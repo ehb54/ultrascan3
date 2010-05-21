@@ -113,11 +113,17 @@ class US_EXTERN US_FemGlobal_New
    {
       public:
       ModelSystem();
+      bool read_from_disk( const QString& );
+
+      double                         density;
       double                         viscosity;
       double                         compressibility;
+      QString                        bufferGUID;   
+      QString                        bufferDesc;   
       double                         temperature;
       OpticsType                     optics;
       QString                        description;
+      QString                        guid;
 
       //! An index of components (-1 means none)$
       int                            coSedSolute;

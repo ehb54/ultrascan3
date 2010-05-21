@@ -10,7 +10,7 @@ int main( int argc, char* argv[] )
    QApplication application( argc, argv );
 
    US_FemGlobal_New::ModelSystem m;
-   US_ModelEditor                w( m );
+   US_ModelEditorNew             w( m );
 
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication

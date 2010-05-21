@@ -12,10 +12,10 @@
 #include <uuid/uuid.h>
 
 US_Properties::US_Properties( 
-      const US_Buffer&                     buf, 
-      const US_FemGlobal_New::ModelSystem& mod,
-      int                                  invID,
-      bool                                 access )
+      const US_Buffer&               buf, 
+      US_FemGlobal_New::ModelSystem& mod,
+      int                            invID,
+      bool                           access )
    : US_WidgetsDialog( 0, 0 ), 
      buffer      ( buf ),
      model       ( mod ),
@@ -153,14 +153,10 @@ US_Properties::US_Properties(
                        SLOT  ( select_shape       ( int ) ) );
    main->addWidget( cmb_shape, row++, 1 );
 
-   QButtonGroup* checks = new QButtonGroup();
-   checks->setExclusive( false );
-   connect( checks, SIGNAL( buttonClicked( int ) ), SLOT( checkbox( int ) ) );
-
    // Row
    QGridLayout* mw_layout = us_checkbox( 
          tr( "Molecular Wt/Stoichiometry" ), cb_mw, true );
-   checks->addButton( cb_mw, MW );
+   connect( cb_mw, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( mw_layout, row, 0 );
 
    QHBoxLayout* mw_layout2 = new QHBoxLayout;
@@ -179,9 +175,9 @@ US_Properties::US_Properties(
 
    // Row
    QGridLayout* f_f0_layout = 
-      us_checkbox( tr( "Frictional Ratio (f/f0)" ), cb_f_f0, true );
+      us_checkbox( tr( "Frictional Ratio (f/f0) (20W)" ), cb_f_f0, true );
    
-   checks->addButton( cb_f_f0, F_F0 );
+   connect( cb_f_f0, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( f_f0_layout, row, 0 );
 
    le_f_f0 = us_lineedit( "1.25" );
@@ -189,8 +185,9 @@ US_Properties::US_Properties(
    main->addWidget( le_f_f0, row++, 1 );
    
    // Row 
-   QGridLayout* s_layout = us_checkbox( tr( "Sedimentation Coeff. (s)" ), cb_s );
-   checks->addButton( cb_s, S );
+   QGridLayout* s_layout = us_checkbox( tr( "Sedimentation Coeff. (s) (20W)" ), cb_s );
+   cb_s->setEnabled( false);
+   connect( cb_s, SIGNAL( toggled( bool ) ), SLOT( calculate( bool) ) );
    main->addLayout( s_layout, row, 0 );
 
    le_s = us_lineedit( "n/a" );
@@ -200,8 +197,9 @@ US_Properties::US_Properties(
    main->addWidget( le_s, row++, 1 );
 
    // Row
-   QGridLayout* D_layout = us_checkbox( tr( "Diffusion Coeff. (D)" ), cb_D );
-   checks->addButton( cb_D, D );
+   QGridLayout* D_layout = us_checkbox( tr( "Diffusion Coeff. (D) (20W)" ), cb_D );
+   cb_D->setEnabled( false);
+   connect( cb_D, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( D_layout, row, 0 );
 
    le_D = us_lineedit( "n/a" );
@@ -211,8 +209,9 @@ US_Properties::US_Properties(
    main->addWidget( le_D, row++, 1 );
 
    // Row
-   QGridLayout* f_layout = us_checkbox( tr( "Frictional Coeff. (f)" ), cb_f );
-   checks->addButton( cb_f, F );
+   QGridLayout* f_layout = us_checkbox( tr( "Frictional Coeff. (f) (20W)" ), cb_f );
+   cb_f->setEnabled( false);
+   connect( cb_f, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( f_layout, row, 0 );
 
    le_f = us_lineedit( "n/a" );
@@ -281,6 +280,9 @@ void US_Properties::clear_entries( void )
 
 void US_Properties::newAnalyte( void )
 {
+   save_changes( lw_components->currentRow() );
+   oldRow = -1;
+
    US_FemGlobal_New::SimulationComponent sc;
    model.components << sc;
 
@@ -312,6 +314,7 @@ void US_Properties::del_component( void )
 
    oldRow = -1;
    clear_entries();
+   le_description->clear();
 }
 
 void US_Properties::update_lw( void )
@@ -347,7 +350,7 @@ void US_Properties::set_stoich( double stoich )
    hydro_data.vbar        = sc->vbar20;
    hydro_data.axial_ratio = sc->axial_ratio;
 
-   hydro_data.calculate( model.temperature );
+   hydro_data.calculate( NORMAL_TEMP );
 
    set_molar();
    inUpdate = false;
@@ -359,17 +362,32 @@ void US_Properties::edit_component( void )
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
 
+   QString desc = le_description->text().trimmed();
+   if ( desc.isEmpty() ) return;
+
+   if ( desc == lw_components->item( row )->text() ) return;
+
+   if ( keep_standard() )  // Do we want to change from the standard values?
+   {
+      // Restore the description
+      le_description->setText( lw_components->item( row )->text() );
+      return;
+   }
+      
    lw_components->disconnect( SIGNAL( currentRowChanged( int ) ) );
    delete lw_components->currentItem();
    
-   QString desc = le_description->text();
    lw_components->insertItem( row, new QListWidgetItem( desc ) );
    lw_components->setCurrentRow( row );
 
-   model.components[ row ].name = desc;
+   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   sc->name = desc;
 
    connect( lw_components, SIGNAL( currentRowChanged( int  ) ),
                            SLOT  ( update           ( int  ) ) );
+
+   clear_guid();
+   le_wavelength->clear();
 }
 
 void US_Properties::edit_vbar( void )
@@ -379,7 +397,17 @@ void US_Properties::edit_vbar( void )
 
    US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
 
+   if ( keep_standard() )  // Change from standard values?
+   {
+      le_vbar->setText( QString::number( sc->vbar20, 'f', 4 ) );
+      return;
+   }
+
    sc->vbar20 = le_vbar->text().toDouble();
+
+   clear_guid();
+   le_wavelength->clear();
+   
    calculate();
 }
 
@@ -621,12 +649,38 @@ void US_Properties::set_molar( void )
 
    double extinction       = le_extinction ->text().toDouble();
    double signalConc       = le_analyteConc->text().toDouble();
+   
+   if ( ! inUpdate )
+   {
+      if ( keep_standard() )
+      {
+         double wavelength = le_wavelength->text().toDouble();
+         if ( wavelength < 200.0 ) return;
+
+         switch ( model.optics )
+         {
+            case US_FemGlobal_New::ABSORBANCE:
+               extinction = analyte.extinction[ wavelength ];
+               break;
+            
+            case US_FemGlobal_New::INTERFERENCE:
+               extinction = analyte.refraction[ wavelength ];
+               break;
+            
+            case US_FemGlobal_New::FLUORESCENCE:
+               extinction = analyte.fluorescence[ wavelength ];
+               break;
+         }
+
+         le_extinction->setText( QString::number( extinction, 'f', 1 ) );         
+         return;
+      }
+   }
+   
    sc->molar_concentration = signalConc / extinction;
    sc->wavelength          = le_wavelength->text().toDouble();
 
    le_molar->setText( QString::number( sc->molar_concentration, 'e', 4 ) );
-   
-   if ( ! inUpdate ) clear_guid();
 }
 
 void US_Properties::clear_guid( void )
@@ -640,84 +694,88 @@ void US_Properties::clear_guid( void )
    le_guid->clear();
 }
 
+void US_Properties::save_changes( int row )
+{
+   if ( row < 0 ) return;
+
+   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+      
+   // Description
+   sc->name = lw_components->item( row )->text(); 
+   
+   // guid
+   if ( le_guid->text().isEmpty() ) 
+      uuid_clear( sc->analyteGUID );
+   else
+   {
+      char uuid[ 37 ];
+      uuid[ 36 ] = 0;
+      strncpy( uuid, le_guid->text().toAscii().data(), 36 );
+      uuid_parse( uuid, sc->analyteGUID );
+   }
+
+   // vbar
+   sc->vbar20 = le_vbar->text().toDouble();
+
+   // Extinction, Wavelength
+   sc->extinction = le_extinction->text().toDouble();
+   sc->wavelength = le_wavelength->text().toDouble();
+
+   // Molar concentration
+   sc->molar_concentration = le_molar->text().toDouble();
+   
+   //  Signal concentration
+   sc->signal_concentration = le_analyteConc->text().toDouble();
+
+   // Shape
+   switch ( cmb_shape->currentIndex() )
+   {
+      case US_FemGlobal_New::SPHERE : 
+         sc->shape = US_FemGlobal_New::SPHERE; break;
+      
+      case US_FemGlobal_New::PROLATE: 
+         sc->shape = US_FemGlobal_New::PROLATE; break;
+      
+      case US_FemGlobal_New::OBLATE : 
+         sc->shape = US_FemGlobal_New::OBLATE; break;
+      
+      default:                        
+         sc->shape = US_FemGlobal_New::ROD; break;
+   }
+   
+   int shape = cmb_shape->itemData( cmb_shape->currentIndex() ).toInt();
+   sc->shape = ( US_FemGlobal_New::ShapeType ) shape;
+   
+   // Characteristics
+   sc->mw    = le_mw   ->text().toDouble();
+   sc->s     = le_s    ->text().toDouble();
+   sc->D     = le_D    ->text().toDouble();
+   sc->f     = le_f    ->text().toDouble();
+   sc->f_f0  = le_f_f0 ->text().toDouble();
+   sc->sigma = le_sigma->text().toDouble();
+   sc->delta = le_delta->text().toDouble();
+
+   // c0 values are already set
+   // co-sed is already set
+}
+
 void US_Properties::update( int /* row */ )
 {
-   int index = lw_components->currentRow();
-
-   if ( index < 0 ) return;
+   int row = lw_components->currentRow();
+   if ( row < 0 ) return;
 
    inUpdate = true;
-   US_FemGlobal_New::SimulationComponent* sc;
 
    char uuid[ 37 ];
    uuid[ 36 ] = 0;
 
    // Save current data 
-   if ( oldRow > -1 )
-   {
-      sc = &model.components[ oldRow ];
-      
-      // Description
-      sc->name = lw_components->currentItem()->text(); 
-      
-      // guid
-      if ( le_guid->text().isEmpty() ) 
-         uuid_clear( sc->analyteGUID );
-      else
-      {
-         strncpy( uuid, le_guid->text().toAscii().data(), 36 );
-         uuid_parse( uuid, sc->analyteGUID );
-      }
+   save_changes( oldRow );
 
-      // vbar
-      sc->vbar20 = le_vbar->text().toDouble();
-
-      // Extinction, Wavelength
-      sc->extinction = le_extinction->text().toDouble();
-      sc->wavelength = le_wavelength->text().toDouble();
-
-      // Molar concentration
-      sc->molar_concentration = le_molar->text().toDouble();
-      
-      //  Signal concentration
-      sc->signal_concentration = le_analyteConc->text().toDouble();
-
-      // Shape
-      switch ( cmb_shape->currentIndex() )
-      {
-         case US_FemGlobal_New::SPHERE : 
-            sc->shape = US_FemGlobal_New::SPHERE; break;
-         
-         case US_FemGlobal_New::PROLATE: 
-            sc->shape = US_FemGlobal_New::PROLATE; break;
-         
-         case US_FemGlobal_New::OBLATE : 
-            sc->shape = US_FemGlobal_New::OBLATE; break;
-         
-         default:                        
-            sc->shape = US_FemGlobal_New::ROD; break;
-      }
-     
-      int shape = cmb_shape->itemData( cmb_shape->currentIndex() ).toInt();
-      sc->shape = ( US_FemGlobal_New::ShapeType ) shape;
-     
-      // Characteristics
-      sc->mw    = le_mw   ->text().toDouble();
-      sc->s     = le_s    ->text().toDouble();
-      sc->D     = le_D    ->text().toDouble();
-      sc->f     = le_f    ->text().toDouble();
-      sc->f_f0  = le_f_f0 ->text().toDouble();
-      sc->sigma = le_sigma->text().toDouble();
-      sc->delta = le_delta->text().toDouble();
-
-      // c0 values are already set
-      // co-sed is already set
-   }
-
-   oldRow = index;
+   oldRow = row;
 
    // Update to current data
-   sc = &model.components[ index ];
+   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
 
    le_description->setText( sc->name );
 
@@ -754,7 +812,7 @@ void US_Properties::update( int /* row */ )
    hydro_data.vbar        = sc->vbar20;
    hydro_data.axial_ratio = sc->axial_ratio;
 
-   hydro_data.calculate( model.temperature );
+   hydro_data.calculate( NORMAL_TEMP );
 
    // Set shape
    switch ( sc->shape )
@@ -777,11 +835,11 @@ void US_Properties::update( int /* row */ )
    le_delta->setText( QString::number( sc->delta, 'e', 4 ) );
 
    // Set load_co indication
-   ( sc->c0.radius.size() > 0 )   ? pb_load_c0->setIcon( check )
-                                  : pb_load_c0->setIcon( QIcon() );
+   ( sc->c0.radius.size() > 0 ) ? pb_load_c0->setIcon( check )
+                                : pb_load_c0->setIcon( QIcon() );
    // Set co-setimenting solute
-   ( index == model.coSedSolute ) ? cb_co_sed->setChecked( true  )
-                                  : cb_co_sed->setChecked( false );
+   ( row == model.coSedSolute ) ? cb_co_sed->setChecked( true  )
+                                : cb_co_sed->setChecked( false );
    inUpdate = false;
 }
 
@@ -813,7 +871,7 @@ void US_Properties::new_hydro( US_Analyte ad )
    working_data.mw *= sc->stoichiometry;
    analyte          = ad;
 
-   hydro_data.calculate( model.temperature );
+   hydro_data.calculate( NORMAL_TEMP );
 
    // Set the name of the component
    if ( ! ad.description.isEmpty() )
@@ -827,6 +885,7 @@ void US_Properties::new_hydro( US_Analyte ad )
                               SLOT  ( update           ( int  ) ) );
 
       sc->name = ad.description;
+      le_description->setText( ad.description );
    }
 
    // Set guid
@@ -859,6 +918,7 @@ void US_Properties::new_hydro( US_Analyte ad )
    sc->axial_ratio = hydro_data.axial_ratio;
    
    // Set f/f0, s, D, and f for shape
+   cmb_shape->setEnabled( true );
    int shape = cmb_shape->itemData( cmb_shape->currentIndex() ).toInt();
    select_shape( shape );
 
@@ -874,7 +934,7 @@ void US_Properties::acceptProp( void )
    accept();
 }
 
-void US_Properties::checkbox( int /*box*/ )
+void US_Properties::checkbox( void )
 {
    if ( countChecks() != 2 )
    {
@@ -960,27 +1020,68 @@ void US_Properties::co_sed( int new_state )
       model.coSedSolute = -1;
 }
 
+bool US_Properties::keep_standard( void )
+{
+   if ( le_guid->text().isEmpty() ) return false;
+
+   int response = QMessageBox::question( this,
+         tr( "Changing Standard Value" ),
+         tr( "You are changing a value that does not correspond\n" 
+             "with a saved analyte.\n\n"
+             "Continue?" ),
+         QMessageBox::Yes, QMessageBox::No );
+
+   if ( response == QMessageBox::Yes )
+   {
+      clear_guid();
+      le_wavelength->clear();
+      analyte.extinction  .clear();
+      analyte.refraction  .clear();
+      analyte.fluorescence.clear();
+      cmb_shape->setEnabled( false );
+      return false;
+   }
+
+   return true;
+}
+
 void US_Properties::calculate( void )
 {
    if ( inUpdate ) return;
 
+   checkbox();
    // First do some sanity checking
    double vbar = le_vbar->text().toDouble();
    if ( vbar <= 0.0 ) return;
 
    // Exatly two checkboxes must be set
-   if ( countChecks() != 2 ) return;
+   if ( countChecks() < 2 )
+   {
+      cb_mw  ->setEnabled( true );
+      cb_f_f0->setEnabled( true );
+      cb_f   ->setEnabled( true );
+      cb_s   ->setEnabled( true );
+      cb_D   ->setEnabled( true );
+      return;
+   }
+   
+   // Two checkboxes set -- Disable others
+   if ( ! cb_mw  ->isChecked() ) cb_mw  ->setEnabled( false );
+   if ( ! cb_f_f0->isChecked() ) cb_f_f0->setEnabled( false );
+   if ( ! cb_f   ->isChecked() ) cb_f   ->setEnabled( false );
+   if ( ! cb_s   ->isChecked() ) cb_s   ->setEnabled( false );
+   if ( ! cb_D   ->isChecked() ) cb_D   ->setEnabled( false );
 
-   double                t = model.temperature;  // Degrees C
    US_Math::SolutionData d;
 
+// Are these water by default?
    d.vbar      = vbar;
-   d.density   = buffer.density;
-   d.viscosity = buffer.viscosity;
+   d.density   = DENS_20W; //buffer.density;
+   d.viscosity = VISC_20W; //buffer.viscosity;
 
-   US_Math::data_correction( t, d );
+   US_Math::data_correction( 20.0, d );  // Always use 20C
 
-   t += K0;  // Calculatons below need Kelvin
+   double t = K0 + 20.0;  // Calculatons below need Kelvin
 
    double mw;
    double s;
@@ -1003,7 +1104,7 @@ void US_Properties::calculate( void )
 
       vol_per_molec = vbar * mw / AVOGADRO;
       radius_sphere = pow( vol_per_molec * 0.75 / M_PI, 1.0 / 3.0 );
-      double f0     = radius_sphere * 6.0 * M_PI * buffer.viscosity * 0.01;
+      double f0     = radius_sphere * 6.0 * M_PI * VISC_20W * 0.01;
 
       // mw and s
       if ( cb_s->isChecked() )
@@ -1049,7 +1150,7 @@ void US_Properties::calculate( void )
          }
 
          f_f0 = f / f0;
-         s    = mw * ( 1.0 - vbar * buffer.density ) / ( AVOGADRO * f );
+         s    = mw * ( 1.0 - vbar * DENS_20W ) / ( AVOGADRO * f );
          D    = s * R * t / ( d.buoyancyb * mw );
       }
 
@@ -1064,7 +1165,7 @@ void US_Properties::calculate( void )
          }
 
          f = f_f0 * f0;
-         s = mw * ( 1.0 - vbar * buffer.density ) / ( AVOGADRO * f );
+         s = mw * ( 1.0 - vbar * DENS_20W ) / ( AVOGADRO * f );
          D = s * R * t / ( d.buoyancyb * mw );
       }
    }
@@ -1089,10 +1190,10 @@ void US_Properties::calculate( void )
             return;
          }
 
-         mw            = s * R * t / ( D * ( 1.0 -  vbar * buffer.density ) );
+         mw            = s * R * t / ( D * ( 1.0 - vbar * DENS_20W ) );
          vol_per_molec = vbar * mw / AVOGADRO;
          radius_sphere = pow( vol_per_molec * 0.75 / M_PI, 1.0 / 3.0 );
-         double f0     = radius_sphere * 6.0 * M_PI * buffer.viscosity * 0.01;
+         double f0     = radius_sphere * 6.0 * M_PI * VISC_20W * 0.01;
          f             = mw * d.buoyancyb / ( s * AVOGADRO );
          f_f0          = f / f0;
       }
@@ -1108,10 +1209,10 @@ void US_Properties::calculate( void )
          }
 
          D             = R * t / ( AVOGADRO * f );
-         mw            = s * R * t / ( D * ( 1.0 - vbar * buffer.density ) );
+         mw            = s * R * t / ( D * ( 1.0 - vbar * DENS_20W ) );
          vol_per_molec = vbar * mw / AVOGADRO;
          radius_sphere = pow( vol_per_molec * 0.75 / M_PI, 1.0 / 3.0 );
-         double f0     = radius_sphere * 6.0 * M_PI * buffer.viscosity * 0.01;
+         double f0     = radius_sphere * 6.0 * M_PI * VISC_20W * 0.01;
          f_f0          = f / f0;
       }
 
@@ -1125,12 +1226,12 @@ void US_Properties::calculate( void )
             return;
          }
 
-         double n  = 2.0 * s * f_f0 * vbar * buffer.viscosity; // numerator
-         double d  = 1.0 - vbar * buffer.density;              // denominator
-         double f0 = 9.0 * buffer.viscosity * M_PI * sqrt( n / d );
+         double n  = 2.0 * s * f_f0 * vbar * VISC_20W; // numerator
+         double d  = 1.0 - vbar * DENS_20W;              // denominator
+         double f0 = 9.0 * VISC_20W * M_PI * sqrt( n / d );
          f         = f_f0 * f0;
          D         = R * t / ( AVOGADRO * f ); 
-         mw        = s * R * t / ( D * ( 1.0 - vbar * buffer.density ) );
+         mw        = s * R * t / ( D * ( 1.0 - vbar * DENS_20W ) );
       }
    }
 
@@ -1162,10 +1263,10 @@ void US_Properties::calculate( void )
 
          f             = R * t / ( AVOGADRO * D );
          double f0     = f / f_f0;
-         radius_sphere = f0 / ( 6.0 * M_PI * buffer.viscosity );
+         radius_sphere = f0 / ( 6.0 * M_PI * VISC_20W );
          double volume = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
          mw            = volume * AVOGADRO / vbar;
-         s             = mw * (1.0 - vbar * buffer.density ) / ( AVOGADRO * f );
+         s             = mw * (1.0 - vbar * DENS_20W ) / ( AVOGADRO * f );
       }
    }
 
@@ -1182,10 +1283,27 @@ void US_Properties::calculate( void )
 
       double f0     = f / f_f0;
       D             = R * t / ( AVOGADRO * f );
-      radius_sphere = f0 / ( 6.0 * M_PI * buffer.viscosity );
+      radius_sphere = f0 / ( 6.0 * M_PI * VISC_20W );
       double volume = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
       mw            = volume * AVOGADRO / vbar;
-      s             = mw * (1.0 - vbar * buffer.density ) / ( AVOGADRO * f );
+      s             = mw * (1.0 - vbar * DENS_20W ) / ( AVOGADRO * f );
+   }
+
+   int row = lw_components->currentRow();
+   if ( row < 0 ) return;
+
+   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+
+   if ( mw != sc->mw )
+   {
+      if ( keep_standard() )  // Reset
+      {
+         mw   = sc->mw;
+         f_f0 = sc->f_f0;
+         f    = sc->f; 
+         s    = sc->s;    
+         D    = sc->D;    
+      }
    }
 
    le_mw  ->setText( QString::number( mw  , 'f', 1 ) );
@@ -1194,21 +1312,10 @@ void US_Properties::calculate( void )
    le_D   ->setText( QString::number( D   , 'e', 4 ) );
    le_f   ->setText( QString::number( f   , 'e', 4 ) );
 
-   int row = lw_components->currentRow();
-   if ( row < 0 ) return;
-
-   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
-
-   // If there is a manual update, then the guid is invalidated
-   clear_guid();
-   le_wavelength->clear();
-
    sc->mw   = mw;
    sc->f_f0 = f_f0;
    sc->f    = f;
    sc->s    = s;
    sc->D    = D;
-
-   sc->wavelength = 0.0;
 }
 

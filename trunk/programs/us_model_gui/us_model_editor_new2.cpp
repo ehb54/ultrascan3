@@ -7,21 +7,19 @@
 #include "us_properties.h"
 #include "us_investigator.h"
 #include "us_buffer_gui.h"
+#include "us_util.h"
+#include "us_passwd.h"
+#include <uuid/uuid.h>
 
-US_ModelEditor::US_ModelEditor( 
-      US_FemGlobal_New::ModelSystem& current_model,
-      QWidget*                       p, 
-      Qt::WindowFlags                f ) 
-   : US_Widgets( true, p, f ), model( current_model )
+US_ModelEditorNew::US_ModelEditorNew( 
+      US_FemGlobal_New::ModelSystem& current_model )
+   : US_Widgets(), model( current_model )
 {
-   setWindowTitle( "Model Editor" );
-   setPalette( US_GuiSettings::frameColor() );
-
+   setWindowTitle   ( "UltraScan Model Editor" );
+   setPalette       ( US_GuiSettings::frameColor() );
    setWindowModality( Qt::WindowModal );
    
-   c0_files.clear();
-   prior_row  = -1;
-   check      = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
+   model_descriptions.clear();
 
    // Very light gray
    QPalette gray = US_GuiSettings::editColor();
@@ -30,8 +28,8 @@ US_ModelEditor::US_ModelEditor(
    investigator = -1;
 
    QGridLayout* main = new QGridLayout( this );
-   main->setSpacing( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
+   main->setSpacing        ( 2 );
 
    int row = 0;
    
@@ -52,12 +50,20 @@ US_ModelEditor::US_ModelEditor(
    main->addLayout( disk_layout, row++, 1 );
 
    QPushButton* pb_models = us_pushbutton( tr( "List Available Models" ) );
-   //connect( pb_models, SIGNAL( clicked() ), SLOT( load_models() ) );
+   connect( pb_models, SIGNAL( clicked() ), SLOT( list_models() ) );
    main->addWidget( pb_models, row, 0 );
 
    QPushButton* pb_new = us_pushbutton( tr( "Create New Model" ) );
    connect( pb_new, SIGNAL( clicked() ), SLOT( new_model() ) );
    main->addWidget( pb_new, row++, 1 );
+
+   QLabel* lb_description = us_label( tr( "Model Description:" ) );
+   main->addWidget( lb_description, row, 0 );
+
+   le_description = us_lineedit( "" );
+   connect( le_description, SIGNAL( editingFinished () ),
+                            SLOT  ( edit_description() ) );
+   main->addWidget( le_description, row++, 1 );
 
    // Models List Box
    lw_models = new US_ListWidget;
@@ -65,8 +71,8 @@ US_ModelEditor::US_ModelEditor(
    //connect( lw_models, SIGNAL( currentRowChanged( int  ) ),
    //                    SLOT  ( change_model     ( int  ) ) );
 
-   //connect( lw_models, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
-   //                    SLOT  ( change_model     ( QListWidgetItem* ) ) );
+   connect( lw_models, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
+                       SLOT  ( select_model     ( QListWidgetItem* ) ) );
 
    main->addWidget( lw_models, row, 0, 5, 2 );
    row += 5;
@@ -126,13 +132,26 @@ US_ModelEditor::US_ModelEditor(
    cb_optics->addItem( tr( "Interference" ), INTERFERENCE );
    cb_optics->addItem( tr( "Fluorescence" ), FLUORESCENCE );
    main->addWidget( cb_optics, row++, 1 );
-   
+
+   QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
+   main->addWidget( lb_guid, row, 0 );
+
+   le_guid = us_lineedit( "" );
+   le_guid->setPalette( gray );
+   main->addWidget( le_guid, row++, 1 );
+
+   if ( US_Settings::us_debug() == 0 )
+   {
+      lb_guid->setVisible( false );
+      le_guid->setVisible( false );
+   }
+ 
    QPushButton* pb_save = us_pushbutton( tr( "Save / Update Model" ) );
-   //connect( pb_save, SIGNAL( clicked() ), SLOT( save_model() ) );
+   connect( pb_save, SIGNAL( clicked() ), SLOT( save_model() ) );
    main->addWidget( pb_save, row, 0 );
 
    QPushButton* pb_delete = us_pushbutton( tr( "Delete Selected Model" ) );
-   //connect( pb_delete, SIGNAL( clicked() ), SLOT( delete_model() ) );
+   connect( pb_delete, SIGNAL( clicked() ), SLOT( delete_model() ) );
    main->addWidget( pb_delete, row++, 1 );
 
    // Pushbuttons
@@ -153,7 +172,182 @@ US_ModelEditor::US_ModelEditor(
    main->addLayout( buttonbox, row++, 0, 1, 4 );
 }
 
-void US_ModelEditor::get_person( void )
+void US_ModelEditorNew::new_model( void )
+{
+   ModelDesc desc;
+   desc.description = "New Model";
+   desc.filename.clear();
+   desc.guid    .clear();
+   desc.DB_id       = -1;
+
+   model_descriptions << desc;
+   show_model_desc();
+   lw_models->setCurrentRow( model_descriptions.size() - 1 );
+}
+
+void US_ModelEditorNew::show_model_desc( void )
+{
+   lw_models->disconnect( SIGNAL( currentRowChanged( int ) ) );
+   lw_models->clear();
+
+   for ( int i = 0; i < model_descriptions.size(); i++ )
+      lw_models->addItem( model_descriptions[ i ].description );
+
+   //connect( lw_modelss, SIGNAL( currentRowChanged( int  ) ),
+   //                     SLOT  ( update           ( int  ) ) );
+}
+
+void US_ModelEditorNew::edit_description( void )
+{
+   int row = lw_models->currentRow();
+   if ( row < 0 ) return;
+
+   QString desc = le_description->text().trimmed();
+   if ( desc.isEmpty() ) return;
+
+   if ( desc == lw_models->item( row )->text() ) return;
+
+   //if ( keep_standard() )  // Do we want to change from the standard values?
+   //{
+      // Restore the description
+   //   le_description->setText( lw_components->item( row )->text() );
+   //   return;
+   //}
+
+   model_descriptions[ row ].description = desc;
+   model.description = desc;
+   show_model_desc();
+
+   model.guid.clear();
+   le_guid->clear();
+}
+
+void US_ModelEditorNew::select_model( QListWidgetItem* item )
+{
+   // Get the current index
+   int index = item -> listWidget()-> currentRow();
+   
+   QString file;
+
+   if ( rb_disk->isChecked() )
+   {
+      file = model_descriptions[ index ].filename;
+   }
+   else // Get from db
+   {
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         connect_error( db.lastError() );
+         return;
+      }
+
+      QStringList q;
+      q << "get_model_info" << model_descriptions[ index ].DB_id;
+
+      db.query( q );
+
+      if ( ! database_ok( db ) ) return;
+      db.next();
+
+      QByteArray contents = db.value( 2 ).toString().toAscii();
+
+      // Write the model file to a temporary file
+      QTemporaryFile temporary;
+      temporary.open();
+      temporary.write( contents );
+      temporary.close();
+
+      file = temporary.fileName();
+   }
+   
+   model.read_from_disk( file );
+   // Populate 
+   
+   le_buffer         ->setText( model.bufferDesc );
+   
+   le_density        ->setText( QString::number( model.density,        'f', 4));
+   le_viscosity      ->setText( QString::number( model.viscosity,      'f', 4));
+   le_compressibility->setText( QString::number( model.compressibility,'e', 3));
+   le_temperature    ->setText( QString::number( model.temperature,    'f', 1));
+   
+   le_guid           ->setText( model.guid );
+
+   cb_optics         ->setCurrentIndex( model.optics );
+}
+
+
+void US_ModelEditorNew::delete_model( void )
+{
+   int row = lw_models->currentRow();
+   if ( row < 0 ) return;
+
+   ModelDesc md = model_descriptions.takeAt( row );
+   show_model_desc();
+
+   // Delete from DB or disk
+
+   if ( rb_disk->isChecked() )
+   {
+      QString path;
+      if ( ! model_path( path ) ) return;
+
+      // If guid matches one we already have, use that filename
+      // otherwise create a new filename.
+      QString fn = get_filename( path, le_guid->text() );
+      if ( newFile ) return;
+
+      QFile::remove( path + "/" + fn );
+   }
+   else // Remove from DB
+   {
+      QStringList q;
+      q << "delete_model" << md.DB_id;
+
+      if ( status_query( q ) )
+         QMessageBox::information( this,
+            tr( "Model Deleted" ),
+            tr( "The model has been deleted from the database." ) );
+   }
+}
+
+bool US_ModelEditorNew::status_query( const QStringList& q )
+{
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return false;
+   }
+
+   db.statusQuery( q );
+
+   return database_ok( db );
+}
+
+void US_ModelEditorNew::connect_error( const QString& error )
+{
+   QMessageBox::warning( this, 
+      tr( "Connection Problem" ),
+      tr( "Could not connect to databasee\n" ) + error );
+}
+
+bool US_ModelEditorNew::database_ok( US_DB2& db )
+{
+   if ( db.lastErrno() == 0 ) return true;
+
+   QMessageBox::information( this, 
+      tr( "Database Error" ),
+      tr( "The following error was returned:\n" ) + db.lastError() );
+
+   return false;
+}
+
+void US_ModelEditorNew::get_person( void )
 {
    US_Investigator* dialog = new US_Investigator( true );
    
@@ -164,9 +358,9 @@ void US_ModelEditor::get_person( void )
    dialog->exec();
 }
 
-void US_ModelEditor::update_person( int            ID, 
-                                    const QString& lname, 
-                                    const QString& fname )
+void US_ModelEditorNew::update_person( int            ID, 
+                                       const QString& lname, 
+                                       const QString& fname )
 {
    investigator = ID;
 
@@ -177,7 +371,7 @@ void US_ModelEditor::update_person( int            ID,
             QString::number( ID ) + ": " + lname + ", " + fname );
 }
 
-void US_ModelEditor::get_buffer( void )
+void US_ModelEditorNew::get_buffer( void )
 {
    US_BufferGui* dialog = new US_BufferGui( investigator, true, buffer, 
          rb_disk->isChecked() );
@@ -188,36 +382,21 @@ void US_ModelEditor::get_buffer( void )
    dialog->exec();
 }
 
-void US_ModelEditor::update_buffer( US_Buffer buf )
+void US_ModelEditorNew::update_buffer( US_Buffer buf )
 {
    buffer = buf;
    le_density        ->setText( QString::number( buf.density        , 'f', 4 ) );
    le_viscosity      ->setText( QString::number( buf.viscosity      , 'f', 4 ) );
    le_compressibility->setText( QString::number( buf.compressibility, 'e', 3 ) );
    le_buffer         ->setText( buf.description );
+
+   model.density         = buf.density;
+   model.viscosity       = buf.viscosity;
+   model.compressibility = buf.compressibility;
+   model.bufferGUID      = buf.GUID;
 }
 
-void US_ModelEditor::new_model( void )
-{
-   ModelDesc desc;
-   desc.description = "New Model";
-   desc.filename    = "";
-   desc.DB_id       = -1;
-
-   model_descriptions << desc;
-   show_model_desc();
-   lw_models->setCurrentRow( model_descriptions.size() - 1 );
-}
-
-void US_ModelEditor::show_model_desc( void )
-{
-   lw_models->clear();
-
-   for ( int i = 0; i < model_descriptions.size(); i++ )
-      lw_models->addItem( model_descriptions[ i ].description );
-}
-
-void US_ModelEditor::manage_components( void )
+void US_ModelEditorNew::manage_components( void )
 {
    int index = lw_models->currentRow();
 
@@ -244,116 +423,18 @@ void US_ModelEditor::manage_components( void )
    US_Properties* dialog = 
       new US_Properties( buffer, working_model, investigator, dbAccess );
    
-   //connect( dialog, SIGNAL( valueChanged( US_Predict1::Hydrosim ) ),
-   //                 SLOT  ( update_sim  ( US_Predict1::Hydrosim ) ) );
    connect( dialog, SIGNAL( done() ), SLOT( update_sim() ) );
-   
    dialog->exec();
 }
 
-//void US_ModelEditor::update_sim( US_Predict1::Hydrosim sim )
-void US_ModelEditor::update_sim( void )
+void US_ModelEditorNew::update_sim( void )
 {
    model = working_model;
-
-   //le_mw->setText( QString::number( sim.mw, 'e', 4 ) );
-
 }
 
-
-//////////////////////////////////////
-
-void US_ModelEditor::show_component( void )
-{
-   int index = lw_components->currentRow();
-   if ( index >= 0 )
-   {
-      prior_row = index;
-
-      US_FemGlobal_New::SimulationComponent* sc = &components[ index ];
-      QListWidgetItem* item = lw_components->item( index );
-      item->setText( QString::number( index + 1 ) + ": " + sc->name );
-
-      le_sed  ->setText( QString::number( sc->s,      'e', 4 ) );
-      le_diff ->setText( QString::number( sc->D,      'e', 4 ) );
-      le_vbar ->setText( QString::number( sc->vbar20, 'e', 4 ) );
-      le_mw   ->setText( QString::number( sc->mw,     'e', 4 ) );
-      le_f_f0 ->setText( QString::number( sc->f_f0,   'e', 4 ) );
-      le_sigma->setText( QString::number( sc->sigma,  'e', 4 ) );
-      le_delta->setText( QString::number( sc->delta,  'e', 4 ) );
-
-      le_conc ->setText( QString::number( sc->molar_concentration,  'e', 4 ) );
-      le_coeff->setText( QString::number( sc->signal_concentration, 'e', 4 ) );
-
-      // Set or clear check in Load C0 push button as appropriate
-      if ( sc->c0.radius.size() > 0 )
-         pb_load_c0->setIcon( check );
-      else
-         pb_load_c0->setIcon( QIcon() );
-
-      pb_load_c0->setToolTip( c0_files[ index ] );
-   }
-}
-/*
-void US_ModelEditor::new_component( void )
-{
-   US_FemGlobal_New::SimulationComponent sc;
-   components << sc;
-
-   // Create empty structures for optics readings
-   QMap< double, double > map;
-   extinction_maps   << map;
-   refraction_maps   << map;
-   fluorescence_maps << map;
-
-   c0_files << QString();
-
-   US_Predict1::Hydrosim sim;
-   hydrosim_maps << sim;
-   hydrosim_valid << false;
-
-   int index = lw_components->count();
-
-   QListWidgetItem* item = 
-      new QListWidgetItem( QString::number( index + 1 ) + ": " + sc.name );
-   
-   item->setFlags( item->flags() | Qt::ItemIsEditable );
-   lw_components->addItem( item );
-
-   cb_shape->setCurrentIndex( 0 );
-   lw_components->setCurrentRow( index ); // Connection calls show_component()
-}
-*/
-void US_ModelEditor::get_vbar( void )
-{
-   int index = lw_components->currentRow();
-   if ( index < 0 ) return; 
-
-   US_AnalyteGui* analyte = new US_AnalyteGui( -1, true );
-
-   connect( analyte, 
-         SIGNAL( valueChanged  ( US_Analyte ) ),
-         SLOT  ( update_analyte( US_Analyte ) ) );
-   analyte->exec();
-}
-
-void US_ModelEditor::update_analyte( US_Analyte data )
-{
-   int index = lw_components->currentRow();
-   if ( index < 0 ) return; 
-
-   US_FemGlobal_New::SimulationComponent* sc = &components[ index ];
-
-   extinction = data.extinction;
-   sc->vbar20 = data.vbar;
-   sc->mw     = data.mw;
-   sc->name   = data.description;
-
-   show_component();
-}
-
-void US_ModelEditor::change_optics( int index )
-{
+//void US_ModelEditorNew::change_optics( int /*index*/ )
+//{
+   /*
    switch ( index )
    {
       case ABSORBANCE: 
@@ -368,804 +449,368 @@ void US_ModelEditor::change_optics( int index )
          lb_coeff->setText( tr ( "Intensity:" ) );
          break;
    }
+*/
+//   int row = lw_components->currentRow();
 
-   int row = lw_components->currentRow();
+//   if ( row > -1 )
+//   {
+//      US_FemGlobal_New::SimulationComponent* sc = &components[ row ];
+//      sc->shape = (US_FemGlobal_New::ShapeType) index;
+//   }
+//}
 
-   if ( row > -1 )
-   {
-      US_FemGlobal_New::SimulationComponent* sc = &components[ row ];
-      sc->shape = (US_FemGlobal_New::ShapeType) index;
-   }
-}
-
-void US_ModelEditor::delete_component( void )
+void US_ModelEditorNew::accept_model( void )
 {
-   int index = lw_components->currentRow();
-   if ( index < 0 ) return;
-
-   int response =  QMessageBox::question( this,
-         tr( "Remove Component" ),
-         tr( "Do you really want to remove this component?" ),
-         QMessageBox::Yes, QMessageBox::Cancel );
-
-   if ( response != QMessageBox::Yes ) return;
-
-   delete lw_components->item( index );  // Remove from the list widget
-   components       .remove( index );    // Remove from memory
-   extinction_maps  .remove( index );
-   refraction_maps  .remove( index );
-   fluorescence_maps.remove( index );
-   hydrosim_maps    .remove( index );
-   hydrosim_valid   .remove( index );
-   c0_files         .takeAt( index );
-
-   int last_index = lw_components->count() - 1;
-   if ( last_index == -1 ) return;
-
-   if ( index > last_index ) index = last_index;  // Was last item deleted?
-
-   lw_components->setCurrentRow( index );
-   show_component();  // Update all values
-}
-
-void US_ModelEditor::change_component( int index )
-{
-   // Update current component from window
-   if ( prior_row > -1 )
-   {
-      US_FemGlobal_New::SimulationComponent* sc = &components[ prior_row ];
-      
-      QListWidgetItem* prior = lw_components->item( prior_row );
-      QStringList sl = prior->text().split( ": ");
-      
-      if ( sl.size() > 1 )
-         sc->name = sl[ 1 ];
-      else
-         sc->name = prior->text();
-
-      sc->s      = le_sed  ->text().toDouble();
-      sc->D      = le_diff ->text().toDouble();
-      sc->vbar20 = le_vbar ->text().toDouble();
-      sc->mw     = le_mw   ->text().toDouble();
-      sc->f_f0   = le_f_f0 ->text().toDouble();
-      sc->sigma  = le_sigma->text().toDouble();
-      sc->delta  = le_delta->text().toDouble();
-
-      sc->molar_concentration  = le_conc ->text().toDouble();
-      sc->signal_concentration = le_coeff->text().toDouble();
-
-   }
-
-   cb_shape->setCurrentIndex( components[ index ].shape );
-   show_component();
-}
-
-void US_ModelEditor::accept_model( void )
-{
-   // Populate the model and return it
-   model.description     = le_description->text();
-   model.compressibility = buffer.compressibility;
-   //model.components   = 
-   //model.coSedSolute  = 
-   //model.associations = 
-   
    emit valueChanged( model );
    close();
 }
-/*
-void US_ModelEditor::simulate_component( void )
-{
-   int index = lw_components->currentRow();
 
-   if ( index < 0 )
+bool US_ModelEditorNew::model_path( QString& path )
+{
+   QDir dir;
+   path = US_Settings::dataDir() + "/models";
+
+   if ( ! dir.exists( path ) )
+   {
+      if ( ! dir.mkpath( path ) )
+      {
+         QMessageBox::critical( this,
+               tr( "Bad Model Path" ),
+               tr( "Could not create default directory for analytes\n" )
+               + path );
+         return false;
+      }
+   }
+
+   return true;
+}
+
+QString US_ModelEditorNew::get_filename( const QString& path, const QString& guid )
+{
+   QDir f( path );
+   QStringList filter( "M???????.xml" );
+   QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
+
+   for ( int i = 0; i < f_names.size(); i++ )
+   {
+      QFile m_file( path + "/" + f_names[ i ] );
+
+      if ( ! m_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
+
+      QXmlStreamReader xml( &m_file );
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement() )
+         {
+            if ( xml.name() == "model" )
+            {
+               QXmlStreamAttributes a = xml.attributes();
+
+               if ( a.value( "guid" ).toString() == guid )
+               {
+                  newFile = false;
+                  return path + "/" + f_names[ i ];
+               }
+            }
+         }
+      }
+
+      m_file.close();
+   }
+
+   int number = ( f_names.size() > 0 ) ? f_names.last().mid( 1, 7 ).toInt() : 0;
+   newFile    = true;
+
+   return path + "/M" + QString().sprintf( "%07i", number + 1 ) + ".xml";
+}
+
+void US_ModelEditorNew::save_model( void )
+{
+   if ( ! verify_model() ) return;
+
+   if ( rb_disk->isChecked() )
+   {
+      QString path;
+      if ( ! model_path( path ) ) return;
+
+      // If guid is null, generate a new one.
+      if ( le_guid->text().size() != 36 )
+         le_guid->setText( US_Util::new_guid() );
+
+      model.guid = le_guid->text();
+
+      // If guid matches one we already have, use that filename
+      // otherwise create a new filename.
+      QString fn = get_filename( path, le_guid->text() );
+      QFile   file( fn );
+
+      if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
+      {
+          qDebug() << "Cannot open file for writing: " << fn;
+          return;
+      }
+
+      QTemporaryFile temporary;
+      write_temp( temporary );
+
+      temporary.open();
+
+      file.write( temporary.readAll() );
+      file.close();
+      temporary.close();
+   }
+   else // Save/update in DB
+   {
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         connect_error( db.lastError() );
+         return;
+      }
+
+      QString     modelID = "-1";
+      QStringList q;
+
+      if ( ! model.guid.isEmpty() )
+      {
+         q << "get_modelID" << model.guid;
+         db.query( q );
+
+         if ( ! database_ok( db ) ) return;
+
+         db.next();
+         modelID = db.value( 0 ).toString();
+      }
+
+      // Create the model xml file in a string
+      QTemporaryFile temporary;
+      write_temp( temporary );
+      temporary.open();
+      QByteArray contents = temporary.readAll();
+
+      q.clear();
+
+      if ( modelID == "-1" )  // New model
+      {
+         // Generate a guid if necessary
+         // The guid may be valid from a disk read, but is not in the DB
+         if ( ! model.guid.size() != 36 )
+         {
+            le_guid->setText( US_Util::new_guid() );
+            model.guid = le_guid->text();
+         }
+
+         q << "new_model" << model.guid << model.description << contents;
+
+         if ( status_query( q ) )
+            QMessageBox::information( this,
+               tr( "Model Saved" ),
+               tr( "The model has been saved in the database." ) );
+      }
+      else
+      {
+         q << "update_model" << modelID << model.description << contents;
+
+         if ( status_query( q ) )
+            QMessageBox::information( this,
+               tr( "Model Updated" ),
+               tr( "The model has been updated in the database." ) );
+      }
+   }
+}
+
+void US_ModelEditorNew::write_temp( QTemporaryFile& file )
+{
+   file.open();// QIODevice::WriteOnly | QIODevice::Text );
+   QXmlStreamWriter xml( &file );
+   xml.setAutoFormatting( true );
+
+   xml.writeStartDocument();
+   xml.writeDTD         ( "<!DOCTYPE US_Model>" );
+   xml.writeStartElement( "ModelData" );
+   xml.writeAttribute   ( "version", "1.0" );
+
+   xml.writeStartElement( "model" );
+   xml.writeAttribute   ( "description",     model.description );
+   xml.writeAttribute   ( "guid",            model.guid );
+   xml.writeAttribute   ( "bufferGuid",      model.bufferGUID );
+   xml.writeAttribute   ( "density",         QString::number( model.density ) );
+   xml.writeAttribute   ( "viscosity",       QString::number( model.viscosity ) );
+   xml.writeAttribute   ( "compressibility", QString::number( model.compressibility ) );
+   xml.writeAttribute   ( "temperature",     QString::number( model.temperature ) );
+   xml.writeAttribute   ( "coSedSolute",     QString::number( model.coSedSolute ) );
+   xml.writeAttribute   ( "optics",          QString::number( model.optics ) );
+   
+   char uuid[ 37 ];
+   uuid[ 36 ] = 0;
+
+   // Write components
+   for ( int i = 0; i < model.components.size(); i++ )
+   {
+      US_FemGlobal_New::SimulationComponent* sc = &model.components[ i ];
+      xml.writeStartElement( "analyte" );
+
+      uuid_unparse( sc->analyteGUID, uuid );
+
+      xml.writeAttribute( "guid",       QString( uuid                      ) );
+      xml.writeAttribute( "name",       sc->name                             );
+      xml.writeAttribute( "vbar20",     QString::number( sc->vbar20        ) );
+      xml.writeAttribute( "mw",         QString::number( sc->mw            ) );
+      xml.writeAttribute( "s",          QString::number( sc->s             ) );
+      xml.writeAttribute( "D",          QString::number( sc->D             ) );
+      xml.writeAttribute( "f",          QString::number( sc->f             ) );
+      xml.writeAttribute( "f_f0",       QString::number( sc->f_f0          ) );
+      xml.writeAttribute( "wavelength", QString::number( sc->wavelength    ) );
+      xml.writeAttribute( "extinction", QString::number( sc->extinction    ) );
+      xml.writeAttribute( "axial",      QString::number( sc->axial_ratio   ) );
+      xml.writeAttribute( "sigma",      QString::number( sc->sigma         ) );
+      xml.writeAttribute( "delta",      QString::number( sc->delta         ) );
+      xml.writeAttribute( "stoich",     QString::number( sc->stoichiometry ) );
+      xml.writeAttribute( "shape",      QString::number( sc->shape         ) );
+      xml.writeAttribute( "type",       QString::number( sc->analyte_type  ) );
+
+      xml.writeAttribute( "molar",      QString::number( sc->molar_concentration  ) );
+      xml.writeAttribute( "signal",     QString::number( sc->signal_concentration ) );
+
+      // TODO Need to add c0;
+
+      xml.writeEndElement(); // analyte (SimulationComponent)
+   }
+
+   // Write associations
+   for ( int i = 0; i < model.associations.size(); i++ )
+   {
+      US_FemGlobal_New::Association* as = &model.associations[ i ];
+      xml.writeStartElement( "association" );
+      xml.writeAttribute( "k_eq", QString::number( as->k_eq ) );
+      xml.writeAttribute( "k_off", QString::number( as->k_off ) );
+
+      for ( uint j = 0; j < as->reaction_components.size(); j++ )
+      {
+         xml.writeStartElement( "component" );
+
+         QString index  = QString::number( as->reaction_components[ j ] );
+         QString stoich = QString::number( as->stoichiometry      [ j ] );
+
+         xml.writeAttribute( "index",         index  );
+         xml.writeAttribute( "stoichiometry", stoich );
+         xml.writeEndElement(); // component
+      }
+
+      xml.writeEndElement(); // association
+   }
+
+   xml.writeEndElement(); // model
+   xml.writeEndElement(); // ModelData
+   xml.writeEndDocument();
+   file.close();
+}
+
+bool US_ModelEditorNew::verify_model( void )
+{
+   if ( model.components.size() == 0 )
    {
       QMessageBox::information( this,
-         tr( "Component not selected" ),
-         tr( "Please select a component first.\n" 
-             "If necessary, create a new component." ) );
-      return;
+            tr( "Model Error" ),
+            tr( "The model has no components." ) );
+      return false;
    }
 
-   //US_Properties* dialog = new US_Properties();
-   //connect( dialog, SIGNAL( valueChanged( US_Predict1::Hydrosim ) ),
-   //                 SLOT  ( update_sim  ( US_Predict1::Hydrosim ) ) );
-   //dialog->exec();
-}
-*/
-
-void US_ModelEditor::update_shape( void )
-{
-   int index               = lw_components->currentRow();
-   hydrosim_valid[ index ] = true;
-   
-   US_FemGlobal_New::SimulationComponent* sc = &components   [ index ];
-   US_Hydrosim*                           h  = &hydrosim_maps[ index ];
-
-   int shape = cb_shape->itemData( cb_shape->currentIndex() ).toInt();
-
-//qDebug() << "Prolate" << h->prolate.sedcoeff << h->prolate.diffcoeff << h->prolate.f_f0;
-//qDebug() << "Oblate" << h->oblate.sedcoeff << h->oblate.diffcoeff << h->oblate.f_f0;
-//qDebug() << "Rod" << h->rod.sedcoeff << h->rod.diffcoeff << h->rod.f_f0;
-//qDebug() << "Sphere" << h->sphere.sedcoeff << h->sphere.diffcoeff << h->sphere.f_f0;
-   switch ( shape )
+   if ( model.description.size()    == 0  ||  
+        model.description.trimmed() == "New Model" )
    {
-      case US_FemGlobal_New::PROLATE:
-         sc->s     = h->prolate.s;
-         sc->D     = h->prolate.D;
-         sc->f_f0  = h->prolate.f_f0;
-         sc->shape = US_FemGlobal_New::PROLATE;
-         break;
-      
-      case US_FemGlobal_New::OBLATE:
-         sc->s     = h->oblate.s;
-         sc->D     = h->oblate.D;
-         sc->f_f0  = h->oblate.f_f0;
-         sc->shape = US_FemGlobal_New::OBLATE;
-         break;
-
-      case US_FemGlobal_New::ROD:
-         sc->s     = h->rod.s;
-         sc->D     = h->rod.D;
-         sc->f_f0  = h->rod.f_f0;
-         sc->shape = US_FemGlobal_New::ROD;
-         break;
-
-      case US_FemGlobal_New::SPHERE:
-         sc->s     = h->sphere.s;
-         sc->D     = h->sphere.D;
-         sc->f_f0  = h->sphere.f_f0;
-         sc->shape = US_FemGlobal_New::SPHERE;
-         break;
+      QMessageBox::information( this,
+            tr( "Model Error" ),
+            tr( "The model does not have an acceptable name." ) );
+      return false;
    }
 
-   sc->mw      = h->mw;
-   sc->vbar20  = h->vbar;
-   
-   show_component();
+   return true;
 }
 
-void US_ModelEditor::select_shape( int /*new_shape*/ )
+void US_ModelEditorNew::list_models( void )
 {
-   int index = lw_components->currentRow();
-   if ( index < 0 ) return;
+   QString path;
+   if ( ! model_path( path ) ) return;
 
-//qDebug() << "" << hydrosim_valid[ index ];
+   model_descriptions.clear();
 
-   if ( ! hydrosim_valid[ index ] ) return;
-   
-   US_FemGlobal_New::SimulationComponent* sc = &components   [ index ];
-   US_Hydrosim*                           h  = &hydrosim_maps[ index ];
-
-   int shape = cb_shape->currentIndex();
-
-   switch ( shape )
+   if ( rb_disk->isChecked() )
    {
-      case US_FemGlobal_New::PROLATE:
-         sc->s     = h->prolate.s;
-         sc->D     = h->prolate.D;
-         sc->f_f0  = h->prolate.f_f0;
-         sc->shape = US_FemGlobal_New::PROLATE;
-         break;
-      
-      case US_FemGlobal_New::OBLATE:
-         sc->s     = h->oblate.s;
-         sc->D     = h->oblate.D;
-         sc->f_f0  = h->oblate.f_f0;
-         sc->shape = US_FemGlobal_New::OBLATE;
-         break;
+      QDir f( path );
+      QStringList filter( "M*.xml" );
+      QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
 
-      case US_FemGlobal_New::ROD:
-         sc->s     = h->rod.s;
-         sc->D     = h->rod.D;
-         sc->f_f0  = h->rod.f_f0;
-         sc->shape = US_FemGlobal_New::ROD;
-         break;
+      QXmlStreamAttributes attr;
 
-      case US_FemGlobal_New::SPHERE:
-         sc->s     = h->sphere.s;
-         sc->D     = h->sphere.D;
-         sc->f_f0  = h->sphere.f_f0;
-         sc->shape = US_FemGlobal_New::SPHERE;
-         break;
-   }
-
-   show_component();
-}
-
-void US_ModelEditor::load_c0( void )
-{
-   int index = lw_components->currentRow();
-   if ( index < 0 ) return;
-
-   QMessageBox::information( this, 
-         tr( "UltraScan Information" ),
-         tr( "Please note:\n\n"
-             "The initial concentration file should have\n"
-             "the following format:\n\n"
-             "radius_value1 concentration_value1\n"
-             "radius_value2 concentration_value2\n"
-             "radius_value3 concentration_value3\n"
-             "etc...\n\n"
-             "radius values smaller than the meniscus or\n"
-             "larger than the bottom of the cell will be\n"
-             "excluded from the concentration vector." ) );
-
-   QString fn = QFileDialog::getOpenFileName( 
-         this, tr( "Select C0 File" ), US_Settings::resultDir(), "*" );
-   
-   if ( ! fn.isEmpty() )
-   {
-      QFile f( fn );;
-
-      if ( f.open( QIODevice::ReadOnly | QIODevice::Text ) )
+      for ( int i = 0; i < f_names.size(); i++ )
       {
-         c0_files[ index ] = fn;
-         QTextStream ts( &f );
+         QFile m_file( path + "/" + f_names[ i ] );
 
-         US_FemGlobal_New::SimulationComponent* sc = &components[ index ];
+         if ( ! m_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
 
-         sc->c0.radius.clear();
-         sc->c0.concentration.clear();
-         
-         double radius;
-         double concentration;
-         
-         while ( ! ts.atEnd() )
+         QXmlStreamReader xml( &m_file );
+
+         while ( ! xml.atEnd() )
          {
-            ts >> radius;
-            ts >> concentration;
+            xml.readNext();
 
-            if ( radius > 0.0 ) // Ignore radius pairs that aren't positive
+            if ( xml.isStartElement() )
             {
-               sc->c0.radius       .push_back( radius );
-               sc->c0.concentration.push_back( concentration );
+               if ( xml.name() == "model" )
+               {
+                  ModelDesc desc;
+                  attr             = xml.attributes();
+                  desc.description = attr.value( "description" ).toString();
+                  desc.guid        = attr.value( "guid"        ).toString();
+                  desc.filename    = path + "/" + f_names[ i ];
+                  desc.DB_id       = -1;
+                  model_descriptions << desc;
+                  break;
+               }
             }
          }
 
-         f.close();
-         pb_load_c0->setIcon( check );
-         pb_load_c0->setToolTip( fn );
-      }
-      else
-      {
-         QMessageBox::warning( this, 
-               tr( "UltraScan Warning" ),
-               tr( "UltraScan could not open the file specified\n" ) + fn );
+         m_file.close();
       }
    }
-}
-
-//////////////////////////////////////////////////
-//////////////////////////////////////////////////
-#ifdef xxx
-void US_ModelEditor::change_spinbox( int /*value*/ )
-{
-   
-   //cmb_component1->disconnect();
-   //cmb_component1->setCurrentIndex( component );
-
-   //connect( cmb_component1, SIGNAL( currentIndexChanged( int ) ),
-   //                         SLOT  ( change_component1  ( int ) ) );
-
-   update_component();
-}
-
-void US_ModelEditor::update_component( void )
-{
-   /*
-   // Convenience 
-   US_FemGlobal::SimulationComponent*           sc  = &model.components[ component ]; 
-   vector< US_FemGlobal::SimulationComponent >* scl = &model.components; 
-   
-   le_sed       ->setText( QString::number( sc->s         , 'e', 4 ) );
-   le_diff      ->setText( QString::number( sc->D         , 'e', 4 ) );
-   //le_extinction->setText( QString::number( sc->extinction, 'e', 4 ) );
-   le_vbar      ->setText( QString::number( sc->vbar20    , 'e', 4 ) );
-   le_mw        ->setText( QString::number( sc->mw        , 'e', 4 ) );
-   le_f_f0      ->setText( QString::number( sc->f_f0      , 'e', 4 ) );
-   
-   // Find the associated components for component1 and enter them into the
-   // linked component list:
-
-   //cmb_component2->clear();
-
-   //for ( uint i = 0; i < sc->show_component.size(); i++ )
-   //   cmb_component2->addItem( (*scl) [ sc->show_component[ i ] ].name );
-
-   if ( sc->show_conc )
+   else  // DB Access
    {
-      le_conc   ->setEnabled( true );
-      le_mw     ->setEnabled( true );
-      le_vbar   ->setEnabled( true );
-      pb_load_c0->setEnabled( true );
-      pb_vbar   ->setEnabled( true );
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
 
-      //if ( sc->concentration == -1.0 )
+      if ( db.lastErrno() != US_DB2::OK )
       {
-         le_conc->setText( "from file" );
-         le_c0  ->setText( c0_file );
-      }
-      //else
-      {
-         //le_conc->setText( QString::number( sc->concentration, 'e', 4 ) );
-         sc->c0.radius.clear();
-         sc->c0.concentration.clear();
-      }
-   }
-   else
-   {
-      // Can't edit an associated species' mw or vbar
-      le_mw     ->setEnabled( false ); 
-
-      le_vbar   ->setEnabled( false ); 
-      pb_vbar   ->setEnabled( false ); 
-      
-      le_conc   ->setEnabled( false );
-      le_conc   ->setText   ( ""    );
-
-      pb_load_c0->setEnabled( false );
-      le_c0     ->setText   ( ""    );
-   }
-*/   
-   // Convenience
-   //vector< US_FemGlobal::Association >* assoc = &model.associations;
-/*
-   if ( sc->show_keq )
-   {
-      for ( uint i = 0; i < assoc->size(); i++ )
-      { // only check the dissociating species
-         if ( (*assoc)[ i ].component2 == component
-         ||   (*assoc)[ i ].component3 == component )
-         {
-            le_keq ->setText( QString::number( (*assoc)[ i ].keq, 'e', 4 ) );
-            le_keq ->setEnabled( true );
-            
-            le_koff->setText( QString::number( (*assoc)[ i ].k_off, 'e', 4 ) );
-            le_koff->setEnabled( true );
-         }
-      }
-   }
-   else
-   {
-      le_keq->setEnabled ( false );
-      le_keq->setText    ( ""    );
-
-      le_koff->setEnabled( false );
-      le_koff->setText   ( ""    );
-   }
-   
-   if ( sc->show_stoich > 0 )
-   { 
-      // This species is the dissociating species in a self-associating system
-      
-      // le_stoich->setEnabled( true );
-      le_stoich->setText( QString::number( sc->show_stoich ) );
-      sc->mw =
-            (*scl) [ sc->show_component[ 0 ] ].mw * sc->show_stoich;
-      
-
-      le_mw->setText( QString::number( sc->mw, 'e', 4 ) );
-
-
-      sc->vbar20 =
-            (*scl) [ sc->show_component[ 0 ] ].vbar20;
-      
-      le_vbar->setText( QString::number( sc->vbar20, 'e', 4 ) );
-
-      update_sD();
-   }
-   else if ( sc->show_stoich == -1 )
-   { 
-      // This species is the dissociating species in a 2-component 
-      // hetero-associating system
-      
-      le_stoich->setText( "hetero-associating" );
-      
-      sc->mw = (*scl) [ sc->show_component[ 0 ] ].mw +
-               (*scl) [ sc->show_component[ 1 ] ].mw;
-
-      le_mw->setText( QString::number( sc->mw, 'e', 4 ) );
-      
-      double fraction1 = (*scl)[ sc->show_component[ 0 ] ].mw / sc->mw;
-      double fraction2 = (*scl)[ sc->show_component[ 1 ] ].mw / sc->mw;
-
-      sc->vbar20 = (*scl) [ sc->show_component[ 0 ] ].vbar20 * fraction1 +
-                   (*scl) [ sc->show_component[ 1 ] ].vbar20 * fraction2;
-      
-      le_vbar->setText( QString::number( sc->vbar20, 'e', 4 ) );
-      
-      update_sD();
-   }
-   else
-   {
-      le_stoich->setText   ( "" );
-      le_stoich->setEnabled( false );
-   }
-*/
-}
-
-void US_ModelEditor::update_sD( void )
-{
-   /*
-   // Convenience 
-   SimulationComponent* sc = &model.components[ component ]; 
-
-   double base = 0.75 / AVOGADRO * sc->mw * sc->vbar20 * M_PI * M_PI;
-
-   sc->s = sc->mw * ( 1.0 - sc->vbar20 * DENS_20W )
-           / ( AVOGADRO * sc->f_f0 * 6.0 * VISC_20W * pow( base, 1.0 / 3.0 ) );
-
-   base =  2.0 * sc->s * sc->f_f0 * sc->vbar20 * VISC_20W 
-           / ( 1.0 - sc->vbar20 * DENS_20W );
-
-   sc->D = R * K20 
-           / ( AVOGADRO *  sc->f_f0 * 9.0 * VISC_20W * M_PI * pow( base, 0.5 ) );
-
-   le_sed ->setText( QString::number( sc->s, 'e', 4 ) );
-   le_diff->setText( QString::number( sc->D, 'e', 4 ) );
-   */
-}
-
-
-void US_ModelEditor::load_model()
-{
-   QString fn = QFileDialog::getOpenFileName( 
-         this, 
-         tr( "Load Model File" ),
-         US_Settings::resultDir(), 
-         "*.model.?? *.model-?.??  *model-??.??" );
-
-   if ( ! fn.isEmpty() )
-   {
-      /*
-      int code = US_FemGlobal::read_modelSystem( model, fn );
-
-      if ( code == 0 )
-      {
-         // Successfully loaded a new model
-         QMessageBox::information( this, 
-               tr( "Simulation Module"), 
-               tr( "Successfully loaded Model:" ) );
-         
-         lb_header->setText( model.description );
-
-         cmb_component1->disconnect();
-         cmb_component1->clear();  
-         
-         vector< SimulationComponent >* scl = &model.components;
-
-         for ( uint i = 0; i< (*scl).size(); i++)
-         {
-            cmb_component1->addItem( ( *scl )[ i ].name );
-         }
-         cmb_component1->setCurrentIndex( 0 );
-         connect( cmb_component1, SIGNAL( currentIndexChanged( int ) ),
-                                  SLOT  ( change_component1  ( int ) ) );
-
-
-         component = 0;
-         sb_count->setRange( 1, (*scl).size() );
-         sb_count->setValue( 1 );  // Resets screen
-
-         //select_component((int) 0);
+         connect_error( db.lastError() );
+         return;
       }
 
-      else if ( code == -40 )
+      QStringList q;
+      q << "get_model_desc" << QString::number( investigator );
+
+      db.query( q );
+
+      while ( db.next() )
       {
-         QMessageBox::warning( this, 
-               tr( "UltraScan Warning" ), 
-               tr( "Please note:\n\n"
-                   "UltraScan could not open\n"
-                   "the selected Model File!" ) );
-      }
-      
-      else if ( code == 1 )
-      {
-         QMessageBox::warning( this, 
-               tr( "UltraScan Warning" ),
-               tr( "Sorry, the old-style models are no longer supported.\n\n"
-                   "Please load a different model or create a new Model" ) );
-      }
+         ModelDesc md;
 
-      else if ( code < 0 && code > -40 )
-      {
-         QMessageBox::warning( this, 
-               tr( "UltraScan Warning" ),
-               tr( "Please note:\n\n"
-                   "There was an error reading\n"
-                   "the selected Model File!\n\n"
-                   "This file appears to be corrupted" ) );
-      } 
-      */
-   }
-}
+         md.DB_id       = db.value( 0 ).toInt();
+         md.description = db.value( 1 ).toString();
+         //md.guid        = db.value( 2 ).toString();
+         md.filename.clear();
 
-void US_ModelEditor::save_model( void )
-{
-   if ( ! verify_model() ) return;
- 
-   QString fn = QFileDialog::getSaveFileName( this, 
-         tr( "Save model as" ),
-         US_Settings::resultDir(), 
-         "*.model.?? *.model-?.?? *model-??.??" );
-
-   if ( ! fn.isEmpty() )
-   {
-      int k = fn.lastIndexOf( "." );
-      
-      // If an extension was given, strip it.
-      if ( k != -1 )  fn.resize( k );
-/*
-      fn += ".model-" + QString::number( model.model ) + ".11";
-
-      QFile f( fn );
-
-      if ( f.exists() )
-      {
-         int answer =  QMessageBox::question( this,
-                  tr( "Warning" ), 
-                  tr( "Attention:\n"
-                      "This file exists already!\n\n"
-                      "Do you want to overwrite it?" ), 
-                  QMessageBox::Yes, QMessageBox::No );
-         
-         if ( answer == QMessageBox::No ) return;
-      }
-
-      int result = US_FemGlobal::write_modelSystem( model, fn );
-      if ( result != 0 ) error( tr( "Could not write file." ) );
-*/
-   }
-}
-
-
-/*
-// The next five methods are virtually identical.  It would be nice
-// to combine them.  It would require a custom class and signal.
-void US_ModelEditor::update_sed( const QString& text )
-{
-   if ( text == "" ) return;
-   
-//   SimulationComponent* sc = &model.components[ component ];
-//   sc->s = text.toDouble();
-}
-
-void US_ModelEditor::update_diff( const QString& text )
-{
-   if ( text == "" ) return;
-   
-//   SimulationComponent* sc = &model.components[ component ];
-//   sc->D = text.toDouble();
-}
-
-void US_ModelEditor::update_extinction( const QString& text )
-{
-   if ( text == "" ) return;
-   
-//   SimulationComponent* sc = &model.components[ component ];
-//   sc->extinction = text.toDouble();
-}
-
-void US_ModelEditor::update_sigma( const QString& text )
-{
-   if ( text == "" ) return;
-   
-//   SimulationComponent* sc = &model.components[ component ];
-//   sc->sigma = text.toDouble();
-}
-
-void US_ModelEditor::update_delta( const QString& text )
-{
-   if ( text == "" ) return;
-   
-//   SimulationComponent* sc = &model.components[ component ];
-//   sc->delta = text.toDouble();
-}
-*/
-// The next two methods are virtually identical.  It would be nice
-// to combine them.
-void US_ModelEditor::update_vbar( const QString& text )
-{
-//   SimulationComponent* sc   = &model.components[ component ];
-   double               vbar = text.toDouble();
-   
-   if ( vbar <= 0.0 )
-   {
-      error( tr( "The vbar value must be greater than 0.0" ) );
-  //    le_vbar->setText( QString::number( sc->vbar20, 'e', 4 ) );
-      return;
-   }
-   
-  // sc->vbar20 = vbar;
-}
-
-void US_ModelEditor::update_mw( const QString& /*text*/ )
-{
-   /*
-   SimulationComponent* sc = &model.components[ component ];
-   double               mw = text.toDouble();
-   
-   if ( mw <= 0.0 )
-   {
-      error( tr( "The Molecular weight must be greater than 0.0" ) );
-      le_mw->setText( QString::number( sc->mw, 'e', 4 ) );
-      return;
-   }
-   
-   sc->mw = mw;
-   */
-}
-
-void US_ModelEditor::update_f_f0( const QString& text )
-{
-   if ( text == "" ) return;
-   
-   //US_FemGlobal::SimulationComponent* sc = &model.components[ component ];
-   //sc->f_f0 = text.toDouble();
-}
-
-void US_ModelEditor::update_conc( const QString& text )
-{
-   //US_FemGlobal::SimulationComponent* sc = &model.components[ component ];
-
-   if ( text == "" ) return;
-/*   
-   if ( text == "from file") 
-      sc->molar_concentration = -1.0;
-   else
-   {
-      bool   ok;
-      double concentration;
-      concentration = text.toDouble( &ok );
-      if ( ok )
-      {
-         //sc->molar_concentration = concentration;
-         //sc->c0.radius.clear();
-         //sc->c0.concentration.clear();
-
-         //le_c0->setText( "" );
-      }
-      else
-        error( tr( "The Partial Concentration field is invalid." ) );
-   }
-   */
-}
-
-// The next two methods are virtually identical.  It would be nice
-// to combine them
-void US_ModelEditor::update_keq( const QString& text )
-{
-   if ( text == "" ) return;
-/*
-   vector< US_FemGlobal::Association >* av = &model.associations;
-
-   // Check to see if the current component is a dissociation component
-      
-   for ( uint i = 0; i < (*av).size(); i++ )
-   {
-      US_FemGlobal::Association* as = &model.associations[ i ];
-      
-      // Check to see if there is an dissociation linked to this component
-      if ( as->reaction_components[ 1 ] == component )
-      {
-         // Check to make sure this component is not an irreversible component
-         if ( as->stoichiometry[ 0 ] != as->reaction_components[ 1 ] // Self-association
-              || (    as->stoichiometry[ 0 ] == 0 
-                   && as->stoichiometry[ 1 ] == 0))        // Hetero-association
-         {
-            as->keq = text.toDouble();
-         }
+         model_descriptions << md;
       }
    }
-   */
+
+   show_model_desc();
+  
+   if ( model_descriptions.size() == 0 )
+      lw_models->addItem( "No model files found." );
 }
 
-void US_ModelEditor::update_koff( const QString& text )
-{
-   if ( text == "" ) return;
-/*
-   vector< US_FemGlobal::Association >* av = &model.associations;
-
-   // Check to see if the current component is a dissociation component
-   for ( uint i = 0; i < (*av).size(); i++ )
-   {
-      US_FemGlobal::Association* as = &model.associations[ i ];
-      
-      // Check to see if there is an dissociation linked to this component
-      if ( as->reaction_components[ 0 ] == component )
-      {
-         // Check to make sure this component is not an irreversible component
-         if ( as->stoichiometry[ 0 ] != as->stoichiometry[ 1 ] // Self-association
-              || (    as->stoichiometry[ 0 ] == 0 
-                   && as->stoichiometry[ 1 ] == 0))        // Hetero-association
-         {
-            as->k_off = text.toDouble();
-         }
-      }
-   }
-   */
-}
-
-void US_ModelEditor::error( const QString& message )
-{
-   QMessageBox::warning( this, tr( "Model Error" ), message );
-}
-
-bool US_ModelEditor::verify_model( void )
-{
-   bool flag = true;
-/*
-   QString str;
-
-   vector< US_FemGlobal::Association >*         av = &model.associations;
-   //vector< US_FemGlobal::SimulationComponent >* cv = &model.components;
-   
-   for ( uint i=0; i < (*av).size(); i++ )
-   {
-      US_FemGlobal::Association* as = &model.associations[ i ];
-
-      // See if we need to check if the MWs match
-      if ( as->stoichiometry[ 1 ] > 0 && as->stoichiometry[ 2 ] != 1 )
-      {
-         if ( fabs( (*cv) [ as->reaction_components[ 1 ] ].mw -
-                    (  (*cv) [ as->reaction_components[ 0 ] ].mw *
-                       as->stoichiometry[ 1 ] / as->stoichiometry[ 0 ]
-                    ) ) > 1.0 ) // MWs don't match within 1 dalton
-         {
-            str = tr( "The molecular weights of the reacting species\n" 
-                      "in reaction " ) + QString::number( i + 1 ) +
-                  tr( "do not agree:\n\n" )
-
-                + tr( "Molecular weight of species 1: " ) + 
-                  QString::number( (*cv) [ as->reaction_components[ 0 ]  ].mw, 'e', 4 ) + "\n"
-
-                + tr( "Molecular weight of species 2:" ) +
-                  QString::number( (*cv) [ as->reaction_components[ 1 ]  ].mw, 'e', 4 ) + "\n"
-
-                + tr( "Stoichiometry of reaction " ) +
-                  QString::number( i + 1 ) + tr( ": MW(1) *" ) +
-                  QString::number( as->stoichiometry[ 1 ] ) + tr( " = MW(2)\n\n" ) 
-
-                + tr( "Please adjust either MW(1) or MW(2) before proceeding..." );
-            
-            QMessageBox::warning( this, tr( "Model Definition Error" ), str );
-            flag = false;
-         }
-      }
-
-      // See if we need to check if the sum of MW(1) + MW(2) = MW(3)
-      if ( as->stoichiometry[ 2 ] == 1 ) 
-      {
-         if ( fabs( model.components[ as->reaction_components[ 2 ] ].mw -
-                    model.components[ as->reaction_components[ 1 ] ].mw -
-                    model.components[ as->reaction_components[ 0 ] ].mw ) > 1.0 ) 
-            // MWs don't match within 10 dalton
-         {
-            str = tr( "The molecular weights of the reacting species\n"
-                      "in reaction ") + QString::number( i + 1 ) + 
-                  tr( "do not agree:\n\n" )
-            
-                + tr( "Molecular weight of species 1: " ) +
-                  QString::number( (*cv) [ as->reaction_components[ 0 ] ].mw, 'e', 4 ) + "\n"
-              
-                + tr( "Molecular weight of species 2: " ) +
-                  QString::number( (*cv) [ as->reaction_components[ 1 ] ].mw, 'e', 4 ) + "\n"
-                
-                + tr( "Molecular weight of species 3: " ) +
-                  QString::number( (*cv) [ as->reaction_components[ 2 ] ].mw, 'e', 4 ) + "\n"
-                
-                + tr( "Stoichiometry of reaction " ) +
-                  QString::number( i + 1 ) + tr( ": MW(1) + MW(2) = MW(3)\n\n" )
-                
-                + tr( "Please adjust the molecular weight of the appropriate\n"
-                      "component before proceeding..." );
-
-            QMessageBox::warning( this, tr( "Model Definition Error" ), str );
-            flag = false;
-         }
-      }
-   }
-*/
-   return (flag);
-}
-#endif

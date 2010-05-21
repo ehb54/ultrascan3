@@ -27,7 +27,7 @@ class US_Properties : public US_WidgetsDialog
       //! \param access - A flag to determine if analyte data access should be
       //!          disk (false) or DB (true)
       US_Properties( const US_Buffer&, 
-                     const US_FemGlobal_New::ModelSystem&,
+                     US_FemGlobal_New::ModelSystem&,
                      int  = -1,
                      bool = false );
    signals:
@@ -41,16 +41,16 @@ class US_Properties : public US_WidgetsDialog
 
    private:
       // Passed parameters
-      US_Buffer                     buffer;
-      US_FemGlobal_New::ModelSystem model;
-      int                           investigator;
-      bool                          db_access;
+      US_Buffer                      buffer;
+      US_FemGlobal_New::ModelSystem& model;
+      int                            investigator;
+      bool                           db_access;
 
-      bool                          inUpdate;
-      int                           oldRow;
-      US_Analyte                    analyte;
+      bool                           inUpdate;
+      int                            oldRow;
+      US_Analyte                     analyte;
 
-      enum { MW, S, D, F, F_F0 }    check_type;
+      enum { MW, S, D, F, F_F0 }     check_type;
 
       US_Hydrosim  hydro_data;
       US_Hydrosim  working_data;
@@ -96,12 +96,15 @@ class US_Properties : public US_WidgetsDialog
       int  next          ( QList< double >, double, bool );
       void clear_guid    ( void );
       void clear_entries ( void );
+      void save_changes  ( int );
+      void checkbox      ( void );
+      bool keep_standard ( void );
 
 	private slots:
       void newAnalyte    ( void );
       void update        ( int );
       void calculate     ( void );
-      void checkbox      ( int = 0 );
+      void calculate     ( bool ) { calculate(); };
       void acceptProp    ( void );
       void simulate      ( void );
       void new_hydro     ( US_Analyte );
@@ -114,7 +117,6 @@ class US_Properties : public US_WidgetsDialog
       void set_stoich    ( double );
            
       void del_component ( void );
-      //void edit_component( QListWidgetItem* );
       void edit_component( void );
       void edit_vbar     ( void );
 };
