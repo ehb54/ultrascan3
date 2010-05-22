@@ -27,7 +27,7 @@ int main( int argc, char* argv[] )
 }
 
 // US_vHW_Enhanced class constructor
-US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase()
+US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
 {
    // set up the GUI (mostly handled in US_AnalysisBase)
 
@@ -70,7 +70,7 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase()
    lb_tolerance  = us_label( tr( "Back Diffusion Tolerance:" ) );
    lb_tolerance->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_tolerance = us_counter( 3, 0.0, 1000.0, 0.001 );
+   ct_tolerance = us_counter( 3, 0.001, 1.0, 0.001 );
    bdtoler      = 0.001;
    ct_tolerance->setStep( 0.001 );
    ct_tolerance->setEnabled( true );
@@ -163,14 +163,14 @@ void US_vHW_Enhanced::load( void )
       QString filename = workingDir + file;
  
       // load edit data (xml) and raw data (auc)
-      int result = US_DataIO::loadData( workingDir, file, dataList, rawList );
+      int result = US_DataIO2::loadData( workingDir, file, dataList, rawList );
 
-      if ( result != US_DataIO::OK )
+      if ( result != US_DataIO2::OK )
       {
          QMessageBox::warning( this,
             tr( "UltraScan Error" ),
             tr( "Could not read edit file.\n" ) 
-            + US_DataIO::errorString( result ) + "\n" + filename );
+            + US_DataIO2::errorString( result ) + "\n" + filename );
          return;
       }
 
@@ -191,17 +191,11 @@ void US_vHW_Enhanced::load( void )
    scanCount = d->scanData.size();
    le_id->setText( d->runID + " / " + d->editID );  // set ID text
 
-   tempera         = 0.0;
    savedValues.clear();
 
    for ( int ii = 0; ii < scanCount; ii++ )
-   {
+   {  // save the data to be used in any smoothing
       s          = &d->scanData[ ii ];
-
-      // sum temperature from each scan to determine average
-      tempera   += s->temperature;
-
-      // save the data
       valueCount = s->readings.size();
       QVector< double > v;
       v.resize( valueCount );
@@ -213,12 +207,6 @@ void US_vHW_Enhanced::load( void )
 
       savedValues << v;
    }
-
-   // display average temperature and data description
-   tempera  /= (double)scanCount;
-   QString t = QString::number( tempera, 'f', 1 ) + " " + QChar( 176 ) + "C";
-   le_temp->setText( t );                            // set avg temp text
-   te_desc->setText( d->description );               // set description text
 
    // Enable pushbuttons
    pb_details->setEnabled( true );
@@ -247,18 +235,19 @@ void US_vHW_Enhanced::load( void )
             this,       SLOT(   details() ) );
    pb_selegr->setEnabled( true );
    pb_dstrpl->setEnabled( true );
-   le_temp->setText( t );                            // set avg temp text
 
    dataLoaded = true;
 
    update( 0 );
+
+   //le_temp->setText( t );                            // set avg temp text
 }
 
 // details
 void US_vHW_Enhanced::details( void )
 {
-   US_RunDetails* dialog
-      = new US_RunDetails( rawList, runID, workingDir, triples );
+   US_RunDetails2* dialog
+      = new US_RunDetails2( rawList, runID, workingDir, triples );
    dialog->move( this->pos() + QPoint( 100, 100 ) );
    dialog->exec();
    qApp->processEvents();
@@ -302,7 +291,7 @@ void US_vHW_Enhanced::data_plot( void )
    data_plot2->detachItems();
 
    // let AnalysisBase do the lower plot
-   US_AnalysisBase::data_plot();
+   US_AnalysisBase2::data_plot();
 
    // handle upper (vHW Extrapolation) plot, here
    row        = lw_triples->currentRow();
@@ -419,7 +408,7 @@ qDebug() << "  scanCount  divsCount" << scanCount << divsCount;
    double  corre;
    cpds.clear();
 
-   US_Math::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, nrelp );
+   US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, nrelp );
 
    Swavg      = slope / ( -2.0 * omega * omega );  // Swavg func of slope
 	C0         = exp( intcp );                      // C0 func of intercept
@@ -622,7 +611,7 @@ qDebug() << "scn liv" << ii+1 << kl
       valueCount = s->readings.size();
       range      = s->plateau - baseline;
       cconc      = baseline + range * positPct; // initial conc for span
-      basecut    = baseline + range * positPct;
+      basecut    = cconc;
       omega      = s->rpm * M_PI / 30.0;
       oterm      = ( timev > 0.0 ) ? ( timev * omega * omega ) : -1.0;
       scpds      = cpds.at( ii );  // list of conc values of divs this scan
@@ -635,7 +624,7 @@ qDebug() << "scn liv" << ii+1 << kl
          mconc       = pconc + cpij * 0.5;  // mid div concentration
 
          int rx      = first_gteq( mconc, s->readings, valueCount, 0 );
-         divrad      = s->readings[ rx ].d.radius;  // radius this division pt.
+         divrad      = readings_radius( d, rx ); // radius this division pt.
 
          if ( divrad < bdrad  ||  mconc < bdcon )
          {  // corresponding sedimentation coefficient
@@ -743,7 +732,7 @@ qDebug() << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
          double sigma = 0.0;
          double correl;
 
-         US_Math::linefit( &x, &y, &slope, &intcept, &sigma, &correl, count );
+         US_Math2::linefit( &x, &y, &slope, &intcept, &sigma, &correl, count );
 
          x[ 0 ] = 0.0;                      // x from 0.0 to max
          x[ 1 ] = xmax + 0.001;
@@ -940,7 +929,7 @@ void US_vHW_Enhanced::update_divis(      double dval )
 
 // index to first readings value greater than or equal to given concentration
 int US_vHW_Enhanced::first_gteq( double concenv,
-      QVector< US_DataIO::reading >& readings, int valueCount, int defndx )
+      QVector< US_DataIO2::Reading >& readings, int valueCount, int defndx )
 {
    int index = defndx;
 
@@ -956,7 +945,7 @@ int US_vHW_Enhanced::first_gteq( double concenv,
 }
 
 int US_vHW_Enhanced::first_gteq( double concenv,
-      QVector< US_DataIO::reading >& readings, int valueCount )
+      QVector< US_DataIO2::Reading >& readings, int valueCount )
 {
    return first_gteq( concenv, readings, valueCount, -1 );
 }
@@ -1008,7 +997,7 @@ double US_vHW_Enhanced::zone_plateau( )
 
    for ( jj = j0; jj < valueCount; jj++ )
    {  // accumulate x,y for all readings in the scan
-      x[ j9 ]       = s->readings[ jj ].d.radius;
+      x[ j9 ]       = readings_radius( d, jj );
       y[ j9++ ]     = s->readings[ jj ].value;
    }
 
@@ -1172,8 +1161,8 @@ double US_vHW_Enhanced::sed_coeff( double cconc, double oterm )
       {  // interpolate radius value
          double av1  = s->readings[ j1 ].value;
          double av2  = s->readings[ j2 ].value;
-         double rv1  = s->readings[ j1 ].d.radius;
-         double rv2  = s->readings[ j2 ].d.radius;
+         double rv1  = readings_radius( d, j1 );
+         double rv2  = readings_radius( d, j2 );
          double rra  = av2 - av1;
          rra         = ( rra == 0.0 ) ? 0.0 : ( ( rv2 - rv1 ) / rra );
          rv0         = rv1 + ( cconc - av1 ) * rra;
@@ -1259,7 +1248,7 @@ void US_vHW_Enhanced::div_seds( )
 //  *pow(run_inf.time[selected_cell][selected_lambda][i],0.5);
 //radD=bottom-(2*find_root(left)
 //  *pow((diff*run_inf.time[selected_cell][selected_lambda][i]),0.5));
-               bottom      = s->readings[ valueCount - 1 ].d.radius;
+               bottom      = readings_radius( d, valueCount - 1 );
                oterm       = timecor * omegasq;
                cpij        = cpds.at( ii ).at( jj );
 
@@ -1282,7 +1271,7 @@ void US_vHW_Enhanced::div_seds( )
                int mm      = 0;
                int mmlast  = valueCount - 1;
 
-               while ( s->readings[ mm ].d.radius < radD  &&  mm < mmlast )
+               while ( readings_radius( d, mm ) < radD  &&  mm < mmlast )
                   mm++;
 
                // accumulate for this scan of this division
@@ -1319,7 +1308,7 @@ qDebug() << "BD x,y " << nscnu+1 << radD << yr[nscnu];
          yy[ kk ]   = sed_coeff( mconc, oterm );  // sedimentation coefficient
 
          int mm     = first_gteq( mconc, s->readings, valueCount, 0 );
-         radD       = s->readings[ mm ].d.radius;  // radius this division pt.
+         radD       = readings_radius( d, mm );   // radius this division pt.
 
          if ( radD > xr[ kk ]  &&  mconc > yr[ kk ] )
          {  // gone beyond back-diffusion cutoff: exit loop with truncated list
@@ -1354,7 +1343,7 @@ qDebug() << "BD x,y " << nscnu+1 << radD << yr[nscnu];
       {
          // calculate and save the division sedcoeff and fitted line slope
 
-         US_Math::linefit( &xx, &yy, &slope, &dsed, &sigma, &corre, kscnu );
+         US_Math2::linefit( &xx, &yy, &slope, &dsed, &sigma, &corre, kscnu );
       }
 
       else
@@ -1459,6 +1448,8 @@ qDebug() << "      find_root:  goal test" << goal << test
 // calculate back diffusion coefficient
 double US_vHW_Enhanced::back_diff_coeff( double sedc )
 {
+   double  tempera  = le_temp->text().split( QRegExp( "\\s+" ) )
+                         .at( 0 ).toDouble();
    double  RT       = R * ( K0 + tempera );
    double  D1       = AVOGADRO * 0.06 * M_PI * viscosity;
    double  D2       = 0.045 * sedc * vbar * viscosity;
@@ -1586,13 +1577,15 @@ qDebug() << "WR: filename " << filename;
    valueCount   = s->readings.size();
    QString t20d = QString( "20" ) + QChar( 176 ) + "C";
 
-   US_Math::SolutionData sd;
+   US_Math2::SolutionData sd;
    sd.vbar      = vbar;
    sd.vbar20    = vbar;
    sd.density   = density;
    sd.viscosity = viscosity;
+   QString tavt = le_temp->text();
+   double  davt = tavt.split( QRegExp( "\\s+" ) ).at( 0 ).toDouble();
 
-   US_Math::data_correction( tempera, sd );
+   US_Math2::data_correction( davt, sd );
 
    QTextStream ts( &res_f );
 
@@ -1608,7 +1601,7 @@ qDebug() << "WR: filename " << filename;
    ts << tr( "Cell Description:       " ) << d->description << "\n";
    ts << tr( "Data Directory:         " ) << workingDir << "\n";
    ts << tr( "Rotor Speed:            " ) << d->scanData[ 0 ].rpm << " rpm\n";
-   ts << tr( "Average Temperature:    " ) << le_temp->text() << "\n";
+   ts << tr( "Average Temperature:    " ) << tavt << "\n";
    ts << tr( "Temperature Variation:  Within Tolerance\n" );
    ts << tr( "Time Correction:        " )
       << text_time( time_correction, 1 ) << "\n";
@@ -1618,9 +1611,9 @@ qDebug() << "WR: filename " << filename;
    ts << tr( "Baseline Absorbance:    " ) << baseline << " OD\n";
    ts << tr( "Meniscus Position:      " ) << d->meniscus << " cm\n";
    ts << tr( "Edited Data starts at:  " )
-      << s->readings[ 0 ].d.radius << " cm\n";
+      << readings_radius( d, 0 ) << " cm\n";
    ts << tr( "Edited Data stops at:   " )
-      << s->readings[ valueCount - 1 ].d.radius << " cm\n\n\n";
+      << readings_radius( d, valueCount - 1 ) << " cm\n\n\n";
 
    ts << tr( "Hydrodynamic Settings:\n\n" );
    ts << tr( "Viscosity correction:   " ) << sd.viscosity << "\n";
@@ -1695,7 +1688,7 @@ qDebug() << "WR: filename " << filename;
       y[ ii ]      = s->plateau;
    }
 
-   US_Math::linefit( &x, &y, &sl, &ci, &sig, &cor, scanCount );
+   US_Math2::linefit( &x, &y, &sl, &ci, &sig, &cor, scanCount );
 
    ts << "\n";
    ts << tr( "Initial Concentration:   " ) << ci << " OD\n";
@@ -1996,5 +1989,13 @@ QStringList US_vHW_Enhanced::last_edit_files( QStringList files )
    ofiles.append( file );
 
    return ofiles;
+}
+
+// get the data readings radius value at a given index
+//   ( needed because the location in structures of radius values
+//     is changing to a single vector for all scans )
+double US_vHW_Enhanced::readings_radius( US_DataIO2::EditedData* d, int index )
+{
+   return d->x[ index ].radius;
 }
 

@@ -1,18 +1,14 @@
 #ifndef US_VHW_ENHCD_H
 #define US_VHW_ENHCD_H
 
-#include "us_dataIO.h"
-#include "us_analysis_base.h"
+#include "us_dataIO2.h"
+#include "us_analysis_base2.h"
 #include "us_distrib_plot.h"
 #include "us_editor.h"
-#include "us_math.h"
-#include "us_run_details.h"
+#include "us_math2.h"
+#include "us_run_details2.h"
 #include "us_buffer_gui.h"
 #include "qwt_plot_marker.h"
-
-#define EDTDAT US_DataIO::editedData
-#define RAWDAT US_DataIO::rawData
-#define SCNDAT US_DataIO::scan
 
 #define PZ_THRLO  0.001  // plateau zone slope threshold (low)
 #define PZ_THRHI  0.200  // plateau zone slope threshold (high)
@@ -31,7 +27,7 @@ typedef struct groupinfo_s
    QList< int >  idivs;       // list of divisions (0 to n-1) included
 } GrpInfo;
 
-class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
+class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase2
 {
    Q_OBJECT
 
@@ -86,7 +82,6 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       double        sumcpij;
       double        sedc;
       double        sdiff;
-      double        tempera;
       double        bdiffc;
 
       int           row;
@@ -120,8 +115,8 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QList< double >          groupxy;    // group select pick coordinates
       QList< GrpInfo >         groupdat;   // selected group info structures
 
-      US_DataIO::editedData*   d;
-      US_DataIO::scan*         s;
+      US_DataIO2::EditedData*  d;
+      US_DataIO2::Scan*        s;
 
    private slots:
 
@@ -138,8 +133,8 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       void update_vbar(      double );
       void update_bdtoler(   double );
       void update_divis(     double );
-      int  first_gteq( double, QVector< US_DataIO::reading >&, int, int );
-      int  first_gteq( double, QVector< US_DataIO::reading >&, int );
+      int  first_gteq( double, QVector< US_DataIO2::Reading >&, int, int );
+      int  first_gteq( double, QVector< US_DataIO2::Reading >&, int );
       double calc_slope( double*, double*, int,
             double&, double&, double&, double& );
       double update_slope( int, double, double, double, double,
@@ -159,6 +154,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QString text_time( double, int );
       QString text_time( double );
       QStringList last_edit_files( QStringList );
+      double readings_radius( US_DataIO2::EditedData *, int );
 
       void help     ( void )
       { showHelp.show_help( "vhw_enhanced.html" ); };
