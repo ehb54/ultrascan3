@@ -13,6 +13,7 @@
 #include "us_math.h"
 #include "us_matrix.h"
 #include "us_sleep.h"
+#include "us_constants.h"
 
 #define PA_TMDIS_MS 100   // default Plotall time per distro in milliseconds
 
@@ -231,7 +232,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    // set up plot component window on right side
    xa_title_s  = tr( "Sedimentation Coefficient corrected for water at 20" )
-      + "<span>&deg;</span>C";
+      + DEGC;
    xa_title_mw = tr( "Molecular Weight (Dalton)" );
    xa_title    = xa_title_s;
 

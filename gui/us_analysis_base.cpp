@@ -307,7 +307,7 @@ void US_AnalysisBase::update( int selection )
       sum += d->scanData[ i ].temperature;
 
    QString t = QString::number( sum / scanCount, 'f', 1 ) 
-             + tr( " deg C" );
+             + " " + DEGC;
    le_temp->setText( t );
 
    te_desc->setText( d->description );
@@ -918,7 +918,7 @@ QString US_AnalysisBase::run_details( void ) const
 
    QString average = QString::number( sum / d->scanData.size(), 'f', 1 );
 
-   s += table_row( tr( "Average Temperature:" ), average + " &deg;C" );
+   s += table_row( tr( "Average Temperature:" ), average + " " + DEGC);
 
    if ( maxTemp - minTemp <= US_Settings::tempTolerance() )
       s += table_row( tr( "Temperature Variation:" ), tr( "Within tolerance" ) );
@@ -984,9 +984,9 @@ QString US_AnalysisBase::hydrodynamics( void ) const
                    QString::number( solution.density_tb, 'f', 6 ) + " g/ccm" ) +
         table_row( tr( "Vbar:" ), 
                    QString::number( solution.vbar, 'f', 4 ) + " ccm/g" ) +
-        table_row( tr( "Vbar corrected for 20 &deg;C:" ),
+        table_row( tr( "Vbar corrected for 20 " ) + DEGC + ":" ,
                    QString::number( solution.vbar20, 'f', 4 ) + " ccm/g" ) +
-        table_row( tr( "Buoyancy (Water, 20 &deg;C): " ),
+        table_row( tr( "Buoyancy (Water, 20 " ) + DEGC + "): ",
                    QString::number( solution.buoyancyw, 'f', 6 ) ) +
         table_row( tr( "Buoyancy (absolute)" ),
                    QString::number( solution.buoyancyb, 'f', 6 ) ) +

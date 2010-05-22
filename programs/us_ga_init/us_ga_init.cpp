@@ -11,6 +11,7 @@
 #include "us_gui_settings.h"
 #include "us_math.h"
 #include "us_matrix.h"
+#include "us_constants.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -300,7 +301,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    // set up plot component window on right side
    xa_title_s  = tr( "Sedimentation Coefficient corrected for water at 20" )
-      + "<span>&deg;</span>C";
+      + DEGC;
    xa_title_mw = tr( "Molecular Weight (Dalton)" );
    xa_title    = xa_title_s;
 

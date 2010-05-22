@@ -145,7 +145,8 @@ US_BufferGui::US_BufferGui(
    main->addWidget( pb_del, row++, 2 );
 
    // Buffer parameters
-   QLabel* lb_density = us_label( tr( "Density (20&deg;C, g/cm<sup>3</sup>):" ) );
+   QLabel* lb_density = us_label( 
+         tr( "Density (20" ) + DEGC + tr( ", g/cm<sup>3</sup>):" ) );
    main->addWidget( lb_density, row, 1 );
 
    le_density = us_lineedit();
@@ -154,7 +155,7 @@ US_BufferGui::US_BufferGui(
    main->addWidget( le_density, row++, 2 );
 
    QLabel* lb_viscosity = 
-      us_label( tr( "Viscosity (20<span>&deg;</span>C, cp):" ) );
+      us_label( tr( "Viscosity (20" ) + DEGC + tr( ", cp):" ) );
    main->addWidget( lb_viscosity, row, 1 );
 
    le_viscosity = us_lineedit();

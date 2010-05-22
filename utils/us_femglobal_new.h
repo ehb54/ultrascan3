@@ -14,8 +14,8 @@ class US_EXTERN US_FemGlobal_New
    class MfemInitial
    {
       public:
-      vector< double > radius;
-      vector< double > concentration;
+      QVector< double > radius;
+      QVector< double > concentration;
    };
 
    class MfemScan
@@ -102,11 +102,11 @@ class US_EXTERN US_FemGlobal_New
       double         k_off;
    
       // A list of all system components involved in this reaction
-      vector< uint > reaction_components;   
+      QVector< uint > reaction_components;   
 
       // Stoichiometry of components in chemical equation.
       // Positive for reactant, negative for product
-      vector< int >  stoichiometry; 
+      QVector< int >  stoichiometry; 
    };
 
    class ModelSystem
@@ -130,6 +130,10 @@ class US_EXTERN US_FemGlobal_New
 
       QVector< SimulationComponent > components;
       QVector< Association >         associations;
+
+      private:
+      void mfem_scans      ( QXmlStreamReader&, SimulationComponent& );
+      void get_associations( QXmlStreamReader&, Association& );
    };
 
    class SpeedProfile

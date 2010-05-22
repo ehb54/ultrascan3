@@ -264,9 +264,12 @@ void US_ModelEditorNew::select_model( QListWidgetItem* item )
    }
    
    model.read_from_disk( file );
-   // Populate 
    
-   le_buffer         ->setText( model.bufferDesc );
+   // Populate 
+   buffer.GUID = model.bufferGUID;
+
+   le_description    ->setText( model.description );
+   le_buffer         ->setText( model.bufferDesc  );
    
    le_density        ->setText( QString::number( model.density,        'f', 4));
    le_viscosity      ->setText( QString::number( model.viscosity,      'f', 4));
@@ -394,6 +397,7 @@ void US_ModelEditorNew::update_buffer( US_Buffer buf )
    model.viscosity       = buf.viscosity;
    model.compressibility = buf.compressibility;
    model.bufferGUID      = buf.GUID;
+   model.bufferDesc      = buf.description;
 }
 
 void US_ModelEditorNew::manage_components( void )
@@ -431,33 +435,6 @@ void US_ModelEditorNew::update_sim( void )
 {
    model = working_model;
 }
-
-//void US_ModelEditorNew::change_optics( int /*index*/ )
-//{
-   /*
-   switch ( index )
-   {
-      case ABSORBANCE: 
-         lb_coeff->setText( tr ( "Optical Density:" ) );
-         break;
-
-      case INTERFERENCE:
-         lb_coeff->setText( tr ( "Fringes:" ) );
-         break;
-
-      default: // FLUORESCENCE
-         lb_coeff->setText( tr ( "Intensity:" ) );
-         break;
-   }
-*/
-//   int row = lw_components->currentRow();
-
-//   if ( row > -1 )
-//   {
-//      US_FemGlobal_New::SimulationComponent* sc = &components[ row ];
-//      sc->shape = (US_FemGlobal_New::ShapeType) index;
-//   }
-//}
 
 void US_ModelEditorNew::accept_model( void )
 {
@@ -639,6 +616,7 @@ void US_ModelEditorNew::write_temp( QTemporaryFile& file )
    xml.writeAttribute   ( "description",     model.description );
    xml.writeAttribute   ( "guid",            model.guid );
    xml.writeAttribute   ( "bufferGuid",      model.bufferGUID );
+   xml.writeAttribute   ( "bufferDesc",      model.bufferDesc );
    xml.writeAttribute   ( "density",         QString::number( model.density ) );
    xml.writeAttribute   ( "viscosity",       QString::number( model.viscosity ) );
    xml.writeAttribute   ( "compressibility", QString::number( model.compressibility ) );
@@ -677,7 +655,15 @@ void US_ModelEditorNew::write_temp( QTemporaryFile& file )
       xml.writeAttribute( "molar",      QString::number( sc->molar_concentration  ) );
       xml.writeAttribute( "signal",     QString::number( sc->signal_concentration ) );
 
-      // TODO Need to add c0;
+      for ( int j = 0; j < sc->c0.radius.size(); j++ )
+      {
+         xml.writeStartElement( "mfem_scan" );
+
+         US_FemGlobal_New::MfemInitial* scan = &sc->c0;
+         xml.writeAttribute( "radius", QString::number( scan->radius       [ j ] ) );
+         xml.writeAttribute( "conc",   QString::number( scan->concentration[ j ] ) );
+         xml.writeEndElement();  // mfem_scan
+      }
 
       xml.writeEndElement(); // analyte (SimulationComponent)
    }
@@ -690,7 +676,7 @@ void US_ModelEditorNew::write_temp( QTemporaryFile& file )
       xml.writeAttribute( "k_eq", QString::number( as->k_eq ) );
       xml.writeAttribute( "k_off", QString::number( as->k_off ) );
 
-      for ( uint j = 0; j < as->reaction_components.size(); j++ )
+      for ( int j = 0; j < as->reaction_components.size(); j++ )
       {
          xml.writeStartElement( "component" );
 
@@ -800,8 +786,8 @@ void US_ModelEditorNew::list_models( void )
          ModelDesc md;
 
          md.DB_id       = db.value( 0 ).toInt();
-         md.description = db.value( 1 ).toString();
-         //md.guid        = db.value( 2 ).toString();
+         md.guid        = db.value( 1 ).toString();
+         md.description = db.value( 2 ).toString();
          md.filename.clear();
 
          model_descriptions << md;
