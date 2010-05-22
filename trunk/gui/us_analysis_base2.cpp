@@ -306,9 +306,7 @@ void US_AnalysisBase2::update( int selection )
    for ( int i = 0; i < scanCount; i++ ) 
       sum += d->scanData[ i ].temperature;
 
-   QString t = QString::number( sum / scanCount, 'f', 1 ) 
-             + tr( " deg C" );
-   le_temp->setText( t );
+   le_temp->setText( QString::number( sum / scanCount, 'f', 1 ) + " " + DEGC );
 
    te_desc->setText( d->description );
 
