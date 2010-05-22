@@ -36,4 +36,5 @@ macx {
   QWTLIB      = -L$$QWTPATH/lib -lqwt
   QCALIB      = -L$$QCAPATH/lib -lqca
   SINGLEDIR   = /opt/local/share/qt/qtsingleapplication-2.6_1-opensource/src
+  MYSQLDIR    = /usr/local/lib/mysql
 }
