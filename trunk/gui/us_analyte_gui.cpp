@@ -206,7 +206,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    protein_info->addWidget( le_protein_mw, prow, 1 );
 
    QLabel* lb_protein_vbar20 = us_label( 
-         tr( "VBar <small>(cm<sup>3</sup>/g at 20 &deg;C)</small>:" ) );
+         tr( "VBar <small>(cm<sup>3</sup>/g at 20 " ) + DEGC + ")</small>:" );
    protein_info->addWidget( lb_protein_vbar20, prow, 2 );
 
    le_protein_vbar20 = us_lineedit( "" );
@@ -214,7 +214,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    protein_info->addWidget( le_protein_vbar20, prow++, 3 );
 
    QLabel* lb_protein_temp = us_label( 
-         tr( "Temperature <small>(&deg;C)</small>:" ) );
+         tr( "Temperature <small>(" ) + DEGC + ")</small>:" );
    protein_info->addWidget( lb_protein_temp, prow, 0 );
 
    le_protein_temp = us_lineedit( QString::number( temperature, 'f', 1 ) );
@@ -233,7 +233,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    protein_info->addWidget( le_protein_temp, prow, 1 );
 
    QLabel* lb_protein_vbar = us_label( 
-         tr( "VBar <small>(cm<sup>3</sup>/g at T &deg;C)</small>:" ) );
+         tr( "VBar <small>(cm<sup>3</sup>/g at T " ) + DEGC + ")</small>:" );
    protein_info->addWidget( lb_protein_vbar, prow, 2 );
 
    le_protein_vbar = us_lineedit( "" );
@@ -1343,10 +1343,10 @@ void US_AnalyteGui::more_info( void )
    s1 += tr( "Molecular Weight:     " ) + s.sprintf( "%i", (int)p.mw )  +
          tr( " Dalton\n" ) +
          
-         tr( "V-bar at 20 deg C:    " ) + 
+         tr( "V-bar at 20 " ) + DEGC + ":    " + 
               QString::number( p.vbar20, 'f', 6 )   + tr( " cm^3/g\n" ) +
          
-         tr( "V-bar at " ) + QString::number( temperature, 'f', 2 ) + " deg C: " +
+         tr( "V-bar at " ) + QString::number( temperature, 'f', 2 ) + " " + DEGC + ": " +
                QString::number( p.vbar, 'f', 6 ) + tr( " cm^3/g\n\n" ) +
        
          tr( "Extinction coefficients for the denatured analyte:\n" 

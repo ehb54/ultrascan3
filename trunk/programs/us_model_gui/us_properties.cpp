@@ -84,7 +84,7 @@ US_Properties::US_Properties(
    }
 
    // Row
-   QLabel* lb_vbar = us_label( tr( "vbar at 20 <span>&deg;</span>C (ml/g):" ) );
+   QLabel* lb_vbar = us_label( tr( "vbar at 20 " ) + DEGC + " (ml/g):" );
    main->addWidget( lb_vbar, row, 0 );
 
    le_vbar = us_lineedit( "" );

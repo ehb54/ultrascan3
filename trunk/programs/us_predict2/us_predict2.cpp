@@ -5,6 +5,7 @@
 #include "us_math.h"
 #include "us_buffer_gui.h"
 #include "us_analyte_gui.h"
+#include "us_constants.h"
 
 US_Predict2::US_Predict2() : US_Widgets()
 {
@@ -51,7 +52,7 @@ US_Predict2::US_Predict2() : US_Widgets()
                           SLOT  ( viscosity  ( const QString& ) ) );
    controls->addWidget( le_viscosity, c_row++, 1 );
 
-   QPushButton* pb_vbar = us_pushbutton( tr( "vbar (20 deg C)" ) );
+   QPushButton* pb_vbar = us_pushbutton( tr( "vbar (20 " ) + DEGC + ")" );
    connect( pb_vbar, SIGNAL( clicked() ), SLOT( get_peptide() ) );
    controls->addWidget( pb_vbar, c_row, 0 );
 
@@ -62,7 +63,7 @@ US_Predict2::US_Predict2() : US_Widgets()
    controls->addWidget( le_vbar, c_row++, 1 );
 
    QLabel* lb_temperature = us_label( 
-         tr( "Temperature (<span>&deg;</span>C):" ) );
+         tr( "Temperature (" ) + DEGC + "):" );
    controls->addWidget( lb_temperature, c_row, 0 );
 
    QLineEdit* le_temperature = us_lineedit();

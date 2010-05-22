@@ -105,7 +105,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       controls->addWidget( le_viscosity, c_row++, 1 );
    }
 
-   QPushButton* pb_vbar = us_pushbutton( tr( "vbar (20 deg C)" ) );
+   QPushButton* pb_vbar = us_pushbutton( tr( "vbar (" ) + DEGC + ")" );
    connect( pb_vbar, SIGNAL( clicked() ), SLOT( get_peptide() ) );
    controls->addWidget( pb_vbar, c_row, 0 );
 
@@ -125,7 +125,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    controls->addWidget( le_mw, c_row++, 1 );
 
    QLabel* lb_temperature = us_label( 
-         tr( "Temperature (<span>&deg;</span>C):" ) );
+         tr( "Temperature (" ) + DEGC + tr( "):" ) );
    controls->addWidget( lb_temperature, c_row, 0 );
 
    QLineEdit* le_temperature = us_lineedit();
