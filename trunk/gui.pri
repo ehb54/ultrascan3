@@ -40,6 +40,7 @@ macx {
   CONFIG     += i386 ppc
   LIBS       += -L../../lib -lus_utils -lus_gui -lus_db
   LIBS       += $$QWTLIB $$QCALIB
+  LIBS       += -L$$MYSQLDIR -lmysqlclient
   DEFINES    += MAC OSX 
 }
 
