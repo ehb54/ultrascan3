@@ -4,6 +4,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_math.h"
+#include "us_constants.h"
 
 #include <qwt_legend.h>
 
@@ -27,7 +28,7 @@ US_RunDetails2::US_RunDetails2( const QVector< US_DataIO2::RawData >& data,
    QBoxLayout* plot = new US_Plot( data_plot,
         tr( "Parameter Variation Throughout Run" ),
         tr( "Scan Number" ), 
-        tr( "RPM * 1000 / Temperature " ) + QChar( 176 ) + "C" );
+        tr( "RPM * 1000 / Temperature " ) + DEGC );
 
    data_plot->setMinimumSize( 400, 200 );
    data_plot->enableAxis( QwtPlot::yRight );
@@ -277,7 +278,7 @@ void US_RunDetails2::show_all_data( void )
 
    // Set average temperature
    le_avgTemp->setText( QString::number( temp / scanCount, 'f', 1 ) 
-         + " " + QChar( 176 ) + "C" );
+         + " " + DEGC );
 
    // Set average rpm
    rpm /= scanCount;             // Get average
@@ -357,7 +358,7 @@ void US_RunDetails2::check_temp( double min, double max )
                 "of the run to a larger extent than allowed by the\n"
                 "current threshold (" )  
                 + QString::number( US_Settings::tempTolerance(), 'f', 1 )
-                + " " + QChar( 178 ) + tr( "C). The accuracy of experimental\n"
+                + " " + DEGC + tr( ". The accuracy of experimental\n"
                 "results may be affected significantly." ) );
    }
 }
@@ -377,12 +378,12 @@ void US_RunDetails2::draw_plot( const double* x, const double* t,
    switch( plotType )
    {
       case TEMPERATURE:
-         axisTitle.setText( tr( "RPM * 1000" ) );
+         axisTitle.setText( tr( "Temperature " ) + DEGC );
          data_plot->setAxisTitle( QwtPlot::yLeft, axisTitle );
          break;
 
       case RPM:
-         axisTitle.setText( tr( "Temperature " ) + QChar( 176 ) + "C" );
+         axisTitle.setText( tr( "RPM * 1000" ) );
          data_plot->setAxisTitle( QwtPlot::yLeft, axisTitle );
          break;
 
@@ -393,7 +394,7 @@ void US_RunDetails2::draw_plot( const double* x, const double* t,
 
       default:
          axisTitle.setText( 
-               tr( "RPM * 1000 / Temperature " ) + QChar( 176 ) + "C" );
+               tr( "RPM * 1000 / Temperature " ) + DEGC );
          data_plot->setAxisTitle( QwtPlot::yLeft, axisTitle );
 
          axisTitle.setText( tr( "Time between Scans (min)" ) );
@@ -487,7 +488,7 @@ void US_RunDetails2::update( int index )
 
    // Set average temperature
    le_avgTemp->setText( QString::number( temp / scanCount, 'f', 1 ) 
-         + " " + QChar( 176 ) + "C" );
+         + " " + DEGC );
 
    // Set average rpm
    rpm /= scanCount;             // Get average

@@ -146,6 +146,9 @@
 #define  DIAMINOPROPANOIC_ACID_VBAR   0.669   //!< diaminopropanoic p.s.vol.
 
 
+//! Declare miscellaneous constants
+const QString DEGC = QString( QChar( 176 ) ) + "C"; //!< Degree-symbol + "C"
+
 
 namespace US_ConstantModels
 {
@@ -182,5 +185,6 @@ class US_EXTERN US_Constants
      
    //! \brief Get defined model strings
    static QStringList modelStrings( void );
+
 };
 #endif
