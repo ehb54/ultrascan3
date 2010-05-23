@@ -849,7 +849,17 @@ void US_Properties::simulate( void )
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
    US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
-   
+  
+   if ( uuid_is_null( sc->analyteGUID ) )
+      analyte.guid.clear(); 
+   else
+   {
+      char uuid[ 37 ];
+      uuid[ 36 ] = 0;
+      uuid_unparse( sc->analyteGUID, uuid );
+      analyte.guid = QString( uuid );
+   }
+
    working_data     = hydro_data; // working_data will be updated
    working_data.mw /= sc->stoichiometry;
 

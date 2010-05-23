@@ -3,6 +3,8 @@
 #include "us_femglobal_new.h"
 #include "us_constants.h"
 
+#include <uuid/uuid.h>
+
 US_FemGlobal_New::SimulationComponent::SimulationComponent()
 {
    name                 = "New Component";
@@ -62,10 +64,12 @@ bool US_FemGlobal_New::ModelSystem::read_from_disk( const QString& filename )
 
    QXmlStreamReader     xml( &file );
    QXmlStreamAttributes a;
+   bool                 read_next = true;
 
    while ( ! xml.atEnd() )
    {
-      xml.readNext();
+      if ( read_next) xml.readNext();
+      read_next = true;
 
       if ( xml.isStartElement() )
       {
@@ -84,17 +88,41 @@ bool US_FemGlobal_New::ModelSystem::read_from_disk( const QString& filename )
             coSedSolute     = a.value( "coSedSolute"     ).toString().toInt();
          }
 
-         if ( xml.name() == "analyte" )
+         else if ( xml.name() == "analyte" )
          {
             US_FemGlobal_New::SimulationComponent sc;
             a = xml.attributes();
 
+            QString guid = a.value( "guid" ).toString();
+            uuid_parse( guid.toAscii().data(), sc.analyteGUID );
+            
+            sc.name        = a.value( "name"       ).toString();
+            sc.vbar20      = a.value( "vbar20"     ).toString().toDouble();
+            sc.mw          = a.value( "mw"         ).toString().toDouble();
+            sc.s           = a.value( "s"          ).toString().toDouble();
+            sc.D           = a.value( "D"          ).toString().toDouble();
+            sc.f           = a.value( "f"          ).toString().toDouble();
+            sc.f_f0        = a.value( "f_f0"       ).toString().toDouble();
+            sc.wavelength  = a.value( "wavelength" ).toString().toDouble();
+            sc.extinction  = a.value( "extinction" ).toString().toDouble();
+            sc.axial_ratio = a.value( "axial"      ).toString().toDouble();
+            sc.sigma       = a.value( "sigma"      ).toString().toDouble();
+            sc.delta       = a.value( "delta"      ).toString().toDouble();
+
+            sc.molar_concentration  = a.value( "molar"  ).toString().toDouble();
+            sc.signal_concentration = a.value( "signal" ).toString().toDouble();
+            sc.stoichiometry        = a.value( "stoich" ).toString().toInt();
+            sc.shape                = 
+               (US_FemGlobal_New::ShapeType)a.value( "shape"  ).toString().toInt();
+            sc.analyte_type         = a.value( "type"   ).toString().toInt();
+
             mfem_scans( xml, sc );
+            read_next = false; // Skip the next read
 
             components << sc;
          }
 
-         if ( xml.name() == "association" )
+         else if ( xml.name() == "association" )
          {
             US_FemGlobal_New::Association as;
             a = xml.attributes();
@@ -103,10 +131,10 @@ bool US_FemGlobal_New::ModelSystem::read_from_disk( const QString& filename )
             as.k_off = a.value( "k_off" ).toString().toDouble();
 
             get_associations( xml, as );
+            read_next = false; // Skip the next read
 
             associations << as;
          }
-
       }
    }
 
