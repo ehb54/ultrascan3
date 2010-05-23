@@ -22,7 +22,7 @@ US_CreateGlobal::US_CreateGlobal(QWidget *parent, const char* name) : QFrame(par
    lb_distro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    connect(lb_distro, SIGNAL(selected(int)), SLOT(remove(int)));
 
-   pb_add = new QPushButton(tr("Add Distribution"), this);
+   pb_add = new QPushButton(tr("Add Distributions"), this);
    Q_CHECK_PTR(pb_add);
    pb_add->setAutoDefault(false);
    pb_add->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -105,43 +105,47 @@ void US_CreateGlobal::add()
    bool MonteCarlo = false, flag = false;
    unsigned int iter;
    temp_distro.line.clear();
-   QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir,
-                                                   "*.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.ga_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.global_dis.* *.sa2d_mw_mc_dis.* *.ga_mw_mc_dis.* *.sa2d_mw_dis.* *.ga_mw_dis.*", 0);
-   QFileInfo fi(filename);
-   if (filename.contains("_mc_", false))
+   QString filename, filter = "*.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.ga_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.global_dis.* *.sa2d_mw_mc_dis.* *.ga_mw_mc_dis.* *.sa2d_mw_dis.* *.ga_mw_dis.*";
+   QStringList sl = QFileDialog::getOpenFileNames(filter, USglobal->config_list.result_dir, 0, 0);
+   for (QStringList::Iterator it=sl.begin(); it != sl.end(); it++)
    {
-      MonteCarlo = true;
-      flag = true;
-   }
-   temp_distro.name = fi.fileName();
-   if (!filename.isEmpty())
-   {
-      lb_distro->insertItem(temp_distro.name, -1);
-      pb_save->setEnabled(true);
-      pb_reset->setEnabled(true);
-      QFile f;
-      f.setName(filename);
-      if (f.open(IO_ReadOnly))
+      filename = *it;
+      QFileInfo fi(*it);
+      if (filename.contains("_mc_", false))
       {
-         QTextStream ts(&f);
-         ts.readLine();
-         if (MonteCarlo) // we need to discard an additional line (the line with the number of MC iterations)
+         MonteCarlo = true;
+         flag = true;
+      }
+      temp_distro.name = fi.fileName();
+      if (!filename.isEmpty())
+      {
+         lb_distro->insertItem(temp_distro.name, -1);
+         pb_save->setEnabled(true);
+         pb_reset->setEnabled(true);
+         QFile f;
+         f.setName(filename);
+         if (f.open(IO_ReadOnly))
          {
-            ts >> iter;
-            cout << ts.readLine();
-            iterations += iter;
-            flag = true;
+            QTextStream ts(&f);
+            ts.readLine();
+            if (MonteCarlo) // we need to discard an additional line (the line with the number of MC iterations)
+            {
+               ts >> iter;
+               cout << ts.readLine();
+               iterations += iter;
+               flag = true;
+            }
+            while (!ts.atEnd())
+            {
+               temp_distro.line.push_back(ts.readLine());
+            }
+            distro.push_back(temp_distro);
+            if (!flag)
+            {
+               iterations ++;
+            }
+            f.close();
          }
-         while (!ts.atEnd())
-         {
-            temp_distro.line.push_back(ts.readLine());
-         }
-         distro.push_back(temp_distro);
-         if (!flag)
-         {
-            iterations ++;
-         }
-         f.close();
       }
    }
 }
