@@ -1,6 +1,6 @@
 //! \file us_assiciations_gui.cpp
 
-#include "us_associations.h"
+#include "us_associations_gui.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
 #include "us_constants.h"
