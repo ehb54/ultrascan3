@@ -9,7 +9,7 @@
 #include "us_buffer_gui.h"
 #include "us_util.h"
 #include "us_passwd.h"
-#include "us_associations.h"
+#include "us_associations_gui.h"
 #include <uuid/uuid.h>
 
 US_ModelEditorNew::US_ModelEditorNew( 
@@ -177,9 +177,9 @@ void US_ModelEditorNew::new_model( void )
 {
    ModelDesc desc;
    desc.description = "New Model";
+   desc.DB_id       = "-1";
    desc.filename.clear();
    desc.guid    .clear();
-   desc.DB_id       = -1;
 
    model_descriptions << desc;
    show_model_desc();
@@ -228,7 +228,8 @@ void US_ModelEditorNew::select_model( QListWidgetItem* item )
    // Get the current index
    int index = item -> listWidget()-> currentRow();
    
-   QString file;
+   QString        file;
+   QTemporaryFile temporary;
 
    if ( rb_disk->isChecked() )
    {
@@ -247,7 +248,6 @@ void US_ModelEditorNew::select_model( QListWidgetItem* item )
 
       QStringList q;
       q << "get_model_info" << model_descriptions[ index ].DB_id;
-
       db.query( q );
 
       if ( ! database_ok( db ) ) return;
@@ -256,7 +256,6 @@ void US_ModelEditorNew::select_model( QListWidgetItem* item )
       QByteArray contents = db.value( 2 ).toString().toAscii();
 
       // Write the model file to a temporary file
-      QTemporaryFile temporary;
       temporary.open();
       temporary.write( contents );
       temporary.close();
@@ -265,7 +264,7 @@ void US_ModelEditorNew::select_model( QListWidgetItem* item )
    }
    
    model.read_from_disk( file );
-   
+  
    // Populate 
    buffer.GUID = model.bufferGUID;
 
@@ -281,7 +280,6 @@ void US_ModelEditorNew::select_model( QListWidgetItem* item )
 
    cb_optics         ->setCurrentIndex( model.optics );
 }
-
 
 void US_ModelEditorNew::delete_model( void )
 {
@@ -342,7 +340,7 @@ void US_ModelEditorNew::connect_error( const QString& error )
 
 bool US_ModelEditorNew::database_ok( US_DB2& db )
 {
-   if ( db.lastErrno() == 0 ) return true;
+   if ( db.lastErrno() == US_DB2::OK ) return true;
 
    QMessageBox::information( this, 
       tr( "Database Error" ),
@@ -450,11 +448,18 @@ void US_ModelEditorNew::associations( void )
       return;
    }
 
+   if ( model.components.size() < 2 )
+   {
+      QMessageBox::information( this,
+         tr( "Model Incomplete" ),
+         tr( "There must be at least two analytes in the selected\n" 
+             "model to specify associations." ) );
+      return;
+   }
+
    working_model = model;
 
-   US_AssociationsGui* dialog = 
-      new US_AssociationsGui( working_model );
-   
+   US_AssociationsGui* dialog = new US_AssociationsGui( working_model );
    connect( dialog, SIGNAL( done() ), SLOT( update_assoc() ) );
    dialog->exec();
 }
@@ -566,6 +571,12 @@ void US_ModelEditorNew::save_model( void )
       file.write( temporary.readAll() );
       file.close();
       temporary.close();
+
+      QString save_type = newFile ? "saved" : "updated";
+
+      QMessageBox::information( this,
+         tr( "Model Saved" ),
+         tr( "The model has been %1 locally." ).arg( save_type ) );
    }
    else // Save/update in DB
    {
@@ -586,10 +597,11 @@ void US_ModelEditorNew::save_model( void )
          q << "get_modelID" << model.guid;
          db.query( q );
 
-         if ( ! database_ok( db ) ) return;
-
-         db.next();
-         modelID = db.value( 0 ).toString();
+         if ( db.lastErrno() == US_DB2::OK ) 
+         {
+            db.next();
+            modelID = db.value( 0 ).toString();
+         }
       }
 
       // Create the model xml file in a string
@@ -800,6 +812,14 @@ void US_ModelEditorNew::list_models( void )
    }
    else  // DB Access
    {
+      if ( investigator < 0 )
+      {
+         QMessageBox::information( this,
+            tr( "Investigator not set" ),
+            tr( "Please select an investigator first." ) );
+         return;
+      }
+
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
 
@@ -818,7 +838,7 @@ void US_ModelEditorNew::list_models( void )
       {
          ModelDesc md;
 
-         md.DB_id       = db.value( 0 ).toInt();
+         md.DB_id       = db.value( 0 ).toString();
          md.guid        = db.value( 1 ).toString();
          md.description = db.value( 2 ).toString();
          md.filename.clear();
