@@ -185,6 +185,39 @@ jid $id
     $msg->send('smtp', 'smtp.uthscsa.edu');
 };
 
+sub gsiget {
+    my $maxtry = 5;
+    my $sys = $_[0];
+    my $port = $_[1];
+    my $sfile = $_[2];
+    my $dfile = $_[3];
+    my $cmd = "gsissh -p $port $sys ls -l $sfile | awk '{ print \$5 }'";
+    print "$cmd\n";
+    my $res = $execute ? `$cmd` : '1234 not run';
+    chomp $res;
+    print "result <$res>\n";
+    my $count = 0;
+    do {
+	$cmd = "gsiscp -C -P $port $sys:$sfile $dfile";
+	print "$cmd\n";
+	my $newres = $execute ? `$cmd` : '4321 not run';
+	print "result <$newres>\n";
+	chomp $newres;
+	$cmd = "ls -l $dfile | awk '{ print \$5 }'\n";
+	print "$cmd\n";
+	$newres = $execute ? `$cmd` : '4321 not run';
+	chomp $newres;
+	print "result <$newres>\n";
+	if ( $newres != $res ) {
+	    $count++;
+	    print "gsiscp failed try $count of $maxtry\n";
+	    return if $count >= $maxtry;
+	} else {
+	    return;
+	}
+    } while (1);
+}
+
 # end user configuration
 
 $|=1;
@@ -974,12 +1007,14 @@ do {
     if($status eq 'Failed' ||
        $status eq 'FAILED') {
 	if($default_system ne 'meta') {
-	    $cmd = 
-"gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
-gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
-";
-	    print $cmd;
-	    print `$cmd` if $execute;
+	    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "/lustre/tmp/us_job${id}.stderr");
+	    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "/lustre/tmp/us_job${id}.stdout");
+#	    $cmd = 
+#"gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
+#gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
+#";
+#	    print $cmd;
+#	    print `$cmd` if $execute;
 	}
 	&failmsg("Tigre Status returned 'Failed'");
 	if($default_system eq 'meta') {
@@ -998,9 +1033,12 @@ if($default_system eq 'meta') {
 mv us_job${id}.stdout /lustre/tmp/us_job${id}.stdout
 ";
 } else {
-    $cmd = "gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
-gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
-gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/email_* .
+    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "/lustre/tmp/us_job${id}.stderr");
+    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "/lustre/tmp/us_job${id}.stdout");
+#    $cmd = "gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
+#    gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
+    $cmd =
+"gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/email_* .
 gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.model* .
 gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*noise* .
 gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.simulation_parameters .
