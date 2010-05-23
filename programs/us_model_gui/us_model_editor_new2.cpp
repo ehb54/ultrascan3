@@ -9,6 +9,7 @@
 #include "us_buffer_gui.h"
 #include "us_util.h"
 #include "us_passwd.h"
+#include "us_associations.h"
 #include <uuid/uuid.h>
 
 US_ModelEditorNew::US_ModelEditorNew( 
@@ -82,7 +83,7 @@ US_ModelEditorNew::US_ModelEditorNew(
    main->addWidget( pb_components, row, 0 );
 
    QPushButton* pb_associations = us_pushbutton( tr( "Manage Associations" ) );
-   //connect( pb_associations, SIGNAL( clicked() ), SLOT( associations() ) );
+   connect( pb_associations, SIGNAL( clicked() ), SLOT( associations() ) );
    main->addWidget( pb_associations, row++, 1 );
 
    QPushButton* pb_buffer = us_pushbutton( tr( "Select Buffer" ) );
@@ -436,6 +437,33 @@ void US_ModelEditorNew::update_sim( void )
    model = working_model;
 }
 
+void US_ModelEditorNew::associations( void )
+{
+   int index = lw_models->currentRow();
+
+   if ( index < 0 )
+   {
+      QMessageBox::information( this,
+         tr( "Model not selected" ),
+         tr( "Please select a model first.\n" 
+             "If necessary, create a new model." ) );
+      return;
+   }
+
+   working_model = model;
+
+   US_AssociationsGui* dialog = 
+      new US_AssociationsGui( working_model );
+   
+   connect( dialog, SIGNAL( done() ), SLOT( update_assoc() ) );
+   dialog->exec();
+}
+
+void US_ModelEditorNew::update_assoc( void )
+{
+   model = working_model;
+}
+
 void US_ModelEditorNew::accept_model( void )
 {
    emit valueChanged( model );
@@ -633,9 +661,14 @@ void US_ModelEditorNew::write_temp( QTemporaryFile& file )
       US_FemGlobal_New::SimulationComponent* sc = &model.components[ i ];
       xml.writeStartElement( "analyte" );
 
-      uuid_unparse( sc->analyteGUID, uuid );
+      if ( uuid_is_null( sc->analyteGUID ) )
+         xml.writeAttribute( "guid",    "" );
+      else
+      {
+         uuid_unparse( sc->analyteGUID, uuid );
+         xml.writeAttribute( "guid",    QString( uuid                      ) );
+      }
 
-      xml.writeAttribute( "guid",       QString( uuid                      ) );
       xml.writeAttribute( "name",       sc->name                             );
       xml.writeAttribute( "vbar20",     QString::number( sc->vbar20        ) );
       xml.writeAttribute( "mw",         QString::number( sc->mw            ) );

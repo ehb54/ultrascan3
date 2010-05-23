@@ -254,6 +254,7 @@ US_Properties::US_Properties(
    connect( pb_accept, SIGNAL( clicked() ), SLOT( acceptProp() ) );
 
    clear_entries();
+   update_lw();
 }
 
 void US_Properties::clear_entries( void )

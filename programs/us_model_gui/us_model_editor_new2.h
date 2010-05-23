@@ -89,6 +89,8 @@ class US_ModelEditorNew : public US_Widgets
       void update_buffer     ( US_Buffer );
       void new_model         ( void );
       void delete_model      ( void );
+      void associations      ( void );
+      void update_assoc      ( void );
 
       void help( void ){ showhelp.show_help( "model_editor.html" ); };
 };
