@@ -41,6 +41,7 @@ US_Investigator::US_Investigator( bool signal, QWidget* p,
    row += 4;
 
    QStringList DB = US_Settings::defaultDB();
+   if ( DB.isEmpty() ) DB << "Undefined";
    QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
    main->addWidget( lb_DB, row++, 0, 1, 2 );
 
