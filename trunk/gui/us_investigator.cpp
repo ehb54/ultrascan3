@@ -10,8 +10,8 @@
 /*! Construct a new US_Investigator interface.
 */
 
-US_Investigator::US_Investigator( bool signal, QWidget* p, 
-   Qt::WindowFlags f ) : US_WidgetsDialog( p, f )
+US_Investigator::US_Investigator( bool signal, int inv )
+   : US_WidgetsDialog( 0, 0 )
 {
    signal_wanted = signal;
 
@@ -161,6 +161,19 @@ US_Investigator::US_Investigator( bool signal, QWidget* p,
     
    main->addLayout( buttons2, row++, 0, 1, 2 );
    reset();
+   queryDB();
+
+   if ( inv > -1 )
+   {
+      for ( int i = 0; i < investigators.size(); i++ )
+      {
+         if ( investigators[ i ].invID == inv )
+         {
+            get_inv_data( lw_names->item( i ) );
+            break;
+         }
+      }
+   }
 }
 
 void US_Investigator::queryDB( void )
@@ -280,7 +293,9 @@ void US_Investigator::limit_names( const QString& s )
    for ( int i = 0; i < investigators.size(); i++ )
    {
       if ( investigators[ i ].lastName.contains( 
-               QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) )
+               QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) ||
+           investigators[ i ].firstName.contains(
+                              QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) )
          lw_names->addItem( new QListWidgetItem(
             "InvID: (" + QString::number( investigators[ i ].invID ) + "), " +
             investigators[ i ].lastName + ", " + 
