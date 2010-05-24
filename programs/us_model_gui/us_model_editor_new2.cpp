@@ -351,7 +351,7 @@ bool US_ModelEditorNew::database_ok( US_DB2& db )
 
 void US_ModelEditorNew::get_person( void )
 {
-   US_Investigator* dialog = new US_Investigator( true );
+   US_Investigator* dialog = new US_Investigator( true, investigator );
    
    connect( dialog, 
       SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),

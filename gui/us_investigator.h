@@ -21,7 +21,7 @@ class US_EXTERN US_Investigator : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      US_Investigator( bool = false, QWidget* = 0, Qt::WindowFlags = 0 );
+      US_Investigator( bool = false, int = -1 );
 
       //! \brief A class for storing investigator data in the DB.
 
