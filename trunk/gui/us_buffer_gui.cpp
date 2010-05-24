@@ -41,6 +41,7 @@ US_BufferGui::US_BufferGui(
    main->setContentsMargins ( 2, 2, 2, 2 );
 
    QStringList DB = US_Settings::defaultDB();
+   if ( DB.isEmpty() ) DB << "Undefined";
    QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
    lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_DB, row++, 0, 1, 3 );

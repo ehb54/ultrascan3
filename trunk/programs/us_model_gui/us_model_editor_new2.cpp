@@ -850,6 +850,6 @@ void US_ModelEditorNew::list_models( void )
    show_model_desc();
   
    if ( model_descriptions.size() == 0 )
-      lw_models->addItem( "No model files found." );
+      lw_models->addItem( "No models found." );
 }
 

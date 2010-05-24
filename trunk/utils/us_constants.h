@@ -14,6 +14,7 @@
 #define DENS_20W     0.998234     //!< Density of water at 20 degrees C
 #define COMP_25W     4.6e-10      //!< Compressibility of water at 25 degrees C
 #define WATER_MW     18.01        //!< Molecular weight of water
+#define WATER_PH     7.0          //!< pH of water
 #define TYPICAL_VBAR 0.7200       //!< Typical vbar for a protein
 #define NORMAL_TEMP  20.0         //!< Normal temperature for an experiment
 

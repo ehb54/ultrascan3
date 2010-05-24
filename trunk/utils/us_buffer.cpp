@@ -1,6 +1,7 @@
 //! \file us_buffer.cpp
 #include "us_buffer.h"
 #include "us_settings.h"
+#include "us_constants.h"
 #include "us_db2.h"
 
 void US_BufferComponent::getAllFromDB( const QString& masterPW, 
@@ -207,10 +208,10 @@ void US_BufferComponent::putAllToHD(
 US_Buffer::US_Buffer()
 {
    personID        = -1;
-   compressibility = 0.0;
-   pH              = 7.0;
-   density         = 0.0;
-   viscosity       = 0.0;
+   compressibility = COMP_25W;
+   pH              = WATER_PH;
+   density         = DENS_20W;
+   viscosity       = VISC_20W;
    person       .clear();
    bufferID     .clear();
    GUID         .clear();
