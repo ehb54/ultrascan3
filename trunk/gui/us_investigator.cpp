@@ -53,6 +53,24 @@ US_Investigator::US_Investigator( bool signal, int inv )
    le_invID->setReadOnly( true );
    main->addWidget( le_invID, row++, 1 );
 
+   // Investigator ID
+   QLabel* lb_invGuid = us_label( tr( "Global Identifier:" ) );
+   main->addWidget( lb_invGuid, row, 0 );
+
+   QPalette gray = US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+
+   le_invGuid = us_lineedit();
+   le_invGuid->setReadOnly( true );
+   le_invGuid->setPalette ( gray );
+   main->addWidget( le_invGuid, row++, 1 );
+
+   if ( US_Settings::us_debug() == 0 )
+   {
+      lb_invGuid->setVisible( false );
+      le_invGuid->setVisible( false );
+   }
+
    // Last Name
    QLabel* lb_lname = us_label( tr( "Last Name:" ) );
    main->addWidget( lb_lname, row, 0 );
@@ -341,6 +359,7 @@ void US_Investigator::get_inv_data( QListWidgetItem* item )
    info.phone        = db.value( 6 ).toString();
    info.email        = db.value( 7 ).toString();
    info.organization = db.value( 8 ).toString();
+   info.invGuid      = db.value( 9 ).toString();
 
    //le_lname  ->disconnect();
    le_lname  ->setText( info.lastName  ); 
@@ -356,6 +375,7 @@ void US_Investigator::get_inv_data( QListWidgetItem* item )
    le_phone  ->setText( info.phone        ); 
    le_email  ->setText( info.email        ); 
    le_org    ->setText( info.organization ); 
+   le_invGuid->setText( info.invGuid      ); 
 
    pb_update ->setEnabled( true );
 }
@@ -383,6 +403,7 @@ void US_Investigator::close( void )
 void US_Investigator::reset( void )
 {
    le_invID  ->setText( "" );
+   le_invGuid->setText( "" );
    le_fname  ->setText( "" );
    le_lname  ->setText( "" );
    le_address->setText( "" );

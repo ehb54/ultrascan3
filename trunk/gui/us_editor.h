@@ -12,7 +12,7 @@
 */
 class US_EXTERN US_Editor : public QMainWindow
 {
-	Q_OBJECT
+   Q_OBJECT
 
    public:
       /*! \brief Text editor main window.
@@ -35,18 +35,18 @@ class US_EXTERN US_Editor : public QMainWindow
 
    private:
 
-	   QFont      currentFont;
+      QFont      currentFont;
       QString    filename;
       QString    file_extension;
-	
+   
       void saveFile   ( void );
 
    private slots:
-	   void load       ( void );
-	   void save       ( void );
-	   void saveAs     ( void );
-	   void print      ( void );
-	   void clear      ( void ) { e->clear(); };
+      void load       ( void );
+      void save       ( void );
+      void saveAs     ( void );
+      void print      ( void );
+      void clear      ( void ) { e->clear(); };
       void update_font( void );
 };
 #endif

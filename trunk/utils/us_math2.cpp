@@ -356,8 +356,8 @@ void US_Math2::data_correction( double t, SolutionData& d )
       \f$ t \f$ = temperature ( Celcius )<br>
       \f$ c_0 = 1301\f$<br>
       \f$ c_1 = 998.333\f$<br>
-      \f$ c_2 = 8.1855\f$
-      \f$ c_3 = 0.00585\f$
+      \f$ c_2 = 8.1855\f$<br>
+      \f$ c_3 = 0.00585\f$<br>
       \f$ c_4 = 3.30233\f$
 
       For temperature 20 to 100 degrees C:
