@@ -459,7 +459,7 @@ void US_Predict1::update()
    lb_sphere[ 1 ] ->setText( QString::number( allparams.sphere.s      , 'e', 6 ) );
    lb_sphere[ 2 ] ->setText( QString::number( allparams.sphere.D      , 'e', 6 ) );
    lb_sphere[ 3 ] ->setText( QString::number( allparams.sphere.f      , 'e', 6 ) ); 
-   lb_sphere[ 6 ] ->setText( QString::number( allparams.sphere.f_f0   , 'e', 6 ) );
+   lb_sphere[ 4 ] ->setText( QString::number( allparams.sphere.f_f0   , 'e', 6 ) );
    lb_sphere[ 5 ] ->setText( QString::number( allparams.sphere.a      , 'e', 6 ) );
    lb_sphere[ 6 ] ->setText( QString::number( allparams.sphere.b      , 'e', 6 ) );
    lb_sphere[ 7 ] ->setText( QString::number( allparams.sphere.volume , 'e', 6 ) );
@@ -467,7 +467,7 @@ void US_Predict1::update()
    lb_prolate[ 1 ]->setText( QString::number( allparams.prolate.s     , 'e', 6 ) );
    lb_prolate[ 2 ]->setText( QString::number( allparams.prolate.D     , 'e', 6 ) );
    lb_prolate[ 3 ]->setText( QString::number( allparams.prolate.f     , 'e', 6 ) ); 
-   lb_prolate[ 6 ]->setText( QString::number( allparams.prolate.f_f0  , 'e', 6 ) );
+   lb_prolate[ 4 ]->setText( QString::number( allparams.prolate.f_f0  , 'e', 6 ) );
    lb_prolate[ 5 ]->setText( QString::number( allparams.prolate.a     , 'e', 6 ) );
    lb_prolate[ 6 ]->setText( QString::number( allparams.prolate.b     , 'e', 6 ) );
    lb_prolate[ 7 ]->setText( QString::number( allparams.prolate.volume, 'e', 6 ) );
@@ -475,7 +475,7 @@ void US_Predict1::update()
    lb_oblate[ 1 ] ->setText( QString::number( allparams.oblate.s      , 'e', 6 ) );
    lb_oblate[ 2 ] ->setText( QString::number( allparams.oblate.D      , 'e', 6 ) );
    lb_oblate[ 3 ] ->setText( QString::number( allparams.oblate.f      , 'e', 6 ) ); 
-   lb_oblate[ 6 ] ->setText( QString::number( allparams.oblate.f_f0   , 'e', 6 ) );
+   lb_oblate[ 4 ] ->setText( QString::number( allparams.oblate.f_f0   , 'e', 6 ) );
    lb_oblate[ 5 ] ->setText( QString::number( allparams.oblate.a      , 'e', 6 ) );
    lb_oblate[ 6 ] ->setText( QString::number( allparams.oblate.b      , 'e', 6 ) );
    lb_oblate[ 7 ] ->setText( QString::number( allparams.oblate.volume , 'e', 6 ) );
@@ -483,7 +483,7 @@ void US_Predict1::update()
    lb_rod[ 1 ]    ->setText( QString::number( allparams.rod.s         , 'e', 6 ) );
    lb_rod[ 2 ]    ->setText( QString::number( allparams.rod.D         , 'e', 6 ) );
    lb_rod[ 3 ]    ->setText( QString::number( allparams.rod.f         , 'e', 6 ) ); 
-   lb_rod[ 6 ]    ->setText( QString::number( allparams.rod.f_f0      , 'e', 6 ) );
+   lb_rod[ 4 ]    ->setText( QString::number( allparams.rod.f_f0      , 'e', 6 ) );
    lb_rod[ 5 ]    ->setText( QString::number( allparams.rod.a         , 'e', 6 ) );
    lb_rod[ 6 ]    ->setText( QString::number( allparams.rod.b         , 'e', 6 ) );
    lb_rod[ 7 ]    ->setText( QString::number( allparams.rod.volume    , 'e', 6 ) );
