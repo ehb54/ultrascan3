@@ -225,41 +225,38 @@ void US_ExpInfo::reset( void )
    cb_instrument   ->reset();
    cb_operator     ->reset();
    cb_rotor        ->reset();
+
+   pb_accept       ->setEnabled( false );
+
+   // Update controls to represent selected experiment
    cb_lab          ->setLogicalIndex( expInfo.labID        );
    cb_instrument   ->setLogicalIndex( expInfo.instrumentID );
    cb_operator     ->setLogicalIndex( expInfo.operatorID   );
    cb_rotor        ->setLogicalIndex( expInfo.rotorID      );
 
-   pb_accept       ->setEnabled( false );
-
+   le_label        ->setText( expInfo.label                );
+   te_comment      ->setText( expInfo.comments             );
+   cb_project      ->setLogicalIndex( expInfo.projectID    );
+         
+   // Experiment types combo
+   for ( uint i = 0; i < sizeof( experimentTypes); i++ )
+   {
+      if ( experimentTypes[ i ].toUpper() == expInfo.expType.toUpper() )
+      {
+         cb_expType->setCurrentIndex( i );
+         break;
+      }
+   }
+   
    if ( expInfo.invID > 0 )
    {
       // Investigator
       le_investigator->setText( "InvID (" + QString::number( expInfo.invID ) + "): " +
                expInfo.lastName + ", " + expInfo.firstName );
 
-      if ( this->editing )
-      {
-         if ( expInfo.expID > 0 )
-         {
-            // Update controls to represent selected experiment
-            le_label   ->setText( expInfo.label             );
-            te_comment ->setText( expInfo.comments          );
-            cb_project ->setLogicalIndex( expInfo.projectID );
-         
-            // Experiment types combo
-            for ( uint i = 0; i < sizeof( experimentTypes); i++ )
-            {
-               if ( experimentTypes[ i ].toUpper() == expInfo.expType.toUpper() )
-               {
-                  cb_expType->setCurrentIndex( i );
-                  break;
-               }
-            }
-   
-            pb_accept       ->setEnabled( true );
-         }
-      }
+      if ( this->editing && ( expInfo.expID > 0 ) )
+         pb_accept       ->setEnabled( true );
+ 
       else if ( checkRunID() == 0 )
       {
          // Then we're not editing, an investigator has been chosen, and 
@@ -283,6 +280,20 @@ bool US_ExpInfo::load( void )
       connect_error( db.lastError() );
       return( false );
    }
+
+   // Some default values
+   expInfo.projectID          = 0;
+   expInfo.expID              = 0;
+   expInfo.labID              = 0;
+   expInfo.instrumentID       = 0;
+   expInfo.operatorID         = 0;
+   expInfo.rotorID            = 0;
+   expInfo.expType            = "velocity";
+   // Let's go with the calculated runTemp);
+   expInfo.label              = "";
+   expInfo.comments           = "";
+   expInfo.centrifugeProtocol = "";
+   expInfo.date               = "";
 
    // Did the user click edit?
    if ( this->editing )
@@ -341,18 +352,11 @@ bool US_ExpInfo::load( void )
    if ( options.size() > 0 )
    {
       cb_lab->addOptions( options );
-      if ( this->editing )
-         cb_lab->setLogicalIndex( expInfo.labID );
-
-      else
-      {
-         cb_lab->setCurrentIndex( 0 );             // the first one
-         expInfo.labID = options[ 0 ].ID.toInt();  // guard against a value of -1 here
-      }
-
-      change_lab( 0 );
-      change_instrument( 0 );
+      if ( ! this->editing )
+         expInfo.labID = options[ 0 ].ID.toInt();  // the first one
    }
+
+   cb_changed = true; // so boxes will go through the reload code 1st time
 
    return( true );
 }
@@ -390,17 +394,173 @@ void US_ExpInfo::reload( void )
       {
           cb_project->addOptions( options );
 
-          if ( this->editing )
-             cb_project ->setLogicalIndex( expInfo.projectID );
-
-          else
-          {
-             cb_project->setCurrentIndex( 0 );
+          if ( ! this->editing )
              expInfo.projectID = options[ 0 ].ID.toInt();
-          }
       }
    }
 
+   if ( cb_changed )
+   {
+      setInstrumentList();
+      setRotorList();
+      setOperatorList();
+
+      cb_changed = false;
+   }
+}
+
+void US_ExpInfo::setInstrumentList( void )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   QStringList q( "get_instrument_names" );
+   q << QString::number( expInfo.labID );     // In this lab
+   db.query( q );
+
+   QList<listInfo> options;
+   while ( db.next() )
+   {
+      struct listInfo option;
+      option.ID      = db.value( 0 ).toString();
+      option.text    = db.value( 1 ).toString();
+      options << option;
+   }
+
+   cb_instrument->clear();
+   if ( options.size() > 0 )
+   {
+      cb_instrument->addOptions( options );
+
+      if ( ! this->editing )
+         expInfo.instrumentID = options[ 0 ].ID.toInt();
+
+      else // is the instrument ID in the list?
+      {
+         int index = 0;
+         for ( int i = 0; i < options.size(); i++ )
+         {
+            if ( expInfo.instrumentID == options[ i ].ID.toInt() )
+            {
+               index = i;
+               break;
+            }
+         }
+
+         // Replace instrument ID with one from the list
+         expInfo.instrumentID = options[ index ].ID.toInt();
+      }
+         
+   }
+
+}
+
+void US_ExpInfo::setRotorList( void )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   // Get a list of rotors in this lab
+   QStringList q( "get_rotor_names" );
+   q << QString::number( expInfo.labID );     // In this lab
+   db.query( q );
+
+   QList<listInfo> options;
+   while ( db.next() )
+   {
+      struct listInfo option;
+      option.ID      = db.value( 0 ).toString();
+      option.text    = db.value( 1 ).toString();
+      options << option;
+   }
+
+   cb_rotor->clear();
+   if ( options.size() > 0 )
+   {
+      cb_rotor->addOptions( options );
+      if ( ! this->editing )
+         expInfo.rotorID = options[ 0 ].ID.toInt();
+
+      else // is the rotor ID in the list?
+      {
+         int index = 0;
+         for ( int i = 0; i < options.size(); i++ )
+         {
+            if ( expInfo.rotorID == options[ i ].ID.toInt() )
+            {
+               index = i;
+               break;
+            }
+         }
+
+         // Replace rotor ID with one from the list
+         expInfo.rotorID = options[ index ].ID.toInt();
+      }
+   }
+}
+
+void US_ExpInfo::setOperatorList( void )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   QStringList q( "get_operator_names" );
+   q << QString::number( expInfo.instrumentID );  // who can use this instrument
+   db.query( q );
+
+   QList<listInfo> options;
+   while ( db.next() )
+   {
+      struct listInfo option;
+      option.ID      = db.value( 0 ).toString();
+      option.text    = db.value( 1 ).toString();
+      options << option;
+   }
+
+   cb_operator->clear();
+   if ( options.size() > 0 )
+   {
+      cb_operator->addOptions( options );
+      if ( ! this->editing )
+         expInfo.operatorID = options[ 0 ].ID.toInt();
+
+      else // is the operator ID in the list?
+      {
+         int index = 0;
+         for ( int i = 0; i < options.size(); i++ )
+         {
+            if ( expInfo.operatorID == options[ i ].ID.toInt() )
+            {
+               index = i;
+               break;
+            }
+         }
+
+         // Replace operator ID with one from the list
+         expInfo.operatorID = options[ index ].ID.toInt();
+      }
+   }
 }
 
 void US_ExpInfo::runIDChanged( void )
@@ -465,68 +625,7 @@ void US_ExpInfo::change_lab( int )
                    ? expInfo.labID
                    : cb_lab->getLogicalID();
  
-   // Get a list of the instruments in this lab
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      qDebug() << db.lastError();
-      return;
-   }
-
-   QStringList q( "get_instrument_names" );
-   q << QString::number( expInfo.labID );     // In this lab
-   db.query( q );
-
-   QList<listInfo> options;
-   while ( db.next() )
-   {
-      struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
-      options << option;
-   }
-
-   cb_instrument->clear();
-   if ( options.size() > 0 )
-   {
-      cb_instrument->addOptions( options );
-
-      if ( this->editing )
-         cb_instrument->setLogicalIndex( expInfo.instrumentID );
-
-      else
-      {
-         cb_instrument->setCurrentIndex( 0 );
-         expInfo.instrumentID = options[ 0 ].ID.toInt();
-      }
-   }
-
-   // Now we need a list of rotors in this lab
-   q.clear();
-   q << "get_rotor_names"
-     << QString::number( expInfo.labID );     // In this lab
-   db.query( q );
-
-   options.clear();
-   while ( db.next() )
-   {
-      struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
-      options << option;
-   }
-
-   cb_rotor->clear();
-   if ( options.size() > 0 )
-   {
-      cb_rotor->addOptions( options );
-      cb_rotor->setCurrentIndex( 0 );
-      expInfo.rotorID = options[ 0 ].ID.toInt();
-   }
-
+   cb_changed = true;
    reset();
 }
 
@@ -538,41 +637,7 @@ void US_ExpInfo::change_instrument( int )
                           ? expInfo.instrumentID
                           : cb_instrument->getLogicalID();
 
-   // Get a list of operators that can run this instrument
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-      return;
-
-   QStringList q( "get_operator_names" );
-   q << QString::number( expInfo.instrumentID );  // who can use this instrument
-   db.query( q );
-
-   QList<listInfo> options;
-   while ( db.next() )
-   {
-      struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
-      options << option;
-   }
-
-   cb_operator->clear();
-   if ( options.size() > 0 )
-   {
-      cb_operator->addOptions( options );
-      if ( this->editing )
-         cb_rotor->setLogicalIndex( expInfo.rotorID );
-
-      else
-      {
-         cb_operator->setCurrentIndex( 0 );
-         expInfo.operatorID = options[ 0 ].ID.toInt();
-      }
-   }
-
+   cb_changed = true;
    reset();
 
 }

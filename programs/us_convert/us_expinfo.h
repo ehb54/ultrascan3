@@ -100,6 +100,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
    private:
       ExperimentInfo&        expInfo;
       bool                   editing;
+      bool                   cb_changed;
 
       US_Help                showHelp;
 
@@ -126,6 +127,9 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       void reset             ( void );
       bool load              ( void );
       void reload            ( void );
+      void setInstrumentList ( void );
+      void setRotorList      ( void );
+      void setOperatorList   ( void );
       void runIDChanged      ( void );
       int  checkRunID        ( void );
       void change_lab        ( int  );

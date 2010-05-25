@@ -49,14 +49,24 @@ class US_EXTERN US_DB2
       EMPTY          = 105,     //!< A required parameter was empty
      
       NOTPERMITTED   = 201,     //!< User does not have permission 
+      BADOPERATOR    = 202,     //!< Operator does not have permission to use that instrument
+      BADLABLOCATION = 203,     //!< Instrument does not belong in that lab
+      BADGUID        = 204,     //!< The specified GUID is not in the correct format
      
       NOROWS         = 301,     //!< No rows returned
      
       INSERTNULL     = 401,     //!< Attempt to insert NULL value in a NOT NULL field
       INSERTDUP      = 402,     //!< Attempt to insert a duplicate value in a primary
                                 //!<    or unique key field
+      DUPFIELD       = 403,     //!< Attempt to insert duplicate value where one should not exist
+
       NO_BUFFER      = 501,     //!< No buffer with that ID was found
-      NO_COMPONENT   = 502      //!< No buffer component with that ID was found
+      NO_COMPONENT   = 502,     //!< No buffer component with that ID was found
+      NO_ROTOR       = 503,     //!< No rotor or abstract rotor with that ID exists
+      NO_ANALYTE     = 504,     //!< No analyte with the specified ID exists
+      NO_LAB         = 505,     //!< No lab with the specified ID exists
+      NO_PERSON      = 506,     //!< No person with the specified ID exists
+      NO_MODEL       = 507      //!< No model with the specified ID exists 
     };
 
     //! Some user levels used by the US3 database procedures

@@ -63,7 +63,8 @@ BEGIN
     SELECT     COUNT(*)
     INTO       count_names
     FROM       people
-    WHERE      lname LIKE template;
+    WHERE      lname LIKE template
+    OR         fname LIKE template;
 
   END IF;
 
@@ -114,6 +115,7 @@ BEGIN
                organization
       FROM     people
       WHERE    lname LIKE template
+      OR       fname LIKE template
       ORDER BY lname, fname;
     
     END IF;
@@ -162,7 +164,8 @@ BEGIN
                zip,
                phone,
                organization,
-               email
+               email,
+               GUID
       FROM     people
       WHERE    personID = p_ID;
 
