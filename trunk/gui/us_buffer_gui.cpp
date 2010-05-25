@@ -382,7 +382,7 @@ void US_BufferGui::synch_components( void )
 
 void US_BufferGui::sel_investigator( void )
 {
-   US_Investigator* inv_dialog = new US_Investigator( true );
+   US_Investigator* inv_dialog = new US_Investigator( true, personID );
 
    connect( inv_dialog, 
       SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
@@ -394,6 +394,7 @@ void US_BufferGui::sel_investigator( void )
 void US_BufferGui::assign_investigator( int invID, 
       const QString& lname, const QString& fname)
 {
+   personID        = invID;
    buffer.personID = invID;
    le_investigator->setText( "InvID (" + QString::number( invID ) + "): " +
          lname + ", " + fname );

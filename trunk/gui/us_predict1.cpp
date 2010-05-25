@@ -6,6 +6,7 @@
 #include "us_buffer_gui.h"
 
 #include "qwt_legend.h"
+
 US_Predict1::US_Predict1( US_Hydrosim&     parm, 
                           int              invID,
                           const US_Analyte a_data,
@@ -68,7 +69,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       controls->addWidget( lb_density, c_row, 0 );
 
       solution.density = DENS_20W;
-      le_density = us_lineedit( QString::number( solution.density, 'f', 4 ) );
+      le_density = us_lineedit( QString::number( solution.density, 'e', 6 ) );
       le_density->setPalette( gray );
       le_density->setReadOnly( true );
       controls->addWidget( le_density, c_row++, 1 );
@@ -77,7 +78,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       controls->addWidget( lb_viscosity, c_row, 0 );
 
       solution.viscosity = VISC_20W;
-      le_viscosity = us_lineedit( QString::number( solution.viscosity, 'f', 4 ) );
+      le_viscosity = us_lineedit( QString::number( solution.viscosity, 'e', 6 ) );
       le_viscosity->setPalette( gray );
       le_viscosity->setReadOnly( true );
       controls->addWidget( le_viscosity, c_row++, 1 );
@@ -89,7 +90,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       controls->addWidget( pb_density, c_row, 0 );
 
       le_density = us_lineedit();
-      le_density->setText( QString::number( DENS_20W ) );
+      le_density->setText( QString::number( DENS_20W, 'e', 6 ) );
       connect( le_density, SIGNAL( textChanged( const QString& ) ),
                            SLOT  ( density    ( const QString& ) ) );
       controls->addWidget( le_density, c_row++, 1 );
@@ -99,18 +100,18 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       controls->addWidget( pb_viscosity, c_row, 0 );
 
       le_viscosity = us_lineedit();
-      le_viscosity->setText( QString::number( VISC_20W * 100.0 ) );
+      le_viscosity->setText( QString::number( VISC_20W * 100.0, 'e', 6 ) );
       connect( le_viscosity, SIGNAL( textChanged( const QString& ) ), 
                              SLOT  ( viscosity  ( const QString& ) ) );
       controls->addWidget( le_viscosity, c_row++, 1 );
    }
 
-   QPushButton* pb_vbar = us_pushbutton( tr( "vbar (" ) + DEGC + ")" );
+   QPushButton* pb_vbar = us_pushbutton( tr( "vbar (20" ) + DEGC + ")" );
    connect( pb_vbar, SIGNAL( clicked() ), SLOT( get_peptide() ) );
    controls->addWidget( pb_vbar, c_row, 0 );
 
    le_vbar = us_lineedit();
-   le_vbar->setText( QString::number( TYPICAL_VBAR ) );
+   le_vbar->setText( QString::number( TYPICAL_VBAR, 'e', 4 ) );
    connect( le_vbar, SIGNAL( textChanged( const QString& ) ), 
                      SLOT  ( vbar       ( const QString& ) ) );
    controls->addWidget( le_vbar, c_row++, 1 );
@@ -119,7 +120,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    controls->addWidget( lb_mw, c_row, 0 );
 
    le_mw = us_lineedit();
-   le_mw->setText( QString::number( mw, 'e', 3 ) );
+   le_mw->setText( QString::number( mw, 'e', 4 ) );
    connect( le_mw, SIGNAL( textChanged( const QString& ) ), 
                    SLOT  ( update_mw  ( const QString& ) ) );
    controls->addWidget( le_mw, c_row++, 1 );
@@ -336,8 +337,8 @@ void US_Predict1::update_vbar( const US_Analyte ad )
    mw            = ad.mw;
    solution.vbar = ad.vbar;
 
-   le_mw  ->setText( QString::number( (int) mw ) );
-   le_vbar->setText( QString::number( solution.vbar, 'f', 4 ) );
+   le_mw  ->setText( QString::number( (int) mw,      'e', 4 ) );
+   le_vbar->setText( QString::number( solution.vbar, 'e', 6 ) );
 
    US_Math::data_correction( temperature, solution );
    update();
@@ -357,8 +358,8 @@ void US_Predict1::update_buffer( const US_Buffer b )
    solution.density   = b.density;
    solution.viscosity = b.viscosity;
 
-   le_density  ->setText( QString::number( solution.density,    'f', 4 ) );
-   le_viscosity->setText( QString::number( solution.viscosity , 'f', 4 ) );
+   le_density  ->setText( QString::number( solution.density,    'e', 6 ) );
+   le_viscosity->setText( QString::number( solution.viscosity , 'e', 6 ) );
 
    US_Math::data_correction( temperature, solution );
    update();
@@ -455,37 +456,37 @@ void US_Predict1::update()
    
    allparams.calculate( temperature );
 
-   lb_sphere[ 1 ] ->setText( QString::number( allparams.sphere.s      , 'e', 4 ) );
-   lb_sphere[ 2 ] ->setText( QString::number( allparams.sphere.D      , 'e', 4 ) );
-   lb_sphere[ 3 ] ->setText( QString::number( allparams.sphere.f      , 'e', 4 ) ); 
-   lb_sphere[ 4 ] ->setText( QString::number( allparams.sphere.f_f0   , 'e', 4 ) );
-   lb_sphere[ 5 ] ->setText( QString::number( allparams.sphere.a      , 'e', 4 ) );
-   lb_sphere[ 6 ] ->setText( QString::number( allparams.sphere.b      , 'e', 4 ) );
-   lb_sphere[ 7 ] ->setText( QString::number( allparams.sphere.volume , 'e', 4 ) );
+   lb_sphere[ 1 ] ->setText( QString::number( allparams.sphere.s      , 'e', 6 ) );
+   lb_sphere[ 2 ] ->setText( QString::number( allparams.sphere.D      , 'e', 6 ) );
+   lb_sphere[ 3 ] ->setText( QString::number( allparams.sphere.f      , 'e', 6 ) ); 
+   lb_sphere[ 6 ] ->setText( QString::number( allparams.sphere.f_f0   , 'e', 6 ) );
+   lb_sphere[ 5 ] ->setText( QString::number( allparams.sphere.a      , 'e', 6 ) );
+   lb_sphere[ 6 ] ->setText( QString::number( allparams.sphere.b      , 'e', 6 ) );
+   lb_sphere[ 7 ] ->setText( QString::number( allparams.sphere.volume , 'e', 6 ) );
 
-   lb_prolate[ 1 ]->setText( QString::number( allparams.prolate.s     , 'e', 4 ) );
-   lb_prolate[ 2 ]->setText( QString::number( allparams.prolate.D     , 'e', 4 ) );
-   lb_prolate[ 3 ]->setText( QString::number( allparams.prolate.f     , 'e', 4 ) ); 
-   lb_prolate[ 4 ]->setText( QString::number( allparams.prolate.f_f0  , 'e', 4 ) );
-   lb_prolate[ 5 ]->setText( QString::number( allparams.prolate.a     , 'e', 4 ) );
-   lb_prolate[ 6 ]->setText( QString::number( allparams.prolate.b     , 'e', 4 ) );
-   lb_prolate[ 7 ]->setText( QString::number( allparams.prolate.volume, 'e', 4 ) );
+   lb_prolate[ 1 ]->setText( QString::number( allparams.prolate.s     , 'e', 6 ) );
+   lb_prolate[ 2 ]->setText( QString::number( allparams.prolate.D     , 'e', 6 ) );
+   lb_prolate[ 3 ]->setText( QString::number( allparams.prolate.f     , 'e', 6 ) ); 
+   lb_prolate[ 6 ]->setText( QString::number( allparams.prolate.f_f0  , 'e', 6 ) );
+   lb_prolate[ 5 ]->setText( QString::number( allparams.prolate.a     , 'e', 6 ) );
+   lb_prolate[ 6 ]->setText( QString::number( allparams.prolate.b     , 'e', 6 ) );
+   lb_prolate[ 7 ]->setText( QString::number( allparams.prolate.volume, 'e', 6 ) );
 
-   lb_oblate[ 1 ] ->setText( QString::number( allparams.oblate.s      , 'e', 4 ) );
-   lb_oblate[ 2 ] ->setText( QString::number( allparams.oblate.D      , 'e', 4 ) );
-   lb_oblate[ 3 ] ->setText( QString::number( allparams.oblate.f      , 'e', 4 ) ); 
-   lb_oblate[ 4 ] ->setText( QString::number( allparams.oblate.f_f0   , 'e', 4 ) );
-   lb_oblate[ 5 ] ->setText( QString::number( allparams.oblate.a      , 'e', 4 ) );
-   lb_oblate[ 6 ] ->setText( QString::number( allparams.oblate.b      , 'e', 4 ) );
-   lb_oblate[ 7 ] ->setText( QString::number( allparams.oblate.volume , 'e', 4 ) );
+   lb_oblate[ 1 ] ->setText( QString::number( allparams.oblate.s      , 'e', 6 ) );
+   lb_oblate[ 2 ] ->setText( QString::number( allparams.oblate.D      , 'e', 6 ) );
+   lb_oblate[ 3 ] ->setText( QString::number( allparams.oblate.f      , 'e', 6 ) ); 
+   lb_oblate[ 6 ] ->setText( QString::number( allparams.oblate.f_f0   , 'e', 6 ) );
+   lb_oblate[ 5 ] ->setText( QString::number( allparams.oblate.a      , 'e', 6 ) );
+   lb_oblate[ 6 ] ->setText( QString::number( allparams.oblate.b      , 'e', 6 ) );
+   lb_oblate[ 7 ] ->setText( QString::number( allparams.oblate.volume , 'e', 6 ) );
 
-   lb_rod[ 1 ]    ->setText( QString::number( allparams.rod.s         , 'e', 4 ) );
-   lb_rod[ 2 ]    ->setText( QString::number( allparams.rod.D         , 'e', 4 ) );
-   lb_rod[ 3 ]    ->setText( QString::number( allparams.rod.f         , 'e', 4 ) ); 
-   lb_rod[ 4 ]    ->setText( QString::number( allparams.rod.f_f0      , 'e', 4 ) );
-   lb_rod[ 5 ]    ->setText( QString::number( allparams.rod.a         , 'e', 4 ) );
-   lb_rod[ 6 ]    ->setText( QString::number( allparams.rod.b         , 'e', 4 ) );
-   lb_rod[ 7 ]    ->setText( QString::number( allparams.rod.volume    , 'e', 4 ) );
+   lb_rod[ 1 ]    ->setText( QString::number( allparams.rod.s         , 'e', 6 ) );
+   lb_rod[ 2 ]    ->setText( QString::number( allparams.rod.D         , 'e', 6 ) );
+   lb_rod[ 3 ]    ->setText( QString::number( allparams.rod.f         , 'e', 6 ) ); 
+   lb_rod[ 6 ]    ->setText( QString::number( allparams.rod.f_f0      , 'e', 6 ) );
+   lb_rod[ 5 ]    ->setText( QString::number( allparams.rod.a         , 'e', 6 ) );
+   lb_rod[ 6 ]    ->setText( QString::number( allparams.rod.b         , 'e', 6 ) );
+   lb_rod[ 7 ]    ->setText( QString::number( allparams.rod.volume    , 'e', 6 ) );
    if ( signal ) emit changed();
 }
 

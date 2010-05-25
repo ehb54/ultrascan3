@@ -4,7 +4,7 @@
 #include "us_astfem_math.h"
 #include "us_femglobal.h"
 #include "us_hardware.h"
-#include "us_math.h"
+#include "us_math2.h"
 #include "us_stiffbase.h"
 #include "us_sleep.h"
 
@@ -454,8 +454,8 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
                ytmp[ i ] = ed->scan[ i ].omega_s_t;
             }
 
-            US_Math::linefit( &xtmp, &ytmp, &slope, &intercept, &sigma, 
-                              &correlation, sp->scans );
+            US_Math2::linefit( &xtmp, &ytmp, &slope, &intercept, &sigma, 
+                               &correlation, sp->scans );
 
             correction = -intercept / slope;
             

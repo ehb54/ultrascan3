@@ -2,7 +2,7 @@
 //
 #include "us_hydrosim.h"
 #include "us_constants.h"
-#include "us_math.h"
+#include "us_math2.h"
 
 US_Hydrosim::US_Hydrocomp::US_Hydrocomp()
 {
@@ -28,13 +28,13 @@ US_Hydrosim::US_Hydrosim()
 
 void US_Hydrosim::calculate( double temperature )
 {
-   US_Math::SolutionData solution;
+   US_Math2::SolutionData solution;
    solution.density   = density;
    solution.viscosity = viscosity;
    solution.vbar      = vbar;
    solution.vbar20    = vbar + 4.25e-4 * ( temperature - 20.0 );
    
-   US_Math::data_correction( temperature, solution );
+   US_Math2::data_correction( temperature, solution );
 
    double t                = temperature + K0;
    double vol_per_molecule = solution.vbar * mw / AVOGADRO;
