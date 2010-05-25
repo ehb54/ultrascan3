@@ -4,7 +4,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_investigator.h"
-#include "us_editor.h"
+#include "us_editor_gui.h"
 #include "us_table.h"
 
 #include <uuid/uuid.h>
@@ -115,6 +115,8 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    description->addWidget( lb_description, 0, 0 );
 
    le_description = us_lineedit( "" ); 
+   connect( le_description, SIGNAL( editingFinished   () ), 
+                            SLOT  ( change_description() ) );
    description->addWidget( le_description, 0, 1 );
  
    QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
@@ -153,11 +155,11 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    connect( pb_load_db, SIGNAL( clicked() ), SLOT( read_db() ) );
    main->addWidget( pb_load_db, row, 1 );
 
-   pb_save_db = us_pushbutton( tr( "Save Analyte" ), false );
+   pb_save_db = us_pushbutton( tr( "New Analyte" ), false );
    connect( pb_save_db, SIGNAL( clicked() ), SLOT( save_db() ) );
    main->addWidget( pb_save_db, row++, 2 );
 
-   pb_update_db = us_pushbutton( tr( "Update Analyte" ), false );
+   pb_update_db = us_pushbutton( tr( "Save Analyte" ), false );
    connect( pb_update_db, SIGNAL( clicked() ), SLOT( update_db() ) );
    main->addWidget( pb_update_db, row, 1 );
 
@@ -206,7 +208,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    protein_info->addWidget( le_protein_mw, prow, 1 );
 
    QLabel* lb_protein_vbar20 = us_label( 
-         tr( "VBar <small>(cm<sup>3</sup>/g at 20 " ) + DEGC + ")</small>:" );
+         tr( "VBar <small>(cm<sup>3</sup>/g at 20" ) + DEGC + ")</small>:" );
    protein_info->addWidget( lb_protein_vbar20, prow, 2 );
 
    le_protein_vbar20 = us_lineedit( "" );
@@ -443,12 +445,27 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
       load_analyte();
 }
 
+void US_AnalyteGui::change_description( void )
+{
+   int row = lw_analytes->currentRow();
+   if ( row < 0 ) return;
+
+   int index = info[ row ].index;
+
+   descriptions[ index ] = le_description->text();
+   search( le_search->text() );
+
+   lw_analytes->setCurrentRow( row );
+
+   //TODO  when changing/exiting chack for change
+}
+
 void US_AnalyteGui::load_analyte( void )
 {
    // At this point we have a guid and whether to load from disk or DB
    if ( db_access ) // Load from DB
    {
-
+// TODO
    }
    else  // Load from disk
    {
@@ -1405,13 +1422,10 @@ void US_AnalyteGui::more_info( void )
          
    s1 += tr( "Delta-linked Ornithine:" ) + QString::number( p.o ) + "\n";
         
-   US_Editor* edit = new US_Editor( US_Editor::LOAD, true );
-   QPoint position = this->pos();
-   edit->move( position + QPoint( 30, 50 ) );
-   edit->resize( 400, 300 );
-   edit->e->setFont(  QFont( "monospace", US_GuiSettings::fontSize() ) );
-   edit->e->setText( s1 );
-   edit->show();
+   US_EditorGui* dialog = new US_EditorGui();
+   dialog->editor->e->setFont(  QFont( "monospace", US_GuiSettings::fontSize() ) );
+   dialog->editor->e->setText( s1 );
+   dialog->exec();
 }
 
 void US_AnalyteGui::search( const QString& text )
@@ -1427,11 +1441,11 @@ void US_AnalyteGui::search( const QString& text )
          AnalyteInfo ai;
          ai.description = descriptions[ i ];
          ai.filename    = filenames   [ i ];
+         ai.index       = i;
          info << ai;
 
-         lw_analytes->addItem( new QListWidgetItem(
-             //info[ i ].analyteID + ": " + info[ i ].description, lw_analytes ) );
-             descriptions[ i ], lw_analytes ) );
+         lw_analytes->addItem( 
+               new QListWidgetItem( descriptions[ i ], lw_analytes ) );
       }
    }
 }

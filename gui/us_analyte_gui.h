@@ -89,6 +89,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
          QString               guid;
          QString               filename;
          QString               analyteID;
+         int                   index;
          US_Analyte::analyte_t type;
       };
 
@@ -187,6 +188,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       void update_db          ( void );
       void delete_db          ( void );
 
+      void change_description ( void );
       void manage_sequence    ( void );
       void spectrum           ( void );
       void more_info          ( void );

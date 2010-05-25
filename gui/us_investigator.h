@@ -32,6 +32,7 @@ class US_EXTERN US_Investigator : public US_WidgetsDialog
       {
          public:
          int     invID;        //!< The uniqe ID in the DB for the entry.
+         QString invGuid;      //!< Investigator's global ID
          QString lastName;     //!< Last Name
          QString firstName;    //!< First Name   
          QString address;      //!< Investigator's address
@@ -65,6 +66,7 @@ class US_EXTERN US_Investigator : public US_WidgetsDialog
 
       QLineEdit*   le_search;
       QLineEdit*   le_invID;
+      QLineEdit*   le_invGuid;
       QLineEdit*   le_fname;
       QLineEdit*   le_lname;
       QLineEdit*   le_address;
