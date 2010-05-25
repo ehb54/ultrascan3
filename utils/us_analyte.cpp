@@ -2,7 +2,7 @@
 #include "us_analyte.h"
 #include "us_constants.h"
 #include "us_settings.h"
-#include "us_math.h"
+#include "us_math2.h"
 
 
 //#include <uuid/uuid.h>
@@ -226,8 +226,8 @@ US_Analyte US_Analyte::read_analyte( const QString& filename, int& error )
             // Set mw
             if ( type == "PROTEIN" )
             {
-               US_Math::Peptide p;
-               US_Math::calc_vbar( p, analyte.sequence, NORMAL_TEMP );
+               US_Math2::Peptide p;
+               US_Math2::calc_vbar( p, analyte.sequence, NORMAL_TEMP );
                analyte.mw = p.mw;
 
                // The sequence tag comes before the extinction extinction tag
