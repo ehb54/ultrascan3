@@ -180,6 +180,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       void sel_investigator   ( void );
       void search             ( const QString& );
       void select_analyte     ( QListWidgetItem* );
+      void access_type        ( bool );
       void read_analyte       ( void );
       void save_analyte       ( void );
 

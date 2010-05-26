@@ -143,6 +143,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    main->addLayout( db_layout, row, 1 );
 
    QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk, true );
+   connect( rb_disk, SIGNAL( toggled( bool ) ), SLOT( access_type( bool ) ) );
    io->addButton( rb_disk );
    main->addLayout( disk_layout, row++, 2 );
 
@@ -443,6 +444,11 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
       reset();
    else
       load_analyte();
+}
+
+void US_AnalyteGui::access_type( bool /* state */ )
+{
+   reset();
 }
 
 void US_AnalyteGui::change_description( void )
