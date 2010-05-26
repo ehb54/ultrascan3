@@ -67,6 +67,8 @@ class US_EXTERN US_FemGlobal_New
    enum MeshType  { ASTFEM, CLAVERIE, MOVING_HAT, USER, ADAPTIVE };
    enum GridType  { FIXED, MOVING };
    enum OpticsType{ ABSORBANCE, INTERFERENCE, FLUORESCENCE };
+   enum ModelType { MANUAL, TWODSA, TWODSA_MW, GA, GA_MW, GA_RA, ONEDSA };
+
 
    class SimulationComponent
    {
@@ -124,6 +126,8 @@ class US_EXTERN US_FemGlobal_New
       OpticsType                     optics;
       QString                        description;
       QString                        guid;
+      ModelType                      type;
+      int                            iterations;
 
       //! An index of components (-1 means none)$
       int                            coSedSolute;

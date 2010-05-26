@@ -663,6 +663,8 @@ void US_ModelEditorNew::write_temp( QTemporaryFile& file )
    xml.writeAttribute   ( "temperature",     QString::number( model.temperature ) );
    xml.writeAttribute   ( "coSedSolute",     QString::number( model.coSedSolute ) );
    xml.writeAttribute   ( "optics",          QString::number( model.optics ) );
+   xml.writeAttribute   ( "type",            QString::number( model.type ) );
+   xml.writeAttribute   ( "iterations",      QString::number( model.iterations ) );
    
    char uuid[ 37 ];
    uuid[ 36 ] = 0;
