@@ -88,7 +88,8 @@ bool US_FemGlobal_New::ModelSystem::read_from_disk( const QString& filename )
             compressibility = a.value( "compressibility" ).toString().toDouble();
             temperature     = a.value( "temperature"     ).toString().toDouble();
             coSedSolute     = a.value( "coSedSolute"     ).toString().toInt();
-            type            = a.value( "type"            ).toString().toInt();
+            type            =
+               (US_FemGlobal_New::ModelType)a.value( "type"   ).toString().toInt();
             iterations      = a.value( "iterations"      ).toString().toInt();
          }
 
