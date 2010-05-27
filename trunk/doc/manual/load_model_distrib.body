@@ -1,0 +1,74 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Load Model Distributions'
+%]
+
+    <h2> <i>UltraScan</i> Load Model Distributions: </h2>
+
+    <p> A number of <b><i>UltraScan III</i></b> applications load model
+    distribution data for processing. These applications use the
+    US_ModelLoader dialog class to allow the user to choose the model(s).</p>
+
+    <p> The dialog presented when a US_ModelLoader is executed allows a
+    list of model choices from local disk or from the database. A Search
+    button and text field allow the list to be pared down to those of
+    interest. After a model or set of models is selected in the list, an
+    Accept button leads to model data being available to the caller. </p>
+    
+    <table>
+      <tr>
+        <td>
+          <img src="images/load_model_distrib.png" alt="ModelLoader Dialog"/>
+        </td>
+        <td>
+          <ul>
+            <li>
+              <b>Use Database</b> Check this radio button to generate a
+              list from the database.
+            </li>
+            
+            <li>
+              <b>Use Local Disk</b> Check this radio button to generate a
+              model list from local disk */ultrascan/data/models files.
+            </li>
+
+            <li>
+              <b>Select Investigator</b> After filling the text box to its
+              right with a partial name, click the Select button to generate
+              a list for the implied investigator. The default is created
+              from the current user name. Upon successfully finding a
+              matching investigator, the text becomes the full database
+              investigator ID, last name, and first name.
+            </li>
+            
+            <li>
+              <b>Search</b> After filling the text box to its right with
+              enough of a partial model description, click the Search button
+              to pare down the model list to descriptions that match the field.
+              Note that the search is case-insensitive. Blank the field and
+              click Search again to restore the full list.
+            </li>
+            
+            <li>
+              <b>(model list)</b> The list of model descriptions is generated
+              either from local disk or db. Click on one or more entries to
+              indicate your choice(s) of data to load.
+            </li>
+            
+            <li>
+              <b>Help</b> Click to bring up this documentation.
+            </li>
+            
+            <li>
+              <b>Cancel</b> Click to close the dialog with no choices made.
+            </li>
+            
+            <li>
+              <b>Accept</b> Click to accept the choice(s) highlighted in the
+              model list and pass distribution data to the caller.
+            </li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+[% INCLUDE footer.us3 %]

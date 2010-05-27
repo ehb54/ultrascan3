@@ -549,6 +549,12 @@ void US_Pseudo3D_Combine::load_distro()
       }
    }
 
+   else
+   {  // no selection made
+      delete dialog;
+      return;
+   }
+
    delete dialog;
 
    plot_data();
