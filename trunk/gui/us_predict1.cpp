@@ -139,8 +139,8 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    }
    else
    {
-      connect( le_vbar, SIGNAL( textChanged( const QString& ) ), 
-                        SLOT  ( degC       ( const QString& ) ) );
+      connect( le_temperature, SIGNAL( textChanged( const QString& ) ), 
+                               SLOT  ( degC       ( const QString& ) ) );
    }
    controls->addWidget( le_temperature, c_row++, 1 );
 
