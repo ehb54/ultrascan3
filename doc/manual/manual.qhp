@@ -33,6 +33,7 @@
             <keyword name="ga-initialize"               ref="ga_initialize.html"/>
             <keyword name="vhw-enhanced"                ref="vhw_enhanced.html"/>
             <keyword name="vhw-distrib-plot"            ref="vhw_distrib_plot.html"/>
+            <keyword name="model-loader"                ref="load_model_distrib.html"/>
         </keywords>
         <files>
             <file>mainstyle.css</file>
@@ -82,6 +83,9 @@
             <file>vhw_distrib_plot.html</file>
             <file>images/vhw_distribution.png</file>
             <file>images/vhw_histogram.png</file>
+
+            <file>load_model_distrib.html</file>
+            <file>images/load_model_distrib.png</file>
         </files>
     </filterSection>
 </QtHelpProject> 
