@@ -5,6 +5,7 @@
 #include <uuid/uuid.h>
 
 #include "us_ga_init.h"
+#include "us_model_loader.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -352,6 +353,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    plot_dim   = 2;
    plot_s     = true;
    rbtn_click = false;
+   def_local  = true;
 
    reset();
 }
@@ -1016,24 +1018,7 @@ void US_GA_Initialize::load_distro()
    Solute      sol_s;
    Solute      sol_w;
 
-   // file types filter
-   QString filter =
-      tr( "Any Distro files (" ) +
-      "*.fe*_dis.* *.cofs*_dis.* *.sa2d*_dis.* *.ga*_dis.* *.global*_dis.*);;"
-      + tr( "FE files (*.fe_dis.*);;" )
-      + tr( "COFS files (*.cofs_dis.*);;" )
-      + tr( "2DSA files (*.sa2d_dis.*);;" )
-      + tr( "2DSA-MW files (*.sa2d_mw_dis.*);;" )
-      + tr( "GA files (*.ga_dis.*);;" )
-      + tr( "GA-MW files (*.ga_mw_dis.*);;" )
-      + tr( "GA-MW-MC files (*.ga_mw_mc_dis.*);;" )
-      + tr( "2DSA-MC files (*.sa2d_mc_dis.*);;" )
-      + tr( "2DSA-MW-MC files (*.sa2d_mw_mc_dis.*);;" )
-      + tr( "Global files (*.global_dis.*);;" )
-      + tr( "Global-MC files (*.global_mc_dis.*);;" )
-      + tr( "Any files (*)" );
-
-   // file type table:  FilePartialName, Method, MonteCarlo
+   // model type table:  DescPartialName, Method, MonteCarlo
    const char* cdtyp[] =
    {
       "cofs_dis",        "C(s)",                               "F",
@@ -1052,23 +1037,61 @@ void US_GA_Initialize::load_distro()
    };
    int ncdte = sizeof( cdtyp ) / sizeof( char* );
 
-   // get a file name for distribution data
-   QString fname = QFileDialog::getOpenFileName( this,
-      tr( "Load Distribution File" ),
-      US_Settings::resultDir(),
-      filter,
-      0, 0 );
+   US_FemGlobal_New::ModelSystem model;
 
-   // set values based on file name
-   QFileInfo fi( fname );
-   int jj       = fname.lastIndexOf( "." );
-   int kk       = fname.length();
-   QString tstr = fname.right( kk - jj - 1 );
+   US_ModelLoader* dialog = new US_ModelLoader( false, def_local );
+   dialog->move( this->pos() + QPoint( 200, 200 ) );
+
+   QString         mdesc;
+   QString         mfnam;
+   QString         sep;
+
+   if ( dialog->exec() == QDialog::Accepted )
+   {
+      model     = dialog->load_model( 0 );
+      mdesc     = dialog->description( 0 );
+qDebug() << "LOAD ACCEPT";
+qDebug() << "  Description:\n " << mdesc;
+      sep       = mdesc.left( 1 );
+      mfnam     = mdesc.section( sep, 2, 2 );
+
+      if ( mfnam.isEmpty() )
+      {  // from db:  make ID the "filename"; default to db next time
+         mfnam     = "db ID " + mdesc.section( sep, 4, 4 );
+         def_local = false;
+      }
+
+      else
+      {  // from disk:  use base file name; default to disk next time
+         mfnam     = QFileInfo( mfnam ).baseName();
+         def_local = true;
+      }
+
+      delete dialog;
+
+      if ( model.components.size() < 1 )
+      {
+qDebug() << "  NO Model components";
+         return;
+      }
+   }
+
+   else
+   {
+      delete dialog;
+      return;
+   }
+
+   mdesc        = mdesc.section( sep, 1, 1 );
+
+   run_name     = mdesc.section( ".", 0, 0 );
+   int jj       = mdesc.lastIndexOf( "." );
+   int kk       = mdesc.length();
+   QString tstr = mdesc.right( kk - jj - 1 );
 
    cell         = tstr.left( 1 );
-   tstr         = fname.right( kk - jj - 2 );
+   tstr         = mdesc.right( kk - jj - 2 );
    wavelength   = tstr;
-   run_name     = fi.baseName();
    distro_type  = 0;
 
    // find type in table and set values accordingly
@@ -1076,7 +1099,7 @@ void US_GA_Initialize::load_distro()
    {
       QString fnp( cdtyp[ jj ] );
 
-      if ( fname.contains( fnp, Qt::CaseInsensitive ) )
+      if ( mdesc.contains( fnp, Qt::CaseInsensitive ) )
       {
          distro_type = jj / 3 + 1;
          monte_carlo = QString( cdtyp[ jj+2 ] ).contains( "T" );
@@ -1087,92 +1110,28 @@ void US_GA_Initialize::load_distro()
    s_distro.clear();
    w_distro.clear();
 
-   tstr    = run_name + "." + cell + wavelength + "\n" + method;
+   // pick up number of monte carlo iterations in case needed
+   mc_iters  = ( model.iterations > 1 ) ? model.iterations : 1;
+
+   tstr      = run_name + "." + cell + wavelength + "\n" + method;
    data_plot->setTitle( tstr );
 
-   // read in and set distribution s,c,k values
+   // read in and set distribution s,c,k,d values
    if ( distro_type > 0 )
    {
-      QFile filei( fname );
-
-      if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+      for ( int jj = 0; jj < model.components.size(); jj++ )
       {
-         QTextStream ts( &filei );
-         QString     s1;
-         QStringList l1;
-         int         i1  = 1;
-         int         i2  = 4;
-         int         i3  = 5;
-         int         i4  = 6;
-         int         i5  = 3;
-         int         mxi = 0;
+         sol_s.s  = model.components[ jj ].s * 1.0e13;
+         sol_s.c  = model.components[ jj ].f;
+         sol_s.k  = model.components[ jj ].f_f0;
+         sol_s.d  = model.components[ jj ].D;
+         sol_w.s  = model.components[ jj ].mw;
+         sol_w.c  = sol_s.c;
+         sol_w.k  = sol_s.k;
+         sol_w.d  = sol_s.d;
 
-         if ( !ts.atEnd() )
-         {
-            s1       = ts.readLine();    // interpret header line
-            l1       = s1.split( QRegExp( "\\s+" ) );
-            i1       = l1.indexOf( QRegExp( "s_20.*", Qt::CaseInsensitive ) );
-            i2       = l1.indexOf( QRegExp( "mw.*",   Qt::CaseInsensitive ) );
-            i3       = l1.indexOf( QRegExp( "freq.*", Qt::CaseInsensitive ) );
-            i4       = l1.indexOf( QRegExp( "f/f0.*", Qt::CaseInsensitive ) );
-            i5       = l1.indexOf( QRegExp( "d_20.*", Qt::CaseInsensitive ) );
-            mxi      = ( i1 > mxi ) ? i1  : mxi;
-            mxi      = ( i2 > mxi ) ? i2  : mxi;
-            mxi      = ( i3 > mxi ) ? i3  : mxi;
-            mxi      = ( i4 > mxi ) ? i4  : mxi;
-            mxi      = ( i5 > mxi ) ? i5  : mxi;
-            i1       = ( i1 < 0 )   ? mxi : i1;
-            i2       = ( i2 < 0 )   ? mxi : i2;
-            i3       = ( i3 < 0 )   ? mxi : i3;
-            i4       = ( i4 < 0 )   ? mxi : i4;
-            i5       = ( i5 < 0 )   ? mxi : i5;
-            mxi++;
-         }
-
-         if ( monte_carlo )
-         {  // GA Monte Carlo:  we need the number of MC iterations
-            s1       = ts.readLine();    // consume entire first line
-            l1       = s1.split( QRegExp( "\\s+" ) );
-            mc_iters = l1.at( 0 ).toInt();
-         }
-
-         while ( !ts.atEnd() )
-         {
-            double dv1;
-            double dv2;
-            double dv3;
-            double dv4;
-            double dv5;
-            s1       = ts.readLine();    // consume entire line
-            l1       = s1.split( QRegExp( "\\s+" ) );
-            if ( l1.empty()  ||  l1.size() < mxi )
-            {
-               qDebug() << "BLANK/SHORT LINE: size=" << l1.size();
-               continue;      // skip this line
-            }
-            dv1      = l1.at( i1 ).toDouble();  // S_20,W
-            dv2      = l1.at( i2 ).toDouble();  // MW
-            dv3      = l1.at( i3 ).toDouble();  // Frequency
-            dv4      = l1.at( i4 ).toDouble();  // f/f0
-            dv5      = l1.at( i5 ).toDouble();  // D_20,W
-
-            if ( dv1 == 0.0 )
-               break;
-
-            dv1     *= 1.0e13;   // s_20,W properly scaled
-            sol_s.s  = dv1;
-            sol_s.c  = dv3;
-            sol_s.k  = dv4;
-            sol_s.d  = dv5;
-            sol_w.s  = dv2;
-            sol_w.c  = dv3;
-            sol_w.k  = dv4;
-            sol_w.d  = dv5;
-
-            s_distro.append( sol_s );
-            w_distro.append( sol_w );
-         }
-         filei.close();
+         s_distro.append( sol_s );
+         w_distro.append( sol_w );
       }
 
       // sort and reduce distributions
@@ -1213,11 +1172,13 @@ void US_GA_Initialize::load_distro()
    pb_resetsb->setEnabled( true );
 
    kk           = s_distro.size();
-   dfilname     = fi.fileName();
+   dfilname     = "(" + mfnam + ") " + mdesc;
    stdfline     = "  " + dfilname;
    stnpline     = tr( "The number of distribution points is %1" ).arg( kk );
+
    if ( kk != psdsiz )
       stnpline    += tr( "\n  (reduced from %1)" ).arg( psdsiz );
+
    te_status->setText( stcmline + "\n" + stdiline + "\n"
          + stdfline + "\n" + stnpline );
 
@@ -1575,7 +1536,6 @@ QwtPlotCurve* US_GA_Initialize::drawBucketRect( int sx, QRectF rect )
 void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
 {
    int sx      = mx.row();
-//qDebug() << "SCLICK sx=" << sx;
 
    highlight_solute( sx );
    data_plot->replot();
@@ -1592,7 +1552,6 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
       msgBox.setDefaultButton( QMessageBox::Yes );
       if ( msgBox.exec() == QMessageBox::Yes )
       {
-         //qDebug() << "removing Solute Bin " << binx;
          removeSoluteBin( sx );
       }
    }
@@ -1612,7 +1571,6 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
 void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
 {
    int sx      = mx.row();
-//qDebug() << "DCLICK sx=" << sx;
    QwtPlotCurve* bc1;
    QPointF pt0;
 
@@ -1727,7 +1685,6 @@ bool US_GA_Initialize::eventFilter( QObject *obj, QEvent *e )
    if ( obj == lw_sbin_data  &&
         e->type() == QEvent::ContextMenu )
    {
-      //qDebug() << "Right-Mouse-Press Event";
       rbtn_click = true;
       return false;
    }

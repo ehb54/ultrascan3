@@ -16,6 +16,7 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_editor.h"
+#include "us_model_loader.h"
 #include "us_plot.h"
 #include "us_colorgradIO.h"
 #include "us_spectrodata.h"
@@ -115,6 +116,7 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       bool          auto_lim;
       bool          plot_s;
       bool          looping;
+      bool          def_local;
 
       QString       xa_title_s;
       QString       xa_title_mw;
@@ -138,7 +140,7 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       void select_plot_s( void );
       void select_plot_mw( void );
       void load_distro( void );
-      void load_distro( const QString& );
+      void load_distro( US_ModelLoader*, int );
       void load_color( void );
       void plotall( void );
       void stop( void );

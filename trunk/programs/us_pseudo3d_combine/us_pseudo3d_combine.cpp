@@ -262,6 +262,8 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    main->addLayout( left );
    main->addLayout( plot );
 
+   def_local  = true;
+
    // set up variables and initial state of GUI
 
    reset();
@@ -426,7 +428,6 @@ void US_Pseudo3D_Combine::plot_data( void )
    if ( tsys->distro_type == 12 )
       methi          = methi + ".00";
    QString ofname = ofdir + "/" + methi + celli + ".png";
-//qDebug() << "PNG SAVE ofname=" << ofname;
 
    plotmap.save( ofname );
 
@@ -470,7 +471,6 @@ void US_Pseudo3D_Combine::update_curr_distr( double dval )
       le_distr_info->setText( tstr );
       cmapname     = tsys->cmapname;
       le_cmap_name->setText( cmapname );
-//qDebug() << "UpdCurrDistr cmapname=" << cmapname;
       colormap     = tsys->colormap;
    }
 
@@ -532,43 +532,33 @@ void US_Pseudo3D_Combine::select_plot_mw()
 
 void US_Pseudo3D_Combine::load_distro()
 {
-   QString filter =
-      tr( "Any Distro files (" ) +
-      "*.fe*_dis.* *.cofs*_dis.* *.sa2d*_dis.* *.ga*_dis.* *.global*_dis.*);;"
-      + tr( "FE files (*.fe_dis.*);;" )
-      + tr( "COFS files (*.cofs_dis.*);;" )
-      + tr( "2DSA files (*.sa2d_dis.*);;" )
-      + tr( "2DSA-MW files (*.sa2d_mw_dis.*);;" )
-      + tr( "GA files (*.ga_dis.*);;" )
-      + tr( "GA-MW files (*.ga_mw_dis.*);;" )
-      + tr( "GA-MW-MC files (*.ga_mw_mc_dis.*);;" )
-      + tr( "2DSA-MC files (*.sa2d_mc_dis.*);;" )
-      + tr( "2DSA-MW-MC files (*.sa2d_mw_mc_dis.*);;" )
-      + tr( "Global files (*.global_dis.*);;" )
-      + tr( "Global-MC files (*.global_mc_dis.*);;" )
-      + tr( "Any files (*)" );
+   // get a model description or set of descriptions for distribution data
+   US_ModelLoader* dialog = new US_ModelLoader( true, def_local );
+   dialog->move( this->pos() + QPoint( 200, 200 ) );
 
-   // get a file name or set of names for distribution data
-   QStringList list = QFileDialog::getOpenFileNames( this,
-      tr( "Load Distribution Files(s)" ),
-      US_Settings::resultDir(),
-      filter,
-      0, 0 );
-
-   if ( !list.empty() )
+   if ( dialog->exec() == QDialog::Accepted )
    {
-      // load a distribution for each named file
+      // detect whether db or disk source; default next load accordingly
+      QString md = dialog->description( 0 );
+      QString mf = md.section( md.left( 1 ), 2, 2 );
+      def_local  = mf.isEmpty() ? false : true;
 
-      for ( QStringList::iterator it = list.begin(); it != list.end(); it++ )
-      {
-         load_distro( *it );
+      for ( int jj = 0; jj < dialog->models_count(); jj++ )
+      {  // load each selected distribution model
+         load_distro( dialog, jj );
       }
    }
+
+   delete dialog;
+
+   plot_data();
 }
 
-void US_Pseudo3D_Combine::load_distro( const QString& fname )
+void US_Pseudo3D_Combine::load_distro( US_ModelLoader* dialog, int index )
 {
-   // file type table:  FilePartialName, Method, MonteCarlo
+   US_FemGlobal_New::ModelSystem model;
+
+   // model type table:  DescPartialName, Method, MonteCarlo
    const char* cdtyp[] =
    {
       "cofs_dis",        "C(s)",                               "F",
@@ -585,27 +575,30 @@ void US_Pseudo3D_Combine::load_distro( const QString& fname )
       "global_dis",      "Global Distro",                      "T",
       "global_mc_dis",   "Global MC Distro",                   "T"
    };
-   int ncdte = sizeof( cdtyp ) / sizeof( char* );
+   int         ncdte = sizeof( cdtyp ) / sizeof( char* );
 
    DisSys      tsys;
    Solute      sol_s;
-   Solute      sol_mw;
+   Solute      sol_w;
+
+   model         = dialog->load_model(  index );
+
+   QString mdesc = dialog->description( index );
+   mdesc         = mdesc.section( mdesc.left( 1 ), 1, 1 );
 
    // load current colormap
    tsys.colormap = colormap;
    tsys.cmapname = cmapname;
 
-   // set values based on file name
-qDebug() << "Load Distro, fname=" << fname;
-   QFileInfo fi( fname );
-   int jj           = fname.lastIndexOf( "." );
-   int kk           = fname.length();
-   QString tstr     = fname.right( kk - jj - 1 );
+   // set values based on description
+   int jj           = mdesc.lastIndexOf( "." );
+   int kk           = mdesc.length();
+   QString tstr     = mdesc.right( kk - jj - 1 );
 
    tsys.cell        = tstr.left( 1 );
-   tstr             = fname.right( kk - jj - 2 );
+   tstr             = mdesc.right( kk - jj - 2 );
    tsys.wavelength  = tstr;
-   tsys.run_name    = fi.baseName();
+   tsys.run_name    = mdesc.section( ".", 0, 0 );
    tsys.distro_type = 0;
 
    // find type in table and set values accordingly
@@ -613,7 +606,7 @@ qDebug() << "Load Distro, fname=" << fname;
    {
       QString fnp( cdtyp[ jj ] );
 
-      if ( fname.contains( fnp, Qt::CaseInsensitive ) )
+      if ( mdesc.contains( fnp, Qt::CaseInsensitive ) )
       {
          tsys.distro_type = jj / 3 + 1;
          tsys.monte_carlo = QString( cdtyp[ jj+2 ] ).contains( "T" );
@@ -633,88 +626,18 @@ qDebug() << "Load Distro, fname=" << fname;
    // read in and set distribution s,c,k values
    if ( tsys.distro_type > 0 )
    {
-      QFile filei( fname );
-
-      if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+      for ( jj = 0; jj < model.components.size(); jj++ )
       {
-         QTextStream ts( &filei );
-         QString     s1;
-         QStringList l1;
-         int         i1  = 1;
-         int         i2  = 4;
-         int         i3  = 5;
-         int         i4  = 6;
-         int         mxi = 0;
+         sol_s.s  = model.components[ jj ].s * 1.0e13;
+         sol_s.c  = model.components[ jj ].f;
+         sol_s.k  = model.components[ jj ].f_f0;
+         sol_w.s  = model.components[ jj ].mw;
+         sol_w.c  = sol_s.c;
+         sol_w.k  = sol_s.k;
 
-         if ( !ts.atEnd() )
-         {
-            s1       = ts.readLine();    // interpret header line
-            l1       = s1.split( QRegExp( "\\s+" ) );
-            i1       = l1.indexOf( QRegExp( "s_20.*", Qt::CaseInsensitive ) );
-            i2       = l1.indexOf( QRegExp( "mw.*",   Qt::CaseInsensitive ) );
-            i3       = l1.indexOf( QRegExp( "freq.*", Qt::CaseInsensitive ) );
-            i4       = l1.indexOf( QRegExp( "f/f0.*", Qt::CaseInsensitive ) );
-#if 0
-qDebug() << "Header Line :" << s1;
-qDebug() << " l1.size()=" << l1.size();
-qDebug() << "  i1=" << i1;
-qDebug() << "  i2=" << i2;
-qDebug() << "  i3=" << i3;
-qDebug() << "  i4=" << i4;
-#endif
-            mxi      = ( i1 > mxi ) ? i1  : mxi;
-            mxi      = ( i2 > mxi ) ? i2  : mxi;
-            mxi      = ( i3 > mxi ) ? i3  : mxi;
-            mxi      = ( i4 > mxi ) ? i4  : mxi;
-            i1       = ( i1 < 0 )   ? mxi : i1;
-            i2       = ( i2 < 0 )   ? mxi : i2;
-            i3       = ( i3 < 0 )   ? mxi : i3;
-            i4       = ( i4 < 0 )   ? mxi : i4;
-            mxi++;
-         }
-
-         if ( tsys.monte_carlo )
-         {  // GA Monte Carlo:  we need the number of MC iterations
-            s1       = ts.readLine();    // consume entire first line
-            l1       = s1.split( QRegExp( "\\s+" ) );
-            mc_iters = l1.at( 0 ).toInt();
-         }
-
-         while ( !ts.atEnd() )
-         {
-            double dv1;
-            double dv2;
-            double dv3;
-            double dv4;
-            s1       = ts.readLine();    // consume entire line
-            l1       = s1.split( QRegExp( "\\s+" ) );
-            if ( l1.empty()  ||  l1.size() < mxi )
-            {
-               qDebug() << "BLANK/SHORT LINE: size=" << l1.size();
-               continue;      // skip this line
-            }
-            dv1      = l1.at( i1 ).toDouble();  // S_20,W
-            dv2      = l1.at( i2 ).toDouble();  // MW
-            dv3      = l1.at( i3 ).toDouble();  // Frequency
-            dv4      = l1.at( i4 ).toDouble();  // f/f0
-
-            if ( dv1 == 0.0 )
-               break;
-
-            dv1     *= 1.0e13;   // s_20,W properly scaled
-            sol_s.s  = dv1;
-            sol_s.c  = dv3;
-            sol_s.k  = dv4;
-            sol_mw.s = dv2;
-            sol_mw.c = dv3;
-            sol_mw.k = dv4;
-
-            tsys.s_distro.append( sol_s );
-            tsys.mw_distro.append( sol_mw );
-         }
-         filei.close();
+         tsys.s_distro.append(  sol_s );
+         tsys.mw_distro.append( sol_w );
       }
-//qDebug() << "  s_distro size=" << tsys.s_distro.size();
 
       // sort and reduce distributions
       sort_distro( tsys.s_distro, true );
@@ -788,10 +711,9 @@ void US_Pseudo3D_Combine::load_color()
    QFileInfo fi( fname );
    cmapname  = tr( "Color Map: " ) + fi.baseName();
    le_cmap_name->setText( cmapname );
-//qDebug() << "LoadColor cmapname=" << cmapname;
 
    // save the map information for the current distribution
-   if ( system.size() > curr_distr )
+   if ( curr_distr < system.size() )
    {
       DisSys* tsys    = (DisSys*)&system.at( curr_distr );
       tsys->colormap  = colormap;
@@ -815,7 +737,6 @@ void US_Pseudo3D_Combine::plotall()
 
 void US_Pseudo3D_Combine::stop()
 {
-//qDebug() << "\t\t+++STOP+++";
    looping  = false;
 }
 
@@ -957,7 +878,6 @@ void US_Pseudo3D_Combine::sort_distro( QList< Solute >& listsols,
 
           sol1    = sol2;        // save entry for next iteration
       }
-//qDebug() << "  SD:   reduced size=" << reduced.size();
 
       if ( reduced.size() < sizi )
       {   // if some reduction happened, replace list with reduced version
@@ -970,7 +890,6 @@ void US_Pseudo3D_Combine::sort_distro( QList< Solute >& listsols,
 void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
 {
    int tm_id  = event->timerId();
-//qDebug() << "Timer ID:" << tm_id;
 
    if ( tm_id != patm_id )
    {  // if other than plot loop timer event, pass on to normal handler
