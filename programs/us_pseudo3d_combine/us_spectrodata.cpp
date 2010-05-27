@@ -182,7 +182,6 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
    int    hiyd  = nyscn / 4;
    nxd          = ( nxd < 10 ) ? 10 : ( ( nxd > hixd ) ? hixd : nxd );
    nyd          = ( nyd < 10 ) ? 10 : ( ( nyd > hiyd ) ? hiyd : nyd );
-//qDebug() << "nxd,nyd=" << nxd << "," << nyd;
 
    if ( resol != 100.0 )
    {

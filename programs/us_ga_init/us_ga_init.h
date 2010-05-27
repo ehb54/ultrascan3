@@ -132,6 +132,7 @@ class US_EXTERN US_GA_Initialize : public US_Widgets
       bool          monte_carlo;
       bool          plot_s;
       bool          rbtn_click;
+      bool          def_local;
 
       QString       run_name;
       QString       cell;
