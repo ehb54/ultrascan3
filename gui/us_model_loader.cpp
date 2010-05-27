@@ -172,7 +172,6 @@ QString US_ModelLoader::description( int index )
 // Slot to respond to change in disk/db radio button select
 void US_ModelLoader::select_disk( bool checked )
 {
-qDebug() << "DISK: ckd isChkd" << checked << rb_disk->isChecked();
    // Disable investigator field if from disk; Enable if from db
    pb_investigator->setEnabled( !rb_disk->isChecked() );
    le_investigator->setEnabled( !rb_disk->isChecked() );
@@ -205,22 +204,16 @@ qDebug() << "DISK: ckd isChkd" << checked << rb_disk->isChecked();
 
       if ( db.numRows() < 1 )
       {  // Investigator text yields nothing:  retry with blank field
-qDebug() << "INITIAL DB numRows invtext" << db.numRows() << invtext;
          query.clear();
          query << "get_people" << "";
          db.query( query );
       }
-
-qDebug() << "DB connected?" << db.isConnected();
-qDebug() << "DB numRows" << db.numRows();
-qDebug() << " Investigator text" << invtext;
 
       while ( db.next() )
       {  // Loop through investigators looking for match
          data.invID     = db.value( 0 ).toInt();
          data.lastName  = db.value( 1 ).toString();
          data.firstName = db.value( 2 ).toString();
-qDebug() << "id lName fName" << data.invID << data.lastName << data.firstName;
          if ( db.numRows() < 2  ||
               data.lastName.contains( invtext, Qt::CaseInsensitive )  ||
               data.firstName.contains( invtext, Qt::CaseInsensitive ) )
@@ -243,17 +236,14 @@ qDebug() << "id lName fName" << data.invID << data.lastName << data.firstName;
 // Investigator text changed:  act like DB radio button just checked
 void US_ModelLoader::investigator()
 {
-qDebug() << "INVESTIGATOR";
    select_disk( false );
 }
 
 // List model choices (disk/db and possibly filtered by search text)
 void US_ModelLoader::list_models()
 {
-qDebug() << "LIST_MODELS";
    QString mfilt = le_mfilter->text();
    QRegExp mpart = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
-qDebug() << "MFILT:" << mfilt;
    ondisk     = rb_disk->isChecked();
    model_descriptions.clear();         // clear model descriptions
 
@@ -357,7 +347,6 @@ qDebug() << "MFILT:" << mfilt;
 void US_ModelLoader::cancelled()
 {
    modelsCount = 0;
-qDebug() << "MLOAD cancel";
    reject();
    close();
 }
@@ -365,7 +354,6 @@ qDebug() << "MLOAD cancel";
 // Accept button:  set up to return model information
 void US_ModelLoader::accepted()
 {
-qDebug() << "MLOAD accept";
    QList< ModelDesc >        allmods = model_descriptions;
    QList< QListWidgetItem* > selmods = lw_models->selectedItems();
    modelsCount = selmods.size();
@@ -378,7 +366,6 @@ qDebug() << "MLOAD accept";
       {  // get row of selection then row in original descriptions list
          int     row   = lw_models->row( selmods[ ii ] );
          QString mdesc = selmods[ ii ]->text();
-qDebug() << "ii row item" << ii << row << mdesc;
          for ( int jj = 0; jj < allmods.size(); jj++ )
          {  // search for matching description and save its row
             if ( mdesc.compare( allmods[ jj ].description ) == 0 )
@@ -387,7 +374,6 @@ qDebug() << "ii row item" << ii << row << mdesc;
                break;
             }
          }
-qDebug() << "   row item" << row << mdesc;
          // repopulate descriptions with only selected row(s)
          model_descriptions.append( allmods.at( row ) );
       }
