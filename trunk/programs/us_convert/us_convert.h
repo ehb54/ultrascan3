@@ -28,7 +28,8 @@ class US_EXTERN US_Convert : public US_Widgets
          CANTOPEN,                            //!< The file cannot be opened for writing
          NODATA,                              //!< There is no data to write
          NOXML,                               //!< XML data has not been entered
-         PARTIAL_XML                          //!< XML data has not been entered for all c/c/w combinations
+         PARTIAL_XML,                         //!< XML data has not been entered for all c/c/w combinations
+         NOT_WRITTEN                          //!< data was not written
       };
 
   private:
@@ -46,6 +47,8 @@ class US_EXTERN US_Convert : public US_Widgets
       QString       runID;
       QLineEdit*    le_dir;
       QLineEdit*    le_runID;
+      QLineEdit*    le_bufferInfo;
+      QLineEdit*    le_analyteInfo;
 
       QLabel*       lb_description;
       QLineEdit*    le_description;
@@ -70,6 +73,7 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_editExpinfo;
       QPushButton*  pb_buffer;
       QPushButton*  pb_analyte;
+      QPushButton*  pb_applyAll;
 
       QComboBox*    cb_centerpiece;
 
@@ -119,6 +123,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void exclude_scans   ( void );
       void include         ( void );
       void reset_scan_ctrls( void );
+      void reset_ccw_ctrls ( void );
       int  writeAll        ( void );
       void cClick          ( const QwtDoublePoint& );
       void define_subsets  ( void );
@@ -138,6 +143,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void assignAnalyte   ( US_Analyte  );
       bool centerpieceInfo ( void );
       void getCenterpieceIndex( int );
+      void ccwApplyAll     ( void );
       int  findTripleIndex ( void );
       void draw_vline      ( double );
       void connect_error   ( const QString& );

@@ -30,7 +30,9 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          int              tripleID;           //!< The ID of this c/c/w combination
          int              centerpiece;        //!< The ID of the centerpiece that was used
          int              bufferID;           //!< The ID of the buffer that was associated
+         QString          bufferDesc;         //!< The corresponding buffer description
          int              analyteID;          //!< The ID of the analyte that was associated
+         QString          analyteDesc;        //!< The corresponding analyte description
          char             guid[16];           //!< The GUID of this triple
          TripleInfo();                        //!< A generic constructor
       };
