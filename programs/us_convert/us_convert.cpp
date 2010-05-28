@@ -32,6 +32,10 @@ US_Convert::US_Convert() : US_Widgets()
    setWindowTitle( tr( "Convert Legacy Raw Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
+   // Very light gray, for read-only line edits
+   QPalette gray = US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+
    QGridLayout* settings = new QGridLayout;
 
    int row = 0;
@@ -96,18 +100,21 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( le_description, row++, 0, 1, 2 );
 
    // Cell / Channel / Wavelength
+   QGridLayout* ccw = new QGridLayout();
+
    lb_triple = us_banner( tr( "Cell / Channel / Wavelength" ), -1 );
-   settings->addWidget( lb_triple, row++, 0, 1, 2 );
+   ccw->addWidget( lb_triple, row++, 0, 1, 4 );
 
    lw_triple = us_listwidget();
    lw_triple->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
    lw_triple->setMaximumHeight( 120 );
+   lw_triple->setMaximumWidth ( 120 );
    connect( lw_triple, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
                        SLOT  ( changeTriple( QListWidgetItem* ) ) );
-   settings->addWidget( lw_triple, row, 0, 4, 1 );
+   ccw->addWidget( lw_triple, row, 0, 4, 1 );
 
    QLabel* lb_ccwinfo = us_label( tr( "Enter Associated c/c/w Info:" ) );
-   settings->addWidget( lb_ccwinfo, row++, 1 );
+   ccw->addWidget( lb_ccwinfo, row++, 1, 1, 3 );
 
    // Set up centerpiece drop-down
    centerpieceInfo();
@@ -115,15 +122,31 @@ US_Convert::US_Convert() : US_Widgets()
    cb_centerpiece -> addItems( centerpieceTypes );
    connect( cb_centerpiece, SIGNAL( currentIndexChanged( int ) ), 
                             SLOT  ( getCenterpieceIndex( int ) ) );
-   settings->addWidget( cb_centerpiece, row++, 1 );
+   ccw->addWidget( cb_centerpiece, row, 1, 1, 2 );
+
+   pb_applyAll = us_pushbutton( tr( "Apply to All" ), false );
+   connect( pb_applyAll, SIGNAL( clicked() ), SLOT( ccwApplyAll() ) );
+   ccw->addWidget( pb_applyAll, row++, 3 );
 
    pb_buffer = us_pushbutton( tr( "Buffer" ), false );
    connect( pb_buffer, SIGNAL( clicked() ), SLOT( selectBuffer() ) );
-   settings->addWidget( pb_buffer, row++, 1 );
+   ccw->addWidget( pb_buffer, row, 1 );
+
+   le_bufferInfo = us_lineedit( "", 1 );
+   le_bufferInfo ->setPalette ( gray );
+   le_bufferInfo ->setReadOnly( true );
+   ccw->addWidget( le_bufferInfo, row++, 2, 1, 2 );
 
    pb_analyte = us_pushbutton( tr( "Analyte" ), false );
    connect( pb_analyte, SIGNAL( clicked() ), SLOT( selectAnalyte() ) );
-   settings->addWidget( pb_analyte, row++, 1 );
+   ccw->addWidget( pb_analyte, row, 1 );
+
+   le_analyteInfo = us_lineedit( "", 1 );
+   le_analyteInfo ->setPalette ( gray );
+   le_analyteInfo ->setReadOnly( true );
+   ccw->addWidget( le_analyteInfo, row++, 2, 1, 2 );
+
+   settings->addLayout( ccw, row++, 0, 1, 2 );
 
    // Scan Controls
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
@@ -238,6 +261,8 @@ void US_Convert::reset( void )
 
    le_description->setText( "" );
    le_runID      ->setText( "" );
+   le_bufferInfo ->setText( "" );
+   le_analyteInfo->setText( "" );
 
    pb_exclude    ->setEnabled( false );
    pb_include    ->setEnabled( false );
@@ -246,6 +271,7 @@ void US_Convert::reset( void )
    pb_cancelref  ->setEnabled( false );
    pb_buffer     ->setEnabled( false );
    pb_analyte    ->setEnabled( false );
+   pb_applyAll   ->setEnabled( false );
 
    cb_centerpiece->setEnabled( false );
 
@@ -430,6 +456,18 @@ bool US_Convert::read( void )
          US_Settings::dataDir(),
          QFileDialog::DontResolveSymlinks );
 
+/*
+Method 2:
+   QString filename = QFileDialog::getOpenFileName( this,
+         tr( "Raw Data Directory" ),
+         US_Settings::dataDir() );
+
+   QFileInfo fileinfo( filename );
+   QString dir = fileinfo.absolutePath();
+*/
+
+// qDebug() << "Dir = " << dir;
+
    if ( dir.isEmpty() ) return( false ); 
 
    dir.replace( "\\", "/" );  // WIN32 issue
@@ -472,6 +510,8 @@ void US_Convert::setTripleInfo( void )
    // Load them into the list box
    lw_triple->clear();
    lw_triple->addItems( triples );
+   QListWidgetItem* item = lw_triple->item( 0 );   // select the item at row 0
+   lw_triple->setItemSelected( item, true );
    currentTriple = 0;
 }
 
@@ -539,12 +579,19 @@ void US_Convert::details( void )
 void US_Convert::changeTriple( QListWidgetItem* )
 {
    currentTriple = lw_triple->currentRow();
+   int ndx       = findTripleIndex();
 
    le_dir         -> setText( saveDir );
    le_description -> setText( saveDescription );
 
+   le_bufferInfo  -> setText( ExpData.triples[ ndx ].bufferDesc  );
+   le_analyteInfo -> setText( ExpData.triples[ ndx ].analyteDesc );
+
    // Reset maximum scan control values
    reset_scan_ctrls();
+
+   // Reset apply all button
+   reset_ccw_ctrls();
 
    // Redo plot
    plot_current();
@@ -576,12 +623,38 @@ int US_Convert::writeAll( void )
         QMessageBox::information( this,
               tr( "Error" ),
               tr( "Cannot write to " ) + writeDir.absolutePath() );
-
         return CANTOPEN;
      }
    }
 
    int status;
+
+   // Check to see if we have all the data to write
+   if ( ExpData.invID == 0 )
+   {
+      status = QMessageBox::information( this,
+               tr( "Warning" ),
+               tr( "Experiment information has not been defined yet. "    ) +
+               tr( "Click 'OK' to proceed anyway, or click 'Cancel' "     ) +
+               tr( "and then click on the 'Enter Experiment Information'" ) +
+               tr( "button to enter this information first.\n\n "         ),
+               tr( "&OK" ), tr( "&Cancel" ),
+               0, 0, 1 );
+      if ( status != 0 ) return NOT_WRITTEN;
+   }
+
+   if ( ExpData.triples.size() != triples.size() )
+   {
+      status = QMessageBox::information( this,
+               tr( "Warning" ),
+               tr( "A buffer and/or analyte has not been defined yet. " )  +
+               tr( "Click 'OK' to proceed anyway, or click 'Cancel' "   )  +
+               tr( "and enter the current c/c/w info for each cell, "   )  +
+               tr( "channel, and wavelength combination first.\n\n "    ),
+               tr( "&OK" ), tr( "&Cancel" ),
+               0, 0, 1 );
+      if ( status != 0 ) return NOT_WRITTEN;
+   }
 
    // Write the data
    US_ProcessConvert* dialog 
@@ -594,7 +667,8 @@ int US_Convert::writeAll( void )
       // Main xml data is missing
       QMessageBox::information( this,
             tr( "Warning" ),
-            tr( "XML file was not written. Please click on the " ) +
+            tr( "The experiment information file was not written. " ) +
+            tr( "Please click on the " ) +
             tr( "'Enter Experiment Information' button \n\n " )    +
             QString::number( triples.size() ) + " "                + 
             runID + tr( " files written." ) );
@@ -606,7 +680,7 @@ int US_Convert::writeAll( void )
       // xml data is missing for one or more triples
       QMessageBox::information( this,
             tr( "Warning" ),
-            tr( "XML file is incomplete. Please click on the " ) +
+            tr( "Buffer and/or analyte information is incomplete. Please click on the " ) +
             tr( "'Enter Current c/c/w Info' button for each "  ) +
             tr( "cell, channel, and wavelength combination \n\n " ) +
             QString::number( triples.size() ) + " "                + 
@@ -936,6 +1010,22 @@ void US_Convert::reset_scan_ctrls( void )
 
 }
 
+void US_Convert::reset_ccw_ctrls( void )
+{
+   int ndx = findTripleIndex();
+
+   // The centerpiece combo box
+   cb_centerpiece->setCurrentIndex( ExpData.triples[ ndx ].centerpiece );
+
+   // Let's calculate if we're eligible to copy this triple info to all
+   US_ExpInfo::TripleInfo triple = ExpData.triples[ ndx ];
+   pb_applyAll  -> setEnabled( false );
+   if ( triples.size()   > 1 && 
+        triple.analyteID > 0 &&
+        triple.bufferID  > 0 )
+      pb_applyAll ->setEnabled( true );
+}
+
 void US_Convert::cClick( const QwtDoublePoint& p )
 {
    switch ( step )
@@ -1254,7 +1344,32 @@ void US_Convert::selectBuffer( void )
 
 void US_Convert::assignBuffer( const QString& bufferID )
 {
-   ExpData.triples[ findTripleIndex() ].bufferID = bufferID.toInt();
+   int ndx = findTripleIndex();
+
+   ExpData.triples[ ndx ].bufferID = bufferID.toInt();
+
+   // Now get the corresponding description 
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   QStringList q( "get_buffer_info" );
+   q << ( bufferID );
+   db.query( q );
+
+   if ( db.next() )
+   {
+      ExpData.triples[ ndx ].bufferDesc = db.value( 1 ).toString();
+      le_bufferInfo -> setText( db.value( 1 ).toString() );
+   }
+
+   reset_ccw_ctrls();
 }
 
 void US_Convert::selectAnalyte( void )
@@ -1269,7 +1384,42 @@ void US_Convert::selectAnalyte( void )
 
 void US_Convert::assignAnalyte( US_Analyte data )
 {
-   ExpData.triples[ findTripleIndex() ].analyteID = data.invID;
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   // Get analyteID
+   QStringList q( "get_analyteID" );
+   q << data.guid;
+
+   db.query( q );
+   if ( db.lastErrno() != US_DB2::OK ) return;
+
+   db.next();
+   QString analyteID = db.value( 0 ).toString();
+
+   int ndx = findTripleIndex();
+   ExpData.triples[ ndx ].analyteID = analyteID.toInt();
+
+   // Now get the corresponding description 
+   q.clear();
+   q << "get_analyte_info";
+   q << analyteID;
+   db.query( q );
+
+   if ( db.next() )
+   {
+      ExpData.triples[ ndx ].analyteDesc = db.value( 4 ).toString();
+      le_analyteInfo -> setText( db.value( 4 ).toString() );
+   }
+
+   reset_ccw_ctrls();
 }
 
 bool US_Convert::centerpieceInfo( void )
@@ -1314,6 +1464,21 @@ void US_Convert::getCenterpieceIndex( int ndx )
    ExpData.triples[ findTripleIndex() ].centerpiece = ndx;
 }
 
+void US_Convert::ccwApplyAll( void )
+{
+   US_ExpInfo::TripleInfo triple = ExpData.triples[ findTripleIndex() ];
+
+   // Copy selected fields only
+   for ( int i = 0; i < ExpData.triples.size(); i++ )
+   {
+      ExpData.triples[ i ].centerpiece = triple.centerpiece;
+      ExpData.triples[ i ].bufferID    = triple.bufferID;
+      ExpData.triples[ i ].bufferDesc  = triple.bufferDesc;
+      ExpData.triples[ i ].analyteID   = triple.analyteID;
+      ExpData.triples[ i ].analyteDesc = triple.analyteDesc;
+   }
+}
+
 int US_Convert::findTripleIndex ( void )
 {
    // See if the current triple has been added already
@@ -1356,5 +1521,5 @@ void US_Convert::draw_vline( double radius )
 void US_Convert::connect_error( const QString& error )
 {
    QMessageBox::warning( this, tr( "Connection Problem" ),
-         tr( "Could not connect to databasee \n" ) + error );
+         tr( "Could not connect to database \n" ) + error );
 }
