@@ -1,4 +1,4 @@
-//! \file us_run_details.h
+//! \file us_distrib_plot.h
 #ifndef US_DISTRIB_PLOT_H
 #define US_DISTRIB_PLOT_H
 
