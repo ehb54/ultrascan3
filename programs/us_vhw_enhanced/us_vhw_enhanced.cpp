@@ -120,7 +120,7 @@ void US_vHW_Enhanced::load( void )
    workingDir = QFileDialog::getExistingDirectory( this,
          tr( "Raw Data Directory" ),
          US_Settings::resultDir(),
-         QFileDialog::DontResolveSymlinks );
+         QFileDialog::DontResolveSymlinks | QFileDialog::ShowDirsOnly );
 
    if ( workingDir.isEmpty() )
       return;
@@ -853,9 +853,8 @@ qDebug() << "view_report";
    // display the report dialog
 
    US_Editor* edit = new US_Editor( US_Editor::LOAD, true );
-   QPoint position = this->pos();
    edit->setWindowTitle( "Results:  van Holde - Weischet Analysis" );
-   edit->move( position + QPoint( 100, 100 ) );
+   edit->move( this->pos() + QPoint( 100, 100 ) );
    edit->resize( 600, 500 );
    edit->e->setFont( fixed_font() );
    edit->e->setText( mtext );
