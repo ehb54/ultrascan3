@@ -21,6 +21,9 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QLabel*       lb_tolerance;
       QLabel*       lb_division;
       QLabel*       lb_rmsd;
+      QLabel*       lb_simpoints;
+      QLabel*       lb_bldvolume;
+      QLabel*       lb_parameter;
 
       QLineEdit*    le_id;
       QLineEdit*    le_temp;
@@ -36,9 +39,20 @@ class US_EXTERN US_FeMatch : public US_Widgets
 
       QTextEdit*    te_desc;
 
+      QCheckBox*    ck_edit;
+
+      QComboBox*    cb_mesh;
+      QComboBox*    cb_grid;
+
+      QGroupBox*    gb_modelsim;
+
       QwtCounter*   ct_from;
       QwtCounter*   ct_to;
       QwtCounter*   ct_component;
+      QwtCounter*   ct_simpoints;
+      QwtCounter*   ct_bldvolume;
+      QwtCounter*   ct_parameter;
+      QwtCounter*   ct_modelnbr;
 
       QwtPlotCurve*  curve;
       QwtPlotCurve*  dcurve;
@@ -59,12 +73,14 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QPushButton*  pb_exclude;
       QPushButton*  pb_loadmodel;
       QPushButton*  pb_simumodel;
+      QPushButton*  pb_showmodel;
 
       QListWidget*  lw_triples;
 
       int           valueCount;
 
       bool          dataLoaded;
+      bool          dataLatest;
 
       QString       run_name;
       QString       cell;
@@ -74,9 +90,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QString       editID;
 
       QStringList   files;
-      QStringList   triples;
-
-      QList< double >          groupxy;    // group select pick coordinates
 
       US_DataIO2::EditedData*  d;
       US_DataIO2::Scan*        s;
@@ -90,13 +103,26 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void update(      int  );
       void update_density(   double );
       void update_viscosity( double );
+      void get_buffer(  void );
+      void get_vbar  (  void );
+      void exclude   (  void );
+      void update_buffer(    double, double );
       void update_vbar(      double );
+      void exclude_from(     double );
+      void exclude_to  (     double );
+      void set_ra_visible(   bool );
+      void set_edit_last(    int  );
 
       void help     ( void )
       { showHelp.show_help( "fematch.html" ); };
 
    protected:
       QList< int >                      excludedScans;
+      QStringList                       triples;
+      QVector< US_DataIO2::EditedData > dataList;
+      QVector< US_DataIO2::RawData    > rawList;
+      
+      US_Math2::SolutionData Data       solution;
 
       US_Help      showHelp;
 
@@ -113,6 +139,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QGridLayout* analysisLayout;
       QGridLayout* runInfoLayout;
       QGridLayout* parameterLayout;
+      QGridLayout* parametraLayout;
       QGridLayout* controlsLayout;
 
       US_Plot*     plotLayout1;  // Derived from QVBoxLayout
