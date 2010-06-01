@@ -288,10 +288,7 @@ int US_Analyte::read_analyte( const QString& filename )
                extinction[ 280.0 ] = p.e280; 
             }
             else if ( type == DNA  ||  type == RNA )
-            {
                mw = nucleotide( a, sequence );
-qDebug() << "mw" << mw;
-            }
 
             else // CARBOHYDRATE
                mw = 0.0;
