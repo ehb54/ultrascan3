@@ -4,39 +4,76 @@
 #include "us_settings.h"
 #include "us_math2.h"
 
-
-//#include <uuid/uuid.h>
-
 US_Analyte::US_Analyte()
 {
-   invID = -1; 
-   vbar  = TYPICAL_VBAR;
-   mw    = 50000.0;
-   type  = PROTEIN;
+   invID          = -1; 
+   vbar20         = TYPICAL_VBAR;
+   mw             = 50000.0;
+   description    = "New Analyte";
+   guid           .clear();
+   sequence       .clear();
+   type           = PROTEIN;
 
-   extinction  .clear();
-   refraction  .clear();
-   fluorescence.clear();
-   description .clear();
-   guid        .clear();
-   sequence    .clear();
+   // Placeholders for DNA/RNA
+   doubleStranded = true;
+   complement     = false;
+   _3prime        = false;
+   _5prime        = false;
+
+   sodium         = 0.0;
+   potassium      = 0.0;
+   lithium        = 0.0;
+   magnesium      = 0.0;
+   calcium        = 0.0;
+
+   extinction     .clear();
+   refraction     .clear();
+   fluorescence   .clear();
 }
 
-US_Analyte US_Analyte::load( 
+bool US_Analyte::operator== ( const US_Analyte& a ) const
+{
+   if ( invID        != a.invID        ) return false;
+   if ( vbar20       != a.vbar20       ) return false;
+   if ( mw           != a.mw           ) return false;
+   if ( description  != a.description  ) return false;
+   if ( guid         != a.guid         ) return false;
+   if ( sequence     != a.sequence     ) return false;
+   if ( type         != a.type         ) return false;
+   if ( extinction   != extinction     ) return false;
+   if ( refraction   != refraction     ) return false;
+   if ( fluorescence != a.fluorescence ) return false;
+
+   if ( type == DNA  || type == RNA )
+   {
+      if ( doubleStranded != a.doubleStranded ) return false;
+      if ( complement     != a.complement     ) return false;
+      if ( _3prime        != a._3prime        ) return false;
+      if ( _5prime        != a._5prime        ) return false;
+      if ( sodium         != a.sodium         ) return false;
+      if ( potassium      != a.potassium      ) return false;
+      if ( lithium        != a.lithium        ) return false;
+      if ( magnesium      != a.magnesium      ) return false;
+      if ( calcium        != a.calcium        ) return false;
+   }
+
+   // Not comparing message and analyteID
+
+   return true;
+}
+
+int US_Analyte::load( 
       bool           db_access, 
       const QString& guid,
-      int&           error,
       US_DB2*        db )
 {
-   if ( db_access ) return load_db  ( guid, error, db );
-   else             return load_disk( guid, error );
+   if ( db_access ) return load_db  ( guid, db );
+   else             return load_disk( guid );
 }
 
-US_Analyte US_Analyte::load_db( const QString& guid, int& error, US_DB2* db )
+int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
 {
-   US_Analyte analyte;
-
-   error = US_DB2::OK;
+   int error = US_DB2::OK;
 
    // Get analyteID
    QStringList q( "get_analyteID" );
@@ -44,7 +81,12 @@ US_Analyte US_Analyte::load_db( const QString& guid, int& error, US_DB2* db )
 
    db->query( q );
    error = db->lastErrno();
-   if ( error != US_DB2::OK ) return analyte;
+  
+   if ( error != US_DB2::OK ) 
+   {
+      message = QObject::tr( "Could not get analyteID" );    
+      return error;
+   }
 
    db->next();
    QString analyteID = db->value( 0 ).toString();
@@ -55,28 +97,39 @@ US_Analyte US_Analyte::load_db( const QString& guid, int& error, US_DB2* db )
 
    db->query( q );
    error = db->lastErrno();
-   if ( error != US_DB2::OK ) return analyte;
+
+   if ( error != US_DB2::OK )
+   {
+      message = QObject::tr( "Could not get analyte info" );
+      return error;
+   }
 
    db->next();
 
-   analyte.guid     = guid;;
-  
-   int type         = db->value( 1 ).toString().toInt();
+   guid = load_guid;;
+   type = (US_Analyte::analyte_t) db->value( 1 ).toString().toInt();
    
-   switch ( type )
-   {
-      case PROTEIN     : analyte.type = PROTEIN;
-      case DNA         : analyte.type = DNA;
-      case RNA         : analyte.type = RNA;
-      case CARBOHYDRATE: analyte.type = CARBOHYDRATE;
-   }
-   
-   analyte.sequence    = db->value( 2 ).toString();
-   analyte.vbar        = db->value( 3 ).toString().toDouble();
-   analyte.description = db->value( 4 ).toString();
+   sequence    = db->value( 2 ).toString();
+   vbar20      = db->value( 3 ).toString().toDouble();
+   description = db->value( 4 ).toString();
    // We don't need spectrum  -- db->value( 5 ).toString();
-   analyte.mw          = db->value( 6 ).toString().toDouble();
-   analyte.invID       = db->value( 7 ).toString().toInt();
+   mw          = db->value( 6 ).toString().toDouble();
+   invID       = db->value( 7 ).toString().toInt();
+
+   q.clear();
+   q << "get_nucleotide" << analyteID;
+   db->query( q );
+   db->next();
+   
+   doubleStranded = db->value( 0 ).toString().toInt();
+   complement     = db->value( 1 ).toString().toInt();
+   _3prime        = db->value( 2 ).toString().toInt();
+   _5prime        = db->value( 3 ).toString().toInt();
+   sodium         = db->value( 4 ).toString().toDouble();
+   potassium      = db->value( 5 ).toString().toDouble();
+   lithium        = db->value( 6 ).toString().toDouble();
+   magnesium      = db->value( 7 ).toString().toDouble();
+   calcium        = db->value( 8 ).toString().toDouble();
 
    q.clear();
    q << "get_spectrum" << analyteID << "Analyte" << "'Extinction";
@@ -87,7 +140,7 @@ US_Analyte US_Analyte::load_db( const QString& guid, int& error, US_DB2* db )
    {
       double lambda = db->value( 1 ).toDouble();
       double coeff  = db->value( 2 ).toDouble();
-      analyte.extinction[ lambda ] = coeff;
+      extinction[ lambda ] = coeff;
    }
 
    q[ 3 ] = "Refraction";
@@ -97,7 +150,7 @@ US_Analyte US_Analyte::load_db( const QString& guid, int& error, US_DB2* db )
    {
       double lambda = db->value( 1 ).toDouble();
       double coeff  = db->value( 2 ).toDouble();
-      analyte.refraction[ lambda ] = coeff;
+      refraction[ lambda ] = coeff;
    }
 
    q[ 3 ] = "Fluorescence";
@@ -107,20 +160,23 @@ US_Analyte US_Analyte::load_db( const QString& guid, int& error, US_DB2* db )
    {
       double lambda = db->value( 1 ).toDouble();
       double coeff  = db->value( 2 ).toDouble();
-      analyte.fluorescence[ lambda ] = coeff;
+      fluorescence[ lambda ] = coeff;
    }
 
-   return analyte;
+   return US_DB2::OK;
 }
 
-US_Analyte US_Analyte::load_disk( const QString& guid, int& error )
+int US_Analyte::load_disk( const QString& guid )
 {
-   error = US_DB2::NO_COMPONENT;  // Error by default
+   int error = US_DB2::NO_ANALYTE;  // Error by default
    
-   US_Analyte analyte;
-   QString    path;
+   QString path;
 
-   if ( ! analyte_path( path ) ) return analyte;  
+   if ( ! analyte_path( path ) )
+   {
+      message = QObject::tr ( "Could not create analyte directory" );
+      return error;  
+   }
 
    QDir        f( path );
    QStringList filter( "A*.xml" );
@@ -155,34 +211,28 @@ US_Analyte US_Analyte::load_disk( const QString& guid, int& error )
 
       file.close();
 
-      if ( found ) 
-      {
-         error = US_DB2::OK;
-         return read_analyte( filename, error );
-      };
+      if ( found ) return read_analyte( filename );
    }
 
-   return analyte;
+   message =  QObject::tr ( "Could not find analyte guid" );
+   return error;
 }
 
-US_Analyte US_Analyte::read_analyte( const QString& filename, int& error )
+int US_Analyte::read_analyte( const QString& filename )
 {
-   US_Analyte analyte;
-
    QFile file( filename );
 
    // Read in the filename and populate class
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
    {
-      // Fail quietly
       qDebug() << "Cannot open file " << filename;
-      error = US_DB2::NO_COMPONENT;
-      return analyte;
+      message = QObject::tr( "Could not open analyte file for reading" );
+      return US_DB2::ERROR;
    }
 
    double               freq;
    double               value;
-   QString              type;
+   QString              type_string;
    QXmlStreamReader     xml( &file );
    QXmlStreamAttributes a;
 
@@ -196,60 +246,62 @@ US_Analyte US_Analyte::read_analyte( const QString& filename, int& error )
          {
             a = xml.attributes();
 
-            type = a.value( "type" ).toString();
+            type_string = a.value( "type" ).toString();
 
             // Set description and guid
-            analyte.description = a.value( "description" ).toString();
-            analyte.guid        = a.value( "guid"        ).toString();
+            description = a.value( "description" ).toString();
+            guid        = a.value( "guid"        ).toString();
 
             // Set type
-            if ( type == "PROTEIN" )
+            if ( type_string == "PROTEIN" )
             {
-               analyte.vbar = a.value( "vbar"        ).toString().toDouble();
-               analyte.type = PROTEIN;
+              vbar20 = a.value( "vbar20" ).toString().toDouble();
+              type = PROTEIN;
             }
 
-            else if ( type == "DNA"  ||  type == "RNA" )
+            else if (  type_string == "DNA"  ||  type_string == "RNA" )
             {
-              analyte.type = ( type == "DNA" ) ? DNA : RNA;
-              analyte.vbar = a.value( "vbar20" ).toString().toDouble();
+              type = ( type_string == "DNA" ) ? DNA : RNA;
+              vbar20    = a.value( "vbar20"    ).toString().toDouble();
             }
 
             else
-               analyte.type = CARBOHYDRATE;
+              type = CARBOHYDRATE;
          }
 
          else if ( xml.name() == "sequence" )
          {
-            analyte.sequence = xml.readElementText();
+            sequence = xml.readElementText();
 
             // Set mw
-            if ( type == "PROTEIN" )
+            if ( type == PROTEIN )
             {
                US_Math2::Peptide p;
-               US_Math2::calc_vbar( p, analyte.sequence, NORMAL_TEMP );
-               analyte.mw = p.mw;
+               US_Math2::calc_vbar( p, sequence, NORMAL_TEMP );
+               mw = p.mw;
 
                // The sequence tag comes before the extinction extinction tag
                // so a value set there will override this setting, if it
                // exists.  It's not the way xml is really supposed work, but it
                // will be ok in this case.
 
-               analyte.extinction[ 280.0 ] = p.e280; 
+               extinction[ 280.0 ] = p.e280; 
             }
-            else if ( type == "DNA"  ||  type == "RNA" )
-               analyte.mw = nucleotide( a, analyte.sequence );
+            else if ( type == DNA  ||  type == RNA )
+            {
+               mw = nucleotide( a, sequence );
+qDebug() << "mw" << mw;
+            }
 
             else // CARBOHYDRATE
-               analyte.mw = 0.0; 
+               mw = 0.0;
          }
-
          else if ( xml.name() == "extinction" )
          {
             QXmlStreamAttributes a = xml.attributes();
             freq  = a.value( "frequency" ).toString().toDouble();
             value = a.value( "value"     ).toString().toDouble();
-            analyte.extinction[ freq ] = value;
+            extinction[ freq ] = value;
          }
 
          else if ( xml.name() == "refraction" )
@@ -257,7 +309,7 @@ US_Analyte US_Analyte::read_analyte( const QString& filename, int& error )
             QXmlStreamAttributes a = xml.attributes();
             freq  = a.value( "frequency" ).toString().toDouble();
             value = a.value( "value"     ).toString().toDouble();
-            analyte.refraction[ freq ] = value;
+            refraction[ freq ] = value;
          }
 
          else if ( xml.name() == "fluorescence" )
@@ -265,12 +317,12 @@ US_Analyte US_Analyte::read_analyte( const QString& filename, int& error )
             QXmlStreamAttributes a = xml.attributes();
             freq  = a.value( "frequency" ).toString().toDouble();
             value = a.value( "value"     ).toString().toDouble();
-            analyte.fluorescence[ freq ] = value;
+            fluorescence[ freq ] = value;
          }
       }
    }
 
-   return analyte;
+   return US_DB2::OK;
 }
 
 double US_Analyte::nucleotide( const QXmlStreamAttributes& a, 
@@ -286,11 +338,11 @@ double US_Analyte::nucleotide( const QXmlStreamAttributes& a,
    uint T = sequence.count( "t" );
    uint U = sequence.count( "u" );
 
-   bool isDNA          = ( a.value( "type"               ).toString() == "DNA" );
-   bool doubleStranded = ( a.value( "stranded"           ).toString() == "T" );
-   bool complement     = ( a.value( "complement_only"    ).toString() == "T" );
-   bool _3prime        = ( a.value( "ThreePrimeHydroxyl" ).toString() == "T" );
-   bool _5prime        = ( a.value( "FivePrimeHydroxyl"  ).toString() == "T" );
+   bool isDNA     = ( a.value( "type"               ).toString() == "DNA");
+   doubleStranded = ( a.value( "stranded"           ).toString() == "T" );
+   complement     = ( a.value( "complement_only"    ).toString() == "T" );
+   _3prime        = ( a.value( "ThreePrimeHydroxyl" ).toString() == "T" );
+   _5prime        = ( a.value( "FivePrimeHydroxyl"  ).toString() == "T" );
 
    const double mw_A = 313.209;
    const double mw_C = 289.184;
@@ -363,11 +415,11 @@ double US_Analyte::nucleotide( const QXmlStreamAttributes& a,
       }
    }
    
-   double sodium    = a.value( "sodium"    ).toString().toDouble();
-   double potassium = a.value( "potassium" ).toString().toDouble();
-   double lithium   = a.value( "lithium"   ).toString().toDouble();
-   double magnesium = a.value( "magnesium" ).toString().toDouble();
-   double calcium   = a.value( "calcium"   ).toString().toDouble();
+   sodium    = a.value( "sodium"    ).toString().toDouble();
+   potassium = a.value( "potassium" ).toString().toDouble();
+   lithium   = a.value( "lithium"   ).toString().toDouble();
+   magnesium = a.value( "magnesium" ).toString().toDouble();
+   calcium   = a.value( "calcium"   ).toString().toDouble();
 
    MW += sodium    * total * 22.99;
    MW += potassium * total * 39.1;
@@ -402,8 +454,299 @@ bool US_Analyte::analyte_path( QString& path )
 
    if ( ! dir.exists( path ) )
    {
-      if ( ! dir.mkpath( path ) ) return false;
+      if ( ! dir.mkpath( path ) ) 
+      {
+         return false;
+      }
    }
 
    return true;
+}
+
+int US_Analyte::write( 
+      bool           db_access, 
+      const QString& filename,
+      US_DB2*        db )
+{
+   if ( db_access ) return write_db  ( db );
+   else             return write_disk( filename );
+}
+
+int US_Analyte::write_disk( const QString& filename )
+{
+   QFile file( filename );
+
+   if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
+   {
+      qDebug() << "Cannot open file for writing: " << filename;
+      message = QObject::tr( "Cannot open file for writing" );
+      return US_DB2::ERROR;
+   }
+
+   QXmlStreamWriter xml( &file );
+   xml.setAutoFormatting( true );
+
+   xml.writeStartDocument();
+   xml.writeDTD         ( "<!DOCTYPE US_Analyte>" );
+   xml.writeStartElement( "AnalyteData" );
+   xml.writeAttribute   ( "version", "1.0" );
+
+   xml.writeStartElement( "analyte" );
+
+   // Set attributes depending on type
+   QString b; // bool
+
+   switch ( type )
+   {
+      case US_Analyte::PROTEIN:
+      {
+         US_Math2::Peptide p;
+         US_Math2::calc_vbar( p, sequence, NORMAL_TEMP );
+
+         xml.writeAttribute( "type",  "PROTEIN" );
+         xml.writeAttribute( "vbar20", QString::number( p.vbar20 ) );
+      }
+         break;
+
+      case US_Analyte::DNA:
+      case US_Analyte::RNA:
+         if ( type == US_Analyte::DNA )
+            xml.writeAttribute( "type", "DNA" );
+         else
+            xml.writeAttribute( "type", "RNA" );
+
+         b = ( doubleStranded ) ? "T" : "F";
+         xml.writeAttribute( "stranded", b );
+
+         b = ( complement ) ? "T" : "F";
+         xml.writeAttribute( "complement_only", b );
+
+         b = ( _3prime ) ? "T" : "F";
+         xml.writeAttribute( "ThreePrimeHydroxyl", b );
+
+         b = ( _5prime ) ? "T" : "F";
+         xml.writeAttribute( "FivePrimeHydroxyl", b );
+
+         xml.writeAttribute( "sodium",    QString::number( sodium    ) );
+         xml.writeAttribute( "potassium", QString::number( potassium ) );
+         xml.writeAttribute( "lithium",   QString::number( lithium   ) );
+         xml.writeAttribute( "magnesium", QString::number( magnesium ) );
+         xml.writeAttribute( "calcium",   QString::number( calcium   ) );
+         xml.writeAttribute( "vbar20",    QString::number( vbar20    ) );
+         break;
+
+      case US_Analyte::CARBOHYDRATE:
+         xml.writeAttribute( "type", "CARB" );
+         break;
+   }
+
+   xml.writeAttribute( "description", description );
+   xml.writeAttribute( "guid"       , guid );
+
+   xml.writeStartElement( "sequence" );
+   xml.writeCharacters( "\n" );
+
+   for ( int i = 0; i < sequence.length() / 80; i++ )
+      xml.writeCharacters( sequence.mid( i * 80, 80 ) + "\n" );
+
+   if ( sequence.length() % 80 > 0 )
+       xml.writeCharacters( sequence.mid( ( sequence.length() / 80 ) * 80 ) );
+
+   xml.writeCharacters( "\n" );
+   xml.writeEndElement(); // sequence
+
+   // Add extinction values
+   QList< double > keys = extinction.keys();
+   double          freq;
+   double          value;
+
+   for ( int i = 0; i < keys.size(); i++ )
+   {
+      freq  =             keys[ i ];
+      value = extinction[ keys[ i ] ];
+
+      xml.writeStartElement( "extinction" );
+      xml.writeAttribute( "frequency",  QString::number( freq , 'f', 1 ) );
+      xml.writeAttribute( "value",      QString::number( value ) );
+      xml.writeEndElement(); // extinction
+   }
+
+   // Add refraction values
+   keys = refraction.keys();
+
+   for ( int i = 0; i < keys.size(); i++ )
+   {
+      freq  =             keys[ i ];
+      value = refraction[ keys[ i ] ];
+
+      xml.writeStartElement( "refraction" );
+      xml.writeAttribute( "frequency",  QString::number( freq , 'f', 1 ) );
+      xml.writeAttribute( "value",      QString::number( value ) );
+      xml.writeEndElement(); // refraction
+   }
+
+   // Add fluorescence values
+   keys = fluorescence.keys();
+
+   for ( int i = 0; i < keys.size(); i++ )
+   {
+      freq  =             keys[ i ];
+      value = fluorescence[ keys[ i ] ];
+
+      xml.writeStartElement( "fluorescence" );
+      xml.writeAttribute( "frequency",  QString::number( freq , 'f', 1 ) );
+      xml.writeAttribute( "value",      QString::number( value ) );
+      xml.writeEndElement(); // fluorescence
+   }
+
+   xml.writeEndElement(); // analyte
+   xml.writeEndDocument();
+   file.close();
+
+   file.close();
+
+   return US_DB2::OK;
+}
+
+void US_Analyte::set_spectrum( US_DB2* db )
+{
+   QStringList q;
+
+   q << "delete_spectrum" << analyteID << "Analyte" << "Extinction";
+   db->statusQuery( q );
+   q[ 3 ] = "Refraction";
+   db->statusQuery( q );
+   q[ 3 ] = "Fluorescence";
+   db->statusQuery( q );
+
+   QList< double > keys = extinction.keys();
+
+   q.clear();
+   q << "new_spectrum" << analyteID << "Analyte" << "Extinction" << "" << "";
+
+   for ( int i = 0; i < keys.size(); i++ )
+   {
+      double key =  keys[ i ];
+      QString lambda = QString::number( key, 'f', 1 );
+      q[ 4 ] = lambda;
+
+      QString coeff = QString::number( extinction[ key ] );
+      q[ 5 ] = coeff;
+
+      db->statusQuery( q );
+   }
+
+   keys = refraction.keys();
+
+   q[ 3 ] = "Refraction";
+
+   for ( int i = 0; i < keys.size(); i++ )
+   {
+      double key =  keys[ i ];
+      QString lambda = QString::number( key, 'f', 1 );
+      q[ 4 ] = lambda;
+
+      QString coeff = QString::number( refraction[ key ] );
+      q[ 5 ] = coeff;
+
+      db->statusQuery( q );
+   }
+
+   keys = fluorescence.keys();
+
+   q[ 3 ] = "Fluorescence";
+
+   for ( int i = 0; i < keys.size(); i++ )
+   {
+      double key =  keys[ i ];
+      QString lambda = QString::number( key, 'f', 1 );
+      q[ 4 ] = lambda;
+
+      QString coeff = QString::number( fluorescence[ key ] );
+      q[ 5 ] = coeff;
+
+      db->statusQuery( q );
+   }
+}
+
+int US_Analyte::write_db( US_DB2* db )
+{
+   QStringList q;
+   bool        insert = true;
+
+   message = QObject::tr( "inserted into" );
+
+   if ( guid.size() != 36 ) 
+   {
+      message = QObject::tr ( "The analyte GUID is invalid" );  
+      return US_DB2::BADGUID;
+   }
+   
+   q << "new_analyte" << guid;
+
+   // Check that the guid exists in the db
+   QStringList q2;
+
+   q2 << "get_bufferID" << guid;
+
+   db->query( q2 );
+
+   if ( db->lastErrno() == US_DB2::OK )
+   {
+      db->next();
+      analyteID = db->value( 0 ).toString();
+      q[ 0 ] = "update_analyte";
+      q[ 1 ] = analyteID;
+      message = QObject::tr( "updated in" );
+      insert = false;
+   }
+      
+   // Finish populating the query
+   if      ( type == US_Analyte::PROTEIN ) q << "Protein";
+   else if ( type == US_Analyte::DNA     ) q << "DNA";
+   else if ( type == US_Analyte::RNA     ) q << "RNA";
+   else                                    q << "Other";
+
+   q << sequence;
+   q << QString::number( vbar20 );
+   q << description;
+
+   QString spectrum = "";  // Unused element
+   q << spectrum;
+   q << QString::number( mw );
+
+   db->statusQuery( q );
+
+   int error = db->lastErrno();
+   if ( error != US_DB2::OK ) 
+   {
+      message = QObject::tr ( "Could not update the DB" );
+      return error;
+   }
+
+   if ( insert ) analyteID = QString::number( db->lastInsertID() );
+   
+   if ( type == US_Analyte::DNA  || type == US_Analyte::RNA )
+      write_nucleotide( db );
+
+   set_spectrum( db );
+   
+   return US_DB2::OK;
+}
+
+void US_Analyte::write_nucleotide( US_DB2* db )
+{
+   QStringList q;
+   q << "set_nucleotide" << analyteID;
+   q << QString::number( doubleStranded );
+   q << QString::number( complement );
+   q << QString::number( _3prime );
+   q << QString::number( _5prime );
+   q << QString::number( sodium );
+   q << QString::number( potassium );
+   q << QString::number( lithium );
+   q << QString::number( magnesium );
+   q << QString::number( calcium );
+
+   db->statusQuery( q );
 }
