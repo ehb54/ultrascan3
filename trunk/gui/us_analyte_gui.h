@@ -44,7 +44,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
 
    public:
       //! Constructor.
-      //! \param invID  - The investigator ID in the database (-1 for unspecified)
+      //! \param invID  - The investigator ID in the DB (-1 for unspecified)
       //! \param signal - A flag to indicate that a signal is wanted
       //! \param GUID   - The global identifier of the current analyte
       //! \param access - A flag to indicate DB (true) or disk (false) access
@@ -68,9 +68,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       bool          db_access;
       double        temperature;
 
-      int           widget_selection;
       bool          inReset;
-      bool          newFile;
 
       uint          A;
       uint          C;
@@ -78,38 +76,30 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       uint          G;
       uint          U;
 
-      US_Analyte::analyte_t analyte_type;
-
-      double        vbar;     
+      US_Analyte    analyte;
+      US_Analyte    saved_analyte;
 
       class AnalyteInfo
       {
          public:
-         QString               description;
-         QString               guid;
-         QString               filename;
-         QString               analyteID;
-         int                   index;
-         US_Analyte::analyte_t type;
+         QString description;
+         QString guid;
+         QString filename;
+         QString analyteID;
+         int     index;
       };
 
-      QList< AnalyteInfo >    info;
-      QMap < double, double > extinction;   // Wavelength, extinction index
-      QMap < double, double > refraction;   // Wavelength, refraction index
-      QMap < double, double > fluorescence; // Wavelength, fluorescence index
+      // Populated in list(), new() used in select()
+      QList< AnalyteInfo > info; 
 
       QStringList   files;
-      QStringList   filenames;
-      QStringList   GUIDs;
-      QStringList   descriptions;
-      QStringList   types;
+
+      QStringList   filenames;    // From list_from_disk()
+      QStringList   analyteIDs;   // From list_from_DB()
+      QStringList   descriptions; // From list(), new()
+      QStringList   GUIDs;        // From list(), new()
 
       QComboBox*    cmb_optics;
-
-      QString       filename;
-      QString       sequence; 
-      QString       description; 
-      QString       analyteID;
 
       US_Help       showHelp;
 
@@ -147,9 +137,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       QRadioButton* rb_5_phosphate;
 
       QPushButton*  pb_save;
-      QPushButton*  pb_save_db;
-      QPushButton*  pb_update_db;
-      QPushButton*  pb_del_db;
+      QPushButton*  pb_delete;
       QPushButton*  pb_sequence;
       QPushButton*  pb_spectrum;
       QPushButton*  pb_more;
@@ -162,32 +150,31 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
 
       void    parse_dna       ( void );
       void    connect_error   ( const QString& );
-
       bool    database_ok     ( US_DB2& );
       bool    data_ok         ( void );
-      void    status_query    ( const QStringList& );
-
-      void    set_spectrum    ( US_DB2& );
-      bool    analyte_path    ( QString& );
+      int     status_query    ( const QStringList& );
       void    load_analyte    ( void );
       void    populate        ( void );
+      void    list_from_disk  ( void );
+      void    list_from_db    ( void );
+      void    delete_from_disk( void );
+      void    delete_from_db  ( void );
+      void    select_from_disk( void );
+      void    select_from_db  ( void );
 
       QString get_filename    ( const QString&, const QString& );
-      QString new_guid        ( void );
 
    private slots:
       void set_analyte_type   ( int  );
       void sel_investigator   ( void );
-      void search             ( const QString& );
+      void search             ( const QString& = QString() );
       void select_analyte     ( QListWidgetItem* );
       void access_type        ( bool );
-      void read_analyte       ( void );
-      void save_analyte       ( void );
 
-      void read_db            ( void );
-      void save_db            ( void );
-      void update_db          ( void );
-      void delete_db          ( void );
+      void new_analyte        ( void );
+      void list               ( void );
+      void save               ( void );
+      void delete_analyte     ( void );
 
       void change_description ( void );
       void manage_sequence    ( void );

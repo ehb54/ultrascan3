@@ -129,7 +129,7 @@ class US_EXTERN US_FemGlobal_New
       ModelType                      type;
       int                            iterations;
 
-      //! An index of components (-1 means none)$
+      //! An index of components (-1 means none)
       int                            coSedSolute;
 
       QVector< SimulationComponent > components;

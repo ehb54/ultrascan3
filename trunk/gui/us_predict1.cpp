@@ -333,9 +333,9 @@ void US_Predict1::get_peptide( void )
 
 void US_Predict1::update_vbar( const US_Analyte ad )
 {
-   analyte       = ad;
-   mw            = ad.mw;
-   solution.vbar = ad.vbar;
+   analyte         = ad;
+   mw              = ad.mw;
+   solution.vbar20 = ad.vbar20;
 
    le_mw  ->setText( QString::number( (int) mw,      'e', 3 ) );
    le_vbar->setText( QString::number( solution.vbar, 'f', 4 ) );
