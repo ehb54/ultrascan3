@@ -213,6 +213,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
 
    le_protein_mw = us_lineedit( "" );
    le_protein_mw->setReadOnly( true );
+   le_protein_mw->setPalette ( gray );
    protein_info->addWidget( le_protein_mw, prow, 1 );
 
    QLabel* lb_protein_vbar20 = us_label( 
@@ -221,6 +222,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
 
    le_protein_vbar20 = us_lineedit( "" );
    le_protein_vbar20->setReadOnly( true );
+   le_protein_vbar20->setPalette ( gray );
    protein_info->addWidget( le_protein_vbar20, prow++, 3 );
 
    QLabel* lb_protein_temp = us_label( 
@@ -247,6 +249,8 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    protein_info->addWidget( lb_protein_vbar, prow, 2 );
 
    le_protein_vbar = us_lineedit( "" );
+   connect( le_protein_vbar, SIGNAL( textChanged ( const QString& ) ),
+                             SLOT  ( value_changed( const QString& ) ) );
    protein_info->addWidget( le_protein_vbar, prow++, 3 );
 
    QLabel* lb_protein_residues = us_label( tr( "Residue count:" ) );
@@ -254,6 +258,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
 
    le_protein_residues = us_lineedit( "" );
    le_protein_residues->setReadOnly( true );
+   le_protein_residues->setPalette ( gray );
    protein_info->addWidget( le_protein_residues, prow, 1 );
    main->addWidget( protein_widget, row, 0, 1, 3 ); 
    
@@ -387,6 +392,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
 
    le_nucle_mw = us_lineedit( "", -2 );
    le_nucle_mw->setReadOnly( true );
+   le_nucle_mw->setPalette ( gray );
    nucle_data->addWidget( le_nucle_mw, 0, 1, 1, 3 );
 
    QLabel* lb_nucle_vbar = us_label( 
@@ -394,6 +400,8 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    nucle_data->addWidget( lb_nucle_vbar, 1, 0 );
 
    le_nucle_vbar = us_lineedit( "" );
+   connect( le_nucle_vbar, SIGNAL( textChanged  ( const QString& ) ),
+                           SLOT  ( value_changed( const QString& ) ) );
    nucle_data->addWidget( le_nucle_vbar, 1, 1, 1, 3 );
 
    dna_layout->addLayout( nucle_data, 4, 0, 2, 3 );
@@ -495,7 +503,13 @@ void US_AnalyteGui::new_analyte( void )
 void US_AnalyteGui::access_type( bool state )
 {
    db_access = ! state;  // db_access is the opposite of rb_disk state
-   reset();
+   //reset();
+}
+
+void US_AnalyteGui::value_changed( const QString& )
+{
+   // Leave empty for now.  This only is activated by changes to vbar
+   // (either protein or dna/rna) but vbar20 is the only thing saved.
 }
 
 void US_AnalyteGui::change_description( void )
@@ -1361,23 +1375,58 @@ int US_AnalyteGui::status_query( const QStringList& q )
    return US_DB2::OK;
 }
 
-void US_AnalyteGui::select_analyte( QListWidgetItem* /* item */ )
+bool US_AnalyteGui::discard_changes( void )
 {
-   if ( db_access )
-      select_from_db();
-   else
-      select_from_disk();
+   if ( saved_analyte == analyte ) return false;
+
+   int response = QMessageBox::question( this,
+      tr( "Analyte Changed" ),
+      tr( "The analyte has changed.\n"
+          "Do you want to continue without saving?" ),
+      QMessageBox::Cancel, QMessageBox::Yes );
+
+   if ( response == QMessageBox::Yes ) return true;
+
+   return false;
 }
 
-void US_AnalyteGui::select_from_disk( void )
+void US_AnalyteGui::select_analyte( QListWidgetItem* /* item */ )
 {
+   if ( ! discard_changes() ) return;
+
    pb_save  ->setEnabled( false );
    pb_delete->setEnabled( false );
    pb_more  ->setEnabled( false );
 
+   try
+   {
+   if ( db_access )
+      select_from_db();
+   else
+      select_from_disk();
+   }
+   catch ( int )
+   {
+      return;
+   }
+
+   populate();
+   saved_analyte = analyte;
+
+   pb_delete->setEnabled( true );
+   pb_save  ->setEnabled( true );
+   pb_more  ->setEnabled( true );
+
+   QMessageBox::information( this,
+      tr( "Analyte Loaded Successfully" ),
+      tr( "The analyte has been loaded from the %1." ).arg( analyte.message) );
+}
+
+void US_AnalyteGui::select_from_disk( void )
+{
    int index = lw_analytes->currentRow();
-   if ( index < 0 ) return;
-   if ( info[ index ].filename.isEmpty() ) return;
+   if ( index < 0 ) throw -1;
+   if ( info[ index ].filename.isEmpty() ) throw -1;;
 
    int result = analyte.load( false, info[ index ].guid );
 
@@ -1386,20 +1435,17 @@ void US_AnalyteGui::select_from_disk( void )
       QMessageBox::warning( this,
             tr( "Analyte Load Rrror" ),
             tr( "Load error when reading the disk:\n\n" ) + analyte.message );
-      return;
+      throw result;
    }
 
-   populate();
+   analyte.message = tr( "disk" );
 
-   pb_delete->setEnabled( true );
-   pb_save  ->setEnabled( true );
-   pb_more  ->setEnabled( true );
 }
 
 void US_AnalyteGui::select_from_db( void )
 {
    int index = lw_analytes->currentRow();
-   if ( index < 0 ) return;
+   if ( index < 0 ) throw -1;
 
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
@@ -1407,19 +1453,20 @@ void US_AnalyteGui::select_from_db( void )
    if ( db.lastErrno() != US_DB2::OK )
    {
       connect_error( db.lastError() );
-      return;
+      throw db.lastErrno();
    }
 
-   analyte.load( true, "", &db );
-   populate();
+   int result = analyte.load( true, "", &db );
 
-   QMessageBox::information( this,
-      tr( "Analyte Loaded Successfully" ),
-      tr( "The analyte has been loaded from the database." ) );
+   if ( result != US_DB2::OK )
+   {
+      QMessageBox::warning( this,
+            tr( "Analyte Load Rrror" ),
+            tr( "Load error when reading the disk:\n\n" ) + analyte.message );
+      throw result;
+   }
 
-   pb_save  ->setEnabled( true );
-   pb_delete->setEnabled( true );
-   pb_more  ->setEnabled( true );
+   analyte.message = tr( "database" );
 }
 
 void US_AnalyteGui::save( void )
@@ -1447,6 +1494,8 @@ void US_AnalyteGui::save( void )
       QString filename = get_filename( path, analyte.guid );
       result = analyte.write( false, filename );
    }
+
+   saved_analyte = analyte;
 
    if ( result == US_DB2::OK )
       QMessageBox::information( this,

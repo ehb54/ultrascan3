@@ -161,6 +161,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       void    delete_from_db  ( void );
       void    select_from_disk( void );
       void    select_from_db  ( void );
+      bool    discard_changes ( void );
 
       QString get_filename    ( const QString&, const QString& );
 
@@ -177,6 +178,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       void delete_analyte     ( void );
 
       void change_description ( void );
+      void value_changed      ( const QString& );
       void manage_sequence    ( void );
       void spectrum           ( void );
       void more_info          ( void );
