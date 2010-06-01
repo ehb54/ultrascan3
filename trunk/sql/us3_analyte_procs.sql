@@ -411,3 +411,103 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
+
+-- Procedures regarding nucleotide information
+
+-- Returns complete list of nucleotide information about an analyte
+DROP PROCEDURE IF EXISTS get_nucleotide_info$$
+CREATE PROCEDURE get_nucleotide_info ( p_guid      CHAR(36),
+                                       p_password  VARCHAR(80),
+                                       p_analyteID INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_analytes INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_analytes
+  FROM       analyte
+  WHERE      analyteID = p_analyteID;
+
+  IF ( verify_analyte_permission( p_guid, p_password, p_analyteID ) = @OK ) THEN
+    IF ( count_analytes = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   doubleStranded, complement, _3prime, _5prime, 
+               sodium, potassium, lithium, magnesium, calcium 
+      FROM     analyte
+      WHERE    analyteID = p_analyteID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+-- UPDATEs an existing analyte with the specified information
+DROP PROCEDURE IF EXISTS set_nucleotide_info$$
+CREATE PROCEDURE set_nucleotide_info ( p_guid        CHAR(36),
+                                       p_password    VARCHAR(80),
+                                       p_analyteID   INT,
+                                       p_doubleStranded TINYINT,
+                                       p_complement  TINYINT,
+                                       p__3prime     TINYINT,
+                                       p__5prime     TINYINT,
+                                       p_sodium      DOUBLE,
+                                       p_potassium   DOUBLE,
+                                       p_lithium     DOUBLE,
+                                       p_magnesium   DOUBLE,
+                                       p_calcium     DOUBLE )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE not_found     TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND
+    SET not_found = 1;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_analyte_permission( p_guid, p_password, p_analyteID ) = @OK ) THEN
+    UPDATE analyte SET
+      doubleStranded = p_doubleStranded,
+      complement     = p_complement,
+      _3prime        = p__3prime,
+      _5prime        = p__5prime,
+      sodium         = p_sodium,
+      potassium      = p_potassium, 
+      lithium        = p_lithium, 
+      magnesium      = p_magnesium, 
+      calcium        = p_calcium 
+    WHERE analyteID = p_analyteID;
+
+    IF ( not_found = 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_ANALYTE;
+      SET @US3_LAST_ERROR = "MySQL: No analyte with that ID exists";
+
+    ELSE
+      SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+    END IF;
+
+  END IF;
+      
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
