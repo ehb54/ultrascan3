@@ -100,18 +100,24 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void data_plot(   void );
       void save_data(   void );
       void details(     void );
+      void reset(       void );
       void update(      int  );
       void update_density(   double );
       void update_viscosity( double );
-      void get_buffer(  void );
-      void get_vbar  (  void );
-      void exclude   (  void );
+      void get_buffer(     void );
+      void get_vbar  (     void );
+      void load_model(     void );
+      void distrib_type(   void );
+      void simulate_model( void );
+      void view_report(    void );
+      void exclude   (     void );
       void update_buffer(    double, double );
       void update_vbar(      double );
       void exclude_from(     double );
       void exclude_to  (     double );
       void set_ra_visible(   bool );
       void set_edit_last(    int  );
+      QStringList last_edit_files( QStringList );
 
       void help     ( void )
       { showHelp.show_help( "fematch.html" ); };
@@ -122,7 +128,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QVector< US_DataIO2::EditedData > dataList;
       QVector< US_DataIO2::RawData    > rawList;
       
-      US_Math2::SolutionData Data       solution;
+      US_Math2::SolutionData            solution;
 
       US_Help      showHelp;
 
@@ -139,7 +145,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QGridLayout* analysisLayout;
       QGridLayout* runInfoLayout;
       QGridLayout* parameterLayout;
-      QGridLayout* parametraLayout;
       QGridLayout* controlsLayout;
 
       US_Plot*     plotLayout1;  // Derived from QVBoxLayout
