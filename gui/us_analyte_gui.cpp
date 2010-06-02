@@ -685,6 +685,8 @@ void US_AnalyteGui::reset( void )
    if ( rb_rna    ->isChecked() ) analyte.type = US_Analyte::RNA;
    if ( rb_carb   ->isChecked() ) analyte.type = US_Analyte::CARBOHYDRATE;
 
+   saved_analyte = analyte;
+
    filenames   .clear();
    analyteIDs  .clear();
    GUIDs       .clear();
