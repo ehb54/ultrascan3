@@ -717,6 +717,7 @@ void US_AnalyteGui::reset( void )
                       
    pb_save            ->setEnabled( false );
    pb_more            ->setEnabled( false );
+   pb_delete          ->setEnabled( false );
 
    qApp->processEvents();
    inReset = false;
