@@ -67,7 +67,7 @@ bool US_DB2::test_db_connection(
                  0, NULL, CLIENT_MULTI_STATEMENTS );
  
    if ( ! status )
-      error = QString( "Test connection open error " ) + mysql_error( conn );
+      error = QString( "Test connection open error\n" ) + mysql_error( conn );
 
    mysql_close( conn );
 
@@ -106,7 +106,7 @@ bool US_DB2::test_secure_connection(
  
    if ( ! status )
    {
-      error = QString( "Test secure connection open error " ) +
+      error = QString( "Test secure connection open error\n" ) +
               mysql_error( db );
       return false;
    }
