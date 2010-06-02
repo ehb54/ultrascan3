@@ -7,15 +7,11 @@ US_Font::US_Font( QWidget* w, Qt::WindowFlags flags )
 {
    // Frame layout
    setPalette( US_GuiSettings::frameColor() );
-
    setWindowTitle( "Font Selection Dialog" );
+   setAttribute( Qt::WA_DeleteOnClose );
  
-   // Title
-   //QLabel* banner = us_banner( tr( "Please select a Base Font" ) );
-   
    QBoxLayout* topbox = new QVBoxLayout( this );
    topbox->setSpacing( 2 );
-   //topbox->addWidget( banner );
 
    // Body
    pb_font = us_pushbutton( tr( "Select Base Font" ) );

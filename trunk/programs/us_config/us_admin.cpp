@@ -10,6 +10,7 @@ US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags )
    : US_Widgets( true, w, flags )
 {
   setWindowTitle( "Change Master Password" );
+  setAttribute( Qt::WA_DeleteOnClose );
 
   int buttonh = 26;
   
