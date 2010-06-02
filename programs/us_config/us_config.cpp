@@ -280,29 +280,25 @@ void US_Config::save( void )
 
 void US_Config::update_colors( void )
 {
-  if ( colors ) delete colors;
-  colors = new US_Color;
+  colors = new US_Color; // Automatic delete
   colors->show();
 }
 
 void US_Config::update_font( void )
 {
-  if ( font ) delete font;
-  font = new US_Font;
+  font = new US_Font;  // Automatic delete
   font->show();
 }
 
 void US_Config::update_db( void )
 {
-  if ( db ) delete db;
-  db = new US_Database;
+  db = new US_Database; // Automatic delete
   db->show();
 }
 
 void US_Config::update_password( void )
 {
-  if ( admin ) delete admin;
-  admin = new US_Admin;
+  admin = new US_Admin;  // Automatic delete
   admin->show();
 }
 
