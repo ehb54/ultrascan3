@@ -476,15 +476,15 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
 
 void US_AnalyteGui::new_analyte( void )
 {
+   if ( ! discard_changes() ) return;
+
    US_Analyte a;
-   analyte       = a;  // Set to default
+   analyte = a;  // Set to default
    
    // Protein is default
    if ( rb_rna ->isChecked() ) analyte.type = US_Analyte::RNA;
    if ( rb_dna ->isChecked() ) analyte.type = US_Analyte::DNA;
    if ( rb_carb->isChecked() ) analyte.type = US_Analyte::CARBOHYDRATE;
-
-   saved_analyte = analyte;
 
    saved_analyte = a;
 
@@ -580,6 +580,24 @@ void US_AnalyteGui::populate( void )
 
 void US_AnalyteGui::set_analyte_type( int type )
 {
+   if ( inReset ) return;
+
+   if ( ! discard_changes() )
+   {
+      inReset = true;
+
+      switch ( analyte.type )
+      {
+         case US_Analyte::PROTEIN: rb_protein->setChecked( true ); break;
+         case US_Analyte::DNA    : rb_dna    ->setChecked( true ); break;
+         case US_Analyte::RNA    : rb_rna    ->setChecked( true ); break;
+         default:                  rb_carb   ->setChecked( true ); break;
+      }
+
+      inReset = false;
+      return;
+   }
+
    switch ( type )
    {
       case US_Analyte::PROTEIN:
@@ -604,7 +622,10 @@ void US_AnalyteGui::set_analyte_type( int type )
          break;
    }
 
-   analyte.type = (US_Analyte::analyte_t) type;
+   US_Analyte a;  // Create a blank analyte
+   analyte            = a;
+   analyte.type       = (US_Analyte::analyte_t) type;
+   saved_analyte.type = analyte.type;
    reset();
 }
 
@@ -1377,7 +1398,8 @@ int US_AnalyteGui::status_query( const QStringList& q )
 
 bool US_AnalyteGui::discard_changes( void )
 {
-   if ( saved_analyte == analyte ) return false;
+   // See if there are changes to discard
+   if ( saved_analyte == analyte ) return true;
 
    int response = QMessageBox::question( this,
       tr( "Analyte Changed" ),
