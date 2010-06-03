@@ -12,7 +12,7 @@
     list of model choices from local disk or from the database. A Search
     button and text field allow the list to be pared down to those of
     interest. After a model or set of models is selected in the list, an
-    Accept button leads to model data being available to the caller. </p>
+    Accept button passes model data to the caller. </p>
     
     <table>
       <tr>
@@ -33,25 +33,31 @@
 
             <li>
               <b>Select Investigator</b> After filling the text box to its
-              right with a partial name, click the Select button to generate
-              a list for the implied investigator. The default is created
-              from the current user name. Upon successfully finding a
-              matching investigator, the text becomes the full database
-              investigator ID, last name, and first name.
+              right with a partial name, click the Select button or hit the
+              Return/Enter key to generate a list for the implied investigator.
+              The default is created from the current user name. Upon
+              successfully finding a matching investigator, the text becomes
+              the full database investigator ID, last name, and first name.
             </li>
             
             <li>
               <b>Search</b> After filling the text box to its right with
               enough of a partial model description, click the Search button
-              to pare down the model list to descriptions that match the field.
-              Note that the search is case-insensitive. Blank the field and
-              click Search again to restore the full list.
+              or hit the Return/Enter key to pare down the model list to
+              descriptions that match the field. Note that the search is
+              case-insensitive. Enter a blank field to restore the full list.
             </li>
             
             <li>
               <b>(model list)</b> The list of model descriptions is generated
               either from local disk or db. Click on one or more entries to
-              indicate your choice(s) of data to load.
+              indicate your choice(s) of data to load. Click an entry with
+              the right mouse button to get a <a href="load_model_dis-MID.html">
+              Model Information Dialog</a> detailing model information. If
+              models are selected, a right-mouse-button click displays
+              information for all selected model entries. If there are no
+              selections, the right-mouse-button click gives information for
+              the row at which the cursor is positioned.
             </li>
             
             <li>

@@ -147,6 +147,8 @@ class US_EXTERN US_GA_Initialize : public US_Widgets
       QString       stdiline;
       QString       stdfline;
       QString       stnpline;
+      QString       mfilter;
+      QString       investig;
 
    private slots:
 

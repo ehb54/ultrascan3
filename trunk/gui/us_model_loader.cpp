@@ -7,10 +7,13 @@
 #include "us_investigator.h"
 #include "us_passwd.h"
 #include "us_db2.h"
+#include "us_editor.h"
 
 // main constructor with flags for multiple-selection and local-data
-US_ModelLoader::US_ModelLoader( bool multisel, bool local )
-  :US_WidgetsDialog( 0, 0 ), multi( multisel ), ondisk( local )
+US_ModelLoader::US_ModelLoader( bool multisel, bool local, QString search,
+      QString invtext )
+  :US_WidgetsDialog( 0, 0 ), multi( multisel ), ondisk( local ),
+   dsearch( search ), dinvtext( invtext )
 {
    setWindowTitle( tr( "Load Distribution Model" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -43,6 +46,8 @@ US_ModelLoader::US_ModelLoader( bool multisel, bool local )
    le_investigator = us_lineedit();
    le_investigator->setReadOnly( false );
    top->addWidget( le_investigator, row++, 1 );
+   connect( le_investigator, SIGNAL( returnPressed() ),
+            this,            SLOT( investigator() ) );
 
    pb_filtmodels   = us_pushbutton( tr( "Search" ) );
    top->addWidget( pb_filtmodels,   row,   0 );
@@ -50,7 +55,11 @@ US_ModelLoader::US_ModelLoader( bool multisel, bool local )
             this,          SLOT( list_models() ) );
    le_mfilter      = us_lineedit();
    le_mfilter->setReadOnly( false );
+   dsearch         = dsearch.isEmpty() ? QString( "" ) : dsearch;
+   le_mfilter->setText( dsearch );
    top->addWidget( le_mfilter,      row++, 1 );
+   connect( le_mfilter,    SIGNAL( returnPressed() ),
+            this,          SLOT( list_models() ) );
 
    main->addLayout( top );
 
@@ -60,6 +69,7 @@ US_ModelLoader::US_ModelLoader( bool multisel, bool local )
    if ( multi )
       lw_models->setSelectionMode( QAbstractItemView::ExtendedSelection );
 
+   lw_models->installEventFilter( this );
    main->addWidget( lw_models );
 
    // Button Row
@@ -79,23 +89,14 @@ US_ModelLoader::US_ModelLoader( bool multisel, bool local )
 
    main->addLayout( buttons );
 
-   // Default investigator to current user, based on home directory
-   le_investigator->setText( QDir( QDir::homePath() ).dirName() );
+   // Default investigator; possibly to current user, based on home directory
+   if ( dinvtext.compare( QString( "USER" ) ) == 0 )
+      dinvtext = QDir( QDir::homePath() ).dirName();
+
+   le_investigator->setText( dinvtext );
 
    // Trigger models list from disk or db source
    select_disk( ondisk );
-}
-
-// Alternate constructor with multi-select and defaulted local-disk flags
-US_ModelLoader::US_ModelLoader( bool multisel ):US_WidgetsDialog( 0, 0 )
-{
-   US_ModelLoader( multisel, true );
-}
-
-// Alternate constructor with both multi-select and local-disk flags defaulted
-US_ModelLoader::US_ModelLoader( void ):US_WidgetsDialog( 0, 0 )
-{
-   US_ModelLoader( false, true );
 }
 
 // Public method to return count of models selected
@@ -131,16 +132,20 @@ US_FemGlobal_New::ModelSystem US_ModelLoader::load_model( int index )
       }
       QStringList query;
 
+      // query db for model information
       query << "get_model_info" << model_descriptions[ index ].DB_id;
       db.query( query );
 
       if ( db.lastErrno() != US_DB2::OK )
          return model;
 
+      // get the result of the query
       db.next();
 
+      // 3rd value is full XML contents
       QByteArray contents = db.value( 2 ).toString().toAscii();
 
+      // write XML to temp file so load below behaves like with local file
       temporary.open();
       temporary.write( contents );
       temporary.close();
@@ -157,16 +162,29 @@ US_FemGlobal_New::ModelSystem US_ModelLoader::load_model( int index )
 // Public method to return description string for model by index
 QString US_ModelLoader::description( int index )
 {
-   QString sep    = ";";
+   QString sep    = ";";     // use semi-colon as separator
 
    if ( model_descriptions[ index ].description.contains( sep ) )
-      sep            = "^";
+      sep            = "^";  // use carat if semi-colon already in use
 
+   // create and return a composite description string
    QString cdesc  = sep + model_descriptions[ index ].description
                   + sep + model_descriptions[ index ].filename
                   + sep + model_descriptions[ index ].guid
                   + sep + model_descriptions[ index ].DB_id;
    return cdesc;
+}
+
+// Public method to return the current search string
+QString US_ModelLoader::search_filter()
+{
+   return le_mfilter->text();
+}
+
+// Public method to return the current investigator string
+QString US_ModelLoader::investigator_text()
+{
+   return le_investigator->text();
 }
 
 // Slot to respond to change in disk/db radio button select
@@ -347,6 +365,7 @@ void US_ModelLoader::list_models()
 void US_ModelLoader::cancelled()
 {
    modelsCount = 0;
+
    reject();
    close();
 }
@@ -363,19 +382,12 @@ void US_ModelLoader::accepted()
       model_descriptions.clear();
 
       for ( int ii = 0; ii < modelsCount; ii++ )
-      {  // get row of selection then row in original descriptions list
-         int     row   = lw_models->row( selmods[ ii ] );
+      {  // get row of selection then index in original descriptions list
          QString mdesc = selmods[ ii ]->text();
-         for ( int jj = 0; jj < allmods.size(); jj++ )
-         {  // search for matching description and save its row
-            if ( mdesc.compare( allmods[ jj ].description ) == 0 )
-            {
-               row        = jj;
-               break;
-            }
-         }
+         int     mdx   = modelIndex( mdesc, allmods );
+
          // repopulate descriptions with only selected row(s)
-         model_descriptions.append( allmods.at( row ) );
+         model_descriptions.append( allmods.at( mdx ) );
       }
    }
 
@@ -389,5 +401,240 @@ void US_ModelLoader::accepted()
 
    accept();        // signal that selection was accepted
    close();
+}
+
+// Filter events to catch right-mouse-button-click on list widget
+bool US_ModelLoader::eventFilter( QObject* obj, QEvent* e )
+{
+   if ( obj == lw_models  &&
+         e->type() == QEvent::ContextMenu )
+   {
+qDebug() << "Right-mouse list select";
+      QPoint mpos = ((QContextMenuEvent*)e)->pos();
+qDebug() << "  pos" << mpos;
+
+      show_model_info( mpos );
+
+      return false;
+   }
+
+   else
+   {  // pass all other events to normal handler
+      return US_WidgetsDialog::eventFilter( obj, e );
+   }
+}
+
+// Get type string corresponding to the type int enum
+QString US_ModelLoader::typeText( US_FemGlobal_New::ModelType mtype, int nassoc, int iters )
+{
+   struct typemap
+   {
+      US_FemGlobal_New::ModelType  typeval;
+      QString                      typedesc;
+   };
+
+   const typemap tmap[] =
+   {
+      { US_FemGlobal_New::MANUAL,    QObject::tr( "Manual"  ) },
+      { US_FemGlobal_New::TWODSA,    QObject::tr( "2DSA"    ) },
+      { US_FemGlobal_New::TWODSA_MW, QObject::tr( "2DSA-MW" ) },
+      { US_FemGlobal_New::GA,        QObject::tr( "GA"      ) },
+      { US_FemGlobal_New::GA_MW,     QObject::tr( "GA-MW"   ) },
+      { US_FemGlobal_New::GA_RA,     QObject::tr( "GA-RA"   ) },
+#if 0
+      { US_FemGlobal_New::COFS,      QObject::tr( "COFS"    ) },
+      { US_FemGlobal_New::FE,        QObject::tr( "FE"      ) },
+      { US_FemGlobal_New::GLOBAL,    QObject::tr( "GLOBAL"  ) },
+#endif
+      { US_FemGlobal_New::ONEDSA,    QObject::tr( "1DSA"    ) }
+   };
+   const int ntmap = sizeof( tmap ) / sizeof( tmap[ 0 ] );
+
+   QString tdesco  = QString( tr( "Unknown" ) );
+
+   for ( int jj = 0; jj < ntmap; jj++ )
+   {
+      if ( mtype == tmap[ jj ].typeval )
+      {
+         tdesco       = tmap[ jj ].typedesc;
+
+         if ( nassoc > 0 )
+            tdesco       = tdesco + "-RA";
+
+         if ( iters > 1 )
+            tdesco       = tdesco + "-MC";
+
+         return tdesco;
+      }
+      
+   }
+
+   return QString( tr( "Unknown" ) );
+}
+
+// Get index in model description list of a model description
+int US_ModelLoader::modelIndex( QString mdesc, QList< ModelDesc > mds )
+{
+   int mdx = 0;
+
+   for ( int jj = 0; jj < mds.size(); jj++ )
+   {  // search for matching description and save its index
+      if ( mdesc.compare( mds[ jj ].description ) == 0 )
+      {
+         mdx        = jj;
+         break;
+      }
+   }
+
+   return mdx;
+}
+
+// Show selected-model(s) information in text dialog
+void US_ModelLoader::show_model_info( QPoint pos )
+{
+   US_FemGlobal_New::ModelType mtype;
+
+   QString mdesc;
+   QString tdesc;
+   QString cdesc;
+   QString runid;
+   QString dtext;
+
+   int     row    = 0;
+   int     mdx    = 0;
+   int     iters  = 1;
+   int     ncomp  = 0;
+   int     nassoc = 0;
+
+   // get the list of selected models
+   QList< QListWidgetItem* > selmods = lw_models->selectedItems();
+   modelsCount = selmods.size();
+
+   if ( modelsCount < 2 )
+   {  // 1 or no rows selected:  build information for single model
+
+      if ( modelsCount == 1 )
+      {  // info on selected model
+         row      = lw_models->row( selmods[ 0 ] );
+         mdesc    = selmods[ 0 ]->text();
+      }
+
+      else
+      {  // info on model at right-click row
+         row      = lw_models->row( lw_models->itemAt( pos ) );
+         mdesc    = lw_models->itemAt( pos )->text();
+      }
+qDebug() << "  row" << row;
+
+      mdx      = modelIndex( mdesc, model_descriptions );
+      model    = load_model( mdx );
+      mtype    = model.type;
+      iters    = model.iterations;
+      ncomp    = model.components.size();
+      nassoc   = model.associations.size();
+      tdesc    = typeText( mtype, nassoc, iters );
+      runid    = mdesc.section( ".", 0, 0 );
+
+
+      dtext    = tr( "Model Information:" )
+         + tr( "\n  Description:           " ) + mdesc
+         + tr( "\n  Run ID:                " ) + runid
+         + tr( "\n  Type:                  " ) + tdesc
+         + "  (" + QString::number( (int)mtype ) + ")"
+         + tr( "\n  Global ID:             " ) + model.guid
+         + tr( "\n  Iterations:            " ) + QString::number( iters )
+         + tr( "\n  Components Count:      " ) + QString::number( ncomp )
+         + tr( "\n  Associations Count:    " ) + QString::number( nassoc )
+         + "";
+   }
+
+   else
+   {  // multiple rows selected:  build multiple-model information text
+      QString aruni;
+      QString atype;
+
+      row      = lw_models->row( selmods[ 0 ] );  // 1st model values
+      mdesc    = selmods[ 0 ]->text();
+      mdx      = modelIndex( mdesc, model_descriptions );
+      model    = load_model( mdx );
+      runid    = mdesc.section( ".", 0, 0 );
+      mtype    = model.type;
+      iters    = model.iterations;
+      nassoc   = model.associations.size();
+      tdesc    = typeText( mtype, nassoc, iters );
+      aruni    = runid;                           // potential common values
+      atype    = tdesc;
+
+      // make a pass to see if runID and type are common
+
+      for ( int jj = 1; jj < modelsCount; jj++ )
+      {
+         row      = lw_models->row( selmods[ jj ] );
+         mdesc    = selmods[ jj ]->text();
+         mdx      = modelIndex( mdesc, model_descriptions );
+         model    = load_model( mdx );
+         runid    = mdesc.section( ".", 0, 0 );
+         tdesc    = typeText( model.type, model.associations.size(),
+               model.iterations );
+
+         if ( !aruni.isEmpty()  &&  aruni.compare( runid ) != 0 )
+            aruni    = "";   // turn off common if mismatch
+
+         if ( !atype.isEmpty()  &&  atype.compare( tdesc ) != 0 )
+            atype    = "";   // turn off common if mismatch
+
+         if ( aruni.isEmpty()  &&  atype.isEmpty() )
+            break;           // neither common:  break
+      }
+
+      // Report on common RunID and/or Type
+      dtext    = tr( "Common Model Information   ( " )
+         + QString::number( modelsCount )
+         + tr( " models ):" );
+      
+      if ( !aruni.isEmpty() )
+         dtext    = dtext + tr( "\n  Run ID:                " ) + aruni;
+      
+      if ( !atype.isEmpty() )
+         dtext    = dtext + tr( "\n  Type:                  " ) + atype;
+
+      // Now loop to report on each model
+
+      for ( int jj = 0; jj < modelsCount; jj++ )
+      {
+         row      = lw_models->row( selmods[ jj ] );
+         mdesc    = selmods[ jj ]->text();
+         mdx      = modelIndex( mdesc, model_descriptions );
+         model    = load_model( mdx );
+
+         mtype    = model.type;
+         iters    = model.iterations;
+         ncomp    = model.components.size();
+         nassoc   = model.associations.size();
+         tdesc    = typeText( mtype, nassoc, iters );
+         runid    = mdesc.section( ".", 0, 0 );
+
+         dtext    = dtext + tr( "\n\nModel Information: (" )
+            + QString::number( ( jj + 1 ) ) + "):"
+            + tr( "\n  Description:           " ) + mdesc
+            + tr( "\n  Run ID:                " ) + runid
+            + tr( "\n  Type:                  " ) + tdesc
+            + "  (" + QString::number( (int)mtype ) + ")"
+            + tr( "\n  Global ID:             " ) + model.guid
+            + tr( "\n  Iterations:            " ) + QString::number( iters )
+            + tr( "\n  Components Count:      " ) + QString::number( ncomp )
+            + tr( "\n  Associations Count:    " ) + QString::number( nassoc )
+            + "";
+      }
+   }
+
+   // open a dialog and display model information
+   US_Editor* edit = new US_Editor( US_Editor::LOAD, true, "", this );
+   edit->setWindowTitle( tr( "Model Information" ) );
+   edit->move( this->pos() + pos + QPoint( 100, 100 ) );
+   edit->resize( 600, 400 );
+   edit->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
+   edit->e->setText( dtext );
+   edit->show();
 }
 

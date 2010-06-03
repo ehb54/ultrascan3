@@ -350,10 +350,12 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    // set up variables and initial state of GUI
    soludata   = new US_SoluteData();
    sdistro    = &s_distro;
-   plot_dim   = 2;
-   plot_s     = true;
-   rbtn_click = false;
-   def_local  = true;
+   plot_dim   = 2;          // default plot dimension
+   plot_s     = true;       // default s/MW X type
+   rbtn_click = false;      // default right-button clicked
+   def_local  = true;       // default local/DB flag
+   investig   = "USER";     // default investigator
+   mfilter    = "";         // default model list filter
 
    reset();
 }
@@ -1039,7 +1041,8 @@ void US_GA_Initialize::load_distro()
 
    US_FemGlobal_New::ModelSystem model;
 
-   US_ModelLoader* dialog = new US_ModelLoader( false, def_local );
+   US_ModelLoader* dialog = new US_ModelLoader( false, def_local,
+      mfilter, investig );
    dialog->move( this->pos() + QPoint( 200, 200 ) );
 
    QString         mdesc;
@@ -1050,6 +1053,8 @@ void US_GA_Initialize::load_distro()
    {
       model     = dialog->load_model( 0 );
       mdesc     = dialog->description( 0 );
+      mfilter   = dialog->search_filter();
+      investig  = dialog->investigator_text();
 qDebug() << "LOAD ACCEPT";
 qDebug() << "  Description:\n " << mdesc;
       sep       = mdesc.left( 1 );

@@ -122,6 +122,8 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       QString       xa_title_mw;
       QString       xa_title;
       QString       cmapname;
+      QString       mfilter;
+      QString       investig;
 
    private slots:
 

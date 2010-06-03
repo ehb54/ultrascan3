@@ -263,6 +263,8 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    main->addLayout( plot );
 
    def_local  = true;
+   mfilter    = "";
+   investig   = "USER";
 
    // set up variables and initial state of GUI
 
@@ -513,10 +515,7 @@ void US_Pseudo3D_Combine::select_autolim()
       ct_plt_smax->setRange( 0.0, 10000.0, 0.01 );
    }
 }
-
-void US_Pseudo3D_Combine::select_plot_s()
-{
-   plot_s     = cb_plot_s->isChecked();
+void US_Pseudo3D_Combine::select_plot_s() { plot_s     = cb_plot_s->isChecked();
    cb_plot_mw->setChecked( !plot_s );
    xa_title   = plot_s ? xa_title_s : xa_title_mw;
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
@@ -533,15 +532,20 @@ void US_Pseudo3D_Combine::select_plot_mw()
 void US_Pseudo3D_Combine::load_distro()
 {
    // get a model description or set of descriptions for distribution data
-   US_ModelLoader* dialog = new US_ModelLoader( true, def_local );
+   US_ModelLoader* dialog = new US_ModelLoader( true, def_local, mfilter,
+      investig );
    dialog->move( this->pos() + QPoint( 200, 200 ) );
 
    if ( dialog->exec() == QDialog::Accepted )
    {
       // detect whether db or disk source; default next load accordingly
       QString md = dialog->description( 0 );
+      mfilter    = dialog->search_filter();
+      investig   = dialog->investigator_text();
       QString mf = md.section( md.left( 1 ), 2, 2 );
       def_local  = mf.isEmpty() ? false : true;
+qDebug() << "accept SEARCH"       << mfilter;
+qDebug() << "accept INVESTIGATOR" << investig;
 
       for ( int jj = 0; jj < dialog->models_count(); jj++ )
       {  // load each selected distribution model
