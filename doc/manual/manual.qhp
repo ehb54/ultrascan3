@@ -85,7 +85,9 @@
             <file>images/vhw_histogram.png</file>
 
             <file>load_model_distrib.html</file>
+            <file>load_model_dis-MID.html</file>
             <file>images/load_model_distrib.png</file>
+            <file>images/load_model_dis-MID.png</file>
         </files>
     </filterSection>
 </QtHelpProject> 
