@@ -6,12 +6,11 @@
 
 #include "us_widgets_dialog.h"
 #include "us_widgets.h"
-//#include "us_femglobal_new.h"
 #include "us_model.h"
 #include "us_predict1.h"
 #include "us_analyte_gui.h"
 #include "us_buffer.h"
-#include "us_model_editor_new2.h"
+#include "us_model_gui.h"
 
 //! \brief A class to manage analytes in a model
 

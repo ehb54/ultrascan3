@@ -1,6 +1,6 @@
-//! \file us_model_editor.cpp
+//! \file us_model_gui.cpp
 
-#include "us_model_editor_new2.h"
+#include "us_model_gui.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
 #include "us_constants.h"
@@ -12,7 +12,7 @@
 #include "us_associations_gui.h"
 #include <uuid/uuid.h>
 
-US_ModelEditorNew::US_ModelEditorNew( US_Model& current_model )
+US_ModelGui::US_ModelGui( US_Model& current_model )
    : US_Widgets(), model( current_model )
 {
    setWindowTitle   ( "UltraScan Model Editor" );
@@ -178,7 +178,7 @@ US_ModelEditorNew::US_ModelEditorNew( US_Model& current_model )
    main->addLayout( buttonbox, row++, 0, 1, 4 );
 }
 
-void US_ModelEditorNew::new_model( void )
+void US_ModelGui::new_model( void )
 {
    ModelDesc desc;
    desc.description = "New Model";
@@ -191,7 +191,7 @@ void US_ModelEditorNew::new_model( void )
    lw_models->setCurrentRow( model_descriptions.size() - 1 );
 }
 
-void US_ModelEditorNew::show_model_desc( void )
+void US_ModelGui::show_model_desc( void )
 {
    lw_models->disconnect( SIGNAL( currentRowChanged( int ) ) );
    lw_models->clear();
@@ -203,7 +203,7 @@ void US_ModelEditorNew::show_model_desc( void )
    //                     SLOT  ( update           ( int  ) ) );
 }
 
-void US_ModelEditorNew::edit_description( void )
+void US_ModelGui::edit_description( void )
 {
    int row = lw_models->currentRow();
    if ( row < 0 ) return;
@@ -228,7 +228,7 @@ void US_ModelEditorNew::edit_description( void )
    le_guid->clear();
 }
 
-void US_ModelEditorNew::select_model( QListWidgetItem* item )
+void US_ModelGui::select_model( QListWidgetItem* item )
 {
    // Get the current index
    int index = item -> listWidget()-> currentRow();
@@ -286,7 +286,7 @@ void US_ModelEditorNew::select_model( QListWidgetItem* item )
    cb_optics         ->setCurrentIndex( model.optics );
 }
 
-void US_ModelEditorNew::delete_model( void )
+void US_ModelGui::delete_model( void )
 {
    int row = lw_models->currentRow();
    if ( row < 0 ) return;
@@ -320,7 +320,7 @@ void US_ModelEditorNew::delete_model( void )
    }
 }
 
-bool US_ModelEditorNew::status_query( const QStringList& q )
+bool US_ModelGui::status_query( const QStringList& q )
 {
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
@@ -336,14 +336,14 @@ bool US_ModelEditorNew::status_query( const QStringList& q )
    return database_ok( db );
 }
 
-void US_ModelEditorNew::connect_error( const QString& error )
+void US_ModelGui::connect_error( const QString& error )
 {
    QMessageBox::warning( this, 
       tr( "Connection Problem" ),
       tr( "Could not connect to databasee\n" ) + error );
 }
 
-bool US_ModelEditorNew::database_ok( US_DB2& db )
+bool US_ModelGui::database_ok( US_DB2& db )
 {
    if ( db.lastErrno() == US_DB2::OK ) return true;
 
@@ -354,7 +354,7 @@ bool US_ModelEditorNew::database_ok( US_DB2& db )
    return false;
 }
 
-void US_ModelEditorNew::get_person( void )
+void US_ModelGui::get_person( void )
 {
    US_Investigator* dialog = new US_Investigator( true, investigator );
    
@@ -365,7 +365,7 @@ void US_ModelEditorNew::get_person( void )
    dialog->exec();
 }
 
-void US_ModelEditorNew::update_person( int            ID, 
+void US_ModelGui::update_person( int            ID, 
                                        const QString& lname, 
                                        const QString& fname )
 {
@@ -378,7 +378,7 @@ void US_ModelEditorNew::update_person( int            ID,
             QString::number( ID ) + ": " + lname + ", " + fname );
 }
 
-void US_ModelEditorNew::get_buffer( void )
+void US_ModelGui::get_buffer( void )
 {
    US_BufferGui* dialog = new US_BufferGui( investigator, true, buffer, 
          rb_disk->isChecked() );
@@ -389,7 +389,7 @@ void US_ModelEditorNew::get_buffer( void )
    dialog->exec();
 }
 
-void US_ModelEditorNew::update_buffer( US_Buffer buf )
+void US_ModelGui::update_buffer( US_Buffer buf )
 {
    buffer = buf;
    le_density        ->setText( QString::number( buf.density        , 'f', 4 ) );
@@ -404,7 +404,7 @@ void US_ModelEditorNew::update_buffer( US_Buffer buf )
    model.bufferDesc      = buf.description;
 }
 
-void US_ModelEditorNew::manage_components( void )
+void US_ModelGui::manage_components( void )
 {
    int index = lw_models->currentRow();
 
@@ -435,12 +435,12 @@ void US_ModelEditorNew::manage_components( void )
    dialog->exec();
 }
 
-void US_ModelEditorNew::update_sim( void )
+void US_ModelGui::update_sim( void )
 {
    model = working_model;
 }
 
-void US_ModelEditorNew::associations( void )
+void US_ModelGui::associations( void )
 {
    int index = lw_models->currentRow();
 
@@ -469,38 +469,18 @@ void US_ModelEditorNew::associations( void )
    dialog->exec();
 }
 
-void US_ModelEditorNew::update_assoc( void )
+void US_ModelGui::update_assoc( void )
 {
    model = working_model;
 }
 
-void US_ModelEditorNew::accept_model( void )
+void US_ModelGui::accept_model( void )
 {
    emit valueChanged( model );
    close();
 }
-/*
-bool US_ModelEditorNew::model_path( QString& path )
-{
-   QDir dir;
-   path = US_Settings::dataDir() + "/models";
 
-   if ( ! dir.exists( path ) )
-   {
-      if ( ! dir.mkpath( path ) )
-      {
-         QMessageBox::critical( this,
-               tr( "Bad Model Path" ),
-               tr( "Could not create default directory for analytes\n" )
-               + path );
-         return false;
-      }
-   }
-
-   return true;
-}
-*/
-QString US_ModelEditorNew::get_filename( const QString& path, const QString& guid )
+QString US_ModelGui::get_filename( const QString& path, const QString& guid )
 {
    QDir f( path );
    QStringList filter( "M???????.xml" );
@@ -542,7 +522,7 @@ QString US_ModelEditorNew::get_filename( const QString& path, const QString& gui
    return path + "/M" + QString().sprintf( "%07i", number + 1 ) + ".xml";
 }
 
-void US_ModelEditorNew::save_model( void )
+void US_ModelGui::save_model( void )
 {
    if ( ! verify_model() ) return;
 
@@ -652,7 +632,7 @@ void US_ModelEditorNew::save_model( void )
    }
 }
 
-bool US_ModelEditorNew::verify_model( void )
+bool US_ModelGui::verify_model( void )
 {
    if ( model.components.size() == 0 )
    {
@@ -674,7 +654,7 @@ bool US_ModelEditorNew::verify_model( void )
    return true;
 }
 
-void US_ModelEditorNew::list_models( void )
+void US_ModelGui::list_models( void )
 {
    QString path;
    if ( ! US_Model::model_path( path ) ) return;

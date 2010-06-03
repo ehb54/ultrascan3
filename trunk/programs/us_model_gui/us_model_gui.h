@@ -1,11 +1,10 @@
-//! \file us_model_editor_new2.h
-#ifndef US_MODEL_EDITOR_H
-#define US_MODEL_EDITOR_H
+//! \file us_model_gui.h
+#ifndef US_MODEL_GUI_H
+#define US_MODEL_GUI_H
 
 #include <QtGui>
 
 #include "us_widgets.h"
-//#include "us_femglobal_new.h"
 #include "us_model.h"
 #include "us_help.h"
 #include "us_predict1.h"
@@ -14,13 +13,13 @@
 
 //! \brief A window to edit a model for simulation
 
-class US_ModelEditorNew : public US_Widgets
+class US_ModelGui : public US_Widgets
 {
    Q_OBJECT
 
    public:
       //! \param current_model - Location of model structure for editing
-      US_ModelEditorNew( US_Model& );
+      US_ModelGui( US_Model& );
 
       enum optics_t { ABSORBANCE, INTERFERENCE, FLUORESCENCE };
 
