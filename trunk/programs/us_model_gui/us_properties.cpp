@@ -5,7 +5,8 @@
 #include "us_gui_settings.h"
 #include "us_buffer_gui.h"
 #include "us_constants.h"
-#include "us_femglobal_new.h"
+//#include "us_femglobal_new.h"
+#include "us_model.h"
 
 #include "qwt_arrow_button.h"
 
@@ -13,7 +14,7 @@
 
 US_Properties::US_Properties( 
       const US_Buffer&               buf, 
-      US_FemGlobal_New::ModelSystem& mod,
+      US_Model&                      mod,
       int                            invID,
       bool                           access )
    : US_WidgetsDialog( 0, 0 ), 
@@ -145,10 +146,10 @@ US_Properties::US_Properties(
    main->addWidget( pb_sim, row, 0 );
 
    cmb_shape = us_comboBox();
-   cmb_shape->addItem( tr( "Sphere"            ), US_FemGlobal_New::SPHERE  );
-   cmb_shape->addItem( tr( "Prolate Ellipsoid" ), US_FemGlobal_New::PROLATE );
-   cmb_shape->addItem( tr( "Oblate Ellipsoid"  ), US_FemGlobal_New::OBLATE  );
-   cmb_shape->addItem( tr( "Rod"               ), US_FemGlobal_New::ROD     );
+   cmb_shape->addItem( tr( "Sphere"            ), US_Model::SPHERE  );
+   cmb_shape->addItem( tr( "Prolate Ellipsoid" ), US_Model::PROLATE );
+   cmb_shape->addItem( tr( "Oblate Ellipsoid"  ), US_Model::OBLATE  );
+   cmb_shape->addItem( tr( "Rod"               ), US_Model::ROD     );
    connect( cmb_shape, SIGNAL( currentIndexChanged( int ) ),
                        SLOT  ( select_shape       ( int ) ) );
    main->addWidget( cmb_shape, row++, 1 );
@@ -284,7 +285,7 @@ void US_Properties::newAnalyte( void )
    save_changes( lw_components->currentRow() );
    oldRow = -1;
 
-   US_FemGlobal_New::SimulationComponent sc;
+   US_Model::SimulationComponent sc;
    model.components << sc;
 
    int last = model.components.size() - 1;
@@ -331,7 +332,7 @@ void US_Properties::set_stoich( double stoich )
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
 
-   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   US_Model::SimulationComponent* sc = &model.components[ row ];
 
    inUpdate = true;
 
@@ -381,7 +382,7 @@ void US_Properties::edit_component( void )
    lw_components->insertItem( row, new QListWidgetItem( desc ) );
    lw_components->setCurrentRow( row );
 
-   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   US_Model::SimulationComponent* sc = &model.components[ row ];
    sc->name = desc;
 
    connect( lw_components, SIGNAL( currentRowChanged( int  ) ),
@@ -396,7 +397,7 @@ void US_Properties::edit_vbar( void )
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
 
-   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   US_Model::SimulationComponent* sc = &model.components[ row ];
 
    if ( keep_standard() )  // Change from standard values?
    {
@@ -429,7 +430,7 @@ void US_Properties::load_c0( void )
 
       if ( response == QMessageBox::Yes )
       {
-         US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+         US_Model::SimulationComponent* sc = &model.components[ row ];
 
          sc->c0.radius       .clear();
          sc->c0.concentration.clear();
@@ -465,7 +466,7 @@ void US_Properties::load_c0( void )
 
          int row = lw_components->currentRow();
 
-         US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+         US_Model::SimulationComponent* sc = &model.components[ row ];
 
          sc->c0.radius       .clear();
          sc->c0.concentration.clear();
@@ -507,25 +508,25 @@ void US_Properties::select_shape( int shape )
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
 
-   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   US_Model::SimulationComponent* sc = &model.components[ row ];
 
    switch ( shape )
    {
-      case US_FemGlobal_New::PROLATE:
+      case US_Model::PROLATE:
          le_f_f0->setText(  QString::number( hydro_data.prolate.f_f0, 'f', 3 ));
          le_s   ->setText(  QString::number( hydro_data.prolate.s,    'e', 4 ));
          le_D   ->setText(  QString::number( hydro_data.prolate.D,    'e', 4 ));
          le_f   ->setText(  QString::number( hydro_data.prolate.f,    'e', 4 ));
          break;
 
-      case US_FemGlobal_New::OBLATE:
+      case US_Model::OBLATE:
          le_f_f0->setText(  QString::number( hydro_data.oblate.f_f0, 'e', 3 ) );
          le_s   ->setText(  QString::number( hydro_data.oblate.s,    'e', 4 ) );
          le_D   ->setText(  QString::number( hydro_data.oblate.D,    'e', 4 ) );
          le_f   ->setText(  QString::number( hydro_data.oblate.f,    'e', 4 ) );
          break;
 
-      case US_FemGlobal_New::ROD:
+      case US_Model::ROD:
          le_f_f0->setText(  QString::number( hydro_data.rod.f_f0, 'e', 3 ) );
          le_s   ->setText(  QString::number( hydro_data.rod.s,    'e', 4 ) );
          le_D   ->setText(  QString::number( hydro_data.rod.D,    'e', 4 ) );
@@ -587,7 +588,7 @@ void US_Properties::lambda( bool down )
    
    switch ( model.optics )
    {
-      case US_FemGlobal_New::ABSORBANCE:
+      case US_Model::ABSORBANCE:
          if ( analyte.extinction.size() > 0 )
          {
             keys = analyte.extinction.keys();
@@ -603,7 +604,7 @@ void US_Properties::lambda( bool down )
          }
          break;
       
-      case US_FemGlobal_New::INTERFERENCE:
+      case US_Model::INTERFERENCE:
          if ( analyte.refraction.size() > 0 )
          {
             keys = analyte.refraction.keys();
@@ -619,7 +620,7 @@ void US_Properties::lambda( bool down )
          }
          break;
       
-      case US_FemGlobal_New::FLUORESCENCE:
+      case US_Model::FLUORESCENCE:
          if ( analyte.fluorescence.size() > 0 )
          {
             keys = analyte.fluorescence.keys();
@@ -646,7 +647,7 @@ void US_Properties::set_molar( void )
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
 
-   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   US_Model::SimulationComponent* sc = &model.components[ row ];
 
    double extinction       = le_extinction ->text().toDouble();
    double signalConc       = le_analyteConc->text().toDouble();
@@ -660,15 +661,15 @@ void US_Properties::set_molar( void )
 
          switch ( model.optics )
          {
-            case US_FemGlobal_New::ABSORBANCE:
+            case US_Model::ABSORBANCE:
                extinction = analyte.extinction[ wavelength ];
                break;
             
-            case US_FemGlobal_New::INTERFERENCE:
+            case US_Model::INTERFERENCE:
                extinction = analyte.refraction[ wavelength ];
                break;
             
-            case US_FemGlobal_New::FLUORESCENCE:
+            case US_Model::FLUORESCENCE:
                extinction = analyte.fluorescence[ wavelength ];
                break;
          }
@@ -679,7 +680,7 @@ void US_Properties::set_molar( void )
    }
    
    sc->molar_concentration = signalConc / extinction;
-   sc->wavelength          = le_wavelength->text().toDouble();
+   //sc->wavelength          = le_wavelength->text().toDouble();
 
    le_molar->setText( QString::number( sc->molar_concentration, 'e', 4 ) );
 }
@@ -689,7 +690,7 @@ void US_Properties::clear_guid( void )
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
 
-   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   US_Model::SimulationComponent* sc = &model.components[ row ];
 
    uuid_clear( sc->analyteGUID );
    le_guid->clear();
@@ -699,7 +700,7 @@ void US_Properties::save_changes( int row )
 {
    if ( row < 0 ) return;
 
-   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   US_Model::SimulationComponent* sc = &model.components[ row ];
       
    // Description
    sc->name = lw_components->item( row )->text(); 
@@ -720,7 +721,7 @@ void US_Properties::save_changes( int row )
 
    // Extinction, Wavelength
    sc->extinction = le_extinction->text().toDouble();
-   sc->wavelength = le_wavelength->text().toDouble();
+   //sc->wavelength = le_wavelength->text().toDouble();
 
    // Molar concentration
    sc->molar_concentration = le_molar->text().toDouble();
@@ -731,21 +732,21 @@ void US_Properties::save_changes( int row )
    // Shape
    switch ( cmb_shape->currentIndex() )
    {
-      case US_FemGlobal_New::SPHERE : 
-         sc->shape = US_FemGlobal_New::SPHERE; break;
+      case US_Model::SPHERE : 
+         sc->shape = US_Model::SPHERE; break;
       
-      case US_FemGlobal_New::PROLATE: 
-         sc->shape = US_FemGlobal_New::PROLATE; break;
+      case US_Model::PROLATE: 
+         sc->shape = US_Model::PROLATE; break;
       
-      case US_FemGlobal_New::OBLATE : 
-         sc->shape = US_FemGlobal_New::OBLATE; break;
+      case US_Model::OBLATE : 
+         sc->shape = US_Model::OBLATE; break;
       
       default:                        
-         sc->shape = US_FemGlobal_New::ROD; break;
+         sc->shape = US_Model::ROD; break;
    }
    
    int shape = cmb_shape->itemData( cmb_shape->currentIndex() ).toInt();
-   sc->shape = ( US_FemGlobal_New::ShapeType ) shape;
+   sc->shape = ( US_Model::ShapeType ) shape;
    
    // Characteristics
    sc->mw    = le_mw   ->text().toDouble();
@@ -776,7 +777,7 @@ void US_Properties::update( int /* row */ )
    oldRow = row;
 
    // Update to current data
-   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   US_Model::SimulationComponent* sc = &model.components[ row ];
 
    le_description->setText( sc->name );
 
@@ -798,10 +799,10 @@ void US_Properties::update( int /* row */ )
    // Set extinction and concentration
    le_extinction ->setText( QString::number( sc->extinction,          'e', 4 ));
 
-   if ( sc->wavelength <= 0.0 )
-      le_wavelength->clear();
-   else
-      le_wavelength ->setText( QString::number( sc->wavelength,       'f', 1 ));
+   //if ( sc->wavelength <= 0.0 )
+   //   le_wavelength->clear();
+   //else
+   //   le_wavelength ->setText( QString::number( sc->wavelength,       'f', 1 ));
 
    le_molar      ->setText( QString::number( sc->molar_concentration, 'e', 4 ));
    le_analyteConc->setText( QString::number( sc->signal_concentration,'f', 1 ));
@@ -818,10 +819,10 @@ void US_Properties::update( int /* row */ )
    // Set shape
    switch ( sc->shape )
    {
-      case US_FemGlobal_New::SPHERE : cmb_shape->setCurrentIndex( 0 ); break;
-      case US_FemGlobal_New::PROLATE: cmb_shape->setCurrentIndex( 1 ); break;
-      case US_FemGlobal_New::OBLATE : cmb_shape->setCurrentIndex( 2 ); break;
-      default:                        cmb_shape->setCurrentIndex( 3 ); break;
+      case US_Model::SPHERE : cmb_shape->setCurrentIndex( 0 ); break;
+      case US_Model::PROLATE: cmb_shape->setCurrentIndex( 1 ); break;
+      case US_Model::OBLATE : cmb_shape->setCurrentIndex( 2 ); break;
+      default:                cmb_shape->setCurrentIndex( 3 ); break;
    }
 
    ct_stoich->setValue( sc->stoichiometry );
@@ -848,7 +849,7 @@ void US_Properties::simulate( void )
 {
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
-   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   US_Model::SimulationComponent* sc = &model.components[ row ];
   
    if ( uuid_is_null( sc->analyteGUID ) )
       analyte.guid.clear(); 
@@ -876,7 +877,7 @@ void US_Properties::new_hydro( US_Analyte ad )
    int row = lw_components->currentRow();
    if ( row < 0 ) return;  // Should never happen
 
-   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   US_Model::SimulationComponent* sc = &model.components[ row ];
 
    hydro_data       = working_data;
    working_data.mw *= sc->stoichiometry;
@@ -1303,7 +1304,7 @@ void US_Properties::calculate( void )
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
 
-   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   US_Model::SimulationComponent* sc = &model.components[ row ];
 
    if ( mw != sc->mw )
    {

@@ -9,8 +9,11 @@ int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
 
-   US_FemGlobal_New::ModelSystem m;
-   US_ModelEditorNew             w( m );
+   //US_FemGlobal_New::ModelSystem m;
+   US_Model          m;
+   US_ModelEditorNew w( m );
+
+
 
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication

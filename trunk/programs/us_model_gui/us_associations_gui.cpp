@@ -5,8 +5,7 @@
 #include "us_settings.h"
 #include "us_constants.h"
 
-US_AssociationsGui::US_AssociationsGui( 
-      US_FemGlobal_New::ModelSystem& current_model )
+US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    : US_WidgetsDialog( 0, 0 ), model( current_model )
 {
    setWindowTitle   ( "UltraScan Model Assiciations" );
@@ -52,5 +51,5 @@ US_AssociationsGui::US_AssociationsGui(
    buttonbox->addWidget( pb_accept );
    //connect( pb_accept, SIGNAL( clicked() ), SLOT( accept_associations()) );
 
-   main->addLayout( buttonbox, row++, 0, 1, 4 );
+   main->addLayout( buttonbox, row++, 0, 1, 2 );
 }

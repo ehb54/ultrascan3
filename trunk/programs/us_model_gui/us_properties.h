@@ -6,7 +6,8 @@
 
 #include "us_widgets_dialog.h"
 #include "us_widgets.h"
-#include "us_femglobal_new.h"
+//#include "us_femglobal_new.h"
+#include "us_model.h"
 #include "us_predict1.h"
 #include "us_analyte_gui.h"
 #include "us_buffer.h"
@@ -27,7 +28,7 @@ class US_Properties : public US_WidgetsDialog
       //! \param access - A flag to determine if analyte data access should be
       //!          disk (false) or DB (true)
       US_Properties( const US_Buffer&, 
-                     US_FemGlobal_New::ModelSystem&,
+                     US_Model&,
                      int  = -1,
                      bool = false );
    signals:
@@ -41,16 +42,16 @@ class US_Properties : public US_WidgetsDialog
 
    private:
       // Passed parameters
-      US_Buffer                      buffer;
-      US_FemGlobal_New::ModelSystem& model;
-      int                            investigator;
-      bool                           db_access;
+      US_Buffer  buffer;
+      US_Model&  model;
+      int        investigator;
+      bool       db_access;
+                
+      bool       inUpdate;
+      int        oldRow;
+      US_Analyte analyte;
 
-      bool                           inUpdate;
-      int                            oldRow;
-      US_Analyte                     analyte;
-
-      enum { MW, S, D, F, F_F0 }     check_type;
+      enum { MW, S, D, F, F_F0 }  check_type;
 
       US_Hydrosim  hydro_data;
       US_Hydrosim  working_data;

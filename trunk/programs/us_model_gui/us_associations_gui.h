@@ -6,7 +6,8 @@
 
 #include "us_widgets_dialog.h"
 #include "us_widgets.h"
-#include "us_femglobal_new.h"
+//#include "us_femglobal_new.h"
+#include "us_model.h"
 #include "us_help.h"
 
 //! \brief A window to edit a model's associations
@@ -17,7 +18,7 @@ class US_AssociationsGui : public US_WidgetsDialog
 
    public:
       //! \param current_model - Location of model structure for editing
-      US_AssociationsGui( US_FemGlobal_New::ModelSystem& );
+      US_AssociationsGui( US_Model& );
 
    signals:
       
@@ -25,16 +26,11 @@ class US_AssociationsGui : public US_WidgetsDialog
       void done( void );
 
    private:
-      US_FemGlobal_New::ModelSystem model;
-
+      US_Model       model;
       US_Help        showhelp;
-
       US_ListWidget* lw_analytes;
 
    private slots:
-      
-      
-      
       void help( void )
       { showhelp.show_help( "model_editor.html#associations" ); };
 };
