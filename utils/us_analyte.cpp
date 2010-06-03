@@ -33,6 +33,32 @@ US_Analyte::US_Analyte()
 
 bool US_Analyte::operator== ( const US_Analyte& a ) const
 {
+   /*
+   if ( invID        != a.invID        ) qDebug() << invID        << a.invID;
+   if ( vbar20       != a.vbar20       ) qDebug() << vbar20       << a.vbar20;
+   if ( mw           != a.mw           ) qDebug() << mw           << a.mw ;
+   if ( description  != a.description  ) qDebug() << description  << a.description ;
+   if ( guid         != a.guid         ) qDebug() << guid         << a.guid ;
+   if ( sequence     != a.sequence     ) qDebug() << sequence     << a.sequence ;
+   if ( type         != a.type         ) qDebug() << type         << a.type  ;
+   if ( extinction   != a.extinction   ) qDebug() << extinction   << a.extinction ;
+   if ( refraction   != a.refraction   ) qDebug() << refraction   << a.refraction;
+   if ( fluorescence != a.fluorescence ) qDebug() << fluorescence << a.fluorescence;
+
+   if ( type == DNA  || type == RNA )
+   {
+      if ( doubleStranded != a.doubleStranded ) qDebug() << doubleStranded << a.doubleStranded ;
+      if ( complement     != a.complement     ) qDebug() << complement     << a.complement ;
+      if ( _3prime        != a._3prime        ) qDebug() << _3prime        << a._3prime ;
+      if ( _5prime        != a._5prime        ) qDebug() << _5prime        << a._5prime ;
+      if ( sodium         != a.sodium         ) qDebug() << sodium         << a.sodium ;
+      if ( potassium      != a.potassium      ) qDebug() << potassium      << a.potassium ;
+      if ( lithium        != a.lithium        ) qDebug() << lithium        << a.lithium ;
+      if ( magnesium      != a.magnesium      ) qDebug() << magnesium      << a.magnesium ;
+      if ( calcium        != a.calcium        ) qDebug() << calcium        << a.calcium ;
+   }
+   */
+
    if ( invID        != a.invID        ) return false;
    if ( vbar20       != a.vbar20       ) return false;
    if ( mw           != a.mw           ) return false;

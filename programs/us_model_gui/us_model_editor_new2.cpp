@@ -12,8 +12,7 @@
 #include "us_associations_gui.h"
 #include <uuid/uuid.h>
 
-US_ModelEditorNew::US_ModelEditorNew( 
-      US_FemGlobal_New::ModelSystem& current_model )
+US_ModelEditorNew::US_ModelEditorNew( US_Model& current_model )
    : US_Widgets(), model( current_model )
 {
    setWindowTitle   ( "UltraScan Model Editor" );
@@ -118,6 +117,12 @@ US_ModelEditorNew::US_ModelEditorNew(
    le_compressibility->setPalette ( gray );
    le_compressibility->setReadOnly( true );
    main->addWidget( le_compressibility, row++, 1 );
+
+   QLabel* lb_wavelength = us_label( tr( "Wavelength:" ) );
+   main->addWidget( lb_wavelength, row, 0 );
+
+   le_wavelength = us_lineedit( );
+   main->addWidget( le_wavelength, row++, 1 );
 
    QLabel* lb_temperature = us_label( tr( "Temperature:" ) );
    main->addWidget( lb_temperature, row, 0 );
@@ -263,7 +268,7 @@ void US_ModelEditorNew::select_model( QListWidgetItem* item )
       file = temporary.fileName();
    }
    
-   model.read_from_disk( file );
+   model.load( false, file );
   
    // Populate 
    buffer.GUID = model.bufferGUID;
@@ -294,7 +299,7 @@ void US_ModelEditorNew::delete_model( void )
    if ( rb_disk->isChecked() )
    {
       QString path;
-      if ( ! model_path( path ) ) return;
+      if ( ! US_Model::model_path( path ) ) return;
 
       // If guid matches one we already have, use that filename
       // otherwise create a new filename.
@@ -474,7 +479,7 @@ void US_ModelEditorNew::accept_model( void )
    emit valueChanged( model );
    close();
 }
-
+/*
 bool US_ModelEditorNew::model_path( QString& path )
 {
    QDir dir;
@@ -494,7 +499,7 @@ bool US_ModelEditorNew::model_path( QString& path )
 
    return true;
 }
-
+*/
 QString US_ModelEditorNew::get_filename( const QString& path, const QString& guid )
 {
    QDir f( path );
@@ -544,7 +549,7 @@ void US_ModelEditorNew::save_model( void )
    if ( rb_disk->isChecked() )
    {
       QString path;
-      if ( ! model_path( path ) ) return;
+      if ( ! US_Model::model_path( path ) ) return;
 
       // If guid is null, generate a new one.
       if ( le_guid->text().size() != 36 )
@@ -563,6 +568,8 @@ void US_ModelEditorNew::save_model( void )
           return;
       }
 
+      model.write( false, fn );
+      /*
       QTemporaryFile temporary;
       write_temp( temporary );
 
@@ -577,6 +584,7 @@ void US_ModelEditorNew::save_model( void )
       QMessageBox::information( this,
          tr( "Model Saved" ),
          tr( "The model has been %1 locally." ).arg( save_type ) );
+      */
    }
    else // Save/update in DB
    {
@@ -589,6 +597,8 @@ void US_ModelEditorNew::save_model( void )
          return;
       }
 
+      model.write( true, "", &db );
+      /*
       QString     modelID = "-1";
       QStringList q;
 
@@ -638,110 +648,8 @@ void US_ModelEditorNew::save_model( void )
                tr( "Model Updated" ),
                tr( "The model has been updated in the database." ) );
       }
+      */
    }
-}
-
-void US_ModelEditorNew::write_temp( QTemporaryFile& file )
-{
-   file.open();// QIODevice::WriteOnly | QIODevice::Text );
-   QXmlStreamWriter xml( &file );
-   xml.setAutoFormatting( true );
-
-   xml.writeStartDocument();
-   xml.writeDTD         ( "<!DOCTYPE US_Model>" );
-   xml.writeStartElement( "ModelData" );
-   xml.writeAttribute   ( "version", "1.0" );
-
-   xml.writeStartElement( "model" );
-   xml.writeAttribute   ( "description",     model.description );
-   xml.writeAttribute   ( "guid",            model.guid );
-   xml.writeAttribute   ( "bufferGuid",      model.bufferGUID );
-   xml.writeAttribute   ( "bufferDesc",      model.bufferDesc );
-   xml.writeAttribute   ( "density",         QString::number( model.density ) );
-   xml.writeAttribute   ( "viscosity",       QString::number( model.viscosity ) );
-   xml.writeAttribute   ( "compressibility", QString::number( model.compressibility ) );
-   xml.writeAttribute   ( "temperature",     QString::number( model.temperature ) );
-   xml.writeAttribute   ( "coSedSolute",     QString::number( model.coSedSolute ) );
-   xml.writeAttribute   ( "optics",          QString::number( model.optics ) );
-   xml.writeAttribute   ( "type",            QString::number( model.type ) );
-   xml.writeAttribute   ( "iterations",      QString::number( model.iterations ) );
-   
-   char uuid[ 37 ];
-   uuid[ 36 ] = 0;
-
-   // Write components
-   for ( int i = 0; i < model.components.size(); i++ )
-   {
-      US_FemGlobal_New::SimulationComponent* sc = &model.components[ i ];
-      xml.writeStartElement( "analyte" );
-
-      if ( uuid_is_null( sc->analyteGUID ) )
-         xml.writeAttribute( "guid",    "" );
-      else
-      {
-         uuid_unparse( sc->analyteGUID, uuid );
-         xml.writeAttribute( "guid",    QString( uuid                      ) );
-      }
-
-      xml.writeAttribute( "name",       sc->name                             );
-      xml.writeAttribute( "vbar20",     QString::number( sc->vbar20        ) );
-      xml.writeAttribute( "mw",         QString::number( sc->mw            ) );
-      xml.writeAttribute( "s",          QString::number( sc->s             ) );
-      xml.writeAttribute( "D",          QString::number( sc->D             ) );
-      xml.writeAttribute( "f",          QString::number( sc->f             ) );
-      xml.writeAttribute( "f_f0",       QString::number( sc->f_f0          ) );
-      xml.writeAttribute( "wavelength", QString::number( sc->wavelength    ) );
-      xml.writeAttribute( "extinction", QString::number( sc->extinction    ) );
-      xml.writeAttribute( "axial",      QString::number( sc->axial_ratio   ) );
-      xml.writeAttribute( "sigma",      QString::number( sc->sigma         ) );
-      xml.writeAttribute( "delta",      QString::number( sc->delta         ) );
-      xml.writeAttribute( "stoich",     QString::number( sc->stoichiometry ) );
-      xml.writeAttribute( "shape",      QString::number( sc->shape         ) );
-      xml.writeAttribute( "type",       QString::number( sc->analyte_type  ) );
-
-      xml.writeAttribute( "molar",      QString::number( sc->molar_concentration  ) );
-      xml.writeAttribute( "signal",     QString::number( sc->signal_concentration ) );
-
-      for ( int j = 0; j < sc->c0.radius.size(); j++ )
-      {
-         xml.writeStartElement( "mfem_scan" );
-
-         US_FemGlobal_New::MfemInitial* scan = &sc->c0;
-         xml.writeAttribute( "radius", QString::number( scan->radius       [ j ] ) );
-         xml.writeAttribute( "conc",   QString::number( scan->concentration[ j ] ) );
-         xml.writeEndElement();  // mfem_scan
-      }
-
-      xml.writeEndElement(); // analyte (SimulationComponent)
-   }
-
-   // Write associations
-   for ( int i = 0; i < model.associations.size(); i++ )
-   {
-      US_FemGlobal_New::Association* as = &model.associations[ i ];
-      xml.writeStartElement( "association" );
-      xml.writeAttribute( "k_eq", QString::number( as->k_eq ) );
-      xml.writeAttribute( "k_off", QString::number( as->k_off ) );
-
-      for ( int j = 0; j < as->reaction_components.size(); j++ )
-      {
-         xml.writeStartElement( "component" );
-
-         QString index  = QString::number( as->reaction_components[ j ] );
-         QString stoich = QString::number( as->stoichiometry      [ j ] );
-
-         xml.writeAttribute( "index",         index  );
-         xml.writeAttribute( "stoichiometry", stoich );
-         xml.writeEndElement(); // component
-      }
-
-      xml.writeEndElement(); // association
-   }
-
-   xml.writeEndElement(); // model
-   xml.writeEndElement(); // ModelData
-   xml.writeEndDocument();
-   file.close();
 }
 
 bool US_ModelEditorNew::verify_model( void )
@@ -769,7 +677,7 @@ bool US_ModelEditorNew::verify_model( void )
 void US_ModelEditorNew::list_models( void )
 {
    QString path;
-   if ( ! model_path( path ) ) return;
+   if ( ! US_Model::model_path( path ) ) return;
 
    model_descriptions.clear();
 

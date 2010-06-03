@@ -5,7 +5,8 @@
 #include <QtGui>
 
 #include "us_widgets.h"
-#include "us_femglobal_new.h"
+//#include "us_femglobal_new.h"
+#include "us_model.h"
 #include "us_help.h"
 #include "us_predict1.h"
 #include "us_analyte_gui.h"
@@ -19,7 +20,7 @@ class US_ModelEditorNew : public US_Widgets
 
    public:
       //! \param current_model - Location of model structure for editing
-      US_ModelEditorNew( US_FemGlobal_New::ModelSystem& );
+      US_ModelEditorNew( US_Model& );
 
       enum optics_t { ABSORBANCE, INTERFERENCE, FLUORESCENCE };
 
@@ -27,7 +28,7 @@ class US_ModelEditorNew : public US_Widgets
       
       //! \brief A signal that retruns the model loaded or created
       //! \param model - The parameters of the model
-      void valueChanged( US_FemGlobal_New::ModelSystem );
+      void valueChanged( US_Model );
 
    private:
       US_Help        showhelp;
@@ -44,10 +45,10 @@ class US_ModelEditorNew : public US_Widgets
          QString DB_id;
       };
 
-      QList< ModelDesc >            model_descriptions;
-      US_FemGlobal_New::ModelSystem model;
-      US_FemGlobal_New::ModelSystem working_model;
-      US_Buffer                     buffer;
+      QList< ModelDesc > model_descriptions;
+      US_Model           model;
+      US_Model           working_model;
+      US_Buffer          buffer;
       
       QLineEdit*     le_description;              
       QLineEdit*     le_investigator;
@@ -55,6 +56,7 @@ class US_ModelEditorNew : public US_Widgets
       QLineEdit*     le_density;
       QLineEdit*     le_viscosity;
       QLineEdit*     le_compressibility;
+      QLineEdit*     le_wavelength;
       QLineEdit*     le_temperature;
       QLineEdit*     le_guid;
 
