@@ -17,9 +17,7 @@ macx {
 
 TRANSLATIONS = $${TARGET}_DE_de.ts
 
-HEADERS      = us_db.h      \
-               us_db2.h 
+HEADERS      = us_db2.h 
 
-SOURCES      = us_db.cpp    \
-               us_db2.cpp
+SOURCES      = us_db2.cpp
 
