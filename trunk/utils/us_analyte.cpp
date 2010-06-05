@@ -103,7 +103,7 @@ int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
 
    // Get analyteID
    QStringList q( "get_analyteID" );
-   q << guid;
+   q << load_guid;
 
    db->query( q );
    error = db->lastErrno();

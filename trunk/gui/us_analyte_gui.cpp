@@ -1255,6 +1255,11 @@ void US_AnalyteGui::list_from_db( void )
       return; 
    }
 
+   descriptions.clear();
+   analyteIDs  .clear();
+   filenames   .clear();
+   GUIDs       .clear();
+
    while ( db.next() )
    {
       QString               a_type = db.value( 2 ).toString();
@@ -1271,7 +1276,9 @@ void US_AnalyteGui::list_from_db( void )
       analyteIDs   << db.value( 0 ).toString();
       descriptions << db.value( 1 ).toString();
       filenames    << "";
+      GUIDs        << "";
    }
+
    search();
 }
 
@@ -1425,10 +1432,10 @@ void US_AnalyteGui::select_analyte( QListWidgetItem* /* item */ )
 
    try
    {
-   if ( db_access )
-      select_from_db();
-   else
-      select_from_disk();
+      if ( db_access )
+         select_from_db();
+      else
+         select_from_disk();
    }
    catch ( int )
    {
@@ -1481,13 +1488,25 @@ void US_AnalyteGui::select_from_db( void )
       throw db.lastErrno();
    }
 
-   int result = analyte.load( true, "", &db );
+   // TODO: Fix analyte to fetch from analyteID
+   // Here we are getting the guid when we know what the IS is, but
+   // US_Analyte searches for the guid...  Extra work for no benefit.
+
+   QStringList q;
+   int         i = info[ index ].index;
+   q << "get_analyte_info" << analyteIDs[ i ];
+   db.query( q );
+   db.next();
+
+   QString guid = db.value( 0 ).toString();
+   
+   int result = analyte.load( true, guid, &db );
 
    if ( result != US_DB2::OK )
    {
       QMessageBox::warning( this,
             tr( "Analyte Load Rrror" ),
-            tr( "Load error when reading the disk:\n\n" ) + analyte.message );
+            tr( "Load error when reading the database:\n\n" ) + analyte.message );
       throw result;
    }
 
