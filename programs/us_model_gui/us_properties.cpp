@@ -868,7 +868,7 @@ void US_Properties::simulate( void )
    working_data.mw /= sc->stoichiometry;
 
    US_Predict1* dialog = new US_Predict1( 
-         working_data, investigator, analyte, true, true );
+         working_data, investigator, analyte, db_access, true );
 
    connect( dialog, SIGNAL( changed  ( US_Analyte ) ), 
                     SLOT  ( new_hydro( US_Analyte ) ) );
