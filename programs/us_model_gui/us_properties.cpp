@@ -5,7 +5,6 @@
 #include "us_gui_settings.h"
 #include "us_buffer_gui.h"
 #include "us_constants.h"
-//#include "us_femglobal_new.h"
 #include "us_model.h"
 
 #include "qwt_arrow_button.h"
@@ -94,7 +93,7 @@ US_Properties::US_Properties(
    main->addWidget( le_vbar, row++, 1 );
 
    // Row
-   QLabel* lb_extinction =  us_label( tr( "Extinction (optical units):" ) );
+   QLabel* lb_extinction =  us_label( tr( "Extinction (optical units)/Wavelength:" ) );
    main->addWidget( lb_extinction, row, 0 );
 
    QHBoxLayout* extinction = new QHBoxLayout;
@@ -104,22 +103,22 @@ US_Properties::US_Properties(
    connect( le_extinction, SIGNAL( editingFinished() ), SLOT( set_molar() ) );
    extinction->addWidget( le_extinction );
 
-   QwtArrowButton* down = new QwtArrowButton( 1, Qt::DownArrow );
-   down->setMinimumWidth( 16 );
-   connect( down, SIGNAL( clicked() ), SLOT( lambda_down() ) );
-   extinction->addWidget( down );
+   //QwtArrowButton* down = new QwtArrowButton( 1, Qt::DownArrow );
+   //down->setMinimumWidth( 16 );
+   //connect( down, SIGNAL( clicked() ), SLOT( lambda_down() ) );
+   //extinction->addWidget( down );
 
-   le_wavelength = us_lineedit( "" );
+   le_wavelength = us_lineedit( QString::number( model.wavelength, 'f', 1 ) );
    le_wavelength->setMinimumWidth( 80 );
    le_wavelength->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Preferred );
    le_wavelength->setPalette ( gray );
    le_wavelength->setReadOnly( true );
    extinction->addWidget( le_wavelength );
 
-   QwtArrowButton* up = new QwtArrowButton( 1, Qt::UpArrow );
-   up->setMinimumWidth( 16 );
-   connect( up, SIGNAL( clicked() ), SLOT( lambda_up() ) );
-   extinction->addWidget( up );
+   //QwtArrowButton* up = new QwtArrowButton( 1, Qt::UpArrow );
+   //up->setMinimumWidth( 16 );
+   //connect( up, SIGNAL( clicked() ), SLOT( lambda_up() ) );
+   //extinction->addWidget( up );
    
    main->addLayout( extinction, row++, 1 );
 
@@ -263,7 +262,7 @@ void US_Properties::clear_entries( void )
    le_guid       ->clear();
    le_vbar       ->clear();
    le_extinction ->clear();
-   le_wavelength ->clear();
+   //le_wavelength ->clear();
    le_molar      ->clear();
    le_analyteConc->clear();
    le_mw         ->clear();
@@ -389,7 +388,7 @@ void US_Properties::edit_component( void )
                            SLOT  ( update           ( int  ) ) );
 
    clear_guid();
-   le_wavelength->clear();
+   //le_wavelength->clear();
 }
 
 void US_Properties::edit_vbar( void )
@@ -408,7 +407,7 @@ void US_Properties::edit_vbar( void )
    sc->vbar20 = le_vbar->text().toDouble();
 
    clear_guid();
-   le_wavelength->clear();
+   //le_wavelength->clear();
    
    calculate();
 }
@@ -561,7 +560,7 @@ int US_Properties::next( QList< double > keys, double wavelength, bool down )
 {
    if ( keys.isEmpty() )
    {
-      le_wavelength->clear();
+      //le_wavelength->clear();
       return -1;
    }
    
@@ -576,16 +575,16 @@ int US_Properties::next( QList< double > keys, double wavelength, bool down )
    return index;
 }
 
-void US_Properties::lambda( bool down )
+void US_Properties::lambda( bool /* down */ )
 {
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
-
+  /* 
    QList < double > keys;
-   double           wavelength = le_wavelength->text().toDouble();
+   //double           wavelength = le_wavelength->text().toDouble();
    double           extinction;
    int              index;
-   
+
    switch ( model.optics )
    {
       case US_Model::ABSORBANCE:
@@ -593,11 +592,11 @@ void US_Properties::lambda( bool down )
          {
             keys = analyte.extinction.keys();
 
-            index = next( keys, wavelength, down );
+            //index = next( keys, wavelength, down );
             if ( index < 0 ) return;
 
-            wavelength = keys[ index ];
-            le_wavelength->setText( QString::number( wavelength, 'f', 1 ) );
+            //wavelength = keys[ index ];
+            //le_wavelength->setText( QString::number( wavelength, 'f', 1 ) );
             
             extinction = analyte.extinction[ wavelength ];
             le_extinction->setText( QString::number( extinction, 'e', 4 ) );
@@ -609,11 +608,11 @@ void US_Properties::lambda( bool down )
          {
             keys = analyte.refraction.keys();
 
-            index = next( keys, wavelength, down );
+            //index = next( keys, wavelength, down );
             if ( index < 0 ) return;
 
-            wavelength = keys[ index ];
-            le_wavelength->setText( QString::number( wavelength, 'f', 1 ) );
+            //wavelength = keys[ index ];
+            //le_wavelength->setText( QString::number( wavelength, 'f', 1 ) );
             
             extinction = analyte.refraction[ wavelength ];
             le_extinction->setText( QString::number( extinction, 'e', 4 ) );
@@ -625,18 +624,18 @@ void US_Properties::lambda( bool down )
          {
             keys = analyte.fluorescence.keys();
 
-            index = next( keys, wavelength, down );
+            //index = next( keys, wavelength, down );
             if ( index < 0 ) return;
 
-            wavelength = keys[ index ];
-            le_wavelength->setText( QString::number( wavelength, 'f', 1 ) );
+            //wavelength = keys[ index ];
+            //le_wavelength->setText( QString::number( wavelength, 'f', 1 ) );
             
-            extinction = analyte.fluorescence[ wavelength ];
+            //extinction = analyte.fluorescence[ wavelength ];
             le_extinction->setText( QString::number( extinction, 'e', 4 ) );
          }
          break;
    }
-
+*/
    inUpdate = true;
    set_molar();
    inUpdate = false;
@@ -651,7 +650,7 @@ void US_Properties::set_molar( void )
 
    double extinction       = le_extinction ->text().toDouble();
    double signalConc       = le_analyteConc->text().toDouble();
-   
+   /*
    if ( ! inUpdate )
    {
       if ( keep_standard() )
@@ -678,8 +677,12 @@ void US_Properties::set_molar( void )
          return;
       }
    }
-   
-   sc->molar_concentration = signalConc / extinction;
+   */
+
+   if ( extinction > 0.0 )
+      sc->molar_concentration = signalConc / extinction;
+   else
+      sc->molar_concentration = 0.0;
    //sc->wavelength          = le_wavelength->text().toDouble();
 
    le_molar->setText( QString::number( sc->molar_concentration, 'e', 4 ) );
@@ -905,6 +908,7 @@ void US_Properties::new_hydro( US_Analyte ad )
    uuid_parse( ad.guid.toAscii().data(), sc->analyteGUID );
 
    // Set extinction
+   /*
    if ( ad.extinction.size() > 0 )
    {
       QList< double > keys = ad.extinction.keys();
@@ -918,7 +922,7 @@ void US_Properties::new_hydro( US_Analyte ad )
       le_wavelength->clear();
       le_extinction->setText( "0.0000" );
    }
-
+  */
    sc->extinction = le_extinction->text().toDouble();
 
    // Set vbar(20), mw
@@ -1046,7 +1050,7 @@ bool US_Properties::keep_standard( void )
    if ( response == QMessageBox::Yes )
    {
       clear_guid();
-      le_wavelength->clear();
+      //le_wavelength->clear();
       analyte.extinction  .clear();
       analyte.refraction  .clear();
       analyte.fluorescence.clear();
