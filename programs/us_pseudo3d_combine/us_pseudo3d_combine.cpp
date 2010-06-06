@@ -6,6 +6,7 @@
 
 #include "us_pseudo3d_combine.h"
 #include "us_spectrodata.h"
+#include "us_model.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -566,7 +567,7 @@ qDebug() << "accept INVESTIGATOR" << investig;
 
 void US_Pseudo3D_Combine::load_distro( US_ModelLoader* dialog, int index )
 {
-   US_FemGlobal_New::ModelSystem model;
+   US_Model model;
 
    // model type table:  DescPartialName, Method, MonteCarlo
    const char* cdtyp[] =
@@ -591,7 +592,7 @@ void US_Pseudo3D_Combine::load_distro( US_ModelLoader* dialog, int index )
    Solute      sol_s;
    Solute      sol_w;
 
-   model         = dialog->load_model(  index );
+   dialog->load_model( model, index );
 
    QString mdesc = dialog->description( index );
    mdesc         = mdesc.section( mdesc.left( 1 ), 1, 1 );

@@ -2,7 +2,8 @@
 #define US_FEMATCH_H
 
 #include "us_dataIO2.h"
-#include "us_analysis_base2.h"
+#include "us_model.h"
+#include "us_model_loader.h"
 #include "us_editor.h"
 #include "us_math2.h"
 #include "us_run_details2.h"
@@ -81,6 +82,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
 
       bool          dataLoaded;
       bool          dataLatest;
+      bool          def_local;
 
       QString       run_name;
       QString       cell;
@@ -88,11 +90,14 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QString       workingDir;
       QString       runID;
       QString       editID;
+      QString       mfilter;
+      QString       investig;
 
       QStringList   files;
 
       US_DataIO2::EditedData*  d;
       US_DataIO2::Scan*        s;
+      US_Model                 model;
 
    private slots:
 
@@ -116,7 +121,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void exclude_from(     double );
       void exclude_to  (     double );
       void set_ra_visible(   bool );
-      void set_edit_last(    int  );
       QStringList last_edit_files( QStringList );
 
       void help     ( void )

@@ -1039,7 +1039,7 @@ void US_GA_Initialize::load_distro()
    };
    int ncdte = sizeof( cdtyp ) / sizeof( char* );
 
-   US_FemGlobal_New::ModelSystem model;
+   US_Model model;
 
    US_ModelLoader* dialog = new US_ModelLoader( false, def_local,
       mfilter, investig );
@@ -1051,7 +1051,8 @@ void US_GA_Initialize::load_distro()
 
    if ( dialog->exec() == QDialog::Accepted )
    {
-      model     = dialog->load_model( 0 );
+      dialog->load_model( model, 0 );
+
       mdesc     = dialog->description( 0 );
       mfilter   = dialog->search_filter();
       investig  = dialog->investigator_text();
