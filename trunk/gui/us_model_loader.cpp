@@ -105,58 +105,47 @@ int US_ModelLoader::models_count()
    return modelsCount;
 }
 
-// Public method to return model data by index
-US_FemGlobal_New::ModelSystem US_ModelLoader::load_model( int index )
+// Public method to load model data by index
+int US_ModelLoader::load_model( US_Model& model, int index )
 {
-   QTemporaryFile temporary;
-   QString        file;
+   int rc = 0;
+
+   model.components.clear();
+   model.associations.clear();
 
    if ( rb_disk->isChecked() )
-   {  // local-disk:  file is actual local file
-      file      = model_descriptions[ index ].filename;
+   {
+      QString   filename = model_descriptions[ index ].filename;
+
+qDebug() << "Model load from file" << filename;
+      rc   = model.load( filename );
+qDebug() << "Model load RETURN" << rc;
+qDebug() << "LD model desc" << model.description;
+qDebug() << "LD model components count" << model.components.size();
    }
 
    else
-   {  // DB:  build temporary file by DB query
-      US_Passwd   pw;
-      QString     masterPW = pw.getPasswd();
-      US_DB2      db( masterPW );
+   {
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( ( rc = db.lastErrno() ) != US_DB2::OK )
       {
          QMessageBox::information( this,
                tr( "DB Connection Problem" ),
                tr( "There was an error connecting to the database:\n" )
                + db.lastError() );
-         return model;
+         return rc;
       }
-      QStringList query;
 
-      // query db for model information
-      query << "get_model_info" << model_descriptions[ index ].DB_id;
-      db.query( query );
+      QString   modelID  = model_descriptions[ index ].DB_id;
 
-      if ( db.lastErrno() != US_DB2::OK )
-         return model;
-
-      // get the result of the query
-      db.next();
-
-      // 3rd value is full XML contents
-      QByteArray contents = db.value( 2 ).toString().toAscii();
-
-      // write XML to temp file so load below behaves like with local file
-      temporary.open();
-      temporary.write( contents );
-      temporary.close();
-
-      file      = temporary.fileName();
+qDebug() << "Model load from modelID" << modelID;
+      rc   = model.load( modelID, &db );
+qDebug() << "Model load RETURN" << rc;
    }
 
-   // Common load of model information from file
-   model.read_from_disk( file );
-
-   return model;
+   return rc;
 }
 
 // Public method to return description string for model by index
@@ -198,9 +187,8 @@ void US_ModelLoader::select_disk( bool checked )
 
    if ( !checked )
    {  // Disk unchecked (DB checked):  fill models list from DB
-      US_Passwd   pw;
-      QString     masterPW = pw.getPasswd();
-      US_DB2      db( masterPW );
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
 
       if ( db.lastErrno() != US_DB2::OK )
       {
@@ -320,6 +308,16 @@ void US_ModelLoader::list_models()
    {  // Model list from DB
       US_Passwd   pw;
       US_DB2      db( pw.getPasswd() );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::information( this,
+               tr( "DB Connection Problem" ),
+               tr( "There was an error connecting to the database:\n" )
+               + db.lastError() );
+         return;
+      }
+
       QStringList query;
       QString     invID = le_investigator->text().section( ":", 0, 0 );
 
@@ -425,28 +423,27 @@ qDebug() << "  pos" << mpos;
 }
 
 // Get type string corresponding to the type int enum
-QString US_ModelLoader::typeText( US_FemGlobal_New::ModelType mtype, int nassoc, int iters )
+QString US_ModelLoader::typeText( US_Model::ModelType mtype,
+   int nassoc, int iters )
 {
    struct typemap
    {
-      US_FemGlobal_New::ModelType  typeval;
-      QString                      typedesc;
+      US_Model::ModelType  typeval;
+      QString              typedesc;
    };
 
    const typemap tmap[] =
    {
-      { US_FemGlobal_New::MANUAL,    QObject::tr( "Manual"  ) },
-      { US_FemGlobal_New::TWODSA,    QObject::tr( "2DSA"    ) },
-      { US_FemGlobal_New::TWODSA_MW, QObject::tr( "2DSA-MW" ) },
-      { US_FemGlobal_New::GA,        QObject::tr( "GA"      ) },
-      { US_FemGlobal_New::GA_MW,     QObject::tr( "GA-MW"   ) },
-      { US_FemGlobal_New::GA_RA,     QObject::tr( "GA-RA"   ) },
-#if 0
-      { US_FemGlobal_New::COFS,      QObject::tr( "COFS"    ) },
-      { US_FemGlobal_New::FE,        QObject::tr( "FE"      ) },
-      { US_FemGlobal_New::GLOBAL,    QObject::tr( "GLOBAL"  ) },
-#endif
-      { US_FemGlobal_New::ONEDSA,    QObject::tr( "1DSA"    ) }
+      { US_Model::MANUAL,    QObject::tr( "Manual"  ) },
+      { US_Model::TWODSA,    QObject::tr( "2DSA"    ) },
+      { US_Model::TWODSA_MW, QObject::tr( "2DSA-MW" ) },
+      { US_Model::GA,        QObject::tr( "GA"      ) },
+      { US_Model::GA_MW,     QObject::tr( "GA-MW"   ) },
+      { US_Model::GA_RA,     QObject::tr( "GA-RA"   ) },
+      { US_Model::COFS,      QObject::tr( "COFS"    ) },
+      { US_Model::FE,        QObject::tr( "FE"      ) },
+      { US_Model::GLOBAL,    QObject::tr( "GLOBAL"  ) },
+      { US_Model::ONEDSA,    QObject::tr( "1DSA"    ) }
    };
    const int ntmap = sizeof( tmap ) / sizeof( tmap[ 0 ] );
 
@@ -492,7 +489,7 @@ int US_ModelLoader::modelIndex( QString mdesc, QList< ModelDesc > mds )
 // Show selected-model(s) information in text dialog
 void US_ModelLoader::show_model_info( QPoint pos )
 {
-   US_FemGlobal_New::ModelType mtype;
+   US_Model::ModelType mtype;
 
    QString mdesc;
    QString tdesc;
@@ -527,7 +524,9 @@ void US_ModelLoader::show_model_info( QPoint pos )
 qDebug() << "  row" << row;
 
       mdx      = modelIndex( mdesc, model_descriptions );
-      model    = load_model( mdx );
+
+      load_model( model, mdx );
+
       mtype    = model.type;
       iters    = model.iterations;
       ncomp    = model.components.size();
@@ -556,7 +555,9 @@ qDebug() << "  row" << row;
       row      = lw_models->row( selmods[ 0 ] );  // 1st model values
       mdesc    = selmods[ 0 ]->text();
       mdx      = modelIndex( mdesc, model_descriptions );
-      model    = load_model( mdx );
+
+      load_model( model, mdx );
+
       runid    = mdesc.section( ".", 0, 0 );
       mtype    = model.type;
       iters    = model.iterations;
@@ -572,7 +573,9 @@ qDebug() << "  row" << row;
          row      = lw_models->row( selmods[ jj ] );
          mdesc    = selmods[ jj ]->text();
          mdx      = modelIndex( mdesc, model_descriptions );
-         model    = load_model( mdx );
+
+         load_model( model, mdx );
+
          runid    = mdesc.section( ".", 0, 0 );
          tdesc    = typeText( model.type, model.associations.size(),
                model.iterations );
@@ -605,7 +608,8 @@ qDebug() << "  row" << row;
          row      = lw_models->row( selmods[ jj ] );
          mdesc    = selmods[ jj ]->text();
          mdx      = modelIndex( mdesc, model_descriptions );
-         model    = load_model( mdx );
+
+         load_model( model, mdx );
 
          mtype    = model.type;
          iters    = model.iterations;

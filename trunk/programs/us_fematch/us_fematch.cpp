@@ -12,6 +12,7 @@
 #include "us_matrix.h"
 #include "us_constants.h"
 #include "us_analyte_gui.h"
+#include "us_model_loader.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -69,11 +70,9 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    ck_edit     ->setPalette( US_GuiSettings::normalColor() );
 
    connect( pb_load,      SIGNAL( clicked() ),
-            this,         SLOT( load() ) );
+            this,         SLOT(   load() ) );
    connect( pb_details,   SIGNAL( clicked() ),
-            this,         SLOT( details() ) );
-   connect( ck_edit,      SIGNAL( stateChanged( int ) ),
-            this,         SLOT  ( set_edit_last( int ) ) );
+            this,         SLOT(   details() ) );
    connect( pb_distrib,   SIGNAL( clicked() ),
             this,         SLOT(   distr_type()  ) );
    connect( pb_loadmodel, SIGNAL( clicked() ),
@@ -107,7 +106,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    QLabel* lb_info    = us_banner( tr( "Information for this Run" ) );
    QLabel* lb_triples = us_banner( tr( "Cell / Channel / Wavelength" ) );
    QLabel* lb_id      = us_label ( tr( "Run ID / Edit ID:" ) );
-   QLabel* lb_temp    = us_label ( tr( "Avg Temperature:" ) );
+   QLabel* lb_temp    = us_label ( tr( "Average Temperature:" ) );
 
    le_id      = us_lineedit();
    le_id->setReadOnly( true );
@@ -331,6 +330,9 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    set_ra_visible( false );
 
    dataLoaded = false;
+   def_local  = true;
+   mfilter    = "";
+   investig   = "USER";
 }
 
 // load data
@@ -339,6 +341,7 @@ void US_FeMatch::load( void )
    QString     file;
    QStringList files;
    QStringList parts;
+   int         scanCount;
 
    dataLoaded = false;
    dataLatest = ck_edit->isChecked();
@@ -443,17 +446,17 @@ qDebug() << "dataLatest:" << dataLatest;
    lw_triples->setCurrentRow( 0 );
 
    d         = &dataList[ 0 ];
-   //scanCount = d->scanData.size();
+   scanCount = d->scanData.size();
 
    // set ID, description, and avg temperature text
    le_id  ->setText( d->runID + " / " + d->editID );
    te_desc->setText( d->description );
    double tempera = d->scanData[ 0 ].temperature;
 
-   for ( int jj = 1; jj < d->scanData.size(); jj++ )
+   for ( int jj = 1; jj < scanCount; jj++ )
       tempera += d->scanData[ jj ].temperature;
 
-   tempera  /= (double)( d->scanData.size() );
+   tempera  /= (double)scanCount;
    le_temp->setText( QString::number( tempera, 'f', 1 ) + " " + DEGC );
 
 #if 0
@@ -484,6 +487,7 @@ qDebug() << "dataLatest:" << dataLatest;
    pb_loadmodel->setEnabled( true );
    pb_distrib  ->setEnabled( true );
    pb_exclude  ->setEnabled( true );
+   mfilter     = dataList[ 0 ].runID;
 
    ct_from->disconnect();
    ct_from->setValue( 0 );
@@ -497,18 +501,20 @@ void US_FeMatch::details( void )
 {
    US_RunDetails2* dialog
       = new US_RunDetails2( rawList, runID, workingDir, triples );
+
    dialog->move( this->pos() + QPoint( 100, 100 ) );
    dialog->exec();
    qApp->processEvents();
+
    delete dialog;
 }
 
-// update
+// update based on selected triples row
 void US_FeMatch::update( int row )
 {
    d              = &dataList[ row ];
    int scanCount  = d->scanData.size();
-   le_id->setText( d->runID + "/" + d->editID );
+   le_id->setText( d->runID + " / " + d->editID );
 
    double avt = 0.0;
 
@@ -602,8 +608,9 @@ void US_FeMatch::data_plot( void )
 
       // Plot each scan in (up to) three segments: below, in, and above
       // the specified boundaries
+
       while (  jj < points  &&  s->readings[ jj ].value < lower_limit )
-      {
+      {  // accumulate coordinates of below-baseline points
          r[ count ] = d->x       [ jj ].radius;
          v[ count ] = s->readings[ jj ].value;
          jj++;
@@ -615,7 +622,7 @@ void US_FeMatch::data_plot( void )
       QwtPlotCurve* c;
 
       if ( count > 1 )
-      {
+      {  // plot portion of curve below baseline
          title = tr( "Curve " ) + QString::number( ii ) + tr( " below range" );
          c     = us_curve( data_plot2, title );
 
@@ -630,7 +637,7 @@ void US_FeMatch::data_plot( void )
       count = 0;
 
       while ( jj < points && s->readings[ jj ].value < upper_limit )
-      {
+      {  // accumulate coordinates of curve within baseline-to-plateau
          r[ count ] = d->x       [ jj ].radius;
          v[ count ] = s->readings[ jj ].value;
          jj++;
@@ -639,9 +646,9 @@ void US_FeMatch::data_plot( void )
 //qDebug() << "IN count" << count;
 
       if ( count > 1 )
-      {
+      {  // plot portion of curve within baseline-to-plateau
          title = tr( "Curve " ) + QString::number( ii ) + tr( " in range" );
-         c = us_curve( data_plot2, title );
+         c     = us_curve( data_plot2, title );
 
          if ( highlight )
             c->setPen( QPen( Qt::red ) );
@@ -654,7 +661,7 @@ void US_FeMatch::data_plot( void )
       count = 0;
 
       while ( jj < points )
-      {
+      {  // accumulate coordinates of curve portion above plateau
          r[ count ] = d->x       [ jj ].radius;
          v[ count ] = s->readings[ jj ].value;
          jj++;
@@ -663,9 +670,9 @@ void US_FeMatch::data_plot( void )
 //qDebug() << "ABOVE count" << count;
 
       if ( count > 1 )
-      {
+      {  // plot portion of curve above plateau
          title = tr( "Curve " ) + QString::number( ii ) + tr( " above range" );
-         c = us_curve( data_plot2, title );
+         c     = us_curve( data_plot2, title );
 
          if ( highlight )
             c->setPen( QPen( Qt::red ) );
@@ -801,7 +808,7 @@ void US_FeMatch::exclude( void )
 
 void US_FeMatch::set_ra_visible( bool visible )
 {
-   lb_simpoints->setVisible( visible );
+   lb_simpoints->setVisible( visible );  // visibility of RA experimental pars
    ct_simpoints->setVisible( visible );
    lb_bldvolume->setVisible( visible );
    ct_bldvolume->setVisible( visible );
@@ -812,18 +819,14 @@ void US_FeMatch::set_ra_visible( bool visible )
    cb_mesh     ->setVisible( visible );
    cb_grid     ->setVisible( visible );
 
-   gb_modelsim ->setVisible( visible );
-}
-
-void US_FeMatch::set_edit_last( int state )
-{
-   dataLatest = ( state == Qt::Checked );
+   gb_modelsim ->setVisible( visible );  // visibility model simulate group box
 }
 
 void US_FeMatch::distrib_type( )
 {
 }
 
+// reset excluded scan range
 void US_FeMatch::reset( )
 {
    if ( !dataLoaded )
@@ -844,15 +847,61 @@ void US_FeMatch::reset( )
    data_plot();
 }
 
+// load model data and detect if RA
 void US_FeMatch::load_model( )
 {
-//DEBUG: for now, use Load Model button to toggle RA visibility
-bool visible = lb_simpoints->isVisible();
-set_ra_visible( !visible );
+   bool     visible = lb_simpoints->isVisible();  // current RA visibility
+   bool     isRA;                                 // is model RA?
+   QString  mdesc;
 
-   adjustSize();
+   // load model
+   US_ModelLoader* dialog = new US_ModelLoader( false, def_local,
+      mfilter, investig );
+   dialog->move( this->pos() + QPoint( 200, 200 ) );
+
+   if ( dialog->exec() == QDialog::Accepted )
+   {
+      mfilter       = dialog->search_filter();     // next search filter
+      investig      = dialog->investigator_text(); // next investigator
+      mdesc         = dialog->description( 0 );
+
+      dialog->load_model( model, 0 );              // load selected model
+
+      if ( mdesc.section( mdesc.left( 1 ), 2, 2 ).isEmpty() )
+         def_local     = false;  // empty filename:      default to db next
+      else
+         def_local     = true;   // non-empty filename:  default to local next
+
+      delete dialog;
+   }
+
+   else
+      return;                     // Cancel:  bail out now
+
+   int ncomp   = model.components.size();           // components count
+   int nassoc  = model.associations.size();         // associations count
+   isRA        = ( nassoc > 1 );                    // RA if #assocs > 1
+qDebug() << "dialog mfilter" << mfilter;
+qDebug() << "dialog investig" << investig;
+qDebug() << "dialog mdesc" << mdesc;
+qDebug() << "dialog model.desc" << model.description;
+qDebug() << "dialog ncomp" << ncomp;
+qDebug() << "dialog nassoc" << nassoc;
+qDebug() << "dialog isRA" << isRA;
+//DEBUG: for now, use Load Model button to toggle RA visibility
+isRA=!visible;
+qDebug() << "debug isRA" << isRA;
+
+   if ( ( isRA && !visible )  ||  ( !isRA && visible ) )
+   {  // new RA visibility state out of sync:  change it
+      set_ra_visible( isRA );  // change visible components based on RA
+
+      adjustSize();            // adjust overall size to visible components
+   }
+
 }
 
+// do model simulation
 void US_FeMatch::simulate_model( )
 {
 }
