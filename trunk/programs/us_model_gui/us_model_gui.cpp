@@ -236,11 +236,13 @@ void US_ModelGui::select_model( QListWidgetItem* item )
    QString        file;
    QTemporaryFile temporary;
 
-   if ( rb_disk->isChecked() )
+   if ( rb_disk->isChecked() ) // Load from disk
    {
       file = model_descriptions[ index ].filename;
+      model.load( file );
+
    }
-   else // Get from db
+   else // Load from db
    {
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
@@ -251,34 +253,20 @@ void US_ModelGui::select_model( QListWidgetItem* item )
          return;
       }
 
-      QStringList q;
-      q << "get_model_info" << model_descriptions[ index ].DB_id;
-      db.query( q );
-
-      if ( ! database_ok( db ) ) return;
-      db.next();
-
-      QByteArray contents = db.value( 2 ).toString().toAscii();
-
-      // Write the model file to a temporary file
-      temporary.open();
-      temporary.write( contents );
-      temporary.close();
-
-      file = temporary.fileName();
+      QString modelID = model_descriptions[ index ].DB_id;
+      model.load( modelID, &db );
    }
    
-   model.load( false, file );
-  
    // Populate 
    buffer.GUID = model.bufferGUID;
 
    le_description    ->setText( model.description );
    le_buffer         ->setText( model.bufferDesc  );
-   
+
    le_density        ->setText( QString::number( model.density,        'f', 4));
    le_viscosity      ->setText( QString::number( model.viscosity,      'f', 4));
    le_compressibility->setText( QString::number( model.compressibility,'e', 3));
+   le_wavelength     ->setText( QString::number( model.wavelength,     'f', 1));
    le_temperature    ->setText( QString::number( model.temperature,    'f', 1));
    
    le_guid           ->setText( model.guid );
@@ -547,6 +535,9 @@ void US_ModelGui::save_model( void )
           qDebug() << "Cannot open file for writing: " << fn;
           return;
       }
+
+      model.temperature = le_temperature->text().toDouble();
+      model.wavelength  = le_wavelength ->text().toDouble();
 
       model.write( false, fn );
       /*

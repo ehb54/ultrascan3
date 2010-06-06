@@ -18,6 +18,7 @@ class US_EXTERN US_Model
       enum ModelType { MANUAL, TWODSA, TWODSA_MW, GA, GA_MW, GA_RA, ONEDSA,
                        COFS, FE, GLOBAL };
 
+      int        iterations;
       double     density;
       double     viscosity;
       double     compressibility;
@@ -29,7 +30,6 @@ class US_EXTERN US_Model
       QString    guid;
       OpticsType optics;
       ModelType  type;
-      //int        iterations;
 
       //! An index into components (-1 means none)
       int        coSedSolute;
@@ -44,6 +44,23 @@ class US_EXTERN US_Model
       //! \param db        - For DB access, an open database connection
       //! \returns         - The \ref US_DB2 retrun code for the operation
       int load( bool, const QString&, US_DB2* = 0 );
+
+      //! An overloaded function to read a model from a database
+      //! \param Database ModelID
+      //! \param db        - For DB access, an open database connection
+      //! \returns         - The \ref US_DB2 retrun code for the operation
+      int load( const QString&, US_DB2* ); 
+
+
+      //! An overloaded function to read a model from the disk
+      //! \param filename  The name, including full path, of the analyte file
+      //! \returns         - The \ref US_DB2 retrun code for the operation
+      int load( const QString& );  
+      
+      
+      //int load( const QString&, US_DB2* ); // guid db
+      //int load( bool, const QString& );    // isFile=T, filename
+                                             // isFile=F, guid
 
       //! Write a model to the disk or database
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
@@ -110,12 +127,14 @@ class US_EXTERN US_Model
    private:
       int  load_db         ( const QString&, US_DB2* );
       int  load_disk       ( const QString& );
-      int  read_model      ( const QString& );
+      //int  read_model      ( const QString& );
       void mfem_scans      ( QXmlStreamReader&, SimulationComponent& );
       void get_associations( QXmlStreamReader&, Association& );
                            
       int  write_disk      ( const QString& );
       int  write_db        ( US_DB2* );
       void write_temp      ( QTemporaryFile& );
+
+      void debug( void );
 };
 #endif

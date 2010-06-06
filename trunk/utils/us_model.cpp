@@ -48,7 +48,7 @@ US_Model::US_Model()
    wavelength      = 0.0;
    coSedSolute     = -1;
    type            = MANUAL;
-   //iterations      = 1;
+   iterations      = 1;
    bufferGUID  .clear();
    guid        .clear();
    components  .clear();
@@ -128,14 +128,15 @@ int US_Model::load_disk( const QString& guid )
 
       file.close();
 
-      if ( found ) return read_model( filename );
+      if ( found ) return load( filename );
    }
 
+   qDebug() << "Could not find model guid";
    //message =  QObject::tr ( "Could not find analyte guid" );
    return error;
 }
 
-int US_Model::read_model( const QString& filename )
+int US_Model::load( const QString& filename )
 {
    QFile file( filename );
 
@@ -144,6 +145,9 @@ int US_Model::read_model( const QString& filename )
       qDebug() << "Cannot open file for reading: " << filename;
       return false;
    }
+
+   components  .clear();
+   associations.clear();
 
    QXmlStreamReader     xml( &file );
    QXmlStreamAttributes a;
@@ -172,7 +176,7 @@ int US_Model::read_model( const QString& filename )
             coSedSolute     = a.value( "coSedSolute"     ).toString().toInt();
             type            =
                (ModelType)a.value( "type"   ).toString().toInt();
-            //iterations      = a.value( "iterations"      ).toString().toInt();
+            iterations      = a.value( "iterations"      ).toString().toInt();
          }
 
          else if ( xml.name() == "analyte" )
@@ -190,7 +194,6 @@ int US_Model::read_model( const QString& filename )
             sc.D           = a.value( "D"          ).toString().toDouble();
             sc.f           = a.value( "f"          ).toString().toDouble();
             sc.f_f0        = a.value( "f_f0"       ).toString().toDouble();
-            //sc.wavelength  = a.value( "wavelength" ).toString().toDouble();
             sc.extinction  = a.value( "extinction" ).toString().toDouble();
             sc.axial_ratio = a.value( "axial"      ).toString().toDouble();
             sc.sigma       = a.value( "sigma"      ).toString().toDouble();
@@ -210,9 +213,55 @@ int US_Model::read_model( const QString& filename )
          }
       }
    }
-
+//debug();
    return US_DB2::OK;
 }
+
+void US_Model::debug( void )
+{
+   qDebug() << "model dump";
+   qDebug() << "desc" << description;
+   qDebug() << "buf guid" << bufferGUID;
+   qDebug() << "buf desc" << bufferDesc;
+   qDebug() << "guid" << guid;;
+   qDebug() << "density" << density;
+   qDebug() << "visc" << viscosity;
+   qDebug() << "comp" << compressibility;
+   qDebug() << "wl" << wavelength;
+   qDebug() << "T" << temperature;
+   qDebug() << "cosed" << coSedSolute;
+   qDebug() << "iterations" << iterations;
+   qDebug() << "type" << (int)type;
+
+   for ( int i = 0; i < components.size(); i++ )
+   {
+      SimulationComponent* sc = &components[ i ];
+      qDebug() << " component";
+      qDebug() << "  name" << sc->name;
+      qDebug() << "  vbar20" << sc->vbar20;
+      qDebug() << "  mw" << sc->mw;
+      qDebug() << "  s" << sc->s;
+      qDebug() << "  D" << sc->D;
+      qDebug() << "  f" << sc->f;
+      qDebug() << "  f/f0" << sc->f_f0;
+      qDebug() << "  extinction" << sc->extinction;
+      qDebug() << "  axial" << sc->axial_ratio;
+      qDebug() << "  sigma" << sc->sigma;
+      qDebug() << "  delta" << sc->delta;
+      qDebug() << "  molar C" << sc->molar_concentration;
+      qDebug() << "  signal C" << sc->signal_concentration;
+      qDebug() << "  stoich" << sc->stoichiometry;
+      qDebug() << "  shape" << (int)sc->shape;
+      qDebug() << "  type" << (int)sc->analyte_type;
+
+      for ( int j = 0; j < sc->c0.radius.size(); j++ )
+      {
+         qDebug() << "    c0" << sc->c0.radius[ j ] <<  sc->c0.concentration[ j ];
+      }
+
+   }
+}
+
 
 void US_Model::mfem_scans( QXmlStreamReader& xml, SimulationComponent& sc )
 {
@@ -261,16 +310,22 @@ int US_Model::load_db( const QString& guid, US_DB2* db )
    QStringList q;
 
    q << "get_modelID" << guid;
-   
    db->query( q );
+
    if ( db->lastErrno() != US_DB2::OK ) return db->lastErrno();
    
    db->next();
    QString id = db->value( 0 ).toString();
+   return load( id, db );
+}
+
+int US_Model::load( const QString& id, US_DB2* db )
+{
+   QStringList q;
 
    q << "get_model_info" << id;
-   
    db->query( q );
+   
    if ( db->lastErrno() != US_DB2::OK ) return db->lastErrno();
 
    db->next();
@@ -283,7 +338,7 @@ int US_Model::load_db( const QString& guid, US_DB2* db )
    temporary.close();
 
    QString file = temporary.fileName();
-   return read_model( file );
+   return load( file );
 }
 
 int US_Model::write_db( US_DB2* db )
@@ -341,7 +396,7 @@ void US_Model::write_temp( QTemporaryFile& file )
    xml.writeAttribute   ( "coSedSolute",     QString::number( coSedSolute    ));
    xml.writeAttribute   ( "optics",          QString::number( optics         ));
    xml.writeAttribute   ( "type",            QString::number( type           ));
-   //xml.writeAttribute   ( "iterations",      QString::number( iterations ) );
+   xml.writeAttribute   ( "iterations",      QString::number( iterations ) );
 
    char uuid[ 37 ];
    uuid[ 36 ] = 0;
