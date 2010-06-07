@@ -25,6 +25,10 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    QPalette gray = US_GuiSettings::editColor();
    gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
 
+   US_Model m;
+   model = working_model = m;
+  
+   recent_row   = -1;
    investigator = -1;
 
    QGridLayout* main = new QGridLayout( this );
@@ -46,7 +50,8 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    QGridLayout* db_layout = us_radiobutton( tr( "Use Database" ), rb_db );
    main->addLayout( db_layout, row, 0 );
 
-   QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk, true );
+   QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk );
+   rb_disk->setChecked( true );
    main->addLayout( disk_layout, row++, 1 );
 
    QPushButton* pb_models = us_pushbutton( tr( "List Available Models" ) );
@@ -180,20 +185,28 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
 
 void US_ModelGui::new_model( void )
 {
+   if ( ! ignore_changes() ) return;
+
+   US_Model m;  // Create a new model
+
    ModelDesc desc;
-   desc.description = "New Model";
+   desc.description = m.description;
    desc.DB_id       = "-1";
    desc.filename.clear();
    desc.guid    .clear();
 
+   model         = m;
+   working_model = m;
+
    model_descriptions << desc;
    show_model_desc();
-   lw_models->setCurrentRow( model_descriptions.size() - 1 );
+   recent_row = model_descriptions.size() - 1;
+   lw_models->setCurrentRow( recent_row );
 }
 
 void US_ModelGui::show_model_desc( void )
 {
-   lw_models->disconnect( SIGNAL( currentRowChanged( int ) ) );
+   //lw_models->disconnect( SIGNAL( currentRowChanged( int ) ) );
    lw_models->clear();
 
    for ( int i = 0; i < model_descriptions.size(); i++ )
@@ -201,6 +214,21 @@ void US_ModelGui::show_model_desc( void )
 
    //connect( lw_modelss, SIGNAL( currentRowChanged( int  ) ),
    //                     SLOT  ( update           ( int  ) ) );
+}
+
+bool US_ModelGui::ignore_changes( void )
+{
+   if ( working_model == model ) return true;
+
+   int response = QMessageBox::question( this,
+      tr( "Model Changed" ),
+      tr( "The model has changed.  Do you want to ignore the changes?" ),
+      QMessageBox::Cancel, QMessageBox::Yes );
+
+   if ( response == QMessageBox::Cancel ) return false;
+
+   working_model = model;
+   return true;
 }
 
 void US_ModelGui::edit_description( void )
@@ -213,13 +241,6 @@ void US_ModelGui::edit_description( void )
 
    if ( desc == lw_models->item( row )->text() ) return;
 
-   //if ( keep_standard() )  // Do we want to change from the standard values?
-   //{
-      // Restore the description
-   //   le_description->setText( lw_components->item( row )->text() );
-   //   return;
-   //}
-
    model_descriptions[ row ].description = desc;
    model.description = desc;
    show_model_desc();
@@ -230,6 +251,13 @@ void US_ModelGui::edit_description( void )
 
 void US_ModelGui::select_model( QListWidgetItem* item )
 {
+   if ( ! ignore_changes() ) 
+   {
+      // Reset to last row;
+      item -> listWidget()->setCurrentRow( recent_row );
+      return;
+   }
+
    // Get the current index
    int index = item -> listWidget()-> currentRow();
    
@@ -256,7 +284,11 @@ void US_ModelGui::select_model( QListWidgetItem* item )
       QString modelID = model_descriptions[ index ].DB_id;
       model.load( modelID, &db );
    }
-   
+ 
+   working_model = model;
+
+   recent_row = index;
+
    // Populate 
    buffer.GUID = model.bufferGUID;
 
@@ -294,7 +326,7 @@ void US_ModelGui::delete_model( void )
       QString fn = get_filename( path, le_guid->text() );
       if ( newFile ) return;
 
-      QFile::remove( path + "/" + fn );
+      QFile::remove( fn );
    }
    else // Remove from DB
    {
@@ -354,8 +386,8 @@ void US_ModelGui::get_person( void )
 }
 
 void US_ModelGui::update_person( int            ID, 
-                                       const QString& lname, 
-                                       const QString& fname )
+                                 const QString& lname, 
+                                 const QString& fname )
 {
    investigator = ID;
 
@@ -380,9 +412,9 @@ void US_ModelGui::get_buffer( void )
 void US_ModelGui::update_buffer( US_Buffer buf )
 {
    buffer = buf;
-   le_density        ->setText( QString::number( buf.density        , 'f', 4 ) );
-   le_viscosity      ->setText( QString::number( buf.viscosity      , 'f', 4 ) );
-   le_compressibility->setText( QString::number( buf.compressibility, 'e', 3 ) );
+   le_density        ->setText( QString::number( buf.density        , 'f', 4 ));
+   le_viscosity      ->setText( QString::number( buf.viscosity      , 'f', 4 ));
+   le_compressibility->setText( QString::number( buf.compressibility, 'e', 3 ));
    le_buffer         ->setText( buf.description );
 
    model.density         = buf.density;
@@ -464,6 +496,7 @@ void US_ModelGui::update_assoc( void )
 
 void US_ModelGui::accept_model( void )
 {
+   if ( ! ignore_changes() ) return;
    emit valueChanged( model );
    close();
 }
@@ -540,22 +573,13 @@ void US_ModelGui::save_model( void )
       model.wavelength  = le_wavelength ->text().toDouble();
 
       model.write( false, fn );
-      /*
-      QTemporaryFile temporary;
-      write_temp( temporary );
-
-      temporary.open();
-
-      file.write( temporary.readAll() );
-      file.close();
-      temporary.close();
 
       QString save_type = newFile ? "saved" : "updated";
 
       QMessageBox::information( this,
          tr( "Model Saved" ),
-         tr( "The model has been %1 locally." ).arg( save_type ) );
-      */
+         tr( "The model has been %1 in the disk." ).arg( save_type ) );
+
    }
    else // Save/update in DB
    {
@@ -569,57 +593,15 @@ void US_ModelGui::save_model( void )
       }
 
       model.write( true, "", &db );
-      /*
-      QString     modelID = "-1";
-      QStringList q;
 
-      if ( ! model.guid.isEmpty() )
-      {
-         q << "get_modelID" << model.guid;
-         db.query( q );
-
-         if ( db.lastErrno() == US_DB2::OK ) 
-         {
-            db.next();
-            modelID = db.value( 0 ).toString();
-         }
-      }
-
-      // Create the model xml file in a string
-      QTemporaryFile temporary;
-      write_temp( temporary );
-      temporary.open();
-      QByteArray contents = temporary.readAll();
-
-      q.clear();
-
-      if ( modelID == "-1" )  // New model
-      {
-         // Generate a guid if necessary
-         // The guid may be valid from a disk read, but is not in the DB
-         if ( ! model.guid.size() != 36 )
-         {
-            le_guid->setText( US_Util::new_guid() );
-            model.guid = le_guid->text();
-         }
-
-         q << "new_model" << model.guid << model.description << contents;
-
-         if ( status_query( q ) )
-            QMessageBox::information( this,
-               tr( "Model Saved" ),
-               tr( "The model has been saved in the database." ) );
-      }
+      if ( model.write( true, "", &db ) == US_DB2::OK )
+         QMessageBox::information( this,
+            tr( "Model Written" ),
+            tr( "The model has been %1 in the database." ).arg( model.message ) );
       else
-      {
-         q << "update_model" << modelID << model.description << contents;
-
-         if ( status_query( q ) )
-            QMessageBox::information( this,
-               tr( "Model Updated" ),
-               tr( "The model has been updated in the database." ) );
-      }
-      */
+         QMessageBox::information( this,
+            tr( "Database Error" ),
+            tr( "The model could not be saved:\n" ) + model.message );
    }
 }
 
@@ -647,6 +629,8 @@ bool US_ModelGui::verify_model( void )
 
 void US_ModelGui::list_models( void )
 {
+   if ( ! ignore_changes() ) return;
+
    QString path;
    if ( ! US_Model::model_path( path ) ) return;
 
@@ -658,7 +642,7 @@ void US_ModelGui::list_models( void )
       QStringList filter( "M*.xml" );
       QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
 
-      QXmlStreamAttributes attr;
+      QXmlStreamAttributes a;
 
       for ( int i = 0; i < f_names.size(); i++ )
       {
@@ -676,13 +660,13 @@ void US_ModelGui::list_models( void )
             {
                if ( xml.name() == "model" )
                {
-                  ModelDesc desc;
-                  attr             = xml.attributes();
-                  desc.description = attr.value( "description" ).toString();
-                  desc.guid        = attr.value( "guid"        ).toString();
-                  desc.filename    = path + "/" + f_names[ i ];
-                  desc.DB_id       = -1;
-                  model_descriptions << desc;
+                  ModelDesc md;
+                  a                = xml.attributes();
+                  md.description = a.value( "description" ).toString();
+                  md.guid        = a.value( "guid"        ).toString();
+                  md.filename    = path + "/" + f_names[ i ];
+                  md.DB_id       = -1;
+                  model_descriptions << md;
                   break;
                }
             }

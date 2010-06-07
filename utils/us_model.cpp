@@ -30,12 +30,49 @@ US_Model::SimulationComponent::SimulationComponent()
    c0.concentration.clear();
 }
 
+bool US_Model::SimulationComponent::operator== 
+                  ( const SimulationComponent& sc ) const
+{
+   if ( uuid_compare( analyteGUID, sc.analyteGUID ) != 0 ) return false;
+   if ( name                 != sc.name                  ) return false;
+   if ( molar_concentration  != sc.molar_concentration   ) return false;
+   if ( signal_concentration != sc.signal_concentration  ) return false;
+   if ( vbar20               != sc.vbar20                ) return false;
+   if ( mw                   != sc.mw                    ) return false;
+   if ( s                    != sc.s                     ) return false;
+   if ( D                    != sc.D                     ) return false;
+   if ( f                    != sc.f                     ) return false;
+   if ( f_f0                 != sc.f_f0                  ) return false;
+   if ( extinction           != sc.extinction            ) return false;
+   if ( sigma                != sc.sigma                 ) return false;
+   if ( delta                != sc.delta                 ) return false;
+   if ( stoichiometry        != sc.stoichiometry         ) return false;
+   if ( shape                != sc.shape                 ) return false;
+   if ( axial_ratio          != sc.axial_ratio           ) return false;
+   if ( analyte_type         != sc.analyte_type          ) return false;
+
+   if ( c0.radius            != sc.c0.radius             ) return false;
+   if ( c0.concentration     != sc.c0.concentration      ) return false;
+
+   return true;
+}
+
 US_Model::Association::Association()
 {
    k_eq  = 0.0;
    k_off = 0.0;
    reaction_components.clear();
    stoichiometry      .clear();
+}
+
+bool US_Model::Association::operator== ( const Association& a ) const
+{
+   if ( k_eq                != a.k_eq                ) return false;
+   if ( k_off               != a.k_off               ) return false;
+   if ( reaction_components != a.reaction_components ) return false;
+   if ( stoichiometry       != a.stoichiometry       ) return false;
+
+   return true;
 }
 
 US_Model::US_Model()
@@ -53,6 +90,32 @@ US_Model::US_Model()
    guid        .clear();
    components  .clear();
    associations.clear();
+}
+
+bool US_Model::operator== ( const US_Model& m ) const
+{
+   if ( density         != m.density         ) return false;
+   if ( viscosity       != m.viscosity       ) return false;
+   if ( compressibility != m.compressibility ) return false;
+   if ( wavelength      != m.wavelength      ) return false;
+   if ( temperature     != m.temperature     ) return false;
+   if ( bufferGUID      != m.bufferGUID      ) return false;
+   if ( bufferDesc      != m.bufferDesc      ) return false;
+   if ( description     != m.description     ) return false;
+   if ( optics          != m.optics          ) return false;
+   if ( type            != m.type            ) return false;
+   if ( coSedSolute     != m.coSedSolute     ) return false;
+   if ( associations.size() != m.associations.size() ) return false;
+
+   for ( int i = 0; i < associations.size(); i++ )
+      if ( associations[ i ] != m.associations[ i ] ) return false;
+
+   if ( components.size() != m.components.size() ) return false;
+
+   for ( int i = 0; i < components.size(); i++ )
+      if ( components[ i ] != m.components[ i ] ) return false;
+
+   return true;
 }
 
 int US_Model::load( bool db_access, const QString& guid, US_DB2* db )
@@ -362,9 +425,13 @@ int US_Model::write_db( US_DB2* db )
       q.clear();
      
       if ( db->lastErrno() != US_DB2::OK )
+      {
+         message = QObject::tr( "created" );
          q << "new_model" << guid << description << contents;
+      }
       else
       {
+         message = QObject::tr( "updated" );
          QString id = db->value( 0 ).toString();
          q << "update_model" << id << description << contents;
       }

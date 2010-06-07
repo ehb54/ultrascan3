@@ -30,10 +30,13 @@ class US_ModelGui : public US_Widgets
       void valueChanged( US_Model );
 
    private:
-      US_Help        showhelp;
-                     
-      int            investigator;
-      bool           newFile;
+      int       investigator;
+      int       recent_row;
+      bool      newFile;
+      US_Model  model;
+      US_Model  working_model;
+      US_Buffer buffer;
+      US_Help   showhelp;
                     
       class ModelDesc
       {
@@ -45,10 +48,7 @@ class US_ModelGui : public US_Widgets
       };
 
       QList< ModelDesc > model_descriptions;
-      US_Model           model;
-      US_Model           working_model;
-      US_Buffer          buffer;
-      
+
       QLineEdit*     le_description;              
       QLineEdit*     le_investigator;
       QLineEdit*     le_buffer;
@@ -67,17 +67,15 @@ class US_ModelGui : public US_Widgets
       QComboBox*     cb_optics;
                     
       bool    verify_model   ( void );
-      bool    model_path     ( QString& );
       bool    status_query   ( const QStringList& );
       bool    database_ok    ( US_DB2& );
+      bool    ignore_changes ( void );
       void    show_model_desc( void );
-      void    write_temp     ( QTemporaryFile& );
       void    connect_error  ( const QString& );
       QString get_filename   ( const QString&, const QString& );
 
    private slots:
       void manage_components ( void );
-      //void change_optics     ( int  );
       void list_models       ( void );
       void select_model      ( QListWidgetItem* );
       void save_model        ( void );
