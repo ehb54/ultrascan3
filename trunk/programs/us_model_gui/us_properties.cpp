@@ -864,6 +864,15 @@ void US_Properties::simulate( void )
       analyte.guid = QString( uuid );
    }
 
+   //hydro_data.density     = buffer.density;
+   //hydro_data.viscosity   = buffer.viscosity;
+   //hydro_data.vbar        = analyte.vbar20;
+   //hydro_data.temperature = NORMAL_TEMP;
+   //hydro_data.mw          = analyte.mw;
+   //hydro_data.axial_ration = ??
+   //hydro_data.guid        = analyte.guid;
+
+
    working_data     = hydro_data; // working_data will be updated
    working_data.mw /= sc->stoichiometry;
 

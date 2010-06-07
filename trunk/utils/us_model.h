@@ -37,6 +37,8 @@ class US_EXTERN US_Model
       QVector< SimulationComponent > components;
       QVector< Association >         associations;
 
+      QString message;  // Used internally for communication
+
       //! Read a model from the disk or database
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
       //!                    should be searched for the model
@@ -57,7 +59,8 @@ class US_EXTERN US_Model
       //! \returns         - The \ref US_DB2 retrun code for the operation
       int load( const QString& );  
       
-      
+      bool operator== ( const US_Model& ) const;      
+      inline bool operator!= ( const US_Model& m ) const { return ! operator==(m); }
       //int load( const QString&, US_DB2* ); // guid db
       //int load( bool, const QString& );    // isFile=T, filename
                                              // isFile=F, guid
@@ -88,6 +91,11 @@ class US_EXTERN US_Model
       {
          public:
          SimulationComponent();
+         
+         bool operator== ( const SimulationComponent& ) const;      
+         inline bool operator!= ( const SimulationComponent& sc ) const 
+         { return ! operator==(sc); }
+
          uchar       analyteGUID[ 16 ];    // GUID for the analyte in the MySQL DB
          double      molar_concentration;
          double      signal_concentration; // To be assigned prior to simulation
@@ -122,9 +130,14 @@ class US_EXTERN US_Model
          // Stoichiometry of components in chemical equation.
          // Positive for reactant, negative for product
          QVector< int >  stoichiometry; 
+
+         bool operator== ( const Association& ) const;      
+         inline bool operator!= ( const Association& a ) const 
+         { return ! operator==(a); }
       };
 
    private:
+
       int  load_db         ( const QString&, US_DB2* );
       int  load_disk       ( const QString& );
       //int  read_model      ( const QString& );
