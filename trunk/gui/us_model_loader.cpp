@@ -117,11 +117,11 @@ int US_ModelLoader::load_model( US_Model& model, int index )
    {
       QString   filename = model_descriptions[ index ].filename;
 
-qDebug() << "Model load from file" << filename;
+//qDebug() << "Model load from file" << filename;
       rc   = model.load( filename );
-qDebug() << "Model load RETURN" << rc;
-qDebug() << "LD model desc" << model.description;
-qDebug() << "LD model components count" << model.components.size();
+//qDebug() << "Model load RETURN" << rc;
+//qDebug() << "LD model desc" << model.description;
+//qDebug() << "LD model components count" << model.components.size();
    }
 
    else
@@ -140,9 +140,9 @@ qDebug() << "LD model components count" << model.components.size();
 
       QString   modelID  = model_descriptions[ index ].DB_id;
 
-qDebug() << "Model load from modelID" << modelID;
+//qDebug() << "Model load from modelID" << modelID;
       rc   = model.load( modelID, &db );
-qDebug() << "Model load RETURN" << rc;
+//qDebug() << "Model load RETURN" << rc;
    }
 
    return rc;
@@ -393,7 +393,7 @@ void US_ModelLoader::accepted()
    {
       QMessageBox::information( this,
             tr( "No Model Selected" ),
-            tr( "You have not selected a model\nSelect+Accept or Cancel" ) );
+            tr( "You have not selected a model.\nSelect+Accept or Cancel" ) );
       return;
    }
 
@@ -407,9 +407,9 @@ bool US_ModelLoader::eventFilter( QObject* obj, QEvent* e )
    if ( obj == lw_models  &&
          e->type() == QEvent::ContextMenu )
    {
-qDebug() << "Right-mouse list select";
+//qDebug() << "Right-mouse list select";
       QPoint mpos = ((QContextMenuEvent*)e)->pos();
-qDebug() << "  pos" << mpos;
+//qDebug() << "  pos" << mpos;
 
       show_model_info( mpos );
 
@@ -496,12 +496,26 @@ void US_ModelLoader::show_model_info( QPoint pos )
    QString cdesc;
    QString runid;
    QString dtext;
+   QString lblid;
+   QString mdlid;
 
    int     row    = 0;
    int     mdx    = 0;
    int     iters  = 1;
    int     ncomp  = 0;
    int     nassoc = 0;
+
+   bool    frDisk = ( model_descriptions[ 0 ].filename.length() > 0 );
+
+   if ( frDisk )
+   {
+      lblid    = tr( "\n  Model File Name:       " );
+   }
+
+   else
+   {
+      lblid    = tr( "\n  Database Model ID:     " );
+   }
 
    // get the list of selected models
    QList< QListWidgetItem* > selmods = lw_models->selectedItems();
@@ -521,7 +535,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
          row      = lw_models->row( lw_models->itemAt( pos ) );
          mdesc    = lw_models->itemAt( pos )->text();
       }
-qDebug() << "  row" << row;
+//qDebug() << "  row" << row;
 
       mdx      = modelIndex( mdesc, model_descriptions );
 
@@ -533,7 +547,11 @@ qDebug() << "  row" << row;
       nassoc   = model.associations.size();
       tdesc    = typeText( mtype, nassoc, iters );
       runid    = mdesc.section( ".", 0, 0 );
-
+      mdlid    = frDisk ?
+         model_descriptions[ mdx ].filename :
+         model_descriptions[ mdx ].DB_id;
+      mdlid    = mdlid.length() < 50 ? mdlid :
+         "*/" + mdlid.section( "/", -3, -1 );
 
       dtext    = tr( "Model Information:" )
          + tr( "\n  Description:           " ) + mdesc
@@ -541,6 +559,8 @@ qDebug() << "  row" << row;
          + tr( "\n  Type:                  " ) + tdesc
          + "  (" + QString::number( (int)mtype ) + ")"
          + tr( "\n  Global ID:             " ) + model.guid
+         + tr( "\n  Global ID: (descr.)    " ) + model_descriptions[ mdx ].guid
+         + lblid + mdlid
          + tr( "\n  Iterations:            " ) + QString::number( iters )
          + tr( "\n  Components Count:      " ) + QString::number( ncomp )
          + tr( "\n  Associations Count:    " ) + QString::number( nassoc )
@@ -617,6 +637,11 @@ qDebug() << "  row" << row;
          nassoc   = model.associations.size();
          tdesc    = typeText( mtype, nassoc, iters );
          runid    = mdesc.section( ".", 0, 0 );
+         mdlid    = frDisk ?
+            model_descriptions[ mdx ].filename :
+            model_descriptions[ mdx ].DB_id;
+         mdlid    = mdlid.length() < 50 ?  mdlid :
+            "*/" + mdlid.section( "/", -3, -1 );
 
          dtext    = dtext + tr( "\n\nModel Information: (" )
             + QString::number( ( jj + 1 ) ) + "):"
@@ -625,6 +650,9 @@ qDebug() << "  row" << row;
             + tr( "\n  Type:                  " ) + tdesc
             + "  (" + QString::number( (int)mtype ) + ")"
             + tr( "\n  Global ID:             " ) + model.guid
+            + tr( "\n  Global ID: (descr.)    " )
+              + model_descriptions[ mdx ].guid
+            + lblid + mdlid
             + tr( "\n  Iterations:            " ) + QString::number( iters )
             + tr( "\n  Components Count:      " ) + QString::number( ncomp )
             + tr( "\n  Associations Count:    " ) + QString::number( nassoc )
