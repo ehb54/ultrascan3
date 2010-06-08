@@ -138,8 +138,8 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       void change_instrument ( int  );
       void accept            ( void );
       void cancel            ( void );
-      void newExperiment     ( ExperimentInfo&  );
-      void updateExperiment  ( ExperimentInfo&  );
+      void newExperiment     ( void );
+      void updateExperiment  ( void );
       void selectInvestigator( void );
       void assignInvestigator( int, const QString&, const QString& );
       QComboBox* us_expTypeComboBox         ( void );

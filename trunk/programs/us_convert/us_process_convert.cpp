@@ -195,6 +195,7 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
                                       QVector< US_DataIO2::RawData >& rawConvertedData,
                                       US_ExpInfo::ExperimentInfo& ExpData,
                                       QStringList& triples,
+                                      QList< int >& tripleMap,
                                       QString runType,
                                       QString runID,
                                       QString dirname
@@ -213,14 +214,15 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
    // Write the data. In this case not triples.size() - 1, because we are
    // going to consider the xml file as one file to write also
    lb_progress ->setText( tr( "Writing:" ) );
-   progress    ->setRange( 0, triples.size() );
+   progress    ->setRange( 0, tripleMap.size() );
    progress    ->setValue( 0 );
    progress    ->show();
    qApp        ->processEvents();
 
-   for ( int i = 0; i < triples.size(); i++ )
+   for ( int i = 0; i < tripleMap.size(); i++ )
    {
-      QString     triple     = triples[ i ];
+      int         ndx        = tripleMap[ i ];
+      QString     triple     = triples[ ndx ];
       QStringList parts      = triple.split(" / ");
 
       QString     cell       = parts[ 0 ];
@@ -251,9 +253,9 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
       // Calculate and save the guid for this triple
       uuid_t uuid;
       uuid_generate( uuid );
-      strncpy( rawConvertedData[ i ].guid, (char*) uuid, 16 );
-      strncpy( ExpData.triples [ i ].guid, (char*) uuid, 16 );
-      status = US_DataIO2::writeRawData( dirname + filename, rawConvertedData[ i ] );
+      strncpy( rawConvertedData[ ndx ].guid, (char*) uuid, 16 );
+      strncpy( ExpData.triples [ ndx ].guid, (char*) uuid, 16 );
+      status = US_DataIO2::writeRawData( dirname + filename, rawConvertedData[ ndx ] );
 
       if ( status !=  US_DataIO2::OK ) break;
       
@@ -270,8 +272,8 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
    }
 
    // Now try to write the xml file
-   status = writeXmlFile( ExpData, triples, runType, runID, dirname );
-   progress->setValue( triples.size() );
+   status = writeXmlFile( ExpData, triples, tripleMap, runType, runID, dirname );
+   progress->setValue( tripleMap.size() );
    qApp    ->processEvents();
 
    this->hide();
@@ -328,7 +330,7 @@ void US_ProcessConvert::convert(
    if ( ccwLegacyData.isEmpty() ) return ; 
 
    strncpy( newRawData.type, runType.toAscii().constData(), 2 );
-   // GUID is done by US_DataIO2.
+   // GUID is done by us_convert.
    newRawData.cell        = cell;
    newRawData.channel     = channel;
    newRawData.description = ccwLegacyData[ 0 ].description;
@@ -745,6 +747,7 @@ void US_ProcessConvert::setCcrTriples(
 
 int US_ProcessConvert::writeXmlFile( US_ExpInfo::ExperimentInfo& ExpData,
                                      QStringList& triples,
+                                     QList< int >& tripleMap,
                                      QString runType,
                                      QString runID,
                                      QString dirname )
@@ -811,9 +814,10 @@ int US_ProcessConvert::writeXmlFile( US_ExpInfo::ExperimentInfo& ExpData,
       xml.writeEndElement  ();
 
       // loop through the following for c/c/w combinations
-      for ( int i = 0; i < ExpData.triples.size(); i++ )
+      for ( int i = 0; i < tripleMap.size(); i++ )
       {
-         US_ExpInfo::TripleInfo t = ExpData.triples[ i ];
+         int ndx = tripleMap[ i ];
+         US_ExpInfo::TripleInfo t = ExpData.triples[ ndx ];
 
          QString triple         = triples[ t.tripleID ];
          QStringList parts      = triple.split(" / ");
@@ -856,8 +860,8 @@ int US_ProcessConvert::writeXmlFile( US_ExpInfo::ExperimentInfo& ExpData,
    xml.writeEndElement(); // US_Scandata
    xml.writeEndDocument();
 
-   if ( ExpData.triples.size() != triples.size() )
-      return( US_Convert::PARTIAL_XML );
+//   if ( ExpData.triples.size() != triples.size() )
+//      return( US_Convert::PARTIAL_XML );
 
    return( US_Convert::OK );
 }
