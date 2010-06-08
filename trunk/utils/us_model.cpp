@@ -126,8 +126,8 @@ int US_Model::load( bool db_access, const QString& guid, US_DB2* db )
 
 int US_Model::write( bool db_access, const QString& filename, US_DB2* db )
 {
-   if ( db_access ) return write     ( db );
-   else             return write_disk( filename );
+   if ( db_access ) return write( db );
+   else             return write( filename );
 }
 
 bool US_Model::model_path( QString& path )
@@ -280,50 +280,6 @@ int US_Model::load( const QString& filename )
    return US_DB2::OK;
 }
 
-void US_Model::debug( void )
-{
-   qDebug() << "model dump";
-   qDebug() << "desc" << description;
-   qDebug() << "buf guid" << bufferGUID;
-   qDebug() << "buf desc" << bufferDesc;
-   qDebug() << "guid" << guid;;
-   qDebug() << "density" << density;
-   qDebug() << "visc" << viscosity;
-   qDebug() << "comp" << compressibility;
-   qDebug() << "wl" << wavelength;
-   qDebug() << "T" << temperature;
-   qDebug() << "cosed" << coSedSolute;
-   qDebug() << "iterations" << iterations;
-   qDebug() << "type" << (int)type;
-
-   for ( int i = 0; i < components.size(); i++ )
-   {
-      SimulationComponent* sc = &components[ i ];
-      qDebug() << " component";
-      qDebug() << "  name" << sc->name;
-      qDebug() << "  vbar20" << sc->vbar20;
-      qDebug() << "  mw" << sc->mw;
-      qDebug() << "  s" << sc->s;
-      qDebug() << "  D" << sc->D;
-      qDebug() << "  f" << sc->f;
-      qDebug() << "  f/f0" << sc->f_f0;
-      qDebug() << "  extinction" << sc->extinction;
-      qDebug() << "  axial" << sc->axial_ratio;
-      qDebug() << "  sigma" << sc->sigma;
-      qDebug() << "  delta" << sc->delta;
-      qDebug() << "  molar C" << sc->molar_concentration;
-      qDebug() << "  signal C" << sc->signal_concentration;
-      qDebug() << "  stoich" << sc->stoichiometry;
-      qDebug() << "  shape" << (int)sc->shape;
-      qDebug() << "  type" << (int)sc->analyte_type;
-
-      for ( int j = 0; j < sc->c0.radius.size(); j++ )
-      {
-         qDebug() << "    c0" << sc->c0.radius[ j ] <<  sc->c0.concentration[ j ];
-      }
-
-   }
-}
 
 
 void US_Model::mfem_scans( QXmlStreamReader& xml, SimulationComponent& sc )
@@ -426,17 +382,37 @@ int US_Model::write( US_DB2* db )
      
       if ( db->lastErrno() != US_DB2::OK )
       {
-         message = QObject::tr( "created" );
          q << "new_model" << guid << description << contents;
+         message = QObject::tr( "created" );
       }
       else
       {
-         message = QObject::tr( "updated" );
+         db->next();
          QString id = db->value( 0 ).toString();
          q << "update_model" << id << description << contents;
+         message = QObject::tr( "updated" );
       }
 
       return db->statusQuery( q );
+}
+
+int US_Model::write( const QString& filename )
+{
+   QTemporaryFile temporary;
+   write_temp( temporary );
+
+   temporary.open();   // Open for reading
+
+   QFile file( filename );
+
+   if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
+      return US_DB2::ERROR;
+   
+   file.write( temporary.readAll() );
+   file.close();
+   temporary.close();
+
+   return US_DB2::OK;
 }
 
 void US_Model::write_temp( QTemporaryFile& file )
@@ -542,21 +518,46 @@ void US_Model::write_temp( QTemporaryFile& file )
    file.close();
 }
 
-int US_Model::write_disk( const QString& filename )
+void US_Model::debug( void )
 {
-   QTemporaryFile temporary;
-   write_temp( temporary );
+   qDebug() << "model dump";
+   qDebug() << "desc" << description;
+   qDebug() << "buf guid" << bufferGUID;
+   qDebug() << "buf desc" << bufferDesc;
+   qDebug() << "guid" << guid;;
+   qDebug() << "density" << density;
+   qDebug() << "visc" << viscosity;
+   qDebug() << "comp" << compressibility;
+   qDebug() << "wl" << wavelength;
+   qDebug() << "T" << temperature;
+   qDebug() << "cosed" << coSedSolute;
+   qDebug() << "iterations" << iterations;
+   qDebug() << "type" << (int)type;
 
-   temporary.open();   // Open for reading
+   for ( int i = 0; i < components.size(); i++ )
+   {
+      SimulationComponent* sc = &components[ i ];
+      qDebug() << " component";
+      qDebug() << "  name" << sc->name;
+      qDebug() << "  vbar20" << sc->vbar20;
+      qDebug() << "  mw" << sc->mw;
+      qDebug() << "  s" << sc->s;
+      qDebug() << "  D" << sc->D;
+      qDebug() << "  f" << sc->f;
+      qDebug() << "  f/f0" << sc->f_f0;
+      qDebug() << "  extinction" << sc->extinction;
+      qDebug() << "  axial" << sc->axial_ratio;
+      qDebug() << "  sigma" << sc->sigma;
+      qDebug() << "  delta" << sc->delta;
+      qDebug() << "  molar C" << sc->molar_concentration;
+      qDebug() << "  signal C" << sc->signal_concentration;
+      qDebug() << "  stoich" << sc->stoichiometry;
+      qDebug() << "  shape" << (int)sc->shape;
+      qDebug() << "  type" << (int)sc->analyte_type;
 
-   QFile file( filename );
-
-   if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
-      return US_DB2::ERROR;
-   
-   file.write( temporary.readAll() );
-   file.close();
-   temporary.close();
-
-   return US_DB2::OK;
+      for ( int j = 0; j < sc->c0.radius.size(); j++ )
+      {
+         qDebug() << "    c0" << sc->c0.radius[ j ] <<  sc->c0.concentration[ j ];
+      }
+   }
 }
