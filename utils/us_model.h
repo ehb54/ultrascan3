@@ -77,7 +77,12 @@ class US_EXTERN US_Model
       //! An overloaded function to write a model to the DB
       //! \param db        - A pointer to an open database connection 
       //! \returns         - The \ref US_DB2 retrun code for the operation
-      int write( US_DB2* db );
+      int write( US_DB2* );
+
+      //! An overloaded function to write a model to a file on disk
+      //! \param filename  - The filename to write
+      //! \returns         - The \ref US_DB2 retrun code for the operation
+      int write( const QString& );
 
       //! \param path - A reference where the path to ayalutes on the disk
       //!               drive is written
@@ -148,7 +153,6 @@ class US_EXTERN US_Model
       void mfem_scans      ( QXmlStreamReader&, SimulationComponent& );
       void get_associations( QXmlStreamReader&, Association& );
                            
-      int  write_disk      ( const QString& );
       void write_temp      ( QTemporaryFile& );
 
       void debug( void );
