@@ -197,10 +197,15 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_cancelref, SIGNAL( clicked() ), SLOT( cancel_reference() ) );
    settings->addWidget( pb_cancelref, row++, 1 );
 
+   // drop scan
+   pb_dropScan = us_pushbutton( tr( "Drop Current Scan" ), false );
+   connect( pb_dropScan, SIGNAL( clicked() ), SLOT( drop_reference() ) );
+   settings->addWidget( pb_dropScan, row, 0 );
+
    // Write pushbuttons
    pb_writeAll = us_pushbutton( tr( "Write All Data" ), false );
    connect( pb_writeAll, SIGNAL( clicked() ), SLOT( writeAll() ) );
-   settings->addWidget( pb_writeAll, row++, 0, 1, 2 );
+   settings->addWidget( pb_writeAll, row++, 1 );
 
    // Standard pushbuttons
    QBoxLayout* buttons = new QHBoxLayout;
@@ -269,6 +274,7 @@ void US_Convert::reset( void )
    pb_writeAll   ->setEnabled( false );
    pb_details    ->setEnabled( false );
    pb_cancelref  ->setEnabled( false );
+   pb_dropScan   ->setEnabled( false );
    pb_buffer     ->setEnabled( false );
    pb_analyte    ->setEnabled( false );
    pb_applyAll   ->setEnabled( false );
@@ -409,6 +415,7 @@ void US_Convert::reload( void )
    bool success = false;
 
    triples.clear();
+   tripleMap.clear();
 
    // In this case the runType is not changing
    oldRunType = runType;
@@ -456,18 +463,6 @@ bool US_Convert::read( void )
          US_Settings::dataDir(),
          QFileDialog::DontResolveSymlinks );
 
-/*
-Method 2:
-   QString filename = QFileDialog::getOpenFileName( this,
-         tr( "Raw Data Directory" ),
-         US_Settings::dataDir() );
-
-   QFileInfo fileinfo( filename );
-   QString dir = fileinfo.absolutePath();
-*/
-
-// qDebug() << "Dir = " << dir;
-
    if ( dir.isEmpty() ) return( false ); 
 
    dir.replace( "\\", "/" );  // WIN32 issue
@@ -509,10 +504,12 @@ void US_Convert::setTripleInfo( void )
 {
    // Load them into the list box
    lw_triple->clear();
-   lw_triple->addItems( triples );
+   foreach ( int ndx, tripleMap )
+      lw_triple->addItem( triples[ ndx ] );
+
    QListWidgetItem* item = lw_triple->item( 0 );   // select the item at row 0
    lw_triple->setItemSelected( item, true );
-   currentTriple = 0;
+   currentTriple = tripleMap[ 0 ];
 }
 
 bool US_Convert::convert( void )
@@ -555,15 +552,27 @@ bool US_Convert::convert( void )
 
    // Convert the data
    US_ProcessConvert* dialog 
-      = new US_ProcessConvert( this, legacyData, allData, triples, runType, tolerance, ss_limits );
+      = new US_ProcessConvert( this, legacyData, allData, triples, 
+                               runType, tolerance, ss_limits );
    delete dialog;
 
    if ( allData.size() == 0 ) return( false );
 
+   // Make sure all the parallel structures are initialized too
+   tripleMap.clear();
+   ExpData.triples.clear();
+   for ( int i = 0; i < triples.size(); i++ )
+   {
+      US_ExpInfo::TripleInfo d;
+      d.tripleID = i;
+      ExpData.triples << d;
+      tripleMap << i;
+   }
+
    le_description->setText( allData[ 0 ].description );
    saveDescription = QString( allData[ 0 ].description ); 
 
-   currentTriple = 0;     // Now let's show the user the first one
+   currentTriple = tripleMap[ 0 ];     // Now let's show the user the first one
    return( true );
 }
 
@@ -578,7 +587,8 @@ void US_Convert::details( void )
 
 void US_Convert::changeTriple( QListWidgetItem* )
 {
-   currentTriple = lw_triple->currentRow();
+   int row       = lw_triple->currentRow();
+   currentTriple = tripleMap[ row ];
    int ndx       = findTripleIndex();
 
    le_dir         -> setText( saveDir );
@@ -658,7 +668,8 @@ int US_Convert::writeAll( void )
 
    // Write the data
    US_ProcessConvert* dialog 
-      = new US_ProcessConvert( this, status, allData, ExpData, triples, runType, runID, dirname );
+      = new US_ProcessConvert( this, status, allData, ExpData, triples, 
+                               tripleMap, runType, runID, dirname );
    delete dialog;
 
    // Now try to communicate status
@@ -698,7 +709,7 @@ int US_Convert::writeAll( void )
    // Status is OK
    QMessageBox::information( this,
          tr( "Success" ),
-         QString::number( triples.size() ) + " " + 
+         QString::number( tripleMap.size() ) + " " + 
          runID + tr( " files written." ) );
 
    return( OK );
@@ -1229,6 +1240,7 @@ void US_Convert::RP_calc_avg( void )
 
    RP_averaged = true;
    pb_cancelref ->setEnabled( true );
+   pb_dropScan  ->setEnabled( true );
 }
 
 void US_Convert::cancel_reference( void )
@@ -1241,11 +1253,42 @@ void US_Convert::cancel_reference( void )
    reference_start = 0.0;
    reference_end   = 0.0;
 
+   tripleMap.clear();
+   for ( int i = 0; i < triples.size(); i++ )
+      tripleMap << i;
+
+   setTripleInfo();
+
    pb_reference  ->setEnabled( true );
    pb_cancelref  ->setEnabled( false );
+   pb_dropScan   ->setEnabled( false );
    currentTriple = 0;
    lw_triple->setCurrentRow( currentTriple );
 
+   plot_current();
+}
+
+void US_Convert::drop_reference( void )
+{
+   int currentRow = lw_triple->currentRow();
+   tripleMap.removeAt( currentRow );
+
+   setTripleInfo();           // Resets currentTriple
+   int ndx       = findTripleIndex();
+
+   le_dir         -> setText( saveDir );
+   le_description -> setText( saveDescription );
+
+   le_bufferInfo  -> setText( ExpData.triples[ ndx ].bufferDesc  );
+   le_analyteInfo -> setText( ExpData.triples[ ndx ].analyteDesc );
+
+   // Reset maximum scan control values
+   reset_scan_ctrls();
+
+   // Reset apply all button
+   reset_ccw_ctrls();
+
+   // Redo plot
    plot_current();
 }
 

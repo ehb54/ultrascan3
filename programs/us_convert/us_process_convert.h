@@ -101,6 +101,9 @@ class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
           \param triples A reference to a structure provided by the calling
                         function that already contains all the different
                         cell/channel/wavelength combinations in the data. 
+          \param tripleMap A reference to a QList of index values indicating
+                        which triples are members of the current data set. Triples
+                        included in the map will be written, others will not.
           \param runType A reference to a variable that already contains the type
                         of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
                         This information will affect how the data is
@@ -113,6 +116,7 @@ class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
                          QVector< US_DataIO2::RawData >& ,
                          US_ExpInfo::ExperimentInfo& ,
                          QStringList& ,
+                         QList< int >& ,
                          QString ,
                          QString ,
                          QString );
@@ -151,6 +155,7 @@ class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
       
       int writeXmlFile   ( US_ExpInfo::ExperimentInfo&          ExpData,
                            QStringList&                         triples,
+                           QList< int >&                        tripleMap,
                            QString                              runType,
                            QString                              runID,
                            QString                              dirname );

@@ -644,8 +644,7 @@ void US_ExpInfo::change_instrument( int )
 
 void US_ExpInfo::accept( void )
 {
-   // Get data directly from the form
-   ExperimentInfo dataOut;
+   // Overwrite data directly from the form
 
    // First get the invID
    QString invInfo = le_investigator->text();
@@ -659,37 +658,37 @@ void US_ExpInfo::accept( void )
 
    QStringList components = invInfo.split( ")", QString::SkipEmptyParts );
    components = components[0].split( "(", QString::SkipEmptyParts );
-   dataOut.invID = components.last().toInt();
+   expInfo.invID = components.last().toInt();
  
    // Get the investigator name too
    components  = invInfo.split( ": ", QString::SkipEmptyParts );
    components  = components.last().split( ", ", QString::SkipEmptyParts );
-   dataOut.lastName  = components.first().toAscii();
-   dataOut.firstName = components.last().toAscii();
+   expInfo.lastName  = components.first().toAscii();
+   expInfo.firstName = components.last().toAscii();
 
    // Other experiment information that goes into the db
-   dataOut.projectID     = cb_project       ->getLogicalID();
-   dataOut.runID         = le_runID         ->text();
-   dataOut.labID         = cb_lab           ->getLogicalID();
-   dataOut.instrumentID  = cb_instrument    ->getLogicalID();
-   dataOut.operatorID    = cb_operator      ->getLogicalID();
-   dataOut.rotorID       = cb_rotor         ->getLogicalID();
-   dataOut.expType       = cb_expType       ->currentText();
-   dataOut.runTemp       = le_runTemp       ->text(); 
-   dataOut.label         = le_label         ->text(); 
-   dataOut.comments      = te_comment       ->toPlainText();
+   expInfo.projectID     = cb_project       ->getLogicalID();
+   expInfo.runID         = le_runID         ->text();
+   expInfo.labID         = cb_lab           ->getLogicalID();
+   expInfo.instrumentID  = cb_instrument    ->getLogicalID();
+   expInfo.operatorID    = cb_operator      ->getLogicalID();
+   expInfo.rotorID       = cb_rotor         ->getLogicalID();
+   expInfo.expType       = cb_expType       ->currentText();
+   expInfo.runTemp       = le_runTemp       ->text(); 
+   expInfo.label         = le_label         ->text(); 
+   expInfo.comments      = te_comment       ->toPlainText();
 
    // Save it to the db and return
    if ( this->editing )
    {
-      dataOut.expID = expInfo.expID;
-      updateExperiment( dataOut );
+      expInfo.expID = expInfo.expID;
+      updateExperiment();
    }
 
    else
-      newExperiment( dataOut );
+      newExperiment();
 
-   emit updateExpInfoSelection( dataOut );
+   emit updateExpInfoSelection( expInfo );
    close();
 }
 
@@ -701,7 +700,7 @@ void US_ExpInfo::cancel( void )
    close();
 }
 
-void US_ExpInfo::newExperiment( ExperimentInfo& d )
+void US_ExpInfo::newExperiment( void )
 {
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
@@ -714,17 +713,17 @@ void US_ExpInfo::newExperiment( ExperimentInfo& d )
    }
 
    QStringList q( "new_experiment" );
-   q  << QString::number( d.projectID )
-      << d.runID
-      << QString::number( d.labID )
-      << QString::number( d.instrumentID )
-      << QString::number( d.operatorID )
-      << QString::number( d.rotorID )
-      << d.expType
-      << d.runTemp
-      << d.label
-      << d.comments
-      << d.centrifugeProtocol;
+   q  << QString::number( expInfo.projectID )
+      << expInfo.runID
+      << QString::number( expInfo.labID )
+      << QString::number( expInfo.instrumentID )
+      << QString::number( expInfo.operatorID )
+      << QString::number( expInfo.rotorID )
+      << expInfo.expType
+      << expInfo.runTemp
+      << expInfo.label
+      << expInfo.comments
+      << expInfo.centrifugeProtocol;
 
    int status = db.statusQuery( q );
    if ( status != US_DB2::OK )
@@ -737,16 +736,16 @@ void US_ExpInfo::newExperiment( ExperimentInfo& d )
 
    // Let's get some info after db update
    q.clear();
-   d.expID = db.lastInsertID();
+   expInfo.expID = db.lastInsertID();
    q << "get_experiment_info"
-     << QString::number( d.expID );
+     << QString::number( expInfo.expID );
    db.query( q );
    db.next();
 
-   d.date = db.value( 11 ).toString();
+   expInfo.date = db.value( 11 ).toString();
 }
 
-void US_ExpInfo::updateExperiment( ExperimentInfo& d )
+void US_ExpInfo::updateExperiment( void )
 {
    // Update database
    US_Passwd pw;
@@ -760,18 +759,18 @@ void US_ExpInfo::updateExperiment( ExperimentInfo& d )
    }
 
    QStringList q( "update_experiment" );
-   q  << QString::number( d.expID )
-      << QString::number( d.projectID )
-      << d.runID
-      << QString::number( d.labID )
-      << QString::number( d.instrumentID )
-      << QString::number( d.operatorID )
-      << QString::number( d.rotorID )
-      << d.expType
-      << d.runTemp
-      << d.label
-      << d.comments
-      << d.centrifugeProtocol;
+   q  << QString::number( expInfo.expID )
+      << QString::number( expInfo.projectID )
+      << expInfo.runID
+      << QString::number( expInfo.labID )
+      << QString::number( expInfo.instrumentID )
+      << QString::number( expInfo.operatorID )
+      << QString::number( expInfo.rotorID )
+      << expInfo.expType
+      << expInfo.runTemp
+      << expInfo.label
+      << expInfo.comments
+      << expInfo.centrifugeProtocol;
 
    int status = db.statusQuery( q );
    if ( status != US_DB2::OK )
@@ -785,11 +784,11 @@ void US_ExpInfo::updateExperiment( ExperimentInfo& d )
    // Let's get some info after db update
    q.clear();
    q << "get_experiment_info"
-     << QString::number( d.expID );
+     << QString::number( expInfo.expID );
    db.query( q );
    db.next();
 
-   d.date = db.value( 11 ).toString();
+   expInfo.date = db.value( 11 ).toString();
 }
 
 void US_ExpInfo::selectInvestigator( void )
@@ -896,13 +895,10 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
       centrifugeProtocol = rhs.centrifugeProtocol;
       date         = rhs.date;
 
+      triples.clear();
       for ( int i = 0; i < triples.size(); i++ )
-      {
-         triples[ i ].tripleID    = rhs.triples[ i ].tripleID;
-         triples[ i ].centerpiece = rhs.triples[ i ].centerpiece;
-         triples[ i ].bufferID    = rhs.triples[ i ].bufferID;
-         triples[ i ].analyteID   = rhs.triples[ i ].analyteID;
-      }
+         triples << rhs.triples[ i ];
+
    }
 
    return *this;

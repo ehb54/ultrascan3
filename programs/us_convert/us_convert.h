@@ -43,6 +43,7 @@ class US_EXTERN US_Convert : public US_Widgets
       QString       oldRunType;
       QStringList   triples;
       int           currentTriple;
+      QList< int >  tripleMap;
 
       QString       runID;
       QLineEdit*    le_dir;
@@ -69,6 +70,7 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_process;
       QPushButton*  pb_reference;
       QPushButton*  pb_cancelref;
+      QPushButton*  pb_dropScan;
       QPushButton*  pb_expinfo;
       QPushButton*  pb_editExpinfo;
       QPushButton*  pb_buffer;
@@ -132,6 +134,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void start_reference   ( const QwtDoublePoint& );
       void process_reference ( const QwtDoublePoint& );
       void cancel_reference( void );
+      void drop_reference  ( void );
       void newExpInfo      ( void );
       void editExpInfo     ( void );
       void getExpInfo      ( bool );
