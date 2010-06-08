@@ -126,7 +126,7 @@ int US_Model::load( bool db_access, const QString& guid, US_DB2* db )
 
 int US_Model::write( bool db_access, const QString& filename, US_DB2* db )
 {
-   if ( db_access ) return write_db  ( db );
+   if ( db_access ) return write     ( db );
    else             return write_disk( filename );
 }
 
@@ -404,7 +404,7 @@ int US_Model::load( const QString& id, US_DB2* db )
    return load( file );
 }
 
-int US_Model::write_db( US_DB2* db )
+int US_Model::write( US_DB2* db )
 {
       // Create the model xml file in a string
       QTemporaryFile temporary;
