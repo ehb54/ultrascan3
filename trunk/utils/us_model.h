@@ -43,13 +43,13 @@ class US_EXTERN US_Model
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
       //!                    should be searched for the model
       //! \param guid      - The guid of the model to be loaded
-      //! \param db        - For DB access, an open database connection
+      //! \param db        - For DB access, A pointer to an open database connection
       //! \returns         - The \ref US_DB2 retrun code for the operation
       int load( bool, const QString&, US_DB2* = 0 );
 
       //! An overloaded function to read a model from a database
       //! \param Database ModelID
-      //! \param db        - For DB access, an open database connection
+      //! \param db        - For DB access, a pointer to an open database connection
       //! \returns         - The \ref US_DB2 retrun code for the operation
       int load( const QString&, US_DB2* ); 
 
@@ -70,9 +70,14 @@ class US_EXTERN US_Model
       //!                    should be used to save the model
       //! \param filename  - The filename (with path) where the xml file
       //!                    be written if disk access is specified
-      //! \param db        - For DB access, an open database connection
+      //! \param db        - For DB access, a pointer to an open database connection
       //! \returns         - The \ref US_DB2 retrun code for the operation
-      int  write( bool, const QString&, US_DB2* = 0 );
+      int write( bool, const QString&, US_DB2* = 0 );
+
+      //! An overloaded function to write a model to the DB
+      //! \param db        - A pointer to an open database connection 
+      //! \returns         - The \ref US_DB2 retrun code for the operation
+      int write( US_DB2* db );
 
       //! \param path - A reference where the path to ayalutes on the disk
       //!               drive is written
@@ -140,12 +145,10 @@ class US_EXTERN US_Model
 
       int  load_db         ( const QString&, US_DB2* );
       int  load_disk       ( const QString& );
-      //int  read_model      ( const QString& );
       void mfem_scans      ( QXmlStreamReader&, SimulationComponent& );
       void get_associations( QXmlStreamReader&, Association& );
                            
       int  write_disk      ( const QString& );
-      int  write_db        ( US_DB2* );
       void write_temp      ( QTemporaryFile& );
 
       void debug( void );

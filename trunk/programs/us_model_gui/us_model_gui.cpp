@@ -592,9 +592,7 @@ void US_ModelGui::save_model( void )
          return;
       }
 
-      model.write( true, "", &db );
-
-      if ( model.write( true, "", &db ) == US_DB2::OK )
+      if ( model.write( &db ) == US_DB2::OK )
          QMessageBox::information( this,
             tr( "Model Written" ),
             tr( "The model has been %1 in the database." ).arg( model.message ) );
