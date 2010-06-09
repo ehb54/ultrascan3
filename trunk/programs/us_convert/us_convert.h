@@ -32,6 +32,21 @@ class US_EXTERN US_Convert : public US_Widgets
          NOT_WRITTEN                          //!< data was not written
       };
 
+      //! \brief Class to contain a list of scans to exclude from a data set
+      //!        for a single c/c/w combination
+      class Excludes
+      {
+         public:
+         QList< int >  excludes;              //!< list of scan indexes to exclude 
+         bool contains ( int x )              //!< function to determine if x is contained in the list
+           { return excludes.contains( x ); }
+         void push_back( int x )              //!< function to add x to the end of the list
+           { excludes.push_back( x ); }
+         Excludes& operator<<( const int x )  //!< function to insert x at the end of the list
+            { this->push_back( x ); return *this; }
+
+      };
+
   private:
 
       enum { SPLIT, REFERENCE, NONE } step;
@@ -85,7 +100,8 @@ class US_EXTERN US_Convert : public US_Widgets
       QString       saveDir;
       QString       saveDescription;
 
-      QList< int >  includes;                         // list of points to include in plot
+      QVector< Excludes > allExcludes;                // excludes for all triples
+
       QwtPlot*      data_plot;
       QwtPlotGrid*  grid;
 
@@ -98,7 +114,7 @@ class US_EXTERN US_Convert : public US_Widgets
 
       void plot_current    ( void );
       void plot_titles     ( void );
-      void init_includes   ( void );
+      void init_excludes   ( void );
       void plot_all        ( void );
       void replot          ( void );
       void set_colors      ( const QList< int >& );

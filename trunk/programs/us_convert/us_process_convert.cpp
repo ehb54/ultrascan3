@@ -196,6 +196,7 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
                                       US_ExpInfo::ExperimentInfo& ExpData,
                                       QStringList& triples,
                                       QList< int >& tripleMap,
+                                      QVector< US_Convert::Excludes >& allExcludes,
                                       QString runType,
                                       QString runID,
                                       QString dirname
@@ -255,7 +256,22 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
       uuid_generate( uuid );
       strncpy( rawConvertedData[ ndx ].guid, (char*) uuid, 16 );
       strncpy( ExpData.triples [ ndx ].guid, (char*) uuid, 16 );
-      status = US_DataIO2::writeRawData( dirname + filename, rawConvertedData[ ndx ] );
+
+      // Create a copy of the current dataset so we can alter it
+      US_DataIO2::RawData  currentData     = rawConvertedData[ ndx ];
+      US_Convert::Excludes currentExcludes = allExcludes     [ ndx ];
+
+      // Now recopy scans, except for excluded ones
+      currentData.scanData.clear();
+      QVector< US_DataIO2::Scan > sourceScans = rawConvertedData[ ndx ].scanData;
+      for ( int j = 0; j < sourceScans.size(); j++ )
+      {
+         if ( ! currentExcludes.contains( j ) )
+            currentData.scanData << sourceScans[ j ];  // copy this scan
+      }
+
+      // Now write altered dataset
+      status = US_DataIO2::writeRawData( dirname + filename, currentData );
 
       if ( status !=  US_DataIO2::OK ) break;
       
