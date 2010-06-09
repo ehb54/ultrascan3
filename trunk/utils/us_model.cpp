@@ -372,7 +372,7 @@ int US_Model::write( US_DB2* db )
 
       // Generate a guid if necessary
       // The guid may be valid from a disk read, but is not in the DB
-      if ( ! guid.size() != 36 ) guid = US_Util::new_guid();
+      if ( guid.size() != 36 ) guid = US_Util::new_guid();
 
       q << "get_modelID" << guid;
       
