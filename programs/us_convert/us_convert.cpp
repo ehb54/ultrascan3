@@ -255,7 +255,6 @@ US_Convert::US_Convert() : US_Widgets()
 
    main->setStretch( 0, 2 );
    main->setStretch( 1, 4 );
-   
 }
 
 void US_Convert::reset( void )
@@ -293,7 +292,7 @@ void US_Convert::reset( void )
 
    // Clear any data structures
    legacyData.clear();
-   includes.clear();
+   allExcludes.clear();
    triples.clear();
    allData.clear();
    RP_averaged        = false;
@@ -379,6 +378,10 @@ void US_Convert::load( QString dir )
    if ( ! success ) return;
 
    setTripleInfo();
+
+   // Initialize exclude list
+   init_excludes();
+   
    plot_current();
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
@@ -417,6 +420,9 @@ void US_Convert::reload( void )
    triples.clear();
    tripleMap.clear();
 
+   // Initialize exclude list
+   init_excludes();
+   
    // In this case the runType is not changing
    oldRunType = runType;
 
@@ -669,7 +675,7 @@ int US_Convert::writeAll( void )
    // Write the data
    US_ProcessConvert* dialog 
       = new US_ProcessConvert( this, status, allData, ExpData, triples, 
-                               tripleMap, runType, runID, dirname );
+                               tripleMap, allExcludes, runType, runID, dirname );
    delete dialog;
 
    // Now try to communicate status
@@ -723,9 +729,6 @@ void US_Convert::plot_current( void )
 
    plot_titles();
 
-   // Initialize include list
-   init_includes();
-   
    // Plot current data for cell / channel / wavelength triple
    plot_all();
    
@@ -807,11 +810,12 @@ void US_Convert::plot_titles( void )
 
 }
 
-void US_Convert::init_includes( void )
+void US_Convert::init_excludes( void )
 {
-   includes.clear();
-   for ( int i = 0; i < allData[ currentTriple ].scanData.size(); i++ ) 
-      includes << i;
+   allExcludes.clear();
+   Excludes x;
+   for ( int i = 0; i < allData.size(); i++ )
+      allExcludes << x;
 }
 
 void US_Convert::plot_all( void )
@@ -833,7 +837,8 @@ void US_Convert::plot_all( void )
 
    for ( int i = 0; i < currentData.scanData.size(); i++ )
    {
-      if ( ! includes.contains( i ) ) continue;
+      Excludes currentExcludes = allExcludes[ currentTriple ];
+      if ( currentExcludes.contains( i ) ) continue;
       US_DataIO2::Scan* s = &currentData.scanData[ i ];
 
       for ( int j = 0; j < size; j++ )
@@ -981,11 +986,11 @@ void US_Convert::exclude_scans( void )
    int scanStart = (int)ct_from->value();
    int scanEnd   = (int)ct_to  ->value();
 
-   // Let's remove back to front---the array
-   // shifts with each deletion
-   // Works when single scan too
-   for ( int i = scanEnd - 1; i >= scanStart - 1; i-- )
-      includes.removeAt( scanStart - 1 );
+   for ( int i = scanStart - 1; i < scanEnd; i++ )
+   {
+      if ( ! allExcludes[ currentTriple ].contains( i ) )
+         allExcludes[ currentTriple ] << i;
+   }
 
    reset_scan_ctrls();
 
@@ -994,7 +999,7 @@ void US_Convert::exclude_scans( void )
 
 void US_Convert::include( void )
 {
-   init_includes();
+   init_excludes();
    reset_scan_ctrls();
 
    replot();
