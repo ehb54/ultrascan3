@@ -572,7 +572,7 @@ void US_ModelGui::save_model( void )
       model.temperature = le_temperature->text().toDouble();
       model.wavelength  = le_wavelength ->text().toDouble();
 
-      model.write( false, fn );
+      model.write( fn );
 
       QString save_type = newFile ? "saved" : "updated";
 
