@@ -337,11 +337,11 @@ void US_Properties::set_stoich( double stoich )
 
    sc->mw /= sc->stoichiometry;  // Get monomer mw
    sc->mw *= stoich;             // Now adjust for new stoichiometry
-   le_mw->setText( QString::number( sc->mw, 'f', 1 ) );
+   le_mw->setText( QString::number( sc->mw, 'e', 3 ) );
 
    sc->extinction /= sc->stoichiometry;
    sc->extinction *= stoich;
-   le_extinction->setText( QString::number( sc->extinction, 'f', 1 ) );
+   le_extinction->setText( QString::number( sc->extinction, 'e', 4 ) );
 
    sc->stoichiometry = (int) stoich;
 
@@ -400,7 +400,7 @@ void US_Properties::edit_vbar( void )
 
    if ( keep_standard() )  // Change from standard values?
    {
-      le_vbar->setText( QString::number( sc->vbar20, 'f', 4 ) );
+      le_vbar->setText( QString::number( sc->vbar20, 'e', 4 ) );
       return;
    }
 
@@ -512,7 +512,7 @@ void US_Properties::select_shape( int shape )
    switch ( shape )
    {
       case US_Model::PROLATE:
-         le_f_f0->setText(  QString::number( hydro_data.prolate.f_f0, 'f', 3 ));
+         le_f_f0->setText(  QString::number( hydro_data.prolate.f_f0, 'e', 3 ));
          le_s   ->setText(  QString::number( hydro_data.prolate.s,    'e', 4 ));
          le_D   ->setText(  QString::number( hydro_data.prolate.D,    'e', 4 ));
          le_f   ->setText(  QString::number( hydro_data.prolate.f,    'e', 4 ));
@@ -797,10 +797,10 @@ void US_Properties::update( int /* row */ )
    inUpdate = true;
 
    // Set vbar
-   le_vbar->setText( QString::number( sc->vbar20, 'f', 4 ) );
+   le_vbar->setText( QString::number( sc->vbar20, 'e', 4 ) );
 
    // Set extinction and concentration
-   le_extinction ->setText( QString::number( sc->extinction,          'e', 4 ));
+   le_extinction ->setText( QString::number( sc->extinction, 'e', 4 ));
 
    //if ( sc->wavelength <= 0.0 )
    //   le_wavelength->clear();
@@ -808,7 +808,7 @@ void US_Properties::update( int /* row */ )
    //   le_wavelength ->setText( QString::number( sc->wavelength,       'f', 1 ));
 
    le_molar      ->setText( QString::number( sc->molar_concentration, 'e', 4 ));
-   le_analyteConc->setText( QString::number( sc->signal_concentration,'f', 1 ));
+   le_analyteConc->setText( QString::number( sc->signal_concentration,'e', 4 ));
    
    // Update hydro data
    hydro_data.mw          = sc->mw;
@@ -831,7 +831,7 @@ void US_Properties::update( int /* row */ )
    ct_stoich->setValue( sc->stoichiometry );
 
    // Set characteristics
-   le_mw   ->setText( QString::number( sc->mw   , 'f', 1 ) );
+   le_mw   ->setText( QString::number( sc->mw   , 'e', 3 ) );
    le_f_f0 ->setText( QString::number( sc->f_f0 , 'e', 3 ) );
    le_s    ->setText( QString::number( sc->s    , 'e', 4 ) );
    le_D    ->setText( QString::number( sc->D    , 'e', 4 ) );
@@ -935,8 +935,8 @@ void US_Properties::new_hydro( US_Analyte ad )
    sc->extinction = le_extinction->text().toDouble();
 
    // Set vbar(20), mw
-   le_mw  ->setText( QString::number( hydro_data.mw,   'f', 1 ) );
-   le_vbar->setText( QString::number( hydro_data.vbar, 'f', 4 ) );
+   le_mw  ->setText( QString::number( hydro_data.mw,   'e', 3 ) );
+   le_vbar->setText( QString::number( hydro_data.vbar, 'e', 4 ) );
 
    sc->mw          = hydro_data.mw;
    sc->vbar20      = hydro_data.vbar;
@@ -1331,7 +1331,7 @@ void US_Properties::calculate( void )
       }
    }
 
-   le_mw  ->setText( QString::number( mw  , 'f', 1 ) );
+   le_mw  ->setText( QString::number( mw  , 'e', 3 ) );
    le_f_f0->setText( QString::number( f_f0, 'e', 3 ) );
    le_s   ->setText( QString::number( s   , 'e', 4 ) );
    le_D   ->setText( QString::number( D   , 'e', 4 ) );
