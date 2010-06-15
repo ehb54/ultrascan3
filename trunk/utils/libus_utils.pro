@@ -36,6 +36,7 @@ HEADERS      = us_analyte.h     \
                us_math2.h       \
                us_matrix.h      \
                us_model.h       \
+               us_noise.h       \
                us_settings.h    \
                us_stiffbase.h   \
                us_util.h
@@ -59,6 +60,7 @@ SOURCES      = us_analyte.cpp     \
                us_math.cpp        \
                us_math2.cpp       \
                us_model.cpp       \
+               us_noise.cpp       \
                us_matrix.cpp      \
                us_settings.cpp    \
                us_stiffbase.cpp   \

@@ -36,8 +36,8 @@ US_ModelLoader::US_ModelLoader( bool multisel, bool local, QString search,
       us_radiobutton( tr( "Use Local Disk" ), rb_disk, ondisk );
    top->addLayout( db_layout,   row,   0 );
    top->addLayout( disk_layout, row++, 1 );
-   connect( rb_disk, SIGNAL( toggled( bool ) ),
-            this,    SLOT( select_disk( bool ) ) );
+   connect( rb_disk, SIGNAL( toggled(     bool ) ),
+            this,    SLOT(   select_disk( bool ) ) );
 
    pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    top->addWidget( pb_investigator, row,   0 );
@@ -96,7 +96,8 @@ US_ModelLoader::US_ModelLoader( bool multisel, bool local, QString search,
    le_investigator->setText( dinvtext );
 
    // Trigger models list from disk or db source
-   select_disk( ondisk );
+   if ( !dsearch.contains( "=edit" ) )
+      select_disk( ondisk );           // only list if not "=edit" filtered
 }
 
 // Public method to return count of models selected
@@ -160,7 +161,8 @@ QString US_ModelLoader::description( int index )
    QString cdesc  = sep + model_descriptions[ index ].description
                   + sep + model_descriptions[ index ].filename
                   + sep + model_descriptions[ index ].guid
-                  + sep + model_descriptions[ index ].DB_id;
+                  + sep + model_descriptions[ index ].DB_id
+                  + sep + model_descriptions[ index ].editguid;
    return cdesc;
 }
 
@@ -174,6 +176,14 @@ QString US_ModelLoader::search_filter()
 QString US_ModelLoader::investigator_text()
 {
    return le_investigator->text();
+}
+
+// Public method to set Edit GUID for possible list filtering
+void US_ModelLoader::set_edit_guid( QString guid )
+{
+   edguid   = guid;           // edit GUID
+
+   select_disk( ondisk );     // trigger list delayed at constructor
 }
 
 // Slot to respond to change in disk/db radio button select
@@ -249,10 +259,33 @@ void US_ModelLoader::investigator()
 void US_ModelLoader::list_models()
 {
    QString mfilt = le_mfilter->text();
+   bool listall  = mfilt.isEmpty();
+   bool listdsc  = !listall;
+   bool listeid  = !listall;
    QRegExp mpart = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
    ondisk     = rb_disk->isChecked();
    model_descriptions.clear();         // clear model descriptions
 
+   if ( !listall )
+   {  // filter is not empty
+      listeid = mfilt.contains( "=edit" );  // edit filtered?
+      listdsc = !listeid;                   // description filtered?
+
+      if ( listeid  &&  edguid.isEmpty() )
+      {  // disallow edit filter if no edit GUID has been given
+         QMessageBox::information( this,
+               tr( "Edit GUID Problem" ),
+               tr( "No Edit GUID was given.\n\"=edit\" reset to blank." ) );
+         listall = true;
+         listdsc = false;
+         listeid = false;
+         le_mfilter->setText( "" );
+      }
+   }
+qDebug() << "listall" << listall;
+qDebug() << "  listdsc" << listdsc;
+qDebug() << "  listeid" << listeid;
+         
    if ( ondisk )
    {  // Models from local disk files
       QDir    dir;
@@ -272,6 +305,7 @@ void US_ModelLoader::list_models()
       for ( int ii = 0; ii < f_names.size(); ii++ )
       {
          QString fname( path + "/" + f_names[ ii ] );
+//qDebug() << "fname" << f_names[ii];
          QFile   m_file( fname );
 
          if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
@@ -288,11 +322,25 @@ void US_ModelLoader::list_models()
                ModelDesc desc;
                attr             = xml.attributes();
                desc.description = attr.value( "description" ).toString();
-               if ( mfilt.isEmpty()  ||  desc.description.contains( mpart ) )
+               desc.editguid    = attr.value( "editguid"    ).toString();
+//qDebug() << "       degid" << desc.editguid;
+//qDebug() << "       edgid" << edguid;
+
+               if ( listall  ||
+                  ( listdsc  &&  desc.description.contains( mpart  ) )  ||
+                  ( listeid  &&  desc.editguid.contains(    edguid ) ) )
                {  // unfiltered or filter matches description
-                  desc.guid        = attr.value( "guid" ).toString();
+                  desc.guid        = attr.value( "guid"        ).toString();
                   desc.filename    = fname;
                   desc.DB_id       = "-1";
+//*DEBUG
+if (!listall) {
+qDebug() << " ddesc" << desc.description;
+qDebug() << "   mpart" << mpart.pattern();
+qDebug() << "   degid" << desc.editguid;
+qDebug() << "   edgid" << edguid;
+}
+//*DEBUG
 
                   model_descriptions << desc;  // add to models list
                }
@@ -330,9 +378,12 @@ void US_ModelLoader::list_models()
          desc.DB_id        = db.value( 0 ).toString();
          desc.guid         = db.value( 1 ).toString();
          desc.description  = db.value( 2 ).toString();
+         desc.editguid     = db.value( 3 ).toString();
          desc.filename.clear();
 
-         if ( mfilt.isEmpty()  ||  desc.description.contains( mpart ) )
+         if ( listall  ||
+            ( listdsc  &&  desc.description.contains( mpart  ) )  ||
+            ( listeid  &&  desc.editguid.contains(    edguid ) ) )
          {  // unfiltered or filter matches
             model_descriptions << desc;   // add to models list
          }
@@ -450,23 +501,23 @@ QString US_ModelLoader::typeText( US_Model::ModelType mtype,
    QString tdesco  = QString( tr( "Unknown" ) );
 
    for ( int jj = 0; jj < ntmap; jj++ )
-   {
+   {  // look for model type match
+
       if ( mtype == tmap[ jj ].typeval )
-      {
-         tdesco       = tmap[ jj ].typedesc;
+      {  // we have a match:  build match type description
+         tdesco       = tmap[ jj ].typedesc;  // base type
 
          if ( nassoc > 0 )
-            tdesco       = tdesco + "-RA";
+            tdesco       = tdesco + "-RA";    // RA subtype
 
          if ( iters > 1 )
-            tdesco       = tdesco + "-MC";
+            tdesco       = tdesco + "-MC";    // MC subtype
 
-         return tdesco;
+         break;                               // break to return description
       }
-      
    }
 
-   return QString( tr( "Unknown" ) );
+   return tdesco;
 }
 
 // Get index in model description list of a model description
@@ -508,12 +559,12 @@ void US_ModelLoader::show_model_info( QPoint pos )
    bool    frDisk = ( model_descriptions[ 0 ].filename.length() > 0 );
 
    if ( frDisk )
-   {
+   {  // ID is filename
       lblid    = tr( "\n  Model File Name:       " );
    }
 
    else
-   {
+   {  // ID is DB id
       lblid    = tr( "\n  Database Model ID:     " );
    }
 
@@ -537,29 +588,30 @@ void US_ModelLoader::show_model_info( QPoint pos )
       }
 //qDebug() << "  row" << row;
 
-      mdx      = modelIndex( mdesc, model_descriptions );
+      mdx      = modelIndex( mdesc, model_descriptions );  // find index
 
-      load_model( model, mdx );
+      load_model( model, mdx );                            // load model
 
-      mtype    = model.type;
+      mtype    = model.type;                               // model info
       iters    = model.iterations;
       ncomp    = model.components.size();
       nassoc   = model.associations.size();
       tdesc    = typeText( mtype, nassoc, iters );
       runid    = mdesc.section( ".", 0, 0 );
       mdlid    = frDisk ?
-         model_descriptions[ mdx ].filename :
-         model_descriptions[ mdx ].DB_id;
+         model_descriptions[ mdx ].filename :              // ID is filename
+         model_descriptions[ mdx ].DB_id;                  // ID is DB id
       mdlid    = mdlid.length() < 50 ? mdlid :
-         "*/" + mdlid.section( "/", -3, -1 );
+         "*/" + mdlid.section( "/", -3, -1 );              // short filename
 
       dtext    = tr( "Model Information:" )
          + tr( "\n  Description:           " ) + mdesc
-         + tr( "\n  Run ID:                " ) + runid
+         + tr( "\n  Implied RunID:         " ) + runid
          + tr( "\n  Type:                  " ) + tdesc
          + "  (" + QString::number( (int)mtype ) + ")"
-         + tr( "\n  Global ID:             " ) + model.guid
-         + tr( "\n  Global ID: (descr.)    " ) + model_descriptions[ mdx ].guid
+         + tr( "\n  Model Global ID:       " ) + model.guid
+         + tr( "\n  Description Global ID: " ) + model_descriptions[ mdx ].guid
+         + tr( "\n  Edit Global ID:        " ) + model.editguid
          + lblid + mdlid
          + tr( "\n  Iterations:            " ) + QString::number( iters )
          + tr( "\n  Components Count:      " ) + QString::number( ncomp )
@@ -571,20 +623,27 @@ void US_ModelLoader::show_model_info( QPoint pos )
    {  // multiple rows selected:  build multiple-model information text
       QString aruni;
       QString atype;
+      QString aegid;
+      QString eguid;
 
       row      = lw_models->row( selmods[ 0 ] );  // 1st model values
       mdesc    = selmods[ 0 ]->text();
-      mdx      = modelIndex( mdesc, model_descriptions );
+      mdx      = modelIndex( mdesc, model_descriptions ); // 1st model index
 
-      load_model( model, mdx );
+      load_model( model, mdx );                           // load model
 
-      runid    = mdesc.section( ".", 0, 0 );
+      runid    = mdesc.section( ".", 0, 0 );              // model info
       mtype    = model.type;
       iters    = model.iterations;
       nassoc   = model.associations.size();
       tdesc    = typeText( mtype, nassoc, iters );
       aruni    = runid;                           // potential common values
       atype    = tdesc;
+      aegid    = model.editguid;
+#if 0
+aegid=model.guid;
+eguid=model.guid;
+#endif
 
       // make a pass to see if runID and type are common
 
@@ -592,13 +651,14 @@ void US_ModelLoader::show_model_info( QPoint pos )
       {
          row      = lw_models->row( selmods[ jj ] );
          mdesc    = selmods[ jj ]->text();
-         mdx      = modelIndex( mdesc, model_descriptions );
+         mdx      = modelIndex( mdesc, model_descriptions ); // model index
 
-         load_model( model, mdx );
+         load_model( model, mdx );                           // load model
 
          runid    = mdesc.section( ".", 0, 0 );
          tdesc    = typeText( model.type, model.associations.size(),
                model.iterations );
+         eguid    = model.editguid;
 
          if ( !aruni.isEmpty()  &&  aruni.compare( runid ) != 0 )
             aruni    = "";   // turn off common if mismatch
@@ -606,8 +666,11 @@ void US_ModelLoader::show_model_info( QPoint pos )
          if ( !atype.isEmpty()  &&  atype.compare( tdesc ) != 0 )
             atype    = "";   // turn off common if mismatch
 
-         if ( aruni.isEmpty()  &&  atype.isEmpty() )
-            break;           // neither common:  break
+         if ( !aegid.isEmpty()  &&  aegid.compare( eguid ) != 0 )
+            aegid    = "";   // turn off common if mismatch
+
+         if ( aruni.isEmpty()  &&  atype.isEmpty()  &&  aegid.isEmpty() )
+            break;           // none common:  break
       }
 
       // Report on common RunID and/or Type
@@ -621,37 +684,40 @@ void US_ModelLoader::show_model_info( QPoint pos )
       if ( !atype.isEmpty() )
          dtext    = dtext + tr( "\n  Type:                  " ) + atype;
 
+      if ( !aegid.isEmpty() )
+         dtext    = dtext + tr( "\n  Related Edit GUID:     " ) + aegid;
+
       // Now loop to report on each model
 
       for ( int jj = 0; jj < modelsCount; jj++ )
       {
-         row      = lw_models->row( selmods[ jj ] );
+         row      = lw_models->row( selmods[ jj ] );          // row selected
          mdesc    = selmods[ jj ]->text();
-         mdx      = modelIndex( mdesc, model_descriptions );
+         mdx      = modelIndex( mdesc, model_descriptions );  // model index
 
-         load_model( model, mdx );
+         load_model( model, mdx );                            // load model
 
-         mtype    = model.type;
+         mtype    = model.type;                               // model info
          iters    = model.iterations;
          ncomp    = model.components.size();
          nassoc   = model.associations.size();
          tdesc    = typeText( mtype, nassoc, iters );
          runid    = mdesc.section( ".", 0, 0 );
          mdlid    = frDisk ?
-            model_descriptions[ mdx ].filename :
-            model_descriptions[ mdx ].DB_id;
+            model_descriptions[ mdx ].filename :              // ID is filename
+            model_descriptions[ mdx ].DB_id;                  // ID is DB id
          mdlid    = mdlid.length() < 50 ?  mdlid :
-            "*/" + mdlid.section( "/", -3, -1 );
+            "*/" + mdlid.section( "/", -3, -1 );              // short filename
 
          dtext    = dtext + tr( "\n\nModel Information: (" )
             + QString::number( ( jj + 1 ) ) + "):"
             + tr( "\n  Description:           " ) + mdesc
-            + tr( "\n  Run ID:                " ) + runid
+            + tr( "\n  Implied RunID:         " ) + runid
             + tr( "\n  Type:                  " ) + tdesc
             + "  (" + QString::number( (int)mtype ) + ")"
-            + tr( "\n  Global ID:             " ) + model.guid
-            + tr( "\n  Global ID: (descr.)    " )
-              + model_descriptions[ mdx ].guid
+            + tr( "\n  Model Global ID:       " ) + model.guid
+            + tr( "\n  Description Global ID: " ) + model_descriptions[ mdx ].guid
+            + tr( "\n  Edit Global ID:        " ) + model.editguid
             + lblid + mdlid
             + tr( "\n  Iterations:            " ) + QString::number( iters )
             + tr( "\n  Components Count:      " ) + QString::number( ncomp )

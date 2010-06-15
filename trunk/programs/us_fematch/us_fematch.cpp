@@ -74,7 +74,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    connect( pb_details,   SIGNAL( clicked() ),
             this,         SLOT(   details() ) );
    connect( pb_distrib,   SIGNAL( clicked() ),
-            this,         SLOT(   distr_type()  ) );
+            this,         SLOT(   distrib_type() ) );
    connect( pb_loadmodel, SIGNAL( clicked() ),
             this,         SLOT(   load_model()  ) );
    connect( pb_simumodel, SIGNAL( clicked() ),
@@ -144,21 +144,22 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    le_vbar      = us_lineedit( "0.7200" );
    pb_showmodel = us_pushbutton( tr( "Show Model #"   ) );
    lb_rmsd      = us_label     ( tr( "RMSD:"  ) );
-   le_rmsd      = us_lineedit( "0" );
+   le_rmsd      = us_lineedit( "0.0" );
+   le_variance  = us_lineedit( "0.0" );
    le_sedcoeff  = us_lineedit( "" );
    le_difcoeff  = us_lineedit( "" );
    le_partconc  = us_lineedit( "" );
-   le_variance  = us_lineedit( "0.0" );
    le_moweight  = us_lineedit( "" );
    ct_component = us_counter( 3, 1, 50, 1 );
    ct_component->setMinimumWidth( 170 );
+   ct_component->setStep( 1.0 );
 
    QLabel* lb_experiment   = us_banner( tr( "Experimental Parameters (at 20" ) 
       + DEGC + "):" );
+   QLabel* lb_variance     = us_label ( tr( "Variance:" ) );
    QLabel* lb_sedcoeff     = us_label ( tr( "Sedimentation Coefficient:" ) );
    QLabel* lb_difcoeff     = us_label ( tr( "Diffusion Coefficient:" ) );
    QLabel* lb_partconc     = us_label ( tr( "Partial Concentration:" ) );
-   QLabel* lb_variance     = us_label ( tr( "Variance:" ) );
    QLabel* lb_moweight     = us_label ( tr( "Molecular Weight, f/f0:" ) );
    QLabel* lb_component    = us_label ( tr( "Component:" ) );
            lb_simpoints    = us_label ( tr( "Simulation Points:" ) );
@@ -185,6 +186,8 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             this,         SLOT( get_buffer() ) );
    connect( pb_vbar,      SIGNAL( clicked() ),
             this,         SLOT( get_vbar() ) );
+   connect( ct_component, SIGNAL( valueChanged( double ) ),
+            this,         SLOT  ( comp_number(  double ) ) );
    le_rmsd->setReadOnly( true );
 
    density   = 0.998234;
@@ -212,16 +215,16 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    parameterLayout->addWidget( le_viscosity    , 1, 3, 1, 1 );
    parameterLayout->addWidget( pb_vbar         , 2, 0, 1, 1 );
    parameterLayout->addWidget( le_vbar         , 2, 1, 1, 1 );
-   parameterLayout->addWidget( lb_rmsd         , 2, 2, 1, 1 );
-   parameterLayout->addWidget( le_rmsd         , 2, 3, 1, 1 );
-   parameterLayout->addWidget( lb_sedcoeff     , 3, 0, 1, 2 );
-   parameterLayout->addWidget( le_sedcoeff     , 3, 2, 1, 2 );
-   parameterLayout->addWidget( lb_difcoeff     , 4, 0, 1, 2 );
-   parameterLayout->addWidget( le_difcoeff     , 4, 2, 1, 2 );
-   parameterLayout->addWidget( lb_partconc     , 5, 0, 1, 2 );
-   parameterLayout->addWidget( le_partconc     , 5, 2, 1, 2 );
-   parameterLayout->addWidget( lb_variance     , 6, 0, 1, 2 );
-   parameterLayout->addWidget( le_variance     , 6, 2, 1, 2 );
+   parameterLayout->addWidget( lb_variance     , 3, 0, 1, 1 );
+   parameterLayout->addWidget( le_variance     , 3, 1, 1, 1 );
+   parameterLayout->addWidget( lb_rmsd         , 3, 2, 1, 1 );
+   parameterLayout->addWidget( le_rmsd         , 3, 3, 1, 1 );
+   parameterLayout->addWidget( lb_sedcoeff     , 4, 0, 1, 2 );
+   parameterLayout->addWidget( le_sedcoeff     , 4, 2, 1, 2 );
+   parameterLayout->addWidget( lb_difcoeff     , 5, 0, 1, 2 );
+   parameterLayout->addWidget( le_difcoeff     , 5, 2, 1, 2 );
+   parameterLayout->addWidget( lb_partconc     , 6, 0, 1, 2 );
+   parameterLayout->addWidget( le_partconc     , 6, 2, 1, 2 );
    parameterLayout->addWidget( lb_moweight     , 7, 0, 1, 2 );
    parameterLayout->addWidget( le_moweight     , 7, 2, 1, 2 );
    parameterLayout->addWidget( lb_component    , 8, 0, 1, 2 );
@@ -487,7 +490,8 @@ qDebug() << "dataLatest:" << dataLatest;
    pb_loadmodel->setEnabled( true );
    pb_distrib  ->setEnabled( true );
    pb_exclude  ->setEnabled( true );
-   mfilter     = dataList[ 0 ].runID;
+   //mfilter     = dataList[ 0 ].runID;
+   mfilter     = QString( "=edit" );
 
    ct_from->disconnect();
    ct_from->setValue( 0 );
@@ -822,6 +826,7 @@ void US_FeMatch::set_ra_visible( bool visible )
    gb_modelsim ->setVisible( visible );  // visibility model simulate group box
 }
 
+// respond to click of current type of distribution plot
 void US_FeMatch::distrib_type( )
 {
 }
@@ -858,6 +863,7 @@ void US_FeMatch::load_model( )
    US_ModelLoader* dialog = new US_ModelLoader( false, def_local,
       mfilter, investig );
    dialog->move( this->pos() + QPoint( 200, 200 ) );
+   dialog->set_edit_guid( dataList[ 0 ].editguid );
 
    if ( dialog->exec() == QDialog::Accepted )
    {
@@ -881,6 +887,16 @@ void US_FeMatch::load_model( )
    int ncomp   = model.components.size();           // components count
    int nassoc  = model.associations.size();         // associations count
    isRA        = ( nassoc > 1 );                    // RA if #assocs > 1
+   double s20w;
+   double D20w;
+   double vbar20;
+   double mw;
+   double vol;
+   double f0;
+   double fv;
+   double f_f0;
+   double rad_sphere;
+   US_Model::SimulationComponent* sc;
 qDebug() << "dialog mfilter" << mfilter;
 qDebug() << "dialog investig" << investig;
 qDebug() << "dialog mdesc" << mdesc;
@@ -891,6 +907,36 @@ qDebug() << "dialog isRA" << isRA;
 //DEBUG: for now, use Load Model button to toggle RA visibility
 isRA=!visible;
 qDebug() << "debug isRA" << isRA;
+
+   // fill out components values
+
+   for ( int jj = 0; jj < ncomp; jj++ )
+   {
+      sc         = &model.components[ jj ];
+      s20w       = fabs( sc->s );
+      D20w       = sc->D;
+      vbar20     = sc->vbar20;
+      vbar20     = ( vbar20 > 0.0 ) ? vbar20 : TYPICAL_VBAR;
+      mw         = ( s20w / D20w ) * ( R * K20 ) / ( 1.0 - vbar20 * DENS_20W );
+      vol        = vbar20 * mw / AVOGADRO;
+      rad_sphere = pow( ( vol * 0.75 ) / M_PI, 1.0 / 3.0 );
+      f0         = rad_sphere * 6.0 * M_PI * VISC_20W;
+      fv         = ( mw * ( 1.0 - vbar20 * DENS_20W ) ) / ( s20w * AVOGADRO );
+      f_f0       = fv / f0;
+
+      sc->vbar20 = vbar20;
+      sc->mw     = mw;
+      sc->f      = fv;
+      sc->f_f0   = f_f0;
+
+      if ( sc->extinction > 0.0 )
+         sc->molar_concentration = sc->signal_concentration / sc->extinction;
+   }
+
+   ct_component->setMaxValue( (double)ncomp );
+
+   // set values for component 1
+   component_values( 0 );
 
    if ( ( isRA && !visible )  ||  ( !isRA && visible ) )
    {  // new RA visibility state out of sync:  change it
@@ -950,5 +996,23 @@ QStringList US_FeMatch::last_edit_files( QStringList files )
    ofiles.append( file );
 
    return ofiles;
+}
+
+// set values for component at index
+void US_FeMatch::component_values( int index )
+{
+   le_sedcoeff->setText( QString::number( model.components[ index ].s ) );
+   le_difcoeff->setText( QString::number( model.components[ index ].D ) );
+   le_partconc->setText(
+      QString::number( model.components[ index ].signal_concentration ) );
+   le_moweight->setText(
+      QString( "%1 kD,  %2" ).arg( model.components[ index ].mw / 1000.0 )
+      .arg( model.components[ index ].f_f0 ) );
+}
+
+// component number changed
+void US_FeMatch::comp_number( double cnbr )
+{
+   component_values( (int)cnbr - 1 );
 }
 

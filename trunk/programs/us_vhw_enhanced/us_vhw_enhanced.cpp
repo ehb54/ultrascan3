@@ -120,7 +120,7 @@ void US_vHW_Enhanced::load( void )
    workingDir = QFileDialog::getExistingDirectory( this,
          tr( "Raw Data Directory" ),
          US_Settings::resultDir(),
-         QFileDialog::DontResolveSymlinks | QFileDialog::ShowDirsOnly );
+         QFileDialog::DontResolveSymlinks );
 
    if ( workingDir.isEmpty() )
       return;

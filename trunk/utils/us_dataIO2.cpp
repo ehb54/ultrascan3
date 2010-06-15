@@ -8,8 +8,6 @@
 #include "us_math2.h"
 #include "us_matrix.h"
 
-#include <uuid/uuid.h>
-
 bool US_DataIO2::readLegacyFile( const QString&  file, 
                                  BeckmanRawScan& data )
 {
@@ -520,15 +518,21 @@ void US_DataIO2::ident( QXmlStreamReader& xml, EditValues& parameters )
       if ( xml.isStartElement()  &&  xml.name() == "runid" )
       {
          QXmlStreamAttributes a = xml.attributes();
-         parameters.runID = a.value( "value" ).toString();
+         parameters.runID       = a.value( "value" ).toString();
+      }
+     
+      if ( xml.isStartElement()  &&  xml.name() == "editguid" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         parameters.editguid    = a.value( "value" ).toString();
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "uuid" )
       {
          QXmlStreamAttributes a = xml.attributes();
-         parameters.uuid = a.value( "value" ).toString();
+         parameters.dataguid    = a.value( "value" ).toString();
       }
-
+     
       xml.readNext();
    }
 }
@@ -700,7 +704,7 @@ int US_DataIO2::loadData( const QString&       directory,
    // Check for uuid match
    char uuid[ 37 ];
    uuid_unparse( (uchar*)d.guid, uuid );
-   if ( QString( uuid ) != e.uuid ) throw NO_UUID_MATCH;
+   if ( QString( uuid ) != e.dataguid ) throw NO_UUID_MATCH;
 
    // Apply the edits
    EditedData ed;
@@ -714,7 +718,8 @@ int US_DataIO2::loadData( const QString&       directory,
    ed.channel     = sl[ 4 ];
    ed.wavelength  = sl[ 5 ];
    ed.description = d.description;
-   ed.uuid        = e.uuid;
+   ed.dataguid    = e.dataguid;
+   ed.editguid    = e.editguid;
    ed.meniscus    = e.meniscus;
    ed.plateau     = e.plateau;
    ed.baseline    = e.baseline;

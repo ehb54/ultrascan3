@@ -194,6 +194,7 @@ void US_ModelGui::new_model( void )
    desc.DB_id       = "-1";
    desc.filename.clear();
    desc.guid    .clear();
+   desc.editguid.clear();
 
    model         = m;
    working_model = m;
@@ -284,6 +285,8 @@ void US_ModelGui::select_model( QListWidgetItem* item )
       QString modelID = model_descriptions[ index ].DB_id;
       model.load( modelID, &db );
    }
+
+   model_descriptions[ index ].editguid = model.editguid;
  
    working_model = model;
 
@@ -662,6 +665,7 @@ void US_ModelGui::list_models( void )
                   a                = xml.attributes();
                   md.description = a.value( "description" ).toString();
                   md.guid        = a.value( "guid"        ).toString();
+                  md.editguid    = a.value( "editguid"    ).toString();
                   md.filename    = path + "/" + f_names[ i ];
                   md.DB_id       = -1;
                   model_descriptions << md;
@@ -704,6 +708,7 @@ void US_ModelGui::list_models( void )
          md.DB_id       = db.value( 0 ).toString();
          md.guid        = db.value( 1 ).toString();
          md.description = db.value( 2 ).toString();
+         md.editguid    = db.value( 3 ).toString();
          md.filename.clear();
 
          model_descriptions << md;

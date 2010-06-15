@@ -88,6 +88,7 @@ US_Model::US_Model()
    iterations      = 1;
    bufferGUID  .clear();
    guid        .clear();
+   editguid    .clear();
    components  .clear();
    associations.clear();
 }
@@ -99,6 +100,7 @@ bool US_Model::operator== ( const US_Model& m ) const
    if ( compressibility != m.compressibility ) return false;
    if ( wavelength      != m.wavelength      ) return false;
    if ( temperature     != m.temperature     ) return false;
+   if ( editguid        != m.editguid        ) return false;
    if ( bufferGUID      != m.bufferGUID      ) return false;
    if ( bufferDesc      != m.bufferDesc      ) return false;
    if ( description     != m.description     ) return false;
@@ -228,6 +230,7 @@ int US_Model::load( const QString& filename )
             a = xml.attributes();
 
             description     = a.value( "description"     ).toString();
+            editguid        = a.value( "editguid"        ).toString();
             bufferGUID      = a.value( "bufferGuid"      ).toString();
             bufferDesc      = a.value( "bufferDesc"      ).toString();
             guid            = a.value( "guid"            ).toString();
@@ -382,14 +385,14 @@ int US_Model::write( US_DB2* db )
      
       if ( db->lastErrno() != US_DB2::OK )
       {
-         q << "new_model" << guid << description << contents;
+         q << "new_model" << guid << description << contents << editguid;
          message = QObject::tr( "created" );
       }
       else
       {
          db->next();
          QString id = db->value( 0 ).toString();
-         q << "update_model" << id << description << contents;
+         q << "update_model" << id << description << contents << editguid;
          message = QObject::tr( "updated" );
       }
 
@@ -429,6 +432,7 @@ void US_Model::write_temp( QTemporaryFile& file )
    xml.writeStartElement( "model" );
    xml.writeAttribute   ( "description",     description );
    xml.writeAttribute   ( "guid",            guid        );
+   xml.writeAttribute   ( "editguid",        editguid    );
    xml.writeAttribute   ( "bufferGuid",      bufferGUID  );
    xml.writeAttribute   ( "bufferDesc",      bufferDesc  );
    xml.writeAttribute   ( "density",         QString::number( density        ));
@@ -522,6 +526,7 @@ void US_Model::debug( void )
 {
    qDebug() << "model dump";
    qDebug() << "desc" << description;
+   qDebug() << "edit guid" << editguid;
    qDebug() << "buf guid" << bufferGUID;
    qDebug() << "buf desc" << bufferDesc;
    qDebug() << "guid" << guid;;
