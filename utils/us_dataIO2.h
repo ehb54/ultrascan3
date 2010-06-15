@@ -177,7 +177,8 @@ class US_DataIO2
          QString              cell;        //!< Cell (hole) of rotor for this data
          QString              channel;     //!< Channel ('A', 'B', etc) of scan data
          QString              wavelength;  //!< Wavlength setting of optical system
-         QString              uuid;        //!< A globally uniquie ID
+         QString              editguid;    //!< A globally unique ID for edit
+         QString              dataguid;    //!< A globally unique ID for data
          double               meniscus;    //!< Designated radius of meniscus
          double               airGapLeft;  //!< Start of air gap for interference data
          double               airGapRight; //!< End of air gap for interfence data
@@ -209,7 +210,8 @@ class US_DataIO2
          QString       channel;     //!< Channel ('A', 'B', etc) of scan data
          QString       wavelength;  //!< Wavlength setting of optical system
          QString       description; //!< ASCII description of the data
-         QString       uuid;        //!< A globally uniquie ID
+         QString       editguid;    //!< A globally unique ID for edit
+         QString       dataguid;    //!< A globally unique ID for data
          double        meniscus;    //!< Designated radius of meniscus
          double        plateau;     //!< Location of maximum value of data.  A radius value.
          double        baseline;    //!< Designated baseline value of data
@@ -237,7 +239,8 @@ class US_DataIO2
          QString       channel;     //!< Channel ('A', 'B', etc) of scan data
          QString       wavelength;  //!< Wavlength setting of optical system
          QString       description; //!< ASCII description of the data
-         QString       uuid;        //!< A globally uniquie ID
+         QString       editguid;    //!< A globally unique ID for edit
+         QString       dataguid;    //!< A globally unique ID for data
          double        meniscus;    //!< Designated radius of meniscus
          double        plateau;     //!< Location of maximum value of data.  A radius value.
          double        baseline;    //!< Designated baseline value of data

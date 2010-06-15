@@ -51,6 +51,7 @@ class US_EXTERN US_ModelLoader : public US_WidgetsDialog
                          2,2 - Models file name (empty if from db);
                          3,3 - GUID of model;
                          4,4 - db ID (-1 if from disk).
+                         5,5 - GUID of related Edit;
       */
       QString description(       int  );
 
@@ -64,6 +65,11 @@ class US_EXTERN US_ModelLoader : public US_WidgetsDialog
       */
       QString investigator_text( void );
 
+      /*! \brief Set Edit GUID for possible use in list filtering.
+          \param guid Edit GUID string to set for possible filtering.
+      */
+      void    set_edit_guid(     QString );
+
    private:
       US_Help showHelp;
 
@@ -74,6 +80,7 @@ class US_EXTERN US_ModelLoader : public US_WidgetsDialog
          QString filename;
          QString guid;
          QString DB_id;
+         QString editguid;
       };
 
       QList< ModelDesc > model_descriptions;
@@ -95,6 +102,8 @@ class US_EXTERN US_ModelLoader : public US_WidgetsDialog
 
       QString        dsearch;
       QString        dinvtext;
+      QString        edguid;
+      QString        daguid;
 
    private slots:
       void select_disk ( bool );

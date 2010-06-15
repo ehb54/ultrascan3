@@ -24,6 +24,7 @@ class US_EXTERN US_Model
       double     compressibility;
       double     wavelength;
       double     temperature;
+      QString    editguid;
       QString    bufferGUID;   
       QString    bufferDesc;   
       QString    description;

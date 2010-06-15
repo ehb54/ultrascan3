@@ -545,8 +545,8 @@ void US_Pseudo3D_Combine::load_distro()
       investig   = dialog->investigator_text();
       QString mf = md.section( md.left( 1 ), 2, 2 );
       def_local  = mf.isEmpty() ? false : true;
-qDebug() << "accept SEARCH"       << mfilter;
-qDebug() << "accept INVESTIGATOR" << investig;
+//qDebug() << "accept SEARCH"       << mfilter;
+//qDebug() << "accept INVESTIGATOR" << investig;
 
       for ( int jj = 0; jj < dialog->models_count(); jj++ )
       {  // load each selected distribution model

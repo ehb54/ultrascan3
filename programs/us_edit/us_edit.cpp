@@ -15,6 +15,7 @@
 #include "us_ri_noise.h"
 #include "us_edit_scan.h"
 #include "us_math.h"
+#include "us_util.h"
 
 //! \brief Main program for US_Edit. Loads translators and starts
 //         the class US_FitMeniscus.
@@ -1876,11 +1877,15 @@ void US_Edit::write( void )
    runid.setAttribute( "value", runID );
    id.appendChild( runid );
 
-   QDomElement guid = doc.createElement( "uuid" );
+   QDomElement eguid = doc.createElement( "editguid" );
+   eguid.setAttribute( "value", US_Util::new_guid() );
+   id.appendChild( eguid );
+
+   QDomElement dguid = doc.createElement( "uuid" );
    char uuid[ 37 ];
    uuid_unparse( (unsigned char*)data.guid, uuid );
-   guid.setAttribute( "value", uuid );
-   id.appendChild( guid );
+   dguid.setAttribute( "value", uuid );
+   id.appendChild( dguid );
 
    QString     triple  = cb_triple->currentText();
    QStringList parts   = triple.split( " / " );
@@ -2036,7 +2041,7 @@ void US_Edit::apply_prior( void )
    char uuid[ 37 ];
    uuid_unparse( (unsigned char*)data.guid, uuid );
 
-   if ( parameters.uuid != uuid )
+   if ( parameters.dataguid != uuid )
    {
       QMessageBox::warning( this,
             tr( "Data Error" ),
