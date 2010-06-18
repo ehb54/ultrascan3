@@ -77,7 +77,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       QLabel* lb_viscosity = us_label( tr( "Viscosity" ) );
       controls->addWidget( lb_viscosity, c_row, 0 );
 
-      solution.viscosity = VISC_20W;
+      solution.viscosity = VISC_20W * 100.0;
       le_viscosity = us_lineedit( QString::number( solution.viscosity, 'f', 6 ) );
       le_viscosity->setPalette( gray );
       le_viscosity->setReadOnly( true );
@@ -111,7 +111,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    controls->addWidget( pb_vbar, c_row, 0 );
 
    le_vbar = us_lineedit();
-   le_vbar->setText( QString::number( TYPICAL_VBAR, 'e', 4 ) );
+   le_vbar->setText( QString::number( solution.vbar20, 'e', 4 ) );
    connect( le_vbar, SIGNAL( textChanged( const QString& ) ), 
                      SLOT  ( vbar       ( const QString& ) ) );
    controls->addWidget( le_vbar, c_row++, 1 );
