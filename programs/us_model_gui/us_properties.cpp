@@ -103,11 +103,6 @@ US_Properties::US_Properties(
    connect( le_extinction, SIGNAL( editingFinished() ), SLOT( set_molar() ) );
    extinction->addWidget( le_extinction );
 
-   //QwtArrowButton* down = new QwtArrowButton( 1, Qt::DownArrow );
-   //down->setMinimumWidth( 16 );
-   //connect( down, SIGNAL( clicked() ), SLOT( lambda_down() ) );
-   //extinction->addWidget( down );
-
    le_wavelength = us_lineedit( QString::number( model.wavelength, 'f', 1 ) );
    le_wavelength->setMinimumWidth( 80 );
    le_wavelength->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Preferred );
@@ -115,11 +110,6 @@ US_Properties::US_Properties(
    le_wavelength->setReadOnly( true );
    extinction->addWidget( le_wavelength );
 
-   //QwtArrowButton* up = new QwtArrowButton( 1, Qt::UpArrow );
-   //up->setMinimumWidth( 16 );
-   //connect( up, SIGNAL( clicked() ), SLOT( lambda_up() ) );
-   //extinction->addWidget( up );
-   
    main->addLayout( extinction, row++, 1 );
 
    // Row
@@ -262,7 +252,6 @@ void US_Properties::clear_entries( void )
    le_guid       ->clear();
    le_vbar       ->clear();
    le_extinction ->clear();
-   //le_wavelength ->clear();
    le_molar      ->clear();
    le_analyteConc->clear();
    le_mw         ->clear();
@@ -386,9 +375,7 @@ void US_Properties::edit_component( void )
 
    connect( lw_components, SIGNAL( currentRowChanged( int  ) ),
                            SLOT  ( update           ( int  ) ) );
-
    clear_guid();
-   //le_wavelength->clear();
 }
 
 void US_Properties::edit_vbar( void )
@@ -407,8 +394,6 @@ void US_Properties::edit_vbar( void )
    sc->vbar20 = le_vbar->text().toDouble();
 
    clear_guid();
-   //le_wavelength->clear();
-   
    calculate();
 }
 
@@ -472,7 +457,6 @@ void US_Properties::load_c0( void )
 
          // Sets concentration for this component to -1 to signal that we are
          // using a concentration vector
-
          double val1;
          double val2;
 
@@ -481,7 +465,7 @@ void US_Properties::load_c0( void )
             ts >> val1;
             ts >> val2;
 
-            if ( val1 > 0.0 ) // ignore radius pairs that aren't positive
+            if ( val1 > 0.0 ) // Ignore radius pairs that aren't positive
             {
                sc->c0.radius        .push_back( val1 );
                sc->c0.concentration .push_back( val2 );
@@ -546,101 +530,6 @@ void US_Properties::select_shape( int shape )
    sc->D    = le_D   ->text().toDouble();
 }
 
-void US_Properties::lambda_down( void )
-{
-   lambda( true );
-}
-
-void US_Properties::lambda_up( void )
-{
-   lambda( false );
-}
-
-int US_Properties::next( QList< double > keys, double wavelength, bool down )
-{
-   if ( keys.isEmpty() )
-   {
-      //le_wavelength->clear();
-      return -1;
-   }
-   
-   qSort( keys );
-
-   int index = keys.indexOf( wavelength );
-   
-   if (   down && ( index < 1               ) ) return -1;
-   if ( ! down && ( index > keys.size() - 2 ) ) return -1;
-   
-   ( down ) ? index-- : index++;
-   return index;
-}
-
-void US_Properties::lambda( bool /* down */ )
-{
-   int row = lw_components->currentRow();
-   if ( row < 0 ) return;
-  /* 
-   QList < double > keys;
-   //double           wavelength = le_wavelength->text().toDouble();
-   double           extinction;
-   int              index;
-
-   switch ( model.optics )
-   {
-      case US_Model::ABSORBANCE:
-         if ( analyte.extinction.size() > 0 )
-         {
-            keys = analyte.extinction.keys();
-
-            //index = next( keys, wavelength, down );
-            if ( index < 0 ) return;
-
-            //wavelength = keys[ index ];
-            //le_wavelength->setText( QString::number( wavelength, 'f', 1 ) );
-            
-            extinction = analyte.extinction[ wavelength ];
-            le_extinction->setText( QString::number( extinction, 'e', 4 ) );
-         }
-         break;
-      
-      case US_Model::INTERFERENCE:
-         if ( analyte.refraction.size() > 0 )
-         {
-            keys = analyte.refraction.keys();
-
-            //index = next( keys, wavelength, down );
-            if ( index < 0 ) return;
-
-            //wavelength = keys[ index ];
-            //le_wavelength->setText( QString::number( wavelength, 'f', 1 ) );
-            
-            extinction = analyte.refraction[ wavelength ];
-            le_extinction->setText( QString::number( extinction, 'e', 4 ) );
-         }
-         break;
-      
-      case US_Model::FLUORESCENCE:
-         if ( analyte.fluorescence.size() > 0 )
-         {
-            keys = analyte.fluorescence.keys();
-
-            //index = next( keys, wavelength, down );
-            if ( index < 0 ) return;
-
-            //wavelength = keys[ index ];
-            //le_wavelength->setText( QString::number( wavelength, 'f', 1 ) );
-            
-            //extinction = analyte.fluorescence[ wavelength ];
-            le_extinction->setText( QString::number( extinction, 'e', 4 ) );
-         }
-         break;
-   }
-*/
-   inUpdate = true;
-   set_molar();
-   inUpdate = false;
-}
-
 void US_Properties::set_molar( void )
 {
    int row = lw_components->currentRow();
@@ -648,42 +537,13 @@ void US_Properties::set_molar( void )
 
    US_Model::SimulationComponent* sc = &model.components[ row ];
 
-   double extinction       = le_extinction ->text().toDouble();
-   double signalConc       = le_analyteConc->text().toDouble();
-   /*
-   if ( ! inUpdate )
-   {
-      if ( keep_standard() )
-      {
-         double wavelength = le_wavelength->text().toDouble();
-         if ( wavelength < 200.0 ) return;
-
-         switch ( model.optics )
-         {
-            case US_Model::ABSORBANCE:
-               extinction = analyte.extinction[ wavelength ];
-               break;
-            
-            case US_Model::INTERFERENCE:
-               extinction = analyte.refraction[ wavelength ];
-               break;
-            
-            case US_Model::FLUORESCENCE:
-               extinction = analyte.fluorescence[ wavelength ];
-               break;
-         }
-
-         le_extinction->setText( QString::number( extinction, 'f', 1 ) );         
-         return;
-      }
-   }
-   */
+   double extinction = le_extinction ->text().toDouble();
+   double signalConc = le_analyteConc->text().toDouble();
 
    if ( extinction > 0.0 )
       sc->molar_concentration = signalConc / extinction;
    else
       sc->molar_concentration = 0.0;
-   //sc->wavelength          = le_wavelength->text().toDouble();
 
    le_molar->setText( QString::number( sc->molar_concentration, 'e', 4 ) );
 }
@@ -722,9 +582,8 @@ void US_Properties::save_changes( int row )
    // vbar
    sc->vbar20 = le_vbar->text().toDouble();
 
-   // Extinction, Wavelength
+   // Extinction
    sc->extinction = le_extinction->text().toDouble();
-   //sc->wavelength = le_wavelength->text().toDouble();
 
    // Molar concentration
    sc->molar_concentration = le_molar->text().toDouble();
@@ -801,11 +660,6 @@ void US_Properties::update( int /* row */ )
 
    // Set extinction and concentration
    le_extinction ->setText( QString::number( sc->extinction, 'e', 4 ));
-
-   //if ( sc->wavelength <= 0.0 )
-   //   le_wavelength->clear();
-   //else
-   //   le_wavelength ->setText( QString::number( sc->wavelength,       'f', 1 ));
 
    le_molar      ->setText( QString::number( sc->molar_concentration, 'e', 4 ));
    le_analyteConc->setText( QString::number( sc->signal_concentration,'e', 4 ));
@@ -917,22 +771,29 @@ void US_Properties::new_hydro( US_Analyte ad )
    uuid_parse( ad.guid.toAscii().data(), sc->analyteGUID );
 
    // Set extinction
-   /*
-   if ( ad.extinction.size() > 0 )
-   {
-      QList< double > keys = ad.extinction.keys();
-      le_wavelength->setText( QString::number( keys[ 0 ], 'f', 1 ) );
+   double          value = 0.0;
+   QList< double > keys;
 
-      double value = ad.extinction[ keys[ 0 ] ] * sc->stoichiometry;
-      le_extinction->setText( QString::number( value,     'f', 1 ) );
-   }
-   else
+   switch ( model.optics )
    {
-      le_wavelength->clear();
-      le_extinction->setText( "0.0000" );
+      case US_Model::ABSORBANCE:
+         if ( analyte.extinction.size() > 0 )
+            value = analyte.extinction[ model.wavelength ] * sc->stoichiometry;
+         break;
+
+      case US_Model::INTERFERENCE:
+         if ( analyte.refraction.size() > 0 )
+            value = analyte.refraction[ model.wavelength ] * sc->stoichiometry;
+         break;
+
+      case US_Model::FLUORESCENCE:
+         if ( analyte.fluorescence.size() > 0 )
+            value = analyte.fluorescence[ model.wavelength ] * sc->stoichiometry;
+         break;
    }
-  */
-   sc->extinction = le_extinction->text().toDouble();
+
+   le_extinction->setText( QString::number( value, 'e', 4 ) );
+   sc->extinction = value;
 
    // Set vbar(20), mw
    le_mw  ->setText( QString::number( hydro_data.mw,   'e', 3 ) );

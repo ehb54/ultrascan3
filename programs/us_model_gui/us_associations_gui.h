@@ -6,7 +6,6 @@
 
 #include "us_widgets_dialog.h"
 #include "us_widgets.h"
-//#include "us_femglobal_new.h"
 #include "us_model.h"
 #include "us_help.h"
 
@@ -29,8 +28,21 @@ class US_AssociationsGui : public US_WidgetsDialog
       US_Model       model;
       US_Help        showhelp;
       US_ListWidget* lw_analytes;
+      QTableWidget*  tw;
+
+      QFontMetrics*  fm;
+
+      QList< QwtCounter* > keq;
+      QList< QwtCounter* > koff;
+
+      void new_row( void );
 
    private slots:
+      void changed( int, int );
+      void clicked( int, int );
+      void counter( double );
+
+
       void help( void )
       { showhelp.show_help( "model_editor.html#associations" ); };
 };

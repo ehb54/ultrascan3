@@ -92,8 +92,6 @@ class US_Properties : public US_WidgetsDialog
       int  countChecks   ( void );
       void update_lw     ( void );
       void enable        ( QLineEdit*, bool, const QPalette& );
-      void lambda        ( bool );
-      int  next          ( QList< double >, double, bool );
       void clear_guid    ( void );
       void clear_entries ( void );
       void save_changes  ( int );
@@ -108,8 +106,6 @@ class US_Properties : public US_WidgetsDialog
       void acceptProp    ( void );
       void simulate      ( void );
       void new_hydro     ( US_Analyte );
-      void lambda_up     ( void );
-      void lambda_down   ( void );
       void select_shape  ( int );
       void load_c0       ( void );
       void co_sed        ( int );
