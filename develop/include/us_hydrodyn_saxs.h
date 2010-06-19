@@ -118,6 +118,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QButtonGroup *bg_curve;
       QRadioButton *rb_curve_raw;
+      QRadioButton *rb_curve_saxs_dry;
       QRadioButton *rb_curve_saxs;
       QRadioButton *rb_curve_sans;
 

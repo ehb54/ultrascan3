@@ -182,13 +182,16 @@ void US_Hydrodyn_Saxs::refresh(
    {
       our_saxs_options->curve = 0;
       rb_curve_raw->setChecked(true);
+      rb_curve_saxs_dry->setChecked(false);
       rb_curve_saxs->setChecked(false);
       rb_curve_sans->setChecked(false);
       rb_curve_raw->setEnabled(false);
+      rb_curve_saxs_dry->setEnabled(false);
       rb_curve_saxs->setEnabled(false);
       rb_curve_sans->setEnabled(false);
    } else {
       rb_curve_raw->setEnabled(true);
+      rb_curve_saxs_dry->setEnabled(true);
       rb_curve_saxs->setEnabled(true);
       rb_curve_sans->setEnabled(true);
    }
@@ -340,21 +343,28 @@ void US_Hydrodyn_Saxs::setupGUI()
    rb_curve_raw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_curve_raw->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
+   rb_curve_saxs_dry = new QRadioButton(tr("SAXS (unc)"), this);
+   rb_curve_saxs_dry->setEnabled(true);
+   rb_curve_saxs_dry->setChecked(our_saxs_options->curve == 1);
+   rb_curve_saxs_dry->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_curve_saxs_dry->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    rb_curve_saxs = new QRadioButton(tr("SAXS"), this);
    rb_curve_saxs->setEnabled(true);
-   rb_curve_saxs->setChecked(our_saxs_options->curve == 1);
+   rb_curve_saxs->setChecked(our_saxs_options->curve == 2);
    rb_curve_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_curve_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    rb_curve_sans = new QRadioButton(tr("SANS"), this);
    rb_curve_sans->setEnabled(true);
-   rb_curve_sans->setChecked(our_saxs_options->curve == 2);
+   rb_curve_sans->setChecked(our_saxs_options->curve == 3);
    rb_curve_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_curve_sans->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    bg_curve = new QButtonGroup(1, Qt::Horizontal, 0);
    bg_curve->setRadioButtonExclusive(true);
    bg_curve->insert(rb_curve_raw);
+   bg_curve->insert(rb_curve_saxs_dry);
    bg_curve->insert(rb_curve_saxs);
    bg_curve->insert(rb_curve_sans);
    connect(bg_curve, SIGNAL(clicked(int)), SLOT(set_curve(int)));
@@ -530,6 +540,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    j++;
    QBoxLayout *bl = new QHBoxLayout(0);
    bl->addWidget(rb_curve_raw);
+   bl->addWidget(rb_curve_saxs_dry);
    bl->addWidget(rb_curve_saxs);
    bl->addWidget(rb_curve_sans);
    bl->addWidget(cb_normalize);
@@ -945,7 +956,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                // it->second.scat_len, .exch_prot
                b[it->first] = 
                   it->second.scat_len + 
-
                   it->second.exch_prot * 
                   our_saxs_options->d2o_conc * 
                   (our_saxs_options->d2o_scat_len_dens - our_saxs_options->h2o_scat_len_dens) * 1;
@@ -972,8 +982,9 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #endif
                }
             }
-         }            
-         if ( rb_curve_saxs->isChecked() )
+         }
+         if ( rb_curve_saxs->isChecked() ||
+              rb_curve_saxs_dry->isChecked() )
          {
             // for each entry in hybrid_map, compute b
             for (map < QString, hybridization >::iterator it = hybrid_map.begin();
@@ -1024,7 +1035,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #endif
                }
 
-               if ( rb_curve_saxs->isChecked() )
+               if ( rb_curve_saxs->isChecked() ||
+                    rb_curve_saxs_dry->isChecked() )
                {
                   QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
                   if ( this_atom->name == "OXT" )
@@ -1032,19 +1044,41 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      mapkey = "OXT|OXT";
                   }
                   QString hybrid_name = residue_atom_hybrid_map[mapkey];
-                  new_atom.b = b[hybrid_name];
+                  double radius = 0e0;
+                  if ( rb_curve_saxs->isChecked() )
+                  {
+                     if ( !hybrid_map.count(hybrid_name) )
+                     {
+                        cout << "error: hybrid_map name missing for hybrid_name " << hybrid_name << endl;
+                        QColor save_color = editor->color();
+                        editor->setColor("red");
+                        editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Assuming zero radius!.\n")
+                                       .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                                       .arg(j+1)
+                                       .arg(this_atom->resName)
+                                       .arg(this_atom->resSeq)
+                                       .arg(hybrid_name)
+                                       );
+                        editor->setColor(save_color);
+                        qApp->processEvents();
+                     } else {
+                        radius = hybrid_map[hybrid_name].radius;
+                     }
+                  }
+                  new_atom.b = b[hybrid_name] - our_saxs_options->water_e_density * radius * radius * radius;
                   b_count++;
                   b_bar += new_atom.b;
-#if defined(BUG_DEBUG)
-                  printf("atom %d %d hybrid name %s, atom name %s b %e mapkey %s hybrid name %s\n",
+                  // #if defined(BUG_DEBUG)
+                  printf("atom %d %d hybrid name %s, atom name %s b %e correction %e mapkey %s hybrid name %s\n",
                          j, k, 
                          hybrid_name.ascii(),
                          this_atom->name.ascii(),
                          new_atom.b,
+                         our_saxs_options->water_e_density * radius * radius * radius,
                          mapkey.ascii(),
                          hybrid_name.ascii()
                          );
-#endif
+                  // #endif
                }
                atoms.push_back(new_atom);
             }
