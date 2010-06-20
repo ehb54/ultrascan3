@@ -39,6 +39,7 @@ HEADERS      = us_analyte.h     \
                us_noise.h       \
                us_settings.h    \
                us_stiffbase.h   \
+               us_simparms.h    \
                us_util.h
 
 SOURCES      = us_analyte.cpp     \
@@ -63,6 +64,7 @@ SOURCES      = us_analyte.cpp     \
                us_noise.cpp       \
                us_matrix.cpp      \
                us_settings.cpp    \
+               us_simparms.cpp    \
                us_stiffbase.cpp   \
                us_util.cpp
 
