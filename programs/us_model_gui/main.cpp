@@ -10,12 +10,12 @@ int main( int argc, char* argv[] )
    QApplication application( argc, argv );
 
    //US_FemGlobal_New::ModelSystem m;
-   US_Model    m;
-   US_ModelGui w( m );
+   US_Model     m;
+   US_ModelGui* w = new US_ModelGui( m );
 
 
 
-   w.show();                   //!< \memberof QWidget
+   w->show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 
 }
