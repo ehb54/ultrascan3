@@ -25,7 +25,7 @@ class US_AssociationsGui : public US_WidgetsDialog
       void done( void );
 
    private:
-      US_Model       model;
+      US_Model&      model;
       US_Help        showhelp;
       US_ListWidget* lw_analytes;
       QTableWidget*  tw;
@@ -35,15 +35,36 @@ class US_AssociationsGui : public US_WidgetsDialog
       QList< QwtCounter* > keq;
       QList< QwtCounter* > koff;
 
-      void new_row( void );
+      void new_row      ( void );
+      void populate     ( void );
+      void set_component( int, int, int );
 
    private slots:
-      void changed( int, int );
-      void clicked( int, int );
-      void counter( double );
+      void changed      ( int, int );
+      void del          ( int      );
+      void complete     ( void     );
 
-
-      void help( void )
+      void help    ( void )
       { showhelp.show_help( "model_editor.html#associations" ); };
 };
+
+class US_PushButton : public QPushButton
+{
+  Q_OBJECT
+
+public:
+  US_PushButton( const QString&, int );
+  void setIndex( int i ){ index = i; }; 
+
+signals:
+  //! A signal to send with the index of the menu selected.
+  void pushed( int );
+
+private:
+  int  index;
+
+private slots:
+  void mousePressEvent( QMouseEvent* );
+};
+
 #endif

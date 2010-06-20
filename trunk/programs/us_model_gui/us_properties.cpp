@@ -22,9 +22,9 @@ US_Properties::US_Properties(
      investigator( invID ),
      db_access   ( access )
 {
-   setPalette( US_GuiSettings::frameColor() );
+   setPalette    ( US_GuiSettings::frameColor() );
    setWindowTitle( tr( "Set Analyte Properties" ) );
-   setAttribute( Qt::WA_DeleteOnClose );
+   setAttribute  ( Qt::WA_DeleteOnClose );
 
    oldRow   = -1;
    inUpdate = false;

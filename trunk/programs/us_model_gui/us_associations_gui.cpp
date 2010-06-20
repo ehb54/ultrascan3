@@ -5,11 +5,28 @@
 #include "us_settings.h"
 #include "us_constants.h"
 
+US_PushButton::US_PushButton( const QString& text, int i )
+    : QPushButton( text ), index( i )
+{
+   setFont( QFont( US_GuiSettings::fontFamily(), 
+                   US_GuiSettings::fontSize() ) );
+
+   setPalette( US_GuiSettings::pushbColor() );
+   setAutoDefault( false );
+}
+
+void US_PushButton::mousePressEvent( QMouseEvent* e )
+{
+  emit pushed( index );
+  e->accept();
+}
+
 US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    : US_WidgetsDialog( 0, 0 ), model( current_model )
 {
    setWindowTitle   ( "UltraScan Model Associations" );
    setPalette       ( US_GuiSettings::frameColor() );
+   setAttribute     ( Qt::WA_DeleteOnClose );
    setWindowModality( Qt::WindowModal );
    
    // Very light gray
@@ -37,7 +54,6 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
       US_Model::SimulationComponent* sc = &model.components[ i ];
       lw_analytes->addItem( QString( QChar( leading ) ) + " " + sc->name );
       leading++;
-
    }
 
    main->addWidget( lw_analytes, row, 0, 5, 2 );
@@ -45,15 +61,16 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
 
    tw = new QTableWidget();
    tw->setPalette( US_GuiSettings::editColor() );
-   tw->setColumnCount( 6 );
+   tw->setColumnCount( 7 );
    tw->setRowCount   ( 0 );
   
    QStringList headers;
-   headers << "Analyte 1" << "Analyte 2" << "<==>" << "Product" 
+   headers << "" << "Analyte 1" << "Analyte 2" << "<==>" << "Product" 
            << "K_dissociation\n(molar units)" << "k_off Rate\n(moles/sec)";
    tw->setMinimumWidth( 550 );
    tw->setRowHeight( 0, fm->height() + 4 );
-   tw->setColumnWidth( 2, fm->width( "<==>" ) + 6 );
+   tw->setColumnWidth( 0, fm->width( "D" ) + 6 );
+   tw->setColumnWidth( 3, fm->width( "<==>" ) + 6 );
 
    new_row();
 
@@ -63,9 +80,6 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
 
    connect( tw, SIGNAL( cellChanged( int, int ) ), 
                 SLOT  ( changed    ( int, int ) ) );
-
-   connect( tw, SIGNAL( cellEntered( int, int ) ), 
-                SLOT  ( clicked    ( int, int ) ) );
 
    main->addWidget( tw, row, 0, 5, 2 );
    row += 5;
@@ -83,9 +97,55 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
 
    QPushButton* pb_accept = us_pushbutton( tr( "Accept") );
    buttonbox->addWidget( pb_accept );
-   //connect( pb_accept, SIGNAL( clicked() ), SLOT( accept_associations()) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( complete()) );
 
    main->addLayout( buttonbox, row++, 0, 1, 2 );
+   populate();
+}
+
+void US_AssociationsGui::populate( void )
+{
+   for ( int i = 0; i < model.associations.size(); i++ )
+   {
+      int                    index = 0;
+      US_Model::Association* as    = &model.associations[ i ];
+      
+      // First set koff and keq
+      QString s = QString::number( as->k_eq, 'e', 4 );
+      tw->setItem( i, 5, new QTableWidgetItem( s ) );
+
+      s = QString::number( as->k_off, 'e', 4 );
+      tw->setItem( i, 6, new QTableWidgetItem( s ) );
+
+
+      // reaction_components must be size 2 or 3 
+      set_component( index++, i, 1 );
+      
+      if ( as->reaction_components.size() > 2 )
+         set_component( index++, i, 2 );
+
+      set_component( index++, i, 4 );
+   }
+}
+
+void US_AssociationsGui::set_component( int index, int row, int col )
+{
+   US_Model::Association* as = &model.associations[ row ];
+         
+   int     component = as->reaction_components[ index ];
+   QString s         = lw_analytes->item( component )->text();
+   tw->setItem( row, col, new QTableWidgetItem( s ) );
+
+   qApp->processEvents();  // Let the signals work
+
+   // Set the counter
+   QWidget* w     = tw->cellWidget( row, col );
+   QLayout* L     = w->layout();
+
+   w              = L->itemAt( 0 )->widget();
+   QwtCounter*  c = dynamic_cast< QwtCounter* >( w );
+
+   c->setValue( fabs( as->stoichiometry[ index ] ) ); 
 }
 
 void US_AssociationsGui::changed( int row, int col )
@@ -94,12 +154,12 @@ void US_AssociationsGui::changed( int row, int col )
 
    QTableWidgetItem* item = tw->item( row, col );
 
-   if ( col > 3 )
+   if ( col > 4 )
    {
       double value = item->text().toDouble();
       item->setText( QString::number( value, 'e', 4 ) );
    }
-   else if ( col == 2 )
+   else if ( col == 3 )
    {
       item->setText( QString() );
    }
@@ -122,42 +182,149 @@ void US_AssociationsGui::changed( int row, int col )
       tw->setCellWidget( row, col, w );
    }
    
-
    connect( tw, SIGNAL( cellChanged( int, int ) ), 
                 SLOT  ( changed    ( int, int ) ) );
-   
+
    if ( row == tw->rowCount() - 1 ) new_row();
 }
 
 void US_AssociationsGui::new_row( void )
 {
    int count = tw->rowCount();
-   
+
    tw->setRowCount ( count + 1 );
    tw->setRowHeight( count, fm->height() + 4 );
 
-   //QWidget*     w1 = new QWidget;
-   //QHBoxLayout* L1 = new QHBoxLayout( w1 );
+   QPushButton* pb = new US_PushButton( "D", count );
+   pb->setMaximumWidth( fm->width( "D" ) + 6 );
+   connect( pb, SIGNAL( pushed( int ) ), SLOT( del( int ) ) );
 
-   //QwtCounter* c1 = us_counter( 1, 0.0, 20.0 );
-   //c1->setStep( 1.0 );
-   //L1->addWidget( c1 );
-
-
-
-   //QwtCounter* c2 = us_counter( 2, 0.0, 1.0 );
-   //koff << c1;
-   //connect ( c2, SIGNAL( valueChanged( double ) ), SLOT( counter( double ) ) );
-   //tw->setCellWidget( count, 0, w1 );
-
+   tw->setCellWidget( count, 0, pb );
 }
 
-void US_AssociationsGui::clicked( int row, int col )
+void US_AssociationsGui::del( int index )
 {
-   qDebug() << "clicked" << row << col;
+   // Don't delete last row
+   if ( index == tw->rowCount() - 1 ) return;
+   tw->removeRow( index );
+
+   for ( int i = 0; i <  tw->rowCount(); i++ )
+   {
+      QWidget*       w  = tw->cellWidget( i, 0 );
+      US_PushButton* pb = dynamic_cast< US_PushButton* >( w );
+      pb->setIndex( i );
+   }
 }
 
-void US_AssociationsGui::counter( double v )
+void US_AssociationsGui::complete( void )
 {
-   qDebug() << "counter value" << v;
+   QVector< US_Model::Association > associations;
+
+   // Check validity
+   for ( int i = 0; i < tw->rowCount() - 1; i++ )
+   {
+      int moles_left  = 0;
+      int moles_right = 0;
+
+      QLayout*    L;
+      QwtCounter* c;
+      int         index;
+      int         count;
+      int         stoich;
+      
+      US_Model::Association association;
+      QTableWidgetItem*     item;
+
+      // If koff and keq are not set, the default is zero
+      item = tw->item( i, 5 );
+      if ( item != 0 ) association.k_eq = item->text().toDouble();
+
+      item = tw->item( i, 6 );
+      if ( item != 0 ) association.k_off = item->text().toDouble();
+
+      QWidget* w = tw->cellWidget( i, 1 );
+      
+      if ( w != 0 )
+      {
+         L = w->layout();
+
+         if ( L != 0 )
+         {
+            w     = L->itemAt( 0 )->widget();
+            c     = dynamic_cast< QwtCounter* >( w );
+            count = (int) c->value(); 
+            association.stoichiometry << count;
+
+            w     = L->itemAt( 1 )->widget();
+            index = dynamic_cast< QLabel* >( w )->text().at( 0 ).cell() - 'A';
+            association.reaction_components << index;
+
+            stoich = model.components[ index ].stoichiometry;
+
+            moles_left += count * stoich;
+         }
+      }
+
+      w = tw->cellWidget( i, 2 );
+      
+      if ( w != 0 )
+      {
+         L = w->layout();
+
+         if ( L != 0 )
+         {
+            w     = L->itemAt( 0 )->widget();
+            c     = dynamic_cast< QwtCounter* >( w );
+            count = (int) c->value(); 
+            association.stoichiometry << count;
+
+            w     = L->itemAt( 1 )->widget();
+            index = dynamic_cast< QLabel* >( w )->text().at( 0 ).cell() - 'A';
+            association.reaction_components << index;
+
+            stoich = model.components[ index ].stoichiometry;
+
+            moles_left += count * stoich;
+         }
+      }
+
+      w = tw->cellWidget( i, 4 );
+      
+      if ( w != 0 )
+      {
+         L = w->layout();
+
+         if ( L != 0 )
+         {
+            w     = L->itemAt( 0 )->widget();
+            c     = dynamic_cast< QwtCounter* >( w );
+            count = (int) c->value(); 
+            association.stoichiometry << -count;
+
+            w     = L->itemAt( 1 )->widget();
+            index = dynamic_cast< QLabel* >( w )->text().at( 0 ).cell() - 'A';
+            association.reaction_components << index;
+
+            stoich = model.components[ index ].stoichiometry;
+
+            moles_right += count * stoich;
+         }
+      }
+
+      if ( moles_right != moles_left )
+      {
+         QMessageBox::information( this,
+               tr( "Equations do not balance" ),
+               tr( "Equation %1 does not balance" ).arg( i + 1 ) );
+         return;
+      }
+
+      associations << association;
+   }
+
+   // Update model associations
+   model.associations = associations;
+ 
+   emit done();
+   close();
 }

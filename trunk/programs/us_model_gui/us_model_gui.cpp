@@ -17,6 +17,7 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
 {
    setWindowTitle   ( "UltraScan Model Editor" );
    setPalette       ( US_GuiSettings::frameColor() );
+   setAttribute     ( Qt::WA_DeleteOnClose );
    setWindowModality( Qt::WindowModal );
    
    model_descriptions.clear();
