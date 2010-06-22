@@ -40,6 +40,8 @@ class US_EXTERN US_Convert : public US_Widgets
          QList< int >  excludes;              //!< list of scan indexes to exclude 
          bool contains ( int x )              //!< function to determine if x is contained in the list
            { return excludes.contains( x ); }
+         bool empty    ()                     //!< function to determine if the list is empty
+           { return excludes.empty(); }
          void push_back( int x )              //!< function to add x to the end of the list
            { excludes.push_back( x ); }
          Excludes& operator<<( const int x )  //!< function to insert x at the end of the list
@@ -60,14 +62,14 @@ class US_EXTERN US_Convert : public US_Widgets
       int           currentTriple;
       QList< int >  tripleMap;
 
+      QLabel*       lb_description;
+
       QString       runID;
-      QLineEdit*    le_dir;
       QLineEdit*    le_runID;
+      QLineEdit*    le_dir;
+      QLineEdit*    le_description;
       QLineEdit*    le_bufferInfo;
       QLineEdit*    le_analyteInfo;
-
-      QLabel*       lb_description;
-      QLineEdit*    le_description;
 
       QLabel*       lb_triple;
       QListWidget*  lw_triple;                        // cell, channel, wavelength
@@ -77,20 +79,23 @@ class US_EXTERN US_Convert : public US_Widgets
 
       QwtCounter*   ct_tolerance;
 
-      QPushButton*  pb_writeAll;
+      QPushButton*  pb_reload;
+      QPushButton*  pb_expinfo;
+      QPushButton*  pb_editExpinfo;
+      QPushButton*  pb_details;
+      QPushButton*  pb_applyAll;
+      QPushButton*  pb_buffer;
+      QPushButton*  pb_analyte;
       QPushButton*  pb_exclude;
       QPushButton*  pb_include;
-      QPushButton*  pb_details;
       QPushButton*  pb_define;
       QPushButton*  pb_process;
       QPushButton*  pb_reference;
       QPushButton*  pb_cancelref;
       QPushButton*  pb_dropScan;
-      QPushButton*  pb_expinfo;
-      QPushButton*  pb_editExpinfo;
-      QPushButton*  pb_buffer;
-      QPushButton*  pb_analyte;
-      QPushButton*  pb_applyAll;
+      QPushButton*  pb_savetoHD;
+      QPushButton*  pb_loadUS3;
+      QPushButton*  pb_syncDB;
 
       QComboBox*    cb_centerpiece;
 
@@ -104,6 +109,8 @@ class US_EXTERN US_Convert : public US_Widgets
 
       QwtPlot*      data_plot;
       QwtPlotGrid*  grid;
+      bool          editing;                          // Did the user press the edit or new experiment
+                                                      //   button?
 
       QList< double > ss_limits;                      // list of subset boundaries
       double        reference_start;                  // boundary of reference scans
@@ -111,61 +118,66 @@ class US_EXTERN US_Convert : public US_Widgets
       bool          RP_averaged;                      // true if RI averages have been done
       int           RP_reference_triple;              // number of the triple that is the reference
       QList< double > RP_averages;
+      bool          toleranceChanged;                 // keep track of whether the tolerance has changed
 
-      void plot_current    ( void );
-      void plot_titles     ( void );
-      void init_excludes   ( void );
-      void plot_all        ( void );
-      void replot          ( void );
-      void set_colors      ( const QList< int >& );
-      void RP_calc_avg     ( void );
-  
       bool show_plot_progress;
       US_ExpInfo::ExperimentInfo ExpData; 
       QStringList          centerpieceTypes;
 
+      void reset           ( void );
+      void getExpInfo      ( bool );
+      void setTripleInfo   ( void );
+      int  findTripleIndex ( void );
+      void focus           ( int, int );
+      void init_excludes   ( void );
+      void reset_scan_ctrls( void );
+      void reset_ccw_ctrls ( void );
+      void start_reference   ( const QwtDoublePoint& );
+      void process_reference ( const QwtDoublePoint& );
+      void RP_calc_avg     ( void );
+      bool read            ( void );
+      bool read            ( QString dir );
+      bool convert         ( void );
+      bool centerpieceInfo ( void );
+      void enableSyncDB    ( void );
+      void plot_current    ( void );
+      void plot_titles     ( void );
+      void plot_all        ( void );
+      void replot          ( void );
+      void set_colors      ( const QList< int >& );
+      void draw_vline      ( double );
+      void db_error        ( const QString& );
+
   private slots:
       void load            ( QString dir = "" );
       void reload          ( void );
-      bool read            ( void );
-      bool read            ( QString dir );
-      void setTripleInfo   ( void );
-      void details         ( void );
-      void reset           ( void );
-      void resetAll        ( void );
-      bool convert         ( void );
-      void changeTriple    ( QListWidgetItem* );
-      void focus_from      ( double );
-      void focus_to        ( double );
-      void focus           ( int, int );
-      void exclude_scans   ( void );
-      void include         ( void );
-      void reset_scan_ctrls( void );
-      void reset_ccw_ctrls ( void );
-      int  writeAll        ( void );
-      void cClick          ( const QwtDoublePoint& );
-      void define_subsets  ( void );
-      void process_subsets ( void );
-      void define_reference  ( void );
-      void start_reference   ( const QwtDoublePoint& );
-      void process_reference ( const QwtDoublePoint& );
-      void cancel_reference( void );
-      void drop_reference  ( void );
+      void toleranceValueChanged( double );           // signal to notify of change
       void newExpInfo      ( void );
       void editExpInfo     ( void );
-      void getExpInfo      ( bool );
       void updateExpInfo   ( US_ExpInfo::ExperimentInfo& );
       void cancelExpInfo   ( void );
-      void selectBuffer    ( void );
-      void assignBuffer    ( const QString&  );
-      void selectAnalyte   ( void );
-      void assignAnalyte   ( US_Analyte  );
-      bool centerpieceInfo ( void );
+      void runDetails      ( void );
+      void changeTriple    ( QListWidgetItem* );
       void getCenterpieceIndex( int );
       void ccwApplyAll     ( void );
-      int  findTripleIndex ( void );
-      void draw_vline      ( double );
-      void connect_error   ( const QString& );
+      void assignBuffer    ( const QString&  );
+      void selectBuffer    ( void );
+      void assignAnalyte   ( US_Analyte  );
+      void selectAnalyte   ( void );
+      void focus_from      ( double );
+      void focus_to        ( double );
+      void exclude_scans   ( void );
+      void include         ( void );
+      void define_subsets  ( void );
+      void cClick          ( const QwtDoublePoint& );
+      void process_subsets ( void );
+      void define_reference  ( void );
+      void cancel_reference( void );
+      void drop_reference  ( void );
+      int  savetoHD        ( void );
+      void loadUS3         ( void );
+      void syncDB          ( void );
+      void resetAll        ( void );
       void help            ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
 };

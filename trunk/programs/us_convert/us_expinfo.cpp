@@ -71,18 +71,18 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn, bool editing ) :
    experiment->addWidget( le_opticalSystem, row++, 1 );
 
    // The optical system won't change
-   if ( ( strncmp( expInfo.opticalSystem, "RA", 2 ) == 0 ) ||
-        ( strncmp( expInfo.opticalSystem, "WA", 2 ) == 0 ) )
+   if ( ( expInfo.opticalSystem == "RA" ) ||
+        ( expInfo.opticalSystem == "WA" ) )
       le_opticalSystem->setText( "Absorbance" );
 
-   else if ( ( strncmp( expInfo.opticalSystem, "RI", 2 ) == 0 ) ||
-             ( strncmp( expInfo.opticalSystem, "WI", 2 ) == 0 ) )
+   else if ( ( expInfo.opticalSystem == "RI" ) ||
+             ( expInfo.opticalSystem == "WI" ) )
       le_opticalSystem->setText( "Intensity" );
 
-   else if ( strncmp( expInfo.opticalSystem, "IP", 2 ) == 0 )
+   else if ( expInfo.opticalSystem == "IP" )
       le_opticalSystem->setText( "Interference" );
 
-   else if ( strncmp( expInfo.opticalSystem, "FI", 2 ) == 0 )
+   else if ( expInfo.opticalSystem == "FI" )
       le_opticalSystem->setText( "Fluorescence" );
 
    else // Unsupported optical system
@@ -409,158 +409,47 @@ void US_ExpInfo::reload( void )
    }
 }
 
-void US_ExpInfo::setInstrumentList( void )
+void US_ExpInfo::selectInvestigator( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      connect_error( db.lastError() );
-      return;
-   }
-
-   QStringList q( "get_instrument_names" );
-   q << QString::number( expInfo.labID );     // In this lab
-   db.query( q );
-
-   QList<listInfo> options;
-   while ( db.next() )
-   {
-      struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
-      options << option;
-   }
-
-   cb_instrument->clear();
-   if ( options.size() > 0 )
-   {
-      cb_instrument->addOptions( options );
-
-      if ( ! this->editing )
-         expInfo.instrumentID = options[ 0 ].ID.toInt();
-
-      else // is the instrument ID in the list?
-      {
-         int index = 0;
-         for ( int i = 0; i < options.size(); i++ )
-         {
-            if ( expInfo.instrumentID == options[ i ].ID.toInt() )
-            {
-               index = i;
-               break;
-            }
-         }
-
-         // Replace instrument ID with one from the list
-         expInfo.instrumentID = options[ index ].ID.toInt();
-      }
-         
-   }
-
+   US_Investigator* inv_dialog = new US_Investigator( true );
+   connect( inv_dialog, 
+      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
+      SLOT  ( assignInvestigator   ( int, const QString&, const QString& ) ) );
+   inv_dialog->exec();
 }
 
-void US_ExpInfo::setRotorList( void )
+void US_ExpInfo::assignInvestigator( int invID,
+      const QString& lname, const QString& fname)
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   expInfo.invID     = invID;
+   expInfo.lastName  = lname;
+   expInfo.firstName = fname;
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( ! this->editing && checkRunID() > 1 )
    {
-      connect_error( db.lastError() );
-      return;
+      QMessageBox::information( this,
+                tr( "Error" ),
+                tr( "This run ID is already in the database; you must " ) +
+                tr( "change that before accepting" ) );
    }
 
-   // Get a list of rotors in this lab
-   QStringList q( "get_rotor_names" );
-   q << QString::number( expInfo.labID );     // In this lab
-   db.query( q );
-
-   QList<listInfo> options;
-   while ( db.next() )
-   {
-      struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
-      options << option;
-   }
-
-   cb_rotor->clear();
-   if ( options.size() > 0 )
-   {
-      cb_rotor->addOptions( options );
-      if ( ! this->editing )
-         expInfo.rotorID = options[ 0 ].ID.toInt();
-
-      else // is the rotor ID in the list?
-      {
-         int index = 0;
-         for ( int i = 0; i < options.size(); i++ )
-         {
-            if ( expInfo.rotorID == options[ i ].ID.toInt() )
-            {
-               index = i;
-               break;
-            }
-         }
-
-         // Replace rotor ID with one from the list
-         expInfo.rotorID = options[ index ].ID.toInt();
-      }
-   }
+   reset();
 }
 
-void US_ExpInfo::setOperatorList( void )
+QComboBox* US_ExpInfo::us_expTypeComboBox( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   QComboBox* cb = us_comboBox();
 
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      connect_error( db.lastError() );
-      return;
-   }
+   // Experiment types
+   experimentTypes.clear();
+   experimentTypes << "Velocity"
+                   << "Equilibrium"
+                   << "Diffusion"
+                   << "other";
 
-   QStringList q( "get_operator_names" );
-   q << QString::number( expInfo.instrumentID );  // who can use this instrument
-   db.query( q );
+   cb->addItems( experimentTypes );
 
-   QList<listInfo> options;
-   while ( db.next() )
-   {
-      struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
-      options << option;
-   }
-
-   cb_operator->clear();
-   if ( options.size() > 0 )
-   {
-      cb_operator->addOptions( options );
-      if ( ! this->editing )
-         expInfo.operatorID = options[ 0 ].ID.toInt();
-
-      else // is the operator ID in the list?
-      {
-         int index = 0;
-         for ( int i = 0; i < options.size(); i++ )
-         {
-            if ( expInfo.operatorID == options[ i ].ID.toInt() )
-            {
-               index = i;
-               break;
-            }
-         }
-
-         // Replace operator ID with one from the list
-         expInfo.operatorID = options[ index ].ID.toInt();
-      }
-   }
+   return cb;
 }
 
 void US_ExpInfo::runIDChanged( void )
@@ -615,6 +504,160 @@ int US_ExpInfo::checkRunID( void )
 
    // We know now that this is a new run ID
    return( 0 );
+}
+
+void US_ExpInfo::setInstrumentList( void )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   QStringList q( "get_instrument_names" );
+   q << QString::number( expInfo.labID );     // In this lab
+   db.query( q );
+
+   QList<listInfo> options;
+   while ( db.next() )
+   {
+      struct listInfo option;
+      option.ID      = db.value( 0 ).toString();
+      option.text    = db.value( 1 ).toString();
+      options << option;
+   }
+
+   cb_instrument->clear();
+   if ( options.size() > 0 )
+   {
+      cb_instrument->addOptions( options );
+
+      if ( ! this->editing )
+         expInfo.instrumentID = options[ 0 ].ID.toInt();
+
+      else // is the instrument ID in the list?
+      {
+         int index = 0;
+         for ( int i = 0; i < options.size(); i++ )
+         {
+            if ( expInfo.instrumentID == options[ i ].ID.toInt() )
+            {
+               index = i;
+               break;
+            }
+         }
+
+         // Replace instrument ID with one from the list
+         expInfo.instrumentID = options[ index ].ID.toInt();
+      }
+         
+   }
+
+}
+
+void US_ExpInfo::setOperatorList( void )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   QStringList q( "get_operator_names" );
+   q << QString::number( expInfo.instrumentID );  // who can use this instrument
+   db.query( q );
+
+   QList<listInfo> options;
+   while ( db.next() )
+   {
+      struct listInfo option;
+      option.ID      = db.value( 0 ).toString();
+      option.text    = db.value( 1 ).toString();
+      options << option;
+   }
+
+   cb_operator->clear();
+   if ( options.size() > 0 )
+   {
+      cb_operator->addOptions( options );
+      if ( ! this->editing )
+         expInfo.operatorID = options[ 0 ].ID.toInt();
+
+      else // is the operator ID in the list?
+      {
+         int index = 0;
+         for ( int i = 0; i < options.size(); i++ )
+         {
+            if ( expInfo.operatorID == options[ i ].ID.toInt() )
+            {
+               index = i;
+               break;
+            }
+         }
+
+         // Replace operator ID with one from the list
+         expInfo.operatorID = options[ index ].ID.toInt();
+      }
+   }
+}
+
+void US_ExpInfo::setRotorList( void )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   // Get a list of rotors in this lab
+   QStringList q( "get_rotor_names" );
+   q << QString::number( expInfo.labID );     // In this lab
+   db.query( q );
+
+   QList<listInfo> options;
+   while ( db.next() )
+   {
+      struct listInfo option;
+      option.ID      = db.value( 0 ).toString();
+      option.text    = db.value( 1 ).toString();
+      options << option;
+   }
+
+   cb_rotor->clear();
+   if ( options.size() > 0 )
+   {
+      cb_rotor->addOptions( options );
+      if ( ! this->editing )
+         expInfo.rotorID = options[ 0 ].ID.toInt();
+
+      else // is the rotor ID in the list?
+      {
+         int index = 0;
+         for ( int i = 0; i < options.size(); i++ )
+         {
+            if ( expInfo.rotorID == options[ i ].ID.toInt() )
+            {
+               index = i;
+               break;
+            }
+         }
+
+         // Replace rotor ID with one from the list
+         expInfo.rotorID = options[ index ].ID.toInt();
+      }
+   }
 }
 
 // Function to change the current lab
@@ -678,16 +721,6 @@ void US_ExpInfo::accept( void )
    expInfo.label         = le_label         ->text(); 
    expInfo.comments      = te_comment       ->toPlainText();
 
-   // Save it to the db and return
-   if ( this->editing )
-   {
-      expInfo.expID = expInfo.expID;
-      updateExperiment();
-   }
-
-   else
-      newExperiment();
-
    emit updateExpInfoSelection( expInfo );
    close();
 }
@@ -698,140 +731,6 @@ void US_ExpInfo::cancel( void )
 
    emit cancelExpInfoSelection();
    close();
-}
-
-void US_ExpInfo::newExperiment( void )
-{
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-
-   // Connect to the database
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      connect_error( db.lastError() );
-      return;
-   }
-
-   QStringList q( "new_experiment" );
-   q  << QString::number( expInfo.projectID )
-      << expInfo.runID
-      << QString::number( expInfo.labID )
-      << QString::number( expInfo.instrumentID )
-      << QString::number( expInfo.operatorID )
-      << QString::number( expInfo.rotorID )
-      << expInfo.expType
-      << expInfo.runTemp
-      << expInfo.label
-      << expInfo.comments
-      << expInfo.centrifugeProtocol;
-
-   int status = db.statusQuery( q );
-   if ( status != US_DB2::OK )
-   {
-      QMessageBox::information( this,
-            tr( "Database Error" ),
-            tr( "The following error was returned:\n" ) + db.lastError() );
-      return;
-   }
-
-   // Let's get some info after db update
-   q.clear();
-   expInfo.expID = db.lastInsertID();
-   q << "get_experiment_info"
-     << QString::number( expInfo.expID );
-   db.query( q );
-   db.next();
-
-   expInfo.date = db.value( 11 ).toString();
-}
-
-void US_ExpInfo::updateExperiment( void )
-{
-   // Update database
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      connect_error( db.lastError() );
-      return;
-   }
-
-   QStringList q( "update_experiment" );
-   q  << QString::number( expInfo.expID )
-      << QString::number( expInfo.projectID )
-      << expInfo.runID
-      << QString::number( expInfo.labID )
-      << QString::number( expInfo.instrumentID )
-      << QString::number( expInfo.operatorID )
-      << QString::number( expInfo.rotorID )
-      << expInfo.expType
-      << expInfo.runTemp
-      << expInfo.label
-      << expInfo.comments
-      << expInfo.centrifugeProtocol;
-
-   int status = db.statusQuery( q );
-   if ( status != US_DB2::OK )
-   {
-      QMessageBox::information( this,
-            tr( "Database Error" ),
-            tr( "The following error was returned:\n" ) + db.lastError() + QString::number(status) );
-      return;
-   }
-
-   // Let's get some info after db update
-   q.clear();
-   q << "get_experiment_info"
-     << QString::number( expInfo.expID );
-   db.query( q );
-   db.next();
-
-   expInfo.date = db.value( 11 ).toString();
-}
-
-void US_ExpInfo::selectInvestigator( void )
-{
-   US_Investigator* inv_dialog = new US_Investigator( true );
-   connect( inv_dialog, 
-      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
-      SLOT  ( assignInvestigator   ( int, const QString&, const QString& ) ) );
-   inv_dialog->exec();
-}
-
-void US_ExpInfo::assignInvestigator( int invID,
-      const QString& lname, const QString& fname)
-{
-   expInfo.invID     = invID;
-   expInfo.lastName  = lname;
-   expInfo.firstName = fname;
-
-   if ( ! this->editing && checkRunID() > 1 )
-   {
-      QMessageBox::information( this,
-                tr( "Error" ),
-                tr( "This run ID is already in the database; you must " ) +
-                tr( "change that before accepting" ) );
-   }
-
-   reset();
-}
-
-QComboBox* US_ExpInfo::us_expTypeComboBox( void )
-{
-   QComboBox* cb = us_comboBox();
-
-   // Experiment types
-   experimentTypes.clear();
-   experimentTypes << "Velocity"
-                   << "Equilibrium"
-                   << "Diffusion"
-                   << "other";
-
-   cb->addItems( experimentTypes );
-
-   return cb;
 }
 
 void US_ExpInfo::connect_error( const QString& error )
@@ -866,6 +765,8 @@ void US_ExpInfo::ExperimentInfo::clear( void )
    operatorID         = 0;
    rotorID            = 0;
    expType            = QString( "" );
+   opticalSystem      = QString( "  " );
+   rpms.clear();
    runTemp            = QString( "" );
    label              = QString( "" );
    comments           = QString( "" );
@@ -878,28 +779,34 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
 {
    if ( this != &rhs )            // Guard against self assignment
    {
-      invID        = rhs.invID;
-      lastName     = rhs.lastName;
-      firstName    = rhs.firstName;
-      expID        = rhs.expID;
-      projectID    = rhs.projectID;
-      runID        = rhs.runID;
-      labID        = rhs.labID;
-      instrumentID = rhs.instrumentID;
-      operatorID   = rhs.operatorID;
-      rotorID      = rhs.rotorID;
-      expType      = rhs.expType;
-      runTemp      = rhs.runTemp;
-      label        = rhs.label;
-      comments     = rhs.comments;
+      invID         = rhs.invID;
+      lastName      = rhs.lastName;
+      firstName     = rhs.firstName;
+      expID         = rhs.expID;
+      projectID     = rhs.projectID;
+      runID         = rhs.runID;
+      labID         = rhs.labID;
+      instrumentID  = rhs.instrumentID;
+      operatorID    = rhs.operatorID;
+      rotorID       = rhs.rotorID;
+      expType       = rhs.expType;
+      opticalSystem = rhs.opticalSystem;
+      runTemp       = rhs.runTemp;
+      label         = rhs.label;
+      comments      = rhs.comments;
       centrifugeProtocol = rhs.centrifugeProtocol;
-      date         = rhs.date;
+      date          = rhs.date;
+
+      rpms.clear();
+      for ( int i = 0; i < rhs.rpms.size(); i++ )
+         rpms << rhs.rpms[ i ];
 
       triples.clear();
-      for ( int i = 0; i < triples.size(); i++ )
+      for ( int i = 0; i < rhs.triples.size(); i++ )
          triples << rhs.triples[ i ];
 
    }
 
    return *this;
 }
+
