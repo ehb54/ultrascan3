@@ -5,27 +5,116 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_math.h"
+#include "us_db2.h"
+#include "us_passwd.h"
 #include "us_process_convert.h"
+#include "us_convertio.h"
 
-// Generic constructor; establishes dialog
-US_ProcessConvert::US_ProcessConvert( QWidget* parent ) : US_WidgetsDialog( parent, 0 )
+US_ConvertProgressBar::US_ConvertProgressBar( QWidget* parent ) 
+                     : US_WidgetsDialog( parent, 0 )
 {
-   createDialog();
+   setModal( true );
+
+   setWindowTitle( tr( "Progress..." ) );
+   setPalette( US_GuiSettings::frameColor() );
+
+   // Everything will be in the main layout
+   QGridLayout* main = new QGridLayout( this );
+   main->setSpacing         ( 2 );
+   main->setContentsMargins ( 2, 2, 2, 2 );
+
+   int row = 0;
+
+   // Progress bar
+   QLabel* lb_placeholder = new QLabel();
+   main -> addWidget( lb_placeholder, row, 0, 1, 2 );
+
+   lb_progress = us_label( tr( "Progress:" ) , -1 );
+   lb_progress->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   main       ->addWidget( lb_progress, row, 0 );
+
+   progress = us_progressBar( 0, 100, 0 );
+   progress -> setVisible( true );
+   main     -> addWidget( progress, row++, 1 );
+
+   // Some pushbuttons
+   QHBoxLayout* buttons = new QHBoxLayout;
+
+   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
+   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
+   buttons->addWidget( pb_cancel );
+
+   main ->setColumnMinimumWidth( 1, 200 );
+   main ->addLayout( buttons, row++, 1 );
+
+   visible  = true;
+   canceled = false;
+   this ->show();
+   qApp    ->processEvents();
 }
 
-// Constructor to use for reading data 
-US_ProcessConvert::US_ProcessConvert( 
-      QWidget*                             parent,
-      QString                              dir,
-      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-      QString&                             runType ) 
-   : US_WidgetsDialog( parent, 0 )
+void US_ConvertProgressBar::setLabel( QString text )
+{
+   lb_progress ->setText( text );
+}
+
+void US_ConvertProgressBar::setRange( int min, int max )
+{
+   this->max   = max;
+   progress    ->setRange( min, max );
+}
+
+void US_ConvertProgressBar::setValue( int value )
+{
+   if ( value < max && visible )
+   {
+      progress    ->setValue( value );
+      progress    ->show();
+      qApp        ->processEvents();
+   }
+
+   else if ( ! canceled )
+   {
+      // Then it's run its course and needs to close
+      this->hide();
+      this->close();
+   }
+
+   // else we just continue to hide until finished
+}
+
+void US_ConvertProgressBar::display( bool visible )
+{
+   this->visible = visible;
+
+   if ( ! visible ) ;
+      this->hide();
+}
+
+
+bool US_ConvertProgressBar::isActive( void )
+{
+   return( ! canceled );
+}
+
+void US_ConvertProgressBar::cancel( void )
+{
+   canceled = true;
+
+   this->setVisible( false );
+}
+
+// Generic constructor; establishes dialog
+US_ProcessConvert::US_ProcessConvert( QWidget* parent ) : US_ConvertProgressBar( parent )
+{
+}
+
+void US_ProcessConvert::readLegacyData( 
+     QString                              dir,
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     QString&                             runType ) 
 {
    if ( dir.isEmpty() ) return; 
-
-   reset();
-
-   createDialog();
 
    // Get legacy file names and set channels
    QDir d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
@@ -59,13 +148,12 @@ US_ProcessConvert::US_ProcessConvert(
 
    if ( channels.isEmpty() ) channels << "A";
 
-   // Now read the data.
-   lb_progress ->setText( tr( "Reading:" ) );
-   progress    ->setRange( 0, fileList.size() - 1 );
-   progress    ->setValue( 0 );
-   progress    ->show();
-   qApp        ->processEvents();
+   // Set up the progress bar
+   this ->setLabel( tr( "Reading:" ) );
+   this ->setRange( 0, fileList.size() );
+   this ->setValue( 0 );
 
+   // Now read the data.
    for ( int i = 0; i < fileList.size(); i++ )
    {
       US_DataIO2::BeckmanRawScan data;
@@ -98,33 +186,26 @@ US_ProcessConvert::US_ProcessConvert(
       }
 
       // Check to see if cancel button has been pressed
-      if ( canceled )
+      if ( ! this->isActive() )
       {
           rawLegacyData.clear();
           break;
       }
 
 
-      progress->setValue( i );
-      qApp    ->processEvents();
+      this->setValue( i );
    }
-
-   this->hide();
-   this->close();
 }
 
-// Constructor to use for converting data 
-US_ProcessConvert::US_ProcessConvert( 
-      QWidget*                             parent,
-      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-      QVector< US_DataIO2::RawData  >&     rawConvertedData,
-      QStringList&                         triples,
-      QString                              runType,
-      double                               tolerance,
-      QList< double >&                     ss_limits // For RA data
-  ) : US_WidgetsDialog( parent, 0 )
+void US_ProcessConvert::convertLegacyData( 
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     QVector< US_DataIO2::RawData  >&     rawConvertedData,
+     QStringList&                         triples,
+     QString                              runType,
+     double                               tolerance,
+     QList< double >&                     ss_limits // For RA data
+     ) 
 {
-   reset();
 
    if ( runType == "RA"  && ss_limits.size() > 2 )
    {
@@ -136,8 +217,8 @@ US_ProcessConvert::US_ProcessConvert(
 
    US_DataIO2::RawData newRawData;     // filtered legacy data in new raw format
 
-   if ( triples.size() > 3 )
-      createDialog();
+   if ( triples.size() <= 3 )
+      this->setVisible( false );
 
    rawConvertedData.clear();
 
@@ -153,11 +234,9 @@ US_ProcessConvert::US_ProcessConvert(
       // Now convert the data.
       if ( triples.size() > 3 )
       {
-         lb_progress ->setText( tr( "Converting:" ) );
-         progress    ->setRange( 0, triples.size() - 1 );
-         progress    ->setValue( 0 );
-         progress    ->show();
-         qApp        ->processEvents();
+         this ->setLabel( tr( "Converting:" ) );
+         this ->setRange( 0, triples.size() - 1 );
+         this ->setValue( 0 );
       }
 
       for ( int i = 0; i < triples.size(); i++ )
@@ -169,7 +248,7 @@ US_ProcessConvert::US_ProcessConvert(
          rawConvertedData << newRawData;
 
          // Check to see if cancel button has been pressed
-         if ( canceled )
+         if ( ! this->isActive() )
          {
             rawConvertedData.clear();
             break;
@@ -177,30 +256,27 @@ US_ProcessConvert::US_ProcessConvert(
 
          if ( triples.size() > 3 )
          {
-            progress->setValue( i );
-            qApp    ->processEvents();
+            this->setValue( i );
          }
 
       }
    }
 
-   qApp    ->processEvents();
    this->hide();
    this->close();
 }
 
-// Constructor to use for writing data 
-US_ProcessConvert::US_ProcessConvert( QWidget* parent,
-                                      int& status,
-                                      QVector< US_DataIO2::RawData >& rawConvertedData,
-                                      US_ExpInfo::ExperimentInfo& ExpData,
-                                      QStringList& triples,
-                                      QList< int >& tripleMap,
-                                      QVector< US_Convert::Excludes >& allExcludes,
-                                      QString runType,
-                                      QString runID,
-                                      QString dirname
-                                    ) : US_WidgetsDialog( parent, 0 )
+void US_ProcessConvert::writeConvertedData(
+     int& status,
+     QVector< US_DataIO2::RawData >& rawConvertedData,
+     US_ExpInfo::ExperimentInfo& ExpData,
+     QStringList& triples,
+     QList< int >& tripleMap,
+     QVector< US_Convert::Excludes >& allExcludes,
+     QString runType,
+     QString runID,
+     QString dirname
+     )
 {
    if ( rawConvertedData[ 0 ].scanData.empty() ) 
    {
@@ -208,17 +284,11 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
       return;
    }
 
-   reset();
-
-   createDialog();
-
    // Write the data. In this case not triples.size() - 1, because we are
    // going to consider the xml file as one file to write also
-   lb_progress ->setText( tr( "Writing:" ) );
-   progress    ->setRange( 0, tripleMap.size() );
-   progress    ->setValue( 0 );
-   progress    ->show();
-   qApp        ->processEvents();
+   this ->setLabel( tr( "Writing:" ) );
+   this ->setRange( 0, tripleMap.size() );
+   this ->setValue( 0 );
 
    for ( int i = 0; i < tripleMap.size(); i++ )
    {
@@ -275,8 +345,7 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
 
       if ( status !=  US_DataIO2::OK ) break;
       
-      progress->setValue( i );
-      qApp    ->processEvents();
+      this->setValue( i );
    }
 
    if ( status != US_Convert::OK )
@@ -288,21 +357,111 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
    }
 
    // Now try to write the xml file
-   status = writeXmlFile( ExpData, triples, tripleMap, runType, runID, dirname );
-   progress->setValue( tripleMap.size() );
-   qApp    ->processEvents();
+   status = US_ConvertIO::writeXmlFile( 
+            ExpData, triples, tripleMap, runType, runID, dirname );
+
+   if ( status == US_Convert::CANTOPEN )
+   {
+      QString writeFile = runID      + "." 
+                        + runType    + ".xml";
+      QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "Cannot open write file: " ) + dirname + writeFile );
+   }
+
+   else if ( status != US_Convert::OK )
+   {
+      QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "Error: " ) + status );
+   }
+
+   this->setValue( tripleMap.size() );
 
    this->hide();
    this->close();
-   return;
+}
+
+void US_ProcessConvert::reloadUS3Data(
+     QString dir,
+     QVector< US_DataIO2::RawData >& rawConvertedData,
+     QStringList& triples,
+     QList< int >& tripleMap,
+     QString runType 
+     )
+{
+   this->display( false );      // too fast for progress bar
+
+   rawConvertedData.clear();
+
+   QStringList nameFilters = QStringList( "*.auc" );
+
+   QDir d( dir );
+
+   QStringList files =  d.entryList( nameFilters, 
+         QDir::Files | QDir::Readable, QDir::Name );
+
+   if ( files.size() == 0 )
+   {
+      QMessageBox::warning( this,
+            tr( "No Files Found" ),
+            tr( "There were no files of the form *.auc\n"  
+                "found in the specified directory." ) );
+      return;
+   }
+
+   // Set up cell / channel / wavelength combinations
+   triples.clear();
+   tripleMap.clear();
+   for ( int i = 0; i < files.size(); i++ )
+   {
+      QStringList part = files[ i ].split( "." );
+
+      QString t = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
+      runType = part[ 1 ];
+      if ( ! triples.contains( t ) ) 
+      {
+          triples << t;
+          tripleMap << i;
+      }
+   }
+
+   // Read all data
+   QString file;
+   foreach ( file, files )
+   {
+      QString filename = dir + file;
+      US_DataIO2::RawData data;
+      
+      int result = US_DataIO2::readRawData( filename, data );
+      if ( result != US_DataIO2::OK )
+      {
+         QMessageBox::warning( this,
+            tr( "UltraScan Error" ),
+            tr( "Could not read data file.\n" ) 
+            + US_DataIO2::errorString( result ) + "\n" + filename );
+         return;
+      }
+
+      rawConvertedData << data;
+      data.scanData.clear();
+   }
+
+   if ( rawConvertedData.isEmpty() )
+   {
+      QMessageBox::warning( this,
+         tr( "UltraScan Error" ),
+         tr( "Could not read any data file." ) );
+      return;
+   }
 }
 
 void US_ProcessConvert::convert( 
-      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-      US_DataIO2::RawData&                 newRawData,
-      QString                              triple,
-      QString                              runType,
-      double                               tolerance )
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     US_DataIO2::RawData&                 newRawData,
+     QString                              triple,
+     QString                              runType,
+     double                               tolerance )
 {
    // Convert the data into the UltraScan3 data structure
    QStringList parts      = triple.split(" / ");
@@ -310,12 +469,6 @@ void US_ProcessConvert::convert(
    int         cell       = parts[ 0 ].toInt();
    char        channel    = parts[ 1 ].toAscii()[ 0 ];
    double      wavelength = parts[ 2 ].toDouble();
-
-   /*
-   qDebug() << cell       << " / "
-            << channel    << " / "
-            << wavelength;
-   */
 
    QList< US_DataIO2::BeckmanRawScan > ccwLegacyData;
 
@@ -381,9 +534,6 @@ void US_ProcessConvert::convert(
       newRawData.x << US_DataIO2::XValue( radius );
       radius += delta_r;
    }
-
-   // qDebug() << "Current triple: " << triple << ' '
-   //          << "delta_r: " << QString::number( delta_r, 'f', 6 );
 
    for ( int i = 0; i < ccwLegacyData.size(); i++ )
    {
@@ -510,8 +660,8 @@ void US_ProcessConvert::convert(
 }
 
 void US_ProcessConvert::splitRAData( 
-      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-      QList< double >&                     ss_limits )
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     QList< double >&                     ss_limits )
 {
    QList< US_DataIO2::BeckmanRawScan > temp = rawLegacyData;
    rawLegacyData.clear();
@@ -551,10 +701,10 @@ void US_ProcessConvert::splitRAData(
 }
 
 void US_ProcessConvert::setTriples( 
-      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-      QStringList&                         triples,
-      QString                              runType,
-      double                               tolerance )
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     QStringList&                         triples,
+     QString                              runType,
+     double                               tolerance )
 {
    // Wavelength data is handled differently here
    if ( runType == "WA" )
@@ -565,9 +715,9 @@ void US_ProcessConvert::setTriples(
 }
 
 void US_ProcessConvert::setCcwTriples( 
-      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-      QStringList&                         triples,
-      double                               tolerance )
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     QStringList&                         triples,
+     double                               tolerance )
 {
    // Most triples are ccw
    triples.clear();
@@ -583,12 +733,6 @@ void US_ProcessConvert::setCcwTriples(
 
    // Merge wavelengths
    wavelengths.sort();
-
-/*
-   qDebug() << "Wavelengths found:";
-   for ( int i = 0; i < wavelengths.size(); i++ )
-      qDebug() << wavelengths[ i ];
-*/
 
    QList< QList< double > > modes;
    QList< double >          mode;
@@ -610,17 +754,6 @@ void US_ProcessConvert::setCcwTriples(
 
    // Now we have a list of modes.  
    // Average each list and round to the closest integer.
-   
-/*
-   qDebug() << "Modes:";
-   for ( int i = 0; i < modes.size(); i++ )
-   {
-      qDebug() << "i: " << i;
-      for ( int j = 0; j < modes[ i ].size(); j++ )
-         qDebug() << "  " << modes[ i ][ j ];
-   }
-*/
-
    QList< double > wl_average;
 
    for ( int i = 0; i < modes.size(); i++ )
@@ -631,12 +764,6 @@ void US_ProcessConvert::setCcwTriples(
 
       wl_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
    }
-
-/*
-   qDebug() << "Wavelength average:";
-   for ( int i = 0; i < wl_average.size(); i++ )
-      qDebug() << "  " << wl_average[ i ];
-*/
 
    // Now that we have a more reliable list of wavelengths, let's
    // find out the possible cell, channel, and wavelength combinations
@@ -663,9 +790,9 @@ void US_ProcessConvert::setCcwTriples(
 }
 
 void US_ProcessConvert::setCcrTriples( 
-      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-      QStringList&                        triples,
-      double                              tolerance )
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     QStringList&                        triples,
+     double                              tolerance )
 {
    // First of all, wavelength triples are ccr.
    triples.clear();
@@ -682,12 +809,6 @@ void US_ProcessConvert::setCcrTriples(
    // Merge radii
 
    radii.sort();
-
-/*
-   qDebug() << "Radius values found:";
-   for ( int i = 0; i < radii.size(); i++ )
-      qDebug() << radii[ i ];
-*/
 
    QList< QList< double > > modes;
    QList< double >          mode;
@@ -709,17 +830,6 @@ void US_ProcessConvert::setCcrTriples(
 
    // Now we have a list of modes.  
    // Average each list and round to the closest integer.
-   
-/*
-   qDebug() << "Modes:";
-   for ( int i = 0; i < modes.size(); i++ )
-   {
-      qDebug() << "i: " << i;
-      for ( int j = 0; j < modes[ i ].size(); j++ )
-         qDebug() << "  " << modes[ i ][ j ];
-   }
-*/
-
    QList< double > r_average;
 
    for ( int i = 0; i < modes.size(); i++ )
@@ -730,12 +840,6 @@ void US_ProcessConvert::setCcrTriples(
 
       r_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
    }
-
-/*
-   qDebug() << "Radius average:";
-   for ( int i = 0; i < r_average.size(); i++ )
-      qDebug() << "  " << r_average[ i ];
-*/
 
    // Now that we have a more reliable list of radii, let's
    // find out the possible cell, channel, and radius combinations
@@ -761,170 +865,6 @@ void US_ProcessConvert::setCcrTriples(
    }
 }
 
-int US_ProcessConvert::writeXmlFile( US_ExpInfo::ExperimentInfo& ExpData,
-                                     QStringList& triples,
-                                     QList< int >& tripleMap,
-                                     QString runType,
-                                     QString runID,
-                                     QString dirname )
-{ 
-   if ( ExpData.invID == 0 ) return( US_Convert::NOXML ); 
-
-   QString writeFile = runID      + "." 
-                     + runType    + ".xml";
-   QFile file( dirname + writeFile );
-   if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
-   {
-      QMessageBox::information( this,
-            tr( "Error" ),
-            tr( "Cannot open file " ) + dirname + writeFile );
-      return( US_Convert::CANTOPEN );
-   }
-
-   QXmlStreamWriter xml;
-   xml.setDevice( &file );
-   xml.setAutoFormatting( true );
-
-   xml.writeStartDocument();
-   xml.writeDTD("<!DOCTYPE US_Scandata>");
-   xml.writeStartElement("US_Scandata");
-   xml.writeAttribute("version", "1.0");
-
-   // elements
-   xml.writeStartElement( "experiment" );
-   xml.writeAttribute   ( "id", QString::number( ExpData.expID ) );
-   xml.writeAttribute   ( "type", ExpData.expType );
-
-      xml.writeStartElement( "investigator" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.invID ) );
-      xml.writeEndElement  ();
-      
-      xml.writeStartElement( "project" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.projectID ) );
-      xml.writeEndElement  ();
-      
-      xml.writeStartElement( "lab" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.labID ) );
-      xml.writeEndElement  ();
-      
-      xml.writeStartElement( "instrument" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.instrumentID ) );
-      xml.writeEndElement  ();
-      
-      xml.writeStartElement( "operator" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.operatorID ) );
-      xml.writeEndElement  ();
-
-      xml.writeStartElement( "rotor" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.rotorID ) );
-      xml.writeEndElement  ();
-
-      // Write out a new GUID for the experiment as a whole
-      uuid_t uuid;
-      char uuidc[ 37 ];
-
-      uuid_generate( uuid );
-      uuid_unparse( (unsigned char*)uuid, uuidc );
-      xml.writeStartElement( "guid" );
-      xml.writeAttribute   ( "id", QString( uuidc ) );
-      xml.writeEndElement  ();
-
-      // loop through the following for c/c/w combinations
-      for ( int i = 0; i < tripleMap.size(); i++ )
-      {
-         int ndx = tripleMap[ i ];
-         US_ExpInfo::TripleInfo t = ExpData.triples[ ndx ];
-
-         QString triple         = triples[ t.tripleID ];
-         QStringList parts      = triple.split(" / ");
-
-         QString     cell       = parts[ 0 ];
-         QString     channel    = parts[ 1 ];
-         QString     wl         = parts[ 2 ];
-
-         xml.writeStartElement( "dataset" );
-         xml.writeAttribute   ( "cell", cell );
-         xml.writeAttribute   ( "channel", channel );
-         xml.writeAttribute   ( "wavelength", wl );
-
-            uuid_unparse( (unsigned char*)t.guid, uuidc );
-            xml.writeStartElement( "guid" );
-            xml.writeAttribute   ( "id", QString( uuidc ) );
-            xml.writeEndElement  ();
-
-            xml.writeStartElement( "centerpiece" );
-            xml.writeAttribute   ( "id", QString::number( t.centerpiece ) );
-            xml.writeEndElement  ();
-
-            xml.writeStartElement( "buffer" );
-            xml.writeAttribute   ( "id", QString::number( t.bufferID ) );
-            xml.writeEndElement  ();
-
-            xml.writeStartElement( "analyte" );
-            xml.writeAttribute   ( "id", QString::number( t.analyteID ) );
-            xml.writeEndElement  ();
-
-         xml.writeEndElement   ();
-      }
-
-   xml.writeTextElement ( "date", ExpData.date );
-   xml.writeTextElement ( "runTemp", ExpData.runTemp );
-   xml.writeTextElement ( "label", ExpData.label );
-   xml.writeTextElement ( "comments", ExpData.comments );
-   xml.writeTextElement ( "centrifugeProtocol", ExpData.centrifugeProtocol );
-
-   xml.writeEndElement(); // US_Scandata
-   xml.writeEndDocument();
-
-//   if ( ExpData.triples.size() != triples.size() )
-//      return( US_Convert::PARTIAL_XML );
-
-   return( US_Convert::OK );
-}
-
-
-void US_ProcessConvert::createDialog( void )
-{
-   reset();
-
-   setModal( true );
-
-   setWindowTitle( tr( "Progress..." ) );
-   setPalette( US_GuiSettings::frameColor() );
-
-   // Everything will be in the main layout
-   QGridLayout* main = new QGridLayout( this );
-   main->setSpacing         ( 2 );
-   main->setContentsMargins ( 2, 2, 2, 2 );
-
-   int row = 0;
-
-   // Progress bar
-   QLabel* lb_placeholder = new QLabel();
-   main -> addWidget( lb_placeholder, row, 0, 1, 2 );
-
-   lb_progress = us_label( tr( "Progress:" ) , -1 );
-   lb_progress->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   main       ->addWidget( lb_progress, row, 0 );
-
-   progress = us_progressBar( 0, 100, 0 );
-   progress -> reset();
-   progress -> setVisible( true );
-   main     -> addWidget( progress, row++, 1 );
-
-   // Some pushbuttons
-   QHBoxLayout* buttons = new QHBoxLayout;
-
-   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
-   buttons->addWidget( pb_cancel );
-
-   main ->setColumnMinimumWidth( 1, 200 );
-   main ->addLayout( buttons, row++, 1 );
-   this ->show();
-   qApp    ->processEvents();
-}
-
 void US_ProcessConvert::setInterpolated ( unsigned char* bitmap, int location )
 {
    int byte = location / 8;
@@ -932,15 +872,3 @@ void US_ProcessConvert::setInterpolated ( unsigned char* bitmap, int location )
 
    bitmap[ byte ] |= 1 << ( 7 - bit );
 }
-
-void US_ProcessConvert::reset( void )
-{
-   canceled  = false;
-}
-
-void US_ProcessConvert::cancel( void )
-{
-   this->hide();
-   canceled = true;
-}
-

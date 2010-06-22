@@ -53,7 +53,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          int              operatorID;         //!< The personID of the person who operated the centrifuge
          int              rotorID;            //!< The rotor that was used
          QString          expType;            //!< The type of experiment
-         char             opticalSystem[2];   //!< The type of optical system used
+         QString          opticalSystem;      //!< The type of optical system used
          QList< double >  rpms;               //!< A list of rotor speeds observed during the experiment
          QString          runTemp;            //!< The run temperature
          QString          label;              //!< The experiment label, or identifying information
@@ -129,20 +129,18 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       void reset             ( void );
       bool load              ( void );
       void reload            ( void );
-      void setInstrumentList ( void );
-      void setRotorList      ( void );
-      void setOperatorList   ( void );
+      void selectInvestigator( void );
+      void assignInvestigator( int, const QString&, const QString& );
+      QComboBox* us_expTypeComboBox         ( void );
       void runIDChanged      ( void );
       int  checkRunID        ( void );
+      void setInstrumentList ( void );
+      void setOperatorList   ( void );
+      void setRotorList      ( void );
       void change_lab        ( int  );
       void change_instrument ( int  );
       void accept            ( void );
       void cancel            ( void );
-      void newExperiment     ( void );
-      void updateExperiment  ( void );
-      void selectInvestigator( void );
-      void assignInvestigator( int, const QString&, const QString& );
-      QComboBox* us_expTypeComboBox         ( void );
       void connect_error     ( const QString& );
       void help              ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
