@@ -18,6 +18,7 @@ TRANSLATIONS = $${TARGET}_DE_de.ts
 HEADERS      = us_analysis_base.h       \
                us_analysis_base2.h      \
                us_analyte_gui.h         \
+               us_associations_gui.h    \
                us_buffer_gui.h          \
                us_colorgradIO.h         \
                us_editor.h              \
@@ -26,12 +27,14 @@ HEADERS      = us_analysis_base.h       \
                us_help.h                \
                us_investigator.h        \
                us_license.h             \
+               us_model_gui.h           \
                us_model_editor.h        \
                us_model_loader.h        \
                us_model_selection.h     \
                us_passwd.h              \
                us_plot.h                \
                us_predict1.h            \
+               us_properties.h          \
                us_run_details.h         \
                us_run_details2.h        \
                us_sassoc.h              \
@@ -46,6 +49,7 @@ HEADERS      = us_analysis_base.h       \
 SOURCES      = us_analysis_base.cpp       \
                us_analysis_base2.cpp      \
                us_analyte_gui.cpp         \
+               us_associations_gui.cpp    \
                us_buffer_gui.cpp          \
                us_colorgradIO.cpp         \
                us_editor.cpp              \
@@ -55,11 +59,13 @@ SOURCES      = us_analysis_base.cpp       \
                us_investigator.cpp        \
                us_license.cpp             \
                us_model_editor.cpp        \
+               us_model_gui.cpp           \
                us_model_loader.cpp        \
                us_model_selection.cpp     \
                us_passwd.cpp              \
                us_plot.cpp                \
                us_predict1.cpp            \
+               us_properties.cpp          \
                us_run_details.cpp         \
                us_run_details2.cpp        \
                us_sassoc.cpp              \
