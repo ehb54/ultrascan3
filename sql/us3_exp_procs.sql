@@ -163,6 +163,7 @@ END$$
 DROP PROCEDURE IF EXISTS new_experiment$$
 CREATE PROCEDURE new_experiment ( p_guid         CHAR(36),
                                   p_password     VARCHAR(80),
+                                  p_expGUID      CHAR(36),
                                   p_projectID    INT,
                                   p_runID        VARCHAR(80),
                                   p_labID        INT,
@@ -203,6 +204,7 @@ BEGIN
     ELSE
       INSERT INTO experiment SET
         projectID          = p_projectID,
+        GUID               = p_expGUID,
         runID              = p_runID,
         labID              = p_labID,
         instrumentID       = p_instrumentID,
@@ -397,8 +399,9 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   projectID, runID, labID, instrumentID, operatorID, rotorID, type,
-               runTemp, label, comment, centrifugeProtocol, dateUpdated, personID
+      SELECT   GUID, projectID, runID, labID, instrumentID, 
+               operatorID, rotorID, type, runTemp, label, comment, 
+               centrifugeProtocol, dateUpdated, personID
       FROM     experiment e, experimentPerson ep
       WHERE    e.experimentID = ep.experimentID
       AND      e.experimentID = p_experimentID;
@@ -444,8 +447,9 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT projectID, e.experimentID, labID, instrumentID, operatorID, rotorID, type,
-             runTemp, label, comment, centrifugeProtocol, dateUpdated, personID
+      SELECT projectID, e.experimentID, GUID, labID, instrumentID, 
+             operatorID, rotorID, type, runTemp, label, comment, 
+             centrifugeProtocol, dateUpdated, personID
       FROM   experiment e, experimentPerson p
       WHERE  e.experimentID = p.experimentID
       AND    p.personID     = @US3_ID
@@ -479,6 +483,9 @@ BEGIN
 
     DELETE FROM experiment
     WHERE experimentID = p_experimentID;
+
+  --  DELETE FROM rawData
+    -- WHERE experimentID = p_experimentID;
 
   END IF;
 

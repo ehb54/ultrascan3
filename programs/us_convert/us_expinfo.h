@@ -30,8 +30,10 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          int              tripleID;           //!< The ID of this c/c/w combination
          int              centerpiece;        //!< The ID of the centerpiece that was used
          int              bufferID;           //!< The ID of the buffer that was associated
+         QString          bufferGUID;         //!< The GUID of the buffer
          QString          bufferDesc;         //!< The corresponding buffer description
          int              analyteID;          //!< The ID of the analyte that was associated
+         QString          analyteGUID;        //!< The GUID of the analyte
          QString          analyteDesc;        //!< The corresponding analyte description
          char             guid[16];           //!< The GUID of this triple
          TripleInfo();                        //!< A generic constructor
@@ -43,15 +45,22 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       {
          public:
          int              invID;              //!< The personID of the investigator
+         QString          invGUID;            //!< The GUID of the investigator
+         
          QString          lastName;           //!< The last name of the investigator
          QString          firstName;          //!< The first name of the investigator
          int              expID;              //!< The ID of the experiment itself
+         QString          expGUID;            //!< The GUID of the experiment
          int              projectID;          //!< The project this experiment is associated with
          QString          runID;              //!< The run ID
          int              labID;              //!< The lab in which the experiment was conducted
+         QString          labGUID;            //!< The GUID of the lab
          int              instrumentID;       //!< The identifier of the ultra-centrifuge
+         QString          instrumentSerial;   //!< The serial number of the instrument
          int              operatorID;         //!< The personID of the person who operated the centrifuge
+         QString          operatorGUID;       //!< The GUID of the operator
          int              rotorID;            //!< The rotor that was used
+         QString          rotorGUID;          //!< The GUID of the rotor
          QString          expType;            //!< The type of experiment
          QString          opticalSystem;      //!< The type of optical system used
          QList< double >  rpms;               //!< A list of rotor speeds observed during the experiment

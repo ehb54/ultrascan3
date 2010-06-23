@@ -1,5 +1,7 @@
 #include <QApplication>
 
+#include <uuid/uuid.h>
+
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -502,11 +504,68 @@ void US_Convert::reload( void )
 
 void US_Convert::newExpInfo( void )
 {
+   // Verify connectivity
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+             tr( "Error" ),
+             tr( "This is the dialog where you associate your experiment " ) +
+             tr( "with information in a database. Please verify your "     ) +
+             tr( "connection parameters before proceeding. You can still " ) +
+             tr( "create your auc file and do this later.\n" ) );
+      return;
+   }
+
+   // Create a new GUID for the experiment as a whole
+   uuid_t uuid;
+   char uuidc[ 37 ];
+
+   uuid_generate( uuid );
+   uuid_unparse( (unsigned char*)uuid, uuidc );
+
+   ExpData.expGUID = QString( uuidc );
+
    getExpInfo( false );
 }
 
 void US_Convert:: editExpInfo( void )
 {
+   // Verify connectivity
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+             tr( "Error" ),
+             tr( "This is the dialog where you associate your experiment " ) +
+             tr( "with information in a database. Please verify your "     ) +
+             tr( "connection parameters before proceeding. You can still " ) +
+             tr( "create your auc file and do this later.\n" ) );
+      return;
+   }
+
+   // Preview if invID and expID are in the database before proceeding
+   QStringList q( "get_experiment_info_by_runID" );
+   q << le_runID -> text();
+   db.query( q );
+   db.next();
+
+   if ( db.lastErrno() == US_DB2::NOROWS )
+   {
+      QMessageBox::information( this,
+             tr( "Error" ),
+             tr( "The current run ID is not found in the database;\n" ) +
+             tr( "Click the New Experiment button to add it.\n" ) );
+      return;
+   }
+
+   // Ok, edit the experiment info
    getExpInfo( true );
 }
 
@@ -531,7 +590,6 @@ void US_Convert::getExpInfo( bool editing )
    // Load information we're passing
    ExpData.runTemp       = QString::number( sum / count );
    ExpData.opticalSystem = QString( allData[ 0 ].type );
-
 
    // A list of unique rpms
    ExpData.rpms.clear();
@@ -659,8 +717,10 @@ void US_Convert::ccwApplyAll( void )
    {
       ExpData.triples[ i ].centerpiece = triple.centerpiece;
       ExpData.triples[ i ].bufferID    = triple.bufferID;
+      ExpData.triples[ i ].bufferGUID  = triple.bufferGUID;
       ExpData.triples[ i ].bufferDesc  = triple.bufferDesc;
       ExpData.triples[ i ].analyteID   = triple.analyteID;
+      ExpData.triples[ i ].analyteGUID = triple.analyteGUID;
       ExpData.triples[ i ].analyteDesc = triple.analyteDesc;
    }
 
@@ -695,11 +755,12 @@ void US_Convert::assignBuffer( const QString& bufferID )
    }
 
    QStringList q( "get_buffer_info" );
-   q << ( bufferID );
+   q << bufferID;
    db.query( q );
 
    if ( db.next() )
    {
+      ExpData.triples[ ndx ].bufferGUID = db.value( 0 ).toString();
       ExpData.triples[ ndx ].bufferDesc = db.value( 1 ).toString();
       le_bufferInfo -> setText( db.value( 1 ).toString() );
    }
@@ -751,6 +812,7 @@ void US_Convert::assignAnalyte( US_Analyte data )
 
    if ( db.next() )
    {
+      ExpData.triples[ ndx ].analyteGUID = db.value( 0 ).toString();
       ExpData.triples[ ndx ].analyteDesc = db.value( 4 ).toString();
       le_analyteInfo -> setText( db.value( 4 ).toString() );
    }
@@ -1481,8 +1543,15 @@ void US_Convert::enableSyncDB( void )
 {
    // Have we made connection with the db?
    if ( ExpData.invID == 0 ||
-        ExpData.expID == 0 ||
         ExpData.triples.size() == 0 )
+   {
+      pb_syncDB ->setEnabled( false );
+      return;
+   }
+
+   // If editing, we should have an expID
+   if ( this->editing      && 
+        ExpData.expID == 0 )
    {
       pb_syncDB ->setEnabled( false );
       return;

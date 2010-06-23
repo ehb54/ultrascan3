@@ -108,11 +108,18 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   r.name, serialNumber, stretchFunction, omega2_t,
-               a.name
-      FROM     rotor r, abstractRotor a
-      WHERE    r.abstractRotorID = a.abstractRotorID
-      AND      rotorID = p_rotorID;
+      -- For now, because there aren't any abstract rotors
+      SELECT   r.GUID, r.name, serialNumber, stretchFunction, 
+               omega2_t, 'Dummy abstract rotor' AS name
+      FROM     rotor r
+      WHERE    rotorID = p_rotorID;
+
+      -- When there are abstract rotors
+--      SELECT   r.GUID, r.name, serialNumber, stretchFunction, 
+--               omega2_t, a.name
+--      FROM     rotor r, abstractRotor a
+--      WHERE    r.abstractRotorID = a.abstractRotorID
+--      AND      rotorID = p_rotorID;
 
     END IF;
 
@@ -346,7 +353,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   name, building, room
+      SELECT   GUID, name, building, room
       FROM     lab
       WHERE    labID = p_labID;
 
@@ -666,7 +673,8 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   name, channels, bottom, shape, maxRPM, pathLength, angle, width
+      SELECT   GUID, name, channels, bottom, shape,
+               maxRPM, pathLength, angle, width
       FROM     abstractCenterpiece
       WHERE    abstractCenterpieceID = p_abstractCenterpieceID;
 
