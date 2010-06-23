@@ -3,9 +3,138 @@
 
 #include <stdio.h>
 
-// this is a stub for command line utilities
-// currently only "dump" is supported, which reads a US_FemGlobal::write_model_data() binary format file
-// and creates a US_FemGlobal::write_ascii_model_data() ascii format file
+class InterpRmsd {
+public:
+   //   InterpRmsd();
+   //   ~InterpRmsd();
+   map < QString, double > s_rmsd;
+   map < QString, double > k_rmsd;
+   map < QString, double > sk_rmsd;
+   vector < double > s_vec;
+   vector < double > k_vec;
+   void prep();
+   double s_interprmsd(double s, double k);
+   double k_interprmsd(double s, double k);
+   double sk_interprmsd(double s, double k);
+   int s_pos(double s); // return index of closest previous s
+   int k_pos(double k); // return index of closest previous k
+private:
+   double s_min;
+   double s_max;
+   double s_range;
+   double s_factor;
+
+   double k_min;
+   double k_max;
+   double k_range;
+   double k_factor;
+
+   unsigned int s_vec_max;
+   unsigned int k_vec_max;
+};
+
+int InterpRmsd::s_pos(double s)
+{
+   int pos = (int)(((double)s_vec_max) * (s - s_min) / s_range);
+   if ( pos >= (int) s_vec_max ) 
+   {
+      pos = s_vec_max - 1;
+   }
+   return pos;
+}
+
+int InterpRmsd::k_pos(double k)
+{
+   int pos = (int)(((double)k_vec_max) * (k - k_min) / k_range);
+   if ( pos >= (int) k_vec_max ) 
+   {
+      pos = k_vec_max - 1;
+   }
+   return pos;
+}
+
+void InterpRmsd::prep()
+{
+   s_min = s_vec[0];
+   s_vec_max = s_vec.size() - 1;
+   s_max = s_vec[s_vec_max];
+   s_range = s_max - s_min;
+   s_factor = s_range / s_vec.size();
+
+   k_min = k_vec[0];
+   k_vec_max = k_vec.size() - 1;
+   k_max = k_vec[k_vec_max];
+   k_range = k_max - k_min;
+   k_factor = k_range / k_vec.size();
+
+   printf("prep s_factor %g s_range %g s_min %g s_max %g\n", 
+          s_factor,
+          s_range,
+          s_min,
+          s_max);
+
+   printf("prep k_factor %g k_range %g k_min %g k_max %g\n", 
+          k_factor,
+          k_range,
+          k_min,
+          k_max);
+}
+
+double InterpRmsd::sk_interprmsd(double s, double k)
+{
+   // find 4 closest values and interpolate?
+   int s_base = s_pos(s);
+   int k_base = k_pos(k);
+   
+   // interpolate in the s direction
+
+   QString key1 = QString("%1~%2")
+      .arg(s_vec[s_base])
+      .arg(k_vec[k_base]);
+
+   QString key2 = QString("%1~%2")
+      .arg(s_vec[s_base+1])
+      .arg(k_vec[k_base]);
+
+   if ( !sk_rmsd.count(key1) ||
+        !sk_rmsd.count(key2) )
+   {
+      cout << "key1 or key2 missing from sk_rmsd " << key1 << " " << key2 << endl;
+      exit(-1);
+   }
+
+   double rmsd1 = 
+      sk_rmsd[key1] + 
+      ( sk_rmsd[key2] - sk_rmsd[key1] ) * (s_vec[s_base+1] - s) / 
+      ( s_vec[s_base+1] - s_vec[s_base] );
+
+   key1 = QString("%1~%2")
+      .arg(s_vec[s_base])
+      .arg(k_vec[k_base+1]);
+
+   key2 = QString("%1~%2")
+      .arg(s_vec[s_base+1])
+      .arg(k_vec[k_base+1]);
+
+   if ( !sk_rmsd.count(key1) ||
+        !sk_rmsd.count(key2) )
+   {
+      cout << "key1 or key2 missing from sk_rmsd " << key1 << " " << key2 << endl;
+      exit(-1);
+   }
+
+   double rmsd2 = 
+      sk_rmsd[key1] + 
+      ( sk_rmsd[key2] - sk_rmsd[key1] ) * (s - s_vec[s_base]) / 
+      ( s_vec[s_base+1] - s_vec[s_base] );
+
+   double rmsd =
+      rmsd1 +
+      ( rmsd2 - rmsd1 ) * ( k - k_vec[k_base] ) /
+      ( k_vec[k_base+1] - k_vec[k_base] );
+
+   return rmsd;
+}
 
 int main (int argc, char **argv)
 {
@@ -21,6 +150,8 @@ int main (int argc, char **argv)
              "               \t              \tCreate a solute file\n"
              "mwl_info       \tinfile\tlist mwl file info\n"
              "check_limits   \tinfile        \tCheck an experiment analysis file for meniscus issues\n"
+             "rmsd2          \tinfile1 infile2\tCompute rmsd between 2 experiment compatible experiment analysis files\n"
+             "flatten        \tsol.dat newsol.dat\tFlatten solute parameter space\n"
              , argv[0]
              );
       exit(-1);
@@ -545,6 +676,259 @@ int main (int argc, char **argv)
       
       exit(0);
    }
+   if (cmds[0].lower() == "rmsd2") 
+   {
+      if (cmds.size() != 3) 
+      {
+         printf(
+                "usage: %s %s infile1 infile2\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(-701);
+      }
+      US_FemGlobal us_femglobal;
+      vector < mfem_data > m1;
+      vector < mfem_data > m2;
+      us_femglobal.read_model_data(&m1, argv[2]);
+      us_femglobal.read_model_data(&m2, argv[3]);
+      // compute rmsd
+      if ( m1.size() != m2.size() ) 
+      {
+         printf("models are not compatible (# of expts %u != %u)\n",
+                (unsigned int) m1.size(),
+                (unsigned int) m2.size());
+         exit(-702);
+      }
+         
+      double rmsd = 0.0;
+      unsigned int pts = 0;
+      for ( unsigned int e = 0;
+            e < m1.size();
+            e++ ) 
+      {
+         if ( m1[e].scan.size() != m2[e].scan.size() ||
+              m1[e].radius.size() != m2[e].radius.size() ) 
+         {
+            printf("models are not compatible (scan sizes %u,%u; radius sizes %u,%u)\n",
+                   (unsigned int) m1[e].scan.size(),
+                   (unsigned int) m2[e].scan.size(),
+                   (unsigned int) m1[e].radius.size(),
+                   (unsigned int) m2[e].radius.size());
+            exit(-702);
+         }
+
+         pts += m1[e].scan.size() * m1[e].radius.size();
+
+         for ( unsigned int j = 0; j < m1[e].scan.size(); j++)
+         {
+            for ( unsigned int k = 0; k < m1[e].radius.size(); k++)
+            {
+               double d = m1[e].scan[j].conc[k] - m2[e].scan[j].conc[k];
+               rmsd += d * d;
+            }
+         }
+      }
+      rmsd /= pts;
+      rmsd = pow(rmsd, 0.5);
+      printf("%g\n", rmsd);
+
+      exit(0);
+   }
+
+   if (cmds[0].lower() == "flatten") 
+   {
+      if (cmds.size() != 3) 
+      {
+         printf(
+                "usage: %s %s sol.dat newsol.dat\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(-801);
+      }
+
+      unsigned int pos = 2;
+
+      // input s.txt & k.txt
+      InterpRmsd ir;
+      //      map < QString, double > s_rmsd;
+      //      map < QString, double > k_rmsd;
+
+      map < QString, bool > used_s;
+      map < QString, bool > used_k;
+
+      // vector < double > s_vec;
+      // vector < double > k_vec;
+
+      QFile fs("s.txt");
+      if ( !fs.open(IO_ReadOnly) )
+      {
+         cout << "s.txt missing\n";
+         exit(-802);
+      }
+
+      QFile fk("k.txt");
+      if ( !fk.open(IO_ReadOnly) )
+      {
+         cout << "k.txt missing\n";
+         exit(-803);
+      }
+
+      QTextStream tss(&fs);
+      QTextStream tsk(&fk);
+
+      QRegExp rx( "^(.*) (.*) (.*)$" );
+
+      while (!tss.atEnd())
+      {
+         if ( rx.search(tss.readLine()) == -1 )
+         {
+            cout << "s.txt format error\n";
+            exit(-804);
+         }
+
+         if ( !used_s.count(rx.cap(1)) )
+         {
+            ir.s_vec.push_back(rx.cap(1).toDouble());
+            used_s[rx.cap(1)] = true;
+         }
+
+         if ( !used_k.count(rx.cap(2)) )
+         {
+            ir.k_vec.push_back(rx.cap(2).toDouble());
+            used_k[rx.cap(2)] = true;
+         }
+
+         QString key = QString("%1~%2").arg(rx.cap(1)).arg(rx.cap(2));
+         ir.s_rmsd[key] = rx.cap(3).toDouble();
+         ir.sk_rmsd[key] = ir.s_rmsd[key];
+      }
+
+      while (!tsk.atEnd())
+      {
+         if ( rx.search(tsk.readLine()) == -1 )
+         {
+            cout << "k.txt format error\n";
+            exit(-805);
+         }
+         QString key = QString("%1~%2").arg(rx.cap(1)).arg(rx.cap(2));
+         ir.k_rmsd[key] = rx.cap(3).toDouble();
+         ir.sk_rmsd[key] += ir.k_rmsd[key];
+         ir.sk_rmsd[key] /= 2.0;
+      }
+
+      cout << "s_vec:\n";
+      for ( unsigned int i = 0; i < ir.s_vec.size(); i++ ) 
+      {
+         cout << ir.s_vec[i] << " ";
+      }
+      
+      cout << "\nk_vec:\n";
+      for ( unsigned int i = 0; i < ir.k_vec.size(); i++ ) 
+      {
+         cout << ir.k_vec[i] << " ";
+      }
+      cout << endl;
+
+      // read solute file
+
+      vector < gene > solutions;
+      control_parameters Control_Params;
+
+      unsigned int count1;
+      unsigned int count2;
+      float float_val;
+      int int_val;
+
+      QFile f(argv[pos++]);
+      if (!f.open(IO_ReadOnly))
+      {
+         cout << "Could not open solute file: " << f.name() << "for input\n";
+         exit(-805);
+      }
+
+      Solute temp_solute;
+      gene temp_gene;
+      QDataStream ds(&f);
+      solutions.clear();
+      ds >> count1;
+      for (unsigned int i = 0; i < count1; i++)
+      {
+         ds >> count2;
+         //      printf("solute %d size %d\n", i, count2);
+         temp_gene.component.clear();
+         for (unsigned int j = 0; j < count2; j++)
+         {
+            ds >> temp_solute.s;
+            ds >> temp_solute.k;
+            ds >> temp_solute.c;
+            temp_gene.component.push_back(temp_solute);
+         }
+         solutions.push_back(temp_gene);
+      }
+      
+      ds >> count2;
+      Control_Params.float_params.clear();
+      for (unsigned int i = 0; i < count2; i++)
+      {
+         ds >> float_val;
+         Control_Params.float_params.push_back(float_val);
+      }
+      ds >> count2;
+      Control_Params.int_params.clear();
+      for ( unsigned int i = 0; i < count2; i++ )
+      {
+         ds >> int_val;
+         Control_Params.int_params.push_back(int_val);
+      }
+
+      f.close();
+
+      // verify the solutes match the s & k.txt files
+      for ( unsigned int i = 0; i < solutions.size(); i++ )
+      {
+         for ( unsigned int j = 0; j < solutions[i].component.size(); j++ )
+         {
+            QString key = QString("%1~%2")
+               .arg(solutions[i].component[j].s)
+               .arg(solutions[i].component[j].k);
+            if ( !ir.k_rmsd.count(key) ||
+                 !ir.s_rmsd.count(key) )
+            {
+               cout << "solute key " << key << " missing from k.txt or s.txt\n";
+               exit(-806);
+            }
+         }
+      }
+      puts("solute file validated");
+      ir.prep();
+
+      printf("s_pos 2.6e-13 %d\n", ir.s_pos(2.6e-13));
+      printf("k_pos 1.6 %d\n", ir.k_pos(1.6));
+
+      QFile f_out("bigsk.txt");
+      if (!f_out.open(IO_WriteOnly))
+      {
+         fprintf(stderr, "File create error bigsk.txt");
+         exit(-804);
+      }
+      
+      QTextStream ts_out(&f_out);
+      for ( double s = 1e-13; s <= 1e-12; s += .05e-13 ) {
+         for ( double k = 1; k <= 4; k += .05 ) {
+            ts_out << s << " " << k << " " << ir.sk_interprmsd(s, k) << endl;
+         }
+      }
+      f_out.close();
+
+      puts("not finished");
+      exit(0);
+      
+   }
+
    printf("%s error: %s unknown command\n", argv[0], argv[1]);
    exit(-2);
 }
+
+

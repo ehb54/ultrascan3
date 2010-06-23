@@ -20,6 +20,9 @@
 #define VARIANCE_IMPROVEMENT_TOLERANCE 1e-100
 
 // #define DEBUG_HYDRO
+// #define DEBUG_RA
+// #define DEBUG_RA_HEAVY1
+// #define DEBUG_RA_HEAVY2
 
 #if defined(TESTING)
 double float_mc_edge_max = 20;
@@ -154,7 +157,7 @@ static void clear_data(mfem_data *d)
 }
 
 US_fe_nnls_t::US_fe_nnls_t()
-   // US_fe_nnls_t::US_fe_nnls_t(QWidget * p, const char *name):QWidget(p, name)
+// US_fe_nnls_t::US_fe_nnls_t(QWidget * p, const char *name):QWidget(p, name)
 {
    fitdiffs = false;
    rotor_list.clear();
@@ -168,6 +171,24 @@ QString tr(QString s)
 {
    return s;
 }
+
+// #define SAVE_FOR_DISTANCE
+#if defined(SAVE_FOR_DISTANCE)
+map < QString, bool > saved_dist;
+US_FemGlobal us_fg;
+
+void save_if_not(vector < mfem_data > *exp, unsigned int e, double s, double k) 
+{
+   QString key = QString("%1~%2~%3").arg(e).arg(s).arg(k);
+   if ( saved_dist.count(key) )
+   {
+      return;
+   }
+   saved_dist[key] = true;
+   us_fg.write_model_data(exp, QString("save_data/%1").arg(key));
+}
+#endif
+   
 
 Simulation_values US_fe_nnls_t::regularize(Simulation_values org_sv, double use_meniscus)
 {
@@ -1024,9 +1045,9 @@ US_fe_nnls_t::send_udp_msg()
          job_udp_msg_iterative;
 #if defined(DEBUG_UDP)
       printf("writing udp message %s to host %s port %d\n",
-	     msg.ascii(),
-	     host_address_udp.toString().ascii(),
-	     host_port);
+             msg.ascii(),
+             host_address_udp.toString().ascii(),
+             host_port);
       fflush(stdout);
 #endif
       socket_device_udp->writeBlock ( msg.ascii(), msg.length(), host_address_udp, host_port );
@@ -1061,6 +1082,13 @@ US_fe_nnls_t::init_run(const QString & data_file,
    job_udp_msg_meniscus = "";
    
    this->gridopt = gridopt;
+   if ( gridopt == "gridrmsd" )
+   {
+      gridrmsd = true;
+      puts("gridrmsd run");
+   } else {
+      gridrmsd = false;
+   }
    this->gridopt = "no";
    maxrss = 0l;
 
@@ -2182,15 +2210,13 @@ typedef struct _MPI_Work_Msg
    int command; // 1 process solutes, 2 wait for wakeup, 3 shutdown, 0 idle (after data received), 4 wakeup sent
    unsigned int depth; // nonzero if union
    double meniscus_offset;
-}
-MPI_Work_Msg;
+} MPI_Work_Msg;
 
 typedef struct _Jobqueue
 {
    MPI_Work_Msg msg;
    vector<Solute> solutes;
-}
-Jobqueue;
+} Jobqueue;
 
 void US_fe_nnls_t::write_checkpoint(
                                     int *monte_carlo_iteration,
@@ -2305,7 +2331,7 @@ void US_fe_nnls_t::write_checkpoint(
             k++ ) 
       {
          *ds << (*i).sv.ri_noise[k];
-         }         
+      }         
       
       *ds << (unsigned int)(*i).sv.variances.size();
       for ( unsigned int k = 0;
@@ -2474,8 +2500,315 @@ void US_fe_nnls_t::read_checkpoint(
    printf("read_checkpoint, mc iteration now, %d our_expdata_list size %u\n", *monte_carlo_iteration, (unsigned int)our_expdata_list->size());
 }
 
+class sortable_double {
+public:
+   double x;
+   bool operator < (const sortable_double& objIn) const
+   {
+      return x < objIn.x;
+   }
+};
+
+static float rmsd2(vector < mfem_data > *m1,
+                   vector < mfem_data > *m2)
+{
+   double rmsd = 0.0;
+   unsigned int pts = 0;
+   for ( unsigned int e = 0;
+         e < m1->size();
+         e++ ) 
+   {
+      if ( (*m1)[e].scan.size() != (*m2)[e].scan.size() ||
+           (*m1)[e].radius.size() != (*m2)[e].radius.size() ) 
+      {
+         printf("models are not compatible (scan sizes %u,%u; radius sizes %u,%u)\n",
+                (unsigned int) (*m1)[e].scan.size(),
+                (unsigned int) (*m2)[e].scan.size(),
+                (unsigned int) (*m1)[e].radius.size(),
+                (unsigned int) (*m2)[e].radius.size());
+         MPI_Finalize();
+         exit(-702);
+      }
+      
+      pts += (*m1)[e].scan.size() * (*m1)[e].radius.size();
+      
+      for ( unsigned int j = 0; j < (*m1)[e].scan.size(); j++)
+      {
+         for ( unsigned int k = 0; k < (*m1)[e].radius.size(); k++)
+         {
+            double d = (*m1)[e].scan[j].conc[k] - (*m2)[e].scan[j].conc[k];
+            rmsd += d * d;
+         }
+      }
+   }
+   rmsd /= pts;
+   rmsd = pow(rmsd, 0.5);
+#if defined(DEBUG_GRIDRMSD)
+   printf("%g\n", rmsd);
+#endif
+   return rmsd;
+}
+
 int US_fe_nnls_t::run(int status)
 {
+   if ( gridrmsd ) 
+   {
+      if ( myrank ) 
+      {
+         MPI_Finalize();
+         exit(0);
+      }
+      if ( analysis_type != "2DSA_RA" )
+      {
+         printf("only 2DSA_RA currently supported\n");
+         MPI_Finalize();
+         exit(0);
+      }        
+
+      // build array of fem solutions
+      cout << "building array\n";
+
+      map < QString, vector < mfem_data > > m;
+
+      list < sortable_double > s_list;
+      list < sortable_double > k_list;
+
+      map < QString, bool > used_s;
+      map < QString, bool > used_k;
+      
+      for (unsigned int i = 0; i < solutions.size(); i++)
+      {
+         for (unsigned int j = 0; j < solutions[i].component.size(); j++)
+         {
+            double s = solutions[i].component[j].s;
+            double k = solutions[i].component[j].k;
+
+            if ( !used_s.count(QString("%1").arg(s)) ) 
+            {
+               used_s[QString("%1").arg(s)] = true;
+               sortable_double tmp;
+               tmp.x = s;
+               s_list.push_back(tmp);
+            }
+
+            if ( !used_k.count(QString("%1").arg(k)) ) 
+            {
+               used_k[QString("%1").arg(k)] = true;
+               sortable_double tmp;
+               tmp.x = k;
+               k_list.push_back(tmp);
+            }
+               
+            QString key =
+               QString("%1~%2").arg(s).arg(k);
+            // cout << "building for solution " << key << endl;
+            m[key] = experiment;
+            for ( unsigned int e = 0; e < experiment.size(); e++ )
+            {
+               double D_20w = (R * K20) /
+                  (AVOGADRO * 18 * M_PI * pow(k * VISC_20W, 3.0/2.0) *
+                   pow((fabs(s) * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
+               double D_tb = D_20w / experiment[e].D20w_correction;
+               
+               US_Astfem_RSA astfem_rsa(false);
+               use_model_system = model_system_1comp;
+               use_model_system.component_vector[0].s = s / experiment[e].s20w_correction;
+               use_model_system.component_vector[0].D = D_tb;
+               use_simulation_parameters = simulation_parameters_vec[e];
+               // use_simulation_parameters.meniscus += meniscus_offset;
+               vector<mfem_data> use_experiment;
+               use_experiment.push_back(experiment[e]);
+               astfem_rsa.setTimeCorrection(true);
+               astfem_rsa.setTimeInterpolation(false);
+               if(!fit_tinoise && use_simulation_parameters.band_forming) {
+                  use_simulation_parameters.band_firstScanIsConcentration = true;
+               } else {
+                  use_simulation_parameters.band_firstScanIsConcentration = false;
+               }
+
+               astfem_rsa.calculate(&use_model_system, 
+                                    &use_simulation_parameters, 
+                                    &use_experiment, 
+                                    0, 
+                                    0, 
+                                    &rotor_list);
+               
+               m[key][e] = use_experiment[0];
+            }
+         }
+      }
+
+      // array bookkeeping
+
+      s_list.sort();
+      k_list.sort();
+
+      vector < double > s_vec;
+      vector < double > k_vec;
+
+      for ( list < sortable_double > ::const_iterator it = s_list.begin(); it != s_list.end(); ++it )
+      {
+         s_vec.push_back(it->x);
+      }
+
+      for ( list < sortable_double > ::const_iterator it = k_list.begin(); it != k_list.end(); ++it )
+      {
+         k_vec.push_back(it->x);
+      }
+
+      cout << "s_vec:\n";
+      for ( unsigned int i = 0; i < s_vec.size(); i++ ) 
+      {
+         cout << s_vec[i] << " ";
+      }
+      
+      cout << "\nk_vec:\n";
+      for ( unsigned int i = 0; i < k_vec.size(); i++ ) 
+      {
+         cout << k_vec[i] << " ";
+      }
+      cout << endl;
+
+      // ok, now we have systems, we can compute our rmsd diffs
+      map < QString, double > rmsd_s;
+      map < QString, double > rmsd_k;
+      map < QString, double > rmsd_sk;
+
+      for ( unsigned int i = 0; i < s_vec.size(); i++ )
+      {
+         for ( unsigned int j = 0; j < k_vec.size(); j++ )
+         {
+            // compute for k
+            // average of previous & next k's
+
+            QString basekey =
+               QString("%1~%2").arg(s_vec[i]).arg(k_vec[j]);
+            
+            QString prevkey =
+               j == 0 ?
+               QString("%1~%2").arg(s_vec[i]).arg(k_vec[j+1]) :
+               QString("%1~%2").arg(s_vec[i]).arg(k_vec[j-1]);
+
+            QString nextkey =
+               ( j == k_vec.size() - 1 ) ?
+               QString("%1~%2").arg(s_vec[i]).arg(k_vec[j-1]) :
+               QString("%1~%2").arg(s_vec[i]).arg(k_vec[j+1]);
+            
+#if defined(DEBUG_GRIDRMSD)
+            cout 
+               << i << "\t"
+               << j << "\t"
+               << prevkey << "\t" 
+               << basekey << "\t" 
+               << nextkey << endl;
+#endif
+               
+            rmsd_k[basekey] = 
+               ( rmsd2(&m[basekey],&m[prevkey]) + 
+                 rmsd2(&m[basekey],&m[nextkey]) ) / 2.0;
+
+            prevkey =
+               i == 0 ?
+               QString("%1~%2").arg(s_vec[i+1]).arg(k_vec[j]) :
+               QString("%1~%2").arg(s_vec[i-1]).arg(k_vec[j]);
+
+            nextkey =
+               ( i == s_vec.size() - 1 ) ?
+               QString("%1~%2").arg(s_vec[i-1]).arg(k_vec[j]) :
+               QString("%1~%2").arg(s_vec[i+1]).arg(k_vec[j]);
+
+#if defined(DEBUG_GRIDRMSD)
+            cout 
+               << i << "\t"
+               << j << "\t"
+               << prevkey << "\t" 
+               << basekey << "\t" 
+               << nextkey << endl;
+#endif
+
+            rmsd_s[basekey] = 
+               ( rmsd2(&m[basekey],&m[prevkey]) + 
+                 rmsd2(&m[basekey],&m[nextkey]) ) / 2.0;
+
+            rmsd_sk[basekey] = 
+               ( rmsd_s[basekey] +
+                 rmsd_k[basekey] ) / 2.0;
+         }
+      }
+
+      QFile fs("s.txt");
+      if ( !fs.open(IO_WriteOnly) )
+      {
+         cout << "s.txt file create error\n";
+         MPI_Finalize();
+         exit(0);
+      }
+      QTextStream tss(&fs);
+      
+      for ( unsigned int i = 0; i < s_vec.size(); i++ )
+      {
+         for ( unsigned int j = 0; j < k_vec.size(); j++ )
+         {
+            QString key =
+               QString("%1~%2").arg(s_vec[i]).arg(k_vec[j]);
+            tss 
+               << s_vec[i] << " "
+               << k_vec[j] << " "
+               << rmsd_s[key] << endl;
+         }
+      }
+      fs.close();
+
+      QFile fk("k.txt");
+      if ( !fk.open(IO_WriteOnly) )
+      {
+         cout << "k.txt file create error\n";
+         MPI_Finalize();
+         exit(0);
+      }
+      QTextStream tsk(&fk);
+      
+      for ( unsigned int i = 0; i < s_vec.size(); i++ )
+      {
+         for ( unsigned int j = 0; j < k_vec.size(); j++ )
+         {
+            QString key =
+               QString("%1~%2").arg(s_vec[i]).arg(k_vec[j]);
+            tsk 
+               << s_vec[i] << " "
+               << k_vec[j] << " "
+               << rmsd_k[key] << endl;
+         }
+      }
+      fk.close();
+
+      QFile fsk("sk.txt");
+      if ( !fsk.open(IO_WriteOnly) )
+      {
+         cout << "sk.txt file create error\n";
+         MPI_Finalize();
+         exit(0);
+      }
+      QTextStream tssk(&fsk);
+      
+      for ( unsigned int i = 0; i < s_vec.size(); i++ )
+      {
+         for ( unsigned int j = 0; j < k_vec.size(); j++ )
+         {
+            QString key =
+               QString("%1~%2").arg(s_vec[i]).arg(k_vec[j]);
+            tssk 
+               << s_vec[i] << " "
+               << k_vec[j] << " "
+               << rmsd_sk[key] << endl;
+         }
+      }
+      fsk.close();
+
+      MPI_Finalize();
+      exit(0);
+   } // end of gridrmsd
+
    if(!myrank) {
       send_udp_msg();
       job_udp_msg_status = "Running. ";
@@ -3384,8 +3717,8 @@ int US_fe_nnls_t::run(int status)
       {
          if ( !myrank && this_monte_carlo )
          {
-               job_udp_msg_mc = QString("MC iteration %1. ").arg(this_monte_carlo);
-               send_udp_msg();
+            job_udp_msg_mc = QString("MC iteration %1. ").arg(this_monte_carlo);
+            send_udp_msg();
          }
          if (use_multi_exp)
          {
@@ -5182,12 +5515,34 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
                } else {
                   use_simulation_parameters.band_firstScanIsConcentration = false;
                }
+#if defined(DEBUG_RA)
+               printf("call astfem_rsa.calculate s %g D %g\n", solutes[i].s, D_tb); fflush(stdout);
+               printf("use_simulation_paramters.simpoints %u\n", use_simulation_parameters.simpoints);
+#endif
                astfem_rsa.calculate(&use_model_system, 
                                     &use_simulation_parameters, 
                                     &use_experiment, 
                                     0, 
                                     0, 
                                     &rotor_list);
+#if defined(DEBUG_RA)
+               puts("return astfem_rsa.calculate"); fflush(stdout);
+#endif
+#if defined(SAVE_FOR_DISTANCE)
+               save_if_not(&use_experiment, e, solutes[i].s, solutes[i].k);
+#endif
+#if defined(DEBUG_RA_HEAVY1)
+               if(1 || !myrank) {
+                  unsigned int e = 0;
+                  unsigned int j;
+                  unsigned int k;
+                  for(j = 0; j < use_experiment[0].scan.size(); j++) {
+                     for(k = 0; k < use_experiment[0].scan[j].conc.size(); k++) {
+                        printf("%d: asftem experiment scan %lu pos %lu conc %g\n", myrank, j, k, use_experiment[e].scan[j].conc[k]); fflush(stdout);
+                     }
+                  }
+               }
+#endif
                experiment[e] = use_experiment[0];
             } else {
                mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,
@@ -6124,6 +6479,22 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
                                        0, 
                                        0, 
                                        &rotor_list);
+#if defined(DEBUG_RA_HEAVY2)
+                  if(1 || !myrank) {
+                     printf("%d: after heavy2 calculate s %g d %g\n", 
+                            myrank,
+                            use_model_system.component_vector[0].s,
+                            use_model_system.component_vector[0].D); fflush(stdout);
+                     unsigned int e = 0;
+                     unsigned int j;
+                     unsigned int k;
+                     for(j = 0; j < use_experiment[0].scan.size(); j++) {
+                        for(k = 0; k < use_experiment[0].scan[j].conc.size(); k++) {
+                           printf("%d: asftem experiment scan %lu pos %lu conc %g\n", myrank, j, k, use_experiment[e].scan[j].conc[k]); fflush(stdout);
+                        }
+                     }
+                  }
+#endif
                   experiment[e] = use_experiment[0];
                } else {
                   mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,
@@ -6147,6 +6518,12 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
                   {
                      residuals[e].scan[j].conc[k] +=
                         nnls_x[i] * experiment[e].scan[j].conc[k];
+#if defined(DEBUG_RA_HEAVY2)
+                     if(!myrank) {
+                        printf("%d: accum residual scan %lu pos %lu conc %g nnls_x[%lu] %g\n", 
+                               myrank, j, k, residuals[e].scan[j].conc[k], i, nnls_x[i]); fflush(stdout);
+                     }
+#endif
                      //   printf("resid %d %d %g\n", j, k, residuals[e].scan[j].conc[k]); fflush(stdout);
                      cks4 += residuals[e].scan[j].conc[k];
                   }
@@ -6260,7 +6637,7 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 #endif
 
 #if defined(DEBUG_HYDRO)
-   printf("%d: rmsd at end of calc_resid: %f\n", sqrt(sv.variance)); fflush(stdout);
+   printf("%d: rmsd at end of calc_resid: %f\n", myrank, sqrt(sv.variance)); fflush(stdout);
 #endif
    return sv;
 
@@ -6279,9 +6656,9 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 #include <fcntl.h>
 #include <dirent.h>
 
-#define DEV_ENCODE(M,m) (                  \
-          ( (M&0xfff) << 8) | ( (m&0xfff00) << 12) | (m&0xff) \
-          )
+#define DEV_ENCODE(M,m) (                                               \
+                         ( (M&0xfff) << 8) | ( (m&0xfff00) << 12) | (m&0xff) \
+                         )
 
 #include <asm/param.h> /* HZ */
 // #include <asm/page.h> /* PAGE_SIZE */

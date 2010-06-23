@@ -5,5 +5,6 @@
 #include "us_femglobal.h"
 #include "us_sa2dbase.h"
 #include "us_viewmwl.h"
+#include "us_gridcontrol.h"
 
 #endif
