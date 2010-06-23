@@ -23,7 +23,8 @@ QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData )
       return( db.lastError() );
 
    QStringList q( "new_experiment" );
-   q  << QString::number( ExpData.projectID )
+   q  << ExpData.expGUID
+      << QString::number( ExpData.projectID )
       << ExpData.runID
       << QString::number( ExpData.labID )
       << QString::number( ExpData.instrumentID )
@@ -47,7 +48,7 @@ QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData )
    db.query( q );
    db.next();
 
-   ExpData.date = db.value( 11 ).toString();
+   ExpData.date = db.value( 12 ).toString();
    return( NULL );
 }
 
@@ -86,7 +87,7 @@ QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData )
    db.query( q );
    db.next();
 
-   ExpData.date = db.value( 11 ).toString();
+   ExpData.date = db.value( 12 ).toString();
    return( NULL );
 }
 
@@ -117,7 +118,8 @@ int US_ConvertIO::writeXmlFile(
 
    // elements
    xml.writeStartElement( "experiment" );
-   xml.writeAttribute   ( "id", QString::number( ExpData.expID ) );
+   xml.writeAttribute   ( "id",   QString::number( ExpData.expID ) );
+   xml.writeAttribute   ( "guid", ExpData.expGUID );
    xml.writeAttribute   ( "type", ExpData.expType );
 
       xml.writeStartElement( "investigator" );
@@ -129,11 +131,13 @@ int US_ConvertIO::writeXmlFile(
       xml.writeEndElement  ();
       
       xml.writeStartElement( "lab" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.labID ) );
+      xml.writeAttribute   ( "id",   QString::number( ExpData.labID   ) );
+      xml.writeAttribute   ( "guid", ExpData.labGUID );
       xml.writeEndElement  ();
       
       xml.writeStartElement( "instrument" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.instrumentID ) );
+      xml.writeAttribute   ( "id",     QString::number( ExpData.instrumentID ) );
+      xml.writeAttribute   ( "serial", ExpData.instrumentSerial );
       xml.writeEndElement  ();
       
       xml.writeStartElement( "operator" );
@@ -141,17 +145,8 @@ int US_ConvertIO::writeXmlFile(
       xml.writeEndElement  ();
 
       xml.writeStartElement( "rotor" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.rotorID ) );
-      xml.writeEndElement  ();
-
-      // Write out a new GUID for the experiment as a whole
-      uuid_t uuid;
-      char uuidc[ 37 ];
-
-      uuid_generate( uuid );
-      uuid_unparse( (unsigned char*)uuid, uuidc );
-      xml.writeStartElement( "guid" );
-      xml.writeAttribute   ( "id", QString( uuidc ) );
+      xml.writeAttribute   ( "id",   QString::number( ExpData.rotorID   ) );
+      xml.writeAttribute   ( "guid", ExpData.rotorGUID );
       xml.writeEndElement  ();
 
       // loop through the following for c/c/w combinations
@@ -167,26 +162,26 @@ int US_ConvertIO::writeXmlFile(
          QString     channel    = parts[ 1 ];
          QString     wl         = parts[ 2 ];
 
+         char uuidc[ 37 ];
+         uuid_unparse( (unsigned char*)t.guid, uuidc );
          xml.writeStartElement( "dataset" );
          xml.writeAttribute   ( "cell", cell );
          xml.writeAttribute   ( "channel", channel );
          xml.writeAttribute   ( "wavelength", wl );
-
-            uuid_unparse( (unsigned char*)t.guid, uuidc );
-            xml.writeStartElement( "guid" );
-            xml.writeAttribute   ( "id", QString( uuidc ) );
-            xml.writeEndElement  ();
+         xml.writeAttribute   ( "guid", QString( uuidc ) );
 
             xml.writeStartElement( "centerpiece" );
             xml.writeAttribute   ( "id", QString::number( t.centerpiece ) );
             xml.writeEndElement  ();
 
             xml.writeStartElement( "buffer" );
-            xml.writeAttribute   ( "id", QString::number( t.bufferID ) );
+            xml.writeAttribute   ( "id",   QString::number( t.bufferID ) );
+            xml.writeAttribute   ( "guid", t.bufferGUID );
             xml.writeEndElement  ();
 
             xml.writeStartElement( "analyte" );
-            xml.writeAttribute   ( "id", QString::number( t.analyteID ) );
+            xml.writeAttribute   ( "id",   QString::number( t.analyteID ) );
+            xml.writeAttribute   ( "guid", t.analyteGUID );
             xml.writeEndElement  ();
 
          xml.writeEndElement   ();

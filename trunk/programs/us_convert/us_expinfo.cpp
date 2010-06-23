@@ -306,16 +306,18 @@ bool US_ExpInfo::load( void )
       {
          expInfo.projectID          = db.value( 0 ).toInt();
          expInfo.expID              = db.value( 1 ).toInt();
-         expInfo.labID              = db.value( 2 ).toInt();
-         expInfo.instrumentID       = db.value( 3 ).toInt();
-         expInfo.operatorID         = db.value( 4 ).toInt();
-         expInfo.rotorID            = db.value( 5 ).toInt();
-         expInfo.expType            = db.value( 6 ).toString();
+         expInfo.expGUID            = db.value( 2 ).toString();
+         expInfo.labID              = db.value( 3 ).toInt();
+         expInfo.instrumentID       = db.value( 4 ).toInt();
+         expInfo.operatorID         = db.value( 5 ).toInt();
+         expInfo.rotorID            = db.value( 6 ).toInt();
+         expInfo.expType            = db.value( 7 ).toString();
          // Let's go with the calculated runTemp);
-         expInfo.label              = db.value( 8 ).toString();
-         expInfo.comments           = db.value( 9 ).toString();
-         expInfo.centrifugeProtocol = db.value( 10 ).toString();
-         expInfo.date               = db.value( 11 ).toString();
+         expInfo.label              = db.value( 9 ).toString();
+         expInfo.comments           = db.value( 10 ).toString();
+         expInfo.centrifugeProtocol = db.value( 11 ).toString();
+         expInfo.date               = db.value( 12 ).toString();
+
       }
 
       else if ( db.lastErrno() == US_DB2::NOROWS )
@@ -493,7 +495,7 @@ int US_ExpInfo::checkRunID( void )
    {
       // Then the runID is in the db
       db.next();
-      return( db.value( 1 ).toInt() );            // Return the expID
+      return( db.value( 2 ).toInt() );            // Return the expID
    }
 
    else if ( db.lastErrno() != US_DB2::NOROWS )
@@ -709,7 +711,7 @@ void US_ExpInfo::accept( void )
    expInfo.lastName  = components.first().toAscii();
    expInfo.firstName = components.last().toAscii();
 
-   // Other experiment information that goes into the db
+   // Other experiment information
    expInfo.projectID     = cb_project       ->getLogicalID();
    expInfo.runID         = le_runID         ->text();
    expInfo.labID         = cb_lab           ->getLogicalID();
@@ -720,6 +722,34 @@ void US_ExpInfo::accept( void )
    expInfo.runTemp       = le_runTemp       ->text(); 
    expInfo.label         = le_label         ->text(); 
    expInfo.comments      = te_comment       ->toPlainText();
+
+   // additional associated information
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   expInfo.labGUID = QString( NULL );
+   QStringList q( "get_lab_info" );
+   q << QString::number( expInfo.labID );
+   db.query( q );
+   if ( db.next() )
+      expInfo.labGUID = db.value( 0 ).toString();
+
+   expInfo.instrumentSerial = QString( NULL );
+   q.clear();
+   q << QString( "get_instrument_info" )
+     << QString::number( expInfo.instrumentID );
+   db.query( q );
+   if ( db.next() )
+      expInfo.instrumentSerial = db.value( 1 ).toString();
+
+   expInfo.rotorGUID = QString( NULL );
+   q.clear();
+   q << QString( "get_rotor_info" )
+     << QString::number( expInfo.rotorID );
+   db.query( q );
+   if ( db.next() )
+      expInfo.rotorGUID = db.value( 0 ).toString();
 
    emit updateExpInfoSelection( expInfo );
    close();
