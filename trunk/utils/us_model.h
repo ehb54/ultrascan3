@@ -136,7 +136,7 @@ class US_EXTERN US_Model
          double k_off;
       
          // A list of all system components involved in this reaction
-         QVector< uint > reaction_components;   
+         QVector< int >  reaction_components;   
 
          // Stoichiometry of components in chemical equation.
          // Positive for reactant, negative for product

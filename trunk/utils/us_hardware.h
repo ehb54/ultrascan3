@@ -3,9 +3,6 @@
 #define US_HARDWARE_H
 
 #include <QtCore>
-#include <vector>
-using namespace std;
-
 #include "us_extern.h"
 #include "us_util.h"
 
@@ -24,7 +21,7 @@ struct centerpieceInfo
    //! The centerpiece's serial number (series starts zero)
    int     serial_number;     
    QString material;             //!< epon, aluminum, titanium
-   uint    channels;             //!< number of channels divided by 2
+   int     channels;             //!< number of channels divided by 2
    
    //! Bottom position of each channel (max 4) 
    //! If sector==3: position for synth. boundary
@@ -50,11 +47,11 @@ class US_EXTERN US_Hardware
    public:
       //! \brief Read rotor information into a structure
       //! \param rotor_list Reference of structure data to place data
-      static bool readRotorInfo      ( vector< struct rotorInfo       >& );
+      static bool readRotorInfo      ( QVector< struct rotorInfo       >& );
       
       //! \brief Read centerpiect information into a structure
       //! \param cp_list Reference of structure to place data 
-      static bool readCenterpieceInfo( vector< struct centerpieceInfo >& );
+      static bool readCenterpieceInfo( QVector< struct centerpieceInfo >& );
 };
 
 #endif

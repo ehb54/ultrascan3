@@ -20,6 +20,7 @@ US_ModelLoader::US_ModelLoader( bool multisel, bool local, QString search,
    setMinimumSize( 320, 300 );
 
    model_descriptions.clear();
+   all_model_descrips.clear();
 
    // Main layout
    QVBoxLayout* main = new QVBoxLayout( this );
@@ -94,6 +95,9 @@ US_ModelLoader::US_ModelLoader( bool multisel, bool local, QString search,
       dinvtext = QDir( QDir::homePath() ).dirName();
 
    le_investigator->setText( dinvtext );
+
+   db_id1     = -2;
+   db_id2     = -2;
 
    // Trigger models list from disk or db source
    if ( !dsearch.contains( "=edit" ) )
@@ -260,31 +264,31 @@ void US_ModelLoader::list_models()
 {
    QString mfilt = le_mfilter->text();
    bool listall  = mfilt.isEmpty();
-   bool listdsc  = !listall;
-   bool listeid  = !listall;
+   bool listdesc = !listall;
+   bool listedit = !listall;
    QRegExp mpart = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
    ondisk     = rb_disk->isChecked();
    model_descriptions.clear();         // clear model descriptions
 
    if ( !listall )
    {  // filter is not empty
-      listeid = mfilt.contains( "=edit" );  // edit filtered?
-      listdsc = !listeid;                   // description filtered?
+      listedit = mfilt.contains( "=edit" );  // edit filtered?
+      listdesc = !listedit;                  // description filtered?
 
-      if ( listeid  &&  edguid.isEmpty() )
+      if ( listedit  &&  edguid.isEmpty() )
       {  // disallow edit filter if no edit GUID has been given
          QMessageBox::information( this,
                tr( "Edit GUID Problem" ),
                tr( "No Edit GUID was given.\n\"=edit\" reset to blank." ) );
-         listall = true;
-         listdsc = false;
-         listeid = false;
+         listall  = true;
+         listdesc = false;
+         listedit = false;
          le_mfilter->setText( "" );
       }
    }
-qDebug() << "listall" << listall;
-qDebug() << "  listdsc" << listdsc;
-qDebug() << "  listeid" << listeid;
+//qDebug() << "listall" << listall;
+//qDebug() << "  listdesc" << listdesc;
+//qDebug() << "  listedit" << listedit;
          
    if ( ondisk )
    {  // Models from local disk files
@@ -299,57 +303,58 @@ qDebug() << "  listeid" << listeid;
       // Examine all "M*xml" files in models directory
       QStringList filter( "M*.xml" );
       QStringList f_names = dir.entryList( filter, QDir::Files, QDir::Name );
+//qDebug() << "   md size" << all_model_descrips.size();
+//qDebug() << "   fn size" << f_names.size();
 
-      QXmlStreamAttributes attr;
+      if ( f_names.size() != all_model_descrips.size() )
+      { // only re-fetch all-models list if we don't yet have it
+         QXmlStreamAttributes attr;
 
-      for ( int ii = 0; ii < f_names.size(); ii++ )
-      {
-         QString fname( path + "/" + f_names[ ii ] );
+         all_model_descrips.clear();
+
+         for ( int ii = 0; ii < f_names.size(); ii++ )
+         {
+            QString fname( path + "/" + f_names[ ii ] );
 //qDebug() << "fname" << f_names[ii];
-         QFile   m_file( fname );
+            QFile   m_file( fname );
 
-         if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
-            continue;
+            if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+               continue;
 
-         QXmlStreamReader xml( &m_file );
+            QXmlStreamReader xml( &m_file );
 
-         while ( ! xml.atEnd() )
-         {  // Search XML elements until we find "model"
-            xml.readNext();
+            while ( ! xml.atEnd() )
+            {  // Search XML elements until we find "model"
+               xml.readNext();
 
-            if ( xml.isStartElement() && xml.name() == "model" )
-            {  // Pick up model attributes for description
-               ModelDesc desc;
-               attr             = xml.attributes();
-               desc.description = attr.value( "description" ).toString();
-               desc.editguid    = attr.value( "editguid"    ).toString();
-//qDebug() << "       degid" << desc.editguid;
-//qDebug() << "       edgid" << edguid;
-
-               if ( listall  ||
-                  ( listdsc  &&  desc.description.contains( mpart  ) )  ||
-                  ( listeid  &&  desc.editguid.contains(    edguid ) ) )
-               {  // unfiltered or filter matches description
+               if ( xml.isStartElement() && xml.name() == "model" )
+               {  // Pick up model attributes for description
+                  ModelDesc desc;
+                  attr             = xml.attributes();
+                  desc.description = attr.value( "description" ).toString();
                   desc.guid        = attr.value( "guid"        ).toString();
                   desc.filename    = fname;
                   desc.DB_id       = "-1";
+                  desc.editguid    = attr.value( "editguid"    ).toString();
 //*DEBUG
-if (!listall) {
-qDebug() << " ddesc" << desc.description;
-qDebug() << "   mpart" << mpart.pattern();
-qDebug() << "   degid" << desc.editguid;
-qDebug() << "   edgid" << edguid;
-}
+//if (!listall) {
+//qDebug() << " ddesc" << desc.description;
+//qDebug() << "   mpart" << mpart.pattern();
+//qDebug() << "   degid" << desc.editguid;
+//qDebug() << "   edgid" << edguid;
+//}
 //*DEBUG
 
-                  model_descriptions << desc;  // add to models list
+                  all_model_descrips << desc;   // add to full models list
+                  break;
                }
-               break;
             }
-         }
 
-         m_file.close();
+            m_file.close();
+         }
       }
+      db_id1            = -2;
+      db_id2            = -2;
    }
 
    else
@@ -369,23 +374,83 @@ qDebug() << "   edgid" << edguid;
       QStringList query;
       QString     invID = le_investigator->text().section( ":", 0, 0 );
 
-      query << "get_model_desc" << invID;
-      db.query( query );
+      int countMD = all_model_descrips.size();
+      int kid1    = -3;
+      int kid2    = -3;
+//qDebug() << " md count" << countMD;
+//      query << "count_models" << invID;
+//      int countDB = db.statusQuery( query );
+//qDebug() << " db count" << countDB;
 
-      while ( db.next() )
+      if ( countMD > 0 )
       {
-         ModelDesc desc;
-         desc.DB_id        = db.value( 0 ).toString();
-         desc.guid         = db.value( 1 ).toString();
-         desc.description  = db.value( 2 ).toString();
-         desc.editguid     = db.value( 3 ).toString();
-         desc.filename.clear();
+         kid1 = all_model_descrips[ 0           ].DB_id.toInt();
+         kid2 = all_model_descrips[ countMD - 1 ].DB_id.toInt();
+      }
+//qDebug() << "  kid1 kid2" << kid1 << kid2;
+//qDebug() << "  db_id1 db_id2" << db_id1 << db_id2;
 
-         if ( listall  ||
-            ( listdsc  &&  desc.description.contains( mpart  ) )  ||
-            ( listeid  &&  desc.editguid.contains(    edguid ) ) )
-         {  // unfiltered or filter matches
-            model_descriptions << desc;   // add to models list
+      if ( countMD == 0  ||  kid1 != db_id1  ||  kid2 != db_id2 )
+      { // only re-fetch all-models list if we don't yet have it
+         db_id1            = kid1;
+         db_id2            = kid2;
+//qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
+         all_model_descrips.clear();
+         query.clear();
+
+         query << "get_model_desc" << invID;
+         db.query( query );
+//qDebug() << " NumRows" << db.numRows();
+
+         while ( db.next() )
+         {
+            ModelDesc desc;
+            desc.DB_id        = db.value( 0 ).toString();
+            desc.guid         = db.value( 1 ).toString();
+            desc.description  = db.value( 2 ).toString();
+            desc.editguid     = db.value( 3 ).toString();
+            desc.filename.clear();
+
+            all_model_descrips << desc;   // add to full models list
+         }
+      }
+   }
+
+   // possibly pare down models list based on search field
+
+   if ( listall )
+   {
+      for ( int jj = 0; jj < all_model_descrips.size(); jj++ )
+      {
+         model_descriptions << all_model_descrips[ jj ];
+      }
+   }
+
+   else if ( listedit )
+   {
+      for ( int jj = 0; jj < all_model_descrips.size(); jj++ )
+      {
+         if ( all_model_descrips[ jj ].editguid.contains(    edguid ) )
+         {  // edit filter matches
+            model_descriptions << all_model_descrips[ jj ];
+//ModelDesc desc = all_model_descrips[jj];
+//qDebug() << " ddesc" << desc.description;
+//qDebug() << "   degid" << desc.editguid;
+//qDebug() << "   edgid" << edguid;
+         }
+      }
+   }
+
+   else if ( listdesc )
+   {
+      for ( int jj = 0; jj < all_model_descrips.size(); jj++ )
+      {
+         if ( all_model_descrips[ jj ].description.contains( mpart  ) )
+         {  // description filter matches
+            model_descriptions << all_model_descrips[ jj ];
+//ModelDesc desc = all_model_descrips[jj];
+//qDebug() << " ddesc" << desc.description << jj;
+//qDebug() << "   mpart" << mpart.pattern();
          }
       }
    }
@@ -396,7 +461,7 @@ qDebug() << "   edgid" << edguid;
    if ( model_descriptions.size() > 0 )
    {
       for ( int ii = 0; ii < model_descriptions.size(); ii++ )
-      {  // propogate list widget with descriptions
+      {  // propagate list widget with descriptions
          lw_models->addItem( model_descriptions[ ii ].description );
       }
 
@@ -586,9 +651,10 @@ void US_ModelLoader::show_model_info( QPoint pos )
          row      = lw_models->row( lw_models->itemAt( pos ) );
          mdesc    = lw_models->itemAt( pos )->text();
       }
-//qDebug() << "  row" << row;
 
       mdx      = modelIndex( mdesc, model_descriptions );  // find index
+//qDebug() << "  row" << row;
+//qDebug() << "   mdx" << mdx;
 
       load_model( model, mdx );                            // load model
 

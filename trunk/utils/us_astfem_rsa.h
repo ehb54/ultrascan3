@@ -3,10 +3,10 @@
 #define US_ASTFEM_RSA_H
 
 #include <QtCore>
-#include <vector>
-using namespace std;
-
 #include "us_extern.h"
+#include "us_model.h"
+#include "us_simparms.h"
+#include "us_dataIO2.h"
 #include "us_astfem_math.h"
 
 //! \brief The module that calculates simulation data
@@ -19,10 +19,9 @@ class US_EXTERN US_Astfem_RSA : public QObject
       //! \param model  Reference to the model parmeters
       //! \param params Referece to the simulation parameters 
       //! \param parent Parent object, normally not specified
-      US_Astfem_RSA( struct ModelSystem&, struct SimulationParameters&, 
-            QObject* = 0 );
+      US_Astfem_RSA( US_Model&, US_SimulationParameters&, QObject* = 0 );
    
-      int  calculate           ( vector< struct mfem_data >&  );
+      int  calculate           ( US_DataIO2::RawData& );
 
       void setTimeCorrection   ( bool flag ){ time_correction = flag; }; 
       void setTimeInterpolation( bool flag ){ use_time        = flag; };
@@ -31,7 +30,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
       
 
    signals:
-      void new_scan         ( vector< double >&, double* );
+      void new_scan         ( QVector< double >&, double* );
       void new_time         ( double                    );
       void current_component( int                       );
       void current_speed    ( unsigned int              );
@@ -53,26 +52,28 @@ class US_EXTERN US_Astfem_RSA : public QObject
       double last_time;      
 
       double w2t_integral;    //!< Keep track of w2t_integral value globally
-      uint   N;               //!< Number of points used in radial direction
+      int    N;               //!< Number of points used in radial direction
       
       struct AstFemParameters af_params;
+      struct mfem_data        af_data;
+      struct mfem_initial     af_c0;
 
-      vector< double >               x;    //<! Radii of grid points; x[0...N-1] 
-      vector< struct ReactionGroup > rg;
-      struct ModelSystem&            system;
-      struct SimulationParameters&   simparams;
+      QVector< double >               x;  //<! Radii of grid points; x[0...N-1] 
+      QVector< struct ReactionGroup > rg;
+      US_Model&                       system;
+      US_SimulationParameters&        simparams;
 
       // Functions
       void   update_assocv  ( void );
-      void   adjust_limits  ( uint speed );
-      double stretch        ( int, uint );
+      void   adjust_limits  ( int speed );
+      double stretch        ( int, int );
       void   initialize_rg  ( void );
-      void   initialize_conc( uint, struct mfem_initial&, bool );
+      void   initialize_conc( int, struct mfem_initial&, bool );
 
       int    calculate_ni   ( double, double, mfem_initial&, mfem_data&, bool );
-      void   mesh_gen       ( vector< double >&, uint );
-      void   mesh_gen_s_pos ( const vector< double >& );
-      void   mesh_gen_s_neg ( const vector< double >& );
+      void   mesh_gen       ( QVector< double >&, int );
+      void   mesh_gen_s_pos ( const QVector< double >& );
+      void   mesh_gen_s_neg ( const QVector< double >& );
       void   mesh_gen_RefL  ( int, int );
       
       void   ComputeCoefMatrixFixedMesh( double, double, double**, double** );
@@ -81,20 +82,22 @@ class US_EXTERN US_Astfem_RSA : public QObject
       void   ComputeCoefMatrixMovingMeshR( double, double, double**, double** );
       void   ComputeCoefMatrixMovingMeshL( double, double, double**, double** );
              
-      void   ReactionOneStep_Euler_imp   ( uint, double**, double );
+      void   ReactionOneStep_Euler_imp   ( int, double**, double );
              
       void   Reaction_dydt    ( double*, double*  );
       void   Reaction_dfdy    ( double*, double** );
              
       int    calculate_ra2    ( double, double, mfem_initial*, mfem_data&, bool );         
 
-      void   GlobalStiff      ( vector< double >&, double**, double**,
+      void   GlobalStiff      ( QVector< double >&, double**, double**,
                                 double, double );
 
+      void   load_mfem_data   ( US_DataIO2::RawData&, struct mfem_data& );         
+      void   store_mfem_data  ( US_DataIO2::RawData&, struct mfem_data& );         
 
 #ifdef NEVER
-      void GlobalStiff_ellam(vector <double> *, double **, double **, double, double);
-      void adjust_grid( uint /*old speed*/, uint /*new speed*/, vector <double> * /*radial grid*/);
+      void GlobalStiff_ellam(QVector <double> *, double **, double **, double, double);
+      void adjust_grid( int /*old speed*/, int /*new speed*/, QVector <double> * /*radial grid*/);
 #endif
 };
 

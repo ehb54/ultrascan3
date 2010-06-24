@@ -1,7 +1,7 @@
 //! \file us_hardware.cpp
 #include "us_hardware.h"
 
-bool US_Hardware::readCenterpieceInfo( vector< struct centerpieceInfo >& cp_list )
+bool US_Hardware::readCenterpieceInfo( QVector< struct centerpieceInfo >& cp_list )
 {
    QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
 
@@ -27,7 +27,7 @@ bool US_Hardware::readCenterpieceInfo( vector< struct centerpieceInfo >& cp_list
             cp.material = US_Util::getToken( s, " " );
             cp.channels = US_Util::getToken( s, " ").toInt();;
 
-            for ( uint i = 0; i < cp.channels; i++ )
+            for ( int i = 0; i < cp.channels; i++ )
                cp.bottom_position[ i ] = US_Util::getToken( s, " " ).toFloat();
 
             cp.sector     = US_Util::getToken( s, " " ).toInt();
@@ -46,7 +46,7 @@ bool US_Hardware::readCenterpieceInfo( vector< struct centerpieceInfo >& cp_list
    return false;
 }
 
-bool US_Hardware::readRotorInfo( vector< struct rotorInfo >& rotor_list )
+bool US_Hardware::readRotorInfo( QVector< struct rotorInfo >& rotor_list )
 {
    QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
    
