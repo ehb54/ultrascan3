@@ -28,7 +28,7 @@ class US_EXTERN US_SimulationParameters
 
    QVector< SpeedProfile > speed_step;
 
-   uint      simpoints;         // number of radial grid points used in sim
+   int       simpoints;         // number of radial grid points used in sim
    MeshType  meshType;    
    GridType  gridType;          // Type of grid
    double    radial_resolution; // The radial datapoint increment/resolution 
@@ -57,13 +57,13 @@ class US_EXTERN US_SimulationParameters
 
       SpeedProfile();
 
-      uint   duration_hours;
-      uint   duration_minutes;
-      uint   delay_hours;
+      int    duration_hours;
+      int    duration_minutes;
+      int    delay_hours;
       double delay_minutes;
-      uint   scans;
-      uint   acceleration;
-      uint   rotorspeed;
+      int    scans;
+      int    acceleration;
+      int    rotorspeed;
       bool   acceleration_flag;
    };
 };

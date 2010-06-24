@@ -153,7 +153,7 @@ class US_DataIO2
          double value;   //!< The new value
       };
 
-      //! A class that holds all entries assiciated with the edits of
+      //! A class that holds all entries associated with the edits of
       //! a scan.
       class EditValues
       {

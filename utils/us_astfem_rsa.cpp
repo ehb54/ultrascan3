@@ -1,16 +1,15 @@
-//! \file us_astfem_rsa.h
+//! \file us_astfem_rsa.cpp
 
 #include "us_astfem_rsa.h"
 #include "us_astfem_math.h"
-#include "us_femglobal.h"
 #include "us_hardware.h"
 #include "us_math2.h"
 #include "us_stiffbase.h"
 #include "us_sleep.h"
 
-US_Astfem_RSA::US_Astfem_RSA( struct ModelSystem&          model, 
-                              struct SimulationParameters& params, 
-                              QObject*                     parent ) 
+US_Astfem_RSA::US_Astfem_RSA( US_Model&                model, 
+                              US_SimulationParameters& params, 
+                              QObject*                 parent ) 
    : QObject( parent ), system( model ), simparams( params )
 {
    stopFlag        = false;
@@ -19,9 +18,7 @@ US_Astfem_RSA::US_Astfem_RSA( struct ModelSystem&          model,
    show_movie      = false;
 }
 
-int US_Astfem_RSA::calculate( //struct ModelSystem&          system, 
-                              //struct SimulationParameters& simparams,
-                              vector< struct mfem_data >&    exp_data ) 
+int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data ) 
 {
    mfem_initial* vC0 = NULL;    // Initial concentration for multiple components
    mfem_initial  CT0;           // Initial total concentration
@@ -32,7 +29,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
    int           duration;
    int           initial_npts = 1000;
    int           current_assoc;
-   int           size_cv         = system.component_vector.size();
+   int           size_cv         = system.components.size();
    bool*         reacting        = new bool[ size_cv ];
 
    double        accel_time;
@@ -40,21 +37,23 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
    
    af_params.first_speed = simparams.speed_step[ 0 ].rotorspeed;
    af_params.simpoints   = simparams.simpoints;
-   
+ 
+   load_mfem_data( exp_data, af_data );
+
    update_assocv();
    initialize_rg();  // Reaction group
    adjust_limits( simparams.speed_step[ 0 ].rotorspeed );
 
    for ( int k = 0; k < size_cv; k++ )
    {
-      struct SimulationComponent* sc = &system.component_vector[ k ];
+      US_Model::SimulationComponent* sc = &system.components[ k ];
       reacting[ k ] = false;
-
-      for ( uint j = 0; j <  system.assoc_vector.size(); j++ )
+#if 0
+      for ( int j = 0; j <  system.associations.size(); j++ )
       {
-         for ( uint n = 0; n < system.assoc_vector[ j ].comp.size(); n++ )
+         for ( int n = 0; n < system.associations[ j ].comp.size(); n++ )
          {
-            if ( k == (int) system.assoc_vector[ j ].comp[ n ] )
+            if ( k == (int) system.associations[ j ].comp[ n ] )
             {
                 reacting[ k ] = true;
                 current_assoc = j;
@@ -62,13 +61,14 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
             }
          }
       }
+#endif
 
       current_time  = 0.0;
       last_time     = 0.0;
       current_speed = 0.0;
       w2t_integral  = 0.0;
       
-      CT0.radius.clear();
+      CT0.radius       .clear();
       CT0.concentration.clear();
       
       dr = ( af_params.current_bottom - af_params.current_meniscus ) / 
@@ -76,8 +76,17 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
       
       for ( int j = 0; j < initial_npts; j++ )
       {
-         CT0.radius.push_back( af_params.current_meniscus + j * dr );
-         CT0.concentration.push_back( 0.0 );
+         CT0.radius.append( af_params.current_meniscus + j * dr );
+         CT0.concentration.append( 0.0 );
+      }
+
+      af_c0.radius       .clear();
+      af_c0.concentration.clear();
+      
+      for ( int jj = 0; jj < initial_npts; jj++ )
+      {
+         af_c0.radius       .append( CT0.radius[        jj ] );
+         af_c0.concentration.append( CT0.concentration[ jj ] );
       }
 
       // Once time invariant noise has been removed in a band experiment, we
@@ -97,14 +106,15 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
          mfem_initial scan1;
          scan1.radius.clear();
          scan1.concentration.clear();
+         mfem_scan*   scan0 = &af_data.scan[ 0 ];
 
-         for ( uint j = 0; j < exp_data[ 0 ].scan[ 0 ].conc.size(); j++ )
+         for ( int j = 0; j < af_data.radius.size(); j++ )
          {
-            scan1.radius       .push_back( exp_data[ 0 ].radius[ j ] );
-            scan1.concentration.push_back( exp_data[ 0 ].scan[ 0 ].conc[ j ] );
+            scan1.radius       .append( af_data.radius[ j ] );
+            scan1.concentration.append( scan0->conc   [ j ] );
          }
 
-         US_AstfemMath::interpolate_C0( scan1, sc->c0 );
+         US_AstfemMath::interpolate_C0( scan1, af_c0 );
       }
 
       if ( ! reacting[ k ] ) // noninteracting
@@ -115,14 +125,14 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
          af_params.D.clear();
          af_params.kext.clear();
 
-         af_params.s    .push_back( sc->s );
-         af_params.D    .push_back( sc->D );
-         af_params.kext .push_back( sc->extinction );
+         af_params.s    .append( sc->s );
+         af_params.D    .append( sc->D );
+         af_params.kext .append( sc->extinction );
          
-         for ( uint step = 0; step < simparams.speed_step.size(); step++ )
+         for ( int step = 0; step < simparams.speed_step.size(); step++ )
          {
-            struct SpeedProfile* sp = &simparams.speed_step[ step ]; 
-            struct mfem_data*    ed = &exp_data            [ step ]; 
+            US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ step ]; 
+            struct mfem_data* ed = &af_data;
             adjust_limits( sp->rotorspeed );
 
             ed->meniscus = af_params.current_meniscus;
@@ -135,7 +145,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
                // If the speed difference is larger than acceleration rate then
                // we have at least 1 acceleration step
                
-               af_params.time_steps = (uint) 
+               af_params.time_steps = (int) 
                   fabs( sp->rotorspeed - current_speed ) / sp->acceleration;
                
                // Each simulation step is 1 second in the acceleration phase
@@ -158,11 +168,11 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
                
             }  // End of acceleration
 
-            duration = (uint) ( sp->duration_hours * 3600 + 
-                                sp->duration_minutes * 60 );
+            duration = (int) ( sp->duration_hours * 3600 + 
+                               sp->duration_minutes * 60 );
 
             if ( step == simparams.speed_step.size() - 1 )
-               duration += (uint) ( duration * 0.05 ); // + 5% 
+               duration += (int) ( duration * 0.05 ); // + 5% 
 
             if ( accel_time > duration )
             {
@@ -172,7 +182,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
             }
             else
             {
-               duration -= (uint) accel_time;
+               duration -= (int) accel_time;
             }
 
             double omega = sp->rotorspeed * M_PI / 30;
@@ -186,7 +196,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
             {
                af_params.dt        = duration;
                af_params.simpoints = 1 + 
-                  (uint) ( log( ed->bottom / ed->meniscus ) /
+                  (int) ( log( ed->bottom / ed->meniscus ) /
                            ( fabs( sc->s ) * af_params.omega_s * af_params.dt ) 
                          );
             }
@@ -195,7 +205,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
 
             // Find out the minimum number of simpoints needed to provide 
             // the necessary dt:
-            af_params.time_steps = (uint) ( 1 + duration / af_params.dt );
+            af_params.time_steps = (int) ( 1 + duration / af_params.dt );
             af_params.start_time = current_time;
             
             calculate_ni( sp->rotorspeed, sp->rotorspeed, CT0, simdata, false );
@@ -228,10 +238,10 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
    
    struct ComponentRole cr;
 
-   for ( uint group = 0; group < rg.size(); group++ )
+   for ( int group = 0; group < rg.size(); group++ )
    {
-      uint num_comp = rg[ group ].GroupComponent.size();
-      uint num_rule = rg[ group ].association.size();
+      int num_comp = rg[ group ].GroupComponent.size();
+      int num_rule = rg[ group ].association.size();
       af_params.rg_index = group;
       
       af_params.s          .clear();
@@ -240,22 +250,23 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
       af_params.role       .clear();
       af_params.association.clear();
 
-      for ( uint m = 0; m < num_rule; m++ )
-         af_params.association.push_back( 
-               system.assoc_vector[ rg[ group ].association[ m ] ] );
+      for ( int m = 0; m < num_rule; m++ )
+         af_params.association.append( 
+               system.associations[ rg[ group ].association[ m ] ] );
 
-      for ( uint j = 0; j < num_comp; j++ )
+#if 0
+      for ( int j = 0; j < num_comp; j++ )
       {
          int                         index = rg[ group ].GroupComponent[ j ];
-         struct SimulationComponent* sc    = &system.component_vector[ index ];
-         af_params.s    .push_back( sc->s );
-         af_params.D    .push_back( sc->D );
-         af_params.kext .push_back( sc->extinction );
+         US_Model::SimulationComponent* sc    = &system.components[ index ];
+         af_params.s    .append( sc->s );
+         af_params.D    .append( sc->D );
+         af_params.kext .append( sc->extinction );
          
          // Global to local index
          af_params.local_index[ index ] = j;
 
-         af_params.role.push_back(  cr );  // Add j'th rule      
+         af_params.role.append(  cr );  // Add j'th rule      
 
          af_params.role[ j ].comp_index = index;
          af_params.role[ j ].assoc.clear();
@@ -263,33 +274,33 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
          af_params.role[ j ].st.clear();
 
          // Check all assoc rule in this rg
-         for ( uint m = 0; m < rg[ group ].association.size(); m++ ) 
+         for ( int m = 0; m < rg[ group ].association.size(); m++ ) 
          {
             // Check all comp in rule
-            uint                rule = rg[ group ].association[ m ];
-            struct Association* as   = &system.assoc_vector[ rule ];
-
-            for ( uint n = 0; n < as->comp.size(); n++ )
+            int                rule = rg[ group ].association[ m ];
+            US_Model::Association* as   = &system.associations[ rule ];
+            for ( int n = 0; n < as->comp.size(); n++ )
             {
                if ( af_params.role[ j ].comp_index == as->comp[ n ] )
                {
-                  af_params.role[ j ].assoc .push_back( m );  // local index for the rule
-                  af_params.role[ j ].react .push_back( as->react [ n ] );
-                  af_params.role[ j ].st    .push_back( as->stoich[ n ] );
+                  af_params.role[ j ].assoc .append( m );  // local index for the rule
+                  af_params.role[ j ].react .append( as->react [ n ] );
+                  af_params.role[ j ].st    .append( as->stoich[ n ] );
                   break;
                }
             }
          }
       }
 
-      for ( uint m = 0; m < num_rule; m++ )
+      for ( int m = 0; m < num_rule; m++ )
       {
-          for ( uint n = 0; n < af_params.association[ m ].comp.size(); n++ )
+          for ( int n = 0; n < af_params.association[ m ].comp.size(); n++ )
           {
             af_params.association[ m ].comp[ n ] = 
                af_params.local_index[ af_params.association[ m ].comp[ n ] ];
           }
       }
+#endif
 
       current_time  = 0.0;
       current_speed = 0.0;
@@ -303,15 +314,15 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
       
       vC0 = new mfem_initial[ rg[ group ].GroupComponent.size() ];
       
-      for ( uint j = 0; j < rg[ group ].GroupComponent.size(); j++ )
+      for ( int j = 0; j < rg[ group ].GroupComponent.size(); j++ )
       {
          CT0.radius.clear();
          CT0.concentration.clear();
 
          for ( int i = 0; i < initial_npts; i++ )
          {
-            CT0.radius       .push_back( af_params.current_meniscus + i * dr );
-            CT0.concentration.push_back( 0.0 );
+            CT0.radius       .append( af_params.current_meniscus + i * dr );
+            CT0.concentration.append( 0.0 );
          }
 
          initialize_conc( rg[ group ].GroupComponent[ j ], CT0, false );
@@ -320,10 +331,10 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
 
       decompose( vC0 );
 
-      for ( uint ss = 0; ss < simparams.speed_step.size(); ss++ )
+      for ( int ss = 0; ss < simparams.speed_step.size(); ss++ )
       {
-         struct SpeedProfile* sp = &simparams.speed_step[ ss ];
-         struct mfem_data*    ed = &exp_data            [ ss ]; // exp data
+         US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ ss ];
+         struct mfem_data* ed = &af_data;
 
          adjust_limits( sp->rotorspeed );
          ed->meniscus = af_params.current_meniscus;
@@ -336,7 +347,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
             // If the speed difference is larger than acceleration 
             // rate then we have at least 1 acceleration step
             
-            af_params.time_steps = (uint) 
+            af_params.time_steps = (int) 
                ( fabs( sp->rotorspeed - current_speed ) / sp->acceleration );
             
             // Each simulation step is 1 second long in the acceleration phase
@@ -360,11 +371,11 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
             if ( stopFlag ) return 1;
          }  // End of for acceleration
 
-         duration = (uint) 
+         duration = (int) 
             ( sp->duration_hours * 3600 + sp->duration_minutes * 60 );
          
          if ( ss == simparams.speed_step.size() - 1 )
-            duration += (uint) ( duration * 0.05 ); // + 5% 
+            duration += (int) ( duration * 0.05 ); // + 5% 
          
          if ( accel_time > duration )
          {
@@ -379,7 +390,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
 
          double s_max = fabs( af_params.s[ 0 ] );     // Find the largest s
          
-         for ( uint m = 1; m < af_params.s.size(); m++ )
+         for ( int m = 1; m < af_params.s.size(); m++ )
              if ( s_max < fabs( af_params.s[m] ) ) s_max = fabs( af_params.s[m] );
 
          af_params.omega_s = sq( sp->rotorspeed * M_PI / 30 );
@@ -391,7 +402,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
          {
             af_params.dt = duration;
             af_params.simpoints = 
-               1 + (uint) ( log( ed->bottom / ed->meniscus )
+               1 + (int) ( log( ed->bottom / ed->meniscus )
                / ( s_max * af_params.omega_s * af_params.dt ) );
          }
 
@@ -430,10 +441,10 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
    if ( time_correction )
    {
       // Check each speed step to see if it contains acceleration
-      for ( uint ss = 0; ss < simparams.speed_step.size(); ss++ ) 
+      for ( int ss = 0; ss < simparams.speed_step.size(); ss++ ) 
       {
-         struct SpeedProfile* sp = &simparams.speed_step[ ss ];
-         struct mfem_data*    ed = &exp_data            [ ss ]; // exp data
+         US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ ss ];
+         struct mfem_data*    ed = &af_data;
          
          // We need to correct time
          if ( simparams.speed_step[ ss ].acceleration_flag ) 
@@ -448,7 +459,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
             double* ytmp = new double [ sp->scans ];
 
             // Only fit the scans that belong to this speed step
-            for ( uint i = 0; i < simparams.speed_step[ ss ].scans; i++ ) 
+            for ( int i = 0; i < simparams.speed_step[ ss ].scans; i++ ) 
             {
                xtmp[ i ] = ed->scan[ i ].time;
                ytmp[ i ] = ed->scan[ i ].omega_s_t;
@@ -459,7 +470,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
 
             correction = -intercept / slope;
             
-            for ( uint i = 0; i < sp->scans; i++ )
+            for ( int i = 0; i < sp->scans; i++ )
                ed->scan[ i ].time -= correction;
             
             delete [] xtmp;
@@ -471,15 +482,18 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
    if ( vC0 != NULL ) delete [] vC0;
    delete [] reacting;
  
+   store_mfem_data( exp_data, af_data );
+
    return 0;
 }
 
 
 void US_Astfem_RSA::update_assocv( void )
 {
-   for ( uint i = 0; i < system.assoc_vector.size(); i++ )
+#if 0
+   for ( int i = 0; i < system.associations.size(); i++ )
    {
-      struct Association* as = &system.assoc_vector[ i ];
+      US_Model::Association* as = &system.associations[ i ];
       
       as->comp  .clear();
       as->stoich.clear();
@@ -487,33 +501,34 @@ void US_Astfem_RSA::update_assocv( void )
       
       if ( as->component3 == -1 )
       {
-         as->comp .push_back( as->component1 );
-         as->comp .push_back( as->component2 );
+         as->comp .append( as->component1 );
+         as->comp .append( as->component2 );
          
-         as->stoich .push_back( as->stoichiometry2 );
-         as->stoich .push_back( as->stoichiometry1 );
+         as->stoich .append( as->stoichiometry2 );
+         as->stoich .append( as->stoichiometry1 );
          
-         as->react .push_back(  1 );
-         as->react .push_back( -1 );
+         as->react .append(  1 );
+         as->react .append( -1 );
       }
       else
       {
-         as->comp .push_back( as->component1 );
-         as->comp .push_back( as->component2 );
-         as->comp .push_back( as->component3 );
+         as->comp .append( as->component1 );
+         as->comp .append( as->component2 );
+         as->comp .append( as->component3 );
          
-         as->stoich .push_back( as->stoichiometry1 );
-         as->stoich .push_back( as->stoichiometry2 );
-         as->stoich .push_back( as->stoichiometry3 );
+         as->stoich .append( as->stoichiometry1 );
+         as->stoich .append( as->stoichiometry2 );
+         as->stoich .append( as->stoichiometry3 );
          
-         as->react .push_back(  1 );
-         as->react .push_back(  1 );
-         as->react .push_back( -1 );
+         as->react .append(  1 );
+         as->react .append(  1 );
+         as->react .append( -1 );
       }
    }
+#endif
 }
 
-void US_Astfem_RSA::adjust_limits( uint speed )
+void US_Astfem_RSA::adjust_limits( int speed )
 {
    // First correct meniscus to theoretical position at rest:
    double stretch_value = stretch( simparams.rotor, af_params.first_speed );
@@ -531,15 +546,15 @@ void US_Astfem_RSA::adjust_limits( uint speed )
    af_params.current_bottom = simparams.bottom + stretch_value;
 }
 
-double US_Astfem_RSA::stretch( int rotor, uint rpm )
+double US_Astfem_RSA::stretch( int rotor, int rpm )
 {
-   vector< struct rotorInfo > rotor_list;
+   QVector< struct rotorInfo > rotor_list;
    rotor_list.clear();
    
    double stretch = 0.0;
    US_Hardware::readRotorInfo( rotor_list );
                   
-   for ( uint i = 0; i < 5; i++ )
+   for ( int i = 0; i < 5; i++ )
    {
       stretch += rotor_list[ rotor ].coefficient[ i ] * 
          pow( (double) rpm, (double) i );
@@ -554,13 +569,13 @@ void US_Astfem_RSA::initialize_rg( void )
    rg.clear();
 
    // If there are no reactions, then it is all noninteracting
-   if ( system.assoc_vector.size() == 0 ) return; 
-   
-   vector< bool > reaction_used;
+   if ( system.associations.size() == 0 ) return; 
+#if 0
+   QVector< bool > reaction_used;
    reaction_used.clear();
 
-   for ( uint i = 0; i < system.assoc_vector.size(); i++ )
-      reaction_used .push_back( false );
+   for ( int i = 0; i < system.associations.size(); i++ )
+      reaction_used .append( false );
    
    // Initialize the first reaction group and put it into a temporary reaction
    // group, use as test against all assoc vector entries:
@@ -569,46 +584,46 @@ void US_Astfem_RSA::initialize_rg( void )
    tmp_rg.GroupComponent.clear();
    tmp_rg.association.clear();
    
-   tmp_rg.association    .push_back( 0 );
-   tmp_rg.GroupComponent .push_back( system.assoc_vector[ 0 ].component1 );
-   tmp_rg.GroupComponent .push_back( system.assoc_vector[ 0 ].component2 );
+   tmp_rg.association    .append( 0 );
+   tmp_rg.GroupComponent .append( system.associations[ 0 ].component1 );
+   tmp_rg.GroupComponent .append( system.associations[ 0 ].component2 );
 
    // Only 2 components react in first reaction
-   if ( system.assoc_vector[ 0 ].component3  != -1 )
-      tmp_rg.GroupComponent .push_back( system.assoc_vector[ 0 ].component3 );
+   if ( system.associations[ 0 ].component3  != -1 )
+      tmp_rg.GroupComponent .append( system.associations[ 0 ].component3 );
    
    reaction_used[ 0 ] = true;
 
    // There is only one reaction, so add it and return
-   if ( system.assoc_vector.size() == 1 )
+   if ( system.associations.size() == 1 )
    {
-      rg .push_back( tmp_rg );
+      rg .append( tmp_rg );
       return;
    }
 
    bool flag3 = false;
    
-   for ( uint i = 0; i < system.assoc_vector.size(); i++ )
+   for ( int i = 0; i < system.associations.size(); i++ )
    {
       // Check each association rule to see if it contains components that
       // match tmp_rg components
       
-      for ( uint counter = 1; counter < system.assoc_vector.size(); counter++ ) 
+      for ( int counter = 1; counter < system.associations.size(); counter++ ) 
       {
-         struct Association* av = &system.assoc_vector[ counter ];
+         US_Model::Association* av = &system.associations[ counter ];
 
          while ( reaction_used[ counter ] )
          {
             counter++;
-            if ( counter == system.assoc_vector.size() ) return;
+            if ( counter == system.associations.size() ) return;
          }
    
          // Check if any component already present in tmp_rg matches any of the
-         // three components in current (*system).assoc_vector entry
+         // three components in current (*system).associations entry
 
          bool flag1;
          
-         for ( uint j = 0; j < tmp_rg.GroupComponent.size(); j++ ) 
+         for ( int j = 0; j < tmp_rg.GroupComponent.size(); j++ ) 
          {
             flag1 = false;
 
@@ -622,42 +637,42 @@ void US_Astfem_RSA::initialize_rg( void )
          }
         
          // If the component from tmp_rg is present in another
-         // system.assoc_vector entry, find out if the component from
-         // system.assoc_vector is already in tmp_rg.GroupComponent
+         // system.associations entry, find out if the component from
+         // system.associations is already in tmp_rg.GroupComponent
 
          if ( flag1 )  
          {       
             // It is present (flag1=true) so add this rule to the tmp_rg vector
-            tmp_rg.association .push_back( counter ); 
+            tmp_rg.association .append( counter ); 
             reaction_used[ counter ] = true;
             
-            // There is at least one of all system.assoc_vector entries in
+            // There is at least one of all system.associations entries in
             // this reaction_group, so set flag3 to true
             
             flag3 = true; 
             bool flag2 = false;
             
             // Check if 1st component is already in the GroupVector from tmp_rg
-            for ( uint j = 0; j < tmp_rg.GroupComponent.size(); j++ ) 
+            for ( int j = 0; j < tmp_rg.GroupComponent.size(); j++ ) 
             {
                if ( av->component1 == (int) tmp_rg.GroupComponent[ j ])
                   flag2 = true;
             }
 
             // Add if not present already
-            if ( ! flag2 ) tmp_rg.GroupComponent .push_back( av->component1 );
+            if ( ! flag2 ) tmp_rg.GroupComponent .append( av->component1 );
 
             flag2 = false;
             
             // Check if 2nd component is already in the GroupVector from tmp_rg
-            for ( uint j = 0; j < tmp_rg.GroupComponent.size(); j++ ) 
+            for ( int j = 0; j < tmp_rg.GroupComponent.size(); j++ ) 
             {
                if ( av->component2 == (int) tmp_rg.GroupComponent[ j ]) 
                   flag2 = true; 
             }
 
             // Add if not present already
-            if ( ! flag2 )  tmp_rg.GroupComponent .push_back( av->component2 ); 
+            if ( ! flag2 )  tmp_rg.GroupComponent .append( av->component2 ); 
 
             flag2 = false;
 
@@ -666,14 +681,14 @@ void US_Astfem_RSA::initialize_rg( void )
             
             if ( av->component3 != -1 ) 
             {
-               for ( uint j = 0; j < tmp_rg.GroupComponent.size(); j++ )
+               for ( int j = 0; j < tmp_rg.GroupComponent.size(); j++ )
                {
                   if ( av->component3 == (int) tmp_rg.GroupComponent[ j ] )
                      flag2 = true;
                }
                
                // Add if not present already
-               if ( ! flag2 ) tmp_rg.GroupComponent .push_back( av->component3 ); 
+               if ( ! flag2 ) tmp_rg.GroupComponent .append( av->component3 ); 
             }
          } 
       }
@@ -681,13 +696,13 @@ void US_Astfem_RSA::initialize_rg( void )
       if ( flag3 )
       {
          flag3 = false;
-         rg .push_back( tmp_rg );
+         rg .append( tmp_rg );
          
          tmp_rg.GroupComponent.clear();
          tmp_rg.association.clear();
 
          // Make the next unused reaction the test reaction
-         uint j = 1;
+         int j = 1;
          
          while ( reaction_used[ j ] ) 
          {
@@ -695,41 +710,43 @@ void US_Astfem_RSA::initialize_rg( void )
             if ( j >= reaction_used.size() ) return;   
          }
 
-         struct Association* avj = &system.assoc_vector[ j ];
+         US_Model::Association* avj = &system.associations[ j ];
          
-         if ( j < system.assoc_vector.size() )
+         if ( j < system.associations.size() )
          {
-            tmp_rg.association    .push_back( j );
-            tmp_rg.GroupComponent .push_back( avj->component1 );
-            tmp_rg.GroupComponent .push_back( avj->component2 );
+            tmp_rg.association    .append( j );
+            tmp_rg.GroupComponent .append( avj->component1 );
+            tmp_rg.GroupComponent .append( avj->component2 );
             
             // Only 2 components react in first reaction
             if ( avj->component3 != -1 )
-               tmp_rg.GroupComponent .push_back( avj->component3 );
+               tmp_rg.GroupComponent .append( avj->component3 );
 
             reaction_used[ j ] = true;
             //counter++;   // Out of scope!!!!
          }
 
-         if ( j == system.assoc_vector.size() - 1 )
+         if ( j == system.associations.size() - 1 )
          {
-            rg .push_back( tmp_rg );
+            rg .append( tmp_rg );
             return;
          }
       }
    }
+#endif
 }
 
 // Initializes total concentration vector
-void US_Astfem_RSA::initialize_conc( uint k, struct mfem_initial& CT0, 
+void US_Astfem_RSA::initialize_conc( int k, struct mfem_initial& CT0, 
       bool noninteracting ) 
 {
-   struct SimulationComponent* sc = &system.component_vector[ k ];
+   US_Model::SimulationComponent* sc = &system.components[ k ];
 
    // We don't have an existing CT0 concentration vector. Build up the initial
    // concentration vector with constant concentration
  
-   if ( sc->c0.concentration.size() == 0 ) 
+   //if ( sc->c0.concentration.size() == 0 ) 
+   if ( af_c0.concentration.size() == 0 ) 
    {
       if ( simparams.band_forming )
       {
@@ -740,18 +757,18 @@ void US_Astfem_RSA::initialize_conc( uint k, struct mfem_initial& CT0,
          double lamella_width = pow( base, 0.5 ) - af_params.current_meniscus;
             
          // Calculate the spread of the lamella:
-         for ( uint j = 0; j < CT0.concentration.size(); j++ )
+         for ( int j = 0; j < CT0.concentration.size(); j++ )
          {
             base = ( CT0.radius[ j ] - af_params.current_meniscus) / lamella_width;
             
             CT0.concentration[ j ] += 
-               sc->concentration * exp( -pow( base, 4.0 ) );
+               sc->signal_concentration * exp( -pow( base, 4.0 ) );
          }
       }
       else
       {
-         for ( uint j = 0; j < CT0.concentration.size(); j++ )
-            CT0.concentration[j] += sc->concentration;
+         for ( int j = 0; j < CT0.concentration.size(); j++ )
+            CT0.concentration[j] += sc->signal_concentration;
       }
    }
    else
@@ -764,7 +781,12 @@ void US_Astfem_RSA::initialize_conc( uint k, struct mfem_initial& CT0,
          
          CT0.radius.clear();
          CT0.concentration.clear();
-         CT0 = system.component_vector[ k ].c0;
+         //CT0 = system.components[ k ].c0;
+         for ( int jj = 0; jj < af_c0.radius.size(); jj++ )
+         {
+            CT0.radius       .append( af_c0.radius       [ jj ] );
+            CT0.concentration.append( af_c0.concentration[ jj ] );
+         }
       }
       else // interpolation
       {
@@ -775,15 +797,16 @@ void US_Astfem_RSA::initialize_conc( uint k, struct mfem_initial& CT0,
          double dr = (af_params.current_bottom - af_params.current_meniscus) /
                      ( CT0.concentration.size() - 1 );
          
-         for ( uint j = 0; j < CT0.concentration.size(); j++ )
+         for ( int j = 0; j < CT0.concentration.size(); j++ )
          {
-            C.radius        .push_back( af_params.current_meniscus + j * dr );
-            C.concentration .push_back(  0.0 );
+            C.radius        .append( af_params.current_meniscus + j * dr );
+            C.concentration .append(  0.0 );
          }
 
-         US_AstfemMath::interpolate_C0 ( sc->c0, C );
+         //US_AstfemMath::interpolate_C0 ( sc->c0, C );
+         US_AstfemMath::interpolate_C0 ( af_c0, C );
          
-         for ( uint j = 0; j < CT0.concentration.size(); j++ )
+         for ( int j = 0; j < CT0.concentration.size(); j++ )
             CT0.concentration[ j ] += C.concentration[ j ];
       }
    }
@@ -814,18 +837,18 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    // Generate the adaptive mesh
   
    double sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
-   vector< double > nu;
+   QVector< double > nu;
    nu.clear();
-   nu .push_back( sw2 / af_params.D[ 0 ] );
+   nu .append( sw2 / af_params.D[ 0 ] );
    
-   mesh_gen( nu, simparams.mesh );
+   mesh_gen( nu, simparams.meshType );
    
    // Refine left hand side (when s>0) or right hand side (when s < 0) for
    // acceleration
 
    if ( accel )     
    {                             
-      uint   j;
+      int   j;
       double xc;
       
       if ( af_params.s[ 0 ] > 0 )
@@ -851,18 +874,19 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       mesh_gen_RefL( j + 1, 4 * j );
    }
 
-   for ( uint i = 0; i < N; i++ ) simdata.radius .push_back( x[ i ] );
+   for ( int i = 0; i < N; i++ ) simdata.radius .append( x[ i ] );
 
    // Initialize the coefficient matrices
 
    US_AstfemMath::initialize_2d( 3, N, &CA );
    US_AstfemMath::initialize_2d( 3, N, &CB );
+   bool fixedGrid = ( simparams.gridType == US_SimulationParameters::FIXED );
 
    if ( ! accel ) // No acceleration
    {
       sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
       
-      if ( ! simparams.moving_grid )
+      if ( fixedGrid )
       {
          ComputeCoefMatrixFixedMesh( af_params.D[ 0 ], sw2, CA, CB );
       }
@@ -899,18 +923,18 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    double* right_hand_side = new double [ N ];
 
    // Calculate all time steps 
-   for ( uint i = 0; i < af_params.time_steps + 1; i++ )
+   for ( int i = 0; i < af_params.time_steps + 1; i++ )
    {
       double rpm_current = rpm_start + 
          ( rpm_stop - rpm_start ) * ( i + 0.5 ) / af_params.time_steps;
       
-      emit current_speed( (uint) rpm_current );
+      emit current_speed( (int) rpm_current );
 
       if ( accel ) // Then we have acceleration
       {
-         for ( uint j1 = 0; j1 < 3; j1++ )
+         for ( int j1 = 0; j1 < 3; j1++ )
          {
-            for ( uint j2 = 0; j2 < N; j2++ )
+            for ( int j2 = 0; j2 < N; j2++ )
             {
                CA[ j1 ][ j2 ] = CA1[ j1 ][ j2 ] + sq( rpm_current / rpm_stop ) * 
                   ( CA2[ j1 ][ j2 ] - CA1[ j1 ][ j2 ] );
@@ -921,7 +945,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
          }
       }
 
-      simscan.rpm  = (uint) rpm_current;
+      simscan.rpm  = (int) rpm_current;
       simscan.time = af_params.start_time + i * af_params.dt;
       
       w2t_integral += ( simscan.time - last_time ) * 
@@ -941,19 +965,19 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
      
       simscan.conc.clear();
 
-      for ( uint j = 0; j < N; j++ ) simscan.conc .push_back( C0[ j ] );
+      for ( int j = 0; j < N; j++ ) simscan.conc .append( C0[ j ] );
 
-      simdata.scan .push_back( simscan );
+      simdata.scan .append( simscan );
 
       // Sedimentation part:
       // Calculate the right hand side vector 
       
-      if ( accel || ! simparams.moving_grid )
+      if ( accel || fixedGrid )
       {
          right_hand_side[ 0 ] = - CB[ 1 ][ 0 ] * C0[ 0 ] 
                                 - CB[ 2 ][ 0 ] * C0[ 1 ];
 
-         for ( uint j = 1; j < N - 1; j++ )
+         for ( int j = 1; j < N - 1; j++ )
          {
             right_hand_side[ j ] = - CB[ 0 ][ j ] * C0[ j - 1 ] 
                                    - CB[ 1 ][ j ] * C0[ j     ] 
@@ -972,7 +996,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
             right_hand_side[ 1 ] = - CB[ 1 ][ 1 ] * C0[ 0 ] 
                                    - CB[ 2 ][ 1 ] * C0[ 1 ];
             
-            for ( uint j = 2; j < N; j++ )
+            for ( int j = 2; j < N; j++ )
             {
                right_hand_side[ j ] = - CB[ 0 ][ j ] * C0[ j - 2 ] 
                                       - CB[ 1 ][ j ] * C0[ j - 1 ] 
@@ -981,7 +1005,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
          }
          else
          {
-            for ( uint j = 0; j < N - 2; j++ )
+            for ( int j = 0; j < N - 2; j++ )
             {
                right_hand_side[ j ] = - CB[ 0 ][ j ] * C0[ j     ] 
                                       - CB[ 1 ][ j ] * C0[ j + 1 ] 
@@ -999,16 +1023,16 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
 
       US_AstfemMath::tridiag( CA[0], CA[1], CA[2], right_hand_side, C1, N );
       
-      for ( uint j = 0; j < N; j++ ) C0[ j ] = C1[ j ];
+      for ( int j = 0; j < N; j++ ) C0[ j ] = C1[ j ];
    } // time loop
 
    C_init.radius.clear();
    C_init.concentration.clear();
    
-   for ( uint j = 0; j < N; j++ )
+   for ( int j = 0; j < N; j++ )
    {
-      C_init.radius        .push_back( x [ j ] );
-      C_init.concentration .push_back( C1[ j ] );
+      C_init.radius        .append( x [ j ] );
+      C_init.concentration .append( C1[ j ] );
    }
 
    delete [] right_hand_side;
@@ -1029,7 +1053,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    return 0;
 }
 
-void US_Astfem_RSA::mesh_gen( vector< double >& nu, uint MeshOpt )
+void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 {
 //////////////////////////////////////////////////////////////%
 //
@@ -1054,7 +1078,7 @@ void US_Astfem_RSA::mesh_gen( vector< double >& nu, uint MeshOpt )
 
    double m  = af_params.current_meniscus;
    double b  = af_params.current_bottom;
-   uint   NN = af_params.simpoints;
+   int   NN = af_params.simpoints;
 
    
    switch ( MeshOpt )
@@ -1074,26 +1098,26 @@ void US_Astfem_RSA::mesh_gen( vector< double >& nu, uint MeshOpt )
          
          else       // Some species with s < 0 and some with s > 0
          {
-            for ( uint i = 0; i < NN; i++ ) 
-               x .push_back( m + ( b - m ) * i / ( NN - 1 ) );
+            for ( int i = 0; i < NN; i++ ) 
+               x .append( m + ( b - m ) * i / ( NN - 1 ) );
          }
          break;
       
       case 1: // Claverie mesh without left hand refinement
 
-         for ( uint i = 0; i < NN; i++ )  
-            x .push_back( m + ( b - m ) * i / ( NN - 1 ) );
+         for ( int i = 0; i < NN; i++ )  
+            x .append( m + ( b - m ) * i / ( NN - 1 ) );
          break;
 
       case 2: // Moving Hat (Peter Schuck's Mesh) w/o left hand side refinement
          
-         x .push_back( m );
+         x .append( m );
          
          // Standard Schuck grids
-         for ( uint i = 1; i < NN - 1; i++ )
-            x .push_back( m * pow( b / m, ( i - 0.5 ) / ( NN - 1 ) ) );
+         for ( int i = 1; i < NN - 1; i++ )
+            x .append( m * pow( b / m, ( i - 0.5 ) / ( NN - 1 ) ) );
          
-         x .push_back( b );
+         x .append( b );
          break;
 
       case 3: // User defined mesh generated from data file
@@ -1106,7 +1130,7 @@ void US_Astfem_RSA::mesh_gen( vector< double >& nu, uint MeshOpt )
             {
                QTextStream ts( &f );
                
-               while ( ! ts.atEnd() )  x .push_back( ts.readLine().toDouble() ); 
+               while ( ! ts.atEnd() )  x .append( ts.readLine().toDouble() ); 
                
                f.close();
 
@@ -1127,8 +1151,8 @@ void US_Astfem_RSA::mesh_gen( vector< double >& nu, uint MeshOpt )
                qDebug() << "Could not read the mesh file - "
                            "using Claverie Mesh instead\n";
                
-               for ( uint i = 0; i < af_params.simpoints; i++ )
-                  x .push_back( m + ( b - m ) * i / ( NN - 1 ) );
+               for ( int i = 0; i < af_params.simpoints; i++ )
+                  x .append( m + ( b - m ) * i / ( NN - 1 ) );
             }
             break;
          }
@@ -1147,13 +1171,13 @@ void US_Astfem_RSA::mesh_gen( vector< double >& nu, uint MeshOpt )
 // Generate exponential mesh and refine cell bottom (for s>0)
 //
 //////////////////////////////////////////////////////////////%
-void US_Astfem_RSA::mesh_gen_s_pos( const vector< double >& nu )
+void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nu )
 {
-   double          tmp_Hstar;
-   vector< double > xc;
-   vector< double > Hstar;
-   vector< double > y;
-   vector< uint >   Nf;
+   double            tmp_Hstar;
+   QVector< double > xc;
+   QVector< double > Hstar;
+   QVector< double > y;
+   QVector< int >    Nf;
    
    xc.clear();
    Hstar.clear();
@@ -1161,12 +1185,12 @@ void US_Astfem_RSA::mesh_gen_s_pos( const vector< double >& nu )
 
    double m  = af_params.current_meniscus;
    double b  = af_params.current_bottom;
-   uint   NN = af_params.simpoints;
+   int   NN = af_params.simpoints;
 
    int    IndLayer = 0;         // number of layers for grids in steep region
    double uth      = 1.0 / NN;  // threshold of u for steep region
 
-   for ( uint i = 0; i < af_params.s.size(); i++ ) // Markers for steep regions
+   for ( int i = 0; i < af_params.s.size(); i++ ) // Markers for steep regions
    {
       double tmp_xc = b - ( 1.0 / ( nu[ i ] * b ) ) * 
          log( nu[ i ] * ( sq( b ) - sq( m ) ) ) / ( 2.0 * uth );
@@ -1181,29 +1205,29 @@ void US_Astfem_RSA::mesh_gen_s_pos( const vector< double >& nu )
       if ( ( tmp_xc > m ) &&
            ( b - m * pow( b / m, ( NN - 2.0 ) /  ( NN - 1.0 ) ) > tmp_Hstar ) )
       {
-         xc    .push_back( tmp_xc );
-         Nf    .push_back( tmp_Nf );
-         Hstar .push_back( tmp_Hstar );
+         xc    .append( tmp_xc );
+         Nf    .append( tmp_Nf );
+         Hstar .append( tmp_Hstar );
          IndLayer++;
       }
    }
 
-   xc .push_back( b );
+   xc .append( b );
 
    if ( IndLayer == 0 )   // Use Schuck's grid only
    {
-      x .push_back( m );
+      x .append( m );
 
       // Add one more point to Schuck's grids
-      for ( uint i = 1; i < NN - 1 ; i++ ) 
-         x .push_back( m * pow( b / m, (double) i / ( NN - 1 ) ) ); // Schuck's mesh
+      for ( int i = 1; i < NN - 1 ; i++ ) 
+         x .append( m * pow( b / m, (double) i / ( NN - 1 ) ) ); // Schuck's mesh
 
-      x .push_back( b );
+      x .append( b );
    }
    else  // Need a composite grid
    {
       // Steep region
-      uint indp = 0;  // Index for a grid point
+      int indp = 0;  // Index for a grid point
       
       for ( int i = 0; i < IndLayer; i++ )  // Consider i-th steep region
       {
@@ -1211,27 +1235,27 @@ void US_Astfem_RSA::mesh_gen_s_pos( const vector< double >& nu )
          {
             double HL = Hstar[ i ];
             double HR = Hstar[ i + 1 ];
-            uint Mp = (uint) ( ( xc[ i + 1 ] - xc[ i ] ) * 2.0 / ( HL + HR ) );
+            int Mp = (int) ( ( xc[ i + 1 ] - xc[ i ] ) * 2.0 / ( HL + HR ) );
             
             if ( Mp > 1 ) 
             {
                double beta  = ( ( HR - HL ) / 2.0 ) * Mp ;
                double alpha = ( xc[ i + 1 ] - xc[ i ] ) - beta;
 
-               for ( uint j = 0; j <= Mp - 1; j++ )
+               for ( int j = 0; j <= Mp - 1; j++ )
                {
                   double xi = (double) j / (double) Mp;
-                  y .push_back( xc[ i ] + alpha * xi + beta * sq( xi )  );
+                  y .append( xc[ i ] + alpha * xi + beta * sq( xi )  );
                   indp++;
                }
             }
          }
          else     // Last layer, use sine distribution for grids
          {
-            for ( uint j = 0; j <= Nf[ i ] - 1; j++ )
+            for ( int j = 0; j <= Nf[ i ] - 1; j++ )
             {
                indp++;
-               y .push_back( xc[ i ] + ( b - xc[ i ] ) * 
+               y .append( xc[ i ] + ( b - xc[ i ] ) * 
                     sin( j / ( Nf[ i ] - 1.0 ) * M_PI / 2.0 ) );
                
                if ( y[ indp - 1 ] > xc[ i + 1 ] ) break; 
@@ -1241,13 +1265,13 @@ void US_Astfem_RSA::mesh_gen_s_pos( const vector< double >& nu )
 
       int NfTotal = indp;
       
-      vector< double > ytmp;
+      QVector< double > ytmp;
       ytmp.clear();
 
       // Reverse the order of y
       int j = NfTotal;
       
-      do { ytmp .push_back( y[ --j ] ); } while ( j != 0 );
+      do { ytmp .append( y[ --j ] ); } while ( j != 0 );
       
       y.clear();
       y = ytmp;
@@ -1257,13 +1281,13 @@ void US_Astfem_RSA::mesh_gen_s_pos( const vector< double >& nu )
       double Hf = y[ NfTotal - 2 ] - y[ NfTotal - 1 ];
 
       // Number of pts in trans region
-      uint Nm = (uint) 
+      int Nm = (int) 
           ( log( b / ( ( NN - 1 ) * Hf ) * log( b / m ) ) / log( 2.0 ) ) + 1;
           
       
       double xa = y[ NfTotal - 1 ] - Hf * ( pow( 2.0, (double) Nm ) - 1.0 );
       
-      uint Js = (uint) ( ( NN - 1 ) * log( xa / m ) / log( b / m ) );
+      int Js = (int) ( ( NN - 1 ) * log( xa / m ) / log( b / m ) );
       
       // xa is  modified so that y[ NfTotal - Nm ] matches xa exactly
       xa = m * pow( b / m, Js / ( NN - 1.0 ) );
@@ -1272,7 +1296,7 @@ void US_Astfem_RSA::mesh_gen_s_pos( const vector< double >& nu )
       double HL     = xa * ( 1.0 - m / b );
       double HR     = y[ NfTotal - 2 ] - y[ NfTotal - 1 ];
       
-      uint Mp = (uint)( ( tmp_xc - xa ) * 2.0 / ( HL + HR ) ) + 1;
+      int Mp = (int)( ( tmp_xc - xa ) * 2.0 / ( HL + HR ) ) + 1;
       
       if ( Mp > 1 ) 
       {
@@ -1282,20 +1306,20 @@ void US_Astfem_RSA::mesh_gen_s_pos( const vector< double >& nu )
          for ( int j = Mp - 1; j > 0; j-- )
          {
             double xi = (double) j / Mp;
-            y .push_back( xa + alpha * xi + beta * sq( xi ) );
+            y .append( xa + alpha * xi + beta * sq( xi ) );
          }
       }
 
       Nm = Mp;
 
       // Regular region
-      x .push_back( m );
+      x .append( m );
       
-      for ( uint j = 1; j <= Js; j++ )
-         x .push_back( m * pow( b / m, j / ( NN - 1.0 ) ) );
+      for ( int j = 1; j <= Js; j++ )
+         x .append( m * pow( b / m, j / ( NN - 1.0 ) ) );
 
-      for ( uint j = 0; j < NfTotal + Nm - 1; j++ )
-         x .push_back( y[ NfTotal + Nm - j - 2 ] );
+      for ( int j = 0; j < NfTotal + Nm - 1; j++ )
+         x .append( y[ NfTotal + Nm - j - 2 ] );
    }
 }
 
@@ -1304,12 +1328,12 @@ void US_Astfem_RSA::mesh_gen_s_pos( const vector< double >& nu )
 // Generate exponential mesh and refine cell meniscus (for  s<0)
 //
 //////////////////////////////////////////////////////////////%
-void US_Astfem_RSA::mesh_gen_s_neg( const vector< double >& nu )
+void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 {
    
-   unsigned int j, Js, Nf, Nm;
-   double xc, xa, Hstar;
-   vector< double > yr, ys, yt;
+   int               j, Js, Nf, Nm;
+   double            xc, xa, Hstar;
+   QVector< double > yr, ys, yt;
 
    x.clear();
    yr.clear();
@@ -1318,7 +1342,7 @@ void US_Astfem_RSA::mesh_gen_s_neg( const vector< double >& nu )
 
    double m  = af_params.current_meniscus;
    double b  = af_params.current_bottom;
-   uint   NN = af_params.simpoints;
+   int    NN = af_params.simpoints;
 
    double uth = 1.0 / NN;   // Threshold of u for steep region
    double nu0 = nu[ 0 ];
@@ -1326,28 +1350,28 @@ void US_Astfem_RSA::mesh_gen_s_neg( const vector< double >& nu )
    xc = m + 1.0 /  ( fabs( nu0 ) * m ) * 
                    log( ( sq( b ) - sq( m ) ) * fabs( nu0 ) / ( 2.0 * uth ) );
    
-   Nf = 1 + (uint)( ( xc - m ) * fabs( nu0 ) * m * M_PI / 4.0 );
+   Nf = 1 + (int)( ( xc - m ) * fabs( nu0 ) * m * M_PI / 4.0 );
    
    Hstar = ( xc - m ) / Nf * M_PI / 2.0;
    
-   Nm = 1 + (uint) 
+   Nm = 1 + (int) 
         ( log( m / ( ( NN - 1.0 ) * Hstar ) * log( b / m ) ) / log( 2.0 ) );
    
    xa = xc + ( pow( 2.0, (double) Nm ) - 1.0 ) * Hstar;
    
-   Js = (uint) ( ( NN - 1) * log( b / xa ) / log( b / m ) + 0.5 );
+   Js = (int) ( ( NN - 1) * log( b / xa ) / log( b / m ) + 0.5 );
 
 
    // All grid points at exponentials
-   yr .push_back( b );
+   yr .append( b );
 
    // Is there a difference between simparams.meniscus and 
    // af_params.current_meniscus??
    for( j = 1; j < NN; j++ )    // Add one more point to Schuck's grids
-      yr .push_back( b * pow( simparams.meniscus / b, 
+      yr .append( b * pow( simparams.meniscus / b, 
                               ( j - 0.5 ) / ( NN - 1.0 ) ) );
    
-   yr .push_back( m );
+   yr .append( m );
    
    if ( b * ( pow( m / b, ( NN - 3.5 ) / ( NN - 1.0 ) )
             - pow( m / b, ( NN - 2.5 ) / ( NN - 1.0 ) ) ) < Hstar || Nf <= 2 )
@@ -1355,7 +1379,7 @@ void US_Astfem_RSA::mesh_gen_s_neg( const vector< double >& nu )
       // No need for steep region
       for ( j = 0; j < NN; j++ )
       {
-         x .push_back( yr[ NN - 1 - j ] );
+         x .append( yr[ NN - 1 - j ] );
       }
       
       qDebug() << "use exponential grid only!\n" << endl;
@@ -1365,23 +1389,23 @@ void US_Astfem_RSA::mesh_gen_s_neg( const vector< double >& nu )
    {
       // Nf > 2
       for ( j = 1; j < Nf; j++ )
-         ys .push_back( xc - ( xc - m ) * sin(( j - 1.0 ) / 
+         ys .append( xc - ( xc - m ) * sin(( j - 1.0 ) / 
                         ( Nf - 1.0 ) * M_PI / 2.0 ) );
       
-      ys .push_back( m );
+      ys .append( m );
 
       for ( j = 0; j < Nm; j++ )
-         yt .push_back( xc + ( pow( 2.0, (double) j ) - 1.0 ) * Hstar );
+         yt .append( xc + ( pow( 2.0, (double) j ) - 1.0 ) * Hstar );
 
       // set x:
       for ( j = 0; j < Nf; j++ )
-         x .push_back( ys[ Nf - 1 - j ] );
+         x .append( ys[ Nf - 1 - j ] );
       
       for ( j = 1; j < Nm; j++ )
-         x .push_back( yt[ j ] );
+         x .append( yt[ j ] );
       
       for ( j = Js + 1; j > 0; j-- )
-         x .push_back( yr[ j - 1 ] );
+         x .append( yr[ j - 1 ] );
 
       // Smooth out
       x[ Nf + Nm     ] = ( x[ Nf + Nm - 1 ] + x[Nf + Nm + 1 ] ) / 2.0;
@@ -1401,7 +1425,7 @@ void US_Astfem_RSA::mesh_gen_s_neg( const vector< double >& nu )
 
 void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
 {
-   vector< double > zz;  // temperary array for adaptive grids
+   QVector< double > zz;  // temperary array for adaptive grids
    zz.clear();
    
    if ( US_AstfemMath::minval( af_params.s ) > 0 ) // All species with s>0
@@ -1411,35 +1435,35 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
       {
          double tmp = (double) j / M0;
          tmp        = 1.0 - cos( tmp * M_PI / 2 );
-         zz .push_back( x[ 0 ] * ( 1.0 - tmp ) + x[ N0 ] * tmp );
+         zz .append( x[ 0 ] * ( 1.0 - tmp ) + x[ N0 ] * tmp );
       }
 
-      for ( uint j = N0; j < x.size(); j++ ) 
-         zz .push_back( x[ j ] );
+      for ( int j = N0; j < x.size(); j++ ) 
+         zz .append( x[ j ] );
 
       x.clear();
 
-      for ( uint j = 0; j < zz.size(); j++ ) 
-         x .push_back( zz[ j ] );
+      for ( int j = 0; j < zz.size(); j++ ) 
+         x .append( zz[ j ] );
    }
    else if ( US_AstfemMath::maxval( af_params.s ) < 0 ) //  All species with s<0
    {
-      for ( uint j = 0; j < x.size() - N0; j++ ) 
-         zz .push_back( x[ j ] );
+      for ( int j = 0; j < x.size() - N0; j++ ) 
+         zz .append( x[ j ] );
       
       // Refine around the bottom for acceleration
       for ( int j = 1; j <= M0; j++ )
       {
          double tmp = (double) j / M0;
          tmp        = sin( tmp * M_PI / 2 );
-         zz .push_back( x[ x.size() - N0 - 1 ] * ( 1.0 - tmp ) + 
+         zz .append( x[ x.size() - N0 - 1 ] * ( 1.0 - tmp ) + 
                         x[ x.size()      - 1 ] * tmp );
       }
       
       x.clear();
       
-      for ( uint j = 0; j < zz.size(); j++ ) 
-         x .push_back( zz[ j ] );
+      for ( int j = 0; j < zz.size(); j++ ) 
+         x .append( zz[ j ] );
    }
    else                  // Sedimentation and floating mixed up
       qDebug() << "No refinement at ends since sedimentation "
@@ -1460,7 +1484,7 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
 
    double xd[ 4 ][ 2 ];     // coord for verices of quad elem
    
-   for ( uint k = 0; k < N - 1; k++ )
+   for ( int k = 0; k < N - 1; k++ )
    {  // loop for all elem
       xd[ 0 ][ 0 ] = x[ k ];
       xd[ 0 ][ 1 ] = 0.0;
@@ -1476,13 +1500,13 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
 
    // Assembly coefficient matrices
    // elem[ 0 ]; i=0
-   uint k = 0;
+   int k = 0;
    CA[ 1 ][ k ] = Stif[ k ][ 3 ][ 0 ] + Stif[ k ][ 3 ][ 3 ]; // j=3;
    CA[ 2 ][ k ] = Stif[ k ][ 2 ][ 0 ] + Stif[ k ][ 2 ][ 3 ]; // j=2;
    CB[ 1 ][ k ] = Stif[ k ][ 0 ][ 0 ] + Stif[ k ][ 0 ][ 3 ]; // j=0;
    CB[ 2 ][ k ] = Stif[ k ][ 1 ][ 0 ] + Stif[ k ][ 1 ][ 3 ]; // j=1;
 
-   for ( uint k = 1; k < N - 1; k++ )
+   for ( int k = 1; k < N - 1; k++ )
    {  // loop for all elem
       // elem k-1: i=1,2
       CA[ 0 ][ k ]  = Stif[ k-1 ][ 3 ][ 1 ] + Stif[ k-1 ][ 3 ][ 2 ];  // j=3;
@@ -1524,7 +1548,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
    stfb0.CompLocalStif( 3, xd, D, sw2, Stif[ 0 ] );
 
    // elem[k]: k=1..(N-2), quadrilateral
-   for ( uint k = 1; k < N - 1; k++ ) // loop for all elem
+   for ( int k = 1; k < N - 1; k++ ) // loop for all elem
    {  
       xd[0][0] = x[k-1];   xd[0][1] = 0.0;
       xd[1][0] = x[k  ];   xd[1][1] = 0.0;
@@ -1541,7 +1565,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
 
    // assembly coefficient matrices
 
-   uint k = 0;
+   int k = 0;
    CA[1][k] = Stif[k][2][2] ;
    CA[2][k] = Stif[k][1][2] ;
    CB[2][k] = Stif[k][0][2] ;
@@ -1556,7 +1580,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
    CB[1][k]+= Stif[k  ][0][0] + Stif[k  ][0][3];   // j=0;
    CB[2][k] = Stif[k  ][1][0] + Stif[k  ][1][3];   // j=1;
 
-   for( uint k = 2; k < N - 1; k++ )
+   for( int k = 2; k < N - 1; k++ )
    {  // loop for all elem
       // elem k-1: i=1,2
       CA[0][k]  = Stif[k-1][3][1] + Stif[k-1][3][2];  // j=3;
@@ -1603,7 +1627,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
    stfb0.CompLocalStif( 3, xd, D, sw2, Stif[ 0 ] );
 
    // elem[k]: k=1..(N-2), quadrilateral
-   for ( uint k = 1; k < N - 1; k++ )
+   for ( int k = 1; k < N - 1; k++ )
    {  // loop for all elem
       xd[0][0] = x[k  ];   xd[0][1] = 0.0;
       xd[1][0] = x[k+1];   xd[1][1] = 0.0;
@@ -1620,7 +1644,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
 
    // assembly coefficient matrices
 
-   uint k = 0;
+   int k = 0;
    CA[1][0] = Stif[0][2][0] + Stif[0][2][1] + Stif[0][2][2];
    CB[0][0] = Stif[0][0][0] + Stif[0][0][1] + Stif[0][0][2] ;
    CB[1][0] = Stif[0][1][0] + Stif[0][1][1] + Stif[0][1][2] ;
@@ -1630,7 +1654,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
    CB[1][0]+= Stif[1][0][0] + Stif[1][0][3] ;
    CB[2][0] = Stif[1][1][0] + Stif[1][1][3] ;
 
-   for ( uint k = 1; k < N - 2; k++ )
+   for ( int k = 1; k < N - 2; k++ )
    {  // loop for all elem
       // elem k:
       CA[0][k]  = Stif[k  ][3][1] + Stif[k  ][3][2];  // j=3;
@@ -1670,19 +1694,20 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
 // find the concentration of each component by equilibrium condition
 void US_Astfem_RSA::decompose( struct mfem_initial* C0 )
 {
-   uint num_comp = af_params.role.size();
+   int num_comp = af_params.role.size();
 
    // Note: all components must be defined on the same radial grids
-   uint Npts = C0[ 0 ].radius.size();  
+   int Npts = C0[ 0 ].radius.size();  
 
    // Special case:  self-association  n A <--> An
    if ( num_comp == 2 )       // Only 2 components and one association rule
    {
-      uint   st0 = af_params.association[ 0 ].stoich[ 0 ];
-      uint   st1 = af_params.association[ 0 ].stoich[ 1 ];
-      double keq = af_params.association[ 0 ].keq;
+#if 0
+      int    st0 = af_params.association[ 0 ].stoich[ 0 ];
+      int    st1 = af_params.association[ 0 ].stoich[ 1 ];
+      double keq = af_params.association[ 0 ].k_eq;
 
-      for ( uint j = 0; j < Npts; j++ )
+      for ( int j = 0; j < Npts; j++ )
       {
           double c1;
           double ct = C0[ 0 ].concentration[ j ] + C0[ 1 ].concentration[ j ] ;
@@ -1716,6 +1741,7 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0 )
           }
       }
       return;
+#endif
    }
 
    // General cases
@@ -1725,9 +1751,9 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0 )
    US_AstfemMath::initialize_2d( num_comp, Npts, &C1 );
    US_AstfemMath::initialize_2d( num_comp, Npts, &C2 );
 
-   for( uint i = 0; i < num_comp; i++ )
+   for( int i = 0; i < num_comp; i++ )
    {
-      for( uint j = 0; j < Npts; j++ )
+      for( int j = 0; j < Npts; j++ )
       {
          //qDebug() << i << j;
           C1[ i ][ j ] = C0[ i ].concentration[ j ];
@@ -1741,7 +1767,7 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0 )
    double k_min    = 1.0e12;
    
    // Get minimum k
-   for ( uint i = 0; i < af_params.association.size(); i++ )
+   for ( int i = 0; i < af_params.association.size(); i++ )
    {
       if ( k_min > af_params.association[ i ].k_off ) 
            k_min = af_params.association[ i ].k_off;
@@ -1750,13 +1776,13 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0 )
    if ( k_min < 1.0e-12 ) k_min = 1.0e-12;
 
    // Max number of time steps to get to equilibrium
-   const uint time_max     = 100; 
+   const int time_max     = 100; 
    double     timeStepSize = - log( 1.0e-7 ) / ( k_min * time_max );
 
    // time loop
    emit calc_start( time_max );
 
-   for ( uint ti = 0; ti < time_max; ti++ )
+   for ( int ti = 0; ti < time_max; ti++ )
    {
       if ( show_movie )
       {
@@ -1770,9 +1796,9 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0 )
       double diff = 0.0;
       double ct   = 0.0;
 
-      for ( uint i = 0; i < num_comp; i++ )
+      for ( int i = 0; i < num_comp; i++ )
       {
-         for ( uint j = 0; j < Npts; j++ )
+         for ( int j = 0; j < Npts; j++ )
          {
              diff        += fabs( C2[ i ][ j ] - C1[ i ][ j ] );
              ct          += fabs( C1[ i ][ j ] );
@@ -1789,9 +1815,9 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0 )
       qApp->processEvents();
    }
 
-   for ( uint i = 0; i < num_comp; i++ )
+   for ( int i = 0; i < num_comp; i++ )
    {
-      for ( uint j = 0; j < Npts; j++ )
+      for ( int j = 0; j < Npts; j++ )
           C0[ i ].concentration[ j ] = C1[ i ][ j ];
    }
 
@@ -1805,23 +1831,23 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0 )
 //
 //////////////////////////////%
 void US_Astfem_RSA::ReactionOneStep_Euler_imp( 
-      uint Npts, double** C1, double timeStep )
+      int Npts, double** C1, double timeStep )
 {
-   uint num_comp = af_params.role.size();
+   int num_comp = af_params.role.size();
 
    // Special case:  self-association  n A <--> An
    if ( num_comp == 2 )       // only  2 components and one association rule
    {
-       double  uhat;
+       double uhat;
 
        // Current rule used
-       uint   rule = rg[ af_params.rg_index ].association[ 0 ]; 
-       uint   st0  = system.assoc_vector[ rule ].stoich[ 0 ];
-       uint   st1  = system.assoc_vector[ rule ].stoich[ 1 ];
-       double keq  = system.assoc_vector[ rule ].keq;
-       double koff = system.assoc_vector[ rule ].k_off;
+       int    rule = rg[ af_params.rg_index ].association[ 0 ]; 
+       int    st0  = system.associations[ rule ].stoichiometry[ 0 ];
+       int    st1  = system.associations[ rule ].stoichiometry[ 1 ];
+       double keq  = system.associations[ rule ].k_eq;
+       double koff = system.associations[ rule ].k_off;
 
-       for ( uint j = 0; j < Npts; j++ )
+       for ( int j = 0; j < Npts; j++ )
        {
           double ct = C1[ 0 ][ j ] + C1[ 1 ][ j ];
 
@@ -1859,7 +1885,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
    }
 
    // General cases
-   const uint iter_max = 20;      // maximum number of Newton iteration allowed
+   const int iter_max = 20;      // maximum number of Newton iteration allowed
    
    double** A;
 
@@ -1869,30 +1895,30 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
    
    US_AstfemMath::initialize_2d( num_comp, num_comp, &A );
    
-   for ( uint j = 0; j < Npts; j++ )
+   for ( int j = 0; j < Npts; j++ )
    {
       double ct = 0.0;
       
-      for ( uint i = 0; i < num_comp; i++ )
+      for ( int i = 0; i < num_comp; i++ )
       {
          y0[ i ]      = C1[ i ][ j ];
          delta_n[ i ] = 0.0;
          ct          += fabs( y0[ i ] );
       }
 
-      for ( uint iter = 0; iter < iter_max; iter++ ) // Newton iteration
+      for ( int iter = 0; iter < iter_max; iter++ ) // Newton iteration
       {
          double diff;
 
-         for ( uint i = 0; i < num_comp; i++ ) 
+         for ( int i = 0; i < num_comp; i++ ) 
             y0[ i ] = C1[ i ][ j ] + delta_n[ i ];
 
          Reaction_dydt( y0, b );                  // b=dy/dt
          Reaction_dfdy( y0, A );                  // A=df/dy
 
-         for ( uint i = 0; i < num_comp; i++ )
+         for ( int i = 0; i < num_comp; i++ )
          {
-            for ( uint k = 0; k < num_comp; k++ ) A[ i ][ k ] *= ( -timeStep );
+            for ( int k = 0; k < num_comp; k++ ) A[ i ][ k ] *= ( -timeStep );
             
             A[ i ][ i ] += 2.0;
             b[ i ]       = - ( 2 * delta_n[ i ] - timeStep * b[ i ] );
@@ -1909,7 +1935,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
          {
             diff = 0.0;
             
-            for ( uint i = 0; i < num_comp; i++ )
+            for ( int i = 0; i < num_comp; i++ )
             {
                delta_n[ i ] += b[ i ];
                diff         += fabs( delta_n[ i ] );
@@ -1919,7 +1945,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
          if ( diff < 1.0e-7 * ct ) break;
       } // End of Newton iteration;
 
-      for ( uint i = 0; i < num_comp; i++ ) C1[ i ][ j ] += delta_n[ i ];
+      for ( int i = 0; i < num_comp; i++ ) C1[ i ][ j ] += delta_n[ i ];
 
    } // End of j (pts)
 
@@ -1932,27 +1958,27 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
 
 void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
 {
-    uint    num_comp  = rg[ af_params.rg_index ].GroupComponent.size();
-    uint    num_rule  = rg[ af_params.rg_index ].association.size();
+    int    num_comp  = rg[ af_params.rg_index ].GroupComponent.size();
+    int    num_rule  = rg[ af_params.rg_index ].association.size();
     double* Q         = new double [ num_rule ];
 
-    for ( uint m = 0; m < num_rule; m++ )
+    for ( int m = 0; m < num_rule; m++ )
     {
         double k_1        = af_params.association[ m ].k_off;
-        double k1         = af_params.association[ m ].keq * k_1;
+        double k1         = af_params.association[ m ].k_eq * k_1;
         double Q_reactant = 1.0;
         double Q_product  = 1.0;
         
-        for ( uint n = 0; n < af_params.association[ m ].comp.size(); n++ )
+        for ( int n = 0; n < af_params.association[ m ].reaction_components.size(); n++ )
         {
            // local index of the n-th component in assoc[rule]
-           uint ind_cn = af_params.association[ m ].comp[ n ] ;
+           int ind_cn = af_params.association[ m ].reaction_components[ n ] ;
            
            // stoich of n-th comp in the rule
-           uint stn = af_params.association[ m ].stoich[ n ] ;
+           int stn    = af_params.association[ m ].stoichiometry[ n ] ;
            
            // comp[n] here is reactant
-           if ( af_params.association[ m ].react[ n ] == 1 ) 
+           if ( af_params.association[ m ].reaction_components[ n ] == 1 ) 
            {
               Q_reactant *= pow( y0[ ind_cn ], (double) stn );
            }
@@ -1965,11 +1991,11 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
         Q[ m ] = k1 * Q_reactant - k_1 * Q_product;
     }
 
-    for ( uint i = 0; i < num_comp; i++ )
+    for ( int i = 0; i < num_comp; i++ )
     {
         yt[ i ] = 0.0;
 
-        for ( uint m = 0; m < af_params.role[ i ].assoc.size(); m++ )
+        for ( int m = 0; m < af_params.role[ i ].assoc.size(); m++ )
         {
             yt[ i ] +=      - af_params.role[ i ].react[ m ] * 
                      (double) af_params.role[ i ].st   [ m ] *
@@ -1984,37 +2010,37 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
 {
     double** QC;
 
-    uint num_comp = rg[ af_params.rg_index ].GroupComponent.size();
-    uint num_rule = rg[ af_params.rg_index ].association.size();
+    int num_comp = rg[ af_params.rg_index ].GroupComponent.size();
+    int num_rule = rg[ af_params.rg_index ].association.size();
 
     US_AstfemMath::initialize_2d( num_rule, num_comp, &QC );
 
-    for ( uint m = 0; m < num_rule; m++ )
+    for ( int m = 0; m < num_rule; m++ )
     {
         double k_1  = af_params.association[ m ].k_off;
-        double k1   = af_params.association[ m ].keq * k_1;
+        double k1   = af_params.association[ m ].k_eq * k_1;
 
-        for ( uint j = 0; j < num_comp; j++ )
+        for ( int j = 0; j < num_comp; j++ )
         {
            double Q_reactant = 1.0;
            double Q_product  = 1.0;
            double deriv_r    = 0.0;
            double deriv_p    = 0.0;
            
-           for( uint n = 0; n < af_params.association[ m ].comp.size(); n++ )
+           for( int n = 0; n < af_params.association[ m ].reaction_components.size(); n++ )
            {
               // Local index of the n-th component in assoc[rule]
               
-              uint ind_cn = af_params.association[ m ].comp[ n ] ;
+              int ind_cn = af_params.association[ m ].reaction_components[ n ] ;
               
               // Stoich of n-th comp in the rule
-              double stn = af_params.association[ m ].stoich[ n ];
+              double stn = af_params.association[ m ].stoichiometry[ n ];
 
               // comp[j] is in the rule
-              if ( af_params.association[m].comp[ n ] == j ) 
+              if ( af_params.association[m].reaction_components[ n ] == j ) 
               {
                   // comp[n] is reactant
-                  if ( af_params.association[ m ].react[ n ] == 1 )   
+                  if ( af_params.association[ m ].reaction_components[ n ] == 1 )   
                      deriv_r = stn * pow( y0[ ind_cn ], stn - 1.0 );
                   
                   else      // comp[n] in this rule is reactant
@@ -2023,7 +2049,7 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
               else              // comp[j] is not in the rule
               {
                   // comp[n] is reactant
-                  if ( af_params.association[ m ].react[ n ] == 1 )
+                  if ( af_params.association[ m ].reaction_components[ n ] == 1 )
                      Q_reactant *= pow( y0[ ind_cn ], stn );
                   
                   else    // comp[n] in this rule is reactant
@@ -2035,13 +2061,13 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
        }  // C_j
     }    // m-rule
 
-    for ( uint i = 0; i < num_comp; i++ )
+    for ( int i = 0; i < num_comp; i++ )
     {
-        for ( uint j = 0; j < num_comp; j++ )
+        for ( int j = 0; j < num_comp; j++ )
         {
             dfdy[ i ][ j ] = 0.0;
 
-            for ( uint m = 0; m < af_params.role[ i ].assoc.size(); m++ )
+            for ( int m = 0; m < af_params.role[ i ].assoc.size(); m++ )
             {
                 dfdy[ i ][ j ] += - af_params.role[ i ].react[ m ] * 
                            (double) af_params.role[ i ].st   [ m ] * 
@@ -2058,27 +2084,28 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
 int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, 
       mfem_initial* C_init, mfem_data& simdata, bool accel )
 {
-   uint Mcomp = af_params.s.size();
+   int Mcomp = af_params.s.size();
 
    simdata.radius.clear();
    simdata.scan.clear();
    mfem_scan simscan;
 
    // Generate the adaptive mesh
-   vector< double > nu;
+   QVector< double > nu;
    nu.clear();
 
-   for ( uint i = 0; i < Mcomp; i++ )
+   for ( int i = 0; i < Mcomp; i++ )
    {
       double sw2 = af_params.s[ i ] * sq( rpm_stop * M_PI / 30 );
-      nu .push_back( sw2 / af_params.D[ i ] );
+      nu .append( sw2 / af_params.D[ i ] );
    }
 
-   mesh_gen( nu, simparams.mesh );
+   mesh_gen( nu, simparams.meshType );
 
+   bool fixedGrid = ( simparams.gridType == US_SimulationParameters::FIXED );
    double m  = af_params.current_meniscus;
    double b  = af_params.current_bottom;
-   uint   NN = af_params.time_steps;
+   int   NN = af_params.time_steps;
    double dt = af_params.dt;
    
    // Refine left hand side (when s_max>0) or  
@@ -2094,7 +2121,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
 
       if ( s_min > 0 )              // all sediment towards bottom
       {
-         uint   j;
+         int   j;
          double sw2 = s_max * sq( rpm_stop * M_PI / 30 );
          xc = m + sw2 * ( NN * dt ) / 3;
 
@@ -2108,7 +2135,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       else if ( s_max < 0 )      // all float towards meniscus
       {
          // s_min corresponds to fastest component
-         uint   j;
+         int   j;
          double sw2 = s_min * sq( rpm_stop * M_PI / 30 ); 
          
          xc = b + sw2 * ( NN * dt) / 3;
@@ -2127,7 +2154,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       }
    }
 
-   for ( uint i = 0; i < N; i++ ) simdata.radius .push_back( x[ i ] );
+   for ( int i = 0; i < N; i++ ) simdata.radius .append( x[ i ] );
 
    // Stiffness matrix on left hand side
    // CA[0...Ms-1][4][0...N-1]
@@ -2152,7 +2179,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       US_AstfemMath::initialize_3d( Mcomp, 3, N, &CB1 );
       US_AstfemMath::initialize_3d( Mcomp, 3, N, &CB2 );
 
-      for( uint i = 0; i < Mcomp; i++ )
+      for( int i = 0; i < Mcomp; i++ )
       {
          double sw2 = 0.0;
          ComputeCoefMatrixFixedMesh( af_params.D[ i ], sw2, CA1[ i ], CB1[ i ] );
@@ -2163,9 +2190,9 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    }
    else     // Constant sedimentation speed
    {
-      if ( ! simparams.moving_grid )
+      if ( fixedGrid )
       {
-         for( uint i = 0; i < Mcomp; i++ )
+         for( int i = 0; i < Mcomp; i++ )
          {
             double sw2 = af_params.s[ i ] * sq( rpm_stop * M_PI / 30 );
             ComputeCoefMatrixFixedMesh( af_params.D[ i ], sw2, CA[ i ], CB[ i ] );
@@ -2175,23 +2202,23 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       {
          if ( s_min > 0)      // All components sedimenting
          {
-            for ( uint i = 0; i < Mcomp; i++ )
+            for ( int i = 0; i < Mcomp; i++ )
             {
                double sw2 = af_params.s[ i ] * sq( rpm_stop * M_PI / 30 );
 
                // Grid for moving adaptive FEM for faster sedimentation
                
-               vector< double > xb;   
+               QVector< double > xb;   
                xb.clear();
-               xb .push_back( m );
+               xb .append( m );
                
-               for ( uint j = 0; j < N - 1; j++ )
+               for ( int j = 0; j < N - 1; j++ )
                {
                   double dval = 0.1 * exp( sw2 / af_params.D[ i ] * 
                         ( sq( 0.5 * (x[ j ] + x[ j + 1 ] ) ) - sq( b ) ) / 2 );
                   
                   double alpha = af_params.s[ i ] / s_max * ( 1 - dval ) + dval;
-                  xb .push_back(  pow( x[ j ]    , alpha ) * 
+                  xb .append(  pow( x[ j ]    , alpha ) * 
                                   pow( x[ j + 1 ], ( 1 - alpha) ) );
                }
 
@@ -2222,7 +2249,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    // Here we need the interpolate the initial partial 
    // concentration onto new grid x[j]
    
-   for( uint i = 0; i < Mcomp; i++ )
+   for( int i = 0; i < Mcomp; i++ )
    {
       // Interpolate the given C_init vector on the new C0 grid
       US_AstfemMath::interpolate_C0( C_init[ i ], C0[ i ], x ); 
@@ -2232,11 +2259,11 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    double* CT0 = new double [ N ];
    double* CT1 = new double [ N ];
    
-   for ( uint j = 0; j < N; j++ )
+   for ( int j = 0; j < N; j++ )
    {
        CT0[ j ] = 0.0;
 
-       for ( uint i = 0; i < Mcomp; i++ )  CT0[ j ] += C0[ i ][ j ];
+       for ( int i = 0; i < Mcomp; i++ )  CT0[ j ] += C0[ i ][ j ];
        
        CT1[ j ] = CT0[ j ];
    }
@@ -2244,15 +2271,15 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    // Time evolution
    double* right_hand_side = new double [N];
 
-   for ( uint kkk = 0; kkk < NN + 2; kkk += 2 )   // two steps in together
+   for ( int kkk = 0; kkk < NN + 2; kkk += 2 )   // two steps in together
    {
       double rpm_current = rpm_start + 
          ( rpm_stop - rpm_start ) * ( kkk + 0.5 ) / NN;
 
-      emit current_speed( (uint) rpm_current);
+      emit current_speed( (int) rpm_current);
 
       simscan.time      = af_params.start_time + kkk * dt;
-      simscan.rpm       = (uint) rpm_current;
+      simscan.rpm       = (int) rpm_current;
       w2t_integral     += ( simscan.time - last_time ) * sq(rpm_current * M_PI / 30 );
       last_time         = simscan.time;
       simscan.omega_s_t = w2t_integral;
@@ -2268,9 +2295,9 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
 
       simscan.conc.clear();
       
-      for ( uint j = 0; j < N; j++ ) simscan.conc .push_back( CT0[ j ] );
+      for ( int j = 0; j < N; j++ ) simscan.conc .append( CT0[ j ] );
       
-      simdata.scan .push_back( simscan );
+      simdata.scan .append( simscan );
 
       // First half step of sedimentation:
    
@@ -2278,11 +2305,11 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       {
          double dval = sq( rpm_current / rpm_stop );
          
-         for ( uint i = 0; i < Mcomp; i++ )
+         for ( int i = 0; i < Mcomp; i++ )
          {
-            for ( uint j1 = 0; j1 < 3; j1++ )
+            for ( int j1 = 0; j1 < 3; j1++ )
             {
-               for ( uint j2 = 0; j2 < N; j2++ )
+               for ( int j2 = 0; j2 < N; j2++ )
                {
                   CA[ i ][ j1 ][ j2 ] = CA1[ i ][ j1 ][ j2 ] + 
                                dval * ( CA2[ i ][ j1 ][ j2 ] - 
@@ -2296,21 +2323,21 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
          }
       }
 
-      if ( accel || ! simparams.moving_grid )   // For fixed grid
+      if ( accel || fixedGrid )    // For fixed grid
       {
-         for ( uint i = 0; i < Mcomp; i++ )
+         for ( int i = 0; i < Mcomp; i++ )
          {
             right_hand_side[ 0 ] = - CB[ i ][ 1 ][ 0 ] * C0[ i ][ 0 ] 
                                    - CB[ i ][ 2 ][ 0 ] * C0[ i ][ 1 ];
             
-            for ( uint j = 1; j < N - 1; j++ )
+            for ( int j = 1; j < N - 1; j++ )
             {
                right_hand_side[ j ] = - CB[ i ][ 0 ][ j ] * C0[ i ][ j - 1 ] 
                                       - CB[ i ][ 1 ][ j ] * C0[ i ][ j     ] 
                                       - CB[ i ][ 2 ][ j ] * C0[ i ][ j + 1 ];
             }
             
-            uint j = N - 1;
+            int j = N - 1;
             
             right_hand_side[ j ] = -CB[ i ][ 0 ][ j ] * C0[ i ][ j - 1 ] 
                                   - CB[ i ][ 1 ][ j ] * C0[ i ][ j     ];
@@ -2321,7 +2348,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       }
       else // Moving grid
       {
-         for ( uint i = 0; i < Mcomp; i++ )
+         for ( int i = 0; i < Mcomp; i++ )
          {
             // Calculate the right hand side vector 
             right_hand_side[ 0 ] = - CB[ i ][ 2 ][ 0 ] * C0[ i ][ 0 ] 
@@ -2331,7 +2358,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
                                    - CB[ i ][ 2 ][ 1 ] * C0[ i ][ 1 ] 
                                    - CB[ i ][ 3 ][ 1 ] * C0[ i ][ 2 ];
             
-            for ( uint j = 2; j < N - 1; j++ )
+            for ( int j = 2; j < N - 1; j++ )
             {
                right_hand_side[ j ] = - CB[ i ] [0 ][ j ] * C0[ i ][ j - 2 ]
                                       - CB[ i ] [1 ][ j ] * C0[ i ][ j - 1 ]
@@ -2339,7 +2366,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
                                       - CB[ i ][ 3 ][ j ] * C0[ i ][ j + 1 ];
             }
 
-            uint j = N - 1;
+            int j = N - 1;
             right_hand_side[ j ] = - CB[ i ][ 0 ][ j ] * C0[ i ][ j - 2 ]
                                    - CB[ i ][ 1 ][ j ] * C0[ i ][ j - 1 ]
                                    - CB[ i ][ 2 ][ j ] * C0[ i ][ j     ];
@@ -2361,11 +2388,11 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
      
       // For next half time-step in SNI operator splitting scheme
       
-      for ( uint j = 0; j < N; j++ )
+      for ( int j = 0; j < N; j++ )
       {
          CT1[ j ] = 0.0;
 
-         for ( uint i = 0; i < Mcomp; i++ )
+         for ( int i = 0; i < Mcomp; i++ )
          {
             CT1[ j ]   += C1[ i ][ j ];
             C0[ i][ j ] = C1[ i ][ j ];
@@ -2382,11 +2409,11 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       {
          double dval = sq( rpm_current / rpm_stop );
          
-         for ( uint i = 0; i < Mcomp; i++ )
+         for ( int i = 0; i < Mcomp; i++ )
          {
-            for ( uint j1 = 0; j1 < 3; j1++ )
+            for ( int j1 = 0; j1 < 3; j1++ )
             {
-               for ( uint j2 = 0; j2 < N; j2++ )
+               for ( int j2 = 0; j2 < N; j2++ )
                {
                   CA[ i][ j1 ][ j2 ] = CA1[ i ][ j1 ][ j2 ] + 
                               dval * ( CA2[ i ][ j1 ][ j2 ] - 
@@ -2400,21 +2427,21 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
          }
       }
 
-      if ( accel || ! simparams.moving_grid )   // for fixed grid
+      if ( accel || fixedGrid )                     // For fixed grid
       {
-         for ( uint i = 0; i < Mcomp; i++ )
+         for ( int i = 0; i < Mcomp; i++ )
          {
             right_hand_side[ 0 ] = - CB[ i ][ 1 ][ 0 ] * C0[ i ][ 0 ] 
                                    - CB[ i ][ 2 ][ 0 ] * C0[ i ][ 1 ];
             
-            for ( uint j = 1; j < N - 1; j++ )
+            for ( int j = 1; j < N - 1; j++ )
             {
                right_hand_side[ j ] = - CB[ i ][ 0 ][ j ] * C0[ i ][ j - 1 ]  
                                       - CB[ i ][ 1 ][ j ] * C0[ i ][ j     ] 
                                       - CB[ i ][ 2 ][ j ] * C0[ i ][ j + 1 ];
             }
 
-            uint j = N - 1;
+            int j = N - 1;
             right_hand_side[ j ] = - CB[ i ][ 0 ][ j ] * C0[ i ][ j - 1 ] 
                                    - CB[ i ][ 1 ][ j ] * C0[ i ][ j     ];
 
@@ -2424,7 +2451,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       }
       else // Moving grid
       {
-         for ( uint i = 0; i < Mcomp; i++ )
+         for ( int i = 0; i < Mcomp; i++ )
          {
             // Calculate the right hand side vector //
             right_hand_side[ 0 ] = - CB[ i ][ 2 ][ 0 ] * C0[ i ][ 0 ] 
@@ -2434,7 +2461,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
                                    - CB[ i ][ 2 ][ 1 ] * C0[ i ][ 1 ] 
                                    - CB[ i ][ 3 ][ 1 ] * C0[ i ][ 2 ];
 
-            for ( uint j = 2; j < N - 1; j++ )
+            for ( int j = 2; j < N - 1; j++ )
             {
                right_hand_side[ j ] = - CB[ i ][ 0 ][ j ] * C0[ i ][ j - 2 ]
                                       - CB[ i ][ 1 ][ j ] * C0[ i ][ j - 1 ]
@@ -2442,7 +2469,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
                                       - CB[ i ][ 3 ][ j ] * C0[ i ][ j + 1 ];
             }
 
-            uint j = N - 1;
+            int j = N - 1;
             right_hand_side[ j ] = - CB[ i ][ 0 ][ j ] * C0[ i ][ j - 2 ]
                                    - CB[ i ][ 1 ][ j ] * C0[ i ][ j - 1 ]
                                    - CB[ i ][ 2 ][ j ] * C0[ i ][ j     ];
@@ -2457,11 +2484,11 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
 
       // For next 2 time steps
       
-      for ( uint j = 0; j < N; j++ )
+      for ( int j = 0; j < N; j++ )
       {
          CT1[ j ] = 0.0;
 
-         for ( uint i = 0; i < Mcomp; i++ )
+         for ( int i = 0; i < Mcomp; i++ )
          {
             CT1[ j ]    += C1[ i ][ j ];
             C0[ i ][ j ] = C1[ i ][ j ];
@@ -2475,15 +2502,15 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    qApp->processEvents();
    US_Sleep::msleep( 10 ); // 10 ms to let the display update.
 
-   for ( uint i = 0; i < Mcomp; i++ )
+   for ( int i = 0; i < Mcomp; i++ )
    {
      C_init[ i ].radius.clear();
      C_init[ i ].concentration.clear();
      
-     for ( uint j = 0; j < N; j++ )
+     for ( int j = 0; j < N; j++ )
      {
-        C_init[ i ].radius        .push_back( x[ j ] );
-        C_init[ i ].concentration .push_back( C1[ i ][ j ] );
+        C_init[ i ].radius        .append( x[ j ] );
+        C_init[ i ].concentration .append( C1[ i ][ j ] );
      }
    }
 
@@ -2507,61 +2534,61 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    return 0;
 }
 
-void US_Astfem_RSA::GlobalStiff( vector< double >& xb, double** ca, double** cb,
-                                 double D, double sw2 )
+void US_Astfem_RSA::GlobalStiff( QVector< double >& xb, double** ca,
+                                 double** cb, double D, double sw2 )
 {
    //  4: global stifness matrix
 
    // function [CA, CB]=4(x, xb, dt, D, sw2)
 
    double*** Stif = NULL;
-   vector< double > vx;
+   QVector< double > vx;
    
    US_AstfemMath::initialize_3d( N, 6, 2, &Stif );
 
    // 1st elem
    vx.clear();
-   vx .push_back( x [ 0 ] );
-   vx .push_back( x [ 1 ] );
-   vx .push_back( x [ 0 ] );
-   vx .push_back( x [ 1 ] );
-   vx .push_back( x [ 2 ] );
-   vx .push_back( xb[ 1 ] );
+   vx .append( x [ 0 ] );
+   vx .append( x [ 1 ] );
+   vx .append( x [ 0 ] );
+   vx .append( x [ 1 ] );
+   vx .append( x [ 2 ] );
+   vx .append( xb[ 1 ] );
    US_AstfemMath::IntQT1( vx, D, sw2, Stif[ 0 ], af_params.dt );
 
    // elems in middle
-   for ( uint i = 1; i < N - 2; i++ )
+   for ( int i = 1; i < N - 2; i++ )
    {
       vx.clear();
-      vx .push_back( x [ i - 1 ] );
-      vx .push_back( x [ i     ] );
-      vx .push_back( x [ i + 1 ] );
-      vx .push_back( x [ i     ] );
-      vx .push_back( x [ i + 1 ] );
-      vx .push_back( x [ i + 2 ] );
-      vx .push_back( xb[ i     ] );
-      vx .push_back( xb[ i + 1 ] );
+      vx .append( x [ i - 1 ] );
+      vx .append( x [ i     ] );
+      vx .append( x [ i + 1 ] );
+      vx .append( x [ i     ] );
+      vx .append( x [ i + 1 ] );
+      vx .append( x [ i + 2 ] );
+      vx .append( xb[ i     ] );
+      vx .append( xb[ i + 1 ] );
       US_AstfemMath::IntQTm( vx, D, sw2, Stif[ i ], af_params.dt );
    }
 
    // 2nd last elems
    vx.clear();
-   vx .push_back( x [ N - 3 ] );
-   vx .push_back( x [ N - 2 ] );
-   vx .push_back( x [ N - 1 ] );
-   vx .push_back( x [ N - 2 ] );
-   vx .push_back( x [ N - 1 ] );
-   vx .push_back( xb[ N - 2 ] );
-   vx .push_back( xb[ N - 1 ] );
+   vx.append( x [ N - 3 ] );
+   vx.append( x [ N - 2 ] );
+   vx.append( x [ N - 1 ] );
+   vx.append( x [ N - 2 ] );
+   vx.append( x [ N - 1 ] );
+   vx.append( xb[ N - 2 ] );
+   vx.append( xb[ N - 1 ] );
 
    US_AstfemMath::IntQTn2( vx, D, sw2, Stif[ N - 2 ], af_params.dt );
 
    // last elems
    vx.clear();
-   vx .push_back( x [ N - 2 ] );
-   vx .push_back( x [ N - 1 ] );
-   vx .push_back( x [ N - 1 ] );
-   vx .push_back( xb[ N - 1 ] );
+   vx.append( x [ N - 2 ] );
+   vx.append( x [ N - 1 ] );
+   vx.append( x [ N - 1 ] );
+   vx.append( xb[ N - 1 ] );
    US_AstfemMath::IntQTn1 ( vx, D, sw2, Stif[ N - 1 ], af_params.dt );
    
    // assembly into global stiffness matrix
@@ -2587,7 +2614,7 @@ void US_Astfem_RSA::GlobalStiff( vector< double >& xb, double** ca, double** cb,
    cb[3][1] =                 Stif[1][2][0];
 
    // i: middle
-   for (  uint i = 2; i < N - 2; i++ )
+   for (  int i = 2; i < N - 2; i++ )
    {
       ca[0][i] = Stif[i-1][3][1];
       ca[1][i] = Stif[i-1][4][1] + Stif[i][3][0];
@@ -2601,7 +2628,7 @@ void US_Astfem_RSA::GlobalStiff( vector< double >& xb, double** ca, double** cb,
    }
 
    // i=n
-   uint i = N - 2;
+   int i = N - 2;
    ca[0][i] = Stif[i-1][3][1];
    ca[1][i] = Stif[i-1][4][1] + Stif[i][3][0];
    ca[2][i] = Stif[i-1][5][1] + Stif[i][4][0];
@@ -2625,4 +2652,75 @@ void US_Astfem_RSA::GlobalStiff( vector< double >& xb, double** ca, double** cb,
    cb[3][i] = 0.0;
 
    US_AstfemMath::clear_3d( N, 6, Stif );
+}
+
+void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData& edata, 
+                                    struct mfem_data&    fdata ) 
+{
+   int  nscan  = edata.scanData.size();
+   int  nconc  = edata.x.size();
+
+   fdata.id    = edata.description;
+   fdata.cell  = edata.cell;
+   fdata.scan.clear();
+   fdata.scan.resize( nscan );
+
+   for ( int ii = 0; ii < nscan; ii++ )
+   {
+      US_DataIO2::Scan* escan = &edata.scanData[ ii ];
+      struct mfem_scan* fscan = &fdata.scan    [ ii ];
+
+      fscan->temperature = escan->temperature;
+      fscan->rpm         = escan->rpm;
+      fscan->time        = escan->seconds;
+      fscan->omega_s_t   = escan->omega2t;
+      fscan->conc.clear();
+
+      for ( int jj = 0; jj < nconc; jj++ )
+      {
+         fscan->conc.append( escan->readings[ jj ].value  );
+      }
+   }
+
+   for ( int jj = 0; jj < nconc; jj++ )
+   {
+      fdata.radius.append( edata.x[ jj ].radius );
+   }
+}
+
+void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData& edata, 
+                                     struct mfem_data&    fdata ) 
+{
+   int  nscan  = fdata.scan.size();
+   int  nconc  = fdata.radius.size();
+
+   edata.description = fdata.id;
+   edata.cell        = fdata.cell;
+   edata.scanData.clear();
+   edata.scanData.resize( nscan );
+
+   for ( int ii = 0; ii < nscan; ii++ )
+   {
+      struct mfem_scan* fscan = &fdata.scan    [ ii ];
+      US_DataIO2::Scan* escan = &edata.scanData[ ii ];
+
+      escan->temperature = fscan->temperature;
+      escan->rpm         = fscan->rpm;
+      escan->seconds     = fscan->time;
+      escan->omega2t     = fscan->omega_s_t;
+      escan->plateau     = fdata.radius[ nconc - 1 ];
+      escan->readings.clear();
+
+      for ( int jj = 0; jj < nconc; jj++ )
+      {
+         US_DataIO2::Reading reading;
+         reading.value = fscan->conc[ jj ];
+         escan->readings.append( reading );
+      }
+   }
+
+   for ( int jj = 0; jj < nconc; jj++ )
+   {
+      edata.x.append( fdata.radius[ jj ] );
+   }
 }

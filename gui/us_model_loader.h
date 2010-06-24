@@ -84,6 +84,7 @@ class US_EXTERN US_ModelLoader : public US_WidgetsDialog
       };
 
       QList< ModelDesc > model_descriptions;
+      QList< ModelDesc > all_model_descrips;
       US_Model           model;
 
       QRadioButton*  rb_db;
@@ -97,6 +98,9 @@ class US_EXTERN US_ModelLoader : public US_WidgetsDialog
       US_ListWidget* lw_models;
 
       int            modelsCount;
+      int            db_id1;
+      int            db_id2;
+
       bool           multi;
       bool           ondisk;
 

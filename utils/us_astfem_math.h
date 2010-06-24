@@ -2,55 +2,126 @@
 #ifndef US_ASTFEM_MATH_H
 #define US_ASTFEM_MATH_H
 
-#include <vector>
-using namespace std;
-
-#include "us_femglobal.h"
+#include "us_model.h"
+#include "us_simparms.h"
 #include "us_extern.h"
 
 //! \brief Reaction Group
 struct ReactionGroup
 {
-   vector< uint > association;
-   vector< uint > GroupComponent;
+   QVector< int > association;
+   QVector< int > GroupComponent;
 };
 
 //! \brief Component Role
 struct ComponentRole
 {
-   uint           comp_index; // index of this component
-   vector< uint > assoc;      // assoc vector index where this component occurs
-   vector< int  > react;      // role of component in each association, 
+   int            comp_index; // index of this component
+   QVector< int > assoc;      // assoc QVector index where this component occurs
+   QVector< int > react;      // role of component in each association, 
                                      // = 1: if as reactant; =-1, if as product
-   vector< uint > st;         // stoichiometry of each component in 
+   QVector< int > st;         // stoichiometry of each component in 
                                      // each assoc., index is linked to assoc.
+};
+
+
+//! \brief Initial concentration contitions
+struct mfem_initial
+{
+   QVector< double > radius;         //!< List of radii
+   QVector< double > concentration;  //!< List of concentrations corresponding
+                                     //!< to radii
+};
+
+//! \brief A scan entry
+struct mfem_scan
+{
+   double            time;        //!< Time of the scan
+   double            omega_s_t;   //!< Omega^2 t 
+   double            temperature; //!< Temperature at the time of the scan
+   int               rpm;         //!< Rotor speed
+   QVector< double > conc;        //!< List of concentration values
+};
+
+//! \brief A data set comprised of scans from one sample taken at constant speed
+struct mfem_data  
+{
+   QString      id;           //!< Description of this dataset
+   int          cell;         //!< Cell position in rotor
+   int          channel;      //!< Channel number from centerpiece
+
+   //! Single wavelength at which data was acquired (for UV/Vis)
+   int          wavelength; 
+   int          rpm;          //!< Constant rotor speed
+   
+   //! The number with which a s20,w value needs
+   //! to be multiplied to get the s value in experimental space
+   //!  - sT,B = s20,W * s20W_correction
+   //!  - sT,B = [s_20,W * [(1-vbar*rho)_T,B * eta_20,W] / 
+   //!        [(1-vbar*rho)_20,W * eta_T,B]
+   
+   /*! 
+      \f[
+        s_{t,b} = s_{20,w} \frac{ ( 1 - (\bar v \rho)_{t,b} ) \eta_{20,w} } 
+                       {( 1 - (\bar v \rho)_{20,w} ) \eta_{t,b} } 
+      \f]
+      <div class='blockcenter'>
+         where: <br>
+
+         \f$ s \f$ = sedimentation coefficient <br>
+         \f$ t \f$ = temperature <br>
+         \f$ b \f$ = buffer <br>
+         \f$ w \f$ = water <br>
+         \f$ \bar v \f$ = average specific volume <br>
+         \f$ \rho \f$ = density <br>
+         \f$ \eta \f$ = viscosity </div>
+   */
+   
+   double       s20w_correction;  
+   
+   //! The number with which a D20,w value needs 
+   //! to be multiplied to get the s value in experimental space
+   //!  - DT,B = D20,W * D20w_correction
+   //!  - DT,B = [D20,W * T * eta_20,W] / [293.15 * eta_T,B]
+   
+   double       D20w_correction;  
+   double       viscosity;       //!< viscosity of solvent
+   double       density;         //!< density of solvent
+   double       vbar;            //!< temperature corrected vbar
+   double       avg_temperature; //!< average temperature of all scans
+   double       vbar20;          //!< vbar at 20C
+   double       meniscus;        //!< radial position of meniscus
+   double       bottom;          //!< speed dependent rotor stretch corrected
+   QVector< double>            radius; //!< radial gridpoints
+   QVector< struct mfem_scan > scan;   //!< list of scan data
 };
 
 //! \brief Parameters for finite element solution
 struct AstFemParameters
 {
-   uint             simpoints;
+   int               simpoints;
 
-   vector< double > s;       //!< sedimentation coefficient
-   vector< double > D;       //!< Diffusion coefficient
-   vector< double > kext;    //!< extinctiom coefficient
-   vector< struct ComponentRole > role; //!< role of each component in various reactions
+   QVector< double > s;       //!< sedimentation coefficient
+   QVector< double > D;       //!< Diffusion coefficient
+   QVector< double > kext;    //!< extinctiom coefficient
+   QVector< struct ComponentRole > role; //!< role of each component
+                                         //!<  in various reactions
 
    double pathlength;       //!< path length of centerpiece;
    double dt;               //!< time step size;
-   uint   time_steps;       //!< number of time steps for simulation
+   int    time_steps;       //!< number of time steps for simulation
    double omega_s;          //!< omega^2
    double start_time;       //!< start time in seconds of simulation at constant speed
    double current_meniscus; //!< actual meniscus for current speed
    double current_bottom;   //!< actual bottom for current speed
-   uint   first_speed;      //!< constant speed at first speed step
-   uint   rg_index;         //!< reaction group index
+   int    first_speed;      //!< constant speed at first speed step
+   int    rg_index;         //!< reaction group index
 
    //! Local index of each GroupComponent involved in a reaction group
-   vector< uint > local_index;  
+   QVector< int > local_index;  
    
    //! All association rules in a reaction group, with comp expressed in local index
-   vector< struct Association > association; 
+   QVector< US_Model::Association > association; 
 };
 
 //! \brief A group of static mathematical functions to support finite element 
@@ -61,22 +132,22 @@ class US_EXTERN US_AstfemMath
    //! Interpolate first onto second
    static void interpolate_C0( struct mfem_initial&, struct mfem_initial& );
 
-   //! Interpolate starting concentration vector mfem_initial onto C0
-   static void interpolate_C0( struct mfem_initial&, double*, vector< double >& );
+   //! Interpolate starting concentration QVector mfem_initial onto C0
+   static void interpolate_C0( struct mfem_initial&, double*, QVector< double >& );
 
-   static void initialize_2d( uint, uint, double*** );
-   static void clear_2d     ( uint, double** );
+   static void initialize_2d( int, int, double*** );
+   static void clear_2d     ( int, double** );
 
-   static double maxval( const vector< double >& );
-   static double minval( const vector< double >& );
-   static double maxval( const vector< struct SimulationComponent >& );
-   static double minval( const vector< struct SimulationComponent >& );
+   static double maxval( const QVector< double >& );
+   static double minval( const QVector< double >& );
+   static double maxval( const QVector< US_Model::SimulationComponent >& );
+   static double minval( const QVector< US_Model::SimulationComponent >& );
    
-   static void   initialize_3d( uint, uint, uint, double**** );
-   static void   clear_3d     ( uint, uint, double*** );
+   static void   initialize_3d( int, int, int, double**** );
+   static void   clear_3d     ( int, int, double*** );
    
    static void   tridiag      ( double*, double*, double*, 
-                                double*, double*, uint );
+                                double*, double*, int );
 
    static double cube_root    ( double, double, double );
    static int    GaussElim    ( int, double**, double* );
@@ -85,27 +156,27 @@ class US_EXTERN US_AstfemMath
 
    static int    interpolate  ( struct mfem_data&, struct mfem_data&, bool );  
    static void   QuadSolver   ( double*, double*, double*, double*, 
-                                double*, double*, uint);
+                                double*, double*, int);
    
-   static void   IntQT1       ( vector< double >, double, double, double**, double );
-   static void   IntQTm       ( vector< double >, double, double, double**, double );
-   static void   IntQTn2      ( vector< double >, double, double, double**, double );
-   static void   IntQTn1      ( vector< double >, double, double, double**, double );
-   static void   DefineFkp    ( uint, double** );
-   static double AreaT        ( vector< double >&, vector< double >& );
+   static void   IntQT1       ( QVector< double >, double, double, double**, double );
+   static void   IntQTm       ( QVector< double >, double, double, double**, double );
+   static void   IntQTn2      ( QVector< double >, double, double, double**, double );
+   static void   IntQTn1      ( QVector< double >, double, double, double**, double );
+   static void   DefineFkp    ( int, double** );
+   static double AreaT        ( QVector< double >&, QVector< double >& );
 
    static void   BasisTS      ( double, double, double*, double*, double*);
    static void   BasisQS      ( double, double, double*, double*, double*);
    
-   static void   BasisTR      ( vector< double >, vector< double >, double, double, 
+   static void   BasisTR      ( QVector< double >, QVector< double >, double, double, 
                                double*, double*, double* );
    
-   static void   BasisQR      ( vector< double >, double, double, double*, double*, 
+   static void   BasisQR      ( QVector< double >, double, double, double*, double*, 
                                 double*, double );
 
    static double Integrand    ( double, double, double, double, double, double, 
                                 double, double);
 
-   static void   DefineGaussian( uint, double** );
+   static void   DefineGaussian( int, double** );
 };
 #endif
