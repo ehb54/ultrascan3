@@ -1,15 +1,13 @@
 #include "us_simulationparameters.h"
-#include "us_femglobal.h"
+//#include "us_femglobal.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
 
-US_SimulationParameters::US_SimulationParameters(
-      struct SimulationParameters& params, 
-      QWidget* p, 
-      Qt::WindowFlags f ) 
-   : US_WidgetsDialog( p, f ), simparams( params )
+US_SimulationParametersGui::US_SimulationParametersGui(
+      US_SimulationParameters& params )
+   : US_WidgetsDialog( 0, 0 ), simparams( params )
 {
-   setWindowTitle( "ASTFEM Simulation Parameters" );
+   setWindowTitle( "Set Simulation Parameters" );
    setPalette    ( US_GuiSettings::frameColor() );
    setAttribute  ( Qt::WA_DeleteOnClose );
 
@@ -36,16 +34,15 @@ US_SimulationParameters::US_SimulationParameters(
    main->addWidget( cnt_speeds, row++, 1 );
    connect( cnt_speeds, SIGNAL( valueChanged ( double ) ), 
                         SLOT  ( update_speeds( double ) ) );
-
    // Speeds combo box
    cmb_speeds = us_comboBox();
    main->addWidget( cmb_speeds, row++, 0, 1, 2 );
 
-   struct SpeedProfile* sp = &simparams.speed_step[ 0 ];
+   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ 0 ];
 
-   for ( uint i = 0; i < simparams.speed_step.size(); i++ ) 
+   for ( int i = 0; i < simparams.speed_step.size(); i++ ) 
    {
-      struct SpeedProfile* spi = &simparams.speed_step[ i ];
+      US_SimulationParameters::SpeedProfile* spi = &simparams.speed_step[ i ];
 
       cmb_speeds->addItem( "Speed Profile " +
             QString::number( i + 1                ) + ": " +
@@ -323,7 +320,7 @@ US_SimulationParameters::US_SimulationParameters(
    cmb_mesh->addItem( "Claverie Fixed Mesh" );
    cmb_mesh->addItem( "Moving Hat Mesh" );
    cmb_mesh->addItem( "Specified file (mesh.dat)" );
-   cmb_mesh->setCurrentIndex( simparams.mesh );
+   //cmb_mesh->setCurrentIndex( simparams.mesh );
    
    main->addWidget( cmb_mesh, row++, 2, 1, 2 );
 
@@ -335,7 +332,7 @@ US_SimulationParameters::US_SimulationParameters(
    cmb_moving->setMaxVisibleItems( 5 );
    cmb_moving->addItem( "Constant Time Grid (Claverie/Acceleration)" );
    cmb_moving->addItem( "Moving Time Grid (ASTFEM/Moving Hat)" );
-   cmb_moving->setCurrentIndex( simparams.moving_grid );
+   //cmb_moving->setCurrentIndex( simparams.moving_grid );
    connect( cmb_moving, SIGNAL( activated    ( int ) ), 
                         SLOT  ( update_moving( int ) ) );
    
@@ -361,23 +358,30 @@ US_SimulationParameters::US_SimulationParameters(
    buttons ->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
    buttons ->addWidget( pb_accept );
 
    main->addLayout( buttons, row++, 0, 1, 4 );
 }
 
-void US_SimulationParameters::backup_parms( void )
+void US_SimulationParametersGui::accepted( void )
 {
-   struct SpeedProfile sp;
+   emit complete();
+   accept();
+}
+
+void US_SimulationParametersGui::backup_parms( void )
+{
+   /*
+   US_SimulationParameters::SpeedProfile sp;
    simparams_backup.speed_step.clear();
 
-   for ( uint i = 0; i < simparams.speed_step.size(); i ++ )
+   for ( int i = 0; i < simparams.speed_step.size(); i ++ )
    {
       simparams_backup.speed_step .push_back( sp );
 
-      struct SpeedProfile* ss   = &simparams       .speed_step[ i ];
-      struct SpeedProfile* ssbu = &simparams_backup.speed_step[ i ];
+      US_SimulationParameters::SpeedProfile* ss   = &simparams       .speed_step[ i ];
+      US_SimulationParameters::SpeedProfile* ssbu = &simparams_backup.speed_step[ i ];
 
       ssbu->duration_hours    = ss->duration_hours;
       ssbu->duration_minutes  = ss->duration_minutes;
@@ -396,19 +400,20 @@ void US_SimulationParameters::backup_parms( void )
    simparams_backup.rnoise            = simparams.rnoise;
    simparams_backup.tinoise           = simparams.tinoise;
    simparams_backup.rinoise           = simparams.rinoise;
+   */
 }
 
-void US_SimulationParameters::revert( void )
+void US_SimulationParametersGui::revert( void )
 {
-   struct SpeedProfile sp;
+   US_SimulationParameters::SpeedProfile sp;
    simparams.speed_step.clear();
 
-   for ( uint i = 0; i < simparams_backup.speed_step.size(); i ++ )
+   for ( int i = 0; i < simparams_backup.speed_step.size(); i ++ )
    {
       simparams.speed_step .push_back( sp );
 
-      struct SpeedProfile* ss   = &simparams       .speed_step[ i ];
-      struct SpeedProfile* ssbu = &simparams_backup.speed_step[ i ];
+      US_SimulationParameters::SpeedProfile* ss   = &simparams       .speed_step[ i ];
+      US_SimulationParameters::SpeedProfile* ssbu = &simparams_backup.speed_step[ i ];
 
       ss->duration_hours    = ssbu->duration_hours;
       ss->duration_minutes  = ssbu->duration_minutes;
@@ -431,10 +436,10 @@ void US_SimulationParameters::revert( void )
    reject();
 }
 
-void US_SimulationParameters::update_speeds( double value )
+void US_SimulationParametersGui::update_speeds( double value )
 {
    int                 old_size = simparams.speed_step.size();
-   struct SpeedProfile sp;
+   US_SimulationParameters::SpeedProfile sp;
    
    for ( int i = old_size; i < (int) value; i++ )
    {
@@ -445,8 +450,8 @@ void US_SimulationParameters::update_speeds( double value )
       // element if old_size > new_size then we won't go through this loop and
       // simply truncate the list
 
-      struct SpeedProfile* ss     = &simparams.speed_step[ i ];
-      struct SpeedProfile* ss_old = &simparams.speed_step[ old_size - 1 ];
+      US_SimulationParameters::SpeedProfile* ss     = &simparams.speed_step[ i ];
+      US_SimulationParameters::SpeedProfile* ss_old = &simparams.speed_step[ old_size - 1 ];
       
       ss->duration_hours    = ss_old->duration_hours;
       ss->duration_minutes  = ss_old->duration_minutes;
@@ -462,14 +467,14 @@ void US_SimulationParameters::update_speeds( double value )
    update_combobox();
 }
 
-void US_SimulationParameters::update_combobox( void )
+void US_SimulationParametersGui::update_combobox( void )
 {
    cmb_speeds->disconnect();
    cmb_speeds->clear();
    
-   for ( uint i = 0; i < simparams.speed_step.size(); i++ )
+   for ( int i = 0; i < simparams.speed_step.size(); i++ )
    {
-      struct SpeedProfile* spi = &simparams.speed_step[ i ];
+      US_SimulationParameters::SpeedProfile* spi = &simparams.speed_step[ i ];
 
       cmb_speeds->addItem( "Speed Profile " +
             QString::number( i + 1                 ) + ": " +
@@ -484,12 +489,12 @@ void US_SimulationParameters::update_combobox( void )
    cmb_speeds->setCurrentIndex( current_speed_step );
 }
 
-void US_SimulationParameters::update_speed_profile( double profile )
+void US_SimulationParametersGui::update_speed_profile( double profile )
 {
    select_speed_profile( (int) profile - 1 );
 }
 
-void US_SimulationParameters::select_speed_profile( int index )
+void US_SimulationParametersGui::select_speed_profile( int index )
 {
    current_speed_step = index;
    cnt_speeds->setValue( index + 1 );
@@ -510,7 +515,7 @@ void US_SimulationParameters::select_speed_profile( int index )
 
    cmb_speeds->setCurrentIndex( index );
    
-   struct SpeedProfile* sp = &simparams.speed_step[ index ];
+   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ index ];
 
    cnt_duration_hours->setValue( sp->duration_hours   );
    cnt_duration_mins ->setValue( sp->duration_minutes );
@@ -523,11 +528,11 @@ void US_SimulationParameters::select_speed_profile( int index )
    cb_acceleration_flag->setChecked( sp->acceleration_flag );
 }
 
-void US_SimulationParameters::check_delay( void )
+void US_SimulationParametersGui::check_delay( void )
 {
-   vector< int    > hours;
-   vector< double > minutes;
-   vector< int    > speed;
+   QVector< int    > hours;
+   QVector< double > minutes;
+   QVector< int    > speed;
    
    speed.clear();
    speed .push_back( 0 );
@@ -539,7 +544,7 @@ void US_SimulationParameters::check_delay( void )
       hours  .push_back( 0 );
       minutes.push_back( 0.0 );
 
-      struct SpeedProfile* ss = &simparams.speed_step[ i ];
+      US_SimulationParameters::SpeedProfile* ss = &simparams.speed_step[ i ];
       speed .push_back( ss->rotorspeed );
       
       int lower_limit = 1 + 
@@ -553,7 +558,7 @@ void US_SimulationParameters::check_delay( void )
    cnt_delay_mins ->setMaxValue( minutes[ current_speed_step ] );
    cnt_delay_hours->setMinValue( hours  [ current_speed_step ] );
    
-   struct SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
+   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
 
    if ( sp->delay_minutes < minutes[ current_speed_step] )
    {
@@ -589,38 +594,38 @@ void US_SimulationParameters::check_delay( void )
    }
 }
 
-void US_SimulationParameters::update_duration_hours( double hours )
+void US_SimulationParametersGui::update_duration_hours( double hours )
 {
-   struct SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
+   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    sp->duration_hours = (unsigned int)hours;
    check_delay();
    update_combobox();
 }
 
-void US_SimulationParameters::update_duration_mins( double minutes )
+void US_SimulationParametersGui::update_duration_mins( double minutes )
 {
-   struct SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
+   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    sp->duration_minutes = (unsigned int)minutes;
    check_delay();
    update_combobox();
 }
 
-void US_SimulationParameters::update_delay_hours( double hours )
+void US_SimulationParametersGui::update_delay_hours( double hours )
 {
-   struct SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
+   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    sp->delay_hours = (unsigned int) hours;
 }
 
-void US_SimulationParameters::update_delay_mins( double minutes )
+void US_SimulationParametersGui::update_delay_mins( double minutes )
 {
-   struct SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
+   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    sp->delay_hours = (unsigned int) minutes;
    check_delay();
 }
 
-void US_SimulationParameters::update_rotorspeed( double speed )
+void US_SimulationParametersGui::update_rotorspeed( double speed )
 {
-   struct SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
+   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    sp->rotorspeed = (unsigned long) speed;
    update_combobox();
  
@@ -629,9 +634,9 @@ void US_SimulationParameters::update_rotorspeed( double speed )
    if ( cb_acceleration_flag->isChecked() ) check_delay();
 }
 
-void US_SimulationParameters::acceleration_flag( void )
+void US_SimulationParametersGui::acceleration_flag( void )
 {
-   struct SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
+   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
 
    bool state = cb_acceleration_flag->isChecked();
    
@@ -643,9 +648,9 @@ void US_SimulationParameters::acceleration_flag( void )
    if ( state ) check_delay();
 }
 
-void US_SimulationParameters::update_acceleration( double accel )
+void US_SimulationParametersGui::update_acceleration( double accel )
 {
-   struct SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
+   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    sp->acceleration = (unsigned long) accel;
  
    // If there is acceleration we need to set the scan delay
@@ -653,13 +658,13 @@ void US_SimulationParameters::update_acceleration( double accel )
    if ( cb_acceleration_flag->isChecked() ) check_delay();
 }
 
-void US_SimulationParameters::update_scans( double scans )
+void US_SimulationParametersGui::update_scans( double scans )
 {
-   struct SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
+   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    sp->scans = (unsigned int)scans;
 }
 
-void US_SimulationParameters::save( void )
+void US_SimulationParametersGui::save( void )
 {
    QString fn = QFileDialog::getSaveFileName( this,
          tr( "Save Simulation Paramaters in:" ),
@@ -688,7 +693,7 @@ void US_SimulationParameters::save( void )
       }
    }
 
-   if ( US_FemGlobal::write_simulationParameters( simparams, fn ) == 0 )
+   //if ( US_FemGlobal::write_simulationParameters( simparams, fn ) == 0 )
    {
       QMessageBox::information( this, 
             tr( "UltraScan Information" ),
@@ -696,7 +701,7 @@ void US_SimulationParameters::save( void )
                 "The Simulation Profile was successfully saved to:\n\n" ) + 
                 fn );
    }
-   else
+   //else
    {
       QMessageBox::information( this, 
             tr( "UltraScan Error" ),
@@ -706,7 +711,7 @@ void US_SimulationParameters::save( void )
    }
 }
 
-void US_SimulationParameters::load( void )
+void US_SimulationParametersGui::load( void )
 {
    QString fn = QFileDialog::getOpenFileName( this,
          tr( "" ),
@@ -714,7 +719,7 @@ void US_SimulationParameters::load( void )
 
    if ( fn.isEmpty() ) return;
   
-   if ( US_FemGlobal::read_simulationParameters( simparams, fn ) == 0 )
+   //if ( US_FemGlobal::read_simulationParameters( simparams, fn ) == 0 )
    {
       int steps = simparams.speed_step.size();
 
@@ -723,7 +728,7 @@ void US_SimulationParameters::load( void )
 
       for ( int i = 0; i < steps; i++ )
       {
-         struct SpeedProfile* spi = &simparams.speed_step[ i ];
+         US_SimulationParameters::SpeedProfile* spi = &simparams.speed_step[ i ];
 
          cmb_speeds->addItem( "Speed Profile " +
             QString::number( i + 1                ) + ": " +
@@ -734,7 +739,7 @@ void US_SimulationParameters::load( void )
 
       // Initialize all counters with the first speed profile:
 
-      struct SpeedProfile* sp = &simparams.speed_step[ 0 ];
+      US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ 0 ];
 
       cnt_duration_hours->setValue( sp->duration_hours   );
       cnt_duration_mins ->setValue( sp->duration_minutes );
@@ -755,8 +760,8 @@ void US_SimulationParameters::load( void )
       cnt_tinoise   ->setValue( simparams.tinoise           );
       cnt_rinoise   ->setValue( simparams.rinoise           );
 
-      cmb_mesh      ->setCurrentIndex( simparams.mesh        );
-      cmb_moving    ->setCurrentIndex( simparams.moving_grid );
+      //cmb_mesh      ->setCurrentIndex( simparams.mesh        );
+      //cmb_moving    ->setCurrentIndex( simparams.moving_grid );
 
       rb_band->setChecked( simparams.band_forming );
 
@@ -766,7 +771,7 @@ void US_SimulationParameters::load( void )
                 "The Simulation Profile was successfully loaded from:\n\n" ) + 
                 fn );
    }
-   else
+   //else
    {
       QMessageBox::information( this, 
             tr( "UltraScan Error" ),
@@ -776,9 +781,9 @@ void US_SimulationParameters::load( void )
    }
 }
    
-void US_SimulationParameters::update_mesh( int mesh )
+void US_SimulationParametersGui::update_mesh( int mesh )
 {
-   simparams.mesh = mesh;
+   //simparams.mesh = mesh;
 
    // By default, the simpoints can be set by the user
    cnt_simpoints->setEnabled( true );
@@ -847,7 +852,7 @@ void US_SimulationParameters::update_mesh( int mesh )
       }
       else
       {
-         simparams.mesh = 0; // Set to default ASTFEM mesh
+         //simparams.mesh = 0; // Set to default mesh
          cmb_mesh->setCurrentIndex( 0 );
          
          // By default, the simpoints can be set by the user 

@@ -13,9 +13,12 @@ using namespace std;
 
 #include "us_widgets.h"
 #include "us_plot.h"
-#include "us_femglobal.h"
+//#include "us_femglobal.h"
+#include "us_model.h"
+#include "us_simparms.h"
 #include "us_help.h"
 #include "us_astfem_rsa.h"
+#include "us_dataIO2.h"
 
 //! \brief Main window to control and display an ultracentrifugation 
 //!        simulation
@@ -65,32 +68,38 @@ class US_Astfem_Sim : public US_Widgets
       int            progress_value;
       int            progress_maximum;
 
-      US_Astfem_RSA* astfem_rsa;
-
-      struct ModelSystem          system;
-      struct SimulationParameters simparams;
-      vector< struct mfem_data >  astfem_data;
+      US_Astfem_RSA*          astfem_rsa;
+      US_Model                system;
+      US_SimulationParameters simparams;
+      US_SimulationParameters working_simparams;
+      US_DataIO2::RawData     sim_data;
 
       void init_simparams  ( void );  
       void save_xla        ( const QString& );  
       void save_ultrascan  ( const QString& );  
+      void finish          ( void );
+      void ri_noise        ( void );
+      void random_noise    ( void );
+      void ti_noise        ( void );
+      void plot            ( void );
 
 // debug
       void dump_system     ( void );
       void dump_simparms   ( void );
       void dump_astfem_data( void );
-      void dump_simComponent( struct SimulationComponent& );
-      void dump_association ( struct Association& );
-      void dump_mfem_initial( struct mfem_initial& );
-      void dump_ss          ( struct SpeedProfile& );
-      void dump_mfem_scan   ( struct mfem_scan& );
+      void dump_simComponent( US_Model::SimulationComponent& );
+      void dump_association ( US_Model::Association& );
+      void dump_mfem_initial( US_DataIO2::Scan& );
+      void dump_ss          ( US_SimulationParameters::SpeedProfile& );
+      void dump_mfem_scan   ( US_DataIO2::Scan& );
 
    private slots:
       void load_experiment ( void );
       void save_experiment ( void );
       void new_model       ( void );
-      void change_model    ( void );
+      void change_model    ( US_Model );
       void load_model      ( void );
+      void set_parameters  ( void );
       void sim_parameters  ( void );
       void start_simulation( void );
       void stop_simulation ( void );
@@ -101,7 +110,8 @@ class US_Astfem_Sim : public US_Widgets
       void calc_over       ( void );
       //void closeEvent      ( QCloseEvent* );
       
-      void update_movie_plot( vector< double >&, double* );
+      //void update_movie_plot( QVector< double >&, double* );
+      void update_movie_plot( int );
 
       void update_time     ( double time )        
          { lcd_time ->display( time  ); };
