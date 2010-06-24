@@ -18,6 +18,8 @@ public:
    double sk_interprmsd(double s, double k);
    int s_pos(double s); // return index of closest previous s
    int k_pos(double k); // return index of closest previous k
+   void s_printgrid(void *ir, QString filename);
+
 private:
    double s_min;
    double s_max;
@@ -32,6 +34,30 @@ private:
    unsigned int s_vec_max;
    unsigned int k_vec_max;
 };
+
+void InterpRmsd::s_printgrid(void *ir, QString filename)
+{
+   QFile f(filename);
+   if ( !f.open(IO_WriteOnly) )
+   {
+      cout << filename << "file create error\n";
+   }
+   QTextStream ts(&f);
+   
+   for ( unsigned int i = 0; i < s_vec.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < k_vec.size(); j++ )
+      {
+         QString key =
+            QString("%1~%2").arg(s_vec[i]).arg(k_vec[j]);
+         ts 
+            << s_vec[i] << " "
+            << k_vec[j] << " "
+            << ((InterpRmsd *)ir)->s_interprmsd(s_vec[i], k_vec[j]) << endl;
+      }
+   }
+   f.close();
+}
 
 int InterpRmsd::s_pos(double s)
 {
@@ -132,6 +158,68 @@ double InterpRmsd::sk_interprmsd(double s, double k)
       rmsd1 +
       ( rmsd2 - rmsd1 ) * ( k - k_vec[k_base] ) /
       ( k_vec[k_base+1] - k_vec[k_base] );
+
+   return rmsd;
+}
+
+double InterpRmsd::s_interprmsd(double s, double k)
+{
+   // find 2 closest values and interpolate?
+   int s_base = s_pos(s);
+   int k_base = k_pos(k);
+   
+   // interpolate in the s direction
+
+   QString key1 = QString("%1~%2")
+      .arg(s_vec[s_base])
+      .arg(k_vec[k_base]);
+
+   QString key2 = QString("%1~%2")
+      .arg(s_vec[s_base+1])
+      .arg(k_vec[k_base]);
+
+   if ( !s_rmsd.count(key1) ||
+        !s_rmsd.count(key2) )
+   {
+      cout << "key1 or key2 missing from s_rmsd " << key1 << " " << key2 << endl;
+      exit(-1);
+   }
+
+   double rmsd = 
+      s_rmsd[key1] + 
+      ( s_rmsd[key2] - s_rmsd[key1] ) * (s_vec[s_base+1] - s) / 
+      ( s_vec[s_base+1] - s_vec[s_base] );
+
+   return rmsd;
+}
+
+double InterpRmsd::k_interprmsd(double s, double k)
+{
+   // find 2 closest values and interpolate?
+   int s_base = s_pos(s);
+   int k_base = k_pos(s);
+   
+   // interpolate in the k direction
+
+   QString key1 = QString("%1~%2")
+      .arg(s_vec[s_base])
+      .arg(k_vec[k_base]);
+
+   QString key2 = QString("%1~%2")
+      .arg(s_vec[s_base])
+      .arg(k_vec[k_base+1]);
+
+   if ( !k_rmsd.count(key1) ||
+        !k_rmsd.count(key2) )
+   {
+      cout << "key1 or key2 missing from k_rmsd " << key1 << " " << key2 << endl;
+      exit(-1);
+   }
+
+   double rmsd = 
+      k_rmsd[key1] + 
+      ( k_rmsd[key2] - k_rmsd[key1] ) * (k_vec[s_base+1] - k) / 
+      ( k_vec[s_base+1] - k_vec[s_base] );
 
    return rmsd;
 }
@@ -921,6 +1009,42 @@ int main (int argc, char **argv)
          }
       }
       f_out.close();
+
+      // ok, lets 'renormalize' in just the s direction for now.
+      // place the new vectors into ir2, rebuild, replace?
+      InterpRmsd ir2 = ir;
+      InterpRmsd ir3 = ir;
+
+      bool updates = false;
+      double new_s;
+      int count = 0;
+# define MAX_TRIES 3
+      do 
+      {
+         printf("renormalizing try %d\n", count);
+         updates = false;
+         ir2 = ir3;
+         for ( unsigned int j = 0; j < ir.k_vec.size(); j++ ) 
+         {
+            for ( unsigned int i = 1; i < ir.s_vec.size() - 1; i++ ) 
+            {
+               // QString key1 = QString("%1~%2").arg(ir.s_vec[i-1]).arg(ir.k_vec[j]);
+               // QString key = QString("%1~%2").arg(ir.s_vec[i]).arg(ir.k_vec[j]);
+               // QString key2 = QString("%1~%2").arg(ir.s_vec[i+1]).arg(ir.k_vec[j]);
+               
+               double rmsd1 = ir.s_interprmsd(ir2.s_vec[i-1],ir2.k_vec[j]);
+               double rmsd2 = ir.s_interprmsd(ir2.s_vec[i+1],ir2.k_vec[j]);
+               new_s = 
+                  ( ir2.s_vec[i-1] * rmsd1 + ir2.s_vec[i+1] * rmsd2 ) / ( rmsd1 + rmsd2 );
+               if ( new_s != ir3.s_vec[i] )
+               {
+                  updates = true;
+                  ir3.s_vec[i] = new_s;
+               }
+            }
+         }
+         ir3.s_printgrid(&ir, QString("s-%1.txt").arg(count));
+      } while ( updates && ++count < MAX_TRIES );
 
       puts("not finished");
       exit(0);

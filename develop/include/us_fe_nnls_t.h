@@ -104,7 +104,19 @@ class US_EXTERN US_fe_nnls_t
                         vector < mfem_data > *save_gaussians,
                         list < Expdata > *expdata_list
                         );
+
    bool gridrmsd;
+
+   vector < mfem_data > build_model(double s, double k);
+
+   void match_rmsd(
+                   double *s_new, 
+                   double *k_new,
+                   double s,
+                   double k,
+                   bool float_s,
+                   double rmsd
+                   );
 };
 
 typedef struct _MPI_GA_Work_Msg {

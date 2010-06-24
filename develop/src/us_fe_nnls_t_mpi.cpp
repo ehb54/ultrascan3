@@ -2549,10 +2549,103 @@ static float rmsd2(vector < mfem_data > *m1,
    return rmsd;
 }
 
+vector < mfem_data > US_fe_nnls_t::build_model(double s, double k)
+{
+   vector < mfem_data > m = experiment;
+   for ( unsigned int e = 0; e < experiment.size(); e++ )
+   {
+      double D_20w = (R * K20) /
+         (AVOGADRO * 18 * M_PI * pow(k * VISC_20W, 3.0/2.0) *
+          pow((fabs(s) * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
+      double D_tb = D_20w / experiment[e].D20w_correction;
+               
+      US_Astfem_RSA astfem_rsa(false);
+      use_model_system = model_system_1comp;
+      use_model_system.component_vector[0].s = s / experiment[e].s20w_correction;
+      use_model_system.component_vector[0].D = D_tb;
+      use_simulation_parameters = simulation_parameters_vec[e];
+      vector <mfem_data> use_experiment;
+      use_experiment.push_back(experiment[e]);
+      astfem_rsa.setTimeCorrection(true);
+      astfem_rsa.setTimeInterpolation(false);
+      if(!fit_tinoise && use_simulation_parameters.band_forming) {
+         use_simulation_parameters.band_firstScanIsConcentration = true;
+      } else {
+         use_simulation_parameters.band_firstScanIsConcentration = false;
+      }
+      
+      astfem_rsa.calculate(&use_model_system, 
+                           &use_simulation_parameters, 
+                           &use_experiment, 
+                           0, 
+                           0, 
+                           &rotor_list);
+               
+      m[e] = use_experiment[0];
+   }
+   return m;
+}
+
+#define DEBUG_MATCH_RMSD
+void US_fe_nnls_t::match_rmsd(
+                              double *s_new, 
+                              double *k_new,
+                              double s,
+                              double k,
+                              bool float_s,
+                              double rmsd
+                              )
+{
+   // simulate system and find matching system with appropriate rmsd
+   // set s_new/k_new to a first guess
+   // always looks for an increasing distance point, so the grid starts
+   // at the top left
+# define RMSD_TOLERANCE .00005
+   vector < mfem_data > m1 = build_model(s, k);
+   vector < mfem_data > m2 = build_model(*s_new, *k_new);
+   double rmsd_new = rmsd2(&m1, &m2);
+
+   if ( (float_s && *s_new <= s) || 
+        (!float_s && *k_new <= k) )
+   {
+      printf("s_new (%g) <= s (%g) || k_new (%g) <= k (%g)\n",
+             *s_new, s, *k_new, k);
+      MPI_Finalize();
+      exit(0);
+   }
+
+#if defined(DEBUG_MATCH_RMSD)
+   printf("trying to match rmsd %g rmsd_new %g s %g s_new %g k %g k_new %g\n",
+          rmsd, rmsd_new, s, *s_new, k, *k_new);
+   int count = 0;
+#endif
+
+   while ( fabs(rmsd_new - rmsd) > RMSD_TOLERANCE )
+   {
+      if ( float_s ) {
+         *s_new = s + (( *s_new - s ) * rmsd / rmsd_new);
+      } else {
+         *k_new = k + (( *k_new - k ) * rmsd / rmsd_new);
+      }
+
+      m2 = build_model(*s_new, *k_new);
+      rmsd_new = rmsd2(&m1, &m2);
+#if defined(DEBUG_MATCH_RMSD)
+   printf("iteration %d rmsd %g rmsd_new %g s %g s_new %g k %g k_new %g\n",
+          ++count, rmsd, rmsd_new, s, *s_new, k, *k_new);
+#endif
+   }
+}
+
 int US_fe_nnls_t::run(int status)
 {
    if ( gridrmsd ) 
    {
+      // keyed by job_id ???
+      // not implemented:
+      // job_id == "sk" : make s.txt, k.txt, sk.txt and exit
+      // job_id == "equalize": create grid with average rmsd
+
       if ( myrank ) 
       {
          MPI_Finalize();
@@ -2601,40 +2694,42 @@ int US_fe_nnls_t::run(int status)
                
             QString key =
                QString("%1~%2").arg(s).arg(k);
-            // cout << "building for solution " << key << endl;
-            m[key] = experiment;
-            for ( unsigned int e = 0; e < experiment.size(); e++ )
-            {
-               double D_20w = (R * K20) /
-                  (AVOGADRO * 18 * M_PI * pow(k * VISC_20W, 3.0/2.0) *
-                   pow((fabs(s) * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
-               double D_tb = D_20w / experiment[e].D20w_correction;
-               
-               US_Astfem_RSA astfem_rsa(false);
-               use_model_system = model_system_1comp;
-               use_model_system.component_vector[0].s = s / experiment[e].s20w_correction;
-               use_model_system.component_vector[0].D = D_tb;
-               use_simulation_parameters = simulation_parameters_vec[e];
-               // use_simulation_parameters.meniscus += meniscus_offset;
-               vector<mfem_data> use_experiment;
-               use_experiment.push_back(experiment[e]);
-               astfem_rsa.setTimeCorrection(true);
-               astfem_rsa.setTimeInterpolation(false);
-               if(!fit_tinoise && use_simulation_parameters.band_forming) {
-                  use_simulation_parameters.band_firstScanIsConcentration = true;
-               } else {
-                  use_simulation_parameters.band_firstScanIsConcentration = false;
-               }
+            m[key] = build_model(s, k);
 
-               astfem_rsa.calculate(&use_model_system, 
-                                    &use_simulation_parameters, 
-                                    &use_experiment, 
-                                    0, 
-                                    0, 
-                                    &rotor_list);
-               
-               m[key][e] = use_experiment[0];
-            }
+            // cout << "building for solution " << key << endl;
+            // m[key] = experiment;
+            // for ( unsigned int e = 0; e < experiment.size(); e++ )
+            // {
+            // double D_20w = (R * K20) /
+            // (AVOGADRO * 18 * M_PI * pow(k * VISC_20W, 3.0/2.0) *
+            // pow((fabs(s) * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
+            // double D_tb = D_20w / experiment[e].D20w_correction;
+            // 
+            // US_Astfem_RSA astfem_rsa(false);
+            // use_model_system = model_system_1comp;
+            // use_model_system.component_vector[0].s = s / experiment[e].s20w_correction;
+            // use_model_system.component_vector[0].D = D_tb;
+            // use_simulation_parameters = simulation_parameters_vec[e];
+            // // use_simulation_parameters.meniscus += meniscus_offset;
+            // vector <mfem_data> use_experiment;
+            // use_experiment.push_back(experiment[e]);
+            // astfem_rsa.setTimeCorrection(true);
+            // astfem_rsa.setTimeInterpolation(false);
+            // if(!fit_tinoise && use_simulation_parameters.band_forming) {
+            // use_simulation_parameters.band_firstScanIsConcentration = true;
+            // } else {
+            // use_simulation_parameters.band_firstScanIsConcentration = false;
+            // }
+            // 
+            // astfem_rsa.calculate(&use_model_system, 
+            // &use_simulation_parameters, 
+            // &use_experiment, 
+            // 0, 
+            // 0, 
+            // &rotor_list);
+            // 
+            // m[key][e] = use_experiment[0];
+            // }
          }
       }
 
@@ -2674,6 +2769,8 @@ int US_fe_nnls_t::run(int status)
       map < QString, double > rmsd_k;
       map < QString, double > rmsd_sk;
 
+      double avg_rmsd = 0e0;
+
       for ( unsigned int i = 0; i < s_vec.size(); i++ )
       {
          for ( unsigned int j = 0; j < k_vec.size(); j++ )
@@ -2702,7 +2799,6 @@ int US_fe_nnls_t::run(int status)
                << basekey << "\t" 
                << nextkey << endl;
 #endif
-               
             rmsd_k[basekey] = 
                ( rmsd2(&m[basekey],&m[prevkey]) + 
                  rmsd2(&m[basekey],&m[nextkey]) ) / 2.0;
@@ -2733,8 +2829,14 @@ int US_fe_nnls_t::run(int status)
             rmsd_sk[basekey] = 
                ( rmsd_s[basekey] +
                  rmsd_k[basekey] ) / 2.0;
+
+            avg_rmsd += rmsd_sk[basekey];
          }
       }
+
+      avg_rmsd /= s_vec.size() * k_vec.size();
+
+      printf("average rmsd is %g\n", avg_rmsd);
 
       QFile fs("s.txt");
       if ( !fs.open(IO_WriteOnly) )
@@ -2804,6 +2906,142 @@ int US_fe_nnls_t::run(int status)
          }
       }
       fsk.close();
+
+      // compute alternate grid, use avg_rmsd
+      
+      // get limits
+      double s_min = s_vec[0];
+      double s_delta = s_vec[1] - s_vec[0]; // trial delta
+      double s_max = s_vec[s_vec.size() - 1];
+
+      double k_min = k_vec[0];
+      double k_delta = k_vec[1] - k_vec[0]; // trial delta
+      double k_max = k_vec[k_vec.size() - 1];
+
+      printf(
+             "s_min, max, delta: %g %g %g\n"
+             "k_min, max, delta: %g %g %g\n"
+             , s_min, s_max, s_delta 
+             , k_min, k_max, k_delta 
+             );
+
+      int points = 0;
+
+      // the new grids
+      vector < double > s_alt;
+      vector < double > k_alt;
+
+      // start with lower left
+
+      s_alt.push_back(s_min);
+      k_alt.push_back(k_min);
+
+      bool done = false;
+
+      double s_new;
+      double k_new;
+
+      avg_rmsd *= 1;
+
+      do 
+      {
+         s_new = s_alt[s_alt.size() - 1] + s_delta;
+         k_new = k_alt[k_alt.size() - 1];
+         match_rmsd(&s_new,
+                    &k_new,
+                    s_alt[s_alt.size() - 1],
+                    k_alt[k_alt.size() - 1],
+                    true,
+                    avg_rmsd);
+         if ( s_new > s_max ) 
+         {
+            // new k row
+            s_new = s_min;
+            k_new = k_alt[k_alt.size() - 1] + k_delta;
+            match_rmsd(&s_new,
+                       &k_new,
+                       s_min,
+                       k_alt[k_alt.size() - 1],
+                       false,
+                       avg_rmsd * 0.95);
+            if ( k_new > k_max )
+            {
+               // we're done
+               done = true;
+            } else {
+               s_alt.push_back(s_new);
+               k_alt.push_back(k_new);
+               points++;
+            }
+         } else {
+            s_alt.push_back(s_new);
+            k_alt.push_back(k_new);
+            points++;
+         }
+      } while (!done);
+
+      printf("points in new grid %d compared to %d\n",
+             points, (int) (s_vec.size() * k_vec.size()));
+      
+      QFile fg("g.txt");
+      if ( !fg.open(IO_WriteOnly) )
+      {
+         cout << "g.txt file create error\n";
+         MPI_Finalize();
+         exit(0);
+      }
+      QTextStream tsg(&fg);
+      for ( unsigned int i = 0; i < s_alt.size(); i++ ) 
+      {
+         tsg
+            << s_alt[i] << " "
+            << k_alt[i] << endl;
+      }
+      fg.close();
+
+      // build new solute file
+      vector < gene > solutions_alt;
+      solutions_alt.resize(solutions.size());
+      Solute temp_solute;
+
+      for ( unsigned int i = 0; i < s_alt.size(); i++ )
+      {
+         temp_solute.s = s_alt[i];
+         temp_solute.k = k_alt[i];
+         solutions_alt[i % solutions.size()].component.push_back(temp_solute);
+      }
+
+      QFile fsol("solnew.dat");
+      if ( !fsol.open(IO_WriteOnly) )
+      {
+         cout << "solnew.dat file create error\n";
+         MPI_Finalize();
+         exit(0);
+      }
+      QDataStream dssol(&fsol);
+      dssol << (unsigned int) solutions_alt.size(); // how many genes
+      for ( unsigned int i = 0; i < solutions_alt.size(); i++ )
+      {
+         printf("solute %d size %u\n", i, (unsigned int) solutions_alt[i].component.size());
+         dssol << (unsigned int) solutions_alt[i].component.size(); // the size of each gene
+         for ( unsigned int j = 0; j < solutions_alt[i].component.size(); j++ )
+         {
+            dssol << solutions_alt[i].component[j].s;
+            dssol << solutions_alt[i].component[j].k;
+            dssol << solutions_alt[i].component[j].c;
+         }
+      }
+      dssol << (unsigned int) Control_Params.float_params.size();
+      for (unsigned int i=0; i<Control_Params.float_params.size(); i++)
+      {
+         dssol << (float) Control_Params.float_params[i];
+      }
+      dssol << (unsigned int) Control_Params.int_params.size();
+      for (unsigned int i=0; i<Control_Params.int_params.size(); i++)
+      {
+         dssol << (int) Control_Params.int_params[i];
+      }
+      fsol.close();
 
       MPI_Finalize();
       exit(0);
