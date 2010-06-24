@@ -7,6 +7,8 @@ US_SimulationParameters::US_SimulationParameters()
    mesh_radius.clear(); 
    speed_step.clear();
 
+   speed_step << SpeedProfile();
+
    simpoints         = 200;  
    meshType          = ADAPTIVE;
    gridType          = MOVING;
