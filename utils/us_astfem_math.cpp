@@ -2,7 +2,7 @@
 #include "us_astfem_math.h"
 #include "us_math.h"
 
-void US_AstfemMath::interpolate_C0( struct mfem_initial& C0, double* C1, 
+void US_AstfemMath::interpolate_C0( MfemInitial& C0, double* C1, 
       QVector< double >& x )
 {
    int ja = 0;
@@ -38,8 +38,7 @@ void US_AstfemMath::interpolate_C0( struct mfem_initial& C0, double* C1,
 }
 
 // Original grid: C0, final grid: C1
-void US_AstfemMath::interpolate_C0( struct mfem_initial& C0, 
-                                    struct mfem_initial& C1 ) 
+void US_AstfemMath::interpolate_C0( MfemInitial& C0, MfemInitial& C1 ) 
 {
    int ja = 0;
 
@@ -354,9 +353,8 @@ int US_AstfemMath::GaussElim( int n, double** a, double* b )
 }
 
 // Interpolation routine By B. Demeler 041708
-int US_AstfemMath::interpolate( struct mfem_data& expdata, 
-                                struct mfem_data& simdata, 
-                                bool              use_time )
+int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata, 
+                                bool      use_time )
 {
   // NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
   // before using this routine! The radius also has to be assigned!
@@ -368,13 +366,13 @@ int US_AstfemMath::interpolate( struct mfem_data& expdata,
 //qDebug() << "Marker I1" << expdata.scan.size() << expdata.scan[0].conc.size() 
 //               << simdata.scan.size() << simdata.radius.size();
 
-   // First, create a temporary mfem_data structure (tmp_data) that has the
+   // First, create a temporary MfemData instance (tmp_data) that has the
    // same radial grid as simdata, but the same time grid as the experimental
    // data. The time and w2t integral values are interpolated for the tmp_data
    // structure.
 
-   mfem_data tmp_data;
-   mfem_scan tmp_scan;
+   MfemData tmp_data;
+   MfemScan tmp_scan;
    
    tmp_data.scan.clear();
    tmp_data.radius.clear();
@@ -2283,20 +2281,21 @@ void DefInitCond(double **C0, int N)
    }
 }
 
-int interpolate(struct mfem_data *simdata, int scans, int points,
-float *scantimes, double *radius, double **c)
+int interpolate( MfemData *simdata, int scans, int points,
+                 float *scantimes, double *radius, double **c )
 {
 
-/********************************************************************************************
- * interpolation:                                                                         *
- *                                                                                        *
- * First, we need to interpolate the time. Create a new array with the same time dimensions *
- * as the raw data and the same radius dimensions as the simulated data. Then find the time *
- * steps from the simulated data that bracket the experimental data from the left and right.*
- * Then make a linear interpolation for the concentration values at each radius point from  *
- * the simulated data. Then interpolate the radius points by linear interpolation.        *
- *                                                                                        *
- ********************************************************************************************/
+/******************************************************************************
+ * Interpolation:                                                             *
+ *                                                                            *
+ * First, we need to interpolate the time. Create a new array with the same   *
+ * time dimensions as the raw data and the same radius dimensions as the      *
+ * simulated data. Then find the time steps from the simulated data that      *
+ * bracket the experimental data from the left and right. Then make a linear  *
+ * interpolation for the concentration values at each radius point from the   *
+ * simulated data. Then interpolate the radius points by linear interpolation.*
+ *                                                                            *
+ ******************************************************************************/
 
    int i, j;
    double slope, intercept;
@@ -2368,15 +2367,20 @@ float *scantimes, double *radius, double **c)
 }
 
 
-void interpolate_Cfinal(struct mfem_initial *C0, double *cfinal, QVector <double> *x )
+void interpolate_Cfinal( MfemInitial *C0, double *cfinal, QVector <double> *x )
 {
-// this routine also considers cases where C0 starts before the meniscus or stops
-// after the bottom is reached, however, C0 needs to cover both meniscus and bottom
-// In those cases it will fill the C0 vector with the first and/or last value of C0,
-// respectively, for the missing points.
+// This routine also considers cases where C0 starts before the meniscus or
+// stops after the bottom is reached. However, C0 needs to cover both meniscus
+// and bottom. In those cases it will fill the C0 vector with the first and/or
+// last value of C0, respectively, for the missing points.
 
-   int i, j, ja;
-   double a, b, xs, tmp;
+   int    i;
+   int    j;
+   int    ja;
+   double a;
+   double b;
+   double xs;
+   double tmp;
 
    ja = 0;
    for(j=0; j<(*C0).radius.size(); j++)

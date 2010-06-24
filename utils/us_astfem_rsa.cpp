@@ -20,9 +20,10 @@ US_Astfem_RSA::US_Astfem_RSA( US_Model&                model,
 
 int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data ) 
 {
-   mfem_initial* vC0 = NULL;    // Initial concentration for multiple components
-   mfem_initial  CT0;           // Initial total concentration
-   mfem_data     simdata;
+   US_AstfemMath::MfemInitial* vC0 = NULL; // Initial concentration for
+                                           //  multiple components
+   US_AstfemMath::MfemInitial  CT0;        // Initial total concentration
+   US_AstfemMath::MfemData     simdata;
    float         current_time;
    double        current_speed;
 
@@ -103,10 +104,10 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
       
       if ( simparams.band_firstScanIsConcentration )
       {
-         mfem_initial scan1;
+         US_AstfemMath::MfemInitial scan1;
          scan1.radius.clear();
          scan1.concentration.clear();
-         mfem_scan*   scan0 = &af_data.scan[ 0 ];
+         US_AstfemMath::MfemScan*   scan0 = &af_data.scan[ 0 ];
 
          for ( int j = 0; j < af_data.radius.size(); j++ )
          {
@@ -131,8 +132,9 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
          
          for ( int step = 0; step < simparams.speed_step.size(); step++ )
          {
-            US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ step ]; 
-            struct mfem_data* ed = &af_data;
+            US_SimulationParameters::SpeedProfile* sp =
+               &simparams.speed_step[ step ]; 
+            US_AstfemMath::MfemData*               ed = &af_data;
             adjust_limits( sp->rotorspeed );
 
             ed->meniscus = af_params.current_meniscus;
@@ -312,7 +314,7 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
       
       if ( vC0 != NULL ) delete [] vC0;
       
-      vC0 = new mfem_initial[ rg[ group ].GroupComponent.size() ];
+      vC0 = new US_AstfemMath::MfemInitial[ rg[ group ].GroupComponent.size() ];
       
       for ( int j = 0; j < rg[ group ].GroupComponent.size(); j++ )
       {
@@ -333,8 +335,9 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
 
       for ( int ss = 0; ss < simparams.speed_step.size(); ss++ )
       {
-         US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ ss ];
-         struct mfem_data* ed = &af_data;
+         US_SimulationParameters::SpeedProfile* sp =
+            &simparams.speed_step[ ss ];
+         US_AstfemMath::MfemData*               ed = &af_data;
 
          adjust_limits( sp->rotorspeed );
          ed->meniscus = af_params.current_meniscus;
@@ -444,7 +447,7 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
       for ( int ss = 0; ss < simparams.speed_step.size(); ss++ ) 
       {
          US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ ss ];
-         struct mfem_data*    ed = &af_data;
+         US_AstfemMath::MfemData*               ed = &af_data;
          
          // We need to correct time
          if ( simparams.speed_step[ ss ].acceleration_flag ) 
@@ -737,7 +740,7 @@ void US_Astfem_RSA::initialize_rg( void )
 }
 
 // Initializes total concentration vector
-void US_Astfem_RSA::initialize_conc( int k, struct mfem_initial& CT0, 
+void US_Astfem_RSA::initialize_conc( int k, US_AstfemMath::MfemInitial& CT0, 
       bool noninteracting ) 
 {
    US_Model::SimulationComponent* sc = &system.components[ k ];
@@ -790,7 +793,7 @@ void US_Astfem_RSA::initialize_conc( int k, struct mfem_initial& CT0,
       }
       else // interpolation
       {
-         mfem_initial C;
+         US_AstfemMath::MfemInitial C;
          C.radius.clear();
          C.concentration.clear();
          
@@ -814,7 +817,8 @@ void US_Astfem_RSA::initialize_conc( int k, struct mfem_initial& CT0,
 
 // Non-interacting solute, constant speed
 int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop, 
-      mfem_initial& C_init, mfem_data& simdata, bool accel )
+      US_AstfemMath::MfemInitial& C_init, US_AstfemMath::MfemData& simdata,
+      bool accel )
 {
    double** CA = NULL;     // stiffness matrix on left hand side
                            // CA[0...Ms-1][0...N-1][4]
@@ -822,7 +826,8 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    double** CB = NULL;     // stiffness matrix on right hand side
                            // CB[0...Ms-1][0...N-1][4]
    
-   double*  C0 = NULL;     // C[m][j]: current/next concentration of m-th component at x_j
+   double*  C0 = NULL;     // C[m][j]: current/next concentration of
+                           // m-th component at x_j
    double*  C1 = NULL;     // C[0...Ms-1][0....N-1]:
    
    double** CA1;           // for matrices used in acceleration
@@ -832,7 +837,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
 
    simdata.radius.clear();
    simdata.scan.clear();
-   mfem_scan simscan;
+   US_AstfemMath::MfemScan simscan;
 
    // Generate the adaptive mesh
   
@@ -1692,7 +1697,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
 
 // Given total concentration of a group of components involved,
 // find the concentration of each component by equilibrium condition
-void US_Astfem_RSA::decompose( struct mfem_initial* C0 )
+void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
 {
    int num_comp = af_params.role.size();
 
@@ -2082,13 +2087,14 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
 // *** this is the SNI version of operator scheme
 
 int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, 
-      mfem_initial* C_init, mfem_data& simdata, bool accel )
+      US_AstfemMath::MfemInitial* C_init, US_AstfemMath::MfemData& simdata,
+      bool accel )
 {
    int Mcomp = af_params.s.size();
 
    simdata.radius.clear();
    simdata.scan.clear();
-   mfem_scan simscan;
+   US_AstfemMath::MfemScan simscan;
 
    // Generate the adaptive mesh
    QVector< double > nu;
@@ -2654,8 +2660,8 @@ void US_Astfem_RSA::GlobalStiff( QVector< double >& xb, double** ca,
    US_AstfemMath::clear_3d( N, 6, Stif );
 }
 
-void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData& edata, 
-                                    struct mfem_data&    fdata ) 
+void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData&     edata, 
+                                    US_AstfemMath::MfemData& fdata ) 
 {
    int  nscan  = edata.scanData.size();
    int  nconc  = edata.x.size();
@@ -2667,8 +2673,8 @@ void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData& edata,
 
    for ( int ii = 0; ii < nscan; ii++ )
    {
-      US_DataIO2::Scan* escan = &edata.scanData[ ii ];
-      struct mfem_scan* fscan = &fdata.scan    [ ii ];
+      US_DataIO2::Scan*        escan = &edata.scanData[ ii ];
+      US_AstfemMath::MfemScan* fscan = &fdata.scan    [ ii ];
 
       fscan->temperature = escan->temperature;
       fscan->rpm         = escan->rpm;
@@ -2688,8 +2694,8 @@ void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData& edata,
    }
 }
 
-void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData& edata, 
-                                     struct mfem_data&    fdata ) 
+void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData&     edata, 
+                                     US_AstfemMath::MfemData& fdata ) 
 {
    int  nscan  = fdata.scan.size();
    int  nconc  = fdata.radius.size();
@@ -2701,8 +2707,8 @@ void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData& edata,
 
    for ( int ii = 0; ii < nscan; ii++ )
    {
-      struct mfem_scan* fscan = &fdata.scan    [ ii ];
-      US_DataIO2::Scan* escan = &edata.scanData[ ii ];
+      US_AstfemMath::MfemScan* fscan = &fdata.scan    [ ii ];
+      US_DataIO2::Scan*        escan = &edata.scanData[ ii ];
 
       escan->temperature = fscan->temperature;
       escan->rpm         = fscan->rpm;
