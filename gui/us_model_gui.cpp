@@ -13,7 +13,7 @@
 #include <uuid/uuid.h>
 
 US_ModelGui::US_ModelGui( US_Model& current_model )
-   : US_Widgets(), model( current_model )
+   : US_WidgetsDialog( 0, 0 ), model( current_model )
 {
    setWindowTitle   ( "UltraScan Model Editor" );
    setPalette       ( US_GuiSettings::frameColor() );
