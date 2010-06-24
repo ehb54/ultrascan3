@@ -54,9 +54,9 @@ class US_EXTERN US_Astfem_RSA : public QObject
       double w2t_integral;    //!< Keep track of w2t_integral value globally
       int    N;               //!< Number of points used in radial direction
       
-      struct AstFemParameters af_params;
-      struct mfem_data        af_data;
-      struct mfem_initial     af_c0;
+      struct AstFemParameters         af_params;
+      US_AstfemMath::MfemData         af_data;
+      US_AstfemMath::MfemInitial      af_c0;
 
       QVector< double >               x;  //<! Radii of grid points; x[0...N-1] 
       QVector< struct ReactionGroup > rg;
@@ -68,16 +68,17 @@ class US_EXTERN US_Astfem_RSA : public QObject
       void   adjust_limits  ( int speed );
       double stretch        ( int, int );
       void   initialize_rg  ( void );
-      void   initialize_conc( int, struct mfem_initial&, bool );
+      void   initialize_conc( int, US_AstfemMath::MfemInitial&, bool );
 
-      int    calculate_ni   ( double, double, mfem_initial&, mfem_data&, bool );
+      int    calculate_ni   ( double, double, US_AstfemMath::MfemInitial&,
+                              US_AstfemMath::MfemData&, bool );
       void   mesh_gen       ( QVector< double >&, int );
       void   mesh_gen_s_pos ( const QVector< double >& );
       void   mesh_gen_s_neg ( const QVector< double >& );
       void   mesh_gen_RefL  ( int, int );
       
       void   ComputeCoefMatrixFixedMesh( double, double, double**, double** );
-      void   decompose      ( struct mfem_initial* );
+      void   decompose      ( US_AstfemMath::MfemInitial* );
 
       void   ComputeCoefMatrixMovingMeshR( double, double, double**, double** );
       void   ComputeCoefMatrixMovingMeshL( double, double, double**, double** );
@@ -87,17 +88,20 @@ class US_EXTERN US_Astfem_RSA : public QObject
       void   Reaction_dydt    ( double*, double*  );
       void   Reaction_dfdy    ( double*, double** );
              
-      int    calculate_ra2    ( double, double, mfem_initial*, mfem_data&, bool );         
+      int    calculate_ra2    ( double, double, US_AstfemMath::MfemInitial*,
+                                US_AstfemMath::MfemData&, bool );         
 
       void   GlobalStiff      ( QVector< double >&, double**, double**,
                                 double, double );
 
-      void   load_mfem_data   ( US_DataIO2::RawData&, struct mfem_data& );         
-      void   store_mfem_data  ( US_DataIO2::RawData&, struct mfem_data& );         
+      void   load_mfem_data ( US_DataIO2::RawData&, US_AstfemMath::MfemData& );         
+      void   store_mfem_data( US_DataIO2::RawData&, US_AstfemMath::MfemData& );         
 
 #ifdef NEVER
-      void GlobalStiff_ellam(QVector <double> *, double **, double **, double, double);
-      void adjust_grid( int /*old speed*/, int /*new speed*/, QVector <double> * /*radial grid*/);
+      void GlobalStiff_ellam( QVector <double> *, double **, double **,
+                              double, double );
+      void adjust_grid( int /*old speed*/, int /*new speed*/,
+                        QVector <double> * /*radial grid*/ );
 #endif
 };
 
