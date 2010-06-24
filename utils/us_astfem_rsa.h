@@ -30,13 +30,13 @@ class US_EXTERN US_Astfem_RSA : public QObject
       
 
    signals:
-      void new_scan         ( QVector< double >&, double* );
-      void new_time         ( double                    );
-      void current_component( int                       );
-      void current_speed    ( unsigned int              );
-      void calc_start       ( unsigned int              );
-      void calc_progress    ( unsigned int              );
-      void calc_done        ( void                      );
+      void new_scan         ( int    );
+      void new_time         ( double );
+      void current_component( int    );
+      void current_speed    ( int    );
+      void calc_start       ( int    );
+      void calc_progress    ( int    );
+      void calc_done        ( void   );
    private:
       bool stopFlag;          //!< Stop calculation, interpolate, and return
       bool time_correction;   //!< Decides if output data is time corrected 

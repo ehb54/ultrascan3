@@ -28,7 +28,7 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
 
    int           duration;
    int           initial_npts = 1000;
-   int           current_assoc;
+   //int           current_assoc;
    int           size_cv         = system.components.size();
    bool*         reacting        = new bool[ size_cv ];
 
@@ -240,7 +240,7 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
 
    for ( int group = 0; group < rg.size(); group++ )
    {
-      int num_comp = rg[ group ].GroupComponent.size();
+      //int num_comp = rg[ group ].GroupComponent.size();
       int num_rule = rg[ group ].association.size();
       af_params.rg_index = group;
       
@@ -957,7 +957,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       if ( show_movie )
       {
          if ( stopFlag ) break;
-         emit new_scan( x, C0 );
+         emit new_scan( i );
          emit new_time( simscan.time );
          qApp->processEvents();
          US_Sleep::msleep( 10 ); // 10 ms to let the display update.
@@ -2287,7 +2287,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       if ( show_movie )
       {
          if ( stopFlag ) break;
-         emit new_scan( x, CT0 );
+         emit new_scan( kkk+1 );
          emit new_time( simscan.time );
          qApp->processEvents();
          US_Sleep::msleep( 10 ); // 10 ms to let the display update.
@@ -2498,7 +2498,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       }
    } // time loop
 
-   emit new_scan( x, CT0 );
+   emit new_scan( NN + 1 );
    qApp->processEvents();
    US_Sleep::msleep( 10 ); // 10 ms to let the display update.
 
