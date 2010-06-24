@@ -1,30 +1,32 @@
 //! \file us_simulationparameters.h
-#ifndef US_SIMULATIONPARAMETERS_H
-#define US_SIMULATIONPARAMETERS_H
+#ifndef US_SIMULATIONPARAMETERS_GUI_H
+#define US_SIMULATIONPARAMETERS_GUI_H
 
 #include <QtGui>
 
 #include <qwt_counter.h>
 
 #include "us_widgets_dialog.h"
-#include "us_femglobal.h"
+#include "us_simparms.h"
 #include "us_help.h"
 
 //! \brief A window for editing simulation parameters
-class US_SimulationParameters : public US_WidgetsDialog
+class US_SimulationParametersGui : public US_WidgetsDialog
 {
 	Q_OBJECT
 	public:
       //! \param params - Location for simulation parameters to be updated
       //! \param p      - Parent widget, normally not specified
       //! \param f      - Window flags, normally not specified
-		US_SimulationParameters( struct SimulationParameters&, QWidget* = 0, 
-            Qt::WindowFlags = 0 );
+		US_SimulationParametersGui( US_SimulationParameters& );
+
+   signals:
+      void complete( void );
 
 	private:
 
-		struct SimulationParameters& simparams;
-		struct SimulationParameters  simparams_backup;
+		US_SimulationParameters& simparams;
+		US_SimulationParameters  simparams_backup;
       
       US_Help       showhelp;
                    
@@ -76,6 +78,7 @@ class US_SimulationParameters : public US_WidgetsDialog
       void update_speed_profile ( double );
       void load                 ( void   );
       void save                 ( void   );
+      void accepted             ( void   );
       void revert               ( void   );
 
       void update_lamella       ( double lamella )
@@ -103,7 +106,7 @@ class US_SimulationParameters : public US_WidgetsDialog
          { simparams.rinoise     = rinoise; };
       
       void update_moving        ( int grid )
-         { simparams.moving_grid = grid; };
+         { simparams.gridType    = (US_SimulationParameters::GridType) grid; };
 
       void select_centerpiece   ( bool )
          { simparams.band_forming = rb_band->isChecked(); };
