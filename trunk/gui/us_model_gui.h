@@ -13,7 +13,7 @@
 
 //! \brief A window to edit a model for simulation
 
-class US_ModelGui : public US_Widgets
+class US_ModelGui : public US_WidgetsDialog
 {
    Q_OBJECT
 
