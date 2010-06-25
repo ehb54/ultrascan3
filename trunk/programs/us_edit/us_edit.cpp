@@ -1883,7 +1883,7 @@ void US_Edit::write( void )
 
    QDomElement dguid = doc.createElement( "uuid" );
    char uuid[ 37 ];
-   uuid_unparse( (unsigned char*)data.guid, uuid );
+   uuid_unparse( (unsigned char*)data.rawGUID, uuid );
    dguid.setAttribute( "value", uuid );
    id.appendChild( dguid );
 
@@ -2039,9 +2039,9 @@ void US_Edit::apply_prior( void )
    }
 
    char uuid[ 37 ];
-   uuid_unparse( (unsigned char*)data.guid, uuid );
+   uuid_unparse( (unsigned char*)data.rawGUID, uuid );
 
-   if ( parameters.dataguid != uuid )
+   if ( parameters.dataGUID != uuid )
    {
       QMessageBox::warning( this,
             tr( "Data Error" ),

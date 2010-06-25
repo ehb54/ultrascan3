@@ -863,7 +863,7 @@ void US_FeMatch::load_model( )
    US_ModelLoader* dialog = new US_ModelLoader( false, def_local,
       mfilter, investig );
    dialog->move( this->pos() + QPoint( 200, 200 ) );
-   dialog->set_edit_guid( dataList[ 0 ].editguid );
+   dialog->set_edit_guid( dataList[ 0 ].editGUID );
 
    if ( dialog->exec() == QDialog::Accepted )
    {

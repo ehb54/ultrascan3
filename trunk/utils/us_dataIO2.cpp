@@ -85,7 +85,7 @@ int US_DataIO2::writeRawData( const QString& file, RawData& data )
    write( ds, data.type, 2, crc );
 
    // Create and write a guid
-   write( ds, data.guid, 16, crc );
+   write( ds, data.rawGUID, 16, crc );
 
    // Write description
    char desc[ 240 ];
@@ -314,7 +314,7 @@ int US_DataIO2::readRawData( const QString& file, RawData& data )
       strncpy( data.type, type, 2 );
     
       // Get the guid
-      read( ds, data.guid, 16, crc );
+      read( ds, data.rawGUID, 16, crc );
     
       // Get the description
       char desc[ 240 ];
@@ -524,13 +524,13 @@ void US_DataIO2::ident( QXmlStreamReader& xml, EditValues& parameters )
       if ( xml.isStartElement()  &&  xml.name() == "editguid" )
       {
          QXmlStreamAttributes a = xml.attributes();
-         parameters.editguid    = a.value( "value" ).toString();
+         parameters.editGUID    = a.value( "value" ).toString();
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "uuid" )
       {
          QXmlStreamAttributes a = xml.attributes();
-         parameters.dataguid    = a.value( "value" ).toString();
+         parameters.dataGUID    = a.value( "value" ).toString();
       }
      
       xml.readNext();
@@ -703,8 +703,8 @@ int US_DataIO2::loadData( const QString&       directory,
 
    // Check for uuid match
    char uuid[ 37 ];
-   uuid_unparse( (uchar*)d.guid, uuid );
-   if ( QString( uuid ) != e.dataguid ) throw NO_GUID_MATCH;
+   uuid_unparse( (uchar*)d.rawGUID, uuid );
+   if ( QString( uuid ) != e.dataGUID ) throw NO_GUID_MATCH;
 
    // Apply the edits
    EditedData ed;
@@ -718,8 +718,8 @@ int US_DataIO2::loadData( const QString&       directory,
    ed.channel     = sl[ 4 ];
    ed.wavelength  = sl[ 5 ];
    ed.description = d.description;
-   ed.dataguid    = e.dataguid;
-   ed.editguid    = e.editguid;
+   ed.dataGUID    = e.dataGUID;
+   ed.editGUID    = e.editGUID;
    ed.meniscus    = e.meniscus;
    ed.plateau     = e.plateau;
    ed.baseline    = e.baseline;

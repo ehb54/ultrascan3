@@ -324,7 +324,7 @@ void US_ProcessConvert::writeConvertedData(
       // Calculate and save the guid for this triple
       uuid_t uuid;
       uuid_generate( uuid );
-      strncpy( rawConvertedData[ ndx ].guid, (char*) uuid, 16 );
+      strncpy( rawConvertedData[ ndx ].rawGUID, (char*) uuid, 16 );
       strncpy( ExpData.triples [ ndx ].guid, (char*) uuid, 16 );
 
       // Create a copy of the current dataset so we can alter it
