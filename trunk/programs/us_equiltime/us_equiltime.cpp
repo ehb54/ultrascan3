@@ -3,8 +3,9 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 #include "us_constants.h"
-#include "us_model_selection.h"
-#include "us_model_editor.h"
+#include "us_math2.h"
+//#include "us_model_selection.h"
+//#include "us_model_editor.h"
 
 US_EquilTime::US_EquilTime() : US_Widgets( true )
 {
@@ -646,7 +647,7 @@ void US_EquilTime::load_model( void )
 
 void US_EquilTime::init_simparams( void )
 {
-   struct SpeedProfile sp;
+   //struct SpeedProfile sp;
 /*
    simparams.speed_step.clear();
    simparams.speed_step .push_back( sp );

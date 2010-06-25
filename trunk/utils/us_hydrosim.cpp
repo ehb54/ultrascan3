@@ -23,7 +23,7 @@ US_Hydrosim::US_Hydrosim()
    vbar        = TYPICAL_VBAR;
    temperature = 20.0;
    axial_ratio = 10.0;
-   guid        = QString();
+   analyteGUID = QString();
 }
 
 void US_Hydrosim::calculate( double temperature )
