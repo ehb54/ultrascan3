@@ -6,54 +6,6 @@
 #include "us_simparms.h"
 #include "us_extern.h"
 
-//! \brief Reaction Group
-struct ReactionGroup
-{
-   QVector< int > association;
-   QVector< int > GroupComponent;
-};
-
-//! \brief Component Role
-struct ComponentRole
-{
-   int            comp_index; // index of this component
-   QVector< int > assoc;      // assoc QVector index where this component occurs
-   QVector< int > react;      // role of component in each association, 
-                                     // = 1: if as reactant; =-1, if as product
-   QVector< int > st;         // stoichiometry of each component in 
-                                     // each assoc., index is linked to assoc.
-};
-
-
-
-//! \brief Parameters for finite element solution
-struct AstFemParameters
-{
-   int               simpoints;
-
-   QVector< double > s;       //!< sedimentation coefficient
-   QVector< double > D;       //!< Diffusion coefficient
-   QVector< double > kext;    //!< extinctiom coefficient
-   QVector< struct ComponentRole > role; //!< role of each component
-                                         //!<  in various reactions
-
-   double pathlength;       //!< path length of centerpiece;
-   double dt;               //!< time step size;
-   int    time_steps;       //!< number of time steps for simulation
-   double omega_s;          //!< omega^2
-   double start_time;       //!< start time in seconds of simulation at constant speed
-   double current_meniscus; //!< actual meniscus for current speed
-   double current_bottom;   //!< actual bottom for current speed
-   int    first_speed;      //!< constant speed at first speed step
-   int    rg_index;         //!< reaction group index
-
-   //! Local index of each GroupComponent involved in a reaction group
-   QVector< int > local_index;  
-   
-   //! All association rules in a reaction group, with comp expressed in local index
-   QVector< US_Model::Association > association; 
-};
-
 //! \brief A group of static mathematical functions to support finite element 
 //!        calculations
 class US_EXTERN US_AstfemMath
@@ -175,12 +127,12 @@ class US_EXTERN US_AstfemMath
          */
    
          double       s20w_correction;  
-   
+      
          //! The number with which a D20,w value needs 
          //! to be multiplied to get the s value in experimental space
          //!  - DT,B = D20,W * D20w_correction
          //!  - DT,B = [D20,W * T * eta_20,W] / [293.15 * eta_T,B]
-   
+      
          double       D20w_correction;  
          double       viscosity;       //!< viscosity of solvent
          double       density;         //!< density of solvent
@@ -192,6 +144,56 @@ class US_EXTERN US_AstfemMath
                                        //!<  rotor stretch
          QVector< double>    radius;   //!< radial gridpoints
          QVector< MfemScan > scan;     //!< list of scan data
-     };
+      };
+     
+      //! \brief Reaction Group
+      class ReactionGroup
+      {
+         public:
+         QVector< int > association;
+         QVector< int > GroupComponent;
+      };
+
+      //! \brief Component Role
+      class ComponentRole
+      {
+         public:
+         int            comp_index; // index of this component
+         QVector< int > assoc;      // assoc QVector index where this component occurs
+         QVector< int > react;      // role of component in each association, 
+                                           // = 1: if as reactant; =-1, if as product
+         QVector< int > st;         // stoichiometry of each component in 
+                                           // each assoc., index is linked to assoc.
+      };
+
+      //! \brief Parameters for finite element solution
+      class AstFemParameters
+      {
+         public:
+         int               simpoints;
+
+         QVector< double > s;       //!< sedimentation coefficient
+         QVector< double > D;       //!< Diffusion coefficient
+         QVector< double > kext;    //!< extinctiom coefficient
+         QVector< struct ComponentRole > role; //!< role of each component
+                                               //!<  in various reactions
+
+         double pathlength;       //!< path length of centerpiece;
+         double dt;               //!< time step size;
+         int    time_steps;       //!< number of time steps for simulation
+         double omega_s;          //!< omega^2
+         double start_time;       //!< start time in seconds of simulation at constant speed
+         double current_meniscus; //!< actual meniscus for current speed
+         double current_bottom;   //!< actual bottom for current speed
+         int    first_speed;      //!< constant speed at first speed step
+         int    rg_index;         //!< reaction group index
+
+         //! Local index of each GroupComponent involved in a reaction group
+         QVector< int > local_index;  
+         
+         //! All association rules in a reaction group, with comp expressed in local index
+         QVector< US_Model::Association > association; 
+      };
+
 };
 #endif
