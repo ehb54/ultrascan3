@@ -332,10 +332,10 @@ void US_ModelLoader::list_models()
                   ModelDesc desc;
                   attr             = xml.attributes();
                   desc.description = attr.value( "description" ).toString();
-                  desc.guid        = attr.value( "guid"        ).toString();
+                  desc.guid        = attr.value( "modelGUID"   ).toString();
                   desc.filename    = fname;
                   desc.DB_id       = "-1";
-                  desc.editguid    = attr.value( "editguid"    ).toString();
+                  desc.editguid    = attr.value( "editGUID"    ).toString();
 //*DEBUG
 //if (!listall) {
 //qDebug() << " ddesc" << desc.description;

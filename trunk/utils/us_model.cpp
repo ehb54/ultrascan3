@@ -84,9 +84,9 @@ US_Model::US_Model()
    coSedSolute     = -1;
    type            = MANUAL;
    iterations      = 1;
-   bufferGUID  .clear();
    modelGUID   .clear();
    editGUID    .clear();
+   bufferGUID  .clear();
    components  .clear();
    associations.clear();
 }
@@ -98,6 +98,7 @@ bool US_Model::operator== ( const US_Model& m ) const
    if ( compressibility != m.compressibility ) return false;
    if ( wavelength      != m.wavelength      ) return false;
    if ( temperature     != m.temperature     ) return false;
+   if ( modelGUID       != m.modelGUID       ) return false;
    if ( editGUID        != m.editGUID        ) return false;
    if ( bufferGUID      != m.bufferGUID      ) return false;
    if ( bufferDesc      != m.bufferDesc      ) return false;
@@ -183,7 +184,8 @@ int US_Model::load_disk( const QString& guid )
             {
                QXmlStreamAttributes a = xml.attributes();
 
-               if ( a.value( "modelGUID" ).toString() == guid ) found = true;
+               if ( a.value( "modelGUID" ).toString() == guid )
+                  found = true;
                break;
             }
          }
@@ -228,8 +230,9 @@ int US_Model::load( const QString& filename )
             a = xml.attributes();
 
             description     = a.value( "description"     ).toString();
+            modelGUID       = a.value( "modelGUID"       ).toString();
             editGUID        = a.value( "editGUID"        ).toString();
-            bufferGUID      = a.value( "bufferGuid"      ).toString();
+            bufferGUID      = a.value( "bufferGUID"      ).toString();
             bufferDesc      = a.value( "bufferDesc"      ).toString();
             density         = a.value( "density"         ).toString().toDouble();
             viscosity       = a.value( "viscosity"       ).toString().toDouble();
@@ -515,10 +518,10 @@ void US_Model::debug( void )
 {
    qDebug() << "model dump";
    qDebug() << "desc" << description;
+   qDebug() << "model guid" << modelGUID;
    qDebug() << "edit guid" << editGUID;
    qDebug() << "buf guid" << bufferGUID;
    qDebug() << "buf desc" << bufferDesc;
-   qDebug() << "model guid" << modelGUID;;
    qDebug() << "density" << density;
    qDebug() << "visc" << viscosity;
    qDebug() << "comp" << compressibility;

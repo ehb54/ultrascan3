@@ -2,6 +2,7 @@
 #define US_FEMATCH_H
 
 #include "us_dataIO2.h"
+#include "us_astfem_rsa.h"
 #include "us_model.h"
 #include "us_model_loader.h"
 #include "us_editor.h"
