@@ -379,7 +379,7 @@ void US_Astfem_Sim::start_simulation( void )
    strncpy( sim_data.type, "RA", 2 );
 
    QString guid = US_Util::new_guid();
-   uuid_parse( guid.toLatin1().data(), (uchar*)sim_data.guid );
+   uuid_parse( guid.toLatin1().data(), (uchar*)sim_data.rawGUID );
    
    sim_data.cell        = 0;
    sim_data.channel     = 'S';
