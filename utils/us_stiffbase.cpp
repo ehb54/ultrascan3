@@ -4,7 +4,7 @@
 #include <math.h>
 #include "us_stiffbase.h"
 
-StiffBase::StiffBase()
+US_StiffBase::US_StiffBase()
 {  
       n_gaussT = 28;
       n_basisT = 3; 
@@ -41,7 +41,7 @@ StiffBase::StiffBase()
 
 }
 
-StiffBase::~StiffBase()
+US_StiffBase::~US_StiffBase()
 {  
       delete [] xgT;
 
@@ -71,7 +71,7 @@ StiffBase::~StiffBase()
       delete [] phiQ2;
 }
 
-void StiffBase::CompLocalStif( int NK, double xd[4][2], 
+void US_StiffBase::CompLocalStif( int NK, double xd[4][2], 
       double D, double sw2, double** Stif )
 {
    double xg  [ 2 ];
@@ -134,7 +134,7 @@ void StiffBase::CompLocalStif( int NK, double xd[4][2],
    }
 }
 
-void StiffBase::LambdaG( uint kk, double lam1, double lam2, double w, 
+void US_StiffBase::LambdaG( uint kk, double lam1, double lam2, double w, 
       Gauss2D* Lm )
 {
    double lam3 = 1.0 - lam1 - lam2;
@@ -189,7 +189,7 @@ void StiffBase::LambdaG( uint kk, double lam1, double lam2, double w,
    }
 }
 
-void StiffBase::SetGauss( void ) 
+void US_StiffBase::SetGauss( void ) 
 {
    double Gs1D[ 5 ];
    double Gs1w[ 5 ];   // Gauss pts and weights in 1D
@@ -288,7 +288,7 @@ void StiffBase::SetGauss( void )
 }
 
 
-void StiffBase::AffineMapping( int NK, double xd[4][2], int gauss_ind, 
+void US_StiffBase::AffineMapping( int NK, double xd[4][2], int gauss_ind, 
       double x[5] ) 
 {
    x[ 0 ] = 0.0;
@@ -313,7 +313,7 @@ void StiffBase::AffineMapping( int NK, double xd[4][2], int gauss_ind,
    }
 }
 
-void StiffBase::Jacobian( int NK, double xd[4][2], int gauss_ind, 
+void US_StiffBase::Jacobian( int NK, double xd[4][2], int gauss_ind, 
       double jcbv[5] ) 
 {
    double J11 = 0.0;
@@ -351,7 +351,7 @@ void StiffBase::Jacobian( int NK, double xd[4][2], int gauss_ind,
    jcbv[ 4 ] =  J11 / jcbv[ 0 ];     // = d_et / d_y
 }
 
-void StiffBase::LinearBasis( void )
+void US_StiffBase::LinearBasis( void )
 {
    // Linear basis for triangular element: (0,0), (1,0), (0,1)
 

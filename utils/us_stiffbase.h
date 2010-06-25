@@ -7,21 +7,22 @@
 //! Set a convenient shorthand
 #define uint unsigned int
 
-struct Gauss2D
-{
-   double x;
-   double y;
-   double w;
-};
-
-class US_EXTERN StiffBase
+class US_EXTERN US_StiffBase
 {
    public:
       //! \brief Allocates memory structures for the integration
-      StiffBase();
+      US_StiffBase();
 
       //! \brief Cleans up memory allocation
-      ~StiffBase();
+      ~US_StiffBase();
+
+      class Gauss2D
+      {
+         public:
+         double x;
+         double y;
+         double w;
+      };
 
       //! \brief  Numerical integration over a quadrilateral
       //! \param NK
@@ -29,7 +30,6 @@ class US_EXTERN StiffBase
       //! \param D
       //! \param sw2
       //! \param Stif
-
       void CompLocalStif( int, double xd[4][2], double, double, double** );
 
    private:

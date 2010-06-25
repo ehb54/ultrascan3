@@ -1482,8 +1482,8 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
 void US_Astfem_RSA::ComputeCoefMatrixFixedMesh( 
       double D, double sw2, double** CA, double** CB )
 {
-   StiffBase stfb0 ;
-   double*** Stif;   // Local stiffness matrix at each element
+   US_StiffBase stfb0 ;
+   double***    Stif;   // Local stiffness matrix at each element
    
    US_AstfemMath::initialize_3d( N - 1, 4, 4, &Stif );
 
@@ -1540,9 +1540,9 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
       double D, double sw2, double** CA, double** CB )
 {
    // Compute local stiffness matrices
-   StiffBase stfb0;
-   double*** Stif;         // Local stiffness matrix at each element
-   double    xd[4][2];     // coord for verices of quad elem
+   US_StiffBase stfb0;
+   double***    Stif;         // Local stiffness matrix at each element
+   double       xd[4][2];     // coord for verices of quad elem
    
    US_AstfemMath::initialize_3d( N, 4, 4, &Stif );
 
@@ -1619,9 +1619,9 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
       double D, double sw2, double** CA, double** CB )
 {
    // compute local stiffness matrices
-   StiffBase stfb0;
-   double*** Stif;       // Local stiffness matrix at each element
-   double    xd[4][2];   // coord for verices of quad elem
+   US_StiffBase stfb0;
+   double***    Stif;       // Local stiffness matrix at each element
+   double       xd[4][2];   // coord for verices of quad elem
 
    US_AstfemMath::initialize_3d( N, 4, 4, &Stif );
    // elem[0]: triangle
