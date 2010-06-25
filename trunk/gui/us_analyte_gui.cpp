@@ -536,9 +536,9 @@ void US_AnalyteGui::populate( void )
       rb_protein->setChecked( true );
       le_protein_vbar20->setText( QString::number( analyte.vbar20, 'f', 4 ) );
 
-      US_Math::Peptide p;
+      US_Math2::Peptide p;
       double temperature = le_protein_temp->text().toDouble();
-      US_Math::calc_vbar( p, analyte.sequence, temperature );
+      US_Math2::calc_vbar( p, analyte.sequence, temperature );
 
       le_protein_mw      ->setText( QString::number( (int) p.mw ) );
       le_protein_vbar20  ->setText( QString::number( p.vbar20, 'f', 4 ) );
@@ -729,8 +729,8 @@ void US_AnalyteGui::temp_changed( const QString& text )
 
    if ( ! analyte.sequence.isEmpty() )
    {
-      US_Math::Peptide p;
-      US_Math::calc_vbar( p, analyte.sequence, temperature );
+      US_Math2::Peptide p;
+      US_Math2::calc_vbar( p, analyte.sequence, temperature );
       le_protein_vbar->setText( QString::number( p.vbar, 'f', 4 ) );
    }
 }
@@ -789,9 +789,9 @@ void US_AnalyteGui::update_sequence( QString seq )
    {
       case US_Analyte::PROTEIN:
       {
-         US_Math::Peptide p;
+         US_Math2::Peptide p;
          double temperature = le_protein_temp->text().toDouble();
-         US_Math::calc_vbar( p, analyte.sequence, temperature );
+         US_Math2::calc_vbar( p, analyte.sequence, temperature );
 
          le_protein_mw      ->setText( QString::number( (int) p.mw ) );
          le_protein_vbar20  ->setText( QString::number( p.vbar20, 'f', 4 ) );
@@ -1027,9 +1027,9 @@ QString US_AnalyteGui::get_filename( const QString& path, const QString& guid )
 
 void US_AnalyteGui::more_info( void )
 {
-   US_Math::Peptide p;
+   US_Math2::Peptide p;
    double temperature =  le_protein_temp->text().toDouble();
-   US_Math::calc_vbar( p, analyte.sequence, temperature );
+   US_Math2::calc_vbar( p, analyte.sequence, temperature );
 
    QString s;
    QString s1 =

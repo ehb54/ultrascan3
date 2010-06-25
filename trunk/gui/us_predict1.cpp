@@ -319,7 +319,7 @@ void US_Predict1::degC( const QString& s )
    temperature = s.toDouble();
    solution.vbar      = solution.vbar20 + 4.25e-4 * ( temperature - 20.0 );
 
-   US_Math::data_correction( temperature, solution );
+   US_Math2::data_correction( temperature, solution );
    update();
 }
 
@@ -340,7 +340,7 @@ void US_Predict1::update_vbar( const US_Analyte ad )
    le_mw  ->setText( QString::number( (int) mw,      'e', 3 ) );
    le_vbar->setText( QString::number( solution.vbar, 'f', 4 ) );
 
-   US_Math::data_correction( temperature, solution );
+   US_Math2::data_correction( temperature, solution );
    update();
 }
 
@@ -361,28 +361,28 @@ void US_Predict1::update_buffer( const US_Buffer b )
    le_density  ->setText( QString::number( solution.density,    'f', 6 ) );
    le_viscosity->setText( QString::number( solution.viscosity , 'f', 6 ) );
 
-   US_Math::data_correction( temperature, solution );
+   US_Math2::data_correction( temperature, solution );
    update();
 }
 
 void US_Predict1::density( const QString& s )
 {
    solution.density = s.toDouble();
-   US_Math::data_correction( temperature, solution );
+   US_Math2::data_correction( temperature, solution );
    update();
 }
 
 void US_Predict1::viscosity( const QString& s )
 {
    solution.viscosity = s.toDouble();
-   US_Math::data_correction( temperature, solution );
+   US_Math2::data_correction( temperature, solution );
    update();
 }
 
 void US_Predict1::vbar( const QString& s )
 {
    solution.vbar = s.toDouble();
-   US_Math::data_correction( temperature, solution );
+   US_Math2::data_correction( temperature, solution );
    update();
 }
 

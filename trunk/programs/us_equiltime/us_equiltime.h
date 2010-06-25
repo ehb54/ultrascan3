@@ -5,8 +5,9 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
-#include "us_femglobal.h"
 #include "us_editor.h"
+#include "us_model.h"
+#include "us_simparms.h"
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
 
@@ -20,9 +21,9 @@ class US_EXTERN US_EquilTime : public US_Widgets
 		US_EquilTime();
 
 	private:
-      struct ModelSystem          model;
-      struct SimulationParameters simparams;
-      vector< struct mfem_data >  astfem_data;
+      struct US_Model                     model;
+      struct US_SimulationParameters      simparams;
+      QVector< US_AstfemMath::MfemData > astfem_data;
 
       enum    { PROLATE, OBLATE, ROD, SPHERE };
       enum    { INNER, OUTER, CENTER, CUSTOM };
@@ -90,7 +91,7 @@ class US_EXTERN US_EquilTime : public US_Widgets
       void change_model      ( void );
       void load_model        ( void );
 
-      void check_equil       ( vector< double >&, double* );
+      void check_equil       ( QVector< double >&, double* );
 
       void set_time          ( double time )
       { step_time = time; };

@@ -1,6 +1,6 @@
 //! \file us_astfem_math.cpp
 #include "us_astfem_math.h"
-#include "us_math.h"
+#include "us_math2.h"
 
 void US_AstfemMath::interpolate_C0( MfemInitial& C0, double* C1, 
       QVector< double >& x )

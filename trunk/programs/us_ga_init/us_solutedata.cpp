@@ -2,7 +2,7 @@
 
 #include "us_solutedata.h"
 #include "us_defines.h"
-#include "us_math.h"
+#include "us_math2.h"
 
 // bucket vertex LessThan routine
 bool buck_vx_lessthan( const bucket &buck1, const bucket &buck2 )
@@ -1068,7 +1068,7 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
 
    // do line fit (mainly for corr value)
 
-   US_Math::linefit( &xplot, &yplot, &slope, &vicep, &sigma, &corr, nvals );
+   US_Math2::linefit( &xplot, &yplot, &slope, &vicep, &sigma, &corr, nvals );
 
    // standard deviation and error
 

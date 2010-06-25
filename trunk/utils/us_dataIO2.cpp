@@ -704,7 +704,7 @@ int US_DataIO2::loadData( const QString&       directory,
    // Check for uuid match
    char uuid[ 37 ];
    uuid_unparse( (uchar*)d.guid, uuid );
-   if ( QString( uuid ) != e.dataguid ) throw NO_UUID_MATCH;
+   if ( QString( uuid ) != e.dataguid ) throw NO_GUID_MATCH;
 
    // Apply the edits
    EditedData ed;
@@ -969,8 +969,8 @@ QString US_DataIO2::errorString( int code )
       case NODATA    : return QObject::tr( "No legacy data files were found" );
       case BAD_VERSION 
          : return QObject::tr( "The file version is not supported" );
-      case NO_UUID_MATCH
-         : return QObject::tr( "UUIDs in raw data and edit data do not match" );
+      case NO_GUID_MATCH
+         : return QObject::tr( "GUIDs in raw data and edit data do not match" );
    }
 
    return QObject::tr( "Unknown error code" );

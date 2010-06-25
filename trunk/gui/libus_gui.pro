@@ -15,7 +15,8 @@ QT          += network svg
 
 TRANSLATIONS = $${TARGET}_DE_de.ts
 
-HEADERS      = us_analysis_base.h       \
+HEADERS      = \
+#               us_analysis_base.h       \
                us_analysis_base2.h      \
                us_analyte_gui.h         \
                us_associations_gui.h    \
@@ -28,25 +29,26 @@ HEADERS      = us_analysis_base.h       \
                us_investigator.h        \
                us_license.h             \
                us_model_gui.h           \
-               us_model_editor.h        \
+#               us_model_editor.h        \
                us_model_loader.h        \
-               us_model_selection.h     \
+#               us_model_selection.h     \
                us_passwd.h              \
                us_plot.h                \
                us_predict1.h            \
                us_properties.h          \
-               us_run_details.h         \
+#               us_run_details.h         \
                us_run_details2.h        \
                us_sassoc.h              \
-               us_selectmodel.h         \
-               us_selectmodel3.h        \
-               us_selectmodel10.h       \
-               us_selectmodel13.h       \
+#               us_selectmodel.h         \
+#               us_selectmodel3.h        \
+#               us_selectmodel10.h       \
+#               us_selectmodel13.h       \
                us_table.h               \
                us_widgets.h             \
                us_widgets_dialog.h
 
-SOURCES      = us_analysis_base.cpp       \
+SOURCES      = \
+#               us_analysis_base.cpp       \
                us_analysis_base2.cpp      \
                us_analyte_gui.cpp         \
                us_associations_gui.cpp    \
@@ -58,21 +60,21 @@ SOURCES      = us_analysis_base.cpp       \
                us_help.cpp                \
                us_investigator.cpp        \
                us_license.cpp             \
-               us_model_editor.cpp        \
+#               us_model_editor.cpp        \
                us_model_gui.cpp           \
                us_model_loader.cpp        \
-               us_model_selection.cpp     \
+#               us_model_selection.cpp     \
                us_passwd.cpp              \
                us_plot.cpp                \
                us_predict1.cpp            \
                us_properties.cpp          \
-               us_run_details.cpp         \
+#               us_run_details.cpp         \
                us_run_details2.cpp        \
                us_sassoc.cpp              \
-               us_selectmodel.cpp         \
-               us_selectmodel3.cpp        \
-               us_selectmodel10.cpp       \
-               us_selectmodel13.cpp       \
+#               us_selectmodel.cpp         \
+#               us_selectmodel3.cpp        \
+#               us_selectmodel10.cpp       \
+#               us_selectmodel13.cpp       \
                us_table.cpp               \
                us_widgets.cpp             \
                us_widgets_dialog.cpp

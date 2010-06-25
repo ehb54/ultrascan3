@@ -566,7 +566,7 @@ void US_SimulationParametersGui::check_delay( void )
       cnt_delay_mins->setValue( minutes[ current_speed_step ] );
    }
 
-   if ( sp->delay_hours < (unsigned int)hours[ current_speed_step ] )
+   if ( sp->delay_hours < (int)hours[ current_speed_step ] )
    {
       sp->delay_hours = hours[ current_speed_step ];
       cnt_delay_hours->setValue( hours[ current_speed_step ] );

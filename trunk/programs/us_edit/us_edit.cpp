@@ -14,7 +14,7 @@
 #include "us_exclude_profile.h"
 #include "us_ri_noise.h"
 #include "us_edit_scan.h"
-#include "us_math.h"
+#include "us_math2.h"
 #include "us_util.h"
 
 //! \brief Main program for US_Edit. Loads translators and starts
@@ -1621,7 +1621,7 @@ bool US_Edit::spike_check( const US_DataIO2::Scan& s,
       }
    }
       
-   US_Math::linefit( &x, &y, &slope, &intercept, &sigma, &correlation, count );
+   US_Math2::linefit( &x, &y, &slope, &intercept, &sigma, &correlation, count );
 
    // If there is more than a 3-fold difference, it is a spike
    double val    =  s.readings[ point ].value;

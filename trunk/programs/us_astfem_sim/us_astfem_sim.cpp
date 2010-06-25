@@ -10,7 +10,7 @@
 //#include "us_model_selection.h"
 #include "us_astfem_sim.h"
 #include "us_simulationparameters.h"
-#include "us_math.h"
+#include "us_math2.h"
 #include "us_defines.h"
 #include "us_clipdata.h"
 #include "us_model_gui.h"
@@ -497,7 +497,7 @@ void US_Astfem_Sim::ri_noise( void )
    for ( int j = 0; j < sim_data.scanData.size(); j++ )
    {
       double rinoise = 
-         US_Math::box_muller( 0, total_conc * simparams.rinoise / 100 );
+         US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
 
       for ( int k = 0; k < sim_data.x.size(); k++ )
          sim_data.scanData[ j ].readings[ k ].value += rinoise;
@@ -514,7 +514,7 @@ void US_Astfem_Sim::random_noise( void )
       for ( int k = 0; k < sim_data.x.size(); k++ )
       {
          sim_data.scanData[ j ].readings[ k ].value 
-            += US_Math::box_muller( 0, total_conc * simparams.rnoise / 100 );
+            += US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 );
       }
    }
 }
@@ -528,11 +528,11 @@ void US_Astfem_Sim::ti_noise( void )
    QVector< double > tinoise;
    tinoise.resize( points );
       
-   double val = US_Math::box_muller( 0, total_conc * simparams.tinoise / 100 );
+   double val = US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
    
    for ( int k = 0; k < points; k++ )
    {
-      val += US_Math::box_muller( 0, total_conc * simparams.tinoise / 100 );
+      val += US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
       tinoise[ k ] = val;
    }
 

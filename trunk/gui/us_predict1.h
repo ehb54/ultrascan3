@@ -6,7 +6,7 @@
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_plot.h"
-#include "us_math.h"
+#include "us_math2.h"
 #include "us_help.h"
 #include "us_buffer.h"
 #include "us_analyte_gui.h"
@@ -56,7 +56,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       bool                    access;
       bool                    signal;
 
-      US_Math::SolutionData   solution;
+      US_Math2::SolutionData  solution;
 
       US_Buffer               buffer;
       US_Analyte              analyte;

@@ -6,7 +6,7 @@
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
-#include "us_math.h"
+#include "us_math2.h"
 
 class US_EXTERN US_Predict2 : public US_Widgets
 {
@@ -26,7 +26,7 @@ class US_EXTERN US_Predict2 : public US_Widgets
       double     temperature;
       US_Help    showHelp;
 
-      US_Math::SolutionData d;
+      US_Math2::SolutionData d;
 
       QLabel*    lb_param1;
       QLabel*    lb_param2;

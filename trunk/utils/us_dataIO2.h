@@ -253,7 +253,7 @@ class US_DataIO2
 
       //! Values that are returned for various errors when managing scan data
       enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, BADXML, 
-                     NODATA, NO_UUID_MATCH, BAD_VERSION };
+                     NODATA, NO_GUID_MATCH, BAD_VERSION };
 
       /*! Read a set of legacy data in raw Beckman data set format
           \param file  The filename to be read
