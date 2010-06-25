@@ -974,7 +974,7 @@ qDebug() << " radhi" << radhi;
    simparams.rnoise            = 0.0;
    simparams.tinoise           = 0.0;
    simparams.rinoise           = 0.0;
-   simparams.rotor             = 0.0;
+   simparams.rotor             = 0;
    simparams.band_forming      = false;
    simparams.band_volume       = 0.0;
 qDebug() << "  radreso " << simparams.radial_resolution;

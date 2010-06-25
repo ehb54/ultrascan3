@@ -551,7 +551,7 @@ void US_Astfem_RSA::adjust_limits( int speed )
 
 double US_Astfem_RSA::stretch( int rotor, int rpm )
 {
-   QVector< struct rotorInfo > rotor_list;
+   QVector< US_Hardware::RotorInfo > rotor_list;
    rotor_list.clear();
    
    double stretch = 0.0;
