@@ -238,7 +238,7 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
    af_params.local_index.clear();
    af_params.local_index.resize( size_cv );
    
-   struct ComponentRole cr;
+   US_AstfemMath::ComponentRole cr;
 
    for ( int group = 0; group < rg.size(); group++ )
    {

@@ -54,14 +54,14 @@ class US_EXTERN US_Astfem_RSA : public QObject
       double w2t_integral;    //!< Keep track of w2t_integral value globally
       int    N;               //!< Number of points used in radial direction
       
-      struct AstFemParameters         af_params;
+      US_AstfemMath::AstFemParameters af_params;
       US_AstfemMath::MfemData         af_data;
       US_AstfemMath::MfemInitial      af_c0;
 
-      QVector< double >               x;  //<! Radii of grid points; x[0...N-1] 
-      QVector< struct ReactionGroup > rg;
-      US_Model&                       system;
-      US_SimulationParameters&        simparams;
+      QVector< double >                       x;  //<! Radii of grid points; x[0...N-1] 
+      QVector< US_AstfemMath::ReactionGroup > rg;
+      US_Model&                               system;
+      US_SimulationParameters&                simparams;
 
       // Functions
       void   update_assocv  ( void );
