@@ -24,11 +24,11 @@ class US_EXTERN US_Model
       double     compressibility;
       double     wavelength;
       double     temperature;
-      QString    editguid;
+      QString    editGUID;
       QString    bufferGUID;   
       QString    bufferDesc;   
       QString    description;
-      QString    guid;
+      QString    modelGUID;
       OpticsType optics;
       ModelType  type;
 
@@ -107,7 +107,7 @@ class US_EXTERN US_Model
          inline bool operator!= ( const SimulationComponent& sc ) const 
          { return ! operator==(sc); }
 
-         uchar       analyteGUID[ 16 ];    // GUID for the analyte in the MySQL DB
+         QString     analyteGUID;          // GUID for the analyte in the MySQL DB
          double      molar_concentration;
          double      signal_concentration; // To be assigned prior to simulation
          double      vbar20;

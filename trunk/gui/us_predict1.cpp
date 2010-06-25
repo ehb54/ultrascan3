@@ -325,7 +325,9 @@ void US_Predict1::degC( const QString& s )
 
 void US_Predict1::get_peptide( void )
 {
-   US_AnalyteGui* dialog = new US_AnalyteGui( investigator, true, analyte.guid );
+   US_AnalyteGui* dialog = 
+      new US_AnalyteGui( investigator, true, analyte.analyteGUID );
+
    connect( dialog, SIGNAL( valueChanged( US_Analyte ) ),
                     SLOT  ( update_vbar ( US_Analyte ) ) );
    dialog->exec();

@@ -3,7 +3,7 @@
 
 #include "us_analysis_base2.h"
 #include "us_editor.h"
-#include "us_math.h"
+#include "us_math2.h"
 
 class US_SecondMoment : public US_AnalysisBase2
 {

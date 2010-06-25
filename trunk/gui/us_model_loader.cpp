@@ -675,9 +675,9 @@ void US_ModelLoader::show_model_info( QPoint pos )
          + tr( "\n  Implied RunID:         " ) + runid
          + tr( "\n  Type:                  " ) + tdesc
          + "  (" + QString::number( (int)mtype ) + ")"
-         + tr( "\n  Model Global ID:       " ) + model.guid
+         + tr( "\n  Model Global ID:       " ) + model.modelGUID
          + tr( "\n  Description Global ID: " ) + model_descriptions[ mdx ].guid
-         + tr( "\n  Edit Global ID:        " ) + model.editguid
+         + tr( "\n  Edit Global ID:        " ) + model.editGUID
          + lblid + mdlid
          + tr( "\n  Iterations:            " ) + QString::number( iters )
          + tr( "\n  Components Count:      " ) + QString::number( ncomp )
@@ -705,7 +705,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
       tdesc    = typeText( mtype, nassoc, iters );
       aruni    = runid;                           // potential common values
       atype    = tdesc;
-      aegid    = model.editguid;
+      aegid    = model.editGUID;
 #if 0
 aegid=model.guid;
 eguid=model.guid;
@@ -724,7 +724,7 @@ eguid=model.guid;
          runid    = mdesc.section( ".", 0, 0 );
          tdesc    = typeText( model.type, model.associations.size(),
                model.iterations );
-         eguid    = model.editguid;
+         eguid    = model.editGUID;
 
          if ( !aruni.isEmpty()  &&  aruni.compare( runid ) != 0 )
             aruni    = "";   // turn off common if mismatch
@@ -781,9 +781,9 @@ eguid=model.guid;
             + tr( "\n  Implied RunID:         " ) + runid
             + tr( "\n  Type:                  " ) + tdesc
             + "  (" + QString::number( (int)mtype ) + ")"
-            + tr( "\n  Model Global ID:       " ) + model.guid
+            + tr( "\n  Model Global ID:       " ) + model.modelGUID
             + tr( "\n  Description Global ID: " ) + model_descriptions[ mdx ].guid
-            + tr( "\n  Edit Global ID:        " ) + model.editguid
+            + tr( "\n  Edit Global ID:        " ) + model.editGUID
             + lblid + mdlid
             + tr( "\n  Iterations:            " ) + QString::number( iters )
             + tr( "\n  Components Count:      " ) + QString::number( ncomp )

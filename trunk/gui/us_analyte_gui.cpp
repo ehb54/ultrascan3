@@ -458,7 +458,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    else
    {
       int result;
-      analyte.guid = guid;
+      analyte.analyteGUID = guid;
 
       if ( db_access )
       {
@@ -529,7 +529,7 @@ void US_AnalyteGui::change_description( void )
 void US_AnalyteGui::populate( void )
 {
    le_description->setText( analyte.description );
-   le_guid       ->setText( analyte.guid );
+   le_guid       ->setText( analyte.analyteGUID );
 
    if ( analyte.type == US_Analyte::PROTEIN )
    {
@@ -637,7 +637,7 @@ void US_AnalyteGui::close( void )
       if ( ! data_ok() ) return;
       
       bool changed = ! ( analyte == saved_analyte );
-      if ( analyte.guid.size() != 36  ||  changed )
+      if ( analyte.analyteGUID.size() != 36  ||  changed )
       {
          int response = QMessageBox::question( this,
                tr( "Analyte Changed" ),
@@ -1515,12 +1515,12 @@ void US_AnalyteGui::select_from_db( void )
 
 void US_AnalyteGui::save( void )
 {
-   if ( analyte.guid.size() != 36 )
-      analyte.guid = US_Util::new_guid();
+   if ( analyte.analyteGUID.size() != 36 )
+      analyte.analyteGUID = US_Util::new_guid();
 
    if ( ! data_ok() ) return;
 
-   le_guid->setText( analyte.guid );
+   le_guid->setText( analyte.analyteGUID );
 
    int result;
 
@@ -1535,7 +1535,7 @@ void US_AnalyteGui::save( void )
       QString path;
       if ( ! US_Analyte::analyte_path( path ) ) return;
 
-      QString filename = get_filename( path, analyte.guid );
+      QString filename = get_filename( path, analyte.analyteGUID );
       result = analyte.write( false, filename );
    }
 
@@ -1554,7 +1554,7 @@ void US_AnalyteGui::save( void )
 void US_AnalyteGui::delete_analyte( void )
 {
    //TODO  What if we select new and then want to delete that?
-   if ( analyte.guid.size() != 36 ) return;
+   if ( analyte.analyteGUID.size() != 36 ) return;
 
    if ( rb_disk->isChecked() )
       delete_from_disk();
@@ -1570,7 +1570,7 @@ void US_AnalyteGui::delete_from_disk( void )
    QString path;
    if ( ! US_Analyte::analyte_path( path ) ) return;
 
-   QString fn = get_filename( path, analyte.guid );
+   QString fn = get_filename( path, analyte.analyteGUID );
 
    // Delete it
    QFile file( fn );

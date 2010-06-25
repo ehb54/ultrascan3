@@ -1,7 +1,7 @@
 //! \file us_fit_meniscus.cpp
 #include "us_fit_meniscus.h"
 #include "us_gui_settings.h"
-#include "us_math.h"
+#include "us_math2.h"
 #include "us_matrix.h"
 
 #include "qwt_plot_marker.h"

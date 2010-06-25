@@ -793,7 +793,7 @@ void US_Convert::assignAnalyte( US_Analyte data )
 
    // Get analyteID
    QStringList q( "get_analyteID" );
-   q << data.guid;
+   q << data.analyteGUID;
 
    db.query( q );
    if ( db.lastErrno() != US_DB2::OK ) return;

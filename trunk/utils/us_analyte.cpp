@@ -10,7 +10,7 @@ US_Analyte::US_Analyte()
    vbar20         = TYPICAL_VBAR;
    mw             = 50000.0;
    description    = "New Analyte";
-   guid           .clear();
+   analyteGUID    .clear();
    sequence       .clear();
    type           = PROTEIN;
 
@@ -63,7 +63,7 @@ bool US_Analyte::operator== ( const US_Analyte& a ) const
    if ( vbar20       != a.vbar20       ) return false;
    if ( mw           != a.mw           ) return false;
    if ( description  != a.description  ) return false;
-   if ( guid         != a.guid         ) return false;
+   if ( analyteGUID  != a.analyteGUID  ) return false;
    if ( sequence     != a.sequence     ) return false;
    if ( type         != a.type         ) return false;
    if ( extinction   != extinction     ) return false;
@@ -132,7 +132,7 @@ int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
 
    db->next();
 
-   guid = load_guid;;
+   analyteGUID = load_guid;;
    type = (US_Analyte::analyte_t) db->value( 1 ).toString().toInt();
    
    sequence    = db->value( 2 ).toString();
@@ -276,7 +276,7 @@ int US_Analyte::read_analyte( const QString& filename )
 
             // Set description and guid
             description = a.value( "description" ).toString();
-            guid        = a.value( "guid"        ).toString();
+            analyteGUID = a.value( "analyteGUID" ).toString();
 
             // Set type
             if ( type_string == "PROTEIN" )
@@ -564,7 +564,7 @@ int US_Analyte::write_disk( const QString& filename )
    }
 
    xml.writeAttribute( "description", description );
-   xml.writeAttribute( "guid"       , guid );
+   xml.writeAttribute( "analyteGUID", analyteGUID );
 
    xml.writeStartElement( "sequence" );
    xml.writeCharacters( "\n" );
@@ -699,18 +699,18 @@ int US_Analyte::write_db( US_DB2* db )
 
    message = QObject::tr( "inserted into" );
 
-   if ( guid.size() != 36 ) 
+   if ( analyteGUID.size() != 36 ) 
    {
       message = QObject::tr ( "The analyte GUID is invalid" );  
       return US_DB2::BADGUID;
    }
    
-   q << "new_analyte" << guid;
+   q << "new_analyte" << analyteGUID;
 
    // Check that the guid exists in the db
    QStringList q2;
 
-   q2 << "get_bufferID" << guid;
+   q2 << "get_analyteID" << analyteGUID;
 
    db->query( q2 );
 
