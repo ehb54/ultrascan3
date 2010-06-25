@@ -284,7 +284,7 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
 
    main->addLayout( right ); 
 
-   model.component_vector.clear();
+   model.components.clear();
    update_speeds( speed_type );
 }
 
@@ -401,9 +401,9 @@ void US_EquilTime::new_channel( int channel )
 double US_EquilTime::rpmFromSigma( double sigma )
 {
    double T     = K0 + 20.0;  // 20C for now
-   double mw    = model.component_vector[ 0 ].mw;
-   double vbar  = model.component_vector[ 0 ].vbar20;
-   double rho   = model.component_vector[ 0 ].density;
+   double mw    = model.components[ 0 ].mw;
+   double vbar  = model.components[ 0 ].vbar20;
+   double rho   = model.density;
 
    double rpm   = 30.0 / M_PI * 
                   sqrt( sigma * R * T * 2 / ( mw * ( 1 - vbar * rho ) ) );
@@ -416,9 +416,9 @@ double US_EquilTime::rpmFromSigma( double sigma )
 double US_EquilTime::sigmaFromRpm( double rpm )
 {
    double T     = K0 + 20.0;  // 20C for now
-   double mw    = model.component_vector[ 0 ].mw;
-   double vbar  = model.component_vector[ 0 ].vbar20;
-   double rho   = model.component_vector[ 0 ].density;
+   double mw    = model.components[ 0 ].mw;
+   double vbar  = model.components[ 0 ].vbar20;
+   double rho   = model.density;
 
    double sigma = mw * ( 1 - vbar * rho ) * sq( M_PI / 30.0 * rpm ) / 
                   ( 2 * R * T );
@@ -436,7 +436,7 @@ void US_EquilTime::update_speeds( int type )
       // Determine max sigma
       double max_sigma;
       
-      if ( model.component_vector.size() > 0 ) 
+      if ( model.components.size() > 0 ) 
       {
          max_sigma   = sigmaFromRpm( 60000.0 );
 
@@ -492,7 +492,7 @@ void US_EquilTime::update_speeds( int type )
    }
    else
    {
-      if ( model.component_vector.size() > 0 &&  type != speed_type )
+      if ( model.components.size() > 0 &&  type != speed_type )
       {
          rpm_start = rpmFromSigma( cnt_lowspeed ->value() );
          rpm_stop  = rpmFromSigma( cnt_highspeed->value() );
@@ -551,7 +551,8 @@ void US_EquilTime::load_experiment( void )
 
    if ( ! fn.isEmpty() )
    {
-      int error_code = US_FemGlobal::read_experiment( model, simparams, fn );
+      //FIXME
+      int error_code = 0;//US_FemGlobal::read_experiment( model, simparams, fn );
 
       if ( error_code < 0 )
       {
@@ -573,19 +574,20 @@ void US_EquilTime::load_experiment( void )
    }
 
    // Initialize.  Can be updated in model editor
-   model.component_vector[ 0 ].density = DENS_20W;
+   model.density = DENS_20W;
    update_speeds( speed_type );
 }
 
 void US_EquilTime::new_model( void )
 {
-   US_ModelSelection::selectModel( model, true );
-
-   if ( model.model >= 0 )
+   //FIXME
+   //US_ModelSelection::selectModel( model, true );
+/*
+   //if ( model.model >= 0 )
    {
       // Set a default partial concentration in OD
-      if ( model.component_vector[ 0 ].concentration == 1.0 )
-         model.component_vector[ 0 ].concentration = 0.3;
+      if ( model.components[ 0 ].concentration == 1.0 )
+         model.components[ 0 ].concentration = 0.3;
             
       // Will be deleted when closed
       US_ModelEditor* component_dialog = new US_ModelEditor( model );
@@ -599,12 +601,13 @@ void US_EquilTime::new_model( void )
 
       update_speeds( speed_type );
    }
+   */
 }
 
 void US_EquilTime::change_model( void )
 {
-   US_ModelEditor* component_dialog = new US_ModelEditor( model );
-   component_dialog->exec();
+   //US_ModelEditor* component_dialog = new US_ModelEditor( model );
+   //component_dialog->exec();
 }
 
 void US_EquilTime::load_model( void )
@@ -614,7 +617,7 @@ void US_EquilTime::load_model( void )
          US_Settings::resultDir(), "*.model.?? *.model-?.?? *model-??.??" );
 
    if ( fn.isEmpty() ) return;
-
+/*
    int error_code = US_FemGlobal::read_modelSystem( model, fn );
 
    if ( error_code < 0 )
@@ -635,16 +638,16 @@ void US_EquilTime::load_model( void )
             tr( "Simulation Module" ),
             tr( "Successfully loaded model:\n\n" ) + model.description );
    }
-
+*/
    // Initialize.  Can be updated in model editor
-   model.component_vector[ 0 ].density = DENS_20W;
+   model.density = DENS_20W;
    update_speeds( speed_type );
 }
 
 void US_EquilTime::init_simparams( void )
 {
    struct SpeedProfile sp;
-
+/*
    simparams.speed_step.clear();
    simparams.speed_step .push_back( sp );
 
@@ -670,12 +673,13 @@ void US_EquilTime::init_simparams( void )
    simparams.rotor             = 0;
    simparams.band_forming      = false;
    simparams.band_firstScanIsConcentration = false;
+   */
 }
 
 void US_EquilTime::init_astfem_data( void )
 {
    astfem_data.clear();
-
+/*
    int ss_size =  simparams.speed_step.size();
 
    for ( int i = 0; i < ss_size; i++ )
@@ -736,11 +740,11 @@ void US_EquilTime::init_astfem_data( void )
 
          astfem_data[ i ].scan .push_back( temp_scan );
       }
-   }
+   }*/
 }
 
 void US_EquilTime::simulate( void )
-{
+{/*
    for ( uint k = 0 ; k < model.component_vector.size(); k++ )
    {
       struct mfem_initial* c0 = &model.component_vector[ k ].c0;
@@ -836,9 +840,9 @@ void US_EquilTime::simulate( void )
              "the nearest 100 RPM.)\n" ) +
              "______________________________________________________"
              "_____________________\n" );
-}
+*/}
 
-void US_EquilTime::check_equil( vector< double >& x, double* c )
+void US_EquilTime::check_equil( QVector< double >& x, double* c )
 {
    // If we are not at the time increment, return
    if ( step_time < next_scan_time ) return;

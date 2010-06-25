@@ -958,14 +958,14 @@ void US_Properties::calculate( void )
    if ( ! cb_s   ->isChecked() ) cb_s   ->setEnabled( false );
    if ( ! cb_D   ->isChecked() ) cb_D   ->setEnabled( false );
 
-   US_Math::SolutionData d;
+   US_Math2::SolutionData d;
 
 // Are these water by default?
    d.vbar      = vbar;
    d.density   = DENS_20W; //buffer.density;
    d.viscosity = VISC_20W; //buffer.viscosity;
 
-   US_Math::data_correction( 20.0, d );  // Always use 20C
+   US_Math2::data_correction( 20.0, d );  // Always use 20C
 
    double t = K0 + 20.0;  // Calculatons below need Kelvin
 

@@ -24,7 +24,7 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-US_SecondMoment::US_SecondMoment() : US_AnalysisBase()
+US_SecondMoment::US_SecondMoment() : US_AnalysisBase2()
 {
    setWindowTitle( tr( "Second Moment Analysis" ) );
 
@@ -39,12 +39,12 @@ US_SecondMoment::US_SecondMoment() : US_AnalysisBase()
 
 void US_SecondMoment::data_plot( void )
 {
-   US_AnalysisBase::data_plot();
+   US_AnalysisBase2::data_plot();
 
    //time_correction = US_Math::time_correction( dataList );
 
-   int                    index  = lw_triples->currentRow();
-   US_DataIO::editedData* d      = &dataList[ index ];
+   int                     index  = lw_triples->currentRow();
+   US_DataIO2::EditedData* d      = &dataList[ index ];
 
    int     scanCount   = d->scanData.size();
    int     exclude     = 0;
@@ -104,7 +104,7 @@ void US_SecondMoment::data_plot( void )
       while ( count < points )
       {   
          double value  = d->scanData[ i ].readings[ count ].value - baseline;
-         double radius = d->scanData[ i ].readings[ count ].d.radius;
+         double radius = d->x[ count ].radius;
 
          if ( value >= test_y + range ) break;
       
@@ -217,8 +217,8 @@ void US_SecondMoment::view( void )
                                      US_GuiSettings::fontSize() ) );
    }
 
-   int                    index  = lw_triples->currentRow();
-   US_DataIO::editedData* d      = &dataList[ index ];
+   int                     index  = lw_triples->currentRow();
+   US_DataIO2::EditedData* d      = &dataList[ index ];
 
    QString sm_results = 
         table_row( tr( "Average Second Moment S: " ),
@@ -245,9 +245,9 @@ void US_SecondMoment::view( void )
 
 void US_SecondMoment::save( void )
 {
-   int                    index  = lw_triples->currentRow();
-   US_DataIO::editedData* d      = &dataList[ index ];
-   QString                dir    = US_Settings::reportDir();
+   int                     index  = lw_triples->currentRow();
+   US_DataIO2::EditedData* d      = &dataList[ index ];
+   QString                 dir    = US_Settings::reportDir();
 
    if ( ! mkdir( dir, d->runID ) ) return;
 

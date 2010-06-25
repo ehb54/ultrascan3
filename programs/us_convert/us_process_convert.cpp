@@ -4,7 +4,7 @@
 
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_math.h"
+#include "us_math2.h"
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "us_process_convert.h"

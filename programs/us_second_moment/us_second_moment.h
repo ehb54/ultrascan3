@@ -1,11 +1,11 @@
 #ifndef US_SECOND_MONENT_H
 #define US_SECOND_MOMENT_H
 
-#include "us_analysis_base.h"
+#include "us_analysis_base2.h"
 #include "us_editor.h"
 #include "us_math.h"
 
-class US_SecondMoment : public US_AnalysisBase
+class US_SecondMoment : public US_AnalysisBase2
 {
    Q_OBJECT
 

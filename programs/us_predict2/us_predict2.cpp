@@ -2,7 +2,6 @@
 #include "us_predict2.h"
 #include "us_gui_settings.h"
 #include "us_constants.h"
-#include "us_math.h"
 #include "us_buffer_gui.h"
 #include "us_analyte_gui.h"
 #include "us_constants.h"
@@ -17,7 +16,7 @@ US_Predict2::US_Predict2() : US_Widgets()
    d.vbar20    = TYPICAL_VBAR;
    d.vbar      = TYPICAL_VBAR + ( 4.25e-4 * ( temperature - 20.0 ) );
 
-   US_Math::data_correction( temperature, d );
+   US_Math2::data_correction( temperature, d );
    
 
    setWindowTitle( tr( "Predict f and axial ratios for 4 basic shapes" ) );
@@ -612,28 +611,28 @@ void US_Predict2::update_param2( const QString& s )
 void US_Predict2::density( const QString& s )
 {
    d.density = s.toDouble();
-   US_Math::data_correction( temperature, d );
+   US_Math2::data_correction( temperature, d );
    update();
 }
 
 void US_Predict2::viscosity( const QString& s )
 {
    d.viscosity = s.toDouble();
-   US_Math::data_correction( temperature, d );
+   US_Math2::data_correction( temperature, d );
    update();
 }
 
 void US_Predict2::vbar( const QString& s )
 {
    d.vbar = s.toDouble();
-   US_Math::data_correction( temperature, d );
+   US_Math2::data_correction( temperature, d );
    update();
 }
 
 void US_Predict2::degC( const QString& s )
 {
    temperature = s.toDouble();
-   US_Math::data_correction( temperature, d );
+   US_Math2::data_correction( temperature, d );
    update();
 }
 
@@ -664,7 +663,7 @@ void US_Predict2::update_buffer( double density, double viscosity )
    le_density  ->setText( QString::number( density,   'f', 4 ) );
    le_viscosity->setText( QString::number( viscosity, 'f', 4 ) );
 
-   US_Math::data_correction( temperature, d );
+   US_Math2::data_correction( temperature, d );
    update();
 }
 
@@ -693,7 +692,7 @@ void US_Predict2::update_vbar( double vbar )
 
    le_vbar  ->setText( QString::number( vbar, 'f', 4 ) );
 
-   US_Math::data_correction( temperature, d );
+   US_Math2::data_correction( temperature, d );
    update();
 }
 

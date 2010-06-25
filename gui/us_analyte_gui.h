@@ -7,7 +7,7 @@
 #include "us_widgets_dialog.h"
 #include "us_extern.h"
 #include "us_help.h"
-#include "us_math.h"
+#include "us_math2.h"
 #include "us_editor.h"
 #include "us_db2.h"
 #include "us_constants.h"

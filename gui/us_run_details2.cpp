@@ -3,7 +3,7 @@
 #include "us_run_details2.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_math.h"
+#include "us_math2.h"
 #include "us_constants.h"
 
 #include <qwt_legend.h>

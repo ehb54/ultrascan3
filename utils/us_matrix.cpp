@@ -1,7 +1,7 @@
 //! \file us_matrix.cpp
 
 #include "us_matrix.h"
-#include "us_math.h"
+#include "us_math2.h"
 
 #include <QtCore>
 
