@@ -12,8 +12,8 @@ US_Noise::US_Noise()
 {
    type            = TI;
    description     = "New Noise";
-   guid            = "";
-   editguid        = "";
+   noiseGUID       = "";
+   editGUID        = "";
    minradius       = 0.0;
    maxradius       = 0.0;
    count           = 0;
@@ -25,8 +25,8 @@ bool US_Noise::operator== ( const US_Noise& n ) const
 {
    if ( type            != n.type            ) return false;
    if ( description     != n.description     ) return false;
-   if ( guid            != n.guid            ) return false;
-   if ( editguid        != n.editguid        ) return false;
+   if ( noiseGUID       != n.noiseGUID       ) return false;
+   if ( editGUID        != n.editGUID        ) return false;
    if ( count           != n.count           ) return false;
    if ( minradius       != n.minradius       ) return false;
    if ( maxradius       != n.maxradius       ) return false;
@@ -99,8 +99,8 @@ int US_Noise::load( const QString& filename )
             type        = typen.compare( "ti" ) == 0 ? TI : RI;
 
             description = a.value( "description" ).toString();
-            guid        = a.value( "guid"        ).toString();
-            editguid    = a.value( "editguid"    ).toString();
+            noiseGUID   = a.value( "noiseGUID"   ).toString();
+            editGUID    = a.value( "editGUID"    ).toString();
             minradius   = a.value( "minradius"   ).toString().toDouble();
             maxradius   = a.value( "maxradius"   ).toString().toDouble();
             count       = a.value( "count"       ).toString().toInt();
@@ -139,9 +139,9 @@ int US_Noise::write( US_DB2* db )
 
       // Generate a guid if necessary
       // The guid may be valid from a disk read, but is not in the DB
-      if ( guid.size() != 36 ) guid = US_Util::new_guid();
+      if ( noiseGUID.size() != 36 ) noiseGUID = US_Util::new_guid();
 
-      q << "get_noiseID" << guid;
+      q << "get_noiseID" << noiseGUID;
       
       db->query( q );
       
@@ -149,14 +149,14 @@ int US_Noise::write( US_DB2* db )
      
       if ( db->lastErrno() != US_DB2::OK )
       {
-         q << "new_noise" << guid << description << contents << editguid;
+         q << "new_noise" << noiseGUID << description << contents << editGUID;
          message = QObject::tr( "created" );
       }
       else
       {
          db->next();
          QString id = db->value( 0 ).toString();
-         q << "update_noise" << id << description << contents << editguid;
+         q << "update_noise" << id << description << contents << editGUID;
          message = QObject::tr( "updated" );
       }
 
@@ -238,7 +238,7 @@ int US_Noise::load_disk( const QString& guid )
             {
                QXmlStreamAttributes a = xml.attributes();
 
-               if ( a.value( "guid" ).toString() == guid ) found = true;
+               if ( a.value( "noiseGUID" ).toString() == guid ) found = true;
                break;
             }
          }
@@ -249,7 +249,7 @@ int US_Noise::load_disk( const QString& guid )
       if ( found ) return load( filename );
    }
 
-   qDebug() << "Could not find noise guid";
+   qDebug() << "Could not find noise GUID";
    //message =  QObject::tr ( "Could not find noise guid" );
    return error;
 }
@@ -289,8 +289,8 @@ void US_Noise::write_temp( QTemporaryFile& file )
    xml.writeStartElement( "noise" );
    xml.writeAttribute   ( "type",        typen       );
    xml.writeAttribute   ( "description", description );
-   xml.writeAttribute   ( "editguid",    editguid    );
-   xml.writeAttribute   ( "guid",        guid        );
+   xml.writeAttribute   ( "editGUID",    editGUID    );
+   xml.writeAttribute   ( "noiseGUID",   noiseGUID   );
 
    if ( type == TI )
    {
@@ -325,8 +325,8 @@ void US_Noise::debug( void )
 
    qDebug() << "type" << (int)type << typen;
    qDebug() << "desc" << description;
-   qDebug() << "edit guid" << editguid;
-   qDebug() << "guid" << guid;;
+   qDebug() << "edit guid" << editGUID;
+   qDebug() << "noise guid" << noiseGUID;;
    qDebug() << "count" << count;
    qDebug() << "values size" << values.size();
 

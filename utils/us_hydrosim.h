@@ -37,7 +37,7 @@ class US_EXTERN US_Hydrosim
       double    vbar;        //!< vbar at temperature
       double    temperature; //!< Temperature for current characteristics
       double    axial_ratio; //!< Axial ratio of major and minor radii
-      QString   guid;        //!< Analyte GUID
+      QString   analyteGUID; //!< Analyte GUID related to this structure 
 
       US_Hydrocomp sphere;   //!< Spherical characteristics
       US_Hydrocomp prolate;  //!< Prolate Ellipsoid

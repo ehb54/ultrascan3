@@ -15,8 +15,8 @@ class US_EXTERN US_Noise
       NoiseType  type;
 
       QString    description;
-      QString    guid;
-      QString    editguid;   
+      QString    noiseGUID;
+      QString    editGUID;   
 
       double     minradius;
       double     maxradius;
