@@ -5,12 +5,10 @@
 #include "us_settings.h"
 #include "us_util.h"
 
-#include <uuid/uuid.h>
-
 US_Model::SimulationComponent::SimulationComponent()
 {
    name                 = "New Component";
-   bzero( analyteGUID, 16 );
+   analyteGUID.clear();
    molar_concentration  = 0.0;
    signal_concentration = 1.0;
    vbar20               = TYPICAL_VBAR;
@@ -33,7 +31,7 @@ US_Model::SimulationComponent::SimulationComponent()
 bool US_Model::SimulationComponent::operator== 
                   ( const SimulationComponent& sc ) const
 {
-   if ( uuid_compare( analyteGUID, sc.analyteGUID ) != 0 ) return false;
+   if ( analyteGUID          != sc.analyteGUID           ) return false;
    if ( name                 != sc.name                  ) return false;
    if ( molar_concentration  != sc.molar_concentration   ) return false;
    if ( signal_concentration != sc.signal_concentration  ) return false;
@@ -87,8 +85,8 @@ US_Model::US_Model()
    type            = MANUAL;
    iterations      = 1;
    bufferGUID  .clear();
-   guid        .clear();
-   editguid    .clear();
+   modelGUID   .clear();
+   editGUID    .clear();
    components  .clear();
    associations.clear();
 }
@@ -100,7 +98,7 @@ bool US_Model::operator== ( const US_Model& m ) const
    if ( compressibility != m.compressibility ) return false;
    if ( wavelength      != m.wavelength      ) return false;
    if ( temperature     != m.temperature     ) return false;
-   if ( editguid        != m.editguid        ) return false;
+   if ( editGUID        != m.editGUID        ) return false;
    if ( bufferGUID      != m.bufferGUID      ) return false;
    if ( bufferDesc      != m.bufferDesc      ) return false;
    if ( description     != m.description     ) return false;
@@ -185,7 +183,7 @@ int US_Model::load_disk( const QString& guid )
             {
                QXmlStreamAttributes a = xml.attributes();
 
-               if ( a.value( "guid" ).toString() == guid ) found = true;
+               if ( a.value( "modelGUID" ).toString() == guid ) found = true;
                break;
             }
          }
@@ -230,10 +228,9 @@ int US_Model::load( const QString& filename )
             a = xml.attributes();
 
             description     = a.value( "description"     ).toString();
-            editguid        = a.value( "editguid"        ).toString();
+            editGUID        = a.value( "editGUID"        ).toString();
             bufferGUID      = a.value( "bufferGuid"      ).toString();
             bufferDesc      = a.value( "bufferDesc"      ).toString();
-            guid            = a.value( "guid"            ).toString();
             density         = a.value( "density"         ).toString().toDouble();
             viscosity       = a.value( "viscosity"       ).toString().toDouble();
             compressibility = a.value( "compressibility" ).toString().toDouble();
@@ -250,8 +247,7 @@ int US_Model::load( const QString& filename )
             SimulationComponent sc;
             a = xml.attributes();
 
-            QString guid = a.value( "guid" ).toString();
-            uuid_parse( guid.toAscii().data(), sc.analyteGUID );
+            sc.analyteGUID = a.value( "analyteGUID").toString();;
 
             sc.name        = a.value( "name"       ).toString();
             sc.vbar20      = a.value( "vbar20"     ).toString().toDouble();
@@ -375,9 +371,9 @@ int US_Model::write( US_DB2* db )
 
       // Generate a guid if necessary
       // The guid may be valid from a disk read, but is not in the DB
-      if ( guid.size() != 36 ) guid = US_Util::new_guid();
+      if ( modelGUID.size() != 36 ) modelGUID = US_Util::new_guid();
 
-      q << "get_modelID" << guid;
+      q << "get_modelID" << modelGUID;
       
       db->query( q );
       
@@ -385,14 +381,14 @@ int US_Model::write( US_DB2* db )
      
       if ( db->lastErrno() != US_DB2::OK )
       {
-         q << "new_model" << guid << description << contents << editguid;
+         q << "new_model" << modelGUID << description << contents << editGUID;
          message = QObject::tr( "created" );
       }
       else
       {
          db->next();
          QString id = db->value( 0 ).toString();
-         q << "update_model" << id << description << contents << editguid;
+         q << "update_model" << id << description << contents << editGUID;
          message = QObject::tr( "updated" );
       }
 
@@ -431,9 +427,9 @@ void US_Model::write_temp( QTemporaryFile& file )
 
    xml.writeStartElement( "model" );
    xml.writeAttribute   ( "description",     description );
-   xml.writeAttribute   ( "guid",            guid        );
-   xml.writeAttribute   ( "editguid",        editguid    );
-   xml.writeAttribute   ( "bufferGuid",      bufferGUID  );
+   xml.writeAttribute   ( "modelGUID",       modelGUID   );
+   xml.writeAttribute   ( "editGUID",        editGUID    );
+   xml.writeAttribute   ( "bufferGUID",      bufferGUID  );
    xml.writeAttribute   ( "bufferDesc",      bufferDesc  );
    xml.writeAttribute   ( "density",         QString::number( density        ));
    xml.writeAttribute   ( "viscosity",       QString::number( viscosity      ));
@@ -454,14 +450,7 @@ void US_Model::write_temp( QTemporaryFile& file )
       SimulationComponent* sc = &components[ i ];
       xml.writeStartElement( "analyte" );
 
-      if ( uuid_is_null( sc->analyteGUID ) )
-         xml.writeAttribute( "guid",    "" );
-      else
-      {
-         uuid_unparse( sc->analyteGUID, uuid );
-         xml.writeAttribute( "guid",    QString( uuid                      ) );
-      }
-
+      xml.writeAttribute( "analyteGUID", ""                                  );
       xml.writeAttribute( "name",       sc->name                             );
       xml.writeAttribute( "vbar20",     QString::number( sc->vbar20        ) );
       xml.writeAttribute( "mw",         QString::number( sc->mw            ) );
@@ -526,10 +515,10 @@ void US_Model::debug( void )
 {
    qDebug() << "model dump";
    qDebug() << "desc" << description;
-   qDebug() << "edit guid" << editguid;
+   qDebug() << "edit guid" << editGUID;
    qDebug() << "buf guid" << bufferGUID;
    qDebug() << "buf desc" << bufferDesc;
-   qDebug() << "guid" << guid;;
+   qDebug() << "model guid" << modelGUID;;
    qDebug() << "density" << density;
    qDebug() << "visc" << viscosity;
    qDebug() << "comp" << compressibility;

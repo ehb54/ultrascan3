@@ -9,8 +9,6 @@
 
 #include "qwt_arrow_button.h"
 
-#include <uuid/uuid.h>
-
 US_Properties::US_Properties( 
       const US_Buffer&               buf, 
       US_Model&                      mod,
@@ -555,7 +553,7 @@ void US_Properties::clear_guid( void )
 
    US_Model::SimulationComponent* sc = &model.components[ row ];
 
-   uuid_clear( sc->analyteGUID );
+   sc->analyteGUID.clear();
    le_guid->clear();
 }
 
@@ -570,14 +568,9 @@ void US_Properties::save_changes( int row )
    
    // guid
    if ( le_guid->text().isEmpty() ) 
-      uuid_clear( sc->analyteGUID );
+      sc->analyteGUID.clear();
    else
-   {
-      char uuid[ 37 ];
-      uuid[ 36 ] = 0;
-      strncpy( uuid, le_guid->text().toAscii().data(), 36 );
-      uuid_parse( uuid, sc->analyteGUID );
-   }
+     sc->analyteGUID = le_guid->text();
 
    // vbar
    sc->vbar20 = le_vbar->text().toDouble();
@@ -644,13 +637,11 @@ void US_Properties::update( int /* row */ )
    le_description->setText( sc->name );
 
    // Set guid
-   
-   if ( uuid_is_null( sc->analyteGUID ) )
+   if ( sc->analyteGUID.isEmpty() )
       le_guid->clear(); 
    else
    {
-      uuid_unparse( sc->analyteGUID, uuid );
-      le_guid->setText( QString( uuid ) );
+      le_guid->setText( sc->analyteGUID );
    }
 
    inUpdate = true;
@@ -708,15 +699,10 @@ void US_Properties::simulate( void )
    if ( row < 0 ) return;
    US_Model::SimulationComponent* sc = &model.components[ row ];
   
-   if ( uuid_is_null( sc->analyteGUID ) )
-      analyte.guid.clear(); 
+   if ( sc->analyteGUID.isEmpty() )
+      analyte.analyteGUID.clear(); 
    else
-   {
-      char uuid[ 37 ];
-      uuid[ 36 ] = 0;
-      uuid_unparse( sc->analyteGUID, uuid );
-      analyte.guid = QString( uuid );
-   }
+      analyte.analyteGUID = sc->analyteGUID;
 
    //hydro_data.density     = buffer.density;
    //hydro_data.viscosity   = buffer.viscosity;
@@ -767,8 +753,8 @@ void US_Properties::new_hydro( US_Analyte ad )
    }
 
    // Set guid
-   le_guid->setText( ad.guid );
-   uuid_parse( ad.guid.toAscii().data(), sc->analyteGUID );
+   le_guid->setText( ad.analyteGUID );
+   sc->analyteGUID = ad.analyteGUID;
 
    // Set extinction
    double          value = 0.0;

@@ -193,9 +193,9 @@ void US_ModelGui::new_model( void )
    ModelDesc desc;
    desc.description = m.description;
    desc.DB_id       = "-1";
-   desc.filename.clear();
-   desc.guid    .clear();
-   desc.editguid.clear();
+   desc.filename .clear();
+   desc.modelGUID.clear();
+   desc.editGUID .clear();
 
    model         = m;
    working_model = m;
@@ -247,7 +247,7 @@ void US_ModelGui::edit_description( void )
    model.description = desc;
    show_model_desc();
 
-   model.guid.clear();
+   model.modelGUID.clear();
    le_guid->clear();
 }
 
@@ -287,7 +287,7 @@ void US_ModelGui::select_model( QListWidgetItem* item )
       model.load( modelID, &db );
    }
 
-   model_descriptions[ index ].editguid = model.editguid;
+   model_descriptions[ index ].editGUID = model.editGUID;
  
    working_model = model;
 
@@ -305,7 +305,7 @@ void US_ModelGui::select_model( QListWidgetItem* item )
    le_wavelength     ->setText( QString::number( model.wavelength,     'f', 1));
    le_temperature    ->setText( QString::number( model.temperature,    'f', 1));
    
-   le_guid           ->setText( model.guid );
+   le_guid           ->setText( model.modelGUID );
 
    cb_optics         ->setCurrentIndex( model.optics );
 }
@@ -529,7 +529,7 @@ QString US_ModelGui::get_filename( const QString& path, const QString& guid )
             {
                QXmlStreamAttributes a = xml.attributes();
 
-               if ( a.value( "guid" ).toString() == guid )
+               if ( a.value( "modelGUID" ).toString() == guid )
                {
                   newFile = false;
                   return path + "/" + f_names[ i ];
@@ -560,7 +560,7 @@ void US_ModelGui::save_model( void )
       if ( le_guid->text().size() != 36 )
          le_guid->setText( US_Util::new_guid() );
 
-      model.guid = le_guid->text();
+      model.modelGUID = le_guid->text();
 
       // If guid matches one we already have, use that filename
       // otherwise create a new filename.
@@ -665,8 +665,8 @@ void US_ModelGui::list_models( void )
                   ModelDesc md;
                   a                = xml.attributes();
                   md.description = a.value( "description" ).toString();
-                  md.guid        = a.value( "guid"        ).toString();
-                  md.editguid    = a.value( "editguid"    ).toString();
+                  md.modelGUID   = a.value( "modelGUID"        ).toString();
+                  md.editGUID    = a.value( "editGUID"    ).toString();
                   md.filename    = path + "/" + f_names[ i ];
                   md.DB_id       = -1;
                   model_descriptions << md;
@@ -707,9 +707,9 @@ void US_ModelGui::list_models( void )
          ModelDesc md;
 
          md.DB_id       = db.value( 0 ).toString();
-         md.guid        = db.value( 1 ).toString();
+         md.modelGUID   = db.value( 1 ).toString();
          md.description = db.value( 2 ).toString();
-         md.editguid    = db.value( 3 ).toString();
+         md.editGUID    = db.value( 3 ).toString();
          md.filename.clear();
 
          model_descriptions << md;

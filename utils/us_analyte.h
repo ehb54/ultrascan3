@@ -24,7 +24,7 @@ class US_EXTERN US_Analyte
       double                 vbar20;       //!< vbar at 20C
       double                 mw;           //!< Molecular weight
       QString                description;  //!< Description of the analyte
-      QString                guid;         //!< Global identifier of the analyte
+      QString                analyteGUID;  //!< Global identifier of the analyte
       QString                sequence;     //!< Coded sequnce of analyte
       analyte_t              type;         //!< The type of analyte
 

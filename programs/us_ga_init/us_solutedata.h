@@ -2,7 +2,6 @@
 #ifndef US_SOLDAT_H
 #define US_SOLDAT_H
 
-#include "us_femglobal.h"
 #include "us_spectrodata.h"
 
 typedef struct short_sim_comp_s

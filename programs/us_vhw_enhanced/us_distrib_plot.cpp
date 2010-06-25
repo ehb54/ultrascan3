@@ -3,7 +3,7 @@
 #include "us_distrib_plot.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_math.h"
+#include "us_math2.h"
 
 #include <qwt_legend.h>
 

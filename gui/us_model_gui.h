@@ -43,9 +43,9 @@ class US_ModelGui : public US_WidgetsDialog
          public:
          QString description;
          QString filename;
-         QString guid;
+         QString modelGUID;
          QString DB_id;
-         QString editguid;
+         QString editGUID;
       };
 
       QList< ModelDesc > model_descriptions;
