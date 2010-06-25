@@ -69,6 +69,10 @@ class US_DataIO2
          public:
          double value;   //!< Value of the sensor's reading
          double stdDev;  //!< Standard deviation of the reading.  Doesn't exist for P data.
+
+         Reading( void )               { }
+         Reading( double v, double s ) { value = v; stdDev = s;   }
+         Reading( double v )           { value = v; stdDev = 0.0; }
       };
 
       /*!  This is the structure of a Beckman raw data file.  The file
@@ -137,10 +141,12 @@ class US_DataIO2
 
          QVector< XValue > x;       //!< Wavelength or radius information
          QVector< Scan > scanData;  //!<  The collections of scans for the CCW
-         double radius ( int i )    //!< a couple of methods for ease of use
+         double radius ( int i )    //!< a few methods for ease of use
             { return x[ i ].radius; }
          double scanWavelength( int i ) 
             { return x[ i ].wavelength; } 
+         double value  ( int i, int j )
+            { return scanData[ i ].readings[ j ].value; }
       };
 
       //! Holds changes made to a scan value.  Created by the data editor and
@@ -221,10 +227,12 @@ class US_DataIO2
          QVector< XValue > x;        //!< Wavelength or radius information
          QVector< Scan > scanData;   //!< The actual data.  The interpolated data 
                                      //!< array is omitted
-         double radius ( int i )     //!< a couple of methods for ease of use
+         double radius ( int i )    //!< a few methods for ease of use
             { return x[ i ].radius; }
          double scanWavelength( int i ) 
             { return x[ i ].wavelength; } 
+         double value  ( int i, int j )
+            { return scanData[ i ].readings[ j ].value; }
       };
 
       //! The CCW data after edits are applied

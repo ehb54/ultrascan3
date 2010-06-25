@@ -12,7 +12,6 @@
 #include "us_matrix.h"
 #include "us_constants.h"
 #include "us_analyte_gui.h"
-#include "us_model_loader.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -620,7 +619,6 @@ void US_FeMatch::data_plot( void )
          jj++;
          count++;
       }
-//qDebug() << "BELOW count" << count;
 
       QString       title; 
       QwtPlotCurve* c;
@@ -647,7 +645,6 @@ void US_FeMatch::data_plot( void )
          jj++;
          count++;
       }
-//qDebug() << "IN count" << count;
 
       if ( count > 1 )
       {  // plot portion of curve within baseline-to-plateau
@@ -671,7 +668,6 @@ void US_FeMatch::data_plot( void )
          jj++;
          count++;
       }
-//qDebug() << "ABOVE count" << count;
 
       if ( count > 1 )
       {  // plot portion of curve above plateau
@@ -905,8 +901,8 @@ qDebug() << "dialog ncomp" << ncomp;
 qDebug() << "dialog nassoc" << nassoc;
 qDebug() << "dialog isRA" << isRA;
 //DEBUG: for now, use Load Model button to toggle RA visibility
-isRA=!visible;
-qDebug() << "debug isRA" << isRA;
+//isRA=!visible;
+//qDebug() << "debug isRA" << isRA;
 
    // fill out components values
 
@@ -945,11 +941,109 @@ qDebug() << "debug isRA" << isRA;
       adjustSize();            // adjust overall size to visible components
    }
 
+   pb_simumodel->setEnabled( true );
 }
 
 // do model simulation
 void US_FeMatch::simulate_model( )
 {
+   int    row     = lw_triples->currentRow();
+qDebug() << "SIM: row" << row;
+   US_SimulationParameters simparams;
+   US_DataIO2::RawData*    rdata   = &rawList[  row ];
+   US_DataIO2::RawData     sdata;
+   US_DataIO2::Reading     reading;
+   int    nscan   = rdata->scanData.size();
+   int    nconc   = rdata->x.size();
+   double radlo   = rdata->x[ 0         ].radius;
+   double radhi   = rdata->x[ nconc - 1 ].radius;
+   double time1   = rdata->scanData[ 0         ].seconds;
+   double time2   = rdata->scanData[ nscan - 1 ].seconds;
+qDebug() << " nscan" << nscan;
+qDebug() << " nconc" << nconc;
+qDebug() << " radlo" << radlo;
+qDebug() << " radhi" << radhi;
+
+   // initialize to simulation parameters using raw data ranges
+   simparams.simpoints         = 200;
+   simparams.meshType          = US_SimulationParameters::ASTFEM;
+   simparams.gridType          = US_SimulationParameters::MOVING;
+   simparams.radial_resolution = ( radhi - radlo ) / (double)( nconc - 1 );
+   simparams.meniscus          = radlo;
+   simparams.bottom            = radhi;
+   simparams.rnoise            = 0.0;
+   simparams.tinoise           = 0.0;
+   simparams.rinoise           = 0.0;
+   simparams.rotor             = 0.0;
+   simparams.band_forming      = false;
+   simparams.band_volume       = 0.0;
+qDebug() << "  radreso " << simparams.radial_resolution;
+qDebug() << "  meniscus" << simparams.meniscus;
+qDebug() << "  bottom  " << simparams.bottom;
+
+   simparams.band_firstScanIsConcentration   = false;
+   simparams.mesh_radius.clear();
+   simparams.speed_step .clear();
+   US_SimulationParameters::SpeedProfile sp;
+   sp.duration_hours    = (int)( time2 / 3600.0 );
+   sp.duration_minutes  = (int)( time2 / 60.0 ) - ( sp.duration_hours * 60 );
+   sp.delay_hours       = (int)( time1 / 3600.0 );
+   sp.delay_minutes     = ( time1 / 60.0 ) - ( (double)sp.delay_hours * 60.0 );
+   sp.scans             = nscan;
+   sp.acceleration      = 400;
+   sp.rotorspeed        = 42000;
+   sp.acceleration_flag = false;
+   simparams.speed_step << sp;
+qDebug() << "  duration_hours  " << sp.duration_hours;
+qDebug() << "  duration_minutes" << sp.duration_minutes;
+qDebug() << "  delay_hours  " << sp.delay_hours;
+qDebug() << "  delay_minutes" << sp.delay_minutes;
+
+   // make a simulation copy of the experimental data without actual readings
+   sdata.type[0]     = rdata->type[0];
+   sdata.type[1]     = rdata->type[1];
+
+   for ( int jj = 0; jj < 16; jj++ )
+      sdata.rawGUID[ jj ] = rdata->rawGUID[ jj ];
+
+   sdata.cell        = rdata->cell;
+   sdata.channel     = rdata->channel;
+   sdata.description = rdata->description;
+qDebug() << "  sdata.description" << sdata.description;
+   sdata.x.resize( nconc );
+
+   for ( int jj = 0; jj < nconc; jj++ )
+   {
+      sdata.x[ jj ]     = rdata->x[ jj ];
+   }
+qDebug() << "   sdata.x0" << sdata.radius(0);
+qDebug() << "   sdata.xN" << sdata.radius(nconc-1);
+qDebug() << "   rdata.cN" << rdata->value(0,nconc-1);
+
+   reading.value     = 0.0;
+   reading.stdDev    = 0.0;
+   sdata.scanData.clear();
+
+   for ( int jj = 0; jj < nscan; jj++ )
+   {
+      US_DataIO2::Scan sscan = rdata->scanData[ jj ];
+
+      for ( int ii = 0; ii < nconc; ii++ )
+      {
+         sscan.readings[ ii ] = reading;
+      }
+
+      sdata.scanData.append( sscan );
+   }
+
+qDebug() << " afrsa init";
+   US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
+   
+qDebug() << " afrsa calc";
+   astfem_rsa->calculate( sdata );
+qDebug() << " afrsa done";
+qDebug() << "   sdata.xN" << sdata.radius(nconc-1);
+qDebug() << "   sdata.cN" << sdata.value(0,nconc-1);
 }
 
 // pare down files list by including only the last-edit versions

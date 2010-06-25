@@ -2673,24 +2673,23 @@ void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData&     edata,
 
    for ( int ii = 0; ii < nscan; ii++ )
    {
-      US_DataIO2::Scan*        escan = &edata.scanData[ ii ];
-      US_AstfemMath::MfemScan* fscan = &fdata.scan    [ ii ];
+      US_AstfemMath::MfemScan* fscan = &fdata.scan[ ii ];
 
-      fscan->temperature = escan->temperature;
-      fscan->rpm         = escan->rpm;
-      fscan->time        = escan->seconds;
-      fscan->omega_s_t   = escan->omega2t;
+      fscan->temperature = edata.scanData[ ii ].temperature;
+      fscan->rpm         = edata.scanData[ ii ].rpm;
+      fscan->time        = edata.scanData[ ii ].seconds;
+      fscan->omega_s_t   = edata.scanData[ ii ].omega2t;
       fscan->conc.clear();
 
       for ( int jj = 0; jj < nconc; jj++ )
       {
-         fscan->conc.append( escan->readings[ jj ].value  );
+         fscan->conc.append( edata.value( ii, jj ) );
       }
    }
 
    for ( int jj = 0; jj < nconc; jj++ )
    {
-      fdata.radius.append( edata.x[ jj ].radius );
+      fdata.radius.append( edata.radius( jj ) );
    }
 }
 
@@ -2719,9 +2718,7 @@ void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData&     edata,
 
       for ( int jj = 0; jj < nconc; jj++ )
       {
-         US_DataIO2::Reading reading;
-         reading.value = fscan->conc[ jj ];
-         escan->readings.append( reading );
+         escan->readings.append( US_DataIO2::Reading( fscan->conc[ jj ] ) );
       }
    }
 
