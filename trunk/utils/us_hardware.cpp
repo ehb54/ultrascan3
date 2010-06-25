@@ -1,7 +1,7 @@
 //! \file us_hardware.cpp
 #include "us_hardware.h"
 
-bool US_Hardware::readCenterpieceInfo( QVector< struct centerpieceInfo >& cp_list )
+bool US_Hardware::readCenterpieceInfo( QVector< CenterpieceInfo >& cp_list )
 {
    QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
 
@@ -15,8 +15,8 @@ bool US_Hardware::readCenterpieceInfo( QVector< struct centerpieceInfo >& cp_lis
       {
          QString s = ts.readLine();          // Process line by line
 
-         bool                   ok;
-         struct centerpieceInfo cp;
+         bool            ok;
+         CenterpieceInfo cp;
          
          cp.serial_number = US_Util::getToken( s, " " ).toInt( &ok );
          
@@ -46,7 +46,7 @@ bool US_Hardware::readCenterpieceInfo( QVector< struct centerpieceInfo >& cp_lis
    return false;
 }
 
-bool US_Hardware::readRotorInfo( QVector< struct rotorInfo >& rotor_list )
+bool US_Hardware::readRotorInfo( QVector< RotorInfo >& rotor_list )
 {
    QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
    
@@ -60,8 +60,8 @@ bool US_Hardware::readRotorInfo( QVector< struct rotorInfo >& rotor_list )
       {
          QString s = ts.readLine();   // process line by line
 
-         bool             ok;
-         struct rotorInfo rotor;
+         bool      ok;
+         RotorInfo rotor;
          
          rotor.serial_number = US_Util::getToken( s, " " ).toInt( &ok);
 
