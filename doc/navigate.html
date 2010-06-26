@@ -110,6 +110,14 @@ if (document.images)
    Nseminar_over.src = "graphics/seminar_over.gif"
    Nseminar_onClick.src = "graphics/seminar_onClick.gif"
 
+   var Nvideos_up = new Image(84,23)
+   var Nvideos_over = new Image(84,23)
+   var Nvideos_onClick = new Image(84,23);
+
+   Nvideos_up.src = "graphics/videos_up.gif"
+   Nvideos_over.src = "graphics/videos_over.gif"
+   Nvideos_onClick.src = "graphics/videos_onClick.gif"
+
    var Narchive_up = new Image(84,23)
    var Narchive_over = new Image(84,23)
    var Narchive_onClick = new Image(84,23);
@@ -301,6 +309,18 @@ onclick="di('Nseminar', 'Nseminar_onClick' );">
 <img name="Nseminar"
 alt="UltraScan Seminar"
 src="graphics/seminar_up.gif" align=center
+border="0"> </a></td>
+
+</tr>
+<tr>
+		  
+<td><a href="http://www.ultrascan.uthscsa.edu/videos" target="main"
+onmouseover="di('Nvideos', 'Nvideos_over' );"
+onmouseout="di('Nvideos', 'Nvideos_up' );"
+onclick="di('Nvideos', 'Nvideos_onClick' );">
+<img name="Nvideos"
+alt="UltraScan Seminar"
+src="graphics/videos_up.gif" align=center
 border="0"> </a></td>
 
 </tr>
