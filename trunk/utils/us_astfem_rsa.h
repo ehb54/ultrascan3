@@ -58,7 +58,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
       US_AstfemMath::MfemData         af_data;
       US_AstfemMath::MfemInitial      af_c0;
 
-      QVector< double >                       x;  //<! Radii of grid points; x[0...N-1] 
+      QVector< double >                       x;  //<! Radii of grid points
       QVector< US_AstfemMath::ReactionGroup > rg;
       US_Model&                               system;
       US_SimulationParameters&                simparams;

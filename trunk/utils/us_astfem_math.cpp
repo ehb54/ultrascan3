@@ -356,8 +356,9 @@ int US_AstfemMath::GaussElim( int n, double** a, double* b )
 int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata, 
                                 bool      use_time )
 {
-  // NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
-  // before using this routine! The radius also has to be assigned!
+  // NOTE: *expdata has to be initialized to have the proper size
+  //        (filled with zeros) before using this routine!
+  //        The radius also has to be assigned!
 
    if ( expdata.scan.size() == 0 || expdata.scan[0].conc.size() == 0 ||
         simdata.scan.size() == 0 || simdata.radius.size() == 0 ) 
@@ -374,7 +375,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    MfemData tmp_data;
    MfemScan tmp_scan;
    
-   tmp_data.scan.clear();
+   tmp_data.scan  .clear();
    tmp_data.radius.clear();
    
    // Fill tmp_data.radius with radius positions from the simdata array:
@@ -418,7 +419,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
          // Check to see if the time is equal or larger:
          if ( simdata.scan[ simscan ].time == expdata.scan[ expscan ].time )
-         { // they are the same, so take this scan and push it onto the tmp_data array.
+         { // they are the same, so take this scan
+           // and push it onto the tmp_data array.
             tmp_data.scan.push_back( simdata.scan[ simscan ] );
          }
          else // interpolation is needed
@@ -431,19 +433,24 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             for ( int i = 0; i < simdata.radius.size(); i++ )
             {
                a = ( simdata.scan[ simscan     ].conc[ i ] - 
-                     simdata.scan[ simscan - 1 ].conc[ i ] )
-               / ( simdata.scan[ simscan ].time - simdata.scan[ simscan - 1 ].time );
+                  simdata.scan[ simscan - 1 ].conc[ i ] ) /
+                  ( simdata.scan[ simscan ].time -
+                  simdata.scan[ simscan - 1 ].time );
 
-               b = simdata.scan[ simscan].conc[ i ] - a * simdata.scan[ simscan ].time;
+               b = simdata.scan[ simscan].conc[ i ] -
+                  a * simdata.scan[ simscan ].time;
                tmp_scan.conc.push_back( a * expdata.scan[ expscan ].time + b );
             }
 
             // interpolate the omega_square_t integral data:
             
-            a = ( simdata.scan[ simscan ].omega_s_t - simdata.scan[ simscan - 1 ].omega_s_t )
-              / ( simdata.scan[ simscan ].time      - simdata.scan[ simscan - 1 ].time );
+            a = ( simdata.scan[ simscan ].omega_s_t -
+               simdata.scan[ simscan - 1 ].omega_s_t ) /
+               ( simdata.scan[ simscan ].time      -
+               simdata.scan[ simscan - 1 ].time );
             
-            b = simdata.scan[ simscan ].omega_s_t - a * simdata.scan[ simscan ].time;
+            b = simdata.scan[ simscan ].omega_s_t -
+               a * simdata.scan[ simscan ].time;
             
             expdata.scan[ expscan ].omega_s_t = a * expdata.scan[ expscan ].time + b;
             tmp_data.scan.push_back( tmp_scan );
@@ -455,7 +462,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 //qDebug() << "Marker I2.2";
       for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
       {
-         while ( simdata.scan[ simscan ].omega_s_t < expdata.scan[ expscan ].omega_s_t )
+         while ( simdata.scan[ simscan ].omega_s_t <
+                 expdata.scan[ expscan ].omega_s_t )
          {
             simscan ++;
             // Make sure we don't overrun bounds:
@@ -476,8 +484,10 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
          }
 
          // Check to see if the time is equal or larger:
-         if ( simdata.scan[ simscan ].omega_s_t == expdata.scan[ expscan ].omega_s_t )
-         { // They are the same, so take this scan and push it onto the tmp_data array.
+         if ( simdata.scan[ simscan ].omega_s_t ==
+              expdata.scan[ expscan ].omega_s_t )
+         { // They are the same, so take this scan and
+           // push it onto the tmp_data array.
             tmp_data.scan.push_back( simdata.scan[ simscan ] );
          }
          else // Interpolation is needed
@@ -489,21 +499,29 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             // Interpolate the concentration points:
             for ( int i = 0; i < simdata.radius.size(); i++ )
             {
-               a = ( simdata.scan[ simscan ].conc[ i ] - simdata.scan[ simscan - 1 ].conc[ i ] )
-               / ( simdata.scan[ simscan ].omega_s_t - simdata.scan[ simscan - 1 ].omega_s_t );
+               a = ( simdata.scan[ simscan ].conc[ i ] -
+                  simdata.scan[ simscan - 1 ].conc[ i ] ) /
+                  ( simdata.scan[ simscan ].omega_s_t -
+                  simdata.scan[ simscan - 1 ].omega_s_t );
 
-               b = simdata.scan[ simscan ].conc[ i ] - a * simdata.scan[ simscan ].omega_s_t;
+               b = simdata.scan[ simscan ].conc[ i ] -
+                  a * simdata.scan[ simscan ].omega_s_t;
                
-               tmp_scan.conc.push_back( a * expdata.scan[ expscan ].omega_s_t + b );
+               tmp_scan.conc.push_back( a *
+                  expdata.scan[ expscan ].omega_s_t + b );
             }
 
             // Interpolate the omega_square_t integral data:
-            a = ( simdata.scan[ simscan ].time - simdata.scan[ simscan - 1 ].time )
-               / ( simdata.scan[ simscan ].omega_s_t - simdata.scan[ simscan - 1 ].omega_s_t );
+            a = ( simdata.scan[ simscan ].time -
+               simdata.scan[ simscan - 1 ].time ) /
+               ( simdata.scan[ simscan ].omega_s_t -
+               simdata.scan[ simscan - 1 ].omega_s_t );
             
-            b = simdata.scan[ simscan ].time - a * simdata.scan[ simscan ].omega_s_t;
+            b = simdata.scan[ simscan ].time -
+               a * simdata.scan[ simscan ].omega_s_t;
             
-            expdata.scan[ expscan ].time = a * expdata.scan[ expscan ].omega_s_t + b;
+            expdata.scan[ expscan ].time =
+               a * expdata.scan[ expscan ].omega_s_t + b;
             tmp_data.scan.push_back( tmp_scan );
          }
       }
@@ -576,8 +594,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    return 0;
 }
 
-void US_AstfemMath::QuadSolver( double* ai, double* bi, double* ci, double* di, 
-                                double* cr, double* solu, int N )
+void US_AstfemMath::QuadSolver( double* ai, double* bi, double* ci,
+      double* di, double* cr, double* solu, int N )
 {
 // Solve Quad-diagonal system [a_i, *b_i*, c_i, d_i]*[x]=[r_i]
 // b_i are on the main diagonal line
@@ -725,10 +743,12 @@ void US_AstfemMath::IntQT1( QVector< double > vx, double D, double sw2,
 
       for (i=0; i<3; i++)
       {
-         dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i], 1.-phiC, -phiCx );
+         dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
+               1.-phiC, -phiCx );
          StifL[i][0] += Lam[k][3] * DJac * dval;
 
-         dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i], phiC, phiCx );
+         dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
+               phiC, phiCx );
          StifL[i][1] += Lam[k][3] * DJac * dval;
       }
    }
@@ -744,43 +764,46 @@ void US_AstfemMath::IntQT1( QVector< double > vx, double D, double sw2,
    Ty.push_back(0.0);
    Ty.push_back(dt);
 
-   for (k=0; k<npts; k++)
+   for ( k = 0; k < npts; k++ )
    {
       x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
       y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
       DJac = 2.0 * AreaT( Tx, Ty );
 
-      if(DJac<1.e-22) break;
+      if( DJac < 1.e-22 ) break;
 
-      xn1 = x_gauss + slope * ( dt - y_gauss ); // trace-forward point at t_n+1 from (x_g, y_g)
-
+      xn1 = x_gauss + slope * ( dt - y_gauss ); // trace-forward point
+                                                //  at t_n+1 from (x_g, y_g)
       //
       // find phi, phi_x, phi_y on R and C at (x,y)
       //
 
       BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt);
-      phiC  = ( xn1 - vx[2] )/hh;      // hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
-      phiCx = 1./hh;
+      phiC  = ( xn1 - vx[ 2 ] ) / hh;  // hat function on t_n+1, =1 at vx[3];
+                                       //  =0 at vx[2]
+      phiCx = 1. / hh;
 
-      for (i=0; i<4; i++)
+      for (i = 0; i < 4; i++ )
       {
-         dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], 1.-phiC, -phiCx);
-         StifR[i][0] += Lam[k][3] * DJac * dval;
+         dval             = Integrand( x_gauss, D, sw2, phiR[ i ], phiRx[ i ],
+                                       phiRy[ i ], 1. - phiC, -phiCx );
+         StifR[ i ][ 0 ] += Lam[ k ][ 3 ] * DJac * dval;
 
-         dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], phiC, phiCx);
-         StifR[i][1] += Lam[k][3] * DJac * dval;
+         dval             = Integrand( x_gauss, D, sw2, phiR[ i ], phiRx[ i ],
+                                       phiRy[ i ], phiC, phiCx );
+         StifR[ i ][ 1 ] += Lam[k][3] * DJac * dval;
       }
    }
 
-   clear_2d(npts, Lam);
+   clear_2d( npts, Lam );
 
-   for (i=0; i<2; i++)
+   for ( i = 0; i < 2; i++ )
    {
-      Stif[0][i] = StifL[0][i] + StifR[0][i];
-      Stif[1][i] =               StifR[1][i];
-      Stif[2][i] = StifL[2][i];
-      Stif[3][i] = StifL[1][i] + StifR[3][i];
-      Stif[4][i] =               StifR[2][i];
+      Stif[ 0 ][ i ] = StifL[ 0 ][ i ] + StifR[ 0 ][ i ];
+      Stif[ 1 ][ i ] =                   StifR[ 1 ][ i ];
+      Stif[ 2 ][ i ] = StifL[ 2 ][ i ];
+      Stif[ 3 ][ i ] = StifL[ 1 ][ i ] + StifR[ 3 ][ i ];
+      Stif[ 4 ][ i ] =                   StifR[ 2 ][ i ];
    }
 
    delete [] phiR;
@@ -790,8 +813,8 @@ void US_AstfemMath::IntQT1( QVector< double > vx, double D, double sw2,
    delete [] phiLx;
    delete [] phiLy;
 
-   clear_2d(3, StifL);
-   clear_2d(4, StifR);
+   clear_2d( 3, StifL );
+   clear_2d( 4, StifR );
 }
 
 void US_AstfemMath::IntQTm( QVector< double > vx, double D, double sw2, 
@@ -799,22 +822,22 @@ void US_AstfemMath::IntQTm( QVector< double > vx, double D, double sw2,
 {
    // element to define basis functions
    //
-   int npts, i, k;
+   int    npts, i, k;
    double x_gauss, y_gauss, dval;
    QVector< double > Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
    double *phiR, *phiRx, *phiRy;
    double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
    double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
    double **Gs=NULL;
-   phiL = new double [4];
-   phiLx = new double [4];
-   phiLy = new double [4];
-   phiCx = new double [4];
-   phiCy = new double [4];
-   phiC = new double [4];
-   phiR = new double [4];
-   phiRx = new double [4];
-   phiRy = new double [4];
+   phiL  = new double [ 4 ];
+   phiLx = new double [ 4 ];
+   phiLy = new double [ 4 ];
+   phiCx = new double [ 4 ];
+   phiCy = new double [ 4 ];
+   phiC  = new double [ 4 ];
+   phiR  = new double [ 4 ];
+   phiRx = new double [ 4 ];
+   phiRy = new double [ 4 ];
    Lx.clear();
    Ly.clear();
    Cx.clear();
@@ -826,150 +849,157 @@ void US_AstfemMath::IntQTm( QVector< double > vx, double D, double sw2,
    Tx.clear();
    Ty.clear();
 
-   Lx.push_back(vx[0]);
-   Lx.push_back(vx[1]);
-   Lx.push_back(vx[4]);
-   Lx.push_back(vx[3]);
+   Lx.push_back( vx[ 0 ] );
+   Lx.push_back( vx[ 1 ] );
+   Lx.push_back( vx[ 4 ] );
+   Lx.push_back( vx[ 3 ] );
 
-   Ly.push_back(0.0);
-   Ly.push_back(0.0);
-   Ly.push_back(dt);
-   Ly.push_back(dt);          // vertices of left T
+   Ly.push_back( 0.0 );
+   Ly.push_back( 0.0 );
+   Ly.push_back( dt );
+   Ly.push_back( dt );          // vertices of left T
 
-   Cx.push_back(vx[6]);
-   Cx.push_back(vx[7]);
-   Cx.push_back(vx[4]);
-   Cx.push_back(vx[3]);
+   Cx.push_back( vx[ 6 ] );
+   Cx.push_back( vx[ 7 ] );
+   Cx.push_back( vx[ 4 ] );
+   Cx.push_back( vx[ 3 ] );
+ 
+   Cy.push_back( 0.0 );
+   Cy.push_back( 0.0 );
+   Cy.push_back( dt );
+   Cy.push_back( dt );
 
-   Cy.push_back(0.0);
-   Cy.push_back(0.0);
-   Cy.push_back(dt);
-   Cy.push_back(dt);
+   Rx.push_back( vx[ 1 ] ); // vertices of Q on right
+   Rx.push_back( vx[ 2 ] );
+   Rx.push_back( vx[ 5 ] );
+   Rx.push_back( vx[ 4 ] );
 
-   Rx.push_back(vx[1]); // vertices of Q on right
-   Rx.push_back(vx[2]);
-   Rx.push_back(vx[5]);
-   Rx.push_back(vx[4]);
+   Ry.push_back( 0.0 );
+   Ry.push_back( 0.0 );
+   Ry.push_back( dt );
+   Ry.push_back( dt );
 
-   Ry.push_back(0.0);
-   Ry.push_back(0.0);
-   Ry.push_back(dt);
-   Ry.push_back(dt);
-
-   initialize_2d(4, 2, &StifL);
-   initialize_2d(4, 2, &StifR);
+   initialize_2d( 4, 2, &StifL );
+   initialize_2d( 4, 2, &StifR );
 
    //
    // integration over element Q :
    //
-   Qx.push_back(vx[6]); // vertices of Q on right
-   Qx.push_back(vx[1]);
-   Qx.push_back(vx[4]);
-   Qx.push_back(vx[3]);
+   Qx.push_back( vx[ 6 ] ); // vertices of Q on right
+   Qx.push_back( vx[ 1 ] );
+   Qx.push_back( vx[ 4 ] );
+   Qx.push_back( vx[ 3 ] );
 
-   Qy.push_back(0.0);
-   Qy.push_back(0.0);
-   Qy.push_back(dt);
-   Qy.push_back(dt); // vertices of left T
+   Qy.push_back( 0.0 );
+   Qy.push_back( 0.0 );
+   Qy.push_back( dt);
+   Qy.push_back( dt ); // vertices of left T
 
    npts = 5 * 5;
-   initialize_2d(npts, 3, &Gs);
-   DefineGaussian(5, Gs);
+   initialize_2d( npts, 3, &Gs );
+   DefineGaussian( 5, Gs );
 
-   double psi[4], psi1[4], psi2[4], jac[4];
-   for (k=0; k<npts; k++)
+   double psi[  4 ];
+   double psi1[ 4 ];
+   double psi2[ 4 ];
+   double jac[  4 ];
+
+   for ( k = 0; k < npts; k++ )
    {
       BasisQS(Gs[k][0], Gs[k][1], psi, psi1, psi2);
 
       x_gauss = 0.0;
       y_gauss = 0.0;
-      for (i=0; i<4; i++)
+      for ( i = 0; i < 4; i++ )
       {
-         jac[i] = 0.0;
+         jac[ i ] = 0.0;
       }
-      for (i=0; i<4; i++)
+      for ( i = 0; i < 4; i++ )
       {
-         x_gauss += psi[i] * Qx[i];
-         y_gauss += psi[i] * Qy[i];
-         jac[0] += Qx[i] * psi1[i];
-         jac[1] += Qx[i] * psi2[i];
-         jac[2] += Qy[i] * psi1[i];
-         jac[3] += Qy[i] * psi2[i];
+         x_gauss  += psi[ i ] * Qx[ i ];
+         y_gauss  += psi[ i ] * Qy[ i ];
+         jac[ 0 ] += Qx[ i ] * psi1[ i ];
+         jac[ 1 ] += Qx[ i ] * psi2[ i ];
+         jac[ 2 ] += Qy[ i ] * psi1[ i ];
+         jac[ 3 ] += Qy[ i ] * psi2[ i ];
       }
 
-      DJac = jac[0] * jac[3] - jac[1] * jac[2];
+      DJac = jac[ 0 ] * jac[ 3 ] - jac[ 1 ] * jac[ 2 ];
 
       //
       // find phi, phi_x, phi_y on L and C at (x,y)
       //
 
-      BasisQR(Lx, x_gauss, y_gauss, phiL, phiLx, phiLy, dt);
-      BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt);
-      for (i=0; i<4; i++)
-      {
-         dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
-                                 phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
-         StifL[i][0] += Gs[k][2] * DJac * dval;
+      BasisQR( Lx, x_gauss, y_gauss, phiL, phiLx, phiLy, dt );
+      BasisQR( Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt );
 
-         dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
-                                 phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
-         StifL[i][1] += Gs[k][2] * DJac * dval;
+      for ( i = 0; i < 4; i++ )
+      {
+         dval = Integrand( x_gauss, D, sw2, phiL[ i ], phiLx[ i ], phiLy[ i ],
+                           phiC[ 0 ] + phiC[ 3 ], phiCx[ 0 ] + phiCx[ 3 ] );
+         StifL[ i ][ 0 ] += Gs[ k ][ 2 ] * DJac * dval;
+
+         dval = Integrand( x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
+                           phiC[ 1 ] + phiC[ 2 ], phiCx[ 1 ] + phiCx[ 2 ] );
+         StifL[ i ][ 1 ] += Gs[ k ][ 2 ] * DJac * dval;
       }
    }
-   clear_2d(npts, Gs);
+   clear_2d( npts, Gs );
 
    //
    // integration over T:
    //
-   Tx.push_back(vx[1]); // vertices of T on right
-   Tx.push_back(vx[7]);
-   Tx.push_back(vx[4]);
+   Tx.push_back( vx[ 1 ] ); // vertices of T on right
+   Tx.push_back( vx[ 7 ] );
+   Tx.push_back( vx[ 4 ] );
 
-   Ty.push_back(0.0);
-   Ty.push_back(0.0);
-   Ty.push_back(dt);
+   Ty.push_back( 0.0 );
+   Ty.push_back( 0.0 );
+   Ty.push_back( dt );
 
    npts = 28;
-   initialize_2d(npts, 4, &Lam);
-   DefineFkp(npts, Lam);
+   initialize_2d( npts, 4, &Lam );
+   DefineFkp( npts, Lam );
 
-   for (k=0; k<npts; k++)
+   for ( k = 0; k < npts; k++ )
    {
-      x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
-      y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-      DJac = 2.0 * AreaT( Tx, Ty );
+      x_gauss = Lam[ k ][ 0 ] * Tx[ 0 ] + Lam[ k ][ 1 ] * Tx[ 1 ] +
+         Lam[ k ][ 2 ] * Tx[ 2 ];
+      y_gauss = Lam[ k ][ 0 ] * Ty[ 0 ] + Lam[ k ][ 1 ] * Ty[ 1 ] +
+         Lam[ k ][ 2 ] * Ty[ 2 ];
+      DJac    = 2.0 * AreaT( Tx, Ty );
 
-      if(DJac<1.e-22) break;
+      if ( DJac < 1.e-22 ) break;
 
       //
       // find phi, phi_x, phi_y on R and C at (x,y)
       //
 
-      BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt);
-      BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt);
+      BasisQR( Rx, x_gauss, y_gauss, phiR, phiRx, phiRy, dt );
+      BasisQR( Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt );
 
-      for (i=0; i<4; i++)
+      for (i = 0; i < 4; i++ )
       {
-         dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
-                                 phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
-         StifR[i][0] += Lam[k][3] * DJac * dval;
+         dval = Integrand( x_gauss, D, sw2, phiR[ i ], phiRx[ i ], phiRy[ i ],
+                           phiC[ 0 ] + phiC[ 3 ], phiCx[ 0 ] + phiCx[ 3 ] );
+         StifR[ i ][ 0 ] += Lam[ k ][ 3 ] * DJac * dval;
 
-         dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
-                                 phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
-         StifR[i][1] += Lam[k][3] * DJac * dval;
+         dval = Integrand( x_gauss, D, sw2, phiR[ i ], phiRx[ i ], phiRy[ i ],
+                           phiC[ 1 ] + phiC[ 2 ], phiCx[ 1 ] + phiCx[ 2 ] );
+         StifR[ i ][ 1 ] += Lam[ k ][ 3 ] * DJac * dval;
       }
    }
-   clear_2d(npts, Lam);
+   clear_2d( npts, Lam );
 
 
-   for (i=0; i<2; i++)
+   for ( i = 0; i < 2; i++ )
    {
-      Stif[0][i] = StifL[0][i];
-      Stif[1][i] = StifL[1][i] + StifR[0][i];
-      Stif[2][i] =               StifR[1][i];
-      Stif[3][i] = StifL[3][i];
-      Stif[4][i] = StifL[2][i] + StifR[3][i];
-      Stif[5][i] =               StifR[2][i];
+      Stif[ 0 ][ i ] = StifL[ 0 ][ i ];
+      Stif[ 1 ][ i ] = StifL[ 1 ][ i ] + StifR[ 0 ][ i ];
+      Stif[ 2 ][ i ] =                   StifR[ 1 ][ i ];
+      Stif[ 3 ][ i ] = StifL[ 3 ][ i ];
+      Stif[ 4 ][ i ] = StifL[ 2 ][ i ] + StifR[ 3 ][ i ];
+      Stif[ 5 ][ i ] =                   StifR[ 2 ][ i ];
    }
    delete [] phiR;
    delete [] phiRx;
@@ -981,8 +1011,8 @@ void US_AstfemMath::IntQTm( QVector< double > vx, double D, double sw2,
    delete [] phiCy;
    delete [] phiC;
 
-   clear_2d(4, StifL);
-   clear_2d(4, StifR);
+   clear_2d( 4, StifL );
+   clear_2d( 4, StifR );
 }
 
 
@@ -991,22 +1021,22 @@ void US_AstfemMath::IntQTn2( QVector< double > vx, double D, double sw2,
 {
    // element to define basis functions
    //
-   int npts, i, k;
+   int    npts, i, k;
    double x_gauss, y_gauss, dval;
    QVector< double > Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
    double *phiR, *phiRx, *phiRy;
    double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
    double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
    double **Gs=NULL;
-   phiL = new double [4];
-   phiLx = new double [4];
-   phiLy = new double [4];
-   phiCx = new double [4];
-   phiCy = new double [4];
-   phiC = new double [4];
-   phiR = new double [3];
-   phiRx = new double [3];
-   phiRy = new double [3];
+   phiL  = new double [ 4 ];
+   phiLx = new double [ 4 ];
+   phiLy = new double [ 4 ];
+   phiCx = new double [ 4 ];
+   phiCy = new double [ 4 ];
+   phiC  = new double [ 4 ];
+   phiR  = new double [ 3 ];
+   phiRx = new double [ 3 ];
+   phiRy = new double [ 3 ];
    Lx.clear();
    Ly.clear();
    Cx.clear();
@@ -1018,146 +1048,152 @@ void US_AstfemMath::IntQTn2( QVector< double > vx, double D, double sw2,
    Tx.clear();
    Ty.clear();
 
-   Lx.push_back(vx[0]);
-   Lx.push_back(vx[1]);
-   Lx.push_back(vx[4]);
-   Lx.push_back(vx[3]);
+   Lx.push_back( vx[ 0 ] );
+   Lx.push_back( vx[ 1 ] );
+   Lx.push_back( vx[ 4 ] );
+   Lx.push_back( vx[ 3 ] );
 
-   Ly.push_back(0.0);
-   Ly.push_back(0.0);
-   Ly.push_back(dt);
-   Ly.push_back(dt);          // vertices of left T
+   Ly.push_back( 0.0 );
+   Ly.push_back( 0.0 );
+   Ly.push_back( dt );
+   Ly.push_back( dt );          // vertices of left T
 
-   Cx.push_back(vx[5]);
-   Cx.push_back(vx[6]);
-   Cx.push_back(vx[4]);
-   Cx.push_back(vx[3]);
+   Cx.push_back( vx[ 5 ] );
+   Cx.push_back( vx[ 6 ] );
+   Cx.push_back( vx[ 4 ] );
+   Cx.push_back( vx[ 3 ] );
 
-   Cy.push_back(0.0);
-   Cy.push_back(0.0);
-   Cy.push_back(dt);
-   Cy.push_back(dt);
+   Cy.push_back( 0.0 );
+   Cy.push_back( 0.0 );
+   Cy.push_back( dt );
+   Cy.push_back( dt );
 
-   Rx.push_back(vx[1]); // vertices of Q on right
-   Rx.push_back(vx[2]);
-   Rx.push_back(vx[4]);
+   Rx.push_back( vx[ 1 ] ); // vertices of Q on right
+   Rx.push_back( vx[ 2 ] );
+   Rx.push_back( vx[ 4 ] );
 
-   Ry.push_back(0.0);
-   Ry.push_back(0.0);
-   Ry.push_back(dt);
+   Ry.push_back( 0.0 );
+   Ry.push_back( 0.0 );
+   Ry.push_back( dt );
 
-   initialize_2d(4, 2, &StifL);
-   initialize_2d(4, 2, &StifR);
+   initialize_2d( 4, 2, &StifL );
+   initialize_2d( 4, 2, &StifR );
 
    //
    // integration over element Q
    //
-   Qx.push_back(vx[5]); // vertices of Q on right
-   Qx.push_back(vx[1]);
-   Qx.push_back(vx[4]);
-   Qx.push_back(vx[3]);
+   Qx.push_back( vx[ 5 ] ); // vertices of Q on right
+   Qx.push_back( vx[ 1 ] );
+   Qx.push_back( vx[ 4 ] );
+   Qx.push_back( vx[ 3 ] );
 
-   Qy.push_back(0.0);
-   Qy.push_back(0.0);
-   Qy.push_back(dt);
-   Qy.push_back(dt);
+   Qy.push_back( 0.0 );
+   Qy.push_back( 0.0 );
+   Qy.push_back( dt );
+   Qy.push_back( dt );
 
    npts = 5 * 5;
-   initialize_2d(npts, 3, &Gs);
-   DefineGaussian(5, Gs);
+   initialize_2d( npts, 3, &Gs );
+   DefineGaussian( 5, Gs );
 
-   double psi[4], psi1[4], psi2[4], jac[4];
-   for (k=0; k<npts; k++)
+   double psi[ 4 ], psi1[ 4 ], psi2[ 4 ], jac[ 4 ];
+
+   for ( k = 0; k < npts; k++ )
    {
-      BasisQS(Gs[k][0], Gs[k][1], psi, psi1, psi2);
+      BasisQS( Gs[ k ][ 0 ], Gs[ k ][ 1 ], psi, psi1, psi2 );
 
       x_gauss = 0.0;
       y_gauss = 0.0;
-      for (i=0; i<4; i++)
+
+      for ( i = 0; i < 4; i++ )
       {
-         jac[i] = 0.0;
-      }
-      for (i=0; i<4; i++)
-      {
-         x_gauss += psi[i] * Qx[i];
-         y_gauss += psi[i] * Qy[i];
-         jac[0] += Qx[i] * psi1[i];
-         jac[1] += Qx[i] * psi2[i];
-         jac[2] += Qy[i] * psi1[i];
-         jac[3] += Qy[i] * psi2[i];
+         jac[ i ] = 0.0;
       }
 
-      DJac = jac[0] * jac[3] - jac[1] * jac[2];
+      for ( i = 0; i < 4; i++ )
+      {
+         x_gauss  += psi[ i ] * Qx[ i ];
+         y_gauss  += psi[ i ] * Qy[ i ];
+         jac[ 0 ] += Qx[ i ] * psi1[ i ];
+         jac[ 1 ] += Qx[ i ] * psi2[ i ];
+         jac[ 2 ] += Qy[ i ] * psi1[ i ];
+         jac[ 3 ] += Qy[ i ] * psi2[ i ];
+      }
+
+      DJac = jac[ 0 ] * jac[ 3 ] - jac[ 1] * jac[ 2 ];
 
       //
       // find phi, phi_x, phi_y on L and C at (x,y)
       //
 
-      BasisQR(Lx, x_gauss, y_gauss, phiL, phiLx, phiLy, dt);
-      BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt);
-      for (i=0; i<4; i++)
-      {
-         dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
-                                 phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
-         StifL[i][0] += Gs[k][2] * DJac * dval;
+      BasisQR( Lx, x_gauss, y_gauss, phiL, phiLx, phiLy, dt );
+      BasisQR( Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt );
 
-         dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
-                                 phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
-         StifL[i][1] += Gs[k][2] * DJac * dval;
+      for ( i = 0; i < 4; i++ )
+      {
+         dval = Integrand( x_gauss, D, sw2, phiL[ i ], phiLx[ i ], phiLy[ i ],
+                           phiC[ 0 ] + phiC[ 3 ], phiCx[ 0 ] + phiCx[ 3 ] );
+         StifL[ i ][ 0 ] += Gs[ k ][ 2 ] * DJac * dval;
+
+         dval = Integrand( x_gauss, D, sw2, phiL[ i ], phiLx[ i ], phiLy[ i ],
+                           phiC[ 1 ] + phiC[ 2 ], phiCx[ 1 ] + phiCx[ 2 ] );
+         StifL[ i ][ 1 ] += Gs[ k ][ 2 ] * DJac * dval;
       }
    }
-   clear_2d(npts, Gs);
+   clear_2d( npts, Gs );
 
    //
    // integration over T:
    //
-   Tx.push_back(vx[1]); // vertices of T on right
-   Tx.push_back(vx[6]);
-   Tx.push_back(vx[4]);
+   Tx.push_back( vx[ 1 ] ); // vertices of T on right
+   Tx.push_back( vx[ 6 ] );
+   Tx.push_back( vx[ 4 ] );
 
-   Ty.push_back(0.0);
-   Ty.push_back(0.0);
-   Ty.push_back(dt);
+   Ty.push_back( 0.0 );
+   Ty.push_back( 0.0 );
+   Ty.push_back( dt  );
 
    npts = 28;
-   initialize_2d(npts, 4, &Lam);
-   DefineFkp(npts, Lam);
+   initialize_2d( npts, 4, &Lam );
+   DefineFkp(     npts, Lam );
 
-   for (k=0; k<npts; k++)
+   for ( k = 0; k < npts; k++ )
    {
-      x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
-      y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-      DJac = 2.0 * AreaT( Tx, Ty );
+      x_gauss = Lam[ k ][ 0 ] * Tx[ 0 ] + Lam[ k ][ 1 ] *
+         Tx[ 1 ] + Lam[ k ][ 2 ] * Tx[ 2 ];
+      y_gauss = Lam[ k ][ 0 ] * Ty[ 0 ] + Lam[ k ][ 1 ] *
+         Ty[ 1 ] + Lam[ k ][ 2 ] * Ty[ 2 ];
+      DJac    = 2.0 * AreaT( Tx, Ty );
 
-      if(DJac<1.e-22) break;
+      if ( DJac < 1.e-22 ) break;
 
       //
       // find phi, phi_x, phi_y on R and C at (x,y)
       //
 
-      BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt);
-      BasisTR(Rx, Ry, x_gauss, y_gauss, phiR, phiRx, phiRy);
+      BasisQR( Cx, x_gauss, y_gauss, phiC, phiCx, phiCy, dt );
+      BasisTR( Rx, Ry, x_gauss, y_gauss, phiR, phiRx, phiRy );
 
-      for (i=0; i<3; i++)
+      for ( i = 0; i < 3; i++ )
       {
-         dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
-                                 phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
-         StifR[i][0] += Lam[k][3] * DJac * dval;
+         dval = Integrand( x_gauss, D, sw2, phiR[ i ], phiRx[ i ], phiRy[ i ],
+                           phiC[ 0 ] + phiC[ 3 ], phiCx[ 0 ] + phiCx[ 3 ] );
+         StifR[ i ][ 0 ] += Lam[ k ][ 3 ] * DJac * dval;
 
-         dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
-                                 phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
-         StifR[i][1] += Lam[k][3] * DJac * dval;
+         dval = Integrand( x_gauss, D, sw2, phiR[ i ], phiRx[ i ], phiRy[ i ],
+                           phiC[ 1 ] + phiC[ 2 ], phiCx[ 1 ] + phiCx[ 2 ] );
+         StifR[ i ][ 1 ] += Lam[ k ][ 3 ] * DJac * dval;
       }
    }
-   clear_2d(npts, Lam);
+   clear_2d( npts, Lam );
 
-   for (i=0; i<2; i++)
+   for ( i = 0; i < 2; i++ )
    {
-      Stif[0][i] = StifL[0][i];
-      Stif[1][i] = StifL[1][i] + StifR[0][i] ;
-      Stif[2][i] =               StifR[1][i];
-      Stif[3][i] = StifL[3][i];
-      Stif[4][i] = StifL[2][i] + StifR[2][i];
+      Stif[ 0 ][ i ] = StifL[ 0 ][ i ];
+      Stif[ 1 ][ i ] = StifL[ 1 ][ i ] + StifR[ 0 ][ i ] ;
+      Stif[ 2 ][ i ] =                   StifR[ 1 ][ i ];
+      Stif[ 3 ][ i ] = StifL[ 3 ][ i ];
+      Stif[ 4 ][ i ] = StifL[ 2 ][ i ] + StifR[ 2 ][ i ];
    }
    delete [] phiR;
    delete [] phiRx;
@@ -1169,8 +1205,8 @@ void US_AstfemMath::IntQTn2( QVector< double > vx, double D, double sw2,
    delete [] phiCy;
    delete [] phiC;
 
-   clear_2d(4, StifL);
-   clear_2d(4, StifR);
+   clear_2d( 4, StifL );
+   clear_2d( 4, StifR );
 }
 
 void US_AstfemMath::IntQTn1( QVector< double > vx, double D, double sw2, 
@@ -1178,76 +1214,79 @@ void US_AstfemMath::IntQTn1( QVector< double > vx, double D, double sw2,
 {
    // element to define basis functions
    //
-   int npts, i, k;
+   int    npts, i, k;
    double x_gauss, y_gauss, dval;
    QVector< double > Lx, Ly, Tx, Ty;
-   double **StifR=NULL, **Lam=NULL, DJac;
+   double **StifR = NULL, **Lam = NULL, DJac;
    double *phiL, *phiLx, *phiLy;
-   phiL = new double [4];
-   phiLx = new double [4];
-   phiLy = new double [4];
+   phiL  = new double [ 4 ];
+   phiLx = new double [ 4 ];
+   phiLy = new double [ 4 ];
    Lx.clear();
    Ly.clear();
    Tx.clear();
    Ty.clear();
 
-   Lx.push_back(vx[0]);
-   Lx.push_back(vx[1]);
-   Lx.push_back(vx[2]);
+   Lx.push_back( vx[ 0 ] );
+   Lx.push_back( vx[ 1 ] );
+   Lx.push_back( vx[ 2 ] );
 
-   Ly.push_back(0.0);
-   Ly.push_back(0.0);
-   Ly.push_back(dt);
+   Ly.push_back( 0.0 );
+   Ly.push_back( 0.0 );
+   Ly.push_back( dt  );
 
-   initialize_2d(4, 2, &StifR);
+   initialize_2d( 4, 2, &StifR );
 
    //
    // integration over T:
    //
-   Tx.push_back(vx[3]); // vertices of T on right
-   Tx.push_back(vx[1]);
-   Tx.push_back(vx[2]);
+   Tx.push_back( vx[ 3 ] ); // vertices of T on right
+   Tx.push_back( vx[ 1 ] );
+   Tx.push_back( vx[ 2 ] );
 
-   Ty.push_back(0.0);
-   Ty.push_back(0.0);
-   Ty.push_back(dt);
+   Ty.push_back( 0.0 );
+   Ty.push_back( 0.0 );
+   Ty.push_back( dt  );
 
    npts = 28;
-   initialize_2d(npts, 4, &Lam);
-   DefineFkp(npts, Lam);
+   initialize_2d( npts, 4, &Lam );
+   DefineFkp(     npts, Lam );
 
-   for (k=0; k<npts; k++)
+   for ( k = 0; k < npts; k++ )
    {
-      x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
-      y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-      DJac = 2.0 * AreaT( Tx, Ty );
+      x_gauss = Lam[ k ][ 0 ] * Tx[ 0 ] + Lam[ k ][ 1 ] *
+                Tx[ 1 ] + Lam[ k ][ 2 ] * Tx[ 2 ];
+      y_gauss = Lam[ k ][ 0 ] * Ty[ 0 ] + Lam[ k ][ 1 ] *
+                Ty[ 1 ] + Lam[ k ][ 2 ] * Ty[ 2 ];
+      DJac    = 2.0 * AreaT( Tx, Ty );
 
-      if(DJac<1.e-22) break;
+      if ( DJac < 1.e-22 ) break;
       
       // find phi, phi_x, phi_y on R and C at (x,y)
       
 
-      BasisTR(Lx, Ly, x_gauss, y_gauss, phiL, phiLx, phiLy);
+      BasisTR( Lx, Ly, x_gauss, y_gauss, phiL, phiLx, phiLy );
 
-      for (i=0; i<3; i++)
+      for ( i = 0; i < 3; i++ )
       {
-         dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i], 1.0, 0.0);
-         StifR[i][0] += Lam[k][3] * DJac * dval;
+         dval = Integrand( x_gauss, D, sw2, phiL[ i ], phiLx[ i ], phiLy[ i ],
+                           1.0, 0.0 );
+         StifR[ i ][ 0 ] += Lam[ k ][ 3 ] * DJac * dval;
       }
    }
-   clear_2d(npts, Lam);
+   clear_2d( npts, Lam );
 
-   for (i=0; i<2; i++)
+   for ( i = 0; i < 2; i++ )
    {
-      Stif[0][i] = StifR[0][i];
-      Stif[1][i] = StifR[1][i];
-      Stif[2][i] = StifR[2][i];
+      Stif[ 0 ][ i ] = StifR[ 0 ][ i ];
+      Stif[ 1 ][ i ] = StifR[ 1 ][ i ];
+      Stif[ 2 ][ i ] = StifR[ 2 ][ i ];
    }
    delete [] phiL;
    delete [] phiLx;
    delete [] phiLy;
 
-   clear_2d(4, StifR);
+   clear_2d( 4, StifR );
 }
 
 void US_AstfemMath::DefineFkp( int npts, double** Lam )
@@ -1260,175 +1299,254 @@ void US_AstfemMath::DefineFkp( int npts, double** Lam )
       case 12:
       //  STRANG9, order 12, degree of precision 6.
       {
-            Lam[ 0][0] = 0.873821971016996;  Lam[ 0][1] = 0.063089014491502;
-            Lam[ 1][0] = 0.063089014491502;  Lam[ 1][1] = 0.873821971016996;
-            Lam[ 2][0] = 0.063089014491502;  Lam[ 2][1] = 0.063089014491502;
-            Lam[ 3][0] = 0.501426509658179;  Lam[ 3][1] = 0.249286745170910;
-            Lam[ 4][0] = 0.249286745170910;  Lam[ 4][1] = 0.501426509658179;
-            Lam[ 5][0] = 0.249286745170910;  Lam[ 5][1] = 0.249286745170910;
-            Lam[ 6][0] = 0.636502499121399;  Lam[ 6][1] = 0.310352451033785;
-            Lam[ 7][0] = 0.636502499121399;  Lam[ 7][1] = 0.053145049844816;
-            Lam[ 8][0] = 0.310352451033785;  Lam[ 8][1] = 0.636502499121399;
-            Lam[ 9][0] = 0.310352451033785;  Lam[ 9][1] = 0.053145049844816;
-            Lam[10][0] = 0.053145049844816;  Lam[10][1] = 0.636502499121399;
-            Lam[11][0] = 0.053145049844816;  Lam[11][1] = 0.310352451033785;
+            Lam[  0 ][ 0 ] = 0.873821971016996;
+            Lam[  1 ][ 0 ] = 0.063089014491502;
+            Lam[  2 ][ 0 ] = 0.063089014491502;
+            Lam[  3 ][ 0 ] = 0.501426509658179;
+            Lam[  4 ][ 0 ] = 0.249286745170910;
+            Lam[  5 ][ 0 ] = 0.249286745170910;
+            Lam[  6 ][ 0 ] = 0.636502499121399;
+            Lam[  7 ][ 0 ] = 0.636502499121399;
+            Lam[  8 ][ 0 ] = 0.310352451033785;
+            Lam[  9 ][ 0 ] = 0.310352451033785;
+            Lam[ 10 ][ 0 ] = 0.053145049844816;
+            Lam[ 11 ][ 0 ] = 0.053145049844816;
 
-            Lam[ 0][3] = 0.050844906370207;
-            Lam[ 1][3] = 0.050844906370207;
-            Lam[ 2][3] = 0.050844906370207;
-            Lam[ 3][3] = 0.116786275726379;
-            Lam[ 4][3] = 0.116786275726379;
-            Lam[ 5][3] = 0.116786275726379;
-            Lam[ 6][3] = 0.082851075618374;
-            Lam[ 7][3] = 0.082851075618374;
-            Lam[ 8][3] = 0.082851075618374;
-            Lam[ 9][3] = 0.082851075618374;
-            Lam[10][3] = 0.082851075618374;
-            Lam[11][3] = 0.082851075618374;
+            Lam[  0 ][ 1 ] = 0.063089014491502;
+            Lam[  1 ][ 1 ] = 0.873821971016996;
+            Lam[  2 ][ 1 ] = 0.063089014491502;
+            Lam[  3 ][ 1 ] = 0.249286745170910;
+            Lam[  4 ][ 1 ] = 0.501426509658179;
+            Lam[  5 ][ 1 ] = 0.249286745170910;
+            Lam[  6 ][ 1 ] = 0.310352451033785;
+            Lam[  7 ][ 1 ] = 0.053145049844816;
+            Lam[  8 ][ 1 ] = 0.636502499121399;
+            Lam[  9 ][ 1 ] = 0.053145049844816;
+            Lam[ 10 ][ 1 ] = 0.636502499121399;
+            Lam[ 11 ][ 1 ] = 0.310352451033785;
+
+            Lam[  0 ][ 3 ] = 0.050844906370207;
+            Lam[  1 ][ 3 ] = 0.050844906370207;
+            Lam[  2 ][ 3 ] = 0.050844906370207;
+            Lam[  3 ][ 3 ] = 0.116786275726379;
+            Lam[  4 ][ 3 ] = 0.116786275726379;
+            Lam[  5 ][ 3 ] = 0.116786275726379;
+            Lam[  6 ][ 3 ] = 0.082851075618374;
+            Lam[  7 ][ 3 ] = 0.082851075618374;
+            Lam[  8 ][ 3 ] = 0.082851075618374;
+            Lam[  9 ][ 3 ] = 0.082851075618374;
+            Lam[ 10 ][ 3 ] = 0.082851075618374;
+            Lam[ 11 ][ 3 ] = 0.082851075618374;
          break;
       }
       case 28:
       // TOMS612_28, order 28, degree of precision 11, 
       // a rule from ACM TOMS algorithm #612
       {
-         Lam[ 0][0] = 0.33333333333333333  ; Lam[ 0][1] = 0.333333333333333333 ;
-         Lam[ 1][0] = 0.9480217181434233   ; Lam[ 1][1] = 0.02598914092828833 ;
-         Lam[ 2][0] = 0.02598914092828833  ; Lam[ 2][1] = 0.9480217181434233 ;
-         Lam[ 3][0] = 0.02598914092828833  ; Lam[ 3][1] = 0.02598914092828833 ;
-         Lam[ 4][0] = 0.8114249947041546   ; Lam[ 4][1] = 0.09428750264792270 ;
-         Lam[ 5][0] = 0.09428750264792270  ; Lam[ 5][1] = 0.8114249947041546 ;
-         Lam[ 6][0] = 0.09428750264792270  ; Lam[ 6][1] = 0.09428750264792270 ;
-         Lam[ 7][0] = 0.01072644996557060  ; Lam[ 7][1] = 0.4946367750172147 ;
-         Lam[ 8][0] = 0.4946367750172147   ; Lam[ 8][1] = 0.01072644996557060 ;
-         Lam[ 9][0] = 0.4946367750172147   ; Lam[ 9][1] = 0.4946367750172147 ;
-         Lam[10][0] = 0.5853132347709715   ; Lam[10][1] = 0.2073433826145142 ;
-         Lam[11][0] = 0.2073433826145142   ; Lam[11][1] = 0.5853132347709715 ;
-         Lam[12][0] = 0.2073433826145142   ; Lam[12][1] = 0.2073433826145142 ;
-         Lam[13][0] = 0.1221843885990187   ; Lam[13][1] = 0.4389078057004907 ;
-         Lam[14][0] = 0.4389078057004907   ; Lam[14][1] = 0.1221843885990187 ;
-         Lam[15][0] = 0.4389078057004907   ; Lam[15][1] = 0.4389078057004907 ;
-         Lam[16][0] = 0.6779376548825902   ; Lam[16][1] = 0.04484167758913055 ;
-         Lam[17][0] = 0.6779376548825902   ; Lam[17][1] = 0.27722066752827925 ;
-         Lam[18][0] = 0.04484167758913055  ; Lam[18][1] = 0.6779376548825902 ;
-         Lam[19][0] = 0.04484167758913055  ; Lam[19][1] = 0.27722066752827925 ;
-         Lam[20][0] = 0.27722066752827925  ; Lam[20][1] = 0.6779376548825902 ;
-         Lam[21][0] = 0.27722066752827925  ; Lam[21][1] = 0.04484167758913055 ;
-         Lam[22][0] = 0.8588702812826364   ; Lam[22][1] = 0.00000000000000000 ;
-         Lam[23][0] = 0.8588702812826364   ; Lam[23][1] = 0.1411297187173636 ;
-         Lam[24][0] = 0.0000000000000000   ; Lam[24][1] = 0.8588702812826364 ;
-         Lam[25][0] = 0.0000000000000000   ; Lam[25][1] = 0.1411297187173636 ;
-         Lam[26][0] = 0.1411297187173636   ; Lam[26][1] = 0.8588702812826364 ;
-         Lam[27][0] = 0.1411297187173636   ; Lam[27][1] = 0.0000000000000000 ;
+         Lam[  0 ][ 0 ] = 0.33333333333333333;
+         Lam[  1 ][ 0 ] = 0.9480217181434233;
+         Lam[  2 ][ 0 ] = 0.02598914092828833;
+         Lam[  3 ][ 0 ] = 0.02598914092828833;
+         Lam[  4 ][ 0 ] = 0.8114249947041546;
+         Lam[  5 ][ 0 ] = 0.09428750264792270;
+         Lam[  6 ][ 0 ] = 0.09428750264792270;
+         Lam[  7 ][ 0 ] = 0.01072644996557060;
+         Lam[  8 ][ 0 ] = 0.4946367750172147;
+         Lam[  9 ][ 0 ] = 0.4946367750172147;
+         Lam[ 10 ][ 0 ] = 0.5853132347709715;
+         Lam[ 11 ][ 0 ] = 0.2073433826145142;
+         Lam[ 12 ][ 0 ] = 0.2073433826145142;
+         Lam[ 13 ][ 0 ] = 0.1221843885990187;
+         Lam[ 14 ][ 0 ] = 0.4389078057004907;
+         Lam[ 15 ][ 0 ] = 0.4389078057004907;
+         Lam[ 16 ][ 0 ] = 0.6779376548825902;
+         Lam[ 17 ][ 0 ] = 0.6779376548825902;
+         Lam[ 18 ][ 0 ] = 0.04484167758913055;
+         Lam[ 19 ][ 0 ] = 0.04484167758913055;
+         Lam[ 20 ][ 0 ] = 0.27722066752827925;
+         Lam[ 21 ][ 0 ] = 0.27722066752827925;
+         Lam[ 22 ][ 0 ] = 0.8588702812826364;
+         Lam[ 23 ][ 0 ] = 0.8588702812826364;
+         Lam[ 24 ][ 0 ] = 0.0000000000000000;
+         Lam[ 25 ][ 0 ] = 0.0000000000000000;
+         Lam[ 26 ][ 0 ] = 0.1411297187173636;
+         Lam[ 27 ][ 0 ] = 0.1411297187173636;
 
-         Lam[ 0][3] = 0.08797730116222190 ;
-         Lam[ 1][3] = 0.008744311553736190 ;
-         Lam[ 2][3] = 0.008744311553736190 ;
-         Lam[ 3][3] = 0.008744311553736190 ;
-         Lam[ 4][3] = 0.03808157199393533 ;
-         Lam[ 5][3] = 0.03808157199393533 ;
-         Lam[ 6][3] = 0.03808157199393533 ;
-         Lam[ 7][3] = 0.01885544805613125 ;
-         Lam[ 8][3] = 0.01885544805613125 ;
-         Lam[ 9][3] = 0.01885544805613125 ;
-         Lam[10][3] = 0.07215969754474100 ;
-         Lam[11][3] = 0.07215969754474100 ;
-         Lam[12][3] = 0.07215969754474100 ;
-         Lam[13][3] = 0.06932913870553720 ;
-         Lam[14][3] = 0.06932913870553720 ;
-         Lam[15][3] = 0.06932913870553720 ;
-         Lam[16][3] = 0.04105631542928860 ;
-         Lam[17][3] = 0.04105631542928860 ;
-         Lam[18][3] = 0.04105631542928860 ;
-         Lam[19][3] = 0.04105631542928860 ;
-         Lam[20][3] = 0.04105631542928860 ;
-         Lam[21][3] = 0.04105631542928860 ;
-         Lam[22][3] = 0.007362383783300573 ;
-         Lam[23][3] = 0.007362383783300573 ;
-         Lam[24][3] = 0.007362383783300573 ;
-         Lam[25][3] = 0.007362383783300573 ;
-         Lam[26][3] = 0.007362383783300573 ;
-         Lam[27][3] = 0.007362383783300573 ;
+         Lam[  0 ][ 1 ] = 0.333333333333333333;
+         Lam[  1 ][ 1 ] = 0.02598914092828833;
+         Lam[  2 ][ 1 ] = 0.9480217181434233;
+         Lam[  3 ][ 1 ] = 0.02598914092828833;
+         Lam[  4 ][ 1 ] = 0.09428750264792270;
+         Lam[  5 ][ 1 ] = 0.8114249947041546;
+         Lam[  6 ][ 1 ] = 0.09428750264792270;
+         Lam[  7 ][ 1 ] = 0.4946367750172147;
+         Lam[  8 ][ 1 ] = 0.01072644996557060;
+         Lam[  9 ][ 1 ] = 0.4946367750172147;
+         Lam[ 10 ][ 1 ] = 0.2073433826145142;
+         Lam[ 11 ][ 1 ] = 0.5853132347709715;
+         Lam[ 12 ][ 1 ] = 0.2073433826145142;
+         Lam[ 13 ][ 1 ] = 0.4389078057004907;
+         Lam[ 14 ][ 1 ] = 0.1221843885990187;
+         Lam[ 15 ][ 1 ] = 0.4389078057004907;
+         Lam[ 16 ][ 1 ] = 0.04484167758913055;
+         Lam[ 17 ][ 1 ] = 0.27722066752827925;
+         Lam[ 18 ][ 1 ] = 0.6779376548825902;
+         Lam[ 19 ][ 1 ] = 0.27722066752827925;
+         Lam[ 20 ][ 1 ] = 0.6779376548825902;
+         Lam[ 21 ][ 1 ] = 0.04484167758913055;
+         Lam[ 22 ][ 1 ] = 0.00000000000000000;
+         Lam[ 23 ][ 1 ] = 0.1411297187173636;
+         Lam[ 24 ][ 1 ] = 0.8588702812826364;
+         Lam[ 25 ][ 1 ] = 0.1411297187173636;
+         Lam[ 26 ][ 1 ] = 0.8588702812826364;
+         Lam[ 27 ][ 1 ] = 0.0000000000000000;
+
+         Lam[  0 ][ 3 ] = 0.08797730116222190;
+         Lam[  1 ][ 3 ] = 0.008744311553736190;
+         Lam[  2 ][ 3 ] = 0.008744311553736190;
+         Lam[  3 ][ 3 ] = 0.008744311553736190;
+         Lam[  4 ][ 3 ] = 0.03808157199393533;
+         Lam[  5 ][ 3 ] = 0.03808157199393533;
+         Lam[  6 ][ 3 ] = 0.03808157199393533;
+         Lam[  7 ][ 3 ] = 0.01885544805613125;
+         Lam[  8 ][ 3 ] = 0.01885544805613125;
+         Lam[  9 ][ 3 ] = 0.01885544805613125;
+         Lam[ 10 ][ 3 ] = 0.07215969754474100;
+         Lam[ 11 ][ 3 ] = 0.07215969754474100;
+         Lam[ 12 ][ 3 ] = 0.07215969754474100;
+         Lam[ 13 ][ 3 ] = 0.06932913870553720;
+         Lam[ 14 ][ 3 ] = 0.06932913870553720;
+         Lam[ 15 ][ 3 ] = 0.06932913870553720;
+         Lam[ 16 ][ 3 ] = 0.04105631542928860;
+         Lam[ 17 ][ 3 ] = 0.04105631542928860;
+         Lam[ 18 ][ 3 ] = 0.04105631542928860;
+         Lam[ 19 ][ 3 ] = 0.04105631542928860;
+         Lam[ 20 ][ 3 ] = 0.04105631542928860;
+         Lam[ 21 ][ 3 ] = 0.04105631542928860;
+         Lam[ 22 ][ 3 ] = 0.007362383783300573;
+         Lam[ 23 ][ 3 ] = 0.007362383783300573;
+         Lam[ 24 ][ 3 ] = 0.007362383783300573;
+         Lam[ 25 ][ 3 ] = 0.007362383783300573;
+         Lam[ 26 ][ 3 ] = 0.007362383783300573;
+         Lam[ 27 ][ 3 ] = 0.007362383783300573;
          break;
       }
       case 37:
       //   TOMS706_37, order 37, degree of precision 13, a rule from ACM TOMS algorithm #706.
       {
-         Lam[ 0][0] = 0.333333333333333333333333333333;  Lam[ 0][1] = 0.333333333333333333333333333333;
-         Lam[ 1][0] = 0.950275662924105565450352089520;  Lam[ 1][1] = 0.024862168537947217274823955239;
-         Lam[ 2][0] = 0.024862168537947217274823955239;  Lam[ 2][1] = 0.950275662924105565450352089520;
-         Lam[ 3][0] = 0.024862168537947217274823955239;  Lam[ 3][1] = 0.024862168537947217274823955239;
-         Lam[ 4][0] = 0.171614914923835347556304795551;  Lam[ 4][1] = 0.414192542538082326221847602214;
-         Lam[ 5][0] = 0.414192542538082326221847602214;  Lam[ 5][1] = 0.171614914923835347556304795551;
-         Lam[ 6][0] = 0.414192542538082326221847602214;  Lam[ 6][1] = 0.414192542538082326221847602214;
-         Lam[ 7][0] = 0.539412243677190440263092985511;  Lam[ 7][1] = 0.230293878161404779868453507244;
-         Lam[ 8][0] = 0.230293878161404779868453507244;  Lam[ 8][1] = 0.539412243677190440263092985511;
-         Lam[ 9][0] = 0.230293878161404779868453507244;  Lam[ 9][1] = 0.230293878161404779868453507244;
-         Lam[10][0] = 0.772160036676532561750285570113;  Lam[10][1] = 0.113919981661733719124857214943;
-         Lam[11][0] = 0.113919981661733719124857214943;  Lam[11][1] = 0.772160036676532561750285570113;
-         Lam[12][0] = 0.113919981661733719124857214943;  Lam[12][1] = 0.113919981661733719124857214943;
-         Lam[13][0] = 0.009085399949835353883572964740;  Lam[13][1] = 0.495457300025082323058213517632;
-         Lam[14][0] = 0.495457300025082323058213517632;  Lam[14][1] = 0.009085399949835353883572964740;
-         Lam[15][0] = 0.495457300025082323058213517632;  Lam[15][1] = 0.495457300025082323058213517632;
-         Lam[16][0] = 0.062277290305886993497083640527;  Lam[16][1] = 0.468861354847056503251458179727;
-         Lam[17][0] = 0.468861354847056503251458179727;  Lam[17][1] = 0.062277290305886993497083640527;
-         Lam[18][0] = 0.468861354847056503251458179727;  Lam[18][1] = 0.468861354847056503251458179727;
-         Lam[19][0] = 0.022076289653624405142446876931;  Lam[19][1] = 0.851306504174348550389457672223;
-         Lam[20][0] = 0.022076289653624405142446876931;  Lam[20][1] = 0.126617206172027096933163647918;
-         Lam[21][0] = 0.851306504174348550389457672223;  Lam[21][1] = 0.022076289653624405142446876931;
-         Lam[22][0] = 0.851306504174348550389457672223;  Lam[22][1] = 0.126617206172027096933163647918;
-         Lam[23][0] = 0.126617206172027096933163647918;  Lam[23][1] = 0.022076289653624405142446876931;
-         Lam[24][0] = 0.126617206172027096933163647918;  Lam[24][1] = 0.851306504174348550389457672223;
-         Lam[25][0] = 0.018620522802520968955913511549;  Lam[25][1] = 0.689441970728591295496647976487;
-         Lam[26][0] = 0.018620522802520968955913511549;  Lam[26][1] = 0.291937506468887771754472382212;
-         Lam[27][0] = 0.689441970728591295496647976487;  Lam[27][1] = 0.018620522802520968955913511549;
-         Lam[28][0] = 0.689441970728591295496647976487;  Lam[28][1] = 0.291937506468887771754472382212;
-         Lam[29][0] = 0.291937506468887771754472382212;  Lam[29][1] = 0.018620522802520968955913511549;
-         Lam[30][0] = 0.291937506468887771754472382212;  Lam[30][1] = 0.689441970728591295496647976487;
-         Lam[31][0] = 0.096506481292159228736516560903;  Lam[31][1] = 0.635867859433872768286976979827;
-         Lam[32][0] = 0.096506481292159228736516560903;  Lam[32][1] = 0.267625659273967961282458816185;
-         Lam[33][0] = 0.635867859433872768286976979827;  Lam[33][1] = 0.096506481292159228736516560903;
-         Lam[34][0] = 0.635867859433872768286976979827;  Lam[34][1] = 0.267625659273967961282458816185;
-         Lam[35][0] = 0.267625659273967961282458816185;  Lam[35][1] = 0.096506481292159228736516560903;
-         Lam[36][0] = 0.267625659273967961282458816185;  Lam[36][1] = 0.635867859433872768286976979827;
+         Lam[  0 ][ 0 ] = 0.333333333333333333333333333333;
+         Lam[  1 ][ 0 ] = 0.950275662924105565450352089520;
+         Lam[  2 ][ 0 ] = 0.024862168537947217274823955239;
+         Lam[  3 ][ 0 ] = 0.024862168537947217274823955239;
+         Lam[  4 ][ 0 ] = 0.171614914923835347556304795551;
+         Lam[  5 ][ 0 ] = 0.414192542538082326221847602214;
+         Lam[  6 ][ 0 ] = 0.414192542538082326221847602214;
+         Lam[  7 ][ 0 ] = 0.539412243677190440263092985511;
+         Lam[  8 ][ 0 ] = 0.230293878161404779868453507244;
+         Lam[  9 ][ 0 ] = 0.230293878161404779868453507244;
+         Lam[ 10 ][ 0 ] = 0.772160036676532561750285570113;
+         Lam[ 11 ][ 0 ] = 0.113919981661733719124857214943;
+         Lam[ 12 ][ 0 ] = 0.113919981661733719124857214943;
+         Lam[ 13 ][ 0 ] = 0.009085399949835353883572964740;
+         Lam[ 14 ][ 0 ] = 0.495457300025082323058213517632;
+         Lam[ 15 ][ 0 ] = 0.495457300025082323058213517632;
+         Lam[ 16 ][ 0 ] = 0.062277290305886993497083640527;
+         Lam[ 17 ][ 0 ] = 0.468861354847056503251458179727;
+         Lam[ 18 ][ 0 ] = 0.468861354847056503251458179727;
+         Lam[ 19 ][ 0 ] = 0.022076289653624405142446876931;
+         Lam[ 20 ][ 0 ] = 0.022076289653624405142446876931;
+         Lam[ 21 ][ 0 ] = 0.851306504174348550389457672223;
+         Lam[ 22 ][ 0 ] = 0.851306504174348550389457672223;
+         Lam[ 23 ][ 0 ] = 0.126617206172027096933163647918;
+         Lam[ 24 ][ 0 ] = 0.126617206172027096933163647918;
+         Lam[ 25 ][ 0 ] = 0.018620522802520968955913511549;
+         Lam[ 26 ][ 0 ] = 0.018620522802520968955913511549;
+         Lam[ 27 ][ 0 ] = 0.689441970728591295496647976487;
+         Lam[ 28 ][ 0 ] = 0.689441970728591295496647976487;
+         Lam[ 29 ][ 0 ] = 0.291937506468887771754472382212;
+         Lam[ 30 ][ 0 ] = 0.291937506468887771754472382212;
+         Lam[ 31 ][ 0 ] = 0.096506481292159228736516560903;
+         Lam[ 32 ][ 0 ] = 0.096506481292159228736516560903;
+         Lam[ 33 ][ 0 ] = 0.635867859433872768286976979827;
+         Lam[ 34 ][ 0 ] = 0.635867859433872768286976979827;
+         Lam[ 35 ][ 0 ] = 0.267625659273967961282458816185;
+         Lam[ 36 ][ 0 ] = 0.267625659273967961282458816185;
 
+         Lam[  0 ][ 1 ] = 0.333333333333333333333333333333;
+         Lam[  1 ][ 1 ] = 0.024862168537947217274823955239;
+         Lam[  2 ][ 1 ] = 0.950275662924105565450352089520;
+         Lam[  3 ][ 1 ] = 0.024862168537947217274823955239;
+         Lam[  4 ][ 1 ] = 0.414192542538082326221847602214;
+         Lam[  5 ][ 1 ] = 0.171614914923835347556304795551;
+         Lam[  6 ][ 1 ] = 0.414192542538082326221847602214;
+         Lam[  7 ][ 1 ] = 0.230293878161404779868453507244;
+         Lam[  8 ][ 1 ] = 0.539412243677190440263092985511;
+         Lam[  9 ][ 1 ] = 0.230293878161404779868453507244;
+         Lam[ 10 ][ 1 ] = 0.113919981661733719124857214943;
+         Lam[ 11 ][ 1 ] = 0.772160036676532561750285570113;
+         Lam[ 12 ][ 1 ] = 0.113919981661733719124857214943;
+         Lam[ 13 ][ 1 ] = 0.495457300025082323058213517632;
+         Lam[ 14 ][ 1 ] = 0.009085399949835353883572964740;
+         Lam[ 15 ][ 1 ] = 0.495457300025082323058213517632;
+         Lam[ 16 ][ 1 ] = 0.468861354847056503251458179727;
+         Lam[ 17 ][ 1 ] = 0.062277290305886993497083640527;
+         Lam[ 18 ][ 1 ] = 0.468861354847056503251458179727;
+         Lam[ 19 ][ 1 ] = 0.851306504174348550389457672223;
+         Lam[ 20 ][ 1 ] = 0.126617206172027096933163647918;
+         Lam[ 21 ][ 1 ] = 0.022076289653624405142446876931;
+         Lam[ 22 ][ 1 ] = 0.126617206172027096933163647918;
+         Lam[ 23 ][ 1 ] = 0.022076289653624405142446876931;
+         Lam[ 24 ][ 1 ] = 0.851306504174348550389457672223;
+         Lam[ 25 ][ 1 ] = 0.689441970728591295496647976487;
+         Lam[ 26 ][ 1 ] = 0.291937506468887771754472382212;
+         Lam[ 27 ][ 1 ] = 0.018620522802520968955913511549;
+         Lam[ 28 ][ 1 ] = 0.291937506468887771754472382212;
+         Lam[ 29 ][ 1 ] = 0.018620522802520968955913511549;
+         Lam[ 30 ][ 1 ] = 0.689441970728591295496647976487;
+         Lam[ 31 ][ 1 ] = 0.635867859433872768286976979827;
+         Lam[ 32 ][ 1 ] = 0.267625659273967961282458816185;
+         Lam[ 33 ][ 1 ] = 0.096506481292159228736516560903;
+         Lam[ 34 ][ 1 ] = 0.267625659273967961282458816185;
+         Lam[ 35 ][ 1 ] = 0.096506481292159228736516560903;
+         Lam[ 36 ][ 1 ] = 0.635867859433872768286976979827;
 
-         Lam[ 0][3] = 0.051739766065744133555179145422;
-         Lam[ 1][3] = 0.008007799555564801597804123460;
-         Lam[ 2][3] = 0.008007799555564801597804123460;
-         Lam[ 3][3] = 0.008007799555564801597804123460;
-         Lam[ 4][3] = 0.046868898981821644823226732071;
-         Lam[ 5][3] = 0.046868898981821644823226732071;
-         Lam[ 6][3] = 0.046868898981821644823226732071;
-         Lam[ 7][3] = 0.046590940183976487960361770070;
-         Lam[ 8][3] = 0.046590940183976487960361770070;
-         Lam[ 9][3] = 0.046590940183976487960361770070;
-         Lam[10][3] = 0.031016943313796381407646220131;
-         Lam[11][3] = 0.031016943313796381407646220131;
-         Lam[12][3] = 0.031016943313796381407646220131;
-         Lam[13][3] = 0.010791612736631273623178240136;
-         Lam[14][3] = 0.010791612736631273623178240136;
-         Lam[15][3] = 0.010791612736631273623178240136;
-         Lam[16][3] = 0.032195534242431618819414482205;
-         Lam[17][3] = 0.032195534242431618819414482205;
-         Lam[18][3] = 0.032195534242431618819414482205;
-         Lam[19][3] = 0.015445834210701583817692900053;
-         Lam[20][3] = 0.015445834210701583817692900053;
-         Lam[21][3] = 0.015445834210701583817692900053;
-         Lam[22][3] = 0.015445834210701583817692900053;
-         Lam[23][3] = 0.015445834210701583817692900053;
-         Lam[24][3] = 0.015445834210701583817692900053;
-         Lam[25][3] = 0.017822989923178661888748319485;
-         Lam[26][3] = 0.017822989923178661888748319485;
-         Lam[27][3] = 0.017822989923178661888748319485;
-         Lam[28][3] = 0.017822989923178661888748319485;
-         Lam[29][3] = 0.017822989923178661888748319485;
-         Lam[30][3] = 0.017822989923178661888748319485;
-         Lam[31][3] = 0.037038683681384627918546472190;
-         Lam[32][3] = 0.037038683681384627918546472190;
-         Lam[33][3] = 0.037038683681384627918546472190;
-         Lam[34][3] = 0.037038683681384627918546472190;
-         Lam[35][3] = 0.037038683681384627918546472190;
-         Lam[36][3] = 0.037038683681384627918546472190;
+         Lam[  0 ][ 3 ] = 0.051739766065744133555179145422;
+         Lam[  1 ][ 3 ] = 0.008007799555564801597804123460;
+         Lam[  2 ][ 3 ] = 0.008007799555564801597804123460;
+         Lam[  3 ][ 3 ] = 0.008007799555564801597804123460;
+         Lam[  4 ][ 3 ] = 0.046868898981821644823226732071;
+         Lam[  5 ][ 3 ] = 0.046868898981821644823226732071;
+         Lam[  6 ][ 3 ] = 0.046868898981821644823226732071;
+         Lam[  7 ][ 3 ] = 0.046590940183976487960361770070;
+         Lam[  8 ][ 3 ] = 0.046590940183976487960361770070;
+         Lam[  9 ][ 3 ] = 0.046590940183976487960361770070;
+         Lam[ 10 ][ 3 ] = 0.031016943313796381407646220131;
+         Lam[ 11 ][ 3 ] = 0.031016943313796381407646220131;
+         Lam[ 12 ][ 3 ] = 0.031016943313796381407646220131;
+         Lam[ 13 ][ 3 ] = 0.010791612736631273623178240136;
+         Lam[ 14 ][ 3 ] = 0.010791612736631273623178240136;
+         Lam[ 15 ][ 3 ] = 0.010791612736631273623178240136;
+         Lam[ 16 ][ 3 ] = 0.032195534242431618819414482205;
+         Lam[ 17 ][ 3 ] = 0.032195534242431618819414482205;
+         Lam[ 18 ][ 3 ] = 0.032195534242431618819414482205;
+         Lam[ 19 ][ 3 ] = 0.015445834210701583817692900053;
+         Lam[ 20 ][ 3 ] = 0.015445834210701583817692900053;
+         Lam[ 21 ][ 3 ] = 0.015445834210701583817692900053;
+         Lam[ 22 ][ 3 ] = 0.015445834210701583817692900053;
+         Lam[ 23 ][ 3 ] = 0.015445834210701583817692900053;
+         Lam[ 24 ][ 3 ] = 0.015445834210701583817692900053;
+         Lam[ 25 ][ 3 ] = 0.017822989923178661888748319485;
+         Lam[ 26 ][ 3 ] = 0.017822989923178661888748319485;
+         Lam[ 27 ][ 3 ] = 0.017822989923178661888748319485;
+         Lam[ 28 ][ 3 ] = 0.017822989923178661888748319485;
+         Lam[ 29 ][ 3 ] = 0.017822989923178661888748319485;
+         Lam[ 30 ][ 3 ] = 0.017822989923178661888748319485;
+         Lam[ 31 ][ 3 ] = 0.037038683681384627918546472190;
+         Lam[ 32 ][ 3 ] = 0.037038683681384627918546472190;
+         Lam[ 33 ][ 3 ] = 0.037038683681384627918546472190;
+         Lam[ 34 ][ 3 ] = 0.037038683681384627918546472190;
+         Lam[ 35 ][ 3 ] = 0.037038683681384627918546472190;
+         Lam[ 36 ][ 3 ] = 0.037038683681384627918546472190;
 
          break;
       }
@@ -1440,9 +1558,9 @@ void US_AstfemMath::DefineFkp( int npts, double** Lam )
 
    for( int i = 0; i < npts; i++ )
    {
-      Lam[i][2] = 1. - Lam[i][0] - Lam[i][1];
+      Lam[ i ][ 2 ]  = 1. - Lam[ i ][ 0 ] - Lam[ i ][ 1 ];
       // To make the sum( wt ) = 0.5 = area of standard elem
-      Lam[i][3] /= 2.;   
+      Lam[ i ][ 3 ] /= 2.;   
    }
 }
 
@@ -1501,100 +1619,107 @@ void US_AstfemMath::BasisQS( double xi, double et, double* phi,
 // phi, phi_x, phi_t at a given (xs,ts) point
 // the triangular is assumed to be (x1,y1), (x2, y2), (x3, y3)
 
-void US_AstfemMath::BasisTR( QVector< double > vx, QVector< double > vy, double xs,
-              double ys, double* phi, double* phix, double* phiy )
+void US_AstfemMath::BasisTR( QVector< double > vx, QVector< double > vy,
+      double xs, double ys, double* phi, double* phix, double* phiy )
 {
    // find (xi,et) corresponding to (xs, ts)
    
    int i;
    QVector< double > tempv1, tempv2;
+
    tempv1.clear();
    tempv2.clear();
-   tempv1.push_back(xs);
-   tempv1.push_back(vx[2]);
-   tempv1.push_back(vx[0]);
-   tempv2.push_back(ys);
-   tempv2.push_back(vy[2]);
-   tempv2.push_back(vy[0]);
+
+   tempv1.push_back( xs );
+   tempv1.push_back( vx[ 2 ] );
+   tempv1.push_back( vx[ 0 ] );
+   tempv2.push_back( ys );
+   tempv2.push_back( vy[ 2 ] );
+   tempv2.push_back( vy[ 0 ] );
+
    double AreaK = AreaT( vx, vy );
    double xi    = AreaT( tempv1, tempv2 ) / AreaK;
+
    tempv1.clear();
    tempv2.clear();
-   tempv1.push_back(xs);
-   tempv1.push_back(vx[0]);
-   tempv1.push_back(vx[1]);
-   tempv2.push_back(ys);
-   tempv2.push_back(vy[0]);
-   tempv2.push_back(vy[1]);
+
+   tempv1.push_back( xs );
+   tempv1.push_back( vx[ 0 ] );
+   tempv1.push_back( vx[ 1 ] );
+   tempv2.push_back( ys );
+   tempv2.push_back( vy[ 0 ] );
+   tempv2.push_back( vy[ 1 ] );
 
    double et = AreaT( tempv1, tempv2 ) / AreaK;
 
    double *phi1, *phi2;
 
-   phi1 = new double [3];
-   phi2 = new double [3];
+   phi1 = new double [ 3 ];
+   phi2 = new double [ 3 ];
 
    BasisTS( xi, et, phi, phi1, phi2 );
 
-   double Jac[4], JacN[4], det;
+   double Jac[ 4 ], JacN[ 4 ], det;
 
-   Jac[0] = vx[0] * phi1[0] + vx[1] * phi1[1] + vx[2] * phi1[2];
-   Jac[1] = vx[0] * phi2[0] + vx[1] * phi2[1] + vx[2] * phi2[2];
-   Jac[2] = vy[0] * phi1[0] + vy[1] * phi1[1] + vy[2] * phi1[2];
-   Jac[3] = vy[0] * phi2[0] + vy[1] * phi2[1] + vy[2] * phi2[2];
+   Jac[ 0 ] = vx[ 0 ] * phi1[ 0 ] + vx[ 1 ] * phi1[ 1 ] + vx[ 2 ] * phi1[ 2 ];
+   Jac[ 1 ] = vx[ 0 ] * phi2[ 0 ] + vx[ 1 ] * phi2[ 1 ] + vx[ 2 ] * phi2[ 2 ];
+   Jac[ 2 ] = vy[ 0 ] * phi1[ 0 ] + vy[ 1 ] * phi1[ 1 ] + vy[ 2 ] * phi1[ 2 ];
+   Jac[ 3 ] = vy[ 0 ] * phi2[ 0 ] + vy[ 1 ] * phi2[ 1 ] + vy[ 2 ] * phi2[ 2 ];
 
-   det = Jac[0] * Jac[3] - Jac[1] * Jac [2];
+   det      = Jac[ 0 ] * Jac[ 3 ] - Jac[ 1 ] * Jac [ 2 ];
 
-   JacN[0] = Jac[3]/det;
-   JacN[1] = -Jac[1]/det;
-   JacN[2] = -Jac[2]/det;
-   JacN[3] = Jac[0]/det;
+   JacN[ 0 ] = Jac[3]/det;
+   JacN[ 1 ] = -Jac[1]/det;
+   JacN[ 2 ] = -Jac[2]/det;
+   JacN[ 3 ] = Jac[0]/det;
 
    for ( i = 0; i < 3; i++ )
    {
-      phix[i] = JacN[0] * phi1[i] + JacN[2] * phi2[i];
-      phiy[i] = JacN[1] * phi1[i] + JacN[3] * phi2[i];
+      phix[ i ] = JacN[ 0 ] * phi1[ i ] + JacN[ 2 ] * phi2[ i ];
+      phiy[ i ] = JacN[ 1 ] * phi1[ i ] + JacN[ 3 ] * phi2[ i ];
    }
    delete [] phi1;
    delete [] phi2;
 }
 
-void US_AstfemMath::BasisQR( QVector< double > vx, double xs, double ts, double* phi, 
-              double* phix, double* phiy, double dt )
+void US_AstfemMath::BasisQR( QVector< double > vx, double xs, double ts,
+      double* phi, double* phix, double* phiy, double dt )
 {
-   int i;
+   int    i;
 
    // find (xi,et) corresponding to (xs, ts)
-   double et = ts/dt;
-   double A = vx[0] * (1.0 - et) + vx[3] * et;
-   double B = vx[1] * (1.0 - et) + vx[2] * et;
-   double xi = (xs - A)/(B - A);
+   double et = ts / dt;
+   double A  = vx[ 0 ] * ( 1.0 - et ) + vx[ 3 ] * et;
+   double B  = vx[ 1 ] * ( 1.0 - et ) + vx[ 2 ] * et;
+   double xi = ( xs - A ) / ( B - A );
 
    double *phi1, *phi2;
 
-   phi1 = new double [4];
-   phi2 = new double [4];
+   phi1 = new double [ 4 ];
+   phi2 = new double [ 4 ];
 
    BasisQS( xi, et, phi, phi1, phi2 );
 
-   double Jac[4], JacN[4], det;
+   double Jac[ 4 ], JacN[ 4 ], det;
 
-   Jac[0] = vx[0] * phi1[0] + vx[1] * phi1[1] + vx[2] * phi1[2] + vx[3] * phi1[3];
-   Jac[1] = vx[0] * phi2[0] + vx[1] * phi2[1] + vx[2] * phi2[2] + vx[3] * phi2[3];
-   Jac[2] = dt * phi1[2] + dt * phi1[3];
-   Jac[3] = dt * phi2[2] + dt * phi2[3];
+   Jac[ 0] = vx[ 0 ] * phi1[ 0 ] + vx[ 1 ] * phi1[ 1 ] + vx[ 2 ] *
+             phi1[ 2 ] + vx[ 3 ] * phi1[ 3 ];
+   Jac[ 1] = vx[ 0 ] * phi2[ 0 ] + vx[ 1 ] * phi2[ 1 ] + vx[ 2 ] *
+             phi2[ 2 ] + vx[ 3 ] * phi2[ 3 ];
+   Jac[ 2] = dt * phi1[ 2 ] + dt * phi1[ 3 ];
+   Jac[ 3] = dt * phi2[ 2 ] + dt * phi2[ 3 ];
 
    det = Jac[0] * Jac[3] - Jac[1] * Jac [2];
 
-   JacN[0] =  Jac[3]/det;
-   JacN[1] = -Jac[1]/det;
-   JacN[2] = -Jac[2]/det;
-   JacN[3] =  Jac[0]/det;
+   JacN[ 0 ] =  Jac[ 3 ] / det;
+   JacN[ 1 ] = -Jac[ 1 ] / det;
+   JacN[ 2 ] = -Jac[ 2 ] / det;
+   JacN[ 3 ] =  Jac[ 0 ] / det;
 
    for ( i = 0; i < 4; i++ )
    {
-      phix[i] = JacN[0] * phi1[i] + JacN[2] * phi2[i];
-      phiy[i] = JacN[1] * phi1[i] + JacN[3] * phi2[i];
+      phix[ i ] = JacN[ 0 ] * phi1[ i ] + JacN[ 2 ] * phi2[ i ];
+      phiy[ i ] = JacN[ 1 ] * phi1[ i ] + JacN[ 3 ] * phi2[ i ];
    }
    delete [] phi1;
    delete [] phi2;
@@ -1602,12 +1727,10 @@ void US_AstfemMath::BasisQR( QVector< double > vx, double xs, double ts, double*
 
 // Integrand for Lamm equation
 
-double US_AstfemMath::Integrand(double x_gauss, double D,  double sw2,
-                 double u,       double ux, double ut, 
-                 double v,       double vx )
+double US_AstfemMath::Integrand( double x_gauss, double D, double sw2,
+   double u, double ux, double ut, double v, double vx )
 {
-   return ( x_gauss * ut * v + 
-            D * x_gauss * ux * vx -
+   return ( x_gauss * ut * v + D * x_gauss * ux * vx -
             sw2 * sq( x_gauss ) * u * vx );
 }
 
@@ -1622,43 +1745,43 @@ void US_AstfemMath::DefineGaussian( int nGauss, double** Gs2 )
    {
       case 3:
       {
-         Gs1[0] = -0.774596669241483;  w[0] = 5.0/9.0;
-         Gs1[1] = 0.0;                 w[1] = 8.0/9.0;
-         Gs1[2] = 0.774596669241483;   w[2] = 5.0/9.0;
+         Gs1[ 0 ] = -0.774596669241483;  w[ 0 ] = 5.0 / 9.0;
+         Gs1[ 1 ] = 0.0;                 w[ 1 ] = 8.0 / 9.0;
+         Gs1[ 2 ] = 0.774596669241483;   w[ 2 ] = 5.0 / 9.0;
          break;
       }
       case 5:
       {
-         Gs1[0] = 0.906179845938664 ;  w[0] = 0.236926885056189;
-         Gs1[1] = 0.538469310105683 ;  w[1] = 0.478628670499366;
-         Gs1[2] = 0.000000000000000 ;  w[2] = 0.568888888888889;
-         Gs1[3] = -Gs1[1];             w[3] = w[1];
-         Gs1[4] = -Gs1[0];             w[4] = w[0];
+         Gs1[ 0 ] = 0.906179845938664 ;  w[ 0 ] = 0.236926885056189;
+         Gs1[ 1 ] = 0.538469310105683 ;  w[ 1 ] = 0.478628670499366;
+         Gs1[ 2 ] = 0.000000000000000 ;  w[ 2 ] = 0.568888888888889;
+         Gs1[ 3 ] = -Gs1[ 1 ];           w[ 3 ] = w[ 1 ];
+         Gs1[ 4 ] = -Gs1[ 0 ];           w[ 4 ] = w[ 0 ];
          break;
       }
       case 7:
       {
-         Gs1[0] = 0.949107912342759 ;  w[0] = 0.129484966168870;
-         Gs1[1] = 0.741531185599394 ;  w[1] = 0.279705391489277;
-         Gs1[2] = 0.405845151377397 ;  w[2] = 0.381830050505119;
-         Gs1[3] = 0.000000000000000 ;  w[3] = 0.417959183673469;
-         Gs1[4] = -Gs1[2];             w[4] = w[2];
-         Gs1[5] = -Gs1[1];             w[5] = w[1];
-         Gs1[6] = -Gs1[0];             w[6] = w[0];
+         Gs1[ 0 ] = 0.949107912342759 ;  w[ 0 ] = 0.129484966168870;
+         Gs1[ 1 ] = 0.741531185599394 ;  w[ 1 ] = 0.279705391489277;
+         Gs1[ 2 ] = 0.405845151377397 ;  w[ 2 ] = 0.381830050505119;
+         Gs1[ 3 ] = 0.000000000000000 ;  w[ 3 ] = 0.417959183673469;
+         Gs1[ 4 ] = -Gs1[ 2 ];           w[ 4 ] = w[ 2 ];
+         Gs1[ 5 ] = -Gs1[ 1 ];           w[ 5 ] = w[ 1 ];
+         Gs1[ 6 ] = -Gs1[ 0 ];           w[ 6 ] = w[ 0 ];
          break;
       }
       case 10:
       {
-         Gs1[0] = 0.973906528517172 ;  w[0] = 0.066671344308688;
-         Gs1[1] = 0.865063366688985 ;  w[1] = 0.149451349150581;
-         Gs1[2] = 0.679409568299024 ;  w[2] = 0.219086362515982;
-         Gs1[3] = 0.433395394129247 ;  w[3] = 0.269266719309996;
-         Gs1[4] = 0.148874338981631 ;  w[4] = 0.295524224714753;
-         Gs1[5] = -Gs1[4];             w[5] = w[4];
-         Gs1[6] = -Gs1[3];             w[6] = w[3];
-         Gs1[7] = -Gs1[2];             w[7] = w[2];
-         Gs1[8] = -Gs1[1];             w[8] = w[1];
-         Gs1[9] = -Gs1[0];             w[9] = w[0];
+         Gs1[ 0 ] = 0.973906528517172 ;  w[ 0 ] = 0.066671344308688;
+         Gs1[ 1 ] = 0.865063366688985 ;  w[ 1 ] = 0.149451349150581;
+         Gs1[ 2 ] = 0.679409568299024 ;  w[ 2 ] = 0.219086362515982;
+         Gs1[ 3 ] = 0.433395394129247 ;  w[ 3 ] = 0.269266719309996;
+         Gs1[ 4 ] = 0.148874338981631 ;  w[ 4 ] = 0.295524224714753;
+         Gs1[ 5 ] = -Gs1[ 4 ];           w[ 5 ] = w[ 4 ];
+         Gs1[ 6 ] = -Gs1[ 3 ];           w[ 6 ] = w[ 3 ];
+         Gs1[ 7 ] = -Gs1[ 2 ];           w[ 7 ] = w[ 2 ];
+         Gs1[ 8 ] = -Gs1[ 1 ];           w[ 8 ] = w[ 1 ];
+         Gs1[ 9 ] = -Gs1[ 0 ];           w[ 9 ] = w[ 0 ];
          break;
       }
       default:
@@ -1688,8 +1811,8 @@ void US_AstfemMath::DefineGaussian( int nGauss, double** Gs2 )
 
 struct _created_matrices {
   long addr;
-  int val1;
-  int val2;
+  int  val1;
+  int  val2;
 };
 
 static list <_created_matrices> created_matrices;
@@ -1697,36 +1820,36 @@ static list <_created_matrices> created_matrices;
 void init_matrices_alloc() 
 {
   created_matrices.clear();
-  puts("init_matrices_alloc()");
+  puts( "init_matrices_alloc()" );
 }
 
 void list_matrices_alloc() 
 {
-  if (created_matrices.size()) {
-    printf("allocated matrices:\n");
+  if ( created_matrices.size() )
+  {
+    printf( "allocated matrices:\n" 0 );
   }
+
   list<_created_matrices>::iterator Li;
 
-  for (Li = created_matrices.begin(); Li != created_matrices.end(); Li++) 
+  for ( Li = created_matrices.begin(); Li != created_matrices.end(); Li++ )
   {
-    printf("addr %lx val1 %u val2 %u\n",
-      Li->addr,
-      Li->val1,
-      Li->val2
-      );
+     printf( "addr %lx val1 %u val2 %u\n", Li->addr, Li->val1, Li->val2 );
   }
 }
 
-static list<_created_matrices>::iterator find_matrices_alloc( long addr) {
-  list<_created_matrices>::iterator Li;
-  for (Li = created_matrices.begin(); Li != created_matrices.end(); Li++) 
-  {
-    if (Li->addr == addr) 
-    {
-      return Li;
-    }
-  }
-  return Li;
+static list<_created_matrices>::iterator find_matrices_alloc( long addr )
+{
+   list<_created_matrices>::iterator Li;
+
+   for ( Li = created_matrices.begin(); Li != created_matrices.end(); Li++ ) 
+   {
+      if ( Li->addr == addr ) 
+      {
+         return Li;
+      }
+   }
+   return Li;
 }
 
 #endif

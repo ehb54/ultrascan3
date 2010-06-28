@@ -955,8 +955,8 @@ qDebug() << "SIM: row" << row;
    US_DataIO2::Reading     reading;
    int    nscan   = rdata->scanData.size();
    int    nconc   = rdata->x.size();
-   double radlo   = rdata->x[ 0         ].radius;
-   double radhi   = rdata->x[ nconc - 1 ].radius;
+   double radlo   = rdata->radius( 0         );
+   double radhi   = rdata->radius( nconc - 1 );
    double time1   = rdata->scanData[ 0         ].seconds;
    double time2   = rdata->scanData[ nscan - 1 ].seconds;
 qDebug() << " nscan" << nscan;
@@ -964,7 +964,7 @@ qDebug() << " nconc" << nconc;
 qDebug() << " radlo" << radlo;
 qDebug() << " radhi" << radhi;
 
-   // initialize to simulation parameters using raw data ranges
+   // initialize simulation parameters using raw data information
    simparams.simpoints         = 200;
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;
@@ -976,12 +976,13 @@ qDebug() << " radhi" << radhi;
    simparams.rinoise           = 0.0;
    simparams.rotor             = 0;
    simparams.band_forming      = false;
-   simparams.band_volume       = 0.0;
+   simparams.band_volume       = 0.015;
 qDebug() << "  radreso " << simparams.radial_resolution;
 qDebug() << "  meniscus" << simparams.meniscus;
 qDebug() << "  bottom  " << simparams.bottom;
 
    simparams.band_firstScanIsConcentration   = false;
+   //simparams.band_firstScanIsConcentration   = true;
    simparams.mesh_radius.clear();
    simparams.speed_step .clear();
    US_SimulationParameters::SpeedProfile sp;
@@ -991,8 +992,8 @@ qDebug() << "  bottom  " << simparams.bottom;
    sp.delay_minutes     = ( time1 / 60.0 ) - ( (double)sp.delay_hours * 60.0 );
    sp.scans             = nscan;
    sp.acceleration      = 400;
-   sp.rotorspeed        = 42000;
-   sp.acceleration_flag = false;
+   sp.rotorspeed        = rdata->scanData[ 0 ].rpm;
+   sp.acceleration_flag = true;
    simparams.speed_step << sp;
 qDebug() << "  duration_hours  " << sp.duration_hours;
 qDebug() << "  duration_minutes" << sp.duration_minutes;
@@ -1018,24 +1019,30 @@ qDebug() << "  sdata.description" << sdata.description;
    }
 qDebug() << "   sdata.x0" << sdata.radius(0);
 qDebug() << "   sdata.xN" << sdata.radius(nconc-1);
+qDebug() << "   rdata.cN" << rdata->value(0,0);
 qDebug() << "   rdata.cN" << rdata->value(0,nconc-1);
 
-   reading.value     = 0.0;
+   reading.value     = model.components[ 0 ].signal_concentration;
    reading.stdDev    = 0.0;
    sdata.scanData.clear();
 
-   for ( int jj = 0; jj < nscan; jj++ )
+   for ( int ii = 0; ii < nscan; ii++ )
    {
-      US_DataIO2::Scan sscan = rdata->scanData[ jj ];
+      US_DataIO2::Scan sscan = rdata->scanData[ ii ];
 
-      for ( int ii = 0; ii < nconc; ii++ )
+      for ( int jj = 0; jj < nconc; jj++ )
       {
-         sscan.readings[ ii ] = reading;
+         sscan.readings[ jj ] = reading;
       }
 
       sdata.scanData.append( sscan );
+      reading.value     = 0.0;
    }
 
+qDebug() << "   sdata.c00" << sdata.value(0,0);
+qDebug() << "   sdata.c0N" << sdata.value(0,nconc-1);
+qDebug() << "   sdata.cM0" << sdata.value(nscan-1,0);
+qDebug() << "   sdata.cMN" << sdata.value(nscan-1,nconc-1);
 qDebug() << " afrsa init";
    US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
    
@@ -1043,7 +1050,10 @@ qDebug() << " afrsa calc";
    astfem_rsa->calculate( sdata );
 qDebug() << " afrsa done";
 qDebug() << "   sdata.xN" << sdata.radius(nconc-1);
-qDebug() << "   sdata.cN" << sdata.value(0,nconc-1);
+qDebug() << "   sdata.c00" << sdata.value(0,0);
+qDebug() << "   sdata.c0N" << sdata.value(0,nconc-1);
+qDebug() << "   sdata.cM0" << sdata.value(nscan-1,0);
+qDebug() << "   sdata.cMN" << sdata.value(nscan-1,nconc-1);
 }
 
 // pare down files list by including only the last-edit versions

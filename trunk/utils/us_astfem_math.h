@@ -159,11 +159,11 @@ class US_EXTERN US_AstfemMath
       {
          public:
          int            comp_index; // index of this component
-         QVector< int > assoc;      // assoc QVector index where this component occurs
+         QVector< int > assoc;      // assoc index where this component occurs
          QVector< int > react;      // role of component in each association, 
-                                           // = 1: if as reactant; =-1, if as product
+                                    //  = 1: if as reactant; =-1, if as product
          QVector< int > st;         // stoichiometry of each component in 
-                                           // each assoc., index is linked to assoc.
+                                    // each assoc., index is linked to assoc.
       };
 
       //! \brief Parameters for finite element solution
@@ -176,13 +176,13 @@ class US_EXTERN US_AstfemMath
          QVector< double > D;       //!< Diffusion coefficient
          QVector< double > kext;    //!< extinctiom coefficient
          QVector< ComponentRole > role; //!< role of each component
-                                               //!<  in various reactions
-
+                                        //!<  in various reactions
          double pathlength;       //!< path length of centerpiece;
          double dt;               //!< time step size;
          int    time_steps;       //!< number of time steps for simulation
          double omega_s;          //!< omega^2
-         double start_time;       //!< start time in seconds of simulation at constant speed
+         double start_time;       //!< start time in seconds of simulation
+                                  //!<  at constant speed
          double current_meniscus; //!< actual meniscus for current speed
          double current_bottom;   //!< actual bottom for current speed
          int    first_speed;      //!< constant speed at first speed step
@@ -191,7 +191,8 @@ class US_EXTERN US_AstfemMath
          //! Local index of each GroupComponent involved in a reaction group
          QVector< int > local_index;  
          
-         //! All association rules in a reaction group, with comp expressed in local index
+         //! All association rules in a reaction group,
+         //!  with components expressed in local index
          QVector< US_Model::Association > association; 
       };
 
