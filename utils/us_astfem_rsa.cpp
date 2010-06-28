@@ -41,6 +41,10 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
  
    load_mfem_data( exp_data, af_data );
 
+qDebug() << "RSA: rotorspeed" << af_params.first_speed;
+qDebug() << "RSA: simpoints" << af_params.simpoints;
+qDebug() << "RSA:  scan0size" << af_data.scan[0].conc.size();
+qDebug() << "RSA:  af_c0size" << initial_npts;
    update_assocv();
    initialize_rg();  // Reaction group
    adjust_limits( simparams.speed_step[ 0 ].rotorspeed );
@@ -79,16 +83,18 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
       {
          CT0.radius.append( af_params.current_meniscus + j * dr );
          CT0.concentration.append( 0.0 );
+         //CT0.concentration.append( sc->signal_concentration );
       }
 
       af_c0.radius       .clear();
       af_c0.concentration.clear();
-      
+#if 0
       for ( int jj = 0; jj < initial_npts; jj++ )
       {
          af_c0.radius       .append( CT0.radius[        jj ] );
          af_c0.concentration.append( CT0.concentration[ jj ] );
       }
+#endif
 
       // Once time invariant noise has been removed in a band experiment, we
       // can use the first scan of the first speed step of the experiment as
@@ -116,6 +122,7 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
          }
 
          US_AstfemMath::interpolate_C0( scan1, af_c0 );
+qDebug() << "RSA: k s0conc" << k << scan0->conc[af_data.radius.size()-1];
       }
 
       if ( ! reacting[ k ] ) // noninteracting
@@ -231,6 +238,7 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
          
          emit current_component( k + 1 );
          qApp->processEvents();
+qDebug() << "RSA:     k conc0" << k << simdata.scan[0].conc[k];
       }
    }
 
@@ -547,6 +555,8 @@ void US_Astfem_RSA::adjust_limits( int speed )
    
    // Add current stretch to bottom at rest
    af_params.current_bottom = simparams.bottom + stretch_value;
+qDebug() << "RSA: AL: stretch bottom"
+   << stretch_value << af_params.current_bottom;
 }
 
 double US_Astfem_RSA::stretch( int rotor, int rpm )
@@ -740,14 +750,15 @@ void US_Astfem_RSA::initialize_rg( void )
 }
 
 // Initializes total concentration vector
-void US_Astfem_RSA::initialize_conc( int k, US_AstfemMath::MfemInitial& CT0, 
+void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0, 
       bool noninteracting ) 
 {
-   US_Model::SimulationComponent* sc = &system.components[ k ];
+   US_Model::SimulationComponent* sc = &system.components[ kk ];
 
    // We don't have an existing CT0 concentration vector. Build up the initial
    // concentration vector with constant concentration
  
+qDebug() << "size(af_c0)" << af_c0.concentration.size();
    //if ( sc->c0.concentration.size() == 0 ) 
    if ( af_c0.concentration.size() == 0 ) 
    {
@@ -757,7 +768,7 @@ void US_Astfem_RSA::initialize_conc( int k, US_AstfemMath::MfemInitial& CT0,
          double base = af_params.current_meniscus * af_params.current_meniscus 
             + simparams.band_volume * 360.0 / ( 2.5 * 1.2 * M_PI );
 
-         double lamella_width = pow( base, 0.5 ) - af_params.current_meniscus;
+         double lamella_width = sqrt( base ) - af_params.current_meniscus;
             
          // Calculate the spread of the lamella:
          for ( int j = 0; j < CT0.concentration.size(); j++ )
@@ -768,13 +779,15 @@ void US_Astfem_RSA::initialize_conc( int k, US_AstfemMath::MfemInitial& CT0,
                sc->signal_concentration * exp( -pow( base, 4.0 ) );
          }
       }
-      else
+
+      else  // !simparams.band_forming
       {
          for ( int j = 0; j < CT0.concentration.size(); j++ )
             CT0.concentration[j] += sc->signal_concentration;
       }
    }
-   else
+
+   else  // af_c0.concentration.size() > 0
    {
       if ( noninteracting )
       {
@@ -791,23 +804,28 @@ void US_Astfem_RSA::initialize_conc( int k, US_AstfemMath::MfemInitial& CT0,
             CT0.concentration.append( af_c0.concentration[ jj ] );
          }
       }
+
       else // interpolation
       {
          US_AstfemMath::MfemInitial C;
          C.radius.clear();
          C.concentration.clear();
          
-         double dr = (af_params.current_bottom - af_params.current_meniscus) /
-                     ( CT0.concentration.size() - 1 );
+         double dr  = ( af_params.current_bottom - af_params.current_meniscus )
+                     / ( CT0.concentration.size() - 1 );
+         double rad = af_params.current_meniscus;
          
          for ( int j = 0; j < CT0.concentration.size(); j++ )
          {
-            C.radius        .append( af_params.current_meniscus + j * dr );
-            C.concentration .append(  0.0 );
+            //C.radius        .append( af_params.current_meniscus + j * dr );
+            C.radius       .append( rad );
+            C.concentration.append(  0.0 );
+            rad += dr;
          }
 
-         //US_AstfemMath::interpolate_C0 ( sc->c0, C );
-         US_AstfemMath::interpolate_C0 ( af_c0, C );
+qDebug() << "interpolate_C0 size(af_c0)" << af_c0.concentration.size();
+         //US_AstfemMath::interpolate_C0( sc->c0, C );
+         US_AstfemMath::interpolate_C0( af_c0, C );
          
          for ( int j = 0; j < CT0.concentration.size(); j++ )
             CT0.concentration[ j ] += C.concentration[ j ];
@@ -941,11 +959,11 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
          {
             for ( int j2 = 0; j2 < N; j2++ )
             {
-               CA[ j1 ][ j2 ] = CA1[ j1 ][ j2 ] + sq( rpm_current / rpm_stop ) * 
-                  ( CA2[ j1 ][ j2 ] - CA1[ j1 ][ j2 ] );
+               CA[ j1 ][ j2 ] = CA1[ j1 ][ j2 ] + sq( rpm_current / rpm_stop )
+                  * ( CA2[ j1 ][ j2 ] - CA1[ j1 ][ j2 ] );
                
-               CB[ j1 ][ j2 ] = CB1[ j1 ][ j2 ] + sq( rpm_current / rpm_stop ) * 
-                  ( CB2[ j1 ][ j2 ] - CB1[ j1 ][ j2 ] );
+               CB[ j1 ][ j2 ] = CB1[ j1 ][ j2 ] + sq( rpm_current / rpm_stop )
+                  * ( CB2[ j1 ][ j2 ] - CB1[ j1 ][ j2 ] );
             }
          }
       }
@@ -1070,7 +1088,7 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 //    nuMax, nuMin = max and min of nu=sw^2/D
 //    MeshType: = 0 ASTFEM grid based on all nu (composite in sharp region)
 //              = 1 Claverie (uniform), etc,
-//              = 2 Exponential mesh (Schuck's formular, no refinement at bottom)
+//              = 2 Exponential mesh (Schuck's form., no refinement at bottom)
 //              = 3 input from data file: "mesh_data.dat"
 //              = 10, acceleration mesh (left and right refinement)
 //////////////////////////////////////////////////////////////%
@@ -1141,14 +1159,15 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 
                if ( fabs( x[ 0 ] - m ) > 1.0e7 )
                {
-                  qDebug() << "The meniscus from the mesh file does not match "
-                              "the set meniscus - using Claverie Mesh instead\n";
+                  qDebug() << "The meniscus from the mesh file does not"
+                     " match the set meniscus - using Claverie Mesh instead\n";
                }
 
                if ( fabs( x[ x.size() - 1 ] - b ) > 1.0e7 )
                {
-                  qDebug() << "The cell bottom from the mesh file does not match "
-                              "the set cell bottom - using Claverie Mesh instead\n";
+                  qDebug() << "The cell bottom from the mesh file does not"
+                     " match the set cell bottom - using Claverie Mesh"
+                     " instead\n";
                }
             }
             else
@@ -1225,10 +1244,13 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nu )
 
       // Add one more point to Schuck's grids
       for ( int i = 1; i < NN - 1 ; i++ ) 
-         x .append( m * pow( b / m, (double) i / ( NN - 1 ) ) ); // Schuck's mesh
+      { // Schuck's mesh
+         x .append( m * pow( b / m, (double) i / ( NN - 1 ) ) );
+      }
 
       x .append( b );
    }
+
    else  // Need a composite grid
    {
       // Steep region
@@ -1236,7 +1258,7 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nu )
       
       for ( int i = 0; i < IndLayer; i++ )  // Consider i-th steep region
       {
-         if ( i < IndLayer - 1 )  // Use linear distribution for step size distrib
+         if ( i < IndLayer - 1 )  // Linear distribution for step size distrib
          {
             double HL = Hstar[ i ];
             double HR = Hstar[ i + 1 ];
@@ -1542,75 +1564,78 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
    // Compute local stiffness matrices
    US_StiffBase stfb0;
    double***    Stif;         // Local stiffness matrix at each element
-   double       xd[4][2];     // coord for verices of quad elem
+   double       xd[ 4 ][ 2 ]; // coord for verices of quad elem
    
    US_AstfemMath::initialize_3d( N, 4, 4, &Stif );
 
    // elem[0]: triangle
-   xd[0][0] = x[0];  xd[0][1] = 0.;
-   xd[1][0] = x[1];  xd[1][1] = af_params.dt;
-   xd[2][0] = x[0];  xd[2][1] = af_params.dt;
+   xd[ 0 ][ 0 ] = x[ 0 ];  xd[ 0 ][ 1 ] = 0.;
+   xd[ 1 ][ 0 ] = x[ 1 ];  xd[ 1 ][ 1 ] = af_params.dt;
+   xd[ 2 ][ 0 ] = x[ 0 ];  xd[ 2 ][ 1 ] = af_params.dt;
    stfb0.CompLocalStif( 3, xd, D, sw2, Stif[ 0 ] );
 
    // elem[k]: k=1..(N-2), quadrilateral
    for ( int k = 1; k < N - 1; k++ ) // loop for all elem
    {  
-      xd[0][0] = x[k-1];   xd[0][1] = 0.0;
-      xd[1][0] = x[k  ];   xd[1][1] = 0.0;
-      xd[2][0] = x[k+1];   xd[2][1] = af_params.dt;
-      xd[3][0] = x[k  ];   xd[3][1] = af_params.dt;
+      xd[ 0 ][ 0 ] = x[ k - 1 ];   xd[ 0 ][ 1 ] = 0.0;
+      xd[ 1 ][ 0 ] = x[ k     ];   xd[ 1 ][ 1 ] = 0.0;
+      xd[ 2 ][ 0 ] = x[ k + 1 ];   xd[ 2 ][ 1 ] = af_params.dt;
+      xd[ 3 ][ 0 ] = x[ k     ];   xd[ 3 ][ 1 ] = af_params.dt;
       stfb0.CompLocalStif( 4, xd, D, sw2, Stif[ k ] );
    }
 
    // elem[N-1]: triangle
-   xd[0][0] = x[N-2];   xd[0][1] = 0.0;
-   xd[1][0] = x[N-1];   xd[1][1] = 0.0;
-   xd[2][0] = x[N-1];   xd[2][1] = af_params.dt;
+   xd[ 0 ][ 0 ] = x[ N - 2 ];   xd[ 0 ][ 1 ] = 0.0;
+   xd[ 1 ][ 0 ] = x[ N - 1 ];   xd[ 1 ][ 1 ] = 0.0;
+   xd[ 2 ][ 0 ] = x[ N - 1 ];   xd[ 2 ][ 1 ] = af_params.dt;
    stfb0.CompLocalStif( 3, xd, D, sw2, Stif[ N - 1 ] );
 
    // assembly coefficient matrices
 
-   int k = 0;
-   CA[1][k] = Stif[k][2][2] ;
-   CA[2][k] = Stif[k][1][2] ;
-   CB[2][k] = Stif[k][0][2] ;
+   int k  = 0;
+   int mm = 0;
+   CA[ 1 ][ k ]  = Stif[ k ][ 2 ][ 2 ] ;
+   CA[ 2 ][ k ]  = Stif[ k ][ 1 ][ 2 ] ;
+   CB[ 2 ][ k ]  = Stif[ k ][ 0 ][ 2 ] ;
 
    k = 1;
-   CA[0][k] = Stif[k-1][2][0] + Stif[k-1][2][1];
-   CA[1][k] = Stif[k-1][1][0] + Stif[k-1][1][1];
-   CA[1][k]+= Stif[k  ][3][0] + Stif[k  ][3][3];
-   CA[2][k] = Stif[k  ][2][0] + Stif[k  ][2][3] ;
+   CA[ 0 ][ k ]  = Stif[ mm ][ 2 ][ 0 ] + Stif[ mm ][ 2 ][ 1 ];
+   CA[ 1 ][ k ]  = Stif[ mm ][ 1 ][ 0 ] + Stif[ mm ][ 1 ][ 1 ];
+   CA[ 1 ][ k ] += Stif[ k  ][ 3 ][ 0 ] + Stif[ k  ][ 3 ][ 3 ];
+   CA[ 2 ][ k ]  = Stif[ k  ][ 2 ][ 0 ] + Stif[ k  ][ 2 ][ 3 ] ;
 
-   CB[1][k] = Stif[k-1][0][0] + Stif[k-1][0][1];   // j=0;
-   CB[1][k]+= Stif[k  ][0][0] + Stif[k  ][0][3];   // j=0;
-   CB[2][k] = Stif[k  ][1][0] + Stif[k  ][1][3];   // j=1;
+   CB[ 1 ][ k ]  = Stif[ mm ][ 0 ][ 0 ] + Stif[ mm ][ 0 ][ 1 ];   // j=0;
+   CB[ 1 ][ k ] += Stif[ k  ][ 0 ][ 0 ] + Stif[ k  ][ 0 ][ 3 ];   // j=0;
+   CB[ 2 ][ k ]  = Stif[ k  ][ 1 ][ 0 ] + Stif[ k  ][ 1 ][ 3 ];   // j=1;
 
-   for( int k = 2; k < N - 1; k++ )
+   for( k = 2; k < N - 1; k++ )
    {  // loop for all elem
       // elem k-1: i=1,2
-      CA[0][k]  = Stif[k-1][3][1] + Stif[k-1][3][2];  // j=3;
-      CA[1][k]  = Stif[k-1][2][1] + Stif[k-1][2][2];  // j=2;
-      CB[0][k]  = Stif[k-1][0][1] + Stif[k-1][0][2];  // j=0;
-      CB[1][k]  = Stif[k-1][1][1] + Stif[k-1][1][2];  // j=1;
+      mm = k - 1;
+      CA[ 0 ][ k ]  = Stif[ mm ][ 3 ][ 1 ] + Stif[ mm ][ 3 ][ 2 ];  // j=3;
+      CA[ 1 ][ k ]  = Stif[ mm ][ 2 ][ 1 ] + Stif[ mm ][ 2 ][ 2 ];  // j=2;
+      CB[ 0 ][ k ]  = Stif[ mm ][ 0 ][ 1 ] + Stif[ mm ][ 0 ][ 2 ];  // j=0;
+      CB[ 1 ][ k ]  = Stif[ mm ][ 1 ][ 1 ] + Stif[ mm ][ 1 ][ 2 ];  // j=1;
 
       // elem k: i=0,3
-      CA[1][k] += Stif[k  ][3][0] + Stif[k  ][3][3];  // j=3;
-      CA[2][k]  = Stif[k  ][2][0] + Stif[k  ][2][3];  // j=2;
-      CB[1][k] += Stif[k  ][0][0] + Stif[k  ][0][3];  // j=0;
-      CB[2][k]  = Stif[k  ][1][0] + Stif[k  ][1][3];  // j=1;
+      CA[ 1 ][ k ] += Stif[ k ][ 3 ][ 0 ] + Stif[ k ][ 3 ][ 3 ];  // j=3;
+      CA[ 2 ][ k ]  = Stif[ k ][ 2 ][ 0 ] + Stif[ k ][ 2 ][ 3 ];  // j=2;
+      CB[ 1 ][ k ] += Stif[ k ][ 0 ][ 0 ] + Stif[ k ][ 0 ][ 3 ];  // j=0;
+      CB[ 2 ][ k ]  = Stif[ k ][ 1 ][ 0 ] + Stif[ k ][ 1 ][ 3 ];  // j=1;
    }
 
-   k = N - 1;
+   k  = N - 1;
+   mm = k - 1;
    // elem[k-1]: quadrilateral
-   CA[0][k]  = Stif[k-1][3][1] + Stif[k-1][3][2];  // j=3;
-   CA[1][k]  = Stif[k-1][2][1] + Stif[k-1][2][2];  // j=2;
-   CB[0][k]  = Stif[k-1][0][1] + Stif[k-1][0][2];  // j=0;
-   CB[1][k]  = Stif[k-1][1][1] + Stif[k-1][1][2];  // j=1;
+   CA[ 0 ][ k ]  = Stif[ mm ][3][1] + Stif[ mm ][3][2];  // j=3;
+   CA[ 1 ][ k ]  = Stif[ mm ][2][1] + Stif[ mm ][2][2];  // j=2;
+   CB[ 0 ][ k ]  = Stif[ mm ][0][1] + Stif[ mm ][0][2];  // j=0;
+   CB[ 1 ][ k ]  = Stif[ mm ][1][1] + Stif[ mm ][1][2];  // j=1;
 
    // elem[k]: triangle
-   CA[1][k] += Stif[k][2][0] + Stif[k][2][1] + Stif[k][2][2];
-   CB[1][k] += Stif[k][0][0] + Stif[k][0][1] + Stif[k][0][2];
-   CB[2][k]  = Stif[k][1][0] + Stif[k][1][1] + Stif[k][1][2];
+   CA[ 1 ][ k ] += Stif[ k  ][2][0] + Stif[ k  ][2][1] + Stif[ k ][2][2];
+   CB[ 1 ][ k ] += Stif[ k  ][0][0] + Stif[ k  ][0][1] + Stif[ k ][0][2];
+   CB[ 2 ][ k ]  = Stif[ k  ][1][0] + Stif[ k  ][1][1] + Stif[ k ][1][2];
    
    US_AstfemMath::clear_3d( N, 4, Stif );
 }
@@ -2246,8 +2271,8 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    } // acceleration
 
    // Initial condition
-   double** C0;  // C[m][j]: current/next concentration of m-th component at x_j
-   double** C1;  // C[0...Ms-1][0....N-1]:
+   double** C0; // C[m][j]: current/next concentration of m-th component at x_j
+   double** C1; // C[0...Ms-1][0....N-1]:
    
    US_AstfemMath::initialize_2d( Mcomp, N, &C0 );
    US_AstfemMath::initialize_2d( Mcomp, N, &C1 );
@@ -2480,9 +2505,9 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
                                    - CB[ i ][ 1 ][ j ] * C0[ i ][ j - 1 ]
                                    - CB[ i ][ 2 ][ j ] * C0[ i ][ j     ];
 
-            US_AstfemMath::QuadSolver( CA[ i ][ 0 ], CA[ i ][ 1 ], CA[ i ][ 2 ], 
-                                       CA[ i ][ 3 ], right_hand_side, C1[ i ], 
-                                       N );
+            US_AstfemMath::QuadSolver( CA[ i ][ 0 ], CA[ i ][ 1 ],
+                                       CA[ i ][ 2 ], CA[ i ][ 3 ],
+                                       right_hand_side, C1[ i ], N );
          }
       }
 
@@ -2598,64 +2623,64 @@ void US_Astfem_RSA::GlobalStiff( QVector< double >& xb, double** ca,
    US_AstfemMath::IntQTn1 ( vx, D, sw2, Stif[ N - 1 ], af_params.dt );
    
    // assembly into global stiffness matrix
-   ca[0][0] = 0.0;
-   ca[1][0] = Stif[0][2][0];
-   ca[2][0] = Stif[0][3][0];
-   ca[3][0] = Stif[0][4][0];
-
-   cb[0][0] = 0.0;
-   cb[1][0] = 0.0;
-   cb[2][0] = Stif[0][0][0];
-   cb[3][0] = Stif[0][1][0];
+   ca[ 0 ][ 0 ] = 0.0;
+   ca[ 1 ][ 0 ] = Stif[ 0 ][ 2 ][ 0 ];
+   ca[ 2 ][ 0 ] = Stif[ 0 ][ 3 ][ 0 ];
+   ca[ 3 ][ 0 ] = Stif[ 0 ][ 4 ][ 0 ];
+ 
+   cb[ 0 ][ 0 ] = 0.0;
+   cb[ 1 ][ 0 ] = 0.0;
+   cb[ 2 ][ 0 ] = Stif[ 0 ][ 0 ][ 0 ];
+   cb[ 3 ][ 0 ] = Stif[ 0 ][ 1 ][ 0 ];
 
    // i=2
-   ca[0][1] = Stif[0][2][1];
-   ca[1][1] = Stif[0][3][1] + Stif[1][3][0];
-   ca[2][1] = Stif[0][4][1] + Stif[1][4][0];
-   ca[3][1] =                 Stif[1][5][0];
+   ca[ 0 ][ 1 ] = Stif[ 0 ][ 2 ][ 1 ];
+   ca[ 1 ][ 1 ] = Stif[ 0 ][ 3 ][ 1 ] + Stif[ 1 ][ 3 ][ 0 ];
+   ca[ 2 ][ 1 ] = Stif[ 0 ][ 4 ][ 1 ] + Stif[ 1 ][ 4 ][ 0 ];
+   ca[ 3 ][ 1 ] =                       Stif[ 1 ][ 5 ][ 0 ];
 
-   cb[0][1] = 0.0;
-   cb[1][1] = Stif[0][0][1] + Stif[1][0][0];
-   cb[2][1] = Stif[0][1][1] + Stif[1][1][0];
-   cb[3][1] =                 Stif[1][2][0];
+   cb[ 0 ][ 1 ] = 0.0;
+   cb[ 1 ][ 1 ] = Stif[ 0 ][ 0 ][ 1 ] + Stif[ 1 ][ 0 ][ 0 ];
+   cb[ 2 ][ 1 ] = Stif[ 0 ][ 1 ][ 1 ] + Stif[ 1 ][ 1 ][ 0 ];
+   cb[ 3 ][ 1 ] =                       Stif[ 1 ][ 2 ][ 0 ];
 
    // i: middle
    for (  int i = 2; i < N - 2; i++ )
    {
-      ca[0][i] = Stif[i-1][3][1];
-      ca[1][i] = Stif[i-1][4][1] + Stif[i][3][0];
-      ca[2][i] = Stif[i-1][5][1] + Stif[i][4][0];
-      ca[3][i] =                   Stif[i][5][0];
+      ca[ 0 ][ i ] = Stif[ i - 1 ][ 3 ][ 1 ];
+      ca[ 1 ][ i ] = Stif[ i - 1 ][ 4 ][ 1 ] + Stif[ i ][ 3 ][ 0 ];
+      ca[ 2 ][ i ] = Stif[ i - 1 ][ 5 ][ 1 ] + Stif[ i ][ 4 ][ 0 ];
+      ca[ 3 ][ i ] =                           Stif[ i ][ 5 ][ 0 ];
 
-      cb[0][i] = Stif[i-1][0][1];
-      cb[1][i] = Stif[i-1][1][1] + Stif[i][0][0];
-      cb[2][i] = Stif[i-1][2][1] + Stif[i][1][0];
-      cb[3][i] =                   Stif[i][2][0];
+      cb[ 0 ][ i ] = Stif[ i - 1 ][ 0 ][ 1 ];
+      cb[ 1 ][ i ] = Stif[ i - 1 ][ 1 ][ 1 ] + Stif[ i ][ 0 ][ 0 ];
+      cb[ 2 ][ i ] = Stif[ i - 1 ][ 2 ][ 1 ] + Stif[ i ][ 1 ][ 0 ];
+      cb[ 3 ][ i ] =                           Stif[ i ][ 2 ][ 0 ];
    }
 
    // i=n
    int i = N - 2;
-   ca[0][i] = Stif[i-1][3][1];
-   ca[1][i] = Stif[i-1][4][1] + Stif[i][3][0];
-   ca[2][i] = Stif[i-1][5][1] + Stif[i][4][0];
-   ca[3][i] = 0.0;
+   ca[ 0 ][ i ] = Stif[ i - 1 ][ 3 ][ 1 ];
+   ca[ 1 ][ i ] = Stif[ i - 1 ][ 4 ][ 1 ] + Stif[ i ][ 3 ][ 0 ];
+   ca[ 2 ][ i ] = Stif[ i - 1 ][ 5 ][ 1 ] + Stif[ i ][ 4 ][ 0 ];
+   ca[ 3 ][ i ] = 0.0;
 
-   cb[0][i] = Stif[i-1][0][1];
-   cb[1][i] = Stif[i-1][1][1] + Stif[i][0][0];
-   cb[2][i] = Stif[i-1][2][1] + Stif[i][1][0];
-   cb[3][i] =                   Stif[i][2][0];
+   cb[ 0 ][ i ] = Stif[ i - 1 ][ 0 ][ 1 ];
+   cb[ 1 ][ i ] = Stif[ i - 1 ][ 1 ][ 1 ] + Stif[ i ][ 0 ][ 0 ];
+   cb[ 2 ][ i ] = Stif[ i - 1 ][ 2 ][ 1 ] + Stif[ i ][ 1 ][ 0 ];
+   cb[ 3 ][ i ] =                           Stif[ i ][ 2 ][ 0 ];
 
    // i=n+1
    i = N - 1;
-   ca[0][i] = Stif[i-1][3][1];
-   ca[1][i] = Stif[i-1][4][1] + Stif[i][2][0];
-   ca[2][i] = 0.0;
-   ca[3][i] = 0.0;
+   ca[ 0 ][ i ] = Stif[ i - 1 ][ 3 ][ 1 ];
+   ca[ 1 ][ i ] = Stif[ i - 1 ][ 4 ][ 1 ] + Stif[ i ][ 2 ][ 0 ];
+   ca[ 2 ][ i ] = 0.0;
+   ca[ 3 ][ i ] = 0.0;
 
-   cb[0][i] = Stif[i-1][0][1];
-   cb[1][i] = Stif[i-1][1][1] + Stif[i][0][0];
-   cb[2][i] = Stif[i-1][2][1] + Stif[i][1][0];
-   cb[3][i] = 0.0;
+   cb[ 0 ][ i ] = Stif[ i - 1 ][ 0 ][ 1 ];
+   cb[ 1 ][ i ] = Stif[ i - 1 ][ 1 ][ 1 ] + Stif[ i ][ 0 ][ 0 ];
+   cb[ 2 ][ i ] = Stif[ i - 1 ][ 2 ][ 1 ] + Stif[ i ][ 1 ][ 0 ];
+   cb[ 3 ][ i ] = 0.0;
 
    US_AstfemMath::clear_3d( N, 6, Stif );
 }
