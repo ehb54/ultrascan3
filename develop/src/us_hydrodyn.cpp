@@ -140,6 +140,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    overwrite = false;
    saveParams = false;
    guiFlag = true;
+   bead_model_selected_filter = "";
    residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
    editor = (QTextEdit *)0;
    read_residue_file();
@@ -1523,9 +1524,17 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
 
 void US_Hydrodyn::load_bead_model()
 {
-   QString filename = QFileDialog::getOpenFileName(somo_dir, QString("*%1.bead_model *%2.beams *%3.BEAD_MODEL *%4.BEAMS")
-                                                   .arg(DOTSOMO).arg(DOTSOMO).arg(DOTSOMOCAP).arg(DOTSOMOCAP),
-                                                   this);
+   QString filename = QFileDialog::getOpenFileName(somo_dir
+
+                                                   ,"Bead models (*.bead_model *.BEAD_MODEL);;"
+                                                   "BEAMS (*.beams *.BEAMS);;"
+                                                   "DAMMIN/DAMMIF (*.pdb)"
+
+                                                   , this
+                                                   , "open file dialog"
+                                                   , "Open"
+                                                   , &bead_model_selected_filter
+                                                   );
    if (!filename.isEmpty())
    {
       options_log = "";
@@ -1557,6 +1566,7 @@ void US_Hydrodyn::load_bead_model()
       }
       else
       {
+         pb_visualize->setEnabled(true);
          pb_bead_saxs->setEnabled(false);
       }
       // bead_model_prefix = "";

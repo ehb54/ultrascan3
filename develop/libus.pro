@@ -174,6 +174,7 @@ SOURCES += \
   src/us_hydrodyn_batch.cpp \
   src/us_hydrodyn_bead_output.cpp \
   src/us_hydrodyn_core.cpp \
+  src/us_hydrodyn_dammin_opts.cpp \
   src/us_hydrodyn_file.cpp \
   src/us_hydrodyn_grid.cpp \
   src/us_hydrodyn_grid_atob.cpp \
@@ -376,6 +377,7 @@ HEADERS += \
   include/us_hydrodyn_batch.h \
   include/us_hydrodyn_save.h \
   include/us_hydrodyn_bead_output.h \
+  include/us_hydrodyn_dammin_opts.h \
   include/us_hydrodyn_file.h \
   include/us_hydrodyn_grid.h \
   include/us_hydrodyn_grid_atob.h \

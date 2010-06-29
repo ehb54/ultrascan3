@@ -43,6 +43,7 @@
 #include "us_hydrodyn_batch.h"
 #include "us_hydrodyn_save.h"
 #include "us_hydrodyn_file.h"
+#include "us_hydrodyn_dammin_opts.h"
 
 //standard C and C++ defs:
 
@@ -175,6 +176,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString bead_model_prefix;
       QString bead_model_suffix;
       QString somo_tmp_dir;
+
+      QString bead_model_selected_filter;
 
       point last_molecular_cog;
 

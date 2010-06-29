@@ -942,6 +942,227 @@ int US_Hydrodyn::read_bead_model(QString filename)
                               hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance));
       }
    }
+
+   
+   if (ftype == "pdb") // DAMMIN;DAMMIF
+   {
+      if (f.open(IO_ReadOnly))
+      {
+         QTextStream ts(&f);
+
+         QString tmp;
+         do {
+            tmp = ts.readLine();
+            ++linepos;
+         } while ( !ts.atEnd() && 
+                   !tmp.contains("Dummy atoms in output phase") );
+         if ( ts.atEnd() )
+         {
+            editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'Dummy atoms in output phase'\n");
+            return 1;
+         }
+         QRegExp rx( "Dummy atoms in output phase\\s*:\\s*(\\d+)\\s" );
+         if ( rx.search(tmp) == -1 ) 
+         {
+            editor->append("Error in DAMMIN/DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
+            return 1;
+         }
+         bead_count = rx.cap(1).toInt();
+         // editor->append(QString("DAMMIN/DAMMIF model has %1 beads\n").arg(bead_count));
+
+         do {
+            tmp = ts.readLine();
+            ++linepos;
+         } while ( !ts.atEnd() && 
+                   !tmp.contains("Dummy atom radius") );
+         
+         if ( ts.atEnd() )
+         {
+            editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'Dummy atom radius'\n");
+            return 1;
+         }
+
+         rx.setPattern("Dummy atom radius\\s *:\\s*(\\d+\\.\\d+)\\s");
+
+         if ( rx.search(tmp) == -1 ) 
+         {
+            editor->append("Error in DAMMIN/DAMMIF file: couldn't find radius in 'Dummy atom radius' line\n");
+            return 1;
+         }
+         float radius = rx.cap(1).toFloat();
+         // editor->append(QString("DAMMIN/DAMMIF model atom radius %1\n").arg(radius));
+         
+         // enter MW and PSV
+         float mw = 0.0;
+         float psv = 0.0;
+         bool do_write_bead_model = true;
+         // QString msg = QString(tr("\n  DAMMIN/DAMMIF file %1  \n  Enter values for vbar and total molecular weight:  \n"))
+         // .arg(filename);
+         QString msg = QString(tr(" Enter values for vbar and total molecular weight: "));
+
+         US_Hydrodyn_Dammin_Opts *hdo = new US_Hydrodyn_Dammin_Opts(
+                                                                    msg,
+                                                                    &psv,
+                                                                    &mw,
+                                                                    &do_write_bead_model
+                                                                    );
+         do {
+            hdo->exec();
+         } while ( mw <= 0.0 || psv <= 0.0 );
+
+         delete hdo;
+
+         results.vbar = psv;
+         mw /= bead_count;
+
+         // skip rest of remarks
+         // set overlap tolerance
+         editor->append("Setting overlap tolerance to .002 for DAMMIN/DAMMIF models\n");
+         overlap_tolerance = 0.002;
+
+         editor->append(QString("Beads %1\n").arg(bead_count));
+         int beads_loaded = 0;
+         while (!ts.atEnd() && beads_loaded < bead_count)
+         {
+            ++linepos;
+            ++beads_loaded;
+            // ATOM     20  CA  ASP A   1      -8.226   5.986 215.196   1.0  20.0 0 2 201    
+            
+            if (!ts.atEnd()) {
+               ts >> tmp;
+               if ( tmp == "REMARK" )
+               {
+                  do {
+                     ts.readLine();
+                     ++linepos;
+                     ts >> tmp;
+                  } while ( !ts.atEnd() && tmp == "REMARK" );
+               }
+
+               if ( tmp != "ATOM" ) 
+               {
+                  editor->append(QString("\nError in line %1. Expected 'ATOM', got '%1'\n")
+                                 .arg(linepos)
+                                 .arg(tmp)
+                                 );
+                  return linepos;
+               }
+            } else {
+               editor->append(QString("\nError in line %1. premature end of file'\n").arg(linepos));
+               return linepos;
+            }
+            
+            if (!ts.atEnd()) {
+               ts >> tmp_atom.serial;
+               //               tmp_atom.serial = tmp.toInt();
+            } else {
+               editor->append(QString("\nError in line %1. premature end of file'\n").arg(linepos));
+               return linepos;
+            }
+
+            // skip next 4 fields
+            for (unsigned int i = 0; i < 4; i++)
+            {
+               if (!ts.atEnd()) {
+                  ts >> tmp;
+               } else {
+                  editor->append(QString("\nError in line %1!\n").arg(linepos));
+                  return linepos;
+               }
+            }
+            
+            for (unsigned int i = 0; i < 3; i++)
+            {
+               if (!ts.atEnd()) {
+                  ts >>  tmp_atom.bead_coordinate.axis[i];
+               }
+               else
+               {
+                  editor->append(QString("\nError in line %1!\n").arg(linepos));
+                  return linepos;
+               }
+            }
+
+            tmp_atom.bead_computed_radius = radius;
+            tmp_atom.bead_mw = mw;
+            tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
+            tmp_atom.bead_color = 8;
+
+            // clear rest of line
+            if (!ts.atEnd()) {
+               ts.readLine();
+            }
+            else
+            {
+               editor->append(QString("\nError in line %1!\n").arg(linepos));
+               return linepos;
+            }
+            tmp_atom.exposed_code = 1;
+            tmp_atom.all_beads.clear();
+            tmp_atom.active = true;
+            tmp_atom.name = "ATOM";
+            tmp_atom.resName = "RESIDUE";
+            tmp_atom.iCode = "ICODE";
+            tmp_atom.chainID = "CHAIN";
+            bead_model.push_back(tmp_atom);
+            // cout << QString("bead loaded serial %1\n").arg(tmp_atom.serial);
+         }
+         
+         // remove TER line
+         if (!ts.atEnd()) {
+            ts.readLine();
+         }
+
+         QFont save_font = editor->currentFont();
+         QFont new_font = QFont("Courier");
+         new_font.setStretch(75);
+         editor->setCurrentFont(new_font);
+         while (!ts.atEnd())
+         {
+            editor->append(ts.readLine());
+         }
+         editor->setCurrentFont(save_font);
+         editor->append(QString("\nvbar: %1\n\n").arg(results.vbar));
+         f.close();
+         if (bead_count != (int)bead_model.size())
+         {
+            editor->append(QString("Error: bead count %1 does not match # of beads read from file (%2) \n").arg(bead_count).arg(bead_model.size()));
+            return -1;
+         }
+         bead_model_from_file = true;
+         editor->append("Bead model loaded\n\n");
+         // write_bead_spt(somo_dir + SLASH + project +
+         //          QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
+         //          DOTSOMO, &bead_model, true);
+         lb_model->clear();
+         lb_model->insertItem("Model 1 from bead_model file");
+         lb_model->setSelected(0, true);
+         lb_model->setEnabled(false);
+         model_vector.resize(1);
+         model_vector[0].vbar = results.vbar;
+         somo_processed.resize(lb_model->numRows());
+         bead_models.resize(lb_model->numRows());
+         current_model = 0;
+         bead_models[0] = bead_model;
+         somo_processed[0] = 1;
+         bead_models_as_loaded = bead_models;
+         if ( do_write_bead_model ) 
+         {
+            bead_model_suffix = "dammin";
+            le_bead_model_suffix->setText(bead_model_suffix);
+            if ( !overwrite )
+            {
+               setSomoGridFile(false);
+            }
+            write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+                             QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
+                             , &bead_model);
+         }
+         return(overlap_check(true, true, true,
+                              hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance));
+      }
+   }
+
    editor->append("File read error\n");
    return -2;
 }
