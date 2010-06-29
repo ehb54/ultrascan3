@@ -555,8 +555,6 @@ void US_Astfem_RSA::adjust_limits( int speed )
    
    // Add current stretch to bottom at rest
    af_params.current_bottom = simparams.bottom + stretch_value;
-qDebug() << "RSA: AL: stretch bottom"
-   << stretch_value << af_params.current_bottom;
 }
 
 double US_Astfem_RSA::stretch( int rotor, int rpm )
@@ -824,7 +822,6 @@ qDebug() << "size(af_c0)" << af_c0.concentration.size();
          }
 
 qDebug() << "interpolate_C0 size(af_c0)" << af_c0.concentration.size();
-         //US_AstfemMath::interpolate_C0( sc->c0, C );
          US_AstfemMath::interpolate_C0( af_c0, C );
          
          for ( int j = 0; j < CT0.concentration.size(); j++ )
@@ -2746,6 +2743,8 @@ void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData&     edata,
          escan->readings.append( US_DataIO2::Reading( fscan->conc[ jj ] ) );
       }
    }
+
+   edata.x.clear();
 
    for ( int jj = 0; jj < nconc; jj++ )
    {
