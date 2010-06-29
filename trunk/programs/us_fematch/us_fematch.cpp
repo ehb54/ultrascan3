@@ -332,6 +332,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    set_ra_visible( false );
 
    dataLoaded = false;
+   haveSim    = false;
    def_local  = true;
    mfilter    = "";
    investig   = "USER";
@@ -482,6 +483,7 @@ qDebug() << "dataLatest:" << dataLatest;
    lw_triples->setCurrentRow( 0 );
 
    dataLoaded = true;
+   haveSim    = false;
 
    update( 0 );
 
@@ -566,8 +568,23 @@ void US_FeMatch::data_plot( void )
 
    int     scanCount = d->scanData.size();
    int     points    = d->scanData[ 0 ].readings.size();
-   double* r         = new double[ points ];
-   double* v         = new double[ points ];
+   int     count     = points;
+
+   if ( haveSim )
+   {
+      count     = sdata.scanData[ 0 ].readings.size();
+qDebug() << "R,V points count" << points << count;
+      count     = points > count ? points : count;
+   }
+
+   double* r         = new double[ count ];
+   double* v         = new double[ count ];
+
+   QString       title; 
+   QwtPlotCurve* c;
+   QPen          pen_red(  Qt::red );
+   QPen          pen_cyan( Qt::cyan );
+   QPen          pen_plot( US_GuiSettings::plotCurve() );
 
    // Calculate basic parameters for other functions
    solution.density   = le_density  ->text().toDouble();
@@ -607,7 +624,7 @@ void US_FeMatch::data_plot( void )
       double upper_limit = s->plateau;
 
       int jj    = 0;
-      int count = 0;
+      count     = 0;
 
       // Plot each scan in (up to) three segments: below, in, and above
       // the specified boundaries
@@ -620,18 +637,15 @@ void US_FeMatch::data_plot( void )
          count++;
       }
 
-      QString       title; 
-      QwtPlotCurve* c;
-
       if ( count > 1 )
       {  // plot portion of curve below baseline
          title = tr( "Curve " ) + QString::number( ii ) + tr( " below range" );
          c     = us_curve( data_plot2, title );
 
          if ( highlight )
-            c->setPen( QPen( Qt::red ) );
+            c->setPen( pen_red );
          else
-            c->setPen( QPen( Qt::cyan ) );
+            c->setPen( pen_cyan );
          
          c->setData( r, v, count );
       }
@@ -652,9 +666,9 @@ void US_FeMatch::data_plot( void )
          c     = us_curve( data_plot2, title );
 
          if ( highlight )
-            c->setPen( QPen( Qt::red ) );
+            c->setPen( pen_red );
          else
-            c->setPen( QPen( US_GuiSettings::plotCurve() ) );
+            c->setPen( pen_plot );
          
          c->setData( r, v, count );
       }
@@ -675,11 +689,65 @@ void US_FeMatch::data_plot( void )
          c     = us_curve( data_plot2, title );
 
          if ( highlight )
-            c->setPen( QPen( Qt::red ) );
+            c->setPen( pen_red );
          else
-            c->setPen( QPen( Qt::cyan ) );
+            c->setPen( pen_cyan );
         
          c->setData( r, v, count );
+      }
+   }
+
+   // plot simulation
+   if ( haveSim )
+   {
+      double rl = d->radius( 0 );
+      double vh = d->value( scanCount - 1, points - 1 );
+      rl       -= 0.05;
+      vh       += ( vh - d->value( 0, 0 ) ) * 0.05;
+      scanCount = sdata.scanData.size();
+qDebug() << "  RL" << rl << "  VH" << vh;
+int nscan=scanCount;
+int nconc=sdata.scanData[0].readings.size();
+qDebug() << "    sdata ns nc " << nscan << nconc;
+qDebug() << "      sdata.x0" << sdata.radius(0);
+qDebug() << "      sdata.xN" << sdata.radius(nconc-1);
+qDebug() << "      sdata.c00" << sdata.value(0,0);
+qDebug() << "      sdata.c0N" << sdata.value(0,nconc-1);
+qDebug() << "      sdata.cM0" << sdata.value(nscan-1,0);
+qDebug() << "      sdata.cMN" << sdata.value(nscan-1,nconc-1);
+//data_plot2->clear();
+//us_grid( data_plot2 );
+
+      for ( int ii = 0; ii < scanCount; ii++ )
+      {
+         if ( excludedScans.contains( ii ) ) continue;
+
+         points    = sdata.scanData[ ii ].readings.size();
+//qDebug() << "      II POINTS" << ii << points;
+         count     = 0;
+         int jj    = 0;
+         double rr = 0.0;
+         double vv = 0.0;
+
+         while ( jj < points )
+         {  // accumulate coordinates of simulation curve
+            rr         = sdata.radius( jj );
+            vv         = sdata.value( ii, jj++ );
+//qDebug() << "       JJ rr vv" << jj << rr << vv;
+
+            if ( rr > rl  &&  vv < vh )
+            {
+               r[ count ] = rr;
+               v[ count ] = vv;
+               count++;
+            }
+         }
+         title   = "SimCurve " + QString::number( ii );
+         c       = us_curve( data_plot2, title );
+         c->setPen( pen_red );
+         c->setData( r, v, count );
+qDebug() << "Sim plot scan" << ii << "  count" << count;
+qDebug() << "  r0 v0 rN vN" << r[0] << v[0 ] << r[count-1] << v[count-1];
       }
    }
 
@@ -687,6 +755,8 @@ void US_FeMatch::data_plot( void )
 
    delete [] r;
    delete [] v;
+
+   return;
 }
 
 // save the enhanced data
@@ -948,15 +1018,15 @@ qDebug() << "dialog isRA" << isRA;
 void US_FeMatch::simulate_model( )
 {
    int    row     = lw_triples->currentRow();
-qDebug() << "SIM: row" << row;
    US_SimulationParameters simparams;
    US_DataIO2::RawData*    rdata   = &rawList[  row ];
-   US_DataIO2::RawData     sdata;
+   US_DataIO2::EditedData* edata   = &dataList[ row ];
    US_DataIO2::Reading     reading;
    int    nscan   = rdata->scanData.size();
-   int    nconc   = rdata->x.size();
-   double radlo   = rdata->radius( 0         );
-   double radhi   = rdata->radius( nconc - 1 );
+   int    nconc   = edata->x.size();
+   //double radlo   = edata->radius( 0 );
+   double radlo   = edata->meniscus;
+   double radhi   = edata->radius( nconc - 1 );
    double time1   = rdata->scanData[ 0         ].seconds;
    double time2   = rdata->scanData[ nscan - 1 ].seconds;
 qDebug() << " nscan" << nscan;
@@ -993,7 +1063,7 @@ qDebug() << "  bottom  " << simparams.bottom;
    sp.scans             = nscan;
    sp.acceleration      = 400;
    sp.rotorspeed        = rdata->scanData[ 0 ].rpm;
-   sp.acceleration_flag = true;
+   sp.acceleration_flag = false;
    simparams.speed_step << sp;
 qDebug() << "  duration_hours  " << sp.duration_hours;
 qDebug() << "  duration_minutes" << sp.duration_minutes;
@@ -1015,7 +1085,7 @@ qDebug() << "  sdata.description" << sdata.description;
 
    for ( int jj = 0; jj < nconc; jj++ )
    {
-      sdata.x[ jj ]     = rdata->x[ jj ];
+      sdata.x[ jj ]     = edata->x[ jj ];
    }
 qDebug() << "   sdata.x0" << sdata.radius(0);
 qDebug() << "   sdata.xN" << sdata.radius(nconc-1);
@@ -1028,7 +1098,7 @@ qDebug() << "   rdata.cN" << rdata->value(0,nconc-1);
 
    for ( int ii = 0; ii < nscan; ii++ )
    {
-      US_DataIO2::Scan sscan = rdata->scanData[ ii ];
+      US_DataIO2::Scan sscan = edata->scanData[ ii ];
 
       for ( int jj = 0; jj < nconc; jj++ )
       {
@@ -1044,16 +1114,26 @@ qDebug() << "   sdata.c0N" << sdata.value(0,nconc-1);
 qDebug() << "   sdata.cM0" << sdata.value(nscan-1,0);
 qDebug() << "   sdata.cMN" << sdata.value(nscan-1,nconc-1);
 qDebug() << " afrsa init";
+
    US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
    
 qDebug() << " afrsa calc";
+
    astfem_rsa->calculate( sdata );
-qDebug() << " afrsa done";
+
+nscan = sdata.scanData.size();
+nconc = sdata.x.size();
+qDebug() << " afrsa done M N" << nscan << nconc;
+qDebug() << "   sdata.x0" << sdata.radius(0);
 qDebug() << "   sdata.xN" << sdata.radius(nconc-1);
 qDebug() << "   sdata.c00" << sdata.value(0,0);
 qDebug() << "   sdata.c0N" << sdata.value(0,nconc-1);
 qDebug() << "   sdata.cM0" << sdata.value(nscan-1,0);
 qDebug() << "   sdata.cMN" << sdata.value(nscan-1,nconc-1);
+
+   haveSim     = true;
+
+   data_plot();
 }
 
 // pare down files list by including only the last-edit versions

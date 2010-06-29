@@ -82,6 +82,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       int           valueCount;
 
       bool          dataLoaded;
+      bool          haveSim;
       bool          dataLatest;
       bool          def_local;
 
@@ -98,6 +99,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
 
       US_DataIO2::EditedData*  d;
       US_DataIO2::Scan*        s;
+      US_DataIO2::RawData      sdata;
       US_Model                 model;
 
    private slots:
