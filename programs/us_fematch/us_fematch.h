@@ -127,6 +127,10 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void component_values( int    );
       void set_ra_visible(   bool );
       QStringList last_edit_files( QStringList );
+      void distrib_plot_stick(  int );
+      void distrib_plot_2d(     int );
+      void distrib_plot_resids( void );
+      double interp_val( double, double*, double*,  int );
 
       void help     ( void )
       { showHelp.show_help( "fematch.html" ); };

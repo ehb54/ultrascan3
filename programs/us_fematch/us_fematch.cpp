@@ -299,8 +299,8 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
-   data_plot1->setMinimumSize( 600, 400 );
-   data_plot2->setMinimumSize( 600, 300 );
+   data_plot1->setMinimumSize( 600, 360 );
+   data_plot2->setMinimumSize( 600, 280 );
 
    // Standard buttons
    pb_reset = us_pushbutton( tr( "Reset" ) );
@@ -489,7 +489,6 @@ qDebug() << "dataLatest:" << dataLatest;
 
    pb_details  ->setEnabled( true );
    pb_loadmodel->setEnabled( true );
-   pb_distrib  ->setEnabled( true );
    pb_exclude  ->setEnabled( true );
    //mfilter     = dataList[ 0 ].runID;
    mfilter     = QString( "=edit" );
@@ -715,8 +714,6 @@ qDebug() << "      sdata.c00" << sdata.value(0,0);
 qDebug() << "      sdata.c0N" << sdata.value(0,nconc-1);
 qDebug() << "      sdata.cM0" << sdata.value(nscan-1,0);
 qDebug() << "      sdata.cMN" << sdata.value(nscan-1,nconc-1);
-//data_plot2->clear();
-//us_grid( data_plot2 );
 
       for ( int ii = 0; ii < scanCount; ii++ )
       {
@@ -746,8 +743,8 @@ qDebug() << "      sdata.cMN" << sdata.value(nscan-1,nconc-1);
          c       = us_curve( data_plot2, title );
          c->setPen( pen_red );
          c->setData( r, v, count );
-qDebug() << "Sim plot scan" << ii << "  count" << count;
-qDebug() << "  r0 v0 rN vN" << r[0] << v[0 ] << r[count-1] << v[count-1];
+qDebug() << "Sim plot scan count" << ii << count
+ << "  r0 v0 rN vN" << r[0] << v[0 ] << r[count-1] << v[count-1];
       }
    }
 
@@ -781,9 +778,9 @@ void US_FeMatch::update_viscosity( double new_visc )
 // open dialog and get buffer information
 void US_FeMatch::get_buffer( void )
 {
-   US_BufferGui* bdiag = new US_BufferGui( true );
-   connect( bdiag, SIGNAL( valueChanged( double, double ) ),
-            this,  SLOT  ( updateBuffer( double, double ) ) );
+   US_BufferGui* bdiag = new US_BufferGui( -1, true );
+   connect( bdiag, SIGNAL( valueChanged(  double, double ) ),
+            this,  SLOT  ( update_buffer( double, double ) ) );
    bdiag->exec();
    qApp->processEvents();
 }
@@ -793,6 +790,7 @@ void US_FeMatch::update_buffer( double new_dens, double new_visc )
 {
    density    = new_dens;
    viscosity  = new_visc;
+qDebug() << "upd_buf dens visc" << density << viscosity;
 
    le_density  ->setText( QString::number( density,   'f', 6 ) );
    le_viscosity->setText( QString::number( viscosity, 'f', 6 ) );
@@ -895,11 +893,410 @@ void US_FeMatch::set_ra_visible( bool visible )
 // respond to click of current type of distribution plot
 void US_FeMatch::distrib_type( )
 {
+   const char* dptyp[] = 
+   {
+      "s20,w distribution",
+      "MW distribution",
+      "D20,w distribution",
+      "f_f0 vs s20,w",
+      "f_f0 vs MW",
+      "D20,w vs s20,w",
+      "D20,w vs MW",
+      "Residuals"
+   };
+   const int ndptyp = sizeof( dptyp ) / sizeof( dptyp[0] );
+
+   QString curtxt = pb_distrib->text();
+   int     itype  = 0;
+
+   for ( int ii = 0; ii < ndptyp; ii++ )
+   { // identify text of current push button
+      if ( curtxt == QString( dptyp[ ii ] ) )
+      { // found:  save index and break
+         itype   = ii;
+         break;
+      }
+   }
+//qDebug() << "distrib_type" << itype;
+
+   // get pointer to data for use by plot routines
+   d       = &dataList[ lw_triples->currentRow() ];
+
+   // set push button text to next type
+   int ii  = itype + 1;
+   ii      = ( ii == ndptyp ) ? 0 : ii;
+   pb_distrib->setText( QString( dptyp[ ii ] ) );
+ 
+   switch( itype )
+   {
+      case 0:     // s20,w distribution
+      case 1:     // MW distribution
+      case 2:     // D20,w distribution
+         distrib_plot_stick( itype );  // bar (1-d) plot
+         break;
+      case 3:     // f_f0 vs s20,w
+      case 4:     // f_f0 vs MW
+      case 5:     // D20,w vs s20,w
+      case 6:     // D20,w vs MW
+         distrib_plot_2d(    itype );  // 2-d plot
+         break;
+      case 7:     // Residuals
+         distrib_plot_resids();        // residuals plot
+         break;
+   }
+}
+
+// do stick type distribution plot
+void US_FeMatch::distrib_plot_stick( int type )
+{
+   QString pltitle = tr( "Run " ) + d->runID + tr( ": Cell " )
+      + d->cell + " (" + d->wavelength + " nm)";
+   QString xatitle;
+   QString yatitle = tr( "Relative Concentration" );
+
+   if ( type == 0 )
+   {
+      pltitle = pltitle + tr( "\ns20,W Distribution" );
+      xatitle = tr( "Corrected Sedimentation Coefficient" );
+   }
+
+   else if ( type == 1 )
+   {
+      pltitle = pltitle + tr( "\nMW Distribution" );
+      xatitle = tr( "Molecular Weight (Dalton)" );
+   }
+
+   else if ( type == 2 )
+   {
+      pltitle = pltitle + tr( "\nD20,W Distribution" );
+      xatitle = tr( "D20,W (cm^2/sec)" );
+   }
+
+   data_plot1->detachItems();
+
+   data_plot1->setTitle(                       pltitle );
+   data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
+   data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
+
+   data_plot1->clear();
+   QwtPlotGrid*  data_grid = us_grid( data_plot1 );
+   QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
+
+   int     dsize  = model.components.size();
+   double* xx     = new double[ dsize ];
+   double* yy     = new double[ dsize ];
+   double  xmin   = 1.0e30;
+   double  xmax   = -1.0e30;
+   double  ymin   = 1.0e30;
+   double  ymax   = -1.0e30;
+   double  xval;
+   double  yval;
+   double  rdif;
+
+   for ( int jj = 0; jj < dsize; jj++ )
+   {
+      xval     = ( type == 0 ) ? model.components[ jj ].s :
+               ( ( type == 1 ) ? model.components[ jj ].mw :
+                                 model.components[ jj ].D );
+      yval     = model.components[ jj ].signal_concentration;
+      xx[ jj ] = xval;
+      yy[ jj ] = yval;
+      xmin     = min( xval, xmin );
+      xmax     = max( xval, xmax );
+      ymin     = min( yval, ymin );
+      ymax     = max( yval, ymax );
+   }
+
+   rdif   = ( xmax - xmin ) / 20.0;
+   xmin  -= rdif;
+   xmax  += rdif;
+   rdif   = ( ymax - ymin ) / 20.0;
+   ymin  -= rdif;
+   ymax  += rdif;
+   xmin   = max( xmin, 0.0 );
+   ymin   = max( ymin, 0.0 );
+
+   data_grid->enableYMin( true );
+   data_grid->enableY(    true );
+   data_grid->setMajPen(
+      QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+
+   data_curv->setData(  xx, yy, dsize );
+   data_curv->setPen(   QPen( Qt::yellow, 3, Qt::SolidLine ) );
+   data_curv->setStyle( QwtPlotCurve::Sticks );
+
+   data_plot1->setAxisAutoScale( QwtPlot::xBottom );
+   data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
+   data_plot1->setAxisScale( QwtPlot::xBottom, xmin, xmax );
+   data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax );
+
+   data_plot1->replot();
+
+   delete [] xx;
+   delete [] yy;
+}
+
+// do 2d type distribution plot
+void US_FeMatch::distrib_plot_2d( int type )
+{
+   QString pltitle = tr( "Run " ) + d->runID + tr( ": Cell " )
+      + d->cell + " (" + d->wavelength + " nm)";
+   QString yatitle;
+   QString xatitle;
+
+   if ( type == 3 )
+   {
+      pltitle = pltitle + tr( "\nf/f0 vs Sed. Coeff." );
+      yatitle = tr( "Frictional Ratio f/f0" );
+      xatitle = tr( "Sedimentation Coefficient s20,W" );
+   }
+
+   else if ( type == 4 )
+   {
+      pltitle = pltitle + tr( "\nf/f0 vs Mol. Weight" );
+      yatitle = tr( "Frictional Ratio f/f0" );
+      xatitle = tr( "Molecular Weight" );
+   }
+
+   else if ( type == 5 )
+   {
+      pltitle = pltitle + tr( "\nDiff. Coeff. vs Sed. Coeff." );
+      yatitle = tr( "Diffusion Coefficent D20,W" );
+      xatitle = tr( "Sedimentation Coefficient s20,W" );
+   }
+
+   else if ( type == 6 )
+   {
+      pltitle = pltitle + tr( "\nDiff. Coeff. vs Molecular Weight" );
+      yatitle = tr( "Diffusion Coefficent D20,W" );
+      xatitle = tr( "Molecular Weight" );
+   }
+
+   data_plot1->setTitle(                       pltitle );
+   data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
+   data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
+
+   data_plot1->clear();
+   data_plot1->detachItems();
+
+   QwtPlotGrid*  data_grid = us_grid( data_plot1 );
+   QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
+   QwtSymbol     symbol;
+
+   int     dsize  = model.components.size();
+   double* xx     = new double[ dsize ];
+   double* yy     = new double[ dsize ];
+   double  xmin   = 1.0e30;
+   double  xmax   = -1.0e30;
+   double  ymin   = 1.0e30;
+   double  ymax   = -1.0e30;
+   double  xval;
+   double  yval;
+   double  rdif;
+
+   for ( int jj = 0; jj < dsize; jj++ )
+   {
+      xval     = ( ( type & 1 ) == 1 ) ? model.components[ jj ].s :
+                                         model.components[ jj ].mw;
+      yval     = ( type < 5          ) ? model.components[ jj ].f_f0 :
+                                         model.components[ jj ].D;
+      xx[ jj ] = xval;
+      yy[ jj ] = yval;
+      xmin     = min( xval, xmin );
+      xmax     = max( xval, xmax );
+      ymin     = min( yval, ymin );
+      ymax     = max( yval, ymax );
+   }
+
+   rdif   = ( xmax - xmin ) / 20.0;
+   xmin  -= rdif;
+   xmax  += rdif;
+   rdif   = ( ymax - ymin ) / 20.0;
+   ymin  -= rdif;
+   ymax  += rdif;
+   xmin   = max( xmin, 0.0 );
+   ymin   = max( ymin, 0.0 );
+
+   data_grid->enableYMin( true );
+   data_grid->enableY(    true );
+   data_grid->setMajPen(
+      QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+
+   symbol.setStyle( QwtSymbol::Ellipse );
+   symbol.setPen(   QPen(   Qt::red    ) );
+   symbol.setBrush( QBrush( Qt::yellow ) );
+   if ( dsize > 100 )
+      symbol.setSize(  5 );
+   else if ( dsize > 50 )
+      symbol.setSize(  8 );
+   else if ( dsize > 20 )
+      symbol.setSize( 10 );
+   else
+      symbol.setSize( 12 );
+
+   data_curv->setStyle(  QwtPlotCurve::NoCurve );
+   data_curv->setSymbol( symbol );
+   data_curv->setData(   xx, yy, dsize );
+
+   data_plot1->setAxisAutoScale( QwtPlot::xBottom );
+   data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
+   data_plot1->setAxisScale( QwtPlot::xBottom, xmin, xmax );
+   data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax );
+
+   data_plot1->replot();
+
+   delete [] xx;
+   delete [] yy;
+}
+
+// do residuals type distribution plot
+void US_FeMatch::distrib_plot_resids( )
+{
+   QString pltitle = tr( "Run " ) + d->runID + tr( ": Cell " )
+      + d->cell + " (" + d->wavelength + " nm)" + tr( "\nResiduals" );
+   QString yatitle = tr( "OD Difference" );
+   QString xatitle = tr( "Radius in cm" );
+
+   data_plot1->setTitle(     pltitle );
+   data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
+   data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
+
+   data_plot1->clear();
+   data_plot1->detachItems();
+
+   QwtPlotGrid*  data_grid = us_grid( data_plot1 );
+   QwtPlotCurve* data_curv = us_curve( data_plot1, "residuals" );
+   QwtPlotCurve* line_curv = us_curve( data_plot1, "resids zline" );
+   QwtSymbol     symbol;
+   QPen          pen_red(  Qt::red );
+   QPen          pen_plot( US_GuiSettings::plotCurve() );
+
+   int     dsize  = d->scanData[ 0 ].readings.size();
+   int     ssize  = sdata.scanData[ 0 ].readings.size();
+   double* xx     = new double[ dsize ];
+   double* yy     = new double[ dsize ];
+   double* sx     = new double[ ssize ];
+   double* sy     = new double[ ssize ];
+   double  zx[ 2 ];
+   double  zy[ 2 ];
+   double  xmin   = 1.0e30;
+   double  xmax   = -1.0e30;
+   double  ymin   = 1.0e30;
+   double  ymax   = -1.0e30;
+   double  xval;
+   double  yval;
+   double  sval;
+   double  rdif;
+
+   for ( int jj = 0; jj < dsize; jj++ )
+   {
+      xval     = d->radius( jj );
+      xmin     = min( xval, xmin );
+      xmax     = max( xval, xmax );
+      xx[ jj ] = xval;
+   }
+
+   for ( int jj = 0; jj < ssize; jj++ )
+   {
+      xval     = sdata.radius( jj );
+      xmin     = min( xval, xmin );
+      xmax     = max( xval, xmax );
+      sx[ jj ] = xval;
+   }
+
+   rdif   = ( xmax - xmin ) / 20.0;
+   xmin  -= rdif;
+   xmax  += rdif;
+   xmin   = max( xmin, 0.0 );
+
+   for ( int ii = 0; ii < d->scanData.size(); ii++ )
+   {
+      for ( int jj = 0; jj < ssize; jj++ )
+      {
+         sy[ jj ] = sdata.value( ii, jj );
+      }
+
+      for ( int jj = 0; jj < dsize; jj++ )
+      {
+         sval     = interp_val( xx[ jj ], sx, sy, ssize );
+         yval     = sval - d->value( ii, jj );
+         yval     = min( yval, 0.1 );
+         yval     = max( yval, -0.1 );
+         ymin     = min( yval, ymin );
+         ymax     = max( yval, ymax );
+if(jj==0)qDebug() << " ii jj yval" << ii << jj << yval;
+      }
+int jj=d->scanData[0].readings.size()-1;
+qDebug() << "   ii jj yval" << ii << jj << yval;
+   }
+
+   rdif   = ( ymax - ymin ) / 20.0;
+   ymin  -= rdif;
+   ymax  += rdif;
+
+   data_grid->enableYMin( true );
+   data_grid->enableY(    true );
+   data_grid->setMajPen(
+      QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+
+   data_plot1->setAxisAutoScale( QwtPlot::xBottom );
+   data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
+   data_plot1->setAxisScale( QwtPlot::xBottom, xmin, xmax );
+   data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax );
+
+   zx[ 0 ] = xmin;
+   zx[ 1 ] = xmax;
+   zy[ 0 ] = 0.0;
+   zy[ 1 ] = 0.0;
+   line_curv->setPen( pen_red );
+   line_curv->setData( zx, zy, 2 );
+
+   symbol.setStyle( QwtSymbol::Ellipse );
+   symbol.setPen(   QPen(   Qt::yellow    ) );
+   symbol.setBrush( QBrush( Qt::yellow ) );
+   symbol.setSize( 2 );
+
+   for ( int ii = 0; ii < d->scanData.size(); ii++ )
+   {
+      for ( int jj = 0; jj < ssize; jj++ )
+      {
+         sy[ jj ] = sdata.value( ii, jj );
+      }
+
+      for ( int jj = 0; jj < dsize; jj++ )
+      {
+         sval     = interp_val( xx[ jj ], sx, sy, ssize );
+         yval     = sval - d->value( ii, jj );
+         yval     = min( yval, 0.1 );
+         yval     = max( yval, -0.1 );
+         yy[ jj ] = yval;
+      }
+
+      data_curv = us_curve( data_plot1, "resids " +  QString::number( ii ) );
+      data_curv->setStyle(  QwtPlotCurve::NoCurve );
+      data_curv->setSymbol( symbol );
+      data_curv->setData( xx, yy, dsize );
+   }
+qDebug() << " dsize ssize" << dsize << ssize;
+qDebug() << "  drN srN" << yy[dsize-1] << sy[ssize-1];
+
+   data_plot1->replot();
+
+   delete [] xx;
+   delete [] yy;
+   delete [] sx;
+   delete [] sy;
 }
 
 // reset excluded scan range
 void US_FeMatch::reset( )
 {
+//DEBUG: for now, use reset button to toggle RA visibility
+bool visible=lb_simpoints->isVisible();
+qDebug() << "debug isRA" << !visible;
+set_ra_visible( !visible );
+adjustSize(); 
+
    if ( !dataLoaded )
       return;
 
@@ -950,8 +1347,42 @@ void US_FeMatch::load_model( )
    else
       return;                     // Cancel:  bail out now
 
-   int ncomp   = model.components.size();           // components count
-   int nassoc  = model.associations.size();         // associations count
+
+   int    scanCount   = d->scanData.size();
+   double avgTemp     = 0.0;
+
+   for ( int ii = 0; ii < scanCount; ii++ )
+      avgTemp += d->scanData[ ii ].temperature;
+
+   avgTemp        /= (double)scanCount;
+double Vd=le_viscosity->text().toDouble();
+qDebug() << "ViscD ViscM D/M" << Vd << model.viscosity << Vd/model.viscosity;
+
+   if ( model.viscosity != 0.0 )
+   {
+      viscosity  = model.viscosity;
+      le_viscosity->setText( QString::number( viscosity, 'f', 6 ) );
+   }
+
+   if ( model.density != 0.0 )
+   {
+      density    = model.density;
+      le_density  ->setText( QString::number( density,   'f', 6 ) );
+   }
+
+   solution.density   = le_density  ->text().toDouble();
+   solution.viscosity = le_viscosity->text().toDouble();
+   solution.vbar      = le_vbar     ->text().toDouble();
+   solution.vbar20    = US_Math2::adjust_vbar( solution.vbar, avgTemp );
+
+   US_Math2::data_correction( avgTemp, solution );
+
+   double scorrec  = 1.0 / solution.correction;
+   double dcorrec  = ( ( K0 + avgTemp ) * 100.0 * VISC_20W )
+      / ( K20 * solution.viscosity );
+
+   int    ncomp    = model.components.size();       // components count
+   int    nassoc   = model.associations.size();     // associations count
    isRA        = ( nassoc > 1 );                    // RA if #assocs > 1
    double s20w;
    double D20w;
@@ -973,6 +1404,8 @@ qDebug() << "dialog isRA" << isRA;
 //DEBUG: for now, use Load Model button to toggle RA visibility
 //isRA=!visible;
 //qDebug() << "debug isRA" << isRA;
+qDebug() << "scorrec dcorrec" << scorrec << dcorrec;
+qDebug() << "  viscosity" << solution.viscosity << solution.viscosity_tb;
 
    // fill out components values
 
@@ -989,6 +1422,10 @@ qDebug() << "dialog isRA" << isRA;
       f0         = rad_sphere * 6.0 * M_PI * VISC_20W;
       fv         = ( mw * ( 1.0 - vbar20 * DENS_20W ) ) / ( s20w * AVOGADRO );
       f_f0       = fv / f0;
+      sc->s     *= scorrec;
+      sc->D     *= dcorrec;
+if(jj==0)
+qDebug() << "  s20w s" << s20w << sc->s << "  D20w D" << D20w << sc->D;
 
       sc->vbar20 = vbar20;
       sc->mw     = mw;
@@ -1024,32 +1461,35 @@ void US_FeMatch::simulate_model( )
    US_DataIO2::Reading     reading;
    int    nscan   = rdata->scanData.size();
    int    nconc   = edata->x.size();
-   //double radlo   = edata->radius( 0 );
-   double radlo   = edata->meniscus;
+   double radlo   = edata->radius( 0 );
+   //double radlo   = edata->meniscus;
    double radhi   = edata->radius( nconc - 1 );
    double time1   = rdata->scanData[ 0         ].seconds;
    double time2   = rdata->scanData[ nscan - 1 ].seconds;
-qDebug() << " nscan" << nscan;
-qDebug() << " nconc" << nconc;
-qDebug() << " radlo" << radlo;
-qDebug() << " radhi" << radhi;
+   //double tcorr   = US_Math2::time_correction( dataList );
+   //time1         -= tcorr;
+   //time2         -= tcorr;
+qDebug() << " nscan nconc" << nscan << nconc;
+qDebug() << " radlo radhi" << radlo << radhi;
+qDebug() << " baseline plateau" << edata->baseline << edata->plateau;
 
    // initialize simulation parameters using raw data information
    simparams.simpoints         = 200;
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;
    simparams.radial_resolution = ( radhi - radlo ) / (double)( nconc - 1 );
-   simparams.meniscus          = radlo;
+   //simparams.meniscus          = radlo;
+   simparams.meniscus          = edata->meniscus;
    simparams.bottom            = radhi;
+//simparams.bottom            = 6.95;
    simparams.rnoise            = 0.0;
    simparams.tinoise           = 0.0;
    simparams.rinoise           = 0.0;
-   simparams.rotor             = 0;
+   simparams.rotor             = 1;
    simparams.band_forming      = false;
    simparams.band_volume       = 0.015;
-qDebug() << "  radreso " << simparams.radial_resolution;
-qDebug() << "  meniscus" << simparams.meniscus;
-qDebug() << "  bottom  " << simparams.bottom;
+qDebug() << "  rad_reso" << simparams.radial_resolution;
+qDebug() << "   meniscus bottom" << simparams.meniscus << simparams.bottom;
 
    simparams.band_firstScanIsConcentration   = false;
    //simparams.band_firstScanIsConcentration   = true;
@@ -1099,6 +1539,7 @@ qDebug() << "   rdata.cN" << rdata->value(0,nconc-1);
    for ( int ii = 0; ii < nscan; ii++ )
    {
       US_DataIO2::Scan sscan = edata->scanData[ ii ];
+      //sscan.seconds -= tcorr;
 
       for ( int jj = 0; jj < nconc; jj++ )
       {
@@ -1132,6 +1573,7 @@ qDebug() << "   sdata.cM0" << sdata.value(nscan-1,0);
 qDebug() << "   sdata.cMN" << sdata.value(nscan-1,nconc-1);
 
    haveSim     = true;
+   pb_distrib->setEnabled( true );
 
    data_plot();
 }
@@ -1198,5 +1640,23 @@ void US_FeMatch::component_values( int index )
 void US_FeMatch::comp_number( double cnbr )
 {
    component_values( (int)cnbr - 1 );
+}
+
+double US_FeMatch::interp_val( double xv, double* sx, double* sy, int ssize )
+{
+   for ( int jj = 1; jj < ssize; jj++ )
+   {
+      if ( xv < sx[ jj ] )
+      {
+         double dx = sx[ jj ] - sx[ jj - 1 ];
+         double dy = sy[ jj ] - sy[ jj - 1 ];
+         return ( sy[ jj ] + ( xv - sx[ jj - 1 ] ) * dy / dx );
+      }
+   }
+
+   int    jj = ssize - 1;
+   double dx = sx[ jj ] - sx[ jj - 1 ];
+   double dy = sy[ jj ] - sy[ jj - 1 ];
+   return ( sy[ jj ] + ( xv - sx[ jj - 1 ] ) * dy / dx );
 }
 

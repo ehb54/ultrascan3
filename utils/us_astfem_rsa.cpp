@@ -122,7 +122,7 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
          }
 
          US_AstfemMath::interpolate_C0( scan1, af_c0 );
-qDebug() << "RSA: k s0conc" << k << scan0->conc[af_data.radius.size()-1];
+//qDebug() << "RSA: k s0conc" << k << scan0->conc[af_data.radius.size()-1];
       }
 
       if ( ! reacting[ k ] ) // noninteracting
@@ -238,7 +238,7 @@ qDebug() << "RSA: k s0conc" << k << scan0->conc[af_data.radius.size()-1];
          
          emit current_component( k + 1 );
          qApp->processEvents();
-qDebug() << "RSA:     k conc0" << k << simdata.scan[0].conc[k];
+//qDebug() << "RSA:     k conc0" << k << simdata.scan[0].conc[k];
       }
    }
 
@@ -571,6 +571,7 @@ double US_Astfem_RSA::stretch( int rotor, int rpm )
          pow( (double) rpm, (double) i );
    }
    
+//qDebug() << "AFRSA: stretch rpm rotor" << stretch << rpm << rotor;
    return stretch;
 }
 
@@ -756,7 +757,7 @@ void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0,
    // We don't have an existing CT0 concentration vector. Build up the initial
    // concentration vector with constant concentration
  
-qDebug() << "size(af_c0)" << af_c0.concentration.size();
+//qDebug() << "size(af_c0)" << af_c0.concentration.size();
    //if ( sc->c0.concentration.size() == 0 ) 
    if ( af_c0.concentration.size() == 0 ) 
    {
@@ -821,7 +822,7 @@ qDebug() << "size(af_c0)" << af_c0.concentration.size();
             rad += dr;
          }
 
-qDebug() << "interpolate_C0 size(af_c0)" << af_c0.concentration.size();
+//qDebug() << "interpolate_C0 size(af_c0)" << af_c0.concentration.size();
          US_AstfemMath::interpolate_C0( af_c0, C );
          
          for ( int j = 0; j < CT0.concentration.size(); j++ )
