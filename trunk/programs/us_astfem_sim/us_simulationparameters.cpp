@@ -102,9 +102,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
 
    cnt_delay_mins = us_counter( 3, 0, 59, sp->delay_minutes );
    cnt_delay_mins->setStep    ( 1 );
-   cnt_delay_mins->setIncSteps( QwtCounter::Button1,   1 );
-   cnt_delay_mins->setIncSteps( QwtCounter::Button2,  10 );
-   cnt_delay_mins->setIncSteps( QwtCounter::Button3,  10 );
+   cnt_delay_mins->setIncSteps( QwtCounter::Button1,  1 );
+   cnt_delay_mins->setIncSteps( QwtCounter::Button2, 10 );
+   cnt_delay_mins->setIncSteps( QwtCounter::Button3, 10 );
 
    main->addWidget( cnt_delay_mins, row++, 1 );
    connect( cnt_delay_mins, SIGNAL( valueChanged     ( double ) ), 
@@ -147,7 +147,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_acceleration->setStep    ( 5 );
    cnt_acceleration->setIncSteps( QwtCounter::Button1,   1 );
    cnt_acceleration->setIncSteps( QwtCounter::Button2,  10 );
-   cnt_acceleration->setIncSteps( QwtCounter::Button3,  10 );
+   cnt_acceleration->setIncSteps( QwtCounter::Button3, 100 );
 
    cnt_acceleration->setValue( sp->acceleration );
    
@@ -320,7 +320,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cmb_mesh->addItem( "Claverie Fixed Mesh" );
    cmb_mesh->addItem( "Moving Hat Mesh" );
    cmb_mesh->addItem( "Specified file (mesh.dat)" );
-   //cmb_mesh->setCurrentIndex( simparams.mesh );
+   cmb_mesh->setCurrentIndex( (int)simparams.meshType );
    
    main->addWidget( cmb_mesh, row++, 2, 1, 2 );
 
@@ -332,7 +332,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cmb_moving->setMaxVisibleItems( 5 );
    cmb_moving->addItem( "Constant Time Grid (Claverie/Acceleration)" );
    cmb_moving->addItem( "Moving Time Grid (ASTFEM/Moving Hat)" );
-   //cmb_moving->setCurrentIndex( simparams.moving_grid );
+   cmb_moving->setCurrentIndex( (int)simparams.gridType );
    connect( cmb_moving, SIGNAL( activated    ( int ) ), 
                         SLOT  ( update_moving( int ) ) );
    
@@ -530,9 +530,9 @@ void US_SimulationParametersGui::select_speed_profile( int index )
 
 void US_SimulationParametersGui::check_delay( void )
 {
-   QVector< int    > hours;
+   QVector< int >    hours;
    QVector< double > minutes;
-   QVector< int    > speed;
+   QVector< int >    speed;
    
    speed.clear();
    speed .push_back( 0 );
@@ -551,16 +551,18 @@ void US_SimulationParametersGui::check_delay( void )
          ( abs( (speed[ i + 1 ] - speed[ i ] ) ) + 1 ) / ss->acceleration;
       
       hours  [ i ] = lower_limit / 3600;
-      minutes[ i ] =  1.0 / 60.0 
-                     + ( lower_limit - hours[ i ] * 3600.0 ) / 60.0 ;
+      int secs     = lower_limit - hours[ i ] * 3600;
+      int mins     = qRound( (double)secs / 60.0 );
+      minutes[ i ] = (double)mins;
    }
 
-   cnt_delay_mins ->setMaxValue( minutes[ current_speed_step ] );
+   //cnt_delay_mins ->setMinValue( minutes[ current_speed_step ] );
    cnt_delay_hours->setMinValue( hours  [ current_speed_step ] );
    
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
 
-   if ( sp->delay_minutes < minutes[ current_speed_step] )
+   if ( sp->delay_hours  == hours[   current_speed_step]  &&
+        sp->delay_minutes < minutes[ current_speed_step] )
    {
       sp->delay_minutes = minutes[ current_speed_step ];
       cnt_delay_mins->setValue( minutes[ current_speed_step ] );
@@ -574,7 +576,7 @@ void US_SimulationParametersGui::check_delay( void )
    
    if ( sp->duration_hours == 0 && sp->duration_minutes < sp->delay_minutes + 1 ) 
    {
-      sp->duration_minutes = (unsigned int) sp->delay_minutes + 1;
+      sp->duration_minutes = (int) sp->delay_minutes + 1;
       
       cnt_duration_mins->setValue( sp->duration_minutes);
       
@@ -597,7 +599,7 @@ void US_SimulationParametersGui::check_delay( void )
 void US_SimulationParametersGui::update_duration_hours( double hours )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
-   sp->duration_hours = (unsigned int)hours;
+   sp->duration_hours   = (int)hours;
    check_delay();
    update_combobox();
 }
@@ -605,7 +607,7 @@ void US_SimulationParametersGui::update_duration_hours( double hours )
 void US_SimulationParametersGui::update_duration_mins( double minutes )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
-   sp->duration_minutes = (unsigned int)minutes;
+   sp->duration_minutes = (int)minutes;
    check_delay();
    update_combobox();
 }
@@ -613,20 +615,20 @@ void US_SimulationParametersGui::update_duration_mins( double minutes )
 void US_SimulationParametersGui::update_delay_hours( double hours )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
-   sp->delay_hours = (unsigned int) hours;
+   sp->delay_hours   = (int) hours;
 }
 
 void US_SimulationParametersGui::update_delay_mins( double minutes )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
-   sp->delay_hours = (unsigned int) minutes;
+   sp->delay_minutes = (int) minutes;
    check_delay();
 }
 
 void US_SimulationParametersGui::update_rotorspeed( double speed )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
-   sp->rotorspeed = (unsigned long) speed;
+   sp->rotorspeed = (long) speed;
    update_combobox();
  
    // If there is acceleration we need to set the scan delay
@@ -651,7 +653,7 @@ void US_SimulationParametersGui::acceleration_flag( void )
 void US_SimulationParametersGui::update_acceleration( double accel )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
-   sp->acceleration = (unsigned long) accel;
+   sp->acceleration = (int)accel;
  
    // If there is acceleration we need to set the scan delay
    // minimum to the time it takes to accelerate:
@@ -661,7 +663,7 @@ void US_SimulationParametersGui::update_acceleration( double accel )
 void US_SimulationParametersGui::update_scans( double scans )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
-   sp->scans = (unsigned int)scans;
+   sp->scans = (int)scans;
 }
 
 void US_SimulationParametersGui::save( void )
