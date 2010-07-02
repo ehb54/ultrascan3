@@ -4,12 +4,8 @@
 
 #include <QtGui>
 
-#include <vector>
-using namespace std;
-
 #include <qwt_plot.h>
 #include <qwt_counter.h>
-
 
 #include "us_widgets.h"
 #include "us_plot.h"
@@ -105,8 +101,8 @@ class US_Astfem_Sim : public US_Widgets
       void stop_simulation ( void );
       void save_scans      ( void );
       void update_progress ( int  );
-      void start_calc      ( unsigned int );
-      void show_progress   ( unsigned int );
+      void start_calc      ( int );
+      void show_progress   ( int );
       void calc_over       ( void );
       //void closeEvent      ( QCloseEvent* );
       
@@ -116,7 +112,7 @@ class US_Astfem_Sim : public US_Widgets
       void update_time     ( double time )        
          { lcd_time ->display( time  ); };
       
-      void update_speed    ( uint speed )
+      void update_speed    ( int speed )
          { lcd_speed->display( (int) speed ); };
 
       void help            ( void )

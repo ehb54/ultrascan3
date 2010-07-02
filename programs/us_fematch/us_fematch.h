@@ -79,7 +79,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
 
       QListWidget*  lw_triples;
 
-      int           valueCount;
+      int           scanCount;
 
       bool          dataLoaded;
       bool          haveSim;
@@ -127,10 +127,20 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void component_values( int    );
       void set_ra_visible(   bool );
       QStringList last_edit_files( QStringList );
+
       void distrib_plot_stick(  int );
       void distrib_plot_2d(     int );
       void distrib_plot_resids( void );
-      double interp_val( double, double*, double*,  int );
+
+      double  interp_sval( double, double*, double*,  int );
+      void    write_res();
+      void    write_cofs();
+      QString wave_index( int  );
+      QString text_time(  double,   int );
+      QString text_model( US_Model, int );
+      double  calc_baseline(  int  );
+      void    calc_residuals( void );
+      double  average_temperature( void );
 
       void help     ( void )
       { showHelp.show_help( "fematch.html" ); };
@@ -140,6 +150,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QStringList                       triples;
       QVector< US_DataIO2::EditedData > dataList;
       QVector< US_DataIO2::RawData    > rawList;
+      QVector< QVector< double >      > resids;
       
       US_Math2::SolutionData            solution;
 

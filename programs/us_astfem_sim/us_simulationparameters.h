@@ -91,7 +91,7 @@ class US_SimulationParametersGui : public US_WidgetsDialog
          { simparams.bottom      = bottom; };
 
       void update_simpoints     ( double simpoints )
-         { simparams.simpoints   = (uint) simpoints; };
+         { simparams.simpoints   = (int) simpoints; };
  
       void update_radial_res    ( double radial_res )
          { simparams.radial_resolution = radial_res; };

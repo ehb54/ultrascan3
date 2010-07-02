@@ -336,6 +336,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    def_local  = true;
    mfilter    = "";
    investig   = "USER";
+   resids.clear();
 }
 
 // load data
@@ -344,7 +345,6 @@ void US_FeMatch::load( void )
    QString     file;
    QStringList files;
    QStringList parts;
-   int         scanCount;
 
    dataLoaded = false;
    dataLatest = ck_edit->isChecked();
@@ -450,36 +450,13 @@ qDebug() << "dataLatest:" << dataLatest;
 
    d         = &dataList[ 0 ];
    scanCount = d->scanData.size();
+   double avgTemp = average_temperature();
 
    // set ID, description, and avg temperature text
    le_id  ->setText( d->runID + " / " + d->editID );
    te_desc->setText( d->description );
-   double tempera = d->scanData[ 0 ].temperature;
+   le_temp->setText( QString::number( avgTemp, 'f', 1 ) + " " + DEGC );
 
-   for ( int jj = 1; jj < scanCount; jj++ )
-      tempera += d->scanData[ jj ].temperature;
-
-   tempera  /= (double)scanCount;
-   le_temp->setText( QString::number( tempera, 'f', 1 ) + " " + DEGC );
-
-#if 0
-   savedValues.clear();
-
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {  // save the data to be used in any smoothing
-      s          = &d->scanData[ ii ];
-      valueCount = s->readings.size();
-      QVector< double > v;
-      v.resize( valueCount );
-
-      for ( int jj = 0; jj < valueCount; jj++ )
-      {
-         v[ jj ] = s->readings[ jj ].value;
-      }
-
-      savedValues << v;
-   }
-#endif
    lw_triples->setCurrentRow( 0 );
 
    dataLoaded = true;
@@ -517,7 +494,7 @@ void US_FeMatch::details( void )
 void US_FeMatch::update( int row )
 {
    d              = &dataList[ row ];
-   int scanCount  = d->scanData.size();
+   scanCount      = d->scanData.size();
    le_id->setText( d->runID + " / " + d->editID );
 
    double avt = 0.0;
@@ -565,7 +542,6 @@ void US_FeMatch::data_plot( void )
    int     from      = (int)ct_from->value();
    int     to        = (int)ct_to  ->value();
 
-   int     scanCount = d->scanData.size();
    int     points    = d->scanData[ 0 ].readings.size();
    int     count     = points;
 
@@ -600,12 +576,7 @@ qDebug() << "R,V points count" << points << count;
 
    baseline       /= 11.0;
 //qDebug() << "baseline(c)" << baseline;
-   double avgTemp  = 0.0;
-
-   for ( int ii = 0; ii < scanCount; ii++ )
-      avgTemp += d->scanData[ ii ].temperature;
-
-   avgTemp        /= (double)scanCount;
+   double avgTemp  = average_temperature();
    solution.vbar20 = US_Math2::adjust_vbar( solution.vbar, avgTemp );
    US_Math2::data_correction( avgTemp, solution );
 
@@ -703,7 +674,6 @@ qDebug() << "R,V points count" << points << count;
       double vh = d->value( scanCount - 1, points - 1 );
       rl       -= 0.05;
       vh       += ( vh - d->value( 0, 0 ) ) * 0.05;
-      scanCount = sdata.scanData.size();
 qDebug() << "  RL" << rl << "  VH" << vh;
 int nscan=scanCount;
 int nconc=sdata.scanData[0].readings.size();
@@ -760,7 +730,9 @@ qDebug() << "Sim plot scan count" << ii << count
 void US_FeMatch::save_data( void )
 { 
 qDebug() << "save_data";
+   write_res();
 
+   write_cofs();
 }
 
 // update density
@@ -808,6 +780,41 @@ void US_FeMatch::get_vbar( void )
 
 void US_FeMatch::view_report( )
 {
+   QString mtext;
+   int     row    = lw_triples->currentRow();
+   d              = &dataList[ row ];
+
+   // generate the report file
+   write_res();
+
+   // open it
+   QString filename = US_Settings::resultDir() + "/" + d->runID + "."
+      + text_model( model, 0 ) + "_res." + d->cell + wave_index( row );
+   QFile   res_f( filename );
+
+   if ( res_f.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QTextStream ts( &res_f );
+
+      while ( !ts.atEnd() )
+         mtext.append( ts.readLine() + "\n" );
+
+      res_f.close();
+   }
+
+   else
+   {
+      mtext.append( "*ERROR* Unable to open file " + filename );
+   }
+
+   // display the report dialog
+   US_Editor* editd = new US_Editor( US_Editor::LOAD, true );
+   editd->setWindowTitle( tr( "Results:  FE Match Model Simulation" ) );
+   editd->move( this->pos() + QPoint( 100, 100 ) );
+   editd->resize( 600, 500 );
+   editd->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
+   editd->e->setText( mtext );
+   editd->show();
 }
 
 // update vbar
@@ -1165,18 +1172,12 @@ void US_FeMatch::distrib_plot_resids( )
    data_plot1->detachItems();
 
    QwtPlotGrid*  data_grid = us_grid( data_plot1 );
-   QwtPlotCurve* data_curv = us_curve( data_plot1, "residuals" );
+   QwtPlotCurve* data_curv;
    QwtPlotCurve* line_curv = us_curve( data_plot1, "resids zline" );
-   QwtSymbol     symbol;
-   QPen          pen_red(  Qt::red );
-   QPen          pen_plot( US_GuiSettings::plotCurve() );
 
    int     dsize  = d->scanData[ 0 ].readings.size();
-   int     ssize  = sdata.scanData[ 0 ].readings.size();
    double* xx     = new double[ dsize ];
    double* yy     = new double[ dsize ];
-   double* sx     = new double[ ssize ];
-   double* sy     = new double[ ssize ];
    double  zx[ 2 ];
    double  zy[ 2 ];
    double  xmin   = 1.0e30;
@@ -1185,49 +1186,31 @@ void US_FeMatch::distrib_plot_resids( )
    double  ymax   = -1.0e30;
    double  xval;
    double  yval;
-   double  sval;
    double  rdif;
 
    for ( int jj = 0; jj < dsize; jj++ )
-   {
+   { // accumulate x (radius) values and min,max
       xval     = d->radius( jj );
       xmin     = min( xval, xmin );
       xmax     = max( xval, xmax );
       xx[ jj ] = xval;
    }
 
-   for ( int jj = 0; jj < ssize; jj++ )
-   {
-      xval     = sdata.radius( jj );
-      xmin     = min( xval, xmin );
-      xmax     = max( xval, xmax );
-      sx[ jj ] = xval;
-   }
-
-   rdif   = ( xmax - xmin ) / 20.0;
+   rdif   = ( xmax - xmin ) / 20.0;  // expand grid range slightly
    xmin  -= rdif;
    xmax  += rdif;
    xmin   = max( xmin, 0.0 );
 
-   for ( int ii = 0; ii < d->scanData.size(); ii++ )
-   {
-      for ( int jj = 0; jj < ssize; jj++ )
-      {
-         sy[ jj ] = sdata.value( ii, jj );
-      }
-
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {  // accumulate min,max y (residual) values
       for ( int jj = 0; jj < dsize; jj++ )
       {
-         sval     = interp_val( xx[ jj ], sx, sy, ssize );
-         yval     = sval - d->value( ii, jj );
+         yval     = resids[ ii ][ jj ];
          yval     = min( yval, 0.1 );
          yval     = max( yval, -0.1 );
          ymin     = min( yval, ymin );
          ymax     = max( yval, ymax );
-if(jj==0)qDebug() << " ii jj yval" << ii << jj << yval;
       }
-int jj=d->scanData[0].readings.size()-1;
-qDebug() << "   ii jj yval" << ii << jj << yval;
    }
 
    rdif   = ( ymax - ymin ) / 20.0;
@@ -1244,48 +1227,38 @@ qDebug() << "   ii jj yval" << ii << jj << yval;
    data_plot1->setAxisScale( QwtPlot::xBottom, xmin, xmax );
    data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax );
 
+   // draw the red zero line
    zx[ 0 ] = xmin;
    zx[ 1 ] = xmax;
    zy[ 0 ] = 0.0;
    zy[ 1 ] = 0.0;
-   line_curv->setPen( pen_red );
+   line_curv->setPen( QPen( Qt::red ) );
    line_curv->setData( zx, zy, 2 );
 
-   symbol.setStyle( QwtSymbol::Ellipse );
-   symbol.setPen(   QPen(   Qt::yellow    ) );
-   symbol.setBrush( QBrush( Qt::yellow ) );
-   symbol.setSize( 2 );
-
-   for ( int ii = 0; ii < d->scanData.size(); ii++ )
-   {
-      for ( int jj = 0; jj < ssize; jj++ )
-      {
-         sy[ jj ] = sdata.value( ii, jj );
-      }
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {  // draw residual dots a scan at a time
 
       for ( int jj = 0; jj < dsize; jj++ )
-      {
-         sval     = interp_val( xx[ jj ], sx, sy, ssize );
-         yval     = sval - d->value( ii, jj );
+      {  // get residuals for this scan
+         yval     = resids[ ii ][ jj ];
          yval     = min( yval, 0.1 );
          yval     = max( yval, -0.1 );
          yy[ jj ] = yval;
       }
 
+      // plot the residual scatter for this scan
       data_curv = us_curve( data_plot1, "resids " +  QString::number( ii ) );
-      data_curv->setStyle(  QwtPlotCurve::NoCurve );
-      data_curv->setSymbol( symbol );
-      data_curv->setData( xx, yy, dsize );
+      data_curv->setPen(    QPen( Qt::yellow ) );
+      data_curv->setStyle(  QwtPlotCurve::Dots );
+      data_curv->setData(   xx, yy, dsize );
    }
-qDebug() << " dsize ssize" << dsize << ssize;
-qDebug() << "  drN srN" << yy[dsize-1] << sy[ssize-1];
+qDebug() << " dsize" << dsize;
+qDebug() << "  drN" << yy[dsize-1];
 
    data_plot1->replot();
 
    delete [] xx;
    delete [] yy;
-   delete [] sx;
-   delete [] sy;
 }
 
 // reset excluded scan range
@@ -1347,14 +1320,7 @@ void US_FeMatch::load_model( )
    else
       return;                     // Cancel:  bail out now
 
-
-   int    scanCount   = d->scanData.size();
-   double avgTemp     = 0.0;
-
-   for ( int ii = 0; ii < scanCount; ii++ )
-      avgTemp += d->scanData[ ii ].temperature;
-
-   avgTemp        /= (double)scanCount;
+   double avgTemp  = average_temperature();
 double Vd=le_viscosity->text().toDouble();
 qDebug() << "ViscD ViscM D/M" << Vd << model.viscosity << Vd/model.viscosity;
 
@@ -1532,12 +1498,13 @@ qDebug() << "   sdata.xN" << sdata.radius(nconc-1);
 qDebug() << "   rdata.cN" << rdata->value(0,0);
 qDebug() << "   rdata.cN" << rdata->value(0,nconc-1);
 
+   // use same concentration value for all of first scan
    reading.value     = model.components[ 0 ].signal_concentration;
    reading.stdDev    = 0.0;
    sdata.scanData.clear();
 
    for ( int ii = 0; ii < nscan; ii++ )
-   {
+   {  // initialize readings for all sim data scans
       US_DataIO2::Scan sscan = edata->scanData[ ii ];
       //sscan.seconds -= tcorr;
 
@@ -1547,6 +1514,7 @@ qDebug() << "   rdata.cN" << rdata->value(0,nconc-1);
       }
 
       sdata.scanData.append( sscan );
+      // set values to zero for 2nd and subsequent scans
       reading.value     = 0.0;
    }
 
@@ -1559,6 +1527,7 @@ qDebug() << " afrsa init";
    US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
    
 qDebug() << " afrsa calc";
+//astfem_rsa->setTimeCorrection( true );
 
    astfem_rsa->calculate( sdata );
 
@@ -1574,6 +1543,10 @@ qDebug() << "   sdata.cMN" << sdata.value(nscan-1,nconc-1);
 
    haveSim     = true;
    pb_distrib->setEnabled( true );
+   pb_view   ->setEnabled( true );
+   pb_save   ->setEnabled( true );
+
+   calc_residuals();
 
    data_plot();
 }
@@ -1642,21 +1615,405 @@ void US_FeMatch::comp_number( double cnbr )
    component_values( (int)cnbr - 1 );
 }
 
-double US_FeMatch::interp_val( double xv, double* sx, double* sy, int ssize )
+// interpolate an sdata y (readings) value for a given x (radius)
+double US_FeMatch::interp_sval( double xv, double* sx, double* sy, int ssize )
 {
    for ( int jj = 1; jj < ssize; jj++ )
    {
       if ( xv < sx[ jj ] )
-      {
+      {  // given x lower than array x: interpolate between point and previous
          double dx = sx[ jj ] - sx[ jj - 1 ];
          double dy = sy[ jj ] - sy[ jj - 1 ];
          return ( sy[ jj ] + ( xv - sx[ jj - 1 ] ) * dy / dx );
       }
    }
 
+   // given x position not found:  interpolate using last two points
    int    jj = ssize - 1;
    double dx = sx[ jj ] - sx[ jj - 1 ];
    double dy = sy[ jj ] - sy[ jj - 1 ];
    return ( sy[ jj ] + ( xv - sx[ jj - 1 ] ) * dy / dx );
+}
+
+// write the results text file
+void US_FeMatch::write_res()
+{
+   int     row      = lw_triples->currentRow();
+   d                = &dataList[ row ];
+   QString filename = US_Settings::resultDir() + "/" + d->runID + "."
+      + text_model( model, 0 ) + "_res." + d->cell + wave_index( row );
+   QFile   res_f( filename );
+
+   if ( !res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      return;
+   }
+
+   s                = &d->scanData[ 0 ];
+   int     vcount   = s->readings.size();
+   int     scount   = d->scanData.size();
+   int     ccount   = model.components.size();
+   QString t20d     = QString( "20" ) + QChar( 176 ) + "C";
+   QString tavt     = le_temp->text();
+   QString stars    = QString( "*" ).repeated( 60 );
+   double  tcorr    = US_Math2::time_correction( dataList );
+   double  baseline = calc_baseline( lw_triples->currentRow() );
+
+   QTextStream ts( &res_f );
+
+   ts << stars << "\n";
+   ts << "*" << text_model( model, 58 ) << "*\n";
+   ts << stars << "\n\n\n";
+   ts << tr( "Data Report for Run \"" ) << d->runID
+      << tr( "\", Cell " ) << d->cell
+      << tr( ", Wavelength " ) << d->wavelength << "\n\n";
+
+   ts << tr( "Detailed Run Information:\n\n" );
+   ts << tr( "Cell Description:        " ) << d->description << "\n";
+   ts << tr( "Raw Data Directory:      " ) << workingDir << "\n";
+   ts << tr( "Rotor Speed:             " ) << s->rpm << " rpm\n";
+   ts << tr( "Average Temperature:     " ) << tavt << "\n";
+   ts << tr( "Temperature Variation:   Within Tolerance\n" );
+   ts << tr( "Time Correction:         " ) << text_time( tcorr, 1 ) << "\n";
+   ts << tr( "Run Duration:            " )
+      << text_time( d->scanData[ scount - 1 ].seconds, 2 ) << "\n";
+   ts << tr( "Wavelength:              " ) << d->wavelength << " nm\n";
+   ts << tr( "Baseline Absorbance:     " ) << baseline << " OD\n";
+   ts << tr( "Meniscus Position:       " ) << d->meniscus << " cm\n";
+   ts << tr( "Edited Data starts at:   " ) << d->radius( 0 ) << " cm\n";
+   ts << tr( "Edited Data stops at:    " )
+      << d->radius( vcount - 1 ) << " cm\n\n\n";
+
+   ts << tr( "Hydrodynamic Settings:\n\n" );
+   ts << tr( "Viscosity correction:    " ) << solution.viscosity << "\n";
+   ts << tr( "Viscosity (absolute):    " ) << solution.viscosity_tb << "\n";
+   ts << tr( "Density correction:      " ) << solution.density << " g/ccm\n";
+   ts << tr( "Density (absolute):      " )
+      << solution.density_tb << " g/ccm\n";
+   ts << tr( "Vbar:                    " ) << solution.vbar << " ccm/g\n";
+   ts << tr( "Vbar corrected for " ) << t20d << ": "
+      << solution.vbar20 << " ccm/g\n";
+   ts << tr( "Buoyancy (Water, " ) << t20d << "):  "
+      << solution.buoyancyw << "\n";
+   ts << tr( "Buoyancy (absolute):     " ) << solution.buoyancyb << "\n";
+   ts << tr( "Correction Factor:       " ) << solution.correction << "\n\n\n";
+
+   ts << tr( "Data Analysis Settings:\n\n" );
+   ts << tr( "Number of Components:    " ) << ccount << "\n";
+   ts << tr( "Residual RMS Deviation:  " ) << le_rmsd->text() << "\n\n";
+
+   double sum_mw   = 0.0;
+   double sum_s    = 0.0;
+   double sum_D    = 0.0;
+   double sum_c    = 0.0;
+   double ctime    = 0.0;
+
+   for ( int jj = 0; jj < ccount; jj++ )
+   {
+      double conc;
+      conc     = model.components[ jj ].signal_concentration;
+      sum_c   += conc;
+      sum_mw  += model.components[ jj ].mw * conc;
+      sum_s   += model.components[ jj ].s  * conc;
+      sum_D   += model.components[ jj ].D  * conc;
+   }
+
+   ts << tr( "Weight Averages:\n\n" );
+   ts << tr( "Weight Average s20,W:    " )
+      << QString().sprintf( "%6.4e\n", (sum_s  / sum_c ) );
+   ts << tr( "Weight Average D20,W:    " )
+      << QString().sprintf( "%6.4e\n", (sum_D  / sum_c ) );
+   ts << tr( "W.A. Molecular Weight:   " )
+      << QString().sprintf( "%6.4e\n", (sum_mw / sum_c ) );
+   ts << tr( "Total Concentration:     " )
+      << QString().sprintf( "%6.4e\n", sum_c ) << "\n\n";
+
+   ts << tr( "Distribution Information:\n\n" );
+   ts << tr( "Molecular Weight    " )
+      << tr( "S 20,W         " )
+      << tr( "D 20,W         " )
+      << tr( "Concentration\n" );
+
+   for ( int jj = 0; jj < ccount; jj++ )
+   {
+      double conc;
+      double perc;
+      conc     = model.components[ jj ].signal_concentration;
+      perc     = 100.0 * conc / sum_c;
+      ts << QString().sprintf( " %12.5e  %14.5e %14.5e %14.5e  (%5.2f",
+         model.components[ jj ].mw, model.components[ jj ].s,
+         model.components[ jj ].D,  conc, perc ) << " %)\n";
+   }
+
+   ts << tr( "\n\nScan Information:\n\n" );
+   ts << tr( "Scan" )
+      << tr( "     Corrected Time" )
+      << tr( "  Plateau Concentration" )
+      << tr( "  (Ed,Sim Omega_s_t)\n" );
+
+   for ( int ii = 0; ii < scount; ii++ )
+   {
+      s         = &d->scanData[ ii ];
+      ctime     = s->seconds - tcorr;
+      ts << QString().sprintf( "%4i:", ( ii + 1 ) );
+      ts << "   " << text_time( ctime, 0 );
+      ts << QString().sprintf( "%14.6f OD  (%9.3e, %9.3e)\n",
+            s->plateau, s->omega2t, sdata.scanData[ ii ].omega2t );
+   }
+
+   ts << "\n";
+
+   res_f.close();
+}
+
+// write the results text file
+void US_FeMatch::write_cofs()
+{
+   int    row      = lw_triples->currentRow();
+   d               = &dataList[ row ];
+   int    ccount   = model.components.size();
+   double avgTemp  = average_temperature();
+   double scorrec  = 1.0 / solution.correction;
+   double dcorrec  = ( ( K0 + avgTemp ) * 100.0 * VISC_20W )
+      / ( K20 * solution.viscosity );
+
+   QString filename = US_Settings::resultDir() + "/" + d->runID + "."
+      + text_model( model, 0 ) + "_dis." + d->cell + wave_index( row );
+   QFile   res_f( filename );
+
+   if ( !res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      return;
+   }
+
+   QTextStream ts( &res_f );
+
+   ts << tr( "S_apparent" )
+      << tr( "  S_20,W    " )
+      << tr( "  D_apparent" )
+      << tr( "  D_20,W    " )
+      << tr( "  MW        " )
+      << tr( "  Frequency " )
+      << tr( "  f/f0(20,W)\n" );
+
+   for ( int jj = 0; jj < ccount; jj++ )
+   {
+      ts << QString().sprintf(
+         "%10.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e",
+         model.components[ jj ].s,  model.components[ jj ].s / scorrec,
+         model.components[ jj ].D,  model.components[ jj ].D / dcorrec,
+         model.components[ jj ].mw, model.components[ jj ].signal_concentration,
+         model.components[ jj ].f_f0 )
+         << "\n";
+   }
+
+   res_f.close();
+}
+
+// format a wavelength index number string
+QString US_FeMatch::wave_index( int row )
+{
+   QString cwaveln = dataList[ row ].wavelength;
+   QStringList wavelns;
+
+   wavelns << dataList[ 0 ].wavelength;
+
+   for ( int jj = 0; jj < dataList.size(); jj++ )
+   {
+      QString dwaveln = dataList[ jj ].wavelength;
+
+      if ( wavelns.contains( dwaveln ) )
+         wavelns << dwaveln;
+
+   }
+
+   wavelns.sort();
+
+   return QString::number( wavelns.indexOf( cwaveln ) + 1 );
+}
+
+// text of minutes,seconds or hours,minutes for a given total seconds value
+QString US_FeMatch::text_time( double seconds, int type )
+{
+   int mins = (int)( seconds / 60.0 );
+   int secs = (int)( seconds - (double)mins * 60.0 );
+
+   if ( type == 0 )
+   {  // fixed-field mins,secs text
+      QString tmin = QString().sprintf( "%4d", mins );
+      QString tsec = QString().sprintf( "%3d", secs );
+      return tr( "%1 min %2 sec" ).arg( tmin ).arg( tsec );
+   }
+
+   else if ( type == 1 )
+   {  // minutes,seconds text
+      return tr( "%1 minute(s) %2 second(s)" ).arg( mins ).arg( secs );
+   }
+
+   else
+   {  // hours,minutes text
+      int hrs   = (int)( seconds / 3600.0 );
+      mins      = qRound( ( seconds - (double)hrs * 3600.0 ) / 60.0 );
+      return tr( "%1 hour(s) %2 minute(s)" ).arg( hrs ).arg( mins );
+   }
+}
+
+// calculate average baseline absorbance
+double US_FeMatch::calc_baseline( int row )
+{
+                           d  = &dataList[ row ];
+   const US_DataIO2::Scan* ss = &d->scanData.last();
+   int                     nn = US_DataIO2::index( *ss, d->x, d->baseline );
+   double                  bl = 0.0;
+
+   for ( int jj = nn - 5; jj < nn + 6; jj++ )
+      bl += ss->readings[ jj ].value;
+
+   return ( bl / 11.0 );
+}
+
+// model type text string
+QString US_FeMatch::text_model( US_Model model, int width )
+{
+   QString title;
+
+   switch ( (int)model.type )
+   {
+      case (int)US_Model::TWODSA:
+         title = ( width == 0 ) ? "sa2d" :
+            tr( "2-Dimensional Spectrum Analysis" );
+         break;
+
+      case (int)US_Model::TWODSA_MW:
+         title = ( width == 0 ) ? "sa2d-mw" :
+            tr( "2-Dimensional Spectrum Analysis" );
+         break;
+
+      case (int)US_Model::GA:
+      case (int)US_Model::GA_RA:
+         title = ( width == 0 ) ? "ga" :
+            tr( "Genetic Algorithm Analysis" );
+         break;
+
+      case (int)US_Model::GA_MW:
+         title = ( width == 0 ) ? "ga-mw" :
+            tr( "Genetic Algorithm Analysis" );
+         break;
+
+      case (int)US_Model::COFS:
+         title = ( width == 0 ) ? "cofs" :
+            tr( "C(s) Analysis" );
+         break;
+
+      case (int)US_Model::FE:
+         title = ( width == 0 ) ? "fe" :
+            tr( "Finite Element Analysis" );
+         break;
+
+      case (int)US_Model::GLOBAL:
+         title = ( width == 0 ) ? "global" :
+            tr( "Global Algorithm Analysis" );
+         break;
+
+      case (int)US_Model::ONEDSA:
+         title = ( width == 0 ) ? "sa1d" :
+            tr( "1-Dimensional Spectrum Analysis" );
+         break;
+
+      case (int)US_Model::MANUAL:
+      default:
+         title = ( width == 0 ) ? "sa2d" :
+            tr( "2-Dimensional Spectrum Analysis" );
+         break;
+   }
+
+   if ( width == 0 )
+   {  // short title (file node):  add any "ra" or "mc"
+
+      if ( model.associations.size() > 1 )
+         title = title + "-ra";
+
+      if ( model.iterations > 1 )
+         title = title + "-mc";
+
+   }
+
+   else if ( width > title.length() )
+   {  // long title centered:  center it in fixed-length string
+      int lent = title.length();
+      int lenl = ( width - lent ) / 2;
+      int lenr = width - lent - lenl;
+      title    = QString( " " ).repeated( lenl ) + title
+               + QString( " " ).repeated( lenr );
+   }
+
+   return title;
+}
+
+
+// calculate residual absorbance values (data - sim)
+void US_FeMatch::calc_residuals()
+{
+   int     dsize  = d->scanData[ 0 ].readings.size();
+   int     ssize  = sdata.scanData[ 0 ].readings.size();
+   double* xx     = new double[ dsize ];
+   double* sx     = new double[ ssize ];
+   double* sy     = new double[ ssize ];
+   double  yval;
+   double  sval;
+   QVector< double > resscan;
+   double rmsd    = 0.0;
+   resids.clear();
+   resscan.resize( dsize );
+
+   for ( int jj = 0; jj < dsize; jj++ )
+   {
+      xx[ jj ] = d->radius( jj );
+   }
+
+   for ( int jj = 0; jj < ssize; jj++ )
+   {
+      sx[ jj ] = sdata.radius( jj );
+   }
+
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {
+
+      for ( int jj = 0; jj < ssize; jj++ )
+      {
+         sy[ jj ] = sdata.value( ii, jj );
+      }
+
+      for ( int jj = 0; jj < dsize; jj++ )
+      {
+         sval          = interp_sval( xx[ jj ], sx, sy, ssize );
+         yval          = sval - d->value( ii, jj );
+         rmsd         += sq( yval );
+         resscan[ jj ] = yval;
+      }
+
+      resids.append( resscan );
+   }
+
+   rmsd  /= (double)( scanCount * dsize );
+   le_variance->setText( QString::number( rmsd ) );
+   rmsd   = sqrt( rmsd );
+   le_rmsd    ->setText( QString::number( rmsd ) );
+
+   delete [] xx;
+   delete [] sx;
+   delete [] sy;
+}
+
+// calculate average temperature across scans
+double US_FeMatch::average_temperature()
+{
+   double avgTemp  = 0.0;
+
+   for ( int ii = 0; ii < scanCount; ii++ )
+      avgTemp += d->scanData[ ii ].temperature;
+
+   avgTemp        /= (double)scanCount;
+   return avgTemp;
 }
 

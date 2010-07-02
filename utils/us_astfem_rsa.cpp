@@ -338,7 +338,6 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
          initialize_conc( rg[ group ].GroupComponent[ j ], CT0, false );
          vC0[ j ] = CT0;
       }
-
       decompose( vC0 );
 
       for ( int ss = 0; ss < simparams.speed_step.size(); ss++ )
@@ -398,7 +397,6 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
          {
             duration -= (unsigned int) accel_time;
          }
-
          double s_max = fabs( af_params.s[ 0 ] );     // Find the largest s
          
          for ( int m = 1; m < af_params.s.size(); m++ )
@@ -822,7 +820,6 @@ void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0,
             rad += dr;
          }
 
-//qDebug() << "interpolate_C0 size(af_c0)" << af_c0.concentration.size();
          US_AstfemMath::interpolate_C0( af_c0, C );
          
          for ( int j = 0; j < CT0.concentration.size(); j++ )
@@ -1108,7 +1105,10 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
       // Mesh Type 0 (default): adaptive mesh based on all nu
       //////////////////////%
 
-      case 0: // Astfem without left hand refinement
+      case (int)US_SimulationParameters::ASTFEM:
+         // Astfem without left hand refinement
+      case (int)US_SimulationParameters::ADAPTIVE:
+         // Adaptive
          qSort( nu.begin(), nu.end() );   // put nu in ascending order
 
          if ( nu[ 0 ] > 0 )
@@ -1124,13 +1124,15 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
          }
          break;
       
-      case 1: // Claverie mesh without left hand refinement
+      case (int)US_SimulationParameters::CLAVERIE:
+         // Claverie mesh without left hand refinement
 
          for ( int i = 0; i < NN; i++ )  
             x .append( m + ( b - m ) * i / ( NN - 1 ) );
          break;
 
-      case 2: // Moving Hat (Peter Schuck's Mesh) w/o left hand side refinement
+      case (int)US_SimulationParameters::MOVING_HAT:
+         // Moving Hat (Peter Schuck's Mesh) w/o left hand side refinement
          
          x .append( m );
          
@@ -1141,7 +1143,8 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
          x .append( b );
          break;
 
-      case 3: // User defined mesh generated from data file
+      case (int)US_SimulationParameters::USER:
+         // User defined mesh generated from data file
          { 
             QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
 
@@ -2691,8 +2694,8 @@ void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData&     edata,
 
    fdata.id    = edata.description;
    fdata.cell  = edata.cell;
-   fdata.scan.clear();
-   fdata.scan.resize( nscan );
+   fdata.scan  .resize( nscan );
+   fdata.radius.resize( nconc );
 
    for ( int ii = 0; ii < nscan; ii++ )
    {
@@ -2702,17 +2705,17 @@ void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData&     edata,
       fscan->rpm         = edata.scanData[ ii ].rpm;
       fscan->time        = edata.scanData[ ii ].seconds;
       fscan->omega_s_t   = edata.scanData[ ii ].omega2t;
-      fscan->conc.clear();
+      fscan->conc.resize( nconc );
 
       for ( int jj = 0; jj < nconc; jj++ )
       {
-         fscan->conc.append( edata.value( ii, jj ) );
+         fscan->conc[ ii ] = edata.value( ii, jj );
       }
    }
 
    for ( int jj = 0; jj < nconc; jj++ )
    {
-      fdata.radius.append( edata.radius( jj ) );
+      fdata.radius[ jj ] = edata.radius( jj );
    }
 }
 
