@@ -22,17 +22,12 @@ HEADERS      = us_analyte.h     \
                us_buffer.h      \
                us_constants.h   \
                us_crc.h         \
-               us_crypto.h      \
-#               us_dataIO.h      \
                us_dataIO2.h     \
                us_global.h      \
-#               us_femglobal.h   \
-#               us_femglobal_new.h   \
                us_hardware.h    \ 
                us_hydrosim.h    \ 
                us_http_post.h   \
                us_license_t.h   \
-#               us_math.h        \
                us_math2.h       \
                us_matrix.h      \
                us_model.h       \
@@ -48,17 +43,12 @@ SOURCES      = us_analyte.cpp     \
                us_buffer.cpp      \
                us_constants.cpp   \
                us_crc.cpp         \
-               us_crypto.cpp      \
-#               us_dataIO.cpp      \
                us_dataIO2.cpp     \
-#               us_femglobal_new.cpp   \
-#               us_femglobal.cpp   \
                us_hardware.cpp    \
                us_hydrosim.cpp    \
                us_global.cpp      \
                us_http_post.cpp   \
                us_license_t.cpp   \
-#               us_math.cpp        \
                us_math2.cpp       \
                us_model.cpp       \
                us_noise.cpp       \
@@ -67,4 +57,11 @@ SOURCES      = us_analyte.cpp     \
                us_simparms.cpp    \
                us_stiffbase.cpp   \
                us_util.cpp
+
+# Only include us_crypto when not on a supercomputer
+
+!contains( DEFINES, NO_DB ) {
+   HEADERS      += us_crypto.h     
+   SOURCES      += us_crypto.cpp    
+}
 

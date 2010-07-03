@@ -13,6 +13,12 @@ unix {
   QCAPATH     = /usr/local
   SINGLEDIR   = /opt/qt/addons/qtsingleapplication-2.5_1-commercial/src/
   MYSQLDIR    = /usr/lib/mysql
+  
+  # For supercompter back ends, we only need us_utils but we also
+  # build us_db to satisfy link requirements.  To avoid needing
+  # libmysqlclient and libqca, define the following 
+
+  # DEFINES += NO_DB
 }
 
 win32 {
