@@ -6,6 +6,8 @@
 #include "us_model.h"
 #include "us_model_loader.h"
 #include "us_editor.h"
+#include "us_resids_bitmap.h"
+#include "us_plot_control.h"
 #include "us_math2.h"
 #include "us_run_details2.h"
 #include "us_buffer_gui.h"
@@ -102,6 +104,12 @@ class US_EXTERN US_FeMatch : public US_Widgets
       US_DataIO2::RawData      sdata;
       US_Model                 model;
 
+      US_ResidsBitmap*         rbmapd;
+      US_PlotControl*          eplotcd;
+
+      QPoint                   rbd_pos;
+      QPoint                   epd_pos;
+
    private slots:
 
       void load(        void );
@@ -141,6 +149,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       double  calc_baseline(  int  );
       void    calc_residuals( void );
       double  average_temperature( void );
+      void    close_all( void );
 
       void help     ( void )
       { showHelp.show_help( "fematch.html" ); };
