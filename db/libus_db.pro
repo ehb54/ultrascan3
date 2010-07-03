@@ -1,6 +1,8 @@
 include ( ../library.pri )
 
-QT                 += sql
+!contains( DEFINES, NO_DB ) {
+   QT                 += sql
+}
 
 unix:  TARGET       = us_db
 

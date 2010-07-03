@@ -9,7 +9,9 @@ CONFIG       += $$DEBUGORRELEASE qt thread warn
 VERSION      = 10.0
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
-QT          += sql xml
+!contains( DEFINES, NO_DB ) {
+  QT          += sql xml
+}
 
 unix {
   contains( DEFINES, NO_DB ) {
