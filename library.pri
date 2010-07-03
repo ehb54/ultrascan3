@@ -12,8 +12,15 @@ OBJECTS_DIR  = ./obj
 QT          += sql xml
 
 unix {
-  DEPENDPATH   += ../gui ../utils ../db $$QWTPATH/include
-  INCLUDEPATH  += ../gui ../utils ../db $$QWTPATH/include $$QCAPATH/include/QtCrypto
+  contains( DEFINES, NO_DB ) {
+    # NO_DB is for the supercomputer back end with no gui, mysql, or qca
+    DEPENDPATH   += ../utils ../db 
+    INCLUDEPATH  += ../utils ../db 
+  }
+  else {
+    DEPENDPATH   += ../gui ../utils ../db $$QWTPATH/include
+    INCLUDEPATH  += ../gui ../utils ../db $$QWTPATH/include $$QCAPATH/include/QtCrypto
+  }
   DEFINES      += INTEL LINUX
   LIBS         += -luuid
   DESTDIR       = ../lib

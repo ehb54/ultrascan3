@@ -3,7 +3,11 @@
 #define US_DB2_H
 
 #include <QtCore>
-#include <mysql/mysql.h>
+
+// The supercomputer does not use the DB
+#ifndef NO_DB
+   #include <mysql/mysql.h>
+#endif
 
 #include "us_extern.h"
 
@@ -232,10 +236,11 @@ class US_EXTERN US_DB2
     
   private:
     bool       connected;
+#ifndef NO_DB
     MYSQL*     db;
     MYSQL_RES* result;
     MYSQL_ROW  row;
-      
+#endif      
     QString    email;
     QString    userPW;
     QString    guid;

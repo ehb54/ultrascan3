@@ -5,14 +5,19 @@
 
 US_DB2::US_DB2()
 {
+#ifdef NO_DB
    QString certDir    = qApp->applicationDirPath().replace( "/bin", "/etc" );
    certFile = certDir + QString( "/ca-cert.pem" );
 
    connected  = false;
    result     = NULL;
    db         = mysql_init( NULL );
+#endif
 }
 
+#ifdef NO_DB
+US_DB2::US_DB2( const QString& ){}
+#else
 US_DB2::US_DB2( const QString& masterPW )
 {
    QString certDir    = qApp->applicationDirPath().replace( "/bin", "/etc" );
@@ -34,6 +39,7 @@ US_DB2::US_DB2( const QString& masterPW )
    error     = "";
    connected = true;
 }
+#endif
 
 US_DB2::~US_DB2()
 {
@@ -44,6 +50,10 @@ US_DB2::~US_DB2()
   connected   = false;
 }
 
+#ifdef NO_DB
+bool US_DB2::test_db_connection( const QString&, const QString&,
+      const QString&, const QString&, QString& ) { return false; }
+#else
 bool US_DB2::test_db_connection( 
         const QString& host, const QString& dbname, 
         const QString& user, const QString& password, 
@@ -73,7 +83,15 @@ bool US_DB2::test_db_connection(
 
    return status;
 }
+#endif
 
+#ifdef NO_DB
+bool US_DB2::test_secure_connection( 
+      const QString&, const QString&,
+      const QString&, const QString&, 
+      const QString&,  const QString&, 
+      QString& ) { return false; }
+#else
 bool US_DB2::test_secure_connection( 
         const QString& host,  const QString& dbname, 
         const QString& user,  const QString& password, 
@@ -127,7 +145,11 @@ bool US_DB2::test_secure_connection(
 
    return true;
 }
+#endif
 
+#ifdef NO_DB
+bool US_DB2::connect( const QString&, QString& ){ return false; }
+#else
 bool US_DB2::connect( const QString& masterPW, QString& error )
 {
    if ( connected ) return true;
@@ -228,7 +250,12 @@ bool US_DB2::connect( const QString& masterPW, QString& error )
 
    return connected;
 }
+#endif
 
+#ifdef NO_DB
+bool US_DB2::connect( const QString&, const QString&, const QString&,
+                      const QString&, QString& ){ return false; }
+#else
 bool US_DB2::connect( 
         const QString& host,  const QString& dbname, 
         const QString& user,  const QString& password, 
@@ -273,7 +300,11 @@ bool US_DB2::connect(
 
   return connected;
 }
+#endif
 
+#ifdef NO_DB
+void US_DB2::rawQuery( const QString& ){}
+#else
 void US_DB2::rawQuery( const QString& sqlQuery )
 {
    // Make sure that we clear out any unused
@@ -294,7 +325,11 @@ void US_DB2::rawQuery( const QString& sqlQuery )
    else
       result = mysql_store_result( db );
 }
+#endif
 
+#ifdef NO_DB
+int US_DB2::statusQuery( const QString& ){ return 0; }
+#else
 int US_DB2::statusQuery( const QString& sqlQuery )
 {
    int value = 0;
@@ -310,12 +345,16 @@ int US_DB2::statusQuery( const QString& sqlQuery )
 
    return value;
 }
+#endif
 
 int US_DB2::statusQuery( const QStringList& arguments )
 {
    return statusQuery( buildQuery( arguments ) );
 }
 
+#ifdef NO_DB
+void US_DB2::query( const QString& ) {}
+#else
 void US_DB2::query( const QString& sqlQuery )
 {
    this->rawQuery( sqlQuery );
@@ -353,6 +392,7 @@ void US_DB2::query( const QString& sqlQuery )
       }
    }
 }
+#endif
 
 void US_DB2::query( const QStringList& arguments )
 {
@@ -377,6 +417,9 @@ QString US_DB2::buildQuery( const QStringList& arguments )
    return newquery;
 }
 
+#ifdef NO_DB
+bool US_DB2::next( void ){ return false; }
+#else
 bool US_DB2::next( void )
 { 
    row = NULL;
@@ -388,7 +431,11 @@ bool US_DB2::next( void )
 
    return false;
 }
+#endif
 
+#ifdef NO_DB
+QVariant US_DB2::value( unsigned ){ return QVariant::Invalid; }
+#else
 QVariant US_DB2::value( unsigned index )
 {
    if ( row && ( index < mysql_field_count( db ) ) )
@@ -396,19 +443,28 @@ QVariant US_DB2::value( unsigned index )
 
    return QVariant::Invalid;
 }
+#endif
 
 bool US_DB2::isConnected ( void )
 {
    return connected;
 }
 
+#ifdef NO_DB
+int US_DB2::numRows( void ){ return 0; }
+#else
 int US_DB2::numRows( void )
 { 
    return ( result )? ( (int) mysql_num_rows( result ) ) : -1;
 }
+#endif
 
+#ifdef NO_DB
+int US_DB2::lastInsertID( void ){ return 0; }
+#else
 int US_DB2::lastInsertID( void )
 {
    return this->statusQuery( "SELECT last_insertID()" );
 }
+#endif
 
