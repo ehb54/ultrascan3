@@ -5,6 +5,8 @@
 #include <uuid/uuid.h>
 
 #include "us_fematch.h"
+#include "us_resids_bitmap.h"
+#include "us_plot_control.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -166,12 +168,13 @@ US_FeMatch::US_FeMatch() : US_Widgets()
            lb_parameter    = us_label ( tr( "Parameter:" ) );
 
    cb_mesh      = us_comboBox();
-   cb_mesh->addItem( tr( "Adaptive Space Mesh (ASTFEM)" )   );
+   cb_mesh->addItem( tr( "Adaptive Space Time Mesh (ASTFEM)" )   );
    cb_mesh->addItem( tr( "Claverie Mesh" ) );
    cb_mesh->addItem( tr( "Moving Hat Mesh" ) );
    cb_mesh->addItem( tr( "File: \"$ULTRASCAN/mesh.dat\"" ) );
+   cb_mesh->addItem( tr( "Adaptive Space Volume Mesh (ASVFEM)" )   );
    cb_grid      = us_comboBox();
-   cb_grid->addItem( tr( "Adaptive Time Grid" )   );
+   cb_grid->addItem( tr( "Moving Time Grid" )   );
    cb_grid->addItem( tr( "Constant Time Grid" ) );
    
    ct_simpoints = us_counter( 3, 0, 500, 1 );
@@ -314,7 +317,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    connect( pb_reset, SIGNAL( clicked() ),
             this,     SLOT(   reset() ) );
    connect( pb_close, SIGNAL( clicked() ),
-            this,     SLOT(   close() ) );
+            this,     SLOT(   close_all() ) );
    connect( pb_help,  SIGNAL( clicked() ),
             this,     SLOT(   help() ) );
 
@@ -337,6 +340,10 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    mfilter    = "";
    investig   = "USER";
    resids.clear();
+   rbmapd     = 0;
+   eplotcd    = 0;
+   rbd_pos    = this->pos() + QPoint( 100, 100 );
+   epd_pos    = this->pos() + QPoint( 200, 200 );
 }
 
 // load data
@@ -475,6 +482,9 @@ qDebug() << "dataLatest:" << dataLatest;
 
    connect( ct_from, SIGNAL( valueChanged( double ) ),
             this,    SLOT(   exclude_from( double ) ) );
+
+   rbd_pos    = this->pos() + QPoint( 100, 100 );
+   epd_pos    = this->pos() + QPoint( 200, 200 );
 }
 
 // details
@@ -495,18 +505,10 @@ void US_FeMatch::update( int row )
 {
    d              = &dataList[ row ];
    scanCount      = d->scanData.size();
-   le_id->setText( d->runID + " / " + d->editID );
+   le_id->  setText( d->runID + " / " + d->editID );
 
-   double avt = 0.0;
-
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {
-      avt       += d->scanData[ ii ].temperature;
-   }
-
-   avt       /= (double)scanCount;
-
-   le_temp->setText( QString::number( avt, 'f', 1 ) + " " + DEGC );
+   le_temp->setText( QString::number( average_temperature(), 'f', 1 )
+         + " " + DEGC );
    te_desc->setText( d->description );
 
    ct_from->setMaxValue( scanCount - excludedScans.size() );
@@ -791,6 +793,9 @@ void US_FeMatch::view_report( )
    QString filename = US_Settings::resultDir() + "/" + d->runID + "."
       + text_model( model, 0 ) + "_res." + d->cell + wave_index( row );
    QFile   res_f( filename );
+   QString fileexts = tr( "Result files (*_res*);;" )
+      + tr( "RunID files (" ) + d->runID + "*);;"
+      + tr( "All files (*)" );
 
    if ( res_f.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
@@ -808,7 +813,7 @@ void US_FeMatch::view_report( )
    }
 
    // display the report dialog
-   US_Editor* editd = new US_Editor( US_Editor::LOAD, true );
+   US_Editor* editd = new US_Editor( US_Editor::LOAD, true, fileexts );
    editd->setWindowTitle( tr( "Results:  FE Match Model Simulation" ) );
    editd->move( this->pos() + QPoint( 100, 100 ) );
    editd->resize( 600, 500 );
@@ -1432,9 +1437,9 @@ void US_FeMatch::simulate_model( )
    double radhi   = edata->radius( nconc - 1 );
    double time1   = rdata->scanData[ 0         ].seconds;
    double time2   = rdata->scanData[ nscan - 1 ].seconds;
-   //double tcorr   = US_Math2::time_correction( dataList );
-   //time1         -= tcorr;
-   //time2         -= tcorr;
+   //double tcorrec = US_Math2::time_correction( dataList );
+   //time1         -= tcorrec;
+   //time2         -= tcorrec;
 qDebug() << " nscan nconc" << nscan << nconc;
 qDebug() << " radlo radhi" << radlo << radhi;
 qDebug() << " baseline plateau" << edata->baseline << edata->plateau;
@@ -1506,7 +1511,7 @@ qDebug() << "   rdata.cN" << rdata->value(0,nconc-1);
    for ( int ii = 0; ii < nscan; ii++ )
    {  // initialize readings for all sim data scans
       US_DataIO2::Scan sscan = edata->scanData[ ii ];
-      //sscan.seconds -= tcorr;
+      //sscan.seconds -= tcorrec;
 
       for ( int jj = 0; jj < nconc; jj++ )
       {
@@ -1546,9 +1551,31 @@ qDebug() << "   sdata.cMN" << sdata.value(nscan-1,nconc-1);
    pb_view   ->setEnabled( true );
    pb_save   ->setEnabled( true );
 
-   calc_residuals();
+   calc_residuals();             // calculate residuals
 
-   data_plot();
+   distrib_plot_resids();        // plot residuals
+
+   data_plot();                  // re-plot data+simulation
+
+   if ( rbmapd )
+   {
+      rbd_pos  = rbmapd->pos();
+      rbmapd->close();
+   }
+
+   rbmapd = new US_ResidsBitmap( resids );
+   rbmapd->move( rbd_pos );
+   rbmapd->show();
+
+   if ( eplotcd )
+   {
+      epd_pos  = eplotcd->pos();
+      eplotcd->close();
+   }
+
+   eplotcd = new US_PlotControl();
+   eplotcd->move( epd_pos );
+   eplotcd->show();
 }
 
 // pare down files list by including only the last-edit versions
@@ -1653,10 +1680,9 @@ void US_FeMatch::write_res()
    int     vcount   = s->readings.size();
    int     scount   = d->scanData.size();
    int     ccount   = model.components.size();
-   QString t20d     = QString( "20" ) + QChar( 176 ) + "C";
-   QString tavt     = le_temp->text();
+   QString t20d     = QString( "20" ) + DEGC;
    QString stars    = QString( "*" ).repeated( 60 );
-   double  tcorr    = US_Math2::time_correction( dataList );
+   double  tcorrec  = US_Math2::time_correction( dataList );
    double  baseline = calc_baseline( lw_triples->currentRow() );
 
    QTextStream ts( &res_f );
@@ -1665,16 +1691,17 @@ void US_FeMatch::write_res()
    ts << "*" << text_model( model, 58 ) << "*\n";
    ts << stars << "\n\n\n";
    ts << tr( "Data Report for Run \"" ) << d->runID
-      << tr( "\", Cell " ) << d->cell
-      << tr( ", Wavelength " ) << d->wavelength << "\n\n";
+      << tr( "\",\n Cell " ) << d->cell << tr( ", Channel " ) << d->channel
+      << tr( ", Wavelength " ) << d->wavelength
+      << tr( ", Edited Dataset " ) << d->editID << "\n\n";
 
    ts << tr( "Detailed Run Information:\n\n" );
    ts << tr( "Cell Description:        " ) << d->description << "\n";
    ts << tr( "Raw Data Directory:      " ) << workingDir << "\n";
    ts << tr( "Rotor Speed:             " ) << s->rpm << " rpm\n";
-   ts << tr( "Average Temperature:     " ) << tavt << "\n";
+   ts << tr( "Average Temperature:     " ) << le_temp->text() << "\n";
    ts << tr( "Temperature Variation:   Within Tolerance\n" );
-   ts << tr( "Time Correction:         " ) << text_time( tcorr, 1 ) << "\n";
+   ts << tr( "Time Correction:         " ) << text_time( tcorrec, 1 ) << "\n";
    ts << tr( "Run Duration:            " )
       << text_time( d->scanData[ scount - 1 ].seconds, 2 ) << "\n";
    ts << tr( "Wavelength:              " ) << d->wavelength << " nm\n";
@@ -1754,7 +1781,7 @@ void US_FeMatch::write_res()
    for ( int ii = 0; ii < scount; ii++ )
    {
       s         = &d->scanData[ ii ];
-      ctime     = s->seconds - tcorr;
+      ctime     = s->seconds - tcorrec;
       ts << QString().sprintf( "%4i:", ( ii + 1 ) );
       ts << "   " << text_time( ctime, 0 );
       ts << QString().sprintf( "%14.6f OD  (%9.3e, %9.3e)\n",
@@ -1816,19 +1843,19 @@ QString US_FeMatch::wave_index( int row )
    QString cwaveln = dataList[ row ].wavelength;
    QStringList wavelns;
 
-   wavelns << dataList[ 0 ].wavelength;
+   wavelns << dataList[ 0 ].wavelength;  // start list of wavelengths
 
-   for ( int jj = 0; jj < dataList.size(); jj++ )
-   {
+   for ( int jj = 1; jj < dataList.size(); jj++ )
+   {  // add to list of unique wavelength strings
       QString dwaveln = dataList[ jj ].wavelength;
 
-      if ( wavelns.contains( dwaveln ) )
+      if ( !wavelns.contains( dwaveln ) )
          wavelns << dwaveln;
-
    }
 
-   wavelns.sort();
+   wavelns.sort();                       // sort wavelengths
 
+   // return string representation of index of current wavelength
    return QString::number( wavelns.indexOf( cwaveln ) + 1 );
 }
 
@@ -2015,5 +2042,17 @@ double US_FeMatch::average_temperature()
 
    avgTemp        /= (double)scanCount;
    return avgTemp;
+}
+
+// slot to make sure all windows and dialogs get closed
+void US_FeMatch::close_all()
+{
+   if ( rbmapd )
+      rbmapd->close();
+
+   if ( eplotcd )
+      eplotcd->close();
+
+   close();
 }
 
