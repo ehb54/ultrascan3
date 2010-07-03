@@ -5,7 +5,7 @@
 
 US_DB2::US_DB2()
 {
-#ifdef NO_DB
+#ifndef NO_DB
    QString certDir    = qApp->applicationDirPath().replace( "/bin", "/etc" );
    certFile = certDir + QString( "/ca-cert.pem" );
 
@@ -43,11 +43,13 @@ US_DB2::US_DB2( const QString& masterPW )
 
 US_DB2::~US_DB2()
 {
+#ifndef NO_DB
   mysql_free_result( result );
   mysql_close(db);
 
   result      = NULL;
   connected   = false;
+#endif
 }
 
 #ifdef NO_DB
