@@ -5,12 +5,14 @@
 !include( local.pri ) error( "local.pri is missing.  Copy from local.pri.template and update variables as appropriate" )
 
 TEMPLATE     = lib
-CONFIG       += $$DEBUGORRELEASE qt thread warn
+CONFIG      += $$DEBUGORRELEASE qt thread warn
 VERSION      = 10.0
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
+QT          += xml
+
 !contains( DEFINES, NO_DB ) {
-  QT          += sql xml
+  QT          += sql
 }
 
 unix {
