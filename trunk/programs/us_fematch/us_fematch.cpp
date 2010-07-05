@@ -14,6 +14,8 @@
 #include "us_matrix.h"
 #include "us_constants.h"
 #include "us_analyte_gui.h"
+#include "us_passwd.h"
+#include "us_db2.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -344,6 +346,9 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    eplotcd    = 0;
    rbd_pos    = this->pos() + QPoint( 100, 100 );
    epd_pos    = this->pos() + QPoint( 200, 200 );
+
+   ti_noise.count = 0;
+   ri_noise.count = 0;
 }
 
 // load data
@@ -1420,6 +1425,120 @@ qDebug() << "  s20w s" << s20w << sc->s << "  D20w D" << D20w << sc->D;
    }
 
    pb_simumodel->setEnabled( true );
+
+   // see if there are any noise files to load
+   load_noise();
+
+}
+
+// load noise record(s) if there are any and user so chooses
+void US_FeMatch::load_noise( )
+{
+   QStringList mieGUIDs;  // list of GUIDs of models-in-edit
+   QStringList nimGUIDs;  // list of GUIDs:type:index of noises-in-models
+   QStringList nieGUIDs;  // list of GUIDS:type:index of noises-in-edit
+   QStringList tmpGUIDs;  // temporary noises-in-model list
+   QString     editGUID  = dataList[ 0 ].editGUID; // loaded edit GUID
+   QString     modelGUID = model.modelGUID;        // loaded model GUID
+   QString     lmodlGUID;                          // list model GUID
+   QString     lnoisGUID;                          // list noise GUID
+   QString     modelIndx;                          // "0001" style model index
+qDebug() << "editGUID  " << editGUID;
+qDebug() << "modelGUID " << modelGUID;
+
+   // get a list of models tied to the loaded edit
+   int nemods  = models_in_edit(  def_local, editGUID, mieGUIDs );
+
+   // get a list of noises tied to the loaded model
+   int nmnois  = noises_in_model( def_local, modelGUID, nimGUIDs );
+   int kk      = 0;           // start of noise-in-edit search
+
+   // move the loaded model to the head of the models-in-edit list
+   if ( nemods > 1  &&  mieGUIDs.removeOne( modelGUID ) )
+   {
+      mieGUIDs.insert( 0, modelGUID );
+      kk        = 1;          // skip 1st model for noise-in-edit search
+      nieGUIDs << nimGUIDs;   // initialize noise-in-edit list
+   }
+
+   int nenois  = nmnois;      // initial noise-in-edit count is noises in model
+
+   for ( int ii = kk; ii < nemods; ii++ )
+   {  // search through models in edit
+      lmodlGUID  = mieGUIDs[ ii ];                    // this model's GUID
+      modelIndx  = QString().sprintf( "%4.4d", ii );  // models-in-edit index
+
+      // find the noises tied to this model
+      int kenois = noises_in_model( def_local, lmodlGUID, tmpGUIDs );
+
+      if ( kenois > 0 )
+      {  // if we have 1 or 2 noises, add to noise-in-edit list
+         nenois    += kenois;
+         // adjust entry to have the right model-in-edit index
+         lnoisGUID  = tmpGUIDs.at( 0 ).section( ":", 0, 1 )
+            + ":" + modelIndx;
+         nieGUIDs << lnoisGUID;
+         if ( kenois > 1 )
+         {  // add a second noise to the list
+            lnoisGUID  = tmpGUIDs.at( 1 ).section( ":", 0, 1 )
+               + ":" + modelIndx;
+            nieGUIDs << lnoisGUID;
+         }
+      }
+   }
+qDebug() << "nemods nmnois nenois" << nemods << nmnois << nenois;
+for (int jj=0;jj<nenois;jj++)
+ qDebug() << " jj nieG" << jj << nieGUIDs.at(jj);
+
+   if ( nenois > 0 )
+   {  // There is/are noise(s):  ask user if she wants to load
+      QMessageBox msgBox;
+      QString     msg;
+
+      if ( nenois > 1 )
+         msg = tr( "There are noise files. Do you want to load them?" );
+
+      else
+         msg = tr( "There is a noise file. Do you want to load it?" );
+
+      msgBox.setWindowTitle( tr( "Edit/Model Associated Noise" ) );
+      msgBox.setText( msg );
+      msgBox.setStandardButtons( QMessageBox::No | QMessageBox::Yes );
+      msgBox.setDefaultButton( QMessageBox::Yes );
+
+      if ( msgBox.exec() == QMessageBox::Yes )
+      {
+         US_Passwd    pw;
+         US_DB2*      db = NULL;
+
+         if ( !def_local )
+             db           = new US_DB2( pw.getPasswd() );
+
+         if ( nenois > 1 )
+         {
+            US_NoiseLoader* nldiag = new US_NoiseLoader( db,
+               mieGUIDs, nieGUIDs, ti_noise, ri_noise );
+            nldiag->move( this->pos() + QPoint( 200, 200 ) );
+            nldiag->exec();
+            qApp->processEvents();
+
+            delete nldiag;
+         }
+
+         else
+         {
+            lnoisGUID     = nieGUIDs.at( 0 );
+            QString typen = lnoisGUID.section( ":", 1, 1 );
+            lnoisGUID     = lnoisGUID.section( ":", 0, 0 );
+
+            if ( typen == "ti" )
+               ti_noise.load( !def_local, lnoisGUID, db );
+
+            else
+               ri_noise.load( !def_local, lnoisGUID, db );
+         }
+      }
+   }
 }
 
 // do model simulation
@@ -2054,5 +2173,179 @@ void US_FeMatch::close_all()
       eplotcd->close();
 
    close();
+}
+
+// build a list of models(GUIDs) for a given edit(GUID)
+int US_FeMatch::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs )
+{
+   QString xmGUID;
+   QString xeGUID;
+
+   mGUIDs.clear();
+
+   if ( ondisk )
+   {  // Models from local disk files
+      QDir    dir;
+      QString path = US_Settings::dataDir() + "/models";
+
+      if ( !dir.exists( path ) )
+         dir.mkpath( path );
+
+      dir          = QDir( path );
+
+      QStringList filter( "M*.xml" );
+      QStringList f_names = dir.entryList( filter, QDir::Files, QDir::Name );
+
+      QXmlStreamAttributes attr;
+
+      for ( int ii = 0; ii < f_names.size(); ii++ )
+      {
+         QString fname( path + "/" + f_names[ ii ] );
+         QFile   m_file( fname );
+
+         if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            continue;
+
+         QXmlStreamReader xml( &m_file );
+
+
+         while ( ! xml.atEnd() )
+         {  // Search XML elements until we find "model"
+            xml.readNext();
+
+            if ( xml.isStartElement()  &&  xml.name() == "model" )
+            {  // test for desired editGUID
+               attr    = xml.attributes();
+               xeGUID  = attr.value( "editGUID"    ).toString();
+               xmGUID  = attr.value( "modelGUID"   ).toString();
+
+               if ( xeGUID == eGUID )
+                  mGUIDs << xmGUID;
+            }
+         }
+
+         m_file.close();
+      }
+   }
+
+   else
+   {
+      US_Passwd    pw;
+      US_DB2       db( pw.getPasswd() );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         return 0;
+      }
+
+      QStringList query;
+      QString     invID  = investig.section( ":", 0, 0 );
+
+      query.clear();
+
+      query << "get_model_desc" << invID;
+      db.query( query );
+
+      while ( db.next() )
+      {  // accumulate from db desc entries matching editGUID;
+         xmGUID  = db.value( 1 ).toString();
+         xeGUID  = db.value( 3 ).toString();
+
+         if ( xeGUID == eGUID )
+            mGUIDs << xmGUID;
+      }
+   }
+
+   return mGUIDs.size();
+}
+
+// build a list of noise(GUIDs) for a given model(GUID)
+int US_FeMatch::noises_in_model( bool ondisk, QString mGUID,
+      QStringList& nGUIDs )
+{
+   QString xnGUID;
+   QString xmGUID;
+   QString xntype;
+
+   nGUIDs.clear();
+
+   if ( ondisk )
+   {  // Noises from local disk files
+      QDir    dir;
+      QString path = US_Settings::dataDir() + "/noises";
+
+      if ( !dir.exists( path ) )
+         dir.mkpath( path );
+
+      dir          = QDir( path );
+
+      QStringList filter( "N*.xml" );
+      QStringList f_names = dir.entryList( filter, QDir::Files, QDir::Name );
+
+      QXmlStreamAttributes attr;
+
+      for ( int ii = 0; ii < f_names.size(); ii++ )
+      {
+         QString fname( path + "/" + f_names[ ii ] );
+         QFile   m_file( fname );
+
+         if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            continue;
+
+         QXmlStreamReader xml( &m_file );
+
+
+         while ( ! xml.atEnd() )
+         {  // Search XML elements until we find "noise"
+            xml.readNext();
+
+            if ( xml.isStartElement()  &&  xml.name() == "noise" )
+            {  // test for desired editGUID
+               attr    = xml.attributes();
+               xmGUID  = attr.value( "modelGUID"   ).toString();
+               xnGUID  = attr.value( "noiseGUID"   ).toString();
+               xntype  = attr.value( "type"        ).toString();
+
+               if ( xmGUID == mGUID )
+                  nGUIDs << xnGUID + ":" + xntype + ":0000";
+            }
+         }
+
+         m_file.close();
+      }
+   }
+
+   else
+   {
+      US_Passwd    pw;
+      US_DB2       db( pw.getPasswd() );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         return 0;
+      }
+
+      QStringList query;
+      QString     invID  = investig.section( ":", 0, 0 );
+
+      query.clear();
+
+      query << "get_noise_desc" << invID;
+      db.query( query );
+
+      while ( db.next() )
+      {  // accumulate from db desc entries matching editGUID;
+         xnGUID  = db.value( 1 ).toString();
+         xmGUID  = db.value( 3 ).toString();
+         xntype  = db.value( 2 ).toString();
+         xntype  = xntype.contains( "ri_nois", Qt::CaseInsensitive ) ?
+                   "ri" : "ti";
+
+         if ( xmGUID == mGUID )
+            nGUIDs << xnGUID + ":" + xntype + ":0000";
+      }
+   }
+
+   return nGUIDs.size();
 }
 

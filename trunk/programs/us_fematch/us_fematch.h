@@ -1,13 +1,15 @@
 #ifndef US_FEMATCH_H
 #define US_FEMATCH_H
 
+#include "us_resids_bitmap.h"
+#include "us_plot_control.h"
+#include "us_noise_loader.h"
 #include "us_dataIO2.h"
 #include "us_astfem_rsa.h"
 #include "us_model.h"
+#include "us_noise.h"
 #include "us_model_loader.h"
 #include "us_editor.h"
-#include "us_resids_bitmap.h"
-#include "us_plot_control.h"
 #include "us_math2.h"
 #include "us_run_details2.h"
 #include "us_buffer_gui.h"
@@ -103,6 +105,8 @@ class US_EXTERN US_FeMatch : public US_Widgets
       US_DataIO2::Scan*        s;
       US_DataIO2::RawData      sdata;
       US_Model                 model;
+      US_Noise                 ri_noise;
+      US_Noise                 ti_noise;
 
       US_ResidsBitmap*         rbmapd;
       US_PlotControl*          eplotcd;
@@ -140,6 +144,9 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void distrib_plot_2d(     int );
       void distrib_plot_resids( void );
 
+      void    load_noise(       void );
+      int     models_in_edit(   bool, QString, QStringList& );
+      int     noises_in_model ( bool, QString, QStringList& );
       double  interp_sval( double, double*, double*,  int );
       void    write_res();
       void    write_cofs();
