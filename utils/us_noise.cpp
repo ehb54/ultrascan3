@@ -13,7 +13,7 @@ US_Noise::US_Noise()
    type            = TI;
    description     = "New Noise";
    noiseGUID       = "";
-   editGUID        = "";
+   modelGUID       = "";
    minradius       = 0.0;
    maxradius       = 0.0;
    count           = 0;
@@ -26,7 +26,7 @@ bool US_Noise::operator== ( const US_Noise& n ) const
    if ( type            != n.type            ) return false;
    if ( description     != n.description     ) return false;
    if ( noiseGUID       != n.noiseGUID       ) return false;
-   if ( editGUID        != n.editGUID        ) return false;
+   if ( modelGUID       != n.modelGUID       ) return false;
    if ( count           != n.count           ) return false;
    if ( minradius       != n.minradius       ) return false;
    if ( maxradius       != n.maxradius       ) return false;
@@ -100,7 +100,7 @@ int US_Noise::load( const QString& filename )
 
             description = a.value( "description" ).toString();
             noiseGUID   = a.value( "noiseGUID"   ).toString();
-            editGUID    = a.value( "editGUID"    ).toString();
+            modelGUID   = a.value( "modelGUID"   ).toString();
             minradius   = a.value( "minradius"   ).toString().toDouble();
             maxradius   = a.value( "maxradius"   ).toString().toDouble();
             count       = a.value( "count"       ).toString().toInt();
@@ -149,14 +149,14 @@ int US_Noise::write( US_DB2* db )
      
       if ( db->lastErrno() != US_DB2::OK )
       {
-         q << "new_noise" << noiseGUID << description << contents << editGUID;
+         q << "new_noise" << noiseGUID << description << contents << modelGUID;
          message = QObject::tr( "created" );
       }
       else
       {
          db->next();
          QString id = db->value( 0 ).toString();
-         q << "update_noise" << id << description << contents << editGUID;
+         q << "update_noise" << id << description << contents << modelGUID;
          message = QObject::tr( "updated" );
       }
 
@@ -187,7 +187,7 @@ int US_Noise::write( const QString& filename )
 bool US_Noise::noise_path( QString& path )
 {
    QDir dir;
-   path = US_Settings::dataDir() + "/noise";
+   path = US_Settings::dataDir() + "/noises";
 
    if ( ! dir.exists( path ) )
    {
@@ -209,7 +209,7 @@ int US_Noise::load_disk( const QString& guid )
 
    if ( ! noise_path( path ) )
    {
-      //message = QObject::tr ( "Could not create noise directory" );
+      //message = QObject::tr ( "Could not create noises directory" );
       return error;
    }
 
@@ -289,7 +289,7 @@ void US_Noise::write_temp( QTemporaryFile& file )
    xml.writeStartElement( "noise" );
    xml.writeAttribute   ( "type",        typen       );
    xml.writeAttribute   ( "description", description );
-   xml.writeAttribute   ( "editGUID",    editGUID    );
+   xml.writeAttribute   ( "modelGUID",   modelGUID    );
    xml.writeAttribute   ( "noiseGUID",   noiseGUID   );
 
    if ( type == TI )
@@ -325,7 +325,7 @@ void US_Noise::debug( void )
 
    qDebug() << "type" << (int)type << typen;
    qDebug() << "desc" << description;
-   qDebug() << "edit guid" << editGUID;
+   qDebug() << "model guid" << modelGUID;
    qDebug() << "noise guid" << noiseGUID;;
    qDebug() << "count" << count;
    qDebug() << "values size" << values.size();
