@@ -22,6 +22,5 @@ class US_EXTERN US_ResidsBitmap : public US_WidgetsDialog
 
    private:
       QLabel*       lb_bitmap;
-
 };
 #endif

@@ -6,6 +6,7 @@
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
+#include "us_resplot.h"
 #include "us_dataIO2.h"
 #include "us_plot.h"
 #include "us_help.h"
@@ -18,7 +19,7 @@ class US_EXTERN US_PlotControl : public US_WidgetsDialog
 
    public:
       //! \param resids A reference to a vector of scans,points residual values
-      US_PlotControl( );
+      US_PlotControl( QWidget* p = 0 );
 
    private:
       QVBoxLayout*  mainLayout;
@@ -26,8 +27,15 @@ class US_EXTERN US_PlotControl : public US_WidgetsDialog
       QHBoxLayout*  plotbtnLayout;
       QHBoxLayout*  buttonsLayout;
 
-      QVector< QCheckBox* > xCheck;
-      QVector< QCheckBox* > yCheck;
+      QVector< QCheckBox* >    xCheck;
+      QVector< QCheckBox* >    yCheck;
+
+      QPointer< US_ResidPlot > resplotd;
+
+      double zscale;
+      double gridres;
+      double pksmooth;
+      double pkwidth;
 
    protected:
       US_Help       showHelp;

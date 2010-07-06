@@ -34,6 +34,8 @@ int main( int argc, char* argv[] )
 // US_FeMatch class constructor
 US_FeMatch::US_FeMatch() : US_Widgets()
 {
+   setObjectName( "US_FeMatch" );
+
    // set up the GUI
    setPalette( US_GuiSettings::frameColor() );
    setWindowTitle(
@@ -275,7 +277,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    // Plots
    plotLayout1 = new US_Plot( data_plot1,
             tr( "Experimental Data" ),
-            tr( "Radius (cm) " ),
+            tr( "Radius (cm)" ),
             tr( "OD Difference" ) );
 
    gb_modelsim         = new QGroupBox( 
@@ -299,7 +301,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 
    plotLayout2 = new US_Plot( data_plot2,
             tr( "Velocity Data" ),
-            tr( "Radius (cm) " ),
+            tr( "Radius (cm)" ),
             tr( "Absorbance" ) );
 
    data_plot1->setCanvasBackground( Qt::black );
@@ -349,7 +351,27 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 
    ti_noise.count = 0;
    ri_noise.count = 0;
+
+   sdata          = 0;
 }
+
+// public function to get pointer to edit data
+US_DataIO2::EditedData*     US_FeMatch::fem_editdata() { return edata;     }
+
+// public function to get pointer to sim data
+US_DataIO2::RawData*        US_FeMatch::fem_simdata()  { return sdata;     }
+
+// public function to get pointer to load model
+US_Model*                   US_FeMatch::fem_model()    { return &model;    }
+
+// public function to get pointer to TI noise
+US_Noise*                   US_FeMatch::fem_ti_noise() { return &ti_noise; }
+
+// public function to get pointer to RI noise
+US_Noise*                   US_FeMatch::fem_ri_noise() { return &ri_noise; }
+
+// public function to get pointer to resid bitmap diag
+QPointer< US_ResidsBitmap > US_FeMatch::fem_resbmap()  { return rbmapd;    }
 
 // load data
 void US_FeMatch::load( void )
@@ -404,11 +426,11 @@ qDebug() << "dataLatest:" << dataLatest;
    }
 
    // Look for cell / channel / wavelength combinations
-   lw_triples->clear();
-   dataList.clear();
-   rawList.clear();
+   lw_triples->  clear();
+   dataList.     clear();
+   rawList.      clear();
    excludedScans.clear();
-   triples.clear();
+   triples.      clear();
 
    // Read all data
    if ( workingDir.right( 1 ) != "/" )
@@ -460,13 +482,13 @@ qDebug() << "dataLatest:" << dataLatest;
 
    lw_triples->setCurrentRow( 0 );
 
-   d         = &dataList[ 0 ];
-   scanCount = d->scanData.size();
-   double avgTemp = average_temperature();
+   edata     = &dataList[ 0 ];
+   scanCount = edata->scanData.size();
+   double avgTemp = average_temperature( edata );
 
    // set ID, description, and avg temperature text
-   le_id  ->setText( d->runID + " / " + d->editID );
-   te_desc->setText( d->description );
+   le_id  ->setText( edata->runID + " / " + edata->editID );
+   te_desc->setText( edata->description );
    le_temp->setText( QString::number( avgTemp, 'f', 1 ) + " " + DEGC );
 
    lw_triples->setCurrentRow( 0 );
@@ -508,13 +530,13 @@ void US_FeMatch::details( void )
 // update based on selected triples row
 void US_FeMatch::update( int row )
 {
-   d              = &dataList[ row ];
-   scanCount      = d->scanData.size();
-   le_id->  setText( d->runID + " / " + d->editID );
+   edata          = &dataList[ row ];
+   scanCount      = edata->scanData.size();
+   le_id->  setText( edata->runID + " / " + edata->editID );
 
-   le_temp->setText( QString::number( average_temperature(), 'f', 1 )
+   le_temp->setText( QString::number( average_temperature( edata ), 'f', 1 )
          + " " + DEGC );
-   te_desc->setText( d->description );
+   te_desc->setText( edata->description );
 
    ct_from->setMaxValue( scanCount - excludedScans.size() );
    ct_to  ->setMaxValue( scanCount - excludedScans.size() );
@@ -534,11 +556,11 @@ void US_FeMatch::data_plot( void )
       return;
 
    int row     = lw_triples->currentRow();
-   d           = &dataList[ row ];
+   edata       = &dataList[ row ];
    data_plot2->setTitle(
-      tr( "Velocity Data for " ) + d->runID );
+      tr( "Velocity Data for " ) + edata->runID );
    data_plot2->setAxisTitle( QwtPlot::yLeft,
-      tr( "Absorbance at " ) + d->wavelength + tr( " nm" ) );
+      tr( "Absorbance at " ) + edata->wavelength + tr( " nm" ) );
    data_plot2->setAxisTitle( QwtPlot::xBottom,
       tr( "Radius (cm)" ) );
 
@@ -549,12 +571,12 @@ void US_FeMatch::data_plot( void )
    int     from      = (int)ct_from->value();
    int     to        = (int)ct_to  ->value();
 
-   int     points    = d->scanData[ 0 ].readings.size();
+   int     points    = edata->scanData[ 0 ].readings.size();
    int     count     = points;
 
    if ( haveSim )
    {
-      count     = sdata.scanData[ 0 ].readings.size();
+      count     = sdata->scanData[ 0 ].readings.size();
 qDebug() << "R,V points count" << points << count;
       count     = points > count ? points : count;
    }
@@ -573,17 +595,17 @@ qDebug() << "R,V points count" << points << count;
    solution.viscosity = le_viscosity->text().toDouble();
    solution.vbar      = le_vbar     ->text().toDouble();
 
-   s               = &d->scanData.last();
-   int    point    = US_DataIO2::index( *s, dataList[ row ].x,
+   dscan           = &edata->scanData.last();
+   int    point    = US_DataIO2::index( *dscan, dataList[ row ].x,
                         dataList[ row ].baseline );
    double baseline = 0.0;
 
    for ( int jj = point - 5; jj <= point + 5; jj++ )
-      baseline        = s->readings[ jj ].value;
+      baseline        = dscan->readings[ jj ].value;
 
    baseline       /= 11.0;
 //qDebug() << "baseline(c)" << baseline;
-   double avgTemp  = average_temperature();
+   double avgTemp  = average_temperature( edata );
    solution.vbar20 = US_Math2::adjust_vbar( solution.vbar, avgTemp );
    US_Math2::data_correction( avgTemp, solution );
 
@@ -595,10 +617,10 @@ qDebug() << "R,V points count" << points << count;
       scan_nbr++;
       bool highlight = ( scan_nbr >= from  &&  scan_nbr <= to );
 
-      US_DataIO2::Scan* s = &d->scanData[ ii ];
+      dscan          = &edata->scanData[ ii ];
 
       double lower_limit = baseline;
-      double upper_limit = s->plateau;
+      double upper_limit = dscan->plateau;
 
       int jj    = 0;
       count     = 0;
@@ -606,12 +628,10 @@ qDebug() << "R,V points count" << points << count;
       // Plot each scan in (up to) three segments: below, in, and above
       // the specified boundaries
 
-      while (  jj < points  &&  s->readings[ jj ].value < lower_limit )
+      while (  jj < points  &&  dscan->readings[ jj ].value < lower_limit )
       {  // accumulate coordinates of below-baseline points
-         r[ count ] = d->x       [ jj ].radius;
-         v[ count ] = s->readings[ jj ].value;
-         jj++;
-         count++;
+         r[ count   ] = edata->radius( jj );
+         v[ count++ ] = edata->value( ii, jj++ );
       }
 
       if ( count > 1 )
@@ -629,12 +649,10 @@ qDebug() << "R,V points count" << points << count;
 
       count = 0;
 
-      while ( jj < points && s->readings[ jj ].value < upper_limit )
+      while ( jj < points && dscan->readings[ jj ].value < upper_limit )
       {  // accumulate coordinates of curve within baseline-to-plateau
-         r[ count ] = d->x       [ jj ].radius;
-         v[ count ] = s->readings[ jj ].value;
-         jj++;
-         count++;
+         r[ count   ] = edata->radius( jj );
+         v[ count++ ] = edata->value( ii, jj++ );
       }
 
       if ( count > 1 )
@@ -654,10 +672,8 @@ qDebug() << "R,V points count" << points << count;
 
       while ( jj < points )
       {  // accumulate coordinates of curve portion above plateau
-         r[ count ] = d->x       [ jj ].radius;
-         v[ count ] = s->readings[ jj ].value;
-         jj++;
-         count++;
+         r[ count   ] = edata->radius( jj );
+         v[ count++ ] = edata->value( ii, jj++ );
       }
 
       if ( count > 1 )
@@ -677,26 +693,26 @@ qDebug() << "R,V points count" << points << count;
    // plot simulation
    if ( haveSim )
    {
-      double rl = d->radius( 0 );
-      double vh = d->value( scanCount - 1, points - 1 );
+      double rl = edata->radius( 0 );
+      double vh = edata->value( scanCount - 1, points - 1 );
       rl       -= 0.05;
-      vh       += ( vh - d->value( 0, 0 ) ) * 0.05;
+      vh       += ( vh - edata->value( 0, 0 ) ) * 0.05;
 qDebug() << "  RL" << rl << "  VH" << vh;
 int nscan=scanCount;
-int nconc=sdata.scanData[0].readings.size();
+int nconc=sdata->scanData[0].readings.size();
 qDebug() << "    sdata ns nc " << nscan << nconc;
-qDebug() << "      sdata.x0" << sdata.radius(0);
-qDebug() << "      sdata.xN" << sdata.radius(nconc-1);
-qDebug() << "      sdata.c00" << sdata.value(0,0);
-qDebug() << "      sdata.c0N" << sdata.value(0,nconc-1);
-qDebug() << "      sdata.cM0" << sdata.value(nscan-1,0);
-qDebug() << "      sdata.cMN" << sdata.value(nscan-1,nconc-1);
+qDebug() << "      sdata->x0" << sdata->radius(0);
+qDebug() << "      sdata->xN" << sdata->radius(nconc-1);
+qDebug() << "      sdata->c00" << sdata->value(0,0);
+qDebug() << "      sdata->c0N" << sdata->value(0,nconc-1);
+qDebug() << "      sdata->cM0" << sdata->value(nscan-1,0);
+qDebug() << "      sdata->cMN" << sdata->value(nscan-1,nconc-1);
 
       for ( int ii = 0; ii < scanCount; ii++ )
       {
          if ( excludedScans.contains( ii ) ) continue;
 
-         points    = sdata.scanData[ ii ].readings.size();
+         points    = sdata->scanData[ ii ].readings.size();
 //qDebug() << "      II POINTS" << ii << points;
          count     = 0;
          int jj    = 0;
@@ -705,15 +721,14 @@ qDebug() << "      sdata.cMN" << sdata.value(nscan-1,nconc-1);
 
          while ( jj < points )
          {  // accumulate coordinates of simulation curve
-            rr         = sdata.radius( jj );
-            vv         = sdata.value( ii, jj++ );
+            rr         = sdata->radius( jj );
+            vv         = sdata->value( ii, jj++ );
 //qDebug() << "       JJ rr vv" << jj << rr << vv;
 
             if ( rr > rl  &&  vv < vh )
             {
-               r[ count ] = rr;
-               v[ count ] = vv;
-               count++;
+               r[ count   ] = rr;
+               v[ count++ ] = vv;
             }
          }
          title   = "SimCurve " + QString::number( ii );
@@ -789,17 +804,17 @@ void US_FeMatch::view_report( )
 {
    QString mtext;
    int     row    = lw_triples->currentRow();
-   d              = &dataList[ row ];
+   edata          = &dataList[ row ];
 
    // generate the report file
    write_res();
 
    // open it
-   QString filename = US_Settings::resultDir() + "/" + d->runID + "."
-      + text_model( model, 0 ) + "_res." + d->cell + wave_index( row );
+   QString filename = US_Settings::resultDir() + "/" + edata->runID + "."
+      + text_model( model, 0 ) + "_res." + edata->cell + wave_index( row );
    QFile   res_f( filename );
    QString fileexts = tr( "Result files (*_res*);;" )
-      + tr( "RunID files (" ) + d->runID + "*);;"
+      + tr( "RunID files (" ) + edata->runID + "*);;"
       + tr( "All files (*)" );
 
    if ( res_f.open( QIODevice::ReadOnly | QIODevice::Text ) )
@@ -871,8 +886,8 @@ void US_FeMatch::exclude( void )
    double from          = ct_from->value();
    double to            = ct_to  ->value();
    int    displayedScan = 1;
-          d             = &dataList[ lw_triples->currentRow() ];
-   int    totalScans    = d->scanData.size();
+          edata         = &dataList[ lw_triples->currentRow() ];
+   int    totalScans    = edata->scanData.size();
 
    for ( int ii = 0; ii < totalScans; ii++ )
    {
@@ -937,7 +952,7 @@ void US_FeMatch::distrib_type( )
 //qDebug() << "distrib_type" << itype;
 
    // get pointer to data for use by plot routines
-   d       = &dataList[ lw_triples->currentRow() ];
+   edata   = &dataList[ lw_triples->currentRow() ];
 
    // set push button text to next type
    int ii  = itype + 1;
@@ -966,8 +981,8 @@ void US_FeMatch::distrib_type( )
 // do stick type distribution plot
 void US_FeMatch::distrib_plot_stick( int type )
 {
-   QString pltitle = tr( "Run " ) + d->runID + tr( ": Cell " )
-      + d->cell + " (" + d->wavelength + " nm)";
+   QString pltitle = tr( "Run " ) + edata->runID + tr( ": Cell " )
+      + edata->cell + " (" + edata->wavelength + " nm)";
    QString xatitle;
    QString yatitle = tr( "Relative Concentration" );
 
@@ -1056,8 +1071,8 @@ void US_FeMatch::distrib_plot_stick( int type )
 // do 2d type distribution plot
 void US_FeMatch::distrib_plot_2d( int type )
 {
-   QString pltitle = tr( "Run " ) + d->runID + tr( ": Cell " )
-      + d->cell + " (" + d->wavelength + " nm)";
+   QString pltitle = tr( "Run " ) + edata->runID + tr( ": Cell " )
+      + edata->cell + " (" + edata->wavelength + " nm)";
    QString yatitle;
    QString xatitle;
 
@@ -1169,10 +1184,10 @@ void US_FeMatch::distrib_plot_2d( int type )
 // do residuals type distribution plot
 void US_FeMatch::distrib_plot_resids( )
 {
-   QString pltitle = tr( "Run " ) + d->runID + tr( ": Cell " )
-      + d->cell + " (" + d->wavelength + " nm)" + tr( "\nResiduals" );
+   QString pltitle = tr( "Run " ) + edata->runID + tr( ": Cell " )
+      + edata->cell + " (" + edata->wavelength + " nm)" + tr( "\nResiduals" );
    QString yatitle = tr( "OD Difference" );
-   QString xatitle = tr( "Radius in cm" );
+   QString xatitle = tr( "Radius (cm)" );
 
    data_plot1->setTitle(     pltitle );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
@@ -1185,7 +1200,7 @@ void US_FeMatch::distrib_plot_resids( )
    QwtPlotCurve* data_curv;
    QwtPlotCurve* line_curv = us_curve( data_plot1, "resids zline" );
 
-   int     dsize  = d->scanData[ 0 ].readings.size();
+   int     dsize  = edata->scanData[ 0 ].readings.size();
    double* xx     = new double[ dsize ];
    double* yy     = new double[ dsize ];
    double  zx[ 2 ];
@@ -1200,7 +1215,7 @@ void US_FeMatch::distrib_plot_resids( )
 
    for ( int jj = 0; jj < dsize; jj++ )
    { // accumulate x (radius) values and min,max
-      xval     = d->radius( jj );
+      xval     = edata->radius( jj );
       xmin     = min( xval, xmin );
       xmax     = max( xval, xmax );
       xx[ jj ] = xval;
@@ -1330,7 +1345,7 @@ void US_FeMatch::load_model( )
    else
       return;                     // Cancel:  bail out now
 
-   double avgTemp  = average_temperature();
+   double avgTemp  = average_temperature( edata );
 double Vd=le_viscosity->text().toDouble();
 qDebug() << "ViscD ViscM D/M" << Vd << model.viscosity << Vd/model.viscosity;
 
@@ -1556,6 +1571,7 @@ void US_FeMatch::simulate_model( )
    double radhi   = edata->radius( nconc - 1 );
    double time1   = rdata->scanData[ 0         ].seconds;
    double time2   = rdata->scanData[ nscan - 1 ].seconds;
+   sdata          = new US_DataIO2::RawData();
    //double tcorrec = US_Math2::time_correction( dataList );
    //time1         -= tcorrec;
    //time2         -= tcorrec;
@@ -1601,35 +1617,35 @@ qDebug() << "  delay_hours  " << sp.delay_hours;
 qDebug() << "  delay_minutes" << sp.delay_minutes;
 
    // make a simulation copy of the experimental data without actual readings
-   sdata.type[0]     = rdata->type[0];
-   sdata.type[1]     = rdata->type[1];
+   sdata->type[0]     = rdata->type[0];
+   sdata->type[1]     = rdata->type[1];
 
    for ( int jj = 0; jj < 16; jj++ )
-      sdata.rawGUID[ jj ] = rdata->rawGUID[ jj ];
+      sdata->rawGUID[ jj ] = rdata->rawGUID[ jj ];
 
-   sdata.cell        = rdata->cell;
-   sdata.channel     = rdata->channel;
-   sdata.description = rdata->description;
-qDebug() << "  sdata.description" << sdata.description;
-   sdata.x.resize( nconc );
+   sdata->cell        = rdata->cell;
+   sdata->channel     = rdata->channel;
+   sdata->description = rdata->description;
+qDebug() << "  sdata->description" << sdata->description;
+   sdata->x.resize( nconc );
 
    for ( int jj = 0; jj < nconc; jj++ )
    {
-      sdata.x[ jj ]     = edata->x[ jj ];
+      sdata->x[ jj ]     = edata->x[ jj ];
    }
-qDebug() << "   sdata.x0" << sdata.radius(0);
-qDebug() << "   sdata.xN" << sdata.radius(nconc-1);
-qDebug() << "   rdata.cN" << rdata->value(0,0);
-qDebug() << "   rdata.cN" << rdata->value(0,nconc-1);
+qDebug() << "   sdata->x0" << sdata->radius(0);
+qDebug() << "   sdata->xN" << sdata->radius(nconc-1);
+qDebug() << "   rdata->cN" << rdata->value(0,0);
+qDebug() << "   rdata->cN" << rdata->value(0,nconc-1);
 
    // use same concentration value for all of first scan
    reading.value     = model.components[ 0 ].signal_concentration;
    reading.stdDev    = 0.0;
-   sdata.scanData.clear();
+   sdata->scanData.clear();
 
    for ( int ii = 0; ii < nscan; ii++ )
    {  // initialize readings for all sim data scans
-      US_DataIO2::Scan sscan = edata->scanData[ ii ];
+      US_DataIO2::Scan sscan  = edata->scanData[ ii ];
       //sscan.seconds -= tcorrec;
 
       for ( int jj = 0; jj < nconc; jj++ )
@@ -1637,15 +1653,15 @@ qDebug() << "   rdata.cN" << rdata->value(0,nconc-1);
          sscan.readings[ jj ] = reading;
       }
 
-      sdata.scanData.append( sscan );
+      sdata->scanData.append( sscan );
       // set values to zero for 2nd and subsequent scans
       reading.value     = 0.0;
    }
 
-qDebug() << "   sdata.c00" << sdata.value(0,0);
-qDebug() << "   sdata.c0N" << sdata.value(0,nconc-1);
-qDebug() << "   sdata.cM0" << sdata.value(nscan-1,0);
-qDebug() << "   sdata.cMN" << sdata.value(nscan-1,nconc-1);
+qDebug() << "   sdata->c00" << sdata->value(0,0);
+qDebug() << "   sdata->c0N" << sdata->value(0,nconc-1);
+qDebug() << "   sdata->cM0" << sdata->value(nscan-1,0);
+qDebug() << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
 qDebug() << " afrsa init";
 
    US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
@@ -1653,17 +1669,17 @@ qDebug() << " afrsa init";
 qDebug() << " afrsa calc";
 //astfem_rsa->setTimeCorrection( true );
 
-   astfem_rsa->calculate( sdata );
+   astfem_rsa->calculate( *sdata );
 
-nscan = sdata.scanData.size();
-nconc = sdata.x.size();
+nscan = sdata->scanData.size();
+nconc = sdata->x.size();
 qDebug() << " afrsa done M N" << nscan << nconc;
-qDebug() << "   sdata.x0" << sdata.radius(0);
-qDebug() << "   sdata.xN" << sdata.radius(nconc-1);
-qDebug() << "   sdata.c00" << sdata.value(0,0);
-qDebug() << "   sdata.c0N" << sdata.value(0,nconc-1);
-qDebug() << "   sdata.cM0" << sdata.value(nscan-1,0);
-qDebug() << "   sdata.cMN" << sdata.value(nscan-1,nconc-1);
+qDebug() << "   sdata->x0" << sdata->radius(0);
+qDebug() << "   sdata->xN" << sdata->radius(nconc-1);
+qDebug() << "   sdata->c00" << sdata->value(0,0);
+qDebug() << "   sdata->c0N" << sdata->value(0,nconc-1);
+qDebug() << "   sdata->cM0" << sdata->value(nscan-1,0);
+qDebug() << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
 
    haveSim     = true;
    pb_distrib->setEnabled( true );
@@ -1692,7 +1708,7 @@ qDebug() << "   sdata.cMN" << sdata.value(nscan-1,nconc-1);
       eplotcd->close();
    }
 
-   eplotcd = new US_PlotControl();
+   eplotcd = new US_PlotControl( this );
    eplotcd->move( epd_pos );
    eplotcd->show();
 }
@@ -1785,9 +1801,9 @@ double US_FeMatch::interp_sval( double xv, double* sx, double* sy, int ssize )
 void US_FeMatch::write_res()
 {
    int     row      = lw_triples->currentRow();
-   d                = &dataList[ row ];
-   QString filename = US_Settings::resultDir() + "/" + d->runID + "."
-      + text_model( model, 0 ) + "_res." + d->cell + wave_index( row );
+   edata            = &dataList[ row ];
+   QString filename = US_Settings::resultDir() + "/" + edata->runID + "."
+      + text_model( model, 0 ) + "_res." + edata->cell + wave_index( row );
    QFile   res_f( filename );
 
    if ( !res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -1795,9 +1811,9 @@ void US_FeMatch::write_res()
       return;
    }
 
-   s                = &d->scanData[ 0 ];
-   int     vcount   = s->readings.size();
-   int     scount   = d->scanData.size();
+   dscan            = &edata->scanData[ 0 ];
+   int     vcount   = dscan->readings.size();
+   int     scount   = edata->scanData.size();
    int     ccount   = model.components.size();
    QString t20d     = QString( "20" ) + DEGC;
    QString stars    = QString( "*" ).repeated( 60 );
@@ -1809,26 +1825,27 @@ void US_FeMatch::write_res()
    ts << stars << "\n";
    ts << "*" << text_model( model, 58 ) << "*\n";
    ts << stars << "\n\n\n";
-   ts << tr( "Data Report for Run \"" ) << d->runID
-      << tr( "\",\n Cell " ) << d->cell << tr( ", Channel " ) << d->channel
-      << tr( ", Wavelength " ) << d->wavelength
-      << tr( ", Edited Dataset " ) << d->editID << "\n\n";
+   ts << tr( "Data Report for Run \"" ) << edata->runID
+      << tr( "\",\n Cell " ) << edata->cell
+      << tr( ", Channel " ) << edata->channel
+      << tr( ", Wavelength " ) << edata->wavelength
+      << tr( ", Edited Dataset " ) << edata->editID << "\n\n";
 
    ts << tr( "Detailed Run Information:\n\n" );
-   ts << tr( "Cell Description:        " ) << d->description << "\n";
+   ts << tr( "Cell Description:        " ) << edata->description << "\n";
    ts << tr( "Raw Data Directory:      " ) << workingDir << "\n";
-   ts << tr( "Rotor Speed:             " ) << s->rpm << " rpm\n";
+   ts << tr( "Rotor Speed:             " ) << dscan->rpm << " rpm\n";
    ts << tr( "Average Temperature:     " ) << le_temp->text() << "\n";
    ts << tr( "Temperature Variation:   Within Tolerance\n" );
    ts << tr( "Time Correction:         " ) << text_time( tcorrec, 1 ) << "\n";
    ts << tr( "Run Duration:            " )
-      << text_time( d->scanData[ scount - 1 ].seconds, 2 ) << "\n";
-   ts << tr( "Wavelength:              " ) << d->wavelength << " nm\n";
+      << text_time( edata->scanData[ scount - 1 ].seconds, 2 ) << "\n";
+   ts << tr( "Wavelength:              " ) << edata->wavelength << " nm\n";
    ts << tr( "Baseline Absorbance:     " ) << baseline << " OD\n";
-   ts << tr( "Meniscus Position:       " ) << d->meniscus << " cm\n";
-   ts << tr( "Edited Data starts at:   " ) << d->radius( 0 ) << " cm\n";
+   ts << tr( "Meniscus Position:       " ) << edata->meniscus << " cm\n";
+   ts << tr( "Edited Data starts at:   " ) << edata->radius( 0 ) << " cm\n";
    ts << tr( "Edited Data stops at:    " )
-      << d->radius( vcount - 1 ) << " cm\n\n\n";
+      << edata->radius( vcount - 1 ) << " cm\n\n\n";
 
    ts << tr( "Hydrodynamic Settings:\n\n" );
    ts << tr( "Viscosity correction:    " ) << solution.viscosity << "\n";
@@ -1899,12 +1916,12 @@ void US_FeMatch::write_res()
 
    for ( int ii = 0; ii < scount; ii++ )
    {
-      s         = &d->scanData[ ii ];
-      ctime     = s->seconds - tcorrec;
+      dscan     = &edata->scanData[ ii ];
+      ctime     = dscan->seconds - tcorrec;
       ts << QString().sprintf( "%4i:", ( ii + 1 ) );
       ts << "   " << text_time( ctime, 0 );
       ts << QString().sprintf( "%14.6f OD  (%9.3e, %9.3e)\n",
-            s->plateau, s->omega2t, sdata.scanData[ ii ].omega2t );
+            dscan->plateau, dscan->omega2t, sdata->scanData[ ii ].omega2t );
    }
 
    ts << "\n";
@@ -1916,15 +1933,15 @@ void US_FeMatch::write_res()
 void US_FeMatch::write_cofs()
 {
    int    row      = lw_triples->currentRow();
-   d               = &dataList[ row ];
+   edata           = &dataList[ row ];
    int    ccount   = model.components.size();
-   double avgTemp  = average_temperature();
+   double avgTemp  = average_temperature( edata );
    double scorrec  = 1.0 / solution.correction;
    double dcorrec  = ( ( K0 + avgTemp ) * 100.0 * VISC_20W )
       / ( K20 * solution.viscosity );
 
-   QString filename = US_Settings::resultDir() + "/" + d->runID + "."
-      + text_model( model, 0 ) + "_dis." + d->cell + wave_index( row );
+   QString filename = US_Settings::resultDir() + "/" + edata->runID + "."
+      + text_model( model, 0 ) + "_dis." + edata->cell + wave_index( row );
    QFile   res_f( filename );
 
    if ( !res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -2007,9 +2024,9 @@ QString US_FeMatch::text_time( double seconds, int type )
 // calculate average baseline absorbance
 double US_FeMatch::calc_baseline( int row )
 {
-                           d  = &dataList[ row ];
-   const US_DataIO2::Scan* ss = &d->scanData.last();
-   int                     nn = US_DataIO2::index( *ss, d->x, d->baseline );
+   US_DataIO2::EditedData* dd = &dataList[ row ];
+   const US_DataIO2::Scan* ss = &dd->scanData.last();
+   int                     nn = US_DataIO2::index( *ss, dd->x, dd->baseline );
    double                  bl = 0.0;
 
    for ( int jj = nn - 5; jj < nn + 6; jj++ )
@@ -2100,8 +2117,8 @@ QString US_FeMatch::text_model( US_Model model, int width )
 // calculate residual absorbance values (data - sim)
 void US_FeMatch::calc_residuals()
 {
-   int     dsize  = d->scanData[ 0 ].readings.size();
-   int     ssize  = sdata.scanData[ 0 ].readings.size();
+   int     dsize  = edata->scanData[ 0 ].readings.size();
+   int     ssize  = sdata->scanData[ 0 ].readings.size();
    double* xx     = new double[ dsize ];
    double* sx     = new double[ ssize ];
    double* sy     = new double[ ssize ];
@@ -2114,12 +2131,12 @@ void US_FeMatch::calc_residuals()
 
    for ( int jj = 0; jj < dsize; jj++ )
    {
-      xx[ jj ] = d->radius( jj );
+      xx[ jj ] = edata->radius( jj );
    }
 
    for ( int jj = 0; jj < ssize; jj++ )
    {
-      sx[ jj ] = sdata.radius( jj );
+      sx[ jj ] = sdata->radius( jj );
    }
 
    for ( int ii = 0; ii < scanCount; ii++ )
@@ -2127,13 +2144,13 @@ void US_FeMatch::calc_residuals()
 
       for ( int jj = 0; jj < ssize; jj++ )
       {
-         sy[ jj ] = sdata.value( ii, jj );
+         sy[ jj ] = sdata->value( ii, jj );
       }
 
       for ( int jj = 0; jj < dsize; jj++ )
       {
          sval          = interp_sval( xx[ jj ], sx, sy, ssize );
-         yval          = sval - d->value( ii, jj );
+         yval          = sval - edata->value( ii, jj );
          rmsd         += sq( yval );
          resscan[ jj ] = yval;
       }
@@ -2152,25 +2169,27 @@ void US_FeMatch::calc_residuals()
 }
 
 // calculate average temperature across scans
-double US_FeMatch::average_temperature()
+double US_FeMatch::average_temperature( US_DataIO2::EditedData* d )
 {
-   double avgTemp  = 0.0;
+   int    sCount   = d->scanData.size();
+   double sumTemp  = 0.0;
 
-   for ( int ii = 0; ii < scanCount; ii++ )
-      avgTemp += d->scanData[ ii ].temperature;
+   for ( int ii = 0; ii < sCount; ii++ )
+      sumTemp += d->scanData[ ii ].temperature;
 
-   avgTemp        /= (double)scanCount;
-   return avgTemp;
+   return ( sumTemp / (double)sCount );
 }
 
 // slot to make sure all windows and dialogs get closed
 void US_FeMatch::close_all()
 {
+#if 1
    if ( rbmapd )
       rbmapd->close();
 
    if ( eplotcd )
       eplotcd->close();
+#endif
 
    close();
 }

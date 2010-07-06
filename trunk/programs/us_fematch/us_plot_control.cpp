@@ -7,9 +7,12 @@
 #include <qwt_legend.h>
 
 // constructor:  enhanced plot control widget
-US_PlotControl::US_PlotControl( )
-   : US_WidgetsDialog( 0, 0 )
+US_PlotControl::US_PlotControl( QWidget* p )
+   : US_WidgetsDialog( p, 0 )
 {
+
+   setObjectName( "US_PlotControl" );
+   setAttribute( Qt::WA_DeleteOnClose, true );
 
    // lay out the GUI
    setWindowTitle( tr( "Enhanced Plotting Controls" ) );
@@ -189,6 +192,11 @@ US_PlotControl::US_PlotControl( )
    connect( pb_close,  SIGNAL( clicked() ),
             this,      SLOT( close_all() ) );
 
+   resplotd = 0;
+   zscale   = 2.0;
+   gridres  = 150.0;
+   pksmooth = 80.0;
+   pkwidth  = 0.3;
 }
 
 // mw x box checked
@@ -286,31 +294,44 @@ void US_PlotControl::checkSet( bool chkd, bool isX, int row )
 // z scale factor changed
 void US_PlotControl::zscal_value( double value )
 {
+   zscale   = value;
 }
 // grid resolution changed
 void US_PlotControl::gridr_value( double value )
 {
+   gridres  = value;
 }
 // peak smoothing changed
 void US_PlotControl::peaks_value( double value )
 {
+   pksmooth = value;
 }
 // peak width changed
 void US_PlotControl::peakw_value( double value )
 {
+   pkwidth  = value;
 }
 
 // residual plot button clicked
 void US_PlotControl::rplot_btn()
 {
+   resplotd = new US_ResidPlot( this );
+   resplotd->setVisible( true );
+   //rplotd->exec();
+   //qApp->processEvents();
 }
+
 // 3d plot button clicked
 void US_PlotControl::plot3_btn()
 {
 }
+
 // close button clicked
 void US_PlotControl::close_all()
 {
+   if ( resplotd )
+      resplotd->close();
+
    close();
 }
 

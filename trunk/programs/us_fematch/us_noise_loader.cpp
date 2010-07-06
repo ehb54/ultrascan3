@@ -13,10 +13,7 @@ US_NoiseLoader::US_NoiseLoader( US_DB2* a_db, QStringList& a_mieGUIDs,
    : US_WidgetsDialog( 0, 0 ), db( a_db ), mieGUIDs( a_mieGUIDs ),
    nieGUIDs( a_nieGUIDs ), ti_noise( a_ti_noise ), ri_noise( a_ri_noise )
 {
-qDebug() << "NL: db=" << ( ( db == (US_DB2*)0 ) ? "(local)" : "(DB)" );
-qDebug() << " mieGUIDs size" << mieGUIDs.size();
-qDebug() << " nieGUIDs size" << nieGUIDs.size();
-qDebug() << " ti_noise count" << ti_noise.count;
+
    setWindowTitle( tr( "Noise Vector Load" ) );
    setPalette( US_GuiSettings::frameColor() );
 
@@ -33,28 +30,28 @@ qDebug() << " ti_noise count" << ti_noise.count;
                     + tr( "Click the \"Load\" button to load selected noise\n" )
                     + tr( "    or the \"Cancel\" button to select no noise.\n" )
                     + tr( "Click \"Details\" for noise entry details." );
-   //QLabel* lb_help  = us_label( hmsg );
-   QLabel* lb_help  = us_banner( hmsg );
-   lb_help->setAlignment(  Qt::AlignVCenter | Qt::AlignLeft );
 
-   QLabel* lb_arrow = us_banner( "Selected Noise Vectors" );
-   lb_arrow->setAlignment( Qt::AlignVCenter | Qt::AlignHCenter );
+   QLabel* lb_noises  = us_banner( hmsg );
+   lb_noises->setAlignment(  Qt::AlignVCenter | Qt::AlignLeft );
+
+   QLabel* lb_selects = us_banner( "Selected Noise Vectors" );
+   lb_selects->setAlignment( Qt::AlignVCenter | Qt::AlignHCenter );
 
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
    int fontHeight = fm.lineSpacing();
 
-   tv_noises        = new QTreeWidget( this );
-   tv_noises->setFrameStyle( QFrame::NoFrame );
-   tv_noises->setPalette( US_GuiSettings::frameColor() );
-   tv_noises->setFont(    font );
+   tw_noises        = new QTreeWidget( this );
+   tw_noises->setFrameStyle( QFrame::NoFrame );
+   tw_noises->setPalette( US_GuiSettings::frameColor() );
+   tw_noises->setFont(    font );
 
    lw_selects       = us_listwidget();
    lw_selects->setMaximumHeight( fontHeight * 2 + 12 );
 
-   mainLayout->addWidget( lb_help );
-   mainLayout->addWidget( tv_noises );
-   mainLayout->addWidget( lb_arrow );
+   mainLayout->addWidget( lb_noises );
+   mainLayout->addWidget( tw_noises );
+   mainLayout->addWidget( lb_selects );
    mainLayout->addWidget( lw_selects );
 
    QPushButton* pb_detail = us_pushbutton( tr( "Details" )   );
@@ -70,44 +67,44 @@ qDebug() << " ti_noise count" << ti_noise.count;
 
    // populate the tree widget
    QTreeWidgetItem* twi_null = (QTreeWidgetItem*)0;
-   QString          twtitle  = QString( "Models-in-Edit/Noises-in-Model" );
+   QString          twtitle  = QString( "Models-in-Edit / Noises-in-Model" );
    QString          mititle  = QString( "Loaded Model" );
    QList< QTreeWidgetItem* > items;
-   tv_noises->setColumnCount( 1 );
-   tv_noises->setHeaderLabel( twtitle );
+   tw_noises->setColumnCount( 1 );
+   tw_noises->setHeaderLabel( twtitle );
+
    QTreeWidgetItem* twi_curr = 
       new QTreeWidgetItem( twi_null, QStringList( mititle ) );
-   items.append( twi_curr );
+   items.append( twi_curr );      // first top-level item in tree
 
    for ( int ii = 1; ii < mieGUIDs.size(); ii++ )
-   {
+   {  // complete models list for top level
       mititle    = QString().sprintf( "Model Sibling %4.4d", ii );
       twi_curr   = new QTreeWidgetItem( twi_null, QStringList( mititle ) );
-qDebug() << "NL: ii mititle" << ii << mititle;
-      items.append( twi_curr );
+      items.append( twi_curr );   // other top-level items are model siblings
    }
 
-   tv_noises->addTopLevelItems( items );
+   tw_noises->addTopLevelItems( items );  // put the top level in tree GUI
 
    for ( int ii = 0; ii < nieGUIDs.size(); ii++ )
-   {
-      QString nie   = nieGUIDs.at( ii );
-      QString typ   = nie.section( ":", 1, 1 );
-      QString mdx   = nie.section( ":", 2, 2 );
-              nie   = typ + "_noise " + mdx;
-      int     ndx   = mdx.toInt();
+   {  // review noises-in-edit, adding children
+      QString nie   = nieGUIDs.at( ii );         // noiseGUID:type:index in edit
+      QString typ   = nie.section( ":", 1, 1 );  // type part ("ti" or "ri")
+      QString mdx   = nie.section( ":", 2, 2 );  // model index part ("0001")
+              nie   = typ + "_noise " + mdx;     // list name ("ti_noise 0003")
+      int     ndx   = mdx.toInt();               // integral model index
 qDebug() << "NL:   ii ndx nie" << ii << ndx << nie;
 
       twi_curr      = new QTreeWidgetItem( QStringList( nie ) );
-      items.at( ndx )->addChild( twi_curr );
+      items.at( ndx )->addChild( twi_curr );     // add as child of model "ndx"
    }
 
    if ( nieGUIDs.at( 0 ).section( ":", 2, 2 ).toInt() == 0 )
-   {
-      tv_noises->expandItem( items.at( 0 ) );
+   {  // expand the loaded model tree if present
+      tw_noises->expandItem( items.at( 0 ) );
    }
 
-   connect( tv_noises,  SIGNAL( itemDoubleClicked( QTreeWidgetItem*, int ) ),
+   connect( tw_noises,  SIGNAL( itemDoubleClicked( QTreeWidgetItem*, int ) ),
             this,       SLOT(   itemSelect(        QTreeWidgetItem*, int ) ) );
    connect( lw_selects, SIGNAL( doubleClicked( const QModelIndex& ) ),
             this,       SLOT(   itemDeselect(  const QModelIndex& ) ) );
@@ -119,18 +116,10 @@ qDebug() << "NL:   ii ndx nie" << ii << ndx << nie;
             this,       SLOT(   selected()     ) );
 }
 
-US_NoiseLoader::~US_NoiseLoader( )
-{
-qDebug() << "NL:DESTRUCT";
-   if ( tv_noises )
-      tv_noises->clear();
-}
-
-// move selected item to selects list
+// move selected tree item to selects list
 void US_NoiseLoader::itemSelect( QTreeWidgetItem* item, int )
 {
    QString itemtext = item->text( 0 );
-qDebug() << "NL: itemSelect" << itemtext;
    QString itemtype = itemtext.left( 2 );
 
    if ( itemtype != "ti"  &&  itemtype != "ri" )
@@ -152,21 +141,25 @@ qDebug() << "NL: itemSelect" << itemtext;
       int secount = lw_selects->count();
 
       for ( int ii = 0; ii < secount; ii++ )
-      {
+      {  // review what is currently in the selects list
          temptext = lw_selects->item( ii )->text();
 
-         selects << temptext;
+         selects << temptext;  // build a string list of selects
 
          if ( temptext.startsWith( "ti", Qt::CaseSensitive ) )
-            ticount++;
+            ticount++;         // bump "ti" count
 
          else
-            ricount++;
+            ricount++;         // bump "ri" count
 
       }
 
+      // The following inserts the selected noise entry into the select list.
+      // The goal is to have at most 2 entries, "ri" first, "ti" last.
+
       if ( itemtype == "ti" )
       {  // item to add is "ti_*"
+
          if ( ticount == 0 )
          {  // there wasn't one before, so insert the new one
             lw_selects->insertItem( 0, itemtext );
@@ -182,13 +175,14 @@ qDebug() << "NL: itemSelect" << itemtext;
 
       else
       {  // item to add is "ri_*"
+
          if ( ricount == 0 )
-         {  // there wasn't one before, so add new one to end
+         {  // there wasn't one before, so add new one to the end
             lw_selects->addItem( itemtext );
          }
 
          else
-         {  // there was one before, replace 2nd in list (ti position)
+         {  // there was one before, replace last in list (ri position)
             selects.replace( secount - 1, itemtext );
             lw_selects->clear();
             lw_selects->addItems( selects );
@@ -218,62 +212,64 @@ qDebug() << "NL: itemDeselect row" << lw_selects->item( sx )->text();
 
 }
 
+// close with check of need to clear noises
 void US_NoiseLoader::close_all()
 {
-   if ( tv_noises )
+   if ( tw_noises )
    {
-      tv_noises->clear();
+      tw_noises->clear();
    }
 
-   tv_noises = (QTreeWidget*)0;
+   tw_noises = (QTreeWidget*)0;
 
    this->close();
 }
 
+// close out after Cancel clicked
 void US_NoiseLoader::cancelled()
 {
    close_all();
 }
 
+// close out after Load clicked: load noise(s)
 void US_NoiseLoader::selected()
 {
-   bool isDB = ( db != (US_DB2*)0 );
+   bool isDB = ( db != (US_DB2*)0 );  // flag DB or Local
 
    for ( int ii = 0; ii < lw_selects->count(); ii++ )
-   {
+   {  // browse select list
       QString selntext = lw_selects->item( ii )->text();
       QString snumtext = selntext.section( " ", 1, 1 );
       QString styptext = selntext.left( 2 );
       QString noisGUID = "";
 
       for ( int jj = 0; jj < nieGUIDs.size(); jj++ )
-      {
+      {  // examine noises-in-edit list
          QString nie   = nieGUIDs.at( jj );
          QString typ   = nie.section( ":", 1, 1 );
          QString mdx   = nie.section( ":", 2, 2 );
+
          if ( typ == styptext  &&   mdx == snumtext )
-         {
+         {  // found the selected noise: break with its GUID
             noisGUID      = nie.section( ":", 0, 0 );
             break;
          }
       }
 
       if ( styptext == "ti" )
-         ti_noise.load( isDB, noisGUID, db );
+         ti_noise.load( isDB, noisGUID, db );  // load ti noise
 
       else
-         ri_noise.load( isDB, noisGUID, db );
+         ri_noise.load( isDB, noisGUID, db );  // load ri noise
 
    }
-qDebug() << "NL: ti_noise count" << ti_noise.count;
-qDebug() << "NL: ri_noise count" << ri_noise.count;
 
    close_all();
 }
 
+// top up editor dialog with current noise details
 void US_NoiseLoader::view_details()
 {
-qDebug() << "NL: view_details";
    US_Noise noise;
    bool     isDB   = ( db != (US_DB2*)0 );
    QString  mtxt;
@@ -290,24 +286,23 @@ qDebug() << "NL: view_details";
       QString typ      = nie.section( ":", 1, 1 );
       QString mdx      = nie.section( ":", 2, 2 );
       QString noisGUID = nie.section( ":", 0, 0 );
+      QString typedesc;
 
-      QString typedesc = tr( "Time-Invariant" );
-      if ( typ == "ri" )
-         typedesc      = tr( "Radius-Invariant" );
-
-      noise.load( isDB, noisGUID, db );
-
-      mtxt  += tr( "\nNoise record \"" ) + typ + "_noise " + mdx + "\":";
-
-      if ( mdx.toInt() == 0 )
-      {
-         mtxt  += tr( "  (from Loaded Model):\n" );
-      }
+      if ( typ == "ti" )
+         typedesc      = tr( "Time-Invariant" );
 
       else
-      {
+         typedesc      = tr( "Radially-Invariant" );
+
+      noise.load( isDB, noisGUID, db );  // load noise to get details
+
+      mtxt  += tr( "\nNoise record \"" ) + typ + "_noise " + mdx + "\"";
+
+      if ( mdx.toInt() == 0 )
+         mtxt  += tr( "  (from Loaded Model):\n" );
+
+      else
          mtxt  += tr( "  (from Model Sibling):\n" );
-      }
 
       mtxt  += tr( "  Type:           " ) + typedesc          + "\n";
       mtxt  += tr( "  Description:    " ) + noise.description + "\n";

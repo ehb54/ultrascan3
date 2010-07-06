@@ -82,5 +82,7 @@ US_ResidsBitmap::US_ResidsBitmap( QVector< QVector< double > >& resids )
    pmap = pmap.fromImage( res_image.scaled( mwid, mhgt ) );
 
    lb_bitmap->setPixmap( pmap );
+
+   setAttribute( Qt::WA_DeleteOnClose, true );
 }
 

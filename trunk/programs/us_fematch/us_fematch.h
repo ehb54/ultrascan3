@@ -4,6 +4,7 @@
 #include "us_resids_bitmap.h"
 #include "us_plot_control.h"
 #include "us_noise_loader.h"
+#include "us_resplot.h"
 #include "us_dataIO2.h"
 #include "us_astfem_rsa.h"
 #include "us_model.h"
@@ -21,6 +22,13 @@ class US_EXTERN US_FeMatch : public US_Widgets
 
    public:
       US_FeMatch();
+
+      US_DataIO2::EditedData*     fem_editdata();
+      US_DataIO2::RawData*        fem_simdata();
+      US_Model*                   fem_model();
+      US_Noise*                   fem_ti_noise();
+      US_Noise*                   fem_ri_noise();
+      QPointer< US_ResidsBitmap > fem_resbmap();
 
    private:
 
@@ -101,18 +109,20 @@ class US_EXTERN US_FeMatch : public US_Widgets
 
       QStringList   files;
 
-      US_DataIO2::EditedData*  d;
-      US_DataIO2::Scan*        s;
-      US_DataIO2::RawData      sdata;
-      US_Model                 model;
-      US_Noise                 ri_noise;
-      US_Noise                 ti_noise;
+      US_DataIO2::EditedData*     edata;
+      US_DataIO2::Scan*           dscan;
+      US_DataIO2::RawData*        rdata;
+      US_DataIO2::RawData*        sdata;
 
-      US_ResidsBitmap*         rbmapd;
-      US_PlotControl*          eplotcd;
+      US_Model                    model;
+      US_Noise                    ri_noise;
+      US_Noise                    ti_noise;
 
-      QPoint                   rbd_pos;
-      QPoint                   epd_pos;
+      QPointer< US_ResidsBitmap > rbmapd;
+      QPointer< US_PlotControl >  eplotcd;
+
+      QPoint                      rbd_pos;
+      QPoint                      epd_pos;
 
    private slots:
 
@@ -155,7 +165,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QString text_model( US_Model, int );
       double  calc_baseline(  int  );
       void    calc_residuals( void );
-      double  average_temperature( void );
+      double  average_temperature( US_DataIO2::EditedData* );
       void    close_all( void );
 
       void help     ( void )
