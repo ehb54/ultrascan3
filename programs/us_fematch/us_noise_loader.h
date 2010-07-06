@@ -26,8 +26,6 @@ class US_EXTERN US_NoiseLoader : public US_WidgetsDialog
       US_NoiseLoader( US_DB2*, QStringList&, QStringList&,
                       US_Noise&, US_Noise& );
 
-      ~US_NoiseLoader( );
-
    private:
       US_DB2*       db;
       QStringList&  mieGUIDs;
@@ -35,7 +33,7 @@ class US_EXTERN US_NoiseLoader : public US_WidgetsDialog
       US_Noise&     ti_noise;
       US_Noise&     ri_noise;
 
-      QTreeWidget*  tv_noises;
+      QTreeWidget*  tw_noises;
       QListWidget*  lw_selects;
       QVBoxLayout*  mainLayout;
       QHBoxLayout*  btnsLayout;
