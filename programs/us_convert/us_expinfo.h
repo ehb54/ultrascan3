@@ -35,7 +35,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          int              analyteID;          //!< The ID of the analyte that was associated
          QString          analyteGUID;        //!< The GUID of the analyte
          QString          analyteDesc;        //!< The corresponding analyte description
-         char             guid[16];           //!< The GUID of this triple
+         char             tripleGUID[16];     //!< The GUID of this triple
          TripleInfo();                        //!< A generic constructor
       };
 

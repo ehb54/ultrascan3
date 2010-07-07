@@ -13,7 +13,7 @@ US_ConvertIO::US_ConvertIO( void )
 {
 }
 
-QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData )
+QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, QString dir )
 {
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
@@ -49,10 +49,12 @@ QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData )
    db.next();
 
    ExpData.date = db.value( 12 ).toString();
-   return( NULL );
+
+   // Now write the auc data
+   return( writeRawDataDB( ExpData, dir ) );
 }
 
-QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData )
+QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, QString dir )
 {
    // Update database
    US_Passwd pw;
@@ -88,6 +90,77 @@ QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData )
    db.next();
 
    ExpData.date = db.value( 12 ).toString();
+
+   // Delete all existing rawData, because we're starting over 
+   q.clear();
+   q << "delete_rawData"
+     << QString::number( ExpData.expID );
+
+   status = db.statusQuery( q );
+   if ( status != US_DB2::OK )
+      return( db.lastError() );
+
+   // Now write the auc data
+   return( writeRawDataDB( ExpData, dir ) );
+}
+
+QString US_ConvertIO::writeRawDataDB( US_ExpInfo::ExperimentInfo& ExpData, QString dir )
+{
+   // Update database
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+      return( db.lastError() );
+
+   // First get a list of auc files
+   QStringList nameFilters = QStringList( "*.auc" );
+
+   QDir readDir( dir );
+   QStringList files =  readDir.entryList( nameFilters, 
+         QDir::Files | QDir::Readable, QDir::Name );
+
+   // We assume there are files, because calling program checked
+
+   // Read all data
+   QString file;
+   QString error = QString( "" );
+   foreach ( file, files )
+   {
+      QString filename = dir + file;
+      QFile f( filename );
+
+      if ( f.open( QFile::ReadOnly ) )
+      {
+         QByteArray aucData = f.readAll();
+
+         QStringList q( "new_rawData" );
+         q  << QString::number( ExpData.expID )
+            << filename
+            << ExpData.label
+            << aucData
+            << ExpData.comments
+            << "1" ;           // channel ID
+
+         int status = db.statusQuery( q );
+         if ( status != US_DB2::OK )
+         {
+            error += "Error returned processing file: " + filename + "\n" +
+                     db.lastError() + "\n";
+         }
+      }
+
+      else
+         error += "Error: could not open file: " + filename + "\n";
+
+      f.close();
+
+   }
+
+   if ( error != NULL )
+      return( error );
+
    return( NULL );
 }
 
@@ -163,7 +236,7 @@ int US_ConvertIO::writeXmlFile(
          QString     wl         = parts[ 2 ];
 
          char uuidc[ 37 ];
-         uuid_unparse( (unsigned char*)t.guid, uuidc );
+         uuid_unparse( (unsigned char*)t.tripleGUID, uuidc );
          xml.writeStartElement( "dataset" );
          xml.writeAttribute   ( "cell", cell );
          xml.writeAttribute   ( "channel", channel );

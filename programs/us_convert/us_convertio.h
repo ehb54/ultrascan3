@@ -24,14 +24,16 @@ class US_EXTERN US_ConvertIO
       /*! \brief    Save new experiment info in the database
 
           \param    ExpData A structure containing all the experiment information
+          \param    dir     The location of the binary auc files
       */
-      static QString newDBExperiment( US_ExpInfo::ExperimentInfo& );
+      static QString newDBExperiment( US_ExpInfo::ExperimentInfo&, QString );
 
       /*! \brief    Update experiment info in the database
 
           \param    ExpData A structure containing all the experiment information
+          \param    dir     The location of the binary auc files
       */
-      static QString updateDBExperiment( US_ExpInfo::ExperimentInfo& );
+      static QString updateDBExperiment( US_ExpInfo::ExperimentInfo&, QString );
 
       /*! \brief    Writes an xml file
 
@@ -58,6 +60,11 @@ class US_EXTERN US_ConvertIO
                  QString                     runType,
                  QString                     runID,
                  QString                     dirname );
+
+   private:
+      static QString writeRawDataDB(
+                 US_ExpInfo::ExperimentInfo& ExpData, 
+                 QString                     dir );
       
 };
 #endif
