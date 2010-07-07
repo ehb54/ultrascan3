@@ -10,7 +10,7 @@ DELIMITER $$
 
 -- Verifies that the specified component ID (bufferID, analyteID) exists
 DROP FUNCTION IF EXISTS verify_componentID$$
-CREATE FUNCTION verify_componentID( p_guid          CHAR(36),
+CREATE FUNCTION verify_componentID( p_personGUID    CHAR(36),
                                     p_password      VARCHAR(80),
                                     p_componentID   INT,
                                     p_componentType enum( 'Buffer', 'Analyte' ) )
@@ -26,7 +26,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( p_componentType = 'Buffer' ) THEN  
       SELECT COUNT(*)
       INTO   count_componentID
@@ -65,7 +65,7 @@ END$$
 
 -- Returns the row count of spectrum info associated with p_componentID
 DROP FUNCTION IF EXISTS count_spectrum$$
-CREATE FUNCTION count_spectrum( p_guid          CHAR(36),
+CREATE FUNCTION count_spectrum( p_personGUID    CHAR(36),
                                 p_password      VARCHAR(80),
                                 p_componentID   INT,
                                 p_componentType enum( 'Buffer', 'Analyte' ),
@@ -80,7 +80,7 @@ BEGIN
   CALL config();
   SET count_component = 0;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT COUNT(*)
     INTO   count_component
     FROM   spectrum
@@ -96,7 +96,7 @@ END$$
 
 -- INSERTs a new spectrum value with the specified information
 DROP PROCEDURE IF EXISTS new_spectrum$$
-CREATE PROCEDURE new_spectrum( p_guid             CHAR(36),
+CREATE PROCEDURE new_spectrum( p_personGUID       CHAR(36),
                                p_password         VARCHAR(80),
                                p_componentID      INT,
                                p_componentType    enum( 'Buffer', 'Analyte' ),
@@ -113,7 +113,7 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
-  IF ( verify_componentID( p_guid, p_password, p_componentID, p_componentType ) = @OK ) THEN
+  IF ( verify_componentID( p_personGUID, p_password, p_componentID, p_componentType ) = @OK ) THEN
     INSERT INTO spectrum SET
       componentID      = p_componentID,
       componentType    = p_componentType,
@@ -129,7 +129,7 @@ END$$
 
 -- UPDATEs an existing spectrum value with the specified information
 DROP PROCEDURE IF EXISTS update_spectrum$$
-CREATE PROCEDURE update_spectrum( p_guid             CHAR(36),
+CREATE PROCEDURE update_spectrum( p_personGUID       CHAR(36),
                                   p_password         VARCHAR(80),
                                   p_spectrumID       INT,
                                   p_componentID      INT,
@@ -146,7 +146,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
  
-  IF ( verify_componentID( p_guid, p_password, p_componentID, p_componentType ) = @OK ) THEN
+  IF ( verify_componentID( p_personGUID, p_password, p_componentID, p_componentType ) = @OK ) THEN
     UPDATE spectrum SET
       componentID      = p_componentID,
       componentType    = p_componentType,
@@ -162,7 +162,7 @@ END$$
 
 -- Returns all spectrum info associated with p_componentID
 DROP PROCEDURE IF EXISTS get_spectrum$$
-CREATE PROCEDURE get_spectrum( p_guid          CHAR(36),
+CREATE PROCEDURE get_spectrum( p_personGUID    CHAR(36),
                                p_password      VARCHAR(80),
                                p_componentID   INT,
                                p_componentType enum( 'Buffer', 'Analyte' ),
@@ -175,10 +175,10 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_componentID( p_guid, p_password, p_componentID, p_componentType ) != @OK ) THEN
+  IF ( verify_componentID( p_personGUID, p_password, p_componentID, p_componentType ) != @OK ) THEN
     SELECT @US3_LAST_ERRNO AS status;
 
-  ELSEIF ( count_spectrum( p_guid, p_password, p_componentID, p_componentType, p_opticsType ) < 1 ) THEN
+  ELSEIF ( count_spectrum( p_personGUID, p_password, p_componentID, p_componentType, p_opticsType ) < 1 ) THEN
     SET @US3_LAST_ERRNO = @NOROWS;
     SET @US3_LAST_ERROR = 'MySQL: no rows returned';
   
@@ -201,7 +201,7 @@ END$$
 
 -- DELETEs all extinction information associated with a spectrumID
 DROP PROCEDURE IF EXISTS delete_spectrum$$
-CREATE PROCEDURE delete_spectrum( p_guid          CHAR(36),
+CREATE PROCEDURE delete_spectrum( p_personGUID    CHAR(36),
                                   p_password      VARCHAR(80),
                                   p_componentID   INT,
                                   p_componentType enum( 'Buffer', 'Analyte' ),
@@ -213,7 +213,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
 
     DELETE FROM spectrum
     WHERE  componentID   = p_componentID

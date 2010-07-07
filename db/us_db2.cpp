@@ -470,3 +470,24 @@ int US_DB2::lastInsertID( void )
 }
 #endif
 
+#ifdef NO_DB
+QString US_DB2::lastDebug( void ){ return ""; }
+#else
+QString US_DB2::lastDebug( void )
+{
+   QString debug = "";
+
+   // Let's see if there is a debug message available
+   this->rawQuery( "SELECT last_debug()" );
+   if ( result )
+   {
+      row       = mysql_fetch_row( result );
+      debug     = row[ 0 ];
+      mysql_free_result( result );
+      result = NULL;
+   }
+
+   return ( debug );
+}
+#endif
+

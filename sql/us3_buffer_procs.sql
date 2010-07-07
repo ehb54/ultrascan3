@@ -11,9 +11,9 @@ DELIMITER $$
 -- Verifies that the user has permission to modify
 --  the specified buffer
 DROP FUNCTION IF EXISTS verify_buffer_permission$$
-CREATE FUNCTION verify_buffer_permission( p_guid     CHAR(36),
-                                          p_password VARCHAR(80),
-                                          p_bufferID INT )
+CREATE FUNCTION verify_buffer_permission( p_personGUID CHAR(36),
+                                          p_password   VARCHAR(80),
+                                          p_bufferID   INT )
   RETURNS INT
   READS SQL DATA
 
@@ -30,11 +30,11 @@ BEGIN
   WHERE  bufferID = p_bufferID
   AND    personID = @US3_ID;
  
-  IF ( verify_user( p_guid, p_password ) = @OK &&
+  IF ( verify_user( p_personGUID, p_password ) = @OK &&
        count_buffer > 0 ) THEN
     SET status = @OK;
 
-  ELSEIF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     SET status = @OK;
 
   ELSE
@@ -52,9 +52,9 @@ END$$
 -- Returns the count of buffers associated with p_ID
 --  If p_ID = 0, retrieves count of all buffers in db
 DROP FUNCTION IF EXISTS count_buffers$$
-CREATE FUNCTION count_buffers( p_guid     CHAR(36),
-                               p_password VARCHAR(80),
-                               p_ID       INT )
+CREATE FUNCTION count_buffers( p_personGUID CHAR(36),
+                               p_password   VARCHAR(80),
+                               p_ID         INT )
   RETURNS INT
   READS SQL DATA
 
@@ -65,7 +65,7 @@ BEGIN
   CALL config();
   SET count_buffers = 0;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( p_ID > 0 ) THEN
       SELECT COUNT(*)
       INTO count_buffers
@@ -87,7 +87,7 @@ END$$
 
 -- INSERTs a new buffer with the specified information
 DROP PROCEDURE IF EXISTS new_buffer$$
-CREATE PROCEDURE new_buffer ( p_guid            CHAR(36),
+CREATE PROCEDURE new_buffer ( p_personGUID      CHAR(36),
                               p_password        VARCHAR(80),
                               p_bufferGUID      CHAR(36),
                               p_description     TEXT,
@@ -114,10 +114,10 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
-  IF ( ( verify_user( p_guid, p_password ) = @OK ) &&
-       ( check_GUID ( p_guid, p_password, p_bufferGUID ) = @OK ) ) THEN
+  IF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+       ( check_GUID ( p_personGUID, p_password, p_bufferGUID ) = @OK ) ) THEN
     INSERT INTO buffer SET
-      GUID            = p_bufferGUID,
+      bufferGUID      = p_bufferGUID,
       description     = p_description,
       compressibility = p_compressibility,
       pH              = p_pH,
@@ -126,11 +126,11 @@ BEGIN
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
-      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for GUID field";
+      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for bufferGUID field";
 
     ELSEIF ( null_field = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTNULL;
-      SET @US3_LAST_ERROR = "MySQL: NULL value for GUID field";
+      SET @US3_LAST_ERROR = "MySQL: NULL value for bufferGUID field";
 
     ELSE
       SET @LAST_INSERT_ID = LAST_INSERT_ID();
@@ -148,7 +148,7 @@ END$$
 
 -- UPDATEs an existing buffer with the specified information
 DROP PROCEDURE IF EXISTS update_buffer$$
-CREATE PROCEDURE update_buffer ( p_guid            CHAR(36),
+CREATE PROCEDURE update_buffer ( p_personGUID      CHAR(36),
                                  p_password        VARCHAR(80),
                                  p_bufferID        INT,
                                  p_description     TEXT,
@@ -168,7 +168,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_buffer_permission( p_guid, p_password, p_bufferID ) = @OK ) THEN
+  IF ( verify_buffer_permission( p_personGUID, p_password, p_bufferID ) = @OK ) THEN
     UPDATE buffer SET
       description     = p_description,
       compressibility = p_compressibility,
@@ -194,7 +194,7 @@ END$$
 
 -- Returns the bufferID associated with the given bufferGUID
 DROP PROCEDURE IF EXISTS get_bufferID$$
-CREATE PROCEDURE get_bufferID ( p_guid       CHAR(36),
+CREATE PROCEDURE get_bufferID ( p_personGUID CHAR(36),
                                 p_password   VARCHAR(80),
                                 p_bufferGUID CHAR(36) )
   READS SQL DATA
@@ -208,12 +208,12 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET count_buff   = 0;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
 
     SELECT    COUNT(*)
     INTO      count_buff
     FROM      buffer
-    WHERE     GUID = p_bufferGUID;
+    WHERE     bufferGUID = p_bufferGUID;
 
     IF ( TRIM( p_bufferGUID ) = '' ) THEN
       SET @US3_LAST_ERRNO = @EMPTY;
@@ -231,7 +231,7 @@ BEGIN
 
       SELECT   bufferID
       FROM     buffer
-      WHERE    GUID = p_bufferGUID;
+      WHERE    bufferGUID = p_bufferGUID;
 
     END IF;
 
@@ -242,9 +242,9 @@ END$$
 -- Returns the bufferID and description of all buffers associated with p_ID
 --  If p_ID = 0, retrieves information about all buffers in db
 DROP PROCEDURE IF EXISTS get_buffer_desc$$
-CREATE PROCEDURE get_buffer_desc ( p_guid     CHAR(36),
-                                   p_password VARCHAR(80),
-                                   p_ID       INT )
+CREATE PROCEDURE get_buffer_desc ( p_personGUID CHAR(36),
+                                   p_password   VARCHAR(80),
+                                   p_ID         INT )
   READS SQL DATA
 
 BEGIN
@@ -253,8 +253,8 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
-    IF ( count_buffers( p_guid, p_password, p_ID ) < 1 ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_buffers( p_personGUID, p_password, p_ID ) < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
  
@@ -285,9 +285,9 @@ END$$
 
 -- Returns a more complete list of information about one buffer
 DROP PROCEDURE IF EXISTS get_buffer_info$$
-CREATE PROCEDURE get_buffer_info ( p_guid     CHAR(36),
-                                   p_password VARCHAR(80),
-                                   p_bufferID INT )
+CREATE PROCEDURE get_buffer_info ( p_personGUID CHAR(36),
+                                   p_password   VARCHAR(80),
+                                   p_bufferID   INT )
   READS SQL DATA
 
 BEGIN
@@ -302,7 +302,7 @@ BEGIN
   FROM       buffer
   WHERE      bufferID = p_bufferID;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_buffers = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -312,7 +312,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   GUID, description, compressibility, pH, viscosity, density, personID
+      SELECT   bufferGUID, description, compressibility, pH, viscosity, density, personID
       FROM     buffer b, bufferPerson bp
       WHERE    b.bufferID = bp.bufferID
       AND      b.bufferID = p_bufferID;
@@ -328,9 +328,9 @@ END$$
 
 -- DELETEs a buffer, plus information in related tables
 DROP PROCEDURE IF EXISTS delete_buffer$$
-CREATE PROCEDURE delete_buffer ( p_guid     CHAR(36),
-                                 p_password VARCHAR(80),
-                                 p_bufferID INT )
+CREATE PROCEDURE delete_buffer ( p_personGUID CHAR(36),
+                                 p_password   VARCHAR(80),
+                                 p_bufferID   INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -338,7 +338,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_buffer_permission( p_guid, p_password, p_bufferID ) = @OK ) THEN
+  IF ( verify_buffer_permission( p_personGUID, p_password, p_bufferID ) = @OK ) THEN
 
     DELETE FROM bufferLink
     WHERE bufferID = p_bufferID;
@@ -364,8 +364,8 @@ END$$
 
 -- SELECTs descriptions for all buffer components
 DROP PROCEDURE IF EXISTS get_buffer_component_desc$$
-CREATE PROCEDURE get_buffer_component_desc ( p_guid     CHAR(36),
-                                             p_password VARCHAR(80) )
+CREATE PROCEDURE get_buffer_component_desc ( p_personGUID CHAR(36),
+                                             p_password   VARCHAR(80) )
   READS SQL DATA
 
 BEGIN
@@ -375,7 +375,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_components
     FROM      bufferComponent;
@@ -401,7 +401,7 @@ END$$
 
 -- Returns a more complete list of information about one buffer component
 DROP PROCEDURE IF EXISTS get_buffer_component_info$$
-CREATE PROCEDURE get_buffer_component_info ( p_guid        CHAR(36),
+CREATE PROCEDURE get_buffer_component_info ( p_personGUID  CHAR(36),
                                              p_password    VARCHAR(80),
                                              p_componentID INT )
   READS SQL DATA
@@ -418,7 +418,7 @@ BEGIN
   FROM       bufferComponent
   WHERE      bufferComponentID = p_componentID;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_components = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -443,7 +443,7 @@ END$$
 
 -- adds a new buffer component from bufferComponent
 DROP PROCEDURE IF EXISTS add_buffer_component$$
-CREATE PROCEDURE add_buffer_component ( p_guid          CHAR(36),
+CREATE PROCEDURE add_buffer_component ( p_personGUID    CHAR(36),
                                         p_password      VARCHAR(80),
                                         p_bufferID      INT,
                                         p_componentID   INT,
@@ -469,7 +469,7 @@ BEGIN
   FROM       bufferComponent
   WHERE      bufferComponentID = p_componentID;
 
-  IF ( verify_buffer_permission( p_guid, p_password, p_bufferID ) = @OK ) THEN
+  IF ( verify_buffer_permission( p_personGUID, p_password, p_bufferID ) = @OK ) THEN
     IF ( count_buffers < 1 ) THEN
       SET @US3_LAST_ERRNO = @NO_BUFFER;
       SET @US3_LAST_ERROR = CONCAT('MySQL: No buffer with ID ',
@@ -500,9 +500,9 @@ END$$
 
 -- Returns information about all buffer components of a single buffer
 DROP PROCEDURE IF EXISTS get_buffer_components$$
-CREATE PROCEDURE get_buffer_components ( p_guid     CHAR(36),
-                                         p_password VARCHAR(80),
-                                         p_bufferID INT )
+CREATE PROCEDURE get_buffer_components ( p_personGUID CHAR(36),
+                                         p_password   VARCHAR(80),
+                                         p_bufferID   INT )
   READS SQL DATA
 
 BEGIN
@@ -512,7 +512,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_components
     FROM      bufferLink
@@ -541,9 +541,9 @@ END$$
 
 -- DELETEs all components associated with a buffer
 DROP PROCEDURE IF EXISTS delete_buffer_components$$
-CREATE PROCEDURE delete_buffer_components ( p_guid     CHAR(36),
-                                            p_password VARCHAR(80),
-                                            p_bufferID INT )
+CREATE PROCEDURE delete_buffer_components ( p_personGUID CHAR(36),
+                                            p_password   VARCHAR(80),
+                                            p_bufferID   INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -551,7 +551,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_buffer_permission( p_guid, p_password, p_bufferID ) = @OK ) THEN
+  IF ( verify_buffer_permission( p_personGUID, p_password, p_bufferID ) = @OK ) THEN
     DELETE FROM bufferLink
     WHERE bufferID = p_bufferID;
 

@@ -11,9 +11,9 @@ DELIMITER $$
 -- Verifies that the user has permission to view or modify
 --  the specified project
 DROP FUNCTION IF EXISTS verify_project_permission$$
-CREATE FUNCTION verify_project_permission( p_guid      CHAR(36),
-                                           p_password  VARCHAR(80),
-                                           p_projectID INT )
+CREATE FUNCTION verify_project_permission( p_personGUID  CHAR(36),
+                                           p_password    VARCHAR(80),
+                                           p_projectID   INT )
   RETURNS INT
   READS SQL DATA
 
@@ -30,11 +30,11 @@ BEGIN
   WHERE  projectID = p_projectID
   AND    personID = @US3_ID;
  
-  IF ( verify_user( p_guid, p_password ) = @OK &&
+  IF ( verify_user( p_personGUID, p_password ) = @OK &&
        count_projects > 0 ) THEN
     SET status = @OK;
 
-  ELSEIF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     SET status = @OK;
 
   ELSE
@@ -53,9 +53,9 @@ END$$
 --  If p_ID = 0, retrieves count of all projects in db
 --  Regular user can only get count of his own projects
 DROP FUNCTION IF EXISTS count_projects$$
-CREATE FUNCTION count_projects( p_guid         CHAR(36),
-                                p_password     VARCHAR(80),
-                                p_ID           INT )
+CREATE FUNCTION count_projects( p_personGUID     CHAR(36),
+                                p_password       VARCHAR(80),
+                                p_ID             INT )
   RETURNS INT
   READS SQL DATA
 
@@ -66,7 +66,7 @@ BEGIN
   CALL config();
   SET count_projects = 0;
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     -- This is an admin; he can get more info
     IF ( p_ID > 0 ) THEN
       SELECT COUNT(*)
@@ -81,7 +81,7 @@ BEGIN
 
     END IF;
 
-  ELSEIF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
       -- Uh oh, can't do that
       SET @US3_LAST_ERRNO = @NOTPERMITTED;
@@ -105,7 +105,7 @@ END$$
 
 -- INSERTs a new project with the specified information
 DROP PROCEDURE IF EXISTS new_project$$
-CREATE PROCEDURE new_project ( p_guid             CHAR(36),
+CREATE PROCEDURE new_project ( p_personGUID       CHAR(36),
                                p_password         VARCHAR(80),
                                p_goals            TEXT,
                                p_molecules        TEXT,
@@ -130,7 +130,7 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     INSERT INTO project SET
       goals            = p_goals,
       molecules        = p_molecules,
@@ -157,7 +157,7 @@ END$$
 
 -- UPDATEs an existing project with the specified information
 DROP PROCEDURE IF EXISTS update_project$$
-CREATE PROCEDURE update_project ( p_guid             CHAR(36),
+CREATE PROCEDURE update_project ( p_personGUID       CHAR(36),
                                   p_password         VARCHAR(80),
                                   p_projectID        INT,
                                   p_goals            TEXT,
@@ -181,7 +181,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;      
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_project_permission( p_guid, p_password, p_projectID ) = @OK ) THEN
+  IF ( verify_project_permission( p_personGUID, p_password, p_projectID ) = @OK ) THEN
     UPDATE project SET
            goals            = p_goals,
            molecules        = p_molecules,
@@ -205,9 +205,9 @@ END$$
 --  If p_ID = 0, retrieves information about all projects in db
 --  Regular user can only get info about his own projects
 DROP PROCEDURE IF EXISTS get_project_desc$$
-CREATE PROCEDURE get_project_desc ( p_guid     CHAR(36),
-                                    p_password VARCHAR(80),
-                                    p_ID       INT )
+CREATE PROCEDURE get_project_desc ( p_personGUID CHAR(36),
+                                    p_password   VARCHAR(80),
+                                    p_ID         INT )
   READS SQL DATA
 
 BEGIN
@@ -216,9 +216,9 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     -- This is an admin; he can get more info
-    IF ( count_projects( p_guid, p_password, p_ID ) < 1 ) THEN
+    IF ( count_projects( p_personGUID, p_password, p_ID ) < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -244,7 +244,7 @@ BEGIN
 
     END IF;
 
-  ELSEIF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
       -- Uh oh, can't do that
       SET @US3_LAST_ERRNO = @NOTPERMITTED;
@@ -252,7 +252,7 @@ BEGIN
      
       SELECT @US3_LAST_ERRNO AS status;
 
-    ELSEIF ( count_projects( p_guid, p_password, @US3_ID ) < 1 ) THEN
+    ELSEIF ( count_projects( p_personGUID, p_password, @US3_ID ) < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -276,9 +276,9 @@ END$$
 
 -- Returns a more complete list of information about one project
 DROP PROCEDURE IF EXISTS get_project_info$$
-CREATE PROCEDURE get_project_info ( p_guid      CHAR(36),
-                                    p_password  VARCHAR(80),
-                                    p_projectID INT )
+CREATE PROCEDURE get_project_info ( p_personGUID  CHAR(36),
+                                    p_password    VARCHAR(80),
+                                    p_projectID   INT )
   READS SQL DATA
 
 BEGIN
@@ -293,7 +293,7 @@ BEGIN
   FROM       project
   WHERE      projectID = p_projectID;
 
-  IF ( verify_project_permission( p_guid, p_password, p_projectID ) = @OK ) THEN
+  IF ( verify_project_permission( p_personGUID, p_password, p_projectID ) = @OK ) THEN
     IF ( count_projects = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -320,9 +320,9 @@ END$$
 
 -- DELETEs an project, plus information in related tables
 DROP PROCEDURE IF EXISTS delete_project$$
-CREATE PROCEDURE delete_project ( p_guid      CHAR(36),
-                                  p_password  VARCHAR(80),
-                                  p_projectID INT )
+CREATE PROCEDURE delete_project ( p_personGUID  CHAR(36),
+                                  p_password    VARCHAR(80),
+                                  p_projectID   INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -330,7 +330,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_project_permission( p_guid, p_password, p_projectID ) = @OK ) THEN
+  IF ( verify_project_permission( p_personGUID, p_password, p_projectID ) = @OK ) THEN
 
     DELETE FROM projectPerson
     WHERE projectID = p_projectID;

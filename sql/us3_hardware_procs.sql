@@ -14,9 +14,9 @@ DELIMITER $$
 
 -- Returns the count of all rotors in db
 DROP FUNCTION IF EXISTS count_rotors$$
-CREATE FUNCTION count_rotors ( p_guid     CHAR(36),
-                               p_password VARCHAR(80),
-                               p_labID    INT )
+CREATE FUNCTION count_rotors ( p_personGUID CHAR(36),
+                               p_password   VARCHAR(80),
+                               p_labID      INT )
   RETURNS INT
   READS SQL DATA
 
@@ -27,7 +27,7 @@ BEGIN
   CALL config();
   SET count_rotors = 0;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_rotors
     FROM      rotor
@@ -41,9 +41,9 @@ END$$
 
 -- SELECTs names of all rotors
 DROP PROCEDURE IF EXISTS get_rotor_names$$
-CREATE PROCEDURE get_rotor_names ( p_guid     CHAR(36),
-                                   p_password VARCHAR(80),
-                                   p_labID    INT )
+CREATE PROCEDURE get_rotor_names ( p_personGUID CHAR(36),
+                                   p_password   VARCHAR(80),
+                                   p_labID      INT )
   READS SQL DATA
 
 BEGIN
@@ -53,7 +53,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_rotors
     FROM      rotor
@@ -81,9 +81,9 @@ END$$
 
 -- Returns a more complete list of information about one rotor
 DROP PROCEDURE IF EXISTS get_rotor_info$$
-CREATE PROCEDURE get_rotor_info ( p_guid     CHAR(36),
-                                  p_password VARCHAR(80),
-                                  p_rotorID  INT )
+CREATE PROCEDURE get_rotor_info ( p_personGUID CHAR(36),
+                                  p_password   VARCHAR(80),
+                                  p_rotorID    INT )
   READS SQL DATA
 
 BEGIN
@@ -98,7 +98,7 @@ BEGIN
   FROM       rotor
   WHERE      rotorID = p_rotorID;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_rotors = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -109,13 +109,13 @@ BEGIN
       SELECT @OK AS status;
 
       -- For now, because there aren't any abstract rotors
-      SELECT   r.GUID, r.name, serialNumber, stretchFunction, 
+      SELECT   r.rotorGUID, r.name, serialNumber, stretchFunction, 
                omega2_t, 'Dummy abstract rotor' AS name
       FROM     rotor r
       WHERE    rotorID = p_rotorID;
 
       -- When there are abstract rotors
---      SELECT   r.GUID, r.name, serialNumber, stretchFunction, 
+--      SELECT   r.rotorGUID, r.name, serialNumber, stretchFunction, 
 --               omega2_t, a.name
 --      FROM     rotor r, abstractRotor a
 --      WHERE    r.abstractRotorID = a.abstractRotorID
@@ -132,13 +132,13 @@ END$$
 
 -- adds a new rotor using an abstractRotor
 DROP PROCEDURE IF EXISTS add_rotor$$
-CREATE PROCEDURE add_rotor ( p_guid            CHAR(36),
-                             p_password        VARCHAR(80),
-                             p_abstractRotorID INT,
-                             p_labID           INT,
-                             p_rotorGUID       CHAR(36),
-                             p_name            TEXT,
-                             p_serialNumber    TEXT )
+CREATE PROCEDURE add_rotor ( p_personGUID        CHAR(36),
+                             p_password          VARCHAR(80),
+                             p_abstractRotorID   INT,
+                             p_labID             INT,
+                             p_rotorGUID         CHAR(36),
+                             p_name              TEXT,
+                             p_serialNumber      TEXT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -170,8 +170,8 @@ BEGIN
   FROM       lab
   WHERE      labID = p_labID;
 
-  IF ( ( verify_userlevel( p_guid, p_password, @US3_ADMIN   ) = @OK ) &&
-       ( check_GUID      ( p_guid, p_password, p_rotorGUID  ) = @OK ) ) THEN
+  IF ( ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN   ) = @OK ) &&
+       ( check_GUID      ( p_personGUID, p_password, p_rotorGUID  ) = @OK ) ) THEN
     IF ( count_abstract_rotors < 1 ) THEN
       SET @US3_LAST_ERRNO = @NO_ROTOR;
       SET @US3_LAST_ERROR = CONCAT('MySQL: No abstract rotor with ID ',
@@ -194,7 +194,7 @@ BEGIN
         abstractRotorID   = p_abstractRotorID,
         labID             = p_labID,
         name              = p_name,
-        GUID              = p_rotorGUID,
+        rotorGUID         = p_rotorGUID,
         serialNumber      = p_serialNumber,
         stretchFunction   = l_defaultStretch,
         omega2_t          = 0.0,
@@ -202,11 +202,11 @@ BEGIN
         
       IF ( duplicate_key = 1 ) THEN
         SET @US3_LAST_ERRNO = @INSERTDUP;
-        SET @US3_LAST_ERROR = "MySQL: Duplicate entry for GUID field";
+        SET @US3_LAST_ERROR = "MySQL: Duplicate entry for abstractRotorGUID field";
   
       ELSEIF ( null_field = 1 ) THEN
         SET @US3_LAST_ERRNO = @INSERTNULL;
-        SET @US3_LAST_ERROR = "MySQL: NULL value for GUID field";
+        SET @US3_LAST_ERROR = "MySQL: NULL value for abstractRotorGUID field";
   
       ELSE
         SET @LAST_INSERT_ID = LAST_INSERT_ID();
@@ -223,8 +223,8 @@ END$$
 
 -- Get a list of abstract rotor names
 DROP PROCEDURE IF EXISTS get_abstractRotor_names$$
-CREATE PROCEDURE get_abstractRotor_names ( p_guid     CHAR(36),
-                                           p_password VARCHAR(80) )
+CREATE PROCEDURE get_abstractRotor_names ( p_personGUID CHAR(36),
+                                           p_password   VARCHAR(80) )
   READS SQL DATA
 
 BEGIN
@@ -234,7 +234,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_abstract_rotors
     FROM      abstractRotor;
@@ -264,8 +264,8 @@ END$$
 
 -- Returns the count of all labs in db
 DROP FUNCTION IF EXISTS count_labs$$
-CREATE FUNCTION count_labs ( p_guid     CHAR(36),
-                             p_password VARCHAR(80) )
+CREATE FUNCTION count_labs ( p_personGUID CHAR(36),
+                             p_password   VARCHAR(80) )
   RETURNS INT
   READS SQL DATA
 
@@ -276,7 +276,7 @@ BEGIN
   CALL config();
   SET count_labs = 0;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_labs
     FROM      lab;
@@ -289,8 +289,8 @@ END$$
 
 -- SELECTs names of all labs
 DROP PROCEDURE IF EXISTS get_lab_names$$
-CREATE PROCEDURE get_lab_names ( p_guid     CHAR(36),
-                                 p_password VARCHAR(80) )
+CREATE PROCEDURE get_lab_names ( p_personGUID CHAR(36),
+                                 p_password   VARCHAR(80) )
   READS SQL DATA
 
 BEGIN
@@ -300,7 +300,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_labs
     FROM      lab;
@@ -326,9 +326,9 @@ END$$
 
 -- Returns a more complete list of information about one lab
 DROP PROCEDURE IF EXISTS get_lab_info$$
-CREATE PROCEDURE get_lab_info ( p_guid     CHAR(36),
-                                p_password VARCHAR(80),
-                                p_labID  INT )
+CREATE PROCEDURE get_lab_info ( p_personGUID CHAR(36),
+                                p_password   VARCHAR(80),
+                                p_labID      INT )
   READS SQL DATA
 
 BEGIN
@@ -343,7 +343,7 @@ BEGIN
   FROM       lab
   WHERE      labID = p_labID;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_labs = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -353,7 +353,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   GUID, name, building, room
+      SELECT   labGUID, name, building, room
       FROM     lab
       WHERE    labID = p_labID;
 
@@ -368,12 +368,12 @@ END$$
 
 -- adds a new lab
 DROP PROCEDURE IF EXISTS add_lab$$
-CREATE PROCEDURE add_lab ( p_guid            CHAR(36),
-                           p_password        VARCHAR(80),
-                           p_labGUID         CHAR(36),
-                           p_name            TEXT,
-                           p_building        TEXT,
-                           p_room            TEXT )
+CREATE PROCEDURE add_lab ( p_personGUID        CHAR(36),
+                           p_password          VARCHAR(80),
+                           p_labGUID           CHAR(36),
+                           p_name              TEXT,
+                           p_building          TEXT,
+                           p_room              TEXT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -391,10 +391,10 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
-  IF ( ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) &&
-       ( check_GUID      ( p_guid, p_password, p_labGUID  ) = @OK ) ) THEN
+  IF ( ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) &&
+       ( check_GUID      ( p_personGUID, p_password, p_labGUID  ) = @OK ) ) THEN
     INSERT INTO lab SET
-      GUID              = p_labGUID,
+      labGUID           = p_labGUID,
       name              = p_name,
       building          = p_building,
       room              = p_room,
@@ -402,11 +402,11 @@ BEGIN
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
-      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for GUID field";
+      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for labGUID field";
 
     ELSEIF ( null_field = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTNULL;
-      SET @US3_LAST_ERROR = "MySQL: NULL value for GUID field";
+      SET @US3_LAST_ERROR = "MySQL: NULL value for labGUID field";
 
     ELSE
       SET @LAST_INSERT_ID = LAST_INSERT_ID();
@@ -425,9 +425,9 @@ END$$
 
 -- Returns the count of all instruments in db
 DROP FUNCTION IF EXISTS count_instruments$$
-CREATE FUNCTION count_instruments ( p_guid     CHAR(36),
-                                    p_password VARCHAR(80),
-                                    p_labID    INT )
+CREATE FUNCTION count_instruments ( p_personGUID CHAR(36),
+                                    p_password   VARCHAR(80),
+                                    p_labID      INT )
   RETURNS INT
   READS SQL DATA
 
@@ -438,7 +438,7 @@ BEGIN
   CALL config();
   SET count_instruments = 0;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_instruments
     FROM      instrument
@@ -452,9 +452,9 @@ END$$
 
 -- SELECTs names of all instruments
 DROP PROCEDURE IF EXISTS get_instrument_names$$
-CREATE PROCEDURE get_instrument_names ( p_guid     CHAR(36),
-                                        p_password VARCHAR(80),
-                                        p_labID    INT )
+CREATE PROCEDURE get_instrument_names ( p_personGUID CHAR(36),
+                                        p_password   VARCHAR(80),
+                                        p_labID      INT )
   READS SQL DATA
 
 BEGIN
@@ -464,7 +464,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_instruments
     FROM      instrument
@@ -492,8 +492,8 @@ END$$
 
 -- Returns a more complete list of information about one instrument
 DROP PROCEDURE IF EXISTS get_instrument_info$$
-CREATE PROCEDURE get_instrument_info ( p_guid     CHAR(36),
-                                       p_password VARCHAR(80),
+CREATE PROCEDURE get_instrument_info ( p_personGUID    CHAR(36),
+                                       p_password      VARCHAR(80),
                                        p_instrumentID  INT )
   READS SQL DATA
 
@@ -509,7 +509,7 @@ BEGIN
   FROM       instrument
   WHERE      instrumentID = p_instrumentID;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_instruments = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -534,11 +534,11 @@ END$$
 
 -- adds a new instrument
 DROP PROCEDURE IF EXISTS add_instrument$$
-CREATE PROCEDURE add_instrument ( p_guid            CHAR(36),
-                                  p_password        VARCHAR(80),
-                                  p_name            TEXT,
-                                  p_serialNumber    TEXT,
-                                  p_labID           INT )
+CREATE PROCEDURE add_instrument ( p_personGUID    CHAR(36),
+                                  p_password      VARCHAR(80),
+                                  p_name          TEXT,
+                                  p_serialNumber  TEXT,
+                                  p_labID         INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -547,7 +547,7 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     INSERT INTO instrument SET
       name              = p_name,
       serialNumber      = p_serialNumber,
@@ -564,7 +564,7 @@ END$$
 
 -- SELECTs names of all operators permitted to operate a specified instrument
 DROP PROCEDURE IF EXISTS get_operator_names$$
-CREATE PROCEDURE get_operator_names ( p_guid         CHAR(36),
+CREATE PROCEDURE get_operator_names ( p_personGUID   CHAR(36),
                                       p_password     VARCHAR(80),
                                       p_instrumentID INT )
   READS SQL DATA
@@ -576,7 +576,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_operators
     FROM      permits
@@ -609,8 +609,8 @@ END$$
 
 -- SELECTs names of all abstract centerpieces
 DROP PROCEDURE IF EXISTS get_abstractCenterpiece_names$$
-CREATE PROCEDURE get_abstractCenterpiece_names ( p_guid     CHAR(36),
-                                                 p_password VARCHAR(80) )
+CREATE PROCEDURE get_abstractCenterpiece_names ( p_personGUID CHAR(36),
+                                                 p_password   VARCHAR(80) )
   READS SQL DATA
 
 BEGIN
@@ -620,7 +620,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_abstract_centerpieces
     FROM      abstractCenterpiece;
@@ -646,8 +646,8 @@ END$$
 
 -- Returns a more complete list of information about one centerpiece
 DROP PROCEDURE IF EXISTS get_abstractCenterpiece_info$$
-CREATE PROCEDURE get_abstractCenterpiece_info ( p_guid     CHAR(36),
-                                                p_password VARCHAR(80),
+CREATE PROCEDURE get_abstractCenterpiece_info ( p_personGUID CHAR(36),
+                                                p_password   VARCHAR(80),
                                                 p_abstractCenterpieceID  INT )
   READS SQL DATA
 
@@ -663,7 +663,7 @@ BEGIN
   FROM       abstractCenterpiece
   WHERE      abstractCenterpieceID = p_abstractCenterpieceID;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_abstract_centerpieces = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -673,7 +673,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   GUID, name, channels, bottom, shape,
+      SELECT   abstractCenterpieceGUID, name, channels, bottom, shape,
                maxRPM, pathLength, angle, width
       FROM     abstractCenterpiece
       WHERE    abstractCenterpieceID = p_abstractCenterpieceID;
