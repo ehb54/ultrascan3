@@ -11,9 +11,9 @@ DELIMITER $$
 -- Verifies that the user has permission to view or modify
 --  the specified model
 DROP FUNCTION IF EXISTS verify_model_permission$$
-CREATE FUNCTION verify_model_permission( p_guid      CHAR(36),
-                                         p_password  VARCHAR(80),
-                                         p_modelID   INT )
+CREATE FUNCTION verify_model_permission( p_personGUID  CHAR(36),
+                                         p_password    VARCHAR(80),
+                                         p_modelID     INT )
   RETURNS INT
   READS SQL DATA
 
@@ -30,11 +30,11 @@ BEGIN
   WHERE  modelID = p_modelID
   AND    personID = @US3_ID;
  
-  IF ( verify_user( p_guid, p_password ) = @OK &&
+  IF ( verify_user( p_personGUID, p_password ) = @OK &&
        count_models > 0 ) THEN
     SET status = @OK;
 
-  ELSEIF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     SET status = @OK;
 
   ELSE
@@ -53,7 +53,7 @@ END$$
 --  If p_ID = 0, retrieves count of all models in db
 --  Regular user can only get count of his own models
 DROP FUNCTION IF EXISTS count_models$$
-CREATE FUNCTION count_models( p_guid     CHAR(36),
+CREATE FUNCTION count_models( p_personGUID CHAR(36),
                               p_password VARCHAR(80),
                               p_ID       INT )
   RETURNS INT
@@ -66,7 +66,7 @@ BEGIN
   CALL config();
   SET count_models = 0;
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     -- This is an admin; he can get more info
     IF ( p_ID > 0 ) THEN
       SELECT COUNT(*)
@@ -81,7 +81,7 @@ BEGIN
 
     END IF;
 
-  ELSEIF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
       -- Uh oh, can't do that
       SET @US3_LAST_ERRNO = @NOTPERMITTED;
@@ -105,7 +105,7 @@ END$$
 
 -- INSERTs a new model with the specified information
 DROP PROCEDURE IF EXISTS new_model$$
-CREATE PROCEDURE new_model ( p_guid        CHAR(36),
+CREATE PROCEDURE new_model ( p_personGUID    CHAR(36),
                              p_password    VARCHAR(80),
                              p_modelGUID   CHAR(36),
                              p_description TEXT,
@@ -129,20 +129,20 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
-  IF ( ( verify_user( p_guid, p_password ) = @OK ) &&
-       ( check_GUID ( p_guid, p_password, p_modelGUID ) = @OK ) ) THEN
+  IF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+       ( check_GUID ( p_personGUID, p_password, p_modelGUID ) = @OK ) ) THEN
     INSERT INTO model SET
-      GUID        = p_modelGUID,
+      modelGUID   = p_modelGUID,
       description = p_description,
       contents    = p_contents;
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
-      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for GUID field";
+      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for modelGUID field";
 
     ELSEIF ( null_field = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTNULL;
-      SET @US3_LAST_ERROR = "MySQL: NULL value for GUID field";
+      SET @US3_LAST_ERROR = "MySQL: NULL value for modelGUID field";
 
     ELSE
       SET @LAST_INSERT_ID = LAST_INSERT_ID();
@@ -161,7 +161,7 @@ END$$
 
 -- UPDATEs an existing model with the specified information
 DROP PROCEDURE IF EXISTS update_model$$
-CREATE PROCEDURE update_model ( p_guid        CHAR(36),
+CREATE PROCEDURE update_model ( p_personGUID    CHAR(36),
                                 p_password    VARCHAR(80),
                                 p_modelID     INT,
                                 p_description TEXT,
@@ -178,7 +178,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_model_permission( p_guid, p_password, p_modelID ) = @OK ) THEN
+  IF ( verify_model_permission( p_personGUID, p_password, p_modelID ) = @OK ) THEN
     UPDATE model SET
       description = p_description,
       contents    = p_contents
@@ -201,7 +201,7 @@ END$$
 
 -- Returns the modelID associated with the given modelGUID
 DROP PROCEDURE IF EXISTS get_modelID$$
-CREATE PROCEDURE get_modelID ( p_guid        CHAR(36),
+CREATE PROCEDURE get_modelID ( p_personGUID    CHAR(36),
                                p_password    VARCHAR(80),
                                p_modelGUID   CHAR(36) )
   READS SQL DATA
@@ -215,17 +215,17 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET count_models    = 0;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
 
     SELECT    COUNT(*)
     INTO      count_models
     FROM      model
-    WHERE     GUID = p_modelGUID;
+    WHERE     modelGUID = p_modelGUID;
 
     IF ( TRIM( p_modelGUID ) = '' ) THEN
       SET @US3_LAST_ERRNO = @EMPTY;
-      SET @US3_LAST_ERROR = CONCAT( 'MySQL: The modelGUID parameter to the get_modelID ',
-                                    'function cannot be empty' );
+      SET @US3_LAST_ERROR = CONCAT( 'MySQL: The modelGUID parameter to the ',
+                                    'get_modelID function cannot be empty' );
 
     ELSEIF ( count_models < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
@@ -238,7 +238,7 @@ BEGIN
 
       SELECT   modelID
       FROM     model
-      WHERE    GUID = p_modelGUID;
+      WHERE    modelGUID = p_modelGUID;
 
     END IF;
 
@@ -250,7 +250,7 @@ END$$
 --  If p_ID = 0, retrieves information about all models in db
 --  Regular user can only get info about his own models
 DROP PROCEDURE IF EXISTS get_model_desc$$
-CREATE PROCEDURE get_model_desc ( p_guid     CHAR(36),
+CREATE PROCEDURE get_model_desc ( p_personGUID CHAR(36),
                                   p_password VARCHAR(80),
                                   p_ID       INT )
   READS SQL DATA
@@ -261,9 +261,9 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     -- This is an admin; he can get more info
-    IF ( count_models( p_guid, p_password, p_ID ) < 1 ) THEN
+    IF ( count_models( p_personGUID, p_password, p_ID ) < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -273,14 +273,14 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   m.modelID, GUID, description
+        SELECT   m.modelID, modelGUID, description
         FROM     model m, modelPerson
         WHERE    m.modelID = modelPerson.modelID
         AND      modelPerson.personID = p_ID
         ORDER BY m.modelID DESC;
    
       ELSE
-        SELECT   m.modelID, GUID, description
+        SELECT   m.modelID, modelGUID, description
         FROM     model m, modelPerson
         WHERE    m.modelID = modelPerson.modelID
         ORDER BY m.modelID DESC;
@@ -289,7 +289,7 @@ BEGIN
 
     END IF;
 
-  ELSEIF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
       -- Uh oh, can't do that
       SET @US3_LAST_ERRNO = @NOTPERMITTED;
@@ -297,7 +297,7 @@ BEGIN
      
       SELECT @US3_LAST_ERRNO AS status;
 
-    ELSEIF ( count_models( p_guid, p_password, @US3_ID ) < 1 ) THEN
+    ELSEIF ( count_models( p_personGUID, p_password, @US3_ID ) < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -307,7 +307,7 @@ BEGIN
       -- Ok, user wants his own info
       SELECT @OK AS status;
 
-      SELECT   m.modelID, GUID, description
+      SELECT   m.modelID, modelGUID, description
       FROM     model m, modelPerson
       WHERE    m.modelID = modelPerson.modelID
       AND      modelPerson.personID = @US3_ID
@@ -322,7 +322,7 @@ END$$
 
 -- Returns a more complete list of information about one model
 DROP PROCEDURE IF EXISTS get_model_info$$
-CREATE PROCEDURE get_model_info ( p_guid      CHAR(36),
+CREATE PROCEDURE get_model_info ( p_personGUID  CHAR(36),
                                   p_password  VARCHAR(80),
                                   p_modelID   INT )
   READS SQL DATA
@@ -339,7 +339,7 @@ BEGIN
   FROM       model
   WHERE      modelID = p_modelID;
 
-  IF ( verify_model_permission( p_guid, p_password, p_modelID ) = @OK ) THEN
+  IF ( verify_model_permission( p_personGUID, p_password, p_modelID ) = @OK ) THEN
     IF ( count_models = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -349,7 +349,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   GUID, description, contents, personID 
+      SELECT   modelGUID, description, contents, personID 
       FROM     model m, modelPerson mp
       WHERE    m.modelID = mp.modelID
       AND      m.modelID = p_modelID;
@@ -365,7 +365,7 @@ END$$
 
 -- DELETEs a model, plus information in related tables
 DROP PROCEDURE IF EXISTS delete_model$$
-CREATE PROCEDURE delete_model ( p_guid      CHAR(36),
+CREATE PROCEDURE delete_model ( p_personGUID  CHAR(36),
                                 p_password  VARCHAR(80),
                                 p_modelID   INT )
   MODIFIES SQL DATA
@@ -375,7 +375,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_model_permission( p_guid, p_password, p_modelID ) = @OK ) THEN
+  IF ( verify_model_permission( p_personGUID, p_password, p_modelID ) = @OK ) THEN
 
     DELETE FROM modelPerson
     WHERE modelID = p_modelID;

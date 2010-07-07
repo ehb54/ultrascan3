@@ -11,14 +11,14 @@ DELIMITER $$
 -- Finds the user with the passed email and password,
 --  returns ID, firstName, lastName, phone, and userLevel
 DROP PROCEDURE IF EXISTS get_user_info$$
-CREATE PROCEDURE get_user_info( p_guid     CHAR(36),
-                                p_password VARCHAR(80) )
+CREATE PROCEDURE get_user_info( p_personGUID CHAR(36),
+                                p_password   VARCHAR(80) )
   READS SQL DATA
 
 BEGIN
   CALL config();
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT @OK AS status;
 
     SELECT @US3_ID    AS ID, 
@@ -39,9 +39,9 @@ END$$
 -- Returns of count of all records in the database, optionally
 --   matching some text in the last name field
 DROP FUNCTION IF EXISTS count_people$$
-CREATE FUNCTION count_people( p_guid     CHAR(36),
-                              p_password VARCHAR(80),
-                              p_template VARCHAR(30) )
+CREATE FUNCTION count_people( p_personGUID CHAR(36),
+                              p_password   VARCHAR(80),
+                              p_template   VARCHAR(30) )
   RETURNS INT
   READS SQL DATA
 
@@ -74,9 +74,9 @@ END$$
 -- Lists all ID's and names in the database, optionally matching
 --   some text in the last name field
 DROP PROCEDURE IF EXISTS get_people$$
-CREATE PROCEDURE get_people( p_guid     CHAR(36),
-                             p_password VARCHAR(80),
-                             p_template VARCHAR(30) )
+CREATE PROCEDURE get_people( p_personGUID CHAR(36),
+                             p_password   VARCHAR(80),
+                             p_template   VARCHAR(30) )
   READS SQL DATA
 
 BEGIN
@@ -87,8 +87,8 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET p_template      = TRIM( p_template );
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
-    IF ( count_people( p_guid, p_password, p_template )  < 1 ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_people( p_personGUID, p_password, p_template )  < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
 
@@ -129,9 +129,9 @@ END$$
 
 -- Returns a more complete list of information about one user
 DROP PROCEDURE IF EXISTS get_person_info$$
-CREATE PROCEDURE get_person_info( p_guid     CHAR(36),
-                                  p_password VARCHAR(80),
-                                  p_ID       INT )
+CREATE PROCEDURE get_person_info( p_personGUID CHAR(36),
+                                  p_password   VARCHAR(80),
+                                  p_ID         INT )
   READS SQL DATA
 
 BEGIN
@@ -146,7 +146,7 @@ BEGIN
   FROM       people
   WHERE      personID = p_ID;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_person = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -165,7 +165,7 @@ BEGIN
                phone,
                organization,
                email,
-               GUID
+               personGUID
       FROM     people
       WHERE    personID = p_ID;
 
@@ -180,7 +180,7 @@ END$$
 
 -- INSERTs a new person with the specified information
 DROP PROCEDURE IF EXISTS new_person$$
-CREATE PROCEDURE new_person ( p_guid         CHAR(36),
+CREATE PROCEDURE new_person ( p_personGUID   CHAR(36),
                               p_password     VARCHAR(80),
                               p_fname        VARCHAR(30),
                               p_lname        VARCHAR(30),
@@ -210,8 +210,8 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
-  IF ( ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) &&
-       ( check_GUID      ( p_guid, p_password, p_new_guid ) = @OK ) ) THEN
+  IF ( ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) &&
+       ( check_GUID      ( p_personGUID, p_password, p_new_guid ) = @OK ) ) THEN
 
     INSERT INTO people SET
            fname        = p_fname,
@@ -222,7 +222,7 @@ BEGIN
            zip          = p_zip,
            phone        = p_phone,
            email        = p_new_email,
-           GUID         = p_new_guid,
+           personGUID   = p_new_guid,
            organization = p_organization,
            password     = MD5(p_new_password),
            activated    = true,
@@ -233,7 +233,7 @@ BEGIN
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
-      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for email or GUID field";
+      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for email or personGUID field";
 
     ELSEIF ( null_field = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTNULL;
@@ -252,7 +252,7 @@ END$$
 
 -- UPDATEs a person with the specified information
 DROP PROCEDURE IF EXISTS update_person$$
-CREATE PROCEDURE update_person ( p_guid         CHAR(36),
+CREATE PROCEDURE update_person ( p_personGUID   CHAR(36),
                                  p_password     VARCHAR(80),
                                  p_ID           INT,
                                  p_fname        VARCHAR(30),
@@ -286,7 +286,7 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
 
     UPDATE people SET
            fname        = p_fname,
@@ -328,7 +328,7 @@ END$$
 
 -- DELETEs a person (marks inactive)
 DROP PROCEDURE IF EXISTS delete_person$$
-CREATE PROCEDURE delete_person ( p_guid         CHAR(36),
+CREATE PROCEDURE delete_person ( p_personGUID     CHAR(36),
                                  p_password     VARCHAR(80),
                                  p_ID           INT )
   MODIFIES SQL DATA
@@ -337,7 +337,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
 
     UPDATE people SET
            activated    = false,

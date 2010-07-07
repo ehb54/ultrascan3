@@ -11,9 +11,9 @@ DELIMITER $$
 -- Verifies that the user has permission to view or modify
 --  the specified analyte
 DROP FUNCTION IF EXISTS verify_analyte_permission$$
-CREATE FUNCTION verify_analyte_permission( p_guid      CHAR(36),
-                                           p_password  VARCHAR(80),
-                                           p_analyteID INT )
+CREATE FUNCTION verify_analyte_permission( p_personGUID CHAR(36),
+                                           p_password   VARCHAR(80),
+                                           p_analyteID  INT )
   RETURNS INT
   READS SQL DATA
 
@@ -30,11 +30,11 @@ BEGIN
   WHERE  analyteID = p_analyteID
   AND    personID = @US3_ID;
  
-  IF ( verify_user( p_guid, p_password ) = @OK &&
+  IF ( verify_user( p_personGUID, p_password ) = @OK &&
        count_analytes > 0 ) THEN
     SET status = @OK;
 
-  ELSEIF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     SET status = @OK;
 
   ELSE
@@ -53,7 +53,7 @@ END$$
 --  If p_ID = 0, retrieves count of all analytes in db
 --  Regular user can only get count of his own analytes
 DROP FUNCTION IF EXISTS count_analytes$$
-CREATE FUNCTION count_analytes( p_guid     CHAR(36),
+CREATE FUNCTION count_analytes( p_personGUID     CHAR(36),
                                 p_password VARCHAR(80),
                                 p_ID       INT )
   RETURNS INT
@@ -66,7 +66,7 @@ BEGIN
   CALL config();
   SET count_analytes = 0;
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     -- This is an admin; he can get more info
     IF ( p_ID > 0 ) THEN
       SELECT COUNT(*)
@@ -81,7 +81,7 @@ BEGIN
 
     END IF;
 
-  ELSEIF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
       -- Uh oh, can't do that
       SET @US3_LAST_ERRNO = @NOTPERMITTED;
@@ -105,7 +105,7 @@ END$$
 
 -- INSERTs a new analyte with the specified information
 DROP PROCEDURE IF EXISTS new_analyte$$
-CREATE PROCEDURE new_analyte ( p_guid        CHAR(36),
+CREATE PROCEDURE new_analyte ( p_personGUID  CHAR(36),
                                p_password    VARCHAR(80),
                                p_analyteGUID CHAR(36),
                                p_type        VARCHAR(16),
@@ -133,10 +133,10 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
-  IF ( ( verify_user( p_guid, p_password ) = @OK ) &&
-       ( check_GUID ( p_guid, p_password, p_analyteGUID ) = @OK ) ) THEN
+  IF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+       ( check_GUID ( p_personGUID, p_password, p_analyteGUID ) = @OK ) ) THEN
     INSERT INTO analyte SET
-      GUID        = p_analyteGUID,
+      analyteGUID        = p_analyteGUID,
       type        = p_type,
       sequence    = p_sequence,
       vbar        = p_vbar,
@@ -146,11 +146,11 @@ BEGIN
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
-      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for GUID field";
+      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for analyteGUID field";
 
     ELSEIF ( null_field = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTNULL;
-      SET @US3_LAST_ERROR = "MySQL: NULL value for GUID field";
+      SET @US3_LAST_ERROR = "MySQL: NULL value for analyteGUID field";
 
     ELSE
       SET @LAST_INSERT_ID = LAST_INSERT_ID();
@@ -169,7 +169,7 @@ END$$
 
 -- UPDATEs an existing analyte with the specified information
 DROP PROCEDURE IF EXISTS update_analyte$$
-CREATE PROCEDURE update_analyte ( p_guid        CHAR(36),
+CREATE PROCEDURE update_analyte ( p_personGUID  CHAR(36),
                                   p_password    VARCHAR(80),
                                   p_analyteID   INT,
                                   p_type        VARCHAR(16),
@@ -190,7 +190,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_analyte_permission( p_guid, p_password, p_analyteID ) = @OK ) THEN
+  IF ( verify_analyte_permission( p_personGUID, p_password, p_analyteID ) = @OK ) THEN
     UPDATE analyte SET
       type        = p_type,
       sequence    = p_sequence,
@@ -217,7 +217,7 @@ END$$
 
 -- Returns the analyteID associated with the given analyteGUID
 DROP PROCEDURE IF EXISTS get_analyteID$$
-CREATE PROCEDURE get_analyteID ( p_guid        CHAR(36),
+CREATE PROCEDURE get_analyteID ( p_personGUID  CHAR(36),
                                  p_password    VARCHAR(80),
                                  p_analyteGUID CHAR(36) )
   READS SQL DATA
@@ -231,12 +231,12 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET count_anal      = 0;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
 
     SELECT    COUNT(*)
     INTO      count_anal
     FROM      analyte
-    WHERE     GUID = p_analyteGUID;
+    WHERE     analyteGUID = p_analyteGUID;
 
     IF ( TRIM( p_analyteGUID ) = '' ) THEN
       SET @US3_LAST_ERRNO = @EMPTY;
@@ -254,7 +254,7 @@ BEGIN
 
       SELECT   analyteID
       FROM     analyte
-      WHERE    GUID = p_analyteGUID;
+      WHERE    analyteGUID = p_analyteGUID;
 
     END IF;
 
@@ -266,9 +266,9 @@ END$$
 --  If p_ID = 0, retrieves information about all analytes in db
 --  Regular user can only get info about his own analytes
 DROP PROCEDURE IF EXISTS get_analyte_desc$$
-CREATE PROCEDURE get_analyte_desc ( p_guid     CHAR(36),
-                                    p_password VARCHAR(80),
-                                    p_ID       INT )
+CREATE PROCEDURE get_analyte_desc ( p_personGUID CHAR(36),
+                                    p_password   VARCHAR(80),
+                                    p_ID         INT )
   READS SQL DATA
 
 BEGIN
@@ -277,9 +277,9 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     -- This is an admin; he can get more info
-    IF ( count_analytes( p_guid, p_password, p_ID ) < 1 ) THEN
+    IF ( count_analytes( p_personGUID, p_password, p_ID ) < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -305,7 +305,7 @@ BEGIN
 
     END IF;
 
-  ELSEIF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
       -- Uh oh, can't do that
       SET @US3_LAST_ERRNO = @NOTPERMITTED;
@@ -313,7 +313,7 @@ BEGIN
      
       SELECT @US3_LAST_ERRNO AS status;
 
-    ELSEIF ( count_analytes( p_guid, p_password, @US3_ID ) < 1 ) THEN
+    ELSEIF ( count_analytes( p_personGUID, p_password, @US3_ID ) < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -338,9 +338,9 @@ END$$
 
 -- Returns a more complete list of information about one analyte
 DROP PROCEDURE IF EXISTS get_analyte_info$$
-CREATE PROCEDURE get_analyte_info ( p_guid      CHAR(36),
-                                    p_password  VARCHAR(80),
-                                    p_analyteID INT )
+CREATE PROCEDURE get_analyte_info ( p_personGUID CHAR(36),
+                                    p_password   VARCHAR(80),
+                                    p_analyteID  INT )
   READS SQL DATA
 
 BEGIN
@@ -355,7 +355,7 @@ BEGIN
   FROM       analyte
   WHERE      analyteID = p_analyteID;
 
-  IF ( verify_analyte_permission( p_guid, p_password, p_analyteID ) = @OK ) THEN
+  IF ( verify_analyte_permission( p_personGUID, p_password, p_analyteID ) = @OK ) THEN
     IF ( count_analytes = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -365,7 +365,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   GUID, type, sequence, vbar, description, spectrum, molecularWeight, personID 
+      SELECT   analyteGUID, type, sequence, vbar, description, spectrum, molecularWeight, personID 
       FROM     analyte a, analytePerson ap
       WHERE    a.analyteID = ap.analyteID
       AND      a.analyteID = p_analyteID;
@@ -381,9 +381,9 @@ END$$
 
 -- DELETEs a analyte, plus information in related tables
 DROP PROCEDURE IF EXISTS delete_analyte$$
-CREATE PROCEDURE delete_analyte ( p_guid      CHAR(36),
-                                  p_password  VARCHAR(80),
-                                  p_analyteID INT )
+CREATE PROCEDURE delete_analyte ( p_personGUID CHAR(36),
+                                  p_password   VARCHAR(80),
+                                  p_analyteID  INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -391,7 +391,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_analyte_permission( p_guid, p_password, p_analyteID ) = @OK ) THEN
+  IF ( verify_analyte_permission( p_personGUID, p_password, p_analyteID ) = @OK ) THEN
 
     DELETE FROM solutionAnalyte
     WHERE analyteID = p_analyteID;
@@ -416,9 +416,9 @@ END$$
 
 -- Returns complete list of nucleotide information about an analyte
 DROP PROCEDURE IF EXISTS get_nucleotide_info$$
-CREATE PROCEDURE get_nucleotide_info ( p_guid      CHAR(36),
-                                       p_password  VARCHAR(80),
-                                       p_analyteID INT )
+CREATE PROCEDURE get_nucleotide_info ( p_personGUID CHAR(36),
+                                       p_password   VARCHAR(80),
+                                       p_analyteID  INT )
   READS SQL DATA
 
 BEGIN
@@ -433,7 +433,7 @@ BEGIN
   FROM       analyte
   WHERE      analyteID = p_analyteID;
 
-  IF ( verify_analyte_permission( p_guid, p_password, p_analyteID ) = @OK ) THEN
+  IF ( verify_analyte_permission( p_personGUID, p_password, p_analyteID ) = @OK ) THEN
     IF ( count_analytes = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -459,7 +459,7 @@ END$$
 
 -- UPDATEs an existing analyte with the specified information
 DROP PROCEDURE IF EXISTS set_nucleotide_info$$
-CREATE PROCEDURE set_nucleotide_info ( p_guid        CHAR(36),
+CREATE PROCEDURE set_nucleotide_info ( p_personGUID  CHAR(36),
                                        p_password    VARCHAR(80),
                                        p_analyteID   INT,
                                        p_doubleStranded TINYINT,
@@ -483,7 +483,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_analyte_permission( p_guid, p_password, p_analyteID ) = @OK ) THEN
+  IF ( verify_analyte_permission( p_personGUID, p_password, p_analyteID ) = @OK ) THEN
     UPDATE analyte SET
       doubleStranded = p_doubleStranded,
       complement     = p_complement,

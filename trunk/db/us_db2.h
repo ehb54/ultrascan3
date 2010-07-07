@@ -234,6 +234,17 @@ class US_EXTERN US_DB2
     */
     int           lastInsertID( void );
     
+    /*! \brief Returns the most recent debug statement. This is only used in the
+               development of the MySQL stored routines. To use it, one would
+               issue a statement like this inside a stored routine:
+
+               SET @DEBUG = 'A Debugging message';
+
+               lastDebug() returns only the string that is currently assigned to
+               @DEBUG
+    */
+    QString       lastDebug( void );
+
   private:
     bool       connected;
 #ifndef NO_DB

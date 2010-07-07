@@ -4,19 +4,20 @@ SET @OLD_SQL_MODE=@@SQL_MODE;
 
 SET UNIQUE_CHECKS = 0;
 SET FOREIGN_KEY_CHECKS=0;
-SET SQL_MODE='TRADITIONAL';
+SET SQL_MODE='STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER';
 
-CREATE SCHEMA IF NOT EXISTS us3 DEFAULT CHARACTER SET ascii COLLATE ascii_bin ;
-USE us3;
+-- Uncomment the following lines to create and use us3 schema
+-- CREATE SCHEMA IF NOT EXISTS us3 DEFAULT CHARACTER SET ascii COLLATE ascii_bin ;
+-- USE us3;
 
 -- -----------------------------------------------------
--- Table us3.people
+-- Table people
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.people ;
+DROP TABLE IF EXISTS people ;
 
-CREATE  TABLE IF NOT EXISTS us3.people (
-  personID INT NOT NULL AUTO_INCREMENT ,
-  GUID CHAR(36) NOT NULL UNIQUE,
+CREATE  TABLE IF NOT EXISTS people (
+  personID int(11) NOT NULL AUTO_INCREMENT ,
+  personGUID CHAR(36) NOT NULL UNIQUE,
   fname VARCHAR(30) NULL ,
   lname VARCHAR(30) NULL ,
   address VARCHAR(255) NULL ,
@@ -28,7 +29,7 @@ CREATE  TABLE IF NOT EXISTS us3.people (
   organization VARCHAR(45) NULL ,
   username VARCHAR(80) NULL,
   password VARCHAR(80) NOT NULL ,
-  activated BOOLEAN NOT NULL DEFAULT false ,
+  activated TINYINT(1) NOT NULL DEFAULT false ,
   signup TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
   lastLogin DATETIME NULL ,
   clusterAuthorizations VARCHAR(255) NOT NULL default 'bcf:alamo:laredo:lonestar:bigred:steele:queenbee',
@@ -38,12 +39,12 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.project
+-- Table project
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.project ;
+DROP TABLE IF EXISTS project ;
 
-CREATE  TABLE IF NOT EXISTS us3.project (
-  projectID INT NOT NULL AUTO_INCREMENT ,
+CREATE  TABLE IF NOT EXISTS project (
+  projectID int(11) NOT NULL AUTO_INCREMENT ,
   goals TEXT NULL ,
   molecules TEXT NULL ,
   purity VARCHAR(10) NULL ,
@@ -59,13 +60,13 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.lab
+-- Table lab
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.lab ;
+DROP TABLE IF EXISTS lab ;
 
-CREATE  TABLE IF NOT EXISTS us3.lab (
-  labID INT NOT NULL AUTO_INCREMENT ,
-  GUID CHAR(36) NOT NULL UNIQUE,
+CREATE  TABLE IF NOT EXISTS lab (
+  labID int(11) NOT NULL AUTO_INCREMENT ,
+  labGUID CHAR(36) NOT NULL UNIQUE,
   name TEXT NULL ,
   building TEXT NULL ,
   room TEXT NULL ,
@@ -75,13 +76,13 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.instrument
+-- Table instrument
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.instrument ;
+DROP TABLE IF EXISTS instrument ;
 
-CREATE  TABLE IF NOT EXISTS us3.instrument (
-  instrumentID INT NOT NULL AUTO_INCREMENT ,
-  labID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS instrument (
+  instrumentID int(11) NOT NULL AUTO_INCREMENT ,
+  labID int(11) NOT NULL ,
   name TEXT NULL ,
   serialNumber TEXT NULL ,
   dateUpdated TIMESTAMP NULL ,
@@ -89,20 +90,20 @@ CREATE  TABLE IF NOT EXISTS us3.instrument (
   INDEX ndx_instrument_labID (labID ASC) ,
   CONSTRAINT fk_instrument_labID
     FOREIGN KEY ( labID )
-    REFERENCES us3.lab ( labID )
+    REFERENCES lab ( labID )
     ON DELETE CASCADE
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.abstractRotor
+-- Table abstractRotor
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.abstractRotor ;
+DROP TABLE IF EXISTS abstractRotor ;
 
-CREATE  TABLE IF NOT EXISTS us3.abstractRotor (
-  abstractRotorID INT NOT NULL UNIQUE ,
-  GUID CHAR(36) NULL ,
+CREATE  TABLE IF NOT EXISTS abstractRotor (
+  abstractRotorID int(11) NOT NULL UNIQUE ,
+  abstractRotorGUID CHAR(36) NULL ,
   name enum( 'Simulation', 'AN50', 'AN60', 'CFA' ) NULL ,
   materialName enum( 'titanium', 'carbon' ) NULL ,
   numHoles INT NULL ,
@@ -118,15 +119,15 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.rotor
+-- Table rotor
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.rotor ;
+DROP TABLE IF EXISTS rotor ;
 
-CREATE  TABLE IF NOT EXISTS us3.rotor (
-  rotorID INT NOT NULL AUTO_INCREMENT ,
-  abstractRotorID INT NULL ,
-  labID INT NOT NULL ,
-  GUID CHAR(36) NOT NULL UNIQUE,
+CREATE  TABLE IF NOT EXISTS rotor (
+  rotorID int(11) NOT NULL AUTO_INCREMENT ,
+  abstractRotorID int(11) NULL ,
+  labID int(11) NOT NULL ,
+  rotorGUID CHAR(36) NOT NULL UNIQUE,
   name TEXT NULL ,
   serialNumber TEXT NULL ,
   stretchFunction TEXT NULL ,
@@ -137,32 +138,33 @@ CREATE  TABLE IF NOT EXISTS us3.rotor (
   INDEX ndx_rotor_labID (labID ASC) ,
   CONSTRAINT fk_rotor_abstractRotorID
     FOREIGN KEY (abstractRotorID )
-    REFERENCES us3.abstractRotor (abstractRotorID )
+    REFERENCES abstractRotor (abstractRotorID )
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT fk_rotor_labID
     FOREIGN KEY (labID )
-    REFERENCES us3.lab (labID )
+    REFERENCES lab (labID )
     ON DELETE CASCADE 
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.experiment
+-- Table experiment
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.experiment ;
+DROP TABLE IF EXISTS experiment ;
 
-CREATE  TABLE IF NOT EXISTS us3.experiment (
-  experimentID INT NOT NULL AUTO_INCREMENT ,
-  projectID INT NULL ,
+CREATE  TABLE IF NOT EXISTS experiment (
+  experimentID int(11) NOT NULL AUTO_INCREMENT ,
+  projectID int(11) NULL ,
   runID VARCHAR(80) NOT NULL ,
-  labID INT NULL ,
-  instrumentID INT NOT NULL ,
-  operatorID INT NULL ,
-  rotorID INT NULL ,
-  GUID CHAR(36) NULL ,
+  labID int(11) NULL ,
+  instrumentID int(11) NOT NULL ,
+  operatorID int(11) NULL ,
+  rotorID int(11) NULL ,
+  experimentGUID CHAR(36) NULL ,
   type ENUM('velocity', 'equilibrium', 'other') NULL ,
+  runType ENUM( 'RA', 'RI', 'IP', 'FI', 'WA', 'WI' ) NULL DEFAULT NULL,
   dateBegin DATE NOT NULL ,
   runTemp FLOAT NULL ,
   label VARCHAR(80) NULL ,
@@ -177,41 +179,41 @@ CREATE  TABLE IF NOT EXISTS us3.experiment (
   INDEX ndx_experiment_rotorID (rotorID ASC) ,
   CONSTRAINT fk_experiment_projectID
     FOREIGN KEY (projectID )
-    REFERENCES us3.project (projectID )
+    REFERENCES project (projectID )
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT fk_experiment_operatorID
     FOREIGN KEY (operatorID )
-    REFERENCES us3.people (personID )
+    REFERENCES people (personID )
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT fk_experiment_instrumentID
     FOREIGN KEY (instrumentID )
-    REFERENCES us3.instrument (instrumentID )
+    REFERENCES instrument (instrumentID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE,
   CONSTRAINT fk_experiment_labID
     FOREIGN KEY (labID )
-    REFERENCES us3.lab (labID )
+    REFERENCES lab (labID )
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT fk_experiment_rotorID
     FOREIGN KEY (rotorID )
-    REFERENCES us3.rotor (rotorID )
+    REFERENCES rotor (rotorID )
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.abstractCenterpiece
+-- Table abstractCenterpiece
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.abstractCenterpiece ;
+DROP TABLE IF EXISTS abstractCenterpiece ;
 
-CREATE  TABLE IF NOT EXISTS us3.abstractCenterpiece (
-  abstractCenterpieceID INT NOT NULL UNIQUE ,
+CREATE  TABLE IF NOT EXISTS abstractCenterpiece (
+  abstractCenterpieceID int(11) NOT NULL UNIQUE ,
   loadMethod enum('top', 'fill') NULL ,
-  GUID CHAR(36) NULL ,
+  abstractCenterpieceGUID CHAR(36) NULL ,
   name TEXT NULL ,
   materialName TEXT NULL ,
   channels INT NOT NULL ,
@@ -231,15 +233,15 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.abstractChannel
+-- Table abstractChannel
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.abstractChannel ;
+DROP TABLE IF EXISTS abstractChannel ;
 
-CREATE  TABLE IF NOT EXISTS us3.abstractChannel (
-  abstractChannelID INT NOT NULL AUTO_INCREMENT ,
+CREATE  TABLE IF NOT EXISTS abstractChannel (
+  abstractChannelID int(11) NOT NULL AUTO_INCREMENT ,
   channelType enum('reference','sample') NULL ,
   channelShape enum( 'sector', 'rectangular' ) NULL ,
-  GUID CHAR(36) NULL ,
+  abstractChannelGUID CHAR(36) NULL ,
   name VARCHAR(100) NULL ,
   number INT NULL ,
   radialBegin FLOAT NULL ,
@@ -255,38 +257,38 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.channel
+-- Table channel
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.channel ;
+DROP TABLE IF EXISTS channel ;
 
-CREATE  TABLE IF NOT EXISTS us3.channel (
-  channelID INT NOT NULL AUTO_INCREMENT ,
-  abstractChannelID INT NULL ,
-  GUID CHAR(36) NULL ,
+CREATE  TABLE IF NOT EXISTS channel (
+  channelID int(11) NOT NULL AUTO_INCREMENT ,
+  abstractChannelID int(11) NULL ,
+  channelGUID CHAR(36) NULL ,
   comments TEXT NULL DEFAULT NULL ,
   dateUpdated TIMESTAMP NULL DEFAULT NULL ,
   PRIMARY KEY (channelID) ,
   INDEX ndx_channel_abstractChannelID (abstractChannelID ASC) ,
   CONSTRAINT fk_channel_abstractChannelID
     FOREIGN KEY (abstractChannelID )
-    REFERENCES us3.abstractChannel (abstractChannelID )
+    REFERENCES abstractChannel (abstractChannelID )
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.cell
+-- Table cell
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.cell ;
+DROP TABLE IF EXISTS cell ;
 
-CREATE  TABLE IF NOT EXISTS us3.cell (
-  cellID INT NOT NULL AUTO_INCREMENT ,
+CREATE  TABLE IF NOT EXISTS cell (
+  cellID int(11) NOT NULL AUTO_INCREMENT ,
   cellType enum( 'counterbalance', 'sample', 'reference' ) NULL ,
   windowType enum( 'quartz', 'saffire' ) NULL ,
-  abstractCenterpieceID INT NULL ,
-  experimentID INT NULL ,
-  GUID CHAR(36) NULL ,
+  abstractCenterpieceID int(11) NULL ,
+  experimentID int(11) NULL ,
+  cellGUID CHAR(36) NULL ,
   name TEXT NULL ,
   holeNumber INT NULL ,
   housing TEXT NULL ,
@@ -298,142 +300,140 @@ CREATE  TABLE IF NOT EXISTS us3.cell (
   INDEX ndx_cell_experimentID (experimentID ASC) ,
   CONSTRAINT fk_cell_abstractCenterpieceID
     FOREIGN KEY (abstractCenterpieceID )
-    REFERENCES us3.abstractCenterpiece (abstractCenterpieceID )
+    REFERENCES abstractCenterpiece (abstractCenterpieceID )
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT fk_cell_experimentID
     FOREIGN KEY (experimentID )
-    REFERENCES us3.experiment (experimentID )
+    REFERENCES experiment (experimentID )
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.rawData
+-- Table rawData
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.rawData ;
+DROP TABLE IF EXISTS rawData ;
 
-CREATE  TABLE IF NOT EXISTS us3.rawData (
-  rawDataID INT NOT NULL AUTO_INCREMENT ,
-  label VARCHAR(80) NOT NULL ,
+CREATE  TABLE IF NOT EXISTS rawData (
+  rawDataID int(11) NOT NULL AUTO_INCREMENT ,
+  label VARCHAR(80) NOT NULL default '',
+  filename VARCHAR(255) NOT NULL DEFAULT '',
   data LONGBLOB NOT NULL ,
   comment TEXT NULL ,
-  experimentID INT NOT NULL ,
-  channelID INT NOT NULL ,
+  experimentID int(11) NOT NULL ,
+  channelID int(11) NOT NULL ,
   PRIMARY KEY (rawDataID) ,
   INDEX ndx_rawData_experimentID (experimentID ASC) ,
   INDEX ndx_rawData_channelID (channelID ASC) ,
   CONSTRAINT fk_rawData_experimentID
     FOREIGN KEY (experimentID )
-    REFERENCES us3.experiment (experimentID )
+    REFERENCES experiment (experimentID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE,
   CONSTRAINT fk_rawData_channelID
     FOREIGN KEY (channelID )
-    REFERENCES us3.channel (channelID )
+    REFERENCES channel (channelID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.editedData
+-- Table editedData
+--
+-- Notes:
+--  Currently rawDataID is set to allow NULL to accommodate
+--   certain special records
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.editedData ;
+DROP TABLE IF EXISTS editedData ;
 
-CREATE  TABLE IF NOT EXISTS us3.editedData (
-  editedDataID INT NOT NULL AUTO_INCREMENT ,
-  rawDataID INT NOT NULL ,
-  label VARCHAR(80) NOT NULL ,
+CREATE  TABLE IF NOT EXISTS editedData (
+  editedDataID int(11) NOT NULL AUTO_INCREMENT ,
+  rawDataID int(11) NULL DEFAULT NULL,
+  -- rawDataID int(11) NOT NULL,
+  editGUID CHAR(36) NOT NULL UNIQUE ,
+  label VARCHAR(80) NOT NULL DEFAULT '',
   data LONGBLOB NOT NULL ,
   comment TEXT NULL ,
+  lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
   PRIMARY KEY (editedDataID) ,
   INDEX ndx_editedData_rawDataID (rawDataID ASC) ,
   CONSTRAINT fk_editedData_rawDataID
     FOREIGN KEY (rawDataID )
-    REFERENCES us3.rawData (rawDataID )
+    REFERENCES rawData (rawDataID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE)
+AUTO_INCREMENT = 10,
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.results
+-- Special records for table editedData
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.results ;
-
-CREATE  TABLE IF NOT EXISTS us3.results (
-  resultsID INT NOT NULL AUTO_INCREMENT ,
-  editedDataID INT NOT NULL ,
-  label VARCHAR(80) NOT NULL ,
-  type ENUM('velocity', 'equilibrium', 'equilproject', 'montecarlo', 'other') NOT NULL ,
-  reportData LONGBLOB NULL ,
-  resultData LONGBLOB NULL ,
-  PRIMARY KEY (resultsID) ,
-  INDEX ndx_results_editDataID (editedDataID ASC) ,
-  CONSTRAINT fk_results_editDataID
-    FOREIGN KEY (editedDataID )
-    REFERENCES us3.editedData (editedDataID )
-    ON DELETE NO ACTION
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
+INSERT INTO editedData SET
+  editedDataID  = 1 ,
+  rawDataID     = NULL ,
+  editGUID      = '00000000-0000-0000-0000-000000000000',
+  label         = 'UNASSIGNED' ,
+  data          = '' ,
+  comment       = 'Link to this record when an editedData record is unassigned' ;
 
 -- -----------------------------------------------------
--- Table us3.projectPerson
+-- Table projectPerson
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.projectPerson ;
+DROP TABLE IF EXISTS projectPerson ;
 
-CREATE  TABLE IF NOT EXISTS us3.projectPerson (
-  projectID INT NOT NULL ,
-  personID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS projectPerson (
+  projectID int(11) NOT NULL ,
+  personID int(11) NOT NULL ,
   INDEX ndx_projectPerson_personID  (personID ASC) ,
   INDEX ndx_projectPerson_projectID (projectID ASC) ,
   CONSTRAINT fk_projectPerson_personID
     FOREIGN KEY (personID )
-    REFERENCES us3.people (personID )
+    REFERENCES people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_projectPerson_projectID
     FOREIGN KEY (projectID )
-    REFERENCES us3.project (projectID )
+    REFERENCES project (projectID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.experimentPerson
+-- Table experimentPerson
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.experimentPerson ;
+DROP TABLE IF EXISTS experimentPerson ;
 
-CREATE  TABLE IF NOT EXISTS us3.experimentPerson (
-  experimentID INT NOT NULL ,
-  personID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS experimentPerson (
+  experimentID int(11) NOT NULL ,
+  personID int(11) NOT NULL ,
   INDEX ndx_experimentPerson_experimentID (experimentID ASC) ,
   INDEX ndx_experimentPerson_personID (personID ASC) ,
   CONSTRAINT fk_experimentPerson_experimentID
     FOREIGN KEY (experimentID )
-    REFERENCES us3.experiment (experimentID )
+    REFERENCES experiment (experimentID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_experimentPerson_personID
     FOREIGN KEY (personID )
-    REFERENCES us3.people (personID )
+    REFERENCES people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.buffer
+-- Table buffer
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.buffer ;
+DROP TABLE IF EXISTS buffer ;
 
-CREATE  TABLE IF NOT EXISTS us3.buffer (
-  bufferID INT NOT NULL AUTO_INCREMENT ,
-  GUID CHAR(36) NOT NULL UNIQUE ,
+CREATE  TABLE IF NOT EXISTS buffer (
+  bufferID int(11) NOT NULL AUTO_INCREMENT ,
+  bufferGUID CHAR(36) NOT NULL UNIQUE ,
   description TEXT NULL DEFAULT NULL ,
   compressibility FLOAT NULL DEFAULT NULL ,
   pH FLOAT NULL DEFAULT NULL ,
@@ -444,14 +444,14 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.bufferComponent
+-- Table bufferComponent
 -- Handle bufferComponentID in code, so they can be
 --  the same on multiple databases
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.bufferComponent ;
+DROP TABLE IF EXISTS bufferComponent ;
 
-CREATE  TABLE IF NOT EXISTS us3.bufferComponent (
-  bufferComponentID INT NOT NULL UNIQUE ,
+CREATE  TABLE IF NOT EXISTS bufferComponent (
+  bufferComponentID int(11) NOT NULL UNIQUE ,
   units VARCHAR(8) NOT NULL DEFAULT 'mM', 
   description TEXT NULL DEFAULT NULL ,
   viscosity TEXT NULL DEFAULT NULL ,
@@ -461,62 +461,62 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.bufferLink
+-- Table bufferLink
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.bufferLink ;
+DROP TABLE IF EXISTS bufferLink ;
 
-CREATE  TABLE IF NOT EXISTS us3.bufferLink (
-  bufferID INT NOT NULL ,
-  bufferComponentID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS bufferLink (
+  bufferID int(11) NOT NULL ,
+  bufferComponentID int(11) NOT NULL ,
   concentration FLOAT NULL ,
   INDEX ndx_bufferLink_bufferID (bufferID ASC) ,
   INDEX ndx_bufferLink_bufferComponentID (bufferComponentID ASC) ,
   CONSTRAINT fk_bufferLink_bufferID
     FOREIGN KEY (bufferID )
-    REFERENCES us3.buffer (bufferID )
+    REFERENCES buffer (bufferID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_bufferLink_bufferComponentID
     FOREIGN KEY (bufferComponentID )
-    REFERENCES us3.bufferComponent (bufferComponentID )
+    REFERENCES bufferComponent (bufferComponentID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.bufferPerson
+-- Table bufferPerson
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.bufferPerson ;
+DROP TABLE IF EXISTS bufferPerson ;
 
-CREATE  TABLE IF NOT EXISTS us3.bufferPerson (
-  bufferID INT NOT NULL ,
-  personID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS bufferPerson (
+  bufferID int(11) NOT NULL ,
+  personID int(11) NOT NULL ,
   private TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (bufferID) ,
   INDEX ndx_bufferPerson_personID (personID ASC) ,
   INDEX ndx_bufferPerson_bufferID (bufferID ASC) ,
   CONSTRAINT fk_bufferPerson_personID
     FOREIGN KEY (personID )
-    REFERENCES us3.people (personID )
+    REFERENCES people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_bufferPerson_bufferID
     FOREIGN KEY (bufferID )
-    REFERENCES us3.buffer (bufferID )
+    REFERENCES buffer (bufferID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.analyte
+-- Table analyte
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.analyte ;
+DROP TABLE IF EXISTS analyte ;
 
-CREATE  TABLE IF NOT EXISTS us3.analyte (
-  analyteID INT NOT NULL AUTO_INCREMENT ,
-  GUID CHAR(36) NOT NULL UNIQUE ,
+CREATE  TABLE IF NOT EXISTS analyte (
+  analyteID int(11) NOT NULL AUTO_INCREMENT ,
+  analyteGUID CHAR(36) NOT NULL UNIQUE ,
   type ENUM('DNA', 'RNA', 'Protein', 'Other') NULL DEFAULT 'Other' ,
   sequence TEXT NULL DEFAULT NULL ,
   vbar FLOAT NULL DEFAULT NULL ,
@@ -537,89 +537,482 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.analytePerson
+-- Table analytePerson
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.analytePerson ;
+DROP TABLE IF EXISTS analytePerson ;
 
-CREATE  TABLE IF NOT EXISTS us3.analytePerson (
-  analyteID INT NOT NULL ,
-  personID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS analytePerson (
+  analyteID int(11) NOT NULL ,
+  personID int(11) NOT NULL ,
   PRIMARY KEY (analyteID) ,
   INDEX ndx_analytePerson_personID  (personID ASC) ,
   INDEX ndx_analytePerson_analyteID (analyteID ASC) ,
   CONSTRAINT fk_analytePerson_personID
     FOREIGN KEY (personID )
-    REFERENCES us3.people (personID )
+    REFERENCES people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_analytePerson_analyteID
     FOREIGN KEY (analyteID )
-    REFERENCES us3.analyte (analyteID )
+    REFERENCES analyte (analyteID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table us3.spectrum
+-- Table spectrum
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.spectrum;
+DROP TABLE IF EXISTS spectrum;
 
-CREATE TABLE IF NOT EXISTS us3.spectrum (
-  spectrumID INT NOT NULL AUTO_INCREMENT ,
-  componentID INT NOT NULL ,
+CREATE TABLE IF NOT EXISTS spectrum (
+  spectrumID int(11) NOT NULL AUTO_INCREMENT ,
+  componentID int(11) NOT NULL ,
   componentType  enum( 'Buffer', 'Analyte' ) NOT NULL,
   opticsType enum( 'Extinction', 'Refraction', 'Fluorescence' ) NOT NULL,
   lambda FLOAT NOT NULL ,
   molarCoefficient FLOAT NOT NULL ,
   PRIMARY KEY (spectrumID) ,
-  INDEX ndx_component_ID (componentID ASC) )
-ENGINE = InnoDB;
-
--- -----------------------------------------------------
--- Table us3.model
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.model ;
-
-CREATE  TABLE IF NOT EXISTS us3.model (
-  modelID INT NOT NULL AUTO_INCREMENT ,
-  GUID CHAR(36) NOT NULL UNIQUE ,
-  description TEXT NULL DEFAULT NULL ,
-  contents TEXT NULL DEFAULT NULL ,
-  PRIMARY KEY (modelID) )
-ENGINE = InnoDB;
-
--- -----------------------------------------------------
--- Table us3.modelPerson
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.modelPerson ;
-
-CREATE  TABLE IF NOT EXISTS us3.modelPerson (
-  modelID INT NOT NULL ,
-  personID INT NOT NULL ,
-  PRIMARY KEY (modelID) ,
-  INDEX ndx_modelPerson_personID  (personID ASC) ,
-  INDEX ndx_modelPerson_modelID (modelID ASC) ,
-  CONSTRAINT fk_modelPerson_personID
-    FOREIGN KEY (personID )
-    REFERENCES us3.people (personID )
+  INDEX ndx_component_ID (componentID ASC),
+  CONSTRAINT fk_spectrum_bufferID
+    FOREIGN KEY (componentID)
+    REFERENCES buffer (bufferID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT fk_modelPerson_modelID
-    FOREIGN KEY (modelID )
-    REFERENCES us3.model (modelID )
+  CONSTRAINT fk_spectrum_analyteID
+    FOREIGN KEY (componentID)
+    REFERENCES analyte (analyteID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
--- Table us3.solution
+-- Table model
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.solution ;
+DROP TABLE IF EXISTS model ;
 
-CREATE  TABLE IF NOT EXISTS us3.solution (
-  solutionID INT NOT NULL AUTO_INCREMENT ,
-  GUID CHAR(36) NULL ,
+CREATE  TABLE IF NOT EXISTS model (
+  modelID int(11) NOT NULL AUTO_INCREMENT ,
+  editedDataID int(11) NULL ,
+  -- editedDataID int(11) NOT NULL ,
+  modelGUID CHAR(36) NOT NULL UNIQUE ,
+  iterations int(11) NOT NULL default 0 ,
+  meniscus double NOT NULL default '0',
+  RMSD double NOT NULL default '0',
+  description TEXT NULL DEFAULT NULL ,
+  contents TEXT NULL DEFAULT NULL ,
+  PRIMARY KEY (modelID) ,
+  INDEX ndx_model_editedDataID (editedDataID ASC) ,
+  CONSTRAINT fk_model_editDataID
+    FOREIGN KEY (editedDataID )
+    REFERENCES editedData (editedDataID )
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table modelPerson
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS modelPerson ;
+
+CREATE  TABLE IF NOT EXISTS modelPerson (
+  modelID int(11) NOT NULL ,
+  personID int(11) NOT NULL ,
+  PRIMARY KEY (modelID) ,
+  INDEX ndx_modelPerson_personID  (personID ASC) ,
+  INDEX ndx_modelPerson_modelID (modelID ASC) ,
+  CONSTRAINT fk_modelPerson_personID
+    FOREIGN KEY (personID )
+    REFERENCES people (personID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_modelPerson_modelID
+    FOREIGN KEY (modelID )
+    REFERENCES model (modelID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table noise
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS noise ;
+
+CREATE TABLE IF NOT EXISTS noise (
+  noiseID INT(11) NOT NULL AUTO_INCREMENT ,
+  noiseGUID CHAR(36) NOT NULL UNIQUE ,  -- needed?
+  editedDataID int(11) NOT NULL ,
+  modelID int(11) NOT NULL ,
+  modelGUID CHAR(36) NULL ,
+  noiseType enum('ri_noise', 'ti_noise') default 'ti_noise',
+  noiseVector TEXT ,                    -- an xml file
+  PRIMARY KEY ( noiseID ) ,
+  INDEX ndx_noise_editedDataID (editedDataID ASC) ,
+  INDEX ndx_noise_modelID (modelID ASC) ,
+  CONSTRAINT fk_noise_editDataID
+    FOREIGN KEY (editedDataID )
+    REFERENCES editedData (editedDataID )
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_noise_modelID
+    FOREIGN KEY (modelID )
+    REFERENCES model (modelID )
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table structure for table HPCAnalysisGroup
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS HPCAnalysisGroup;
+
+CREATE TABLE IF NOT EXISTS HPCAnalysisGroup (
+  HPCAnalysisGroupID int(11) NOT NULL AUTO_INCREMENT,
+  HPCAnalysisGroupGUID CHAR(36) NOT NULL,
+  investigatorGUID CHAR(36) NOT NULL,     -- maps to person.personGUID
+  submitterGUID CHAR(36) NOT NULL,        -- maps to person.personGUID
+  experimentID int(11) NULL,
+  rotorID int(11) NULL,                   -- to get stretch function params
+  architecture varchar(80) default NULL,
+  clusterName varchar(80) default NULL,
+  CPUCount int(11) default '0',
+  max_rss int(11) default '0',            -- from nnls finished message
+  method enum('2DSA','2DSA_MW','GA','GA_MW','GA_SC') NOT NULL default '2DSA',
+  PRIMARY KEY (HPCAnalysisGroupID) )
+ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table structure for table HPCAnalysisRequest
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS HPCAnalysisRequest;
+
+CREATE TABLE IF NOT EXISTS HPCAnalysisRequest (
+  HPCAnalysisRequestID int(11) NOT NULL AUTO_INCREMENT,
+  submitTime datetime NOT NULL default '0000-00-00 00:00:00',
+  HPCAnalysisGroupID int(11) NOT NULL,
+  HPCAnalysisGroupGUID CHAR(36) default NULL,  -- not unique here
+  PRIMARY KEY  (HPCAnalysisRequestID),
+  INDEX ndx_HPCAnalysisRequest_HPCAnalysisGroupID (HPCAnalysisGroupID ASC) ,
+  CONSTRAINT fk_HPCAnalysisRequest_HPCAnalysisGroupID
+    FOREIGN KEY (HPCAnalysisGroupID )
+    REFERENCES HPCAnalysisGroup (HPCAnalysisGroupID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table structure for table HPCRequestData
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS HPCRequestData;
+
+CREATE TABLE IF NOT EXISTS HPCRequestData (
+  HPCRequestDataID int(11) NOT NULL AUTO_INCREMENT,
+  sequenceNum int(11) NOT NULL default 1, -- identifies which dataset
+  HPCAnalysisRequestID int(11) NOT NULL,
+  editedDataID INT(11) NOT NULL ,
+  dataType enum('noise', 'model'), 
+  dataID int(11) NOT NULL,          -- could be a noiseID or a modelID
+  INDEX ndx_HPCRequestData_HPCAnalysisRequestID (HPCAnalysisRequestID ASC) ,
+  PRIMARY KEY (HPCRequestDataID),
+  CONSTRAINT fk_HPCRequestData_HPCAnalysisRequestID
+    FOREIGN KEY (HPCAnalysisRequestID)
+    REFERENCES HPCAnalysisRequest (HPCAnalysisRequestID )
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+   CONSTRAINT fk_HPCRequestData_noiseID
+     FOREIGN KEY (dataID)
+     REFERENCES noise (noiseID)
+     ON DELETE NO ACTION
+     ON UPDATE NO ACTION,
+  CONSTRAINT fk_HPCRequestData_modelID
+    FOREIGN KEY (dataID)
+    REFERENCES model (modelID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION)
+ENGINE=InnoDB;
+  
+
+-- -----------------------------------------------------
+-- Table structure for table HPCAnalysisResult
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS HPCAnalysisResult;
+
+CREATE TABLE IF NOT EXISTS HPCAnalysisResult (
+  HPCAnalysisResultID INT(11) NOT NULL AUTO_INCREMENT,
+  HPCAnalysisRequestID int(11) NOT NULL,
+  startTime datetime NOT NULL default '0000-00-00 00:00:00',
+  endTime datetime default NULL,          -- needed?
+  queueStatus enum( 'queued','running','aborted','completed') default 'queued',
+  lastMessage text default NULL,          -- from nnls
+  updateTime datetime default NULL,
+  wallTime int(11) NOT NULL default '0',
+  CPUTime double NOT NULL default '0',
+  calculatedData TEXT,                          -- an xml file
+  PRIMARY KEY (HPCAnalysisResultID),
+  INDEX ndx_HPCAnalysisResult_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
+  CONSTRAINT fk_HPCAnalysisResult_HPCAnalysisRequestID
+    FOREIGN KEY (HPCAnalysisRequestID)
+    REFERENCES HPCAnalysisRequest (HPCAnalysisRequestID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+  
+  
+-- -----------------------------------------------------
+-- Table structure for table HPCAnalysisResultData
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS HPCAnalysisResultData;
+
+CREATE TABLE IF NOT EXISTS HPCAnalysisResultData (
+  HPCAnalysisResultDataID INT(11) NOT NULL AUTO_INCREMENT,
+  HPCAnalysisResultID INT(11) NOT NULL,
+  HPCAnalysisResultType enum( 'model', 'noise' ),
+  resultID INT(11) NOT NULL,          -- could be a noiseID or a modelID
+  PRIMARY KEY (HPCAnalysisResultDataID),
+  INDEX ndx_HPCAnalysisResultData_HPCAnalysisResultID (HPCAnalysisResultID ASC),
+  CONSTRAINT fk_HPCAnalysisResultData_HPCAnalysisResultID
+    FOREIGN KEY (HPCAnalysisResultID)
+    REFERENCES HPCAnalysisResult (HPCAnalysisResultID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION ,
+   CONSTRAINT fk_HPCAnalysisResultData_noiseID
+     FOREIGN KEY (resultID)
+     REFERENCES noise (noiseID)
+     ON DELETE NO ACTION
+     ON UPDATE NO ACTION,
+   CONSTRAINT fk_HPCAnalysisResultData_modelID
+     FOREIGN KEY (resultID)
+     REFERENCES model (modelID)
+     ON DELETE NO ACTION
+     ON UPDATE NO ACTION )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table structure for table 2DSA_Settings
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS 2DSA_Settings;
+
+CREATE TABLE IF NOT EXISTS 2DSA_Settings (
+  2DSA_SettingsID int(11) NOT NULL AUTO_INCREMENT,
+  HPCAnalysisRequestID int(11) NOT NULL,
+  s_min double NOT NULL default '1',
+  s_max double NOT NULL default '10',
+  s_resolution double NOT NULL default '10',
+  ff0_min double NOT NULL default '1',
+  ff0_max double NOT NULL default '4',
+  ff0_resolution double NOT NULL default '10',
+  uniform_grid int(11) NOT NULL default '6',
+  montecarlo_value int(11) NOT NULL default '0',
+  tinoise_option tinyint(1) NOT NULL default '0',
+  regularization int(11) NOT NULL default '0',
+  meniscus_option tinyint(1) NOT NULL default '0',
+  meniscus_value double NOT NULL default '0.01',
+  meniscus_points double NOT NULL default '3',
+  iterations_option tinyint(1) NOT NULL default '0',
+  iterations_value int(11) NOT NULL default '3',
+  rinoise_option tinyint(1) NOT NULL default '0',
+  simpoints int(11) default NULL,
+  band_volume double default NULL,
+  radial_grid tinyint(4) default NULL,
+  time_grid tinyint(4) default NULL,
+  PRIMARY KEY  (2DSA_SettingsID),
+  INDEX ndx_2DSA_Settings_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
+  CONSTRAINT fk_2DSA_Settings_HPCAnalysisRequestID
+    FOREIGN KEY (HPCAnalysisRequestID)
+    REFERENCES HPCAnalysisRequest (HPCAnalysisRequestID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION )
+ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table structure for table 2DSA_MW_Settings
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS 2DSA_MW_Settings;
+
+CREATE TABLE IF NOT EXISTS 2DSA_MW_Settings (
+  2DSA_MW_SettingsID int(11) NOT NULL AUTO_INCREMENT,
+  HPCAnalysisRequestID int(11) NOT NULL,
+  mw_min double NOT NULL default '100',
+  mw_max double NOT NULL default '1000',
+  grid_resolution int(11) NOT NULL default '10',
+  oligomer int(11) NOT NULL default '4',
+  ff0_min double NOT NULL default '1',
+  ff0_max double NOT NULL default '4',
+  ff0_resolution int(11) NOT NULL default '10',
+  uniform_grid int(11) NOT NULL default '6',
+  montecarlo_value int(11) NOT NULL default '0',
+  tinoise_option tinyint(1) NOT NULL default '0',
+  regularization int(11) NOT NULL default '0',
+  meniscus_option tinyint(1) NOT NULL default '0',
+  meniscus_value double NOT NULL default '0.01',
+  meniscus_points int(11) NOT NULL default '3',
+  iterations_option tinyint(1) NOT NULL default '0',
+  iterations_value int(11) NOT NULL default '3',
+  rinoise_option tinyint(1) NOT NULL default '0',
+  simpoints int(11) default NULL,
+  band_volume double default NULL,
+  radial_grid tinyint(4) default NULL,
+  time_grid tinyint(4) default NULL,
+  PRIMARY KEY  (2DSA_MW_SettingsID),
+  INDEX ndx_2DSA_MW_Settings_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
+  CONSTRAINT fk_2DSA_MW_Settings_HPCAnalysisRequestID
+    FOREIGN KEY (HPCAnalysisRequestID)
+    REFERENCES HPCAnalysisRequest (HPCAnalysisRequestID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION )
+ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table structure for table GA_Settings
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS GA_Settings;
+
+CREATE TABLE IF NOT EXISTS GA_Settings (
+  GA_SettingsID int(11) NOT NULL AUTO_INCREMENT,
+  HPCAnalysisRequestID int(11) NOT NULL,
+  montecarlo_value int(11) NOT NULL default '0',
+  demes_value int(11) NOT NULL default '31',
+  genes_value int(11) NOT NULL default '100',
+  generations_value int(11) NOT NULL default '100',
+  crossover_value int(11) NOT NULL default '50',
+  mutation_value int(11) NOT NULL default '50',
+  plague_value int(11) NOT NULL default '4',
+  elitism_value int(11) NOT NULL default '2',
+  migration_value int(11) NOT NULL default '3',
+  regularization_value double NOT NULL default '5',
+  seed_value int(11) NOT NULL default '0',
+  tinoise_option tinyint(1) NOT NULL default '0',
+  rinoise_option tinyint(1) NOT NULL default '0',
+  simpoints int(11) default NULL,
+  band_volume double default NULL,
+  radial_grid tinyint(4) default NULL,
+  time_grid tinyint(4) default NULL,
+  meniscus_option tinyint(1) NOT NULL default '0',
+  meniscus_value double NOT NULL default '0',
+  solute_value int(11) NOT NULL default '3',
+  solute_data mediumtext,
+  PRIMARY KEY  (GA_SettingsID),
+  INDEX ndx_GA_Settings_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
+  CONSTRAINT fk_GA_Settings_HPCAnalysisRequestID
+    FOREIGN KEY (HPCAnalysisRequestID)
+    REFERENCES HPCAnalysisRequest (HPCAnalysisRequestID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION )
+ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table structure for table GA_MW_Settings
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS GA_MW_Settings;
+
+CREATE TABLE IF NOT EXISTS GA_MW_Settings (
+  GA_MW_SettingsID int(11) NOT NULL AUTO_INCREMENT,
+  HPCAnalysisRequestID int(11) NOT NULL,
+  mw_min double NOT NULL default '100',
+  mw_max double NOT NULL default '1000',
+  oligomer int(11) NOT NULL default '4',
+  ff0_min double NOT NULL default '1',
+  ff0_max double NOT NULL default '4',
+  montecarlo_value int(11) NOT NULL default '0',
+  tinoise_option tinyint(1) NOT NULL default '0',
+  demes_value int(11) NOT NULL default '31',
+  genes_value int(11) NOT NULL default '100',
+  generations_value int(11) NOT NULL default '100',
+  crossover_value int(11) NOT NULL default '50',
+  mutation_value int(11) NOT NULL default '50',
+  plague_value int(11) NOT NULL default '4',
+  elitism_value int(11) NOT NULL default '2',
+  migration_value int(11) NOT NULL default '3',
+  regularization_value double NOT NULL default '5',
+  seed_value int(11) NOT NULL default '0',
+  rinoise_option tinyint(1) NOT NULL default '0',
+  simpoints int(11) default NULL,
+  band_volume double default NULL,
+  radial_grid tinyint(4) default NULL,
+  time_grid tinyint(4) default NULL,
+  meniscus_option tinyint(1) NOT NULL default '0',
+  meniscus_value double NOT NULL default '0',
+  PRIMARY KEY  (GA_MW_SettingsID),
+  INDEX ndx_GA_MW_Settings_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
+  CONSTRAINT fk_GA_MW_Settings_HPCAnalysisRequestID
+    FOREIGN KEY (HPCAnalysisRequestID)
+    REFERENCES HPCAnalysisRequest (HPCAnalysisRequestID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION )
+ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table structure for table GA_SC_Settings
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS GA_SC_Settings;
+
+CREATE TABLE IF NOT EXISTS GA_SC_Settings (
+  GA_SC_SettingsID int(11) NOT NULL AUTO_INCREMENT,
+  HPCAnalysisRequestID int(11) NOT NULL,
+  montecarlo_value int(11) NOT NULL default '0',
+  demes_value int(11) NOT NULL default '31',
+  genes_value int(11) NOT NULL default '100',
+  generations_value int(11) NOT NULL default '100',
+  crossover_value int(11) NOT NULL default '50',
+  mutation_value int(11) NOT NULL default '50',
+  plague_value int(11) NOT NULL default '4',
+  elitism_value int(11) NOT NULL default '2',
+  migration_value int(11) NOT NULL default '3',
+  regularization_value double NOT NULL default '5',
+  seed_value int(11) NOT NULL default '0',
+  tinoise_option tinyint(1) NOT NULL default '0',
+  rinoise_option tinyint(1) NOT NULL default '0',
+  meniscus_option tinyint(1) NOT NULL default '0',
+  meniscus_value double NOT NULL default '0',
+  constraint_data mediumtext,
+  PRIMARY KEY  (GA_SC_SettingsID),
+  INDEX ndx_GA_SC_Settings_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
+  CONSTRAINT fk_GA_SC_Settings_HPCAnalysisRequestID
+    FOREIGN KEY (HPCAnalysisRequestID)
+    REFERENCES HPCAnalysisRequest (HPCAnalysisRequestID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION )
+ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table structure for table HPCSoluteData
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS HPCSoluteData;
+
+CREATE TABLE IF NOT EXISTS HPCSoluteData (
+  HPCSoluteDataID int(11) NOT NULL AUTO_INCREMENT,
+  GA_SettingsID int(11) NOT NULL,
+  s_min double NOT NULL default '0',
+  s_max double NOT NULL default '0',
+  ff0_min double NOT NULL default '0',
+  ff0_max double NOT NULL default '0',
+  PRIMARY KEY  (HPCSoluteDataID),
+  INDEX ndx_HPCSoluteData_GA_SettingsID (GA_SettingsID ASC),
+  CONSTRAINT fk_HPCSoluteData_GA_SettingsID
+    FOREIGN KEY (GA_SettingsID)
+    REFERENCES GA_Settings (GA_SettingsID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION)
+ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table solution
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS solution ;
+
+CREATE  TABLE IF NOT EXISTS solution (
+  solutionID int(11) NOT NULL AUTO_INCREMENT ,
+  solutionGUID CHAR(36) NULL ,
   description VARCHAR(80) NOT NULL ,
   storageTemp TINYINT NULL DEFAULT NULL ,
   notes TEXT NULL DEFAULT NULL ,
@@ -628,116 +1021,116 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.solutionBuffer
+-- Table solutionBuffer
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.solutionBuffer ;
+DROP TABLE IF EXISTS solutionBuffer ;
 
-CREATE  TABLE IF NOT EXISTS us3.solutionBuffer (
-  solutionID INT NOT NULL ,
-  bufferID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS solutionBuffer (
+  solutionID int(11) NOT NULL ,
+  bufferID int(11) NOT NULL ,
   PRIMARY KEY (solutionID) ,
   INDEX ndx_solutionBuffer_solutionID (solutionID ASC) ,
   INDEX ndx_solutionBuffer_bufferID   (bufferID ASC) ,
   CONSTRAINT fk_solutionBuffer_solutionID
     FOREIGN KEY (solutionID )
-    REFERENCES us3.solution (solutionID )
+    REFERENCES solution (solutionID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_solutionBuffer_bufferID
     FOREIGN KEY (bufferID )
-    REFERENCES us3.buffer (bufferID )
+    REFERENCES buffer (bufferID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.solutionAnalyte
+-- Table solutionAnalyte
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.solutionAnalyte ;
+DROP TABLE IF EXISTS solutionAnalyte ;
 
-CREATE  TABLE IF NOT EXISTS us3.solutionAnalyte (
-  solutionID INT NOT NULL ,
-  analyteID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS solutionAnalyte (
+  solutionID int(11) NOT NULL ,
+  analyteID int(11) NOT NULL ,
   amount FLOAT NOT NULL ,
   PRIMARY KEY (solutionID) ,
   INDEX ndx_solutionAnalyte_solutionID (solutionID ASC) ,
   INDEX ndx_solutionAnalyte_analyteID (analyteID ASC) ,
   CONSTRAINT fk_solutionAnalyte_solutionID
     FOREIGN KEY (solutionID )
-    REFERENCES us3.solution (solutionID )
+    REFERENCES solution (solutionID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_solutionAnalyte_analyteID
     FOREIGN KEY (analyteID )
-    REFERENCES us3.analyte (analyteID )
+    REFERENCES analyte (analyteID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.solutionPerson
+-- Table solutionPerson
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.solutionPerson ;
+DROP TABLE IF EXISTS solutionPerson ;
 
-CREATE  TABLE IF NOT EXISTS us3.solutionPerson (
-  solutionID INT NOT NULL ,
-  personID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS solutionPerson (
+  solutionID int(11) NOT NULL ,
+  personID int(11) NOT NULL ,
   PRIMARY KEY (solutionID) ,
   INDEX ndx_solutionPerson_personID (personID ASC) ,
   INDEX ndx_solutionPerson_solutionID (solutionID ASC) ,
   CONSTRAINT fk_solutionPerson_personID
     FOREIGN KEY (personID )
-    REFERENCES us3.people (personID )
+    REFERENCES people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_solutionPerson_solutionID
     FOREIGN KEY (solutionID )
-    REFERENCES us3.solution (solutionID )
+    REFERENCES solution (solutionID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.experimentSolutionChannel
+-- Table experimentSolutionChannel
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.experimentSolutionChannel ;
+DROP TABLE IF EXISTS experimentSolutionChannel ;
 
-CREATE  TABLE IF NOT EXISTS us3.experimentSolutionChannel (
-  experimentID INT NOT NULL ,
-  solutionID INT NOT NULL ,
-  channelID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS experimentSolutionChannel (
+  experimentID int(11) NOT NULL ,
+  solutionID int(11) NOT NULL ,
+  channelID int(11) NOT NULL ,
   INDEX ndx_experimentSolutionChannel_experimentID (experimentID ASC) ,
   INDEX ndx_experimentSolutionChannel_channelID (channelID ASC) ,
   INDEX ndx_experimentSolutionChannel_solutionID (solutionID ASC) ,
   CONSTRAINT fk_experimentSolutionChannel_experimentID
     FOREIGN KEY (experimentID )
-    REFERENCES us3.experiment (experimentID )
+    REFERENCES experiment (experimentID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_experimentSolutionChannel_channelID
     FOREIGN KEY (channelID )
-    REFERENCES us3.channel (channelID )
+    REFERENCES channel (channelID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE,
   CONSTRAINT fk_experimentSolutionChannel_solutionID
     FOREIGN KEY ( solutionID )
-    REFERENCES us3.solution (solutionID)
+    REFERENCES solution (solutionID)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.image
+-- Table image
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.image ;
+DROP TABLE IF EXISTS image ;
 
-CREATE  TABLE IF NOT EXISTS us3.image (
-  imageID INT NOT NULL AUTO_INCREMENT ,
-  GUID CHAR(36) NULL ,
+CREATE  TABLE IF NOT EXISTS image (
+  imageID int(11) NOT NULL AUTO_INCREMENT ,
+  imageGUID CHAR(36) NULL ,
   description VARCHAR(80) NOT NULL DEFAULT 'No description was entered for this image' ,
   gelPicture LONGBLOB NOT NULL ,
   date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
@@ -746,84 +1139,84 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.imagePerson
+-- Table imagePerson
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.imagePerson ;
+DROP TABLE IF EXISTS imagePerson ;
 
-CREATE  TABLE IF NOT EXISTS us3.imagePerson (
-  imageID INT NOT NULL ,
-  personID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS imagePerson (
+  imageID int(11) NOT NULL ,
+  personID int(11) NOT NULL ,
   INDEX ndx_imagePerson_personID (personID ASC) ,
   INDEX ndx_imagePerson_imageID (imageID ASC) ,
   CONSTRAINT fk_imagePerson_personID
     FOREIGN KEY (personID )
-    REFERENCES us3.people (personID )
+    REFERENCES people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_imagePerson_imageID
     FOREIGN KEY (imageID )
-    REFERENCES us3.image (imageID )
+    REFERENCES image (imageID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.imageAnalyte
+-- Table imageAnalyte
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.imageAnalyte ;
+DROP TABLE IF EXISTS imageAnalyte ;
 
-CREATE  TABLE IF NOT EXISTS us3.imageAnalyte (
-  imageID INT NOT NULL ,
-  analyteID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS imageAnalyte (
+  imageID int(11) NOT NULL ,
+  analyteID int(11) NOT NULL ,
   PRIMARY KEY (imageID) ,
   INDEX ndx_imageAnalyte_imageID   (imageID ASC) ,
   INDEX ndx_imageAnalyte_analyteID (analyteID ASC) ,
   CONSTRAINT fk_imageAnalyte_imageID
     FOREIGN KEY (imageID )
-    REFERENCES us3.image (imageID )
+    REFERENCES image (imageID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_imageAnalyte_analyteID
     FOREIGN KEY (analyteID )
-    REFERENCES us3.analyte (analyteID )
+    REFERENCES analyte (analyteID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.imageSolution
+-- Table imageSolution
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.imageSolution ;
+DROP TABLE IF EXISTS imageSolution ;
 
-CREATE  TABLE IF NOT EXISTS us3.imageSolution (
-  imageID INT NOT NULL ,
-  solutionID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS imageSolution (
+  imageID int(11) NOT NULL ,
+  solutionID int(11) NOT NULL ,
   PRIMARY KEY (imageID) ,
   INDEX ndx_imageSolution_imageID    (imageID ASC) ,
   INDEX ndx_imageSolution_solutionID (solutionID ASC) ,
   CONSTRAINT fk_imageSolution_imageID
     FOREIGN KEY (imageID )
-    REFERENCES us3.image (imageID )
+    REFERENCES image (imageID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_imageSolution_solutionID
     FOREIGN KEY (solutionID )
-    REFERENCES us3.solution (solutionID )
+    REFERENCES solution (solutionID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.avivFluorescence
+-- Table avivFluorescence
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.avivFluorescence ;
+DROP TABLE IF EXISTS avivFluorescence ;
 
-CREATE  TABLE IF NOT EXISTS us3.avivFluorescence (
-  avivFluorescenceID INT NOT NULL AUTO_INCREMENT ,
-  opticalSystemSettingID INT NULL ,
+CREATE  TABLE IF NOT EXISTS avivFluorescence (
+  avivFluorescenceID int(11) NOT NULL AUTO_INCREMENT ,
+  opticalSystemSettingID int(11) NULL ,
   topRadius FLOAT NULL ,
   bottomRadius FLOAT NULL ,
   mmStepSize FLOAT NULL ,
@@ -838,19 +1231,19 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.beckmanRadialAbsorbance
+-- Table beckmanRadialAbsorbance
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.beckmanRadialAbsorbance ;
+DROP TABLE IF EXISTS beckmanRadialAbsorbance ;
 
-CREATE  TABLE IF NOT EXISTS us3.beckmanRadialAbsorbance (
-  beckmanRadialAbsorbanceID INT NOT NULL AUTO_INCREMENT ,
-  opticalSystemSettingID INT NULL ,
+CREATE  TABLE IF NOT EXISTS beckmanRadialAbsorbance (
+  beckmanRadialAbsorbanceID int(11) NOT NULL AUTO_INCREMENT ,
+  opticalSystemSettingID int(11) NULL ,
   topRadius FLOAT NULL ,
   bottomRadius FLOAT NULL ,
   mmStepSize FLOAT NULL ,
   replicates INT NULL ,
-  isContinuousMode BOOLEAN NULL ,
-  isIntensity BOOLEAN NULL ,
+  isContinuousMode TINYINT(1) NULL ,
+  isIntensity TINYINT(1) NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (beckmanRadialAbsorbanceID) ,
   INDEX ndx_beckmanRadialAbsorbance_opticalSystemSettingID 
@@ -859,19 +1252,19 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.beckmanWavelengthAbsorbance
+-- Table beckmanWavelengthAbsorbance
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.beckmanWavelengthAbsorbance ;
+DROP TABLE IF EXISTS beckmanWavelengthAbsorbance ;
 
-CREATE  TABLE IF NOT EXISTS us3.beckmanWavelengthAbsorbance (
-  beckmanWavelengthAbsorbanceID INT NOT NULL AUTO_INCREMENT ,
-  opticalSystemSettingID INT NULL ,
+CREATE  TABLE IF NOT EXISTS beckmanWavelengthAbsorbance (
+  beckmanWavelengthAbsorbanceID int(11) NOT NULL AUTO_INCREMENT ,
+  opticalSystemSettingID int(11) NULL ,
   radialPosition FLOAT NULL ,
   startWavelength FLOAT NULL ,
   endWavelength FLOAT NULL ,
   nmStepsize FLOAT NULL ,
   replicates INT NULL ,
-  isIntensity BOOLEAN NULL ,
+  isIntensity TINYINT(1) NULL ,
   secondsBetween INT NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (beckmanWavelengthAbsorbanceID) ,
@@ -881,13 +1274,13 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.beckmanInterference
+-- Table beckmanInterference
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.beckmanInterference ;
+DROP TABLE IF EXISTS beckmanInterference ;
 
-CREATE  TABLE IF NOT EXISTS us3.beckmanInterference (
-  beckmanInterferenceID INT NOT NULL AUTO_INCREMENT ,
-  opticalSystemSettingID INT NULL ,
+CREATE  TABLE IF NOT EXISTS beckmanInterference (
+  beckmanInterferenceID int(11) NOT NULL AUTO_INCREMENT ,
+  opticalSystemSettingID int(11) NULL ,
   topRadious FLOAT NULL ,
   bottomRadius FLOAT NULL ,
   pixelsPerFringe INT NULL ,
@@ -907,13 +1300,13 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.multiWavelengthSystem
+-- Table multiWavelengthSystem
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.multiWavelengthSystem ;
+DROP TABLE IF EXISTS multiWavelengthSystem ;
 
-CREATE  TABLE IF NOT EXISTS us3.multiWavelengthSystem (
-  multiWavelengthSystemID INT NOT NULL AUTO_INCREMENT ,
-  opticalSystemSettingID INT NULL ,
+CREATE  TABLE IF NOT EXISTS multiWavelengthSystem (
+  multiWavelengthSystemID int(11) NOT NULL AUTO_INCREMENT ,
+  opticalSystemSettingID int(11) NULL ,
   startWavelength FLOAT NULL ,
   endWavelength FLOAT NULL ,
   nmStepsize FLOAT NULL ,
@@ -925,13 +1318,13 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.otherOpticalSystem
+-- Table otherOpticalSystem
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.otherOpticalSystem ;
+DROP TABLE IF EXISTS otherOpticalSystem ;
 
-CREATE  TABLE IF NOT EXISTS us3.otherOpticalSystem (
-  otherOpticalSystemID INT NOT NULL AUTO_INCREMENT ,
-  opticalSystemSettingID INT NULL ,
+CREATE  TABLE IF NOT EXISTS otherOpticalSystem (
+  otherOpticalSystemID int(11) NOT NULL AUTO_INCREMENT ,
+  opticalSystemSettingID int(11) NULL ,
   name TEXT NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (otherOpticalSystemID) ,
@@ -941,21 +1334,21 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.opticalSystemSetting
+-- Table opticalSystemSetting
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.opticalSystemSetting ;
+DROP TABLE IF EXISTS opticalSystemSetting ;
 
-CREATE  TABLE IF NOT EXISTS us3.opticalSystemSetting (
-  opticalSystemSettingID INT NOT NULL AUTO_INCREMENT ,
-  rawDataID INT NULL ,
-  GUID CHAR(36) NULL ,
+CREATE  TABLE IF NOT EXISTS opticalSystemSetting (
+  opticalSystemSettingID int(11) NOT NULL AUTO_INCREMENT ,
+  rawDataID int(11) NULL ,
+  opticalSystemSettingGUID CHAR(36) NULL ,
   name TEXT NULL ,
   value FLOAT NULL ,
   dateUpdated TIMESTAMP NULL ,
   secondsDuration INT NULL ,
   hwType ENUM( 'fluor', 'wlAbsorb', 'interfere', 'radialAbs', 'MWL', 'other') NULL ,
   hwIndex INT NULL ,
-  channelID INT NULL ,
+  channelID int(11) NULL ,
   PRIMARY KEY (opticalSystemSettingID) ,
   INDEX ndx_opticalSystemSetting_rawDataID (rawDataID ASC) ,
   INDEX ndx_opticalSystemSetting_channelID (channelID ASC) ,
@@ -963,77 +1356,78 @@ CREATE  TABLE IF NOT EXISTS us3.opticalSystemSetting (
     (opticalSystemSettingID ASC) ,
   CONSTRAINT fk_opticalSystemSetting_rawDataID
     FOREIGN KEY (rawDataID )
-    REFERENCES us3.rawData (rawDataID )
+    REFERENCES rawData (rawDataID )
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT fk_opticalSystemSetting_channelID
     FOREIGN KEY (channelID )
-    REFERENCES us3.channel (channelID )
+    REFERENCES channel (channelID )
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT fk_opticalSystemSetting_fluorescenceOpSysID
     FOREIGN KEY (opticalSystemSettingID )
-    REFERENCES us3.avivFluorescence (opticalSystemSettingID )
+    REFERENCES avivFluorescence (opticalSystemSettingID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_opticalSystemSetting_radialOpSysID
     FOREIGN KEY (opticalSystemSettingID )
-    REFERENCES us3.beckmanRadialAbsorbance (opticalSystemSettingID )
+    REFERENCES beckmanRadialAbsorbance (opticalSystemSettingID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_opticalSystemSetting_wavelengthOpSysID
     FOREIGN KEY (opticalSystemSettingID )
-    REFERENCES us3.beckmanWavelengthAbsorbance (opticalSystemSettingID )
+    REFERENCES beckmanWavelengthAbsorbance (opticalSystemSettingID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_opticalSystemSetting_interferenceOpSysID
     FOREIGN KEY (opticalSystemSettingID )
-    REFERENCES us3.beckmanInterference (opticalSystemSettingID )
+    REFERENCES beckmanInterference (opticalSystemSettingID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_opticalSystemSetting_MWLOpSysID
     FOREIGN KEY (opticalSystemSettingID )
-    REFERENCES us3.multiWavelengthSystem (opticalSystemSettingID )
+    REFERENCES multiWavelengthSystem (opticalSystemSettingID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_opticalSystemSetting_otherOpSysID
     FOREIGN KEY (opticalSystemSettingID )
-    REFERENCES us3.otherOpticalSystem (opticalSystemSettingID )
+    REFERENCES otherOpticalSystem (opticalSystemSettingID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.permits
+-- Table permits
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.permits ;
+DROP TABLE IF EXISTS permits ;
 
-CREATE  TABLE IF NOT EXISTS us3.permits (
-  permitID INT NOT NULL AUTO_INCREMENT ,
-  personID INT NOT NULL ,
-  collaboratorID INT default NULL ,
-  instrumentID INT NOT NULL ,
+CREATE  TABLE IF NOT EXISTS permits (
+  permitID int(11) NOT NULL AUTO_INCREMENT ,
+  personID int(11) NOT NULL ,
+  collaboratorID int(11) default NULL ,
+  instrumentID int(11) NOT NULL ,
   PRIMARY KEY (permitID) ,
   INDEX ndx_permits_personID (personID ASC) ,
   INDEX ndx_permits_collaboratorID (collaboratorID ASC) ,
   INDEX ndx_permits_instrumentID (instrumentID ASC) ,
   CONSTRAINT fk_permits_personID
     FOREIGN KEY (personID )
-    REFERENCES us3.people (personID )
+    REFERENCES people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_permits_collaboratorID
     FOREIGN KEY (collaboratorID )
-    REFERENCES us3.people (personID )
+    REFERENCES people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_permits_instrumentID
     FOREIGN KEY (instrumentID )
-    REFERENCES us3.instrument (instrumentID )
+    REFERENCES instrument (instrumentID )
     ON DELETE CASCADE
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
+
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

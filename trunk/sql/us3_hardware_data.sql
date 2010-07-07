@@ -54,7 +54,7 @@ INSERT INTO abstractRotor SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 1,
   loadMethod        = 'top',
-  GUID              = NULL,
+  abstractCenterpieceGUID = NULL,
   name              = 'Simulation 1-channel standard',
   materialName      = 'Simulation',
   channels          = 1,          -- x2 for actual number
@@ -73,7 +73,7 @@ INSERT INTO abstractCenterpiece SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 2,
   loadMethod        = 'top',
-  GUID              = NULL,
+  abstractCenterpieceGUID = NULL,
   name              = 'Epon 2-channel standard',
   materialName      = 'Epon',
   channels          = 1,          -- x2 for actual number
@@ -92,7 +92,7 @@ INSERT INTO abstractCenterpiece SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 3,
   loadMethod        = 'top',
-  GUID              = NULL,
+  abstractCenterpieceGUID = NULL,
   name              = 'Aluminum 2-channel standard',
   materialName      = 'Aluminum',
   channels          = 1,          -- x2 for actual number
@@ -111,7 +111,7 @@ INSERT INTO abstractCenterpiece SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 4,
   loadMethod        = 'top',
-  GUID              = NULL,
+  abstractCenterpieceGUID = NULL,
   name              = 'Epon 6-channel rectangular',
   materialName      = 'Epon',
   channels          = 3,          -- x2 for actual number
@@ -130,7 +130,7 @@ INSERT INTO abstractCenterpiece SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 5,
   loadMethod        = 'top',
-  GUID              = NULL,
+  abstractCenterpieceGUID = NULL,
   name              = 'Titanium 2-channel standard',
   materialName      = 'Titanium',
   channels          = 1,          -- x2 for actual number
@@ -149,7 +149,7 @@ INSERT INTO abstractCenterpiece SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 6,
   loadMethod        = 'top',
-  GUID              = NULL,
+  abstractCenterpieceGUID = NULL,
   name              = 'Titanium 6-channel rectangular',
   materialName      = 'Titanium',
   channels          = 3,          -- x2 for actual number
@@ -168,7 +168,7 @@ INSERT INTO abstractCenterpiece SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 7,
   loadMethod        = 'top',
-  GUID              = NULL,
+  abstractCenterpieceGUID = NULL,
   name              = 'Epon 2-channel band forming',
   materialName      = 'Epon',
   channels          = 1,          -- x2 for actual number

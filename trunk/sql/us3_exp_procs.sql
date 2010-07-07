@@ -11,7 +11,7 @@ DELIMITER $$
 -- Verifies that the user has permission to view or modify
 --  the specified experiment
 DROP FUNCTION IF EXISTS verify_experiment_permission$$
-CREATE FUNCTION verify_experiment_permission( p_guid         CHAR(36),
+CREATE FUNCTION verify_experiment_permission( p_personGUID   CHAR(36),
                                               p_password     VARCHAR(80),
                                               p_experimentID INT )
   RETURNS INT
@@ -30,11 +30,11 @@ BEGIN
   WHERE  experimentID = p_experimentID
   AND    personID = @US3_ID;
  
-  IF ( verify_user( p_guid, p_password ) = @OK &&
+  IF ( verify_user( p_personGUID, p_password ) = @OK &&
        count_experiments > 0 ) THEN
     SET status = @OK;
 
-  ELSEIF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     SET status = @OK;
 
   ELSE
@@ -52,7 +52,7 @@ END$$
 -- Verifies that the operator has permission to operate the instrument,
 --  and that the instrument is in the right lab
 DROP FUNCTION IF EXISTS verify_operator_permission$$
-CREATE FUNCTION verify_operator_permission( p_guid         CHAR(36),
+CREATE FUNCTION verify_operator_permission( p_personGUID   CHAR(36),
                                             p_password     VARCHAR(80),
                                             p_labID        INT,
                                             p_instrumentID INT,
@@ -83,7 +83,7 @@ BEGIN
   WHERE  instrumentID = p_instrumentID
   AND    labID        = p_labID;
  
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_instruments < 1 ) THEN
       SET @US3_LAST_ERRNO = @BADOPERATOR;
       SET @US3_LAST_ERROR = 'MySQL: operator is not permitted to work on this instrument';
@@ -109,7 +109,7 @@ END$$
 --  If p_ID = 0, retrieves count of all experiments in db
 --  Regular user can only get count of his own experiments
 DROP FUNCTION IF EXISTS count_experiments$$
-CREATE FUNCTION count_experiments( p_guid         CHAR(36),
+CREATE FUNCTION count_experiments( p_personGUID   CHAR(36),
                                    p_password     VARCHAR(80),
                                    p_ID           INT )
   RETURNS INT
@@ -122,7 +122,7 @@ BEGIN
   CALL config();
   SET count_experiments = 0;
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     -- This is an admin; he can get more info
     IF ( p_ID > 0 ) THEN
       SELECT COUNT(*)
@@ -137,7 +137,7 @@ BEGIN
 
     END IF;
 
-  ELSEIF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
       -- Uh oh, can't do that
       SET @US3_LAST_ERRNO = @NOTPERMITTED;
@@ -161,7 +161,7 @@ END$$
 
 -- INSERTs a new experiment with the specified information
 DROP PROCEDURE IF EXISTS new_experiment$$
-CREATE PROCEDURE new_experiment ( p_guid         CHAR(36),
+CREATE PROCEDURE new_experiment ( p_personGUID   CHAR(36),
                                   p_password     VARCHAR(80),
                                   p_expGUID      CHAR(36),
                                   p_projectID    INT,
@@ -186,8 +186,8 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
-  IF ( ( verify_user( p_guid, p_password ) = @OK ) &&
-       ( verify_operator_permission( p_guid, p_password, 
+  IF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+       ( verify_operator_permission( p_personGUID, p_password, 
           p_labID, p_instrumentID, p_operatorID ) = @OK ) ) THEN
     -- Can't have duplicate run ID's for this investigator
     SELECT COUNT(*)
@@ -204,7 +204,7 @@ BEGIN
     ELSE
       INSERT INTO experiment SET
         projectID          = p_projectID,
-        GUID               = p_expGUID,
+        experimentGUID     = p_expGUID,
         runID              = p_runID,
         labID              = p_labID,
         instrumentID       = p_instrumentID,
@@ -233,7 +233,7 @@ END$$
 
 -- UPDATEs an existing experiment with the specified information
 DROP PROCEDURE IF EXISTS update_experiment$$
-CREATE PROCEDURE update_experiment ( p_guid         CHAR(36),
+CREATE PROCEDURE update_experiment ( p_personGUID   CHAR(36),
                                      p_password     VARCHAR(80),
                                      p_experimentID INT,
                                      p_projectID    INT,
@@ -256,8 +256,8 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( ( verify_experiment_permission( p_guid, p_password, p_experimentID ) = @OK ) &&
-       ( verify_operator_permission( p_guid, p_password, 
+  IF ( ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) &&
+       ( verify_operator_permission( p_personGUID, p_password, 
           p_labID, p_instrumentID, p_operatorID ) = @OK ) ) THEN
     -- Let's make sure we don't result in a duplicate run ID's for this investigator
     --  through renaming or some such
@@ -301,9 +301,9 @@ END$$
 --  If p_ID = 0, retrieves information about all experiments in db
 --  Regular user can only get info about his own experiments
 DROP PROCEDURE IF EXISTS get_experiment_desc$$
-CREATE PROCEDURE get_experiment_desc ( p_guid     CHAR(36),
-                                       p_password VARCHAR(80),
-                                       p_ID       INT )
+CREATE PROCEDURE get_experiment_desc ( p_personGUID CHAR(36),
+                                       p_password   VARCHAR(80),
+                                       p_ID         INT )
   READS SQL DATA
 
 BEGIN
@@ -312,9 +312,9 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     -- This is an admin; he can get more info
-    IF ( count_experiments( p_guid, p_password, p_ID ) < 1 ) THEN
+    IF ( count_experiments( p_personGUID, p_password, p_ID ) < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -340,7 +340,7 @@ BEGIN
 
     END IF;
 
-  ELSEIF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
       -- Uh oh, can't do that
       SET @US3_LAST_ERRNO = @NOTPERMITTED;
@@ -348,7 +348,7 @@ BEGIN
      
       SELECT @US3_LAST_ERRNO AS status;
 
-    ELSEIF ( count_experiments( p_guid, p_password, @US3_ID ) < 1 ) THEN
+    ELSEIF ( count_experiments( p_personGUID, p_password, @US3_ID ) < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -372,7 +372,7 @@ END$$
 
 -- Returns a more complete list of information about one experiment
 DROP PROCEDURE IF EXISTS get_experiment_info$$
-CREATE PROCEDURE get_experiment_info ( p_guid         CHAR(36),
+CREATE PROCEDURE get_experiment_info ( p_personGUID   CHAR(36),
                                        p_password     VARCHAR(80),
                                        p_experimentID INT )
   READS SQL DATA
@@ -389,7 +389,7 @@ BEGIN
   FROM       experiment
   WHERE      experimentID = p_experimentID;
 
-  IF ( verify_experiment_permission( p_guid, p_password, p_experimentID ) = @OK ) THEN
+  IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
     IF ( count_experiments = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -399,7 +399,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   GUID, projectID, runID, labID, instrumentID, 
+      SELECT   experimentGUID, projectID, runID, labID, instrumentID, 
                operatorID, rotorID, type, runTemp, label, comment, 
                centrifugeProtocol, dateUpdated, personID
       FROM     experiment e, experimentPerson ep
@@ -418,9 +418,9 @@ END$$
 -- Returns a more complete list of information about one experiment
 -- Differs from previous procedure by searching by runID
 DROP PROCEDURE IF EXISTS get_experiment_info_by_runID$$
-CREATE PROCEDURE get_experiment_info_by_runID ( p_guid     CHAR(36),
-                                                p_password VARCHAR(80),
-                                                p_runID    VARCHAR(80) )
+CREATE PROCEDURE get_experiment_info_by_runID ( p_personGUID CHAR(36),
+                                                p_password   VARCHAR(80),
+                                                p_runID      VARCHAR(80) )
   READS SQL DATA
 
 BEGIN
@@ -430,7 +430,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT COUNT(*)
     INTO   count_experiments
     FROM   experiment e, experimentPerson p
@@ -447,7 +447,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT projectID, e.experimentID, GUID, labID, instrumentID, 
+      SELECT projectID, e.experimentID, experimentGUID, labID, instrumentID, 
              operatorID, rotorID, type, runTemp, label, comment, 
              centrifugeProtocol, dateUpdated, personID
       FROM   experiment e, experimentPerson p
@@ -466,8 +466,8 @@ END$$
 
 -- DELETEs an experiment, plus information in related tables
 DROP PROCEDURE IF EXISTS delete_experiment$$
-CREATE PROCEDURE delete_experiment ( p_guid      CHAR(36),
-                                     p_password  VARCHAR(80),
+CREATE PROCEDURE delete_experiment ( p_personGUID   CHAR(36),
+                                     p_password     VARCHAR(80),
                                      p_experimentID INT )
   MODIFIES SQL DATA
 
@@ -476,16 +476,16 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_experiment_permission( p_guid, p_password, p_experimentID ) = @OK ) THEN
+  IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
+
+    DELETE FROM rawData
+    WHERE experimentID = p_experimentID;
 
     DELETE FROM experimentPerson
     WHERE experimentID = p_experimentID;
 
     DELETE FROM experiment
     WHERE experimentID = p_experimentID;
-
-  --  DELETE FROM rawData
-    -- WHERE experimentID = p_experimentID;
 
   END IF;
 

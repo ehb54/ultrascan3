@@ -44,6 +44,7 @@ BEGIN
   SET @NO_LAB         = 505;
   SET @NO_PERSON      = 506;
   SET @NO_MODEL       = 507;
+  SET @NO_EXPERIMENT  = 508;
 
   -- Some user levels
   SET @US3_USER       = 0;
@@ -89,9 +90,20 @@ BEGIN
 
 END$$
 
+-- Returns the most recent @DEBUG statement
+DROP FUNCTION IF EXISTS last_debug$$
+CREATE FUNCTION last_debug()
+  RETURNS TEXT
+  NO SQL
+
+BEGIN
+  RETURN( @DEBUG );
+
+END$$
+
 -- Checks the user with the passed GUID and password
 DROP FUNCTION IF EXISTS check_user$$
-CREATE FUNCTION check_user( p_guid     CHAR(36),
+CREATE FUNCTION check_user( p_personGUID     CHAR(36),
                             p_password VARCHAR(80) )
   RETURNS INT
   READS SQL DATA
@@ -112,7 +124,7 @@ BEGIN
   SET @LNAME          = NULL;
   SET @PHONE          = NULL;
   SET @EMAIL          = NULL;
-  SET @GUID           = NULL;
+  SET @personGUID     = NULL;
   SET @USERLEVEL      = NULL;
 
   SET md5_pw          = MD5( p_password );
@@ -121,17 +133,17 @@ BEGIN
   SELECT COUNT(*)
   INTO   count_user
   FROM   people
-  WHERE  GUID = p_guid;
+  WHERE  personGUID = p_personGUID;
 
-  IF ( TRIM( p_guid ) = '' ) THEN
+  IF ( TRIM( p_personGUID ) = '' ) THEN
     SET @US3_LAST_ERRNO = @EMPTY;
-    SET @US3_LAST_ERROR = CONCAT( 'MySQL: The GUID parameter to the check_user ',
-                                  'function cannot be empty' );
+    SET @US3_LAST_ERROR = CONCAT( 'MySQL: The personGUID parameter to the ',
+                                  'check_user function cannot be empty' );
 
   ELSEIF ( count_user = 0 ) THEN
     SET @US3_LAST_ERRNO = @NO_ACCT;
-    SET @US3_LAST_ERROR = CONCAT( 'MySQL: The account identified by GUID ',
-                                  p_guid,
+    SET @US3_LAST_ERROR = CONCAT( 'MySQL: The account identified by personGUID ',
+                                  p_personGUID,
                                   ' is not set up correctly. ',
                                   'Please contact the administrator: ',
                                   @ADMIN_EMAIL );
@@ -141,9 +153,9 @@ BEGIN
     SELECT personID, password, fname, lname, phone, email, userlevel, activated
     INTO   @US3_ID, l_password, @FNAME, @LNAME, @PHONE, @EMAIL, @USERLEVEL, activated
     FROM   people
-    WHERE  GUID = p_guid;
+    WHERE  personGUID = p_personGUID;
 
-    SET @GUID         = p_guid;
+    SET @personGUID   = p_personGUID;
 
     IF ( l_password != md5_pw ) THEN
       SET @US3_LAST_ERRNO = @BADPASS;
@@ -154,7 +166,7 @@ BEGIN
       SET @LNAME      = NULL;
       SET @PHONE      = NULL;
       SET @EMAIL      = NULL;
-      SET @GUID       = NULL;
+      SET @personGUID = NULL;
       SET @USERLEVEL  = NULL;
 
     ELSEIF ( activated = false ) THEN
@@ -168,7 +180,7 @@ BEGIN
       SET @LNAME      = NULL;
       SET @PHONE      = NULL;
       SET @EMAIL      = NULL;
-      SET @GUID       = NULL;
+      SET @personGUID = NULL;
       SET @USERLEVEL  = NULL;
 
     ELSE
@@ -189,17 +201,17 @@ END$$
 
 -- Checks the user with the passed email and password
 DROP FUNCTION IF EXISTS check_user_email$$
-CREATE FUNCTION check_user_email( p_email VARCHAR(63),
+CREATE FUNCTION check_user_email( p_email    VARCHAR(63),
                                   p_password VARCHAR(80) )
   RETURNS INT
   READS SQL DATA
 
 BEGIN
   DECLARE count_user INT;
-  DECLARE md5_pw VARCHAR(80);
+  DECLARE md5_pw     VARCHAR(80);
   DECLARE l_password VARCHAR(80);
-  DECLARE activated INT;
-  DECLARE status INT;
+  DECLARE activated  INT;
+  DECLARE status     INT;
 
   call config();
   SET @US3_LAST_ERRNO = @OK;
@@ -210,7 +222,7 @@ BEGIN
   SET @LNAME          = NULL;
   SET @PHONE          = NULL;
   SET @EMAIL          = NULL;
-  SET @GUID           = NULL;
+  SET @personGUID     = NULL;
   SET @USERLEVEL      = NULL;
 
   SET md5_pw          = MD5( p_password );
@@ -242,8 +254,8 @@ BEGIN
 
   ELSE
     -- At this point we should have exactly 1 record
-    SELECT personID, password, fname, lname, phone, GUID, userlevel, activated
-    INTO   @US3_ID, l_password, @FNAME, @LNAME, @PHONE, @GUID, @USERLEVEL, activated
+    SELECT personID, password, fname, lname, phone, personGUID, userlevel, activated
+    INTO   @US3_ID, l_password, @FNAME, @LNAME, @PHONE, @personGUID, @USERLEVEL, activated
     FROM   people
     WHERE  email = p_email;
 
@@ -258,7 +270,7 @@ BEGIN
       SET @LNAME      = NULL;
       SET @PHONE      = NULL;
       SET @EMAIL      = NULL;
-      SET @GUID       = NULL;
+      SET @personGUID = NULL;
       SET @USERLEVEL  = NULL;
 
     ELSEIF ( activated = false ) THEN
@@ -272,16 +284,16 @@ BEGIN
       SET @LNAME      = NULL;
       SET @PHONE      = NULL;
       SET @EMAIL      = NULL;
-      SET @GUID       = NULL;
+      SET @personGUID = NULL;
       SET @USERLEVEL  = NULL;
 
     ELSE
       -- Successful login
       UPDATE people
       SET    lastLogin = NOW()
-      WHERE  personID = @US3_ID;
+      WHERE  personID  = @US3_ID;
 
-      SET status      = @OK;
+      SET status       = @OK;
 
     END IF;
 
@@ -294,8 +306,8 @@ END$$
 -- Verifies that user identified by guid is the same as the
 --  logged in user
 DROP FUNCTION IF EXISTS verify_user$$
-CREATE FUNCTION verify_user( p_guid     CHAR(36),
-                             p_password VARCHAR(80) )
+CREATE FUNCTION verify_user( p_personGUID CHAR(36),
+                             p_password   VARCHAR(80) )
   RETURNS INT
   READS SQL DATA
 
@@ -306,7 +318,7 @@ BEGIN
   SET status = @OK;
 
   IF ( @US3_ID IS NULL ) THEN
-    SET status = check_user( p_guid, p_password );
+    SET status = check_user( p_personGUID, p_password );
 
   END IF;
 
@@ -316,9 +328,9 @@ END$$
 
 -- Same as verify_user(), but also verifies userlevel
 DROP FUNCTION IF EXISTS verify_userlevel$$
-CREATE FUNCTION verify_userlevel( p_guid      CHAR(36),
-                                  p_password  VARCHAR(80),
-                                  p_userlevel INT )
+CREATE FUNCTION verify_userlevel( p_personGUID CHAR(36),
+                                  p_password   VARCHAR(80),
+                                  p_userlevel  INT )
   RETURNS INT
   READS SQL DATA
 
@@ -326,7 +338,7 @@ BEGIN
   DECLARE status       INT;
 
   CALL config();
-  SET status = verify_user( p_guid, p_password );
+  SET status = verify_user( p_personGUID, p_password );
 
   IF ( status = @OK && @USERLEVEL < p_userlevel ) THEN
     SET @US3_LAST_ERRNO = @NOTPERMITTED;
@@ -343,8 +355,8 @@ END$$
 -- Verifies that user identified by email is the same as the
 --  logged in user
 DROP FUNCTION IF EXISTS verify_user_email$$
-CREATE FUNCTION verify_user_email( p_email VARCHAR(63),
-                             p_password VARCHAR(80) )
+CREATE FUNCTION verify_user_email( p_email    VARCHAR(63),
+                                   p_password VARCHAR(80) )
   RETURNS INT
   READS SQL DATA
 
@@ -364,12 +376,12 @@ BEGIN
 
 END$$
 
--- Validates the user either by GUID or email and password
--- Returns status, GUID and email
+-- Validates the user either by personGUID or email and password
+-- Returns status, personGUID and email
 DROP PROCEDURE IF EXISTS validate_user$$
-CREATE PROCEDURE validate_user( p_guid     CHAR(36),
-                                p_email    VARCHAR(63),
-                                p_password VARCHAR(80) )
+CREATE PROCEDURE validate_user( p_personGUID CHAR(36),
+                                p_email      VARCHAR(63),
+                                p_password   VARCHAR(80) )
   READS SQL DATA
 
 BEGIN
@@ -378,11 +390,11 @@ BEGIN
   call config();
 
   -- Let's see if we can validate with the guid
-  SET status = check_user( p_guid, p_password );
+  SET status = check_user( p_personGUID, p_password );
   IF ( @US3_ID IS NOT NULL ) THEN
     -- We've validated with the guid
     SELECT @OK AS status;
-    SELECT @GUID AS GUID, @EMAIL AS email;
+    SELECT @personGUID AS personGUID, @EMAIL AS email;
 
   ELSE
     -- Can we validate using the email?
@@ -390,12 +402,12 @@ BEGIN
     IF ( @US3_ID IS NOT NULL ) THEN
       -- We've validated with the email
       SELECT @OK AS status;
-      SELECT @GUID AS GUID, @EMAIL AS email;
+      SELECT @personGUID AS personGUID, @EMAIL AS email;
 
     ELSE
       -- No, can't validate either way
       SELECT @US3_LAST_ERRNO AS status;
-      SELECT p_guid AS GUID, p_email AS email;
+      SELECT p_personpersonGUID AS personGUID, p_email AS email;
 
     END IF;
 
@@ -404,9 +416,9 @@ BEGIN
 END$$
 
 DROP FUNCTION IF EXISTS check_GUID$$
-CREATE FUNCTION check_GUID( p_guid      CHAR(36),
-                            p_password  VARCHAR(80),
-                            p_tableGUID CHAR(36) )
+CREATE FUNCTION check_GUID( p_personGUID CHAR(36),
+                            p_password   VARCHAR(80),
+                            p_tableGUID  CHAR(36) )
   RETURNS INT
   READS SQL DATA
 
@@ -420,7 +432,7 @@ BEGIN
   SET @US3_LAST_ERROR   = '';
   SET pattern = '^(([0-9a-fA-F]){8}-([0-9a-fA-F]){4}-([0-9a-fA-F]){4}-([0-9a-fA-F]){4}-([0-9a-fA-F]){12})$';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     -- Does the GUID fit the pattern?
     SET p_tableGUID = TRIM( p_tableGUID );
     SELECT p_tableGUID REGEXP pattern
@@ -452,6 +464,7 @@ SOURCE us3_people_procs.sql
 SOURCE us3_buffer_procs.sql
 SOURCE us3_analyte_procs.sql
 SOURCE us3_exp_procs.sql
+SOURCE us3_expdata_procs.sql
 SOURCE us3_proj_procs.sql
 SOURCE us3_hardware_procs.sql
 SOURCE us3_hardware_data.sql
