@@ -1373,12 +1373,40 @@ void US_Convert::syncDB( void )
 {
    QString error;
 
+   // Get the directory where the auc files are
+   QDir        resultDir( US_Settings::resultDir() );
+   QString     dir = resultDir.absolutePath() + "/" + ExpData.runID + "/";
+
+   if ( ! resultDir.exists( ExpData.runID ) )
+   {
+      QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "Cannot read from " ) + dir ); // aucDir.absolutePath() );
+      return;
+   }
+
+   QStringList nameFilters = QStringList( "*.auc" );
+
+   QDir readDir( dir );
+
+   QStringList files =  readDir.entryList( nameFilters, 
+         QDir::Files | QDir::Readable, QDir::Name );
+
+   if ( files.size() == 0 )
+   {
+      QMessageBox::warning( this,
+            tr( "No Files Found" ),
+            tr( "There were no files of the form *.auc\n"  
+                "found in the specified directory." ) );
+      return;
+   }
+
    // Save it to the db and return
    if ( this->editing )
-      error = US_ConvertIO::updateDBExperiment( ExpData );
+      error = US_ConvertIO::updateDBExperiment( ExpData, dir );
 
    else
-      error = US_ConvertIO::newDBExperiment( ExpData );
+      error = US_ConvertIO::newDBExperiment( ExpData, dir );
 
    if ( ! error.isNull() )
    {

@@ -87,7 +87,7 @@ void US_ConvertProgressBar::display( bool visible )
 {
    this->visible = visible;
 
-   if ( ! visible ) ;
+   if ( ! visible )
       this->hide();
 }
 
@@ -325,7 +325,7 @@ void US_ProcessConvert::writeConvertedData(
       uuid_t uuid;
       uuid_generate( uuid );
       strncpy( rawConvertedData[ ndx ].rawGUID, (char*) uuid, 16 );
-      strncpy( ExpData.triples [ ndx ].guid, (char*) uuid, 16 );
+      strncpy( ExpData.triples [ ndx ].tripleGUID, (char*) uuid, 16 );
 
       // Create a copy of the current dataset so we can alter it
       US_DataIO2::RawData  currentData     = rawConvertedData[ ndx ];
