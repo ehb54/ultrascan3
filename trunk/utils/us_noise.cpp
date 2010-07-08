@@ -183,6 +183,80 @@ int US_Noise::write( const QString& filename )
    return US_DB2::OK;
 }
 
+// apply noise to EditedData by add/subtract noise values from readings
+int US_Noise::apply_to_data( US_DataIO2::EditedData& editdata, bool remove )
+{
+   int    rCount = editdata.scanData[ 0 ].readings.size(); // readings count
+   int    sCount = editdata.scanData.size();               // scan count
+   int    ii;
+   int    jj;
+   double vnoise;
+   double applyf = remove ? -1.0 : 1.0;                    // apply factor
+
+   if ( count == 0 )
+   {
+      message = QObject::tr( "No noise applied, since its count is zero" );
+      return 1;
+   }
+
+   if ( type == TI )
+   {  // Time-invariant:  subtract same value all scans at reading position
+
+      if ( count != rCount )
+      {
+         message = QObject::tr( "Noise count does not equal data readings count" );
+         return -1;
+      }
+
+      for ( jj = 0; jj < rCount; jj++ )
+      {  // get constant noise value for each reading and apply to scans
+         vnoise = ( values[ jj ] * applyf );
+
+         for ( ii = 0; ii < sCount; ii++ )
+         {  // apply to all scans at reading position
+            editdata.scanData[ ii ].readings[ jj ].value += vnoise;
+         }
+      }
+   }
+
+   else
+   {  // Radially-invariant:  subtract same value all readings at scan position
+
+      if ( count != sCount )
+      {
+         message = QObject::tr( "Noise count does not equal data scan count" );
+         return -2;
+      }
+
+      for ( ii = 0; ii < sCount; ii++ )
+      {  // get constant noise value for each scan and apply to readings
+         vnoise = ( values[ ii ] * applyf );
+
+         for ( jj = 0; jj < rCount; jj++ )
+         {  // apply to all readings at scan position
+            editdata.scanData[ ii ].readings[ jj ].value += vnoise;
+         }
+      }
+   }
+
+   return 0;
+}
+
+// remove/add noise vector from/to edited data
+int US_Noise::apply_noise( US_DataIO2::EditedData& editdata,
+      US_Noise* noise, bool remove )
+{
+   if ( noise != 0 )
+   {
+      return noise->apply_to_data( editdata, remove );
+   }
+
+   else
+   {
+      return 1;
+   }
+}
+
 // test noise file path and create directory if need be
 bool US_Noise::noise_path( QString& path )
 {
@@ -209,7 +283,7 @@ int US_Noise::load_disk( const QString& guid )
 
    if ( ! noise_path( path ) )
    {
-      //message = QObject::tr ( "Could not create noises directory" );
+      message = QObject::tr ( "Could not create noises directory" );
       return error;
    }
 
@@ -250,7 +324,7 @@ int US_Noise::load_disk( const QString& guid )
    }
 
    qDebug() << "Could not find noise GUID";
-   //message =  QObject::tr ( "Could not find noise guid" );
+   message =  QObject::tr ( "Could not find noise guid" );
    return error;
 }
 
