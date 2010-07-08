@@ -170,7 +170,8 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
    {
       if ( 
           (*model)[i].active &&
-          (*model)[i].chain == 0 // main chain
+          ( bd_options.include_sc ||
+            (*model)[i].chain == 0 )
           )
       {
          ts << 
@@ -270,6 +271,29 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
    }
    ts << "END\n";
    fpdb.close();
+
+   { // display pdb
+      QStringList argument;
+#if !defined(WIN32)
+      argument.append("xterm");
+      argument.append("-e");
+#endif
+#if defined(BIN64)
+      argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
+#else
+      argument.append(USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol");
+#endif
+      argument.append(QFileInfo(fpdb.name()).fileName());
+      rasmol->setWorkingDirectory(QFileInfo(fpdb.name()).dirPath());
+      rasmol->setArguments(argument);
+      if (advanced_config.auto_view_pdb &&
+          !rasmol->start())
+      {
+         QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+                                                     "Please check to make sure RASMOL is properly installed..."));
+      }
+   }
+
    return 0;
 }
 
@@ -306,14 +330,14 @@ int US_Hydrodyn::compute_bd_connections()
    {
       if ( 
           bead_models[current_model][i].active &&
-          bead_models[current_model][i].chain == 0 // main chain
+          ( bd_options.include_sc || bead_models[current_model][i].chain == 0 )
           )
       {
          for ( unsigned int j = i + 1; j < bead_models[current_model].size(); j++ ) 
          {
             if ( 
                 bead_models[current_model][j].active &&
-                bead_models[current_model][j].chain == 0 // main chain
+                ( bd_options.include_sc || bead_models[current_model][j].chain == 0 )
                 )
             {
                d = dist( bead_models[current_model][i].bead_coordinate,
@@ -352,9 +376,9 @@ int US_Hydrodyn::compute_bd_connections()
 
          if ( 
              !bead_models[current_model][i].active ||
-             bead_models[current_model][i].chain != 0 ||
+             ( !bd_options.include_sc && bead_models[current_model][i].chain != 0 ) ||
              !bead_models[current_model][j].active ||
-             bead_models[current_model][j].chain != 0 ||
+             ( !bd_options.include_sc && bead_models[current_model][j].chain != 0 ) ||
              
              ( d = dist( bead_models[current_model][i].bead_coordinate,
                          bead_models[current_model][j].bead_coordinate ) ) > bd_options.threshold 
@@ -367,7 +391,6 @@ int US_Hydrodyn::compute_bd_connections()
          }
       }
    }
-
 
    // compute stats
 

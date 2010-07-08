@@ -5506,58 +5506,63 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
          RADIAL_REDUCTION | RR_MCSC | RR_BURIED,
       };
 
-   if (sidechain_overlap.fuse_beads) {
+   if ( !bd_mode &&
+        sidechain_overlap.fuse_beads ) {
       methods[0] |= POP_SC | POP_EXPOSED;
    }
 
-   if (mainchain_overlap.fuse_beads) {
+   if ( !bd_mode &&
+        mainchain_overlap.fuse_beads) {
       methods[1] |= POP_MCSC | POP_EXPOSED;
    }
 
-   if (buried_overlap.fuse_beads) {
+   if ( !bd_mode &&
+        buried_overlap.fuse_beads ) {
       methods[2] |= POP_ALL | POP_BURIED;
    }
 
-   if (sidechain_overlap.remove_hierarch) {
+   if ( sidechain_overlap.remove_hierarch ) {
       methods[0] |= RR_HIERC;
    }
 
-   if (mainchain_overlap.remove_hierarch) {
+   if ( mainchain_overlap.remove_hierarch ) {
       methods[1] |= RR_HIERC;
    }
 
-   if (buried_overlap.remove_hierarch) {
+   if ( buried_overlap.remove_hierarch ) {
       methods[2] |= RR_HIERC;
    }
 
-   if (sidechain_overlap.translate_out) {
+   if ( sidechain_overlap.translate_out ) {
       methods[0] |= OUTWARD_TRANSLATION;
    }
 
-   if (mainchain_overlap.translate_out) {
+   if ( mainchain_overlap.translate_out ) {
       methods[1] |= OUTWARD_TRANSLATION;
    }
 
-   if (buried_overlap.translate_out) {
+   if ( buried_overlap.translate_out ) {
       methods[2] |= OUTWARD_TRANSLATION;
    }
 
-   if (!sidechain_overlap.remove_overlap) {
+   if ( !sidechain_overlap.remove_overlap ) {
       methods[0] = 0;
    }
 
-   if (!mainchain_overlap.remove_overlap) {
+   if ( !mainchain_overlap.remove_overlap ) {
       methods[1] = 0;
    }
 
-   if (!buried_overlap.remove_overlap) {
+   if ( !buried_overlap.remove_overlap ) {
       methods[2] = 0;
    }
 
-   if ( bd_mode ) {
+   if ( bd_mode && 
+        !bd_options.do_rr ) {
       methods[0] = 0;
       methods[1] = 0;
       methods[2] = 0;
+      cout << "BD MODE REMOVED RR!\n"; 
    }
 
    float overlap[] =
@@ -5829,7 +5834,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
 #endif
       printf("stage %d beads popped %d\n", k, beads_popped);
       progress->setProgress(ppos++); // 12,13,14
-      if ( !bd_mode )
+      if ( !bd_mode || bd_options.do_rr )
       {
          editor->append(QString("Beads popped %1.\nBegin radial reduction stage %2\n").arg(beads_popped).arg(k + 1));
       }
@@ -6756,7 +6761,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
    write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
                     QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") + DOTSOMO
                     , &bead_model);
-   if ( !bd_mode )
+   if ( bd_options.do_rr || !bd_mode  )
    {
       editor->append("Finished with popping and radial reduction\n");
    }
@@ -6764,6 +6769,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
    if ( bd_mode )
    {
       progress->setProgress(1,1);
+      lbl_core_progress->setText("");
    }
       
    qApp->processEvents();

@@ -27,6 +27,9 @@ using namespace std;
 struct BD_Options
 {
    float threshold;
+   bool do_rr;
+   bool force_chem;
+   bool include_sc;
 };
 
 class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
@@ -48,6 +51,10 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       
       QwtCounter *cnt_bd_threshold;
 
+      QCheckBox *cb_do_rr;
+      QCheckBox *cb_force_chem;
+      QCheckBox *cb_include_sc;
+
       QPushButton *pb_help;
       QPushButton *pb_cancel;
       
@@ -55,6 +62,9 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       
       void setupGUI();
       void update_bd_threshold(double);
+      void set_do_rr();
+      void set_force_chem();
+      void set_include_sc();
       void cancel();
       void help();
    

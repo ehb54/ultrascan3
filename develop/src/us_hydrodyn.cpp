@@ -178,7 +178,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    results.tau_sd = 0.0;
    results.asa_rg_pos = 0.0;
    results.asa_rg_neg = 0.0;
-   bd_options.threshold = 4.0;
+   bd_options.threshold = 7.0;
+   bd_options.do_rr = true;
+   bd_options.force_chem = true;
+   bd_options.include_sc = true;
    rasmol = new QProcess(this);
    rasmol->setWorkingDirectory(
                                QDir(USglobal->config_list.system_dir + SLASH +
