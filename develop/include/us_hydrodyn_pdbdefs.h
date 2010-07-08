@@ -7,9 +7,11 @@ using namespace std;
 // QT defs:
 #include <qstring.h>
 
-struct point
+class point
 {
+ public:
    float axis[3];
+   friend ostream& operator<<(ostream&, const point&);
 };
 
 struct matrix

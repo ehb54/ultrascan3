@@ -1,5 +1,6 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
 // (this) us_hydrodyn_core.cpp contains the main computational routines
+// us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic computations
 // us_hydrodyn_other.cpp contains other routines such as file i/o
 
 // includes and defines need cleanup
@@ -3218,7 +3219,6 @@ void US_Hydrodyn::radial_reduction()
       editor->append(QString("Beads popped %1.\nBegin radial reduction stage %2\n").arg(beads_popped).arg(k + 1));
       qApp->processEvents();
 
-
       // radial reduction phase
 
 #if defined(TIMING)
@@ -4187,7 +4187,7 @@ void US_Hydrodyn::radial_reduction()
 
 //------------------------------ end of radial reduction ------------------------------------------------------
 
-int US_Hydrodyn::compute_asa()
+int US_Hydrodyn::compute_asa( bool bd_mode )
 {
    QString error_string = "";
    progress->reset();
@@ -5415,7 +5415,9 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG_MOD)
    write_bead_tsv(somo_tmp_dir + SLASH + "bead_model_debug" + DOTSOMO + ".tsv", &dbg_model);
 #endif
-   editor->append(QString("There are %1 beads in this model before popping\n").arg(bead_model.size()));
+   editor->append(QString("There are %1 beads in this model%2\n")
+                  .arg(bead_model.size())
+                  .arg(bd_mode ? "" : " before popping"));
 
    progress->setProgress(ppos++); // 8
    qApp->processEvents();
@@ -5504,12 +5506,6 @@ int US_Hydrodyn::compute_asa()
          RADIAL_REDUCTION | RR_MCSC | RR_BURIED,
       };
 
-   // if (no_rr) {
-   //  methods[0] = 0;
-   //  methods[1] = 0;
-   //  methods[2] = 0;
-   // }
-
    if (sidechain_overlap.fuse_beads) {
       methods[0] |= POP_SC | POP_EXPOSED;
    }
@@ -5555,6 +5551,12 @@ int US_Hydrodyn::compute_asa()
    }
 
    if (!buried_overlap.remove_overlap) {
+      methods[2] = 0;
+   }
+
+   if ( bd_mode ) {
+      methods[0] = 0;
+      methods[1] = 0;
       methods[2] = 0;
    }
 
@@ -5622,7 +5624,10 @@ int US_Hydrodyn::compute_asa()
 #if defined(TIMING)
       gettimeofday(&start_tv, NULL);
 #endif
-      editor->append(QString("Begin popping stage %1\n").arg(k + 1));
+      if ( !bd_mode )
+      {
+         editor->append(QString("Begin popping stage %1\n").arg(k + 1));
+      }
       progress->setProgress(ppos++); // 9, 10, 11
       qApp->processEvents();
       if (stopFlag)
@@ -5824,7 +5829,10 @@ int US_Hydrodyn::compute_asa()
 #endif
       printf("stage %d beads popped %d\n", k, beads_popped);
       progress->setProgress(ppos++); // 12,13,14
-      editor->append(QString("Beads popped %1.\nBegin radial reduction stage %2\n").arg(beads_popped).arg(k + 1));
+      if ( !bd_mode )
+      {
+         editor->append(QString("Beads popped %1.\nBegin radial reduction stage %2\n").arg(beads_popped).arg(k + 1));
+      }
       qApp->processEvents();
       if (stopFlag)
       {
@@ -6748,8 +6756,16 @@ int US_Hydrodyn::compute_asa()
    write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
                     QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") + DOTSOMO
                     , &bead_model);
-   editor->append("Finished with popping and radial reduction\n");
+   if ( !bd_mode )
+   {
+      editor->append("Finished with popping and radial reduction\n");
+   }
    progress->setProgress(mppos - (asa.recheck_beads ? 1 : 0));
+   if ( bd_mode )
+   {
+      progress->setProgress(1,1);
+   }
+      
    qApp->processEvents();
    if (stopFlag)
    {

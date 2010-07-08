@@ -31,6 +31,7 @@
 #include "us_hydrodyn_overlap.h"
 #include "us_hydrodyn_bead_output.h"
 #include "us_hydrodyn_asa.h"
+#include "us_hydrodyn_bd_options.h"
 #include "us_hydrodyn_hydro.h"
 #include "us_hydrodyn_misc.h"
 #include "us_hydrodyn_grid.h"
@@ -67,6 +68,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
                   const char *name = 0);
       ~US_Hydrodyn();
       int get_color(PDB_atom *);
+      BD_Options bd_options;
       struct misc_options misc;
       struct misc_options default_misc;
       struct advanced_config advanced_config;
@@ -126,6 +128,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool pdb_parsing_widget;
       bool pdb_visualization_widget;
       bool saxs_options_widget;
+      bool bd_options_widget;
       bool saxs_plot_widget;
       bool advanced_config_widget;
       bool save_widget;
@@ -210,6 +213,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_select_residue_file;
       QPushButton *pb_load_pdb;
       QPushButton *pb_pdb_saxs;
+      QPushButton *pb_bd;
       QPushButton *pb_bead_saxs;
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -237,6 +241,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Overlap *overlap_window;
       US_Hydrodyn_Overlap *grid_overlap_window;
       US_Hydrodyn_Bead_Output *bead_output_window;
+      US_Hydrodyn_BD_Options *bd_options_window;
       US_Hydrodyn_Hydro *hydro_window;
       US_Hydrodyn_Misc *misc_window;
       US_Hydrodyn_Results *results_window;
@@ -254,17 +259,17 @@ class US_EXTERN US_Hydrodyn : public QFrame
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
-      vector < QString >            batch_file;
-      vector <PDB_atom>             bead_model;
-      vector < vector <PDB_atom> >  bead_models;
-      vector < vector <PDB_atom> >  bead_models_as_loaded;
-      vector <PDB_atom *>           active_atoms;
-      vector <struct residue>       residue_list;
-      vector <struct residue>       residue_list_no_pbr;
-      map < QString, vector <int> > multi_residue_map; // maps residue to index of residue_list
-      map < QString, vector <int> > valid_atom_map;    // maps resName|atomName|pos
+      vector < QString >              batch_file;
+      vector < PDB_atom >             bead_model;
+      vector < vector < PDB_atom > >  bead_models;
+      vector < vector < PDB_atom > >  bead_models_as_loaded;
+      vector < PDB_atom * >           active_atoms;
+      vector < struct residue >       residue_list;
+      vector < struct residue >       residue_list_no_pbr;
+      map < QString, vector < int > > multi_residue_map; // maps residue to index of residue_list
+      map < QString, vector < int > > valid_atom_map;    // maps resName|atomName|pos
       //                                                  in multi_residue_map to index of atoms
-      map < QString, QString >      residue_atom_hybrid_map;
+      map < QString, QString >        residue_atom_hybrid_map;
       //                                       maps resName|atomName to hybrid_name
       map < QString, int > atom_counts;     // maps molecule #|resName|resSeq to count
       //                                       counts how many atoms are in each residue
@@ -325,6 +330,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool install_new_version();         
       // checks for new versions of somo.config, .atom, .saxs_atom, .hybrid, .residue and backs up previous versions
 
+      // bd private data
+
+      //    next three are keyed upon string "bead#~bead#"
+      map < QString, bool > connection_active;
+      map < QString, vector < float > > connection_dists;
+      map < QString, vector < float > > connection_dist_stats;  // 0 = min, 1 = max, 2 = avg
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -339,6 +351,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int calc_hydro();
       void select_save_params();
       void show_saxs_options();
+      void show_bd_options();
       void read_residue_file();
       int read_config(const QString &);
       int read_config(QFile &);
@@ -371,7 +384,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int check_for_missing_atoms(QString *error_string, PDB_model *);
       void build_molecule_maps(PDB_model *model); // sets up maps for molecule
       int overlap_check(bool sc, bool mc, bool buried, double tolerance); // check for overlaps
-      int compute_asa(); // calculate maximum accessible surface area
+      int compute_asa(bool bd_mode = false); // calculate maximum accessible surface area
       void show_asa();
       void show_overlap();
       void show_grid_overlap();
@@ -426,6 +439,22 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void set_setSuffix();
       void set_overwrite();
       void set_saveParams();
+
+      // bd functions:
+      void calc_bd();
+
+      int compute_pb_normals();                // compute the normal vectors for each peptide bond plane
+      int build_pb_structures( PDB_model * ) ; // create pb data structures
+      point minus( point p1, point p2 );       // returns p1 - p2
+      point cross( point p1, point p2 );       // returns p1 x p2
+      float dot( point p1, point p2);          // p1 dot p2
+      point normal( point p1 );                // normalized point
+      point plane( PDB_atom *a1, PDB_atom *a2, PDB_atom *a3 );  //( a3 - a2 ) x ( a1 - a2 )
+      point average( vector < point > *v );    // returns an average vector
+      float dist( point p1, point p2);         // sqrt( (p1 - p2) dot (p1 - p2) )
+
+      int compute_bd_connections();            // computes intersected pb beads within tolerance map
+      int write_pdb( QString fname, vector < PDB_atom > *model );
 
    protected slots:
 

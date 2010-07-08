@@ -1,5 +1,6 @@
 // (this) us_hydrodyn.cpp contains class creation & gui connected functions
 // us_hydrodyn_core.cpp contains the main computational routines
+// us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic computations
 // us_hydrodyn_other.cpp contains other routines such as file i/o
 
 // includes and defines need cleanup
@@ -176,6 +177,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    results.tau_sd = 0.0;
    results.asa_rg_pos = 0.0;
    results.asa_rg_neg = 0.0;
+   bd_options.threshold = 4.0;
    rasmol = new QProcess(this);
    rasmol->setWorkingDirectory(
                                QDir(USglobal->config_list.system_dir + SLASH +
@@ -277,6 +279,7 @@ void US_Hydrodyn::setupGUI()
    somo_options->insertItem(tr("&Bead Model Output"), this, SLOT(show_bead_output()));
    somo_options->insertItem(tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
    somo_options->insertItem(tr("SA&XS/SANS Options"), this, SLOT(show_saxs_options()));
+   somo_options->insertItem(tr("B&D Options"), this, SLOT(show_bd_options()));
 
    pdb_options = new QPopupMenu;
    pdb_options->insertItem(tr("&Parsing"), this, SLOT(pdb_parsing()));
@@ -457,6 +460,14 @@ void US_Hydrodyn::setupGUI()
    pb_pdb_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_pdb_saxs, SIGNAL(clicked()), SLOT(pdb_saxs()));
 
+   pb_bd = new QPushButton(tr("BD"), this);
+   Q_CHECK_PTR(pb_bd);
+   pb_bd->setMinimumHeight(minHeight1);
+   pb_bd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_bd->setEnabled(false);
+   pb_bd->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_bd, SIGNAL(clicked()), SLOT(calc_bd()));
+
    pb_bead_saxs = new QPushButton(tr("SAXS/SANS Functions"), this);
    Q_CHECK_PTR(pb_bead_saxs);
    pb_bead_saxs->setMinimumHeight(minHeight1);
@@ -616,11 +627,13 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(lbl_pdb_file, j, 1);
    j++;
    background->addWidget(lbl_model, j, 0);
-   background->addMultiCellWidget(lb_model, j, j+2, 1, 1);
+   background->addMultiCellWidget(lb_model, j, j+3, 1, 1);
    j++;
    background->addWidget(pb_view_pdb, j, 0);
    j++;
    background->addWidget(pb_pdb_saxs, j, 0);
+   j++;
+   background->addWidget(pb_bd, j, 0);
    j++;
    background->addMultiCellWidget(lbl_info2, j, j, 0, 1);
    j++;
@@ -685,6 +698,7 @@ void US_Hydrodyn::set_disabled()
    pb_calc_hydro->setEnabled(false);
    pb_visualize->setEnabled(false);
    pb_pdb_saxs->setEnabled(false);
+   pb_bd->setEnabled(false);
    pb_bead_saxs->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
 }
@@ -882,6 +896,27 @@ void US_Hydrodyn::show_saxs_options()
    {
       saxs_options_window = new US_Hydrodyn_SaxsOptions(&saxs_options, &saxs_options_widget, this);
       saxs_options_window->show();
+   }
+}
+
+void US_Hydrodyn::show_bd_options()
+{
+   if (bd_options_widget)
+   {
+      if (bd_options_window->isVisible())
+      {
+         bd_options_window->raise();
+      }
+      else
+      {
+         bd_options_window->show();
+      }
+      return;
+   }
+   else
+   {
+      bd_options_window = new US_Hydrodyn_BD_Options(&bd_options, &bd_options_widget, this);
+      bd_options_window->show();
    }
 }
 
@@ -1438,6 +1473,7 @@ bool US_Hydrodyn::screen_bead_model(QString filename)
       pb_grid->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_pdb_saxs->setEnabled(false);
+      pb_bd->setEnabled(false);
       return true;
    }
    else
@@ -1483,6 +1519,7 @@ void US_Hydrodyn::select_model(int val)
    pb_calc_hydro->setEnabled(false);
    pb_visualize->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
+   pb_bd->setEnabled(true);
 }
 
 void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
@@ -1563,6 +1600,7 @@ void US_Hydrodyn::load_bead_model()
          pb_grid->setEnabled(true);
          pb_bead_saxs->setEnabled(true);
          pb_pdb_saxs->setEnabled(false);
+         pb_bd->setEnabled(false);
       }
       else
       {
@@ -1588,6 +1626,7 @@ int US_Hydrodyn::calc_somo()
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_somo->setEnabled(false);
+   pb_bd->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
    pb_grid->setEnabled(false);
    options_log = "";
@@ -1605,6 +1644,7 @@ int US_Hydrodyn::calc_somo()
    if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
+      pb_bd->setEnabled(true);
       pb_somo->setEnabled(true);
       pb_grid_pdb->setEnabled(true);
       progress->reset();
@@ -1676,6 +1716,7 @@ int US_Hydrodyn::calc_somo()
       {
          editor->append("Stopped by user\n\n");
          pb_somo->setEnabled(true);
+         pb_bd->setEnabled(true);
          pb_grid_pdb->setEnabled(true);
          progress->reset();
          return -1;

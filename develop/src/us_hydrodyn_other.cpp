@@ -1,5 +1,6 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
 // us_hydrodyn_core.cpp contains the main computational routines
+// us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic computations
 // (this) us_hydrodyn_other.cpp contains other routines such as file i/o
 
 // includes and defines need cleanup
@@ -472,6 +473,7 @@ int US_Hydrodyn::read_pdb(const QString &filename)
    temp_model.residue.clear();
    clear_temp_chain(&temp_chain);
    bool currently_aa_chain = false; // do we have an amino acid chain (pbr)
+   bool last_was_ENDMDL = false;    // to fix pdbs with missing MODEL tag
 
    if (f.open(IO_ReadOnly))
    {
@@ -503,8 +505,10 @@ int US_Hydrodyn::read_pdb(const QString &filename)
             editor->append(QString("PDB %1: %2").arg(str1.left(6)).arg(tmp_str));
             editor->setColor(save_color);
          }
-         if (str1.left(5) == "MODEL") // we have a new model in a multi-model file
+         if (str1.left(5) == "MODEL" ||
+             (str1.left(4) == "ATOM" && last_was_ENDMDL) ) // we have a new model in a multi-model file
          {
+            last_was_ENDMDL = false;
             model_flag = true; // we are using model descriptions (possibly multiple models)
             str2 = str1.mid(6, 15);
             temp_model.model_id = str2.toUInt();
@@ -515,6 +519,7 @@ int US_Hydrodyn::read_pdb(const QString &filename)
          }
          if (str1.left(6) == "ENDMDL") // we need to save the previously recorded molecule
          {
+            last_was_ENDMDL = true;
             temp_model.molecule.push_back(temp_chain); // add the last chain of this model
             editor->append("\nResidue sequence from " + project +".pdb model " +
                            QString("%1").arg(model_vector.size() + 1) + ": \n");
