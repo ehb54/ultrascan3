@@ -169,9 +169,10 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
    for ( unsigned int i = 0; i < model->size(); i++ ) 
    {
       if ( 
-          (*model)[i].active &&
-          ( bd_options.include_sc ||
-            (*model)[i].chain == 0 )
+          (*model)[i].active
+          // &&
+          // ( bd_options.include_sc ||
+          //  (*model)[i].chain == 0 )
           )
       {
          ts << 
@@ -299,6 +300,8 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
 
 int US_Hydrodyn::compute_bd_connections()
 {
+   map < QString, bool > connection_forced;
+
    connection_active.clear();
    connection_dists.clear();
    connection_dist_stats.clear();
@@ -320,9 +323,80 @@ int US_Hydrodyn::compute_bd_connections()
       editor->append("No models!\n");
       return -1;
    }
-      
-   // build connection_active for 1st model
+
    float d; // distance
+      
+   // build connection_forced for 1st model
+
+   if ( bd_options.force_chem )
+   {
+      current_model = models_to_proc[0];
+
+      // force all mc to subsequent mc
+      // mc to subsequent sc's
+
+      // pass 1 -  mc to mc
+      for ( unsigned int i = 0; i < bead_models[current_model].size() - 1; i++ ) 
+      {
+         if ( 
+             bead_models[current_model][i].active &&
+             bead_models[current_model][i].chain == 0
+             )
+         {
+            for ( unsigned int j = i + 1; j < bead_models[current_model].size(); j++ ) 
+            {
+               if ( 
+                   bead_models[current_model][j].active &&
+                   bead_models[current_model][j].chain == 0 
+                   )
+               {
+                  d = dist( bead_models[current_model][i].bead_coordinate,
+                            bead_models[current_model][j].bead_coordinate );
+                  editor->append(QString("adding forced connection %1 %2\n").arg(i).arg(j));
+                  connection_forced[QString("%1~%2").arg(i).arg(j)] = true;
+                  connection_active[QString("%1~%2").arg(i).arg(j)] = true;
+                  connection_dists[QString("%1~%2").arg(i).arg(j)].push_back(d);
+                  break;
+               }
+            }
+         }
+      }
+
+      // pass 1 -  mc to mc
+      unsigned int last_i;
+      for ( unsigned int i = 0; i < bead_models[current_model].size() - 1; i++ ) 
+      {
+         if ( 
+             bead_models[current_model][i].active &&
+             bead_models[current_model][i].chain == 0
+             )
+         {
+            last_i = i;
+            // add all sc bead in a subchain until first main chain
+            for ( unsigned int j = i + 1; j < bead_models[current_model].size(); j++ ) 
+            {
+               if ( bead_models[current_model][j].active )
+               {
+                  if ( bead_models[current_model][j].chain != 0 )
+                  {
+                     d = dist( bead_models[current_model][last_i].bead_coordinate,
+                               bead_models[current_model][j].bead_coordinate );
+                     editor->append(QString("adding forced connection %1 %2\n").arg(last_i).arg(j));
+                     connection_forced[QString("%1~%2").arg(last_i).arg(j)] = true;
+                     connection_active[QString("%1~%2").arg(last_i).arg(j)] = true;
+                     connection_dists[QString("%1~%2").arg(last_i).arg(j)].push_back(d);
+                     last_i = j;
+                  } else {
+                     // break at next main chain
+                     break;
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   // build connection_active for 1st model
    
    current_model = models_to_proc[0];
 
@@ -375,13 +449,14 @@ int US_Hydrodyn::compute_bd_connections()
          int j = rx.cap(2).toInt();
 
          if ( 
-             !bead_models[current_model][i].active ||
-             ( !bd_options.include_sc && bead_models[current_model][i].chain != 0 ) ||
-             !bead_models[current_model][j].active ||
-             ( !bd_options.include_sc && bead_models[current_model][j].chain != 0 ) ||
-             
-             ( d = dist( bead_models[current_model][i].bead_coordinate,
-                         bead_models[current_model][j].bead_coordinate ) ) > bd_options.threshold 
+             !connection_forced.count(QString("%1~%2").arg(i).arg(j)) &&
+             ( !bead_models[current_model][i].active ||
+               ( !bd_options.include_sc && bead_models[current_model][i].chain != 0 ) ||
+               !bead_models[current_model][j].active ||
+               ( !bd_options.include_sc && bead_models[current_model][j].chain != 0 ) ||
+               ( d = dist( bead_models[current_model][i].bead_coordinate,
+                           bead_models[current_model][j].bead_coordinate ) ) > bd_options.threshold 
+               )
              )
          {
             editor->append(QString("removing connection %1 %2\n").arg(i).arg(j));
