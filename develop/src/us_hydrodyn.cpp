@@ -134,6 +134,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    pdb_visualization_widget = false;
    pdb_parsing_widget = false;
    advanced_config_widget = false;
+   bd_options_widget = false;
    batch_widget = false;
    save_widget = false;
    calcAutoHydro = false;
