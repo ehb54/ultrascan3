@@ -108,6 +108,37 @@ void US_Hydrodyn_BD_Options::setupGUI()
    cnt_bd_threshold_sc_sc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_bd_threshold_sc_sc, SIGNAL(valueChanged(double)), SLOT(update_bd_threshold_sc_sc(double)));
 
+   bg_bead_size_type = new QButtonGroup(3, Qt::Vertical, " Bead sizes determined ", this);
+   Q_CHECK_PTR(bg_bead_size_type);
+   bg_bead_size_type->setExclusive(true);
+   bg_bead_size_type->setAlignment(Qt::AlignHCenter);
+   bg_bead_size_type->setInsideMargin(3);
+   bg_bead_size_type->setInsideSpacing(0);
+   connect(bg_bead_size_type, SIGNAL(clicked(int)), this, SLOT(set_bead_size_type(int)));
+
+   cb_bead_size_type_1st = new QCheckBox(bg_bead_size_type);
+   cb_bead_size_type_1st->setText(tr(" 1st models beads "));
+   cb_bead_size_type_1st->setEnabled(true);
+   //   cb_bead_size_type_1st->setMinimumHeight(minHeight1);
+   cb_bead_size_type_1st->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_bead_size_type_1st->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_bead_size_type_min = new QCheckBox(bg_bead_size_type);
+   cb_bead_size_type_min->setText(tr(" Minimum size "));
+   cb_bead_size_type_min->setEnabled(true);
+   //   cb_bead_size_type_min->setMinimumHeight(minHeight1);
+   cb_bead_size_type_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_bead_size_type_min->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_bead_size_type_avg = new QCheckBox(bg_bead_size_type);
+   cb_bead_size_type_avg->setText(tr(" Average size "));
+   cb_bead_size_type_avg->setEnabled(true);
+   //   cb_bead_size_type_avg->setMinimumHeight(minHeight1);
+   cb_bead_size_type_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_bead_size_type_avg->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_bead_size_type->setButton(bd_options->bead_size_type);
+
    lbl_npadif = new QLabel(tr(" Number of consecutive steps without recalculating: "), this);
    lbl_npadif->setAlignment(AlignLeft|AlignVCenter);
    lbl_npadif->setMinimumHeight(minHeight1);
@@ -423,7 +454,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
 
    bg_inter->setButton(bd_options->inter);
 
-   bg_iorder = new QButtonGroup(3, Qt::Vertical, "Order of the simulation algorithm::", this);
+   bg_iorder = new QButtonGroup(3, Qt::Vertical, "Order of the simulation algorithm:", this);
    Q_CHECK_PTR(bg_iorder);
    bg_iorder->setExclusive(true);
    bg_iorder->setAlignment(Qt::AlignHCenter);
@@ -445,7 +476,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    cb_iorder_igt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_iorder_igt->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-   bg_iorder->setButton(bd_options->iorder - 1);
+   bg_iorder->setButton(bd_options->iorder);
 
    bg_chem_pb_pb_bond_types = new QButtonGroup(4, Qt::Vertical, "Bond type:", this);
    qf = bg_chem_pb_pb_bond_types->font();
@@ -970,6 +1001,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    gl_thresh->addWidget(cnt_bd_threshold_sc_sc, j, 1); j++;
    gl_thresh->addMultiCellWidget(cb_do_rr, j, j, 0, 1); j++;
    gl_thresh->addMultiCellWidget(cb_force_chem, j, j, 0, 1); j++;
+   gl_thresh->addMultiCellWidget(bg_bead_size_type, j, j+4, 0, 1); j++;
 
    hbl_method->addLayout(gl_thresh);
    hbl_method->addSpacing(3);
@@ -1170,6 +1202,12 @@ void US_Hydrodyn_BD_Options::set_icdm()
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_BD_Options::set_bead_size_type(int val)
+{
+   (*bd_options).bead_size_type = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_BD_Options::set_compute_chem_pb_pb_force_constant()
 {
    (*bd_options).compute_chem_pb_pb_force_constant = cb_compute_chem_pb_pb_force_constant->isChecked();
@@ -1286,7 +1324,7 @@ void US_Hydrodyn_BD_Options::set_inter(int val)
 
 void US_Hydrodyn_BD_Options::set_iorder(int val)
 {
-   (*bd_options).iorder = val - 1;
+   (*bd_options).iorder = val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

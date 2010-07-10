@@ -306,6 +306,7 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
 int US_Hydrodyn::compute_bd_connections()
 {
    map < QString, bool > connection_forced;
+   map < QString, int > connection_pair_type; // 0 mc-mc, 1 mc-sc, 2 sc-sc
 
    connection_active.clear();
    connection_dists.clear();
@@ -340,7 +341,7 @@ int US_Hydrodyn::compute_bd_connections()
       // force all mc to subsequent mc
       // mc to subsequent sc's
 
-      // pass 1 -  mc to mc
+      // pass 1 -  force mc to mc
       for ( unsigned int i = 0; i < bead_models[current_model].size() - 1; i++ ) 
       {
          if ( 
@@ -367,7 +368,7 @@ int US_Hydrodyn::compute_bd_connections()
          }
       }
 
-      // pass 1 -  mc to mc
+      // pass 2 -  force mc to sc
       unsigned int last_i;
       for ( unsigned int i = 0; i < bead_models[current_model].size() - 1; i++ ) 
       {
@@ -402,26 +403,53 @@ int US_Hydrodyn::compute_bd_connections()
    }
 
    // build connection_active for 1st model
-   
+               
    current_model = models_to_proc[0];
 
    for ( unsigned int i = 0; i < bead_models[current_model].size() - 1; i++ ) 
    {
-      if ( 
-          bead_models[current_model][i].active &&
-          ( /* bd_options.include_sc || */ bead_models[current_model][i].chain == 0 )
-          )
+      if ( bead_models[current_model][i].active )
       {
          for ( unsigned int j = i + 1; j < bead_models[current_model].size(); j++ ) 
          {
-            if ( 
-                bead_models[current_model][j].active &&
-                ( /* bd_options.include_sc || */ bead_models[current_model][j].chain == 0 )
-                )
+            if ( bead_models[current_model][j].active )
             {
                d = dist( bead_models[current_model][i].bead_coordinate,
-                               bead_models[current_model][j].bead_coordinate );
-               if ( d <= bd_options.threshold_pb_pb )
+                         bead_models[current_model][j].bead_coordinate );
+
+               if ( bead_models[current_model][i].chain == 0 &&
+                    bead_models[current_model][j].chain == 0 )
+               {
+                  connection_pair_type[QString("%1~%2").arg(i).arg(j)] = 0;
+               }
+               if ( (  bead_models[current_model][i].chain == 0 &&
+                       bead_models[current_model][j].chain != 0 ) ||
+                    (  bead_models[current_model][i].chain != 0 &&
+                       bead_models[current_model][j].chain == 0 ) )
+               {
+                  connection_pair_type[QString("%1~%2").arg(i).arg(j)] = 1;
+               }
+               if ( bead_models[current_model][i].chain == 1 &&
+                    bead_models[current_model][j].chain == 1 )
+               {
+                  connection_pair_type[QString("%1~%2").arg(i).arg(j)] = 2;
+               }
+               if ( 
+                   ( // mc - mc
+                    connection_pair_type[QString("%1~%2").arg(i).arg(j)] == 0 &&
+                    d <= bd_options.threshold_pb_pb 
+                    ) 
+                   ||
+                   ( // mc - sc
+                    connection_pair_type[QString("%1~%2").arg(i).arg(j)] == 1 &&
+                    d <= bd_options.threshold_pb_sc 
+                    )
+                   ||
+                   ( // sc - sc
+                    connection_pair_type[QString("%1~%2").arg(i).arg(j)] == 2 &&
+                    d <= bd_options.threshold_sc_sc 
+                    )
+                   )
                {
                   editor->append(QString("adding connection %1 %2\n").arg(i).arg(j));
                   connection_active[QString("%1~%2").arg(i).arg(j)] = true;
@@ -455,17 +483,41 @@ int US_Hydrodyn::compute_bd_connections()
 
          if ( 
              !connection_forced.count(QString("%1~%2").arg(i).arg(j)) &&
-             ( !bead_models[current_model][i].active ||
-               ( /* !bd_options.include_sc && */ bead_models[current_model][i].chain != 0 ) ||
-               !bead_models[current_model][j].active ||
-               ( /* !bd_options.include_sc && */ bead_models[current_model][j].chain != 0 ) ||
-               ( d = dist( bead_models[current_model][i].bead_coordinate,
-                           bead_models[current_model][j].bead_coordinate ) ) > bd_options.threshold_pb_pb 
-               )
+             (
+              !bead_models[current_model][i].active ||
+              !bead_models[current_model][j].active 
+              )
              )
          {
-            editor->append(QString("removing connection %1 %2\n").arg(i).arg(j));
-            connection_active[it->first] = false;
+            d = dist( bead_models[current_model][i].bead_coordinate,
+                      bead_models[current_model][j].bead_coordinate );
+            if ( 
+                ( // mc - mc
+                 connection_pair_type[QString("%1~%2").arg(i).arg(j)] == 0 &&
+                 d > bd_options.threshold_pb_pb
+                 ) 
+                ||
+                ( // mc - sc
+                 connection_pair_type[QString("%1~%2").arg(i).arg(j)] == 1 &&
+                 d > bd_options.threshold_pb_sc 
+                 )
+                ||
+                ( // sc - sc
+                 connection_pair_type[QString("%1~%2").arg(i).arg(j)] == 2 &&
+                 d > bd_options.threshold_sc_sc 
+                 )
+                )
+            {
+               editor->append(
+                              QString("removing type %1 connection %2 %3\n")
+                              .arg(connection_pair_type[QString("%1~%2").arg(i).arg(j)])
+                              .arg(i)
+                              .arg(j)
+                              );
+               connection_active[it->first] = false;
+            } else {
+               connection_dists[QString("%1~%2").arg(i).arg(j)].push_back(d);
+            }
          } else {
             connection_dists[QString("%1~%2").arg(i).arg(j)].push_back(d);
          }
@@ -506,7 +558,6 @@ int US_Hydrodyn::compute_bd_connections()
          }
       }
    }
-         
 
    for ( map < QString, bool >::iterator it = connection_active.begin();
          it != connection_active.end();

@@ -32,7 +32,9 @@ struct BD_Options
    bool do_rr;
    bool force_chem;
 
-   float ttraj;
+   int bead_size_type; // 0 = first model, 1 = minimum, 2 = average
+
+   float ttraj;  // see browflex2a.pdf for more info
    float deltat;
    int npadif;
    int inter;
@@ -124,6 +126,11 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       QLineEdit *le_deltat;
       QwtCounter *cnt_npadif;
       QLineEdit *le_iseed;
+
+      QButtonGroup  *bg_bead_size_type;
+      QCheckBox     *cb_bead_size_type_1st;
+      QCheckBox     *cb_bead_size_type_min;
+      QCheckBox     *cb_bead_size_type_avg;
 
       QButtonGroup  *bg_inter;
       QCheckBox     *cb_inter_no_hi;
@@ -270,6 +277,8 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
 
       void update_npadif(double);
       void update_iseed(const QString &str);
+
+      void set_bead_size_type(int);
 
       void set_iorder(int);
       void set_inter(int);

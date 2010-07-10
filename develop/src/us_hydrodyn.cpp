@@ -184,6 +184,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    bd_options.threshold_sc_sc = 4;
    bd_options.do_rr = true;
    bd_options.force_chem = true;
+   bd_options.bead_size_type = 0;
 
    bd_options.ttraj = 1.0;
    bd_options.deltat = 0.0001;
