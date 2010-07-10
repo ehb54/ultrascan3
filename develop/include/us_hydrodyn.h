@@ -456,6 +456,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int compute_bd_connections();            // computes intersected pb beads within tolerance map
       int write_pdb( QString fname, vector < PDB_atom > *model );
 
+      // ancillary pdb utils
+
+      int write_contact_plot( QString fname, PDB_model *model, float thresh );
+      int write_contact_plot( QString fname, vector < PDB_atom > *model, float thresh );
+
    protected slots:
 
       void closeEvent(QCloseEvent *);

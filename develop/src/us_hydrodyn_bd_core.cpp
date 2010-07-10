@@ -96,6 +96,11 @@ void US_Hydrodyn::calc_bd()
          {
             any_errors = true;
          }
+         write_contact_plot( 
+                            somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+                            QString("-pdb_contact-%1.txt").arg(bd_options.threshold_pb_pb)
+                            , &model_vector_as_loaded[current_model]
+                            , bd_options.threshold_pb_pb );
       }
       if (stopFlag)
       {
@@ -406,6 +411,13 @@ int US_Hydrodyn::compute_bd_connections()
                
    current_model = models_to_proc[0];
 
+   write_contact_plot(
+                      somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+                      QString("-bead_contact-%1.txt").arg(bd_options.threshold_pb_pb)
+                      , &bead_models[current_model]
+                      , bd_options.threshold_pb_pb
+                      );
+
    for ( unsigned int i = 0; i < bead_models[current_model].size() - 1; i++ ) 
    {
       if ( bead_models[current_model][i].active )
@@ -583,6 +595,89 @@ int US_Hydrodyn::compute_bd_connections()
    return 0;
 }
                
+
+// -------------- contact plot stuff --------------------
+
+
+int US_Hydrodyn::write_contact_plot( QString fname, PDB_model *model, float thresh )
+{
+   // create a contact plot of each residues c-alpha's
+   QFile f(fname);
+   if ( !f.open(IO_WriteOnly) )
+   {
+      return -1;
+   }
+   QTextStream ts(&f);
+
+   for (unsigned int j = 0; j < model->molecule.size(); j++)
+   {
+      for (unsigned int k = 0; k < model->molecule[j].atom.size(); k++)
+      {
+         PDB_atom *this_atom = &(model->molecule[j].atom[k]);
+         if ( this_atom->name == "CA" )
+         {
+            for (unsigned int l = j; l < model->molecule.size(); l++)
+            {
+               for (unsigned int m = (l == j ? k : 0); m < model->molecule[l].atom.size(); m++)
+               {
+                  PDB_atom *alt_atom = &(model->molecule[l].atom[m]);
+                  if ( alt_atom->name == "CA" )
+                  {
+                     if (
+                         dist ( this_atom->coordinate, alt_atom->coordinate ) <= thresh 
+                         )
+                     {
+                        ts << 
+                           QString("%1 %2\n")
+                           .arg(this_atom->resSeq)
+                           .arg(alt_atom->resSeq);
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+   f.close();
+   return 0;
+}
+
+int US_Hydrodyn::write_contact_plot( QString fname, vector < PDB_atom > *model, float thresh )
+{
+   // create a contact plot of the mc beads
+   QFile f(fname);
+   if ( !f.open(IO_WriteOnly) )
+   {
+      return -1;
+   }
+   QTextStream ts(&f);
+
+   // find all the mc beads which are within thresh dist and write out the pairs
+
+   for ( unsigned int i = 0; i < model->size(); i++ ) 
+   {
+      if ( (*model)[i].chain == 0 ) 
+      {
+         for ( unsigned int j = i; j < model->size(); j++ ) 
+         {
+            if ( (*model)[j].chain == 0 ) 
+            {
+               if (
+                   dist ( (*model)[i].bead_coordinate, (*model)[j].bead_coordinate ) <= thresh 
+                   )
+               {
+                  ts << 
+                     QString("%1 %2\n")
+                     .arg((*model)[i].resSeq)
+                     .arg((*model)[j].resSeq);
+               }
+            }
+         }
+      }
+   }
+   f.close();
+   return 0;
+}
 
 // ----------  compute normals for peptide bond routines
 
