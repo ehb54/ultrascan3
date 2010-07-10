@@ -21,8 +21,13 @@ US_Hydrodyn_BD_Options::~US_Hydrodyn_BD_Options()
    *bd_widget = false;
 }
 
+#define SEC2
+
 void US_Hydrodyn_BD_Options::setupGUI()
 {
+   QFont qf;
+   QString str;
+
    int minHeight1 = 30;
    lbl_info = new QLabel(tr("BD Options:"), this);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -31,28 +36,114 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_bd_threshold = new QLabel(tr(" BD threshold (A): "), this);
-   lbl_bd_threshold->setAlignment(AlignLeft|AlignVCenter);
-   lbl_bd_threshold->setMinimumHeight(minHeight1);
-   lbl_bd_threshold->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_bd_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_info_model_creation = new QLabel(tr("Connector Discovery:"), this);
+   lbl_info_model_creation->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_info_model_creation->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info_model_creation->setMinimumHeight(minHeight1);
+   lbl_info_model_creation->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_info_model_creation->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   cnt_bd_threshold= new QwtCounter(this);
-   cnt_bd_threshold->setRange(0, 100, 0.1);
-   cnt_bd_threshold->setValue((*bd_options).threshold);
-   cnt_bd_threshold->setMinimumHeight(minHeight1);
-   cnt_bd_threshold->setMinimumWidth(150);
-   cnt_bd_threshold->setEnabled(true);
-   cnt_bd_threshold->setNumButtons(3);
-   cnt_bd_threshold->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_bd_threshold->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_bd_threshold, SIGNAL(valueChanged(double)), SLOT(update_bd_threshold(double)));
+   lbl_info_simulation_opts = new QLabel(tr("Simulation Parameters:"), this);
+   lbl_info_simulation_opts->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_info_simulation_opts->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info_simulation_opts->setMinimumHeight(minHeight1);
+   lbl_info_simulation_opts->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_info_simulation_opts->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   lbl_springs = new QLabel(tr("Connector Spring Definitions:"), this);
+   lbl_springs->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_springs->setAlignment(AlignCenter|AlignVCenter);
+   lbl_springs->setMinimumHeight(minHeight1);
+   lbl_springs->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_springs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   lbl_bd_threshold_pb_pb = new QLabel(tr(" Threshold PB-PB (A): "), this);
+   lbl_bd_threshold_pb_pb->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bd_threshold_pb_pb->setMinimumHeight(minHeight1);
+   lbl_bd_threshold_pb_pb->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_bd_threshold_pb_pb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_bd_threshold_pb_pb= new QwtCounter(this);
+   cnt_bd_threshold_pb_pb->setRange(0, 100, 0.1);
+   cnt_bd_threshold_pb_pb->setValue((*bd_options).threshold_pb_pb);
+   cnt_bd_threshold_pb_pb->setMinimumHeight(minHeight1);
+   cnt_bd_threshold_pb_pb->setMinimumWidth(150);
+   cnt_bd_threshold_pb_pb->setEnabled(true);
+   cnt_bd_threshold_pb_pb->setNumButtons(3);
+   cnt_bd_threshold_pb_pb->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_bd_threshold_pb_pb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_bd_threshold_pb_pb, SIGNAL(valueChanged(double)), SLOT(update_bd_threshold_pb_pb(double)));
+
+   lbl_bd_threshold_pb_sc = new QLabel(tr(" Threshold PB-SC (A): "), this);
+   lbl_bd_threshold_pb_sc->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bd_threshold_pb_sc->setMinimumHeight(minHeight1);
+   lbl_bd_threshold_pb_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_bd_threshold_pb_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_bd_threshold_pb_sc = new QwtCounter(this);
+   cnt_bd_threshold_pb_sc->setRange(0, 100, 0.1);
+   cnt_bd_threshold_pb_sc->setValue((*bd_options).threshold_pb_sc);
+   cnt_bd_threshold_pb_sc->setMinimumHeight(minHeight1);
+   cnt_bd_threshold_pb_sc->setMinimumWidth(150);
+   cnt_bd_threshold_pb_sc->setEnabled(true);
+   cnt_bd_threshold_pb_sc->setNumButtons(3);
+   cnt_bd_threshold_pb_sc->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_bd_threshold_pb_sc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_bd_threshold_pb_sc, SIGNAL(valueChanged(double)), SLOT(update_bd_threshold_pb_sc(double)));
+
+   lbl_bd_threshold_sc_sc = new QLabel(tr(" Threshold SC-SC (A): "), this);
+   lbl_bd_threshold_sc_sc->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bd_threshold_sc_sc->setMinimumHeight(minHeight1);
+   lbl_bd_threshold_sc_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_bd_threshold_sc_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_bd_threshold_sc_sc= new QwtCounter(this);
+   cnt_bd_threshold_sc_sc->setRange(0, 100, 0.1);
+   cnt_bd_threshold_sc_sc->setValue((*bd_options).threshold_sc_sc);
+   cnt_bd_threshold_sc_sc->setMinimumHeight(minHeight1);
+   cnt_bd_threshold_sc_sc->setMinimumWidth(150);
+   cnt_bd_threshold_sc_sc->setEnabled(true);
+   cnt_bd_threshold_sc_sc->setNumButtons(3);
+   cnt_bd_threshold_sc_sc->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_bd_threshold_sc_sc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_bd_threshold_sc_sc, SIGNAL(valueChanged(double)), SLOT(update_bd_threshold_sc_sc(double)));
+
+   lbl_npadif = new QLabel(tr(" Number of consecutive steps without recalculating: "), this);
+   lbl_npadif->setAlignment(AlignLeft|AlignVCenter);
+   lbl_npadif->setMinimumHeight(minHeight1);
+   lbl_npadif->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_npadif->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_npadif = new QwtCounter(this);
+   cnt_npadif->setRange(0, 100, 1);
+   cnt_npadif->setValue((*bd_options).npadif);
+   cnt_npadif->setMinimumHeight(minHeight1);
+   cnt_npadif->setMinimumWidth(150);
+   cnt_npadif->setEnabled(true);
+   cnt_npadif->setNumButtons(3);
+   cnt_npadif->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_npadif->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_npadif, SIGNAL(valueChanged(double)), SLOT(update_npadif(double)));
+
+   lbl_iseed = new QLabel(tr(" Random seed: "), this);
+   lbl_iseed->setAlignment(AlignLeft|AlignVCenter);
+   lbl_iseed->setMinimumHeight(minHeight1);
+   lbl_iseed->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_iseed->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_iseed = new QLineEdit(this, "Iseed Line Edit");
+   le_iseed->setText(str.sprintf("%d",(*bd_options).iseed));
+   le_iseed->setAlignment(AlignVCenter);
+   le_iseed->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_iseed->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_iseed->setEnabled(true);
+   connect(le_iseed, SIGNAL(textChanged(const QString &)), SLOT(update_iseed(const QString &)));
 
    cb_do_rr = new QCheckBox(this);
    cb_do_rr->setText(tr(" Use radial reduction "));
    cb_do_rr->setChecked((*bd_options).do_rr);
    cb_do_rr->setEnabled(true);
-   cb_do_rr->setMinimumHeight(minHeight1);
+   //   cb_do_rr->setMinimumHeight(minHeight1);
    cb_do_rr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_do_rr->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_do_rr, SIGNAL(clicked()), SLOT(set_do_rr()));
@@ -61,19 +152,792 @@ void US_Hydrodyn_BD_Options::setupGUI()
    cb_force_chem->setText(tr(" Force chemical bonds as connectors "));
    cb_force_chem->setChecked((*bd_options).force_chem);
    cb_force_chem->setEnabled(true);
-   cb_force_chem->setMinimumHeight(minHeight1);
+   // cb_force_chem->setMinimumHeight(minHeight1);
    cb_force_chem->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_force_chem->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_force_chem, SIGNAL(clicked()), SLOT(set_force_chem()));
 
-   cb_include_sc = new QCheckBox(this);
-   cb_include_sc->setText(tr(" Include side chains "));
-   cb_include_sc->setChecked((*bd_options).include_sc);
-   cb_include_sc->setEnabled(true);
-   cb_include_sc->setMinimumHeight(minHeight1);
-   cb_include_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_include_sc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_include_sc, SIGNAL(clicked()), SLOT(set_include_sc()));
+   cb_icdm = new QCheckBox(this);
+   cb_icdm->setText(tr(" Center of mass reference frame "));
+   cb_icdm->setChecked((*bd_options).icdm);
+   cb_icdm->setEnabled(true);
+   cb_icdm->setMinimumHeight(minHeight1);
+   cb_icdm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_icdm->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_icdm, SIGNAL(clicked()), SLOT(set_icdm()));
+
+   lbl_ttraj = new QLabel(tr(" Total time duration: "), this);
+   lbl_ttraj->setAlignment(AlignLeft|AlignVCenter);
+   lbl_ttraj->setMinimumHeight(minHeight1);
+   lbl_ttraj->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_ttraj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_ttraj = new QLineEdit(this, "Ttraj Line Edit");
+   le_ttraj->setText(str.sprintf("%4.6f",(*bd_options).ttraj));
+   le_ttraj->setAlignment(AlignVCenter);
+   le_ttraj->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_ttraj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_ttraj->setEnabled(true);
+   connect(le_ttraj, SIGNAL(textChanged(const QString &)), SLOT(update_ttraj(const QString &)));
+
+   lbl_deltat = new QLabel(tr(" Duration of each simulation step: "), this);
+   lbl_deltat->setAlignment(AlignLeft|AlignVCenter);
+   lbl_deltat->setMinimumHeight(minHeight1);
+   lbl_deltat->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_deltat = new QLineEdit(this, "Deltat Line Edit");
+   le_deltat->setText(str.sprintf("%4.6f",(*bd_options).deltat));
+   le_deltat->setAlignment(AlignVCenter);
+   le_deltat->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_deltat->setEnabled(true);
+   connect(le_deltat, SIGNAL(textChanged(const QString &)), SLOT(update_deltat(const QString &)));
+
+   lbl_chem_pb_pb = new QLabel(tr(" Chemical PB-PB: "), this);
+   lbl_chem_pb_pb->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_chem_pb_pb->setMinimumHeight(minHeight1);
+   lbl_chem_pb_pb->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chem_pb_pb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_chem_pb_sc = new QLabel(tr(" Chemical PB-SC: "), this);
+   lbl_chem_pb_sc->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_chem_pb_sc->setMinimumHeight(minHeight1);
+   lbl_chem_pb_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chem_pb_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_chem_sc_sc = new QLabel(tr(" Chemical SC-SC: "), this);
+   lbl_chem_sc_sc->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_chem_sc_sc->setMinimumHeight(minHeight1);
+   lbl_chem_sc_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chem_sc_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_pb_pb = new QLabel(tr(" PB-PB: "), this);
+   lbl_pb_pb->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_pb_pb->setMinimumHeight(minHeight1);
+   lbl_pb_pb->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_pb_pb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_pb_sc = new QLabel(tr(" PB-SC: "), this);
+   lbl_pb_sc->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_pb_sc->setMinimumHeight(minHeight1);
+   lbl_pb_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_pb_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_sc_sc = new QLabel(tr(" SC-SC: "), this);
+   lbl_sc_sc->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_sc_sc->setMinimumHeight(minHeight1);
+   lbl_sc_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_sc_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cb_compute_chem_pb_pb_force_constant = new QCheckBox(this);
+   cb_compute_chem_pb_pb_force_constant->setText(tr(" Compute "));
+   cb_compute_chem_pb_pb_force_constant->setChecked((*bd_options).compute_chem_pb_pb_force_constant);
+   cb_compute_chem_pb_pb_force_constant->setEnabled(true);
+   cb_compute_chem_pb_pb_force_constant->setMinimumHeight(minHeight1);
+   cb_compute_chem_pb_pb_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_chem_pb_pb_force_constant->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_chem_pb_pb_force_constant, SIGNAL(clicked()), SLOT(set_compute_chem_pb_pb_force_constant()));
+
+   cb_compute_chem_pb_pb_equilibrium_dist = new QCheckBox(this);
+   cb_compute_chem_pb_pb_equilibrium_dist->setText(tr(" Compute "));
+   cb_compute_chem_pb_pb_equilibrium_dist->setChecked((*bd_options).compute_chem_pb_pb_equilibrium_dist);
+   cb_compute_chem_pb_pb_equilibrium_dist->setEnabled(true);
+   cb_compute_chem_pb_pb_equilibrium_dist->setMinimumHeight(minHeight1);
+   cb_compute_chem_pb_pb_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_chem_pb_pb_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_chem_pb_pb_equilibrium_dist, SIGNAL(clicked()), SLOT(set_compute_chem_pb_pb_equilibrium_dist()));
+
+   cb_compute_chem_pb_pb_max_elong = new QCheckBox(this);
+   cb_compute_chem_pb_pb_max_elong->setText(tr(" Compute "));
+   cb_compute_chem_pb_pb_max_elong->setChecked((*bd_options).compute_chem_pb_pb_max_elong);
+   cb_compute_chem_pb_pb_max_elong->setEnabled(true);
+   cb_compute_chem_pb_pb_max_elong->setMinimumHeight(minHeight1);
+   cb_compute_chem_pb_pb_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_chem_pb_pb_max_elong->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_chem_pb_pb_max_elong, SIGNAL(clicked()), SLOT(set_compute_chem_pb_pb_max_elong()));
+
+   cb_compute_chem_pb_sc_force_constant = new QCheckBox(this);
+   cb_compute_chem_pb_sc_force_constant->setText(tr(" Compute "));
+   cb_compute_chem_pb_sc_force_constant->setChecked((*bd_options).compute_chem_pb_sc_force_constant);
+   cb_compute_chem_pb_sc_force_constant->setEnabled(true);
+   cb_compute_chem_pb_sc_force_constant->setMinimumHeight(minHeight1);
+   cb_compute_chem_pb_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_chem_pb_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_chem_pb_sc_force_constant, SIGNAL(clicked()), SLOT(set_compute_chem_pb_sc_force_constant()));
+
+   cb_compute_chem_pb_sc_equilibrium_dist = new QCheckBox(this);
+   cb_compute_chem_pb_sc_equilibrium_dist->setText(tr(" Compute "));
+   cb_compute_chem_pb_sc_equilibrium_dist->setChecked((*bd_options).compute_chem_pb_sc_equilibrium_dist);
+   cb_compute_chem_pb_sc_equilibrium_dist->setEnabled(true);
+   cb_compute_chem_pb_sc_equilibrium_dist->setMinimumHeight(minHeight1);
+   cb_compute_chem_pb_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_chem_pb_sc_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_chem_pb_sc_equilibrium_dist, SIGNAL(clicked()), SLOT(set_compute_chem_pb_sc_equilibrium_dist()));
+
+   cb_compute_chem_pb_sc_max_elong = new QCheckBox(this);
+   cb_compute_chem_pb_sc_max_elong->setText(tr(" Compute "));
+   cb_compute_chem_pb_sc_max_elong->setChecked((*bd_options).compute_chem_pb_sc_max_elong);
+   cb_compute_chem_pb_sc_max_elong->setEnabled(true);
+   cb_compute_chem_pb_sc_max_elong->setMinimumHeight(minHeight1);
+   cb_compute_chem_pb_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_chem_pb_sc_max_elong->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_chem_pb_sc_max_elong, SIGNAL(clicked()), SLOT(set_compute_chem_pb_sc_max_elong()));
+
+   cb_compute_chem_sc_sc_force_constant = new QCheckBox(this);
+   cb_compute_chem_sc_sc_force_constant->setText(tr(" Compute "));
+   cb_compute_chem_sc_sc_force_constant->setChecked((*bd_options).compute_chem_sc_sc_force_constant);
+   cb_compute_chem_sc_sc_force_constant->setEnabled(true);
+   cb_compute_chem_sc_sc_force_constant->setMinimumHeight(minHeight1);
+   cb_compute_chem_sc_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_chem_sc_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_chem_sc_sc_force_constant, SIGNAL(clicked()), SLOT(set_compute_chem_sc_sc_force_constant()));
+
+   cb_compute_chem_sc_sc_equilibrium_dist = new QCheckBox(this);
+   cb_compute_chem_sc_sc_equilibrium_dist->setText(tr(" Compute "));
+   cb_compute_chem_sc_sc_equilibrium_dist->setChecked((*bd_options).compute_chem_sc_sc_equilibrium_dist);
+   cb_compute_chem_sc_sc_equilibrium_dist->setEnabled(true);
+   cb_compute_chem_sc_sc_equilibrium_dist->setMinimumHeight(minHeight1);
+   cb_compute_chem_sc_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_chem_sc_sc_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_chem_sc_sc_equilibrium_dist, SIGNAL(clicked()), SLOT(set_compute_chem_sc_sc_equilibrium_dist()));
+
+   cb_compute_chem_sc_sc_max_elong = new QCheckBox(this);
+   cb_compute_chem_sc_sc_max_elong->setText(tr(" Compute "));
+   cb_compute_chem_sc_sc_max_elong->setChecked((*bd_options).compute_chem_sc_sc_max_elong);
+   cb_compute_chem_sc_sc_max_elong->setEnabled(true);
+   cb_compute_chem_sc_sc_max_elong->setMinimumHeight(minHeight1);
+   cb_compute_chem_sc_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_chem_sc_sc_max_elong->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_chem_sc_sc_max_elong, SIGNAL(clicked()), SLOT(set_compute_chem_sc_sc_max_elong()));
+
+   cb_compute_pb_pb_force_constant = new QCheckBox(this);
+   cb_compute_pb_pb_force_constant->setText(tr(" Compute "));
+   cb_compute_pb_pb_force_constant->setChecked((*bd_options).compute_pb_pb_force_constant);
+   cb_compute_pb_pb_force_constant->setEnabled(true);
+   cb_compute_pb_pb_force_constant->setMinimumHeight(minHeight1);
+   cb_compute_pb_pb_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_pb_pb_force_constant->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_pb_pb_force_constant, SIGNAL(clicked()), SLOT(set_compute_pb_pb_force_constant()));
+
+   cb_compute_pb_pb_equilibrium_dist = new QCheckBox(this);
+   cb_compute_pb_pb_equilibrium_dist->setText(tr(" Compute "));
+   cb_compute_pb_pb_equilibrium_dist->setChecked((*bd_options).compute_pb_pb_equilibrium_dist);
+   cb_compute_pb_pb_equilibrium_dist->setEnabled(true);
+   cb_compute_pb_pb_equilibrium_dist->setMinimumHeight(minHeight1);
+   cb_compute_pb_pb_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_pb_pb_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_pb_pb_equilibrium_dist, SIGNAL(clicked()), SLOT(set_compute_pb_pb_equilibrium_dist()));
+
+   cb_compute_pb_pb_max_elong = new QCheckBox(this);
+   cb_compute_pb_pb_max_elong->setText(tr(" Compute "));
+   cb_compute_pb_pb_max_elong->setChecked((*bd_options).compute_pb_pb_max_elong);
+   cb_compute_pb_pb_max_elong->setEnabled(true);
+   cb_compute_pb_pb_max_elong->setMinimumHeight(minHeight1);
+   cb_compute_pb_pb_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_pb_pb_max_elong->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_pb_pb_max_elong, SIGNAL(clicked()), SLOT(set_compute_pb_pb_max_elong()));
+
+   cb_compute_pb_sc_force_constant = new QCheckBox(this);
+   cb_compute_pb_sc_force_constant->setText(tr(" Compute "));
+   cb_compute_pb_sc_force_constant->setChecked((*bd_options).compute_pb_sc_force_constant);
+   cb_compute_pb_sc_force_constant->setEnabled(true);
+   cb_compute_pb_sc_force_constant->setMinimumHeight(minHeight1);
+   cb_compute_pb_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_pb_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_pb_sc_force_constant, SIGNAL(clicked()), SLOT(set_compute_pb_sc_force_constant()));
+
+   cb_compute_pb_sc_equilibrium_dist = new QCheckBox(this);
+   cb_compute_pb_sc_equilibrium_dist->setText(tr(" Compute "));
+   cb_compute_pb_sc_equilibrium_dist->setChecked((*bd_options).compute_pb_sc_equilibrium_dist);
+   cb_compute_pb_sc_equilibrium_dist->setEnabled(true);
+   cb_compute_pb_sc_equilibrium_dist->setMinimumHeight(minHeight1);
+   cb_compute_pb_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_pb_sc_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_pb_sc_equilibrium_dist, SIGNAL(clicked()), SLOT(set_compute_pb_sc_equilibrium_dist()));
+
+   cb_compute_pb_sc_max_elong = new QCheckBox(this);
+   cb_compute_pb_sc_max_elong->setText(tr(" Compute "));
+   cb_compute_pb_sc_max_elong->setChecked((*bd_options).compute_pb_sc_max_elong);
+   cb_compute_pb_sc_max_elong->setEnabled(true);
+   cb_compute_pb_sc_max_elong->setMinimumHeight(minHeight1);
+   cb_compute_pb_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_pb_sc_max_elong->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_pb_sc_max_elong, SIGNAL(clicked()), SLOT(set_compute_pb_sc_max_elong()));
+
+   cb_compute_sc_sc_force_constant = new QCheckBox(this);
+   cb_compute_sc_sc_force_constant->setText(tr(" Compute "));
+   cb_compute_sc_sc_force_constant->setChecked((*bd_options).compute_sc_sc_force_constant);
+   cb_compute_sc_sc_force_constant->setEnabled(true);
+   cb_compute_sc_sc_force_constant->setMinimumHeight(minHeight1);
+   cb_compute_sc_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_sc_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_sc_sc_force_constant, SIGNAL(clicked()), SLOT(set_compute_sc_sc_force_constant()));
+
+   cb_compute_sc_sc_equilibrium_dist = new QCheckBox(this);
+   cb_compute_sc_sc_equilibrium_dist->setText(tr(" Compute "));
+   cb_compute_sc_sc_equilibrium_dist->setChecked((*bd_options).compute_sc_sc_equilibrium_dist);
+   cb_compute_sc_sc_equilibrium_dist->setEnabled(true);
+   cb_compute_sc_sc_equilibrium_dist->setMinimumHeight(minHeight1);
+   cb_compute_sc_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_sc_sc_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_sc_sc_equilibrium_dist, SIGNAL(clicked()), SLOT(set_compute_sc_sc_equilibrium_dist()));
+
+   cb_compute_sc_sc_max_elong = new QCheckBox(this);
+   cb_compute_sc_sc_max_elong->setText(tr(" Compute "));
+   cb_compute_sc_sc_max_elong->setChecked((*bd_options).compute_sc_sc_max_elong);
+   cb_compute_sc_sc_max_elong->setEnabled(true);
+   cb_compute_sc_sc_max_elong->setMinimumHeight(minHeight1);
+   cb_compute_sc_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_sc_sc_max_elong->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_sc_sc_max_elong, SIGNAL(clicked()), SLOT(set_compute_sc_sc_max_elong()));
+
+   bg_inter = new QButtonGroup(3, Qt::Vertical, "Type of simulation algorithm:", this);
+   Q_CHECK_PTR(bg_inter);
+   bg_inter->setExclusive(true);
+   bg_inter->setAlignment(Qt::AlignHCenter);
+   bg_inter->setInsideMargin(3);
+   bg_inter->setInsideSpacing(0);
+   connect(bg_inter, SIGNAL(clicked(int)), this, SLOT(set_inter(int)));
+
+   cb_inter_no_hi = new QCheckBox(bg_inter);
+   cb_inter_no_hi->setText(tr(" No hydrodynamic interaction (HI) "));
+   cb_inter_no_hi->setEnabled(true);
+   //   cb_inter_no_hi->setMinimumHeight(minHeight1);
+   cb_inter_no_hi->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_inter_no_hi->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_inter_os = new QCheckBox(bg_inter);
+   cb_inter_os->setText(tr(" HI Oseen "));
+   cb_inter_os->setEnabled(true);
+   //   cb_inter_os->setMinimumHeight(minHeight1);
+   cb_inter_os->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_inter_os->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_inter_mos = new QCheckBox(bg_inter);
+   cb_inter_mos->setText(tr(" HI modified Oseen "));
+   cb_inter_mos->setEnabled(true);
+   //   cb_inter_mos->setMinimumHeight(minHeight1);
+   cb_inter_mos->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_inter_mos->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_inter->setButton(bd_options->inter);
+
+   bg_iorder = new QButtonGroup(3, Qt::Vertical, "Order of the simulation algorithm::", this);
+   Q_CHECK_PTR(bg_iorder);
+   bg_iorder->setExclusive(true);
+   bg_iorder->setAlignment(Qt::AlignHCenter);
+   bg_iorder->setInsideMargin(3);
+   bg_iorder->setInsideSpacing(0);
+   connect(bg_iorder, SIGNAL(clicked(int)), this, SLOT(set_iorder(int)));
+
+   cb_iorder_em = new QCheckBox(bg_iorder);
+   cb_iorder_em->setText(tr(" Ermak-McCammon 1st order "));
+   cb_iorder_em->setEnabled(true);
+   //   cb_iorder_em->setMinimumHeight(minHeight1);
+   cb_iorder_em->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iorder_em->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_iorder_igt = new QCheckBox(bg_iorder);
+   cb_iorder_igt->setText(tr(" Iniesta-Garcia de la Torre predictor-corrector"));
+   cb_iorder_igt->setEnabled(true);
+   //   cb_iorder_igt->setMinimumHeight(minHeight1);
+   cb_iorder_igt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iorder_igt->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_iorder->setButton(bd_options->iorder - 1);
+
+   bg_chem_pb_pb_bond_types = new QButtonGroup(4, Qt::Vertical, "Bond type:", this);
+   qf = bg_chem_pb_pb_bond_types->font();
+   qf.setPointSize(qf.pointSize() - 1);
+   bg_chem_pb_pb_bond_types->setFont(qf);
+   bg_chem_pb_pb_bond_types->setExclusive(true);
+   bg_chem_pb_pb_bond_types->setAlignment(Qt::AlignHCenter);
+   bg_chem_pb_pb_bond_types->setInsideMargin(3);
+   bg_chem_pb_pb_bond_types->setInsideSpacing(0);
+   connect(bg_chem_pb_pb_bond_types, SIGNAL(clicked(int)), this, SLOT(set_chem_pb_pb_bond_types(int)));
+
+   cb_chem_pb_pb_bond_type_fraenkel = new QCheckBox(bg_chem_pb_pb_bond_types);
+   cb_chem_pb_pb_bond_type_fraenkel->setText(tr(" Fraenkel (hard Hookean) "));
+   cb_chem_pb_pb_bond_type_fraenkel->setEnabled(true);
+   //   cb_chem_pb_pb_bond_type_fraenkel->setMinimumHeight(minHeight1);
+   cb_chem_pb_pb_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_chem_pb_pb_bond_type_fraenkel->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_chem_pb_pb_bond_type_hookean = new QCheckBox(bg_chem_pb_pb_bond_types);
+   cb_chem_pb_pb_bond_type_hookean->setText(tr(" Hookean,Gaussian (soft) "));
+   cb_chem_pb_pb_bond_type_hookean->setEnabled(true);
+   //   cb_chem_pb_pb_bond_type_hookean->setMinimumHeight(minHeight1);
+   cb_chem_pb_pb_bond_type_hookean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_chem_pb_pb_bond_type_hookean->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_chem_pb_pb_bond_type_fene = new QCheckBox(bg_chem_pb_pb_bond_types);
+   cb_chem_pb_pb_bond_type_fene->setText(tr(" FENE "));
+   cb_chem_pb_pb_bond_type_fene->setEnabled(true);
+   //   cb_chem_pb_pb_bond_type_fene->setMinimumHeight(minHeight1);
+   cb_chem_pb_pb_bond_type_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_chem_pb_pb_bond_type_fene->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_chem_pb_pb_bond_type_hard_fene = new QCheckBox(bg_chem_pb_pb_bond_types);
+   cb_chem_pb_pb_bond_type_hard_fene->setText(tr(" Hard-FENE "));
+   cb_chem_pb_pb_bond_type_hard_fene->setEnabled(true);
+   //   cb_chem_pb_pb_bond_type_hard_fene->setMinimumHeight(minHeight1);
+   cb_chem_pb_pb_bond_type_hard_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_chem_pb_pb_bond_type_hard_fene->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_chem_pb_pb_bond_types->setButton(bd_options->chem_pb_pb_bond_type);
+
+   bg_chem_pb_sc_bond_types = new QButtonGroup(4, Qt::Vertical, "Bond type:", this);
+   qf = bg_chem_pb_sc_bond_types->font();
+   qf.setPointSize(qf.pointSize() - 1);
+   bg_chem_pb_sc_bond_types->setFont(qf);
+   bg_chem_pb_sc_bond_types->setExclusive(true);
+   bg_chem_pb_sc_bond_types->setAlignment(Qt::AlignHCenter);
+   bg_chem_pb_sc_bond_types->setInsideMargin(3);
+   bg_chem_pb_sc_bond_types->setInsideSpacing(0);
+   connect(bg_chem_pb_sc_bond_types, SIGNAL(clicked(int)), this, SLOT(set_chem_pb_sc_bond_types(int)));
+
+   cb_chem_pb_sc_bond_type_fraenkel = new QCheckBox(bg_chem_pb_sc_bond_types);
+   cb_chem_pb_sc_bond_type_fraenkel->setText(tr(" Fraenkel (hard Hookean) "));
+   cb_chem_pb_sc_bond_type_fraenkel->setEnabled(true);
+   //   cb_chem_pb_sc_bond_type_fraenkel->setMinimumHeight(minHeight1);
+   cb_chem_pb_sc_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_chem_pb_sc_bond_type_fraenkel->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_chem_pb_sc_bond_type_hookean = new QCheckBox(bg_chem_pb_sc_bond_types);
+   cb_chem_pb_sc_bond_type_hookean->setText(tr(" Hookean,Gaussian (soft) "));
+   cb_chem_pb_sc_bond_type_hookean->setEnabled(true);
+   //   cb_chem_pb_sc_bond_type_hookean->setMinimumHeight(minHeight1);
+   cb_chem_pb_sc_bond_type_hookean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_chem_pb_sc_bond_type_hookean->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_chem_pb_sc_bond_type_fene = new QCheckBox(bg_chem_pb_sc_bond_types);
+   cb_chem_pb_sc_bond_type_fene->setText(tr(" FENE "));
+   cb_chem_pb_sc_bond_type_fene->setEnabled(true);
+   //   cb_chem_pb_sc_bond_type_fene->setMinimumHeight(minHeight1);
+   cb_chem_pb_sc_bond_type_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_chem_pb_sc_bond_type_fene->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_chem_pb_sc_bond_type_hard_fene = new QCheckBox(bg_chem_pb_sc_bond_types);
+   cb_chem_pb_sc_bond_type_hard_fene->setText(tr(" Hard-FENE "));
+   cb_chem_pb_sc_bond_type_hard_fene->setEnabled(true);
+   //   cb_chem_pb_sc_bond_type_hard_fene->setMinimumHeight(minHeight1);
+   cb_chem_pb_sc_bond_type_hard_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_chem_pb_sc_bond_type_hard_fene->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_chem_pb_sc_bond_types->setButton(bd_options->chem_pb_sc_bond_type);
+
+   bg_chem_sc_sc_bond_types = new QButtonGroup(4, Qt::Vertical, "Bond type:", this);
+   qf = bg_chem_sc_sc_bond_types->font();
+   qf.setPointSize(qf.pointSize() - 1);
+   bg_chem_sc_sc_bond_types->setFont(qf);
+   bg_chem_sc_sc_bond_types->setExclusive(true);
+   bg_chem_sc_sc_bond_types->setAlignment(Qt::AlignHCenter);
+   bg_chem_sc_sc_bond_types->setInsideMargin(3);
+   bg_chem_sc_sc_bond_types->setInsideSpacing(0);
+   connect(bg_chem_sc_sc_bond_types, SIGNAL(clicked(int)), this, SLOT(set_chem_sc_sc_bond_types(int)));
+
+   cb_chem_sc_sc_bond_type_fraenkel = new QCheckBox(bg_chem_sc_sc_bond_types);
+   cb_chem_sc_sc_bond_type_fraenkel->setText(tr(" Fraenkel (hard Hookean) "));
+   cb_chem_sc_sc_bond_type_fraenkel->setEnabled(true);
+   //   cb_chem_sc_sc_bond_type_fraenkel->setMinimumHeight(minHeight1);
+   cb_chem_sc_sc_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_chem_sc_sc_bond_type_fraenkel->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_chem_sc_sc_bond_type_hookean = new QCheckBox(bg_chem_sc_sc_bond_types);
+   cb_chem_sc_sc_bond_type_hookean->setText(tr(" Hookean,Gaussian (soft) "));
+   cb_chem_sc_sc_bond_type_hookean->setEnabled(true);
+   //   cb_chem_sc_sc_bond_type_hookean->setMinimumHeight(minHeight1);
+   cb_chem_sc_sc_bond_type_hookean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_chem_sc_sc_bond_type_hookean->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_chem_sc_sc_bond_type_fene = new QCheckBox(bg_chem_sc_sc_bond_types);
+   cb_chem_sc_sc_bond_type_fene->setText(tr(" FENE "));
+   cb_chem_sc_sc_bond_type_fene->setEnabled(true);
+   //   cb_chem_sc_sc_bond_type_fene->setMinimumHeight(minHeight1);
+   cb_chem_sc_sc_bond_type_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_chem_sc_sc_bond_type_fene->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_chem_sc_sc_bond_type_hard_fene = new QCheckBox(bg_chem_sc_sc_bond_types);
+   cb_chem_sc_sc_bond_type_hard_fene->setText(tr(" Hard-FENE "));
+   cb_chem_sc_sc_bond_type_hard_fene->setEnabled(true);
+   //   cb_chem_sc_sc_bond_type_hard_fene->setMinimumHeight(minHeight1);
+   cb_chem_sc_sc_bond_type_hard_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_chem_sc_sc_bond_type_hard_fene->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_chem_sc_sc_bond_types->setButton(bd_options->chem_sc_sc_bond_type);
+
+   bg_pb_pb_bond_types = new QButtonGroup(4, Qt::Vertical, "Bond type:", this);
+   qf = bg_pb_pb_bond_types->font();
+   qf.setPointSize(qf.pointSize() - 1);
+   bg_pb_pb_bond_types->setFont(qf);
+   bg_pb_pb_bond_types->setExclusive(true);
+   bg_pb_pb_bond_types->setAlignment(Qt::AlignHCenter);
+   bg_pb_pb_bond_types->setInsideMargin(3);
+   bg_pb_pb_bond_types->setInsideSpacing(0);
+   connect(bg_pb_pb_bond_types, SIGNAL(clicked(int)), this, SLOT(set_pb_pb_bond_types(int)));
+
+   cb_pb_pb_bond_type_fraenkel = new QCheckBox(bg_pb_pb_bond_types);
+   cb_pb_pb_bond_type_fraenkel->setText(tr(" Fraenkel (hard Hookean) "));
+   cb_pb_pb_bond_type_fraenkel->setEnabled(true);
+   //   cb_pb_pb_bond_type_fraenkel->setMinimumHeight(minHeight1);
+   cb_pb_pb_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pb_pb_bond_type_fraenkel->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_pb_pb_bond_type_hookean = new QCheckBox(bg_pb_pb_bond_types);
+   cb_pb_pb_bond_type_hookean->setText(tr(" Hookean,Gaussian (soft) "));
+   cb_pb_pb_bond_type_hookean->setEnabled(true);
+   //   cb_pb_pb_bond_type_hookean->setMinimumHeight(minHeight1);
+   cb_pb_pb_bond_type_hookean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pb_pb_bond_type_hookean->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_pb_pb_bond_type_fene = new QCheckBox(bg_pb_pb_bond_types);
+   cb_pb_pb_bond_type_fene->setText(tr(" FENE "));
+   cb_pb_pb_bond_type_fene->setEnabled(true);
+   //   cb_pb_pb_bond_type_fene->setMinimumHeight(minHeight1);
+   cb_pb_pb_bond_type_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pb_pb_bond_type_fene->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_pb_pb_bond_type_hard_fene = new QCheckBox(bg_pb_pb_bond_types);
+   cb_pb_pb_bond_type_hard_fene->setText(tr(" Hard-FENE "));
+   cb_pb_pb_bond_type_hard_fene->setEnabled(true);
+   //   cb_pb_pb_bond_type_hard_fene->setMinimumHeight(minHeight1);
+   cb_pb_pb_bond_type_hard_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pb_pb_bond_type_hard_fene->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_pb_pb_bond_types->setButton(bd_options->pb_pb_bond_type);
+
+   bg_pb_sc_bond_types = new QButtonGroup(4, Qt::Vertical, "Bond type:", this);
+   qf = bg_pb_sc_bond_types->font();
+   qf.setPointSize(qf.pointSize() - 1);
+   bg_pb_sc_bond_types->setFont(qf);
+   bg_pb_sc_bond_types->setExclusive(true);
+   bg_pb_sc_bond_types->setAlignment(Qt::AlignHCenter);
+   bg_pb_sc_bond_types->setInsideMargin(3);
+   bg_pb_sc_bond_types->setInsideSpacing(0);
+   connect(bg_pb_sc_bond_types, SIGNAL(clicked(int)), this, SLOT(set_pb_sc_bond_types(int)));
+
+   cb_pb_sc_bond_type_fraenkel = new QCheckBox(bg_pb_sc_bond_types);
+   cb_pb_sc_bond_type_fraenkel->setText(tr(" Fraenkel (hard Hookean) "));
+   cb_pb_sc_bond_type_fraenkel->setEnabled(true);
+   //   cb_pb_sc_bond_type_fraenkel->setMinimumHeight(minHeight1);
+   cb_pb_sc_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pb_sc_bond_type_fraenkel->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_pb_sc_bond_type_hookean = new QCheckBox(bg_pb_sc_bond_types);
+   cb_pb_sc_bond_type_hookean->setText(tr(" Hookean,Gaussian (soft) "));
+   cb_pb_sc_bond_type_hookean->setEnabled(true);
+   //   cb_pb_sc_bond_type_hookean->setMinimumHeight(minHeight1);
+   cb_pb_sc_bond_type_hookean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pb_sc_bond_type_hookean->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_pb_sc_bond_type_fene = new QCheckBox(bg_pb_sc_bond_types);
+   cb_pb_sc_bond_type_fene->setText(tr(" FENE "));
+   cb_pb_sc_bond_type_fene->setEnabled(true);
+   //   cb_pb_sc_bond_type_fene->setMinimumHeight(minHeight1);
+   cb_pb_sc_bond_type_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pb_sc_bond_type_fene->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_pb_sc_bond_type_hard_fene = new QCheckBox(bg_pb_sc_bond_types);
+   cb_pb_sc_bond_type_hard_fene->setText(tr(" Hard-FENE "));
+   cb_pb_sc_bond_type_hard_fene->setEnabled(true);
+   //   cb_pb_sc_bond_type_hard_fene->setMinimumHeight(minHeight1);
+   cb_pb_sc_bond_type_hard_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pb_sc_bond_type_hard_fene->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_pb_sc_bond_types->setButton(bd_options->pb_sc_bond_type);
+
+   bg_sc_sc_bond_types = new QButtonGroup(4, Qt::Vertical, "Bond type:", this);
+   qf = bg_sc_sc_bond_types->font();
+   qf.setPointSize(qf.pointSize() - 1);
+   bg_sc_sc_bond_types->setFont(qf);
+   bg_sc_sc_bond_types->setExclusive(true);
+   bg_sc_sc_bond_types->setAlignment(Qt::AlignHCenter);
+   bg_sc_sc_bond_types->setInsideMargin(3);
+   bg_sc_sc_bond_types->setInsideSpacing(0);
+   connect(bg_sc_sc_bond_types, SIGNAL(clicked(int)), this, SLOT(set_sc_sc_bond_types(int)));
+
+   cb_sc_sc_bond_type_fraenkel = new QCheckBox(bg_sc_sc_bond_types);
+   cb_sc_sc_bond_type_fraenkel->setText(tr(" Fraenkel (hard Hookean) "));
+   cb_sc_sc_bond_type_fraenkel->setEnabled(true);
+   //   cb_sc_sc_bond_type_fraenkel->setMinimumHeight(minHeight1);
+   cb_sc_sc_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_sc_sc_bond_type_fraenkel->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_sc_sc_bond_type_hookean = new QCheckBox(bg_sc_sc_bond_types);
+   cb_sc_sc_bond_type_hookean->setText(tr(" Hookean,Gaussian (soft) "));
+   cb_sc_sc_bond_type_hookean->setEnabled(true);
+   //   cb_sc_sc_bond_type_hookean->setMinimumHeight(minHeight1);
+   cb_sc_sc_bond_type_hookean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_sc_sc_bond_type_hookean->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_sc_sc_bond_type_fene = new QCheckBox(bg_sc_sc_bond_types);
+   cb_sc_sc_bond_type_fene->setText(tr(" FENE "));
+   cb_sc_sc_bond_type_fene->setEnabled(true);
+   //   cb_sc_sc_bond_type_fene->setMinimumHeight(minHeight1);
+   cb_sc_sc_bond_type_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_sc_sc_bond_type_fene->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   cb_sc_sc_bond_type_hard_fene = new QCheckBox(bg_sc_sc_bond_types);
+   cb_sc_sc_bond_type_hard_fene->setText(tr(" Hard-FENE "));
+   cb_sc_sc_bond_type_hard_fene->setEnabled(true);
+   //   cb_sc_sc_bond_type_hard_fene->setMinimumHeight(minHeight1);
+   cb_sc_sc_bond_type_hard_fene->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_sc_sc_bond_type_hard_fene->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_sc_sc_bond_types->setButton(bd_options->sc_sc_bond_type);
+
+   lbl_chem_pb_pb_force_constant = new QLabel(tr(" Hookean force constant: "), this);
+   lbl_chem_pb_pb_force_constant->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_pb_pb_force_constant->setMinimumHeight(minHeight1);
+   lbl_chem_pb_pb_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chem_pb_pb_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_chem_pb_pb_force_constant = new QLineEdit(this, "Chem_Pb_Pb_Force_Constant Line Edit");
+   le_chem_pb_pb_force_constant->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_pb_force_constant));
+   le_chem_pb_pb_force_constant->setAlignment(AlignVCenter);
+   le_chem_pb_pb_force_constant->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_chem_pb_pb_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chem_pb_pb_force_constant->setEnabled(true);
+   connect(le_chem_pb_pb_force_constant, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_pb_force_constant(const QString &)));
+
+   lbl_chem_pb_pb_equilibrium_dist = new QLabel(tr(" Equilibrium distance: "), this);
+   lbl_chem_pb_pb_equilibrium_dist->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_pb_pb_equilibrium_dist->setMinimumHeight(minHeight1);
+   lbl_chem_pb_pb_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chem_pb_pb_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_chem_pb_pb_equilibrium_dist = new QLineEdit(this, "Chem_Pb_Pb_Equilibrium_Dist Line Edit");
+   le_chem_pb_pb_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_pb_equilibrium_dist));
+   le_chem_pb_pb_equilibrium_dist->setAlignment(AlignVCenter);
+   le_chem_pb_pb_equilibrium_dist->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_chem_pb_pb_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chem_pb_pb_equilibrium_dist->setEnabled(true);
+   connect(le_chem_pb_pb_equilibrium_dist, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_pb_equilibrium_dist(const QString &)));
+
+   lbl_chem_pb_pb_max_elong = new QLabel(tr(" Maximum elongation: "), this);
+   lbl_chem_pb_pb_max_elong->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_pb_pb_max_elong->setMinimumHeight(minHeight1);
+   lbl_chem_pb_pb_max_elong->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chem_pb_pb_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_chem_pb_pb_max_elong = new QLineEdit(this, "Chem_Pb_Pb_Max_Elong Line Edit");
+   le_chem_pb_pb_max_elong->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_pb_max_elong));
+   le_chem_pb_pb_max_elong->setAlignment(AlignVCenter);
+   le_chem_pb_pb_max_elong->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_chem_pb_pb_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chem_pb_pb_max_elong->setEnabled(true);
+   connect(le_chem_pb_pb_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_pb_max_elong(const QString &)));
+
+   lbl_chem_pb_sc_force_constant = new QLabel(tr(" Hookean force constant: "), this);
+   lbl_chem_pb_sc_force_constant->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_pb_sc_force_constant->setMinimumHeight(minHeight1);
+   lbl_chem_pb_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chem_pb_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_chem_pb_sc_force_constant = new QLineEdit(this, "Chem_Pb_Sc_Force_Constant Line Edit");
+   le_chem_pb_sc_force_constant->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_sc_force_constant));
+   le_chem_pb_sc_force_constant->setAlignment(AlignVCenter);
+   le_chem_pb_sc_force_constant->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_chem_pb_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chem_pb_sc_force_constant->setEnabled(true);
+   connect(le_chem_pb_sc_force_constant, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_sc_force_constant(const QString &)));
+
+   lbl_chem_pb_sc_equilibrium_dist = new QLabel(tr(" Equilibrium distance: "), this);
+   lbl_chem_pb_sc_equilibrium_dist->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_pb_sc_equilibrium_dist->setMinimumHeight(minHeight1);
+   lbl_chem_pb_sc_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chem_pb_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_chem_pb_sc_equilibrium_dist = new QLineEdit(this, "Chem_Pb_Sc_Equilibrium_Dist Line Edit");
+   le_chem_pb_sc_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_sc_equilibrium_dist));
+   le_chem_pb_sc_equilibrium_dist->setAlignment(AlignVCenter);
+   le_chem_pb_sc_equilibrium_dist->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_chem_pb_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chem_pb_sc_equilibrium_dist->setEnabled(true);
+   connect(le_chem_pb_sc_equilibrium_dist, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_sc_equilibrium_dist(const QString &)));
+
+   lbl_chem_pb_sc_max_elong = new QLabel(tr(" Maximum elongation: "), this);
+   lbl_chem_pb_sc_max_elong->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_pb_sc_max_elong->setMinimumHeight(minHeight1);
+   lbl_chem_pb_sc_max_elong->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chem_pb_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_chem_pb_sc_max_elong = new QLineEdit(this, "Chem_Pb_Sc_Max_Elong Line Edit");
+   le_chem_pb_sc_max_elong->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_sc_max_elong));
+   le_chem_pb_sc_max_elong->setAlignment(AlignVCenter);
+   le_chem_pb_sc_max_elong->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_chem_pb_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chem_pb_sc_max_elong->setEnabled(true);
+   connect(le_chem_pb_sc_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_sc_max_elong(const QString &)));
+
+   lbl_chem_sc_sc_force_constant = new QLabel(tr(" Hookean force constant: "), this);
+   lbl_chem_sc_sc_force_constant->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_sc_sc_force_constant->setMinimumHeight(minHeight1);
+   lbl_chem_sc_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chem_sc_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_chem_sc_sc_force_constant = new QLineEdit(this, "Chem_Sc_Sc_Force_Constant Line Edit");
+   le_chem_sc_sc_force_constant->setText(str.sprintf("%4.2f",(*bd_options).chem_sc_sc_force_constant));
+   le_chem_sc_sc_force_constant->setAlignment(AlignVCenter);
+   le_chem_sc_sc_force_constant->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_chem_sc_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chem_sc_sc_force_constant->setEnabled(true);
+   connect(le_chem_sc_sc_force_constant, SIGNAL(textChanged(const QString &)), SLOT(update_chem_sc_sc_force_constant(const QString &)));
+
+   lbl_chem_sc_sc_equilibrium_dist = new QLabel(tr(" Equilibrium distance: "), this);
+   lbl_chem_sc_sc_equilibrium_dist->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_sc_sc_equilibrium_dist->setMinimumHeight(minHeight1);
+   lbl_chem_sc_sc_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chem_sc_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_chem_sc_sc_equilibrium_dist = new QLineEdit(this, "Chem_Sc_Sc_Equilibrium_Dist Line Edit");
+   le_chem_sc_sc_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).chem_sc_sc_equilibrium_dist));
+   le_chem_sc_sc_equilibrium_dist->setAlignment(AlignVCenter);
+   le_chem_sc_sc_equilibrium_dist->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_chem_sc_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chem_sc_sc_equilibrium_dist->setEnabled(true);
+   connect(le_chem_sc_sc_equilibrium_dist, SIGNAL(textChanged(const QString &)), SLOT(update_chem_sc_sc_equilibrium_dist(const QString &)));
+
+   lbl_chem_sc_sc_max_elong = new QLabel(tr(" Maximum elongation: "), this);
+   lbl_chem_sc_sc_max_elong->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_sc_sc_max_elong->setMinimumHeight(minHeight1);
+   lbl_chem_sc_sc_max_elong->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chem_sc_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_chem_sc_sc_max_elong = new QLineEdit(this, "Chem_Sc_Sc_Max_Elong Line Edit");
+   le_chem_sc_sc_max_elong->setText(str.sprintf("%4.2f",(*bd_options).chem_sc_sc_max_elong));
+   le_chem_sc_sc_max_elong->setAlignment(AlignVCenter);
+   le_chem_sc_sc_max_elong->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_chem_sc_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chem_sc_sc_max_elong->setEnabled(true);
+   connect(le_chem_sc_sc_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_chem_sc_sc_max_elong(const QString &)));
+
+   lbl_pb_pb_force_constant = new QLabel(tr(" Hookean force constant: "), this);
+   lbl_pb_pb_force_constant->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pb_pb_force_constant->setMinimumHeight(minHeight1);
+   lbl_pb_pb_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_pb_pb_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_pb_pb_force_constant = new QLineEdit(this, "Pb_Pb_Force_Constant Line Edit");
+   le_pb_pb_force_constant->setText(str.sprintf("%4.2f",(*bd_options).pb_pb_force_constant));
+   le_pb_pb_force_constant->setAlignment(AlignVCenter);
+   le_pb_pb_force_constant->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_pb_pb_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pb_pb_force_constant->setEnabled(true);
+   connect(le_pb_pb_force_constant, SIGNAL(textChanged(const QString &)), SLOT(update_pb_pb_force_constant(const QString &)));
+
+   lbl_pb_pb_equilibrium_dist = new QLabel(tr(" Equilibrium distance: "), this);
+   lbl_pb_pb_equilibrium_dist->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pb_pb_equilibrium_dist->setMinimumHeight(minHeight1);
+   lbl_pb_pb_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_pb_pb_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_pb_pb_equilibrium_dist = new QLineEdit(this, "Pb_Pb_Equilibrium_Dist Line Edit");
+   le_pb_pb_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).pb_pb_equilibrium_dist));
+   le_pb_pb_equilibrium_dist->setAlignment(AlignVCenter);
+   le_pb_pb_equilibrium_dist->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_pb_pb_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pb_pb_equilibrium_dist->setEnabled(true);
+   connect(le_pb_pb_equilibrium_dist, SIGNAL(textChanged(const QString &)), SLOT(update_pb_pb_equilibrium_dist(const QString &)));
+
+   lbl_pb_pb_max_elong = new QLabel(tr(" Maximum elongation: "), this);
+   lbl_pb_pb_max_elong->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pb_pb_max_elong->setMinimumHeight(minHeight1);
+   lbl_pb_pb_max_elong->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_pb_pb_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_pb_pb_max_elong = new QLineEdit(this, "Pb_Pb_Max_Elong Line Edit");
+   le_pb_pb_max_elong->setText(str.sprintf("%4.2f",(*bd_options).pb_pb_max_elong));
+   le_pb_pb_max_elong->setAlignment(AlignVCenter);
+   le_pb_pb_max_elong->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_pb_pb_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pb_pb_max_elong->setEnabled(true);
+   connect(le_pb_pb_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_pb_pb_max_elong(const QString &)));
+
+   lbl_pb_sc_force_constant = new QLabel(tr(" Hookean force constant: "), this);
+   lbl_pb_sc_force_constant->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pb_sc_force_constant->setMinimumHeight(minHeight1);
+   lbl_pb_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_pb_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_pb_sc_force_constant = new QLineEdit(this, "Pb_Sc_Force_Constant Line Edit");
+   le_pb_sc_force_constant->setText(str.sprintf("%4.2f",(*bd_options).pb_sc_force_constant));
+   le_pb_sc_force_constant->setAlignment(AlignVCenter);
+   le_pb_sc_force_constant->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_pb_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pb_sc_force_constant->setEnabled(true);
+   connect(le_pb_sc_force_constant, SIGNAL(textChanged(const QString &)), SLOT(update_pb_sc_force_constant(const QString &)));
+
+   lbl_pb_sc_equilibrium_dist = new QLabel(tr(" Equilibrium distance: "), this);
+   lbl_pb_sc_equilibrium_dist->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pb_sc_equilibrium_dist->setMinimumHeight(minHeight1);
+   lbl_pb_sc_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_pb_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_pb_sc_equilibrium_dist = new QLineEdit(this, "Pb_Sc_Equilibrium_Dist Line Edit");
+   le_pb_sc_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).pb_sc_equilibrium_dist));
+   le_pb_sc_equilibrium_dist->setAlignment(AlignVCenter);
+   le_pb_sc_equilibrium_dist->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_pb_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pb_sc_equilibrium_dist->setEnabled(true);
+   connect(le_pb_sc_equilibrium_dist, SIGNAL(textChanged(const QString &)), SLOT(update_pb_sc_equilibrium_dist(const QString &)));
+
+   lbl_pb_sc_max_elong = new QLabel(tr(" Maximum elongation: "), this);
+   lbl_pb_sc_max_elong->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pb_sc_max_elong->setMinimumHeight(minHeight1);
+   lbl_pb_sc_max_elong->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_pb_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_pb_sc_max_elong = new QLineEdit(this, "Pb_Sc_Max_Elong Line Edit");
+   le_pb_sc_max_elong->setText(str.sprintf("%4.2f",(*bd_options).pb_sc_max_elong));
+   le_pb_sc_max_elong->setAlignment(AlignVCenter);
+   le_pb_sc_max_elong->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_pb_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pb_sc_max_elong->setEnabled(true);
+   connect(le_pb_sc_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_pb_sc_max_elong(const QString &)));
+
+   lbl_sc_sc_force_constant = new QLabel(tr(" Hookean force constant: "), this);
+   lbl_sc_sc_force_constant->setAlignment(AlignLeft|AlignVCenter);
+   lbl_sc_sc_force_constant->setMinimumHeight(minHeight1);
+   lbl_sc_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_sc_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_sc_sc_force_constant = new QLineEdit(this, "Sc_Sc_Force_Constant Line Edit");
+   le_sc_sc_force_constant->setText(str.sprintf("%4.2f",(*bd_options).sc_sc_force_constant));
+   le_sc_sc_force_constant->setAlignment(AlignVCenter);
+   le_sc_sc_force_constant->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_sc_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_sc_sc_force_constant->setEnabled(true);
+   connect(le_sc_sc_force_constant, SIGNAL(textChanged(const QString &)), SLOT(update_sc_sc_force_constant(const QString &)));
+
+   lbl_sc_sc_equilibrium_dist = new QLabel(tr(" Equilibrium distance: "), this);
+   lbl_sc_sc_equilibrium_dist->setAlignment(AlignLeft|AlignVCenter);
+   lbl_sc_sc_equilibrium_dist->setMinimumHeight(minHeight1);
+   lbl_sc_sc_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_sc_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_sc_sc_equilibrium_dist = new QLineEdit(this, "Sc_Sc_Equilibrium_Dist Line Edit");
+   le_sc_sc_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).sc_sc_equilibrium_dist));
+   le_sc_sc_equilibrium_dist->setAlignment(AlignVCenter);
+   le_sc_sc_equilibrium_dist->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_sc_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_sc_sc_equilibrium_dist->setEnabled(true);
+   connect(le_sc_sc_equilibrium_dist, SIGNAL(textChanged(const QString &)), SLOT(update_sc_sc_equilibrium_dist(const QString &)));
+
+   lbl_sc_sc_max_elong = new QLabel(tr(" Maximum elongation: "), this);
+   lbl_sc_sc_max_elong->setAlignment(AlignLeft|AlignVCenter);
+   lbl_sc_sc_max_elong->setMinimumHeight(minHeight1);
+   lbl_sc_sc_max_elong->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_sc_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_sc_sc_max_elong = new QLineEdit(this, "Sc_Sc_Max_Elong Line Edit");
+   le_sc_sc_max_elong->setText(str.sprintf("%4.2f",(*bd_options).sc_sc_max_elong));
+   le_sc_sc_max_elong->setAlignment(AlignVCenter);
+   le_sc_sc_max_elong->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_sc_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_sc_sc_max_elong->setEnabled(true);
+   connect(le_sc_sc_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_sc_sc_max_elong(const QString &)));
 
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -87,22 +951,167 @@ void US_Hydrodyn_BD_Options::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=1, columns = 2, spacing = 2, j=0, margin=4;
-   QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
+   QVBoxLayout *vbl_top = new QVBoxLayout;
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
-   j++;
-   background->addWidget(lbl_bd_threshold, j, 0);
-   background->addWidget(cnt_bd_threshold, j, 1);
-   j++;
-   background->addMultiCellWidget(cb_do_rr, j, j, 0, 1);
-   j++;
-   background->addMultiCellWidget(cb_force_chem, j, j, 0, 1);
-   j++;
-   background->addMultiCellWidget(cb_include_sc, j, j, 0, 1);
-   j++;
-   background->addWidget(pb_help, j, 0);
-   background->addWidget(pb_cancel, j, 1);
+   vbl_top->addWidget(lbl_info);
+   vbl_top->addSpacing(3);
+
+   QHBoxLayout *hbl_method = new QHBoxLayout;
+
+   QGridLayout *gl_thresh = new QGridLayout;
+
+   int j = 0;
+   gl_thresh->addMultiCellWidget(lbl_info_model_creation, j, j, 0, 1); j++;
+   gl_thresh->addWidget(lbl_bd_threshold_pb_pb, j, 0);
+   gl_thresh->addWidget(cnt_bd_threshold_pb_pb, j, 1); j++;
+   gl_thresh->addWidget(lbl_bd_threshold_pb_sc, j, 0);
+   gl_thresh->addWidget(cnt_bd_threshold_pb_sc, j, 1); j++;
+   gl_thresh->addWidget(lbl_bd_threshold_sc_sc, j, 0);
+   gl_thresh->addWidget(cnt_bd_threshold_sc_sc, j, 1); j++;
+   gl_thresh->addMultiCellWidget(cb_do_rr, j, j, 0, 1); j++;
+   gl_thresh->addMultiCellWidget(cb_force_chem, j, j, 0, 1); j++;
+
+   hbl_method->addLayout(gl_thresh);
+   hbl_method->addSpacing(3);
+
+   QVBoxLayout *vbl_method_group = new QVBoxLayout;
+   vbl_method_group->addWidget(lbl_info_simulation_opts);
+
+   QHBoxLayout *hbl_method_group = new QHBoxLayout;
+
+   QVBoxLayout *vbl_method = new QVBoxLayout;
+   vbl_method->addWidget(bg_inter);
+   vbl_method->addSpacing(10);
+   vbl_method->addWidget(bg_iorder);
+
+   hbl_method_group->addLayout(vbl_method);
+   hbl_method_group->addSpacing(3);
+
+   QGridLayout *gl_simu = new QGridLayout;
+   gl_simu->addWidget(lbl_ttraj, 0, 0);
+   gl_simu->addWidget(le_ttraj, 0, 1);
+   gl_simu->addWidget(lbl_deltat, 1, 0);
+   gl_simu->addWidget(le_deltat, 1, 1);
+   gl_simu->addWidget(lbl_npadif, 2, 0);
+   gl_simu->addWidget(cnt_npadif, 2, 1);
+   gl_simu->addWidget(lbl_iseed, 3, 0);
+   gl_simu->addWidget(le_iseed, 3, 1);
+   gl_simu->addMultiCellWidget(cb_icdm, 4, 4, 0, 1);
+
+   hbl_method_group->addLayout(gl_simu);
+
+   vbl_method_group->addLayout(hbl_method_group);
+
+   hbl_method->addLayout(vbl_method_group);
+
+   vbl_top->addLayout(hbl_method);
+   vbl_top->addSpacing(3);
+   vbl_top->addWidget(lbl_springs);
+
+   QHBoxLayout *hbl_bonds = new QHBoxLayout;
+
+   QVBoxLayout *vbl_chem_pb_pb = new QVBoxLayout;
+   vbl_chem_pb_pb->addWidget(lbl_chem_pb_pb);
+   vbl_chem_pb_pb->addWidget(bg_chem_pb_pb_bond_types);
+   vbl_chem_pb_pb->addWidget(lbl_chem_pb_pb_force_constant);
+   vbl_chem_pb_pb->addWidget(cb_compute_chem_pb_pb_force_constant);
+   vbl_chem_pb_pb->addWidget(le_chem_pb_pb_force_constant);
+   vbl_chem_pb_pb->addWidget(lbl_chem_pb_pb_equilibrium_dist);
+   vbl_chem_pb_pb->addWidget(cb_compute_chem_pb_pb_equilibrium_dist);
+   vbl_chem_pb_pb->addWidget(le_chem_pb_pb_equilibrium_dist);
+   vbl_chem_pb_pb->addWidget(lbl_chem_pb_pb_max_elong);
+   vbl_chem_pb_pb->addWidget(cb_compute_chem_pb_pb_max_elong);
+   vbl_chem_pb_pb->addWidget(le_chem_pb_pb_max_elong);
+   hbl_bonds->addLayout(vbl_chem_pb_pb);
+   hbl_bonds->addSpacing(3);
+
+   QVBoxLayout *vbl_chem_pb_sc = new QVBoxLayout;
+   vbl_chem_pb_sc->addWidget(lbl_chem_pb_sc);
+   vbl_chem_pb_sc->addWidget(bg_chem_pb_sc_bond_types);
+   vbl_chem_pb_sc->addWidget(lbl_chem_pb_sc_force_constant);
+   vbl_chem_pb_sc->addWidget(cb_compute_chem_pb_sc_force_constant);
+   vbl_chem_pb_sc->addWidget(le_chem_pb_sc_force_constant);
+   vbl_chem_pb_sc->addWidget(lbl_chem_pb_sc_equilibrium_dist);
+   vbl_chem_pb_sc->addWidget(cb_compute_chem_pb_sc_equilibrium_dist);
+   vbl_chem_pb_sc->addWidget(le_chem_pb_sc_equilibrium_dist);
+   vbl_chem_pb_sc->addWidget(lbl_chem_pb_sc_max_elong);
+   vbl_chem_pb_sc->addWidget(cb_compute_chem_pb_sc_max_elong);
+   vbl_chem_pb_sc->addWidget(le_chem_pb_sc_max_elong);
+   hbl_bonds->addLayout(vbl_chem_pb_sc);
+   hbl_bonds->addSpacing(3);
+
+   QVBoxLayout *vbl_chem_sc_sc = new QVBoxLayout;
+   vbl_chem_sc_sc->addWidget(lbl_chem_sc_sc);
+   vbl_chem_sc_sc->addWidget(bg_chem_sc_sc_bond_types);
+   vbl_chem_sc_sc->addWidget(lbl_chem_sc_sc_force_constant);
+   vbl_chem_sc_sc->addWidget(cb_compute_chem_sc_sc_force_constant);
+   vbl_chem_sc_sc->addWidget(le_chem_sc_sc_force_constant);
+   vbl_chem_sc_sc->addWidget(lbl_chem_sc_sc_equilibrium_dist);
+   vbl_chem_sc_sc->addWidget(cb_compute_chem_sc_sc_equilibrium_dist);
+   vbl_chem_sc_sc->addWidget(le_chem_sc_sc_equilibrium_dist);
+   vbl_chem_sc_sc->addWidget(lbl_chem_sc_sc_max_elong);
+   vbl_chem_sc_sc->addWidget(cb_compute_chem_sc_sc_max_elong);
+   vbl_chem_sc_sc->addWidget(le_chem_sc_sc_max_elong);
+   hbl_bonds->addLayout(vbl_chem_sc_sc);
+   hbl_bonds->addSpacing(3);
+
+   QVBoxLayout *vbl_pb_pb = new QVBoxLayout;
+   vbl_pb_pb->addWidget(lbl_pb_pb);
+   vbl_pb_pb->addWidget(bg_pb_pb_bond_types);
+   vbl_pb_pb->addWidget(lbl_pb_pb_force_constant);
+   vbl_pb_pb->addWidget(cb_compute_pb_pb_force_constant);
+   vbl_pb_pb->addWidget(le_pb_pb_force_constant);
+   vbl_pb_pb->addWidget(lbl_pb_pb_equilibrium_dist);
+   vbl_pb_pb->addWidget(cb_compute_pb_pb_equilibrium_dist);
+   vbl_pb_pb->addWidget(le_pb_pb_equilibrium_dist);
+   vbl_pb_pb->addWidget(lbl_pb_pb_max_elong);
+   vbl_pb_pb->addWidget(cb_compute_pb_pb_max_elong);
+   vbl_pb_pb->addWidget(le_pb_pb_max_elong);
+   hbl_bonds->addLayout(vbl_pb_pb);
+   hbl_bonds->addSpacing(3);
+
+   QVBoxLayout *vbl_pb_sc = new QVBoxLayout;
+   vbl_pb_sc->addWidget(lbl_pb_sc);
+   vbl_pb_sc->addWidget(bg_pb_sc_bond_types);
+   vbl_pb_sc->addWidget(lbl_pb_sc_force_constant);
+   vbl_pb_sc->addWidget(cb_compute_pb_sc_force_constant);
+   vbl_pb_sc->addWidget(le_pb_sc_force_constant);
+   vbl_pb_sc->addWidget(lbl_pb_sc_equilibrium_dist);
+   vbl_pb_sc->addWidget(cb_compute_pb_sc_equilibrium_dist);
+   vbl_pb_sc->addWidget(le_pb_sc_equilibrium_dist);
+   vbl_pb_sc->addWidget(lbl_pb_sc_max_elong);
+   vbl_pb_sc->addWidget(cb_compute_pb_sc_max_elong);
+   vbl_pb_sc->addWidget(le_pb_sc_max_elong);
+   hbl_bonds->addLayout(vbl_pb_sc);
+   hbl_bonds->addSpacing(3);
+
+   QVBoxLayout *vbl_sc_sc = new QVBoxLayout;
+   vbl_sc_sc->addWidget(lbl_sc_sc);
+   vbl_sc_sc->addWidget(bg_sc_sc_bond_types);
+   vbl_sc_sc->addWidget(lbl_sc_sc_force_constant);
+   vbl_sc_sc->addWidget(cb_compute_sc_sc_force_constant);
+   vbl_sc_sc->addWidget(le_sc_sc_force_constant);
+   vbl_sc_sc->addWidget(lbl_sc_sc_equilibrium_dist);
+   vbl_sc_sc->addWidget(cb_compute_sc_sc_equilibrium_dist);
+   vbl_sc_sc->addWidget(le_sc_sc_equilibrium_dist);
+   vbl_sc_sc->addWidget(lbl_sc_sc_max_elong);
+   vbl_sc_sc->addWidget(cb_compute_sc_sc_max_elong);
+   vbl_sc_sc->addWidget(le_sc_sc_max_elong);
+   hbl_bonds->addLayout(vbl_sc_sc);
+
+   vbl_top->addSpacing(3);
+   vbl_top->addLayout(hbl_bonds);
+
+   QHBoxLayout *hbl_buttons = new QHBoxLayout;
+
+   hbl_buttons->addWidget(pb_help);
+   hbl_buttons->addWidget(pb_cancel);
+   
+   vbl_top->addSpacing(3);
+   vbl_top->addLayout(hbl_buttons);
+
+   QHBoxLayout *background = new QHBoxLayout(this);
+   background->addLayout(vbl_top);
 }
 
 void US_Hydrodyn_BD_Options::cancel()
@@ -125,9 +1134,21 @@ void US_Hydrodyn_BD_Options::closeEvent(QCloseEvent *e)
    e->accept();
 }
 
-void US_Hydrodyn_BD_Options::update_bd_threshold(double val)
+void US_Hydrodyn_BD_Options::update_bd_threshold_pb_pb(double val)
 {
-   (*bd_options).threshold = (float) val;
+   (*bd_options).threshold_pb_pb = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::update_bd_threshold_pb_sc(double val)
+{
+   (*bd_options).threshold_pb_sc = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::update_bd_threshold_sc_sc(double val)
+{
+   (*bd_options).threshold_sc_sc = (float) val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -143,8 +1164,334 @@ void US_Hydrodyn_BD_Options::set_force_chem()
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
-void US_Hydrodyn_BD_Options::set_include_sc()
+void US_Hydrodyn_BD_Options::set_icdm()
 {
-   (*bd_options).include_sc = cb_include_sc->isChecked();
+   (*bd_options).icdm = cb_do_rr->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_chem_pb_pb_force_constant()
+{
+   (*bd_options).compute_chem_pb_pb_force_constant = cb_compute_chem_pb_pb_force_constant->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_chem_pb_pb_equilibrium_dist()
+{
+   (*bd_options).compute_chem_pb_pb_equilibrium_dist = cb_compute_chem_pb_pb_equilibrium_dist->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_chem_pb_pb_max_elong()
+{
+   (*bd_options).compute_chem_pb_pb_max_elong = cb_compute_chem_pb_pb_max_elong->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_chem_pb_sc_force_constant()
+{
+   (*bd_options).compute_chem_pb_sc_force_constant = cb_compute_chem_pb_sc_force_constant->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_chem_pb_sc_equilibrium_dist()
+{
+   (*bd_options).compute_chem_pb_sc_equilibrium_dist = cb_compute_chem_pb_sc_equilibrium_dist->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_chem_pb_sc_max_elong()
+{
+   (*bd_options).compute_chem_pb_sc_max_elong = cb_compute_chem_pb_sc_max_elong->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_chem_sc_sc_force_constant()
+{
+   (*bd_options).compute_chem_sc_sc_force_constant = cb_compute_chem_sc_sc_force_constant->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_chem_sc_sc_equilibrium_dist()
+{
+   (*bd_options).compute_chem_sc_sc_equilibrium_dist = cb_compute_chem_sc_sc_equilibrium_dist->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_chem_sc_sc_max_elong()
+{
+   (*bd_options).compute_chem_sc_sc_max_elong = cb_compute_chem_sc_sc_max_elong->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_pb_pb_force_constant()
+{
+   (*bd_options).compute_pb_pb_force_constant = cb_compute_pb_pb_force_constant->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_pb_pb_equilibrium_dist()
+{
+   (*bd_options).compute_pb_pb_equilibrium_dist = cb_compute_pb_pb_equilibrium_dist->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_pb_pb_max_elong()
+{
+   (*bd_options).compute_pb_pb_max_elong = cb_compute_pb_pb_max_elong->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_pb_sc_force_constant()
+{
+   (*bd_options).compute_pb_sc_force_constant = cb_compute_pb_sc_force_constant->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_pb_sc_equilibrium_dist()
+{
+   (*bd_options).compute_pb_sc_equilibrium_dist = cb_compute_pb_sc_equilibrium_dist->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_pb_sc_max_elong()
+{
+   (*bd_options).compute_pb_sc_max_elong = cb_compute_pb_sc_max_elong->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_sc_sc_force_constant()
+{
+   (*bd_options).compute_sc_sc_force_constant = cb_compute_sc_sc_force_constant->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_sc_sc_equilibrium_dist()
+{
+   (*bd_options).compute_sc_sc_equilibrium_dist = cb_compute_sc_sc_equilibrium_dist->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_compute_sc_sc_max_elong()
+{
+   (*bd_options).compute_sc_sc_max_elong = cb_compute_sc_sc_max_elong->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_inter(int val)
+{
+   (*bd_options).inter = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_iorder(int val)
+{
+   (*bd_options).iorder = val - 1;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::update_ttraj(const QString &str)
+{
+   (*bd_options).ttraj = str.toFloat();
+   //   le_ttraj->setText(QString("").sprintf("%4.2f",(*hydro).ttraj));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::update_deltat(const QString &str)
+{
+   (*bd_options).deltat = str.toFloat();
+   //   le_deltat->setText(QString("").sprintf("%4.2f",(*hydro).deltat));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::update_npadif(double val)
+{
+   (*bd_options).npadif = (int) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::update_iseed(const QString &str)
+{
+   (*bd_options).iseed = str.toInt();
+   //   le_iseed->setText(QString("").sprintf("%4.2f",(*hydro).iseed));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_chem_pb_pb_bond_types(int val)
+{
+   (*bd_options).chem_pb_pb_bond_type = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_chem_pb_sc_bond_types(int val)
+{
+   (*bd_options).chem_pb_sc_bond_type = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_chem_sc_sc_bond_types(int val)
+{
+   (*bd_options).chem_sc_sc_bond_type = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_pb_pb_bond_types(int val)
+{
+   (*bd_options).pb_pb_bond_type = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_pb_sc_bond_types(int val)
+{
+   (*bd_options).pb_sc_bond_type = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_sc_sc_bond_types(int val)
+{
+   (*bd_options).sc_sc_bond_type = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::update_chem_pb_pb_force_constant(const QString &str)
+{
+   (*bd_options).chem_pb_pb_force_constant = str.toFloat();
+   //   le_chem_pb_pb_force_constant->setText(QString("").sprintf("%4.2f",(*hydro).chem_pb_pb_force_constant));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_chem_pb_pb_equilibrium_dist(const QString &str)
+{
+   (*bd_options).chem_pb_pb_equilibrium_dist = str.toFloat();
+   //   le_chem_pb_pb_equilibrium_dist->setText(QString("").sprintf("%4.2f",(*hydro).chem_pb_pb_equilibrium_dist));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_chem_pb_pb_max_elong(const QString &str)
+{
+   (*bd_options).chem_pb_pb_max_elong = str.toFloat();
+   //   le_chem_pb_pb_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).chem_pb_pb_max_elong));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_chem_pb_sc_force_constant(const QString &str)
+{
+   (*bd_options).chem_pb_sc_force_constant = str.toFloat();
+   //   le_chem_pb_sc_force_constant->setText(QString("").sprintf("%4.2f",(*hydro).chem_pb_sc_force_constant));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_chem_pb_sc_equilibrium_dist(const QString &str)
+{
+   (*bd_options).chem_pb_sc_equilibrium_dist = str.toFloat();
+   //   le_chem_pb_sc_equilibrium_dist->setText(QString("").sprintf("%4.2f",(*hydro).chem_pb_sc_equilibrium_dist));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_chem_pb_sc_max_elong(const QString &str)
+{
+   (*bd_options).chem_pb_sc_max_elong = str.toFloat();
+   //   le_chem_pb_sc_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).chem_pb_sc_max_elong));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_chem_sc_sc_force_constant(const QString &str)
+{
+   (*bd_options).chem_sc_sc_force_constant = str.toFloat();
+   //   le_chem_sc_sc_force_constant->setText(QString("").sprintf("%4.2f",(*hydro).chem_sc_sc_force_constant));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_chem_sc_sc_equilibrium_dist(const QString &str)
+{
+   (*bd_options).chem_sc_sc_equilibrium_dist = str.toFloat();
+   //   le_chem_sc_sc_equilibrium_dist->setText(QString("").sprintf("%4.2f",(*hydro).chem_sc_sc_equilibrium_dist));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_chem_sc_sc_max_elong(const QString &str)
+{
+   (*bd_options).chem_sc_sc_max_elong = str.toFloat();
+   //   le_chem_sc_sc_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).chem_sc_sc_max_elong));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_pb_pb_force_constant(const QString &str)
+{
+   (*bd_options).pb_pb_force_constant = str.toFloat();
+   //   le_pb_pb_force_constant->setText(QString("").sprintf("%4.2f",(*hydro).pb_pb_force_constant));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_pb_pb_equilibrium_dist(const QString &str)
+{
+   (*bd_options).pb_pb_equilibrium_dist = str.toFloat();
+   //   le_pb_pb_equilibrium_dist->setText(QString("").sprintf("%4.2f",(*hydro).pb_pb_equilibrium_dist));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_pb_pb_max_elong(const QString &str)
+{
+   (*bd_options).pb_pb_max_elong = str.toFloat();
+   //   le_pb_pb_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).pb_pb_max_elong));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_pb_sc_force_constant(const QString &str)
+{
+   (*bd_options).pb_sc_force_constant = str.toFloat();
+   //   le_pb_sc_force_constant->setText(QString("").sprintf("%4.2f",(*hydro).pb_sc_force_constant));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_pb_sc_equilibrium_dist(const QString &str)
+{
+   (*bd_options).pb_sc_equilibrium_dist = str.toFloat();
+   //   le_pb_sc_equilibrium_dist->setText(QString("").sprintf("%4.2f",(*hydro).pb_sc_equilibrium_dist));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_pb_sc_max_elong(const QString &str)
+{
+   (*bd_options).pb_sc_max_elong = str.toFloat();
+   //   le_pb_sc_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).pb_sc_max_elong));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_sc_sc_force_constant(const QString &str)
+{
+   (*bd_options).sc_sc_force_constant = str.toFloat();
+   //   le_sc_sc_force_constant->setText(QString("").sprintf("%4.2f",(*hydro).sc_sc_force_constant));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_sc_sc_equilibrium_dist(const QString &str)
+{
+   (*bd_options).sc_sc_equilibrium_dist = str.toFloat();
+   //   le_sc_sc_equilibrium_dist->setText(QString("").sprintf("%4.2f",(*hydro).sc_sc_equilibrium_dist));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+
+void US_Hydrodyn_BD_Options::update_sc_sc_max_elong(const QString &str)
+{
+   (*bd_options).sc_sc_max_elong = str.toFloat();
+   //   le_sc_sc_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).sc_sc_max_elong));
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

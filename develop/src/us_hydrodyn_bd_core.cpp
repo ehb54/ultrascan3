@@ -38,7 +38,12 @@ void US_Hydrodyn::calc_bd()
    bool any_errors = false;
    bool any_models = false;
 
-   bead_model_suffix = QString("bd-%1").arg(bd_options.threshold);
+   bead_model_suffix = 
+      QString("bd-%1-%2-%3")
+      .arg(bd_options.threshold_pb_pb)
+      .arg(bd_options.threshold_pb_sc)
+      .arg(bd_options.threshold_sc_sc);
+
    le_bead_model_suffix->setText(bead_model_suffix);
 
    if (stopFlag)
@@ -404,19 +409,19 @@ int US_Hydrodyn::compute_bd_connections()
    {
       if ( 
           bead_models[current_model][i].active &&
-          ( bd_options.include_sc || bead_models[current_model][i].chain == 0 )
+          ( /* bd_options.include_sc || */ bead_models[current_model][i].chain == 0 )
           )
       {
          for ( unsigned int j = i + 1; j < bead_models[current_model].size(); j++ ) 
          {
             if ( 
                 bead_models[current_model][j].active &&
-                ( bd_options.include_sc || bead_models[current_model][j].chain == 0 )
+                ( /* bd_options.include_sc || */ bead_models[current_model][j].chain == 0 )
                 )
             {
                d = dist( bead_models[current_model][i].bead_coordinate,
                                bead_models[current_model][j].bead_coordinate );
-               if ( d <= bd_options.threshold )
+               if ( d <= bd_options.threshold_pb_pb )
                {
                   editor->append(QString("adding connection %1 %2\n").arg(i).arg(j));
                   connection_active[QString("%1~%2").arg(i).arg(j)] = true;
@@ -451,11 +456,11 @@ int US_Hydrodyn::compute_bd_connections()
          if ( 
              !connection_forced.count(QString("%1~%2").arg(i).arg(j)) &&
              ( !bead_models[current_model][i].active ||
-               ( !bd_options.include_sc && bead_models[current_model][i].chain != 0 ) ||
+               ( /* !bd_options.include_sc && */ bead_models[current_model][i].chain != 0 ) ||
                !bead_models[current_model][j].active ||
-               ( !bd_options.include_sc && bead_models[current_model][j].chain != 0 ) ||
+               ( /* !bd_options.include_sc && */ bead_models[current_model][j].chain != 0 ) ||
                ( d = dist( bead_models[current_model][i].bead_coordinate,
-                           bead_models[current_model][j].bead_coordinate ) ) > bd_options.threshold 
+                           bead_models[current_model][j].bead_coordinate ) ) > bd_options.threshold_pb_pb 
                )
              )
          {
