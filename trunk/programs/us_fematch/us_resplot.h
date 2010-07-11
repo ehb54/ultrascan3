@@ -8,6 +8,7 @@
 #include "us_widgets_dialog.h"
 #include "us_dataIO2.h"
 #include "us_plot.h"
+#include "us_plot3d.h"
 #include "us_resids_bitmap.h"
 #include "us_noise.h"
 #include "us_plot.h"
@@ -79,7 +80,6 @@ class US_EXTERN US_ResidPlot : public US_WidgetsDialog
       void prinCheck( bool );
       void pranCheck( bool );
       void srbmCheck( bool );
-      void write_noise( void );
       void close_all  ( void );
       void plot_data(   void );
       void plot_edata(  void );
