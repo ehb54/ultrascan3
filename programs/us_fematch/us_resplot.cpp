@@ -15,6 +15,9 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    setWindowTitle( tr( "Finite Element Data/Residuals Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 
+   QSize p1size( 560, 240 );
+   QSize p2size( 560, 240 );
+
    mainLayout      = new QHBoxLayout( this );
    leftLayout      = new QVBoxLayout();
    rightLayout     = new QVBoxLayout();
@@ -25,15 +28,11 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
-   mainLayout->addLayout( leftLayout );
-   mainLayout->addLayout( rightLayout  );
-
    QLabel* lb_datctrls    = us_banner( tr( "FE Analysis Data Viewer" ) );
    QLabel* lb_resctrls    = us_banner( tr( "FE Analysis Residuals Viewer" ) );
    QLabel* lb_vari        = us_label(  tr( "Variance:" ) );
    QLabel* lb_rmsd        = us_label(  tr( "RMSD:" ) );
 
-   QPushButton* pb_write  = us_pushbutton( tr( "Write Ti/Ri Noise" ) );
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
    ck_plteda = new QCheckBox( tr( "Plot Experimental Data" ) );
@@ -72,7 +71,6 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    resctrlsLayout->addWidget( lb_rmsd,     7, 0, 1, 3 );
    resctrlsLayout->addWidget( le_rmsd,     7, 3, 1, 5 );
 
-   buttonsLayout->addWidget( pb_write );
    buttonsLayout->addWidget( pb_close );
 
    ck_plteda->setChecked( true  );
@@ -106,21 +104,27 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
          tr( "Experimental Data" ),
          tr( "Radius (cm)" ),
          tr( "Absorbance" ) );
+
    plotLayout2 = new US_Plot( data_plot2,
          tr( "Residuals" ),
          tr( "Radius (cm)" ),
          tr( "OD Difference" ) );
+
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
-   data_plot1->setMinimumSize( 600, 240 );
-   data_plot2->setMinimumSize( 600, 240 );
+   data_plot1->setMinimumSize( p1size );
+   data_plot2->setMinimumSize( p2size );
+
+   rightLayout->addLayout( plotLayout1    );
+   rightLayout->addLayout( plotLayout2    );
 
    leftLayout ->addLayout( datctrlsLayout );
    leftLayout ->addLayout( resctrlsLayout );
    leftLayout ->addStretch();
    leftLayout ->addLayout( buttonsLayout  );
-   rightLayout->addLayout( plotLayout1    );
-   rightLayout->addLayout( plotLayout2    );
+
+   mainLayout->addLayout( leftLayout  );
+   mainLayout->addLayout( rightLayout );
 
    connect( ck_plteda, SIGNAL( toggled( bool ) ),
             this,      SLOT( pedaCheck( bool ) ) );
@@ -145,8 +149,6 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    connect( ck_shorbm, SIGNAL( toggled( bool ) ),
             this,      SLOT( srbmCheck( bool ) ) );
 
-   connect( pb_write,  SIGNAL( clicked()   ),
-            this,      SLOT( write_noise() ) );
    connect( pb_close,  SIGNAL( clicked()   ),
             this,      SLOT( close_all()   ) );
 
@@ -192,6 +194,7 @@ qDebug() << "RP:resbmap" << have_bm;
       qDebug() << "*ERROR* unable to get RP parent";
    }
 
+   ck_plteda->setChecked( true );
    ck_subtin->setEnabled( have_ti );
    ck_subrin->setEnabled( have_ri );
    ck_addtin->setEnabled( false );
@@ -200,14 +203,14 @@ qDebug() << "RP:resbmap" << have_bm;
    ck_pltrin->setEnabled( have_ri );
    ck_pltrin->setEnabled( have_ri );
 
-
-   ck_plteda->setChecked( true );
    skip_plot = false;
+   data_plot1->resize( p1size );
+   data_plot2->resize( p2size );
 
    plot_data();
 
    setVisible( true );
-
+   resize( p2size );
 }
 
 // plot-experimental-data box [un]checked
@@ -263,11 +266,13 @@ void US_ResidPlot::atinCheck( bool )
 {
    plot_data();
 }
+
 // add-ri-noise box [un]checked
 void US_ResidPlot::arinCheck( bool )
 {
    plot_data();
 }
+
 // plot-residuals  box [un]checked
 void US_ResidPlot::presCheck( bool chkd )
 {
@@ -284,6 +289,7 @@ void US_ResidPlot::presCheck( bool chkd )
 
    plot_data();
 }
+
 // plot-ti-noise box [un]checked
 void US_ResidPlot::ptinCheck( bool chkd )
 {
@@ -300,6 +306,7 @@ void US_ResidPlot::ptinCheck( bool chkd )
 
    plot_data();
 }
+
 // plot-ri-noise box [un]checked
 void US_ResidPlot::prinCheck( bool chkd )
 {
@@ -316,6 +323,7 @@ void US_ResidPlot::prinCheck( bool chkd )
 
    plot_data();
 }
+
 // plot-random-noise box [un]checked
 void US_ResidPlot::pranCheck( bool chkd )
 {
@@ -332,6 +340,7 @@ void US_ResidPlot::pranCheck( bool chkd )
 
    plot_data();
 }
+
 // show-residual-bitmap box [un]checked
 void US_ResidPlot::srbmCheck( bool chkd )
 {
@@ -339,18 +348,13 @@ void US_ResidPlot::srbmCheck( bool chkd )
    {  // bitmap checked:  replot to possibly build new map
 
       if ( have_bm )
-      {  // if bitmap exists already, detect if closed
+      {  // if bitmap exists already, detect when closed
          connect( resbmap, SIGNAL( destroyed()   ),
                   this,    SLOT( resids_closed() ) );
       }
 
       plot_data();
    }
-}
-
-// write-noise button clicked
-void US_ResidPlot::write_noise()
-{
 }
 
 // close button clicked
@@ -400,14 +404,14 @@ double ptfac=0.82;
    us_grid( data_plot1 );
 
    if ( do_plteda )
-   {  // get title and values count for experimental data
+   {  // set title and values count for experimental data
       data_plot1->setAxisTitle( QwtPlot::yLeft,
          tr( "Absorbance at " ) + edata->wavelength + tr( " nm" ) );
       points   = edata->scanData[ 0 ].readings.size();
    }
 
    if ( do_pltsda )
-   {  // get title and values count for simulation data
+   {  // set title and values count for simulation data
       if ( have_ed )
          data_plot1->setAxisTitle( QwtPlot::yLeft,
             tr( "Absorbance at " ) + edata->wavelength + tr( " nm" ) );
@@ -417,7 +421,7 @@ double ptfac=0.82;
       count    = sdata->scanData[ 0 ].readings.size();
    }
 
-   count    = ( points > count ) ? points : count;  // maximum readings count
+   count    = ( points > count ) ? points : count;  // maximum array count
 
    double* rr  = new double[ count ];
    double* vv  = new double[ count ];
@@ -440,11 +444,14 @@ points=qRound(points*ptfac);
 
       for ( ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
-         rinoi    = ( do_subrin ? ri_noise->values[ ii ] : 0.0 );
+         if ( do_subrin )
+            rinoi    = ri_noise->values[ ii ];
 
          for ( jj = 0; jj < points; jj++ )
          {  // each y is reading, optionally minus some noise
-            tinoi    = ( do_subtin ? ti_noise->values[ jj ] : 0.0 );
+            if ( do_subtin )
+               tinoi    = ti_noise->values[ jj ];
+
             vv[ jj ] = edata->value( ii, jj ) - rinoi - tinoi;
          }
 
@@ -469,11 +476,14 @@ points=qRound(points*ptfac);
 
       for ( ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
-         rinoi    = ( do_addrin ? ri_noise->values[ ii ] : 0.0 );
+         if ( do_addrin )
+            rinoi    = ri_noise->values[ ii ];
 
          for ( jj = 0; jj < points; jj++ )
-         {  // each y is reading, optionally minus some noise
-            tinoi    = ( do_addtin ? ti_noise->values[ jj ] : 0.0 );
+         {  // each y is reading, optionally plus some noise
+            if ( do_addtin )
+               tinoi    = ti_noise->values[ jj ];
+
             vv[ jj ] = sdata->value( ii, jj ) + rinoi + tinoi;
          }
 
@@ -584,6 +594,24 @@ points=qRound(points*ptfac);
       le_vari->setText( QString::number( rmsd ) );
       rmsd    = sqrt( rmsd );
       le_rmsd->setText( QString::number( rmsd ) );
+//*Debug
+//qDebug() << "BEFORE data00" << edata->value(0,0);
+//ti_noise->apply_to_data(*edata);
+//qDebug() << " TIrmv  data00" << edata->value(0,0);
+//ti_noise->apply_to_data(*edata,false);
+//qDebug() << "  TIadd  data00" << edata->value(0,0);
+//ri_noise->apply_to_data(*edata);
+//qDebug() << " RIrmv  data00" << edata->value(0,0);
+//ri_noise->apply_to_data(*edata,false);
+//qDebug() << "  RIadd  data00" << edata->value(0,0);
+//US_Noise::apply_noise(*edata,ti_noise);
+//qDebug() << " TIrmv  data00" << edata->value(0,0);
+//US_Noise::apply_noise(*edata,ti_noise,false);
+//qDebug() << "  TIadd  data00" << edata->value(0,0);
+//US_Noise::apply_noise(*edata,ri_noise);
+//qDebug() << " RIrmv  data00" << edata->value(0,0);
+//US_Noise::apply_noise(*edata,ri_noise,false);
+//qDebug() << "  RIadd  data00" << edata->value(0,0);
    }
 
    else if ( do_plttin )

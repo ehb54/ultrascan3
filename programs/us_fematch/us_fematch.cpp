@@ -2,8 +2,6 @@
 
 #include <QApplication>
 
-#include <uuid/uuid.h>
-
 #include "us_fematch.h"
 #include "us_resids_bitmap.h"
 #include "us_plot_control.h"
@@ -123,11 +121,11 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    int fontHeight = fm.lineSpacing();
 
    te_desc    = us_textedit();
-   te_desc->setMaximumHeight( fontHeight * 2 + 12 );  // Add for border
+   te_desc->setMaximumHeight( fontHeight * 1 + 12 );  // Add for border
    te_desc->setReadOnly( true );
 
    lw_triples = us_listwidget();
-   lw_triples->setMaximumHeight( fontHeight * 4 + 12 );
+   lw_triples->setMaximumHeight( fontHeight * 3 + 12 );
 
 
    runInfoLayout->addWidget( lb_info   , 0, 0, 1, 4 );
@@ -306,8 +304,8 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
-   data_plot1->setMinimumSize( 600, 360 );
-   data_plot2->setMinimumSize( 600, 280 );
+   data_plot1->setMinimumSize( 560, 240 );
+   data_plot2->setMinimumSize( 560, 240 );
 
    // Standard buttons
    pb_reset = us_pushbutton( tr( "Reset" ) );
@@ -328,7 +326,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    rightLayout->addLayout( plotLayout1 );
    rightLayout->addWidget( gb_modelsim );
    rightLayout->addLayout( plotLayout2 );
-   rightLayout->setStretchFactor( plotLayout1, 4 );
+   rightLayout->setStretchFactor( plotLayout1, 3 );
    rightLayout->setStretchFactor( plotLayout2, 2 );
 
    mainLayout->addLayout( leftLayout  );
@@ -1708,7 +1706,7 @@ qDebug() << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
       eplotcd->close();
    }
 
-   eplotcd = new US_PlotControl( this );
+   eplotcd = new US_PlotControl( this, &model );
    eplotcd->move( epd_pos );
    eplotcd->show();
 }

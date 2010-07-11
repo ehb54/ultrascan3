@@ -1,5 +1,6 @@
 //! \file us_plot_control.cpp
 
+#include "us_fematch.h"
 #include "us_plot_control.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -7,9 +8,12 @@
 #include <qwt_legend.h>
 
 // constructor:  enhanced plot control widget
-US_PlotControl::US_PlotControl( QWidget* p )
+US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    : US_WidgetsDialog( p, 0 )
 {
+
+   wparent        = p;
+   model          = amodel;
 
    setObjectName( "US_PlotControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
@@ -60,10 +64,10 @@ US_PlotControl::US_PlotControl( QWidget* p )
    QCheckBox*   ck_xfra   = new QCheckBox( tr( "x=fr" ) );
    QCheckBox*   ck_yfra   = new QCheckBox( tr( "y=fr" ) );
 
-   QwtCounter* ct_zscalefac = us_counter( 3, 1,  50, 1 );
-   QwtCounter* ct_gridreso  = us_counter( 3, 1,  50, 1 );
-   QwtCounter* ct_peaksmoo  = us_counter( 3, 1, 150, 1 );
-   QwtCounter* ct_peakwidth = us_counter( 3, 0,  50, 1 );
+   QwtCounter* ct_zscalefac = us_counter( 3,  -10,   10, 0.01 );
+   QwtCounter* ct_gridreso  = us_counter( 3,   50, 1000,   10 );
+   QwtCounter* ct_peaksmoo  = us_counter( 3,    1,  200,    1 );
+   QwtCounter* ct_peakwidth = us_counter( 3, 0.01, 10.0, 0.01 );
 
    controlsLayout->addWidget( lb_controls,   0, 0, 1, 4 );
    controlsLayout->addWidget( lb_dimens,     1, 0, 1, 2 );
@@ -152,6 +156,10 @@ US_PlotControl::US_PlotControl( QWidget* p )
    ct_gridreso ->setValue( 150 );
    ct_peaksmoo ->setValue( 80 );
    ct_peakwidth->setValue( 0.3 );
+   ct_zscalefac->setStep(  0.01 );
+   ct_gridreso ->setStep(  10   );
+   ct_peaksmoo ->setStep(  1    );
+   ct_peakwidth->setStep(  0.01 );
 
    connect( ck_xmwt, SIGNAL( toggled( bool ) ),
             this,    SLOT( xmwtCheck( bool ) ) );
@@ -193,6 +201,7 @@ US_PlotControl::US_PlotControl( QWidget* p )
             this,      SLOT( close_all() ) );
 
    resplotd = 0;
+   plot3d_w = 0;
    zscale   = 2.0;
    gridres  = 150.0;
    pksmooth = 80.0;
@@ -324,6 +333,21 @@ void US_PlotControl::rplot_btn()
 // 3d plot button clicked
 void US_PlotControl::plot3_btn()
 {
+   int typex = dimensionType( xCheck );
+   int typey = dimensionType( yCheck );
+   int typez = 1;
+
+   if ( plot3d_w == 0 )
+   {
+      plot3d_w = new US_Plot3D( this, model );
+   }
+
+   plot3d_w->setTypes     ( typex, typey, typez );
+   plot3d_w->setRanges    ( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 );
+   plot3d_w->setParameters( 0.0, zscale, gridres, pksmooth, pkwidth );
+   plot3d_w->replot       ( );
+
+   plot3d_w->setVisible( true );
 }
 
 // close button clicked
@@ -333,5 +357,21 @@ void US_PlotControl::close_all()
       resplotd->close();
 
    close();
+}
+
+int US_PlotControl::dimensionType( QVector< QCheckBox* >& xycheck )
+{
+   int dimType = 1;
+
+   for ( int ii = 0; ii < xycheck.size(); ii++ )
+   {
+      if ( xycheck[ ii ]->isChecked() )
+      {
+         dimType = ii + 1;
+         break;
+      }
+   }
+
+   return dimType;
 }
 

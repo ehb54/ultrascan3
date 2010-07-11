@@ -155,7 +155,7 @@ void US_NoiseLoader::itemSelect( QTreeWidgetItem* item, int )
       }
 
       // The following inserts the selected noise entry into the select list.
-      // The goal is to have at most 2 entries, "ri" first, "ti" last.
+      // The goal is to have at most 2 entries, "ti" first, "ri" last.
 
       if ( itemtype == "ti" )
       {  // item to add is "ti_*"
