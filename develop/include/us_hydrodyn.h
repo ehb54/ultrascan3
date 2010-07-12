@@ -69,6 +69,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       ~US_Hydrodyn();
       int get_color(PDB_atom *);
       BD_Options bd_options;
+      BD_Options default_bd_options;
       struct misc_options misc;
       struct misc_options default_misc;
       struct advanced_config advanced_config;

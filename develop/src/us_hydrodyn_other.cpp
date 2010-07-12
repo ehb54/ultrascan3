@@ -1600,6 +1600,239 @@ int US_Hydrodyn::read_config(QFile& f)
    if ( ts.readLine() == QString::null ) return -10156;
    saxs_options.saxs_sans = str.toInt();
 
+   // bd_options
+   {
+      int i = -12000;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.threshold_pb_pb = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.threshold_pb_sc = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.threshold_sc_sc = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.do_rr = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.force_chem = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.bead_size_type = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.tprev = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.ttraj = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.deltat = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.npadif = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.nconf = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.inter = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.iorder = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.iseed = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.icdm = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.chem_pb_pb_bond_type = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_chem_pb_pb_force_constant = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.chem_pb_pb_force_constant = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_chem_pb_pb_equilibrium_dist = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.chem_pb_pb_equilibrium_dist = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_chem_pb_pb_max_elong = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.chem_pb_pb_max_elong = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.chem_pb_sc_bond_type = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_chem_pb_sc_force_constant = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.chem_pb_sc_force_constant = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_chem_pb_sc_equilibrium_dist = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.chem_pb_sc_equilibrium_dist = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_chem_pb_sc_max_elong = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.chem_pb_sc_max_elong = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.chem_sc_sc_bond_type = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_chem_sc_sc_force_constant = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.chem_sc_sc_force_constant = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_chem_sc_sc_equilibrium_dist = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.chem_sc_sc_equilibrium_dist = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_chem_sc_sc_max_elong = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.chem_sc_sc_max_elong = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.pb_pb_bond_type = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_pb_pb_force_constant = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.pb_pb_force_constant = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_pb_pb_equilibrium_dist = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.pb_pb_equilibrium_dist = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_pb_pb_max_elong = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.pb_pb_max_elong = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.pb_sc_bond_type = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_pb_sc_force_constant = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.pb_sc_force_constant = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_pb_sc_equilibrium_dist = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.pb_sc_equilibrium_dist = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_pb_sc_max_elong = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.pb_sc_max_elong = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.sc_sc_bond_type = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_sc_sc_force_constant = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.sc_sc_force_constant = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_sc_sc_equilibrium_dist = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.sc_sc_equilibrium_dist = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.compute_sc_sc_max_elong = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.sc_sc_max_elong = str.toFloat();
+      i--;
+   }
+
    ts >> str; // batch missing atom handling
    if ( ts.readLine() == QString::null ) return -11000;
    batch.missing_atoms = str.toInt();
@@ -1652,7 +1885,8 @@ int US_Hydrodyn::read_config(QFile& f)
       }
    }
 
-   if ( !ts.atEnd() ) return -12000;
+
+   if ( !ts.atEnd() ) return -20000;
 
    f.close();
    return 0;
@@ -1843,6 +2077,64 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << saxs_options.curve << "\t\t# 0 = raw, 1 = saxs, 2 = sans\n";
       ts << saxs_options.saxs_sans << "\t\t# 0 = saxs, 1 = sans\n";
 
+      ts << bd_options.threshold_pb_pb << "\t\t# bd_options.threshold_pb_pb\n";
+      ts << bd_options.threshold_pb_sc << "\t\t# bd_options.threshold_pb_sc\n";
+      ts << bd_options.threshold_sc_sc << "\t\t# bd_options.threshold_sc_sc\n";
+      ts << bd_options.do_rr << "\t\t# bd_options.do_rr\n";
+      ts << bd_options.force_chem << "\t\t# bd_options.force_chem\n";
+      ts << bd_options.bead_size_type << "\t\t# bd_options.bead_size_type\n";
+      ts << bd_options.tprev << "\t\t# bd_options.tprev\n";
+      ts << bd_options.ttraj << "\t\t# bd_options.ttraj\n";
+      ts << bd_options.deltat << "\t\t# bd_options.deltat\n";
+      ts << bd_options.npadif << "\t\t# bd_options.npadif\n";
+      ts << bd_options.nconf << "\t\t# bd_options.nconf\n";
+      ts << bd_options.inter << "\t\t# bd_options.inter\n";
+      ts << bd_options.iorder << "\t\t# bd_options.iorder\n";
+      ts << bd_options.iseed << "\t\t# bd_options.iseed\n";
+      ts << bd_options.icdm << "\t\t# bd_options.icdm\n";
+      ts << bd_options.chem_pb_pb_bond_type << "\t\t# bd_options.chem_pb_pb_bond_type\n";
+      ts << bd_options.compute_chem_pb_pb_force_constant << "\t\t# bd_options.compute_chem_pb_pb_force_constant\n";
+      ts << bd_options.chem_pb_pb_force_constant << "\t\t# bd_options.chem_pb_pb_force_constant\n";
+      ts << bd_options.compute_chem_pb_pb_equilibrium_dist << "\t\t# bd_options.compute_chem_pb_pb_equilibrium_dist\n";
+      ts << bd_options.chem_pb_pb_equilibrium_dist << "\t\t# bd_options.chem_pb_pb_equilibrium_dist\n";
+      ts << bd_options.compute_chem_pb_pb_max_elong << "\t\t# bd_options.compute_chem_pb_pb_max_elong\n";
+      ts << bd_options.chem_pb_pb_max_elong << "\t\t# bd_options.chem_pb_pb_max_elong\n";
+      ts << bd_options.chem_pb_sc_bond_type << "\t\t# bd_options.chem_pb_sc_bond_type\n";
+      ts << bd_options.compute_chem_pb_sc_force_constant << "\t\t# bd_options.compute_chem_pb_sc_force_constant\n";
+      ts << bd_options.chem_pb_sc_force_constant << "\t\t# bd_options.chem_pb_sc_force_constant\n";
+      ts << bd_options.compute_chem_pb_sc_equilibrium_dist << "\t\t# bd_options.compute_chem_pb_sc_equilibrium_dist\n";
+      ts << bd_options.chem_pb_sc_equilibrium_dist << "\t\t# bd_options.chem_pb_sc_equilibrium_dist\n";
+      ts << bd_options.compute_chem_pb_sc_max_elong << "\t\t# bd_options.compute_chem_pb_sc_max_elong\n";
+      ts << bd_options.chem_pb_sc_max_elong << "\t\t# bd_options.chem_pb_sc_max_elong\n";
+      ts << bd_options.chem_sc_sc_bond_type << "\t\t# bd_options.chem_sc_sc_bond_type\n";
+      ts << bd_options.compute_chem_sc_sc_force_constant << "\t\t# bd_options.compute_chem_sc_sc_force_constant\n";
+      ts << bd_options.chem_sc_sc_force_constant << "\t\t# bd_options.chem_sc_sc_force_constant\n";
+      ts << bd_options.compute_chem_sc_sc_equilibrium_dist << "\t\t# bd_options.compute_chem_sc_sc_equilibrium_dist\n";
+      ts << bd_options.chem_sc_sc_equilibrium_dist << "\t\t# bd_options.chem_sc_sc_equilibrium_dist\n";
+      ts << bd_options.compute_chem_sc_sc_max_elong << "\t\t# bd_options.compute_chem_sc_sc_max_elong\n";
+      ts << bd_options.chem_sc_sc_max_elong << "\t\t# bd_options.chem_sc_sc_max_elong\n";
+      ts << bd_options.pb_pb_bond_type << "\t\t# bd_options.pb_pb_bond_type\n";
+      ts << bd_options.compute_pb_pb_force_constant << "\t\t# bd_options.compute_pb_pb_force_constant\n";
+      ts << bd_options.pb_pb_force_constant << "\t\t# bd_options.pb_pb_force_constant\n";
+      ts << bd_options.compute_pb_pb_equilibrium_dist << "\t\t# bd_options.compute_pb_pb_equilibrium_dist\n";
+      ts << bd_options.pb_pb_equilibrium_dist << "\t\t# bd_options.pb_pb_equilibrium_dist\n";
+      ts << bd_options.compute_pb_pb_max_elong << "\t\t# bd_options.compute_pb_pb_max_elong\n";
+      ts << bd_options.pb_pb_max_elong << "\t\t# bd_options.pb_pb_max_elong\n";
+      ts << bd_options.pb_sc_bond_type << "\t\t# bd_options.pb_sc_bond_type\n";
+      ts << bd_options.compute_pb_sc_force_constant << "\t\t# bd_options.compute_pb_sc_force_constant\n";
+      ts << bd_options.pb_sc_force_constant << "\t\t# bd_options.pb_sc_force_constant\n";
+      ts << bd_options.compute_pb_sc_equilibrium_dist << "\t\t# bd_options.compute_pb_sc_equilibrium_dist\n";
+      ts << bd_options.pb_sc_equilibrium_dist << "\t\t# bd_options.pb_sc_equilibrium_dist\n";
+      ts << bd_options.compute_pb_sc_max_elong << "\t\t# bd_options.compute_pb_sc_max_elong\n";
+      ts << bd_options.pb_sc_max_elong << "\t\t# bd_options.pb_sc_max_elong\n";
+      ts << bd_options.sc_sc_bond_type << "\t\t# bd_options.sc_sc_bond_type\n";
+      ts << bd_options.compute_sc_sc_force_constant << "\t\t# bd_options.compute_sc_sc_force_constant\n";
+      ts << bd_options.sc_sc_force_constant << "\t\t# bd_options.sc_sc_force_constant\n";
+      ts << bd_options.compute_sc_sc_equilibrium_dist << "\t\t# bd_options.compute_sc_sc_equilibrium_dist\n";
+      ts << bd_options.sc_sc_equilibrium_dist << "\t\t# bd_options.sc_sc_equilibrium_dist\n";
+      ts << bd_options.compute_sc_sc_max_elong << "\t\t# bd_options.compute_sc_sc_max_elong\n";
+      ts << bd_options.sc_sc_max_elong << "\t\t# bd_options.sc_sc_max_elong\n";
+
       ts << batch.missing_atoms << "\t\t# batch missing atom handling\n";
       ts << batch.missing_residues << "\t\t# batch missing residue handling\n";
       ts << batch.somo << "\t\t# batch run somo\n";
@@ -1863,6 +2155,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       {
          ts << save_params.field[i] << endl;
       }
+
       f.close();
    }
 }
@@ -1880,6 +2173,7 @@ void US_Hydrodyn::set_default()
       j=read_config(f);
       if ( j )
       {
+         cout << "read config returned " << j << endl;
          QMessageBox::message(tr("Please note:"),
                               tr("The somo.default configuration file was found to be corrupt.\n"
                                  "Resorting to hard-coded defaults."));
@@ -2055,6 +2349,64 @@ void US_Hydrodyn::set_default()
       saxs_options.curve = 0;                // 0 = raw, 1 = saxs, 2 = sans
       saxs_options.saxs_sans = 0;            // 0 = saxs, 1 = sans
 
+      bd_options.threshold_pb_pb = 6;
+      bd_options.threshold_pb_sc = 5;
+      bd_options.threshold_sc_sc = 4;
+      bd_options.do_rr = true;
+      bd_options.force_chem = true;
+      bd_options.bead_size_type = 0;
+      bd_options.tprev = 0.0;
+      bd_options.ttraj = 1.0;
+      bd_options.deltat = 0.0001;
+      bd_options.npadif = 10;
+      bd_options.nconf = 1000;
+      bd_options.inter = 2;
+      bd_options.iorder = 1;
+      bd_options.iseed = 1234;
+      bd_options.icdm = 0;
+      bd_options.chem_pb_pb_bond_type = 0;
+      bd_options.compute_chem_pb_pb_force_constant = false;
+      bd_options.chem_pb_pb_force_constant = 10.0;
+      bd_options.compute_chem_pb_pb_equilibrium_dist = true;
+      bd_options.chem_pb_pb_equilibrium_dist = 0.0;
+      bd_options.compute_chem_pb_pb_max_elong = true;
+      bd_options.chem_pb_pb_max_elong = 0.0;
+      bd_options.chem_pb_sc_bond_type = 0;
+      bd_options.compute_chem_pb_sc_force_constant = false;
+      bd_options.chem_pb_sc_force_constant = 10.0;
+      bd_options.compute_chem_pb_sc_equilibrium_dist = true;
+      bd_options.chem_pb_sc_equilibrium_dist = 0.0;
+      bd_options.compute_chem_pb_sc_max_elong = true;
+      bd_options.chem_pb_sc_max_elong = 0.0;
+      bd_options.chem_sc_sc_bond_type = 0;
+      bd_options.compute_chem_sc_sc_force_constant = false;
+      bd_options.chem_sc_sc_force_constant = 10.0;
+      bd_options.compute_chem_sc_sc_equilibrium_dist = true;
+      bd_options.chem_sc_sc_equilibrium_dist = 0.0;
+      bd_options.compute_chem_sc_sc_max_elong = true;
+      bd_options.chem_sc_sc_max_elong = 0.0;
+      bd_options.pb_pb_bond_type = 0;
+      bd_options.compute_pb_pb_force_constant = false;
+      bd_options.pb_pb_force_constant = 10.0;
+      bd_options.compute_pb_pb_equilibrium_dist = true;
+      bd_options.pb_pb_equilibrium_dist = 0.0;
+      bd_options.compute_pb_pb_max_elong = true;
+      bd_options.pb_pb_max_elong = 0.0;
+      bd_options.pb_sc_bond_type = 0;
+      bd_options.compute_pb_sc_force_constant = false;
+      bd_options.pb_sc_force_constant = 10.0;
+      bd_options.compute_pb_sc_equilibrium_dist = true;
+      bd_options.pb_sc_equilibrium_dist = 0.0;
+      bd_options.compute_pb_sc_max_elong = true;
+      bd_options.pb_sc_max_elong = 0.0;
+      bd_options.sc_sc_bond_type = 0;
+      bd_options.compute_sc_sc_force_constant = false;
+      bd_options.sc_sc_force_constant = 10.0;
+      bd_options.compute_sc_sc_equilibrium_dist = true;
+      bd_options.sc_sc_equilibrium_dist = 0.0;
+      bd_options.compute_sc_sc_max_elong = true;
+      bd_options.sc_sc_max_elong = 0.0;
+
       batch.missing_atoms = 0;
       batch.missing_residues = 0;
       batch.somo = true;
@@ -2067,6 +2419,7 @@ void US_Hydrodyn::set_default()
       batch.file.clear();
 
       save_params.field.clear();
+
    }
 
    default_sidechain_overlap = sidechain_overlap;
@@ -2086,6 +2439,7 @@ void US_Hydrodyn::set_default()
    default_saxs_options = saxs_options;
    default_batch = batch;
    default_save_params = save_params;
+   default_bd_options = bd_options;
 }
 
 void US_Hydrodyn::view_file(const QString &filename)

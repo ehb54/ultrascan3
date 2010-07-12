@@ -154,6 +154,8 @@ void US_Hydrodyn::calc_bd()
 // ---------- create browflex files
 int US_Hydrodyn::create_browflex_files()
 {
+   double conv = 1e-8;
+
    QString basename = 
       somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
@@ -222,7 +224,7 @@ int US_Hydrodyn::create_browflex_files()
       ts << QString(" %1,   Number of beads\n").arg(bead_models[current_model].size());
       for (  unsigned int i = 0; i < bead_models[current_model].size(); i++ )
       {
-         ts << QString("  %1\n").arg(bead_models[current_model][i].bead_computed_radius);
+         ts << QString("  %1\n").arg(bead_models[current_model][i].bead_computed_radius * conv);
       }
 
       // connectors
@@ -275,13 +277,13 @@ int US_Hydrodyn::create_browflex_files()
                   }
                   if ( bd_options.compute_pb_pb_equilibrium_dist )
                   {
-                     equilibrium_dist = connection_dist_stats[it->first][2];
+                     equilibrium_dist = connection_dist_stats[it->first][2] * conv;
                   } else {
                      equilibrium_dist = bd_options.pb_pb_equilibrium_dist;
                   }
                   if ( bd_options.compute_pb_pb_max_elong )
                   {
-                     max_elong = connection_dist_stats[it->first][1];
+                     max_elong = connection_dist_stats[it->first][1] * conv;
                   } else {
                      max_elong = bd_options.pb_pb_max_elong;
                   }
@@ -353,13 +355,13 @@ int US_Hydrodyn::create_browflex_files()
                   }
                   if ( bd_options.compute_pb_sc_equilibrium_dist )
                   {
-                     equilibrium_dist = connection_dist_stats[it->first][2];
+                     equilibrium_dist = connection_dist_stats[it->first][2] * conv;
                   } else {
                      equilibrium_dist = bd_options.pb_sc_equilibrium_dist;
                   }
                   if ( bd_options.compute_pb_sc_max_elong )
                   {
-                     max_elong = connection_dist_stats[it->first][1];
+                     max_elong = connection_dist_stats[it->first][1] * conv;
                   } else {
                      max_elong = bd_options.pb_sc_max_elong;
                   }
@@ -431,13 +433,13 @@ int US_Hydrodyn::create_browflex_files()
                   }
                   if ( bd_options.compute_sc_sc_equilibrium_dist )
                   {
-                     equilibrium_dist = connection_dist_stats[it->first][2];
+                     equilibrium_dist = connection_dist_stats[it->first][2] * conv;
                   } else {
                      equilibrium_dist = bd_options.sc_sc_equilibrium_dist;
                   }
                   if ( bd_options.compute_sc_sc_max_elong )
                   {
-                     max_elong = connection_dist_stats[it->first][1];
+                     max_elong = connection_dist_stats[it->first][1] * conv;
                   } else {
                      max_elong = bd_options.sc_sc_max_elong;
                   }
@@ -509,13 +511,13 @@ int US_Hydrodyn::create_browflex_files()
                   }
                   if ( bd_options.compute_chem_pb_pb_equilibrium_dist )
                   {
-                     equilibrium_dist = connection_dist_stats[it->first][2];
+                     equilibrium_dist = connection_dist_stats[it->first][2] * conv;
                   } else {
                      equilibrium_dist = bd_options.chem_pb_pb_equilibrium_dist;
                   }
                   if ( bd_options.compute_chem_pb_pb_max_elong )
                   {
-                     max_elong = connection_dist_stats[it->first][1];
+                     max_elong = connection_dist_stats[it->first][1] * conv;
                   } else {
                      max_elong = bd_options.chem_pb_pb_max_elong;
                   }
@@ -587,13 +589,13 @@ int US_Hydrodyn::create_browflex_files()
                   }
                   if ( bd_options.compute_chem_pb_sc_equilibrium_dist )
                   {
-                     equilibrium_dist = connection_dist_stats[it->first][2];
+                     equilibrium_dist = connection_dist_stats[it->first][2] * conv;
                   } else {
                      equilibrium_dist = bd_options.chem_pb_sc_equilibrium_dist;
                   }
                   if ( bd_options.compute_chem_pb_sc_max_elong )
                   {
-                     max_elong = connection_dist_stats[it->first][1];
+                     max_elong = connection_dist_stats[it->first][1] * conv;
                   } else {
                      max_elong = bd_options.chem_pb_sc_max_elong;
                   }
@@ -665,13 +667,13 @@ int US_Hydrodyn::create_browflex_files()
                   }
                   if ( bd_options.compute_chem_sc_sc_equilibrium_dist )
                   {
-                     equilibrium_dist = connection_dist_stats[it->first][2];
+                     equilibrium_dist = connection_dist_stats[it->first][2] * conv;
                   } else {
                      equilibrium_dist = bd_options.chem_sc_sc_equilibrium_dist;
                   }
                   if ( bd_options.compute_chem_sc_sc_max_elong )
                   {
-                     max_elong = connection_dist_stats[it->first][1];
+                     max_elong = connection_dist_stats[it->first][1] * conv;
                   } else {
                      max_elong = bd_options.chem_sc_sc_max_elong;
                   }
@@ -759,9 +761,9 @@ int US_Hydrodyn::create_browflex_files()
       {
          ts << 
             QString("%1 %2 %3\n")
-            .arg(bead_models[current_model][i].bead_coordinate.axis[0])
-            .arg(bead_models[current_model][i].bead_coordinate.axis[1])
-            .arg(bead_models[current_model][i].bead_coordinate.axis[2])
+            .arg(bead_models[current_model][i].bead_coordinate.axis[0] * conv)
+            .arg(bead_models[current_model][i].bead_coordinate.axis[1] * conv)
+            .arg(bead_models[current_model][i].bead_coordinate.axis[2] * conv)
             ;
       }
       f.close();

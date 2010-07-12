@@ -34,6 +34,7 @@ struct BD_Options
 
    int bead_size_type; // 0 = first model, 1 = minimum, 2 = average
 
+   float tprev;  // see browflex2a.pdf for more info
    float ttraj;  // see browflex2a.pdf for more info
    float deltat;
    int npadif;
@@ -116,6 +117,7 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       QLabel *lbl_npadif;
       QLabel *lbl_nconf;
       QLabel *lbl_iseed;
+      QLabel *lbl_tprev;
       QLabel *lbl_ttraj;
       QLabel *lbl_deltat;
       QLabel *lbl_springs;
@@ -124,6 +126,7 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       QwtCounter *cnt_bd_threshold_pb_sc;
       QwtCounter *cnt_bd_threshold_sc_sc;
 
+      QLineEdit *le_tprev;
       QLineEdit *le_ttraj;
       QLineEdit *le_deltat;
       QwtCounter *cnt_npadif;
@@ -283,6 +286,7 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       void set_compute_sc_sc_equilibrium_dist();
       void set_compute_sc_sc_max_elong();
 
+      void update_tprev(const QString &str);
       void update_ttraj(const QString &str);
       void update_deltat(const QString &str);
 

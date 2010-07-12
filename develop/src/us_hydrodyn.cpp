@@ -179,71 +179,6 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    results.asa_rg_pos = 0.0;
    results.asa_rg_neg = 0.0;
 
-   bd_options.threshold_pb_pb = 6;
-   bd_options.threshold_pb_sc = 5;
-   bd_options.threshold_sc_sc = 4;
-   bd_options.do_rr = true;
-   bd_options.force_chem = true;
-   bd_options.bead_size_type = 0;
-
-   bd_options.ttraj = 1.0;
-   bd_options.deltat = 0.0001;
-   bd_options.npadif = 10;
-   bd_options.nconf = 5000;
-   bd_options.inter = 2;
-   bd_options.iorder = 1;
-   bd_options.iseed = 1234;
-   bd_options.icdm = 0;
-
-   bd_options.chem_pb_pb_bond_type = 0;
-   bd_options.compute_chem_pb_pb_force_constant = false;
-   bd_options.chem_pb_pb_force_constant = 0.0;
-   bd_options.compute_chem_pb_pb_equilibrium_dist = true;
-   bd_options.chem_pb_pb_equilibrium_dist = 0.0;
-   bd_options.compute_chem_pb_pb_max_elong = true;
-   bd_options.chem_pb_pb_max_elong = 0.0;
-
-   bd_options.chem_pb_sc_bond_type = 0;
-   bd_options.compute_chem_pb_sc_force_constant = false;
-   bd_options.chem_pb_sc_force_constant = 0.0;
-   bd_options.compute_chem_pb_sc_equilibrium_dist = true;
-   bd_options.chem_pb_sc_equilibrium_dist = 0.0;
-   bd_options.compute_chem_pb_sc_max_elong = true;
-   bd_options.chem_pb_sc_max_elong = 0.0;
-
-   bd_options.chem_sc_sc_bond_type = 0;
-   bd_options.compute_chem_sc_sc_force_constant = false;
-   bd_options.chem_sc_sc_force_constant = 0.0;
-   bd_options.compute_chem_sc_sc_equilibrium_dist = true;
-   bd_options.chem_sc_sc_equilibrium_dist = 0.0;
-   bd_options.compute_chem_sc_sc_max_elong = true;
-   bd_options.chem_sc_sc_max_elong = 0.0;
-
-   bd_options.pb_pb_bond_type = 0;
-   bd_options.compute_pb_pb_force_constant = false;
-   bd_options.pb_pb_force_constant = 0.0;
-   bd_options.compute_pb_pb_equilibrium_dist = true;
-   bd_options.pb_pb_equilibrium_dist = 0.0;
-   bd_options.compute_pb_pb_max_elong = true;
-   bd_options.pb_pb_max_elong = 0.0;
-
-   bd_options.pb_sc_bond_type = 0;
-   bd_options.compute_pb_sc_force_constant = false;
-   bd_options.pb_sc_force_constant = 0.0;
-   bd_options.compute_pb_sc_equilibrium_dist = true;
-   bd_options.pb_sc_equilibrium_dist = 0.0;
-   bd_options.compute_pb_sc_max_elong = true;
-   bd_options.pb_sc_max_elong = 0.0;
-
-   bd_options.sc_sc_bond_type = 0;
-   bd_options.compute_sc_sc_force_constant = false;
-   bd_options.sc_sc_force_constant = 0.0;
-   bd_options.compute_sc_sc_equilibrium_dist = true;
-   bd_options.sc_sc_equilibrium_dist = 0.0;
-   bd_options.compute_sc_sc_max_elong = true;
-   bd_options.sc_sc_max_elong = 0.0;
-
-
    rasmol = new QProcess(this);
    rasmol->setWorkingDirectory(
                                QDir(USglobal->config_list.system_dir + SLASH +
@@ -1128,6 +1063,7 @@ void US_Hydrodyn::do_reset()
    grid = default_grid;
    saxs_options = default_saxs_options;
    batch = default_batch;
+   bd_options = default_bd_options;
    //  save = default_save;
 }
 

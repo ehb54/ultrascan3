@@ -50,7 +50,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_info_simulation_opts->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info_simulation_opts->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_springs = new QLabel(tr("Connector Spring Definitions:"), this);
+   lbl_springs = new QLabel(tr("Connector Spring Definitions (spring constant in erg/cm^2, distance in cm):"), this);
    lbl_springs->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_springs->setAlignment(AlignCenter|AlignVCenter);
    lbl_springs->setMinimumHeight(minHeight1);
@@ -212,7 +212,21 @@ void US_Hydrodyn_BD_Options::setupGUI()
    cb_icdm->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_icdm, SIGNAL(clicked()), SLOT(set_icdm()));
 
-   lbl_ttraj = new QLabel(tr(" Total time duration: "), this);
+   lbl_tprev = new QLabel(tr(" Previous heating time (s): "), this);
+   lbl_tprev->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tprev->setMinimumHeight(minHeight1);
+   lbl_tprev->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_tprev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_tprev = new QLineEdit(this, "Tprev Line Edit");
+   le_tprev->setText(str.sprintf("%4.6f",(*bd_options).tprev));
+   le_tprev->setAlignment(AlignVCenter);
+   le_tprev->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_tprev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_tprev->setEnabled(true);
+   connect(le_tprev, SIGNAL(textChanged(const QString &)), SLOT(update_tprev(const QString &)));
+
+   lbl_ttraj = new QLabel(tr(" Total time duration (s): "), this);
    lbl_ttraj->setAlignment(AlignLeft|AlignVCenter);
    lbl_ttraj->setMinimumHeight(minHeight1);
    lbl_ttraj->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -226,7 +240,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    le_ttraj->setEnabled(true);
    connect(le_ttraj, SIGNAL(textChanged(const QString &)), SLOT(update_ttraj(const QString &)));
 
-   lbl_deltat = new QLabel(tr(" Duration of each simulation step: "), this);
+   lbl_deltat = new QLabel(tr(" Duration of each simulation step (s): "), this);
    lbl_deltat->setAlignment(AlignLeft|AlignVCenter);
    lbl_deltat->setMinimumHeight(minHeight1);
    lbl_deltat->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -733,7 +747,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
 
    bg_sc_sc_bond_types->setButton(bd_options->sc_sc_bond_type);
 
-   lbl_chem_pb_pb_force_constant = new QLabel(tr(" Hookean force constant: "), this);
+   lbl_chem_pb_pb_force_constant = new QLabel(tr(" Hookean spring constant: "), this);
    lbl_chem_pb_pb_force_constant->setAlignment(AlignLeft|AlignVCenter);
    lbl_chem_pb_pb_force_constant->setMinimumHeight(minHeight1);
    lbl_chem_pb_pb_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -775,7 +789,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    le_chem_pb_pb_max_elong->setEnabled(true);
    connect(le_chem_pb_pb_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_pb_max_elong(const QString &)));
 
-   lbl_chem_pb_sc_force_constant = new QLabel(tr(" Hookean force constant: "), this);
+   lbl_chem_pb_sc_force_constant = new QLabel(tr(" Hookean spring constant: "), this);
    lbl_chem_pb_sc_force_constant->setAlignment(AlignLeft|AlignVCenter);
    lbl_chem_pb_sc_force_constant->setMinimumHeight(minHeight1);
    lbl_chem_pb_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -817,7 +831,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    le_chem_pb_sc_max_elong->setEnabled(true);
    connect(le_chem_pb_sc_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_sc_max_elong(const QString &)));
 
-   lbl_chem_sc_sc_force_constant = new QLabel(tr(" Hookean force constant: "), this);
+   lbl_chem_sc_sc_force_constant = new QLabel(tr(" Hookean spring constant: "), this);
    lbl_chem_sc_sc_force_constant->setAlignment(AlignLeft|AlignVCenter);
    lbl_chem_sc_sc_force_constant->setMinimumHeight(minHeight1);
    lbl_chem_sc_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -859,7 +873,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    le_chem_sc_sc_max_elong->setEnabled(true);
    connect(le_chem_sc_sc_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_chem_sc_sc_max_elong(const QString &)));
 
-   lbl_pb_pb_force_constant = new QLabel(tr(" Hookean force constant: "), this);
+   lbl_pb_pb_force_constant = new QLabel(tr(" Hookean spring constant: "), this);
    lbl_pb_pb_force_constant->setAlignment(AlignLeft|AlignVCenter);
    lbl_pb_pb_force_constant->setMinimumHeight(minHeight1);
    lbl_pb_pb_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -901,7 +915,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    le_pb_pb_max_elong->setEnabled(true);
    connect(le_pb_pb_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_pb_pb_max_elong(const QString &)));
 
-   lbl_pb_sc_force_constant = new QLabel(tr(" Hookean force constant: "), this);
+   lbl_pb_sc_force_constant = new QLabel(tr(" Hookean spring constant: "), this);
    lbl_pb_sc_force_constant->setAlignment(AlignLeft|AlignVCenter);
    lbl_pb_sc_force_constant->setMinimumHeight(minHeight1);
    lbl_pb_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -943,7 +957,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    le_pb_sc_max_elong->setEnabled(true);
    connect(le_pb_sc_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_pb_sc_max_elong(const QString &)));
 
-   lbl_sc_sc_force_constant = new QLabel(tr(" Hookean force constant: "), this);
+   lbl_sc_sc_force_constant = new QLabel(tr(" Hookean spring constant: "), this);
    lbl_sc_sc_force_constant->setAlignment(AlignLeft|AlignVCenter);
    lbl_sc_sc_force_constant->setMinimumHeight(minHeight1);
    lbl_sc_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -1041,17 +1055,20 @@ void US_Hydrodyn_BD_Options::setupGUI()
    hbl_method_group->addSpacing(3);
 
    QGridLayout *gl_simu = new QGridLayout;
-   gl_simu->addWidget(lbl_ttraj, 0, 0);
-   gl_simu->addWidget(le_ttraj, 0, 1);
-   gl_simu->addWidget(lbl_deltat, 1, 0);
-   gl_simu->addWidget(le_deltat, 1, 1);
-   gl_simu->addWidget(lbl_npadif, 2, 0);
-   gl_simu->addWidget(cnt_npadif, 2, 1);
-   gl_simu->addWidget(lbl_nconf, 3, 0);
-   gl_simu->addWidget(le_nconf, 3, 1);
-   gl_simu->addWidget(lbl_iseed, 4, 0);
-   gl_simu->addWidget(le_iseed, 4, 1);
-   gl_simu->addMultiCellWidget(cb_icdm, 5, 5, 0, 1);
+   j = 0;
+   gl_simu->addWidget(lbl_tprev, j, 0);
+   gl_simu->addWidget(le_tprev, j, 1); j++;
+   gl_simu->addWidget(lbl_ttraj, j, 0);
+   gl_simu->addWidget(le_ttraj, j, 1); j++;
+   gl_simu->addWidget(lbl_deltat, j, 0);
+   gl_simu->addWidget(le_deltat, j, 1); j++;
+   gl_simu->addWidget(lbl_npadif, j, 0);
+   gl_simu->addWidget(cnt_npadif, j, 1); j++;
+   gl_simu->addWidget(lbl_nconf, j, 0);
+   gl_simu->addWidget(le_nconf, j, 1); j++;
+   gl_simu->addWidget(lbl_iseed, j, 0);
+   gl_simu->addWidget(le_iseed, j, 1); j++;
+   gl_simu->addMultiCellWidget(cb_icdm, j, j, 0, 1); j++;
 
    hbl_method_group->addLayout(gl_simu);
 
@@ -1348,6 +1365,14 @@ void US_Hydrodyn_BD_Options::set_inter(int val)
 void US_Hydrodyn_BD_Options::set_iorder(int val)
 {
    (*bd_options).iorder = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::update_tprev(const QString &str)
+{
+   (*bd_options).tprev = str.toFloat();
+   //   le_tprev->setText(QString("").sprintf("%4.2f",(*hydro).tprev));
+   update_labels();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -1762,12 +1787,12 @@ void US_Hydrodyn_BD_Options::update_labels()
       cout << QString("total steps %1 int total_steps %2\n").arg(total_steps).arg(int(total_steps));
       cout << QString("").sprintf("%f %e %g\n", total_steps, total_steps, (total_steps - int(total_steps)));
       lbl_deltat->setPalette(label_font_ok);
-      lbl_deltat->setText(tr(" Duration of each simulation step: "));
+      lbl_deltat->setText(tr(" Duration of each simulation step (s): "));
    } else {
       cout << QString("total steps %1 int total_steps %2\n").arg(total_steps).arg(int(total_steps));
       cout << QString("").sprintf("%f %e %g\n", total_steps, total_steps, (total_steps - int(total_steps)));
       lbl_deltat->setPalette(label_font_warning);
-      lbl_deltat->setText(tr(" Duration of each simulation step\n"
+      lbl_deltat->setText(tr(" Duration of each simulation step (s)\n"
                              " WARNING: does not divide total duration: "));
    }
    double max_conf = total_steps / bd_options->npadif;
