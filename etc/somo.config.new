@@ -126,6 +126,63 @@ w		# solvent acronym
 0		# hydrate PDB model? true = yes
 1		# 0 = raw, 1 = saxs, 2 = sans
 0		# 0 = saxs, 1 = sans
+6		# bd_options.threshold_pb_pb
+5		# bd_options.threshold_pb_sc
+4		# bd_options.threshold_sc_sc
+1		# bd_options.do_rr
+1		# bd_options.force_chem
+0		# bd_options.bead_size_type
+0		# bd_options.tprev
+1		# bd_options.ttraj
+0.0001		# bd_options.deltat
+10		# bd_options.npadif
+1000		# bd_options.nconf
+2		# bd_options.inter
+1		# bd_options.iorder
+1234		# bd_options.iseed
+0		# bd_options.icdm
+0		# bd_options.chem_pb_pb_bond_type
+0		# bd_options.compute_chem_pb_pb_force_constant
+10		# bd_options.chem_pb_pb_force_constant
+1		# bd_options.compute_chem_pb_pb_equilibrium_dist
+0		# bd_options.chem_pb_pb_equilibrium_dist
+1		# bd_options.compute_chem_pb_pb_max_elong
+0		# bd_options.chem_pb_pb_max_elong
+0		# bd_options.chem_pb_sc_bond_type
+0		# bd_options.compute_chem_pb_sc_force_constant
+10		# bd_options.chem_pb_sc_force_constant
+1		# bd_options.compute_chem_pb_sc_equilibrium_dist
+0		# bd_options.chem_pb_sc_equilibrium_dist
+1		# bd_options.compute_chem_pb_sc_max_elong
+0		# bd_options.chem_pb_sc_max_elong
+0		# bd_options.chem_sc_sc_bond_type
+0		# bd_options.compute_chem_sc_sc_force_constant
+10		# bd_options.chem_sc_sc_force_constant
+1		# bd_options.compute_chem_sc_sc_equilibrium_dist
+0		# bd_options.chem_sc_sc_equilibrium_dist
+1		# bd_options.compute_chem_sc_sc_max_elong
+0		# bd_options.chem_sc_sc_max_elong
+0		# bd_options.pb_pb_bond_type
+0		# bd_options.compute_pb_pb_force_constant
+10		# bd_options.pb_pb_force_constant
+1		# bd_options.compute_pb_pb_equilibrium_dist
+0		# bd_options.pb_pb_equilibrium_dist
+1		# bd_options.compute_pb_pb_max_elong
+0		# bd_options.pb_pb_max_elong
+0		# bd_options.pb_sc_bond_type
+0		# bd_options.compute_pb_sc_force_constant
+10		# bd_options.pb_sc_force_constant
+1		# bd_options.compute_pb_sc_equilibrium_dist
+0		# bd_options.pb_sc_equilibrium_dist
+1		# bd_options.compute_pb_sc_max_elong
+0		# bd_options.pb_sc_max_elong
+0		# bd_options.sc_sc_bond_type
+0		# bd_options.compute_sc_sc_force_constant
+10		# bd_options.sc_sc_force_constant
+1		# bd_options.compute_sc_sc_equilibrium_dist
+0		# bd_options.sc_sc_equilibrium_dist
+1		# bd_options.compute_sc_sc_max_elong
+0		# bd_options.sc_sc_max_elong
 1		# batch missing atom handling
 0		# batch missing residue handling
 1		# batch run somo
