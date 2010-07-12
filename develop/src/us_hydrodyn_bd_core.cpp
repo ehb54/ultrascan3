@@ -139,6 +139,7 @@ void US_Hydrodyn::calc_bd()
            somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
            QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "");
         write_pdb( fname, &bead_models[current_model] );
+        create_browflex_files();
         break;
       }
    }
@@ -148,6 +149,646 @@ void US_Hydrodyn::calc_bd()
    pb_grid_pdb->setEnabled(true);
    pb_grid->setEnabled(true);
    pb_stop_calc->setEnabled(false);
+}
+
+// ---------- create browflex files
+int US_Hydrodyn::create_browflex_files()
+{
+   QString basename = 
+      somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
+      + "-browflex";
+
+   // browflex-main.txt
+   QFile f;
+   // main file
+   {
+      f.setName(basename + "-main.txt");
+      if ( !f.open(IO_WriteOnly) )
+      {
+         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         return -1;
+      }
+      QTextStream ts(&f);
+      ts <<
+         QString(
+                 "%1-log.txt            !logfile\n"
+                 "%2-tra.txt            !trajectory file\n"
+                 "%3-molec.txt          !molecular file\n"
+                 "%4-initc.txt          !initial coords. file\n"
+                 "-                                       !Flow file\n"
+                 "-                                       !Elec file\n"
+                 "-                                       !Wall file\n"
+                 "-                                       !Spec file\n"
+                 "%5-brown.txt          !Brownian data file\n" 
+                 "*\n\n\n"
+                 )
+         .arg(basename)
+         .arg(basename)
+         .arg(basename)
+         .arg(basename)
+         .arg(basename)
+         ;
+      f.close();
+   }
+   // molecular file
+   {
+      f.setName(basename + "-molec.txt");
+      if ( !f.open(IO_WriteOnly) )
+      {
+         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         return -1;
+      }
+      QTextStream ts(&f);
+      ts << QString(" %1,   Temperature (C)\n").arg(hydro.temperature);
+      ts << QString(" %1,   Solvent viscosity (poise)\n").arg(hydro.solvent_viscosity);
+      // mass
+      double usemass = 0e0;
+      if ( hydro.mass_correction )
+      {
+         usemass = hydro.mass;
+      } else {
+         for ( unsigned int i = 0; i < bead_models[current_model].size(); i++ )
+         {
+            if ( bead_models[current_model][i].active )
+            {
+               usemass += bead_models[current_model][i].bead_ref_mw;
+            }
+         }
+      }
+      ts << QString(" %1,   Molecular weight (g/mol)\n").arg(usemass);
+      ts << " " + basename + "\n";
+
+      ts << QString(" %1,   Number of beads\n").arg(bead_models[current_model].size());
+      for (  unsigned int i = 0; i < bead_models[current_model].size(); i++ )
+      {
+         ts << QString("  %1\n").arg(bead_models[current_model][i].bead_computed_radius);
+      }
+
+      // connectors
+      unsigned int connectors = 0;
+
+      QRegExp rx("^(\\d+)~(\\d+)$");
+
+      for ( map < QString, bool >::iterator it = connection_active.begin();
+            it != connection_active.end();
+            it++ )
+      {
+         if ( connection_active[it->first] )
+         {
+            connectors++;
+         }
+      }
+
+      ts << QString(" %1,   Number of connectors\n").arg(connectors);
+
+      for ( map < QString, bool >::iterator it = connection_active.begin();
+            it != connection_active.end();
+            it++ )
+      {
+         if ( connection_active[it->first] )
+         {
+            if ( rx.search(it->first) == -1 ) 
+            {
+               editor->append("unexpected regexp extract failure (write_browflex_files)!\n");
+               return -1;
+            }
+            int i = rx.cap(1).toInt();
+            int j = rx.cap(2).toInt();
+            
+            // determine connector type for correct bd_options
+            float force_constant;
+            float equilibrium_dist;
+            float max_elong;
+
+            switch ( (connection_forced[it->first] == 0 ? 0 : 1) * 10 + 
+                     connection_pair_type[it->first] )
+            {
+            case 0: // pb-pb not chemical
+               {
+                  if ( bd_options.compute_pb_pb_force_constant )
+                  {
+                     editor->append("compute hookean force constant for pb_pb not implemented!\n");
+                     return -1;
+                  } else {
+                     force_constant = bd_options.pb_pb_force_constant;
+                  }
+                  if ( bd_options.compute_pb_pb_equilibrium_dist )
+                  {
+                     equilibrium_dist = connection_dist_stats[it->first][2];
+                  } else {
+                     equilibrium_dist = bd_options.pb_pb_equilibrium_dist;
+                  }
+                  if ( bd_options.compute_pb_pb_max_elong )
+                  {
+                     max_elong = connection_dist_stats[it->first][1];
+                  } else {
+                     max_elong = bd_options.pb_pb_max_elong;
+                  }
+                  switch ( bd_options.pb_pb_bond_type )
+                  {
+                  case 0 : // fraenkel (hard hookean)
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4 %5\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(1)
+                           .arg(force_constant)
+                           .arg(equilibrium_dist)
+                           ;
+                     }
+                     break;
+                  case 1 : // hookean, gaussian (soft)
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(2)
+                           .arg(force_constant)
+                           ;
+                     }
+                     break;
+                  case 2 : // fene
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4 %5\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(3)
+                           .arg(force_constant)
+                           .arg(max_elong)
+                           ;
+                     }
+                     break;
+                  case 3 : // hard-fene
+                     {
+                        ts <<
+                           QString("%1 %2 %3 %4 %5 %6\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(6)
+                           .arg(force_constant)
+                           .arg(equilibrium_dist)
+                           .arg(max_elong)
+                           ;
+                     }
+                     break;
+                  default :
+                     editor->append("unexpected case type pb-pb (write_browflex_files)!\n");
+                     return -1;
+                     break;
+                  }
+               }
+               break;
+            case 1: // pb-sc not chemical
+               {
+                  if ( bd_options.compute_pb_sc_force_constant )
+                  {
+                     editor->append("compute hookean force constant for pb_sc not implemented!\n");
+                     return -1;
+                  } else {
+                     force_constant = bd_options.pb_sc_force_constant;
+                  }
+                  if ( bd_options.compute_pb_sc_equilibrium_dist )
+                  {
+                     equilibrium_dist = connection_dist_stats[it->first][2];
+                  } else {
+                     equilibrium_dist = bd_options.pb_sc_equilibrium_dist;
+                  }
+                  if ( bd_options.compute_pb_sc_max_elong )
+                  {
+                     max_elong = connection_dist_stats[it->first][1];
+                  } else {
+                     max_elong = bd_options.pb_sc_max_elong;
+                  }
+                  switch ( bd_options.pb_sc_bond_type )
+                  {
+                  case 0 : // fraenkel (hard hookean)
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4 %5\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(1)
+                           .arg(force_constant)
+                           .arg(equilibrium_dist)
+                           ;
+                     }
+                     break;
+                  case 1 : // hookean, gaussian (soft)
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(2)
+                           .arg(force_constant)
+                           ;
+                     }
+                     break;
+                  case 2 : // fene
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4 %5\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(3)
+                           .arg(force_constant)
+                           .arg(max_elong)
+                           ;
+                     }
+                     break;
+                  case 3 : // hard-fene
+                     {
+                        ts <<
+                           QString("%1 %2 %3 %4 %5 %6\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(6)
+                           .arg(force_constant)
+                           .arg(equilibrium_dist)
+                           .arg(max_elong)
+                           ;
+                     }
+                     break;
+                  default :
+                     editor->append("unexpected case type pb_sc (write_browflex_files)!\n");
+                     return -1;
+                     break;
+                  }
+               }
+               break;
+            case 2: // sc-sc not chemical
+               {
+                  if ( bd_options.compute_sc_sc_force_constant )
+                  {
+                     editor->append("compute hookean force constant for sc_sc not implemented!\n");
+                     return -1;
+                  } else {
+                     force_constant = bd_options.sc_sc_force_constant;
+                  }
+                  if ( bd_options.compute_sc_sc_equilibrium_dist )
+                  {
+                     equilibrium_dist = connection_dist_stats[it->first][2];
+                  } else {
+                     equilibrium_dist = bd_options.sc_sc_equilibrium_dist;
+                  }
+                  if ( bd_options.compute_sc_sc_max_elong )
+                  {
+                     max_elong = connection_dist_stats[it->first][1];
+                  } else {
+                     max_elong = bd_options.sc_sc_max_elong;
+                  }
+                  switch ( bd_options.sc_sc_bond_type )
+                  {
+                  case 0 : // fraenkel (hard hookean)
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4 %5\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(1)
+                           .arg(force_constant)
+                           .arg(equilibrium_dist)
+                           ;
+                     }
+                     break;
+                  case 1 : // hookean, gaussian (soft)
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(2)
+                           .arg(force_constant)
+                           ;
+                     }
+                     break;
+                  case 2 : // fene
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4 %5\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(3)
+                           .arg(force_constant)
+                           .arg(max_elong)
+                           ;
+                     }
+                     break;
+                  case 3 : // hard-fene
+                     {
+                        ts <<
+                           QString("%1 %2 %3 %4 %5 %6\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(6)
+                           .arg(force_constant)
+                           .arg(equilibrium_dist)
+                           .arg(max_elong)
+                           ;
+                     }
+                     break;
+                  default :
+                     editor->append("unexpected case type sc_sc (write_browflex_files)!\n");
+                     return -1;
+                     break;
+                  }
+               }
+               break;
+            case 10: // pb_pb chemical
+               {
+                  if ( bd_options.compute_chem_pb_pb_force_constant )
+                  {
+                     editor->append("compute hookean force constant for chem_pb_pb not implemented!\n");
+                     return -1;
+                  } else {
+                     force_constant = bd_options.chem_pb_pb_force_constant;
+                  }
+                  if ( bd_options.compute_chem_pb_pb_equilibrium_dist )
+                  {
+                     equilibrium_dist = connection_dist_stats[it->first][2];
+                  } else {
+                     equilibrium_dist = bd_options.chem_pb_pb_equilibrium_dist;
+                  }
+                  if ( bd_options.compute_chem_pb_pb_max_elong )
+                  {
+                     max_elong = connection_dist_stats[it->first][1];
+                  } else {
+                     max_elong = bd_options.chem_pb_pb_max_elong;
+                  }
+                  switch ( bd_options.chem_pb_pb_bond_type )
+                  {
+                  case 0 : // fraenkel (hard hookean)
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4 %5\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(1)
+                           .arg(force_constant)
+                           .arg(equilibrium_dist)
+                           ;
+                     }
+                     break;
+                  case 1 : // hookean, gaussian (soft)
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(2)
+                           .arg(force_constant)
+                           ;
+                     }
+                     break;
+                  case 2 : // fene
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4 %5\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(3)
+                           .arg(force_constant)
+                           .arg(max_elong)
+                           ;
+                     }
+                     break;
+                  case 3 : // hard-fene
+                     {
+                        ts <<
+                           QString("%1 %2 %3 %4 %5 %6\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(6)
+                           .arg(force_constant)
+                           .arg(equilibrium_dist)
+                           .arg(max_elong)
+                           ;
+                     }
+                     break;
+                  default :
+                     editor->append("unexpected case type chem_pb_pb (write_browflex_files)!\n");
+                     return -1;
+                     break;
+                  }
+               }
+               break;
+            case 11: // pb-sc chemical
+               {
+                  if ( bd_options.compute_chem_pb_sc_force_constant )
+                  {
+                     editor->append("compute hookean force constant for chem_pb_sc not implemented!\n");
+                     return -1;
+                  } else {
+                     force_constant = bd_options.chem_pb_sc_force_constant;
+                  }
+                  if ( bd_options.compute_chem_pb_sc_equilibrium_dist )
+                  {
+                     equilibrium_dist = connection_dist_stats[it->first][2];
+                  } else {
+                     equilibrium_dist = bd_options.chem_pb_sc_equilibrium_dist;
+                  }
+                  if ( bd_options.compute_chem_pb_sc_max_elong )
+                  {
+                     max_elong = connection_dist_stats[it->first][1];
+                  } else {
+                     max_elong = bd_options.chem_pb_sc_max_elong;
+                  }
+                  switch ( bd_options.chem_pb_sc_bond_type )
+                  {
+                  case 0 : // fraenkel (hard hookean)
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4 %5\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(1)
+                           .arg(force_constant)
+                           .arg(equilibrium_dist)
+                           ;
+                     }
+                     break;
+                  case 1 : // hookean, gaussian (soft)
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(2)
+                           .arg(force_constant)
+                           ;
+                     }
+                     break;
+                  case 2 : // fene
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4 %5\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(3)
+                           .arg(force_constant)
+                           .arg(max_elong)
+                           ;
+                     }
+                     break;
+                  case 3 : // hard-fene
+                     {
+                        ts <<
+                           QString("%1 %2 %3 %4 %5 %6\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(6)
+                           .arg(force_constant)
+                           .arg(equilibrium_dist)
+                           .arg(max_elong)
+                           ;
+                     }
+                     break;
+                  default :
+                     editor->append("unexpected case type chem_pb_sc (write_browflex_files)!\n");
+                     return -1;
+                     break;
+                  }
+               }
+               break;
+            case 12: // sc-sc chemical
+               {
+                  if ( bd_options.compute_chem_sc_sc_force_constant )
+                  {
+                     editor->append("compute hookean force constant for chem_sc_sc not implemented!\n");
+                     return -1;
+                  } else {
+                     force_constant = bd_options.chem_sc_sc_force_constant;
+                  }
+                  if ( bd_options.compute_chem_sc_sc_equilibrium_dist )
+                  {
+                     equilibrium_dist = connection_dist_stats[it->first][2];
+                  } else {
+                     equilibrium_dist = bd_options.chem_sc_sc_equilibrium_dist;
+                  }
+                  if ( bd_options.compute_chem_sc_sc_max_elong )
+                  {
+                     max_elong = connection_dist_stats[it->first][1];
+                  } else {
+                     max_elong = bd_options.chem_sc_sc_max_elong;
+                  }
+                  switch ( bd_options.chem_sc_sc_bond_type )
+                  {
+                  case 0 : // fraenkel (hard hookean)
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4 %5\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(1)
+                           .arg(force_constant)
+                           .arg(equilibrium_dist)
+                           ;
+                     }
+                     break;
+                  case 1 : // hookean, gaussian (soft)
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(2)
+                           .arg(force_constant)
+                           ;
+                     }
+                     break;
+                  case 2 : // fene
+                     {
+                        ts << 
+                           QString("%1 %2 %3 %4 %5\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(3)
+                           .arg(force_constant)
+                           .arg(max_elong)
+                           ;
+                     }
+                     break;
+                  case 3 : // hard-fene
+                     {
+                        ts <<
+                           QString("%1 %2 %3 %4 %5 %6\n")
+                           .arg(i)
+                           .arg(j)
+                           .arg(6)
+                           .arg(force_constant)
+                           .arg(equilibrium_dist)
+                           .arg(max_elong)
+                           ;
+                     }
+                     break;
+                  default :
+                     editor->append("unexpected case type chem sc-sc (write_browflex_files)!\n");
+                     return -1;
+                     break;
+                  }
+               }
+               break;
+            default: 
+               editor->append("unexpected case type (write_browflex_files)!\n");
+               return -1;
+               break;
+            }
+         }
+      }
+      ts << 
+         "0   Number of angles\n"
+         "0   Number of torsions\n"
+         "0   Number of pairs\n"
+         ;
+      f.close();
+   }
+   // initial coordinates file
+   {
+      f.setName(basename + "-initc.txt");
+      if ( !f.open(IO_WriteOnly) )
+      {
+         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         return -1;
+      }
+      QTextStream ts(&f);
+      for ( unsigned int i = 0; i < bead_models[current_model].size(); i++ )
+      {
+         ts << 
+            QString("%1 %2 %3\n")
+            .arg(bead_models[current_model][i].bead_coordinate.axis[0])
+            .arg(bead_models[current_model][i].bead_coordinate.axis[1])
+            .arg(bead_models[current_model][i].bead_coordinate.axis[2])
+            ;
+      }
+      f.close();
+   }
+   // brownian dynamics file
+   {
+      f.setName(basename + "-brown.txt");
+      if ( !f.open(IO_WriteOnly) )
+      {
+         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         return -1;
+      }
+      QTextStream ts(&f);
+      ts << QString("%1,         mol\n").arg(1);
+      ts << QString("%1,         tprev\n").arg(0);
+      ts << QString("%1,         ttraj\n").arg(bd_options.ttraj);
+      ts << QString("%1,         nconf \n").arg(bd_options.nconf);
+      ts << QString("%1,         nscreen\n").arg(20);
+      ts << QString("%1,         deltat \n").arg(bd_options.deltat);
+      ts << QString("%1,         npadif\n").arg(bd_options.npadif);
+      ts << QString("%1,         inter\n").arg(bd_options.inter);
+      ts << QString("%1,         iorder\n").arg(bd_options.iorder + 1);
+      ts << QString("%1,        iseed\n").arg(bd_options.iseed);
+      ts << QString("%1,        icdm\n").arg(bd_options.icdm);
+      f.close();
+   }
+   return 0;
 }
 
 // ---------- compute connections
@@ -310,12 +951,11 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
 
 int US_Hydrodyn::compute_bd_connections()
 {
-   map < QString, bool > connection_forced;
-   map < QString, int > connection_pair_type; // 0 mc-mc, 1 mc-sc, 2 sc-sc
-
    connection_active.clear();
    connection_dists.clear();
    connection_dist_stats.clear();
+   connection_pair_type.clear();
+   connection_forced.clear();
 
    vector < unsigned int > models_to_proc;
 

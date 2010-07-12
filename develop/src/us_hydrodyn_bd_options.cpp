@@ -117,7 +117,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    connect(bg_bead_size_type, SIGNAL(clicked(int)), this, SLOT(set_bead_size_type(int)));
 
    cb_bead_size_type_1st = new QCheckBox(bg_bead_size_type);
-   cb_bead_size_type_1st->setText(tr(" 1st models beads "));
+   cb_bead_size_type_1st->setText(tr(" First model's beads "));
    cb_bead_size_type_1st->setEnabled(true);
    //   cb_bead_size_type_1st->setMinimumHeight(minHeight1);
    cb_bead_size_type_1st->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -146,7 +146,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_npadif->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_npadif = new QwtCounter(this);
-   cnt_npadif->setRange(0, 100, 1);
+   cnt_npadif->setRange(1, 999, 1);
    cnt_npadif->setValue((*bd_options).npadif);
    cnt_npadif->setMinimumHeight(minHeight1);
    cnt_npadif->setMinimumWidth(150);
@@ -155,6 +155,21 @@ void US_Hydrodyn_BD_Options::setupGUI()
    cnt_npadif->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cnt_npadif->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_npadif, SIGNAL(valueChanged(double)), SLOT(update_npadif(double)));
+
+   lbl_nconf = new QLabel(tr(" Number of conformations to store: "), this);
+   lbl_nconf->setAlignment(AlignLeft|AlignVCenter);
+   lbl_nconf->setMinimumHeight(minHeight1);
+   lbl_nconf->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_nconf->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_nconf = new QLineEdit(this, "Nconf Line Edit");
+   le_nconf->setText(str.sprintf("%d",(*bd_options).nconf));
+   le_nconf->setAlignment(AlignVCenter);
+   le_nconf->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_nconf->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_nconf->setEnabled(true);
+   connect(le_nconf, SIGNAL(textChanged(const QString &)), SLOT(update_nconf(const QString &)));
+
 
    lbl_iseed = new QLabel(tr(" Random seed: "), this);
    lbl_iseed->setAlignment(AlignLeft|AlignVCenter);
@@ -982,6 +997,12 @@ void US_Hydrodyn_BD_Options::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
+   label_font_ok = QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label);
+   label_font_warning = QPalette(USglobal->global_colors.cg_label_warn, USglobal->global_colors.cg_label_warn, USglobal->global_colors.cg_label_warn);
+
+   update_enables();
+   update_labels();
+
    QVBoxLayout *vbl_top = new QVBoxLayout;
 
    vbl_top->addWidget(lbl_info);
@@ -1026,9 +1047,11 @@ void US_Hydrodyn_BD_Options::setupGUI()
    gl_simu->addWidget(le_deltat, 1, 1);
    gl_simu->addWidget(lbl_npadif, 2, 0);
    gl_simu->addWidget(cnt_npadif, 2, 1);
-   gl_simu->addWidget(lbl_iseed, 3, 0);
-   gl_simu->addWidget(le_iseed, 3, 1);
-   gl_simu->addMultiCellWidget(cb_icdm, 4, 4, 0, 1);
+   gl_simu->addWidget(lbl_nconf, 3, 0);
+   gl_simu->addWidget(le_nconf, 3, 1);
+   gl_simu->addWidget(lbl_iseed, 4, 0);
+   gl_simu->addWidget(le_iseed, 4, 1);
+   gl_simu->addMultiCellWidget(cb_icdm, 5, 5, 0, 1);
 
    hbl_method_group->addLayout(gl_simu);
 
@@ -1332,6 +1355,7 @@ void US_Hydrodyn_BD_Options::update_ttraj(const QString &str)
 {
    (*bd_options).ttraj = str.toFloat();
    //   le_ttraj->setText(QString("").sprintf("%4.2f",(*hydro).ttraj));
+   update_labels();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -1339,12 +1363,22 @@ void US_Hydrodyn_BD_Options::update_deltat(const QString &str)
 {
    (*bd_options).deltat = str.toFloat();
    //   le_deltat->setText(QString("").sprintf("%4.2f",(*hydro).deltat));
+   update_labels();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_BD_Options::update_npadif(double val)
 {
    (*bd_options).npadif = (int) val;
+   update_labels();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::update_nconf(const QString &str)
+{
+   (*bd_options).nconf = str.toInt();
+   //   le_nconf->setText(QString("").sprintf("%4.2f",(*hydro).nconf));
+   update_labels();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -1358,36 +1392,42 @@ void US_Hydrodyn_BD_Options::update_iseed(const QString &str)
 void US_Hydrodyn_BD_Options::set_chem_pb_pb_bond_types(int val)
 {
    (*bd_options).chem_pb_pb_bond_type = val;
+   update_enables();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_BD_Options::set_chem_pb_sc_bond_types(int val)
 {
    (*bd_options).chem_pb_sc_bond_type = val;
+   update_enables();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_BD_Options::set_chem_sc_sc_bond_types(int val)
 {
    (*bd_options).chem_sc_sc_bond_type = val;
+   update_enables();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_BD_Options::set_pb_pb_bond_types(int val)
 {
    (*bd_options).pb_pb_bond_type = val;
+   update_enables();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_BD_Options::set_pb_sc_bond_types(int val)
 {
    (*bd_options).pb_sc_bond_type = val;
+   update_enables();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_BD_Options::set_sc_sc_bond_types(int val)
 {
    (*bd_options).sc_sc_bond_type = val;
+   update_enables();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -1532,4 +1572,221 @@ void US_Hydrodyn_BD_Options::update_sc_sc_max_elong(const QString &str)
    (*bd_options).sc_sc_max_elong = str.toFloat();
    //   le_sc_sc_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).sc_sc_max_elong));
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::update_enables()
+{
+   switch ( bd_options->chem_pb_pb_bond_type )
+   {
+   case 0 : // fraenkel (hard hookean)
+      cb_compute_chem_pb_pb_equilibrium_dist->setEnabled(true);
+      le_chem_pb_pb_equilibrium_dist->setEnabled(true);
+      cb_compute_chem_pb_pb_max_elong->setEnabled(false);
+      le_chem_pb_pb_max_elong->setEnabled(false);
+      break;
+   case 1 : // hookean, gaussian (soft)
+      cb_compute_chem_pb_pb_equilibrium_dist->setEnabled(false);
+      le_chem_pb_pb_equilibrium_dist->setEnabled(false);
+      cb_compute_chem_pb_pb_max_elong->setEnabled(false);
+      le_chem_pb_pb_max_elong->setEnabled(false);
+      break;
+   case 2 : // fene
+      cb_compute_chem_pb_pb_equilibrium_dist->setEnabled(false);
+      le_chem_pb_pb_equilibrium_dist->setEnabled(false);
+      cb_compute_chem_pb_pb_max_elong->setEnabled(true);
+      le_chem_pb_pb_max_elong->setEnabled(true);
+      break;
+   case 3 : // hard-fene
+      cb_compute_chem_pb_pb_equilibrium_dist->setEnabled(true);
+      le_chem_pb_pb_equilibrium_dist->setEnabled(true);
+      cb_compute_chem_pb_pb_max_elong->setEnabled(true);
+      le_chem_pb_pb_max_elong->setEnabled(true);
+      break;
+   default : 
+      break;
+   }
+   switch ( bd_options->chem_pb_sc_bond_type )
+   {
+   case 0 : // fraenkel (hard hookean)
+      cb_compute_chem_pb_sc_equilibrium_dist->setEnabled(true);
+      le_chem_pb_sc_equilibrium_dist->setEnabled(true);
+      cb_compute_chem_pb_sc_max_elong->setEnabled(false);
+      le_chem_pb_sc_max_elong->setEnabled(false);
+      break;
+   case 1 : // hookean, gaussian (soft)
+      cb_compute_chem_pb_sc_equilibrium_dist->setEnabled(false);
+      le_chem_pb_sc_equilibrium_dist->setEnabled(false);
+      cb_compute_chem_pb_sc_max_elong->setEnabled(false);
+      le_chem_pb_sc_max_elong->setEnabled(false);
+      break;
+   case 2 : // fene
+      cb_compute_chem_pb_sc_equilibrium_dist->setEnabled(false);
+      le_chem_pb_sc_equilibrium_dist->setEnabled(false);
+      cb_compute_chem_pb_sc_max_elong->setEnabled(true);
+      le_chem_pb_sc_max_elong->setEnabled(true);
+      break;
+   case 3 : // hard-fene
+      cb_compute_chem_pb_sc_equilibrium_dist->setEnabled(true);
+      le_chem_pb_sc_equilibrium_dist->setEnabled(true);
+      cb_compute_chem_pb_sc_max_elong->setEnabled(true);
+      le_chem_pb_sc_max_elong->setEnabled(true);
+      break;
+   default : 
+      break;
+   }
+   switch ( bd_options->chem_sc_sc_bond_type )
+   {
+   case 0 : // fraenkel (hard hookean)
+      cb_compute_chem_sc_sc_equilibrium_dist->setEnabled(true);
+      le_chem_sc_sc_equilibrium_dist->setEnabled(true);
+      cb_compute_chem_sc_sc_max_elong->setEnabled(false);
+      le_chem_sc_sc_max_elong->setEnabled(false);
+      break;
+   case 1 : // hookean, gaussian (soft)
+      cb_compute_chem_sc_sc_equilibrium_dist->setEnabled(false);
+      le_chem_sc_sc_equilibrium_dist->setEnabled(false);
+      cb_compute_chem_sc_sc_max_elong->setEnabled(false);
+      le_chem_sc_sc_max_elong->setEnabled(false);
+      break;
+   case 2 : // fene
+      cb_compute_chem_sc_sc_equilibrium_dist->setEnabled(false);
+      le_chem_sc_sc_equilibrium_dist->setEnabled(false);
+      cb_compute_chem_sc_sc_max_elong->setEnabled(true);
+      le_chem_sc_sc_max_elong->setEnabled(true);
+      break;
+   case 3 : // hard-fene
+      cb_compute_chem_sc_sc_equilibrium_dist->setEnabled(true);
+      le_chem_sc_sc_equilibrium_dist->setEnabled(true);
+      cb_compute_chem_sc_sc_max_elong->setEnabled(true);
+      le_chem_sc_sc_max_elong->setEnabled(true);
+      break;
+   default : 
+      break;
+   }
+   switch ( bd_options->pb_pb_bond_type )
+   {
+   case 0 : // fraenkel (hard hookean)
+      cb_compute_pb_pb_equilibrium_dist->setEnabled(true);
+      le_pb_pb_equilibrium_dist->setEnabled(true);
+      cb_compute_pb_pb_max_elong->setEnabled(false);
+      le_pb_pb_max_elong->setEnabled(false);
+      break;
+   case 1 : // hookean, gaussian (soft)
+      cb_compute_pb_pb_equilibrium_dist->setEnabled(false);
+      le_pb_pb_equilibrium_dist->setEnabled(false);
+      cb_compute_pb_pb_max_elong->setEnabled(false);
+      le_pb_pb_max_elong->setEnabled(false);
+      break;
+   case 2 : // fene
+      cb_compute_pb_pb_equilibrium_dist->setEnabled(false);
+      le_pb_pb_equilibrium_dist->setEnabled(false);
+      cb_compute_pb_pb_max_elong->setEnabled(true);
+      le_pb_pb_max_elong->setEnabled(true);
+      break;
+   case 3 : // hard-fene
+      cb_compute_pb_pb_equilibrium_dist->setEnabled(true);
+      le_pb_pb_equilibrium_dist->setEnabled(true);
+      cb_compute_pb_pb_max_elong->setEnabled(true);
+      le_pb_pb_max_elong->setEnabled(true);
+      break;
+   default : 
+      break;
+   }
+   switch ( bd_options->pb_sc_bond_type )
+   {
+   case 0 : // fraenkel (hard hookean)
+      cb_compute_pb_sc_equilibrium_dist->setEnabled(true);
+      le_pb_sc_equilibrium_dist->setEnabled(true);
+      cb_compute_pb_sc_max_elong->setEnabled(false);
+      le_pb_sc_max_elong->setEnabled(false);
+      break;
+   case 1 : // hookean, gaussian (soft)
+      cb_compute_pb_sc_equilibrium_dist->setEnabled(false);
+      le_pb_sc_equilibrium_dist->setEnabled(false);
+      cb_compute_pb_sc_max_elong->setEnabled(false);
+      le_pb_sc_max_elong->setEnabled(false);
+      break;
+   case 2 : // fene
+      cb_compute_pb_sc_equilibrium_dist->setEnabled(false);
+      le_pb_sc_equilibrium_dist->setEnabled(false);
+      cb_compute_pb_sc_max_elong->setEnabled(true);
+      le_pb_sc_max_elong->setEnabled(true);
+      break;
+   case 3 : // hard-fene
+      cb_compute_pb_sc_equilibrium_dist->setEnabled(true);
+      le_pb_sc_equilibrium_dist->setEnabled(true);
+      cb_compute_pb_sc_max_elong->setEnabled(true);
+      le_pb_sc_max_elong->setEnabled(true);
+      break;
+   default : 
+      break;
+   }
+   switch ( bd_options->sc_sc_bond_type )
+   {
+   case 0 : // fraenkel (hard hookean)
+      cb_compute_sc_sc_equilibrium_dist->setEnabled(true);
+      le_sc_sc_equilibrium_dist->setEnabled(true);
+      cb_compute_sc_sc_max_elong->setEnabled(false);
+      le_sc_sc_max_elong->setEnabled(false);
+      break;
+   case 1 : // hookean, gaussian (soft)
+      cb_compute_sc_sc_equilibrium_dist->setEnabled(false);
+      le_sc_sc_equilibrium_dist->setEnabled(false);
+      cb_compute_sc_sc_max_elong->setEnabled(false);
+      le_sc_sc_max_elong->setEnabled(false);
+      break;
+   case 2 : // fene
+      cb_compute_sc_sc_equilibrium_dist->setEnabled(false);
+      le_sc_sc_equilibrium_dist->setEnabled(false);
+      cb_compute_sc_sc_max_elong->setEnabled(true);
+      le_sc_sc_max_elong->setEnabled(true);
+      break;
+   case 3 : // hard-fene
+      cb_compute_sc_sc_equilibrium_dist->setEnabled(true);
+      le_sc_sc_equilibrium_dist->setEnabled(true);
+      cb_compute_sc_sc_max_elong->setEnabled(true);
+      le_sc_sc_max_elong->setEnabled(true);
+      break;
+   default : 
+      break;
+   }
+}
+
+#define TOLERANCE 1e-3
+
+void US_Hydrodyn_BD_Options::update_labels()
+{
+   double total_steps = bd_options->ttraj / bd_options->deltat;
+   if ( fabs( ( total_steps ) - int( total_steps + 0.5 ) ) < TOLERANCE )
+   {
+      cout << QString("total steps %1 int total_steps %2\n").arg(total_steps).arg(int(total_steps));
+      cout << QString("").sprintf("%f %e %g\n", total_steps, total_steps, (total_steps - int(total_steps)));
+      lbl_deltat->setPalette(label_font_ok);
+      lbl_deltat->setText(tr(" Duration of each simulation step: "));
+   } else {
+      cout << QString("total steps %1 int total_steps %2\n").arg(total_steps).arg(int(total_steps));
+      cout << QString("").sprintf("%f %e %g\n", total_steps, total_steps, (total_steps - int(total_steps)));
+      lbl_deltat->setPalette(label_font_warning);
+      lbl_deltat->setText(tr(" Duration of each simulation step\n"
+                             " WARNING: does not divide total duration: "));
+   }
+   double max_conf = total_steps / bd_options->npadif;
+   double check_nconf = max_conf / bd_options->nconf;
+   if ( fabs( ( check_nconf ) - int( check_nconf + 0.5 ) ) < TOLERANCE )
+   {
+      cout << QString("check_nconf %1 int check_nconf %2\n").arg(check_nconf).arg(int(check_nconf));
+      if ( bd_options->nconf > max_conf )
+      {
+         lbl_nconf->setPalette(label_font_warning);
+         lbl_nconf->setText(tr(QString(" Number of conformations to store (maximum %1)\n"
+                                       " WARNING: greater than maximum: ").arg((int)max_conf)));
+      } else {
+         lbl_nconf->setPalette(label_font_ok);
+         lbl_nconf->setText(tr(QString(" Number of conformations to store (max %1): ").arg((int)max_conf)));
+      }
+   } else {
+      lbl_nconf->setPalette(label_font_warning);
+      lbl_nconf->setText(tr(QString(" Number of conformations to store (maximum %1)\n"
+                                    " WARNING: does not divide maximum").arg((int)max_conf)));
+   }
 }

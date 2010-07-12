@@ -336,6 +336,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, bool > connection_active;
       map < QString, vector < float > > connection_dists;
       map < QString, vector < float > > connection_dist_stats;  // 0 = min, 1 = max, 2 = avg
+      map < QString, int > connection_pair_type; // 0 mc-mc, 1 mc-sc, 2 sc-sc
+      map < QString, bool > connection_forced;  // chemical connections
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -442,6 +444,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       // bd functions:
       void calc_bd();
+      int create_browflex_files();
 
       int compute_pb_normals();                // compute the normal vectors for each peptide bond plane
       int build_pb_structures( PDB_model * ) ; // create pb data structures

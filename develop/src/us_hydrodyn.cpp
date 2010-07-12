@@ -189,13 +189,14 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    bd_options.ttraj = 1.0;
    bd_options.deltat = 0.0001;
    bd_options.npadif = 10;
+   bd_options.nconf = 5000;
    bd_options.inter = 2;
    bd_options.iorder = 1;
    bd_options.iseed = 1234;
    bd_options.icdm = 0;
 
    bd_options.chem_pb_pb_bond_type = 0;
-   bd_options.compute_chem_pb_pb_force_constant = true;
+   bd_options.compute_chem_pb_pb_force_constant = false;
    bd_options.chem_pb_pb_force_constant = 0.0;
    bd_options.compute_chem_pb_pb_equilibrium_dist = true;
    bd_options.chem_pb_pb_equilibrium_dist = 0.0;
@@ -203,7 +204,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    bd_options.chem_pb_pb_max_elong = 0.0;
 
    bd_options.chem_pb_sc_bond_type = 0;
-   bd_options.compute_chem_pb_sc_force_constant = true;
+   bd_options.compute_chem_pb_sc_force_constant = false;
    bd_options.chem_pb_sc_force_constant = 0.0;
    bd_options.compute_chem_pb_sc_equilibrium_dist = true;
    bd_options.chem_pb_sc_equilibrium_dist = 0.0;
@@ -211,7 +212,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    bd_options.chem_pb_sc_max_elong = 0.0;
 
    bd_options.chem_sc_sc_bond_type = 0;
-   bd_options.compute_chem_sc_sc_force_constant = true;
+   bd_options.compute_chem_sc_sc_force_constant = false;
    bd_options.chem_sc_sc_force_constant = 0.0;
    bd_options.compute_chem_sc_sc_equilibrium_dist = true;
    bd_options.chem_sc_sc_equilibrium_dist = 0.0;
@@ -219,7 +220,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    bd_options.chem_sc_sc_max_elong = 0.0;
 
    bd_options.pb_pb_bond_type = 0;
-   bd_options.compute_pb_pb_force_constant = true;
+   bd_options.compute_pb_pb_force_constant = false;
    bd_options.pb_pb_force_constant = 0.0;
    bd_options.compute_pb_pb_equilibrium_dist = true;
    bd_options.pb_pb_equilibrium_dist = 0.0;
@@ -227,7 +228,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    bd_options.pb_pb_max_elong = 0.0;
 
    bd_options.pb_sc_bond_type = 0;
-   bd_options.compute_pb_sc_force_constant = true;
+   bd_options.compute_pb_sc_force_constant = false;
    bd_options.pb_sc_force_constant = 0.0;
    bd_options.compute_pb_sc_equilibrium_dist = true;
    bd_options.pb_sc_equilibrium_dist = 0.0;
@@ -235,7 +236,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    bd_options.pb_sc_max_elong = 0.0;
 
    bd_options.sc_sc_bond_type = 0;
-   bd_options.compute_sc_sc_force_constant = true;
+   bd_options.compute_sc_sc_force_constant = false;
    bd_options.sc_sc_force_constant = 0.0;
    bd_options.compute_sc_sc_equilibrium_dist = true;
    bd_options.sc_sc_equilibrium_dist = 0.0;

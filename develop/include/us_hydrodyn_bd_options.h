@@ -37,6 +37,7 @@ struct BD_Options
    float ttraj;  // see browflex2a.pdf for more info
    float deltat;
    int npadif;
+   int nconf;
    int inter;
    int iorder;
    int iseed;
@@ -113,6 +114,7 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       QLabel *lbl_bd_threshold_pb_sc;
       QLabel *lbl_bd_threshold_sc_sc;
       QLabel *lbl_npadif;
+      QLabel *lbl_nconf;
       QLabel *lbl_iseed;
       QLabel *lbl_ttraj;
       QLabel *lbl_deltat;
@@ -125,6 +127,7 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       QLineEdit *le_ttraj;
       QLineEdit *le_deltat;
       QwtCounter *cnt_npadif;
+      QLineEdit *le_nconf;
       QLineEdit *le_iseed;
 
       QButtonGroup  *bg_bead_size_type;
@@ -244,9 +247,17 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       QPushButton *pb_help;
       QPushButton *pb_cancel;
       
+   private :
+      QPalette      label_font_ok;
+      QPalette      label_font_warning;
+
    private slots:
       
       void setupGUI();
+
+      void update_enables();
+      void update_labels();
+   
       void update_bd_threshold_pb_pb(double);
       void update_bd_threshold_pb_sc(double);
       void update_bd_threshold_sc_sc(double);
@@ -276,6 +287,7 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       void update_deltat(const QString &str);
 
       void update_npadif(double);
+      void update_nconf(const QString &str);
       void update_iseed(const QString &str);
 
       void set_bead_size_type(int);
