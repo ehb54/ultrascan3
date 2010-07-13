@@ -19,8 +19,14 @@ class US_EXTERN US_PlotControl : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      //! \param resids A reference to a vector of scans,points residual values
+      //! \brief US_PlotControl constructor
+      //! \param parent Pointer to the parent of this widget
+      //! \param model  Pointer to the model to be plotted
       US_PlotControl( QWidget* p = 0, US_Model* = 0 );
+
+      //! \brief Public function to return US_PlotControl's caller (e.g., US_Fematch)
+      //! \returns Pointer to the QWidget that created this plot control
+      QWidget* caller( void );
 
    private:
       QVBoxLayout*  mainLayout;

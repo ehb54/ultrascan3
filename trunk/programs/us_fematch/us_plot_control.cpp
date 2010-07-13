@@ -1,3 +1,4 @@
+
 //! \file us_plot_control.cpp
 
 #include "us_fematch.h"
@@ -9,7 +10,7 @@
 
 // constructor:  enhanced plot control widget
 US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
-   : US_WidgetsDialog( p, 0 )
+   : US_WidgetsDialog( 0, 0 )
 {
 
    wparent        = p;
@@ -65,7 +66,7 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QCheckBox*   ck_yfra   = new QCheckBox( tr( "y=fr" ) );
 
    QwtCounter* ct_zscalefac = us_counter( 3,  -10,   10, 0.01 );
-   QwtCounter* ct_gridreso  = us_counter( 3,   50, 1000,   10 );
+   QwtCounter* ct_gridreso  = us_counter( 3,   50,  300,   10 );
    QwtCounter* ct_peaksmoo  = us_counter( 3,    1,  200,    1 );
    QwtCounter* ct_peakwidth = us_counter( 3, 0.01, 10.0, 0.01 );
 
@@ -208,6 +209,12 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    pkwidth  = 0.3;
 }
 
+// return caller of plot_control
+QWidget* US_PlotControl::caller( void )
+{
+   return wparent;
+}
+
 // mw x box checked
 void US_PlotControl::xmwtCheck( bool chkd )
 {
@@ -343,8 +350,7 @@ void US_PlotControl::plot3_btn()
    }
 
    plot3d_w->setTypes     ( typex, typey, typez );
-   plot3d_w->setRanges    ( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 );
-   plot3d_w->setParameters( 0.0, zscale, gridres, pksmooth, pkwidth );
+   plot3d_w->setParameters( zscale, gridres, pksmooth, pkwidth );
    plot3d_w->replot       ( );
 
    plot3d_w->setVisible( true );

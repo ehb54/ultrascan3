@@ -28,15 +28,8 @@ class US_EXTERN US_Plot3D : public QMainWindow
 
       //! \brief Public function to set 3 coordinate type flags
       void setTypes     ( int, int, int );
-      //! \brief Public function to set axis titles
-      void setAxisTitles( QString, QString, QString );
-      //! \brief Public function to set X and Y dimensions
-      void setDimensions( int, int );
-      //! \brief Public function to set 3 sets of ranges
-      //! \param xmin    X minimum value
-      void setRanges    ( double, double, double, double, double, double );
       //! \brief Public function to set plot control parameters
-      void setParameters( double, double, double, double, double );
+      void setParameters( double, double, double, double );
       //! \brief Public function to (re)calculate Z values at fixed increments
       void calculateData( QVector< QVector< double > >& );
       //! \brief Public function to replot the 3D data
@@ -57,32 +50,29 @@ class US_EXTERN US_Plot3D : public QMainWindow
 
       QAction*      openAct;
       QAction*      openffAct;
-      QAction*      movieAct;
       QAction*      saveAct;
-      QAction*      boxAct;
-      QAction*      fdmeshAct;
-      QAction*      fldataAct;
-      QAction*      flemptAct;
-      QAction*      flisoAct;
-      QAction*      flmeshAct;
+      QAction*      movieAct;
+      QAction*      exitAct;
       QAction*      frameAct;
-      QAction*      gridbAct;
-      QAction*      gridcAct;
-      QAction*      gridfAct;
+      QAction*      boxAct;
+      QAction*      noneAct;
       QAction*      gridfrAct;
-      QAction*      gridAct;
+      QAction*      gridbAct;
       QAction*      gridrAct;
       QAction*      gridlAct;
-      QAction*      hiddlnAct;
-      QAction*      iconAct;
-      QAction*      nodataAct;
-      QAction*      noneAct;
-      QAction*      normsAct;
-      QAction*      polygnAct;
-      QAction*      qwtpltAct;
+      QAction*      gridcAct;
+      QAction*      gridfAct;
       QAction*      scattdAct;
       QAction*      wirefrAct;
-      QAction*      exitAct;
+      QAction*      hiddlnAct;
+      QAction*      polygnAct;
+      QAction*      fdmeshAct;
+      QAction*      nodataAct;
+      QAction*      fldataAct;
+      QAction*      flisoAct;
+      QAction*      flemptAct;
+      QAction*      flmeshAct;
+      QAction*      normsAct;
       QAction*      coaxisAct;
       QAction*      cobackAct;
       QAction*      comeshAct;
@@ -95,6 +85,8 @@ class US_EXTERN US_Plot3D : public QMainWindow
       QAction*      fnaxisAct;
       QAction*      fncaptAct;
       QAction*      fnrsetAct;
+      QAction*      iconAct;
+      QAction*      qwtpltAct;
 
       QActionGroup* frameGroup;
       QActionGroup* gridGroup;
@@ -129,6 +121,9 @@ class US_EXTERN US_Plot3D : public QMainWindow
       int           typex;
       int           typey;
       int           typez;
+      int           powrx;
+      int           powry;
+      int           redrawWait;
 
       double        xmin;
       double        xmax;
@@ -139,14 +134,22 @@ class US_EXTERN US_Plot3D : public QMainWindow
       double        zfloor;
       double        zscale;
       double        gridres;
-      double        pksmooth;
-      double        pkwidth;
+      double        x_norm;
+      double        y_norm;
+      double        z_norm;
+      double        x_scale;
+      double        y_scale;
+      double        z_scale;
+      double        alpha;
+      double        beta;
 
       QString       xatitle;
       QString       yatitle;
       QString       zatitle;
 
       QFrame*       frame;
+
+      QTimer*       timer;
 
       QVector< QVector< double > > zdata;
 
@@ -162,13 +165,49 @@ class US_EXTERN US_Plot3D : public QMainWindow
 
    private slots:
 
-      QString xyAxisTitle( int );
+      void    std_button(   void );
+      void    light_button( void );
+      void    ifmt_chosen(  int  );
+      void    light_check(  int  );
+      void    ortho_check(  int  );
+      void    legnd_check(  int  );
+      void    autsc_check(  int  );
+      void    mouse_check(  int  );
+      void    shade_check(  int  );
+      void    poffs_slide(  int  );
+      void    resol_slide(  int  );
+      void    movie_toggle(     bool );
+      void    frame_axes_on(    bool );
+      void    box_axes_on(      bool );
+      void    no_axes_on(       bool );
+      void    grid_front_on(    bool );
+      void    grid_back_on(     bool );
+      void    grid_left_on(     bool );
+      void    grid_right_on(    bool );
+      void    grid_ceil_on(     bool );
+      void    grid_floor_on(    bool );
+      void    set_grid_onoff(   Qwt3D::SIDE, bool );
+      void    data_points_on(    bool );
+      void    data_wirefr_on(    bool );
+      void    data_hidden_on(    bool );
+      void    data_polygn_on(    bool );
+      void    data_fimesh_on(    bool );
+      void    data_none_on(      bool );
+      void    floor_data_on(     bool );
+      void    floor_iso_on(      bool );
+      void    floor_empty_on(    bool );
+      void    floor_mesh_on(     bool );
+      void    rotate(       void );
+      void    open_file(    void );
+      void    close_all(    void );
+
+      QString xyAxisTitle( int, int );
       QString zAxisTitle(  int );
       void    setStandardView( void );
       void    createActions(   void );
       void    createMenus(     void );
       void    createToolBar(   void );
-      double  comp_value( US_Model::SimulationComponent*, int );
+      double  comp_value( US_Model::SimulationComponent*, int, double );
 
 };
 #endif
