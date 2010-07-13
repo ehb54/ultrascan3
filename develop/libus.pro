@@ -169,6 +169,7 @@ SOURCES += \
   src/us_hydrodyn_addresidue.cpp \
   src/us_hydrodyn_addsaxs.cpp \
   src/us_hydrodyn_advanced_config.cpp \
+  src/us_hydrodyn_anaflex_options.cpp \
   src/us_hydrodyn_asa.cpp \
   src/us_hydrodyn_asab1.cpp \
   src/us_hydrodyn_batch.cpp \
@@ -177,6 +178,7 @@ SOURCES += \
   src/us_hydrodyn_bd_options.cpp \
   src/us_hydrodyn_core.cpp \
   src/us_hydrodyn_dammin_opts.cpp \
+  src/us_hydrodyn_dmd_options.cpp \
   src/us_hydrodyn_file.cpp \
   src/us_hydrodyn_grid.cpp \
   src/us_hydrodyn_grid_atob.cpp \
@@ -374,6 +376,7 @@ HEADERS += \
   include/us_hydrodyn_addresidue.h \
   include/us_hydrodyn_addsaxs.h \
   include/us_hydrodyn_advanced_config.h \
+  include/us_hydrodyn_anaflex_options.h \
   include/us_hydrodyn_asa.h \
   include/us_hydrodyn_asab1.h \
   include/us_hydrodyn_batch.h \
@@ -381,6 +384,7 @@ HEADERS += \
   include/us_hydrodyn_save.h \
   include/us_hydrodyn_bead_output.h \
   include/us_hydrodyn_dammin_opts.h \
+  include/us_hydrodyn_dmd_options.h \
   include/us_hydrodyn_file.h \
   include/us_hydrodyn_grid.h \
   include/us_hydrodyn_grid_atob.h \

@@ -1604,7 +1604,7 @@ int US_Hydrodyn::run_browflex()
       {
          QColor save_color = editor->color();
          editor->setColor("red");
-         editor->append(QString("BrowFlex program '%1' does not exist\n").arg(prog));
+         editor->append(QString("Browflex program '%1' does not exist\n").arg(prog));
          editor->setColor(save_color);
          return -1;
       }
@@ -1612,7 +1612,7 @@ int US_Hydrodyn::run_browflex()
       {
          QColor save_color = editor->color();
          editor->setColor("red");
-         editor->append(QString("BrowFlex program '%1' is not executable\n").arg(prog));
+         editor->append(QString("Browflex program '%1' is not executable\n").arg(prog));
          editor->setColor(save_color);
          return -1;
       }
@@ -1668,7 +1668,7 @@ void US_Hydrodyn::browflex_processExited()
 {
    QColor save_color = editor->color();
    editor->setColor("brown");
-   editor->append("BrowFlex process exited\n");
+   editor->append("Browflex process exited\n");
    editor->setColor(save_color);
    browflex_readFromStderr();
    browflex_readFromStdout();
@@ -1691,7 +1691,7 @@ void US_Hydrodyn::browflex_launchFinished()
 {
    QColor save_color = editor->color();
    editor->setColor("brown");
-   editor->append("BrowFlex launch exited\n");
+   editor->append("Browflex launch exited\n");
    editor->setColor(save_color);
    disconnect( browflex, SIGNAL(launchFinished()), 0, 0);
 }

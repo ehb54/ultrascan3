@@ -21,8 +21,6 @@ US_Hydrodyn_BD_Options::~US_Hydrodyn_BD_Options()
    *bd_widget = false;
 }
 
-#define SEC2
-
 void US_Hydrodyn_BD_Options::setupGUI()
 {
    QFont qf;

@@ -136,6 +136,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    pdb_parsing_widget = false;
    advanced_config_widget = false;
    bd_options_widget = false;
+   dmd_options_widget = false;
+   anaflex_options_widget = false;
    batch_widget = false;
    save_widget = false;
    calcAutoHydro = false;
@@ -282,7 +284,11 @@ void US_Hydrodyn::setupGUI()
    somo_options->insertItem(tr("&Bead Model Output"), this, SLOT(show_bead_output()));
    somo_options->insertItem(tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
    somo_options->insertItem(tr("SA&XS/SANS Options"), this, SLOT(show_saxs_options()));
-   somo_options->insertItem(tr("B&D Options"), this, SLOT(show_bd_options()));
+
+   md_options = new QPopupMenu;
+   md_options->insertItem(tr("&DMD Options"), this, SLOT(show_dmd_options()));
+   md_options->insertItem(tr("&BD (Browflex) Options"), this, SLOT(show_bd_options()));
+   md_options->insertItem(tr("&Anaflex Options"), this, SLOT(show_anaflex_options()));
 
    pdb_options = new QPopupMenu;
    pdb_options->insertItem(tr("&Parsing"), this, SLOT(pdb_parsing()));
@@ -302,6 +308,7 @@ void US_Hydrodyn::setupGUI()
    menu->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    menu->insertItem(tr("&Lookup Tables"), lookup_tables);
    menu->insertItem(tr("&SOMO Options"), somo_options);
+   menu->insertItem(tr("&MD Options"), md_options);
    menu->insertItem(tr("&PDB Options"), pdb_options);
    menu->insertItem(tr("&Configurations"), configuration);
 
@@ -902,6 +909,27 @@ void US_Hydrodyn::show_saxs_options()
    }
 }
 
+void US_Hydrodyn::show_dmd_options()
+{
+   if (dmd_options_widget)
+   {
+      if (dmd_options_window->isVisible())
+      {
+         dmd_options_window->raise();
+      }
+      else
+      {
+         dmd_options_window->show();
+      }
+      return;
+   }
+   else
+   {
+      dmd_options_window = new US_Hydrodyn_DMD_Options(&dmd_options, &dmd_options_widget, this);
+      dmd_options_window->show();
+   }
+}
+
 void US_Hydrodyn::show_bd_options()
 {
    if (bd_options_widget)
@@ -920,6 +948,27 @@ void US_Hydrodyn::show_bd_options()
    {
       bd_options_window = new US_Hydrodyn_BD_Options(&bd_options, &bd_options_widget, this);
       bd_options_window->show();
+   }
+}
+
+void US_Hydrodyn::show_anaflex_options()
+{
+   if (anaflex_options_widget)
+   {
+      if (anaflex_options_window->isVisible())
+      {
+         anaflex_options_window->raise();
+      }
+      else
+      {
+         anaflex_options_window->show();
+      }
+      return;
+   }
+   else
+   {
+      anaflex_options_window = new US_Hydrodyn_Anaflex_Options(&anaflex_options, &anaflex_options_widget, this);
+      anaflex_options_window->show();
    }
 }
 
@@ -1066,6 +1115,8 @@ void US_Hydrodyn::do_reset()
    saxs_options = default_saxs_options;
    batch = default_batch;
    bd_options = default_bd_options;
+   dmd_options = default_dmd_options;
+   anaflex_options = default_anaflex_options;
    //  save = default_save;
 }
 

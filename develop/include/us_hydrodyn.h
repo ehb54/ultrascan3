@@ -28,10 +28,12 @@
 #include "us_hydrodyn_addatom.h"
 #include "us_hydrodyn_addresidue.h"
 #include "us_hydrodyn_addsaxs.h"
+#include "us_hydrodyn_anaflex_options.h"
 #include "us_hydrodyn_overlap.h"
 #include "us_hydrodyn_bead_output.h"
 #include "us_hydrodyn_asa.h"
 #include "us_hydrodyn_bd_options.h"
+#include "us_hydrodyn_dmd_options.h"
 #include "us_hydrodyn_hydro.h"
 #include "us_hydrodyn_misc.h"
 #include "us_hydrodyn_grid.h"
@@ -70,6 +72,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int get_color(PDB_atom *);
       BD_Options bd_options;
       BD_Options default_bd_options;
+      Anaflex_Options anaflex_options;
+      Anaflex_Options default_anaflex_options;
+      DMD_Options dmd_options;
+      DMD_Options default_dmd_options;
       struct misc_options misc;
       struct misc_options default_misc;
       struct advanced_config advanced_config;
@@ -130,6 +136,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool pdb_visualization_widget;
       bool saxs_options_widget;
       bool bd_options_widget;
+      bool anaflex_options_widget;
+      bool dmd_options_widget;
       bool saxs_plot_widget;
       bool advanced_config_widget;
       bool save_widget;
@@ -200,6 +208,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QPopupMenu *lookup_tables;
       QPopupMenu *somo_options;
+      QPopupMenu *md_options;
       QPopupMenu *pdb_options;
       QPopupMenu *configuration;
       QMenuBar *menu;
@@ -243,6 +252,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Overlap *grid_overlap_window;
       US_Hydrodyn_Bead_Output *bead_output_window;
       US_Hydrodyn_BD_Options *bd_options_window;
+      US_Hydrodyn_Anaflex_Options *anaflex_options_window;
+      US_Hydrodyn_DMD_Options *dmd_options_window;
       US_Hydrodyn_Hydro *hydro_window;
       US_Hydrodyn_Misc *misc_window;
       US_Hydrodyn_Results *results_window;
@@ -357,6 +368,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void select_save_params();
       void show_saxs_options();
       void show_bd_options();
+      void show_anaflex_options();
+      void show_dmd_options();
       void read_residue_file();
       int read_config(const QString &);
       int read_config(QFile &);
