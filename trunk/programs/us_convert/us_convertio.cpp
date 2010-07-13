@@ -51,7 +51,7 @@ QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, QStr
    ExpData.date = db.value( 12 ).toString();
 
    // Now write the auc data
-   return( writeRawDataDB( ExpData, dir ) );
+   return( writeRawDataToDB( ExpData, dir ) );
 }
 
 QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, QString dir )
@@ -91,20 +91,11 @@ QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, Q
 
    ExpData.date = db.value( 12 ).toString();
 
-   // Delete all existing rawData, because we're starting over 
-   q.clear();
-   q << "delete_rawData"
-     << QString::number( ExpData.expID );
-
-   status = db.statusQuery( q );
-   if ( status != US_DB2::OK )
-      return( db.lastError() );
-
    // Now write the auc data
-   return( writeRawDataDB( ExpData, dir ) );
+   return( writeRawDataToDB( ExpData, dir ) );
 }
 
-QString US_ConvertIO::writeRawDataDB( US_ExpInfo::ExperimentInfo& ExpData, QString dir )
+QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData, QString dir )
 {
    // Update database
    US_Passwd pw;
@@ -112,6 +103,13 @@ QString US_ConvertIO::writeRawDataDB( US_ExpInfo::ExperimentInfo& ExpData, QStri
    US_DB2 db( masterPW );
 
    if ( db.lastErrno() != US_DB2::OK )
+      return( db.lastError() );
+
+   // Delete all existing rawData, because we're starting over 
+   QStringList q( "delete_rawData" );
+   q << QString::number( ExpData.expID );
+   int status = db.statusQuery( q );
+   if ( status != US_DB2::OK )
       return( db.lastError() );
 
    // First get a list of auc files
@@ -124,27 +122,32 @@ QString US_ConvertIO::writeRawDataDB( US_ExpInfo::ExperimentInfo& ExpData, QStri
    // We assume there are files, because calling program checked
 
    // Read all data
-   QString file;
    QString error = QString( "" );
-   foreach ( file, files )
+   foreach ( QString file, files )
    {
       QString filename = dir + file;
-      QFile f( filename );
 
-      if ( f.open( QFile::ReadOnly ) )
+      QStringList q( "new_rawData" );
+      q  << QString::number( ExpData.expID )
+         << filename
+         << ExpData.label
+         << ExpData.comments
+         << "1" ;           // channel ID
+
+      status = db.statusQuery( q );
+      int rawDataID = 0;
+      if ( status == US_DB2::OK )
       {
-         QByteArray aucData = f.readAll();
-
-         QStringList q( "new_rawData" );
-         q  << QString::number( ExpData.expID )
-            << filename
-            << ExpData.label
-            << aucData
-            << ExpData.comments
-            << "1" ;           // channel ID
-
-         int status = db.statusQuery( q );
-         if ( status != US_DB2::OK )
+         // If ok, we can upload the auc data
+         rawDataID = db.lastInsertID();
+         status = db.writeBlobToDB( filename, QString( "upload_aucData" ), rawDataID );
+         if ( status == US_DB2::ERROR )
+         {
+            error += "Error processing file: " + filename + "\n" +
+                     "Could not open file or no data \n";
+         }
+   
+         else if ( status != US_DB2::OK )
          {
             error += "Error returned processing file: " + filename + "\n" +
                      db.lastError() + "\n";
@@ -152,10 +155,10 @@ QString US_ConvertIO::writeRawDataDB( US_ExpInfo::ExperimentInfo& ExpData, QStri
       }
 
       else
-         error += "Error: could not open file: " + filename + "\n";
-
-      f.close();
-
+      {
+         error += "Error returned processing file: " + filename + "\n" +
+                  db.lastError() + "\n";
+      }
    }
 
    if ( error != NULL )

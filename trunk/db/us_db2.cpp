@@ -462,6 +462,142 @@ int US_DB2::numRows( void )
 #endif
 
 #ifdef NO_DB
+int US_DB2::writeBlobToDB( const QString& , const QString& , const int ) { return 0; }
+#else
+int US_DB2::writeBlobToDB( const QString& filename, 
+    const QString& procedure, const int tableID )
+{
+   // First let's read the file
+   QFile fin( filename );
+
+   if ( ! fin.open( QIODevice::ReadOnly ) )
+      return ERROR;
+
+   QByteArray blobData = fin.readAll();
+   fin.close();
+
+   if ( blobData.size() < 1 )
+      return ERROR;
+
+   if ( tableID == 0 )
+      return ERROR;
+
+   // Now let's start building the query
+   QString queryPart1 = "CALL " + procedure +
+                        "('"    + guid      + 
+                        "', '"  + userPW    + 
+                        "', "   + QString::number( tableID )   +
+                        ", '"   ;
+   char* sqlQuery = new char[ blobData.size() * 2 + queryPart1.size() + 3 ];
+   strcpy( sqlQuery, queryPart1.toAscii() );
+
+   // Now insert blob data directly into query with escape codes
+   const char* blobPtr = blobData.data();
+   char* queryPtr = sqlQuery + queryPart1.size();
+   int length = mysql_real_escape_string( db, queryPtr, blobPtr, blobData.size() );
+   queryPtr += length;
+   strcpy( queryPtr, "')\0" );
+
+   // We can't use standard methods since they use QStrings
+   // Clear out any unused result sets
+   if ( result )
+      mysql_free_result( result ); 
+
+   while ( mysql_next_result( db ) == 0 )
+   {
+      result = mysql_store_result( db );
+      mysql_free_result( result );
+   }
+   result = NULL;
+
+   if ( mysql_query( db, sqlQuery ) != 0 )
+   {
+      error = QString( "MySQL error: " ) + mysql_error( db );
+
+      delete[] sqlQuery;
+      return ERROR;
+   }
+
+   result    = mysql_store_result( db );
+   row       = mysql_fetch_row( result );
+   int value = atoi( row[ 0 ] );
+   mysql_free_result( result );
+   result = NULL;
+
+   delete[] sqlQuery;
+   return value;
+}
+#endif
+
+#ifdef NO_DB
+int US_DB2::readBlobFromDB( const QString& , const QString& , const int ) { return 0; }
+#else
+int US_DB2::readBlobFromDB( const QString& filename, 
+    const QString& procedure, const int tableID )
+{
+   // First let's build the query
+   QString sqlQuery = "CALL " + procedure +
+                      "('"    + guid      + 
+                      "', '"  + userPW    + 
+                      "', "   + QString::number( tableID )   +
+                      ")"   ;
+
+   // We can't use standard methods since because the
+   // binary data doesn't all transfer
+
+   // Make sure that we clear out any unused
+   //   result sets
+   if ( result )
+      mysql_free_result( result ); 
+
+   while ( mysql_next_result( db ) == 0 )
+   {
+      result = mysql_store_result( db );
+      mysql_free_result( result );
+   }
+   result = NULL;
+
+   if ( mysql_query( db, sqlQuery.toAscii() ) != OK )
+   {
+      error = QString( "MySQL error: " ) + mysql_error( db );
+
+      return ERROR;
+   }
+
+   // First result set is status
+   result      = mysql_store_result( db );
+   row         = mysql_fetch_row( result );
+   int status  = atoi( row[ 0 ] );
+   mysql_free_result( result );
+   result = NULL;
+
+   // Now get the result data
+   if ( mysql_next_result( db ) == 0 )
+   {
+      result = mysql_store_result( db );
+      row    = mysql_fetch_row( result );
+
+      // Make sure we get the right number of bytes
+      ulong* lengths = mysql_fetch_lengths( result );
+      QByteArray aucData( row[ 0 ], lengths[ 0 ] );
+
+      mysql_free_result( result );
+      result = NULL;
+
+      // Since we got data, let's write it out
+      QFile fout( filename + "2" );
+      if ( fout.open( QIODevice::WriteOnly ) )
+      {
+         fout.write( aucData );
+         fout.close();
+      }
+   }
+
+   return( status );
+}
+#endif
+
+#ifdef NO_DB
 int US_DB2::lastInsertID( void ){ return 0; }
 #else
 int US_DB2::lastInsertID( void )
@@ -490,4 +626,3 @@ QString US_DB2::lastDebug( void )
    return ( debug );
 }
 #endif
-

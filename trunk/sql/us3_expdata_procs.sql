@@ -143,7 +143,6 @@ CREATE PROCEDURE new_rawData ( p_personGUID   CHAR(36),
                                p_experimentID INT,
                                p_filename     VARCHAR(255),
                                p_label        VARCHAR(80),
-                               p_data         LONGBLOB,
                                p_comment      TEXT,
                                p_channelID    INT )
   MODIFIES SQL DATA
@@ -167,7 +166,6 @@ BEGIN
       experimentID  = p_experimentID,
       filename      = p_filename,
       label         = p_label,
-      data          = p_data,
       comment       = p_comment,
       channelID     = p_channelID;
    
@@ -250,16 +248,112 @@ BEGIN
 
   IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
 
-    -- write code to delete related editedData, model, noise, modelPerson data
-       -- get editedDataID, then modelID: modelID can be used to delete from
-       -- model, noise, and modelPerson tables
+    -- Make sure records match if they have related tables or not
+    DELETE      rawData, editedData, model, noise, modelPerson
+    FROM        rawData
+    LEFT JOIN   editedData  ON ( editedData.rawDataID = rawData.rawDataID )
+    LEFT JOIN   model       ON ( model.editedDataID   = editedData.editedDataID )
+    LEFT JOIN   noise       ON ( noise.modelID        = model.modelID )
+    LEFT JOIN   modelPerson ON ( modelPerson.modelID  = model.modelID )
+    WHERE       rawData.experimentID = p_experimentID;
 
-    DELETE FROM rawData
-    WHERE experimentID = p_experimentID;
+--    DELETE FROM rawData
+--    WHERE experimentID = p_experimentID;
 
   END IF;
 
   SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- UPDATEs a rawData record with the auc data
+DROP PROCEDURE IF EXISTS upload_aucData$$
+CREATE PROCEDURE upload_aucData ( p_personGUID   CHAR(36),
+                                  p_password     VARCHAR(80),
+                                  p_rawDataID    INT,
+                                  p_data         LONGBLOB )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE l_experimentID INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+ 
+  -- Get information we need to verify ownership
+  SELECT experimentID
+  INTO   l_experimentID
+  FROM   rawData
+  WHERE  rawDataID = p_rawDataID;
+
+  IF ( verify_experiment_permission( p_personGUID, p_password, l_experimentID ) = @OK ) THEN
+ 
+    -- This is either an admin, or a person inquiring about his own experiment
+    UPDATE rawData SET
+      data           = p_data
+    WHERE  rawDataID = p_rawDataID;
+
+    SET @LAST_INSERT_ID  = LAST_INSERT_ID();
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- SELECTs a rawData record of auc data previously saved with upload_aucData
+DROP PROCEDURE IF EXISTS download_aucData$$
+CREATE PROCEDURE download_aucData ( p_personGUID   CHAR(36),
+                                    p_password     VARCHAR(80),
+                                    p_rawDataID    INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE l_count_aucData INT;
+  DECLARE l_experimentID  INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+ 
+  -- Get information to verify that there are records
+  SELECT COUNT(*)
+  INTO   l_count_aucData
+  FROM   rawData
+  WHERE  rawDataID = p_rawDataID;
+
+SET @DEBUG = CONCAT('Raw data ID = ', p_rawDataID,
+                    'Count = ', l_count_aucData );
+  -- Get information we need to verify ownership
+  SELECT experimentID
+  INTO   l_experimentID
+  FROM   rawData
+  WHERE  rawDataID = p_rawDataID;
+
+  IF ( l_count_aucData != 1 ) THEN
+    -- Probably no rows
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows exist with that ID (or too many rows)';
+
+    SELECT @NOROWS AS status;
+    
+  ELSEIF ( verify_experiment_permission( p_personGUID, p_password, l_experimentID ) != @OK ) THEN
+ 
+    -- verify_experiment_permission must have thrown an error, so pass it on
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+
+    -- This is either an admin, or a person inquiring about his own experiment
+    SELECT @OK AS status;
+
+    SELECT data
+    FROM   rawData
+    WHERE  rawDataID = p_rawDataID;
+
+  END IF;
 
 END$$
 

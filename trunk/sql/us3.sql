@@ -313,6 +313,8 @@ ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table rawData
+-- The data field is not expected to be NULL, but loading
+--  this table is a 2-step process
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS rawData ;
 
@@ -320,7 +322,7 @@ CREATE  TABLE IF NOT EXISTS rawData (
   rawDataID int(11) NOT NULL AUTO_INCREMENT ,
   label VARCHAR(80) NOT NULL default '',
   filename VARCHAR(255) NOT NULL DEFAULT '',
-  data LONGBLOB NOT NULL ,
+  data LONGBLOB NULL ,
   comment TEXT NULL ,
   experimentID int(11) NOT NULL ,
   channelID int(11) NOT NULL ,
