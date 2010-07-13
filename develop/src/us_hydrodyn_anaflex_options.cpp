@@ -50,7 +50,6 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    connect(cb_instprofiles, SIGNAL(clicked()), SLOT(set_instprofiles()));
 
    bg_run_mode = new QButtonGroup(5, Qt::Vertical, " Run mode ", this);
-   Q_CHECK_PTR(bg_run_mode);
    bg_run_mode->setExclusive(true);
    bg_run_mode->setAlignment(Qt::AlignHCenter);
    bg_run_mode->setInsideMargin(3);
@@ -101,6 +100,8 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    cb_run_mode_9->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_run_mode_9->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    // connect(cb_run_mode_9, SIGNAL(clicked()), SLOT(set_run_mode_9()));
+
+   bg_run_mode->setButton(anaflex_options->run_mode);
 
    lbl_nfrec = new QLabel(tr(" Trajectory sampling frequency: "), this);
    lbl_nfrec->setAlignment(AlignLeft|AlignVCenter);
