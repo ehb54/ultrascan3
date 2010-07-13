@@ -207,13 +207,14 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
    //dataWidget->coordinates()->setGridLinesColr( RGBA( 0.35, 0.35, 0.35, 1 ) );
    dataWidget->enableMouse( true );
    dataWidget->setKeySpeed( 15, 20, 20 );
+
    dataWidget->setTitleFont( US_GuiSettings::fontFamily(),
                              US_GuiSettings::fontSize() );
-
    dataWidget->setTitle( tr( "Model 3-D Plot" ) );
-   dataWidget->setPlotStyle( FILLEDMESH );
-   dataWidget->setFloorStyle( NOFLOOR );
-   dataWidget->setCoordinateStyle( NOCOORD );
+
+   dataWidget->setPlotStyle(       FILLEDMESH );
+   dataWidget->setFloorStyle(      NOFLOOR    );
+   dataWidget->setCoordinateStyle( NOCOORD    );
 
    skip_plot  = false;
    x_scale    = 1.0;
@@ -278,14 +279,16 @@ qDebug() << "P3D:sT: type xyz" << typex << typey << typez;
    yval    = ( ymax - ymin ) * 0.05;
    ymin   -= yval;
    ymax   += yval;
-   zval    = ( zmax - zmin ) * 0.05;
-   zmin   -= zval;
+   //zval    = ( zmax - zmin ) * 0.05;
+   //zmin   -= zval;
+   //zmax   += zval;
 
    // determine a normalizing power-of-ten for x and y
    x_norm  = 9.99 / xmax;
    y_norm  = 9.99 / ymax;
    z_norm  = 9.99 / zmax;
 qDebug() << "P3D:sR: xmax ymax xnorm ynorm" << xmax << ymax << x_norm << y_norm;
+qDebug() << "P3D:sR:  zmin zmax" << zmin << zmax;
    powrx   = qRound( log10( x_norm ) );
    powry   = qRound( log10( y_norm ) );
    powrz   = qRound( log10( z_norm ) );
@@ -311,6 +314,7 @@ qDebug() << "P3D:sR: xmax ymax xnorm ynorm" << xmax << ymax << x_norm << y_norm;
       powrz--;
    }
 //z_norm=1.0;
+//z_norm=2.0/zmax;
 qDebug() << "P3D:sR: powx powy xnorm ynorm" << powrx << powry << x_norm << y_norm;
    xmin   *= x_norm;
    xmax   *= x_norm;
@@ -328,7 +332,8 @@ qDebug() << "P3D:sR: xmin xmax ymin ymax" << xmin << xmax << ymin << ymax;
    zmin    = (double)( (int)( zmin * 10.0 )     ) * 0.1;
    zmax    = (double)( (int)( zmax * 10.0 ) + 1 ) * 0.1;
    zmin    = ( zmin < 0.0 ) ? ( zmin - 0.1 ) : zmin;
-qDebug() << "P3D:sR:  xmin xmax ymin ymax" << xmin << xmax << ymin << ymax;
+qDebug() << "P3D:sR:  xmin xmax" << xmin << xmax
+ << " ymin ymax" << ymin << ymax << " zmin zmax" << zmin << zmax;
 }
 
 // Public function to set internal variables from plot control parameters
@@ -355,6 +360,7 @@ void US_Plot3D::setParameters( double a_scale, double a_gridr,
    calculateData( zdata );
 }
 
+// calculate raster data from model data
 void US_Plot3D::calculateData( QVector< QVector< double > >& zdat )
 {
    US_Model::SimulationComponent* sc;
@@ -378,10 +384,7 @@ void US_Plot3D::calculateData( QVector< QVector< double > >& zdat )
    double ydif;
    double xpinc  = (double)( nrows - 1 ) / ( xmax - xmin );
    double ypinc  = (double)( ncols - 1 ) / ( ymax - ymin );
-   //double zfact  = 1.0;
    double zfact  = zscale;
-qDebug() << "P3D:cD: xpinc" << xpinc;
-qDebug() << "P3D:cD: zmin zmax" << zmin << zmax;
 
    for ( int ii = 0; ii < nrows; ii++ )      // initialize all to zmin
       for ( int jj = 0; jj < ncols; jj++ )
@@ -389,31 +392,30 @@ qDebug() << "P3D:cD: zmin zmax" << zmin << zmax;
 
    for ( int kk = 0; kk < ncomp; kk++ )
    {
-      sc         = &model->components[ kk ];  // current component
-      // get x,y,z offsets from minimum
+      sc         = &model->components[ kk ];  // current component and xyz
       xval       = comp_value( sc, typex,  x_norm ) - xmin;
       yval       = comp_value( sc, typey,  y_norm ) - ymin;
       zval       = comp_value( sc, -typez, z_norm );
 
-      rx         = (int)( xval * xpinc );       // raster index of model x
-      fx         = rx - nxd;                    // range of x to work on
+      rx         = (int)( xval * xpinc );     // raster index of model x
+      fx         = rx - nxd;                  // range of x to work on
       lx         = rx + nxd;
       fx         = ( fx > 0 )     ? fx : 0;
       lx         = ( lx < ncols ) ? lx : ncols;
 
-      ry         = (int)( yval * ypinc );       // raster index of model y
-      fy         = ry - nyd;                    // range of y to work on
+      ry         = (int)( yval * ypinc );     // raster index of model y
+      fy         = ry - nyd;                  // range of y to work on
       ly         = ry + nyd;
       fy         = ( fy > 0 )     ? fy : 0;
       ly         = ( ly < nrows ) ? ly : nrows;
 
-      for ( int ii = fy; ii < ly; ii++ )
-      {  // find square of difference of y-raster and y-model
-         ydif       = sq( (double)ii / ypinc - yval );
+      for ( int ii = fx; ii < lx; ii++ )
+      {  // find square of difference of x-raster and x-model
+         xdif       = sq( (double)ii / xpinc - xval );
 
-         for ( int jj = fx; jj < lx; jj++ )
-         {  // find square of difference of x-raster and x-model
-            xdif       = sq( (double)jj / xpinc - xval );
+         for ( int jj = fy; jj < ly; jj++ )
+         {  // find square of difference of y-raster and y-model
+            ydif       = sq( (double)jj / ypinc - yval );
             // distance of raster point from model point
             dist       = sqrt( xdif + ydif );
 
@@ -426,7 +428,7 @@ qDebug() << "P3D:cD: zmin zmax" << zmin << zmax;
             //       Beta,  the user-specified peak width factor;
             //       Dist,  the calculated model-to-raster point distance;
             //       Scale, the calculated Z decay at this distance;
-            //       Zfact, the user-specified Z scaling factor (default is 2);
+            //       Zfact, the user-specified Z scaling factor;
             //   Scale = Cosine( Dist * PI/2 / Beta ) raised to the Alpha power
             //   OutZ  = InZ + ( ModlZ * Scale * Zfact )
             if ( dist <= beta )
@@ -434,7 +436,16 @@ qDebug() << "P3D:cD: zmin zmax" << zmin << zmax;
                zdat[ ii ][ jj ] += ( ( zval *
                      ( pow( cos( dist * dfac ), alpha ) ) ) * zfact );
             }
-//else {qDebug() << "  *dist>beta* dist beta ii jj" << dist << beta << ii << jj;}
+//else {qDebug() << "  *dist>beta* dist beta iijj" << dist << beta << ii << jj;}
+//*DBG*
+//if ( kk>(ncomp/2-2) && kk<(ncomp/2+2) ) {
+//if ( ii>3 && ii<9 && jj>5 && jj<11 ) {
+// qDebug() << "kk" << kk << "rx ry ii jj" << rx << ry << ii << jj
+//  << "zout"  << zdat[ii][jj];
+// qDebug() << "  dist" << dist << "dfac alpha beta zval" << dfac
+//  << alpha << beta << zval;
+//}
+//*DBG*
          }
       }
 //qDebug() << "P3D:cD:  kk fx lx fy ly" << kk << fx << lx << fy << ly
@@ -447,31 +458,48 @@ void US_Plot3D::replot()
    unsigned int kcols = (unsigned int)ncols;
    unsigned int krows = (unsigned int)nrows;
 
-   double** wdata = new double* [ nrows ];
+   double** wdata = new double* [ ncols ];
 qDebug() << "P3D: replot: ncols nrows" << ncols << nrows;
 
-   for ( int ii = 0; ii < nrows; ii++ )
-   {
-if ((ii&63)==1) qDebug() << "P3D:  rp: row" << ii;
-      wdata[ ii ] = new double [ ncols ];
+   double zdmx    = zmin;
+   double zfac    = 1.0;
 
-      for ( int jj = 0; jj < ncols; jj++ )
+   for ( int ii = 0; ii < ncols; ii++ )
+   {  // copy data to work 2D vector and get new z-max
+if ((ii&63)==1) qDebug() << "P3D:  rp: row" << ii;
+      wdata[ ii ] = new double [ nrows ];
+
+      for ( int jj = 0; jj < nrows; jj++ )
       {
-         wdata[ ii ][ jj ] = zdata[ ii ][ jj ];
+         double zval       = zdata[ ii ][ jj ];
+         wdata[ ii ][ jj ] = zval;
+         zdmx              = zdmx > zval ? zdmx : zval;
 if ((ii&63)==1&&(jj&63)==1) qDebug() << "P3D:    rp: col" << jj
-   << "  wdat" << wdata[ii][jj];
+ << "  wdat" << zval;
       }
    }
 
+   // scale back data to have same z-max as before
+   zfac  = zmax / zdmx;
+
+   for ( int ii = 0; ii < ncols; ii++ )
+      for ( int jj = 0; jj < nrows; jj++ )
+         wdata[ ii ][ jj ] *= zfac;
+
    // load the widget raster data
+   //dataWidget->loadFromData( wdata, kcols, krows, ymin, ymax, xmin, xmax );
    dataWidget->loadFromData( wdata, kcols, krows, xmin, xmax, ymin, ymax );
 
    // set coordinate system ranges
    dataWidget->createCoordinateSystem( Triple( xmin, ymin, zmin ),
                                        Triple( xmax, ymax, zmax ) );
-   dataWidget->coordinates()->setPosition
-                                     ( Triple( xmin, ymin, zmin ),
-                                       Triple( xmax, ymax, zmax ) );
+   //dataWidget->createCoordinateSystem( Triple( ymin, xmin, zmin ),
+   //                                    Triple( ymax, xmax, zmax ) );
+   //dataWidget->createCoordinateSystem( Triple( -0.6, -0.6, -0.6 ),
+   //                                    Triple(  0.6,  0.6,  0.6 ) );
+   //dataWidget->coordinates()->setPosition
+   //                                  ( Triple( xmin, ymin, zmin ),
+   //                                    Triple( xmax, ymax, zmax ) );
 
    dataWidget->makeCurrent();
    dataWidget->legend()->setScale( LINEARSCALE );
@@ -490,23 +518,8 @@ if ((ii&63)==1&&(jj&63)==1) qDebug() << "P3D:    rp: col" << jj
                                              US_GuiSettings::fontSize() );
 
    x_scale  = xmax / ymax;
-   //x_scale  = ( x_scale < 0.25 ) ? 0.25 : x_scale;
-   //x_scale  = ( x_scale > 4.00 ) ? 4.00 : x_scale;
    y_scale  = 1.0;
    z_scale  = zscale;
-   double ytl = 1.0 / ( 30.0 * y_scale );
-   double yth = 1.0 / ( 15.0 * y_scale );
-   double ztl = 1.0 / ( 5.0 * z_scale );
-   double zth = 1.0 / ( 2.0 * z_scale );
-   dataWidget->coordinates()->axes[Y1].setTicLength( ytl, yth );
-   dataWidget->coordinates()->axes[Y2].setTicLength( ytl, yth );
-   dataWidget->coordinates()->axes[Y3].setTicLength( ytl, yth );
-   dataWidget->coordinates()->axes[Y4].setTicLength( ytl, yth );
-   dataWidget->coordinates()->axes[Z1].setTicLength( ztl, zth );
-   dataWidget->coordinates()->axes[Z2].setTicLength( ztl, zth );
-   dataWidget->coordinates()->axes[Z3].setTicLength( ztl, zth );
-   dataWidget->coordinates()->axes[Z4].setTicLength( ztl, zth );
-
    xatitle  = xyAxisTitle( typex, powrx );
    yatitle  = xyAxisTitle( typey, powry );
    zatitle  = zAxisTitle(  typez );
@@ -586,7 +599,7 @@ void US_Plot3D::setStandardView()
 
    dataWidget->setViewportShift( 0.05, 0 );
    dataWidget->setScale( x_scale, y_scale, z_scale );
-   dataWidget->setZoom( 1.0 );
+   dataWidget->setZoom( 0.95 );
 }
 
 void US_Plot3D::createActions()
