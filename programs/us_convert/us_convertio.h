@@ -62,7 +62,7 @@ class US_EXTERN US_ConvertIO
                  QString                     dirname );
 
    private:
-      static QString writeRawDataDB(
+      static QString writeRawDataToDB(
                  US_ExpInfo::ExperimentInfo& ExpData, 
                  QString                     dir );
       

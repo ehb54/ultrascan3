@@ -212,6 +212,53 @@ class US_EXTERN US_DB2
     */
     int           numRows     ( void );
 
+    /*! \brief Loads raw binary data from a file and writes it to the
+               database. This makes writing a record with binary information
+               in it a two-step process---first write the record with the
+               rest of the information using statusQuery(), get the table ID
+               for that record using lastInsertID(), and finally write the
+               corresponding binary information into the same record 
+               using writeBlobToDB(). WriteBlobToDB() will return 
+               dbStatus.ERROR if the file cannot be opened, or pass through
+               any error codes returned by the db.
+
+        \param filename The complete and absolute pathname of the file with
+               the binary data. WriteBlobToDB() will try to open the file
+               and read the raw binary data.
+        \param procedure The name of the MySQL stored procedure that will
+               accept the data and write it to the database. The procedure
+               must implement a parameter list as follows:
+
+               CALL procedure( yourGUID, yourPassword, tableID, blobData );
+
+        \param tableID The integer primary-key index of the record that the
+               raw binary data should be written to.
+    */
+    int           writeBlobToDB ( const QString& , const QString& , const int );
+
+    /*! \brief Reads raw binary data from the database and writes it to the
+               specified file. This makes reading a record with binary information
+               in it a two-step process---first get the rest of the record 
+               with query(), and then use the table ID for that record 
+               to read the corresponding binary information to a file 
+               using readBlobFromDB(). ReadBlobFromDB() will return 
+               dbStatus.ERROR if the file cannot be opened, or pass through
+               any error codes returned by the db.
+
+        \param filename The complete and absolute pathname of the file to
+               write the binary data to. ReadBlobFromDB() will try to open 
+               the file and write the raw binary data to it.
+        \param procedure The name of the MySQL stored procedure that will
+               accept the data and write it to the database. The procedure
+               must implement a parameter list as follows:
+
+               CALL procedure( yourGUID, yourPassword, tableID, blobData );
+
+        \param tableID The integer primary-key index of the record that 
+               contains the raw binary data.
+    */
+    int           readBlobFromDB( const QString& , const QString& , const int );
+
     /*! \brief Returns a text string containing the most recent error encountered
         by the US3 database system. If a query did not result in an error,
         lastError() might return a text string describing the previous error,
