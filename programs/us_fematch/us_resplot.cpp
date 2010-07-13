@@ -9,7 +9,7 @@
 
 // constructor:  residuals plot widget
 US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
-   : US_WidgetsDialog( p, 0 )
+   : US_WidgetsDialog( 0, 0 )
 {
    // lay out the GUI
    setWindowTitle( tr( "Finite Element Data/Residuals Viewer" ) );
@@ -163,10 +163,11 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
 
    if ( p )
    {
-      if ( p->parent() )
+      QWidget* caller = (QWidget*)((US_PlotControl*)p)->caller();
+      if ( caller )
       {
-qDebug() << "RP: grandparent" << p->parent()->objectName();
-         US_FeMatch* fem = (US_FeMatch*)p->parent();
+qDebug() << "RP: grandparent" << caller->objectName();
+         US_FeMatch* fem = (US_FeMatch*)caller;
          edata           = fem->fem_editdata();
          sdata           = fem->fem_simdata();
          ti_noise        = fem->fem_ti_noise();
