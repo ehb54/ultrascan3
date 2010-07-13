@@ -21,12 +21,58 @@
 #endif
 
 // ---------- create anaflex files
+// ---------- create one for each mode that is selected
 int US_Hydrodyn::create_anaflex_files()
 {
+   // right now we are just going to support one-mode per run
+   // in future we will support multiple, which will require the
+   // following code
+   //   if ( anaflex_options.run_mode_1 )
+   //   {
+   //      create_anaflex_files(1);
+   //   }
+   //   if ( anaflex_options.run_mode_2 )
+   //   {
+   //      create_anaflex_files(2);
+   //   }
+   //   if ( anaflex_options.run_mode_3 )
+   //   {
+   //      create_anaflex_files(3);
+   //   }
+   //   if ( anaflex_options.run_mode_4 )
+   //   {
+   //      create_anaflex_files(4);
+   //   }
+   //   if ( anaflex_options.run_mode_9 )
+   //   {
+   //      create_anaflex_files(9);
+   //   }
+   switch ( anaflex_options.run_mode )
+   {
+   case 0 : 
+   case 1 : 
+   case 2 : 
+   case 3 : 
+      return create_anaflex_files( anaflex_options.run_mode + 1);
+      break;
+   case 4 : 
+      return create_anaflex_files( 9 );
+      break;
+   default :
+      editor->append("unexpected case type (create_anaflex_files)!\n");
+      return -1;
+   }
+   return -2; // shouldn't get here!
+}
+
+int US_Hydrodyn::create_anaflex_files( int use_mode )
+{
+   editor->append(tr(QString("Creating anaflex files (mode %1)\n").arg(use_mode)));
+
    QString filename = 
       project + QString("_%1").arg(current_model + 1) +
       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
-      + "-af";
+      + QString("-af%1").arg(use_mode);
    QString bffilename = 
       project + QString("_%1").arg(current_model + 1) +
       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
@@ -35,7 +81,6 @@ int US_Hydrodyn::create_anaflex_files()
       somo_dir + SLASH + filename;
 
    // anaflex-main.txt
-   int use_mode = 0;
    QFile f;
    // main file
    {

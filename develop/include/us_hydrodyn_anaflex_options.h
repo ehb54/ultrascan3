@@ -29,6 +29,7 @@ struct Anaflex_Options
    bool run_anaflex;
    int nfrec;
    bool instprofiles;
+   int run_mode;
    bool run_mode_1;
    bool run_mode_2;
    bool run_mode_3;
@@ -55,6 +56,8 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
 
       QCheckBox *cb_run_anaflex;
       QCheckBox *cb_instprofiles;
+
+      QButtonGroup *bg_run_mode;
       QCheckBox *cb_run_mode_1;
       QCheckBox *cb_run_mode_2;
       QCheckBox *cb_run_mode_3;
@@ -72,6 +75,7 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
 
       void set_run_anaflex();
       void set_instprofiles();
+      void set_run_mode( int );
       void set_run_mode_1();
       void set_run_mode_2();
       void set_run_mode_3();

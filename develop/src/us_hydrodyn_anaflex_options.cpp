@@ -49,50 +49,58 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    cb_instprofiles->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_instprofiles, SIGNAL(clicked()), SLOT(set_instprofiles()));
 
-   cb_run_mode_1 = new QCheckBox(this);
+   bg_run_mode = new QButtonGroup(5, Qt::Vertical, " Run mode ", this);
+   Q_CHECK_PTR(bg_run_mode);
+   bg_run_mode->setExclusive(true);
+   bg_run_mode->setAlignment(Qt::AlignHCenter);
+   bg_run_mode->setInsideMargin(3);
+   bg_run_mode->setInsideSpacing(0);
+   connect(bg_run_mode, SIGNAL(clicked(int)), this, SLOT(set_run_mode(int)));
+
+   cb_run_mode_1 = new QCheckBox(bg_run_mode);
    cb_run_mode_1->setText(tr(" Compute steady state properties "));
    cb_run_mode_1->setChecked((*anaflex_options).run_mode_1);
    cb_run_mode_1->setEnabled(true);
    //   cb_run_mode_1->setMinimumHeight(minHeight1);
    cb_run_mode_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_run_mode_1->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_run_mode_1, SIGNAL(clicked()), SLOT(set_run_mode_1()));
+   // connect(cb_run_mode_1, SIGNAL(clicked()), SLOT(set_run_mode_1()));
 
-   cb_run_mode_2 = new QCheckBox(this);
+   cb_run_mode_2 = new QCheckBox(bg_run_mode);
    cb_run_mode_2->setText(tr(" Compute time-dependent properties "));
    cb_run_mode_2->setChecked((*anaflex_options).run_mode_2);
    cb_run_mode_2->setEnabled(true);
    //   cb_run_mode_2->setMinimumHeight(minHeight1);
    cb_run_mode_2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_run_mode_2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_run_mode_2, SIGNAL(clicked()), SLOT(set_run_mode_2()));
+   // connect(cb_run_mode_2, SIGNAL(clicked()), SLOT(set_run_mode_2()));
 
-   cb_run_mode_3 = new QCheckBox(this);
+   cb_run_mode_3 = new QCheckBox(bg_run_mode);
    cb_run_mode_3->setText(tr(" Compute correlation function "));
    cb_run_mode_3->setChecked((*anaflex_options).run_mode_3);
    cb_run_mode_3->setEnabled(true);
    //   cb_run_mode_3->setMinimumHeight(minHeight1);
    cb_run_mode_3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_run_mode_3->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_run_mode_3, SIGNAL(clicked()), SLOT(set_run_mode_3()));
+   // connect(cb_run_mode_3, SIGNAL(clicked()), SLOT(set_run_mode_3()));
 
-   cb_run_mode_4 = new QCheckBox(this);
+   cb_run_mode_4 = new QCheckBox(bg_run_mode);
    cb_run_mode_4->setText(tr(" Graphical display "));
    cb_run_mode_4->setChecked((*anaflex_options).run_mode_4);
    cb_run_mode_4->setEnabled(true);
    //   cb_run_mode_4->setMinimumHeight(minHeight1);
    cb_run_mode_4->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_run_mode_4->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_run_mode_4, SIGNAL(clicked()), SLOT(set_run_mode_4()));
+   // connect(cb_run_mode_4, SIGNAL(clicked()), SLOT(set_run_mode_4()));
 
-   cb_run_mode_9 = new QCheckBox(this);
+   cb_run_mode_9 = new QCheckBox(bg_run_mode);
    cb_run_mode_9->setText(tr(" Create text file "));
    cb_run_mode_9->setChecked((*anaflex_options).run_mode_9);
    cb_run_mode_9->setEnabled(true);
    //   cb_run_mode_9->setMinimumHeight(minHeight1);
    cb_run_mode_9->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_run_mode_9->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_run_mode_9, SIGNAL(clicked()), SLOT(set_run_mode_9()));
+   // connect(cb_run_mode_9, SIGNAL(clicked()), SLOT(set_run_mode_9()));
 
    lbl_nfrec = new QLabel(tr(" Trajectory sampling frequency: "), this);
    lbl_nfrec->setAlignment(AlignLeft|AlignVCenter);
@@ -126,11 +134,12 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    vbl_top->addSpacing(3);
    vbl_top->addWidget(cb_run_anaflex);
    vbl_top->addWidget(cb_instprofiles);
-   vbl_top->addWidget(cb_run_mode_1);
-   vbl_top->addWidget(cb_run_mode_2);
-   vbl_top->addWidget(cb_run_mode_3);
-   vbl_top->addWidget(cb_run_mode_4);
-   vbl_top->addWidget(cb_run_mode_9);
+   vbl_top->addWidget(bg_run_mode);
+   //   vbl_top->addWidget(cb_run_mode_1);
+   //   vbl_top->addWidget(cb_run_mode_2);
+   //   vbl_top->addWidget(cb_run_mode_3);
+   //   vbl_top->addWidget(cb_run_mode_4);
+   //   vbl_top->addWidget(cb_run_mode_9);
 
    QGridLayout *gl_ana_1 = new QGridLayout;
 
@@ -219,5 +228,11 @@ void US_Hydrodyn_Anaflex_Options::update_nfrec(const QString &str)
 {
    (*anaflex_options).nfrec = str.toInt();
    //   le_nfrec->setText(QString("").sprintf("%4.2f",(*hydro).nfrec));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Anaflex_Options::set_run_mode( int val )
+{
+   (*anaflex_options).run_mode = val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

@@ -189,6 +189,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    anaflex_options.run_anaflex = true;
    anaflex_options.nfrec = 1;
    anaflex_options.instprofiles = true;
+   anaflex_options.run_mode = 0;
    anaflex_options.run_mode_1 = false;
    anaflex_options.run_mode_2 = false;
    anaflex_options.run_mode_3 = false;
