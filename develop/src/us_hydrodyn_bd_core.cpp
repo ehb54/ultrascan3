@@ -26,6 +26,7 @@ ostream& operator<<(ostream& out, const point& c)
 
 void US_Hydrodyn::calc_bd()
 {
+   pb_bd->setEnabled( false );
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_somo->setEnabled(false);
@@ -119,36 +120,36 @@ void US_Hydrodyn::calc_bd()
    {
       editor->append("Build bead model for BD completed\n");
       qApp->processEvents();
-      pb_visualize->setEnabled(true);
-      pb_calc_hydro->setEnabled(false);
-      pb_bead_saxs->setEnabled(true);
+      compute_bd_connections();
+      for (current_model = 0; 
+           current_model < (unsigned int)lb_model->numRows(); 
+           current_model++)
+      {
+         if ( lb_model->isSelected(current_model) )
+         {
+            QString fname = 
+               somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+               QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "");
+            write_pdb( fname, &bead_models[current_model] );
+            create_browflex_files();
+            if ( bd_options.run_browflex )
+            {
+               run_browflex();
+            }
+            break;
+         }
+      }
    }
    else
    {
       editor->append("Errors encountered\n");
    }
 
-   compute_bd_connections();
-   for (current_model = 0; 
-        current_model < (unsigned int)lb_model->numRows(); 
-        current_model++)
-   {
-      if ( lb_model->isSelected(current_model) )
-      {
-        QString fname = 
-           somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-           QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "");
-        write_pdb( fname, &bead_models[current_model] );
-        create_browflex_files();
-        break;
-      }
-   }
-
-   pb_bd->setEnabled(true);
+   pb_bd->setEnabled( ( browflex && browflex->isRunning() ) ? false : true );
    pb_somo->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
    pb_grid->setEnabled(true);
-   pb_stop_calc->setEnabled(false);
+   pb_stop_calc->setEnabled( ( browflex && browflex->isRunning() ) ? true : false );
 }
 
 // ---------- create browflex files
@@ -156,10 +157,12 @@ int US_Hydrodyn::create_browflex_files()
 {
    double conv = 1e-8;
 
-   QString basename = 
-      somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+   QString filename = 
+      project + QString("_%1").arg(current_model + 1) +
       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
-      + "-browflex";
+      + "-bf";
+   QString basename = 
+      somo_dir + SLASH + filename;
 
    // browflex-main.txt
    QFile f;
@@ -185,11 +188,11 @@ int US_Hydrodyn::create_browflex_files()
                  "%5-brown.txt          !Brownian data file\n" 
                  "*\n\n\n"
                  )
-         .arg(basename)
-         .arg(basename)
-         .arg(basename)
-         .arg(basename)
-         .arg(basename)
+         .arg(filename)
+         .arg(filename)
+         .arg(filename)
+         .arg(filename)
+         .arg(filename)
          ;
       f.close();
    }
@@ -219,7 +222,7 @@ int US_Hydrodyn::create_browflex_files()
          }
       }
       ts << QString(" %1,   Molecular weight (g/mol)\n").arg(usemass);
-      ts << " " + basename + "\n";
+      ts << " " + filename + "\n";
 
       ts << QString(" %1,   Number of beads\n").arg(bead_models[current_model].size());
       for (  unsigned int i = 0; i < bead_models[current_model].size(); i++ )
@@ -293,8 +296,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4 %5\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(1)
                            .arg(force_constant)
                            .arg(equilibrium_dist)
@@ -305,8 +308,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(2)
                            .arg(force_constant)
                            ;
@@ -316,8 +319,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4 %5\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(3)
                            .arg(force_constant)
                            .arg(max_elong)
@@ -328,8 +331,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts <<
                            QString("%1 %2 %3 %4 %5 %6\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(6)
                            .arg(force_constant)
                            .arg(equilibrium_dist)
@@ -371,8 +374,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4 %5\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(1)
                            .arg(force_constant)
                            .arg(equilibrium_dist)
@@ -383,8 +386,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(2)
                            .arg(force_constant)
                            ;
@@ -394,8 +397,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4 %5\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(3)
                            .arg(force_constant)
                            .arg(max_elong)
@@ -406,8 +409,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts <<
                            QString("%1 %2 %3 %4 %5 %6\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(6)
                            .arg(force_constant)
                            .arg(equilibrium_dist)
@@ -449,8 +452,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4 %5\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(1)
                            .arg(force_constant)
                            .arg(equilibrium_dist)
@@ -461,8 +464,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(2)
                            .arg(force_constant)
                            ;
@@ -472,8 +475,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4 %5\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(3)
                            .arg(force_constant)
                            .arg(max_elong)
@@ -484,8 +487,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts <<
                            QString("%1 %2 %3 %4 %5 %6\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(6)
                            .arg(force_constant)
                            .arg(equilibrium_dist)
@@ -527,8 +530,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4 %5\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(1)
                            .arg(force_constant)
                            .arg(equilibrium_dist)
@@ -539,8 +542,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(2)
                            .arg(force_constant)
                            ;
@@ -550,8 +553,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4 %5\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(3)
                            .arg(force_constant)
                            .arg(max_elong)
@@ -562,8 +565,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts <<
                            QString("%1 %2 %3 %4 %5 %6\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(6)
                            .arg(force_constant)
                            .arg(equilibrium_dist)
@@ -605,8 +608,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4 %5\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(1)
                            .arg(force_constant)
                            .arg(equilibrium_dist)
@@ -617,8 +620,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(2)
                            .arg(force_constant)
                            ;
@@ -628,8 +631,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4 %5\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(3)
                            .arg(force_constant)
                            .arg(max_elong)
@@ -640,8 +643,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts <<
                            QString("%1 %2 %3 %4 %5 %6\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(6)
                            .arg(force_constant)
                            .arg(equilibrium_dist)
@@ -683,8 +686,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4 %5\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(1)
                            .arg(force_constant)
                            .arg(equilibrium_dist)
@@ -695,8 +698,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(2)
                            .arg(force_constant)
                            ;
@@ -706,8 +709,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts << 
                            QString("%1 %2 %3 %4 %5\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(3)
                            .arg(force_constant)
                            .arg(max_elong)
@@ -718,8 +721,8 @@ int US_Hydrodyn::create_browflex_files()
                      {
                         ts <<
                            QString("%1 %2 %3 %4 %5 %6\n")
-                           .arg(i)
-                           .arg(j)
+                           .arg(i + 1)
+                           .arg(j + 1)
                            .arg(6)
                            .arg(force_constant)
                            .arg(equilibrium_dist)
@@ -926,6 +929,7 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
    ts << "END\n";
    fpdb.close();
 
+   if ( bd_options.show_pdb )
    { // display pdb
       QStringList argument;
 #if !defined(WIN32)
@@ -940,14 +944,13 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
       argument.append(QFileInfo(fpdb.name()).fileName());
       rasmol->setWorkingDirectory(QFileInfo(fpdb.name()).dirPath());
       rasmol->setArguments(argument);
-      if (advanced_config.auto_view_pdb &&
-          !rasmol->start())
+      if (!rasmol->start())
       {
          QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
                                                      "Please check to make sure RASMOL is properly installed..."));
       }
    }
-
+   
    return 0;
 }
 
@@ -1572,3 +1575,124 @@ int US_Hydrodyn::compute_pb_normals()
    build_pb_structures( &model_vector[current_model] );
    return 0;
 }
+
+// ------------- run browflex --------------
+
+int US_Hydrodyn::run_browflex()
+{
+   // possible setup a new text window for the browflex runs?
+   QString dir = somo_dir;
+   QString prog = 
+      USglobal->config_list.system_dir + SLASH +
+#if defined(BIN64)
+      "bin64"
+#else
+      "/bin/"
+#endif
+      + SLASH
+      + "browflex2a2-"
+#if defined(WIN32)
+      + "msd"
+#else
+      + "lnx"
+#endif
+      + ".exe";
+
+   {
+      QFileInfo qfi(prog);
+      if ( !qfi.exists() )
+      {
+         QColor save_color = editor->color();
+         editor->setColor("red");
+         editor->append(QString("BrowFlex program '%1' does not exist\n").arg(prog));
+         editor->setColor(save_color);
+         return -1;
+      }
+      if ( !qfi.isExecutable() )
+      {
+         QColor save_color = editor->color();
+         editor->setColor("red");
+         editor->append(QString("BrowFlex program '%1' is not executable\n").arg(prog));
+         editor->setColor(save_color);
+         return -1;
+      }
+   }
+
+   QString browfile = 
+      project + QString("_%1").arg(current_model + 1) +
+      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
+      + "-bf-main.txt\n" ;
+
+   cout << QString("run browflex dir <%1> prog <%2> stdin <%3>\n")
+      .arg(dir)
+      .arg(prog)
+      .arg(browfile);
+   browflex = new QProcess( this );
+   browflex->setWorkingDirectory( dir );
+   browflex->addArgument( prog );
+   connect( browflex, SIGNAL(readyReadStdout()), this, SLOT(browflex_readFromStdout()) );
+   connect( browflex, SIGNAL(readyReadStderr()), this, SLOT(browflex_readFromStderr()) );
+   connect( browflex, SIGNAL(processExited()), this, SLOT(browflex_processExited()) );
+   connect( browflex, SIGNAL(launchFinished()), this, SLOT(browflex_launchFinished()) );
+
+   browflex->launch( browfile );
+
+   return 0;
+}
+
+void US_Hydrodyn::browflex_readFromStdout()
+{
+   QColor save_color = editor->color();
+   while ( browflex->canReadLineStdout() )
+   {
+      editor->setColor("brown");
+      editor->append(browflex->readLineStdout() + "\n");
+      editor->setColor(save_color);
+   }
+   qApp->processEvents();
+}
+   
+void US_Hydrodyn::browflex_readFromStderr()
+{
+   QColor save_color = editor->color();
+   while ( browflex->canReadLineStderr() )
+   {
+      editor->setColor("red");
+      editor->append(browflex->readLineStderr() + "\n");
+      editor->setColor(save_color);
+   }
+   qApp->processEvents();
+}
+   
+void US_Hydrodyn::browflex_processExited()
+{
+   QColor save_color = editor->color();
+   editor->setColor("brown");
+   editor->append("BrowFlex process exited\n");
+   editor->setColor(save_color);
+   browflex_readFromStderr();
+   browflex_readFromStdout();
+   disconnect( browflex, SIGNAL(readyReadStdout()), 0, 0);
+   disconnect( browflex, SIGNAL(readyReadStderr()), 0, 0);
+   disconnect( browflex, SIGNAL(processExited()), 0, 0);
+   for ( current_model = 0; 
+         current_model < (unsigned int)lb_model->numRows(); 
+         current_model++)
+   {
+      if ( lb_model->isSelected(current_model) )
+      {
+         pb_bd->setEnabled( true );
+         break;
+      }
+   }
+}
+   
+void US_Hydrodyn::browflex_launchFinished()
+{
+   QColor save_color = editor->color();
+   editor->setColor("brown");
+   editor->append("BrowFlex launch exited\n");
+   editor->setColor(save_color);
+   disconnect( browflex, SIGNAL(launchFinished()), 0, 0);
+}
+   

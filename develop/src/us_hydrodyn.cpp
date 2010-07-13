@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <qtimer.h>
 
 #undef DEBUG
 
@@ -153,6 +154,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    create_beads_normally = true;
    alt_method = false;
    rasmol = NULL;
+   browflex = NULL;
    chdir(somo_tmp_dir);
    if ( advanced_config.debug_5 )
    {
@@ -615,7 +617,7 @@ void US_Hydrodyn::setupGUI()
    QGridLayout *background = new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(frame, j, j, 0, 1);
-   background->addMultiCellWidget(editor, j, j+21, 2, 2);
+   background->addMultiCellWidget(editor, j, j+22, 2, 2);
    j++;
    background->addMultiCellWidget(lbl_info1, j, j, 0, 1);
    j++;
@@ -1521,7 +1523,7 @@ void US_Hydrodyn::select_model(int val)
    pb_calc_hydro->setEnabled(false);
    pb_visualize->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
-   pb_bd->setEnabled(true);
+   pb_bd->setEnabled( ( browflex && browflex->isRunning() ) ? false : true );
 }
 
 void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
@@ -1646,7 +1648,7 @@ int US_Hydrodyn::calc_somo()
    if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
-      pb_bd->setEnabled(true);
+      pb_bd->setEnabled( ( browflex && browflex->isRunning() ) ? false : true);
       pb_somo->setEnabled(true);
       pb_grid_pdb->setEnabled(true);
       progress->reset();
@@ -1718,7 +1720,7 @@ int US_Hydrodyn::calc_somo()
       {
          editor->append("Stopped by user\n\n");
          pb_somo->setEnabled(true);
-         pb_bd->setEnabled(true);
+         pb_bd->setEnabled( ( browflex && browflex->isRunning() ) ? false : true );
          pb_grid_pdb->setEnabled(true);
          progress->reset();
          return -1;
@@ -2756,6 +2758,11 @@ void US_Hydrodyn::help()
 void US_Hydrodyn::stop_calc()
 {
    stopFlag = true;
+   if ( browflex && browflex->isRunning() )
+   {
+      browflex->tryTerminate();
+      QTimer::singleShot( 1000, browflex, SLOT( kill() ) );
+   }
    pb_stop_calc->setEnabled(false);
 }
 

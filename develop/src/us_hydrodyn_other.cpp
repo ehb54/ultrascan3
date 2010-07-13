@@ -1629,6 +1629,14 @@ int US_Hydrodyn::read_config(QFile& f)
       i--;
       ts >> str;
       if ( ts.readLine() == QString::null ) return i;
+      bd_options.show_pdb = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.run_browflex = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
       bd_options.tprev = str.toFloat();
       i--;
       ts >> str;
@@ -2083,6 +2091,8 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << bd_options.do_rr << "\t\t# bd_options.do_rr\n";
       ts << bd_options.force_chem << "\t\t# bd_options.force_chem\n";
       ts << bd_options.bead_size_type << "\t\t# bd_options.bead_size_type\n";
+      ts << bd_options.show_pdb << "\t\t# bd_options.show_pdb\n";
+      ts << bd_options.run_browflex << "\t\t# bd_options.run_browflex\n";
       ts << bd_options.tprev << "\t\t# bd_options.tprev\n";
       ts << bd_options.ttraj << "\t\t# bd_options.ttraj\n";
       ts << bd_options.deltat << "\t\t# bd_options.deltat\n";
@@ -2355,6 +2365,8 @@ void US_Hydrodyn::set_default()
       bd_options.do_rr = true;
       bd_options.force_chem = true;
       bd_options.bead_size_type = 0;
+      bd_options.show_pdb = true;
+      bd_options.run_browflex = true;
       bd_options.tprev = 0.0;
       bd_options.ttraj = 1.0;
       bd_options.deltat = 0.0001;

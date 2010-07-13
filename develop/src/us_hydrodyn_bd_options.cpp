@@ -212,6 +212,24 @@ void US_Hydrodyn_BD_Options::setupGUI()
    cb_icdm->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_icdm, SIGNAL(clicked()), SLOT(set_icdm()));
 
+   cb_show_pdb = new QCheckBox(this);
+   cb_show_pdb->setText(tr(" Show connection PDB "));
+   cb_show_pdb->setChecked((*bd_options).show_pdb);
+   cb_show_pdb->setEnabled(true);
+   //   cb_show_pdb->setMinimumHeight(minHeight1);
+   cb_show_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_show_pdb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_show_pdb, SIGNAL(clicked()), SLOT(set_show_pdb()));
+
+   cb_run_browflex = new QCheckBox(this);
+   cb_run_browflex->setText(tr(" Run BrowFlex "));
+   cb_run_browflex->setChecked((*bd_options).run_browflex);
+   cb_run_browflex->setEnabled(true);
+   //   cb_run_browflex->setMinimumHeight(minHeight1);
+   cb_run_browflex->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_run_browflex->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_run_browflex, SIGNAL(clicked()), SLOT(set_run_browflex()));
+
    lbl_tprev = new QLabel(tr(" Previous heating time (s): "), this);
    lbl_tprev->setAlignment(AlignLeft|AlignVCenter);
    lbl_tprev->setMinimumHeight(minHeight1);
@@ -1036,6 +1054,8 @@ void US_Hydrodyn_BD_Options::setupGUI()
    gl_thresh->addWidget(cnt_bd_threshold_sc_sc, j, 1); j++;
    gl_thresh->addMultiCellWidget(cb_do_rr, j, j, 0, 1); j++;
    gl_thresh->addMultiCellWidget(cb_force_chem, j, j, 0, 1); j++;
+   gl_thresh->addMultiCellWidget(cb_show_pdb, j, j, 0, 1); j++;
+   gl_thresh->addMultiCellWidget(cb_run_browflex, j, j, 0, 1); j++;
    gl_thresh->addMultiCellWidget(bg_bead_size_type, j, j+4, 0, 1); j++;
 
    hbl_method->addLayout(gl_thresh);
@@ -1239,6 +1259,18 @@ void US_Hydrodyn_BD_Options::set_force_chem()
 void US_Hydrodyn_BD_Options::set_icdm()
 {
    (*bd_options).icdm = cb_do_rr->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_show_pdb()
+{
+   (*bd_options).show_pdb = cb_show_pdb->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::set_run_browflex()
+{
+   (*bd_options).run_browflex = cb_run_browflex->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

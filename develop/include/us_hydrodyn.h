@@ -340,6 +340,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, int > connection_pair_type; // 0 mc-mc, 1 mc-sc, 2 sc-sc
       map < QString, bool > connection_forced;  // chemical connections
 
+      QProcess *browflex;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -361,6 +363,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void show_misc();
 
    private slots:
+      void browflex_readFromStdout();
+      void browflex_readFromStderr();
+      void browflex_launchFinished();
+      void browflex_processExited();
       void load_pdb();
       void show_batch();
       int read_pdb(const QString &);
@@ -446,6 +452,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // bd functions:
       void calc_bd();
       int create_browflex_files();
+      int run_browflex();
 
       int compute_pb_normals();                // compute the normal vectors for each peptide bond plane
       int build_pb_structures( PDB_model * ) ; // create pb data structures

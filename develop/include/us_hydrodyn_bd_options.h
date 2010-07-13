@@ -31,8 +31,11 @@ struct BD_Options
    float threshold_sc_sc;
    bool do_rr;
    bool force_chem;
-
+   
    int bead_size_type; // 0 = first model, 1 = minimum, 2 = average
+
+   bool show_pdb;
+   bool run_browflex;
 
    float tprev;  // see browflex2a.pdf for more info
    float ttraj;  // see browflex2a.pdf for more info
@@ -149,6 +152,8 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
 
       QCheckBox *cb_do_rr;
       QCheckBox *cb_force_chem;
+      QCheckBox *cb_show_pdb;
+      QCheckBox *cb_run_browflex;
       QCheckBox *cb_icdm;
       QCheckBox *cb_compute_chem_pb_pb_force_constant;
       QCheckBox *cb_compute_chem_pb_pb_equilibrium_dist;
@@ -266,6 +271,8 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       void update_bd_threshold_sc_sc(double);
       void set_do_rr();
       void set_force_chem();
+      void set_show_pdb();
+      void set_run_browflex();
       void set_icdm();
       void set_compute_chem_pb_pb_force_constant();
       void set_compute_chem_pb_pb_equilibrium_dist();
