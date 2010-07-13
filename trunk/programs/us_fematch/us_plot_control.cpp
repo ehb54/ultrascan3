@@ -65,7 +65,7 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QCheckBox*   ck_xfra   = new QCheckBox( tr( "x=fr" ) );
    QCheckBox*   ck_yfra   = new QCheckBox( tr( "y=fr" ) );
 
-   QwtCounter* ct_zscalefac = us_counter( 3,  -10,   10, 0.01 );
+   QwtCounter* ct_zscalefac = us_counter( 3,  0.1,   10, 0.01 );
    QwtCounter* ct_gridreso  = us_counter( 3,   50,  300,   10 );
    QwtCounter* ct_peaksmoo  = us_counter( 3,    1,  200,    1 );
    QwtCounter* ct_peakwidth = us_counter( 3, 0.01, 10.0, 0.01 );
@@ -153,7 +153,7 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    ck_xfra->setPalette( US_GuiSettings::normalColor() );
    ck_yfra->setPalette( US_GuiSettings::normalColor() );
 
-   ct_zscalefac->setValue( 2 );
+   ct_zscalefac->setValue( 1 );
    ct_gridreso ->setValue( 150 );
    ct_peaksmoo ->setValue( 80 );
    ct_peakwidth->setValue( 0.3 );
@@ -203,7 +203,7 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
 
    resplotd = 0;
    plot3d_w = 0;
-   zscale   = 2.0;
+   zscale   = 1.0;
    gridres  = 150.0;
    pksmooth = 80.0;
    pkwidth  = 0.3;
