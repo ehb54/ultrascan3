@@ -132,6 +132,8 @@ w		# solvent acronym
 1		# bd_options.do_rr
 1		# bd_options.force_chem
 0		# bd_options.bead_size_type
+1		# bd_options.show_pdb
+1		# bd_options.run_browflex
 0		# bd_options.tprev
 1		# bd_options.ttraj
 0.0001		# bd_options.deltat
