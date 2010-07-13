@@ -1,6 +1,8 @@
 // (this) us_hydrodyn.cpp contains class creation & gui connected functions
 // us_hydrodyn_core.cpp contains the main computational routines
-// us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic computations
+// us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
+// us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
+// us_hydrodyn_dmd_core.cpp contains the main computational routines for molecular dynamic (dmd) computations
 // us_hydrodyn_other.cpp contains other routines such as file i/o
 
 // includes and defines need cleanup
@@ -157,6 +159,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    alt_method = false;
    rasmol = NULL;
    browflex = NULL;
+   anaflex = NULL;
    chdir(somo_tmp_dir);
    if ( advanced_config.debug_5 )
    {
@@ -182,6 +185,15 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    results.tau_sd = 0.0;
    results.asa_rg_pos = 0.0;
    results.asa_rg_neg = 0.0;
+
+   anaflex_options.run_anaflex = true;
+   anaflex_options.nfrec = 1;
+   anaflex_options.instprofiles = true;
+   anaflex_options.run_mode_1 = false;
+   anaflex_options.run_mode_2 = false;
+   anaflex_options.run_mode_3 = false;
+   anaflex_options.run_mode_4 = false;
+   anaflex_options.run_mode_9 = false;
 
    rasmol = new QProcess(this);
    rasmol->setWorkingDirectory(
@@ -1574,7 +1586,8 @@ void US_Hydrodyn::select_model(int val)
    pb_calc_hydro->setEnabled(false);
    pb_visualize->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
-   pb_bd->setEnabled( ( browflex && browflex->isRunning() ) ? false : true );
+   pb_bd->setEnabled( ( ( browflex && browflex->isRunning() ) ||
+                        ( anaflex && anaflex->isRunning() ) ) ? false : true );
 }
 
 void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
@@ -1699,7 +1712,8 @@ int US_Hydrodyn::calc_somo()
    if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
-      pb_bd->setEnabled( ( browflex && browflex->isRunning() ) ? false : true);
+      pb_bd->setEnabled( ( ( browflex && browflex->isRunning() ) ||
+                           ( anaflex && anaflex->isRunning() ) ) ? false : true );
       pb_somo->setEnabled(true);
       pb_grid_pdb->setEnabled(true);
       progress->reset();
@@ -1771,7 +1785,8 @@ int US_Hydrodyn::calc_somo()
       {
          editor->append("Stopped by user\n\n");
          pb_somo->setEnabled(true);
-         pb_bd->setEnabled( ( browflex && browflex->isRunning() ) ? false : true );
+         pb_bd->setEnabled( ( ( browflex && browflex->isRunning() ) ||
+                              ( anaflex && anaflex->isRunning() ) ) ? false : true );
          pb_grid_pdb->setEnabled(true);
          progress->reset();
          return -1;
@@ -2813,6 +2828,11 @@ void US_Hydrodyn::stop_calc()
    {
       browflex->tryTerminate();
       QTimer::singleShot( 1000, browflex, SLOT( kill() ) );
+   }
+   if ( anaflex && anaflex->isRunning() )
+   {
+      anaflex->tryTerminate();
+      QTimer::singleShot( 1000, anaflex, SLOT( kill() ) );
    }
    pb_stop_calc->setEnabled(false);
 }

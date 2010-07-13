@@ -169,6 +169,7 @@ SOURCES += \
   src/us_hydrodyn_addresidue.cpp \
   src/us_hydrodyn_addsaxs.cpp \
   src/us_hydrodyn_advanced_config.cpp \
+  src/us_hydrodyn_anaflex_core.cpp \
   src/us_hydrodyn_anaflex_options.cpp \
   src/us_hydrodyn_asa.cpp \
   src/us_hydrodyn_asab1.cpp \
@@ -178,6 +179,7 @@ SOURCES += \
   src/us_hydrodyn_bd_options.cpp \
   src/us_hydrodyn_core.cpp \
   src/us_hydrodyn_dammin_opts.cpp \
+  src/us_hydrodyn_dmd_core.cpp \
   src/us_hydrodyn_dmd_options.cpp \
   src/us_hydrodyn_file.cpp \
   src/us_hydrodyn_grid.cpp \

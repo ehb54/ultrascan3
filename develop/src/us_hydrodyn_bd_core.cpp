@@ -1,6 +1,8 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
-// (this) us_hydrodyn_core.cpp contains the main computational routines
-// us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic computations
+// us_hydrodyn_core.cpp contains the main computational routines
+// (this) us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
+// us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
+// us_hydrodyn_dmd_core.cpp contains the main computational routines for molecular dynamic (dmd) computations
 // us_hydrodyn_other.cpp contains other routines such as file i/o
 
 // includes and defines need cleanup
@@ -149,7 +151,8 @@ void US_Hydrodyn::calc_bd()
    pb_somo->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
    pb_grid->setEnabled(true);
-   pb_stop_calc->setEnabled( ( browflex && browflex->isRunning() ) ? true : false );
+   pb_bd->setEnabled( ( ( browflex && browflex->isRunning() ) ||
+                        ( anaflex && anaflex->isRunning() ) ) ? true : false );
 }
 
 // ---------- create browflex files
@@ -1681,7 +1684,12 @@ void US_Hydrodyn::browflex_processExited()
    {
       if ( lb_model->isSelected(current_model) )
       {
-         pb_bd->setEnabled( true );
+         if ( anaflex_options.run_anaflex )
+         {
+            run_anaflex();
+         } else {
+            pb_bd->setEnabled( true );
+         }
          break;
       }
    }

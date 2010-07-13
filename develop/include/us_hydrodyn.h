@@ -352,6 +352,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, bool > connection_forced;  // chemical connections
 
       QProcess *browflex;
+      QProcess *anaflex;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -380,6 +381,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void browflex_readFromStderr();
       void browflex_launchFinished();
       void browflex_processExited();
+
+      void anaflex_readFromStdout();
+      void anaflex_readFromStderr();
+      void anaflex_launchFinished();
+      void anaflex_processExited();
+
       void load_pdb();
       void show_batch();
       int read_pdb(const QString &);
@@ -484,6 +491,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       int write_contact_plot( QString fname, PDB_model *model, float thresh );
       int write_contact_plot( QString fname, vector < PDB_atom > *model, float thresh );
+
+      // anaflex functions
+
+      int create_anaflex_files();
+      int run_anaflex();
 
    protected slots:
 
