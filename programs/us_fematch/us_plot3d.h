@@ -201,7 +201,7 @@ class US_EXTERN US_Plot3D : public QMainWindow
       void    open_file(    void );
       void    close_all(    void );
 
-      QString xyAxisTitle( int, int );
+      QString xyAxisTitle( int, double );
       QString zAxisTitle(  int );
       void    setStandardView( void );
       void    createActions(   void );

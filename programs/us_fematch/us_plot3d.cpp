@@ -313,13 +313,39 @@ qDebug() << "P3D:sR:  zmin zmax" << zmin << zmax;
       z_norm  *= 0.1;
       powrz--;
    }
+
 //z_norm=1.0;
 //z_norm=2.0/zmax;
 qDebug() << "P3D:sR: powx powy xnorm ynorm" << powrx << powry << x_norm << y_norm;
-   xmin   *= x_norm;
    xmax   *= x_norm;
-   ymin   *= y_norm;
    ymax   *= y_norm;
+
+   if ( ( xmax * 4.0 ) < ymax )
+   {
+      xmax   *= 4.0;
+      x_norm *= 4.0;
+   }
+
+   else if ( ( xmax * 2.0 ) < ymax )
+   {
+      xmax   *= 2.0;
+      x_norm *= 2.0;
+   }
+
+   else if ( ( ymax * 4.0 ) < xmax )
+   {
+      ymax   *= 4.0;
+      y_norm *= 4.0;
+   }
+
+   else if ( ( ymax * 2.0 ) < xmax )
+   {
+      ymax   *= 2.0;
+      y_norm *= 2.0;
+   }
+
+   xmin   *= x_norm;
+   ymin   *= y_norm;
    zmin   *= z_norm;
    zmax   *= z_norm;
 qDebug() << "P3D:sR: xmin xmax ymin ymax" << xmin << xmax << ymin << ymax;
@@ -365,7 +391,7 @@ void US_Plot3D::calculateData( QVector< QVector< double > >& zdat )
 {
    US_Model::SimulationComponent* sc;
    int    ncomp  = model->components.size();
-   int    hixd   = ncols / 5;
+   int    hixd   = ncols / 5;  // max raster radius is 5th of total extent
    int    hiyd   = nrows / 5;
    int    nxd    = hixd;
    int    nyd    = hiyd;
@@ -379,19 +405,47 @@ void US_Plot3D::calculateData( QVector< QVector< double > >& zdat )
    double yval;
    double zval   = zmin;
    double dist;
-   double dfac   = M_PI * 0.5 / beta;
+   double dfac   = M_PI * 0.5 / beta;  // dist-related scale factor
    double xdif;
    double ydif;
-   double xpinc  = (double)( nrows - 1 ) / ( xmax - xmin );
+   double xpinc  = (double)( nrows - 1 ) / ( xmax - xmin ); // xy points/value
    double ypinc  = (double)( ncols - 1 ) / ( ymax - ymin );
    double zfact  = zscale;
 
-   for ( int ii = 0; ii < nrows; ii++ )      // initialize all to zmin
+   // Calculate "nxd" and "nyd" the number of reasonable point differentials
+   //   around any model point for which to calculate a decayed zvalue.
+   // Beyond these radii, the factor will be insignificant (< 1e-18).
+   // Given that the z value for any raster point near a model point is:
+   //   zadd = ( z-peak * ( pow( cos( dist * dfac ), alpha ) ) );
+   // For the limiting "zpkf" factor of 1e-18,
+   //   zpkf                                  = pow( cos( dist * dfac ), alpha);
+   //   pow( zpkf, 1.0/alpha )                = cos( dist * dfac );
+   //   acos( pow( zpkf, 1.0/alpha ) )        = dist * dfac;
+   //   acos( pow( zpkf, 1.0/alpha ) ) / dfac = dist;
+   //   dist             = sqrt( xdif * xdif + xdif * xdif );
+   //   dist             = sqrt( 2 ) * xdif;
+   //   sqrt( 2 ) * xdif = acos( pow( zpkf, 1.0/alpha ) ) / dfac;
+   //   xdif = acos( pow( zpkf, 1.0/alpha ) ) / ( sqrt(2) * dfac );
+   //   xdif = acos( pow( zpkf, 1.0/alpha ) ) / ( sqrt(2) * M_PI * 0.5 / beta );
+
+   xdif = acos( pow( 1e-18, ( 1.0 / alpha) ) )
+          * beta / ( M_PI * 0.5 * sqrt( 2.0 ) );  // max xy-diff at small zpkf
+   nxd  = qRound( xdif * xpinc );                 // reasonable x point radius
+   nyd  = qRound( xdif * ypinc );                 // reasonable y point radius
+qDebug() << " xdif nxd nyd" << xdif << nxd << nyd;
+   nxd  = nxd * 2 + 2;                            // fudge each up a bit
+   nyd  = nyd * 2 + 2;                            //  just to be extra careful
+   nxd  = ( nxd < hixd ) ? nxd : hixd;            // at most, a 5th of extent
+   nyd  = ( nyd < hiyd ) ? nyd : hiyd;
+qDebug() << "  nxd nyd" << nxd << nyd;
+//nxd=hixd;nyd=hiyd;
+
+   for ( int ii = 0; ii < nrows; ii++ )      // initialize raster to zmin
       for ( int jj = 0; jj < ncols; jj++ )
          zdat[ ii ][ jj ] = zval;
 
    for ( int kk = 0; kk < ncomp; kk++ )
-   {
+   {  // calculate spread of each model point to a radius of raster points
       sc         = &model->components[ kk ];  // current component and xyz
       xval       = comp_value( sc, typex,  x_norm ) - xmin;
       yval       = comp_value( sc, typey,  y_norm ) - ymin;
@@ -441,7 +495,7 @@ void US_Plot3D::calculateData( QVector< QVector< double > >& zdat )
 //if ( kk>(ncomp/2-2) && kk<(ncomp/2+2) ) {
 //if ( ii>3 && ii<9 && jj>5 && jj<11 ) {
 // qDebug() << "kk" << kk << "rx ry ii jj" << rx << ry << ii << jj
-//  << "zout"  << zdat[ii][jj];
+//  << "zout"  << zdat[ii][jj] << " zfac" << (pow(cos(dist*dfac),alpha));
 // qDebug() << "  dist" << dist << "dfac alpha beta zval" << dfac
 //  << alpha << beta << zval;
 //}
@@ -520,8 +574,8 @@ if ((ii&63)==1&&(jj&63)==1) qDebug() << "P3D:    rp: col" << jj
    x_scale  = xmax / ymax;
    y_scale  = 1.0;
    z_scale  = zscale;
-   xatitle  = xyAxisTitle( typex, powrx );
-   yatitle  = xyAxisTitle( typey, powry );
+   xatitle  = xyAxisTitle( typex, x_norm );
+   yatitle  = xyAxisTitle( typey, y_norm );
    zatitle  = zAxisTitle(  typez );
 
    dataWidget->coordinates()->axes[X1].setLabelString( xatitle );
@@ -549,7 +603,7 @@ qDebug() << "P3D:rp:xatitle yatitle" << xatitle << yatitle;
    delete [] wdata;
 }
 
-QString US_Plot3D::xyAxisTitle( int type, int powr )
+QString US_Plot3D::xyAxisTitle( int type, double sclnorm )
 {
    QString atitle = tr( "s" );
 
@@ -573,8 +627,8 @@ QString US_Plot3D::xyAxisTitle( int type, int powr )
          break;
    }
 
-   if ( powr != 0 )
-      atitle  = atitle + " * 1e" + QString::number( powr );
+   if ( sclnorm != 1.0 )
+      atitle  = atitle + " * " + QString::number( sclnorm );
 
 qDebug() << "P3D: xyAT: type atitle" << type << atitle;
    return atitle;
