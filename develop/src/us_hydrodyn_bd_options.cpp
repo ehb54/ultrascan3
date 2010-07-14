@@ -235,7 +235,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_tprev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tprev = new QLineEdit(this, "Tprev Line Edit");
-   le_tprev->setText(str.sprintf("%4.6f",(*bd_options).tprev));
+   le_tprev->setText(str.sprintf("%4.2g",(*bd_options).tprev));
    le_tprev->setAlignment(AlignVCenter);
    le_tprev->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_tprev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -249,7 +249,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_ttraj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_ttraj = new QLineEdit(this, "Ttraj Line Edit");
-   le_ttraj->setText(str.sprintf("%4.6f",(*bd_options).ttraj));
+   le_ttraj->setText(str.sprintf("%4.2g",(*bd_options).ttraj));
    le_ttraj->setAlignment(AlignVCenter);
    le_ttraj->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_ttraj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -263,7 +263,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_deltat = new QLineEdit(this, "Deltat Line Edit");
-   le_deltat->setText(str.sprintf("%4.6f",(*bd_options).deltat));
+   le_deltat->setText(str.sprintf("%4.6g",(*bd_options).deltat));
    le_deltat->setAlignment(AlignVCenter);
    le_deltat->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));

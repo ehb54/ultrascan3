@@ -107,7 +107,21 @@ int US_Hydrodyn::create_anaflex_files( int use_mode )
          .arg(anaflex_options.instprofiles)
          .arg(use_mode)
          ;
-      ts << "mode dependent stuff goes here\n";
+
+      switch ( use_mode )
+      {
+      case 9 : // textfile
+         ts << 
+            QString(
+                    "%1-to.txt                 !output textfile\n"
+                    )
+            .arg(filename);
+         break;
+
+      default : 
+         editor->append(QString("anaflex mode %1 not yet supported\n").arg(use_mode));
+         break;
+      }
 
       ts <<
          QString(
@@ -125,7 +139,24 @@ int US_Hydrodyn::create_anaflex_files( int use_mode )
 
 int US_Hydrodyn::run_anaflex()
 {
+   int use_mode = 0;
    // possible setup a new text window for the anaflex runs?
+   switch ( anaflex_options.run_mode )
+   {
+   case 0 : 
+   case 1 : 
+   case 2 : 
+   case 3 : 
+      use_mode = anaflex_options.run_mode + 1;
+      break;
+   case 4 : 
+      use_mode = 9;
+      break;
+   default :
+      editor->append("unexpected case type (run_anaflex)!\n");
+      return -1;
+   }
+
    QString dir = somo_dir;
    QString prog = 
       USglobal->config_list.system_dir + SLASH +
@@ -166,7 +197,7 @@ int US_Hydrodyn::run_anaflex()
    QString anafile = 
       project + QString("_%1").arg(current_model + 1) +
       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
-      + "-af-main.txt\n" ;
+      + QString("-af%1-main.txt\n").arg(use_mode);
 
    cout << QString("run anaflex dir <%1> prog <%2> stdin <%3>\n")
       .arg(dir)

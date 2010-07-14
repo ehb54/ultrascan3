@@ -1686,6 +1686,7 @@ void US_Hydrodyn::browflex_processExited()
       {
          if ( anaflex_options.run_anaflex )
          {
+            create_anaflex_files();
             run_anaflex();
          } else {
             pb_bd->setEnabled( true );
