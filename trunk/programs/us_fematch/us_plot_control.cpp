@@ -153,10 +153,14 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    ck_xfra->setPalette( US_GuiSettings::normalColor() );
    ck_yfra->setPalette( US_GuiSettings::normalColor() );
 
-   ct_zscalefac->setValue( 1 );
-   ct_gridreso ->setValue( 150 );
-   ct_peaksmoo ->setValue( 80 );
-   ct_peakwidth->setValue( 0.3 );
+   zscale   = 2.0;
+   gridres  = 150.0;
+   pksmooth = 80.0;
+   pkwidth  = 0.3;
+   ct_zscalefac->setValue( zscale   );
+   ct_gridreso ->setValue( gridres  );
+   ct_peaksmoo ->setValue( pksmooth );
+   ct_peakwidth->setValue( pkwidth  );
    ct_zscalefac->setStep(  0.01 );
    ct_gridreso ->setStep(  10   );
    ct_peaksmoo ->setStep(  1    );
@@ -203,10 +207,6 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
 
    resplotd = 0;
    plot3d_w = 0;
-   zscale   = 1.0;
-   gridres  = 150.0;
-   pksmooth = 80.0;
-   pkwidth  = 0.3;
 }
 
 // return caller of plot_control
