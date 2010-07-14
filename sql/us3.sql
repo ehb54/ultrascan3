@@ -24,6 +24,7 @@ CREATE  TABLE IF NOT EXISTS people (
   city VARCHAR(30) NULL ,
   state CHAR(2) NULL ,
   zip VARCHAR(10) NULL ,
+  country VARCHAR(64) NULL ,
   phone VARCHAR(24) NULL ,
   email VARCHAR(63) NOT NULL UNIQUE ,
   organization VARCHAR(45) NULL ,

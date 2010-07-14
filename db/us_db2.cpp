@@ -575,17 +575,19 @@ int US_DB2::readBlobFromDB( const QString& filename,
    if ( mysql_next_result( db ) == 0 )
    {
       result = mysql_store_result( db );
-      row    = mysql_fetch_row( result );
 
-      // Make sure we get the right number of bytes
+      // Make sure we get the data and the right number of bytes
+      row    = mysql_fetch_row( result );
       ulong* lengths = mysql_fetch_lengths( result );
+
+      // Now convert
       QByteArray aucData( row[ 0 ], lengths[ 0 ] );
 
       mysql_free_result( result );
       result = NULL;
 
       // Since we got data, let's write it out
-      QFile fout( filename + "2" );
+      QFile fout( filename );
       if ( fout.open( QIODevice::WriteOnly ) )
       {
          fout.write( aucData );
