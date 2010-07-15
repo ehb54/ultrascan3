@@ -106,6 +106,8 @@
 
        <li>
           <b>Simulate Model</b> Run a simulation and display results.
+          For details on the results of clicking this button, see
+          <a href="fe_match_simulate.html">Simulate Model Results</a>.
        </li>
 
        <li>

@@ -97,8 +97,34 @@
             <file>images/load_noise_details.png</file>
 
             <file>fe_match.html</file>
+            <file>fe_match_lddat.html</file>
+            <file>fe_match_simulate.html</file>
+            <file>fe_match_controls.html</file>
             <file>images/fe_match.png</file>
             <file>images/fe_match-ra.png</file>
+            <file>images/fe_match_lddat1.png</file>
+            <file>images/fe_match_lddat2.png</file>
+            <file>images/fe_match_lddat3.png</file>
+            <file>images/fe_match_lddat4.png</file>
+            <file>images/fe_match_sim1.png</file>
+            <file>images/fe_match_sim2.png</file>
+            <file>images/fe_match_sim3_1b.png</file>
+            <file>images/fe_match_sim3_1p.png</file>
+            <file>images/fe_match_sim3_2b.png</file>
+            <file>images/fe_match_sim3_2p.png</file>
+            <file>images/fe_match_sim3_3b.png</file>
+            <file>images/fe_match_sim3_4b.png</file>
+            <file>images/fe_match_sim3_5b.png</file>
+            <file>images/fe_match_sim3_5p.png</file>
+            <file>images/fe_match_sim3_6b.png</file>
+            <file>images/fe_match_sim3_7b.png</file>
+            <file>images/fe_match_sim3_8b.png</file>
+            <file>images/fe_match_sim4.png</file>
+            <file>images/fe_match_sim5.png</file>
+            <file>images/fe_match_sim6.png</file>
+            <file>images/fe_match_sim7.png</file>
+            <file>images/fe_match_3dplot.png</file>
+            <file>images/fe_match_resplot.png</file>
         </files>
     </filterSection>
 </QtHelpProject> 
