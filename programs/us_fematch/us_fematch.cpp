@@ -1462,14 +1462,22 @@ qDebug() << "modelGUID " << modelGUID;
    // get a list of models tied to the loaded edit
    int nemods  = models_in_edit(  def_local, editGUID, mieGUIDs );
 
+   if ( nemods == 0 )
+      return;                 // go no further if no models in edit
+
    // get a list of noises tied to the loaded model
    int nmnois  = noises_in_model( def_local, modelGUID, nimGUIDs );
    int kk      = 0;           // start of noise-in-edit search
 
    // move the loaded model to the head of the models-in-edit list
-   if ( nemods > 1  &&  mieGUIDs.removeOne( modelGUID ) )
-   {
-      mieGUIDs.insert( 0, modelGUID );
+   if ( nmnois > 0 )
+   {  // if loaded model has noise, make sure it's in noise-in-edit list
+
+      if ( nemods > 1  &&  mieGUIDs.removeOne( modelGUID ) )
+      {  // make sure loaded model goes to head of model-in-edit list
+         mieGUIDs.insert( 0, modelGUID );
+      }
+
       kk        = 1;          // skip 1st model for noise-in-edit search
       nieGUIDs << nimGUIDs;   // initialize noise-in-edit list
    }
@@ -2122,10 +2130,15 @@ void US_FeMatch::calc_residuals()
    double* sy     = new double[ ssize ];
    double  yval;
    double  sval;
+   double  rl     = edata->radius( 0 );
+   double  vh     = edata->value( scanCount - 1, dsize - 1 );
+   double  rmsd   = 0.0;
+
    QVector< double > resscan;
-   double rmsd    = 0.0;
+
    resids.clear();
    resscan.resize( dsize );
+qDebug() << "CalcRes: dsize ssize" << dsize << ssize;
 
    for ( int jj = 0; jj < dsize; jj++ )
    {
@@ -2149,6 +2162,10 @@ void US_FeMatch::calc_residuals()
       {
          sval          = interp_sval( xx[ jj ], sx, sy, ssize );
          yval          = sval - edata->value( ii, jj );
+
+         if ( xx[ jj ] < rl  ||  sval > vh )
+            yval          = 0.0;
+
          rmsd         += sq( yval );
          resscan[ jj ] = yval;
       }

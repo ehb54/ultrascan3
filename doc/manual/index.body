@@ -76,6 +76,7 @@
       <li> <a href="finite_fit_ctrl.html">Finite Element Fitting Control</a> </li>
       <li> <a href="finite_tutor.html">Finite Element Tutorial</a> </li>
       <li> <a href="finite_interpretation.html">Finite Element Results Interpretation</a> </li>
+      <li> <a href="fe_match.html">Finite Element Model Viewer</a> </li>
     </ul>
 
     <p> Other Analysis Methods: </p>
