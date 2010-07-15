@@ -1,0 +1,31 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III FE Match Load-Data Dialog'
+%]
+
+    <h2> FE Match Load Data Dialogs:</h2>
+
+    <p> Loading data from FE Match invokes one of two types of file open
+    dialogs, depending on whether "Latest Data Edit" is checked or not.
+    In the checked case, one need only select a data directory and the
+    latest edit therein will be loaded. In the unchecked case, one may
+    select an edit file that is not the latest, after navigating to a
+    Run ID directory.</p>
+
+    <p>In the default checked case (
+    <img src="images/fe_match_lddat1.png" alt="Latest Data Checked"/>
+    ) the dialog is a directory open dialog as shown immediately below.
+    Select a folder and click the "Choose" button.</p>
+
+    <img src="images/fe_match_lddat2.png" alt="Directory Open"/>
+
+    <p>In the unchecked case (
+    <img src="images/fe_match_lddat3.png" alt="Latest Data Unchecked"/>
+    ) the dialog is a file open dialog as shown immediately below.
+    Navigate to a Run folder, select an edit XML file, then click
+    the "Open" button. Note that in this mode it is still possible
+    to choose the latest edit by selecting that actual .xml file or
+    by selecting the .auc file.</p>
+
+    <img src="images/fe_match_lddat4.png" alt="File Open"/>
+
+[% INCLUDE footer.us3 %]

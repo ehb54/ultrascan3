@@ -34,6 +34,8 @@
             <keyword name="vhw-enhanced"                ref="vhw_enhanced.html"/>
             <keyword name="vhw-distrib-plot"            ref="vhw_distrib_plot.html"/>
             <keyword name="model-loader"                ref="load_model_distrib.html"/>
+            <keyword name="noise-loader"                ref="load_noise.html"/>
+            <keyword name="fe-model"                    ref="fe_match.html"/>
         </keywords>
         <files>
             <file>mainstyle.css</file>
@@ -88,6 +90,15 @@
             <file>load_model_dis-MID.html</file>
             <file>images/load_model_distrib.png</file>
             <file>images/load_model_dis-MID.png</file>
+
+            <file>load_noise.html</file>
+            <file>load_noise_details.html</file>
+            <file>images/load_noise.png</file>
+            <file>images/load_noise_details.png</file>
+
+            <file>fe_match.html</file>
+            <file>images/fe_match.png</file>
+            <file>images/fe_match-ra.png</file>
         </files>
     </filterSection>
 </QtHelpProject> 

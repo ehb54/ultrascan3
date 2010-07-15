@@ -169,7 +169,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void    close_all( void );
 
       void help     ( void )
-      { showHelp.show_help( "fematch.html" ); };
+      { showHelp.show_help( "fe_match.html" ); };
 
    protected:
       QList< int >                      excludedScans;

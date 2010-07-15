@@ -32,6 +32,7 @@ HEADERS      = \
 #               us_model_editor.h        \
                us_model_loader.h        \
 #               us_model_selection.h     \
+               us_noise_loader.h        \
                us_passwd.h              \
                us_plot.h                \
                us_predict1.h            \
@@ -64,6 +65,7 @@ SOURCES      = \
                us_model_gui.cpp           \
                us_model_loader.cpp        \
 #               us_model_selection.cpp     \
+               us_noise_loader.cpp        \
                us_passwd.cpp              \
                us_plot.cpp                \
                us_predict1.cpp            \

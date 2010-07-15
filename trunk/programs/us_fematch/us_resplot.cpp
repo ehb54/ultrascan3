@@ -378,7 +378,8 @@ void US_ResidPlot::plot_data()
 // plot the experimental data
 void US_ResidPlot::plot_edata()
 {
-double ptfac=0.82;
+//double ptfac=0.82;
+double ptfac=0.99;
    data_plot1->detachItems();
    data_plot1->clear();
 
@@ -395,6 +396,18 @@ double ptfac=0.82;
    int    jj;
    double tinoi     = 0.0;
    double rinoi     = 0.0;
+   double rl        = 0.0;
+   double vh        = 9999.0;
+   double sval;
+
+   if ( have_ed )
+   {
+      points   = edata->scanData[ 0 ].readings.size();
+      //count    = edata->scanData.size();
+      rl       = edata->radius( 0 );
+      vh       = edata->value( 0, points - 1 );
+      vh      *= 1.05;
+   }
 
    if ( !do_plteda  &&  !do_pltsda )
    {  // no real experimental plot specified:  re-do plot and return
@@ -485,7 +498,16 @@ points=qRound(points*ptfac);
             if ( do_addtin )
                tinoi    = ti_noise->values[ jj ];
 
-            vv[ jj ] = sdata->value( ii, jj ) + rinoi + tinoi;
+            if ( rr[ jj ] >= rl )
+               sval     = sdata->value( ii, jj ) + rinoi + tinoi;
+
+            else
+               sval     = edata->value( ii, jj ) + rinoi + tinoi;
+
+            if ( sval > vh )
+               sval     = vv[ jj - 1 ];
+
+            vv[ jj ] = sval;
          }
 
          title   = tr( "S-Curve " ) + QString::number( ii );
