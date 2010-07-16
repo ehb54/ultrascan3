@@ -4,19 +4,24 @@ $us = $ENV{'ULTRASCAN'} || die "The environment variable ULTRASCAN must be set. 
 # ----------- user configuration area
 $debug++;
 #$debugdb++;
+$debug_cmds++;
 $globustimeout = 15; # seconds to wait for globusrun-ws commands to succeed or timeout
 $statusupdate = 10;  # seconds to wait for status update
 $globus_statusupdate = 60;  # seconds to wait for status update
 $killupdate = 60;  # seconds to wait for rekilling
-$maxkillreps = 120;  # number of times to try to kill before giving up
+$maxkillreps = 5;  # number of times to try to kill before giving up
 $logfiledir = "/opt/tmp";    # reset to /opt/tmp for godzilla
 # ----------- end user configuration area
 
 use FileHandle;
+# use IO::Handle;
 
 $us = $ENV{'ULTRASCAN'} || die "The environment variable ULTRASCAN must be set.  Terminating\n";
 open(SYS_LOCK, "$us/etc/us_gridpipe.lock") || die "$0: lockfile $us/etc/us_gridpipe.lock error: $!.  Terminating\n";
 flock(SYS_LOCK, 6) || die "$0: lockfile $us/etc/us_gridpipe.lock is already in use ($!).  Terminating\n";
+
+$seqlock = "$us/etc/us_gridpipe_seq.lock";
+`touch $seqlock` if ! -e $seqlock;
 
 require "$us/etc/us_gcfields.pl";
 
@@ -34,14 +39,22 @@ $ENV{'DISPLAY'}='';
 # returns a unique increasing #
 # @param nothing
 # @return a unique sequence #
+sub LOCK_EX { 2 }
+sub LOCK_UN { 8 }
 
 sub dbnxtseq() {
+    open(SEQLOCK, $seqlock);
+    flock(SEQLOCK, LOCK_EX) || print STDERR "$0: Warning can not flock $seqlock proceeding (possible status file mangling!)\n";
+    
     print "dbnxtseq\n" if $debugdb;
     my $seq = dbread("next_seq");
     print "seq was $seq\n" if $debugdb;
     $seq++;
     dbwrite("next_seq",$seq);
+    flock(SEQLOCK, LOCK_UN);
+    close SEQLOCK;
     print "seq is $seq $db{'next_seq'}\n" if $debugdb;
+    print DBSEQ "dbnxtseq: $seq\n" if $debug_cmds;
     $seq;
 }
 
@@ -85,6 +98,7 @@ sub startjob {
     my $started = `date '+%D %T'`; chomp $started;
     my $child;
     if(!($child = fork)) {
+	print PROCS "$$ startjob $queue[0]\n" if $debug_cmds;
 	print STDERR "$0: child started job\n" if $debug;
 	`$queue[0]`;
 	exit;
@@ -96,6 +110,7 @@ sub startjob_gc {
     print STDERR "$0: start gc process $_[0]\n" if $debug;
     my $child;
     if(!($child = fork)) {
+	print PROCS "$$ startjob_gc $_[0]\n" if $debug_cmds;
 	print STDERR "$0: child started gc process job\n" if $debug;
 	`us_gridcontrol_t $_[0] > $logfiledir/us_gridcontrol.stdout 2> $logfiledir/us_gridcontrol.stderr`;
 	exit;
@@ -107,6 +122,7 @@ sub startjob_gc_tigre {
     print STDERR "$0: start gc tigre process $_[0]\n" if $debug;
     my $child;
     if(!($child = fork)) {
+	printf PROCS "$$ startjob_gc_tigre $_[0]\n" if $debug_cmds;
 	print STDERR "$0: child started gc process job\n" if $debug;
 	`us_gridcontrol_t $_[0] TIGRE $_[1] > $logfiledir/us_gridcontrol.stdout 2> $logfiledir/us_gridcontrol.stderr`;
 	exit;
@@ -118,6 +134,7 @@ sub startjob_tigre {
     print STDERR "$0: start tigre job process $_[0]\n" if $debug;
     my $child;
     if(!($child = fork)) {
+	printf PROCS "$$ startjob_tigre $_[0]\n" if $debug_cmds;
 	$SIG{HUP} = 'IGNORE';
 	print STDERR "$0: child started tigre job\n" if $debug;
 	`$_[0]`;
@@ -142,6 +159,7 @@ sub startjob_tigre_status {
     print STDERR "$0: start tigre status job process $_[0]\n" if $debug;
     my $child;
     if(!($child = fork)) {
+	printf PROCS "$$ startjob_tigre_status\n" if $debug_cmds;
 	dbopen();
 	print STDERR "$0: child status started tigre job\n" if $debug;
 	sleep $globus_statusupdate;
@@ -178,6 +196,7 @@ sub write_status {
     print STDERR "$0: write_status $_[0]\n" if $debug;
     my $child;
     if(!($child = fork)) {
+	printf PROCS "$$ write_status $_[0]\n" if $debug_cmds;
 	dbopen();
 	print STDERR "$0: child started write_status\n" if $debug;
 	my $outfile = $_[0];
@@ -255,6 +274,7 @@ sub status_daemon {
     print STDERR "$0: start status_daemon\n" if $debug;
     my $child;
     if(!($child = fork)) {
+	printf PROCS "$$ status_daemon\n" if $debug_cmds;
 	dbopen();
 	while(1) {
 	    print STDERR "$: internal_status_update\n" if $debug;
@@ -277,6 +297,7 @@ sub remove_status
     my $child;
     if (!($child = fork)) 
     {
+	printf PROCS "$$ remove_status\n" if $debug_cmds;
 	dbopen();
 	print STDERR "$0: child started remove_status\n" if $debug;
 	my $outfile = $_[0];
@@ -337,9 +358,10 @@ sub remove_status
 sub tigre_kill {
     print STDERR "$0: tigre_kill $_[0]\n" if $debug;
     if(!(my $child = fork)) {
+	printf PROCS "$$ tigre_kill $_[0]\n" if $debug_cmds;
 	my $reps = 0;
 	do {
-	    my $status = `globusrun-ws -kill -subject /O=Grid/OU=GlobusTest/OU=simpleCA-godzilla.allergan.com/CN=host/godzilla.allergan.com -job-epr-file $_[0] 2>&1`;
+	    my $status = &timedexec($globustimeout, "globusrun-ws -kill -subject /O=Grid/OU=GlobusTest/OU=simpleCA-godzilla.allergan.com/CN=host/godzilla.allergan.com -job-epr-file $_[0] 2>&1");
 	    print STDERR "$0: tigre_kill $_[0] returned <$status>\n" if $debug;
 	    exit if $status =~ /Destroying job\.\.\.Done./;
 	    sleep $killupdate;
@@ -356,6 +378,7 @@ sub tigre_kill {
 sub handle_request {
     print STDERR "$0: handle request $_[0]\n" if $debug;
     if(!(my $child = fork)) {
+	printf PROCS "$$ handle_request $_[0]\n" if $debug_cmds;
 	dbopen();
 	print STDERR "$0: received $line\n" if $debug;
 	undef $valid;
@@ -533,6 +556,20 @@ $SIG{CHLD} = "IGNORE";
 
 $seq = 0;
 
+if($debug_cmds)
+{
+    open(CMDS, ">$us/etc/us_gridpipe_cmds.txt");
+    $old_fh = select(CMDS);
+    $|=1;
+    open(DBSEQ, ">$us/etc/us_gridpipe_dbseq.txt");
+    select(DBSEQ);
+    $|=1;
+    open(PROCS, ">$us/etc/us_gridpipe_procs.txt");
+    select(PROCS);
+    $|=1;
+    select($old_fh);
+}
+
 &dbopen();
 &status_daemon();
 %tigre = dbrocopy();
@@ -559,6 +596,7 @@ while(1) {
 #	    waitpid -1, 1;
 	chomp $line;
 #	    close(PIPE);
+	print CMDS $line if $debug_cmds;
 	&handle_request($line);
 	print STDERR "$0: try reading again\n" if $debug;
     }
