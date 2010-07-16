@@ -1614,7 +1614,7 @@ qDebug() << "   meniscus bottom" << simparams.meniscus << simparams.bottom;
    sp.delay_minutes     = ( time1 / 60.0 ) - ( (double)sp.delay_hours * 60.0 );
    sp.scans             = nscan;
    sp.acceleration      = 400;
-   sp.rotorspeed        = rdata->scanData[ 0 ].rpm;
+   sp.rotorspeed        = (int)rdata->scanData[ 0 ].rpm;
    sp.acceleration_flag = false;
    simparams.speed_step << sp;
 qDebug() << "  duration_hours  " << sp.duration_hours;

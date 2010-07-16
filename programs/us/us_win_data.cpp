@@ -12,7 +12,7 @@ namespace US_WinData
     P_CONFIG = 300, P_EDIT,                // Edit Menu
     
     P_SECOND,       P_DCDT,   P_VHWE,      // Velocity Menu
-                    P_GAINIT, 
+                    P_GAINIT, P_FEMA,
     P_CONVERT,      P_FIT,    P_COLORGRAD, // Utilities menu
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
@@ -88,6 +88,11 @@ namespace US_WinData
     { P_GAINIT,  0, 0, "us_ga_init",
       QObject::tr( "Loading Genetic Algorithm Initialize" ),
       QObject::tr( "Genetic Algorithm Initialize Program" )
+    },
+    
+    { P_FEMA,    0, 0, "us_fematch",
+      QObject::tr( "Loading Finite Element Match" ),
+      QObject::tr( "Finite Element Match Program" )
     },
     
     { P_CONVERT,  1, 0, "us_convert",

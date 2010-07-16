@@ -145,6 +145,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_GAINIT, tr( "&Initialize Genetic Algorithm" ), velocity );
   addMenu(  P_SECOND, tr( "&Second Moment" ), velocity );
   addMenu(  P_DCDT  , tr( "&Time Derivitive" ), velocity );
+  addMenu(  P_FEMA  , tr( "&FE Model Viewer" ), velocity );
   
   QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
   QMenu* fit         = new QMenu( tr( "&Global Fit" ), this );
@@ -283,9 +284,10 @@ void US_Win::launch( int index )
 #else
    QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;
    QString procapp = procbin + ".app";
+
    if ( !QFile( procapp ).exists() )
       procapp         = procbin;
-   procapp         = "open -a " + procapp;
+
    process->start( procapp );
 #endif
 

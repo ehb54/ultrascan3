@@ -72,7 +72,7 @@ class US_EXTERN US_PlotControl : public US_WidgetsDialog
       int  dimensionType( QVector< QCheckBox* >& );
 
       void help     ( void )
-      { showHelp.show_help( "plot_control.html" ); };
+      { showHelp.show_help( "fe_match_controls.html" ); };
 };
 #endif
 
