@@ -13,6 +13,7 @@ unix {
   QCAPATH     = /usr/local
   SINGLEDIR   = /opt/qt/addons/qtsingleapplication-2.5_1-commercial/src/
   MYSQLDIR    = /usr/lib/mysql
+  QWTPLOTDIR  = /opt/qwtplot3d-0.2.7/lib
   
   # For supercompter back ends, we only need us_utils but we also
   # build us_db to satisfy link requirements.  To avoid needing
