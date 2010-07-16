@@ -1,0 +1,13 @@
+These are the mysql verison replacements for the gdb base gridpipe.
+see us_gridpipe_db.pl for user/db configurations.
+
+A mysql db needs to be setup for this to work.
+Here's the one table:
+
+create table gridjob (
+jid int(11) not null default '0',
+message varchar(511) default NULL,
+primary key (jid)
+);
+
+
