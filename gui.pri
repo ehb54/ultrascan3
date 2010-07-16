@@ -15,6 +15,7 @@ unix {
   LIBS       += -lqca
   LIBS       += -lqwt -L$$QWTPATH/lib
   LIBS       += -lmysqlclient -L$$MYSQLDIR 
+  LIBS       += -lqwtplot3d -L$$QWTPLOTDIR
   DEFINES    += INTEL LINUX
 
   DEPENDPATH   += ../../gui ../../utils ../../db $$QWTPATH/include ..
