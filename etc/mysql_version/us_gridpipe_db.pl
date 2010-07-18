@@ -5,6 +5,7 @@ $db_login_database = "grid";
 $db_login_host = "localhost";
 $db_login_user = "httpd";
 $db_login_password = "pw";
+$DB_MAX_RECONNECT_TRIES = 10; # maximum # of times to retry opening the db before failing
 # ----------- end user configuration area
 
 use DBI;
@@ -22,6 +23,21 @@ sub dbopen {
 			{'RaiseError' => 1});
 }
 
+## @fn $ dbalive()
+# checks to see if the connection is alive; if not, reopens it
+# @param nothing
+# @return nothing
+sub dbalive {
+    my $count = 0;
+    while ( !$dbh->ping  && $count < $MAX_TRIES) {
+	dbopen();
+	return if $dbh->ping;
+	$count++;
+	print STDERR "WARNING: mysql db connection could not be reopened, retrying $count of $MAX_TRIES\n";
+	sleep $count * 10;
+    }
+}
+
 ## @fn $ dbclose()
 # closed the database
 # @param nothing
@@ -37,6 +53,7 @@ sub dbclose {
 # @return value
 
 sub dbread {
+    dbalive();
     my $sql = 
 	"select message from gridjob where jid = \"$_[0]\";\n";
     my $sth = $dbh->prepare($sql);
@@ -66,6 +83,7 @@ sub dbread {
 # @return nothing
 
 sub dbwrite {
+    dbalive();
     my $sql = 
 	"select message from gridjob where jid = \"$_[0]\";\n";
     my $sth = $dbh->prepare($sql);
@@ -95,6 +113,7 @@ sub dbwrite {
 # @return nothing
 
 sub dbdel {
+    dbalive();
     my $sql = 
 	"delete from gridjob where jid = \"$_[0]\";\n";
     $dbh->do($sql);
@@ -107,6 +126,7 @@ sub dbdel {
 # @return copy of database
 
 sub dbrocopy {
+    dbalive();
     my %mdb;
     my $sql = 
 	"select jid,message from gridjob;\n";

@@ -27,7 +27,7 @@ print "awating UDP messages on port $port\n";
 
 $MAXLEN = 1024;
 
-&dbopen();
+dbopen();
 
 while(1) {
     while ($server->recv($msg, $MAXLEN)) {

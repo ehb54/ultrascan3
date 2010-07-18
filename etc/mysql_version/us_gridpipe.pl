@@ -5,6 +5,7 @@ $us = $ENV{'ULTRASCAN'} || die "The environment variable ULTRASCAN must be set. 
 $debug++;
 #$debugdb++;
 $debug_cmds++;
+$debug_each_id++;
 $globustimeout = 15; # seconds to wait for globusrun-ws commands to succeed or timeout
 $statusupdate = 10;  # seconds to wait for status update
 $globus_statusupdate = 60;  # seconds to wait for status update
@@ -34,6 +35,14 @@ $status_detail_file = "$us/etc/queue_status_detail";
 $pipe = "$us/etc/us_gridpipe";
 
 $ENV{'DISPLAY'}='';
+
+$gclock = "$us/etc/gridcontrol.lock";
+`touch $gclock` if ! -e $gclock;
+die "couldn't create $gclock\n" if ! -e $gclock;
+
+$tjlock = "$us/etc/tigrejob.lock";
+`touch $tjlock` if ! -e $tjlock;
+die "couldn't create $tjlock\n" if ! -e $tjlock;
 
 ## @fn $ dbnxtseq()
 # returns a unique increasing #
@@ -123,8 +132,31 @@ sub startjob_gc_tigre {
     my $child;
     if(!($child = fork)) {
 	printf PROCS "$$ startjob_gc_tigre $_[0]\n" if $debug_cmds;
+
+	open(GCLOCK, $gclock) || die "couldn't access gclock file $gclock <$!>\n";
+	if (!flock(GCLOCK, LOCK_EX)) {
+	    do {
+		print STDERR "$0: warning: error trying to lock file $gclock <$!>\n";
+		close GCLOCK;
+		open(GCLOCK, $gclock) || die "couldn't access gclock file $gclock <$!>\n";
+		sleep 5;
+	    } while (!flock(GCLOCK, LOCK_EX));
+	}
+	
 	print STDERR "$0: child started gc process job\n" if $debug;
+
 	`us_gridcontrol_t $_[0] TIGRE $_[1] > $logfiledir/us_gridcontrol.stdout 2> $logfiledir/us_gridcontrol.stderr`;
+
+	sleep 2;
+
+	if (!flock(GCLOCK, LOCK_UN)) {
+	    do {
+		print STDERR "$0: warning: error trying to unlock file $gclock<$!>\n";
+		sleep 5;
+	    } while (!flock(GCLOCK, LOCK_UN));
+	}
+	close GCLOCK;
+
 	exit;
     }
     print STDERR "$0: gc tigre child pid is $child\n" if $debug;
@@ -596,7 +628,7 @@ while(1) {
 #	    waitpid -1, 1;
 	chomp $line;
 #	    close(PIPE);
-	print CMDS $line if $debug_cmds;
+	print CMDS "$line\n" if $debug_cmds;
 	&handle_request($line);
 	print STDERR "$0: try reading again\n" if $debug;
     }
