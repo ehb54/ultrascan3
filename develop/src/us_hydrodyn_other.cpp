@@ -962,42 +962,81 @@ int US_Hydrodyn::read_bead_model(QString filename)
             tmp = ts.readLine();
             ++linepos;
          } while ( !ts.atEnd() && 
-                   !tmp.contains("Dummy atoms in output phase") );
+                   !tmp.contains("Dummy atoms in output phase") &&
+                   !tmp.contains("Number of particle atoms") );
          if ( ts.atEnd() )
          {
-            editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'Dummy atoms in output phase'\n");
+            editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'Dummy atoms in output phase' or 'Number of particle atoms'\n");
             return 1;
          }
-         QRegExp rx( "Dummy atoms in output phase\\s*:\\s*(\\d+)\\s" );
-         if ( rx.search(tmp) == -1 ) 
-         {
-            editor->append("Error in DAMMIN/DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
-            return 1;
-         }
-         bead_count = rx.cap(1).toInt();
-         // editor->append(QString("DAMMIN/DAMMIF model has %1 beads\n").arg(bead_count));
+         bool dammin = tmp.contains("Number of particle atoms");
 
-         do {
-            tmp = ts.readLine();
-            ++linepos;
-         } while ( !ts.atEnd() && 
-                   !tmp.contains("Dummy atom radius") );
-         
-         if ( ts.atEnd() )
-         {
-            editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'Dummy atom radius'\n");
-            return 1;
-         }
+         float radius;
+         QRegExp rx;
 
-         rx.setPattern("Dummy atom radius\\s *:\\s*(\\d+\\.\\d+)\\s");
-
-         if ( rx.search(tmp) == -1 ) 
+         if ( dammin ) 
          {
-            editor->append("Error in DAMMIN/DAMMIF file: couldn't find radius in 'Dummy atom radius' line\n");
-            return 1;
+            rx.setPattern( "Number of particle atoms \\.*\\s*:\\s*(\\d+)\\s" );
+            if ( rx.search(tmp) == -1 ) 
+            {
+               editor->append("Error in DAMMIN/DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
+               return 1;
+            }
+            bead_count = rx.cap(1).toInt();
+            // editor->append(QString("DAMMIN/DAMMIF model has %1 beads\n").arg(bead_count));
+            
+            do {
+               tmp = ts.readLine();
+               ++linepos;
+            } while ( !ts.atEnd() && 
+                      !tmp.contains("DAM packing radius") );
+            
+            if ( ts.atEnd() )
+            {
+               editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'DAM packing radius'\n");
+               return 1;
+            }
+            
+            rx.setPattern("DAM packing radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s");
+            
+            if ( rx.search(tmp) == -1 ) 
+            {
+               editor->append("Error in DAMMIN/DAMMIF file: couldn't find radius in 'Dummy atom radius' line\n");
+               return 1;
+            }
+            radius = rx.cap(1).toFloat();
+         } else {
+            rx.setPattern( "Dummy atoms in output phase\\s*:\\s*(\\d+)\\s" );
+            if ( rx.search(tmp) == -1 ) 
+            {
+               editor->append("Error in DAMMIN/DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
+               return 1;
+            }
+            bead_count = rx.cap(1).toInt();
+            // editor->append(QString("DAMMIN/DAMMIF model has %1 beads\n").arg(bead_count));
+            
+            do {
+               tmp = ts.readLine();
+               ++linepos;
+            } while ( !ts.atEnd() && 
+                      !tmp.contains("Dummy atom radius") );
+            
+            if ( ts.atEnd() )
+            {
+               editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'Dummy atom radius'\n");
+               return 1;
+            }
+            
+            rx.setPattern("Dummy atom radius\\s *:\\s*(\\d+\\.\\d+)\\s");
+            
+            if ( rx.search(tmp) == -1 ) 
+            {
+               editor->append("Error in DAMMIN/DAMMIF file: couldn't find radius in 'Dummy atom radius' line\n");
+               return 1;
+            }
+            radius = rx.cap(1).toFloat();
          }
-         float radius = rx.cap(1).toFloat();
-         // editor->append(QString("DAMMIN/DAMMIF model atom radius %1\n").arg(radius));
+         editor->append(QString("DAMMIN/DAMMIF model atom radius %1\n").arg(radius));
          
          // enter MW and PSV
          float mw = 0.0;
@@ -1034,60 +1073,37 @@ int US_Hydrodyn::read_bead_model(QString filename)
             ++linepos;
             ++beads_loaded;
             // ATOM     20  CA  ASP A   1      -8.226   5.986 215.196   1.0  20.0 0 2 201    
-            
+
+            QString str;
             if (!ts.atEnd()) {
-               ts >> tmp;
-               if ( tmp == "REMARK" )
+               str = ts.readLine();
+               if ( str.mid(0,4) != "ATOM" )
                {
                   do {
-                     ts.readLine();
+                     str = ts.readLine();
                      ++linepos;
-                     ts >> tmp;
-                  } while ( !ts.atEnd() && tmp == "REMARK" );
+                  } while ( !ts.atEnd() &&
+                            str.mid(0,4) != "ATOM" ) ;
                }
-
-               if ( tmp != "ATOM" ) 
+               if ( ts.atEnd() &&
+                    str.mid(0,4) != "ATOM" )
                {
-                  editor->append(QString("\nError in line %1. Expected 'ATOM', got '%1'\n")
+                  editor->append(QString("\nError in line %1. Expected 'ATOM' before end of file\n")
                                  .arg(linepos)
-                                 .arg(tmp)
                                  );
                   return linepos;
                }
+               
             } else {
                editor->append(QString("\nError in line %1. premature end of file'\n").arg(linepos));
                return linepos;
             }
             
-            if (!ts.atEnd()) {
-               ts >> tmp_atom.serial;
-               //               tmp_atom.serial = tmp.toInt();
-            } else {
-               editor->append(QString("\nError in line %1. premature end of file'\n").arg(linepos));
-               return linepos;
-            }
+            tmp_atom.serial = str.mid(8,4).toInt();
 
-            // skip next 4 fields
-            for (unsigned int i = 0; i < 4; i++)
-            {
-               if (!ts.atEnd()) {
-                  ts >> tmp;
-               } else {
-                  editor->append(QString("\nError in line %1!\n").arg(linepos));
-                  return linepos;
-               }
-            }
-            
             for (unsigned int i = 0; i < 3; i++)
             {
-               if (!ts.atEnd()) {
-                  ts >>  tmp_atom.bead_coordinate.axis[i];
-               }
-               else
-               {
-                  editor->append(QString("\nError in line %1!\n").arg(linepos));
-                  return linepos;
-               }
+               tmp_atom.bead_coordinate.axis[i] = str.mid(30 + i * 8, 8).toFloat();
             }
 
             tmp_atom.bead_computed_radius = radius;
@@ -1095,15 +1111,6 @@ int US_Hydrodyn::read_bead_model(QString filename)
             tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
             tmp_atom.bead_color = 8;
 
-            // clear rest of line
-            if (!ts.atEnd()) {
-               ts.readLine();
-            }
-            else
-            {
-               editor->append(QString("\nError in line %1!\n").arg(linepos));
-               return linepos;
-            }
             tmp_atom.exposed_code = 1;
             tmp_atom.all_beads.clear();
             tmp_atom.active = true;
