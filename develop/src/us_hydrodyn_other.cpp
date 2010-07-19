@@ -1160,10 +1160,10 @@ int US_Hydrodyn::read_bead_model(QString filename)
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;
+         bead_model_suffix = dammin ? "dammin" : "dammif";
+         le_bead_model_suffix->setText(bead_model_suffix);
          if ( do_write_bead_model ) 
          {
-            bead_model_suffix = "dammin";
-            le_bead_model_suffix->setText(bead_model_suffix);
             if ( !overwrite )
             {
                setSomoGridFile(false);
