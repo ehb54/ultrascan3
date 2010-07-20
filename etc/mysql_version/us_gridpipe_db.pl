@@ -20,7 +20,12 @@ $|=1;
 sub dbopen {
     $dbh = DBI->connect("DBI:mysql:database=$db_login_database;host=$db_login_host",
 			"$db_login_user", "$db_login_password",
-			{'RaiseError' => 1});
+			{ 
+			    'PrintError' => 1,
+			    'RaiseError' => 0
+			}
+	);
+    $dbh->{mysql_auto_reconnect} = 1;
 }
 
 ## @fn $ dbalive()
@@ -29,7 +34,7 @@ sub dbopen {
 # @return nothing
 sub dbalive {
     my $count = 0;
-    while ( !$dbh->ping  && $count < $MAX_TRIES) {
+    while ( !$dbh->ping && $count < $MAX_TRIES) {
 	dbopen();
 	return if $dbh->ping;
 	$count++;
@@ -56,7 +61,21 @@ sub dbread {
     dbalive();
     my $sql = 
 	"select message from gridjob where jid = \"$_[0]\";\n";
-    my $sth = $dbh->prepare($sql);
+    my $sth;
+    if ( !($sth = $dbh->prepare($sql)) ) {
+	warn "dbread:: prepare failed\n";
+	my $count = 0;
+	while ( !($sth = $dbh->prepare($sql)) && $count < $MAX_TRIES) {
+	    dbalive();
+	    $count++;
+	    warn "WARNING: dbread prepare failed, retrying $count of $MAX_TRIES\n";
+	    sleep $count * 10;
+	}
+	if ( $count >= $MAX_TRIES ) {
+	    warn "WARNING: dbread failed, no more retires\n";
+	    return "";
+	}
+    }
     $sth->execute;
     if(!$sth->rows)
     {
@@ -86,7 +105,21 @@ sub dbwrite {
     dbalive();
     my $sql = 
 	"select message from gridjob where jid = \"$_[0]\";\n";
-    my $sth = $dbh->prepare($sql);
+    my $sth;
+    if ( !($sth = $dbh->prepare($sql)) ) {
+	warn "dbwrite:: prepare failed\n";
+	my $count = 0;
+	while ( !($sth = $dbh->prepare($sql)) && $count < $MAX_TRIES) {
+	    dbalive();
+	    $count++;
+	    warn "WARNING: dbwrite prepare failed, retrying $count of $MAX_TRIES\n";
+	    sleep $count * 10;
+	}
+	if ( $count >= $MAX_TRIES ) {
+	    warn "WARNING: dbwrite failed, no more retires\n";
+	    return;
+	}
+    }
     $sth->execute;
     if(!$sth->rows)
     {
@@ -116,7 +149,20 @@ sub dbdel {
     dbalive();
     my $sql = 
 	"delete from gridjob where jid = \"$_[0]\";\n";
-    $dbh->do($sql);
+    if ( !$dbh->do($sql) ) {
+	warn "dbdel:: failed\n";
+	my $count = 0;
+	while ( !$dbh->do($sql) && $count < $MAX_TRIES) {
+	    dbalive();
+	    $count++;
+	    warn "WARNING: dbdel do failed, retrying $count of $MAX_TRIES\n";
+	    sleep $count * 10;
+	}
+	if ( $count >= $MAX_TRIES ) {
+	    warn "WARNING: dbwrite failed, no more retires\n";
+	    return;
+	}
+    }
     return "";
 }
 
@@ -130,7 +176,21 @@ sub dbrocopy {
     my %mdb;
     my $sql = 
 	"select jid,message from gridjob;\n";
-    my $sth = $dbh->prepare($sql);
+    my $sth;
+    if ( !($sth = $dbh->prepare($sql)) ) {
+	warn "dbrocopy:: prepare failed\n";
+	my $count = 0;
+	while ( !($sth = $dbh->prepare($sql)) && $count < $MAX_TRIES) {
+	    dbalive();
+	    $count++;
+	    warn "WARNING: dbrocopy prepare failed, retrying $count of $MAX_TRIES\n";
+	    sleep $count * 10;
+	}
+	if ( $count >= $MAX_TRIES ) {
+	    warn "WARNING: dbrocopy failed, no more retires\n";
+	    return %mdb;
+	}
+    }
     $sth->execute;
     while ( my @row = $sth->fetchrow_array ) {
 	$mdb{$row[0]} = $row[1];
