@@ -323,6 +323,16 @@ class US_DataIO2
       static int     loadData      ( const QString&, const QString&, 
                                      QVector< EditedData >& ); 
 
+      /*! This is an overloaded method to read data into memory.  It uses
+          the functions readRawData and readEdits.
+          \param directory    The directory of the auc files
+          \param editFilename The the file with the edited parameters
+          \param data         The location where the edited data is placed
+      */
+
+      static int     loadData      ( const QString&, const QString&, 
+                                     EditedData& ); 
+
    private:
 
       //!  \private A private convenience class
