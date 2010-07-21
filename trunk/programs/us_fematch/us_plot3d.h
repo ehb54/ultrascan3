@@ -69,20 +69,19 @@ class US_EXTERN US_Plot3D : public QMainWindow
       QAction*      fdmeshAct;
       QAction*      nodataAct;
       QAction*      fldataAct;
-      QAction*      flisoAct;
+      QAction*      flisolAct;
       QAction*      flemptAct;
-      QAction*      flmeshAct;
       QAction*      normsAct;
-      QAction*      coaxisAct;
+      QAction*      coaxesAct;
       QAction*      cobackAct;
       QAction*      comeshAct;
-      QAction*      conbrsAct;
+      QAction*      conumbAct;
       QAction*      colablAct;
       QAction*      cocaptAct;
       QAction*      codataAct;
       QAction*      corsetAct;
-      QAction*      fnscalAct;
-      QAction*      fnaxisAct;
+      QAction*      fnnumbAct;
+      QAction*      fnaxesAct;
       QAction*      fncaptAct;
       QAction*      fnrsetAct;
       QAction*      iconAct;
@@ -153,15 +152,10 @@ class US_EXTERN US_Plot3D : public QMainWindow
 
       QVector< QVector< double > > zdata;
 
-      Qwt3D::SurfacePlot* dataWidget;
+      Qwt3D::SurfacePlot*          dataWidget;
 
    protected:
-      QwtPlot*      data_plot1;
-
       US_Model*     model;
-
-      QCheckBox*  ck_plteda;
-
 
    private slots:
 
@@ -176,6 +170,8 @@ class US_EXTERN US_Plot3D : public QMainWindow
       void    shade_check(  int  );
       void    poffs_slide(  int  );
       void    resol_slide(  int  );
+      void    norml_slide(  int  );
+      void    normq_slide(  int  );
       void    movie_toggle(     bool );
       void    frame_axes_on(    bool );
       void    box_axes_on(      bool );
@@ -194,12 +190,25 @@ class US_EXTERN US_Plot3D : public QMainWindow
       void    data_fimesh_on(    bool );
       void    data_none_on(      bool );
       void    floor_data_on(     bool );
-      void    floor_iso_on(      bool );
+      void    floor_isol_on(     bool );
       void    floor_empty_on(    bool );
-      void    floor_mesh_on(     bool );
-      void    rotate(       void );
-      void    open_file(    void );
-      void    close_all(    void );
+      void    normals_on(        bool );
+      void    rotate(        void );
+      void    open_file(     void );
+      void    close_all(     void );
+      void    pick_axes_co(  void );
+      void    pick_back_co(  void );
+      void    pick_mesh_co(  void );
+      void    pick_numb_co(  void );
+      void    pick_labl_co(  void );
+      void    pick_capt_co(  void );
+      void    pick_data_co(  void );
+      void    reset_colors(  void );
+      void    pick_numb_fn(  void );
+      void    pick_axes_fn(  void );
+      void    pick_capt_fn(  void );
+      void    reset_fonts(   void );
+      void    dump_contents( void );
 
       QString xyAxisTitle( int, double );
       QString zAxisTitle(  int );

@@ -5,6 +5,7 @@
 #include "us_fematch.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_colorgradIO.h"
 #include <qwt_legend.h>
 #include <qwt3d_plot.h>
 
@@ -51,14 +52,16 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
    resolSlider->setMinimum( 1   );
    resolSlider->setMaximum( 20  );
    resolSlider->setValue(   1   );
-   normqSlider->setMinimum( 0   );
-   normqSlider->setMaximum( 100 );
+   normqSlider->setMinimum( 3   );
+   normqSlider->setMaximum( 32  );
+   normqSlider->setValue(   1   );
    normlSlider->setMinimum( 0   );
    normlSlider->setMaximum( 100 );
+   normlSlider->setValue(   8   );
    poffsSlider->setTickInterval( 2  );
    resolSlider->setTickInterval( 2  );
-   normqSlider->setTickInterval( 5 );
-   normlSlider->setTickInterval( 5 );
+   normqSlider->setTickInterval( 1 );
+   normlSlider->setTickInterval( 8 );
    poffsSlider->setTickPosition( QSlider::TicksAbove );
    resolSlider->setTickPosition( QSlider::TicksAbove );
    normqSlider->setTickPosition( QSlider::TicksLeft );
@@ -67,6 +70,14 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
    resolSlider->setTracking( false );
    normqSlider->setTracking( false );
    normlSlider->setTracking( false );
+   poffsSlider->setStatusTip( tr( "Polygon Offset increase surface quality)" ));
+   resolSlider->setStatusTip( tr( "Data Resolution (rectangular data)" ) );
+   normqSlider->setStatusTip( tr( "Normals Quality (Roundness)" ) );
+   normlSlider->setStatusTip( tr( "Normals Length" ) );
+   poffsSlider->setToolTip( tr( "Polygon Offset"  ) );
+   resolSlider->setToolTip( tr( "Data Resolution" ) );
+   normqSlider->setToolTip( tr( "Normals Quality" ) );
+   normlSlider->setToolTip( tr( "Normals Length"  ) );
 
    ck_ortho         = new QCheckBox( tr( "Ortho" ) );
    ck_legend        = new QCheckBox( tr( "Legend" ) );
@@ -87,6 +98,13 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
    pb_std           = new QPushButton( tr( "Std" ) );
    pb_light         = new QPushButton( tr( "Lighting" ) );
    ck_light         = new QCheckBox( "" );
+   pb_std  ->setToolTip( tr( "Standard View"  ) );
+   pb_light->setToolTip( tr( "Calibrate Lighting"  ) );
+   ck_light->setToolTip( tr( "Lighting On/Off"  ) );
+   pb_std  ->setStatusTip( tr( "Set standard view"  ) );
+   pb_light->setStatusTip( tr( "Calibrate Lighting"  ) );
+   ck_light->setStatusTip( tr( "Turn Lighting On/Off"  ) );
+
    QLabel* offsLabl = new QLabel( tr( "Polygon Offset" ) );
    QLabel* resoLabl = new QLabel( tr( "Resolution" ) );
    QLabel* dumyLabl = new QLabel(" " );
@@ -146,6 +164,10 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
             this,        SLOT(   poffs_slide(  int ) ) );
    connect( resolSlider, SIGNAL( valueChanged( int ) ),
             this,        SLOT(   resol_slide(  int ) ) );
+   connect( normlSlider, SIGNAL( valueChanged( int ) ),
+            this,        SLOT(   norml_slide(  int ) ) );
+   connect( normqSlider, SIGNAL( valueChanged( int ) ),
+            this,        SLOT(   normq_slide(  int ) ) );
 
    timer  = new QTimer( this );
    connect( movieAct,    SIGNAL( toggled(      bool ) ),
@@ -154,8 +176,36 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
             this,        SLOT(   rotate()             ) );
    connect( openAct,     SIGNAL( triggered(    bool ) ),
             this,        SLOT(   open_file()          ) );
+   connect( saveAct,     SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   dump_contents()      ) );
    connect( exitAct,     SIGNAL( triggered(    bool ) ),
             this,        SLOT(   close_all()          ) );
+
+   connect( coaxesAct,   SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   pick_axes_co()       ) );
+   connect( cobackAct,   SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   pick_back_co()       ) );
+   connect( comeshAct,   SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   pick_mesh_co()       ) );
+   connect( conumbAct,   SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   pick_numb_co()       ) );
+   connect( colablAct,   SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   pick_labl_co()       ) );
+   connect( cocaptAct,   SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   pick_capt_co()       ) );
+   connect( codataAct,   SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   pick_data_co()       ) );
+   connect( corsetAct,   SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   reset_colors()       ) );
+
+   connect( fnnumbAct,   SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   pick_numb_fn()       ) );
+   connect( fnaxesAct,   SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   pick_axes_fn()       ) );
+   connect( fncaptAct,   SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   pick_capt_fn()       ) );
+   connect( fnrsetAct,   SIGNAL( triggered(    bool ) ),
+            this,        SLOT(   reset_fonts()        ) );
 
    connect( frameAct,    SIGNAL( toggled(      bool ) ),
             this,        SLOT( frame_axes_on(  bool ) ) );
@@ -196,12 +246,13 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
 
    connect( fldataAct,   SIGNAL( toggled(      bool ) ),
             this,        SLOT( floor_data_on(  bool ) ) );
-   connect( flisoAct,    SIGNAL( toggled(      bool ) ),
-            this,        SLOT( floor_iso_on(   bool ) ) );
+   connect( flisolAct,   SIGNAL( toggled(      bool ) ),
+            this,        SLOT( floor_isol_on(  bool ) ) );
    connect( flemptAct,   SIGNAL( toggled(      bool ) ),
             this,        SLOT( floor_empty_on( bool ) ) );
-   connect( flmeshAct,   SIGNAL( toggled(      bool ) ),
-            this,        SLOT( floor_mesh_on(  bool ) ) );
+
+   connect( normsAct,    SIGNAL( toggled(      bool ) ),
+            this,        SLOT(   normals_on(   bool ) ) );
 
    dataWidget->coordinates()->setLineSmooth( true );
    //dataWidget->coordinates()->setGridLinesColr( RGBA( 0.35, 0.35, 0.35, 1 ) );
@@ -393,6 +444,8 @@ void US_Plot3D::calculateData( QVector< QVector< double > >& zdat )
    int    ncomp  = model->components.size();
    int    hixd   = ncols / 5;  // max raster radius is 5th of total extent
    int    hiyd   = nrows / 5;
+   int    loxd   = 5;
+   int    loyd   = 5;
    int    nxd    = hixd;
    int    nyd    = hiyd;
    int    fx;
@@ -437,6 +490,8 @@ qDebug() << " xdif nxd nyd" << xdif << nxd << nyd;
    nyd  = nyd * 2 + 2;                            //  just to be extra careful
    nxd  = ( nxd < hixd ) ? nxd : hixd;            // at most, a 5th of extent
    nyd  = ( nyd < hiyd ) ? nyd : hiyd;
+   nxd  = ( nxd > loxd ) ? nxd : loxd;            // at least 5 pixels
+   nyd  = ( nyd > loyd ) ? nyd : loyd;
 qDebug() << "  nxd nyd" << nxd << nyd;
 //nxd=hixd;nyd=hiyd;
 
@@ -702,12 +757,10 @@ void US_Plot3D::createActions()
       tr( "No Data" ),        this );
    fldataAct  = new QAction( QIcon( ":/images/floordata.png" ),
       tr( "Floor Data" ),     this );
-   flisoAct   = new QAction( QIcon( ":/images/flooriso.png" ),
+   flisolAct  = new QAction( QIcon( ":/images/flooriso.png" ),
       tr( "Floor Isolines" ), this );
    flemptAct  = new QAction( QIcon( ":/images/floorempty.png" ),
       tr( "Floor Empty" ),    this );
-   flmeshAct  = new QAction( QIcon( ":/images/floormesh.png" ),
-      tr( "Floor Mesh" ),     this );
 
    normsAct   = new QAction( QIcon( ":/images/normals.png" ),
       tr( "Normal Vectors" ), this );
@@ -718,17 +771,17 @@ void US_Plot3D::createActions()
 
    exitAct    = new QAction( tr( "Exit" ),            this );
 
-   coaxisAct  = new QAction( tr( "Axes" ),            this );
+   coaxesAct  = new QAction( tr( "Axes" ),            this );
    cobackAct  = new QAction( tr( "Background" ),      this );
    comeshAct  = new QAction( tr( "Mesh" ),            this );
-   conbrsAct  = new QAction( tr( "Numbers" ),         this );
+   conumbAct  = new QAction( tr( "Number" ),          this );
    colablAct  = new QAction( tr( "Label" ),           this );
    cocaptAct  = new QAction( tr( "Caption" ),         this );
    codataAct  = new QAction( tr( "Data Color" ),      this );
    corsetAct  = new QAction( tr( "Reset" ),           this );
 
-   fnscalAct  = new QAction( tr( "Scale numbering" ), this );
-   fnaxisAct  = new QAction( tr( "Axis label" ),      this );
+   fnnumbAct  = new QAction( tr( "Scale numbering" ), this );
+   fnaxesAct  = new QAction( tr( "Axes label" ),      this );
    fncaptAct  = new QAction( tr( "Caption" ),         this );
    fnrsetAct  = new QAction( tr( "Reset" ),           this );
 
@@ -759,15 +812,18 @@ void US_Plot3D::createMenus()
    fileMenu->addAction( exitAct   );
 
    colorMenu = menuBar()->addMenu( tr( "&Color" ) );
-   colorMenu->addAction( coaxisAct );
+   colorMenu->addAction( coaxesAct );
    colorMenu->addAction( cobackAct );
    colorMenu->addAction( comeshAct );
-   colorMenu->addAction( conbrsAct );
+   colorMenu->addAction( conumbAct );
+   colorMenu->addAction( colablAct );
+   colorMenu->addAction( cocaptAct );
+   colorMenu->addAction( codataAct );
    colorMenu->addAction( corsetAct );
 
    fontMenu  = menuBar()->addMenu( tr( "Font" ) );
-   fontMenu->addAction( fnscalAct );
-   fontMenu->addAction( fnaxisAct );
+   fontMenu->addAction( fnnumbAct );
+   fontMenu->addAction( fnaxesAct );
    fontMenu->addAction( fncaptAct );
    fontMenu->addAction( fnrsetAct );
 }
@@ -843,18 +899,16 @@ void US_Plot3D::createToolBar()
    fdmeshAct->setChecked(   true );
 
    fileToolBar->addAction( fldataAct );
-   fileToolBar->addAction( flisoAct  );
+   fileToolBar->addAction( flisolAct  );
    fileToolBar->addAction( flemptAct );
-   fileToolBar->addAction( flmeshAct );
    fileToolBar->addAction( normsAct  );
    floorGroup->addAction( fldataAct  );
-   floorGroup->addAction( flisoAct   );
+   floorGroup->addAction( flisolAct   );
    floorGroup->addAction( flemptAct  );
-   floorGroup->addAction( flmeshAct  );
    fldataAct->setCheckable( true );
-   flisoAct ->setCheckable( true );
+   flisolAct->setCheckable( true );
    flemptAct->setCheckable( true );
-   flmeshAct->setCheckable( true );
+   normsAct ->setCheckable( true );
    flemptAct->setChecked(   true );
 
    openAct  ->setStatusTip( tr( "Open GridData (.mes) files" ) );
@@ -878,9 +932,8 @@ void US_Plot3D::createToolBar()
    fdmeshAct->setStatusTip( tr( "Display mesh & filled polygons" ) );
    nodataAct->setStatusTip( tr( "Hide data" ) );
    fldataAct->setStatusTip( tr( "Floor data projection" ) );
-   flisoAct ->setStatusTip( tr( "Floor isolines" ) );
+   flisolAct->setStatusTip( tr( "Floor isolines" ) );
    flemptAct->setStatusTip( tr( "Floor empty" ) );
-   flmeshAct->setStatusTip( tr( "Floor mesh" ) );
    normsAct ->setStatusTip( tr( "Show normal vectors" ) );
 
    addToolBar( fileToolBar );
@@ -1181,7 +1234,7 @@ void US_Plot3D::floor_data_on( bool isOn )
    }
 }
 // set floor as isolines on
-void US_Plot3D::floor_iso_on(  bool isOn )
+void US_Plot3D::floor_isol_on(  bool isOn )
 {
    if ( isOn )
    {
@@ -1200,16 +1253,30 @@ void US_Plot3D::floor_empty_on( bool isOn )
       dataWidget->updateGL();
    }
 }
-// set floor as mesh on
-void US_Plot3D::floor_mesh_on( bool isOn )
+
+// set show-normals on
+void US_Plot3D::normals_on( bool isOn )
 {
-   if ( isOn )
-   {
-      //dataWidget->setFloorStyle( FLOORMESH );
-      dataWidget->setFloorStyle( FLOORISO );
-      dataWidget->updateData();
-      dataWidget->updateGL();
-   }
+qDebug() << "normals_on" << isOn;
+   dataWidget->showNormals( isOn );
+   dataWidget->updateNormals();
+   dataWidget->updateGL();
+}
+// set normal length
+void US_Plot3D::norml_slide( int val )
+{
+qDebug() << "norml_slide" << val;
+   dataWidget->setNormalLength( (double)val / 400.0 );
+   dataWidget->updateNormals();
+   dataWidget->updateGL();
+}
+// set normal quality
+void US_Plot3D::normq_slide( int val )
+{
+qDebug() << "normq_slide" << val;
+   dataWidget->setNormalQuality( val );
+   dataWidget->updateNormals();
+   dataWidget->updateGL();
 }
 
 // rotate 3d plot
@@ -1240,5 +1307,211 @@ qDebug() << "close_all";
    zdata.clear();
 
    close();
+}
+
+// pick axes color
+void US_Plot3D::pick_axes_co()
+{
+   QColor cc = QColorDialog::getColor( Qt::white, this,
+         tr( "Select Axes Color" ) );
+   Qwt3D::RGBA rgb = Qt2GL( cc );
+   dataWidget->coordinates()->setAxesColor( rgb );
+   dataWidget->updateGL();
+}
+// pick axes color
+void US_Plot3D::pick_back_co()
+{
+   QColor cc = QColorDialog::getColor( Qt::white, this,
+         tr( "Select Background Color" ) );
+   Qwt3D::RGBA rgb = Qt2GL( cc );
+   dataWidget->setBackgroundColor( rgb );
+   dataWidget->updateGL();
+}
+// pick mesh color
+void US_Plot3D::pick_mesh_co()
+{
+   QColor cc = QColorDialog::getColor( Qt::white, this,
+         tr( "Select Mesh Color" ) );
+   Qwt3D::RGBA rgb = Qt2GL( cc );
+   dataWidget->setMeshColor( rgb );
+   dataWidget->updateGL();
+}
+// pick number color
+void US_Plot3D::pick_numb_co()
+{
+   QColor cc = QColorDialog::getColor( Qt::white, this,
+         tr( "Select Number Color" ) );
+   Qwt3D::RGBA rgb = Qt2GL( cc );
+   dataWidget->coordinates()->setNumberColor( rgb );
+   dataWidget->updateGL();
+}
+// pick label color
+void US_Plot3D::pick_labl_co()
+{
+   QColor cc = QColorDialog::getColor( Qt::white, this,
+         tr( "Select Label Color" ) );
+   Qwt3D::RGBA rgb = Qt2GL( cc );
+   dataWidget->coordinates()->setLabelColor( rgb );
+   dataWidget->updateGL();
+}
+// pick caption color
+void US_Plot3D::pick_capt_co()
+{
+   QColor cc = QColorDialog::getColor( Qt::white, this,
+         tr( "Select Caption Color" ) );
+   Qwt3D::RGBA rgb = Qt2GL( cc );
+   dataWidget->setTitleColor( rgb );
+   dataWidget->updateGL();
+}
+// pick data color map
+void US_Plot3D::pick_data_co()
+{
+   QList< QColor >       colorlist;
+   Qwt3D::ColorVector    colorvect;
+   Qwt3D::StandardColor* stdcol;
+   Qwt3D::RGBA           rgb;
+
+   QString filter = tr( "Color Map files (cm*.xml);;" )
+      + tr( "Any XML files (*.xml);;" )
+      + tr( "Any files (*)" );
+
+   QString mapfname = QFileDialog::getOpenFileName( this,
+      tr( "Load Color Map File" ),
+      US_Settings::appBaseDir() + "/etc",
+      filter, 0, 0 );
+
+   if ( mapfname.isEmpty() )
+      return;
+
+   US_ColorGradIO::read_color_gradient( mapfname, colorlist );
+
+   for ( int ii = 0; ii < colorlist.size(); ii++ )
+   {
+      rgb   = Qt2GL( colorlist.at( ii ) );
+      colorvect.push_back( rgb );
+   }
+
+   stdcol  = new StandardColor( dataWidget );
+   stdcol->setColorVector( colorvect );
+
+   dataWidget->setDataColor( stdcol );
+   dataWidget->updateData();
+   dataWidget->updateNormals();
+   dataWidget->showColorLegend( ck_legend->isChecked() );
+   dataWidget->updateGL();
+}
+// reset to default colors
+void US_Plot3D::reset_colors()
+{
+   Qwt3D::StandardColor* stdcol;
+
+   if ( !dataWidget )
+      return;
+
+   const Qwt3D::RGBA blackc = Qt2GL( QColor( Qt::black ) );
+   const Qwt3D::RGBA whitec = Qt2GL( QColor( Qt::white ) );
+   stdcol = new StandardColor( dataWidget );
+
+   dataWidget->coordinates()->setAxesColor(   blackc );
+   dataWidget->coordinates()->setNumberColor( blackc );
+   dataWidget->coordinates()->setLabelColor(  blackc );
+   dataWidget->setBackgroundColor( whitec );
+   dataWidget->setMeshColor(       blackc );
+   dataWidget->setTitleColor(      blackc );
+   dataWidget->setDataColor(       stdcol );
+   dataWidget->showColorLegend( ck_legend->isChecked() );
+   dataWidget->updateData();
+   dataWidget->updateNormals();
+   dataWidget->updateGL();
+}
+
+// pick scale number font
+void US_Plot3D::pick_numb_fn()
+{
+   bool  ok;
+   QFont oldfont( US_GuiSettings::fontFamily(),
+                  US_GuiSettings::fontSize() );
+   QFont newfont = QFontDialog::getFont( &ok, oldfont, this,
+      tr( "Select Scale Numbers Font" ) );
+
+   if ( !ok )
+      return;
+
+   dataWidget->coordinates()->setNumberFont( newfont );
+   dataWidget->updateGL();
+}
+// pick axes labels font
+void US_Plot3D::pick_axes_fn()
+{
+   bool  ok;
+   QFont oldfont( US_GuiSettings::fontFamily(),
+                  US_GuiSettings::fontSize() );
+   QFont newfont = QFontDialog::getFont( &ok, oldfont, this,
+      tr( "Select Axes Labels Font" ) );
+
+   if ( !ok )
+      return;
+
+   dataWidget->coordinates()->setLabelFont( newfont );
+   dataWidget->updateGL();
+}
+// pick title caption font
+void US_Plot3D::pick_capt_fn()
+{
+   bool  ok;
+   QFont oldfont( US_GuiSettings::fontFamily(),
+                  US_GuiSettings::fontSize() );
+   QFont newfont = QFontDialog::getFont( &ok, oldfont, this,
+      tr( "Select Title Caption Font" ) );
+
+   if ( !ok )
+      return;
+
+   dataWidget->setTitleFont( newfont.family(), newfont.pointSize() );
+   dataWidget->updateGL();
+}
+// rset fonts
+void US_Plot3D::reset_fonts()
+{
+   dataWidget->setTitleFont( US_GuiSettings::fontFamily(),
+                             US_GuiSettings::fontSize() );
+   dataWidget->coordinates()->setLabelFont( US_GuiSettings::fontFamily(),
+                                            US_GuiSettings::fontSize(),
+                                            QFont::Bold );
+   dataWidget->coordinates()->setNumberFont( US_GuiSettings::fontFamily(),
+                                             US_GuiSettings::fontSize() );
+   dataWidget->updateGL();
+}
+
+// dump plot contents to image file
+void US_Plot3D::dump_contents()
+{
+   QString modldesc   = model->description.section( "_", 0, 1 );
+   QString imagetype  = cb_ifmt->currentText();
+   QString fileext    = cb_ifmt->currentText().toLower();
+   QString datetime   = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
+
+   if ( !imagetype.contains( "PS" )  &&  !imagetype.contains( "PDF" ) )
+      imagetype       = imagetype.toLower();
+
+   QString ofname     = US_Settings::reportDir() + "/" + modldesc
+      + "_" + datetime + "_plot3d." + fileext;
+
+   bool ok = IO::save( dataWidget, ofname, imagetype );
+//qDebug() << " oformats" << IO::outputFormatList();
+qDebug() << " dump_contents" << ofname << "  OK " << ok;
+qDebug() << " imagetype" << imagetype;
+
+   if ( ok )
+   {
+      statusBar()->showMessage( tr( "Successful dump to " ) 
+         + ofname );
+   }
+
+   else
+   {
+      statusBar()->showMessage( tr( "*ERROR* Unable to create " )
+         + ofname );
+   }
 }
 

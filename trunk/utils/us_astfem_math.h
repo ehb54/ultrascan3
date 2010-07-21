@@ -174,7 +174,7 @@ class US_EXTERN US_AstfemMath
 
          QVector< double > s;       //!< sedimentation coefficient
          QVector< double > D;       //!< Diffusion coefficient
-         QVector< double > kext;    //!< extinctiom coefficient
+         QVector< double > kext;    //!< extinction coefficient
          QVector< ComponentRole > role; //!< role of each component
                                         //!<  in various reactions
          double pathlength;       //!< path length of centerpiece;

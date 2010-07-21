@@ -8,7 +8,6 @@
 #include "us_widgets_dialog.h"
 #include "us_dataIO2.h"
 #include "us_plot.h"
-#include "us_plot3d.h"
 #include "us_resids_bitmap.h"
 #include "us_noise.h"
 #include "us_plot.h"
