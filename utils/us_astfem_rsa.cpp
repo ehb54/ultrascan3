@@ -29,7 +29,7 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
 
    int           duration;
    int           initial_npts = 1000;
-   //int           current_assoc;
+   int           current_assoc;
    int           size_cv         = system.components.size();
    bool*         reacting        = new bool[ size_cv ];
 
@@ -52,13 +52,16 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
    for ( int k = 0; k < size_cv; k++ )
    {
       US_Model::SimulationComponent* sc = &system.components[ k ];
+      US_Model::Association*         as;
       reacting[ k ] = false;
-#if 0
+
       for ( int j = 0; j <  system.associations.size(); j++ )
       {
-         for ( int n = 0; n < system.associations[ j ].comp.size(); n++ )
+         as  = &system.associations[ j ];
+
+         for ( int n = 0; n < as->reaction_components.size(); n++ )
          {
-            if ( k == (int) system.associations[ j ].comp[ n ] )
+            if ( k == (int)as->reaction_components[ n ] )
             {
                 reacting[ k ] = true;
                 current_assoc = j;
@@ -66,7 +69,6 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
             }
          }
       }
-#endif
 
       current_time  = 0.0;
       last_time     = 0.0;
@@ -252,6 +254,7 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
    {
       //int num_comp = rg[ group ].GroupComponent.size();
       int num_rule = rg[ group ].association.size();
+      int num_comp = rg[ group ].GroupComponent.size();
       af_params.rg_index = group;
       
       af_params.s          .clear();
@@ -264,10 +267,9 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
          af_params.association.append( 
                system.associations[ rg[ group ].association[ m ] ] );
 
-#if 0
       for ( int j = 0; j < num_comp; j++ )
       {
-         int                         index = rg[ group ].GroupComponent[ j ];
+         int                            index = rg[ group ].GroupComponent[ j ];
          US_Model::SimulationComponent* sc    = &system.components[ index ];
          af_params.s    .append( sc->s );
          af_params.D    .append( sc->D );
@@ -287,15 +289,18 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
          for ( int m = 0; m < rg[ group ].association.size(); m++ ) 
          {
             // Check all comp in rule
-            int                rule = rg[ group ].association[ m ];
+            int                    rule = rg[ group ].association[ m ];
             US_Model::Association* as   = &system.associations[ rule ];
-            for ( int n = 0; n < as->comp.size(); n++ )
+
+            for ( int n = 0; n < as->reaction_components.size(); n++ )
             {
-               if ( af_params.role[ j ].comp_index == as->comp[ n ] )
+               if ( af_params.role[ j ].comp_index ==
+                    as->reaction_components[ n ] )
                {
-                  af_params.role[ j ].assoc .append( m );  // local index for the rule
-                  af_params.role[ j ].react .append( as->react [ n ] );
-                  af_params.role[ j ].st    .append( as->stoich[ n ] );
+                  // local index for the rule
+                  af_params.role[ j ].assoc.append( m );
+                  af_params.role[ j ].react.append( as->reaction_components[ n ] );
+                  af_params.role[ j ].st   .append( as->stoichiometry[ n ] );
                   break;
                }
             }
@@ -304,13 +309,13 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
 
       for ( int m = 0; m < num_rule; m++ )
       {
-          for ( int n = 0; n < af_params.association[ m ].comp.size(); n++ )
+         US_Model::Association* as = &af_params.association[ m ];
+          for ( int n = 0; n < as->reaction_components.size(); n++ )
           {
-            af_params.association[ m ].comp[ n ] = 
-               af_params.local_index[ af_params.association[ m ].comp[ n ] ];
+            as->reaction_components[ n ] = 
+               af_params.local_index[ as->reaction_components[ n ] ];
           }
       }
-#endif
 
       current_time  = 0.0;
       current_speed = 0.0;
@@ -499,42 +504,27 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
 
 void US_Astfem_RSA::update_assocv( void )
 {
-#if 0
-   for ( int i = 0; i < system.associations.size(); i++ )
+   for ( int ii = 0; ii < system.associations.size(); ii++ )
    {
-      US_Model::Association* as = &system.associations[ i ];
+      US_Model::Association* as    = &system.associations[ ii ];
+      int                    ncomp = as->reaction_components.size();
       
-      as->comp  .clear();
-      as->stoich.clear();
-      as->react .clear();
-      
-      if ( as->component3 == -1 )
+      if ( ncomp == 2 )
       {
-         as->comp .append( as->component1 );
-         as->comp .append( as->component2 );
-         
-         as->stoich .append( as->stoichiometry2 );
-         as->stoich .append( as->stoichiometry1 );
-         
-         as->react .append(  1 );
-         as->react .append( -1 );
+         int stoich1                  = as->stoichiometry[ 0 ];
+         as->stoichiometry[ 0 ]       = as->stoichiometry[ 1 ];
+         as->stoichiometry[ 1 ]       = stoich1;
+         as->reaction_components[ 0 ] = 1;
+         as->reaction_components[ 1 ] = -1;
       }
-      else
+
+      else if ( ncomp == 3 )
       {
-         as->comp .append( as->component1 );
-         as->comp .append( as->component2 );
-         as->comp .append( as->component3 );
-         
-         as->stoich .append( as->stoichiometry1 );
-         as->stoich .append( as->stoichiometry2 );
-         as->stoich .append( as->stoichiometry3 );
-         
-         as->react .append(  1 );
-         as->react .append(  1 );
-         as->react .append( -1 );
+         as->reaction_components[ 0 ] = 1;
+         as->reaction_components[ 1 ] = 1;
+         as->reaction_components[ 2 ] = -1;
       }
    }
-#endif
 }
 
 void US_Astfem_RSA::adjust_limits( int speed )
@@ -580,27 +570,28 @@ void US_Astfem_RSA::initialize_rg( void )
 
    // If there are no reactions, then it is all noninteracting
    if ( system.associations.size() == 0 ) return; 
-#if 0
    QVector< bool > reaction_used;
    reaction_used.clear();
 
    for ( int i = 0; i < system.associations.size(); i++ )
-      reaction_used .append( false );
+      reaction_used.append( false );
    
    // Initialize the first reaction group and put it into a temporary reaction
    // group, use as test against all assoc vector entries:
-   
-   struct ReactionGroup tmp_rg;
+
+   US_Model::Association*       as     = &system.associations[ 0 ];
+   US_AstfemMath::ReactionGroup tmp_rg;
+
    tmp_rg.GroupComponent.clear();
    tmp_rg.association.clear();
    
-   tmp_rg.association    .append( 0 );
-   tmp_rg.GroupComponent .append( system.associations[ 0 ].component1 );
-   tmp_rg.GroupComponent .append( system.associations[ 0 ].component2 );
+   tmp_rg.association   .append( 0 );
+   tmp_rg.GroupComponent.append( as->reaction_components[ 0 ] );
+   tmp_rg.GroupComponent.append( as->reaction_components[ 1 ] );
 
    // Only 2 components react in first reaction
-   if ( system.associations[ 0 ].component3  != -1 )
-      tmp_rg.GroupComponent .append( system.associations[ 0 ].component3 );
+   if ( as->reaction_components.size() > 2 )
+      tmp_rg.GroupComponent .append( as->reaction_components[ 2 ] );
    
    reaction_used[ 0 ] = true;
 
@@ -615,12 +606,21 @@ void US_Astfem_RSA::initialize_rg( void )
    
    for ( int i = 0; i < system.associations.size(); i++ )
    {
+      int ncomp;
+      int component1;
+      int component2;
+      int component3;
+
       // Check each association rule to see if it contains components that
       // match tmp_rg components
       
       for ( int counter = 1; counter < system.associations.size(); counter++ ) 
       {
-         US_Model::Association* av = &system.associations[ counter ];
+         US_Model::Association* av    = &system.associations[ counter ];
+         ncomp      = av->reaction_components.size();
+         component1 = ( ncomp > 0 ) ? av->reaction_components[ 0 ] : 0;
+         component2 = ( ncomp > 1 ) ? av->reaction_components[ 1 ] : 0;
+         component3 = ( ncomp > 2 ) ? av->reaction_components[ 2 ] : 0;
 
          while ( reaction_used[ counter ] )
          {
@@ -637,9 +637,9 @@ void US_Astfem_RSA::initialize_rg( void )
          {
             flag1 = false;
 
-            if ( av->component1 == (int) tmp_rg.GroupComponent[ j ]  ||
-                 av->component2 == (int) tmp_rg.GroupComponent[ j ]  ||
-                 av->component3 == (int) tmp_rg.GroupComponent[ j ] )
+            if ( component1 == (int) tmp_rg.GroupComponent[ j ]  ||
+                 component2 == (int) tmp_rg.GroupComponent[ j ]  ||
+                 component3 == (int) tmp_rg.GroupComponent[ j ] )
             {
                flag1 = true;
                break;
@@ -665,40 +665,40 @@ void US_Astfem_RSA::initialize_rg( void )
             // Check if 1st component is already in the GroupVector from tmp_rg
             for ( int j = 0; j < tmp_rg.GroupComponent.size(); j++ ) 
             {
-               if ( av->component1 == (int) tmp_rg.GroupComponent[ j ])
+               if ( component1 == (int) tmp_rg.GroupComponent[ j ])
                   flag2 = true;
             }
 
             // Add if not present already
-            if ( ! flag2 ) tmp_rg.GroupComponent .append( av->component1 );
+            if ( ! flag2 ) tmp_rg.GroupComponent.append( component1 );
 
             flag2 = false;
             
             // Check if 2nd component is already in the GroupVector from tmp_rg
             for ( int j = 0; j < tmp_rg.GroupComponent.size(); j++ ) 
             {
-               if ( av->component2 == (int) tmp_rg.GroupComponent[ j ]) 
+               if ( component2 == (int) tmp_rg.GroupComponent[ j ]) 
                   flag2 = true; 
             }
 
             // Add if not present already
-            if ( ! flag2 )  tmp_rg.GroupComponent .append( av->component2 ); 
+            if ( ! flag2 )  tmp_rg.GroupComponent .append( component2 ); 
 
             flag2 = false;
 
             // Check if 3rd component is already in the GroupVector from tmp_rg
             // (but only if non-zero)
             
-            if ( av->component3 != -1 ) 
+            if ( ncomp > 2 )
             {
                for ( int j = 0; j < tmp_rg.GroupComponent.size(); j++ )
                {
-                  if ( av->component3 == (int) tmp_rg.GroupComponent[ j ] )
+                  if ( component3 == (int) tmp_rg.GroupComponent[ j ] )
                      flag2 = true;
                }
                
                // Add if not present already
-               if ( ! flag2 ) tmp_rg.GroupComponent .append( av->component3 ); 
+               if ( ! flag2 ) tmp_rg.GroupComponent .append( component3 ); 
             }
          } 
       }
@@ -721,16 +721,20 @@ void US_Astfem_RSA::initialize_rg( void )
          }
 
          US_Model::Association* avj = &system.associations[ j ];
+         ncomp      = avj->reaction_components.size();
+         component1 = ( ncomp > 0 ) ? avj->reaction_components[ 0 ] : 0;
+         component2 = ( ncomp > 1 ) ? avj->reaction_components[ 1 ] : 0;
+         component3 = ( ncomp > 2 ) ? avj->reaction_components[ 2 ] : 0;
          
          if ( j < system.associations.size() )
          {
-            tmp_rg.association    .append( j );
-            tmp_rg.GroupComponent .append( avj->component1 );
-            tmp_rg.GroupComponent .append( avj->component2 );
+            tmp_rg.association   .append( j );
+            tmp_rg.GroupComponent.append( component1 );
+            tmp_rg.GroupComponent.append( component2 );
             
             // Only 2 components react in first reaction
-            if ( avj->component3 != -1 )
-               tmp_rg.GroupComponent .append( avj->component3 );
+            if ( ncomp > 2 )
+               tmp_rg.GroupComponent.append( component3 );
 
             reaction_used[ j ] = true;
             //counter++;   // Out of scope!!!!
@@ -743,7 +747,6 @@ void US_Astfem_RSA::initialize_rg( void )
          }
       }
    }
-#endif
 }
 
 // Initializes total concentration vector
@@ -770,7 +773,8 @@ void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0,
          // Calculate the spread of the lamella:
          for ( int j = 0; j < CT0.concentration.size(); j++ )
          {
-            base = ( CT0.radius[ j ] - af_params.current_meniscus) / lamella_width;
+            base = ( CT0.radius[ j ] - af_params.current_meniscus )
+               / lamella_width;
             
             CT0.concentration[ j ] += 
                sc->signal_concentration * exp( -pow( base, 4.0 ) );
@@ -1733,9 +1737,8 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
    // Special case:  self-association  n A <--> An
    if ( num_comp == 2 )       // Only 2 components and one association rule
    {
-#if 0
-      int    st0 = af_params.association[ 0 ].stoich[ 0 ];
-      int    st1 = af_params.association[ 0 ].stoich[ 1 ];
+      int    st0 = af_params.association[ 0 ].stoichiometry[ 0 ];
+      int    st1 = af_params.association[ 0 ].stoichiometry[ 1 ];
       double keq = af_params.association[ 0 ].k_eq;
 
       for ( int j = 0; j < Npts; j++ )
@@ -1772,7 +1775,6 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
           }
       }
       return;
-#endif
    }
 
    // General cases
@@ -1995,43 +1997,44 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
 
     for ( int m = 0; m < num_rule; m++ )
     {
-        double k_1        = af_params.association[ m ].k_off;
-        double k1         = af_params.association[ m ].k_eq * k_1;
-        double Q_reactant = 1.0;
-        double Q_product  = 1.0;
+       US_Model::Association* as = &af_params.association[ m ];
+       double k_1        = as->k_off;
+       double k1         = as->k_eq * k_1;
+       double Q_reactant = 1.0;
+       double Q_product  = 1.0;
         
-        for ( int n = 0; n < af_params.association[ m ].reaction_components.size(); n++ )
-        {
-           // local index of the n-th component in assoc[rule]
-           int ind_cn = af_params.association[ m ].reaction_components[ n ] ;
+       for ( int n = 0; n < as->reaction_components.size(); n++ )
+       {
+          // local index of the n-th component in assoc[rule]
+          int ind_cn = as->reaction_components[ n ] ;
            
-           // stoich of n-th comp in the rule
-           int stn    = af_params.association[ m ].stoichiometry[ n ] ;
+          // stoich of n-th comp in the rule
+          int stn    = as->stoichiometry[ n ] ;
            
-           // comp[n] here is reactant
-           if ( af_params.association[ m ].reaction_components[ n ] == 1 ) 
-           {
-              Q_reactant *= pow( y0[ ind_cn ], (double) stn );
-           }
-           else
-           {
-              Q_product  *= pow( y0[ ind_cn ], (double) stn );
-           }
-        }
+          // comp[n] here is reactant
+          if ( as->reaction_components[ n ] == 1 ) 
+          {
+             Q_reactant *= pow( y0[ ind_cn ], (double) stn );
+          }
+          else
+          {
+             Q_product  *= pow( y0[ ind_cn ], (double) stn );
+          }
+       }
 
-        Q[ m ] = k1 * Q_reactant - k_1 * Q_product;
+       Q[ m ] = k1 * Q_reactant - k_1 * Q_product;
     }
 
     for ( int i = 0; i < num_comp; i++ )
     {
-        yt[ i ] = 0.0;
+       yt[ i ] = 0.0;
 
-        for ( int m = 0; m < af_params.role[ i ].assoc.size(); m++ )
-        {
-            yt[ i ] +=      - af_params.role[ i ].react[ m ] * 
-                     (double) af_params.role[ i ].st   [ m ] *
-                           Q[ af_params.role[ i ].assoc[ m ] ];
-        }
+       for ( int m = 0; m < af_params.role[ i ].assoc.size(); m++ )
+       {
+          yt[ i ] +=      - af_params.role[ i ].react[ m ] * 
+                   (double) af_params.role[ i ].st   [ m ] *
+                         Q[ af_params.role[ i ].assoc[ m ] ];
+       }
     }
 
     delete [] Q;
@@ -2039,75 +2042,76 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
 
 void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
 {
-    double** QC;
+   double** QC;
 
-    int num_comp = rg[ af_params.rg_index ].GroupComponent.size();
-    int num_rule = rg[ af_params.rg_index ].association.size();
+   int num_comp = rg[ af_params.rg_index ].GroupComponent.size();
+   int num_rule = rg[ af_params.rg_index ].association.size();
 
-    US_AstfemMath::initialize_2d( num_rule, num_comp, &QC );
+   US_AstfemMath::initialize_2d( num_rule, num_comp, &QC );
 
-    for ( int m = 0; m < num_rule; m++ )
-    {
-        double k_1  = af_params.association[ m ].k_off;
-        double k1   = af_params.association[ m ].k_eq * k_1;
+   for ( int m = 0; m < num_rule; m++ )
+   {
+      US_Model::Association* as = &af_params.association[ m ];
+      double k_1  = as->k_off;
+      double k1   = as->k_eq * k_1;
 
-        for ( int j = 0; j < num_comp; j++ )
-        {
-           double Q_reactant = 1.0;
-           double Q_product  = 1.0;
-           double deriv_r    = 0.0;
-           double deriv_p    = 0.0;
+      for ( int j = 0; j < num_comp; j++ )
+      {
+         double Q_reactant = 1.0;
+         double Q_product  = 1.0;
+         double deriv_r    = 0.0;
+         double deriv_p    = 0.0;
            
-           for( int n = 0; n < af_params.association[ m ].reaction_components.size(); n++ )
-           {
-              // Local index of the n-th component in assoc[rule]
+         for( int n = 0; n < as->reaction_components.size(); n++ )
+         {
+            // Local index of the n-th component in assoc[rule]
               
-              int ind_cn = af_params.association[ m ].reaction_components[ n ] ;
+            int ind_cn = as->reaction_components[ n ] ;
               
-              // Stoich of n-th comp in the rule
-              double stn = af_params.association[ m ].stoichiometry[ n ];
+            // Stoich of n-th comp in the rule
+            double stn = as->stoichiometry[ n ];
 
-              // comp[j] is in the rule
-              if ( af_params.association[m].reaction_components[ n ] == j ) 
-              {
-                  // comp[n] is reactant
-                  if ( af_params.association[ m ].reaction_components[ n ] == 1 )   
-                     deriv_r = stn * pow( y0[ ind_cn ], stn - 1.0 );
-                  
-                  else      // comp[n] in this rule is reactant
-                     deriv_p = stn * pow( y0[ ind_cn ], stn - 1.0 );
-              }
-              else              // comp[j] is not in the rule
-              {
-                  // comp[n] is reactant
-                  if ( af_params.association[ m ].reaction_components[ n ] == 1 )
-                     Q_reactant *= pow( y0[ ind_cn ], stn );
-                  
-                  else    // comp[n] in this rule is reactant
-                     Q_product *= pow( y0[ ind_cn ], stn );
-              }
-           }
-
-           QC[ m ][ j ] = k1 * Q_reactant * deriv_r - k_1 * Q_product * deriv_p;
-       }  // C_j
-    }    // m-rule
-
-    for ( int i = 0; i < num_comp; i++ )
-    {
-        for ( int j = 0; j < num_comp; j++ )
-        {
-            dfdy[ i ][ j ] = 0.0;
-
-            for ( int m = 0; m < af_params.role[ i ].assoc.size(); m++ )
+            // comp[j] is in the rule
+            if ( as->reaction_components[ n ] == j ) 
             {
-                dfdy[ i ][ j ] += - af_params.role[ i ].react[ m ] * 
-                           (double) af_params.role[ i ].st   [ m ] * 
-                                QC[ af_params.role[ i ].assoc[ m ] ][ j ];
+               // comp[n] is reactant
+               if ( as->reaction_components[ n ] == 1 )   
+                  deriv_r = stn * pow( y0[ ind_cn ], stn - 1.0 );
+                  
+               else      // comp[n] in this rule is reactant
+                  deriv_p = stn * pow( y0[ ind_cn ], stn - 1.0 );
             }
-        }
-    }
+            else              // comp[j] is not in the rule
+            {
+               // comp[n] is reactant
+               if ( as->reaction_components[ n ] == 1 )
+                  Q_reactant *= pow( y0[ ind_cn ], stn );
+                  
+               else    // comp[n] in this rule is reactant
+                  Q_product *= pow( y0[ ind_cn ], stn );
+            }
+         }
 
-    US_AstfemMath::clear_2d( num_rule, QC );
+         QC[ m ][ j ] = k1 * Q_reactant * deriv_r - k_1 * Q_product * deriv_p;
+      }  // C_j
+   }    // m-rule
+
+   for ( int i = 0; i < num_comp; i++ )
+   {
+      for ( int j = 0; j < num_comp; j++ )
+      {
+         dfdy[ i ][ j ] = 0.0;
+
+         for ( int m = 0; m < af_params.role[ i ].assoc.size(); m++ )
+         {
+            dfdy[ i ][ j ] += - af_params.role[ i ].react[ m ] * 
+                       (double) af_params.role[ i ].st   [ m ] * 
+                            QC[ af_params.role[ i ].assoc[ m ] ][ j ];
+         }
+      }
+   }
+
+   US_AstfemMath::clear_2d( num_rule, QC );
 }
 
 // *** this is the SNI version of operator scheme
