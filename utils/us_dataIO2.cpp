@@ -669,12 +669,27 @@ void US_DataIO2::do_edits( QXmlStreamReader& xml, EditValues& parameters )
 }
 
 int US_DataIO2::loadData( const QString&         directory, 
-                         const QString&         editFilename,
-                         QVector< EditedData >& data )
+                          const QString&         editFilename,
+                          QVector< EditedData >& data )
 {
    QVector< RawData > raw;
 
    return loadData( directory, editFilename, data, raw );
+}
+
+int US_DataIO2::loadData( const QString&  directory, 
+                          const QString&  editFilename,
+                          EditedData&     data )
+{
+   QVector< RawData    > raw;
+   QVector< EditedData > editedData;
+
+   int result = loadData( directory, editFilename, editedData, raw );
+   
+   if ( result == OK ) 
+      data = editedData[ 0 ];
+
+   return result;
 }
 
 int US_DataIO2::loadData( const QString&       directory, 
