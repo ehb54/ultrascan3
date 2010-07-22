@@ -67,7 +67,9 @@
 
        <li>
           <b>Latest Data Edit</b> Uncheck to allow choosing an edit other
-          than the latest one for the raw experimental data.
+          than the latest one for the raw experimental data. The effect of
+          checking or unchecking can be seen in the
+           <a href="fe_match_lddat.html">Load Data Dialogs</a> documentation.
        </li>
 
        <li>

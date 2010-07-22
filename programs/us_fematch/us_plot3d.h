@@ -110,7 +110,7 @@ class US_EXTERN US_Plot3D : public QMainWindow
       QCheckBox*    ck_mouse;
       QCheckBox*    ck_shade;
 
-      US_Plot*      plotLayout1;
+      QFont         titleFont;
 
       bool          have_ed;
       bool          skip_plot;

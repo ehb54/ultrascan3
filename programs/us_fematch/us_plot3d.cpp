@@ -259,8 +259,10 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
    dataWidget->enableMouse( true );
    dataWidget->setKeySpeed( 15, 20, 20 );
 
-   dataWidget->setTitleFont( US_GuiSettings::fontFamily(),
-                             US_GuiSettings::fontSize() );
+   titleFont  = QFont( US_GuiSettings::fontFamily(),
+                       US_GuiSettings::fontSize() );
+   dataWidget->setTitleFont( titleFont.family(), titleFont.pointSize(),
+      titleFont.weight() );
    dataWidget->setTitle( tr( "Model 3-D Plot" ) );
 
    dataWidget->setPlotStyle(       FILLEDMESH );
@@ -937,16 +939,12 @@ void US_Plot3D::createToolBar()
    normsAct ->setStatusTip( tr( "Show normal vectors" ) );
 
    addToolBar( fileToolBar );
-qDebug() << "pre-adjust tbar size" << fileToolBar->size();
    fileToolBar->adjustSize();
-qDebug() << "post-adjust tbar size" << fileToolBar->size();
    int wdim  = qRound( (double)fileToolBar->size().width() * 0.75 );
    int hdim  = qRound( (double)wdim * 0.75 );
    setMinimumSize( wdim, hdim );
    adjustSize();
-qDebug() << "post-adjust mainw size" << size();
-   wdim  = qRound( (double)size().width() * 0.75 );
-   //setMinimumSize( wdim, wdim );
+wdim  = qRound( (double)size().width() * 0.75 );
 qDebug() << "  min x,y dim" << wdim;
 }
 
@@ -1312,7 +1310,7 @@ qDebug() << "close_all";
 // pick axes color
 void US_Plot3D::pick_axes_co()
 {
-   QColor cc = QColorDialog::getColor( Qt::white, this,
+   QColor cc = QColorDialog::getColor( Qt::black, this,
          tr( "Select Axes Color" ) );
    Qwt3D::RGBA rgb = Qt2GL( cc );
    dataWidget->coordinates()->setAxesColor( rgb );
@@ -1330,16 +1328,17 @@ void US_Plot3D::pick_back_co()
 // pick mesh color
 void US_Plot3D::pick_mesh_co()
 {
-   QColor cc = QColorDialog::getColor( Qt::white, this,
+   QColor cc = QColorDialog::getColor( Qt::black, this,
          tr( "Select Mesh Color" ) );
    Qwt3D::RGBA rgb = Qt2GL( cc );
    dataWidget->setMeshColor( rgb );
+   dataWidget->updateData();
    dataWidget->updateGL();
 }
 // pick number color
 void US_Plot3D::pick_numb_co()
 {
-   QColor cc = QColorDialog::getColor( Qt::white, this,
+   QColor cc = QColorDialog::getColor( Qt::black, this,
          tr( "Select Number Color" ) );
    Qwt3D::RGBA rgb = Qt2GL( cc );
    dataWidget->coordinates()->setNumberColor( rgb );
@@ -1348,7 +1347,7 @@ void US_Plot3D::pick_numb_co()
 // pick label color
 void US_Plot3D::pick_labl_co()
 {
-   QColor cc = QColorDialog::getColor( Qt::white, this,
+   QColor cc = QColorDialog::getColor( Qt::black, this,
          tr( "Select Label Color" ) );
    Qwt3D::RGBA rgb = Qt2GL( cc );
    dataWidget->coordinates()->setLabelColor( rgb );
@@ -1357,7 +1356,7 @@ void US_Plot3D::pick_labl_co()
 // pick caption color
 void US_Plot3D::pick_capt_co()
 {
-   QColor cc = QColorDialog::getColor( Qt::white, this,
+   QColor cc = QColorDialog::getColor( Qt::black, this,
          tr( "Select Caption Color" ) );
    Qwt3D::RGBA rgb = Qt2GL( cc );
    dataWidget->setTitleColor( rgb );
@@ -1403,14 +1402,12 @@ void US_Plot3D::pick_data_co()
 // reset to default colors
 void US_Plot3D::reset_colors()
 {
-   Qwt3D::StandardColor* stdcol;
-
    if ( !dataWidget )
       return;
 
-   const Qwt3D::RGBA blackc = Qt2GL( QColor( Qt::black ) );
-   const Qwt3D::RGBA whitec = Qt2GL( QColor( Qt::white ) );
-   stdcol = new StandardColor( dataWidget );
+   const Qwt3D::RGBA     blackc = Qt2GL( QColor( Qt::black ) );
+   const Qwt3D::RGBA     whitec = Qt2GL( QColor( Qt::white ) );
+   Qwt3D::StandardColor* stdcol = new StandardColor( dataWidget );
 
    dataWidget->coordinates()->setAxesColor(   blackc );
    dataWidget->coordinates()->setNumberColor( blackc );
@@ -1429,8 +1426,7 @@ void US_Plot3D::reset_colors()
 void US_Plot3D::pick_numb_fn()
 {
    bool  ok;
-   QFont oldfont( US_GuiSettings::fontFamily(),
-                  US_GuiSettings::fontSize() );
+   QFont oldfont = dataWidget->coordinates()->axes[X1].numberFont();
    QFont newfont = QFontDialog::getFont( &ok, oldfont, this,
       tr( "Select Scale Numbers Font" ) );
 
@@ -1444,8 +1440,7 @@ void US_Plot3D::pick_numb_fn()
 void US_Plot3D::pick_axes_fn()
 {
    bool  ok;
-   QFont oldfont( US_GuiSettings::fontFamily(),
-                  US_GuiSettings::fontSize() );
+   QFont oldfont = dataWidget->coordinates()->axes[X1].labelFont();
    QFont newfont = QFontDialog::getFont( &ok, oldfont, this,
       tr( "Select Axes Labels Font" ) );
 
@@ -1459,16 +1454,16 @@ void US_Plot3D::pick_axes_fn()
 void US_Plot3D::pick_capt_fn()
 {
    bool  ok;
-   QFont oldfont( US_GuiSettings::fontFamily(),
-                  US_GuiSettings::fontSize() );
-   QFont newfont = QFontDialog::getFont( &ok, oldfont, this,
+   QFont newfont = QFontDialog::getFont( &ok, titleFont, this,
       tr( "Select Title Caption Font" ) );
 
    if ( !ok )
       return;
 
-   dataWidget->setTitleFont( newfont.family(), newfont.pointSize() );
+   dataWidget->setTitleFont( newfont.family(), newfont.pointSize(),
+      newfont.weight() );
    dataWidget->updateGL();
+   titleFont = newfont;
 }
 // rset fonts
 void US_Plot3D::reset_fonts()
