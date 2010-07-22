@@ -88,6 +88,9 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QPushButton   *pb_remove_files;
       QPushButton   *pb_load_somo;
 
+      QLabel        *lbl_total_files;
+      QLabel        *lbl_selected;
+
       QLabel        *lbl_screen;
       QButtonGroup  *bg_residues;
       QCheckBox     *cb_residue_stop;
@@ -192,6 +195,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void update_enables();
       void disable_after_start();
       void enable_after_stop();
+
+      void set_counts();
 
       QString get_file_name(int i);
       void check_for_missing_files(bool display_messages);

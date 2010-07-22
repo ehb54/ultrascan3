@@ -152,6 +152,20 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_load_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_somo, SIGNAL(clicked()), SLOT(load_somo()));
 
+   lbl_total_files = new QLabel(tr("Total Files: 0 "), this);
+   lbl_total_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_total_files->setAlignment(AlignCenter|AlignVCenter);
+   lbl_total_files->setMinimumHeight(minHeight1);
+   lbl_total_files->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_total_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   lbl_selected = new QLabel(tr("Selected: 0 "), this);
+   lbl_selected->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_selected->setAlignment(AlignCenter|AlignVCenter);
+   lbl_selected->setMinimumHeight(minHeight1);
+   lbl_selected->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
    lbl_screen = new QLabel(tr("Screen selected files:"), this);
    Q_CHECK_PTR(lbl_screen);
    lbl_screen->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -364,10 +378,15 @@ void US_Hydrodyn_Batch::setupGUI()
    hbl_selection_ops->addWidget(pb_remove_files);
    hbl_selection_ops->addWidget(pb_load_somo);
 
+   QHBoxLayout *hbl_counts = new QHBoxLayout;
+   hbl_counts->addWidget(lbl_total_files);
+   hbl_counts->addWidget(lbl_selected);
+
    QVBoxLayout *vbl_selection = new QVBoxLayout;
    vbl_selection->addWidget(lb_files);
    vbl_selection->addLayout(hbl_selection_ops);
-
+   vbl_selection->addSpacing(3);
+   vbl_selection->addLayout(hbl_counts);
    vbl_selection->addSpacing(3);
 
    // 2nd section - screening
@@ -487,6 +506,11 @@ void US_Hydrodyn_Batch::add_files()
                                                          this,
                                                          "Open Structure Files",
                                                          "Please select a PDB file or files...");
+   map < QString, bool > current_files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      current_files[get_file_name(i)] = true;
+   }
    QColor save_color = editor->color();
    QStringList::Iterator it = filenames.begin();
    if ( it != filenames.end() )
@@ -494,17 +518,24 @@ void US_Hydrodyn_Batch::add_files()
       editor->append("\n");
    }
    disable_updates = true;
+   unsigned int count = 0;
    while( it != filenames.end() ) 
    {
-      bool dup = false;
-      for ( int i = 0; i < lb_files->numRows(); i++ )
+      if ( ! ( count++ % 500 ) )
       {
-         if ( QString(*it) == get_file_name(i) ) 
-         {
-            dup = true;
-            break;
-         }
+         qApp->processEvents();
       }
+         
+      bool dup = false;
+      dup = current_files[QString(*it)];
+      // for ( int i = 0; i < lb_files->numRows(); i++ )
+      //      {
+      //         if ( QString(*it) == get_file_name(i) ) 
+      //         {
+      //            dup = true;
+      //            break;
+      //         }
+      //      }
       if ( !dup )
       {
          batch->file.push_back(*it);
@@ -638,6 +669,7 @@ void US_Hydrodyn_Batch::update_enables()
    le_avg_hydro_name->setEnabled(lb_files->numRows() && batch->hydro && batch->avg_hydro);
    pb_select_save_params->setEnabled(lb_files->numRows() && batch->hydro);
    cb_saveParams->setEnabled(lb_files->numRows() && batch->hydro);
+   set_counts();
 }
 
 void US_Hydrodyn_Batch::residue(int val)
@@ -1176,21 +1208,30 @@ void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
    editor->append("\n");
    if ( QUriDrag::decodeLocalFiles(event, fileNames) )
    {
+      map < QString, bool > current_files;
+      for ( int i = 0; i < lb_files->numRows(); i++ )
+      {
+         current_files[get_file_name(i)] = true;
+      }
       QColor save_color = editor->color();
       QStringList::Iterator it = fileNames.begin();
+      unsigned int count = 0;
       while( it != fileNames.end() ) 
       {
+         if ( ! ( count++ % 500 ) )
+         {
+            qApp->processEvents();
+         }
          if ( QString(*it).contains(QRegExp("(pdb|PDB|bead_model|BEAD_MODEL|beams|BEAMS)$")) )
          {
             bool dup = false;
-            for ( int i = 0; i < lb_files->numRows(); i++ )
-            {
-               if ( QString(*it) == get_file_name(i) ) 
-               {
-                  dup = true;
-                  break;
-               }
-            }
+            //     if ( QString(*it) == get_file_name(i) ) 
+            //               {
+            //                  dup = true;
+            //                  break;
+            //               }
+            //            }
+            dup = current_files[QString(*it)];
             if ( !dup )
             {
                batch->file.push_back(*it);
@@ -1240,8 +1281,13 @@ void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
    bool is_selected;
    int item = lb_files->currentItem();
    bool item_selected = lb_files->isSelected(item);
+   unsigned int count = 0;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
+      if ( ! ( count++ % 500 ) )
+      {
+         qApp->processEvents();
+      }
       f = get_file_name(i);
       is_selected = lb_files->isSelected(i);
       if ( QFile::exists(f) )
@@ -1270,4 +1316,18 @@ void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
    {
       update_enables();
    }
+}
+
+void US_Hydrodyn_Batch::set_counts()
+{
+   lbl_total_files->setText(QString("Total files: %1").arg(lb_files->count()));
+   unsigned int count = 0;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected(i) )
+      {
+         count++;
+      }
+   }
+   lbl_selected->setText(QString("Selected: %1").arg(count));
 }
