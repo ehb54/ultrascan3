@@ -1,4 +1,3 @@
-
 //! \file us_plot_control.cpp
 
 #include "us_fematch.h"
@@ -12,16 +11,16 @@
 US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    : US_WidgetsDialog( 0, 0 )
 {
-
    wparent        = p;
    model          = amodel;
 
    setObjectName( "US_PlotControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
+   setPalette( US_GuiSettings::frameColor() );
+   setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
 
    // lay out the GUI
    setWindowTitle( tr( "Enhanced Plotting Controls" ) );
-   setPalette( US_GuiSettings::frameColor() );
 
    mainLayout      = new QVBoxLayout( this );
    controlsLayout  = new QGridLayout( );
@@ -54,16 +53,16 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
-   QCheckBox*   ck_xmwt   = new QCheckBox( tr( "x=mw" ) );
-   QCheckBox*   ck_ymwt   = new QCheckBox( tr( "y=mw" ) );
-   QCheckBox*   ck_xsed   = new QCheckBox( tr( "x=sc" ) );
-   QCheckBox*   ck_ysed   = new QCheckBox( tr( "y=sc" ) );
-   QCheckBox*   ck_xdif   = new QCheckBox( tr( "x=dc" ) );
-   QCheckBox*   ck_ydif   = new QCheckBox( tr( "y=dc" ) );
-   QCheckBox*   ck_xfco   = new QCheckBox( tr( "x=fc" ) );
-   QCheckBox*   ck_yfco   = new QCheckBox( tr( "y=fc" ) );
-   QCheckBox*   ck_xfra   = new QCheckBox( tr( "x=fr" ) );
-   QCheckBox*   ck_yfra   = new QCheckBox( tr( "y=fr" ) );
+   QCheckBox*   ck_xmwt   = new QCheckBox( tr( "x=MW"   ) );
+   QCheckBox*   ck_ymwt   = new QCheckBox( tr( "y=MW"   ) );
+   QCheckBox*   ck_xsed   = new QCheckBox( tr( "x=s"    ) );
+   QCheckBox*   ck_ysed   = new QCheckBox( tr( "y=s"    ) );
+   QCheckBox*   ck_xdif   = new QCheckBox( tr( "x=D"    ) );
+   QCheckBox*   ck_ydif   = new QCheckBox( tr( "y=D"    ) );
+   QCheckBox*   ck_xfco   = new QCheckBox( tr( "x=f"    ) );
+   QCheckBox*   ck_yfco   = new QCheckBox( tr( "y=f"    ) );
+   QCheckBox*   ck_xfra   = new QCheckBox( tr( "x=f/f0" ) );
+   QCheckBox*   ck_yfra   = new QCheckBox( tr( "y=f/f0" ) );
 
    QwtCounter* ct_zscalefac = us_counter( 3,  0.1,   10, 0.01 );
    QwtCounter* ct_gridreso  = us_counter( 3,   50,  300,   10 );
@@ -131,27 +130,17 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    yCheck[ 3 ] = ck_yfco;
    yCheck[ 4 ] = ck_yfra;
 
-   ck_xmwt->setFont( pb_help->font() );
-   ck_ymwt->setFont( pb_help->font() );
-   ck_xsed->setFont( pb_help->font() );
-   ck_ysed->setFont( pb_help->font() );
-   ck_xdif->setFont( pb_help->font() );
-   ck_ydif->setFont( pb_help->font() );
-   ck_xfco->setFont( pb_help->font() );
-   ck_yfco->setFont( pb_help->font() );
-   ck_xfra->setFont( pb_help->font() );
-   ck_yfra->setFont( pb_help->font() );
-
-   ck_xmwt->setPalette( US_GuiSettings::normalColor() );
-   ck_ymwt->setPalette( US_GuiSettings::normalColor() );
-   ck_xsed->setPalette( US_GuiSettings::normalColor() );
-   ck_ysed->setPalette( US_GuiSettings::normalColor() );
-   ck_xdif->setPalette( US_GuiSettings::normalColor() );
-   ck_ydif->setPalette( US_GuiSettings::normalColor() );
-   ck_xfco->setPalette( US_GuiSettings::normalColor() );
-   ck_yfco->setPalette( US_GuiSettings::normalColor() );
-   ck_xfra->setPalette( US_GuiSettings::normalColor() );
-   ck_yfra->setPalette( US_GuiSettings::normalColor() );
+   QPalette gpalette = US_GuiSettings::normalColor();
+   ck_xmwt->setPalette( gpalette );
+   ck_ymwt->setPalette( gpalette );
+   ck_xsed->setPalette( gpalette );
+   ck_ysed->setPalette( gpalette );
+   ck_xdif->setPalette( gpalette );
+   ck_ydif->setPalette( gpalette );
+   ck_xfco->setPalette( gpalette );
+   ck_yfco->setPalette( gpalette );
+   ck_xfra->setPalette( gpalette );
+   ck_yfra->setPalette( gpalette );
 
    zscale   = 2.0;
    gridres  = 150.0;
@@ -207,6 +196,10 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
 
    resplotd = 0;
    plot3d_w = 0;
+
+   lb_sedcoeff ->adjustSize();
+   ct_zscalefac->setMinimumWidth( lb_sedcoeff->width() );
+   adjustSize();
 }
 
 // return caller of plot_control
