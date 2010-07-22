@@ -186,16 +186,6 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    results.asa_rg_pos = 0.0;
    results.asa_rg_neg = 0.0;
 
-   anaflex_options.run_anaflex = true;
-   anaflex_options.nfrec = 1;
-   anaflex_options.instprofiles = true;
-   anaflex_options.run_mode = 0;
-   anaflex_options.run_mode_1 = false;
-   anaflex_options.run_mode_2 = false;
-   anaflex_options.run_mode_3 = false;
-   anaflex_options.run_mode_4 = false;
-   anaflex_options.run_mode_9 = false;
-
    rasmol = new QProcess(this);
    rasmol->setWorkingDirectory(
                                QDir(USglobal->config_list.system_dir + SLASH +
@@ -320,10 +310,10 @@ void US_Hydrodyn::setupGUI()
    menu = new QMenuBar(frame);
    menu->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    menu->insertItem(tr("&Lookup Tables"), lookup_tables);
-   menu->insertItem(tr("&SOMO Options"), somo_options);
-   menu->insertItem(tr("&MD Options"), md_options);
-   menu->insertItem(tr("&PDB Options"), pdb_options);
-   menu->insertItem(tr("&Configurations"), configuration);
+   menu->insertItem(tr("&SOMO"), somo_options);
+   menu->insertItem(tr("&MD"), md_options);
+   menu->insertItem(tr("&PDB"), pdb_options);
+   menu->insertItem(tr("&Configuration"), configuration);
 
    lbl_info1 = new QLabel(tr("PDB Functions:"), this);
    Q_CHECK_PTR(lbl_info1);

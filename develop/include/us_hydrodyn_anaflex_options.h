@@ -29,11 +29,52 @@ struct Anaflex_Options
    bool run_anaflex;
    int nfrec;
    bool instprofiles;
-   int run_mode;
+
    bool run_mode_1;
+   bool run_mode_1_1;
+   bool run_mode_1_2;
+   bool run_mode_1_3;
+   bool run_mode_1_4;
+   bool run_mode_1_5;
+   bool run_mode_1_7;
+   bool run_mode_1_8;
+   bool run_mode_1_12;
+   bool run_mode_1_13;
+   bool run_mode_1_14;
+   bool run_mode_1_18;
+   bool run_mode_1_20;
+   bool run_mode_1_24;
+   
    bool run_mode_2;
+   bool run_mode_2_1;
+   bool run_mode_2_2;
+   bool run_mode_2_3;
+   bool run_mode_2_4;
+   bool run_mode_2_5;
+   bool run_mode_2_7;
+   bool run_mode_2_8;
+   bool run_mode_2_12;
+   bool run_mode_2_13;
+   bool run_mode_2_14;
+   bool run_mode_2_18;
+   bool run_mode_2_20;
+   bool run_mode_2_24;
+   
    bool run_mode_3;
+   bool run_mode_3_1;
+   bool run_mode_3_5;
+   bool run_mode_3_9;
+   bool run_mode_3_10;
+   bool run_mode_3_14;
+   bool run_mode_3_15;
+   bool run_mode_3_16;
+
    bool run_mode_4;
+   bool run_mode_4_1;
+   bool run_mode_4_6;
+   bool run_mode_4_7;
+   bool run_mode_4_8;
+
    bool run_mode_9;
 };
 
@@ -53,15 +94,56 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
 
       QLabel *lbl_info;
       QLabel *lbl_nfrec;
+      QLabel *lbl_run_mode;
 
       QCheckBox *cb_run_anaflex;
       QCheckBox *cb_instprofiles;
 
-      QButtonGroup *bg_run_mode;
       QCheckBox *cb_run_mode_1;
+      QCheckBox *cb_run_mode_1_1;
+      QCheckBox *cb_run_mode_1_2;
+      QCheckBox *cb_run_mode_1_3;
+      QCheckBox *cb_run_mode_1_4;
+      QCheckBox *cb_run_mode_1_5;
+      QCheckBox *cb_run_mode_1_7;
+      QCheckBox *cb_run_mode_1_8;
+      QCheckBox *cb_run_mode_1_12;
+      QCheckBox *cb_run_mode_1_13;
+      QCheckBox *cb_run_mode_1_14;
+      QCheckBox *cb_run_mode_1_18;
+      // QCheckBox *cb_run_mode_1_20;
+      // QCheckBox *cb_run_mode_1_24;
+
       QCheckBox *cb_run_mode_2;
+      QCheckBox *cb_run_mode_2_1;
+      QCheckBox *cb_run_mode_2_2;
+      QCheckBox *cb_run_mode_2_3;
+      QCheckBox *cb_run_mode_2_4;
+      QCheckBox *cb_run_mode_2_5;
+      QCheckBox *cb_run_mode_2_7;
+      QCheckBox *cb_run_mode_2_8;
+      QCheckBox *cb_run_mode_2_12;
+      QCheckBox *cb_run_mode_2_13;
+      QCheckBox *cb_run_mode_2_14;
+      QCheckBox *cb_run_mode_2_18;
+      // QCheckBox *cb_run_mode_2_20;
+      // QCheckBox *cb_run_mode_2_24;
+
       QCheckBox *cb_run_mode_3;
+      QCheckBox *cb_run_mode_3_1;
+      // QCheckBox *cb_run_mode_3_5;
+      QCheckBox *cb_run_mode_3_9;
+      // QCheckBox *cb_run_mode_3_10;
+      // QCheckBox *cb_run_mode_3_14;
+      QCheckBox *cb_run_mode_3_15;
+      QCheckBox *cb_run_mode_3_16;
+
       QCheckBox *cb_run_mode_4;
+      QCheckBox *cb_run_mode_4_1;
+      QCheckBox *cb_run_mode_4_6;
+      QCheckBox *cb_run_mode_4_7;
+      QCheckBox *cb_run_mode_4_8;
+
       QCheckBox *cb_run_mode_9;
 
       QLineEdit *le_nfrec;
@@ -75,14 +157,57 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
 
       void set_run_anaflex();
       void set_instprofiles();
-      void set_run_mode( int );
+
       void set_run_mode_1();
+      void set_run_mode_1_1();
+      void set_run_mode_1_2();
+      void set_run_mode_1_3();
+      void set_run_mode_1_4();
+      void set_run_mode_1_5();
+      void set_run_mode_1_7();
+      void set_run_mode_1_8();
+      void set_run_mode_1_12();
+      void set_run_mode_1_13();
+      void set_run_mode_1_14();
+      void set_run_mode_1_18();
+      // void set_run_mode_1_20();
+      // void set_run_mode_1_24();
+
       void set_run_mode_2();
+      void set_run_mode_2_1();
+      void set_run_mode_2_2();
+      void set_run_mode_2_3();
+      void set_run_mode_2_4();
+      void set_run_mode_2_5();
+      void set_run_mode_2_7();
+      void set_run_mode_2_8();
+      void set_run_mode_2_12();
+      void set_run_mode_2_13();
+      void set_run_mode_2_14();
+      void set_run_mode_2_18();
+      // void set_run_mode_2_20();
+      // void set_run_mode_2_24();
+
       void set_run_mode_3();
+      void set_run_mode_3_1();
+      // void set_run_mode_3_5();
+      void set_run_mode_3_9();
+      // void set_run_mode_3_10();
+      // void set_run_mode_3_14();
+      void set_run_mode_3_15();
+      void set_run_mode_3_16();
+
       void set_run_mode_4();
+      void set_run_mode_4_1();
+      void set_run_mode_4_6();
+      void set_run_mode_4_7();
+      void set_run_mode_4_8();
+
       void set_run_mode_9();
 
       void update_nfrec(const QString &str);
+
+      void update_enables();
 
       void cancel();
       void help();

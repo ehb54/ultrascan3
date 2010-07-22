@@ -27,42 +27,27 @@ int US_Hydrodyn::create_anaflex_files()
    // right now we are just going to support one-mode per run
    // in future we will support multiple, which will require the
    // following code
-   //   if ( anaflex_options.run_mode_1 )
-   //   {
-   //      create_anaflex_files(1);
-   //   }
-   //   if ( anaflex_options.run_mode_2 )
-   //   {
-   //      create_anaflex_files(2);
-   //   }
-   //   if ( anaflex_options.run_mode_3 )
-   //   {
-   //      create_anaflex_files(3);
-   //   }
-   //   if ( anaflex_options.run_mode_4 )
-   //   {
-   //      create_anaflex_files(4);
-   //   }
-   //   if ( anaflex_options.run_mode_9 )
-   //   {
-   //      create_anaflex_files(9);
-   //   }
-   switch ( anaflex_options.run_mode )
+   if ( anaflex_options.run_mode_1 )
    {
-   case 0 : 
-   case 1 : 
-   case 2 : 
-   case 3 : 
-      return create_anaflex_files( anaflex_options.run_mode + 1);
-      break;
-   case 4 : 
-      return create_anaflex_files( 9 );
-      break;
-   default :
-      editor->append("unexpected case type (create_anaflex_files)!\n");
-      return -1;
+      return create_anaflex_files(1);
    }
-   return -2; // shouldn't get here!
+   if ( anaflex_options.run_mode_2 )
+   {
+      return create_anaflex_files(2);
+   }
+   if ( anaflex_options.run_mode_3 )
+   {
+      return create_anaflex_files(3);
+   }
+   if ( anaflex_options.run_mode_4 )
+   {
+      return create_anaflex_files(4);
+   }
+   if ( anaflex_options.run_mode_9 )
+   {
+      return create_anaflex_files(9);
+   }
+   return -1;
 }
 
 int US_Hydrodyn::create_anaflex_files( int use_mode )
@@ -141,22 +126,27 @@ int US_Hydrodyn::run_anaflex()
 {
    int use_mode = 0;
    // possible setup a new text window for the anaflex runs?
-   switch ( anaflex_options.run_mode )
+   // later loop through for multiple runs?
+   if ( anaflex_options.run_mode_1 )
    {
-   case 0 : 
-   case 1 : 
-   case 2 : 
-   case 3 : 
-      use_mode = anaflex_options.run_mode + 1;
-      break;
-   case 4 : 
-      use_mode = 9;
-      break;
-   default :
-      editor->append("unexpected case type (run_anaflex)!\n");
-      return -1;
+      use_mode = 1;
    }
-
+   if ( anaflex_options.run_mode_2 )
+   {
+      use_mode = 2;
+   }
+   if ( anaflex_options.run_mode_3 )
+   {
+      use_mode = 3;
+   }
+   if ( anaflex_options.run_mode_4 )
+   {
+      use_mode = 4;
+   }
+   if ( anaflex_options.run_mode_9 )
+   {
+      use_mode = 9;
+   }
    QString dir = somo_dir;
    QString prog = 
       USglobal->config_list.system_dir + SLASH +
