@@ -592,429 +592,78 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_1()
 void US_Hydrodyn_Anaflex_Options::set_run_mode_1_1()
 {
    (*anaflex_options).run_mode_1_1 = cb_run_mode_1_1->isChecked();
-   if ( cb_run_mode_1_1->isChecked() )
-   {
-      cb_run_mode_1_2->setChecked(false);
-      cb_run_mode_1_3->setChecked(false);
-      cb_run_mode_1_4->setChecked(false);
-      cb_run_mode_1_5->setChecked(false);
-      cb_run_mode_1_7->setChecked(false);
-      cb_run_mode_1_8->setChecked(false);
-      cb_run_mode_1_12->setChecked(false);
-      cb_run_mode_1_13->setChecked(false);
-      cb_run_mode_1_14->setChecked(false);
-      cb_run_mode_1_18->setChecked(false);
-      // cb_run_mode_1_20->setChecked(false);
-      // cb_run_mode_1_24->setChecked(false);
-      (*anaflex_options).run_mode_1_2 = false;
-      (*anaflex_options).run_mode_1_3 = false;
-      (*anaflex_options).run_mode_1_4 = false;
-      (*anaflex_options).run_mode_1_5 = false;
-      (*anaflex_options).run_mode_1_7 = false;
-      (*anaflex_options).run_mode_1_8 = false;
-      (*anaflex_options).run_mode_1_12 = false;
-      (*anaflex_options).run_mode_1_13 = false;
-      (*anaflex_options).run_mode_1_14 = false;
-      (*anaflex_options).run_mode_1_18 = false;
-      // (*anaflex_options).run_mode_1_20 = false;
-      // (*anaflex_options).run_mode_1_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_1_2()
 {
    (*anaflex_options).run_mode_1_2 = cb_run_mode_1_2->isChecked();
-   if ( cb_run_mode_1_2->isChecked() )
-   {
-      cb_run_mode_1_1->setChecked(false);
-      cb_run_mode_1_3->setChecked(false);
-      cb_run_mode_1_4->setChecked(false);
-      cb_run_mode_1_5->setChecked(false);
-      cb_run_mode_1_7->setChecked(false);
-      cb_run_mode_1_8->setChecked(false);
-      cb_run_mode_1_12->setChecked(false);
-      cb_run_mode_1_13->setChecked(false);
-      cb_run_mode_1_14->setChecked(false);
-      cb_run_mode_1_18->setChecked(false);
-      // cb_run_mode_1_20->setChecked(false);
-      // cb_run_mode_1_24->setChecked(false);
-      (*anaflex_options).run_mode_1_1 = false;
-      (*anaflex_options).run_mode_1_3 = false;
-      (*anaflex_options).run_mode_1_4 = false;
-      (*anaflex_options).run_mode_1_5 = false;
-      (*anaflex_options).run_mode_1_7 = false;
-      (*anaflex_options).run_mode_1_8 = false;
-      (*anaflex_options).run_mode_1_12 = false;
-      (*anaflex_options).run_mode_1_13 = false;
-      (*anaflex_options).run_mode_1_14 = false;
-      (*anaflex_options).run_mode_1_18 = false;
-      // (*anaflex_options).run_mode_1_20 = false;
-      // (*anaflex_options).run_mode_1_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_1_3()
 {
    (*anaflex_options).run_mode_1_3 = cb_run_mode_1_3->isChecked();
-   if ( cb_run_mode_1_3->isChecked() )
-   {
-      cb_run_mode_1_1->setChecked(false);
-      cb_run_mode_1_2->setChecked(false);
-      cb_run_mode_1_4->setChecked(false);
-      cb_run_mode_1_5->setChecked(false);
-      cb_run_mode_1_7->setChecked(false);
-      cb_run_mode_1_8->setChecked(false);
-      cb_run_mode_1_12->setChecked(false);
-      cb_run_mode_1_13->setChecked(false);
-      cb_run_mode_1_14->setChecked(false);
-      cb_run_mode_1_18->setChecked(false);
-      // cb_run_mode_1_20->setChecked(false);
-      // cb_run_mode_1_24->setChecked(false);
-      (*anaflex_options).run_mode_1_1 = false;
-      (*anaflex_options).run_mode_1_2 = false;
-      (*anaflex_options).run_mode_1_4 = false;
-      (*anaflex_options).run_mode_1_5 = false;
-      (*anaflex_options).run_mode_1_7 = false;
-      (*anaflex_options).run_mode_1_8 = false;
-      (*anaflex_options).run_mode_1_12 = false;
-      (*anaflex_options).run_mode_1_13 = false;
-      (*anaflex_options).run_mode_1_14 = false;
-      (*anaflex_options).run_mode_1_18 = false;
-      // (*anaflex_options).run_mode_1_20 = false;
-      // (*anaflex_options).run_mode_1_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_1_4()
 {
    (*anaflex_options).run_mode_1_4 = cb_run_mode_1_4->isChecked();
-   if ( cb_run_mode_1_4->isChecked() )
-   {
-      cb_run_mode_1_1->setChecked(false);
-      cb_run_mode_1_2->setChecked(false);
-      cb_run_mode_1_3->setChecked(false);
-      cb_run_mode_1_5->setChecked(false);
-      cb_run_mode_1_7->setChecked(false);
-      cb_run_mode_1_8->setChecked(false);
-      cb_run_mode_1_12->setChecked(false);
-      cb_run_mode_1_13->setChecked(false);
-      cb_run_mode_1_14->setChecked(false);
-      cb_run_mode_1_18->setChecked(false);
-      // cb_run_mode_1_20->setChecked(false);
-      // cb_run_mode_1_24->setChecked(false);
-      (*anaflex_options).run_mode_1_1 = false;
-      (*anaflex_options).run_mode_1_2 = false;
-      (*anaflex_options).run_mode_1_3 = false;
-      (*anaflex_options).run_mode_1_5 = false;
-      (*anaflex_options).run_mode_1_7 = false;
-      (*anaflex_options).run_mode_1_8 = false;
-      (*anaflex_options).run_mode_1_12 = false;
-      (*anaflex_options).run_mode_1_13 = false;
-      (*anaflex_options).run_mode_1_14 = false;
-      (*anaflex_options).run_mode_1_18 = false;
-      // (*anaflex_options).run_mode_1_20 = false;
-      // (*anaflex_options).run_mode_1_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_1_5()
 {
    (*anaflex_options).run_mode_1_5 = cb_run_mode_1_5->isChecked();
-   if ( cb_run_mode_1_5->isChecked() )
-   {
-      cb_run_mode_1_1->setChecked(false);
-      cb_run_mode_1_2->setChecked(false);
-      cb_run_mode_1_3->setChecked(false);
-      cb_run_mode_1_4->setChecked(false);
-      cb_run_mode_1_7->setChecked(false);
-      cb_run_mode_1_8->setChecked(false);
-      cb_run_mode_1_12->setChecked(false);
-      cb_run_mode_1_13->setChecked(false);
-      cb_run_mode_1_14->setChecked(false);
-      cb_run_mode_1_18->setChecked(false);
-      // cb_run_mode_1_20->setChecked(false);
-      // cb_run_mode_1_24->setChecked(false);
-      (*anaflex_options).run_mode_1_1 = false;
-      (*anaflex_options).run_mode_1_2 = false;
-      (*anaflex_options).run_mode_1_3 = false;
-      (*anaflex_options).run_mode_1_4 = false;
-      (*anaflex_options).run_mode_1_7 = false;
-      (*anaflex_options).run_mode_1_8 = false;
-      (*anaflex_options).run_mode_1_12 = false;
-      (*anaflex_options).run_mode_1_13 = false;
-      (*anaflex_options).run_mode_1_14 = false;
-      (*anaflex_options).run_mode_1_18 = false;
-      // (*anaflex_options).run_mode_1_20 = false;
-      // (*anaflex_options).run_mode_1_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_1_7()
 {
    (*anaflex_options).run_mode_1_7 = cb_run_mode_1_7->isChecked();
-   if ( cb_run_mode_1_7->isChecked() )
-   {
-      cb_run_mode_1_1->setChecked(false);
-      cb_run_mode_1_2->setChecked(false);
-      cb_run_mode_1_3->setChecked(false);
-      cb_run_mode_1_4->setChecked(false);
-      cb_run_mode_1_5->setChecked(false);
-      cb_run_mode_1_8->setChecked(false);
-      cb_run_mode_1_12->setChecked(false);
-      cb_run_mode_1_13->setChecked(false);
-      cb_run_mode_1_14->setChecked(false);
-      cb_run_mode_1_18->setChecked(false);
-      // cb_run_mode_1_20->setChecked(false);
-      // cb_run_mode_1_24->setChecked(false);
-      (*anaflex_options).run_mode_1_1 = false;
-      (*anaflex_options).run_mode_1_2 = false;
-      (*anaflex_options).run_mode_1_3 = false;
-      (*anaflex_options).run_mode_1_4 = false;
-      (*anaflex_options).run_mode_1_5 = false;
-      (*anaflex_options).run_mode_1_8 = false;
-      (*anaflex_options).run_mode_1_12 = false;
-      (*anaflex_options).run_mode_1_13 = false;
-      (*anaflex_options).run_mode_1_14 = false;
-      (*anaflex_options).run_mode_1_18 = false;
-      // (*anaflex_options).run_mode_1_20 = false;
-      // (*anaflex_options).run_mode_1_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_1_8()
 {
    (*anaflex_options).run_mode_1_8 = cb_run_mode_1_8->isChecked();
-   if ( cb_run_mode_1_8->isChecked() )
-   {
-      cb_run_mode_1_1->setChecked(false);
-      cb_run_mode_1_2->setChecked(false);
-      cb_run_mode_1_3->setChecked(false);
-      cb_run_mode_1_4->setChecked(false);
-      cb_run_mode_1_5->setChecked(false);
-      cb_run_mode_1_7->setChecked(false);
-      cb_run_mode_1_12->setChecked(false);
-      cb_run_mode_1_13->setChecked(false);
-      cb_run_mode_1_14->setChecked(false);
-      cb_run_mode_1_18->setChecked(false);
-      // cb_run_mode_1_20->setChecked(false);
-      // cb_run_mode_1_24->setChecked(false);
-      (*anaflex_options).run_mode_1_1 = false;
-      (*anaflex_options).run_mode_1_2 = false;
-      (*anaflex_options).run_mode_1_3 = false;
-      (*anaflex_options).run_mode_1_4 = false;
-      (*anaflex_options).run_mode_1_5 = false;
-      (*anaflex_options).run_mode_1_7 = false;
-      (*anaflex_options).run_mode_1_12 = false;
-      (*anaflex_options).run_mode_1_13 = false;
-      (*anaflex_options).run_mode_1_14 = false;
-      (*anaflex_options).run_mode_1_18 = false;
-      // (*anaflex_options).run_mode_1_20 = false;
-      // (*anaflex_options).run_mode_1_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_1_12()
 {
    (*anaflex_options).run_mode_1_12 = cb_run_mode_1_12->isChecked();
-   if ( cb_run_mode_1_12->isChecked() )
-   {
-      cb_run_mode_1_1->setChecked(false);
-      cb_run_mode_1_2->setChecked(false);
-      cb_run_mode_1_3->setChecked(false);
-      cb_run_mode_1_4->setChecked(false);
-      cb_run_mode_1_5->setChecked(false);
-      cb_run_mode_1_7->setChecked(false);
-      cb_run_mode_1_8->setChecked(false);
-      cb_run_mode_1_13->setChecked(false);
-      cb_run_mode_1_14->setChecked(false);
-      cb_run_mode_1_18->setChecked(false);
-      // cb_run_mode_1_20->setChecked(false);
-      // cb_run_mode_1_24->setChecked(false);
-      (*anaflex_options).run_mode_1_1 = false;
-      (*anaflex_options).run_mode_1_2 = false;
-      (*anaflex_options).run_mode_1_3 = false;
-      (*anaflex_options).run_mode_1_4 = false;
-      (*anaflex_options).run_mode_1_5 = false;
-      (*anaflex_options).run_mode_1_7 = false;
-      (*anaflex_options).run_mode_1_8 = false;
-      (*anaflex_options).run_mode_1_13 = false;
-      (*anaflex_options).run_mode_1_14 = false;
-      (*anaflex_options).run_mode_1_18 = false;
-      // (*anaflex_options).run_mode_1_20 = false;
-      // (*anaflex_options).run_mode_1_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_1_13()
 {
    (*anaflex_options).run_mode_1_13 = cb_run_mode_1_13->isChecked();
-   if ( cb_run_mode_1_13->isChecked() )
-   {
-      cb_run_mode_1_1->setChecked(false);
-      cb_run_mode_1_2->setChecked(false);
-      cb_run_mode_1_3->setChecked(false);
-      cb_run_mode_1_4->setChecked(false);
-      cb_run_mode_1_5->setChecked(false);
-      cb_run_mode_1_7->setChecked(false);
-      cb_run_mode_1_8->setChecked(false);
-      cb_run_mode_1_12->setChecked(false);
-      cb_run_mode_1_14->setChecked(false);
-      cb_run_mode_1_18->setChecked(false);
-      // cb_run_mode_1_20->setChecked(false);
-      // cb_run_mode_1_24->setChecked(false);
-      (*anaflex_options).run_mode_1_1 = false;
-      (*anaflex_options).run_mode_1_2 = false;
-      (*anaflex_options).run_mode_1_3 = false;
-      (*anaflex_options).run_mode_1_4 = false;
-      (*anaflex_options).run_mode_1_5 = false;
-      (*anaflex_options).run_mode_1_7 = false;
-      (*anaflex_options).run_mode_1_8 = false;
-      (*anaflex_options).run_mode_1_12 = false;
-      (*anaflex_options).run_mode_1_14 = false;
-      (*anaflex_options).run_mode_1_18 = false;
-      // (*anaflex_options).run_mode_1_20 = false;
-      // (*anaflex_options).run_mode_1_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_1_14()
 {
    (*anaflex_options).run_mode_1_14 = cb_run_mode_1_14->isChecked();
-   if ( cb_run_mode_1_14->isChecked() )
-   {
-      cb_run_mode_1_1->setChecked(false);
-      cb_run_mode_1_2->setChecked(false);
-      cb_run_mode_1_3->setChecked(false);
-      cb_run_mode_1_4->setChecked(false);
-      cb_run_mode_1_5->setChecked(false);
-      cb_run_mode_1_7->setChecked(false);
-      cb_run_mode_1_8->setChecked(false);
-      cb_run_mode_1_12->setChecked(false);
-      cb_run_mode_1_13->setChecked(false);
-      cb_run_mode_1_18->setChecked(false);
-      // cb_run_mode_1_20->setChecked(false);
-      // cb_run_mode_1_24->setChecked(false);
-      (*anaflex_options).run_mode_1_1 = false;
-      (*anaflex_options).run_mode_1_2 = false;
-      (*anaflex_options).run_mode_1_3 = false;
-      (*anaflex_options).run_mode_1_4 = false;
-      (*anaflex_options).run_mode_1_5 = false;
-      (*anaflex_options).run_mode_1_7 = false;
-      (*anaflex_options).run_mode_1_8 = false;
-      (*anaflex_options).run_mode_1_12 = false;
-      (*anaflex_options).run_mode_1_13 = false;
-      (*anaflex_options).run_mode_1_18 = false;
-      // (*anaflex_options).run_mode_1_20 = false;
-      // (*anaflex_options).run_mode_1_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_1_18()
 {
    (*anaflex_options).run_mode_1_18 = cb_run_mode_1_18->isChecked();
-   if ( cb_run_mode_1_18->isChecked() )
-   {
-      cb_run_mode_1_1->setChecked(false);
-      cb_run_mode_1_2->setChecked(false);
-      cb_run_mode_1_3->setChecked(false);
-      cb_run_mode_1_4->setChecked(false);
-      cb_run_mode_1_5->setChecked(false);
-      cb_run_mode_1_7->setChecked(false);
-      cb_run_mode_1_8->setChecked(false);
-      cb_run_mode_1_12->setChecked(false);
-      cb_run_mode_1_13->setChecked(false);
-      cb_run_mode_1_14->setChecked(false);
-      // cb_run_mode_1_20->setChecked(false);
-      // cb_run_mode_1_24->setChecked(false);
-      (*anaflex_options).run_mode_1_1 = false;
-      (*anaflex_options).run_mode_1_2 = false;
-      (*anaflex_options).run_mode_1_3 = false;
-      (*anaflex_options).run_mode_1_4 = false;
-      (*anaflex_options).run_mode_1_5 = false;
-      (*anaflex_options).run_mode_1_7 = false;
-      (*anaflex_options).run_mode_1_8 = false;
-      (*anaflex_options).run_mode_1_12 = false;
-      (*anaflex_options).run_mode_1_13 = false;
-      (*anaflex_options).run_mode_1_14 = false;
-      // (*anaflex_options).run_mode_1_20 = false;
-      // (*anaflex_options).run_mode_1_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 // void US_Hydrodyn_Anaflex_Options::set_run_mode_1_20()
 // {
 //    (*anaflex_options).run_mode_1_20 = cb_run_mode_1_20->isChecked();
-//    if ( cb_run_mode_1_20->isChecked() )
-//    {
-//       cb_run_mode_1_1->setChecked(false);
-//       cb_run_mode_1_2->setChecked(false);
-//       cb_run_mode_1_3->setChecked(false);
-//       cb_run_mode_1_4->setChecked(false);
-//       cb_run_mode_1_5->setChecked(false);
-//       cb_run_mode_1_7->setChecked(false);
-//       cb_run_mode_1_8->setChecked(false);
-//       cb_run_mode_1_12->setChecked(false);
-//       cb_run_mode_1_13->setChecked(false);
-//       cb_run_mode_1_14->setChecked(false);
-//       cb_run_mode_1_18->setChecked(false);
-//       // cb_run_mode_1_24->setChecked(false);
-//       (*anaflex_options).run_mode_1_1 = false;
-//       (*anaflex_options).run_mode_1_2 = false;
-//       (*anaflex_options).run_mode_1_3 = false;
-//       (*anaflex_options).run_mode_1_4 = false;
-//       (*anaflex_options).run_mode_1_5 = false;
-//       (*anaflex_options).run_mode_1_7 = false;
-//       (*anaflex_options).run_mode_1_8 = false;
-//       (*anaflex_options).run_mode_1_12 = false;
-//       (*anaflex_options).run_mode_1_13 = false;
-//       (*anaflex_options).run_mode_1_14 = false;
-//       (*anaflex_options).run_mode_1_18 = false;
-//       // (*anaflex_options).run_mode_1_24 = false;
-//    }
 //    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 // }
 
 // void US_Hydrodyn_Anaflex_Options::set_run_mode_1_24()
 // {
 //    (*anaflex_options).run_mode_1_24 = cb_run_mode_1_24->isChecked();
-//    if ( cb_run_mode_1_24->isChecked() )
-//    {
-//       cb_run_mode_1_1->setChecked(false);
-//       cb_run_mode_1_2->setChecked(false);
-//       cb_run_mode_1_3->setChecked(false);
-//       cb_run_mode_1_4->setChecked(false);
-//       cb_run_mode_1_5->setChecked(false);
-//       cb_run_mode_1_7->setChecked(false);
-//       cb_run_mode_1_8->setChecked(false);
-//       cb_run_mode_1_12->setChecked(false);
-//       cb_run_mode_1_13->setChecked(false);
-//       cb_run_mode_1_14->setChecked(false);
-//       cb_run_mode_1_18->setChecked(false);
-//       // cb_run_mode_1_20->setChecked(false);
-//       (*anaflex_options).run_mode_1_1 = false;
-//       (*anaflex_options).run_mode_1_2 = false;
-//       (*anaflex_options).run_mode_1_3 = false;
-//       (*anaflex_options).run_mode_1_4 = false;
-//       (*anaflex_options).run_mode_1_5 = false;
-//       (*anaflex_options).run_mode_1_7 = false;
-//       (*anaflex_options).run_mode_1_8 = false;
-//       (*anaflex_options).run_mode_1_12 = false;
-//       (*anaflex_options).run_mode_1_13 = false;
-//       (*anaflex_options).run_mode_1_14 = false;
-//       (*anaflex_options).run_mode_1_18 = false;
-//       // (*anaflex_options).run_mode_1_20 = false;
-//    }
 //    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 // }
 
@@ -1039,429 +688,78 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_2()
 void US_Hydrodyn_Anaflex_Options::set_run_mode_2_1()
 {
    (*anaflex_options).run_mode_2_1 = cb_run_mode_2_1->isChecked();
-   if ( cb_run_mode_2_1->isChecked() )
-   {
-      cb_run_mode_2_2->setChecked(false);
-      cb_run_mode_2_3->setChecked(false);
-      cb_run_mode_2_4->setChecked(false);
-      cb_run_mode_2_5->setChecked(false);
-      cb_run_mode_2_7->setChecked(false);
-      cb_run_mode_2_8->setChecked(false);
-      cb_run_mode_2_12->setChecked(false);
-      cb_run_mode_2_13->setChecked(false);
-      cb_run_mode_2_14->setChecked(false);
-      cb_run_mode_2_18->setChecked(false);
-      // cb_run_mode_2_20->setChecked(false);
-      // cb_run_mode_2_24->setChecked(false);
-      (*anaflex_options).run_mode_2_2 = false;
-      (*anaflex_options).run_mode_2_3 = false;
-      (*anaflex_options).run_mode_2_4 = false;
-      (*anaflex_options).run_mode_2_5 = false;
-      (*anaflex_options).run_mode_2_7 = false;
-      (*anaflex_options).run_mode_2_8 = false;
-      (*anaflex_options).run_mode_2_12 = false;
-      (*anaflex_options).run_mode_2_13 = false;
-      (*anaflex_options).run_mode_2_14 = false;
-      (*anaflex_options).run_mode_2_18 = false;
-      // (*anaflex_options).run_mode_2_20 = false;
-      // (*anaflex_options).run_mode_2_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_2_2()
 {
    (*anaflex_options).run_mode_2_2 = cb_run_mode_2_2->isChecked();
-   if ( cb_run_mode_2_2->isChecked() )
-   {
-      cb_run_mode_2_1->setChecked(false);
-      cb_run_mode_2_3->setChecked(false);
-      cb_run_mode_2_4->setChecked(false);
-      cb_run_mode_2_5->setChecked(false);
-      cb_run_mode_2_7->setChecked(false);
-      cb_run_mode_2_8->setChecked(false);
-      cb_run_mode_2_12->setChecked(false);
-      cb_run_mode_2_13->setChecked(false);
-      cb_run_mode_2_14->setChecked(false);
-      cb_run_mode_2_18->setChecked(false);
-      // cb_run_mode_2_20->setChecked(false);
-      // cb_run_mode_2_24->setChecked(false);
-      (*anaflex_options).run_mode_2_1 = false;
-      (*anaflex_options).run_mode_2_3 = false;
-      (*anaflex_options).run_mode_2_4 = false;
-      (*anaflex_options).run_mode_2_5 = false;
-      (*anaflex_options).run_mode_2_7 = false;
-      (*anaflex_options).run_mode_2_8 = false;
-      (*anaflex_options).run_mode_2_12 = false;
-      (*anaflex_options).run_mode_2_13 = false;
-      (*anaflex_options).run_mode_2_14 = false;
-      (*anaflex_options).run_mode_2_18 = false;
-      // (*anaflex_options).run_mode_2_20 = false;
-      // (*anaflex_options).run_mode_2_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_2_3()
 {
    (*anaflex_options).run_mode_2_3 = cb_run_mode_2_3->isChecked();
-   if ( cb_run_mode_2_3->isChecked() )
-   {
-      cb_run_mode_2_1->setChecked(false);
-      cb_run_mode_2_2->setChecked(false);
-      cb_run_mode_2_4->setChecked(false);
-      cb_run_mode_2_5->setChecked(false);
-      cb_run_mode_2_7->setChecked(false);
-      cb_run_mode_2_8->setChecked(false);
-      cb_run_mode_2_12->setChecked(false);
-      cb_run_mode_2_13->setChecked(false);
-      cb_run_mode_2_14->setChecked(false);
-      cb_run_mode_2_18->setChecked(false);
-      // cb_run_mode_2_20->setChecked(false);
-      // cb_run_mode_2_24->setChecked(false);
-      (*anaflex_options).run_mode_2_1 = false;
-      (*anaflex_options).run_mode_2_2 = false;
-      (*anaflex_options).run_mode_2_4 = false;
-      (*anaflex_options).run_mode_2_5 = false;
-      (*anaflex_options).run_mode_2_7 = false;
-      (*anaflex_options).run_mode_2_8 = false;
-      (*anaflex_options).run_mode_2_12 = false;
-      (*anaflex_options).run_mode_2_13 = false;
-      (*anaflex_options).run_mode_2_14 = false;
-      (*anaflex_options).run_mode_2_18 = false;
-      // (*anaflex_options).run_mode_2_20 = false;
-      // (*anaflex_options).run_mode_2_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_2_4()
 {
    (*anaflex_options).run_mode_2_4 = cb_run_mode_2_4->isChecked();
-   if ( cb_run_mode_2_4->isChecked() )
-   {
-      cb_run_mode_2_1->setChecked(false);
-      cb_run_mode_2_2->setChecked(false);
-      cb_run_mode_2_3->setChecked(false);
-      cb_run_mode_2_5->setChecked(false);
-      cb_run_mode_2_7->setChecked(false);
-      cb_run_mode_2_8->setChecked(false);
-      cb_run_mode_2_12->setChecked(false);
-      cb_run_mode_2_13->setChecked(false);
-      cb_run_mode_2_14->setChecked(false);
-      cb_run_mode_2_18->setChecked(false);
-      // cb_run_mode_2_20->setChecked(false);
-      // cb_run_mode_2_24->setChecked(false);
-      (*anaflex_options).run_mode_2_1 = false;
-      (*anaflex_options).run_mode_2_2 = false;
-      (*anaflex_options).run_mode_2_3 = false;
-      (*anaflex_options).run_mode_2_5 = false;
-      (*anaflex_options).run_mode_2_7 = false;
-      (*anaflex_options).run_mode_2_8 = false;
-      (*anaflex_options).run_mode_2_12 = false;
-      (*anaflex_options).run_mode_2_13 = false;
-      (*anaflex_options).run_mode_2_14 = false;
-      (*anaflex_options).run_mode_2_18 = false;
-      // (*anaflex_options).run_mode_2_20 = false;
-      // (*anaflex_options).run_mode_2_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_2_5()
 {
    (*anaflex_options).run_mode_2_5 = cb_run_mode_2_5->isChecked();
-   if ( cb_run_mode_2_5->isChecked() )
-   {
-      cb_run_mode_2_1->setChecked(false);
-      cb_run_mode_2_2->setChecked(false);
-      cb_run_mode_2_3->setChecked(false);
-      cb_run_mode_2_4->setChecked(false);
-      cb_run_mode_2_7->setChecked(false);
-      cb_run_mode_2_8->setChecked(false);
-      cb_run_mode_2_12->setChecked(false);
-      cb_run_mode_2_13->setChecked(false);
-      cb_run_mode_2_14->setChecked(false);
-      cb_run_mode_2_18->setChecked(false);
-      // cb_run_mode_2_20->setChecked(false);
-      // cb_run_mode_2_24->setChecked(false);
-      (*anaflex_options).run_mode_2_1 = false;
-      (*anaflex_options).run_mode_2_2 = false;
-      (*anaflex_options).run_mode_2_3 = false;
-      (*anaflex_options).run_mode_2_4 = false;
-      (*anaflex_options).run_mode_2_7 = false;
-      (*anaflex_options).run_mode_2_8 = false;
-      (*anaflex_options).run_mode_2_12 = false;
-      (*anaflex_options).run_mode_2_13 = false;
-      (*anaflex_options).run_mode_2_14 = false;
-      (*anaflex_options).run_mode_2_18 = false;
-      // (*anaflex_options).run_mode_2_20 = false;
-      // (*anaflex_options).run_mode_2_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_2_7()
 {
    (*anaflex_options).run_mode_2_7 = cb_run_mode_2_7->isChecked();
-   if ( cb_run_mode_2_7->isChecked() )
-   {
-      cb_run_mode_2_1->setChecked(false);
-      cb_run_mode_2_2->setChecked(false);
-      cb_run_mode_2_3->setChecked(false);
-      cb_run_mode_2_4->setChecked(false);
-      cb_run_mode_2_5->setChecked(false);
-      cb_run_mode_2_8->setChecked(false);
-      cb_run_mode_2_12->setChecked(false);
-      cb_run_mode_2_13->setChecked(false);
-      cb_run_mode_2_14->setChecked(false);
-      cb_run_mode_2_18->setChecked(false);
-      // cb_run_mode_2_20->setChecked(false);
-      // cb_run_mode_2_24->setChecked(false);
-      (*anaflex_options).run_mode_2_1 = false;
-      (*anaflex_options).run_mode_2_2 = false;
-      (*anaflex_options).run_mode_2_3 = false;
-      (*anaflex_options).run_mode_2_4 = false;
-      (*anaflex_options).run_mode_2_5 = false;
-      (*anaflex_options).run_mode_2_8 = false;
-      (*anaflex_options).run_mode_2_12 = false;
-      (*anaflex_options).run_mode_2_13 = false;
-      (*anaflex_options).run_mode_2_14 = false;
-      (*anaflex_options).run_mode_2_18 = false;
-      // (*anaflex_options).run_mode_2_20 = false;
-      // (*anaflex_options).run_mode_2_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_2_8()
 {
    (*anaflex_options).run_mode_2_8 = cb_run_mode_2_8->isChecked();
-   if ( cb_run_mode_2_8->isChecked() )
-   {
-      cb_run_mode_2_1->setChecked(false);
-      cb_run_mode_2_2->setChecked(false);
-      cb_run_mode_2_3->setChecked(false);
-      cb_run_mode_2_4->setChecked(false);
-      cb_run_mode_2_5->setChecked(false);
-      cb_run_mode_2_7->setChecked(false);
-      cb_run_mode_2_12->setChecked(false);
-      cb_run_mode_2_13->setChecked(false);
-      cb_run_mode_2_14->setChecked(false);
-      cb_run_mode_2_18->setChecked(false);
-      // cb_run_mode_2_20->setChecked(false);
-      // cb_run_mode_2_24->setChecked(false);
-      (*anaflex_options).run_mode_2_1 = false;
-      (*anaflex_options).run_mode_2_2 = false;
-      (*anaflex_options).run_mode_2_3 = false;
-      (*anaflex_options).run_mode_2_4 = false;
-      (*anaflex_options).run_mode_2_5 = false;
-      (*anaflex_options).run_mode_2_7 = false;
-      (*anaflex_options).run_mode_2_12 = false;
-      (*anaflex_options).run_mode_2_13 = false;
-      (*anaflex_options).run_mode_2_14 = false;
-      (*anaflex_options).run_mode_2_18 = false;
-      // (*anaflex_options).run_mode_2_20 = false;
-      // (*anaflex_options).run_mode_2_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_2_12()
 {
    (*anaflex_options).run_mode_2_12 = cb_run_mode_2_12->isChecked();
-   if ( cb_run_mode_2_12->isChecked() )
-   {
-      cb_run_mode_2_1->setChecked(false);
-      cb_run_mode_2_2->setChecked(false);
-      cb_run_mode_2_3->setChecked(false);
-      cb_run_mode_2_4->setChecked(false);
-      cb_run_mode_2_5->setChecked(false);
-      cb_run_mode_2_7->setChecked(false);
-      cb_run_mode_2_8->setChecked(false);
-      cb_run_mode_2_13->setChecked(false);
-      cb_run_mode_2_14->setChecked(false);
-      cb_run_mode_2_18->setChecked(false);
-      // cb_run_mode_2_20->setChecked(false);
-      // cb_run_mode_2_24->setChecked(false);
-      (*anaflex_options).run_mode_2_1 = false;
-      (*anaflex_options).run_mode_2_2 = false;
-      (*anaflex_options).run_mode_2_3 = false;
-      (*anaflex_options).run_mode_2_4 = false;
-      (*anaflex_options).run_mode_2_5 = false;
-      (*anaflex_options).run_mode_2_7 = false;
-      (*anaflex_options).run_mode_2_8 = false;
-      (*anaflex_options).run_mode_2_13 = false;
-      (*anaflex_options).run_mode_2_14 = false;
-      (*anaflex_options).run_mode_2_18 = false;
-      // (*anaflex_options).run_mode_2_20 = false;
-      // (*anaflex_options).run_mode_2_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_2_13()
 {
    (*anaflex_options).run_mode_2_13 = cb_run_mode_2_13->isChecked();
-   if ( cb_run_mode_2_13->isChecked() )
-   {
-      cb_run_mode_2_1->setChecked(false);
-      cb_run_mode_2_2->setChecked(false);
-      cb_run_mode_2_3->setChecked(false);
-      cb_run_mode_2_4->setChecked(false);
-      cb_run_mode_2_5->setChecked(false);
-      cb_run_mode_2_7->setChecked(false);
-      cb_run_mode_2_8->setChecked(false);
-      cb_run_mode_2_12->setChecked(false);
-      cb_run_mode_2_14->setChecked(false);
-      cb_run_mode_2_18->setChecked(false);
-      // cb_run_mode_2_20->setChecked(false);
-      // cb_run_mode_2_24->setChecked(false);
-      (*anaflex_options).run_mode_2_1 = false;
-      (*anaflex_options).run_mode_2_2 = false;
-      (*anaflex_options).run_mode_2_3 = false;
-      (*anaflex_options).run_mode_2_4 = false;
-      (*anaflex_options).run_mode_2_5 = false;
-      (*anaflex_options).run_mode_2_7 = false;
-      (*anaflex_options).run_mode_2_8 = false;
-      (*anaflex_options).run_mode_2_12 = false;
-      (*anaflex_options).run_mode_2_14 = false;
-      (*anaflex_options).run_mode_2_18 = false;
-      // (*anaflex_options).run_mode_2_20 = false;
-      // (*anaflex_options).run_mode_2_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_2_14()
 {
    (*anaflex_options).run_mode_2_14 = cb_run_mode_2_14->isChecked();
-   if ( cb_run_mode_2_14->isChecked() )
-   {
-      cb_run_mode_2_1->setChecked(false);
-      cb_run_mode_2_2->setChecked(false);
-      cb_run_mode_2_3->setChecked(false);
-      cb_run_mode_2_4->setChecked(false);
-      cb_run_mode_2_5->setChecked(false);
-      cb_run_mode_2_7->setChecked(false);
-      cb_run_mode_2_8->setChecked(false);
-      cb_run_mode_2_12->setChecked(false);
-      cb_run_mode_2_13->setChecked(false);
-      cb_run_mode_2_18->setChecked(false);
-      // cb_run_mode_2_20->setChecked(false);
-      // cb_run_mode_2_24->setChecked(false);
-      (*anaflex_options).run_mode_2_1 = false;
-      (*anaflex_options).run_mode_2_2 = false;
-      (*anaflex_options).run_mode_2_3 = false;
-      (*anaflex_options).run_mode_2_4 = false;
-      (*anaflex_options).run_mode_2_5 = false;
-      (*anaflex_options).run_mode_2_7 = false;
-      (*anaflex_options).run_mode_2_8 = false;
-      (*anaflex_options).run_mode_2_12 = false;
-      (*anaflex_options).run_mode_2_13 = false;
-      (*anaflex_options).run_mode_2_18 = false;
-      // (*anaflex_options).run_mode_2_20 = false;
-      // (*anaflex_options).run_mode_2_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_2_18()
 {
    (*anaflex_options).run_mode_2_18 = cb_run_mode_2_18->isChecked();
-   if ( cb_run_mode_2_18->isChecked() )
-   {
-      cb_run_mode_2_1->setChecked(false);
-      cb_run_mode_2_2->setChecked(false);
-      cb_run_mode_2_3->setChecked(false);
-      cb_run_mode_2_4->setChecked(false);
-      cb_run_mode_2_5->setChecked(false);
-      cb_run_mode_2_7->setChecked(false);
-      cb_run_mode_2_8->setChecked(false);
-      cb_run_mode_2_12->setChecked(false);
-      cb_run_mode_2_13->setChecked(false);
-      cb_run_mode_2_14->setChecked(false);
-      // cb_run_mode_2_20->setChecked(false);
-      // cb_run_mode_2_24->setChecked(false);
-      (*anaflex_options).run_mode_2_1 = false;
-      (*anaflex_options).run_mode_2_2 = false;
-      (*anaflex_options).run_mode_2_3 = false;
-      (*anaflex_options).run_mode_2_4 = false;
-      (*anaflex_options).run_mode_2_5 = false;
-      (*anaflex_options).run_mode_2_7 = false;
-      (*anaflex_options).run_mode_2_8 = false;
-      (*anaflex_options).run_mode_2_12 = false;
-      (*anaflex_options).run_mode_2_13 = false;
-      (*anaflex_options).run_mode_2_14 = false;
-      // (*anaflex_options).run_mode_2_20 = false;
-      // (*anaflex_options).run_mode_2_24 = false;
-   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 // void US_Hydrodyn_Anaflex_Options::set_run_mode_2_20()
 // {
 //    (*anaflex_options).run_mode_2_20 = cb_run_mode_2_20->isChecked();
-//    if ( cb_run_mode_2_20->isChecked() )
-//    {
-//       cb_run_mode_2_1->setChecked(false);
-//       cb_run_mode_2_2->setChecked(false);
-//       cb_run_mode_2_3->setChecked(false);
-//       cb_run_mode_2_4->setChecked(false);
-//       cb_run_mode_2_5->setChecked(false);
-//       cb_run_mode_2_7->setChecked(false);
-//       cb_run_mode_2_8->setChecked(false);
-//       cb_run_mode_2_12->setChecked(false);
-//       cb_run_mode_2_13->setChecked(false);
-//       cb_run_mode_2_14->setChecked(false);
-//       cb_run_mode_2_18->setChecked(false);
-//       // cb_run_mode_2_24->setChecked(false);
-//       (*anaflex_options).run_mode_2_1 = false;
-//       (*anaflex_options).run_mode_2_2 = false;
-//       (*anaflex_options).run_mode_2_3 = false;
-//       (*anaflex_options).run_mode_2_4 = false;
-//       (*anaflex_options).run_mode_2_5 = false;
-//       (*anaflex_options).run_mode_2_7 = false;
-//       (*anaflex_options).run_mode_2_8 = false;
-//       (*anaflex_options).run_mode_2_12 = false;
-//       (*anaflex_options).run_mode_2_13 = false;
-//       (*anaflex_options).run_mode_2_14 = false;
-//       (*anaflex_options).run_mode_2_18 = false;
-//       // (*anaflex_options).run_mode_2_24 = false;
-//    }
 //    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 // }
 
 // void US_Hydrodyn_Anaflex_Options::set_run_mode_2_24()
 // {
 //    (*anaflex_options).run_mode_2_24 = cb_run_mode_2_24->isChecked();
-//    if ( cb_run_mode_2_24->isChecked() )
-//    {
-//       cb_run_mode_2_1->setChecked(false);
-//       cb_run_mode_2_2->setChecked(false);
-//       cb_run_mode_2_3->setChecked(false);
-//       cb_run_mode_2_4->setChecked(false);
-//       cb_run_mode_2_5->setChecked(false);
-//       cb_run_mode_2_7->setChecked(false);
-//       cb_run_mode_2_8->setChecked(false);
-//       cb_run_mode_2_12->setChecked(false);
-//       cb_run_mode_2_13->setChecked(false);
-//       cb_run_mode_2_14->setChecked(false);
-//       cb_run_mode_2_18->setChecked(false);
-//       // cb_run_mode_2_20->setChecked(false);
-//       (*anaflex_options).run_mode_2_1 = false;
-//       (*anaflex_options).run_mode_2_2 = false;
-//       (*anaflex_options).run_mode_2_3 = false;
-//       (*anaflex_options).run_mode_2_4 = false;
-//       (*anaflex_options).run_mode_2_5 = false;
-//       (*anaflex_options).run_mode_2_7 = false;
-//       (*anaflex_options).run_mode_2_8 = false;
-//       (*anaflex_options).run_mode_2_12 = false;
-//       (*anaflex_options).run_mode_2_13 = false;
-//       (*anaflex_options).run_mode_2_14 = false;
-//       (*anaflex_options).run_mode_2_18 = false;
-//       // (*anaflex_options).run_mode_2_20 = false;
-//    }
 //    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 // }
 

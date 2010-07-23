@@ -25,23 +25,65 @@
 int US_Hydrodyn::create_anaflex_files()
 {
    // right now we are just going to support one-mode per run
-   // in future we will support multiple, which will require the
-   // following code
+   // in future we will support multiple, which requires
+   // the extra structures
    if ( anaflex_options.run_mode_1 )
    {
-      return create_anaflex_files(1);
+      return create_anaflex_files( 1 );
    }
    if ( anaflex_options.run_mode_2 )
    {
-      return create_anaflex_files(2);
+      return create_anaflex_files( 2 );
    }
    if ( anaflex_options.run_mode_3 )
    {
-      return create_anaflex_files(3);
+      if ( anaflex_options.run_mode_3_1 )
+      {
+         return create_anaflex_files( 3, 1 );
+      }
+      if ( anaflex_options.run_mode_3_5 )
+      {
+         return create_anaflex_files( 3, 5 );
+      }
+      if ( anaflex_options.run_mode_3_9 )
+      {
+         return create_anaflex_files( 3, 9 );
+      }
+      if ( anaflex_options.run_mode_3_10 )
+      {
+         return create_anaflex_files( 3, 10 );
+      }
+      if ( anaflex_options.run_mode_3_14 )
+      {
+         return create_anaflex_files( 3, 14 );
+      }
+      if ( anaflex_options.run_mode_3_15 )
+      {
+         return create_anaflex_files( 3, 15 );
+      }
+      if ( anaflex_options.run_mode_3_16 )
+      {
+         return create_anaflex_files( 3, 16 );
+      }
    }
    if ( anaflex_options.run_mode_4 )
    {
-      return create_anaflex_files(4);
+      if ( anaflex_options.run_mode_4_1 )
+      {
+         return create_anaflex_files( 4, 1 );
+      }
+      if ( anaflex_options.run_mode_4_6 )
+      {
+         return create_anaflex_files( 4, 6 );
+      }
+      if ( anaflex_options.run_mode_4_7 )
+      {
+         return create_anaflex_files( 4, 7 );
+      }
+      if ( anaflex_options.run_mode_4_8 )
+      {
+         return create_anaflex_files( 4, 8 );
+      }
    }
    if ( anaflex_options.run_mode_9 )
    {
@@ -50,14 +92,14 @@ int US_Hydrodyn::create_anaflex_files()
    return -1;
 }
 
-int US_Hydrodyn::create_anaflex_files( int use_mode )
+int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
 {
    editor->append(tr(QString("Creating anaflex files (mode %1)\n").arg(use_mode)));
 
    QString filename = 
-      project + QString("_%1").arg(current_model + 1) +
-      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
-      + QString("-af%1").arg(use_mode);
+      project + QString("%1").arg(current_model + 1) +
+      // QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
+      + QString("af%1%2").arg(use_mode).arg(sub_mode ? QString("-%1").arg(sub_mode) : "");
    QString bffilename = 
       project + QString("_%1").arg(current_model + 1) +
       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
@@ -69,7 +111,7 @@ int US_Hydrodyn::create_anaflex_files( int use_mode )
    QFile f;
    // main file
    {
-      f.setName(basename + "-main.txt");
+      f.setName(basename + "m.txt");
       if ( !f.open(IO_WriteOnly) )
       {
          editor->append(QString("File write error: can't create %1\n").arg(f.name()));
@@ -78,9 +120,9 @@ int US_Hydrodyn::create_anaflex_files( int use_mode )
       QTextStream ts(&f);
       ts <<
          QString(
-                 "%1-log.txt            !outputfile 1\n"
-                 "%2-res.txt            !outputfile 2\n"
-                 "%3-sum.txt            !outputfile 3\n"
+                 "%1l.txt            !outputfile 1\n"
+                 "%2r.txt            !outputfile 2\n"
+                 "%3s.txt            !outputfile 3\n"
                  "%4                    !sampling frequency\n"
                  "%5                    !instprofiles\n"
                  "%6                    !mode\n"
@@ -95,6 +137,166 @@ int US_Hydrodyn::create_anaflex_files( int use_mode )
 
       switch ( use_mode )
       {
+      case 1 : // steady state
+         {
+            // count nprops
+            int ncodes =
+               anaflex_options.run_mode_1_1 +
+               anaflex_options.run_mode_1_2 +
+               anaflex_options.run_mode_1_3 +
+               anaflex_options.run_mode_1_4 +
+               anaflex_options.run_mode_1_5 +
+               anaflex_options.run_mode_1_7 +
+               anaflex_options.run_mode_1_8 +
+               anaflex_options.run_mode_1_12 +
+               anaflex_options.run_mode_1_13 +
+               anaflex_options.run_mode_1_14 +
+               anaflex_options.run_mode_1_18;
+
+            int nprops =
+               anaflex_options.run_mode_1_1 +
+               anaflex_options.run_mode_1_2 +
+               anaflex_options.run_mode_1_3 +
+               anaflex_options.run_mode_1_4 * 2 +
+               anaflex_options.run_mode_1_5 * 3 +
+               anaflex_options.run_mode_1_7 * 2 +
+               anaflex_options.run_mode_1_8 * 4 +
+               anaflex_options.run_mode_1_12 +
+               anaflex_options.run_mode_1_13 +
+               anaflex_options.run_mode_1_14 * 6 +
+               anaflex_options.run_mode_1_18 * 6;
+            //editor->append(QString("mode 1 ncodes %1 nprops %2\n").arg(ncodes).arg(nprops));
+            ts << 
+               QString("%1,%2                 !number of codes & properties\n")
+               .arg(ncodes)
+               .arg(nprops);
+            if ( anaflex_options.run_mode_1_1 )
+            {
+               ts << "1,0,0,0,0                      !linear end-to-end square distance\n";
+            }
+            if ( anaflex_options.run_mode_1_2 )
+            {
+               ts << "2,0,0,0,0                      !square radius of gyration\n";
+            }
+            if ( anaflex_options.run_mode_1_3 )
+            {
+               ts << "3,0,0,0,0                      !gzz components of gyration tensor\n";
+            }
+            if ( anaflex_options.run_mode_1_4 )
+            {
+               ts << "4,0,0,0,0                      !gxx,gyy components of gyration tensor\n";
+            }
+            if ( anaflex_options.run_mode_1_5 )
+            {
+               ts << "5,0,0,0,0                      !gxy,gxz,gyz components of gyration tensor\n";
+            }
+            if ( anaflex_options.run_mode_1_7 )
+            {
+               ts << "7,0,0,0,0                      !extension along z and it's square\n";
+            }
+            if ( anaflex_options.run_mode_1_8 )
+            {
+               ts << "8,0,0,0,0                      !extension along x and y and their squares\n";
+            }
+            if ( anaflex_options.run_mode_1_12 )
+            {
+               ts << "12,0,0,0,0                     !birefringence in FENE chains\n";
+            }
+            if ( anaflex_options.run_mode_1_13 )
+            {
+               ts << "13,0,0,0,0                     !p2 average over connectors \n";
+            }
+            if ( anaflex_options.run_mode_1_14 )
+            {
+               ts << "14,0,0,0,0                     !components of stress tensor\n";
+            }
+            if ( anaflex_options.run_mode_1_18 )
+            {
+               ts << "18,12,0,0,0                    !rigid body hydrodynamic props\n";
+            }
+         }
+         break;
+
+      case 2 : // time dependent
+         {
+            // count nprops
+            int ncodes =
+               anaflex_options.run_mode_2_1 +
+               anaflex_options.run_mode_2_2 +
+               anaflex_options.run_mode_2_3 +
+               anaflex_options.run_mode_2_4 +
+               anaflex_options.run_mode_2_5 +
+               anaflex_options.run_mode_2_7 +
+               anaflex_options.run_mode_2_8 +
+               anaflex_options.run_mode_2_12 +
+               anaflex_options.run_mode_2_13 +
+               anaflex_options.run_mode_2_14 +
+               anaflex_options.run_mode_2_18;
+
+            int nprops =
+               anaflex_options.run_mode_2_1 +
+               anaflex_options.run_mode_2_2 +
+               anaflex_options.run_mode_2_3 +
+               anaflex_options.run_mode_2_4 * 2 +
+               anaflex_options.run_mode_2_5 * 3 +
+               anaflex_options.run_mode_2_7 * 2 +
+               anaflex_options.run_mode_2_8 * 4 +
+               anaflex_options.run_mode_2_12 +
+               anaflex_options.run_mode_2_13 +
+               anaflex_options.run_mode_2_14 * 6 +
+               anaflex_options.run_mode_2_18 * 6;
+
+            ts << 
+               QString("%1,%2                 !number of codes & properties\n")
+               .arg(ncodes)
+               .arg(nprops);
+            if ( anaflex_options.run_mode_2_1 )
+            {
+               ts << "1,0,0,0,0                      !linear end-to-end square distance\n";
+            }
+            if ( anaflex_options.run_mode_2_2 )
+            {
+               ts << "2,0,0,0,0                      !square radius of gyration\n";
+            }
+            if ( anaflex_options.run_mode_2_3 )
+            {
+               ts << "3,0,0,0,0                      !gzz components of gyration tensor\n";
+            }
+            if ( anaflex_options.run_mode_2_4 )
+            {
+               ts << "4,0,0,0,0                      !gxx,gyy components of gyration tensor\n";
+            }
+            if ( anaflex_options.run_mode_2_5 )
+            {
+               ts << "5,0,0,0,0                      !gxy,gxz,gyz components of gyration tensor\n";
+            }
+            if ( anaflex_options.run_mode_2_7 )
+            {
+               ts << "7,0,0,0,0                      !extension along z and it's square\n";
+            }
+            if ( anaflex_options.run_mode_2_8 )
+            {
+               ts << "8,0,0,0,0                      !extension along x and y and their squares\n";
+            }
+            if ( anaflex_options.run_mode_2_12 )
+            {
+               ts << "12,0,0,0,0                     !birefringence in FENE chains\n";
+            }
+            if ( anaflex_options.run_mode_2_13 )
+            {
+               ts << "13,0,0,0,0                     !p2 average over connectors \n";
+            }
+            if ( anaflex_options.run_mode_2_14 )
+            {
+               ts << "14,0,0,0,0                     !components of stress tensor\n";
+            }
+            if ( anaflex_options.run_mode_2_18 )
+            {
+               ts << "18,12,0,0,0                    !rigid body hydrodynamic props\n";
+            }
+         }
+         break;
+
       case 9 : // textfile
          ts << 
             QString(
@@ -125,6 +327,7 @@ int US_Hydrodyn::create_anaflex_files( int use_mode )
 int US_Hydrodyn::run_anaflex()
 {
    int use_mode = 0;
+   int sub_mode = 0;
    // possible setup a new text window for the anaflex runs?
    // later loop through for multiple runs?
    if ( anaflex_options.run_mode_1 )
@@ -138,10 +341,54 @@ int US_Hydrodyn::run_anaflex()
    if ( anaflex_options.run_mode_3 )
    {
       use_mode = 3;
+      if ( anaflex_options.run_mode_3_1 )
+      {
+         sub_mode = 1;
+      }
+      if ( anaflex_options.run_mode_3_5 )
+      {
+         sub_mode = 5;
+      }
+      if ( anaflex_options.run_mode_3_9 )
+      {
+         sub_mode = 9;
+      }
+      if ( anaflex_options.run_mode_3_10 )
+      {
+         sub_mode = 10;
+      }
+      if ( anaflex_options.run_mode_3_14 )
+      {
+         sub_mode = 14;
+      }
+      if ( anaflex_options.run_mode_3_15 )
+      {
+         sub_mode = 15;
+      }
+      if ( anaflex_options.run_mode_3_16 )
+      {
+         sub_mode = 16;
+      }
    }
    if ( anaflex_options.run_mode_4 )
    {
       use_mode = 4;
+      if ( anaflex_options.run_mode_4_1 )
+      {
+         sub_mode = 1;
+      }
+      if ( anaflex_options.run_mode_4_6 )
+      {
+         sub_mode = 6;
+      }
+      if ( anaflex_options.run_mode_4_7 )
+      {
+         sub_mode = 7;
+      }
+      if ( anaflex_options.run_mode_4_8 )
+      {
+         sub_mode = 8;
+      }
    }
    if ( anaflex_options.run_mode_9 )
    {
@@ -185,9 +432,9 @@ int US_Hydrodyn::run_anaflex()
    }
 
    QString anafile = 
-      project + QString("_%1").arg(current_model + 1) +
-      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
-      + QString("-af%1-main.txt\n").arg(use_mode);
+      project + QString("%1").arg(current_model + 1) +
+      //      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
+      + QString("af%1%2m.txt\n").arg(use_mode).arg(sub_mode ? QString("-%1").arg(sub_mode) : "");
 
    cout << QString("run anaflex dir <%1> prog <%2> stdin <%3>\n")
       .arg(dir)

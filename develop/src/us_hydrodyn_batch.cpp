@@ -954,6 +954,7 @@ void US_Hydrodyn_Batch::start()
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       progress->setProgress( i * 2 );
+      set_counts();
       qApp->processEvents();
       if ( lb_files->isSelected(i) )
       {
@@ -1111,6 +1112,7 @@ void US_Hydrodyn_Batch::start()
    progress->setProgress(1,1);
    disable_updates = false;
    enable_after_stop();
+   set_counts();
    if ( overwriteForcedOn )
    {
       ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;

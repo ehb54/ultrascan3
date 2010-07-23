@@ -495,7 +495,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // anaflex functions
 
       int create_anaflex_files();
-      int create_anaflex_files( int use_mode );
+      int create_anaflex_files( int use_mode, int sub_mode = 0 );
       int run_anaflex();
 
    protected slots:
