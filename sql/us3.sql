@@ -601,7 +601,7 @@ CREATE  TABLE IF NOT EXISTS model (
   iterations int(11) NOT NULL default 0 ,
   meniscus double NOT NULL default '0',
   RMSD double NOT NULL default '0',
-  description TEXT NULL DEFAULT NULL ,
+  description VARCHAR(80) NULL DEFAULT NULL,
   contents TEXT NULL DEFAULT NULL ,
   PRIMARY KEY (modelID) ,
   INDEX ndx_model_editedDataID (editedDataID ASC) ,
@@ -649,6 +649,7 @@ CREATE TABLE IF NOT EXISTS noise (
   modelGUID CHAR(36) NULL ,
   noiseType enum('ri_noise', 'ti_noise') default 'ti_noise',
   noiseVector TEXT ,                    -- an xml file
+  timeEntered TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
   PRIMARY KEY ( noiseID ) ,
   INDEX ndx_noise_editedDataID (editedDataID ASC) ,
   INDEX ndx_noise_modelID (modelID ASC) ,
@@ -666,45 +667,51 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table structure for table HPCAnalysisGroup
--- -----------------------------------------------------
-DROP TABLE IF EXISTS HPCAnalysisGroup;
-
-CREATE TABLE IF NOT EXISTS HPCAnalysisGroup (
-  HPCAnalysisGroupID int(11) NOT NULL AUTO_INCREMENT,
-  HPCAnalysisGroupGUID CHAR(36) NOT NULL,
-  investigatorGUID CHAR(36) NOT NULL,     -- maps to person.personGUID
-  submitterGUID CHAR(36) NOT NULL,        -- maps to person.personGUID
-  experimentID int(11) NULL,
-  rotorID int(11) NULL,                   -- to get stretch function params
-  architecture varchar(80) default NULL,
-  clusterName varchar(80) default NULL,
-  CPUCount int(11) default '0',
-  max_rss int(11) default '0',            -- from nnls finished message
-  method enum('2DSA','2DSA_MW','GA','GA_MW','GA_SC') NOT NULL default '2DSA',
-  PRIMARY KEY (HPCAnalysisGroupID) )
-ENGINE=InnoDB;
-
-
--- -----------------------------------------------------
 -- Table structure for table HPCAnalysisRequest
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS HPCAnalysisRequest;
 
 CREATE TABLE IF NOT EXISTS HPCAnalysisRequest (
   HPCAnalysisRequestID int(11) NOT NULL AUTO_INCREMENT,
+  HPCAnalysisRequestGUID CHAR(36) NOT NULL,
+  investigatorGUID CHAR(36) NOT NULL,     -- maps to person.personGUID
+  submitterGUID CHAR(36) NOT NULL,        -- maps to person.personGUID
+  experimentID int(11) NULL,
   submitTime datetime NOT NULL default '0000-00-00 00:00:00',
-  HPCAnalysisGroupID int(11) NOT NULL,
-  HPCAnalysisGroupGUID CHAR(36) default NULL,  -- not unique here
-  PRIMARY KEY  (HPCAnalysisRequestID),
-  INDEX ndx_HPCAnalysisRequest_HPCAnalysisGroupID (HPCAnalysisGroupID ASC) ,
-  CONSTRAINT fk_HPCAnalysisRequest_HPCAnalysisGroupID
-    FOREIGN KEY (HPCAnalysisGroupID )
-    REFERENCES HPCAnalysisGroup (HPCAnalysisGroupID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
+  rotor_stretch VARCHAR(80) NULL, 
+  clusterName varchar(80) default NULL,
+  method enum('2DSA','2DSA_MW','GA','GA_MW','GA_SC') NOT NULL default '2DSA',
+  PRIMARY KEY (HPCAnalysisRequestID) )
 ENGINE=InnoDB;
 
+-- -----------------------------------------------------
+-- Table structure for table HPCDataset
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS HPCDataset;
+DROP TABLE IF EXISTS HPCAnalysisGroup;
+
+CREATE TABLE IF NOT EXISTS HPCDataset (
+  HPCDatasetID int(11) NOT NULL AUTO_INCREMENT,
+  HPCAnalysisRequestID int(11) NOT NULL,
+  editedDataID INT(11) NOT NULL ,
+  simpoints int(11) default NULL,
+  band_volume double default NULL,
+  radial_grid tinyint(4) default NULL,
+  time_grid tinyint(4) default NULL,
+  INDEX ndx_HPCDataset_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
+  INDEX ndx_HPCDataset_editedDataID (editedDataID ASC),
+  PRIMARY KEY (HPCDatasetID),
+  CONSTRAINT fk_HPCDataset_HPCAnalysisRequestID
+    FOREIGN KEY (HPCAnalysisRequestID)
+    REFERENCES HPCAnalysisRequest (HPCAnalysisRequestID )
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION ,
+  CONSTRAINT fk_HPCDataset_editedDataID
+    FOREIGN KEY (editedDataID)
+    REFERENCES editedData ( editedDataID )
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION )
+ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table structure for table HPCRequestData
@@ -713,16 +720,14 @@ DROP TABLE IF EXISTS HPCRequestData;
 
 CREATE TABLE IF NOT EXISTS HPCRequestData (
   HPCRequestDataID int(11) NOT NULL AUTO_INCREMENT,
-  sequenceNum int(11) NOT NULL default 1, -- identifies which dataset
-  HPCAnalysisRequestID int(11) NOT NULL,
-  editedDataID INT(11) NOT NULL ,
+  HPCDatasetID int(11) NOT NULL,
   dataType enum('noise', 'model'), 
   dataID int(11) NOT NULL,          -- could be a noiseID or a modelID
-  INDEX ndx_HPCRequestData_HPCAnalysisRequestID (HPCAnalysisRequestID ASC) ,
+  INDEX ndx_HPCRequestData_HPCDatasetID (HPCDatasetID ASC) ,
   PRIMARY KEY (HPCRequestDataID),
-  CONSTRAINT fk_HPCRequestData_HPCAnalysisRequestID
-    FOREIGN KEY (HPCAnalysisRequestID)
-    REFERENCES HPCAnalysisRequest (HPCAnalysisRequestID )
+  CONSTRAINT fk_HPCRequestData_HPCDatasetID
+    FOREIGN KEY (HPCDatasetID)
+    REFERENCES HPCDataset (HPCDatasetID )
     ON DELETE CASCADE
     ON UPDATE NO ACTION,
    CONSTRAINT fk_HPCRequestData_noiseID
@@ -748,11 +753,15 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisResult (
   HPCAnalysisRequestID int(11) NOT NULL,
   startTime datetime NOT NULL default '0000-00-00 00:00:00',
   endTime datetime default NULL,          -- needed?
-  queueStatus enum( 'queued','running','aborted','completed') default 'queued',
+  queueStatus enum( 'queued','failed','running','aborted','completed') default 'queued',
   lastMessage text default NULL,          -- from nnls
   updateTime datetime default NULL,
+  EPRFile TEXT DEFAULT NULL,
+  jobfile TEXT,
   wallTime int(11) NOT NULL default '0',
   CPUTime double NOT NULL default '0',
+  CPUCount int(11) default '0',
+  max_rss int(11) default '0',            -- from nnls finished message
   calculatedData TEXT,                          -- an xml file
   PRIMARY KEY (HPCAnalysisResultID),
   INDEX ndx_HPCAnalysisResult_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
@@ -812,16 +821,10 @@ CREATE TABLE IF NOT EXISTS 2DSA_Settings (
   montecarlo_value int(11) NOT NULL default '0',
   tinoise_option tinyint(1) NOT NULL default '0',
   regularization int(11) NOT NULL default '0',
-  meniscus_option tinyint(1) NOT NULL default '0',
   meniscus_value double NOT NULL default '0.01',
   meniscus_points double NOT NULL default '3',
-  iterations_option tinyint(1) NOT NULL default '0',
   iterations_value int(11) NOT NULL default '3',
   rinoise_option tinyint(1) NOT NULL default '0',
-  simpoints int(11) default NULL,
-  band_volume double default NULL,
-  radial_grid tinyint(4) default NULL,
-  time_grid tinyint(4) default NULL,
   PRIMARY KEY  (2DSA_SettingsID),
   INDEX ndx_2DSA_Settings_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
   CONSTRAINT fk_2DSA_Settings_HPCAnalysisRequestID
@@ -851,16 +854,10 @@ CREATE TABLE IF NOT EXISTS 2DSA_MW_Settings (
   montecarlo_value int(11) NOT NULL default '0',
   tinoise_option tinyint(1) NOT NULL default '0',
   regularization int(11) NOT NULL default '0',
-  meniscus_option tinyint(1) NOT NULL default '0',
   meniscus_value double NOT NULL default '0.01',
   meniscus_points int(11) NOT NULL default '3',
-  iterations_option tinyint(1) NOT NULL default '0',
   iterations_value int(11) NOT NULL default '3',
   rinoise_option tinyint(1) NOT NULL default '0',
-  simpoints int(11) default NULL,
-  band_volume double default NULL,
-  radial_grid tinyint(4) default NULL,
-  time_grid tinyint(4) default NULL,
   PRIMARY KEY  (2DSA_MW_SettingsID),
   INDEX ndx_2DSA_MW_Settings_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
   CONSTRAINT fk_2DSA_MW_Settings_HPCAnalysisRequestID
@@ -892,11 +889,6 @@ CREATE TABLE IF NOT EXISTS GA_Settings (
   seed_value int(11) NOT NULL default '0',
   tinoise_option tinyint(1) NOT NULL default '0',
   rinoise_option tinyint(1) NOT NULL default '0',
-  simpoints int(11) default NULL,
-  band_volume double default NULL,
-  radial_grid tinyint(4) default NULL,
-  time_grid tinyint(4) default NULL,
-  meniscus_option tinyint(1) NOT NULL default '0',
   meniscus_value double NOT NULL default '0',
   solute_value int(11) NOT NULL default '3',
   solute_data mediumtext,
@@ -936,11 +928,6 @@ CREATE TABLE IF NOT EXISTS GA_MW_Settings (
   regularization_value double NOT NULL default '5',
   seed_value int(11) NOT NULL default '0',
   rinoise_option tinyint(1) NOT NULL default '0',
-  simpoints int(11) default NULL,
-  band_volume double default NULL,
-  radial_grid tinyint(4) default NULL,
-  time_grid tinyint(4) default NULL,
-  meniscus_option tinyint(1) NOT NULL default '0',
   meniscus_value double NOT NULL default '0',
   PRIMARY KEY  (GA_MW_SettingsID),
   INDEX ndx_GA_MW_Settings_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
