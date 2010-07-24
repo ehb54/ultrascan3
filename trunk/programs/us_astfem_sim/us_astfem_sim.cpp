@@ -198,7 +198,8 @@ void US_Astfem_Sim::init_simparams( void )
 {
    US_SimulationParameters::SpeedProfile sp;
 
-   simparams.speed_step.clear();
+   simparams.mesh_radius.clear();
+   simparams.speed_step .clear();
 
    sp.duration_hours    = 5;
    sp.duration_minutes  = 30;
@@ -340,10 +341,7 @@ void US_Astfem_Sim::sim_parameters( void )
 
 void US_Astfem_Sim::set_parameters( void )
 {
-qDebug() << "simparams" << simparams.gridType;
-qDebug() << " MOVING" << (int)US_SimulationParameters::MOVING;
    simparams = working_simparams;
-qDebug() << "wk_simparams" << working_simparams.gridType;
 
    pb_start  ->setEnabled( true );
 }
@@ -356,6 +354,21 @@ void US_Astfem_Sim::stop_simulation( void )
 
 void US_Astfem_Sim::start_simulation( void )
 {
+
+   astfem_rsa = new US_Astfem_RSA( system, simparams );
+   connect( astfem_rsa, SIGNAL( new_scan         ( int ) ), 
+                        SLOT(   update_movie_plot( int ) ) );
+   connect( astfem_rsa, SIGNAL( current_component( int ) ), 
+                        SLOT  ( update_progress  ( int ) ) );
+   connect( astfem_rsa, SIGNAL( new_time   ( double ) ), 
+                        SLOT  ( update_time( double ) ) );
+   connect( astfem_rsa, SIGNAL( current_speed( int ) ), 
+                        SLOT  ( update_speed ( int ) ) );
+   connect( astfem_rsa, SIGNAL( calc_progress( int ) ), 
+                        SLOT  ( show_progress( int ) ) );
+   connect( astfem_rsa, SIGNAL( calc_done( void ) ), 
+                        SLOT  ( calc_over( void ) ) );
+
    moviePlot->clear();
    moviePlot->replot();
    curve_count = 0;
@@ -389,7 +402,6 @@ void US_Astfem_Sim::start_simulation( void )
    int points = qRound( ( simparams.bottom - simparams.meniscus ) / 
                           simparams.radial_resolution );
 
-qDebug() << "SS: points" << points;
    sim_data.x.resize( points );
 
    for ( int i = 0; i < points; i++ ) 
@@ -400,7 +412,6 @@ qDebug() << "SS: points" << points;
    for ( int i = 0; i < simparams.speed_step.size(); i++ ) 
       total_scans += simparams.speed_step[ i ].scans;
 
-qDebug() << "SS: total_scans" << total_scans;
    sim_data.scanData.resize( total_scans );
 
    for ( int i = 0; i < total_scans; i++ ) 
@@ -413,11 +424,13 @@ qDebug() << "SS: total_scans" << total_scans;
       scan->wavelength  = system.wavelength;
       scan->plateau     = 0.0;
       scan->delta_r     = simparams.radial_resolution;
+      double rvalue     = ( i == 0 ) ?
+         system.components[ 0 ].signal_concentration : 0.0;
 
       scan->readings.resize( points );
       for ( int j = 0; j < points; j++ ) 
       {
-         scan->readings[ j ].value  = 0.0;
+         scan->readings[ j ].value  = rvalue;
          scan->readings[ j ].stdDev = 0.0;
       }
 
@@ -426,7 +439,10 @@ qDebug() << "SS: total_scans" << total_scans;
    }
 
    // Set the time for the scans
-   int scan_number = 0;
+   double current_time;
+   double duration;
+   double increment;
+   int    scan_number = 0;
 
    for ( int i = 0; i < simparams.speed_step.size(); i++ )
    {
@@ -436,9 +452,9 @@ qDebug() << "SS: total_scans" << total_scans;
       // First time point of this speed step in secs
       US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ i ];
 
-      double current_time = sp->delay_hours    * 3600 + sp->delay_minutes    * 60;
-      double duration     = sp->duration_hours * 3600 + sp->duration_minutes * 60;
-      double increment    = ( duration - current_time ) / sp->scans;
+      current_time = sp->delay_hours    * 3600 + sp->delay_minutes    * 60;
+      duration     = sp->duration_hours * 3600 + sp->duration_minutes * 60;
+      increment    = ( duration - current_time ) / sp->scans;
 
       for ( int j = 0; j < sp->scans; j++ )
       {
@@ -447,12 +463,12 @@ qDebug() << "SS: total_scans" << total_scans;
 
          scan_number++;
       }
-qDebug() << "SS: step scan_number spscans" << i+1 << scan_number << sp->scans;
    }
 
    lb_progress->setText( tr( "% Completed:" ) );
    progress->setMaximum( system.components.size() ); 
    progress->reset();
+   lcd_component->display( 0 );
 
    // Interpolate simulation onto desired grid based on time, not based on
    // omega-square-t integral
@@ -462,11 +478,12 @@ qDebug() << "SS: step scan_number spscans" << i+1 << scan_number << sp->scans;
    stopFlag = false;
    astfem_rsa->setStopFlag( stopFlag );
    
+   simparams.mesh_radius.clear();
    simparams.band_firstScanIsConcentration = false;
-qDebug() << "call AR-CALC";
+
    // Run the simulation
    astfem_rsa->calculate( sim_data );
-qDebug() << "  return fr AR-CALC";
+
    finish();
 }
 
@@ -476,8 +493,9 @@ void US_Astfem_Sim::finish( void )
 
    for ( int i = 0; i < system.components.size(); i++ )
       total_conc += system.components[ i ].signal_concentration;
-qDebug() << "FIN: comp size" << system.components.size();
 
+qDebug() << "FIN: comp size" << system.components.size();
+qDebug() << "FIN:  total_conc" << total_conc;
    ri_noise();
    random_noise();
    ti_noise();
@@ -485,7 +503,6 @@ qDebug() << "FIN: comp size" << system.components.size();
    // If we didn't interrupt, we need to set to 100 % complete at end of run
    if ( ! stopFlag )
       progress->setValue( system.components.size() ); 
-qDebug() << "FIN: comp size" << system.components.size();
 
    stopFlag = false;
 
@@ -553,6 +570,8 @@ void US_Astfem_Sim::ti_noise( void )
 
 void US_Astfem_Sim::plot( void )
 {
+   scanPlot->detachItems();
+
    // Set plot scale
    if ( simparams.band_forming )
       scanPlot->setAxisScale( QwtPlot::yLeft, 0, total_conc );
@@ -959,11 +978,11 @@ void US_Astfem_Sim::save_ultrascan( const QString& /*filename*/ )
             {
                double plateau = 0.0;
 
-               for ( int n = 0; n < system.component_vector.size(); n++ )
+               for ( int n = 0; n < system.components.size(); n++ )
                {
                   // This is the equation for radial dilution:
-                  plateau += system.component_vector[ n ].concentration * 
-                             exp( - 2.0 * system.component_vector[ n ].s *
+                  plateau += system.components[ n ].concentration * 
+                             exp( - 2.0 * system.components[ n ].s *
                                     astfem_data[ k ].scan[ j ].omega_s_t );
                }
 
@@ -1015,12 +1034,12 @@ void US_Astfem_Sim::save_ultrascan( const QString& /*filename*/ )
    }
 }
 
-void US_Astfem_Sim::update_progress( int /* component*/ )
+//void US_Astfem_Sim::update_progress( int /* component*/ )
+void US_Astfem_Sim::update_progress( int component )
 {
-   /*
    if ( component == -1 )
    {
-      progress->setValue( system.component_vector.size() );
+      progress->setValue( system.components.size() );
       lcd_component->setMode( QLCDNumber::Hex );
       lcd_component->display( "rA " );
    }
@@ -1030,7 +1049,6 @@ void US_Astfem_Sim::update_progress( int /* component*/ )
       lcd_component->setMode( QLCDNumber::Dec );
       lcd_component->display( component );
    }
-   */
 }
 
 void US_Astfem_Sim::show_progress( int time_step )
@@ -1060,10 +1078,11 @@ void US_Astfem_Sim::calc_over( void )
 void US_Astfem_Sim::update_movie_plot( int /*scan_number*/ )
 {
    moviePlot->clear();
-   //double total_c = 0.0;
-/*   
-   for ( int i = 0; i < system.component_vector.size(); i++ )
-      total_c += system.component_vector[ i ].concentration;
+#if 0
+   double total_c = 0.0;
+
+   for ( int i = 0; i < system.components.size(); i++ )
+      total_c += system.components[ i ].concentration;
 
    moviePlot->setAxisScale( QwtPlot::yLeft, 0, total_c * 2.0 );
    
@@ -1082,96 +1101,78 @@ void US_Astfem_Sim::update_movie_plot( int /*scan_number*/ )
    qApp->processEvents();
    
    delete [] r;
-   */
+#endif
 }
 
 void US_Astfem_Sim::dump_system( void )
 {
-   /*
-   //struct ModelSystem
    qDebug() << "description" <<system.description;
-   qDebug() << "model" << system.model;
-   qDebug() << "component vector size" << system.component_vector.size();
-   for ( int i = 0; i < system.component_vector.size(); i++ ) 
+   qDebug() << "modelGUID" << system.modelGUID;
+   qDebug() << "component vector size" << system.components.size();
+   for ( int i = 0; i < system.components.size(); i++ ) 
    {
-      qDebug() << "component vector " << i;
-      dump_simComponent( system.component_vector[ i ] );
+      qDebug() << "component " << i;
+      dump_simComponent( system.components[ i ] );
    }
-   qDebug() << "association vector size" << system.assoc_vector.size();
-   for ( int i = 0; i < system.assoc_vector.size(); i++ )
+   qDebug() << "association vector size" << system.associations.size();
+   for ( int i = 0; i < system.associations.size(); i++ )
    {
       qDebug() << "Association vector " << i;
-      dump_association( system.assoc_vector[ i ] );
+      dump_association( system.associations[ i ] );
    }
-   */
 }
 
-void US_Astfem_Sim::dump_simComponent( US_Model::SimulationComponent& /*sc*/ )
+void US_Astfem_Sim::dump_simComponent( US_Model::SimulationComponent& sc )
 {
-   /*
+   qDebug() << "molar_concentration" << sc.molar_concentration;
+   qDebug() << "signal_concentration" << sc.signal_concentration;
    qDebug() << "vbar20" << sc.vbar20;
    qDebug() << "mw" << sc.mw;
    qDebug() << "s" << sc.s;
    qDebug() << "D" << sc.D;
+   qDebug() << "f" << sc.f;
+   qDebug() << "f_f0" << sc.f_f0;
+   qDebug() << "extinction" << sc.extinction;
+   qDebug() << "axial_ratio" << sc.axial_ratio;
    qDebug() << "sigma" << sc.sigma;
    qDebug() << "delta" << sc.delta;
-   qDebug() << "extinction" << sc.extinction;
-   qDebug() << "concentration" << sc.concentration;
-   qDebug() << "f_f0" << sc.f_f0;
-   qDebug() << "show_conc" << sc.show_conc;
-   qDebug() << "show_keq" << sc.show_keq;
-   qDebug() << "show_koff" << sc.show_koff;
-   qDebug() << "show_stoich" << sc.show_stoich;
-//   qDebug() << "QList show_component" << sc.show_component;
+   qDebug() << "stoichiometry" << sc.stoichiometry;
    qDebug() << "shape" << sc.shape;
    qDebug() << "name" << sc.name;
+   qDebug() << "analyte_type" << sc.analyte_type;
    qDebug() << "mfem_initial:";
    dump_mfem_initial( sc.c0 );
-   */
 }
 
-void US_Astfem_Sim::dump_mfem_initial( US_DataIO2::Scan& /*mfem*/ )
+void US_Astfem_Sim::dump_mfem_initial( US_Model::MfemInitial& mfem )
 {
-   /*
    qDebug() << "radius list size " << mfem.radius.size();
 //   qDebug() << "radius list" << mfem.radius;
    qDebug() << "concentration list size " << mfem.concentration.size();
 //   qDebug() << "concentration list" << mfem.concentration;
-   */
 }
 
-void US_Astfem_Sim::dump_association( US_Model::Association& /*as*/ )
+void US_Astfem_Sim::dump_association( US_Model::Association& as )
 {
-   /*
-   qDebug() << "keq" << as.keq;
+   qDebug() << "keq" << as.k_eq;
    qDebug() << "koff" << as.k_off;
-   qDebug() << "units" << as.units;
-   qDebug() << "component1" << as.component1;
-   qDebug() << "component2" << as.component2;
-   qDebug() << "component3" << as.component3;
-   qDebug() << "stoichiometry1" << as.stoichiometry1;
-   qDebug() << "stoichiometry2" << as.stoichiometry2;
-   qDebug() << "stoichiometry3" << as.stoichiometry3;
-   qDebug() << "comp list size " << as.comp.size();
-//   qDebug() << "comp list " << as.comp;
-   qDebug() << "stoich list size " << as.stoich.size();
-//   qDebug() << "stoich list " << as.stoich;
-   qDebug() << "react list size " << as.react.size();
-//   qDebug() << "react list " << as.react;
-   */
+   qDebug() << "react list size " << as.reaction_components.size();
+   qDebug() << "react list " << as.reaction_components;
+   qDebug() << "stoich list size " << as.stoichiometry.size();
+   qDebug() << "stoich list " << as.stoichiometry;
 }
 
 void US_Astfem_Sim::dump_simparms( void )
 {
-/*
    qDebug() << "simparams";
    qDebug() << "mesh_radius list size " << simparams.mesh_radius.size();
 //   qDebug() << "mesh_radius list " << simparams.mesh_radius;;
    qDebug() << "speed profile list size " << simparams.speed_step.size();
-   for ( int i = 0; i < simparams.speed_step.size(); i++ ) dump_ss( simparams.speed_step[ i ] );
+   for ( int i = 0; i < simparams.speed_step.size(); i++ )
+      dump_ss( simparams.speed_step[ i ] );
    qDebug() << "simpoints " << simparams.simpoints;
-   qDebug() << "mesh " << simparams.mesh;
-   qDebug() << "moving_grid " << simparams.moving_grid;
+   qDebug() << "meshType " << simparams.meshType;
+   qDebug() << "gridType " << simparams.gridType;
    qDebug() << "radial_resolution " << simparams.radial_resolution;
    qDebug() << "meniscus " << simparams.meniscus;
    qDebug() << "bottom " << simparams.bottom;
@@ -1181,13 +1182,12 @@ void US_Astfem_Sim::dump_simparms( void )
    qDebug() << "rotor " << simparams.rotor;
    qDebug() << "band_forming " << simparams.band_forming;
    qDebug() << "band_volume " << simparams.band_volume;
-   qDebug() << "band_firstScanIsConcentration " << simparams.band_firstScanIsConcentration;
-*/
+   qDebug() << "band_firstScanIsConcentration "
+      << simparams.band_firstScanIsConcentration;
 }
 
-void US_Astfem_Sim::dump_ss( US_SimulationParameters::SpeedProfile& /*sp*/ )
+void US_Astfem_Sim::dump_ss( US_SimulationParameters::SpeedProfile& sp )
 {
-/*
    qDebug() << "speed profile";
    qDebug() << "duration_hours " << sp.duration_hours;
    qDebug() << "duration_minutes " << sp.duration_minutes;
@@ -1197,7 +1197,6 @@ void US_Astfem_Sim::dump_ss( US_SimulationParameters::SpeedProfile& /*sp*/ )
    qDebug() << "acceleration " << sp.acceleration;
    qDebug() << "rotorspeed " << sp.rotorspeed;
    qDebug() << "acceleration_flag " << sp.acceleration_flag;
-*/
 }
 
 void US_Astfem_Sim::dump_astfem_data( void )

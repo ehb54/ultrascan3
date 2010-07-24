@@ -976,13 +976,14 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       last_time         = simscan.time;
       simscan.omega_s_t = w2t_integral;
 
-      if ( show_movie )
+      if ( show_movie  &&  (i%4) == 0 )
       {
+//qDebug() << "AR: new_scan i" << i;
          if ( stopFlag ) break;
          emit new_scan( i );
          emit new_time( simscan.time );
          qApp->processEvents();
-         US_Sleep::msleep( 10 ); // 10 ms to let the display update.
+         //US_Sleep::msleep( 10 ); // 10 ms to let the display update.
       }
      
       simscan.conc.clear();
@@ -1100,7 +1101,7 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 
    double m  = af_params.current_meniscus;
    double b  = af_params.current_bottom;
-   int   NN = af_params.simpoints;
+   int    NN = af_params.simpoints;
 
    
    switch ( MeshOpt )
@@ -1214,7 +1215,7 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nu )
 
    double m  = af_params.current_meniscus;
    double b  = af_params.current_bottom;
-   int   NN = af_params.simpoints;
+   int    NN = af_params.simpoints;
 
    int    IndLayer = 0;         // number of layers for grids in steep region
    double uth      = 1.0 / NN;  // threshold of u for steep region
@@ -1817,11 +1818,12 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
 
    for ( int ti = 0; ti < time_max; ti++ )
    {
-      if ( show_movie )
+      if ( show_movie  &&  (ti%8) == 0 )
       {
+//qDebug() << "AR: calc_progr ti" << ti;
          emit calc_progress( ti );
          qApp->processEvents();
-         US_Sleep::msleep( 10 );
+         //US_Sleep::msleep( 10 );
       }
 
       ReactionOneStep_Euler_imp( Npts, C1, timeStepSize );
@@ -2138,10 +2140,10 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
 
    mesh_gen( nu, simparams.meshType );
 
-   bool fixedGrid = ( simparams.gridType == US_SimulationParameters::FIXED );
+   bool   fixedGrid = ( simparams.gridType == US_SimulationParameters::FIXED );
    double m  = af_params.current_meniscus;
    double b  = af_params.current_bottom;
-   int   NN = af_params.time_steps;
+   int    NN = af_params.time_steps;
    double dt = af_params.dt;
    
    // Refine left hand side (when s_max>0) or  
@@ -2320,13 +2322,14 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       last_time         = simscan.time;
       simscan.omega_s_t = w2t_integral;
       
-      if ( show_movie )
+      if ( show_movie  &&  (kkk%8) == 0 )
       {
+//qDebug() << "AR: new_scan kkk" << kkk;
          if ( stopFlag ) break;
          emit new_scan( kkk+1 );
          emit new_time( simscan.time );
          qApp->processEvents();
-         US_Sleep::msleep( 10 ); // 10 ms to let the display update.
+         //US_Sleep::msleep( 10 ); // 10 ms to let the display update.
       }
 
       simscan.conc.clear();
