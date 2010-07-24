@@ -15,10 +15,10 @@ class US_EXTERN US_Astfem_RSA : public QObject
    Q_OBJECT
 
    public:
-      //! \brief Initialize the 
-      //! \param model  Reference to the model parmeters
-      //! \param params Referece to the simulation parameters 
-      //! \param parent Parent object, normally not specified
+      //! \brief Initialize the simulation calculation object.
+      //! \param model  Reference to the model.
+      //! \param params Reference to the simulation parameters.
+      //! \param parent Parent object, normally not specified.
       US_Astfem_RSA( US_Model&, US_SimulationParameters&, QObject* = 0 );
    
       int  calculate           ( US_DataIO2::RawData& );
@@ -27,7 +27,6 @@ class US_EXTERN US_Astfem_RSA : public QObject
       void setTimeInterpolation( bool flag ){ use_time        = flag; };
       void setStopFlag         ( bool flag ){ stopFlag        = flag; };    
       void set_movie_flag      ( bool flag ){ show_movie      = flag; };
-      
 
    signals:
       void new_scan         ( int    );
@@ -37,6 +36,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
       void calc_start       ( int    );
       void calc_progress    ( int    );
       void calc_done        ( void   );
+
    private:
       bool stopFlag;          //!< Stop calculation, interpolate, and return
       bool time_correction;   //!< Decides if output data is time corrected 

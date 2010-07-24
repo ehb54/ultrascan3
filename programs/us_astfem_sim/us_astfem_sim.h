@@ -85,7 +85,7 @@ class US_Astfem_Sim : public US_Widgets
       void dump_astfem_data( void );
       void dump_simComponent( US_Model::SimulationComponent& );
       void dump_association ( US_Model::Association& );
-      void dump_mfem_initial( US_DataIO2::Scan& );
+      void dump_mfem_initial( US_Model::MfemInitial& );
       void dump_ss          ( US_SimulationParameters::SpeedProfile& );
       void dump_mfem_scan   ( US_DataIO2::Scan& );
 
