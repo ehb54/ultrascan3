@@ -2741,7 +2741,7 @@ void US_Hydrodyn::set_default()
    default_anaflex_options = anaflex_options;
 }
 
-void US_Hydrodyn::view_file(const QString &filename)
+void US_Hydrodyn::view_file(const QString &filename, QString title)
 {
    //   US_Editor *edit;
    //   edit = new US_Editor(1);
@@ -2750,6 +2750,7 @@ void US_Hydrodyn::view_file(const QString &filename)
    edit->setFont(QFont("Courier"));
    edit->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    edit->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
+   //   edit->setTitle(title);
    edit->load(filename);
    edit->show();
 }
@@ -4467,3 +4468,12 @@ bool US_Hydrodyn::install_new_version()
    }
    return false;
 }
+
+void US_Hydrodyn::editor_msg( QString color, QString msg )
+{
+   QColor save_color = editor->color();
+   editor->setColor(color);
+   editor->append(msg);
+   editor->setColor(save_color);
+}
+

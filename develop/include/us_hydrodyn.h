@@ -371,6 +371,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QProcess *browflex;
       QProcess *anaflex;
 
+      QString bd_last_file;
+      QString anaflex_last_file;
+
+      QString bd_last_traj_file;  // needed for anaflex
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -444,7 +449,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void view_asa(); // show asa file in editor
       void view_bead_model(); // show bead model file in editor
       void stop_calc(); // stop some operations
-      void view_file(const QString &); // call editor to view a file
+      void view_file(const QString &, QString title = "SOMO editor"); // call editor to view a file
       void bead_check( bool use_threshold = false, bool message_type = false ); // recheck beads
       void load_config();
       void write_config();
@@ -486,6 +491,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void set_overwrite();
       void set_saveParams();
 
+      // message utility
+      void editor_msg( QString color, QString msg );
+
       // dmd functions:
       void dmd_run();
 
@@ -493,8 +501,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
       //      void bd_mode();
       void bd_anaflex_enables( bool flag ); // turns buttons on/off based upon current status
       void bd_prepare();
+      bool bd_valid_browflex_main( QString filename );
       void bd_load();
+      void bd_load_error( QString filename );
       void bd_edit();
+      void bd_edit_util( QString dir, QString filename ); 
       void bd_run();
       void bd_load_results();
 

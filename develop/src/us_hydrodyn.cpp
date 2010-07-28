@@ -161,6 +161,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    bd_ready_to_run = false;
    anaflex_ready_to_run = false;
+   bd_last_file = "";
+   anaflex_last_file = "";
 
    setupGUI();
    //   global_Xpos += 30;
@@ -305,7 +307,7 @@ void US_Hydrodyn::setupGUI()
 
    md_options = new QPopupMenu;
    md_options->insertItem(tr("&DMD Options"), this, SLOT(show_dmd_options()));
-   md_options->insertItem(tr("&BD (Browflex) Options"), this, SLOT(show_bd_options()));
+   md_options->insertItem(tr("&Browflex Options"), this, SLOT(show_bd_options()));
    md_options->insertItem(tr("&Anaflex Options"), this, SLOT(show_anaflex_options()));
 
    pdb_options = new QPopupMenu;
@@ -589,35 +591,35 @@ void US_Hydrodyn::setupGUI()
    connect(pb_dmd_run, SIGNAL(clicked()), SLOT(dmd_run()));
 
    // ***** bd *******
-   pb_bd_prepare = new QPushButton(tr("Create BD files"), this);
+   pb_bd_prepare = new QPushButton(tr("Create Browflex files"), this);
    pb_bd_prepare->setMinimumHeight(minHeight1);
    pb_bd_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_bd_prepare->setEnabled(false);
    pb_bd_prepare->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_bd_prepare, SIGNAL(clicked()), SLOT(bd_prepare()));
 
-   pb_bd_load = new QPushButton(tr("Load BD files"), this);
+   pb_bd_load = new QPushButton(tr("Load Browflex files"), this);
    pb_bd_load->setMinimumHeight(minHeight1);
    pb_bd_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_bd_load->setEnabled(false);
    pb_bd_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_bd_load, SIGNAL(clicked()), SLOT(bd_load()));
 
-   pb_bd_edit = new QPushButton(tr("View/Edit BD files"), this);
+   pb_bd_edit = new QPushButton(tr("View/Edit Browflex files"), this);
    pb_bd_edit->setMinimumHeight(minHeight1);
    pb_bd_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_bd_edit->setEnabled(false);
    pb_bd_edit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_bd_edit, SIGNAL(clicked()), SLOT(bd_edit()));
 
-   pb_bd_run = new QPushButton(tr("Run BD"), this);
+   pb_bd_run = new QPushButton(tr("Run Browflex"), this);
    pb_bd_run->setMinimumHeight(minHeight1);
    pb_bd_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_bd_run->setEnabled(false);
    pb_bd_run->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_bd_run, SIGNAL(clicked()), SLOT(bd_run()));
 
-   pb_bd_load_results = new QPushButton(tr("Load BD results"), this);
+   pb_bd_load_results = new QPushButton(tr("Load Browflex results"), this);
    pb_bd_load_results->setMinimumHeight(minHeight1);
    pb_bd_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_bd_load_results->setEnabled(false);
@@ -804,6 +806,8 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_help, j, 0);
    background->addWidget(progress, j, 1);
    background->addWidget(lbl_core_progress, j, 2);
+
+   bd_anaflex_enables(false);
 }
 
 

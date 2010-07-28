@@ -141,12 +141,14 @@ void US_Hydrodyn::bd_prepare()
             break;
          }
       }
+      editor->append("\nBrowflex files created.\n");
    }
    else
    {
       editor->append("Errors encountered\n");
    }
 
+   pb_stop_calc->setEnabled(false);
    pb_somo->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
    pb_grid->setEnabled(true);
@@ -181,6 +183,9 @@ int US_Hydrodyn::create_browflex_files()
          editor->append(QString("File write error: can't create %1\n").arg(f.name()));
          return -1;
       }
+      bd_last_file = f.name();
+      bd_last_traj_file = somo_dir + SLASH + "bd" + SLASH + filename + "-tra.txt";
+      cout << "last tra file " << bd_last_traj_file << endl;
       QTextStream ts(&f);
       ts <<
          QString(
@@ -1588,7 +1593,6 @@ int US_Hydrodyn::compute_pb_normals()
 int US_Hydrodyn::run_browflex()
 {
    // possible setup a new text window for the browflex runs?
-   QString dir = somo_dir + SLASH + "bd";
    QString prog = 
       USglobal->config_list.system_dir + SLASH +
 #if defined(BIN64)
@@ -1609,26 +1613,22 @@ int US_Hydrodyn::run_browflex()
       QFileInfo qfi(prog);
       if ( !qfi.exists() )
       {
-         QColor save_color = editor->color();
-         editor->setColor("red");
-         editor->append(QString("Browflex program '%1' does not exist\n").arg(prog));
-         editor->setColor(save_color);
+         editor_msg("red", QString("Browflex program '%1' does not exist\n").arg(prog));
          return -1;
       }
       if ( !qfi.isExecutable() )
       {
-         QColor save_color = editor->color();
-         editor->setColor("red");
-         editor->append(QString("Browflex program '%1' is not executable\n").arg(prog));
-         editor->setColor(save_color);
+         editor_msg("red", QString("Browflex program '%1' is not executable\n").arg(prog));
          return -1;
       }
    }
 
-   QString browfile = 
-      project + QString("_%1").arg(current_model + 1) +
-      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
-      + "-bf-main.txt\n" ;
+   QFileInfo fi(bd_last_file);
+   QString browfile = fi.fileName();
+      //      project + QString("_%1").arg(current_model + 1) +
+      //      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
+      //      + "-bf-main.txt\n" ;
+   QString dir = fi.dirPath();
 
    cout << QString("run browflex dir <%1> prog <%2> stdin <%3>\n")
       .arg(dir)
@@ -1642,6 +1642,7 @@ int US_Hydrodyn::run_browflex()
    connect( browflex, SIGNAL(processExited()), this, SLOT(browflex_processExited()) );
    connect( browflex, SIGNAL(launchFinished()), this, SLOT(browflex_launchFinished()) );
 
+   editor->append("\n\nStarting Browflex\n");
    browflex->launch( browfile );
 
    return 0;
@@ -1649,39 +1650,33 @@ int US_Hydrodyn::run_browflex()
 
 void US_Hydrodyn::browflex_readFromStdout()
 {
-   QColor save_color = editor->color();
    while ( browflex->canReadLineStdout() )
    {
-      editor->setColor("brown");
-      editor->append(browflex->readLineStdout() + "\n");
-      editor->setColor(save_color);
+      editor_msg("brown", browflex->readLineStdout() + "\n");
    }
-   qApp->processEvents();
+   //  qApp->processEvents();
 }
    
 void US_Hydrodyn::browflex_readFromStderr()
 {
-   QColor save_color = editor->color();
    while ( browflex->canReadLineStderr() )
    {
-      editor->setColor("red");
-      editor->append(browflex->readLineStderr() + "\n");
-      editor->setColor(save_color);
+      editor_msg("red", browflex->readLineStderr() + "\n");
    }
-   qApp->processEvents();
+   //  qApp->processEvents();
 }
    
 void US_Hydrodyn::browflex_processExited()
 {
-   QColor save_color = editor->color();
-   editor->setColor("brown");
-   editor->append("Browflex process exited\n");
-   editor->setColor(save_color);
+   //   for ( int i = 0; i < 10000; i++ )
+   //   {
    browflex_readFromStderr();
    browflex_readFromStdout();
+      //   }
    disconnect( browflex, SIGNAL(readyReadStdout()), 0, 0);
    disconnect( browflex, SIGNAL(readyReadStderr()), 0, 0);
    disconnect( browflex, SIGNAL(processExited()), 0, 0);
+   editor->append("Browflex finished.\n");
    for ( current_model = 0; 
          current_model < (unsigned int)lb_model->numRows(); 
          current_model++)
@@ -1692,48 +1687,604 @@ void US_Hydrodyn::browflex_processExited()
          {
             create_anaflex_files();
             anaflex_ready_to_run = true;
-         } else {
-            bd_anaflex_enables(true);
          }
          break;
       }
    }
+   bd_anaflex_enables(true);
+   pb_stop_calc->setEnabled(false);
 }
    
 void US_Hydrodyn::browflex_launchFinished()
 {
-   QColor save_color = editor->color();
-   editor->setColor("brown");
-   editor->append("Browflex launch exited\n");
-   editor->setColor(save_color);
+   editor_msg("brown", "Browflex launch exited\n");
    disconnect( browflex, SIGNAL(launchFinished()), 0, 0);
+   bd_anaflex_enables(false);
+   pb_stop_calc->setEnabled(true);
 }
    
 void US_Hydrodyn::bd_anaflex_enables( bool flag )
 {
    // this needs better logic
 
-   pb_bd_prepare->setEnabled(flag);
+   if ( ( browflex && browflex->isRunning() ) ||
+        ( anaflex && anaflex->isRunning() ) )
+   {
+      pb_bd_prepare->setEnabled(false);
+      pb_bd_load->setEnabled(false);
+      pb_bd_edit->setEnabled(false);
+      pb_bd_run->setEnabled(false);
+      pb_bd_load_results->setEnabled(false);
+      
+      pb_anaflex_prepare->setEnabled(false);
+      pb_anaflex_load->setEnabled(false);
+      pb_anaflex_edit->setEnabled(false);
+      pb_anaflex_run->setEnabled(false);
+      pb_anaflex_load_results->setEnabled(false);
+      return;
+   }
+
+   // any models selected
+   int models = 0;
+   for(int i = 0; i < lb_model->numRows(); i++) {
+      if ( lb_model->isSelected(i) ) {
+         models++;
+      }
+   }
+
+   pb_bd_prepare->setEnabled((bool) models);
    pb_bd_load->setEnabled(true);
-   pb_bd_edit->setEnabled(flag);
+   pb_bd_edit->setEnabled(true);
    pb_bd_run->setEnabled(flag && bd_ready_to_run);
-   pb_bd_load_results->setEnabled(true);
+   pb_bd_load_results->setEnabled(bd_last_file != "");
 
    pb_anaflex_prepare->setEnabled(flag);
    pb_anaflex_load->setEnabled(true);
-   pb_anaflex_edit->setEnabled(flag);
+   pb_anaflex_edit->setEnabled(true);
    pb_anaflex_run->setEnabled(flag && anaflex_ready_to_run);
-   pb_anaflex_load_results->setEnabled(true);
+   pb_anaflex_load_results->setEnabled(anaflex_last_file != "");
+}
+
+void US_Hydrodyn::bd_load_error( QString filename )
+{
+   editor_msg("red", QString(tr("\nFile %1 does not look like a Browflex file.\n")).arg(filename));
+}
+
+bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
+{
+   // make sure this is a valid browflex main file
+   /* 
+--- example broflex file ----:
+1BPI_1-bd-4-4-4-bf-log.txt            !logfile
+1BPI_1-bd-4-4-4-bf-tra.txt            !trajectory file
+1BPI_1-bd-4-4-4-bf-molec.txt          !molecular file
+1BPI_1-bd-4-4-4-bf-initc.txt          !initial coords. file
+-                                       !Flow file
+-                                       !Elec file
+-                                       !Wall file
+-                                       !Spec file
+1BPI_1-bd-4-4-4-bf-brown.txt          !Brownian data file
+*
+--- end example --- */
+   if ( !filename.isEmpty() )
+   {
+      QFileInfo fi(filename);
+      QString dir = fi.dirPath();
+      // check for file format
+      QFile f( filename );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         return false;
+      }
+      QTextStream ts( &f );
+      QString tmp_filename;
+      // logfile
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return false;
+         }
+      } else {
+         f.close();
+         return false;
+      }
+      // traj file (don't view)
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return false;
+         }
+      } else {
+         f.close();
+         return false;
+      }
+      // molecular file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return false;
+         }
+      } else {
+         f.close();
+         return false;
+      }
+      // initial coords. file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return false;
+         }
+      } else {
+         f.close();
+         return false;
+      }
+      // flow file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( tmp_filename != "-" &&
+              !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return false;
+         }
+      } else {
+         f.close();
+         return false;
+      }
+      // elec file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( tmp_filename != "-" &&
+              !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return false;
+         }
+      } else {
+         f.close();
+         return false;
+      }
+      // wall file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( tmp_filename != "-" &&
+              !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return false;
+         }
+      } else {
+         f.close();
+         return false;
+      }
+      // spec file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( tmp_filename != "-" &&
+              !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return false;
+         }
+      } else {
+         f.close();
+         return false;
+      }
+      // brownian data file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if (!tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return false;
+         }
+      } else {
+         f.close();
+         return false;
+      }
+      f.close();
+   } else {
+      return false;
+   }
+   return true;
 }
 
 void US_Hydrodyn::bd_load()
 {
+   QString filename;
+   if ( bd_last_file != "" )
+   {
+      // ask if use existing or new
+      QFileInfo fi(bd_last_file);
+      switch (
+              QMessageBox::question(
+                                    this,
+                                    tr("Load Browflex Files"),
+                                    QString(tr("Replace current Browflex file ") + fi.fileName() + "?"),
+                                    QMessageBox::Yes, 
+                                    QMessageBox::No,
+                                    QMessageBox::NoButton
+                                    ) )
+      {
+      case QMessageBox::Yes : 
+         filename = QFileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+         break;
+      case QMessageBox::No : 
+         return;
+         break;
+      case QMessageBox::Cancel :
+      default :
+         return;
+         break;
+      }
+   } else {
+      filename = QFileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+   }
+   // check to make sure it is a good browflex file
+      
+   if ( !filename.isEmpty() )
+   {
+      QFileInfo fi(filename);
+      QString dir = fi.dirPath();
+      QString traj_file = "";
+      // check for file format
+      QFile f( filename );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         editor_msg("red",QString(tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
+         return;
+      }
+      if ( !bd_valid_browflex_main( filename ) )
+      {
+         bd_load_error(filename);
+         f.close();
+         return;
+      }
+      QTextStream ts( &f );
+      QString tmp_filename;
+      // logfile
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            bd_load_error(filename);
+            f.close();
+            return;
+         }
+      } else {
+         bd_load_error(filename);
+         f.close();
+         return;
+      }
+      // traj file (don't view)
+      if ( !ts.atEnd() )
+      {
+         ts >> traj_file;
+         ts.readLine();
+      } else {
+         bd_load_error(filename);
+         f.close();
+         return;
+      }
+      // molecular file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+      } else {
+         bd_load_error(filename);
+         f.close();
+         return;
+      }
+      // initial coords. file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+      } else {
+         bd_load_error(filename);
+         f.close();
+         return;
+      }
+      // flow file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+      } else {
+         bd_load_error(filename);
+         f.close();
+         return;
+      }
+      // elec file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+      } else {
+         bd_load_error(filename);
+         f.close();
+         return;
+      }
+      // wall file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+      } else {
+         bd_load_error(filename);
+         f.close();
+         return;
+      }
+      // spec file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+      } else {
+         bd_load_error(filename);
+         f.close();
+         return;
+      }
+      // brownian data file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+      } else {
+         bd_load_error(filename);
+         f.close();
+         return;
+      }
+      f.close();
+      editor->append(QString("Browflex file %1 loaded\n").arg(filename));
+      bd_last_file = filename;
+      bd_last_traj_file = dir + SLASH + traj_file;
+      cout << "last tra file " << bd_last_traj_file << endl;
+      bd_ready_to_run = true;
+      bd_anaflex_enables(true);
+   }
+}
+
+void US_Hydrodyn::bd_edit_util( QString dir, QString filename )
+{
+   if ( filename != "-" && filename != "*" )
+   {
+      filename = dir + SLASH + filename;
+      QFileInfo fi(filename);
+      if( fi.exists() && fi.isReadable() )
+      {
+         view_file( filename );
+      } else {
+         if( !fi.exists() )
+         {
+            editor_msg("red", QString(tr("\nCould not open file %1, does not exist.\n")).arg(filename));
+         } else {
+            editor_msg("red", QString(tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
+         }
+      }
+   }
 }
 
 void US_Hydrodyn::bd_edit()
 {
+   QString filename;
+   if ( bd_last_file != "" )
+   {
+      // ask if use existing or new
+      QFileInfo fi(bd_last_file);
+      switch (
+              QMessageBox::question(
+                                    this,
+                                    tr("View/Edit Browflex Files"),
+                                    QString(tr("View/Edit current file ") + fi.fileName() + "?"),
+                                    QMessageBox::Yes, 
+                                    QMessageBox::No,
+                                    QMessageBox::Cancel
+                                    ) )
+      {
+      case QMessageBox::Yes : 
+         filename = bd_last_file;
+         break;
+      case QMessageBox::No : 
+         filename = QFileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+         break;
+      case QMessageBox::Cancel :
+      default :
+         return;
+         break;
+      }
+   } else {
+      filename = QFileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+   }
+   if ( !filename.isEmpty() )
+   {
+      QFileInfo fi(filename);
+      QString dir = fi.dirPath();
+      // open file and view this and all associated files if first line ends with .txt or .TXT
+      QFile f( filename );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         editor_msg("red", QString(tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
+         return;
+      }
+      view_file( filename );
+      if ( !bd_valid_browflex_main( filename ) )
+      {
+         f.close();
+         return;
+      }
+      switch (
+              QMessageBox::question(
+                                    this,
+                                    tr("Load Browflex Files"),
+                                    QString(tr(fi.fileName() + " appears to be a 'main' Browflex file, open all ancillary files? ")),
+                                    QMessageBox::Yes, 
+                                    QMessageBox::No,
+                                    QMessageBox::NoButton
+                                    ) )
+      {
+      case QMessageBox::No : 
+         f.close();
+         return;
+         break;
+      case QMessageBox::Yes : 
+      default :
+         break;
+      }
+      
+      QTextStream ts( &f );
+      QString tmp_filename;
+      // logfile
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return;
+         }
+         bd_edit_util( dir, tmp_filename );
+      } else {
+         f.close();
+         return;
+      }
+      // traj file (don't view)
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+      } else {
+         f.close();
+         return;
+      }
+      // molecular file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         bd_edit_util( dir, tmp_filename );
+      } else {
+         f.close();
+         return;
+      }
+      // initial coords. file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         bd_edit_util( dir, tmp_filename );
+      } else {
+         f.close();
+         return;
+      }
+      // flow file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         bd_edit_util( dir, tmp_filename );
+      } else {
+         f.close();
+         return;
+      }
+      // elec file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         bd_edit_util( dir, tmp_filename );
+      } else {
+         f.close();
+         return;
+      }
+      // wall file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         bd_edit_util( dir, tmp_filename );
+      } else {
+         f.close();
+         return;
+      }
+      // spec file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         bd_edit_util( dir, tmp_filename );
+      } else {
+         f.close();
+         return;
+      }
+      // brownian data file
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         bd_edit_util( dir, tmp_filename );
+      } else {
+         f.close();
+         return;
+      }
+      f.close();
+   }
 }
 
 void US_Hydrodyn::bd_load_results()
 {
+   // check to make sure browflex file is ok
+   QString filename = bd_last_file;
+   if ( !bd_valid_browflex_main( filename ) )
+   {
+      bd_load_error(filename);
+      return;
+   }
+   QFileInfo fi_traj( bd_last_traj_file );
+   if( !fi_traj.exists() )
+   {
+      editor_msg("red", QString(tr("\nCould not open trajectory file %1, does not exist.\n")).arg(filename));
+      return;
+   }
+   if( !fi_traj.isReadable() )
+   {
+      editor_msg("red", QString(tr("\nCould not open trajectory file %1 for reading. Check permissions.\n")).arg(filename));
+      return;
+   }
+   if( !fi_traj.size() )
+   {
+      editor_msg("red", QString(tr("\nTrajectory file %1 is empty!\n")).arg(filename));
+      return;
+   }
 }
+
