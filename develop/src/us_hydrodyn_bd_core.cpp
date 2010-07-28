@@ -26,13 +26,14 @@ ostream& operator<<(ostream& out, const point& c)
    return out;
 }
 
-void US_Hydrodyn::calc_bd()
+void US_Hydrodyn::bd_prepare()
 {
-   pb_bd->setEnabled( false );
+   bd_ready_to_run = false;
+   bd_anaflex_enables(false);
+
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_somo->setEnabled(false);
-   pb_bd->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
    pb_grid->setEnabled(false);
    display_default_differences();
@@ -52,7 +53,9 @@ void US_Hydrodyn::calc_bd()
    if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
-      pb_bd->setEnabled(true);
+
+      bd_anaflex_enables(true);
+
       pb_somo->setEnabled(true);
       pb_grid_pdb->setEnabled(true);
       progress->reset();
@@ -100,7 +103,7 @@ void US_Hydrodyn::calc_bd()
             any_errors = true;
          }
          write_contact_plot( 
-                            somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+                            somo_dir + SLASH + "bd" + SLASH + project + QString("_%1").arg(current_model + 1) +
                             QString("-pdb_contact-%1.txt").arg(bd_options.threshold_pb_pb)
                             , &model_vector_as_loaded[current_model]
                             , bd_options.threshold_pb_pb );
@@ -108,7 +111,7 @@ void US_Hydrodyn::calc_bd()
       if (stopFlag)
       {
          editor->append("Stopped by user\n\n");
-         pb_bd->setEnabled(true);
+         bd_anaflex_enables(true);
          pb_somo->setEnabled(true);
          pb_grid_pdb->setEnabled(true);
          progress->reset();
@@ -130,14 +133,11 @@ void US_Hydrodyn::calc_bd()
          if ( lb_model->isSelected(current_model) )
          {
             QString fname = 
-               somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+               somo_dir + SLASH + "bd" + SLASH + project + QString("_%1").arg(current_model + 1) +
                QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "");
             write_pdb( fname, &bead_models[current_model] );
             create_browflex_files();
-            if ( bd_options.run_browflex )
-            {
-               run_browflex();
-            }
+            bd_ready_to_run = true;
             break;
          }
       }
@@ -147,12 +147,16 @@ void US_Hydrodyn::calc_bd()
       editor->append("Errors encountered\n");
    }
 
-   pb_bd->setEnabled( ( browflex && browflex->isRunning() ) ? false : true );
    pb_somo->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
    pb_grid->setEnabled(true);
-   pb_bd->setEnabled( ( ( browflex && browflex->isRunning() ) ||
-                        ( anaflex && anaflex->isRunning() ) ) ? true : false );
+   bd_anaflex_enables( ( ( browflex && browflex->isRunning() ) ||
+                         ( anaflex && anaflex->isRunning() ) ) ? false : true );
+}
+
+void US_Hydrodyn::bd_run()
+{
+   run_browflex();
 }
 
 // ---------- create browflex files
@@ -165,7 +169,7 @@ int US_Hydrodyn::create_browflex_files()
       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
       + "-bf";
    QString basename = 
-      somo_dir + SLASH + filename;
+      somo_dir + SLASH + "bd" + SLASH + filename;
 
    // browflex-main.txt
    QFile f;
@@ -1060,7 +1064,7 @@ int US_Hydrodyn::compute_bd_connections()
    current_model = models_to_proc[0];
 
    write_contact_plot(
-                      somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+                      somo_dir + SLASH + "bd" + SLASH + project + QString("_%1").arg(current_model + 1) +
                       QString("-bead_contact-%1.txt").arg(bd_options.threshold_pb_pb)
                       , &bead_models[current_model]
                       , bd_options.threshold_pb_pb
@@ -1584,7 +1588,7 @@ int US_Hydrodyn::compute_pb_normals()
 int US_Hydrodyn::run_browflex()
 {
    // possible setup a new text window for the browflex runs?
-   QString dir = somo_dir;
+   QString dir = somo_dir + SLASH + "bd";
    QString prog = 
       USglobal->config_list.system_dir + SLASH +
 #if defined(BIN64)
@@ -1687,9 +1691,9 @@ void US_Hydrodyn::browflex_processExited()
          if ( anaflex_options.run_anaflex )
          {
             create_anaflex_files();
-            run_anaflex();
+            anaflex_ready_to_run = true;
          } else {
-            pb_bd->setEnabled( true );
+            bd_anaflex_enables(true);
          }
          break;
       }
@@ -1705,3 +1709,31 @@ void US_Hydrodyn::browflex_launchFinished()
    disconnect( browflex, SIGNAL(launchFinished()), 0, 0);
 }
    
+void US_Hydrodyn::bd_anaflex_enables( bool flag )
+{
+   // this needs better logic
+
+   pb_bd_prepare->setEnabled(flag);
+   pb_bd_load->setEnabled(true);
+   pb_bd_edit->setEnabled(flag);
+   pb_bd_run->setEnabled(flag && bd_ready_to_run);
+   pb_bd_load_results->setEnabled(true);
+
+   pb_anaflex_prepare->setEnabled(flag);
+   pb_anaflex_load->setEnabled(true);
+   pb_anaflex_edit->setEnabled(flag);
+   pb_anaflex_run->setEnabled(flag && anaflex_ready_to_run);
+   pb_anaflex_load_results->setEnabled(true);
+}
+
+void US_Hydrodyn::bd_load()
+{
+}
+
+void US_Hydrodyn::bd_edit()
+{
+}
+
+void US_Hydrodyn::bd_load_results()
+{
+}

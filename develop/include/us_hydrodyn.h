@@ -223,7 +223,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_select_residue_file;
       QPushButton *pb_load_pdb;
       QPushButton *pb_pdb_saxs;
-      QPushButton *pb_bd;
       QPushButton *pb_bead_saxs;
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -239,6 +238,21 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_grid;
       QPushButton *pb_view_asa;
       QPushButton *pb_view_bead_model;
+
+      QPushButton *pb_dmd_run;
+
+      //      QPushButton *pb_bd_mode;
+      QPushButton *pb_bd_prepare;
+      QPushButton *pb_bd_load;
+      QPushButton *pb_bd_edit;
+      QPushButton *pb_bd_run;
+      QPushButton *pb_bd_load_results;
+
+      QPushButton *pb_anaflex_prepare;
+      QPushButton *pb_anaflex_load;
+      QPushButton *pb_anaflex_edit;
+      QPushButton *pb_anaflex_run;
+      QPushButton *pb_anaflex_load_results;
 
       QProgressBar *progress;
       TextEdit *e;
@@ -342,7 +356,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool install_new_version();         
       // checks for new versions of somo.config, .atom, .saxs_atom, .hybrid, .residue and backs up previous versions
 
+
       // bd private data
+      bool bd_ready_to_run;
+      bool anaflex_ready_to_run;
 
       //    next three are keyed upon string "bead#~bead#"
       map < QString, bool > connection_active;
@@ -469,8 +486,18 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void set_overwrite();
       void set_saveParams();
 
+      // dmd functions:
+      void dmd_run();
+
       // bd functions:
-      void calc_bd();
+      //      void bd_mode();
+      void bd_anaflex_enables( bool flag ); // turns buttons on/off based upon current status
+      void bd_prepare();
+      void bd_load();
+      void bd_edit();
+      void bd_run();
+      void bd_load_results();
+
       int create_browflex_files();
       int run_browflex();
 
@@ -493,6 +520,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int write_contact_plot( QString fname, vector < PDB_atom > *model, float thresh );
 
       // anaflex functions
+
+      void anaflex_prepare();
+      void anaflex_load();
+      void anaflex_edit();
+      void anaflex_run();
+      void anaflex_load_results();
 
       int create_anaflex_files();
       int create_anaflex_files( int use_mode, int sub_mode = 0 );

@@ -394,7 +394,7 @@ int US_Hydrodyn::run_anaflex()
    {
       use_mode = 9;
    }
-   QString dir = somo_dir;
+   QString dir = somo_dir + SLASH + "bd";
    QString prog = 
       USglobal->config_list.system_dir + SLASH +
 #if defined(BIN64)
@@ -494,7 +494,7 @@ void US_Hydrodyn::anaflex_processExited()
    {
       if ( lb_model->isSelected(current_model) )
       {
-         pb_bd->setEnabled( true );
+         bd_anaflex_enables( true );
          break;
       }
    }
@@ -507,4 +507,24 @@ void US_Hydrodyn::anaflex_launchFinished()
    editor->append("Anaflex launch exited\n");
    editor->setColor(save_color);
    disconnect( anaflex, SIGNAL(launchFinished()), 0, 0);
+}
+
+void US_Hydrodyn::anaflex_prepare()
+{
+}
+
+void US_Hydrodyn::anaflex_load()
+{
+}
+
+void US_Hydrodyn::anaflex_edit()
+{
+}
+
+void US_Hydrodyn::anaflex_run()
+{
+}
+
+void US_Hydrodyn::anaflex_load_results()
+{
 }
