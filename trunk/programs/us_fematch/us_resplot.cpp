@@ -378,8 +378,6 @@ void US_ResidPlot::plot_data()
 // plot the experimental data
 void US_ResidPlot::plot_edata()
 {
-//double ptfac=0.82;
-double ptfac=0.99;
    data_plot1->detachItems();
    data_plot1->clear();
 
@@ -449,7 +447,6 @@ double ptfac=0.99;
    {  // plot experimental curves
       points   = edata->scanData[ 0 ].readings.size();
       count    = edata->scanData.size();
-points=qRound(points*ptfac);
 
       for ( jj = 0; jj < points; jj++ )
       {  // get radii (x) just once
@@ -481,7 +478,6 @@ points=qRound(points*ptfac);
    {  // plot simulation curves
       points   = sdata->scanData[ 0 ].readings.size();
       count    = sdata->scanData.size();
-points=qRound(points*ptfac);
 
       for ( jj = 0; jj < points; jj++ )
       {  // get radii (x) just once
@@ -527,7 +523,6 @@ points=qRound(points*ptfac);
 // plot the residual data
 void US_ResidPlot::plot_rdata()
 {
-double ptfac=0.82;
    data_plot2->detachItems();
    data_plot2->clear();
 
@@ -585,7 +580,6 @@ double ptfac=0.82;
    {  // plot residuals
       points   = sdata->scanData[ 0 ].readings.size();
       count    = sdata->scanData.size();
-points=qRound(points*ptfac);
 
       for ( jj = 0; jj < points; jj++ )
       {  // get radii (x) just once
@@ -640,7 +634,6 @@ points=qRound(points*ptfac);
    else if ( do_plttin )
    {  // plot time-invariant noise
       points   = edata->scanData[ 0 ].readings.size();
-points=qRound(points*ptfac);
 
       for ( jj = 0; jj < points; jj++ )
       {  // accumulate radii and noise values
@@ -677,7 +670,6 @@ points=qRound(points*ptfac);
    {  // plot random noise
       points   = sdata->scanData[ 0 ].readings.size();
       count    = sdata->scanData.size();
-points=qRound(points*ptfac);
 
       for ( jj = 0; jj < points; jj++ )
       {  // get radii (x) just once
@@ -732,7 +724,6 @@ points=qRound(points*ptfac);
 
          points   = sdata->scanData[ 0 ].readings.size();
          count    = sdata->scanData.size();
-points=qRound(points*ptfac);
          resids .resize( count );
          resscan.resize( points );
 

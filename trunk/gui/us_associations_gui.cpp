@@ -1,4 +1,4 @@
-//! \file us_assiciations_gui.cpp
+//! \file us_associations_gui.cpp
 
 #include "us_associations_gui.h"
 #include "us_gui_settings.h"

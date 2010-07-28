@@ -723,7 +723,8 @@ qDebug() << "      sdata->cMN" << sdata->value(nscan-1,nconc-1);
             vv         = sdata->value( ii, jj++ );
 //qDebug() << "       JJ rr vv" << jj << rr << vv;
 
-            if ( rr > rl  &&  vv < vh )
+            //if ( rr > rl  &&  vv < vh )
+            if ( rr > rl )
             {
                r[ count   ] = rr;
                v[ count++ ] = vv;
@@ -1573,97 +1574,42 @@ void US_FeMatch::simulate_model( )
    int    nscan   = rdata->scanData.size();
    int    nconc   = edata->x.size();
    double radlo   = edata->radius( 0 );
-   //double radlo   = edata->meniscus;
    double radhi   = edata->radius( nconc - 1 );
-   double time1   = rdata->scanData[ 0         ].seconds;
-   double time2   = rdata->scanData[ nscan - 1 ].seconds;
-   sdata          = new US_DataIO2::RawData();
-   //double tcorrec = US_Math2::time_correction( dataList );
-   //time1         -= tcorrec;
-   //time2         -= tcorrec;
+   double rmsd    = 0.0;
 qDebug() << " nscan nconc" << nscan << nconc;
 qDebug() << " radlo radhi" << radlo << radhi;
 qDebug() << " baseline plateau" << edata->baseline << edata->plateau;
 
-   // initialize simulation parameters using raw data information
-   simparams.simpoints         = 200;
+   sdata          = new US_DataIO2::RawData();
+
+   // initialize simulation parameters using edited data information
+   simparams.initFromData( *edata );
+
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;
    simparams.radial_resolution = ( radhi - radlo ) / (double)( nconc - 1 );
-   //simparams.meniscus          = radlo;
-   simparams.meniscus          = edata->meniscus;
-   simparams.bottom            = radhi;
-//simparams.bottom            = 6.95;
-   simparams.rnoise            = 0.0;
-   simparams.tinoise           = 0.0;
-   simparams.rinoise           = 0.0;
-   simparams.rotor             = 1;
-   simparams.band_forming      = false;
-   simparams.band_volume       = 0.015;
-qDebug() << "  rad_reso" << simparams.radial_resolution;
-qDebug() << "   meniscus bottom" << simparams.meniscus << simparams.bottom;
 
    simparams.band_firstScanIsConcentration   = false;
-   //simparams.band_firstScanIsConcentration   = true;
-   simparams.mesh_radius.clear();
-   simparams.speed_step .clear();
-   US_SimulationParameters::SpeedProfile sp;
-   sp.duration_hours    = (int)( time2 / 3600.0 );
-   sp.duration_minutes  = (int)( time2 / 60.0 ) - ( sp.duration_hours * 60 );
-   sp.delay_hours       = (int)( time1 / 3600.0 );
-   sp.delay_minutes     = ( time1 / 60.0 ) - ( (double)sp.delay_hours * 60.0 );
-   sp.scans             = nscan;
-   sp.acceleration      = 400;
-   sp.rotorspeed        = (int)rdata->scanData[ 0 ].rpm;
-   sp.acceleration_flag = false;
-   simparams.speed_step << sp;
-qDebug() << "  duration_hours  " << sp.duration_hours;
-qDebug() << "  duration_minutes" << sp.duration_minutes;
-qDebug() << "  delay_hours  " << sp.delay_hours;
-qDebug() << "  delay_minutes" << sp.delay_minutes;
+qDebug() << "  duration_hours  " << simparams.speed_step[0].duration_hours;
+qDebug() << "  duration_minutes" << simparams.speed_step[0].duration_minutes;
+qDebug() << "  delay_hours  " << simparams.speed_step[0].delay_hours;
+qDebug() << "  delay_minutes" << simparams.speed_step[0].delay_minutes;
 
    // make a simulation copy of the experimental data without actual readings
-   sdata->type[0]     = rdata->type[0];
-   sdata->type[1]     = rdata->type[1];
 
-   for ( int jj = 0; jj < 16; jj++ )
-      sdata->rawGUID[ jj ] = rdata->rawGUID[ jj ];
+   US_AstfemMath::initSimData( *sdata, *edata,
+         model.components[ 0 ].signal_concentration );
 
    sdata->cell        = rdata->cell;
    sdata->channel     = rdata->channel;
    sdata->description = rdata->description;
 qDebug() << "  sdata->description" << sdata->description;
-   sdata->x.resize( nconc );
-
-   for ( int jj = 0; jj < nconc; jj++ )
-   {
-      sdata->x[ jj ]     = edata->x[ jj ];
-   }
 qDebug() << "   sdata->x0" << sdata->radius(0);
 qDebug() << "   sdata->xN" << sdata->radius(nconc-1);
-qDebug() << "   rdata->cN" << rdata->value(0,0);
+qDebug() << "   rdata->c0" << rdata->value(0,0);
 qDebug() << "   rdata->cN" << rdata->value(0,nconc-1);
-
-   // use same concentration value for all of first scan
-   reading.value     = model.components[ 0 ].signal_concentration;
-   reading.stdDev    = 0.0;
-   sdata->scanData.clear();
-
-   for ( int ii = 0; ii < nscan; ii++ )
-   {  // initialize readings for all sim data scans
-      US_DataIO2::Scan sscan  = edata->scanData[ ii ];
-      //sscan.seconds -= tcorrec;
-
-      for ( int jj = 0; jj < nconc; jj++ )
-      {
-         sscan.readings[ jj ] = reading;
-      }
-
-      sdata->scanData.append( sscan );
-      // set values to zero for 2nd and subsequent scans
-      reading.value     = 0.0;
-   }
-
+qDebug() << "   edata->c0" << edata->value(0,0);
+qDebug() << "   edata->cN" << edata->value(0,nconc-1);
 qDebug() << "   sdata->c00" << sdata->value(0,0);
 qDebug() << "   sdata->c0N" << sdata->value(0,nconc-1);
 qDebug() << "   sdata->cM0" << sdata->value(nscan-1,0);
@@ -1686,6 +1632,11 @@ qDebug() << "   sdata->c00" << sdata->value(0,0);
 qDebug() << "   sdata->c0N" << sdata->value(0,nconc-1);
 qDebug() << "   sdata->cM0" << sdata->value(nscan-1,0);
 qDebug() << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
+
+   rmsd        = US_AstfemMath::variance( *sdata, *edata );
+   le_variance->setText( QString::number( rmsd ) );
+   rmsd        = sqrt( rmsd );
+   le_rmsd    ->setText( QString::number( rmsd ) );
 
    haveSim     = true;
    pb_distrib->setEnabled( true );
@@ -1788,6 +1739,11 @@ double US_FeMatch::interp_sval( double xv, double* sx, double* sy, int ssize )
 {
    for ( int jj = 1; jj < ssize; jj++ )
    {
+      if ( xv == sx[ jj ] )
+      {
+         return sy[ jj ];
+      }
+
       if ( xv < sx[ jj ] )
       {  // given x lower than array x: interpolate between point and previous
          double dx = sx[ jj ] - sx[ jj - 1 ];
@@ -2130,8 +2086,8 @@ void US_FeMatch::calc_residuals()
    double* sy     = new double[ ssize ];
    double  yval;
    double  sval;
-   double  rl     = edata->radius( 0 );
-   double  vh     = edata->value( scanCount - 1, dsize - 1 );
+   //double  rl     = edata->radius( 0 );
+   //double  vh     = edata->value( scanCount - 1, dsize - 1 );
    double  rmsd   = 0.0;
 
    QVector< double > resscan;
@@ -2163,8 +2119,8 @@ qDebug() << "CalcRes: dsize ssize" << dsize << ssize;
          sval          = interp_sval( xx[ jj ], sx, sy, ssize );
          yval          = sval - edata->value( ii, jj );
 
-         if ( xx[ jj ] < rl  ||  sval > vh )
-            yval          = 0.0;
+         //if ( xx[ jj ] < rl )
+         //   yval          = 0.0;
 
          rmsd         += sq( yval );
          resscan[ jj ] = yval;

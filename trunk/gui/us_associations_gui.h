@@ -1,4 +1,4 @@
-//! \file associationsi_gui.h
+//! \file associations_gui.h
 #ifndef US_ASSOCIATIONS_GUI_H
 #define US_ASSOCIATIONS_GUI_H
 
