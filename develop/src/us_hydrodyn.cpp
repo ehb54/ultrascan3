@@ -173,6 +173,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    rasmol = NULL;
    browflex = NULL;
    anaflex = NULL;
+   bd_anaflex_enables(false);
    chdir(somo_tmp_dir);
    if ( advanced_config.debug_5 )
    {
@@ -806,8 +807,6 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_help, j, 0);
    background->addWidget(progress, j, 1);
    background->addWidget(lbl_core_progress, j, 2);
-
-   bd_anaflex_enables(false);
 }
 
 
