@@ -1,6 +1,7 @@
 //! \file us_astfem_math.cpp
 #include "us_astfem_math.h"
 #include "us_math2.h"
+#include "us_hardware.h"
 
 void US_AstfemMath::interpolate_C0( MfemInitial& C0, double* C1, 
       QVector< double >& x )
@@ -1806,6 +1807,138 @@ void US_AstfemMath::DefineGaussian( int nGauss, double** Gs2 )
    delete [] w;
    delete [] Gs1;
 }
+
+// initialize a simulation RawData object to have sizes,ranges,controls
+//   that mirror those of an experimental EditedData object
+void US_AstfemMath::initSimData( US_DataIO2::RawData& simdata,
+      US_DataIO2::EditedData& editdata, double concval1=0.0 )
+{
+   US_DataIO2::Reading reading;
+
+   int    nconc = editdata.scanData[ 0 ].readings.size();
+   int    nscan = editdata.scanData.size();
+
+   // copy general control variable values
+   simdata.type[ 0 ]     = ' ';
+   simdata.type[ 1 ]     = ' ';
+
+   for ( int jj = 0; jj < 16; jj++ )
+      simdata.rawGUID[ jj ] = ' ';
+
+   simdata.cell          = editdata.cell.toInt();
+   simdata.channel       = editdata.channel.at( 0 ).toAscii();
+   simdata.description   = editdata.description;
+
+   simdata.x.resize( nconc );
+
+   for ( int jj = 0; jj < nconc; jj++ )
+      simdata.x[ jj ]       = editdata.x[ jj ];  // copy radius values
+
+   simdata.scanData.resize( nscan );
+   reading.value         = concval1;  // 1st scan constant concentration value
+   reading.stdDev        = 0.0;
+
+   for ( int ii = 0; ii < nscan; ii++ )
+   {  // loop to copy scans
+      US_DataIO2::Scan* escan = &editdata.scanData[ ii ];
+      US_DataIO2::Scan  sscan;
+
+      sscan.temperature      = escan->temperature;
+      sscan.rpm              = escan->rpm;
+      sscan.seconds          = escan->seconds;
+      sscan.omega2t          = escan->omega2t;
+      sscan.wavelength       = escan->wavelength;
+      sscan.plateau          = escan->plateau;
+      sscan.delta_r          = escan->delta_r;
+      sscan.interpolated     = escan->interpolated;
+
+      sscan.readings.resize( nconc );
+
+      for ( int jj = 0; jj < nconc; jj++ )
+      {  // set constant concentration value (usually zero)
+         sscan.readings[ jj ]   = reading;
+      }
+
+      simdata.scanData[ ii ] = sscan;
+
+      // set values to zero for 2nd and subsequent scans
+      reading.value          = 0.0;
+   }
+
+   return;
+}
+
+// calculate variance (average difference squared) between simulated and
+//  experimental data.
+double US_AstfemMath::variance( US_DataIO2::RawData&    simdata,
+                                US_DataIO2::EditedData& editdata )
+{
+   int    nscan = simdata .scanData.size();
+   int    kscan = editdata.scanData.size();
+   int    nconc = simdata .scanData[ 0 ].readings.size();
+   int    kconc = editdata.scanData[ 0 ].readings.size();
+   double vari  = 0.0;
+
+   if ( nscan != kscan )
+   {
+      qDebug() << "*WARNING* variance(): sim/exp scan counts differ";
+      nscan   = ( nscan < kscan ) ? nscan : kscan;
+   }
+
+   if ( nconc != kconc )
+   {
+      qDebug() << "*WARNING* variance(): sim/exp readings counts differ";
+      nconc   = ( nconc < kconc ) ? nconc : kconc;
+   }
+
+   for ( int ii = 0; ii < nscan; ii++ )
+   {  // accumulate sum of differences squared (readings in scans)
+
+      for ( int jj = 0; jj < nconc; jj++ )
+      {
+         vari   += sq( simdata.value( ii, jj ) - editdata.value( ii, jj ) );
+      }
+   }
+
+   vari  /= (double)( nscan * nconc );  // variance is average diff-squared
+
+   return vari;
+}
+
+// calculate bottom radius value using rotor/centerpiece information
+double US_AstfemMath::calc_bottom( double rpm, int rotor,
+      int centerp, int channel )
+{
+   QVector< US_Hardware::CenterpieceInfo > cp_list;
+   QVector< US_Hardware::RotorInfo >       rotor_list;
+   double bottom = 0.0;
+
+   if ( !US_Hardware::readCenterpieceInfo( cp_list ) )
+   {
+      qDebug() << "Unable to read centerpiece info";
+      return -1.0;
+   }
+
+   if ( !US_Hardware::readRotorInfo( rotor_list ) )
+   {
+      qDebug() << "Unable to read rotor info";
+      return -2.0;
+   }
+
+   bottom  = cp_list[ centerp ].bottom_position[ channel ];
+
+   if ( rpm != 0.0 )
+   {
+      for ( int ii = 0; ii < 5; ii++ )
+      {
+         bottom  += ( rotor_list[ rotor ].coefficient[ ii ]
+                      * pow( rpm, (double)ii ) );
+      }
+   }
+
+   return bottom;
+}
+
 #ifdef NEVER
 #if defined(DEBUG_ALLOC)
 

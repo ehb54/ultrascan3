@@ -70,6 +70,29 @@ class US_EXTERN US_AstfemMath
 
       static void   DefineGaussian( int, double** );
 
+      //! \brief Initialize simulation data from experimental
+      //! \param simdata  Reference to simulation Raw Data to initialize.
+      //! \param editdata Reference to experimental Edited Data to mirror.
+      //! \param conval1  Optional constant concentration value for first scan.
+      static void   initSimData   ( US_DataIO2::RawData&,
+                                    US_DataIO2::EditedData&, double );
+
+      //! \brief Calculate variance for Simulation-Experimental difference.
+      //! \param simdata  Reference to simulation Raw Data.
+      //! \param editdata Reference to experimental Edited Data.
+      //! \returns        The variance (average of differences squared) between
+      //!                 the simulated and experimental readings values.
+      static double variance      ( US_DataIO2::RawData&,
+                                    US_DataIO2::EditedData& );
+
+      //! \brief Calculate bottom radius from rotor/centerpiece information.
+      //! \param rpm       Rotor revolutions per minute.
+      //! \param rotor     Rotor index (default=1).
+      //! \param centerp   Centerpiece index (default=0).
+      //! \param channel   Channel index (default=0).
+      //! \returns         The calculated bottom radius value.
+      static double calc_bottom   ( double, int = 1, int = 0, int = 0 );
+
       //! \brief Initial concentration conditions
       class MfemInitial
       {

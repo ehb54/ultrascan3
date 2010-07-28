@@ -41,9 +41,11 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
  
    load_mfem_data( exp_data, af_data );
 
+   int npts      = af_data.scan[ 0 ].conc.size();
+   initial_npts  = ( initial_npts < npts ) ? initial_npts : npts;
 qDebug() << "RSA: rotorspeed" << af_params.first_speed;
 qDebug() << "RSA: simpoints" << af_params.simpoints;
-qDebug() << "RSA:  scan0size" << af_data.scan[0].conc.size();
+qDebug() << "RSA:  scan0size" << npts;
 qDebug() << "RSA:  af_c0size" << initial_npts;
    update_assocv();
    initialize_rg();  // Reaction group
@@ -1111,9 +1113,9 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
       //////////////////////%
 
       case (int)US_SimulationParameters::ASTFEM:
-         // Astfem without left hand refinement
-      case (int)US_SimulationParameters::ADAPTIVE:
-         // Adaptive
+         // Adaptive Space Time FE Mesh without left hand refinement
+      case (int)US_SimulationParameters::ASVFEM:
+         // Adaptive Space Volume FE Mesh
          qSort( nu.begin(), nu.end() );   // put nu in ascending order
 
          if ( nu[ 0 ] > 0 )

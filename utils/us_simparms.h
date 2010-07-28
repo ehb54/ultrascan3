@@ -4,17 +4,20 @@
 
 #include <QtCore>
 #include "us_extern.h"
+#include "us_dataIO2.h"
 
 class US_EXTERN US_SimulationParameters
 {
    public:
   
-   enum MeshType  { ASTFEM, CLAVERIE, MOVING_HAT, USER, ADAPTIVE };
+   enum MeshType  { ASTFEM, CLAVERIE, MOVING_HAT, USER, ASVFEM };
    enum GridType  { FIXED, MOVING };
 
    class SpeedProfile;
 
    US_SimulationParameters();
+
+   void initFromData( US_DataIO2::EditedData& );
 
    // The radii from a user-selected mesh file (mesh == USER)
    QVector< double > mesh_radius; 
