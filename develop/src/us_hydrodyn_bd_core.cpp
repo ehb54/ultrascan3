@@ -185,7 +185,9 @@ int US_Hydrodyn::create_browflex_files()
       }
       bd_last_file = f.name();
       bd_last_traj_file = somo_dir + SLASH + "bd" + SLASH + filename + "-tra.txt";
+      bd_last_molec_file = somo_dir + SLASH + "bd" + SLASH + filename + "-molec.txt";
       cout << "last tra file " << bd_last_traj_file << endl;
+      cout << "last molec file " << bd_last_molec_file << endl;
       QTextStream ts(&f);
       ts <<
          QString(
@@ -1953,6 +1955,7 @@ void US_Hydrodyn::bd_load()
       QFileInfo fi(filename);
       QString dir = fi.dirPath();
       QString traj_file = "";
+      QString molec_file = "";
       // check for file format
       QFile f( filename );
       if ( !f.open( IO_ReadOnly ) )
@@ -1997,7 +2000,7 @@ void US_Hydrodyn::bd_load()
       // molecular file
       if ( !ts.atEnd() )
       {
-         ts >> tmp_filename;
+         ts >> molec_file;
          ts.readLine();
       } else {
          bd_load_error(filename);
@@ -2068,7 +2071,9 @@ void US_Hydrodyn::bd_load()
       editor->append(QString("Browflex file %1 loaded\n").arg(filename));
       bd_last_file = filename;
       bd_last_traj_file = dir + SLASH + traj_file;
+      bd_last_molec_file = dir + SLASH + molec_file;
       cout << "last tra file " << bd_last_traj_file << endl;
+      cout << "last molec file " << bd_last_molec_file << endl;
       bd_ready_to_run = true;
       bd_anaflex_enables(true);
    }
@@ -2286,5 +2291,36 @@ void US_Hydrodyn::bd_load_results()
       editor_msg("red", QString(tr("\nTrajectory file %1 is empty!\n")).arg(filename));
       return;
    }
+   QFileInfo fi_molec( bd_last_molec_file );
+   if( !fi_molec.exists() )
+   {
+      editor_msg("red", QString(tr("\nCould not open molecular file %1, does not exist.\n")).arg(filename));
+      return;
+   }
+   if( !fi_molec.isReadable() )
+   {
+      editor_msg("red", QString(tr("\nCould not open molecular file %1 for reading. Check permissions.\n")).arg(filename));
+      return;
+   }
+   if( !fi_molec.size() )
+   {
+      editor_msg("red", QString(tr("\nMolecular file %1 is empty!\n")).arg(filename));
+      return;
+   }
+   // ok, now setup a type 9 anaflex run and run it.
+   editor->append("\ncreate anaflex files\n");
+   create_anaflex_files( 9, 0 );
+   editor->append("\nrun anaflex\n");
+   run_anaflex( 9, 0 );
+   editor->append("\nback from run anaflex\n");
+   // somehow wait for anaflex to finish and then postprocess the log file into bead models
+   // read traj file, molec file, build bead models & load them up! (into batch?)
+   // create bead model file
+   if ( !batch_widget )
+   {
+      batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
+   }
+   batch_window->show();
+   this->raise();
+   batch_window->add_file("hi there");
 }
-

@@ -96,6 +96,10 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
 {
    editor->append(tr(QString("Creating anaflex files (mode %1)\n").arg(use_mode)));
 
+   QFileInfo fi(bd_last_traj_file);
+   QString dir = fi.dirPath();
+   QString trajfile = fi.fileName();
+
    QString filename = 
       project + QString("%1").arg(current_model + 1) +
       // QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
@@ -104,8 +108,9 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
       project + QString("_%1").arg(current_model + 1) +
       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
       + "-bf";
+
    QString basename = 
-      somo_dir + SLASH + filename;
+      dir + SLASH + filename;
 
    // anaflex-main.txt
    QFile f;
@@ -117,6 +122,7 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
          editor->append(QString("File write error: can't create %1\n").arg(f.name()));
          return -1;
       }
+      anaflex_last_file = f.name();
       QTextStream ts(&f);
       ts <<
          QString(
@@ -312,10 +318,10 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
 
       ts <<
          QString(
-                 "%1-tra.txt                         !trajectory file\n" 
+                 "%1                         !trajectory file\n" 
                  "*\n\n\n"
                  )
-         .arg(bffilename);
+         .arg(trajfile);
 
       f.close();
    }
@@ -394,7 +400,12 @@ int US_Hydrodyn::run_anaflex()
    {
       use_mode = 9;
    }
-   QString dir = somo_dir + SLASH + "bd";
+   return run_anaflex( use_mode, sub_mode );
+}
+
+int US_Hydrodyn::run_anaflex( int use_mode, int sub_mode )
+{
+   //   QString dir = somo_dir + SLASH + "bd";
    QString prog = 
       USglobal->config_list.system_dir + SLASH +
 #if defined(BIN64)
@@ -431,10 +442,17 @@ int US_Hydrodyn::run_anaflex()
       }
    }
 
-   QString anafile = 
-      project + QString("%1").arg(current_model + 1) +
+   QFileInfo fi(anaflex_last_file);
+   QString anafile = fi.fileName();
+      //      project + QString("_%1").arg(current_model + 1) +
       //      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
-      + QString("af%1%2m.txt\n").arg(use_mode).arg(sub_mode ? QString("-%1").arg(sub_mode) : "");
+      //      + "-bf-main.txt\n" ;
+   QString dir = fi.dirPath();
+
+   //   QString anafile = 
+   //      project + QString("%1").arg(current_model + 1) +
+   //      //      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
+   //      + QString("af%1%2m.txt\n").arg(use_mode).arg(sub_mode ? QString("-%1").arg(sub_mode) : "");
 
    cout << QString("run anaflex dir <%1> prog <%2> stdin <%3>\n")
       .arg(dir)
@@ -455,39 +473,28 @@ int US_Hydrodyn::run_anaflex()
 
 void US_Hydrodyn::anaflex_readFromStdout()
 {
-   QColor save_color = editor->color();
    while ( anaflex->canReadLineStdout() )
    {
-      editor->setColor("brown");
-      editor->append(anaflex->readLineStdout() + "\n");
-      editor->setColor(save_color);
+      editor_msg("brown", anaflex->readLineStdout() + "\n");
    }
-   qApp->processEvents();
 }
    
 void US_Hydrodyn::anaflex_readFromStderr()
 {
-   QColor save_color = editor->color();
    while ( anaflex->canReadLineStderr() )
    {
-      editor->setColor("red");
-      editor->append(anaflex->readLineStderr() + "\n");
-      editor->setColor(save_color);
+      editor_msg("red", anaflex->readLineStderr() + "\n");
    }
-   qApp->processEvents();
 }
    
 void US_Hydrodyn::anaflex_processExited()
 {
-   QColor save_color = editor->color();
-   editor->setColor("brown");
-   editor->append("Anaflex process exited\n");
-   editor->setColor(save_color);
    anaflex_readFromStderr();
    anaflex_readFromStdout();
    disconnect( anaflex, SIGNAL(readyReadStdout()), 0, 0);
    disconnect( anaflex, SIGNAL(readyReadStderr()), 0, 0);
    disconnect( anaflex, SIGNAL(processExited()), 0, 0);
+   editor_msg("brown", "Anaflex process exited\n");
    for ( current_model = 0; 
          current_model < (unsigned int)lb_model->numRows(); 
          current_model++)
@@ -502,10 +509,7 @@ void US_Hydrodyn::anaflex_processExited()
    
 void US_Hydrodyn::anaflex_launchFinished()
 {
-   QColor save_color = editor->color();
-   editor->setColor("brown");
-   editor->append("Anaflex launch exited\n");
-   editor->setColor(save_color);
+   editor_msg("brown","Anaflex launch exited\n");
    disconnect( anaflex, SIGNAL(launchFinished()), 0, 0);
 }
 

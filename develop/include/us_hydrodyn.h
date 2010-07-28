@@ -374,7 +374,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString bd_last_file;
       QString anaflex_last_file;
 
-      QString bd_last_traj_file;  // needed for anaflex
+      QString bd_last_traj_file;  // needed for anaflex and to load bd results
+      QString bd_last_molec_file;  // needed to load bd results
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -541,6 +542,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int create_anaflex_files();
       int create_anaflex_files( int use_mode, int sub_mode = 0 );
       int run_anaflex();
+      int run_anaflex( int use_mode, int sub_mode = 0 );
 
    protected slots:
 

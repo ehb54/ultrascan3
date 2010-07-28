@@ -151,6 +151,9 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      
+   public :
+      void add_file( QString filename );
 
    private slots:
       

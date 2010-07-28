@@ -628,7 +628,7 @@ void US_Hydrodyn::setupGUI()
    connect(pb_bd_load_results, SIGNAL(clicked()), SLOT(bd_load_results()));
 
    // ***** anaflex *******
-   pb_anaflex_prepare = new QPushButton(tr("Build Anaflex files"), this);
+   pb_anaflex_prepare = new QPushButton(tr("Create Anaflex files"), this);
    pb_anaflex_prepare->setMinimumHeight(minHeight1);
    pb_anaflex_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_anaflex_prepare->setEnabled(false);

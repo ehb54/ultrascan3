@@ -498,6 +498,31 @@ void US_Hydrodyn_Batch::closeEvent(QCloseEvent *e)
    e->accept();
 }
 
+void US_Hydrodyn_Batch::add_file( QString filename )
+{
+   QColor save_color = editor->color();
+   disable_updates = true;
+   bool dup = false;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( filename == get_file_name(i) ) 
+      {
+         dup = true;
+         break;
+      }
+   }
+   if ( !dup )
+   {
+      batch->file.push_back(filename);
+      lb_files->insertItem(filename);
+      editor->setColor("dark blue");
+      editor->append(QString(tr("File loaded: %1")).arg(filename));
+   }
+   editor->setColor(save_color);
+   disable_updates = false;
+   update_enables();
+}
+
 void US_Hydrodyn_Batch::add_files()
 {
    QStringList filenames = QFileDialog::getOpenFileNames(
@@ -538,6 +563,7 @@ void US_Hydrodyn_Batch::add_files()
       //      }
       if ( !dup )
       {
+         current_files[*it] = true;
          batch->file.push_back(*it);
          lb_files->insertItem(*it);
          editor->setColor("dark blue");
@@ -1236,6 +1262,7 @@ void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
             dup = current_files[QString(*it)];
             if ( !dup )
             {
+               current_files[*it] = true;
                batch->file.push_back(*it);
                lb_files->insertItem(*it);
                editor->setColor("dark blue");
