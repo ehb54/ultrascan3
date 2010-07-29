@@ -154,6 +154,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       
    public :
       void add_file( QString filename );
+      void add_files( vector < QString > filenames );
 
    private slots:
       

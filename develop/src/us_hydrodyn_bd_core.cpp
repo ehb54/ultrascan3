@@ -2278,49 +2278,339 @@ void US_Hydrodyn::bd_load_results()
    QFileInfo fi_traj( bd_last_traj_file );
    if( !fi_traj.exists() )
    {
-      editor_msg("red", QString(tr("\nCould not open trajectory file %1, does not exist.\n")).arg(filename));
+      editor_msg("red", QString(tr("\nCould not open trajectory file %1, does not exist.\n")).arg(bd_last_traj_file));
       return;
    }
    if( !fi_traj.isReadable() )
    {
-      editor_msg("red", QString(tr("\nCould not open trajectory file %1 for reading. Check permissions.\n")).arg(filename));
+      editor_msg("red", QString(tr("\nCould not open trajectory file %1 for reading. Check permissions.\n")).arg(bd_last_traj_file));
       return;
    }
    if( !fi_traj.size() )
    {
-      editor_msg("red", QString(tr("\nTrajectory file %1 is empty!\n")).arg(filename));
+      editor_msg("red", QString(tr("\nTrajectory file %1 is empty!\n")).arg(bd_last_traj_file));
       return;
    }
    QFileInfo fi_molec( bd_last_molec_file );
    if( !fi_molec.exists() )
    {
-      editor_msg("red", QString(tr("\nCould not open molecular file %1, does not exist.\n")).arg(filename));
+      editor_msg("red", QString(tr("\nCould not open molecular file %1, does not exist.\n")).arg(bd_last_molec_file));
       return;
    }
    if( !fi_molec.isReadable() )
    {
-      editor_msg("red", QString(tr("\nCould not open molecular file %1 for reading. Check permissions.\n")).arg(filename));
+      editor_msg("red", QString(tr("\nCould not open molecular file %1 for reading. Check permissions.\n")).arg(bd_last_molec_file));
       return;
    }
    if( !fi_molec.size() )
    {
-      editor_msg("red", QString(tr("\nMolecular file %1 is empty!\n")).arg(filename));
+      editor_msg("red", QString(tr("\nMolecular file %1 is empty!\n")).arg(bd_last_molec_file));
       return;
    }
+   // read bead sizes
+   {
+      QString errmsg = QString(tr("\nMolecular file ") + "%1" + tr("error at line")).arg(bd_last_molec_file) + "%1\n";
+      QFile f( bd_last_molec_file );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         editor_msg("red", QString(tr("\nCould not open molecular file %1 for reading. Check permissions.\n")).arg(bd_last_molec_file));
+         return;
+      }
+      QTextStream ts( &f );
+
+      // temperature
+      int line = 1;
+      if ( ts.atEnd() )
+      {
+         editor_msg("red", QString(errmsg).arg(line));
+         f.close();
+         return;
+      }
+      ts.readLine(); 
+
+      // psv
+      line++;
+      ts >> bd_load_results_psv;  
+      cout << "psv " << bd_load_results_psv << endl;
+      if ( ts.atEnd() )
+      {
+         editor_msg("red", QString(errmsg).arg(line));
+         f.close();
+         return;
+      }
+      ts.readLine();
+
+      // mw
+      line++;
+      ts >> bd_load_results_mw;
+      if ( ts.atEnd() )
+      {
+         editor_msg("red", QString(errmsg).arg(line));
+         f.close();
+         return;
+      }
+      ts.readLine();
+
+      // name of case
+      line++;
+      if ( ts.atEnd() )
+      {
+         editor_msg("red", QString(errmsg).arg(line));
+         f.close();
+         return;
+      }
+      ts.readLine();
+
+      // beads
+      line++;
+      ts >> bd_load_results_beads;
+      cout << "beads " << bd_load_results_beads << endl;
+      if ( ts.atEnd() )
+      {
+         editor_msg("red", QString(errmsg).arg(line));
+         f.close();
+         return;
+      }
+      ts.readLine();
+
+      bd_load_results_mw /= bd_load_results_beads;
+      cout << "mw " << bd_load_results_mw << endl;
+
+      // beads radii
+      float tmp_float;
+      bd_load_results_bead_radius.clear();
+      for ( unsigned int i = 0; i < bd_load_results_beads; i++ )
+      {
+         line++;
+         ts >> tmp_float;
+         bd_load_results_bead_radius.push_back(tmp_float * 4.8e4);
+         if ( ts.atEnd() )
+         {
+            editor_msg("red", QString(errmsg).arg(line));
+            f.close();
+            return;
+         }
+         ts.readLine();
+      }
+
+      // bonds etc... not needed right now
+      f.close();
+   }
+
+   for ( unsigned int i = 0; i < bd_load_results_beads; i++ )
+   {
+      cout << QString("bead %1 radius %2\n").arg(i).arg(bd_load_results_bead_radius[i]);
+   }
+
    // ok, now setup a type 9 anaflex run and run it.
    editor->append("\ncreate anaflex files\n");
    create_anaflex_files( 9, 0 );
    editor->append("\nrun anaflex\n");
+   bd_anaflex_enables( false );
+   stopFlag = false;
+   pb_stop_calc->setEnabled(true);
+   anaflex_return_to_bd_load_results = true;
    run_anaflex( 9, 0 );
+}
+
+void US_Hydrodyn::bd_load_results_after_anaflex()
+{
    editor->append("\nback from run anaflex\n");
-   // somehow wait for anaflex to finish and then postprocess the log file into bead models
+   pb_stop_calc->setEnabled(false);
+   if ( stopFlag )
+   {
+      editor_msg("red", "\nload Browflex results was stopped\n");
+      return;
+   }
+   // log file into bead models
    // read traj file, molec file, build bead models & load them up! (into batch?)
+   // molec file has molecular weight, have to input psv (like dammin/dammif files)
    // create bead model file
+
+   QFileInfo fi_log( anaflex_last_log_file );
+   if( !fi_log.exists() )
+   {
+      editor_msg("red", QString(tr("\nCould not Anaflex log file %1, does not exist.\n")).arg(anaflex_last_log_file));
+      return;
+   }
+   if( !fi_log.isReadable() )
+   {
+      editor_msg("red", QString(tr("\nCould not open Anaflex log file %1 for reading. Check permissions.\n")).arg(anaflex_last_log_file));
+      return;
+   }
+   if( !fi_log.size() )
+   {
+      editor_msg("red", QString(tr("\nAnaflex log file %1 is empty!\n")).arg(anaflex_last_log_file));
+      return;
+   }
+   QString dir = fi_log.dirPath();
+
+   QString errmsg = QString(tr("\nAnaflex log file ") + "%1" + tr("error at line")).arg(anaflex_last_log_file) + "%1\n";
+   QFile f( anaflex_last_log_file );
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      editor_msg("red", QString(tr("\nCould not open molecular file %1 for reading. Check permissions.\n")).arg(anaflex_last_log_file));
+      return;
+   }
+
+   QTextStream ts( &f );
+
+   // name
+   QString name;
+   int line = 1;
+   ts >> name;
+   if ( ts.atEnd() )
+   {
+      editor_msg("red", QString(errmsg).arg(line));
+      f.close();
+      return;
+   }
+   ts.readLine();
+
+   name.replace(QRegExp("\\.(txt|TXT)"),"");
+   cout << "name " << name << endl;
+
+   // nmol
+   unsigned int nmol;
+   line++;
+   ts >> nmol;
+   cout << "nmol " << nmol << endl;
+   if ( ts.atEnd() )
+   {
+      editor_msg("red", QString(errmsg).arg(line));
+      f.close();
+      return;
+   }
+   ts.readLine();
+
+   // ttraj
+   float ttraj;
+   line++;
+   ts >> ttraj;
+   cout << "ttraj " << ttraj << endl;
+   if ( ts.atEnd() )
+   {
+      editor_msg("red", QString(errmsg).arg(line));
+      f.close();
+      return;
+   }
+   ts.readLine();
+
+   // nconf
+   unsigned int nconf;
+   line++;
+   ts >> nconf;
+   cout << "nconf " << nconf << endl;
+   if ( ts.atEnd() )
+   {
+      editor_msg("red", QString(errmsg).arg(line));
+      f.close();
+      return;
+   }
+   ts.readLine();
+
+   if ( anaflex_options.nfrec > 1 ) 
+   {
+      nconf = 
+         ( nconf / anaflex_options.nfrec ) +
+         ( nconf % anaflex_options.nfrec ? 1 : 0 );
+   }
+
+   // beads
+   unsigned int beads;
+   line++;
+   ts >> beads;
+   cout << "beads " << beads << endl;
+   if ( ts.atEnd() )
+   {
+      editor_msg("red", QString(errmsg).arg(line));
+      f.close();
+      return;
+   }
+   ts.readLine();
+
+   if ( beads != bd_load_results_bead_radius.size() )
+   {
+      editor_msg("red", 
+                 QString(tr("Number of beads in Anaflex log file (%1) does not match"
+                            " number of beads in Browflex molecular file (%2)"))
+                 .arg(beads)
+                 .arg(bd_load_results_bead_radius.size()));
+      f.close();
+      return;
+   }                 
+
+   PDB_atom tmp_atom;
+
+   results.vbar = bd_load_results_psv;
+
+   // create the bead models
+   QString basename = dir + SLASH + name;
+   int save_bead_output = bead_output.output;
+   bead_output.output |= US_HYDRODYN_OUTPUT_SOMO;
+   vector < QString > model_names;
+   for ( unsigned int i = 0; i < nmol; i++ )
+   {
+      for ( unsigned int j = 0; j < nconf; j++ )
+      {
+         bead_model.clear();
+         for ( unsigned int k = 0; k < beads; k++ )
+         {
+            line++;
+            for ( unsigned int l = 0; l < 3; l++ )
+            {
+               tmp_atom.serial = k + 1;
+               if ( ts.atEnd() )
+               {
+                  editor_msg("red", QString(errmsg).arg(line));
+                  f.close();
+                  bead_output.output = save_bead_output;
+                  return;
+               }
+               ts >> tmp_atom.bead_coordinate.axis[l];
+            }
+
+            ts.readLine();
+
+            tmp_atom.bead_computed_radius = bd_load_results_bead_radius[k];
+            tmp_atom.bead_mw = bd_load_results_mw;
+            tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
+            tmp_atom.bead_color = 8;
+
+            tmp_atom.exposed_code = 1;
+            tmp_atom.all_beads.clear();
+            tmp_atom.active = true;
+            tmp_atom.name = "ATOM";
+            tmp_atom.resName = "RESIDUE";
+            tmp_atom.iCode = "ICODE";
+            tmp_atom.chainID = "CHAIN";
+            bead_model.push_back(tmp_atom);
+         }
+         QString model_name = basename + QString("-m%1-c%2").arg(i).arg(j);
+         cout << "model name " << model_name << endl;
+         write_bead_model( model_name, &bead_model );
+         model_names.push_back(  model_name + ".bead_model" );
+         editor->append(QString(tr("Created bead model %1\n")).arg(name + QString("-m%1-c%2").arg(i).arg(j) + ".bead_model"));
+      }
+   }
+   f.close();
+   bead_output.output = save_bead_output;
+
+   editor->append(tr("Loading into batch window. (this may take some time)\n"));
+   qApp->processEvents();
+   
+   // add output to batch window
+
+   // check if want to clear existing batch files ....
+
    if ( !batch_widget )
    {
       batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
    }
    batch_window->show();
    this->raise();
-   batch_window->add_file("hi there");
+   batch_window->add_files( model_names );
+
+   editor->append(tr("Load Browflex results completed.\n"));
+   batch_window->show();
 }

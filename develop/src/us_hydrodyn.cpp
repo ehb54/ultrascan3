@@ -173,6 +173,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    rasmol = NULL;
    browflex = NULL;
    anaflex = NULL;
+   anaflex_return_to_bd_load_results = false;
    bd_anaflex_enables(false);
    chdir(somo_tmp_dir);
    if ( advanced_config.debug_5 )
@@ -2929,6 +2930,7 @@ void US_Hydrodyn::help()
 void US_Hydrodyn::stop_calc()
 {
    stopFlag = true;
+   anaflex_return_to_bd_load_results = false;
    if ( browflex && browflex->isRunning() )
    {
       browflex->tryTerminate();

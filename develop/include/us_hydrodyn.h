@@ -376,6 +376,15 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QString bd_last_traj_file;  // needed for anaflex and to load bd results
       QString bd_last_molec_file;  // needed to load bd results
+      QString anaflex_last_log_file; // needed to load bd results
+
+      bool anaflex_return_to_bd_load_results;
+      float bd_load_results_psv;
+      unsigned int bd_load_results_beads;
+      float bd_load_results_mw;
+      vector < float > bd_load_results_bead_radius;
+
+      // needed 
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -509,6 +518,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void bd_edit_util( QString dir, QString filename ); 
       void bd_run();
       void bd_load_results();
+      void bd_load_results_after_anaflex();
 
       int create_browflex_files();
       int run_browflex();

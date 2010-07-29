@@ -304,9 +304,10 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
          break;
 
       case 9 : // textfile
+         anaflex_last_log_file = dir + SLASH + filename + "-to.txt";
          ts << 
             QString(
-                    "%1-to.txt                 !output textfile\n"
+                    "%1-to.txt                !output textfile\n"
                     )
             .arg(filename);
          break;
@@ -334,6 +335,7 @@ int US_Hydrodyn::run_anaflex()
 {
    int use_mode = 0;
    int sub_mode = 0;
+   anaflex_return_to_bd_load_results = false;
    // possible setup a new text window for the anaflex runs?
    // later loop through for multiple runs?
    if ( anaflex_options.run_mode_1 )
@@ -495,15 +497,23 @@ void US_Hydrodyn::anaflex_processExited()
    disconnect( anaflex, SIGNAL(readyReadStderr()), 0, 0);
    disconnect( anaflex, SIGNAL(processExited()), 0, 0);
    editor_msg("brown", "Anaflex process exited\n");
-   for ( current_model = 0; 
-         current_model < (unsigned int)lb_model->numRows(); 
-         current_model++)
+   if ( !anaflex_return_to_bd_load_results )
    {
-      if ( lb_model->isSelected(current_model) )
+      for ( current_model = 0; 
+            current_model < (unsigned int)lb_model->numRows(); 
+            current_model++)
       {
-         bd_anaflex_enables( true );
-         break;
+         if ( lb_model->isSelected(current_model) )
+         {
+            bd_anaflex_enables( true );
+            break;
+         }
       }
+   }
+   if ( anaflex_return_to_bd_load_results )
+   {
+      anaflex_return_to_bd_load_results = false;
+      bd_load_results_after_anaflex();
    }
 }
    

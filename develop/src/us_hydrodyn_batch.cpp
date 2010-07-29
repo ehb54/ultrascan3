@@ -523,6 +523,43 @@ void US_Hydrodyn_Batch::add_file( QString filename )
    update_enables();
 }
 
+void US_Hydrodyn_Batch::add_files( vector < QString > filenames )
+{
+   QColor save_color = editor->color();
+   disable_updates = true;
+
+   map < QString, bool > current_files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      current_files[get_file_name(i)] = true;
+   }
+   unsigned int count = 0;
+   for ( unsigned int i = 0; i < filenames.size(); i++ )
+   {
+      if ( ! ( count++ % 500 ) )
+      {
+         qApp->processEvents();
+      }
+         
+      bool dup = false;
+      dup = current_files[filenames[i]];
+      if ( !dup )
+      {
+         current_files[filenames[i]] = true;
+         batch->file.push_back(filenames[i]);
+         lb_files->insertItem(filenames[i]);
+         editor->setColor("dark blue");
+         editor->append(QString(tr("File loaded: %1")).arg(filenames[i]));
+      } else {
+         //         editor->setColor("dark red");
+         //         editor->append(QString(tr("File skipped: %1 (already in list)")).arg(filenames[i]));
+      }
+   }
+   editor->setColor(save_color);
+   disable_updates = false;
+   update_enables();
+}
+
 void US_Hydrodyn_Batch::add_files()
 {
    QStringList filenames = QFileDialog::getOpenFileNames(
