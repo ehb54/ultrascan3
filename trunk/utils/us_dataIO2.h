@@ -47,7 +47,7 @@ class US_DataIO2
          };                    //!< Data union for above values
 
          XValue( void ) { }
-         XValue( double value) { radius = value; }
+         XValue( double value) { radius = value; } //!< A constructor
       };
 
       //!  A single Reading of data from the centrifuge
@@ -70,9 +70,9 @@ class US_DataIO2
          double value;   //!< Value of the sensor's reading
          double stdDev;  //!< Standard deviation of the reading.  Doesn't exist for P data.
 
-         Reading( void )               { }
-         Reading( double v, double s ) { value = v; stdDev = s;   }
-         Reading( double v )           { value = v; stdDev = 0.0; }
+         Reading( void )               { } //!< Null constructor
+         Reading( double v, double s ) { value = v; stdDev = s;   } //!< Alternate Constructor
+         Reading( double v )           { value = v; stdDev = 0.0; } //!< Alternate Constructor
       };
 
       /*!  This is the structure of a Beckman raw data file.  The file
@@ -141,12 +141,13 @@ class US_DataIO2
 
          QVector< XValue > x;       //!< Wavelength or radius information
          QVector< Scan > scanData;  //!<  The collections of scans for the CCW
-         double radius ( int i )    //!< a few methods for ease of use
-            { return x[ i ].radius; }
+         double radius ( int i )    
+            { return x[ i ].radius; } //!< Convenience function returning radius
          double scanWavelength( int i ) 
-            { return x[ i ].wavelength; } 
+            { return x[ i ].wavelength; } //!< Convenience function returning wavelength
          double value  ( int i, int j )
             { return scanData[ i ].readings[ j ].value; }
+                                       //!< Convenience function returning a reading
       };
 
       //! Holds changes made to a scan value.  Created by the data editor and
@@ -227,12 +228,13 @@ class US_DataIO2
          QVector< XValue > x;        //!< Wavelength or radius information
          QVector< Scan > scanData;   //!< The actual data.  The interpolated data 
                                      //!< array is omitted
-         double radius ( int i )    //!< a few methods for ease of use
-            { return x[ i ].radius; }
+         double radius ( int i )    
+            { return x[ i ].radius; } //!< A convenience function returning a radius value
          double scanWavelength( int i ) 
-            { return x[ i ].wavelength; } 
-         double value  ( int i, int j )
-            { return scanData[ i ].readings[ j ].value; }
+            { return x[ i ].wavelength; } //!< A convenience function returning a wavelength value 
+         double value  ( int i, int j ) 
+            { return scanData[ i ].readings[ j ].value; } 
+                                      //!< A convenience function returning a reading value
       };
 
       //! The CCW data after edits are applied
@@ -295,7 +297,7 @@ class US_DataIO2
 
       /*! Determine the index of a radius in a scan
           \param s A reference of the scan to be searched
-          \param radii A parallel vector of corresponding radius information
+          \param x A parallel vector of corresponding radius information
           \param r The radius where the index is needed
       */
       static int     index         ( const Scan&, const QVector< XValue >&, double );
