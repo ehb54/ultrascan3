@@ -47,6 +47,7 @@
 #include "us_hydrodyn_save.h"
 #include "us_hydrodyn_file.h"
 #include "us_hydrodyn_dammin_opts.h"
+#include "us_hydrodyn_bd_load_results_opts.h"
 
 //standard C and C++ defs:
 
@@ -380,7 +381,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString anaflex_last_out1_file; // needed to load bd results
 
       bool anaflex_return_to_bd_load_results;
-      float bd_load_results_psv;
+      float bd_load_results_solvent_visc;
+      float bd_load_results_temp;
       unsigned int bd_load_results_beads;
       float bd_load_results_mw;
       vector < float > bd_load_results_bead_radius;

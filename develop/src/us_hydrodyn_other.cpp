@@ -788,6 +788,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          new_font.setStretch(75);
          editor->setCurrentFont(new_font);
          {
+            bool units_loaded = false;
             QRegExp rx(", where x is : (\\d+)");
             while (!ts.atEnd())
             {
@@ -795,9 +796,18 @@ int US_Hydrodyn::read_bead_model(QString filename)
                editor->append(str);
                if ( rx.search(str) != -1 )
                {
+                  units_loaded = true;
                   hydro.unit = - rx.cap(1).toInt();
                   display_default_differences();
                }
+            }
+            if ( !units_loaded )
+            {
+               editor_msg("red", 
+                          tr("\nNote: The model scale (nm, angstrom, etc.) was not found in this bead model file.\n"
+                             "Please make sure the scale is correct before computing hydrodynamic parameters.\n"));
+               editor_msg("dark red", 
+                          QString("Current model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : %1\n").arg(-hydro.unit));
             }
          }
          editor->setCurrentFont(save_font);

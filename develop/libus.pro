@@ -177,6 +177,7 @@ SOURCES += \
   src/us_hydrodyn_bead_output.cpp \
   src/us_hydrodyn_bd_core.cpp \
   src/us_hydrodyn_bd_options.cpp \
+  src/us_hydrodyn_bd_load_results_opts.cpp \
   src/us_hydrodyn_core.cpp \
   src/us_hydrodyn_dammin_opts.cpp \
   src/us_hydrodyn_dmd_core.cpp \
@@ -383,6 +384,7 @@ HEADERS += \
   include/us_hydrodyn_asab1.h \
   include/us_hydrodyn_batch.h \
   include/us_hydrodyn_bd_options.h \
+  include/us_hydrodyn_bd_load_results_opts.h \
   include/us_hydrodyn_save.h \
   include/us_hydrodyn_bead_output.h \
   include/us_hydrodyn_dammin_opts.h \

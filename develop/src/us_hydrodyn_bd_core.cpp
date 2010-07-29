@@ -2320,6 +2320,8 @@ void US_Hydrodyn::bd_load_results()
 
       // temperature
       int line = 1;
+      ts >> bd_load_results_temp;  
+      cout << "temperature " << bd_load_results_temp << endl;
       if ( ts.atEnd() )
       {
          editor_msg("red", QString(errmsg).arg(line));
@@ -2330,8 +2332,8 @@ void US_Hydrodyn::bd_load_results()
 
       // psv
       line++;
-      ts >> bd_load_results_psv;  
-      cout << "psv " << bd_load_results_psv << endl;
+      ts >> bd_load_results_solvent_visc;  
+      cout << "solvent visc " << bd_load_results_solvent_visc << endl;
       if ( ts.atEnd() )
       {
          editor_msg("red", QString(errmsg).arg(line));
@@ -2605,7 +2607,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
 
    PDB_atom tmp_atom;
 
-   results.vbar = bd_load_results_psv;
+   //   results.vbar = bd_load_results_solvent_visc;
 
    // create the bead models
    QString basename = dir + SLASH + name;
