@@ -787,9 +787,18 @@ int US_Hydrodyn::read_bead_model(QString filename)
          QFont new_font = QFont("Courier");
          new_font.setStretch(75);
          editor->setCurrentFont(new_font);
-         while (!ts.atEnd())
          {
-            editor->append(ts.readLine());
+            QRegExp rx(", where x is : (\\d+)");
+            while (!ts.atEnd())
+            {
+               QString str = ts.readLine();
+               editor->append(str);
+               if ( rx.search(str) != -1 )
+               {
+                  hydro.unit = - rx.cap(1).toInt();
+                  display_default_differences();
+               }
+            }
          }
          editor->setCurrentFont(save_font);
          editor->append(QString("\nvbar: %1\n\n").arg(results.vbar));
@@ -3325,12 +3334,14 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
               "Bead Model Output:\n"
               "  Sequence:                   %s\n"
               "\n"
+              "Model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : %d\n"
 
               ,bead_output.sequence ?
               (bead_output.sequence == 1 ?
                "exposed sidechain -> exposed main chain -> buried" :
                "include bead-original residue correspondence") :
               "as in original PDB file"
+              ,-hydro.unit
               );
       fprintf(fsomo, options_log.ascii());
       fprintf(fsomo, last_abb_msgs.ascii());

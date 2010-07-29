@@ -141,6 +141,7 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
          .arg(use_mode)
          ;
 
+      anaflex_last_out1_file = dir + SLASH + filename + "l.txt";
       switch ( use_mode )
       {
       case 1 : // steady state

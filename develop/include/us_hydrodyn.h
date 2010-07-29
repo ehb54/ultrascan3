@@ -377,6 +377,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString bd_last_traj_file;  // needed for anaflex and to load bd results
       QString bd_last_molec_file;  // needed to load bd results
       QString anaflex_last_log_file; // needed to load bd results
+      QString anaflex_last_out1_file; // needed to load bd results
 
       bool anaflex_return_to_bd_load_results;
       float bd_load_results_psv;

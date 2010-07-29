@@ -37,6 +37,7 @@ struct BD_Options
    bool show_pdb;
    bool run_browflex;
 
+   int nmol;
    float tprev;  // see browflex2a.pdf for more info
    float ttraj;  // see browflex2a.pdf for more info
    float deltat;
@@ -117,6 +118,7 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       QLabel *lbl_bd_threshold_pb_pb;
       QLabel *lbl_bd_threshold_pb_sc;
       QLabel *lbl_bd_threshold_sc_sc;
+      QLabel *lbl_nmol;
       QLabel *lbl_npadif;
       QLabel *lbl_nconf;
       QLabel *lbl_iseed;
@@ -133,6 +135,7 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       QLineEdit *le_ttraj;
       QLineEdit *le_deltat;
       QwtCounter *cnt_npadif;
+      QLineEdit *le_nmol;
       QLineEdit *le_nconf;
       QLineEdit *le_iseed;
 
@@ -297,6 +300,7 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       void update_ttraj(const QString &str);
       void update_deltat(const QString &str);
 
+      void update_nmol(const QString &str);
       void update_npadif(double);
       void update_nconf(const QString &str);
       void update_iseed(const QString &str);

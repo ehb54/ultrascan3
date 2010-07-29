@@ -794,8 +794,8 @@ int US_Hydrodyn::create_browflex_files()
          return -1;
       }
       QTextStream ts(&f);
-      ts << QString("%1,         mol\n").arg(1);
-      ts << QString("%1,         tprev\n").arg(0);
+      ts << QString("%1,         mol\n").arg(bd_options.nmol);
+      ts << QString("%1,         tprev\n").arg(bd_options.tprev);
       ts << QString("%1,         ttraj\n").arg(bd_options.ttraj);
       ts << QString("%1,         nconf \n").arg(bd_options.nconf);
       ts << QString("%1,         nscreen\n").arg(20);
@@ -2383,7 +2383,8 @@ void US_Hydrodyn::bd_load_results()
       {
          line++;
          ts >> tmp_float;
-         bd_load_results_bead_radius.push_back(tmp_float * 4.8e4);
+         // these are in cm in the file
+         bd_load_results_bead_radius.push_back(tmp_float);
          if ( ts.atEnd() )
          {
             editor_msg("red", QString(errmsg).arg(line));
@@ -2416,12 +2417,74 @@ void US_Hydrodyn::bd_load_results()
 void US_Hydrodyn::bd_load_results_after_anaflex()
 {
    editor->append("\nback from run anaflex\n");
+   // GET unit of measure from log file
    pb_stop_calc->setEnabled(false);
    if ( stopFlag )
    {
       editor_msg("red", "\nload Browflex results was stopped\n");
       return;
    }
+
+   // need output1 for length unit
+
+   QFileInfo fi_out1( anaflex_last_out1_file );
+   if( !fi_out1.exists() )
+   {
+      editor_msg("red", QString(tr("\nCould not Anaflex log file %1, does not exist.\n")).arg(anaflex_last_out1_file));
+      return;
+   }
+   if( !fi_out1.isReadable() )
+   {
+      editor_msg("red", QString(tr("\nCould not open Anaflex log file %1 for reading. Check permissions.\n")).arg(anaflex_last_out1_file));
+      return;
+   }
+   if( !fi_out1.size() )
+   {
+      editor_msg("red", QString(tr("\nAnaflex log file %1 is empty!\n")).arg(anaflex_last_out1_file));
+      return;
+   }
+   QFile f_out1( anaflex_last_out1_file );
+   if ( !f_out1.open( IO_ReadOnly ) )
+   {
+      editor_msg("red", QString(tr("\nCould not open output file %1 for reading. Check permissions.\n")).arg(anaflex_last_out1_file));
+      return;
+   }
+
+   QTextStream ts_out1( &f_out1 );
+   
+   float unit_of_length = 0.0;
+   {
+      QString tmp;
+      bool done = false;
+      QRegExp rx("^Unit of length = (.*)$");
+      while( !done &&  !ts_out1.atEnd() )
+      {
+         if ( rx.search(ts_out1.readLine()) != -1 )
+         {
+            done = true;
+            unit_of_length = rx.cap(1).toFloat();
+         }
+      }
+      f_out1.close();
+      if ( !done ) 
+      {
+         editor_msg("red", QString(tr("\nCould not find \"Unit of length\" in file %1.\n")).arg(anaflex_last_out1_file));
+         return;
+      }
+   }
+   cout << "unit_of_length " << unit_of_length << endl;
+   int exp = (int)log10(unit_of_length);
+   hydro.unit = exp;
+   display_default_differences();
+   
+   cout << "exp = " << exp << endl;
+
+   for ( unsigned int i = 0; i < bd_load_results_beads; i++ )
+   {
+      bd_load_results_bead_radius[i] /= unit_of_length;
+      cout << QString("after redo, bead %1 radius %2\n").arg(i).arg(bd_load_results_bead_radius[i]);
+   }
+
    // log file into bead models
    // read traj file, molec file, build bead models & load them up! (into batch?)
    // molec file has molecular weight, have to input psv (like dammin/dammif files)
@@ -2568,6 +2631,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                   return;
                }
                ts >> tmp_atom.bead_coordinate.axis[l];
+               //  tmp_atom.bead_coordinate.axis[l] *= unit_of_length * 1e6; // to micron
             }
 
             ts.readLine();

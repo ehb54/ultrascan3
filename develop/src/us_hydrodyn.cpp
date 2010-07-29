@@ -175,6 +175,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    anaflex = NULL;
    anaflex_return_to_bd_load_results = false;
    bd_anaflex_enables(false);
+   bd_options.nmol = 1;
    chdir(somo_tmp_dir);
    if ( advanced_config.debug_5 )
    {
@@ -1648,6 +1649,7 @@ bool US_Hydrodyn::screen_bead_model(QString filename)
    }
    else
    {
+      pb_visualize->setEnabled(true);
       pb_bead_saxs->setEnabled(false);
       return false;
    }

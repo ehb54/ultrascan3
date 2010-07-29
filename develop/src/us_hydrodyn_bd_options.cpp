@@ -154,6 +154,20 @@ void US_Hydrodyn_BD_Options::setupGUI()
    cnt_npadif->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_npadif, SIGNAL(valueChanged(double)), SLOT(update_npadif(double)));
 
+   lbl_nmol = new QLabel(tr(" Number of subtrajectories: "), this);
+   lbl_nmol->setAlignment(AlignLeft|AlignVCenter);
+   lbl_nmol->setMinimumHeight(minHeight1);
+   lbl_nmol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_nmol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_nmol = new QLineEdit(this, "Nmol Line Edit");
+   le_nmol->setText(str.sprintf("%d",(*bd_options).nmol));
+   le_nmol->setAlignment(AlignVCenter);
+   le_nmol->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_nmol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_nmol->setEnabled(true);
+   connect(le_nmol, SIGNAL(textChanged(const QString &)), SLOT(update_nmol(const QString &)));
+
    lbl_nconf = new QLabel(tr(" Number of conformations to store: "), this);
    lbl_nconf->setAlignment(AlignLeft|AlignVCenter);
    lbl_nconf->setMinimumHeight(minHeight1);
@@ -1068,12 +1082,16 @@ void US_Hydrodyn_BD_Options::setupGUI()
    vbl_method->addWidget(bg_inter);
    vbl_method->addSpacing(10);
    vbl_method->addWidget(bg_iorder);
+   vbl_method->addSpacing(10);
+   vbl_method->addWidget(cb_icdm);
 
    hbl_method_group->addLayout(vbl_method);
    hbl_method_group->addSpacing(3);
 
    QGridLayout *gl_simu = new QGridLayout;
    j = 0;
+   gl_simu->addWidget(lbl_nmol, j, 0);
+   gl_simu->addWidget(le_nmol, j, 1); j++;
    gl_simu->addWidget(lbl_tprev, j, 0);
    gl_simu->addWidget(le_tprev, j, 1); j++;
    gl_simu->addWidget(lbl_ttraj, j, 0);
@@ -1086,7 +1104,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    gl_simu->addWidget(le_nconf, j, 1); j++;
    gl_simu->addWidget(lbl_iseed, j, 0);
    gl_simu->addWidget(le_iseed, j, 1); j++;
-   gl_simu->addMultiCellWidget(cb_icdm, j, j, 0, 1); j++;
+   //   gl_simu->addMultiCellWidget(cb_icdm, j, j, 0, 1); j++;
 
    hbl_method_group->addLayout(gl_simu);
 
@@ -1434,6 +1452,13 @@ void US_Hydrodyn_BD_Options::update_nconf(const QString &str)
    (*bd_options).nconf = str.toInt();
    //   le_nconf->setText(QString("").sprintf("%4.2f",(*hydro).nconf));
    update_labels();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_BD_Options::update_nmol(const QString &str)
+{
+   (*bd_options).nmol = str.toInt();
+   //   le_nmol->setText(QString("").sprintf("%4.2f",(*hydro).nmol));
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
