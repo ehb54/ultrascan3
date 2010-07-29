@@ -225,11 +225,11 @@ class US_EXTERN US_DB2
         \param filename The complete and absolute pathname of the file with
                the binary data. WriteBlobToDB() will try to open the file
                and read the raw binary data.
+
         \param procedure The name of the MySQL stored procedure that will
                accept the data and write it to the database. The procedure
-               must implement a parameter list as follows:
-
-               CALL procedure( yourGUID, yourPassword, tableID, blobData );
+               must implement a parameter list as follows:<br><br>
+               CALL procedure( yourGUID, yourPassword, tableID, blobData );<br><br>
 
         \param tableID The integer primary-key index of the record that the
                raw binary data should be written to.
@@ -248,11 +248,11 @@ class US_EXTERN US_DB2
         \param filename The complete and absolute pathname of the file to
                write the binary data to. ReadBlobFromDB() will try to open 
                the file and write the raw binary data to it.
+
         \param procedure The name of the MySQL stored procedure that will
                accept the data and write it to the database. The procedure
-               must implement a parameter list as follows:
-
-               CALL procedure( yourGUID, yourPassword, tableID, blobData );
+               must implement a parameter list as follows:<br><br>
+               CALL procedure( yourGUID, yourPassword, tableID, blobData );<br><br>
 
         \param tableID The integer primary-key index of the record that 
                contains the raw binary data.
@@ -285,10 +285,10 @@ class US_EXTERN US_DB2
                development of the MySQL stored routines. To use it, one would
                issue a statement like this inside a stored routine:
 
-               SET @DEBUG = 'A Debugging message';
+               SET \@DEBUG = 'A Debugging message';
 
                lastDebug() returns only the string that is currently assigned to
-               @DEBUG
+               \@DEBUG
     */
     QString       lastDebug( void );
 
