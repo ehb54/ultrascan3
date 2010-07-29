@@ -1397,3 +1397,16 @@ void US_Hydrodyn_Batch::set_counts()
    }
    lbl_selected->setText(QString("Selected: %1").arg(count));
 }
+
+int US_Hydrodyn_Batch::count_files()
+{
+   return lb_files->numRows();
+}
+
+void US_Hydrodyn_Batch::clear_files()
+{
+   batch->file.clear();
+   status.clear();
+   lb_files->clear();
+   update_enables();
+}

@@ -155,6 +155,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
    public :
       void add_file( QString filename );
       void add_files( vector < QString > filenames );
+      int count_files(); // return current # of files
+      void clear_files(); // reset all files
 
    private slots:
       

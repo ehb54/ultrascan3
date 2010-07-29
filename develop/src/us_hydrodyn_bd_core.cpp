@@ -2587,7 +2587,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
             bead_model.push_back(tmp_atom);
          }
          QString model_name = basename + QString("-m%1-c%2").arg(i).arg(j);
-         cout << "model name " << model_name << endl;
+         // cout << "model name " << model_name << endl;
          write_bead_model( model_name, &bead_model );
          model_names.push_back(  model_name + ".bead_model" );
          editor->append(QString(tr("Created bead model %1\n")).arg(name + QString("-m%1-c%2").arg(i).arg(j) + ".bead_model"));
@@ -2608,9 +2608,39 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
       batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
    }
    batch_window->show();
+   
+   if ( batch_window->count_files() ) 
+   {
+      batch_window->raise();
+      switch (
+              QMessageBox::question(
+                                    this,
+                                    tr("Load Browflex Files"),
+                                    QString(tr("The batch operation window currently has files loaded.\n"
+                                               "      Should they be removed before loading ?\n\n"
+                                               "    CANCEL to skip loading of batch operations."
+                                               )),
+                                    QMessageBox::Yes, 
+                                    QMessageBox::No,
+                                    QMessageBox::Cancel
+                                    ) )
+      {
+      case QMessageBox::Yes : 
+         batch_window->clear_files();
+         break;
+      case QMessageBox::Cancel : 
+         editor_msg("red", "Loading of models into batch operation window canceled\n");
+         return;
+         break;
+      case QMessageBox::No : 
+      default :
+         break;
+      }
+   }
    this->raise();
+      
    batch_window->add_files( model_names );
 
    editor->append(tr("Load Browflex results completed.\n"));
-   batch_window->show();
+   batch_window->raise();
 }
