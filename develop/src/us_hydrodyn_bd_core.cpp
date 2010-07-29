@@ -2445,7 +2445,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    }
    QString dir = fi_log.dirPath();
 
-   QString errmsg = QString(tr("\nAnaflex log file ") + "%1" + tr("error at line")).arg(anaflex_last_log_file) + "%1\n";
+   QString errmsg = QString(tr("\nAnaflex log file ") + "%1" + tr(" error at line ")).arg(anaflex_last_log_file) + "%1\n";
    QFile f( anaflex_last_log_file );
    if ( !f.open( IO_ReadOnly ) )
    {
