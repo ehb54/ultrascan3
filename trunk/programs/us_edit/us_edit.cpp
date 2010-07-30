@@ -16,6 +16,7 @@
 #include "us_edit_scan.h"
 #include "us_math2.h"
 #include "us_util.h"
+#include "us_load_db.h"
 
 //! \brief Main program for US_Edit. Loads translators and starts
 //         the class US_FitMeniscus.
@@ -64,6 +65,14 @@ US_Edit::US_Edit() : US_Widgets()
    int s_row = 0;
 
    // Row 1
+   QGridLayout* db_layout = us_radiobutton( tr( "Use Database" ), rb_db );
+   specs->addLayout( db_layout, s_row, 0, 1, 2 );
+
+   QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk );
+   rb_disk->setChecked( true );
+   specs->addLayout( disk_layout, s_row++, 2, 1, 2 );
+
+   // Row 2
    QPushButton* pb_load = us_pushbutton( tr( "Load Data" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    specs->addWidget( pb_load, s_row, 0, 1, 2 );
@@ -71,8 +80,6 @@ US_Edit::US_Edit() : US_Widgets()
    pb_details = us_pushbutton( tr( "Run Details" ), false );
    connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
    specs->addWidget( pb_details, s_row++, 2, 1, 2 );
-
-   // Row 2 - moved to top
 
    // Row 3
    QLabel* lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
@@ -524,13 +531,21 @@ void US_Edit::gap_check( void )
 
 void US_Edit::load( void )
 {  
-   // Ask for data directory
-   workingDir = QFileDialog::getExistingDirectory( this, 
-         tr("Raw Data Directory"),
-         US_Settings::resultDir(),
-         QFileDialog::DontResolveSymlinks );
+   if ( rb_db->isChecked() )
+   {
+      US_LoadDB dialog( workingDir );
+      if ( dialog.exec() == QDialog::Rejected ) return;
+   }
+   else
+   {
+      // Ask for data directory
+      workingDir = QFileDialog::getExistingDirectory( this, 
+            tr("Raw Data Directory"),
+            US_Settings::resultDir(),
+            QFileDialog::DontResolveSymlinks );
 
-   if ( workingDir.isEmpty() ) return; 
+      if ( workingDir.isEmpty() ) return; 
+   }
 
    reset();
    allData.clear();
@@ -1881,6 +1896,10 @@ void US_Edit::write( void )
    eguid.setAttribute( "value", US_Util::new_guid() );
    id.appendChild( eguid );
 
+   // TODO: Need change to "uuid" to rawDataGUID for clarity. Also
+   // needs to change us_dataIO where it reads this value.  Changing
+   // will invalidate an editedData xml file so any working edit xml
+   // files need to be deleted afte the change.
    QDomElement dguid = doc.createElement( "uuid" );
    char uuid[ 37 ];
    uuid_unparse( (unsigned char*)data.rawGUID, uuid );
