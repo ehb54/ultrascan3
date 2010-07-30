@@ -171,7 +171,7 @@ CREATE  TABLE IF NOT EXISTS experiment (
   label VARCHAR(80) NULL ,
   comment TEXT NULL ,
   centrifugeProtocol TEXT NULL ,
-  dateUpdated DATE NULL ,
+  dateUpdated DATETIME NULL ,
   PRIMARY KEY (experimentID) ,
   INDEX ndx_experiment_projectID (projectID ASC) ,
   INDEX ndx_experiment_operatorID (operatorID ASC) ,
@@ -321,12 +321,14 @@ DROP TABLE IF EXISTS rawData ;
 
 CREATE  TABLE IF NOT EXISTS rawData (
   rawDataID int(11) NOT NULL AUTO_INCREMENT ,
+  rawDataGUID CHAR(36) NOT NULL UNIQUE ,
   label VARCHAR(80) NOT NULL default '',
   filename VARCHAR(255) NOT NULL DEFAULT '',
   data LONGBLOB NULL ,
   comment TEXT NULL ,
   experimentID int(11) NOT NULL ,
   channelID int(11) NOT NULL ,
+  lastUpdated DATETIME NULL ,
   PRIMARY KEY (rawDataID) ,
   INDEX ndx_rawData_experimentID (experimentID ASC) ,
   INDEX ndx_rawData_channelID (channelID ASC) ,
@@ -347,7 +349,7 @@ ENGINE = InnoDB;
 -- Table editedData
 --
 -- Notes:
---  Currently rawDataID is set to allow NULL to accommodate
+--  rawDataID is set to allow NULL to accommodate
 --   certain special records
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS editedData ;
@@ -355,12 +357,12 @@ DROP TABLE IF EXISTS editedData ;
 CREATE  TABLE IF NOT EXISTS editedData (
   editedDataID int(11) NOT NULL AUTO_INCREMENT ,
   rawDataID int(11) NULL DEFAULT NULL,
-  -- rawDataID int(11) NOT NULL,
   editGUID CHAR(36) NOT NULL UNIQUE ,
   label VARCHAR(80) NOT NULL DEFAULT '',
   data LONGBLOB NOT NULL ,
+  filename VARCHAR(255) NOT NULL DEFAULT '',
   comment TEXT NULL ,
-  lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
+  lastUpdated DATETIME NULL ,
   PRIMARY KEY (editedDataID) ,
   INDEX ndx_editedData_rawDataID (rawDataID ASC) ,
   CONSTRAINT fk_editedData_rawDataID
@@ -649,7 +651,7 @@ CREATE TABLE IF NOT EXISTS noise (
   modelGUID CHAR(36) NULL ,
   noiseType enum('ri_noise', 'ti_noise') default 'ti_noise',
   noiseVector TEXT ,                    -- an xml file
-  timeEntered TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
+  timeEntered DATETIME NULL ,
   PRIMARY KEY ( noiseID ) ,
   INDEX ndx_noise_editedDataID (editedDataID ASC) ,
   INDEX ndx_noise_modelID (modelID ASC) ,
@@ -677,6 +679,7 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisRequest (
   investigatorGUID CHAR(36) NOT NULL,     -- maps to person.personGUID
   submitterGUID CHAR(36) NOT NULL,        -- maps to person.personGUID
   experimentID int(11) NULL,
+  requestXMLFile text NULL ,
   submitTime datetime NOT NULL default '0000-00-00 00:00:00',
   rotor_stretch VARCHAR(80) NULL, 
   clusterName varchar(80) default NULL,
@@ -688,7 +691,6 @@ ENGINE=InnoDB;
 -- Table structure for table HPCDataset
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS HPCDataset;
-DROP TABLE IF EXISTS HPCAnalysisGroup;
 
 CREATE TABLE IF NOT EXISTS HPCDataset (
   HPCDatasetID int(11) NOT NULL AUTO_INCREMENT,
