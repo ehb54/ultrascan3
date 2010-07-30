@@ -166,6 +166,9 @@ int US_Hydrodyn::create_browflex_files()
 {
    double conv = 1e-8;
 
+   bd_project = project;
+   bd_current_model = current_model;
+
    QString filename = 
       project + QString("_%1").arg(current_model + 1) +
       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
@@ -1954,6 +1957,7 @@ void US_Hydrodyn::bd_load()
    {
       QFileInfo fi(filename);
       QString dir = fi.dirPath();
+      QString name = fi.fileName();
       QString traj_file = "";
       QString molec_file = "";
       // check for file format
@@ -2069,6 +2073,9 @@ void US_Hydrodyn::bd_load()
       }
       f.close();
       editor->append(QString("Browflex file %1 loaded\n").arg(filename));
+
+      project = name.left(5);
+      bd_project = project;
       bd_last_file = filename;
       bd_last_traj_file = dir + SLASH + traj_file;
       bd_last_molec_file = dir + SLASH + molec_file;
@@ -2269,6 +2276,7 @@ void US_Hydrodyn::bd_edit()
 void US_Hydrodyn::bd_load_results()
 {
    // check to make sure browflex file is ok
+
    QString filename = bd_last_file;
    if ( !bd_valid_browflex_main( filename ) )
    {

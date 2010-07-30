@@ -372,6 +372,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QProcess *browflex;
       QProcess *anaflex;
 
+      QString bd_project;
+      unsigned int bd_current_model;
       QString bd_last_file;
       QString anaflex_last_file;
 

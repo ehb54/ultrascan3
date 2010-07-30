@@ -96,6 +96,15 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
 {
    editor->append(tr(QString("Creating anaflex files (mode %1)\n").arg(use_mode)));
 
+   project = bd_project;
+   current_model = bd_current_model;
+
+   cout << "project " << project << endl;
+   cout << "ca bd last file " << bd_last_file << endl;
+   cout << "ca bd last tra file " << bd_last_traj_file << endl;
+   cout << "ca bd last molec file " << bd_last_molec_file << endl;
+   fflush(stdout);
+
    QFileInfo fi(bd_last_traj_file);
    QString dir = fi.dirPath();
    QString trajfile = fi.fileName();
