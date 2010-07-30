@@ -97,6 +97,9 @@ class US_EXTERN US_Edit : public US_Widgets
       QPushButton*       pb_float;
       QPushButton*       pb_undo;
                         
+      QRadioButton*      rb_db;
+      QRadioButton*      rb_disk;
+
       QComboBox*         cb_triple;
                         
       QwtCounter*        ct_from;
