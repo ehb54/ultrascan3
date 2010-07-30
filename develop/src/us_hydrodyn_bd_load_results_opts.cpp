@@ -1,21 +1,35 @@
 #include "../include/us_hydrodyn_bd_load_results_opts.h"
+#include "../include/us_math.h"
 
 US_Hydrodyn_BD_Load_Results_Opts::US_Hydrodyn_BD_Load_Results_Opts(
-                                                 QString msg,
-                                                 float *psv,
-                                                 float *mw,
-                                                 bool *write_bead_model,
-                                                 QWidget *p,
-                                                 const char *name
-                                                 ) : QDialog(p, name)
+                                                                   QString msg,
+                                                                   double *temperature,
+                                                                   double *solvent_viscosity,
+                                                                   double *solvent_density,
+                                                                   QString *solvent_name,
+                                                                   QString *solvent_acronym,
+                                                                   double *psv,
+                                                                   double browflex_temperature,
+                                                                   double browflex_solvent_viscosity,
+                                                                   bool *check_fix_overlaps,
+                                                                   QWidget *p,
+                                                                   const char *name
+                                                                   ) : QDialog(p, name)
 {
    this->msg = msg;
+   this->temperature = temperature;
+   this->solvent_viscosity = solvent_viscosity;
+   this->solvent_density = solvent_density;
+   this->solvent_name = solvent_name;
+   this->solvent_acronym = solvent_acronym;
    this->psv = psv;
-   this->mw = mw;
-   this->write_bead_model = write_bead_model;
+   this->browflex_temperature = browflex_temperature;
+   this->browflex_solvent_viscosity = browflex_solvent_viscosity;
+   this->check_fix_overlaps = check_fix_overlaps;
+
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   setCaption("Set PSV and MW for DAMMIN/DAMMIF files");
+   setCaption("Set parameters for Browflex generated bead models");
    setupGUI();
    global_Xpos = 200;
    global_Ypos = 150;
@@ -37,11 +51,131 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
+   lbl_param = new QLabel(tr("Parameter  "), this);
+   lbl_param->setAlignment(AlignCenter|AlignVCenter);
+   lbl_param->setMinimumHeight(minHeight2);
+   lbl_param->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_param->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   lbl_browflex = new QLabel(tr("  From Browflex  "), this);
+   lbl_browflex->setAlignment(AlignCenter|AlignVCenter);
+   lbl_browflex->setMinimumHeight(minHeight2);
+   lbl_browflex->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_browflex->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   lbl_to_use = new QLabel(tr("To Use"), this);
+   lbl_to_use->setAlignment(AlignCenter|AlignVCenter);
+   lbl_to_use->setMinimumHeight(minHeight2);
+   lbl_to_use->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_to_use->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   lbl_solvent_name = new QLabel(tr(" Solvent:"), this);
+   Q_CHECK_PTR(lbl_solvent_name);
+   lbl_solvent_name->setAlignment(AlignLeft|AlignVCenter);
+   lbl_solvent_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_solvent_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_solvent_name = new QLineEdit(this, "Solvent_Name Line Edit");
+   le_solvent_name->setText(*solvent_name);
+   le_solvent_name->setAlignment(AlignCenter | AlignVCenter);
+   le_solvent_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_solvent_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_solvent_name->setEnabled(true);
+   connect(le_solvent_name, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_name(const QString &)));
+
+   cb_solvent_defaults = new QCheckBox(this);
+   cb_solvent_defaults->setText(tr("Set solvent to defaults"));
+   cb_solvent_defaults->setEnabled(true);
+   cb_solvent_defaults->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_solvent_defaults->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_solvent_defaults, SIGNAL(clicked()), this, SLOT(set_solvent_defaults()));
+
+   cb_set_to_browflex = new QCheckBox(this);
+   cb_set_to_browflex->setText("Set Browflex Defaults");
+   cb_set_to_browflex->setEnabled(true);
+   cb_set_to_browflex->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_set_to_browflex->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_set_to_browflex, SIGNAL(clicked()), this, SLOT(set_to_browflex()));
+
+   cb_check_fix_overlaps = new QCheckBox(this);
+   cb_check_fix_overlaps->setText(tr(" Check and fix overlaps "));
+   cb_check_fix_overlaps->setEnabled(true);
+   cb_check_fix_overlaps->setChecked(*check_fix_overlaps);
+   cb_check_fix_overlaps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_check_fix_overlaps->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_check_fix_overlaps, SIGNAL(clicked()), this, SLOT(set_check_fix_overlaps()));
+
+   lbl_solvent_acronym = new QLabel(tr(" Solvent acronym:"), this);
+   //   lbl_solvent_acronym = new QLabel(tr(" Solvent acronym (max 5 characters):"), this);
+   Q_CHECK_PTR(lbl_solvent_acronym);
+   lbl_solvent_acronym->setAlignment(AlignLeft|AlignVCenter);
+   lbl_solvent_acronym->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_solvent_acronym->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_solvent_acronym = new QLineEdit(this, "Solvent_Acronym Line Edit");
+   le_solvent_acronym->setText(*solvent_acronym);
+   le_solvent_acronym->setAlignment(AlignCenter | AlignVCenter);
+   le_solvent_acronym->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_solvent_acronym->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_solvent_acronym->setEnabled(true);
+   connect(le_solvent_acronym, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_acronym(const QString &)));
+
+   lbl_temperature = new QLabel(tr(" Temperature (ºC):  "), this);
+   Q_CHECK_PTR(lbl_temperature);
+   lbl_temperature->setAlignment(AlignLeft|AlignVCenter);
+   lbl_temperature->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_browflex_temperature = new QLabel(QString("").sprintf("%4.2f",browflex_temperature), this);
+   lbl_browflex_temperature->setAlignment(AlignCenter | AlignVCenter);
+   lbl_browflex_temperature->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_browflex_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+   le_temperature = new QLineEdit(this, "Temperature Line Edit");
+   le_temperature->setText(QString("").sprintf("%4.2f",*temperature));
+   le_temperature->setAlignment(AlignCenter | AlignVCenter);
+   le_temperature->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_temperature->setEnabled(true);
+   connect(le_temperature, SIGNAL(textChanged(const QString &)), SLOT(update_temperature(const QString &)));
+
+   lbl_solvent_viscosity = new QLabel(tr(" Solvent viscosity (cP):"), this);
+   Q_CHECK_PTR(lbl_solvent_viscosity);
+   lbl_solvent_viscosity->setAlignment(AlignLeft|AlignVCenter);
+   lbl_solvent_viscosity->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_browflex_solvent_viscosity = new QLabel(QString("").sprintf("%f",browflex_solvent_viscosity), this);
+   lbl_browflex_solvent_viscosity->setAlignment(AlignCenter | AlignVCenter);
+   lbl_browflex_solvent_viscosity->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_browflex_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+   le_solvent_viscosity = new QLineEdit(this, "Solvent_Viscosity Line Edit");
+   le_solvent_viscosity->setText(QString("").sprintf("%f",*solvent_viscosity));
+   le_solvent_viscosity->setAlignment(AlignCenter | AlignVCenter);
+   le_solvent_viscosity->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_solvent_viscosity->setEnabled(true);
+   connect(le_solvent_viscosity, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_viscosity(const QString &)));
+
+   lbl_solvent_density = new QLabel(tr(" Solvent density (g/ml):"), this);
+   Q_CHECK_PTR(lbl_solvent_density);
+   lbl_solvent_density->setAlignment(AlignLeft|AlignVCenter);
+   lbl_solvent_density->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_solvent_density = new QLineEdit(this, "Solvent_Density Line Edit");
+   le_solvent_density->setText(QString("").sprintf("%f",*solvent_density));
+   le_solvent_density->setAlignment(AlignCenter | AlignVCenter);
+   le_solvent_density->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_solvent_density->setEnabled(true);
+   connect(le_solvent_density, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_density(const QString &)));
+
    lbl_psv = new QLabel(tr(" Enter a vbar value:"), this);
-   lbl_psv->setAlignment(AlignCenter|AlignVCenter);
-   lbl_psv->setMinimumHeight(minHeight2);
-   lbl_psv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+   lbl_psv->setAlignment(AlignLeft | AlignVCenter);
+   lbl_psv->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_psv = new QLineEdit(this, "psv Line Edit");
    le_psv->setText(QString("").sprintf("%5.3f", *psv));
@@ -52,30 +186,6 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
    le_psv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
    connect(le_psv, SIGNAL(textChanged(const QString &)), SLOT(update_psv(const QString &)));
-
-   lbl_mw = new QLabel(tr(" Molecular Weight (Daltons):"), this);
-   lbl_mw->setAlignment(AlignCenter|AlignVCenter);
-   lbl_mw->setMinimumHeight(minHeight2);
-   lbl_mw->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
-
-   le_mw = new QLineEdit(this, "mw Line Edit");
-   le_mw->setText(QString("").sprintf("%5.3f", *mw));
-   le_mw->setReadOnly(false);
-   le_mw->setMinimumWidth(100);
-   le_mw->setMinimumHeight(minHeight2);
-   le_mw->setAlignment(AlignCenter|AlignVCenter);
-   le_mw->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
-   connect(le_mw, SIGNAL(textChanged(const QString &)), SLOT(update_mw(const QString &)));
-
-   cb_write_bead_model = new QCheckBox(this);
-   cb_write_bead_model->setText(tr(" Create a bead model file ?"));
-   cb_write_bead_model->setChecked(*write_bead_model);
-   cb_write_bead_model->setMinimumHeight(minHeight1);
-   cb_write_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_write_bead_model->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_write_bead_model, SIGNAL(clicked()), SLOT(set_write_bead_model()));
 
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -91,20 +201,44 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
 
    int j = 0;
 
-   QGridLayout *background = new QGridLayout(this, 1, 2, 4, 2);
+   QGridLayout *background = new QGridLayout(this);
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   background->addMultiCellWidget(lbl_info, j, j, 0, 2);
+   j++;
+   background->addWidget(lbl_param, j, 0);
+   background->addWidget(lbl_browflex, j, 1);
+   background->addWidget(lbl_to_use, j, 2);
+   j++;
+   background->addWidget(lbl_solvent_name, j, 0);
+   background->addWidget(le_solvent_name, j, 2);
+   j++;
+   background->addWidget(lbl_solvent_acronym, j, 0);
+   background->addWidget(le_solvent_acronym, j, 2);
+   j++;
+   background->addWidget(lbl_solvent_viscosity, j, 0);
+   background->addWidget(lbl_browflex_solvent_viscosity, j, 1);
+   background->addWidget(le_solvent_viscosity, j, 2);
+   j++;
+   background->addWidget(lbl_solvent_density, j, 0);
+   background->addWidget(le_solvent_density, j, 2);
+   j++;
+   background->addWidget(lbl_temperature, j, 0);
+   background->addWidget(lbl_browflex_temperature, j, 1);
+   background->addWidget(le_temperature, j, 2);
    j++;
    background->addWidget(lbl_psv, j, 0);
-   background->addWidget(le_psv, j, 1);
+   background->addWidget(le_psv, j, 2);
    j++;
-   background->addWidget(lbl_mw, j, 0);
-   background->addWidget(le_mw, j, 1);
+   background->addWidget(cb_check_fix_overlaps, j, 0);
+   background->addWidget(cb_set_to_browflex, j, 1);
+   background->addWidget(cb_solvent_defaults, j, 2);
    j++;
-   background->addMultiCellWidget(cb_write_bead_model, j, j, 0, 1);
-   j++;
-   background->addWidget(pb_help, j, 0);
-   background->addWidget(pb_cancel, j, 1);
+
+   QHBoxLayout *hbl = new QHBoxLayout;
+   hbl->addWidget(pb_help);
+   hbl->addWidget(pb_cancel);
+   background->addMultiCellLayout(hbl, j, j, 0, 2);
+   check_solvent_browflex_defaults();
 }
 
 void US_Hydrodyn_BD_Load_Results_Opts::cancel()
@@ -116,7 +250,40 @@ void US_Hydrodyn_BD_Load_Results_Opts::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_dammin_opts.html");
+   online_help->show_help("manual/somo_bd_load_results_opts.html");
+}
+
+void US_Hydrodyn_BD_Load_Results_Opts::update_solvent_name(const QString &str)
+{
+   *solvent_name = str;
+   check_solvent_browflex_defaults();
+}
+
+void US_Hydrodyn_BD_Load_Results_Opts::update_solvent_acronym(const QString &str)
+{
+   *solvent_acronym = str.left(5);
+   le_solvent_acronym->setText(*solvent_acronym);
+   check_solvent_browflex_defaults();
+}
+
+void US_Hydrodyn_BD_Load_Results_Opts::update_temperature(const QString &str)
+{
+   *temperature = str.toDouble();
+   check_solvent_browflex_defaults();
+}
+
+void US_Hydrodyn_BD_Load_Results_Opts::update_solvent_viscosity(const QString &str)
+{
+   *solvent_viscosity = str.toDouble();
+   // le_solvent_viscosity->setText(QString("").sprintf("%f",*solvent_viscosity));
+   check_solvent_browflex_defaults();
+}
+
+void US_Hydrodyn_BD_Load_Results_Opts::update_solvent_density(const QString &str)
+{
+   *solvent_density = str.toDouble();
+   // le_solvent_density->setText(QString("").sprintf("%f",*solvent_density));
+   check_solvent_browflex_defaults();
 }
 
 void US_Hydrodyn_BD_Load_Results_Opts::update_psv(const QString &str)
@@ -124,12 +291,62 @@ void US_Hydrodyn_BD_Load_Results_Opts::update_psv(const QString &str)
    *psv = str.toDouble();
 }
 
-void US_Hydrodyn_BD_Load_Results_Opts::update_mw(const QString &str)
+void US_Hydrodyn_BD_Load_Results_Opts::set_solvent_defaults()
 {
-   *mw = str.toDouble();
+   if ( cb_solvent_defaults->isChecked() )
+   {
+      *solvent_name = "Water";
+      *solvent_acronym = "w";
+      *temperature = K20 - K0;
+      *solvent_viscosity = VISC_20W * 100;
+      *solvent_density = DENS_20W;
+      le_solvent_name->setText(*solvent_name);
+      le_solvent_acronym->setText(*solvent_acronym);
+      le_temperature->setText(QString("").sprintf("%4.2f",*temperature));
+      le_solvent_viscosity->setText(QString("").sprintf("%f",*solvent_viscosity));
+      le_solvent_density->setText(QString("").sprintf("%f",*solvent_density));
+   }
 }
 
-void US_Hydrodyn_BD_Load_Results_Opts::set_write_bead_model()
+void US_Hydrodyn_BD_Load_Results_Opts::set_check_fix_overlaps()
 {
-   *write_bead_model = cb_write_bead_model->isChecked();
+   *check_fix_overlaps = cb_check_fix_overlaps->isChecked();
+}
+
+void US_Hydrodyn_BD_Load_Results_Opts::set_to_browflex()
+{
+   if ( cb_set_to_browflex->isChecked() )
+   {
+      *temperature = browflex_temperature;
+      *solvent_viscosity = browflex_solvent_viscosity;
+      le_temperature->setText(QString("").sprintf("%4.2f",*temperature));
+      le_solvent_viscosity->setText(QString("").sprintf("%f",*solvent_viscosity));
+   }
+   check_solvent_browflex_defaults();
+}
+
+void US_Hydrodyn_BD_Load_Results_Opts::check_solvent_browflex_defaults()
+{
+   cb_solvent_defaults->setChecked(
+                                   *solvent_name == "Water" &&
+                                   *solvent_acronym == "w" &&
+                                   *temperature == K20 - K0 &&
+                                   *solvent_viscosity == VISC_20W * 100 &&
+                                   *solvent_density == DENS_20W
+                                   );
+   cb_set_to_browflex->setChecked(
+                                  QString("").sprintf("%4.2f",*temperature) == 
+                                  QString("").sprintf("%4.2f",browflex_temperature) &&
+                                  QString("").sprintf("%f",*solvent_viscosity) == 
+                                  QString("").sprintf("%f",browflex_solvent_viscosity)
+                                  );
+}
+      
+int US_Hydrodyn_BD_Load_Results_Opts::write_conditions_to_file( QString filename )
+{
+   return -1;
+}
+
+void US_Hydrodyn_BD_Load_Results_Opts::read_conditions_from_file( QString filename )
+{
 }

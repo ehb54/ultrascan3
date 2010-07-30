@@ -2609,6 +2609,34 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
 
    //   results.vbar = bd_load_results_solvent_visc;
 
+   // set the parameters
+
+   QString msg = QString(tr(" Enter conditions for the bead models: "));
+   
+   double psv = 0.0; // misc.vbar;
+   bool check_fix_overlaps = true;
+
+   US_Hydrodyn_BD_Load_Results_Opts *hblro = 
+      new US_Hydrodyn_BD_Load_Results_Opts (
+                                            msg,
+                                            &hydro.temperature,
+                                            &hydro.solvent_viscosity,
+                                            &hydro.solvent_density,
+                                            &hydro.solvent_name,
+                                            &hydro.solvent_acronym,
+                                            &psv,
+                                            bd_load_results_temp,
+                                            bd_load_results_solvent_visc,
+                                            &check_fix_overlaps
+                                            );
+   do {
+      hblro->exec();
+   } while ( psv <= 0.0 );
+
+   results.vbar = psv;
+   
+   delete hblro;
+
    // create the bead models
    QString basename = dir + SLASH + name;
    int save_bead_output = bead_output.output;
@@ -2654,6 +2682,136 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
          }
          QString model_name = basename + QString("-m%1-c%2").arg(i).arg(j);
          // cout << "model name " << model_name << endl;
+         if ( check_fix_overlaps )
+         {
+            if ( overlap_check(true, true, true,
+                               hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance) )
+            {
+               pb_stop_calc->setEnabled(true);
+               int mpos =
+                  3 // grid_atob
+                  + (grid.enable_asa ?
+                     ( 1 
+                       + 10 // radial reduction
+                       + ( asa.recheck_beads ? 2 : 0 )
+                       )
+                     : 0 )
+                  + ( ( !grid.enable_asa && grid_overlap.remove_overlap ) ?
+                      ( 10 // radial reduction
+                        + ( asa.recheck_beads ? 2 : 0 )
+                        )
+                      : 0 )
+                  + 1 // finish off
+                  ;
+               
+               progress->reset();
+               progress->setTotalSteps(mpos);
+               progress->setProgress(progress->progress() + 1);
+               qApp->processEvents();
+
+               if ( grid.enable_asa )
+               {
+                  editor->append("ASA check\n");
+                  qApp->processEvents();
+                  // set all beads buried
+                  for(unsigned int i = 0; i < bead_model.size(); i++) {
+                     bead_model[i].exposed_code = 6;
+                     bead_model[i].bead_color = 6;
+                     bead_model[i].chain = 1; // all 'side' chain
+                  }
+                  double save_threshold = asa.threshold;
+                  double save_threshold_percent = asa.threshold_percent;
+                  asa.threshold = asa.grid_threshold;
+                  asa.threshold_percent = asa.grid_threshold_percent;
+                  progress->setProgress(progress->progress() + 1);
+                  bead_check(true, true);
+                  progress->setProgress(progress->progress() + 1);
+                  asa.threshold = save_threshold;
+                  asa.threshold_percent = save_threshold_percent;
+                  // now apply radial reduction with outward translation using
+
+                  // grid_exposed/buried_overlap
+                  overlap_reduction save_sidechain_overlap = sidechain_overlap;
+                  overlap_reduction save_mainchain_overlap = mainchain_overlap;
+                  overlap_reduction save_buried_overlap = buried_overlap;
+                  sidechain_overlap = grid_exposed_overlap;
+                  mainchain_overlap = grid_exposed_overlap;
+                  buried_overlap = grid_buried_overlap;
+                  progress->setProgress(progress->progress() + 1);
+                  radial_reduction();
+                  sidechain_overlap = save_sidechain_overlap;
+                  mainchain_overlap = save_mainchain_overlap;
+                  buried_overlap = save_buried_overlap;
+
+                  // grid_buried_overlap
+
+                  if (asa.recheck_beads)
+                  {
+                     editor->append("Rechecking beads\n");
+                     qApp->processEvents();
+                     double save_threshold = asa.threshold;
+                     double save_threshold_percent = asa.threshold_percent;
+                     asa.threshold = asa.grid_threshold;
+                     asa.threshold_percent = asa.grid_threshold_percent;
+                     progress->setProgress(progress->progress() + 1);
+                     bead_check(false, false);
+                     progress->setProgress(progress->progress() + 1);
+                     asa.threshold = save_threshold;
+                     asa.threshold_percent = save_threshold_percent;
+                  }
+               }
+               else
+               {
+                  if (grid_overlap.remove_overlap)
+                  {
+                     progress->setProgress(progress->progress() + 1);
+                     radial_reduction();
+                     progress->setProgress(progress->progress() + 1);
+                  }
+                  if (stopFlag)
+                  {
+                     editor->append("Stopped by user\n\n");
+                     progress->reset();
+                     f.close();
+                     return;
+                  }
+                  if (asa.recheck_beads)
+                  {
+                     editor->append("Rechecking beads\n");
+                     qApp->processEvents();
+                     // all buried
+                     for(unsigned int i = 0; i < bead_model.size(); i++) {
+                        bead_model[i].exposed_code = 6;
+                        bead_model[i].bead_color = 6;
+                     }
+                     double save_threshold = asa.threshold;
+                     double save_threshold_percent = asa.threshold_percent;
+                     asa.threshold = asa.grid_threshold;
+                     asa.threshold_percent = asa.grid_threshold_percent;
+                     progress->setProgress(progress->progress() + 1);
+                     bead_check(false, false);
+                     progress->setProgress(progress->progress() + 1);
+                     asa.threshold = save_threshold;
+                     asa.threshold_percent = save_threshold_percent;
+                  }
+                  else
+                  {
+                     // all exposed
+                     for(unsigned int i = 0; i < bead_model.size(); i++) {
+                        bead_model[i].exposed_code = 1;
+                        bead_model[i].bead_color = 8;
+                     }
+                  }
+                  if (stopFlag)
+                  {
+                     editor->append("Stopped by user\n\n");
+                     progress->reset();
+                     f.close();
+                     return;
+                  }
+               }
+            }
+         }
          write_bead_model( model_name, &bead_model );
          model_names.push_back(  model_name + ".bead_model" );
          editor->append(QString(tr("Created bead model %1\n")).arg(name + QString("-m%1-c%2").arg(i).arg(j) + ".bead_model"));
