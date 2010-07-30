@@ -119,6 +119,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void setSomoGridFile(bool); // checks for file existance and resets suffix accordingly, true for somo
       void setHydroFile(); // checks for file existance and resets suffix accordingly
       QCheckBox *cb_overwrite;
+      QString last_hydro_res;
 
    private:
       bool residue_widget;
@@ -390,6 +391,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       vector < float > bd_load_results_bead_radius;
 
       bool check_bead_model_for_nan();
+
+      QString last_read_bead_model;
 
       // needed 
 

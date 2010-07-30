@@ -2485,7 +2485,9 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
       }
    }
    cout << "unit_of_length " << unit_of_length << endl;
-   int exp = (int)log10(unit_of_length);
+   cout << "log10 unit_of_length " << log10(unit_of_length) << endl;
+   int exp = (int)(log10(unit_of_length) - .01);
+   exp -= 2;  // convert from browflex cm to our m.
    hydro.unit = exp;
    display_default_differences();
    

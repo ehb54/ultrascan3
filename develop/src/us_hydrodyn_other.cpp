@@ -669,6 +669,7 @@ int US_Hydrodyn::read_pdb(const QString &filename)
 
 int US_Hydrodyn::read_bead_model(QString filename)
 {
+   last_read_bead_model = filename;
    lb_model->clear();
    lbl_pdb_file->setText(tr(" not selected "));
    project = filename;

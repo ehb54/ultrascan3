@@ -175,7 +175,9 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    anaflex = NULL;
    anaflex_return_to_bd_load_results = false;
    bd_anaflex_enables(false);
-   bd_options.nmol = 1;
+   bd_options.nmol = 1;  // need to move to saved options!
+   last_read_bead_model = "";
+   last_hydro_res = "";
    chdir(somo_tmp_dir);
    if ( advanced_config.debug_5 )
    {
@@ -2620,7 +2622,50 @@ void US_Hydrodyn::view_asa()
 
 void US_Hydrodyn::view_bead_model()
 {
-   QString filename = QFileDialog::getOpenFileName(somo_dir, "*.bead_model* *.BEAD_MODEL*", this);
+   QString filename = "";
+   if ( last_read_bead_model != "" )
+   {
+      QFileInfo fi(last_read_bead_model);
+      switch (
+              QMessageBox::question(
+                                    this,
+                                    tr("View Bead Model File"),
+                                    QString(tr("View last read bead model ") + fi.fileName() + " ?"),
+                                    QMessageBox::Yes, 
+                                    QMessageBox::No,
+                                    QMessageBox::Cancel
+                                    ) )
+      {
+      case QMessageBox::Yes : 
+         filename = last_read_bead_model;
+         break;
+      case QMessageBox::No : 
+         filename = QFileDialog::getOpenFileName(somo_dir
+                                                 ,"Bead models (*.bead_model *.BEAD_MODEL);;"
+                                                 "BEAMS (*.beams *.BEAMS);;"
+                                                 "DAMMIN/DAMMIF (*.pdb)"
+                                                 , this
+                                                 , "open file dialog"
+                                                 , "Open"
+                                                 , &bead_model_selected_filter
+                                                 );
+         break;
+      case QMessageBox::Cancel :
+      default :
+         return;
+         break;
+      }
+   } else {
+      filename = QFileDialog::getOpenFileName(somo_dir
+                                              ,"Bead models (*.bead_model *.BEAD_MODEL);;"
+                                              "BEAMS (*.beams *.BEAMS);;"
+                                              "DAMMIN/DAMMIF (*.pdb)"
+                                              , this
+                                              , "open file dialog"
+                                              , "Open"
+                                              , &bead_model_selected_filter
+                                              );
+   }
    if (!filename.isEmpty())
    {
       view_file(filename);
@@ -2852,7 +2897,34 @@ void US_Hydrodyn::show_hydro_results()
 
 void US_Hydrodyn::open_hydro_results()
 {
-   QString filename = QFileDialog::getOpenFileName(somo_dir, "*.hydro_res *.HYDRO_RES", this);
+   QString filename = "";
+   if ( last_hydro_res != "" )
+   {
+      QFileInfo fi(last_hydro_res);
+      switch (
+              QMessageBox::question(
+                                    this,
+                                    tr("Open Hydrodynamic Calculations File"),
+                                    QString(tr("View last results file ") + fi.fileName() + " ?"),
+                                    QMessageBox::Yes, 
+                                    QMessageBox::No,
+                                    QMessageBox::Cancel
+                                    ) )
+      {
+      case QMessageBox::Yes : 
+         filename = somo_dir + SLASH + last_hydro_res;
+         break;
+      case QMessageBox::No : 
+         filename = QFileDialog::getOpenFileName(somo_dir, "*.hydro_res *.HYDRO_RES", this);
+         break;
+      case QMessageBox::Cancel :
+      default :
+         return;
+         break;
+      }
+   } else {
+      filename = QFileDialog::getOpenFileName(somo_dir, "*.hydro_res *.HYDRO_RES", this);
+   }
    if (!filename.isEmpty())
    {
       view_file(filename);
