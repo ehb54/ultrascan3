@@ -36,6 +36,7 @@
 #   define SLASH "\\"
 #   define STDOUT_FILENO 1
 #   define STDERR_FILENO 2
+#   define isnan _isnan
 #endif
 
 #define TOLERANCE overlap_tolerance
@@ -4277,6 +4278,7 @@ void US_Hydrodyn::display_default_differences()
 }
 
 
+#define USE_MPLAYER
 // probably should replace with enum of event types
 // and a more through matrix of sound events
 void US_Hydrodyn::play_sounds(int type)
@@ -4292,7 +4294,13 @@ void US_Hydrodyn::play_sounds(int type)
             QString sf = sound_base + "somo_done.wav";
             if ( QFileInfo(sf).exists() )
             {
-               QSound::play(sf);
+#if defined(USE_MPLAYER)
+	      QString cmd = QString("mplayer %1&").arg(sf).ascii();
+	      cout << cmd << endl;
+	      system(cmd);
+#else
+	      QSound::play(sf);
+#endif
             }
             else
             {
@@ -4498,3 +4506,23 @@ void US_Hydrodyn::editor_msg( QString color, QString msg )
    editor->setColor(save_color);
 }
 
+bool US_Hydrodyn::check_bead_model_for_nan()
+{
+   bool issues = false;
+   for ( unsigned int i = 0; i < bead_model.size() - 1; i++ ) 
+   {
+      for ( int j = 0; j < 3; j++ )
+      {
+         if ( isnan(bead_model[i].bead_coordinate.axis[j]) )
+         {
+            issues = true;
+            editor_msg("red", 
+                       QString("WARNING: bead %1 coordinate %2 is NAN!\n")
+                       .arg(i+1)
+                       .arg(j+1)
+                       );
+         }
+      }
+   }
+   return issues;
+}

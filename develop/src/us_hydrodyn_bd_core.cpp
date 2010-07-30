@@ -2340,7 +2340,9 @@ void US_Hydrodyn::bd_load_results()
 
       // psv
       line++;
-      ts >> bd_load_results_solvent_visc;  
+      ts >> bd_load_results_solvent_visc;
+      bd_load_results_solvent_visc *= 100;  // cP to Poise
+      
       cout << "solvent visc " << bd_load_results_solvent_visc << endl;
       if ( ts.atEnd() )
       {
@@ -2675,13 +2677,18 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
             ts.readLine();
 
             tmp_atom.bead_computed_radius = bd_load_results_bead_radius[k];
+            tmp_atom.bead_actual_radius = bd_load_results_bead_radius[k];
+            tmp_atom.radius = bd_load_results_bead_radius[k];
             tmp_atom.bead_mw = bd_load_results_mw;
             tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
-            tmp_atom.bead_color = 8;
+            tmp_atom.bead_ref_volume = 0;
+            tmp_atom.bead_color = 1;
 
             tmp_atom.exposed_code = 1;
             tmp_atom.all_beads.clear();
             tmp_atom.active = true;
+            tmp_atom.chain = 1;
+            tmp_atom.normalized_ot_is_valid = false;
             tmp_atom.name = "ATOM";
             tmp_atom.resName = "RESIDUE";
             tmp_atom.iCode = "ICODE";
@@ -2770,6 +2777,13 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                }
                else
                {
+                  //                  // set all beads exposed
+                  //                  for(unsigned int i = 0; i < bead_model.size(); i++) {
+                  //		     bead_model[i].exposed_code = 1;
+                  //		     bead_model[i].bead_color = 8;
+                  //		     bead_model[i].chain = 1; // all 'side' chain
+                  //                  }
+
                   if (grid_overlap.remove_overlap)
                   {
                      progress->setProgress(progress->progress() + 1);
@@ -2820,11 +2834,13 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                }
             }
          }
+         check_bead_model_for_nan();
          write_bead_model( model_name, &bead_model );
          model_names.push_back(  model_name + ".bead_model" );
          editor->append(QString(tr("Created bead model %1\n")).arg(name + QString("-m%1-c%2").arg(i).arg(j) + ".bead_model"));
       }
    }
+   progress->setProgress(1,1);
    f.close();
    bead_output.output = save_bead_output;
 

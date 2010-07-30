@@ -389,6 +389,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       float bd_load_results_mw;
       vector < float > bd_load_results_bead_radius;
 
+      bool check_bead_model_for_nan();
+
       // needed 
 
 #ifdef WIN32
