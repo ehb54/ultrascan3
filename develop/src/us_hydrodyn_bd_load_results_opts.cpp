@@ -184,7 +184,7 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
    le_psv->setMinimumHeight(minHeight2);
    le_psv->setAlignment(AlignCenter|AlignVCenter);
    le_psv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
+   le_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    connect(le_psv, SIGNAL(textChanged(const QString &)), SLOT(update_psv(const QString &)));
 
    pb_cancel = new QPushButton(tr("Close"), this);

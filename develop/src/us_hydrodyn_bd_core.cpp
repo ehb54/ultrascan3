@@ -2753,7 +2753,12 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                   mainchain_overlap = grid_exposed_overlap;
                   buried_overlap = grid_buried_overlap;
                   progress->setProgress(progress->progress() + 1);
+
+                  double save_overlap = overlap_tolerance;
+                  overlap_tolerance *= .8;
                   radial_reduction();
+                  overlap_tolerance = save_overlap;
+                  
                   sidechain_overlap = save_sidechain_overlap;
                   mainchain_overlap = save_mainchain_overlap;
                   buried_overlap = save_buried_overlap;
@@ -2787,7 +2792,10 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                   if (grid_overlap.remove_overlap)
                   {
                      progress->setProgress(progress->progress() + 1);
+                     double save_overlap = overlap_tolerance;
+                     overlap_tolerance *= .8;
                      radial_reduction();
+                     overlap_tolerance = save_overlap;
                      progress->setProgress(progress->progress() + 1);
                   }
                   if (stopFlag)
@@ -2832,6 +2840,13 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                      return;
                   }
                }
+            }
+         }
+         // set all exposed for now
+         {
+            for( unsigned int i = 0; i < bead_model.size(); i++) {
+               bead_model[i].exposed_code = 1;
+               bead_model[i].bead_color = 8;
             }
          }
          check_bead_model_for_nan();

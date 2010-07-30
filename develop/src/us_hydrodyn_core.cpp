@@ -2783,6 +2783,7 @@ void US_Hydrodyn::radial_reduction()
    float molecular_cog[3] = { 0, 0, 0 };
    float molecular_mw = 0;
    int end_progress = progress->progress() + 10;
+   cout << QString("radial reduction, tolerance is %1\n").arg(TOLERANCE);
 
    for (unsigned int i = 0; i < bead_model.size(); i++) {
       PDB_atom *this_atom = &bead_model[i];
@@ -3290,7 +3291,7 @@ void US_Hydrodyn::radial_reduction()
                            (bead_model[i].exposed_code == 1 &&
                             bead_model[j].exposed_code == 1)) &&
                           bead_model[i].bead_computed_radius > TOLERANCE &&
-                          bead_model[j].bead_computed_radius > TOLERANCE) ? "logic true" : "logic false"
+                          bead_model[j].bead_computed_radius > TOLERANCE ) ? "logic true" : "logic false"
                          );
 #endif
                   //                  bool active = bead_model[i].active && bead_model[j].active;
