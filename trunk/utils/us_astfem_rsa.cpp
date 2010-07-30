@@ -1092,6 +1092,7 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 //              = 1 Claverie (uniform), etc,
 //              = 2 Exponential mesh (Schuck's form., no refinement at bottom)
 //              = 3 input from data file: "mesh_data.dat"
+//              = 4 ASVFEM grid (Adaptive Space-Volume)
 //              = 10, acceleration mesh (left and right refinement)
 //////////////////////////////////////////////////////////////%
 
@@ -1114,8 +1115,6 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 
       case (int)US_SimulationParameters::ASTFEM:
          // Adaptive Space Time FE Mesh without left hand refinement
-      case (int)US_SimulationParameters::ASVFEM:
-         // Adaptive Space Volume FE Mesh
          qSort( nu.begin(), nu.end() );   // put nu in ascending order
 
          if ( nu[ 0 ] > 0 )
@@ -1188,6 +1187,23 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
             }
             break;
          }
+      
+      case (int)US_SimulationParameters::ASVFEM:
+         // Adaptive Space Volume FE Mesh
+         qSort( nu.begin(), nu.end() );   // put nu in ascending order
+
+         if ( nu[ 0 ] > 0 )
+            mesh_gen_s_pos( nu );
+
+         else if ( nu[ nu.size() - 1 ] < 0 )
+            mesh_gen_s_neg( nu );
+         
+         else       // Some species with s < 0 and some with s > 0
+         {
+            for ( int i = 0; i < NN; i++ ) 
+               x .append( m + ( b - m ) * i / ( NN - 1 ) );
+         }
+         break;
       
       default:
          qDebug() << "undefined mesh option\n";
