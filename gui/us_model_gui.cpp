@@ -182,6 +182,8 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    connect( pb_accept, SIGNAL( clicked() ), SLOT( accept_model()) );
 
    main->addLayout( buttonbox, row++, 0, 1, 4 );
+
+   adjustSize();
 }
 
 void US_ModelGui::new_model( void )
@@ -208,14 +210,17 @@ void US_ModelGui::new_model( void )
 
 void US_ModelGui::show_model_desc( void )
 {
-   //lw_models->disconnect( SIGNAL( currentRowChanged( int ) ) );
    lw_models->clear();
 
    for ( int i = 0; i < model_descriptions.size(); i++ )
       lw_models->addItem( model_descriptions[ i ].description );
 
-   //connect( lw_modelss, SIGNAL( currentRowChanged( int  ) ),
-   //                     SLOT  ( update           ( int  ) ) );
+   lw_models->sortItems();
+
+   int lheight = lw_models->height();
+   int height  = this->height() + ( lheight / 5 );
+   int width   = this->width();
+   resize( width, height );
 }
 
 bool US_ModelGui::ignore_changes( void )
@@ -261,14 +266,16 @@ void US_ModelGui::select_model( QListWidgetItem* item )
    }
 
    // Get the current index
-   int index = item -> listWidget()-> currentRow();
+   int     index = item -> listWidget()-> currentRow();
+   QString mdesc = item->text();
+   int     modlx = modelIndex( mdesc, model_descriptions );
    
    QString        file;
    QTemporaryFile temporary;
 
    if ( rb_disk->isChecked() ) // Load from disk
    {
-      file = model_descriptions[ index ].filename;
+      file = model_descriptions[ modlx ].filename;
       model.load( file );
 
    }
@@ -283,18 +290,18 @@ void US_ModelGui::select_model( QListWidgetItem* item )
          return;
       }
 
-      QString modelID = model_descriptions[ index ].DB_id;
+      QString modelID = model_descriptions[ modlx ].DB_id;
       model.load( modelID, &db );
    }
 
-   model_descriptions[ index ].editGUID = model.editGUID;
+   model_descriptions[ modlx ].editGUID = model.editGUID;
  
    working_model = model;
 
-   recent_row = index;
+   recent_row    = index;
 
    // Populate 
-   buffer.GUID = model.bufferGUID;
+   buffer.GUID   = model.bufferGUID;
 
    le_description    ->setText( model.description );
    le_buffer         ->setText( model.bufferDesc  );
@@ -720,5 +727,21 @@ void US_ModelGui::list_models( void )
   
    if ( model_descriptions.size() == 0 )
       lw_models->addItem( "No models found." );
+}
+
+int US_ModelGui::modelIndex( QString mdesc, QList< ModelDesc > mds )
+{
+   int mdx = 0;
+
+   for ( int jj = 0; jj < mds.size(); jj++ )
+   {
+      if ( mdesc.compare( mds[ jj ].description ) == 0 )
+      {
+         mdx    = jj;
+         break;
+      }
+   }
+
+   return mdx;
 }
 

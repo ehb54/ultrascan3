@@ -523,6 +523,11 @@ void US_FeMatch::details( void )
    qApp->processEvents();
 
    delete dialog;
+//DEBUG: for now, use details button to toggle RA visibility
+bool visible=lb_simpoints->isVisible();
+qDebug() << "debug isRA" << !visible;
+set_ra_visible( !visible );
+adjustSize(); 
 }
 
 // update based on selected triples row
@@ -915,8 +920,8 @@ void US_FeMatch::set_ra_visible( bool visible )
    ct_parameter->setVisible( visible );
    pb_showmodel->setVisible( visible );
    ct_modelnbr ->setVisible( visible );
-   cb_mesh     ->setVisible( visible );
-   cb_grid     ->setVisible( visible );
+   //cb_mesh     ->setVisible( visible );
+   //cb_grid     ->setVisible( visible );
 
    gb_modelsim ->setVisible( visible );  // visibility model simulate group box
 }
@@ -1288,12 +1293,6 @@ qDebug() << "  drN" << yy[dsize-1];
 // reset excluded scan range
 void US_FeMatch::reset( )
 {
-//DEBUG: for now, use reset button to toggle RA visibility
-bool visible=lb_simpoints->isVisible();
-qDebug() << "debug isRA" << !visible;
-set_ra_visible( !visible );
-adjustSize(); 
-
    if ( !dataLoaded )
       return;
 
@@ -1588,6 +1587,21 @@ qDebug() << " baseline plateau" << edata->baseline << edata->plateau;
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;
    simparams.radial_resolution = ( radhi - radlo ) / (double)( nconc - 1 );
+
+   QString mtyp = cb_mesh->currentText();
+   QString gtyp = cb_grid->currentText();
+
+   if ( mtyp.contains( "Claverie" ) )
+      simparams.meshType = US_SimulationParameters::CLAVERIE;
+   else if ( mtyp.contains( "Moving Hat" ) )
+      simparams.meshType = US_SimulationParameters::MOVING_HAT;
+   else if ( mtyp.contains( "File:"      ) )
+      simparams.meshType = US_SimulationParameters::USER;
+   else if ( mtyp.contains( "Space Volu" ) )
+      simparams.meshType = US_SimulationParameters::ASVFEM;
+
+   if ( gtyp.contains( "Constant" ) )
+      simparams.gridType = US_SimulationParameters::FIXED;
 
    simparams.band_firstScanIsConcentration   = false;
 qDebug() << "  duration_hours  " << simparams.speed_step[0].duration_hours;

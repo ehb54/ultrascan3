@@ -91,6 +91,7 @@ class US_ModelGui : public US_WidgetsDialog
       void delete_model      ( void );
       void associations      ( void );
       void update_assoc      ( void );
+      int  modelIndex        ( QString, QList< ModelDesc > );
 
       void help( void ){ showhelp.show_help( "model_editor.html" ); };
 };

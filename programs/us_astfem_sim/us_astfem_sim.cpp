@@ -107,26 +107,26 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    connect( cb_timeCorr, SIGNAL( clicked() ), SLOT( update_time_corr() ) );
    buttonbox->addLayout( timeCorr );
 
-   pb_start = us_pushbutton( tr( "Start Simulation"), false );
+   pb_start = us_pushbutton( tr( "Start Simulation" ), false );
    connect( pb_start, SIGNAL( clicked() ), SLOT( start_simulation() ) );
    buttonbox->addWidget( pb_start );
 
-   pb_stop = us_pushbutton( tr( "Stop Simulation"), false );
+   pb_stop = us_pushbutton( tr( "Stop Simulation" ), false );
    connect( pb_stop, SIGNAL( clicked() ), SLOT( stop_simulation() ) );
    buttonbox->addWidget( pb_stop );
 
    //QPushButton* pb_dcdt = us_pushbutton( tr( "dC/dt Window"), false );
    //buttonbox->addWidget( pb_dcdt );
 
-   pb_saveSim = us_pushbutton( tr( "Save Simulation"), false );
+   pb_saveSim = us_pushbutton( tr( "Save Simulation" ), false );
    connect( pb_saveSim, SIGNAL( clicked() ), SLOT( save_scans() ) );
    buttonbox->addWidget( pb_saveSim );
 
-   QPushButton* pb_help = us_pushbutton( tr( "Help") );
+   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help()) );
    buttonbox->addWidget( pb_help );
 
-   QPushButton* pb_close = us_pushbutton( tr( "Close") );
+   QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
    buttonbox->addWidget( pb_close );
    connect( pb_close, SIGNAL( clicked() ), SLOT( close()) );
 
@@ -197,6 +197,10 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 void US_Astfem_Sim::init_simparams( void )
 {
    US_SimulationParameters::SpeedProfile sp;
+   int    rotor  = 1;
+   double rpm    = 45000.0;
+   double bottom = US_AstfemMath::calc_bottom( rpm, rotor );
+          bottom = (double)( qRound( bottom * 1000.0 ) ) * 0.001;
 
    simparams.mesh_radius.clear();
    simparams.speed_step .clear();
@@ -205,7 +209,7 @@ void US_Astfem_Sim::init_simparams( void )
    sp.duration_minutes  = 30;
    sp.delay_hours       = 0;
    sp.delay_minutes     = 20;
-   sp.rotorspeed        = 45000;
+   sp.rotorspeed        = (int)rpm;
    sp.scans             = 30;
    sp.acceleration      = 400;
    sp.acceleration_flag = true;
@@ -217,12 +221,12 @@ void US_Astfem_Sim::init_simparams( void )
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;
    simparams.meniscus          = 5.8;
-   simparams.bottom            = 7.2;
+   simparams.bottom            = bottom;
    simparams.rnoise            = 0.0;
    simparams.tinoise           = 0.0;
    simparams.rinoise           = 0.0;
    simparams.band_volume       = 0.015;
-   simparams.rotor             = 1;
+   simparams.rotor             = rotor;
    simparams.band_forming      = false;
 }
 
@@ -372,6 +376,7 @@ void US_Astfem_Sim::start_simulation( void )
    moviePlot->clear();
    moviePlot->replot();
    curve_count = 0;
+   double rpm  = simparams.speed_step[ 0 ].rotorspeed;
 
    scanPlot->clear();
    scanPlot->replot();
@@ -395,7 +400,7 @@ void US_Astfem_Sim::start_simulation( void )
    QString guid = US_Util::new_guid();
    uuid_parse( guid.toLatin1().data(), (uchar*)sim_data.rawGUID );
    
-   sim_data.cell        = 0;
+   sim_data.cell        = 1;
    sim_data.channel     = 'S';
    sim_data.description = "Simulation";
    
@@ -419,7 +424,7 @@ void US_Astfem_Sim::start_simulation( void )
       US_DataIO2::Scan* scan = &sim_data.scanData[ i ];
 
       scan->temperature = system.temperature;
-      scan->rpm         = 0.0;
+      scan->rpm         = rpm;
       scan->omega2t     = 0.0;
       scan->wavelength  = system.wavelength;
       scan->plateau     = 0.0;
@@ -625,416 +630,109 @@ void US_Astfem_Sim::plot( void )
 
 void US_Astfem_Sim::save_scans( void )
 {
-   QMessageBox mb( QMessageBox::Question, 
-         tr( "UltraScan" ), 
-         tr( "Please choose an export format:" ), 0, this );
+   QString fn = QFileDialog::getExistingDirectory( this,
+         tr( "Select a directory for the simulated data:" ),
+         US_Settings::resultDir() );
 
-   QPushButton* us  = mb.addButton( tr( "UltraScan"), QMessageBox::YesRole    );
-   QPushButton* xla = mb.addButton( tr( "XLA")      , QMessageBox::AcceptRole );
-                      mb.addButton( tr( "Cancel")   , QMessageBox::RejectRole );
+   // The user gave a directory name, save in Beckman/XLA format
 
-   mb.exec();
-   
-   if ( mb.clickedButton() == us ) // Save in UltraScan format
-   {
-      QString fn = QFileDialog::getSaveFileName( this,
-            tr( "Select or input a filename" ),
-            US_Settings::resultDir(), "*.us.v" );
-      
-      if ( ! fn.isEmpty() )
-      {
-         // If an extension was given, strip it
-         fn = fn.left( fn.indexOf( "." ) ); 
-
-         // The user gave a file name, save in UltraScan format
-         save_ultrascan( fn ); 
-      }
-   }
-   else if ( mb.clickedButton() == xla ) // Save in XL-A format
-   {
-      QString fn = QFileDialog::getExistingDirectory( this,
-            tr( "Select a directory for the simulated data files:" ),
-            US_Settings::dataDir() );
-
-      // The user gave a directory name, save in Beckman/XLA format
-      if ( ! fn.isEmpty() ) save_xla( fn ); 
-   }
+   if ( ! fn.isEmpty() )
+      save_xla( fn ); 
 }
 
-void US_Astfem_Sim::save_xla( const QString& /*dirname*/ )
+void US_Astfem_Sim::save_xla( const QString& dirname )
 {
    double b         = simparams.bottom;
    double m         = simparams.meniscus;
    double grid_res  = simparams.radial_resolution;
-   int    step_size = simparams.speed_step.size();
 
    // Add 30 points in front of meniscus                                                               
-   int    points = (int)( ( b - m )/ grid_res ) + 30; 
+   int    points      = (int)( ( b - m ) / grid_res ) + 30; 
    
-   double maxc = 0.0;
-   int    total_scans = 0;
-/*   
-   for ( int k = 0; k < step_size; k++ )
+   double maxc        = 0.0;
+   int    total_scans = sim_data.scanData.size();
+   int    old_points  = sim_data.scanData[ 0 ].readings.size();
+   int    kk          = old_points - 1;
+
+   for ( int ii = 0; ii < total_scans; ii++ )
    {
-      int last_scan = astfem_data[ k ].scan.size() - 1;
-      
-      maxc = max( maxc, 
-              astfem_data[ k ].scan[ last_scan - 1 ].
-                conc[ astfem_data[ k ].scan[ last_scan ].conc.size() - 1 ] );
-      
-      total_scans += astfem_data[ k ].scan.size();
+      maxc = max( maxc, sim_data.value( ii, kk ) );
    }
-*/
-   US_ClipData* cd = new US_ClipData( maxc, b, m, total_conc );
-   if ( ! cd->exec() ) return;
+
+   //US_ClipData* cd = new US_ClipData( maxc, b, m, total_conc );
+   //if ( ! cd->exec() ) return;
    
    progress->setMaximum( total_scans );
    progress->reset();
    
-   double* temp_radius = new double [ points ];
-   temp_radius[ 0 ] = m - 30 * grid_res;
-   
-   for ( int i = 1; i < 30; i++ )
-      temp_radius[ i ] = temp_radius[ i - 1 ] + grid_res;
-   
-   for ( int i = 30; i < points; i++ )
-      temp_radius[ i ] = m + ( grid_res * ( i - 30 ) );
-   
+   double* temp_conc   = new double [ points ];
+   double  rad         = m - 30.0 * grid_res;
+   double  conc        = 0.0;
+   double  conc_res    = 0.0;
+   sim_data.x.resize( points );
    lb_progress->setText( "Writing..." );
    
-   //int current_scan = 1;
-   
-   for ( int k = 0; k < step_size; k++ )
+   for ( int jj = 0; jj < points; jj++ )
    {
-/*      for ( int i = 0; i < astfem_data[ k ].scan.size(); i++ )
+      sim_data.x[ jj ].radius = rad;
+      rad  += grid_res;
+   }
+
+   for ( int ii = 0; ii < total_scans; ii++ )
+   {
+      US_DataIO2::Scan* scan = &sim_data.scanData[ ii ];
+
+      for ( int jj = 30; jj < points; jj++ )
       {
-         QString s;
-         s.sprintf( "/%5.5d.ra1", current_scan );
-
-         QString fn = dirname + s;
- 
-         QFile f( fn );
-
-         if ( f.open( QIODevice::WriteOnly | QIODevice::Text ) )
-         {
-            QTextStream ts( &f );
-            ts << "Simulated Velocity Data" << endl;
-            ts << "R 1 20.0 " << s.sprintf( "%5u %7ld %1.5e %d %d\n", 
-                  astfem_data[ k ].rpm, 
-                  (long int)astfem_data[ k ].scan[ i ].time, 
-                  astfem_data[ k ].scan[ i ].omega_s_t, 999, 1 );
-            
-            for ( int j = 0; j < 30; j++ ) // The region in front of meniscus
-            {
-               ts << s.sprintf( "%9.4f %12.5e %12.5e", temp_radius[ j ], 
-                     0.0, 0.0 ) << endl;
-            }
-            
-            // One high point for the meniscus:
-            ts << s.sprintf( "%9.4f %12.5e %12.5e", temp_radius[ 30 ], 
-                  total_conc * 1.3, 0.0 ) << endl;
-            
-            int j = 31;
-            
-            if ( maxc == 0 ) // Ff 0 then use the entire range
-            {
-               while ( j < points && temp_radius[ j ] <= b )
-               {
-                  ts << s.sprintf( "%9.4f %12.5e %12.5e", temp_radius[ j ], 
-                        astfem_data[ k ].scan[ i ].conc[ j - 30 ], 0.0 ) 
-                     << endl;
-                  j++;
-               }
-            }
-            else
-            {
-               while ( j                                        <  points && 
-                       astfem_data[ k ].scan[ i].conc[ j - 30 ] <= maxc   && 
-                       temp_radius[ j ]                         <= b )
-               {
-                  ts << s.sprintf( "%9.4f %12.5e %12.5e", temp_radius[ j ], 
-                        astfem_data[ k ].scan[ i ].conc[ j - 30 ], 0.0 ) 
-                     << endl;
-                  j++;
-               }
-            }
-         }
-
-         current_scan++;
-         progress->setValue( current_scan );
-         qApp->processEvents();
-         //f.close();
+         temp_conc[ jj ] = scan->readings[ jj - 30 ].value;
       }
-*/   }
+
+      conc     = 0.0;
+      conc_res = temp_conc[ 30 ] / 30.0;
+
+      for ( int jj = 0; jj < 30; jj++ )
+      {
+         temp_conc[ jj ] = conc;
+         conc  += conc_res;
+      }
+
+      scan->readings.resize( points );
+
+      for ( int jj = 0; jj < points; jj++ )
+      {
+         scan->readings[ jj ].value = temp_conc[ jj ];
+      }
+
+      progress->setValue( ( ii + 1 ) );
+qDebug() << "WD:sc secs" << scan->seconds;
+if ( ii == 0 || (ii+1) == total_scans ) {
+qDebug() << "WD:S0:c00" << scan->readings[0].value;
+qDebug() << "WD:S0:c01" << scan->readings[1].value;
+qDebug() << "WD:S0:c30" << scan->readings[30].value;
+qDebug() << "WD:S0:cn1" << scan->readings[points-2].value;
+qDebug() << "WD:S0:cnn" << scan->readings[points-1].value; }
+   }
+
+   QString run_id    = dirname.section( "/", -1, -1 );
+   QString stype     = QString( QChar( sim_data.type[ 0 ] ) )
+                     + QString( QChar( sim_data.type[ 1 ] ) );
+   QString schann    = QString( QChar( sim_data.channel ) );
+   int     cell      = sim_data.cell;
+   int     wvlen     = qRound( sim_data.scanData[ 0 ].wavelength );
+           wvlen     = ( wvlen < 1 ) ? 260 : wvlen;
+   QString ofname    = QString( "%1/%2.%3.%4.%5.%6.auc" )
+      .arg( dirname ).arg( run_id ).arg( stype ).arg( cell )
+      .arg( schann  ).arg( wvlen  );
+   
+   US_DataIO2::writeRawData( ofname, sim_data );
 
    progress->setValue( total_scans );
    lb_progress->setText( tr( "Completed" ) );
    
-   delete [] temp_radius;
+   delete [] temp_conc;
+   pb_saveSim->setEnabled( false );
 }
 
-void US_Astfem_Sim::save_ultrascan( const QString& /*filename*/ )
-{
-   //double b           = simparams.bottom;
-   //double m           = simparams.meniscus;
-   //double grid_res    = simparams.radial_resolution;
-   //int    step_size   = simparams.speed_step.size();
-
-   //int    total_scans = 0;
-   //double maxc        = 0.0;
-/*
-   for ( int k = 0; k < step_size; k++ )
-   {
-      // astfem_data[ k ].scan is a struct mfem_scan[]
-      int last_scan = astfem_data[ k ].scan.size() - 1;
-      
-      //  mfem_data[].scan[].conc is a double[]
-      int last_conc = astfem_data[ k ].scan[ last_scan ].conc.size() - 1;
-
-      maxc = max( maxc, astfem_data[ k ].scan[ last_scan ].conc[ last_conc] );
-      
-      total_scans += astfem_data[ k ].scan.size();
-   }
-
-   double maxrad = b;
-   US_ClipData* cd = new US_ClipData( maxc, maxrad, m, total_conc );
-   if ( ! cd->exec() ) return;
-
-   progress->setMaximum( total_scans );
-   progress->reset();
-
-   lb_progress->setText( tr("Writing..." ) );
-   
-   int new_points = astfem_data[ 0 ].scan[ 0 ].conc.size();
-   
-   for ( int k = 0; k < step_size; k++ )
-   {
-      // Find the radius from the last scan where the
-      // concentration is higher than the threshold (if at all)
-      int i = 0;
-      
-      int last_scan = astfem_data[ k ].scan.size() - 1;
-
-      while ( i < astfem_data[ 0 ].scan[ 0 ].conc.size() && 
-                  astfem_data[ k ].scan[ last_scan ].conc[ i ] < maxc )
-      {         
-         i++;    
-      }
-
-      if ( i < new_points ) new_points = i; 
-   }
-   
-   // Then check to see if this radius is larger than the maxrad.
-   // If it is, then decrease the point count until the max radius matches.
-   
-   while ( maxrad < astfem_data[ 0 ].radius[ new_points ] ) --new_points;
-
-   double new_bottom = astfem_data[0].radius[new_points];
-   
-   QString temp_str  = filename;
-   QString run_file  = temp_str;
-   QString data_file = temp_str;
-   QString scan_file = temp_str;
-   QString temp      = temp_str;
-   
-   int position = temp.lastIndexOf( "/" );
-   
-   int i = temp.length();
-   
-   // -1 because we dont want to count the null terminating character
-   int j = i - position - 1; 
-
-   QString run_name = temp.right( j );   // Run name without leading path
-   run_file.append ( ".us.v"     );
-   data_file.append( ".veloc.11" );
-   scan_file.append( ".scn"      );
-   
-   QFile f1( run_file );
-   
-   if ( f1.exists() )
-   {
-      if ( ! QMessageBox::question( this, 
-               tr( "Warning" ), 
-               tr( "Attention:\n"
-                   "This file exists already!\n\n"
-                   "Do you want to overwrite it?" ), tr( "Yes" ), tr( "No" ) ) )
-      {
-         f1.close();
-         return;
-      }
-   }
-
-   if ( f1.open( QIODevice::WriteOnly ) ) // Write the binary run file *.us.v
-   {
-      QDataStream ds( &f1 );
-      
-      ds << US_Version;
-      ds << US_Settings::dataDir() + "/simulation"; // data directory
-      
-      temp_str = temp_str.right( temp_str.lastIndexOf( "/" ) );
-
-      ds << temp_str;
-      ds << 20.0;                            // average temperature
-      ds << 1;                               // run_inf.temperature_check;
-      ds << 0.0;                             // run_inf.time_correction;
-      
-      // Run_inf.duration;
-      ds << astfem_data[astfem_data.size() - 1 ].
-              scan[ astfem_data[ astfem_data.size() - 1 ].scan.size() - 1 ].time; 
-       
-      // for simulated data, total scans = scans for simulation, 
-      // since only one "cell" is simulated
-      
-      ds << total_scans;  
-      ds << grid_res;                // run_inf.delta_r
-      ds << -1;                      // experimental data ID
-      ds << -1;                      // Investigator ID
-      
-      QDate today = QDate::currentDate();
-      QString current_date;
-      current_date.sprintf( "%d/%d/%d", today.month(), today.day(), today.year() );
-      
-      ds << current_date;
-      ds << (QString) "Simulated Velocity Data";
-      ds << (QString) "ultrascan";
-      ds << (QString) "192.168.0.1";
-      ds << (QString) "QMYSQL3";
-      
-      ds << 1; // run_inf.exp_type.velocity;
-      ds << 0; // run_inf.exp_type.equilibrium;
-      ds << 0; // run_inf.exp_type.diffusion;
-      ds << 1; // run_inf.exp_type.simulation;
-      ds << 0; // run_inf.exp_type.interference;
-      ds << 1; // run_inf.exp_type.absorbance;
-      ds << 0; // run_inf.exp_type.fluorescence;
-      ds << 0; // run_inf.exp_type.intensity;
-      ds << 0; // run_inf.exp_type.wavelength;
-      
-      for ( int i = 0; i < 8; i++ )
-      {
-         if ( i == 0)
-         {
-            ds << 0; //centerpiece = simulation cell is zero
-            ds << simparams.meniscus;
-            
-            // Data discription
-            ds << QString( tr( "Simulated Data - see corresponding model" ) );
-            ds << 1; // How many wavelengths?
-         }
-         else
-         {
-            ds << 0; // Centerpiece = conventional 2 channel epon
-            ds << 0.0;
-            ds << QString();
-            ds << 0;
-         }
-      }
-
-      int serial_number = -1;
-      
-      for ( int i = 0; i < 8; i++ )
-      {
-         for ( int j = 0; j < 4; j++ )
-         {
-            ds << serial_number; //buffer serial number
-            
-            for( int k = 0; k < 3; k++ )
-            {
-               ds << serial_number; //peptide serial number
-               ds << serial_number; //DNA serial number
-            }
-         }
-
-         for ( int j = 0; j < 3; j++ )
-         {
-            if ( i == 0 && j == 0 )
-            {
-               ds << 999;  // run_inf.wavelength[i][j]
-               ds << total_scans;
-               ds << 0.0;   // baseline
-               ds << simparams.meniscus;
-               ds << new_bottom;
-               ds << new_points;
-               ds << ( new_bottom - m ) / new_points;
-            }
-            else
-            {
-               ds << 0;
-               ds << 0;
-               ds << 0.0;   // baseline
-               ds << 0.0;
-               ds << 0.0;
-               ds << 0;
-               ds << 0.0;
-            }
-         }
-      }
-
-      for ( int i = 0; i < 8; i++ )
-      {
-         for ( int k = 0; k < simparams.speed_step.size(); k++ )
-         {
-            for ( int j = 0; j < astfem_data[ k ].scan.size(); j++ )
-            {
-               double plateau = 0.0;
-
-               for ( int n = 0; n < system.components.size(); n++ )
-               {
-                  // This is the equation for radial dilution:
-                  plateau += system.components[ n ].concentration * 
-                             exp( - 2.0 * system.components[ n ].s *
-                                    astfem_data[ k ].scan[ j ].omega_s_t );
-               }
-
-               if ( i == 0)
-               {
-                  ds << astfem_data[ k ].rpm;
-                  ds << 20.0;     // temperature
-                  ds << astfem_data[ k ].scan[ j ].time;
-                  ds << astfem_data[ k ].scan[ j ].omega_s_t;
-                  ds << 1.0;      //plateau;
-               }
-               else
-               {
-                  ds << 0;
-                  ds << 0.0;
-                  ds << 0;
-                  ds << 0.0;
-                  ds << 0.0;
-               }
-            }
-         }
-      }
-
-      ds << -1;   // run_inf.rotor;
-      f1.flush();
-      f1.close();
-   }
-*/
-   //QFile f2( data_file );
-
-   // Write the binary scan data file *.veloc.11
-   //if ( f2.open( QIODevice::WriteOnly ) ) 
-   {
-      //QDataStream ds2( &f2 );
-/*      
-      for ( int k = 0; k < simparams.speed_step.size(); k++ )
-      {
-         for ( int j = 0; j < astfem_data[ k ].scan.size(); j++ )
-         {
-            for ( int i = 0; i < new_points; i++ )
-            {
-               ds2 << astfem_data[ k ].scan[ j ].conc[ i ];
-            }
-         }
-      }
-*/
-      //f2.flush();
-      //f2.close();
-   }
-}
-
-//void US_Astfem_Sim::update_progress( int /* component*/ )
 void US_Astfem_Sim::update_progress( int component )
 {
    if ( component == -1 )
