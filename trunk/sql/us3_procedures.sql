@@ -45,6 +45,8 @@ BEGIN
   SET @NO_PERSON      = 506;
   SET @NO_MODEL       = 507;
   SET @NO_EXPERIMENT  = 508;
+  SET @NO_RAWDATA     = 509;
+  SET @NO_EDITDATA    = 510;
 
   -- Some user levels
   SET @US3_USER       = 0;
