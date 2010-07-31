@@ -134,7 +134,7 @@ void US_LoadDB::populate_tree( void )
    }
 
    QStringList q( "all_rawDataIDs" );
-   //q << QString::number( personID;
+   q << QString::number( personID );
    db.query( q );
 
    QTreeWidgetItem*                  top;
@@ -147,7 +147,7 @@ void US_LoadDB::populate_tree( void )
    {
       QString rawDataID = db.value( 0 ).toString();
       QString filename  = db.value( 2 ).toString();
-      //QString date  = db.value( 3 ).toString();
+      QString date      = db.value( 4 ).toString();
 
       QStringList sl    = filename.split( "." );
       QString     runID = sl[ 0 ];
@@ -169,10 +169,18 @@ void US_LoadDB::populate_tree( void )
          filenames[ runID ] << filename;
       }
       
-      // Need to add date to QStringList
       QStringList item( filename );
-      //item << date;
+      item << date;
       new QTreeWidgetItem( top, item );
+   }
+
+   if ( runIDs.size() == 0 )
+   {
+      QMessageBox::information( this,
+         tr( "No AUC Files" ),
+         tr( "No AUC files were found for the investigator." ) );
+      
+      return;
    }
 
    tree->expandAll();

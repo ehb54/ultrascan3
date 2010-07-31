@@ -17,6 +17,10 @@
 #include "us_math2.h"
 #include "us_util.h"
 #include "us_load_db.h"
+#include "us_passwd.h"
+#include "us_db2.h"
+#include "us_get_edit.h"
+#include "us_load_db.h"
 
 //! \brief Main program for US_Edit. Loads translators and starts
 //         the class US_FitMeniscus.
@@ -1893,7 +1897,8 @@ void US_Edit::write( void )
    id.appendChild( runid );
 
    QDomElement eguid = doc.createElement( "editguid" );
-   eguid.setAttribute( "value", US_Util::new_guid() );
+   QString editGUID = US_Util::new_guid();
+   eguid.setAttribute( "value", editGUID );
    id.appendChild( eguid );
 
    // TODO: Need change to "uuid" to rawDataGUID for clarity. Also
@@ -2023,6 +2028,43 @@ void US_Edit::write( void )
 
    f.close();
 
+   if ( rb_db->isChecked() )
+   {
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Connection Problem" ),
+           tr( "Could not connect to databasee \n" ) + db.lastError() );
+         return;
+      }
+
+      QStringList q( "get_rawDataID_from_GUID" );
+      q << QString( uuid );
+      db.query( q );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, 
+           tr( "AUC Data is not in DB" ),
+           tr( "Cannot save edit data to the database.\n"
+               "The associated AUC data is not present." ) );
+      }
+      else
+      {
+         QString rawDataID = db.value( 0 ).toString();
+         // Save edit file to DB
+         q.clear();
+         q << "new_editedData" << rawDataID << editGUID << runID << filename << "";
+         db.query( q );
+
+         int insertID = db.lastInsertID();
+
+         db.writeBlobToDB( workingDir + filename, "upload_editData", insertID );
+      }
+   }
+
    changes_made = false;
    pb_write->setEnabled( false );
    pb_write->setIcon   ( check );
@@ -2030,16 +2072,89 @@ void US_Edit::write( void )
 
 void US_Edit::apply_prior( void )
 {
-   QString filter = files[ cb_triple->currentIndex() ];
-   int     index1 = filter.indexOf( '.' ) + 1;
+   QString filename;
+   int     index1;
 
-   filter.insert( index1, "*." );
-   filter.replace( QRegExp( "auc$" ), "xml" );
-   
-   // Ask for edit file
-   QString filename = QFileDialog::getOpenFileName( this, 
-         tr( "Select a saved edit file" ),
-         workingDir, filter );
+   if ( rb_db->isChecked() )
+   {
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Connection Problem" ),
+           tr( "Could not connect to databasee \n" ) + db.lastError() );
+         return;
+      }
+
+      QStringList q( "get_rawDataID_from_GUID" );
+      
+      char uuid[ 37 ];
+      uuid_unparse( (uchar*)data.rawGUID, uuid );
+      q << QString( uuid );
+
+      db.query( q );
+
+      // Error check    
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this,
+           tr( "AUC Data is not in DB" ),
+           tr( "Cannot find the raw data in the database.\n" ) );
+
+         return;
+      }
+      
+      db.next();
+      QString rawDataID = db.value( 0 ).toString();
+
+      q.clear();
+      q << "get_editedDataIDs" << rawDataID;
+      db.query( q );
+
+
+      QStringList editDataIDs;
+      QStringList filenames;
+
+      while ( db.next() )
+      {
+         editDataIDs << db.value( 0 ).toString();
+         filenames   << db.value( 2 ).toString();
+      }
+
+      if ( editDataIDs.size() == 0 )
+      {
+         QMessageBox::warning( this,
+           tr( "Edit data is not in DB" ),
+           tr( "Cannot find any edit rcdords in the database.\n" ) );
+
+         return;
+      }
+
+      int index;
+      US_GetEdit dialog( index, filenames );
+      if ( dialog.exec() == QDialog::Rejected ) return;
+
+      if ( index >= 0 ) 
+      {
+         filename   = workingDir + filenames[ index ];
+         int dataID = editDataIDs[ index ].toInt();
+         db.readBlobFromDB( filename, "download_editData", dataID );
+      }
+   }
+   else
+   {
+      QString filter = files[ cb_triple->currentIndex() ];
+      index1 = filter.indexOf( '.' ) + 1;
+
+      filter.insert( index1, "*." );
+      filter.replace( QRegExp( "auc$" ), "xml" );
+      
+      // Ask for edit file
+      filename = QFileDialog::getOpenFileName( this, 
+            tr( "Select a saved edit file" ),
+            workingDir, filter );
+   }
 
    if ( filename.isEmpty() ) return; 
 
