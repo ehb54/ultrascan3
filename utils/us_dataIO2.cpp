@@ -521,13 +521,13 @@ void US_DataIO2::ident( QXmlStreamReader& xml, EditValues& parameters )
          parameters.runID       = a.value( "value" ).toString();
       }
      
-      if ( xml.isStartElement()  &&  xml.name() == "editguid" )
+      if ( xml.isStartElement()  &&  xml.name() == "editGUID" )
       {
          QXmlStreamAttributes a = xml.attributes();
          parameters.editGUID    = a.value( "value" ).toString();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "uuid" )
+      if ( xml.isStartElement()  &&  xml.name() == "rawDataGUID" )
       {
          QXmlStreamAttributes a = xml.attributes();
          parameters.dataGUID    = a.value( "value" ).toString();
