@@ -1896,16 +1896,12 @@ void US_Edit::write( void )
    runid.setAttribute( "value", runID );
    id.appendChild( runid );
 
-   QDomElement eguid = doc.createElement( "editguid" );
+   QDomElement eguid = doc.createElement( "editGUID" );
    QString editGUID = US_Util::new_guid();
    eguid.setAttribute( "value", editGUID );
    id.appendChild( eguid );
 
-   // TODO: Need change to "uuid" to rawDataGUID for clarity. Also
-   // needs to change us_dataIO where it reads this value.  Changing
-   // will invalidate an editedData xml file so any working edit xml
-   // files need to be deleted afte the change.
-   QDomElement dguid = doc.createElement( "uuid" );
+   QDomElement dguid = doc.createElement( "rawDataGUID" );
    char uuid[ 37 ];
    uuid_unparse( (unsigned char*)data.rawGUID, uuid );
    dguid.setAttribute( "value", uuid );
