@@ -12,7 +12,7 @@
 @laredodowncount = `ssh laredo /opt/torque/bin/pbsnodes -l`;
 @alamodowncount = `ssh alamo pbsnodes -l`;
 
-$bcf_no_procs = 40 - 2 * @bcfdowncount;
+$bcf_no_procs = 38 - 2 * @bcfdowncount;
 $alamo_no_procs = 31 - 2 * @alamodowncount;
 $laredo_no_procs = 40 - 4 * @laredodowncount;
 
@@ -234,6 +234,7 @@ $id = $timestamp;
 $basedir = shift;
 $experiment = shift;
 $solutes = shift;
+$cwd = "$basedir/$id";
 
 require "$US/etc/us_gcfields.pl";
 &parsegc($gcfile);
@@ -330,7 +331,9 @@ $results
 "
 		 );
     $msg->send('smtp', 'smtp.uthscsa.edu');
-    print `echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
+    $cmd = "echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/us_gridpipe";
+    print "$cmd\n";
+    print `$cmd`;
     exit;
 } else {
     print "ok\n";
@@ -795,7 +798,6 @@ $MAXMEM = "<maxMemory>2000</maxMemory>" if $SYSTEM =~ /ng2.vpac.monash.edu.au/;
 $WORKTMP = "${WORK}/tmp";
 $WORKRUN = "${WORK}/tmp/$id";
 
-$cwd = "$basedir/$id";
 
 $xmlfile = "us_tigre_job_desc${id}.xml";
 
