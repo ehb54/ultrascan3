@@ -299,7 +299,7 @@ BEGIN
       comment       = p_comment,
       experimentID  = p_experimentID,
       channelID     = p_channelID,
-      dateUpdated   = NOW();
+      lastUpdated   = NOW();
    
     IF ( null_field = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTNULL;
@@ -381,7 +381,8 @@ BEGIN
   IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
 
     -- Make sure records match if they have related tables or not
-    DELETE      rawData, editedData, model, noise, modelPerson
+    -- Have to do it in a couple of stages because of the constraints
+    DELETE      model, noise, modelPerson
     FROM        rawData
     LEFT JOIN   editedData  ON ( editedData.rawDataID = rawData.rawDataID )
     LEFT JOIN   model       ON ( model.editedDataID   = editedData.editedDataID )
@@ -389,8 +390,13 @@ BEGIN
     LEFT JOIN   modelPerson ON ( modelPerson.modelID  = model.modelID )
     WHERE       rawData.experimentID = p_experimentID;
 
---    DELETE FROM rawData
---    WHERE experimentID = p_experimentID;
+    DELETE      editedData
+    FROM        rawData
+    LEFT JOIN   editedData  ON ( editedData.rawDataID = rawData.rawDataID )
+    WHERE       rawData.experimentID = p_experimentID;
+
+    DELETE FROM rawData
+    WHERE       experimentID = p_experimentID;
 
   END IF;
 

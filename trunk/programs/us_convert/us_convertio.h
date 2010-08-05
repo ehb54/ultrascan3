@@ -24,16 +24,26 @@ class US_EXTERN US_ConvertIO
       /*! \brief    Save new experiment info in the database
 
           \param    ExpData A structure containing all the experiment information
+          \param    tripleMap A reference to a QList of index values indicating
+                        which triples are members of the current data set. Triples
+                        included in the map will be written, others will not.
           \param    dir     The location of the binary auc files
       */
-      static QString newDBExperiment( US_ExpInfo::ExperimentInfo&, QString );
+      static QString newDBExperiment( US_ExpInfo::ExperimentInfo&, 
+                                      QList< int >& ,
+                                      QString );
 
       /*! \brief    Update experiment info in the database
 
           \param    ExpData A structure containing all the experiment information
+          \param    tripleMap A reference to a QList of index values indicating
+                        which triples are members of the current data set. Triples
+                        included in the map will be written, others will not.
           \param    dir     The location of the binary auc files
       */
-      static QString updateDBExperiment( US_ExpInfo::ExperimentInfo&, QString );
+      static QString updateDBExperiment( US_ExpInfo::ExperimentInfo&, 
+                                         QList< int >& ,
+                                         QString );
 
       /*! \brief    Writes an xml file
 
@@ -55,16 +65,53 @@ class US_EXTERN US_ConvertIO
       */
       static int writeXmlFile( 
                  US_ExpInfo::ExperimentInfo& ExpData,
-                 QStringList&                triples,
-                 QList< int >&               tripleMap,
-                 QString                     runType,
-                 QString                     runID,
-                 QString                     dirname );
+                 QStringList& ,
+                 QList< int >& ,
+                 QString ,
+                 QString ,
+                 QString );
+
+      /*! \brief    Reads an xml file
+
+          \param ExpData A reference to a structure provided by the calling function
+                         that will contain the hardware and other database
+                         connection information provide by the xml file.
+          \param triples A reference to a structure provided by the calling
+                        function that will contain all the different
+                        cell/channel/wavelength defined by the xml file.
+          \param runType A reference to a variable that will contain the type
+                        of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
+                        This information will affect how the data is
+                        stored.
+          \param runID  The run ID of the experiment.
+          \param dirname The directory from which the files are read.
+      */
+      static int readXmlFile( 
+                 US_ExpInfo::ExperimentInfo& ,
+                 QStringList& ,
+                 QString ,
+                 QString ,
+                 QString );
 
    private:
+      static void readExperiment( 
+                 QXmlStreamReader& , 
+                 US_ExpInfo::ExperimentInfo& ,
+                 QStringList& ,
+                 QString ,
+                 QString );
+
+      static void readDataset( 
+                 QXmlStreamReader& , 
+                 US_ExpInfo::TripleInfo& );
+
+      static int verifyXml( 
+                 US_ExpInfo::ExperimentInfo& );
+
       static QString writeRawDataToDB(
-                 US_ExpInfo::ExperimentInfo& ExpData, 
-                 QString                     dir );
+                 US_ExpInfo::ExperimentInfo& , 
+                 QList< int >& ,
+                 QString );
       
 };
 #endif

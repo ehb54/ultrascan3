@@ -178,6 +178,9 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
           \param dir    The directory that contains the auc files
           \param rawConvertedData A reference to a structure provided by the calling
                         function that will be used to store the US3 raw converted data.
+          \param ExpData A reference to a structure provided by the calling function
+                         that will contain the hardware and other database
+                         connection information relevant to this experiment.
           \param triples A reference to a structure provided by the calling
                         function that will be used to store all the different
                         cell/channel/wavelength combinations found in the data. 
@@ -192,8 +195,10 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
       void          reloadUS3Data(
                     QString ,
                     QVector< US_DataIO2::RawData        >& ,
+                    US_ExpInfo::ExperimentInfo&,
                     QStringList& ,
                     QList< int >& ,
+                    QString&,
                     QString );
 
    private:

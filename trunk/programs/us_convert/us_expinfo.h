@@ -36,6 +36,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          QString          analyteGUID;        //!< The GUID of the analyte
          QString          analyteDesc;        //!< The corresponding analyte description
          char             tripleGUID[16];     //!< The GUID of this triple
+         QString          tripleFilename;     //!< The filename of this auc file
          TripleInfo();                        //!< A generic constructor
       };
 
@@ -74,6 +75,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          ExperimentInfo&  operator=( const ExperimentInfo& ); //!< An overloaded assignment operator
          void updateDB( void );               //!< Function to update the database with changes
          void clear( void );                  //!< Function to reset all class variables to defaults
+void displayInfo( QList< int >& tripleMap );
       };
 
       /*! \brief Generic constructor for the US_ExpInfo class. To 
