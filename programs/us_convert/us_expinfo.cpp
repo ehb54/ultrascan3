@@ -689,6 +689,16 @@ void US_ExpInfo::change_instrument( int )
 
 void US_ExpInfo::accept( void )
 {
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
    // Overwrite data directly from the form
 
    // First get the invID
@@ -705,12 +715,15 @@ void US_ExpInfo::accept( void )
    components = components[0].split( "(", QString::SkipEmptyParts );
    expInfo.invID = components.last().toInt();
  
-   // Get the investigator name too
-   components  = invInfo.split( ": ", QString::SkipEmptyParts );
-   components  = components.last().split( ", ", QString::SkipEmptyParts );
-   expInfo.lastName  = components.first().toAscii();
-   expInfo.firstName = components.last().toAscii();
-
+   // Other investigator information
+   QStringList q( "get_person_info" );
+   q << QString::number( expInfo.invID );
+   db.query( q );
+   db.next();
+   expInfo.firstName = db.value( 0 ).toString();
+   expInfo.lastName  = db.value( 1 ).toString();
+   expInfo.invGUID   = db.value( 9 ).toString();
+   
    // Other experiment information
    expInfo.projectID     = cb_project       ->getLogicalID();
    expInfo.runID         = le_runID         ->text();
@@ -724,18 +737,23 @@ void US_ExpInfo::accept( void )
    expInfo.comments      = te_comment       ->toPlainText();
 
    // additional associated information
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   expInfo.operatorGUID = QString( "" );
+   q.clear();
+   q << QString( "get_person_info" )
+     << QString::number( expInfo.operatorID );
+   db.query( q );
+   if ( db.next() )
+      expInfo.operatorGUID   = db.value( 9 ).toString();
 
-   expInfo.labGUID = QString( NULL );
-   QStringList q( "get_lab_info" );
-   q << QString::number( expInfo.labID );
+   expInfo.labGUID = QString( "" );
+   q.clear();
+   q << QString( "get_lab_info" )
+     << QString::number( expInfo.labID );
    db.query( q );
    if ( db.next() )
       expInfo.labGUID = db.value( 0 ).toString();
 
-   expInfo.instrumentSerial = QString( NULL );
+   expInfo.instrumentSerial = QString( "" );
    q.clear();
    q << QString( "get_instrument_info" )
      << QString::number( expInfo.instrumentID );
@@ -743,7 +761,7 @@ void US_ExpInfo::accept( void )
    if ( db.next() )
       expInfo.instrumentSerial = db.value( 1 ).toString();
 
-   expInfo.rotorGUID = QString( NULL );
+   expInfo.rotorGUID = QString( "" );
    q.clear();
    q << QString( "get_rotor_info" )
      << QString::number( expInfo.rotorID );
@@ -772,9 +790,16 @@ void US_ExpInfo::connect_error( const QString& error )
 // Initializations
 US_ExpInfo::TripleInfo::TripleInfo()
 {
+   tripleID     = 0;
    centerpiece  = 0;
    bufferID     = 0;
+   bufferGUID   = "";
+   bufferDesc   = "";
    analyteID    = 0;
+   analyteGUID  = "";
+   analyteDesc  = "";
+   memset( tripleGUID, 0, 16 );
+   tripleFilename = "";
 }
 
 US_ExpInfo::ExperimentInfo::ExperimentInfo()

@@ -326,6 +326,9 @@ void US_ProcessConvert::writeConvertedData(
       uuid_generate( uuid );
       strncpy( rawConvertedData[ ndx ].rawGUID, (char*) uuid, 16 );
       strncpy( ExpData.triples [ ndx ].tripleGUID, (char*) uuid, 16 );
+ 
+      // Save the filename of this triple
+      ExpData.triples[ ndx ].tripleFilename = filename;
 
       // Create a copy of the current dataset so we can alter it
       US_DataIO2::RawData  currentData     = rawConvertedData[ ndx ];
@@ -385,9 +388,11 @@ void US_ProcessConvert::writeConvertedData(
 void US_ProcessConvert::reloadUS3Data(
      QString dir,
      QVector< US_DataIO2::RawData >& rawConvertedData,
+     US_ExpInfo::ExperimentInfo& ExpData,
      QStringList& triples,
      QList< int >& tripleMap,
-     QString runType 
+     QString& runType ,
+     QString runID
      )
 {
    this->display( false );      // too fast for progress bar
@@ -411,19 +416,20 @@ void US_ProcessConvert::reloadUS3Data(
    }
 
    // Set up cell / channel / wavelength combinations
-   triples.clear();
    tripleMap.clear();
+   triples.clear();
+   ExpData.clear();
    for ( int i = 0; i < files.size(); i++ )
    {
-      QStringList part = files[ i ].split( "." );
+      tripleMap << i;
 
-      QString t = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
-      runType = part[ 1 ];
-      if ( ! triples.contains( t ) ) 
-      {
-          triples << t;
-          tripleMap << i;
-      }
+      QStringList part = files[ i ].split( "." );
+      QString triple   = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
+      runType          = part[ 1 ];
+      triples << triple;
+
+      US_ExpInfo::TripleInfo t;
+      ExpData.triples << t;
    }
 
    // Read all data
@@ -454,6 +460,43 @@ void US_ProcessConvert::reloadUS3Data(
          tr( "Could not read any data file." ) );
       return;
    }
+
+   // Now try to read the xml file
+   int status = US_ConvertIO::readXmlFile( 
+                ExpData, triples, runType, runID, dir );
+
+   if ( status == US_Convert::CANTOPEN )
+   {
+      QString readFile = runID      + "." 
+                       + runType    + ".xml";
+      QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "Cannot open read file: " ) + dir + readFile );
+   }
+
+   else if ( status == US_Convert::BADXML )
+   {
+      QString readFile = runID      + "." 
+                       + runType    + ".xml";
+      QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "Improper XML in read file: " ) + dir + readFile );
+   }
+
+   else if ( status == US_Convert::BADGUID )
+   {
+      QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "One or more GUID's were not found in the database " ) );
+   }
+
+   else if ( status != US_Convert::OK )
+   {
+      QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "Unknown error: " ) + status );
+   }
+
 }
 
 void US_ProcessConvert::convert( 

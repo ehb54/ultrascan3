@@ -221,6 +221,47 @@ BEGIN
 
 END$$
 
+-- Translate a rotorGUID into a rotorID
+DROP PROCEDURE IF EXISTS get_rotorID_from_GUID$$
+CREATE PROCEDURE get_rotorID_from_GUID ( p_rotorGUID   CHAR(36),
+                                         p_password     VARCHAR(80),
+                                         p_lookupGUID   CHAR(36) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_rotor  INT;
+  DECLARE l_rotorID    INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_rotor
+  FROM       rotor
+  WHERE      rotorGUID = p_lookupGUID;
+
+  IF ( count_rotor = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+    SELECT rotorID
+    INTO   l_rotorID
+    FROM   rotor
+    WHERE  rotorGUID = p_lookupGUID
+    LIMIT  1;                           -- should be only 1
+
+    SELECT @OK AS status;
+
+    SELECT l_rotorID AS rotorID;
+
+  END IF;
+
+END$$
+
 -- Get a list of abstract rotor names
 DROP PROCEDURE IF EXISTS get_abstractRotor_names$$
 CREATE PROCEDURE get_abstractRotor_names ( p_personGUID CHAR(36),
@@ -416,6 +457,47 @@ BEGIN
   END IF;
 
   SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- Translate a labGUID into a labID
+DROP PROCEDURE IF EXISTS get_labID_from_GUID$$
+CREATE PROCEDURE get_labID_from_GUID ( p_labGUID      CHAR(36),
+                                       p_password     VARCHAR(80),
+                                       p_lookupGUID   CHAR(36) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_lab  INT;
+  DECLARE l_labID    INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_lab
+  FROM       lab
+  WHERE      labGUID = p_lookupGUID;
+
+  IF ( count_lab = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+    SELECT labID
+    INTO   l_labID
+    FROM   lab
+    WHERE  labGUID = p_lookupGUID
+    LIMIT  1;                           -- should be only 1
+
+    SELECT @OK AS status;
+
+    SELECT l_labID AS labID;
+
+  END IF;
 
 END$$
 

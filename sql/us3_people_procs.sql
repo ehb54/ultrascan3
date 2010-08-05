@@ -352,3 +352,44 @@ BEGIN
 
 END$$
 
+-- Translate a personGUID into a personID
+DROP PROCEDURE IF EXISTS get_personID_from_GUID$$
+CREATE PROCEDURE get_personID_from_GUID ( p_personGUID   CHAR(36),
+                                          p_password     VARCHAR(80),
+                                          p_lookupGUID   CHAR(36) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_person  INT;
+  DECLARE l_personID    INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_person
+  FROM       people
+  WHERE      personGUID = p_lookupGUID;
+
+  IF ( count_person = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+    SELECT personID
+    INTO   l_personID
+    FROM   people
+    WHERE  personGUID = p_lookupGUID
+    LIMIT  1;                           -- should be only 1
+
+    SELECT @OK AS status;
+
+    SELECT l_personID AS personID;
+
+  END IF;
+
+END$$
+

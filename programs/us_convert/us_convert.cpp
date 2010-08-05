@@ -589,7 +589,10 @@ void US_Convert::getExpInfo( bool editing )
 
    // Load information we're passing
    ExpData.runTemp       = QString::number( sum / count );
-   ExpData.opticalSystem = QString( allData[ 0 ].type );
+   char temp[ 3 ];
+   strncpy( temp, allData[ 0 ].type, 2 );
+   temp[ 2 ] = '\0';
+   ExpData.opticalSystem = QString( temp );
 
    // A list of unique rpms
    ExpData.rpms.clear();
@@ -690,17 +693,15 @@ void US_Convert::setTripleInfo( void )
 int US_Convert::findTripleIndex ( void )
 {
    // See if the current triple has been added already
-   for (int i = 0; i < ExpData.triples.size(); i++ )
+   for (int i = 0; i < tripleMap.size(); i++ )
    {
-      if ( ExpData.triples[ i ].tripleID == currentTriple )
+      if ( tripleMap[ i ] == currentTriple )
          return i;
    }
 
-   // Not found, so let's add it
-   US_ExpInfo::TripleInfo d;
-   d.tripleID = currentTriple;
-   ExpData.triples << d;
-   return ExpData.triples.size() - 1;
+   // Not found, so let's pick the first one
+   currentTriple = tripleMap[ 0 ];
+   return 0;
 }
 
 void US_Convert::getCenterpieceIndex( int ndx )
@@ -1319,22 +1320,29 @@ void US_Convert::loadUS3( void )
    // Reload the data
    US_ProcessConvert* dialog 
       = new US_ProcessConvert( this );
-      dialog->reloadUS3Data( dir, allData, triples, tripleMap, runType );
+      dialog->reloadUS3Data( dir, allData, ExpData, triples, tripleMap, runType, runID );
    delete dialog;
 
    if ( allData.size() == 0 ) return;
 
-   // Update ExpData information
-   ExpData.triples.clear();
-   for ( int i = 0; i < triples.size(); i++ )
-   {
-       US_ExpInfo::TripleInfo d;
-       d.tripleID = i;
-       ExpData.triples << d;
-   }
-
+   // Update triple information on screen
    setTripleInfo();
+   int ndx       = findTripleIndex();
 
+   le_bufferInfo  -> setText( ExpData.triples[ ndx ].bufferDesc  );
+   le_analyteInfo -> setText( ExpData.triples[ ndx ].analyteDesc );
+
+   // Restore description
+   le_description->setText( allData[ 0 ].description );
+   saveDescription = QString( allData[ 0 ].description );
+
+   // Reset maximum scan control values
+   reset_scan_ctrls();
+
+   // Reset apply all button
+   reset_ccw_ctrls();
+
+   // Redo plot
    init_excludes();
    plot_current();
 
@@ -1403,10 +1411,10 @@ void US_Convert::syncDB( void )
 
    // Save it to the db and return
    if ( this->editing )
-      error = US_ConvertIO::updateDBExperiment( ExpData, dir );
+      error = US_ConvertIO::updateDBExperiment( ExpData, tripleMap, dir );
 
    else
-      error = US_ConvertIO::newDBExperiment( ExpData, dir );
+      error = US_ConvertIO::newDBExperiment( ExpData, tripleMap, dir );
 
    if ( ! error.isNull() )
    {

@@ -25,11 +25,14 @@ class US_EXTERN US_Convert : public US_Widgets
       enum ioError
       { 
          OK,                                  //!< Ok, no error
-         CANTOPEN,                            //!< The file cannot be opened for writing
+         CANTOPEN,                            //!< The file cannot be opened
          NODATA,                              //!< There is no data to write
+         NODB,                                //!< Connection to database cannot be made
          NOXML,                               //!< XML data has not been entered
+         BADXML,                              //!< XML not formed correctly
+         BADGUID,                             //!< GUID read in the XML was not found in the database
          PARTIAL_XML,                         //!< XML data has not been entered for all c/c/w combinations
-         NOT_WRITTEN                          //!< data was not written
+         NOT_WRITTEN,                         //!< data was not written
       };
 
       //! \brief Class to contain a list of scans to exclude from a data set
