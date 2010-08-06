@@ -106,7 +106,8 @@ EXCLUDE                = ./doc/ \
                          ./programs/ \
                          ./gui/moc/ \
                          ./utils/moc/ \
-                         ./db/moc/
+                         ./db/moc/ \
+                         ./qwtplot3d-qt4
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = moc*
 EXCLUDE_SYMBOLS        = 
