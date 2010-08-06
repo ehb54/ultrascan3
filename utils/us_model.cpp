@@ -84,8 +84,8 @@ US_Model::US_Model()
    coSedSolute     = -1;
    type            = MANUAL;
    iterations      = 1;
+   editGUID        = QString( "00000000-0000-0000-0000-000000000000" );
    modelGUID   .clear();
-   editGUID    .clear();
    bufferGUID  .clear();
    components  .clear();
    associations.clear();
@@ -368,7 +368,12 @@ int US_Model::write( US_DB2* db )
       QTemporaryFile temporary;
       write_temp( temporary );
       temporary.open();
-      QByteArray contents = temporary.readAll();
+      QByteArray temp_contents = temporary.readAll();
+      QByteArray contents;
+
+      //contents.replace( QByteArray( "\"" ), QByteArray( "\\\"" ) );
+
+      db->mysqlEscapeString( contents, temp_contents, temp_contents.size() );
 
       QStringList q;
 
