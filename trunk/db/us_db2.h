@@ -292,6 +292,17 @@ class US_EXTERN US_DB2
     */
     QString       lastDebug( void );
 
+    /*! \brief Inserts escape codes into a string, preparing the string to be inserted
+               into a mysql database
+
+        \param to A reference to a data structure where the escaped string will go
+
+        \param from A reference to the source string
+
+        \param length The length of the source data
+    */
+    unsigned long mysqlEscapeString( QByteArray& , QByteArray& , unsigned long );
+
   private:
     bool       connected;
 #ifndef NO_DB

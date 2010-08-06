@@ -109,11 +109,14 @@ CREATE PROCEDURE new_model ( p_personGUID    CHAR(36),
                              p_password    VARCHAR(80),
                              p_modelGUID   CHAR(36),
                              p_description TEXT,
-                             p_contents    TEXT )
+                             p_contents    TEXT,
+                             p_editGUID    CHAR(36) )
   MODIFIES SQL DATA
 
 BEGIN
-  DECLARE l_modelID INT;
+  DECLARE l_modelID      INT;
+  DECLARE l_count_editID INT;
+  DECLARE l_editID       INT;
 
   DECLARE duplicate_key TINYINT DEFAULT 0;
   DECLARE null_field    TINYINT DEFAULT 0;
@@ -129,12 +132,29 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
+  -- Translate editGUID into editedDataID
+  SET l_editID = 1;         -- default to special "unassigned" record
+  SELECT COUNT(*) 
+  INTO   l_count_editID
+  FROM   editedData
+  WHERE  editGUID = p_editGUID;
+
+  IF ( l_count_editID > 0 ) THEN
+    SELECT editedDataID
+    INTO   l_editID
+    FROM   editedData
+    WHERE  editGUID = p_editGUID
+    LIMIT  1;
+
+  END IF;
+
   IF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
        ( check_GUID ( p_personGUID, p_password, p_modelGUID ) = @OK ) ) THEN
     INSERT INTO model SET
-      modelGUID   = p_modelGUID,
-      description = p_description,
-      contents    = p_contents;
+      editedDataID = l_editID,
+      modelGUID    = p_modelGUID,
+      description  = p_description,
+      contents     = p_contents;
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
@@ -165,11 +185,14 @@ CREATE PROCEDURE update_model ( p_personGUID    CHAR(36),
                                 p_password    VARCHAR(80),
                                 p_modelID     INT,
                                 p_description TEXT,
-                                p_contents    TEXT )
+                                p_contents    TEXT,
+                                p_editGUID    CHAR(36) )
   MODIFIES SQL DATA
 
 BEGIN
   DECLARE not_found     TINYINT DEFAULT 0;
+  DECLARE l_count_editID INT;
+  DECLARE l_editID       INT;
 
   DECLARE CONTINUE HANDLER FOR NOT FOUND
     SET not_found = 1;
@@ -178,11 +201,28 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
+  -- Translate editGUID into editedDataID
+  SET l_editID = 1;         -- default to special "unassigned" record
+  SELECT COUNT(*) 
+  INTO   l_count_editID
+  FROM   editedData
+  WHERE  editGUID = p_editGUID;
+
+  IF ( l_count_editID > 0 ) THEN
+    SELECT editedDataID
+    INTO   l_editID
+    FROM   editedData
+    WHERE  editGUID = p_editGUID
+    LIMIT  1;
+
+  END IF;
+
   IF ( verify_model_permission( p_personGUID, p_password, p_modelID ) = @OK ) THEN
     UPDATE model SET
-      description = p_description,
-      contents    = p_contents
-    WHERE modelID = p_modelID;
+      editedDataID = l_editID,
+      description  = p_description,
+      contents     = p_contents
+    WHERE modelID  = p_modelID;
 
     IF ( not_found = 1 ) THEN
       SET @US3_LAST_ERRNO = @NO_MODEL;
@@ -273,16 +313,18 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   m.modelID, modelGUID, description
-        FROM     model m, modelPerson
-        WHERE    m.modelID = modelPerson.modelID
+        SELECT   m.modelID, modelGUID, description, editGUID
+        FROM     modelPerson, model m, editedData
+        WHERE    modelPerson.modelID = m.modelID
+        AND      m.editedDataID = editedData.editedDataID
         AND      modelPerson.personID = p_ID
         ORDER BY m.modelID DESC;
    
       ELSE
-        SELECT   m.modelID, modelGUID, description
-        FROM     model m, modelPerson
-        WHERE    m.modelID = modelPerson.modelID
+        SELECT   m.modelID, modelGUID, description, editGUID
+        FROM     modelPerson, model m, editedData
+        WHERE    modelPerson.modelID = m.modelID
+        AND      m.editedDataID = editedData.editedDataID
         ORDER BY m.modelID DESC;
 
       END IF;
@@ -307,9 +349,10 @@ BEGIN
       -- Ok, user wants his own info
       SELECT @OK AS status;
 
-      SELECT   m.modelID, modelGUID, description
-      FROM     model m, modelPerson
-      WHERE    m.modelID = modelPerson.modelID
+      SELECT   m.modelID, modelGUID, description, editGUID
+      FROM     modelPerson, model m, editedData
+      WHERE    modelPerson.modelID = m.modelID
+      AND      m.editedDataID = editedData.editedDataID
       AND      modelPerson.personID = @US3_ID
       ORDER BY m.modelID DESC;
       

@@ -628,3 +628,26 @@ QString US_DB2::lastDebug( void )
    return ( debug );
 }
 #endif
+
+#ifdef NO_DB
+unsigned long US_DB2::mysqlEscapeString( QByteArray& , QByteArray& , unsigned long  ) { return 0; }
+#else
+unsigned long US_DB2::mysqlEscapeString( QByteArray& to, QByteArray& from, unsigned long length )
+{
+   to.resize( length * 2 );     // Make room in advance for escaped characters
+
+   const char* fromPtr = from.data();
+   char* toPtr         = to.data();
+
+   ulong to_length = mysql_real_escape_string( db, toPtr, fromPtr, length );
+
+   // Add null termination to the string
+   toPtr += to_length;
+   strcpy( toPtr, "\0" );
+
+   // Size string appropriately and return new length
+   to.resize( to_length + 1 );
+   return to_length + 1;
+}
+#endif
+

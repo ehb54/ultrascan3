@@ -597,8 +597,7 @@ DROP TABLE IF EXISTS model ;
 
 CREATE  TABLE IF NOT EXISTS model (
   modelID int(11) NOT NULL AUTO_INCREMENT ,
-  editedDataID int(11) NULL ,
-  -- editedDataID int(11) NOT NULL ,
+  editedDataID int(11) NOT NULL DEFAULT 1,
   modelGUID CHAR(36) NOT NULL UNIQUE ,
   iterations int(11) NOT NULL default 0 ,
   meniscus double NOT NULL default '0',
