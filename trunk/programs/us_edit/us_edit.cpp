@@ -1782,7 +1782,11 @@ void US_Edit::new_triple( int index )
    }
 
    triple_index = index;
-   reset();
+   reset(); 
+
+   // Need to reconnect after reset
+   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+                       SLOT  ( new_triple         ( int ) ) );
 
    data = allData[ index ];
    plot_current( index );
@@ -1848,14 +1852,14 @@ void US_Edit::write( void )
    // Ask for editID if not yet defined
    if ( editID.isEmpty() )
    {
-      QString today =  QDate::currentDate().toString( "yyyyMMdd" );
+      QString now =  QDateTime::currentDateTime().toString( "yyyyMMddhhmm" );
 
       bool ok;
       editID = QInputDialog::getText( this, 
          tr( "Input a unique Edit ID for this edit session" ),
          tr( "Use alphanumeric characters, underscores, or hyphens (no spaces)" ),
          QLineEdit::Normal,
-         today, &ok);
+         now, &ok);
       
       if ( ! ok ) return;
 
