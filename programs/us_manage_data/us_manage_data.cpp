@@ -122,6 +122,20 @@ US_ManageData::US_ManageData() : US_Widgets()
    dctlLayout->addWidget( pb_close,  row++, 6, 1, 2 );
    connect( pb_close,   SIGNAL( clicked() ),
             this,       SLOT(   close()   ) );
+   pb_invtor->setToolTip( 
+      tr( "Use an Investigator dialog to set the database person ID" ) );
+   pb_browse->setToolTip(
+      tr( "Review DB and Local data, skipping content analysis" ) );
+   pb_detail->setToolTip(
+      tr( "Review DB and Local data, with detailed content analysis" ) );
+   pb_helpdt->setToolTip(
+      tr( "Show a short Help/Legend dialog for notes on the data tree" ) );
+   pb_reset ->setToolTip(
+      tr( "Reset the data display to its default state" ) );
+   pb_help  ->setToolTip(
+      tr( "Display detailed US_ManageData documentation text and images" ) );
+   pb_close ->setToolTip(
+      tr( "Close the US_ManageData window and exit" ) );
 
    QLabel* lb_info2 = us_banner( tr( "User Data Sets Summary:" ) );
    dctlLayout->addWidget( lb_info2,  row++, 0, 1, 8 );
@@ -167,9 +181,8 @@ US_ManageData::US_ManageData() : US_Widgets()
    tctlLayout->addWidget( tw_recs );
 
    QStringList theads;
-   theads << "Type" << "Label"
-      << "nDc" << "nDd" << "nLc" << "nLd"
-      << "SubType" << "Source";
+   theads << "Type" << "Label" << "SubType" << "Source"
+      << "Children\nDB, Local" << "Descendants\nDB, Local";
    ntrows = 5;
    ntcols = theads.size();
    tw_recs->setHeaderLabels( theads );
@@ -184,10 +197,8 @@ US_ManageData::US_ManageData() : US_Widgets()
       QString labl = QString( "item%11" ).arg( ii + 1 );
       QString subt = "";
       QString rsrc = "DB";
-      QString andc = "1";
-      QString andd = "2";
-      QString anlc = "0";
-      QString anld = "3";
+      QString anch = "1, 1";
+      QString ande = "2, 3";
       QStringList cvals;
       int ityp     = 1;
 
@@ -197,10 +208,8 @@ US_ManageData::US_ManageData() : US_Widgets()
          rtyp = "Edited";
          ityp = 2;
          rsrc = "In Sync";
-         andc = "0";
-         andd = "1";
-         anlc = "1";
-         anld = "1";
+         anch = "0, 1";
+         ande = "1, 1";
          subt = "RA";
       }
       else if ( ii == 2 )
@@ -209,10 +218,8 @@ US_ManageData::US_ManageData() : US_Widgets()
          rtyp = "Model";
          ityp = 3;
          rsrc = "Local";
-         andc = "1";
-         andd = "1";
-         anlc = "1";
-         anld = "1";
+         anch = "1, 1";
+         ande = "";
          subt = "2DSA";
       }
       else if ( ii == 3 )
@@ -221,10 +228,8 @@ US_ManageData::US_ManageData() : US_Widgets()
          rtyp = "Noise";
          ityp = 4;
          rsrc = "Conflict";
-         andc = "0";
-         andd = "0";
-         anlc = "0";
-         anld = "0";
+         anch = "";
+         ande = "";
          subt = "TI";
       }
       else if ( ii == 4 )
@@ -233,41 +238,40 @@ US_ManageData::US_ManageData() : US_Widgets()
          rtyp = "Edited";
          ityp = 2;
          rsrc = "dummy";
-         andc = "0";
-         andd = "0";
-         anlc = "0";
-         anld = "0";
+         anch = "0, 0";
+         ande = "0, 0";
          subt = "";
       }
-      labl = QString( "item %1 2" ).arg( ii + 1 );
+      labl = QString( "item_%1_2" ).arg( ii + 1 );
 
       QTreeWidgetItem* item;
-      int wiutype = (int)QTreeWidgetItem::UserType + ii;
+      int wiutype = (int)QTreeWidgetItem::UserType + ii; // type: encoded index
 
-      cvals << rtyp << labl << andc << andd << anlc << anld << subt << rsrc;
+      cvals << rtyp << labl << subt << rsrc << anch << ande;
 
       if ( ityp <= 1 )
-         item = new QTreeWidgetItem( tw_recs, cvals, wiutype );
+         // Raws are children of root
+         item = new QTreeWidgetItem( tw_recs,            cvals, wiutype );
       else
+         // others are children of next level up
          item = new QTreeWidgetItem( pitems[ ityp - 2 ], cvals, wiutype );
 
-      pitems[ ityp - 1 ] = item;
+      pitems[ ityp - 1 ] = item;  // save next parent item of this type;
 
       for ( int jj = 0; jj < ntcols; jj++ )
       {
          item->setForeground( jj, QBrush( fg ) );
          item->setBackground( jj, QBrush( bg ) );
-         if ( jj > 1  &&  jj < 6 )
-            item->setTextAlignment( jj, Qt::AlignRight );
       }
-      //item->setObjectName( QString( "Rec#%1" ).arg( ii ) );
    }
 
    tw_recs->expandAll();
+
    for ( int jj = 0; jj < ntcols; jj++ )
    {
       tw_recs->resizeColumnToContents( jj );
    }
+
    tw_recs->collapseAll();
 
    tw_recs->setObjectName( QString( "tree-widget" ) );
@@ -275,6 +279,8 @@ US_ManageData::US_ManageData() : US_Widgets()
    tw_recs->installEventFilter( this );
    connect( tw_recs, SIGNAL( itemClicked( QTreeWidgetItem*, int ) ),
             this,    SLOT(   clickedItem( QTreeWidgetItem* ) ) );
+
+   reset_hsbuttons( false, true, true, true );  // hs button labels,tooltips
 
    // put layouts together for overall layout
    leftLayout->addLayout( dctlLayout );
@@ -404,93 +410,136 @@ void US_ManageData::find_investigator( QString& invname )
 // toggle edits between hide/show
 void US_ManageData::toggle_edits()
 {
-   QString blabl = pb_hsedit->text();          // current button label
-   bool show     = blabl.startsWith( "Show" ); // show or hide?
+   bool show = pb_hsedit->text().startsWith( "Show" ); // show or hide?
 
-   toggle_hidden( "Raw",    show );            // expand/collapse one level up
+   toggle_expand( "Raw",    show );    // expand/collapse one level up
 
-   blabl.replace( show ? "Show" : "Hide", show ? "Hide" : "Show" );
+   if ( show )
+   {  // for show edits, need only relabel edit button
+      reset_hsbuttons( show, true, false, false );
+   }
 
-   pb_hsedit->setText( blabl );
+   else
+   {  // for hide edits, must toggle labels below; relabel all buttons
+      toggle_expand( "Model", show );
+      toggle_expand( "Noise", show );
 
-   if ( !show )
-   {  // for "hide", must toggle labels below
-      toggle_hidden( "Model", false );
-      toggle_hidden( "Noise", false );
-      blabl = pb_hsmodl->text();
-      blabl.replace( "Hide", "Show" );
-      pb_hsmodl->setText( blabl );
-      blabl = pb_hsnois->text();
-      blabl.replace( "Hide", "Show" );
-      pb_hsnois->setText( blabl );
+      reset_hsbuttons( show, true, true, true );
    }
 }
 
 // toggle models between hide/show
 void US_ManageData::toggle_models()
 {
-   QString blabl = pb_hsmodl->text();          // current button label
-   bool show     = blabl.startsWith( "Show" ); // show or hide?
+   bool show = pb_hsmodl->text().startsWith( "Show" ); // show or hide?
 
-   toggle_hidden( "Edited", show );            // expand/collapse one level up
-
-   blabl.replace( show ? "Show" : "Hide", show ? "Hide" : "Show" );
-
-   pb_hsmodl->setText( blabl );
+   toggle_expand( "Edited", show );    // expand/collapse one level up
 
    if ( show )
-   { // for "show", must expand next level up
-      toggle_hidden( "Raw",    show );
-      blabl = pb_hsedit->text();
-      blabl.replace( "Show", "Hide" );
-      pb_hsedit->setText( blabl );
+   { // for show models, must expand levels above; reset edit,model buttons
+      toggle_expand( "Raw",    show );
+
+      reset_hsbuttons( show, false, true, true );
    }
 
    else
-   {  // for "hide", must toggle label below
-      toggle_hidden( "Noise", false );
-      blabl = pb_hsnois->text();
-      blabl.replace( "Hide", "Show" );
-      pb_hsnois->setText( blabl );
+   {  // for hide models, must collapse below;  reset model,noise buttons
+      toggle_expand( "Noise", false );
+
+      reset_hsbuttons( show, false, true, true );
    }
 }
 
 // toggle noises between hide/show
 void US_ManageData::toggle_noises()
 {
-   QString blabl = pb_hsnois->text();          // current button label
-   bool show     = blabl.startsWith( "Show" ); // show or hide?
+   bool show = pb_hsnois->text().startsWith( "Show" )  // show or hide?
+            || pb_hsnois->text().startsWith( "Expand" );
 
-   toggle_hidden( "Model",  show );            // expand/collapse one level up
-
-   blabl.replace( show ? "Show" : "Hide", show ? "Hide" : "Show" );
-
-   pb_hsnois->setText( blabl );
+   toggle_expand( "Model",  show );    // expand/collapse one level up
 
    if ( show )
-   { // for "show", must expand levels above
-      toggle_hidden( "Edited", show );
-      toggle_hidden( "Raw",    show );
-      blabl = pb_hsedit->text();
-      blabl.replace( "Show", "Hide" );
-      pb_hsedit->setText( blabl );
-      blabl = pb_hsmodl->text();
-      blabl.replace( "Show", "Hide" );
-      pb_hsmodl->setText( blabl );
+   {  // for show noise, must expand above; reset edit,model,noise buttons
+      toggle_expand( "Edited", show );
+      toggle_expand( "Raw",    show );
+
+      reset_hsbuttons( show, true, true, true );
+   }
+
+   else
+   {  // for hide noise, need only reset noise button
+      reset_hsbuttons( show, false, false, true );
    }
 
 }
 
-// hide or show all rows of specified type
-void US_ManageData::toggle_hidden( QString c1str, bool show )
+// show or hide (expand/collapse) all rows of specified type
+void US_ManageData::toggle_expand( QString c1str, bool show )
 {
    QList< QTreeWidgetItem* > listi = tw_recs->findItems(
       c1str, Qt::MatchExactly | Qt::MatchWrap | Qt::MatchRecursive, 0 );
-qDebug() << "TOG_HIDD: match show listi.size" << c1str << show << listi.size();
+//qDebug() << "TOG_HIDD: match show listi.size"
+// << c1str << show << listi.size();
 
    for ( int ii = 0; ii < listi.size(); ii++ )
    {
       listi.at( ii )->setExpanded( show );
+   }
+}
+
+// change hide/show button text and tooltips for new expand/collapse state
+void US_ManageData::reset_hsbuttons( bool show,
+      bool edts, bool mods, bool nois )
+{
+   QString blabl;
+   QString btool;
+
+   if ( show )
+   {  // show (expand) is the new state
+      if ( edts )
+      { // Hide Edits 
+         pb_hsedit->setText( tr( "Collapse All" ) );
+         pb_hsedit->setToolTip( 
+            tr( "Collapse All, so Edits and all descendants are hidden" ) );
+      }
+
+      if ( mods )
+      { // Hide Models
+         pb_hsmodl->setText( tr( "Hide All Models" ) );
+         pb_hsmodl->setToolTip( 
+            tr( "Collapse Edits, so Models and their children are hidden" ) );
+      }
+
+      if ( nois )
+      { // Hide Noises
+         pb_hsnois->setText( tr( "Hide All Noises" ) );
+         pb_hsnois->setToolTip( 
+            tr( "Collapse Models, so Noises are hidden" ) );
+      }
+   }
+
+   else
+   {  // hide (collapse) is the new state
+      if ( edts )
+      { // Show Edits 
+         pb_hsedit->setText( tr( "Show All Edits" ) );
+         pb_hsedit->setToolTip( 
+            tr( "Expand Raws, so Edits and parent Raws are shown" ) );
+      }
+
+      if ( mods )
+      { // Show Models
+         pb_hsmodl->setText( tr( "Show All Models" ) );
+         pb_hsmodl->setToolTip( 
+            tr( "Expand Edits, so Models and their parents are shown" ) );
+      }
+
+      if ( nois )
+      { // Show Noises
+         pb_hsnois->setText( tr( "Expand All" ) );
+         pb_hsnois->setToolTip( 
+            tr( "Expand All, so Noises and all ancestors are shown" ) );
+      }
    }
 }
 
@@ -588,19 +637,17 @@ void US_ManageData::detail_data()
 void US_ManageData::build_dtree()
 {
    QString rtyp;
-   QString styp;
+   QString subt;
    QString labl;
    QString dguid;
    QString rsrc;
-   QString andc;
-   QString andd;
-   QString anlc;
-   QString anld;
-   int     ityp = 1;
-   int     ndc  = 0;
-   int     ndd  = 0;
-   int     nlc  = 0;
-   int     nld  = 0;
+   QString anch;
+   QString ande;
+   int     ityp  = 1;
+   int     nchdb = 0;
+   int     nchlo = 0;
+   int     ndedb = 0;
+   int     ndelo = 0;
    QBrush  fbru( colrBrown );
    QBrush  bbru( colrWhite );
    QTreeWidgetItem* pitems[4];
@@ -617,6 +664,7 @@ void US_ManageData::build_dtree()
    for ( int ii = 0; ii < ncrecs; ii++ )
    {
       cdesc      = adescs[ ii ];
+      ityp       = cdesc.recType;
       QStringList cvals;
 
       if ( cdesc.recordID < 0 )
@@ -624,29 +672,25 @@ void US_ManageData::build_dtree()
          fbru    = QBrush( colrBrown );
          rsrc    = "Local";
 
-         if ( cdesc.recType == 1 )
+         if      ( ityp == 1 )
          {
             nlraws++; ncraws++;
             rtyp    = "Raw";
-            ityp    = 1;
          }
-         else if ( cdesc.recType == 2 )
+         else if ( ityp == 2 )
          {
             nledts++; ncedts++;
             rtyp    = "Edited";
-            ityp    = 2;
          }
-         else if ( cdesc.recType == 3 )
+         else if ( ityp == 3 )
          {
             nlmods++; ncmods++;
             rtyp    = "Model";
-            ityp    = 3;
          }
-         else if ( cdesc.recType == 4 )
+         else if ( ityp == 4 )
          {
             nlnois++; ncnois++;
             rtyp    = "Noise";
-            ityp    = 4;
          }
          else
          {
@@ -660,29 +704,25 @@ void US_ManageData::build_dtree()
          fbru    = QBrush( colrBlue );
          rsrc    = "DB";
 
-         if ( cdesc.recType == 1 )
+         if      ( ityp == 1 )
          {
             ndraws++; ncraws++;
             rtyp    = "Raw";
-            ityp    = 1;
          }
-         else if ( cdesc.recType == 2 )
+         else if ( ityp == 2 )
          {
             ndedts++; ncedts++;
             rtyp    = "Edited";
-            ityp    = 2;
          }
-         else if ( cdesc.recType == 3 )
+         else if ( ityp == 3 )
          {
             ndmods++; ncmods++;
             rtyp    = "Model";
-            ityp    = 3;
          }
-         else if ( cdesc.recType == 4 )
+         else if ( ityp == 4 )
          {
             ndnois++; ncnois++;
             rtyp    = "Noise";
-            ityp    = 4;
          }
          else
          {
@@ -696,29 +736,25 @@ void US_ManageData::build_dtree()
          fbru    = QBrush( colrGreen );
          rsrc    = "In Sync";
 
-         if ( cdesc.recType == 1 )
+         if      ( ityp == 1 )
          {
             nlraws++; ndraws++; ncraws++;
             rtyp    = "Raw";
-            ityp    = 1;
          }
-         else if ( cdesc.recType == 2 )
+         else if ( ityp == 2 )
          {
             nledts++; ndedts++; ncedts++;
             rtyp    = "Edited";
-            ityp    = 2;
          }
-         else if ( cdesc.recType == 3 )
+         else if ( ityp == 3 )
          {
             nlmods++; ndmods++; ncmods++;
             rtyp    = "Model";
-            ityp    = 3;
          }
-         else if ( cdesc.recType == 4 )
+         else if ( ityp == 4 )
          {
             nlnois++; ndnois++; ncnois++;
             rtyp    = "Noise";
-            ityp    = 4;
          }
          else
          {
@@ -730,63 +766,72 @@ void US_ManageData::build_dtree()
 
       labl       = cdesc.label;
       dguid      = cdesc.dataGUID;
-      styp       = cdesc.subType;
-      ndc        = ndd = nlc = nld = 0;
+      subt       = cdesc.subType;
+      nchdb      = nchlo = ndedb = ndelo = 0;
 
       if ( cdesc.recState == NOSTAT )
-      {
+      {  // mark artificial record with color and source text
          fbru       = QBrush( colrGray );
          rsrc       = "dummy";
       }
 
       for ( int jj = ( ii + 1 ); jj < ncrecs; jj++ )
-      {  // count children and descendants
-         int     crtyp = adescs[ jj ].recType;
-         int     cdbid = adescs[ jj ].recordID;
-         QString cfnam = adescs[ jj ].filename;
-         QString cpgid = adescs[ jj ].parentGUID;
+      {  // count children and descendants from next-row until back-to-level
 
-         if ( crtyp <= cdesc.recType )
-            break;
+         if ( adescs[ jj ].recType <= cdesc.recType )
+            break;   // once we've reached or passed same level, break
 
-         if ( cpgid == dguid )
-         {  // this child has parent GUID matching level above
-            if ( cdbid < 0 )            { nlc++; nld++; }
-            else if ( cfnam.isEmpty() ) { ndc++; ndd++; }
-            else                        { ndc++; nlc++; ndd++; nld++; }
+         bool isDba = ( ( adescs[ jj ].recState & REC_DB ) != 0 );  // database
+         bool isLoc = ( ( adescs[ jj ].recState & REC_LO ) != 0 );  // local
+//qDebug() << "  drow rTyp crTyp cSta"
+// << jj+1 << ityp << adescs[jj].recType << adescs[jj].recState;
+
+         if ( adescs[ jj ].parentGUID == dguid )
+         {  // this is a child, since it has parent GUID matching level above
+            if ( isDba ) { nchdb++; ndedb++; }
+            if ( isLoc ) { nchlo++; ndelo++; }
          }
+
          else
          {  // this is descendant, not direct child
-//qDebug() << "cpgid dguid" << cpgid << dguid;
-            if ( cdbid < 0 )            { nld++; }
-            else if ( cfnam.isEmpty() ) { ndd++; }
-            else                        { ndd++; nld++; }
+            if ( isDba ) { ndedb++; }
+            if ( isLoc ) { ndelo++; }
+//qDebug() << "isDba cpgid dguid row drow ndedb"
+// << isDba << adescs[jj].parentGUID << dguid << ii+1 << jj+1 << ndedb;
          }
       }
 
-      andc = QString::number( ndc );
-      andd = QString::number( ndd );
-      anlc = QString::number( nlc );
-      anld = QString::number( nld );
+      anch = ( ityp < 4 ) ?
+         QString( "%1, %2" ).arg( nchdb ).arg( nchlo ) : "";  // children
+      ande = ( ityp < 3 ) ?
+         QString( "%1, %2" ).arg( ndedb ).arg( ndelo ) : "";  // descendants
 
       QTreeWidgetItem* item;
-      int wiutype = (int)QTreeWidgetItem::UserType + ii;
+      int wiutype = (int)QTreeWidgetItem::UserType + ii; // type: encoded index
 
-      cvals << rtyp << labl << andc << andd << anlc << anld << styp << rsrc;
+      cvals << rtyp << labl << subt << rsrc << anch << ande;
+if ( ityp < 1 || ityp > 4 ) qDebug() << "*** row type ***" << ii+1 << ityp;
 
       if ( ityp == 1 )
-         item = new QTreeWidgetItem( tw_recs, cvals, wiutype );
-      else
-         item = new QTreeWidgetItem( pitems[ ityp - 2 ], cvals, wiutype );
+      {  // Raws are children of the root
+         item = new QTreeWidgetItem( tw_recs,            cvals, wiutype );
+//if ( ii > 13 && ii < 20 )
+// qDebug() << " row rtyp *ROOT*" << ii+1 << rtyp;
+      }
 
-      pitems[ ityp - 1 ] = item;
+      else
+      {  // others are children of the next level up
+         item = new QTreeWidgetItem( pitems[ ityp - 2 ], cvals, wiutype );
+//if ( ii > 13 && ii < 20 )
+// qDebug() << " row rtyp prtyp" << ii+1 << rtyp << pitems[ityp-2]->text(0);
+      }
+
+      pitems[ ityp - 1 ] = item;  // save next parent of this type
 
       for ( int jj = 0; jj < ntcols; jj++ )
       {
          item->setForeground( jj, fbru );
          item->setBackground( jj, bbru );
-         if ( jj > 1  &&  jj < 6 )
-            item->setTextAlignment( jj, Qt::AlignRight );
       }
    }
 
@@ -802,16 +847,7 @@ void US_ManageData::build_dtree()
 
    this->resize( 1000, 500 );
 
-   QString blabl;                             // make buttons say "Show ..."
-   blabl = pb_hsedit->text();
-   blabl.replace( "Hide", "Show" );
-   pb_hsedit->setText( blabl );
-   blabl = pb_hsmodl->text();
-   blabl.replace( "Hide", "Show" );
-   pb_hsmodl->setText( blabl );
-   blabl = pb_hsnois->text();
-   blabl.replace( "Hide", "Show" );
-   pb_hsnois->setText( blabl );
+   reset_hsbuttons( false, true, true, true );  // hs button labels,tooltips
 
    // reformat and display report on record counts
    const char* fmtn[] = { "\%2d", "\%3d", "\%4d" };
@@ -874,7 +910,7 @@ void US_ManageData::assign_investigator( int invID,
 // handle a right-mouse click of a row cell
 void US_ManageData::clickedItem( QTreeWidgetItem* item )
 {
-qDebug() << "TABLE ITEM CLICKED rbtn_click" << rbtn_click;
+//qDebug() << "TABLE ITEM CLICKED rbtn_click" << rbtn_click;
 
    if ( rbtn_click )
    {  // only bring up context menu if right-mouse-button was clicked
@@ -887,9 +923,8 @@ qDebug() << "TABLE ITEM CLICKED rbtn_click" << rbtn_click;
 void US_ManageData::row_context_menu( QTreeWidgetItem* item )
 {
    tw_item  = item;
-   //int irow = item->type() - (int)QTreeWidgetItem::UserType;
-   //int ixpo = cur_pos->x();
-   //int iypo = cur_pos->y();
+   int irow = item->type() - (int)QTreeWidgetItem::UserType;
+//qDebug() << "    context_menu row" << irow+1;
 
    QMenu*   cmenu   = new QMenu();
    QAction* upldact = new QAction( tr( " upload to DB" ), this );
@@ -919,6 +954,24 @@ void US_ManageData::row_context_menu( QTreeWidgetItem* item )
    connect( shdeact, SIGNAL( triggered() ),
             this,    SLOT(   item_details()    ) );
 
+   // disable menu items that are not appropriate to the record
+   cdesc    = adescs[ irow ];
+
+   if ( ( cdesc.recState & REC_LO ) == 0 )
+   {  // if record not local, no upload and no remove from local or both
+      upldact->setEnabled( false );
+      rmloact->setEnabled( false );
+      rmboact->setEnabled( false );
+   }
+
+   if ( ( cdesc.recState & REC_DB ) == 0 )
+   {  // if record not db, no download and no remove from db or both
+      dnldact->setEnabled( false );
+      rmdbact->setEnabled( false );
+      rmboact->setEnabled( false );
+   }
+
+   // display the context menu and act on selection
    cmenu->exec( QCursor::pos() );
 
 }
@@ -930,27 +983,27 @@ void US_ManageData::dtree_help()
       + tr( "All files (*)" );
    QString mtext =
       tr( "Data Tree Columns --\n\n" ) +
-      tr( "  \"Type\"    :  type of data set record -\n" ) +
-      tr( "                 \"Raw\", \"Edited\", \"Model\" or \"Noise\".\n" ) +
-      tr( "  \"Label\"   :  short description of specific record.\n" ) +
-      tr( "  \"nDc\"     :  number of Database Children of this row.\n" ) +
-      tr( "  \"nDd\"     :  number of Database Descendants of this row.\n" ) +
-      tr( "  \"nLc\"     :  number of Local-disk Children of this row.\n" ) +
-      tr( "  \"nLd\"     :  number of Local Descendants of this row.\n" ) +
-      tr( "  \"SubType\" :  record-specific type (e.g. \"2DSA\", \"TI\").\n" ) +
-      tr( "  \"Source\"  :  location/state (see color legend below)-\n" ) +
-      tr( "                 \"DB\"        (Blue, database); \n" ) +
-      tr( "                 \"Local\"     (Brown, local disk); \n" ) +
-      tr( "                 \"In Sync\"   (Green, both, consistent); \n" ) +
-      tr( "                 \"Conflict\"  (Red), both, inconsistent); \n" ) +
-      tr( "                 \"dummy\"     (Gray, missing parent filler).\n\n" )+
+      tr( " \"Type\"       :  Type of data set record -\n" ) +
+      tr( "                  \"Raw\", \"Edited\", \"Model\" or \"Noise\".\n") +
+      tr( " \"Label\"      :  Short description of specific record.\n" ) +
+      tr( " \"SubType\"    :  Record-specific type (e.g. \"2DSA\", \"TI\").\n")+
+      tr( " \"Source\"     :  Location/state (see color legend below)-\n" ) +
+      tr( "                  \"DB\"        (Blue,  database); \n" ) +
+      tr( "                  \"Local\"     (Brown, local disk); \n" ) +
+      tr( "                  \"In Sync\"   (Green, both, consistent); \n" ) +
+      tr( "                  \"Conflict\"  (Red,   both, inconsistent); \n" ) +
+      tr( "                  \"dummy\"     (Gray,  missing parent filler).\n") +
+      tr( " \"Children    :  Number of Children of this row\n" ) +
+      tr( "  DB, Local\"       from Database, Local-disk.\n" ) +
+      tr( " \"Descendants :  Number of Descendants of this row\n" ) +
+      tr( "  DB, Local\"       from Database, Local-disk.\n\n" ) +
       tr( "Tree Row Color Legend --\n\n" ) +
-      tr( "  Blue      :  This record exists for database only.\n" ) +
-      tr( "  Brown     :  This record exists for local disk only.\n" ) +
-      tr( "  Green     :  This record exists and is consistent\n" ) +
-      tr( "               for both database and local.\n" ) +
-      tr( "  Red       :  This record exists for both, but is inconsistent.\n")+
-      tr( "  Gray      :  This row is a filler for a missing parent.\n\n" ) +
+      tr( "  Blue   :  This record exists for database only.\n" ) +
+      tr( "  Brown  :  This record exists for local disk only.\n" ) +
+      tr( "  Green  :  This record exists and is consistent\n" ) +
+      tr( "              for both database and local.\n" ) +
+      tr( "  Red    :  This record exists for both, but is inconsistent.\n")+
+      tr( "  Gray   :  This record is a filler for a missing parent.\n\n" ) +
       tr( "Tree Entry Processes --\n\n" ) +
       tr( "  A right-mouse-button click on any cell of a row pops up\n" ) +
       tr( "  a context menu with actions to take for the record.\n" ) +
@@ -1015,13 +1068,13 @@ qDebug() << "ITEM Remove Both DB and Local";
 // perform item details action
 void US_ManageData::item_details(  )
 {
-   const char* rtyps[] = { "RawData", "EditedData", "Model", "Noise" };
-   int irow = tw_item->type() - (int)QTreeWidgetItem::UserType;
-qDebug() << "ITEM Show Details  row" << irow;
-   QString fileexts = tr( "Text,Log files (*.txt *.log);;" )
+   const char* rtyps[]  = { "RawData", "EditedData", "Model", "Noise" };
+   QString     fileexts = tr( "Text,Log files (*.txt *.log);;" )
       + tr( "All files (*)" );
+   int         irow     = tw_item->type() - (int)QTreeWidgetItem::UserType;
+qDebug() << "ITEM Show Details  row" << irow+1;
 
-   cdesc             = adescs[ irow++ ];  // get desc., index as 1...
+   cdesc  = adescs[ irow++ ];  // get description record, index as 1...
 
    QString mtext =
       tr( "Data Tree Item at Row %1 -- \n\n" ).arg( irow ) +
@@ -1040,6 +1093,7 @@ qDebug() << "ITEM Show Details  row" << irow;
       tr( "  Record State   : " ) + record_state( cdesc.recState ) + "\n" +
       tr( "  Last Mod Date  : " ) + cdesc.lastmodDate;
 
+   // display the text dialog
    US_Editor* editd = new US_Editor( US_Editor::LOAD, true, fileexts );
    editd->setWindowTitle( tr( "Data Tree Entry Details" ) );
    editd->move( QCursor::pos() + QPoint( 100, 100 ) );
@@ -1047,48 +1101,6 @@ qDebug() << "ITEM Show Details  row" << irow;
    editd->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
    editd->e->setText( mtext );
    editd->show();
-}
-
-// perform item show-children action
-void US_ManageData::item_show_child()
-{
-qDebug() << "ITEM Show Children";
-#if 0
-   int irow = tw_item->row();
-   int ityp = adescs[ irow ].recType;
-
-   for ( int jj = ( irow + 1 ); jj < ncrecs; jj++ )
-   {  // browse children and descendants
-      int ctyp = adescs[ jj ].recType;
-
-      if ( ctyp <= ityp )      // break out when a sibling is reached
-         break;
-
-      // this record has greater type number and so is a child or descendant
-      tw_recs->showRow( jj );  // show this child row
-   }
-#endif
-}
-
-// perform item hide-children action
-void US_ManageData::item_hide_child()
-{
-qDebug() << "ITEM Hide Children";
-#if 0
-   int irow = tw_item->row();
-   int ityp = adescs[ irow ].recType;
-
-   for ( int jj = ( irow + 1 ); jj < ncrecs; jj++ )
-   {  // browse children and descendants
-      int ctyp = adescs[ jj ].recType;
-
-      if ( ctyp <= ityp )      // break out when a sibling is reached
-         break;
-
-      // this record has greater type number and so is a child or descendant
-      tw_recs->hideRow( jj );  // hide this child row
-   }
-#endif
 }
 
 // browse the database for R/E/M/N data sets, with/without content details
@@ -1569,7 +1581,7 @@ void US_ManageData::merge_dblocal( )
 
    int jdr   = 0;
    int jlr   = 0;
-   int kar   = 0;
+   int kar   = 1;
 
    DataDesc  descd = ddescs.at( 0 );
    DataDesc  descl = ldescs.at( 0 );
@@ -1580,36 +1592,39 @@ void US_ManageData::merge_dblocal( )
    while ( jdr < nddes  &&  jlr < nldes )
    {  // main loop to merge records until one is exhausted
 
-      progress->setValue( kar + 1 );
+      progress->setValue( kar );           // report progress
 
       if ( kar > nstep )
-      {
+      {  // if count beyond max, bump max by one eighth
          nstep = ( kar * 9 ) / 8;
          progress->setMaximum( nstep );
       }
 
       while ( descd.dataGUID == descl.dataGUID )
       {  // records match in GUID:  merge them into one
-         descd.recState    |= descl.recState;
-         descd.filename     = descl.filename;
-         descd.lastmodDate  = descl.lastmodDate;
-         adescs << descd;
+         descd.recState    |= descl.recState;     // OR states
+         descd.filename     = descl.filename;     // filename from local
+         descd.lastmodDate  = descl.lastmodDate;  // last mod date from local
+
+         adescs << descd;                  // output combo record
+qDebug() << "MERGE:  kar jdr jlr (1)GID" << kar << jdr << jlr << descd.dataGUID;
          kar++;
 
-         if ( ++jdr >= nddes )
+         if ( ++jdr >= nddes )             // bump db count and test if done
             break;
 
-         descd = ddescs.at( jdr );
+         descd = ddescs.at( jdr );         // get next db record
 
-         if ( ++jlr >= nldes )
+         if ( ++jlr >= nldes )             // bump local count and test if done
             break;
 
-         descl = ldescs.at( jlr );
+         descl = ldescs.at( jlr );         // get next local record
       }
 
       while ( descd.recType > descl.recType )
       {  // output db records that are left-over children
          adescs << descd;
+qDebug() << "MERGE:  kar jdr jlr (2)GID" << kar << jdr << jlr << descd.dataGUID;
          kar++;
 
          if ( ++jdr >= nddes )
@@ -1621,6 +1636,7 @@ void US_ManageData::merge_dblocal( )
       while ( descl.recType > descd.recType )
       {  // output local records that are left-over children
          adescs << descl;
+qDebug() << "MERGE:  kar jdr jlr (3)GID" << kar << jdr << jlr << descl.dataGUID;
          kar++;
 
          if ( ++jlr >= nldes )
@@ -1629,15 +1645,20 @@ void US_ManageData::merge_dblocal( )
          descl = ldescs.at( jlr );
       }
 
-      // if we've reached another matching pair or if we are not at
-      // the same level, go back up to start of main loop
+      // If we've reached another matching pair or if we are not at
+      // the same level, go back up to the start of the main loop.
       if ( descd.dataGUID == descl.dataGUID  ||
            descd.recType  != descl.recType  )
          continue;
 
+      // If we are here, we have records at the same level,
+      // but with different GUIDs. Output one of them, based on
+      // an alphanumeric comparison of label values.
+
       if ( descd.label < descl.label )
       {  // output db record first based on alphabetic label sort
          adescs << descd;
+qDebug() << "MERGE:  kar jdr jlr (4)GID" << kar << jdr << jlr << descd.dataGUID;
          kar++;
 
          if ( ++jdr >= nddes )
@@ -1649,31 +1670,37 @@ void US_ManageData::merge_dblocal( )
       else
       {  // output local record first based on alphabetic label sort
          adescs << descl;
+qDebug() << "MERGE:  kar jdr jlr (5)GID" << kar << jdr << jlr << descl.dataGUID;
          kar++;
 
-         if ( ++jlr >= nddes )
+         if ( ++jlr >= nldes )
             break;
 
-         descl = ddescs.at( jlr );
+         descl = ldescs.at( jlr );
       }
-   }
+
+   }  // end of main merge loop;
 
    // after breaking from main loop, output any records left from one
-   // source (db,local) or the other.
+   // source (db/local) or the other.
    //
    while ( jdr < nddes )
    {
       adescs << ddescs.at( jdr++ );
+descd=ddescs.at(jlr-1);
+qDebug() << "MERGE:  kar jdr jlr (8)GID" << kar << jdr << jlr << descd.dataGUID;
       kar++;
    }
 
    while ( jlr < nldes )
    {
       adescs << ldescs.at( jlr++ );
+descl=ldescs.at(jlr-1);
+qDebug() << "MERGE:  kar jdr jlr (9)GID" << kar << jdr << jlr << descl.dataGUID;
       kar++;
    }
 
-qDebug() << "MERGE: nddes nldes kar" << nddes << nldes << kar;
+qDebug() << "MERGE: nddes nldes kar" << nddes << nldes << --kar;
 
    //adescs.clear();
    //adescs << ddescs;
@@ -1756,7 +1783,7 @@ void US_ManageData::sort_descs( QVector< DataDesc >& descs )
    int kndx = tdess.size();
    int jndx;
    int kk;
-   int nddm = 0;     // flag of duplicate dummies
+   int ndmy = 0;     // flag of duplicate dummies
 
    // create dummy records to parent each orphan
 
@@ -1772,7 +1799,7 @@ void US_ManageData::sort_descs( QVector< DataDesc >& descs )
 
       if ( dpGUID.length() < 2 )
       { // handle case where there is no valid parentGUID
-         if ( nddm == 0 )      // first time:  create one
+         if ( ndmy == 0 )      // first time:  create one
             dpGUID = dmyBGID + QString().sprintf( "%4.4d", kdmy++ );
          else
             dpGUID = ppGUID;   // afterwards:  re-use same parent
@@ -1787,10 +1814,10 @@ void US_ManageData::sort_descs( QVector< DataDesc >& descs )
             tdess[ jndx ]     = cdesc;
          }
 
-         if ( nddm > 0 )       // after 1st time, skip creating new parent
+         if ( ndmy > 0 )       // after 1st time, skip creating new parent
             continue;
 
-         nddm++;               // flag that we have a parent for invalid ones
+         ndmy++;               // flag that we have a parent for invalid ones
          ppGUID = dpGUID;      // save the GUID for new dummy parent
       }
 
@@ -1824,7 +1851,7 @@ qDebug() << "N orphan:" << orphn.at( ii );
 qDebug() << "  M dummy:" << dsorts;
    }
 
-   nddm   = 0;
+   ndmy   = 0;
 
    for ( int ii = 0; ii < orphm.size(); ii++ )
    {  // for each orphan model, create a dummy edit
@@ -1836,9 +1863,9 @@ qDebug() << "  M dummy:" << dsorts;
       jndx   = dindex.toInt();
       cdesc  = tdess[ jndx ];
 
-      if ( dpGUID.length() < 2 )
+      if ( dpGUID.length() < 16 )
       { // handle case where there is no valid parentGUID
-         if ( nddm == 0 )      // first time:  create one
+         if ( ndmy == 0 )      // first time:  create one
             dpGUID = dmyBGID + QString().sprintf( "%4.4d", kdmy++ );
          else
             dpGUID = ppGUID;   // afterwards:  re-use same parent
@@ -1853,10 +1880,10 @@ qDebug() << "  M dummy:" << dsorts;
             tdess[ jndx ]     = cdesc;
          }
 
-         if ( nddm > 0 )       // after 1st time, skip creating new parent
+         if ( ndmy > 0 )       // after 1st time, skip creating new parent
             continue;
 
-         nddm++;               // flag that we have a parent for invalid ones
+         ndmy++;               // flag that we have a parent for invalid ones
          ppGUID = dpGUID;      // save the GUID for new dummy parent
       }
 
@@ -1890,7 +1917,7 @@ qDebug() << "M orphan:" << orphm.at( ii );
 qDebug() << "  E dummy:" << dsorts;
    }
 
-   nddm   = 0;
+   ndmy   = 0;
 
    for ( int ii = 0; ii < orphe.size(); ii++ )
    {  // for each orphan edit, create a dummy raw
@@ -1904,7 +1931,7 @@ qDebug() << "  E dummy:" << dsorts;
 
       if ( dpGUID.length() < 2 )
       { // handle case where there is no valid parentGUID
-         if ( nddm == 0 )      // first time:  create one
+         if ( ndmy == 0 )      // first time:  create one
             dpGUID = dmyBGID + QString().sprintf( "%4.4d", kdmy++ );
          else
             dpGUID = ppGUID;   // afterwards:  re-use same parent
@@ -1919,10 +1946,10 @@ qDebug() << "  E dummy:" << dsorts;
             tdess[ jndx ]     = cdesc;
          }
 
-         if ( nddm > 0 )       // after 1st time, skip creating new parent
+         if ( ndmy > 0 )       // after 1st time, skip creating new parent
             continue;
 
-         nddm++;               // flag that we have a parent for invalid ones
+         ndmy++;               // flag that we have a parent for invalid ones
          ppGUID = dpGUID;      // save the GUID for new dummy parent
       }
 
@@ -1961,12 +1988,18 @@ qDebug() << "  R dummy:" << dsorts;
    int countE = sorte.size();
    int countM = sortm.size();
    int countN = sortn.size();
+
+   sortr.sort();                 // re-sort for dummy additions
+   sorte.sort();
+   sortm.sort();
+   sortn.sort();
 qDebug() << "sort/dumy: count REMN" << countR << countE << countM << countN;
 
    int noutR  = 0;               // count of each kind in hierarchical output
    int noutE  = 0;
    int noutM  = 0;
    int noutN  = 0;
+   int indx;
    int pstate = REC_LO | PAR_LO;
 
    descs.clear();                // reset input vector to become sorted output
@@ -1978,22 +2011,24 @@ qDebug() << "sort/dumy: count REMN" << countR << countE << countM << countN;
       QString recr   = sortr[ ii ];
       QString didr   = recr.section( ":", 2, 2 );
       QString pidr   = recr.section( ":", 3, 3 );
-      int     indx   = recr.section( ":", 1, 1 ).toInt();
+
+      indx           = recr.section( ":", 1, 1 ).toInt();
 
       cdesc          = tdess.at( indx );
 
-      if ( ii == 0 )
-      {  // set up a default parent state flag
-         pstate = cdesc.recState;
-         pstate = ( pstate & REC_DB ) != 0 ? ( pstate | PAR_DB ) : pstate;
-         pstate = ( pstate & REC_LO ) != 0 ? ( pstate | PAR_LO ) : pstate;
-      }
+      // set up a default parent state flag
+      pstate = cdesc.recState;
+      pstate = ( pstate & REC_DB ) != 0 ? ( pstate | PAR_DB ) : pstate;
+      pstate = ( pstate & REC_LO ) != 0 ? ( pstate | PAR_LO ) : pstate;
 
       // new state is the default,  or NOSTAT if this is a dummy record
-      cdesc.recState = record_state( cdesc, pstate );
+      cdesc.recState = record_state_flag( cdesc, pstate );
 
       descs << cdesc;                   // output Raw rec
       noutR++;
+
+      // set up parent state for children to follow
+      int rpstate    = cdesc.recState;
 
       for ( int jj = 0; jj < countE; jj++ )
       {  // loop to output sorted Edit records for the above Raw
@@ -2006,11 +2041,14 @@ qDebug() << "sort/dumy: count REMN" << countR << countE << countM << countN;
          QString dide   = rece.section( ":", 2, 2 );
          indx           = rece.section( ":", 1, 1 ).toInt();
          cdesc          = tdess.at( indx );
-         cdesc.recState = record_state( cdesc, pstate );
+         cdesc.recState = record_state_flag( cdesc, rpstate );
 //qDebug() << "     ii jj indx" << ii << jj << indx;
 
          descs << cdesc;                // output Edit rec
          noutE++;
+
+         // set up parent state for children to follow
+         int epstate    = cdesc.recState;
 
          for ( int mm = 0; mm < countM; mm++ )
          {  // loop to output sorted Model records for above Edit
@@ -2023,11 +2061,14 @@ qDebug() << "sort/dumy: count REMN" << countR << countE << countM << countN;
             QString didm   = recm.section( ":", 2, 2 );
             indx           = recm.section( ":", 1, 1 ).toInt();
             cdesc          = tdess.at( indx );
-            cdesc.recState = record_state( cdesc, pstate );
+            cdesc.recState = record_state_flag( cdesc, epstate );
 
             descs << cdesc;             // output Model rec
 
             noutM++;
+
+            // set up parent state for children to follow
+            int mpstate    = cdesc.recState;
 
             for ( int nn = 0; nn < countN; nn++ )
             {  // loop to output sorted Noise records for above Model
@@ -2039,7 +2080,7 @@ qDebug() << "sort/dumy: count REMN" << countR << countE << countM << countN;
 
                indx           = recn.section( ":", 1, 1 ).toInt();
                cdesc          = tdess.at( indx );
-               cdesc.recState = record_state( cdesc, pstate );
+               cdesc.recState = record_state_flag( cdesc, mpstate );
 
                descs << cdesc;          // output Noise rec
 
@@ -2405,22 +2446,20 @@ QStringList US_ManageData::list_orphans( QStringList& rlist,
    return olist;
 }
 
-// return a record state flag: default or NOSTAT if artificial
-int US_ManageData::record_state( DataDesc descr, int defstate )
+// return a record state flag with parent state ORed in
+int US_ManageData::record_state_flag( DataDesc descr, int pstate )
 {
-   int state = defstate;
+   int state = descr.recState;
 
-   if ( descr.recState == NOSTAT )
+   if ( descr.recState == NOSTAT  ||
+        descr.description.contains( "ARTIFICIAL" ) )
       state = NOSTAT;
 
-   if ( descr.recordID < 0  &&  descr.filename.isEmpty() )
-      state = NOSTAT;
+   else if ( ( pstate & REC_DB ) != 0 )
+      state = state | PAR_DB;
 
-   if ( descr.description.contains( "ARTIFICIAL" ) )
-      state = NOSTAT;
-
-   if ( descr.label.contains( "ARTIFICIAL" ) )
-      state = NOSTAT;
+   else if ( ( pstate & REC_LO ) != 0 )
+      state = state | PAR_LO;
 
    return state;
 }
