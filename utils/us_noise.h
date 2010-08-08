@@ -6,27 +6,37 @@
 #include "us_db2.h"
 #include "us_dataIO2.h"
 
+//! \brief Noise Vector object
+
+/*! \class US_Noise
+  
+    This class sets up a noise vector of time-invariant or radially-invariant
+    values. It provides an interface to read and write values in the database
+    or in local disk files.
+*/
 class US_EXTERN US_Noise
 {
    public:
+      //! \brief Create a noise vector object.
       US_Noise();
 
+      //! Types of noise: radially-invariant or time-invariant
       enum NoiseType { RI, TI };
 
-      NoiseType  type;
+      NoiseType  type;           //!< Type of noise: RI or TI
 
-      QString    description;
-      QString    noiseGUID;
-      QString    modelGUID;   
+      QString    description;    //!< String describing the noise set
+      QString    noiseGUID;      //!< Global ID of this noise
+      QString    modelGUID;      //!< Global ID of parent model object
 
-      double     minradius;
-      double     maxradius;
+      double     minradius;      //!< Minimum radius value for RI type
+      double     maxradius;      //!< Maximum radius value for RI type
 
-      int        count;
+      int        count;          //!< Number of noise values in the vector
 
-      QVector< double > values;
+      QVector< double > values;  //!< Vector of noise values
 
-      QString    message;  // Used internally for communication
+      QString    message;        //!< Used internally for communication
 
       //! Read a noise vector from the disk or database
       //! \param db_access A flag to indicate if the DB (true) or disk (false)
@@ -48,7 +58,9 @@ class US_EXTERN US_Noise
       //! \returns        The \ref US_DB2 return code for the operation
       int load( const QString& );  
       
+      //! Compare two noise objects for equality
       bool operator== ( const US_Noise& ) const;      
+      //! Compare two noise objects for non-equality
       inline bool operator!= ( const US_Noise& n ) const
          { return ! operator==(n); }
 

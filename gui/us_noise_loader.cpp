@@ -7,13 +7,12 @@
 
 #include <qwt_legend.h>
 
-// constructor:  residuals bitmap widget
-US_NoiseLoader::US_NoiseLoader( US_DB2* a_db, QStringList& a_mieGUIDs,
-   QStringList& a_nieGUIDs, US_Noise& a_ti_noise, US_Noise& a_ri_noise )
-   : US_WidgetsDialog( 0, 0 ), db( a_db ), mieGUIDs( a_mieGUIDs ),
-   nieGUIDs( a_nieGUIDs ), ti_noise( a_ti_noise ), ri_noise( a_ri_noise )
+// constructor:  load loader dialog
+US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
+   QStringList& nieGUIDs, US_Noise& ti_noise, US_Noise& ri_noise )
+   : US_WidgetsDialog( 0, 0 ), db( db ), mieGUIDs( mieGUIDs ),
+   nieGUIDs( nieGUIDs ), ti_noise( ti_noise ), ri_noise( ri_noise )
 {
-
    setWindowTitle( tr( "Noise Vector Load" ) );
    setPalette( US_GuiSettings::frameColor() );
 
