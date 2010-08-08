@@ -77,7 +77,8 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    //connect( lw_models, SIGNAL( currentRowChanged( int  ) ),
    //                    SLOT  ( change_model     ( int  ) ) );
 
-   connect( lw_models, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
+   //connect( lw_models, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
+   connect( lw_models, SIGNAL( itemClicked      ( QListWidgetItem* ) ),
                        SLOT  ( select_model     ( QListWidgetItem* ) ) );
 
    main->addWidget( lw_models, row, 0, 5, 2 );
@@ -186,6 +187,8 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    adjustSize();
 }
 
+#define RESERVED 1000
+
 void US_ModelGui::new_model( void )
 {
    if ( ! ignore_changes() ) return;
@@ -204,8 +207,19 @@ void US_ModelGui::new_model( void )
 
    model_descriptions << desc;
    show_model_desc();
-   recent_row = model_descriptions.size() - 1;
-   lw_models->setCurrentRow( recent_row );
+
+   // Account for sorting
+   int last = model_descriptions.size() - 1;
+
+   for ( int i = 0; i < lw_models->count(); i++ )
+   {
+      if ( lw_models->item( i )->type() - RESERVED == last )
+      {
+         lw_models->setCurrentRow( i );
+         recent_row = i;
+         break;
+      }
+   }
 }
 
 void US_ModelGui::show_model_desc( void )
@@ -213,14 +227,17 @@ void US_ModelGui::show_model_desc( void )
    lw_models->clear();
 
    for ( int i = 0; i < model_descriptions.size(); i++ )
-      lw_models->addItem( model_descriptions[ i ].description );
+   {
+      QString desc = model_descriptions[ i ].description;
+      new QListWidgetItem( desc, lw_models, i + RESERVED );
+   }
 
    lw_models->sortItems();
 
-   int lheight = lw_models->height();
-   int height  = this->height() + ( lheight / 5 );
-   int width   = this->width();
-   resize( width, height );
+   //int lheight = lw_models->height();
+   //int height  = this->height() + ( lheight / 5 );
+   //int width   = this->width();
+   //resize( width, height );
 }
 
 bool US_ModelGui::ignore_changes( void )
@@ -241,16 +258,38 @@ bool US_ModelGui::ignore_changes( void )
 void US_ModelGui::edit_description( void )
 {
    int row = lw_models->currentRow();
-   if ( row < 0 ) return;
+   if ( row < 0  ||  model_descriptions.size() == 0 ) return;
 
    QString desc = le_description->text().trimmed();
    if ( desc.isEmpty() ) return;
 
    if ( desc == lw_models->item( row )->text() ) return;
 
-   model_descriptions[ row ].description = desc;
+   // Find index into model_descriptions
+   int index = -1;
+
+   for ( int i = 0; i < model_descriptions.size(); i++ )
+   {
+      if ( lw_models->item( i )->type() - RESERVED == row )
+      {
+         index = i;
+         model_descriptions[ i ].description = desc;
+         break;
+      }
+   }
+
    model.description = desc;
    show_model_desc();
+
+   // Re-select row (it was sorted)
+   for ( int i = 0; i < model_descriptions.size(); i++ )
+   {
+      if ( lw_models->item( i )->type() - RESERVED == index )
+      {
+         lw_models->setCurrentRow( i );
+         break;
+      }
+   }
 
    model.modelGUID.clear();
    le_guid->clear();
@@ -266,18 +305,23 @@ void US_ModelGui::select_model( QListWidgetItem* item )
    }
 
    // Get the current index
+   if ( model_descriptions.size() == 0 ) return;
    int     index = item -> listWidget()-> currentRow();
    QString mdesc = item->text();
    int     modlx = modelIndex( mdesc, model_descriptions );
    
+   // For the case of the user clicking on "New Model"
+   if ( model_descriptions[ modlx ].modelGUID.isEmpty() ) return;
+
    QString        file;
    QTemporaryFile temporary;
 
    if ( rb_disk->isChecked() ) // Load from disk
    {
       file = model_descriptions[ modlx ].filename;
+      if ( file.isEmpty() ) return;
+      
       model.load( file );
-
    }
    else // Load from db
    {
@@ -591,6 +635,7 @@ void US_ModelGui::save_model( void )
          tr( "Model Saved" ),
          tr( "The model has been %1 in the disk." ).arg( save_type ) );
 
+      working_model = model;
    }
    else // Save/update in DB
    {
@@ -604,9 +649,13 @@ void US_ModelGui::save_model( void )
       }
 
       if ( model.write( &db ) == US_DB2::OK )
+      {
          QMessageBox::information( this,
             tr( "Model Written" ),
             tr( "The model has been %1 in the database." ).arg( model.message ) );
+         
+         working_model = model;
+      }
       else
          QMessageBox::information( this,
             tr( "Database Error" ),
@@ -731,17 +780,12 @@ void US_ModelGui::list_models( void )
 
 int US_ModelGui::modelIndex( QString mdesc, QList< ModelDesc > mds )
 {
-   int mdx = 0;
-
-   for ( int jj = 0; jj < mds.size(); jj++ )
+   for ( int i = 0; i < mds.size(); i++ )
    {
-      if ( mdesc.compare( mds[ jj ].description ) == 0 )
-      {
-         mdx    = jj;
-         break;
-      }
+      if ( mdesc == mds[ i ].description )
+         return i;
    }
 
-   return mdx;
+   return -1;
 }
 
