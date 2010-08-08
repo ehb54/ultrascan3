@@ -6,7 +6,7 @@
 #include "us_editor.h"
 #include "us_widgets_dialog.h"
 
-/*! Class to display US_Edit in a dailog type screen */
+/*! Class to display US_Edit in a dialog type screen */
 class US_EXTERN US_EditorGui : public US_WidgetsDialog
 {
 	Q_OBJECT
@@ -14,6 +14,7 @@ class US_EXTERN US_EditorGui : public US_WidgetsDialog
    public:
       US_EditorGui(); 
 
+      //! The access to the contenets of the editor
       US_Editor* editor;
 
    signals:

@@ -1,4 +1,4 @@
-//! \file us_run_details.cpp
+//! \file us_run_details2.cpp
 
 #include "us_run_details2.h"
 #include "us_settings.h"

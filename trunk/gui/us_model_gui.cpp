@@ -187,8 +187,6 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    adjustSize();
 }
 
-#define RESERVED 1000
-
 void US_ModelGui::new_model( void )
 {
    if ( ! ignore_changes() ) return;
@@ -213,7 +211,7 @@ void US_ModelGui::new_model( void )
 
    for ( int i = 0; i < lw_models->count(); i++ )
    {
-      if ( lw_models->item( i )->type() - RESERVED == last )
+      if ( lw_models->item( i )->type() - QListWidgetItem::UserType == last )
       {
          lw_models->setCurrentRow( i );
          recent_row = i;
@@ -229,7 +227,10 @@ void US_ModelGui::show_model_desc( void )
    for ( int i = 0; i < model_descriptions.size(); i++ )
    {
       QString desc = model_descriptions[ i ].description;
-      new QListWidgetItem( desc, lw_models, i + RESERVED );
+      // Add a type value to the that is the position of the item
+      // in the model_description list plus the Qt set minimum value
+      // for custom types.
+      new QListWidgetItem( desc, lw_models, i + QListWidgetItem::UserType );
    }
 
    lw_models->sortItems();
@@ -270,7 +271,7 @@ void US_ModelGui::edit_description( void )
 
    for ( int i = 0; i < model_descriptions.size(); i++ )
    {
-      if ( lw_models->item( i )->type() - RESERVED == row )
+      if ( lw_models->item( i )->type() - QListWidgetItem::UserType == row )
       {
          index = i;
          model_descriptions[ i ].description = desc;
@@ -284,7 +285,7 @@ void US_ModelGui::edit_description( void )
    // Re-select row (it was sorted)
    for ( int i = 0; i < model_descriptions.size(); i++ )
    {
-      if ( lw_models->item( i )->type() - RESERVED == index )
+      if ( lw_models->item( i )->type() - QListWidgetItem::UserType == index )
       {
          lw_models->setCurrentRow( i );
          break;

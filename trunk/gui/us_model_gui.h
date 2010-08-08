@@ -21,13 +21,14 @@ class US_ModelGui : public US_WidgetsDialog
       //! \param current_model - Location of model structure for editing
       US_ModelGui( US_Model& );
 
+      //! The optical type of sensor in the experiment
       enum optics_t { ABSORBANCE, INTERFERENCE, FLUORESCENCE };
 
    signals:
       
       //! \brief A signal that retruns the model loaded or created
       //! \param model - The parameters of the model
-      void valueChanged( US_Model );
+      void valueChanged( US_Model model );
 
    private:
       int       investigator;

@@ -12,7 +12,12 @@
 #include "us_plot.h"
 #include "us_help.h"
 
+//! Define the number of points in a plot
 #define ARRAY_SIZE 555
+
+//! \brief Class to show results of Self-Association Equilibrium Simulation
+//! This program allows you to simulate the relative amounts of monomer, dimer 
+//! and tetramer species present in a self-association equilibrium.
 
 class US_EXTERN US_Sassoc : public US_Widgets
 {
@@ -20,6 +25,19 @@ class US_EXTERN US_Sassoc : public US_Widgets
    
    public:
    
+      /*! Constructor
+         \param eq0 Equilibrium constant for first component
+         \param eq1 Equilibrium constant for second component
+         \param stoich1 Stoichiometry for first component
+         \param stoich2 Stoichiometry for second component
+         \param t_project Project Name
+         \param t_model Index into redefined model US_Constants::modelStrings()
+         \param status Not used
+         \param position_win If true, set the window position upper left
+                        corner to 30, 30 from parent, otherwise system default
+         \param parent  Parent window, normally 0
+         \param flags   Window flags, normally 0 (default)
+      */
       US_Sassoc( double, double, double, double, 
                  const QString&, int, bool, 
                  bool = true, QWidget* = 0, Qt::WindowFlags = 0 );
