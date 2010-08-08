@@ -5,6 +5,7 @@
 #include "us_extern.h"
 #include "us_db2.h"
 
+//! A class to define a model and provide Disk/DB IO for models.
 class US_EXTERN US_Model
 {
    public:
@@ -13,32 +14,41 @@ class US_EXTERN US_Model
       class SimulationComponent;
       class Association;
 
+      //! Enumeration of the general shapes of molecules
       enum ShapeType { SPHERE, PROLATE, OBLATE, ROD };
+
+      //! The type of optics used to acquire data for the current model
       enum OpticsType{ ABSORBANCE, INTERFERENCE, FLUORESCENCE };
+
+      //! The type of analysis used with the model
       enum ModelType { MANUAL, TWODSA, TWODSA_MW, GA, GA_MW, GA_RA, ONEDSA,
                        COFS, FE, GLOBAL };
 
-      int        iterations;
-      double     density;
-      double     viscosity;
-      double     compressibility;
-      double     wavelength;
-      double     temperature;
-      QString    editGUID;
-      QString    bufferGUID;   
-      QString    bufferDesc;   
-      QString    description;
-      QString    modelGUID;
-      OpticsType optics;
-      ModelType  type;
+      int        iterations;      //!< The number of iterations accomplished in the analysis
+      double     density;         //!< The density of the buffer
+      double     viscosity;       //!< The viscosity of the buffer
+      double     compressibility; //!< The compressibility of the buffer
+      double     wavelength;      //!< Wavlength of the data acquisition
+      double     temperature;     //!< Temperature (C) of the acquisition
+      QString    editGUID;        //!< Identifier of the edit data
+      QString    bufferGUID;      //!< Identifier of the buffer
+      QString    bufferDesc;      //!< Text description ofo the buffer
+      QString    description;     //!< Text description of th emodel
+      QString    modelGUID;       //!< Identifier of the model
+      OpticsType optics;          //!< The optics used for the data acquisition
+      ModelType  type;            //!< The analysis used with this model
 
-      //! An index into components (-1 means none)
-      int        coSedSolute;
+      //! An index into components (-1 means none).  Generally buffer data 
+      //! in the form of a component that affects the data readings.
+      int        coSedSolute;  
 
+      //! The components being analyzed
       QVector< SimulationComponent > components;
+
+      //! The association constants for interacting solutes
       QVector< Association >         associations;
 
-      QString message;  // Used internally for communication
+      QString message;  //!< Used internally for communication
 
       //! Read a model from the disk or database
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
@@ -49,7 +59,7 @@ class US_EXTERN US_Model
       int load( bool, const QString&, US_DB2* = 0 );
 
       //! An overloaded function to read a model from a database
-      //! \param Database ModelID
+      //! \param id        - Database ModelID
       //! \param db        - For DB access, a pointer to an open database connection
       //! \returns         - The \ref US_DB2 retrun code for the operation
       int load( const QString&, US_DB2* ); 
@@ -60,11 +70,11 @@ class US_EXTERN US_Model
       //! \returns         - The \ref US_DB2 retrun code for the operation
       int load( const QString& );  
       
+      //! A test for model equality
       bool operator== ( const US_Model& ) const;      
+
+      //! A test for model inequality
       inline bool operator!= ( const US_Model& m ) const { return ! operator==(m); }
-      //int load( const QString&, US_DB2* ); // guid db
-      //int load( bool, const QString& );    // isFile=T, filename
-                                             // isFile=F, guid
 
       //! Write a model to the disk or database
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
@@ -91,58 +101,69 @@ class US_EXTERN US_Model
       //!               if the path cannot be created
       static bool       model_path( QString& );
 
+      //! A class representing the initial concentration distribution of a
+      //! solute in the buffer.
       class MfemInitial
       {
          public:
-         QVector< double > radius;
-         QVector< double > concentration;
+         QVector< double > radius;        //!< The radii of the distribution
+         QVector< double > concentration; //!< The concentration values
       };
 
+      //! Each analyte in the model is a component.  A sedimenting solute
+      //! can also be a component.
       class SimulationComponent
       {
          public:
          SimulationComponent();
          
-         bool operator== ( const SimulationComponent& ) const;      
+         //! A test for identical components
+         bool operator== ( const SimulationComponent& ) const;
+
+         //! A test for unequal components
          inline bool operator!= ( const SimulationComponent& sc ) const 
          { return ! operator==(sc); }
 
-         QString     analyteGUID;          // GUID for the analyte in the MySQL DB
-         double      molar_concentration;
-         double      signal_concentration; // To be assigned prior to simulation
-         double      vbar20;
-         double      mw;
-         double      s;
-         double      D;
-         double      f;
-         double      f_f0;
-         double      extinction;
-         double      axial_ratio;
-         double      sigma;   // Concentration dependency of s
-         double      delta;   // concentration dependency of D
-         int         stoichiometry;
-         ShapeType   shape;
-         QString     name;
-         int         analyte_type;
-         MfemInitial c0;      // The radius/concentration points for a user-defined
-                              // initial concentration grid
+         QString     analyteGUID;          //!< GUID for the analyte in the MySQL DB
+         double      molar_concentration;  //!< Analyte concentration
+         double      signal_concentration; //!< Signal attenutaion on molar basis
+         double      vbar20;               //!< Analyte specific volume
+         double      mw;                   //!< Analyte mollecular weight
+         double      s;                    //!< Sedimentation coefficient
+         double      D;                    //!< Diffusion coefficient
+         double      f;                    //!< Frictional coefficient
+         double      f_f0;                 //!< Frictional ratio
+         double      extinction;           //!< Coefficient of light extinction at model wavelength
+         double      axial_ratio;          //!< Ratio of major/minor shape axes
+         double      sigma;   //!< Concentration dependency of s
+         double      delta;   //!< Concentration dependency of D
+         int         stoichiometry; //!< Molecule count for this experiment (e.g. dimer = 2)
+         ShapeType   shape;   //!< Classification of shape
+         QString     name;    //!< Descriptive name
+         int         analyte_type; //!< Protein, RNA, DNA, Corbohydrate, etc
+         MfemInitial c0;      //!< The radius/concentration points for a user-defined
+                              //!< initial concentration grid
       };
 
+      //! The chemical constants associated with a reaction.
       class Association
       {
          public:
          Association();
-         double k_eq;
-         double k_off;
+         double k_eq;  //!< Equiibrium Constant
+         double k_off; //!< Dissociation Constant 
       
-         // A list of all system components involved in this reaction
+         //! A list of all system components involved in this reaction
          QVector< int >  reaction_components;   
 
-         // Stoichiometry of components in chemical equation.
-         // Positive for reactant, negative for product
+         //! Stoichiometry of components in chemical equation.
+         //! Positive for reactant, negative for product
          QVector< int >  stoichiometry; 
 
-         bool operator== ( const Association& ) const;      
+         //! A test for equal Associations
+         bool operator== ( const Association& ) const;
+
+         //! A test for unequal associations
          inline bool operator!= ( const Association& a ) const 
          { return ! operator==(a); }
       };
