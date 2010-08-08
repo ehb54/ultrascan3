@@ -103,7 +103,7 @@ class US_EXTERN US_ManageData : public US_Widgets
       void toggle_edits (  void );
       void toggle_models(  void );
       void toggle_noises(  void );
-      void toggle_hidden( QString, bool );
+      void toggle_expand( QString, bool );
       void dtree_help(     void );
       void browse_data  (  void );
       void detail_data  (  void );
@@ -121,8 +121,6 @@ class US_EXTERN US_ManageData : public US_Widgets
       void item_remove_loc(  void );
       void item_remove_all(  void );
       void item_details(     void );
-      void item_show_child(  void );
-      void item_hide_child(  void );
       void browse_dbase(     bool );
       void browse_local(     bool );
       void merge_dblocal(    void );
@@ -136,8 +134,8 @@ class US_EXTERN US_ManageData : public US_Widgets
       int         index_substring(  QString, int, QStringList& );
       QStringList filter_substring( QString, int, QStringList& );
       QStringList list_orphans    ( QStringList&, QStringList& );
-      int         record_state(     DataDesc, int );
-
+      int  record_state_flag(       DataDesc, int );
+      void reset_hsbuttons( bool, bool, bool, bool );
 
       void help     ( void )
       { showHelp.show_help( "manage_data.html" ); };
