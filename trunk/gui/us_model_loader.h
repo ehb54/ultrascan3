@@ -123,6 +123,12 @@ class US_EXTERN US_ModelLoader : public US_WidgetsDialog
       void    show_model_info( QPoint );
 
    protected:
+      /*! \brief Event filter to flag whether a mouse click is
+                 with the right mouse button
+          \param obj      Pointer to object on which event occurred.
+          \param e        Pointer to event to filter.
+          \return         Flag if event has been completely handled.
+      */
       bool eventFilter(        QObject*, QEvent* );
 };
 #endif
