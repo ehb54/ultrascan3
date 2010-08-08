@@ -1,4 +1,4 @@
-//! \file associations_gui.h
+//! \file us_associations_gui.h
 #ifndef US_ASSOCIATIONS_GUI_H
 #define US_ASSOCIATIONS_GUI_H
 
@@ -48,12 +48,20 @@ class US_AssociationsGui : public US_WidgetsDialog
       { showhelp.show_help( "model_editor.html#associations" ); };
 };
 
+//! \brief An overloaded QPushButton to allow an index to be set and a 
+//! signal to be emitted with the index.  Allows the connected handler to 
+//! tell which buttone was pushed.
 class US_PushButton : public QPushButton
 {
   Q_OBJECT
 
 public:
+  //! Constructor for the pushbutton
+  //! \param text Label for the pushbutton
+  //! \param i Value to be used to identify the pushbutton
   US_PushButton( const QString&, int );
+  //! \brief A utility to set the pushbutton's index
+  //! \param i Value to be saved
   void setIndex( int i ){ index = i; }; 
 
 signals:

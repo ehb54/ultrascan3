@@ -1,4 +1,4 @@
-//! \file us_math.cpp
+//! \file us_math2.cpp
 
 #include <stdlib.h>
 #include <math.h>

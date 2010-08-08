@@ -22,7 +22,6 @@ class US_Properties : public US_WidgetsDialog
       //! Constructor.
       //! \param buf - The buffer to use in the analyte calculations
       //! \param mod - The model to use
-      //! \param optical_sys - The current optical system type
       //! \param invID - The investigator ID in the database (-1 if not defined)
       //! \param access - A flag to determine if analyte data access should be
       //!          disk (false) or DB (true)
