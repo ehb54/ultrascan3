@@ -38,8 +38,8 @@ class US_EXTERN US_ManageData : public US_Widgets
 
    private:
 
-      QTableWidget*       tw_recs;    // table widget
-      QTableWidgetItem*   tw_item;    // current table widget item
+      QTreeWidget*        tw_recs;    // tree widget
+      QTreeWidgetItem*    tw_item;    // current tree widget item
 
       DataDesc            cdesc;      // current record description
       QVector< DataDesc > ddescs;     // DB descriptions
@@ -64,7 +64,7 @@ class US_EXTERN US_ManageData : public US_Widgets
       QPushButton*  pb_hsedit;
       QPushButton*  pb_hsmodl;
       QPushButton*  pb_hsnois;
-      QPushButton*  pb_helptb;
+      QPushButton*  pb_helpdt;
       QPushButton*  pb_reset;
       QPushButton*  pb_help;
       QPushButton*  pb_close;
@@ -104,17 +104,17 @@ class US_EXTERN US_ManageData : public US_Widgets
       void toggle_models(  void );
       void toggle_noises(  void );
       void toggle_hidden( QString, bool );
-      void table_help(     void );
+      void dtree_help(     void );
       void browse_data  (  void );
       void detail_data  (  void );
-      void build_table  (  void );
+      void build_dtree  (  void );
       void reset(       void );
       void chg_investigator(    void );
       void find_investigator(   QString& );
       void sel_investigator(    void );
       void assign_investigator( int, const QString&, const QString& );
-      void clickedItem(      QTableWidgetItem* );
-      void row_context_menu( QTableWidgetItem* );
+      void clickedItem(      QTreeWidgetItem* );
+      void row_context_menu( QTreeWidgetItem* );
       void item_upload(      void );
       void item_download(    void );
       void item_remove_db(   void );
