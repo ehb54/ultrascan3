@@ -1,3 +1,4 @@
+//! \file us_analysis_base2.h
 #ifndef US_ANALYSIS_BASE_H
 #define US_ANALYSIS_BASE_H
 
@@ -12,7 +13,9 @@
 
 #include "qwt_counter.h"
 
-//! \brief A base class for analysis programs
+//! \brief A base class for analysis programs.  Other programs will derive from 
+//!        this class and override layouts and functions as required for the
+//!        specific analysis to be done.
 
 class US_EXTERN US_AnalysisBase2 : public US_Widgets
 {
@@ -22,87 +25,122 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       US_AnalysisBase2();
 
    protected:
+      //! A set of edited data for the analysis
       QVector< US_DataIO2::EditedData > dataList;
+
+      //! A set of raw data for the analysis
       QVector< US_DataIO2::RawData    > rawList;
+
+      //! The currently loaded triples in the form cell / channel / wavelength
       QStringList                       triples;
+
+      //! Scans excluded by the user beyond those excluded by US_Edit
       QList< int >                      excludedScans;
 
+      //! Current data values for athe analysis
       QList< QVector< double > >        savedValues;
 
+      //! The solution data corresponding to the current triple
       US_Math2::SolutionData            solution;
       
-      bool         dataLoaded;
-      double       time_correction;
-      QString      directory;
-      QString      editID;
-      QString      runID;
+      bool         dataLoaded;      //!< A flag to indicate data is loaded
+      double       time_correction; //!< Time correction for centrifuge acceleration
+      QString      directory;       //!< Data directory of analysis files.
+      QString      editID;          //!< Current edit ID.  Ususally a date-time.
+      QString      runID;           //!< User specified run ID string
 
+      //! A class to display help in the US Help viewer
       US_Help      showHelp;
 
-      double       density;
-      double       viscosity;
-      double       vbar;
+      double       density;         //!< Density of the buffer
+      double       viscosity;       //!< Viscosity of the buffer
+      double       vbar;            //!< Specific volume of the analyte
 
       // Layouts
-      QBoxLayout*  mainLayout;
-      QBoxLayout*  leftLayout;
-      QBoxLayout*  rightLayout;
-      QBoxLayout*  buttonLayout;
+      QBoxLayout*  mainLayout;      //!< Overall Layout
+      QBoxLayout*  leftLayout;      //!< Layout of the left column
+      QBoxLayout*  rightLayout;     //!< Layout of the right column
+      QBoxLayout*  buttonLayout;    //!< Layout of the bottom button row
 
-      QGridLayout* analysisLayout;
-      QGridLayout* runInfoLayout;
-      QGridLayout* parameterLayout;
-      QGridLayout* controlsLayout;
+      QGridLayout* analysisLayout;  //!< Layout for analysis functions
+      QGridLayout* runInfoLayout;   //!< Layout for run details
+      QGridLayout* parameterLayout; //!< Layout for other analysis controls
+      QGridLayout* controlsLayout;  //!< Layout of analysis controls
 
-      US_Plot*     plotLayout1;  // Derived from QVBoxLayout
-      US_Plot*     plotLayout2;
+      US_Plot*     plotLayout1;     //!< Top plot layout
+      US_Plot*     plotLayout2;     //!< Bottom plot layout
 
       // Widgets
-      QwtPlot*     data_plot1;
-      QwtPlot*     data_plot2;
+      QwtPlot*     data_plot1;      //!< Access to the top qwt plot 
+      QwtPlot*     data_plot2;      //!< Access to the bottom qwt plot
 
-      QPushButton* pb_load;
-      QPushButton* pb_details;
-      QPushButton* pb_view;
-      QPushButton* pb_save;
-      QPushButton* pb_reset;
-      QPushButton* pb_help;
-      QPushButton* pb_close;
-      QPushButton* pb_exclude;
+      QPushButton* pb_load;         //!< Pushbutton to load data
+      QPushButton* pb_details;      //!< Pushbuttion to view run details
+      QPushButton* pb_view;         //!< Pushbuttion to view run a data report
+      QPushButton* pb_save;         //!< Pushbutton to save the analysis results
+      QPushButton* pb_reset;        //!< Pushbutton to reset the screen
+      QPushButton* pb_help;         //!< Pushbutton to show help
+      QPushButton* pb_close;        //!< Pushbutton to close the application
+      QPushButton* pb_exclude;      //!< Pushbutton to exclude specified scans
 
-      QLineEdit*   le_id;
-      QLineEdit*   le_temp;
-      QTextEdit*   te_desc;
-      QListWidget* lw_triples;
+      QLineEdit*   le_id;           //!< Display the current RunID
+      QLineEdit*   le_temp;         //!< Display/change the temperature used
+      QTextEdit*   te_desc;         //!< Text edit box for discription
+      QListWidget* lw_triples;      //!< List widget containing triples
 
-      QLineEdit*   le_density;
-      QLineEdit*   le_viscosity;
-      QLineEdit*   le_vbar;
-      QLineEdit*   le_skipped;
+      QLineEdit*   le_density;      //!< Display/change the density used
+      QLineEdit*   le_viscosity;    //!< Display/change the viscosity
+      QLineEdit*   le_vbar;         //!< Display/change the specific volume
+      QLineEdit*   le_skipped;      //!< Display the number os scans skipped
+      //
+      //!< Counter for the number of coefficients in a polynomial smoothing function
+      QwtCounter*  ct_smoothing;   
+      QwtCounter*  ct_boundaryPercent;  //!< Counter for boundary percentage specification
+      QwtCounter*  ct_boundaryPos;      //!< Counter for bountry starting point
+      QwtCounter*  ct_from;             //!< Counter for specifying start of exclude range
+      QwtCounter*  ct_to;               //!< Counter for specifying end of exclude range
 
-      QwtCounter*  ct_smoothing;
-      QwtCounter*  ct_boundaryPercent;
-      QwtCounter*  ct_boundaryPos;
-      QwtCounter*  ct_from;
-      QwtCounter*  ct_to;
+      virtual void update   ( int );    //!< Update the screen for a new dataset
+      virtual void data_plot( void );   //!< Update the data plot
 
-      virtual void update   ( int );
-      virtual void data_plot( void );
-      static  void write_plot( const QString&, const QwtPlot* );
+      //! Write the specified plot to a file
+      static  void write_plot( const QString&, const QwtPlot* ); 
+
+      //! A utility to create a directory
       bool         mkdir     ( const QString&, const QString& );
 
    protected slots:
+      //! Resets the class to a default state.
       virtual void reset        ( void );
+    
+      //! Update the class to show data for a new triple.
       virtual void new_triple   ( int  );
+
+      //! Load data from a directory on disk.
       virtual void load         ( void );
+
+      //! Return run details in an html formatted string.
       QString      run_details  ( void )                           const;
+
+      //! List solution data in an html formatted string.
       QString      hydrodynamics( void )                           const;
+
+      //! Return smoothing and boundary factors in an html formatted string.
       QString      analysis     ( const QString& )                 const;
+
+      //! Return scan information in an html formatted string.
       QString      scan_info    ( void )                           const;
       
+      //! Returns an html string of a two column table row.
       QString      table_row    ( const QString&, const QString& ) const;
+
+      //! Returns an html string of a three column table row.
       QString      table_row    ( const QString&, const QString&, 
                                   const QString& )                 const;
+      
+      //! Calculate the 11 point average of the last point in the current
+      //! dataset boundary.  Assumes that there are at least 5 points
+      //! available above the boundary.
       double       calc_baseline( void )                           const;
 
    private:
