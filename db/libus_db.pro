@@ -1,9 +1,6 @@
 include ( ../library.pri )
 
-!contains( DEFINES, NO_DB ) {
-       QT          += sql
-       QT          -= gui
-}
+QT -= gui
 
 unix:  TARGET       = us_db
 
