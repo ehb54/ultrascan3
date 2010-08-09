@@ -11,10 +11,6 @@ MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 QT          += xml
 
-!contains( DEFINES, NO_DB ) {
-  QT          += sql
-}
-
 unix {
   contains( DEFINES, NO_DB ) {
     # NO_DB is for the supercomputer back end with no gui, mysql, or qca

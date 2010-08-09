@@ -1,6 +1,5 @@
 include( ../../gui.pri )
 
-QT           += sql
 QT           += xml
 
 TARGET        = us_convert

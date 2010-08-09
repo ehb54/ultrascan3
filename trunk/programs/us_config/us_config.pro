@@ -1,6 +1,6 @@
 include( ../../gui.pri )
 
-QT           += sql svg
+QT           += svg
 TARGET        = us_config
 TRANSLATIONS += $${TARGET}_de_DE.ts
 
