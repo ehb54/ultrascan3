@@ -357,16 +357,13 @@ int US_AstfemMath::GaussElim( int n, double** a, double* b )
 int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata, 
                                 bool      use_time )
 {
-  // NOTE: *expdata has to be initialized to have the proper size
-  //        (filled with zeros) before using this routine!
-  //        The radius also has to be assigned!
+   // NOTE: *expdata has to be initialized to have the proper size
+   //        (filled with zeros) before using this routine!
+   //        The radius also has to be assigned!
 
    if ( expdata.scan.size() == 0 || expdata.scan[0].conc.size() == 0 ||
         simdata.scan.size() == 0 || simdata.radius.size() == 0 ) 
       return -1;
-
-//qDebug() << "Marker I1" << expdata.scan.size() << expdata.scan[0].conc.size() 
-//               << simdata.scan.size() << simdata.radius.size();
 
    // First, create a temporary MfemData instance (tmp_data) that has the
    // same radial grid as simdata, but the same time grid as the experimental
@@ -390,10 +387,9 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    // in simdata that is higher or equal to each time point in expdata:
 
    int simscan = 0;
-//qDebug() << "Marker I2";
+
    if ( use_time )
    {
-//qDebug() << "Marker I2.1";
       for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
       {
          while ( simdata.scan[ simscan ].time < expdata.scan[ expscan ].time )
@@ -460,7 +456,6 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    }
    else // Use omega^2t integral for interpolation
    {
-//qDebug() << "Marker I2.2";
       for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
       {
          while ( simdata.scan[ simscan ].omega_s_t <
@@ -528,7 +523,6 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
       }
    }
 
-//qDebug() << "Marker I3";
    // Interpolate all radial points from each scan in tmp_data onto expdata
    for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
    {
@@ -554,7 +548,6 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
          exit( -3 );
       }
 
-//qDebug() << "Marker I4";
       for ( int i = 0; i < expdata.radius.size(); i++ )
       {
          while ( tmp_data.radius[ j ] < expdata.radius[ i ] )

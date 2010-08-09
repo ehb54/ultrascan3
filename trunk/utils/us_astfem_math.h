@@ -22,26 +22,48 @@ class US_EXTERN US_AstfemMath
       //! Interpolate starting concentration QVector mfem_initial onto C0
       static void interpolate_C0( MfemInitial&, double*, QVector< double >& );
 
+      //! Create a 2d matrix in memory and initilize to all zeros.
       static void initialize_2d( int, int, double*** );
+
+      //! Delete a 2d matrix in memory
       static void clear_2d     ( int, double** );
 
+      //! Find the maximum value in a vector
       static double maxval( const QVector< double >& );
+
+      //! Find the minimum value in a vector
       static double minval( const QVector< double >& );
+
+      //! Find the maximum s in a vector of SimulationComponent entries
       static double maxval( const QVector< US_Model::SimulationComponent >& );
+
+      //! Find the minimum s in a vector of SimulationComponent entries
       static double minval( const QVector< US_Model::SimulationComponent >& );
-   
+
+      //! Create a 3d matrix in memory and initilize to all zeros.
       static void   initialize_3d( int, int, int, double**** );
+      
+      //! Delete a 3d matrix in memory
       static void   clear_3d     ( int, int, double*** );
    
+      //! Solve a Ax = b whre A is tridiagonal
       static void   tridiag      ( double*, double*, double*, 
                                    double*, double*, int );
 
+      //! Find the positive cubic-root of a cubic polynomial<br>
+      //! with a0 <= 0 and<br>
+      //! a1, a2 >= 0
       static double cube_root    ( double, double, double );
+
+
+      // Solva Ax = b using Gaussian Elimination
       static int    GaussElim    ( int, double**, double* );
 
       static double find_C1_mono_Nmer( int, double, double );
 
       static int    interpolate  ( MfemData&, MfemData&, bool );  
+
+      //! Solve Quad-diagonal system
       static void   QuadSolver   ( double*, double*, double*, double*, 
                                    double*, double*, int);
    
