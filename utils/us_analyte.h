@@ -14,6 +14,7 @@ class US_EXTERN US_Analyte
       //! An analyte constructor with default values.
       US_Analyte();
 
+      //! A test for equality between two analytes.
       bool operator== ( const US_Analyte& ) const;
 
 
@@ -29,15 +30,15 @@ class US_EXTERN US_Analyte
       analyte_t              type;         //!< The type of analyte
 
       // The following values are valid for DNA/RNA only
-      bool                   doubleStranded;
-      bool                   complement;
-      bool                   _3prime;  // 
-      bool                   _5prime;
-      double                 sodium;
-      double                 potassium;
-      double                 lithium;
-      double                 magnesium;
-      double                 calcium;
+      bool                   doubleStranded; //!< Single or double stranded analyte?
+      bool                   complement;     //!< Is the strand a complement?
+      bool                   _3prime;        //!< Hydroxyl or Phosphate
+      bool                   _5prime;        //!< Hydroxyl or Phosphate
+      double                 sodium;         //!< Counterion molar ratio/nucleotide
+      double                 potassium;      //!< Counterion molar ratio/nucleotide
+      double                 lithium;        //!< Counterion molar ratio/nucleotide
+      double                 magnesium;      //!< Counterion molar ratio/nucleotide
+      double                 calcium;        //!< Counterion molar ratio/nucleotide
 
       //! extinction[ wavelength ] <=> value
       QMap< double, double > extinction;
@@ -48,10 +49,10 @@ class US_EXTERN US_Analyte
        //! fluorescence[ wavelength ] <=> value
       QMap< double, double > fluorescence;
 
-      // The following items are for internal use in memory.  They are
-      // not written to the disk or DB
+      //! The following items are for internal use in memory.  They are
+      //! not written to the disk or DB
       QString message;
-      QString analyteID;
+      QString analyteID; //!< Current analyte DB ID
 
       //! Read an analyte from the disk or database
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
