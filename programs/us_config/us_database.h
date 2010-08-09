@@ -47,6 +47,6 @@ class US_Database : public US_Widgets
     void reset       ( void );
     void save_default( void );
     void deleteDB    ( void );
-    void test_connect( void );
+    bool test_connect( void );
 };
 #endif

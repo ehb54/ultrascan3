@@ -127,7 +127,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   connect( pb_reset, SIGNAL( clicked() ), this, SLOT( reset() ) );
   buttons->addWidget( pb_reset, row++, 1 );
 
-  pb_testConnect = us_pushbutton( tr( "Test DB Connectivity" ) );
+  pb_testConnect = us_pushbutton( tr( "Test Database Connectivity" ) );
   connect( pb_testConnect, SIGNAL( clicked() ), this, SLOT( test_connect() ) );
   buttons->addWidget( pb_testConnect, row++, 0, 1, 2 );
 
@@ -249,11 +249,7 @@ void US_Database::check_add()
   
   if ( uuid.isEmpty() )
   {
-    QMessageBox::information( this,
-        tr( "Attention" ), 
-        tr( "Please test the password connection "
-            "before saving..." ) );
-    return;
+    if ( ! test_connect() ) return;
   }
   
   // Get the master PW
@@ -438,7 +434,7 @@ void US_Database::deleteDB( void )
           "The database has not been removed." ) );
 }
 
-void US_Database::test_connect( void )
+bool US_Database::test_connect( void )
 {
    QString error;
    US_DB2  db;
@@ -476,4 +472,6 @@ void US_Database::test_connect( void )
       QMessageBox::warning( this,
         tr( "Database Connectiom" ),
         tr( "The connection failed.\n" ) + error );
+
+   return ok;
 }
