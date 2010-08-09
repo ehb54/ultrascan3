@@ -145,7 +145,7 @@ namespace US_WinData
       QObject::tr( "Editing Buffer Data Program" )
     },
     
-    { P_VBAR,  0, 0, "us_analyte",
+    { P_VBAR,  0, 0, "us_analyte_gui",
       QObject::tr( "Editing Analyte Sequences" ),
       QObject::tr( "Editing Analyte Sequences Program" )
     },
