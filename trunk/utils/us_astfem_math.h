@@ -55,12 +55,14 @@ class US_EXTERN US_AstfemMath
       //! a1, a2 >= 0
       static double cube_root    ( double, double, double );
 
-
-      // Solva Ax = b using Gaussian Elimination
+      //! Solve Ax = b using Gaussian Elimination
       static int    GaussElim    ( int, double**, double* );
 
+      //! Solve  f(x) = x + K * x^n - C using Newton's method.<br>
+      //! This function needs to be renamed!
       static double find_C1_mono_Nmer( int, double, double );
 
+      //! Interpolate one dataset onto another usitn time or omega^2t
       static int    interpolate  ( MfemData&, MfemData&, bool );  
 
       //! Solve Quad-diagonal system
@@ -76,6 +78,8 @@ class US_EXTERN US_AstfemMath
       static void   IntQTn1      ( QVector< double >, double, double,
                                    double**, double );
       static void   DefineFkp    ( int, double** );
+
+      //! Compute the area of a triangle
       static double AreaT        ( QVector< double >&, QVector< double >& );
 
       static void   BasisTS      ( double, double, double*, double*, double*);
@@ -203,19 +207,19 @@ class US_EXTERN US_AstfemMath
       class ComponentRole
       {
          public:
-         int            comp_index; // index of this component
-         QVector< int > assoc;      // assoc index where this component occurs
-         QVector< int > react;      // role of component in each association, 
-                                    //  = 1: if as reactant; =-1, if as product
-         QVector< int > st;         // stoichiometry of each component in 
-                                    // each assoc., index is linked to assoc.
+         int            comp_index; //!< index of this component
+         QVector< int > assoc;      //!< assoc index where this component occurs
+         QVector< int > react;      //!< role of component in each association, 
+                                    //!<  = 1: if as reactant; =-1, if as product
+         QVector< int > st;         //!< stoichiometry of each component in 
+                                    //!< each assoc., index is linked to assoc.
       };
 
       //! \brief Parameters for finite element solution
       class AstFemParameters
       {
          public:
-         int               simpoints;
+         int simpoints; //!< The number of datapoints for the simulation
 
          QVector< double > s;       //!< sedimentation coefficient
          QVector< double > D;       //!< Diffusion coefficient
