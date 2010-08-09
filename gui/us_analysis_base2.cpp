@@ -310,9 +310,6 @@ void US_AnalysisBase2::update( int selection )
 
    te_desc->setText( d->description );
 
-   
-
-
    ct_smoothing      ->disconnect();
    ct_boundaryPercent->disconnect();
    ct_boundaryPos    ->disconnect();
@@ -881,7 +878,7 @@ double US_AnalysisBase2::calc_baseline( void ) const
    int                     row   = lw_triples->currentRow();
    const US_DataIO2::Scan* scan  = &dataList[ row ].scanData.last();
    int                     point = US_DataIO2::index( *scan, dataList[ row ].x, 
-                                  dataList[ row ].baseline );
+                                   dataList[ row ].baseline );
    double                 sum   = 0.0;
    
    for ( int j = point - 5;  j <= point + 5; j++ )
@@ -1014,7 +1011,6 @@ QString US_AnalysisBase2::analysis( const QString& extra ) const
 
    return s;
 }
-
 
 QString US_AnalysisBase2::scan_info( void ) const
 {
