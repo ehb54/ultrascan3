@@ -110,8 +110,17 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   setWindowTitle( "UltraScan III" );
   procs = QList<procData*>(); // Initialize to an empty list
 
+  QFont bfont = QFont( US_GuiSettings::fontFamily(),
+                       US_GuiSettings::fontSize() - 1,
+                       QFont::Bold );
+
+  QFont mfont = QFont( US_GuiSettings::fontFamily(),
+                       US_GuiSettings::fontSize() - 1,
+                       QFont::Normal );
+
   ////////////
   QMenu* file = new QMenu( tr( "&File" ), this );
+  file       ->setFont( mfont );
 
   //addMenu(  P_CONFIG, tr( "&Configuration" ), file );
   //addMenu(  P_ADMIN , tr( "&Administrator" ), file );
@@ -128,36 +137,34 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   //addMenu( 31, tr( "&Absorbance Data"     ), type2 );
 
   ///////////////
-  QMenu* edit = new QMenu( tr( "&Edit" ), this );
-  //edit->setFont( QFont( "Helvetica" ) );
-  //edit->addMenu( type1 );
-  //edit->addMenu( type2 );
+  QMenu* edit        = new QMenu( tr( "&Edit" ),       this );
   //addMenu( 12, tr( "&Equilibrium Data" )    , edit );
   //addMenu( 13, tr( "Edit &Wavelength Data" ), edit );
   //addMenu( 14, tr( "View/Edit &Multiwavelength Data" ), edit );
-  addMenu(  P_EDIT, tr( "&Edit Data" )  , edit );
+  addMenu(  P_EDIT,   tr( "&Edit Data" )          , edit );
   edit->addSeparator();
-  addMenu(  P_CONFIG, tr( "&Preferences" )  , edit );
+  addMenu(  P_CONFIG, tr( "&Preferences" )        , edit );
+  addMenu(  P_APPLYP, tr( "&Apply Preferences" )  , edit );
   
   /////////////
-  QMenu* velocity    = new QMenu( tr( "&Velocity" ), this );
+  QMenu* velocity    = new QMenu( tr( "&Velocity" ),    this );
   addMenu(  P_VHWE  , tr( "&Enhanced van Holde - Weischet" ), velocity );
-  addMenu(  P_GAINIT, tr( "&Initialize Genetic Algorithm" ), velocity );
-  addMenu(  P_SECOND, tr( "&Second Moment" ), velocity );
-  addMenu(  P_DCDT  , tr( "&Time Derivitive" ), velocity );
-  addMenu(  P_FEMA  , tr( "&FE Model Viewer" ), velocity );
+  addMenu(  P_GAINIT, tr( "&Initialize Genetic Algorithm" ),  velocity );
+  addMenu(  P_SECOND, tr( "&Second Moment" ),                 velocity );
+  addMenu(  P_DCDT  , tr( "&Time Derivative" ),               velocity );
+  addMenu(  P_FEMA  , tr( "&FE Model Viewer" ),               velocity );
   
   QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
-  QMenu* fit         = new QMenu( tr( "&Global Fit" ), this );
+  QMenu* fit         = new QMenu( tr( "&Global Fit" ),  this );
   
-  QMenu* utilities   = new QMenu( tr( "&Utilities" ), this );
+  QMenu* utilities   = new QMenu( tr( "&Utilities" ),   this );
   addMenu(  P_CONVERT  , tr( "&Convert Legacy Data"      ), utilities );
   addMenu(  P_FIT      , tr( "&Fit Meniscus"             ), utilities );
   addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator" ), utilities );
 
 
 
-  QMenu* simulation  = new QMenu( tr( "S&imulation" ), this );
+  QMenu* simulation  = new QMenu( tr( "S&imulation" ),  this );
   addMenu(  P_ASTFEM, tr( "&Finite Element Simulation (ASTFEM)" ), simulation );
   addMenu(  P_EQUILTIMESIM, 
                       tr( "Estimate Equilibrium &Times"         ), simulation );
@@ -167,18 +174,13 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_MODEL2, tr( "&Predict f and axial ratios for 4 basic shapes" ), 
                                                                    simulation );
 
-  QMenu* database    = new QMenu( tr( "&Database" ), this );
+  QMenu* database    = new QMenu( tr( "&Database" ),    this );
   addMenu(  P_INVESTIGATOR, tr( "Manage Investigator &Data" ), database );
   addMenu(  P_BUFFER      , tr( "Manage &Buffer Data"       ), database );
-  addMenu(  P_VBAR        , tr( "Manage &Analyte Sequences" ), database );
-
-  
-
-
-
+  addMenu(  P_VBAR        , tr( "Manage &Analytes"          ), database );
 
   ///////////////
-  QMenu* help = new QMenu( tr( "&Help" ), this );
+  QMenu* help        = new QMenu( tr( "&Help" ),        this );
   addMenu( HELP_HOME   , tr("UltraScan &Home"    ), help );
   addMenu( HELP        , tr("UltraScan &Manual"  ), help );
   addMenu( HELP_REG    , tr("&Register Software" ), help );
@@ -187,9 +189,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu( HELP_ABOUT  , tr("&About"             ), help );
   addMenu( HELP_CREDITS, tr("&Credits"           ), help );
   
-
-  QFont bold = QFont( "Helvetica", 9, QFont::Bold );
-  menuBar()->setFont( bold        );
+  menuBar()->setFont( bfont       );
   menuBar()->addMenu( file        );
   menuBar()->addMenu( edit        );
   menuBar()->addMenu( velocity    );
@@ -199,6 +199,16 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   menuBar()->addMenu( simulation  );
   menuBar()->addMenu( database    );
   menuBar()->addMenu( help        );
+
+  file       ->setFont( mfont );
+  edit       ->setFont( mfont );
+  velocity   ->setFont( mfont );
+  equilibrium->setFont( mfont );
+  fit        ->setFont( mfont );
+  utilities  ->setFont( mfont );
+  simulation ->setFont( mfont );
+  database   ->setFont( mfont );
+  help       ->setFont( mfont );
 
   splash();
   statusBar()->showMessage( tr( "Ready" ) );
@@ -214,10 +224,9 @@ void US_Win::addMenu( int index, const QString& label, QMenu* menu )
 {
   US_Action* action = new US_Action( index, label, menu );
 
-  QString family    = "Helvetica";
-  int     pointsize = 9;
-  int     weight    = QFont::Normal;
-  QFont   font      = QFont( family, pointsize, weight );
+  QFont      font   = QFont( US_GuiSettings::fontFamily(),
+                             US_GuiSettings::fontSize() - 1,
+                             QFont::Normal );
   action->setFont( font );
 
   connect( action, SIGNAL( indexTriggered  ( int ) ), 
@@ -228,7 +237,9 @@ void US_Win::addMenu( int index, const QString& label, QMenu* menu )
 
 void US_Win::onIndexTriggered( int index )
 {
-  if ( index == 4 ) close();
+  if ( index == 4 )         close();
+  if ( index == P_APPLYP )  apply_prefs();
+
 //qDebug() << index << P_CONFIG << P_END;
   if ( index >= P_CONFIG && index < P_END    ) launch( index );
   if ( index >= HELP     && index < HELP_END ) help  ( index );
@@ -521,7 +532,7 @@ void US_Win::help( int index )
 
       if (  h[i].type == URL )
       {
-        //showhelp.show_URL( h[i].url );
+        showhelp.show_URL( h[i].url );
       }
       else
       {
@@ -531,5 +542,38 @@ void US_Win::help( int index )
       statusBar()->showMessage( tr( "Loaded " ) + h[i].loadMsg.toAscii() );
       break;
   }
+}
+
+// apply font and base frame color preferences
+void US_Win::apply_prefs()
+{
+   // reset the menu bar font
+   QFont bfont = QFont( US_GuiSettings::fontFamily(),
+                        US_GuiSettings::fontSize() - 1,
+                        QFont::Bold );
+
+   menuBar()->setFont( bfont  );
+
+   // reset the font for all the sub-menus
+   QFont mfont = QFont( US_GuiSettings::fontFamily(),
+                        US_GuiSettings::fontSize() - 1,
+                        QFont::Normal );
+
+   QList< QMenu* > mens  = this->findChildren< QMenu* >();  // menubar menus
+
+   for ( int ii = 0; ii < mens.count(); ii++ )
+   {  // loop to get and reset actions font for each menu
+      QList< QAction* > acts  = mens.at( ii )->findChildren< QAction* >();
+
+      for ( int jj = 0; jj < acts.count(); jj++ )
+      {  // reset the font for each submenu action
+         acts.at( jj )->setFont( mfont );
+      }
+   }
+
+   // reset the frame color
+   bigframe->setPalette( US_GuiSettings::frameColor() );
+
+   show();
 }
 

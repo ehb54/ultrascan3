@@ -2,6 +2,7 @@
 #define US_HELP_H
 
 #include <QtCore>
+#include <QtGui>
 #include "us_extern.h"
 
 //! \brief Launch help programs
@@ -29,9 +30,21 @@ class US_EXTERN US_Help : public QObject
     */
     void show_help( const QString& );
 
+    /*! \brief Show URL page in the configured browser for US3
+        \param location URL to open in the configured browser
+    */
+    void show_URL(  const QString& );
+
+    /*! \brief Show HTML file in the configured browser for US3
+        \param location HTML file to open in the configured browser
+    */
+    void show_html_file(  const QString& );
+
   private:
     // Only needed because we don't want it to be deleted when 
     // show_help() returns.
     QProcess* assistant;
+
+    void openBrowser( const QString& );
 };
 #endif

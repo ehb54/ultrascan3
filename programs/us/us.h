@@ -36,6 +36,7 @@ private:
   void logo   ( int );
   void help   ( int );
   void launch ( int );
+  void apply_prefs( void );
 
   struct procData
   {

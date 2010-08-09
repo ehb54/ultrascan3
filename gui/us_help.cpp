@@ -4,6 +4,7 @@
 // Null constructor
 US_Help::US_Help( QObject* parent ) : QObject( parent ) { }
 
+// Show a specified help page in US3 manual
 void US_Help::show_help( const QString& helpFile )
 {
   // Create a new process each time.  If show_help() is called multiple
@@ -58,5 +59,39 @@ void US_Help::show_help( const QString& helpFile )
     assistant->start( helpbin, args );
 #endif
   // Don't bother to wait
+}
+
+// Show a specified URL in the user's configured browser
+void US_Help::show_URL( const QString& location )
+{
+   openBrowser( location );
+}
+
+// Show a specified HTML file in the user's configured browser
+void US_Help::show_html_file( const QString& location )
+{
+   openBrowser( "file://" + location );
+}
+
+// Open a web page or file in the user's configured browser
+void US_Help::openBrowser( const QString& location )
+{
+   QProcess*   proc    = new QProcess( this );
+   QString     program = US_Settings::browser();
+   QStringList args;
+
+   args << location;
+
+   proc->start( program, args );
+
+   if ( !proc->waitForStarted( 10000 ) )
+   {
+      QMessageBox::warning( 0,
+         tr( "Ultrascan III Error" ),
+         tr( "Cannot start browser window ...\n"
+             "Please insure you have the configured browser installed.\n\n"
+             "  Configured browser: %1\n"
+             "  URL: %2" ).arg( program ).arg( location ) );
+   }
 }
 
