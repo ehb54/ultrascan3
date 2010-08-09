@@ -8,7 +8,7 @@ namespace US_WinData
 {
   enum
   {
-    P_EXIT   = 4,
+    P_EXIT   = 4,   P_APPLYP,
     P_CONFIG = 300, P_EDIT,                // Edit Menu
     
     P_SECOND,       P_DCDT,   P_VHWE,      // Velocity Menu
@@ -62,10 +62,10 @@ namespace US_WinData
 /*    
     { P_ADMIN,  1, 0, "us_admin",
       QObject::tr( "Loading Administrator" ),
-      QObject::tr( "Adminstrator Program"  )
+      QObject::tr( "Administrator Program"  )
     },
 */
-    { P_EDIT,  0, 0, "us_edvabs",
+    { P_EDIT,  0, 0, "us_edit",
       QObject::tr( "Loading Editing Data" ),
       QObject::tr( "Editing Data Program" )
     },
@@ -76,8 +76,8 @@ namespace US_WinData
     },
     
     { P_DCDT,  0, 0, "us_dcdt",
-      QObject::tr( "Loading Time Derivitive Analysis" ),
-      QObject::tr( "Time Derivitive Analysis Program" )
+      QObject::tr( "Loading Time Derivative Analysis" ),
+      QObject::tr( "Time Derivative Analysis Program" )
     },
     
     { P_VHWE,  0, 0, "us_vhw_enhanced",
