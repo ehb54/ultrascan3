@@ -19,11 +19,12 @@ namespace US_WinData
     P_SASSOC,       P_MODEL1, P_MODEL2,
 
     P_INVESTIGATOR, P_BUFFER, P_VBAR,      // Database Menu
+    P_MANAGEDATA,
 
     P_END 
   };
 
-  /*!  \brief A structure to contol launching of external processes within the 
+  /*!  \brief A structure to control launching of external processes within the 
               main UltraScan program
       
          The process structure is a set of constants (with the exception
@@ -37,18 +38,19 @@ namespace US_WinData
   */
   struct processes
   {
-    int       index;           //!< This member contains a constant P_ enum value.
-    int       maxRunCount;     //!< Maximum number of this type process that can run
-                               //!< simutaneously. For many process, this is 1.  A
-                               //!< value of 0 indicates unlimited instances are allowed.
-                               //!< this is a constant.
-    int       currentRunCount; //!< The number of instances of this process currently
-                               //!< active.  Initialized to 0.
+    int       index;           //!< This member contains a constant P_ enum
+                               //!<  value.
+    int       maxRunCount;     //!< Maximum number of this process that can run
+                               //!<  simultaneously (1, for many processes).
+                               //!< A value of 0 indicates unlimited instances
+                               //!<  are allowed this is a constant.
+    int       currentRunCount; //!< The number of instances of this process
+                               //!<  currently active. Initialized to 0.
     QString   name;            //!< The name of the executable process.
-    QString   loadingMsg;      //!< A constant message that is displayed on the status
-                               //!< line when loading the process.
-    QString   runningMsg;      //!< A constant string that displays after the process
-                               //!<  has loaded.
+    QString   loadingMsg;      //!< A constant message that is displayed on the
+                               //!<  status line when loading the process.
+    QString   runningMsg;      //!< A constant string that displays after the
+                               //!<  process has loaded.
 
   } 
   //! An array of processes
@@ -137,7 +139,7 @@ namespace US_WinData
 
     { P_INVESTIGATOR,  0, 0, "us_investigator",
       QObject::tr( "Loading Managing Investigator Data" ),
-      QObject::tr( "Managing Investigator Data Data Program" )
+      QObject::tr( "Managing Investigator Data Program" )
     },
     
     { P_BUFFER,  0, 0, "us_buffer",
@@ -146,8 +148,13 @@ namespace US_WinData
     },
     
     { P_VBAR,  0, 0, "us_analyte_gui",
-      QObject::tr( "Editing Analyte Sequences" ),
+      QObject::tr( "Loading Analyte Sequences" ),
       QObject::tr( "Editing Analyte Sequences Program" )
+    },
+
+    { P_MANAGEDATA,  0, 0, "us_manage_data",
+      QObject::tr( "Loading Data Management" ),
+      QObject::tr( "Managing Data Program" )
     },
 
     { P_END, 0, 0, "", "", "" }
@@ -175,34 +182,43 @@ namespace US_WinData
     METHOD     //!< An interanl method of the \ref US_Win class.
   };
 
-  /*! \brief A structure to contol calls to help within the main UltraScan program
+  /*! \brief A structure to control calls to help within the main UltraScan
+             program
     
-              The help_data structure is a set of constants used to display different
-              help pages.
+              The help_data structure is a set of constants used to display
+              different help pages.
       \note   The index values in h[] must be placed in the same order as
               defined in the HELP_ enum list.
   */
   struct help_data
   {
     int            index;   //!< A constant HELP_ enum value.
-    enum help_type type;    //!< The type of page corresponding the the help_type enum.
-    QString        loadMsg; //!< A constant message that is displayed on the status
-                            //!< line when loading the help.
-    QString        url;     //!< The actual page to display.  It is only valid for the
-                            //!< PAGE and URL help types.
+    enum help_type type;    //!< The type of page corresponding to the
+                            //!<  help_type enum.
+    QString        loadMsg; //!< A constant message that is displayed on the
+                            //!<  status line when loading the help.
+    QString        url;     //!< The actual page to display. It is only valid
+                            //!<  for the PAGE and URL help types.
 
   } 
   //! An array of help_data
   h[] =
   {
-    { HELP,         PAGE  , QObject::tr( "Help..." )                    , "manual/index.html" },
-    { HELP_REG,     PAGE  , QObject::tr( "Registration Information..." ), "register.html"     },
-    { HELP_HOME,    URL   , QObject::tr( "UltraScan Home Page..." )     , 
-      "http://www.ultrascan.uthscsa.edu/" },
-    { HELP_UPGRADE, PAGE  , QObject::tr( "Upgrade Information..." )     , "download.html"     },
-    { HELP_LICENSE, PAGE  , QObject::tr( "License Information..." )     , "license.html"      },
-    { HELP_ABOUT,   METHOD, QObject::tr( "About Ultrascan..." )         , ""                  },
-    { HELP_CREDITS, METHOD, QObject::tr( "UltraScan Credits..." )       , ""                  },
-    { HELP_END,     METHOD, ""                                 , ""                  }
+    { HELP,         PAGE,   QObject::tr( "Help..." ),
+       "manual/index.html"                 },
+    { HELP_REG,     PAGE,   QObject::tr( "Registration Information..." ),
+       "register.html"                     },
+    { HELP_HOME,    URL,    QObject::tr( "UltraScan Home Page..." ), 
+       "http://www.ultrascan.uthscsa.edu/" },
+    { HELP_UPGRADE, PAGE,   QObject::tr( "Upgrade Information..." ),
+       "download.html"                     },
+    { HELP_LICENSE, PAGE,   QObject::tr( "License Information..." ),
+       "register.html"                     },
+    { HELP_ABOUT,   METHOD, QObject::tr( "About Ultrascan..." ),
+       ""                                  },
+    { HELP_CREDITS, METHOD, QObject::tr( "UltraScan Credits..." ),
+       ""                                  },
+    { HELP_END,     METHOD, "",
+       ""                                  }
   };
 }
