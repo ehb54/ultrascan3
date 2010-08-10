@@ -764,13 +764,16 @@ void US_Hydrodyn_Batch::save_us_hydrodyn_settings()
    save_pdb_parse = ((US_Hydrodyn *)us_hydrodyn)->pdb_parse;
    save_pb_rule_on = ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on;
    save_calcAutoHydro = ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro;
-   ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues = batch->missing_residues;
-   ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms = batch->missing_atoms;
-   ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro = false;
-   if ( batch->missing_residues || batch->missing_atoms )
+   if ( bg_atoms->isEnabled() )
    {
-      ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = false;
-   }      
+      ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues = batch->missing_residues;
+      ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms = batch->missing_atoms;
+      if ( batch->missing_residues || batch->missing_atoms )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = false;
+      }      
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro = false;
 }
 
 void US_Hydrodyn_Batch::restore_us_hydrodyn_settings()
@@ -778,6 +781,7 @@ void US_Hydrodyn_Batch::restore_us_hydrodyn_settings()
    ((US_Hydrodyn *)us_hydrodyn)->pdb_parse = save_pdb_parse;
    ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = save_pb_rule_on;
    ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro = save_calcAutoHydro;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Batch::screen()

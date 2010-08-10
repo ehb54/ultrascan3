@@ -478,6 +478,31 @@ int US_Hydrodyn::read_pdb(const QString &filename)
    bool currently_aa_chain = false; // do we have an amino acid chain (pbr)
    bool last_was_ENDMDL = false;    // to fix pdbs with missing MODEL tag
 
+   if ( hydro.unit != -10 )
+   {
+      QFileInfo fi(bd_last_file);
+      switch (
+              QMessageBox::question(
+                                    this,
+                                    tr("Load PDB file"),
+                                    QString(tr("The default PDB unit is Angstrom (1e-10).\n"
+                                               "Your current setting is 1e%1\n"
+                                               "Do you want to reset the unit to Angstrom?")).arg(hydro.unit),
+                                    QMessageBox::Yes, 
+                                    QMessageBox::No,
+                                    QMessageBox::NoButton
+                                    ) )
+      {
+      case QMessageBox::Yes : 
+         hydro.unit = -10;
+         display_default_differences();
+         break;
+      case QMessageBox::No : 
+      default :
+         break;
+      }
+   }
+
    if (f.open(IO_ReadOnly))
    {
       QTextStream ts(&f);
