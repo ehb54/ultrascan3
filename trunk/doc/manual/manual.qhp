@@ -36,6 +36,8 @@
             <keyword name="model-loader"                ref="load_model_distrib.html"/>
             <keyword name="noise-loader"                ref="load_noise.html"/>
             <keyword name="fe-model"                    ref="fe_match.html"/>
+            <keyword name="license"                     ref="register.html"/>
+            <keyword name="register"                    ref="register.html"/>
         </keywords>
         <files>
             <file>mainstyle.css</file>
@@ -125,6 +127,9 @@
             <file>images/fe_match_sim7.png</file>
             <file>images/fe_match_3dplot.png</file>
             <file>images/fe_match_resplot.png</file>
+
+            <file>register.html</file>
+            <file>images/register.png</file>
         </files>
     </filterSection>
 </QtHelpProject> 

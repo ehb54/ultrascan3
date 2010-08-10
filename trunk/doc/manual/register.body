@@ -1,0 +1,64 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Registration Update Panel'
+%]
+
+
+    <h2> Registration / License Update Panel: </h2>
+
+    <img src="images/register.png" alt="Registration Dialog"/>
+
+    <p> The registration control panel allows <b><i>UltraScan III</i></b>
+    registration or update of a license. The contact fields should be filled
+    out completely and then the <em>Update / Renew</em> button clicked.</p>
+    
+    <p> If you are registering for the first time, you will be sent an e-mail
+    with instructions for completing the registration process. If you are
+    simply updating information, the process is complete after
+    <em>Update / Renew</em>.</p>
+    
+    <p> This panel is self-explanatory. For completeness, the GUI options
+    are detailed below. Be sure to fill out all text boxes.</p>
+
+    <ul>
+        <li>
+            <b>Name (first, last):</b>  Fill in your first and last name.
+        </li>
+        <li>
+            <b>E-mail address:</b>  Give your best contact e-mail address.
+        </li>
+        <li>
+            <b>Institution:</b>  Fill in the institution or company at which
+            you will be using <i>UltraScan III</i>.
+        </li>
+        <li>
+            <b>Address:</b>  Fill in address number and street.
+        </li>
+        <li>
+            <b>City:</b>  Give your city name.
+        </li>
+        <li>
+            <b>State:</b>  Select your state.
+        </li>
+        <li>
+            <b>Zip:</b>  Fill in the postal zip code.
+        </li>
+        <li>
+            <b>Phone Number:</b>  Give your best contact telephone number.
+        </li>
+        <li>
+            <b>License:</b>  Enter the license type you desire: academic,
+            commercial, or trial.
+        </li>
+        <li>
+            <b>Update / Renew</b>  When all the above fields are complete,
+            click this button to complete the registration or update.
+        </li>
+        <li>
+            <b>Help</b>  See this documentation.
+        </li>
+        <li>
+            <b>Close</b>  Exit the registration dialog.
+        </li>
+    </ul>
+
+[% INCLUDE footer.us3 %]

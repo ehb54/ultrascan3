@@ -175,9 +175,10 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
                                                                    simulation );
 
   QMenu* database    = new QMenu( tr( "&Database" ),    this );
-  addMenu(  P_INVESTIGATOR, tr( "Manage Investigator &Data" ), database );
+  addMenu(  P_INVESTIGATOR, tr( "Manage &Investigator Data" ), database );
   addMenu(  P_BUFFER      , tr( "Manage &Buffer Data"       ), database );
   addMenu(  P_VBAR        , tr( "Manage &Analytes"          ), database );
+  addMenu(  P_MANAGEDATA  , tr( "Manage &Data"              ), database );
 
   ///////////////
   QMenu* help        = new QMenu( tr( "&Help" ),        this );
