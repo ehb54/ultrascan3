@@ -639,6 +639,13 @@ void US_Hydrodyn_Batch::select_all()
 
 void US_Hydrodyn_Batch::remove_files()
 {
+   if ( lbl_selected->text() == QString("Selected: %1").arg(lb_files->numRows()) ) 
+   {
+      status.clear();
+      batch->file.clear();
+      lb_files->clear();
+      return;
+   }
    disable_updates = true;
    batch->file.clear();
    for ( int i = 0; i < lb_files->numRows(); i++ )
@@ -1343,6 +1350,11 @@ QString US_Hydrodyn_Batch::get_file_name(int i)
 
 void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
 {
+   if ( lb_files->numRows() > 1000 )
+   {
+      printf("check for missing files disabled - too many files!\n");
+      return;
+   }
    bool save_disable_updates = disable_updates;
    disable_updates = true;
    printf("check for missing files!\n");
