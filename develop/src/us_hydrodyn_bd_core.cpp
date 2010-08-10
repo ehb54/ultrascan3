@@ -1759,7 +1759,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
 {
    // make sure this is a valid browflex main file
    /* 
---- example broflex file ----:
+--- example browflex file ----:
 1BPI_1-bd-4-4-4-bf-log.txt            !logfile
 1BPI_1-bd-4-4-4-bf-tra.txt            !trajectory file
 1BPI_1-bd-4-4-4-bf-molec.txt          !molecular file
@@ -2094,7 +2094,12 @@ void US_Hydrodyn::bd_edit_util( QString dir, QString filename )
       QFileInfo fi(filename);
       if( fi.exists() && fi.isReadable() )
       {
-         view_file( filename );
+         if ( fi.size() )
+         {
+            view_file( filename );
+         } else {
+            editor_msg("dark red", QString(tr("\nFile %1 is empty, not openend.\n")).arg(filename));
+         }
       } else {
          if( !fi.exists() )
          {

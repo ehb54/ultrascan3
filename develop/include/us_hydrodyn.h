@@ -529,6 +529,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void bd_run();
       void bd_load_results();
       void bd_load_results_after_anaflex();
+      bool anaflex_valid_anaflex_main( QString filename );
+      void anaflex_load_error( QString filename );
 
       int create_browflex_files();
       int run_browflex();

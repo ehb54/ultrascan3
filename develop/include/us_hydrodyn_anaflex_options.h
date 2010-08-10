@@ -76,6 +76,9 @@ struct Anaflex_Options
    bool run_mode_4_8;
 
    bool run_mode_9;
+
+   int ntimc;
+   float tmax;
 };
 
 class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
@@ -95,6 +98,8 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       QLabel *lbl_info;
       QLabel *lbl_nfrec;
       QLabel *lbl_run_mode;
+      QLabel *lbl_ntimc;
+      QLabel *lbl_tmax;
 
       QCheckBox *cb_run_anaflex;
       QCheckBox *cb_instprofiles;
@@ -147,6 +152,8 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       QCheckBox *cb_run_mode_9;
 
       QLineEdit *le_nfrec;
+      QLineEdit *le_ntimc;
+      QLineEdit *le_tmax;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -206,6 +213,8 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       void set_run_mode_9();
 
       void update_nfrec(const QString &str);
+      void update_ntimc(const QString &str);
+      void update_tmax(const QString &str);
 
       void update_enables();
 

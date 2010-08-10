@@ -313,6 +313,20 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
          }
          break;
 
+      case 3 : // correlation functions
+         {
+            ts << sub_mode << ",";                // indcorr indicated type of function
+            ts << (sub_mode == 1 ? 1 : 3) << ","; // ian is type of fitting of correlation
+                                                  // usually 3 except 1 for translation
+            ts << "0,";                           // inbase is the indicator of base line in some types of fitting
+            ts << anaflex_options.ntimc << ",";
+            ts << anaflex_options.tmax << ",";
+
+            // iii,jjj,nvx, this will change if we support sub modes 5, 10 and 14
+            ts << "0,0,0                           !Hydrodynamic properties\n"; 
+         }
+         break;
+
       case 9 : // textfile
          anaflex_last_log_file = dir + SLASH + filename + "-to.txt";
          ts << 
@@ -335,7 +349,9 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
          .arg(trajfile);
 
       f.close();
+      anaflex_ready_to_run = true;
    }
+   bd_anaflex_enables(true);
    return 0;
 }
 
@@ -535,20 +551,316 @@ void US_Hydrodyn::anaflex_launchFinished()
 
 void US_Hydrodyn::anaflex_prepare()
 {
+   create_anaflex_files();
+}
+
+void US_Hydrodyn::anaflex_load_error( QString filename )
+{
+   editor_msg("red", QString(tr("\nFile %1 does not look like an Anaflex file.\n")).arg(filename));
 }
 
 void US_Hydrodyn::anaflex_load()
 {
+   QString filename;
+   if ( anaflex_last_file != "" )
+   {
+      // ask if use existing or new
+      QFileInfo fi(anaflex_last_file);
+      switch (
+              QMessageBox::question(
+                                    this,
+                                    tr("Load Anaflex Files"),
+                                    QString(tr("Replace current Anaflex file ") + fi.fileName() + "?"),
+                                    QMessageBox::Yes, 
+                                    QMessageBox::No,
+                                    QMessageBox::NoButton
+                                    ) )
+      {
+      case QMessageBox::Yes : 
+         filename = QFileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+         break;
+      case QMessageBox::No : 
+         return;
+         break;
+      case QMessageBox::Cancel :
+      default :
+         return;
+         break;
+      }
+   } else {
+      filename = QFileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+   }
+   // check to make sure it is a good anaflex file
+   if ( !filename.isEmpty() )
+   {
+      QFileInfo fi(filename);
+      QString dir = fi.dirPath();
+      QString name = fi.fileName();
+      // check for file format
+      QFile f( filename );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         editor_msg("red",QString(tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
+         return;
+      }
+      if ( !anaflex_valid_anaflex_main( filename ) )
+      {
+         bd_load_error(filename);
+         f.close();
+         return;
+      }
+      f.close();
+      editor->append(QString("Anaflex file %1 loaded\n").arg(filename));
+
+      anaflex_last_file = filename;
+      anaflex_ready_to_run = true;
+      bd_anaflex_enables(true);
+   }
+}
+
+bool US_Hydrodyn::anaflex_valid_anaflex_main( QString filename )
+{
+   // make sure this is a valid anaflex main file
+   /* 
+--- example anaflex file ----:
+anaDNAdoubhel20bp-log1.txt                 !outputfile 1 
+anaDNAdoubhel20bp-res1.txt                 !outputfile 2
+anaDNAdoubhel20bp-sum1.txt                 !outputfile 3
+1                                         !sampling frequency in traj.
+0                                         !instprofiles 1-yes,write 
+3                                         !mode
+1,1,0,11,1.6e-8,0,0,0                     !Hydrodynamic properties  
+DNAdoubhel20bp-tra.txt                    !trajectory file
+*
+--- end example --- */
+   if ( !filename.isEmpty() )
+   {
+      QFileInfo fi(filename);
+      QString dir = fi.dirPath();
+      // check for file format
+      QFile f( filename );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         return false;
+      }
+      QTextStream ts( &f );
+      QString tmp_filename;
+      // outputfile 1
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return false;
+         }
+      } else {
+         f.close();
+         return false;
+      }
+      // outputfile 2
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return false;
+         }
+      } else {
+         f.close();
+         return false;
+      }
+      // outputfile 3
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return false;
+         }
+      } else {
+         f.close();
+         return false;
+      }
+      // other lines
+      f.close();
+   } else {
+      return false;
+   }
+   return true;
 }
 
 void US_Hydrodyn::anaflex_edit()
 {
+   QString filename;
+   if ( anaflex_last_file != "" )
+   {
+      // ask if use existing or new
+      QFileInfo fi(anaflex_last_file);
+      switch (
+              QMessageBox::question(
+                                    this,
+                                    tr("View/Edit Anaflex Files"),
+                                    QString(tr("View/Edit current file ") + fi.fileName() + "?"),
+                                    QMessageBox::Yes, 
+                                    QMessageBox::No,
+                                    QMessageBox::Cancel
+                                    ) )
+      {
+      case QMessageBox::Yes : 
+         filename = anaflex_last_file;
+         break;
+      case QMessageBox::No : 
+         filename = QFileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+         break;
+      case QMessageBox::Cancel :
+      default :
+         return;
+         break;
+      }
+   } else {
+      filename = QFileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+   }
+   if ( !filename.isEmpty() )
+   {
+      QFileInfo fi(filename);
+      QString dir = fi.dirPath();
+      // open file and view this and all associated files if first line ends with .txt or .TXT
+      QFile f( filename );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         editor_msg("red", QString(tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
+         return;
+      }
+      view_file( filename );
+      f.close();
+   }
 }
 
 void US_Hydrodyn::anaflex_run()
 {
+   run_anaflex();
 }
 
 void US_Hydrodyn::anaflex_load_results()
 {
+   QString filename;
+   if ( anaflex_last_file != "" )
+   {
+      // ask if use existing or new
+      QFileInfo fi(anaflex_last_file);
+      switch (
+              QMessageBox::question(
+                                    this,
+                                    tr("Load Anaflex Results"),
+                                    QString(tr("View/Edit current file ") + fi.fileName() + "?"),
+                                    QMessageBox::Yes, 
+                                    QMessageBox::No,
+                                    QMessageBox::Cancel
+                                    ) )
+      {
+      case QMessageBox::Yes : 
+         filename = anaflex_last_file;
+         break;
+      case QMessageBox::No : 
+         filename = QFileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+         break;
+      case QMessageBox::Cancel :
+      default :
+         return;
+         break;
+      }
+   } else {
+      filename = QFileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+   }
+   if ( !filename.isEmpty() )
+   {
+      QFileInfo fi(filename);
+      QString dir = fi.dirPath();
+      // open file and view this and all associated files if first line ends with .txt or .TXT
+      QFile f( filename );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         editor_msg("red", QString(tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
+         return;
+      }
+      view_file( filename );
+      if ( !anaflex_valid_anaflex_main( filename ) )
+      {
+         f.close();
+         return;
+      }
+      switch (
+              QMessageBox::question(
+                                    this,
+                                    tr("Load Anaflex Files"),
+                                    QString(tr(fi.fileName() + " appears to be a 'main' Anaflex file, open all ancillary files? ")),
+                                    QMessageBox::Yes, 
+                                    QMessageBox::No,
+                                    QMessageBox::NoButton
+                                    ) )
+      {
+      case QMessageBox::No : 
+         f.close();
+         return;
+         break;
+      case QMessageBox::Yes : 
+      default :
+         break;
+      }
+      
+      QTextStream ts( &f );
+      QString tmp_filename;
+      // outputfile 1
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return;
+         }
+         bd_edit_util( dir, tmp_filename );
+      } else {
+         f.close();
+         return;
+      }
+      // outputfile 2
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return;
+         }
+         bd_edit_util( dir, tmp_filename );
+      } else {
+         f.close();
+         return;
+      }
+      // outputfile 3
+      if ( !ts.atEnd() )
+      {
+         ts >> tmp_filename;
+         ts.readLine();
+         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         {
+            f.close();
+            return;
+         }
+         bd_edit_util( dir, tmp_filename );
+      } else {
+         f.close();
+         return;
+      }
+      f.close();
+   }
 }

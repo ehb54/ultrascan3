@@ -419,12 +419,42 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    lbl_nfrec->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_nfrec = new QLineEdit(this, "Nfrec Line Edit");
-   le_nfrec->setText(QString("").sprintf("%d",(*anaflex_options).nfrec));
+   le_nfrec->setText(QString("%1").arg((*anaflex_options).nfrec));
    le_nfrec->setAlignment(AlignVCenter);
    le_nfrec->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_nfrec->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_nfrec->setEnabled(true);
    connect(le_nfrec, SIGNAL(textChanged(const QString &)), SLOT(update_nfrec(const QString &)));
+
+   lbl_ntimc = new QLabel(tr(" Number of points of the\n correlation function: "), this);
+   lbl_ntimc->setAlignment(AlignLeft|AlignVCenter);
+   lbl_ntimc->setMinimumHeight(minHeight1);
+   lbl_ntimc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_ntimc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_ntimc = new QLineEdit(this, "Ntimc Line Edit");
+   le_ntimc->setText(QString("%1").arg((*anaflex_options).ntimc));
+   le_ntimc->setAlignment(AlignVCenter);
+   le_ntimc->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_ntimc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_ntimc->setEnabled(true);
+   le_ntimc->setMinimumWidth(75);
+   connect(le_ntimc, SIGNAL(textChanged(const QString &)), SLOT(update_ntimc(const QString &)));
+
+   lbl_tmax = new QLabel(tr(" Maximum time reached in the\n calculation of the correlation function (s): "), this);
+   lbl_tmax->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tmax->setMinimumHeight(minHeight1);
+   lbl_tmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_tmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_tmax = new QLineEdit(this, "Tmax Line Edit");
+   le_tmax->setText(QString("%1").arg((*anaflex_options).tmax));
+   le_tmax->setAlignment(AlignVCenter);
+   le_tmax->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_tmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_tmax->setMinimumWidth(75);
+   le_tmax->setEnabled(true);
+   connect(le_tmax, SIGNAL(textChanged(const QString &)), SLOT(update_tmax(const QString &)));
 
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -498,8 +528,17 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    vbl_2->addWidget(cb_run_mode_2_18);
    
    QVBoxLayout *vbl_3 = new QVBoxLayout;
-
    vbl_3->addWidget(cb_run_mode_3);
+   vbl_3->addSpacing(2);
+
+   QGridLayout *gl_3 = new QGridLayout;
+   gl_3->addWidget(lbl_ntimc, 0, 0);
+   gl_3->addWidget(le_ntimc, 0, 1);
+   gl_3->addWidget(lbl_tmax, 1, 0);
+   gl_3->addWidget(le_tmax, 1, 1);
+
+   vbl_3->addLayout(gl_3);
+   vbl_3->addSpacing(2);
    vbl_3->addWidget(cb_run_mode_3_1);
    vbl_3->addWidget(cb_run_mode_3_9);
    vbl_3->addWidget(cb_run_mode_3_15);
@@ -1041,7 +1080,18 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_9()
 void US_Hydrodyn_Anaflex_Options::update_nfrec(const QString &str)
 {
    (*anaflex_options).nfrec = str.toInt();
-   //   le_nfrec->setText(QString("").sprintf("%4.2f",(*hydro).nfrec));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Anaflex_Options::update_ntimc(const QString &str)
+{
+   (*anaflex_options).ntimc = str.toInt();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Anaflex_Options::update_tmax(const QString &str)
+{
+   (*anaflex_options).tmax = str.toFloat();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -1076,6 +1126,8 @@ void US_Hydrodyn_Anaflex_Options::update_enables()
    // cb_run_mode_2_24->setEnabled(cb_run_mode_2->isChecked());
 
    cb_run_mode_3_1->setEnabled(cb_run_mode_3->isChecked());
+   le_ntimc->setEnabled(cb_run_mode_3->isChecked());
+   le_tmax->setEnabled(cb_run_mode_3->isChecked());
    // cb_run_mode_3_5->setEnabled(cb_run_mode_3->isChecked());
    cb_run_mode_3_9->setEnabled(cb_run_mode_3->isChecked());
    // cb_run_mode_3_10->setEnabled(cb_run_mode_3->isChecked());

@@ -176,6 +176,9 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    anaflex_return_to_bd_load_results = false;
    bd_anaflex_enables(false);
    bd_options.nmol = 1;  // need to move to saved options!
+   anaflex_options.ntimc = 21; // need to move to saved options!
+   anaflex_options.tmax = 1.6e-6; // need to move to saved options!
+   
    last_read_bead_model = "";
    last_hydro_res = "";
    chdir(somo_tmp_dir);
@@ -603,7 +606,7 @@ void US_Hydrodyn::setupGUI()
    pb_bd_prepare->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_bd_prepare, SIGNAL(clicked()), SLOT(bd_prepare()));
 
-   pb_bd_load = new QPushButton(tr("Load Browflex files"), this);
+   pb_bd_load = new QPushButton(tr("Load/Process Browflex files"), this);
    pb_bd_load->setMinimumHeight(minHeight1);
    pb_bd_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_bd_load->setEnabled(false);
