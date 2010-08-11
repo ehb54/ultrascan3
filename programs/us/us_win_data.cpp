@@ -8,7 +8,7 @@ namespace US_WinData
 {
   enum
   {
-    P_EXIT   = 4,   P_APPLYP,
+    P_EXIT   = 4,
     P_CONFIG = 300, P_EDIT,                // Edit Menu
     
     P_SECOND,       P_DCDT,   P_VHWE,      // Velocity Menu

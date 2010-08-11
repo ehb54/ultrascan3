@@ -144,7 +144,6 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_EDIT,   tr( "&Edit Data" )          , edit );
   edit->addSeparator();
   addMenu(  P_CONFIG, tr( "&Preferences" )        , edit );
-  addMenu(  P_APPLYP, tr( "&Apply Preferences" )  , edit );
   
   /////////////
   QMenu* velocity    = new QMenu( tr( "&Velocity" ),    this );
@@ -239,7 +238,6 @@ void US_Win::addMenu( int index, const QString& label, QMenu* menu )
 void US_Win::onIndexTriggered( int index )
 {
   if ( index == 4 )         close();
-  if ( index == P_APPLYP )  apply_prefs();
 
 //qDebug() << index << P_CONFIG << P_END;
   if ( index >= P_CONFIG && index < P_END    ) launch( index );
@@ -262,6 +260,10 @@ void US_Win::terminated( int /* code*/, QProcess::ExitStatus /* status */ )
       p[ index ].currentRunCount--;
       delete process;  // Deleting the process structure
       delete d;        // Deleting the procData structure
+
+      if ( index == 0 )
+        apply_prefs();
+
       return;
     }
   }
