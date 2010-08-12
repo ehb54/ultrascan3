@@ -1032,7 +1032,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    unlink(risultati);
    flag_mem = 1;
     
-   strncpy(molecola, QString(use_filename).arg(model_idx[0] + 1).ascii(), SMAX); // first model
+   strncpy(molecola, use_filename.contains("%1") ? QString(use_filename).arg(model_idx[0] + 1).ascii() : use_filename.ascii() , SMAX); // first model
    molecola[SMAX-1] = 0;
    strncpy(molecola_nb, molecola, SMAX);
    molecola_nb[SMAX-1] = 0;
@@ -1153,8 +1153,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
          init_da_a();
 #endif
-         printf("opening file: %s\n",  QString(use_filename).arg(model_idx[k] + 1).ascii());
-         strncpy(molecola, QString(use_filename).arg(model_idx[k] + 1).ascii(), SMAX); // first model
+         printf("opening file: %s\n",  use_filename.contains("%1") ? QString(use_filename).arg(model_idx[k] + 1).ascii() : use_filename.ascii());
+         strncpy(molecola, use_filename.contains("%1") ? QString(use_filename).arg(model_idx[k] + 1).ascii() : use_filename.ascii(), SMAX); // first model
          molecola[SMAX-1] = 0;
          strncpy(molecola_nb, molecola, SMAX);
          molecola_nb[SMAX-1] = 0;
@@ -3441,7 +3441,6 @@ inp_inter()
 
    fclose(interinp);
    fclose(interinp1);
-
 }
 
 /**************************************************************************/

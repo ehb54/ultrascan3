@@ -614,10 +614,10 @@ initarray()
          fscanf(rmc, "%d", &dt[i].m);
          fscanf(rmc, "%d", &dt[i].col);
       }
-
-      fclose(mol);
-      fclose(rmc);
    }
+
+   fclose(rmc);
+   fclose(mol);
 
 #if defined(DEBUG_WW)
    for (i = 0; i < nat; i++) {
