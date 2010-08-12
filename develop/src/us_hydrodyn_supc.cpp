@@ -1759,7 +1759,10 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          {
             for (i = 0; i < numero_sfere; i++)
             {
-               free(dt[i].cor);
+               if ( dt[i].cor ) {
+                  free(dt[i].cor);
+                  dt[i].cor = 0;
+               }
             }
          }
       }
