@@ -127,20 +127,6 @@ class US_EXTERN US_Math2
       static double adjust_vbar( double vbar, double degC )
       { return vbar - 0.002125 - 4.25e-4 * ( degC - 25.0 ); }
 
-/*  
-      //! \brief An overloaded version of the above function with floats 
-      //!        instead of doubles.
-      //!       
-      //! \param x Pointer to an array of x values
-      //! \param y Pointer to an array of y values
-      //! \param slope       Pointer to location to retrun the line's slope
-      //! \param intercept   Pointer to location to retrun the line's y intercept
-      //! \param sigma       Pointer to location to retrun the standard deviation 
-      //! \param correlation Pointer to location to retrun the correlation
-      //! \param arraysize   Input array size
-      static float  linefit   ( float** , float** , float* , float* , float* , 
-                              float*  , int );
-*/
       //! \brief Correct buffer data for temperature
       //! \param t  Temperture of solution
       //! \param d  Data to be corrected
@@ -159,6 +145,10 @@ class US_EXTERN US_Math2
       //! \param dataList The list of editedData for the run
 
       static double time_correction( const QVector< US_DataIO2::EditedData >& );
+
+      //! \brief Set the sysem random sequence.
+      //! \return The seed used to set the system time
+      static int randomize( void );
 };
 #endif
 
