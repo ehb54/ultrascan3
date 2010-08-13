@@ -7,6 +7,8 @@
 #include "us_widgets.h"
 #include "us_db2.h"
 #include "us_model.h"
+#include "us_buffer.h"
+#include "us_analyte.h"
 #include "us_help.h"
 
 class US_EXTERN US_ManageData : public US_Widgets
@@ -51,6 +53,9 @@ class US_EXTERN US_ManageData : public US_Widgets
       US_Help       showHelp;
 
       US_DB2*       db;
+
+      US_Buffer     buffer;
+      US_Analyte    analyte;
  
       QLabel*       lb_status;
 
@@ -121,25 +126,37 @@ class US_EXTERN US_ManageData : public US_Widgets
       void item_remove_loc(  void );
       void item_remove_all(  void );
       void item_details(     void );
-      void browse_dbase(     bool );
-      void browse_local(     bool );
+      int  record_upload(       int );
+      int  record_download(     int );
+      int  record_remove_db(    int );
+      int  record_remove_local( int );
+      void browse_dbase(     void );
+      void browse_local(     void );
       void merge_dblocal(    void );
       void sort_descs( QVector< DataDesc >& descs );
-      QString sort_string( DataDesc, int );
-      QString model_type(   int, int, int );
-      QString model_type(   US_Model      );
-      QString model_type(   QString       );
-      QString record_state( int      );
+      QString sort_string(   DataDesc, int );
+      QString model_type(    int, int, int );
+      QString model_type(    US_Model      );
+      QString model_type(    QString       );
+      QString action_text(   QString, QString );
+      void    action_result( int,     QString );
+      QString record_state(  int );
       bool    review_descs( QStringList&, QVector< DataDesc >& );
       int         index_substring(  QString, int, QStringList& );
       QStringList filter_substring( QString, int, QStringList& );
       QStringList list_orphans    ( QStringList&, QStringList& );
       int  record_state_flag(       DataDesc, int );
       void reset_hsbuttons( bool, bool, bool, bool );
+      int  new_experiment_local( US_DB2*, QString& );
+      int  new_experiment_db(    US_DB2*, QString&, QString&, QString& );
+      void assignAnalyte( US_Analyte );
+      void assignBuffer(  US_Buffer  );
+      QString md5sum_file( QString );
 
       void help     ( void )
       { showHelp.show_help( "manage_data.html" ); };
 
+      //quint32 crc32( quint32, const unsigned char*, int );
    protected:
       bool eventFilter( QObject*, QEvent* );
 };
