@@ -17,13 +17,19 @@
 #include "us_dataIO2.h"
 #include "us_noise.h"
 #include "us_util.h"
+#include "us_convertio.h"
+#include "us_expinfo.h"
+#include "us_selectbox.h"
+#include "us_buffer_gui.h"
+#include "us_analyte_gui.h"
+#include "us_util.h"
 
-const QColor colrRed(   240,   0,   0 );
-const QColor colrBlue(    0,   0, 255 );
-const QColor colrBrown( 120,  60,   0 );
-const QColor colrGreen(   0, 150,   0 );
-const QColor colrGray(  110, 110, 110 );
-const QColor colrWhite( 255, 255, 240 );
+const QColor colorRed(   240,   0,   0 );
+const QColor colorBlue(    0,   0, 255 );
+const QColor colorBrown( 120,  60,   0 );
+const QColor colorGreen(   0, 150,   0 );
+const QColor colorGray(  110, 110, 110 );
+const QColor colorWhite( 255, 255, 240 );
 
 // main program
 int main( int argc, char* argv[] )
@@ -191,8 +197,8 @@ US_ManageData::US_ManageData() : US_Widgets()
 
    for ( int ii = 0; ii < ntrows; ii++ )
    {
-      QColor  bg   = colrWhite;
-      QColor  fg   = colrBlue;
+      QColor  bg   = colorWhite;
+      QColor  fg   = colorBlue;
       QString rtyp = "Raw";
       QString labl = QString( "item%11" ).arg( ii + 1 );
       QString subt = "";
@@ -204,7 +210,7 @@ US_ManageData::US_ManageData() : US_Widgets()
 
       if      ( ii == 1 )
       {
-         fg   = colrGreen;
+         fg   = colorGreen;
          rtyp = "Edited";
          ityp = 2;
          rsrc = "In Sync";
@@ -214,7 +220,7 @@ US_ManageData::US_ManageData() : US_Widgets()
       }
       else if ( ii == 2 )
       {
-         fg   = colrBrown;
+         fg   = colorBrown;
          rtyp = "Model";
          ityp = 3;
          rsrc = "Local";
@@ -224,7 +230,7 @@ US_ManageData::US_ManageData() : US_Widgets()
       }
       else if ( ii == 3 )
       {
-         fg   = colrRed;
+         fg   = colorRed;
          rtyp = "Noise";
          ityp = 4;
          rsrc = "Conflict";
@@ -234,7 +240,7 @@ US_ManageData::US_ManageData() : US_Widgets()
       }
       else if ( ii == 4 )
       {
-         fg   = colrGray;
+         fg   = colorGray;
          rtyp = "Edited";
          ityp = 2;
          rsrc = "dummy";
@@ -550,67 +556,18 @@ void US_ManageData::browse_data()
    ldescs.clear();   // local descriptions
    adescs.clear();   // all descriptions
 
-   cdesc.recordID       = 1;
-   cdesc.recType        = 1;
-   cdesc.subType        = "";
-   cdesc.parentID       = 1;
-   cdesc.recState       = REC_DB | PAR_DB;
-   cdesc.dataGUID       = "6fab-def";
-   cdesc.parentGUID     = "7a24-72c";
-   cdesc.filename       = "";
-   cdesc.contents       = "";
-   cdesc.label          = "demo1-veloc";
-   cdesc.description    = "demo1-veloc.1.A.260.auc";
-   cdesc.lastmodDate    = QDateTime::currentDateTime().toString();
-   ddescs.append( cdesc );
-
-   cdesc.recType        = 2;
-   cdesc.parentGUID     = cdesc.dataGUID;
-   cdesc.dataGUID       = "a94b-c71";
-   cdesc.description    = "demo1-veloc.20100714.1.A.260.xml";
-   ddescs.append( cdesc );
-
-   cdesc.recType        = 3;
-   cdesc.subType        = "2DSA";
-   cdesc.parentGUID     = cdesc.dataGUID;
-   cdesc.dataGUID       = "921b-e75";
-   cdesc.description    = "demo1-veloc.20100714.model.11";
-   ddescs.append( cdesc );
-
-   cdesc.recType        = 4;
-   cdesc.subType        = "TI";
-   cdesc.parentGUID     = cdesc.dataGUID;
-   cdesc.dataGUID       = "271e-7e5";
-   cdesc.description    = "demo1-veloc.ti_noise.11";
-   ddescs.append( cdesc );
-#if 0
-   cdesc.recordID       = -1;
-   cdesc.recType        = 2;
-   cdesc.parentGUID     = "6fab-def";
-   cdesc.dataGUID       = "a94b-c71";
-   cdesc.description    = "demo1-veloc.20100714.1.A.260.xml";
-   cdesc.filename       = "demo1-veloc.20100714.1.A.260.xml";
-   ldescs.append( cdesc );
-
-   cdesc.recType        = 3;
-   cdesc.parentGUID     = cdesc.dataGUID;
-   cdesc.dataGUID       = "921b-e75";
-   cdesc.description    = "demo1-veloc.20100714.model.11";
-   cdesc.filename       = "demo1-veloc.20100714.model.11";
-   ldescs.append( cdesc );
-#endif
    kdmy        = 0;
+   details     = false;
 
-   browse_dbase( false  );     // read db to build db descriptions
+   browse_dbase( );            // read db to build db descriptions
 
-   sort_descs(   ddescs );     // sort db descriptions
+   sort_descs(   ddescs  );    // sort db descriptions
 
-   browse_local( false  );     // read files to build local descriptions
+   browse_local( );            // read files to build local descriptions
 
-   sort_descs(   ldescs );     // sort local descriptions
+   sort_descs(   ldescs  );    // sort local descriptions
 
    merge_dblocal();            // merge database and local descriptions
-qDebug() << " a/d/l sizes" << adescs.size() << ddescs.size() << ldescs.size();
 
    build_dtree();              // rebuild the data tree with present data
 }
@@ -618,15 +575,20 @@ qDebug() << " a/d/l sizes" << adescs.size() << ddescs.size() << ldescs.size();
 // browse the database,local for R/E/M/N data sets, with content detail
 void US_ManageData::detail_data()
 {
+   ddescs.clear();   // db descriptions
+   ldescs.clear();   // local descriptions
+   adescs.clear();   // all descriptions
+
    kdmy        = 0;
+   details     = true;
 
-   browse_dbase( true   );     // read db to build db descriptions
+   browse_dbase( );            // read db to build db descriptions
 
-   sort_descs(   ddescs );     // sort db descriptions
+   sort_descs(   ddescs  );    // sort db descriptions
 
-   browse_local( true   );     // read files to build local descriptions
+   browse_local( );            // read files to build local descriptions
 
-   sort_descs(   ldescs );     // sort local descriptions
+   sort_descs(   ldescs  );    // sort local descriptions
 
    merge_dblocal();            // merge database and local descriptions
 
@@ -648,8 +610,8 @@ void US_ManageData::build_dtree()
    int     nchlo = 0;
    int     ndedb = 0;
    int     ndelo = 0;
-   QBrush  fbru( colrBrown );
-   QBrush  bbru( colrWhite );
+   QBrush  fbru( colorBrown );
+   QBrush  bbru( colorWhite );
    QTreeWidgetItem* pitems[4];
 
    ncrecs     = adescs.size();
@@ -669,7 +631,7 @@ void US_ManageData::build_dtree()
 
       if ( cdesc.recordID < 0 )
       { // local only
-         fbru    = QBrush( colrBrown );
+         fbru    = QBrush( colorBrown );
          rsrc    = "Local";
 
          if      ( ityp == 1 )
@@ -701,7 +663,7 @@ void US_ManageData::build_dtree()
 
       else if ( cdesc.filename.isEmpty() )
       { // database only
-         fbru    = QBrush( colrBlue );
+         fbru    = QBrush( colorBlue );
          rsrc    = "DB";
 
          if      ( ityp == 1 )
@@ -733,8 +695,20 @@ void US_ManageData::build_dtree()
 
       else
       { // both local and database
-         fbru    = QBrush( colrGreen );
+         fbru    = QBrush( colorGreen );
          rsrc    = "In Sync";
+
+         if ( details )
+         {
+            QString cont1 = cdesc.contents.section( " ", 0, 1 ).simplified();
+            QString cont2 = cdesc.contents.section( " ", 2, 4 ).simplified();
+            if ( cont1 != cont2 )
+            {
+               fbru    = QBrush( colorRed );
+               rsrc    = "Conflict";
+qDebug() << "CONFLICT cont1 cont2" << cont1 << cont2;
+            }
+         }
 
          if      ( ityp == 1 )
          {
@@ -771,7 +745,7 @@ void US_ManageData::build_dtree()
 
       if ( cdesc.recState == NOSTAT )
       {  // mark artificial record with color and source text
-         fbru       = QBrush( colrGray );
+         fbru       = QBrush( colorGray );
          rsrc       = "dummy";
       }
 
@@ -1035,34 +1009,231 @@ void US_ManageData::dtree_help()
    editd->show();
 }
 
+// format an item action text for a message box
+QString US_ManageData::action_text( QString exstext, QString acttext )
+{
+   return tr( "This item exists on %1.<br>"
+              "Are you sure you want to proceed with a %2?<ul>"
+              "<li><b>No </b> to cancel the action;</li>"
+              "<li><b>Yes</b> to proceed with the action.</li></ul>" )
+          .arg( exstext ).arg( acttext );
+}
+
+// report the result of an item action
+void US_ManageData::action_result( int stat, QString item_act )
+{
+   if ( stat != 999 )
+   {  // proceed was selected:  test status of action
+
+      if ( stat == 0 )
+      {  // action was successful
+         QMessageBox::information( this,
+               item_act + tr( " Successful!" ),
+               tr( "The \"%1\" action was successfully performed." )
+               .arg( item_act ) );
+      }
+
+      else
+      {  // action got an error
+         QMessageBox::warning( this,
+               item_act + tr( " *ERROR*!" ),
+               tr( "The \"%1\" action had an error: %2" )
+               .arg( item_act ).arg( stat ) );
+      }
+   }
+
+   else
+   {  // cancel was selected:  report it
+      QMessageBox::information( this,
+            item_act + tr( " Cancelled!" ),
+            tr( "The \"%1\" action was cancelled." ).arg( item_act ) );
+   }
+}
+
 // perform item upload action
 void US_ManageData::item_upload()
 {
+   QMessageBox msgBox( this );
+   QString     item_exs = tr( "Local disk only" );
+   QString     item_act = tr( "DB create" );
 qDebug() << "ITEM Upload";
+   int irow = tw_item->type() - (int)QTreeWidgetItem::UserType;
+   cdesc    = adescs.at( irow );
+
+   if ( ( cdesc.recState & REC_DB ) != 0 )
+   {
+      item_exs = tr( "both DB and Local" );
+      item_act = tr( "DB replace" );
+   }
+
+   msgBox.setWindowTitle( item_act );
+   msgBox.setTextFormat(  Qt::RichText );
+   msgBox.setText( action_text( item_exs, item_act ) );
+   msgBox.addButton( QMessageBox::No );
+   msgBox.addButton( QMessageBox::Yes );
+   msgBox.setDefaultButton( QMessageBox::No );
+
+   if ( msgBox.exec() == QMessageBox::Yes )
+   {
+qDebug() << " ITEM ACTION: YES";
+      int stat1  = record_upload( irow );
+
+      action_result( stat1, item_act );
+   }
+
+   else
+   {
+qDebug() << " ITEM ACTION: NO";
+      action_result( 999, item_act );
+   }
+
 }
 
 // perform item download action
 void US_ManageData::item_download()
 {
+   QMessageBox msgBox( this );
+   QString     item_exs = tr( "Database only" );
+   QString     item_act = tr( "Local file create" );
 qDebug() << "ITEM Download";
+   int irow = tw_item->type() - (int)QTreeWidgetItem::UserType;
+   cdesc    = adescs.at( irow );
+
+   if ( ( cdesc.recState & REC_LO ) != 0 )
+   {
+      item_exs = tr( "both DB and Local" );
+      item_act = tr( "Local file replace" );
+   }
+
+   msgBox.setWindowTitle( item_act );
+   msgBox.setTextFormat(  Qt::RichText );
+   msgBox.setText( action_text( item_exs, item_act ) );
+   msgBox.addButton( QMessageBox::No );
+   msgBox.addButton( QMessageBox::Yes );
+   msgBox.setDefaultButton( QMessageBox::No );
+
+   if ( msgBox.exec() == QMessageBox::Yes )
+   {
+qDebug() << " ITEM ACTION: YES";
+      int stat1  = record_download( irow );
+
+      action_result( stat1, item_act );
+   }
+
+   else
+   {
+qDebug() << " ITEM ACTION: NO";
+      action_result( 999, item_act );
+   }
 }
 
 // perform item remove-from-db action
 void US_ManageData::item_remove_db()
 {
 qDebug() << "ITEM Remove from DB";
+   QString     item_exs = tr( "Database only" );
+   QString     item_act = tr( "DB remove" );
+   QMessageBox msgBox( this );
+   int irow = tw_item->type() - (int)QTreeWidgetItem::UserType;
+   cdesc    = adescs.at( irow );
+
+   if ( ( cdesc.recState & REC_LO ) != 0 )
+   {
+      item_exs = tr( "both DB and Local" );
+      item_act = tr( "DB-only remove" );
+   }
+
+   msgBox.setWindowTitle( item_act );
+   msgBox.setTextFormat(  Qt::RichText );
+   msgBox.setText( action_text( item_exs, item_act ) );
+   msgBox.addButton( QMessageBox::No );
+   msgBox.addButton( QMessageBox::Yes );
+   msgBox.setDefaultButton( QMessageBox::No );
+
+   if ( msgBox.exec() == QMessageBox::Yes )
+   {
+qDebug() << " ITEM ACTION: YES";
+      int stat1  = record_remove_db( irow );
+
+      action_result( stat1, item_act );
+   }
+
+   else
+   {
+qDebug() << " ITEM ACTION: NO";
+      action_result( 999, item_act );
+   }
 }
 
 // perform item remove-from-local action
 void US_ManageData::item_remove_loc()
 {
 qDebug() << "ITEM Remove from Local";
+   QString     item_exs = tr( "Local disk only" );
+   QString     item_act = tr( "Local remove" );
+   QMessageBox msgBox( this );
+   int irow = tw_item->type() - (int)QTreeWidgetItem::UserType;
+   cdesc    = adescs.at( irow );
+
+   if ( ( cdesc.recState & REC_DB ) != 0 )
+   {
+      item_exs = tr( "both DB and Local" );
+      item_act = tr( "Local-only remove" );
+   }
+
+   msgBox.setWindowTitle( item_act );
+   msgBox.setTextFormat(  Qt::RichText );
+   msgBox.setText( action_text( item_exs, item_act ) );
+   msgBox.addButton( QMessageBox::No );
+   msgBox.addButton( QMessageBox::Yes );
+   msgBox.setDefaultButton( QMessageBox::No );
+
+   if ( msgBox.exec() == QMessageBox::Yes )
+   {
+qDebug() << " ITEM ACTION: YES";
+      int stat1  = record_remove_local( irow );
+
+      action_result( stat1, item_act );
+   }
+
+   else
+   {
+qDebug() << " ITEM ACTION: NO";
+      action_result( 999, item_act );
+   }
 }
 
 // perform item remove-from-all action
 void US_ManageData::item_remove_all()
 {
 qDebug() << "ITEM Remove Both DB and Local";
+   QString     item_exs = tr( "both DB and Local" );
+   QString     item_act = tr( "DB+Local remove" );
+   QMessageBox msgBox( this );
+   int irow = tw_item->type() - (int)QTreeWidgetItem::UserType;
+   cdesc    = adescs.at( irow );
+
+   msgBox.setWindowTitle( item_act );
+   msgBox.setTextFormat(  Qt::RichText );
+   msgBox.setText( action_text( item_exs, item_act ) );
+   msgBox.addButton( QMessageBox::No );
+   msgBox.addButton( QMessageBox::Yes );
+   msgBox.setDefaultButton( QMessageBox::No );
+
+   if ( msgBox.exec() == QMessageBox::Yes )
+   {
+qDebug() << " ITEM ACTION: YES";
+      int stat1  = record_remove_local( irow );
+      stat1     += record_remove_db(    irow );
+
+      action_result( stat1, item_act );
+   }
+
+   else
+   {
+qDebug() << " ITEM ACTION: NO";
+      action_result( 999, item_act );
+   }
 }
 
 // perform item details action
@@ -1072,7 +1243,6 @@ void US_ManageData::item_details(  )
    QString     fileexts = tr( "Text,Log files (*.txt *.log);;" )
       + tr( "All files (*)" );
    int         irow     = tw_item->type() - (int)QTreeWidgetItem::UserType;
-qDebug() << "ITEM Show Details  row" << irow+1;
 
    cdesc  = adescs[ irow++ ];  // get description record, index as 1...
 
@@ -1091,7 +1261,21 @@ qDebug() << "ITEM Show Details  row" << irow+1;
       tr( "  File Name      : " )
          + cdesc.filename.section( "/", -1, -1 ) + "\n" +
       tr( "  Record State   : " ) + record_state( cdesc.recState ) + "\n" +
-      tr( "  Last Mod Date  : " ) + cdesc.lastmodDate;
+      tr( "  Last Mod Date  : " ) + cdesc.lastmodDate + "\n";
+
+   if ( cdesc.contents.length() < 60 )
+   {
+      mtext = mtext + 
+         tr( "  Content Checks : " ) + cdesc.contents;
+   }
+   else
+   {
+      QString cont1 = cdesc.contents.section( " ", 0, 1 ).simplified();
+      QString cont2 = cdesc.contents.section( " ", 2, 4 ).simplified();
+      mtext = mtext + 
+         tr( "  Content Checks : " ) + cont1 + "\n" +
+             "                   "   + cont2 + "\n";
+   }
 
    // display the text dialog
    US_Editor* editd = new US_Editor( US_Editor::LOAD, true, fileexts );
@@ -1104,15 +1288,18 @@ qDebug() << "ITEM Show Details  row" << irow+1;
 }
 
 // browse the database for R/E/M/N data sets, with/without content details
-void US_ManageData::browse_dbase( bool details = false )
+void US_ManageData::browse_dbase( )
 {
    QStringList rawIDs;
+   QStringList rawGUIDs;
    QStringList edtIDs;
    QStringList modIDs;
    QStringList noiIDs;
    QStringList query;
    QString     invID = QString::number( personID );
    QString     recID;
+   QString     rawGUID;
+   QString     contents;
    int         irecID;
    int         nraws = 0;
    int         nedts = 0;
@@ -1188,7 +1375,7 @@ qDebug() << "BrDb: kr ke km kn"
       db->next();
 
       //db.readBlobFromDB( fname, "download_aucData", irecID );
-      QString rawGUID   = db->value( 0 ).toString();
+              rawGUID   = db->value( 0 ).toString();
       QString label     = db->value( 1 ).toString();
       QString filename  = db->value( 2 ).toString();
       QString comment   = db->value( 3 ).toString();
@@ -1196,8 +1383,11 @@ qDebug() << "BrDb: kr ke km kn"
       QString date      = db->value( 6 ).toString();
       QString runID     = filename.section( ".", 0, 0 );
       QString subType   = filename.section( ".", 1, 1 );
-qDebug() << "BrDb:   raw ii id eid rGid label date"
-   << ii << irecID << experID << rawGUID << label << date;
+              contents  = "";
+      QString filebase  = filename.section( "/", -1, -1 );
+      rawGUIDs << rawGUID;
+//qDebug() << "BrDb:   raw ii id eid rGid label date"
+//   << ii << irecID << experID << rawGUID << label << date;
 
       query.clear();
       query << "get_experiment_info" << experID;
@@ -1205,52 +1395,17 @@ qDebug() << "BrDb:   raw ii id eid rGid label date"
       db->next();
 
       QString expGUID   = db->value( 0 ).toString();
-qDebug() << "BrDb:     raw expGid" << expGUID;
-if ( rawGUID.startsWith( "0000" ) )
-{
-  qDebug() << "BrDb:        *** 0000 rawGUID ***";
-  qDebug() << "BrDb:           filename" << filename;
-  qDebug() << "BrDb:           comment" << comment;
-  rawGUID = US_Util::new_guid();
-  query.clear();
-  query << "delete_rawData" << experID;
-  int rmstat = db->statusQuery( query );
-  if ( rmstat != US_DB2::OK )
-  {
-     qDebug() << "*ERROR* deleting eID" << experID;
-     break;
-  }
-  qDebug() << "BrDb:             new raw GUID" << rawGUID;
-  query.clear();
-  query << "new_rawData"
-     << rawGUID
-     << label
-     << filename
-     << comment
-     << experID
-     << "1"; // channel ID
-  int status = db->statusQuery( query );
-  irecID = db->lastInsertID();
-  if ( status == US_DB2::OK )
-  {
-     QString rdir = US_Settings::resultDir();
-     QString filepath = rdir + "/" + runID + "/" + filename;
-     int wrstat = db->writeBlobToDB( filepath, QString( "upload_aucData" ),
-           irecID );
-     if ( wrstat == US_DB2::ERROR )
-     {
-        qDebug() << "*ERROR* processing" << filepath;
-     }
-     else
-     {
-        qDebug() << "+SUCCESS+ loading" << filepath;
-     }
-  }
-  else
-  {
-     qDebug() << "*ERROR* processing" << rawGUID;
-  }
-}
+//qDebug() << "BrDb:     raw expGid" << expGUID;
+
+      if ( details )
+      {
+         QString filetemp = US_Settings::tmpDir() + "/" + filebase;
+
+         db->readBlobFromDB( filetemp, "download_aucData", irecID );
+
+         contents         = md5sum_file( filetemp );
+//qDebug() << "BrDb:       (R)contents filetemp" << contents << filetemp;
+      }
 
       cdesc.recordID    = irecID;
       cdesc.recType     = 1;
@@ -1258,11 +1413,12 @@ if ( rawGUID.startsWith( "0000" ) )
       cdesc.recState    = REC_DB;
       cdesc.dataGUID    = rawGUID;
       cdesc.parentGUID  = expGUID;
-      //cdesc.filename    = filename;
-      cdesc.filename    = "";
-      cdesc.contents    = "";
+      cdesc.filename    = filename;
+      cdesc.contents    = contents;
       cdesc.label       = label;
-      cdesc.description = comment + " File: " + filename;
+      cdesc.description = ( comment.isEmpty() ) ?
+                          filename.section( ".", 0, 2 ) :
+                          comment;
       cdesc.lastmodDate = date;
 
       ddescs << cdesc;
@@ -1286,16 +1442,31 @@ if ( rawGUID.startsWith( "0000" ) )
       QString comment   = db->value( 4 ).toString();
       QString date      = db->value( 5 ).toString();
       QString subType   = filename.section( ".", 2, 2 );
+              contents  = "";
+      QString filebase  = filename.section( "/", -1, -1 );
 
+              rawGUID   = rawGUIDs.at( rawIDs.indexOf( rawID ) );
+#if 0
       query.clear();
       query << "get_rawData" << rawID;
       db->query( query );
       db->next();
 
       QString rawGUID   = db->value( 0 ).toString();
+#endif
 
-qDebug() << "BrDb:     edt ii id eGID rGID label" << ii << irecID << editGUID
-   << rawGUID << label;
+//qDebug() << "BrDb:     edt ii id eGID rGID label" << ii << irecID << editGUID
+//   << rawGUID << label;
+
+      if ( details )
+      {
+         QString filetemp = US_Settings::tmpDir() + "/" + filebase;
+
+         db->readBlobFromDB( filetemp, "download_editData", irecID );
+
+         contents         = md5sum_file( filetemp );
+//qDebug() << "BrDb:       (E)contents filetemp" << contents << filetemp;
+      }
 
       cdesc.recordID    = irecID;
       cdesc.recType     = 2;
@@ -1305,11 +1476,11 @@ qDebug() << "BrDb:     edt ii id eGID rGID label" << ii << irecID << editGUID
       cdesc.parentGUID  = rawGUID;
       //cdesc.filename    = filename;
       cdesc.filename    = "";
-      cdesc.contents    = "";
+      cdesc.contents    = contents;
       cdesc.label       = label;
-      cdesc.description = comment.isEmpty() ?
-                          "File: " + filename :
-                          comment + " (File: " + filename + ")";
+      cdesc.description = ( comment.isEmpty() ) ?
+                          filename.section( ".", 0, 2 ) :
+                          comment;
       //cdesc.lastmodDate = QFileInfo( aucfile ).lastModified().toString();
 
       ddescs << cdesc;
@@ -1328,7 +1499,7 @@ qDebug() << "BrDb:     edt ii id eGID rGID label" << ii << irecID << editGUID
 
       QString modelGUID = db->value( 0 ).toString();
       QString descript  = db->value( 1 ).toString();
-      QString contents  = db->value( 2 ).toString();
+              contents  = db->value( 2 ).toString();
       QString label     = descript;
 
       if ( label.length() > 40 )
@@ -1341,6 +1512,20 @@ qDebug() << "BrDb:     edt ii id eGID rGID label" << ii << irecID << editGUID
 //qDebug() << "BrDb:       mod ii id mGID dsc"
 //   << ii << irecID << modelGUID << descript;
 
+      if ( details )
+      {
+         QTemporaryFile temporary;
+         temporary.open();
+         temporary.write( contents.toAscii() );
+         temporary.close();
+
+         contents     = md5sum_file( temporary.fileName() );
+//qDebug() << "BrDb:         det: cont" << contents;
+      }
+
+      else
+         contents     = "";
+
       cdesc.recordID    = irecID;
       cdesc.recType     = 3;
       cdesc.subType     = subType;
@@ -1348,7 +1533,7 @@ qDebug() << "BrDb:     edt ii id eGID rGID label" << ii << irecID << editGUID
       cdesc.dataGUID    = modelGUID;
       cdesc.parentGUID  = editGUID;
       cdesc.filename    = "";
-      cdesc.contents    = details ? contents : "";
+      cdesc.contents    = contents;
       cdesc.label       = label;
       cdesc.description = descript;
       //cdesc.lastmodDate = QFileInfo( aucfile ).lastModified().toString();
@@ -1376,6 +1561,19 @@ qDebug() << "BrDb:     edt ii id eGID rGID label" << ii << irecID << editGUID
       QString date      = db->value( 5 ).toString();
       QString label     = descript;
 
+      if ( details )
+      {
+         QTemporaryFile temporary;
+         temporary.open();
+         temporary.write( contents.toAscii() );
+         temporary.close();
+
+         contents     = md5sum_file( temporary.fileName() );
+      }
+
+      else
+         contents     = "";
+
       if ( label.length() > 40 )
          label = descript.left( 18 ) + "..." + descript.right( 19 );
 
@@ -1385,8 +1583,8 @@ qDebug() << "BrDb:     edt ii id eGID rGID label" << ii << irecID << editGUID
       cdesc.recState    = REC_DB;
       cdesc.dataGUID    = noiseGUID;
       //cdesc.parentGUID  = modelGUID;
-      //cdesc.filename    = filename;
-      cdesc.contents    = details ? contents : "";
+      cdesc.filename    = filename;
+      cdesc.contents    = contents;
       cdesc.label       = label;
       cdesc.description = descript;
       //cdesc.lastmodDate = QFileInfo( aucfile ).lastModified().toString();
@@ -1395,22 +1593,358 @@ qDebug() << "BrDb:     edt ii id eGID rGID label" << ii << irecID << editGUID
       progress->setValue( ++istep );
    }
 
-qDebug() << "BrDb: work done"; 
    progress->setValue( nstep );
    lb_status->setText( tr( "Database Review Complete" ) );
-qDebug() << "BrDb: progress reported";
+}
+
+// perform a record upload to the database from local disk
+int US_ManageData::record_upload( int irow )
+{
+   int stat = 0;
+stat = irow & 3;
+stat = 888;
+   QStringList query;
+   QString filepath = cdesc.filename;
+   QString pathdir  = filepath.section( "/",  0, -2 );
+   QString filename = filepath.section( "/", -1, -1 );
+
+   if      ( cdesc.recType == 1 )
+   {  // upload a Raw record
+      US_DataIO2::RawData rdata;
+
+      QString runID    = filename.section( ".",  0,  0 );
+      QString tripl    = filename.section( ".", -5, -2 );
+      QString fileexp  = filename.section( ".",  0,  1 ) + ".xml";
+      QString pathexp  = pathdir + "/" + fileexp;
+      QString expID;
+      QString expGUID  = "";
+qDebug() << "REC_ULD:EXP: runID" << runID << "  tripl" << tripl;
+
+      US_DataIO2::readRawData( filepath, rdata );
+
+      query.clear();
+      query << "get_experiment_info_by_runID" << runID;
+      db->query( query );
+      db->next();
+   
+      bool    havelexp    = QFile( pathexp ).exists();
+      bool    havedexp    = ( db->lastErrno() == US_DB2::OK );
+      bool    exp_create  = false;
+qDebug() << "REC_ULD:EXP: havelexp havedexp" << havelexp << havedexp;
+qDebug() << "REC_ULD:EXP:  dbErrno NOROWS" << db->lastErrno() << US_DB2::NOROWS;
+
+      if ( havedexp )
+      {  // experiment exists on the db
+         expID     = db->value(  1 ).toString();
+         expGUID   = db->value(  2 ).toString();
+
+         if ( !havelexp )
+         {  // but it does not exist locally, so create it
+            stat = new_experiment_local( db, pathexp );
+         }
+      }
+
+      else if ( havelexp )
+      {  // experiment exists locally, but not on db, so create it
+         stat = new_experiment_db( db, pathexp, expID, expGUID );
+      }
+
+      else
+      {  // experiment does not exist on db or local:  may need to skip update
+         QMessageBox msgBox;
+         QString     msg;
+
+         // format a message for the warning pop-up
+         msg  =
+            tr( "No parent Experiment record exists in the database\n" 
+                "or on local disk for this Raw record.\n"
+                "You may create an experiment now for the runID\n"
+                "                \"%1\"\n"
+                "using Buffer, Analyte, and Experiment dialogs.\n\n"
+                "Do you wish to create a new experiment at this time?\n\n"
+                "    Click \"No\"  to simply abort the upload;\n"
+                "    Click \"Yes\" to create an experiment record.\n" )
+                .arg( runID );
+         msgBox.setWindowTitle( tr( "No Existing Parent Experiment" ) );
+         msgBox.setText( msg );
+         msgBox.setStandardButtons( QMessageBox::Yes | QMessageBox::No );
+         msgBox.setDefaultButton( QMessageBox::No );
+         exp_create  = ( msgBox.exec() == QMessageBox::Yes );
+         stat        = 30000;
+      }
+
+      if ( exp_create )
+      {
+         US_ExpInfo::ExperimentInfo expdata;
+         US_ExpInfo::TripleInfo     triple;
+
+         int centerpiece = 0;
+         int projID      = 0;
+         int insID       = 0;
+         int operID      = 0;
+         int rotorID     = 1;
+         int labID       = 0;
+
+         double  avgTemp = 0.0;
+
+         QString projGUID;
+         QString invGUID;
+         QString labGUID;
+         QString insSerial;
+         QString expType       = "velocity";
+         QString operGUID;
+         QString optSystem     = filename.section( ".", 1, 1 );
+         QString firstName     = investig.section( ":", 1, 1 )
+                                         .section( ",", 1, 1 ).simplified();
+         QString lastName      = investig.section( ":", 1, 1 )
+                                         .section( ",", 0, 0 ).simplified();
+         QString centrifuge;
+
+         for ( int jj = 0; jj < rdata.scanData.size(); jj++ )
+         {
+            avgTemp += rdata.scanData[ jj ].temperature;
+         }
+         avgTemp /= (double)( rdata.scanData.size() );
+
+         expdata.triples.clear();
+         expdata.rpms   .clear();
+
+         expdata.invID              = personID;
+         expdata.invGUID            = invGUID;
+         expdata.lastName           = lastName;
+         expdata.firstName          = firstName;
+         expdata.expID              = expID.toInt();
+         expdata.expGUID            = expGUID;
+         expdata.projectID          = projID;
+         expdata.runID              = runID;
+         expdata.labID              = labID;
+         expdata.labGUID            = labGUID;
+         expdata.instrumentID       = insID;
+         expdata.instrumentSerial   = insSerial;
+         expdata.operatorID         = operID;
+         expdata.operatorGUID       = operGUID;
+         expdata.rotorID            = rotorID;
+         expdata.expType            = expType;
+         expdata.opticalSystem      = optSystem;
+         expdata.runTemp            = QString::number( avgTemp );
+         expdata.label              = runID;
+         expdata.comments           = runID + " experiment";
+         expdata.centrifugeProtocol = centrifuge;
+         expdata.date               = QDateTime::currentDateTime().toString();
+
+         double grpm = rdata.scanData[ 0 ].rpm; // greatest rpm so far
+         double crpm;
+         expdata.rpms << grpm;                  // first rpm list value
+
+         for ( int jj = 1; jj < rdata.scanData.size(); jj++ )
+         {  // loop to add unique rpms to a list, sorting as we go
+            crpm   = rdata.scanData[ jj ].rpm;
+
+            if ( crpm == grpm )
+               continue;     // if equal to greatest, no need to add it
+
+            else if ( crpm > grpm )
+            {  // this rpm is greater than any so far:  append it
+               expdata.rpms << crpm;
+               grpm    = crpm;         // set new greatest
+            }
+
+            else if ( crpm < grpm )
+            {  // this rpm is less than greatest, find where to insert it
+
+               for ( int kk = 0; kk < expdata.rpms.size(); kk++ )
+               {
+                  if ( crpm == expdata.rpms.at( kk ) )
+                     break;   // break from insert loop if equal to one in list
+
+                  if ( crpm < expdata.rpms.at( kk ) )
+                  {  // found list value we are less than, so insert before it
+                     expdata.rpms.insert( kk, crpm );
+                     break;
+                  }
+               }
+            }
+         }
+
+         buffer.personID       = personID;
+         buffer.person         = firstName + " " + lastName;
+
+         analyte.invID         = personID;
+
+         US_BufferGui*  budiag =
+            new US_BufferGui(  expdata.invID, true, buffer, false );
+         connect( budiag, SIGNAL( valueChanged(  US_Buffer  ) ),
+                  this,   SLOT  ( assignBuffer(  US_Buffer  ) ) );
+         budiag->exec();
+
+         US_AnalyteGui* andiag =
+            new US_AnalyteGui( expdata.invID, true, "", true, avgTemp );
+         connect( andiag, SIGNAL( valueChanged(  US_Analyte ) ),
+                  this,   SLOT  ( assignAnalyte( US_Analyte ) ) );
+         andiag->exec();
+
+         triple.centerpiece    = centerpiece;
+         triple.bufferID       = buffer.bufferID.toInt();
+         triple.bufferGUID     = buffer.GUID;
+         triple.bufferDesc     = buffer.description;
+         triple.analyteID      = analyte.analyteID.toInt();
+         triple.analyteGUID    = analyte.analyteGUID;
+         triple.analyteDesc    = analyte.description;
+         triple.tripleFilename = filename;
+qDebug() << "triple: center  " << triple.centerpiece;
+qDebug() << "  b.bufferID    " << triple.bufferID;
+qDebug() << "  b.bufferGUID  " << triple.bufferGUID;
+qDebug() << "  b.bufferDesc  " << triple.bufferDesc;
+qDebug() << "  a.analyteID   " << triple.analyteID;
+qDebug() << "  a.analyteGUID " << triple.analyteGUID;
+qDebug() << "  a.analyteDesc " << triple.analyteDesc;
+
+         expdata.triples << triple;
+
+         US_ExpInfo*    eidiag =
+            new US_ExpInfo(    expdata, false );
+         eidiag->exec();
+
+//*DEBUG*
+if ( exp_create ) return 40000;
+//*DEBUG*
+
+         stat        = 20000;
+      }
+
+      if ( stat == 0 )
+      {  // all ok with experiment:  proceed with uploading Raw record
+         cdesc.parentGUID  = expGUID;
+
+         query.clear();
+         query << "new_rawData"
+            << cdesc.dataGUID
+            << cdesc.label
+            << cdesc.filename
+            << cdesc.description
+            << expID
+            << "1"; // channel ID
+
+         int dbstat = db->statusQuery( query );
+         int irecID = db->lastInsertID();
+         if ( dbstat == US_DB2::OK )
+         {
+            dbstat     = db->writeBlobToDB( filepath,
+                                            QString( "upload_aucData" ),
+                                            irecID );
+            if ( dbstat == US_DB2::ERROR )
+            {
+               qDebug() << "*ERROR* processing" << filepath;
+               stat        = 40000;
+            }
+            else
+            {
+               qDebug() << "+SUCCESS+ loading" << filepath;
+            }
+         }
+      }
+   }
+
+   else if ( cdesc.recType == 2 )
+   {  // upload an EditedData record
+   }
+
+   else if ( cdesc.recType == 3 )
+   {  // upload a Model record
+   }
+
+   else if ( cdesc.recType == 4 )
+   {  // upload a Noise record
+   }
+
+   else
+   {  // *ERROR*:  invalid type
+      stat        = 10000;
+   }
+
+   return stat;
+}
+// perform a record download from the database to local disk
+int US_ManageData::record_download( int irow )
+{
+   int stat = 0;
+stat = irow & 3;
+stat = 888;
+   return stat;
+}
+// perform a record remove from the database
+int US_ManageData::record_remove_db( int irow )
+{
+   int stat = 0;
+stat = irow & 3;
+stat = 888;
+   return stat;
+}
+
+// perform a record remove from local disk
+int US_ManageData::record_remove_local( int irow )
+{
+   int stat = 0;
+   QString filepath = cdesc.filename;
+   QString filename = filepath.section( "/", -1, -1 );
+   QFile   file( filepath );
+   QBrush  fbru( colorGray );
+
+   if ( file.exists() )
+   {  // the file to remove does exist
+
+      if ( file.remove() )
+      {  // the remove was successful
+
+         if ( ( cdesc.recState & REC_DB ) == 0 )
+         {  // it was local-only, so now it's a dummy
+            cdesc.recState  = NOSTAT;
+         }
+
+         else
+         {  // it was on both, so now it's db-only
+            cdesc.recState &= ~REC_LO;
+            fbru            = QBrush( colorBlue );
+         }
+
+         for ( int jj = 0; jj < ntcols; jj++ )
+         {  // re-color row to reflect its new state
+            tw_item->setForeground( jj, fbru ); 
+         }
+
+         // update the current description record in the vector
+         adescs[ irow ] = cdesc;
+      }
+
+      else
+      {  // an error occurred in removing
+         stat     = 1000;
+         qDebug() << "*ERROR* removing row file " << filename
+            << "  (row" << irow << ")";
+      }
+   }
+
+   else
+   {  // file did not exist
+      stat     = 2000;
+      qDebug() << "*ERROR* attempt to remove non-existent file " << filename
+         << "  (row" << irow << ")";
+   }
+
+   return stat;
 }
 
 // browse the local disk for R/E/M/N data sets, with/without content details
-void US_ManageData::browse_local( bool details = false )
+void US_ManageData::browse_local( )
 {
    // start with AUC (raw) and edit files in directories of resultDir
-   QString     rdir    = US_Settings::resultDir();
-   QString     ddir    = US_Settings::dataDir();
-   QString     dirm    = ddir + "/models";
-   QString     dirn    = ddir + "/noises";
-   QStringList aucdirs = QDir( rdir )
-      .entryList( QDir::AllDirs, QDir::Name );
+   QString     rdir     = US_Settings::resultDir();
+   QString     ddir     = US_Settings::dataDir();
+   QString     dirm     = ddir + "/models";
+   QString     dirn     = ddir + "/noises";
+   QString     contents = "";
+   QStringList aucdirs  = QDir( rdir )
+      .entryList( QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
    QStringList aucfilt;
    QStringList edtfilt;
    QStringList modfilt( "M*xml" );
@@ -1442,17 +1976,27 @@ qDebug() << "BrLoc:  nau nmo nno nst" << naucd << nmodf << nnoif << nstep;
 
       for ( int jj = 0; jj < naucf; jj++ )
       {  // loop thru .auc files found in a directory
-         QString     fname   = aucfiles.at( jj );
-         QString     runid   = fname.section( ".", 0, 0 );
-         QString     tripl   = fname.section( ".", -5, -2 );
-         QString     aucfile = subdir + "/" + fname;
-qDebug() << "BrLoc: ii jj file" << ii << jj << aucfile;
+         QString fname    = aucfiles.at( jj );
+         QString runid    = fname.section( ".", 0, 0 );
+         QString tripl    = fname.section( ".", -5, -2 );
+         QString aucfile  = subdir + "/" + fname;
+         QString descr    = "";
+         QString rawGUID  = "";
+                 contents = "";
+//qDebug() << "BrLoc: ii jj file" << ii << jj << aucfile;
 
          // read in the raw data and build description record
          US_DataIO2::readRawData( aucfile, rdata );
 
+         if ( details )
+         {
+            contents     = md5sum_file( aucfile );
+//qDebug() << "BrLoc:      contents" << contents;
+         }
+
          char uuid[ 37 ];
          uuid_unparse( (uchar*)rdata.rawGUID, uuid );
+
          cdesc.recordID    = -1;
          cdesc.recType     = 1;
          cdesc.subType     = fname.section( ".", 1, 1 );
@@ -1460,7 +2004,7 @@ qDebug() << "BrLoc: ii jj file" << ii << jj << aucfile;
          cdesc.dataGUID    = QString( uuid );
          cdesc.parentGUID  = "0";
          cdesc.filename    = aucfile;
-         cdesc.contents    = "";
+         cdesc.contents    = contents;
          cdesc.label       = runid + "." + tripl;
          cdesc.description = rdata.description;
          cdesc.lastmodDate = QFileInfo( aucfile ).lastModified().toString();
@@ -1477,13 +2021,20 @@ qDebug() << "BrLoc: ii jj file" << ii << jj << aucfile;
 
          for ( int kk = 0; kk < edtfiles.size(); kk++ )
          {
-            QString efname  = edtfiles.at( kk );
-            QString editid  = efname.section( ".", 1, 3 );
-            QString edtfile = subdir + "/" + efname;
-//qDebug() << "BrLoc:    kk file" << jj << edtfile;
+            QString efname   = edtfiles.at( kk );
+            QString editid   = efname.section( ".", 1, 3 );
+            QString edtfile  = subdir + "/" + efname;
+                    contents = "";
+//qDebug() << "BrLoc:    kk file" << kk << edtfile;
 
             // read EditValues for the edit data and build description record
             US_DataIO2::readEdits( edtfile, edval );
+
+            if ( details )
+            {
+               contents     = md5sum_file( edtfile );
+//qDebug() << "BrLoc:      (E)contents edtfile" << contents << edtfile;
+            }
 
             cdesc.recordID    = -1;
             cdesc.recType     = 2;
@@ -1492,7 +2043,7 @@ qDebug() << "BrLoc: ii jj file" << ii << jj << aucfile;
             cdesc.dataGUID    = edval.editGUID;
             cdesc.parentGUID  = edval.dataGUID;
             cdesc.filename    = edtfile;
-            cdesc.contents    = "";
+            cdesc.contents    = contents;
             cdesc.label       = runid + "." + editid;
             cdesc.description = cdesc.label;
             cdesc.lastmodDate = QFileInfo( edtfile ).lastModified().toString();
@@ -1510,8 +2061,14 @@ qDebug() << "BrLoc: ii jj file" << ii << jj << aucfile;
    {  // loop thru potential model files
       US_Model    model;
       QString     modfil   = dirm + "/" + modfils.at( ii );
+                  contents = "";
 
       model.load( modfil );
+
+      if ( details )
+      {
+         contents     = md5sum_file( modfil );
+      }
 
       cdesc.recordID    = -1;
       cdesc.recType     = 3;
@@ -1520,7 +2077,7 @@ qDebug() << "BrLoc: ii jj file" << ii << jj << aucfile;
       cdesc.dataGUID    = model.modelGUID;
       cdesc.parentGUID  = model.editGUID;
       cdesc.filename    = modfil;
-      cdesc.contents    = "";
+      cdesc.contents    = contents;
       cdesc.description = model.description;
       cdesc.lastmodDate = QFileInfo( modfil ).lastModified().toString();
 
@@ -1543,8 +2100,14 @@ qDebug() << "BrLoc: ii jj file" << ii << jj << aucfile;
    {  // loop thru potential noise files
       US_Noise    noise;
       QString     noifil   = dirn + "/" + noifils.at( ii );
+                  contents = "";
 
       noise.load( noifil );
+
+      if ( details )
+      {
+         contents     = md5sum_file( noifil );
+      }
 
       cdesc.recordID    = -1;
       cdesc.recType     = 4;
@@ -1553,7 +2116,7 @@ qDebug() << "BrLoc: ii jj file" << ii << jj << aucfile;
       cdesc.dataGUID    = noise.noiseGUID;
       cdesc.parentGUID  = noise.modelGUID;
       cdesc.filename    = noifil;
-      cdesc.contents    = "";
+      cdesc.contents    = contents;
       cdesc.description = noise.description;
       cdesc.lastmodDate = QFileInfo( noifil ).lastModified().toString();
 
@@ -1606,12 +2169,23 @@ void US_ManageData::merge_dblocal( )
          descd.filename     = descl.filename;     // filename from local
          descd.lastmodDate  = descl.lastmodDate;  // last mod date from local
 
+         if ( details )
+         {
+            descd.contents     = descd.contents + " " + descl.contents;
+         }
+
          adescs << descd;                  // output combo record
-qDebug() << "MERGE:  kar jdr jlr (1)GID" << kar << jdr << jlr << descd.dataGUID;
+//qDebug() << "MERGE:  kar jdr jlr (1)GID" << kar << jdr << jlr << descd.dataGUID;
          kar++;
 
          if ( ++jdr >= nddes )             // bump db count and test if done
+         {
+            if ( ++jlr >= nldes )
+               break;
+            descl = ldescs.at( jlr );      // get next local record
+
             break;
+         }
 
          descd = ddescs.at( jdr );         // get next db record
 
@@ -1621,10 +2195,13 @@ qDebug() << "MERGE:  kar jdr jlr (1)GID" << kar << jdr << jlr << descd.dataGUID;
          descl = ldescs.at( jlr );         // get next local record
       }
 
+      if ( jdr >= nddes  ||  jlr >= nldes )
+         break;
+
       while ( descd.recType > descl.recType )
       {  // output db records that are left-over children
          adescs << descd;
-qDebug() << "MERGE:  kar jdr jlr (2)GID" << kar << jdr << jlr << descd.dataGUID;
+//qDebug() << "MERGE:  kar jdr jlr (2)GID" << kar << jdr << jlr << descd.dataGUID;
          kar++;
 
          if ( ++jdr >= nddes )
@@ -1633,10 +2210,13 @@ qDebug() << "MERGE:  kar jdr jlr (2)GID" << kar << jdr << jlr << descd.dataGUID;
          descd = ddescs.at( jdr );
       }
 
+      if ( jdr >= nddes  ||  jlr >= nldes )
+         break;
+
       while ( descl.recType > descd.recType )
       {  // output local records that are left-over children
          adescs << descl;
-qDebug() << "MERGE:  kar jdr jlr (3)GID" << kar << jdr << jlr << descl.dataGUID;
+//qDebug() << "MERGE:  kar jdr jlr (3)GID" << kar << jdr << jlr << descl.dataGUID;
          kar++;
 
          if ( ++jlr >= nldes )
@@ -1644,6 +2224,9 @@ qDebug() << "MERGE:  kar jdr jlr (3)GID" << kar << jdr << jlr << descl.dataGUID;
 
          descl = ldescs.at( jlr );
       }
+
+      if ( jdr >= nddes  ||  jlr >= nldes )
+         break;
 
       // If we've reached another matching pair or if we are not at
       // the same level, go back up to the start of the main loop.
@@ -1658,7 +2241,7 @@ qDebug() << "MERGE:  kar jdr jlr (3)GID" << kar << jdr << jlr << descl.dataGUID;
       if ( descd.label < descl.label )
       {  // output db record first based on alphabetic label sort
          adescs << descd;
-qDebug() << "MERGE:  kar jdr jlr (4)GID" << kar << jdr << jlr << descd.dataGUID;
+//qDebug() << "MERGE:  kar jdr jlr (4)GID" << kar << jdr << jlr << descd.dataGUID;
          kar++;
 
          if ( ++jdr >= nddes )
@@ -1670,7 +2253,7 @@ qDebug() << "MERGE:  kar jdr jlr (4)GID" << kar << jdr << jlr << descd.dataGUID;
       else
       {  // output local record first based on alphabetic label sort
          adescs << descl;
-qDebug() << "MERGE:  kar jdr jlr (5)GID" << kar << jdr << jlr << descl.dataGUID;
+//qDebug() << "MERGE:  kar jdr jlr (5)GID" << kar << jdr << jlr << descl.dataGUID;
          kar++;
 
          if ( ++jlr >= nldes )
@@ -1683,28 +2266,29 @@ qDebug() << "MERGE:  kar jdr jlr (5)GID" << kar << jdr << jlr << descl.dataGUID;
 
    // after breaking from main loop, output any records left from one
    // source (db/local) or the other.
-   //
+   nstep += ( nddes - jdr + nldes - jlr );
+   progress->setMaximum( nstep );
+
    while ( jdr < nddes )
    {
       adescs << ddescs.at( jdr++ );
-descd=ddescs.at(jlr-1);
-qDebug() << "MERGE:  kar jdr jlr (8)GID" << kar << jdr << jlr << descd.dataGUID;
+//descd=ddescs.at(jlr-1);
+//qDebug() << "MERGE:  kar jdr jlr (8)GID" << kar << jdr << jlr << descd.dataGUID;
       kar++;
+      progress->setValue( kar );
    }
 
    while ( jlr < nldes )
    {
       adescs << ldescs.at( jlr++ );
-descl=ldescs.at(jlr-1);
-qDebug() << "MERGE:  kar jdr jlr (9)GID" << kar << jdr << jlr << descl.dataGUID;
+//descl=ldescs.at(jlr-1);
+//qDebug() << "MERGE:  kar jdr jlr (9)GID" << kar << jdr << jlr << descl.dataGUID;
       kar++;
+      progress->setValue( kar );
    }
 
-qDebug() << "MERGE: nddes nldes kar" << nddes << nldes << --kar;
-
-   //adescs.clear();
-   //adescs << ddescs;
-   //adescs << ldescs;
+//qDebug() << "MERGE: nddes nldes kar" << nddes << nldes << --kar;
+//qDebug() << " a/d/l sizes" << adescs.size() << ddescs.size() << ldescs.size();
 
    progress->setValue( nstep );
    lb_status->setText( tr( "Data Merge Complete" ) );
@@ -1847,8 +2431,8 @@ void US_ManageData::sort_descs( QVector< DataDesc >& descs )
       sortm << dsorts;
       orphm << dsorts;
       tdess.append( cdesc );
-qDebug() << "N orphan:" << orphn.at( ii );
-qDebug() << "  M dummy:" << dsorts;
+//qDebug() << "N orphan:" << orphn.at( ii );
+//qDebug() << "  M dummy:" << dsorts;
    }
 
    ndmy   = 0;
@@ -2115,8 +2699,9 @@ QString US_ManageData::model_type( int imtype, int nassoc, int niters )
 {
    QString mtype;
 
+   // format the base model type string
    switch ( imtype )
-   {  // format the base model type string
+   {
       default:
       case (int)US_Model::TWODSA:
       case (int)US_Model::MANUAL:
@@ -2146,11 +2731,13 @@ QString US_ManageData::model_type( int imtype, int nassoc, int niters )
          break;
    }
 
+   // add RA for Reversible Associations (if associations count > 1)
    if ( nassoc > 1 )
-      mtype = mtype + "-RA";            // add RA for Reversible Associations
+      mtype = mtype + "-RA";
 
+   // add MC for Monte Carlo (if iterations count > 1)
    if ( niters > 1 )
-      mtype = mtype + "-MC";            // add MC for Monte Carlo
+      mtype = mtype + "-MC";
 
    return mtype;
 }
@@ -2158,6 +2745,7 @@ QString US_ManageData::model_type( int imtype, int nassoc, int niters )
 // compose string describing model type
 QString US_ManageData::model_type( US_Model model )
 {
+   // return model type string based on integer flags in the model object
    return model_type( (int)model.type,
                       model.associations.size(),
                       model.iterations );
@@ -2172,14 +2760,18 @@ QString US_ManageData::model_type( QString modxml )
    int   nassoc;
    int   niters;
 
+   // model type number from type attribute
    jj       = modxml.indexOf( " type=" );
    imtype   = ( jj < 1 ) ? 0 : modxml.mid( jj ).section( quo, 1, 1 ).toInt();
 
+   // count of associations is count of k_eq attributes present
    nassoc   = modxml.count( "k_eq=" );
 
+   // number of iterations from iterations attribute value
    jj       = modxml.indexOf( " iterations=" );
    niters   = ( jj < 1 ) ? 0 : modxml.mid( jj ).section( quo, 1, 1 ).toInt();
 
+   // return model type string based on integer flags
    return model_type( imtype, nassoc, niters );
 }
 
@@ -2400,7 +2992,7 @@ int US_ManageData::index_substring( QString ss, int ixs, QStringList& sl )
    return kndx;
 }
 
-// get sublist from string list of substring matches at given position
+// get sublist from string list of substring matches at a given string position
 QStringList US_ManageData::filter_substring( QString ss, int ixs,
    QStringList& sl )
 {
@@ -2452,14 +3044,175 @@ int US_ManageData::record_state_flag( DataDesc descr, int pstate )
    int state = descr.recState;
 
    if ( descr.recState == NOSTAT  ||
-        descr.description.contains( "ARTIFICIAL" ) )
-      state = NOSTAT;
+        descr.description.contains( "-ARTIFICIAL" ) )
+      state = NOSTAT;                    // mark a dummy record
 
-   else if ( ( pstate & REC_DB ) != 0 )
-      state = state | PAR_DB;
+   else
+   {  // detect and mark parentage of non-dummy
+      if ( ( pstate & REC_DB ) != 0 )
+         state = state | PAR_DB;         // mark a record with db parent
 
-   else if ( ( pstate & REC_LO ) != 0 )
-      state = state | PAR_LO;
+      if ( ( pstate & REC_LO ) != 0 )
+         state = state | PAR_LO;         // mark a record with local parent
+   }
 
    return state;
 }
+
+// use database information to create a new local XML experiment record
+int US_ManageData::new_experiment_local( US_DB2* db, QString& pathexp )
+{
+   int stat = 70000;
+
+   QString projID    = db->value(  0 ).toString();
+   QString expID     = db->value(  1 ).toString();
+   QString expGUID   = db->value(  2 ).toString();
+   QString labID     = db->value(  3 ).toString();
+   QString instrID   = db->value(  4 ).toString();
+   QString operID    = db->value(  5 ).toString();
+   QString rotorID   = db->value(  6 ).toString();
+   QString expType   = db->value(  7 ).toString();
+   QString runTemp   = db->value(  8 ).toString();
+   QString label     = db->value(  9 ).toString();
+   QString comment   = db->value( 10 ).toString();
+   QString centrif   = db->value( 11 ).toString();
+   QString dateUpd   = db->value( 12 ).toString();
+   QString personID  = db->value( 13 ).toString();
+
+   US_ExpInfo::ExperimentInfo expdata;
+   US_ExpInfo::TripleInfo     triple;
+
+   int centerpiece = 0;
+
+   QString runType;
+   QString invGUID;
+   QString lastName;
+   QString firstName;
+   QString runID;
+   QString labGUID;
+   QString instrSerial;
+   QString operGUID;
+   QString optSystem;
+
+   expdata.triples.clear();
+   expdata.rpms   .clear();
+
+   expdata.invID              = personID.toInt();
+   expdata.invGUID            = invGUID;
+   expdata.lastName           = lastName;
+   expdata.firstName          = firstName;
+   expdata.expID              = expID.toInt();
+   expdata.expGUID            = expGUID;
+   expdata.projectID          = projID.toInt();
+   expdata.runID              = runID;
+   expdata.labID              = labID.toInt();
+   expdata.labGUID            = labGUID;
+   expdata.instrumentID       = instrID.toInt();
+   expdata.instrumentSerial   = instrSerial;
+   expdata.operatorID         = operID.toInt();
+   expdata.operatorGUID       = operGUID;
+   expdata.rotorID            = rotorID.toInt();
+   expdata.expType            = expType;
+   expdata.opticalSystem      = optSystem;
+   expdata.runTemp            = runTemp;
+   expdata.label              = runID;
+   expdata.comments           = runID + " experiment";
+   expdata.centrifugeProtocol = centrif;
+   expdata.date               = QDateTime::currentDateTime().toString();
+
+   triple.centerpiece    = centerpiece;
+   //triple.bufferID       = buffer.bufferID.toInt();
+   //triple.bufferGUID     = buffer.GUID;
+   //triple.bufferDesc     = buffer.description;
+   //triple.analyteID      = analyte.analyteID.toInt();
+   //triple.analyteGUID    = analyte.analyteGUID;
+   //triple.analyteDesc    = analyte.description;
+   //triple.tripleFilename = filename;
+
+   QList< int > tripmap;
+   QStringList  triples;
+
+   tripmap << 0;
+
+   stat = US_ConvertIO::writeXmlFile( expdata, triples, tripmap,
+                                      runType, runID, pathexp );
+   return stat;
+}
+
+// use local XML information to create a new database experiment record
+int US_ManageData::new_experiment_db( US_DB2* db, QString& pathexp,
+      QString& expID, QString& expGUID )
+{
+   int stat = 80000;
+
+   US_ExpInfo::ExperimentInfo expdata;
+   US_ExpInfo::TripleInfo     triple;
+
+   QString expdir   = pathexp.section( "/",  0, -2 );
+   QString expfile  = pathexp.section( "/", -1, -1 );
+   QString runID    = expfile.section( ".",  0,  0 );
+   QString runType  = expfile.section( ".",  1,  1 );
+
+   QStringList triples;
+
+   stat = US_ConvertIO::readXmlFile( expdata, triples,
+                                     runType, runID, expdir );
+
+   int iexpID       = expdata.expID;
+   expID            = QString::number( iexpID );
+   expGUID          = expdata.expGUID;
+
+   QStringList query( "new_experiment" );
+
+   query << expdata.expGUID
+         << QString::number( expdata.projectID )
+         << runID
+         << QString::number( expdata.labID )
+         << QString::number( expdata.instrumentID )
+         << QString::number( expdata.operatorID )
+         << QString::number( expdata.rotorID )
+         << expdata.expType
+         << expdata.runTemp
+         << expdata.label
+         << expdata.comments
+         << expdata.centrifugeProtocol;
+
+   stat = db->statusQuery( query );
+
+   if ( stat != US_DB2::OK )
+      stat += 80000;
+
+   return stat;
+}
+
+// slot to get analyte data returned by us_analyte_gui
+void US_ManageData::assignAnalyte( US_Analyte data )
+{
+   analyte = data;
+}
+
+// slot to get buffer data returned by us_buffer_gui
+void US_ManageData::assignBuffer(  US_Buffer  data )
+{
+   buffer  = data;
+}
+
+// calculate the md5hash and size of a named file
+QString US_ManageData::md5sum_file( QString filename )
+{
+   QFile f( filename );
+
+   if ( ! f.open( QIODevice::ReadOnly ) )
+      return "0 0";
+
+   QByteArray data = f.readAll();
+   f.close();
+
+   QString hashandsize =
+      QString( QCryptographicHash::hash( data, QCryptographicHash::Md5 )
+      .toHex() ) + " " + 
+      QString::number( QFileInfo( filename ).size() );
+
+   return hashandsize;
+}
+
