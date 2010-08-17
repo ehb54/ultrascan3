@@ -661,7 +661,7 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
 
    QVBoxLayout *vbl_2 = vbl_1; // new QVBoxLayout;
 
-   vbl_2->addSpacing(3);
+   vbl_2->addSpacing(5);
    vbl_2->addWidget(cb_run_mode_2);
    vbl_2->addWidget(cb_run_mode_2_1);
    vbl_2->addWidget(cb_run_mode_2_2);
@@ -675,6 +675,9 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    vbl_2->addWidget(cb_run_mode_2_14);
    vbl_2->addWidget(cb_run_mode_2_18);
    
+   vbl_2->addSpacing(5);
+   vbl_2->addWidget(cb_run_mode_9);
+
    QVBoxLayout *vbl_3 = new QVBoxLayout;
    vbl_3->addWidget(cb_run_mode_3);
    vbl_3->addSpacing(2);
@@ -743,9 +746,6 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    vbl_3->addWidget(cb_run_mode_4_7);
    vbl_3->addWidget(cb_run_mode_4_8);
 
-   vbl_3->addSpacing(5);
-
-   vbl_3->addWidget(cb_run_mode_9);
 
    QHBoxLayout *hbl_modes = new QHBoxLayout;
 
