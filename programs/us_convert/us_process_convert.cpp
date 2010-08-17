@@ -532,7 +532,7 @@ void US_ProcessConvert::convert(
    // Sort the list according to time.  Use a simple bubble sort
    for ( int i = 0; i < ccwLegacyData.size(); i++ )
    {
-      for ( int j = i + i; j < ccwLegacyData.size(); j++ )
+      for ( int j = i + 1; j < ccwLegacyData.size(); j++ )
       {
          if ( ccwLegacyData[ j ].seconds < ccwLegacyData[ i ].seconds ) 
             ccwLegacyData.swap( i, j );
@@ -550,27 +550,31 @@ void US_ProcessConvert::convert(
    // Get the min and max radius
    double min_radius = 1.0e99;
    double max_radius = 0.0;
+   double max_size   = 0.0;
 
-   for ( int i = 0; i < ccwLegacyData.size(); i++ )
+   // Calculate mins and maxes over the entire dataset for proper scaling
+   for ( int i = 0; i < rawLegacyData.size(); i++ )
    {
-      double first = ccwLegacyData[ i ].readings[ 0 ].d.radius;
+      double first = rawLegacyData[ i ].readings[ 0 ].d.radius;
 
-      uint   size  = ccwLegacyData[ i ].readings.size();
-      double last  = ccwLegacyData[ i ].readings[ size - 1 ].d.radius; 
+      uint   size  = rawLegacyData[ i ].readings.size();
+      double last  = rawLegacyData[ i ].readings[ size - 1 ].d.radius; 
 
       min_radius = min( min_radius, first );
-      max_radius = max( max_radius, last );
+      max_radius = max( max_radius, last  );
+      max_size   = max( max_size,   size  );
    }
 
    // Convert the scans
    
    // Set the distance between readings 
    double delta_r = ( runType == "IP" ) 
-      ? ( max_radius - min_radius ) / ( ccwLegacyData[ 0 ].readings.size() - 1 )
+      ? ( max_radius - min_radius ) / ( max_size - 1 )
       : 0.001;
 
    // Calculate the radius vector
    int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
+
    double radius = min_radius;
    for ( int j = 0; j < radius_count; j++ )
    {

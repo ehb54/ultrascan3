@@ -1,5 +1,7 @@
 //! \file us_expinfo.cpp
 
+#include <QtGui>
+
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_passwd.h"
@@ -32,15 +34,8 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn, bool editing ) :
    QLabel* lb_runID = us_label( tr( "Run ID " ) );
    experiment->addWidget( lb_runID, row++, 0, 1, 2 );
    le_runID = us_lineedit();
-   if ( this->editing )
-   {
-      le_runID->setPalette ( gray );
-      le_runID->setReadOnly( true );
-   }
-
-   else
-      connect( le_runID, SIGNAL( editingFinished() ), 
-                         SLOT  ( runIDChanged   () ) );
+   le_runID->setPalette ( gray );
+   le_runID->setReadOnly( true );
 
    experiment->addWidget( le_runID, row++, 0, 1, 2 );
  
@@ -239,7 +234,8 @@ void US_ExpInfo::reset( void )
    cb_project      ->setLogicalIndex( expInfo.projectID    );
          
    // Experiment types combo
-   for ( uint i = 0; i < sizeof( experimentTypes); i++ )
+   cb_expType->setCurrentIndex( 3 );  // default is "other"
+   for ( int i = 0; i < experimentTypes.size(); i++ )
    {
       if ( experimentTypes[ i ].toUpper() == expInfo.expType.toUpper() )
       {
@@ -280,20 +276,6 @@ bool US_ExpInfo::load( void )
       connect_error( db.lastError() );
       return( false );
    }
-
-   // Some default values
-   expInfo.projectID          = 0;
-   expInfo.expID              = 0;
-   expInfo.labID              = 0;
-   expInfo.instrumentID       = 0;
-   expInfo.operatorID         = 0;
-   expInfo.rotorID            = 0;
-   expInfo.expType            = "velocity";
-   // Let's go with the calculated runTemp);
-   expInfo.label              = "";
-   expInfo.comments           = "";
-   expInfo.centrifugeProtocol = "";
-   expInfo.date               = "";
 
    // Did the user click edit?
    if ( this->editing )
@@ -452,23 +434,6 @@ QComboBox* US_ExpInfo::us_expTypeComboBox( void )
    cb->addItems( experimentTypes );
 
    return cb;
-}
-
-void US_ExpInfo::runIDChanged( void )
-{
-   expInfo.runID = le_runID->text();
-
-   // If we are editing, and we've identified an investigator and an experiment
-   if ( expInfo.invID > 0 && this->editing && expInfo.expID > 0 )
-      pb_accept->setEnabled( true );
-
-   // If we are not editing, but we've identified an investigator and the runID is new
-   else if ( expInfo.invID > 0 && checkRunID() == 0 )
-      pb_accept->setEnabled( true );
-
-   else 
-      pb_accept->setEnabled( false );
- 
 }
 
 // Function to see if the current runID already exists in the database
@@ -820,7 +785,7 @@ void US_ExpInfo::ExperimentInfo::clear( void )
    operatorID         = 0;
    rotorID            = 0;
    expType            = QString( "" );
-   opticalSystem      = QString( "  " );
+   opticalSystem      = QByteArray( "  " );
    rpms.clear();
    runTemp            = QString( "" );
    label              = QString( "" );
@@ -865,3 +830,42 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
    return *this;
 }
 
+void US_ExpInfo::ExperimentInfo::show( QList< int >& tripleMap )
+{
+   qDebug() << "invID        = " << invID << '\n'
+            << "lastName     = " << lastName << '\n'
+            << "firstName    = " << firstName << '\n'
+            << "expID        = " << expID << '\n'
+            << "projectID    = " << projectID << '\n'
+            << "runID        = " << runID << '\n'
+            << "labID        = " << labID << '\n'
+            << "instrumentID = " << instrumentID << '\n'
+            << "operatorID   = " << operatorID << '\n'
+            << "rotorID      = " << rotorID << '\n'
+            << "expType      = " << expType << '\n'
+            << "opticalSystem = " << opticalSystem << '\n'
+            << "runTemp      = " << runTemp << '\n'
+            << "label        = " << label << '\n'
+            << "comments     = " << comments << '\n'
+            << "centrifugeProtocol = " << centrifugeProtocol << '\n'
+            << "date         = " << date << '\n';
+
+   for ( int i = 0; i < rpms.size(); i++ )
+   {
+      qDebug() << "i = " << i ;
+      qDebug() << "rpm = " << rpms[ i ];
+   }
+
+   qDebug() << "triples.size()   = " << triples.size();
+   qDebug() << "tripleMap.size() = " << tripleMap.size();
+
+   for ( int i = 0; i < tripleMap.size(); i++ )
+   {
+      int ndx = tripleMap[ i ];
+      qDebug() << "i = " << i << "; ndx = " << ndx;
+      qDebug() << "tripleID    = " << triples[ ndx ].tripleID    << '\n'
+               << "centerpiece = " << triples[ ndx ].centerpiece << '\n'
+               << "bufferID    = " << triples[ ndx ].bufferID    << '\n'
+               << "analyteID   = " << triples[ ndx ].analyteID   << '\n';
+   }
+}
