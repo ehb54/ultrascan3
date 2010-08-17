@@ -105,7 +105,7 @@ class US_EXTERN US_Convert : public US_Widgets
       QList< US_DataIO2::BeckmanRawScan > legacyData; // legacy data from file
       QVector< US_DataIO2::RawData >      allData;    // all the data, separated by c/c/w
       QVector< US_DataIO2::RawData >      RIData;     // to save RI data, after converting to RP
-      QString       saveDir;
+      QString       currentDir;
       QString       saveDescription;
 
       QVector< Excludes > allExcludes;                // excludes for all triples
@@ -128,13 +128,15 @@ class US_EXTERN US_Convert : public US_Widgets
       QStringList          centerpieceTypes;
 
       void reset           ( void );
+      void enableRunIDControl( bool );
+      void enableScanControls( void );
+      void enableCCWControls ( void );
+      void enableSyncDB    ( void );
       void getExpInfo      ( bool );
       void setTripleInfo   ( void );
       int  findTripleIndex ( void );
       void focus           ( int, int );
       void init_excludes   ( void );
-      void reset_scan_ctrls( void );
-      void reset_ccw_ctrls ( void );
       void start_reference   ( const QwtDoublePoint& );
       void process_reference ( const QwtDoublePoint& );
       void RP_calc_avg     ( void );
@@ -142,7 +144,6 @@ class US_EXTERN US_Convert : public US_Widgets
       bool read            ( QString dir );
       bool convert         ( void );
       bool centerpieceInfo ( void );
-      void enableSyncDB    ( void );
       void plot_current    ( void );
       void plot_titles     ( void );
       void plot_all        ( void );
@@ -154,6 +155,8 @@ class US_EXTERN US_Convert : public US_Widgets
   private slots:
       void load            ( QString dir = "" );
       void reload          ( void );
+      void enableControls  ( void );
+      void runIDChanged    ( void );
       void toleranceValueChanged( double );           // signal to notify of change
       void newExpInfo      ( void );
       void editExpInfo     ( void );

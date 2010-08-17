@@ -2,8 +2,6 @@
 #ifndef US_EXPINFO_H
 #define US_EXPINFO_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_widgets_dialog.h"
@@ -63,7 +61,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          int              rotorID;            //!< The rotor that was used
          QString          rotorGUID;          //!< The GUID of the rotor
          QString          expType;            //!< The type of experiment
-         QString          opticalSystem;      //!< The type of optical system used
+         QByteArray       opticalSystem;      //!< The type of optical system used
          QList< double >  rpms;               //!< A list of rotor speeds observed during the experiment
          QString          runTemp;            //!< The run temperature
          QString          label;              //!< The experiment label, or identifying information
@@ -75,7 +73,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          ExperimentInfo&  operator=( const ExperimentInfo& ); //!< An overloaded assignment operator
          void updateDB( void );               //!< Function to update the database with changes
          void clear( void );                  //!< Function to reset all class variables to defaults
-void displayInfo( QList< int >& tripleMap );
+         void show( QList< int >& tripleMap ); //!< Temporary function to display current exp info
       };
 
       /*! \brief Generic constructor for the US_ExpInfo class. To 
@@ -143,7 +141,6 @@ void displayInfo( QList< int >& tripleMap );
       void selectInvestigator( void );
       void assignInvestigator( int, const QString&, const QString& );
       QComboBox* us_expTypeComboBox         ( void );
-      void runIDChanged      ( void );
       int  checkRunID        ( void );
       void setInstrumentList ( void );
       void setOperatorList   ( void );

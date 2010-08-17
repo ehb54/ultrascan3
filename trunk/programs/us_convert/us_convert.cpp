@@ -96,6 +96,8 @@ US_Convert::US_Convert() : US_Widgets()
 
    le_dir = us_lineedit( "", 1 );
    settings->addWidget( le_dir, row++, 0, 1, 2 );
+   le_dir ->setPalette ( gray );
+   le_dir ->setReadOnly( true );
 
    // Description
    lb_description = us_label( tr( "Description:" ), -1 );
@@ -114,7 +116,7 @@ US_Convert::US_Convert() : US_Widgets()
    lw_triple->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
    lw_triple->setMaximumHeight( 120 );
    lw_triple->setMaximumWidth ( 120 );
-   connect( lw_triple, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
+   connect( lw_triple, SIGNAL( itemClicked ( QListWidgetItem* ) ),
                        SLOT  ( changeTriple( QListWidgetItem* ) ) );
    ccw->addWidget( lw_triple, row, 0, 4, 1 );
 
@@ -295,6 +297,7 @@ void US_Convert::reset( void )
    pb_applyAll   ->setEnabled( false );
    pb_expinfo    ->setEnabled( false );
    pb_editExpinfo->setEnabled( false );
+   pb_syncDB     ->setEnabled( false );
 
    pb_reload     ->setEnabled( true  );
    ct_tolerance  ->setEnabled( true  );
@@ -332,7 +335,10 @@ void US_Convert::reset( void )
    pb_process     ->setEnabled( false );
    step           = NONE;
 
+   enableRunIDControl( true );
+
    toleranceChanged = false;
+   this->editing    = false;
 
    pb_reference   ->setEnabled( false );
 }
@@ -375,7 +381,7 @@ void US_Convert::load( QString dir )
    // Display the data that was read
    for ( int i = 0; i < legacyData.size(); i++ )
    {
-      US_DataIO2::beckmanRawScan d = legacyData[ i ];
+      US_DataIO2::BeckmanRawScan d = legacyData[ i ];
 
       qDebug() << d.description;
       qDebug() << d.type         << " "
@@ -389,9 +395,9 @@ void US_Convert::load( QString dir )
 
       for ( int j = 0; j < d.readings.size(); j++ )
       {
-         if ( i != legacyData.size() - 1 ) continue;
+         if ( i != 2 ) continue; // only the 2nd set for now
 
-         US_DataIO2::reading r = d.readings[ j ];
+         US_DataIO2::RawReading r = d.readings[ j ];
 
          QString line = QString::number(r.d.radius, 'f', 4 )    + " "
                       + QString::number(r.value, 'E', 5 )       + " "
@@ -421,22 +427,7 @@ void US_Convert::load( QString dir )
                      SLOT  ( focus_to     ( double ) ) );
 
    // Ok to enable some buttons now
-   pb_savetoHD    ->setEnabled( true );
-   pb_details     ->setEnabled( true );
-   pb_buffer      ->setEnabled( true );
-   pb_analyte     ->setEnabled( true );
-   cb_centerpiece ->setEnabled( true );
-   pb_expinfo     ->setEnabled( true );
-   pb_editExpinfo ->setEnabled( true );
-
-   if ( runType == "RI" )
-      pb_reference->setEnabled( true );
-
-   else if ( runType == "RA" && ss_limits.size() < 2 )
-   {
-      // Allow user to define subsets, if he hasn't already
-      pb_define   ->setEnabled( true );
-   } 
+   enableControls();
 
 }
 
@@ -482,24 +473,174 @@ void US_Convert::reload( void )
                      SLOT  ( focus_to     ( double ) ) );
 
    // Ok to enable some buttons now
-   pb_savetoHD    ->setEnabled( true );
-   pb_details     ->setEnabled( true );
-   pb_buffer      ->setEnabled( true );
-   pb_analyte     ->setEnabled( true );
-   cb_centerpiece ->setEnabled( true );
-   pb_expinfo     ->setEnabled( true );
-   pb_editExpinfo ->setEnabled( true );
-   enableSyncDB();
+   enableControls();
 
-   if ( runType == "RI" )
-      pb_reference->setEnabled( true );
+}
 
-   else if ( runType == "RA" && ss_limits.size() < 2 )
+// Enable the common dialog controls when there is data
+void US_Convert::enableControls( void )
+{
+   if ( allData.size() == 0 )
+      reset();
+
+   else
    {
-      // Allow user to define subsets, if he hasn't already
-      pb_define   ->setEnabled( true );
-   } 
+      // Ok to enable some buttons now
+      pb_savetoHD    ->setEnabled( true );
+      pb_details     ->setEnabled( true );
+      pb_buffer      ->setEnabled( true );
+      pb_analyte     ->setEnabled( true );
+      cb_centerpiece ->setEnabled( true );
+      pb_expinfo     ->setEnabled( true );
+      pb_editExpinfo ->setEnabled( true );
+      pb_dropScan    ->setEnabled( true );
 
+      if ( runType == "RI" )
+         pb_reference->setEnabled( true );
+   
+      else if ( runType == "RA" && ss_limits.size() < 2 )
+      {
+         // Allow user to define subsets, if he hasn't already
+         pb_define   ->setEnabled( true );
+      } 
+
+      enableRunIDControl( ! this->editing );
+         
+      enableSyncDB();
+   }
+}
+
+// Enable or disable the runID control
+void US_Convert::enableRunIDControl( bool setEnable )
+{
+   QPalette gray = US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+
+   if ( setEnable )
+   {
+      le_runID->setPalette ( US_GuiSettings::normalColor() );
+      le_runID->setReadOnly( false );
+      connect( le_runID, SIGNAL( editingFinished() ),
+                         SLOT  ( runIDChanged   () ) );
+   }
+
+   else
+   {
+      le_runID->disconnect();
+      le_runID->setPalette ( gray );
+      le_runID->setReadOnly( true );
+   }
+         
+}
+
+// Reset the boundaries on the scan controls
+void US_Convert::enableScanControls( void )
+{
+   ct_from->disconnect();
+   ct_from->setMinValue( 0.0 );
+   ct_from->setMaxValue(  allData[ currentTriple ].scanData.size() );
+   ct_from->setValue   ( 0 );
+
+   ct_to  ->disconnect();
+   ct_to  ->setMinValue( 0.0 );
+   ct_to  ->setMaxValue(  allData[ currentTriple ].scanData.size() );
+   ct_to  ->setValue   ( 0 );
+
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+
+   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_to     ( double ) ) );
+
+}
+
+void US_Convert::enableCCWControls( void )
+{
+   int ndx = findTripleIndex();
+
+   // The centerpiece combo box
+   cb_centerpiece->setCurrentIndex( ExpData.triples[ ndx ].centerpiece );
+
+   // Let's calculate if we're eligible to copy this triple info to all
+   US_ExpInfo::TripleInfo triple = ExpData.triples[ ndx ];
+   pb_applyAll  -> setEnabled( false );
+   if ( tripleMap.size()   > 1 && 
+        triple.analyteID   > 0 &&
+        triple.bufferID    > 0 )
+   {
+      pb_applyAll ->setEnabled( true );
+      // pb_dropCurrent ->setEnabled( true );
+   }
+   
+}
+
+// Enable the "sync with DB" button, if appropriate
+void US_Convert::enableSyncDB( void )
+{
+   // Have we made connection with the db?
+   if ( ExpData.invID == 0 ||
+        ExpData.triples.size() == 0 )
+   {
+      pb_syncDB ->setEnabled( false );
+      return;
+   }
+
+   // If editing, we should have an expID
+   if ( this->editing      && 
+        ExpData.expID == 0 )
+   {
+      pb_syncDB ->setEnabled( false );
+      return;
+   }
+
+   // Have we filled out all the c/c/w info?
+   for ( int i = 0; i < tripleMap.size(); i++ )
+   {
+      int ndx = tripleMap[ i ];
+      US_ExpInfo::TripleInfo triple = ExpData.triples[ ndx ];
+      if ( triple.bufferID  == 0 ||
+           triple.analyteID == 0 )
+      {
+         pb_syncDB ->setEnabled( false );
+         return;
+      }
+   }
+
+   // Information is there, but are we connected to the db? 
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( ! db.isConnected() )
+   {
+      pb_syncDB ->setEnabled( false );
+      return;
+   }
+
+   // If we made it here, user can sync with DB
+   pb_syncDB ->setEnabled( true );
+}
+
+// Process when the user changes the runID
+void US_Convert::runIDChanged( void )
+{
+   // See if we need to update the runID
+   QRegExp rx( "^[A-Za-z0-9_]{1,20}$" );
+   QString new_runID = le_runID->text();
+      
+   if ( rx.indexIn( new_runID ) >= 0 )
+   {
+      runID = new_runID;
+      plot_titles();
+   }
+
+   le_runID->setText( runID );
+   ExpData.runID = runID;
+
+   // Set the directory too
+   QDir resultDir( US_Settings::resultDir() );
+   currentDir = resultDir.absolutePath() + "/" + runID + "/";
+   le_dir ->setText( currentDir );
 }
 
 void US_Convert::newExpInfo( void )
@@ -589,10 +730,9 @@ void US_Convert::getExpInfo( bool editing )
 
    // Load information we're passing
    ExpData.runTemp       = QString::number( sum / count );
-   char temp[ 3 ];
-   strncpy( temp, allData[ 0 ].type, 2 );
-   temp[ 2 ] = '\0';
-   ExpData.opticalSystem = QString( temp );
+   char* optSysPtr       = ExpData.opticalSystem.data();
+   strncpy( optSysPtr, allData[ 0 ].type, 2 );
+   optSysPtr[ 2 ] = '\0';
 
    // A list of unique rpms
    ExpData.rpms.clear();
@@ -633,24 +773,26 @@ void US_Convert::getExpInfo( bool editing )
    expInfo->exec();
 }
 
+// Updating after user has selected info from experiment dialog
 void US_Convert::updateExpInfo( US_ExpInfo::ExperimentInfo& d )
 {
    // Update local copy
    ExpData = d;
 
-   // The runID could have changed
-   le_runID      ->setText( ExpData.runID );
+   enableControls();
 }
 
 void US_Convert::cancelExpInfo( void )
 {
    ExpData.clear();
+   this->editing = false;
+   enableControls();
 }
 
 void US_Convert::runDetails( void )
 {
    US_RunDetails2* dialog
-      = new US_RunDetails2( allData, runID, saveDir, triples );
+      = new US_RunDetails2( allData, runID, currentDir, triples );
    dialog->exec();
    qApp->processEvents();
    delete dialog;
@@ -662,17 +804,17 @@ void US_Convert::changeTriple( QListWidgetItem* )
    currentTriple = tripleMap[ row ];
    int ndx       = findTripleIndex();
 
-   le_dir         -> setText( saveDir );
+   le_dir         -> setText( currentDir );
    le_description -> setText( saveDescription );
 
    le_bufferInfo  -> setText( ExpData.triples[ ndx ].bufferDesc  );
    le_analyteInfo -> setText( ExpData.triples[ ndx ].analyteDesc );
 
    // Reset maximum scan control values
-   reset_scan_ctrls();
+   enableScanControls();
 
    // Reset apply all button
-   reset_ccw_ctrls();
+   enableCCWControls();
 
    // Redo plot
    plot_current();
@@ -725,9 +867,11 @@ void US_Convert::ccwApplyAll( void )
       ExpData.triples[ i ].analyteDesc = triple.analyteDesc;
    }
 
+   enableControls();
    enableSyncDB();
 }
 
+// Create a dialog to request a buffer selection
 void US_Convert::selectBuffer( void )
 {
    US_BufferGui* buffer_dialog = new US_BufferGui( ExpData.invID, true );         // Ask for a signal
@@ -738,6 +882,7 @@ void US_Convert::selectBuffer( void )
    buffer_dialog->exec();
 }
 
+// Get information about selected buffer
 void US_Convert::assignBuffer( const QString& bufferID )
 {
    int ndx = findTripleIndex();
@@ -766,10 +911,12 @@ void US_Convert::assignBuffer( const QString& bufferID )
       le_bufferInfo -> setText( db.value( 1 ).toString() );
    }
 
+   enableControls();
    enableSyncDB();
-   reset_ccw_ctrls();
+   enableCCWControls();
 }
 
+// Create dialog to request an analyte selection
 void US_Convert::selectAnalyte( void )
 {
    US_AnalyteGui* analyte_dialog = new US_AnalyteGui( ExpData.invID, true ); 
@@ -780,6 +927,7 @@ void US_Convert::selectAnalyte( void )
    analyte_dialog->exec();
 }
 
+// Get information about selected analyte
 void US_Convert::assignAnalyte( US_Analyte data )
 {
    US_Passwd pw;
@@ -818,8 +966,9 @@ void US_Convert::assignAnalyte( US_Analyte data )
       le_analyteInfo -> setText( db.value( 4 ).toString() );
    }
 
+   enableControls();
    enableSyncDB();
-   reset_ccw_ctrls();
+   enableCCWControls();
 }
 
 void US_Convert::focus_from( double scan )
@@ -897,7 +1046,7 @@ void US_Convert::exclude_scans( void )
          allExcludes[ currentTriple ] << i;
    }
 
-   reset_scan_ctrls();
+   enableScanControls();
 
    replot();
 }
@@ -905,7 +1054,7 @@ void US_Convert::exclude_scans( void )
 void US_Convert::include( void )
 {
    init_excludes();
-   reset_scan_ctrls();
+   enableScanControls();
 
    pb_include->setEnabled( false );
    pb_exclude->setEnabled( false );
@@ -913,43 +1062,7 @@ void US_Convert::include( void )
    replot();
 }
 
-// Reset the boundaries on the scan controls
-void US_Convert::reset_scan_ctrls( void )
-{
-   ct_from->disconnect();
-   ct_from->setMinValue( 0.0 );
-   ct_from->setMaxValue(  allData[ currentTriple ].scanData.size() );
-   ct_from->setValue   ( 0 );
-
-   ct_to  ->disconnect();
-   ct_to  ->setMinValue( 0.0 );
-   ct_to  ->setMaxValue(  allData[ currentTriple ].scanData.size() );
-   ct_to  ->setValue   ( 0 );
-
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
-
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
-
-}
-
-void US_Convert::reset_ccw_ctrls( void )
-{
-   int ndx = findTripleIndex();
-
-   // The centerpiece combo box
-   cb_centerpiece->setCurrentIndex( ExpData.triples[ ndx ].centerpiece );
-
-   // Let's calculate if we're eligible to copy this triple info to all
-   US_ExpInfo::TripleInfo triple = ExpData.triples[ ndx ];
-   pb_applyAll  -> setEnabled( false );
-   if ( triples.size()   > 1 && 
-        triple.analyteID > 0 &&
-        triple.bufferID  > 0 )
-      pb_applyAll ->setEnabled( true );
-}
-
+// User pressed the define subsets button while processing equil-abs data
 void US_Convert::define_subsets( void )
 {
    ss_limits.clear();
@@ -993,13 +1106,14 @@ void US_Convert::process_subsets( void )
 
    // Now that we know we're subdividing, let's reconvert the file
    reset();
-   load( saveDir );
+   load( currentDir );
 
    // We don't need this any more, and it interferes with subsequent
    //  loads of RA data. 
    ss_limits.clear();
 }
 
+// User pressed the Define reference button while analyzing intensity data
 void US_Convert::define_reference( void )
 {
    connect( picker, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
@@ -1012,6 +1126,7 @@ void US_Convert::define_reference( void )
    step = REFERENCE;
 }
 
+// Select starting point of reference scan in intensity data
 void US_Convert::start_reference( const QwtDoublePoint& p )
 {
    reference_start   = p.x();
@@ -1020,6 +1135,7 @@ void US_Convert::start_reference( const QwtDoublePoint& p )
    data_plot->replot();
 }
 
+// Select end point of reference scan in intensity data
 void US_Convert::process_reference( const QwtDoublePoint& p )
 {
    // Just in case we get a second click message right away
@@ -1060,16 +1176,19 @@ void US_Convert::process_reference( const QwtDoublePoint& p )
    plot_current();
 }
 
+// Process a control-click on the plot window
 void US_Convert::cClick( const QwtDoublePoint& p )
 {
    switch ( step )
    {
       case SPLIT :
+         // process equil-abs data
          draw_vline( p.x() );
          ss_limits << p.x();
          break;
 
       case REFERENCE :
+         // process reference scan
          if ( reference_start == 0.0 )
             start_reference( p );
 
@@ -1101,10 +1220,30 @@ void US_Convert::RP_calc_avg( void )
       while ( referenceData.radius( j ) < reference_start && j < ref_size )
          j++;
 
+      int lastGood = j;
+      int countBad = 0;
       //while ( referenceData.x[ j ].radius < reference_end && j < ref_size )
       while ( referenceData.radius( j ) < reference_end && j < ref_size )
       {
-         sum += s.readings[ j ].value;
+         // Check against excluded values
+         if ( allExcludes[ currentTriple ].contains( j ) )
+            countBad++;
+
+         // Calculate average of before and after for intervening values
+         else if ( countBad > 0 )
+         {
+            sum += ( ( s.readings[ lastGood ].value + s.readings[ j ].value ) / 2.0 )
+                   * countBad;
+            countBad = 0;
+         }
+
+         // Normal situation -- value is not excluded
+         else
+         {
+            sum += s.readings[ j ].value;
+            lastGood = j;
+         }
+
          count++;
          j++;
       }
@@ -1134,7 +1273,6 @@ void US_Convert::RP_calc_avg( void )
 
    RP_averaged = true;
    pb_cancelref ->setEnabled( true );
-   pb_dropScan  ->setEnabled( true );
 }
 
 void US_Convert::cancel_reference( void )
@@ -1170,17 +1308,17 @@ void US_Convert::drop_reference( void )
    setTripleInfo();           // Resets currentTriple
    int ndx       = findTripleIndex();
 
-   le_dir         -> setText( saveDir );
+   le_dir         -> setText( currentDir );
    le_description -> setText( saveDescription );
 
    le_bufferInfo  -> setText( ExpData.triples[ ndx ].bufferDesc  );
    le_analyteInfo -> setText( ExpData.triples[ ndx ].analyteDesc );
 
    // Reset maximum scan control values
-   reset_scan_ctrls();
+   enableScanControls();
 
    // Reset apply all button
-   reset_ccw_ctrls();
+   enableCCWControls();
 
    // Redo plot
    plot_current();
@@ -1189,18 +1327,6 @@ void US_Convert::drop_reference( void )
 int US_Convert::savetoHD( void )
 {
    if ( allData[ 0 ].scanData.empty() ) return NODATA; 
-
-   // See if we need to update the runID
-   QRegExp rx( "^[A-Za-z0-9_]{1,20}$" );
-   QString new_runID = le_runID->text();
-      
-   if ( rx.indexIn( new_runID ) >= 0 )
-   {
-      runID = new_runID;
-      plot_titles();
-   }
-
-   le_runID->setText( runID );
 
    QDir        writeDir( US_Settings::resultDir() );
    QString     dirname = writeDir.absolutePath() + "/" + runID + "/";
@@ -1291,6 +1417,8 @@ int US_Convert::savetoHD( void )
          tr( "Success" ),
          QString::number( tripleMap.size() ) + " " + 
          runID + tr( " files written." ) );
+  
+   enableRunIDControl( false );
 
    return( OK );
 }
@@ -1315,7 +1443,7 @@ void US_Convert::loadUS3( void )
    runID    = components.last();
    le_runID ->setText( runID );
    le_dir   ->setText( dir );
-   saveDir  = QString( dir );
+   currentDir  = QString( dir );
 
    // Reload the data
    US_ProcessConvert* dialog 
@@ -1337,10 +1465,10 @@ void US_Convert::loadUS3( void )
    saveDescription = QString( allData[ 0 ].description );
 
    // Reset maximum scan control values
-   reset_scan_ctrls();
+   enableScanControls();
 
    // Reset apply all button
-   reset_ccw_ctrls();
+   enableCCWControls();
 
    // Redo plot
    init_excludes();
@@ -1353,6 +1481,7 @@ void US_Convert::loadUS3( void )
                      SLOT  ( focus_to     ( double ) ) );
 
    // Ok to enable some buttons now
+   enableControls();
    pb_savetoHD    ->setEnabled( true );
    pb_details     ->setEnabled( true );
    pb_buffer      ->setEnabled( true );
@@ -1364,6 +1493,8 @@ void US_Convert::loadUS3( void )
    // some things one can't do from here
    pb_reload      ->setEnabled( false );
    ct_tolerance   ->setEnabled( false );
+
+   enableRunIDControl( false );
 
    if ( runType == "RI" )
       pb_reference->setEnabled( true );
@@ -1424,6 +1555,9 @@ void US_Convert::syncDB( void )
 
    QMessageBox::information( this, tr( "Record saved" ),
          tr( "The experiment information has been synchronized with the DB successfully \n" ) );
+
+   enableRunIDControl( false );
+
 }
 
 bool US_Convert::read( void )
@@ -1454,7 +1588,7 @@ bool US_Convert::read( QString dir )
    runID    = components.last();
    le_runID ->setText( runID );
    le_dir   ->setText( dir );
-   saveDir  = QString( dir );
+   currentDir  = QString( dir );
 
    oldRunType = runType;            // let's see if the runType changes
 
@@ -1566,58 +1700,12 @@ bool US_Convert::centerpieceInfo( void )
                    + pathlength + "cm";
 
          centerpieceTypes << c;
-
       }
    }
 
    f.close();
 
    return true;
-}
-
-void US_Convert::enableSyncDB( void )
-{
-   // Have we made connection with the db?
-   if ( ExpData.invID == 0 ||
-        ExpData.triples.size() == 0 )
-   {
-      pb_syncDB ->setEnabled( false );
-      return;
-   }
-
-   // If editing, we should have an expID
-   if ( this->editing      && 
-        ExpData.expID == 0 )
-   {
-      pb_syncDB ->setEnabled( false );
-      return;
-   }
-
-   // Have we filled out all the c/c/w info?
-   for ( int i = 0; i < ExpData.triples.size(); i++ )
-   {
-      US_ExpInfo::TripleInfo triple = ExpData.triples[ i ];
-      if ( triple.bufferID  == 0 ||
-           triple.analyteID == 0 )
-      {
-         pb_syncDB ->setEnabled( false );
-         return;
-      }
-   }
-
-   // Information is there, but are we connected to the db? 
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( ! db.isConnected() )
-   {
-      pb_syncDB ->setEnabled( false );
-      return;
-   }
-
-   // If we made it here, user can sync with DB
-   pb_syncDB ->setEnabled( true );
 }
 
 void US_Convert::plot_current( void )
@@ -1632,7 +1720,7 @@ void US_Convert::plot_current( void )
    plot_all();
    
    // Set the Scan spin boxes
-   reset_scan_ctrls();
+   enableScanControls();
 }
 
 void US_Convert::plot_titles( void )
@@ -1734,7 +1822,6 @@ void US_Convert::plot_all( void )
 
       for ( int j = 0; j < size; j++ )
       {
-         //r[ j ] = currentData.x[ j ].radius;
          r[ j ] = currentData.radius( j );
          v[ j ] = s->readings  [ j ].value;
 
@@ -1752,7 +1839,6 @@ void US_Convert::plot_all( void )
          minR = min( minR, r[ j ] );
          maxV = max( maxV, v[ j ] );
          minV = min( minV, v[ j ] );
-
       }
 
       QString title = tr( "Raw Data at " )

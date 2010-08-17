@@ -455,7 +455,7 @@ void US_ConvertIO::readExperiment(
          else if ( xml.name() == "opticalSystem" )
          {
             QXmlStreamAttributes a = xml.attributes();
-            ExpData.opticalSystem  = a.value( "value" ).toString();
+            ExpData.opticalSystem  = a.value( "value" ).toString().toAscii();
          }
 
          else if ( xml.name() == "date" )
