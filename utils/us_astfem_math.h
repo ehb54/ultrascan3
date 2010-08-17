@@ -237,6 +237,14 @@ class US_EXTERN US_AstfemMath
       static double variance      ( US_DataIO2::RawData&,
                                     US_DataIO2::EditedData& );
 
+      //! \brief Calculate bottom radius from channel bottom
+      //! and rotor coefficients
+      //! \param rpm          Rotor revolutions per minute.
+      //! \param bottom_chan  Initial bottom for centerpiece channel
+      //! \param rotorcoefs   Array of 5 rotor coefficients
+      //! \returns            The calculated bottom radius value.
+      static double calc_bottom   ( double, double, double* );
+
       //! \brief Calculate bottom radius from rotor/centerpiece information.
       //! \param rpm       Rotor revolutions per minute.
       //! \param rotor     Rotor index (default=1).

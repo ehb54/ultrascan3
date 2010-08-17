@@ -1898,13 +1898,31 @@ double US_AstfemMath::variance( US_DataIO2::RawData&    simdata,
    return vari;
 }
 
+// calculate bottom radius value using channel bottom and rotor coeff. array
+double US_AstfemMath::calc_bottom( double rpm, double bottom_chan,
+      double* rotorcoefs )
+{
+   double bottom = bottom_chan;  // initial bottom from channel position
+   double rpmpow = 1.0;          // initial rpm power coefficient ( rpm ^ 0 )
+
+   if ( rpm != 0.0 )
+   {
+      for ( int ii = 0; ii < 5; ii++ )
+      {
+         bottom  += rotorcoefs[ ii ] * rpmpow; // update bottom
+         rpmpow  *= rpm;                       // next rpm power ( rpm ^ i+1 )
+      }
+   }
+
+   return bottom;
+}
+
 // calculate bottom radius value using rotor/centerpiece information
 double US_AstfemMath::calc_bottom( double rpm, int rotor,
       int centerp, int channel )
 {
    QVector< US_Hardware::CenterpieceInfo > cp_list;
    QVector< US_Hardware::RotorInfo >       rotor_list;
-   double bottom = 0.0;
 
    if ( !US_Hardware::readCenterpieceInfo( cp_list ) )
    {
@@ -1918,18 +1936,9 @@ double US_AstfemMath::calc_bottom( double rpm, int rotor,
       return -2.0;
    }
 
-   bottom  = cp_list[ centerp ].bottom_position[ channel ];
-
-   if ( rpm != 0.0 )
-   {
-      for ( int ii = 0; ii < 5; ii++ )
-      {
-         bottom  += ( rotor_list[ rotor ].coefficient[ ii ]
-                      * pow( rpm, (double)ii ) );
-      }
-   }
-
-   return bottom;
+   return calc_bottom( rpm,
+                       cp_list[ centerp ].bottom_position[ channel ],
+                       rotor_list[ rotor ].coefficient );
 }
 
 #ifdef NEVER

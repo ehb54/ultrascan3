@@ -532,13 +532,14 @@ void US_Astfem_RSA::update_assocv( void )
 void US_Astfem_RSA::adjust_limits( int speed )
 {
    // First correct meniscus to theoretical position at rest:
-   double stretch_value = stretch( simparams.rotor, af_params.first_speed );
+   double stretch_value = stretch( simparams.rotorcoeffs,
+                                   af_params.first_speed );
   
    // This is the meniscus at rest
    af_params.current_meniscus = simparams.meniscus - stretch_value;
  
    // Calculate rotor stretch at current speed
-   stretch_value = stretch( simparams.rotor, speed );
+   stretch_value = stretch( simparams.rotorcoeffs, speed );
 
    // Add current stretch to meniscus at rest
    af_params.current_meniscus += stretch_value;
@@ -547,21 +548,20 @@ void US_Astfem_RSA::adjust_limits( int speed )
    af_params.current_bottom = simparams.bottom + stretch_value;
 }
 
-double US_Astfem_RSA::stretch( int rotor, int rpm )
+// calculate stretch for rotor coefficients array and rpm
+double US_Astfem_RSA::stretch( double* rotorcoeffs, int rpm )
 {
-   QVector< US_Hardware::RotorInfo > rotor_list;
-   rotor_list.clear();
-   
-   double stretch = 0.0;
-   US_Hardware::readRotorInfo( rotor_list );
-                  
+   double stretch = 0.0;          // initial stretch value
+   double rpmpow  = 1.0;          // initial rpm power ( rpm^0 )
+   double rpmval  = (double)rpm;  // Revs per Minute as double
+
    for ( int i = 0; i < 5; i++ )
    {
-      stretch += rotor_list[ rotor ].coefficient[ i ] * 
-         pow( (double) rpm, (double) i );
+      stretch += rotorcoeffs[ i ] * rpmpow;  // update stretch
+      rpmpow  *= rpmval;                     // next rpm power ( rpm^(i+1) )
    }
-   
-//qDebug() << "AFRSA: stretch rpm rotor" << stretch << rpm << rotor;
+
+//qDebug() << "AFRSA: stretch rpm" << stretch << rpm;
    return stretch;
 }
 

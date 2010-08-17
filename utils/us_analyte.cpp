@@ -115,7 +115,7 @@ int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
    }
 
    db->next();
-   QString analyteID = db->value( 0 ).toString();
+   analyteID = db->value( 0 ).toString();
 
    // Get analyte info;
    q.clear();
