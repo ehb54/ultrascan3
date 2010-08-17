@@ -38,9 +38,9 @@ struct BD_Options
    bool run_browflex;
 
    int nmol;
-   float tprev;  // see browflex2a.pdf for more info
-   float ttraj;  // see browflex2a.pdf for more info
-   float deltat;
+   double tprev;  // see browflex2a.pdf for more info
+   double ttraj;  // see browflex2a.pdf for more info
+   double deltat;
    int npadif;
    int nconf;
    int inter;

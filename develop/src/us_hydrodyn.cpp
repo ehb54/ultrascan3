@@ -178,6 +178,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    bd_options.nmol = 1;  // need to move to saved options!
    anaflex_options.ntimc = 21; // need to move to saved options!
    anaflex_options.tmax = 1.6e-6; // need to move to saved options!
+   anaflex_options.run_mode_3_5_iii = 1; // need to move to saved options!
+   anaflex_options.run_mode_3_5_jjj = 99999; // need to move to saved options!
+   anaflex_options.run_mode_3_14_iii = 1; // need to move to saved options!
+   anaflex_options.run_mode_3_14_jjj = 99999; // need to move to saved options!
    
    last_read_bead_model = "";
    last_hydro_res = "";

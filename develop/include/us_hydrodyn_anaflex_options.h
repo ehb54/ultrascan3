@@ -63,9 +63,13 @@ struct Anaflex_Options
    bool run_mode_3;
    bool run_mode_3_1;
    bool run_mode_3_5;
+   int run_mode_3_5_iii;
+   int run_mode_3_5_jjj;
    bool run_mode_3_9;
    bool run_mode_3_10;
    bool run_mode_3_14;
+   int run_mode_3_14_iii;
+   int run_mode_3_14_jjj;
    bool run_mode_3_15;
    bool run_mode_3_16;
 
@@ -79,6 +83,7 @@ struct Anaflex_Options
 
    int ntimc;
    float tmax;
+
 };
 
 class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
@@ -100,6 +105,14 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       QLabel *lbl_run_mode;
       QLabel *lbl_ntimc;
       QLabel *lbl_tmax;
+      QLabel *lbl_run_mode_3_5_iii_spacing;
+      QLabel *lbl_run_mode_3_5_iii;
+      QLabel *lbl_run_mode_3_5_jjj_spacing;
+      QLabel *lbl_run_mode_3_5_jjj;
+      QLabel *lbl_run_mode_3_14_iii_spacing;
+      QLabel *lbl_run_mode_3_14_iii;
+      QLabel *lbl_run_mode_3_14_jjj_spacing;
+      QLabel *lbl_run_mode_3_14_jjj;
 
       QCheckBox *cb_run_anaflex;
       QCheckBox *cb_instprofiles;
@@ -136,10 +149,10 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
 
       QCheckBox *cb_run_mode_3;
       QCheckBox *cb_run_mode_3_1;
-      // QCheckBox *cb_run_mode_3_5;
+      QCheckBox *cb_run_mode_3_5;
       QCheckBox *cb_run_mode_3_9;
       // QCheckBox *cb_run_mode_3_10;
-      // QCheckBox *cb_run_mode_3_14;
+      QCheckBox *cb_run_mode_3_14;
       QCheckBox *cb_run_mode_3_15;
       QCheckBox *cb_run_mode_3_16;
 
@@ -154,6 +167,10 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       QLineEdit *le_nfrec;
       QLineEdit *le_ntimc;
       QLineEdit *le_tmax;
+      QLineEdit *le_run_mode_3_5_iii;
+      QLineEdit *le_run_mode_3_5_jjj;
+      QLineEdit *le_run_mode_3_14_iii;
+      QLineEdit *le_run_mode_3_14_jjj;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -197,10 +214,10 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
 
       void set_run_mode_3();
       void set_run_mode_3_1();
-      // void set_run_mode_3_5();
+      void set_run_mode_3_5();
       void set_run_mode_3_9();
       // void set_run_mode_3_10();
-      // void set_run_mode_3_14();
+      void set_run_mode_3_14();
       void set_run_mode_3_15();
       void set_run_mode_3_16();
 
@@ -215,6 +232,10 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       void update_nfrec(const QString &str);
       void update_ntimc(const QString &str);
       void update_tmax(const QString &str);
+      void update_run_mode_3_5_iii(const QString &str);
+      void update_run_mode_3_5_jjj(const QString &str);
+      void update_run_mode_3_14_iii(const QString &str);
+      void update_run_mode_3_14_jjj(const QString &str);
 
       void update_enables();
 

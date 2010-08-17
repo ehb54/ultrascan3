@@ -105,6 +105,8 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
    cout << "ca bd last molec file " << bd_last_molec_file << endl;
    fflush(stdout);
 
+   int no_of_beads = browflex_get_no_of_beads(bd_last_file);
+
    QFileInfo fi(bd_last_traj_file);
    QString dir = fi.dirPath();
    QString trajfile = fi.fileName();
@@ -323,7 +325,62 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
             ts << anaflex_options.tmax << ",";
 
             // iii,jjj,nvx, this will change if we support sub modes 5, 10 and 14
-            ts << "0,0,0                           !Hydrodynamic properties\n"; 
+            switch ( sub_mode ) 
+            {
+            case 5 :
+               ts << anaflex_options.run_mode_3_5_iii << ",";
+               {
+                  int use_last_bead = anaflex_options.run_mode_3_5_jjj;
+                  if ( use_last_bead > no_of_beads )
+                  {
+                     if ( !QMessageBox::question( this, QString("Number of beads"),
+                                                  QString(tr("You have selected an Anaflex"
+                                                             " option which requires a last bead number.\n"
+                                                             "There appear to be %1 beads in your Browflex file\n"
+                                                             "And your last bead number is set to %2.\n"))
+                                                  .arg(no_of_beads)
+                                                  .arg(use_last_bead),
+                                                  tr(QString("&Use %1 as last bead").arg(no_of_beads)),
+                                                  tr(QString("&Accept %1 as last bead").arg(use_last_bead)),
+                                                  QString::null,
+                                                  0, 1 ) )
+                     {
+                        use_last_bead = no_of_beads;
+                     }
+                  }
+                  ts << use_last_bead << ",";
+                  ts << "0                           !Hydrodynamic properties\n"; 
+               }
+               break;
+            case 14 :
+               ts << anaflex_options.run_mode_3_14_iii << ",";
+               {
+                  int use_last_bead = anaflex_options.run_mode_3_5_jjj;
+                  if ( use_last_bead > no_of_beads )
+                  {
+                     if ( !QMessageBox::question( this, QString("Number of beads"),
+                                                  QString(tr("You have selected an Anaflex"
+                                                             " option which requires a last bead number.\n"
+                                                             "There appear to be %1 beads in your Browflex file\n"
+                                                             "And your last bead number is set to %2.\n"))
+                                                  .arg(no_of_beads)
+                                                  .arg(use_last_bead),
+                                                  tr(QString("&Use %1 as last bead").arg(no_of_beads)),
+                                                  tr(QString("&Accept %1 as last bead").arg(use_last_bead)),
+                                                  QString::null,
+                                                  0, 1 ) )
+                     {
+                        use_last_bead = no_of_beads;
+                     }
+                  }
+                  ts << use_last_bead << ",";
+                  ts << "0                           !Hydrodynamic properties\n"; 
+               }
+               break;
+            default :
+               ts << "0,0,0                           !Hydrodynamic properties\n"; 
+               break;
+            }
          }
          break;
 

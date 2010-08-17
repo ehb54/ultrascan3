@@ -310,13 +310,55 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    cb_run_mode_3_1->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_run_mode_3_1, SIGNAL(clicked()), SLOT(set_run_mode_3_1()));
 
-   // cb_run_mode_3_5 = new QCheckBox(this);
-   // cb_run_mode_3_5->setText(tr(" < P2 cos( theta ) > "));
-   // cb_run_mode_3_5->setChecked((*anaflex_options).run_mode_3_5);
-   // cb_run_mode_3_5->setEnabled(true);
-   // cb_run_mode_3_5->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // cb_run_mode_3_5->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   // connect(cb_run_mode_3_5, SIGNAL(clicked()), SLOT(set_run_mode_3_5()));
+   cb_run_mode_3_5 = new QCheckBox(this);
+   cb_run_mode_3_5->setText(tr(" < P2 cos( theta ) > "));
+   cb_run_mode_3_5->setChecked((*anaflex_options).run_mode_3_5);
+   cb_run_mode_3_5->setEnabled(true);
+   cb_run_mode_3_5->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_run_mode_3_5->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_run_mode_3_5, SIGNAL(clicked()), SLOT(set_run_mode_3_5()));
+
+   lbl_run_mode_3_5_iii_spacing = new QLabel("    ", this);
+   lbl_run_mode_3_5_iii_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_5_iii_spacing->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_5_iii_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_run_mode_3_5_iii_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_run_mode_3_5_jjj_spacing = new QLabel("    ", this);
+   lbl_run_mode_3_5_jjj_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_5_jjj_spacing->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_5_jjj_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_run_mode_3_5_jjj_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_run_mode_3_5_iii = new QLabel(tr(" Bead 1 index : "), this);
+   lbl_run_mode_3_5_iii->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_5_iii->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_5_iii->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_run_mode_3_5_iii->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_run_mode_3_5_iii = new QLineEdit(this, "Run_Mode_3_5_Iii Line Edit");
+   le_run_mode_3_5_iii->setText(QString("%1").arg((*anaflex_options).run_mode_3_5_iii));
+   le_run_mode_3_5_iii->setAlignment(AlignVCenter);
+   le_run_mode_3_5_iii->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_run_mode_3_5_iii->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_run_mode_3_5_iii->setEnabled(true);
+   le_run_mode_3_5_iii->setMinimumWidth(75);
+   connect(le_run_mode_3_5_iii, SIGNAL(textChanged(const QString &)), SLOT(update_run_mode_3_5_iii(const QString &)));
+
+   lbl_run_mode_3_5_jjj = new QLabel(tr(" Bead 2 index : "), this);
+   lbl_run_mode_3_5_jjj->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_5_jjj->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_5_jjj->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_run_mode_3_5_jjj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_run_mode_3_5_jjj = new QLineEdit(this, "Run_Mode_3_5_Jjj Line Edit");
+   le_run_mode_3_5_jjj->setText(QString("%1").arg((*anaflex_options).run_mode_3_5_jjj));
+   le_run_mode_3_5_jjj->setAlignment(AlignVCenter);
+   le_run_mode_3_5_jjj->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_run_mode_3_5_jjj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_run_mode_3_5_jjj->setEnabled(true);
+   le_run_mode_3_5_jjj->setMinimumWidth(75);
+   connect(le_run_mode_3_5_jjj, SIGNAL(textChanged(const QString &)), SLOT(update_run_mode_3_5_jjj(const QString &)));
 
    cb_run_mode_3_9 = new QCheckBox(this);
    cb_run_mode_3_9->setText(tr(" Depolarized dynamic light scattering "));
@@ -334,14 +376,56 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    // cb_run_mode_3_10->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    // connect(cb_run_mode_3_10, SIGNAL(clicked()), SLOT(set_run_mode_3_10()));
 
-   // cb_run_mode_3_14 = new QCheckBox(this);
-   // cb_run_mode_3_14->setText(tr(" < Rij dot Rij > "));
-   // cb_run_mode_3_14->setChecked((*anaflex_options).run_mode_3_14);
-   // cb_run_mode_3_14->setEnabled(true);
-   // cb_run_mode_3_14->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // cb_run_mode_3_14->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   // connect(cb_run_mode_3_14, SIGNAL(clicked()), SLOT(set_run_mode_3_14()));
+   cb_run_mode_3_14 = new QCheckBox(this);
+   cb_run_mode_3_14->setText(tr(" < Rij dot Rij > "));
+   cb_run_mode_3_14->setChecked((*anaflex_options).run_mode_3_14);
+   cb_run_mode_3_14->setEnabled(true);
+   cb_run_mode_3_14->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_run_mode_3_14->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_run_mode_3_14, SIGNAL(clicked()), SLOT(set_run_mode_3_14()));
    
+   lbl_run_mode_3_14_iii_spacing = new QLabel(tr("    "), this);
+   lbl_run_mode_3_14_iii_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_14_iii_spacing->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_14_iii_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_run_mode_3_14_iii_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_run_mode_3_14_jjj_spacing = new QLabel("    ", this);
+   lbl_run_mode_3_14_jjj_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_14_jjj_spacing->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_14_jjj_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_run_mode_3_14_jjj_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_run_mode_3_14_iii = new QLabel(tr(" Bead 1 index : "), this);
+   lbl_run_mode_3_14_iii->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_14_iii->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_14_iii->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_run_mode_3_14_iii->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_run_mode_3_14_iii = new QLineEdit(this, "Run_Mode_3_14_Iii Line Edit");
+   le_run_mode_3_14_iii->setText(QString("%1").arg((*anaflex_options).run_mode_3_14_iii));
+   le_run_mode_3_14_iii->setAlignment(AlignVCenter);
+   le_run_mode_3_14_iii->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_run_mode_3_14_iii->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_run_mode_3_14_iii->setEnabled(true);
+   le_run_mode_3_14_iii->setMinimumWidth(75);
+   connect(le_run_mode_3_14_iii, SIGNAL(textChanged(const QString &)), SLOT(update_run_mode_3_14_iii(const QString &)));
+
+   lbl_run_mode_3_14_jjj = new QLabel(tr(" Bead 2 index : "), this);
+   lbl_run_mode_3_14_jjj->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_14_jjj->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_14_jjj->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_run_mode_3_14_jjj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_run_mode_3_14_jjj = new QLineEdit(this, "Run_Mode_3_14_Jjj Line Edit");
+   le_run_mode_3_14_jjj->setText(QString("%1").arg((*anaflex_options).run_mode_3_14_jjj));
+   le_run_mode_3_14_jjj->setAlignment(AlignVCenter);
+   le_run_mode_3_14_jjj->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_run_mode_3_14_jjj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_run_mode_3_14_jjj->setEnabled(true);
+   le_run_mode_3_14_jjj->setMinimumWidth(75);
+   connect(le_run_mode_3_14_jjj, SIGNAL(textChanged(const QString &)), SLOT(update_run_mode_3_14_jjj(const QString &)));
+
    cb_run_mode_3_15 = new QCheckBox(this);
    cb_run_mode_3_15->setText(tr(" First Rouse mode  "));
    cb_run_mode_3_15->setChecked((*anaflex_options).run_mode_3_15);
@@ -540,7 +624,33 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    vbl_3->addLayout(gl_3);
    vbl_3->addSpacing(2);
    vbl_3->addWidget(cb_run_mode_3_1);
+   vbl_3->addWidget(cb_run_mode_3_5);
+
+   QGridLayout *gl_3_5 = new QGridLayout;
+   gl_3_5->addWidget(lbl_run_mode_3_5_iii_spacing, 0, 0);
+   gl_3_5->addWidget(lbl_run_mode_3_5_iii, 0, 1);
+   gl_3_5->addWidget(le_run_mode_3_5_iii, 0, 2);
+   gl_3_5->addWidget(lbl_run_mode_3_5_jjj_spacing, 1, 0);
+   gl_3_5->addWidget(lbl_run_mode_3_5_jjj, 1, 1);
+   gl_3_5->addWidget(le_run_mode_3_5_jjj, 1, 2);
+
+   vbl_3->addLayout(gl_3_5);
+   vbl_3->addSpacing(2);
+
    vbl_3->addWidget(cb_run_mode_3_9);
+
+   vbl_3->addWidget(cb_run_mode_3_14);
+   QGridLayout *gl_3_14 = new QGridLayout;
+   gl_3_14->addWidget(lbl_run_mode_3_14_iii_spacing, 0, 0);
+   gl_3_14->addWidget(lbl_run_mode_3_14_iii, 0, 1);
+   gl_3_14->addWidget(le_run_mode_3_14_iii, 0, 2);
+   gl_3_14->addWidget(lbl_run_mode_3_14_jjj_spacing, 1, 0);
+   gl_3_14->addWidget(lbl_run_mode_3_14_jjj, 1, 1);
+   gl_3_14->addWidget(le_run_mode_3_14_jjj, 1, 2);
+
+   vbl_3->addLayout(gl_3_14);
+   vbl_3->addSpacing(2);
+
    vbl_3->addWidget(cb_run_mode_3_15);
    vbl_3->addWidget(cb_run_mode_3_16);
 
@@ -826,10 +936,10 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_1()
    if ( cb_run_mode_3_1->isChecked() )
    {
       //      cb_run_mode_3_1->setChecked(false);
-      // cb_run_mode_3_5->setChecked(false);
+      cb_run_mode_3_5->setChecked(false);
       cb_run_mode_3_9->setChecked(false);
       // cb_run_mode_3_10->setChecked(false);
-      // cb_run_mode_3_14->setChecked(false);
+      cb_run_mode_3_14->setChecked(false);
       cb_run_mode_3_15->setChecked(false);
       cb_run_mode_3_16->setChecked(false);
       //      (*anaflex_options).run_mode_3_1 = false;
@@ -840,31 +950,33 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_1()
       (*anaflex_options).run_mode_3_15 = false;
       (*anaflex_options).run_mode_3_16 = false;
    }
+   update_enables();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
-// void US_Hydrodyn_Anaflex_Options::set_run_mode_3_5()
-// {
-//    (*anaflex_options).run_mode_3_5 = cb_run_mode_3_5->isChecked();
-//    if ( cb_run_mode_3_5->isChecked() )
-//    {
-//       cb_run_mode_3_1->setChecked(false);
-//       //      // cb_run_mode_3_5->setChecked(false);
-//       cb_run_mode_3_9->setChecked(false);
-//       // cb_run_mode_3_10->setChecked(false);
-//       // cb_run_mode_3_14->setChecked(false);
-//       cb_run_mode_3_15->setChecked(false);
-//       cb_run_mode_3_16->setChecked(false);
-//       (*anaflex_options).run_mode_3_1 = false;
-//       //      // (*anaflex_options).run_mode_3_5 = false;
-//       (*anaflex_options).run_mode_3_9 = false;
-//       // (*anaflex_options).run_mode_3_10 = false;
-//       // (*anaflex_options).run_mode_3_14 = false;
-//       (*anaflex_options).run_mode_3_15 = false;
-//       (*anaflex_options).run_mode_3_16 = false;
-//    }
-//    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-// }
+void US_Hydrodyn_Anaflex_Options::set_run_mode_3_5()
+{
+   (*anaflex_options).run_mode_3_5 = cb_run_mode_3_5->isChecked();
+   if ( cb_run_mode_3_5->isChecked() )
+   {
+      cb_run_mode_3_1->setChecked(false);
+      //      cb_run_mode_3_5->setChecked(false);
+      cb_run_mode_3_9->setChecked(false);
+      // cb_run_mode_3_10->setChecked(false);
+      cb_run_mode_3_14->setChecked(false);
+      cb_run_mode_3_15->setChecked(false);
+      cb_run_mode_3_16->setChecked(false);
+      (*anaflex_options).run_mode_3_1 = false;
+      //     (*anaflex_options).run_mode_3_5 = false;
+      (*anaflex_options).run_mode_3_9 = false;
+      // (*anaflex_options).run_mode_3_10 = false;
+      (*anaflex_options).run_mode_3_14 = false;
+      (*anaflex_options).run_mode_3_15 = false;
+      (*anaflex_options).run_mode_3_16 = false;
+   }
+   update_enables();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_3_9()
 {
@@ -872,20 +984,21 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_9()
    if ( cb_run_mode_3_9->isChecked() )
    {
       cb_run_mode_3_1->setChecked(false);
-      // cb_run_mode_3_5->setChecked(false);
+      cb_run_mode_3_5->setChecked(false);
       //      cb_run_mode_3_9->setChecked(false);
       // cb_run_mode_3_10->setChecked(false);
-      // cb_run_mode_3_14->setChecked(false);
+      cb_run_mode_3_14->setChecked(false);
       cb_run_mode_3_15->setChecked(false);
       cb_run_mode_3_16->setChecked(false);
       (*anaflex_options).run_mode_3_1 = false;
-      // (*anaflex_options).run_mode_3_5 = false;
+      (*anaflex_options).run_mode_3_5 = false;
       //      (*anaflex_options).run_mode_3_9 = false;
       // (*anaflex_options).run_mode_3_10 = false;
-      // (*anaflex_options).run_mode_3_14 = false;
+      (*anaflex_options).run_mode_3_14 = false;
       (*anaflex_options).run_mode_3_15 = false;
       (*anaflex_options).run_mode_3_16 = false;
    }
+   update_enables();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -910,30 +1023,32 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_9()
 //       (*anaflex_options).run_mode_3_16 = false;
 //    }
 //    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+//   update_enables();
 // }
 
-// void US_Hydrodyn_Anaflex_Options::set_run_mode_3_14()
-// {
-//    (*anaflex_options).run_mode_3_14 = cb_run_mode_3_14->isChecked();
-//    if ( cb_run_mode_3_14->isChecked() )
-//    {
-//       cb_run_mode_3_1->setChecked(false);
-//       // cb_run_mode_3_5->setChecked(false);
-//       cb_run_mode_3_9->setChecked(false);
-//       // cb_run_mode_3_10->setChecked(false);
-//       //      // cb_run_mode_3_14->setChecked(false);
-//       cb_run_mode_3_15->setChecked(false);
-//       cb_run_mode_3_16->setChecked(false);
-//       (*anaflex_options).run_mode_3_1 = false;
-//       // (*anaflex_options).run_mode_3_5 = false;
-//       (*anaflex_options).run_mode_3_9 = false;
-//       // (*anaflex_options).run_mode_3_10 = false;
-//       //      // (*anaflex_options).run_mode_3_14 = false;
-//       (*anaflex_options).run_mode_3_15 = false;
-//       (*anaflex_options).run_mode_3_16 = false;
-//    }
-//    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-// }
+void US_Hydrodyn_Anaflex_Options::set_run_mode_3_14()
+{
+   (*anaflex_options).run_mode_3_14 = cb_run_mode_3_14->isChecked();
+   if ( cb_run_mode_3_14->isChecked() )
+   {
+      cb_run_mode_3_1->setChecked(false);
+      cb_run_mode_3_5->setChecked(false);
+      cb_run_mode_3_9->setChecked(false);
+      // cb_run_mode_3_10->setChecked(false);
+      //      cb_run_mode_3_14->setChecked(false);
+      cb_run_mode_3_15->setChecked(false);
+      cb_run_mode_3_16->setChecked(false);
+      (*anaflex_options).run_mode_3_1 = false;
+      (*anaflex_options).run_mode_3_5 = false;
+      (*anaflex_options).run_mode_3_9 = false;
+      // (*anaflex_options).run_mode_3_10 = false;
+      //      (*anaflex_options).run_mode_3_14 = false;
+      (*anaflex_options).run_mode_3_15 = false;
+      (*anaflex_options).run_mode_3_16 = false;
+   }
+   update_enables();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_3_15()
 {
@@ -941,20 +1056,21 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_15()
    if ( cb_run_mode_3_15->isChecked() )
    {
       cb_run_mode_3_1->setChecked(false);
-      // cb_run_mode_3_5->setChecked(false);
+      cb_run_mode_3_5->setChecked(false);
       cb_run_mode_3_9->setChecked(false);
       // cb_run_mode_3_10->setChecked(false);
-      // cb_run_mode_3_14->setChecked(false);
+      cb_run_mode_3_14->setChecked(false);
       //      cb_run_mode_3_15->setChecked(false);
       cb_run_mode_3_16->setChecked(false);
       (*anaflex_options).run_mode_3_1 = false;
-      // (*anaflex_options).run_mode_3_5 = false;
+      (*anaflex_options).run_mode_3_5 = false;
       (*anaflex_options).run_mode_3_9 = false;
       // (*anaflex_options).run_mode_3_10 = false;
-      // (*anaflex_options).run_mode_3_14 = false;
+      (*anaflex_options).run_mode_3_14 = false;
       //      (*anaflex_options).run_mode_3_15 = false;
       (*anaflex_options).run_mode_3_16 = false;
    }
+   update_enables();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -964,20 +1080,21 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_16()
    if ( cb_run_mode_3_16->isChecked() )
    {
       cb_run_mode_3_1->setChecked(false);
-      // cb_run_mode_3_5->setChecked(false);
+      cb_run_mode_3_5->setChecked(false);
       cb_run_mode_3_9->setChecked(false);
       // cb_run_mode_3_10->setChecked(false);
-      // cb_run_mode_3_14->setChecked(false);
+      cb_run_mode_3_14->setChecked(false);
       cb_run_mode_3_15->setChecked(false);
       //      cb_run_mode_3_16->setChecked(false);
       (*anaflex_options).run_mode_3_1 = false;
-      // (*anaflex_options).run_mode_3_5 = false;
+      (*anaflex_options).run_mode_3_5 = false;
       (*anaflex_options).run_mode_3_9 = false;
       // (*anaflex_options).run_mode_3_10 = false;
-      // (*anaflex_options).run_mode_3_14 = false;
+      (*anaflex_options).run_mode_3_14 = false;
       (*anaflex_options).run_mode_3_15 = false;
       //      (*anaflex_options).run_mode_3_16 = false;
    }
+   update_enables();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -1095,6 +1212,83 @@ void US_Hydrodyn_Anaflex_Options::update_tmax(const QString &str)
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_Anaflex_Options::update_run_mode_3_5_iii(const QString &str)
+{
+   (*anaflex_options).run_mode_3_5_iii = str.toInt();
+   if ( (*anaflex_options).run_mode_3_5_iii <= 0 )
+   {
+      (*anaflex_options).run_mode_3_5_iii = 1;
+      le_run_mode_3_5_iii->setText(QString("%1").arg((*anaflex_options).run_mode_3_5_iii));
+   }
+
+   if ( (*anaflex_options).run_mode_3_5_iii >=
+        (*anaflex_options).run_mode_3_5_jjj )
+   {
+        (*anaflex_options).run_mode_3_5_jjj = 
+           (*anaflex_options).run_mode_3_5_iii + 1;
+        le_run_mode_3_5_jjj->setText(QString("%1").arg((*anaflex_options).run_mode_3_5_jjj));
+   }
+           
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Anaflex_Options::update_run_mode_3_5_jjj(const QString &str)
+{
+   (*anaflex_options).run_mode_3_5_jjj = str.toInt();
+   if ( (*anaflex_options).run_mode_3_5_jjj <= 0 )
+   {
+      (*anaflex_options).run_mode_3_5_jjj = 1;
+      le_run_mode_3_5_jjj->setText(QString("%1").arg((*anaflex_options).run_mode_3_5_jjj));
+   }
+
+   if ( (*anaflex_options).run_mode_3_5_jjj <=
+        (*anaflex_options).run_mode_3_5_iii )
+   {
+        (*anaflex_options).run_mode_3_5_jjj = 
+           (*anaflex_options).run_mode_3_5_iii + 1;
+        le_run_mode_3_5_jjj->setText(QString("%1").arg((*anaflex_options).run_mode_3_5_jjj));
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Anaflex_Options::update_run_mode_3_14_iii(const QString &str)
+{
+   (*anaflex_options).run_mode_3_14_iii = str.toInt();
+   if ( (*anaflex_options).run_mode_3_14_iii <= 0 )
+   {
+      (*anaflex_options).run_mode_3_14_iii = 1;
+      le_run_mode_3_14_iii->setText(QString("%1").arg((*anaflex_options).run_mode_3_14_iii));
+   }
+
+   if ( (*anaflex_options).run_mode_3_14_iii >=
+        (*anaflex_options).run_mode_3_14_jjj )
+   {
+        (*anaflex_options).run_mode_3_14_jjj = 
+           (*anaflex_options).run_mode_3_14_iii + 1;
+        le_run_mode_3_14_jjj->setText(QString("%1").arg((*anaflex_options).run_mode_3_14_jjj));
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Anaflex_Options::update_run_mode_3_14_jjj(const QString &str)
+{
+   (*anaflex_options).run_mode_3_14_jjj = str.toInt();
+   if ( (*anaflex_options).run_mode_3_14_jjj <= 0 )
+   {
+      (*anaflex_options).run_mode_3_14_jjj = 1;
+      le_run_mode_3_14_jjj->setText(QString("%1").arg((*anaflex_options).run_mode_3_14_jjj));
+   }
+
+   if ( (*anaflex_options).run_mode_3_14_jjj <=
+        (*anaflex_options).run_mode_3_14_iii )
+   {
+        (*anaflex_options).run_mode_3_14_jjj = 
+           (*anaflex_options).run_mode_3_14_iii + 1;
+        le_run_mode_3_14_jjj->setText(QString("%1").arg((*anaflex_options).run_mode_3_14_jjj));
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_Anaflex_Options::update_enables()
 {
    cb_run_mode_1_1->setEnabled(cb_run_mode_1->isChecked());
@@ -1128,10 +1322,14 @@ void US_Hydrodyn_Anaflex_Options::update_enables()
    cb_run_mode_3_1->setEnabled(cb_run_mode_3->isChecked());
    le_ntimc->setEnabled(cb_run_mode_3->isChecked());
    le_tmax->setEnabled(cb_run_mode_3->isChecked());
-   // cb_run_mode_3_5->setEnabled(cb_run_mode_3->isChecked());
+   cb_run_mode_3_5->setEnabled(cb_run_mode_3->isChecked());
+   le_run_mode_3_5_iii->setEnabled(cb_run_mode_3_5->isChecked() && cb_run_mode_3->isChecked());
+   le_run_mode_3_5_jjj->setEnabled(cb_run_mode_3_5->isChecked() && cb_run_mode_3->isChecked());
    cb_run_mode_3_9->setEnabled(cb_run_mode_3->isChecked());
    // cb_run_mode_3_10->setEnabled(cb_run_mode_3->isChecked());
-   // cb_run_mode_3_14->setEnabled(cb_run_mode_3->isChecked());
+   cb_run_mode_3_14->setEnabled(cb_run_mode_3->isChecked());
+   le_run_mode_3_14_iii->setEnabled(cb_run_mode_3_14->isChecked() && cb_run_mode_3->isChecked());
+   le_run_mode_3_14_jjj->setEnabled(cb_run_mode_3_14->isChecked() && cb_run_mode_3->isChecked());
    cb_run_mode_3_15->setEnabled(cb_run_mode_3->isChecked());
    cb_run_mode_3_16->setEnabled(cb_run_mode_3->isChecked());
 

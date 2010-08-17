@@ -3151,9 +3151,127 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
 }
 
 
+void US_Hydrodyn::write_corr(QString fname, vector<PDB_atom> *model) {
+   FILE *fcorr = (FILE *)0;
+   fcorr = fopen(QString("%1.corr").arg(fname).ascii(), "w");
+   vector <PDB_atom *> use_model;
+   for (unsigned int i = 0; i < model->size(); i++) {
+      use_model.push_back(&(*model)[i]);
+   }
+
+   if ( fcorr )
+   {
+      fprintf(fcorr, "%.3f\n", results.vbar);
+   }
+
+   for (unsigned int i = 0; i < use_model.size(); i++) {
+      if (use_model[i]->active) {
+         QString tmp_serial = use_model[i]->resSeq; // was serial
+         QString residues;
+
+         if (!bead_model_from_file) {
+            residues =
+               use_model[i]->resName +
+               (use_model[i]->org_chain ? ".SC." : 
+                ((misc.pb_rule_on && !use_model[i]->type) ? ".PB." : ".MC.")) +
+               (use_model[i]->chainID == " " ? "" : (use_model[i]->chainID + "."));
+            // a compiler error forced this kludge using tmp_serial
+            //   + QString("%1").arg((*use_model)[i].serial);
+            residues += QString("%1").arg(tmp_serial);
+
+            for (unsigned int j = 0; j < use_model[i]->all_beads.size(); j++)
+            {
+               QString tmp_serial = use_model[i]->all_beads[j]->resSeq;
+
+               residues += "," +
+                  (use_model[i]->all_beads[j]->resName +
+                   (use_model[i]->all_beads[j]->org_chain ? ".SC." : 
+                    ((misc.pb_rule_on && !use_model[i]->type) ? ".PB." : ".MC.")) +
+                   (use_model[i]->all_beads[j]->chainID == " " ? "" : (use_model[i]->all_beads[j]->chainID + ".")));
+               // a compiler error forced this kludge using tmp_serial
+               //  + QString("%1").arg((*use_model)[i].all_beads[j].serial);
+               residues += QString("%1").arg(tmp_serial);
+            }
+         }
+         else
+         {
+            residues = use_model[i]->residue_list;
+         }
+         if (fcorr) {
+            fprintf(fcorr,
+                    "%s\n%s\n%s\n%s\n%s\n%f\n%f\n%f\n%d\n%u\n%d\n",
+                    use_model[i]->name.ascii(),
+                    use_model[i]->resName.ascii(),
+                    use_model[i]->chainID.ascii(),
+                    use_model[i]->resSeq.ascii(),
+                    use_model[i]->iCode.ascii(),
+                    use_model[i]->bead_ref_mw,
+                    use_model[i]->bead_ref_volume,
+                    use_model[i]->bead_recheck_asa,
+                    use_model[i]->chain,
+                    use_model[i]->serial,
+                    use_model[i]->exposed_code);
+         }
+      }
+   }
+   fclose(fcorr);
+}
+
+bool US_Hydrodyn::read_corr(QString fname, vector<PDB_atom> *model) {
+   QFile f(fname);
+   vector < PDB_atom > new_model;
+   new_model.resize(model->size());
+   bool result = false;
+   if ( f.open(IO_ReadOnly) )
+   {
+      editor->append(QString("Reading correspondence file %1\n").arg(fname));
+      QTextStream ts(&f);
+      results.vbar = ts.readLine().toFloat();
+      unsigned int i = 0;
+      while( !ts.atEnd() && i < model->size() )
+      {
+         new_model[i].name = ts.readLine();
+         new_model[i].resName = ts.readLine();
+         new_model[i].chainID = ts.readLine();
+         new_model[i].resSeq = ts.readLine();
+         new_model[i].iCode = ts.readLine();
+         new_model[i].bead_ref_mw = ts.readLine().toFloat();
+         new_model[i].bead_ref_volume = ts.readLine().toFloat();
+         new_model[i].bead_recheck_asa = ts.readLine().toFloat();
+         new_model[i].chain = ts.readLine().toInt();
+         new_model[i].serial = ts.readLine().toUInt();
+         new_model[i].exposed_code = ts.readLine().toInt();
+         i++;
+      }
+      // only update if read matches
+      if( ts.atEnd() && i == model->size() )
+      {
+         for ( i = 0; i < model->size(); i++ )
+         {
+            (*model)[i].name = new_model[i].name;
+            (*model)[i].resName = new_model[i].resName;
+            (*model)[i].chainID = new_model[i].chainID;
+            (*model)[i].resSeq = new_model[i].resSeq;
+            (*model)[i].iCode = new_model[i].iCode;
+            (*model)[i].bead_ref_mw = new_model[i].bead_ref_mw;
+            (*model)[i].bead_ref_volume = new_model[i].bead_ref_volume;
+            (*model)[i].bead_recheck_asa = new_model[i].bead_recheck_asa;
+            (*model)[i].chain = new_model[i].chain;
+            (*model)[i].serial = new_model[i].serial;
+            (*model)[i].exposed_code = new_model[i].exposed_code;
+         }
+         result = true;
+         editor->append("Correspondence file ok\n");
+      } else {
+         editor->append(QString("Correspondence file didn't match %1\n").arg(fname));
+      }
+   }
+   f.close();
+   return result;
+}
 
 void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
-
+   // write corresopdence file also
    int decpts = -(int)log10(overlap_tolerance/9.9999) + 1;
    if (decpts < 4) {
       decpts = 4;
@@ -3315,7 +3433,6 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
          {
             residues = use_model[i]->residue_list;
          }
-
          if (fsomo) {
             fprintf(fsomo,
                     fstring_somo.ascii(),

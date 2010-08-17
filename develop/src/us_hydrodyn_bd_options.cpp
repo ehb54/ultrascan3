@@ -1844,7 +1844,10 @@ void US_Hydrodyn_BD_Options::update_labels()
       lbl_deltat->setPalette(label_font_ok);
       lbl_deltat->setText(tr(" Duration of each simulation step (s): "));
    } else {
-      cout << QString("total steps %1 int total_steps %2\n").arg(total_steps).arg(int(total_steps));
+      cout << QString("total steps %1 int total_steps %2 diff %3\n")
+         .arg(total_steps)
+         .arg(int(total_steps))
+         .arg(fabs( ( total_steps ) - int( total_steps + 0.5 ) ));
       cout << QString("").sprintf("%f %e %g\n", total_steps, total_steps, (total_steps - int(total_steps)));
       lbl_deltat->setPalette(label_font_warning);
       lbl_deltat->setText(tr(" Duration of each simulation step (s)\n"

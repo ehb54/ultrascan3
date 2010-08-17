@@ -86,6 +86,11 @@ void US_Hydrodyn::bd_prepare()
    msg += "\n";
    editor->append(msg);
 
+
+   overlap_reduction save_sidechain_overlap = sidechain_overlap;;
+   overlap_reduction save_mainchain_overlap = mainchain_overlap;;
+   overlap_reduction save_buried_overlap = buried_overlap;;
+
    for (current_model = 0; 
         current_model < (unsigned int)lb_model->numRows(); 
         current_model++)
@@ -97,6 +102,13 @@ void US_Hydrodyn::bd_prepare()
          {
             somo_processed[current_model] = 1;
             bead_models[current_model] = bead_model;
+            QString corr_name = 
+               somo_dir + SLASH + "bd" + SLASH + 
+               project + QString("_%1").arg(current_model + 1) +
+               QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
+               + "-bf-main";
+            write_corr(corr_name, &bead_models[current_model]);
+            write_bead_model( corr_name + "-A", &bead_models[current_model] );
          }
          else
          {
@@ -110,6 +122,9 @@ void US_Hydrodyn::bd_prepare()
       }
       if (stopFlag)
       {
+         sidechain_overlap = save_sidechain_overlap;
+         mainchain_overlap = save_mainchain_overlap;
+         buried_overlap = save_buried_overlap;
          editor->append("Stopped by user\n\n");
          bd_anaflex_enables(true);
          pb_somo->setEnabled(true);
@@ -121,6 +136,9 @@ void US_Hydrodyn::bd_prepare()
       // calculate bead model and generate hydrodynamics calculation output
       // if successful, enable follow-on buttons:
    }
+   sidechain_overlap = save_sidechain_overlap;
+   mainchain_overlap = save_mainchain_overlap;
+   buried_overlap = save_buried_overlap;
    if (any_models && !any_errors)
    {
       editor->append("Build bead model for BD completed\n");
@@ -223,7 +241,7 @@ int US_Hydrodyn::create_browflex_files()
       }
       QTextStream ts(&f);
       ts << QString(" %1,   Temperature (C)\n").arg(hydro.temperature);
-      ts << QString(" %1,   Solvent viscosity (poise)\n").arg(hydro.solvent_viscosity);
+      ts << QString(" %1,   Solvent viscosity (poise)\n").arg(hydro.solvent_viscosity / 100.0);
       // mass
       double usemass = 0e0;
       if ( hydro.mass_correction )
@@ -801,7 +819,7 @@ int US_Hydrodyn::create_browflex_files()
       ts << QString("%1,         tprev\n").arg(bd_options.tprev);
       ts << QString("%1,         ttraj\n").arg(bd_options.ttraj);
       ts << QString("%1,         nconf \n").arg(bd_options.nconf);
-      ts << QString("%1,         nscreen\n").arg(20);
+      ts << QString("%1,         nscreen\n").arg(1);
       ts << QString("%1,         deltat \n").arg(bd_options.deltat);
       ts << QString("%1,         npadif\n").arg(bd_options.npadif);
       ts << QString("%1,         inter\n").arg(bd_options.inter);
@@ -2632,27 +2650,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    
    double psv = 0.0; // misc.vbar;
    bool check_fix_overlaps = true;
-
-   US_Hydrodyn_BD_Load_Results_Opts *hblro = 
-      new US_Hydrodyn_BD_Load_Results_Opts (
-                                            msg,
-                                            &hydro.temperature,
-                                            &hydro.solvent_viscosity,
-                                            &hydro.solvent_density,
-                                            &hydro.solvent_name,
-                                            &hydro.solvent_acronym,
-                                            &psv,
-                                            bd_load_results_temp,
-                                            bd_load_results_solvent_visc,
-                                            &check_fix_overlaps
-                                            );
-   do {
-      hblro->exec();
-   } while ( psv <= 0.0 );
-
-   results.vbar = psv;
-   
-   delete hblro;
+   bool load_results_win_done = false;
 
    // create the bead models
    QString basename = dir + SLASH + name;
@@ -2703,6 +2701,38 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
             bead_model.push_back(tmp_atom);
          }
          QString model_name = basename + QString("-m%1-c%2").arg(i).arg(j);
+         editor->append(QString("base name is %1\n").arg(basename));
+         bool has_corr = read_corr(basename + ".corr", &bead_model);
+         if ( !load_results_win_done )
+         {
+            if ( has_corr )
+            {
+               psv = results.vbar;
+            }
+            
+            US_Hydrodyn_BD_Load_Results_Opts *hblro = 
+               new US_Hydrodyn_BD_Load_Results_Opts (
+                                                     msg,
+                                                     &hydro.temperature,
+                                                     &hydro.solvent_viscosity,
+                                                     &hydro.solvent_density,
+                                                     &hydro.solvent_name,
+                                                     &hydro.solvent_acronym,
+                                                     &psv,
+                                                     bd_load_results_temp,
+                                                     bd_load_results_solvent_visc,
+                                                     &check_fix_overlaps
+                                                     );
+            do {
+               hblro->exec();
+            } while ( psv <= 0.0 );
+         
+            results.vbar = psv;
+            
+            delete hblro;
+
+            load_results_win_done = true;
+         }
          // cout << "model name " << model_name << endl;
          if ( check_fix_overlaps )
          {
@@ -2730,127 +2760,153 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                progress->setTotalSteps(mpos);
                progress->setProgress(progress->progress() + 1);
                qApp->processEvents();
-
-               if ( grid.enable_asa )
+               puts("a1\n"); fflush(stdout);
+               write_bead_model( model_name + "-X", &bead_model );
+               if ( has_corr )
                {
-                  editor->append("ASA check\n");
-                  qApp->processEvents();
-                  // set all beads buried
-                  for(unsigned int i = 0; i < bead_model.size(); i++) {
-                     bead_model[i].exposed_code = 6;
-                     bead_model[i].bead_color = 6;
-                     bead_model[i].chain = 1; // all 'side' chain
-                  }
-                  double save_threshold = asa.threshold;
-                  double save_threshold_percent = asa.threshold_percent;
-                  asa.threshold = asa.grid_threshold;
-                  asa.threshold_percent = asa.grid_threshold_percent;
-                  progress->setProgress(progress->progress() + 1);
-                  bead_check(true, true);
-                  progress->setProgress(progress->progress() + 1);
-                  asa.threshold = save_threshold;
-                  asa.threshold_percent = save_threshold_percent;
-                  // now apply radial reduction with outward translation using
-
-                  // grid_exposed/buried_overlap
-                  overlap_reduction save_sidechain_overlap = sidechain_overlap;
-                  overlap_reduction save_mainchain_overlap = mainchain_overlap;
-                  overlap_reduction save_buried_overlap = buried_overlap;
-                  sidechain_overlap = grid_exposed_overlap;
-                  mainchain_overlap = grid_exposed_overlap;
-                  buried_overlap = grid_buried_overlap;
-                  progress->setProgress(progress->progress() + 1);
-
-                  double save_overlap = overlap_tolerance;
-                  overlap_tolerance *= .8;
-                  radial_reduction();
-                  overlap_tolerance = save_overlap;
-                  
-                  sidechain_overlap = save_sidechain_overlap;
-                  mainchain_overlap = save_mainchain_overlap;
-                  buried_overlap = save_buried_overlap;
-
-                  // grid_buried_overlap
-
+                  puts("a2\n"); fflush(stdout);
+                  compute_asa();
+                  puts("a3\n"); fflush(stdout);
                   if (asa.recheck_beads)
                   {
+                     puts("a4\n"); fflush(stdout);
+                     // puts("recheck beads disabled");
                      editor->append("Rechecking beads\n");
                      qApp->processEvents();
+                     
+                     bead_check(false, false);
+                     editor->append("Finished rechecking beads\n");
+                     progress->setProgress(19);
+                  }
+                  else
+                  {
+                     puts("a5\n"); fflush(stdout);
+                     editor->append("No rechecking of beads\n");
+                     qApp->processEvents();
+                  }
+                  write_bead_model( model_name + "-Y", &bead_model );
+               } else { // ! has_corr
+                  if ( grid.enable_asa )
+                  {
+                     editor->append("ASA check\n");
+                     qApp->processEvents();
+                     // set all beads buried
+                     for(unsigned int i = 0; i < bead_model.size(); i++) {
+                        bead_model[i].exposed_code = 6;
+                        bead_model[i].bead_color = 6;
+                        bead_model[i].chain = 1; // all 'side' chain
+                     }
                      double save_threshold = asa.threshold;
                      double save_threshold_percent = asa.threshold_percent;
                      asa.threshold = asa.grid_threshold;
                      asa.threshold_percent = asa.grid_threshold_percent;
                      progress->setProgress(progress->progress() + 1);
-                     bead_check(false, false);
+                     bead_check(true, true);
                      progress->setProgress(progress->progress() + 1);
                      asa.threshold = save_threshold;
                      asa.threshold_percent = save_threshold_percent;
-                  }
-               }
-               else
-               {
-                  //                  // set all beads exposed
-                  //                  for(unsigned int i = 0; i < bead_model.size(); i++) {
-                  //		     bead_model[i].exposed_code = 1;
-                  //		     bead_model[i].bead_color = 8;
-                  //		     bead_model[i].chain = 1; // all 'side' chain
-                  //                  }
-
-                  if (grid_overlap.remove_overlap)
-                  {
+                     // now apply radial reduction with outward translation using
+                     
+                     // grid_exposed/buried_overlap
+                     overlap_reduction save_sidechain_overlap = sidechain_overlap;
+                     overlap_reduction save_mainchain_overlap = mainchain_overlap;
+                     overlap_reduction save_buried_overlap = buried_overlap;
+                     sidechain_overlap = grid_exposed_overlap;
+                     mainchain_overlap = grid_exposed_overlap;
+                     buried_overlap = grid_buried_overlap;
                      progress->setProgress(progress->progress() + 1);
+                     
                      double save_overlap = overlap_tolerance;
                      overlap_tolerance *= .8;
                      radial_reduction();
                      overlap_tolerance = save_overlap;
-                     progress->setProgress(progress->progress() + 1);
-                  }
-                  if (stopFlag)
-                  {
-                     editor->append("Stopped by user\n\n");
-                     progress->reset();
-                     f.close();
-                     return;
-                  }
-                  if (asa.recheck_beads)
-                  {
-                     editor->append("Rechecking beads\n");
-                     qApp->processEvents();
-                     // all buried
-                     for(unsigned int i = 0; i < bead_model.size(); i++) {
-                        bead_model[i].exposed_code = 6;
-                        bead_model[i].bead_color = 6;
+                     
+                     sidechain_overlap = save_sidechain_overlap;
+                     mainchain_overlap = save_mainchain_overlap;
+                     buried_overlap = save_buried_overlap;
+                     
+                     // grid_buried_overlap
+                     
+                     if (asa.recheck_beads)
+                     {
+                        editor->append("Rechecking beads\n");
+                        qApp->processEvents();
+                        double save_threshold = asa.threshold;
+                        double save_threshold_percent = asa.threshold_percent;
+                        asa.threshold = asa.grid_threshold;
+                        asa.threshold_percent = asa.grid_threshold_percent;
+                        progress->setProgress(progress->progress() + 1);
+                        bead_check(false, false);
+                        progress->setProgress(progress->progress() + 1);
+                        asa.threshold = save_threshold;
+                        asa.threshold_percent = save_threshold_percent;
                      }
-                     double save_threshold = asa.threshold;
-                     double save_threshold_percent = asa.threshold_percent;
-                     asa.threshold = asa.grid_threshold;
-                     asa.threshold_percent = asa.grid_threshold_percent;
-                     progress->setProgress(progress->progress() + 1);
-                     bead_check(false, false);
-                     progress->setProgress(progress->progress() + 1);
-                     asa.threshold = save_threshold;
-                     asa.threshold_percent = save_threshold_percent;
                   }
                   else
                   {
-                     // all exposed
-                     for(unsigned int i = 0; i < bead_model.size(); i++) {
-                        bead_model[i].exposed_code = 1;
-                        bead_model[i].bead_color = 8;
+                     //                  // set all beads exposed
+                     //                  for(unsigned int i = 0; i < bead_model.size(); i++) {
+                     //		     bead_model[i].exposed_code = 1;
+                     //		     bead_model[i].bead_color = 8;
+                     //		     bead_model[i].chain = 1; // all 'side' chain
+                     //                  }
+                     
+                     if (grid_overlap.remove_overlap)
+                     {
+                        progress->setProgress(progress->progress() + 1);
+                        double save_overlap = overlap_tolerance;
+                        overlap_tolerance *= .8;
+                        radial_reduction();
+                        overlap_tolerance = save_overlap;
+                        progress->setProgress(progress->progress() + 1);
+                     }
+                     if (stopFlag)
+                     {
+                        editor->append("Stopped by user\n\n");
+                        progress->reset();
+                        f.close();
+                        return;
+                     }
+                     if (asa.recheck_beads)
+                     {
+                        editor->append("Rechecking beads\n");
+                        qApp->processEvents();
+                        // all buried
+                        for(unsigned int i = 0; i < bead_model.size(); i++) {
+                           bead_model[i].exposed_code = 6;
+                           bead_model[i].bead_color = 6;
+                        }
+                        double save_threshold = asa.threshold;
+                        double save_threshold_percent = asa.threshold_percent;
+                        asa.threshold = asa.grid_threshold;
+                        asa.threshold_percent = asa.grid_threshold_percent;
+                        progress->setProgress(progress->progress() + 1);
+                        bead_check(false, false);
+                        progress->setProgress(progress->progress() + 1);
+                        asa.threshold = save_threshold;
+                        asa.threshold_percent = save_threshold_percent;
+                     }
+                     else
+                     {
+                        // all exposed
+                        for(unsigned int i = 0; i < bead_model.size(); i++) {
+                           bead_model[i].exposed_code = 1;
+                           bead_model[i].bead_color = 8;
+                        }
                      }
                   }
-                  if (stopFlag)
-                  {
-                     editor->append("Stopped by user\n\n");
-                     progress->reset();
-                     f.close();
-                     return;
-                  }
+               } // !has_corr
+               if (stopFlag)
+               {
+                  editor->append("Stopped by user\n\n");
+                  progress->reset();
+                  f.close();
+                  return;
                }
             }
          }
          // set all exposed for now
-         {
+         if ( !has_corr ) {
             for( unsigned int i = 0; i < bead_model.size(); i++) {
                bead_model[i].exposed_code = 1;
                bead_model[i].bead_color = 8;
@@ -2914,3 +2970,60 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    editor->append(tr("Load Browflex results completed.\n"));
    batch_window->raise();
 }
+
+int US_Hydrodyn::browflex_get_no_of_beads( QString filename )
+{
+   cout << "check no_of_beads\n";
+   if ( !bd_valid_browflex_main( filename ) )
+   {
+      cout << "check no_of_beads invalid file\n";
+      return 0;
+   }
+   QFile f( filename );
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      cout << "check no_of_beads can't read\n";
+      return 0;
+   }
+   QTextStream ts( &f );
+   QString molec_file = "";
+   ts.readLine();    // logfile
+   ts.readLine();    // trajfile
+   // molecular file
+   if ( !ts.atEnd() )
+   {
+      ts >> molec_file;
+   } else {
+      cout << "check no_of_beads no molec file line\n";
+      f.close();
+      return 0;
+   }
+   f.close();
+   molec_file = QFileInfo(filename).dirPath() + SLASH + molec_file;
+   f.setName(molec_file);
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      cout << "check no_of_beads can't open molec file\n";
+      return 0;
+   }
+   ts.readLine();
+   ts.readLine();
+   ts.readLine();
+   ts.readLine();
+   int no_of_beads;
+   if ( !ts.atEnd() )
+   {
+      ts >> no_of_beads;
+   } else {
+      cout << "check no_of_beads molec file not enough lines\n";
+      f.close();
+      return 0;
+   }
+   cout << "no of beads from molec " << no_of_beads << endl;
+   return no_of_beads;
+}
+
+
+   
+
+   

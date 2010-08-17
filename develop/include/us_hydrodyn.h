@@ -489,6 +489,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void write_bead_ebf(QString, vector <PDB_atom> *);
       void write_bead_spt(QString, vector <PDB_atom> *);
       void write_bead_model(QString, vector <PDB_atom> *);
+      void write_corr(QString, vector <PDB_atom> *);
+      bool read_corr(QString, vector <PDB_atom> *);
       void printError(const QString &);
       void closeAttnt(QProcess *, QString);
       void calc_vbar(struct PDB_model *);
@@ -534,6 +536,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       int create_browflex_files();
       int run_browflex();
+      int browflex_get_no_of_beads( QString filename ); // open main file, read molec file, return # of beads or zero if not found
 
       int compute_pb_normals();                // compute the normal vectors for each peptide bond plane
       int build_pb_structures( PDB_model * ) ; // create pb data structures
