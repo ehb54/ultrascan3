@@ -106,7 +106,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
       // Functions
       void   update_assocv  ( void );
       void   adjust_limits  ( int speed );
-      double stretch        ( int, int );
+      double stretch        ( double*, int );
       void   initialize_rg  ( void );
       void   initialize_conc( int, US_AstfemMath::MfemInitial&, bool );
 

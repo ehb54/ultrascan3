@@ -199,8 +199,14 @@ void US_Astfem_Sim::init_simparams( void )
    US_SimulationParameters::SpeedProfile sp;
    int    rotor  = 1;
    double rpm    = 45000.0;
-   double bottom = US_AstfemMath::calc_bottom( rpm, rotor );
-          bottom = (double)( qRound( bottom * 1000.0 ) ) * 0.001;
+
+   // set up bottom start and rotor coefficients from hardware file
+   simparams.setHardware( rotor, 0, 0 );
+
+   // calculate bottom from rpm, channel bottom pos., rotor coefficients
+   double bottom = US_AstfemMath::calc_bottom( rpm,
+         simparams.bottom_position, simparams.rotorcoeffs );
+   bottom        = (double)( qRound( bottom * 1000.0 ) ) * 0.001;
 
    simparams.mesh_radius.clear();
    simparams.speed_step .clear();

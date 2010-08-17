@@ -27,6 +27,12 @@ class US_EXTERN US_SimulationParameters
    //! \param editdata Data structure of edited data that contains run info.
    void initFromData( US_DataIO2::EditedData& );
 
+   //! \brief Read hardware files to update bottom and rotor coefficients array
+   //! \param rx New rotor index to set and use for coefficients (default = 1)
+   //! \param cp Centerpiece index (default = 0)
+   //! \param ch Index to channel in centerpiece (default = 0) 
+   void setHardware( int = 1, int = 0, int = 0 );
+
    //! The radii from a user-selected mesh file (mesh == USER)
    QVector< double > mesh_radius; 
 
@@ -59,6 +65,8 @@ class US_EXTERN US_SimulationParameters
    bool      band_forming;      //!< True for band-forming centerpieces
    double    band_volume;       //!< Loading volume (of lamella) in a 
                                 //!< Band-forming centerpiece
+   double    bottom_position;   //!< Bottom position from centerpiece,channel
+   double    rotorcoeffs[ 5 ];  //!< Rotor coefficients for stretch calculation
 
    //! First band sedimentation scan is initializer for concentration
    bool      band_firstScanIsConcentration; 

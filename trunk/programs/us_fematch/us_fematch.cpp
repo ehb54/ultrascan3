@@ -525,9 +525,13 @@ void US_FeMatch::details( void )
    delete dialog;
 //DEBUG: for now, use details button to toggle RA visibility
 bool visible=lb_simpoints->isVisible();
+//pl1siz = data_plot1->size();
+//pl2siz = data_plot2->size();
 qDebug() << "debug isRA" << !visible;
 set_ra_visible( !visible );
-adjustSize(); 
+//data_plot1->resize( pl1siz );
+//data_plot2->resize( pl2siz );
+//adjustSize(); 
 }
 
 // update based on selected triples row
@@ -912,6 +916,8 @@ void US_FeMatch::exclude( void )
 
 void US_FeMatch::set_ra_visible( bool visible )
 {
+   QSize pl1siz = data_plot1->size();
+   QSize pl2siz = data_plot2->size();
    lb_simpoints->setVisible( visible );  // visibility of RA experimental pars
    ct_simpoints->setVisible( visible );
    lb_bldvolume->setVisible( visible );
@@ -924,6 +930,10 @@ void US_FeMatch::set_ra_visible( bool visible )
    //cb_grid     ->setVisible( visible );
 
    gb_modelsim ->setVisible( visible );  // visibility model simulate group box
+
+   data_plot1->resize( pl1siz );
+   data_plot2->resize( pl2siz );
+   adjustSize(); 
 }
 
 // respond to click of current type of distribution plot
@@ -2272,7 +2282,6 @@ int US_FeMatch::noises_in_model( bool ondisk, QString mGUID,
    QString xntype;
 
    nGUIDs.clear();
-
    if ( ondisk )
    {  // Noises from local disk files
       QDir    dir;
