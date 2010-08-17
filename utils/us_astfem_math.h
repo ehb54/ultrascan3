@@ -16,90 +16,216 @@ class US_EXTERN US_AstfemMath
       class MfemScan;
       class MfemData;
 
-      //! Interpolate first onto second
+      //! \brief Interpolate first onto second
+      //! \param C0    Input MfemInitial
+      //! \param C1    MfemInitial with interpolated concentrations
       static void interpolate_C0( MfemInitial&, MfemInitial& );
 
-      //! Interpolate starting concentration QVector mfem_initial onto C0
+      //! \brief Interpolate starting concentration QVector MfemInitial onto C0
+      //! \param C0    Input MfemInitial
+      //! \param C1    First scan with interpolated concentrations
+      //! \param x     Start x (radius) values for each scan
       static void interpolate_C0( MfemInitial&, double*, QVector< double >& );
 
-      //! Create a 2d matrix in memory and initilize to all zeros.
+      //! \brief Create a 2d matrix in memory and initilize to all zeros.
+      //! \param val1   First dimension
+      //! \param val2   Second dimension
+      //! \param matrix Initialized val1 x val2 matrix
       static void initialize_2d( int, int, double*** );
 
-      //! Delete a 2d matrix in memory
+      //! \brief Delete a 2d matrix in memory
+      //! \param val1   First dimension
+      //! \param matrix val1 x n matrix to be deleted
       static void clear_2d     ( int, double** );
 
-      //! Find the maximum value in a vector
+      //! \brief Find the maximum value in a vector
+      //! \param value Vector whose maximum is found
+      //! \returns Vector maximum value
       static double maxval( const QVector< double >& );
 
-      //! Find the minimum value in a vector
+      //! \brief Find the minimum value in a vector
+      //! \param value Vector whose minimum is found
+      //! \returns Vector minimum value
       static double minval( const QVector< double >& );
 
-      //! Find the maximum s in a vector of SimulationComponent entries
+      //! \brief Find the maximum s in a vector of SimulationComponent entries
+      //! \param value Vector of components whose maximum s value is found
+      //! \returns Vector maximum value
       static double maxval( const QVector< US_Model::SimulationComponent >& );
 
-      //! Find the minimum s in a vector of SimulationComponent entries
+      //! \brief Find the minimum s in a vector of SimulationComponent entries
+      //! \param value Vector of components whose minimum s value is found
+      //! \returns Vector minimum value
       static double minval( const QVector< US_Model::SimulationComponent >& );
 
-      //! Create a 3d matrix in memory and initilize to all zeros.
+      //! \brief Create a 3d matrix in memory and initilize to all zeros.
+      //! \param val1   First dimension
+      //! \param val2   Second dimension
+      //! \param val3   Third dimension
+      //! \param matrix Initialized val1 x val2 x val3 matrix
       static void   initialize_3d( int, int, int, double**** );
       
-      //! Delete a 3d matrix in memory
+      //! \brief Delete a 3d matrix in memory
+      //! \param val1   First dimension
+      //! \param val2   Second dimension
+      //! \param matrix Deleted val1 x val2 x n matrix
       static void   clear_3d     ( int, int, double*** );
    
-      //! Solve a Ax = b whre A is tridiagonal
+      //! \brief Solve a Ax = b where A is tridiagonal
+      //! \param a  Array of a values
+      //! \param b  Array of b values
+      //! \param c  Array of c values
+      //! \param r  Array of r values
+      //! \param u  Array of u values
+      //! \param N  Length of vectors
       static void   tridiag      ( double*, double*, double*, 
                                    double*, double*, int );
 
-      //! Find the positive cubic-root of a cubic polynomial<br>
+      //! \brief Find the positive cubic-root of a cubic polynomial<br>
       //! with a0 <= 0 and<br>
       //! a1, a2 >= 0
+      //! \param a0 The a0 value
+      //! \param a1 The a0 value
+      //! \param a2 The a0 value
+      //! \returns Cube root
       static double cube_root    ( double, double, double );
 
-      //! Solve Ax = b using Gaussian Elimination
+      //! \brief Solve Ax = b using Gaussian Elimination
+      //! \param n  The order of the square matrix
+      //! \param a  The n x n matrix
+      //! \param b  The b vector
+      //! \returns Success flag: -1 -> singular, no solution; 1 -> success
       static int    GaussElim    ( int, double**, double* );
 
-      //! Solve  f(x) = x + K * x^n - C using Newton's method.<br>
+      //! \brief Solve  f(x) = x + K * x^n - C using Newton's method.<br>
       //! This function needs to be renamed!
+      //! \param n  The power exponent
+      //! \param K  The scalar constant
+      //! \param CT The test C value
       static double find_C1_mono_Nmer( int, double, double );
 
-      //! Interpolate one dataset onto another usitn time or omega^2t
+      //! \brief Interpolate one dataset onto another usitn time or omega^2t
+      //! \param expdata  Experimental data to create, sized on input
+      //! \param simdata  Simulation from which to create modeled experiment
+      //! \param use_time Flag of whether to use time correction
+      //! \returns Success flag: 0 -> success
       static int    interpolate  ( MfemData&, MfemData&, bool );  
 
-      //! Solve Quad-diagonal system
+      //! \brief Solve Quad-diagonal system
+      //! \param ai   The initial a vector
+      //! \param bi   The initial b vector
+      //! \param ci   The initial c vector
+      //! \param di   The initial d vector
+      //! \param cr   The Cr        vector
+      //! \param solu The calculated solution vector
+      //! \param N    The length of vectors
       static void   QuadSolver   ( double*, double*, double*, double*, 
                                    double*, double*, int);
    
+      //! \brief Integration on test function seperately on left Q, right T
+      //! \param vx   The vx vector
+      //! \param D    The D   value
+      //! \param sw2  The sw2 value
+      //! \param Stif The Stif matrix
+      //! \param dt   The dt value
       static void   IntQT1       ( QVector< double >, double, double,
                                    double**, double );
+   
+      //! \brief Integration on test function
+      //! \param vx   The vx vector
+      //! \param D    The D   value
+      //! \param sw2  The sw2 value
+      //! \param Stif The Stif matrix
+      //! \param dt   The dt value
       static void   IntQTm       ( QVector< double >, double, double,
                                    double**, double );
+   
+      //! \brief Integration on test function
+      //! \param vx   The vx vector
+      //! \param D    The D   value
+      //! \param sw2  The sw2 value
+      //! \param Stif The Stif matrix
+      //! \param dt   The dt value
       static void   IntQTn2      ( QVector< double >, double, double,
                                    double**, double );
+   
+      //! \brief Integration on test function
+      //! \param vx   The vx vector
+      //! \param D    The D   value
+      //! \param sw2  The sw2 value
+      //! \param Stif The Stif matrix
+      //! \param dt   The dt value
       static void   IntQTn1      ( QVector< double >, double, double,
                                    double**, double );
+      //! \brief Define Lamm equation values
+      //! \param npts  Order of the equation
+      //! \param Lam   Matrix of Lamm values to fill
       static void   DefineFkp    ( int, double** );
 
-      //! Compute the area of a triangle
+      //! \brief Compute the area of a triangle (v1, v2, v3)
+      //! \param xv The XV vector
+      //! \param yv The YV vector
       static double AreaT        ( QVector< double >&, QVector< double >& );
 
+      //! \brief Computer basis on standard element (TS)
+      //! \param xi    The XI constant
+      //! \param et    The ET constant
+      //! \param phi   The Phi  vector to fill
+      //! \param phi1  The Phi1 vector to fill
+      //! \param phi2  The Phi2 vector to fill
       static void   BasisTS      ( double, double, double*, double*, double*);
+
+      //! \brief Computer basis on standard element (QS)
+      //! \param xi    The XI constant
+      //! \param et    The ET constant
+      //! \param phi   The Phi  vector to fill
+      //! \param phi1  The Phi1 vector to fill
+      //! \param phi2  The Phi2 vector to fill
       static void   BasisQS      ( double, double, double*, double*, double*);
    
+      //! \brief Computer basis on real element T at given(xs,ts) point
+      //! \param vx   The Vx vector
+      //! \param vy   The Vy vector
+      //! \param xs   The start X coordinate
+      //! \param ys   The start Y coordinate
+      //! \param phi  The Phi  vector to fill
+      //! \param phix The PhiX vector to fill
+      //! \param phiy The PhiY vector to fill
       static void   BasisTR      ( QVector< double >, QVector< double >,
                                    double, double, double*, double*, double* );
    
+      //! \brief Computer basis on real element Q at given(xs,ts) point
+      //! \param vx   The VX vector
+      //! \param xs   The start X coordinate
+      //! \param ts   The start Y coordinate
+      //! \param phi  The Phi  vector to fill
+      //! \param phix The PhiX vector to fill
+      //! \param phiy The PhiY vector to fill
+      //! \param dt   The d-t constant
       static void   BasisQR      ( QVector< double >, double, double,
                                    double*, double*, double*, double );
 
+      //! \brief Integrand for Lamm equation
+      //! \param x_gauss The X-gaussian constant
+      //! \param D       The D   constant
+      //! \param sw2     The SW2 constant
+      //! \param u       The U   constant
+      //! \param ux      The Ux  constant
+      //! \param ut      The Ut  constant
+      //! \param v       The V   constant
+      //! \param vx      The Vx  constant
       static double Integrand    ( double, double, double, double,
                                    double, double, double, double);
 
+      //! \brief Define Gaussian
+      //! \param nGauss Order of the matrix
+      //! \param Gs2    Matrix to be filled
       static void   DefineGaussian( int, double** );
 
       //! \brief Initialize simulation data from experimental
       //! \param simdata  Reference to simulation Raw Data to initialize.
       //! \param editdata Reference to experimental Edited Data to mirror.
-      //! \param conval1  Optional constant concentration value for first scan.
+      //! \param concval1 Optional constant concentration value for first scan.
       static void   initSimData   ( US_DataIO2::RawData&,
                                     US_DataIO2::EditedData&, double );
 
@@ -199,8 +325,8 @@ class US_EXTERN US_AstfemMath
       class ReactionGroup
       {
          public:
-         QVector< int > association;
-         QVector< int > GroupComponent;
+         QVector< int > association;    //!< assocation flags 
+         QVector< int > GroupComponent; //!< group component flags
       };
 
       //! \brief Component Role
