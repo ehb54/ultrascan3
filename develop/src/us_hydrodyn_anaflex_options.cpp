@@ -368,13 +368,76 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    cb_run_mode_3_9->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_run_mode_3_9, SIGNAL(clicked()), SLOT(set_run_mode_3_9()));
 
-   // cb_run_mode_3_10 = new QCheckBox(this);
-   // cb_run_mode_3_10->setText(tr(" Polarized dynamic light scattering "));
-   // cb_run_mode_3_10->setChecked((*anaflex_options).run_mode_3_10);
-   // cb_run_mode_3_10->setEnabled(true);
-   // cb_run_mode_3_10->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // cb_run_mode_3_10->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   // connect(cb_run_mode_3_10, SIGNAL(clicked()), SLOT(set_run_mode_3_10()));
+   cb_run_mode_3_10 = new QCheckBox(this);
+   cb_run_mode_3_10->setText(tr(" Polarized dynamic light scattering "));
+   cb_run_mode_3_10->setChecked((*anaflex_options).run_mode_3_10);
+   cb_run_mode_3_10->setEnabled(true);
+   cb_run_mode_3_10->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_run_mode_3_10->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_run_mode_3_10, SIGNAL(clicked()), SLOT(set_run_mode_3_10()));
+
+   lbl_run_mode_3_10_theta_spacing = new QLabel("    ", this);
+   lbl_run_mode_3_10_theta_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_10_theta_spacing->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_10_theta_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_run_mode_3_10_theta_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_run_mode_3_10_theta = new QLabel(tr(" Theta (degrees): "), this);
+   lbl_run_mode_3_10_theta->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_10_theta->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_10_theta->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_run_mode_3_10_theta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_run_mode_3_10_theta = new QLineEdit(this, "Run_Mode_3_10_Theta Line Edit");
+   le_run_mode_3_10_theta->setText(QString("%1").arg((*anaflex_options).run_mode_3_10_theta));
+   le_run_mode_3_10_theta->setAlignment(AlignVCenter);
+   le_run_mode_3_10_theta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_run_mode_3_10_theta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_run_mode_3_10_theta->setMinimumWidth(75);
+   le_run_mode_3_10_theta->setEnabled(true);
+   connect(le_run_mode_3_10_theta, SIGNAL(textChanged(const QString &)), SLOT(update_run_mode_3_10_theta(const QString &)));
+
+   lbl_run_mode_3_10_refractive_index_spacing = new QLabel("    ", this);
+   lbl_run_mode_3_10_refractive_index_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_10_refractive_index_spacing->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_10_refractive_index_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_run_mode_3_10_refractive_index_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_run_mode_3_10_refractive_index = new QLabel(tr(" Refractive_Index: "), this);
+   lbl_run_mode_3_10_refractive_index->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_10_refractive_index->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_10_refractive_index->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_run_mode_3_10_refractive_index->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_run_mode_3_10_refractive_index = new QLineEdit(this, "Run_Mode_3_10_Refractive_Index Line Edit");
+   le_run_mode_3_10_refractive_index->setText(QString("%1").arg((*anaflex_options).run_mode_3_10_refractive_index));
+   le_run_mode_3_10_refractive_index->setAlignment(AlignVCenter);
+   le_run_mode_3_10_refractive_index->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_run_mode_3_10_refractive_index->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_run_mode_3_10_refractive_index->setMinimumWidth(75);
+   le_run_mode_3_10_refractive_index->setEnabled(true);
+   connect(le_run_mode_3_10_refractive_index, SIGNAL(textChanged(const QString &)), SLOT(update_run_mode_3_10_refractive_index(const QString &)));
+
+   lbl_run_mode_3_10_lambda_spacing = new QLabel("    ", this);
+   lbl_run_mode_3_10_lambda_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_10_lambda_spacing->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_10_lambda_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_run_mode_3_10_lambda_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   lbl_run_mode_3_10_lambda = new QLabel(tr(" Lambda (nm): "), this);
+   lbl_run_mode_3_10_lambda->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_10_lambda->setMinimumHeight(minHeight1);
+   lbl_run_mode_3_10_lambda->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_run_mode_3_10_lambda->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_run_mode_3_10_lambda = new QLineEdit(this, "Run_Mode_3_10_Lambda Line Edit");
+   le_run_mode_3_10_lambda->setText(QString("%1").arg((*anaflex_options).run_mode_3_10_lambda));
+   le_run_mode_3_10_lambda->setAlignment(AlignVCenter);
+   le_run_mode_3_10_lambda->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_run_mode_3_10_lambda->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_run_mode_3_10_lambda->setMinimumWidth(75);
+   le_run_mode_3_10_lambda->setEnabled(true);
+   connect(le_run_mode_3_10_lambda, SIGNAL(textChanged(const QString &)), SLOT(update_run_mode_3_10_lambda(const QString &)));
 
    cb_run_mode_3_14 = new QCheckBox(this);
    cb_run_mode_3_14->setText(tr(" < Rij dot Rij > "));
@@ -638,6 +701,20 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    vbl_3->addSpacing(2);
 
    vbl_3->addWidget(cb_run_mode_3_9);
+   vbl_3->addWidget(cb_run_mode_3_10);
+   QGridLayout *gl_3_10 = new QGridLayout;
+   gl_3_10->addWidget(lbl_run_mode_3_10_theta_spacing, 0, 0);
+   gl_3_10->addWidget(lbl_run_mode_3_10_theta, 0, 1);
+   gl_3_10->addWidget(le_run_mode_3_10_theta, 0, 2);
+   gl_3_10->addWidget(lbl_run_mode_3_10_refractive_index_spacing, 1, 0);
+   gl_3_10->addWidget(lbl_run_mode_3_10_refractive_index, 1, 1);
+   gl_3_10->addWidget(le_run_mode_3_10_refractive_index, 1, 2);
+   gl_3_10->addWidget(lbl_run_mode_3_10_lambda_spacing, 2, 0);
+   gl_3_10->addWidget(lbl_run_mode_3_10_lambda, 2, 1);
+   gl_3_10->addWidget(le_run_mode_3_10_lambda, 2, 2);
+
+   vbl_3->addLayout(gl_3_10);
+   vbl_3->addSpacing(2);
 
    vbl_3->addWidget(cb_run_mode_3_14);
    QGridLayout *gl_3_14 = new QGridLayout;
@@ -938,15 +1015,15 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_1()
       //      cb_run_mode_3_1->setChecked(false);
       cb_run_mode_3_5->setChecked(false);
       cb_run_mode_3_9->setChecked(false);
-      // cb_run_mode_3_10->setChecked(false);
+      cb_run_mode_3_10->setChecked(false);
       cb_run_mode_3_14->setChecked(false);
       cb_run_mode_3_15->setChecked(false);
       cb_run_mode_3_16->setChecked(false);
       //      (*anaflex_options).run_mode_3_1 = false;
-      // (*anaflex_options).run_mode_3_5 = false;
+      (*anaflex_options).run_mode_3_5 = false;
       (*anaflex_options).run_mode_3_9 = false;
-      // (*anaflex_options).run_mode_3_10 = false;
-      // (*anaflex_options).run_mode_3_14 = false;
+      (*anaflex_options).run_mode_3_10 = false;
+      (*anaflex_options).run_mode_3_14 = false;
       (*anaflex_options).run_mode_3_15 = false;
       (*anaflex_options).run_mode_3_16 = false;
    }
@@ -962,14 +1039,14 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_5()
       cb_run_mode_3_1->setChecked(false);
       //      cb_run_mode_3_5->setChecked(false);
       cb_run_mode_3_9->setChecked(false);
-      // cb_run_mode_3_10->setChecked(false);
+      cb_run_mode_3_10->setChecked(false);
       cb_run_mode_3_14->setChecked(false);
       cb_run_mode_3_15->setChecked(false);
       cb_run_mode_3_16->setChecked(false);
       (*anaflex_options).run_mode_3_1 = false;
       //     (*anaflex_options).run_mode_3_5 = false;
       (*anaflex_options).run_mode_3_9 = false;
-      // (*anaflex_options).run_mode_3_10 = false;
+      (*anaflex_options).run_mode_3_10 = false;
       (*anaflex_options).run_mode_3_14 = false;
       (*anaflex_options).run_mode_3_15 = false;
       (*anaflex_options).run_mode_3_16 = false;
@@ -986,14 +1063,14 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_9()
       cb_run_mode_3_1->setChecked(false);
       cb_run_mode_3_5->setChecked(false);
       //      cb_run_mode_3_9->setChecked(false);
-      // cb_run_mode_3_10->setChecked(false);
+      cb_run_mode_3_10->setChecked(false);
       cb_run_mode_3_14->setChecked(false);
       cb_run_mode_3_15->setChecked(false);
       cb_run_mode_3_16->setChecked(false);
       (*anaflex_options).run_mode_3_1 = false;
       (*anaflex_options).run_mode_3_5 = false;
       //      (*anaflex_options).run_mode_3_9 = false;
-      // (*anaflex_options).run_mode_3_10 = false;
+      (*anaflex_options).run_mode_3_10 = false;
       (*anaflex_options).run_mode_3_14 = false;
       (*anaflex_options).run_mode_3_15 = false;
       (*anaflex_options).run_mode_3_16 = false;
@@ -1002,29 +1079,29 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_9()
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
-// void US_Hydrodyn_Anaflex_Options::set_run_mode_3_10()
-// {
-//    (*anaflex_options).run_mode_3_10 = cb_run_mode_3_10->isChecked();
-//    if ( cb_run_mode_3_10->isChecked() )
-//    {
-//       cb_run_mode_3_1->setChecked(false);
-//       // cb_run_mode_3_5->setChecked(false);
-//       cb_run_mode_3_9->setChecked(false);
-//       //      // cb_run_mode_3_10->setChecked(false);
-//       // cb_run_mode_3_14->setChecked(false);
-//       cb_run_mode_3_15->setChecked(false);
-//       cb_run_mode_3_16->setChecked(false);
-//       (*anaflex_options).run_mode_3_1 = false;
-//       // (*anaflex_options).run_mode_3_5 = false;
-//       (*anaflex_options).run_mode_3_9 = false;
-//       //      // (*anaflex_options).run_mode_3_10 = false;
-//       // (*anaflex_options).run_mode_3_14 = false;
-//       (*anaflex_options).run_mode_3_15 = false;
-//       (*anaflex_options).run_mode_3_16 = false;
-//    }
-//    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-//   update_enables();
-// }
+void US_Hydrodyn_Anaflex_Options::set_run_mode_3_10()
+{
+   (*anaflex_options).run_mode_3_10 = cb_run_mode_3_10->isChecked();
+   if ( cb_run_mode_3_10->isChecked() )
+   {
+      cb_run_mode_3_1->setChecked(false);
+      cb_run_mode_3_5->setChecked(false);
+      cb_run_mode_3_9->setChecked(false);
+      //      cb_run_mode_3_10->setChecked(false);
+      cb_run_mode_3_14->setChecked(false);
+      cb_run_mode_3_15->setChecked(false);
+      cb_run_mode_3_16->setChecked(false);
+      (*anaflex_options).run_mode_3_1 = false;
+      (*anaflex_options).run_mode_3_5 = false;
+      (*anaflex_options).run_mode_3_9 = false;
+      //      (*anaflex_options).run_mode_3_10 = false;
+      (*anaflex_options).run_mode_3_14 = false;
+      (*anaflex_options).run_mode_3_15 = false;
+      (*anaflex_options).run_mode_3_16 = false;
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+  update_enables();
+}
 
 void US_Hydrodyn_Anaflex_Options::set_run_mode_3_14()
 {
@@ -1034,14 +1111,14 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_14()
       cb_run_mode_3_1->setChecked(false);
       cb_run_mode_3_5->setChecked(false);
       cb_run_mode_3_9->setChecked(false);
-      // cb_run_mode_3_10->setChecked(false);
+      cb_run_mode_3_10->setChecked(false);
       //      cb_run_mode_3_14->setChecked(false);
       cb_run_mode_3_15->setChecked(false);
       cb_run_mode_3_16->setChecked(false);
       (*anaflex_options).run_mode_3_1 = false;
       (*anaflex_options).run_mode_3_5 = false;
       (*anaflex_options).run_mode_3_9 = false;
-      // (*anaflex_options).run_mode_3_10 = false;
+      (*anaflex_options).run_mode_3_10 = false;
       //      (*anaflex_options).run_mode_3_14 = false;
       (*anaflex_options).run_mode_3_15 = false;
       (*anaflex_options).run_mode_3_16 = false;
@@ -1058,14 +1135,14 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_15()
       cb_run_mode_3_1->setChecked(false);
       cb_run_mode_3_5->setChecked(false);
       cb_run_mode_3_9->setChecked(false);
-      // cb_run_mode_3_10->setChecked(false);
+      cb_run_mode_3_10->setChecked(false);
       cb_run_mode_3_14->setChecked(false);
       //      cb_run_mode_3_15->setChecked(false);
       cb_run_mode_3_16->setChecked(false);
       (*anaflex_options).run_mode_3_1 = false;
       (*anaflex_options).run_mode_3_5 = false;
       (*anaflex_options).run_mode_3_9 = false;
-      // (*anaflex_options).run_mode_3_10 = false;
+      (*anaflex_options).run_mode_3_10 = false;
       (*anaflex_options).run_mode_3_14 = false;
       //      (*anaflex_options).run_mode_3_15 = false;
       (*anaflex_options).run_mode_3_16 = false;
@@ -1082,14 +1159,14 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_3_16()
       cb_run_mode_3_1->setChecked(false);
       cb_run_mode_3_5->setChecked(false);
       cb_run_mode_3_9->setChecked(false);
-      // cb_run_mode_3_10->setChecked(false);
+      cb_run_mode_3_10->setChecked(false);
       cb_run_mode_3_14->setChecked(false);
       cb_run_mode_3_15->setChecked(false);
       //      cb_run_mode_3_16->setChecked(false);
       (*anaflex_options).run_mode_3_1 = false;
       (*anaflex_options).run_mode_3_5 = false;
       (*anaflex_options).run_mode_3_9 = false;
-      // (*anaflex_options).run_mode_3_10 = false;
+      (*anaflex_options).run_mode_3_10 = false;
       (*anaflex_options).run_mode_3_14 = false;
       (*anaflex_options).run_mode_3_15 = false;
       //      (*anaflex_options).run_mode_3_16 = false;
@@ -1289,6 +1366,24 @@ void US_Hydrodyn_Anaflex_Options::update_run_mode_3_14_jjj(const QString &str)
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_Anaflex_Options::update_run_mode_3_10_theta(const QString &str)
+{
+   (*anaflex_options).run_mode_3_10_theta = str.toFloat();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Anaflex_Options::update_run_mode_3_10_refractive_index(const QString &str)
+{
+   (*anaflex_options).run_mode_3_10_refractive_index = str.toFloat();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Anaflex_Options::update_run_mode_3_10_lambda(const QString &str)
+{
+   (*anaflex_options).run_mode_3_10_lambda = str.toFloat();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_Anaflex_Options::update_enables()
 {
    cb_run_mode_1_1->setEnabled(cb_run_mode_1->isChecked());
@@ -1326,7 +1421,10 @@ void US_Hydrodyn_Anaflex_Options::update_enables()
    le_run_mode_3_5_iii->setEnabled(cb_run_mode_3_5->isChecked() && cb_run_mode_3->isChecked());
    le_run_mode_3_5_jjj->setEnabled(cb_run_mode_3_5->isChecked() && cb_run_mode_3->isChecked());
    cb_run_mode_3_9->setEnabled(cb_run_mode_3->isChecked());
-   // cb_run_mode_3_10->setEnabled(cb_run_mode_3->isChecked());
+   cb_run_mode_3_10->setEnabled(cb_run_mode_3->isChecked());
+   le_run_mode_3_10_theta->setEnabled(cb_run_mode_3_10->isChecked() && cb_run_mode_3->isChecked());
+   le_run_mode_3_10_refractive_index->setEnabled(cb_run_mode_3_10->isChecked() && cb_run_mode_3->isChecked());
+   le_run_mode_3_10_lambda->setEnabled(cb_run_mode_3_10->isChecked() && cb_run_mode_3->isChecked());
    cb_run_mode_3_14->setEnabled(cb_run_mode_3->isChecked());
    le_run_mode_3_14_iii->setEnabled(cb_run_mode_3_14->isChecked() && cb_run_mode_3->isChecked());
    le_run_mode_3_14_jjj->setEnabled(cb_run_mode_3_14->isChecked() && cb_run_mode_3->isChecked());

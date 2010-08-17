@@ -352,6 +352,14 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
                   ts << "0                           !Hydrodynamic properties\n"; 
                }
                break;
+            case 10 :
+               ts << "0,0,1," 
+                  << 
+                  (4.0 * M_PI * anaflex_options.run_mode_3_10_refractive_index / 
+                   anaflex_options.run_mode_3_10_lambda ) *
+                  sin(anaflex_options.run_mode_3_10_theta * (M_PI / 180.0) / 2.0)
+                  << "                            !Hydrodynamic properties\n"; 
+               break;
             case 14 :
                ts << anaflex_options.run_mode_3_14_iii << ",";
                {

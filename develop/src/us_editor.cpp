@@ -428,8 +428,11 @@ void TextEdit::setupTextActions(  )
    actionTextColor->addTo( menu );
 }
 
-void TextEdit::load( const QString & f )
+void TextEdit::load( const QString & f, QString title, bool ourfmt, TextFormat fmt )
 {
+   this->title = title;
+   this->fmt = fmt;
+
    if ( !QFile::exists( f ) )
    {
       QMessageBox::message( "Warning:", "Cannot find file: " + f );
@@ -448,10 +451,17 @@ void TextEdit::load( const QString & f )
    QTextStream ts( &file );
    QString txt = ts.read(  );
 
-   if ( !QStyleSheet::mightBeRichText( txt ) )
-      txt =
-         QStyleSheet::convertFromPlainText( txt,
-                                            QStyleSheetItem::WhiteSpacePre );
+   if ( ourfmt ) 
+   {
+      edit->setTextFormat( fmt );
+   } else {
+      if ( !QStyleSheet::mightBeRichText( txt ) )
+      {
+         txt =
+            QStyleSheet::convertFromPlainText( txt,
+                                               QStyleSheetItem::WhiteSpacePre );
+      }
+   }
    edit->setText( txt );
    tabWidget->showPage( edit );
    edit->viewport(  )->setFocus(  );
@@ -496,7 +506,8 @@ void TextEdit::fileNew(  )
 {
    QTextEdit *edit = new QTextEdit( tabWidget );
 
-   edit->setTextFormat( RichText );
+   //   edit->setTextFormat( RichText );
+   edit->setTextFormat( fmt );
    doConnections( edit );
    tabWidget->addTab( edit, tr( "noname" ) );
    tabWidget->showPage( edit );

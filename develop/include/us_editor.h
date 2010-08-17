@@ -83,7 +83,7 @@ class TextEdit : public QMainWindow
 public:
     TextEdit( QWidget *parent = 0, const char *name = 0 );
     TextEdit(int id, QWidget *parent = 0, const char *name = 0);
-    void load( const QString &f );
+    void load( const QString &f, QString title = "", bool ourfmt = false, TextFormat fmt = RichText );
     void load_text(QString);
     int tableID;
    
@@ -93,6 +93,8 @@ private:
     void setupTextActions();
     QTextEdit *currentEditor() const;
     void doConnections( QTextEdit *e );
+    TextFormat fmt;
+    QString title;
 
 private slots:
     void fileNew();

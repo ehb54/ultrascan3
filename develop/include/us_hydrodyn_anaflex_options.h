@@ -67,6 +67,9 @@ struct Anaflex_Options
    int run_mode_3_5_jjj;
    bool run_mode_3_9;
    bool run_mode_3_10;
+   float run_mode_3_10_theta;
+   float run_mode_3_10_refractive_index;
+   float run_mode_3_10_lambda;
    bool run_mode_3_14;
    int run_mode_3_14_iii;
    int run_mode_3_14_jjj;
@@ -109,6 +112,12 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       QLabel *lbl_run_mode_3_5_iii;
       QLabel *lbl_run_mode_3_5_jjj_spacing;
       QLabel *lbl_run_mode_3_5_jjj;
+      QLabel *lbl_run_mode_3_10_theta_spacing;
+      QLabel *lbl_run_mode_3_10_theta;
+      QLabel *lbl_run_mode_3_10_refractive_index_spacing;
+      QLabel *lbl_run_mode_3_10_refractive_index;
+      QLabel *lbl_run_mode_3_10_lambda_spacing;
+      QLabel *lbl_run_mode_3_10_lambda;
       QLabel *lbl_run_mode_3_14_iii_spacing;
       QLabel *lbl_run_mode_3_14_iii;
       QLabel *lbl_run_mode_3_14_jjj_spacing;
@@ -151,7 +160,7 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       QCheckBox *cb_run_mode_3_1;
       QCheckBox *cb_run_mode_3_5;
       QCheckBox *cb_run_mode_3_9;
-      // QCheckBox *cb_run_mode_3_10;
+      QCheckBox *cb_run_mode_3_10;
       QCheckBox *cb_run_mode_3_14;
       QCheckBox *cb_run_mode_3_15;
       QCheckBox *cb_run_mode_3_16;
@@ -169,6 +178,9 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       QLineEdit *le_tmax;
       QLineEdit *le_run_mode_3_5_iii;
       QLineEdit *le_run_mode_3_5_jjj;
+      QLineEdit *le_run_mode_3_10_theta;
+      QLineEdit *le_run_mode_3_10_refractive_index;
+      QLineEdit *le_run_mode_3_10_lambda;
       QLineEdit *le_run_mode_3_14_iii;
       QLineEdit *le_run_mode_3_14_jjj;
 
@@ -216,7 +228,7 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       void set_run_mode_3_1();
       void set_run_mode_3_5();
       void set_run_mode_3_9();
-      // void set_run_mode_3_10();
+      void set_run_mode_3_10();
       void set_run_mode_3_14();
       void set_run_mode_3_15();
       void set_run_mode_3_16();
@@ -234,6 +246,9 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       void update_tmax(const QString &str);
       void update_run_mode_3_5_iii(const QString &str);
       void update_run_mode_3_5_jjj(const QString &str);
+      void update_run_mode_3_10_theta(const QString &str);
+      void update_run_mode_3_10_refractive_index(const QString &str);
+      void update_run_mode_3_10_lambda(const QString &str);
       void update_run_mode_3_14_iii(const QString &str);
       void update_run_mode_3_14_jjj(const QString &str);
 

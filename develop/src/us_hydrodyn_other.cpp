@@ -2797,7 +2797,8 @@ void US_Hydrodyn::view_file(const QString &filename, QString title)
    edit->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    edit->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
    //   edit->setTitle(title);
-   edit->load(filename);
+   edit->load(filename, title, true, PlainText);
+   //   edit->setTextFormat( PlainText );
    edit->show();
 }
 
