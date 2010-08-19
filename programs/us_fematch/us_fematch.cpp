@@ -1608,7 +1608,7 @@ qDebug() << " baseline plateau" << edata->baseline << edata->plateau;
    else if ( mtyp.contains( "File:"      ) )
       simparams.meshType = US_SimulationParameters::USER;
    else if ( mtyp.contains( "Space Volu" ) )
-      simparams.meshType = US_SimulationParameters::ASVFEM;
+      simparams.meshType = US_SimulationParameters::ASTFVM;
 
    if ( gtyp.contains( "Constant" ) )
       simparams.gridType = US_SimulationParameters::FIXED;

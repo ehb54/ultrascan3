@@ -34,7 +34,7 @@ class US_EXTERN US_LammAstfvm : QObject
             int MonScale;
             double MonCutoff;
             double SmoothingWt;
-            double SmoothingCyl;
+            int    SmoothingCyl;
 
             int *Eid;			// elem id
             int *RefLev;	        // refinement level of an elem
