@@ -179,18 +179,6 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
   otherSettings->addLayout( radiobutton, row++, 1 );
 
-  // us_debug
-  QLabel* lb_debug = us_label( "Debug value:" );
-  otherSettings->addWidget( lb_debug, row, 0 );
-
-  sb_debug = new QSpinBox();
-  sb_debug->setRange( 0, 5 );
-  sb_debug->setValue( US_Settings::us_debug() );
-  sb_debug->setPalette( US_GuiSettings::editColor() );
-  sb_debug->setFont( QFont( US_GuiSettings::fontFamily(), 
-                            US_GuiSettings::fontSize() ) );
-  otherSettings->addWidget( sb_debug, row++, 1 );
-
   // Color Preferences
   QLabel* color = us_label( "Color Preferences:" );
   otherSettings->addWidget( color, row, 0 );
@@ -215,19 +203,6 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   otherSettings->addWidget( pb_db, row++, 1 );
   connect( pb_db, SIGNAL( clicked() ), this, SLOT( update_db() ) );
 
-  // Number of Threads
-  QLabel* threads = us_label( "Number of Threads:" );
-  otherSettings->addWidget( threads, row, 0 );
-
-  // Use a spin box here
-  sb_threads = new QSpinBox();
-  sb_threads->setRange( 1, 64 );
-  sb_threads->setValue( US_Settings::threads() );
-  sb_threads->setPalette( US_GuiSettings::editColor() );
-  sb_threads->setFont( QFont( US_GuiSettings::fontFamily(), 
-                              US_GuiSettings::fontSize() ) );
-  otherSettings->addWidget( sb_threads, row++, 1 );
-
   // Master Password
   QLabel* password = us_label( "Master Password:" );
   otherSettings->addWidget( password, row, 0 );
@@ -235,6 +210,14 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   pb_password = us_pushbutton( tr( "Change" ) );
   otherSettings->addWidget( pb_password, row++, 1 );
   connect( pb_password, SIGNAL( clicked() ), this, SLOT( update_password() ) );
+
+  // Advanced settings
+  QLabel* advanced = us_label( "Advanced Settings:" );
+  otherSettings->addWidget( advanced, row, 0 );
+
+  pb_advanced = us_pushbutton( tr( "Change" ) );
+  otherSettings->addWidget( pb_advanced, row++, 1 );
+  connect( pb_advanced, SIGNAL( clicked() ), this, SLOT( update_advanced() ) );
 
   topbox->addLayout( otherSettings );
 
@@ -269,9 +252,7 @@ void US_Config::save( void )
    US_Settings::set_reportDir    ( le_reportDir  ->text()      );
    US_Settings::set_archiveDir   ( le_archiveDir ->text()      );
    US_Settings::set_tmpDir       ( le_tmpDir     ->text()      );
-   US_Settings::set_threads      ( sb_threads    ->value()     );
    US_Settings::set_beckmanBug   ( rb_on         ->isChecked() );
-   US_Settings::set_us_debug     ( sb_debug      ->value()     );
 
    QMessageBox::information( this,
          tr( "Settings Saved" ),
@@ -300,6 +281,12 @@ void US_Config::update_password( void )
 {
   admin = new US_Admin;  // Automatic delete
   admin->show();
+}
+
+void US_Config::update_advanced( void )
+{
+   advanced = new US_Advanced;
+   advanced->show();
 }
 
 void US_Config::open_browser( void )

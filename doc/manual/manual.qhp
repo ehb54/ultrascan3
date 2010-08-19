@@ -63,6 +63,9 @@
             <file>database_config.html</file>
             <file>images/database.png</file>
             
+            <file>advanced_config.html</file>
+            <file>images/advanced_config.png</file>
+            
             <file>master_pw.html</file>
             <file>images/master-pw.png</file>
 

@@ -96,6 +96,18 @@ class US_EXTERN US_Settings
     //! \brief Set the US_Debug setting
     static void        set_us_debug( int );
 
+    //! \brief Get the Debug text setting as a string list
+    static QStringList debug_text(     void );
+    //! \brief Get a flag if given string matches any in debug text
+    static bool        debug_match(    QString );
+    //! \brief Set the Debug text setting as a string list
+    static void        set_debug_text( QStringList );
+
+    //! \brief Get the advanced level setting
+    static int         advanced_level( void );
+    //! \brief Set the advanced level setting
+    static void        set_advanced_level( int );
+
     //! \brief Get the number of threads to use for internal procesing
     static int         threads( void );
     //! \brief Set the number of threads to use for internal procesing.
