@@ -102,12 +102,10 @@ US_Advanced::US_Advanced( QWidget* w, Qt::WindowFlags flags )
 // set values as they were at last save
 void US_Advanced::reset()
 {
-qDebug() << "RESET";
    QStringList dbg_text  = US_Settings::debug_text();
    int         dbg_level = US_Settings::us_debug();
    int         adv_level = US_Settings::advanced_level();
    int         threads   = US_Settings::threads();
-qDebug() << "dbg_level" << dbg_level;
 
    QString dbg_str = "";
 

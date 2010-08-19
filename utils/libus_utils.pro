@@ -27,6 +27,7 @@ HEADERS      = us_analyte.h     \
                us_hardware.h    \ 
                us_hydrosim.h    \ 
                us_http_post.h   \
+               us_lamm_astfvm.h \
                us_license_t.h   \
                us_math2.h       \
                us_matrix.h      \
@@ -48,6 +49,7 @@ SOURCES      = us_analyte.cpp     \
                us_hydrosim.cpp    \
                us_global.cpp      \
                us_http_post.cpp   \
+               us_lamm_astfvm.cpp \
                us_license_t.cpp   \
                us_math2.cpp       \
                us_model.cpp       \
