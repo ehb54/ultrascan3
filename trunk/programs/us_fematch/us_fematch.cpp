@@ -174,7 +174,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    cb_mesh->addItem( tr( "Claverie Mesh" ) );
    cb_mesh->addItem( tr( "Moving Hat Mesh" ) );
    cb_mesh->addItem( tr( "File: \"$ULTRASCAN/mesh.dat\"" ) );
-   cb_mesh->addItem( tr( "Adaptive Space Volume Mesh (ASVFEM)" )   );
+   cb_mesh->addItem( tr( "AST Finite Volume Method (ASTFVM)" )   );
    cb_grid      = us_comboBox();
    cb_grid->addItem( tr( "Moving Time Grid" )   );
    cb_grid->addItem( tr( "Constant Time Grid" ) );

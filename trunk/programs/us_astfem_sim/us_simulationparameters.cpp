@@ -316,10 +316,11 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    // Mesh combo box
    cmb_mesh = us_comboBox();
    cmb_mesh->setMaxVisibleItems( 5 );
-   cmb_mesh->addItem( "Adaptive Space Mesh (ASTFEM)" );
+   cmb_mesh->addItem( "Adaptive Space Time FE Mesh (ASTFEM)" );
    cmb_mesh->addItem( "Claverie Fixed Mesh" );
    cmb_mesh->addItem( "Moving Hat Mesh" );
    cmb_mesh->addItem( "Specified file (mesh.dat)" );
+   cmb_mesh->addItem( "AST Finite Volume Method (ASTFVM)" );
    cmb_mesh->setCurrentIndex( (int)simparams.meshType );
    
    main->addWidget( cmb_mesh, row++, 2, 1, 2 );

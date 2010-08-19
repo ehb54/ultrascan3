@@ -13,9 +13,9 @@ class US_EXTERN US_SimulationParameters
    public:
   
    //! The type of mesh used internally for the simulation.
-   enum MeshType  { ASTFEM, CLAVERIE, MOVING_HAT, USER, ASVFEM };
+   enum MeshType  { ASTFEM, CLAVERIE, MOVING_HAT, USER, ASTFVM };
    
-   //! For a sumulation, specify the grid type.
+   //! For a simulation, specify the grid type.
    enum GridType  { FIXED, MOVING };
 
    class SpeedProfile;

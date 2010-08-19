@@ -1092,7 +1092,7 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 //              = 1 Claverie (uniform), etc,
 //              = 2 Exponential mesh (Schuck's form., no refinement at bottom)
 //              = 3 input from data file: "mesh_data.dat"
-//              = 4 ASVFEM grid (Adaptive Space-Volume)
+//              = 4 ASTFVM grid (Finite Volume Method)
 //              = 10, acceleration mesh (left and right refinement)
 //////////////////////////////////////////////////////////////%
 
@@ -1188,8 +1188,8 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
             break;
          }
       
-      case (int)US_SimulationParameters::ASVFEM:
-         // Adaptive Space Volume FE Mesh
+      case (int)US_SimulationParameters::ASTFVM:
+         // Adaptive Space Time Finite Volume Method
          qSort( nu.begin(), nu.end() );   // put nu in ascending order
 
          if ( nu[ 0 ] > 0 )
