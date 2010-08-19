@@ -218,6 +218,43 @@ void US_Settings::set_us_debug( int level )
     settings.setValue( "us_debug", level );
 }
 
+// debug text
+QStringList US_Settings::debug_text( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  return settings.value( "debug_text", "" ).toStringList();
+}
+
+bool US_Settings::debug_match( QString match )
+{
+  return debug_text().contains( match, Qt::CaseInsensitive );
+}
+
+void US_Settings::set_debug_text( QStringList debuglist )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( debuglist.count() == 0 )
+    settings.remove( "debug_text" );
+  else
+    settings.setValue( "debug_text", debuglist );
+}
+
+// advanced level
+int US_Settings::advanced_level( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  return settings.value( "advanced_level", 0 ).toInt();
+}
+
+void US_Settings::set_advanced_level( int level )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( level == 0 )
+    settings.remove( "advanced_level" );
+  else
+    settings.setValue( "advanced_level", level );
+}
+
 // Threads
 int US_Settings::threads( void )
 {

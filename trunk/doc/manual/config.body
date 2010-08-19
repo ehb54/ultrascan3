@@ -92,16 +92,17 @@
             </li>
 
             <li>
-              <b>Number of Threads:</b> Change this setting to match the number 
-              of processors or cores on your system.
-            </li>
-            
-            <li>
               <b>Master Password:</b> Click on the <a href=
               "master_pw.html">Change</a> button to set or reset your personal
               <b><i>UltraScan</i></b> passord. Be sure to remember the password.
               If it is lost, you will need to reset all saved database information
               in the <i>Database Preferences</i> panel.
+            </li>
+            
+            <li>
+              <b>Advanced Settings:</b> Click on the <a href=
+              "advanced_config.html">Change</a> button to set advanced settings
+              related to debug, advanced level, and number of threads.
             </li>
           </ul>
         </td>

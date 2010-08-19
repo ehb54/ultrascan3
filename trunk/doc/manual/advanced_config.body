@@ -1,0 +1,66 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Advanced Configuration Panel'
+%]
+    <h2> Advanced Configuration Panel </h2>
+
+
+    <p> <b>Note</b>: Some <b><i>UltraScan III</i></b> applications output debug
+    text to STDOUT or a log file. Some only include certain GUI elements when
+    in an advanced mode. Certain applications can benefit from use of more
+    than one thread. These variations are governed by the configuration values
+    that are set in this panel. Actual values should be set only under the
+    guidance of UTHSCSA software developers, since meanings of settings vary
+    considerably from application to application.</p>
+
+    <p class='center'> <img src="images/advanced_config.png" alt='Advanced
+    Configuration Panel'/> </p>
+
+    <ul>
+        <li>
+            <b>Debug Text List</b> Additional debugging to aid in trouble-shooting
+            can be turned on or off based on a debug text phrase. One or more of
+            such phrases may be entered in this list. Leading or trailing blanks
+            and multiple consecutive blanks are ignored.
+        </li>
+
+        <li>
+            <b>Debug Level:</b> The quantity of debug outputs may be determined
+            by the magnitude of the value selected here. The greater the count,
+            the greater the number of debug lines output for applications that
+            take advantage of the debug level value.
+        </li>
+
+        <li>
+            <b>Advanced Level:</b> For certain applications, there are options
+            that should only be visible and changeable by a highly knowledgeable
+            user working in advanced mode. The level of advanced mode may be set
+            with the counter here.
+        </li>
+
+        <li>
+            <b>Number of Threads:</b> A threads count greater than one is
+            advantageous in certain applications that are thread-aware. A
+            number from one to ten may be set here.
+        </li>
+
+        <li>
+            <b>Reset to Last Saved</b> All of the above settings can be made to
+            revert to last-saved settings by clicking this button.
+        </li>
+
+        <li>
+            <b>Save</b> When settings are as desired, this button should be
+            clicked to save them for use by any applications subsequently
+            launched.
+        </li>
+
+        <li>
+            <b>Help</b> Click to get this help documentation.
+        </li>
+
+        <li>
+            <b>Close</b> Click to close this dialog.
+        </li>
+    </ul>
+
+[% INCLUDE footer.us3 %]
