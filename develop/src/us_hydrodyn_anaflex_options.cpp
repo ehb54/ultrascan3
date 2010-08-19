@@ -603,6 +603,21 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    le_tmax->setEnabled(true);
    connect(le_tmax, SIGNAL(textChanged(const QString &)), SLOT(update_tmax(const QString &)));
 
+   lbl_deltat = new QLabel(tr(" Correlation interval time (s): "), this);
+   lbl_deltat->setAlignment(AlignLeft|AlignVCenter);
+   lbl_deltat->setMinimumHeight(minHeight1);
+   lbl_deltat->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_deltat = new QLineEdit(this, "Deltat Edit");
+   le_deltat->setAlignment(AlignVCenter);
+   le_deltat->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_deltat->setMinimumWidth(100);
+   le_deltat->setEnabled(true);
+   le_deltat->setReadOnly(true);
+   update_deltat();
+
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -615,7 +630,12 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
+
+   label_font_ok = QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label);
+   label_font_warning = QPalette(USglobal->global_colors.cg_label_warn, USglobal->global_colors.cg_label_warn, USglobal->global_colors.cg_label_warn);
+
    update_enables();
+   update_ntimc_msg();
 
    QVBoxLayout *vbl_top = new QVBoxLayout;
 
@@ -687,6 +707,8 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    gl_3->addWidget(le_ntimc, 0, 1);
    gl_3->addWidget(lbl_tmax, 1, 0);
    gl_3->addWidget(le_tmax, 1, 1);
+   gl_3->addWidget(lbl_deltat, 2, 0);
+   gl_3->addWidget(le_deltat, 2, 1);
 
    vbl_3->addLayout(gl_3);
    vbl_3->addSpacing(2);
@@ -1278,18 +1300,22 @@ void US_Hydrodyn_Anaflex_Options::set_run_mode_9()
 void US_Hydrodyn_Anaflex_Options::update_nfrec(const QString &str)
 {
    (*anaflex_options).nfrec = str.toInt();
+   //   update_deltat();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::update_ntimc(const QString &str)
 {
    (*anaflex_options).ntimc = str.toInt();
+   update_deltat();
+   update_ntimc_msg();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Anaflex_Options::update_tmax(const QString &str)
 {
    (*anaflex_options).tmax = str.toFloat();
+   update_deltat();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -1439,4 +1465,23 @@ void US_Hydrodyn_Anaflex_Options::update_enables()
    cb_run_mode_4_6->setEnabled(cb_run_mode_4->isChecked());
    cb_run_mode_4_7->setEnabled(cb_run_mode_4->isChecked());
    cb_run_mode_4_8->setEnabled(cb_run_mode_4->isChecked());
+}
+
+void US_Hydrodyn_Anaflex_Options::update_deltat()
+{
+   le_deltat->setText(QString("%1")
+                      .arg( (*anaflex_options).tmax / ( (*anaflex_options).ntimc - 1) )
+                      );
+}
+
+void US_Hydrodyn_Anaflex_Options::update_ntimc_msg()
+{
+   if ( (*anaflex_options).ntimc % 10 != 1 )
+   {
+      lbl_ntimc->setPalette(label_font_warning);
+      lbl_ntimc->setText(tr(" Number of points of the correlation\n function (must be a multiple of 10 + 1): "));
+   } else {
+      lbl_ntimc->setPalette(label_font_ok);
+      lbl_ntimc->setText(tr(" Number of points of the\n correlation function: "));
+   }
 }

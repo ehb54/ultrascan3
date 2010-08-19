@@ -126,7 +126,7 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       QLabel *lbl_ttraj;
       QLabel *lbl_deltat;
       QLabel *lbl_springs;
-      
+
       QwtCounter *cnt_bd_threshold_pb_pb;
       QwtCounter *cnt_bd_threshold_pb_sc;
       QwtCounter *cnt_bd_threshold_sc_sc;
@@ -180,6 +180,7 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       QLabel        *lbl_chem_pb_pb;
       QButtonGroup  *bg_chem_pb_pb_bond_types;
       QCheckBox     *cb_chem_pb_pb_bond_type_fraenkel;
+      QPushButton   *pb_dup_fraenkel;
       QCheckBox     *cb_chem_pb_pb_bond_type_hookean;
       QCheckBox     *cb_chem_pb_pb_bond_type_fene;
       QCheckBox     *cb_chem_pb_pb_bond_type_hard_fene;
@@ -335,6 +336,8 @@ class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
       void update_sc_sc_force_constant(const QString &str);
       void update_sc_sc_equilibrium_dist(const QString &str);
       void update_sc_sc_max_elong(const QString &str);
+
+      void dup_fraenkel();
 
       void cancel();
       void help();

@@ -108,6 +108,7 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       QLabel *lbl_run_mode;
       QLabel *lbl_ntimc;
       QLabel *lbl_tmax;
+      QLabel *lbl_deltat;
       QLabel *lbl_run_mode_3_5_iii_spacing;
       QLabel *lbl_run_mode_3_5_iii;
       QLabel *lbl_run_mode_3_5_jjj_spacing;
@@ -176,6 +177,7 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       QLineEdit *le_nfrec;
       QLineEdit *le_ntimc;
       QLineEdit *le_tmax;
+      QLineEdit *le_deltat;
       QLineEdit *le_run_mode_3_5_iii;
       QLineEdit *le_run_mode_3_5_jjj;
       QLineEdit *le_run_mode_3_10_theta;
@@ -187,10 +189,19 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       QPushButton *pb_help;
       QPushButton *pb_cancel;
       
-   private slots:
-      
+   private:
+
       void setupGUI();
 
+      void update_deltat();
+      void update_enables();
+      void update_ntimc_msg();
+
+      QPalette      label_font_ok;
+      QPalette      label_font_warning;
+
+   private slots:
+      
       void set_run_anaflex();
       void set_instprofiles();
 
@@ -251,8 +262,6 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
       void update_run_mode_3_10_lambda(const QString &str);
       void update_run_mode_3_14_iii(const QString &str);
       void update_run_mode_3_14_jjj(const QString &str);
-
-      void update_enables();
 
       void cancel();
       void help();

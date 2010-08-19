@@ -554,6 +554,12 @@ void US_Hydrodyn_BD_Options::setupGUI()
    cb_chem_pb_pb_bond_type_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_chem_pb_pb_bond_type_fraenkel->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
+   pb_dup_fraenkel = new QPushButton(tr("Replicate"), this);
+   pb_dup_fraenkel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_dup_fraenkel->setMinimumHeight(minHeight1);
+   pb_dup_fraenkel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_dup_fraenkel, SIGNAL(clicked()), SLOT(dup_fraenkel()));
+
    cb_chem_pb_pb_bond_type_hookean = new QCheckBox(bg_chem_pb_pb_bond_types);
    cb_chem_pb_pb_bond_type_hookean->setText(tr(" Hookean,Gaussian (soft) "));
    cb_chem_pb_pb_bond_type_hookean->setEnabled(true);
@@ -1122,7 +1128,10 @@ void US_Hydrodyn_BD_Options::setupGUI()
    vbl_chem_pb_pb->addWidget(lbl_chem_pb_pb);
    vbl_chem_pb_pb->addWidget(bg_chem_pb_pb_bond_types);
    vbl_chem_pb_pb->addWidget(lbl_chem_pb_pb_force_constant);
-   vbl_chem_pb_pb->addWidget(cb_compute_chem_pb_pb_force_constant);
+   QHBoxLayout *hbl_chem_pb_pb_force_constant = new QHBoxLayout;
+   hbl_chem_pb_pb_force_constant->addWidget(cb_compute_chem_pb_pb_force_constant);
+   hbl_chem_pb_pb_force_constant->addWidget(pb_dup_fraenkel);
+   vbl_chem_pb_pb->addLayout(hbl_chem_pb_pb_force_constant);
    vbl_chem_pb_pb->addWidget(le_chem_pb_pb_force_constant);
    vbl_chem_pb_pb->addWidget(lbl_chem_pb_pb_equilibrium_dist);
    vbl_chem_pb_pb->addWidget(cb_compute_chem_pb_pb_equilibrium_dist);
@@ -1832,6 +1841,25 @@ void US_Hydrodyn_BD_Options::update_enables()
    }
 }
 
+void US_Hydrodyn_BD_Options::dup_fraenkel()
+{
+   update_chem_pb_sc_force_constant(le_chem_pb_pb_force_constant->text());
+   le_chem_pb_sc_force_constant->setText(le_chem_pb_pb_force_constant->text());
+   cb_compute_chem_pb_sc_force_constant->setChecked(cb_compute_chem_pb_pb_force_constant->isChecked());
+   update_chem_sc_sc_force_constant(le_chem_pb_pb_force_constant->text());
+   le_chem_sc_sc_force_constant->setText(le_chem_pb_pb_force_constant->text());
+   cb_compute_chem_sc_sc_force_constant->setChecked(cb_compute_chem_pb_pb_force_constant->isChecked());
+   update_pb_pb_force_constant(le_chem_pb_pb_force_constant->text());
+   le_pb_pb_force_constant->setText(le_chem_pb_pb_force_constant->text());
+   cb_compute_pb_pb_force_constant->setChecked(cb_compute_chem_pb_pb_force_constant->isChecked());
+   update_pb_sc_force_constant(le_chem_pb_pb_force_constant->text());
+   le_pb_sc_force_constant->setText(le_chem_pb_pb_force_constant->text());
+   cb_compute_pb_sc_force_constant->setChecked(cb_compute_chem_pb_pb_force_constant->isChecked());
+   update_sc_sc_force_constant(le_chem_pb_pb_force_constant->text());
+   le_sc_sc_force_constant->setText(le_chem_pb_pb_force_constant->text());
+   cb_compute_sc_sc_force_constant->setChecked(cb_compute_chem_pb_pb_force_constant->isChecked());
+}
+
 #define TOLERANCE 1e-3
 
 void US_Hydrodyn_BD_Options::update_labels()
@@ -1873,3 +1901,4 @@ void US_Hydrodyn_BD_Options::update_labels()
                                     " WARNING: does not divide maximum").arg((int)max_conf)));
    }
 }
+
