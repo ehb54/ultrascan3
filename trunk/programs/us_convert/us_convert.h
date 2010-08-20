@@ -122,6 +122,7 @@ class US_EXTERN US_Convert : public US_Widgets
       int           RP_reference_triple;              // number of the triple that is the reference
       QList< double > RP_averages;
       bool          toleranceChanged;                 // keep track of whether the tolerance has changed
+      double        scanTolerance;                    // remember the scan tolerance value
 
       bool show_plot_progress;
       US_ExpInfo::ExperimentInfo ExpData; 

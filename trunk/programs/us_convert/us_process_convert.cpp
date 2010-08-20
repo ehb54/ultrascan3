@@ -565,25 +565,24 @@ void US_ProcessConvert::convert(
       max_size   = max( max_size,   size  );
    }
 
-   // Convert the scans
-   
    // Set the distance between readings 
-   double delta_r = ( runType == "IP" ) 
-      ? ( max_radius - min_radius ) / ( max_size - 1 )
-      : 0.001;
-
+   double delta_r = ( runType == "IP" )
+                  ? ( max_radius - min_radius ) / ( max_size - 1 )
+                  : 0.001;
+   
    // Calculate the radius vector
    int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
-
    double radius = min_radius;
    for ( int j = 0; j < radius_count; j++ )
    {
       newRawData.x << US_DataIO2::XValue( radius );
       radius += delta_r;
    }
-
+      
+   // Convert the scans
    for ( int i = 0; i < ccwLegacyData.size(); i++ )
    {
+      // Start loading the data
       US_DataIO2::Scan s;
       s.temperature = ccwLegacyData[ i ].temperature;
       s.rpm         = ccwLegacyData[ i ].rpm;
@@ -597,106 +596,95 @@ void US_ProcessConvert::convert(
       uchar* interpolated = new uchar[ bitmap_size ];
       bzero( interpolated, bitmap_size );
 
-      if ( runType == "IP" )
-      {
-         for ( int j = 0; j < radius_count; j++ )
-         {
-            US_DataIO2::Reading r;
-            r.value    = ccwLegacyData[ i ].readings[ j ].value;
-            r.stdDev   = 0.0;
+      /*
+      There are two indexes needed here.  The new radius as iterated
+      from min_radius to max_radius and the pointer to the current 
+      scan readings is j.  
 
-            s.readings <<  r;
-         }
-      }
+      The old scan reading is ccwLegacyData[ i ]->readings[ j ]
+
+      If the current new radius is within 0.0003 of the i
+      ccwLegacyData[ i ]->readings[ j ].d.radius
+         copy ccwLegacyData[ i ]->readings[ j ].value into the new reading
+         copy ccwLegacyData[ i ]->readings[ j ].stdDev into the new reading
+         increment j
+
+      If the current new radius is less than i
+      ccwLegacyData[ i ]->readings[ 0 ].d.radius,
+      then 
+         copy ccwLegacyData[ i ]->readings[ 0 ].value into the new reading
+         set the std dev to 0.0.
+         set the interpolated flag
+      
+      If the current new radius is greater than 
+      ccwLegacyData[ i ]->readings[ last() ].d.radius
+         copy ccwLegacyData[ i ]->readings[ last ].value into the new reading
+         set the std dev to 0.0.
+         set the interpolated flag
+
       else
+         interplate between ccwLegacyData[ i ]->readings[ j ] and 
+                            ccwLegacyData[ i ]->readings[ j -1 ]
+         set the std dev to 0.0.
+         set the interpolated flag
+
+      Append the new reading and continue.
+      */
+
+      radius = min_radius;
+      double r0     = ccwLegacyData[ i ].readings[ 0 ].d.radius;
+      int    rCount = ccwLegacyData[ i ].readings.size();       
+      double rLast  = ccwLegacyData[ i ].readings[ rCount - 1 ].d.radius;
+      
+      int    k      = 0;
+
+      for ( int j = 0; j < radius_count; j++ )
       {
-         /*
-         There are two indexes needed here.  The new radius as iterated
-         from min_radius to max_radius and the pointer to the current 
-         scan readings is j.  
+         US_DataIO2::Reading r;
+         double             dr = 0.0;
 
-         The old scan reading is ccwLegacyData[ i ]->readings[ j ]
+         if ( k < rCount )
+            dr = radius - ccwLegacyData[ i ].readings[ k ].d.radius;
 
-         If the current new radius is within 0.0003 of the i
-         ccwLegacyData[ i ]->readings[ j ].d.radius
-            copy ccwLegacyData[ i ]->readings[ j ].value into the new reading
-            copy ccwLegacyData[ i ]->readings[ j ].stdDev into the new reading
-            increment j
-
-         If the current new radius is less than i
-         ccwLegacyData[ i ]->readings[ 0 ].d.radius,
-         then 
-            copy ccwLegacyData[ i ]->readings[ 0 ].value into the new reading
-            set the std dev to 0.0.
-            set the interpolated flag
-         
-         If the current new radius is greater than 
-         ccwLegacyData[ i ]->readings[ last() ].d.radius
-            copy ccwLegacyData[ i ]->readings[ last ].value into the new reading
-            set the std dev to 0.0.
-            set the interpolated flag
-
-         else
-            interplate between ccwLegacyData[ i ]->readings[ j ] and 
-                               ccwLegacyData[ i ]->readings[ j -1 ]
-            set the std dev to 0.0.
-            set the interpolated flag
-
-         Append the new reading and continue.
-         */
-
-         double radius = min_radius;
-         double r0     = ccwLegacyData[ i ].readings[ 0 ].d.radius;
-         int    rCount = ccwLegacyData[ i ].readings.size();       
-         double rLast  = ccwLegacyData[ i ].readings[ rCount - 1 ].d.radius;
-         
-         int    k      = 0;
-         
-         for ( int j = 0; j < radius_count; j++ )
+         if ( dr > -3.0e-4   &&  k < rCount ) // A value
          {
-            US_DataIO2::Reading r;
-            double             dr = 0.0;
-
-            if ( k < rCount )
-               dr = radius - ccwLegacyData[ i ].readings[ k ].d.radius;
-
-            if ( dr > -3.0e-4   &&  k < rCount ) // A value
-            {
-               r.value  = ccwLegacyData[ i ].readings[ k ].value;
-               r.stdDev = ccwLegacyData[ i ].readings[ k ].stdDev;
-               k++;
-            }
-            else if ( radius < r0 ) // Before the first
-            {
-               r.value  = ccwLegacyData[ i ].readings[ 0 ].value;
-               r.stdDev = 0.0;
-               setInterpolated( interpolated, j );
-            }
-            else if ( radius > rLast  ||  k >= rCount ) // After the last
-            {
-               r.value  = ccwLegacyData[ i ].readings[ rCount - 1 ].value;
-               r.stdDev = 0.0;
-               setInterpolated( interpolated, j );
-            }
-            else  // Interpolate the value
-            {
-               double dv = ccwLegacyData[ i ].readings[ k     ].value - 
-                           ccwLegacyData[ i ].readings[ k - 1 ].value;
-               
-               double dR = ccwLegacyData[ i ].readings[ k     ].d.radius -
-                           ccwLegacyData[ i ].readings[ k - 1 ].d.radius;
-
-               dr = radius - ccwLegacyData[ i ].readings[ k - 1 ].d.radius;
-
-               r.value  = ccwLegacyData[ i ].readings[ k - 1 ].value + dr * dv / dR;
-               r.stdDev = 0.0;
-
-               setInterpolated( interpolated, j );
-            }
-
-            s.readings <<  r;
-            radius += delta_r;
+            r.value  = ccwLegacyData[ i ].readings[ k ].value;
+            r.stdDev = ccwLegacyData[ i ].readings[ k ].stdDev;
+            k++;
          }
+         else if ( radius < r0 ) // Before the first
+         {
+            r.value  = ccwLegacyData[ i ].readings[ 0 ].value;
+            r.stdDev = 0.0;
+            setInterpolated( interpolated, j );
+         }
+         else if ( radius > rLast  ||  k >= rCount ) // After the last
+         {
+            r.value  = ccwLegacyData[ i ].readings[ rCount - 1 ].value;
+            r.stdDev = 0.0;
+            setInterpolated( interpolated, j );
+         }
+         else  // Interpolate the value
+         {
+            double dv = ccwLegacyData[ i ].readings[ k     ].value - 
+                        ccwLegacyData[ i ].readings[ k - 1 ].value;
+            
+            double dR = ccwLegacyData[ i ].readings[ k     ].d.radius -
+                        ccwLegacyData[ i ].readings[ k - 1 ].d.radius;
+
+            dr = radius - ccwLegacyData[ i ].readings[ k - 1 ].d.radius;
+
+            r.value  = ccwLegacyData[ i ].readings[ k - 1 ].value + dr * dv / dR;
+            r.stdDev = 0.0;
+
+            setInterpolated( interpolated, j );
+         }
+
+         // Ensure in the case of IP data, stdDev is 0.0
+         if ( runType == "IP" ) r.stdDev = 0.0;
+
+         s.readings <<  r;
+         radius += delta_r;
       }
       s.interpolated = QByteArray( (char*)interpolated, bitmap_size );
       delete [] interpolated;

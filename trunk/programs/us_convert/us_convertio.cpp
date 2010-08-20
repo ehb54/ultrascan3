@@ -117,13 +117,14 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
    QStringList q( "delete_rawData" );
    q << QString::number( ExpData.expID );
    int status = db.statusQuery( q );
+
    if ( status != US_DB2::OK )
       return( db.lastError() );
 
    // We assume there are files, because calling program checked
 
    // Read all data
-   QString error = QString( "" );
+   QString error = NULL;
    for ( int i = 0; i < tripleMap.size(); i++ )
    {
       int ndx = tripleMap[ i ];
@@ -142,6 +143,7 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
          << "1" ;           // channel ID
 
       status = db.statusQuery( q );
+
       int rawDataID = db.lastInsertID();
       if ( status == US_DB2::OK )
       {
@@ -151,6 +153,7 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
          // We can also upload the auc data
          int writeStatus = db.writeBlobToDB( dir + triple.tripleFilename, 
                            QString( "upload_aucData" ), rawDataID );
+
          if ( writeStatus == US_DB2::ERROR )
          {
             error += "Error processing file: " + triple.tripleFilename + "\n" +
