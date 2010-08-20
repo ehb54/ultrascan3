@@ -356,12 +356,14 @@ void US_Convert::resetAll( void )
    ct_tolerance    ->setMaxValue( 100.0 );
    ct_tolerance    ->setValue   (   5.0 );
    ct_tolerance    ->setStep( 1 );
+   scanTolerance   = 5.0;
 }
 
 // User changed the dataset separation tolerance
 void US_Convert::toleranceValueChanged( double )
 {
    toleranceChanged = true;
+   scanTolerance    = ct_tolerance->value();
 }
 
 // User pressed the load data button
@@ -407,6 +409,10 @@ void US_Convert::load( QString dir )
    }
 
 */
+
+   // Define default tolerances before converting
+   scanTolerance = ( runType == "WA" ) ? 0.1 : 5.0;
+   ct_tolerance->setValue( scanTolerance );
 
    // Figure out all the triple combinations and convert data
    success = convert();
@@ -493,7 +499,9 @@ void US_Convert::enableControls( void )
       cb_centerpiece ->setEnabled( true );
       pb_expinfo     ->setEnabled( true );
       pb_editExpinfo ->setEnabled( true );
-      pb_dropScan    ->setEnabled( true );
+
+      // Ok to drop scan if not the only one
+      pb_dropScan    ->setEnabled( tripleMap.size() > 1 );
 
       if ( runType == "RI" )
          pb_reference->setEnabled( true );
@@ -503,6 +511,26 @@ void US_Convert::enableControls( void )
          // Allow user to define subsets, if he hasn't already
          pb_define   ->setEnabled( true );
       } 
+
+      // Most triples are ccw
+      lb_triple   ->setText( tr( "Cell / Channel / Wavelength" ) );
+      ct_tolerance->setMinimumWidth( 160 );
+      ct_tolerance->setNumButtons  ( 2 );
+      ct_tolerance->setRange       ( 0.0, 100.0 );
+      ct_tolerance->setStep        ( 1.0 );
+      ct_tolerance->setValue       ( scanTolerance );
+
+      // Default tolerances are different for wavelength data
+      if ( runType == "WA" )
+      {
+         // First of all, wavelength triples are ccr.
+         lb_triple   ->setText( tr( "Cell / Channel / Radius" ) );
+         ct_tolerance->setMinimumWidth( 160 );
+         ct_tolerance->setNumButtons  ( 3 );
+         ct_tolerance->setRange       ( 0.0, 10.0 );
+         ct_tolerance->setStep        ( 0.001 );
+         ct_tolerance->setValue       ( scanTolerance );
+      }
 
       enableRunIDControl( ! this->editing );
          
@@ -1027,6 +1055,7 @@ void US_Convert::focus( int from, int to )
 
 }
 
+// Function to initialize the excluded scan count
 void US_Convert::init_excludes( void )
 {
    allExcludes.clear();
@@ -1035,6 +1064,7 @@ void US_Convert::init_excludes( void )
       allExcludes << x;
 }
 
+// Function to exclude user-selected scans
 void US_Convert::exclude_scans( void )
 {
    int scanStart = (int)ct_from->value();
@@ -1042,8 +1072,15 @@ void US_Convert::exclude_scans( void )
 
    for ( int i = scanStart - 1; i < scanEnd; i++ )
    {
+      // Find all lower-numbered excluded scans, to account for them
+      int excludeCount = 0;
+      for ( int j = 0; j < scanStart; j++ )
+         if ( allExcludes[ currentTriple ].contains( j ) )
+            excludeCount++;
+
+      // Delete scans, accounting for previous exclusions
       if ( ! allExcludes[ currentTriple ].contains( i ) )
-         allExcludes[ currentTriple ] << i;
+         allExcludes[ currentTriple ] << ( i + excludeCount );
    }
 
    enableScanControls();
@@ -1314,6 +1351,8 @@ void US_Convert::drop_reference( void )
    le_bufferInfo  -> setText( ExpData.triples[ ndx ].bufferDesc  );
    le_analyteInfo -> setText( ExpData.triples[ ndx ].analyteDesc );
 
+   enableControls();
+
    // Reset maximum scan control values
    enableScanControls();
 
@@ -1510,7 +1549,7 @@ void US_Convert::loadUS3( void )
 
 void US_Convert::syncDB( void )
 {
-   QString error;
+   QString error = NULL;
 
    // Get the directory where the auc files are
    QDir        resultDir( US_Settings::resultDir() );
@@ -1547,7 +1586,7 @@ void US_Convert::syncDB( void )
    else
       error = US_ConvertIO::newDBExperiment( ExpData, tripleMap, dir );
 
-   if ( ! error.isNull() )
+   if ( error != NULL )
    {
       db_error( error );
       return;
@@ -1608,40 +1647,6 @@ bool US_Convert::read( QString dir )
 
 bool US_Convert::convert( void )
 {
-   // We need to set the default tolerances before converting
-   if ( runType == "WA" )
-   {
-      // First of all, wavelength triples are ccr.
-      lb_triple   ->setText( tr( "Cell / Channel / Radius" ) );
-   
-      if ( runType != oldRunType )
-      {
-         // We only need to adjust these if the runType has changed
-         ct_tolerance->setMinimumWidth( 160 );
-         ct_tolerance->setNumButtons  ( 3 );
-         ct_tolerance->setRange       ( 0.0, 10.0 );
-         ct_tolerance->setStep        ( 0.001 );
-         ct_tolerance->setValue       ( 0.1 );
-      }
-
-   }
-   else
-   {
-      // Most triples are ccw
-      lb_triple   ->setText( tr( "Cell / Channel / Wavelength" ) );
-   
-      if ( runType != oldRunType )
-      {
-         // We only need to adjust these if the runType has changed
-         ct_tolerance->setMinimumWidth( 160 );
-         ct_tolerance->setNumButtons  ( 2 );
-         ct_tolerance->setRange       ( 0.0, 100.0 );
-         ct_tolerance->setStep        ( 1.0 );
-         ct_tolerance->setValue       ( 5.0 );
-      }
-
-   }
-
    double tolerance = (double)ct_tolerance->value() + 0.05;    // to stay between wl numbers
 
    // Convert the data
