@@ -69,34 +69,15 @@ class US_EXTERN US_LammAstfvm : QObject
             double *Cs0, *Cs1; // salt concentration for the time interval
       };
 
-      //US_LammAstfvm( US_Model&, US_SimulationParameters&, QObject* = 0 );
-
-      US_LammAstfvm(double m, double b, double s, double D, double rpm); 
+      US_LammAstfvm( US_Model&, US_SimulationParameters&, QObject* = 0 );
 
       ~US_LammAstfvm();
 
-      int calculate( US_DataIO2::RawData& );
+      void calculate( US_DataIO2::RawData& );
 
+      void solve_component( int ); 
 
-      Mesh *msh;			    // redial grid
-
-      int NonIdealCaseNo;		    // non-ideal case number
-                                 // = 0 : ideal, constant s, D
-                                 // = 1 : concentration dependent
-                                 // = 2 : co-sedimenting
-
-      double ConcDep_K;		    // constant for concentration dependent
-                                 // non-ideal case
-                                 // s = s_0/(1+K*C), D=D_0/(1+K*C)
-
-      SaltData *saltdata;		    // data handle for cosedimenting
-
-      double MeshSpeedFactor;          // = 1: mesh following sedimentation
-                                     // = 0: fixed mesh in each time step
-
-      int MeshRefineOpt;               // = 1: perform mesh local refinement
-                                    // = 0: no mesh refinement
-
+      int nonIdealCaseNo( void );  // get case number from model parameters
 
       void SetNonIdealCase_1( double const_K );	// conc dependent case
 
@@ -120,10 +101,39 @@ class US_EXTERN US_LammAstfvm : QObject
       ///////
    private:
 
+      US_Model&                 model;
+      US_SimulationParameters&  simparams;
+
+      US_AstfemMath::MfemData   af_data;
+
+      Mesh *msh;			    // redial grid
+
+      int NonIdealCaseNo;		    // non-ideal case number
+                                 // = 0 : ideal, constant s, D
+                                 // = 1 : concentration dependent
+                                 // = 2 : co-sedimenting
+                                 // = 3 : compressibility
+
+      double ConcDep_K;		    // constant for concentration dependent
+                                 // non-ideal case
+                                 // s = s_0/(1+K*C), D=D_0/(1+K*C)
+
+      SaltData *saltdata;		    // data handle for cosedimenting
+
+      double MeshSpeedFactor;          // = 1: mesh following sedimentation
+                                     // = 0: fixed mesh in each time step
+
+      int MeshRefineOpt;               // = 1: perform mesh local refinement
+                                    // = 0: no mesh refinement
+
+      int    comp_x;             // current component index
+
       double param_m, param_b;	// m, b of cell
       double param_s, param_D; 	// base s, D values
       double param_w2;		// rpm, w2=(rpm*pi/30)^2
 
+      void quadInterpolate( double*, double*, int,
+                            QVector< double >&, QVector< double >& );
 
       void LocateStar(int N0, double *x0, int Ns, double *xs,
                       int *ke, double *xi);
@@ -143,5 +153,7 @@ class US_EXTERN US_LammAstfvm : QObject
 
       void LsSolver53(int m, double **A, double *b, double *x);
 
+      void load_mfem_data(  US_DataIO2::RawData&, US_AstfemMath::MfemData& );
+      void store_mfem_data( US_DataIO2::RawData&, US_AstfemMath::MfemData& );
 };
 #endif

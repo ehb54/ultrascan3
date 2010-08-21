@@ -1,6 +1,7 @@
 //! \file us_lamm_astfvm.cpp
 
 #include "us_lamm_astfvm.h"
+#include "us_math2.h"
 
 /////////////////////////
 //
@@ -575,27 +576,228 @@ int main()
 }
 #endif
 
-US_LammAstfvm::US_LammAstfvm(double m, double b, double s, double D, double rpm) 
+// construct Lamm solver for finite volume method
+US_LammAstfvm::US_LammAstfvm( US_Model& rmodel,
+      US_SimulationParameters& rsimparms, QObject* parent /*=0*/ )
+   : QObject( parent ), model( rmodel ), simparams( rsimparms )
 {
-   param_m = m;
-   param_b = b;
-   param_s = s;
-   param_D = D;
-   param_w2 = pow(rpm*M_PI/30., 2.0);
+   comp_x   = 0;           // initial model component index
 
-   MeshSpeedFactor = 1;		// default mesh moving option
-   MeshRefineOpt = 1;		// default mesh refinement option
+   param_m  = simparams.meniscus;
+   param_b  = simparams.bottom;
+   param_w2 = sq( simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0 );
 
-   NonIdealCaseNo = 0;		// default case: ideal with constant s, D
+   MeshSpeedFactor = 1;    // default mesh moving option
+   MeshRefineOpt   = 1;    // default mesh refinement option
 
-   ConcDep_K = 0.;		// default: s=s_0, D=D_0
+   NonIdealCaseNo  = 0;    // default case: ideal with constant s, D
+
+   ConcDep_K       = 0.;   // default: s=s_0, D=D_0
+   
 }
 
+// destroy
 US_LammAstfvm::~US_LammAstfvm()
 {
    if(NonIdealCaseNo == 2) delete saltdata;
 
    return;
+}
+
+// primary method to calculate solutions for all species
+void US_LammAstfvm::calculate( US_DataIO2::RawData& exp_data )
+{
+   // use given data to create form for internal data
+   load_mfem_data( exp_data, af_data );
+
+   // update concentrations for each model component
+   for ( int ii = 0; ii < model.components.size(); ii++ )
+   {
+      solve_component( ii );
+   }
+
+   // populate user's data set from calculated simulation
+   store_mfem_data( exp_data, af_data );
+}
+
+// get a solution for a component and update concentrations
+void US_LammAstfvm::solve_component( int compx )
+{
+   comp_x  = compx;
+
+   param_s = model.components[ compx ].s;
+   param_D = model.components[ compx ].D;
+
+   double  t0  = 0.;
+   double  t1  = 100.;
+   double* x0;
+   double* u0;
+   double* x1;
+   double* u1;
+   double* u1p0;
+   double* u1p;
+   double* dtmp;
+   double  total_t = ( param_b - param_m ) * 2.0
+                   / ( param_s * param_w2 * param_m );
+   double  dt      = log( param_b / param_m )
+                   / ( param_w2 * param_s * 100.0 );
+
+   int ntc = (int)( total_t / dt ) + 1;      // nbr. times in calculations
+   int jt  = 0; 
+   int nts = af_data.scan.size();            // nbr. output times (scans)
+   int kt  = 0; 
+   int ncs = af_data.scan[ 0 ].conc.size();  // nbr. concentrations each scan
+   int N0;
+   int N1;
+   int N0u;
+   int N1u;
+   int nicase = nonIdealCaseNo();            // non-ideal case number
+
+   QVector< double > conc0;
+   QVector< double > conc1;
+   QVector< double > rads;
+
+   conc0.resize( ncs );
+   conc1.resize( ncs );
+
+   //FILE *fout = fopen("tt0", "w");
+
+   Mesh *msh = new Mesh( param_m, param_b, 100, 0 );
+
+   msh->InitMesh( param_s, param_D, param_w2 );
+
+   // setting for model
+   if ( nicase == 1 )
+   {
+      double conc_k = model.components[ comp_x ].delta *
+                      model.components[ comp_x ].sigma;
+
+      SetNonIdealCase_1( conc_k );
+   }
+
+   else if ( nicase == 2 )
+      SetNonIdealCase_2( (char*)"salt.data", 3.5 );	// co-sedimenting
+
+   //else if ( nicase == 3 )
+   //   SetNonIdealCase_3( "salt.data", 3.5 );	// co-sedimenting
+
+
+   SetMeshRefineOpt(1);		      // mesh refine option
+   SetMeshSpeedFactor(1.0);		// mesh speed factor
+
+   // initialization
+   N0    = msh->Nv;
+   N0u   = N0 + N0 - 1;
+   x0    = new double [ N0  ];
+   u0    = new double [ N0u ];
+   x1    = new double [ N0  ];
+   u1    = new double [ N0u ];
+
+   for ( int jj = 0; jj < N0 - 1; jj++ )
+   {
+      int kk = jj + jj;
+      int k1 = kk + 1;
+      int j1 = jj + 1;
+
+      x0[ jj ]   = msh->x[ jj ];
+      u0[ kk ]   = msh->x[ jj ];
+      u0[ k1 ]   = ( msh->x[ jj ] + msh->x[ j1 ] ) * 0.5;
+      x1[ jj ]   = x0[ jj ];
+      u1[ kk ]   = u0[ kk ];
+      u1[ k1 ]   = u0[ k1 ];
+   }
+
+   for ( int jj = 0; jj < ncs; jj++ )
+   {
+      rads[ jj ] = af_data.radius[ jj ];
+   }
+
+   // loop for time
+   for ( jt = 0, kt = 0; jt < ntc; jt++ )
+   {
+      t0    = dt * (double)jt;
+      t1    = t0 + dt;
+
+      //IntQs( x0, u0, 0, -1, N0-2, 1 );
+
+      u1p0  = new double [ N0u ];
+
+      LammStepSedDiff_P( t0, dt, N0-1, x0, u0, u1p0 );
+
+      if ( MeshRefineOpt== 1 )
+      {
+         msh->RefineMesh( u0, u1p0, 1.0e-4 );
+
+         N1    = msh->Nv;
+         N1u   = N1 + N1 - 1;
+         u1p   = new double [ N1u ];
+
+         delete [] x1;
+         x1    = new double [ N1 ];
+
+         for ( int jj = 0; jj < N0 - 1; jj++ )
+            x1[ jj ] = msh->x[ jj ];
+
+         ProjectQ( N0-1, x0, u1p0, N1-1, x1, u1p );
+
+         delete [] u1;
+         u1    = new double [ N1u ];
+
+         LammStepSedDiff_C( t0, dt, N0-1, x0, u0, N1-1, x1, u1p, u1 );
+
+         delete [] u1p;
+      }
+
+      else
+      {
+         LammStepSedDiff_C( t0, dt, N0-1, x0, u0, N1-1, x1, u1p, u1 );
+      }
+
+      // see if our scan is between calculated times; output scan if so
+      double ts  = af_data.scan[ kt ].time;           // time at output scan
+
+      if ( ts >= t0  &&  ts <= t1 )
+      {  // interpolate concentrations quadratically; linear in time
+         double f0 = ( ts - t0 ) / ( t1 - t0 );       // fraction of conc0
+         double f1 = ( t1 - ts ) / ( t1 - t0 );       // fraction of conc1
+
+         quadInterpolate( x0, u0, N0, rads, conc0 );  // quad interp conc at t0
+
+         quadInterpolate( x1, u1, N1, rads, conc1 );  // quad interp conc at t1
+
+         for ( int jj = 0; jj < ncs; jj++ )
+         {  // update concentration vector with linear interpolation for time
+            af_data.scan[ kt ].conc[ jj ] += ( conc0[ jj ] * f0 +
+                                               conc1[ jj ] * f1 );
+         }
+
+         kt++;   // bump output time(scan) index
+      }
+
+      delete [] u1p0;
+
+      if ( kt >= nts )
+         break;  // if all scans updated, we are done
+
+      // switch x,u arrays for next iteration
+      N0    = N1;
+      N0u   = N1u;
+      dtmp  = x0;
+      x0    = x1;
+      x1    = dtmp;
+      dtmp  = u0;
+      u0    = u1;
+      u1    = dtmp;
+   }
+    
+   delete [] x0;
+   delete [] u0;
+   delete [] x1;
+   delete [] u1;
+   delete msh;
+
+   //fclose(fout);
+
 }
 
 void US_LammAstfvm::SetNonIdealCase_1( double const_K )
@@ -1146,5 +1348,146 @@ void US_LammAstfvm::LsSolver53(int m, double **A, double *b, double *x)
     x[j-1] = ( b[j-1] - A[j-1][3]*x[j] - A[j-1][4]*x[j+1] )/A[j-1][2]; 
   }
 
+}
+
+// determine the non-ideal case number: 0/1/2/3
+int US_LammAstfvm::nonIdealCaseNo()
+{
+   int caseno = 0;      // ideal
+   US_Model::SimulationComponent* sc = &model.components[ comp_x ];
+
+   if ( sc->sigma != 0.0  &&  sc->delta != 0.0 )
+   {  // non-zero sigma and delta given:        concentration-dependent
+      caseno = 1;
+   }
+
+   else if ( model.coSedSolute >= 0 )
+   {  // co-sedimentation solute index not -1:  co-sedimenting
+      caseno = 2;
+   }
+
+   else if ( model.compressibility != 1.0 )
+   {  // compressibility factor not 1.0:        compressibility
+      caseno = 3;
+   }
+
+   return caseno;
+}
+
+// perform quadratic interpolation to fill out full concentration vector
+void US_LammAstfvm::quadInterpolate( double* x0, double* u0, int N0,
+      QVector< double >& xout, QVector< double >& cout )
+{
+   int    nout = xout.size();         // output concentrations count
+   int    kk   = 0;                   // initial output index
+   double xv   = xout[ 0 ];           // first output X
+   double yv;                         // output Y
+
+   int    ii   = 2;                   // x0 index
+   int    jj   = 3;                   // u0 index
+   double x1   = x0[ 0 ];             // initial start X
+   double x3   = x0[ 1 ];             // initial end X
+   double x2   = ( x1 + x3 ) * 0.5;   // initial mid-point X
+   double y1   = u0[ 0 ];             // initial start Y
+   double y2   = u0[ 1 ];             // initial mid-point Y
+   double y3   = u0[ 2 ];             // initial end Y
+
+   cout.resize( nout );
+
+   while ( kk < nout )
+   {  // loop to output interpolated concentrations
+      xv   = xout[ kk ];              // X for which we need a Y
+
+      while ( xv > x3  &&  ii < N0 )
+      {  // if need be, walk up input until between x values
+         jj   = ii + ii;              // index to u values
+         x1   = x3;                   // start x (previous end)
+         x3   = x0[ ii++ ];           // end (next) x
+         y1   = u0[ jj - 2 ];         // y at start x
+         y2   = u0[ jj - 1 ];         // y at mid-point
+         y3   = u0[ jj     ];         // y at end (next) x
+
+         x2   = ( x1 + x3 ) * 0.5;    // mid-point x
+      }
+
+      // do the quadratic interpolation of this Y
+      yv    =
+         (( ( xv - x2 ) * ( xv - x3 ) ) / ( ( x1 - x2 ) * ( x1 - x3 ) )) * y1 +
+         (( ( xv - x1 ) * ( xv - x3 ) ) / ( ( x2 - x1 ) * ( x2 - x3 ) )) * y2 +
+         (( ( xv - x1 ) * ( xv - x2 ) ) / ( ( x3 - x1 ) * ( x3 - x2 ) )) * y3;
+
+      cout[ kk++ ] = yv;              // output interpolated concentration
+   }
+}
+
+// load MfemData object used internally from caller's RawData object
+void US_LammAstfvm::load_mfem_data( US_DataIO2::RawData&     edata, 
+                                    US_AstfemMath::MfemData& fdata ) 
+{
+   int  nscan  = edata.scanData.size();  // scan count
+   int  nconc  = edata.x.size();         // concentrations count
+
+   fdata.id    = edata.description;
+   fdata.cell  = edata.cell;
+   fdata.scan  .resize( nscan );         // mirror number of scans
+   fdata.radius.resize( nconc );         // mirror number of radius values
+
+   for ( int ii = 0; ii < nscan; ii++ )
+   {  // copy over all scans
+      US_AstfemMath::MfemScan* fscan = &fdata.scan[ ii ];
+
+      fscan->temperature = edata.scanData[ ii ].temperature;
+      fscan->rpm         = edata.scanData[ ii ].rpm;
+      fscan->time        = edata.scanData[ ii ].seconds;
+      fscan->omega_s_t   = edata.scanData[ ii ].omega2t;
+      fscan->conc.resize( nconc );        // mirror number of concentrations
+
+      for ( int jj = 0; jj < nconc; jj++ )
+      {  // copy all concentrations for a scan
+         fscan->conc[ ii ] = edata.value( ii, jj );
+      }
+   }
+
+   for ( int jj = 0; jj < nconc; jj++ )
+   {  // copy all radius values
+      fdata.radius[ jj ] = edata.radius( jj );
+   }
+}
+
+// store MfemData object used internally into caller's RawData object
+void US_LammAstfvm::store_mfem_data( US_DataIO2::RawData&     edata, 
+                                     US_AstfemMath::MfemData& fdata ) 
+{
+   int  nscan  = fdata.scan.size();     // scan count
+   int  nconc  = fdata.radius.size();   // concentrations count
+
+   edata.description = fdata.id;
+   edata.cell        = fdata.cell;
+   edata.scanData.resize( nscan );      // mirror number of scans
+
+   for ( int ii = 0; ii < nscan; ii++ )
+   {  // copy over each scan
+      US_AstfemMath::MfemScan* fscan = &fdata.scan    [ ii ];
+      US_DataIO2::Scan*        escan = &edata.scanData[ ii ];
+
+      escan->temperature = fscan->temperature;
+      escan->rpm         = fscan->rpm;
+      escan->seconds     = fscan->time;
+      escan->omega2t     = fscan->omega_s_t;
+      escan->plateau     = fdata.radius[ nconc - 1 ];
+      escan->readings.resize( nconc );  // mirror number of concentrations
+
+      for ( int jj = 0; jj < nconc; jj++ )
+      {  // copy all readings concentrations for this scan
+         escan->readings[ jj ] = US_DataIO2::Reading( fscan->conc[ jj ] );
+      }
+   }
+
+   edata.x.resize( nconc );
+
+   for ( int jj = 0; jj < nconc; jj++ )
+   {  // copy radius values
+      edata.x[ jj ] = US_DataIO2::XValue( fdata.radius[ jj ] );
+   }
 }
 
