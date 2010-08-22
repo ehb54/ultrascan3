@@ -324,10 +324,15 @@ void US_LammAstfvm::Mesh::RefineMesh(double *u0, double *u1, double ErrTol)
     double alpha;		// coarsening threshhold: h*|D_3u|^(1/3) < alpha
     alpha = beta/4;      
 
+//qDebug() << "RM: call ComputeMeshDen";
     ComputeMeshDen_D3(u0, u1);
+//qDebug() << "RM: call MeshDen";
     Smoothing(Ne, MeshDen, 0.7, 4);
+//qDebug() << "RM: call Unrefine";
     Unrefine(alpha);
+//qDebug() << "RM: call Refine";
     Refine(beta);
+//qDebug() << "RM:  RETURN";
 }
    
 /////////////////////////
@@ -577,8 +582,9 @@ int main()
 #endif
 
 // construct Lamm solver for finite volume method
-US_LammAstfvm::US_LammAstfvm( US_Model& rmodel,
-      US_SimulationParameters& rsimparms, QObject* parent /*=0*/ )
+US_LammAstfvm::US_LammAstfvm( US_Model&                rmodel,
+                              US_SimulationParameters& rsimparms,
+                              QObject*                 parent /*=0*/ )
    : QObject( parent ), model( rmodel ), simparams( rsimparms )
 {
    comp_x   = 0;           // initial model component index
@@ -607,16 +613,25 @@ US_LammAstfvm::~US_LammAstfvm()
 // primary method to calculate solutions for all species
 void US_LammAstfvm::calculate( US_DataIO2::RawData& exp_data )
 {
+qDebug() << "LAc: call load_mfem";
    // use given data to create form for internal data
    load_mfem_data( exp_data, af_data );
+for ( int jj = 0; jj < af_data.scan[ 0 ].conc.size(); jj++ )
+ af_data.scan[ 0 ].conc[ jj ] = 0.0;
+    int nsteps = af_data.scan.size() * model.components.size();
+    emit calc_start( nsteps );
 
    // update concentrations for each model component
    for ( int ii = 0; ii < model.components.size(); ii++ )
    {
+qDebug() << "LAc:  call solve_c" << ii;
       solve_component( ii );
    }
 
+   emit calc_done();
+
    // populate user's data set from calculated simulation
+qDebug() << "LAc: call store";
    store_mfem_data( exp_data, af_data );
 }
 
@@ -652,6 +667,8 @@ void US_LammAstfvm::solve_component( int compx )
    int N0u;
    int N1u;
    int nicase = nonIdealCaseNo();            // non-ideal case number
+qDebug() << "LAsc:  CX ntc nts ncs nicase" << comp_x << ntc << nts << ncs << nicase;
+   int istep = comp_x * nts;
 
    QVector< double > conc0;
    QVector< double > conc1;
@@ -659,11 +676,14 @@ void US_LammAstfvm::solve_component( int compx )
 
    conc0.resize( ncs );
    conc1.resize( ncs );
+   rads. resize( ncs );
 
    //FILE *fout = fopen("tt0", "w");
 
+//qDebug() << "LAsc:  create Mesh" << param_m << param_b;
    Mesh *msh = new Mesh( param_m, param_b, 100, 0 );
 
+//qDebug() << "LAsc:  Init Mesh" << param_s << param_D << param_w2;
    msh->InitMesh( param_s, param_D, param_w2 );
 
    // setting for model
@@ -672,6 +692,7 @@ void US_LammAstfvm::solve_component( int compx )
       double conc_k = model.components[ comp_x ].delta *
                       model.components[ comp_x ].sigma;
 
+//qDebug() << "LAsc:   conc_k" << conc_k;
       SetNonIdealCase_1( conc_k );
    }
 
@@ -682,35 +703,45 @@ void US_LammAstfvm::solve_component( int compx )
    //   SetNonIdealCase_3( "salt.data", 3.5 );	// co-sedimenting
 
 
-   SetMeshRefineOpt(1);		      // mesh refine option
-   SetMeshSpeedFactor(1.0);		// mesh speed factor
+   SetMeshRefineOpt(   1   );    // mesh refine option
+   SetMeshSpeedFactor( 1.0 );    // mesh speed factor
 
    // initialization
    N0    = msh->Nv;
    N0u   = N0 + N0 - 1;
    x0    = new double [ N0  ];
    u0    = new double [ N0u ];
-   x1    = new double [ N0  ];
-   u1    = new double [ N0u ];
+   N1    = N0;
+   N1u   = N0u;
+   x1    = new double [ N1  ];
+   u1    = new double [ N1u ];
 
-   for ( int jj = 0; jj < N0 - 1; jj++ )
-   {
+//qDebug() << "LAsc:   N0" << N0;
+   for ( int jj = 0; jj < N0; jj++ )
+   {  // initialize X and U values
       int kk = jj + jj;
-      int k1 = kk + 1;
-      int j1 = jj + 1;
 
       x0[ jj ]   = msh->x[ jj ];
-      u0[ kk ]   = msh->x[ jj ];
-      u0[ k1 ]   = ( msh->x[ jj ] + msh->x[ j1 ] ) * 0.5;
       x1[ jj ]   = x0[ jj ];
+      u0[ kk ]   = msh->x[ jj ];
       u1[ kk ]   = u0[ kk ];
-      u1[ k1 ]   = u0[ k1 ];
    }
 
+   for ( int kk = 1; kk < N0u - 1; kk+=2 )
+   {  // fill in mid-point U values
+      u0[ kk ]   = ( u0[ kk - 1 ] + u0[ kk + 1 ] ) * 0.5;
+      u1[ kk ]   = u0[ kk ];
+   }
+qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
+   << u0[N0u-3] << u0[N0u-2] << u0[N0u-1];
+
    for ( int jj = 0; jj < ncs; jj++ )
-   {
+   {  // get output radius vector
       rads[ jj ] = af_data.radius[ jj ];
    }
+//qDebug() << "LAsc:  rads 0 1" << rads[0] << rads[1];
+
+   int ktinc = 5;                           // signal progress every 5th scan
 
    // loop for time
    for ( jt = 0, kt = 0; jt < ntc; jt++ )
@@ -722,53 +753,82 @@ void US_LammAstfvm::solve_component( int compx )
 
       u1p0  = new double [ N0u ];
 
+//qDebug() << "LAsc:   LSSD_P t0" << t0;
       LammStepSedDiff_P( t0, dt, N0-1, x0, u0, u1p0 );
+//qDebug() << "LAsc:    aft LSSD_P u1p0" << u1p0[0];
 
       if ( MeshRefineOpt== 1 )
       {
          msh->RefineMesh( u0, u1p0, 1.0e-4 );
 
          N1    = msh->Nv;
+//qDebug() << "LAsc:   aft RefineMesh N1" << N1;
          N1u   = N1 + N1 - 1;
          u1p   = new double [ N1u ];
 
          delete [] x1;
          x1    = new double [ N1 ];
 
-         for ( int jj = 0; jj < N0 - 1; jj++ )
+         for ( int jj = 0; jj < N1; jj++ )
             x1[ jj ] = msh->x[ jj ];
+//qDebug() << "LAsc:    x1[0]" << x1[0];
 
+//qDebug() << "LAsc:     call ProjectQ N0 N1" << N0 << N1;
          ProjectQ( N0-1, x0, u1p0, N1-1, x1, u1p );
+//qDebug() << "LAsc:    u1p[0]" << u1p[0];
 
          delete [] u1;
          u1    = new double [ N1u ];
 
          LammStepSedDiff_C( t0, dt, N0-1, x0, u0, N1-1, x1, u1p, u1 );
+//qDebug() << "LAsc:     aft LSSD_C u1[0]" << u1[0];
 
          delete [] u1p;
       }
 
       else
       {
-         LammStepSedDiff_C( t0, dt, N0-1, x0, u0, N1-1, x1, u1p, u1 );
+         LammStepSedDiff_C( t0, dt, N0-1, x0, u0, N1-1, x1, u1p0, u1 );
+//qDebug() << "LAsc:     LSSD_C x1[0] u1[0]" << x1[0] << u1[0];
       }
 
-      // see if our scan is between calculated times; output scan if so
+      // see if current scan is between calculated times; output scan if so
       double ts  = af_data.scan[ kt ].time;           // time at output scan
+//qDebug() << "LAsc:   kt ts" << kt << ts;
 
       if ( ts >= t0  &&  ts <= t1 )
-      {  // interpolate concentrations quadratically; linear in time
-         double f0 = ( ts - t0 ) / ( t1 - t0 );       // fraction of conc0
-         double f1 = ( t1 - ts ) / ( t1 - t0 );       // fraction of conc1
+      {  // interpolate concentrations quadratically; linearly in time
+         double f0 = ( t1 - ts ) / ( t1 - t0 );       // fraction of conc0
+         double f1 = ( ts - t0 ) / ( t1 - t0 );       // fraction of conc1
 
+qDebug() << "LAsc: call qI  t0 ts t1" << t0 << ts << t1;
+f0 = f0 * 1.0 / ( u0[N0u/2] * (double)model.components.size() );
+f1 = f1 * 1.0 / ( u1[N1u/2] * (double)model.components.size() );
          quadInterpolate( x0, u0, N0, rads, conc0 );  // quad interp conc at t0
 
          quadInterpolate( x1, u1, N1, rads, conc1 );  // quad interp conc at t1
+qDebug() << "LAsc:  x0[0] x0[H] x0[N]" << x0[0] << x0[N0/2] << x0[N0-1];
+qDebug() << "LAsc:  x1[0] x1[H] x1[N]" << x1[0] << x1[N1/2] << x1[N1-1];
+qDebug() << "LAsc:   r[0]  r[H]  r[N]" << rads[0] << rads[ncs/2] << rads[ncs-1];
+qDebug() << "LAsc:  u0[0] u0[H] u0[N]" << u0[0] << u0[N0u/2] << u0[N1u-1];
+qDebug() << "LAsc:  u1[0] u1[H] u1[N]" << u1[0] << u1[N1u/2] << u1[N1u-1];
+qDebug() << "LAsc:  c0[0] c0[H] c0[N]" << conc0[0] << conc0[ncs/2] << conc0[ncs-1];
+qDebug() << "LAsc:  c1[0] c1[H] c1[N]" << conc1[0] << conc1[ncs/2] << conc1[ncs-1];
 
          for ( int jj = 0; jj < ncs; jj++ )
          {  // update concentration vector with linear interpolation for time
             af_data.scan[ kt ].conc[ jj ] += ( conc0[ jj ] * f0 +
                                                conc1[ jj ] * f1 );
+         }
+qDebug() << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
+ << af_data.scan[kt].conc[ncs/2] << af_data.scan[kt].conc[ncs-1] << kt;
+
+         istep++;
+
+         if ( ( ( kt / ktinc ) * ktinc ) == kt  ||  ( kt + 1 ) == nts )
+         {
+            emit calc_progress( istep );
+            qApp->processEvents();
          }
 
          kt++;   // bump output time(scan) index
@@ -1056,7 +1116,9 @@ void US_LammAstfvm::LammStepSedDiff_C(double t, double dt, int M0, double *x0, d
               + dt2 * ( - flux_u[i-1] );
 
 
+//qDebug() << "DC: LS53 Ng Mtx11" << Ng << Mtx[1][1];
    LsSolver53(Ng, Mtx, rhs, u1);
+//qDebug() << "DC:  LS53   rhs u1" << rhs[0] << u1[0];
 
    for(i=0;i<=Ng; i++) delete [] Mtx[i];
    delete [] Mtx;
@@ -1272,16 +1334,20 @@ double US_LammAstfvm::IntQs(double *x, double *u, int ka, double xia, int kb, do
 void US_LammAstfvm::ProjectQ(int M0, double *x0, double *u0, 
                           int M1, double *x1, double *u1)
 {
+//         ProjectQ( N0-1, x0, u1p0, N1-1, x1, u1p );
    int *ke, idx, j, j2;
    //int kj;
    double *phi, *xi, intgrl;
    //double um;
 
+//qDebug() << "PQ: M0 M1" << M0 << M1;
    ke  = new int [M1+1];
    xi  = new double [M1+1];
    phi = new double [3];
 
+//qDebug() << "PQ: LocStar call";
    LocateStar(M0+1, x0, M1+1, x1, ke, xi);
+//qDebug() << "PQ: LocStar x00 x10 ke0 xi0" << x0[0] << x1[0] << ke[0] << xi[0];
 
    // u1 = u0 at all nodes 
    for(j=0;j<=M1;j++) 
@@ -1290,6 +1356,7 @@ void US_LammAstfvm::ProjectQ(int M0, double *x0, double *u0,
      idx = 2*ke[j];
      u1[2*j] = phi[0]*u0[idx] + phi[1]*u0[idx+1] + phi[2]*u0[idx+2];
    }
+//qDebug() << "PQ:  u1[0]" << u1[0];
 
    for(j=0;j<M1;j++) 
    {
@@ -1300,6 +1367,7 @@ void US_LammAstfvm::ProjectQ(int M0, double *x0, double *u0,
      u1[j2+1] = 1.5*intgrl/(x1[j+1]-x1[j]) - 0.25*(u1[j2]+u1[j2+2]) ;
 
    }
+//qDebug() << "PQ:  u1[1]" << u1[1];
 
    delete [] ke;
    delete [] phi;

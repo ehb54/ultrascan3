@@ -15,6 +15,7 @@
 #include "us_clipdata.h"
 #include "us_model_gui.h"
 #include "us_util.h"
+#include "us_lamm_astfvm.h"
 
 #include <uuid/uuid.h>
 
@@ -352,6 +353,9 @@ void US_Astfem_Sim::sim_parameters( void )
 void US_Astfem_Sim::set_parameters( void )
 {
    simparams = working_simparams;
+qDebug() << "meshType" << working_simparams.meshType
+   << US_SimulationParameters::ASTFEM
+   << US_SimulationParameters::ASTFVM;
 
    pb_start  ->setEnabled( true );
 }
@@ -493,7 +497,38 @@ void US_Astfem_Sim::start_simulation( void )
    simparams.band_firstScanIsConcentration = false;
 
    // Run the simulation
-   astfem_rsa->calculate( sim_data );
+   if ( simparams.meshType != US_SimulationParameters::ASTFVM )
+   {  // the normal case:  ASTFEM (finite element)
+      astfem_rsa->calculate( sim_data );
+   }
+
+   else
+   {  // special case:  ASTFVM (finite volume)
+      delete astfem_rsa;      // destroy astfem solver
+
+      // create ASTFVM solver
+      US_LammAstfvm* astfvm = new US_LammAstfvm( system, simparams, this );
+
+      // set up to report progress
+      connect( astfvm, SIGNAL( calc_start( int ) ), 
+                       SLOT  ( start_calc( int ) ) );
+
+      connect( astfvm, SIGNAL( calc_progress( int ) ), 
+                       SLOT  ( show_progress( int ) ) );
+
+      connect( astfvm, SIGNAL( calc_done( void ) ), 
+                       SLOT  ( calc_over( void ) ) );
+
+      // initialize LCD with component "1"
+      lcd_component->setMode( QLCDNumber::Dec );
+      lcd_component->display( 1 );
+
+      // solve using ASTFVM
+      astfvm->calculate( sim_data );
+
+      // on completion, set LCD display to components count
+      lcd_component->display( system.components.size() ); 
+   }
 
    finish();
 }
@@ -505,8 +540,8 @@ void US_Astfem_Sim::finish( void )
    for ( int i = 0; i < system.components.size(); i++ )
       total_conc += system.components[ i ].signal_concentration;
 
-qDebug() << "FIN: comp size" << system.components.size();
-qDebug() << "FIN:  total_conc" << total_conc;
+//qDebug() << "FIN: comp size" << system.components.size();
+//qDebug() << "FIN:  total_conc" << total_conc;
    ri_noise();
    random_noise();
    ti_noise();
@@ -710,13 +745,13 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
       }
 
       progress->setValue( ( ii + 1 ) );
-qDebug() << "WD:sc secs" << scan->seconds;
-if ( ii == 0 || (ii+1) == total_scans ) {
-qDebug() << "WD:S0:c00" << scan->readings[0].value;
-qDebug() << "WD:S0:c01" << scan->readings[1].value;
-qDebug() << "WD:S0:c30" << scan->readings[30].value;
-qDebug() << "WD:S0:cn1" << scan->readings[points-2].value;
-qDebug() << "WD:S0:cnn" << scan->readings[points-1].value; }
+//qDebug() << "WD:sc secs" << scan->seconds;
+//if ( ii == 0 || (ii+1) == total_scans ) {
+//qDebug() << "WD:S0:c00" << scan->readings[0].value;
+//qDebug() << "WD:S0:c01" << scan->readings[1].value;
+//qDebug() << "WD:S0:c30" << scan->readings[30].value;
+//qDebug() << "WD:S0:cn1" << scan->readings[points-2].value;
+//qDebug() << "WD:S0:cnn" << scan->readings[points-1].value; }
    }
 
    QString run_id    = dirname.section( "/", -1, -1 );
