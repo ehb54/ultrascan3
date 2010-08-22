@@ -763,8 +763,8 @@ void US_SimulationParametersGui::load( void )
       cnt_tinoise   ->setValue( simparams.tinoise           );
       cnt_rinoise   ->setValue( simparams.rinoise           );
 
-      //cmb_mesh      ->setCurrentIndex( simparams.mesh        );
-      //cmb_moving    ->setCurrentIndex( simparams.moving_grid );
+      cmb_mesh      ->setCurrentIndex( (int)simparams.meshType );
+      cmb_moving    ->setCurrentIndex( (int)simparams.gridType );
 
       rb_band->setChecked( simparams.band_forming );
 
@@ -786,7 +786,7 @@ void US_SimulationParametersGui::load( void )
    
 void US_SimulationParametersGui::update_mesh( int mesh )
 {
-   //simparams.mesh = mesh;
+   simparams.meshType = (US_SimulationParameters::MeshType)mesh;
 
    // By default, the simpoints can be set by the user
    cnt_simpoints->setEnabled( true );

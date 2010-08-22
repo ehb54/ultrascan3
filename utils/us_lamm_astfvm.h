@@ -11,7 +11,7 @@
 #include "us_astfem_rsa.h"
 
 //! \brief Module to calculate simulation data by AST Finite Volume Method
-class US_EXTERN US_LammAstfvm : QObject
+class US_EXTERN US_LammAstfvm : public QObject
 {
    Q_OBJECT
 
@@ -97,6 +97,11 @@ class US_EXTERN US_LammAstfvm : QObject
                     int M1, double *x1, double *u1);
 
       double IntQs(double *x, double *u, int ka, double xia, int kb, double xib);
+
+   signals:
+      void calc_start( int );
+      void calc_progress( int );
+      void calc_done( void );
 
       ///////
    private:
