@@ -16,6 +16,7 @@
 #include "us_passwd.h"
 #include "us_process_convert.h"
 #include "us_convertio.h"
+#include "us_rp_intensity.h"
 
 int main( int argc, char* argv[] )
 {
@@ -205,6 +206,11 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_cancelref, SIGNAL( clicked() ), SLOT( cancel_reference() ) );
    settings->addWidget( pb_cancelref, row++, 1 );
 
+   // Define intensity profile
+   pb_intensity = us_pushbutton( tr( "Intensity Profile" ) , false );
+   connect( pb_intensity, SIGNAL( clicked() ), SLOT( show_intensity() ) );
+   settings->addWidget( pb_intensity, row++, 0 );
+
    // drop scan
    pb_dropScan = us_pushbutton( tr( "Drop Current c/c/w" ), false );
    connect( pb_dropScan, SIGNAL( clicked() ), SLOT( drop_reference() ) );
@@ -290,6 +296,7 @@ void US_Convert::reset( void )
    pb_include    ->setEnabled( false );
    pb_savetoHD   ->setEnabled( false );
    pb_details    ->setEnabled( false );
+   pb_intensity  ->setEnabled( false );
    pb_cancelref  ->setEnabled( false );
    pb_dropScan   ->setEnabled( false );
    pb_buffer     ->setEnabled( false );
@@ -831,19 +838,19 @@ void US_Convert::changeTriple( QListWidgetItem* )
    int row       = lw_triple->currentRow();
    currentTriple = tripleMap[ row ];
    int ndx       = findTripleIndex();
-
+   
    le_dir         -> setText( currentDir );
    le_description -> setText( saveDescription );
-
+   
    le_bufferInfo  -> setText( ExpData.triples[ ndx ].bufferDesc  );
    le_analyteInfo -> setText( ExpData.triples[ ndx ].analyteDesc );
-
+   
    // Reset maximum scan control values
    enableScanControls();
-
+   
    // Reset apply all button
    enableCCWControls();
-
+   
    // Redo plot
    plot_current();
 }
@@ -1070,6 +1077,10 @@ void US_Convert::exclude_scans( void )
    int scanStart = (int)ct_from->value();
    int scanEnd   = (int)ct_to  ->value();
 
+   // Create a new list temporarily, to avoid accounting for them twice
+   QList< int > newExcludes;
+   newExcludes.clear();
+
    for ( int i = scanStart - 1; i < scanEnd; i++ )
    {
       // Find all lower-numbered excluded scans, to account for them
@@ -1078,9 +1089,15 @@ void US_Convert::exclude_scans( void )
          if ( allExcludes[ currentTriple ].contains( j ) )
             excludeCount++;
 
-      // Delete scans, accounting for previous exclusions
-      if ( ! allExcludes[ currentTriple ].contains( i ) )
-         allExcludes[ currentTriple ] << ( i + excludeCount );
+      // Make a list of current exclusions, accounting for previous ones
+      newExcludes << ( i + excludeCount );
+   }
+
+   // Now add new excludes to existing ones
+   for ( int i = 0; i < newExcludes.size(); i++ )
+   {
+      if ( ! allExcludes[ currentTriple ].contains( newExcludes[ i ] ) )
+         allExcludes[ currentTriple ] << newExcludes[ i ];
    }
 
    enableScanControls();
@@ -1257,34 +1274,40 @@ void US_Convert::RP_calc_avg( void )
       while ( referenceData.radius( j ) < reference_start && j < ref_size )
          j++;
 
-      int lastGood = j;
-      int countBad = 0;
       //while ( referenceData.x[ j ].radius < reference_end && j < ref_size )
       while ( referenceData.radius( j ) < reference_end && j < ref_size )
       {
-         // Check against excluded values
-         if ( allExcludes[ currentTriple ].contains( j ) )
-            countBad++;
-
-         // Calculate average of before and after for intervening values
-         else if ( countBad > 0 )
-         {
-            sum += ( ( s.readings[ lastGood ].value + s.readings[ j ].value ) / 2.0 )
-                   * countBad;
-            countBad = 0;
-         }
-
-         // Normal situation -- value is not excluded
-         else
-         {
-            sum += s.readings[ j ].value;
-            lastGood = j;
-         }
-
+         sum += s.readings[ j ].value;
          count++;
          j++;
       }
+
       RP_averages << sum / count;
+   }
+   
+   // Now average around excluded values
+   int lastGood  = 0;
+   int countBad  = 0;
+   for ( int i = 0; i < RP_averages.size(); i++ )
+   {
+      // In case there are adjacent excluded scans...
+      if ( allExcludes[ currentTriple ].contains( i ) )
+         countBad++;
+
+      // Calculate average of before and after for intervening values
+      else if ( countBad > 0 )
+      {
+         double newAvg = ( RP_averages[ lastGood ] + RP_averages[ i ] ) / 2.0;
+         for ( int k = lastGood + 1; k < i; k++ )
+            RP_averages[ k ] = newAvg;
+
+         countBad = 0;
+      }
+
+      // Normal situation -- value is not excluded
+      else
+         lastGood = i;
+
    }
 
    // Now calculate the pseudo-absorbance
@@ -1308,8 +1331,21 @@ void US_Convert::RP_calc_avg( void )
       strncpy( currentData->type, "RP", 2);
    }
 
+   // Enable intensity plot
+   pb_intensity->setEnabled( true );
+
    RP_averaged = true;
    pb_cancelref ->setEnabled( true );
+}
+
+// Bring up a graph window showing the intensity profile
+void US_Convert::show_intensity( void )
+{
+   US_RPIntensity* dialog
+      = new US_RPIntensity( ( const QVector< double > ) RP_averages );
+   dialog->exec();
+   qApp->processEvents();
+   delete dialog;
 }
 
 void US_Convert::cancel_reference( void )
@@ -1330,7 +1366,7 @@ void US_Convert::cancel_reference( void )
 
    pb_reference  ->setEnabled( true );
    pb_cancelref  ->setEnabled( false );
-   pb_dropScan   ->setEnabled( false );
+   pb_intensity  ->setEnabled( false );
    currentTriple = 0;
    lw_triple->setCurrentRow( currentTriple );
 

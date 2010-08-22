@@ -94,6 +94,7 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_define;
       QPushButton*  pb_process;
       QPushButton*  pb_reference;
+      QPushButton*  pb_intensity;
       QPushButton*  pb_cancelref;
       QPushButton*  pb_dropScan;
       QPushButton*  pb_savetoHD;
@@ -120,7 +121,7 @@ class US_EXTERN US_Convert : public US_Widgets
       double        reference_end;
       bool          RP_averaged;                      // true if RI averages have been done
       int           RP_reference_triple;              // number of the triple that is the reference
-      QList< double > RP_averages;
+      QVector< double > RP_averages;
       bool          toleranceChanged;                 // keep track of whether the tolerance has changed
       double        scanTolerance;                    // remember the scan tolerance value
 
@@ -179,6 +180,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void cClick          ( const QwtDoublePoint& );
       void process_subsets ( void );
       void define_reference  ( void );
+      void show_intensity  ( void );
       void cancel_reference( void );
       void drop_reference  ( void );
       int  savetoHD        ( void );
