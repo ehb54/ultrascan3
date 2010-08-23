@@ -203,6 +203,7 @@ int US_Model::load_disk( const QString& guid )
 
 int US_Model::load( const QString& filename )
 {
+   QString coSedStr;
    QFile file( filename );
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
@@ -239,7 +240,8 @@ int US_Model::load( const QString& filename )
             compressibility = a.value( "compressibility" ).toString().toDouble();
             wavelength      = a.value( "wavelength"      ).toString().toDouble();
             temperature     = a.value( "temperature"     ).toString().toDouble();
-            coSedSolute     = a.value( "coSedSolute"     ).toString().toInt();
+            coSedStr        = a.value( "coSedSolute"     ).toString();
+            coSedSolute     = ( coSedStr.isEmpty() ) ? -1 : coSedStr.toInt();
             type            =
                (ModelType)a.value( "type"   ).toString().toInt();
             iterations      = a.value( "iterations"      ).toString().toInt();

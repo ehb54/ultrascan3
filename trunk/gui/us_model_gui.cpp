@@ -235,10 +235,11 @@ void US_ModelGui::show_model_desc( void )
 
    lw_models->sortItems();
 
-   //int lheight = lw_models->height();
-   //int height  = this->height() + ( lheight / 5 );
-   //int width   = this->width();
-   //resize( width, height );
+   // resize so vertical scroll bar works
+   int lheight = lw_models->height();
+   int height  = this->height() + ( lheight / 5 );
+   int width   = this->width();
+   resize( width, height );
 }
 
 bool US_ModelGui::ignore_changes( void )

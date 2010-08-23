@@ -308,6 +308,16 @@ void US_Astfem_Sim::change_model( US_Model m )
 {
    system = m;
    pb_simParms->setEnabled( true );
+
+   // set default of FVM if model is non-ideal
+   if ( system.components[ 0 ].sigma != 0.0  ||
+        system.components[ 0 ].delta != 0.0  ||
+        system.coSedSolute           >= 0    ||
+        system.compressibility       != 0 )
+      simparams.meshType = US_SimulationParameters::ASTFVM;
+
+   else  // normal (ideal) default
+      simparams.meshType = US_SimulationParameters::ASTFEM;
 }
 
 void US_Astfem_Sim::load_model( void )
@@ -353,9 +363,6 @@ void US_Astfem_Sim::sim_parameters( void )
 void US_Astfem_Sim::set_parameters( void )
 {
    simparams = working_simparams;
-qDebug() << "meshType" << working_simparams.meshType
-   << US_SimulationParameters::ASTFEM
-   << US_SimulationParameters::ASTFVM;
 
    pb_start  ->setEnabled( true );
 }
@@ -518,6 +525,9 @@ void US_Astfem_Sim::start_simulation( void )
 
       connect( astfvm, SIGNAL( calc_done( void ) ), 
                        SLOT  ( calc_over( void ) ) );
+
+      connect( astfvm, SIGNAL( comp_progress(    int ) ), 
+                       SLOT  ( update_component( int ) ) );
 
       // initialize LCD with component "1"
       lcd_component->setMode( QLCDNumber::Dec );
@@ -774,6 +784,7 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
    pb_saveSim->setEnabled( false );
 }
 
+// slot to update progress and lcd based on current component
 void US_Astfem_Sim::update_progress( int component )
 {
    if ( component == -1 )
@@ -790,11 +801,20 @@ void US_Astfem_Sim::update_progress( int component )
    }
 }
 
+// slot to update lcd based on current component
+void US_Astfem_Sim::update_component( int component )
+{
+   lcd_component->setMode( QLCDNumber::Dec );
+   lcd_component->display( component );
+}
+
+// slot to update progress by time step
 void US_Astfem_Sim::show_progress( int time_step )
 {
    progress->setValue( time_step );
 }
 
+// slot to initialize progress and set maximum steps
 void US_Astfem_Sim::start_calc( int steps )
 {
    progress_text    = lb_progress->text();
@@ -806,6 +826,7 @@ void US_Astfem_Sim::start_calc( int steps )
    lb_progress->setText( tr( "Calculating..." ) );
 }
 
+// slot to set progress to maximum
 void US_Astfem_Sim::calc_over( void )
 {
    progress   ->setMaximum( progress_maximum );
@@ -813,7 +834,7 @@ void US_Astfem_Sim::calc_over( void )
    lb_progress->setText( progress_text );
 }
 
-//void US_Astfem_Sim::update_movie_plot( QVector< double >& x, double* c )
+// slot to update movie plot
 void US_Astfem_Sim::update_movie_plot( int /*scan_number*/ )
 {
    moviePlot->clear();
