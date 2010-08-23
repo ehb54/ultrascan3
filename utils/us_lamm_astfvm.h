@@ -16,18 +16,37 @@ class US_EXTERN US_LammAstfvm : public QObject
    Q_OBJECT
 
    public:
+
+      //! \brief Finite volume mesh for ASTFVM solution
       class Mesh 
       {
-   
          public: 
-            //unsigned int Nv, Ne;	// Number of grids, and Number of elems
-            int Nv, Ne;	// Number of grids, and Number of elems
-            double *x;			// coordinates of grids
-     
-            Mesh(double xl, double xr, int Nelem, int opt);
+   
+            //! \brief Changeable non-ideal mesh
+            //! \param xl    Left X (radius) value
+            //! \param xr    Right X (radius) value
+            //! \param Nelem Number of elements
+            //! \param Opt   Mesh option (0 for uniform)
+            Mesh( double, double, int, int );
+
+            //! \brief Destroy mesh
             ~Mesh();
-            void InitMesh(double s, double D, double w2);
-            void RefineMesh(double *u0, double *u1, double ErrTol);
+
+            //! \brief Initialize mesh
+            //! \param s  Sedimentation coefficient
+            //! \param D  Diffusion coefficient
+            //! \param w2 Omega squared
+            void InitMesh( double, double, double );
+
+            //! \brief Refine mesh
+            //! \param u0     Current concentration array
+            //! \param u1     Next concentration array
+            //! \param ErrTol Error tolerance
+            void RefineMesh( double*, double*, double );
+
+            int Nv;	         //!< Number of grids
+            int Ne;	         //!< Number of elements
+            double *x;			//!< radius coordinates of grids
 
          private:
             int MaxRefLev;
@@ -42,24 +61,34 @@ class US_EXTERN US_LammAstfvm : public QObject
             int *Mark;			// ref/unref marker
 
             void ComputeMeshDen_D3(double *u0, double *u1);
-            //void Smoothing(unsigned int n, double *y, double Wt, unsigned int Cycle);
             void Smoothing( int n, double *y, double Wt, int Cycle);
             void Unrefine(double alpha);
             void Refine(double beta);
       };
 
-
+      //! \brief Salt data for co-sedimenting
       class SaltData
       {
          public:
 
-            double SaltMoler;		// moler number of cosedimenting salt
+            //! \brief Create salt data
+            //! \param fname  File name for salt data
+            //! \param Moler  Concentration moler factor
+            SaltData( char*, double );
 
-            SaltData(char *fname, double Moler);
+            //! \brief Destroy salt data
             ~SaltData();
-            void InterpolateCSalt(int N, double *x, double t, double *Csalt);
 
-            private:
+            //! \brief Interpolate concentrations of salt
+            //! \param N     Number of elements in arrays
+            //! \param x     X (radius) array
+            //! \param t     Current time value
+            //! \param Csalt Concentration of salt for current time
+            void InterpolateCSalt( int, double*, double, double* );
+
+            double SaltMoler;		//!< moler number of cosedimenting salt
+
+         private:
 
             FILE *f_salt;
             int Nx;		// number of points in radial direction
@@ -69,41 +98,61 @@ class US_EXTERN US_LammAstfvm : public QObject
             double *Cs0, *Cs1; // salt concentration for the time interval
       };
 
+      //! \brief Create Lamm equations AST Finite Volume Method solver
+      //! \param rmodel     Reference to model on which solution is based
+      //! \param rsimparms  Reference to simulation parameters
+      //! \param parent     Parent object (may be 0)
       US_LammAstfvm( US_Model&, US_SimulationParameters&, QObject* = 0 );
 
+      //! \brief Destroy FVM solver
       ~US_LammAstfvm();
 
+      //! \brief Main method to calculate FVM solution
+      //! \param sim_data Reference to simulated AUC data to produce
       void calculate( US_DataIO2::RawData& );
 
+      //! \brief Calculate solution for a model component
+      //! \param compx Index to model component to use in solution pass
       void solve_component( int ); 
 
-      int nonIdealCaseNo( void );  // get case number from model parameters
+      //! \brief Get the non-ideal case number from model parameters
+      int nonIdealCaseNo( void );
 
-      void SetNonIdealCase_1( double const_K );	// conc dependent case
+      //! \brief Set up non-ideal case type 1 (concentration-dependent)
+      //! \param sigma_k Sigma constant to modify sedimentation coefficient
+      //! \param delta_k Delta constant to modify diffusion coefficient
+      void SetNonIdealCase_1( double, double );
 
-      void SetNonIdealCase_2( char *fname, double Moler );  // co-sed case
+      //! \brief Set up non-ideal case type 2 (co-sedimenting)
+      //! \param fname   Salt data file name
+      //! \param Moler   Salt moler factor
+      void SetNonIdealCase_2( char*, double );
 
-      void SetMeshSpeedFactor(double speed);	// moving (1) or not moving (0)
+      //! \brief Set the mesh speed factor: 1.0 (moving) or 0.0 (non-moving)
+      //! \param speed   Mesh speed factor of 1.0 or 0.0
+      void SetMeshSpeedFactor( double );
 
-      void SetMeshRefineOpt(int Opt);	        // Refine (1) or no-refine (0)
-
-      void LammStepSedDiff_P(double t, double dt, int M0, double *x0, double *u0, 
-                             double *u1 );
-
-      void LammStepSedDiff_C(double t, double dt, int M0, double *x0, double *u0, 
-                             int M1, double *x1, double *u1_est, double *u1 );
-
-      void ProjectQ(int M0, double *x0, double *u0, 
-                    int M1, double *x1, double *u1);
-
-      double IntQs(double *x, double *u, int ka, double xia, int kb, double xib);
+      //! \brief Set the mesh refinement option:  1 to refine, 0 to not refine
+      //! \param Opt     Mesh refinement option flag: 1/0 for yes/no.
+      void SetMeshRefineOpt( int );
 
    signals:
-      void calc_start( int );
-      void calc_progress( int );
+      //! \brief Signal calculation start and give maximum steps
+      //! \param nsteps Number of expected total calculation progress steps
+      void calc_start( int nsteps );
+
+      //! \brief Signal calculation progress, giving running step count
+      //! \param istep Current progress step count
+      void calc_progress( int istep );
+
+      //! \brief Signal that calculations are complete
       void calc_done( void );
 
-      ///////
+      //! \brief Signal component progress, giving running component number
+      //! \param icomp Current component begun (1,...)
+      void comp_progress( int icomp );
+
+
    private:
 
       US_Model&                 model;
@@ -119,9 +168,10 @@ class US_EXTERN US_LammAstfvm : public QObject
                                  // = 2 : co-sedimenting
                                  // = 3 : compressibility
 
-      double ConcDep_K;		    // constant for concentration dependent
+      double sigma;
+      double delta;    		    // constants for concentration dependent
                                  // non-ideal case
-                                 // s = s_0/(1+K*C), D=D_0/(1+K*C)
+                                 // s = s_0/(1+sigma*C), D=D_0/(1+delta*C)
 
       SaltData *saltdata;		    // data handle for cosedimenting
 
@@ -136,6 +186,19 @@ class US_EXTERN US_LammAstfvm : public QObject
       double param_m, param_b;	// m, b of cell
       double param_s, param_D; 	// base s, D values
       double param_w2;		// rpm, w2=(rpm*pi/30)^2
+
+      //! \brief Lamm equation step for sedimentation difference - predict
+      void LammStepSedDiff_P( double, double, int, double*, double*, double* );
+
+      //! \brief Lamm equation step for sedimentation difference - calculate
+      void LammStepSedDiff_C( double, double, int, double*, double*, 
+                              int, double*, double*, double* );
+
+      //! \brief Project piecewise quadratic solution onto mesh
+      void ProjectQ( int, double*, double*, int, double*, double* );
+
+      //! \brief Integrate piecewise quadratic function defined on mesh
+      double IntQs( double*, double*, int, double, int, double );
 
       void quadInterpolate( double*, double*, int,
                             QVector< double >&, QVector< double >& );

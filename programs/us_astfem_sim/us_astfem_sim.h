@@ -101,6 +101,7 @@ class US_Astfem_Sim : public US_Widgets
       void stop_simulation ( void );
       void save_scans      ( void );
       void update_progress ( int  );
+      void update_component( int  );
       void start_calc      ( int );
       void show_progress   ( int );
       void calc_over       ( void );
