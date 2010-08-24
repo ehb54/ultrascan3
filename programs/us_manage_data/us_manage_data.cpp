@@ -1725,7 +1725,7 @@ qDebug() << "REC_ULD:EXP:  dbErrno NOROWS" << db->lastErrno() << US_DB2::NOROWS;
          expdata.operatorGUID       = operGUID;
          expdata.rotorID            = rotorID;
          expdata.expType            = expType;
-         expdata.opticalSystem      = optSystem;
+         expdata.opticalSystem      = optSystem.toAscii();
          expdata.runTemp            = QString::number( avgTemp );
          expdata.label              = runID;
          expdata.comments           = runID + " experiment";
@@ -3113,7 +3113,7 @@ int US_ManageData::new_experiment_local( US_DB2* db, QString& pathexp )
    expdata.operatorGUID       = operGUID;
    expdata.rotorID            = rotorID.toInt();
    expdata.expType            = expType;
-   expdata.opticalSystem      = optSystem;
+   expdata.opticalSystem      = optSystem.toAscii();
    expdata.runTemp            = runTemp;
    expdata.label              = runID;
    expdata.comments           = runID + " experiment";
