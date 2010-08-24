@@ -204,6 +204,7 @@ int US_Model::load_disk( const QString& guid )
 int US_Model::load( const QString& filename )
 {
    QString coSedStr;
+   QString comprStr;
    QFile file( filename );
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
@@ -230,21 +231,23 @@ int US_Model::load( const QString& filename )
          {
             a = xml.attributes();
 
-            description     = a.value( "description"     ).toString();
-            modelGUID       = a.value( "modelGUID"       ).toString();
-            editGUID        = a.value( "editGUID"        ).toString();
-            bufferGUID      = a.value( "bufferGUID"      ).toString();
-            bufferDesc      = a.value( "bufferDesc"      ).toString();
-            density         = a.value( "density"         ).toString().toDouble();
-            viscosity       = a.value( "viscosity"       ).toString().toDouble();
-            compressibility = a.value( "compressibility" ).toString().toDouble();
-            wavelength      = a.value( "wavelength"      ).toString().toDouble();
-            temperature     = a.value( "temperature"     ).toString().toDouble();
-            coSedStr        = a.value( "coSedSolute"     ).toString();
+            description     = a.value( "description"    ).toString();
+            modelGUID       = a.value( "modelGUID"      ).toString();
+            editGUID        = a.value( "editGUID"       ).toString();
+            bufferGUID      = a.value( "bufferGUID"     ).toString();
+            bufferDesc      = a.value( "bufferDesc"     ).toString();
+            density         = a.value( "density"        ).toString().toDouble();
+            viscosity       = a.value( "viscosity"      ).toString().toDouble();
+            comprStr        = a.value( "compressibility").toString();
+            compressibility = ( comprStr.isEmpty() ||  comprStr == "0" )
+                              ? COMP_25W : comprStr.toDouble();
+            wavelength      = a.value( "wavelength"     ).toString().toDouble();
+            temperature     = a.value( "temperature"    ).toString().toDouble();
+            coSedStr        = a.value( "coSedSolute"    ).toString();
             coSedSolute     = ( coSedStr.isEmpty() ) ? -1 : coSedStr.toInt();
             type            =
                (ModelType)a.value( "type"   ).toString().toInt();
-            iterations      = a.value( "iterations"      ).toString().toInt();
+            iterations      = a.value( "iterations"     ).toString().toInt();
          }
 
          else if ( xml.name() == "analyte" )
