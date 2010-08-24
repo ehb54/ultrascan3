@@ -210,6 +210,8 @@ void US_Investigator::queryDB( void )
       return;
    } 
 
+   lw_names->clear();
+
    QStringList query;
    query << "get_people" << "%" + le_search->text() + "%"; 
 
