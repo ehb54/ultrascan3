@@ -2,6 +2,7 @@
 
 #include "us_lamm_astfvm.h"
 #include "us_math2.h"
+#include "us_constants.h"
 
 /////////////////////////
 //
@@ -596,6 +597,9 @@ qDebug() << "LAsc:   sigma delta" << model.components[comp_x].sigma
    SetMeshRefineOpt(   1   );    // mesh refine option
    SetMeshSpeedFactor( 1.0 );    // mesh speed factor
 
+   // get initial concentration for this component
+   double sig_conc = model.components[ comp_x ].signal_concentration;
+
    // initialization
    N0    = msh->Nv;
    N0u   = N0 + N0 - 1;
@@ -611,9 +615,9 @@ qDebug() << "LAsc:   sigma delta" << model.components[comp_x].sigma
    {  // initialize X and U values
       int kk = jj + jj;
 
-      x0[ jj ]   = msh->x[ jj ];
+      x0[ jj ]   = msh->x[ jj ];              // r value
       x1[ jj ]   = x0[ jj ];
-      u0[ kk ]   = msh->x[ jj ];
+      u0[ kk ]   = msh->x[ jj ] * sig_conc;   // C*r value
       u1[ kk ]   = u0[ kk ];
    }
 
@@ -689,13 +693,6 @@ qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
          double f0 = ( t1 - ts ) / ( t1 - t0 );       // fraction of conc0
          double f1 = ( ts - t0 ) / ( t1 - t0 );       // fraction of conc1
 
-         // get number-of-components compensation factor
-         double cf = 1.0 / (double)model.components.size();
-
-         // include components compensation in linear interpolation factors
-         f0       *= cf;
-         f1       *= cf;
-
 qDebug() << "LAsc: call qI  t0 ts t1" << t0 << ts << t1;
          // do quadratic interpolation to fill out concentrations at time t0
          quadInterpolate( x0, u0, N0, rads, conc0 );
@@ -723,7 +720,7 @@ qDebug() << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
          istep++;  // bump progress step
 
          if ( ( ( kt / ktinc ) * ktinc ) == kt  ||  ( kt + 1 ) == nts )
-         {  // signal progress at every 5th scan or final one
+         {  // signal progress at every "ktinc'th" scan or final one
             emit calc_progress( istep );
             qApp->processEvents();
          }
@@ -758,7 +755,7 @@ void US_LammAstfvm::SetNonIdealCase_1( double sigma_k, double delta_k )
 {
    NonIdealCaseNo = 1;
 
-   sigma     = sigma_k;                  // for concentration dependency
+   sigma     = sigma_k;                     // for concentration dependency
    delta     = delta_k;
 }
 
@@ -766,10 +763,10 @@ void US_LammAstfvm::SetNonIdealCase_2( char *fname, double Moler )
 {
    NonIdealCaseNo = 2;
 
-   saltdata = new SaltData(fname, Moler);	// for co-sedimenting
+   saltdata = new SaltData( fname, Moler );  // for co-sedimenting
 }
 
-void US_LammAstfvm::SetMeshSpeedFactor(double speed)
+void US_LammAstfvm::SetMeshSpeedFactor( double speed )
 {
    MeshSpeedFactor = speed;
 }
@@ -1330,8 +1327,8 @@ int US_LammAstfvm::nonIdealCaseNo()
       caseno = 2;
    }
 
-   else if ( model.compressibility != 1.0 )
-   {  // compressibility factor not 1.0:        compressibility
+   else if ( model.compressibility != COMP_25W )
+   {  // compressibility factor not water's:    compressibility
       caseno = 3;
    }
 
