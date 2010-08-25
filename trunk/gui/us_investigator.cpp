@@ -181,6 +181,10 @@ US_Investigator::US_Investigator( bool signal, int inv )
    reset();
    queryDB();
 
+   // Get last investigator ID if it is not passed
+   // Will return -1 if it has not been set
+   if ( inv < 0 ) inv = US_Settings::us_inv_ID();
+
    if ( inv > -1 )
    {
       for ( int i = 0; i < investigators.size(); i++ )
@@ -400,6 +404,14 @@ void US_Investigator::close( void )
 
       emit investigator_accepted( le_invID->text().toInt(), 
             le_lname->text(), le_fname->text() );
+   }
+qDebug() << "le_invID->text().toInt()" << le_invID->text().toInt();
+   if ( le_invID->text().toInt() > 0 )
+   {
+      QString s = le_lname->text() + ", " + le_fname->text();
+
+      US_Settings::set_us_inv_name( s );
+      US_Settings::set_us_inv_ID  ( le_invID->text().toInt() );
    }
 
    accept();

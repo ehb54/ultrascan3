@@ -96,6 +96,16 @@ class US_EXTERN US_Settings
     //! \brief Set the US_Debug setting
     static void        set_us_debug( int );
 
+    //! \brief Get the last set investigator name
+    static QString     us_inv_name( void );
+    //! \brief Set the last set investigator name
+    static void        set_us_inv_name( QString& );
+
+    //! \brief Get the last set investigator ID
+    static int         us_inv_ID( void );
+    //! \brief Set the last set investigator ID
+    static void        set_us_inv_ID( int );
+
     //! \brief Get the Debug text setting as a string list
     static QStringList debug_text(     void );
     //! \brief Get a flag if given string matches any in debug text

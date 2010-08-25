@@ -239,6 +239,37 @@ void US_Settings::set_debug_text( QStringList debuglist )
     settings.setValue( "debug_text", debuglist );
 }
 
+// Investigator
+QString US_Settings::us_inv_name( void )
+{
+   QSettings settings( "UTHSCSA", "UltraScan" );
+   return settings.value( "us_investigator_name", "" ).toString();
+}
+
+void US_Settings::set_us_inv_name( QString& name )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( name == "" )
+    settings.remove( "us_investigator_name" );
+  else
+    settings.setValue( "us_investigator_name", name );
+}
+
+int US_Settings::us_inv_ID( void )
+{
+   QSettings settings( "UTHSCSA", "UltraScan" );
+   return settings.value( "us_investigator_ID", -1 ).toInt();
+}
+
+void US_Settings::set_us_inv_ID( int id )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( id == -1 )
+    settings.remove( "us_investigator_ID" );
+  else
+    settings.setValue( "us_investigator_ID", id );
+}
+
 // advanced level
 int US_Settings::advanced_level( void )
 {
