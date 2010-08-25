@@ -277,9 +277,18 @@ void US_BufferGui::check_db( void )
    QStringList DB = US_Settings::defaultDB();
 
    if ( DB.size() < 5 )
+   {
       QMessageBox::warning( this,
          tr( "Attention" ),
          tr( "There is no default database set." ) );
+   }
+   else
+   {
+      personID = US_Settings::us_inv_ID();
+
+      if ( personID > 0 )
+         le_investigator->setText( US_Settings::us_inv_name() );
+   }
 }
 
 void US_BufferGui::density( const QString& d )
