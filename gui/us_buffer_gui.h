@@ -137,6 +137,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       void list_component     ( void );
       void add_component      ( void );
       void accept_buffer      ( void );
+      void check_db           ( void );
       void density            ( const QString& );
       void viscosity          ( const QString& );
       void remove_component   ( QListWidgetItem* );

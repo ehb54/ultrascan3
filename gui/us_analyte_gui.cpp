@@ -42,13 +42,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    QString     db_name;
 
    if ( DB.size() < 5 )
-   {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "There is no default database set." ) );
-      
       db_name = "No Default Set";
-   }
    else
       db_name = DB.at( 0 );
 
@@ -141,6 +135,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    QButtonGroup* io = new QButtonGroup;
 
    QGridLayout* db_layout = us_radiobutton( tr( "Use Database" ), rb_db );
+   connect( rb_db, SIGNAL( clicked() ),  SLOT( check_db() ) );
    io->addButton( rb_db );
    main->addLayout( db_layout, row, 1 );
 
@@ -498,6 +493,16 @@ void US_AnalyteGui::new_analyte( void )
    le_search->setText( "" );
    search();
    lw_analytes->setCurrentRow( lw_analytes->count() - 1 );
+}
+
+void US_AnalyteGui::check_db( void )
+{
+   QStringList DB = US_Settings::defaultDB();
+
+   if ( DB.size() < 5 )
+      QMessageBox::warning( this,
+         tr( "Attention" ),
+         tr( "There is no default database set." ) );
 }
 
 void US_AnalyteGui::access_type( bool state )
