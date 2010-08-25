@@ -44,26 +44,27 @@ class US_EXTERN US_LammAstfvm : public QObject
             //! \param ErrTol Error tolerance
             void RefineMesh( double*, double*, double );
 
-            int Nv;	         //!< Number of grids
-            int Ne;	         //!< Number of elements
-            double *x;			//!< radius coordinates of grids
+            int     Nv;       //!< Number of grids
+            int     Ne;       //!< Number of elements
+            double* x;        //!< radius coordinates of grids
 
          private:
-            int MaxRefLev;
-            int MonScale;
-            double MonCutoff;
-            double SmoothingWt;
-            int    SmoothingCyl;
+            int     MaxRefLev;
+            int     MonScale;
+            double  MonCutoff;
+            double  SmoothingWt;
+            int     SmoothingCyl;
 
-            int *Eid;			// elem id
-            int *RefLev;	        // refinement level of an elem
-            double *MeshDen;		// desired mesh density
-            int *Mark;			// ref/unref marker
+            int*    Eid;      // elem id
+            int*    RefLev;   // refinement level of an elem
+            double* MeshDen;  // desired mesh density
+            int*    Mark;     // ref/unref marker
 
-            void ComputeMeshDen_D3(double *u0, double *u1);
-            void Smoothing( int n, double *y, double Wt, int Cycle);
-            void Unrefine(double alpha);
-            void Refine(double beta);
+            // private functions
+            void ComputeMeshDen_D3( double*, double* );
+            void Smoothing( int, double*, double, int );
+            void Unrefine(  double );
+            void Refine(    double );
       };
 
       //! \brief Salt data for co-sedimenting
@@ -86,16 +87,18 @@ class US_EXTERN US_LammAstfvm : public QObject
             //! \param Csalt Concentration of salt for current time
             void InterpolateCSalt( int, double*, double, double* );
 
-            double SaltMoler;		//!< moler number of cosedimenting salt
+            double SaltMoler; //!< moler number of cosedimenting salt
 
          private:
 
-            FILE *f_salt;
-            int Nx;		// number of points in radial direction
-            int Nt;		// number of points in time direction
-            double *xs;	// grids in radial direction
-            double t0, t1;	// time intervals in use.
-            double *Cs0, *Cs1; // salt concentration for the time interval
+            FILE*   f_salt;
+            int     Nx;       // number of points in radial direction
+            int     Nt;       // number of points in time direction
+            double* xs;       // grids in radial direction
+            double  t0;       // 1st time intervals in use.
+            double  t1;       // 2nd time intervals in use.
+            double* Cs0;      // salt concentration for the 1st time interval
+            double* Cs1;      // salt concentration for the 2nd time interval
       };
 
       //! \brief Create Lamm equations AST Finite Volume Method solver
@@ -128,6 +131,10 @@ class US_EXTERN US_LammAstfvm : public QObject
       //! \param Moler   Salt moler factor
       void SetNonIdealCase_2( char*, double );
 
+      //! \brief Set up non-ideal case type 3 (compressibility)
+      //! \param cmpress Compressibility factor
+      void SetNonIdealCase_3( double );
+
       //! \brief Set the mesh speed factor: 1.0 (moving) or 0.0 (non-moving)
       //! \param speed   Mesh speed factor of 1.0 or 0.0
       void SetMeshSpeedFactor( double );
@@ -155,73 +162,82 @@ class US_EXTERN US_LammAstfvm : public QObject
 
    private:
 
-      US_Model&                 model;
-      US_SimulationParameters&  simparams;
+      US_Model&                 model;       // input model
+      US_SimulationParameters&  simparams;   // input simulation parameters
 
-      US_AstfemMath::MfemData   af_data;
+      US_AstfemMath::MfemData   af_data;     // internal data
 
-      Mesh *msh;			    // redial grid
+      Mesh*   msh;            // radial grid
 
-      int NonIdealCaseNo;		    // non-ideal case number
-                                 // = 0 : ideal, constant s, D
-                                 // = 1 : concentration dependent
-                                 // = 2 : co-sedimenting
-                                 // = 3 : compressibility
+      int     NonIdealCaseNo; // non-ideal case number
+                              // = 0 : ideal, constant s, D
+                              // = 1 : concentration dependent
+                              // = 2 : co-sedimenting
+                              // = 3 : compressibility
 
-      double sigma;
-      double delta;    		    // constants for concentration dependent
-                                 // non-ideal case
-                                 // s = s_0/(1+sigma*C), D=D_0/(1+delta*C)
+      double  sigma;          // constant for concentration dependence (s)
+      double  delta;          // constant for concentration dependence (D)
+                              // non-ideal case
+                              // s = s_0/(1+sigma*C), D=D_0/(1+delta*C)
 
-      SaltData *saltdata;		    // data handle for cosedimenting
+      double  cmprssfac;      // factor for compressibility
 
-      double MeshSpeedFactor;          // = 1: mesh following sedimentation
-                                     // = 0: fixed mesh in each time step
+      SaltData* saltdata;     // data handle for cosedimenting
 
-      int MeshRefineOpt;               // = 1: perform mesh local refinement
-                                    // = 0: no mesh refinement
+      double  MeshSpeedFactor; // = 1: mesh following sedimentation
+                               // = 0: fixed mesh in each time step
 
-      int    comp_x;             // current component index
+      int     MeshRefineOpt;  // = 1: perform mesh local refinement
+                              // = 0: no mesh refinement
 
-      double param_m, param_b;	// m, b of cell
-      double param_s, param_D; 	// base s, D values
-      double param_w2;		// rpm, w2=(rpm*pi/30)^2
+      int     comp_x;         // current component index
 
-      //! \brief Lamm equation step for sedimentation difference - predict
+      double  param_m;        // m of cell (meniscus)
+      double  param_b;        // b of cell (bottom)
+      double  param_s;        // base s value (sedimentation coefficient)
+      double  param_D;        // base D value (diffusion coefficient)
+      double  param_w2;       // rpm-based omega-sq-t, w2=(rpm*pi/30)^2
+
+      // private functions
+
+      // Lamm equation step for sedimentation difference - predict
       void LammStepSedDiff_P( double, double, int, double*, double*, double* );
 
-      //! \brief Lamm equation step for sedimentation difference - calculate
+      // Lamm equation step for sedimentation difference - calculate
       void LammStepSedDiff_C( double, double, int, double*, double*, 
                               int, double*, double*, double* );
 
-      //! \brief Project piecewise quadratic solution onto mesh
-      void ProjectQ( int, double*, double*, int, double*, double* );
+      // Project piecewise quadratic solution onto mesh
+      void   ProjectQ(   int, double*, double*, int, double*, double* );
 
-      //! \brief Integrate piecewise quadratic function defined on mesh
-      double IntQs( double*, double*, int, double, int, double );
+      // Integrate piecewise quadratic function defined on mesh
+      double IntQs(      double*, double*, int, double, int, double );
 
-      void quadInterpolate( double*, double*, int,
-                            QVector< double >&, QVector< double >& );
+      // Perform quadratic interpolation to fill out radius,conc. vectors
+      void   quadInterpolate( double*, double*, int,
+                              QVector< double >&, QVector< double >& );
 
-      void LocateStar(int N0, double *x0, int Ns, double *xs,
-                      int *ke, double *xi);
+      void   LocateStar( int, double*, int, double*, int*, double* );
+
+      // Adjust s and D arrays
+      void   AdjustSD(   double, int, double*, double*, double*, double* );
+
+      void   fun_phi(    double, double* );
+
+      void   fun_dphi(   double, double* );
+
+      void   fun_Iphi(   double, double* );
+
+      double IntQ(       double*, double*, double, double );
 
 
-      void AdjustSD(double t, int Nv, double *x, double *u, 
-                    double *s_adj, double *D_adj);
+      void LsSolver53(   int, double**, double*, double* );
 
-      void fun_phi(double x, double *y);
+      // load internal data from caller's raw data
+      void load_mfem_data(  US_DataIO2::RawData&, US_AstfemMath::MfemData&,
+                            bool = true );
 
-      void fun_dphi(double x, double *y);
-
-      void fun_Iphi(double x, double *y);
-
-      double IntQ(double *x, double *u, double xia, double xib);
-
-
-      void LsSolver53(int m, double **A, double *b, double *x);
-
-      void load_mfem_data(  US_DataIO2::RawData&, US_AstfemMath::MfemData& );
+      // store internal data to caller's raw data
       void store_mfem_data( US_DataIO2::RawData&, US_AstfemMath::MfemData& );
 };
 #endif
