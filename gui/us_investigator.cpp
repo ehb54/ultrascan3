@@ -288,11 +288,14 @@ void US_Investigator::update( void )
       query << le_email  ->text();
       query << le_org    ->text();
       query << userPW;
-
+qDebug() << query;
       // Error check
-      if ( db.statusQuery( query ) == US_DB2::OK )
+      
+      int status = db.statusQuery( query );
+qDebug() << "status" << status;
+      if ( status == US_DB2::OK )
       {
-         QMessageBox::warning( this,
+         QMessageBox::information( this,
             tr( "Success" ),   
             tr( "The entry was updated.\n" ) );
       }
@@ -359,8 +362,8 @@ void US_Investigator::get_inv_data( QListWidgetItem* item )
    info.state        = db.value( 4 ).toString();
    info.zip          = db.value( 5 ).toString();
    info.phone        = db.value( 6 ).toString();
-   info.email        = db.value( 7 ).toString();
-   info.organization = db.value( 8 ).toString();
+   info.organization = db.value( 7 ).toString();
+   info.email        = db.value( 8 ).toString();
    info.invGuid      = db.value( 9 ).toString();
 
    //le_lname  ->disconnect();
