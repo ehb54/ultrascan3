@@ -8,6 +8,7 @@
 #include "us_investigator.h"
 #include "us_table.h"
 #include "us_util.h"
+#include "us_math2.h"
 
 US_BufferGui::US_BufferGui( 
       int              invID, 
@@ -96,9 +97,22 @@ US_BufferGui::US_BufferGui(
 
    lw_ingredients = us_listwidget();
 
+   QFontMetrics fm( QFont( US_GuiSettings::fontFamily(),
+                           US_GuiSettings::fontSize() ) );
+   int width = 0;
+
    for ( int i = 0; i < component_list.size(); i++ )
-      lw_ingredients->addItem( component_list[ i ].name +  
-                        " (" + component_list[ i ].range + ")" );
+   {
+      QString s = component_list[ i ].name +
+                  " (" + component_list[ i ].range + ")";
+
+      lw_ingredients->addItem( s );
+      width = max( fm.width( s ), width );
+   }
+
+   // Allow for vertical scroll bar too
+   lw_ingredients->setMinimumWidth( width + 30 );
+   lw_ingredients->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
 
    connect( lw_ingredients, SIGNAL( itemSelectionChanged( void ) ), 
                             SLOT  ( list_component      ( void ) ) );
