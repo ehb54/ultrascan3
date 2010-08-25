@@ -292,11 +292,10 @@ void US_Investigator::update( void )
       query << le_email  ->text();
       query << le_org    ->text();
       query << userPW;
-qDebug() << query;
+
       // Error check
-      
       int status = db.statusQuery( query );
-qDebug() << "status" << status;
+
       if ( status == US_DB2::OK )
       {
          QMessageBox::information( this,
@@ -405,7 +404,7 @@ void US_Investigator::close( void )
       emit investigator_accepted( le_invID->text().toInt(), 
             le_lname->text(), le_fname->text() );
    }
-qDebug() << "le_invID->text().toInt()" << le_invID->text().toInt();
+
    if ( le_invID->text().toInt() > 0 )
    {
       QString s = le_lname->text() + ", " + le_fname->text();
