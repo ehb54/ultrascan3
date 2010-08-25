@@ -133,6 +133,7 @@ US_BufferGui::US_BufferGui(
    main->addWidget( le_investigator, row++, 1, 1, 2 );
 
    QGridLayout* db_layout = us_radiobutton( tr( "Use Database" ), rb_db );
+   connect( rb_db, SIGNAL( clicked() ),  SLOT( check_db() ) );
    main->addLayout( db_layout, row, 1 );
 
    QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk );
@@ -269,6 +270,16 @@ US_BufferGui::US_BufferGui(
 
    set_investigator();
    init_buffer();
+}
+
+void US_BufferGui::check_db( void )
+{
+   QStringList DB = US_Settings::defaultDB();
+
+   if ( DB.size() < 5 )
+      QMessageBox::warning( this,
+         tr( "Attention" ),
+         tr( "There is no default database set." ) );
 }
 
 void US_BufferGui::density( const QString& d )

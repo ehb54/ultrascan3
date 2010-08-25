@@ -171,6 +171,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       void search             ( const QString& = QString() );
       void select_analyte     ( QListWidgetItem* );
       void access_type        ( bool );
+      void check_db           ( void );
 
       void new_analyte        ( void );
       void list               ( void );
