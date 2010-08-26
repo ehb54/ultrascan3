@@ -86,6 +86,7 @@ class US_ModelGui : public US_WidgetsDialog
       void edit_description  ( void );
       void get_person        ( void );
       void update_person     ( int, const QString&, const QString& );
+      void check_db          ( void );
       void get_buffer        ( void );
       void update_buffer     ( US_Buffer );
       void new_model         ( void );
