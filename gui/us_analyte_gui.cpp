@@ -811,6 +811,9 @@ void US_AnalyteGui::update_sequence( QString seq )
          le_protein_vbar20  ->setText( QString::number( p.vbar20, 'f', 4 ) );
          le_protein_vbar    ->setText( QString::number( p.vbar  , 'f', 4 ) );
          le_protein_residues->setText( QString::number( p.residues ) );
+
+         analyte.mw     = p.mw;
+         analyte.vbar20 = p.vbar20;
       }
          break;
 
