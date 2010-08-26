@@ -334,18 +334,30 @@ int US_DB2::statusQuery( const QString& ){ return 0; }
 #else
 int US_DB2::statusQuery( const QString& sqlQuery )
 {
-   int value = 0;
+   errno = ERROR;
 
    this->rawQuery( sqlQuery );
    if ( result )
    {
       row       = mysql_fetch_row( result );
-      value     = atoi( row[ 0 ] );
+      errno     = atoi( row[ 0 ] );
       mysql_free_result( result );
       result = NULL;
    }
 
-   return value;
+   if ( errno != 0 )
+   {
+      this->rawQuery( "SELECT last_error()" );
+      if ( result )
+      {
+         row       = mysql_fetch_row( result );
+         error     = row[ 0 ];
+         mysql_free_result( result );
+         result = NULL;
+      }
+   }
+
+   return errno;
 }
 #endif
 
