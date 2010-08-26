@@ -277,9 +277,20 @@ void US_Win::launch( int index )
   if ( p[ index ].maxRunCount <= p[ index ].currentRunCount && 
        p[ index ].maxRunCount > 0 ) 
   {
+    if ( p[ index ].index == P_CONFIG )
+    {
+       QMessageBox::information( this,
+         tr( "ALready Running" ),
+         tr( "The configuration program is already running.\n"
+             "Click on the task bar item named UltraScan " 
+             "Configuration to continue." ) );
+    }
+    else
+    {
     QMessageBox::warning( this,
       tr( "Error" ),
       pname + tr( " has reached it's maximum run count." ) );
+    }
   
     return;
   }

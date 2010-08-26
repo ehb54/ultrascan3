@@ -383,7 +383,11 @@ void US_Database::save_default( void )
          return;
       }
 
+      QString null = "";
+
       US_Settings::set_defaultDB( dblist.at( i ) );
+      US_Settings::set_us_inv_name( null );
+      US_Settings::set_us_inv_ID( -1 );
       reset();
       
       QMessageBox::information( this, 
