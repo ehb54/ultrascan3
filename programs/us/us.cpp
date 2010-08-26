@@ -280,7 +280,7 @@ void US_Win::launch( int index )
     if ( p[ index ].index == P_CONFIG )
     {
        QMessageBox::information( this,
-         tr( "ALready Running" ),
+         tr( "Already Running" ),
          tr( "The configuration program is already running.\n"
              "Click on the task bar item named UltraScan " 
              "Configuration to continue." ) );
