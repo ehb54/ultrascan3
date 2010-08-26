@@ -1453,10 +1453,6 @@ void US_AnalyteGui::select_analyte( QListWidgetItem* /* item */ )
    pb_delete->setEnabled( true );
    pb_save  ->setEnabled( true );
    pb_more  ->setEnabled( true );
-
-   QMessageBox::information( this,
-      tr( "Analyte Loaded Successfully" ),
-      tr( "The analyte has been loaded from the %1." ).arg( analyte.message) );
 }
 
 void US_AnalyteGui::select_from_disk( void )
