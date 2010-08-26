@@ -52,6 +52,7 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    main->addLayout( db_layout, row, 0 );
 
    QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk );
+   connect( rb_db, SIGNAL( clicked() ), SLOT( check_db() ) );
    rb_disk->setChecked( true );
    main->addLayout( disk_layout, row++, 1 );
 
@@ -411,6 +412,25 @@ bool US_ModelGui::status_query( const QStringList& q )
    db.statusQuery( q );
 
    return database_ok( db );
+}
+
+void US_ModelGui::check_db( void )
+{
+   QStringList DB = US_Settings::defaultDB();
+
+   if ( DB.size() < 5 )
+   {
+      QMessageBox::warning( this,
+         tr( "Attention" ),
+         tr( "There is no default database set." ) );
+   }
+   else
+   {
+      investigator = US_Settings::us_inv_ID();
+
+      if ( investigator > 0 )
+         le_investigator->setText( US_Settings::us_inv_name() );
+   }
 }
 
 void US_ModelGui::connect_error( const QString& error )
