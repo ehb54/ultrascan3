@@ -1,9 +1,9 @@
-//! \file us_rp_intensity.cpp
+//! \file us_intensity.cpp
 
-#include "us_rp_intensity.h"
+#include "us_intensity.h"
 #include "us_gui_settings.h"
 
-US_RPIntensity::US_RPIntensity( const QVector< double >& data ) 
+US_Intensity::US_Intensity( const QVector< double >& data ) 
     : US_WidgetsDialog( 0, 0 ), dataIn( data )
 {
    setWindowTitle( tr( "Details for Average Intensity Values" ) );
@@ -42,7 +42,7 @@ US_RPIntensity::US_RPIntensity( const QVector< double >& data )
    draw_plot( dataIn );
 }
 
-void US_RPIntensity::draw_plot( const QVector< double >& scanData )
+void US_Intensity::draw_plot( const QVector< double >& scanData )
 {
    // Set up the axes and titles
    QwtText axisTitle = data_plot->axisTitle( QwtPlot::yLeft );

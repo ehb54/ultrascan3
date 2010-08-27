@@ -372,6 +372,9 @@ void US_ProcessConvert::writeConvertedData(
             tr( "Cannot open write file: " ) + dirname + writeFile );
    }
 
+   else if ( status == US_Convert::NOXML )
+      ; // Covered in caller error message
+
    else if ( status != US_Convert::OK )
    {
       QMessageBox::information( this,
@@ -471,6 +474,7 @@ void US_ProcessConvert::reloadUS3Data(
                        + runType    + ".xml";
       QMessageBox::information( this,
             tr( "Error" ),
+            tr( "US3 run data ok, but unable to assocate run with DB.\n " ) +
             tr( "Cannot open read file: " ) + dir + readFile );
    }
 
@@ -480,6 +484,7 @@ void US_ProcessConvert::reloadUS3Data(
                        + runType    + ".xml";
       QMessageBox::information( this,
             tr( "Error" ),
+            tr( "US3 run data ok, but there is an error in association with DB.\n" ) +
             tr( "Improper XML in read file: " ) + dir + readFile );
    }
 

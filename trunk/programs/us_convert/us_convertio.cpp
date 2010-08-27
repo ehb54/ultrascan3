@@ -15,6 +15,28 @@ US_ConvertIO::US_ConvertIO( void )
 {
 }
 
+// Function to see if the current runID already exists in the database
+int US_ConvertIO::checkRunID( QString runID )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+   
+   if ( db.lastErrno() != US_DB2::OK )
+      return -1;
+
+   // Let's see if we can find the run ID
+   QStringList q( "get_experiment_info_by_runID" );
+   q << runID;
+   db.query( q );
+
+   if ( db.lastErrno() == US_DB2::NOROWS )
+      return 0;
+   
+   // Ok, let's return the experiment ID
+   return ( db.value( 1 ).toInt() );
+}
+
 QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, 
                                        QList< int >& tripleMap,
                                        QString dir )
@@ -176,6 +198,51 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
 
    if ( error != NULL )
       return( error );
+
+   return( NULL );
+}
+
+QString US_ConvertIO::readDBExperiment( QString runID,
+                                        US_ExpInfo::ExperimentInfo& ExpData, 
+                                        QList< int >& tripleMap,
+                                        QString dir )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+      return( db.lastError() );
+
+   QStringList q( "get_experiment_info_by_runID" );
+   q << runID;
+   db.query( q );
+ 
+   if ( db.next() )
+   {
+      ExpData.projectID          = db.value( 0 ).toInt();
+      ExpData.expID              = db.value( 1 ).toInt();
+      ExpData.expGUID            = db.value( 2 ).toString();
+      ExpData.labID              = db.value( 3 ).toInt();
+      ExpData.instrumentID       = db.value( 4 ).toInt();
+      ExpData.operatorID         = db.value( 5 ).toInt();
+      ExpData.rotorID            = db.value( 6 ).toInt();
+      ExpData.expType            = db.value( 7 ).toString();
+      ExpData.runTemp            = db.value( 8 ).toInt();
+      ExpData.label              = db.value( 9 ).toString();
+      ExpData.comments           = db.value( 10 ).toString();
+      ExpData.centrifugeProtocol = db.value( 11 ).toString();
+      ExpData.date               = db.value( 12 ).toString();
+
+   }
+
+   else if ( db.lastErrno() == US_DB2::NOROWS )
+      return( "The current run ID is not found in the database." );
+
+   else
+      return( db.lastError() );
+
+   // Code to read the auc file to disk
 
    return( NULL );
 }

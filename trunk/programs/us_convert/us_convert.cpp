@@ -16,7 +16,7 @@
 #include "us_passwd.h"
 #include "us_process_convert.h"
 #include "us_convertio.h"
-#include "us_rp_intensity.h"
+#include "us_intensity.h"
 
 int main( int argc, char* argv[] )
 {
@@ -55,33 +55,39 @@ US_Convert::US_Convert() : US_Widgets()
    connect( ct_tolerance, SIGNAL( valueChanged         ( double ) ),      // if the user has changed it
                           SLOT  ( toleranceValueChanged( double ) ) );
 
+   pb_details = us_pushbutton( tr( "Run Details" ), false );
+   connect( pb_details, SIGNAL( clicked() ), SLOT( runDetails() ) );
+   settings->addWidget( pb_details, row++, 0, 1, 2 );
+
+//   pb_reload = us_pushbutton( tr( "Reload Data" ) );
+//   connect( pb_reload, SIGNAL( clicked() ), SLOT( reload() ) );
+//   settings->addWidget( pb_reload, row++, 1 );
+
    // Pushbuttons to load and reload data
-   QPushButton* pb_load = us_pushbutton( tr( "Load Legacy Data" ) );
+   pb_load = us_pushbutton( tr( "Import Legacy Run from HD" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    settings->addWidget( pb_load, row, 0 );
 
-   pb_reload = us_pushbutton( tr( "Reset Data Parameters" ) );
-   connect( pb_reload, SIGNAL( clicked() ), SLOT( reload() ) );
-   settings->addWidget( pb_reload, row++, 1 );
+   // load US3 data ( that perhaps has been done offline )
+   pb_loadUS3HD = us_pushbutton( tr( "Load US3 Run from HD" ), true );
+   connect( pb_loadUS3HD, SIGNAL( clicked() ), SLOT( loadUS3HD() ) );
+   settings->addWidget( pb_loadUS3HD, row++, 1 );
 
    // External program to enter experiment information
-   QBoxLayout* expButtons = new QHBoxLayout;
+//   QBoxLayout* expButtons = new QHBoxLayout;
 
-   pb_expinfo = us_pushbutton( tr( "New Experiment" ) );
-   connect( pb_expinfo, SIGNAL( clicked() ), SLOT( newExpInfo() ) );
-   expButtons->addWidget( pb_expinfo );
-   pb_expinfo->setEnabled( false );
+   pb_newRuninfo = us_pushbutton( tr( "Associate Run with DB" ) );
+   connect( pb_newRuninfo, SIGNAL( clicked() ), SLOT( newRuninfo() ) );
+   //expButtons->addWidget( pb_newRuninfo );
+   settings->addWidget( pb_newRuninfo, row, 0 );
+   pb_newRuninfo->setEnabled( false );
 
-   pb_editExpinfo = us_pushbutton( tr( "Edit Experiment" ) );
-   connect( pb_editExpinfo, SIGNAL( clicked() ), SLOT( editExpInfo() ) );
-   expButtons->addWidget( pb_editExpinfo );
-   pb_editExpinfo->setEnabled( false );
+   pb_loadUS3DB = us_pushbutton( tr( "Load US3 Run from DB" ) );
+   connect( pb_loadUS3DB, SIGNAL( clicked() ), SLOT( loadUS3DB() ) );
+   //expButtons->addWidget( pb_loadUS3DB );
+   settings->addWidget( pb_loadUS3DB, row++, 1 );
 
-   settings->addLayout( expButtons, row, 0 );
-
-   pb_details = us_pushbutton( tr( "Run Details" ), false );
-   connect( pb_details, SIGNAL( clicked() ), SLOT( runDetails() ) );
-   settings->addWidget( pb_details, row++, 1 );
+//   settings->addLayout( expButtons, row, 0 );
 
    // Change Run ID
    QLabel* lb_runID = us_label( tr( "Run ID:" ) );
@@ -207,29 +213,24 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_cancelref, row++, 1 );
 
    // Define intensity profile
-   pb_intensity = us_pushbutton( tr( "Intensity Profile" ) , false );
+   pb_intensity = us_pushbutton( tr( "Show Intensity Profile" ) , false );
    connect( pb_intensity, SIGNAL( clicked() ), SLOT( show_intensity() ) );
-   settings->addWidget( pb_intensity, row++, 0 );
+   settings->addWidget( pb_intensity, row, 0 );
 
    // drop scan
    pb_dropScan = us_pushbutton( tr( "Drop Current c/c/w" ), false );
    connect( pb_dropScan, SIGNAL( clicked() ), SLOT( drop_reference() ) );
-   settings->addWidget( pb_dropScan, row, 0 );
+   settings->addWidget( pb_dropScan, row++, 1 );
 
    // Write pushbuttons
-   pb_savetoHD = us_pushbutton( tr( "Save to HD" ), false );
+   pb_savetoHD = us_pushbutton( tr( "Save US3 Run to HD" ), false );
    connect( pb_savetoHD, SIGNAL( clicked() ), SLOT( savetoHD() ) );
-   settings->addWidget( pb_savetoHD, row++, 1 );
-
-   // load US3 data ( that perhaps has been done offline )
-   pb_loadUS3 = us_pushbutton( tr( "Load US3 Data" ), true );
-   connect( pb_loadUS3, SIGNAL( clicked() ), SLOT( loadUS3() ) );
-   settings->addWidget( pb_loadUS3, row, 0 );
+   settings->addWidget( pb_savetoHD, row, 0 );
 
    // sync data with DB
-   pb_syncDB = us_pushbutton( tr( "Sync with DB" ), false );
-   connect( pb_syncDB, SIGNAL( clicked() ), SLOT( syncDB() ) );
-   settings->addWidget( pb_syncDB, row++, 1 );
+   pb_savetoDB = us_pushbutton( tr( "Save US3 Run to DB" ), false );
+   connect( pb_savetoDB, SIGNAL( clicked() ), SLOT( savetoDB() ) );
+   settings->addWidget( pb_savetoDB, row++, 1 );
 
    // Standard pushbuttons
    QBoxLayout* buttons = new QHBoxLayout;
@@ -292,6 +293,9 @@ void US_Convert::reset( void )
    le_bufferInfo ->setText( "" );
    le_analyteInfo->setText( "" );
 
+   pb_load       ->setEnabled( true  );
+   pb_loadUS3HD  ->setEnabled( true  );
+   pb_loadUS3DB  ->setEnabled( true  );
    pb_exclude    ->setEnabled( false );
    pb_include    ->setEnabled( false );
    pb_savetoHD   ->setEnabled( false );
@@ -302,11 +306,10 @@ void US_Convert::reset( void )
    pb_buffer     ->setEnabled( false );
    pb_analyte    ->setEnabled( false );
    pb_applyAll   ->setEnabled( false );
-   pb_expinfo    ->setEnabled( false );
-   pb_editExpinfo->setEnabled( false );
-   pb_syncDB     ->setEnabled( false );
+   pb_newRuninfo ->setEnabled( false );
+   pb_savetoDB     ->setEnabled( false );
 
-   pb_reload     ->setEnabled( true  );
+//   pb_reload     ->setEnabled( true  );
    ct_tolerance  ->setEnabled( true  );
 
    cb_centerpiece->setEnabled( false );
@@ -326,7 +329,7 @@ void US_Convert::reset( void )
    allExcludes.clear();
    triples.clear();
    allData.clear();
-   RP_averaged        = false;
+   Pseudo_averaged        = false;
    show_plot_progress = true;
    ExpData.triples.clear();
    ExpData.rpms.clear();
@@ -345,7 +348,8 @@ void US_Convert::reset( void )
    enableRunIDControl( true );
 
    toleranceChanged = false;
-   this->editing    = false;
+   saveStatus       = NOT_SAVED;
+   isPseudo         = false;
 
    pb_reference   ->setEnabled( false );
 }
@@ -371,6 +375,7 @@ void US_Convert::toleranceValueChanged( double )
 {
    toleranceChanged = true;
    scanTolerance    = ct_tolerance->value();
+   reload();
 }
 
 // User pressed the load data button
@@ -439,6 +444,8 @@ void US_Convert::load( QString dir )
    connect( ct_to  , SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_to     ( double ) ) );
 
+   saveStatus = NOT_SAVED;
+
    // Ok to enable some buttons now
    enableControls();
 
@@ -504,8 +511,7 @@ void US_Convert::enableControls( void )
       pb_buffer      ->setEnabled( true );
       pb_analyte     ->setEnabled( true );
       cb_centerpiece ->setEnabled( true );
-      pb_expinfo     ->setEnabled( true );
-      pb_editExpinfo ->setEnabled( true );
+      pb_newRuninfo  ->setEnabled( true );
 
       // Ok to drop scan if not the only one
       pb_dropScan    ->setEnabled( tripleMap.size() > 1 );
@@ -519,6 +525,11 @@ void US_Convert::enableControls( void )
          pb_define   ->setEnabled( true );
       } 
 
+      // Disable load buttons if there is data
+      pb_load        ->setEnabled( false );
+      pb_loadUS3HD   ->setEnabled( false );
+      pb_loadUS3DB   ->setEnabled( false );
+      
       // Most triples are ccw
       lb_triple   ->setText( tr( "Cell / Channel / Wavelength" ) );
       ct_tolerance->setMinimumWidth( 160 );
@@ -539,7 +550,7 @@ void US_Convert::enableControls( void )
          ct_tolerance->setValue       ( scanTolerance );
       }
 
-      enableRunIDControl( ! this->editing );
+      enableRunIDControl( saveStatus == NOT_SAVED );
          
       enableSyncDB();
    }
@@ -616,15 +627,7 @@ void US_Convert::enableSyncDB( void )
    if ( ExpData.invID == 0 ||
         ExpData.triples.size() == 0 )
    {
-      pb_syncDB ->setEnabled( false );
-      return;
-   }
-
-   // If editing, we should have an expID
-   if ( this->editing      && 
-        ExpData.expID == 0 )
-   {
-      pb_syncDB ->setEnabled( false );
+      pb_savetoDB ->setEnabled( false );
       return;
    }
 
@@ -636,9 +639,16 @@ void US_Convert::enableSyncDB( void )
       if ( triple.bufferID  == 0 ||
            triple.analyteID == 0 )
       {
-         pb_syncDB ->setEnabled( false );
+         pb_savetoDB ->setEnabled( false );
          return;
       }
+   }
+
+   // We have to have saved it to the HD before, to have auc files
+   if ( saveStatus == NOT_SAVED )
+   {
+      pb_savetoDB ->setEnabled( false );
+      return;
    }
 
    // Information is there, but are we connected to the db? 
@@ -648,19 +658,19 @@ void US_Convert::enableSyncDB( void )
 
    if ( ! db.isConnected() )
    {
-      pb_syncDB ->setEnabled( false );
+      pb_savetoDB ->setEnabled( false );
       return;
    }
 
    // If we made it here, user can sync with DB
-   pb_syncDB ->setEnabled( true );
+   pb_savetoDB ->setEnabled( true );
 }
 
 // Process when the user changes the runID
 void US_Convert::runIDChanged( void )
 {
    // See if we need to update the runID
-   QRegExp rx( "^[A-Za-z0-9_]{1,20}$" );
+   QRegExp rx( "^[A-Za-z0-9_-]{1,20}$" );
    QString new_runID = le_runID->text();
       
    if ( rx.indexIn( new_runID ) >= 0 )
@@ -672,13 +682,15 @@ void US_Convert::runIDChanged( void )
    le_runID->setText( runID );
    ExpData.runID = runID;
 
+   saveStatus = NOT_SAVED;
+
    // Set the directory too
    QDir resultDir( US_Settings::resultDir() );
    currentDir = resultDir.absolutePath() + "/" + runID + "/";
    le_dir ->setText( currentDir );
 }
 
-void US_Convert::newExpInfo( void )
+void US_Convert::newRuninfo( void )
 {
    // Verify connectivity
    US_Passwd pw;
@@ -689,12 +701,14 @@ void US_Convert::newExpInfo( void )
    {
       QMessageBox::information( this,
              tr( "Error" ),
-             tr( "This is the dialog where you associate your experiment " ) +
-             tr( "with information in a database. Please verify your "     ) +
+             tr( "This is the dialog where you associate the run information " ) +
+             tr( "with the database. Please verify your "     ) +
              tr( "connection parameters before proceeding. You can still " ) +
              tr( "create your auc file and do this later.\n" ) );
       return;
    }
+
+   ExpData.reset();
 
    // Create a new GUID for the experiment as a whole
    uuid_t uuid;
@@ -705,10 +719,10 @@ void US_Convert::newExpInfo( void )
 
    ExpData.expGUID = QString( uuidc );
 
-   getExpInfo( false );
+   getExpInfo( EDITING );
 }
 
-void US_Convert:: editExpInfo( void )
+void US_Convert:: loadUS3DB( void )
 {
    // Verify connectivity
    US_Passwd pw;
@@ -719,37 +733,40 @@ void US_Convert:: editExpInfo( void )
    {
       QMessageBox::information( this,
              tr( "Error" ),
-             tr( "This is the dialog where you associate your experiment " ) +
-             tr( "with information in a database. Please verify your "     ) +
-             tr( "connection parameters before proceeding. You can still " ) +
-             tr( "create your auc file and do this later.\n" ) );
+             tr( "Error making the DB connection.\n" ) );
       return;
    }
 
-   // Preview if invID and expID are in the database before proceeding
-   QStringList q( "get_experiment_info_by_runID" );
-   q << le_runID -> text();
-   db.query( q );
-   db.next();
+   QMessageBox::information( this,
+      tr( "Error" ),
+      tr( "This function is not supported yet") );
 
-   if ( db.lastErrno() == US_DB2::NOROWS )
+}
+
+void US_Convert::getExpInfo( aucStatus status )
+{
+   ExpData.runID = le_runID -> text();
+
+   // Check if the run ID already exists in the DB
+   int recStatus = US_ConvertIO::checkRunID( ExpData.runID );
+   if ( recStatus == -1 )
    {
       QMessageBox::information( this,
              tr( "Error" ),
-             tr( "The current run ID is not found in the database;\n" ) +
-             tr( "Click the New Experiment button to add it.\n" ) );
+             tr( "Error making the DB connection.\n" ) );
       return;
    }
 
-   // Ok, edit the experiment info
-   getExpInfo( true );
-}
+   else if ( recStatus > 0 )
+   {
+      QMessageBox::information( this,
+             tr( "Error" ),
+             tr( "The current runID already exists in the database.\n" ) );
+      return;
+   }
 
-void US_Convert::getExpInfo( bool editing )
-{
-   this->editing = editing;
-
-   ExpData.runID = le_runID -> text();
+   // OK, proceed
+   this->saveStatus = status;
 
    // Calculate average temperature
    double sum = 0.0;
@@ -797,7 +814,7 @@ void US_Convert::getExpInfo( bool editing )
       }
    }
 
-   US_ExpInfo* expInfo = new US_ExpInfo( ExpData, editing );
+   US_ExpInfo* expInfo = new US_ExpInfo( ExpData );
 
    connect( expInfo, SIGNAL( updateExpInfoSelection( US_ExpInfo::ExperimentInfo& ) ),
             this   , SLOT  ( updateExpInfo         ( US_ExpInfo::ExperimentInfo& ) ) );
@@ -820,7 +837,7 @@ void US_Convert::updateExpInfo( US_ExpInfo::ExperimentInfo& d )
 void US_Convert::cancelExpInfo( void )
 {
    ExpData.clear();
-   this->editing = false;
+   this->saveStatus = NOT_SAVED;
    enableControls();
 }
 
@@ -1211,15 +1228,15 @@ void US_Convert::process_reference( const QwtDoublePoint& p )
    }
 
    // Calculate the averages for all triples
-   RP_calc_avg();
+   PseudoCalcAvg();
 
    // Now that we have the averages, let's replot
-   RP_reference_triple = currentTriple;
+   Pseudo_reference_triple = currentTriple;
 
    // Default to displaying the first non-reference triple
    for ( int i = 0; i < allData.size(); i++ )
    {
-      if ( i != RP_reference_triple )
+      if ( i != Pseudo_reference_triple )
       {
          currentTriple = i;
          break;
@@ -1256,9 +1273,9 @@ void US_Convert::cClick( const QwtDoublePoint& p )
 
 }
 
-void US_Convert::RP_calc_avg( void )
+void US_Convert::PseudoCalcAvg( void )
 {
-   if ( RP_averaged ) return;             // Average calculation has already been done
+   if ( Pseudo_averaged ) return;             // Average calculation has already been done
 
    US_DataIO2::RawData referenceData = allData[ currentTriple ];
    int ref_size = referenceData.scanData[ 0 ].readings.size();
@@ -1282,13 +1299,13 @@ void US_Convert::RP_calc_avg( void )
          j++;
       }
 
-      RP_averages << sum / count;
+      Pseudo_averages << sum / count;
    }
    
    // Now average around excluded values
    int lastGood  = 0;
    int countBad  = 0;
-   for ( int i = 0; i < RP_averages.size(); i++ )
+   for ( int i = 0; i < Pseudo_averages.size(); i++ )
    {
       // In case there are adjacent excluded scans...
       if ( allExcludes[ currentTriple ].contains( i ) )
@@ -1297,9 +1314,9 @@ void US_Convert::RP_calc_avg( void )
       // Calculate average of before and after for intervening values
       else if ( countBad > 0 )
       {
-         double newAvg = ( RP_averages[ lastGood ] + RP_averages[ i ] ) / 2.0;
+         double newAvg = ( Pseudo_averages[ lastGood ] + Pseudo_averages[ i ] ) / 2.0;
          for ( int k = lastGood + 1; k < i; k++ )
-            RP_averages[ k ] = newAvg;
+            Pseudo_averages[ k ] = newAvg;
 
          countBad = 0;
       }
@@ -1325,24 +1342,27 @@ void US_Convert::RP_calc_avg( void )
          {
             US_DataIO2::Reading* r = &s->readings[ k ];
 
-            r->value = log10(RP_averages[ j ] / r->value );
+            r->value = log10(Pseudo_averages[ j ] / r->value );
          }
       }
-      strncpy( currentData->type, "RP", 2);
+
+      // Let's mark pseudo-absorbance as different from RI data,
+      //  since it needs some different processing in some places
+      isPseudo = true;
    }
 
    // Enable intensity plot
    pb_intensity->setEnabled( true );
 
-   RP_averaged = true;
+   Pseudo_averaged = true;
    pb_cancelref ->setEnabled( true );
 }
 
 // Bring up a graph window showing the intensity profile
 void US_Convert::show_intensity( void )
 {
-   US_RPIntensity* dialog
-      = new US_RPIntensity( ( const QVector< double > ) RP_averages );
+   US_Intensity* dialog
+      = new US_Intensity( ( const QVector< double > ) Pseudo_averages );
    dialog->exec();
    qApp->processEvents();
    delete dialog;
@@ -1350,11 +1370,11 @@ void US_Convert::show_intensity( void )
 
 void US_Convert::cancel_reference( void )
 {
-   RP_averaged = false;
+   Pseudo_averaged = false;
    allData     = RIData;
    RIData.clear();
 
-   RP_averages.clear();
+   Pseudo_averages.clear();
    reference_start = 0.0;
    reference_end   = 0.0;
 
@@ -1406,15 +1426,24 @@ int US_Convert::savetoHD( void )
    QDir        writeDir( US_Settings::resultDir() );
    QString     dirname = writeDir.absolutePath() + "/" + runID + "/";
 
-   if ( ! writeDir.exists( runID ) )
+   if ( saveStatus == NOT_SAVED && writeDir.exists( runID ) )
    {
-     if ( ! writeDir.mkdir( runID ) )
-     {
         QMessageBox::information( this,
               tr( "Error" ),
-              tr( "Cannot write to " ) + writeDir.absolutePath() );
-        return CANTOPEN;
-     }
+              tr( "The write directory,  " ) + dirname + 
+              tr( " already exists. Please change run ID to a unique value." ) );
+        return DUP_RUNID;
+   }
+
+   if ( ! writeDir.exists( runID ) )
+   {
+      if ( ! writeDir.mkdir( runID ) )
+      {
+         QMessageBox::information( this,
+               tr( "Error" ),
+               tr( "Cannot write to " ) + writeDir.absolutePath() );
+         return CANTOPEN;
+      }
    }
 
    int status;
@@ -1424,10 +1453,10 @@ int US_Convert::savetoHD( void )
    {
       status = QMessageBox::information( this,
                tr( "Warning" ),
-               tr( "Experiment information has not been defined yet. "    ) +
-               tr( "Click 'OK' to proceed anyway, or click 'Cancel' "     ) +
-               tr( "and then click on the 'Enter Experiment Information'" ) +
-               tr( "button to enter this information first.\n\n "         ),
+               tr( "The run has not yet been associated with the database. "    ) +
+               tr( "Click 'OK' to proceed anyway, or click 'Cancel' "           ) +
+               tr( "and then click on the 'Associate Run with DB'"              ) +
+               tr( "button to enter this information first.\n\n "               ),
                tr( "&OK" ), tr( "&Cancel" ),
                0, 0, 1 );
       if ( status != 0 ) return NOT_WRITTEN;
@@ -1459,10 +1488,10 @@ int US_Convert::savetoHD( void )
       // Main xml data is missing
       QMessageBox::information( this,
             tr( "Warning" ),
-            tr( "The experiment information file was not written. " ) +
+            tr( "The run information file was not written. " ) +
             tr( "Please click on the " ) +
-            tr( "'Enter Experiment Information' button \n\n " )    +
-            QString::number( triples.size() ) + " "                + 
+            tr( "'Associate Run with DB' button \n\n " )    +
+            QString::number( tripleMap.size() ) + " "                + 
             runID + tr( " files written." ) );
       return( status );
    }
@@ -1475,7 +1504,7 @@ int US_Convert::savetoHD( void )
             tr( "Buffer and/or analyte information is incomplete. Please click on the " ) +
             tr( "'Enter Current c/c/w Info' button for each "  ) +
             tr( "cell, channel, and wavelength combination \n\n " ) +
-            QString::number( triples.size() ) + " "                + 
+            QString::number( tripleMap.size() ) + " "                + 
             runID + tr( " files written." ) );
       return( status );
    }
@@ -1498,7 +1527,7 @@ int US_Convert::savetoHD( void )
    return( OK );
 }
 
-void US_Convert::loadUS3( void )
+void US_Convert::loadUS3HD( void )
 {
    // Ask for data directory
    QString dir = QFileDialog::getExistingDirectory( this, 
@@ -1562,11 +1591,13 @@ void US_Convert::loadUS3( void )
    pb_buffer      ->setEnabled( true );
    pb_analyte     ->setEnabled( true );
    cb_centerpiece ->setEnabled( true );
-   pb_expinfo     ->setEnabled( true );
-   pb_editExpinfo ->setEnabled( true );
+   pb_newRuninfo  ->setEnabled( true );
 
    // some things one can't do from here
-   pb_reload      ->setEnabled( false );
+   pb_load        ->setEnabled( false );
+   pb_loadUS3HD   ->setEnabled( false );
+   pb_loadUS3DB   ->setEnabled( false );
+   //pb_reload      ->setEnabled( false );
    ct_tolerance   ->setEnabled( false );
 
    enableRunIDControl( false );
@@ -1580,10 +1611,14 @@ void US_Convert::loadUS3( void )
       pb_define   ->setEnabled( true );
    } 
 
+   saveStatus = ( ExpData.expID == 0 ) ? HD_ONLY : DB_SYNC;
+   pb_newRuninfo  ->setEnabled ( saveStatus == HD_ONLY );
+
    enableSyncDB();
+
 }
 
-void US_Convert::syncDB( void )
+void US_Convert::savetoDB( void )
 {
    QString error = NULL;
 
@@ -1616,8 +1651,15 @@ void US_Convert::syncDB( void )
    }
 
    // Save it to the db and return
-   if ( this->editing )
+   int expID = US_ConvertIO::checkRunID( ExpData.runID );
+   if ( expID == -1 )
+      error =  "Error making DB connection";
+
+   else if ( expID > 0 )
+   {
+      ExpData.expID = expID;
       error = US_ConvertIO::updateDBExperiment( ExpData, tripleMap, dir );
+   }
 
    else
       error = US_ConvertIO::newDBExperiment( ExpData, tripleMap, dir );
@@ -1629,8 +1671,9 @@ void US_Convert::syncDB( void )
    }
 
    QMessageBox::information( this, tr( "Record saved" ),
-         tr( "The experiment information has been synchronized with the DB successfully \n" ) );
+         tr( "The run information has been saved to the DB successfully \n" ) );
 
+   saveStatus = BOTH;
    enableRunIDControl( false );
 
 }
@@ -1695,6 +1738,18 @@ bool US_Convert::convert( void )
    if ( allData.size() == 0 ) return( false );
 
    // Make sure all the parallel structures are initialized too
+   initTriples();
+
+   le_description->setText( allData[ 0 ].description );
+   saveDescription = QString( allData[ 0 ].description ); 
+
+   currentTriple = tripleMap[ 0 ];     // Now let's show the user the first one
+   return( true );
+}
+
+// Function to initialize ExpData triples and tripleMap
+void US_Convert::initTriples( void )
+{
    tripleMap.clear();
    ExpData.triples.clear();
    ExpData.rpms.clear();
@@ -1705,12 +1760,6 @@ bool US_Convert::convert( void )
       ExpData.triples << d;
       tripleMap << i;
    }
-
-   le_description->setText( allData[ 0 ].description );
-   saveDescription = QString( allData[ 0 ].description ); 
-
-   currentTriple = tripleMap[ 0 ];     // Now let's show the user the first one
-   return( true );
 }
 
 bool US_Convert::centerpieceInfo( void )
@@ -1786,17 +1835,10 @@ void US_Convert::plot_titles( void )
             + runID + " Cell: " + cell + " Wavelength: " + wl;
    }
 
-   else if ( strncmp( currentData.type, "RP", 2 ) == 0 )
+   else if ( ( strncmp( currentData.type, "RI", 2 ) == 0 ) && isPseudo )
    {
       title = "Pseudo Absorbance Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
-   }
-
-   else if ( strncmp( currentData.type, "IP", 2 ) == 0 )
-   {
-      title = "Interference Data\nRun ID: "
-            + runID + " Cell: " + cell + " Wavelength: " + wl;
-      yLegend = "Fringes";
    }
 
    else if ( strncmp( currentData.type, "RI", 2 ) == 0 )
@@ -1804,6 +1846,13 @@ void US_Convert::plot_titles( void )
       title = "Radial Intensity Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
       yLegend = "Radial Intensity";
+   }
+
+   else if ( strncmp( currentData.type, "IP", 2 ) == 0 )
+   {
+      title = "Interference Data\nRun ID: "
+            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      yLegend = "Fringes";
    }
 
    else if ( strncmp( currentData.type, "FI", 2 ) == 0 )

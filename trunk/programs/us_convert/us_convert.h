@@ -26,13 +26,24 @@ class US_EXTERN US_Convert : public US_Widgets
       { 
          OK,                                  //!< Ok, no error
          CANTOPEN,                            //!< The file cannot be opened
+         DUP_RUNID,                           //!< The given run ID already exists
          NODATA,                              //!< There is no data to write
          NODB,                                //!< Connection to database cannot be made
          NOXML,                               //!< XML data has not been entered
          BADXML,                              //!< XML not formed correctly
          BADGUID,                             //!< GUID read in the XML was not found in the database
          PARTIAL_XML,                         //!< XML data has not been entered for all c/c/w combinations
-         NOT_WRITTEN,                         //!< data was not written
+         NOT_WRITTEN                          //!< data was not written
+      };
+
+      //! \brief   Some status codes to keep track of where data has been saved to
+      enum aucStatus
+      {
+         NOT_SAVED,                           //!< The file has not been saved
+         EDITING,                             //!< Data is being edited; certain operations not permitted
+         HD_ONLY,                             //!< The file has been saved to the HD
+         DB_SYNC,                             //!< The HD file has been synchronized with the DB
+         BOTH                                 //!< The file has been saved to both HD and DB
       };
 
       //! \brief Class to contain a list of scans to exclude from a data set
@@ -56,6 +67,7 @@ class US_EXTERN US_Convert : public US_Widgets
 
       enum { SPLIT, REFERENCE, NONE } step;
 
+      aucStatus      saveStatus;
       US_Help        showHelp;
       US_PlotPicker* picker;
 
@@ -82,9 +94,11 @@ class US_EXTERN US_Convert : public US_Widgets
 
       QwtCounter*   ct_tolerance;
 
-      QPushButton*  pb_reload;
-      QPushButton*  pb_expinfo;
-      QPushButton*  pb_editExpinfo;
+      //QPushButton*  pb_reload;
+      QPushButton*  pb_newRuninfo;
+      QPushButton*  pb_load;
+      QPushButton*  pb_loadUS3HD;
+      QPushButton*  pb_loadUS3DB;
       QPushButton*  pb_details;
       QPushButton*  pb_applyAll;
       QPushButton*  pb_buffer;
@@ -98,14 +112,13 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_cancelref;
       QPushButton*  pb_dropScan;
       QPushButton*  pb_savetoHD;
-      QPushButton*  pb_loadUS3;
-      QPushButton*  pb_syncDB;
+      QPushButton*  pb_savetoDB;
 
       QComboBox*    cb_centerpiece;
 
       QList< US_DataIO2::BeckmanRawScan > legacyData; // legacy data from file
       QVector< US_DataIO2::RawData >      allData;    // all the data, separated by c/c/w
-      QVector< US_DataIO2::RawData >      RIData;     // to save RI data, after converting to RP
+      QVector< US_DataIO2::RawData >      RIData;     // to save RI data, after converting to Pseudo
       QString       currentDir;
       QString       saveDescription;
 
@@ -113,15 +126,14 @@ class US_EXTERN US_Convert : public US_Widgets
 
       QwtPlot*      data_plot;
       QwtPlotGrid*  grid;
-      bool          editing;                          // Did the user press the edit or new experiment
-                                                      //   button?
 
       QList< double > ss_limits;                      // list of subset boundaries
       double        reference_start;                  // boundary of reference scans
       double        reference_end;
-      bool          RP_averaged;                      // true if RI averages have been done
-      int           RP_reference_triple;              // number of the triple that is the reference
-      QVector< double > RP_averages;
+      bool          Pseudo_averaged;                      // true if RI averages have been done
+      int           Pseudo_reference_triple;              // number of the triple that is the reference
+      QVector< double > Pseudo_averages;
+      bool          isPseudo;                         // Is this RI data pseudo-absorbance?
       bool          toleranceChanged;                 // keep track of whether the tolerance has changed
       double        scanTolerance;                    // remember the scan tolerance value
 
@@ -134,17 +146,18 @@ class US_EXTERN US_Convert : public US_Widgets
       void enableScanControls( void );
       void enableCCWControls ( void );
       void enableSyncDB    ( void );
-      void getExpInfo      ( bool );
+      void getExpInfo      ( aucStatus );
       void setTripleInfo   ( void );
       int  findTripleIndex ( void );
       void focus           ( int, int );
       void init_excludes   ( void );
       void start_reference   ( const QwtDoublePoint& );
       void process_reference ( const QwtDoublePoint& );
-      void RP_calc_avg     ( void );
+      void PseudoCalcAvg     ( void );
       bool read            ( void );
       bool read            ( QString dir );
       bool convert         ( void );
+      void initTriples     ( void );
       bool centerpieceInfo ( void );
       void plot_current    ( void );
       void plot_titles     ( void );
@@ -160,8 +173,9 @@ class US_EXTERN US_Convert : public US_Widgets
       void enableControls  ( void );
       void runIDChanged    ( void );
       void toleranceValueChanged( double );           // signal to notify of change
-      void newExpInfo      ( void );
-      void editExpInfo     ( void );
+      void newRuninfo      ( void );
+      void loadUS3HD       ( void );
+      void loadUS3DB       ( void );
       void updateExpInfo   ( US_ExpInfo::ExperimentInfo& );
       void cancelExpInfo   ( void );
       void runDetails      ( void );
@@ -184,8 +198,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void cancel_reference( void );
       void drop_reference  ( void );
       int  savetoHD        ( void );
-      void loadUS3         ( void );
-      void syncDB          ( void );
+      void savetoDB        ( void );
       void resetAll        ( void );
       void help            ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
