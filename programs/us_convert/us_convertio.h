@@ -21,6 +21,15 @@ class US_EXTERN US_ConvertIO
       // \brief Generic constructor for the US_ConvertIO class.
       US_ConvertIO( void );
 
+      /*! \brief    Determine if the experiment exists in the DB. Returns
+                    -1 if there is a database connection error, 0 if the
+                    run ID doesn't match any records in the DB, and a positive
+                    value is the experimentID itself
+
+          \param    runID The run ID to check
+      */
+      static int checkRunID( QString runID );
+
       /*! \brief    Save new experiment info in the database
 
           \param    ExpData A structure containing all the experiment information
@@ -44,6 +53,20 @@ class US_EXTERN US_ConvertIO
       static QString updateDBExperiment( US_ExpInfo::ExperimentInfo&, 
                                          QList< int >& ,
                                          QString );
+
+      /*! \brief    Read experiment info from the database
+
+          \param    The run ID to look up in the database
+          \param    ExpData A structure that will contain all the experiment information
+          \param    tripleMap A reference to a QList of index values indicating
+                        which triples are members of the current data set. Structure
+                        to be created.
+          \param    dir     The location where the binary auc files are to go.
+      */
+      static QString readDBExperiment( QString,
+                                        US_ExpInfo::ExperimentInfo&, 
+                                        QList< int >&,
+                                        QString );
 
       /*! \brief    Writes an xml file
 

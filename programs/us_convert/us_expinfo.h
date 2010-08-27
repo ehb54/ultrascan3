@@ -72,6 +72,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          ExperimentInfo();                    //!< A generic constructor
          ExperimentInfo&  operator=( const ExperimentInfo& ); //!< An overloaded assignment operator
          void updateDB( void );               //!< Function to update the database with changes
+         void reset( void );                  //!< Function to zero variables without destroying triples
          void clear( void );                  //!< Function to reset all class variables to defaults
          void show( QList< int >& tripleMap ); //!< Temporary function to display current exp info
       };
@@ -82,10 +83,8 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
 
           \param dataIn  A reference to a structure that contains
                          previously selected experiment data, if any.
-          \param editing A way to distinguish between a new db instance
-                         or editing a previously existing one
       */
-      US_ExpInfo( ExperimentInfo&, bool editing = false );
+      US_ExpInfo( ExperimentInfo& );
 
       //! A null destructor. 
       ~US_ExpInfo() {};
@@ -110,7 +109,6 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
 
    private:
       ExperimentInfo&        expInfo;
-      bool                   editing;
       bool                   cb_changed;
 
       US_Help                showHelp;
@@ -140,8 +138,8 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       void reload            ( void );
       void selectInvestigator( void );
       void assignInvestigator( int, const QString&, const QString& );
+      void getInvestigatorInfo( int );
       QComboBox* us_expTypeComboBox         ( void );
-      int  checkRunID        ( void );
       void setInstrumentList ( void );
       void setOperatorList   ( void );
       void setRotorList      ( void );
