@@ -3,13 +3,14 @@
 #include "us_lamm_astfvm.h"
 #include "us_math2.h"
 #include "us_constants.h"
+#include "us_astfem_rsa.h"
 
 /////////////////////////
 //
 // Mesh
 //
 /////////////////////////
-US_LammAstfvm::Mesh::Mesh(double xl, double xr, int Nelem, int Opt)
+US_LammAstfvm::Mesh::Mesh( double xl, double xr, int Nelem, int Opt )
 {
    int i;
 
@@ -427,80 +428,125 @@ void US_LammAstfvm::Mesh::InitMesh( double s, double D, double w2 )
 }
 
 
-US_LammAstfvm::SaltData::SaltData( char *fname, double Moler )
+US_LammAstfvm::SaltData::SaltData( US_Model                amodel,
+                                   US_SimulationParameters asparms,
+                                   US_DataIO2::RawData*    asim_data,
+                                   double                  Moler )
 {
    int j;
 
-   SaltMoler = Moler;
+   SaltMoler  = Moler;
+   model      = amodel;
+   simparms   = asparms;
+   sa_data    = *asim_data;
 
-   f_salt = fopen( fname, "r" );
-   if ( f_salt == NULL )
+   Nt         = sa_data.scanData.size();
+   Nx         = sa_data.x.size();
+
+   model.components.resize( 1 );
+   model.components[ 0 ] = amodel.components[ amodel.coSedSolute ];
+   model.coSedSolute     = -1;
+
+   simparms.meshType     = US_SimulationParameters::ASTFEM;
+   simparms.gridType     = US_SimulationParameters::MOVING;
+
+   simparms.radial_resolution             =
+      ( sa_data.radius( Nx - 1 ) - sa_data.radius( 0 ) ) / (double)( Nx - 1 );
+   simparms.band_firstScanIsConcentration = false;
+
+qDebug() << "SaltD: Nt Nx" << Nt << Nx;
+qDebug() << "SaltD: sa sc0 omg" << sa_data.scanData[0].omega2t;
+qDebug() << "SaltD: as sc0 omg" << asim_data->scanData[0].omega2t;
+qDebug() << "SaltD: model comps" << model.components.size();
+qDebug() << "SaltD: amodel comps" << amodel.components.size();
+qDebug() << "SaltD: comp0 s d s_conc" << model.components[0].s
+ << model.components[0].D << model.components[0].signal_concentration;
+
+   US_Astfem_RSA* astfem = new US_Astfem_RSA( model, simparms );
+
+   astfem->setTimeInterpolation( true );
+
+   for ( int i = 0; i < Nt; i++ )
+      for ( j = 0; j < Nx; j++ )
+            sa_data.scanData[ i ].readings[ j ] = US_DataIO2::Reading( 0.0 );
+
+   astfem->calculate( sa_data );
+
+   xs         = new double [ Nx ];
+   Cs0        = new double [ Nx ];
+   Cs1        = new double [ Nx ];
+
+   delete astfem;
+
+   for ( j = 0; j < Nx; j++ )
    {
-      qDebug() << "*** Unable to find salt data file" << fname;
-      return;
+      xs[ j ]    = sa_data.radius( j );
    }
 
-   fscanf( f_salt, "%d", &Nt );
-   fscanf( f_salt, "%d", &Nx );
-
-   xs  = new double [Nx];
-   Cs0 = new double [Nx];
-   Cs1 = new double [Nx];
-        
-   for ( j = 0; j < Nx; j++ )
-      fscanf( f_salt, "%lf", &xs[ j ] );
-        
-   fscanf( f_salt, "%lf", &t0 );
-
-   for ( j = 0; j < Nx; j++ )
-      fscanf( f_salt, "%lf", &Cs0[ j ] );
-
-   fscanf( f_salt, "%lf", &t1 );
-
-   for ( j = 0; j < Nx; j++ )
-      fscanf( f_salt, "%lf", &Cs1[ j ] );
-
-   Nt -= 2;   // time level left
 };
 
 US_LammAstfvm::SaltData::~SaltData()
 {
-   fclose(f_salt);
    delete [] xs;
    delete [] Cs0;
    delete [] Cs1;
 };
+
+void US_LammAstfvm::SaltData::initSalt()
+{
+   t0         = sa_data.scanData[ 0 ].seconds;
+   t1         = sa_data.scanData[ 1 ].seconds;
+qDebug() << "initSalt: t0 t1" << t0 << t1;
+   scn        = 2;
+   Nt         = sa_data.scanData.size() - 2;
+        
+   for ( int j = 0; j < Nx; j++ )
+   {
+      Cs0[ j ]   = sa_data.value( 0, j );
+      Cs1[ j ]   = sa_data.value( 1, j );
+if ( j==0 || (j+1)==Nx )
+qDebug() << "initSalt:  xs Cs0 Cs1 j" << xs[j] << Cs0[j] << Cs1[j] << j;
+   }
+
+}
 
 void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
    double *Csalt )
 {
    int     j;
    int     k;
-   double  xi;
-   double  et;
+   double  xik;
+   double  xim;
+   double  et0;
+   double  et1;
    double* tmp;
 
-   while ( ( t > t1 ) && ( Nt > 0 ) ) 
+   while ( ( t1 < t ) && ( Nt > 0 ) ) 
    {
+qDebug() << "SaltD:      intrp 0 t 1" << t0 << t << t1 << "  N s" << Nt << scn;
       t0    = t1;
       tmp   = Cs0;
       Cs0   = Cs1;
       Cs1   = tmp;    // swap Cs0 and Cs1
 
-      fscanf( f_salt, "%lf", &t1 );
+      t1    = sa_data.scanData[ scn ].seconds;
 
       for ( j = 0; j < Nx; j++ )
-         fscanf( f_salt, "%lf", &Cs1[ j ] );
+         Cs1[ j ]   = sa_data.value( scn, j );
 
       Nt --;             // Nt = time level left
+      scn++;
+qDebug() << "SaltD:      intrp 0 t 1" << t0 << t << t1 << "  N s" << Nt << scn;
    }
+qDebug() << "SaltD:  intrp t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
 
    // interpolate between t0 and t1
-   et    = ( t - t0 ) / ( t1 - t0 );
-   et    = ( et > 1.0 ) ? 1.0 : et;
-   et    = ( et < 0.0 ) ? 0.0 : et;
+   et1   = ( t - t0 ) / ( t1 - t0 );
+   et1   = ( et1 > 1.0 ) ? 1.0 : et1;
+   et1   = ( et1 < 0.0 ) ? 0.0 : et1;
+   et0   = 1.0 - et1;
 
-   // interpolated between xs_(k-1) and xs_k
+   // interpolate between xs[k-1] and xs[k]
    k     = 1;
 
    for ( j = 0; j < N; j++ )      // loop for all x[m]
@@ -508,12 +554,14 @@ void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
       while ( ( x[ j ] > xs[ k ] )  &&  ( k < Nx - 1 ) ) k++;
 
       // linear interpolation
-      xi         = ( x[ j ] - xs[ k - 1 ] ) / ( xs[ k ] - xs[ k - 1 ] );
-      xi         = ( xi > 1.0 ) ? 1.0 : xi;
-      xi         = ( xi < 0.0 ) ? 0.0 : xi;
-      Csalt[ j ] = ( 1 - et ) * ( ( 1 - xi ) * Cs0[ k - 1 ] + xi * Cs0[ k ] )
-                      +  et   * ( ( 1 - xi ) * Cs1[ k - 1 ] + xi * Cs1[ k ] );
+      xik        = ( x[ j ] - xs[ k - 1 ] ) / ( xs[ k ] - xs[ k - 1 ] );
+      xik        = ( xik > 1.0 ) ? 1.0 : xik;
+      xik        = ( xik < 0.0 ) ? 0.0 : xik;
+      xim        = 1.0 - xik;
+      Csalt[ j ] = et0 * ( xim * Cs0[ k - 1 ] + xik * Cs0[ k ] )
+                +  et1 * ( xim * Cs1[ k - 1 ] + xik * Cs1[ k ] );
     }
+qDebug() << "SaltD:    Csalt0 CsaltN" << Csalt[0] << Csalt[N-1];
 };
 
 
@@ -550,6 +598,8 @@ US_LammAstfvm::~US_LammAstfvm()
 // primary method to calculate solutions for all species
 void US_LammAstfvm::calculate( US_DataIO2::RawData& sim_data )
 {
+   auc_data = &sim_data;
+
    // use given data to create form for internal data; zero initial concs.
    load_mfem_data( sim_data, af_data, true );
 
@@ -600,9 +650,6 @@ void US_LammAstfvm::solve_component( int compx )
    int N1;
    int N0u;
    int N1u;
-   int nicase = nonIdealCaseNo();            // non-ideal case number
-qDebug() << "LAsc:  CX=" << comp_x
- << "  ntc nts ncs nicase" << ntc << nts << ncs << nicase;
    int istep = comp_x * nts;
 
    QVector< double > conc0;
@@ -610,6 +657,12 @@ qDebug() << "LAsc:  CX=" << comp_x
    QVector< double > rads;
 
    emit comp_progress( compx + 1 );
+
+   nonIdealCaseNo();            // set non-ideal case number
+
+qDebug() << "LAsc:  CX=" << comp_x
+ << "  ntc nts ncs nicase" << ntc << nts << ncs << NonIdealCaseNo;
+qDebug() << "LAsc:    tot_t dt" << total_t << dt;
 
    conc0.resize( ncs );
    conc1.resize( ncs );
@@ -620,7 +673,7 @@ qDebug() << "LAsc:  CX=" << comp_x
    msh->InitMesh( param_s, param_D, param_w2 );
 
    // make settings based on non-ideal case type
-   if ( nicase == 1 )                   // concentration-dependent
+   if ( NonIdealCaseNo == 1 )                   // concentration-dependent
    {
       SetNonIdealCase_1( model.components[ comp_x ].sigma,
                          model.components[ comp_x ].delta );
@@ -629,17 +682,24 @@ qDebug() << "LAsc:   sigma delta" << model.components[comp_x].sigma
  << model.components[comp_x].delta << "  comp_x" << comp_x;
    }
 
-   else if ( nicase == 2 )              // co-sedimenting
-      SetNonIdealCase_2( (char*)"salt.data", 3.5 );
+   else if ( NonIdealCaseNo == 2 )              // co-sedimenting
+   {
+      SetNonIdealCase_2( 3.5 );
+   }
 
-   else if ( nicase == 3 )              // compressibility
+   else if ( NonIdealCaseNo == 3 )              // compressibility
+   {
       SetNonIdealCase_3( model.compressibility );
+   }
 
    else
+   {
       NonIdealCaseNo = 0;
+   }
 
    SetMeshRefineOpt(   1   );    // mesh refine option
    SetMeshSpeedFactor( 1.0 );    // mesh speed factor
+
 
    // get initial concentration for this component
    double sig_conc = model.components[ comp_x ].signal_concentration;
@@ -684,12 +744,13 @@ qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
    {
       t0    = dt * (double)jt;
       t1    = t0 + dt;
+qDebug() << "LAsc:    jt kt t0 t1" << jt << kt << t0 << t1;
 
       u1p0  = new double [ N0u ];
 
       LammStepSedDiff_P( t0, dt, N0-1, x0, u0, u1p0 );
 
-      if ( MeshRefineOpt== 1 )
+      if ( MeshRefineOpt == 1 )
       {
          msh->RefineMesh( u0, u1p0, 1.0e-4 );
 
@@ -786,24 +847,21 @@ qDebug() << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
 
 void US_LammAstfvm::SetNonIdealCase_1( double sigma_k, double delta_k )
 {
-   NonIdealCaseNo = 1;
-
    sigma     = sigma_k;                     // for concentration dependency
    delta     = delta_k;
 }
 
-void US_LammAstfvm::SetNonIdealCase_2( char *fname, double Moler )
+void US_LammAstfvm::SetNonIdealCase_2( double Moler )
 {
-   NonIdealCaseNo = 2;
+   if ( comp_x == 0 )
+      saltdata  = new SaltData( model, simparams, auc_data, Moler );
 
-   saltdata = new SaltData( fname, Moler );  // for co-sedimenting
+   saltdata->initSalt();
 }
 
 void US_LammAstfvm::SetNonIdealCase_3( double cmpress )
 {
-   NonIdealCaseNo  = 3;
-
-   cmprssfac       = cmpress;
+   cmprssfac = cmpress;
 }
 
 void US_LammAstfvm::SetMeshSpeedFactor( double speed )
@@ -1190,9 +1248,13 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
       
             s_adj[ j ] = ( 1 - vbar * rho ) * 1.00194
                          / ( ( 1 - vbar_w * rho_w ) * visc )     * param_s;
+s_adj[j] = s_adj[j] > 0.0 ? s_adj[j] : -s_adj[j];
 
             D_adj[ j ] = ( Tempt * 1.00194 ) / ( 293.15 * visc ) * param_D;
          }
+qDebug() << "AdjSD:    Csalt0 CsaltN" << Csalt[0] << Csalt[Nv-1];
+qDebug() << "AdjSD:    s_adj0 s_adjN" << s_adj[0] << s_adj[Nv-1];
+qDebug() << "AdjSD:    D_adj0 D_adjN" << D_adj[0] << D_adj[Nv-1] << Nv;
 
          delete [] Csalt;
          break;
@@ -1402,27 +1464,29 @@ void US_LammAstfvm::LsSolver53( int m, double **A, double *b, double *x )
 }
 
 // determine the non-ideal case number: 0/1/2/3
-int US_LammAstfvm::nonIdealCaseNo()
+void US_LammAstfvm::nonIdealCaseNo()
 {
-   int caseno = 0;      // ideal
+   if ( comp_x > 0 )
+      return;
+
+   NonIdealCaseNo  = 0;      // ideal
+
    US_Model::SimulationComponent* sc = &model.components[ comp_x ];
 
    if ( sc->sigma != 0.0  ||  sc->delta != 0.0 )
    {  // non-zero sigma or delta given:         concentration-dependent
-      caseno = 1;
+      NonIdealCaseNo = 1;
    }
 
    else if ( model.coSedSolute >= 0 )
    {  // co-sedimentation solute index not -1:  co-sedimenting
-      caseno = 2;
+      NonIdealCaseNo = 2;
    }
 
    else if ( model.compressibility != COMP_25W )
    {  // compressibility factor not water's:    compressibility
-      caseno = 3;
+      NonIdealCaseNo = 3;
    }
-
-   return caseno;
 }
 
 // perform quadratic interpolation to fill out full concentration vector

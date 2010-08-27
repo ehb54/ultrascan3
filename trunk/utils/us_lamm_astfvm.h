@@ -73,12 +73,18 @@ class US_EXTERN US_LammAstfvm : public QObject
          public:
 
             //! \brief Create salt data
-            //! \param fname  File name for salt data
-            //! \param Moler  Concentration moler factor
-            SaltData( char*, double );
+            //! \param amodel   Model with all components to simulate
+            //! \param asparms  Simulation parameters for all components
+            //! \param sim_data Simulation AUC data for all components
+            //! \param Moler    Concentration moler factor
+            SaltData( US_Model, US_SimulationParameters,
+                      US_DataIO2::RawData*, double );
 
             //! \brief Destroy salt data
             ~SaltData();
+
+            //! \brief Initialize time & concentration arrays for a component
+            void initSalt();
 
             //! \brief Interpolate concentrations of salt
             //! \param N     Number of elements in arrays
@@ -91,9 +97,14 @@ class US_EXTERN US_LammAstfvm : public QObject
 
          private:
 
-            FILE*   f_salt;
+            US_Model                model;     // salt data co-sed model
+            US_SimulationParameters simparms;  // salt simulation parameters
+            US_DataIO2::RawData     sa_data;   // salt data 1-component
+                                               //  simulation for co-sed
+
             int     Nx;       // number of points in radial direction
             int     Nt;       // number of points in time direction
+            int     scn;      // index to next available salt data scan
             double* xs;       // grids in radial direction
             double  t0;       // 1st time intervals in use.
             double  t1;       // 2nd time intervals in use.
@@ -111,7 +122,7 @@ class US_EXTERN US_LammAstfvm : public QObject
       ~US_LammAstfvm();
 
       //! \brief Main method to calculate FVM solution
-      //! \param sim_data Reference to simulated AUC data to produce
+      //! \param rsim_data Reference to simulated AUC data to produce
       void calculate( US_DataIO2::RawData& );
 
       //! \brief Calculate solution for a model component
@@ -119,7 +130,7 @@ class US_EXTERN US_LammAstfvm : public QObject
       void solve_component( int ); 
 
       //! \brief Get the non-ideal case number from model parameters
-      int nonIdealCaseNo( void );
+      void nonIdealCaseNo( void );
 
       //! \brief Set up non-ideal case type 1 (concentration-dependent)
       //! \param sigma_k Sigma constant to modify sedimentation coefficient
@@ -127,9 +138,8 @@ class US_EXTERN US_LammAstfvm : public QObject
       void SetNonIdealCase_1( double, double );
 
       //! \brief Set up non-ideal case type 2 (co-sedimenting)
-      //! \param fname   Salt data file name
       //! \param Moler   Salt moler factor
-      void SetNonIdealCase_2( char*, double );
+      void SetNonIdealCase_2( double );
 
       //! \brief Set up non-ideal case type 3 (compressibility)
       //! \param cmpress Compressibility factor
@@ -164,39 +174,40 @@ class US_EXTERN US_LammAstfvm : public QObject
 
       US_Model&                 model;       // input model
       US_SimulationParameters&  simparams;   // input simulation parameters
+      US_DataIO2::RawData*      auc_data;    // input/output AUC data
 
       US_AstfemMath::MfemData   af_data;     // internal data
 
-      Mesh*   msh;            // radial grid
+      Mesh*   msh;             // radial grid
 
-      int     NonIdealCaseNo; // non-ideal case number
-                              // = 0 : ideal, constant s, D
-                              // = 1 : concentration dependent
-                              // = 2 : co-sedimenting
-                              // = 3 : compressibility
+      int     NonIdealCaseNo;  // non-ideal case number
+                               // = 0 : ideal, constant s, D
+                               // = 1 : concentration dependent
+                               // = 2 : co-sedimenting
+                               // = 3 : compressibility
 
-      double  sigma;          // constant for concentration dependence (s)
-      double  delta;          // constant for concentration dependence (D)
-                              // non-ideal case
-                              // s = s_0/(1+sigma*C), D=D_0/(1+delta*C)
+      double  sigma;           // constant for concentration dependence (s)
+      double  delta;           // constant for concentration dependence (D)
+                               // non-ideal case
+                               // s = s_0/(1+sigma*C), D=D_0/(1+delta*C)
 
-      double  cmprssfac;      // factor for compressibility
+      double  cmprssfac;       // factor for compressibility
 
-      SaltData* saltdata;     // data handle for cosedimenting
+      SaltData* saltdata;      // data handle for cosedimenting
 
       double  MeshSpeedFactor; // = 1: mesh following sedimentation
                                // = 0: fixed mesh in each time step
 
-      int     MeshRefineOpt;  // = 1: perform mesh local refinement
-                              // = 0: no mesh refinement
+      int     MeshRefineOpt;   // = 1: perform mesh local refinement
+                               // = 0: no mesh refinement
 
-      int     comp_x;         // current component index
+      int     comp_x;          // current component index
 
-      double  param_m;        // m of cell (meniscus)
-      double  param_b;        // b of cell (bottom)
-      double  param_s;        // base s value (sedimentation coefficient)
-      double  param_D;        // base D value (diffusion coefficient)
-      double  param_w2;       // rpm-based omega-sq-t, w2=(rpm*pi/30)^2
+      double  param_m;         // m of cell (meniscus)
+      double  param_b;         // b of cell (bottom)
+      double  param_s;         // base s value (sedimentation coefficient)
+      double  param_D;         // base D value (diffusion coefficient)
+      double  param_w2;        // rpm-based omega-sq-t, w2=(rpm*pi/30)^2
 
       // private functions
 
