@@ -463,4 +463,5 @@ int US_Math2::randomize( void )
 #endif
 
    srand( (uint) seed );
+   return seed;
 }
