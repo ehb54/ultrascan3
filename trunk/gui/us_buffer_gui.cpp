@@ -96,17 +96,23 @@ US_BufferGui::US_BufferGui(
    main->addWidget( lb_banner2, row++, 0 );
 
    lw_ingredients = us_listwidget();
+   lw_ingredients-> setSortingEnabled( true );
 
    QFontMetrics fm( QFont( US_GuiSettings::fontFamily(),
                            US_GuiSettings::fontSize() ) );
    int width = 0;
 
-   for ( int i = 0; i < component_list.size(); i++ )
-   {
-      QString s = component_list[ i ].name +
-                  " (" + component_list[ i ].range + ")";
+   QStringList keys = component_list.keys();
+   qSort( keys );
 
-      lw_ingredients->addItem( s );
+   for ( int i = 0; i < keys.size(); i++ )
+   {
+      QString key = keys[ i ];
+      QString s = component_list[ key ].name +
+                  " (" + component_list[ key ].range + ")";
+
+      // Insert the buffer component with it's key
+      new QListWidgetItem( s, lw_ingredients, key.toInt() );
       width = max( fm.width( s ), width );
    }
 
@@ -409,9 +415,18 @@ void US_BufferGui::synch_components( void )
    // Update the list widget with components from DB
    lw_ingredients->clear();
 
-   for ( int i = 0; i < component_list.size(); i++ )
-      lw_ingredients->addItem( component_list[ i ].name +  
-                        " (" + component_list[ i ].range + ")" );
+   QStringList keys = component_list.keys();
+   qSort( keys );
+
+   for ( int i = 0; i < keys.size(); i++ )
+   {
+      QString key = keys[ i ];
+      QString s   = component_list[ key ].name + 
+                    " (" + component_list[ key ].range + ")";
+
+      // Insert the buffer component with it's key
+      new QListWidgetItem( s, lw_ingredients, key.toInt() );
+   }
 }
 
 void US_BufferGui::sel_investigator( void )
@@ -663,9 +678,13 @@ void US_BufferGui::read_from_disk( QListWidgetItem* item )
 
    for ( int i = 0; i < buffer.componentIDs.size(); i++ )
    {
-      int index = buffer.componentIDs[ i ].toInt();
+      QString index = buffer.componentIDs[ i ];
       buffer.component << component_list[ index ];
    }
+
+//for ( int i=0; i < buffer.component.size(); i++ ) 
+//   qDebug() << "buffer.component[ i ]" << buffer.component[ i ].componentID;
+
 }
 
 void US_BufferGui::read_from_db( QListWidgetItem* item )
@@ -720,7 +739,7 @@ void US_BufferGui::read_from_db( const QString& bufferID )
       QString index = db.value( 0 ).toString();
       buffer.componentIDs  << index;
       buffer.concentration << db.value( 4 ).toString().toDouble();
-      buffer.component     << component_list[ index.toInt() ];
+      buffer.component     << component_list[ index ];
    }
 
    // Get the investigator's name and display it
@@ -744,19 +763,12 @@ void US_BufferGui::read_from_db( const QString& bufferID )
 
 void US_BufferGui::update_lw_buf( const QString& componentID, double conc )
 {
-   for ( int i = 0; i < component_list.size(); i ++ )
-   {
-      if ( componentID == component_list[ i ].componentID )
-      {
-         QString name = component_list[ i ].name;
-         QString unit = component_list[ i ].unit;
+   QString name = component_list[ componentID ].name;
+   QString unit = component_list[ componentID ].unit;
    
-         QString s = QString::number( conc, 'f', 1 );
+   QString s = QString::number( conc, 'f', 1 );
          
-         lw_buffer->addItem( name + " (" + s + " " + unit + ")" );
-         break;
-      }
-   }
+   lw_buffer->addItem( name + " (" + s + " " + unit + ")" );
 }
 
 void US_BufferGui::update_buffer( void )
@@ -950,6 +962,8 @@ void US_BufferGui::save_disk( void )
 
 void US_BufferGui::save_db( void )
 {
+   if ( personID > 0 ) buffer.personID = personID;
+
    if ( buffer.personID < 0 )
    {
       QMessageBox::information( this,
@@ -1147,9 +1161,11 @@ void US_BufferGui::add_component( void )
 
    QString s;
    bool    newItem = true;
-   int     current = lw_ingredients->currentRow();
+   QListWidgetItem* item = lw_ingredients->item( lw_ingredients->currentRow() ); 
+   //QString index   = QString::number( lw_ingredients->currentRow() + 1 );
+   QString index = QString::number( item->type() );
 
-   US_BufferComponent std_bc = component_list[ current ];
+   US_BufferComponent std_bc = component_list[ index ];
    
    // Find out if this inredient already exists, otherwise add a new component
    for ( int i = 0; i < buffer.component.size(); i++ ) 
@@ -1198,11 +1214,11 @@ void US_BufferGui::add_component( void )
      display in lb_selected and wait for a partial concentartion input value. */
 void US_BufferGui::list_component( void )
 {
-   int row = lw_ingredients->currentRow();
+   QString id = QString::number( lw_ingredients->currentRow() );
 
    lb_selected->setText( lw_ingredients->currentItem()->text() );
    lb_units->setText( tr( "Please enter with units in: " ) + 
-         component_list[ row ].unit );
+         component_list[ id ].unit );
    
    le_concentration->setFocus();
 }

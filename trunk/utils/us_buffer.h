@@ -21,22 +21,22 @@ class US_EXTERN US_BufferComponent
       //! Get all component data from the DB
       //! \param masterPW The user's master password.
       //! \param componentList A reference to where the data should be placed.
-      static void getAllFromDB ( const QString&, QList< US_BufferComponent >& );
+      static void getAllFromDB ( const QString&, QMap< QString, US_BufferComponent >& );
 
       //! Get all component data from the etc/buffer_comp.xml file
       //! \param componentList A reference to where the data should be placed.
-      static void getAllFromHD ( QList< US_BufferComponent >& );
+      static void getAllFromHD ( QMap< QString, US_BufferComponent >& );
 
       //! Write all component data from the etc/buffer_comp.xml file
       //! \param componentList A reference to where the data is found.
-      static void putAllToHD ( const QList< US_BufferComponent >& );
+      static void putAllToHD ( const QMap< QString, US_BufferComponent >& );
 
    private:
       //! Get the info for an individual component from the DB.
       //! \param db A \ref US_DB2 structure to an opened connection to the DB.
       void getInfoFromDB( US_DB2& );
 
-      static void component( QXmlStreamReader&, QList< US_BufferComponent >& );
+      static void component( QXmlStreamReader&, QMap< QString, US_BufferComponent >& );
 };
 
 //! The internal structure of a buffer.

@@ -5,7 +5,7 @@
 #include "us_db2.h"
 
 void US_BufferComponent::getAllFromDB( const QString& masterPW, 
-         QList< US_BufferComponent >& componentList )
+         QMap< QString, US_BufferComponent >& componentList )
 {
    US_DB2 db( masterPW );
    
@@ -36,7 +36,7 @@ void US_BufferComponent::getAllFromDB( const QString& masterPW,
       c.componentID = db.value( 0 ).toString();
       c.name        = db.value( 1 ).toString();
       c.getInfoFromDB( db2 );
-      componentList << c;
+      componentList[ c.componentID ] = c;
    }
 }
 
@@ -68,7 +68,7 @@ void US_BufferComponent::getInfoFromDB( US_DB2& db )
 }
 
 void US_BufferComponent::getAllFromHD( 
-        QList< US_BufferComponent >& componentList ) 
+        QMap< QString, US_BufferComponent >& componentList ) 
 {
    componentList.clear();
 
@@ -100,7 +100,7 @@ void US_BufferComponent::getAllFromHD(
 
 void US_BufferComponent::component( 
         QXmlStreamReader&            xml, 
-        QList< US_BufferComponent >& componentList ) 
+        QMap< QString, US_BufferComponent >& componentList ) 
 {
    US_BufferComponent bc;
 
@@ -115,7 +115,7 @@ void US_BufferComponent::component(
 
       if ( xml.isEndElement()  &&  xml.name() == "component" ) 
       {
-         componentList << bc;
+         componentList[ bc.componentID ] = bc;
          return;
       }
 
@@ -146,7 +146,7 @@ void US_BufferComponent::component(
 }
 
 void US_BufferComponent::putAllToHD( 
-        const QList< US_BufferComponent >& componentList ) 
+        const QMap< QString, US_BufferComponent >& componentList ) 
 {
    QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
    QFile   file( home + "/etc/bufferComponents.xml" );
@@ -165,13 +165,16 @@ void US_BufferComponent::putAllToHD(
    xml.writeStartElement( "BufferComponents" );
    xml.writeAttribute   ( "version", "1.0" );
    
-   for ( int i = 0; i < componentList.size(); i++ )
+   QStringList keys = componentList.keys();
+
+   for ( int i = 0; i < keys.size(); i++ )
    {
+      QString key = keys[ i ];
       xml.writeStartElement( "component" );
-      xml.writeAttribute( "id"   , componentList[ i ].componentID );
-      xml.writeAttribute( "name" , componentList[ i ].name );
-      xml.writeAttribute( "unit" , componentList[ i ].unit );
-      xml.writeAttribute( "range", componentList[ i ].range );
+      xml.writeAttribute( "id"   , componentList[ key ].componentID );
+      xml.writeAttribute( "name" , componentList[ key ].name );
+      xml.writeAttribute( "unit" , componentList[ key ].unit );
+      xml.writeAttribute( "range", componentList[ key ].range );
 
       QString factor;
       QString value;
@@ -180,7 +183,7 @@ void US_BufferComponent::putAllToHD(
       for ( int j = 0; j < 6; j++ )
       {
          factor.sprintf( "c%i", j );
-         value = QString::number( componentList[ i ].dens_coeff[ j ], 'f', 5 );
+         value = QString::number( componentList[ key ].dens_coeff[ j ], 'f', 5 );
          xml.writeAttribute( factor, value );
       }
 
@@ -190,7 +193,7 @@ void US_BufferComponent::putAllToHD(
       for ( int j = 0; j < 6; j++ )
       {
          factor.sprintf( "c%i", j );
-         value = QString::number( componentList[ i ].visc_coeff[ j ], 'f', 5 );
+         value = QString::number( componentList[ key ].visc_coeff[ j ], 'f', 5 );
          xml.writeAttribute( factor, value );
       }
 
