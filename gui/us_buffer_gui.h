@@ -48,7 +48,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       
       //! A BufferComponent vector structure for all components in 
       //! template list (stored in us_home/etc/buffer.xml). 
-      QList< US_BufferComponent > component_list;   
+      QMap< QString, US_BufferComponent > component_list;   
 
       // For list widget
       class BufferInfo
