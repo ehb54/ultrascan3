@@ -1801,8 +1801,7 @@ qDebug() << "  a.analyteDesc " << triple.analyteDesc;
 
          expdata.triples << triple;
 
-         US_ExpInfo*    eidiag =
-            new US_ExpInfo(    expdata, false );
+         US_ExpInfo*    eidiag = new US_ExpInfo( expdata );
          eidiag->exec();
 
 //*DEBUG*
