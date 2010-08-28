@@ -144,6 +144,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    pdb_visualization_widget = false;
    pdb_parsing_widget = false;
    advanced_config_widget = false;
+   bd_widget = false;
    bd_options_widget = false;
    dmd_options_widget = false;
    anaflex_options_widget = false;
@@ -607,77 +608,85 @@ void US_Hydrodyn::setupGUI()
    pb_dmd_run->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_dmd_run, SIGNAL(clicked()), SLOT(dmd_run()));
 
+   pb_bd = new QPushButton(tr("BD"), this);
+   Q_CHECK_PTR(pb_bd);
+   pb_bd->setMinimumHeight(minHeight1);
+   pb_bd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_bd->setEnabled(true);
+   pb_bd->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_bd, SIGNAL(clicked()), SLOT(show_bd()));
+
    // ***** bd *******
-   pb_bd_prepare = new QPushButton(tr("Create Browflex files"), this);
-   pb_bd_prepare->setMinimumHeight(minHeight1);
-   pb_bd_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_bd_prepare->setEnabled(false);
-   pb_bd_prepare->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_bd_prepare, SIGNAL(clicked()), SLOT(bd_prepare()));
+   //   pb_bd_prepare = new QPushButton(tr("Create Browflex files"), this);
+   //   pb_bd_prepare->setMinimumHeight(minHeight1);
+   //   pb_bd_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_bd_prepare->setEnabled(false);
+   //   pb_bd_prepare->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   connect(pb_bd_prepare, SIGNAL(clicked()), SLOT(bd_prepare()));
 
-   pb_bd_load = new QPushButton(tr("Load Browflex files"), this);
-   pb_bd_load->setMinimumHeight(minHeight1);
-   pb_bd_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_bd_load->setEnabled(false);
-   pb_bd_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_bd_load, SIGNAL(clicked()), SLOT(bd_load()));
+   //   pb_bd_load = new QPushButton(tr("Load Browflex files"), this);
+   //   pb_bd_load->setMinimumHeight(minHeight1);
+   //   pb_bd_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_bd_load->setEnabled(false);
+   //   pb_bd_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   connect(pb_bd_load, SIGNAL(clicked()), SLOT(bd_load()));
 
-   pb_bd_edit = new QPushButton(tr("View/Edit Browflex files"), this);
-   pb_bd_edit->setMinimumHeight(minHeight1);
-   pb_bd_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_bd_edit->setEnabled(false);
-   pb_bd_edit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_bd_edit, SIGNAL(clicked()), SLOT(bd_edit()));
+   //   pb_bd_edit = new QPushButton(tr("View/Edit Browflex files"), this);
+   //   pb_bd_edit->setMinimumHeight(minHeight1);
+   //   pb_bd_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_bd_edit->setEnabled(false);
+   //   pb_bd_edit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   connect(pb_bd_edit, SIGNAL(clicked()), SLOT(bd_edit()));
 
-   pb_bd_run = new QPushButton(tr("Run Browflex"), this);
-   pb_bd_run->setMinimumHeight(minHeight1);
-   pb_bd_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_bd_run->setEnabled(false);
-   pb_bd_run->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_bd_run, SIGNAL(clicked()), SLOT(bd_run()));
+   //   pb_bd_run = new QPushButton(tr("Run Browflex"), this);
+   //   pb_bd_run->setMinimumHeight(minHeight1);
+   //   pb_bd_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_bd_run->setEnabled(false);
+   //   pb_bd_run->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   connect(pb_bd_run, SIGNAL(clicked()), SLOT(bd_run()));
 
-   pb_bd_load_results = new QPushButton(tr("Load/Process Browflex results"), this);
-   pb_bd_load_results->setMinimumHeight(minHeight1);
-   pb_bd_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_bd_load_results->setEnabled(false);
-   pb_bd_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_bd_load_results, SIGNAL(clicked()), SLOT(bd_load_results()));
+   //   pb_bd_load_results = new QPushButton(tr("Load/Process Browflex results"), this);
+   //   pb_bd_load_results->setMinimumHeight(minHeight1);
+   //   pb_bd_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_bd_load_results->setEnabled(false);
+   //   pb_bd_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   connect(pb_bd_load_results, SIGNAL(clicked()), SLOT(bd_load_results()));
 
    // ***** anaflex *******
-   pb_anaflex_prepare = new QPushButton(tr("Create Anaflex files"), this);
-   pb_anaflex_prepare->setMinimumHeight(minHeight1);
-   pb_anaflex_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_anaflex_prepare->setEnabled(false);
-   pb_anaflex_prepare->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_anaflex_prepare, SIGNAL(clicked()), SLOT(anaflex_prepare()));
+   //   pb_anaflex_prepare = new QPushButton(tr("Create Anaflex files"), this);
+   //   pb_anaflex_prepare->setMinimumHeight(minHeight1);
+   //   pb_anaflex_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_anaflex_prepare->setEnabled(false);
+   //   pb_anaflex_prepare->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   connect(pb_anaflex_prepare, SIGNAL(clicked()), SLOT(anaflex_prepare()));
 
-   pb_anaflex_load = new QPushButton(tr("Load Anaflex files"), this);
-   pb_anaflex_load->setMinimumHeight(minHeight1);
-   pb_anaflex_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_anaflex_load->setEnabled(false);
-   pb_anaflex_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_anaflex_load, SIGNAL(clicked()), SLOT(anaflex_load()));
+   //   pb_anaflex_load = new QPushButton(tr("Load Anaflex files"), this);
+   //   pb_anaflex_load->setMinimumHeight(minHeight1);
+   //   pb_anaflex_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_anaflex_load->setEnabled(false);
+   //   pb_anaflex_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   connect(pb_anaflex_load, SIGNAL(clicked()), SLOT(anaflex_load()));
 
-   pb_anaflex_edit = new QPushButton(tr("View/Edit Anaflex files"), this);
-   pb_anaflex_edit->setMinimumHeight(minHeight1);
-   pb_anaflex_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_anaflex_edit->setEnabled(false);
-   pb_anaflex_edit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_anaflex_edit, SIGNAL(clicked()), SLOT(anaflex_edit()));
+   //   pb_anaflex_edit = new QPushButton(tr("View/Edit Anaflex files"), this);
+   //   pb_anaflex_edit->setMinimumHeight(minHeight1);
+   //   pb_anaflex_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_anaflex_edit->setEnabled(false);
+   //   pb_anaflex_edit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   connect(pb_anaflex_edit, SIGNAL(clicked()), SLOT(anaflex_edit()));
 
-   pb_anaflex_run = new QPushButton(tr("Run Anaflex"), this);
-   pb_anaflex_run->setMinimumHeight(minHeight1);
-   pb_anaflex_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_anaflex_run->setEnabled(false);
-   pb_anaflex_run->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_anaflex_run, SIGNAL(clicked()), SLOT(anaflex_run()));
+   //   pb_anaflex_run = new QPushButton(tr("Run Anaflex"), this);
+   //   pb_anaflex_run->setMinimumHeight(minHeight1);
+   //   pb_anaflex_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_anaflex_run->setEnabled(false);
+   //   pb_anaflex_run->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   connect(pb_anaflex_run, SIGNAL(clicked()), SLOT(anaflex_run()));
 
-   pb_anaflex_load_results = new QPushButton(tr("Load Anaflex results"), this);
-   pb_anaflex_load_results->setMinimumHeight(minHeight1);
-   pb_anaflex_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_anaflex_load_results->setEnabled(false);
-   pb_anaflex_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_anaflex_load_results, SIGNAL(clicked()), SLOT(anaflex_load_results()));
+   //   pb_anaflex_load_results = new QPushButton(tr("Load Anaflex results"), this);
+   //   pb_anaflex_load_results->setMinimumHeight(minHeight1);
+   //   pb_anaflex_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_anaflex_load_results->setEnabled(false);
+   //   pb_anaflex_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   connect(pb_anaflex_load_results, SIGNAL(clicked()), SLOT(anaflex_load_results()));
 
    pb_help = new QPushButton(tr("Help"), this);
    Q_CHECK_PTR(pb_help);
@@ -733,7 +742,7 @@ void US_Hydrodyn::setupGUI()
    QGridLayout *background = new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(frame, j, j, 0, 1);
-   background->addMultiCellWidget(editor, j, j+26, 2, 2);
+   background->addMultiCellWidget(editor, j, j+23, 2, 2);
    j++;
    background->addMultiCellWidget(lbl_info1, j, j, 0, 1);
    j++;
@@ -746,13 +755,15 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(lbl_pdb_file, j, 1);
    j++;
    background->addWidget(lbl_model, j, 0);
-   background->addMultiCellWidget(lb_model, j, j+3, 1, 1);
+   background->addMultiCellWidget(lb_model, j, j+4, 1, 1);
    j++;
    background->addWidget(pb_view_pdb, j, 0);
    j++;
    background->addWidget(pb_pdb_saxs, j, 0);
    j++;
    background->addWidget(pb_dmd_run, j, 0);
+   j++;
+   background->addWidget(pb_bd, j, 0);
    j++;
    background->addMultiCellWidget(lbl_info2, j, j, 0, 1);
    j++;
@@ -777,15 +788,15 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_grid, j, 0);
    background->addWidget(cb_calcAutoHydro, j, 1);
    j++;
-   background->addWidget(pb_bd_prepare, j, 0);
-   QHBoxLayout *qhl_bd_1 = new QHBoxLayout;
-   qhl_bd_1->addWidget(pb_bd_load);
-   qhl_bd_1->addWidget(pb_bd_edit);
-   background->addLayout(qhl_bd_1, j, 1);
-   j++;
-   background->addWidget(pb_bd_run, j, 0);
-   background->addWidget(pb_bd_load_results, j, 1);
-   j++;
+   //   background->addWidget(pb_bd_prepare, j, 0);
+   //   QHBoxLayout *qhl_bd_1 = new QHBoxLayout;
+   //   qhl_bd_1->addWidget(pb_bd_load);
+   //   qhl_bd_1->addWidget(pb_bd_edit);
+   //   background->addLayout(qhl_bd_1, j, 1);
+   //   j++;
+   //   background->addWidget(pb_bd_run, j, 0);
+   //   background->addWidget(pb_bd_load_results, j, 1);
+   //   j++;
    background->addWidget(pb_view_asa, j, 0);
    background->addWidget(pb_visualize, j, 1);
    j++;
@@ -802,15 +813,15 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_calc_hydro, j, 0);
    background->addWidget(pb_show_hydro_results, j, 1);
    j++;
-   background->addWidget(pb_anaflex_prepare, j, 0);
-   QHBoxLayout *qhl_anaflex_1 = new QHBoxLayout;
-   qhl_anaflex_1->addWidget(pb_anaflex_load);
-   qhl_anaflex_1->addWidget(pb_anaflex_edit);
-   background->addLayout(qhl_anaflex_1, j, 1);
-   j++;
-   background->addWidget(pb_anaflex_run, j, 0);
-   background->addWidget(pb_anaflex_load_results, j, 1);
-   j++;
+   //   background->addWidget(pb_anaflex_prepare, j, 0);
+   //   QHBoxLayout *qhl_anaflex_1 = new QHBoxLayout;
+   //   qhl_anaflex_1->addWidget(pb_anaflex_load);
+   //   qhl_anaflex_1->addWidget(pb_anaflex_edit);
+   //   background->addLayout(qhl_anaflex_1, j, 1);
+   //   j++;
+   //   background->addWidget(pb_anaflex_run, j, 0);
+   //   background->addWidget(pb_anaflex_load_results, j, 1);
+   //   j++;
    background->addWidget(pb_open_hydro_results, j, 1);
    j++;
    background->addWidget(pb_select_save_params, j, 0);
@@ -1056,6 +1067,28 @@ void US_Hydrodyn::show_dmd_options()
    {
       dmd_options_window = new US_Hydrodyn_DMD_Options(&dmd_options, &dmd_options_widget, this);
       dmd_options_window->show();
+   }
+}
+
+void US_Hydrodyn::show_bd()
+{
+   if (bd_widget)
+   {
+      if (bd_window->isVisible())
+      {
+         bd_window->raise();
+      }
+      else
+      {
+         bd_window->show();
+      }
+      return;
+   }
+   else
+   {
+      bd_window = new US_Hydrodyn_BD(&bd_widget, &bd_options, &anaflex_options, this);
+      bd_anaflex_enables(false);
+      bd_window->show();
    }
 }
 

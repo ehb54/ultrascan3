@@ -1729,21 +1729,25 @@ void US_Hydrodyn::browflex_launchFinished()
 void US_Hydrodyn::bd_anaflex_enables( bool flag )
 {
    // this needs better logic
+   if ( !bd_widget )
+   {
+      return;
+   }
 
    if ( ( browflex && browflex->isRunning() ) ||
         ( anaflex && anaflex->isRunning() ) )
    {
-      pb_bd_prepare->setEnabled(false);
-      pb_bd_load->setEnabled(false);
-      pb_bd_edit->setEnabled(false);
-      pb_bd_run->setEnabled(false);
-      pb_bd_load_results->setEnabled(false);
+      bd_window->pb_bd_prepare->setEnabled(false);
+      bd_window->pb_bd_load->setEnabled(false);
+      bd_window->pb_bd_edit->setEnabled(false);
+      bd_window->pb_bd_run->setEnabled(false);
+      bd_window->pb_bd_load_results->setEnabled(false);
       
-      pb_anaflex_prepare->setEnabled(false);
-      pb_anaflex_load->setEnabled(false);
-      pb_anaflex_edit->setEnabled(false);
-      pb_anaflex_run->setEnabled(false);
-      pb_anaflex_load_results->setEnabled(false);
+      bd_window->pb_anaflex_prepare->setEnabled(false);
+      bd_window->pb_anaflex_load->setEnabled(false);
+      bd_window->pb_anaflex_edit->setEnabled(false);
+      bd_window->pb_anaflex_run->setEnabled(false);
+      bd_window->pb_anaflex_load_results->setEnabled(false);
       return;
    }
 
@@ -1755,17 +1759,17 @@ void US_Hydrodyn::bd_anaflex_enables( bool flag )
       }
    }
 
-   pb_bd_prepare->setEnabled((bool) models);
-   pb_bd_load->setEnabled(true);
-   pb_bd_edit->setEnabled(true);
-   pb_bd_run->setEnabled(flag && bd_ready_to_run);
-   pb_bd_load_results->setEnabled(bd_last_file != "");
+   bd_window->pb_bd_prepare->setEnabled((bool) models);
+   bd_window->pb_bd_load->setEnabled(true);
+   bd_window->pb_bd_edit->setEnabled(true);
+   bd_window->pb_bd_run->setEnabled(flag && bd_ready_to_run);
+   bd_window->pb_bd_load_results->setEnabled(bd_last_file != "");
 
-   pb_anaflex_prepare->setEnabled(flag);
-   pb_anaflex_load->setEnabled(true);
-   pb_anaflex_edit->setEnabled(true);
-   pb_anaflex_run->setEnabled(flag && anaflex_ready_to_run);
-   pb_anaflex_load_results->setEnabled(anaflex_last_file != "");
+   bd_window->pb_anaflex_prepare->setEnabled(flag);
+   bd_window->pb_anaflex_load->setEnabled(true);
+   bd_window->pb_anaflex_edit->setEnabled(true);
+   bd_window->pb_anaflex_run->setEnabled(flag && anaflex_ready_to_run);
+   bd_window->pb_anaflex_load_results->setEnabled(anaflex_last_file != "");
 }
 
 void US_Hydrodyn::bd_load_error( QString filename )
@@ -3022,8 +3026,3 @@ int US_Hydrodyn::browflex_get_no_of_beads( QString filename )
    cout << "no of beads from molec " << no_of_beads << endl;
    return no_of_beads;
 }
-
-
-   
-
-   

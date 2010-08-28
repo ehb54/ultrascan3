@@ -48,6 +48,7 @@
 #include "us_hydrodyn_file.h"
 #include "us_hydrodyn_dammin_opts.h"
 #include "us_hydrodyn_bd_load_results_opts.h"
+#include "us_hydrodyn_bd.h"
 
 //standard C and C++ defs:
 
@@ -120,6 +121,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void setHydroFile(); // checks for file existance and resets suffix accordingly
       QCheckBox *cb_overwrite;
       QString last_hydro_res;
+      void bd_anaflex_enables( bool flag ); // turns buttons on/off based upon current status
 
    private:
       bool residue_widget;
@@ -137,6 +139,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool pdb_parsing_widget;
       bool pdb_visualization_widget;
       bool saxs_options_widget;
+      bool bd_widget;
       bool bd_options_widget;
       bool anaflex_options_widget;
       bool dmd_options_widget;
@@ -243,18 +246,19 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QPushButton *pb_dmd_run;
 
-      //      QPushButton *pb_bd_mode;
-      QPushButton *pb_bd_prepare;
-      QPushButton *pb_bd_load;
-      QPushButton *pb_bd_edit;
-      QPushButton *pb_bd_run;
-      QPushButton *pb_bd_load_results;
+      QPushButton *pb_bd;
 
-      QPushButton *pb_anaflex_prepare;
-      QPushButton *pb_anaflex_load;
-      QPushButton *pb_anaflex_edit;
-      QPushButton *pb_anaflex_run;
-      QPushButton *pb_anaflex_load_results;
+      //      QPushButton *pb_bd_prepare;
+      //      QPushButton *pb_bd_load;
+      //      QPushButton *pb_bd_edit;
+      //      QPushButton *pb_bd_run;
+      //      QPushButton *pb_bd_load_results;
+
+      //      QPushButton *pb_anaflex_prepare;
+      //      QPushButton *pb_anaflex_load;
+      //      QPushButton *pb_anaflex_edit;
+      //      QPushButton *pb_anaflex_run;
+      //      QPushButton *pb_anaflex_load_results;
 
       QProgressBar *progress;
       TextEdit *e;
@@ -267,6 +271,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Overlap *overlap_window;
       US_Hydrodyn_Overlap *grid_overlap_window;
       US_Hydrodyn_Bead_Output *bead_output_window;
+      US_Hydrodyn_BD *bd_window;
       US_Hydrodyn_BD_Options *bd_options_window;
       US_Hydrodyn_Anaflex_Options *anaflex_options_window;
       US_Hydrodyn_DMD_Options *dmd_options_window;
@@ -418,6 +423,20 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int read_config(QFile &);
       void show_misc();
 
+      void bd_prepare();
+      void bd_load();
+      void bd_edit();
+      void bd_run();
+      void bd_load_results();
+
+      void anaflex_prepare();
+      void anaflex_load();
+      void anaflex_edit();
+      void anaflex_run();
+      void anaflex_load_results();
+
+      void stop_calc(); // stop some operations
+
    private slots:
       void browflex_readFromStdout();
       void browflex_readFromStderr();
@@ -457,6 +476,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int overlap_check(bool sc, bool mc, bool buried, double tolerance); // check for overlaps
       int compute_asa(bool bd_mode = false); // calculate maximum accessible surface area
       void show_asa();
+      void show_bd();
       void show_overlap();
       void show_grid_overlap();
       void show_bead_output();
@@ -468,7 +488,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void pdb_visualization(); // pdb visualization options
       void view_asa(); // show asa file in editor
       void view_bead_model(); // show bead model file in editor
-      void stop_calc(); // stop some operations
       void view_file(const QString &, QString title = "SOMO editor"); // call editor to view a file
       void bead_check( bool use_threshold = false, bool message_type = false ); // recheck beads
       void load_config();
@@ -521,15 +540,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       // bd functions:
       //      void bd_mode();
-      void bd_anaflex_enables( bool flag ); // turns buttons on/off based upon current status
-      void bd_prepare();
       bool bd_valid_browflex_main( QString filename );
-      void bd_load();
       void bd_load_error( QString filename );
-      void bd_edit();
       void bd_edit_util( QString dir, QString filename ); 
-      void bd_run();
-      void bd_load_results();
       void bd_load_results_after_anaflex();
       bool anaflex_valid_anaflex_main( QString filename );
       void anaflex_load_error( QString filename );
@@ -558,11 +571,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       // anaflex functions
 
-      void anaflex_prepare();
-      void anaflex_load();
-      void anaflex_edit();
-      void anaflex_run();
-      void anaflex_load_results();
 
       int create_anaflex_files();
       int create_anaflex_files( int use_mode, int sub_mode = 0 );
