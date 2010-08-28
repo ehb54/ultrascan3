@@ -103,10 +103,10 @@ class US_EXTERN US_Hydrodyn_BD : public QFrame
       void bd_options();
       void anaflex_options();
       void stop();
-      void clear_display();
-      void print();
-      void update_font();
-      void save();
+      //       void clear_display();
+      //       void print();
+      //       void update_font();
+      //       void save();
 
       void bd_prepare();
       void bd_load();
