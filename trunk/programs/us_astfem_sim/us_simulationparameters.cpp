@@ -181,9 +181,6 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_selected_speed->setIncSteps( QwtCounter::Button3, 1 );
 
    main->addWidget( cnt_selected_speed, row++, 1 );
-   connect( cnt_selected_speed, SIGNAL( valueChanged        ( double ) ), 
-                                SLOT  ( update_speed_profile( double ) ) );
-
    // Right Column
    row = 1;
    // Centerpiece
@@ -284,7 +281,10 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( cnt_rnoise, row++, 3 );
    connect( cnt_rnoise, SIGNAL( valueChanged ( double ) ), 
                         SLOT  ( update_rnoise( double ) ) );
-   
+
+   connect( cnt_selected_speed, SIGNAL( valueChanged        ( double ) ), 
+                                SLOT  ( update_speed_profile( double ) ) );
+
    // Time invariant noise
    QLabel* lb_tinoise = us_label( tr( "Time Invariant Noise (% Conc.):" ) );
    main->addWidget( lb_tinoise, row, 2 );
@@ -670,18 +670,22 @@ void US_SimulationParametersGui::update_scans( double scans )
 void US_SimulationParametersGui::save( void )
 {
    QString fn = QFileDialog::getSaveFileName( this,
-         tr( "Save Simulation Paramaters in:" ),
-         US_Settings::resultDir(), 
-         "*.simulation_parameters" );
+         tr( "Save Simulation Parameters in:" ),
+         US_Settings::appBaseDir() + "/etc", 
+         tr( "SimParams files (sp_*.xml);;"
+             "All XML files (*.xml);;"
+             "All files (*)" ) );
         
    if ( fn.isEmpty() ) return;
    
   
-   // If an extension was given, strip it.
-   int k = fn.lastIndexOf( "." );
-   if ( k != -1 ) fn.truncate( k );
+   // Make sure file ends with .xml extension
+   if ( !fn.endsWith( "." )  &&  !fn.endsWith( ".xml" ) )
+   {
+      fn = fn + ".xml";
+   }
 
-   QFile f( fn + ".simulation_parameters" );
+   QFile f( fn );
 
    if ( f.exists() )
    {
@@ -696,7 +700,7 @@ void US_SimulationParametersGui::save( void )
       }
    }
 
-   //if ( US_FemGlobal::write_simulationParameters( simparams, fn ) == 0 )
+   if ( write_simpars( fn ) == 0 )
    {
       QMessageBox::information( this, 
             tr( "UltraScan Information" ),
@@ -704,7 +708,7 @@ void US_SimulationParametersGui::save( void )
                 "The Simulation Profile was successfully saved to:\n\n" ) + 
                 fn );
    }
-   //else
+   else
    {
       QMessageBox::information( this, 
             tr( "UltraScan Error" ),
@@ -717,14 +721,20 @@ void US_SimulationParametersGui::save( void )
 void US_SimulationParametersGui::load( void )
 {
    QString fn = QFileDialog::getOpenFileName( this,
-         tr( "" ),
-         US_Settings::resultDir(), "*.simulation_parameters" );
+         tr( "Load Simulation Parameters from:" ),
+         US_Settings::appBaseDir() + "/etc", 
+         tr( "SimParams files (sp_*.xml);;"
+             "All XML files (*.xml);;"
+             "All files (*)" ) );
 
    if ( fn.isEmpty() ) return;
   
-   //if ( US_FemGlobal::read_simulationParameters( simparams, fn ) == 0 )
+   if ( read_simpars( fn ) == 0 )
    {
+      current_speed_step = 0;
       int steps = simparams.speed_step.size();
+qDebug() << "SP: load() steps" << steps;
+      disconnect_all();
 
       cnt_speeds->setValue( steps );
       cmb_speeds->clear();
@@ -740,33 +750,40 @@ void US_SimulationParametersGui::load( void )
             QString::number( spi->rotorspeed       ) + " rpm" );
       }
 
+      connect( cmb_speeds, SIGNAL( activated           ( int ) ),
+                           SLOT  ( select_speed_profile( int ) ) );
+
       // Initialize all counters with the first speed profile:
 
       US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ 0 ];
 
-      cnt_duration_hours->setValue( sp->duration_hours   );
-      cnt_duration_mins ->setValue( sp->duration_minutes );
-      cnt_delay_hours   ->setValue( sp->delay_hours      );
-      cnt_delay_mins    ->setValue( sp->delay_minutes    );
-      cnt_rotorspeed    ->setValue( sp->rotorspeed       );
-      cnt_acceleration  ->setValue( sp->acceleration     );
-      cnt_scans         ->setValue( sp->scans            );
+      cnt_duration_hours  ->setValue( 5.0                  );
+      cnt_duration_hours  ->setValue( 5                    );
+      cnt_duration_hours  ->setValue( sp->duration_hours   );
+      cnt_duration_mins   ->setValue( sp->duration_minutes );
+      cnt_delay_hours     ->setValue( sp->delay_hours      );
+      cnt_delay_mins      ->setValue( sp->delay_minutes    );
+      cnt_rotorspeed      ->setValue( sp->rotorspeed       );
+      cnt_acceleration    ->setValue( sp->acceleration     );
+      cnt_scans           ->setValue( sp->scans            );
       
       cb_acceleration_flag->setChecked( sp->acceleration_flag );
       cnt_acceleration    ->setEnabled( sp->acceleration_flag );
       
-      cnt_simpoints ->setValue( simparams.simpoints         );
-      cnt_radial_res->setValue( simparams.radial_resolution );
-      cnt_meniscus  ->setValue( simparams.meniscus          );
-      cnt_bottom    ->setValue( simparams.bottom            );
-      cnt_rnoise    ->setValue( simparams.rnoise            );
-      cnt_tinoise   ->setValue( simparams.tinoise           );
-      cnt_rinoise   ->setValue( simparams.rinoise           );
+      cnt_simpoints       ->setValue( simparams.simpoints         );
+      cnt_radial_res      ->setValue( simparams.radial_resolution );
+      cnt_meniscus        ->setValue( simparams.meniscus          );
+      cnt_bottom          ->setValue( simparams.bottom            );
+      cnt_rnoise          ->setValue( simparams.rnoise            );
+      cnt_tinoise         ->setValue( simparams.tinoise           );
+      cnt_rinoise         ->setValue( simparams.rinoise           );
 
-      cmb_mesh      ->setCurrentIndex( (int)simparams.meshType );
-      cmb_moving    ->setCurrentIndex( (int)simparams.gridType );
+      cmb_mesh            ->setCurrentIndex( (int)simparams.meshType );
+      cmb_moving          ->setCurrentIndex( (int)simparams.gridType );
 
       rb_band->setChecked( simparams.band_forming );
+
+      reconnect_all();
 
       QMessageBox::information( this, 
             tr( "UltraScan Information" ),
@@ -774,7 +791,8 @@ void US_SimulationParametersGui::load( void )
                 "The Simulation Profile was successfully loaded from:\n\n" ) + 
                 fn );
    }
-   //else
+
+   else
    {
       QMessageBox::information( this, 
             tr( "UltraScan Error" ),
@@ -782,6 +800,7 @@ void US_SimulationParametersGui::load( void )
                 "Could not read the Simulation Profile:\n\n" ) + 
                 fn );
    }
+qDebug() << "SP: (9)load() steps" << simparams.speed_step.size();
 }
    
 void US_SimulationParametersGui::update_mesh( int mesh )
@@ -871,3 +890,264 @@ void US_SimulationParametersGui::update_mesh( int mesh )
       }
    }
 }
+
+int US_SimulationParametersGui::write_simpars( QString fn )
+{
+   int stat = 0;
+   const char* mesh[] = { "ASTFEM", "Claverie", "MovingHat", "User", "ASTFVM" };
+   const char* grid[] = { "Fixed",  "Moving" };
+   US_SimulationParameters::SpeedProfile* spi;
+
+   QFile xfile( fn );
+
+   if ( xfile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      QXmlStreamWriter xml( &xfile );
+      xml.setAutoFormatting( true );
+
+      xml.writeStartDocument();
+      xml.writeDTD         ( "<!DOCTYPE US_SimParams>" );
+      xml.writeStartElement( "SimParams" );
+      xml.writeAttribute   ( "version", "1.0" );
+
+      xml.writeStartElement( "params" );
+      xml.writeAttribute   ( "meshType",
+         QString( mesh[ (int)simparams.meshType ] ) );
+      xml.writeAttribute   ( "gridType",
+         QString( grid[ (int)simparams.gridType ] ) );
+      xml.writeAttribute   ( "simpoints",
+         QString::number( simparams.simpoints ) );
+      xml.writeAttribute   ( "radialres",
+         QString::number( simparams.radial_resolution ) );
+      xml.writeAttribute   ( "meniscus",
+         QString::number( simparams.meniscus ) );
+      xml.writeAttribute   ( "bottom",
+         QString::number( simparams.bottom ) );
+      xml.writeAttribute   ( "rnoise",
+         QString::number( simparams.rnoise ) );
+      xml.writeAttribute   ( "tinoise",
+         QString::number( simparams.tinoise ) );
+      xml.writeAttribute   ( "rinoise",
+         QString::number( simparams.rinoise ) );
+      xml.writeAttribute   ( "bandform",
+         simparams.band_forming ? "yes" : "no" );
+
+      int steps = simparams.speed_step.size();
+
+      for ( int ii = 0; ii < steps; ii++ )
+      {
+         spi = &simparams.speed_step[ ii ];
+
+         xml.writeStartElement( "speedstep" );
+         xml.writeAttribute   ( "dura_hours",
+            QString::number( spi->duration_hours ) );
+         xml.writeAttribute   ( "dura_minutes",
+            QString::number( spi->duration_minutes ) );
+         xml.writeAttribute   ( "dlay_hours",
+            QString::number( spi->delay_hours ) );
+         xml.writeAttribute   ( "dlay_minutes",
+            QString::number( spi->delay_minutes ) );
+         xml.writeAttribute   ( "rotorspeed",
+            QString::number( spi->rotorspeed ) );
+         xml.writeAttribute   ( "acceleration",
+            QString::number( spi->acceleration ) );
+         xml.writeAttribute   ( "accelerflag",
+            spi->acceleration_flag ? "yes" : "no" );
+         xml.writeAttribute   ( "scans",
+            QString::number( spi->scans ) );
+         xml.writeEndElement  ();
+      }
+
+      xml.writeEndElement  ();   // params
+      xml.writeEndElement  ();   // SimParams
+
+      xml.writeEndDocument ();
+      xfile.close();
+   }
+
+   else
+   {
+      stat  = -1;
+   }
+
+   return stat;
+}
+
+int US_SimulationParametersGui::read_simpars( QString fn )
+{
+   int stat = 0;
+   QStringList meshlist;
+   QStringList gridlist;
+   meshlist << "ASTFEM" << "Claverie" << "MovingHat" << "User" << "ASTFVM";
+   gridlist << "Fixed" <<  "Moving";
+   US_SimulationParameters::SpeedProfile sp;
+
+   QFile xfile( fn );
+
+   if ( xfile.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QXmlStreamReader xml( &xfile );
+      QXmlStreamAttributes a;
+      QString astr;
+      int     kk;
+      simparams.speed_step.clear();
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "params" )
+         {
+            a     = xml.attributes();
+
+            astr  = a.value( "meshType" ).toString();
+            if ( !astr.isEmpty() )
+            {
+               kk                  = meshlist.indexOf( astr );
+               simparams.meshType  = (US_SimulationParameters::MeshType)kk;
+            }
+            astr                = a.value( "gridType" ).toString();
+            if ( !astr.isEmpty() )
+            {
+               kk                  = gridlist.indexOf( astr );
+               simparams.gridType  = (US_SimulationParameters::GridType)kk;
+            }
+            astr  = a.value( "simpoints" ).toString();
+            if ( !astr.isEmpty() )
+               simparams.simpoints = astr.toInt();
+            astr  = a.value( "radialres" ).toString();
+            if ( !astr.isEmpty() )
+               simparams.radial_resolution = astr.toDouble();
+            astr  = a.value( "meniscus"  ).toString();
+            if ( !astr.isEmpty() )
+               simparams.meniscus  = astr.toDouble();
+            astr  = a.value( "bottom"    ).toString();
+            if ( !astr.isEmpty() )
+               simparams.bottom    = astr.toDouble();
+            astr  = a.value( "rnoise"    ).toString();
+            if ( !astr.isEmpty() )
+               simparams.rnoise    = astr.toDouble();
+            astr  = a.value( "tinoise"   ).toString();
+            if ( !astr.isEmpty() )
+               simparams.tinoise   = astr.toDouble();
+            astr  = a.value( "rinoise"   ).toString();
+               simparams.rinoise   = astr.toDouble();
+            astr  = a.value( "bandform"  ).toString();
+            if ( !astr.isEmpty() )
+               simparams.band_forming = ( astr == "yes" );
+         }
+
+         else if ( xml.isStartElement()  &&  xml.name() == "speedstep" )
+         {
+            a     = xml.attributes();
+
+            astr  = a.value( "dura_hours"   ).toString();
+            if ( !astr.isEmpty() )
+               sp.duration_hours    = astr.toInt();
+            astr  = a.value( "dura_minutes" ).toString();
+            if ( !astr.isEmpty() )
+               sp.duration_minutes  = astr.toInt();
+            astr  = a.value( "dlay_hours"   ).toString();
+            if ( !astr.isEmpty() )
+               sp.delay_hours       = astr.toInt();
+            astr  = a.value( "dlay_minutes" ).toString();
+            if ( !astr.isEmpty() )
+               sp.delay_minutes     = astr.toDouble();
+            astr  = a.value( "rotorspeed"   ).toString();
+            if ( !astr.isEmpty() )
+               sp.rotorspeed        = astr.toInt();
+            astr  = a.value( "acceleration" ).toString();
+            if ( !astr.isEmpty() )
+               sp.acceleration      = astr.toInt();
+            astr  = a.value( "accelerflag"  ).toString();
+            if ( !astr.isEmpty() )
+               sp.acceleration_flag = ( astr == "yes" );
+            astr  = a.value( "scans"        ).toString();
+            if ( !astr.isEmpty() )
+               sp.scans             = astr.toInt();
+
+            simparams.speed_step.append( sp );
+         }
+      }
+   }
+
+   else
+   {
+      stat = -1;
+   }
+
+   return stat;
+}
+
+
+void US_SimulationParametersGui::disconnect_all( )
+{
+   cnt_speeds          ->disconnect();
+   cmb_speeds          ->disconnect();
+   cnt_duration_hours  ->disconnect();
+   cnt_duration_mins   ->disconnect();
+   cnt_delay_hours     ->disconnect();
+   cnt_delay_mins      ->disconnect();
+   cnt_rotorspeed      ->disconnect();
+   cb_acceleration_flag->disconnect();
+   cnt_acceleration    ->disconnect();
+   cnt_scans           ->disconnect();
+   cnt_selected_speed  ->disconnect();
+   cnt_lamella         ->disconnect();
+   cnt_meniscus        ->disconnect();
+   cnt_bottom          ->disconnect();
+   cnt_simpoints       ->disconnect();
+   cnt_radial_res      ->disconnect();
+   cnt_rnoise          ->disconnect();
+   cnt_tinoise         ->disconnect();
+   cnt_rinoise         ->disconnect();
+   cmb_mesh            ->disconnect();
+   cmb_moving          ->disconnect();
+}
+
+void US_SimulationParametersGui::reconnect_all( )
+{
+   connect( cnt_speeds,           SIGNAL( valueChanged (         double ) ), 
+                                  SLOT  ( update_speeds(         double ) ) );
+   connect( cmb_speeds,           SIGNAL( activated           (  int ) ), 
+                                  SLOT  ( select_speed_profile(  int ) ) );
+   connect( cnt_duration_hours,   SIGNAL( valueChanged         ( double ) ), 
+                                  SLOT  ( update_duration_hours( double ) ) );
+   connect( cnt_duration_mins,    SIGNAL( valueChanged        (  double ) ), 
+                                  SLOT  ( update_duration_mins(  double ) ) );
+   connect( cnt_delay_hours,      SIGNAL( valueChanged      (    double ) ), 
+                                  SLOT  ( update_delay_hours(    double ) ) );
+   connect( cnt_delay_mins,       SIGNAL( valueChanged     (     double ) ), 
+                                  SLOT  ( update_delay_mins(     double ) ) );
+   connect( cnt_rotorspeed,       SIGNAL( valueChanged     (     double ) ), 
+                                  SLOT  ( update_rotorspeed(     double ) ) );
+   connect( cb_acceleration_flag, SIGNAL( clicked          () ), 
+                                  SLOT  ( acceleration_flag() ) );
+   connect( cnt_acceleration,     SIGNAL( valueChanged       (   double ) ), 
+                                  SLOT  ( update_acceleration(   double ) ) );
+   connect( cnt_scans,            SIGNAL( valueChanged(          double ) ), 
+                                  SLOT  ( update_scans(          double ) ) );
+   connect( cnt_selected_speed,   SIGNAL( valueChanged        (  double ) ), 
+                                  SLOT  ( update_speed_profile(  double ) ) );
+   connect( cnt_lamella,          SIGNAL( valueChanged  (        double ) ), 
+                                  SLOT  ( update_lamella(        double ) ) );
+   connect( cnt_meniscus,         SIGNAL( valueChanged   (       double ) ), 
+                                  SLOT  ( update_meniscus(       double ) ) );
+   connect( cnt_bottom,           SIGNAL( valueChanged (         double ) ), 
+                                  SLOT  ( update_bottom(         double ) ) );
+   connect( cnt_simpoints,        SIGNAL( valueChanged    (      double ) ), 
+                                  SLOT  ( update_simpoints(      double ) ) );
+   connect( cnt_radial_res,       SIGNAL( valueChanged     (     double ) ), 
+                                  SLOT  ( update_radial_res(     double ) ) );
+   connect( cnt_rnoise,           SIGNAL( valueChanged (         double ) ), 
+                                  SLOT  ( update_rnoise(         double ) ) );
+   connect( cnt_tinoise,          SIGNAL( valueChanged  (        double ) ), 
+                                  SLOT  ( update_tinoise(        double ) ) );
+   connect( cnt_rinoise,          SIGNAL( valueChanged  (        double ) ), 
+                                  SLOT  ( update_rinoise(        double ) ) );
+   connect( cmb_mesh,             SIGNAL( activated  (           int ) ), 
+                                  SLOT  ( update_mesh(           int ) ) );
+   connect( cmb_moving,           SIGNAL( activated    (         int ) ), 
+                                  SLOT  ( update_moving(         int ) ) );
+}
+

@@ -4,6 +4,8 @@
 #include "us_math2.h"
 #include "us_constants.h"
 #include "us_astfem_rsa.h"
+#include "us_settings.h"
+#include "us_dataIO2.h"
 
 /////////////////////////
 //
@@ -476,6 +478,9 @@ qDebug() << "SaltD: comp0 s d s_conc" << model.components[0].s
    Cs0        = new double [ Nx ];
    Cs1        = new double [ Nx ];
 
+   QString safile = US_Settings::resultDir() + "/salt_data/salt_data.RA.1.S.260.auc";
+   US_DataIO2::writeRawData( safile, sa_data );
+
    delete astfem;
 
    for ( j = 0; j < Nx; j++ )
@@ -605,6 +610,12 @@ void US_LammAstfvm::calculate( US_DataIO2::RawData& sim_data )
 
     // set up to report progress to any listener (e.g., us_astfem_sim)
     int nsteps = af_data.scan.size() * model.components.size();
+
+    if ( model.coSedSolute >= 0 )
+    {  // for co-sedimenting, reduce total steps by one scan
+       nsteps    -= af_data.scan.size();
+    }
+
     emit calc_start( nsteps );
 
    // update concentrations for each model component
@@ -663,6 +674,26 @@ void US_LammAstfvm::solve_component( int compx )
 qDebug() << "LAsc:  CX=" << comp_x
  << "  ntc nts ncs nicase" << ntc << nts << ncs << NonIdealCaseNo;
 qDebug() << "LAsc:    tot_t dt" << total_t << dt;
+
+   if ( NonIdealCaseNo == 2 )
+   {  // co-sedimenting
+      if ( comp_x == model.coSedSolute )
+      {  // if this component is the salt, skip solving for it
+         //for ( kt = 0; kt < nts; kt++ )
+         //{
+         //   for ( int jj = 0; jj < ncs; jj++ )
+         //   {  // update concentration vector with salt concentrations
+         //      af_data.scan[ kt ].conc[ jj ] += saltdata->sa_data.value( kt, jj );
+         //   }
+         //}
+         return;
+      }
+
+      else if ( compx > model.coSedSolute )
+      {  // if beyond the salt component, adjust step count
+         istep    -= nts;
+      }
+   }
 
    conc0.resize( ncs );
    conc1.resize( ncs );
@@ -742,8 +773,11 @@ qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
    // loop for time
    for ( jt = 0, kt = 0; jt < ntc; jt++ )
    {
-      t0    = dt * (double)jt;
-      t1    = t0 + dt;
+      //if ( jt < ntc )
+      //{
+         t0    = dt * (double)jt;
+         t1    = t0 + dt;
+      //}
 qDebug() << "LAsc:    jt kt t0 t1" << jt << kt << t0 << t1;
 
       u1p0  = new double [ N0u ];
@@ -803,11 +837,20 @@ qDebug() << "LAsc:  c0[0] c0[H] c0[N]"
 qDebug() << "LAsc:  c1[0] c1[H] c1[N]"
  << conc1[0] << conc1[ncs/2] << conc1[ncs-1];
 
+         double cmax = 0.0;
+         double rmax = 0.0;
          for ( int jj = 0; jj < ncs; jj++ )
          {  // update concentration vector with linear interpolation for time
             af_data.scan[ kt ].conc[ jj ] += ( conc0[ jj ] * f0 +
                                                conc1[ jj ] * f1 );
+            double Cm = af_data.scan[ kt ].conc[ jj ];
+            if ( Cm > cmax )
+            {
+               cmax = Cm;
+               rmax = af_data.radius[ jj ];
+            }
          }
+qDebug() << "LAsc: t=" << ts << "Cmax=" << cmax << " r=" << rmax;
 qDebug() << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
  << af_data.scan[kt].conc[ncs/2] << af_data.scan[kt].conc[ncs-1] << kt;
 
@@ -827,15 +870,18 @@ qDebug() << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
       if ( kt >= nts )
          break;   // if all scans updated, we are done
 
-      // switch x,u arrays for next iteration
-      N0    = N1;
-      N0u   = N1u;
-      dtmp  = x0;
-      x0    = x1;
-      x1    = dtmp;
-      dtmp  = u0;
-      u0    = u1;
-      u1    = dtmp;
+      //if ( jt < ntc )
+      //{
+         // switch x,u arrays for next iteration
+         N0    = N1;
+         N0u   = N1u;
+         dtmp  = x0;
+         x0    = x1;
+         x1    = dtmp;
+         dtmp  = u0;
+         u0    = u1;
+         u1    = dtmp;
+      //}
    }
     
    delete [] x0;  // clean up
@@ -1201,9 +1247,13 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
    double  rho;
    double  visc;
    double  Tempt  = 293.15;    // temperature in K
-   double  vbar   =  0.72 ;    // 0.251; 
+   double  vbar   = 0.72;      // 0.251; 
    double  vbar_w = vbar;
+   //double  vbar   = 0.251;
+   //double  vbar_w = 0.72;
    double  rho_w  = 0.998234;  //  density of water
+   double  rmark;
+   double  rdif;
 
    switch ( NonIdealCaseNo )
    {
@@ -1230,6 +1280,7 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
   
          saltdata->InterpolateCSalt( Nv, x, t, Csalt);     // Csalt at (x, t)
 
+rmark=1.0/0.72;
          for ( j = 0; j < Nv; j++ )
          {
             // salt concentration
@@ -1240,6 +1291,10 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
                                   + Cm * ( 1.27445e-3
                                   + Cm * ( -11.954e-4
                                   + Cm * 258.866e-6 ) ) ) + 6.e-6;
+rdif = rho - rmark;
+rdif = rdif < 0.0 ? -rdif : rdif;
+if ( rdif < 0.001 )
+qDebug() << "AdjSD: rho rad t" << rho << x[j] << t << rdif << j << Nv;
 
             visc       = 1.00194 - 19.4104e-3 * sqrt( Cm )
                                   + Cm * ( -4.07863e-2
@@ -1248,7 +1303,7 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
       
             s_adj[ j ] = ( 1 - vbar * rho ) * 1.00194
                          / ( ( 1 - vbar_w * rho_w ) * visc )     * param_s;
-s_adj[j] = s_adj[j] > 0.0 ? s_adj[j] : -s_adj[j];
+//s_adj[j] = s_adj[j] > 0.0 ? s_adj[j] : -s_adj[j];
 
             D_adj[ j ] = ( Tempt * 1.00194 ) / ( 293.15 * visc ) * param_D;
          }
