@@ -170,7 +170,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
          tr( "Radius (cm)" ), tr( "Concentration" ) );
    us_grid  ( scanPlot );
    scanPlot->setMinimumSize( 600, 275);
-   scanPlot->setAxisScale( QwtPlot::yLeft, 0.0, 2.0 );
+   scanPlot->setAxisScale( QwtPlot::yLeft,   0.0, 2.0 );
    scanPlot->setAxisScale( QwtPlot::xBottom, 5.8, 7.2 );
    plot->addLayout( plot2 );
 
@@ -313,7 +313,7 @@ void US_Astfem_Sim::change_model( US_Model m )
    if ( system.components[ 0 ].sigma != 0.0  ||
         system.components[ 0 ].delta != 0.0  ||
         system.coSedSolute           >= 0    ||
-        system.compressibility       != 0 )
+        system.compressibility       != COMP_25W )
       simparams.meshType = US_SimulationParameters::ASTFVM;
 
    else  // normal (ideal) default
@@ -448,12 +448,12 @@ void US_Astfem_Sim::start_simulation( void )
       scan->delta_r     = simparams.radial_resolution;
       double rvalue     = ( i == 0 ) ?
          system.components[ 0 ].signal_concentration : 0.0;
+      //double rvalue     = 0.0;
 
       scan->readings.resize( points );
       for ( int j = 0; j < points; j++ ) 
       {
-         scan->readings[ j ].value  = rvalue;
-         scan->readings[ j ].stdDev = 0.0;
+         scan->readings[ j ] = US_DataIO2::Reading( rvalue );
       }
 
       scan->interpolated.resize( ( points + 7 ) / 8 );
@@ -476,7 +476,7 @@ void US_Astfem_Sim::start_simulation( void )
 
       current_time = sp->delay_hours    * 3600 + sp->delay_minutes    * 60;
       duration     = sp->duration_hours * 3600 + sp->duration_minutes * 60;
-      increment    = ( duration - current_time ) / sp->scans;
+      increment    = ( duration - current_time ) / (double)sp->scans;
 
       for ( int j = 0; j < sp->scans; j++ )
       {
@@ -631,6 +631,15 @@ void US_Astfem_Sim::plot( void )
    // Set plot scale
    if ( simparams.band_forming )
       scanPlot->setAxisScale( QwtPlot::yLeft, 0, total_conc );
+
+   else if ( system.coSedSolute >= 0 )
+   {
+      scanPlot->setAxisAutoScale( QwtPlot::xBottom );
+      scanPlot->setAxisAutoScale( QwtPlot::yLeft   );
+      QwtPlotGrid* grid2 = us_grid  ( scanPlot );
+      grid2->enableY(    true );
+   }
+
    else
       scanPlot->setAxisScale( QwtPlot::yLeft, 0, total_conc * 2.0 );
 

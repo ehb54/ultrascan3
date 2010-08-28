@@ -95,12 +95,12 @@ class US_EXTERN US_LammAstfvm : public QObject
 
             double SaltMoler; //!< moler number of cosedimenting salt
 
+            US_DataIO2::RawData     sa_data;   // salt data 1-component
+                                               //  simulation for co-sed
          private:
 
             US_Model                model;     // salt data co-sed model
             US_SimulationParameters simparms;  // salt simulation parameters
-            US_DataIO2::RawData     sa_data;   // salt data 1-component
-                                               //  simulation for co-sed
 
             int     Nx;       // number of points in radial direction
             int     Nt;       // number of points in time direction

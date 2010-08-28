@@ -80,6 +80,10 @@ class US_SimulationParametersGui : public US_WidgetsDialog
       void save                 ( void   );
       void accepted             ( void   );
       void revert               ( void   );
+      int  write_simpars        ( QString );
+      int  read_simpars         ( QString );
+      void disconnect_all       ( void   );
+      void reconnect_all        ( void   );
 
       void update_lamella       ( double lamella )
          { simparams.band_volume = lamella; };
