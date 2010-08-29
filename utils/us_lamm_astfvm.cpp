@@ -662,6 +662,8 @@ void US_LammAstfvm::solve_component( int compx )
    int N0u;
    int N1u;
    int istep = comp_x * nts;
+//ntc=nts;
+//dt = af_data.scan[ nts - 1 ].time / (double)( ntc - 1 );
 
    QVector< double > conc0;
    QVector< double > conc1;
@@ -674,6 +676,7 @@ void US_LammAstfvm::solve_component( int compx )
 qDebug() << "LAsc:  CX=" << comp_x
  << "  ntc nts ncs nicase" << ntc << nts << ncs << NonIdealCaseNo;
 qDebug() << "LAsc:    tot_t dt" << total_t << dt;
+qDebug() << "LAsc:     b m s w2" << param_b << param_m << param_s << param_w2;
 
    if ( NonIdealCaseNo == 2 )
    {  // co-sedimenting
@@ -768,17 +771,20 @@ qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
       rads[ jj ] = af_data.radius[ jj ];
    }
 
-   int ktinc = 5;                           // signal progress every 5th scan
+   int    ktinc = 5;                        // signal progress every 5th scan
+   double ts;
 
    // loop for time
-   for ( jt = 0, kt = 0; jt < ntc; jt++ )
+   //for ( jt = 0, kt = 0; jt < ntc; jt++ )
+   for ( jt = 0, kt = 0; kt < nts; jt++ )
    {
       //if ( jt < ntc )
       //{
          t0    = dt * (double)jt;
          t1    = t0 + dt;
       //}
-qDebug() << "LAsc:    jt kt t0 t1" << jt << kt << t0 << t1;
+      ts    = af_data.scan[ kt ].time;           // time at output scan
+qDebug() << "LAsc:    jt kt t0 ts t1" << jt << kt << t0 << ts << t1;
 
       u1p0  = new double [ N0u ];
 
@@ -814,9 +820,9 @@ qDebug() << "LAsc:    jt kt t0 t1" << jt << kt << t0 << t1;
       }
 
       // see if current scan is between calculated times; output scan if so
-      double ts  = af_data.scan[ kt ].time;           // time at output scan
 
       if ( ts >= t0  &&  ts <= t1 )
+      //if ( ts >= t0  )
       {  // interpolate concentrations quadratically; linearly in time
          double f0 = ( t1 - ts ) / ( t1 - t0 );       // fraction of conc0
          double f1 = ( ts - t0 ) / ( t1 - t0 );       // fraction of conc1
@@ -863,6 +869,12 @@ qDebug() << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
          }
 
          kt++;    // bump output time(scan) index
+
+         if ( kt < nts )
+            ts    = af_data.scan[ kt ].time;
+
+         if ( ts <= t1 )
+            jt--;
       }
 
       delete [] u1p0;
@@ -871,7 +883,9 @@ qDebug() << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
          break;   // if all scans updated, we are done
 
       //if ( jt < ntc )
-      //{
+      //if ( (jt+1) < ntc )
+      if ( ts > t1 )
+      {
          // switch x,u arrays for next iteration
          N0    = N1;
          N0u   = N1u;
@@ -881,8 +895,34 @@ qDebug() << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
          dtmp  = u0;
          u0    = u1;
          u1    = dtmp;
-      //}
+      }
    }
+
+   // calculate and print the integral of scan curves
+   double cimn = 9e+14;
+   double cimx = 0.0;
+   double ciav = 0.0;
+   double dltr = ( af_data.radius[ 1 ] - af_data.radius[ 0 ] ) * 0.5;
+   for ( int ii = 0; ii < af_data.scan.size(); ii++ )
+   {
+      double csum = 0.0;
+      double cpre = af_data.scan[ ii ].conc[ 0 ];
+      for ( int jj = 1; jj < af_data.scan[ ii ].conc.size(); jj++ )
+      {
+         double cval = af_data.scan[ ii ].conc[ jj ];
+         csum       += ( ( cval + cpre ) * dltr );
+         cpre        = cval;
+      }
+      qDebug() << "Scan" << ii + 1 << "  Integral" << csum;
+      cimn        = ( cimn < csum ) ? cimn : csum;
+      cimx        = ( cimx > csum ) ? cimx : csum;
+      ciav       += csum;
+   }
+   ciav       /= (double)af_data.scan.size();
+   double cidf = cimx - cimn;
+   double cidp = (double)( qRound( 10000.0 * cidf / ciav ) ) / 100.0;
+   qDebug() << "  Integral Min Max Mean" << cimn << cimx << ciav;
+   qDebug() << "  ( range of" << cidf << "=" << cidp << " percent of mean )";
     
    delete [] x0;  // clean up
    delete [] u0;
