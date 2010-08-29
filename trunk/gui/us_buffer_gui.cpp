@@ -681,10 +681,6 @@ void US_BufferGui::read_from_disk( QListWidgetItem* item )
       QString index = buffer.componentIDs[ i ];
       buffer.component << component_list[ index ];
    }
-
-//for ( int i=0; i < buffer.component.size(); i++ ) 
-//   qDebug() << "buffer.component[ i ]" << buffer.component[ i ].componentID;
-
 }
 
 void US_BufferGui::read_from_db( QListWidgetItem* item )
@@ -1000,10 +996,16 @@ void US_BufferGui::save_db( void )
 
       if ( db.lastErrno() != US_DB2::OK )
       {
+         QString msg = ( db.lastErrno() == US_DB2::INSERTDUP )
+                       ? "The buffer already exists.\n"
+                         "Use 'Update' to save changes."
+                       : db.lastError();
+
          QMessageBox::information( this,
                tr( "Attention" ), 
-               tr( "Error saving buffer to the database:\n" )
-               + db.lastError() );
+               tr( "Error updating buffer in the database:\n" )
+               + msg );
+
          return;
       }
 
@@ -1096,10 +1098,15 @@ void US_BufferGui::update_db( void )
 
       if ( db.lastErrno() != US_DB2::OK )
       {
+         QString msg = ( db.lastErrno() == US_DB2::INSERTDUP )
+                       ? "The buffer already exists.\n"
+                         "Use 'Update' to save changes."
+                       : db.lastError();
+
          QMessageBox::information( this,
                tr( "Attention" ), 
                tr( "Error updating buffer in the database:\n" )
-               + db.lastError() );
+               + msg );
          return;
       }
 
@@ -1159,11 +1166,11 @@ void US_BufferGui::add_component( void )
 
    if ( manualUpdate ) lw_buffer->clear();
 
-   QString s;
-   bool    newItem = true;
-   QListWidgetItem* item = lw_ingredients->item( lw_ingredients->currentRow() ); 
-   //QString index   = QString::number( lw_ingredients->currentRow() + 1 );
-   QString index = QString::number( item->type() );
+   QString          s;
+   bool             newItem = true;
+   int              row     = lw_ingredients->currentRow();
+   QListWidgetItem* item    = lw_ingredients->item( row );
+   QString          index   = QString::number( item->type() );
 
    US_BufferComponent std_bc = component_list[ index ];
    
@@ -1188,8 +1195,6 @@ void US_BufferGui::add_component( void )
    // Add a new ingredient to this buffer
    if ( newItem ) 
    {
-   //   US_BufferComponent component;
-      
       buffer.concentration << partial_concentration;
       buffer.component     << std_bc;
       buffer.componentIDs  << std_bc.componentID;
