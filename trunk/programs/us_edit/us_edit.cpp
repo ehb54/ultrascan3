@@ -256,7 +256,9 @@ US_Edit::US_Edit() : US_Widgets()
    data_plot->enableAxis( QwtPlot::yLeft  , true );
 
    pick = new US_PlotPicker( data_plot );
-   pick->setRubberBand( QwtPicker::VLineRubberBand );
+   // Set rubber band to display for Control+Left Mouse Button
+   pick->setRubberBand  ( QwtPicker::VLineRubberBand );
+   pick->setMousePattern( QwtEventPattern::MouseSelect1, Qt::LeftButton, Qt::ControlModifier );
 
    left->addLayout( specs );
    left->addStretch();
@@ -266,7 +268,6 @@ US_Edit::US_Edit() : US_Widgets()
    main->addLayout( plot );
    top ->addLayout( main );
 
-   //partial_reset = false;
    reset();
 }
 
@@ -783,19 +784,22 @@ void US_Edit::mouse( const QwtDoublePoint& p )
                swap_double( meniscus_left, meniscus_right );
 
             // Find the radius for the max value
-            double          maximum = -1.0e99;
-            US_DataIO2::Scan s;
+            double            maximum = -1.0e99;
+            US_DataIO2::Scan* s;
 
-            foreach ( s, data.scanData )
+            for ( int i = 0; i < data.scanData.size(); i++ )
             {
-               int start = US_DataIO2::index( s, data.x, meniscus_left  );
-               int end   = US_DataIO2::index( s, data.x, meniscus_right );
+               if ( ! includes.contains( i - 1 ) ) continue;
+
+               s         = &data.scanData[ i ];
+               int start = US_DataIO2::index( *s, data.x, meniscus_left  );
+               int end   = US_DataIO2::index( *s, data.x, meniscus_right );
 
                for ( int j = start; j <= end; j++ )
                {
-                  if ( maximum < s.readings[ j ].value )
+                  if ( maximum < s->readings[ j ].value )
                   {
-                     maximum  = s.readings[ j ].value;
+                     maximum  = s->readings[ j ].value;
                      meniscus = data.x[ j ].radius;
                   }
                }
@@ -952,6 +956,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
 
             QString str;
             le_baseline->setText( str.sprintf( "%.3f (%.3e)", p.x(), bl ) );
+            plot_range();
          }
 
          pb_write      ->setEnabled( true );
@@ -1746,10 +1751,10 @@ void US_Edit::subtract_residuals( void )
 {
    for ( int i = 0; i < data.scanData.size(); i++ )
    {
+     if ( ! includes.contains( i ) ) continue;
+
      for ( int j = 0; j <  data.scanData[ i ].readings.size(); j++ )
-     {
          data.scanData[ i ].readings[ j ].value -= residuals[ i ];
-     }
    }
 
    pb_residuals->setEnabled( false );
