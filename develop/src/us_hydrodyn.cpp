@@ -2717,43 +2717,70 @@ void US_Hydrodyn::view_bead_model()
    }
 }
 
-void US_Hydrodyn::visualize()
+void US_Hydrodyn::visualize(bool movie_frame, QString dir)
 {
+   QString use_dir = ( dir == "" ? somo_dir : dir );
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
          if (somo_processed[current_model]) {
             bead_model = bead_models[current_model];
-            write_bead_spt(somo_dir + SLASH + project +
+            write_bead_spt(use_dir + SLASH + project +
                            (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
                            QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-                           DOTSOMO, &bead_model);
+                           DOTSOMO, &bead_model, movie_frame);
             editor->append(QString("Visualizing model %1\n").arg(current_model + 1));
             QStringList argument;
 #if !defined(WIN32)
             // maybe we should make this a user defined terminal window?
-            argument.append("xterm");
-            argument.append("-e");
+            if ( !movie_frame )
+            {
+               argument.append("xterm");
+               argument.append("-e");
+            }
 #endif
 #if defined(BIN64)
             argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
 #else
             argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
 #endif
-            argument.append("-script");
-            argument.append(
-                            project +
-                            (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-                            QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-                            DOTSOMO + ".spt");
-
-            rasmol->setWorkingDirectory(somo_dir);
+            if ( !movie_frame )
+            {
+               argument.append("-script");
+               argument.append(
+                               project +
+                               (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+                               QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
+                               DOTSOMO + ".spt");
+            }
+         
+            rasmol->setWorkingDirectory(use_dir);
 
             rasmol->setArguments(argument);
-            if (!rasmol->start())
+
+            if ( movie_frame )
             {
-               QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-                                                           "Please check to make sure RASMOL is properly installed..."));
-               return;
+               if (!rasmol->launch(last_spt_text))
+               {
+                  QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+                                                              "Please check to make sure RASMOL is properly installed..."));
+                  return;
+               }
+               cout << "movie text [" << last_spt_text << "]\n";
+               //               rasmol->writeToStdin(last_spt_text);
+               //               rasmol->closeStdin();
+               //               qApp->processEvents();
+               while ( rasmol && rasmol->isRunning() )
+               {
+                  usleep(1000);
+                  qApp->processEvents();
+               }
+            } else {
+               if (!rasmol->start())
+               {
+                  QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+                                                              "Please check to make sure RASMOL is properly installed..."));
+                  return;
+               }
             }
          }
          else

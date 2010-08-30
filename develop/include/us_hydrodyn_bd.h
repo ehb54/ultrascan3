@@ -69,6 +69,7 @@ class US_EXTERN US_Hydrodyn_BD : public QFrame
       US_Config *USglobal;
 
       QLabel *lbl_info;
+      QLabel *lbl_credits;
       QLabel *lbl_browflex;
       QLabel *lbl_anaflex;
 

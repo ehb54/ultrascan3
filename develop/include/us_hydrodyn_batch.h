@@ -87,6 +87,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QPushButton   *pb_select_all;
       QPushButton   *pb_remove_files;
       QPushButton   *pb_load_somo;
+      QPushButton   *pb_make_movie;
 
       QLabel        *lbl_total_files;
       QLabel        *lbl_selected;
@@ -182,6 +183,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void select_save_params();
       void set_saveParams();
       void stop();
+
+      void make_movie();
 
       void cancel();
       void help();

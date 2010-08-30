@@ -1,0 +1,198 @@
+#include "../include/us_hydrodyn_batch_movie_opts.h"
+
+US_Hydrodyn_Batch_Movie_Opts::US_Hydrodyn_Batch_Movie_Opts(
+                                                           QString    msg,
+                                                           QString    *dir,
+                                                           QString    somo_dir,
+                                                           QString    *file,
+                                                           float      *fps,
+                                                           bool       *cancel_req,
+                                                           bool       *clean_up,
+                                                           QWidget *p,
+                                                           const char *name
+                                                           ) : QDialog(p, name)
+{
+   this->msg = msg;
+   this->dir = dir;
+   this->file = file;
+   this->fps = fps;
+   this->cancel_req = cancel_req;
+   this->cancel_req = false;
+   this->clean_up = clean_up;
+   this->somo_dir = somo_dir;
+
+   USglobal = new US_Config();
+   setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   setCaption("Set parameters for movie file");
+   setupGUI();
+   global_Xpos = 200;
+   global_Ypos = 150;
+   setGeometry(global_Xpos, global_Ypos, 0, 0);
+}
+
+US_Hydrodyn_Batch_Movie_Opts::~US_Hydrodyn_Batch_Movie_Opts()
+{
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
+{
+   int minHeight1 = 30;
+   int minHeight2 = 30;
+
+   lbl_info = new QLabel(msg, this);
+   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setMinimumHeight(minHeight2);
+   lbl_info->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   lbl_dir = new QLabel(tr(" Directory for movie file:"), this);
+   Q_CHECK_PTR(lbl_dir);
+   lbl_dir->setAlignment(AlignLeft|AlignVCenter);
+   lbl_dir->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_dir = new QLineEdit(this, "Dir Line Edit");
+   le_dir->setText(*dir);
+   le_dir->setAlignment(AlignCenter | AlignVCenter);
+   le_dir->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_dir->setEnabled(true);
+   connect(le_dir, SIGNAL(textChanged(const QString &)), SLOT(update_dir(const QString &)));
+
+   lbl_file = new QLabel(tr(" Name of movie file (.avi will be appended):"), this);
+   Q_CHECK_PTR(lbl_file);
+   lbl_file->setAlignment(AlignLeft|AlignVCenter);
+   lbl_file->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_file = new QLineEdit(this, "File Line Edit");
+   le_file->setText(*file);
+   le_file->setMinimumWidth(300);
+   le_file->setAlignment(AlignCenter | AlignVCenter);
+   le_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_file->setEnabled(true);
+   connect(le_file, SIGNAL(textChanged(const QString &)), SLOT(update_file(const QString &)));
+
+   lbl_fps = new QLabel(tr(" Frames per second:"), this);
+   Q_CHECK_PTR(lbl_fps);
+   lbl_fps->setAlignment(AlignLeft|AlignVCenter);
+   lbl_fps->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_fps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_fps = new QLineEdit(this, "Fps Line Edit");
+   le_fps->setText(QString("%1").arg(*fps));
+   le_fps->setAlignment(AlignCenter | AlignVCenter);
+   le_fps->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_fps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_fps->setEnabled(true);
+   connect(le_fps, SIGNAL(textChanged(const QString &)), SLOT(update_fps(const QString &)));
+
+   cb_clean_up = new QCheckBox(this);
+   cb_clean_up->setText(tr("Clean up files (ppm, gifs, spts)"));
+   cb_clean_up->setEnabled(true);
+   cb_clean_up->setChecked(*clean_up);
+   cb_clean_up->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_clean_up->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_clean_up, SIGNAL(clicked()), this, SLOT(set_clean_up()));
+
+   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_cancel->setMinimumHeight(minHeight1);
+   pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
+
+   pb_help = new QPushButton("Help", this);
+   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_help->setMinimumHeight(minHeight2);
+   pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_help, SIGNAL(clicked()), SLOT(help()));
+
+   label_font_ok = QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label);
+   label_font_warning = QPalette(USglobal->global_colors.cg_label_warn, USglobal->global_colors.cg_label_warn, USglobal->global_colors.cg_label_warn);
+
+   int j = 0;
+
+   QGridLayout *background = new QGridLayout(this);
+
+   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   j++;
+   background->addWidget(lbl_dir, j, 0);
+   background->addWidget(le_dir, j, 1);
+   j++;
+   background->addWidget(lbl_file, j, 0);
+   background->addWidget(le_file, j, 1);
+   j++;
+   background->addWidget(lbl_fps, j, 0);
+   background->addWidget(le_fps, j, 1);
+   j++;
+   background->addMultiCellWidget(cb_clean_up, j, j, 0, 1);
+   j++;
+   QHBoxLayout *hbl = new QHBoxLayout;
+   hbl->addWidget(pb_help);
+   hbl->addWidget(pb_cancel);
+   background->addMultiCellLayout(hbl, j, j, 0, 1);
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::cancel()
+{
+   close();
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::help()
+{
+   US_Help *online_help;
+   online_help = new US_Help(this);
+   online_help->show_help("manual/somo_batch_movie_opts.html");
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::update_dir(const QString &str)
+{
+   *dir = str;
+   if ( str == "" )
+   {
+      *dir = somo_dir;
+      le_dir->setText(*dir);
+   }
+   update_dir_msg();
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::update_file(const QString &str)
+{
+   *file = str;
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::update_fps(const QString &str)
+{
+   *fps = str.toFloat();
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::set_clean_up()
+{
+   *clean_up = cb_clean_up->isChecked();
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::update_dir_msg()
+{
+   QFileInfo fi(*dir);
+   if ( !fi.exists() )
+   {
+      lbl_dir->setPalette(label_font_warning);
+      lbl_dir->setText(tr(" Directory for movie file (Warning: does not exist):"));
+   } else {
+      if ( !fi.isDir() )
+      {
+         lbl_dir->setPalette(label_font_warning);
+         lbl_dir->setText(tr(" Directory for movie file (Error: not a directory!):"));
+      } else {
+         if ( !fi.isWritable() )
+         {
+            lbl_dir->setPalette(label_font_warning);
+            lbl_dir->setText(tr(" Directory for movie file (Error: not writable!):"));
+         } else {
+            lbl_dir->setPalette(label_font_ok);
+            lbl_dir->setText(tr(" Directory for movie file:"));
+         }
+      }
+   }
+}

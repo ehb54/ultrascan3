@@ -61,6 +61,14 @@ void US_Hydrodyn_BD::setupGUI()
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
+   lbl_credits = new QLabel("SIMUFLEX BD suite, by J. Garcia de la Torre et al. (JCTC 5:2606-18, 2009)", this);
+   Q_CHECK_PTR(lbl_credits);
+   lbl_credits->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_credits->setAlignment(AlignCenter|AlignVCenter);
+   lbl_credits->setMinimumHeight(minHeight1);
+   lbl_credits->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_credits->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
    lbl_browflex = new QLabel(tr("Browflex:"), this);
    Q_CHECK_PTR(lbl_browflex);
    lbl_browflex->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -208,6 +216,8 @@ void US_Hydrodyn_BD::setupGUI()
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   j++;
+   background->addMultiCellWidget(lbl_credits, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(lbl_browflex, j, j, 0, 1);
    j++;

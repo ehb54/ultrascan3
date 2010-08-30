@@ -2903,8 +2903,8 @@ int US_Hydrodyn::get_color(PDB_atom *a) {
    return color;
 }
 
-void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
-
+void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool movie_frame) 
+{
    char *colormap[] =
       {
          "black",        // 0 black
@@ -2958,10 +2958,14 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
            beads + 1,
            QFileInfo(fname).fileName().ascii()
            );
-   fprintf(fspt,
-           "load xyz %s\nselect all\nwireframe off\nset background white\n",
-           QString("%1.bms").arg(QFileInfo(fname).fileName()).ascii()
-           );
+   //   fprintf(fspt,
+   //           "load xyz %s\nselect all\nwireframe off\nset background white\n",
+   //           QString("%1.bms").arg(QFileInfo(fname).fileName()).ascii()
+   //           );
+
+   last_spt_text = 
+      QString("").sprintf("load xyz %s\nselect all\nwireframe off\nset background white\n",
+                          QString("%1.bms").arg(QFileInfo(fname).fileName()).ascii());
 
    int atomno = 0;
    for (unsigned int i = 0; i < model->size(); i++) {
@@ -2988,14 +2992,26 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
                  (*model)[i].bead_coordinate.axis[1] / scaling,
                  (*model)[i].bead_coordinate.axis[2] / scaling
                  );
-         fprintf(fspt,
-                 "select atomno=%d\nspacefill %.2f\ncolour %s\n",
-                 ++atomno,
-                 (*model)[i].bead_computed_radius / scaling,
-                 colormap[get_color(&(*model)[i])]
-                 );
+         last_spt_text += QString("")
+            .sprintf(
+                     "select atomno=%d\nspacefill %.2f\ncolour %s\n",
+                     ++atomno,
+                     (*model)[i].bead_computed_radius / scaling,
+                     colormap[get_color(&(*model)[i])]
+                     );
       }
    }
+   if ( movie_frame )
+   {
+      last_spt_text += QString("")
+         .sprintf(
+                  "write ppm %s.ppm\n"
+                  "exit\n",
+                  fname.ascii()
+                  );
+      movie_text.push_back(fname);
+   }
+   fprintf(fspt, last_spt_text.ascii());
    fclose(fspt);
    fclose(fbms);
 }
@@ -3152,7 +3168,8 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
 }
 
 
-void US_Hydrodyn::write_corr(QString fname, vector<PDB_atom> *model) {
+void US_Hydrodyn::write_corr( QString fname, vector<PDB_atom> *model ) 
+{
    FILE *fcorr = (FILE *)0;
    fcorr = fopen(QString("%1.corr").arg(fname).ascii(), "w");
    vector <PDB_atom *> use_model;
@@ -3200,7 +3217,7 @@ void US_Hydrodyn::write_corr(QString fname, vector<PDB_atom> *model) {
          }
          if (fcorr) {
             fprintf(fcorr,
-                    "%s\n%s\n%s\n%s\n%s\n%f\n%f\n%f\n%d\n%u\n%d\n",
+                    "%s\n%s\n%s\n%s\n%s\n%f\n%f\n%f\n%d\n%u\n%d\n%u\n",
                     use_model[i]->name.ascii(),
                     use_model[i]->resName.ascii(),
                     use_model[i]->chainID.ascii(),
@@ -3211,7 +3228,9 @@ void US_Hydrodyn::write_corr(QString fname, vector<PDB_atom> *model) {
                     use_model[i]->bead_recheck_asa,
                     use_model[i]->chain,
                     use_model[i]->serial,
-                    use_model[i]->exposed_code);
+                    use_model[i]->exposed_code,
+                    use_model[i]->bead_color
+                    );
          }
       }
    }
@@ -3242,6 +3261,7 @@ bool US_Hydrodyn::read_corr(QString fname, vector<PDB_atom> *model) {
          new_model[i].chain = ts.readLine().toInt();
          new_model[i].serial = ts.readLine().toUInt();
          new_model[i].exposed_code = ts.readLine().toInt();
+         new_model[i].bead_color = ts.readLine().toUInt();
          i++;
       }
       // only update if read matches
@@ -3260,11 +3280,14 @@ bool US_Hydrodyn::read_corr(QString fname, vector<PDB_atom> *model) {
             (*model)[i].chain = new_model[i].chain;
             (*model)[i].serial = new_model[i].serial;
             (*model)[i].exposed_code = new_model[i].exposed_code;
+            (*model)[i].bead_color = new_model[i].bead_color;
          }
          result = true;
          editor->append("Correspondence file ok\n");
+         cout << "read_corr: Correspondence file ok\n";
       } else {
          editor->append(QString("Correspondence file didn't match %1\n").arg(fname));
+         cout << "read_corr: Correspondence file not ok\n";
       }
    }
    f.close();

@@ -49,6 +49,7 @@
 #include "us_hydrodyn_dammin_opts.h"
 #include "us_hydrodyn_bd_load_results_opts.h"
 #include "us_hydrodyn_bd.h"
+#include "us_hydrodyn_batch_movie_opts.h"
 
 //standard C and C++ defs:
 
@@ -122,6 +123,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QCheckBox *cb_overwrite;
       QString last_hydro_res;
       void bd_anaflex_enables( bool flag ); // turns buttons on/off based upon current status
+      vector < QString > movie_text;
 
    private:
       bool residue_widget;
@@ -288,7 +290,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QProcess *rasmol;
 
       QString getExtendedSuffix(bool prerun = true, bool somo = true); 
-
+      
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
@@ -399,6 +401,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QString last_read_bead_model;
 
+      QString last_spt_text;
+
       // needed 
 
 #ifdef WIN32
@@ -436,6 +440,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void anaflex_load_results();
 
       void stop_calc(); // stop some operations
+      void visualize(bool movie_frame = false, QString dir = "");
 
    private slots:
       void browflex_readFromStdout();
@@ -495,7 +500,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void write_config(const QString &);
       void reset();
       void set_default();
-      void visualize();
       void update_bead_model_file(const QString &);
       void update_bead_model_prefix(const QString &);
       void radial_reduction();
@@ -506,7 +510,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void write_bead_asa(QString, vector <PDB_atom> *);
       void write_bead_tsv(QString, vector <PDB_atom> *);
       void write_bead_ebf(QString, vector <PDB_atom> *);
-      void write_bead_spt(QString, vector <PDB_atom> *);
+      void write_bead_spt(QString, vector <PDB_atom> *, bool movie_frame = false);
       void write_bead_model(QString, vector <PDB_atom> *);
       void write_corr(QString, vector <PDB_atom> *);
       bool read_corr(QString, vector <PDB_atom> *);

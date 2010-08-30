@@ -152,6 +152,18 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_load_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_somo, SIGNAL(clicked()), SLOT(load_somo()));
 
+   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   {
+      pb_make_movie = new QPushButton(tr("Make movie"), this);
+      Q_CHECK_PTR(pb_make_movie);
+      pb_make_movie->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+      pb_make_movie->setMinimumHeight(minHeight1);
+      pb_make_movie->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+      connect(pb_make_movie, SIGNAL(clicked()), SLOT(make_movie()));
+   } else {
+      pb_make_movie = (QPushButton *) 0;
+   }
+
    lbl_total_files = new QLabel(tr("Total Files: 0 "), this);
    lbl_total_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_total_files->setAlignment(AlignCenter|AlignVCenter);
@@ -377,6 +389,10 @@ void US_Hydrodyn_Batch::setupGUI()
    hbl_selection_ops->addWidget(pb_select_all);
    hbl_selection_ops->addWidget(pb_remove_files);
    hbl_selection_ops->addWidget(pb_load_somo);
+   if ( pb_make_movie )
+   {
+      hbl_selection_ops->addWidget(pb_make_movie);
+   }
 
    QHBoxLayout *hbl_counts = new QHBoxLayout;
    hbl_counts->addWidget(lbl_total_files);
@@ -734,6 +750,10 @@ void US_Hydrodyn_Batch::update_enables()
    pb_remove_files->setEnabled(count_selected);
    pb_screen->setEnabled(count_selected);
    pb_load_somo->setEnabled(count_selected == 1);
+   if ( pb_make_movie )
+   {
+      pb_make_movie->setEnabled(count_selected > 1);
+   }
    cb_hydro->setEnabled(lb_files->numRows());
    cb_avg_hydro->setEnabled(lb_files->numRows() && batch->hydro);
    le_avg_hydro_name->setEnabled(lb_files->numRows() && batch->hydro && batch->avg_hydro);
@@ -1424,5 +1444,152 @@ void US_Hydrodyn_Batch::clear_files()
    batch->file.clear();
    status.clear();
    lb_files->clear();
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::make_movie()
+{
+   puts("make movie");
+   ((US_Hydrodyn *)us_hydrodyn)->movie_text.clear();   
+   disable_updates = true;
+   QString cmds = "";
+
+   QString proc_dir;
+   QString output_file;
+   float fps = 1;
+   bool cancel_req = false;
+   bool clean_up = true;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      // load file into somo
+      if ( lb_files->isSelected(i) )
+      {
+         QString file = get_file_name(i);
+         output_file = QFileInfo(file).baseName();
+         proc_dir = QFileInfo(file).dirPath();
+         break;
+      }
+   }
+
+   US_Hydrodyn_Batch_Movie_Opts *hbmo = 
+      new US_Hydrodyn_Batch_Movie_Opts (
+                                        QString(tr("Select parameters for movie file:")),
+                                        &proc_dir,
+                                        ((US_Hydrodyn *)us_hydrodyn)->somo_dir,
+                                        &output_file,
+                                        &fps,
+                                        &cancel_req,
+                                        &clean_up
+                                        );
+
+   hbmo->exec();
+   delete hbmo;
+
+   if ( !cancel_req )
+   {
+      QFileInfo fi(proc_dir);
+      QColor save_color = editor->color();
+      if ( !fi.exists() )
+      {
+         QDir new_dir;
+         if ( !new_dir.mkdir(proc_dir) ) 
+         {
+            editor->setColor("red");
+            editor->append(tr("Error: Could not create directory " + proc_dir + "\n"));
+            editor->setColor(save_color);
+            cancel_req = true;
+         } else {
+            editor->setColor("dark blue");
+            editor->append(tr("Notice: creating directory " + proc_dir + "\n"));
+            editor->setColor(save_color);
+         }
+      } else {
+         if ( !fi.isDir() )
+         {
+            editor->setColor("red");
+            editor->append(tr("Error: ") + proc_dir + tr(" not a directory\n"));
+            editor->setColor(save_color);
+            cancel_req = true;
+         } else {
+            if ( !fi.isWritable() )
+            {
+               editor->setColor("red");
+               editor->append(tr("Error: ") + proc_dir + tr(" not writable (check permissions)\n"));
+               editor->setColor(save_color);
+               cancel_req = true;
+            }
+         }
+      }
+   }
+
+   if ( cancel_req )
+   {
+      disable_updates = false;
+      update_enables();
+      return;
+   }
+   
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      // load file into somo
+      if ( lb_files->isSelected(i) )
+      {
+         bool result;
+         QString file = get_file_name(i);
+         QString dir = QFileInfo(file).dirPath();
+         QColor save_color = editor->color();
+         if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
+         {
+            // result = ((US_Hydrodyn *)us_hydrodyn)->screen_pdb(file, true);
+            editor->setColor("red");
+            editor->append(QString(tr("PDB not yet supported for movie frames: %1")).arg(file));
+         } else {
+            result = screen_bead_model(file);
+            if ( result ) 
+            {
+               editor->setColor("dark blue");
+               editor->append(QString(tr("Screening: %1 ok.").arg(file)));
+            } else {
+               editor->setColor("red");
+               editor->append(QString(tr("Screening: %1 FAILED.").arg(file)));
+            }
+            editor->setColor("dark blue");
+            editor->append(QString(tr("Creating movie frame for %1")).arg(file));
+            ((US_Hydrodyn *)us_hydrodyn)->visualize(true,proc_dir);
+         }
+      }
+   }
+   if ( ((US_Hydrodyn *)us_hydrodyn)->movie_text.size() ) 
+   {
+      // here we ppmtogif and mencoder
+      QString cmd1 = "cd " + proc_dir + "\n";
+      QString cmd2 = cmd1 + "mencoder -o " + output_file + ".avi -ovc lavc -fps " + QString("%1").arg(fps);
+      QString cmd3 = cmd1;
+      for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->movie_text.size(); i++ )
+      {
+         QString file = ((US_Hydrodyn *)us_hydrodyn)->movie_text[i];
+         QFileInfo fi(file);
+         cout << i << ":" << fi.fileName() << endl;
+         cmd1 += 
+            "ppmtogif " + fi.fileName() + ".ppm > " + fi.fileName() + ".gif\n";
+         cmd2 += " " + fi.fileName() + ".gif";
+         cmd3 += 
+            "rm " + fi.fileName() + ".gif;"
+            "rm " + fi.fileName() + ".ppm;"
+            "rm " + fi.fileName() + ".spt;"
+            "rm " + fi.fileName() + ".bms\n";
+      }
+      cout << "cmd1 [" << cmd1 << "]\ncmd2 [" << cmd2 << "]\ncmd3 [" << cmd3 << "]\ncmd3";
+      system(cmd1.ascii());
+      system(cmd2.ascii());
+      if ( clean_up ) 
+      {
+         system(cmd3.ascii());
+      }
+   } else {
+      cout << "what, no movie text?\n";
+   }
+   disable_updates = false;
    update_enables();
 }

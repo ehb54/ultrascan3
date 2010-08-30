@@ -1759,6 +1759,12 @@ void US_Hydrodyn::bd_anaflex_enables( bool flag )
       }
    }
 
+   if (!residue_list.size() ||
+       !model_vector.size())
+   {
+      models = 0;
+   }
+
    bd_window->pb_bd_prepare->setEnabled((bool) models);
    bd_window->pb_bd_load->setEnabled(true);
    bd_window->pb_bd_edit->setEnabled(true);
@@ -2706,7 +2712,11 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
          }
          QString model_name = basename + QString("-m%1-c%2").arg(i).arg(j);
          editor->append(QString("base name is %1\n").arg(basename));
+         write_bead_model( model_name + "-pp0", &bead_model );
          bool has_corr = read_corr(basename + ".corr", &bead_model);
+         puts(has_corr ? "has corr" : "does not have corr");
+         cout << QString("base name %1\n").arg(basename);
+         write_bead_model( model_name + "-pp1", &bead_model );
          if ( !load_results_win_done )
          {
             if ( has_corr )
@@ -2737,9 +2747,10 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
 
             load_results_win_done = true;
          }
-         // cout << "model name " << model_name << endl;
+         cout << "model name " << model_name << endl;
          if ( check_fix_overlaps )
          {
+            puts("check fix overlaps\n"); fflush(stdout);
             if ( overlap_check(true, true, true,
                                hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance) )
             {
@@ -2764,16 +2775,17 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                progress->setTotalSteps(mpos);
                progress->setProgress(progress->progress() + 1);
                qApp->processEvents();
-               puts("a1\n"); fflush(stdout);
+               puts("xa1\n"); fflush(stdout);
                write_bead_model( model_name + "-X", &bead_model );
                if ( has_corr )
                {
-                  puts("a2\n"); fflush(stdout);
-                  compute_asa();
-                  puts("a3\n"); fflush(stdout);
+                  puts("xa2\n"); fflush(stdout);
+                  //                  compute_asa();
+                  radial_reduction();
+                  puts("xa3\n"); fflush(stdout);
                   if (asa.recheck_beads)
                   {
-                     puts("a4\n"); fflush(stdout);
+                     puts("xa4\n"); fflush(stdout);
                      // puts("recheck beads disabled");
                      editor->append("Rechecking beads\n");
                      qApp->processEvents();
@@ -2784,22 +2796,27 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                   }
                   else
                   {
-                     puts("a5\n"); fflush(stdout);
+                     puts("xa5\n"); fflush(stdout);
                      editor->append("No rechecking of beads\n");
                      qApp->processEvents();
                   }
                   write_bead_model( model_name + "-Y", &bead_model );
-               } else { // ! has_corr
+               } else { 
+                  puts("xax no corr\n"); fflush(stdout);
                   if ( grid.enable_asa )
                   {
                      editor->append("ASA check\n");
                      qApp->processEvents();
                      // set all beads buried
-                     for(unsigned int i = 0; i < bead_model.size(); i++) {
-                        bead_model[i].exposed_code = 6;
-                        bead_model[i].bead_color = 6;
-                        bead_model[i].chain = 1; // all 'side' chain
+                     if ( !has_corr )
+                     {
+                        for(unsigned int i = 0; i < bead_model.size(); i++) {
+                           bead_model[i].exposed_code = 6;
+                           bead_model[i].bead_color = 6;
+                           bead_model[i].chain = 1; // all 'side' chain
+                        }
                      }
+
                      double save_threshold = asa.threshold;
                      double save_threshold_percent = asa.threshold_percent;
                      asa.threshold = asa.grid_threshold;
@@ -2876,9 +2893,12 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                         editor->append("Rechecking beads\n");
                         qApp->processEvents();
                         // all buried
-                        for(unsigned int i = 0; i < bead_model.size(); i++) {
-                           bead_model[i].exposed_code = 6;
-                           bead_model[i].bead_color = 6;
+                        if ( !has_corr )
+                        {
+                           for(unsigned int i = 0; i < bead_model.size(); i++) {
+                              bead_model[i].exposed_code = 6;
+                              bead_model[i].bead_color = 6;
+                           }
                         }
                         double save_threshold = asa.threshold;
                         double save_threshold_percent = asa.threshold_percent;
@@ -2893,13 +2913,16 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                      else
                      {
                         // all exposed
-                        for(unsigned int i = 0; i < bead_model.size(); i++) {
-                           bead_model[i].exposed_code = 1;
-                           bead_model[i].bead_color = 8;
+                        if ( !has_corr )
+                        {
+                           for(unsigned int i = 0; i < bead_model.size(); i++) {
+                              bead_model[i].exposed_code = 1;
+                              bead_model[i].bead_color = 8;
+                           }
                         }
                      }
                   }
-               } // !has_corr
+               } //
                if (stopFlag)
                {
                   editor->append("Stopped by user\n\n");
@@ -2907,15 +2930,21 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                   f.close();
                   return;
                }
-            }
-         }
+            } else {
+               puts("no overlaps found\n"); fflush(stdout);
+            }               
+         } else {
+            puts("no ! check fix overlaps\n"); fflush(stdout);
+         }            
          // set all exposed for now
+         write_bead_model( model_name + "-pp8", &bead_model );
          if ( !has_corr ) {
             for( unsigned int i = 0; i < bead_model.size(); i++) {
                bead_model[i].exposed_code = 1;
                bead_model[i].bead_color = 8;
             }
          }
+         write_bead_model( model_name + "-pp9", &bead_model );
          check_bead_model_for_nan();
          write_bead_model( model_name, &bead_model );
          model_names.push_back(  model_name + ".bead_model" );
