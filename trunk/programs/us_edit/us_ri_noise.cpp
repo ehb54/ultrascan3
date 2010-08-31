@@ -87,12 +87,12 @@ void US_RiNoise::draw_fit( double new_order )
    {
       if ( ! includes.contains( i ) ) continue;
 
-      absorbance_integral[ scan ] = 0;
+      absorbance_integral[ scan ] = 0.0;
 
       // For now, all radii are spaces equally at 0.001 cm
       const double delta_r = 0.001;
 
-      const US_DataIO2::Scan* s = &data.scanData[ scan ];
+      const US_DataIO2::Scan* s = &data.scanData[ i ];
       int value_count           = s->readings.size();
       
       // Integrate using trapezoid rule
@@ -205,7 +205,7 @@ void US_RiNoise::calc_residuals( const US_DataIO2::RawData& data,
       // For now, all radii are spaces equally at 0.001 cm
       const double delta_r = 0.001;
 
-      const US_DataIO2::Scan* s = &data.scanData[ scan ];
+      const US_DataIO2::Scan* s = &data.scanData[ i ];
       int value_count           = s->readings.size();
       
       // Integrate using trapezoid rule
