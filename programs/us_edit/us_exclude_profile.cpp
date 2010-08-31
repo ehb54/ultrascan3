@@ -26,20 +26,20 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    main->addWidget( lb_banner, row++, 0, 1, 2 );
 
    // Row
-   QLabel* lb_start = us_label( tr( "Start Profile at Scan:" ) );
+   QLabel* lb_start = us_label( tr( "Start Exclusion at Scan:" ) );
    main->addWidget( lb_start, row, 0 );
 
-   ct_start = us_counter( 2, 1.0, scanCount, 1.0 );
+   ct_start = us_counter( 2, 0.0, scanCount, 0.0 );
    ct_start->setStep( 1.0 );
    connect( ct_start, SIGNAL( valueChanged ( double ) ),
                       SLOT  ( update_start ( double ) ) );
    main->addWidget( ct_start, row++, 1 );
 
    // Row
-   QLabel* lb_stop = us_label( tr( "Stop Profile at Scan:" ) );
+   QLabel* lb_stop = us_label( tr( "Stop Exclusion at Scan:" ) );
    main->addWidget( lb_stop, row, 0 );
 
-   ct_stop = us_counter( 2, 2.0, scanCount, scanCount );
+   ct_stop = us_counter( 2, 0.0, scanCount, 0.0 );
    ct_stop->setStep( 1.0 );
    connect( ct_stop, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( update_stop  ( double ) ) );
@@ -102,7 +102,7 @@ void US_ExcludeProfile::update_start( double v )
       connect( ct_stop, SIGNAL( valueChanged ( double ) ),
                         SLOT  ( update_stop  ( double ) ) );
    }
-   update( 0.0 );
+   update();
 }
 
 void US_ExcludeProfile::update_stop( double v)
@@ -114,10 +114,10 @@ void US_ExcludeProfile::update_stop( double v)
       connect( ct_start, SIGNAL( valueChanged ( double ) ),
                          SLOT  ( update_start ( double ) ) );
    }
-   update( 0.0 );
+   update();
 }
 
-void US_ExcludeProfile::update( double )
+void US_ExcludeProfile::update( double /* unused */ )
 {
    int start = (int)ct_start->value();
    int stop  = (int)ct_stop ->value();
@@ -125,24 +125,14 @@ void US_ExcludeProfile::update( double )
 
    QList< int > excludes;
 
-   for ( int i = 0; i < start - 1; i++ ) excludes << i;
-
-   // Handle values beyond last -- go from back to front to not corrupt list 
-   for ( int i = stop; i < original.size(); i++ ) excludes << i;
-
    // Handle nth
-   for ( int i = 0; i < stop - start + 1; i++ )
-      if ( ( start + i ) % nth > 0 ) excludes << start + i;
-
-   int remaining = original.size() - excludes.size();
-
-   if ( remaining < 10 )
+   if ( start > 0 )
    {
-      QMessageBox::warning( this,
-            tr( "Exclude Error" ),
-            tr( "Your profile should include\nat least 10 scans..." ) );
+     for ( int i = start; i <= stop; i++ )
+        if ( i % nth == 0 ) excludes << ( i - 1 );
    }
 
+   int remaining = original.size() - excludes.size();
    int excluded  = excludes.size();
 
    QString scans = ( remaining == 1 ) ? tr( " scan" ) : tr( " scans" );
@@ -152,13 +142,27 @@ void US_ExcludeProfile::update( double )
    le_excluded->setText( QString::number( excluded ) + scans );
 
    if ( finished )
+   {
+      if ( remaining < 10 )
+      {
+         int result = QMessageBox::question( this,
+               tr( "Exclude Error" ),
+               tr( "Your profile should include\nat least 10 scans..." ),
+               QMessageBox::Cancel, QMessageBox::Ok);
+
+         if ( result == QMessageBox::Cancel ) return;
+      }
+
       emit finish_exclude_profile( excludes );
+   }
    else
       emit update_exclude_profile( excludes );
 }
 
 void US_ExcludeProfile::reset( void )
 {
+   ct_stop->setValue( 0.0 );
+   ct_nth ->setValue( 1.0 );
    QList< int > excludes;
    emit update_exclude_profile( excludes );
 }
@@ -172,7 +176,7 @@ void US_ExcludeProfile::terminate( void )
 void US_ExcludeProfile::done( void )
 {
    finished = true;
-   update( 0.0 );
+   update();
    close();
 }
 

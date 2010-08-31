@@ -34,7 +34,7 @@ class US_EXTERN US_ExcludeProfile : public US_WidgetsDialog
       US_Help      showHelp;
 
    private slots:
-      void update      ( double );
+      void update      ( double=0.0 );
       void update_start( double );
       void update_stop ( double );
       void terminate   ( void );
