@@ -14,17 +14,22 @@ class US_EXTERN US_RiNoise : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      US_RiNoise( const US_DataIO2::RawData&, int&, QList< double >& );
+      US_RiNoise( const US_DataIO2::RawData&, 
+                  const QList< int >&, 
+                  int&, 
+                  QList< double >& );
       
-      static void calc_residuals( const US_DataIO2::RawData&, int, 
-               QList< double >& );
+      static void calc_residuals( const US_DataIO2::RawData&, 
+                                  const QList< int >&, 
+                                  int, 
+                                  QList< double >& );
 
    private:
       const US_DataIO2::RawData& data;
+      const QList< int >&        includes;
+      int&                       order;
+      QList< double >&           residuals;
 
-      int&             order;
-
-      QList< double >& residuals;
       QTextEdit*       te_details;
                       
       QwtPlot*         data_plot;
