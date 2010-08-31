@@ -6,9 +6,11 @@
 #include "us_matrix.h"
 
 US_RiNoise::US_RiNoise( const US_DataIO2::RawData& raw, 
-                        int&                      initial_order, 
-                        QList< double >&          r )
-  :US_WidgetsDialog( 0, 0 ), data( raw ), order( initial_order ), residuals( r )
+                        const QList< int >&        Includes,
+                        int&                       initial_order, 
+                        QList< double >&           r )
+  : US_WidgetsDialog( 0, 0 ), 
+    data( raw ), includes( Includes ), order( initial_order ), residuals( r )
 {
    setWindowTitle( tr( "Determine Radial Invariant Noise" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -67,7 +69,7 @@ US_RiNoise::US_RiNoise( const US_DataIO2::RawData& raw,
 void US_RiNoise::draw_fit( double new_order )
 {
    order = (int)new_order;
- 
+
    int scan_count = data.scanData.size();
 
    double* coeffs              = new double[ order ];
@@ -79,39 +81,59 @@ void US_RiNoise::draw_fit( double new_order )
    // polynomial fit to correct for radially invariant baseline noise. We also
    // keep track of the total integral at each point.
 
+   int scan = 0;
+
    for ( int i = 0; i < scan_count; i++ )
    {
-      absorbance_integral[ i ] = 0;
+      if ( ! includes.contains( i ) ) continue;
+
+      absorbance_integral[ scan ] = 0;
 
       // For now, all radii are spaces equally at 0.001 cm
       const double delta_r = 0.001;
 
-      const US_DataIO2::Scan* s = &data.scanData[ i ];
-      int value_count          = s->readings.size();
+      const US_DataIO2::Scan* s = &data.scanData[ scan ];
+      int value_count           = s->readings.size();
       
       // Integrate using trapezoid rule
       for ( int j = 1; j < value_count; j++ )
       {
-         double avg = ( s->readings[ j ].value + s->readings[ j - 1 ].value ) / 2.0;
-         absorbance_integral[ i ] += avg * delta_r;
+         double avg = 
+            ( s->readings[ j ].value + s->readings[ j - 1 ].value ) / 2.0;
+         
+         absorbance_integral[ scan ] += avg * delta_r;
       }
+
+      scan++;
    }
 
-   for ( int i = 0; i < scan_count; i++ )
-      scan_time[ i ] =  data.scanData[ i ].seconds;
-
-   US_Matrix::lsfit( coeffs, scan_time, absorbance_integral, scan_count, order );
-
-   residuals.clear();
+   scan = 0;
 
    for ( int i = 0; i < scan_count; i++ )
    {
-      fit[ i ] = 0;
-      
-      for ( int j = 0; j < order; j++ )
-         fit[ i ] +=  coeffs[ j ] * pow( data.scanData[ i ].seconds, j );
+      if ( ! includes.contains( i ) ) continue;
+      scan_time[ scan++ ] =  data.scanData[ i ].seconds;
+   }
 
-      residuals << absorbance_integral[ i ] - fit[ i ];
+   US_Matrix::lsfit( coeffs, scan_time, absorbance_integral, scan, order );
+
+   residuals.clear();
+   scan = 0;
+
+   for ( int i = 0; i < scan_count; i++ )
+   {
+      if ( includes.contains( i ) ) 
+      {
+         fit[ scan ] = 0;
+         
+         for ( int j = 0; j < order; j++ )
+            fit[ scan ] +=  coeffs[ j ] * pow( data.scanData[ i ].seconds, j );
+
+         residuals << absorbance_integral[ scan ] - fit[ scan ];
+         scan++;
+      }
+      else 
+         residuals << 0.0;  // Fill in holes for deleted scans
    }
 
    // Write the coefficients
@@ -130,15 +152,21 @@ void US_RiNoise::draw_fit( double new_order )
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
 
    //  Plot against the time of the scan:
+   scan = 0;
+
    for ( int i = 0; i < scan_count; i++ )
-      scan_time[ i ] =  data.scanData[ i ].seconds;
+   {
+      if ( ! includes.contains( i ) ) continue;
+      scan_time[ scan ] =  data.scanData[ i ].seconds;
+      scan++;
+   }
 
    QwtPlotCurve* integrals = us_curve( data_plot, tr( "Integrals" ) );
-   integrals->setData( scan_time, absorbance_integral, scan_count );
+   integrals->setData( scan_time, absorbance_integral, scan );
    integrals->setPen( QPen( Qt::yellow ) );
 
    QwtPlotCurve* polyfit = us_curve( data_plot, tr( "Polynomial Fit" ) );
-   polyfit->setData( scan_time, fit, scan_count );
+   polyfit->setData( scan_time, fit, scan );
    integrals->setPen( QPen( Qt::magenta ) );
 
    data_plot->replot();
@@ -152,8 +180,9 @@ void US_RiNoise::draw_fit( double new_order )
 
 // We want to be able to call this function from other places.
 void US_RiNoise::calc_residuals( const US_DataIO2::RawData& data, 
-                                 int                       order, 
-                                 QList< double >&          residuals )
+                                 const QList< int >&        includes,
+                                 int                        order, 
+                                 QList< double >&           residuals )
 {
    int scan_count = data.scanData.size();
 
@@ -166,39 +195,57 @@ void US_RiNoise::calc_residuals( const US_DataIO2::RawData& data,
    // polynomial fit to correct for radially invariant baseline noise. We also
    // keep track of the total integral at each point.
 
+   int scan = 0;
+
    for ( int i = 0; i < scan_count; i++ )
    {
-      absorbance_integral[ i ] = 0;
+      if ( ! includes.contains( i ) ) continue;
+      absorbance_integral[ scan ] = 0;
 
       // For now, all radii are spaces equally at 0.001 cm
       const double delta_r = 0.001;
 
-      const US_DataIO2::Scan* s = &data.scanData[ i ];
-      int value_count          = s->readings.size();
+      const US_DataIO2::Scan* s = &data.scanData[ scan ];
+      int value_count           = s->readings.size();
       
       // Integrate using trapezoid rule
       for ( int j = 1; j < value_count; j++ )
       {
-         double avg = ( s->readings[ j ].value + s->readings[ j - 1 ].value ) / 2.0;
-         absorbance_integral[ i ] += avg * delta_r;
+         double avg = 
+            ( s->readings[ j ].value + s->readings[ j - 1 ].value ) / 2.0;
+         
+         absorbance_integral[ scan ] += avg * delta_r;
       }
    }
 
-   for ( int i = 0; i < scan_count; i++ )
-      scan_time[ i ] =  data.scanData[ i ].seconds;
-
-   US_Matrix::lsfit( coeffs, scan_time, absorbance_integral, scan_count, order );
-
-   residuals.clear();
+   scan = 0;
 
    for ( int i = 0; i < scan_count; i++ )
    {
-      fit[ i ] = 0;
-      
-      for ( int j = 0; j < order; j++ )
-         fit[ i ] +=  coeffs[ j ] * pow( data.scanData[ i ].seconds, j );
+      if ( ! includes.contains( i ) ) continue;
+      scan_time[ scan++ ] =  data.scanData[ i ].seconds;
+   }
 
-      residuals << absorbance_integral[ i ] - fit[ i ];
+   US_Matrix::lsfit( coeffs, scan_time, absorbance_integral, scan, order );
+
+   residuals.clear();
+   scan = 0;
+
+   for ( int i = 0; i < scan_count; i++ )
+   {
+      if ( includes.contains( i ) )
+      {
+         fit[ scan ] = 0;
+         
+         for ( int j = 0; j < order; j++ )
+            fit[ scan ] +=  coeffs[ j ] * pow( data.scanData[ i ].seconds, j );
+
+         residuals << absorbance_integral[ scan ] - fit[ scan ];
+         scan++;
+      }
+      else
+         residuals << 0.0;  // Fill in holes for deleted scans
+
    }
 
    delete [] coeffs;

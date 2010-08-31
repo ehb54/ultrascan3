@@ -1732,7 +1732,7 @@ void US_Edit::undo( void )
 void US_Edit::noise( void )
 {
    residuals.clear();
-   US_RiNoise* dialog = new US_RiNoise( data, noise_order, residuals );
+   US_RiNoise* dialog = new US_RiNoise( data, includes, noise_order, residuals );
    int code = dialog->exec();
    qApp->processEvents();
 
@@ -1751,8 +1751,6 @@ void US_Edit::subtract_residuals( void )
 {
    for ( int i = 0; i < data.scanData.size(); i++ )
    {
-     if ( ! includes.contains( i ) ) continue;
-
      for ( int j = 0; j <  data.scanData[ i ].readings.size(); j++ )
          data.scanData[ i ].readings[ j ].value -= residuals[ i ];
    }
@@ -2274,7 +2272,7 @@ void US_Edit::apply_prior( void )
    noise_order = parameters.noiseOrder;
    if ( noise_order > 0 )
    {
-      US_RiNoise::calc_residuals( data, noise_order, residuals );
+      US_RiNoise::calc_residuals( data, includes, noise_order, residuals );
       subtract_residuals();
    }
    else
