@@ -382,13 +382,13 @@ void US_Edit::gap_check( void )
    US_DataIO2::Scan s;
    QString         gaps;
 
-   int             scanNumber = 1;
+   int             scanNumber = 0;
    bool            deleteAll  = false;
 
    foreach ( s, data.scanData )
    {
       // If scan has been deleted, skip to next
-      if ( ! includes.contains( scanNumber - 1 ) ) continue;
+      if ( ! includes.contains( scanNumber ) ) continue;
 
       int maxGap    = 0;
       int gapLength = 0;
@@ -522,7 +522,7 @@ void US_Edit::gap_check( void )
          // Delete the scan
          if ( deleteAll || deleteCurrent )
          {
-            includes.removeOne( scanNumber - 1 );
+            includes.removeOne( scanNumber );
             replot();
 
             ct_to  ->setMaxValue( includes.size() );
@@ -789,7 +789,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
 
             for ( int i = 0; i < data.scanData.size(); i++ )
             {
-               if ( ! includes.contains( i - 1 ) ) continue;
+               if ( ! includes.contains( i ) ) continue;
 
                s         = &data.scanData[ i ];
                int start = US_DataIO2::index( *s, data.x, meniscus_left  );
