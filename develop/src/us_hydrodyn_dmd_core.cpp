@@ -9,7 +9,6 @@
 
 #include "../include/us_hydrodyn.h"
 #include <qregexp.h>
-#include <values.h>
 
 #ifndef WIN32
 #   include <unistd.h>
