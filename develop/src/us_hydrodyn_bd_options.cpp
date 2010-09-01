@@ -1860,12 +1860,15 @@ void US_Hydrodyn_BD_Options::dup_fraenkel()
    cb_compute_sc_sc_force_constant->setChecked(cb_compute_chem_pb_pb_force_constant->isChecked());
 }
 
-#define TOLERANCE 1e-3
+#define TOLERANCE 1e-2
 
 void US_Hydrodyn_BD_Options::update_labels()
 {
    double total_steps = bd_options->ttraj / bd_options->deltat;
-   if ( fabs( ( total_steps ) - int( total_steps + 0.5 ) ) < TOLERANCE )
+
+   int digits = (int)log10(total_steps) - 5;
+   digits = digits >= 0 ? digits : 0;
+   if ( fabs( total_steps * pow(0.1,digits) - (double)(int( total_steps * pow(0.1,digits) + 0.5 )) ) < TOLERANCE )
    {
       cout << QString("total steps %1 int total_steps %2\n").arg(total_steps).arg(int(total_steps));
       cout << QString("").sprintf("%f %e %g\n", total_steps, total_steps, (total_steps - int(total_steps)));
@@ -1883,7 +1886,7 @@ void US_Hydrodyn_BD_Options::update_labels()
    }
    double max_conf = total_steps / bd_options->npadif;
    double check_nconf = max_conf / bd_options->nconf;
-   if ( fabs( ( check_nconf ) - int( check_nconf + 0.5 ) ) < TOLERANCE )
+   if ( fabs( check_nconf  - int( check_nconf + 0.5 ) ) < TOLERANCE )
    {
       cout << QString("check_nconf %1 int check_nconf %2\n").arg(check_nconf).arg(int(check_nconf));
       if ( bd_options->nconf > max_conf )
