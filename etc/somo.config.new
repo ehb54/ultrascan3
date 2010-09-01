@@ -124,19 +124,19 @@ w		# solvent acronym
 40		# maximum size
 1		# bin size
 0		# hydrate PDB model? true = yes
-1		# 0 = raw, 1 = saxs, 2 = sans
+0		# 0 = raw, 1 = saxs, 2 = sans
 0		# 0 = saxs, 1 = sans
-6		# bd_options.threshold_pb_pb
+5		# bd_options.threshold_pb_pb
 5		# bd_options.threshold_pb_sc
-4		# bd_options.threshold_sc_sc
+5		# bd_options.threshold_sc_sc
 1		# bd_options.do_rr
 1		# bd_options.force_chem
 0		# bd_options.bead_size_type
 1		# bd_options.show_pdb
 1		# bd_options.run_browflex
-0		# bd_options.tprev
-1		# bd_options.ttraj
-0.0001		# bd_options.deltat
+8e-09		# bd_options.tprev
+8e-06		# bd_options.ttraj
+1.6e-13		# bd_options.deltat
 10		# bd_options.npadif
 1000		# bd_options.nconf
 2		# bd_options.inter
@@ -185,6 +185,7 @@ w		# solvent acronym
 0		# bd_options.sc_sc_equilibrium_dist
 1		# bd_options.compute_sc_sc_max_elong
 0		# bd_options.sc_sc_max_elong
+1		# bd_options.nmol
 1		# anaflex_options.run_anaflex
 10		# anaflex_options.nfrec
 0		# anaflex_options.instprofiles
@@ -230,11 +231,20 @@ w		# solvent acronym
 0		# anaflex_options.run_mode_4_7
 1		# anaflex_options.run_mode_4_8
 0		# anaflex_options.run_mode_9
-1		# batch missing atom handling
+21		# anaflex_options.ntimc
+1.6e-06		# anaflex_options.tmax
+1		# anaflex_options.run_mode_3_5_iii
+99999		# anaflex_options.run_mode_3_5_jjj
+90		# anaflex_options.run_mode_3_10_theta
+1.3312		# anaflex_options.run_mode_3_10_refractive_index
+633		# anaflex_options.run_mode_3_10_lambda
+1		# anaflex_options.run_mode_3_14_iii
+99999		# anaflex_options.run_mode_3_14_jjj
+0		# batch missing atom handling
 0		# batch missing residue handling
 1		# batch run somo
 0		# batch run grid
-0		# batch run hydro
+1		# batch run hydro
 0		# batch avg hydro
 results		# batch avg hydro name
 0		# batch window last height
