@@ -176,19 +176,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    anaflex = NULL;
    anaflex_return_to_bd_load_results = false;
    bd_anaflex_enables(false);
-   bd_options.nmol = 1;  // need to move to saved options!
-   anaflex_options.ntimc = 21; // need to move to saved options!
-   anaflex_options.tmax = 1.6e-6; // need to move to saved options!
-   anaflex_options.run_mode_3_5_iii = 1; // need to move to saved options!
-   anaflex_options.run_mode_3_5_jjj = 99999; // need to move to saved options!
 
-   anaflex_options.run_mode_3_10_theta = 90.0;
-   anaflex_options.run_mode_3_10_refractive_index = 1.3312;
-   anaflex_options.run_mode_3_10_lambda = 633.0;
-
-   anaflex_options.run_mode_3_14_iii = 1; // need to move to saved options!
-   anaflex_options.run_mode_3_14_jjj = 99999; // need to move to saved options!
-   
    last_read_bead_model = "";
    last_hydro_res = "";
    chdir(somo_tmp_dir);
@@ -2717,7 +2705,7 @@ void US_Hydrodyn::view_bead_model()
    }
 }
 
-void US_Hydrodyn::visualize(bool movie_frame, QString dir)
+void US_Hydrodyn::visualize(bool movie_frame, QString dir, float scale)
 {
    QString use_dir = ( dir == "" ? somo_dir : dir );
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
@@ -2727,7 +2715,7 @@ void US_Hydrodyn::visualize(bool movie_frame, QString dir)
             write_bead_spt(use_dir + SLASH + project +
                            (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
                            QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-                           DOTSOMO, &bead_model, movie_frame);
+                           DOTSOMO, &bead_model, movie_frame, scale);
             editor->append(QString("Visualizing model %1\n").arg(current_model + 1));
             QStringList argument;
 #if !defined(WIN32)
@@ -2801,7 +2789,7 @@ int US_Hydrodyn::calc_hydro()
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
-   puts("calc hydro (supc)");
+   //   puts("calc hydro (supc)");
    display_default_differences();
    editor->append("\nBegin hydrodynamic calculations\n\n");
    results.s20w_sd = 0.0;

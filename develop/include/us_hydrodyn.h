@@ -57,7 +57,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
+#include <float.h>
 #include <iostream>
+#include <list>
 #include <map>
 
 #define START_RASMOL
@@ -440,7 +443,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void anaflex_load_results();
 
       void stop_calc(); // stop some operations
-      void visualize(bool movie_frame = false, QString dir = "");
+      void visualize(bool movie_frame = false, QString dir = "", float scale = 1.0);
 
    private slots:
       void browflex_readFromStdout();
@@ -510,7 +513,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void write_bead_asa(QString, vector <PDB_atom> *);
       void write_bead_tsv(QString, vector <PDB_atom> *);
       void write_bead_ebf(QString, vector <PDB_atom> *);
-      void write_bead_spt(QString, vector <PDB_atom> *, bool movie_frame = false);
+      void write_bead_spt(QString, vector <PDB_atom> *, bool movie_frame = false, float scale = 1);
       void write_bead_model(QString, vector <PDB_atom> *);
       void write_corr(QString, vector <PDB_atom> *);
       bool read_corr(QString, vector <PDB_atom> *);

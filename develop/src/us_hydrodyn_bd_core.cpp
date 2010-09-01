@@ -108,7 +108,7 @@ void US_Hydrodyn::bd_prepare()
                QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
                + "-bf-main";
             write_corr(corr_name, &bead_models[current_model]);
-            write_bead_model( corr_name + "-A", &bead_models[current_model] );
+            // write_bead_model( corr_name + "-A", &bead_models[current_model] );
          }
          else
          {
@@ -207,8 +207,10 @@ int US_Hydrodyn::create_browflex_files()
       bd_last_file = f.name();
       bd_last_traj_file = somo_dir + SLASH + "bd" + SLASH + filename + "-tra.txt";
       bd_last_molec_file = somo_dir + SLASH + "bd" + SLASH + filename + "-molec.txt";
+#if defined(DEBUG_CONN)
       cout << "last tra file " << bd_last_traj_file << endl;
       cout << "last molec file " << bd_last_molec_file << endl;
+#endif
       QTextStream ts(&f);
       ts <<
          QString(
@@ -1251,6 +1253,7 @@ int US_Hydrodyn::compute_bd_connections()
       }
    }
 
+#if defined(DEBUG_CONN)
    for ( map < QString, bool >::iterator it = connection_active.begin();
          it != connection_active.end();
          it++ )
@@ -1271,6 +1274,7 @@ int US_Hydrodyn::compute_bd_connections()
          cout << endl;
       }
    }
+#endif
          
    return 0;
 }
@@ -1502,6 +1506,7 @@ int US_Hydrodyn::build_pb_structures( PDB_model *model )
       
    }
 
+#if defined(DEBUG_CONN)
    for (unsigned int j = 0; j < pb_list.size(); j++ )
    {
       for ( unsigned int k = 0; k < pb_list[j].size(); k++ ) {
@@ -1515,10 +1520,12 @@ int US_Hydrodyn::build_pb_structures( PDB_model *model )
             .arg(this_atom->resSeq);
       }
    }
+#endif
    for (unsigned int j = 0; j < pb_base_list.size(); j++ )
    {
       for ( unsigned int k = 0; k < pb_base_list[j].size(); k++ ) {
          unsigned int p = pb_base_list[j][k];
+#if defined(DEBUG_CONN)
          PDB_atom *this_atom = &(model->molecule[j].atom[pb_list[j][p]]);
          cout << 
             QString("base pb_atom %1 %2 %3 %4 %5\n")
@@ -1527,12 +1534,15 @@ int US_Hydrodyn::build_pb_structures( PDB_model *model )
             .arg(this_atom->resName)
             .arg(this_atom->chainID)
             .arg(this_atom->resSeq);
+#endif
          vector < point > v;
          point cross1 = plane(&(model->molecule[j].atom[pb_list[j][p+2]]),  // O
                               &(model->molecule[j].atom[pb_list[j][p+1]]),  // C
                               &(model->molecule[j].atom[pb_list[j][p+0]])); // CA
          v.push_back(cross1);
+#if defined(DEBUG_CONN)
          cout << "(ca - c) x (o - c): " << cross1 << endl;
+#endif
          if ( p + 3 < pb_list[j].size() )
          {
             // we have the n, can compute multiple crosses
@@ -1548,17 +1558,22 @@ int US_Hydrodyn::build_pb_structures( PDB_model *model )
             point cross4 = plane(&(model->molecule[j].atom[pb_list[j][p+2]]),  // O
                                  &(model->molecule[j].atom[pb_list[j][p+3]]),  // N
                                  &(model->molecule[j].atom[pb_list[j][p+0]])); // CA
+#if defined(DEBUG_CONN)
             cout << "(o - c) x (n - c): " << cross2 << endl;
             cout << "(n - c) x (ca - c): " << cross3 << endl;
             cout << "(ca - n) x (o - n): " << cross4 << endl;
+#endif
             v.push_back(cross2);
             v.push_back(cross3);
             v.push_back(cross4);
+#if defined(DEBUG_CONN)
             cout << "average: " << average(&v) << endl;
+#endif
          }
 
          // compute angles between C-N-CA
 
+#if defined(DEBUG_CONN)
          if ( k ) 
          {
             float angle = 
@@ -1584,6 +1599,7 @@ int US_Hydrodyn::build_pb_structures( PDB_model *model )
                  << angle
                  << endl;
          }
+#endif
       }
    }
    
@@ -1653,10 +1669,12 @@ int US_Hydrodyn::run_browflex()
       //      + "-bf-main.txt\n" ;
    QString dir = fi.dirPath();
 
+#if defined(DEBUG_CONN)
    cout << QString("run browflex dir <%1> prog <%2> stdin <%3>\n")
       .arg(dir)
       .arg(prog)
       .arg(browfile);
+#endif
    browflex = new QProcess( this );
    browflex->setWorkingDirectory( dir );
    browflex->addArgument( prog );
@@ -2107,8 +2125,10 @@ void US_Hydrodyn::bd_load()
       bd_last_file = filename;
       bd_last_traj_file = dir + SLASH + traj_file;
       bd_last_molec_file = dir + SLASH + molec_file;
+#if defined(DEBUG_CONN)
       cout << "last tra file " << bd_last_traj_file << endl;
       cout << "last molec file " << bd_last_molec_file << endl;
+#endif
       bd_ready_to_run = true;
       bd_anaflex_enables(true);
    }
@@ -2362,7 +2382,9 @@ void US_Hydrodyn::bd_load_results()
       // temperature
       int line = 1;
       ts >> bd_load_results_temp;  
+#if defined(DEBUG_CONN)
       cout << "temperature " << bd_load_results_temp << endl;
+#endif
       if ( ts.atEnd() )
       {
          editor_msg("red", QString(errmsg).arg(line));
@@ -2376,7 +2398,9 @@ void US_Hydrodyn::bd_load_results()
       ts >> bd_load_results_solvent_visc;
       bd_load_results_solvent_visc *= 100;  // cP to Poise
       
+#if defined(DEBUG_CONN)
       cout << "solvent visc " << bd_load_results_solvent_visc << endl;
+#endif
       if ( ts.atEnd() )
       {
          editor_msg("red", QString(errmsg).arg(line));
@@ -2409,7 +2433,9 @@ void US_Hydrodyn::bd_load_results()
       // beads
       line++;
       ts >> bd_load_results_beads;
+#if defined(DEBUG_CONN)
       cout << "beads " << bd_load_results_beads << endl;
+#endif
       if ( ts.atEnd() )
       {
          editor_msg("red", QString(errmsg).arg(line));
@@ -2419,7 +2445,9 @@ void US_Hydrodyn::bd_load_results()
       ts.readLine();
 
       bd_load_results_mw /= bd_load_results_beads;
+#if defined(DEBUG_CONN)
       cout << "mw " << bd_load_results_mw << endl;
+#endif
 
       // beads radii
       float tmp_float;
@@ -2443,10 +2471,12 @@ void US_Hydrodyn::bd_load_results()
       f.close();
    }
 
+#if defined(DEBUG_CONN)
    for ( unsigned int i = 0; i < bd_load_results_beads; i++ )
    {
       cout << QString("bead %1 radius %2\n").arg(i).arg(bd_load_results_bead_radius[i]);
    }
+#endif
 
    // ok, now setup a type 9 anaflex run and run it.
    editor->append("\ncreate anaflex files\n");
@@ -2517,19 +2547,25 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
          return;
       }
    }
+#if defined(DEBUG_CONN)
    cout << "unit_of_length " << unit_of_length << endl;
    cout << "log10 unit_of_length " << log10(unit_of_length) << endl;
+#endif
    int exp = (int)(log10(unit_of_length) - .01);
    exp -= 2;  // convert from browflex cm to our m.
    hydro.unit = exp;
    display_default_differences();
    
+#if defined(DEBUG_CONN)
    cout << "exp = " << exp << endl;
+#endif
 
    for ( unsigned int i = 0; i < bd_load_results_beads; i++ )
    {
       bd_load_results_bead_radius[i] /= unit_of_length;
+#if defined(DEBUG_CONN)
       cout << QString("after redo, bead %1 radius %2\n").arg(i).arg(bd_load_results_bead_radius[i]);
+#endif
    }
 
    // log file into bead models
@@ -2578,13 +2614,17 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    ts.readLine();
 
    name.replace(QRegExp("\\.(txt|TXT)"),"");
+#if defined(DEBUG_CONN)
    cout << "name " << name << endl;
+#endif
 
    // nmol
    unsigned int nmol;
    line++;
    ts >> nmol;
+#if defined(DEBUG_CONN)
    cout << "nmol " << nmol << endl;
+#endif
    if ( ts.atEnd() )
    {
       editor_msg("red", QString(errmsg).arg(line));
@@ -2597,7 +2637,9 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    float ttraj;
    line++;
    ts >> ttraj;
+#if defined(DEBUG_CONN)
    cout << "ttraj " << ttraj << endl;
+#endif
    if ( ts.atEnd() )
    {
       editor_msg("red", QString(errmsg).arg(line));
@@ -2610,7 +2652,9 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    unsigned int nconf;
    line++;
    ts >> nconf;
+#if defined(DEBUG_CONN)
    cout << "nconf " << nconf << endl;
+#endif
    if ( ts.atEnd() )
    {
       editor_msg("red", QString(errmsg).arg(line));
@@ -2630,7 +2674,9 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    unsigned int beads;
    line++;
    ts >> beads;
+#if defined(DEBUG_CONN)
    cout << "beads " << beads << endl;
+#endif
    if ( ts.atEnd() )
    {
       editor_msg("red", QString(errmsg).arg(line));
@@ -2712,11 +2758,13 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
          }
          QString model_name = basename + QString("-m%1-c%2").arg(i).arg(j);
          editor->append(QString("base name is %1\n").arg(basename));
-         write_bead_model( model_name + "-pp0", &bead_model );
+         // write_bead_model( model_name + "-pp0", &bead_model );
          bool has_corr = read_corr(basename + ".corr", &bead_model);
+#if defined(DEBUG_CONN)
          puts(has_corr ? "has corr" : "does not have corr");
          cout << QString("base name %1\n").arg(basename);
-         write_bead_model( model_name + "-pp1", &bead_model );
+#endif
+         // write_bead_model( model_name + "-pp1", &bead_model );
          if ( !load_results_win_done )
          {
             if ( has_corr )
@@ -2747,10 +2795,14 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
 
             load_results_win_done = true;
          }
+#if defined(DEBUG_CONN)
          cout << "model name " << model_name << endl;
+#endif
          if ( check_fix_overlaps )
          {
+#if defined(DEBUG_CONN)
             puts("check fix overlaps\n"); fflush(stdout);
+#endif
             if ( overlap_check(true, true, true,
                                hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance) )
             {
@@ -2775,17 +2827,13 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                progress->setTotalSteps(mpos);
                progress->setProgress(progress->progress() + 1);
                qApp->processEvents();
-               puts("xa1\n"); fflush(stdout);
-               write_bead_model( model_name + "-X", &bead_model );
+               // write_bead_model( model_name + "-X", &bead_model );
                if ( has_corr )
                {
-                  puts("xa2\n"); fflush(stdout);
                   //                  compute_asa();
                   radial_reduction();
-                  puts("xa3\n"); fflush(stdout);
                   if (asa.recheck_beads)
                   {
-                     puts("xa4\n"); fflush(stdout);
                      // puts("recheck beads disabled");
                      editor->append("Rechecking beads\n");
                      qApp->processEvents();
@@ -2796,13 +2844,11 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                   }
                   else
                   {
-                     puts("xa5\n"); fflush(stdout);
                      editor->append("No rechecking of beads\n");
                      qApp->processEvents();
                   }
-                  write_bead_model( model_name + "-Y", &bead_model );
+                  // write_bead_model( model_name + "-Y", &bead_model );
                } else { 
-                  puts("xax no corr\n"); fflush(stdout);
                   if ( grid.enable_asa )
                   {
                      editor->append("ASA check\n");
@@ -2931,20 +2977,24 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                   return;
                }
             } else {
+#if defined(DEBUG_CONN)
                puts("no overlaps found\n"); fflush(stdout);
+#endif
             }               
          } else {
+#if defined(DEBUG_CONN)
             puts("no ! check fix overlaps\n"); fflush(stdout);
+#endif
          }            
          // set all exposed for now
-         write_bead_model( model_name + "-pp8", &bead_model );
+         // write_bead_model( model_name + "-pp8", &bead_model );
          if ( !has_corr ) {
             for( unsigned int i = 0; i < bead_model.size(); i++) {
                bead_model[i].exposed_code = 1;
                bead_model[i].bead_color = 8;
             }
          }
-         write_bead_model( model_name + "-pp9", &bead_model );
+         // write_bead_model( model_name + "-pp9", &bead_model );
          check_bead_model_for_nan();
          write_bead_model( model_name, &bead_model );
          model_names.push_back(  model_name + ".bead_model" );
@@ -3006,16 +3056,22 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
 
 int US_Hydrodyn::browflex_get_no_of_beads( QString filename )
 {
+#if defined(DEBUG_CONN)
    cout << "check no_of_beads\n";
+#endif
    if ( !bd_valid_browflex_main( filename ) )
    {
+#if defined(DEBUG_CONN)
       cout << "check no_of_beads invalid file\n";
+#endif
       return 0;
    }
    QFile f( filename );
    if ( !f.open( IO_ReadOnly ) )
    {
+#if defined(DEBUG_CONN)
       cout << "check no_of_beads can't read\n";
+#endif
       return 0;
    }
    QTextStream ts( &f );
@@ -3027,7 +3083,9 @@ int US_Hydrodyn::browflex_get_no_of_beads( QString filename )
    {
       ts >> molec_file;
    } else {
+#if defined(DEBUG_CONN)
       cout << "check no_of_beads no molec file line\n";
+#endif
       f.close();
       return 0;
    }
@@ -3036,7 +3094,9 @@ int US_Hydrodyn::browflex_get_no_of_beads( QString filename )
    f.setName(molec_file);
    if ( !f.open( IO_ReadOnly ) )
    {
+#if defined(DEBUG_CONN)
       cout << "check no_of_beads can't open molec file\n";
+#endif
       return 0;
    }
    ts.readLine();
@@ -3048,10 +3108,14 @@ int US_Hydrodyn::browflex_get_no_of_beads( QString filename )
    {
       ts >> no_of_beads;
    } else {
+#if defined(DEBUG_CONN)
       cout << "check no_of_beads molec file not enough lines\n";
+#endif
       f.close();
       return 0;
    }
+#if defined(DEBUG_CONN)
    cout << "no of beads from molec " << no_of_beads << endl;
+#endif
    return no_of_beads;
 }

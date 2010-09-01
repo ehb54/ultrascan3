@@ -6,8 +6,13 @@ US_Hydrodyn_Batch_Movie_Opts::US_Hydrodyn_Batch_Movie_Opts(
                                                            QString    somo_dir,
                                                            QString    *file,
                                                            float      *fps,
+                                                           float      *scale,
                                                            bool       *cancel_req,
                                                            bool       *clean_up,
+                                                           bool       *use_tc,
+                                                           QString    *tc_unit,
+                                                           float      *tc_start,
+                                                           float      *tc_delta,
                                                            QWidget *p,
                                                            const char *name
                                                            ) : QDialog(p, name)
@@ -16,15 +21,21 @@ US_Hydrodyn_Batch_Movie_Opts::US_Hydrodyn_Batch_Movie_Opts(
    this->dir = dir;
    this->file = file;
    this->fps = fps;
+   this->scale = scale;
    this->cancel_req = cancel_req;
    this->cancel_req = false;
    this->clean_up = clean_up;
    this->somo_dir = somo_dir;
+   this->use_tc = use_tc;
+   this->tc_unit = tc_unit;
+   this->tc_start = tc_start;
+   this->tc_delta = tc_delta;
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption("Set parameters for movie file");
    setupGUI();
+   update_enables();
    global_Xpos = 200;
    global_Ypos = 150;
    setGeometry(global_Xpos, global_Ypos, 0, 0);
@@ -88,6 +99,70 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
    le_fps->setEnabled(true);
    connect(le_fps, SIGNAL(textChanged(const QString &)), SLOT(update_fps(const QString &)));
 
+   lbl_scale = new QLabel(tr(" Image scale:"), this);
+   Q_CHECK_PTR(lbl_scale);
+   lbl_scale->setAlignment(AlignLeft|AlignVCenter);
+   lbl_scale->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_scale = new QLineEdit(this, "Scale Line Edit");
+   le_scale->setText(QString("%1").arg(*scale));
+   le_scale->setAlignment(AlignCenter | AlignVCenter);
+   le_scale->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_scale->setEnabled(true);
+   connect(le_scale, SIGNAL(textChanged(const QString &)), SLOT(update_scale(const QString &)));
+
+   lbl_tc_unit = new QLabel(tr(" Time code unit (e.g. ns, ps):"), this);
+   Q_CHECK_PTR(lbl_tc_unit);
+   lbl_tc_unit->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tc_unit->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_tc_unit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_tc_unit = new QLineEdit(this, "Tc_Unit Line Edit");
+   le_tc_unit->setText(QString("%1").arg(*tc_unit));
+   le_tc_unit->setAlignment(AlignCenter | AlignVCenter);
+   le_tc_unit->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_tc_unit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_tc_unit->setEnabled(true);
+   connect(le_tc_unit, SIGNAL(textChanged(const QString &)), SLOT(update_tc_unit(const QString &)));
+
+   lbl_tc_start = new QLabel(tr(" Time code start:"), this);
+   Q_CHECK_PTR(lbl_tc_start);
+   lbl_tc_start->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tc_start->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_tc_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_tc_start = new QLineEdit(this, "Tc_Start Line Edit");
+   le_tc_start->setText(QString("%1").arg(*tc_start));
+   le_tc_start->setAlignment(AlignCenter | AlignVCenter);
+   le_tc_start->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_tc_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_tc_start->setEnabled(true);
+   connect(le_tc_start, SIGNAL(textChanged(const QString &)), SLOT(update_tc_start(const QString &)));
+
+   lbl_tc_delta = new QLabel(tr(" Time code delta per frame:"), this);
+   Q_CHECK_PTR(lbl_tc_delta);
+   lbl_tc_delta->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tc_delta->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_tc_delta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_tc_delta = new QLineEdit(this, "Tc_Delta Line Edit");
+   le_tc_delta->setText(QString("%1").arg(*tc_delta));
+   le_tc_delta->setAlignment(AlignCenter | AlignVCenter);
+   le_tc_delta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_tc_delta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_tc_delta->setEnabled(true);
+   connect(le_tc_delta, SIGNAL(textChanged(const QString &)), SLOT(update_tc_delta(const QString &)));
+
+   cb_use_tc = new QCheckBox(this);
+   cb_use_tc->setText(tr("Use time code"));
+   cb_use_tc->setEnabled(true);
+   cb_use_tc->setChecked(*use_tc);
+   cb_use_tc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_use_tc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_use_tc, SIGNAL(clicked()), this, SLOT(set_use_tc()));
+
    cb_clean_up = new QCheckBox(this);
    cb_clean_up->setText(tr("Clean up files (ppm, gifs, spts)"));
    cb_clean_up->setEnabled(true);
@@ -125,6 +200,20 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
    j++;
    background->addWidget(lbl_fps, j, 0);
    background->addWidget(le_fps, j, 1);
+   j++;
+   background->addWidget(lbl_scale, j, 0);
+   background->addWidget(le_scale, j, 1);
+   j++;
+   background->addMultiCellWidget(cb_use_tc, j, j, 0, 1);
+   j++;
+   background->addWidget(lbl_tc_unit, j, 0);
+   background->addWidget(le_tc_unit, j, 1);
+   j++;
+   background->addWidget(lbl_tc_start, j, 0);
+   background->addWidget(le_tc_start, j, 1);
+   j++;
+   background->addWidget(lbl_tc_delta, j, 0);
+   background->addWidget(le_tc_delta, j, 1);
    j++;
    background->addMultiCellWidget(cb_clean_up, j, j, 0, 1);
    j++;
@@ -167,9 +256,42 @@ void US_Hydrodyn_Batch_Movie_Opts::update_fps(const QString &str)
    *fps = str.toFloat();
 }
 
+void US_Hydrodyn_Batch_Movie_Opts::update_scale(const QString &str)
+{
+   *scale = str.toFloat();
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::update_tc_unit(const QString &str)
+{
+   *tc_unit = str;
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::update_tc_start(const QString &str)
+{
+   *tc_start = str.toFloat();
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::update_tc_delta(const QString &str)
+{
+   *tc_delta = str.toFloat();
+}
+
 void US_Hydrodyn_Batch_Movie_Opts::set_clean_up()
 {
    *clean_up = cb_clean_up->isChecked();
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::set_use_tc()
+{
+   *use_tc = cb_use_tc->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::update_enables()
+{
+   le_tc_unit->setEnabled(*use_tc);
+   le_tc_start->setEnabled(*use_tc);
+   le_tc_delta->setEnabled(*use_tc);
 }
 
 void US_Hydrodyn_Batch_Movie_Opts::update_dir_msg()

@@ -99,11 +99,13 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
    project = bd_project;
    current_model = bd_current_model;
 
+#if defined(DEBUG_BD)
    cout << "project " << project << endl;
    cout << "ca bd last file " << bd_last_file << endl;
    cout << "ca bd last tra file " << bd_last_traj_file << endl;
    cout << "ca bd last molec file " << bd_last_molec_file << endl;
    fflush(stdout);
+#endif
 
    int no_of_beads = browflex_get_no_of_beads(bd_last_file);
 
@@ -547,10 +549,12 @@ int US_Hydrodyn::run_anaflex( int use_mode, int sub_mode )
    //      //      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
    //      + QString("af%1%2m.txt\n").arg(use_mode).arg(sub_mode ? QString("-%1").arg(sub_mode) : "");
 
+#if defined(DEBUG_BD)
    cout << QString("run anaflex dir <%1> prog <%2> stdin <%3>\n")
       .arg(dir)
       .arg(prog)
       .arg(anafile);
+#endif
    anaflex = new QProcess( this );
    anaflex->setWorkingDirectory( dir );
    anaflex->addArgument( prog );

@@ -1894,6 +1894,9 @@ int US_Hydrodyn::read_config(QFile& f)
       if ( ts.readLine() == QString::null ) return i;
       bd_options.sc_sc_max_elong = str.toFloat();
       i--;
+      if ( ts.readLine() == QString::null ) return i;
+      bd_options.nmol = str.toInt();
+      i--;
    }
 
    // anaflex_options
@@ -2078,6 +2081,42 @@ int US_Hydrodyn::read_config(QFile& f)
       ts >> str;
       if ( ts.readLine() == QString::null ) return i;
       anaflex_options.run_mode_9 = (bool)str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      anaflex_options.ntimc = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      anaflex_options.tmax = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      anaflex_options.run_mode_3_5_iii = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      anaflex_options.run_mode_3_5_jjj = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      anaflex_options.run_mode_3_10_theta = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      anaflex_options.run_mode_3_10_refractive_index = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      anaflex_options.run_mode_3_10_lambda = str.toFloat();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      anaflex_options.run_mode_3_14_iii = str.toInt();
+      i--;
+      ts >> str;
+      if ( ts.readLine() == QString::null ) return i;
+      anaflex_options.run_mode_3_14_jjj = str.toInt();
       i--;
    }
 
@@ -2384,6 +2423,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << bd_options.sc_sc_equilibrium_dist << "\t\t# bd_options.sc_sc_equilibrium_dist\n";
       ts << bd_options.compute_sc_sc_max_elong << "\t\t# bd_options.compute_sc_sc_max_elong\n";
       ts << bd_options.sc_sc_max_elong << "\t\t# bd_options.sc_sc_max_elong\n";
+      ts << bd_options.nmol << "\t\t# bd_options.nmol\n";
 
       ts << anaflex_options.run_anaflex << "\t\t# anaflex_options.run_anaflex\n";
       ts << anaflex_options.nfrec << "\t\t# anaflex_options.nfrec\n";
@@ -2430,6 +2470,15 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << anaflex_options.run_mode_4_7 << "\t\t# anaflex_options.run_mode_4_7\n";
       ts << anaflex_options.run_mode_4_8 << "\t\t# anaflex_options.run_mode_4_8\n";
       ts << anaflex_options.run_mode_9 << "\t\t# anaflex_options.run_mode_9\n";
+      ts << anaflex_options.ntimc << "\t\t# anaflex_options.ntimc\n";
+      ts << anaflex_options.tmax << "\t\t# anaflex_options.tmax\n";
+      ts << anaflex_options.run_mode_3_5_iii << "\t\t# anaflex_options.run_mode_3_5_iii\n";
+      ts << anaflex_options.run_mode_3_5_jjj << "\t\t# anaflex_options.run_mode_3_5_jjj\n";
+      ts << anaflex_options.run_mode_3_10_theta << "\t\t# anaflex_options.run_mode_3_10_theta\n";
+      ts << anaflex_options.run_mode_3_10_refractive_index << "\t\t# anaflex_options.run_mode_3_10_refractive_index\n";
+      ts << anaflex_options.run_mode_3_10_lambda << "\t\t# anaflex_options.run_mode_3_10_lambda\n";
+      ts << anaflex_options.run_mode_3_14_iii << "\t\t# anaflex_options.run_mode_3_14_iii\n";
+      ts << anaflex_options.run_mode_3_14_jjj << "\t\t# anaflex_options.run_mode_3_14_jjj\n";
       
       ts << batch.missing_atoms << "\t\t# batch missing atom handling\n";
       ts << batch.missing_residues << "\t\t# batch missing residue handling\n";
@@ -2645,17 +2694,17 @@ void US_Hydrodyn::set_default()
       saxs_options.curve = 0;                // 0 = raw, 1 = saxs, 2 = sans
       saxs_options.saxs_sans = 0;            // 0 = saxs, 1 = sans
 
-      bd_options.threshold_pb_pb = 6;
+      bd_options.threshold_pb_pb = 5;
       bd_options.threshold_pb_sc = 5;
-      bd_options.threshold_sc_sc = 4;
+      bd_options.threshold_sc_sc = 5;
       bd_options.do_rr = true;
       bd_options.force_chem = true;
       bd_options.bead_size_type = 0;
       bd_options.show_pdb = true;
       bd_options.run_browflex = true;
-      bd_options.tprev = 0.0;
-      bd_options.ttraj = 1.0;
-      bd_options.deltat = 0.0001;
+      bd_options.tprev = 8.0e-9;
+      bd_options.ttraj = 8.0e-6;
+      bd_options.deltat = 1.6e-13;
       bd_options.npadif = 10;
       bd_options.nconf = 1000;
       bd_options.inter = 2;
@@ -2704,6 +2753,7 @@ void US_Hydrodyn::set_default()
       bd_options.sc_sc_equilibrium_dist = 0.0;
       bd_options.compute_sc_sc_max_elong = true;
       bd_options.sc_sc_max_elong = 0.0;
+      bd_options.nmol = 1;
 
       anaflex_options.run_anaflex = true;
       anaflex_options.nfrec = 10;
@@ -2750,6 +2800,15 @@ void US_Hydrodyn::set_default()
       anaflex_options.run_mode_4_7 = false;
       anaflex_options.run_mode_4_8 = true;
       anaflex_options.run_mode_9 = false;
+      anaflex_options.ntimc = 21;
+      anaflex_options.tmax = 1.6e-6;
+      anaflex_options.run_mode_3_5_iii = 1;
+      anaflex_options.run_mode_3_5_jjj = 99999;
+      anaflex_options.run_mode_3_10_theta = 90.0;
+      anaflex_options.run_mode_3_10_refractive_index = 1.3312;
+      anaflex_options.run_mode_3_10_lambda = 633.0;
+      anaflex_options.run_mode_3_14_iii = 1;
+      anaflex_options.run_mode_3_14_jjj = 99999;
       
       batch.missing_atoms = 0;
       batch.missing_residues = 0;
@@ -2903,7 +2962,7 @@ int US_Hydrodyn::get_color(PDB_atom *a) {
    return color;
 }
 
-void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool movie_frame) 
+void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool movie_frame, float scale) 
 {
    char *colormap[] =
       {
@@ -2952,7 +3011,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool mo
    if(max_radius > MAX_RADIUS) {
       scaling = max_radius / MAX_RADIUS;
    }
-   scaling = 5.0;
+   scaling = 5.0 / scale;
    fprintf(fbms,
            "%d\n%s\n",
            beads + 1,

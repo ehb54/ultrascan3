@@ -152,6 +152,9 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_load_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_somo, SIGNAL(clicked()), SLOT(load_somo()));
 
+#if defined(WIN32)
+   pb_make_movie = (QPushButton *) 0;
+#else
    if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
    {
       pb_make_movie = new QPushButton(tr("Make movie"), this);
@@ -163,6 +166,7 @@ void US_Hydrodyn_Batch::setupGUI()
    } else {
       pb_make_movie = (QPushButton *) 0;
    }
+#endif
 
    lbl_total_files = new QLabel(tr("Total Files: 0 "), this);
    lbl_total_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -1449,16 +1453,22 @@ void US_Hydrodyn_Batch::clear_files()
 
 void US_Hydrodyn_Batch::make_movie()
 {
-   puts("make movie");
+#if !defined(WIN32)
+   // puts("make movie");
    ((US_Hydrodyn *)us_hydrodyn)->movie_text.clear();   
    disable_updates = true;
    QString cmds = "";
 
    QString proc_dir;
    QString output_file;
-   float fps = 1;
+   float fps = 1.0;
+   float scale = 1.0;
    bool cancel_req = false;
    bool clean_up = true;
+   bool use_tc = false;
+   QString tc_unit = "ns";
+   float tc_start = 0.0;
+   float tc_delta = 0.0;
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -1479,8 +1489,13 @@ void US_Hydrodyn_Batch::make_movie()
                                         ((US_Hydrodyn *)us_hydrodyn)->somo_dir,
                                         &output_file,
                                         &fps,
+                                        &scale,
                                         &cancel_req,
-                                        &clean_up
+                                        &clean_up,
+                                        &use_tc,
+                                        &tc_unit,
+                                        &tc_start,
+                                        &tc_delta
                                         );
 
    hbmo->exec();
@@ -1556,40 +1571,57 @@ void US_Hydrodyn_Batch::make_movie()
             }
             editor->setColor("dark blue");
             editor->append(QString(tr("Creating movie frame for %1")).arg(file));
-            ((US_Hydrodyn *)us_hydrodyn)->visualize(true,proc_dir);
+            ((US_Hydrodyn *)us_hydrodyn)->visualize(true,proc_dir,scale);
          }
       }
    }
    if ( ((US_Hydrodyn *)us_hydrodyn)->movie_text.size() ) 
    {
       // here we ppmtogif and mencoder
-      QString cmd1 = "cd " + proc_dir + "\n";
-      QString cmd2 = cmd1 + "mencoder -o " + output_file + ".avi -ovc lavc -fps " + QString("%1").arg(fps);
-      QString cmd3 = cmd1;
+      QString cd = "cd " + proc_dir + ";";
+      QString cmd0 = cd + "rm -f " + output_file + ".list\n";
+      vector < QString > cmd1;
+      QString cmd2 = cd + "cat " + output_file + ".list | xargs mencoder -o " + output_file + ".avi -ovc lavc -fps " + QString("%1").arg(fps);
+      vector < QString > cmd3;
       for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->movie_text.size(); i++ )
       {
          QString file = ((US_Hydrodyn *)us_hydrodyn)->movie_text[i];
          QFileInfo fi(file);
          cout << i << ":" << fi.fileName() << endl;
-         cmd1 += 
-            "ppmtogif " + fi.fileName() + ".ppm > " + fi.fileName() + ".gif\n";
-         cmd2 += " " + fi.fileName() + ".gif";
-         cmd3 += 
-            "rm " + fi.fileName() + ".gif;"
-            "rm " + fi.fileName() + ".ppm;"
-            "rm " + fi.fileName() + ".spt;"
-            "rm " + fi.fileName() + ".bms\n";
+         cmd1.push_back(cd + "ppmtogif " + fi.fileName() + ".ppm > " + fi.fileName() + ".gif\n" +
+                        "echo " +  fi.fileName() + ".gif >> " + output_file + ".list\n" +
+                        ( use_tc ?
+                          QString("mogrify -gravity southwest -pointsize 20 -draw 'text 25,25 \"%1 %2\"' ")
+                          .arg(tc_start).arg(tc_unit) 
+                          + fi.fileName() + ".gif\n"
+                          : "" ) );
+         cmd3.push_back(cd +
+                        "rm " + fi.fileName() + ".gif;"
+                        "rm " + fi.fileName() + ".ppm;"
+                        "rm " + fi.fileName() + ".spt;"
+                        "rm " + fi.fileName() + ".bms\n");
+         tc_start += tc_delta;
       }
-      cout << "cmd1 [" << cmd1 << "]\ncmd2 [" << cmd2 << "]\ncmd3 [" << cmd3 << "]\ncmd3";
-      system(cmd1.ascii());
+      cout << "cmd0 [" << cmd0 << "]\ncmd2 [" << cmd2 << "]\n";
+      system(cmd0.ascii());
+      for ( unsigned int i = 0; i < cmd1.size(); i++ )
+      {
+         cout << QString("cmd1:%1 [%2]\n").arg(i).arg(cmd1[i]);
+         system(cmd1[i].ascii());
+      }
       system(cmd2.ascii());
       if ( clean_up ) 
       {
-         system(cmd3.ascii());
+         for ( unsigned int i = 0; i < cmd3.size(); i++ )
+         {
+            cout << QString("cmd3:%1 [%2]\n").arg(i).arg(cmd3[i]);
+            system(cmd3[i].ascii());
+         }
       }
    } else {
       cout << "what, no movie text?\n";
    }
    disable_updates = false;
    update_enables();
+#endif
 }
