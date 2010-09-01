@@ -1894,6 +1894,7 @@ int US_Hydrodyn::read_config(QFile& f)
       if ( ts.readLine() == QString::null ) return i;
       bd_options.sc_sc_max_elong = str.toFloat();
       i--;
+      ts >> str;
       if ( ts.readLine() == QString::null ) return i;
       bd_options.nmol = str.toInt();
       i--;
