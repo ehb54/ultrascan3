@@ -24,14 +24,14 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
                                    QString    *dir,
                                    QString    somo_dir,
                                    QString    *file,
-                                   float      *fps,
-                                   float      *scale,
+                                   double     *fps,
+                                   double     *scale,
                                    bool       *cancel_req,
                                    bool       *clean_up,
                                    bool       *use_tc,
                                    QString    *tc_unit,
-                                   float      *tc_start,
-                                   float      *tc_delta,
+                                   double     *tc_start,
+                                   double     *tc_delta,
                                    QWidget    *p = 0, 
                                    const char *name = 0
                                    );
@@ -71,14 +71,14 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
       QString    *dir;
       QString    somo_dir;
       QString    *file;
-      float      *fps;
-      float      *scale;
+      double     *fps;
+      double     *scale;
       bool       *cancel_req;
       bool       *clean_up;
       bool       *use_tc;
       QString    *tc_unit;
-      float      *tc_start;
-      float      *tc_delta;
+      double     *tc_start;
+      double     *tc_delta;
 
       QPalette label_font_ok;
       QPalette label_font_warning;

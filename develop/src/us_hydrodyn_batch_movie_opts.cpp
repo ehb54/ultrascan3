@@ -5,14 +5,14 @@ US_Hydrodyn_Batch_Movie_Opts::US_Hydrodyn_Batch_Movie_Opts(
                                                            QString    *dir,
                                                            QString    somo_dir,
                                                            QString    *file,
-                                                           float      *fps,
-                                                           float      *scale,
+                                                           double     *fps,
+                                                           double     *scale,
                                                            bool       *cancel_req,
                                                            bool       *clean_up,
                                                            bool       *use_tc,
                                                            QString    *tc_unit,
-                                                           float      *tc_start,
-                                                           float      *tc_delta,
+                                                           double     *tc_start,
+                                                           double     *tc_delta,
                                                            QWidget *p,
                                                            const char *name
                                                            ) : QDialog(p, name)
@@ -253,12 +253,12 @@ void US_Hydrodyn_Batch_Movie_Opts::update_file(const QString &str)
 
 void US_Hydrodyn_Batch_Movie_Opts::update_fps(const QString &str)
 {
-   *fps = str.toFloat();
+   *fps = str.toDouble();
 }
 
 void US_Hydrodyn_Batch_Movie_Opts::update_scale(const QString &str)
 {
-   *scale = str.toFloat();
+   *scale = str.toDouble();
 }
 
 void US_Hydrodyn_Batch_Movie_Opts::update_tc_unit(const QString &str)
@@ -268,12 +268,12 @@ void US_Hydrodyn_Batch_Movie_Opts::update_tc_unit(const QString &str)
 
 void US_Hydrodyn_Batch_Movie_Opts::update_tc_start(const QString &str)
 {
-   *tc_start = str.toFloat();
+   *tc_start = str.toDouble();
 }
 
 void US_Hydrodyn_Batch_Movie_Opts::update_tc_delta(const QString &str)
 {
-   *tc_delta = str.toFloat();
+   *tc_delta = str.toDouble();
 }
 
 void US_Hydrodyn_Batch_Movie_Opts::set_clean_up()

@@ -1461,14 +1461,14 @@ void US_Hydrodyn_Batch::make_movie()
 
    QString proc_dir;
    QString output_file;
-   float fps = 1.0;
-   float scale = 1.0;
+   double fps = 1.0;
+   double scale = 1.0;
    bool cancel_req = false;
    bool clean_up = true;
    bool use_tc = false;
    QString tc_unit = "ns";
-   float tc_start = 0.0;
-   float tc_delta = 0.0;
+   double tc_start = 0.0;
+   double tc_delta = 0.0;
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
