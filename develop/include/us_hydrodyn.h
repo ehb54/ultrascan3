@@ -126,7 +126,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QCheckBox *cb_overwrite;
       QString last_hydro_res;
       void bd_anaflex_enables( bool flag ); // turns buttons on/off based upon current status
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
       vector < QString > movie_text;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
    private:
       bool residue_widget;
