@@ -1,5 +1,8 @@
 #include "../include/us_cmdline_t.h"
 #include <qregexp.h>
+#include <map>
+#include <vector>
+#include <list>
 
 #include <stdio.h>
 
