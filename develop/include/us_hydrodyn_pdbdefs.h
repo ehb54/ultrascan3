@@ -28,7 +28,7 @@ struct PDB_atom
    QString chainID;
    QString resSeq;
    QString iCode;
-   struct point coordinate;
+   point coordinate;
    float occupancy;
    float tempFactor;
    QString element;

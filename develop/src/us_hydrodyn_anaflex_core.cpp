@@ -14,6 +14,8 @@
 #   include <unistd.h>
 #   define SLASH "/"
 #else
+#   include <dos.h>
+#   include <stdlib.h>
 #   include <direct.h>
 #   include <io.h>
 #   define SLASH "\\"
@@ -497,8 +499,9 @@ int US_Hydrodyn::run_anaflex()
    return run_anaflex( use_mode, sub_mode );
 }
 
-int US_Hydrodyn::run_anaflex( int use_mode, int sub_mode )
+int US_Hydrodyn::run_anaflex( int /* use_mode */, int /* sub_mode */ )
 {
+
    //   QString dir = somo_dir + SLASH + "bd";
    QString prog = 
       USglobal->config_list.system_dir + SLASH +

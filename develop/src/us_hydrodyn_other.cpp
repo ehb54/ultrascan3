@@ -2802,11 +2802,11 @@ void US_Hydrodyn::set_default()
       anaflex_options.run_mode_4_8 = true;
       anaflex_options.run_mode_9 = false;
       anaflex_options.ntimc = 21;
-      anaflex_options.tmax = 1.6e-6;
+      anaflex_options.tmax = (float)1.6e-6;
       anaflex_options.run_mode_3_5_iii = 1;
       anaflex_options.run_mode_3_5_jjj = 99999;
       anaflex_options.run_mode_3_10_theta = 90.0;
-      anaflex_options.run_mode_3_10_refractive_index = 1.3312;
+      anaflex_options.run_mode_3_10_refractive_index = (float)1.3312;
       anaflex_options.run_mode_3_10_lambda = 633.0;
       anaflex_options.run_mode_3_14_iii = 1;
       anaflex_options.run_mode_3_14_jjj = 99999;

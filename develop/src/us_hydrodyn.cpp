@@ -2759,7 +2759,11 @@ void US_Hydrodyn::visualize(bool movie_frame, QString dir, float scale)
                //               qApp->processEvents();
                while ( rasmol && rasmol->isRunning() )
                {
+#if defined(WIN32)
+                  _sleep(1);
+#else
                   usleep(1000);
+#endif
                   qApp->processEvents();
                }
             } else {
