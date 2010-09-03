@@ -4,12 +4,17 @@
 #include <QtGui>
 
 #include "us_extern.h"
+#include "us_data_model.h"
+#include "us_data_process.h"
+#include "us_data_tree.h"
+#include "us_sync_exper.h"
 #include "us_widgets.h"
 #include "us_db2.h"
 #include "us_model.h"
 #include "us_buffer.h"
 #include "us_analyte.h"
 #include "us_help.h"
+#include "us_dataIO2.h"
 
 class US_EXTERN US_ManageData : public US_Widgets
 {
@@ -25,14 +30,14 @@ class US_EXTERN US_ManageData : public US_Widgets
       {
          public:
          int       recordID;          // record DB Identifier
-         int       recType;           // record type (0-4)=None/Raw/Edit/Model/Noise
+         int       recType;           // record type (1-4)=Raw/Edit/Model/Noise
          int       parentID;          // parent's DB Identifier
          int       recState;          // record state flag
          QString   subType;           // sub-type (e.g., TI,RI for noises)
          QString   dataGUID;          // this record data Global Identifier
          QString   parentGUID;        // parent's GUID
          QString   filename;          // file name if on local disk
-         QString   contents;          // XML contents or head of encoded BLOB
+         QString   contents;          // md5sum() and length of data
          QString   label;             // record identifying label
          QString   description;       // record description string
          QString   lastmodDate;       // last modification date/time
@@ -47,6 +52,11 @@ class US_EXTERN US_ManageData : public US_Widgets
       QVector< DataDesc > ddescs;     // DB descriptions
       QVector< DataDesc > ldescs;     // local-disk descriptions
       QVector< DataDesc > adescs;     // all (merged) descriptions
+
+      US_DataModel*       da_model;   // underlying data handler
+      US_DataProcess*     da_process; // data processing handler
+      US_DataTree*        da_tree;    // data tree display handler
+      US_SyncExperiment*  syncExper;  // experiment synchronizer
 
       QProgressBar* progress;
 
@@ -63,9 +73,10 @@ class US_EXTERN US_ManageData : public US_Widgets
 
       QLineEdit*    le_invtor;
 
+      QCheckBox*    ck_detail;
+
       QPushButton*  pb_invtor;
-      QPushButton*  pb_browse;
-      QPushButton*  pb_detail;
+      QPushButton*  pb_scanda;
       QPushButton*  pb_hsedit;
       QPushButton*  pb_hsmodl;
       QPushButton*  pb_hsnois;
@@ -98,60 +109,25 @@ class US_EXTERN US_ManageData : public US_Widgets
       bool          rbtn_click;
 
       QString       run_name;
-      QString       cell;
       QString       investig;
-
-      QPoint        cur_pos;
 
    private slots:
 
       void toggle_edits (  void );
       void toggle_models(  void );
       void toggle_noises(  void );
-      void toggle_expand( QString, bool );
       void dtree_help(     void );
-      void browse_data  (  void );
-      void detail_data  (  void );
-      void build_dtree  (  void );
+      void scan_data    (  void );
       void reset(       void );
       void chg_investigator(    void );
       void find_investigator(   QString& );
       void sel_investigator(    void );
       void assign_investigator( int, const QString&, const QString& );
       void clickedItem(      QTreeWidgetItem* );
-      void row_context_menu( QTreeWidgetItem* );
-      void item_upload(      void );
-      void item_download(    void );
-      void item_remove_db(   void );
-      void item_remove_loc(  void );
-      void item_remove_all(  void );
-      void item_details(     void );
-      int  record_upload(       int );
-      int  record_download(     int );
-      int  record_remove_db(    int );
-      int  record_remove_local( int );
-      void browse_dbase(     void );
-      void browse_local(     void );
-      void merge_dblocal(    void );
-      void sort_descs( QVector< DataDesc >& descs );
-      QString sort_string(   DataDesc, int );
-      QString model_type(    int, int, int );
-      QString model_type(    US_Model      );
-      QString model_type(    QString       );
       QString action_text(   QString, QString );
       void    action_result( int,     QString );
-      QString record_state(  int );
-      bool    review_descs( QStringList&, QVector< DataDesc >& );
-      int         index_substring(  QString, int, QStringList& );
-      QStringList filter_substring( QString, int, QStringList& );
-      QStringList list_orphans    ( QStringList&, QStringList& );
-      int  record_state_flag(       DataDesc, int );
       void reset_hsbuttons( bool, bool, bool, bool );
-      int  new_experiment_local( US_DB2*, QString& );
-      int  new_experiment_db(    US_DB2*, QString&, QString&, QString& );
-      void assignAnalyte( US_Analyte );
-      void assignBuffer(  US_Buffer  );
-      QString md5sum_file( QString );
+      void reportDataStatus( void    );
 
       void help     ( void )
       { showHelp.show_help( "manage_data.html" ); };
