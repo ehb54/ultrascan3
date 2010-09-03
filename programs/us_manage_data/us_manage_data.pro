@@ -5,13 +5,14 @@ QT           += xml
 TARGET        = us_manage_data
 
 HEADERS       = us_manage_data.h \
-                ../us_convert/us_convertio.h \
-                ../us_convert/us_expinfo.h \
-                ../us_convert/us_selectbox.h
+                us_data_model.h \
+                us_data_process.h \
+                us_data_tree.h \
+                us_sync_exper.h
 
 SOURCES       = us_manage_data.cpp \
-                ../us_convert/us_convertio.cpp \
-                ../us_convert/us_expinfo.cpp \
-                ../us_convert/us_selectbox.cpp
+                us_data_model.cpp \
+                us_data_process.cpp \
+                us_data_tree.cpp \
+                us_sync_exper.cpp
 
-INCLUDEPATH  += ../us_convert
