@@ -15,6 +15,7 @@ US_Astfem_RSA::US_Astfem_RSA( US_Model&                model,
    stopFlag        = false;
    use_time        = false;
    time_correction = true;
+   simout_flag     = false;
    show_movie      = false;
 }
 
@@ -24,10 +25,10 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
                                            //  multiple components
    US_AstfemMath::MfemInitial  CT0;        // Initial total concentration
    US_AstfemMath::MfemData     simdata;
-   float         current_time;
+   double        current_time;
    double        current_speed;
+   double        duration;
 
-   int           duration;
    int           initial_npts = 1000;
    int           current_assoc;
    int           size_cv         = system.components.size();
@@ -126,7 +127,6 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
          }
 
          US_AstfemMath::interpolate_C0( scan1, af_c0 );
-//qDebug() << "RSA: k s0conc" << k << scan0->conc[af_data.radius.size()-1];
       }
 
       if ( ! reacting[ k ] ) // noninteracting
@@ -181,11 +181,10 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
                
             }  // End of acceleration
 
-            duration = (int) ( sp->duration_hours * 3600 + 
-                               sp->duration_minutes * 60 );
+            duration =sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0;
 
             if ( step == simparams.speed_step.size() - 1 )
-               duration += (int) ( duration * 0.05 ); // + 5% 
+               duration += (double)( (int)( duration * 0.05 ) );  // +5%
 
             if ( accel_time > duration )
             {
@@ -195,7 +194,7 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
             }
             else
             {
-               duration -= (int) accel_time;
+               duration -= accel_time;
             }
 
             double omega = sp->rotorspeed * M_PI / 30;
@@ -218,7 +217,7 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
 
             // Find out the minimum number of simpoints needed to provide 
             // the necessary dt:
-            af_params.time_steps = (int) ( 1 + duration / af_params.dt );
+            af_params.time_steps = (int) ( 1.0 + duration / af_params.dt );
             af_params.start_time = current_time;
             
             calculate_ni( sp->rotorspeed, sp->rotorspeed, CT0, simdata, false );
@@ -242,7 +241,6 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
          
          emit current_component( k + 1 );
          qApp->processEvents();
-//qDebug() << "RSA:     k conc0" << k << simdata.scan[0].conc[k];
       }
    }
 
@@ -388,11 +386,10 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
             if ( stopFlag ) return 1;
          }  // End of for acceleration
 
-         duration = (int) 
-            ( sp->duration_hours * 3600 + sp->duration_minutes * 60 );
+         duration = sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0;
          
          if ( ss == simparams.speed_step.size() - 1 )
-            duration += (int) ( duration * 0.05 ); // + 5% 
+            duration += (double)( (int)( duration * 0.05 ) );  // +5%
          
          if ( accel_time > duration )
          {
@@ -402,7 +399,7 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
          }
          else
          {
-            duration -= (unsigned int) accel_time;
+            duration -= accel_time;
          }
          double s_max = fabs( af_params.s[ 0 ] );     // Find the largest s
          
@@ -426,7 +423,7 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
 
          // Find out the minimum number of simpoints needed to provide the 
          // necessary dt:
-         af_params.time_steps = (unsigned int) ( 1 + duration / af_params.dt );
+         af_params.time_steps = (int)( 1.0 + duration / af_params.dt );
 
          af_params.start_time = current_time;
 
@@ -434,7 +431,7 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
                vC0, simdata, false );
          
          // Set the current time to the last scan of this speed step
-         current_time = sp->duration_hours * 3600 + sp->duration_minutes * 60;
+         current_time = sp->duration_hours * 3600. + sp->duration_minutes * 60.;
          
          // Interpolate the simulated data onto the experimental 
          // time and radius grid
@@ -459,8 +456,10 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
       // Check each speed step to see if it contains acceleration
       for ( int ss = 0; ss < simparams.speed_step.size(); ss++ ) 
       {
-         US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ ss ];
+         US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ss];
          US_AstfemMath::MfemData*               ed = &af_data;
+
+         if ( simout_flag )                     ed = &simdata;
          
          // We need to correct time
          if ( simparams.speed_step[ ss ].acceleration_flag ) 
@@ -498,7 +497,50 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
    if ( vC0 != NULL ) delete [] vC0;
    delete [] reacting;
  
-   store_mfem_data( exp_data, af_data );
+   if ( simout_flag )
+      store_mfem_data( exp_data, simdata );
+   else
+      store_mfem_data( exp_data, af_data );
+int nasc = af_data.scan.size();
+int naco = af_data.scan[0].conc.size();
+qDebug() << "RSA: af_data nc nt" << naco << nasc;
+for ( int ii=0; ii < nasc; ii++ )
+{
+   if ( ii<4 || (ii+4)>nasc || ((ii*2)>(nasc-4)&&(ii*2)<nasc+4) )
+   {
+      int naco = af_data.scan[ii].conc.size();
+      qDebug() << "RSA:  ii csiz time" << ii << naco << af_data.scan[ii].time;
+      for ( int jj=0; jj < naco; jj++ )
+      {
+         if ( jj<4 || (jj+5)>naco || ((jj*2)>(naco-4)&&(jj*2)<naco+4) )
+         {
+            if ( ii==0 )
+               qDebug() << "RSA:    jj radi" << jj << af_data.radius[jj];
+            qDebug() << "RSA:    jj conc" << jj << af_data.scan[ii].conc[jj];
+         }
+      }
+   }
+}
+int nssc = simdata.scan.size();
+int nsco = simdata.scan[0].conc.size();
+qDebug() << "RSA: simdata nc nt" << nsco << nssc;
+for ( int ii=0; ii < nssc; ii++ )
+{
+   if ( ii<4 || (ii+4)>nssc || ((ii*2)>(nssc-8)&&(ii*2)<nssc+8) )
+   {
+      int nsco = simdata.scan[ii].conc.size();
+      qDebug() << "RSA:  ii csiz time" << ii << nsco << simdata.scan[ii].time;
+      for ( int jj=0; jj < nsco; jj++ )
+      {
+         if ( jj<4 || (jj+5)>nsco || ((jj*2)>(nsco-4)&&(jj*2)<nsco+4) )
+         {
+            if ( ii==0 )
+               qDebug() << "RSA:    jj radi" << jj << simdata.radius[jj];
+            qDebug() << "RSA:    jj conc" << jj << simdata.scan[ii].conc[jj];
+         }
+      }
+   }
+}
 
    return 0;
 }

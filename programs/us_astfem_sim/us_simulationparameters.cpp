@@ -677,12 +677,34 @@ void US_SimulationParametersGui::save( void )
              "All files (*)" ) );
         
    if ( fn.isEmpty() ) return;
+
+   fn   = fn.replace( "\\", "/" );
+   int     jj   = fn.lastIndexOf( "/" ) + 1;
+   QString fdir = fn.left( jj );
+   QString fnam = fn.mid( jj );
    
-  
-   // Make sure file ends with .xml extension
-   if ( !fn.endsWith( "." )  &&  !fn.endsWith( ".xml" ) )
-   {
-      fn = fn + ".xml";
+   // Make sure file name is in "sp_<name>.xml" form
+
+   if ( fn.endsWith( "." ) )
+   {  // ending with '.' signals no ".xml" to be added
+      fn   = fn.left( fn.length() - 1 );
+      fnam = fnam.left( fnam.length() - 1 );
+   }
+
+   else if ( !fn.endsWith( ".xml" ) )
+   {  // if no .xml extension, add one
+      fn   = fn   + ".xml";
+      fnam = fnam + ".xml";
+   }
+
+   if ( fnam.startsWith( "." ) )
+   {  // starting with '.' signals no "sp_" prefix
+      fn = fdir + fnam.mid( 1 );
+   }
+
+   else if ( !fnam.startsWith( "sp_" ) )
+   {  // if no sp_ prefix, add one
+      fn = fdir + "sp_" + fnam;
    }
 
    QFile f( fn );
@@ -733,7 +755,6 @@ void US_SimulationParametersGui::load( void )
    {
       current_speed_step = 0;
       int steps = simparams.speed_step.size();
-qDebug() << "SP: load() steps" << steps;
       disconnect_all();
 
       cnt_speeds->setValue( steps );
@@ -800,7 +821,6 @@ qDebug() << "SP: load() steps" << steps;
                 "Could not read the Simulation Profile:\n\n" ) + 
                 fn );
    }
-qDebug() << "SP: (9)load() steps" << simparams.speed_step.size();
 }
    
 void US_SimulationParametersGui::update_mesh( int mesh )
