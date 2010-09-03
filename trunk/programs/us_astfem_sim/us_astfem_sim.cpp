@@ -198,7 +198,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 void US_Astfem_Sim::init_simparams( void )
 {
    US_SimulationParameters::SpeedProfile sp;
-   int    rotor  = 1;
+   int    rotor  = 0;
    double rpm    = 45000.0;
 
    // set up bottom start and rotor coefficients from hardware file
@@ -446,9 +446,7 @@ void US_Astfem_Sim::start_simulation( void )
       scan->wavelength  = system.wavelength;
       scan->plateau     = 0.0;
       scan->delta_r     = simparams.radial_resolution;
-      double rvalue     = ( i == 0 ) ?
-         system.components[ 0 ].signal_concentration : 0.0;
-      //double rvalue     = 0.0;
+      double rvalue     = 0.0;
 
       scan->readings.resize( points );
       for ( int j = 0; j < points; j++ ) 
@@ -476,14 +474,16 @@ void US_Astfem_Sim::start_simulation( void )
 
       current_time = sp->delay_hours    * 3600 + sp->delay_minutes    * 60;
       duration     = sp->duration_hours * 3600 + sp->duration_minutes * 60;
-      increment    = ( duration - current_time ) / (double)sp->scans;
+      increment    = ( duration - current_time ) / (double)( sp->scans );
+qDebug() << "SIM curtime dur incr" << current_time << duration << increment;
 
       for ( int j = 0; j < sp->scans; j++ )
       {
          US_DataIO2::Scan* scan = &sim_data.scanData[ scan_number ];
-         scan->seconds = current_time + increment * j;
+         scan->seconds = current_time + increment * ( j + 1 );
 
          scan_number++;
+qDebug() << "SIM   scan time" << scan_number << scan->seconds;
       }
    }
 
@@ -507,6 +507,37 @@ void US_Astfem_Sim::start_simulation( void )
    if ( simparams.meshType != US_SimulationParameters::ASTFVM )
    {  // the normal case:  ASTFEM (finite element)
       astfem_rsa->calculate( sim_data );
+double cmin=99999.9;
+double cmax=-999999.9;
+int ilo=0;
+int ihi=0;
+int jlo=0;
+int jhi=0;
+int nscn=sim_data.scanData.size();
+int ncvl=sim_data.scanData[0].readings.size();
+for ( int ii=0; ii<nscn; ii++ )
+{
+ double t0=sim_data.scanData[ii].seconds;
+ double t1=(ii==0)?sim_data.scanData[1].seconds:sim_data.scanData[ii-1].seconds;
+ if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
+    qDebug() << "  Scan" << ii << "  Time" << t0 << t1;
+ for ( int jj=0; jj<ncvl; jj++ )
+ {
+   double cval = sim_data.value(ii,jj);
+   if ( cval < cmin ) { ilo=ii; jlo=jj; cmin=cval; }
+   if ( cval > cmax ) { ihi=ii; jhi=jj; cmax=cval; }
+   if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
+   {
+      if ( jj<10 || (jj+11)>ncvl || ((jj*2)>(ncvl-10)&&(jj*2)<(ncvl+11)) )
+         qDebug() << "    C index value" << jj << cval;
+   }
+ }
+}
+qDebug() << "SIM data min conc ilo jlo" << cmin << ilo << jlo;
+qDebug() << "SIM data max conc ihi jhi" << cmax << ihi << jhi;
+qDebug() << "SIM:fem: m b  s D  rpm" << simparams.meniscus << simparams.bottom
+   << system.components[0].s << system.components[0].D
+   << simparams.speed_step[0].rotorspeed;
    }
 
    else
@@ -574,7 +605,7 @@ void US_Astfem_Sim::ri_noise( void )
 {
    if ( simparams.rinoise == 0.0 ) return;
 
-   // Add radially invarient noise
+   // Add radially invariant noise
    for ( int j = 0; j < sim_data.scanData.size(); j++ )
    {
       double rinoise = 
@@ -604,7 +635,7 @@ void US_Astfem_Sim::ti_noise( void )
 {
    if ( simparams.tinoise == 0.0 ) return;
 
-   // Add time invarient noise
+   // Add time invariant noise
    int points = sim_data.x.size();
    QVector< double > tinoise;
    tinoise.resize( points );

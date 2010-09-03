@@ -3,6 +3,7 @@
 #include "us_simparms.h"
 #include "us_astfem_math.h"
 #include "us_hardware.h"
+#include "us_settings.h"
 
 US_SimulationParameters::US_SimulationParameters()
 {
@@ -49,25 +50,73 @@ void US_SimulationParameters::initFromData( US_DataIO2::EditedData& editdata )
    SpeedProfile sp;
 
    int    scanCount    = editdata.scanData.size();
-   int    valCount     = editdata.scanData[ 0 ].readings.size();
-   double time1        = editdata.scanData[ 0             ].seconds;
-   double time2        = editdata.scanData[ scanCount - 1 ].seconds;
-   double rpm          = editdata.scanData[ 0             ].rpm;
+   double time1        = editdata.scanData[ 0 ].seconds;
+   double time2        = editdata.scanData[ 0 ].seconds;
+   double rpm          = editdata.scanData[ 0 ].rpm;
+   double rpmnext      = rpm;
+   int    jj           = 0;
 
    rotor               = 1;
+   QString fn          = US_Settings::resultDir() + "/" + editdata.runID + "/"
+                         + editdata.runID + "." + editdata.dataType + ".xml";
+   QFile file( fn );
+
+   if ( file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {  // if experiment/run file exists, get rotor serial from it
+      QXmlStreamReader xml( &file );
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "rotor" )
+         {  // pick up rotor serial from  <rotor ...serial="1"...
+            QXmlStreamAttributes a = xml.attributes();
+            QString aser  = a.value( "serial" ).toString();
+            rotor         = aser.isEmpty() ? rotor : aser.toInt();
+         }
+      }
+
+      file.close();
+   }
+
    bottom_position     = 72.0;
    meniscus            = editdata.meniscus;
-qDebug() << "iFD: max radius" << editdata.radius( valCount - 1 );
 
+   speed_step.clear();
+
+   for ( int ii = 1; ii < scanCount; ii++ )
+   {  // loop to build speed steps where RPM changes
+      rpmnext          = editdata.scanData[ ii ].rpm;
+
+      if ( rpm != rpmnext )
+      {  // rpm has changed, so need to create speed step for previous scans
+         time2               = editdata.scanData[ ii - 1 ].seconds;
+         sp.duration_hours   = (int)( time2 / 3600.0 );
+         sp.duration_minutes = (int)( time2 / 60.0 )
+                               - ( sp.duration_hours * 60 );
+         sp.delay_hours      = (int)( time1 / 3600.0 );
+         sp.delay_minutes    = ( time1 / 60.0 )
+                               - ( (double)sp.delay_hours * 60.0 );
+         sp.scans            = ii - jj;
+         sp.rotorspeed       = (int)rpm;
+         speed_step.append( sp );
+
+         jj                  = ii;
+         rpm                 = rpmnext;
+         time1               = editdata.scanData[ ii     ].seconds;
+      }
+   }
+
+   // set final (only?) speed step
+   time2               = editdata.scanData[ scanCount - 1 ].seconds;
    sp.duration_hours   = (int)( time2 / 3600.0 );
    sp.duration_minutes = (int)( time2 / 60.0 ) - ( sp.duration_hours * 60 );
    sp.delay_hours      = (int)( time1 / 3600.0 );
    sp.delay_minutes    = ( time1 / 60.0 ) - ( (double)sp.delay_hours * 60.0 );
-   sp.scans            = scanCount;
+   sp.scans            = scanCount - jj;
    sp.rotorspeed       = (int)rpm;
-
-   speed_step.resize( 1 );
-   speed_step[ 0 ]     = sp;
+   speed_step.append( sp );
 
    // set rotor coefficients, channel bottom position from hardware files
    setHardware( rotor, 0, 0 );
@@ -75,7 +124,6 @@ qDebug() << "iFD: max radius" << editdata.radius( valCount - 1 );
    // calculate bottom using RPM, start bottom, and rotor coefficients
    bottom              = US_AstfemMath::calc_bottom( rpm, bottom_position,
                                                      rotorcoeffs );
-qDebug() << "iFD: calc bottom" << bottom;
 }
 
 // Set parameters from hardware files, related to rotor and centerpiece

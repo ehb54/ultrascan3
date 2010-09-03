@@ -38,6 +38,11 @@ class US_EXTERN US_Astfem_RSA : public QObject
       //! \brief Set a flag for whether to emit signals for movie mode.
       //! \param flag  Flag for whether or not to operate in show-movie mode.
       void set_movie_flag      ( bool flag ){ show_movie      = flag; };
+      //! \brief Set a flag for whether to output the simulation data.
+      //! \param flag  Flag for whether or not to output raw simulation data,
+      //!              instead of the normal data interpolated to fit the
+      //!              input experiment grid.
+      void set_simout_flag     ( bool flag ){ simout_flag     = flag; };
 
    signals:
       //! \brief Signal that a calculate_ni()/calculate_ra2() step is complete.
@@ -87,6 +92,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
                               //!< based on omega-square-t integral (=false)
       
       bool show_movie;
+      bool simout_flag;
 
       //! Keep track of time globally for w2t_integral calculation
       double last_time;      
