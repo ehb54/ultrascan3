@@ -2,6 +2,7 @@
 #include "qwt3d_function.h"
 
 using namespace Qwt3D;
+using namespace std;
 
 Function::Function()
 :GridMapping()
