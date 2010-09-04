@@ -122,8 +122,11 @@ void US_ProcessConvert::readLegacyData(
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
    QStringList files = d.entryList( QDir::Files );
-   runType = files[ 0 ].right( 3 ).left( 2 ).toUpper(); // 1st 2 chars of extention
 
+   // Maybe dir had only directories ( i.e., not empty )
+   if ( files.size() < 1 ) return;
+
+   runType = files[ 0 ].right( 3 ).left( 2 ).toUpper(); // 1st 2 chars of extention
    QStringList fileList;
    QStringList channels;
    QString f;
@@ -192,7 +195,6 @@ void US_ProcessConvert::readLegacyData(
           break;
       }
 
-
       this->setValue( i );
    }
 }
@@ -200,13 +202,12 @@ void US_ProcessConvert::readLegacyData(
 void US_ProcessConvert::convertLegacyData( 
      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
      QVector< US_DataIO2::RawData  >&     rawConvertedData,
-     QStringList&                         triples,
+     QList< US_ExpInfo::TripleInfo >&     triples,
      QString                              runType,
      double                               tolerance,
      QList< double >&                     ss_limits // For RA data
      ) 
 {
-
    if ( runType == "RA"  && ss_limits.size() > 2 )
    {
       // We need to subdivide this data
@@ -224,7 +225,7 @@ void US_ProcessConvert::convertLegacyData(
 
    if ( triples.size() == 1 )
    {
-      convert( rawLegacyData, newRawData, triples[ 0 ], runType, tolerance );
+      convert( rawLegacyData, newRawData, triples[ 0 ].tripleDesc, runType, tolerance );
 
       rawConvertedData << newRawData;
    }
@@ -242,7 +243,7 @@ void US_ProcessConvert::convertLegacyData(
       for ( int i = 0; i < triples.size(); i++ )
       {
          // Convert data for this cell / channel / wavelength
-         convert( rawLegacyData, newRawData, triples[ i ], runType, tolerance );
+         convert( rawLegacyData, newRawData, triples[ i ].tripleDesc, runType, tolerance );
 
          // and save it
          rawConvertedData << newRawData;
@@ -270,8 +271,7 @@ void US_ProcessConvert::writeConvertedData(
      int& status,
      QVector< US_DataIO2::RawData >& rawConvertedData,
      US_ExpInfo::ExperimentInfo& ExpData,
-     QStringList& triples,
-     QList< int >& tripleMap,
+     QList< US_ExpInfo::TripleInfo >& triples,
      QVector< US_Convert::Excludes >& allExcludes,
      QString runType,
      QString runID,
@@ -287,13 +287,14 @@ void US_ProcessConvert::writeConvertedData(
    // Write the data. In this case not triples.size() - 1, because we are
    // going to consider the xml file as one file to write also
    this ->setLabel( tr( "Writing:" ) );
-   this ->setRange( 0, tripleMap.size() );
+   this ->setRange( 0, triples.size() );
    this ->setValue( 0 );
 
-   for ( int i = 0; i < tripleMap.size(); i++ )
+   for ( int i = 0; i < triples.size(); i++ )
    {
-      int         ndx        = tripleMap[ i ];
-      QString     triple     = triples[ ndx ];
+      if ( triples[ i ].excluded ) continue;
+
+      QString     triple     = triples[ i ].tripleDesc;
       QStringList parts      = triple.split(" / ");
 
       QString     cell       = parts[ 0 ];
@@ -324,19 +325,19 @@ void US_ProcessConvert::writeConvertedData(
       // Calculate and save the guid for this triple
       uuid_t uuid;
       uuid_generate( uuid );
-      strncpy( rawConvertedData[ ndx ].rawGUID, (char*) uuid, 16 );
-      strncpy( ExpData.triples [ ndx ].tripleGUID, (char*) uuid, 16 );
+      strncpy( rawConvertedData[ i ].rawGUID, (char*) uuid, 16 );
+      strncpy( triples [ i ].tripleGUID, (char*) uuid, 16 );
  
       // Save the filename of this triple
-      ExpData.triples[ ndx ].tripleFilename = filename;
+      triples[ i ].tripleFilename = filename;
 
       // Create a copy of the current dataset so we can alter it
-      US_DataIO2::RawData  currentData     = rawConvertedData[ ndx ];
-      US_Convert::Excludes currentExcludes = allExcludes     [ ndx ];
+      US_DataIO2::RawData  currentData     = rawConvertedData[ i ];
+      US_Convert::Excludes currentExcludes = allExcludes     [ i ];
 
       // Now recopy scans, except for excluded ones
       currentData.scanData.clear();
-      QVector< US_DataIO2::Scan > sourceScans = rawConvertedData[ ndx ].scanData;
+      QVector< US_DataIO2::Scan > sourceScans = rawConvertedData[ i ].scanData;
       for ( int j = 0; j < sourceScans.size(); j++ )
       {
          if ( ! currentExcludes.contains( j ) )
@@ -361,7 +362,7 @@ void US_ProcessConvert::writeConvertedData(
 
    // Now try to write the xml file
    status = US_ConvertIO::writeXmlFile( 
-            ExpData, triples, tripleMap, runType, runID, dirname );
+            ExpData, triples, runType, runID, dirname );
 
    if ( status == US_Convert::CANTOPEN )
    {
@@ -382,7 +383,7 @@ void US_ProcessConvert::writeConvertedData(
             tr( "Error: " ) + status );
    }
 
-   this->setValue( tripleMap.size() );
+   this->setValue( triples.size() );
 
    this->hide();
    this->close();
@@ -392,8 +393,7 @@ void US_ProcessConvert::reloadUS3Data(
      QString dir,
      QVector< US_DataIO2::RawData >& rawConvertedData,
      US_ExpInfo::ExperimentInfo& ExpData,
-     QStringList& triples,
-     QList< int >& tripleMap,
+     QList< US_ExpInfo::TripleInfo >& triples,
      QString& runType ,
      QString runID
      )
@@ -418,21 +418,22 @@ void US_ProcessConvert::reloadUS3Data(
       return;
    }
 
+   // Get runType
+   QStringList part = files[ 0 ].split( "." );
+   runType = part[ 1 ];
+
    // Set up cell / channel / wavelength combinations
-   tripleMap.clear();
    triples.clear();
    ExpData.clear();
    for ( int i = 0; i < files.size(); i++ )
    {
-      tripleMap << i;
-
-      QStringList part = files[ i ].split( "." );
-      QString triple   = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
-      runType          = part[ 1 ];
-      triples << triple;
+      part.clear();
+      part = files[ i ].split( "." );
 
       US_ExpInfo::TripleInfo t;
-      ExpData.triples << t;
+      t.tripleDesc = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
+      t.excluded   = false;
+      triples << t;
    }
 
    // Read all data
@@ -492,7 +493,8 @@ void US_ProcessConvert::reloadUS3Data(
    {
       QMessageBox::information( this,
             tr( "Error" ),
-            tr( "One or more GUID's were not found in the database " ) );
+            tr( "One or more GUID's were not found in the database.\n" ) +
+            tr( "Most likely the run has not been saved to the DB.\n") );
    }
 
    else if ( status != US_Convert::OK )
@@ -557,11 +559,10 @@ void US_ProcessConvert::convert(
    double max_radius = 0.0;
    double max_size   = 0.0;
 
-   // Calculate mins and maxes over the entire dataset for proper scaling
+   // Calculate mins and maxes for proper scaling
    for ( int i = 0; i < rawLegacyData.size(); i++ )
    {
       double first = rawLegacyData[ i ].readings[ 0 ].d.radius;
-
       uint   size  = rawLegacyData[ i ].readings.size();
       double last  = rawLegacyData[ i ].readings[ size - 1 ].d.radius; 
 
@@ -574,7 +575,7 @@ void US_ProcessConvert::convert(
    double delta_r = ( runType == "IP" )
                   ? ( max_radius - min_radius ) / ( max_size - 1 )
                   : 0.001;
-   
+
    // Calculate the radius vector
    int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
    double radius = min_radius;
@@ -715,18 +716,19 @@ void US_ProcessConvert::splitRAData(
    
       US_DataIO2::RawReading r;
    
-      for ( int x = 1; x < ss_limits.size(); x++ )
+      for ( int x = 0; x < ss_limits.size() - 1; x++ )
       {
          data2.readings.clear();                  // Only need to alter readings for sub-datasets
    
          // Go through all the readings to see which ones to include
          for ( int y = 0; y < data.readings.size(); y++ )
          {
-            if ( data.readings[ y ].d.radius > ss_limits[ x - 1 ] &&
-               data.readings[ y ].d.radius < ss_limits[ x ] )
+            if ( data.readings[ y ].d.radius > ss_limits[ x ] &&
+               data.readings[ y ].d.radius < ss_limits[ x + 1 ] )
             {
                // Create the current dataset point
-               r.d.radius = data.readings[ y ].d.radius;
+               // Scale the radius to the same range of radii
+               r.d.radius = data.readings[ y ].d.radius - ss_limits[ x ] + 5.7;
                r.value    = data.readings[ y ].value;
                r.stdDev   = data.readings[ y ].stdDev;
                data2.readings << r;
@@ -742,7 +744,7 @@ void US_ProcessConvert::splitRAData(
 
 void US_ProcessConvert::setTriples( 
      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-     QStringList&                         triples,
+     QList< US_ExpInfo::TripleInfo >&     triples,
      QString                              runType,
      double                               tolerance )
 {
@@ -756,7 +758,7 @@ void US_ProcessConvert::setTriples(
 
 void US_ProcessConvert::setCcwTriples( 
      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-     QStringList&                         triples,
+     QList< US_ExpInfo::TripleInfo >&     triples,
      double                               tolerance )
 {
    // Most triples are ccw
@@ -825,13 +827,24 @@ void US_ProcessConvert::setCcwTriples(
       }
 
       QString t = cell + " / " + channel + " / " + wavelength;
-      if (! triples.contains( t ) ) triples << t;
+      bool found = false;
+      for ( int j = 0; j < triples.size(); j++ )
+      {
+         if ( triples[ j ].tripleDesc == t )
+            found = true;
+      }
+      if ( ! found )
+      {
+         US_ExpInfo::TripleInfo triple;
+         triple.tripleDesc = t;
+         triples << triple;
+      }
    }
 }
 
 void US_ProcessConvert::setCcrTriples( 
      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-     QStringList&                        triples,
+     QList< US_ExpInfo::TripleInfo >&    triples,
      double                              tolerance )
 {
    // First of all, wavelength triples are ccr.
@@ -901,7 +914,18 @@ void US_ProcessConvert::setCcrTriples(
       }
 
       QString t = cell + " / " + channel + " / " + radius;
-      if (! triples.contains( t ) ) triples << t;
+      bool found = false;
+      for ( int j = 0; j < triples.size(); j++ )
+      {
+         if ( triples[ j ].tripleDesc == t )
+            found = true;
+      }
+      if ( ! found )
+      {
+         US_ExpInfo::TripleInfo triple;
+         triple.tripleDesc = t;
+         triples << triple;
+      }
    }
 }
 

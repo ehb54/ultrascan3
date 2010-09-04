@@ -17,6 +17,7 @@
 #include "us_process_convert.h"
 #include "us_convertio.h"
 #include "us_intensity.h"
+#include "us_get_dbrun.h"
 
 int main( int argc, char* argv[] )
 {
@@ -76,7 +77,7 @@ US_Convert::US_Convert() : US_Widgets()
    // External program to enter experiment information
 //   QBoxLayout* expButtons = new QHBoxLayout;
 
-   pb_newRuninfo = us_pushbutton( tr( "Associate Run with DB" ) );
+   pb_newRuninfo = us_pushbutton( tr( "Edit Run Information" ) );
    connect( pb_newRuninfo, SIGNAL( clicked() ), SLOT( newRuninfo() ) );
    //expButtons->addWidget( pb_newRuninfo );
    settings->addWidget( pb_newRuninfo, row, 0 );
@@ -331,7 +332,6 @@ void US_Convert::reset( void )
    allData.clear();
    Pseudo_averaged        = false;
    show_plot_progress = true;
-   ExpData.triples.clear();
    ExpData.rpms.clear();
 
    data_plot      ->detachItems();
@@ -356,6 +356,15 @@ void US_Convert::reset( void )
 
 void US_Convert::resetAll( void )
 {
+   int status = QMessageBox::information( this,
+            tr( "Warning" ),
+            tr( "This will erase all data currently on the screen, and reset "    ) +
+            tr( "the program to its starting condition. No hard-drive data  "     ) +
+            tr( "or database information will be affected. Proceed? "             ),
+            tr( "&OK" ), tr( "&Cancel" ),
+            0, 0, 1 );
+   if ( status != 0 ) return;
+
    reset();
 
    ExpData.clear();
@@ -448,7 +457,6 @@ void US_Convert::load( QString dir )
 
    // Ok to enable some buttons now
    enableControls();
-
 }
 
 // User pressed the reload data button
@@ -462,7 +470,6 @@ void US_Convert::reload( void )
       bool success = false;
 
       triples.clear();
-      tripleMap.clear();
 
       le_bufferInfo ->setText( "" );
       le_analyteInfo->setText( "" );
@@ -514,7 +521,10 @@ void US_Convert::enableControls( void )
       pb_newRuninfo  ->setEnabled( true );
 
       // Ok to drop scan if not the only one
-      pb_dropScan    ->setEnabled( tripleMap.size() > 1 );
+      int currentScanCount = 0;
+      for ( int i = 0; i < triples.size(); i++ )
+         if ( ! triples[ i ].excluded ) currentScanCount++;
+      pb_dropScan    ->setEnabled( currentScanCount > 1 );
 
       if ( runType == "RI" )
          pb_reference->setEnabled( true );
@@ -602,16 +612,13 @@ void US_Convert::enableScanControls( void )
 
 void US_Convert::enableCCWControls( void )
 {
-   int ndx = findTripleIndex();
-
    // The centerpiece combo box
-   cb_centerpiece->setCurrentIndex( ExpData.triples[ ndx ].centerpiece );
+   cb_centerpiece->setCurrentIndex( triples[ currentTriple ].centerpiece );
 
    // Let's calculate if we're eligible to copy this triple info to all
-   US_ExpInfo::TripleInfo triple = ExpData.triples[ ndx ];
+   US_ExpInfo::TripleInfo triple = triples[ currentTriple ];
    pb_applyAll  -> setEnabled( false );
-   if ( tripleMap.size()   > 1 && 
-        triple.analyteID   > 0 &&
+   if ( triple.analyteID   > 0 &&
         triple.bufferID    > 0 )
    {
       pb_applyAll ->setEnabled( true );
@@ -625,17 +632,18 @@ void US_Convert::enableSyncDB( void )
 {
    // Have we made connection with the db?
    if ( ExpData.invID == 0 ||
-        ExpData.triples.size() == 0 )
+        triples.size() == 0 )
    {
       pb_savetoDB ->setEnabled( false );
       return;
    }
 
    // Have we filled out all the c/c/w info?
-   for ( int i = 0; i < tripleMap.size(); i++ )
+   for ( int i = 0; i < triples.size(); i++ )
    {
-      int ndx = tripleMap[ i ];
-      US_ExpInfo::TripleInfo triple = ExpData.triples[ ndx ];
+      US_ExpInfo::TripleInfo triple = triples[ i ];
+      if ( triple.excluded ) continue;
+
       if ( triple.bufferID  == 0 ||
            triple.analyteID == 0 )
       {
@@ -690,6 +698,7 @@ void US_Convert::runIDChanged( void )
    le_dir ->setText( currentDir );
 }
 
+// Function to generate a new guid for experiment, and associate with DB
 void US_Convert::newRuninfo( void )
 {
    // Verify connectivity
@@ -708,20 +717,27 @@ void US_Convert::newRuninfo( void )
       return;
    }
 
-   ExpData.reset();
+   if ( saveStatus == NOT_SAVED )
+   {
+      // First time for this data, so clear ExpData out
+      ExpData.clear();
+   
+      // Create a new GUID for the experiment as a whole
+      uuid_t uuid;
+      char uuidc[ 37 ];
+   
+      uuid_generate( uuid );
+      uuid_unparse( (unsigned char*)uuid, uuidc );
+   
+      ExpData.expGUID = QString( uuidc );
 
-   // Create a new GUID for the experiment as a whole
-   uuid_t uuid;
-   char uuidc[ 37 ];
+      saveStatus = EDITING;
+   }
 
-   uuid_generate( uuid );
-   uuid_unparse( (unsigned char*)uuid, uuidc );
-
-   ExpData.expGUID = QString( uuidc );
-
-   getExpInfo( EDITING );
+   getExpInfo( );
 }
 
+// Function to load an experiment from the DB
 void US_Convert:: loadUS3DB( void )
 {
    // Verify connectivity
@@ -737,13 +753,34 @@ void US_Convert:: loadUS3DB( void )
       return;
    }
 
-   QMessageBox::information( this,
-      tr( "Error" ),
-      tr( "This function is not supported yet") );
+   // Present a dialog to ask user which experiment to load
+   QString runID;
+   US_GetDBRun dialog( runID );
+   if ( dialog.exec() == QDialog::Rejected )
+      return;
 
+   if ( runID == NULL )
+      return;
+
+   // Now that we have the runID, let's copy the DB info to HD
+   QDir        readDir( US_Settings::resultDir() );
+   QString     dirname = readDir.absolutePath() + "/" + runID + "/";
+   QString status = US_ConvertIO::readDBExperiment( runID, dirname );
+   if ( status  != NULL )
+   {
+      QMessageBox::information( this,
+             tr( "Error" ),
+             status + "\n" );
+      return;
+   }
+
+   // and load it
+   loadUS3HD( dirname );
+
+   saveStatus = BOTH;         // override from loadUS3HD()
 }
 
-void US_Convert::getExpInfo( aucStatus status )
+void US_Convert::getExpInfo( void )
 {
    ExpData.runID = le_runID -> text();
 
@@ -757,7 +794,8 @@ void US_Convert::getExpInfo( aucStatus status )
       return;
    }
 
-   else if ( recStatus > 0 )
+   // if saveStatus == BOTH, then we are editing the record from the database
+   else if ( ( recStatus > 0 ) && ( saveStatus != BOTH ) ) 
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -766,7 +804,6 @@ void US_Convert::getExpInfo( aucStatus status )
    }
 
    // OK, proceed
-   this->saveStatus = status;
 
    // Calculate average temperature
    double sum = 0.0;
@@ -843,8 +880,17 @@ void US_Convert::cancelExpInfo( void )
 
 void US_Convert::runDetails( void )
 {
+   // Create a triples structure for US_RunDetails2
+   QStringList tripleDescriptions;
+   for (int i = 0; i < triples.size(); i++ )
+   {
+      if ( triples[ i ].excluded ) continue;
+
+      tripleDescriptions << triples[ i ].tripleDesc;
+   }
+
    US_RunDetails2* dialog
-      = new US_RunDetails2( allData, runID, currentDir, triples );
+      = new US_RunDetails2( allData, runID, currentDir, tripleDescriptions );
    dialog->exec();
    qApp->processEvents();
    delete dialog;
@@ -852,15 +898,20 @@ void US_Convert::runDetails( void )
 
 void US_Convert::changeTriple( QListWidgetItem* )
 {
-   int row       = lw_triple->currentRow();
-   currentTriple = tripleMap[ row ];
-   int ndx       = findTripleIndex();
+   // Match the description to find the correct triple in memory
+   QString triple = lw_triple->currentItem()->text();
+   currentTriple = 0;
+   for ( int i = 0; i < triples.size(); i++ )
+   {
+      if ( triple == triples[ i ].tripleDesc )
+         currentTriple = i;
+   }
    
    le_dir         -> setText( currentDir );
-   le_description -> setText( saveDescription );
+   le_description -> setText( allData[ currentTriple ].description );
    
-   le_bufferInfo  -> setText( ExpData.triples[ ndx ].bufferDesc  );
-   le_analyteInfo -> setText( ExpData.triples[ ndx ].analyteDesc );
+   le_bufferInfo  -> setText( triples[ currentTriple ].bufferDesc  );
+   le_analyteInfo -> setText( triples[ currentTriple ].analyteDesc );
    
    // Reset maximum scan control values
    enableScanControls();
@@ -876,47 +927,40 @@ void US_Convert::setTripleInfo( void )
 {
    // Load them into the list box
    lw_triple->clear();
-   foreach ( int ndx, tripleMap )
-      lw_triple->addItem( triples[ ndx ] );
+   currentTriple = -1;          // indicates that it hasn't been selected yet
+   for (int i = 0; i < triples.size(); i++ )
+   {
+      if ( triples[ i ].excluded ) continue;
+
+      lw_triple->addItem( triples[ i ].tripleDesc );
+      if ( currentTriple == -1 ) currentTriple = i;
+   }
 
    QListWidgetItem* item = lw_triple->item( 0 );   // select the item at row 0
    lw_triple->setItemSelected( item, true );
-   currentTriple = tripleMap[ 0 ];
-}
-
-int US_Convert::findTripleIndex ( void )
-{
-   // See if the current triple has been added already
-   for (int i = 0; i < tripleMap.size(); i++ )
-   {
-      if ( tripleMap[ i ] == currentTriple )
-         return i;
-   }
-
-   // Not found, so let's pick the first one
-   currentTriple = tripleMap[ 0 ];
-   return 0;
 }
 
 void US_Convert::getCenterpieceIndex( int ndx )
 {
-   ExpData.triples[ findTripleIndex() ].centerpiece = ndx;
+   triples[ currentTriple ].centerpiece = ndx;
 }
 
 void US_Convert::ccwApplyAll( void )
 {
-   US_ExpInfo::TripleInfo triple = ExpData.triples[ findTripleIndex() ];
+   US_ExpInfo::TripleInfo triple = triples[ currentTriple ];
 
    // Copy selected fields only
-   for ( int i = 0; i < ExpData.triples.size(); i++ )
+   for ( int i = 0; i < triples.size(); i++ )
    {
-      ExpData.triples[ i ].centerpiece = triple.centerpiece;
-      ExpData.triples[ i ].bufferID    = triple.bufferID;
-      ExpData.triples[ i ].bufferGUID  = triple.bufferGUID;
-      ExpData.triples[ i ].bufferDesc  = triple.bufferDesc;
-      ExpData.triples[ i ].analyteID   = triple.analyteID;
-      ExpData.triples[ i ].analyteGUID = triple.analyteGUID;
-      ExpData.triples[ i ].analyteDesc = triple.analyteDesc;
+      if ( triples[ i ].excluded ) continue;
+
+      triples[ i ].centerpiece = triple.centerpiece;
+      triples[ i ].bufferID    = triple.bufferID;
+      triples[ i ].bufferGUID  = triple.bufferGUID;
+      triples[ i ].bufferDesc  = triple.bufferDesc;
+      triples[ i ].analyteID   = triple.analyteID;
+      triples[ i ].analyteGUID = triple.analyteGUID;
+      triples[ i ].analyteDesc = triple.analyteDesc;
    }
 
    enableControls();
@@ -937,9 +981,7 @@ void US_Convert::selectBuffer( void )
 // Get information about selected buffer
 void US_Convert::assignBuffer( const QString& bufferID )
 {
-   int ndx = findTripleIndex();
-
-   ExpData.triples[ ndx ].bufferID = bufferID.toInt();
+   triples[ currentTriple ].bufferID = bufferID.toInt();
 
    // Now get the corresponding description 
    US_Passwd pw;
@@ -958,8 +1000,8 @@ void US_Convert::assignBuffer( const QString& bufferID )
 
    if ( db.next() )
    {
-      ExpData.triples[ ndx ].bufferGUID = db.value( 0 ).toString();
-      ExpData.triples[ ndx ].bufferDesc = db.value( 1 ).toString();
+      triples[ currentTriple ].bufferGUID = db.value( 0 ).toString();
+      triples[ currentTriple ].bufferDesc = db.value( 1 ).toString();
       le_bufferInfo -> setText( db.value( 1 ).toString() );
    }
 
@@ -1002,8 +1044,7 @@ void US_Convert::assignAnalyte( US_Analyte data )
    db.next();
    QString analyteID = db.value( 0 ).toString();
 
-   int ndx = findTripleIndex();
-   ExpData.triples[ ndx ].analyteID = analyteID.toInt();
+   triples[ currentTriple ].analyteID = analyteID.toInt();
 
    // Now get the corresponding description 
    q.clear();
@@ -1013,8 +1054,8 @@ void US_Convert::assignAnalyte( US_Analyte data )
 
    if ( db.next() )
    {
-      ExpData.triples[ ndx ].analyteGUID = db.value( 0 ).toString();
-      ExpData.triples[ ndx ].analyteDesc = db.value( 4 ).toString();
+      triples[ currentTriple ].analyteGUID = db.value( 0 ).toString();
+      triples[ currentTriple ].analyteDesc = db.value( 4 ).toString();
       le_analyteInfo -> setText( db.value( 4 ).toString() );
    }
 
@@ -1270,7 +1311,6 @@ void US_Convert::cClick( const QwtDoublePoint& p )
          break;
 
    }
-
 }
 
 void US_Convert::PseudoCalcAvg( void )
@@ -1378,9 +1418,8 @@ void US_Convert::cancel_reference( void )
    reference_start = 0.0;
    reference_end   = 0.0;
 
-   tripleMap.clear();
    for ( int i = 0; i < triples.size(); i++ )
-      tripleMap << i;
+      triples[ i ].excluded = false;
 
    setTripleInfo();
 
@@ -1395,17 +1434,14 @@ void US_Convert::cancel_reference( void )
 
 void US_Convert::drop_reference( void )
 {
-   int currentRow = lw_triple->currentRow();
-   tripleMap.removeAt( currentRow );
-
+   triples[ currentTriple ].excluded = true;
    setTripleInfo();           // Resets currentTriple
-   int ndx       = findTripleIndex();
 
    le_dir         -> setText( currentDir );
    le_description -> setText( saveDescription );
 
-   le_bufferInfo  -> setText( ExpData.triples[ ndx ].bufferDesc  );
-   le_analyteInfo -> setText( ExpData.triples[ ndx ].analyteDesc );
+   le_bufferInfo  -> setText( triples[ currentTriple ].bufferDesc  );
+   le_analyteInfo -> setText( triples[ currentTriple ].analyteDesc );
 
    enableControls();
 
@@ -1455,13 +1491,14 @@ int US_Convert::savetoHD( void )
                tr( "Warning" ),
                tr( "The run has not yet been associated with the database. "    ) +
                tr( "Click 'OK' to proceed anyway, or click 'Cancel' "           ) +
-               tr( "and then click on the 'Associate Run with DB'"              ) +
+               tr( "and then click on the 'Edit Run Information'"              ) +
                tr( "button to enter this information first.\n\n "               ),
                tr( "&OK" ), tr( "&Cancel" ),
                0, 0, 1 );
       if ( status != 0 ) return NOT_WRITTEN;
    }
 
+/* // delete
    if ( ExpData.triples.size() != triples.size() )
    {
       status = QMessageBox::information( this,
@@ -1474,13 +1511,19 @@ int US_Convert::savetoHD( void )
                0, 0, 1 );
       if ( status != 0 ) return NOT_WRITTEN;
    }
+*/
 
    // Write the data
    US_ProcessConvert* dialog 
       = new US_ProcessConvert( this );
       dialog->writeConvertedData( status, allData, ExpData, triples, 
-                                  tripleMap, allExcludes, runType, runID, dirname );
+                                  allExcludes, runType, runID, dirname );
    delete dialog;
+
+   // How many files should have been written?
+   int fileCount = 0;
+   for ( int i = 0; i < triples.size(); i++ )
+      if ( ! triples[ i ].excluded ) fileCount++;
 
    // Now try to communicate status
    if ( status == NOXML )
@@ -1491,7 +1534,7 @@ int US_Convert::savetoHD( void )
             tr( "The run information file was not written. " ) +
             tr( "Please click on the " ) +
             tr( "'Associate Run with DB' button \n\n " )    +
-            QString::number( tripleMap.size() ) + " "                + 
+            QString::number( fileCount ) + " "                + 
             runID + tr( " files written." ) );
       return( status );
    }
@@ -1504,7 +1547,7 @@ int US_Convert::savetoHD( void )
             tr( "Buffer and/or analyte information is incomplete. Please click on the " ) +
             tr( "'Enter Current c/c/w Info' button for each "  ) +
             tr( "cell, channel, and wavelength combination \n\n " ) +
-            QString::number( tripleMap.size() ) + " "                + 
+            QString::number( fileCount ) + " "                + 
             runID + tr( " files written." ) );
       return( status );
    }
@@ -1519,7 +1562,7 @@ int US_Convert::savetoHD( void )
    // Status is OK
    QMessageBox::information( this,
          tr( "Success" ),
-         QString::number( tripleMap.size() ) + " " + 
+         QString::number( fileCount ) + " " + 
          runID + tr( " files written." ) );
   
    enableRunIDControl( false );
@@ -1540,6 +1583,11 @@ void US_Convert::loadUS3HD( void )
    dir.replace( "\\", "/" );  // WIN32 issue
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
+   loadUS3HD( dir );
+}
+
+void US_Convert::loadUS3HD( QString dir )
+{
    resetAll();
 
    // Set the runID and directory
@@ -1552,17 +1600,16 @@ void US_Convert::loadUS3HD( void )
    // Reload the data
    US_ProcessConvert* dialog 
       = new US_ProcessConvert( this );
-      dialog->reloadUS3Data( dir, allData, ExpData, triples, tripleMap, runType, runID );
+      dialog->reloadUS3Data( dir, allData, ExpData, triples, runType, runID );
    delete dialog;
 
    if ( allData.size() == 0 ) return;
 
    // Update triple information on screen
    setTripleInfo();
-   int ndx       = findTripleIndex();
 
-   le_bufferInfo  -> setText( ExpData.triples[ ndx ].bufferDesc  );
-   le_analyteInfo -> setText( ExpData.triples[ ndx ].analyteDesc );
+   le_bufferInfo  -> setText( triples[ currentTriple ].bufferDesc  );
+   le_analyteInfo -> setText( triples[ currentTriple ].analyteDesc );
 
    // Restore description
    le_description->setText( allData[ 0 ].description );
@@ -1615,11 +1662,14 @@ void US_Convert::loadUS3HD( void )
    pb_newRuninfo  ->setEnabled ( saveStatus == HD_ONLY );
 
    enableSyncDB();
-
 }
 
 void US_Convert::savetoDB( void )
 {
+   int status = savetoHD();
+   if ( status != OK )
+      return;
+
    QString error = NULL;
 
    // Get the directory where the auc files are
@@ -1658,11 +1708,11 @@ void US_Convert::savetoDB( void )
    else if ( expID > 0 )
    {
       ExpData.expID = expID;
-      error = US_ConvertIO::updateDBExperiment( ExpData, tripleMap, dir );
+      error = US_ConvertIO::updateDBExperiment( ExpData, triples, dir );
    }
 
    else
-      error = US_ConvertIO::newDBExperiment( ExpData, tripleMap, dir );
+      error = US_ConvertIO::newDBExperiment( ExpData, triples, dir );
 
    if ( error != NULL )
    {
@@ -1737,29 +1787,19 @@ bool US_Convert::convert( void )
 
    if ( allData.size() == 0 ) return( false );
 
-   // Make sure all the parallel structures are initialized too
-   initTriples();
-
    le_description->setText( allData[ 0 ].description );
    saveDescription = QString( allData[ 0 ].description ); 
 
-   currentTriple = tripleMap[ 0 ];     // Now let's show the user the first one
-   return( true );
-}
-
-// Function to initialize ExpData triples and tripleMap
-void US_Convert::initTriples( void )
-{
-   tripleMap.clear();
-   ExpData.triples.clear();
-   ExpData.rpms.clear();
+   // Now let's show the user the first one
+   currentTriple = -1;
    for ( int i = 0; i < triples.size(); i++ )
    {
-      US_ExpInfo::TripleInfo d;
-      d.tripleID = i;
-      ExpData.triples << d;
-      tripleMap << i;
+      if ( triples[ i ].excluded ) continue;
+
+      if ( currentTriple == -1 ) currentTriple = i;
    }
+
+   return( true );
 }
 
 bool US_Convert::centerpieceInfo( void )
@@ -1817,7 +1857,7 @@ void US_Convert::plot_titles( void )
 {
    US_DataIO2::RawData currentData = allData[ currentTriple ];
 
-   QString triple         = triples[ currentTriple ];
+   QString triple         = triples[ currentTriple ].tripleDesc;
    QStringList parts      = triple.split(" / ");
 
    QString     cell       = parts[ 0 ];

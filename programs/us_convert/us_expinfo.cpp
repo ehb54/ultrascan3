@@ -214,11 +214,11 @@ void US_ExpInfo::reset( void )
    le_runID        ->setText( expInfo.runID );
    te_comment      ->clear();
 
-   cb_project      ->reset();
-   cb_lab          ->reset();
-   cb_instrument   ->reset();
-   cb_operator     ->reset();
-   cb_rotor        ->reset();
+   cb_project      ->load();
+   cb_lab          ->load();
+   cb_instrument   ->load();
+   cb_operator     ->load();
+   cb_rotor        ->load();
 
    pb_accept       ->setEnabled( false );
 
@@ -303,7 +303,20 @@ bool US_ExpInfo::load( void )
    if ( options.size() > 0 )
    {
       cb_lab->addOptions( options );
-      expInfo.labID = options[ 0 ].ID.toInt();  // the first one
+
+      // is the lab ID in the list?
+      int index = 0;
+      for ( int i = 0; i < options.size(); i++ )
+      {
+         if ( expInfo.labID == options[ i ].ID.toInt() )
+         {
+            index = i;
+            break;
+         }
+      }
+   
+      // Replace labID with one from the list
+      expInfo.labID = options[ index ].ID.toInt();
    }
 
    cb_changed = true; // so boxes will go through the reload code 1st time
@@ -641,9 +654,6 @@ void US_ExpInfo::accept( void )
    components = components[0].split( "(", QString::SkipEmptyParts );
    expInfo.invID = components.last().toInt();
  
-   // Other investigator information
-   getInvestigatorInfo( expInfo.invID );
-   
    // Other experiment information
    expInfo.projectID     = cb_project       ->getLogicalID();
    expInfo.runID         = le_runID         ->text();
@@ -656,37 +666,9 @@ void US_ExpInfo::accept( void )
    expInfo.label         = le_label         ->text(); 
    expInfo.comments      = te_comment       ->toPlainText();
 
-   // additional associated information
-   expInfo.operatorGUID = QString( "" );
-   QStringList q( "get_person_info" );
-   q  << QString::number( expInfo.operatorID );
-   db.query( q );
-   if ( db.next() )
-      expInfo.operatorGUID   = db.value( 9 ).toString();
-
-   expInfo.labGUID = QString( "" );
-   q.clear();
-   q << QString( "get_lab_info" )
-     << QString::number( expInfo.labID );
-   db.query( q );
-   if ( db.next() )
-      expInfo.labGUID = db.value( 0 ).toString();
-
-   expInfo.instrumentSerial = QString( "" );
-   q.clear();
-   q << QString( "get_instrument_info" )
-     << QString::number( expInfo.instrumentID );
-   db.query( q );
-   if ( db.next() )
-      expInfo.instrumentSerial = db.value( 1 ).toString();
-
-   expInfo.rotorGUID = QString( "" );
-   q.clear();
-   q << QString( "get_rotor_info" )
-     << QString::number( expInfo.rotorID );
-   db.query( q );
-   if ( db.next() )
-      expInfo.rotorGUID = db.value( 0 ).toString();
+   // Other investigator and experiment information
+   //getInvestigatorInfo( expInfo.invID );
+   QString status = US_ConvertIO::readExperimentInfoDB( expInfo );
 
    emit updateExpInfoSelection( expInfo );
    close();
@@ -710,6 +692,8 @@ void US_ExpInfo::connect_error( const QString& error )
 US_ExpInfo::TripleInfo::TripleInfo()
 {
    tripleID     = 0;
+   tripleDesc   = QString( "" );
+   excluded     = false;
    centerpiece  = 0;
    bufferID     = 0;
    bufferGUID   = "";
@@ -721,13 +705,23 @@ US_ExpInfo::TripleInfo::TripleInfo()
    tripleFilename = "";
 }
 
+void US_ExpInfo::TripleInfo::show( void )
+{
+   qDebug() << "tripleID    = " << tripleID    << '\n'
+            << "tripleDesc  = " << tripleDesc  << '\n'
+            << "centerpiece = " << centerpiece << '\n'
+            << "bufferID    = " << bufferID    << '\n'
+            << "analyteID   = " << analyteID   << '\n';
+   if ( excluded ) qDebug() << "excluded";
+}
+
 US_ExpInfo::ExperimentInfo::ExperimentInfo()
 {
    ExperimentInfo::clear();
 }
 
-// Zero out all data structures without destroying the triples
-void US_ExpInfo::ExperimentInfo::reset( void )
+// Zero out all data structures
+void US_ExpInfo::ExperimentInfo::clear( void )
 {
    invID              = 0;
    lastName           = QString( "" );
@@ -748,20 +742,6 @@ void US_ExpInfo::ExperimentInfo::reset( void )
    centrifugeProtocol = QString( "" );
    date               = QString( "" );
 
-   for ( int i = 0; i < triples.size(); i++ )
-   {
-      triples[ i ].tripleID    = 0;
-      triples[ i ].centerpiece = 0;
-      triples[ i ].bufferID    = 0;
-      triples[ i ].analyteID   = 0;
-   }
-}
-
-// Clear out all data structures
-void US_ExpInfo::ExperimentInfo::clear( void )
-{
-   triples.clear();               // Not to be confused with the global triples
-   reset();
 }
 
 US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const ExperimentInfo& rhs )
@@ -790,16 +770,12 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
       for ( int i = 0; i < rhs.rpms.size(); i++ )
          rpms << rhs.rpms[ i ];
 
-      triples.clear();
-      for ( int i = 0; i < rhs.triples.size(); i++ )
-         triples << rhs.triples[ i ];
-
    }
 
    return *this;
 }
 
-void US_ExpInfo::ExperimentInfo::show( QList< int >& tripleMap )
+void US_ExpInfo::ExperimentInfo::show( void )
 {
    qDebug() << "invID        = " << invID << '\n'
             << "lastName     = " << lastName << '\n'
@@ -825,19 +801,4 @@ void US_ExpInfo::ExperimentInfo::show( QList< int >& tripleMap )
       qDebug() << "rpm = " << rpms[ i ];
    }
 
-   qDebug() << "triples.size()   = " << triples.size();
-   qDebug() << "tripleMap.size() = " << tripleMap.size();
-
-   if ( triples.size() > 0 && tripleMap.size() >= triples.size() )
-   {
-      for ( int i = 0; i < tripleMap.size(); i++ )
-      {
-         int ndx = tripleMap[ i ];
-         qDebug() << "i = " << i << "; ndx = " << ndx;
-         qDebug() << "tripleID    = " << triples[ ndx ].tripleID    << '\n'
-                  << "centerpiece = " << triples[ ndx ].centerpiece << '\n'
-                  << "bufferID    = " << triples[ ndx ].bufferID    << '\n'
-                  << "analyteID   = " << triples[ ndx ].analyteID   << '\n';
-      }
-   }
 }

@@ -132,7 +132,7 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
       void          convertLegacyData(
                     QList  < US_DataIO2::BeckmanRawScan >& ,
                     QVector< US_DataIO2::RawData        >& ,
-                    QStringList& ,
+                    QList< US_ExpInfo::TripleInfo >& ,
                     QString ,
                     double ,
                     QList< double >& );
@@ -149,9 +149,6 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
           \param triples A reference to a structure provided by the calling
                         function that already contains all the different
                         cell/channel/wavelength combinations in the data. 
-          \param tripleMap A reference to a QList of index values indicating
-                        which triples are members of the current data set. Triples
-                        included in the map will be written, others will not.
           \param allExcludes A reference to a QVector of excluded scans for
                         each c/c/w combination
           \param runType A reference to a variable that already contains the type
@@ -165,8 +162,7 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
                     int& status,
                     QVector< US_DataIO2::RawData >& ,
                     US_ExpInfo::ExperimentInfo& ,
-                    QStringList& ,
-                    QList< int >& ,
+                    QList< US_ExpInfo::TripleInfo >& ,
                     QVector< US_Convert::Excludes >& ,
                     QString ,
                     QString ,
@@ -184,9 +180,6 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
           \param triples A reference to a structure provided by the calling
                         function that will be used to store all the different
                         cell/channel/wavelength combinations found in the data. 
-          \param tripleMap A reference to a QList of index values indicating
-                        which triples are members of the current data set. Triples
-                        included in the map will be written, others will not.
           \param runType A reference to a variable that already contains the type
                         of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
                         This information will affect how the data is
@@ -196,8 +189,7 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
                     QString ,
                     QVector< US_DataIO2::RawData        >& ,
                     US_ExpInfo::ExperimentInfo&,
-                    QStringList& ,
-                    QList< int >& ,
+                    QList< US_ExpInfo::TripleInfo >& ,
                     QString&,
                     QString );
 
@@ -214,16 +206,16 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
                            QList< double >&                     ss_limits );
 
       void setTriples    ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-                           QStringList&                         triples,
+                           QList< US_ExpInfo::TripleInfo >&     triples,
                            QString                              runType,
                            double                               tolerance );
       
       void setCcwTriples ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-                           QStringList&                         triples,
+                           QList< US_ExpInfo::TripleInfo >&     triples,
                            double                               tolerance );
       
       void setCcrTriples ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-                           QStringList&                         triples,
+                           QList< US_ExpInfo::TripleInfo >&     triples,
                            double                               tolerance );
       
       void setInterpolated ( unsigned char*, int );

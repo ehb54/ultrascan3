@@ -8,6 +8,7 @@
 #include "us_math2.h"
 #include "us_db2.h"
 #include "us_passwd.h"
+#include "us_convert.h"
 #include "us_convertio.h"
 
 // Generic constructor
@@ -38,7 +39,7 @@ int US_ConvertIO::checkRunID( QString runID )
 }
 
 QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, 
-                                       QList< int >& tripleMap,
+                                       QList< US_ExpInfo::TripleInfo >& triples,
                                        QString dir )
 {
    US_Passwd pw;
@@ -77,11 +78,11 @@ QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData,
    ExpData.date = db.value( 12 ).toString();
 
    // Now write the auc data
-   return( writeRawDataToDB( ExpData, tripleMap, dir ) );
+   return( writeRawDataToDB( ExpData, triples, dir ) );
 }
 
 QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, 
-                                          QList< int >& tripleMap,
+                                          QList< US_ExpInfo::TripleInfo >& triples,
                                           QString dir )
 {
    // Update database
@@ -120,11 +121,11 @@ QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData,
    ExpData.date = db.value( 12 ).toString();
 
    // Now write the auc data
-   return( writeRawDataToDB( ExpData, tripleMap, dir ) );
+   return( writeRawDataToDB( ExpData, triples, dir ) );
 }
 
 QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData, 
-                                        QList< int >& tripleMap,
+                                        QList< US_ExpInfo::TripleInfo >& triples,
                                         QString dir )
 {
    // Update database
@@ -147,10 +148,10 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
 
    // Read all data
    QString error = NULL;
-   for ( int i = 0; i < tripleMap.size(); i++ )
+   for ( int i = 0; i < triples.size(); i++ )
    {
-      int ndx = tripleMap[ i ];
-      US_ExpInfo::TripleInfo triple = ExpData.triples[ ndx ];
+      US_ExpInfo::TripleInfo triple = triples[ i ];
+      if ( triple.excluded ) continue;
 
       // Convert uuid to long form
       char uuidc[ 37 ];
@@ -170,7 +171,7 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
       if ( status == US_DB2::OK )
       {
          // If ok, then let's save the tripleID
-         ExpData.triples[ i ].tripleID = rawDataID;
+         triples[ i ].tripleID = rawDataID;
 
          // We can also upload the auc data
          int writeStatus = db.writeBlobToDB( dir + triple.tripleFilename, 
@@ -202,9 +203,8 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
    return( NULL );
 }
 
+// Function to read the experiment info and binary auc files to disk
 QString US_ConvertIO::readDBExperiment( QString runID,
-                                        US_ExpInfo::ExperimentInfo& ExpData, 
-                                        QList< int >& tripleMap,
                                         QString dir )
 {
    US_Passwd pw;
@@ -214,12 +214,15 @@ QString US_ConvertIO::readDBExperiment( QString runID,
    if ( db.lastErrno() != US_DB2::OK )
       return( db.lastError() );
 
+   US_ExpInfo::ExperimentInfo ExpData;       // A local copy
+   QList< US_ExpInfo::TripleInfo > triples;  // a local copy
    QStringList q( "get_experiment_info_by_runID" );
    q << runID;
    db.query( q );
  
    if ( db.next() )
    {
+      ExpData.runID              = runID;
       ExpData.projectID          = db.value( 0 ).toInt();
       ExpData.expID              = db.value( 1 ).toInt();
       ExpData.expGUID            = db.value( 2 ).toString();
@@ -228,12 +231,12 @@ QString US_ConvertIO::readDBExperiment( QString runID,
       ExpData.operatorID         = db.value( 5 ).toInt();
       ExpData.rotorID            = db.value( 6 ).toInt();
       ExpData.expType            = db.value( 7 ).toString();
-      ExpData.runTemp            = db.value( 8 ).toInt();
+      ExpData.runTemp            = db.value( 8 ).toString();
       ExpData.label              = db.value( 9 ).toString();
       ExpData.comments           = db.value( 10 ).toString();
       ExpData.centrifugeProtocol = db.value( 11 ).toString();
       ExpData.date               = db.value( 12 ).toString();
-
+      ExpData.invID              = db.value( 13 ).toInt();
    }
 
    else if ( db.lastErrno() == US_DB2::NOROWS )
@@ -242,21 +245,235 @@ QString US_ConvertIO::readDBExperiment( QString runID,
    else
       return( db.lastError() );
 
-   // Code to read the auc file to disk
+   QString status = readExperimentInfoDB( ExpData );
+   if ( status != NULL )
+      return status;
+
+   // Now read the auc data
+   status = readRawDataFromDB( ExpData, triples, dir );
+   if ( status != NULL )
+      return status;
+
+   // Now try to write the xml file
+   int xmlStatus = writeXmlFile( 
+            ExpData, triples, ExpData.opticalSystem, runID, dir );
+
+   if ( xmlStatus == US_Convert::CANTOPEN )
+   {
+      QString writeFile = runID      + "." 
+                        + ExpData.opticalSystem    + ".xml";
+      return( "Cannot open write file: " + dir + writeFile );
+   }
+
+   else if ( xmlStatus == US_Convert::NOXML )
+      ; // Covered in caller error message
+
+   else if ( xmlStatus != US_Convert::OK )
+      return( "Unspecified error writing xml file." );
+
+   return( NULL );
+}
+
+// Function to read the auc files to disk
+QString US_ConvertIO::readRawDataFromDB( US_ExpInfo::ExperimentInfo& ExpData, 
+                                         QList< US_ExpInfo::TripleInfo >& triples,
+                                         QString& dir )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+      return( db.lastError() );
+
+   // Get the rawDataID's that correspond to this experiment
+   QStringList q( "get_rawDataIDs" );
+   q  << QString::number( ExpData.expID );
+   db.query( q );
+
+   QStringList rawDataIDs;
+   QStringList filenames;
+
+   while ( db.next() )
+   {
+      rawDataIDs << db.value( 0 ).toString();
+      filenames  << db.value( 2 ).toString();
+   }
+
+   if ( rawDataIDs.size() < 1 )
+      return( "There were no auc files found in the databae." );
+
+   // Set working directory and create it if necessary
+   dir  = US_Settings::resultDir() + "/" + ExpData.runID;
+
+   QDir work( US_Settings::resultDir() );
+   work.mkdir( ExpData.runID );
+
+   // Read the auc files to disk
+   for ( int i = 0; i < rawDataIDs.size(); i++ )
+   {
+      QString f = dir + "/" + filenames[ i ];
+      db.readBlobFromDB( f, QString( "download_aucData" ), rawDataIDs[ i ].toInt() );
+   }
+
+   // Get the other db info and create triples
+   QString error = NULL;
+   triples.clear();
+   for ( int i = 0; i < rawDataIDs.size(); i++ )
+   {
+      US_ExpInfo::TripleInfo triple;
+
+      q.clear();
+      q  << "get_rawData"
+         << rawDataIDs[ i ];
+      db.query( q );
+
+      if ( db.next() )
+      {
+         QString uuidc         = db.value( 0 ).toString();
+         uuid_parse( uuidc.toAscii(), (unsigned char*) triple.tripleGUID );
+         //triple.label          = db.value( 1 ).toString();
+         triple.tripleFilename = db.value( 2 ).toString();
+         //triple.tripleComments = db.value( 3 ).toString();
+         triple.tripleID       = rawDataIDs[ i ].toInt();
+
+         QStringList part      = triple.tripleFilename.split( "." );
+         triple.tripleDesc     = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
+         triple.excluded       = false;
+
+         triple.centerpiece    = 0;           // don't know these yet
+         triple.bufferID       = 0;
+         triple.analyteID      = 0;
+
+         // get more buffer info
+         q.clear();
+         q << QString( "get_buffer_info" )
+           << QString::number( triple.bufferID );
+         db.query( q );
+         if ( db.next() )
+         {
+            triple.bufferGUID  = db.value( 0 ).toString();
+            triple.bufferDesc  = db.value( 1 ).toString();
+         }
+
+         // get more analyte info
+         q.clear();
+         q << QString( "get_analyte_info" )
+           << QString::number( triple.analyteID );
+         db.query( q );
+         if ( db.next() )
+         {
+            triple.analyteGUID = db.value( 0 ).toString();
+            triple.analyteDesc = db.value( 4 ).toString();
+         }
+
+         // save it   
+         triples << triple;
+      }
+
+      else
+         error += "Error processing file: " + filenames[ i ] + "\n" +
+                  db.lastError() + "\n";
+   }
+      
+   // Get runType
+   QStringList part = triples[ 0 ].tripleFilename.split( "." );
+   ExpData.opticalSystem = part[ 1 ].toAscii();
+
+   if ( error != NULL )
+      return( error );
+
+   return( NULL );
+}
+
+// Function to read the ExperimentInfo structure from DB
+QString US_ConvertIO::readExperimentInfoDB( US_ExpInfo::ExperimentInfo& expInfo )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+      return( db.lastError() );
+
+   // Investigator info
+   QStringList q( "get_person_info" );
+   q << QString::number( expInfo.invID );
+   db.query( q );
+   if ( db.next() )
+   {
+      expInfo.firstName = db.value( 0 ).toString();
+      expInfo.lastName  = db.value( 1 ).toString();
+      expInfo.invGUID   = db.value( 9 ).toString();
+   }
+
+/*
+   // Experiment Info
+   opticalSystem
+   rpms??
+
+   // Triples
+   tripleID;      
+   centerpiece;   
+   bufferID;      
+   bufferGUID;    
+   bufferDesc;    
+   analyteID;     
+   analyteGUID;   
+   analyteDesc;   
+   tripleGUID[16];
+   tripleFilename;
+*/
+
+   // Hardware info
+   expInfo.operatorGUID = QString( "" );
+   q.clear();
+   q  << QString( "get_person_info" )
+      << QString::number( expInfo.operatorID );
+   db.query( q );
+   if ( db.next() )
+      expInfo.operatorGUID   = db.value( 9 ).toString();
+
+   expInfo.labGUID = QString( "" );
+   q.clear();
+   q << QString( "get_lab_info" )
+     << QString::number( expInfo.labID );
+   db.query( q );
+   if ( db.next() )
+      expInfo.labGUID = db.value( 0 ).toString();
+
+   expInfo.instrumentSerial = QString( "" );
+   q.clear();
+   q << QString( "get_instrument_info" )
+     << QString::number( expInfo.instrumentID );
+   db.query( q );
+   if ( db.next() )
+      expInfo.instrumentSerial = db.value( 1 ).toString();
+
+   expInfo.rotorGUID = QString( "" );
+   q.clear();
+   q << QString( "get_rotor_info" )
+     << QString::number( expInfo.rotorID );
+   db.query( q );
+   if ( db.next() )
+   {
+      expInfo.rotorGUID   = db.value( 0 ).toString();
+      expInfo.rotorSerial = db.value( 2 ).toString();
+   }
 
    return( NULL );
 }
 
 int US_ConvertIO::writeXmlFile(
     US_ExpInfo::ExperimentInfo& ExpData,
-    QStringList& triples,
-    QList< int >& tripleMap,
+    QList< US_ExpInfo::TripleInfo >& triples,
     QString runType,
     QString runID,
     QString dirname )
 { 
    if ( ExpData.invID == 0 ) return( US_Convert::NOXML ); 
 
+   if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
    QString writeFile = runID      + "." 
                      + runType    + ".xml";
    QFile file( dirname + writeFile );
@@ -309,17 +526,18 @@ int US_ConvertIO::writeXmlFile(
       xml.writeEndElement  ();
 
       xml.writeStartElement( "rotor" );
-      xml.writeAttribute   ( "id",   QString::number( ExpData.rotorID   ) );
-      xml.writeAttribute   ( "guid", ExpData.rotorGUID );
+      xml.writeAttribute   ( "id",     QString::number( ExpData.rotorID   ) );
+      xml.writeAttribute   ( "guid",   ExpData.rotorGUID );
+      xml.writeAttribute   ( "serial", ExpData.rotorSerial );
       xml.writeEndElement  ();
 
       // loop through the following for c/c/w combinations
-      for ( int i = 0; i < tripleMap.size(); i++ )
+      for ( int i = 0; i < triples.size(); i++ )
       {
-         int ndx = tripleMap[ i ];
-         US_ExpInfo::TripleInfo t = ExpData.triples[ ndx ];
+         US_ExpInfo::TripleInfo t = triples[ i ];
+         if ( t.excluded ) continue;
 
-         QString triple         = triples[ ndx ];
+         QString triple         = t.tripleDesc;
          QStringList parts      = triple.split(" / ");
 
          QString     cell       = parts[ 0 ];
@@ -373,15 +591,12 @@ int US_ConvertIO::writeXmlFile(
    xml.writeEndElement(); // US_Scandata
    xml.writeEndDocument();
 
-//   if ( ExpData.triples.size() != triples.size() )
-//      return( US_Convert::PARTIAL_XML );
-
    return( US_Convert::OK );
 }
 
 int US_ConvertIO::readXmlFile( 
     US_ExpInfo::ExperimentInfo& ExpData,
-    QStringList& triples,
+    QList< US_ExpInfo::TripleInfo >& triples,
     QString runType,
     QString runID,
     QString dirname )
@@ -419,13 +634,13 @@ int US_ConvertIO::readXmlFile(
 
    if ( error ) return US_Convert::BADXML;
 
-   return( verifyXml( ExpData ) );
+   return( verifyXml( ExpData, triples ) );
 }
 
 void US_ConvertIO::readExperiment( 
      QXmlStreamReader& xml, 
      US_ExpInfo::ExperimentInfo& ExpData,
-     QStringList& triples,
+     QList< US_ExpInfo::TripleInfo >& triples,
      QString runType,
      QString runID )
 {
@@ -481,8 +696,9 @@ void US_ConvertIO::readExperiment(
          else if ( xml.name() == "rotor" )
          {
             QXmlStreamAttributes a = xml.attributes();
-            ExpData.rotorID        = a.value( "id" )  .toString().toInt();
-            ExpData.rotorGUID      = a.value( "guid" ).toString();
+            ExpData.rotorID        = a.value( "id"     ).toString().toInt();
+            ExpData.rotorGUID      = a.value( "guid"   ).toString();
+            ExpData.rotorSerial    = a.value( "serial" ).toString();
          }
    
          else if ( xml.name() == "dataset" )
@@ -498,7 +714,9 @@ void US_ConvertIO::readExperiment(
             int ndx                = 0;
             for ( int i = 0; i < triples.size(); i++ )
             {
-               if ( triple == triples[ i ] )
+               if ( triples[ i ].excluded ) continue;
+
+               if ( triple == triples[ i ].tripleDesc )
                {
                   found = true;
                   ndx   = i;
@@ -508,17 +726,19 @@ void US_ConvertIO::readExperiment(
 
             if ( found )
             {
-               ExpData.triples[ ndx ].tripleID = a.value( "id" ).toString().toInt();
+               triples[ ndx ].tripleID = a.value( "id" ).toString().toInt();
                QString uuidc = a.value( "guid" ).toString();
-               uuid_parse( uuidc.toAscii(), (unsigned char*) ExpData.triples[ ndx ].tripleGUID );
+               uuid_parse( uuidc.toAscii(), (unsigned char*) triples[ ndx ].tripleGUID );
 
-               ExpData.triples[ ndx ].tripleFilename = runID    + "." +
-                                                       runType  + "." +
-                                                       cell     + "." +
-                                                       channel  + "." +
-                                                       wl       + ".auc";
+               triples[ ndx ].tripleFilename = runID    + "." +
+                                               runType  + "." +
+                                               cell     + "." +
+                                               channel  + "." +
+                                               wl       + ".auc";
 
-               readDataset( xml, ExpData.triples[ ndx ] );
+               triples[ ndx ].excluded       = false;
+
+               readDataset( xml, triples[ ndx ] );
             }
          }
 
@@ -599,7 +819,8 @@ void US_ConvertIO::readDataset( QXmlStreamReader& xml, US_ExpInfo::TripleInfo& t
    }
 }
 
-int US_ConvertIO::verifyXml( US_ExpInfo::ExperimentInfo& ExpData )
+int US_ConvertIO::verifyXml( US_ExpInfo::ExperimentInfo& ExpData,
+                             QList< US_ExpInfo::TripleInfo >& triples )
 {
    US_Passwd pw;
    US_DB2 db( pw.getPasswd() );
@@ -647,10 +868,12 @@ int US_ConvertIO::verifyXml( US_ExpInfo::ExperimentInfo& ExpData )
    }
 
    // Double check triple GUID's
-   for ( int i = 0; i < ExpData.triples.size(); i++ )
+   for ( int i = 0; i < triples.size(); i++ )
    {
+      if ( triples[ i ].excluded ) continue;
+
       char uuidc[ 37 ];
-      uuid_unparse( (unsigned char*) ExpData.triples[ i ].tripleGUID, uuidc );
+      uuid_unparse( (unsigned char*) triples[ i ].tripleGUID, uuidc );
       q.clear();
       q << QString( "get_rawDataID_from_GUID" )
         << QString( uuidc );
@@ -658,15 +881,15 @@ int US_ConvertIO::verifyXml( US_ExpInfo::ExperimentInfo& ExpData )
 
       if ( db.lastErrno() != US_DB2::OK )
       {
-         ExpData.triples[ i ].tripleID = 0;
-         memset( ExpData.triples[ i ].tripleGUID, 0, 16 );
+         triples[ i ].tripleID = 0;
+         memset( triples[ i ].tripleGUID, 0, 16 );
          status = US_Convert::BADGUID;
       }
 
       else
       {
          // Save updated triple ID
-         ExpData.triples[ i ].tripleID = db.value( 0 ).toString().toInt();
+         triples[ i ].tripleID = db.value( 0 ).toString().toInt();
       }
    }
 
@@ -678,15 +901,25 @@ int US_ConvertIO::verifyXml( US_ExpInfo::ExperimentInfo& ExpData )
 
    if ( db.lastErrno() != US_DB2::OK )
    {
-      ExpData.rotorID   = 0;
-      ExpData.rotorGUID = QString( "" );
+      ExpData.rotorID     = 0;
+      ExpData.rotorGUID   = QString( "" );
+      ExpData.rotorSerial = QString( "" );
       status = US_Convert::BADGUID;
    }
 
    else
    {
-      // Save updated investigator ID
+      // Save updated rotor info 
       ExpData.rotorID = db.value( 0 ).toInt();
+      q.clear();
+      q << QString( "get_rotor_info" )
+        << QString::number( ExpData.rotorID );
+      db.query( q );
+      if ( db.next() )
+      {
+         ExpData.rotorGUID   = db.value( 0 ).toString();
+         ExpData.rotorSerial = db.value( 2 ).toString();
+      }
    }
 
    // Double check lab GUID
