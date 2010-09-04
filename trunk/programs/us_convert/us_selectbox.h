@@ -70,12 +70,66 @@ class US_EXTERN US_SelectBox : public QComboBox, public US_SelectBase
           \param options A QList of type listInfo, containing the ID's and
                          corresponding text information
       */
-      void addOptions           ( QList<listInfo>& );
+      void addOptions           ( QList< listInfo >& );
 
-      /*! \brief A function to reset the contents of the widget, from
+      /*! \brief A function to load the contents of the widget from
                  the information it reads in widgetList.
       */
-      void reset                ( void );
+      void load                ( void );
+
+      /*! \brief A function to set the current index of the combo box
+                 to a logical ID
+
+          \param ID    The logical ID to set the current index to
+      */
+      void setLogicalIndex    ( int );
+
+      /*! \brief A function to retrieve the logical ID of the option
+                 the combo box is currently pointing to
+      */
+      int  getLogicalID       ( void );
+};
+
+/*! \class US_ListwidgetBox
+           This class provides the ability to create a list widget that
+           can keep track of its contents. The ability to set the widget
+           to display the contents associated with a logical ID (for
+           instance, an ID from a database table), and to retrieve the 
+           current logical ID are provided.
+*/
+class US_EXTERN US_ListwidgetBox : public QListWidget, public US_SelectBase
+{
+   public:
+      /*! \brief Generic constructor for the US_ListwidgetBox class.
+
+          \param parent A reference to the parent dialog to which this 
+                        US_ListwidgetBox belongs, or 0 if no parent.
+
+          \param fontAdjust Adjustment to default font size
+      */
+      US_ListwidgetBox            ( QWidget* parent = 0, int fontAdjust = 0 );
+
+      //! A null destructor. 
+      ~US_ListwidgetBox           () {};
+
+      /*! \brief A function to add one option to the widget
+
+          \param option   A variable of type listInfo, containing an ID and
+                        corresponding text information
+      */
+      void addOption              ( listInfo& );
+
+      /*! \brief A function to load the widget with appropriate information
+
+          \param options A QList of type listInfo, containing the ID's and
+                         corresponding text information
+      */
+      void addOptions             ( QList< listInfo >& );
+
+      /*! \brief A function to load the contents of the widget from
+                 the information it reads in widgetList.
+      */
+      void load                  ( void );
 
       /*! \brief A function to set the current index of the combo box
                  to a logical ID

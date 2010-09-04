@@ -26,6 +26,8 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       {
          public:
          int              tripleID;           //!< The ID of this c/c/w combination
+         QString          tripleDesc;         //!< The description of this triple ( e.g., "2 / A / 260" )
+         bool             excluded;           //!< Whether this triple has been dropped or not
          int              centerpiece;        //!< The ID of the centerpiece that was used
          int              bufferID;           //!< The ID of the buffer that was associated
          QString          bufferGUID;         //!< The GUID of the buffer
@@ -36,6 +38,8 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          char             tripleGUID[16];     //!< The GUID of this triple
          QString          tripleFilename;     //!< The filename of this auc file
          TripleInfo();                        //!< A generic constructor
+         void             clear( void );
+         void             show( void );       // temporary
       };
 
       //! \brief  Class that contains information about the hardware and other
@@ -60,6 +64,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          QString          operatorGUID;       //!< The GUID of the operator
          int              rotorID;            //!< The rotor that was used
          QString          rotorGUID;          //!< The GUID of the rotor
+         QString          rotorSerial;        //!< The serial number of the rotor
          QString          expType;            //!< The type of experiment
          QByteArray       opticalSystem;      //!< The type of optical system used
          QList< double >  rpms;               //!< A list of rotor speeds observed during the experiment
@@ -68,13 +73,11 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          QString          comments;           //!< Comments that were associated with the experiment
          QString          centrifugeProtocol; //!< The governing centrifuge protocol
          QString          date;               //!< The date the record was entered or last updated
-         QList< TripleInfo > triples;         //!< Information about the cell/channel/wavelength info
          ExperimentInfo();                    //!< A generic constructor
          ExperimentInfo&  operator=( const ExperimentInfo& ); //!< An overloaded assignment operator
          void updateDB( void );               //!< Function to update the database with changes
-         void reset( void );                  //!< Function to zero variables without destroying triples
          void clear( void );                  //!< Function to reset all class variables to defaults
-         void show( QList< int >& tripleMap ); //!< Temporary function to display current exp info
+         void show ( void );                  // Temporary function to display current exp info
       };
 
       /*! \brief Generic constructor for the US_ExpInfo class. To 

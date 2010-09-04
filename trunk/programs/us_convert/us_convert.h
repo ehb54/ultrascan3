@@ -73,9 +73,6 @@ class US_EXTERN US_Convert : public US_Widgets
 
       QString       runType;
       QString       oldRunType;
-      QStringList   triples;
-      int           currentTriple;
-      QList< int >  tripleMap;
 
       QLabel*       lb_description;
 
@@ -138,15 +135,17 @@ class US_EXTERN US_Convert : public US_Widgets
       double        scanTolerance;                    // remember the scan tolerance value
 
       bool show_plot_progress;
-      US_ExpInfo::ExperimentInfo ExpData; 
-      QStringList          centerpieceTypes;
+      US_ExpInfo::ExperimentInfo      ExpData; 
+      QList< US_ExpInfo::TripleInfo > triples;
+      int                             currentTriple;
+      QStringList                     centerpieceTypes;
 
       void reset           ( void );
       void enableRunIDControl( bool );
       void enableScanControls( void );
       void enableCCWControls ( void );
       void enableSyncDB    ( void );
-      void getExpInfo      ( aucStatus );
+      void getExpInfo      ( void );
       void setTripleInfo   ( void );
       int  findTripleIndex ( void );
       void focus           ( int, int );
@@ -175,6 +174,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void toleranceValueChanged( double );           // signal to notify of change
       void newRuninfo      ( void );
       void loadUS3HD       ( void );
+      void loadUS3HD       ( QString );
       void loadUS3DB       ( void );
       void updateExpInfo   ( US_ExpInfo::ExperimentInfo& );
       void cancelExpInfo   ( void );

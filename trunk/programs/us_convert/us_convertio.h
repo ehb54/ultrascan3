@@ -33,40 +33,45 @@ class US_EXTERN US_ConvertIO
       /*! \brief    Save new experiment info in the database
 
           \param    ExpData A structure containing all the experiment information
-          \param    tripleMap A reference to a QList of index values indicating
-                        which triples are members of the current data set. Triples
-                        included in the map will be written, others will not.
+          \param    triples A reference to a structure provided by the calling
+                        function that will contain all the different
+                        cell/channel/wavelength information.
           \param    dir     The location of the binary auc files
       */
       static QString newDBExperiment( US_ExpInfo::ExperimentInfo&, 
-                                      QList< int >& ,
+                                      QList< US_ExpInfo::TripleInfo >& ,
                                       QString );
 
       /*! \brief    Update experiment info in the database
 
           \param    ExpData A structure containing all the experiment information
-          \param    tripleMap A reference to a QList of index values indicating
-                        which triples are members of the current data set. Triples
-                        included in the map will be written, others will not.
+          \param    triples A reference to a structure provided by the calling
+                        function that will contain all the different
+                        cell/channel/wavelength information.
           \param    dir     The location of the binary auc files
       */
       static QString updateDBExperiment( US_ExpInfo::ExperimentInfo&, 
-                                         QList< int >& ,
+                                         QList< US_ExpInfo::TripleInfo >& ,
                                          QString );
 
-      /*! \brief    Read experiment info from the database
+      /*! \brief    Reads entire experiment and auc files from the database, save to HD
 
           \param    The run ID to look up in the database
-          \param    ExpData A structure that will contain all the experiment information
-          \param    tripleMap A reference to a QList of index values indicating
-                        which triples are members of the current data set. Structure
-                        to be created.
           \param    dir     The location where the binary auc files are to go.
       */
       static QString readDBExperiment( QString,
-                                        US_ExpInfo::ExperimentInfo&, 
-                                        QList< int >&,
-                                        QString );
+                                       QString );
+
+      /*! \brief    Reads secondary experiment info from the database. Call 
+                    this function when you already have IDs stored and
+                    want to fill out with GUIDs serial numbers and the like.
+                    For instance, after loading the xml file to fill in the gaps,
+                    or to load experiment info after reading
+                    auc files.
+
+          \param    expInfo A structure that contains the experiment information
+      */
+      static QString readExperimentInfoDB( US_ExpInfo::ExperimentInfo& );
 
       /*! \brief    Writes an xml file
 
@@ -76,9 +81,6 @@ class US_EXTERN US_ConvertIO
           \param triples A reference to a structure provided by the calling
                         function that already contains all the different
                         cell/channel/wavelength combinations in the data. 
-          \param tripleMap A reference to a QList of index values indicating
-                        which triples are members of the current data set. Triples
-                        included in the map will be written, others will not.
           \param runType A reference to a variable that already contains the type
                         of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
                         This information will affect how the data is
@@ -88,8 +90,7 @@ class US_EXTERN US_ConvertIO
       */
       static int writeXmlFile( 
                  US_ExpInfo::ExperimentInfo& ExpData,
-                 QStringList& ,
-                 QList< int >& ,
+                 QList< US_ExpInfo::TripleInfo >& ,
                  QString ,
                  QString ,
                  QString );
@@ -111,7 +112,7 @@ class US_EXTERN US_ConvertIO
       */
       static int readXmlFile( 
                  US_ExpInfo::ExperimentInfo& ,
-                 QStringList& ,
+                 QList< US_ExpInfo::TripleInfo >& ,
                  QString ,
                  QString ,
                  QString );
@@ -120,7 +121,7 @@ class US_EXTERN US_ConvertIO
       static void readExperiment( 
                  QXmlStreamReader& , 
                  US_ExpInfo::ExperimentInfo& ,
-                 QStringList& ,
+                 QList< US_ExpInfo::TripleInfo >& ,
                  QString ,
                  QString );
 
@@ -129,12 +130,18 @@ class US_EXTERN US_ConvertIO
                  US_ExpInfo::TripleInfo& );
 
       static int verifyXml( 
-                 US_ExpInfo::ExperimentInfo& );
+                 US_ExpInfo::ExperimentInfo&,
+                 QList< US_ExpInfo::TripleInfo >& );
 
       static QString writeRawDataToDB(
                  US_ExpInfo::ExperimentInfo& , 
-                 QList< int >& ,
+                 QList< US_ExpInfo::TripleInfo >& ,
                  QString );
+
+      static QString readRawDataFromDB( 
+                 US_ExpInfo::ExperimentInfo& , 
+                 QList< US_ExpInfo::TripleInfo >& ,
+                 QString& );
       
 };
 #endif
