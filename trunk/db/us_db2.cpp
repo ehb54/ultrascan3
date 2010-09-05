@@ -31,7 +31,7 @@ US_DB2::US_DB2( const QString& masterPW )
    if ( ! connect( masterPW, err ) )
    {
       errno = NOT_CONNECTED;
-      error = "US_DB2 error: could not connect";
+      error = "US_DB2 error: could not connect\n" + err;
       return;
    }
 
@@ -98,7 +98,7 @@ bool US_DB2::test_secure_connection(
         const QString& host,  const QString& dbname, 
         const QString& user,  const QString& password, 
         const QString& email, const QString& pw, 
-        QString& error )
+        QString&       err )
 {
    error = "";
 
@@ -139,7 +139,7 @@ bool US_DB2::test_secure_connection(
 
    if ( errno != OK )
    {
-      error = mysql_error( db );
+      err = error;
       return false;
    }
    
@@ -152,7 +152,7 @@ bool US_DB2::test_secure_connection(
 #ifdef NO_DB
 bool US_DB2::connect( const QString&, QString& ){ return false; }
 #else
-bool US_DB2::connect( const QString& masterPW, QString& error )
+bool US_DB2::connect( const QString& masterPW, QString& err )
 {
    if ( connected ) return true;
 
@@ -222,7 +222,7 @@ bool US_DB2::connect( const QString& masterPW, QString& error )
 
    if ( errno != OK )
    {
-      error = mysql_error( db );
+      err = error;
       return false;
    }
    
@@ -294,7 +294,7 @@ bool US_DB2::connect(
 
    errno = OK;
    error = "";
-   if ( !connected )
+   if ( ! connected )
    {
       errno = NOT_CONNECTED;
       error = QString( "Connect open error: " ) + mysql_error( db );
@@ -397,6 +397,7 @@ void US_DB2::query( const QString& sqlQuery )
    if ( errno != 0 )
    {
       this->rawQuery( "SELECT last_error()" );
+
       if ( result )
       {
          row       = mysql_fetch_row( result );
