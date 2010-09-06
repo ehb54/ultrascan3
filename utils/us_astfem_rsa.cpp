@@ -451,96 +451,59 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
    //emit current_component( k + 1 );
    qApp->processEvents();
 
-   if ( time_correction )
+   if ( time_correction  &&  !simout_flag )
    {
+      int soff   = 0;
+      int nsstep = simparams.speed_step.size();
+
       // Check each speed step to see if it contains acceleration
-      for ( int ss = 0; ss < simparams.speed_step.size(); ss++ ) 
+      for ( int ss = 0; ss < nsstep; ss++ ) 
       {
          US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ss];
          US_AstfemMath::MfemData*               ed = &af_data;
+         int nscans = sp->scans;
 
-         if ( simout_flag )                     ed = &simdata;
-         
          // We need to correct time
-         if ( simparams.speed_step[ ss ].acceleration_flag ) 
+         if ( sp->acceleration_flag ) 
          {
             double slope;
             double intercept;
             double correlation; 
             double sigma;
             double correction;
-            
-            double* xtmp = new double [ sp->scans ];
-            double* ytmp = new double [ sp->scans ];
+
+            double* xtmp = new double [ nscans ];
+            double* ytmp = new double [ nscans ];
 
             // Only fit the scans that belong to this speed step
-            for ( int i = 0; i < simparams.speed_step[ ss ].scans; i++ ) 
+            for ( int i = 0; i < nscans; i++ ) 
             {
-               xtmp[ i ] = ed->scan[ i ].time;
-               ytmp[ i ] = ed->scan[ i ].omega_s_t;
+               xtmp[ i ] = ed->scan[ i + soff ].time;
+               ytmp[ i ] = ed->scan[ i + soff ].omega_s_t;
             }
 
             US_Math2::linefit( &xtmp, &ytmp, &slope, &intercept, &sigma, 
-                               &correlation, sp->scans );
+                               &correlation, nscans );
 
             correction = -intercept / slope;
             
-            for ( int i = 0; i < sp->scans; i++ )
-               ed->scan[ i ].time -= correction;
+            for ( int i = 0; i < nscans; i++ )
+               ed->scan[ i + soff ].time -= correction;
             
             delete [] xtmp;
             delete [] ytmp;
          }
+         soff += nscans;
       }
    }
 
    if ( vC0 != NULL ) delete [] vC0;
    delete [] reacting;
  
-   if ( simout_flag )
-      store_mfem_data( exp_data, simdata );
+   if ( !simout_flag )
+      store_mfem_data( exp_data, af_data );    // normal experiment grid
    else
-      store_mfem_data( exp_data, af_data );
-int nasc = af_data.scan.size();
-int naco = af_data.scan[0].conc.size();
-qDebug() << "RSA: af_data nc nt" << naco << nasc;
-for ( int ii=0; ii < nasc; ii++ )
-{
-   if ( ii<4 || (ii+4)>nasc || ((ii*2)>(nasc-4)&&(ii*2)<nasc+4) )
-   {
-      int naco = af_data.scan[ii].conc.size();
-      qDebug() << "RSA:  ii csiz time" << ii << naco << af_data.scan[ii].time;
-      for ( int jj=0; jj < naco; jj++ )
-      {
-         if ( jj<4 || (jj+5)>naco || ((jj*2)>(naco-4)&&(jj*2)<naco+4) )
-         {
-            if ( ii==0 )
-               qDebug() << "RSA:    jj radi" << jj << af_data.radius[jj];
-            qDebug() << "RSA:    jj conc" << jj << af_data.scan[ii].conc[jj];
-         }
-      }
-   }
-}
-int nssc = simdata.scan.size();
-int nsco = simdata.scan[0].conc.size();
-qDebug() << "RSA: simdata nc nt" << nsco << nssc;
-for ( int ii=0; ii < nssc; ii++ )
-{
-   if ( ii<4 || (ii+4)>nssc || ((ii*2)>(nssc-8)&&(ii*2)<nssc+8) )
-   {
-      int nsco = simdata.scan[ii].conc.size();
-      qDebug() << "RSA:  ii csiz time" << ii << nsco << simdata.scan[ii].time;
-      for ( int jj=0; jj < nsco; jj++ )
-      {
-         if ( jj<4 || (jj+5)>nsco || ((jj*2)>(nsco-4)&&(jj*2)<nsco+4) )
-         {
-            if ( ii==0 )
-               qDebug() << "RSA:    jj radi" << jj << simdata.radius[jj];
-            qDebug() << "RSA:    jj conc" << jj << simdata.scan[ii].conc[jj];
-         }
-      }
-   }
-}
+      store_mfem_data( exp_data, simdata );    // raw simulation grid
 
    return 0;
 }
