@@ -74,8 +74,6 @@ void US_LammAstfvm::Mesh::ComputeMeshDen_D3( double *u0, double *u1 )
    double* D21 = new double [ Ne ];
    double* D30 = new double [ Nv ];
    double* D31 = new double [ Nv ];
-qDebug() << "MeshDen: IN 0 1 h h1 nm m" << MeshDen[0] << MeshDen[1]
- << MeshDen[Ne/2] << MeshDen[Ne/2+1] << MeshDen[Ne-2] << MeshDen[Ne-1];
    // 2nd derivative on elems
    for ( i = 0; i < Ne; i++ )
    {
@@ -115,11 +113,7 @@ qDebug() << "MeshDen: IN 0 1 h h1 nm m" << MeshDen[0] << MeshDen[1]
       if ( MeshDen[ i ] > MonCutoff ) MeshDen[ i ] = MonCutoff;
    }
 
-qDebug() << "MeshDen:  pS 0 1 h h1 nm m" << MeshDen[0] << MeshDen[1]
- << MeshDen[Ne/2] << MeshDen[Ne/2+1] << MeshDen[Ne-2] << MeshDen[Ne-1];
    Smoothing( Ne, MeshDen, SmoothingWt, SmoothingCyl );
-qDebug() << "MeshDen:   Out 0 1 h h1 nm m" << MeshDen[0] << MeshDen[1]
- << MeshDen[Ne/2] << MeshDen[Ne/2+1] << MeshDen[Ne-2] << MeshDen[Ne-1];
 
    delete [] D20;
    delete [] D21;
@@ -141,22 +135,14 @@ void US_LammAstfvm::Mesh::Smoothing( int n, double *y, double Wt, int Cycle )
    int     i;
    double  Wt1;
    double  Wt2;
-//qDebug() << "SMOO: wt cycle n" << Wt << Cycle << n;
    Wt1        = 1. - Wt;                           // sum of outside pt. weights
    Wt2        = Wt1 * 0.5;                         // weight, each outside pt.
-//double* yin = new double[n];
-//double* yo1 = new double[n];
-//double* tmp = new double[n];
-//for(i=0;i<n;i++) yin[i]=y[i];
 
    for ( s = 0; s < Cycle; s++ )
    {
       double y1;
       double y2  = y[ 0 ];
       double y3  = y[ 1 ];
-//qDebug() << "SMOO: s y012" << s << y[0] << y[1] << y[2];
-//qDebug() << "SMOO:   y0h2" << y[n/2] << y[n/2+1] << y[n/2+2];
-//qDebug() << "SMOO:   y0e2" << y[n-3] << y[n-2] << y[n-1];
 
       y[ 0 ]     = Wt * y3 + Wt1 * y2;              // 1st smoothed point
 
@@ -171,27 +157,6 @@ void US_LammAstfvm::Mesh::Smoothing( int n, double *y, double Wt, int Cycle )
     
       y[ n - 1 ] = Wt * y2 + Wt1 * y3;              // last smoothed point
    }
-//qDebug() << "SMOO: E y012" << y[0] << y[1] << y[2];
-//qDebug() << "SMOO:   y0h2" << y[n/2] << y[n/2+1] << y[n/2+2];
-//qDebug() << "SMOO:   y0e2" << y[n-3] << y[n-2] << y[n-1];
-//for(i=0;i<n;i++) yo1[i]=y[i];
-//for(i=0;i<n;i++) y[i]=yin[i];
-//   for ( s = 0; s < Cycle; s++ )
-//   {
-//      for (i=0;i<n;i++) tmp[i]=y[i];
-//      for ( i = 1; i < n - 1; i++ ) 
-//         y[ i ]     = Wt * tmp[i] + Wt1 * ( y[i-1]+y[i+1])/2;
-//      y[ 0 ]     = Wt * y[1] + Wt1 * tmp[0];
-//      y[ n - 1 ] = Wt * y[n-2] + Wt1 * tmp[n-1];
-//         y[ i ]     = Wt * tmp[i] + Wt1 * ( tmp[i-1]+tmp[i+1])/2;
-//      y[ 0 ]     = Wt * tmp[1] + Wt1 * tmp[0];
-//      y[ n - 1 ] = Wt * tmp[n-2] + Wt1 * tmp[n-1];
-//   }
-//for ( i=0; i<n; i++ )
-// if ( y[i] != yo1[i] ) qDebug() << "DIFF i yi yo1i" << i << y[i] << yo1[i];
-//delete [] tmp;
-//delete [] yo1;
-//delete [] yin;
 }
 
 /////////////////////////
@@ -273,7 +238,6 @@ void US_LammAstfvm::Mesh::Unrefine( double alpha )
       delete [] MeshDen;
       delete [] Mark;
 
-qDebug() << "Unrefine Ne Ne1" << Ne << Ne1;
       Ne      = Ne1;
       Nv      = Nv1;
       x       = x1;
@@ -377,7 +341,6 @@ void US_LammAstfvm::Mesh::Refine( double beta )
       delete [] Mark;
       delete [] MeshDen;
 
-qDebug() << "Refine Ne Ne1" << Ne << Ne1;
       Ne      = Ne1;
       Nv      = Nv1;
       x       = x1;
@@ -468,12 +431,10 @@ void US_LammAstfvm::Mesh::InitMesh( double s, double D, double w2 )
 
 US_LammAstfvm::SaltData::SaltData( US_Model                amodel,
                                    US_SimulationParameters asparms,
-                                   US_DataIO2::RawData*    asim_data,
-                                   double                  Moler )
+                                   US_DataIO2::RawData*    asim_data )
 {
    int j;
 
-   SaltMoler  = Moler;
    model      = amodel;
    simparms   = asparms;
    sa_data    = *asim_data;
@@ -533,49 +494,6 @@ qDebug() << "SaltD: sa sc0 sec" << sa_data.scanData[0].seconds;
    {
       xs[ j ]    = sa_data.radius( j );
    }
-double cmin=99999.9;
-double cmax=-999999.9;
-int ilo=0;
-int ihi=0;
-int jlo=0;
-int jhi=0;
-int nscn=sa_data.scanData.size();
-int ncvl=sa_data.scanData[0].readings.size();
-for ( int ii=0; ii<nscn; ii++ )
-{
- double t1=(ii==0)?sa_data.scanData[1].seconds:sa_data.scanData[ii-1].seconds;
- if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
-    qDebug() << "  Scan" << ii << sa_data.scanData[ii].seconds << t1;
- for ( int jj=0; jj<ncvl; jj++ )
- {
-   double cval = sa_data.value(ii,jj);
-   if ( cval < cmin ) { ilo=ii; jlo=jj; cmin=cval; }
-   if ( cval > cmax ) { ihi=ii; jhi=jj; cmax=cval; }
-   if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
-   {
-      if ( jj<10 || (jj+11)>ncvl || ((jj*2)>(ncvl-10)&&(jj*2)<(ncvl+11)) )
-         qDebug() << "    C index value" << jj << cval;
-   }
- }
-}
-qDebug() << "Salt data min conc ilo jlo" << cmin << ilo << jlo;
-qDebug() << "Salt data max conc ihi jhi" << cmax << ihi << jhi;
-qDebug() << "SaltD:fem: m b s D r" << simparms.meniscus << simparms.bottom
-   << model.components[0].s << model.components[0].D
-   << simparms.speed_step[0].rotorspeed;
-double tdmx=0.0;
-double tdmn=999999.0;
-double tdif;
-int idmx=-1;
-int idmn=-1;
-for ( int ii=1; ii<nscn; ii++ )
-{
- tdif = qAbs( sa_data.scanData[ii].seconds - sa_data.scanData[ii-1].seconds );
- if ( tdif > tdmx ) { tdmx=tdif; idmx=ii; }
- if ( tdif < tdmn ) { tdmn=tdif; idmn=ii; }
-}
-qDebug() << "SaltD: timediff min max imn imx" << tdmn << tdmx << idmn << idmx;
-
 };
 
 US_LammAstfvm::SaltData::~SaltData()
@@ -616,7 +534,6 @@ void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
 
    while ( ( t1 < t ) && ( Nt > 0 ) ) 
    {
-//qDebug() << "SaltD:      intrp 0 t 1" << t0 << t << t1 << "  N s" << Nt << scn;
       t0    = t1;
       tmp   = Cs0;
       Cs0   = Cs1;
@@ -629,7 +546,7 @@ void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
 
       Nt --;             // Nt = time level left
       scn++;
-//qDebug() << "SaltD:      intrp 0 t 1" << t0 << t << t1 << "  N s" << Nt << scn;
+//qDebug() << "SaltD:     intrp 0 t 1" << t0 << t << t1 << "  N s" << Nt << scn;
    }
 qDebug() << "SaltD:  intrp t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
 
@@ -814,7 +731,7 @@ qDebug() << "LAsc:   sigma delta" << model.components[comp_x].sigma
 
    else if ( NonIdealCaseNo == 2 )              // co-sedimenting
    {
-      SetNonIdealCase_2( 3.5 );
+      SetNonIdealCase_2( );
    }
 
    else if ( NonIdealCaseNo == 3 )              // compressibility
@@ -869,9 +786,9 @@ qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
 
    int    ktinc = 5;                        // signal progress every 5th scan
    double ts;
-   QFile ftto( "/home/gary/usr/tmp/tt0-fvm" );
+   QFile ftto( US_Settings::tmpDir() + "/tt0-ufvm" );
    if ( ! ftto.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
-      qDebug() << "*ERROR* Unable to open tt0-fvm";
+      qDebug() << "*ERROR* Unable to open tt0-ufvm";
    QTextStream tso( &ftto );
 //ntc=ntcc;
    tso << ntc << "\n";
@@ -1044,10 +961,10 @@ void US_LammAstfvm::SetNonIdealCase_1( double sigma_k, double delta_k )
    delta     = delta_k;
 }
 
-void US_LammAstfvm::SetNonIdealCase_2( double Moler )
+void US_LammAstfvm::SetNonIdealCase_2( )
 {
    if ( comp_x == 0 )
-      saltdata  = new SaltData( model, simparams, auc_data, Moler );
+      saltdata  = new SaltData( model, simparams, auc_data );
 
    saltdata->initSalt();
 }
@@ -1425,23 +1342,15 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
   
          saltdata->InterpolateCSalt( Nv, x, t, Csalt);     // Csalt at (x, t)
 
-//double rmark=1.0/0.72;
-double rho0, rhom, rhoe;
-double vis0, vism, vise;
          for ( j = 0; j < Nv; j++ )
          {
             // salt concentration
-            Cm         = Csalt[ j ] * ( saltdata->SaltMoler );
-            // Cm = Csalt[j]*2.0;
+            Cm         = Csalt[ j ];
 
             rho        = 0.998234 + Cm * ( 12.68641e-2
                                   + Cm * ( 1.27445e-3
                                   + Cm * ( -11.954e-4
                                   + Cm * 258.866e-6 ) ) ) + 6.e-6;
-//double rdif = qAbs( rho - rmark );
-//if ( rdif < 0.001 )
-//qDebug() << "AdjSD: rho rad t" << rho << x[j] << t << rdif << j << Nv;
-
             visc       = 1.00194 - 19.4104e-3 * sqrt( Cm )
                                   + Cm * ( -4.07863e-2
                                   + Cm * ( 11.5489e-3
@@ -1449,18 +1358,14 @@ double vis0, vism, vise;
       
             s_adj[ j ] = ( 1 - vbar * rho ) * 1.00194
                          / ( ( 1 - vbar_w * rho_w ) * visc )     * param_s;
-//s_adj[j] = s_adj[j] > 0.0 ? s_adj[j] : -s_adj[j];
 
             D_adj[ j ] = ( Tempt * 1.00194 ) / ( 293.15 * visc ) * param_D;
-if(j==0) { rho0=rho;vis0=visc;}
-if((j*2)==Nv) { rhom=rho;vism=visc;}
          }
-rhoe=rho;vise=visc;
-qDebug() << "AdjSD:    Csalt0 CsaltN Cm" << Csalt[0] << Csalt[Nv-1] << Cm;
-qDebug() << "AdjSD:     s_adj0 s_adjN" << s_adj[0] << s_adj[Nv-1];
-qDebug() << "AdjSD:     D_adj0 D_adjN" << D_adj[0] << D_adj[Nv-1] << "N=" << Nv;
-qDebug() << "AdjSD:      rho 0,m,e" << rho0 << rhom << rhoe;
-qDebug() << "AdjSD:      visc 0,m,e" << vis0 << vism << vise;
+//qDebug() << "AdjSD:    Csalt0 CsaltN Cm" << Csalt[0] << Csalt[Nv-1] << Cm;
+//qDebug() << "AdjSD:     s_adj0 s_adjN" << s_adj[0] << s_adj[Nv-1];
+//qDebug() << "AdjSD:     D_adj0 D_adjN" << D_adj[0] << D_adj[Nv-1] << "N=" << Nv;
+//qDebug() << "AdjSD:      rho 0,m,e" << rho0 << rhom << rhoe;
+//qDebug() << "AdjSD:      visc 0,m,e" << vis0 << vism << vise;
 
          delete [] Csalt;
          break;
@@ -1705,16 +1610,13 @@ void US_LammAstfvm::quadInterpolate( double* x0, double* u0, int N0,
    double yv;                         // output Y
 
    int    ii   = 2;                   // next x0 index to x3
-   int    jj   = 4;                   // next u0 index to y3
+   int    jj   = 3;                   // next u0 index to y2
    double x1   = x0[ 0 ];             // initial start X
    double x3   = x0[ 1 ];             // initial end X
    double x2   = ( x1 + x3 ) * 0.5;   // initial mid-point X
    double y1   = u0[ 0 ];             // initial start Y
    double y2   = u0[ 1 ];             // initial mid-point Y
    double y3   = u0[ 2 ];             // initial end Y
-//y1 /= x1;
-//y2 /= x2;
-//y3 /= x3;
 
    cout.resize( nout );
 
@@ -1724,24 +1626,26 @@ void US_LammAstfvm::quadInterpolate( double* x0, double* u0, int N0,
 
       while ( xv > x3  &&  ii < N0 )
       {  // if need be, walk up input until between x values
-         jj   = ii + ii;              // index to u values
          x1   = x3;                   // start x (previous end)
          x3   = x0[ ii++ ];           // end (next) x
-         y1   = u0[ jj - 2 ];         // y at start x
-         y2   = u0[ jj - 1 ];         // y at mid-point
-         y3   = u0[ jj     ];         // y at end (next) x
+         y1   = y3;                   // y at start x
+         y2   = u0[ jj++ ];           // y at mid-point
+         y3   = u0[ jj++ ];           // y at end (next) x
 
-         x2   = ( x1 + x3 ) * 0.5;    // mid-point x
+      }
+      x2   = ( x1 + x3 ) * 0.5;    // mid-point x
 //y1 /= x1;
 //y2 /= x2;
 //y3 /= x3;
-      }
 
       // do the quadratic interpolation of this Y (C*r)
       yv    =
          (( ( xv - x2 ) * ( xv - x3 ) ) / ( ( x1 - x2 ) * ( x1 - x3 ) )) * y1 +
          (( ( xv - x1 ) * ( xv - x3 ) ) / ( ( x2 - x1 ) * ( x2 - x3 ) )) * y2 +
          (( ( xv - x1 ) * ( xv - x2 ) ) / ( ( x3 - x1 ) * ( x3 - x2 ) )) * y3;
+//y1 *= x1;
+//y2 *= x2;
+//y3 *= x3;
 
       // output interpolated concentration with r factor removed (C = (C*r)/r)
       cout[ kk++ ] = yv / xv;

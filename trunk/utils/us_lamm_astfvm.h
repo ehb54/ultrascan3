@@ -73,12 +73,11 @@ class US_EXTERN US_LammAstfvm : public QObject
          public:
 
             //! \brief Create salt data
-            //! \param amodel   Model with all components to simulate
-            //! \param asparms  Simulation parameters for all components
-            //! \param sim_data Simulation AUC data for all components
-            //! \param Moler    Concentration moler factor
+            //! \param amodel    Model with all components to simulate
+            //! \param asparms   Simulation parameters for all components
+            //! \param asim_data Simulation AUC data for all components
             SaltData( US_Model, US_SimulationParameters,
-                      US_DataIO2::RawData*, double );
+                      US_DataIO2::RawData* );
 
             //! \brief Destroy salt data
             ~SaltData();
@@ -93,10 +92,8 @@ class US_EXTERN US_LammAstfvm : public QObject
             //! \param Csalt Concentration of salt for current time
             void InterpolateCSalt( int, double*, double, double* );
 
-            double SaltMoler; //!< moler number of cosedimenting salt
-
-            US_DataIO2::RawData     sa_data;   // salt data 1-component
-                                               //  simulation for co-sed
+            US_DataIO2::RawData     sa_data;   //!< salt data 1-component
+                                               //!<  simulation for co-sed
          private:
 
             US_Model                model;     // salt data co-sed model
@@ -122,7 +119,7 @@ class US_EXTERN US_LammAstfvm : public QObject
       ~US_LammAstfvm();
 
       //! \brief Main method to calculate FVM solution
-      //! \param rsim_data Reference to simulated AUC data to produce
+      //! \param sim_data Reference to simulated AUC data to produce
       void calculate( US_DataIO2::RawData& );
 
       //! \brief Calculate solution for a model component
@@ -138,8 +135,7 @@ class US_EXTERN US_LammAstfvm : public QObject
       void SetNonIdealCase_1( double, double );
 
       //! \brief Set up non-ideal case type 2 (co-sedimenting)
-      //! \param Moler   Salt moler factor
-      void SetNonIdealCase_2( double );
+      void SetNonIdealCase_2( void   );
 
       //! \brief Set up non-ideal case type 3 (compressibility)
       //! \param cmpress Compressibility factor
