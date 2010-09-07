@@ -39,6 +39,7 @@ US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
 US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_axis, 
                   const QString& y_axis ) : QVBoxLayout()
 {
+   zoomer = NULL;
    setSpacing( 0 );
 
    QFont buttonFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 2 );
@@ -48,7 +49,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_
    toolBar->setAutoFillBackground( true );
    toolBar->setPalette( US_GuiSettings::plotColor() );
 
-   QToolButton* btnZoom = new QToolButton( toolBar );
+   btnZoom = new QToolButton( toolBar );
    btnZoom->setText( "Zoom" );
    btnZoom->setIcon(QIcon( zoom_xpm ) );
    btnZoom->setCheckable( true );
@@ -166,11 +167,12 @@ void US_Plot::zoom( bool on )
 
    picker->setEnabled( ! on );
 
-   if ( ! on )
+   if ( ! on  &&  zoomer != NULL )
    {
       delete picker;
       delete panner;
       delete zoomer;
+      zoomer = NULL;
    }
 }
 
