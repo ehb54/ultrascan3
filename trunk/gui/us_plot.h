@@ -51,7 +51,8 @@ class US_EXTERN US_Plot : public QVBoxLayout
 
       US_Plot( QwtPlot*& plot, const QString&, const QString&, const QString& );
 
-      //void quit( void );
+      //! Make access to the zoom button public
+      QToolButton* btnZoom;
 
    private:
       US_PlotConfig* configWidget;
@@ -66,7 +67,6 @@ class US_EXTERN US_Plot : public QVBoxLayout
       void print             ( void );
       void svg               ( void );
       void config            ( void );
-      //void plotConfigFinished( void );
 };
 
 //! \brief A specialized push button class for US_Plot to automatically
