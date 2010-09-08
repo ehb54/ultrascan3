@@ -29,7 +29,7 @@ class US_EXTERN US_Edit : public US_Widgets
             QList< QPointF > changes;
       };
 
-      QList< Edits >                changed_points;
+      QList< Edits >                 changed_points;
       US_DataIO2::RawData            data;
       QVector< US_DataIO2::RawData > allData;
 
@@ -69,6 +69,7 @@ class US_EXTERN US_Edit : public US_Widgets
       QwtPlotGrid*       grid;
       QwtPlotMarker*     marker;
       US_PlotPicker*     pick;
+      US_Plot*           plot;
                       
       QLineEdit*         le_info;
       QLineEdit*         le_meniscus;
@@ -143,6 +144,7 @@ class US_EXTERN US_Edit : public US_Widgets
       void include           ( void );
       void apply_prior       ( void );
 
+      void set_fringe_tolerance( double ); 
       void set_meniscus      ( void );
       void set_airGap        ( void );
       void set_dataRange     ( void );
