@@ -584,9 +584,10 @@ void US_DataIO2::params( QXmlStreamReader& xml, EditValues& parameters )
 
       if ( xml.isStartElement()  &&  xml.name() == "air_gap" )
       {
-         QXmlStreamAttributes a = xml.attributes();
-         parameters.airGapLeft  = a.value( "left"  ).toString().toDouble();
-         parameters.airGapRight = a.value( "right" ).toString().toDouble();
+         QXmlStreamAttributes a  = xml.attributes();
+         parameters.airGapLeft   = a.value( "left"      ).toString().toDouble();
+         parameters.airGapRight  = a.value( "right"     ).toString().toDouble();
+         parameters.gapTolerance = a.value( "tolerance" ).toString().toDouble();
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "baseline" )
@@ -692,8 +693,8 @@ int US_DataIO2::loadData( const QString&  directory,
    return result;
 }
 
-int US_DataIO2::loadData( const QString&       directory, 
-                          const QString&       editFilename,
+int US_DataIO2::loadData( const QString&         directory, 
+                          const QString&         editFilename,
                           QVector< EditedData >& data,
                           QVector< RawData    >& raw )
 {
@@ -763,6 +764,13 @@ int US_DataIO2::loadData( const QString&       directory,
       d.scanData[ scan ].readings[ index1 ].value = value;
    }
 
+   // Update for interference data
+   if ( ed.dataType == "IP" )
+   {
+      adjust_interference( d, e );  // rawData, editValues
+      calc_integral      ( d, e );
+   }
+
    // Do not copy excluded data or data outside the edit range
    for ( int i = 0; i < d.scanData.size(); i++ )
    {
@@ -827,6 +835,132 @@ int US_DataIO2::loadData( const QString&       directory,
 
    data << ed;
    return OK;
+}
+
+void US_DataIO2::adjust_interference( RawData& data, const EditValues& e )
+{
+   // Find first scan
+   for ( int i = 0; i < data.scanData.size(); i++ )
+   {
+      if ( e.excludes.contains( i ) ) continue;
+
+      US_DataIO2::Scan* s = &data.scanData[ i ];
+
+      int r_left  = US_DataIO2::index( *s, data.x, e.airGapLeft );
+      int r_right = US_DataIO2::index( *s, data.x, e.airGapRight );
+      double sum  = 0.0;
+
+      for ( int k = r_left; k <= r_right; k++ )
+         sum += data.value( i, k );
+
+      double average = sum / ( r_right - r_left + 1 );
+
+      for ( int j = i + 1; j < data.scanData.size(); j++ )
+      {
+         // Get average difference between gap in first included
+         // scan and each subsequent scan
+
+         s = &data.scanData[ j ];
+         sum = 0.0;
+
+         for ( int k = r_left; k <= r_right; k++ )
+            sum += data.value( j, k ) - data.value( i, k );
+
+         double delta = sum / ( r_right - r_left + 1 );
+
+         // Subtract average difference from all points
+         for ( int k = 0; k < s->readings.size(); k++ )
+            s->readings[ k ].value -= delta;
+      }
+
+      for ( int j = i; j < data.scanData.size(); j++ )
+      {
+         s = &data.scanData[ j ];
+
+         for ( int k = 0; k < s->readings.size(); k++ )
+            s->readings[ k ].value -= average;
+      }
+
+      return; // After first included scan
+   }
+}
+
+void US_DataIO2::calc_integral( RawData& data, const EditValues& e )
+{
+   // This function gets a little tricky because we have raw data, but
+   // want to adjust int the range identified by the user *and* 
+   // not use excluded scans.
+
+   int               index = 0;
+   QVector< int    > included;
+   QVector< double > integral;
+
+   for ( int scan = 0; scan < data.scanData.size(); scan++ )
+   {
+      if ( e.excludes.contains( scan ) ) continue;
+
+      included << scan;
+
+      integral << 0.0;
+
+      // Arbitrarily add 1000 fringes to each reading value
+      // to make sure we don't sum negatives
+      US_DataIO2::Scan* s = &data.scanData[ scan ];
+
+      int r_left  = US_DataIO2::index( *s, data.x, e.rangeLeft );
+      int r_right = US_DataIO2::index( *s, data.x, e.rangeRight );
+
+      for ( int r = r_left; r <= r_right; r++ )
+         integral[ index ] += data.value( scan, r ) + 1000.0;
+
+      index++;
+   }
+
+   // Integral fringe shifts contribute exactly points[ scan ] to integral, since
+   // we use unity stepsize in integral calculation.
+
+   for ( int scan = 1; scan < included.size(); scan++ )
+   {
+      US_DataIO2::Scan* s = &data.scanData[ included[ scan ] ];
+
+      int    r_left    = US_DataIO2::index( *s, data.x, e.rangeLeft );
+      int    r_right   = US_DataIO2::index( *s, data.x, e.rangeRight );
+      int    current   = included[ scan ];
+      int    previous  = included[ scan - 1 ];
+      int    position  = 0;
+      double points    = (double) ( r_right - r_left + 1 );
+
+      while ( integral[ current ] <= integral[ previous ] )
+      {
+         integral[ current ] += points;
+         position++;
+      }
+
+      while ( integral[ current ] > integral[ previous ] )
+      {
+         integral[ current ] -= points;
+         position--;
+      }
+
+      // Add the integral steps (which may be negative!) to each datapoint
+      for ( int r = r_left; r <= r_right; r++ )
+         s->readings[ r ].value += (double) position;
+
+      double diff1 = integral[ previous ] - integral[ current ];
+
+      double diff2 = integral[ previous ] - integral[ current ] - points;
+
+      // The scan is one fringe too low
+      if ( fabs( diff2 / diff1 ) < e.gapTolerance )
+      {
+         // add one fringe to all readings
+         for ( int r = r_left; r <= r_right; r++ )
+            s->readings[ r ].value += 1.0;
+
+         // Update integral for this scan
+         integral[ current ] += points;
+      }
+   }
 }
 
 void US_DataIO2::copyRange ( double left, double right, const Scan& orig, Scan& dest, 

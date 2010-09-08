@@ -189,6 +189,7 @@ class US_DataIO2
          double               meniscus;    //!< Designated radius of meniscus
          double               airGapLeft;  //!< Start of air gap for interference data
          double               airGapRight; //!< End of air gap for interfence data
+         double               gapTolerance;//!< Tolerance for interference adjustments
          double               rangeLeft;   //!< Minimum radius for valid data
          double               rangeRight;  //!< Maximum radius for valid data
          double               plateau;     //!< A radius value
@@ -335,6 +336,21 @@ class US_DataIO2
       static int     loadData      ( const QString&, const QString&, 
                                      EditedData& ); 
 
+      /*! Adjust interference data by aligning air gaps at zero fringes 
+          \param data A reference to the RawData structure to be adjusted
+          \param w    The EditValues used for the adjustment.  Only
+                      airGapLeft, airGapRight, and includes are needed.
+       */
+
+      static void    adjust_interference( RawData&, const EditValues& );
+  
+      /*! Align integal fringe shifts within the valid data range 
+          \param data A reference to the RawData structure to be adjusted
+          \param w    The EditValues used for the adjustment.  Only
+                      rangeLeft, rangeRight, and gapTolerance are needed.
+       */
+
+      static void    calc_integral ( RawData&, const EditValues& );
    private:
 
       //!  \private A private convenience class

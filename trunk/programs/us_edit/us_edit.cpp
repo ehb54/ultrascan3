@@ -98,8 +98,10 @@ US_Edit::US_Edit() : US_Widgets()
    QLabel* lb_gaps = us_label( tr( "Threshold for Scan Gaps" ), -1 );
    specs->addWidget( lb_gaps, s_row, 0, 1, 2 );
 
-   ct_gaps = us_counter ( 1, 10.0, 100.0 ); 
-   ct_gaps->setStep ( 10 );
+   ct_gaps = us_counter ( 3, 0.0, 20.0, 0.4 ); 
+   ct_gaps->setStep ( 0.001 );
+   connect( ct_gaps, SIGNAL( valueChanged        ( double ) ), 
+                     SLOT  ( set_fringe_tolerance( double ) ) );
    specs->addWidget( ct_gaps, s_row++, 2, 1, 2 );
 
    // Row 5
@@ -246,7 +248,7 @@ US_Edit::US_Edit() : US_Widgets()
    buttons->addWidget( pb_accept );
 
    // Plot layout on right side of window
-   QBoxLayout* plot = new US_Plot( data_plot, 
+   plot = new US_Plot( data_plot, 
          tr( "Absorbance Data" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ) );
    
@@ -295,7 +297,7 @@ void US_Edit::reset( void )
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
-   ct_gaps->setValue( 10 );
+   ct_gaps->setValue( 0.4 );
 
    ct_from->disconnect();
    ct_from->setMinValue( 0 );
@@ -380,10 +382,10 @@ void US_Edit::gap_check( void )
    int threshold = (int)ct_gaps->value();
             
    US_DataIO2::Scan s;
-   QString         gaps;
+   QString          gaps;
 
-   int             scanNumber = 0;
-   bool            deleteAll  = false;
+   int              scanNumber = 0;
+   bool             deleteAll  = false;
 
    foreach ( s, data.scanData )
    {
@@ -764,13 +766,26 @@ void US_Edit::replot( void )
 
 void US_Edit::mouse( const QwtDoublePoint& p )
 {
+   double maximum;
+
    switch ( step )
    {
       case MENISCUS:
-         if ( meniscus_left == 0.0 )
+         if ( dataType == "IP" )
+         {
+            meniscus = p.x();
+            // Un-zoom
+            if ( plot->btnZoom->isChecked() )
+               plot->btnZoom->setChecked( false );
+
+            draw_vline( meniscus );
+         }
+
+         else if ( meniscus_left == 0.0  )
          {
             meniscus_left = p.x();
             draw_vline( meniscus_left );
+            break;
          }
          else
          {
@@ -784,7 +799,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
                swap_double( meniscus_left, meniscus_right );
 
             // Find the radius for the max value
-            double            maximum = -1.0e99;
+            maximum = -1.0e99;
             US_DataIO2::Scan* s;
 
             for ( int i = 0; i < data.scanData.size(); i++ )
@@ -804,17 +819,19 @@ void US_Edit::mouse( const QwtDoublePoint& p )
                   }
                }
             }
-            
-            // Display the value
-            QString m;
-            le_meniscus->setText( m.sprintf( "%.3f", meniscus ) );
 
             // Remove the left line
             v_line->detach();
             delete v_line;
             v_line = NULL;
+         }
 
-            // Create a marker
+         // Display the value
+         le_meniscus->setText( QString::number( meniscus, 'f', 3 ) );
+
+         // Create a marker
+         if ( dataType != "IP" )
+         {
             marker = new QwtPlotMarker;
             QBrush brush( Qt::white );
             QPen   pen  ( brush, 2.0 );
@@ -827,17 +844,18 @@ void US_Edit::mouse( const QwtDoublePoint& p )
                         QSize ( 8, 8 ) ) );
 
             marker->attach( data_plot );
-            data_plot->replot();
+         }
 
-            pb_meniscus->setIcon( check );
-            
-            if ( dataType == "IP" )
-               pb_airGap->setEnabled( true );
-            else
-               pb_dataRange->setEnabled( true );
-           
-            next_step();
-         }         
+         data_plot->replot();
+
+         pb_meniscus->setIcon( check );
+         
+         if ( dataType == "IP" )
+            pb_airGap->setEnabled( true );
+         else
+            pb_dataRange->setEnabled( true );
+        
+         next_step();
          break;
 
       case AIRGAP:
@@ -855,6 +873,21 @@ void US_Edit::mouse( const QwtDoublePoint& p )
 
             if ( airGap_right < airGap_left ) 
                swap_double( airGap_left, airGap_right );
+
+            US_DataIO2::EditValues edits;
+            edits.airGapLeft  = airGap_left;
+            edits.airGapRight = airGap_right;
+
+            QList< int > excludes;
+            
+            for ( int i = 0; i < data.scanData.size(); i++ )
+               if ( ! includes.contains( i ) ) edits.excludes << i;
+         
+            US_DataIO2::adjust_interference( data, edits );
+
+            // Un-zoom
+            if ( plot->btnZoom->isChecked() )
+               plot->btnZoom->setChecked( false );
 
             // Display the data
             QString s;
@@ -890,6 +923,21 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             if ( range_right < range_left )
                swap_double( range_left, range_right );
 
+            if ( dataType == "IP" )
+            {
+               US_DataIO2::EditValues edits;
+               edits.rangeLeft    = range_left;
+               edits.rangeRight   = range_right;
+               edits.gapTolerance = ct_gaps->value();
+
+               QList< int > excludes;
+               
+               for ( int i = 0; i < data.scanData.size(); i++ )
+                  if ( ! includes.contains( i ) ) edits.excludes << i;
+            
+               US_DataIO2::calc_integral( data, edits );
+            }
+            
             // Display the data
             QString s;
             le_dataRange->setText( s.sprintf( "%.3f - %.3f", 
@@ -1053,6 +1101,8 @@ void US_Edit::set_meniscus( void )
    set_pbColors( pb_meniscus );
    pb_meniscus->setIcon( QIcon() );
 
+   pb_airGap   ->setEnabled( false );
+   pb_airGap   ->setIcon( QIcon() );
    pb_dataRange->setEnabled( false );
    pb_dataRange->setIcon( QIcon() );
    pb_plateau  ->setEnabled( false );
@@ -1066,6 +1116,11 @@ void US_Edit::set_meniscus( void )
    pb_spikes   ->setEnabled( false );
    pb_spikes   ->setIcon( QIcon() );
 
+   // Clear any existing marker
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );
+            
+   // Reset data and plot
+   undo();
    plot_all();
 }
 
@@ -1149,6 +1204,32 @@ void US_Edit::set_plateau( void )
    pb_write    ->setIcon( QIcon() );;
 
    plot_range();
+}
+
+void US_Edit::set_fringe_tolerance( double /* tolerance */)
+{
+   // This is only valid for interference data
+   if ( dataType != "IP" ) return;
+
+   // If we haven't yet set the range, just ignore the change
+   if ( step == MENISCUS  ||  step == AIRGAP  ||  step == RANGE ) return;
+
+   // Reset the data
+   int index = cb_triple->currentIndex();
+   data = allData[ index ];
+
+   US_DataIO2::EditValues edits;
+   edits.rangeLeft    = range_left;
+   edits.rangeRight   = range_right;
+   edits.gapTolerance = ct_gaps->value();
+
+   QList< int > excludes;
+               
+   for ( int i = 0; i < data.scanData.size(); i++ )
+      if ( ! includes.contains( i ) ) edits.excludes << i;
+
+   US_DataIO2::calc_integral( data, edits );
+   data_plot->replot();
 }
 
 void US_Edit::set_baseline( void )
@@ -1976,8 +2057,9 @@ void US_Edit::write( void )
    if ( dataType == "IP" )
    {
       QDomElement airGap = doc.createElement( "air_gap" );
-      airGap.setAttribute( "left" , airGap_left );
-      airGap.setAttribute( "right", airGap_right );
+      airGap.setAttribute( "left" ,     airGap_left );
+      airGap.setAttribute( "right",     airGap_right );
+      airGap.setAttribute( "tolerance", ct_gaps->value() );
       parameters.appendChild( airGap );
    }
 
@@ -2299,4 +2381,5 @@ void US_Edit::apply_prior( void )
    changes_made= false;
    plot_range();
 }
+
 
