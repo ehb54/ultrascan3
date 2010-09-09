@@ -2,6 +2,7 @@
 
 US_Hydrodyn_Batch_Movie_Opts::US_Hydrodyn_Batch_Movie_Opts(
                                                            QString    msg,
+                                                           QString    *title,
                                                            QString    *dir,
                                                            QString    somo_dir,
                                                            QString    *file,
@@ -13,11 +14,14 @@ US_Hydrodyn_Batch_Movie_Opts::US_Hydrodyn_Batch_Movie_Opts(
                                                            QString    *tc_unit,
                                                            double     *tc_start,
                                                            double     *tc_delta,
+                                                           float      *tc_pointsize,
+                                                           bool       *black_background,
                                                            QWidget *p,
                                                            const char *name
                                                            ) : QDialog(p, name)
 {
    this->msg = msg;
+   this->title = title;
    this->dir = dir;
    this->file = file;
    this->fps = fps;
@@ -30,6 +34,8 @@ US_Hydrodyn_Batch_Movie_Opts::US_Hydrodyn_Batch_Movie_Opts(
    this->tc_unit = tc_unit;
    this->tc_start = tc_start;
    this->tc_delta = tc_delta;
+   this->tc_pointsize = tc_pointsize;
+   this->black_background = black_background;
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -55,6 +61,20 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
    lbl_info->setMinimumHeight(minHeight2);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   lbl_title = new QLabel(tr(" Title (leave blank for no title):"), this);
+   Q_CHECK_PTR(lbl_title);
+   lbl_title->setAlignment(AlignLeft|AlignVCenter);
+   lbl_title->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_title = new QLineEdit(this, "Title Line Edit");
+   le_title->setText(*title);
+   le_title->setAlignment(AlignCenter | AlignVCenter);
+   le_title->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_title->setEnabled(true);
+   connect(le_title, SIGNAL(textChanged(const QString &)), SLOT(update_title(const QString &)));
 
    lbl_dir = new QLabel(tr(" Directory for movie file:"), this);
    Q_CHECK_PTR(lbl_dir);
@@ -113,6 +133,14 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
    le_scale->setEnabled(true);
    connect(le_scale, SIGNAL(textChanged(const QString &)), SLOT(update_scale(const QString &)));
 
+   cb_use_tc = new QCheckBox(this);
+   cb_use_tc->setText(tr("Use time code"));
+   cb_use_tc->setEnabled(true);
+   cb_use_tc->setChecked(*use_tc);
+   cb_use_tc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_use_tc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_use_tc, SIGNAL(clicked()), this, SLOT(set_use_tc()));
+
    lbl_tc_unit = new QLabel(tr(" Time code unit (e.g. ns, ps):"), this);
    Q_CHECK_PTR(lbl_tc_unit);
    lbl_tc_unit->setAlignment(AlignLeft|AlignVCenter);
@@ -155,13 +183,27 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
    le_tc_delta->setEnabled(true);
    connect(le_tc_delta, SIGNAL(textChanged(const QString &)), SLOT(update_tc_delta(const QString &)));
 
-   cb_use_tc = new QCheckBox(this);
-   cb_use_tc->setText(tr("Use time code"));
-   cb_use_tc->setEnabled(true);
-   cb_use_tc->setChecked(*use_tc);
-   cb_use_tc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_use_tc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_use_tc, SIGNAL(clicked()), this, SLOT(set_use_tc()));
+   lbl_tc_pointsize = new QLabel(tr(" Time code font pointsize:"), this);
+   Q_CHECK_PTR(lbl_tc_pointsize);
+   lbl_tc_pointsize->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tc_pointsize->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_tc_pointsize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_tc_pointsize = new QLineEdit(this, "Tc_Pointsize Line Edit");
+   le_tc_pointsize->setText(QString("%1").arg(*tc_pointsize));
+   le_tc_pointsize->setAlignment(AlignCenter | AlignVCenter);
+   le_tc_pointsize->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_tc_pointsize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_tc_pointsize->setEnabled(true);
+   connect(le_tc_pointsize, SIGNAL(textChanged(const QString &)), SLOT(update_tc_pointsize(const QString &)));
+
+   cb_black_background = new QCheckBox(this);
+   cb_black_background->setText(tr("Black background:"));
+   cb_black_background->setEnabled(true);
+   cb_black_background->setChecked(*black_background);
+   cb_black_background->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_black_background->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_black_background, SIGNAL(clicked()), this, SLOT(set_black_background()));
 
    cb_clean_up = new QCheckBox(this);
    cb_clean_up->setText(tr("Clean up files (ppm, gifs, spts)"));
@@ -192,6 +234,9 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
    j++;
+   background->addWidget(lbl_title, j, 0);
+   background->addWidget(le_title, j, 1);
+   j++;
    background->addWidget(lbl_dir, j, 0);
    background->addWidget(le_dir, j, 1);
    j++;
@@ -215,6 +260,11 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
    background->addWidget(lbl_tc_delta, j, 0);
    background->addWidget(le_tc_delta, j, 1);
    j++;
+   background->addWidget(lbl_tc_pointsize, j, 0);
+   background->addWidget(le_tc_pointsize, j, 1);
+   j++;
+   background->addMultiCellWidget(cb_black_background, j, j, 0, 1);
+   j++;
    background->addMultiCellWidget(cb_clean_up, j, j, 0, 1);
    j++;
    QHBoxLayout *hbl = new QHBoxLayout;
@@ -233,6 +283,11 @@ void US_Hydrodyn_Batch_Movie_Opts::help()
    US_Help *online_help;
    online_help = new US_Help(this);
    online_help->show_help("manual/somo_batch_movie_opts.html");
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::update_title(const QString &str)
+{
+   *title = str;
 }
 
 void US_Hydrodyn_Batch_Movie_Opts::update_dir(const QString &str)
@@ -276,6 +331,11 @@ void US_Hydrodyn_Batch_Movie_Opts::update_tc_delta(const QString &str)
    *tc_delta = str.toDouble();
 }
 
+void US_Hydrodyn_Batch_Movie_Opts::update_tc_pointsize(const QString &str)
+{
+   *tc_pointsize = str.toDouble();
+}
+
 void US_Hydrodyn_Batch_Movie_Opts::set_clean_up()
 {
    *clean_up = cb_clean_up->isChecked();
@@ -287,11 +347,17 @@ void US_Hydrodyn_Batch_Movie_Opts::set_use_tc()
    update_enables();
 }
 
+void US_Hydrodyn_Batch_Movie_Opts::set_black_background()
+{
+   *black_background = cb_black_background->isChecked();
+}
+
 void US_Hydrodyn_Batch_Movie_Opts::update_enables()
 {
    le_tc_unit->setEnabled(*use_tc);
    le_tc_start->setEnabled(*use_tc);
    le_tc_delta->setEnabled(*use_tc);
+   le_tc_pointsize->setEnabled(*use_tc);
 }
 
 void US_Hydrodyn_Batch_Movie_Opts::update_dir_msg()

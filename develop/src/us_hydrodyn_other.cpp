@@ -2963,7 +2963,11 @@ int US_Hydrodyn::get_color(PDB_atom *a) {
    return color;
 }
 
-void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool movie_frame, float scale) 
+void US_Hydrodyn::write_bead_spt(QString fname, 
+                                 vector<PDB_atom> *model, 
+                                 bool movie_frame, 
+                                 float scale, 
+                                 bool black_background) 
 {
    char *colormap[] =
       {
@@ -3024,8 +3028,10 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool mo
    //           );
 
    last_spt_text = 
-      QString("").sprintf("load xyz %s\nselect all\nwireframe off\nset background white\n",
-                          QString("%1.bms").arg(QFileInfo(fname).fileName()).ascii());
+      QString("").sprintf("load xyz %s\nselect all\nwireframe off\nset background %s\n",
+                          QString("%1.bms").arg(QFileInfo(fname).fileName()).ascii(),
+                          black_background ? "black" : "white"
+                          );
 
    int atomno = 0;
    for (unsigned int i = 0; i < model->size(); i++) {

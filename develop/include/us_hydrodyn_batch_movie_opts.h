@@ -21,6 +21,7 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
 
       US_Hydrodyn_Batch_Movie_Opts(
                                    QString    msg,
+                                   QString    *title,
                                    QString    *dir,
                                    QString    somo_dir,
                                    QString    *file,
@@ -32,6 +33,8 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
                                    QString    *tc_unit,
                                    double     *tc_start,
                                    double     *tc_delta,
+                                   float      *tc_pointsize,
+                                   bool       *black_background,
                                    QWidget    *p = 0, 
                                    const char *name = 0
                                    );
@@ -40,6 +43,7 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
    private:
 
       QLabel *lbl_info;
+      QLabel *lbl_title;
       QLabel *lbl_dir;
       QLabel *lbl_file;
       QLabel *lbl_fps;
@@ -47,20 +51,24 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
       QLabel *lbl_tc_unit;
       QLabel *lbl_tc_start;
       QLabel *lbl_tc_delta;
+      QLabel *lbl_tc_pointsize;
 
       QLineEdit *le_dir;
+      QLineEdit *le_title;
       QLineEdit *le_file;
       QLineEdit *le_fps;
       QLineEdit *le_scale;
       QLineEdit *le_tc_unit;
       QLineEdit *le_tc_start;
       QLineEdit *le_tc_delta;
+      QLineEdit *le_tc_pointsize;
 
       QPushButton *pb_cancel;
       QPushButton *pb_help;
 
       QCheckBox *cb_clean_up;
       QCheckBox *cb_use_tc;
+      QCheckBox *cb_black_background;
 
       void setupGUI();
 
@@ -68,6 +76,7 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
       
       QString msg;
       
+      QString    *title;
       QString    *dir;
       QString    somo_dir;
       QString    *file;
@@ -79,6 +88,8 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
       QString    *tc_unit;
       double     *tc_start;
       double     *tc_delta;
+      float      *tc_pointsize;
+      bool       *black_background;
 
       QPalette label_font_ok;
       QPalette label_font_warning;
@@ -89,6 +100,7 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
 
    private slots:
 
+      void update_title(const QString &str);
       void update_dir(const QString &str);
       void update_file(const QString &str);
       void update_fps(const QString &str);
@@ -96,6 +108,7 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
       void update_tc_unit(const QString &str);
       void update_tc_start(const QString &str);
       void update_tc_delta(const QString &str);
+      void update_tc_pointsize(const QString &str);
 
       void update_dir_msg();
 
@@ -103,6 +116,7 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
 
       void set_clean_up();
       void set_use_tc();
+      void set_black_background();
 
       void cancel();
       void help();

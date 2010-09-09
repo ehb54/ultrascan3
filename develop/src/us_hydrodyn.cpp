@@ -2705,7 +2705,7 @@ void US_Hydrodyn::view_bead_model()
    }
 }
 
-void US_Hydrodyn::visualize(bool movie_frame, QString dir, float scale)
+void US_Hydrodyn::visualize(bool movie_frame, QString dir, float scale, bool black_background)
 {
    QString use_dir = ( dir == "" ? somo_dir : dir );
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
@@ -2715,7 +2715,7 @@ void US_Hydrodyn::visualize(bool movie_frame, QString dir, float scale)
             write_bead_spt(use_dir + SLASH + project +
                            (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
                            QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-                           DOTSOMO, &bead_model, movie_frame, scale);
+                           DOTSOMO, &bead_model, movie_frame, scale, black_background);
             editor->append(QString("Visualizing model %1\n").arg(current_model + 1));
             QStringList argument;
 #if !defined(WIN32)

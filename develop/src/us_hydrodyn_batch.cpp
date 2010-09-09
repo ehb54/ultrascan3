@@ -1459,6 +1459,7 @@ void US_Hydrodyn_Batch::make_movie()
    disable_updates = true;
    QString cmds = "";
 
+   QString title = "";
    QString proc_dir;
    QString output_file;
    double fps = 1.0;
@@ -1469,6 +1470,8 @@ void US_Hydrodyn_Batch::make_movie()
    QString tc_unit = "ns";
    double tc_start = 0.0;
    double tc_delta = 0.0;
+   float tc_pointsize = 20;
+   bool black_background = true;
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -1485,6 +1488,7 @@ void US_Hydrodyn_Batch::make_movie()
    US_Hydrodyn_Batch_Movie_Opts *hbmo = 
       new US_Hydrodyn_Batch_Movie_Opts (
                                         QString(tr("Select parameters for movie file:")),
+                                        &title,
                                         &proc_dir,
                                         ((US_Hydrodyn *)us_hydrodyn)->somo_dir,
                                         &output_file,
@@ -1495,7 +1499,9 @@ void US_Hydrodyn_Batch::make_movie()
                                         &use_tc,
                                         &tc_unit,
                                         &tc_start,
-                                        &tc_delta
+                                        &tc_delta,
+                                        &tc_pointsize,
+                                        &black_background
                                         );
 
    hbmo->exec();
@@ -1571,14 +1577,40 @@ void US_Hydrodyn_Batch::make_movie()
             }
             editor->setColor("dark blue");
             editor->append(QString(tr("Creating movie frame for %1")).arg(file));
-            ((US_Hydrodyn *)us_hydrodyn)->visualize(true,proc_dir,scale);
+            ((US_Hydrodyn *)us_hydrodyn)->visualize(true,proc_dir,scale,black_background);
          }
       }
    }
+   QString tc_format_string = "%.0f";
+   {
+      QRegExp rx("\\.(\\d*)$");
+      if ( rx.search(QString("%1").arg(tc_delta)) != -1 )
+      {
+         tc_format_string = QString("%.%1f").arg(rx.cap(1).length());
+      }
+   }
+   cout << "tc format: " << tc_format_string << endl;
+
+
    if ( ((US_Hydrodyn *)us_hydrodyn)->movie_text.size() ) 
    {
       // here we ppmtogif and mencoder
       QString cd = "cd " + proc_dir + ";";
+      QString cmdlog =
+         cd +
+         "cat <<__EOF > " + output_file + ".log\n"
+         "title:           [" + title + "]\n"
+         "dir:             [" + proc_dir + "]\n"
+         "file:            [" + output_file + "]\n"
+         "fps:             [" + QString("%1").arg(fps) + "]\n"
+         "scale:           [" + QString("%1").arg(scale) + "]\n"
+         "use_tc:          [" + ( use_tc ? "true" : "false" ) + "]\n"
+         "tc_unit:         [" + QString("%1").arg(tc_unit) + "]\n"
+         "tc_start:        [" + QString("%1").arg(tc_start) + "]\n"
+         "tc_delta:        [" + QString("%1").arg(tc_delta) + "]\n"
+         "tc_pointsize:    [" + QString("%1").arg(tc_pointsize) + "]\n"
+         "black_background:[" + ( black_background ? "true" : "false" ) + "]\n"
+         "__EOF\n";
       QString cmd0 = cd + "rm -f " + output_file + ".list\n";
       vector < QString > cmd1;
       QString cmd2 = cd + "cat " + output_file + ".list | xargs mencoder -o " + output_file + ".avi -ovc lavc -fps " + QString("%1").arg(fps);
@@ -1588,13 +1620,26 @@ void US_Hydrodyn_Batch::make_movie()
          QString file = ((US_Hydrodyn *)us_hydrodyn)->movie_text[i];
          QFileInfo fi(file);
          cout << i << ":" << fi.fileName() << endl;
-         cmd1.push_back(cd + "ppmtogif " + fi.fileName() + ".ppm > " + fi.fileName() + ".gif\n" +
+         cmd1.push_back(cd + 
+                        "pnmquant 256 " + fi.fileName() + ".ppm > " + fi.fileName() + "-q.ppm\n" +
+                        "ppmtogif " + fi.fileName() + "-q.ppm > " + fi.fileName() + ".gif\n" +
                         "echo " +  fi.fileName() + ".gif >> " + output_file + ".list\n" +
                         ( use_tc ?
-                          QString("mogrify -gravity southwest -pointsize 20 -draw 'text 25,25 \"%1 %2\"' ")
-                          .arg(tc_start).arg(tc_unit) 
+                          QString("mogrify -gravity southwest -fill %1 -font Courier-10-Pitch-Regular -pointsize %2 -draw 'text 25,25 \"%3 %4\"' ")
+                          .arg(black_background ? "white" : "black")
+                          .arg(tc_pointsize)
+                          .arg(QString("").sprintf(tc_format_string, tc_start))
+                          .arg(tc_unit) 
                           + fi.fileName() + ".gif\n"
-                          : "" ) );
+                          : "" ) +
+                        ( title != "" ?
+                          QString("mogrify -gravity north -fill %1 -pointsize %2 -draw 'text 25,0 \"%3\"' ")
+                          .arg(black_background ? "white" : "black")
+                          .arg(tc_pointsize)
+                          .arg(title)
+                          + fi.fileName() + ".gif\n"
+                          : "" ) 
+                        );
          cmd3.push_back(cd +
                         "rm " + fi.fileName() + ".gif;"
                         "rm " + fi.fileName() + ".ppm;"
@@ -1602,6 +1647,8 @@ void US_Hydrodyn_Batch::make_movie()
                         "rm " + fi.fileName() + ".bms\n");
          tc_start += tc_delta;
       }
+      cout << "cmdlog [" << cmdlog << "]\n";
+      system(cmdlog.ascii());
       cout << "cmd0 [" << cmd0 << "]\ncmd2 [" << cmd2 << "]\n";
       system(cmd0.ascii());
       for ( unsigned int i = 0; i < cmd1.size(); i++ )
