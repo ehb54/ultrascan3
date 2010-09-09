@@ -1035,7 +1035,8 @@ void US_GA_Initialize::load_distro()
       "sa2d_mw_mc_dis",  "2DSA, MW Constrained, Monte Carlo",  "T",
       "ga_mw_mc_dis",    "GA, MW Constrained, Monte Carlo",    "T",
       "global_dis",      "Global Distro",                      "T",
-      "global_mc_dis",   "Global MC Distro",                   "T"
+      "global_mc_dis",   "Global MC Distro",                   "T",
+      "model",           "2DSA",                               "T"
    };
    int ncdte = sizeof( cdtyp ) / sizeof( char* );
 
@@ -1088,11 +1089,123 @@ qDebug() << "  NO Model components";
       return;
    }
 
+//*DEBUG*
+#if 0
+   double i_s    = model.components[0].s;
+   double i_D    = model.components[0].D;
+   double i_mw   = model.components[0].mw;
+   double i_f    = model.components[0].f;
+   double i_ff0  = model.components[0].f_f0;
+   double i_c    = model.components[0].signal_concentration;
+   qDebug() << QString().sprintf(
+      "    INPUT     s/D/mw/f/ff0/c %13.4e%13.4e%13.4e%13.4e%13.4e%13.4e"
+      ,i_s,i_D,i_mw,i_f,i_ff0,i_c);
+   for ( int ii = 0; ii < 10; ii++ )
+   {
+      double c_s    = i_s;
+      double c_D    = i_D;
+      double c_mw   = i_mw;
+      double c_f    = i_f;
+      double c_ff0  = i_ff0;
+      QString  oper="";
+      switch ( ii )
+      {
+         case 0:
+            oper="s+D   ";
+            c_mw = c_ff0 = 0.0;
+            break;
+         case 1:
+            oper="s+mw  ";
+            c_D = c_ff0 = 0.0;
+            break;
+         case 2:
+            oper="s+ff0 ";
+            c_mw = c_D = 0.0;
+            break;
+         case 3:
+            oper="s+f   ";
+            c_mw = c_D = c_ff0 = 0.0;
+            break;
+         case 4:
+            oper="mw+D  ";
+            c_s = c_ff0 = 0.0;
+            break;
+         case 5:
+            oper="mw+ff0";
+            c_s = c_D = 0.0;
+            break;
+         case 6:
+            oper="mw+f  ";
+            c_s = c_D = c_ff0 = 0.0;
+            break;
+         case 7:
+            oper="D+ff0 ";
+            c_s = c_mw = 0.0;
+            break;
+         case 8:
+            oper="D+f   ";
+            c_s = c_mw = c_ff0 = 0.0;
+            break;
+         case 9:
+         default:
+            oper="f+ff0 ";
+            c_s = c_mw = c_D = 0.0;
+            break;
+      }
+      model.components[0].s    = c_s;
+      model.components[0].D    = c_D;
+      model.components[0].mw   = c_mw;
+      model.components[0].f    = c_f;
+      model.components[0].f_f0 = c_ff0;
+
+      bool uok = model.update_coefficients();
+
+      qDebug() << oper << " OUTp s/D/mw/f/ff0/c"
+         << QString().sprintf("%13.4e%13.4e%13.4e%13.4e%13.4e%13.4e",
+         model.components[ 0 ].s,model.components[ 0 ].D,model.components[ 0 ].mw,
+         model.components[ 0 ].f,model.components[ 0 ].f_f0,
+         model.components[ 0 ].signal_concentration) << uok;
+      if ( ii == 0 )
+      {
+         US_Math2::SolutionData d;
+         d.vbar20 = model.components[0].vbar20;
+         //d.vbar = model.components[0].vbar20;
+         d.density = DENS_20W;
+         d.viscosity = VISC_20W;
+         US_Math2::data_correction( 20.0, d );
+
+         //qDebug() << "fIN fOUT  ratioOI" << i_f << model.components[0].f << " " << model.components[0].f/i_f;
+         //qDebug() << " V20W vTB  bB bW" << VISC_20W << d.viscosity_tb << " " << d.buoyancyb << d.buoyancyw;
+      }
+   }
+   model.components[0].s    = i_s;
+   model.components[0].D    = i_D;
+   model.components[0].mw   = i_mw;
+   model.components[0].f    = i_f;
+   model.components[0].f_f0 = i_ff0;
+   model.components[0].signal_concentration = i_c;
+#endif
+//*DEBUG*
+   // insure all model coefficient properties are set
+   if ( ! model.update_coefficients() )
+   {
+      qDebug() << "*** Unable to recalculate coefficient values ***";
+   }
+
+   // parse model information from its description
    mdesc        = mdesc.section( sep, 1, 1 );
 
    run_name     = mdesc.section( ".", 0, 0 );
    int jj       = mdesc.lastIndexOf( "." );
    int kk       = mdesc.length();
+
+   if ( jj < 0 )
+   {  // for model not really a distribution, fake it
+      jj           = kk;
+      mdesc        = mdesc + ".model.11";
+      kk           = mdesc.length();
+   }
+
    QString tstr = mdesc.right( kk - jj - 1 );
 
    cell         = tstr.left( 1 );
@@ -1128,13 +1241,14 @@ qDebug() << "  NO Model components";
       for ( int jj = 0; jj < model.components.size(); jj++ )
       {
          sol_s.s  = model.components[ jj ].s * 1.0e13;
-         sol_s.c  = model.components[ jj ].f;
+         sol_s.c  = model.components[ jj ].signal_concentration;
          sol_s.k  = model.components[ jj ].f_f0;
          sol_s.d  = model.components[ jj ].D;
          sol_w.s  = model.components[ jj ].mw;
          sol_w.c  = sol_s.c;
          sol_w.k  = sol_s.k;
          sol_w.d  = sol_s.d;
+//qDebug() << "Solute jj s c k d" << jj << sol_s.s << sol_s.c << sol_s.k << sol_s.d;
 
          s_distro.append( sol_s );
          w_distro.append( sol_w );

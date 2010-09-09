@@ -344,7 +344,7 @@ void US_Pseudo3D_Combine::plot_data( void )
       "cofs",       "fe",         "sa2d",       "ga_mc",
       "sa2d_mc",    "ga",         "global",     "sa2d_mw",
       "ga_mw",      "sa2d_mw_mc", "ga_mw_mc",   "global",
-      "global_mc"
+      "global_mc",  "model"
    };
 
    if ( curr_distr < 0  ||  curr_distr >= system.size() )
@@ -365,7 +365,8 @@ void US_Pseudo3D_Combine::plot_data( void )
    cmapname = tsys->cmapname;
 
    data_plot->clear();
-   data_plot->setCanvasBackground( colormap->color1() ); 
+   //data_plot->setCanvasBackground( colormap->color1() ); 
+   data_plot->setCanvasBackground( Qt::darkBlue );
 
    // set up spectrogram data
    QwtPlotSpectrogram *d_spectrogram = new QwtPlotSpectrogram();
@@ -584,7 +585,8 @@ void US_Pseudo3D_Combine::load_distro( US_ModelLoader* dialog, int index )
       "sa2d_mw_mc_dis",  "2DSA, MW Constrained, Monte Carlo",  "T",
       "ga_mw_mc_dis",    "GA, MW Constrained, Monte Carlo",    "T",
       "global_dis",      "Global Distro",                      "T",
-      "global_mc_dis",   "Global MC Distro",                   "T"
+      "global_mc_dis",   "Global MC Distro",                   "T",
+      "model",           "2DSA",                               "F" 
    };
    int         ncdte = sizeof( cdtyp ) / sizeof( char* );
 
@@ -592,7 +594,9 @@ void US_Pseudo3D_Combine::load_distro( US_ModelLoader* dialog, int index )
    Solute      sol_s;
    Solute      sol_w;
 
-   dialog->load_model( model, index );
+   dialog->load_model( model, index );   // load a model
+
+   model.update_coefficients();          // fill in any missing coefficients
 
    QString mdesc = dialog->description( index );
    mdesc         = mdesc.section( mdesc.left( 1 ), 1, 1 );
@@ -604,6 +608,14 @@ void US_Pseudo3D_Combine::load_distro( US_ModelLoader* dialog, int index )
    // set values based on description
    int jj           = mdesc.lastIndexOf( "." );
    int kk           = mdesc.length();
+
+   if ( jj < 0 )
+   {  // for model not really a distribution, fake it
+      jj               = kk;
+      mdesc            = mdesc + ".model.11";
+      kk               = mdesc.length();
+   }
+
    QString tstr     = mdesc.right( kk - jj - 1 );
 
    tsys.cell        = tstr.left( 1 );
@@ -640,7 +652,7 @@ void US_Pseudo3D_Combine::load_distro( US_ModelLoader* dialog, int index )
       for ( jj = 0; jj < model.components.size(); jj++ )
       {
          sol_s.s  = model.components[ jj ].s * 1.0e13;
-         sol_s.c  = model.components[ jj ].f;
+         sol_s.c  = model.components[ jj ].signal_concentration;
          sol_s.k  = model.components[ jj ].f_f0;
          sol_w.s  = model.components[ jj ].mw;
          sol_w.c  = sol_s.c;

@@ -145,6 +145,7 @@ void US_DataModel::scan_dbase( )
    QStringList modIDs;
    QStringList noiIDs;
    QStringList query;
+   QString     dmyGUID  = "00000000-0000-0000-0000-000000000000";
    QString     recID;
    QString     rawGUID;
    QString     contents;
@@ -269,8 +270,8 @@ if ( ii<2 ) tevent << "raw 02 "; times << t.elapsed();
       cdesc.recType     = 1;
       cdesc.subType     = subType;
       cdesc.recState    = REC_DB;
-      cdesc.dataGUID    = rawGUID;
-      cdesc.parentGUID  = expGUID;
+      cdesc.dataGUID    = rawGUID.simplified();
+      cdesc.parentGUID  = expGUID.simplified();
       cdesc.filename    = filename;
       cdesc.contents    = contents;
       cdesc.label       = label;
@@ -278,6 +279,12 @@ if ( ii<2 ) tevent << "raw 02 "; times << t.elapsed();
                           filename.section( ".", 0, 2 ) :
                           comment;
       cdesc.lastmodDate = date;
+
+      if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
+         cdesc.dataGUID    = US_Util::new_guid();
+
+      cdesc.parentGUID  = cdesc.parentGUID.length() == 36 ?
+                          cdesc.parentGUID : dmyGUID;
 
       ddescs << cdesc;
       progress->setValue( ( istep += 5 ) );
@@ -326,8 +333,8 @@ qDebug() << "BrDb:     edt ii id eGID rGID label date"
       cdesc.recType     = 2;
       cdesc.subType     = subType;
       cdesc.recState    = REC_DB;
-      cdesc.dataGUID    = editGUID;
-      cdesc.parentGUID  = rawGUID;
+      cdesc.dataGUID    = editGUID.simplified();
+      cdesc.parentGUID  = rawGUID.simplified();
       //cdesc.filename    = filename;
       cdesc.filename    = "";
       cdesc.contents    = contents;
@@ -336,6 +343,12 @@ qDebug() << "BrDb:     edt ii id eGID rGID label date"
                           filename.section( ".", 0, 2 ) :
                           comment;
       cdesc.lastmodDate = date;
+
+      if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
+         cdesc.dataGUID    = US_Util::new_guid();
+
+      cdesc.parentGUID  = cdesc.parentGUID.simplified().length() == 36 ?
+                          cdesc.parentGUID.simplified() : dmyGUID;
 
       ddescs << cdesc;
       progress->setValue( ( istep += 5 ) );
@@ -390,14 +403,20 @@ if ( ii<2 ) tevent << "mod 05 "; times << t.elapsed();
       cdesc.recType     = 3;
       cdesc.subType     = subType;
       cdesc.recState    = REC_DB;
-      cdesc.dataGUID    = modelGUID;
-      cdesc.parentGUID  = editGUID;
+      cdesc.dataGUID    = modelGUID.simplified();
+      cdesc.parentGUID  = editGUID.simplified();
       cdesc.filename    = "";
       cdesc.contents    = contents;
       cdesc.label       = label;
       cdesc.description = descript;
       //cdesc.lastmodDate = QFileInfo( aucfile ).lastModified().toString();
       cdesc.lastmodDate = "";
+
+      if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
+         cdesc.dataGUID    = US_Util::new_guid();
+
+      cdesc.parentGUID  = cdesc.parentGUID.simplified().length() == 36 ?
+                          cdesc.parentGUID.simplified() : dmyGUID;
 
       ddescs << cdesc;
       progress->setValue( ++istep );
@@ -422,6 +441,7 @@ qDebug() << "TIMING NM step: " << istep;
       QString filename  = db->value( 3 ).toString();
       QString comment   = db->value( 4 ).toString();
       QString date      = db->value( 5 ).toString();
+      QString modelGUID = db->value( 6 ).toString();
       QString label     = descript;
 
       if ( details )
@@ -444,13 +464,19 @@ qDebug() << "TIMING NM step: " << istep;
       cdesc.recType     = 4;
       cdesc.subType     = "";
       cdesc.recState    = REC_DB;
-      cdesc.dataGUID    = noiseGUID;
-      //cdesc.parentGUID  = modelGUID;
+      cdesc.dataGUID    = noiseGUID.simplified();
+      cdesc.parentGUID  = modelGUID.simplified();
       cdesc.filename    = filename;
       cdesc.contents    = contents;
       cdesc.label       = label;
       cdesc.description = descript;
       //cdesc.lastmodDate = QFileInfo( aucfile ).lastModified().toString();
+
+      if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
+         cdesc.dataGUID    = US_Util::new_guid();
+
+      cdesc.parentGUID  = cdesc.parentGUID.simplified().length() == 36 ?
+                          cdesc.parentGUID.simplified() : dmyGUID;
 
       ddescs << cdesc;
       progress->setValue( ++istep );
@@ -473,6 +499,7 @@ void US_DataModel::scan_local( )
    QString     dirm     = ddir + "/models";
    QString     dirn     = ddir + "/noises";
    QString     contents = "";
+   QString     dmyGUID  = "00000000-0000-0000-0000-000000000000";
    QStringList aucdirs  = QDir( rdir )
       .entryList( QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
    QStringList aucfilt;
@@ -532,13 +559,19 @@ qDebug() << "BrLoc:      contents" << contents;
          cdesc.recType     = 1;
          cdesc.subType     = fname.section( ".", 1, 1 );
          cdesc.recState    = REC_LO;
-         cdesc.dataGUID    = rawGUID;
-         cdesc.parentGUID  = expGUID;
+         cdesc.dataGUID    = rawGUID.simplified();
+         cdesc.parentGUID  = expGUID.simplified();
          cdesc.filename    = aucfile;
          cdesc.contents    = contents;
          cdesc.label       = runid + "." + tripl;
          cdesc.description = rdata.description;
          cdesc.lastmodDate = QFileInfo( aucfile ).lastModified().toString();
+
+         if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
+            cdesc.dataGUID    = US_Util::new_guid();
+
+         cdesc.parentGUID  = cdesc.parentGUID.simplified().length() == 36 ?
+                             cdesc.parentGUID.simplified() : dmyGUID;
 
          ldescs << cdesc;
 
@@ -571,13 +604,19 @@ qDebug() << "BrLoc:  edtfilt" << edtfilt;
             cdesc.recType     = 2;
             cdesc.subType     = efname.section( ".", 2, 2 );
             cdesc.recState    = REC_LO;
-            cdesc.dataGUID    = edval.editGUID;
-            cdesc.parentGUID  = rawGUID;
+            cdesc.dataGUID    = edval.editGUID.simplified();
+            cdesc.parentGUID  = edval.dataGUID.simplified();
             cdesc.filename    = edtfile;
             cdesc.contents    = contents;
             cdesc.label       = runid + "." + editid;
             cdesc.description = cdesc.label;
             cdesc.lastmodDate = QFileInfo( edtfile ).lastModified().toString();
+
+            if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
+               cdesc.dataGUID    = US_Util::new_guid();
+
+            cdesc.parentGUID  = cdesc.parentGUID.simplified().length() == 36 ?
+                                cdesc.parentGUID.simplified() : dmyGUID;
 
             ldescs << cdesc;
          }
@@ -605,12 +644,18 @@ qDebug() << "BrLoc:  edtfilt" << edtfilt;
       cdesc.recType     = 3;
       cdesc.subType     = model_type( model );
       cdesc.recState    = REC_LO;
-      cdesc.dataGUID    = model.modelGUID;
-      cdesc.parentGUID  = model.editGUID;
+      cdesc.dataGUID    = model.modelGUID.simplified();
+      cdesc.parentGUID  = model.editGUID.simplified();
       cdesc.filename    = modfil;
       cdesc.contents    = contents;
       cdesc.description = model.description;
       cdesc.lastmodDate = QFileInfo( modfil ).lastModified().toString();
+
+      if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
+         cdesc.dataGUID    = US_Util::new_guid();
+
+      cdesc.parentGUID  = cdesc.parentGUID.simplified().length() == 36 ?
+                          cdesc.parentGUID.simplified() : dmyGUID;
 
       if ( model.description.length() < 41 )
          cdesc.label       = model.description;
@@ -640,12 +685,18 @@ qDebug() << "BrLoc:  edtfilt" << edtfilt;
       cdesc.recType     = 4;
       cdesc.subType     = ( noise.type == US_Noise::RI ) ? "RI" : "TI";
       cdesc.recState    = REC_LO;
-      cdesc.dataGUID    = noise.noiseGUID;
-      cdesc.parentGUID  = noise.modelGUID;
+      cdesc.dataGUID    = noise.noiseGUID.simplified();
+      cdesc.parentGUID  = noise.modelGUID.simplified();
       cdesc.filename    = noifil;
       cdesc.contents    = contents;
       cdesc.description = noise.description;
       cdesc.lastmodDate = QFileInfo( noifil ).lastModified().toString();
+
+      if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
+         cdesc.dataGUID    = US_Util::new_guid();
+
+      cdesc.parentGUID  = cdesc.parentGUID.simplified().length() == 36 ?
+                          cdesc.parentGUID.simplified() : dmyGUID;
 
       if ( noise.description.length() < 41 )
          cdesc.label       = noise.description;
@@ -896,8 +947,8 @@ void US_DataModel::sort_descs( QVector< DataDesc >& descs )
       dsorts = orphn.at( ii );
       dlabel = dsorts.section( ":", 0, 0 );
       dindex = dsorts.section( ":", 1, 1 );
-      ddGUID = dsorts.section( ":", 2, 2 );
-      dpGUID = dsorts.section( ":", 3, 3 );
+      ddGUID = dsorts.section( ":", 2, 2 ).simplified();
+      dpGUID = dsorts.section( ":", 3, 3 ).simplified();
       jndx   = dindex.toInt();
       cdesc  = tdess[ jndx ];
 
@@ -965,8 +1016,8 @@ void US_DataModel::sort_descs( QVector< DataDesc >& descs )
       dsorts = orphm.at( ii );
       dlabel = dsorts.section( ":", 0, 0 );
       dindex = dsorts.section( ":", 1, 1 );
-      ddGUID = dsorts.section( ":", 2, 2 );
-      dpGUID = dsorts.section( ":", 3, 3 );
+      ddGUID = dsorts.section( ":", 2, 2 ).simplified();
+      dpGUID = dsorts.section( ":", 3, 3 ).simplified();
       jndx   = dindex.toInt();
       cdesc  = tdess[ jndx ];
 
@@ -1034,8 +1085,8 @@ void US_DataModel::sort_descs( QVector< DataDesc >& descs )
       dsorts = orphe.at( ii );
       dlabel = dsorts.section( ":", 0, 0 );
       dindex = dsorts.section( ":", 1, 1 );
-      ddGUID = dsorts.section( ":", 2, 2 );
-      dpGUID = dsorts.section( ":", 3, 3 );
+      ddGUID = dsorts.section( ":", 2, 2 ).simplified();
+      dpGUID = dsorts.section( ":", 3, 3 ).simplified();
       jndx   = dindex.toInt();
       cdesc  = tdess[ jndx ];
 
@@ -1628,4 +1679,5 @@ QString US_DataModel::expGUIDauc( QString aucfile )
 
    return expGUID;
 }
+
 
