@@ -286,7 +286,10 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
-  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+  -- Legitimate users include people updating their own info, or admins
+  IF ( ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+         ( p_ID = @US3_ID                                )              ) ||
+       ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK )  ) THEN
 
     UPDATE people SET
            fname        = p_fname,
