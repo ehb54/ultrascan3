@@ -234,51 +234,6 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table abstractChannel
--- -----------------------------------------------------
-DROP TABLE IF EXISTS abstractChannel ;
-
-CREATE  TABLE IF NOT EXISTS abstractChannel (
-  abstractChannelID int(11) NOT NULL AUTO_INCREMENT ,
-  channelType enum('reference','sample') NULL ,
-  channelShape enum( 'sector', 'rectangular' ) NULL ,
-  abstractChannelGUID CHAR(36) NULL ,
-  name VARCHAR(100) NULL ,
-  number INT NULL ,
-  radialBegin FLOAT NULL ,
-  radialEnd FLOAT NULL ,
-  degreesWide FLOAT NULL ,
-  degreesOffset FLOAT NULL ,
-  radialBandTop FLOAT NULL ,
-  radialBandBottom FLOAT NULL ,
-  radialMeniscusPos FLOAT NULL ,
-  dateUpdated DATE NULL ,
-  PRIMARY KEY (abstractChannelID) )
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table channel
--- -----------------------------------------------------
-DROP TABLE IF EXISTS channel ;
-
-CREATE  TABLE IF NOT EXISTS channel (
-  channelID int(11) NOT NULL AUTO_INCREMENT ,
-  abstractChannelID int(11) NULL ,
-  channelGUID CHAR(36) NULL ,
-  comments TEXT NULL DEFAULT NULL ,
-  dateUpdated TIMESTAMP NULL DEFAULT NULL ,
-  PRIMARY KEY (channelID) ,
-  INDEX ndx_channel_abstractChannelID (abstractChannelID ASC) ,
-  CONSTRAINT fk_channel_abstractChannelID
-    FOREIGN KEY (abstractChannelID )
-    REFERENCES abstractChannel (abstractChannelID )
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
 -- Table cell
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS cell ;
@@ -313,6 +268,176 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
+-- Table abstractChannel
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS abstractChannel ;
+
+CREATE  TABLE IF NOT EXISTS abstractChannel (
+  abstractChannelID int(11) NOT NULL AUTO_INCREMENT ,
+  channelType enum('reference','sample') NULL ,
+  channelShape enum( 'sector', 'rectangular' ) NULL ,
+  abstractChannelGUID CHAR(36) NULL ,
+  name VARCHAR(100) NULL ,
+  number INT NULL ,
+  radialBegin FLOAT NULL ,
+  radialEnd FLOAT NULL ,
+  degreesWide FLOAT NULL ,
+  degreesOffset FLOAT NULL ,
+  radialBandTop FLOAT NULL ,
+  radialBandBottom FLOAT NULL ,
+  radialMeniscusPos FLOAT NULL ,
+  dateUpdated DATE NULL ,
+  PRIMARY KEY (abstractChannelID) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table channel
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS channel ;
+
+CREATE  TABLE IF NOT EXISTS channel (
+  channelID int(11) NOT NULL AUTO_INCREMENT ,
+  abstractChannelID int(11) NULL ,
+  channelGUID CHAR(36) NULL ,
+  cellID int(11) NOT NULL ,
+  channelName CHAR(10) NULL ,
+  comments TEXT NULL DEFAULT NULL ,
+  dateUpdated TIMESTAMP NULL DEFAULT NULL ,
+  PRIMARY KEY (channelID) ,
+  INDEX ndx_channel_abstractChannelID (abstractChannelID ASC) ,
+  INDEX ndx_channel_cellID (cellID ASC) ,
+  CONSTRAINT fk_channel_abstractChannelID
+    FOREIGN KEY (abstractChannelID )
+    REFERENCES abstractChannel (abstractChannelID )
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_channel_cellID
+    FOREIGN KEY (cellID )
+    REFERENCES cell (cellID )
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table solution
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS solution ;
+
+CREATE  TABLE IF NOT EXISTS solution (
+  solutionID int(11) NOT NULL AUTO_INCREMENT ,
+  solutionGUID CHAR(36) NULL ,
+  description VARCHAR(80) NOT NULL ,
+  storageTemp TINYINT NULL DEFAULT NULL ,
+  notes TEXT NULL DEFAULT NULL ,
+  PRIMARY KEY (solutionID) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table solutionBuffer
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS solutionBuffer ;
+
+CREATE  TABLE IF NOT EXISTS solutionBuffer (
+  solutionID int(11) NOT NULL ,
+  bufferID int(11) NOT NULL ,
+  PRIMARY KEY (solutionID) ,
+  INDEX ndx_solutionBuffer_solutionID (solutionID ASC) ,
+  INDEX ndx_solutionBuffer_bufferID   (bufferID ASC) ,
+  CONSTRAINT fk_solutionBuffer_solutionID
+    FOREIGN KEY (solutionID )
+    REFERENCES solution (solutionID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_solutionBuffer_bufferID
+    FOREIGN KEY (bufferID )
+    REFERENCES buffer (bufferID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table solutionAnalyte
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS solutionAnalyte ;
+
+CREATE  TABLE IF NOT EXISTS solutionAnalyte (
+  solutionID int(11) NOT NULL ,
+  analyteID int(11) NOT NULL ,
+  amount FLOAT NOT NULL ,
+  INDEX ndx_solutionAnalyte_solutionID (solutionID ASC) ,
+  INDEX ndx_solutionAnalyte_analyteID (analyteID ASC) ,
+  CONSTRAINT fk_solutionAnalyte_solutionID
+    FOREIGN KEY (solutionID )
+    REFERENCES solution (solutionID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_solutionAnalyte_analyteID
+    FOREIGN KEY (analyteID )
+    REFERENCES analyte (analyteID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table solutionPerson
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS solutionPerson ;
+
+CREATE  TABLE IF NOT EXISTS solutionPerson (
+  solutionID int(11) NOT NULL ,
+  personID int(11) NOT NULL ,
+  PRIMARY KEY (solutionID) ,
+  INDEX ndx_solutionPerson_personID (personID ASC) ,
+  INDEX ndx_solutionPerson_solutionID (solutionID ASC) ,
+  CONSTRAINT fk_solutionPerson_personID
+    FOREIGN KEY (personID )
+    REFERENCES people (personID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_solutionPerson_solutionID
+    FOREIGN KEY (solutionID )
+    REFERENCES solution (solutionID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table experimentSolutionChannel
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS experimentSolutionChannel ;
+
+CREATE  TABLE IF NOT EXISTS experimentSolutionChannel (
+  experimentID int(11) NOT NULL ,
+  solutionID int(11) NOT NULL ,
+  channelID int(11) NOT NULL ,
+  INDEX ndx_experimentSolutionChannel_experimentID (experimentID ASC) ,
+  INDEX ndx_experimentSolutionChannel_channelID (channelID ASC) ,
+  INDEX ndx_experimentSolutionChannel_solutionID (solutionID ASC) ,
+  CONSTRAINT fk_experimentSolutionChannel_experimentID
+    FOREIGN KEY (experimentID )
+    REFERENCES experiment (experimentID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_experimentSolutionChannel_channelID
+    FOREIGN KEY (channelID )
+    REFERENCES channel (channelID )
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_experimentSolutionChannel_solutionID
+    FOREIGN KEY ( solutionID )
+    REFERENCES solution (solutionID)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table rawData
 -- The data field is not expected to be NULL, but loading
 --  this table is a 2-step process
@@ -327,6 +452,7 @@ CREATE  TABLE IF NOT EXISTS rawData (
   data LONGBLOB NULL ,
   comment TEXT NULL ,
   experimentID int(11) NOT NULL ,
+  solutionID int(11) NOT NULL ,
   channelID int(11) NOT NULL ,
   lastUpdated DATETIME NULL ,
   PRIMARY KEY (rawDataID) ,
@@ -997,124 +1123,6 @@ ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
--- Table solution
--- -----------------------------------------------------
-DROP TABLE IF EXISTS solution ;
-
-CREATE  TABLE IF NOT EXISTS solution (
-  solutionID int(11) NOT NULL AUTO_INCREMENT ,
-  solutionGUID CHAR(36) NULL ,
-  description VARCHAR(80) NOT NULL ,
-  storageTemp TINYINT NULL DEFAULT NULL ,
-  notes TEXT NULL DEFAULT NULL ,
-  PRIMARY KEY (solutionID) )
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table solutionBuffer
--- -----------------------------------------------------
-DROP TABLE IF EXISTS solutionBuffer ;
-
-CREATE  TABLE IF NOT EXISTS solutionBuffer (
-  solutionID int(11) NOT NULL ,
-  bufferID int(11) NOT NULL ,
-  PRIMARY KEY (solutionID) ,
-  INDEX ndx_solutionBuffer_solutionID (solutionID ASC) ,
-  INDEX ndx_solutionBuffer_bufferID   (bufferID ASC) ,
-  CONSTRAINT fk_solutionBuffer_solutionID
-    FOREIGN KEY (solutionID )
-    REFERENCES solution (solutionID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT fk_solutionBuffer_bufferID
-    FOREIGN KEY (bufferID )
-    REFERENCES buffer (bufferID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table solutionAnalyte
--- -----------------------------------------------------
-DROP TABLE IF EXISTS solutionAnalyte ;
-
-CREATE  TABLE IF NOT EXISTS solutionAnalyte (
-  solutionID int(11) NOT NULL ,
-  analyteID int(11) NOT NULL ,
-  amount FLOAT NOT NULL ,
-  PRIMARY KEY (solutionID) ,
-  INDEX ndx_solutionAnalyte_solutionID (solutionID ASC) ,
-  INDEX ndx_solutionAnalyte_analyteID (analyteID ASC) ,
-  CONSTRAINT fk_solutionAnalyte_solutionID
-    FOREIGN KEY (solutionID )
-    REFERENCES solution (solutionID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT fk_solutionAnalyte_analyteID
-    FOREIGN KEY (analyteID )
-    REFERENCES analyte (analyteID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table solutionPerson
--- -----------------------------------------------------
-DROP TABLE IF EXISTS solutionPerson ;
-
-CREATE  TABLE IF NOT EXISTS solutionPerson (
-  solutionID int(11) NOT NULL ,
-  personID int(11) NOT NULL ,
-  PRIMARY KEY (solutionID) ,
-  INDEX ndx_solutionPerson_personID (personID ASC) ,
-  INDEX ndx_solutionPerson_solutionID (solutionID ASC) ,
-  CONSTRAINT fk_solutionPerson_personID
-    FOREIGN KEY (personID )
-    REFERENCES people (personID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT fk_solutionPerson_solutionID
-    FOREIGN KEY (solutionID )
-    REFERENCES solution (solutionID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table experimentSolutionChannel
--- -----------------------------------------------------
-DROP TABLE IF EXISTS experimentSolutionChannel ;
-
-CREATE  TABLE IF NOT EXISTS experimentSolutionChannel (
-  experimentID int(11) NOT NULL ,
-  solutionID int(11) NOT NULL ,
-  channelID int(11) NOT NULL ,
-  INDEX ndx_experimentSolutionChannel_experimentID (experimentID ASC) ,
-  INDEX ndx_experimentSolutionChannel_channelID (channelID ASC) ,
-  INDEX ndx_experimentSolutionChannel_solutionID (solutionID ASC) ,
-  CONSTRAINT fk_experimentSolutionChannel_experimentID
-    FOREIGN KEY (experimentID )
-    REFERENCES experiment (experimentID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT fk_experimentSolutionChannel_channelID
-    FOREIGN KEY (channelID )
-    REFERENCES channel (channelID )
-    ON DELETE NO ACTION
-    ON UPDATE CASCADE,
-  CONSTRAINT fk_experimentSolutionChannel_solutionID
-    FOREIGN KEY ( solutionID )
-    REFERENCES solution (solutionID)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
 -- Table image
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS image ;
@@ -1272,7 +1280,7 @@ DROP TABLE IF EXISTS beckmanInterference ;
 CREATE  TABLE IF NOT EXISTS beckmanInterference (
   beckmanInterferenceID int(11) NOT NULL AUTO_INCREMENT ,
   opticalSystemSettingID int(11) NULL ,
-  topRadious FLOAT NULL ,
+  topRadius FLOAT NULL ,
   bottomRadius FLOAT NULL ,
   pixelsPerFringe INT NULL ,
   numberOfFringes INT NULL ,

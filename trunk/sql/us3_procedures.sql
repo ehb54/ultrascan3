@@ -47,6 +47,7 @@ BEGIN
   SET @NO_EXPERIMENT  = 508;
   SET @NO_RAWDATA     = 509;
   SET @NO_EDITDATA    = 510;
+  SET @NO_SOLUTION    = 511;
 
   -- Some user levels
   SET @US3_USER       = 0;
@@ -398,8 +399,13 @@ BEGIN
     SELECT @OK AS status;
     SELECT @personGUID AS personGUID, @EMAIL AS email;
 
+  ELSEIF ( TRIM( p_email ) = '' ) THEN
+    -- Then we were trying to validate with the guid, but failed
+    SELECT @US3_LAST_ERRNO AS status;
+    SELECT p_personGUID AS personGUID, p_email AS email;
+
   ELSE
-    -- Can we validate using the email?
+    -- Email is not empty; can we validate using it?
     SET status = check_user_email( p_email, p_password );
     IF ( @US3_ID IS NOT NULL ) THEN
       -- We've validated with the email
@@ -409,7 +415,7 @@ BEGIN
     ELSE
       -- No, can't validate either way
       SELECT @US3_LAST_ERRNO AS status;
-      SELECT p_personpersonGUID AS personGUID, p_email AS email;
+      SELECT p_personGUID AS personGUID, p_email AS email;
 
     END IF;
 
@@ -471,6 +477,7 @@ SOURCE us3_proj_procs.sql
 SOURCE us3_hardware_procs.sql
 SOURCE us3_hardware_data.sql
 SOURCE us3_buffer_components.sql
+SOURCE us3_solution_procs.sql
 SOURCE us3_spectrum_procs.sql
 SOURCE us3_model_procs.sql
 

@@ -63,6 +63,7 @@ BEGIN
   DECLARE count_rawData  INT;
   DECLARE l_rawDataID    INT;
   DECLARE l_experimentID INT;
+  DECLARE l_solutionID   INT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -81,8 +82,8 @@ BEGIN
 
   ELSE
     -- Let's get both the rawDataID and the experimentID so we can verify permission
-    SELECT rawDataID, experimentID
-    INTO   l_rawDataID, l_experimentID
+    SELECT rawDataID, experimentID, solutionID
+    INTO   l_rawDataID, l_experimentID, l_solutionID
     FROM   rawData
     WHERE  rawDataGUID = p_rawDataGUID
     LIMIT  1;                           -- should be only 1
@@ -90,7 +91,9 @@ BEGIN
     IF ( verify_experiment_permission( p_personGUID, p_password, l_experimentID ) = @OK ) THEN
       SELECT @OK AS status;
 
-      SELECT l_rawDataID AS rawDataID, l_experimentID AS experimentID;
+      SELECT l_rawDataID AS rawDataID, 
+             l_experimentID AS experimentID,
+             l_solutionID AS solutionID;
 
     ELSE
       SELECT @US3_LAST_ERRNO AS status;
@@ -214,7 +217,7 @@ BEGIN
   
       IF ( p_ID > 0 ) THEN
         SELECT     rawDataID, rawData.label, rawData.filename,
-                   rawData.experimentID, rawData.lastUpdated
+                   rawData.experimentID, rawData.solutionID, rawData.lastUpdated
         FROM       rawData, experiment, experimentPerson
         WHERE      experimentPerson.personID = p_ID
         AND        experiment.experimentID = experimentPerson.experimentID
@@ -223,7 +226,7 @@ BEGIN
 
       ELSE
         SELECT     rawDataID, rawData.label, rawData.filename,
-                   rawData.experimentID, rawData.lastUpdated
+                   rawData.experimentID, rawData.solutionID, rawData.lastUpdated
         FROM       rawData, experiment, experimentPerson
         WHERE      experiment.experimentID = experimentPerson.experimentID
         AND        rawData.experimentID = experiment.experimentID
@@ -252,7 +255,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT     rawDataID, rawData.label, rawData.filename,
-                 rawData.experimentID, rawData.lastUpdated
+                 rawData.experimentID, rawData.solutionID, rawData.lastUpdated
       FROM       rawData, experiment, experimentPerson
       WHERE      experimentPerson.personID = @US3_ID
       AND        experiment.experimentID = experimentPerson.experimentID
@@ -274,6 +277,7 @@ CREATE PROCEDURE new_rawData ( p_personGUID   CHAR(36),
                                p_filename     VARCHAR(255),
                                p_comment      TEXT,
                                p_experimentID INT,
+                               p_solutionID   INT,
                                p_channelID    INT )
   MODIFIES SQL DATA
 
@@ -298,6 +302,7 @@ BEGIN
       filename      = p_filename,
       comment       = p_comment,
       experimentID  = p_experimentID,
+      solutionID    = p_solutionID,
       channelID     = p_channelID,
       lastUpdated   = NOW();
    
@@ -354,7 +359,7 @@ BEGIN
     -- This is either an admin, or a person inquiring about his own experiment
     SELECT @OK as status;
 
-    SELECT  rawDataGUID, label, filename, comment, experimentID, channelID, lastUpdated
+    SELECT  rawDataGUID, label, filename, comment, experimentID, solutionID, channelID, lastUpdated
     FROM    rawData
     WHERE   rawDataID = p_rawDataID;
 
