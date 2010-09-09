@@ -428,7 +428,7 @@ void US_LammAstfvm::Mesh::InitMesh( double s, double D, double w2 )
    }
 }
 
-
+// create salt data set by solving ideal astfem equations
 US_LammAstfvm::SaltData::SaltData( US_Model                amodel,
                                    US_SimulationParameters asparms,
                                    US_DataIO2::RawData*    asim_data )
@@ -445,6 +445,12 @@ US_LammAstfvm::SaltData::SaltData( US_Model                amodel,
    model.components.resize( 1 );
    model.components[ 0 ] = amodel.components[ amodel.coSedSolute ];
    model.coSedSolute     = -1;
+   // use salt's molar concentration, if possible, for initial concentration
+   double conc0          = model.components[ 0 ].molar_concentration;
+   conc0                 = ( conc0 < 0.01 ) ?
+                           model.components[ 0 ].signal_concentration : conc0;
+   conc0                 = ( conc0 < 0.01 ) ? 2.5 : conc0;
+   model.components[ 0 ].signal_concentration = conc0;
 
    simparms.meshType     = US_SimulationParameters::ASTFEM;
    simparms.gridType     = US_SimulationParameters::MOVING;
@@ -470,28 +476,38 @@ qDebug() << "SaltD:fem: m b  s D  rpm" << simparms.meniscus << simparms.bottom
    << model.components[0].s << model.components[0].D
    << simparms.speed_step[0].rotorspeed;
 
-   astfem->set_simout_flag( true );
+   astfem->set_simout_flag( true );         // set flag to output raw simulation
 
-   astfem->calculate( sa_data );
+   astfem->calculate( sa_data );            // solve equations to create data
 
    Nt         = sa_data.scanData.size();
    Nx         = sa_data.x.size();
 
 qDebug() << "SaltD: Nt Nx" << Nt << Nx;
-qDebug() << "SaltD: sa sc0 omg" << sa_data.scanData[0].omega2t;
-qDebug() << "SaltD: sa sc0 sec" << sa_data.scanData[0].seconds;
+qDebug() << "SaltD: sa sc0 sec omg" << sa_data.scanData[0].seconds
+ << sa_data.scanData[0].omega2t;
 
    xs         = new double [ Nx ];
    Cs0        = new double [ Nx ];
    Cs1        = new double [ Nx ];
 
-   QString safile = US_Settings::resultDir() + "/salt_data/salt_data.RA.1.S.260.auc";
-   US_DataIO2::writeRawData( safile, sa_data );
+   // save a copy of the salt data set so that it may be plotted for QC
+   QString safile  = US_Settings::resultDir() + "/salt_data";
+   QDir dir;
 
-   delete astfem;
+   if ( ! dir.exists( safile ) )
+   {
+      if ( dir.mkpath( safile ) )
+      {
+         safile       = safile + "/salt_data.RA.1.S.260.auc";
+         US_DataIO2::writeRawData( safile, sa_data );
+      }
+   }
+
+   delete astfem;                           // astfem solver no longer needed
 
    for ( j = 0; j < Nx; j++ )
-   {
+   {  // set salt radius array
       xs[ j ]    = sa_data.radius( j );
    }
 };
@@ -505,19 +521,22 @@ US_LammAstfvm::SaltData::~SaltData()
 
 void US_LammAstfvm::SaltData::initSalt()
 {
-   t0         = sa_data.scanData[ 0 ].seconds;
+   t0         = sa_data.scanData[ 0 ].seconds; // times of 1st 2 salt scans
    t1         = sa_data.scanData[ 1 ].seconds;
-qDebug() << "initSalt: t0 t1" << t0 << t1;
-   scn        = 2;
-   Nt         = sa_data.scanData.size() - 2;
+   scn        = 2;                             // index to next scan to use
+   Nt         = sa_data.scanData.size() - 2;   // scan count less two used here
         
    for ( int j = 0; j < Nx; j++ )
-   {
+   {  // get 1st two salt arrays from 1st two salt scans
       Cs0[ j ]   = sa_data.value( 0, j );
       Cs1[ j ]   = sa_data.value( 1, j );
-if ( j==0 || (j+1)==Nx )
-qDebug() << "initSalt:  xs Cs0 Cs1 j" << xs[j] << Cs0[j] << Cs1[j] << j;
    }
+int k=Nx/2;
+int n=Nx-1;
+qDebug() << "initSalt: t0 t1" << t0 << t1;
+qDebug() << "initSalt:  xs Cs0 Cs1 j" << xs[0] << Cs0[0] << Cs1[0] << 0;
+qDebug() << "initSalt:  xs Cs0 Cs1 j" << xs[k] << Cs0[k] << Cs1[k] << k;
+qDebug() << "initSalt:  xs Cs0 Cs1 j" << xs[n] << Cs0[n] << Cs1[n] << n;
 
 }
 
@@ -533,7 +552,7 @@ void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
    double* tmp;
 
    while ( ( t1 < t ) && ( Nt > 0 ) ) 
-   {
+   {  // walk down salt scans until we are straddling desired time value
       t0    = t1;
       tmp   = Cs0;
       Cs0   = Cs1;
@@ -561,13 +580,14 @@ qDebug() << "SaltD:  intrp t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
 
    for ( j = 0; j < N; j++ )      // loop for all x[m]
    {
-      while ( ( x[ j ] > xs[ k ] )  &&  ( k < Nx - 1 ) ) k++;
+      while ( ( x[ j ] > xs[ k ] )  &&  ( k < Nx - 1 ) ) k++; // radial point
 
       // linear interpolation
       xik        = ( x[ j ] - xs[ k - 1 ] ) / ( xs[ k ] - xs[ k - 1 ] );
       xik        = ( xik > 1.0 ) ? 1.0 : xik;
       xik        = ( xik < 0.0 ) ? 0.0 : xik;
       xim        = 1.0 - xik;
+      // interpolate linearly in both time and radius
       Csalt[ j ] = et0 * ( xim * Cs0[ k - 1 ] + xik * Cs0[ k ] )
                 +  et1 * ( xim * Cs1[ k - 1 ] + xik * Cs1[ k ] );
     }
@@ -668,7 +688,7 @@ void US_LammAstfvm::solve_component( int compx )
    int N1u;
    int istep = comp_x * nts;
 
-   double  solut_t  = af_data.scan[ nts - 1 ].time;
+   double  solut_t  = af_data.scan[ nts - 1 ].time;  // true total time
    int ntc   = (int)( solut_t / dt ) + 1;      // nbr. times in calculations
 
    QVector< double > conc0;
@@ -793,7 +813,8 @@ qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
 //ntc=ntcc;
    tso << ntc << "\n";
    double u_ttl;
-   // loop for time
+
+   // main loop for time
    for ( jt = 0, kt = 0; jt < ntc; jt++ )
    {
       t0    = dt * (double)jt;

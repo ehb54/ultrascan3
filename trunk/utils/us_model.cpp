@@ -4,6 +4,7 @@
 #include "us_constants.h"
 #include "us_settings.h"
 #include "us_util.h"
+#include "us_math2.h"
 
 US_Model::SimulationComponent::SimulationComponent()
 {
@@ -76,7 +77,7 @@ bool US_Model::Association::operator== ( const Association& a ) const
 US_Model::US_Model()
 {
    viscosity       = VISC_20W;
-   compressibility = COMP_25W;
+   compressibility = 0;
    temperature     = NORMAL_TEMP;
    optics          = ABSORBANCE;
    description     = "New Model";
@@ -131,6 +132,212 @@ int US_Model::write( bool db_access, const QString& filename, US_DB2* db )
    else             return write( filename );
 }
 
+// update any missing coefficient values in the components of the model
+bool US_Model::update_coefficients()
+{
+   bool ok = true;
+
+   for ( int ii = 0; ii < components.size(); ii++ )
+   {  // calculate missing coefficients for each component; note overall success
+      ok = ok && calc_coefficients( components[ ii ] );
+   }
+
+   return ok;
+}
+
+// calculate any missing coefficient values in a model component
+bool US_Model::calc_coefficients( SimulationComponent& component )
+{
+   bool   ok = true;
+   double vbar;             // component vbar
+   double volume;           // e.g., vbar * mw / AVOGADRO
+   double vol_fac;          // volume factor, e.g., 0.75 / M_PI
+   double radius_sphere;    // e.g., pow( volume * vol_fac, 1/3 );
+   double rsph_fac;         // radius_sphere factor; e.g., 6 * PI * VISC * 0.01
+   double onethird;         // one third ( 1.0 / 3.0 )
+   double c;                // concentration
+   double t;                // temperature in kelvin
+   double s;                // sedimentation coefficient
+   double D;                // diffusion coefficient
+   double mw;               // molecular weight
+   double f;                // frictional coefficient
+   double fv;               // frictional coefficient (working value)
+   double f_f0;             // frictional ratio
+   double f0;               // f-zero
+   double s20w;
+   double buoyancyb;
+   US_Math2::SolutionData d; // data correction object
+
+   // insure that we have a vbar we can use
+   vbar           = component.vbar20;
+
+   if ( vbar <= 0.0 )
+   {
+      vbar           = TYPICAL_VBAR;
+      component.vbar20 = vbar;
+   }
+
+   t              = K0 + 20.0;          // temperature kelvin
+   vol_fac        = 0.75 / M_PI;        // various factors used in calcs below
+   onethird       = 1.0 / 3.0;
+   rsph_fac       = 6.0 * M_PI * VISC_20W;
+   buoyancyb      = 1.0 - vbar * DENS_20W;
+
+   s              = component.s;        // component coefficient values
+   D              = component.D;
+   mw             = component.mw;
+   f              = component.f;
+   f_f0           = component.f_f0;
+   c              = component.signal_concentration;
+   fv             = f;
+
+   d.vbar         = TYPICAL_VBAR;       // data correction for buoyancy
+   d.vbar20       = vbar;
+   d.density      = DENS_20W;
+   d.viscosity    = VISC_20W;
+
+   US_Math2::data_correction( 20.0, d );
+//qDebug() << "CC: b_b b_w dn dn_t vi vi_t corr"
+//   << d.buoyancyb << d.buoyancyw << d.density << d.density_tb
+//   << d.viscosity << d.viscosity_tb << d.correction;
+
+   // start with already calculated s if possible
+   if ( s != 0.0 )
+   {
+      s20w           = qAbs( s );
+
+      // first check s and D
+                                                 ///////////////
+      if ( D != 0.0 )                            // s and D
+      {                                          ///////////////
+         mw             = s * R * t / ( D * buoyancyb );
+         volume         = vbar * mw / AVOGADRO;
+         radius_sphere  = pow( volume * vol_fac, onethird );
+         f0             = radius_sphere * rsph_fac;
+         fv             = mw * buoyancyb / ( s20w * AVOGADRO );
+         f_f0           = fv / f0;
+      }
+
+      // next check s and k (f_f0)
+                                                 ///////////////
+      else if ( f_f0 != 0.0 )                    // s and f_f0
+      {                                          ///////////////
+         double numer   = 2.0 * s * f_f0 * vbar * VISC_20W;
+         f0             = 9.0 * VISC_20W * M_PI * sqrt( numer / buoyancyb );
+         fv             = f_f0 * f0;
+         D              = R * t / ( AVOGADRO * fv );
+         mw             = s * R * t / ( D * buoyancyb );
+      }
+
+      // then check any other s + combinations
+                                                 ///////////////
+      else if ( mw != 0.0 )                      // s and mw
+      {                                          ///////////////
+         D              = s * R * t / ( d.buoyancyb * mw );
+         fv             = mw * d.buoyancyb / ( s20w * AVOGADRO );
+         volume         = vbar * mw / AVOGADRO;
+         radius_sphere  = pow( volume * vol_fac, onethird );
+         f0             = radius_sphere * rsph_fac;
+         f_f0           = fv / f0;
+      }
+                                                 ///////////////
+      else if ( f != 0.0 )                       // s and f
+      {                                          ///////////////
+         D              = R * t / ( AVOGADRO * fv );
+         mw             = s * R * t / ( D * buoyancyb );
+         volume         = vbar * mw / AVOGADRO;
+         radius_sphere  = pow( volume * vol_fac, onethird );
+         f0             = radius_sphere * rsph_fac;
+         f_f0           = fv / f0;
+      }
+                                                 //****************************
+      else                                       // do not have 2 valid coeffs
+         ok             = false;                 //****************************
+   }
+
+   else if ( component.mw   != 0.0 )
+   {
+      volume         = vbar * mw / AVOGADRO;
+      radius_sphere  = pow( volume * vol_fac, onethird );
+      f0             = radius_sphere * rsph_fac;
+                                                 ///////////////
+      if ( D != 0.0 )                            // mw and D
+      {                                          ///////////////
+         s              = D * buoyancyb * mw / ( R * t );
+         fv             = mw * buoyancyb / ( s * AVOGADRO );
+         f_f0           = fv / f0;
+      }
+                                                 ///////////////
+      else if ( f_f0 != 0.0 )                    // mw and f_f0
+      {                                          ///////////////
+         fv             = f_f0 * f0;
+         s              = mw * buoyancyb / ( AVOGADRO * fv );
+         D              = s * R * t / ( buoyancyb * mw );
+      }
+                                                 ///////////////
+      else if ( f != 0.0 )                       // mw and f
+      {                                          ///////////////
+         f_f0           = fv / f0;
+         s              = mw * buoyancyb / ( AVOGADRO * fv );
+         D              = s * R * t / ( buoyancyb * mw );
+      }
+                                                 //****************************
+      else                                       // do not have 2 valid coeffs
+         ok             = false;                 //****************************
+   }
+
+   else if ( component.D    != 0.0 )
+   {                                             ///////////////
+      if ( f_f0 >= 1.0 )                         // D and f_f0
+      {                                          ///////////////
+         fv             = R * t / ( AVOGADRO * D );
+         f0             = fv / f_f0;
+         radius_sphere  = f0 / ( 6.0 * M_PI * VISC_20W );
+         double volume  = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
+         mw             = volume * AVOGADRO / vbar;
+         s              = mw * buoyancyb / ( AVOGADRO * fv );
+      }
+                                                 //****************************
+                                                 // D and f - not a valid combo
+                                                 //****************************
+      else                                       // do not have 2 valid coeffs
+         ok             = false;                 //****************************
+   }
+                                                 ///////////////
+   else if ( fv > 0.0  &&  f_f0 >= 1.0 )         // f and f_f0
+   {                                             ///////////////
+      f0             = fv / f_f0;
+      D              = R * t / ( AVOGADRO * fv );
+      radius_sphere  = f0 / ( 6.0 * M_PI * VISC_20W );
+      double volume  = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
+      mw             = volume * AVOGADRO / vbar;
+      s              = mw * buoyancyb / ( AVOGADRO * fv );
+   }
+                                                 //****************************
+   else                                          // do not have 2 valid coeffs
+      ok             = false;                    //****************************
+
+   double df      = qAbs( f - fv ) / fv;
+
+   if ( df > 0.1 )
+   {  // significant change in f:  replace and use old as concentration
+
+      if ( c == 0.0 )
+         component.signal_concentration = f;
+
+      f              = fv;
+   }
+
+   component.s    = s;     // set component properties (some re-calculated)
+   component.D    = D;
+   component.mw   = mw;
+   component.f_f0 = f_f0;
+   component.f    = f;
+
+   return ok;
+}
+
+// test the existence of the models directory path and create it if need be
 bool US_Model::model_path( QString& path )
 {
    QDir dir;
@@ -238,9 +445,7 @@ int US_Model::load( const QString& filename )
             bufferDesc      = a.value( "bufferDesc"     ).toString();
             density         = a.value( "density"        ).toString().toDouble();
             viscosity       = a.value( "viscosity"      ).toString().toDouble();
-            comprStr        = a.value( "compressibility").toString();
-            compressibility = ( comprStr.isEmpty() ||  comprStr == "0" )
-                              ? COMP_25W : comprStr.toDouble();
+            compressibility = a.value( "compressibility").toString().toDouble();
             wavelength      = a.value( "wavelength"     ).toString().toDouble();
             temperature     = a.value( "temperature"    ).toString().toDouble();
             coSedStr        = a.value( "coSedSolute"    ).toString();

@@ -95,8 +95,19 @@ class US_EXTERN US_Model
       //! \returns         - The \ref US_DB2 retrun code for the operation
       int write( const QString& );
 
-      //! \param path - A reference where the path to ayalutes on the disk
-      //!               drive is written
+      //! Update any missing analyte coefficient values
+      //! \returns    - Success if values already existed or were successfully
+      //!               filled in by calculations.
+      bool update_coefficients( void );
+
+      //! Calculate any missing coefficient values in an analyte component
+      //! \returns    - Success if values already existed or were successfully
+      //!               filled in by calculations.
+      static bool calc_coefficients( SimulationComponent& );
+
+      //! Model directory path existence test and creation
+      //! \param path - A reference to the directory path on the disk where
+      //!               model files are to be written
       //! \returns    - Success if the path is found or created and failure
       //!               if the path cannot be created
       static bool       model_path( QString& );
@@ -124,25 +135,27 @@ class US_EXTERN US_Model
          inline bool operator!= ( const SimulationComponent& sc ) const 
          { return ! operator==(sc); }
 
-         QString     analyteGUID;          //!< GUID for the analyte in the MySQL DB
-         double      molar_concentration;  //!< Analyte concentration
-         double      signal_concentration; //!< Signal attenutaion on molar basis
+         QString     analyteGUID;          //!< GUID for the analyte in the DB
+         double      molar_concentration;  //!< Signal attenuation, molar basis
+         double      signal_concentration; //!< Analyte concentration
          double      vbar20;               //!< Analyte specific volume
-         double      mw;                   //!< Analyte mollecular weight
+         double      mw;                   //!< Analyte molecular weight
          double      s;                    //!< Sedimentation coefficient
          double      D;                    //!< Diffusion coefficient
          double      f;                    //!< Frictional coefficient
          double      f_f0;                 //!< Frictional ratio
-         double      extinction;           //!< Coefficient of light extinction at model wavelength
+         double      extinction;           //!< Coefficient of light extinction
+                                           //!<   at model wavelength
          double      axial_ratio;          //!< Ratio of major/minor shape axes
          double      sigma;   //!< Concentration dependency of s
          double      delta;   //!< Concentration dependency of D
-         int         stoichiometry; //!< Molecule count for this experiment (e.g. dimer = 2)
+         int         stoichiometry; //!< Molecule count for this experiment
+                                    //!<   (e.g. dimer = 2)
          ShapeType   shape;   //!< Classification of shape
          QString     name;    //!< Descriptive name
          int         analyte_type; //!< Protein, RNA, DNA, Corbohydrate, etc
-         MfemInitial c0;      //!< The radius/concentration points for a user-defined
-                              //!< initial concentration grid
+         MfemInitial c0;      //!< The radius/concentration points for a
+                              //!<   user-defined initial concentration grid
       };
 
       //! The chemical constants associated with a reaction.

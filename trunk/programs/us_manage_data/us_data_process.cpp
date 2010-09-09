@@ -22,10 +22,8 @@ qDebug() << "DP:  syncExper created";
 // perform a record upload to the database from local disk
 int US_DataProcess::record_upload( int irow )
 {
-qDebug() << "REC_ULD:EXP: row" << irow+1;
+qDebug() << "REC_ULD: row" << irow+1;
    int stat = 0;
-stat = irow & 3;
-stat = 888;
 
    cdesc            = da_model->row_datadesc( irow );
 
@@ -37,30 +35,26 @@ stat = 888;
 
    if      ( cdesc.recType == 1 )
    {  // upload a Raw record
-      US_DataIO2::RawData        rdata;
+      //US_DataIO2::RawData        rdata;
 
       QString runID    = filename.section( ".",  0,  0 );
       QString tripl    = filename.section( ".", -4, -2 )
                          .replace( ".", " / " );
-      QString fileexp  = filename.section( ".",  0,  1 ) + ".xml";
-      QString pathexp  = pathdir + "/" + fileexp;
-      QString expID;
-      QString expGUID  = "";
-qDebug() << "REC_ULD:EXP: runID" << runID << "  tripl" << tripl;
+qDebug() << "REC_ULD:RAW: runID" << runID << "  tripl" << tripl;
 
-      US_DataIO2::readRawData( filepath, rdata );
+      //US_DataIO2::readRawData( filepath, rdata );
 
       stat = syncExper->synchronize( cdesc );
+qDebug() << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
 
       if ( stat == 0 )
       {
          stat = db->writeBlobToDB( filepath,
                                    QString( "upload_aucData" ),
                                    idData );
+         stat = ( stat == 0 ) ? 0 : 3041;
 
       }
-      //      stat = new_experiment_local( db, pathexp, tripl );
-      //   stat = new_experiment_db( db, pathexp, expID, expGUID );
    }
 
    else if ( cdesc.recType == 2 )
@@ -68,14 +62,19 @@ qDebug() << "REC_ULD:EXP: runID" << runID << "  tripl" << tripl;
       stat = db->writeBlobToDB( filepath,
                                 QString( "upload_editData" ),
                                 idData );
+      qDebug() << "writeBlob Edited stat" << stat;
+      stat = ( stat == 0 ) ? 0 : 3042;
    }
 
    else if ( cdesc.recType == 3 )
    {  // upload a Model record
       US_Model model;
+      filepath = get_model_filename( cdesc.dataGUID );
 
-      model.load( filepath );
-      model.write( db );
+      model.load( filepath );         // load model from local disk
+      model.update_coefficients();    // fill in any missing coefficients
+      stat = model.write( db );       // store model to database
+      stat = ( stat == 0 ) ? 0 : 3043;
    }
 
    else if ( cdesc.recType == 4 )
@@ -83,7 +82,8 @@ qDebug() << "REC_ULD:EXP: runID" << runID << "  tripl" << tripl;
       US_Noise noise;
 
       noise.load( filepath );
-      noise.write( db );
+      stat = noise.write( db );
+      stat = ( stat == 0 ) ? 0 : 3044;
    }
 
    else
@@ -101,13 +101,14 @@ int US_DataProcess::record_download( int irow )
    QStringList query;
    QString     filepath = "";
    QString     dataID;
+   QString     dataGUID;
    int         idData;
-stat = irow & 3;
-stat = 888;
+
    cdesc            = da_model->row_datadesc( irow );
    idData           = cdesc.recordID;
    dataID           = QString::number( idData );
    filepath         = cdesc.filename;
+   dataGUID         = cdesc.dataGUID;
 
    if      ( cdesc.recType == 1 )
    {  // download a Raw record
@@ -121,32 +122,29 @@ stat = 888;
 
    else if ( cdesc.recType == 3 )
    {  // download a Model record
-      query.clear();
-      query << "get_model_info" << dataID;
-      db->query( query );
+      US_Model model;
 
-      if ( db->lastErrno() != US_DB2::OK )
+      filepath = get_model_filename( dataGUID );
+      stat     = model.load( dataID, db );
+
+      if ( stat == US_DB2::OK )
       {
-         stat = 3023;
+         model.update_coefficients();
+
+         stat = model.write( filepath );
+
+         if ( stat != US_DB2::OK )
+         {
+            stat = 3023;  // download write error
+         }
+
+         else
+            cdesc.filename = filepath;
       }
 
       else
       {
-         db->next();
-         QByteArray contents = db->value( 2 ).toString().toAscii();
-
-         QFile file( filepath );
-         
-         if ( !file.open( QIODevice::WriteOnly | QIODevice::Text ) )
-         {
-            stat = 3033;
-         }
-
-         else
-         {
-            file.write( contents );
-            file.close();
-         }
+         stat = 3022;     // download read error
       }
    }
 
@@ -193,8 +191,7 @@ int US_DataProcess::record_remove_db( int irow )
 {
    int stat = 0;
    QStringList query;
-stat = irow & 3;
-stat = 888;
+
    cdesc            = da_model->row_datadesc( irow );
    QString dataID   = QString::number( cdesc.recordID );
 
@@ -225,8 +222,9 @@ stat = 888;
       query.clear();
       query << "delete_model" << dataID;
 
-      if ( ! db->statusQuery( query ) )
+      if ( ( stat = db->statusQuery( query ) ) != 0 )
       {
+         qDebug() << "delete model stat" << stat;
          stat = 2013;
       }
    }
@@ -292,5 +290,71 @@ int US_DataProcess::record_remove_local( int irow )
    }
 
    return stat;
+}
+
+QString US_DataProcess::get_model_filename( QString guid )
+{
+   QString fname = "";
+   QString path;
+
+   if ( ! US_Model::model_path( path ) )
+      return fname;
+
+   QDir f( path );
+   QStringList filter( "M???????.xml" );
+   QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
+   f_names.sort();
+
+   int         nnames  = f_names.size();
+   int         newnum  = nnames + 1;
+   bool        found   = false;
+
+   for ( int ii = 0; ii < nnames; ii++ )
+   {
+      QString fn = f_names[ ii ];
+      int     kf = fn.mid( 1, 7 ).toInt() - 1;  // expected index in file name
+      fn         = path + "/" + fn;             // full path file name
+
+      if ( kf != ii  &&  newnum > nnames )
+         newnum     = kf;                       // 1st opened number slot
+
+      QFile m_file( fn );
+
+      if ( ! m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            continue;
+
+      QXmlStreamReader xml( &m_file );
+
+      while ( !xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "model" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+
+            if ( a.value( "modelGUID" ).toString() == guid )
+            {
+               fname    = fn;                   // name of file with match
+               found    = true;                 // match to guid found
+               break;
+            }
+         }
+
+      }
+
+      m_file.close();
+
+      if ( found )
+         break;
+   }
+
+ 
+   // if no guid match found, create new file name with a numeric part from
+   //   the first gap in the file list sequence or from count plus one
+   if ( ! found )
+      fname     = path + "/M" + QString().sprintf( "%07i", newnum ) + ".xml";
+
+   return fname;
 }
 
