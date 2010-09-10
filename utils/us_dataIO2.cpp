@@ -470,6 +470,8 @@ int US_DataIO2::readRawData( const QString& file, RawData& data )
    }
 
    f.close();
+}
+
    return err;
 }
 
@@ -713,14 +715,14 @@ int US_DataIO2::loadData( const QString&         directory,
    qApp->processEvents();
 
    // Get the edit data
-   EditValues e;
-   result = readEdits( directory + "/" + editFilename, e );
+   EditValues ev;
+   result = readEdits( directory + "/" + editFilename, ev );
    if ( result != OK ) throw result;
 
    // Check for uuid match
    char uuid[ 37 ];
    uuid_unparse( (uchar*)d.rawGUID, uuid );
-   if ( QString( uuid ) != e.dataGUID ) throw NO_GUID_MATCH;
+   if ( QString( uuid ) != ev.dataGUID ) throw NO_GUID_MATCH;
 
    // Apply the edits
    EditedData ed;
@@ -734,32 +736,32 @@ int US_DataIO2::loadData( const QString&         directory,
    ed.channel     = sl[ 4 ];
    ed.wavelength  = sl[ 5 ];
    ed.description = d.description;
-   ed.dataGUID    = e.dataGUID;
-   ed.editGUID    = e.editGUID;
-   ed.meniscus    = e.meniscus;
-   ed.plateau     = e.plateau;
-   ed.baseline    = e.baseline;
-   ed.floatingData= e.floatingData;
+   ed.dataGUID    = ev.dataGUID;
+   ed.editGUID    = ev.editGUID;
+   ed.meniscus    = ev.meniscus;
+   ed.plateau     = ev.plateau;
+   ed.baseline    = ev.baseline;
+   ed.floatingData= ev.floatingData;
 
    // Invert values before updating edited points
-   if ( e.invert < 0 )
+   if ( ev.invert < 0 )
    {
       for ( int i = 0; i < ed.scanData.size(); i++ )
       {
          Scan* s = &ed.scanData[ i ];
          for ( int j = 0; i < s->readings.size(); i++ )
          {
-            s->readings[ j ].value *= e.invert;
+            s->readings[ j ].value *= ev.invert;
          }
       }
    }
 
    // Update any edited points
-   for ( int i = 0; i < e.editedPoints.length(); i++ )
+   for ( int i = 0; i < ev.editedPoints.length(); i++ )
    {
-      int    scan   =      e.editedPoints[ i ].scan;
-      int    index1 = (int)e.editedPoints[ i ].radius;
-      double value  =      e.editedPoints[ i ].value;
+      int    scan   =      ev.editedPoints[ i ].scan;
+      int    index1 = (int)ev.editedPoints[ i ].radius;
+      double value  =      ev.editedPoints[ i ].value;
 
       d.scanData[ scan ].readings[ index1 ].value = value;
    }
@@ -767,23 +769,23 @@ int US_DataIO2::loadData( const QString&         directory,
    // Update for interference data
    if ( ed.dataType == "IP" )
    {
-      adjust_interference( d, e );  // rawData, editValues
-      calc_integral      ( d, e );
+      adjust_interference( d, ev );  // rawData, editValues
+      calc_integral      ( d, ev );
    }
 
    // Do not copy excluded data or data outside the edit range
    for ( int i = 0; i < d.scanData.size(); i++ )
    {
-      if ( e.excludes.contains( i ) ) continue;
+      if ( ev.excludes.contains( i ) ) continue;
 
       Scan s;
-      copyRange( e.rangeLeft, e.rangeRight, d.scanData[ i ], s, d.x );
+      copyRange( ev.rangeLeft, ev.rangeRight, d.scanData[ i ], s, d.x );
      
       ed.scanData << s;
    }
 
    // Only need to copy radius vector for given range once
-   copyxRange( e.rangeLeft, e.rangeRight, d.scanData[ 0 ], d.x, ed.x );
+   copyxRange( ev.rangeLeft, ev.rangeRight, d.scanData[ 0 ], d.x, ed.x );
 
    // Determine plateau values for each scan
    for ( int i = 0; i < ed.scanData.size(); i++ )
@@ -792,7 +794,7 @@ int US_DataIO2::loadData( const QString&         directory,
       ed.scanData[ i ].plateau = ed.scanData[ i ].readings[ point ].value;
    }
 
-   if ( e.removeSpikes )
+   if ( ev.removeSpikes )
    {
       double smoothed_value;
 
@@ -822,9 +824,9 @@ int US_DataIO2::loadData( const QString&         directory,
       }
    }
 
-   if ( e.noiseOrder > 0 )
+   if ( ev.noiseOrder > 0 )
    {
-      QList< double > residuals = calc_residuals( e.noiseOrder, ed.scanData );
+      QList< double > residuals = calc_residuals( ev.noiseOrder, ed.scanData );
       
       for ( int i = 0; i < ed.scanData.size(); i++ )
       {
@@ -837,17 +839,17 @@ int US_DataIO2::loadData( const QString&         directory,
    return OK;
 }
 
-void US_DataIO2::adjust_interference( RawData& data, const EditValues& e )
+void US_DataIO2::adjust_interference( RawData& data, const EditValues& ev )
 {
    // Find first scan
    for ( int i = 0; i < data.scanData.size(); i++ )
    {
-      if ( e.excludes.contains( i ) ) continue;
+      if ( ev.excludes.contains( i ) ) continue;
 
       US_DataIO2::Scan* s = &data.scanData[ i ];
 
-      int r_left  = US_DataIO2::index( *s, data.x, e.airGapLeft );
-      int r_right = US_DataIO2::index( *s, data.x, e.airGapRight );
+      int r_left  = US_DataIO2::index( *s, data.x, ev.airGapLeft );
+      int r_right = US_DataIO2::index( *s, data.x, ev.airGapRight );
       double sum  = 0.0;
 
       for ( int k = r_left; k <= r_right; k++ )
@@ -904,7 +906,9 @@ void US_DataIO2::calc_integral( RawData& data, const EditValues& e )
       integral << 0.0;
 
       // Arbitrarily add 1000 fringes to each reading value
-      // to make sure we don't sum negatives
+      // to make sure we don't sum negatives.  This is not needed from a
+      // mathematical point of view, but physically, negative fringes 
+      // do not make sense.
       US_DataIO2::Scan* s = &data.scanData[ scan ];
 
       int r_left  = US_DataIO2::index( *s, data.x, e.rangeLeft );
@@ -916,8 +920,8 @@ void US_DataIO2::calc_integral( RawData& data, const EditValues& e )
       index++;
    }
 
-   // Integral fringe shifts contribute exactly points[ scan ] to integral, since
-   // we use unity stepsize in integral calculation.
+   // Integral fringe shifts contribute exactly ( r_right - r_left + 1 ) 
+   // to the integral, since we use unity stepsize in integral calculation.
 
    for ( int scan = 1; scan < included.size(); scan++ )
    {
@@ -948,7 +952,7 @@ void US_DataIO2::calc_integral( RawData& data, const EditValues& e )
 
       double diff1 = integral[ previous ] - integral[ current ];
 
-      double diff2 = integral[ previous ] - integral[ current ] - points;
+      double diff2 = integral[ previous ] - ( integral[ current ] + points );
 
       // The scan is one fringe too low
       if ( fabs( diff2 / diff1 ) < e.gapTolerance )
