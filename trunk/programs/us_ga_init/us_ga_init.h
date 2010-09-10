@@ -197,6 +197,7 @@ class US_EXTERN US_GA_Initialize : public US_Widgets
       void erase_buckets( bool );
       void erase_buckets();
       void removeSoluteBin( int );
+      bool equivalent( double, double, double );
 
       void help     ( void )
       { showHelp.show_help( "ga_initialize.html" ); };
