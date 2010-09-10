@@ -35,6 +35,8 @@ bool distro_lessthan( const Solute &solu1, const Solute &solu2 )
           ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );
 }
 
+const double epsilon = 0.005;    // equivalence magnitude ratio radius
+
 // US_GA_Initialize class constructor
 US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 {
@@ -327,6 +329,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    te_pctl_help->setReadOnly( true );
    txed->addWidget( te_pctl_help );
    rght->addLayout( txed );
+   rght->setStretchFactor( plot, 4 );
+   rght->setStretchFactor( txed, 1 );
 
    data_plot->setAutoDelete( true );
    data_plot->setMinimumSize( 600, 600 );
@@ -341,11 +345,11 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    // put layouts together for overall layout
    left->addLayout( spec );
-   left->addStretch();
-   plot->addStretch();
 
    main->addLayout( left );
    main->addLayout( rght );
+   main->setStretchFactor( left, 2 );
+   main->setStretchFactor( rght, 5 );
 
    // set up variables and initial state of GUI
    soludata   = new US_SoluteData();
@@ -586,17 +590,36 @@ void US_GA_Initialize::plot_1dim( void )
    int     dsize = sdistro->size();
    double* x     = new double[ dsize ];
    double* y     = new double[ dsize ];
-   double  cmin  = 1.0e30;
-   double  cmax  = -1.0e30;
-   double  smin  = 1.0e30;
-   double  smax  = -1.0e30;
+   double  sval  = sdistro->at( 0 ).s;
+   double  smin  = sval;
+   double  smax  = sval;
+   double  cval  = sdistro->at( 0 ).c;
+   double  cmin  = cval;
+   double  cmax  = cval;
+   int     nn    = 1;
+   x[ 0 ]        = sval;
+   y[ 0 ]        = cval;
 
-   for ( int jj = 0; jj < dsize; jj++ )
+   for ( int jj = 1; jj < dsize; jj++ )
    {
-      double sval = sdistro->at( jj ).s;
-      double cval = sdistro->at( jj ).c;
-      x[ jj ]     = sval;
-      y[ jj ]     = cval;
+      double svpr = sval;
+      double cvpr = cval;
+      sval        = sdistro->at( jj ).s;
+      cval        = sdistro->at( jj ).c;
+
+      if ( equivalent( sval, svpr, epsilon ) )
+      {  // effectively equal s values: sum c values
+         cval       += cvpr;
+         x[ nn - 1 ] = ( svpr + sval ) * 0.5;
+         y[ nn - 1 ] = cval;
+      }
+
+      else
+      {  // new s value:  save c value and bump count
+         x[ nn   ]   = sval;
+         y[ nn++ ]   = cval;
+      }
+
       smin        = ( smin < sval ) ? smin : sval;
       smax        = ( smax > sval ) ? smax : sval;
       cmin        = ( cmin < cval ) ? cmin : cval;
@@ -620,7 +643,7 @@ void US_GA_Initialize::plot_1dim( void )
    data_grid->attach( data_plot );
 
    QwtPlotCurve *data_curv = us_curve( data_plot, "distro" );
-   data_curv->setData( x, y, dsize );
+   data_curv->setData( x, y, nn );
    data_curv->setPen( QPen( Qt::yellow, 3, Qt::SolidLine ) );
    data_curv->setStyle( QwtPlotCurve::Sticks );
 
@@ -1488,13 +1511,17 @@ void US_GA_Initialize::sort_distro( QList< Solute >& listsols,
       {     // loop to compare each entry to previous
           sol2    = *jj;         // solute entry
 
-          if ( ( sol2.s != sol1.s ) || ( sol2.k != sol1.k ) )
+          if ( !equivalent( sol1.s, sol2.s, epsilon )  ||
+               !equivalent( sol1.k, sol2.k, epsilon ) )
           {   // not a duplicate, so output to temporary list
              reduced.append( sol2 );
           }
+
           else
           {   // duplicate:  sum c value
              sol2.c += sol1.c;   // sum c value
+             sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average s,k
+             sol2.k  = ( sol1.k + sol2.k ) * 0.5;
              reduced.replace( reduced.size()-1, sol2 );
           }
 
@@ -1878,5 +1905,11 @@ void US_GA_Initialize::removeSoluteBin( int sx )
    data_plot->replot();
 
    return;
+}
+
+// flag whether two values are effectively equal within a given epsilon
+bool US_GA_Initialize::equivalent( double a, double b, double eps )
+{
+   return ( qAbs( ( a - b ) / a ) <= eps );
 }
 

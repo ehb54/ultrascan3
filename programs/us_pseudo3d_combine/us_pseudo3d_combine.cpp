@@ -39,6 +39,8 @@ bool distro_lessthan( const Solute &solu1, const Solute &solu2 )
           ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );
 }
 
+const double epsilon = 0.005;  // equivalence magnitude ratio radius
+
 // US_Pseudo3D_Combine class constructor
 US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 {
@@ -258,10 +260,11 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    // put layouts together for overall layout
    left->addLayout( spec );
    left->addStretch();
-   plot->addStretch();
 
    main->addLayout( left );
    main->addLayout( plot );
+   main->setStretchFactor( left, 2 );
+   main->setStretchFactor( plot, 5 );
 
    def_local  = true;
    mfilter    = "";
@@ -894,9 +897,18 @@ void US_Pseudo3D_Combine::sort_distro( QList< Solute >& listsols,
       {     // loop to compare each entry to previous
           sol2    = *jj;         // solute entry
 
-          if ( ( sol2.s != sol1.s ) || ( sol2.k != sol1.k ) )
+          if ( ! equivalent( sol1.s, sol2.s, epsilon )  ||
+               ! equivalent( sol1.k, sol2.k, epsilon ) )
           {   // not a duplicate, so output to temporary list
              reduced.append( sol2 );
+          }
+
+          else
+          {  // duplicate, so sum c value;
+             sol2.c += sol1.c;   // sum c value
+             sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average s,k
+             sol2.k  = ( sol1.k + sol2.k ) * 0.5;
+             reduced.replace( reduced.size() - 1, sol2 );
           }
 
           sol1    = sol2;        // save entry for next iteration
@@ -939,4 +951,9 @@ void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
    ct_curr_distr->setValue( curr_distr+1 );
 }
 
+// flag whether two values are effectively equal within a given epsilon
+bool US_Pseudo3D_Combine::equivalent( double a, double b, double eps )
+{
+   return ( qAbs( ( a - b ) / a ) <= eps );
+}
 

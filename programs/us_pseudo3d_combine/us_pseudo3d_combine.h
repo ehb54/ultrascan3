@@ -149,6 +149,7 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       void reset( void );
       void set_limits( void );
       void sort_distro( QList< Solute >&, bool );
+      bool equivalent( double, double, double );
 
       void help     ( void )
       { showHelp.show_help( "pseudo3d_combine.html" ); };
