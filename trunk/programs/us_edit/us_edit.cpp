@@ -95,13 +95,11 @@ US_Edit::US_Edit() : US_Widgets()
    specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
 
    // Row 4
-   QLabel* lb_gaps = us_label( tr( "Threshold for Scan Gaps" ), -1 );
+   lb_gaps = us_label( tr( "Threshold for Scan Gaps" ), -1 );
    specs->addWidget( lb_gaps, s_row, 0, 1, 2 );
 
-   ct_gaps = us_counter ( 3, 0.0, 20.0, 0.4 ); 
-   ct_gaps->setStep ( 0.001 );
-   connect( ct_gaps, SIGNAL( valueChanged        ( double ) ), 
-                     SLOT  ( set_fringe_tolerance( double ) ) );
+   ct_gaps = us_counter ( 1, 10.0, 100.0 ); 
+   ct_gaps->setStep ( 10.0 );
    specs->addWidget( ct_gaps, s_row++, 2, 1, 2 );
 
    // Row 5
@@ -268,6 +266,7 @@ US_Edit::US_Edit() : US_Widgets()
 
    main->addLayout( left );
    main->addLayout( plot );
+   main->setStretchFactor( plot, 3 );
    top ->addLayout( main );
 
    reset();
@@ -626,6 +625,30 @@ void US_Edit::load( void )
       return;
    }
 
+   dataType = QString( QChar( data.type[ 0 ] ) ) 
+            + QString( QChar( data.type[ 1 ] ) );
+
+   if ( dataType == "IP" )
+   {
+      lb_gaps->setText( tr( "Fringe Tolerance" ) );
+
+      ct_gaps->setRange     ( 0.0, 20.0, 0.001 );
+      ct_gaps->setValue     ( 0.4 );
+      ct_gaps->setNumButtons( 3 );
+
+      connect( ct_gaps, SIGNAL( valueChanged        ( double ) ), 
+                        SLOT  ( set_fringe_tolerance( double ) ) );
+   }
+   else
+   {
+      lb_gaps->setText( tr( "Threshold for Scan Gaps" ) );
+      
+      ct_gaps->disconnect   ();
+      ct_gaps->setRange     ( 10.0, 100.0, 10.0 );
+      ct_gaps->setValue     ( 10.0 );
+      ct_gaps->setNumButtons( 1 );
+   }
+
    data = allData[ 0 ];
    plot_current( 0 );
 
@@ -750,6 +773,7 @@ void US_Edit::replot( void )
 {
    switch( step )
    {
+      case FINISHED:
       case PLATEAU:
          plot_range();
          break;
@@ -758,7 +782,7 @@ void US_Edit::replot( void )
          plot_last();
          break;
 
-      default:
+      default:   // MENISCUS, AIRGAP, RANGE
          plot_all();
          break;
    }
@@ -947,7 +971,9 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             plot_range();
 
             qApp->processEvents();
-            gap_check();
+
+            // Skip the gap check for interference data
+            if ( dataType != "IP" ) gap_check();
             
             pb_dataRange->setIcon( check );
             pb_plateau  ->setEnabled( true );
@@ -1154,6 +1180,7 @@ void US_Edit::set_airGap( void )
    pb_spikes   ->setEnabled( false );
    pb_spikes   ->setIcon( QIcon() );
 
+   undo();
    plot_all();
 }
 
@@ -1183,6 +1210,7 @@ void US_Edit::set_dataRange( void )
    pb_spikes   ->setEnabled( false );
    pb_spikes   ->setIcon( QIcon() );
 
+   undo();
    plot_all();
 }
 
@@ -1203,6 +1231,7 @@ void US_Edit::set_plateau( void )
    pb_write    ->setEnabled( false );
    pb_write    ->setIcon( QIcon() );;
 
+   undo();
    plot_range();
 }
 
@@ -1219,17 +1248,22 @@ void US_Edit::set_fringe_tolerance( double /* tolerance */)
    data = allData[ index ];
 
    US_DataIO2::EditValues edits;
+   edits.airGapLeft  = airGap_left;
+   edits.airGapRight = airGap_right;
+
+   QList< int > excludes;
+            
+   for ( int i = 0; i < data.scanData.size(); i++ )
+      if ( ! includes.contains( i ) ) edits.excludes << i;
+         
+   US_DataIO2::adjust_interference( data, edits );
+
    edits.rangeLeft    = range_left;
    edits.rangeRight   = range_right;
    edits.gapTolerance = ct_gaps->value();
 
-   QList< int > excludes;
-               
-   for ( int i = 0; i < data.scanData.size(); i++ )
-      if ( ! includes.contains( i ) ) edits.excludes << i;
-
    US_DataIO2::calc_integral( data, edits );
-   data_plot->replot();
+   replot();
 }
 
 void US_Edit::set_baseline( void )
@@ -1785,6 +1819,30 @@ void US_Edit::undo( void )
    // Copy from allData to data
    int index = cb_triple->currentIndex();
    data = allData[ index ];
+
+   // Redo some things depending on type
+   if ( dataType == "IP" )
+   {
+      US_DataIO2::EditValues edits;
+      edits.airGapLeft  = airGap_left;
+      edits.airGapRight = airGap_right;
+
+      edits.rangeLeft    = range_left;
+      edits.rangeRight   = range_right;
+      edits.gapTolerance = ct_gaps->value();
+      
+      QList< int > excludes;
+      
+      for ( int i = 0; i < data.scanData.size(); i++ )
+         if ( ! includes.contains( i ) ) edits.excludes << i;
+
+      if ( step > AIRGAP )
+            US_DataIO2::adjust_interference( data, edits );
+
+      if ( step >  RANGE )
+         US_DataIO2::calc_integral( data, edits );
+   }
+
    replot();
 
    // Reset buttons and structures
@@ -1813,7 +1871,8 @@ void US_Edit::undo( void )
 void US_Edit::noise( void )
 {
    residuals.clear();
-   US_RiNoise* dialog = new US_RiNoise( data, includes, noise_order, residuals );
+   US_RiNoise* dialog = new US_RiNoise( data, includes,  
+         range_left, range_right, dataType, noise_order, residuals );
    int code = dialog->exec();
    qApp->processEvents();
 
@@ -2283,7 +2342,17 @@ void US_Edit::apply_prior( void )
 
    airGap_left  = parameters.airGapLeft;
    airGap_right = parameters.airGapRight;
-   
+
+   if ( dataType == "IP" )
+   {
+      US_DataIO2::adjust_interference( data, parameters );
+      US_DataIO2::calc_integral      ( data, parameters );
+      le_airGap->setText( s.sprintf( "%.3f - %.3f", 
+               airGap_left, airGap_right ) ); 
+      pb_airGap->setIcon( check );
+      pb_airGap->setEnabled( true );
+   }
+
    range_left  = parameters.rangeLeft;
    range_right = parameters.rangeRight;
    
@@ -2300,8 +2369,8 @@ void US_Edit::apply_prior( void )
    baseline = parameters.baseline;
    
    US_DataIO2::Scan scan  = data.scanData.last();
-   int             pt    = US_DataIO2::index( scan, data.x, baseline );
-   double          sum   = 0.0;
+   int              pt    = US_DataIO2::index( scan, data.x, baseline );
+   double           sum   = 0.0;
 
    // Average the value for +/- 5 points
    for ( int j = pt - 5; j <= pt + 5; j++ )
@@ -2354,7 +2423,9 @@ void US_Edit::apply_prior( void )
    noise_order = parameters.noiseOrder;
    if ( noise_order > 0 )
    {
-      US_RiNoise::calc_residuals( data, includes, noise_order, residuals );
+      US_RiNoise::calc_residuals( data, includes, range_left, range_right, 
+            noise_order, residuals );
+      
       subtract_residuals();
    }
    else

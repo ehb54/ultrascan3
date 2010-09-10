@@ -70,7 +70,9 @@ class US_EXTERN US_Edit : public US_Widgets
       QwtPlotMarker*     marker;
       US_PlotPicker*     pick;
       US_Plot*           plot;
-                      
+      
+      QLabel*            lb_gaps;
+
       QLineEdit*         le_info;
       QLineEdit*         le_meniscus;
       QLineEdit*         le_airGap;

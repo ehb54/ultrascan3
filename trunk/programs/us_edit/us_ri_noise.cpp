@@ -7,10 +7,14 @@
 
 US_RiNoise::US_RiNoise( const US_DataIO2::RawData& raw, 
                         const QList< int >&        Includes,
+                        double                     left,
+                        double                     right,
+                        const QString&             dataType,
                         int&                       initial_order, 
                         QList< double >&           r )
   : US_WidgetsDialog( 0, 0 ), 
-    data( raw ), includes( Includes ), order( initial_order ), residuals( r )
+    data( raw ), includes( Includes ), range_left( left ), 
+    range_right( right ), order( initial_order ), residuals( r )
 {
    setWindowTitle( tr( "Determine Radial Invariant Noise" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -54,9 +58,12 @@ US_RiNoise::US_RiNoise( const US_DataIO2::RawData& raw,
 
    main->addLayout( info );
 
+   QString y_axis =  tr( "Absorbance" );
+   if ( dataType == "IP" ) y_axis = tr( "Fringes" );
+
    QBoxLayout* plot = new US_Plot( data_plot,
       tr( "RI Noise Fit" ),
-      tr( "Scan Time (seconds)" ), tr( "Absorbance" ) );
+      tr( "Scan Time (seconds)" ), y_axis );
    
    data_plot->setMinimumSize( 600, 400 );
    us_grid( data_plot );
@@ -87,16 +94,18 @@ void US_RiNoise::draw_fit( double new_order )
    {
       if ( ! includes.contains( i ) ) continue;
 
+      const US_DataIO2::Scan* s = &data.scanData[ i ];
+
+      int indexLeft  = US_DataIO2::index( *s, data.x, range_left );
+      int indexRight = US_DataIO2::index( *s, data.x, range_right );
+
+      double delta_r  = ( range_right - range_left ) / 
+                        ( indexRight - indexLeft );
+
       absorbance_integral[ scan ] = 0.0;
 
-      // For now, all radii are spaces equally at 0.001 cm
-      const double delta_r = 0.001;
-
-      const US_DataIO2::Scan* s = &data.scanData[ i ];
-      int value_count           = s->readings.size();
-      
       // Integrate using trapezoid rule
-      for ( int j = 1; j < value_count; j++ )
+      for ( int j = indexLeft + 1; j <= indexRight; j++ )
       {
          double avg = 
             ( s->readings[ j ].value + s->readings[ j - 1 ].value ) / 2.0;
@@ -181,6 +190,8 @@ void US_RiNoise::draw_fit( double new_order )
 // We want to be able to call this function from other places.
 void US_RiNoise::calc_residuals( const US_DataIO2::RawData& data, 
                                  const QList< int >&        includes,
+                                 double                     range_left,
+                                 double                     range_right,
                                  int                        order, 
                                  QList< double >&           residuals )
 {
@@ -200,22 +211,27 @@ void US_RiNoise::calc_residuals( const US_DataIO2::RawData& data,
    for ( int i = 0; i < scan_count; i++ )
    {
       if ( ! includes.contains( i ) ) continue;
-      absorbance_integral[ scan ] = 0;
-
-      // For now, all radii are spaces equally at 0.001 cm
-      const double delta_r = 0.001;
 
       const US_DataIO2::Scan* s = &data.scanData[ i ];
-      int value_count           = s->readings.size();
-      
+
+      int indexLeft  = US_DataIO2::index( *s, data.x, range_left );
+      int indexRight = US_DataIO2::index( *s, data.x, range_right );
+
+      double delta_r  = ( range_right - range_left ) / 
+                        ( indexRight - indexLeft );
+
+      absorbance_integral[ scan ] = 0.0;
+
       // Integrate using trapezoid rule
-      for ( int j = 1; j < value_count; j++ )
+      for ( int j = indexLeft + 1; j <= indexRight; j++ )
       {
          double avg = 
             ( s->readings[ j ].value + s->readings[ j - 1 ].value ) / 2.0;
          
          absorbance_integral[ scan ] += avg * delta_r;
       }
+
+      scan++;
    }
 
    scan = 0;

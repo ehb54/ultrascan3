@@ -16,17 +16,24 @@ class US_EXTERN US_RiNoise : public US_WidgetsDialog
    public:
       US_RiNoise( const US_DataIO2::RawData&, 
                   const QList< int >&, 
+                  double,
+                  double,
+                  const QString&,
                   int&, 
                   QList< double >& );
       
       static void calc_residuals( const US_DataIO2::RawData&, 
                                   const QList< int >&, 
+                                  double,
+                                  double,
                                   int, 
                                   QList< double >& );
 
    private:
       const US_DataIO2::RawData& data;
       const QList< int >&        includes;
+      double                     range_left;
+      double                     range_right;
       int&                       order;
       QList< double >&           residuals;
 
