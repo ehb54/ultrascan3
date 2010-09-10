@@ -11,6 +11,7 @@
 #include "us_dataIO2.h"
 #include "us_analyte.h"
 #include "us_expinfo.h"
+#include "us_solution_gui.h"
 
 class US_EXTERN US_Convert : public US_Widgets
 {
@@ -136,7 +137,7 @@ class US_EXTERN US_Convert : public US_Widgets
 
       bool show_plot_progress;
       US_ExpInfo::ExperimentInfo      ExpData; 
-      QList< US_ExpInfo::TripleInfo > triples;
+      QList< US_SolutionGui::TripleInfo > triples;
       int                             currentTriple;
       QStringList                     centerpieceTypes;
 

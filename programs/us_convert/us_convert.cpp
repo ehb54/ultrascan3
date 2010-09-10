@@ -616,7 +616,7 @@ void US_Convert::enableCCWControls( void )
    cb_centerpiece->setCurrentIndex( triples[ currentTriple ].centerpiece );
 
    // Let's calculate if we're eligible to copy this triple info to all
-   US_ExpInfo::TripleInfo triple = triples[ currentTriple ];
+   US_SolutionGui::TripleInfo triple = triples[ currentTriple ];
    pb_applyAll  -> setEnabled( false );
    if ( triple.analyteID   > 0 &&
         triple.bufferID    > 0 )
@@ -641,7 +641,7 @@ void US_Convert::enableSyncDB( void )
    // Have we filled out all the c/c/w info?
    for ( int i = 0; i < triples.size(); i++ )
    {
-      US_ExpInfo::TripleInfo triple = triples[ i ];
+      US_SolutionGui::TripleInfo triple = triples[ i ];
       if ( triple.excluded ) continue;
 
       if ( triple.bufferID  == 0 ||
@@ -687,6 +687,11 @@ void US_Convert::runIDChanged( void )
       plot_titles();
    }
 
+   // If the runID has changed, a number of other things need to change too,
+   // for instance GUID's.
+   ExpData.clear();
+   foreach( US_SolutionGui::TripleInfo triple, triples )
+      triple.clear();
    le_runID->setText( runID );
    ExpData.runID = runID;
 
@@ -947,7 +952,7 @@ void US_Convert::getCenterpieceIndex( int ndx )
 
 void US_Convert::ccwApplyAll( void )
 {
-   US_ExpInfo::TripleInfo triple = triples[ currentTriple ];
+   US_SolutionGui::TripleInfo triple = triples[ currentTriple ];
 
    // Copy selected fields only
    for ( int i = 0; i < triples.size(); i++ )

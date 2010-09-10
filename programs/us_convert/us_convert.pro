@@ -10,7 +10,8 @@ HEADERS       = us_convert.h           \
                 us_expinfo.h           \
                 us_selectbox.h         \
                 us_intensity.h         \
-                us_get_dbrun.h
+                us_get_dbrun.h         \
+                us_solution_gui.h
 
 SOURCES       = us_convert.cpp         \
                 us_process_convert.cpp \
@@ -18,5 +19,6 @@ SOURCES       = us_convert.cpp         \
                 us_expinfo.cpp         \
                 us_selectbox.cpp       \
                 us_intensity.cpp       \
-                us_get_dbrun.cpp
+                us_get_dbrun.cpp       \
+                us_solution_gui.cpp
 

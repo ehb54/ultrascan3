@@ -10,6 +10,7 @@
 #include "us_help.h"
 #include "us_convert.h"
 #include "us_expinfo.h"
+#include "us_solution_gui.h"
 
 /*! \class US_ConvertProgressBar
            This class creates and displays a progress bar to inform
@@ -132,7 +133,7 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
       void          convertLegacyData(
                     QList  < US_DataIO2::BeckmanRawScan >& ,
                     QVector< US_DataIO2::RawData        >& ,
-                    QList< US_ExpInfo::TripleInfo >& ,
+                    QList< US_SolutionGui::TripleInfo >& ,
                     QString ,
                     double ,
                     QList< double >& );
@@ -162,7 +163,7 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
                     int& status,
                     QVector< US_DataIO2::RawData >& ,
                     US_ExpInfo::ExperimentInfo& ,
-                    QList< US_ExpInfo::TripleInfo >& ,
+                    QList< US_SolutionGui::TripleInfo >& ,
                     QVector< US_Convert::Excludes >& ,
                     QString ,
                     QString ,
@@ -189,7 +190,7 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
                     QString ,
                     QVector< US_DataIO2::RawData        >& ,
                     US_ExpInfo::ExperimentInfo&,
-                    QList< US_ExpInfo::TripleInfo >& ,
+                    QList< US_SolutionGui::TripleInfo >& ,
                     QString&,
                     QString );
 
@@ -206,16 +207,16 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
                            QList< double >&                     ss_limits );
 
       void setTriples    ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-                           QList< US_ExpInfo::TripleInfo >&     triples,
+                           QList< US_SolutionGui::TripleInfo >& triples,
                            QString                              runType,
                            double                               tolerance );
       
       void setCcwTriples ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-                           QList< US_ExpInfo::TripleInfo >&     triples,
+                           QList< US_SolutionGui::TripleInfo >& triples,
                            double                               tolerance );
       
       void setCcrTriples ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-                           QList< US_ExpInfo::TripleInfo >&     triples,
+                           QList< US_SolutionGui::TripleInfo >& triples,
                            double                               tolerance );
       
       void setInterpolated ( unsigned char*, int );
