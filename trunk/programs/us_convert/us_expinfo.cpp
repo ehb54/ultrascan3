@@ -8,6 +8,7 @@
 #include "us_db2.h"
 #include "us_investigator.h"
 #include "us_expinfo.h"
+#include "us_solution_gui.h"
 #include "us_convertio.h"
 
 US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
@@ -686,33 +687,6 @@ void US_ExpInfo::connect_error( const QString& error )
 {
    QMessageBox::warning( this, tr( "Connection Problem" ),
          tr( "Could not connect to databasee \n" ) + error );
-}
-
-// Initializations
-US_ExpInfo::TripleInfo::TripleInfo()
-{
-   tripleID     = 0;
-   tripleDesc   = QString( "" );
-   excluded     = false;
-   centerpiece  = 0;
-   bufferID     = 0;
-   bufferGUID   = "";
-   bufferDesc   = "";
-   analyteID    = 0;
-   analyteGUID  = "";
-   analyteDesc  = "";
-   memset( tripleGUID, 0, 16 );
-   tripleFilename = "";
-}
-
-void US_ExpInfo::TripleInfo::show( void )
-{
-   qDebug() << "tripleID    = " << tripleID    << '\n'
-            << "tripleDesc  = " << tripleDesc  << '\n'
-            << "centerpiece = " << centerpiece << '\n'
-            << "bufferID    = " << bufferID    << '\n'
-            << "analyteID   = " << analyteID   << '\n';
-   if ( excluded ) qDebug() << "excluded";
 }
 
 US_ExpInfo::ExperimentInfo::ExperimentInfo()

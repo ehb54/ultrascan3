@@ -202,7 +202,7 @@ void US_ProcessConvert::readLegacyData(
 void US_ProcessConvert::convertLegacyData( 
      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
      QVector< US_DataIO2::RawData  >&     rawConvertedData,
-     QList< US_ExpInfo::TripleInfo >&     triples,
+     QList< US_SolutionGui::TripleInfo >&     triples,
      QString                              runType,
      double                               tolerance,
      QList< double >&                     ss_limits // For RA data
@@ -271,7 +271,7 @@ void US_ProcessConvert::writeConvertedData(
      int& status,
      QVector< US_DataIO2::RawData >& rawConvertedData,
      US_ExpInfo::ExperimentInfo& ExpData,
-     QList< US_ExpInfo::TripleInfo >& triples,
+     QList< US_SolutionGui::TripleInfo >& triples,
      QVector< US_Convert::Excludes >& allExcludes,
      QString runType,
      QString runID,
@@ -322,12 +322,36 @@ void US_ProcessConvert::writeConvertedData(
                              + wavelength + ".auc";
       }
 
-      // Calculate and save the guid for this triple
-      uuid_t uuid;
-      uuid_generate( uuid );
-      strncpy( rawConvertedData[ i ].rawGUID, (char*) uuid, 16 );
-      strncpy( triples [ i ].tripleGUID, (char*) uuid, 16 );
- 
+      // Let's see if there is a triple guid already (from a previous save)
+      char uuidc[ 37 ];
+      uuid_unparse( (unsigned char*) rawConvertedData[ i ].rawGUID, uuidc );
+      QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+
+      if ( rx.exactMatch( QString( uuidc ) ) )
+      {
+         // Make sure xml file matches
+         strncpy( triples [ i ].tripleGUID, (char*) rawConvertedData[ i ].rawGUID, 16 );
+      }
+
+      else
+      {
+         // Calculate and save the guid for this triple
+         uuid_t uuid;
+         uuid_generate( uuid );
+         strncpy( rawConvertedData[ i ].rawGUID, (char*) uuid, 16 );
+         strncpy( triples [ i ].tripleGUID, (char*) uuid, 16 );
+      }
+
+      // Same with solutionGUID
+      uuid_unparse( (unsigned char*) triples[ i ].solutionGUID, uuidc );
+      if ( ! rx.exactMatch( QString( uuidc ) ) )
+      {
+         // Calculate and save the solution guid for this triple
+         uuid_t uuid;
+         uuid_generate( uuid );
+         strncpy( triples [ i ].solutionGUID, (char*) uuid, 16 );
+      }
+         
       // Save the filename of this triple
       triples[ i ].tripleFilename = filename;
 
@@ -393,7 +417,7 @@ void US_ProcessConvert::reloadUS3Data(
      QString dir,
      QVector< US_DataIO2::RawData >& rawConvertedData,
      US_ExpInfo::ExperimentInfo& ExpData,
-     QList< US_ExpInfo::TripleInfo >& triples,
+     QList< US_SolutionGui::TripleInfo >& triples,
      QString& runType ,
      QString runID
      )
@@ -430,7 +454,7 @@ void US_ProcessConvert::reloadUS3Data(
       part.clear();
       part = files[ i ].split( "." );
 
-      US_ExpInfo::TripleInfo t;
+      US_SolutionGui::TripleInfo t;
       t.tripleDesc = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
       t.excluded   = false;
       triples << t;
@@ -571,10 +595,20 @@ void US_ProcessConvert::convert(
       max_size   = max( max_size,   size  );
    }
 
-   // Set the distance between readings 
-   double delta_r = ( runType == "IP" )
-                  ? ( max_radius - min_radius ) / ( max_size - 1 )
-                  : 0.001;
+   // Set the distance between readings
+   double delta_r;
+   if ( runType == "IP" )
+   {
+      // Get the actual delta out of the header lines
+      QStringList descriptionParts = rawLegacyData[ 0 ].description.split( " ", QString::SkipEmptyParts );
+      QString proto = descriptionParts[ 1 ].toAscii();
+      proto.remove( "," );
+   
+      delta_r = proto.toDouble();
+   }
+
+   else
+      delta_r = 0.001;
 
    // Calculate the radius vector
    int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
@@ -652,7 +686,14 @@ void US_ProcessConvert::convert(
          if ( k < rCount )
             dr = radius - ccwLegacyData[ i ].readings[ k ].d.radius;
 
-         if ( dr > -3.0e-4   &&  k < rCount ) // A value
+         if ( runType == "IP" )
+         {
+            // No interpolation in this data
+            r.value  = ccwLegacyData[ i ].readings[ j ].value;
+            r.stdDev = 0.0;
+         }
+
+         else if ( dr > -3.0e-4   &&  k < rCount ) // A value
          {
             r.value  = ccwLegacyData[ i ].readings[ k ].value;
             r.stdDev = ccwLegacyData[ i ].readings[ k ].stdDev;
@@ -685,9 +726,6 @@ void US_ProcessConvert::convert(
 
             setInterpolated( interpolated, j );
          }
-
-         // Ensure in the case of IP data, stdDev is 0.0
-         if ( runType == "IP" ) r.stdDev = 0.0;
 
          s.readings <<  r;
          radius += delta_r;
@@ -744,7 +782,7 @@ void US_ProcessConvert::splitRAData(
 
 void US_ProcessConvert::setTriples( 
      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-     QList< US_ExpInfo::TripleInfo >&     triples,
+     QList< US_SolutionGui::TripleInfo >& triples,
      QString                              runType,
      double                               tolerance )
 {
@@ -758,7 +796,7 @@ void US_ProcessConvert::setTriples(
 
 void US_ProcessConvert::setCcwTriples( 
      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-     QList< US_ExpInfo::TripleInfo >&     triples,
+     QList< US_SolutionGui::TripleInfo >& triples,
      double                               tolerance )
 {
    // Most triples are ccw
@@ -835,7 +873,7 @@ void US_ProcessConvert::setCcwTriples(
       }
       if ( ! found )
       {
-         US_ExpInfo::TripleInfo triple;
+         US_SolutionGui::TripleInfo triple;
          triple.tripleDesc = t;
          triples << triple;
       }
@@ -844,8 +882,8 @@ void US_ProcessConvert::setCcwTriples(
 
 void US_ProcessConvert::setCcrTriples( 
      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-     QList< US_ExpInfo::TripleInfo >&    triples,
-     double                              tolerance )
+     QList< US_SolutionGui::TripleInfo >& triples,
+     double                               tolerance )
 {
    // First of all, wavelength triples are ccr.
    triples.clear();
@@ -922,7 +960,7 @@ void US_ProcessConvert::setCcrTriples(
       }
       if ( ! found )
       {
-         US_ExpInfo::TripleInfo triple;
+         US_SolutionGui::TripleInfo triple;
          triple.tripleDesc = t;
          triples << triple;
       }

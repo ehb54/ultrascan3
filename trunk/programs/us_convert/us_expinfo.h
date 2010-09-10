@@ -20,28 +20,6 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
 
    public:
 
-      //! \brief  Class that contains information about relevant 
-      //!         cell/channel/wavelength combinations
-      class TripleInfo
-      {
-         public:
-         int              tripleID;           //!< The ID of this c/c/w combination
-         QString          tripleDesc;         //!< The description of this triple ( e.g., "2 / A / 260" )
-         bool             excluded;           //!< Whether this triple has been dropped or not
-         int              centerpiece;        //!< The ID of the centerpiece that was used
-         int              bufferID;           //!< The ID of the buffer that was associated
-         QString          bufferGUID;         //!< The GUID of the buffer
-         QString          bufferDesc;         //!< The corresponding buffer description
-         int              analyteID;          //!< The ID of the analyte that was associated
-         QString          analyteGUID;        //!< The GUID of the analyte
-         QString          analyteDesc;        //!< The corresponding analyte description
-         char             tripleGUID[16];     //!< The GUID of this triple
-         QString          tripleFilename;     //!< The filename of this auc file
-         TripleInfo();                        //!< A generic constructor
-         void             clear( void );
-         void             show( void );       // temporary
-      };
-
       //! \brief  Class that contains information about the hardware and other
       //!         associations
       class ExperimentInfo

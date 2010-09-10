@@ -411,7 +411,7 @@ END$$
 DROP PROCEDURE IF EXISTS delete_solution$$
 CREATE PROCEDURE delete_solution ( p_personGUID   CHAR(36),
                                    p_password     VARCHAR(80),
-                                   p_solutionID   INT )
+                                   p_experimentID INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -419,23 +419,32 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_solution_permission( p_personGUID, p_password, p_solutionID ) = @OK ) THEN
+  IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
 
+    -- Make sure records match if they have related tables or not
     -- Have to do it in a couple of stages because of the constraints
-    DELETE FROM solutionBuffer
-    WHERE       solutionID = p_solutionID;
+    DELETE      solutionBuffer
+    FROM        experimentSolutionChannel, solutionBuffer 
+    WHERE       experimentSolutionChannel.experimentID = p_experimentID
+    AND         experimentSolutionChannel.solutionID   = solutionBuffer.solutionID;
 
-    DELETE FROM solutionAnalyte
-    WHERE       solutionID = p_solutionID;
-
-    DELETE FROM solutionPerson
-    WHERE       solutionID = p_solutionID;
-
+    DELETE      solutionAnalyte
+    FROM        experimentSolutionChannel, solutionAnalyte
+    WHERE       experimentSolutionChannel.experimentID = p_experimentID
+    AND         experimentSolutionChannel.solutionID   = solutionAnalyte.solutionID;
+    
+    DELETE      solutionPerson
+    FROM        experimentSolutionChannel, solutionPerson
+    WHERE       experimentSolutionChannel.experimentID = p_experimentID
+    AND         experimentSolutionChannel.solutionID   = solutionPerson.solutionID;
+    
+    DELETE      solution
+    FROM        experimentSolutionChannel, solution
+    WHERE       experimentSolutionChannel.experimentID = p_experimentID
+    AND         experimentSolutionChannel.solutionID   = solution.solutionID;
+    
     DELETE FROM experimentSolutionChannel
-    WHERE       solutionID = p_solutionID;
-
-    DELETE FROM solution
-    WHERE       solutionID = p_solutionID;
+    WHERE       experimentID = p_experimentID;
 
   END IF;
 
@@ -610,6 +619,93 @@ BEGIN
   END IF;
 
   SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- Retrieves the buffer associated with a solution
+DROP PROCEDURE IF EXISTS get_solutionBuffer$$
+CREATE PROCEDURE get_solutionBuffer( p_personGUID   CHAR(36),
+                                     p_password     VARCHAR(80),
+                                     p_solutionID   INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE l_bufferCount     INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT COUNT(*)
+  INTO   l_bufferCount
+  FROM   solutionBuffer
+  WHERE  solutionID = p_solutionID
+  LIMIT  1;                         -- should be exactly 1
+
+  IF ( verify_solution_permission( p_personGUID, p_password, p_solutionID ) != @OK ) THEN
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSEIF ( l_bufferCount = 0 ) THEN
+    SET @US3_LAST_ERROR = "MySQL: the buffer association was not found in the database";
+    SET @US3_LAST_ERRNO = @NO_BUFFER;
+
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+    
+    SELECT @OK AS status;
+
+    SELECT   buffer.bufferID, bufferGUID, description
+    FROM     solutionBuffer, buffer
+    WHERE    solutionBuffer.solutionID = p_solutionID
+    AND      solutionBuffer.bufferID   = buffer.bufferID
+    ORDER BY description
+    LIMIT    1;                     -- should be exactly 1
+
+  END IF;
+
+END$$
+
+-- Retrieves the analyte associated with a solution
+DROP PROCEDURE IF EXISTS get_solutionAnalyte$$
+CREATE PROCEDURE get_solutionAnalyte( p_personGUID   CHAR(36),
+                                      p_password     VARCHAR(80),
+                                      p_solutionID   INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE l_analyteCount     INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT COUNT(*)
+  INTO   l_analyteCount
+  FROM   solutionAnalyte
+  WHERE  solutionID = p_solutionID
+  LIMIT  1;                         -- should be exactly 1
+
+  IF ( verify_solution_permission( p_personGUID, p_password, p_solutionID ) != @OK ) THEN
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSEIF ( l_analyteCount = 0 ) THEN
+    SET @US3_LAST_ERROR = "MySQL: the analyte association was not found in the database";
+    SET @US3_LAST_ERRNO = @NO_ANALYTE;
+
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+    
+    SELECT @OK AS status;
+
+    SELECT   analyte.analyteID, analyteGUID, description
+    FROM     solutionAnalyte, analyte
+    WHERE    solutionAnalyte.solutionID = p_solutionID
+    AND      solutionAnalyte.analyteID   = analyte.analyteID
+    ORDER BY description;
+
+  END IF;
 
 END$$
 

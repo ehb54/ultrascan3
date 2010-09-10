@@ -9,6 +9,7 @@
 #include "us_help.h"
 #include "us_convert.h"
 #include "us_expinfo.h"
+#include "us_solution_gui.h"
 
 /*! \class US_ConvertIO
            This class provides the ability to save converted US3
@@ -39,7 +40,7 @@ class US_EXTERN US_ConvertIO
           \param    dir     The location of the binary auc files
       */
       static QString newDBExperiment( US_ExpInfo::ExperimentInfo&, 
-                                      QList< US_ExpInfo::TripleInfo >& ,
+                                      QList< US_SolutionGui::TripleInfo >& ,
                                       QString );
 
       /*! \brief    Update experiment info in the database
@@ -51,7 +52,7 @@ class US_EXTERN US_ConvertIO
           \param    dir     The location of the binary auc files
       */
       static QString updateDBExperiment( US_ExpInfo::ExperimentInfo&, 
-                                         QList< US_ExpInfo::TripleInfo >& ,
+                                         QList< US_SolutionGui::TripleInfo >& ,
                                          QString );
 
       /*! \brief    Reads entire experiment and auc files from the database, save to HD
@@ -90,7 +91,7 @@ class US_EXTERN US_ConvertIO
       */
       static int writeXmlFile( 
                  US_ExpInfo::ExperimentInfo& ExpData,
-                 QList< US_ExpInfo::TripleInfo >& ,
+                 QList< US_SolutionGui::TripleInfo >& ,
                  QString ,
                  QString ,
                  QString );
@@ -112,7 +113,7 @@ class US_EXTERN US_ConvertIO
       */
       static int readXmlFile( 
                  US_ExpInfo::ExperimentInfo& ,
-                 QList< US_ExpInfo::TripleInfo >& ,
+                 QList< US_SolutionGui::TripleInfo >& ,
                  QString ,
                  QString ,
                  QString );
@@ -121,26 +122,30 @@ class US_EXTERN US_ConvertIO
       static void readExperiment( 
                  QXmlStreamReader& , 
                  US_ExpInfo::ExperimentInfo& ,
-                 QList< US_ExpInfo::TripleInfo >& ,
+                 QList< US_SolutionGui::TripleInfo >& ,
                  QString ,
                  QString );
 
       static void readDataset( 
                  QXmlStreamReader& , 
-                 US_ExpInfo::TripleInfo& );
+                 US_SolutionGui::TripleInfo& );
+
+      static void readSolutionInfo( 
+                 QXmlStreamReader& , 
+                 US_SolutionGui::TripleInfo& );
 
       static int verifyXml( 
                  US_ExpInfo::ExperimentInfo&,
-                 QList< US_ExpInfo::TripleInfo >& );
+                 QList< US_SolutionGui::TripleInfo >& );
 
       static QString writeRawDataToDB(
                  US_ExpInfo::ExperimentInfo& , 
-                 QList< US_ExpInfo::TripleInfo >& ,
+                 QList< US_SolutionGui::TripleInfo >& ,
                  QString );
 
       static QString readRawDataFromDB( 
                  US_ExpInfo::ExperimentInfo& , 
-                 QList< US_ExpInfo::TripleInfo >& ,
+                 QList< US_SolutionGui::TripleInfo >& ,
                  QString& );
       
 };
