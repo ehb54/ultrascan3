@@ -470,8 +470,6 @@ int US_DataIO2::readRawData( const QString& file, RawData& data )
    }
 
    f.close();
-}
-
    return err;
 }
 
