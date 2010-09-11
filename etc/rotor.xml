@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE US_Rotor>
+<rotors version="1.0">
+   <rotor serial="0" type="Simulation" stretch="0 0 0 0 0"/>
+   <rotor serial="1" type="AN50" stretch="7.754e-5 -1.546e-8 9.601e-12 -5.800e-17 6.948e-22" />
+   <rotor serial="2" type="AN60" stretch="3.128e-5 -6.620e-9 7.264e-12 -6.152e-17 5.760e-22" />
+</rotors>
