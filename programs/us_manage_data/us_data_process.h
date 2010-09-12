@@ -21,10 +21,14 @@ class US_EXTERN US_DataProcess : public QObject
       int record_remove_db(    int );
       int record_remove_local( int );
 
-   private:
-      QWidget*                parentw;
+      QString lastError( void ) { return errMsg; }
 
-      US_DB2*                 db;
+   private:
+      QString                 errMsg;     // message from last error
+
+      QWidget*                parentw;    // parent widget
+
+      US_DB2*                 db;         // pointer to database connection
 
       US_DataModel*           da_model;   // data model object
 
