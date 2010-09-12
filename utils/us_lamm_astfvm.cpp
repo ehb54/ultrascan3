@@ -543,12 +543,6 @@ qDebug() << "initSalt:  xs Cs0 Cs1 j" << xs[n] << Cs0[n] << Cs1[n] << n;
 void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
    double *Csalt )
 {
-   int     j;
-   int     k;
-   double  xik;
-   double  xim;
-   double  et0;
-   double  et1;
    double* tmp;
 
    while ( ( t1 < t ) && ( Nt > 0 ) ) 
@@ -560,38 +554,41 @@ void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
 
       t1    = sa_data.scanData[ scn ].seconds;
 
-      for ( j = 0; j < Nx; j++ )
+      for ( int j = 0; j < Nx; j++ )
          Cs1[ j ]   = sa_data.value( scn, j );
 
       Nt --;             // Nt = time level left
       scn++;
 //qDebug() << "SaltD:     intrp 0 t 1" << t0 << t << t1 << "  N s" << Nt << scn;
    }
-qDebug() << "SaltD:  intrp t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
+//qDebug() << "SaltD:  intrp t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
 
    // interpolate between t0 and t1
-   et1   = ( t - t0 ) / ( t1 - t0 );
-   et1   = ( et1 > 1.0 ) ? 1.0 : et1;
-   et1   = ( et1 < 0.0 ) ? 0.0 : et1;
-   et0   = 1.0 - et1;
+   double et1 = ( t - t0 ) / ( t1 - t0 );
+   et1        = ( et1 > 1.0 ) ? 1.0 : et1;
+   et1        = ( et1 < 0.0 ) ? 0.0 : et1;
+   double et0 = 1.0 - et1;
 
    // interpolate between xs[k-1] and xs[k]
-   k     = 1;
+   int k  = 1;
+   int Lx = Nx - 1;
 
-   for ( j = 0; j < N; j++ )      // loop for all x[m]
+   for ( int j = 0; j < N; j++ )      // loop for all x[m]
    {
-      while ( ( x[ j ] > xs[ k ] )  &&  ( k < Nx - 1 ) ) k++; // radial point
+      double xj  = x[ j ];
+      while ( xj > xs[ k ]  &&  k < Lx ) k++; // radial point
 
       // linear interpolation
-      xik        = ( x[ j ] - xs[ k - 1 ] ) / ( xs[ k ] - xs[ k - 1 ] );
+      int m      = k - 1;
+      double xik = ( xj - xs[ m ] ) / ( xs[ k ] - xs[ m ] );
       xik        = ( xik > 1.0 ) ? 1.0 : xik;
       xik        = ( xik < 0.0 ) ? 0.0 : xik;
-      xim        = 1.0 - xik;
+      double xim = 1.0 - xik;
       // interpolate linearly in both time and radius
-      Csalt[ j ] = et0 * ( xim * Cs0[ k - 1 ] + xik * Cs0[ k ] )
-                +  et1 * ( xim * Cs1[ k - 1 ] + xik * Cs1[ k ] );
-    }
-qDebug() << "SaltD:    Csalt0 CsaltN" << Csalt[0] << Csalt[N-1];
+      Csalt[ j ] = et0 * ( xim * Cs0[ m ] + xik * Cs0[ k ] )
+                +  et1 * ( xim * Cs1[ m ] + xik * Cs1[ k ] );
+   }
+//qDebug() << "SaltD:    Csalt0 CsaltN" << Csalt[0] << Csalt[N-1];
 };
 
 
@@ -771,6 +768,14 @@ qDebug() << "LAsc:   sigma delta" << model.components[comp_x].sigma
    // get initial concentration for this component
    double sig_conc = model.components[ comp_x ].signal_concentration;
 
+QTime timer;
+int ktime1=0;
+int ktime2=0;
+int ktime3=0;
+int ktime4=0;
+int ktime5=0;
+int ktime6=0;
+timer.start();
    // initialization
    N0    = msh->Nv;
    N0u   = N0 + N0 - 1;
@@ -817,6 +822,7 @@ qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
    // main loop for time
    for ( jt = 0, kt = 0; jt < ntc; jt++ )
    {
+timer.restart();
       t0    = dt * (double)jt;
       t1    = t0 + dt;
       ts    = af_data.scan[ kt ].time;           // time at output scan
@@ -834,14 +840,16 @@ qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2];
             tso << QString().sprintf( "%15.7e \n", u0[j] );
          tso << QString().sprintf( "\n\n" );
       }
+ktime1+=timer.restart();
 
       u1p0  = new double [ N0u ];
-
       LammStepSedDiff_P( t0, dt, N0-1, x0, u0, u1p0 );
+ktime2+=timer.restart();
 
       if ( MeshRefineOpt == 1 )
       {
          msh->RefineMesh( u0, u1p0, 1.0e-4 );
+ktime3+=timer.restart();
 
          N1    = msh->Nv;
          N1u   = N1 + N1 - 1;
@@ -858,6 +866,7 @@ qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2];
          delete [] u1;
          u1    = new double [ N1u ];
 
+ktime4+=timer.restart();
          LammStepSedDiff_C( t0, dt, N0-1, x0, u0, N1-1, x1, u1p, u1 );
 
          delete [] u1p;
@@ -865,9 +874,11 @@ qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2];
 
       else
       {
+ktime4+=timer.restart();
          LammStepSedDiff_C( t0, dt, N0-1, x0, u0, N1-1, x1, u1p0, u1 );
       }
 
+ktime5+=timer.restart();
       // see if current scan is between calculated times; output scan if so
 
       if ( ts >= t0  &&  ts <= t1 )
@@ -974,6 +985,9 @@ qDebug() << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
    delete [] x1;
    delete [] u1;
    delete msh;
+ktime6+=timer.elapsed();
+qDebug() << "compx" << comp_x << "times 1-6"
+ << ktime1 << ktime2 << ktime3 << ktime4 << ktime5 << ktime6;
 }
 
 void US_LammAstfvm::SetNonIdealCase_1( double sigma_k, double delta_k )
@@ -1043,26 +1057,12 @@ void US_LammAstfvm::LammStepSedDiff_P( double t, double dt, int M0,
 void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
    double *x0, double *u0, int M1, double *x1, double *u1p, double *u1 )
 {
-   int     i;
-   int     j;
-   int     j2;
-   int     jm;
-   int     k;
-   int     cnt;
-   int     Ng  = 2 * M1;     // number of x_star points
-
-   double  dt2 = dt * 0.5;
-   double  uxs;
-   double  sw2;
-   double  bl;
-   double  br;
-   double  h;
-   double  wt;
-
+   int     Ng        = 2 * M1;     // number of x_star points
    int*    ke        = new int    [ Ng ];
    double* MemDouble = new double [ 12 * Ng + 15 ];
    double* flux_p[ 3 ];
 
+   double  dt2     = dt * 0.5;
    double* xt      = MemDouble;
    double* xi      = xt          + Ng; 
    double* xg0     = xi          + Ng;
@@ -1078,11 +1078,21 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
    double* phi     = flux_p[ 2 ] + Ng; 
    double* phiL    = phi         + 3;
    double* phiR    = phiL        + 6; 
+QTime timer;
+static int ktim1=0;
+static int ktim2=0;
+static int ktim3=0;
+static int ktim4=0;
+static int ktim5=0;
+static int ktim6=0;
+static int ktim7=0;
+static int ktim8=0;
+timer.start();
 
    // calculate Sv, Dv at t+dt on xg=(xl, xr)
-   for ( j = 0; j < Ng; j += 2 )
+   for ( int j = 0; j < Ng; j += 2 )
    {
-      j2           = j / 2;
+      int j2       = j / 2;
       xg1[ j     ] = x1[ j2 ] * 0.75 + x1[ j2 + 1 ] * 0.25;    // xl
       xg1[ j + 1 ] = x1[ j2 ] * 0.25 + x1[ j2 + 1 ] * 0.75;    // xr
       ug1[ j     ] = ( 3. * u1p[ j ] + 6. * u1p[ j + 1 ] - u1p[ j + 2 ] ) / 8.;
@@ -1090,32 +1100,33 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
    }
 
    AdjustSD( t + dt, Ng, xg1, ug1, Sv, Dv );
+ktim1+=timer.restart();
 
    // determine xg0=(xls, xrs)
-   for ( j = 0; j < Ng; j++ )
+   for ( int j = 0; j < Ng; j++ )
    {
-      sw2      = Sv[ j ] * param_w2;
-      xg0[ j ] = xg1[ j ] - dt * MeshSpeedFactor * sw2 * xg1[ j ]
-                 * exp( -fabs( sw2 ) * dt / 2 );
+      double sw2 = Sv[ j ] * param_w2;
+      xg0[ j ]   = xg1[ j ] - dt * MeshSpeedFactor * sw2 * xg1[ j ]
+                   * exp( -fabs( sw2 ) * dt / 2 );
 
       if      ( xg0[ j ] < param_m ) xg0[ j ] = param_m;
       else if ( xg0[ j ] > param_b ) xg0[ j ] = param_b;
 
-      xt[ j ]  = ( xg1[ j ] - xg0[ j ] ) / dt;
+      xt[ j ]    = ( xg1[ j ] - xg0[ j ] ) / dt;
    }
 
    // redistribute xgs so that in between [m,b] and in increasing order
-   bl     = param_m;
+   double bl     = param_m;
 
-   for ( j = 0; j < Ng; j++ )
+   for ( int j = 0; j < Ng; j++ )
    {
-      cnt    = 1;
+      int    cnt  = 1;
 
       while ( xg0[ j ] < bl) { j++; cnt++; }
 
-      br     = ( xg0[ j ] < param_b ) ? xg0[ j ] : param_b ;
+      double br   = ( xg0[ j ] < param_b ) ? xg0[ j ] : param_b ;
 
-      for ( jm = 0; jm < cnt; jm++ )
+      for ( int jm = 0; jm < cnt; jm++ )
       {  
         xg0[ j - jm ] = br - (double)jm / (double)cnt * ( br - bl );
         xt[  j - jm ] = ( xg1[ j - jm ] - xg0[ j - jm ] ) / dt;
@@ -1123,17 +1134,18 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
 
       bl = br;
    }
+ktim2+=timer.restart();
 
    // calculate Flux(phi, t+dt) at all xg1
    fun_dphi( -0.5, phiL );  // basis at xi=-1/2
    fun_dphi(  0.5, phiR );
 
-   for ( j = 0; j < Ng; j++ )
+   for ( int j = 0; j < Ng; j++ )
    {
-      j2 = j / 2;
-      h  = 0.5 * ( x1[ j2 + 1 ] - x1[ j2 ] );
+      int    j2 = j / 2;
+      double h  = 0.5 * ( x1[ j2 + 1 ] - x1[ j2 ] );
 
-      for ( jm = 0; jm < 3; jm++ )    // at xl
+      for ( int jm = 0; jm < 3; jm++ )    // at xl
       {
          flux_p[ jm ][ j ] = ( xt[ j ] - Sv[ j ] * param_w2 * xg1[ j ]
                            - Dv[ j ] / xg1[ j ] ) * phiL[ jm ] 
@@ -1141,7 +1153,7 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
       }
       j++;
 
-      for ( jm = 0; jm < 3; jm++ )     // at xr
+      for ( int jm = 0; jm < 3; jm++ )     // at xr
       {
          flux_p[ jm ][ j ] = ( xt[ j ] - Sv[ j ] * param_w2 * xg1[ j ]
                            - Dv[ j ] / xg1[ j ] ) * phiR[ jm ] 
@@ -1154,45 +1166,47 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
 
    LocateStar( M0 + 1, x0, Ng, xg0, ke, xi );    // position of xg0 on mesh x0
 
-   for ( j = 0; j < Ng; j++ )
+   for ( int j = 0; j < Ng; j++ )
    {
       fun_phi( xi[ j ], phi );
 
-      j2       = 2 * ke[ j ];
+      int j2   = 2 * ke[ j ];
       ug0[ j ] = u0[ j2 ]     * phi[ 0 ]
                + u0[ j2 + 1 ] * phi[ 1 ]
                + u0[ j2 + 2 ] * phi[ 2 ];
    }
 
    // calculate s, D at xg0 on time t 
+ktim3+=timer.restart();
    AdjustSD( t, Ng, xg0, ug0, Sv, Dv );
+ktim4+=timer.restart();
 
    // calculate Flux(u0,t) at all xg0
    // (i) Compute ux at nodes as average of Du from left and right
 
    double* ux = new double [ M0 + 1 ];     // D_x(u0) at all x0
 
-   for ( j = 1; j < M0; j++ )         // internal nodes
+   for ( int j = 1; j < M0; j++ )         // internal nodes
    {
-      j2       = 2 * j;
+      int j2   = 2 * j;
       ux[ j ]  = ( ( u0[ j2 - 2 ] - 4. * u0[ j2 - 1 ] + 3. * u0[ j2 ] )
                  / ( x0[ j ] - x0[ j - 1 ] )
                  - ( 3. * u0[ j2 ] - 4. * u0[ j2 + 1 ] + u0[ j2 + 2 ] )
                  / ( x0[ j + 1 ] - x0[ j ] ) ) / 2.;
    }
 
-   j2       = 2 * M0;
+   int j2   = 2 * M0;
    ux[ 0 ]  = -( 3. * u0[ 0 ] - 4. * u0[ 1 ] + u0[ 2 ] )
               / ( x0[ 1 ] - x0[ 0 ] ) / 2.;
    ux[ M0 ] = ( u0[ j2 - 2 ] - 4. * u0[ j2 - 1 ] + 3. * u0[ j2 ] )
               / ( x0[ M0 ] - x0[ M0 - 1 ] ) / 2.;
 
    // (ii) flux(u0,t) at all xg0
-   for ( j = 0; j < Ng; j++ )
+   for ( int j = 0; j < Ng; j++ )
    {
-      wt    = ( 1. - xi[ j ] ) / 2.;
-      uxs   = ux[ ke[ j ]     ] * wt
-            + ux[ ke[ j ] + 1 ] * ( 1. - wt );    // Du0 at xg0
+      double wt  = ( 1. - xi[ j ] ) / 2.;
+      double uxs = ux[ ke[ j ]     ] * wt
+                   + ux[ ke[ j ] + 1 ] * ( 1. - wt );    // Du0 at xg0
 
       if ( ( xg0[ j ] <= ( param_m + 1.e-14 ) ) ||
            ( xg0[ j ] >= ( param_b - 1.e-14 ) ) ) 
@@ -1214,14 +1228,15 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
    //
    double** Mtx = new double* [ Ng + 1 ];
    double*  rhs = new double  [ Ng + 1 ];
-   for ( i = 0; i <= Ng; i++ )
+   for ( int i = 0; i <= Ng; i++ )
       Mtx[ i ] = new double [ 5 ];
 
+ktim5+=timer.restart();
    // Assemble the coefficient matrix
-   for ( i = 1; i < Ng; i += 2 ) 
+   for ( int i = 1; i < Ng; i += 2 ) 
    {
-      k              = ( i - 1 ) / 2;
-      h              = 0.5 * ( x1[ k + 1 ] - x1[ k ] );
+      int    k       = ( i - 1 ) / 2;
+      double h       = 0.5 * ( x1[ k + 1 ] - x1[ k ] );
       Mtx[ i ][ 0 ]  = 0.;
       Mtx[ i ][ 1 ]  = h       / 24.
                        + dt2 * ( flux_p[ 0 ][ i - 1 ] - flux_p[ 0 ][ i ] );
@@ -1231,11 +1246,12 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
                        + dt2 * ( flux_p[ 2 ][ i - 1 ] - flux_p[ 2 ][ i ] );
       Mtx[ i ][ 4 ]  = 0.;
    }
-   for ( i = 2; i < Ng; i += 2 ) 
-   {
-      k              = i / 2;
 
-      h              = 0.5 * ( x1[ k ] - x1[ k - 1 ] );
+   for ( int i = 2; i < Ng; i += 2 ) 
+   {
+      int    k       = i / 2;
+
+      double h       = 0.5 * ( x1[ k ] - x1[ k - 1 ] );
       Mtx[ i ][ 0 ]  =-h      / 24. + dt2 * flux_p[ 0 ][ i - 1 ];
       Mtx[ i ][ 1 ]  = h * 5. / 24. + dt2 * flux_p[ 1 ][ i - 1 ];
       Mtx[ i ][ 2 ]  = h * 8. / 24. + dt2 * flux_p[ 2 ][ i - 1 ];
@@ -1246,8 +1262,8 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
       Mtx[ i ][ 4 ]  =-h      / 24. - dt2 * flux_p[ 2 ][ i ];
    }
 
-   i             = 0;
-   h             = 0.5 * ( x1[ 1 ] - x1[ 0 ] );
+   int i         = 0;
+   double h      = 0.5 * ( x1[ 1 ] - x1[ 0 ] );
    Mtx[ i ][ 2 ] = h * 8. / 24. - dt2 * flux_p[ 0 ][ 0 ];
    Mtx[ i ][ 3 ] = h * 5. / 24. - dt2 * flux_p[ 1 ][ 0 ];
    Mtx[ i ][ 4 ] =-h      / 24. - dt2 * flux_p[ 2 ][ 0 ];
@@ -1258,13 +1274,14 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
    Mtx[ i ][ 1 ] = h * 5. / 24. + dt2 * flux_p[ 1 ][ i - 1 ];
    Mtx[ i ][ 2 ] = h * 8. / 24. + dt2 * flux_p[ 2 ][ i - 1 ];
    
+ktim6+=timer.restart();
 
    // assemble the right hand side
    i        = 0;
    rhs[ i ] =  IntQs( x0, u0, 0, -1., ke[ i ], xi[ i ] )
                + dt2 * flux_u[ i ];
 
-   for ( i = 1; i < Ng; i++ ) 
+   for ( int i = 1; i < Ng; i++ ) 
    {
       rhs[i] = IntQs( x0, u0, ke[ i - 1 ], xi[ i - 1 ], ke[ i ], xi[ i ] )
                + dt2 * ( flux_u[ i ] - flux_u[i - 1 ] );
@@ -1274,9 +1291,11 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
    rhs[ i ] =  IntQs( x0, u0, ke[ i - 1 ], xi[ i - 1 ], M0 - 1,  1. )
                + dt2 * ( - flux_u[ i - 1 ] );
 
+ktim7+=timer.restart();
    LsSolver53( Ng, Mtx, rhs, u1 );
+ktim8+=timer.restart();
 
-   for ( i = 0; i <= Ng; i++ )
+   for ( int i = 0; i <= Ng; i++ )
       delete [] Mtx[ i ];
 
    delete [] Mtx;
@@ -1285,6 +1304,8 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
 
    delete [] ke;
    delete [] MemDouble;
+qDebug() << " Diff_C times 1-8" << ktim1 << ktim2 << ktim3 << ktim4
+   << ktim5 << ktim6 << ktim7 << ktim8;
    return;
 }
 
@@ -1337,6 +1358,9 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
    //double  vbar   = 0.251;
    //double  vbar_w = 0.72;
    double  rho_w  = 0.998234;  //  density of water
+QTime timer;
+static int kst1=0;
+static int kst2=0;
 
    switch ( NonIdealCaseNo )
    {
@@ -1359,10 +1383,12 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
 
       case 2:      // co-sedimenting
          //** salt-protein
+timer.start();
          Csalt = new double [ Nv ];
   
-         saltdata->InterpolateCSalt( Nv, x, t, Csalt);     // Csalt at (x, t)
-
+         saltdata->InterpolateCSalt( Nv, x, t, Csalt );    // Csalt at (x, t)
+kst1+=timer.restart();
+#if 0
          for ( j = 0; j < Nv; j++ )
          {
             // salt concentration
@@ -1382,12 +1408,42 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
 
             D_adj[ j ] = ( Tempt * 1.00194 ) / ( 293.15 * visc ) * param_D;
          }
+#endif
+#if 1
+         {
+            double rK = 0.998234 + 6e-6;
+            double vK = 1.00194 - 0.00078;
+            double sA = param_s * 1.00194 / ( 1.0 - vbar_w * rho_w );
+            double dA = param_D * Tempt * 1.00194 / 293.15;
+           
+            for ( j = 0; j < Nv; j++ )
+            {
+               // salt concentration
+               Cm         = Csalt[ j ];
+      
+               rho        = rK + Cm * ( 12.68641e-2
+                               + Cm * ( 1.27445e-3
+                               + Cm * ( -11.954e-4
+                               + Cm * 258.866e-6 ) ) );
+               visc       = vK - 19.4104e-3 * sqrt( Cm )
+                               + Cm * ( -4.07863e-2
+                               + Cm * ( 11.5489e-3
+                               + Cm * ( -21.774e-4 ) ) );
+      
+               s_adj[ j ] = sA * ( 1.0 - vbar * rho ) / visc;
+
+               D_adj[ j ] = dA / visc;
+            }
+         }
+#endif
 //qDebug() << "AdjSD:    Csalt0 CsaltN Cm" << Csalt[0] << Csalt[Nv-1] << Cm;
-//qDebug() << "AdjSD:     s_adj0 s_adjN" << s_adj[0] << s_adj[Nv-1];
-//qDebug() << "AdjSD:     D_adj0 D_adjN" << D_adj[0] << D_adj[Nv-1] << "N=" << Nv;
+//qDebug() << "AdjSD:   sadj 0 m n" << s_adj[0] << s_adj[Nv/2] << s_adj[Nv-1];
+//qDebug() << "AdjSD:   Dadj 0 m n" << D_adj[0] << D_adj[Nv/2] << D_adj[Nv-1];
 //qDebug() << "AdjSD:      rho 0,m,e" << rho0 << rhom << rhoe;
 //qDebug() << "AdjSD:      visc 0,m,e" << vis0 << vism << vise;
 
+kst2+=timer.restart();
+qDebug() << "AdjSD:  times 1 2" << kst1 << kst2;
          delete [] Csalt;
          break;
 
@@ -1414,19 +1470,21 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
 //
 ///////////////////////////////////////////////////////////////////
 
-void US_LammAstfvm::fun_phi( double x, double *y )
+void US_LammAstfvm::fun_phi( double x, double* y )
 {
-   y[ 0 ] = 0.5 * x * ( x - 1 );
-   y[ 1 ] = 1. - x * x;
-   y[ 2 ] = 0.5 * x * ( x + 1 );
+   double x2 = x * x;
+   y[ 0 ] = 0.5 * ( x2 - x );
+   y[ 1 ] = 1.0 - x2;
+   y[ 2 ] = 0.5 * ( x2 + x );
 }
 
-void US_LammAstfvm::fun_dphi( double x, double *y )
+void US_LammAstfvm::fun_dphi( double x, double* y )
 {
    // quadratic basis
-   y[ 0 ] = 0.5 * x * ( x - 1 );
-   y[ 1 ] = 1. - x * x;
-   y[ 2 ] = 0.5 * x * ( x + 1 );
+   double x2 = x * x;
+   y[ 0 ] = 0.5 * ( x2 - x );
+   y[ 1 ] = 1.0 - x2;
+   y[ 2 ] = 0.5 * ( x2 + x );
 
    // derivatives
    y[ 3 ] = x - 0.5;
@@ -1434,11 +1492,13 @@ void US_LammAstfvm::fun_dphi( double x, double *y )
    y[ 5 ] = x + 0.5;
 }
 
-void US_LammAstfvm::fun_Iphi( double x, double *y )
+void US_LammAstfvm::fun_Iphi( double x, double* y )
 {
-   y[ 0 ] = x * x * ( x / 6. - 0.25 );
-   y[ 1 ] = x * ( 1. - x * x / 3.);
-   y[ 2 ] = x * x * ( x / 6. + 0.25 );
+   double x2 = x  * x * 0.25;
+   double x3 = x2 * x / 6.0;
+   y[ 0 ] = x3 - x2;
+   y[ 1 ] = x  - x3 * 2.0;
+   y[ 2 ] = x3 + x2;
 }
 
 ////////////////////////////////////////////
@@ -1466,7 +1526,7 @@ double US_LammAstfvm::IntQ( double *x, double *u, double xia, double xib )
 
 //////////////////////////////////////////////////////////////////
 //
-// integrate a piecwise quadratic function defined on mesh *x
+// integrate a piecewise quadratic function defined on mesh *x
 // by nodal values *u from xia in elem ka to xib in elem kb
 //
 //////////////////////////////////////////////////////////////////
@@ -1474,7 +1534,6 @@ double US_LammAstfvm::IntQs( double *x, double *u,
                              int ka, double xia, int kb, double xib )
 {
    double intgrl;
-   int    k;
    
    if ( ka == kb )
    {
@@ -1486,7 +1545,7 @@ double US_LammAstfvm::IntQs( double *x, double *u,
       intgrl  = IntQ( x + ka, u + 2 * ka, xia, 1.  );
       intgrl += IntQ( x + kb, u + 2 * kb, -1., xib );
 
-      for ( k = ka + 1; k <= kb - 1; k++ )
+      for ( int k = ka + 1; k <= kb - 1; k++ )
       {
          int k2  = k + k;
          intgrl += ( x[ k + 1 ] - x[ k ] )
@@ -1508,9 +1567,6 @@ double US_LammAstfvm::IntQs( double *x, double *u,
 void US_LammAstfvm::ProjectQ( int M0, double *x0, double *u0,
                               int M1, double *x1, double *u1 )
 {
-   int     idx;
-   int     j;
-   int     j2;
    double  intgrl;
    double  phi[ 3 ];
 
@@ -1520,19 +1576,19 @@ void US_LammAstfvm::ProjectQ( int M0, double *x0, double *u0,
    LocateStar( M0 + 1, x0, M1 + 1, x1, ke, xi );
 
    // u1 = u0 at all nodes 
-   for ( j = 0; j <= M1; j++ ) 
+   for ( int j = 0; j <= M1; j++ ) 
    {
       fun_phi( xi[ j ], phi );
 
-      idx         = 2 * ke[ j ];
-      u1[ 2 * j ] = phi[ 0 ] * u0[ idx ]
+      int idx     = 2 * ke[ j ];
+      u1[ 2 * j ] = phi[ 0 ] * u0[ idx     ]
                   + phi[ 1 ] * u0[ idx + 1 ]
                   + phi[ 2 ] * u0[ idx + 2 ];
    }
 
-   for ( j = 0; j < M1; j++ ) 
+   for ( int j = 0; j < M1; j++ ) 
    {
-      j2     = 2 * j; 
+      int j2 = 2 * j; 
 
       intgrl = IntQs( x0, u0, ke[ j ], xi[ j ], ke[ j + 1 ], xi[ j + 1 ] );
 
@@ -1555,17 +1611,13 @@ void US_LammAstfvm::ProjectQ( int M0, double *x0, double *u0,
 ///////////////////////////////////////////////////////
 void US_LammAstfvm::LsSolver53( int m, double **A, double *b, double *x )
 {
-  int    j;
-  int    j1;
-  int    j2;
-  double multi;
 
-  for ( j = 0; j < m - 1; j += 2 )
+  for ( int j = 0; j < m - 1; j += 2 )
   {
-     j1 = j + 1;
-     j2 = j + 2;
+     int j1 = j + 1;
+     int j2 = j + 2;
 
-     multi         = -A[ j1 ][ 1 ] / A[ j ][ 2 ];
+     double multi  = -A[ j1 ][ 1 ] / A[ j ][ 2 ];
      A[ j1 ][ 2 ] += multi * A[ j ][ 3 ];
      A[ j1 ][ 3 ] += multi * A[ j ][ 4 ];
      b[ j1 ]      += multi * b[ j ];
@@ -1583,14 +1635,17 @@ void US_LammAstfvm::LsSolver53( int m, double **A, double *b, double *x )
   // Back-substitution 
   x[ m ]   = b[ m ] / A[ m ][ 2 ];
 
-  for ( j = m - 1; j > 0; j -= 2 )
+  for ( int j = m - 1; j > 0; j -= 2 )
   {
-     x[ j     ] = ( b[ j ]     - A[ j ][ 3 ]     * x[ j + 1 ] )
-                               / A[ j ][ 2 ];
+     int jm  = j - 1;
+     int jp  = j + 1;
 
-     x[ j - 1 ] = ( b[ j - 1 ] - A[ j - 1 ][ 3 ] * x[ j ]
-                               - A[ j - 1 ][ 4 ] * x[ j + 1 ] )
-                               / A[ j - 1 ][ 2 ];
+     x[ j  ] = ( b[ j  ] - A[ j  ][ 3 ] * x[ jp ] )
+                         / A[ j  ][ 2 ];
+
+     x[ jm ] = ( b[ jm ] - A[ jm ][ 3 ] * x[ j  ]
+                         - A[ jm ][ 4 ] * x[ jp ] )
+                         / A[ jm ][ 2 ];
   }
 
 }

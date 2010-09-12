@@ -5,6 +5,7 @@
 #include <QtCore>
 #include "us_extern.h"
 #include "us_dataIO2.h"
+#include "us_db2.h"
 
 //! A class to hold parameters of a run for simulation purposes.
 
@@ -24,14 +25,24 @@ class US_EXTERN US_SimulationParameters
 
    //! \brief A function to update the simulation parameters to match 
    //! an experiment's edited data.
+   //! \param db       Pointer to opened database connection or NULL
    //! \param editdata Data structure of edited data that contains run info.
-   void initFromData( US_DataIO2::EditedData& );
+   void initFromData( US_DB2*, US_DataIO2::EditedData& );
 
    //! \brief Read hardware files to update bottom and rotor coefficients array
-   //! \param rx New rotor index to set and use for coefficients (default = 1)
-   //! \param cp Centerpiece index (default = 0)
-   //! \param ch Index to channel in centerpiece (default = 0) 
-   void setHardware( int = 1, int = 0, int = 0 );
+   //! \param db     Pointer to opened database connection or NULL
+   //! \param serial New rotor serial to set and use for coefficients
+   //!               (default = "1")
+   //! \param cp     Centerpiece index (default = 0)
+   //! \param ch     Index to channel in centerpiece (default = 0) 
+   void setHardware( US_DB2* = NULL, QString = "1", int = 0, int = 0 );
+
+   //! \brief Read hardware files to update bottom and rotor coefficients array
+   //! \param serial New rotor serial to set and use for coefficients
+   //!               (default = "1")
+   //! \param cp     Centerpiece index (default = 0)
+   //! \param ch     Index to channel in centerpiece (default = 0) 
+   void setHardware( QString = "1", int = 0, int = 0 );
 
    //! The radii from a user-selected mesh file (mesh == USER)
    QVector< double > mesh_radius; 
@@ -61,11 +72,12 @@ class US_EXTERN US_SimulationParameters
    double    rnoise;            //!< Random noise
    double    tinoise;           //!< Time invariant noise
    double    rinoise;           //!< Radially invariant noise
-   int       rotor;             //!< Rotor serial number in database
+   QString   rotorSerial;       //!< Rotor serial number in database/XML
    bool      band_forming;      //!< True for band-forming centerpieces
    double    band_volume;       //!< Loading volume (of lamella) in a 
                                 //!< Band-forming centerpiece
    double    bottom_position;   //!< Bottom position from centerpiece,channel
+   QString   rotorType;         //!< Rotor type (Simulation|AN50|AN60|...)
    double    rotorcoeffs[ 5 ];  //!< Rotor coefficients for stretch calculation
 
    //! First band sedimentation scan is initializer for concentration
