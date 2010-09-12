@@ -95,6 +95,7 @@ QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData,
 
    QStringList q( "update_experiment" );
    q  << QString::number( ExpData.expID )
+      << QString( ExpData.expGUID )
       << QString::number( ExpData.projectID )
       << ExpData.runID
       << QString::number( ExpData.labID )

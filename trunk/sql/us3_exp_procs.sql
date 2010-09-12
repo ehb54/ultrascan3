@@ -236,6 +236,7 @@ DROP PROCEDURE IF EXISTS update_experiment$$
 CREATE PROCEDURE update_experiment ( p_personGUID   CHAR(36),
                                      p_password     VARCHAR(80),
                                      p_experimentID INT,
+                                     p_expGUID      CHAR(36),
                                      p_projectID    INT,
                                      p_runID        VARCHAR(80),
                                      p_labID        INT,
@@ -275,6 +276,7 @@ BEGIN
 
     ELSE
       UPDATE experiment SET
+        experimentGUID     = p_expGUID,
         projectID          = p_projectID,
         runID              = p_runID,
         labID              = p_labID,
