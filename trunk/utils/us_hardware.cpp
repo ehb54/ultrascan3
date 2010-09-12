@@ -84,3 +84,109 @@ bool US_Hardware::readRotorInfo( QVector< RotorInfo >& rotor_list )
 
    return false;
 }
+
+bool US_Hardware::readRotorMap( QMap< QString, QString >& rotor_map )
+{
+   bool    ok    = false;
+   QString fname = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) )
+                   + "/etc/rotor.xml";
+
+   QFile filei( fname );
+
+   if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QXmlStreamReader xml( &filei );
+      rotor_map.clear();
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "rotor" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+
+            QString serial      = a.value( "serial"  ).toString();
+            QString type        = a.value( "type"    ).toString();
+            QString stretch     = a.value( "stretch" ).toString();
+
+            rotor_map[ serial ] = type + ":" + stretch;
+         }
+      }
+
+      ok        = true;
+   }
+
+   return ok;
+}
+
+bool US_Hardware::readRotorMap( US_DB2* db,
+                                QMap< QString, QString >& rotor_map )
+{
+   bool    ok    = false;
+
+   if ( db == 0  ||  ! db->isConnected() )
+      return readRotorMap( rotor_map );
+
+   QStringList query;
+   QStringList rotorIDs;
+   QStringList locNames;
+
+   query << "get_experiment_desc" << "0";
+   db->query( query );
+   db->next();
+
+   QString labID   = db->value( 3 ).toString();
+
+   query.clear();
+   query << "get_rotor_names" << labID;
+   db->query( query );
+
+   while ( db->next() )
+   {
+      rotorIDs << db->value( 0 ).toString();
+      locNames << db->value( 1 ).toString();
+   }
+
+   for ( int ii = 0; ii < rotorIDs.size(); ii++ )
+   {
+      QString rotorID     = rotorIDs.at( ii );
+      QString locName     = locNames.at( ii );
+
+      query.clear();
+      query << "get_rotor_info" << rotorID;
+      db->query( query );
+      db->next();
+
+      QString rotorName   = db->value( 1 ).toString();
+      QString serial      = db->value( 2 ).toString();
+      QString stretch     = db->value( 3 ).toString();
+      QString type        = !locName.isEmpty() ? locName : rotorName;
+
+      rotor_map[ serial ] = type + ":" + stretch;
+      ok                  = !serial.isEmpty() ? true : ok;
+   }
+
+   return ok;
+}
+
+bool US_Hardware::rotorValues( QString serial,
+      QMap< QString, QString >rotor_map, QString& type, double* rotcoeffs )
+{
+   bool ok = rotor_map.contains( serial );
+
+   if ( ok )
+   {
+      QString rotval = rotor_map[ serial ];
+      type           = rotval.section( ":", 0, 0 ).simplified();
+      QString coeffs = rotval.section( ":", 1, 1 ).simplified();
+
+      for ( int ii = 0; ii < 5; ii++ )
+         rotcoeffs[ ii ] = coeffs.section( " ", ii, ii ).toDouble();
+
+   }
+
+   return ok;
+}
+
+

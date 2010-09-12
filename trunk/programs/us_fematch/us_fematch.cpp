@@ -351,6 +351,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    ri_noise.count = 0;
 
    sdata          = 0;
+   db             = NULL;
 }
 
 // public function to get pointer to edit data
@@ -1540,7 +1541,6 @@ for (int jj=0;jj<nenois;jj++)
       if ( msgBox.exec() == QMessageBox::Yes )
       {
          US_Passwd    pw;
-         US_DB2*      db = NULL;
 
          if ( !def_local )
              db           = new US_DB2( pw.getPasswd() );
@@ -1592,7 +1592,14 @@ qDebug() << " baseline plateau" << edata->baseline << edata->plateau;
    sdata          = new US_DataIO2::RawData();
 
    // initialize simulation parameters using edited data information
-   simparams.initFromData( *edata );
+   simparams.initFromData( db, *edata );
+qDebug() << " initFrDat serial type coeffs" << simparams.rotorSerial
+   << simparams.rotorType
+   << simparams.rotorcoeffs[0]
+   << simparams.rotorcoeffs[1]
+   << simparams.rotorcoeffs[2]
+   << simparams.rotorcoeffs[3]
+   << simparams.rotorcoeffs[4];
 
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;
@@ -2245,9 +2252,9 @@ int US_FeMatch::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs 
    else
    {
       US_Passwd    pw;
-      US_DB2       db( pw.getPasswd() );
+      db  = ( db == NULL ) ? new US_DB2( pw.getPasswd() ) : db;
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
          return 0;
       }
@@ -2258,12 +2265,12 @@ int US_FeMatch::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs 
       query.clear();
 
       query << "get_model_desc" << invID;
-      db.query( query );
+      db->query( query );
 
-      while ( db.next() )
+      while ( db->next() )
       {  // accumulate from db desc entries matching editGUID;
-         xmGUID  = db.value( 1 ).toString();
-         xeGUID  = db.value( 3 ).toString();
+         xmGUID  = db->value( 1 ).toString();
+         xeGUID  = db->value( 3 ).toString();
 
          if ( xeGUID == eGUID )
             mGUIDs << xmGUID;
@@ -2331,9 +2338,9 @@ int US_FeMatch::noises_in_model( bool ondisk, QString mGUID,
    else
    {
       US_Passwd    pw;
-      US_DB2       db( pw.getPasswd() );
+      db  = ( db == NULL ) ? new US_DB2( pw.getPasswd() ) : db;
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != US_DB2::OK )
       {
          return 0;
       }
@@ -2344,13 +2351,13 @@ int US_FeMatch::noises_in_model( bool ondisk, QString mGUID,
       query.clear();
 
       query << "get_noise_desc" << invID;
-      db.query( query );
+      db->query( query );
 
-      while ( db.next() )
+      while ( db->next() )
       {  // accumulate from db desc entries matching editGUID;
-         xnGUID  = db.value( 1 ).toString();
-         xmGUID  = db.value( 3 ).toString();
-         xntype  = db.value( 2 ).toString();
+         xnGUID  = db->value( 1 ).toString();
+         xmGUID  = db->value( 3 ).toString();
+         xntype  = db->value( 2 ).toString();
          xntype  = xntype.contains( "ri_nois", Qt::CaseInsensitive ) ?
                    "ri" : "ti";
 

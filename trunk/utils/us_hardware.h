@@ -5,6 +5,7 @@
 #include <QtCore>
 #include "us_extern.h"
 #include "us_util.h"
+#include "us_db2.h"
 
 //! \brief A set of static functions to handle hardware data
 class US_EXTERN US_Hardware
@@ -17,8 +18,8 @@ class US_EXTERN US_Hardware
       public:
       int     serial_number;    //!< Rotor's serial number (series starts at zero)
       QString type;             //!< Name of rotor
-      double  coefficient[ 5 ]; //!< Stretching coefficient for 5th order polynomial 
-                                //!< (radius vs speed in rpm)
+      double  coefficient[ 5 ]; //!< Stretching coefficients for 5th order
+                                //!<  polynomial  (radius vs speed in rpm)
    };
 
    //! General centerpiece characteristics
@@ -48,6 +49,23 @@ class US_EXTERN US_Hardware
       double  width;
    };
 
+   //! \brief Read rotor information from a local XML file to a QMap
+   //! \param rotor_map Reference of QMap into which to place data
+   static bool readRotorMap( QMap< QString, QString >& );
+   
+   //! \brief Read rotor information from the database to a QMap
+   //! \param db        Pointer to opened database connection
+   //! \param rotor_map Reference of QMap into which to place data
+   static bool readRotorMap( US_DB2*, QMap< QString, QString >& );
+   
+   //! \brief Read rotor information from the database to a QMap
+   //! \param serial    Rotor serial for which to get values
+   //! \param rotor_map QMap of serial,value mappings
+   //! \param type      Reference into which to return rotor type string
+   //! \param rotcoeffs Array of 5 doubles to fill with rotor coefficients
+   static bool rotorValues ( QString, QMap< QString, QString >,
+                             QString&, double* );
+   
    //! \brief Read rotor information into a structure
    //! \param rotor_list Reference of structure data to place data
    static bool readRotorInfo      ( QVector< RotorInfo >& );

@@ -6,6 +6,7 @@
 #include "us_noise_loader.h"
 #include "us_resplot.h"
 #include "us_dataIO2.h"
+#include "us_db2.h"
 #include "us_astfem_rsa.h"
 #include "us_model.h"
 #include "us_noise.h"
@@ -113,6 +114,8 @@ class US_EXTERN US_FeMatch : public US_Widgets
       US_DataIO2::Scan*           dscan;
       US_DataIO2::RawData*        rdata;
       US_DataIO2::RawData*        sdata;
+
+      US_DB2*                     db;
 
       US_Model                    model;
       US_Noise                    ri_noise;

@@ -21,7 +21,8 @@ US_SimulationParameters::US_SimulationParameters()
    rnoise            = 0.0;  
    tinoise           = 0.0;      
    rinoise           = 0.0;     
-   rotor             = 0;      
+   rotorSerial       = "0";      
+   rotorType         = "Simulation";      
    band_forming      = false;   
    band_volume       = 0.0015;
    bottom_position   = 7.2;
@@ -45,7 +46,7 @@ US_SimulationParameters::SpeedProfile::SpeedProfile()
 }
 
 // Set simulation parameter values from an experimental EditedData set.
-void US_SimulationParameters::initFromData( US_DataIO2::EditedData& editdata )
+void US_SimulationParameters::initFromData( US_DB2* db, US_DataIO2::EditedData& editdata )
 {
    SpeedProfile sp;
 
@@ -56,7 +57,8 @@ void US_SimulationParameters::initFromData( US_DataIO2::EditedData& editdata )
    double rpmnext      = rpm;
    int    jj           = 0;
 
-   rotor               = 1;
+   rotorSerial         = "1";
+   rotorType           = "AN50";
    QString fn          = US_Settings::resultDir() + "/" + editdata.runID + "/"
                          + editdata.runID + "." + editdata.dataType + ".xml";
    QFile file( fn );
@@ -72,8 +74,7 @@ void US_SimulationParameters::initFromData( US_DataIO2::EditedData& editdata )
          if ( xml.isStartElement()  &&  xml.name() == "rotor" )
          {  // pick up rotor serial from  <rotor ...serial="1"...
             QXmlStreamAttributes a = xml.attributes();
-            QString aser  = a.value( "serial" ).toString();
-            rotor         = aser.isEmpty() ? rotor : aser.toInt();
+            rotorSerial   = a.value( "serial" ).toString();
          }
       }
 
@@ -119,7 +120,7 @@ void US_SimulationParameters::initFromData( US_DataIO2::EditedData& editdata )
    speed_step.append( sp );
 
    // set rotor coefficients, channel bottom position from hardware files
-   setHardware( rotor, 0, 0 );
+   setHardware( db, rotorSerial, 0, 0 );
 
    // calculate bottom using RPM, start bottom, and rotor coefficients
    bottom              = US_AstfemMath::calc_bottom( rpm, bottom_position,
@@ -127,24 +128,30 @@ void US_SimulationParameters::initFromData( US_DataIO2::EditedData& editdata )
 }
 
 // Set parameters from hardware files, related to rotor and centerpiece
-void US_SimulationParameters::setHardware( int rx, int cp, int ch )
+void US_SimulationParameters::setHardware( US_DB2* db, QString serial,
+      int cp, int ch )
 {
-   rotor            = rx;
+   rotorSerial      = serial;
    bottom_position  = 72.0;
 
    QVector< US_Hardware::CenterpieceInfo > cp_list;
-   QVector< US_Hardware::RotorInfo >       rotor_list;
-   rotor_list.clear();
+   QMap   < QString, QString             > rotor_map;
+   rotor_map.clear();
 
    if ( US_Hardware::readCenterpieceInfo( cp_list ) )
       bottom_position     = cp_list[ cp ].bottom_position[ ch ];
 
-   if ( US_Hardware::readRotorInfo( rotor_list ) )
+   if ( US_Hardware::readRotorMap( db, rotor_map ) )
    {
-      for ( int ii = 0; ii < 5; ii++ )
-         rotorcoeffs[ ii ] = rotor_list[ rotor ].coefficient[ ii ];
+      US_Hardware::rotorValues( serial, rotor_map, rotorType, rotorcoeffs );
    }
 
    return;
+}
+
+// Set parameters from hardware files, related to rotor and centerpiece
+void US_SimulationParameters::setHardware( QString serial, int cp, int ch )
+{
+   return setHardware( NULL, serial, cp, ch );
 }
 
