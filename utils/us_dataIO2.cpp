@@ -131,14 +131,6 @@ int US_DataIO2::writeRawData( const QString& file, RawData& data )
       }
    }
 
-   // Write all types as little endian
-   uchar c[ 4 ];
-   qToLittleEndian( (quint16)( min_radius * 1000.0 ), c );
-   write( ds, (char*)c, 2, crc );
-
-   qToLittleEndian( (qint16)( max_radius * 1000.0 ), c );
-   write( ds, (char*)c, 2, crc );
-
    // Distance between radius entries
    //double r1    = data.x[ 0 ].radius;
    //double r2    = data.x[ 1 ].radius;
@@ -164,7 +156,15 @@ int US_DataIO2::writeRawData( const QString& file, RawData& data )
       uchar u[ 4 ];
    } ui;
 
-   uf.f = (float) ( r2 - r1 );  //delta r
+   uf.f = (float) min_radius;  // min_radius
+   qToLittleEndian( uf.u, ui.u );
+   write( ds, ui.c, 4, crc );
+
+   uf.f = (float) max_radius;  // max_radius
+   qToLittleEndian( uf.u, ui.u );
+   write( ds, ui.c, 4, crc );
+
+   uf.f = (float) ( r2 - r1 );  // delta r
    qToLittleEndian( uf.u, ui.u );
    write( ds, ui.c, 4, crc );
 
@@ -300,7 +300,7 @@ int US_DataIO2::readRawData( const QString& file, RawData& data )
       unsigned char ver[ 2 ];
       read( ds, (char*) ver, 2, crc );
       quint32 version = ( ( ver[ 0 ] & 0x0f ) << 8 ) | ( ver[ 1 ] & 0x0f );
-      if ( version != format_version ) throw BAD_VERSION;
+      if ( version != format_version  && version != 2 ) throw BAD_VERSION;
 
       // Read and get the file type
       char type[ 3 ];
@@ -328,13 +328,6 @@ int US_DataIO2::readRawData( const QString& file, RawData& data )
          quint16 I;
       } si;
 
-      read( ds, si.c, 2, crc );
-      double min_radius = qFromLittleEndian( si.I ) / 1000.0;
-
-      read( ds, si.c, 2, crc );
-      // Unused
-      //double max_radius = qFromLittleEndian( si.I ) / 1000.0;
-
       union
       {
          char   c[ 4 ];
@@ -348,6 +341,31 @@ int US_DataIO2::readRawData( const QString& file, RawData& data )
          qint32 I;
          float  f;
       } u2;
+
+      double min_radius;
+      //double max_radius;  //unused
+
+      // Workaround to read old versions of auc files
+      if ( version == 2 )
+      {
+         read( ds, si.c, 2, crc );
+         min_radius = qFromLittleEndian( si.I ) / 1000.0;
+
+         read( ds, si.c, 2, crc );
+         // Unused
+         //max_radius = qFromLittleEndian( si.I ) / 1000.0;
+      }
+      else  // version > 2 
+      {
+         read( ds, u1.c, 4, crc );
+         u2.I = qFromLittleEndian( u1.I );
+         min_radius = u2.f;
+
+         read( ds, u1.c, 4, crc );
+         // Unused
+         //u2.I = qFromLittleEndian( u1.I );
+         //min_radius = u2.f;
+      }
 
       read( ds, u1.c, 4, crc );
       u2.I = qFromLittleEndian( u1.I );
