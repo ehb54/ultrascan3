@@ -91,6 +91,46 @@ qDebug() << "db get_exp_inf: rotorID" << db->value(6).toString();
 qDebug() << "db get_exp_inf: type   " << db->value(7).toString();
 qDebug() << "db get_exp_inf: comment" << db->value(10).toString();
 qDebug() << "db get_exp_inf: dateUpd" << db->value(12).toString();
+            if ( dexpGUID.isEmpty()  ||  dexpGUID.startsWith( "0000" ) )
+            {  // try to set DB experiment GUID
+               QString projID    = db->value(  1 ).toString();
+               QString runID     = db->value(  2 ).toString();
+               QString labID     = db->value(  3 ).toString();
+               QString instrID   = db->value(  4 ).toString();
+               QString operID    = db->value(  5 ).toString();
+               QString rotorID   = db->value(  6 ).toString();
+               QString type      = db->value(  7 ).toString();
+               QString runTemp   = db->value(  8 ).toString();
+               QString label     = db->value(  9 ).toString();
+               QString comment   = db->value( 10 ).toString();
+               QString centrf    = db->value( 11 ).toString();
+               QString persID    = db->value( 13 ).toString();
+               dexpGUID          = lexpGUID.isEmpty() ?
+                                   US_Util::new_guid() :
+                                   lexpGUID;
+               query.clear();
+               query << "update_experiment" << expID << dexpGUID
+                  << projID << runID << labID << instrID
+                  << operID << rotorID << type << runTemp << label
+                  << comment << centrf;
+               int stat = db->statusQuery( query );
+
+               if ( stat == US_DB2::OK )
+               {
+                  qDebug() << "Successful EXP update, GUID" << dexpGUID;
+                  rexpGUID         = dexpGUID;
+                  haverexp         = true;
+                  cdesc.parentGUID = rexpGUID;
+                  cdesc.parentID   = expID.toInt();
+                  qDebug() << "   EXP update, ID runID" << expID << runID;
+               }
+               else
+               {
+                  qDebug() << "*ERROR* EXP update, GUID" << dexpGUID;
+                  dexpGUID = "";
+                  status   = 6000 + stat;
+               }
+            }
          }
       }
 

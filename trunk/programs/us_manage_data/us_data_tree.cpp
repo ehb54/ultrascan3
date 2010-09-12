@@ -685,7 +685,8 @@ void US_DataTree::action_result( int stat, QString item_act )
          QMessageBox::warning( parentw,
                item_act + tr( " *ERROR*!" ),
                tr( "The \"%1\" action had an error: %2" )
-               .arg( item_act ).arg( stat ) );
+               .arg( item_act ).arg( stat )
+               + "\n\n" + da_process->lastError() );
       }
    }
 

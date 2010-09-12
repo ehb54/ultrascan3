@@ -4,6 +4,7 @@
 #include "us_data_model.h"
 #include "us_sync_exper.h"
 #include "us_util.h"
+#include "us_settings.h"
 
 // class to process operatations on data:  upload/download/remove
 US_DataProcess::US_DataProcess( US_DataModel* dmodel, QWidget* parent /*=0*/ )
@@ -14,9 +15,7 @@ US_DataProcess::US_DataProcess( US_DataModel* dmodel, QWidget* parent /*=0*/ )
    QString invID    = investig.section( ":", 0, 0 );
    db               = da_model->dbase();
 
-qDebug() << "DP:  investig invID" << investig << invID;
    syncExper        = new US_SyncExperiment( db, invID, parent );
-qDebug() << "DP:  syncExper created";
 }
 
 // perform a record upload to the database from local disk
@@ -46,24 +45,70 @@ qDebug() << "REC_ULD:RAW: runID" << runID << "  tripl" << tripl;
 
       stat = syncExper->synchronize( cdesc );
 qDebug() << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
+      QString expGUID  = cdesc.parentGUID;
 
       if ( stat == 0 )
       {
-         stat = db->writeBlobToDB( filepath,
-                                   QString( "upload_aucData" ),
-                                   idData );
-         stat = ( stat == 0 ) ? 0 : 3041;
+         stat   = db->writeBlobToDB( filepath,
+                                     QString( "upload_aucData" ),
+                                     idData );
+         errMsg = tr( "Raw upload writeBlobToDB() status %1" ).arg( stat );
+         stat   = ( stat == 0 ) ? 0 : 3041;
 
       }
    }
 
    else if ( cdesc.recType == 2 )
    {  // upload an EditedData record
-      stat = db->writeBlobToDB( filepath,
-                                QString( "upload_editData" ),
-                                idData );
-      qDebug() << "writeBlob Edited stat" << stat;
-      stat = ( stat == 0 ) ? 0 : 3042;
+      QString runID    = filename.section( ".",  0,  0 );
+      QString label    = filename.section( ".",  0,  1 );
+      QString editGUID = cdesc.dataGUID;
+      QString rawGUID  = cdesc.parentGUID;
+      QString editID   = QString::number( idData );
+
+      query.clear();
+      query << "get_rawDataID_from_GUID" << rawGUID;
+      db->query( query );
+
+      if ( ( stat = db->lastErrno() ) != US_DB2::OK )
+      {
+         errMsg = tr( "Raw DB record for Edit could not be accessed: %1" )
+                  .arg( stat );
+         stat   = 3052;
+      }
+
+      else
+      {
+         db->next();
+         qDebug() << "editUpld: rawGUID" << rawGUID;
+
+         QString rawDataID = db->value( 0 ).toString();
+
+         qDebug() << "editUpld: rawDataID" << rawDataID;
+         query.clear();
+
+         if ( idData < 0 )
+         {
+            query << "new_editedData" << rawDataID << editGUID << runID
+               << filename << cdesc.description;
+            db->query( query );
+            idData   = db->lastInsertID();
+            editID   = QString::number( idData );
+            qDebug() << "editUpld: NEW idData" << idData << editID;
+         }
+
+         query << "update_editedData" << editID << rawDataID << editGUID
+            << label << filename << cdesc.description;
+         db->query( query );
+         qDebug() << "editUpld: label" << label;
+
+         stat = db->writeBlobToDB( filepath,
+                                   QString( "upload_editData" ),
+                                   idData );
+         errMsg = tr( "writeBlob Edited stat %1, idData %2" )
+            .arg( stat ).arg( idData );
+         stat = ( stat == 0 ) ? 0 : 3042;
+      }
    }
 
    else if ( cdesc.recType == 3 )
@@ -73,8 +118,9 @@ qDebug() << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
 
       model.load( filepath );         // load model from local disk
       model.update_coefficients();    // fill in any missing coefficients
-      stat = model.write( db );       // store model to database
-      stat = ( stat == 0 ) ? 0 : 3043;
+      stat   = model.write( db );     // store model to database
+      errMsg = tr( "model write to DB stat %1" ).arg( stat );
+      stat   = ( stat == 0 ) ? 0 : 3043;
    }
 
    else if ( cdesc.recType == 4 )
@@ -82,13 +128,15 @@ qDebug() << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
       US_Noise noise;
 
       noise.load( filepath );
-      stat = noise.write( db );
-      stat = ( stat == 0 ) ? 0 : 3044;
+      stat   = noise.write( db );
+      errMsg = tr( "noise write to DB stat %1" ).arg( stat );
+      stat   = ( stat == 0 ) ? 0 : 3044;
    }
 
    else
    {  // *ERROR*:  invalid type
-      stat        = 3045;
+      errMsg = tr( "upload attempt with type=%1" ).arg( cdesc.recType );
+      stat   = 3045;
    }
 
    return stat;
@@ -99,25 +147,35 @@ int US_DataProcess::record_download( int irow )
 {
    int stat = 0;
    QStringList query;
-   QString     filepath = "";
-   QString     dataID;
-   QString     dataGUID;
-   int         idData;
 
    cdesc            = da_model->row_datadesc( irow );
-   idData           = cdesc.recordID;
-   dataID           = QString::number( idData );
-   filepath         = cdesc.filename;
-   dataGUID         = cdesc.dataGUID;
+
+   int idData       = cdesc.recordID;
+   QString dataID   = QString::number( idData );
+   QString filepath = cdesc.filename;
+   QString dataGUID = cdesc.dataGUID;
+   QString filename = filepath.section( "/", -1, -1 );
+   QString runID    = filename.section( ".",  0,  0 );
+
+   filepath         = ( filepath == filename ) ?
+                      US_Settings::resultDir() + "/" + runID + "/" + filename :
+                      filepath;
 
    if      ( cdesc.recType == 1 )
    {  // download a Raw record
-      stat = db->readBlobFromDB( filepath, "download_aucData", idData );
+      
+      stat   = db->readBlobFromDB( filepath, "download_aucData", idData );
+      if ( stat != 0 )
+         errMsg = tr( "Raw download status %1" ).arg( stat )
+                  + "\n " + filepath;
    }
 
    else if ( cdesc.recType == 2 )
    {  // download an EditedData record
-      stat = db->readBlobFromDB( filepath, "download_editData", idData );
+      stat   = db->readBlobFromDB( filepath, "download_editData", idData );
+      if ( stat != 0 )
+         errMsg = tr( "Edited download status %1" ).arg( stat )
+                  + "\n " + filepath;
    }
 
    else if ( cdesc.recType == 3 )
@@ -135,7 +193,8 @@ int US_DataProcess::record_download( int irow )
 
          if ( stat != US_DB2::OK )
          {
-            stat = 3023;  // download write error
+            errMsg = tr( "Model write for download, status %1" ).arg( stat );
+            stat   = 3023;  // download write error
          }
 
          else
@@ -144,7 +203,8 @@ int US_DataProcess::record_download( int irow )
 
       else
       {
-         stat = 3022;     // download read error
+         errMsg = tr( "Model load for download, status %1" ).arg( stat );
+         stat   = 3022;     // download read error
       }
    }
 
@@ -156,7 +216,8 @@ int US_DataProcess::record_download( int irow )
 
       if ( db->lastErrno() != US_DB2::OK )
       {
-         stat = 3024;
+         errMsg = tr( "Noise info for download, status %1" ).arg( stat );
+         stat   = 3024;
       }
 
       else
@@ -168,7 +229,8 @@ int US_DataProcess::record_download( int irow )
          
          if ( !file.open( QIODevice::WriteOnly | QIODevice::Text ) )
          {
-            stat = 3034;
+            errMsg = tr( "Noise file download open error %1" ).arg( filepath );
+            stat   = 3034;
          }
 
          else
@@ -181,7 +243,8 @@ int US_DataProcess::record_download( int irow )
 
    else
    {  // *ERROR*:  invalid type
-      stat        = 3015;
+      errMsg = tr( "download attempt with type=%1" ).arg( cdesc.recType );
+      stat   = 3015;
    }
 
    return stat;
@@ -200,9 +263,10 @@ int US_DataProcess::record_remove_db( int irow )
       query.clear();
       query << "delete_rawData" << dataID;
 
-      if ( ! db->statusQuery( query ) )
+      if ( ( stat = db->statusQuery( query ) ) != 0 )
       {
-         stat = 2011;
+         errMsg = tr( "delete_rawData status=%1" ).arg( stat );
+         stat   = 2011;
       }
    }
 
@@ -211,9 +275,10 @@ int US_DataProcess::record_remove_db( int irow )
       query.clear();
       query << "delete_editedData" << dataID;
 
-      if ( ! db->statusQuery( query ) )
+      if ( ( stat = db->statusQuery( query ) ) != 0 )
       {
-         stat = 2012;
+         errMsg = tr( "delete_editedData status=%1" ).arg( stat );
+         stat   = 2012;
       }
    }
 
@@ -224,8 +289,8 @@ int US_DataProcess::record_remove_db( int irow )
 
       if ( ( stat = db->statusQuery( query ) ) != 0 )
       {
-         qDebug() << "delete model stat" << stat;
-         stat = 2013;
+         errMsg = tr( "delete_model status=%1" ).arg( stat );
+         stat   = 2013;
       }
    }
 
@@ -234,15 +299,17 @@ int US_DataProcess::record_remove_db( int irow )
       query.clear();
       query << "delete_noise" << dataID;
 
-      if ( ! db->statusQuery( query ) )
+      if ( ( stat = db->statusQuery( query ) ) != 0 )
       {
-         stat = 2014;
+         errMsg = tr( "delete_noise status=%1" ).arg( stat );
+         stat   = 2014;
       }
    }
 
    else
    {  // *ERROR*:  invalid type
-      stat        = 2015;
+      errMsg = tr( "DB remove attempt for type=%1" ).arg( cdesc.recType );
+      stat   = 2015;
    }
    return stat;
 }
@@ -276,17 +343,15 @@ int US_DataProcess::record_remove_local( int irow )
 
       else
       {  // an error occurred in removing
-         stat     = 1000;
-         qDebug() << "*ERROR* removing row file " << filename
-            << "  (row" << irow << ")";
+         errMsg = tr( "File remove error,\n" ) + filepath;
+         stat   = 1000;
       }
    }
 
    else
    {  // file did not exist
-      stat     = 2000;
-      qDebug() << "*ERROR* attempt to remove non-existent file " << filename
-         << "  (row" << irow << ")";
+      errMsg = tr( "*ERROR* attempt to remove non-existent file\n" ) + filepath;
+      stat   = 2000;
    }
 
    return stat;

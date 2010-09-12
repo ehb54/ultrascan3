@@ -161,9 +161,73 @@ void US_DataModel::scan_dbase( )
    progress->setMaximum( nstep );
    ddescs.clear();
 
-QList<int> times;
-QStringList tevent;
-QTime t; t.start();
+   query.clear();
+   query << "get_experiment_desc" << invID;
+   db->query( query );
+   QStringList expIDs;
+
+   while ( db->next() )
+   {
+      QString expID = db->value( 0 ).toString();
+      QString runID = db->value( 1 ).toString();
+      QString etype = db->value( 2 ).toString();
+      qDebug() << " expID runID type" << expID << runID << etype;
+      expIDs << expID;
+   }
+
+   qDebug() << "  expID expGUID runID label comment date";
+
+   for ( int ii = 0; ii < expIDs.size(); ii++ )
+   {
+      QString expID = expIDs[ ii ];
+      query.clear();
+      query << "get_experiment_info" << expID;
+      db->query( query );
+      db->next();
+      QString expGUID = db->value( 0 ).toString();
+      QString runID   = db->value( 2 ).toString();
+      QString label   = db->value( 9 ).toString();
+      QString comment = db->value( 10 ).toString();
+      QString date    = US_Util::toUTCDatetimeText( db->value( 12 )
+                        .toDateTime().toUTC().toString( Qt::ISODate ), true );
+      qDebug() << "  " << expID << expGUID << runID << label << comment << date;
+   }
+//*DEBUG*
+QString labID = db->value( 3 ).toString();
+QStringList rotorIDs;
+QStringList locNames;
+query.clear();
+query << "get_rotor_names" << labID;
+db->query( query );
+while ( db->next() )
+{
+  rotorIDs << db->value(0).toString();
+  locNames << db->value(1).toString();
+}
+qDebug() << "ROTOR ID lname name serial absname stretch omeg2t GUID";
+for ( int ii=0; ii<rotorIDs.size(); ii++ )
+{
+  QString rotorID = rotorIDs.at(ii);
+  QString locName = locNames.at(ii);
+  query.clear();
+  query << "get_rotor_info" << rotorID;
+  db->query( query );
+  if ( db->next() )
+  {
+  QString rotorGUID = db->value(0).toString();
+  QString rotorName = db->value(1).toString();
+  QString serialNum = db->value(2).toString();
+  QString stretchF  = db->value(3).toString();
+  QString omega2t   = db->value(4).toString();
+  QString abrotName = db->value(5).toString();
+  qDebug() << "   " << rotorID << locName << rotorName << serialNum
+     << abrotName << stretchF << omega2t << rotorGUID;
+  }
+  else
+    qDebug() << "   *** get_rotor_info *ERROR* rotorID" << rotorID;
+}
+//*DEBUG*
+
    // get raw data IDs
    query.clear();
    query << "all_rawDataIDs" << invID;
@@ -174,7 +238,6 @@ QTime t; t.start();
       rawIDs << db->value( 0 ).toString();
    }
    progress->setValue( ++istep );
-tevent << "all_raw"; times << t.elapsed();
 
    // get edited data IDs
    query.clear();
@@ -186,8 +249,6 @@ tevent << "all_raw"; times << t.elapsed();
       edtIDs << db->value( 0 ).toString();
    }
    progress->setValue( ++istep );
-tevent << "all_edt"; times << t.elapsed();
-qDebug() << "TIMING ED step: " << istep;
 
    // get model IDs
    query.clear();
@@ -199,7 +260,6 @@ qDebug() << "TIMING ED step: " << istep;
       modIDs << db->value( 0 ).toString();
    }
    progress->setValue( ++istep );
-tevent << "all_mod"; times << t.elapsed();
 
    // get noise IDs
    query.clear();
@@ -211,8 +271,6 @@ tevent << "all_mod"; times << t.elapsed();
       noiIDs << db->value( 0 ).toString();
    }
    progress->setValue( ++istep );
-tevent << "all_noi"; times << t.elapsed();
-qDebug() << "TIMING NO step: " << istep;
    nraws = rawIDs.size();
    nedts = edtIDs.size();
    nmods = modIDs.size();
@@ -231,7 +289,6 @@ qDebug() << "BrDb: kr ke km kn"
       query << "get_rawData" << recID;
       db->query( query );
       db->next();
-if ( ii<2 ) tevent << "raw 02 "; times << t.elapsed();
 
       //db.readBlobFromDB( fname, "download_aucData", irecID );
               rawGUID   = db->value( 0 ).toString();
@@ -289,8 +346,6 @@ if ( ii<2 ) tevent << "raw 02 "; times << t.elapsed();
       ddescs << cdesc;
       progress->setValue( ( istep += 5 ) );
    }
-tevent << "nraws  "; times << t.elapsed();
-qDebug() << "TIMING NR step: " << istep;
 
    for ( int ii = 0; ii < nedts; ii++ )
    {  // get edited data information from DB
@@ -338,10 +393,10 @@ qDebug() << "BrDb:     edt ii id eGID rGID label date"
       //cdesc.filename    = filename;
       cdesc.filename    = "";
       cdesc.contents    = contents;
-      cdesc.label       = label;
       cdesc.description = ( comment.isEmpty() ) ?
                           filename.section( ".", 0, 2 ) :
                           comment;
+      cdesc.label       = cdesc.description;
       cdesc.lastmodDate = date;
 
       if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
@@ -353,8 +408,6 @@ qDebug() << "BrDb:     edt ii id eGID rGID label date"
       ddescs << cdesc;
       progress->setValue( ( istep += 5 ) );
    }
-tevent << "nedts  "; times << t.elapsed();
-qDebug() << "TIMING NE step: " << istep;
 
    for ( int ii = 0; ii < nmods; ii++ )
    {  // get model information from DB
@@ -365,13 +418,11 @@ qDebug() << "TIMING NE step: " << istep;
       query << "get_model_info" << recID;
       db->query( query );
       db->next();
-if ( ii<2 ) tevent << "mod 02 "; times << t.elapsed();
 
       QString modelGUID = db->value( 0 ).toString();
       QString descript  = db->value( 1 ).toString();
               contents  = db->value( 2 ).toString();
       QString label     = descript;
-if ( ii<2 ) tevent << "mod 03 "; times << t.elapsed();
 
       if ( label.length() > 40 )
          label = descript.left( 18 ) + "..." + descript.right( 19 );
@@ -380,7 +431,6 @@ if ( ii<2 ) tevent << "mod 03 "; times << t.elapsed();
       int     jj        = contents.indexOf( "editGUID=" );
       QString editGUID  = ( jj < 1 ) ? "" :
                           contents.mid( jj ).section( QChar( '"' ), 1, 1 );
-if ( ii<2 ) tevent << "mod 04 "; times << t.elapsed();
 //qDebug() << "BrDb:       mod ii id mGID dsc"
 //   << ii << irecID << modelGUID << descript;
 
@@ -397,7 +447,6 @@ if ( ii<2 ) tevent << "mod 04 "; times << t.elapsed();
 
       else
          contents     = "";
-if ( ii<2 ) tevent << "mod 05 "; times << t.elapsed();
 
       cdesc.recordID    = irecID;
       cdesc.recType     = 3;
@@ -420,10 +469,7 @@ if ( ii<2 ) tevent << "mod 05 "; times << t.elapsed();
 
       ddescs << cdesc;
       progress->setValue( ++istep );
-if ( ii<2 ) tevent << "mod 09 "; times << t.elapsed();
    }
-tevent << "nmods  "; times << t.elapsed();
-qDebug() << "TIMING NM step: " << istep;
 
    for ( int ii = 0; ii < nnois; ii++ )
    {  // get noise information from DB
@@ -481,10 +527,6 @@ qDebug() << "TIMING NM step: " << istep;
       ddescs << cdesc;
       progress->setValue( ++istep );
    }
-tevent << "nnois  "; times << t.elapsed();
-for (int jj=0; jj<tevent.size(); jj++ )
- qDebug() << "TIMINGS: " << tevent[jj] << times[jj];
-qDebug() << "TIMING DN step: " << istep;
 
    progress->setValue( nstep );
    lb_status->setText( tr( "Database Review Complete" ) );
