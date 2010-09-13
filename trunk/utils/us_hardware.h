@@ -58,7 +58,7 @@ class US_EXTERN US_Hardware
    //! \param rotor_map Reference of QMap into which to place data
    static bool readRotorMap( US_DB2*, QMap< QString, QString >& );
    
-   //! \brief Read rotor information from the database to a QMap
+   //! \brief Get type, coefficient values for a specified rotor
    //! \param serial    Rotor serial for which to get values
    //! \param rotor_map QMap of serial,value mappings
    //! \param type      Reference into which to return rotor type string
