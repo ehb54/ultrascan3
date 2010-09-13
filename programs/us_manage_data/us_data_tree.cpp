@@ -365,15 +365,15 @@ void US_DataTree::dtree_help()
       tr( "  appropriate for the particular record shown in the row.\n" ) +
       tr( "  Possible actions are:\n" ) +
       tr( "    \"upload to DB\"\n" ) +
-      tr( "       -> Upload this local record/tree to DB;\n" ) +
+      tr( "       -> Upload this local record to the database;\n" ) +
       tr( "    \"download to local\"\n" ) +
-      tr( "       -> Download this DB record/tree to local disk.\n" ) +
+      tr( "       -> Download this DB record to local disk.\n" ) +
       tr( "    \"remove from DB\"\n" ) +
-      tr( "       -> Remove this record/tree from DB.\n" ) +
+      tr( "       -> Remove this record from the database.\n" ) +
       tr( "    \"remove from local\"\n" ) +
-      tr( "       > Remove this record/tree from local disk.\n" ) +
+      tr( "       > Remove this record from local disk.\n" ) +
       tr( "    \"remove both\"\n" ) +
-      tr( "       -> Remove this record/tree from both DB and local.\n" ) +
+      tr( "       -> Remove this record from both DB and local.\n" ) +
       tr( "    \"show details\"\n" ) +
       tr( "       -> Pop up a text dialog with details about the record.\n" ) +
       tr( "Detailed Help --\n\n" ) +

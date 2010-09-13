@@ -1,0 +1,72 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III US_ManageData Context Menus'
+%]
+
+    <h2> Manage Data Tree View Context Menus:</h2>
+
+    <p> One of the main purposes of the Manage Data application is to bring
+    each data set in the database and on local disk into synchronization.
+    The processes to accomplish this are accessible through a context menu
+    that pops up when you right-mouse-button click on a tree row. You can
+    then move the cursor until a desired process is highlighted and release
+    the mouse button to initiate that process.<p>
+
+    <p> There is no "Synchronize" option. The best method to accomplish
+    identical records in the database and locally is something you must
+    decide for each individual record. Sometimes the decision is easy:
+    download when no local record exists; upload when no database one exists.
+    Other times, a combination of upload, download, remove is called for in
+    an order dictated by which version of a record is the latest or is
+    regarded as the most reliable. A "details" display can help in making
+    that determination.</p>
+
+    <img src="images/manage_data_cmenu-1.png" alt="Context Menu Samp-1"/>
+
+    <h3> Context menu processes:</h3>
+
+    <ul>
+        <li>
+            <b>upload to DB</b> Create or replace a database copy of an
+            existing local record.
+        </li>
+        <li>
+            <b>download to local</b> Create or replace a local copy of an
+            existing database record.
+        </li>
+        <li>
+            <b>remove from DB</b> Remove a data record from the database.
+        </li>
+        <li>
+            <b>remove from local</b> Remove a data record from local disk.
+        </li>
+        <li>
+            <b>remove both</b> Remove a data record from both the database
+            and local disk.
+        </li>
+        <li>
+            <b>show details</b> Pop up a text window that gives details about
+            a data record. This may help in deciding how best to bring
+            database and local copies in sync. More on the detail window is
+            given below.
+        </li>
+    </ul>
+
+    <p> Note that not all process options are available at every row. Some
+    options are not possible for a particular data record. For example, in
+    the context menu for a local-only record, only "upload to DB",
+    "remove from local", and "show details" are enabled.</p>
+
+    <img src="images/manage_data_cmenu-2.png" alt="Context Menu Samp-2"/>
+
+    <p> The details window for a data record that is already in sync will show
+    that the DB and local copies have the same "Content Checks" (MD5 hash
+    and record size values).</p>
+
+    <img src="images/manage_data_sync.png" alt="Details - Sync"/>
+
+    <p> By contrast, the details window for a data record that exists on both
+    media but is marked "Conflict" shows non-matching Content Checks.</p>
+
+    <img src="images/manage_data_conf.png" alt="Details - Conflict"/>
+
+[% INCLUDE footer.us3 %]

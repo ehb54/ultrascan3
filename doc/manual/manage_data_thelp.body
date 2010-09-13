@@ -1,0 +1,21 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III US_ManageData Tree Help'
+%]
+
+    <h2> Manage Data Tree Help Text Window:</h2>
+
+    <p> Manage Data provides a way with the <b>Tree Help</b> button to
+    pop up a text window that explains about the tree view of your data.
+    This window can be moved off to the side and provide guidance on
+    the data tree until you become familiar with it. The text begins
+    with an explanation of column headers, followed by a color legend
+    for the row colors.</p>
+
+    <img src="images/manage_data_thelp-1.png" alt="Tree Help part 1"/>
+
+    <p> As you scroll down in the window, the text explains the use of
+    context menus that may be invoked on any row.</p>
+
+    <img src="images/manage_data_thelp-2.png" alt="Tree Help part 2"/>
+
+[% INCLUDE footer.us3 %]

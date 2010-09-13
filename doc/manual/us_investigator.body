@@ -5,8 +5,8 @@
     <p class='center'><img src="images/us_investigator.png" 
     alt="Investigator Window"/></p>
 
-    <p> Using this window, you can update any personal information.  Your
-    database autorizations must allow update privileges for the record
+    <p> Using this window, you can update any personal information. Your
+    database authorizations must allow update privileges for the record
     being changed.</p>
 
    <ol>
@@ -21,11 +21,16 @@
      <li>Change any data desired.</li>
 
      <li>Use <b>Update DB</b> to commit the changes to the database.</li>
+
+     <li>Use <b>Accept</b> to pass information back to the calling program and
+     close this dialog or <b>Cancel</b> to simply close without changing the
+     investigator data of the caller.</li>
    </ol> 
 
-   <p>Note:  Depending upon how the window is initiated, 
-   the <b>Close</b> button will change to <b>Accept</b>.  Accepting an
-   entry passes the selected person back to the calling program.</p>
+   <p>Note:  Depending upon how the window is initiated, the <b>Cancel</b>
+   button may be labelled <b>Close</b> with no <b>Accept</b> button present.</p>
 
+    <p class='center'><img src="images/us_investigator-2.png" 
+    alt="Investigator Search"/></p>
 
 [% INCLUDE footer.us3 %]

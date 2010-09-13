@@ -95,7 +95,7 @@ class US_EXTERN US_Investigator : public US_WidgetsDialog
       void get_inv_data( QListWidgetItem* );
 
       void help        ( void )
-      { showHelp.show_help( "tbl_investigator.html" ); };
+      { showHelp.show_help( "us_investigator.html" ); };
 
 };
 #endif

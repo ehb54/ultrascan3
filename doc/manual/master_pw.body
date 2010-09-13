@@ -7,7 +7,7 @@
     <p class='center'> <img src="images/master-pw.png" alt="Master Password
     Panel"/> </p>
 
-    <p> The user's master password needs to entered in order to access
+    <p> The user's master password needs to be entered in order to access
     encrypted database information.  Enter the old password and the new
     password twice to change the password.  When entering the password for the
     first time, the <b>Old Password</b> entry will not be shown. </p>

@@ -38,6 +38,7 @@
             <keyword name="fe-model"                    ref="fe_match.html"/>
             <keyword name="license"                     ref="register.html"/>
             <keyword name="register"                    ref="register.html"/>
+            <keyword name="manage-data"                 ref="manage_data.html"/>
         </keywords>
         <files>
             <file>mainstyle.css</file>
@@ -133,6 +134,21 @@
 
             <file>register.html</file>
             <file>images/register.png</file>
+
+            <file>manage_data.html</file>
+            <file>manage_data_thelp.html</file>
+            <file>manage_data_cmenu.html</file>
+            <file>images/manage_data.png</file>
+            <file>images/manage_data_pasw.png</file>
+            <file>images/manage_data_exp.png</file>
+            <file>images/manage_data_bshow.png</file>
+            <file>images/manage_data_bhide.png</file>
+            <file>images/manage_data_cmenu-1.png</file>
+            <file>images/manage_data_cmenu-2.png</file>
+            <file>images/manage_data_sync.png</file>
+            <file>images/manage_data_conf.png</file>
+            <file>images/manage_data_thelp-1.png</file>
+            <file>images/manage_data_thelp-2.png</file>
         </files>
     </filterSection>
 </QtHelpProject> 

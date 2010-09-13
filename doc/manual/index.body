@@ -193,7 +193,7 @@
       <li> <a href="database_config.html">Database Configuration</a> </li>
       <li> <a href="database.html#commit.html">Committing Data to the Database</a>
         <ol>
-          <li> <a href="tbl_investigator.html">Investigator contact information</a> </li>
+          <li> <a href="us_investigator.html">Investigator contact information</a> </li>
           <li> <a href="hydro.html">Buffer composition files for hydrodynamic corrections</a> </li>
           <li> <a href="vbar.html">Peptide sequence files</a> </li>
           <li> <a href="nucleotide.html">Nucleotide sequence files</a> </li>
