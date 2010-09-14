@@ -300,21 +300,13 @@ CREATE  TABLE IF NOT EXISTS channel (
   channelID int(11) NOT NULL AUTO_INCREMENT ,
   abstractChannelID int(11) NULL ,
   channelGUID CHAR(36) NULL ,
-  cellID int(11) NOT NULL ,
-  channelName CHAR(10) NULL ,
   comments TEXT NULL DEFAULT NULL ,
   dateUpdated TIMESTAMP NULL DEFAULT NULL ,
   PRIMARY KEY (channelID) ,
   INDEX ndx_channel_abstractChannelID (abstractChannelID ASC) ,
-  INDEX ndx_channel_cellID (cellID ASC) ,
   CONSTRAINT fk_channel_abstractChannelID
     FOREIGN KEY (abstractChannelID )
     REFERENCES abstractChannel (abstractChannelID )
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT fk_channel_cellID
-    FOREIGN KEY (cellID )
-    REFERENCES cell (cellID )
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
