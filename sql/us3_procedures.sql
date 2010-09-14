@@ -480,5 +480,6 @@ SOURCE us3_buffer_components.sql
 SOURCE us3_solution_procs.sql
 SOURCE us3_spectrum_procs.sql
 SOURCE us3_model_procs.sql
+SOURCE us3_noise_procs.sql
 
 DELIMITER ;
