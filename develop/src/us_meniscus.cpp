@@ -269,6 +269,7 @@ void US_Meniscus::update_plot()
    if (i == fit_points-1)
    {
       le_minimum->setText(tr("No minimum found!"));
+		pb_reset->setEnabled(true);
       return;
    }
    minimum = fitx[i];
