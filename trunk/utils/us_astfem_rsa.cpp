@@ -983,15 +983,19 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       last_time         = simscan.time;
       simscan.omega_s_t = w2t_integral;
 
+#if 0
       if ( show_movie  &&  (i%4) == 0 )
       {
 //qDebug() << "AR: new_scan i" << i;
          if ( stopFlag ) break;
-         emit new_scan( i );
+         //emit new_scan( i );
+         //emit new_scan( &simdata.radius, C0 );
+         emit new_scan( &simdata.radius, C0 );
          emit new_time( simscan.time );
          qApp->processEvents();
          //US_Sleep::msleep( 10 ); // 10 ms to let the display update.
       }
+#endif
      
       simscan.conc.clear();
 
@@ -1054,6 +1058,19 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       US_AstfemMath::tridiag( CA[0], CA[1], CA[2], right_hand_side, C1, N );
       
       for ( int j = 0; j < N; j++ ) C0[ j ] = C1[ j ];
+#if 1
+      //if ( show_movie  &&  (i%4) == 0 )
+      if ( show_movie )
+      {
+//qDebug() << "AR: new_scan i" << i;
+         if ( stopFlag ) break;
+         emit new_scan( &x, C0 );
+         emit new_time( simscan.time );
+         qApp->processEvents();
+         //US_Sleep::msleep( 10 ); // 10 ms to let the display update.
+         //US_Sleep::msleep( 1 ); // 10 ms to let the display update.
+      }
+#endif
    } // time loop
 
    C_init.radius.clear();
@@ -2344,16 +2361,19 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       w2t_integral     += ( simscan.time - last_time ) * sq(rpm_current * M_PI / 30 );
       last_time         = simscan.time;
       simscan.omega_s_t = w2t_integral;
-      
+    
+#if 0
       if ( show_movie  &&  (kkk%8) == 0 )
       {
 //qDebug() << "AR: new_scan kkk" << kkk;
          if ( stopFlag ) break;
-         emit new_scan( kkk+1 );
+         //emit new_scan( kkk+1 );
+         emit new_scan( &simdata.radius, CT0 );
          emit new_time( simscan.time );
          qApp->processEvents();
          //US_Sleep::msleep( 10 ); // 10 ms to let the display update.
       }
+#endif
 
       simscan.conc.clear();
       
@@ -2558,11 +2578,24 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
 
          CT0[ j ] = CT1[ j ];
       }
+#if 1
+      //if ( show_movie  &&  (kkk%8) == 0 )
+      if ( show_movie )
+      {
+//qDebug() << "AR: new_scan kkk" << kkk;
+         if ( stopFlag ) break;
+         emit new_scan( &x, CT0 );
+         emit new_time( simscan.time );
+         qApp->processEvents();
+         //US_Sleep::msleep( 10 ); // 10 ms to let the display update.
+         //US_Sleep::msleep( 1 ); // 10 ms to let the display update.
+      }
+#endif
    } // time loop
 
-   emit new_scan( NN + 1 );
-   qApp->processEvents();
-   US_Sleep::msleep( 10 ); // 10 ms to let the display update.
+   //emit new_scan( NN + 1 );
+   //qApp->processEvents();
+   //US_Sleep::msleep( 10 ); // 10 ms to let the display update.
 
    for ( int i = 0; i < Mcomp; i++ )
    {
