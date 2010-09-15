@@ -21,7 +21,7 @@ US_SimulationParameters::US_SimulationParameters()
    rnoise            = 0.0;  
    tinoise           = 0.0;      
    rinoise           = 0.0;     
-   rotorSerial       = "0";      
+   rotorSerial       = "UTHSCSA 1001";      
    rotorType         = "Simulation";      
    band_forming      = false;   
    band_volume       = 0.0015;
@@ -57,7 +57,7 @@ void US_SimulationParameters::initFromData( US_DB2* db, US_DataIO2::EditedData& 
    double rpmnext      = rpm;
    int    jj           = 0;
 
-   rotorSerial         = "1";
+   rotorSerial         = "UTHSCSA 1002";
    rotorType           = "AN50";
    QString fn          = US_Settings::resultDir() + "/" + editdata.runID + "/"
                          + editdata.runID + "." + editdata.dataType + ".xml";
@@ -72,7 +72,7 @@ void US_SimulationParameters::initFromData( US_DB2* db, US_DataIO2::EditedData& 
          xml.readNext();
 
          if ( xml.isStartElement()  &&  xml.name() == "rotor" )
-         {  // pick up rotor serial from  <rotor ...serial="1"...
+         {  // pick up rotor serial from  <rotor ...serial="UTHSCSA 1002"...
             QXmlStreamAttributes a = xml.attributes();
             rotorSerial   = a.value( "serial" ).toString();
          }
@@ -144,7 +144,12 @@ void US_SimulationParameters::setHardware( US_DB2* db, QString serial,
    if ( US_Hardware::readRotorMap( db, rotor_map ) )
    {
       US_Hardware::rotorValues( serial, rotor_map, rotorType, rotorcoeffs );
+//qDebug() << "setHardware: serial type coeff0" << serial << rotorType
+//   << rotorcoeffs[0];
    }
+
+   else
+      qDebug() << "setHardware:readRotorMap *ERROR*";
 
    return;
 }
