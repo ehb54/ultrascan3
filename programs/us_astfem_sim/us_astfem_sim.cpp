@@ -42,32 +42,8 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    init_simparams();
 
    stopFlag            = false;
-   movieFlag           = true;
+   movieFlag           = false;
    time_correctionFlag = true;
-
-   astfem_rsa = new US_Astfem_RSA( system, simparams );
-
-   connect( astfem_rsa, SIGNAL( new_scan         ( int ) ), 
-                        SLOT(   update_movie_plot( int ) ) );
-   
-
-   connect( astfem_rsa, SIGNAL( current_component( int ) ), 
-                        SLOT  ( update_progress  ( int ) ) );
-
-   connect( astfem_rsa, SIGNAL( new_time   ( double ) ), 
-                        SLOT  ( update_time( double ) ) );
-   
-   connect( astfem_rsa, SIGNAL( current_speed( int ) ), 
-                        SLOT  ( update_speed ( int ) ) );
-
-   connect( astfem_rsa, SIGNAL( calc_start( int ) ), 
-                        SLOT  ( start_calc( int ) ) );
-
-   connect( astfem_rsa, SIGNAL( calc_progress( int ) ), 
-                        SLOT  ( show_progress( int ) ) );
-
-   connect( astfem_rsa, SIGNAL( calc_done( void ) ), 
-                        SLOT  ( calc_over( void ) ) );
 
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing( 2 );
@@ -198,7 +174,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 void US_Astfem_Sim::init_simparams( void )
 {
    US_SimulationParameters::SpeedProfile sp;
-   QString rotor_serial = "0";
+   QString rotor_serial = "UTHSCSA 1001";
    double  rpm          = 45000.0;
 
    // set up bottom start and rotor coefficients from hardware file
@@ -377,8 +353,8 @@ void US_Astfem_Sim::start_simulation( void )
 {
 
    astfem_rsa = new US_Astfem_RSA( system, simparams );
-   connect( astfem_rsa, SIGNAL( new_scan         ( int ) ), 
-                        SLOT(   update_movie_plot( int ) ) );
+   connect( astfem_rsa, SIGNAL( new_scan( QVector< double >*, double* ) ), 
+                 SLOT( update_movie_plot( QVector< double >*, double* ) ) );
    connect( astfem_rsa, SIGNAL( current_component( int ) ), 
                         SLOT  ( update_progress  ( int ) ) );
    connect( astfem_rsa, SIGNAL( new_time   ( double ) ), 
@@ -875,33 +851,35 @@ void US_Astfem_Sim::calc_over( void )
 }
 
 // slot to update movie plot
-void US_Astfem_Sim::update_movie_plot( int /*scan_number*/ )
+void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
 {
    moviePlot->clear();
-#if 0
    double total_c = 0.0;
 
    for ( int i = 0; i < system.components.size(); i++ )
-      total_c += system.components[ i ].concentration;
+      total_c += system.components[ i ].signal_concentration;
 
    moviePlot->setAxisScale( QwtPlot::yLeft, 0, total_c * 2.0 );
    
-   double* r = new double [ x.size() ];
+   double* r = new double [ x->size() ];
    
-   for ( int i = 0; i < x.size(); i++ ) r[ i ] = x[ i ]; 
+   for ( int i = 0; i < x->size(); i++ ) r[ i ] = (*x)[ i ]; 
 
    QwtPlotCurve* curve = 
       new QwtPlotCurve( "Scan Number " + QString::number( curve_count++ ) );
 
    curve->setPen( QPen( Qt::yellow ) );
-   curve->setData( r, c, x.size() );
+   curve->setData( r, c, x->size() );
    curve->attach( moviePlot );
    
    moviePlot->replot();
    qApp->processEvents();
+//int k=x->size()-1;
+//int h=x->size()/2;
+//qDebug() << "UpdMovie: r0 rh rn c0 ch cn" << r[0] << r[h] << r[k]
+//   << c[0] << c[h] << c[k];
    
    delete [] r;
-#endif
 }
 
 void US_Astfem_Sim::dump_system( void )

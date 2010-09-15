@@ -49,7 +49,8 @@ class US_EXTERN US_Astfem_RSA : public QObject
       //!
       //! The connected slot receives the integer step count from loops in
       //! functions calculate_ni() and calculate_ra2().
-      void new_scan         ( int    );
+      //void new_scan         ( int    );
+      void new_scan         ( QVector< double >*, double* );
       //! \brief Signal that a calculate()/*_ni()/*_ra2() step is complete.
       //!
       //! The connected slot receives the scan time value from loops in
