@@ -15,6 +15,8 @@ BEGIN
   SET @ADMIN_EMAIL    = 'dzollars@gmail.com';
   SET @USERNAME       = LEFT( USER(), LOCATE( '@', USER() ) - 1 );
 
+  SELECT timediff( UTC_TIMESTAMP(), CURRENT_TIMESTAMP() ) INTO @UTC_DIFF;
+
 -- Some error codes
   SET @OK             = 0;
   SET @ERROR          = -1;
@@ -101,6 +103,34 @@ CREATE FUNCTION last_debug()
 
 BEGIN
   RETURN( @DEBUG );
+
+END$$
+
+DROP FUNCTION IF EXISTS timestamp2UTC$$
+CREATE FUNCTION timestamp2UTC( p_ts TIMESTAMP )
+  RETURNS TIMESTAMP
+  NO SQL
+
+BEGIN
+  DECLARE count_gmt INT;
+  DECLARE utcTime   TIMESTAMP;
+
+  -- Let's see if timezone support is there
+  SELECT COUNT(*) INTO count_gmt
+  FROM mysql.time_zone_name
+  WHERE name LIKE '%GMT%';
+
+  IF ( count_gmt > 0 ) THEN
+    -- yes, it looks like timezone support is there
+    SELECT CONVERT_TZ( p_ts, @@global.time_zone, 'GMT') INTO utcTime;
+
+  ELSE
+    -- no, not there
+    SELECT ADDTIME( p_ts, @UTC_DIFF ) INTO utcTime;
+
+  END IF;
+
+  RETURN( utcTime );
 
 END$$
 
@@ -475,7 +505,7 @@ SOURCE us3_exp_procs.sql
 SOURCE us3_expdata_procs.sql
 SOURCE us3_proj_procs.sql
 SOURCE us3_hardware_procs.sql
-SOURCE us3_hardware_data.sql
+-- SOURCE us3_hardware_data.sql
 SOURCE us3_buffer_components.sql
 SOURCE us3_solution_procs.sql
 SOURCE us3_spectrum_procs.sql

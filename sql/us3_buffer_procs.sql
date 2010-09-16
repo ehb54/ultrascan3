@@ -350,7 +350,7 @@ BEGIN
     WHERE bufferID = p_bufferID;
 
     DELETE FROM spectrum 
-    WHERE bufferID = p_bufferID
+    WHERE componentID = p_bufferID
     AND   componentType = 'Buffer';
 
     DELETE FROM buffer

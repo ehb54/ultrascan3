@@ -108,18 +108,11 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      -- For now, because there aren't any abstract rotors
       SELECT   r.rotorGUID, r.name, serialNumber, stretchFunction, 
-               omega2_t, 'Dummy abstract rotor' AS name
-      FROM     rotor r
-      WHERE    rotorID = p_rotorID;
-
-      -- When there are abstract rotors
---      SELECT   r.rotorGUID, r.name, serialNumber, stretchFunction, 
---               omega2_t, a.name
---      FROM     rotor r, abstractRotor a
---      WHERE    r.abstractRotorID = a.abstractRotorID
---      AND      rotorID = p_rotorID;
+               omega2_t, a.name, r.abstractRotorID
+      FROM     rotor r, abstractRotor a
+      WHERE    r.abstractRotorID = a.abstractRotorID
+      AND      rotorID = p_rotorID;
 
     END IF;
 
