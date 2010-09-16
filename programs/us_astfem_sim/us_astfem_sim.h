@@ -105,10 +105,8 @@ class US_Astfem_Sim : public US_Widgets
       void start_calc      ( int );
       void show_progress   ( int );
       void calc_over       ( void );
-      //void closeEvent      ( QCloseEvent* );
       
       void update_movie_plot( QVector< double >*, double* );
-      //void update_movie_plot( int );
 
       void update_time     ( double time )        
          { lcd_time ->display( time  ); };
