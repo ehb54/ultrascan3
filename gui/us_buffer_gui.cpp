@@ -181,8 +181,8 @@ US_BufferGui::US_BufferGui(
    main->addWidget( lb_viscosity, row, 1 );
 
    le_viscosity = us_lineedit();
-   connect( le_density, SIGNAL( textEdited( const QString& ) ), 
-                        SLOT  ( viscosity ( const QString& ) ) );
+   connect( le_viscosity, SIGNAL( textEdited( const QString& ) ), 
+                          SLOT  ( viscosity ( const QString& ) ) );
    main->addWidget( le_viscosity, row++, 2 );
 
    QLabel* lb_ph = us_label( tr( "pH:" ) );
@@ -856,8 +856,8 @@ void US_BufferGui::delete_db( void )
       q[ 1 ] = bufferID;
       status = db.statusQuery( q );
    }
-  
-   if ( status  != US_DB2::OK )
+
+   if ( status != US_DB2::OK )
    {
       QMessageBox::warning( this,
          tr( "Attention" ),
@@ -1015,10 +1015,10 @@ void US_BufferGui::save_db( void )
       {
          q.clear();
          q << "add_buffer_component" 
-           << QString::number ( bufferID ) 
+           << QString::number( bufferID ) 
            << buffer.component[ i ].componentID
            << QString::number( buffer.concentration[ i ], 'f', 5 );
-      
+
          db.statusQuery( q );
       }
 
@@ -1327,6 +1327,9 @@ void US_BufferGui::reset( void )
       if ( US_Investigator::get_person_info( personID, lname, fname ) )
          assign_investigator( personID, lname, fname );
    }
+
+   // Allow query of all buffers
+   buffer.personID = -1;
 }
 
 /*!  Recalculate the density of the buffer based on the information in the
