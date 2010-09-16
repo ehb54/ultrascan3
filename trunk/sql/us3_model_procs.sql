@@ -154,7 +154,8 @@ BEGIN
       editedDataID = l_editID,
       modelGUID    = p_modelGUID,
       description  = p_description,
-      contents     = p_contents;
+      contents     = p_contents,
+      lastUpdated  = NOW();
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
@@ -221,7 +222,8 @@ BEGIN
     UPDATE model SET
       editedDataID = l_editID,
       description  = p_description,
-      contents     = p_contents
+      contents     = p_contents,
+      lastUpdated  = NOW()
     WHERE modelID  = p_modelID;
 
     IF ( not_found = 1 ) THEN
@@ -392,7 +394,9 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   modelGUID, description, contents, personID 
+      SELECT   modelGUID, description, contents, personID,
+               timestamp2UTC( lastUpdated ) AS UTC_lastUpdated,
+               MD5( contents ) AS checksum, LENGTH( contents ) AS size
       FROM     model m, modelPerson mp
       WHERE    m.modelID = mp.modelID
       AND      m.modelID = p_modelID;

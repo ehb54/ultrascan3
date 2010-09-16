@@ -400,7 +400,7 @@ BEGIN
     WHERE analyteID = p_analyteID;
 
     DELETE FROM spectrum
-    WHERE analyteID = p_analyteID
+    WHERE componentID = p_analyteID
     AND   componentType = 'Analyte';
 
     DELETE FROM analyte

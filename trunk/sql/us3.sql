@@ -722,6 +722,7 @@ CREATE  TABLE IF NOT EXISTS model (
   RMSD double NOT NULL default '0',
   description VARCHAR(80) NULL DEFAULT NULL,
   contents TEXT NULL DEFAULT NULL ,
+  lastUpdated DATETIME NULL ,
   PRIMARY KEY (modelID) ,
   INDEX ndx_model_editedDataID (editedDataID ASC) ,
   CONSTRAINT fk_model_editDataID

@@ -315,7 +315,8 @@ BEGIN
       modelID      = l_modelID,
       modelGUID    = l_modelGUID,
       noiseType    = p_noiseType,
-      noiseVector  = p_noiseVector
+      noiseVector  = p_noiseVector,
+      timeEntered  = NOW()
     WHERE noiseID  = p_noiseID;
 
     IF ( duplicate_key = 1 ) THEN
@@ -486,7 +487,9 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   noiseGUID, editedDataID, modelID, modelGUID, noiseType, noiseVector
+      SELECT   noiseGUID, editedDataID, modelID, modelGUID, noiseType, noiseVector,
+               timestamp2UTC( timeEntered ) AS UTC_timeEntered,
+               MD5( noiseVector ) AS checksum, LENGTH( noiseVector ) AS size
       FROM     noise 
       WHERE    noiseID = p_noiseID;
 

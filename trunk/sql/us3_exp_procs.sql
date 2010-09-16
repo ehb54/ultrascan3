@@ -403,7 +403,8 @@ BEGIN
 
       SELECT   experimentGUID, projectID, runID, labID, instrumentID, 
                operatorID, rotorID, type, runTemp, label, comment, 
-               centrifugeProtocol, dateUpdated, personID
+               centrifugeProtocol, timestamp2UTC( dateUpdated) AS UTC_dateUpdated, 
+               personID
       FROM     experiment e, experimentPerson ep
       WHERE    e.experimentID = ep.experimentID
       AND      e.experimentID = p_experimentID;

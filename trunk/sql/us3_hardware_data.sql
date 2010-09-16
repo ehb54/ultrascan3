@@ -13,6 +13,7 @@ DELETE FROM abstractCenterpiece;
 
 INSERT INTO abstractRotor SET
   abstractRotorID   = 1,
+  abstractRotorGUID = '4f9326de-0f40-5474-f957-1eaea5b1478c',
   name              = 'Simulation',
   materialName      = 'titanium',
   numHoles          = 8,
@@ -26,6 +27,7 @@ INSERT INTO abstractRotor SET
 
 INSERT INTO abstractRotor SET
   abstractRotorID   = 2,
+  abstractRotorGUID = 'a06a2795-99bd-67b4-ad90-401eb5f560fd',
   name              = 'AN50',
   materialName      = 'titanium',
   numHoles          = 8,
@@ -39,6 +41,7 @@ INSERT INTO abstractRotor SET
 
 INSERT INTO abstractRotor SET
   abstractRotorID   = 3,
+  abstractRotorGUID = 'fda22413-8d1a-4ef4-a9fc-620d0c00d434',
   name              = 'AN60',
   materialName      = 'titanium',
   numHoles          = 4,

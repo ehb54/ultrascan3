@@ -217,7 +217,9 @@ BEGIN
   
       IF ( p_ID > 0 ) THEN
         SELECT     rawDataID, rawData.label, rawData.filename,
-                   rawData.experimentID, rawData.solutionID, rawData.lastUpdated
+                   rawData.experimentID, rawData.solutionID, 
+                   timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
+                   MD5( rawData.data ) AS checksum, LENGTH( rawData.data ) AS size
         FROM       rawData, experiment, experimentPerson
         WHERE      experimentPerson.personID = p_ID
         AND        experiment.experimentID = experimentPerson.experimentID
@@ -226,7 +228,9 @@ BEGIN
 
       ELSE
         SELECT     rawDataID, rawData.label, rawData.filename,
-                   rawData.experimentID, rawData.solutionID, rawData.lastUpdated
+                   rawData.experimentID, rawData.solutionID,
+                   timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
+                   MD5( rawData.data ) AS checksum, LENGTH( rawData.data ) AS size
         FROM       rawData, experiment, experimentPerson
         WHERE      experiment.experimentID = experimentPerson.experimentID
         AND        rawData.experimentID = experiment.experimentID
@@ -255,7 +259,9 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT     rawDataID, rawData.label, rawData.filename,
-                 rawData.experimentID, rawData.solutionID, rawData.lastUpdated
+                 rawData.experimentID, rawData.solutionID, 
+                 timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
+                 MD5( rawData.data ) AS checksum, LENGTH( rawData.data ) AS size
       FROM       rawData, experiment, experimentPerson
       WHERE      experimentPerson.personID = @US3_ID
       AND        experiment.experimentID = experimentPerson.experimentID
@@ -359,7 +365,9 @@ BEGIN
     -- This is either an admin, or a person inquiring about his own experiment
     SELECT @OK as status;
 
-    SELECT  rawDataGUID, label, filename, comment, experimentID, solutionID, channelID, lastUpdated
+    SELECT  rawDataGUID, label, filename, comment, experimentID, solutionID, channelID, 
+            timestamp2UTC( lastUpdated ) AS UTC_lastUpdated, 
+            MD5( data ) AS checksum, LENGTH( data ) AS size
     FROM    rawData
     WHERE   rawDataID = p_rawDataID;
 
@@ -723,7 +731,7 @@ BEGIN
 
   IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     -- This is an admin; he can get more info
-    IF ( count_editData( p_personGUID, p_password, p_ID ) < 1 ) THEN
+    IF ( count_editedData( p_personGUID, p_password, p_ID ) < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -734,7 +742,9 @@ BEGIN
   
       IF ( p_ID > 0 ) THEN
         SELECT     editedDataID, editedData.label, editedData.filename,
-                   editedData.rawDataID, rawData.experimentID, editedData.lastUpdated
+                   editedData.rawDataID, rawData.experimentID,
+                   timestamp2UTC( editedData.lastUpdated) AS UTC_lastUpdated, 
+                   MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size
         FROM       editedData, rawData, experiment, experimentPerson
         WHERE      experimentPerson.personID = p_ID
         AND        experiment.experimentID = experimentPerson.experimentID
@@ -744,7 +754,9 @@ BEGIN
 
       ELSE
         SELECT     editedDataID, editedData.label, editedData.filename,
-                   editedData.rawDataID, rawData.experimentID, editedData.lastUpdated
+                   editedData.rawDataID, rawData.experimentID,
+                   timestamp2UTC( editedData.lastUpdated) AS UTC_lastUpdated, 
+                   MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size
         FROM       editedData, rawData, experiment, experimentPerson
         WHERE      experiment.experimentID = experimentPerson.experimentID
         AND        rawData.experimentID = experiment.experimentID
@@ -774,7 +786,9 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT     editedDataID, editedData.label, editedData.filename,
-                 editedData.rawDataID, rawData.experimentID, editedData.lastUpdated
+                 editedData.rawDataID, rawData.experimentID, 
+                 timestamp2UTC( editedData.lastUpdated) AS UTC_lastUpdated, 
+                 MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size
       FROM       editedData, rawData, experiment, experimentPerson
       WHERE      experimentPerson.personID = @US3_ID
       AND        experiment.experimentID = experimentPerson.experimentID
@@ -874,7 +888,9 @@ BEGIN
     -- This is either an admin, or a person inquiring about his own experiment
     SELECT @OK as status;
 
-    SELECT  rawDataID, editGUID, label, filename, comment, lastUpdated
+    SELECT  rawDataID, editGUID, label, filename, comment, 
+            timestamp2UTC( lastUpdated ) AS UTC_lastUpdated, 
+            MD5( data ) AS checksum, LENGTH( data ) AS size
     FROM    editedData
     WHERE   editedDataID = p_editedDataID;
 
