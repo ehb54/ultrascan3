@@ -92,6 +92,9 @@ class US_EXTERN US_Buffer
       //!             "Refraction", or "Fluorescence"
       void putSpectrum( US_DB2&, const QString& );
 
+      //! \brief A debug function to write buffer contents to stderr
+      void dumpBuffer( void ) const;
+
    private:
       void readBuffer  ( QXmlStreamReader& );
       void readSpectrum( QXmlStreamReader& );
