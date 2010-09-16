@@ -29,8 +29,8 @@ class US_EXTERN US_Noise
       QString    noiseGUID;      //!< Global ID of this noise
       QString    modelGUID;      //!< Global ID of parent model object
 
-      double     minradius;      //!< Minimum radius value for RI type
-      double     maxradius;      //!< Maximum radius value for RI type
+      double     minradius;      //!< Minimum radius value for TI type
+      double     maxradius;      //!< Maximum radius value for TI type
 
       int        count;          //!< Number of noise values in the vector
 
@@ -112,6 +112,18 @@ class US_EXTERN US_Noise
       //!             if the path cannot be created
       static bool noise_path( QString& );
 
+      //! Sum a second noise vector into a noise vector
+      //! \param noise2     A second noise object to sum into current noise
+      //! \param always_sum Flag if summing should proceed even with mismatch
+      //! \returns          Flag if summing was performed.
+      bool sum_noise( US_Noise, bool );
+
+      //! Static function to sum two noise vectors
+      //! \param noise1     A first noise object into which to sum a second
+      //! \param noise2     A second noise object to sum into the first
+      //! \param always_sum Flag if summing should proceed even with mismatch
+      //! \returns          Flag if summing was performed.
+      static bool sum_noises( US_Noise&, US_Noise, bool );
    private:
 
       int  load_disk       ( const QString& );

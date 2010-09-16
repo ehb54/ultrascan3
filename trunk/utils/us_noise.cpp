@@ -56,13 +56,14 @@ int US_Noise::load( const QString& id, US_DB2* db )
    if ( db->lastErrno() != US_DB2::OK ) return db->lastErrno();
 
    db->next();
-   QByteArray contents = db->value( 2 ).toString().toAscii();
+   QByteArray contents = db->value( 5 ).toString().toAscii();
 
    // Write the model file to a temporary file
    QTemporaryFile temporary;
    temporary.open();
    temporary.write( contents );
    temporary.close();
+qDebug() << "NOI: ldIdDb: length contents" << QString(contents).length();
 
    QString file = temporary.fileName();
    return load( file );
@@ -115,6 +116,7 @@ int US_Noise::load( const QString& filename )
          }
       }
    }
+qDebug() << "NOI: ldFile: count valsize" << count << values.size();
 //debug();
    return US_DB2::OK;
 }
@@ -133,14 +135,25 @@ int US_Noise::write( US_DB2* db )
       QTemporaryFile temporary;
       write_temp( temporary );
       temporary.open();
-      QByteArray contents = temporary.readAll();
+      QByteArray     temp_contents = temporary.readAll();
+      QByteArray     contents;
+      QStringList    q;
 
-      QStringList q;
+      QString typen   = ( type == TI ) ? "ti_noise" : "ri_noise";
+      QString editID  = "0";
 
-      // Generate a guid if necessary
+      q << "get_modelID" << modelGUID;
+      db->query( q );
+      db->next();
+      QString modelID = db->value( 0 ).toString();
+
+      db->mysqlEscapeString( contents, temp_contents, temp_contents.size() );
+
+      // Generate a noise guid if necessary
       // The guid may be valid from a disk read, but is not in the DB
       if ( noiseGUID.size() != 36 ) noiseGUID = US_Util::new_guid();
 
+      q.clear();
       q << "get_noiseID" << noiseGUID;
       
       db->query( q );
@@ -149,18 +162,29 @@ int US_Noise::write( US_DB2* db )
      
       if ( db->lastErrno() != US_DB2::OK )
       {
-         q << "new_noise" << noiseGUID << description << contents << modelGUID;
+         //q << "new_noise" << noiseGUID << description << typen
+         //  << contents << modelGUID;
+         q << "new_noise" << noiseGUID << editID << modelID << modelGUID
+           << typen << contents;
          message = QObject::tr( "created" );
+qDebug() << "get_noiseID stat GUID" << db->lastErrno() << noiseGUID;
       }
       else
       {
          db->next();
-         QString id = db->value( 0 ).toString();
-         q << "update_noise" << id << description << contents << modelGUID;
+         QString noiseID = db->value( 0 ).toString();
+qDebug() << "get_noiseID ID GUID" << noiseID << noiseGUID;
+         //q << "update_noise" << noiseID << noiseGUID << description << typen 
+         //  << contents << modelGUID;
+         q << "update_noise" << noiseID << noiseGUID << editID << modelID
+           << modelGUID << typen << contents;
          message = QObject::tr( "updated" );
       }
 
-      return db->statusQuery( q );
+//      return db->statusQuery( q );
+int updstat = db->statusQuery( q );
+qDebug() << "new/update_noise stat" << updstat;
+return updstat;
 }
 
 // write noise to local disk
@@ -408,5 +432,83 @@ void US_Noise::debug( void )
    {
       qDebug() << "  v[" << ii << "]" << values[ ii ];
    }
+}
+
+// sum second noise into this vector
+bool US_Noise::sum_noise( US_Noise noise2, bool always_sum )
+{
+   bool    ok    = true;
+   bool    match = true;
+
+   if ( type != noise2.type )
+      ok    = false;            // cannot sum if noises are different types
+
+   else
+   {  // determine if they match in count and any radius range
+      if ( count != noise2.count  ||
+         ( type == RI  && 
+         ( minradius != noise2.minradius  || minradius != noise2.minradius ) ) )
+         match   = false;
+   }
+
+   if ( match )
+   {  // if they match, simply sum vector values;
+      for ( int ii = 0; ii < values.size(); ii++ )
+         values[ ii ] += noise2.values[ ii ];
+   }
+
+   else if ( always_sum )
+   {  // otherwise, we may need to interpolate or only sum a portion
+      
+      if ( type == RI )
+      {  // for radially-invariant, just sum for minimum count
+         int mcount = ( count < noise2.count ) ? count : noise2.count;
+
+         for ( int ii = 0; ii < mcount; ii++ )
+            values[ ii ] += noise2.values[ ii ];
+
+      }
+
+      else
+      {  // for time-invariant,  interpolate by radius location
+         double radval = minradius;
+         double radinc = ( maxradius - minradius ) / (double)( count - 1 );
+         double radlo2 = noise2.minradius;
+         int    limk2  = noise2.count - 1;
+         double radin2 = ( noise2.maxradius - radlo2 ) / (double)( limk2 );
+
+         for ( int ii = 0; ii < count; ii++ )
+         {
+            // calculate index of noise1 radius in noise2 range
+            double xrad2  = ( radval - radlo2 ) / radin2;
+            int    j1     = (int)xrad2;
+            int    j2     = j1 + 1;
+            // get interpolation factors and noise2 values around index
+            double fac1   = (double)j2 - xrad2;
+            double fac2   = 1.0 - fac1;
+            double val1   = ( j1 < 0     ) ? noise2.values[ 0 ] :
+                          ( ( j1 > limk2 ) ? noise2.values[ limk2 ] :
+                                             noise2.values[ j1    ] );
+            double val2   = ( j2 < 0     ) ? noise2.values[ 0 ] :
+                          ( ( j2 > limk2 ) ? noise2.values[ limk2 ] :
+                                             noise2.values[ j2    ] );
+            // sum in an interpolated value and bump noise1 radius
+            values[ ii ] += ( val1 * fac1 + val2 * fac2 );
+            radval       += radinc;
+         }
+      }
+   }
+
+   else  // no summing done
+      ok        = false;
+
+   return ok;
+}
+
+// sum second noise into an original noise
+bool US_Noise::sum_noises( US_Noise& noise1, US_Noise noise2, bool always_sum )
+{
+
+   return noise1.sum_noise( noise2, always_sum );
 }
 

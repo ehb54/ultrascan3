@@ -290,15 +290,16 @@ qDebug() << "BrDb: kr ke km kn"
       db->query( query );
       db->next();
 
-      //db.readBlobFromDB( fname, "download_aucData", irecID );
               rawGUID   = db->value( 0 ).toString();
       QString label     = db->value( 1 ).toString();
       QString filename  = db->value( 2 ).toString();
       QString comment   = db->value( 3 ).toString();
       QString experID   = db->value( 4 ).toString();
-      QString date      = US_Util::toUTCDatetimeText( db->value( 6 )
+      QString date      = US_Util::toUTCDatetimeText( db->value( 7 )
                           .toDateTime().toUTC().toString( Qt::ISODate ),
                                                       true );
+      QString cksum     = db->value( 8 ).toString();
+      QString recsize   = db->value( 9 ).toString();
       QString runID     = filename.section( ".", 0, 0 );
       QString subType   = filename.section( ".", 1, 1 );
               contents  = "";
@@ -315,11 +316,7 @@ qDebug() << "BrDb: kr ke km kn"
 
       if ( details )
       {
-         QString filetemp = US_Settings::tmpDir() + "/" + filebase;
-
-         db->readBlobFromDB( filetemp, "download_aucData", irecID );
-
-         contents         = US_Util::md5sum_file( filetemp );
+         contents         = cksum + " " + recsize;
 //qDebug() << "BrDb:       (R)contents filetemp" << contents << filetemp;
       }
 
@@ -365,22 +362,20 @@ qDebug() << "BrDb: kr ke km kn"
       QString date      = US_Util::toUTCDatetimeText( db->value( 5 )
                           .toDateTime().toUTC().toString( Qt::ISODate ),
                                                       true );
+      QString cksum     = db->value( 6 ).toString();
+      QString recsize   = db->value( 7 ).toString();
       QString subType   = filename.section( ".", 2, 2 );
               contents  = "";
       QString filebase  = filename.section( "/", -1, -1 );
 
               rawGUID   = rawGUIDs.at( rawIDs.indexOf( rawID ) );
 
-qDebug() << "BrDb:     edt ii id eGID rGID label date"
- << ii << irecID << editGUID << rawGUID << label << date;
+//qDebug() << "BrDb:     edt ii id eGID rGID label date"
+// << ii << irecID << editGUID << rawGUID << label << date;
 
       if ( details )
       {
-         QString filetemp = US_Settings::tmpDir() + "/" + filebase;
-
-         db->readBlobFromDB( filetemp, "download_editData", irecID );
-
-         contents         = US_Util::md5sum_file( filetemp );
+         contents         = cksum + " " + recsize;
 //qDebug() << "BrDb:       (E)contents filetemp" << contents << filetemp;
       }
 
@@ -422,6 +417,8 @@ qDebug() << "BrDb:     edt ii id eGID rGID label date"
       QString modelGUID = db->value( 0 ).toString();
       QString descript  = db->value( 1 ).toString();
               contents  = db->value( 2 ).toString();
+      QString cksum     = db->value( 4 ).toString();
+      QString recsize   = db->value( 5 ).toString();
       QString label     = descript;
 
       if ( label.length() > 40 )
@@ -436,12 +433,7 @@ qDebug() << "BrDb:     edt ii id eGID rGID label date"
 
       if ( details )
       {
-         QTemporaryFile temporary;
-         temporary.open();
-         temporary.write( contents.toAscii() );
-         temporary.close();
-
-         contents     = US_Util::md5sum_file( temporary.fileName() );
+         contents     = cksum + " " + recsize;
 //qDebug() << "BrDb:         det: cont" << contents;
       }
 
@@ -482,22 +474,24 @@ qDebug() << "BrDb:     edt ii id eGID rGID label date"
       db->next();
 
       QString noiseGUID = db->value( 0 ).toString();
-      QString descript  = db->value( 1 ).toString();
-      QString contents  = db->value( 2 ).toString();
-      QString filename  = db->value( 3 ).toString();
-      QString comment   = db->value( 4 ).toString();
-      QString date      = db->value( 5 ).toString();
-      QString modelGUID = db->value( 6 ).toString();
+      QString editID    = db->value( 1 ).toString();
+      QString modelID   = db->value( 2 ).toString();
+      QString modelGUID = db->value( 3 ).toString();
+      QString noiseType = db->value( 4 ).toString();
+              contents  = db->value( 5 ).toString();
+      int     idescr    = contents.indexOf( "description=" ) + 10;
+      QString descript  = contents.mid( idescr, idescr+100 )
+                          .section( "\"", 1, 1 );
       QString label     = descript;
+      QString cksum     = db->value( 6 ).toString();
+      QString recsize   = db->value( 7 ).toString();
+//qDebug() << "BrDb: contents================================================";
+//qDebug() << contents.left( 200 );
+//qDebug() << "BrDb: contents================================================";
 
       if ( details )
       {
-         QTemporaryFile temporary;
-         temporary.open();
-         temporary.write( contents.toAscii() );
-         temporary.close();
-
-         contents     = US_Util::md5sum_file( temporary.fileName() );
+         contents     = cksum + " " + recsize;
       }
 
       else
@@ -508,15 +502,17 @@ qDebug() << "BrDb:     edt ii id eGID rGID label date"
 
       cdesc.recordID    = irecID;
       cdesc.recType     = 4;
-      cdesc.subType     = "";
+      cdesc.subType     = ( noiseType == "ti_noise" ) ? "TI" : "RI";
       cdesc.recState    = REC_DB;
       cdesc.dataGUID    = noiseGUID.simplified();
       cdesc.parentGUID  = modelGUID.simplified();
-      cdesc.filename    = filename;
+      cdesc.filename    = "";
       cdesc.contents    = contents;
       cdesc.label       = label;
       cdesc.description = descript;
       //cdesc.lastmodDate = QFileInfo( aucfile ).lastModified().toString();
+qDebug() << "BrDb:       noi ii id nGID dsc typ noityp"
+   << ii << irecID << noiseGUID << descript << cdesc.subType << noiseType;
 
       if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
          cdesc.dataGUID    = US_Util::new_guid();
