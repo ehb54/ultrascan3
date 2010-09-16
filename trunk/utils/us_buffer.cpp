@@ -99,7 +99,7 @@ void US_BufferComponent::getAllFromHD(
 }
 
 void US_BufferComponent::component( 
-        QXmlStreamReader&            xml, 
+        QXmlStreamReader&                    xml, 
         QMap< QString, US_BufferComponent >& componentList ) 
 {
    US_BufferComponent bc;
@@ -464,3 +464,24 @@ void US_Buffer::readSpectrum( QXmlStreamReader& xml )
       xml.readNext();
    }
 }
+
+void US_Buffer::dumpBuffer( void ) const
+{
+   qDebug() << "buffer:\npersonID       " << personID;
+   qDebug() << "person         " << person;
+   qDebug() << "bufferID       " << bufferID;
+   qDebug() << "GUID           " << GUID;
+   qDebug() << "description    " << description;
+   qDebug() << "compressibility" << compressibility;
+   qDebug() << "pH             " << pH;
+   qDebug() << "density        " << density;
+   qDebug() << "viscosity      " << viscosity;
+   qDebug() << "extinction     " << extinction;
+   qDebug() << "refraction     " << refraction;
+   qDebug() << "fluorescence   " << fluorescence;
+   qDebug() << "Components     " << component.size();
+   for ( int i = 0; i < component.size(); i++ )
+   {
+      qDebug() << component[ i ].name << concentration[ i ] << componentIDs[ i ];
+   }
+};
