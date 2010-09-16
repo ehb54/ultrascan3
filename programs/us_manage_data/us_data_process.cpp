@@ -126,6 +126,9 @@ qDebug() << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
    else if ( cdesc.recType == 4 )
    {  // upload a Noise record
       US_Noise noise;
+qDebug() << "NOISE: (1) filepath" << filepath;
+      filepath = get_noise_filename( cdesc.dataGUID );
+qDebug() << "NOISE: (2) filepath" << filepath;
 
       noise.load( filepath );
       stat   = noise.write( db );
@@ -204,40 +207,35 @@ int US_DataProcess::record_download( int irow )
       else
       {
          errMsg = tr( "Model load for download, status %1" ).arg( stat );
-         stat   = 3022;     // download read error
+         stat   = 3033;     // download read error
       }
    }
 
    else if ( cdesc.recType == 4 )
    {  // download a Noise record
-      query.clear();
-      query << "get_noise_info" << dataID;
-      db->query( query );
+      US_Noise noise;
 
-      if ( db->lastErrno() != US_DB2::OK )
+      filepath = get_noise_filename( dataGUID );
+      stat     = noise.load( dataID, db );
+
+      if ( stat == US_DB2::OK )
       {
-         errMsg = tr( "Noise info for download, status %1" ).arg( stat );
-         stat   = 3024;
+         stat     = noise.write( filepath );
+
+         if ( stat != US_DB2::OK )
+         {
+            errMsg = tr( "Noise write for download, status %1" ).arg( stat );
+            stat   = 3024;  // download write error
+         }
+
+         else
+            cdesc.filename = filepath;
       }
 
       else
       {
-         db->next();
-         QByteArray contents = db->value( 2 ).toString().toAscii();
-
-         QFile file( filepath );
-         
-         if ( !file.open( QIODevice::WriteOnly | QIODevice::Text ) )
-         {
-            errMsg = tr( "Noise file download open error %1" ).arg( filepath );
-            stat   = 3034;
-         }
-
-         else
-         {
-            file.write( contents );
-            file.close();
-         }
+         errMsg = tr( "Noise load for download, status %1" ).arg( stat );
+         stat   = 3034;     // download read error
       }
    }
 
@@ -399,6 +397,76 @@ QString US_DataProcess::get_model_filename( QString guid )
             QXmlStreamAttributes a = xml.attributes();
 
             if ( a.value( "modelGUID" ).toString() == guid )
+            {
+               fname    = fn;                   // name of file with match
+               found    = true;                 // match to guid found
+               break;
+            }
+         }
+
+      }
+
+      m_file.close();
+
+      if ( found )
+         break;
+   }
+
+ 
+   // if no guid match found, create new file name with a numeric part from
+   //   the first gap in the file list sequence or from count plus one
+   if ( ! found )
+      fname     = path + "/M" + QString().sprintf( "%07i", newnum ) + ".xml";
+
+   return fname;
+}
+
+QString US_DataProcess::get_noise_filename( QString guid )
+{
+   QString fname = "";
+   QString path  = US_Settings::dataDir() + "/noises";
+   QDir    dir;
+
+   if ( ! dir.exists( path ) )
+   {
+      if ( ! dir.mkpath( path ) )
+         return fname;
+   }
+
+   QDir f( path );
+   QStringList filter( "N???????.xml" );
+   QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
+   f_names.sort();
+
+   int         nnames  = f_names.size();
+   int         newnum  = nnames + 1;
+   bool        found   = false;
+
+   for ( int ii = 0; ii < nnames; ii++ )
+   {
+      QString fn = f_names[ ii ];
+      int     kf = fn.mid( 1, 7 ).toInt() - 1;  // expected index in file name
+      fn         = path + "/" + fn;             // full path file name
+
+      if ( kf != ii  &&  newnum > nnames )
+         newnum     = kf;                       // 1st opened number slot
+
+      QFile m_file( fn );
+
+      if ( ! m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            continue;
+
+      QXmlStreamReader xml( &m_file );
+
+      while ( !xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "noise" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+
+            if ( a.value( "noiseGUID" ).toString() == guid )
             {
                fname    = fn;                   // name of file with match
                found    = true;                 // match to guid found

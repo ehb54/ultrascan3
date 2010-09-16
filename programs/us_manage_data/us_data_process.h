@@ -37,6 +37,7 @@ class US_EXTERN US_DataProcess : public QObject
       US_SyncExperiment*      syncExper;  // experiment synchronizer
 
       QString get_model_filename( QString );
+      QString get_noise_filename( QString );
 
 };
 #endif
