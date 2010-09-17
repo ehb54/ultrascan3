@@ -211,7 +211,7 @@ void US_BufferComponent::putAllToHD(
 US_Buffer::US_Buffer()
 {
    personID        = -1;
-   compressibility = COMP_25W;
+   compressibility = 0.0;
    pH              = WATER_PH;
    density         = DENS_20W;
    viscosity       = VISC_20W;
