@@ -229,7 +229,7 @@ int US_Analyte::load_disk( const QString& guid )
             {
                QXmlStreamAttributes a = xml.attributes();
 
-               if ( a.value( "guid" ).toString() == guid ) found = true; 
+               if ( a.value( "analyteGUID" ).toString() == guid ) found = true; 
                break;
             }
          }

@@ -1319,9 +1319,11 @@ void US_AnalyteGui::list_from_disk( void )
    else if ( rb_rna    ->isChecked() ) type = "RNA";
    else                                type = "CARB";
 
+   QFile a_file;
+
    for ( int i = 0; i < f_names.size(); i++ )
    {
-      QFile a_file( path + "/" + f_names[ i ] );
+      a_file.setFileName( path + "/" + f_names[ i ] );
 
       if ( ! a_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
 
@@ -1340,7 +1342,7 @@ void US_AnalyteGui::list_from_disk( void )
                if ( a.value( "type" ).toString() == type )
                {
                   descriptions << a.value( "description" ).toString();
-                  GUIDs        << a.value( "guid" ).toString();
+                  GUIDs        << a.value( "analyteGUID" ).toString();
                   filenames    << path + "/" + f_names[ i ];
                }
                break;
@@ -1471,7 +1473,10 @@ void US_AnalyteGui::select_from_disk( void )
 {
    int index = lw_analytes->currentRow();
    if ( index < 0 ) throw -1;
-   if ( info[ index ].filename.isEmpty() ) throw -1;;
+   if ( info[ index ].filename.isEmpty() ) 
+   {
+      throw -1;
+   }
 
    int result = analyte.load( false, info[ index ].guid );
 
