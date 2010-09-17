@@ -76,15 +76,15 @@ qDebug() << "GUI setup begun";
    int row   = 0;
 
    pb_invtor     = us_pushbutton( tr( "Investigator" ) );
-   dctlLayout->addWidget( pb_invtor, row,   0, 1, 3 );
-   le_invtor     = us_lineedit();
-   dctlLayout->addWidget( le_invtor, row++, 3, 1, 5 );
+   dctlLayout->addWidget( pb_invtor, row,   0, 1, 1 );
 
-   ck_detail     = new QCheckBox( tr( "Content Details" ) );
-   dctlLayout->addWidget( ck_detail, row,   0, 1, 4 );
-   ck_detail->setChecked( true );
-   ck_detail->setFont( pb_invtor->font() );
-   ck_detail->setPalette( US_GuiSettings::normalColor() );
+   le_invtor     = us_lineedit();
+   dctlLayout->addWidget( le_invtor, row++, 1, 1, 7 );
+
+   pb_reset      = us_pushbutton( tr( "Reset" ), false );
+   dctlLayout->addWidget( pb_reset,  row,   0, 1, 4 );
+   connect( pb_reset,   SIGNAL( clicked()     ),
+            this,       SLOT  (   reset()     ) );
 
    pb_scanda     = us_pushbutton( tr( "Scan Data" ) );
    dctlLayout->addWidget( pb_scanda, row++, 4, 1, 4 );
@@ -109,27 +109,20 @@ qDebug() << "GUI setup begun";
    pb_helpdt     = us_pushbutton( tr( "Data Tree Help" ) );
    dctlLayout->addWidget( pb_helpdt, row++, 4, 1, 4 );
 
-   pb_reset      = us_pushbutton( tr( "Reset" ), false );
-   dctlLayout->addWidget( pb_reset,  row,   2, 1, 2 );
-   connect( pb_reset,   SIGNAL( clicked() ),
-            this,       SLOT(   reset()   ) );
-
    pb_help       = us_pushbutton( tr( "Help" ) );
-   dctlLayout->addWidget( pb_help,   row,   4, 1, 2 );
+   dctlLayout->addWidget( pb_help,   row,   0, 1, 4 );
    connect( pb_help,    SIGNAL( clicked() ),
             this,       SLOT(   help()    ) );
 
    pb_close      = us_pushbutton( tr( "Close" ) );
-   dctlLayout->addWidget( pb_close,  row++, 6, 1, 2 );
+   dctlLayout->addWidget( pb_close,  row++, 4, 1, 4 );
    connect( pb_close,   SIGNAL( clicked() ),
             this,       SLOT(   close()   ) );
 
    pb_invtor->setToolTip( 
       tr( "Use an Investigator dialog to set the database person ID" ) );
    pb_scanda->setToolTip(
-      tr( "Scan DB and Local data, with possible content analysis" ) );
-   ck_detail->setToolTip(
-      tr( "Specify whether data scan includes detailed content analysis" ) );
+      tr( "Scan Database and Local data, with content analysis" ) );
    pb_helpdt->setToolTip(
       tr( "Show a short Help/Legend dialog for notes on the data tree" ) );
    pb_reset ->setToolTip(
@@ -139,11 +132,9 @@ qDebug() << "GUI setup begun";
    pb_close ->setToolTip(
       tr( "Close the US_ManageData window and exit" ) );
 
-qDebug() << " tooltip complete";
    QLabel* lb_info2 = us_banner( tr( "User Data Sets Summary:" ) );
    dctlLayout->addWidget( lb_info2,  row++, 0, 1, 8 );
 
-qDebug() << "te_status setup begun";
    QPalette pa( le_invtor->palette() );
    te_status    = us_textedit( );
    te_status->setPalette( US_GuiSettings::normalColor() );
@@ -167,7 +158,14 @@ qDebug() << "te_status setup begun";
       tr( "  %1 Local    Model      records;\n" ).arg( 0 ) +
       tr( "  %1 Local    Noise      records.\n" ).arg( 0 ) );
    smryLayout->addWidget( te_status );
-qDebug() << "te_status setup complete";
+   QFontMetrics fm( te_status->font() );
+   int   fontw  = fm.maxWidth();
+   int   fonth  = fm.lineSpacing();
+   int   minsw  = fontw * 40 + 10;
+   int   minsh  = fonth * 18 + 10;
+qDebug() << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
+   te_status->setMinimumSize( minsw, minsh );
+   te_status->adjustSize();
 
    row  = 0;
    QLabel* lb_progr  = us_label( tr( "% Completed:" ) );
@@ -209,8 +207,8 @@ qDebug() << "te_status setup complete";
 
    mainLayout->addLayout( leftLayout );
    mainLayout->addLayout( rghtLayout );
-   mainLayout->setStretchFactor( leftLayout, 1  );
-   mainLayout->setStretchFactor( rghtLayout, 10 );
+   mainLayout->setStretchFactor( leftLayout, 2 );
+   mainLayout->setStretchFactor( rghtLayout, 8 );
 
    show();    // display main window before password dialog appears
 qDebug() << "show complete";
@@ -479,9 +477,7 @@ void US_ManageData::reset_hsbuttons( bool show,
 // scan the database and local disk for R/E/M/N data sets
 void US_ManageData::scan_data()
 {
-   details     = ck_detail->isChecked();
-
-   da_model->scan_data( details );   // scan the data
+   da_model->scan_data();            // scan the data
 
    da_tree ->build_dtree();          // rebuild the data tree with present data
 

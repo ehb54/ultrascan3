@@ -50,7 +50,7 @@ class US_EXTERN US_DataModel : public QObject
       QObject*      procobj (      void );
       QObject*      treeobj (      void );
       void      browse_data(       void );
-      void      scan_data(         bool );
+      void      scan_data(         void );
       void      dummy_data(        void );
       void      set_investigator(  QString );
       QString   investigator_text( void );
@@ -85,8 +85,6 @@ class US_EXTERN US_DataModel : public QObject
  
 
       int           personID;
-
-      bool          details;
 
       QString       invID;
       QString       run_name;

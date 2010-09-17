@@ -49,7 +49,7 @@
           
     <h3> Main Window:</h3>
 
-    <p> Initially you are presented with a small window to enter you
+    <p> Initially you are presented with a small window to enter your
     database password.</p>
 
     <img src="images/manage_data_pasw.png" alt="ManageData Password"/>
@@ -93,11 +93,7 @@
        </li>
 
        <li>
-          <b>Content Details</b> Before scanning for data, check or uncheck
-          the box to specify whether you want content details. You would only
-          want to uncheck this box if your experience leads you to believe
-          that comparing the actual content of records adds unduly to the time
-          required for a scan.
+          <b>Reset</b> Reset the tree to the default sample data.
        </li>
 
        <li>
@@ -140,10 +136,6 @@
           on any row brings up a
           <a href="manage_data_cmenu.html">Context Menu</a> that allows you
           to perform processes on the data record or show details about it.
-       </li>
-
-       <li>
-          <b>Reset</b> Reset the tree to the default sample data.
        </li>
 
        <li>

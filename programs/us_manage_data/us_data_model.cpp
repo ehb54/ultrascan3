@@ -18,8 +18,6 @@ US_DataModel::US_DataModel( QWidget* parwidg /*=0*/ )
    ddescs.clear();         // db descriptions
    ldescs.clear();         // local descriptions
    adescs.clear();         // all descriptions
-
-   details    = false;     // flag whether to get content details
 }
 
 // set database related pointers
@@ -81,13 +79,11 @@ QObject* US_DataModel::treeobj()
 }
 
 // scan the database and local disk for R/E/M/N data sets
-void US_DataModel::scan_data( bool content_details )
+void US_DataModel::scan_data()
 {
    ddescs.clear();         // db descriptions
    ldescs.clear();         // local descriptions
    adescs.clear();         // all descriptions
-
-   details     = content_details;
 
    scan_dbase( );          // read db to build db descriptions
 
@@ -189,7 +185,7 @@ void US_DataModel::scan_dbase( )
       QString label   = db->value( 9 ).toString();
       QString comment = db->value( 10 ).toString();
       QString date    = US_Util::toUTCDatetimeText( db->value( 12 )
-                        .toDateTime().toUTC().toString( Qt::ISODate ), true );
+                        .toDateTime().toString( Qt::ISODate ), true );
       qDebug() << "  " << expID << expGUID << runID << label << comment << date;
    }
 //*DEBUG*
@@ -292,18 +288,17 @@ qDebug() << "BrDb: kr ke km kn"
 
               rawGUID   = db->value( 0 ).toString();
       QString label     = db->value( 1 ).toString();
-      QString filename  = db->value( 2 ).toString();
+      QString filename  = db->value( 2 ).toString().replace( "\\", "/" );
+      QString filebase  = filename.section( "/", -1, -1 );
       QString comment   = db->value( 3 ).toString();
       QString experID   = db->value( 4 ).toString();
       QString date      = US_Util::toUTCDatetimeText( db->value( 7 )
-                          .toDateTime().toUTC().toString( Qt::ISODate ),
-                                                      true );
+                          .toDateTime().toString( Qt::ISODate ), true );
       QString cksum     = db->value( 8 ).toString();
       QString recsize   = db->value( 9 ).toString();
-      QString runID     = filename.section( ".", 0, 0 );
-      QString subType   = filename.section( ".", 1, 1 );
-              contents  = "";
-      QString filebase  = filename.section( "/", -1, -1 );
+      QString runID     = filebase.section( ".", 0, 0 );
+      QString subType   = "";
+      contents          = cksum + " " + recsize;
       rawGUIDs << rawGUID;
 
       query.clear();
@@ -314,11 +309,7 @@ qDebug() << "BrDb: kr ke km kn"
       QString expGUID   = db->value( 0 ).toString();
 //qDebug() << "BrDb:     raw expGid" << expGUID;
 
-      if ( details )
-      {
-         contents         = cksum + " " + recsize;
-//qDebug() << "BrDb:       (R)contents filetemp" << contents << filetemp;
-      }
+//qDebug() << "BrDb:       (R)contents" << contents;
 
       cdesc.recordID    = irecID;
       cdesc.recType     = 1;
@@ -357,27 +348,26 @@ qDebug() << "BrDb: kr ke km kn"
       QString rawID     = db->value( 0 ).toString();
       QString editGUID  = db->value( 1 ).toString();
       QString label     = db->value( 2 ).toString();
-      QString filename  = db->value( 3 ).toString();
+      QString filename  = db->value( 3 ).toString().replace( "\\", "/" );
+      QString filebase  = filename.section( "/", -1, -1 );
       QString comment   = db->value( 4 ).toString();
       QString date      = US_Util::toUTCDatetimeText( db->value( 5 )
-                          .toDateTime().toUTC().toString( Qt::ISODate ),
-                                                      true );
+                          .toDateTime().toString( Qt::ISODate ), true );
       QString cksum     = db->value( 6 ).toString();
       QString recsize   = db->value( 7 ).toString();
-      QString subType   = filename.section( ".", 2, 2 );
-              contents  = "";
-      QString filebase  = filename.section( "/", -1, -1 );
+      QString subType   = filebase.section( ".", 2, 2 );
+      contents          = cksum + " " + recsize;
 
               rawGUID   = rawGUIDs.at( rawIDs.indexOf( rawID ) );
+qDebug() << "BrDb:     edt ii id eGID rGID label date"
+ << ii << irecID << editGUID << rawGUID << label << date;
+//qDebug() << "BrDb:       (E)contents" << contents;
 
-//qDebug() << "BrDb:     edt ii id eGID rGID label date"
-// << ii << irecID << editGUID << rawGUID << label << date;
-
-      if ( details )
-      {
-         contents         = cksum + " " + recsize;
-//qDebug() << "BrDb:       (E)contents filetemp" << contents << filetemp;
-      }
+      if ( ! filename.contains( "/" ) )
+         filename          = US_Settings::resultDir() + "/"
+                             + filename.section( ".", 0, 0 ) + "/"
+                             + filename;
+//qDebug() << "BrDb:       fname" << filename;
 
       cdesc.recordID    = irecID;
       cdesc.recType     = 2;
@@ -385,11 +375,10 @@ qDebug() << "BrDb: kr ke km kn"
       cdesc.recState    = REC_DB;
       cdesc.dataGUID    = editGUID.simplified();
       cdesc.parentGUID  = rawGUID.simplified();
-      //cdesc.filename    = filename;
-      cdesc.filename    = "";
+      cdesc.filename    = filename;
       cdesc.contents    = contents;
       cdesc.description = ( comment.isEmpty() ) ?
-                          filename.section( ".", 0, 2 ) :
+                          filebase.section( ".", 0, 2 ) :
                           comment;
       cdesc.label       = cdesc.description;
       cdesc.lastmodDate = date;
@@ -417,8 +406,10 @@ qDebug() << "BrDb: kr ke km kn"
       QString modelGUID = db->value( 0 ).toString();
       QString descript  = db->value( 1 ).toString();
               contents  = db->value( 2 ).toString();
-      QString cksum     = db->value( 4 ).toString();
-      QString recsize   = db->value( 5 ).toString();
+      QString date      = US_Util::toUTCDatetimeText( db->value( 4 )
+                          .toDateTime().toString( Qt::ISODate ), true );
+      QString cksum     = db->value( 5 ).toString();
+      QString recsize   = db->value( 6 ).toString();
       QString label     = descript;
 
       if ( label.length() > 40 )
@@ -428,17 +419,11 @@ qDebug() << "BrDb: kr ke km kn"
       int     jj        = contents.indexOf( "editGUID=" );
       QString editGUID  = ( jj < 1 ) ? "" :
                           contents.mid( jj ).section( QChar( '"' ), 1, 1 );
+      contents          = cksum + " " + recsize;
 //qDebug() << "BrDb:       mod ii id mGID dsc"
 //   << ii << irecID << modelGUID << descript;
 
-      if ( details )
-      {
-         contents     = cksum + " " + recsize;
 //qDebug() << "BrDb:         det: cont" << contents;
-      }
-
-      else
-         contents     = "";
 
       cdesc.recordID    = irecID;
       cdesc.recType     = 3;
@@ -450,8 +435,7 @@ qDebug() << "BrDb: kr ke km kn"
       cdesc.contents    = contents;
       cdesc.label       = label;
       cdesc.description = descript;
-      //cdesc.lastmodDate = QFileInfo( aucfile ).lastModified().toString();
-      cdesc.lastmodDate = "";
+      cdesc.lastmodDate = date;
 
       if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
          cdesc.dataGUID    = US_Util::new_guid();
@@ -483,19 +467,15 @@ qDebug() << "BrDb: kr ke km kn"
       QString descript  = contents.mid( idescr, idescr+100 )
                           .section( "\"", 1, 1 );
       QString label     = descript;
-      QString cksum     = db->value( 6 ).toString();
-      QString recsize   = db->value( 7 ).toString();
+      QString date      = US_Util::toUTCDatetimeText( db->value( 6 )
+                          .toDateTime().toString( Qt::ISODate ), true );
+      QString cksum     = db->value( 7 ).toString();
+      QString recsize   = db->value( 8 ).toString();
 //qDebug() << "BrDb: contents================================================";
 //qDebug() << contents.left( 200 );
 //qDebug() << "BrDb: contents================================================";
 
-      if ( details )
-      {
-         contents     = cksum + " " + recsize;
-      }
-
-      else
-         contents     = "";
+      contents          = cksum + " " + recsize;
 
       if ( label.length() > 40 )
          label = descript.left( 18 ) + "..." + descript.right( 19 );
@@ -510,7 +490,7 @@ qDebug() << "BrDb: kr ke km kn"
       cdesc.contents    = contents;
       cdesc.label       = label;
       cdesc.description = descript;
-      //cdesc.lastmodDate = QFileInfo( aucfile ).lastModified().toString();
+      cdesc.lastmodDate = date;
 qDebug() << "BrDb:       noi ii id nGID dsc typ noityp"
    << ii << irecID << noiseGUID << descript << cdesc.subType << noiseType;
 
@@ -577,17 +557,13 @@ qDebug() << "BrLoc:  nau nmo nno nst" << naucd << nmodf << nnoif << nstep;
          QString aucfile  = subdir + "/" + fname;
          QString descr    = "";
          QString expGUID  = expGUIDauc( aucfile );
-                 contents = "";
 qDebug() << "BrLoc: ii jj file" << ii << jj << aucfile;
 
          // read in the raw data and build description record
          US_DataIO2::readRawData( aucfile, rdata );
 
-         if ( details )
-         {
-            contents     = US_Util::md5sum_file( aucfile );
+         contents         = US_Util::md5sum_file( aucfile );
 qDebug() << "BrLoc:      contents" << contents;
-         }
 
          char uuid[ 37 ];
          uuid_unparse( (uchar*)rdata.rawGUID, uuid );
@@ -595,7 +571,7 @@ qDebug() << "BrLoc:      contents" << contents;
 
          cdesc.recordID    = -1;
          cdesc.recType     = 1;
-         cdesc.subType     = fname.section( ".", 1, 1 );
+         cdesc.subType     = "";
          cdesc.recState    = REC_LO;
          cdesc.dataGUID    = rawGUID.simplified();
          cdesc.parentGUID  = expGUID.simplified();
@@ -603,7 +579,9 @@ qDebug() << "BrLoc:      contents" << contents;
          cdesc.contents    = contents;
          cdesc.label       = runid + "." + tripl;
          cdesc.description = rdata.description;
-         cdesc.lastmodDate = QFileInfo( aucfile ).lastModified().toString();
+         cdesc.lastmodDate = US_Util::toUTCDatetimeText( QFileInfo( aucfile )
+                             .lastModified().toUTC().toString( Qt::ISODate )
+                             , true );
 
          if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
             cdesc.dataGUID    = US_Util::new_guid();
@@ -632,11 +610,8 @@ qDebug() << "BrLoc:  edtfilt" << edtfilt;
             // read EditValues for the edit data and build description record
             US_DataIO2::readEdits( edtfile, edval );
 
-            if ( details )
-            {
-               contents     = US_Util::md5sum_file( edtfile );
+            contents          = US_Util::md5sum_file( edtfile );
 //qDebug() << "BrLoc:      (E)contents edtfile" << contents << edtfile;
-            }
 
             cdesc.recordID    = -1;
             cdesc.recType     = 2;
@@ -648,7 +623,9 @@ qDebug() << "BrLoc:  edtfilt" << edtfilt;
             cdesc.contents    = contents;
             cdesc.label       = runid + "." + editid;
             cdesc.description = cdesc.label;
-            cdesc.lastmodDate = QFileInfo( edtfile ).lastModified().toString();
+            cdesc.lastmodDate = US_Util::toUTCDatetimeText( QFileInfo( edtfile )
+                                .lastModified().toUTC().toString( Qt::ISODate )
+                                , true );
 
             if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
                cdesc.dataGUID    = US_Util::new_guid();
@@ -673,10 +650,7 @@ qDebug() << "BrLoc:  edtfilt" << edtfilt;
 
       model.load( modfil );
 
-      if ( details )
-      {
-         contents     = US_Util::md5sum_file( modfil );
-      }
+      contents          = US_Util::md5sum_file( modfil );
 
       cdesc.recordID    = -1;
       cdesc.recType     = 3;
@@ -687,7 +661,9 @@ qDebug() << "BrLoc:  edtfilt" << edtfilt;
       cdesc.filename    = modfil;
       cdesc.contents    = contents;
       cdesc.description = model.description;
-      cdesc.lastmodDate = QFileInfo( modfil ).lastModified().toString();
+      cdesc.lastmodDate = US_Util::toUTCDatetimeText( QFileInfo( modfil )
+                          .lastModified().toUTC().toString( Qt::ISODate )
+                          , true );
 
       if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
          cdesc.dataGUID    = US_Util::new_guid();
@@ -710,14 +686,10 @@ qDebug() << "BrLoc:  edtfilt" << edtfilt;
    {  // loop thru potential noise files
       US_Noise    noise;
       QString     noifil   = dirn + "/" + noifils.at( ii );
-                  contents = "";
 
       noise.load( noifil );
 
-      if ( details )
-      {
-         contents     = US_Util::md5sum_file( noifil );
-      }
+      contents          = US_Util::md5sum_file( noifil );
 
       cdesc.recordID    = -1;
       cdesc.recType     = 4;
@@ -728,7 +700,9 @@ qDebug() << "BrLoc:  edtfilt" << edtfilt;
       cdesc.filename    = noifil;
       cdesc.contents    = contents;
       cdesc.description = noise.description;
-      cdesc.lastmodDate = QFileInfo( noifil ).lastModified().toString();
+      cdesc.lastmodDate = US_Util::toUTCDatetimeText( QFileInfo( noifil )
+                          .lastModified().toUTC().toString( Qt::ISODate )
+                          , true );
 
       if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
          cdesc.dataGUID    = US_Util::new_guid();
@@ -786,9 +760,7 @@ void US_DataModel::merge_dblocal( )
          descd.recState    |= descl.recState;     // OR states
          descd.filename     = descl.filename;     // filename from local
          descd.lastmodDate  = descl.lastmodDate;  // last mod date from local
-
-         if ( details )
-            descd.contents     = descd.contents + " " + descl.contents;
+         descd.contents     = descd.contents + " " + descl.contents;
 
          adescs << descd;                  // output combo record
 //qDebug() << "MERGE:  kar jdr jlr (1)GID" << kar << jdr << jlr << descd.dataGUID;
@@ -1032,7 +1004,9 @@ void US_DataModel::sort_descs( QVector< DataDesc >& descs )
       cdesc.contents    = "";
       cdesc.label       = cdesc.label.section( ".", 0, 0 );
       cdesc.description = cdesc.label + "--ARTIFICIAL-RECORD";
-      cdesc.lastmodDate = QDateTime::currentDateTime().toUTC().toString();
+      cdesc.lastmodDate = US_Util::toUTCDatetimeText(
+                          QDateTime::currentDateTime().toUTC()
+                          .toString( Qt::ISODate ), true );
 
       dlabel = dlabel.section( ".", 0, 0 );
       dindex = QString().sprintf( "%4.4d", kndx++ );
@@ -1101,7 +1075,9 @@ void US_DataModel::sort_descs( QVector< DataDesc >& descs )
       cdesc.contents    = "";
       cdesc.label       = cdesc.label.section( ".", 0, 0 );
       cdesc.description = cdesc.label + "--ARTIFICIAL-RECORD";
-      cdesc.lastmodDate = QDateTime::currentDateTime().toUTC().toString();
+      cdesc.lastmodDate = US_Util::toUTCDatetimeText(
+                          QDateTime::currentDateTime().toUTC()
+                          .toString( Qt::ISODate ), true );
 
       dlabel = dlabel.section( ".", 0, 0 );
       dindex = QString().sprintf( "%4.4d", kndx++ );
@@ -1170,7 +1146,9 @@ void US_DataModel::sort_descs( QVector< DataDesc >& descs )
       cdesc.contents    = "";
       cdesc.label       = cdesc.label.section( ".", 0, 0 );
       cdesc.description = cdesc.label + "--ARTIFICIAL-RECORD";
-      cdesc.lastmodDate = QDateTime::currentDateTime().toUTC().toString();
+      cdesc.lastmodDate = US_Util::toUTCDatetimeText(
+                          QDateTime::currentDateTime().toUTC()
+                          .toString( Qt::ISODate ), true );
 
       dlabel = dlabel.section( ".", 0, 0 );
       dindex = QString().sprintf( "%4.4d", kndx++ );
@@ -1630,7 +1608,6 @@ void US_DataModel::dummy_data()
    adescs.clear();
    ddescs.clear();
    ldescs.clear();
-   details    = true;
 
    cdesc.recType        = 1;
    cdesc.recState       = REC_DB | PAR_DB;

@@ -73,15 +73,13 @@ class US_EXTERN US_ManageData : public US_Widgets
 
       QLineEdit*    le_invtor;
 
-      QCheckBox*    ck_detail;
-
       QPushButton*  pb_invtor;
+      QPushButton*  pb_reset;
       QPushButton*  pb_scanda;
       QPushButton*  pb_hsedit;
       QPushButton*  pb_hsmodl;
       QPushButton*  pb_hsnois;
       QPushButton*  pb_helpdt;
-      QPushButton*  pb_reset;
       QPushButton*  pb_help;
       QPushButton*  pb_close;
 
@@ -105,7 +103,6 @@ class US_EXTERN US_ManageData : public US_Widgets
       int           nlnois;
       int           kdmy;
 
-      bool          details;
       bool          rbtn_click;
 
       QString       run_name;
