@@ -1448,6 +1448,8 @@ qDebug() << "AdjSD:  times 1 2" << kst1 << kst2;
          break;
 
       case 3:      // compressibility
+//*DEBUG: treat case 3 like case 0 for now
+for (int j=0; j<Nv; j++) { s_adj[j]=param_s; D_adj[j]=param_D; }
          break;
 
       default:
@@ -1670,8 +1672,8 @@ void US_LammAstfvm::nonIdealCaseNo()
       NonIdealCaseNo = 2;
    }
 
-   else if ( model.compressibility != COMP_25W )
-   {  // compressibility factor not water's:    compressibility
+   else if ( model.compressibility > 0.0 )
+   {  // compressibility factor positive:       compressibility
       NonIdealCaseNo = 3;
    }
 }

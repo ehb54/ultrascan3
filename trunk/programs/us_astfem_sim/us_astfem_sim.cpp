@@ -289,7 +289,7 @@ void US_Astfem_Sim::change_model( US_Model m )
    if ( system.components[ 0 ].sigma != 0.0  ||
         system.components[ 0 ].delta != 0.0  ||
         system.coSedSolute           >= 0    ||
-        system.compressibility       != COMP_25W )
+        system.compressibility       >  0.0 )
       simparams.meshType = US_SimulationParameters::ASTFVM;
 
    else  // normal (ideal) default

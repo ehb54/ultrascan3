@@ -25,7 +25,7 @@ US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
                     + tr( "   to the list below of selected noise records.\n" )
                     + tr( "Double-click on a selected-noise list entry\n" )
                     + tr( "   to remove it from the selected list.\n\n" )
-                    + tr( "You may select one TI and one RI noise record.\n\n" )
+                    + tr( "You may select multiple noise records.\n\n" )
                     + tr( "Click the \"Load\" button to load selected noise\n" )
                     + tr( "    or the \"Cancel\" button to select no noise.\n" )
                     + tr( "Click \"Details\" for noise entry details." );
@@ -46,7 +46,7 @@ US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
    tw_noises->setFont(    font );
 
    lw_selects       = us_listwidget();
-   lw_selects->setMaximumHeight( fontHeight * 2 + 12 );
+   lw_selects->setMaximumHeight( fontHeight * 3 + 12 );
 
    mainLayout->addWidget( lb_noises );
    mainLayout->addWidget( tw_noises );
@@ -132,7 +132,7 @@ void US_NoiseLoader::itemSelect( QTreeWidgetItem* item, int )
    }
 
    else
-   {  // otherwise, replace anything of same type
+   {  // otherwise, insert the item in the select list
       QStringList selects;
       QString     temptext;
       int ricount = 0;
@@ -151,41 +151,42 @@ void US_NoiseLoader::itemSelect( QTreeWidgetItem* item, int )
          else
             ricount++;         // bump "ri" count
 
+         if ( temptext == itemtext )
+            return;            // abort now if already in select list
+
       }
 
       // The following inserts the selected noise entry into the select list.
-      // The goal is to have at most 2 entries, "ti" first, "ri" last.
+      // The goal is to have "ti" entries first, "ri" entries second.
 
       if ( itemtype == "ti" )
       {  // item to add is "ti_*"
 
-         if ( ticount == 0 )
+         if ( ticount == 0  ||  itemtext == "ti_noise 0000" )
          {  // there wasn't one before, so insert the new one
             lw_selects->insertItem( 0, itemtext );
          }
 
-         else
-         {  // there was one before, replace 1st in list (ti position)
-            selects.replace( 0, itemtext );
-            lw_selects->clear();
-            lw_selects->addItems( selects );
-         }
-      }
-
-      else
-      {  // item to add is "ri_*"
-
-         if ( ricount == 0 )
-         {  // there wasn't one before, so add new one to the end
+         else if ( ricount == 0 )
+         {  // have ti's and no ri's, so just append
             lw_selects->addItem( itemtext );
          }
 
          else
-         {  // there was one before, replace last in list (ri position)
-            selects.replace( secount - 1, itemtext );
-            lw_selects->clear();
-            lw_selects->addItems( selects );
+         {  // one or more exist, so insert before any ri entries
+            lw_selects->insertItem( ticount, itemtext );
          }
+      }
+
+      else if ( itemtext == "ri_noise 0000" )
+      {  // insure primary ri is the first one of the ri part of the list
+         lw_selects->insertItem( ticount, itemtext );
+      }
+
+      else
+      {  // item to add is "ri_*" (not 0000), so just add it to the end
+
+         lw_selects->addItem( itemtext );
       }
    }
 }
@@ -203,10 +204,8 @@ qDebug() << "NL: itemDeselect row" << lw_selects->item( sx )->text();
    }
 
    else
-   {  // otherwise, rebuild list with only other item
-      QString keepitem = lw_selects->item( 1 - sx )->text();
-      lw_selects->clear();
-      lw_selects->addItem( keepitem );
+   {  // otherwise, remove the item
+      lw_selects->takeItem( sx );
    }
 
 }
@@ -234,6 +233,9 @@ void US_NoiseLoader::cancelled()
 void US_NoiseLoader::selected()
 {
    bool isDB = ( db != (US_DB2*)0 );  // flag DB or Local
+   int  nti  = 0;
+   int  nri  = 0;
+   US_Noise t2_noise;
 
    for ( int ii = 0; ii < lw_selects->count(); ii++ )
    {  // browse select list
@@ -256,11 +258,32 @@ void US_NoiseLoader::selected()
       }
 
       if ( styptext == "ti" )
-         ti_noise.load( isDB, noisGUID, db );  // load ti noise
+      {
+         if ( nti == 0 )
+            ti_noise.load( isDB, noisGUID, db );    // load ti noise
+
+         else
+         {
+            t2_noise.load( isDB, noisGUID, db );
+            ti_noise.sum_noise( t2_noise, true );   // sum multiple ti noises
+         }
+
+         nti++;
+      }
 
       else
-         ri_noise.load( isDB, noisGUID, db );  // load ri noise
+      {
+         if ( nri == 0 )
+            ri_noise.load( isDB, noisGUID, db );    // load ri noise
 
+         else
+         {
+            t2_noise.load( isDB, noisGUID, db );
+            ri_noise.sum_noise( t2_noise, true );   // sum multiple ri noises
+         }
+
+         nri++;
+      }
    }
 
    close_all();
