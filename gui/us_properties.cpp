@@ -274,7 +274,36 @@ void US_Properties::newAnalyte( void )
    US_Model::SimulationComponent sc;
    model.components << sc;
 
+   US_AnalyteGui* dialog =
+      new US_AnalyteGui( investigator, true, QString(), db_access );
+
+   connect( dialog, SIGNAL( valueChanged   ( US_Analyte ) ),
+                    SLOT  ( update_analyte ( US_Analyte ) ) );
+   
+   // If accepted, work is done by update_analyte
+   if ( dialog->exec() == QDialog::Rejected )
+   {
+      int last = model.components.size() - 1;
+      update_lw();
+
+      lw_components->setCurrentRow( last );  // Runs update() via signal
+      calculate();
+   }
+}
+
+void US_Properties::update_analyte( US_Analyte new_analyte )
+{
+   analyte  = new_analyte;
    int last = model.components.size() - 1;
+   
+   US_Model::SimulationComponent* sc = &model.components[ last ];
+
+   sc->name        = analyte.description;
+   sc->analyteGUID = analyte.analyteGUID;
+   sc->mw          = analyte.mw;
+   sc->vbar20      = analyte.vbar20;
+
+   le_guid->setText( sc->analyteGUID );
    update_lw();
 
    lw_components->setCurrentRow( last );  // Runs update() via signal
@@ -621,8 +650,6 @@ void US_Properties::update( int /* row */ )
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
 
-   inUpdate = true;
-
    char uuid[ 37 ];
    uuid[ 36 ] = 0;
 
@@ -922,6 +949,7 @@ void US_Properties::calculate( void )
    if ( inUpdate ) return;
 
    checkbox();
+
    // First do some sanity checking
    double vbar = le_vbar->text().toDouble();
    if ( vbar <= 0.0 ) return;
@@ -1166,7 +1194,11 @@ void US_Properties::calculate( void )
 
    US_Model::SimulationComponent* sc = &model.components[ row ];
 
-   if ( mw != sc->mw )
+
+   // Sometimes the mw is truncated to 4 significant digits.
+   QString mw_string = QString::number( sc->mw, 'e', 3 );
+
+   if ( mw != mw_string.toDouble() )
    {
       if ( keep_standard() )  // Reset
       {
