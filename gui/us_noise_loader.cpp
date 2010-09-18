@@ -13,7 +13,9 @@ US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
    : US_WidgetsDialog( 0, 0 ), db( db ), mieGUIDs( mieGUIDs ),
    nieGUIDs( nieGUIDs ), ti_noise( ti_noise ), ri_noise( ri_noise )
 {
-   setWindowTitle( tr( "Noise Vector Load" ) );
+   setWindowTitle( ( db == (US_DB2*) 0 ?
+                    tr( "Noise Vector Local Disk Load" ) :
+                    tr( "Noise Vector Database Load" ) ) );
    setPalette( US_GuiSettings::frameColor() );
 
    mainLayout        = new QVBoxLayout( this );
@@ -196,7 +198,7 @@ void US_NoiseLoader::itemDeselect( const QModelIndex& mx )
 {
    int sx    = mx.row();
    int nrows = lw_selects->count();
-qDebug() << "NL: itemDeselect row" << lw_selects->item( sx )->text();
+//qDebug() << "NL: itemDeselect row" << lw_selects->item( sx )->text();
 
    if ( nrows == 1 )
    {  // if there was only 1 item, list will now be clear
@@ -299,7 +301,8 @@ void US_NoiseLoader::view_details()
    // build noise details text
    mtxt  = tr( "All models derive from the common loaded Edit.\n" )
          + tr( "All noise vector records derive from the loaded Model\n" )
-         + tr( "  or from siblings of that model.\n" )
+         + tr( "  or from siblings of that model " )
+         + ( isDB ? tr( "in the database.\n" ) : tr( "on local disk.\n" ) )
          + tr( "Details for noise vector records follow.\n" );
 
    for ( int ii = 0; ii < nieGUIDs.size(); ii++ )

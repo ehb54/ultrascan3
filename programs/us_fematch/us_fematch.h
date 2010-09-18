@@ -39,6 +39,11 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QLabel*       lb_simpoints;
       QLabel*       lb_bldvolume;
       QLabel*       lb_parameter;
+      QLabel*       lb_sedcoeff;
+      QLabel*       lb_difcoeff;
+      QLabel*       lb_partconc;
+      QLabel*       lb_moweight;
+      QLabel*       lb_component;
 
       QLineEdit*    le_id;
       QLineEdit*    le_temp;
@@ -78,6 +83,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QPushButton*  pb_view;
       QPushButton*  pb_save;
       QPushButton*  pb_distrib;
+      QPushButton*  pb_advanced;
       QPushButton*  pb_reset;
       QPushButton*  pb_help;
       QPushButton*  pb_close;
@@ -105,6 +111,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QString       workingDir;
       QString       runID;
       QString       editID;
+      QString       dfilter;
       QString       mfilter;
       QString       investig;
 
@@ -134,6 +141,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void save_data(   void );
       void details(     void );
       void reset(       void );
+      void advanced(    void );
       void update(      int  );
       void update_density(   double );
       void update_viscosity( double );
