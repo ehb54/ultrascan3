@@ -14,6 +14,9 @@
 #include "us_analyte_gui.h"
 #include "us_passwd.h"
 #include "us_db2.h"
+#include "us_data_loader.h"
+#include "us_util.h"
+#include "us_investigator.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -33,6 +36,7 @@ int main( int argc, char* argv[] )
 US_FeMatch::US_FeMatch() : US_Widgets()
 {
    setObjectName( "US_FeMatch" );
+   def_local  = true;
 
    // set up the GUI
    setPalette( US_GuiSettings::frameColor() );
@@ -160,11 +164,11 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    QLabel* lb_experiment   = us_banner( tr( "Experimental Parameters (at 20" ) 
       + DEGC + "):" );
    QLabel* lb_variance     = us_label ( tr( "Variance:" ) );
-   QLabel* lb_sedcoeff     = us_label ( tr( "Sedimentation Coefficient:" ) );
-   QLabel* lb_difcoeff     = us_label ( tr( "Diffusion Coefficient:" ) );
-   QLabel* lb_partconc     = us_label ( tr( "Partial Concentration:" ) );
-   QLabel* lb_moweight     = us_label ( tr( "Molecular Weight, f/f0:" ) );
-   QLabel* lb_component    = us_label ( tr( "Component:" ) );
+           lb_sedcoeff     = us_label ( tr( "Sedimentation Coefficient:" ) );
+           lb_difcoeff     = us_label ( tr( "Diffusion Coefficient:" ) );
+           lb_partconc     = us_label ( tr( "Partial Concentration:" ) );
+           lb_moweight     = us_label ( tr( "Molecular Weight, f/f0:" ) );
+           lb_component    = us_label ( tr( "Component:" ) );
            lb_simpoints    = us_label ( tr( "Simulation Points:" ) );
            lb_bldvolume    = us_label ( tr( "Band-loading Volume:" ) );
            lb_parameter    = us_label ( tr( "Parameter:" ) );
@@ -308,20 +312,24 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    data_plot2->setMinimumSize( 560, 240 );
 
    // Standard buttons
-   pb_reset = us_pushbutton( tr( "Reset" ) );
-   pb_help  = us_pushbutton( tr( "Help"  ) );
-   pb_close = us_pushbutton( tr( "Close" ) );
+   pb_advanced = us_pushbutton( tr( "Advanced" ) );
+   pb_reset    = us_pushbutton( tr( "Reset" ) );
+   pb_help     = us_pushbutton( tr( "Help"  ) );
+   pb_close    = us_pushbutton( tr( "Close" ) );
 
-   buttonLayout->addWidget( pb_reset );
-   buttonLayout->addWidget( pb_help  );
-   buttonLayout->addWidget( pb_close );
+   buttonLayout->addWidget( pb_advanced );
+   buttonLayout->addWidget( pb_reset    );
+   buttonLayout->addWidget( pb_help     );
+   buttonLayout->addWidget( pb_close    );
 
-   connect( pb_reset, SIGNAL( clicked() ),
-            this,     SLOT(   reset() ) );
-   connect( pb_close, SIGNAL( clicked() ),
-            this,     SLOT(   close_all() ) );
-   connect( pb_help,  SIGNAL( clicked() ),
-            this,     SLOT(   help() ) );
+   connect( pb_reset,    SIGNAL( clicked() ),
+            this,        SLOT(   reset()     ) );
+   connect( pb_close,    SIGNAL( clicked() ),
+            this,        SLOT(   close_all() ) );
+   connect( pb_help,     SIGNAL( clicked() ),
+            this,        SLOT(   help()      ) );
+   connect( pb_advanced, SIGNAL( clicked() ),
+            this,        SLOT(   advanced()  ) );
 
    rightLayout->addLayout( plotLayout1 );
    rightLayout->addWidget( gb_modelsim );
@@ -338,7 +346,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 
    dataLoaded = false;
    haveSim    = false;
-   def_local  = true;
    mfilter    = "";
    investig   = "USER";
    resids.clear();
@@ -378,108 +385,35 @@ void US_FeMatch::load( void )
    QString     file;
    QStringList files;
    QStringList parts;
-
-   dataLoaded = false;
-   dataLatest = ck_edit->isChecked();
-
-   if ( dataLatest )
-   {  // will be getting latest edit, so let user choose directory
-      workingDir = QFileDialog::getExistingDirectory( this,
-            tr( "Raw Data Directory" ),
-            US_Settings::resultDir(),
-            QFileDialog::DontResolveSymlinks | QFileDialog::ShowDirsOnly );
-qDebug() << "LATEST edit: wdir" << workingDir;
-   }
-
-   else
-   {  // will be getting specific edit, so user may choose a file
-      file       = QFileDialog::getOpenFileName( this,
-            tr( "Raw Data Directory & Specific Edit" ),
-            US_Settings::resultDir(),
-            tr( "Edit/Data Files (*.xml *.auc);; All Files( *)" ) );
-      workingDir   = QFileInfo( file ).absolutePath();
-qDebug() << "SPECIFIC edit: file" << file;
-qDebug() << "SPECIFIC edit: wdir" << workingDir;
-      if ( file.contains( ".auc" ) )
-         dataLatest    = true;
-   }
-
-qDebug() << "dataLatest:" << dataLatest;
-
-   if ( workingDir.isEmpty() )
-      return;
-
-   // insure we have a .auc file
-   workingDir.replace( "\\", "/" );
-   QDir wdir( workingDir );
-   files    = wdir.entryList( QStringList() << "*.auc",
-         QDir::Files | QDir::Readable, QDir::Name );
-
-   if ( files.size() == 0 )
-   {
-      QMessageBox::warning( this,
-            tr( "No Files Found" ),
-            tr( "There were no files of the form *.auc\n"
-                "found in the specified directory." ) );
-      return;
-   }
-
-   // Look for cell / channel / wavelength combinations
    lw_triples->  clear();
    dataList.     clear();
    rawList.      clear();
    excludedScans.clear();
    triples.      clear();
 
-   // Read all data
-   if ( workingDir.right( 1 ) != "/" )
-      workingDir += "/"; // Ensure trailing '/'
+   dataLoaded = false;
+   dataLatest = ck_edit->isChecked();
 
-   if ( dataLatest )
-   {  // build list of files with latest edit ID
-      files    = wdir.entryList( QStringList() << "*.*.*.*.*.*.xml",
-         QDir::Files | QDir::Readable, QDir::Name );
-      files    = last_edit_files( files );
+   US_DataLoader* dialog = new US_DataLoader( true, dataLatest, def_local, dfilter,
+         investig, db );
+
+   if ( dialog->exec() == QDialog::Accepted )
+   {
+      db         = dialog->settings( def_local, investig, dfilter );
+qDebug() << "DLd:  loc vest filt" << def_local << investig << dfilter;
+qDebug() << "DLd: dd" << dialog->description();
+
+      dialog->load_edit( dataList, rawList, triples );
+qDebug() << "DLd: triples[0]" << triples.at(0);
+
+      delete dialog;
    }
 
    else
-   {  // build list of files with edit ID matching selected file
-      editID   = file.section( ".", 1, 1 );
-      file     = "*." + editID + ".*.*.*.*.xml";
-      files    = wdir.entryList( QStringList() << file,
-         QDir::Files | QDir::Readable, QDir::Name );
-   }
+      return;
 
-   for ( int ii = 0; ii < files.size(); ii++ )
-   {  // load all data in directory; get triples
-      file     = files[ ii ];
-      parts    = file.split( "." );
- 
-      // load edit data (xml) and raw data (auc)
-      int result = US_DataIO2::loadData( workingDir, file, dataList, rawList );
-
-      if ( result != US_DataIO2::OK )
-      {
-         QMessageBox::warning( this,
-            tr( "UltraScan Error" ),
-            tr( "Could not read edit file.\n" ) 
-            + US_DataIO2::errorString( result ) + "\n"
-            + workingDir + file );
-         return;
-      }
-
-      QString t = parts[ 3 ] + " / " + parts[ 4 ] + " / " + parts[ 5 ];
-      runID     = parts[ 0 ];
-      editID    = parts[ 1 ];
-
-      if ( ! triples.contains( t ) )
-      {  // update ListWidget with cell / channel / wavelength triple
-         triples << t;
-         lw_triples->addItem( t );
-      } 
-   }
-
-   lw_triples->setCurrentRow( 0 );
+   for ( int ii = 0; ii < triples.size(); ii++ )
+      lw_triples->addItem( triples.at( ii ) );
 
    edata     = &dataList[ 0 ];
    scanCount = edata->scanData.size();
@@ -500,8 +434,8 @@ qDebug() << "dataLatest:" << dataLatest;
    pb_details  ->setEnabled( true );
    pb_loadmodel->setEnabled( true );
    pb_exclude  ->setEnabled( true );
-   //mfilter     = dataList[ 0 ].runID;
    mfilter     = QString( "=edit" );
+   dfilter     = QString( "" );
 
    ct_from->disconnect();
    ct_from->setValue( 0 );
@@ -525,14 +459,9 @@ void US_FeMatch::details( void )
 
    delete dialog;
 //DEBUG: for now, use details button to toggle RA visibility
-bool visible=lb_simpoints->isVisible();
-//pl1siz = data_plot1->size();
-//pl2siz = data_plot2->size();
-qDebug() << "debug isRA" << !visible;
-set_ra_visible( !visible );
-//data_plot1->resize( pl1siz );
-//data_plot2->resize( pl2siz );
-//adjustSize(); 
+//bool visible=lb_simpoints->isVisible();
+//qDebug() << "debug isRA" << !visible;
+//set_ra_visible( !visible );
 }
 
 // update based on selected triples row
@@ -917,6 +846,8 @@ void US_FeMatch::exclude( void )
 
 void US_FeMatch::set_ra_visible( bool visible )
 {
+   lb_sedcoeff ->setVisible( true );
+   adjustSize(); 
    QSize pl1siz = data_plot1->size();
    QSize pl2siz = data_plot2->size();
    lb_simpoints->setVisible( visible );  // visibility of RA experimental pars
@@ -927,8 +858,18 @@ void US_FeMatch::set_ra_visible( bool visible )
    ct_parameter->setVisible( visible );
    pb_showmodel->setVisible( visible );
    ct_modelnbr ->setVisible( visible );
-   //cb_mesh     ->setVisible( visible );
-   //cb_grid     ->setVisible( visible );
+   cb_mesh     ->setVisible( visible );
+   cb_grid     ->setVisible( visible );
+   lb_sedcoeff ->setVisible( visible );
+   le_sedcoeff ->setVisible( visible );
+   lb_difcoeff ->setVisible( visible );
+   le_difcoeff ->setVisible( visible );
+   lb_partconc ->setVisible( visible );
+   le_partconc ->setVisible( visible );
+   lb_moweight ->setVisible( visible );
+   le_moweight ->setVisible( visible );
+   lb_component->setVisible( visible );
+   ct_component->setVisible( visible );
 
    gb_modelsim ->setVisible( visible );  // visibility model simulate group box
 
@@ -1301,6 +1242,26 @@ qDebug() << "  drN" << yy[dsize-1];
    delete [] yy;
 }
 
+// toggle advanced/basic display components
+void US_FeMatch::advanced( )
+{
+   bool visible = !lb_simpoints->isVisible();
+
+   if ( pb_advanced->text() == "Advanced" )
+   {
+      pb_advanced->setText( "Basic" );
+      visible  = true;
+   }
+
+   else
+   {
+      pb_advanced->setText( "Advanced" );
+      visible  = false;
+   }
+
+   set_ra_visible( visible );
+}
+
 // reset excluded scan range
 void US_FeMatch::reset( )
 {
@@ -1594,12 +1555,9 @@ qDebug() << " baseline plateau" << edata->baseline << edata->plateau;
    // initialize simulation parameters using edited data information
    simparams.initFromData( db, *edata );
 qDebug() << " initFrDat serial type coeffs" << simparams.rotorSerial
-   << simparams.rotorType
-   << simparams.rotorcoeffs[0]
-   << simparams.rotorcoeffs[1]
-   << simparams.rotorcoeffs[2]
-   << simparams.rotorcoeffs[3]
-   << simparams.rotorcoeffs[4];
+   << simparams.rotorType      << simparams.rotorcoeffs[0]
+   << simparams.rotorcoeffs[1] << simparams.rotorcoeffs[2]
+   << simparams.rotorcoeffs[3] << simparams.rotorcoeffs[4];
 
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;
@@ -2148,7 +2106,7 @@ qDebug() << "CalcRes: dsize ssize" << dsize << ssize;
       for ( int jj = 0; jj < dsize; jj++ )
       {
          sval          = interp_sval( xx[ jj ], sx, sy, ssize );
-         yval          = sval - edata->value( ii, jj );
+         yval          = edata->value( ii, jj ) - sval;
 
          //if ( xx[ jj ] < rl )
          //   yval          = 0.0;
@@ -2271,6 +2229,7 @@ int US_FeMatch::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs 
       {  // accumulate from db desc entries matching editGUID;
          xmGUID  = db->value( 1 ).toString();
          xeGUID  = db->value( 3 ).toString();
+//qDebug() << "MIE(db): xm/xe/e GUID" << xmGUID << xeGUID << eGUID;
 
          if ( xeGUID == eGUID )
             mGUIDs << xmGUID;
@@ -2347,21 +2306,31 @@ int US_FeMatch::noises_in_model( bool ondisk, QString mGUID,
 
       QStringList query;
       QString     invID  = investig.section( ":", 0, 0 );
+      QString     xnoiID;
+      QString     xmodID;
+      QString     modlID;
 
       query.clear();
+      query << "get_modelID" << mGUID;
+      db->query( query );
+      db->next();
+      modlID  = db->value( 0 ).toString();
 
+      query.clear();
       query << "get_noise_desc" << invID;
       db->query( query );
 
       while ( db->next() )
       {  // accumulate from db desc entries matching editGUID;
+         xnoiID  = db->value( 0 ).toString();
          xnGUID  = db->value( 1 ).toString();
-         xmGUID  = db->value( 3 ).toString();
-         xntype  = db->value( 2 ).toString();
+         xmodID  = db->value( 3 ).toString();
+         xntype  = db->value( 4 ).toString();
          xntype  = xntype.contains( "ri_nois", Qt::CaseInsensitive ) ?
                    "ri" : "ti";
 
-         if ( xmGUID == mGUID )
+//qDebug() << "NIM(db): xm/xe/e ID" << xnoiID << xmodID << modlID;
+         if ( xmodID == modlID )
             nGUIDs << xnGUID + ":" + xntype + ":0000";
       }
    }
