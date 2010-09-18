@@ -100,6 +100,7 @@ class US_Properties : public US_WidgetsDialog
 	private slots:
       void newAnalyte    ( void );
       void update        ( int );
+      void update_analyte( US_Analyte );
       void calculate     ( void );
       void calculate     ( bool ) { calculate(); };
       void acceptProp    ( void );
