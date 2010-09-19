@@ -9,17 +9,18 @@
     can import models from finite element nonlinear fitting sessions, from
     2-dimensional spectrum analysis fits, from genetic algorithm fits, and
     from C(s) fits. The program will then compare the fitted model to the
-    experimental data and display residual plots, sedimentation and
-    diffusion coefficent distributions, as well as molecular weight distributions.
+    experimental data and display residual plots, sedimentation and diffusion
+    coefficent distributions, as well as molecular weight distributions.
     The model can be displayed as a 3-dimensional plot showing the partial
     concentrations mapped onto a 2-dimensional grid of any two of the following
     parameters: s, D, f, f/f0, and MW. Residual plots including deconvoluted
     time- and radially-invariant noise plots can also be displayed. The
     results can be saved for inclusion into a velocity result report.</p>
 
-    <p> The main US_Fematch window can take on an alternate form, with some
-    additional parameter options, when the model loaded includes
-    Reversible Associations (RA).</p>
+    <p> The main US_Fematch window may need additional controls when the model
+    loaded includes Reversible Associations (RA). These controls can be
+    revealed using the <i>Advanced</i> button or hidden again via the
+    <i>Basic</i> button.</p>
 
     <h3> Process:</h3>
 
@@ -54,9 +55,13 @@
 
     <img src="images/fe_match.png" alt="FE_Match Main Window"/>
 
-    <p> An alternate main window is revealed when an RA model is loaded.</p>
+    <p> An alternate main window may be revealed by clicking on the
+    <b>Advanced</b> button when an RA model has been loaded. This choice
+    is available even in non-RA cases, when the extra controls seem
+    useful. The default window configuration is again available by
+    clicking on the same button, now relabelled <b>Basic</b>.</p>
 
-    <img src="images/fe_match-ra.png" alt="FE_Match-RA Main Window"/>
+    <img src="images/fe_match_ra.png" alt="FE_Match-RA Main Window"/>
           
     <h3> Functions:</h3>
 
@@ -164,28 +169,28 @@
        </li>
 
        <li>
-          <b>Sedimentation Coefficient:</b> Sedimentation coefficient for the
-          currently selected model component.
+          <b>Sedimentation Coefficient:</b> (Advanced) Sedimentation
+          coefficient for the currently selected model component.
        </li>
 
        <li>
-          <b>Diffusion Coefficient:</b> Diffusion coefficient for the the
-          selected component.
+          <b>Diffusion Coefficient:</b> (Advanced) Diffusion coefficient
+          for the selected component.
        </li>
 
        <li>
-          <b>Partial Concentration:</b> Partial concentration value for the
-          selected component.
+          <b>Partial Concentration:</b> (Advanced) Partial concentration
+          value for the selected component.
        </li>
 
        <li>
-          <b>Molecular Weight, f/f0:</b> Molecular weight and frictional
-          ratio for the selected component.
+          <b>Molecular Weight, f/f0:</b> (Advanced) Molecular weight and
+          frictional ratio for the selected component.
        </li>
 
        <li>
-          <b>Component:</b> Specify the index of the component for which the
-          above values are to be displayed.
+          <b>Component:</b> (Advanced) Specify the index of the component
+          for which the above values are to be displayed.
        </li>
 
        <li>
@@ -196,6 +201,12 @@
        <li>
           <b>Exclude Scan Range</b> Initiate exclusion of the scans given
           in the above controls.
+       </li>
+
+       <li>
+          <b>Advanced</b> Reveal advanced controls. The label of this button
+          is then changed to <b>Basic</b>, allowing a return to the original
+          main window controls configuration.
        </li>
 
        <li>
@@ -211,35 +222,35 @@
        </li>
 
        <li>
-          <b>Simulation Points:</b> (RA parameter) Specify simulation points.
+          <b>Simulation Points:</b> (Advanced/RA) Specify simulation points.
        </li>
 
        <li>
-          <b>Band-loading Volume:</b> (RA parameter) Specify a band-loading
+          <b>Band-loading Volume:</b> (Advanced/RA) Specify a band-loading
           volume value.
        </li>
 
        <li>
-          <b>Parameter:</b> (RA parameter) Choose a parameter value.
+          <b>Parameter:</b> (Advanced/RA) Choose a parameter value.
        </li>
 
        <li>
-          <b>Show Model #</b> (RA parameter) Choose a number.
+          <b>Show Model #</b> (Advanced/RA) Choose a number.
        </li>
 
        <li>
-          <b>(mesh type)</b> (RA parameter) Select from one of several mesh
+          <b>(mesh type)</b> (Advanced) Select from one of several mesh
           types, including Adaptive Space Time (ASTFEM), Claverie, Moving
           Hat, user File, or Adaptive Space Volume (ASVFEM).
        </li>
 
        <li>
-          <b>(grid type)</b> (RA parameter) Select a moving-time or
+          <b>(grid type)</b> (Advanced) Select a moving-time or
           constant-time grid type.
        </li>
 
        <li>
-          <b>(model/Monte Carlo)</b> (RA parameter) Select one of the four
+          <b>(model/Monte Carlo)</b> (Advanced/RA) Select one of the four
           choices for initial scan partial concentrations: Current Model;
           MC Mode value; MC Mean value; MC Median value. Make one choice by
           selecting a radio button in the parameter area between plots
