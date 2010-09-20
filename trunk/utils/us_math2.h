@@ -149,6 +149,63 @@ class US_EXTERN US_Math2
       //! \brief Set the sysem random sequence.
       //! \return The seed used to set the system time
       static int randomize( void );
+
+      /*! Algorithm NNLS (Non-negative least-squares)
+ 
+      Given an m by n matrix A, and an m-vector B, computes an n-vector X,
+      that solves the least squares problem A * X = B   , subject to X>=0
+      The A matrix is formatted such that the columns are placed into a
+      vector end-to-end, and the parameter a_dim1 contains the length of
+      each column
+
+      Function returns 0 if succesful, 1, if iteration count exceeded 3*N,
+      or 2 in case of invalid problem dimensions or memory allocation error.
+
+      Instead of pointers for working space, NULL can be given to let this
+      function to allocate and free the required memory.
+      
+      \param a      The m by n matrix A. On exit, a[] contains the
+                    product matrix Q*A, where Q is an m by n orthogonal 
+                    matrix generated implicitly by this function.
+      
+      \param a_dim1 Since matrix A is processed as a set of vectors, 
+                    a_dim1 is needed to specify the storage increment between
+                    vectors in a[]
+
+      \param m      Columns
+      \param n      Rows
+
+      \param b      On entry, b[] must contain the m-vector B.
+                    On exit, b[] contains Q*B 
+
+      \param x      On exit, x[] will contain the solution vector.
+      \param rnorm  On exit, rnorm contains the Euclidean norm of the
+                    residual vector
+
+      \param wp     An n-array of working space, w[].  On exit, w[] will 
+                    contain the dual solution vector.
+                    w[i]=0.0 for all i in set p and w[ i ] <= 0.0 for 
+                    all i in set z.
+      
+      \param zzp    An m-array of working space, zz[].
+      \param indexp An n-array of working space, index[].
+      */
+
+      static int nnls(
+         double* a, int a_dim1, int m, int n,
+         double* b,
+         double* x,
+         double* rnorm,
+         double* wp,  
+         double* zzp, 
+         int*    indexp 
+         );
+      
+      private:
+
+      static void _nnls_g1 ( double a, double b, double*, double*, double* );
+      static int  _nnls_h12( int, int, int, int m, double*, int,
+                             double*, double *, int, int, int );
 };
 #endif
 
