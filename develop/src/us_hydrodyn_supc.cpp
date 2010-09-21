@@ -12,6 +12,7 @@
 #include "../include/us_math.h"
 #include <qregexp.h>
 
+// #define OLD_WAY_CHECK
 #define  PI M_PI
 // below are moved to variable values
 // #define  ETAo VISC_20W
@@ -36,16 +37,6 @@
 
 #undef R // it's defined as a us #define above & we use R as a local variable
 
-struct dati1
-{
-   float x, y, z;      /* coordinates of the bead center    */
-   float r;         /* hydrated radius of the bead       */
-   float ru;         /* unhydrated radius of the bead     */
-   float m;         /* mass of the bead                  */
-   int col;         /* color of the bead                 */
-   char *cor;         /* correspondence between beads and AA */
-};
-
 static double ETAo;
 static double DENS;
 static double TE;
@@ -61,12 +52,27 @@ static FILE *new_mol1;
 static FILE *new_rmc;
 static FILE *ris;
 #if defined(CREATE_EXE_TIME)
-static FILE *exe_time;
+ static FILE *exe_time;
 #endif
-static FILE *tot_mol;
-static FILE *interinp;
-static FILE *interinp1;
-static FILE *interout;
+
+
+#if defined(CREATE_TOT_MOL)
+ static FILE *tot_mol;
+#else
+ static vector < QString > molecola_v;
+ static vector < int > nat_v;
+ static vector < int > prima_v;
+ static vector < int > ultima_v;
+ static vector < float > raggio_v;
+#endif
+
+#if defined(OLD_WAY_CHECK)
+ static FILE *interinp;
+ static FILE *interinp1;
+#endif
+#if defined(OLD_WAY)
+ static FILE *interout;
+#endif
 
 static char molecola[SMAX];
 static char ragcol[SMAX];
@@ -263,8 +269,12 @@ static void stampamatrice1l(long double *n);
 static void stampa_ris();
 static void mem_ris(int);
 static void val_med();
-static void inp_inter();
-static void out_inter();
+#if defined(OLD_WAY_CHECK)
+ static void inp_inter();
+#endif
+#if defined(OLD_WAY)
+ static void out_inter();
+#endif
 static void mem_mol();
 static void autovalori();
 static void riempimatrice();
@@ -301,7 +311,7 @@ static void doublesum();
 static void init_da_a();
 static void inv(float r[9]);
 static void inv6x6(float a[6][6]);
-static void initarray();
+static void initarray(int);
 static void diffcalc();
 static void relax_rigid_calc();
 static void ragir();
@@ -319,8 +329,8 @@ static void dww(char *s) {
 
 // #define NMAX 1690
 
-static struct dati1 *dt = 0;   // [2 * NMAX];
-static struct dati1 *dtn = 0;   // [NMAX];
+static struct dati1_supc *dt = 0;   // [2 * NMAX];
+static struct dati1_supc *dtn = 0;   // [NMAX];
 static float *rRi = 0;      // [3 * NMAX];
 static float *b1 = 0;      // [3 * NMAX];
 static float *p = 0;      // [3 * NMAX];
@@ -417,23 +427,23 @@ supc_free_alloced_2()
 static int
 supc_alloc()
 {
-   dt = (struct dati1 *) malloc(2 * nmax * sizeof(struct dati1));
+   dt = (struct dati1_supc *) malloc(2 * nmax * sizeof(struct dati1_supc));
    if (!dt)
    {
       supc_free_alloced();
       fprintf(stderr, "memory allocation error\n");
       return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
    }
-   memset(dt, 0, 2 * nmax * sizeof(struct dati1));
+   memset(dt, 0, 2 * nmax * sizeof(struct dati1_supc));
 
-   dtn = (struct dati1 *) malloc(nmax * sizeof(struct dati1));
+   dtn = (struct dati1_supc *) malloc(nmax * sizeof(struct dati1_supc));
    if (!dtn)
    {
       supc_free_alloced();
       fprintf(stderr, "memory allocation error\n");
       return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
    }
-   memset(dtn, 0, nmax * sizeof(struct dati1));
+   memset(dtn, 0, nmax * sizeof(struct dati1_supc));
 
    rRi = (float *) malloc(nmax * 3 * sizeof(float));
    if (!rRi)
@@ -573,6 +583,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    q = 0;   
    a = 0;   
    tot_partvol = 0.0;
+
+#if !defined(CREATE_TOT_MOL)
+   molecola_v.clear();
+   nat_v.clear();
+   prima_v.clear();
+   ultima_v.clear();
+   raggio_v.clear();
+#endif
 
    ETAo = hydro->solvent_viscosity / 100;
    DENS = hydro->solvent_density;
@@ -741,8 +759,11 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
    printf("\n\n ** REMOVING RESERVED FILES, IF PRESENT ** \n\n");
 
+#if defined(CREATE_TOT_MOL)
    printf("Removing tot_mol\n");
    unlink("tot_mol");
+#endif
+#if defined(OLD_WAY)
    printf("Removing ifraxon\n");
    unlink("ifraxon");
    printf("Removing ofraxon\n");
@@ -751,6 +772,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    unlink("ifraxon1");
    printf("Removing ofraxon1\n");
    unlink("ofraxon1");
+#endif
 
    Gets_date(day, month, &year, &numday, hour);
 
@@ -1130,10 +1152,23 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                printf("\n");
             }
          }
+
+#if defined(CREATE_TOT_MOL)
          tot_mol = fopen("tot_mol", "wb");
          fprintf(tot_mol, "%s\n", molecola);
          fprintf(tot_mol, "%d\t%d\t%d\n", nat, prima, ultima);
          fclose(tot_mol);
+#else
+         molecola_v.clear();
+         nat_v.clear();
+         prima_v.clear();
+         ultima_v.clear();
+         raggio_v.clear();
+         molecola_v.push_back(QString("%1").arg(molecola));
+         nat_v.push_back(nat);
+         prima_v.push_back(prima);
+         ultima_v.push_back(ultima);
+#endif
       }
 
       else
@@ -1167,7 +1202,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       }
    }
 
+#if defined(CREATE_TOT_MOL)
    tot_mol = fopen("tot_mol", "r");
+#endif
 
    for (k = 0; k < num; k++)
    {
@@ -1191,7 +1228,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
       supc_free_alloced_2();
 
-      initarray();
+      initarray(k);
       editor->append(QString("Using %1 beads for the matrix\n").arg(nat));
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
@@ -1218,37 +1255,94 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          return -1;
       }
 
+#if defined(CREATE_TOT_MOL)
       fscanf(tot_mol, "%f", &raflag);
+#else
+      raflag = raggio_v[k];
+#endif
 
       presentazione();
 
       kkk = k + 1;
+#if defined(OLD_WAY_CHECK)
       inp_inter();
-      printf("\n\n- Starting PAT ...\n");
+#endif
       {
-         int retval = us_hydrodyn_pat_main(nmax);
-         printf("pat returns %d\n", retval);
+         struct dati1_pat *out_dt = 0;
+
+         out_dt = (struct dati1_pat *) malloc(nmax * sizeof(struct dati1_pat));
+         if (!out_dt)
+         {
+            supc_free_alloced();
+            fprintf(stderr, "memory allocation error\n");
+            return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
+         }
+         memset(out_dt, 0, nmax * sizeof(struct dati1_pat));
+
+         int out_nat;
+         printf("\n\n- Starting PAT ...\n");
+         {
+            int retval = us_hydrodyn_pat_main(nmax,
+                                              nat,
+                                              dt,
+                                              &out_nat,
+                                              out_dt);
+            printf("pat returns %d\n", retval);
+            if ( retval )
+            {
+               if ( out_dt )
+               {
+                  free(out_dt);
+                  out_dt = 0;
+               }
+               supc_free_alloced();
+               return -1;
+            }
+         }
+         printf("\n\n- End of PAT ...\n\n");
+         progress->setProgress(ppos++); // 2
+         qApp->processEvents();
+         if (us_hydrodyn->stopFlag)
+         {
+            supc_free_alloced();
+            return -1;
+         }
+         
+#if defined(OLD_WAY)
+         out_inter();
+         
+         printf("Removing ifraxon\n");
+         unlink("ifraxon");
+         printf("Removing ofraxon\n");
+         unlink("ofraxon");
+         printf("Removing ifraxon1\n");
+         unlink("ifraxon1");
+         printf("Removing ofraxon1\n");
+         unlink("ofraxon1");
+#endif
+         
+         printf("out_nat %d\n", out_nat); fflush(stdout);
+         printf("nat %d\n", nat); fflush(stdout);
+
+         for (i = 0; i < out_nat; i++)
+         {
+#if defined(MIMIC_FILE)
+            dtn[i].x = QString("").sprintf("%f",out_dt[i].x).toFloat();
+            dtn[i].y = QString("").sprintf("%f",out_dt[i].y).toFloat();
+            dtn[i].z = QString("").sprintf("%f",out_dt[i].z).toFloat();
+#else
+            dtn[i].x = out_dt[i].x;
+            dtn[i].y = out_dt[i].y;
+            dtn[i].z = out_dt[i].z;
+#endif
+            if ( i < 3 ) 
+            {
+               printf("after out_dt bead %d @ %f %f %f\n", i, out_dt[i].x,out_dt[i].y,out_dt[i].z);
+               printf("after bead %d @ %f %f %f\n", i, dtn[i].x,dtn[i].y,dtn[i].z);
+            }
+         }
       }
-      printf("\n\n- End of PAT ...\n\n");
-      progress->setProgress(ppos++); // 2
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
-
-      out_inter();
-
-      printf("Removing ifraxon\n");
-      unlink("ifraxon");
-      printf("Removing ofraxon\n");
-      unlink("ofraxon");
-      printf("Removing ifraxon1\n");
-      unlink("ifraxon1");
-      printf("Removing ofraxon1\n");
-      unlink("ofraxon1");
-
+      
       for (i = 0; i < nat; i++)
       {
          x = fabs(dt[i].x - dtn[i].x);
@@ -1781,10 +1875,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       supc_results->used_beads_sd = 0;
    }
 
+#if defined(CREATE_TOT_MOL)
    fclose(tot_mol);
+   //   unlink("tot_mol");
+#endif
 
-   unlink("tot_mol");
+#if defined(CREATE_EXE_TIME)
    unlink("exe_time");
+#endif
 
 #if defined(DEBUG_WW)
    dww("final");
@@ -3407,6 +3505,7 @@ val_med()
 /**************************************************************************/
 /**************************************************************************/
 /**************************************************************************/
+#if defined(OLD_WAY_CHECK)
 
 static void
 inp_inter()
@@ -3445,7 +3544,9 @@ inp_inter()
    fclose(interinp);
    fclose(interinp1);
 }
+#endif
 
+#if defined(OLD_WAY)
 /**************************************************************************/
 /**************************************************************************/
 /**************************************************************************/
@@ -3482,7 +3583,7 @@ out_inter()
    fclose(interout);
 
 }
-
+#endif
 /**************************************************************************/
 /**************************************************************************/
 /**************************************************************************/
@@ -4300,26 +4401,43 @@ init_da_a()
 #endif
 
    printf("adding file: %s to tot_mol\n",  molecola);
+#if defined(CREATE_TOT_MOL)
    tot_mol = fopen("tot_mol", "ab");
    fprintf(tot_mol, "%s\n", molecola);
    fprintf(tot_mol, "%d\t%d\t%d\t%f\n", nat, prima, ultima, raggio);
    fclose(tot_mol);
+#else
+   molecola_v.push_back(QString("%1").arg(molecola));
+   nat_v.push_back(nat);
+   prima_v.push_back(prima);
+   ultima_v.push_back(ultima);
+   raggio_v.push_back(raggio);
+#endif
+   
 }
 
 /*********************************************************************/
 
 static void
-initarray()
+initarray(int k)
 {
    int i;
    char temp[34];
    memset(temp, 0, 34);
 
+#if defined(CREATE_TOT_MOL)
    fscanf(tot_mol, "%s", molecola);
    strcpy(ricorda, molecola);
    fscanf(tot_mol, "%d", &nat);
    fscanf(tot_mol, "%d", &prima);
    fscanf(tot_mol, "%d", &ultima);
+#else
+   strcpy(molecola, molecola_v[k].ascii());
+   strcpy(ricorda, molecola);
+   nat = nat_v[k];
+   prima = prima_v[k];
+   ultima = ultima_v[k];
+#endif
 
    //    editor->append(QString("initarray - 0 From file: %1 beads\n").arg(nat));
 

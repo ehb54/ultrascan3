@@ -2899,8 +2899,17 @@ void US_Hydrodyn::printError(const QString &str)
 {
    if ( guiFlag )
    {
-      QMessageBox::warning(this, tr("UltraScan Warning"), tr("Please note:\n\n") +
-                           tr(str), QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+      if ( batch_widget &&
+           batch_window->batch_job_running )
+      {
+         QColor save_color = editor->color();
+         editor->setColor("red");
+         editor->append(str);
+         editor->setColor(save_color);
+      } else {
+         QMessageBox::warning(this, tr("UltraScan Warning"), tr("Please note:\n\n") +
+                              tr(str), QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+      }
    }
 }
 

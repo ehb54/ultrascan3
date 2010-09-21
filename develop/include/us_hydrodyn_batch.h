@@ -67,6 +67,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 
       QCheckBox     *cb_saveParams;
       bool          save_batch_active;
+      bool          batch_job_running;
 
    protected:
 

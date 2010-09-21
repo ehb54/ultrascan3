@@ -1,4 +1,3 @@
-
 #define  PI 3.141592654
 #define  SMAX 20
 
@@ -23,25 +22,23 @@ static void dww(char *s) {
 }
 #endif
 
-struct dati1
-{
+// #define OLD_WAY_CHECK
+#if defined(OLD_WAY)
+ static FILE *mol;
+ static FILE *rmc;
+#endif
+#if defined(OLD_WAY_CHECK)
+ static FILE *omol;
+ static FILE *ormc;
+ static void inp_inter();
+#endif
 
-   float x, y, z;      /* coordinate del centro della sfera */
-   float rg, r;      /* raggio della sfera                */
-   float m;         /* massa                             */
-   int col;         /* colore                            */
+static struct dati1_pat *dt = 0;   // [NMAX]
+static struct dati1_pat *dtn = 0;   // [NMAX]
 
-};
-
-static FILE *mol;
-static FILE *rmc;
-static FILE *omol;
-static FILE *ormc;
-
-static struct dati1 *dt = 0;   // [NMAX]
-static struct dati1 *dtn = 0;   // [NMAX]
-
-static char ragcol[SMAX];
+#if defined(OLD_WAY)
+ static char ragcol[SMAX];
+#endif
 static int nat, flag, cc, FL, autovett;
 
 static float a[3][3], a1[3][3], a2[3][3], a3[3][3];
@@ -51,7 +48,9 @@ static float vv[3][4];
 static float dl1, dl2, dl3;
 static float raggio;
 
-static void initarray();
+#if defined(OLD_WAY)
+ static void initarray();
+#endif
 static float approx(float a);
 static void calc_CM();
 static void calc_inertia_tensor();
@@ -80,29 +79,33 @@ pat_free_alloced()
 static int
 pat_alloc()
 {
-   dt = (struct dati1 *) malloc(2 * nmax * sizeof(struct dati1));
+   dt = (struct dati1_pat *) malloc(2 * nmax * sizeof(struct dati1_pat));
    if (!dt)
    {
       pat_free_alloced();
       fprintf(stderr, "memory allocation error\n");
       return US_HYDRODYN_PAT_ERR_MEMORY_ALLOC;
    }
-   memset(dt, 0, 2 * nmax * sizeof(struct dati1));
+   memset(dt, 0, 2 * nmax * sizeof(struct dati1_pat));
 
-   dtn = (struct dati1 *) malloc(nmax * sizeof(struct dati1));
+   dtn = (struct dati1_pat *) malloc(nmax * sizeof(struct dati1_pat));
    if (!dtn)
    {
       pat_free_alloced();
       fprintf(stderr, "memory allocation error\n");
       return US_HYDRODYN_PAT_ERR_MEMORY_ALLOC;
    }
-   memset(dtn, 0, nmax * sizeof(struct dati1));
-
+   memset(dtn, 0, nmax * sizeof(struct dati1_pat));
+   
    return 0;
 }
 
 int 
-us_hydrodyn_pat_main(int use_nmax)
+us_hydrodyn_pat_main(int                 use_nmax, 
+                     int                 in_nat, 
+                     struct dati1_supc  *in_dt, 
+                     int                *out_nat,
+                     struct dati1_pat   *out_dt)
 {
    nmax = use_nmax;
    if (int retval = pat_alloc())
@@ -128,7 +131,61 @@ us_hydrodyn_pat_main(int use_nmax)
    dww("start");
 #endif
 
+#if defined(OLD_WAY)
    initarray();
+#endif
+   nat = in_nat;
+   raggio = 0.0;
+   for (i = 0; i < nat; i++)
+   {
+#if defined(MIMIC_FILE)
+      dt[i].x = QString("").sprintf("%f",in_dt[i].x).toFloat();
+      dt[i].y = QString("").sprintf("%f",in_dt[i].y).toFloat();
+      dt[i].z = QString("").sprintf("%f",in_dt[i].z).toFloat();
+      dt[i].r = QString("").sprintf("%f",in_dt[i].r).toFloat();
+      dt[i].m = QString("").sprintf("%f",in_dt[i].m).toFloat();
+      dt[i].col = QString("").sprintf("%d",in_dt[i].col).toInt();
+#else
+      dt[i].x = in_dt[i].x;
+      dt[i].y = in_dt[i].y;
+      dt[i].z = in_dt[i].z;
+      dt[i].r = in_dt[i].r;
+      dt[i].m = in_dt[i].m;
+      dt[i].col = in_dt[i].col;
+#endif
+      if ( i < 3 ) 
+      {
+         printf("reading in coords in_dt bead %d @ %f %f %f %f %f %d\n", i, in_dt[i].x,in_dt[i].y,in_dt[i].z,in_dt[i].r, in_dt[i].m, in_dt[i].col);
+         printf("reading in coords dt bead %d @ %f %f %f %f %f %d\n", i, dt[i].x,dt[i].y,dt[i].z,dt[i].r, dt[i].m, dt[i].col);
+      }
+   }
+#if defined(OLD_WAY_CHECK)
+   inp_inter();
+   {
+      
+      int i;
+      
+      FILE *interinp = fopen("p_in_ifraxon", "wb");
+      FILE *interinp1 = fopen("p_in_ifraxon1", "wb");
+
+      fprintf(interinp, "%d\n", nat);
+      fprintf(interinp, "%f\n", 0.0);
+      fprintf(interinp, "%s\n", "p_in_ifraxon1");
+      
+      for (i = 0; i < nat; i++)
+      {
+         fprintf(interinp, "%f\t", in_dt[i].x);
+         fprintf(interinp, "%f\t", in_dt[i].y);
+         fprintf(interinp, "%f\n", in_dt[i].z);
+         fprintf(interinp1, "%f\t", in_dt[i].r);
+         fprintf(interinp1, "%f\t", in_dt[i].m);
+         fprintf(interinp1, "%d\n", in_dt[i].col);
+      }
+      
+      fclose(interinp);
+      fclose(interinp1);
+   }
+#endif
 
    contatore = 0;
    max = dt[0].m;
@@ -407,7 +464,22 @@ us_hydrodyn_pat_main(int use_nmax)
 
    if (contatore > 4)
    {
+      *out_nat = nat;
+      for (i = 0; i < nat; i++)
+      {
+         if ( i < 3 ) 
+         {
+            printf("pat bead %d @ %f %f %f\n", i, dtn[i].x,dtn[i].y,dtn[i].z);
+         }
+         out_dt[i].x = dtn[i].x;
+         out_dt[i].y = dtn[i].y;
+         out_dt[i].z = dtn[i].z;
+         out_dt[i].r = dtn[i].r;
+         out_dt[i].m = dtn[i].m;
+         out_dt[i].col = dtn[i].col;
+      }
 
+#if defined(OLD_WAY_CHECK)
       omol = fopen("ofraxon", "w");
 
       fprintf(omol, "%d\t", nat);
@@ -430,12 +502,28 @@ us_hydrodyn_pat_main(int use_nmax)
 
       fclose(omol);
       fclose(ormc);
+#endif
 
    }
    else
    {
       if ((fabs(a[0][0] - vv[0][0]) < 1) && (fabs(a[1][1] - vv[1][0]) < 1) && (fabs(a[2][2] - vv[2][0]) < 1))
       {
+         *out_nat = nat;
+         for (i = 0; i < nat; i++)
+         {
+            if ( i < 3 ) 
+            {
+               printf("pat bead %d @ %f %f %f\n", i, dtn[i].x,dtn[i].y,dtn[i].z);
+            }
+            out_dt[i].x = dtn[i].x;
+            out_dt[i].y = dtn[i].y;
+            out_dt[i].z = dtn[i].z;
+            out_dt[i].r = dtn[i].r;
+            out_dt[i].m = dtn[i].m;
+            out_dt[i].col = dtn[i].col;
+         }
+#if defined(OLD_WAY_CHECK)
 
          omol = fopen("ofraxon", "w");
 
@@ -459,12 +547,13 @@ us_hydrodyn_pat_main(int use_nmax)
 
          fclose(omol);
          fclose(ormc);
-
+#endif
       }
       else
          goto RET;
 
    }
+
    pat_free_alloced();
 #if defined(DEBUG_WW)
    fclose(logfx);
@@ -488,6 +577,37 @@ approx(float a)
 
    return (app);
 }
+
+#if defined(OLD_WAY_CHECK)
+
+static void
+inp_inter()
+{
+
+   int i;
+
+   FILE *interinp = fopen("p_ifraxon", "wb");
+   FILE *interinp1 = fopen("p_ifraxon1", "wb");
+
+   fprintf(interinp, "%d\n", nat);
+   fprintf(interinp, "%f\n", 0.0);
+   fprintf(interinp, "%s\n", "p_ifraxon1");
+
+   for (i = 0; i < nat; i++)
+   {
+      fprintf(interinp, "%f\t", dt[i].x);
+      fprintf(interinp, "%f\t", dt[i].y);
+      fprintf(interinp, "%f\n", dt[i].z);
+      fprintf(interinp1, "%f\t", dt[i].r);
+      fprintf(interinp1, "%d\t", dt[i].m);
+      fprintf(interinp1, "%d\n", dt[i].col);
+   }
+
+   fclose(interinp);
+   fclose(interinp1);
+}
+
+#endif
 
 static void
 calc_CM()
@@ -571,16 +691,16 @@ calc_inertia_tensor()
 
 }
 
-
+#if defined(OLD_WAY)
 static void
 initarray()
 {
    int i;
 
-   mol = fopen("ifraxon", "r");
+   //   mol = fopen("ifraxon", "r");
 
-   fscanf(mol, "%d", &nat);
-   fscanf(mol, "%f", &raggio);
+   //   fscanf(mol, "%d", &nat);
+   //   fscanf(mol, "%f", &raggio);
 
    if (raggio == 0.0)
    {
@@ -593,10 +713,9 @@ initarray()
          fscanf(mol, "%f", &dt[i].y);
          fscanf(mol, "%f", &dt[i].z);
          fscanf(rmc, "%f", &dt[i].r);
-         fscanf(rmc, "%f", &dt[i].m);
+         fscanf(rmc, "%d", &dt[i].m);
          fscanf(rmc, "%d", &dt[i].col);
       }
-
    }
 
    else if ((raggio == -1.0) || (raggio == -3.0))
@@ -632,6 +751,7 @@ initarray()
 #endif
 
 }
+#endif
 
 static void
 place2(float a1[3], float a2[3])
@@ -1148,7 +1268,7 @@ terzo(float b, float c, float d)
    ;
 }
 
-#define USE_MAIN
+// #define USE_MAIN
 
 #if defined(USE_MAIN)
 int

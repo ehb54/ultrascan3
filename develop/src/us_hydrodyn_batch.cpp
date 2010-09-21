@@ -41,6 +41,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
                                      const char *name
                                      ) : QFrame(p, name)
 {
+   batch_job_running = false;
    save_batch_active = false;
    this->batch_widget = batch_widget;
    this->batch = batch;
@@ -931,6 +932,7 @@ void US_Hydrodyn_Batch::set_saveParams()
 
 void US_Hydrodyn_Batch::disable_after_start()
 {
+   batch_job_running = true;
    lb_files->setEnabled(false);
    pb_add_files->setEnabled(false);
    pb_select_all->setEnabled(false);
@@ -955,6 +957,7 @@ void US_Hydrodyn_Batch::disable_after_start()
 
 void US_Hydrodyn_Batch::enable_after_stop()
 {
+   batch_job_running = false;
    lb_files->setEnabled(true);
    pb_add_files->setEnabled(true);
    pb_select_all->setEnabled(true);

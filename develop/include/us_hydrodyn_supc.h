@@ -1,6 +1,16 @@
 #ifndef US_HYDRODYN_SUPC_H
 #define US_HYDRODYN_SUPC_H
 
+struct dati1_supc
+{
+   float x, y, z;      /* coordinates of the bead center    */
+   float r;         /* hydrated radius of the bead       */
+   float ru;         /* unhydrated radius of the bead     */
+   float m;         /* mass of the bead                  */
+   int col;         /* color of the bead                 */
+   char *cor;         /* correspondence between beads and AA */
+};
+
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_hydro.h"
 #include "../include/us_hydrodyn_pdbdefs.h"
@@ -12,6 +22,7 @@
 #include <sys/malloc.h>
 #endif
 #include <string.h>
+
 
 int
 us_hydrodyn_supc_main(hydro_results *hydro_results, 
