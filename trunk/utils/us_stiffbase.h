@@ -7,6 +7,7 @@
 //! Set a convenient shorthand
 #define uint unsigned int
 
+//! \brief Stiff Base object
 class US_EXTERN US_StiffBase
 {
    public:
@@ -16,21 +17,22 @@ class US_EXTERN US_StiffBase
       //! \brief Cleans up memory allocation
       ~US_StiffBase();
 
+      //! \brief Triplet class (x,y,w) for gaussians
       class Gauss2D
       {
          public:
-         double x;
-         double y;
-         double w;
+         double x;      //!< X coordinate
+         double y;      //!< Y coordinate
+         double w;      //!< W coordinate
       };
 
       //! \brief  Numerical integration over a quadrilateral
-      //! \param NK
-      //! \param xd[4][2] 
-      //! \param D
-      //! \param sw2
-      //! \param Stif
-      void CompLocalStif( int, double xd[4][2], double, double, double** );
+      //! \param NK   Order of phi arrays: 3 or 4
+      //! \param xd   XD 4 x 2 matrix
+      //! \param D    Diffusion coefficient
+      //! \param sw2  Omega-squared
+      //! \param Stif Stif matrix
+      void CompLocalStif( int, double [4][2], double, double, double** );
 
    private:
       // parameters for triangular elements
