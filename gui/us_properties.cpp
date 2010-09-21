@@ -143,7 +143,7 @@ US_Properties::US_Properties(
 
    // Row
    QGridLayout* mw_layout = us_checkbox( 
-         tr( "Molecular Wt/Stoichiometry" ), cb_mw, true );
+      tr( "Molecular Wt/Stoichiometry" ), cb_mw );
    connect( cb_mw, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( mw_layout, row, 0 );
 
@@ -163,7 +163,7 @@ US_Properties::US_Properties(
 
    // Row
    QGridLayout* f_f0_layout = 
-      us_checkbox( tr( "Frictional Ratio (f/f0) (20W)" ), cb_f_f0, true );
+      us_checkbox( tr( "Frictional Ratio (f/f0) (20W)" ), cb_f_f0 );
    
    connect( cb_f_f0, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( f_f0_layout, row, 0 );
@@ -173,7 +173,8 @@ US_Properties::US_Properties(
    main->addWidget( le_f_f0, row++, 1 );
    
    // Row 
-   QGridLayout* s_layout = us_checkbox( tr( "Sedimentation Coeff. (s) (20W)" ), cb_s );
+   QGridLayout* s_layout = us_checkbox(
+      tr( "Sedimentation Coeff. (s) (20W)" ), cb_s, true );
    cb_s->setEnabled( false);
    connect( cb_s, SIGNAL( toggled( bool ) ), SLOT( calculate( bool) ) );
    main->addLayout( s_layout, row, 0 );
@@ -185,7 +186,8 @@ US_Properties::US_Properties(
    main->addWidget( le_s, row++, 1 );
 
    // Row
-   QGridLayout* D_layout = us_checkbox( tr( "Diffusion Coeff. (D) (20W)" ), cb_D );
+   QGridLayout* D_layout = us_checkbox(
+      tr( "Diffusion Coeff. (D) (20W)" ), cb_D, true );
    cb_D->setEnabled( false);
    connect( cb_D, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( D_layout, row, 0 );
@@ -197,7 +199,8 @@ US_Properties::US_Properties(
    main->addWidget( le_D, row++, 1 );
 
    // Row
-   QGridLayout* f_layout = us_checkbox( tr( "Frictional Coeff. (f) (20W)" ), cb_f );
+   QGridLayout* f_layout = us_checkbox(
+      tr( "Frictional Coeff. (f) (20W)" ), cb_f );
    cb_f->setEnabled( false);
    connect( cb_f, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( f_layout, row, 0 );
@@ -209,14 +212,16 @@ US_Properties::US_Properties(
    main->addWidget( le_f, row++, 1 );
 
    // Row
-   QLabel* lb_sigma = us_label( tr( "Conc. Dependency of s (<span>&sigma;</span>):" ) );
+   QLabel* lb_sigma = us_label(
+      tr( "Conc. Dependency of s (<span>&sigma;</span>):" ) );
    main->addWidget( lb_sigma, row, 0 );
 
    le_sigma = us_lineedit( "" );
    main->addWidget( le_sigma, row++, 1 );
 
    // Row
-   QLabel* lb_delta = us_label( tr( "Conc. Dependency of D (<span>&delta;</span>):" ) );
+   QLabel* lb_delta = us_label(
+      tr( "Conc. Dependency of D (<span>&delta;</span>):" ) );
    main->addWidget( lb_delta, row, 0 );
 
    le_delta = us_lineedit( "" );
@@ -227,8 +232,8 @@ US_Properties::US_Properties(
    connect( pb_load_c0, SIGNAL( clicked() ), SLOT( load_c0() ) );
    main->addWidget( pb_load_c0, row, 0 );
 
-   QGridLayout* co_sed_layout = us_checkbox( tr( "Co-sedimenting Solute" ), 
-         cb_co_sed );
+   QGridLayout* co_sed_layout = us_checkbox(
+      tr( "Co-sedimenting Solute" ), cb_co_sed );
    connect( cb_co_sed, SIGNAL( stateChanged( int ) ), SLOT( co_sed( int ) ) );
    main->addLayout( co_sed_layout, row++, 1 );
    
@@ -946,15 +951,19 @@ bool US_Properties::keep_standard( void )
 
 void US_Properties::calculate( void )
 {
-   if ( inUpdate ) return;
+   if ( inUpdate )
+      return;
 
    checkbox();
 
    // First do some sanity checking
+   int    row  = lw_components->currentRow();
    double vbar = le_vbar->text().toDouble();
-   if ( vbar <= 0.0 ) return;
 
-   // Exatly two checkboxes must be set
+   if ( row < 0  ||  vbar <= 0.0 )
+      return;
+
+   // Exactly two checkboxes must be set
    if ( countChecks() < 2 )
    {
       cb_mw  ->setEnabled( true );
@@ -964,262 +973,31 @@ void US_Properties::calculate( void )
       cb_D   ->setEnabled( true );
       return;
    }
+
+   // disable all check boxes except for the two set
+   cb_mw  ->setEnabled( cb_mw  ->isChecked() );
+   cb_f_f0->setEnabled( cb_f_f0->isChecked() );
+   cb_f   ->setEnabled( cb_f   ->isChecked() );
+   cb_s   ->setEnabled( cb_s   ->isChecked() );
+   cb_D   ->setEnabled( cb_D   ->isChecked() );
    
-   // Two checkboxes set -- Disable others
-   if ( ! cb_mw  ->isChecked() ) cb_mw  ->setEnabled( false );
-   if ( ! cb_f_f0->isChecked() ) cb_f_f0->setEnabled( false );
-   if ( ! cb_f   ->isChecked() ) cb_f   ->setEnabled( false );
-   if ( ! cb_s   ->isChecked() ) cb_s   ->setEnabled( false );
-   if ( ! cb_D   ->isChecked() ) cb_D   ->setEnabled( false );
-
-   US_Math2::SolutionData d;
-
-// Are these water by default?
-   d.vbar      = vbar;
-   d.density   = DENS_20W; //buffer.density;
-   d.viscosity = VISC_20W; //buffer.viscosity;
-
-   US_Math2::data_correction( 20.0, d );  // Always use 20C
-
-   double t = K0 + 20.0;  // Calculatons below need Kelvin
-
-   double mw;
-   double s;
-   double D;
-   double f;
-   double f_f0;
-   double vol_per_molec;
-   double radius_sphere;
-
-   // Molecular weight
-   if ( cb_mw->isChecked() )
-   {
-      mw = le_mw->text().toDouble();
-      
-      if ( mw <= 0.0 ) 
-      {
-         setInvalid();
-         return;
-      }
-
-      vol_per_molec = vbar * mw / AVOGADRO;
-      radius_sphere = pow( vol_per_molec * 0.75 / M_PI, 1.0 / 3.0 );
-      double f0     = radius_sphere * 6.0 * M_PI * VISC_20W * 0.01;
-
-      // mw and s
-      if ( cb_s->isChecked() )
-      {
-         s = le_s->text().toDouble();
-         
-         if ( s <= 0.0 ) 
-         {
-            setInvalid();
-            return;
-         }
-
-         D    = s * R * t / ( d.buoyancyb * mw );
-         f    = mw * d.buoyancyb / ( s * AVOGADRO );
-         f_f0 = f / f0;
-      }
-
-      // mw and D
-      else if ( cb_D->isChecked() )
-      {
-         D = le_D->text().toDouble();
-         
-         if ( D <= 0.0 ) 
-         {
-            setInvalid();
-            return;
-         }
-
-         s    = D * d.buoyancyb * mw / ( R * t );
-         f    = mw * d.buoyancyb / ( s * AVOGADRO );
-         f_f0 = f / f0;
-      }
-
-      // mw and f
-      else if ( cb_f->isChecked() )
-      {
-         f = le_f->text().toDouble();
-         
-         if ( f <= 0.0 ) 
-         {
-            setInvalid();
-            return;
-         }
-
-         f_f0 = f / f0;
-         s    = mw * ( 1.0 - vbar * DENS_20W ) / ( AVOGADRO * f );
-         D    = s * R * t / ( d.buoyancyb * mw );
-      }
-
-      else // mw and f_f0
-      {
-         f_f0 = le_f_f0->text().toDouble();
-         
-         if ( f_f0 < 1.0 ) 
-         {
-            setInvalid();
-            return;
-         }
-
-         f = f_f0 * f0;
-         s = mw * ( 1.0 - vbar * DENS_20W ) / ( AVOGADRO * f );
-         D = s * R * t / ( d.buoyancyb * mw );
-      }
-   }
-
-   else if ( cb_s->isChecked() )  // mw is NOT checked
-   {
-      s = le_s->text().toDouble();
-      
-      if ( s <= 0.0 ) 
-      {
-         setInvalid();
-         return;
-      }
-
-      if ( cb_D->isChecked() )   // s and D
-      {
-         D = le_D->text().toDouble();
-
-         if ( D <= 0.0 )
-         {
-            setInvalid();
-            return;
-         }
-
-         mw            = s * R * t / ( D * ( 1.0 - vbar * DENS_20W ) );
-         vol_per_molec = vbar * mw / AVOGADRO;
-         radius_sphere = pow( vol_per_molec * 0.75 / M_PI, 1.0 / 3.0 );
-         double f0     = radius_sphere * 6.0 * M_PI * VISC_20W * 0.01;
-         f             = mw * d.buoyancyb / ( s * AVOGADRO );
-         f_f0          = f / f0;
-      }
-
-      else if (  cb_f->isChecked() ) // s and f
-      {
-         f = le_f->text().toDouble();
-         
-         if ( f <= 0.0 ) 
-         {
-            setInvalid();
-            return;
-         }
-
-         D             = R * t / ( AVOGADRO * f );
-         mw            = s * R * t / ( D * ( 1.0 - vbar * DENS_20W ) );
-         vol_per_molec = vbar * mw / AVOGADRO;
-         radius_sphere = pow( vol_per_molec * 0.75 / M_PI, 1.0 / 3.0 );
-         double f0     = radius_sphere * 6.0 * M_PI * VISC_20W * 0.01;
-         f_f0          = f / f0;
-      }
-
-      else  // s and f_f0
-      {
-         f_f0 = le_f_f0->text().toDouble();
-         
-         if ( f_f0 <= 1.0 ) 
-         {
-            setInvalid();
-            return;
-         }
-
-         double n  = 2.0 * s * f_f0 * vbar * VISC_20W; // numerator
-         double d  = 1.0 - vbar * DENS_20W;              // denominator
-         double f0 = 9.0 * VISC_20W * M_PI * sqrt( n / d );
-         f         = f_f0 * f0;
-         D         = R * t / ( AVOGADRO * f ); 
-         mw        = s * R * t / ( D * ( 1.0 - vbar * DENS_20W ) );
-      }
-   }
-
-   else if ( cb_D->isChecked() ) // mw and s are NOT checked
-   {
-      D = le_D->text().toDouble();
-      
-      if ( D <= 0.0 ) 
-      {
-         setInvalid();
-         return;
-      }
-
-      if ( cb_f->isChecked() ) // D and f  -  The is an invalid combination
-      {
-         setInvalid();
-         return;
-      }
-
-      else // D and f/f0
-      {
-         f_f0 = le_f_f0->text().toDouble();
-         
-         if ( f_f0 <= 1.0 ) 
-         {
-            setInvalid();
-            return;
-         }
-
-         f             = R * t / ( AVOGADRO * D );
-         double f0     = f / f_f0;
-         radius_sphere = f0 / ( 6.0 * M_PI * VISC_20W );
-         double volume = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
-         mw            = volume * AVOGADRO / vbar;
-         s             = mw * (1.0 - vbar * DENS_20W ) / ( AVOGADRO * f );
-      }
-   }
-
-   else  // only f and f_f0 are checked
-   {
-      f    = le_f   ->text().toDouble();
-      f_f0 = le_f_f0->text().toDouble();
-      
-      if ( f <= 0.0  ||  f_f0 < 1.0 ) 
-      {
-         setInvalid();
-         return;
-      }
-
-      double f0     = f / f_f0;
-      D             = R * t / ( AVOGADRO * f );
-      radius_sphere = f0 / ( 6.0 * M_PI * VISC_20W );
-      double volume = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
-      mw            = volume * AVOGADRO / vbar;
-      s             = mw * (1.0 - vbar * DENS_20W ) / ( AVOGADRO * f );
-   }
-
-   int row = lw_components->currentRow();
-   if ( row < 0 ) return;
-
    US_Model::SimulationComponent* sc = &model.components[ row ];
 
+   // set values for checked boxes; clear others
+   sc->mw   = cb_mw  ->isChecked() ? le_mw  ->text().toDouble() : 0.0;
+   sc->f_f0 = cb_f_f0->isChecked() ? le_f_f0->text().toDouble() : 0.0;
+   sc->f    = cb_f   ->isChecked() ? le_f   ->text().toDouble() : 0.0;
+   sc->s    = cb_s   ->isChecked() ? le_s   ->text().toDouble() : 0.0;
+   sc->D    = cb_D   ->isChecked() ? le_D   ->text().toDouble() : 0.0;
 
-   // Sometimes the mw is truncated to 4 significant digits.
-   QString mw_string = QString::number( sc->mw, 'e', 3 );
+   // re-calculate coefficients based on the two that are set
+   US_Model::calc_coefficients( model.components[ row ] );
 
-   if ( mw != mw_string.toDouble() )
-   {
-      if ( keep_standard() )  // Reset
-      {
-         mw   = sc->mw;
-         f_f0 = sc->f_f0;
-         f    = sc->f; 
-         s    = sc->s;    
-         D    = sc->D;    
-      }
-   }
-
-   le_mw  ->setText( QString::number( mw  , 'e', 3 ) );
-   le_f_f0->setText( QString::number( f_f0, 'e', 3 ) );
-   le_s   ->setText( QString::number( s   , 'e', 4 ) );
-   le_D   ->setText( QString::number( D   , 'e', 4 ) );
-   le_f   ->setText( QString::number( f   , 'e', 4 ) );
-
-   sc->mw   = mw;
-   sc->f_f0 = f_f0;
-   sc->f    = f;
-   sc->s    = s;
-   sc->D    = D;
+   // fill in text boxes with given and calculated coefficients
+   le_mw  ->setText( QString::number( sc->mw  , 'e', 3 ) );
+   le_f_f0->setText( QString::number( sc->f_f0, 'e', 3 ) );
+   le_s   ->setText( QString::number( sc->s   , 'e', 4 ) );
+   le_D   ->setText( QString::number( sc->D   , 'e', 4 ) );
+   le_f   ->setText( QString::number( sc->f   , 'e', 4 ) );
 }
 
