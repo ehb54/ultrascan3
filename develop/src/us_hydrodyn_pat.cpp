@@ -28,7 +28,7 @@ struct dati1
 
    float x, y, z;      /* coordinate del centro della sfera */
    float rg, r;      /* raggio della sfera                */
-   int m;         /* massa                             */
+   float m;         /* massa                             */
    int col;         /* colore                            */
 
 };
@@ -131,13 +131,13 @@ us_hydrodyn_pat_main(int use_nmax)
    initarray();
 
    contatore = 0;
-   max = (float)dt[0].m;
+   max = dt[0].m;
 
    printf("pat: nmax %d nat %d\n", nmax, nat);
 
    for (i = 1; i < nat; i++)
       if (dt[i].m > max)
-         max = (float)dt[i].m;
+         max = dt[i].m;
 
 #if defined(DEBUG_WW)
    cks += (double)max;
@@ -593,7 +593,7 @@ initarray()
          fscanf(mol, "%f", &dt[i].y);
          fscanf(mol, "%f", &dt[i].z);
          fscanf(rmc, "%f", &dt[i].r);
-         fscanf(rmc, "%d", &dt[i].m);
+         fscanf(rmc, "%f", &dt[i].m);
          fscanf(rmc, "%d", &dt[i].col);
       }
 
