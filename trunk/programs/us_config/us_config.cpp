@@ -122,7 +122,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   directories->addWidget( pb_tmpDir, row, 0 );
   connect( pb_tmpDir, SIGNAL( clicked() ), this, SLOT( open_tmpDir() ) );
 
-  QString tmpDir = US_Settings::resultDir();
+  QString tmpDir = US_Settings::tmpDir();
   le_w = qMax( fm->width( tmpDir ) + 20, le_w );
 
   le_tmpDir = us_lineedit( tmpDir, 0 );

@@ -37,6 +37,8 @@ int main( int argc, char* argv[] )
 US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f ) 
    : US_Widgets( true, p, f )
 {
+   dbg_level           = US_Settings::us_debug();
+
    setWindowTitle( "UltraScan3 Simulation Module" );
    setPalette( US_GuiSettings::frameColor() );
    init_simparams();
@@ -451,7 +453,7 @@ void US_Astfem_Sim::start_simulation( void )
       current_time = sp->delay_hours    * 3600 + sp->delay_minutes    * 60;
       duration     = sp->duration_hours * 3600 + sp->duration_minutes * 60;
       increment    = ( duration - current_time ) / (double)( sp->scans );
-qDebug() << "SIM curtime dur incr" << current_time << duration << increment;
+DbgLv(2) << "SIM curtime dur incr" << current_time << duration << increment;
 
       for ( int j = 0; j < sp->scans; j++ )
       {
@@ -459,7 +461,7 @@ qDebug() << "SIM curtime dur incr" << current_time << duration << increment;
          scan->seconds = current_time + increment * ( j + 1 );
 
          scan_number++;
-qDebug() << "SIM   scan time" << scan_number << scan->seconds;
+DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       }
    }
 
@@ -483,37 +485,41 @@ qDebug() << "SIM   scan time" << scan_number << scan->seconds;
    if ( simparams.meshType != US_SimulationParameters::ASTFVM )
    {  // the normal case:  ASTFEM (finite element)
       astfem_rsa->calculate( sim_data );
-double cmin=99999.9;
-double cmax=-999999.9;
-int ilo=0;
-int ihi=0;
-int jlo=0;
-int jhi=0;
-int nscn=sim_data.scanData.size();
-int ncvl=sim_data.scanData[0].readings.size();
-for ( int ii=0; ii<nscn; ii++ )
-{
- double t0=sim_data.scanData[ii].seconds;
- double t1=(ii==0)?sim_data.scanData[1].seconds:sim_data.scanData[ii-1].seconds;
- if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
-    qDebug() << "  Scan" << ii << "  Time" << t0 << t1;
- for ( int jj=0; jj<ncvl; jj++ )
- {
-   double cval = sim_data.value(ii,jj);
-   if ( cval < cmin ) { ilo=ii; jlo=jj; cmin=cval; }
-   if ( cval > cmax ) { ihi=ii; jhi=jj; cmax=cval; }
-   if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
-   {
-      if ( jj<10 || (jj+11)>ncvl || ((jj*2)>(ncvl-10)&&(jj*2)<(ncvl+11)) )
-         qDebug() << "    C index value" << jj << cval;
-   }
- }
-}
-qDebug() << "SIM data min conc ilo jlo" << cmin << ilo << jlo;
-qDebug() << "SIM data max conc ihi jhi" << cmax << ihi << jhi;
-qDebug() << "SIM:fem: m b  s D  rpm" << simparams.meniscus << simparams.bottom
-   << system.components[0].s << system.components[0].D
-   << simparams.speed_step[0].rotorspeed;
+
+      if ( dbg_level > 0 )
+      {
+         double cmin=99999.9;
+         double cmax=-999999.9;
+         int ilo=0;
+         int ihi=0;
+         int jlo=0;
+         int jhi=0;
+         int nscn=sim_data.scanData.size();
+         int ncvl=sim_data.scanData[0].readings.size();
+         for ( int ii=0; ii<nscn; ii++ )
+         {
+            double t0=sim_data.scanData[ii].seconds;
+            double t1=(ii==0)?sim_data.scanData[1].seconds:sim_data.scanData[ii-1].seconds;
+            if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
+               DbgLv(2) << "  Scan" << ii << "  Time" << t0 << t1;
+            for ( int jj=0; jj<ncvl; jj++ )
+            {
+              double cval = sim_data.value(ii,jj);
+              if ( cval < cmin ) { ilo=ii; jlo=jj; cmin=cval; }
+              if ( cval > cmax ) { ihi=ii; jhi=jj; cmax=cval; }
+              if ( ii==0 || (ii+1)==nscn || (ii*2)==nscn )
+              {
+                 if ( jj<10 || (jj+11)>ncvl || ((jj*2)>(ncvl-10)&&(jj*2)<(ncvl+11)) )
+                    DbgLv(2) << "    C index value" << jj << cval;
+              }
+            }
+         }
+         DbgLv(1) << "SIM data min conc ilo jlo" << cmin << ilo << jlo;
+         DbgLv(1) << "SIM data max conc ihi jhi" << cmax << ihi << jhi;
+         DbgLv(1) << "SIM:fem: m b  s D  rpm" << simparams.meniscus << simparams.bottom
+            << system.components[0].s << system.components[0].D
+            << simparams.speed_step[0].rotorspeed;
+      }
    }
 
    else
@@ -557,8 +563,8 @@ void US_Astfem_Sim::finish( void )
    for ( int i = 0; i < system.components.size(); i++ )
       total_conc += system.components[ i ].signal_concentration;
 
-//qDebug() << "FIN: comp size" << system.components.size();
-//qDebug() << "FIN:  total_conc" << total_conc;
+//DbgLv(1) << "FIN: comp size" << system.components.size();
+//DbgLv(1) << "FIN:  total_conc" << total_conc;
    ri_noise();
    random_noise();
    ti_noise();
@@ -771,13 +777,13 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
       }
 
       progress->setValue( ( ii + 1 ) );
-//qDebug() << "WD:sc secs" << scan->seconds;
+//DbgLv(2) << "WD:sc secs" << scan->seconds;
 //if ( ii == 0 || (ii+1) == total_scans ) {
-//qDebug() << "WD:S0:c00" << scan->readings[0].value;
-//qDebug() << "WD:S0:c01" << scan->readings[1].value;
-//qDebug() << "WD:S0:c30" << scan->readings[30].value;
-//qDebug() << "WD:S0:cn1" << scan->readings[points-2].value;
-//qDebug() << "WD:S0:cnn" << scan->readings[points-1].value; }
+//DbgLv(2) << "WD:S0:c00" << scan->readings[0].value;
+//DbgLv(2) << "WD:S0:c01" << scan->readings[1].value;
+//DbgLv(2) << "WD:S0:c30" << scan->readings[30].value;
+//DbgLv(2) << "WD:S0:cn1" << scan->readings[points-2].value;
+//DbgLv(2) << "WD:S0:cnn" << scan->readings[points-1].value; }
    }
 
    QString run_id    = dirname.section( "/", -1, -1 );
@@ -876,7 +882,7 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
    qApp->processEvents();
 //int k=x->size()-1;
 //int h=x->size()/2;
-//qDebug() << "UpdMovie: r0 rh rn c0 ch cn" << r[0] << r[h] << r[k]
+//DbgLv(1) << "UpdMovie: r0 rh rn c0 ch cn" << r[0] << r[h] << r[k]
 //   << c[0] << c[h] << c[k];
    
    delete [] r;

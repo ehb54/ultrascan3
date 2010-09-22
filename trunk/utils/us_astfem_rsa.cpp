@@ -5,6 +5,7 @@
 #include "us_hardware.h"
 #include "us_math2.h"
 #include "us_stiffbase.h"
+#include "us_settings.h"
 #include "us_sleep.h"
 
 US_Astfem_RSA::US_Astfem_RSA( US_Model&                model, 
@@ -17,6 +18,8 @@ US_Astfem_RSA::US_Astfem_RSA( US_Model&                model,
    time_correction = true;
    simout_flag     = false;
    show_movie      = false;
+
+   dbg_level       = US_Settings::us_debug();
 }
 
 int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data ) 
@@ -44,10 +47,10 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
 
    int npts      = af_data.scan[ 0 ].conc.size();
    initial_npts  = ( initial_npts < npts ) ? initial_npts : npts;
-qDebug() << "RSA: rotorspeed" << af_params.first_speed;
-qDebug() << "RSA: simpoints" << af_params.simpoints;
-qDebug() << "RSA:  scan0size" << npts;
-qDebug() << "RSA:  af_c0size" << initial_npts;
+DbgLv(1) << "RSA: rotorspeed" << af_params.first_speed;
+DbgLv(1) << "RSA: simpoints" << af_params.simpoints;
+DbgLv(1) << "RSA:  scan0size" << npts;
+DbgLv(1) << "RSA:  af_c0size" << initial_npts;
    update_assocv();
    initialize_rg();  // Reaction group
    adjust_limits( simparams.speed_step[ 0 ].rotorspeed );
@@ -70,6 +73,7 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
                 current_assoc = j;
                 break;   // Since a comp appears at most once in an assoc rule
             }
+DbgLv(1) << "RSA:  k j current_assoc" << k << j << current_assoc;
          }
       }
 
@@ -256,6 +260,7 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
       int num_rule = rg[ group ].association.size();
       int num_comp = rg[ group ].GroupComponent.size();
       af_params.rg_index = group;
+DbgLv(1) << "RSA:  group nrule ncomp" << group << num_rule << num_comp;
       
       af_params.s          .clear();
       af_params.D          .clear();
@@ -270,6 +275,7 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
       for ( int j = 0; j < num_comp; j++ )
       {
          int                            index = rg[ group ].GroupComponent[ j ];
+DbgLv(1) << "RSA:    j index" << j << index;
          US_Model::SimulationComponent* sc    = &system.components[ index ];
          af_params.s    .append( sc->s );
          af_params.D    .append( sc->D );
@@ -290,6 +296,7 @@ qDebug() << "RSA:  af_c0size" << initial_npts;
          {
             // Check all comp in rule
             int                    rule = rg[ group ].association[ m ];
+DbgLv(1) << "RSA:    m rule" << m << rule;
             US_Model::Association* as   = &system.associations[ rule ];
 
             for ( int n = 0; n < as->reaction_components.size(); n++ )
@@ -566,7 +573,7 @@ double US_Astfem_RSA::stretch( double* rotorcoeffs, int rpm )
       rpmpow  *= rpmval;                     // next rpm power ( rpm^(i+1) )
    }
 
-//qDebug() << "AFRSA: stretch rpm" << stretch << rpm;
+//DbgLv(1) << "AFRSA: stretch rpm" << stretch << rpm;
    return stretch;
 }
 
@@ -765,7 +772,7 @@ void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0,
    // We don't have an existing CT0 concentration vector. Build up the initial
    // concentration vector with constant concentration
  
-//qDebug() << "size(af_c0)" << af_c0.concentration.size();
+//DbgLv(1) << "size(af_c0)" << af_c0.concentration.size();
    //if ( sc->c0.concentration.size() == 0 ) 
    if ( af_c0.concentration.size() == 0 ) 
    {
@@ -1845,7 +1852,7 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
    {
       if ( show_movie  &&  (ti%8) == 0 )
       {
-//qDebug() << "AR: calc_progr ti" << ti;
+//DbgLv(1) << "AR: calc_progr ti" << ti;
          emit calc_progress( ti );
          qApp->processEvents();
          //US_Sleep::msleep( 10 );

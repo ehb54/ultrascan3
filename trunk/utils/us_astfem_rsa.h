@@ -9,6 +9,10 @@
 #include "us_dataIO2.h"
 #include "us_astfem_math.h"
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
 //! \brief The module that calculates simulation data
 class US_EXTERN US_Astfem_RSA : public QObject
 {
@@ -109,6 +113,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
 
       double w2t_integral;    //!< Keep track of w2t_integral value globally
       int    N;               //!< Number of points used in radial direction
+      int    dbg_level;
       
       US_AstfemMath::AstFemParameters af_params;
       US_AstfemMath::MfemData         af_data;
