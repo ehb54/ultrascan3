@@ -10,6 +10,10 @@
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
 //! \brief Module to calculate simulation data by AST Finite Volume Method
 class US_EXTERN US_LammAstfvm : public QObject
 {
@@ -49,6 +53,7 @@ class US_EXTERN US_LammAstfvm : public QObject
             double* x;        //!< radius coordinates of grids
 
          private:
+            int     dbg_level;       // debug level
             int     MaxRefLev;
             int     MonScale;
             double  MonCutoff;
@@ -107,6 +112,7 @@ class US_EXTERN US_LammAstfvm : public QObject
             double  t1;       // 2nd time intervals in use.
             double* Cs0;      // salt concentration for the 1st time interval
             double* Cs1;      // salt concentration for the 2nd time interval
+            int     dbg_level;       // debug level
       };
 
       //! \brief Create Lamm equations AST Finite Volume Method solver
@@ -198,6 +204,7 @@ class US_EXTERN US_LammAstfvm : public QObject
                                // = 0: no mesh refinement
 
       int     comp_x;          // current component index
+      int     dbg_level;       // debug level
 
       double  param_m;         // m of cell (meniscus)
       double  param_b;         // b of cell (bottom)

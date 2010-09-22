@@ -15,6 +15,7 @@
 US_LammAstfvm::Mesh::Mesh( double xl, double xr, int Nelem, int Opt )
 {
    int i;
+   dbg_level    = US_Settings::us_debug();
 
    // constants
    MaxRefLev    = 20;
@@ -435,6 +436,7 @@ US_LammAstfvm::SaltData::SaltData( US_Model                amodel,
 {
    int j;
 
+   dbg_level  = US_Settings::us_debug();
    model      = amodel;
    simparms   = asparms;
    sa_data    = *asim_data;
@@ -468,11 +470,11 @@ US_LammAstfvm::SaltData::SaltData( US_Model                amodel,
       for ( j = 0; j < Nx; j++ )
          sa_data.scanData[ i ].readings[ j ] = US_DataIO2::Reading( 0.0 );
 
-qDebug() << "SaltD: model comps" << model.components.size();
-qDebug() << "SaltD: amodel comps" << amodel.components.size();
-qDebug() << "SaltD: comp0 s d s_conc" << model.components[0].s
+DbgLv(1) << "SaltD: model comps" << model.components.size();
+DbgLv(1) << "SaltD: amodel comps" << amodel.components.size();
+DbgLv(1) << "SaltD: comp0 s d s_conc" << model.components[0].s
  << model.components[0].D << model.components[0].signal_concentration;
-qDebug() << "SaltD:fem: m b  s D  rpm" << simparms.meniscus << simparms.bottom
+DbgLv(1) << "SaltD:fem: m b  s D  rpm" << simparms.meniscus << simparms.bottom
    << model.components[0].s << model.components[0].D
    << simparms.speed_step[0].rotorspeed;
 
@@ -483,8 +485,8 @@ qDebug() << "SaltD:fem: m b  s D  rpm" << simparms.meniscus << simparms.bottom
    Nt         = sa_data.scanData.size();
    Nx         = sa_data.x.size();
 
-qDebug() << "SaltD: Nt Nx" << Nt << Nx;
-qDebug() << "SaltD: sa sc0 sec omg" << sa_data.scanData[0].seconds
+DbgLv(1) << "SaltD: Nt Nx" << Nt << Nx;
+DbgLv(1) << "SaltD: sa sc0 sec omg" << sa_data.scanData[0].seconds
  << sa_data.scanData[0].omega2t;
 
    xs         = new double [ Nx ];
@@ -533,11 +535,10 @@ void US_LammAstfvm::SaltData::initSalt()
    }
 int k=Nx/2;
 int n=Nx-1;
-qDebug() << "initSalt: t0 t1" << t0 << t1;
-qDebug() << "initSalt:  xs Cs0 Cs1 j" << xs[0] << Cs0[0] << Cs1[0] << 0;
-qDebug() << "initSalt:  xs Cs0 Cs1 j" << xs[k] << Cs0[k] << Cs1[k] << k;
-qDebug() << "initSalt:  xs Cs0 Cs1 j" << xs[n] << Cs0[n] << Cs1[n] << n;
-
+DbgLv(1) << "initSalt: t0 t1" << t0 << t1;
+DbgLv(1) << "initSalt:  xs Cs0 Cs1 j" << xs[0] << Cs0[0] << Cs1[0] << 0;
+DbgLv(1) << "initSalt:  xs Cs0 Cs1 j" << xs[k] << Cs0[k] << Cs1[k] << k;
+DbgLv(1) << "initSalt:  xs Cs0 Cs1 j" << xs[n] << Cs0[n] << Cs1[n] << n;
 }
 
 void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
@@ -559,9 +560,9 @@ void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
 
       Nt --;             // Nt = time level left
       scn++;
-//qDebug() << "SaltD:     intrp 0 t 1" << t0 << t << t1 << "  N s" << Nt << scn;
+DbgLv(3) << "SaltD:     intrp 0 t 1" << t0 << t << t1 << "  N s" << Nt << scn;
    }
-//qDebug() << "SaltD:  intrp t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
+DbgLv(3) << "SaltD:  intrp t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
 
    // interpolate between t0 and t1
    double et1 = ( t - t0 ) / ( t1 - t0 );
@@ -588,8 +589,8 @@ void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
       Csalt[ j ] = et0 * ( xim * Cs0[ m ] + xik * Cs0[ k ] )
                 +  et1 * ( xim * Cs1[ m ] + xik * Cs1[ k ] );
    }
-//qDebug() << "SaltD:    Csalt0 CsaltN" << Csalt[0] << Csalt[N-1];
-};
+DbgLv(3) << "SaltD:    Csalt0 CsaltN" << Csalt[0] << Csalt[N-1];
+}
 
 
 // construct Lamm solver for finite volume method
@@ -611,7 +612,8 @@ US_LammAstfvm::US_LammAstfvm( US_Model&                rmodel,
 
    sigma           = 0.;   // default: s=s_0
    delta           = 0.;   // default: D=D_0
-   
+
+   dbg_level       = US_Settings::us_debug();
 }
 
 // destroy
@@ -696,29 +698,15 @@ void US_LammAstfvm::solve_component( int compx )
 
    nonIdealCaseNo();            // set non-ideal case number
 
-qDebug() << "LAsc:  CX=" << comp_x
+DbgLv(1) << "LAsc:  CX=" << comp_x
  << "  ntcc ntc nts ncs nicase" << ntcc << ntc << nts << ncs << NonIdealCaseNo;
-qDebug() << "LAsc:    tot_t dt sol_t" << total_t << dt << solut_t;
-qDebug() << "LAsc:     b m s w2" << param_b << param_m << param_s << param_w2;
+DbgLv(1) << "LAsc:    tot_t dt sol_t" << total_t << dt << solut_t;
+DbgLv(1) << "LAsc:     b m s w2" << param_b << param_m << param_s << param_w2;
 
    if ( NonIdealCaseNo == 2 )
    {  // co-sedimenting
       if ( comp_x == model.coSedSolute )
-#if 1
       {  // if this component is the salt, skip solving for it
-#endif
-#if 0
-      {  // if this component is the salt, add its ideal solution concentrations
-         for ( kt = 0; kt < nts; kt++ )
-         {
-            US_AstfemMath::MfemScan* s = &af_data.scan[ kt ];
-
-            for ( int jj = 0; jj < ncs; jj++ )
-            {  // update concentration vector with salt concentrations
-               s->conc[ jj ] += saltdata->sa_data.value( kt, jj );
-            }
-         }
-#endif
          return;
       }
 
@@ -742,7 +730,7 @@ qDebug() << "LAsc:     b m s w2" << param_b << param_m << param_s << param_w2;
       SetNonIdealCase_1( model.components[ comp_x ].sigma,
                          model.components[ comp_x ].delta );
 
-qDebug() << "LAsc:   sigma delta" << model.components[comp_x].sigma
+DbgLv(1) << "LAsc:   sigma delta" << model.components[comp_x].sigma
  << model.components[comp_x].delta << "  comp_x" << comp_x;
    }
 
@@ -801,7 +789,7 @@ timer.start();
       u0[ kk ]   = ( u0[ kk - 1 ] + u0[ kk + 1 ] ) * 0.5;
       u1[ kk ]   = u0[ kk ];
    }
-qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
+DbgLv(1) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
    << u0[N0u-3] << u0[N0u-2] << u0[N0u-1];
 
    for ( int jj = 0; jj < ncs; jj++ )
@@ -811,13 +799,18 @@ qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
 
    int    ktinc = 5;                        // signal progress every 5th scan
    double ts;
+   double u_ttl;
+
    QFile ftto( US_Settings::tmpDir() + "/tt0-ufvm" );
-   if ( ! ftto.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
-      qDebug() << "*ERROR* Unable to open tt0-ufvm";
+   if ( dbg_level > 0 )
+   {
+      if ( ! ftto.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
+         qDebug() << "*ERROR* Unable to open tt0-ufvm";
+   }
    QTextStream tso( &ftto );
 //ntc=ntcc;
-   tso << ntc << "\n";
-   double u_ttl;
+   if ( dbg_level > 0 )
+      tso << ntc << "\n";
 
    // main loop for time
    for ( jt = 0, kt = 0; jt < ntc; jt++ )
@@ -827,11 +820,11 @@ timer.restart();
       t1    = t0 + dt;
       ts    = af_data.scan[ kt ].time;           // time at output scan
       N0u   = N0 + N0 - 1;
-      if ( (jt/10)*10 == jt )
+      if ( dbg_level > 0  &&  ( ( jt / 10 ) * 10 ) == jt )
       {
          u_ttl = IntQs( x0, u0, 0, -1, N0-2, 1 );
-qDebug() << "LAsc:    t=" << t0 << " Nv=" << N0 << "u_ttl=" << u_ttl;
-qDebug() << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2];
+DbgLv(1) << "LAsc:    t=" << t0 << " Nv=" << N0 << "u_ttl=" << u_ttl;
+DbgLv(1) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2];
          tso << QString().sprintf( "%12.5e %d %12.5e\n", t0, N0, u_ttl );
          for ( int j=0; j<N0; j++ )
             tso << QString().sprintf( "%10.6e \n", x0[j] );
@@ -886,20 +879,20 @@ ktime5+=timer.restart();
          double f0 = ( t1 - ts ) / ( t1 - t0 );       // fraction of conc0
          double f1 = ( ts - t0 ) / ( t1 - t0 );       // fraction of conc1
 
-qDebug() << "LAsc: call qI  t0 ts t1" << t0 << ts << t1;
+DbgLv(1) << "LAsc: call qI  t0 ts t1" << t0 << ts << t1;
          // do quadratic interpolation to fill out concentrations at time t0
          quadInterpolate( x0, u0, N0, rads, conc0 );
 
          // do quadratic interpolation to fill out concentrations at time t1
          quadInterpolate( x1, u1, N1, rads, conc1 );
-qDebug() << "LAsc:  x0[0] x0[H] x0[N]" << x0[0] << x0[N0/2] << x0[N0-1];
-qDebug() << "LAsc:  x1[0] x1[H] x1[N]" << x1[0] << x1[N1/2] << x1[N1-1];
-qDebug() << "LAsc:   r[0]  r[H]  r[N]" << rads[0] << rads[ncs/2] << rads[ncs-1];
-qDebug() << "LAsc:  u0[0] u0[H] u0[N]" << u0[0] << u0[N0u/2] << u0[N1u-1];
-qDebug() << "LAsc:  u1[0] u1[H] u1[N]" << u1[0] << u1[N1u/2] << u1[N1u-1];
-qDebug() << "LAsc:  c0[0] c0[H] c0[N]"
+DbgLv(1) << "LAsc:  x0[0] x0[H] x0[N]" << x0[0] << x0[N0/2] << x0[N0-1];
+DbgLv(1) << "LAsc:  x1[0] x1[H] x1[N]" << x1[0] << x1[N1/2] << x1[N1-1];
+DbgLv(1) << "LAsc:   r[0]  r[H]  r[N]" << rads[0] << rads[ncs/2] << rads[ncs-1];
+DbgLv(1) << "LAsc:  u0[0] u0[H] u0[N]" << u0[0] << u0[N0u/2] << u0[N1u-1];
+DbgLv(1) << "LAsc:  u1[0] u1[H] u1[N]" << u1[0] << u1[N1u/2] << u1[N1u-1];
+DbgLv(1) << "LAsc:  c0[0] c0[H] c0[N]"
  << conc0[0] << conc0[ncs/2] << conc0[ncs-1];
-qDebug() << "LAsc:  c1[0] c1[H] c1[N]"
+DbgLv(1) << "LAsc:  c1[0] c1[H] c1[N]"
  << conc1[0] << conc1[ncs/2] << conc1[ncs-1];
 
          double cmax = 0.0;
@@ -917,8 +910,8 @@ qDebug() << "LAsc:  c1[0] c1[H] c1[N]"
                rmax = af_data.radius[ jj ];
             }
          }
-qDebug() << "LAsc: t=" << ts << "Cmax=" << cmax << " r=" << rmax;
-qDebug() << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
+DbgLv(1) << "LAsc: t=" << ts << "Cmax=" << cmax << " r=" << rmax;
+DbgLv(1) << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
  << af_data.scan[kt].conc[ncs/2] << af_data.scan[kt].conc[ncs-1] << kt;
 
          istep++;  // bump progress step
@@ -948,37 +941,40 @@ qDebug() << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
       u1    = dtmp;
    }
 
-   ftto.close();
+   if ( dbg_level > 0 )
+      ftto.close();
 
-   // calculate and print the integral of scan curves
-   double cimn = 9e+14;
-   double cimx = 0.0;
-   double ciav = 0.0;
-   double dltr = ( af_data.radius[ 1 ] - af_data.radius[ 0 ] ) * 0.5;
+   if ( dbg_level > 0 )
+   { // calculate and print the integral of scan curves
+      double cimn = 9e+14;
+      double cimx = 0.0;
+      double ciav = 0.0;
+      double dltr = ( af_data.radius[ 1 ] - af_data.radius[ 0 ] ) * 0.5;
 
-   for ( int ii = 0; ii < af_data.scan.size(); ii++ )
-   {
-      double csum = 0.0;
-      double cpre = af_data.scan[ ii ].conc[ 0 ];
-
-      for ( int jj = 1; jj < af_data.scan[ ii ].conc.size(); jj++ )
+      for ( int ii = 0; ii < af_data.scan.size(); ii++ )
       {
-         double cval = af_data.scan[ ii ].conc[ jj ];
-         csum       += ( ( cval + cpre ) * dltr );
-         cpre        = cval;
+         double csum = 0.0;
+         double cpre = af_data.scan[ ii ].conc[ 0 ];
+
+         for ( int jj = 1; jj < af_data.scan[ ii ].conc.size(); jj++ )
+         {
+            double cval = af_data.scan[ ii ].conc[ jj ];
+            csum       += ( ( cval + cpre ) * dltr );
+            cpre        = cval;
+         }
+
+         DbgLv(2) << "Scan" << ii + 1 << "  Integral" << csum;
+         cimn        = ( cimn < csum ) ? cimn : csum;
+         cimx        = ( cimx > csum ) ? cimx : csum;
+         ciav       += csum;
       }
 
-      qDebug() << "Scan" << ii + 1 << "  Integral" << csum;
-      cimn        = ( cimn < csum ) ? cimn : csum;
-      cimx        = ( cimx > csum ) ? cimx : csum;
-      ciav       += csum;
+      ciav       /= (double)af_data.scan.size();
+      double cidf = cimx - cimn;
+      double cidp = (double)( qRound( 10000.0 * cidf / ciav ) ) / 100.0;
+      DbgLv(2) << "  Integral Min Max Mean" << cimn << cimx << ciav;
+      DbgLv(2) << "  ( range of" << cidf << "=" << cidp << " percent of mean )";
    }
-
-   ciav       /= (double)af_data.scan.size();
-   double cidf = cimx - cimn;
-   double cidp = (double)( qRound( 10000.0 * cidf / ciav ) ) / 100.0;
-   qDebug() << "  Integral Min Max Mean" << cimn << cimx << ciav;
-   qDebug() << "  ( range of" << cidf << "=" << cidp << " percent of mean )";
     
    delete [] x0;  // clean up
    delete [] u0;
@@ -986,7 +982,7 @@ qDebug() << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
    delete [] u1;
    delete msh;
 ktime6+=timer.elapsed();
-qDebug() << "compx" << comp_x << "times 1-6"
+DbgLv(1) << "compx" << comp_x << "times 1-6"
  << ktime1 << ktime2 << ktime3 << ktime4 << ktime5 << ktime6;
 }
 
@@ -1304,7 +1300,7 @@ ktim8+=timer.restart();
 
    delete [] ke;
    delete [] MemDouble;
-qDebug() << " Diff_C times 1-8" << ktim1 << ktim2 << ktim3 << ktim4
+DbgLv(2) << " Diff_C times 1-8" << ktim1 << ktim2 << ktim3 << ktim4
    << ktim5 << ktim6 << ktim7 << ktim8;
    return;
 }
@@ -1388,28 +1384,6 @@ timer.start();
   
          saltdata->InterpolateCSalt( Nv, x, t, Csalt );    // Csalt at (x, t)
 kst1+=timer.restart();
-#if 0
-         for ( j = 0; j < Nv; j++ )
-         {
-            // salt concentration
-            Cm         = Csalt[ j ];
-
-            rho        = 0.998234 + Cm * ( 12.68641e-2
-                                  + Cm * ( 1.27445e-3
-                                  + Cm * ( -11.954e-4
-                                  + Cm * 258.866e-6 ) ) ) + 6.e-6;
-            visc       = 1.00194 - 19.4104e-3 * sqrt( Cm )
-                                  + Cm * ( -4.07863e-2
-                                  + Cm * ( 11.5489e-3
-                                  + Cm * ( -21.774e-4 ) ) ) - 0.00078;
-      
-            s_adj[ j ] = ( 1 - vbar * rho ) * 1.00194
-                         / ( ( 1 - vbar_w * rho_w ) * visc )     * param_s;
-
-            D_adj[ j ] = ( Tempt * 1.00194 ) / ( 293.15 * visc ) * param_D;
-         }
-#endif
-#if 1
          {
             double rK = 0.998234 + 6e-6;
             double vK = 1.00194 - 0.00078;
@@ -1435,15 +1409,14 @@ kst1+=timer.restart();
                D_adj[ j ] = dA / visc;
             }
          }
-#endif
-//qDebug() << "AdjSD:    Csalt0 CsaltN Cm" << Csalt[0] << Csalt[Nv-1] << Cm;
-//qDebug() << "AdjSD:   sadj 0 m n" << s_adj[0] << s_adj[Nv/2] << s_adj[Nv-1];
-//qDebug() << "AdjSD:   Dadj 0 m n" << D_adj[0] << D_adj[Nv/2] << D_adj[Nv-1];
-//qDebug() << "AdjSD:      rho 0,m,e" << rho0 << rhom << rhoe;
-//qDebug() << "AdjSD:      visc 0,m,e" << vis0 << vism << vise;
+//DbgLv(3) << "AdjSD:    Csalt0 CsaltN Cm" << Csalt[0] << Csalt[Nv-1] << Cm;
+//DbgLv(3) << "AdjSD:   sadj 0 m n" << s_adj[0] << s_adj[Nv/2] << s_adj[Nv-1];
+//DbgLv(3) << "AdjSD:   Dadj 0 m n" << D_adj[0] << D_adj[Nv/2] << D_adj[Nv-1];
+//DbgLv(3) << "AdjSD:      rho 0,m,e" << rho0 << rhom << rhoe;
+//DbgLv(3) << "AdjSD:      visc 0,m,e" << vis0 << vism << vise;
 
 kst2+=timer.restart();
-qDebug() << "AdjSD:  times 1 2" << kst1 << kst2;
+DbgLv(3) << "AdjSD:  times 1 2" << kst1 << kst2;
          delete [] Csalt;
          break;
 
@@ -1496,8 +1469,9 @@ void US_LammAstfvm::fun_dphi( double x, double* y )
 
 void US_LammAstfvm::fun_Iphi( double x, double* y )
 {
-   double x2 = x  * x * 0.25;
-   double x3 = x2 * x / 6.0;
+   double x2  = x * x;
+   double x3  = x * x2 / 6.0;
+          x2 *= 0.25;
    y[ 0 ] = x3 - x2;
    y[ 1 ] = x  - x3 * 2.0;
    y[ 2 ] = x3 + x2;
@@ -1513,15 +1487,16 @@ void US_LammAstfvm::fun_Iphi( double x, double* y )
 double US_LammAstfvm::IntQ( double *x, double *u, double xia, double xib )
 {
    double intgrl;
-   double Iphi[ 6 ];
+   double phia[ 3 ];
+   double phib[ 3 ];
 
-   fun_Iphi( xia, Iphi );
-   fun_Iphi( xib, Iphi + 3 );
+   fun_Iphi( xia, phia );
+   fun_Iphi( xib, phib );
 
    intgrl = ( x[ 1 ] - x[ 0 ] ) / 2. * (
-              u[ 0 ] * ( Iphi[ 3 ] - Iphi[ 0 ] ) + 
-              u[ 1 ] * ( Iphi[ 4 ] - Iphi[ 1 ] ) +
-              u[ 2 ] * ( Iphi[ 5 ] - Iphi[ 2 ] ) );
+              u[ 0 ] * ( phib[ 0 ] - phia[ 0 ] ) + 
+              u[ 1 ] * ( phib[ 1 ] - phia[ 1 ] ) +
+              u[ 2 ] * ( phib[ 2 ] - phia[ 2 ] ) );
 
    return( intgrl );
 }

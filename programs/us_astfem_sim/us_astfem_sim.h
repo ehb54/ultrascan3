@@ -9,16 +9,18 @@
 
 #include "us_widgets.h"
 #include "us_plot.h"
-//#include "us_femglobal.h"
 #include "us_model.h"
 #include "us_simparms.h"
 #include "us_help.h"
 #include "us_astfem_rsa.h"
 #include "us_dataIO2.h"
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
 //! \brief Main window to control and display an ultracentrifugation 
 //!        simulation
-
 class US_Astfem_Sim : public US_Widgets
 {
    Q_OBJECT
@@ -34,6 +36,7 @@ class US_Astfem_Sim : public US_Widgets
       bool           time_correctionFlag;
       int            curve_count;
       double         total_conc;
+      int            dbg_level;
       
       QCheckBox*     cb_movie;
       QCheckBox*     cb_timeCorr;
