@@ -1447,6 +1447,13 @@ void US_Hydrodyn::load_pdb()
                                                    this,
                                                    "Open Structure Files",
                                                    "Please select a PDB file...");
+   if ( QFileInfo(filename).fileName().contains(" ") )
+   {
+      printError(tr("Filenames containing spaces are not currently supported.\n"
+                    "Please rename the file to remove spaces."));
+      return;
+   }
+
    int errors_found = 0;
    if (!filename.isEmpty())
    {
@@ -1552,6 +1559,14 @@ void US_Hydrodyn::load_pdb()
 bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
 {
    pdb_file = filename;
+
+   if ( QFileInfo(filename).fileName().contains(" ") )
+   {
+      printError(tr("Filenames containing spaces are not currently supported.\n"
+                    "Please rename the file to remove spaces."));
+      return false;
+   }
+
    options_log = "";
    last_abb_msgs = "";
    bead_model_from_file = false;
@@ -1653,6 +1668,12 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
 
 bool US_Hydrodyn::screen_bead_model(QString filename)
 {
+   if ( QFileInfo(filename).fileName().contains(" ") )
+   {
+      printError(tr("Filenames containing spaces are not currently supported.\n"
+                    "Please rename the file to remove spaces."));
+      return false;
+   }
    options_log = "";
    pb_somo->setEnabled(false);
    pb_visualize->setEnabled(false);
@@ -1780,6 +1801,15 @@ void US_Hydrodyn::load_bead_model()
                                                    , "Open"
                                                    , &bead_model_selected_filter
                                                    );
+
+
+   if ( QFileInfo(filename).fileName().contains(" ") )
+   {
+      printError(tr("Filenames containing spaces are not currently supported.\n"
+                    "Please rename the file to remove spaces."));
+      return;
+   }
+
    if (!filename.isEmpty())
    {
       options_log = "";

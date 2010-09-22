@@ -1022,10 +1022,11 @@ int US_Hydrodyn::read_bead_model(QString filename)
 
          if ( dammin ) 
          {
-            rx.setPattern( "Number of particle atoms \\.*\\s*:\\s*(\\d+)\\s" );
+            puts("dammin");
+            rx.setPattern( "Number of particle atoms \\.*\\s*:\\s*(\\d+)\\s*" );
             if ( rx.search(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIN/DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
+               editor->append("Error in DAMMIN/DAMMIF file: couldn't find number of atoms in 'Number of particle atoms' line\n");
                return 1;
             }
             bead_count = rx.cap(1).toInt();
@@ -1043,7 +1044,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                return 1;
             }
             
-            rx.setPattern("DAM packing radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s");
+            rx.setPattern("DAM packing radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
             
             if ( rx.search(tmp) == -1 ) 
             {
@@ -1052,7 +1053,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
             }
             radius = rx.cap(1).toFloat();
          } else {
-            rx.setPattern( "Dummy atoms in output phase\\s*:\\s*(\\d+)\\s" );
+            puts("dammif");
+            rx.setPattern( "Dummy atoms in output phase\\s*:\\s*(\\d+)\\s*" );
             if ( rx.search(tmp) == -1 ) 
             {
                editor->append("Error in DAMMIN/DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
@@ -1073,7 +1075,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                return 1;
             }
             
-            rx.setPattern("Dummy atom radius\\s *:\\s*(\\d+\\.\\d+)\\s");
+            rx.setPattern("Dummy atom radius\\s *:\\s*(\\d+\\.\\d+)\\s*");
             
             if ( rx.search(tmp) == -1 ) 
             {
