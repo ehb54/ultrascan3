@@ -60,10 +60,6 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_details, SIGNAL( clicked() ), SLOT( runDetails() ) );
    settings->addWidget( pb_details, row++, 0, 1, 2 );
 
-//   pb_reload = us_pushbutton( tr( "Reload Data" ) );
-//   connect( pb_reload, SIGNAL( clicked() ), SLOT( reload() ) );
-//   settings->addWidget( pb_reload, row++, 1 );
-
    // Pushbuttons to load and reload data
    pb_load = us_pushbutton( tr( "Import Legacy Run from HD" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
@@ -75,20 +71,14 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_loadUS3HD, row++, 1 );
 
    // External program to enter experiment information
-//   QBoxLayout* expButtons = new QHBoxLayout;
-
-   pb_newRuninfo = us_pushbutton( tr( "Edit Run Information" ) );
-   connect( pb_newRuninfo, SIGNAL( clicked() ), SLOT( newRuninfo() ) );
-   //expButtons->addWidget( pb_newRuninfo );
-   settings->addWidget( pb_newRuninfo, row, 0 );
-   pb_newRuninfo->setEnabled( false );
+   pb_editRuninfo = us_pushbutton( tr( "Edit Run Information" ) );
+   connect( pb_editRuninfo, SIGNAL( clicked() ), SLOT( editRuninfo() ) );
+   settings->addWidget( pb_editRuninfo, row, 0 );
+   pb_editRuninfo->setEnabled( false );
 
    pb_loadUS3DB = us_pushbutton( tr( "Load US3 Run from DB" ) );
    connect( pb_loadUS3DB, SIGNAL( clicked() ), SLOT( loadUS3DB() ) );
-   //expButtons->addWidget( pb_loadUS3DB );
    settings->addWidget( pb_loadUS3DB, row++, 1 );
-
-//   settings->addLayout( expButtons, row, 0 );
 
    // Change Run ID
    QLabel* lb_runID = us_label( tr( "Run ID:" ) );
@@ -307,8 +297,8 @@ void US_Convert::reset( void )
    pb_buffer     ->setEnabled( false );
    pb_analyte    ->setEnabled( false );
    pb_applyAll   ->setEnabled( false );
-   pb_newRuninfo ->setEnabled( false );
-   pb_savetoDB     ->setEnabled( false );
+   pb_editRuninfo ->setEnabled( false );
+   pb_savetoDB    ->setEnabled( false );
 
 //   pb_reload     ->setEnabled( true  );
    ct_tolerance  ->setEnabled( true  );
@@ -518,7 +508,7 @@ void US_Convert::enableControls( void )
       pb_buffer      ->setEnabled( true );
       pb_analyte     ->setEnabled( true );
       cb_centerpiece ->setEnabled( true );
-      pb_newRuninfo  ->setEnabled( true );
+      pb_editRuninfo ->setEnabled( true );
 
       // Ok to drop scan if not the only one
       int currentScanCount = 0;
@@ -659,12 +649,18 @@ void US_Convert::enableSyncDB( void )
       return;
    }
 
-   // Information is there, but are we connected to the db? 
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   // Information is there, but we need to see if the runID exists in the 
+   // DB. If we didn't load it from there, then we shouldn't be able to sync
+   int recStatus = US_ConvertIO::checkRunID( ExpData.runID );
+   if ( recStatus == -1 )
+   {
+      // We can't sync to the DB if we can't connect to it
+      pb_savetoDB ->setEnabled( false );
+      return;
+   }
 
-   if ( ! db.isConnected() )
+   // if a record is found but saveStatus == BOTH, then we are editing that record
+   else if ( ( recStatus > 0 ) && ( saveStatus != BOTH ) ) 
    {
       pb_savetoDB ->setEnabled( false );
       return;
@@ -704,7 +700,7 @@ void US_Convert::runIDChanged( void )
 }
 
 // Function to generate a new guid for experiment, and associate with DB
-void US_Convert::newRuninfo( void )
+void US_Convert::editRuninfo( void )
 {
    // Verify connectivity
    US_Passwd pw;
@@ -740,6 +736,96 @@ void US_Convert::newRuninfo( void )
    }
 
    getExpInfo( );
+}
+
+void US_Convert::loadUS3HD( void )
+{
+   // Ask for data directory
+   QString dir = QFileDialog::getExistingDirectory( this, 
+         tr("US3 Raw Data Directory"),
+         US_Settings::resultDir(),
+         QFileDialog::DontResolveSymlinks );
+
+   if ( dir.isEmpty() ) return; 
+
+   dir.replace( "\\", "/" );  // WIN32 issue
+   if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
+
+   loadUS3HD( dir );
+}
+
+void US_Convert::loadUS3HD( QString dir )
+{
+   resetAll();
+
+   // Set the runID and directory
+   QStringList components =  dir.split( "/", QString::SkipEmptyParts );  
+   runID    = components.last();
+   le_runID ->setText( runID );
+   le_dir   ->setText( dir );
+   currentDir  = QString( dir );
+
+   // Reload the data
+   US_ProcessConvert* dialog 
+      = new US_ProcessConvert( this );
+      dialog->reloadUS3Data( dir, allData, ExpData, triples, runType, runID );
+   delete dialog;
+
+   if ( allData.size() == 0 ) return;
+
+   // Update triple information on screen
+   setTripleInfo();
+
+   le_bufferInfo  -> setText( triples[ currentTriple ].bufferDesc  );
+   le_analyteInfo -> setText( triples[ currentTriple ].analyteDesc );
+
+   // Restore description
+   le_description->setText( allData[ 0 ].description );
+   saveDescription = QString( allData[ 0 ].description );
+
+   // Reset maximum scan control values
+   enableScanControls();
+
+   // Reset apply all button
+   enableCCWControls();
+
+   // Redo plot
+   init_excludes();
+   plot_current();
+
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+
+   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_to     ( double ) ) );
+
+   // Ok to enable some buttons now
+   enableControls();
+   pb_savetoHD    ->setEnabled( true );
+   pb_details     ->setEnabled( true );
+   pb_buffer      ->setEnabled( true );
+   pb_analyte     ->setEnabled( true );
+   cb_centerpiece ->setEnabled( true );
+   pb_editRuninfo ->setEnabled( true );
+
+   // some things one can't do from here
+   ct_tolerance   ->setEnabled( false );
+
+   enableRunIDControl( false );
+
+   if ( runType == "RI" )
+      pb_reference->setEnabled( true );
+
+   else if ( runType == "RA" && ss_limits.size() < 2 )
+   {
+      // Allow user to define subsets, if he hasn't already
+      pb_define   ->setEnabled( true );
+   } 
+
+   saveStatus = ( ExpData.expID == 0 ) ? HD_ONLY : DB_SYNC;
+   //pb_editRuninfo  ->setEnabled ( saveStatus == HD_ONLY );
+
+   enableSyncDB();
 }
 
 // Function to load an experiment from the DB
@@ -781,6 +867,7 @@ void US_Convert:: loadUS3DB( void )
 
    // and load it
    loadUS3HD( dirname );
+   enableControls();
 
    saveStatus = BOTH;         // override from loadUS3HD()
 }
@@ -804,7 +891,8 @@ void US_Convert::getExpInfo( void )
    {
       QMessageBox::information( this,
              tr( "Error" ),
-             tr( "The current runID already exists in the database.\n" ) );
+             tr( "The current runID already exists in the database. To edit that "
+                 "information, load it from the database to start with.\n" ) );
       return;
    }
 
@@ -1503,26 +1591,12 @@ int US_Convert::savetoHD( void )
       if ( status != 0 ) return NOT_WRITTEN;
    }
 
-/* // delete
-   if ( ExpData.triples.size() != triples.size() )
-   {
-      status = QMessageBox::information( this,
-               tr( "Warning" ),
-               tr( "A buffer and/or analyte has not been defined yet. " )  +
-               tr( "Click 'OK' to proceed anyway, or click 'Cancel' "   )  +
-               tr( "and enter the current c/c/w info for each cell, "   )  +
-               tr( "channel, and wavelength combination first.\n\n "    ),
-               tr( "&OK" ), tr( "&Cancel" ),
-               0, 0, 1 );
-      if ( status != 0 ) return NOT_WRITTEN;
-   }
-*/
-
    // Write the data
+   bool saveGUIDs = saveStatus != NOT_SAVED && saveStatus != EDITING;
    US_ProcessConvert* dialog 
       = new US_ProcessConvert( this );
       dialog->writeConvertedData( status, allData, ExpData, triples, 
-                                  allExcludes, runType, runID, dirname );
+                                  allExcludes, runType, runID, dirname, saveGUIDs );
    delete dialog;
 
    // How many files should have been written?
@@ -1570,103 +1644,12 @@ int US_Convert::savetoHD( void )
          QString::number( fileCount ) + " " + 
          runID + tr( " files written." ) );
   
+   if ( saveStatus == NOT_SAVED || saveStatus == EDITING )
+      saveStatus = HD_ONLY;
+
    enableRunIDControl( false );
 
    return( OK );
-}
-
-void US_Convert::loadUS3HD( void )
-{
-   // Ask for data directory
-   QString dir = QFileDialog::getExistingDirectory( this, 
-         tr("US3 Raw Data Directory"),
-         US_Settings::resultDir(),
-         QFileDialog::DontResolveSymlinks );
-
-   if ( dir.isEmpty() ) return; 
-
-   dir.replace( "\\", "/" );  // WIN32 issue
-   if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
-
-   loadUS3HD( dir );
-}
-
-void US_Convert::loadUS3HD( QString dir )
-{
-   resetAll();
-
-   // Set the runID and directory
-   QStringList components =  dir.split( "/", QString::SkipEmptyParts );  
-   runID    = components.last();
-   le_runID ->setText( runID );
-   le_dir   ->setText( dir );
-   currentDir  = QString( dir );
-
-   // Reload the data
-   US_ProcessConvert* dialog 
-      = new US_ProcessConvert( this );
-      dialog->reloadUS3Data( dir, allData, ExpData, triples, runType, runID );
-   delete dialog;
-
-   if ( allData.size() == 0 ) return;
-
-   // Update triple information on screen
-   setTripleInfo();
-
-   le_bufferInfo  -> setText( triples[ currentTriple ].bufferDesc  );
-   le_analyteInfo -> setText( triples[ currentTriple ].analyteDesc );
-
-   // Restore description
-   le_description->setText( allData[ 0 ].description );
-   saveDescription = QString( allData[ 0 ].description );
-
-   // Reset maximum scan control values
-   enableScanControls();
-
-   // Reset apply all button
-   enableCCWControls();
-
-   // Redo plot
-   init_excludes();
-   plot_current();
-
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
-
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
-
-   // Ok to enable some buttons now
-   enableControls();
-   pb_savetoHD    ->setEnabled( true );
-   pb_details     ->setEnabled( true );
-   pb_buffer      ->setEnabled( true );
-   pb_analyte     ->setEnabled( true );
-   cb_centerpiece ->setEnabled( true );
-   pb_newRuninfo  ->setEnabled( true );
-
-   // some things one can't do from here
-   pb_load        ->setEnabled( false );
-   pb_loadUS3HD   ->setEnabled( false );
-   pb_loadUS3DB   ->setEnabled( false );
-   //pb_reload      ->setEnabled( false );
-   ct_tolerance   ->setEnabled( false );
-
-   enableRunIDControl( false );
-
-   if ( runType == "RI" )
-      pb_reference->setEnabled( true );
-
-   else if ( runType == "RA" && ss_limits.size() < 2 )
-   {
-      // Allow user to define subsets, if he hasn't already
-      pb_define   ->setEnabled( true );
-   } 
-
-   saveStatus = ( ExpData.expID == 0 ) ? HD_ONLY : DB_SYNC;
-   pb_newRuninfo  ->setEnabled ( saveStatus == HD_ONLY );
-
-   enableSyncDB();
 }
 
 void US_Convert::savetoDB( void )
@@ -1710,14 +1693,29 @@ void US_Convert::savetoDB( void )
    if ( expID == -1 )
       error =  "Error making DB connection";
 
-   else if ( expID > 0 )
+   else if ( expID == 0 )
+   {
+      // No database records with this runID found
+      error = US_ConvertIO::newDBExperiment( ExpData, triples, dir );
+   }
+
+   // If saveStatus == BOTH already, then it came from the db to begin with, so it's
+   // ok to update it
+   else if ( saveStatus == BOTH )
    {
       ExpData.expID = expID;
       error = US_ConvertIO::updateDBExperiment( ExpData, triples, dir );
    }
 
    else
-      error = US_ConvertIO::newDBExperiment( ExpData, triples, dir );
+   {
+      // User is trying to overwrite a runID that is already in the DB
+      QMessageBox::warning( this,
+            tr( "Duplicate runID" ),
+            tr( "This runID already exists in the database. To edit that "  
+                "run information, load it from there to begin with.\n" ) );
+      return;
+   }
 
    if ( error != NULL )
    {
