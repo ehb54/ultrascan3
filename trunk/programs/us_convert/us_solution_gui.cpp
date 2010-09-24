@@ -1,6 +1,7 @@
 //! \file us_solutioninfo.cpp
 
 #include <QtGui>
+#include <uuid/uuid.h>
 
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -125,7 +126,7 @@ void US_SolutionGui::cancel( void )
 void US_SolutionGui::connect_error( const QString& error )
 {
    QMessageBox::warning( this, tr( "Connection Problem" ),
-         tr( "Could not connect to databasee \n" ) + error );
+         tr( "Could not connect to database \n" ) + error );
 }
 
 // Initializations
@@ -160,6 +161,11 @@ void US_SolutionGui::TripleInfo::clear( void )
 
 void US_SolutionGui::TripleInfo::show( void )
 {
+   char uuidc[ 37 ];
+   uuid_unparse( (unsigned char*)tripleGUID, uuidc );
+   
+   char uuidc2[ 37 ];
+   uuid_unparse( (unsigned char*)solutionGUID, uuidc2 );
    qDebug() << "tripleID     = " << tripleID     << '\n'
             << "tripleDesc   = " << tripleDesc   << '\n'
             << "centerpiece  = " << centerpiece  << '\n'
@@ -169,9 +175,9 @@ void US_SolutionGui::TripleInfo::show( void )
             << "analyteID    = " << analyteID    << '\n'
             << "analyteGUID  = " << analyteGUID  << '\n'
             << "analyteDesc  = " << analyteDesc  << '\n'
-            << "tripleGUID   = " << tripleGUID   << '\n'
-            << "tripleFilename = " << tripleFilename  << '\n'
-            << "solutionGUID = " << solutionGUID << '\n'
+            << "tripleGUID   = " << QString( uuidc )   << '\n'
+            << "tripleFilename = " << tripleFilename   << '\n'
+            << "solutionGUID = " << QString( uuidc2 ) << '\n'
             << "description  = " << description  << '\n'
             << "storageTemp  = " << storageTemp  << '\n'
             << "notes        = " << notes        << '\n';

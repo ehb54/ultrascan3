@@ -179,6 +179,7 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
          << "1" ;           // channel ID
 
       status = db.statusQuery( q );
+
       int solutionID = db.lastInsertID();
 
       if ( status == US_DB2::OK )
@@ -625,8 +626,9 @@ int US_ConvertIO::writeXmlFile(
             xml.writeAttribute   ( "id", QString::number( t.centerpiece ) );
             xml.writeEndElement  ();
 
+            uuid_unparse( (unsigned char*)t.solutionGUID, uuidc );
             xml.writeStartElement( "solution" );
-            xml.writeAttribute   ( "guid", t.solutionGUID );
+            xml.writeAttribute   ( "guid", QString( uuidc ) );
             int st = ( t.storageTemp ) ? 1 : 0;
             xml.writeAttribute   ( "storageTemp", QString::number( st ) );
             xml.writeTextElement ( "description", t.description );

@@ -158,6 +158,8 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
                         written.
           \param runID  The run ID of the experiment.
           \param dirname The directory in which the files are to be written.
+          \param saveGUIDs Boolean value that indicates whether data has been saved
+                        to disk before and doesn't require new GUIDs
       */
       void          writeConvertedData(
                     int& status,
@@ -167,7 +169,8 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
                     QVector< US_Convert::Excludes >& ,
                     QString ,
                     QString ,
-                    QString );
+                    QString,
+                    bool );
 
       /*! \brief Reloads converted US3 data back into the program to sync
                  up with the database. 

@@ -92,8 +92,7 @@ class US_EXTERN US_Convert : public US_Widgets
 
       QwtCounter*   ct_tolerance;
 
-      //QPushButton*  pb_reload;
-      QPushButton*  pb_newRuninfo;
+      QPushButton*  pb_editRuninfo;
       QPushButton*  pb_load;
       QPushButton*  pb_loadUS3HD;
       QPushButton*  pb_loadUS3DB;
@@ -173,7 +172,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void enableControls  ( void );
       void runIDChanged    ( void );
       void toleranceValueChanged( double );           // signal to notify of change
-      void newRuninfo      ( void );
+      void editRuninfo     ( void );
       void loadUS3HD       ( void );
       void loadUS3HD       ( QString );
       void loadUS3DB       ( void );

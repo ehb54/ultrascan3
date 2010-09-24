@@ -275,7 +275,8 @@ void US_ProcessConvert::writeConvertedData(
      QVector< US_Convert::Excludes >& allExcludes,
      QString runType,
      QString runID,
-     QString dirname
+     QString dirname,
+     bool saveGUIDs
      )
 {
    if ( rawConvertedData[ 0 ].scanData.empty() ) 
@@ -327,10 +328,10 @@ void US_ProcessConvert::writeConvertedData(
       uuid_unparse( (unsigned char*) rawConvertedData[ i ].rawGUID, uuidc );
       QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
-      if ( rx.exactMatch( QString( uuidc ) ) )
+      if ( saveGUIDs && rx.exactMatch( QString( uuidc ) ) )
       {
          // Make sure xml file matches
-         strncpy( triples [ i ].tripleGUID, (char*) rawConvertedData[ i ].rawGUID, 16 );
+         memcpy( triples [ i ].tripleGUID, (char*) rawConvertedData[ i ].rawGUID, 16 );
       }
 
       else
@@ -338,18 +339,18 @@ void US_ProcessConvert::writeConvertedData(
          // Calculate and save the guid for this triple
          uuid_t uuid;
          uuid_generate( uuid );
-         strncpy( rawConvertedData[ i ].rawGUID, (char*) uuid, 16 );
-         strncpy( triples [ i ].tripleGUID, (char*) uuid, 16 );
+         memcpy( rawConvertedData[ i ].rawGUID, (char*) uuid, 16 );
+         memcpy( triples [ i ].tripleGUID, (char*) uuid, 16 );
       }
 
       // Same with solutionGUID
       uuid_unparse( (unsigned char*) triples[ i ].solutionGUID, uuidc );
-      if ( ! rx.exactMatch( QString( uuidc ) ) )
+      if ( ! saveGUIDs || ! rx.exactMatch( QString( uuidc ) ) )
       {
          // Calculate and save the solution guid for this triple
          uuid_t uuid;
          uuid_generate( uuid );
-         strncpy( triples [ i ].solutionGUID, (char*) uuid, 16 );
+         memcpy( triples [ i ].solutionGUID, (char*) uuid, 16 );
       }
          
       // Save the filename of this triple
@@ -604,7 +605,13 @@ void US_ProcessConvert::convert(
       QString proto = descriptionParts[ 1 ].toAscii();
       proto.remove( "," );
    
-      delta_r = proto.toDouble();
+      // Some IP data doesn't have this
+      if ( proto.toDouble() == 0.0 )
+         delta_r = ( max_radius - min_radius ) / ( max_size - 1 );
+
+      else
+         delta_r = proto.toDouble();
+
    }
 
    else
@@ -688,8 +695,24 @@ void US_ProcessConvert::convert(
 
          if ( runType == "IP" )
          {
-            // No interpolation in this data
-            r.value  = ccwLegacyData[ i ].readings[ j ].value;
+            if ( dr > -3.0e-4 && k < rCount ) // No interpolation here
+            {
+               r.value  = ccwLegacyData[ i ].readings[ k ].value;
+               k++;
+            }
+
+            else if ( radius < r0 ) // Before the first
+            {
+               r.value = ccwLegacyData[ i ].readings[ 0 ].value;
+               setInterpolated( interpolated, j );
+            }
+
+            else if ( radius > rLast || k >= rCount ) // After the last
+            {
+               r.value = ccwLegacyData[ i ].readings[ rCount - 1 ].value;
+               setInterpolated( interpolated, j );
+            }
+
             r.stdDev = 0.0;
          }
 
@@ -735,7 +758,6 @@ void US_ProcessConvert::convert(
 
       newRawData.scanData <<  s ;
    }
-
 }
 
 void US_ProcessConvert::splitRAData( 
