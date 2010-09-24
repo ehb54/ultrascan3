@@ -163,7 +163,7 @@ CREATE  TABLE IF NOT EXISTS experiment (
   instrumentID int(11) NOT NULL ,
   operatorID int(11) NULL ,
   rotorID int(11) NULL ,
-  experimentGUID CHAR(36) NULL ,
+  experimentGUID CHAR(36) NULL UNIQUE,
   type ENUM('velocity', 'equilibrium', 'other') NULL ,
   runType ENUM( 'RA', 'RI', 'IP', 'FI', 'WA', 'WI' ) NULL DEFAULT NULL,
   dateBegin DATE NOT NULL ,
@@ -1420,6 +1420,9 @@ CREATE  TABLE IF NOT EXISTS permits (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+-- Load some non-changing hardware data
+SOURCE us3_hardware_data.sql
+SOURCE us3_buffer_components.sql
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

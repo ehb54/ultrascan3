@@ -180,15 +180,20 @@ CREATE PROCEDURE new_experiment ( p_personGUID   CHAR(36),
 BEGIN
   DECLARE l_experimentID INT;
   DECLARE l_count_runID  INT;
+  DECLARE duplicate_key  TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR 1062
+    SET duplicate_key = 1;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
-  IF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+  IF ( ( verify_user( p_personGUID, p_password ) = @OK           )   &&
        ( verify_operator_permission( p_personGUID, p_password, 
-          p_labID, p_instrumentID, p_operatorID ) = @OK ) ) THEN
+          p_labID, p_instrumentID, p_operatorID ) = @OK          )   &&
+       ( check_GUID( p_personGUID, p_password, p_expGUID ) = @OK ) ) THEN
     -- Can't have duplicate run ID's for this investigator
     SELECT COUNT(*)
     INTO   l_count_runID
@@ -217,11 +222,18 @@ BEGIN
         centrifugeProtocol = p_centrifugeProtocol,
         dateUpdated        = NOW() ;
   
-      SET @LAST_INSERT_ID  = LAST_INSERT_ID();
-  
-      INSERT INTO experimentPerson SET
-        experimentID = @LAST_INSERT_ID,
-        personID     = @US3_ID;
+      IF ( duplicate_key = 1 ) THEN
+        SET @US3_LAST_ERRNO = @INSERTDUP;
+        SET @US3_LAST_ERROR = "MySQL: Duplicate entry for experimentGUID field";
+
+      ELSE
+        SET @LAST_INSERT_ID  = LAST_INSERT_ID();
+    
+        INSERT INTO experimentPerson SET
+          experimentID = @LAST_INSERT_ID,
+          personID     = @US3_ID;
+
+      END IF;
 
     END IF;
 
@@ -252,6 +264,10 @@ CREATE PROCEDURE update_experiment ( p_personGUID   CHAR(36),
 
 BEGIN
   DECLARE l_count_runID  INT;
+  DECLARE duplicate_key  TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR 1062
+    SET duplicate_key = 1;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -259,7 +275,8 @@ BEGIN
 
   IF ( ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) &&
        ( verify_operator_permission( p_personGUID, p_password, 
-          p_labID, p_instrumentID, p_operatorID ) = @OK ) ) THEN
+          p_labID, p_instrumentID, p_operatorID ) = @OK )                                 &&
+       ( check_GUID( p_personGUID, p_password, p_expGUID ) = @OK ) ) THEN
     -- Let's make sure we don't result in a duplicate run ID's for this investigator
     --  through renaming or some such
     SELECT COUNT(*)
@@ -290,6 +307,12 @@ BEGIN
         centrifugeProtocol = p_centrifugeProtocol,
         dateUpdated        = NOW()
       WHERE experimentID   = p_experimentID;
+
+      IF ( duplicate_key = 1 ) THEN
+        SET @US3_LAST_ERRNO = @INSERTDUP;
+        SET @US3_LAST_ERROR = "MySQL: Duplicate entry for experimentGUID field";
+
+      END IF;
 
     END IF;
 
