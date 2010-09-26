@@ -17,6 +17,7 @@
 #include "us_data_loader.h"
 #include "us_util.h"
 #include "us_investigator.h"
+#include "us_lamm_astfvm.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -1605,12 +1606,25 @@ qDebug() << "   sdata->cM0" << sdata->value(nscan-1,0);
 qDebug() << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
 qDebug() << " afrsa init";
 
-   US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
+   if ( model.components[ 0 ].sigma == 0.0  &&
+        model.components[ 0 ].delta == 0.0  &&
+        model.coSedSolute           <  0.0  &&
+        model.compressibility       == 0.0 )
+   {
+      US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
    
 qDebug() << " afrsa calc";
 //astfem_rsa->setTimeCorrection( true );
 
-   astfem_rsa->calculate( *sdata );
+      astfem_rsa->calculate( *sdata );
+   }
+
+   else
+   {
+      US_LammAstfvm *astfvm  = new US_LammAstfvm( model, simparams );
+
+      astfvm->calculate( *sdata );
+   }
 
 nscan = sdata->scanData.size();
 nconc = sdata->x.size();
