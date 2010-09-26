@@ -212,6 +212,8 @@ US_BufferGui::US_BufferGui(
 
    le_description = us_lineedit();
    main->addWidget( le_description, row++, 1, 1, 2 );
+   connect( le_description, SIGNAL( editingFinished() ),
+                            SLOT( new_description() ) );
 
    le_guid = us_lineedit();
    le_guid->setReadOnly( true );
@@ -1209,6 +1211,8 @@ void US_BufferGui::add_component( void )
    le_density      ->setText( QString::number( buffer.density,   'f', 4 ) );
    le_viscosity    ->setText( QString::number( buffer.viscosity, 'f', 4 ) );
    le_concentration->setText( "" );
+   le_compressibility
+                   ->setText( QString::number( buffer.compressibility, 'f', 4));
    
    pb_save->setEnabled( true );
    bufferCurrent = false;
@@ -1395,3 +1399,34 @@ void US_BufferGui::recalc_viscosity( void )
       }
    }
 }
+
+void US_BufferGui::new_description()
+{
+   buffer.description = le_description->text();
+
+   int row = -1;
+
+   for ( int ii = 0; ii < lw_buffer_db->count(); ii++ )
+   {
+      if ( buffer.description == lw_buffer_db->item( ii )->text() )
+      {
+         row   = ii;
+         break;
+      }
+   }
+
+   pb_update->setEnabled( row >= 0 );
+   pb_save  ->setEnabled( row < 0  );
+
+   if ( row < 0 )
+   {
+      le_guid->clear();
+   }
+
+   else
+   {
+      buffer.GUID   = buffer_metadata[ row ].guid;
+      le_guid->setText( buffer.GUID );
+   }
+}
+

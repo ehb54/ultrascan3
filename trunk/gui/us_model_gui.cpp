@@ -61,14 +61,15 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    main->addWidget( pb_models, row, 0 );
 
    QPushButton* pb_new = us_pushbutton( tr( "Create New Model" ) );
-   connect( pb_new, SIGNAL( clicked() ), SLOT( new_model() ) );
    main->addWidget( pb_new, row++, 1 );
+   connect( pb_new,         SIGNAL( clicked()   ),
+                            SLOT(   new_model() ) );
 
    QLabel* lb_description = us_label( tr( "Model Description:" ) );
    main->addWidget( lb_description, row, 0 );
 
    le_description = us_lineedit( "" );
-   connect( le_description, SIGNAL( editingFinished () ),
+   connect( le_description, SIGNAL( returnPressed () ),
                             SLOT  ( edit_description() ) );
    main->addWidget( le_description, row++, 1 );
 
@@ -98,32 +99,24 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    main->addWidget( pb_buffer, row, 0 );
 
    le_buffer = us_lineedit( );
-   le_buffer->setPalette ( gray );
-   le_buffer->setReadOnly( true );
    main->addWidget( le_buffer, row++, 1 );
 
    QLabel* lb_density = us_label( tr( "Density:" ) );
    main->addWidget( lb_density, row, 0 );
 
    le_density = us_lineedit( );
-   le_density->setPalette ( gray );
-   le_density->setReadOnly( true );
    main->addWidget( le_density, row++, 1 );
 
    QLabel* lb_viscosity = us_label( tr( "Viscosity:" ) );
    main->addWidget( lb_viscosity, row, 0 );
 
    le_viscosity = us_lineedit( );
-   le_viscosity->setPalette ( gray );
-   le_viscosity->setReadOnly( true );
    main->addWidget( le_viscosity, row++, 1 );
 
    QLabel* lb_compressibility = us_label( tr( "Compressibility:" ) );
    main->addWidget( lb_compressibility, row, 0 );
 
    le_compressibility = us_lineedit( );
-   le_compressibility->setPalette ( gray );
-   le_compressibility->setReadOnly( true );
    main->addWidget( le_compressibility, row++, 1 );
 
    QLabel* lb_wavelength = us_label( tr( "Wavelength:" ) );
@@ -193,6 +186,7 @@ void US_ModelGui::new_model( void )
    if ( ! ignore_changes() ) return;
 
    US_Model m;  // Create a new model
+   m.description    = le_description->text().trimmed();
 
    ModelDesc desc;
    desc.description = m.description;
@@ -219,6 +213,8 @@ void US_ModelGui::new_model( void )
          break;
       }
    }
+
+   le_guid->clear();
 }
 
 void US_ModelGui::show_model_desc( void )
@@ -269,18 +265,9 @@ void US_ModelGui::edit_description( void )
    if ( desc == lw_models->item( row )->text() ) return;
 
    // Find index into model_descriptions
-   int index = -1;
+   int index  = lw_models->item( row )->type() - QListWidgetItem::UserType;
 
-   for ( int i = 0; i < model_descriptions.size(); i++ )
-   {
-      if ( lw_models->item( i )->type() - QListWidgetItem::UserType == row )
-      {
-         index = i;
-         model_descriptions[ i ].description = desc;
-         break;
-      }
-   }
-
+   model_descriptions[ index ].description = desc;
    model.description = desc;
    show_model_desc();
 
@@ -293,9 +280,6 @@ void US_ModelGui::edit_description( void )
          break;
       }
    }
-
-   model.modelGUID.clear();
-   le_guid->clear();
 }
 
 void US_ModelGui::select_model( QListWidgetItem* item )
@@ -309,12 +293,19 @@ void US_ModelGui::select_model( QListWidgetItem* item )
 
    // Get the current index
    if ( model_descriptions.size() == 0 ) return;
-   int     index = item -> listWidget()-> currentRow();
+   int     index = item->listWidget()-> currentRow();
    QString mdesc = item->text();
    int     modlx = modelIndex( mdesc, model_descriptions );
    
    // For the case of the user clicking on "New Model"
-   if ( model_descriptions[ modlx ].modelGUID.isEmpty() ) return;
+   if ( model_descriptions[ modlx ].modelGUID.isEmpty() )
+   {
+      model.description = mdesc;
+      model.modelGUID   = "";
+      le_description->setText( model.description );
+      le_guid       ->setText( model.modelGUID   );
+      return;
+   }
 
    QString        file;
    QTemporaryFile temporary;
@@ -624,6 +615,13 @@ void US_ModelGui::save_model( void )
 {
    if ( ! verify_model() ) return;
 
+   model.bufferDesc      = le_buffer         ->text();
+   model.density         = le_density        ->text().toDouble();
+   model.viscosity       = le_viscosity      ->text().toDouble();
+   model.compressibility = le_compressibility->text().toDouble();
+   model.wavelength      = le_wavelength     ->text().toDouble();
+   model.temperature     = le_temperature    ->text().toDouble();
+
    if ( rb_disk->isChecked() )
    {
       QString path;
@@ -645,9 +643,6 @@ void US_ModelGui::save_model( void )
           qDebug() << "Cannot open file for writing: " << fn;
           return;
       }
-
-      model.temperature = le_temperature->text().toDouble();
-      model.wavelength  = le_wavelength ->text().toDouble();
 
       model.write( fn );
 
