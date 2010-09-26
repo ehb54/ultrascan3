@@ -151,6 +151,8 @@ US_Properties::US_Properties(
 
    le_mw = us_lineedit( "" );
    connect( le_mw, SIGNAL( editingFinished() ), SLOT( calculate() ) );
+   le_mw->setPalette ( gray );
+   le_mw->setReadOnly( true );
    mw_layout2->addWidget( le_mw );
 
    ct_stoich = us_counter( 1, 1.0, 10.0, 1.0 );
@@ -168,40 +170,35 @@ US_Properties::US_Properties(
    connect( cb_f_f0, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( f_f0_layout, row, 0 );
 
-   le_f_f0 = us_lineedit( "1.25" );
+   le_f_f0 = us_lineedit( "n/a" );
    connect( le_f_f0, SIGNAL( editingFinished () ), SLOT( calculate() ) );
    main->addWidget( le_f_f0, row++, 1 );
+   le_f_f0->setPalette ( gray );
+   le_f_f0->setReadOnly( true );
    
    // Row 
    QGridLayout* s_layout = us_checkbox(
       tr( "Sedimentation Coeff. (s) (20W)" ), cb_s, true );
-   cb_s->setEnabled( false);
    connect( cb_s, SIGNAL( toggled( bool ) ), SLOT( calculate( bool) ) );
    main->addLayout( s_layout, row, 0 );
 
-   le_s = us_lineedit( "n/a" );
-   le_s->setPalette ( gray );
-   le_s->setReadOnly( true );
+   le_s = us_lineedit( "1e-13" );
    connect( le_s, SIGNAL( editingFinished () ), SLOT( calculate() ) );
    main->addWidget( le_s, row++, 1 );
 
    // Row
    QGridLayout* D_layout = us_checkbox(
       tr( "Diffusion Coeff. (D) (20W)" ), cb_D, true );
-   cb_D->setEnabled( false);
    connect( cb_D, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( D_layout, row, 0 );
 
-   le_D = us_lineedit( "n/a" );
-   le_D->setPalette ( gray );
-   le_D->setReadOnly( true );
+   le_D = us_lineedit( "2e-7" );
    connect( le_D, SIGNAL( editingFinished () ), SLOT( calculate() ) );
    main->addWidget( le_D, row++, 1 );
 
    // Row
    QGridLayout* f_layout = us_checkbox(
       tr( "Frictional Coeff. (f) (20W)" ), cb_f );
-   cb_f->setEnabled( false);
    connect( cb_f, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( f_layout, row, 0 );
 
@@ -248,6 +245,7 @@ US_Properties::US_Properties(
 
    clear_entries();
    update_lw();
+   checkbox();
 }
 
 void US_Properties::clear_entries( void )
