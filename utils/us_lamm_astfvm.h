@@ -126,14 +126,17 @@ class US_EXTERN US_LammAstfvm : public QObject
 
       //! \brief Main method to calculate FVM solution
       //! \param sim_data Reference to simulated AUC data to produce
-      void calculate( US_DataIO2::RawData& );
+      //! \returns        Non-zero if multiple non-ideal conditions
+      int  calculate( US_DataIO2::RawData& );
 
       //! \brief Calculate solution for a model component
       //! \param compx Index to model component to use in solution pass
-      void solve_component( int ); 
+      //! \returns     Non-zero if multiple non-ideal conditions
+      int  solve_component( int ); 
 
       //! \brief Get the non-ideal case number from model parameters
-      void nonIdealCaseNo( void );
+      //! \returns Non-zero if multiple non-ideal conditions
+      int  nonIdealCaseNo( void );
 
       //! \brief Set up non-ideal case type 1 (concentration-dependent)
       //! \param sigma_k Sigma constant to modify sedimentation coefficient
@@ -193,7 +196,7 @@ class US_EXTERN US_LammAstfvm : public QObject
                                // non-ideal case
                                // s = s_0/(1+sigma*C), D=D_0/(1+delta*C)
 
-      double  cmprssfac;       // factor for compressibility
+      double  compressib;      // factor for compressibility
 
       SaltData* saltdata;      // data handle for cosedimenting
 
@@ -211,6 +214,8 @@ class US_EXTERN US_LammAstfvm : public QObject
       double  param_s;         // base s value (sedimentation coefficient)
       double  param_D;         // base D value (diffusion coefficient)
       double  param_w2;        // rpm-based omega-sq-t, w2=(rpm*pi/30)^2
+
+      double  err_tol;         // error tolerance for mesh refinement
 
       // private functions
 

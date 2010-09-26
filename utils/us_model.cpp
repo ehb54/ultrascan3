@@ -715,8 +715,8 @@ void US_Model::write_temp( QTemporaryFile& file )
          QString index  = QString::number( as->reaction_components[ j ] );
          QString stoich = QString::number( as->stoichiometry      [ j ] );
 
-         xml.writeAttribute( "index",         index  );
-         xml.writeAttribute( "stoichiometry", stoich );
+         xml.writeAttribute( "index",  index  );
+         xml.writeAttribute( "stoich", stoich );
          xml.writeEndElement(); // component
       }
 

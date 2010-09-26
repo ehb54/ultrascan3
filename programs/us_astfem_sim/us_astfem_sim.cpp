@@ -400,7 +400,7 @@ void US_Astfem_Sim::start_simulation( void )
    sim_data.description = "Simulation";
    
    int points = qRound( ( simparams.bottom - simparams.meniscus ) / 
-                          simparams.radial_resolution );
+                          simparams.radial_resolution ) + 1;
 
    sim_data.x.resize( points );
 
@@ -547,7 +547,17 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       lcd_component->display( 1 );
 
       // solve using ASTFVM
-      astfvm->calculate( sim_data );
+      int rc = astfvm->calculate( sim_data );
+
+      if ( rc != 0 )
+      {  // report on multiple non-ideal conditions
+         QMessageBox::information( this, 
+               tr( "Non-Ideal Simulation Error" ), 
+               tr( "Unable to create simulation.\n"
+                   "Multiple non-ideal conditions exist.\n"
+                   "Edit the ambiguous model." ) ); 
+         return;
+      }
 
       // on completion, set LCD display to components count
       lcd_component->display( system.components.size() ); 
@@ -720,7 +730,7 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
    double grid_res  = simparams.radial_resolution;
 
    // Add 30 points in front of meniscus                                                               
-   int    points      = (int)( ( b - m ) / grid_res ) + 30; 
+   int    points      = (int)( ( b - m ) / grid_res ) + 31; 
    
    double maxc        = 0.0;
    int    total_scans = sim_data.scanData.size();

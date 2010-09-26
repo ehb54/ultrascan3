@@ -613,6 +613,8 @@ US_LammAstfvm::US_LammAstfvm( US_Model&                rmodel,
    sigma           = 0.;   // default: s=s_0
    delta           = 0.;   // default: D=D_0
 
+   err_tol         = 1.0e-4;
+
    dbg_level       = US_Settings::us_debug();
 }
 
@@ -625,7 +627,7 @@ US_LammAstfvm::~US_LammAstfvm()
 }
 
 // primary method to calculate solutions for all species
-void US_LammAstfvm::calculate( US_DataIO2::RawData& sim_data )
+int US_LammAstfvm::calculate( US_DataIO2::RawData& sim_data )
 {
    auc_data = &sim_data;
 
@@ -645,17 +647,22 @@ void US_LammAstfvm::calculate( US_DataIO2::RawData& sim_data )
    // update concentrations for each model component
    for ( int ii = 0; ii < model.components.size(); ii++ )
    {
-      solve_component( ii );
+      int rc = solve_component( ii );
+
+      if ( rc != 0 )
+         return rc;
    }
 
    emit calc_done();
 
    // populate user's data set from calculated simulation
    store_mfem_data( sim_data, af_data );
+
+   return 0;
 }
 
 // get a solution for a component and update concentrations
-void US_LammAstfvm::solve_component( int compx )
+int US_LammAstfvm::solve_component( int compx )
 {
    comp_x  = compx;
 
@@ -696,7 +703,16 @@ void US_LammAstfvm::solve_component( int compx )
 
    emit comp_progress( compx + 1 );
 
-   nonIdealCaseNo();            // set non-ideal case number
+   if ( nonIdealCaseNo() != 0 )            // set non-ideal case number
+   {  // if multiple cases, abort
+      return 1;
+   }
+
+   if ( NonIdealCaseNo == 3 )
+   {  // compressibility:  8-fold smaller delta-t and greater time points
+      dt        /= 8.0;
+      ntc        = (int)( solut_t / dt ) + 1;
+   }
 
 DbgLv(1) << "LAsc:  CX=" << comp_x
  << "  ntcc ntc nts ncs nicase" << ntcc << ntc << nts << ncs << NonIdealCaseNo;
@@ -707,7 +723,7 @@ DbgLv(1) << "LAsc:     b m s w2" << param_b << param_m << param_s << param_w2;
    {  // co-sedimenting
       if ( comp_x == model.coSedSolute )
       {  // if this component is the salt, skip solving for it
-         return;
+         return 0;
       }
 
       else if ( compx > model.coSedSolute )
@@ -723,13 +739,13 @@ DbgLv(1) << "LAsc:     b m s w2" << param_b << param_m << param_s << param_w2;
    Mesh *msh = new Mesh( param_m, param_b, 100, 0 );
 
    msh->InitMesh( param_s, param_D, param_w2 );
+   int mropt = 1;                   // mesh refine option;
 
    // make settings based on non-ideal case type
    if ( NonIdealCaseNo == 1 )                   // concentration-dependent
    {
       SetNonIdealCase_1( model.components[ comp_x ].sigma,
                          model.components[ comp_x ].delta );
-
 DbgLv(1) << "LAsc:   sigma delta" << model.components[comp_x].sigma
  << model.components[comp_x].delta << "  comp_x" << comp_x;
    }
@@ -742,6 +758,9 @@ DbgLv(1) << "LAsc:   sigma delta" << model.components[comp_x].sigma
    else if ( NonIdealCaseNo == 3 )              // compressibility
    {
       SetNonIdealCase_3( model.compressibility );
+
+      mropt          = 0;
+      err_tol        = 1.0e-5;
    }
 
    else
@@ -749,7 +768,7 @@ DbgLv(1) << "LAsc:   sigma delta" << model.components[comp_x].sigma
       NonIdealCaseNo = 0;
    }
 
-   SetMeshRefineOpt(   1   );    // mesh refine option
+   SetMeshRefineOpt( mropt );    // mesh refine option
    SetMeshSpeedFactor( 1.0 );    // mesh speed factor
 
 
@@ -824,7 +843,8 @@ timer.restart();
       {
          u_ttl = IntQs( x0, u0, 0, -1, N0-2, 1 );
 DbgLv(1) << "LAsc:    t=" << t0 << " Nv=" << N0 << "u_ttl=" << u_ttl;
-DbgLv(1) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2];
+DbgLv(1) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
+   << u0[N0u-3] << u0[N0u-2] << u0[N0u-1];
          tso << QString().sprintf( "%12.5e %d %12.5e\n", t0, N0, u_ttl );
          for ( int j=0; j<N0; j++ )
             tso << QString().sprintf( "%10.6e \n", x0[j] );
@@ -841,7 +861,8 @@ ktime2+=timer.restart();
 
       if ( MeshRefineOpt == 1 )
       {
-         msh->RefineMesh( u0, u1p0, 1.0e-4 );
+
+         msh->RefineMesh( u0, u1p0, err_tol );
 ktime3+=timer.restart();
 
          N1    = msh->Nv;
@@ -894,6 +915,9 @@ DbgLv(1) << "LAsc:  c0[0] c0[H] c0[N]"
  << conc0[0] << conc0[ncs/2] << conc0[ncs-1];
 DbgLv(1) << "LAsc:  c1[0] c1[H] c1[N]"
  << conc1[0] << conc1[ncs/2] << conc1[ncs-1];
+         double utt0 = IntQs( x0, u0, 0, -1, N0-2, 1 );
+         double utt1 = IntQs( x1, u1, 0, -1, N1-2, 1 );
+DbgLv(1) << "LAsc:   utt0 utt1" << utt0 << utt1;
 
          double cmax = 0.0;
          double rmax = 0.0;
@@ -954,13 +978,15 @@ DbgLv(1) << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
       for ( int ii = 0; ii < af_data.scan.size(); ii++ )
       {
          double csum = 0.0;
-         double cpre = af_data.scan[ ii ].conc[ 0 ];
+         double pval = af_data.scan[ ii ].conc[ 0 ];
 
          for ( int jj = 1; jj < af_data.scan[ ii ].conc.size(); jj++ )
          {
             double cval = af_data.scan[ ii ].conc[ jj ];
-            csum       += ( ( cval + cpre ) * dltr );
-            cpre        = cval;
+            csum       += ( ( cval + pval ) * dltr );
+            pval        = cval;
+//if ( ii < 19  &&  ( (jj/100)*100 == jj || (jj+5)>nconc ) )
+// DbgLv(3) << "   jj cval dltr csum" << jj << cval << dltr << csum;
          }
 
          DbgLv(2) << "Scan" << ii + 1 << "  Integral" << csum;
@@ -984,6 +1010,7 @@ DbgLv(1) << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
 ktime6+=timer.elapsed();
 DbgLv(1) << "compx" << comp_x << "times 1-6"
  << ktime1 << ktime2 << ktime3 << ktime4 << ktime5 << ktime6;
+   return 0;
 }
 
 void US_LammAstfvm::SetNonIdealCase_1( double sigma_k, double delta_k )
@@ -1002,7 +1029,7 @@ void US_LammAstfvm::SetNonIdealCase_2( )
 
 void US_LammAstfvm::SetNonIdealCase_3( double cmpress )
 {
-   cmprssfac = cmpress;
+   compressib      = cmpress;
 }
 
 void US_LammAstfvm::SetMeshSpeedFactor( double speed )
@@ -1010,7 +1037,7 @@ void US_LammAstfvm::SetMeshSpeedFactor( double speed )
    MeshSpeedFactor = speed;
 }
 
-void US_LammAstfvm::SetMeshRefineOpt(int Opt)
+void US_LammAstfvm::SetMeshRefineOpt( int Opt )
 {
    MeshRefineOpt   = Opt;
 }
@@ -1097,6 +1124,10 @@ timer.start();
 
    AdjustSD( t + dt, Ng, xg1, ug1, Sv, Dv );
 ktim1+=timer.restart();
+DbgLv(2) << "  xg1 0 1 M Nm N" << xg1[0] << xg1[1] << xg1[Ng/2]
+   << xg1[Ng-2] << xg1[Ng-1];
+DbgLv(2) << "  Sv 0 1 M Nm N" << Sv[0] << Sv[1] << Sv[Ng/2]
+   << Sv[Ng-2] << Sv[Ng-1];
 
    // determine xg0=(xls, xrs)
    for ( int j = 0; j < Ng; j++ )
@@ -1110,6 +1141,8 @@ ktim1+=timer.restart();
 
       xt[ j ]    = ( xg1[ j ] - xg0[ j ] ) / dt;
    }
+DbgLv(2) << "  xg0 0 1 M Nm N" << xg0[0] << xg0[1] << xg0[Ng/2]
+   << xg0[Ng-2] << xg0[Ng-1];
 
    // redistribute xgs so that in between [m,b] and in increasing order
    double bl     = param_m;
@@ -1118,7 +1151,7 @@ ktim1+=timer.restart();
    {
       int    cnt  = 1;
 
-      while ( xg0[ j ] < bl) { j++; cnt++; }
+      while ( xg0[ j ] < bl  ) { j++; cnt++; }
 
       double br   = ( xg0[ j ] < param_b ) ? xg0[ j ] : param_b ;
 
@@ -1302,7 +1335,6 @@ ktim8+=timer.restart();
    delete [] MemDouble;
 DbgLv(2) << " Diff_C times 1-8" << ktim1 << ktim2 << ktim3 << ktim4
    << ktim5 << ktim6 << ktim7 << ktim8;
-   return;
 }
 
 
@@ -1421,8 +1453,27 @@ DbgLv(3) << "AdjSD:  times 1 2" << kst1 << kst2;
          break;
 
       case 3:      // compressibility
-//*DEBUG: treat case 3 like case 0 for now
-for (int j=0; j<Nv; j++) { s_adj[j]=param_s; D_adj[j]=param_D; }
+         {
+            double phip  = vbar;     // apparent specific volume
+            double alpha = 1.0;
+            double dens  = model.density;
+            double factn = 0.5 * dens * param_w2 * model.compressibility;
+            double msq   = param_m * param_m;
+            double sA    = 1.0 - vbar * rho_w;
+
+            for ( int jj = 0; jj < Nv; jj++ )
+            {
+               rho          = dens
+                              / ( 1.0 - factn * ( x[ jj ] * x[ jj ] - msq ) );
+               double beta  = ( 1.0 - phip * rho ) / sA;
+               s_adj[ jj ]  = param_s * alpha * beta;
+               D_adj[ jj ]  = param_D * alpha;
+            }
+DbgLv(3) << "AdjSD: compr dens" << model.compressibility << dens;
+DbgLv(3) << "AdjSD:    factn msq sa" << factn << msq << sA;
+DbgLv(3) << "AdjSD:   sadj 0 m n" << s_adj[0] << s_adj[Nv/2] << s_adj[Nv-1];
+DbgLv(3) << "AdjSD:   Dadj 0 m n" << D_adj[0] << D_adj[Nv/2] << D_adj[Nv-1];
+         }
          break;
 
       default:
@@ -1628,10 +1679,12 @@ void US_LammAstfvm::LsSolver53( int m, double **A, double *b, double *x )
 }
 
 // determine the non-ideal case number: 0/1/2/3
-void US_LammAstfvm::nonIdealCaseNo()
+int US_LammAstfvm::nonIdealCaseNo()
 {
+   int rc = 0;
+
    if ( comp_x > 0 )
-      return;
+      return rc;
 
    NonIdealCaseNo  = 0;      // ideal
 
@@ -1642,15 +1695,22 @@ void US_LammAstfvm::nonIdealCaseNo()
       NonIdealCaseNo = 1;
    }
 
-   else if ( model.coSedSolute >= 0 )
+   if ( model.coSedSolute >= 0 )
    {  // co-sedimentation solute index not -1:  co-sedimenting
+      if ( NonIdealCaseNo != 0 )
+         rc          = 2;
+
       NonIdealCaseNo = 2;
    }
 
-   else if ( model.compressibility > 0.0 )
+   if ( model.compressibility > 0.0 )
    {  // compressibility factor positive:       compressibility
+      if ( NonIdealCaseNo != 0 )
+         rc          = 3;
+
       NonIdealCaseNo = 3;
    }
+   return rc;
 }
 
 // perform quadratic interpolation to fill out full concentration vector
