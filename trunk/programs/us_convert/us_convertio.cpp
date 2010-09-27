@@ -172,7 +172,7 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
       q.clear();
       q  << "new_solution" 
          << QString( solution_uuidc )
-         << triple.description
+         << triple.solutionDesc
          << QString::number( triple.storageTemp )
          << triple.notes
          << QString::number( ExpData.expID )
@@ -407,11 +407,11 @@ QString US_ConvertIO::readRawDataFromDB( US_ExpInfo::ExperimentInfo& ExpData,
 
          if ( db.next() )
          {
-            uuidc              = db.value( 0 ).toString();
+            uuidc               = db.value( 0 ).toString();
             uuid_parse( uuidc.toAscii(), (unsigned char*) triple.solutionGUID );
-            triple.description = db.value( 1 ).toString();
-            triple.storageTemp = db.value( 2 ).toInt();
-            triple.notes       = db.value( 3 ).toString();
+            triple.solutionDesc = db.value( 1 ).toString();
+            triple.storageTemp  = db.value( 2 ).toInt();
+            triple.notes        = db.value( 3 ).toString();
 
             q.clear();
             q  << "get_solutionBuffer"
@@ -631,7 +631,7 @@ int US_ConvertIO::writeXmlFile(
             xml.writeAttribute   ( "guid", QString( uuidc ) );
             int st = ( t.storageTemp ) ? 1 : 0;
             xml.writeAttribute   ( "storageTemp", QString::number( st ) );
-            xml.writeTextElement ( "description", t.description );
+            xml.writeTextElement ( "description", t.solutionDesc );
             xml.writeTextElement ( "notes", t.notes );
             xml.writeEndElement  ();
 
@@ -920,7 +920,7 @@ void US_ConvertIO::readSolutionInfo( QXmlStreamReader& xml, US_SolutionGui::Trip
          if ( xml.name() == "description" )
          {
             xml.readNext();
-            triple.description = xml.text().toString();
+            triple.solutionDesc = xml.text().toString();
          }
 
          if ( xml.name() == "notes" )

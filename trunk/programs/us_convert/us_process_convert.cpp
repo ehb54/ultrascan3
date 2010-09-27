@@ -897,6 +897,7 @@ void US_ProcessConvert::setCcwTriples(
       {
          US_SolutionGui::TripleInfo triple;
          triple.tripleDesc = t;
+         triple.tripleID   = triples.size();    // The next number
          triples << triple;
       }
    }
@@ -983,6 +984,7 @@ void US_ProcessConvert::setCcrTriples(
       if ( ! found )
       {
          US_SolutionGui::TripleInfo triple;
+         triple.tripleID   = triples.size();    // The next number
          triple.tripleDesc = t;
          triples << triple;
       }
