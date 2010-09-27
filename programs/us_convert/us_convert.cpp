@@ -129,22 +129,21 @@ US_Convert::US_Convert() : US_Widgets()
                             SLOT  ( getCenterpieceIndex( int ) ) );
    ccw->addWidget( cb_centerpiece, row, 1, 1, 2 );
 
-   pb_applyAll = us_pushbutton( tr( "Apply to All" ), false );
-   connect( pb_applyAll, SIGNAL( clicked() ), SLOT( ccwApplyAll() ) );
-   ccw->addWidget( pb_applyAll, row++, 3 );
+   // External program to enter solution information
+   pb_solution = us_pushbutton( tr( "Manage Solutions" ), false );
+   connect( pb_solution, SIGNAL( clicked() ), SLOT( getSolutionInfo() ) );
+   ccw->addWidget( pb_solution, row++, 3 );
 
-   pb_buffer = us_pushbutton( tr( "Buffer" ), false );
-   connect( pb_buffer, SIGNAL( clicked() ), SLOT( selectBuffer() ) );
-   ccw->addWidget( pb_buffer, row, 1 );
+   QLabel* lb_buffer = us_label( tr( "Buffer:" ) );
+   ccw->addWidget( lb_buffer, row, 1 );
 
    le_bufferInfo = us_lineedit( "", 1 );
    le_bufferInfo ->setPalette ( gray );
    le_bufferInfo ->setReadOnly( true );
    ccw->addWidget( le_bufferInfo, row++, 2, 1, 2 );
 
-   pb_analyte = us_pushbutton( tr( "Analyte" ), false );
-   connect( pb_analyte, SIGNAL( clicked() ), SLOT( selectAnalyte() ) );
-   ccw->addWidget( pb_analyte, row, 1 );
+   QLabel* lb_analyte = us_label( tr( "Analyte:" ) );
+   ccw->addWidget( lb_analyte, row, 1 );
 
    le_analyteInfo = us_lineedit( "", 1 );
    le_analyteInfo ->setPalette ( gray );
@@ -294,9 +293,7 @@ void US_Convert::reset( void )
    pb_intensity  ->setEnabled( false );
    pb_cancelref  ->setEnabled( false );
    pb_dropScan   ->setEnabled( false );
-   pb_buffer     ->setEnabled( false );
-   pb_analyte    ->setEnabled( false );
-   pb_applyAll   ->setEnabled( false );
+   pb_solution   ->setEnabled( false );
    pb_editRuninfo ->setEnabled( false );
    pb_savetoDB    ->setEnabled( false );
 
@@ -463,7 +460,6 @@ void US_Convert::reload( void )
 
       le_bufferInfo ->setText( "" );
       le_analyteInfo->setText( "" );
-      pb_applyAll   ->setEnabled( false );
    
       // Figure out all the triple combinations and convert data
       success = convert();
@@ -505,8 +501,7 @@ void US_Convert::enableControls( void )
       // Ok to enable some buttons now
       pb_savetoHD    ->setEnabled( true );
       pb_details     ->setEnabled( true );
-      pb_buffer      ->setEnabled( true );
-      pb_analyte     ->setEnabled( true );
+      pb_solution    ->setEnabled( true );
       cb_centerpiece ->setEnabled( true );
       pb_editRuninfo ->setEnabled( true );
 
@@ -598,23 +593,6 @@ void US_Convert::enableScanControls( void )
    connect( ct_to  , SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_to     ( double ) ) );
 
-}
-
-void US_Convert::enableCCWControls( void )
-{
-   // The centerpiece combo box
-   cb_centerpiece->setCurrentIndex( triples[ currentTriple ].centerpiece );
-
-   // Let's calculate if we're eligible to copy this triple info to all
-   US_SolutionGui::TripleInfo triple = triples[ currentTriple ];
-   pb_applyAll  -> setEnabled( false );
-   if ( triple.analyteID   > 0 &&
-        triple.bufferID    > 0 )
-   {
-      pb_applyAll ->setEnabled( true );
-      // pb_dropCurrent ->setEnabled( true );
-   }
-   
 }
 
 // Enable the "sync with DB" button, if appropriate
@@ -786,8 +764,8 @@ void US_Convert::loadUS3HD( QString dir )
    // Reset maximum scan control values
    enableScanControls();
 
-   // Reset apply all button
-   enableCCWControls();
+   // The centerpiece combo box
+   cb_centerpiece->setCurrentIndex( triples[ currentTriple ].centerpiece );
 
    // Redo plot
    init_excludes();
@@ -803,8 +781,7 @@ void US_Convert::loadUS3HD( QString dir )
    enableControls();
    pb_savetoHD    ->setEnabled( true );
    pb_details     ->setEnabled( true );
-   pb_buffer      ->setEnabled( true );
-   pb_analyte     ->setEnabled( true );
+   pb_solution    ->setEnabled( true );
    cb_centerpiece ->setEnabled( true );
    pb_editRuninfo ->setEnabled( true );
 
@@ -971,6 +948,48 @@ void US_Convert::cancelExpInfo( void )
    enableControls();
 }
 
+void US_Convert::getSolutionInfo( void )
+{
+   ExpData.runID = le_runID -> text();
+
+   // Copy some info into the triple structure
+   for ( int i = 0; i < allData.size(); i++ )
+      triples[ i ].description = allData[ i ].description;
+
+   US_SolutionGui* solutionInfo = new US_SolutionGui( triples, currentTriple, ExpData.invID );
+
+   connect( solutionInfo, SIGNAL( updateSolutionGuiSelection( QList< US_SolutionGui::TripleInfo >&, int& ) ),
+            this,         SLOT  ( updateSolutionInfo        ( QList< US_SolutionGui::TripleInfo >&, int& ) ) );
+
+   connect( solutionInfo, SIGNAL( cancelSolutionGuiSelection() ),
+            this,         SLOT  ( cancelSolutionInfo        () ) );
+
+   solutionInfo->exec();
+}
+
+// Updating after user has selected info from experiment dialog
+void US_Convert::updateSolutionInfo( QList< US_SolutionGui::TripleInfo >& t, int& current )
+{
+   // Update local copy
+   triples = t;
+
+   // Update current triple
+   currentTriple = current;
+   lw_triple->setCurrentRow( currentTriple );
+
+   le_bufferInfo  ->setText( triples[ currentTriple ].bufferDesc  );
+   le_analyteInfo ->setText( triples[ currentTriple ].analyteDesc );
+
+   plot_current();
+
+   enableControls();
+}
+
+void US_Convert::cancelSolutionInfo( void )
+{
+   enableControls();
+}
+
 void US_Convert::runDetails( void )
 {
    // Create a triples structure for US_RunDetails2
@@ -1002,15 +1021,14 @@ void US_Convert::changeTriple( QListWidgetItem* )
    
    le_dir         -> setText( currentDir );
    le_description -> setText( allData[ currentTriple ].description );
-   
    le_bufferInfo  -> setText( triples[ currentTriple ].bufferDesc  );
    le_analyteInfo -> setText( triples[ currentTriple ].analyteDesc );
    
    // Reset maximum scan control values
    enableScanControls();
    
-   // Reset apply all button
-   enableCCWControls();
+   // The centerpiece combo box
+   cb_centerpiece->setCurrentIndex( triples[ currentTriple ].centerpiece );
    
    // Redo plot
    plot_current();
@@ -1036,125 +1054,6 @@ void US_Convert::setTripleInfo( void )
 void US_Convert::getCenterpieceIndex( int ndx )
 {
    triples[ currentTriple ].centerpiece = ndx;
-}
-
-void US_Convert::ccwApplyAll( void )
-{
-   US_SolutionGui::TripleInfo triple = triples[ currentTriple ];
-
-   // Copy selected fields only
-   for ( int i = 0; i < triples.size(); i++ )
-   {
-      if ( triples[ i ].excluded ) continue;
-
-      triples[ i ].centerpiece = triple.centerpiece;
-      triples[ i ].bufferID    = triple.bufferID;
-      triples[ i ].bufferGUID  = triple.bufferGUID;
-      triples[ i ].bufferDesc  = triple.bufferDesc;
-      triples[ i ].analyteID   = triple.analyteID;
-      triples[ i ].analyteGUID = triple.analyteGUID;
-      triples[ i ].analyteDesc = triple.analyteDesc;
-   }
-
-   enableControls();
-   enableSyncDB();
-}
-
-// Create a dialog to request a buffer selection
-void US_Convert::selectBuffer( void )
-{
-   US_BufferGui* buffer_dialog = new US_BufferGui( ExpData.invID, true );         // Ask for a signal
-
-   connect( buffer_dialog, SIGNAL( valueBufferID ( const QString& ) ),
-            this,          SLOT  ( assignBuffer  ( const QString& ) ) );
-
-   buffer_dialog->exec();
-}
-
-// Get information about selected buffer
-void US_Convert::assignBuffer( const QString& bufferID )
-{
-   triples[ currentTriple ].bufferID = bufferID.toInt();
-
-   // Now get the corresponding description 
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      db_error( db.lastError() );
-      return;
-   }
-
-   QStringList q( "get_buffer_info" );
-   q << bufferID;
-   db.query( q );
-
-   if ( db.next() )
-   {
-      triples[ currentTriple ].bufferGUID = db.value( 0 ).toString();
-      triples[ currentTriple ].bufferDesc = db.value( 1 ).toString();
-      le_bufferInfo -> setText( db.value( 1 ).toString() );
-   }
-
-   enableControls();
-   enableSyncDB();
-   enableCCWControls();
-}
-
-// Create dialog to request an analyte selection
-void US_Convert::selectAnalyte( void )
-{
-   US_AnalyteGui* analyte_dialog = new US_AnalyteGui( ExpData.invID, true ); 
-
-   connect( analyte_dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
-            this,           SLOT  ( assignAnalyte ( US_Analyte ) ) );
-
-   analyte_dialog->exec();
-}
-
-// Get information about selected analyte
-void US_Convert::assignAnalyte( US_Analyte data )
-{
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      db_error( db.lastError() );
-      return;
-   }
-
-   // Get analyteID
-   QStringList q( "get_analyteID" );
-   q << data.analyteGUID;
-
-   db.query( q );
-   if ( db.lastErrno() != US_DB2::OK ) return;
-
-   db.next();
-   QString analyteID = db.value( 0 ).toString();
-
-   triples[ currentTriple ].analyteID = analyteID.toInt();
-
-   // Now get the corresponding description 
-   q.clear();
-   q << "get_analyte_info";
-   q << analyteID;
-   db.query( q );
-
-   if ( db.next() )
-   {
-      triples[ currentTriple ].analyteGUID = db.value( 0 ).toString();
-      triples[ currentTriple ].analyteDesc = db.value( 4 ).toString();
-      le_analyteInfo -> setText( db.value( 4 ).toString() );
-   }
-
-   enableControls();
-   enableSyncDB();
-   enableCCWControls();
 }
 
 void US_Convert::focus_from( double scan )
@@ -1541,8 +1440,8 @@ void US_Convert::drop_reference( void )
    // Reset maximum scan control values
    enableScanControls();
 
-   // Reset apply all button
-   enableCCWControls();
+   // The centerpiece combo box
+   cb_centerpiece->setCurrentIndex( triples[ currentTriple ].centerpiece );
 
    // Redo plot
    plot_current();

@@ -97,9 +97,7 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_loadUS3HD;
       QPushButton*  pb_loadUS3DB;
       QPushButton*  pb_details;
-      QPushButton*  pb_applyAll;
-      QPushButton*  pb_buffer;
-      QPushButton*  pb_analyte;
+      QPushButton*  pb_solution;
       QPushButton*  pb_exclude;
       QPushButton*  pb_include;
       QPushButton*  pb_define;
@@ -143,7 +141,6 @@ class US_EXTERN US_Convert : public US_Widgets
       void reset           ( void );
       void enableRunIDControl( bool );
       void enableScanControls( void );
-      void enableCCWControls ( void );
       void enableSyncDB    ( void );
       void getExpInfo      ( void );
       void setTripleInfo   ( void );
@@ -178,14 +175,12 @@ class US_EXTERN US_Convert : public US_Widgets
       void loadUS3DB       ( void );
       void updateExpInfo   ( US_ExpInfo::ExperimentInfo& );
       void cancelExpInfo   ( void );
+      void getSolutionInfo ( void );
+      void updateSolutionInfo( QList< US_SolutionGui::TripleInfo >&, int& );
+      void cancelSolutionInfo( void );
       void runDetails      ( void );
       void changeTriple    ( QListWidgetItem* );
       void getCenterpieceIndex( int );
-      void ccwApplyAll     ( void );
-      void assignBuffer    ( const QString&  );
-      void selectBuffer    ( void );
-      void assignAnalyte   ( US_Analyte  );
-      void selectAnalyte   ( void );
       void focus_from      ( double );
       void focus_to        ( double );
       void exclude_scans   ( void );
