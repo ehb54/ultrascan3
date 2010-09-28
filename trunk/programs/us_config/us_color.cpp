@@ -1237,7 +1237,8 @@ void US_Color:: selMargin( int index )
 
 void US_Color::apply( void )
 {
-  US_GuiSettings::set_plotMargin  ( current.plotMargin );
+  US_GuiSettings::set_guiStyle    ( current.guiStyle      );
+  US_GuiSettings::set_plotMargin  ( current.plotMargin    );
 
   US_GuiSettings::set_plotCurve   ( current.plotCurve     );
   US_GuiSettings::set_plotCanvasBG( current.plotBg        );
