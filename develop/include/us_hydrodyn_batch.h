@@ -133,6 +133,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       bool          disable_updates;
       QFont ft;
 
+      bool          any_pdb_in_list;
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif

@@ -1567,6 +1567,11 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
       return false;
    }
 
+   if ( is_dammin_dammif(filename) )
+   {
+      return screen_bead_model(filename);
+   }
+
    options_log = "";
    last_abb_msgs = "";
    bead_model_from_file = false;
@@ -1794,7 +1799,7 @@ void US_Hydrodyn::load_bead_model()
 
                                                    ,"Bead models (*.bead_model *.BEAD_MODEL);;"
                                                    "BEAMS (*.beams *.BEAMS);;"
-                                                   "DAMMIN/DAMMIF (*.pdb)"
+                                                   "DAMMIN/DAMMIF/DAMAVER (*.pdb)"
 
                                                    , this
                                                    , "open file dialog"

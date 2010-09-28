@@ -133,6 +133,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      bool is_dammin_dammif(QString filename);
 
    private:
       bool residue_widget;
@@ -412,7 +413,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QString last_spt_text;
 
-      // needed 
+      map < QString, float > dammix_remember_psv;
+      map < QString, float > dammix_remember_mw;
+
+      map < QString, float > dammix_match_remember_psv;
+      map < QString, float > dammix_match_remember_mw;
+      map < QString, bool >  dammix_match_remember_write_bead_model;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )

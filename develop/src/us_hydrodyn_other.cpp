@@ -878,6 +878,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          else
          {
             editor->append("Error in line 1!\n");
+            f.close();
             return 1;
          }
          if (!ts.atEnd()) {
@@ -886,6 +887,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          else
          {
             editor->append("Error in line 1!\n");
+            f.close();
             return 1;
          }
          QString rmcfile;
@@ -895,6 +897,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          else
          {
             editor->append("Error in line 1!\n");
+            f.close();
             return 1;
          }
          if (results.vbar == -2)
@@ -905,6 +908,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
             else
             {
                editor->append("Error in line 1!\n");
+               f.close();
                return 1;
             }
          }
@@ -925,6 +929,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
                   else
                   {
                      editor->append(QString("\nError in line %1!\n").arg(linepos));
+                     f.close();
+                     frmc.close();
                      return linepos;
                   }
                }
@@ -934,6 +940,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
                else
                {
                   editor->append(QString("\nError in line %1!\n").arg(linepos));
+                  f.close();
+                  frmc.close();
                   return linepos;
                }
                if (!tsrmc.atEnd()) {
@@ -943,6 +951,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
                else
                {
                   editor->append(QString("\nError in line %1!\n").arg(linepos));
+                  f.close();
+                  frmc.close();
                   return linepos;
                }
                if (!tsrmc.atEnd()) {
@@ -951,6 +961,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
                else
                {
                   editor->append(QString("\nError in line %1!\n").arg(linepos));
+                  f.close();
+                  frmc.close();
                   return linepos;
                }
                tmp_atom.serial = linepos;
@@ -997,28 +1009,85 @@ int US_Hydrodyn::read_bead_model(QString filename)
    }
 
    
-   if (ftype == "pdb") // DAMMIN;DAMMIF
+   if (ftype == "pdb") // DAMMIN;DAMMIF;DAMAVER
    {
       if (f.open(IO_ReadOnly))
       {
-         QTextStream ts(&f);
-
-         QString tmp;
-         do {
-            tmp = ts.readLine();
-            ++linepos;
-         } while ( !ts.atEnd() && 
-                   !tmp.contains("Dummy atoms in output phase") &&
-                   !tmp.contains("Number of particle atoms") );
-         if ( ts.atEnd() )
+         QStringList qsl;
          {
-            editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'Dummy atoms in output phase' or 'Number of particle atoms'\n");
+            QTextStream ts(&f);
+            do {
+               qsl << ts.readLine();
+            } while (!ts.atEnd());
+         }
+         f.close();
+         if ( !f.open(IO_ReadOnly) )
+         {
+            editor->append("File read error\n");
+            return -2;
+         }
+         
+         // make sure it is a valid file
+
+         bool damaver = (qsl.grep("Number of atoms written").count() > 0);
+         bool dammin = (qsl.grep("Number of particle atoms").count() > 0);
+         bool dammif = (qsl.grep("Dummy atoms in output phase").count() > 0);
+
+         if ( !damaver &&
+              !dammin &&
+              !dammif )
+         {
+            editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'Dummy atoms in output phase' or 'Number of particle atoms' of 'Number of atoms written'\n");
+            f.close();
             return 1;
          }
-         bool dammin = tmp.contains("Number of particle atoms");
 
-         float radius;
+         // find last atom number
          QRegExp rx;
+
+         QStringList qsl_atom = qsl.grep(QRegExp("^ATOM "));
+         QString last_atom = "";
+         if ( !qsl_atom.empty() )
+         {
+            last_atom = *qsl_atom.at(qsl_atom.count() - 1);
+         } else {
+            editor->append("No ATOM lines found in DAMMIN/DAMMIF/DAMAVER file\n");
+            f.close();
+            return 1;
+         }
+
+         rx.setPattern("^ATOM\\s*(\\d+)\\s*CA");
+         if ( rx.search(last_atom) ) 
+         {
+            editor->append("Couldn't find a last atom number in the DAMMIN/DAMMIF/DAMAVER file\n");
+            f.close();
+            return 1;
+         }
+         
+         // determine and compare bead count
+         int tmp_bead_count = rx.cap(1).toInt();
+         printf("read bead count %d\n", tmp_bead_count);
+
+         // count atom lines
+         int atom_line_count = qsl.grep(QRegExp("^ATOM ")).count();
+         printf("atom line count %d\n", atom_line_count);
+
+         bead_count = atom_line_count;
+
+         QTextStream ts(&f);
+         QString tmp;
+         if ( dammin || dammif )
+         {
+            do {
+               tmp = ts.readLine();
+               ++linepos;
+            } while ( !ts.atEnd() && 
+                      !tmp.contains("Dummy atoms in output phase") &&
+                      !tmp.contains("Number of particle atoms")
+                      );
+         }
+
+         float radius = 0.0;
 
          if ( dammin ) 
          {
@@ -1026,11 +1095,12 @@ int US_Hydrodyn::read_bead_model(QString filename)
             rx.setPattern( "Number of particle atoms \\.*\\s*:\\s*(\\d+)\\s*" );
             if ( rx.search(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIN/DAMMIF file: couldn't find number of atoms in 'Number of particle atoms' line\n");
+               editor->append("Error in DAMMIN file: couldn't find number of atoms in 'Number of particle atoms' line\n");
+               f.close();
                return 1;
             }
             bead_count = rx.cap(1).toInt();
-            // editor->append(QString("DAMMIN/DAMMIF model has %1 beads\n").arg(bead_count));
+            // editor->append(QString("DAMMIN model has %1 beads\n").arg(bead_count));
             
             do {
                tmp = ts.readLine();
@@ -1040,7 +1110,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
             
             if ( ts.atEnd() )
             {
-               editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'DAM packing radius'\n");
+               editor->append("Error in DAMMIN file: couldn't find 'DAM packing radius'\n");
+               f.close();
                return 1;
             }
             
@@ -1048,20 +1119,24 @@ int US_Hydrodyn::read_bead_model(QString filename)
             
             if ( rx.search(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIN/DAMMIF file: couldn't find radius in 'Dummy atom radius' line\n");
+               editor->append("Error in DAMMIN file: couldn't find radius in 'Dummy atom radius' line\n");
+               f.close();
                return 1;
             }
             radius = rx.cap(1).toFloat();
-         } else {
+         } 
+
+         if ( dammif ) {
             puts("dammif");
             rx.setPattern( "Dummy atoms in output phase\\s*:\\s*(\\d+)\\s*" );
             if ( rx.search(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIN/DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
+               editor->append("Error in DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
+               f.close();
                return 1;
             }
             bead_count = rx.cap(1).toInt();
-            // editor->append(QString("DAMMIN/DAMMIF model has %1 beads\n").arg(bead_count));
+            // editor->append(QString("DAMMIF model has %1 beads\n").arg(bead_count));
             
             do {
                tmp = ts.readLine();
@@ -1071,7 +1146,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
             
             if ( ts.atEnd() )
             {
-               editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'Dummy atom radius'\n");
+               editor->append("Error in DAMMIF file: couldn't find 'Dummy atom radius'\n");
+               f.close();
                return 1;
             }
             
@@ -1079,32 +1155,112 @@ int US_Hydrodyn::read_bead_model(QString filename)
             
             if ( rx.search(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIN/DAMMIF file: couldn't find radius in 'Dummy atom radius' line\n");
+               editor->append("Error in DAMMIF file: couldn't find radius in 'Dummy atom radius' line\n");
+               f.close();
                return 1;
             }
             radius = rx.cap(1).toFloat();
          }
-         editor->append(QString("DAMMIN/DAMMIF model atom radius %1\n").arg(radius));
+
+         if ( damaver ) {
+            puts("damaver");
+            
+            do {
+               tmp = ts.readLine();
+               ++linepos;
+            } while ( !ts.atEnd() && 
+                      !tmp.contains("DAM packing radius") );
+               
+            if ( ts.atEnd() )
+            {
+               editor->append("Error in DAMAVER file: couldn't find 'DAM packing radius'\n");
+               return 1;
+            }
+            
+            rx.setPattern("DAM packing radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
+            
+            if ( rx.search(tmp) == -1 ) 
+            {
+               editor->append("Error in DAMAVER file: couldn't find radius in 'DAM packing radius' line\n");
+               return 1;
+            }
+            radius = rx.cap(1).toFloat();
+         }
+
+         editor->append(QString("DAMMIN/DAMMIF/DAMAVER model atom radius %1\n").arg(radius));
          
          // enter MW and PSV
          float mw = 0.0;
          float psv = 0.0;
          bool do_write_bead_model = true;
+         bool remember = true;
+         bool use_partial = false;
+         QString partial = filename;
          // QString msg = QString(tr("\n  DAMMIN/DAMMIF file %1  \n  Enter values for vbar and total molecular weight:  \n"))
          // .arg(filename);
          QString msg = QString(tr(" Enter values for vbar and total molecular weight: "));
 
-         US_Hydrodyn_Dammin_Opts *hdo = new US_Hydrodyn_Dammin_Opts(
-                                                                    msg,
-                                                                    &psv,
-                                                                    &mw,
-                                                                    &do_write_bead_model
-                                                                    );
-         do {
-            hdo->exec();
-         } while ( mw <= 0.0 || psv <= 0.0 );
+         bool found = false;
+         if ( dammix_remember_psv.count(filename) )
+         {
+            psv = dammix_remember_psv[filename];
+            mw = dammix_remember_mw[filename];
+            found = true;
+            do_write_bead_model = false; // we should have already created it if we wanted the first time
+         } else {
+            if ( !dammix_match_remember_psv.empty() )
+            {
+               puts("dammix_match_remember not empty");
+               for (map < QString, float >::iterator it = dammix_match_remember_psv.begin();
+                    it != dammix_remember_psv.end();
+                    it++)
+               {
+                  printf("iterator first %s\n", it->first.ascii());
+                  printf("iterator second %f\n", it->second);
 
-         delete hdo;
+                  if ( filename.contains(it->first) )
+                  {
+                     psv = dammix_match_remember_psv[it->first];
+                     mw = dammix_match_remember_mw[it->first];
+                     do_write_bead_model = dammix_match_remember_write_bead_model[it->first];
+                     found = true;
+                     break;
+                  }
+               }
+            }
+         }
+
+         if ( found ) 
+         {
+            editor->append(QString("Recalled: psv %1, mw %2\n").arg(psv).arg(mw));
+         } else {
+            US_Hydrodyn_Dammin_Opts *hdo = new US_Hydrodyn_Dammin_Opts(
+                                                                       msg,
+                                                                       &psv,
+                                                                       &mw,
+                                                                       &do_write_bead_model,
+                                                                       &remember,
+                                                                       &use_partial,
+                                                                       &partial
+                                                                       );
+            do {
+               hdo->exec();
+            } while ( mw <= 0.0 || psv <= 0.0 );
+            
+            delete hdo;
+            
+            if ( remember ) 
+            {
+               dammix_remember_psv[filename] = psv;
+               dammix_remember_mw[filename] = mw;
+            }
+            if ( use_partial ) 
+            {
+               dammix_match_remember_psv[partial] = psv;
+               dammix_match_remember_mw[partial] = mw;
+               dammix_match_remember_write_bead_model[partial] = do_write_bead_model;
+            }
+         }
 
          results.vbar = psv;
          mw /= bead_count;
@@ -1208,7 +1364,19 @@ int US_Hydrodyn::read_bead_model(QString filename)
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;
-         bead_model_suffix = dammin ? "dammin" : "dammif";
+         if ( dammin )
+         {
+            bead_model_suffix = "dammin";
+         }
+         if ( dammif )
+         {
+            bead_model_suffix = "dammif";
+         }
+         if ( damaver )
+         {
+            bead_model_suffix = "damaver";
+         }
+
          le_bead_model_suffix->setText(bead_model_suffix);
          if ( do_write_bead_model ) 
          {
@@ -4769,4 +4937,48 @@ bool US_Hydrodyn::check_bead_model_for_nan()
       }
    }
    return issues;
+}
+
+bool US_Hydrodyn::is_dammin_dammif(QString filename)
+{
+   if ( !filename.isEmpty() )
+   {
+      QFileInfo fi(filename);
+      QString dir = fi.dirPath();
+      // check for file format
+      QFile f( filename );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         return false;
+      }
+      QTextStream ts( &f );
+
+      QString tmp;
+      do {
+         tmp = ts.readLine();
+      } while ( !ts.atEnd() && 
+                !tmp.contains("Dummy atoms in output phase") &&
+                !tmp.contains("Number of particle atoms") &&
+                !tmp.contains("Number of atoms written")
+                );
+
+      if ( ts.atEnd() )
+      {
+         f.close();
+         return false;
+      }
+      
+      while ( !ts.atEnd() )
+      {
+         tmp = ts.readLine();
+         if ( tmp.contains(QRegExp("^ATOM ")) &&
+              !tmp.contains("CA  ASP ") ) {
+            f.close();
+            return false;
+         }
+      }
+      f.close();
+      return true;
+   }
+   return false;
 }

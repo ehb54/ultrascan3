@@ -24,6 +24,9 @@ class US_EXTERN US_Hydrodyn_Dammin_Opts : public QDialog
                               float *psv,
                               float *mw,
                               bool *write_bead_model,
+                              bool *remember,
+                              bool *use_partial,
+                              QString *partial,
                               QWidget *p = 0, 
                               const char *name = 0
                               );
@@ -37,8 +40,11 @@ class US_EXTERN US_Hydrodyn_Dammin_Opts : public QDialog
 
       QLineEdit *le_psv;
       QLineEdit *le_mw;
+      QLineEdit *le_partial;
 
       QCheckBox *cb_write_bead_model;
+      QCheckBox *cb_remember;
+      QCheckBox *cb_use_partial;
 
       QPushButton *pb_cancel;
       QPushButton *pb_help;
@@ -51,6 +57,9 @@ class US_EXTERN US_Hydrodyn_Dammin_Opts : public QDialog
       float *psv;
       float *mw;
       bool *write_bead_model;
+      bool *remember;
+      bool *use_partial;
+      QString *partial;
 
    public slots:
 
@@ -58,8 +67,11 @@ class US_EXTERN US_Hydrodyn_Dammin_Opts : public QDialog
 
       void update_psv(const QString &);
       void update_mw(const QString &);
+      void update_partial(const QString &);
 
       void set_write_bead_model();
+      void set_remember();
+      void set_use_partial();
 
       void cancel();
       void help();

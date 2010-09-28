@@ -54,6 +54,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    batch->mm_first = true;
    batch->mm_all = false;
    disable_updates = false;
+   any_pdb_in_list = false;
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -730,7 +731,7 @@ void US_Hydrodyn_Batch::update_enables()
       return;
    }
    int count_selected = 0;
-   bool any_pdb_in_list = false;
+   any_pdb_in_list = false;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected(i) )
@@ -796,14 +797,17 @@ void US_Hydrodyn_Batch::save_us_hydrodyn_settings()
    save_pdb_parse = ((US_Hydrodyn *)us_hydrodyn)->pdb_parse;
    save_pb_rule_on = ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on;
    save_calcAutoHydro = ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro;
-   if ( bg_atoms->isEnabled() )
+   if ( any_pdb_in_list )
    {
+      puts("bg atoms is enabled");
       ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues = batch->missing_residues;
       ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms = batch->missing_atoms;
       if ( batch->missing_residues || batch->missing_atoms )
       {
          ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = false;
       }      
+   } else {
+      puts("bg atoms is NOT enabled");
    }
    ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro = false;
 }
@@ -850,6 +854,7 @@ void US_Hydrodyn_Batch::screen()
          qApp->processEvents();
          if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
          {
+            
             result = screen_pdb(file);
          } else {
             result = screen_bead_model(file);
@@ -1107,7 +1112,8 @@ void US_Hydrodyn_Batch::start()
                }
                return;
             }
-            if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
+            if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
+                 !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) ) 
             {
                save_us_hydrodyn_settings();
                if ( batch->mm_all ) 
