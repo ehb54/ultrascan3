@@ -163,7 +163,7 @@ class US_EXTERN US_Model
       {
          public:
          Association();
-         double k_eq;  //!< Equiibrium Constant
+         double k_eq;  //!< Equilibrium Constant
          double k_off; //!< Dissociation Constant 
       
          //! A list of all system components involved in this reaction

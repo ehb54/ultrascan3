@@ -231,12 +231,6 @@ void US_ModelGui::show_model_desc( void )
    }
 
    lw_models->sortItems();
-
-   // resize so vertical scroll bar works
-   int lheight = lw_models->height();
-   int height  = this->height() + ( lheight / 5 );
-   int width   = this->width();
-   resize( width, height );
 }
 
 bool US_ModelGui::ignore_changes( void )
@@ -420,7 +414,8 @@ void US_ModelGui::check_db( void )
       investigator = US_Settings::us_inv_ID();
 
       if ( investigator > 0 )
-         le_investigator->setText( US_Settings::us_inv_name() );
+         le_investigator->setText( QString::number( investigator ) + ": "
+               + US_Settings::us_inv_name() );
    }
 }
 
@@ -788,11 +783,30 @@ void US_ModelGui::list_models( void )
          model_descriptions << md;
       }
    }
+ 
+   int olhgt  = lw_models->height();  // old list dimensions before any change
+   int olwid  = lw_models->width();
 
-   show_model_desc();
-  
-   if ( model_descriptions.size() == 0 )
+   show_model_desc();                 // re-do list of model descriptions
+ 
+   int nlines = model_descriptions.size();
+
+   if ( nlines == 0 )
       lw_models->addItem( "No models found." );
+
+   else
+   {  // resize to show reasonable portion of list
+      nlines     = nlines > 13 ? 13 : nlines;        // show at most 13 lines,
+      nlines     = nlines <  5 ?  5 : nlines;        //   and no less than 5
+      QFontMetrics fm = lw_models->fontMetrics();    // list font metrics
+      int height = nlines * fm.lineSpacing();        // list height needed
+      int width  = fm.maxWidth() * 20;               // list width needed
+      height     = height > olhgt ? height : olhgt;  // max of old,new height
+      width      = width  > olwid ? width  : olwid;  // max of old,new width
+      height     = this->height() + height - olhgt;  // bump by difference in
+      width      = this->width()  + width  - olwid;  //   old,new list size for
+      resize( width, height );                       //   new total dialog size
+   }
 }
 
 int US_ModelGui::modelIndex( QString mdesc, QList< ModelDesc > mds )

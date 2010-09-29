@@ -482,9 +482,20 @@ int US_Model::load( const QString& filename )
             sc.analyte_type         = a.value( "type"   ).toString().toInt();
 
             mfem_scans( xml, sc );
+
             read_next = false; // Skip the next read
 
             components << sc;
+         }
+
+         else if ( xml.name() == "association" )
+         {
+            Association as;
+            get_associations( xml, as );
+
+            associations << as;
+
+            read_next = false; // Skip the next read
          }
       }
    }
