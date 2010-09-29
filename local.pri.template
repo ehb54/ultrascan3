@@ -9,6 +9,14 @@ unix {
   #QMAKE_CXXFLAGS_DEBUG += -pg
   #QMAKE_LFLAGS_DEBUG += -pg
 
+  #If you want your compiles to do a globus run on bcf, uncomment the following lines:
+  # Be sure to add the environment variable MAKEFLAGS=-j44
+  #QMAKE_CXX  = distcc g++
+  #QMAKE_CC   = distcc g++
+  #QMAKE_MOC  = distcc $(QTDIR)/bin/moc
+  #QMAKE_UIC  = distcc $(QTDIR)/bin/uic
+  #QMAKE_LINK = distcc g++
+
   QWTPATH     = /usr/local/qwt-5.1.1
   QCAPATH     = /usr/local
   SINGLEDIR   = /opt/qt/addons/qtsingleapplication-2.5_1-commercial/src/
