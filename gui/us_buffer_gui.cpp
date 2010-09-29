@@ -212,8 +212,9 @@ US_BufferGui::US_BufferGui(
 
    le_description = us_lineedit();
    main->addWidget( le_description, row++, 1, 1, 2 );
-   connect( le_description, SIGNAL( editingFinished() ),
+   connect( le_description, SIGNAL( returnPressed() ),
                             SLOT( new_description() ) );
+   le_description->setEnabled( false );
 
    le_guid = us_lineedit();
    le_guid->setReadOnly( true );
@@ -295,7 +296,8 @@ void US_BufferGui::check_db( void )
       personID = US_Settings::us_inv_ID();
 
       if ( personID > 0 )
-         le_investigator->setText( US_Settings::us_inv_name() );
+         le_investigator->setText( QString::number( personID ) + ": "
+             + US_Settings::us_inv_name() );
    }
 }
 
@@ -447,7 +449,7 @@ void US_BufferGui::assign_investigator( int invID,
 {
    personID        = invID;
    buffer.personID = invID;
-   le_investigator->setText( "InvID (" + QString::number( invID ) + "): " +
+   le_investigator->setText( QString::number( invID ) + ": " +
          lname + ", " + fname );
 }
 
@@ -478,6 +480,8 @@ void US_BufferGui::query( void )
 {
    if ( rb_disk->isChecked() ) read_buffer();
    else                        read_db(); 
+
+   le_description->setEnabled( true );
 }
 
 //! Load buffer data from Hard Drive
@@ -488,6 +492,8 @@ void US_BufferGui::read_buffer( void )
 
    filenames   .clear();
    descriptions.clear();
+   GUIDs       .clear();
+   bufferIDs   .clear();
    le_search->  clear();
    le_search->setPalette( gray );
    le_search->setReadOnly( true );
@@ -550,6 +556,7 @@ void US_BufferGui::read_db( void )
 
    bufferIDs   .clear();
    descriptions.clear();
+   GUIDs       .clear();
    le_search->  clear();
    le_search->setPalette( gray );
    le_search->setReadOnly( true );
@@ -594,24 +601,37 @@ void US_BufferGui::read_db( void )
 
 void US_BufferGui::search( const QString& text )
 {
+   QString     sep = ";";
+   QStringList sortdesc;
    lw_buffer_db  ->clear();
    buffer_metadata.clear();
+   sortdesc       .clear();
 
-   for ( int i = 0; i < descriptions.size(); i++ )
-   {
-      if ( descriptions[ i ].contains( 
-               QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) ) )
+   for ( int ii = 0; ii < descriptions.size(); ii++ )
+   {  // get list of filtered-description + index strings
+      if ( descriptions[ ii ].contains(
+              QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) ) )
       {
-         BufferInfo info;
-         info.index       = i;
-         info.description = descriptions[ i ];
-         info.guid        = GUIDs       [ i ];
-         info.bufferID    = bufferIDs   [ i ];
-        
-         buffer_metadata << info;
-
-         lw_buffer_db->addItem( info.description );
+         sortdesc << descriptions[ ii ] + sep + QString::number( ii );
       }
+   }
+
+   // sort the descriptions
+   sortdesc.sort();
+
+   for ( int jj = 0; jj < sortdesc.size(); jj++ )
+   {  // build list of sorted meta data and ListWidget entries
+      int ii     = sortdesc[ jj ].section( sep, 1, 1 ).toInt();
+
+      BufferInfo info;
+      info.index       = ii;
+      info.description = descriptions[ ii ];
+      info.guid        = GUIDs       [ ii ];
+      info.bufferID    = bufferIDs   [ ii ];
+
+      buffer_metadata << info;
+
+      lw_buffer_db->addItem( info.description );
    }
 }
 
@@ -749,9 +769,9 @@ void US_BufferGui::read_from_db( const QString& bufferID )
 
    QString fname = db.value( 0 ).toString();
    QString lname = db.value( 1 ).toString();
-   buffer.person =  fname + " " + lname;
+   buffer.person =  lname + ", " + fname;
 
-   le_investigator->setText( "InvID (" + personID + ") " + buffer.person );
+   le_investigator->setText( personID + ": " + buffer.person );
 
    // Get spectrum data
    buffer.getSpectrum( db, "Refraction" );
@@ -1147,9 +1167,9 @@ void US_BufferGui::update_db( void )
    }
 }
 
-/*!  Input the value of component  selected in lw_ingredients.  After 'Return'
- *   key was pressed, this function will dispaly the selected component value in
- *   lw_buffer and recalculate the density and viscosity.  */
+/*!  Input the value of component selected in lw_ingredients. After 'Return'
+ *   key was pressed, this function will display the selected component value
+ *   in lw_buffer and recalculate the density and viscosity.  */
 void US_BufferGui::add_component( void )
 {
    // We are modifying the buffer, nothing should be selected in the DB list
@@ -1400,15 +1420,16 @@ void US_BufferGui::recalc_viscosity( void )
    }
 }
 
+// slot to handle an entered buffer description
 void US_BufferGui::new_description()
 {
    buffer.description = le_description->text();
 
    int row = -1;
 
-   for ( int ii = 0; ii < lw_buffer_db->count(); ii++ )
+   for ( int ii = 0; ii < descriptions.size(); ii++ )
    {
-      if ( buffer.description == lw_buffer_db->item( ii )->text() )
+      if ( buffer.description == descriptions.at( ii ) )
       {
          row   = ii;
          break;
@@ -1419,13 +1440,66 @@ void US_BufferGui::new_description()
    pb_save  ->setEnabled( row < 0  );
 
    if ( row < 0 )
-   {
+   {  // no match to description:  clear GUID, de-select any list item
       le_guid->clear();
+      lw_buffer_db->setCurrentRow( -1 );
    }
 
    else
-   {
-      buffer.GUID   = buffer_metadata[ row ].guid;
+   {  // matching description:  get GUID, but ask user if new or update
+      buffer.GUID   = GUIDs[ row ];
+
+      if ( buffer.GUID.isEmpty()  &&  rb_db->isChecked() )
+      {  // if no GUID yet and from DB, read GUID
+         QString bufferID = bufferIDs[ row ];
+         US_Passwd pw;
+         US_DB2    db( pw.getPasswd() );
+   
+         if ( db.lastErrno() != US_DB2::OK )
+            connect_error( db.lastError() );
+   
+         QStringList q( "get_buffer_info" );
+         q << bufferID;
+      
+         db.query( q );
+         db.next(); 
+   
+         buffer.bufferID        = bufferID;
+         buffer.GUID            = db.value( 0 ).toString();
+      }
+
+      int response = QMessageBox::question( this,
+         tr( "Update Buffer?" ),
+         tr( "The buffer description is already used.\n"
+             "Do you wish to replace that buffer?\n\n"
+             "Click \"No\" to create a new buffer;\n"
+             "Click \"Yes\" to update the existing buffer.\n" ),
+         QMessageBox::Yes, QMessageBox::No );
+
+      row           = -1;
+
+      if ( response == QMessageBox::No )
+      {  // new description (even if duplicate)
+         buffer.GUID.clear();
+         pb_update->setEnabled( false );
+         pb_save  ->setEnabled( true  );
+      }
+
+      else
+      {  // find description in list if possible
+         for ( int ii = 0; ii < lw_buffer_db->count(); ii++ )
+         {
+            if ( buffer.description == lw_buffer_db->item( ii )->text() )
+            {
+               row   = ii;
+   
+               break;
+            }
+         }
+      }
+
+      // select any match in list; set existing GUID
+      lw_buffer_db->setCurrentRow( row );
       le_guid->setText( buffer.GUID );
    }
 }
