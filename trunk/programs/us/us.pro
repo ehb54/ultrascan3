@@ -7,7 +7,7 @@ TRANSLATIONS += $${TARGET}_de_DE.ts
 revision.target           = us_revision.h
 revision.commands         = sh revision.sh
 revision.depends          = FORCE
-QMAKE_EXTRA_UNIX_TARGETS += revision
+unix:QMAKE_EXTRA_TARGETS += revision
 
 HEADERS      += us.h            \
                 us_revision.h
