@@ -1082,6 +1082,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
    job_udp_msg_meniscus = "";
    
    this->gridopt = gridopt;
+   gridrmsd2 = false;
    if ( gridopt == "gridrmsd" )
    {
       gridrmsd = true;
@@ -1089,6 +1090,12 @@ US_fe_nnls_t::init_run(const QString & data_file,
    } else {
       gridrmsd = false;
    }
+   if ( gridopt == "gridrmsd2" )
+   {
+      gridrmsd = true;
+      gridrmsd2 = true;
+      puts("gridrmsd2 run");
+   } 
    this->gridopt = "no";
    maxrss = 0l;
 
@@ -2639,7 +2646,7 @@ void US_fe_nnls_t::match_rmsd(
 
 int US_fe_nnls_t::run(int status)
 {
-   if ( gridrmsd ) 
+   if ( gridrmsd || gridrmsd2 ) 
    {
       // keyed by job_id ???
       // not implemented:
@@ -2654,6 +2661,28 @@ int US_fe_nnls_t::run(int status)
       if ( analysis_type != "2DSA_RA" )
       {
          printf("only 2DSA_RA currently supported\n");
+         MPI_Finalize();
+         exit(0);
+      }        
+
+
+      if ( gridrmsd2 )
+      {
+         double s_1 = solutions[0].component[0].s;
+         double ff0_1 = solutions[0].component[0].k;
+         double s_2 = solutions[0].component[1].s;
+         double ff0_2 = solutions[0].component[1].k;
+         printf(
+                "component 1:     %.4e S, %.4e f/f0\n"
+                "component 2:     %.4e S, %.4e f/f0\n"
+                , s_1, ff0_1
+                , s_2, ff0_2
+                );
+         // build models
+         vector < mfem_data > m1 = build_model(s_1, ff0_1);
+         vector < mfem_data > m2 = build_model(s_2, ff0_2);
+         double rmsd = rmsd2(&m1, &m2);
+         printf("rmsd  %.4e\n", rmsd);
          MPI_Finalize();
          exit(0);
       }        
@@ -2770,6 +2799,8 @@ int US_fe_nnls_t::run(int status)
       map < QString, double > rmsd_sk;
 
       double avg_rmsd = 0e0;
+      double min_rmsd = 1e9;
+      double max_rmsd = 0e0;
 
       for ( unsigned int i = 0; i < s_vec.size(); i++ )
       {
@@ -2831,12 +2862,22 @@ int US_fe_nnls_t::run(int status)
                  rmsd_k[basekey] ) / 2.0;
 
             avg_rmsd += rmsd_sk[basekey];
+            if ( min_rmsd > rmsd_sk[basekey] )
+            {
+               min_rmsd = rmsd_sk[basekey];
+            }
+            if ( max_rmsd < rmsd_sk[basekey] )
+            {
+               max_rmsd = rmsd_sk[basekey];
+            }
          }
       }
 
       avg_rmsd /= s_vec.size() * k_vec.size();
 
       printf("average rmsd is %g\n", avg_rmsd);
+      printf("max rmsd is %g\n", max_rmsd);
+      printf("min rmsd is %g\n", min_rmsd);
 
       QFile fs("s.txt");
       if ( !fs.open(IO_WriteOnly) )
@@ -2942,6 +2983,7 @@ int US_fe_nnls_t::run(int status)
       double k_new;
 
       avg_rmsd *= 1;
+
 
       do 
       {

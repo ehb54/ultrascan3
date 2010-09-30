@@ -106,6 +106,7 @@ class US_EXTERN US_fe_nnls_t
                         );
 
    bool gridrmsd;
+   bool gridrmsd2;
 
    vector < mfem_data > build_model(double s, double k);
 

@@ -239,6 +239,8 @@ int main (int argc, char **argv)
              "dump_solutes   \tinfile outfile\tConvert an solute analysis file to ascii\n"
              "create_solutes \toutfile #_of_grids smin smax sres fmin fmax fres\n"
              "               \t              \tCreate a solute file\n"
+             "create_solutes2 \toutfile s_1 ff0_1 s_2 ff0_2\n"
+             "               \t              \tCreate a solute file with two solutes\n"
              "mwl_info       \tinfile\tlist mwl file info\n"
              "check_limits   \tinfile        \tCheck an experiment analysis file for meniscus issues\n"
              "rmsd2          \tinfile1 infile2\tCompute rmsd between 2 experiment compatible experiment analysis files\n"
@@ -462,6 +464,188 @@ int main (int argc, char **argv)
       f_out.close();
       exit(0);
    }
+   if (cmds[0].lower() == "mwl_info") 
+   {
+      if (cmds.size() != 2) 
+      {
+         printf(
+                "usage: %s %s infile\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(-501);
+      }
+      QFile f_in(cmds[1]);
+      if (!f_in.open(IO_ReadOnly))
+      {
+         fprintf(stderr, "%s: File open error : %s\n", argv[0], argv[2]);
+         exit(-502);
+      }
+      struct channel channel_data;
+      struct cell cell_data;
+
+      QString filter, str1, str2, filename;
+      unsigned int i, j, k, scans, radius_points, wavelengths;
+      QFile f;
+      Q_UINT16 int16;
+      Q_UINT32 int32;
+      Q_INT16 signed_int16;
+      float fval;
+
+      channel_data.data.clear();
+      cell_data.cell_channel.clear();
+      struct time_point timepoint_data;
+      struct radial_scan rscan;
+
+      QDataStream ds(&f_in);
+      ds >> int16;
+      cell_data.cell_number = int16;
+      printf("cell number: %u\n", int16);
+      
+      ds >> int16;
+      cell_data.centerpiece = int16;
+      printf("centerpiece: %u\n", int16);
+      
+      ds >> int16;
+      channel_data.channel_number = int16;
+      printf("channel number: %u\n", int16);
+      
+      ds >> channel_data.contents;
+      ds >> int16;
+      channel_data.measurement_mode = int16;
+      ds >> fval;
+      // min_od = fval;
+      ds >> fval;
+      // max_od = fval;
+      ds >> int32;
+      scans = int32;
+      printf("scans: %u\n", int32);
+      QFile fout(QString("%1.index").arg(argv[2]));
+      fout.open(IO_WriteOnly);
+      QTextStream tsout(&fout);
+      for (i=0; i<scans; i++) {
+         // printf("mwl reading scan %u\n", i);
+         timepoint_data.radius.clear();
+         timepoint_data.scan.clear();
+         ds >> timepoint_data.rotor_speed;
+         ds >> timepoint_data.time;
+         ds >> timepoint_data.omega_2_t;
+         ds >> timepoint_data.temperature;
+         ds >> int32;
+         radius_points = int32;
+         for (j=0; j<radius_points; j++) {
+            ds >> fval;
+            //cout << fval << endl;
+            timepoint_data.radius.push_back(fval);
+         }
+         ds >> int32;
+         wavelengths = int32;
+         for (j=0; j<wavelengths; j++) {
+            ds >> fval;
+            rscan.wavelength = fval;
+            if (!i) {
+               tsout << j << "\t" << fval << endl;
+            }
+            rscan.absorbance.clear();
+            for (k=0; k<radius_points; k++) {
+               ds >> signed_int16;
+               rscan.absorbance.push_back(signed_int16);
+            }
+            timepoint_data.scan.push_back(rscan);
+         }
+         channel_data.data.push_back(timepoint_data);
+      }
+      cell_data.cell_channel.push_back(channel_data);
+      fout.close();
+      f_in.close();
+      exit(0);
+   }
+
+   if (cmds[0].lower() == "create_solutes2") 
+   {
+      if (cmds.size() != 6) 
+      {
+         printf(
+                "usage: %s %s outfile s_1 ff0_1 s_2 ff0_2\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(-901);
+      }
+      QFile f_out(cmds[1]);
+      if (!f_out.open(IO_WriteOnly))
+      {
+         fprintf(stderr, "%s: File create error : %s\n", argv[0], argv[2]);
+         exit(-902);
+      }
+      int pos = 3;
+      double s_1 = atof(argv[pos++]);
+      double ff0_1 = atof(argv[pos++]);
+      double s_2 = atof(argv[pos++]);
+      double ff0_2 = atof(argv[pos++]);
+      printf(
+             "component 1:     %.4e S, %.4e f/f0\n"
+             "component 2:     %.4e S, %.4e f/f0\n"
+             , s_1, ff0_1
+             , s_2, ff0_2
+             );
+        
+        
+      QDataStream ds(&f_out);
+      // build the grid
+      vector < vector < Solute > > genes;
+      vector <Solute> solutes;
+      vector <int> used;
+      Solute tmp_solute;
+      tmp_solute.c = 0.0;
+      tmp_solute.s = s_1;
+      tmp_solute.k = ff0_1;
+      solutes.push_back(tmp_solute);
+      used.push_back(0);
+
+      tmp_solute.c = 0.0;
+      tmp_solute.s = s_2;
+      tmp_solute.k = ff0_2;
+      solutes.push_back(tmp_solute);
+      used.push_back(0);
+
+      cout << "total solutes: " << solutes.size() << "\n";
+      for (unsigned int ofs = 0; ofs < 1; ofs++) 
+      {
+         vector < Solute > tmp_gene;
+         for (unsigned int i = ofs; i < solutes.size(); i += 1) 
+         {
+            tmp_gene.push_back(solutes[i]);
+            // cout << "adding solute: " << i << "\n";
+            used[i] = 1;
+         }
+         genes.push_back(tmp_gene);
+      }
+      for (unsigned int i = 0; i < used.size(); i ++) 
+      {
+         if (!used[i]) 
+         {
+            fprintf(stderr, "%s: unused solute error %u\n", argv[0], i);
+            exit(-403);
+         }
+      }
+      ds << (unsigned int) genes.size();
+      for (unsigned int i = 0; i < genes.size(); i++)
+      {
+         ds << (unsigned int) genes[i].size();
+         for (unsigned int j = 0; j < genes[i].size(); j++)
+         {
+            ds << genes[i][j].s;
+            ds << genes[i][j].k;
+            ds << genes[i][j].c;
+         }
+      }
+      ds << (unsigned int)0;
+      ds << (unsigned int)0;
+      f_out.close();
+      exit(0);
+   }
+
    if (cmds[0].lower() == "mwl_info") 
    {
       if (cmds.size() != 2) 
