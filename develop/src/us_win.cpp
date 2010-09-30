@@ -34,7 +34,7 @@ namespace us_win_data
          P_COMBINE_COFD, P_PSEUDO3D,     P_CREATEG,
 
          P_ARCHIVE,      P_REORDER,      P_MERGE,        P_PSEUDOABS,
-         P_DIAG,         P_NUCL_DB,      P_CALC_HYDRO,   P_VBAR_DB,
+         P_DIAG,         P_RADIAL_CORR,  P_NUCL_DB,      P_CALC_HYDRO,   P_VBAR_DB,
          P_DMA60,        P_COLORG,       /* P_EXTINCT again */
 
          P_ASTFEM,       P_EQULILSIM,    P_EQUILTIMESIM, P_SASSOC,
@@ -225,6 +225,10 @@ namespace us_win_data
 
          { P_DIAG,          NULL, "us_diagnostics",
            "Loading UltraScan Diagnostics Utilities",
+           "UltraScan Diagnostics Utilities" },
+
+         { P_RADIAL_CORR,          NULL, "us_radial_correction",
+           "Loading Radial Correction Routine",
            "UltraScan Diagnostics Utilities" },
 
          { P_NUCL_DB,       NULL, "us_nucleotide_db",
@@ -588,6 +592,7 @@ UsWin::UsWin( QWidget* parent, const char* name ): US_Widgets( parent, name )
    util->insertItem(tr( "&Combine Distribution Data"), combine );
 
    util->insertItem( tr( "Scan &Diagnostics"              ), P_DIAG       );
+   util->insertItem( tr( "Radial Calibration Correction " ), P_RADIAL_CORR);
    util->insertItem( tr( "Calculate &DNA/RNA MW"          ), P_NUCL_DB    );
    util->insertItem( tr( "&Buffer Corrections"            ), P_CALC_HYDRO );
    util->insertItem( tr( "Calculate &Protein MW and vbar" ), P_VBAR_DB    );

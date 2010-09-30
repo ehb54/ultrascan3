@@ -77,6 +77,7 @@ SUBDIRS += \
     us_predict2 \
     us_pseudo3d_combine \
     us_pseudoabs \
+    us_radial_correction \
     us_reorder \
     us_sassoc \
     us_secdat \

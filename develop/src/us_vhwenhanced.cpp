@@ -535,6 +535,7 @@ int US_vhwEnhanced::plot_analysis()
    {
       float bottom = calc_bottom(rotor_list, cp_list, run_inf.rotor, run_inf.centerpiece[selected_cell], 
             0, run_inf.rpm[selected_cell][0][0]);
+      cout << bottom << endl;
       stop_point.clear();
       float Davg = (float) 5e-7;
       float radD;

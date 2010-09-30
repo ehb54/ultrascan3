@@ -223,6 +223,7 @@ SOURCES += \
   src/us_pseudo3d_combine.cpp \
   src/us_pseudo3d_thread.cpp \
   src/us_pseudoabs.cpp \
+  src/us_radial_correction.cpp \
   src/us_register.cpp \
   src/us_reorder.cpp \
   src/us_resplot.cpp \
@@ -431,6 +432,7 @@ HEADERS += \
   include/us_pseudo3d_combine.h \
   include/us_pseudo3d_thread.h \
   include/us_pseudoabs.h \
+  include/us_radial_correction.h \
   include/us_register.h \
   include/us_reorder.h \
   include/us_resplot.h \
