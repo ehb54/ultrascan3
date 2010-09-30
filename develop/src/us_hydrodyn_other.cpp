@@ -1212,7 +1212,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
             {
                puts("dammix_match_remember not empty");
                for (map < QString, float >::iterator it = dammix_match_remember_psv.begin();
-                    it != dammix_remember_psv.end();
+                    it != dammix_match_remember_psv.end();
                     it++)
                {
                   printf("iterator first %s\n", it->first.ascii());
