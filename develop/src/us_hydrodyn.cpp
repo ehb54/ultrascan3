@@ -1457,6 +1457,11 @@ void US_Hydrodyn::load_pdb()
    int errors_found = 0;
    if (!filename.isEmpty())
    {
+      if ( is_dammin_dammif(filename) ) 
+      {
+         screen_bead_model(filename);
+         return;
+      }
       pdb_file = filename;
       options_log = "";
       last_abb_msgs = "";
