@@ -38,6 +38,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 {
    setObjectName( "US_FeMatch" );
    def_local  = true;
+   dbg_level  = US_Settings::us_debug();
 
    // set up the GUI
    setPalette( US_GuiSettings::frameColor() );
@@ -401,11 +402,11 @@ void US_FeMatch::load( void )
    if ( dialog->exec() == QDialog::Accepted )
    {
       db         = dialog->settings( def_local, investig, dfilter );
-qDebug() << "DLd:  loc vest filt" << def_local << investig << dfilter;
-qDebug() << "DLd: dd" << dialog->description();
+DbgLv(1) << "DLd:  loc vest filt" << def_local << investig << dfilter;
+DbgLv(1) << "DLd: dd" << dialog->description();
 
       dialog->load_edit( dataList, rawList, triples );
-qDebug() << "DLd: triples[0]" << triples.at(0);
+DbgLv(1) << "DLd: triples[0]" << triples.at(0);
 
       delete dialog;
    }
@@ -515,7 +516,7 @@ void US_FeMatch::data_plot( void )
    if ( haveSim )
    {
       count     = sdata->scanData[ 0 ].readings.size();
-qDebug() << "R,V points count" << points << count;
+DbgLv(1) << "R,V points count" << points << count;
       count     = points > count ? points : count;
    }
 
@@ -542,7 +543,6 @@ qDebug() << "R,V points count" << points << count;
       baseline        = dscan->readings[ jj ].value;
 
    baseline       /= 11.0;
-//qDebug() << "baseline(c)" << baseline;
    double avgTemp  = average_temperature( edata );
    solution.vbar20 = US_Math2::adjust_vbar( solution.vbar, avgTemp );
    US_Math2::data_correction( avgTemp, solution );
@@ -635,23 +635,23 @@ qDebug() << "R,V points count" << points << count;
       double vh = edata->value( scanCount - 1, points - 1 );
       rl       -= 0.05;
       vh       += ( vh - edata->value( 0, 0 ) ) * 0.05;
-qDebug() << "  RL" << rl << "  VH" << vh;
+DbgLv(1) << "  RL" << rl << "  VH" << vh;
 int nscan=scanCount;
 int nconc=sdata->scanData[0].readings.size();
-qDebug() << "    sdata ns nc " << nscan << nconc;
-qDebug() << "      sdata->x0" << sdata->radius(0);
-qDebug() << "      sdata->xN" << sdata->radius(nconc-1);
-qDebug() << "      sdata->c00" << sdata->value(0,0);
-qDebug() << "      sdata->c0N" << sdata->value(0,nconc-1);
-qDebug() << "      sdata->cM0" << sdata->value(nscan-1,0);
-qDebug() << "      sdata->cMN" << sdata->value(nscan-1,nconc-1);
+DbgLv(1) << "    sdata ns nc " << nscan << nconc;
+DbgLv(1) << "      sdata->x0" << sdata->radius(0);
+DbgLv(1) << "      sdata->xN" << sdata->radius(nconc-1);
+DbgLv(1) << "      sdata->c00" << sdata->value(0,0);
+DbgLv(1) << "      sdata->c0N" << sdata->value(0,nconc-1);
+DbgLv(1) << "      sdata->cM0" << sdata->value(nscan-1,0);
+DbgLv(1) << "      sdata->cMN" << sdata->value(nscan-1,nconc-1);
 
       for ( int ii = 0; ii < scanCount; ii++ )
       {
          if ( excludedScans.contains( ii ) ) continue;
 
          points    = sdata->scanData[ ii ].readings.size();
-//qDebug() << "      II POINTS" << ii << points;
+DbgLv(2) << "      II POINTS" << ii << points;
          count     = 0;
          int jj    = 0;
          double rr = 0.0;
@@ -661,7 +661,7 @@ qDebug() << "      sdata->cMN" << sdata->value(nscan-1,nconc-1);
          {  // accumulate coordinates of simulation curve
             rr         = sdata->radius( jj );
             vv         = sdata->value( ii, jj++ );
-//qDebug() << "       JJ rr vv" << jj << rr << vv;
+DbgLv(2) << "       JJ rr vv" << jj << rr << vv;
 
             //if ( rr > rl  &&  vv < vh )
             if ( rr > rl )
@@ -674,7 +674,7 @@ qDebug() << "      sdata->cMN" << sdata->value(nscan-1,nconc-1);
          c       = us_curve( data_plot2, title );
          c->setPen( pen_red );
          c->setData( r, v, count );
-qDebug() << "Sim plot scan count" << ii << count
+DbgLv(1) << "Sim plot scan count" << ii << count
  << "  r0 v0 rN vN" << r[0] << v[0 ] << r[count-1] << v[count-1];
       }
    }
@@ -690,7 +690,6 @@ qDebug() << "Sim plot scan count" << ii << count
 // save the enhanced data
 void US_FeMatch::save_data( void )
 { 
-qDebug() << "save_data";
    write_res();
 
    write_cofs();
@@ -723,7 +722,6 @@ void US_FeMatch::update_buffer( double new_dens, double new_visc )
 {
    density    = new_dens;
    viscosity  = new_visc;
-qDebug() << "upd_buf dens visc" << density << viscosity;
 
    le_density  ->setText( QString::number( density,   'f', 6 ) );
    le_viscosity->setText( QString::number( viscosity, 'f', 6 ) );
@@ -906,7 +904,6 @@ void US_FeMatch::distrib_type( )
          break;
       }
    }
-//qDebug() << "distrib_type" << itype;
 
    // get pointer to data for use by plot routines
    edata   = &dataList[ lw_triples->currentRow() ];
@@ -1234,8 +1231,6 @@ void US_FeMatch::distrib_plot_resids( )
       data_curv->setStyle(  QwtPlotCurve::Dots );
       data_curv->setData(   xx, yy, dsize );
    }
-qDebug() << " dsize" << dsize;
-qDebug() << "  drN" << yy[dsize-1];
 
    data_plot1->replot();
 
@@ -1317,8 +1312,6 @@ void US_FeMatch::load_model( )
       return;                     // Cancel:  bail out now
 
    double avgTemp  = average_temperature( edata );
-double Vd=le_viscosity->text().toDouble();
-qDebug() << "ViscD ViscM D/M" << Vd << model.viscosity << Vd/model.viscosity;
 
    if ( model.viscosity != 0.0 )
    {
@@ -1356,18 +1349,15 @@ qDebug() << "ViscD ViscM D/M" << Vd << model.viscosity << Vd/model.viscosity;
    double f_f0;
    double rad_sphere;
    US_Model::SimulationComponent* sc;
-qDebug() << "dialog mfilter" << mfilter;
-qDebug() << "dialog investig" << investig;
-qDebug() << "dialog mdesc" << mdesc;
-qDebug() << "dialog model.desc" << model.description;
-qDebug() << "dialog ncomp" << ncomp;
-qDebug() << "dialog nassoc" << nassoc;
-qDebug() << "dialog isRA" << isRA;
-//DEBUG: for now, use Load Model button to toggle RA visibility
-//isRA=!visible;
-//qDebug() << "debug isRA" << isRA;
-qDebug() << "scorrec dcorrec" << scorrec << dcorrec;
-qDebug() << "  viscosity" << solution.viscosity << solution.viscosity_tb;
+DbgLv(1) << "dialog mfilter" << mfilter;
+DbgLv(1) << "dialog investig" << investig;
+DbgLv(1) << "dialog mdesc" << mdesc;
+DbgLv(1) << "dialog model.desc" << model.description;
+DbgLv(1) << "dialog ncomp" << ncomp;
+DbgLv(1) << "dialog nassoc" << nassoc;
+DbgLv(1) << "dialog isRA" << isRA;
+DbgLv(1) << "scorrec dcorrec" << scorrec << dcorrec;
+DbgLv(1) << "  viscosity" << solution.viscosity << solution.viscosity_tb;
 
    // fill out components values
 
@@ -1387,7 +1377,7 @@ qDebug() << "  viscosity" << solution.viscosity << solution.viscosity_tb;
       sc->s     *= scorrec;
       sc->D     *= dcorrec;
 if(jj==0)
-qDebug() << "  s20w s" << s20w << sc->s << "  D20w D" << D20w << sc->D;
+DbgLv(1) << "  s20w s" << s20w << sc->s << "  D20w D" << D20w << sc->D;
 
       sc->vbar20 = vbar20;
       sc->mw     = mw;
@@ -1429,8 +1419,8 @@ void US_FeMatch::load_noise( )
    QString     lmodlGUID;                          // list model GUID
    QString     lnoisGUID;                          // list noise GUID
    QString     modelIndx;                          // "0001" style model index
-qDebug() << "editGUID  " << editGUID;
-qDebug() << "modelGUID " << modelGUID;
+DbgLv(1) << "editGUID  " << editGUID;
+DbgLv(1) << "modelGUID " << modelGUID;
 
    // get a list of models tied to the loaded edit
    int nemods  = models_in_edit(  def_local, editGUID, mieGUIDs );
@@ -1480,9 +1470,9 @@ qDebug() << "modelGUID " << modelGUID;
          }
       }
    }
-qDebug() << "nemods nmnois nenois" << nemods << nmnois << nenois;
+DbgLv(1) << "nemods nmnois nenois" << nemods << nmnois << nenois;
 for (int jj=0;jj<nenois;jj++)
- qDebug() << " jj nieG" << jj << nieGUIDs.at(jj);
+ DbgLv(1) << " jj nieG" << jj << nieGUIDs.at(jj);
 
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
@@ -1547,15 +1537,15 @@ void US_FeMatch::simulate_model( )
    double radlo   = edata->radius( 0 );
    double radhi   = edata->radius( nconc - 1 );
    double rmsd    = 0.0;
-qDebug() << " nscan nconc" << nscan << nconc;
-qDebug() << " radlo radhi" << radlo << radhi;
-qDebug() << " baseline plateau" << edata->baseline << edata->plateau;
+DbgLv(1) << " nscan nconc" << nscan << nconc;
+DbgLv(1) << " radlo radhi" << radlo << radhi;
+DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
 
    sdata          = new US_DataIO2::RawData();
 
    // initialize simulation parameters using edited data information
    simparams.initFromData( db, *edata );
-qDebug() << " initFrDat serial type coeffs" << simparams.rotorSerial
+DbgLv(1) << " initFrDat serial type coeffs" << simparams.rotorSerial
    << simparams.rotorType      << simparams.rotorcoeffs[0]
    << simparams.rotorcoeffs[1] << simparams.rotorcoeffs[2]
    << simparams.rotorcoeffs[3] << simparams.rotorcoeffs[4];
@@ -1580,10 +1570,10 @@ qDebug() << " initFrDat serial type coeffs" << simparams.rotorSerial
       simparams.gridType = US_SimulationParameters::FIXED;
 
    simparams.band_firstScanIsConcentration   = false;
-qDebug() << "  duration_hours  " << simparams.speed_step[0].duration_hours;
-qDebug() << "  duration_minutes" << simparams.speed_step[0].duration_minutes;
-qDebug() << "  delay_hours  " << simparams.speed_step[0].delay_hours;
-qDebug() << "  delay_minutes" << simparams.speed_step[0].delay_minutes;
+DbgLv(1) << "  duration_hours  " << simparams.speed_step[0].duration_hours;
+DbgLv(1) << "  duration_minutes" << simparams.speed_step[0].duration_minutes;
+DbgLv(1) << "  delay_hours  " << simparams.speed_step[0].delay_hours;
+DbgLv(1) << "  delay_minutes" << simparams.speed_step[0].delay_minutes;
 
    // make a simulation copy of the experimental data without actual readings
 
@@ -1593,18 +1583,20 @@ qDebug() << "  delay_minutes" << simparams.speed_step[0].delay_minutes;
    sdata->cell        = rdata->cell;
    sdata->channel     = rdata->channel;
    sdata->description = rdata->description;
-qDebug() << "  sdata->description" << sdata->description;
-qDebug() << "   sdata->x0" << sdata->radius(0);
-qDebug() << "   sdata->xN" << sdata->radius(nconc-1);
-qDebug() << "   rdata->c0" << rdata->value(0,0);
-qDebug() << "   rdata->cN" << rdata->value(0,nconc-1);
-qDebug() << "   edata->c0" << edata->value(0,0);
-qDebug() << "   edata->cN" << edata->value(0,nconc-1);
-qDebug() << "   sdata->c00" << sdata->value(0,0);
-qDebug() << "   sdata->c0N" << sdata->value(0,nconc-1);
-qDebug() << "   sdata->cM0" << sdata->value(nscan-1,0);
-qDebug() << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
-qDebug() << " afrsa init";
+DbgLv(1) << "  sdata->description" << sdata->description;
+DbgLv(1) << "   sdata->x0" << sdata->radius(0);
+DbgLv(1) << "   sdata->xN" << sdata->radius(nconc-1);
+DbgLv(1) << "   rdata->c0" << rdata->value(0,0);
+DbgLv(1) << "   rdata->cN" << rdata->value(0,nconc-1);
+DbgLv(1) << "   edata->c0" << edata->value(0,0);
+DbgLv(1) << "   edata->cN" << edata->value(0,nconc-1);
+DbgLv(1) << "   sdata->c00" << sdata->value(0,0);
+DbgLv(1) << "   sdata->c0N" << sdata->value(0,nconc-1);
+DbgLv(1) << "   sdata->cM0" << sdata->value(nscan-1,0);
+DbgLv(1) << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
+DbgLv(1) << " afrsa init";
+if ( dbg_level > 1 )
+ simparams.save_simparms( US_Settings::appBaseDir() + "/etc/sp_fematch.xml" );
 
    if ( model.components[ 0 ].sigma == 0.0  &&
         model.components[ 0 ].delta == 0.0  &&
@@ -1613,7 +1605,7 @@ qDebug() << " afrsa init";
    {
       US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
    
-qDebug() << " afrsa calc";
+DbgLv(1) << " afrsa calc";
 //astfem_rsa->setTimeCorrection( true );
 
       astfem_rsa->calculate( *sdata );
@@ -1628,13 +1620,13 @@ qDebug() << " afrsa calc";
 
 nscan = sdata->scanData.size();
 nconc = sdata->x.size();
-qDebug() << " afrsa done M N" << nscan << nconc;
-qDebug() << "   sdata->x0" << sdata->radius(0);
-qDebug() << "   sdata->xN" << sdata->radius(nconc-1);
-qDebug() << "   sdata->c00" << sdata->value(0,0);
-qDebug() << "   sdata->c0N" << sdata->value(0,nconc-1);
-qDebug() << "   sdata->cM0" << sdata->value(nscan-1,0);
-qDebug() << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
+DbgLv(1) << " afrsa done M N" << nscan << nconc;
+DbgLv(1) << "   sdata->x0" << sdata->radius(0);
+DbgLv(1) << "   sdata->xN" << sdata->radius(nconc-1);
+DbgLv(1) << "   sdata->c00" << sdata->value(0,0);
+DbgLv(1) << "   sdata->c0N" << sdata->value(0,nconc-1);
+DbgLv(1) << "   sdata->cM0" << sdata->value(nscan-1,0);
+DbgLv(1) << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
 
    rmsd        = US_AstfemMath::variance( *sdata, *edata );
    le_variance->setText( QString::number( rmsd ) );
@@ -2097,7 +2089,6 @@ void US_FeMatch::calc_residuals()
 
    resids.clear();
    resscan.resize( dsize );
-qDebug() << "CalcRes: dsize ssize" << dsize << ssize;
 
    for ( int jj = 0; jj < dsize; jj++ )
    {
@@ -2243,7 +2234,7 @@ int US_FeMatch::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs 
       {  // accumulate from db desc entries matching editGUID;
          xmGUID  = db->value( 1 ).toString();
          xeGUID  = db->value( 3 ).toString();
-//qDebug() << "MIE(db): xm/xe/e GUID" << xmGUID << xeGUID << eGUID;
+DbgLv(2) << "MIE(db): xm/xe/e GUID" << xmGUID << xeGUID << eGUID;
 
          if ( xeGUID == eGUID )
             mGUIDs << xmGUID;
@@ -2343,7 +2334,7 @@ int US_FeMatch::noises_in_model( bool ondisk, QString mGUID,
          xntype  = xntype.contains( "ri_nois", Qt::CaseInsensitive ) ?
                    "ri" : "ti";
 
-//qDebug() << "NIM(db): xm/xe/e ID" << xnoiID << xmodID << modlID;
+//DbgLv(2) << "NIM(db): xm/xe/e ID" << xnoiID << xmodID << modlID;
          if ( xmodID == modlID )
             nGUIDs << xnGUID + ":" + xntype + ":0000";
       }

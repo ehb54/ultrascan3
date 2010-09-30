@@ -44,6 +44,32 @@ class US_EXTERN US_SimulationParameters
    //! \param ch     Index to channel in centerpiece (default = 0) 
    void setHardware( QString = "1", int = 0, int = 0 );
 
+   //! \brief Load simulation parameters from an xml file
+   //! \param fname Full path name of file from which to load simulation
+   //!              parameters; name part in "sp_*.xml" form.
+   //! \returns     Status flag:  0 if able to read from file
+   int  load_simparms( QString );
+
+   //! \brief Save simulation parameters into an xml file
+   //! \param fname Full path name of file to which to save simulation
+   //!              parameters; name part usually in "sp_*.xml" form.
+   //! \returns     Status flag:  0 if able to write to file
+   int  save_simparms( QString );
+
+   //! \brief Static function to load simulation parameters from an xml file
+   //! \param sparms Reference to simulation parameters object to load
+   //! \param fname  Full path name of file from which to load simulation
+   //!               parameters; name part in "sp_*.xml" form.
+   //! \returns      Status flag:  0 if able to read from file
+   static int get_simparms( US_SimulationParameters&, QString );
+
+   //! \brief Static function to save simulation parameters into an xml file
+   //! \param sparms Reference to simulation parameters object to save
+   //! \param fname  Full path name of file to which to save simulation
+   //!               parameters; name part usually in "sp_*.xml" form.
+   //! \returns      Status flag:  0 if able to write to file
+   static int put_simparms( US_SimulationParameters&, QString );
+
    //! The radii from a user-selected mesh file (mesh == USER)
    QVector< double > mesh_radius; 
 
