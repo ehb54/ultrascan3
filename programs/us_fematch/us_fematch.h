@@ -17,6 +17,10 @@
 #include "us_buffer_gui.h"
 #include "qwt_plot_marker.h"
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
 class US_EXTERN US_FeMatch : public US_Widgets
 {
    Q_OBJECT
@@ -99,6 +103,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QListWidget*  lw_triples;
 
       int           scanCount;
+      int           dbg_level;
 
       bool          dataLoaded;
       bool          haveSim;
