@@ -11,7 +11,7 @@
 #include "us_astfem_rsa.h"
 
 #ifndef DbgLv
-#define DbgLv(a) if(dbg_level>=a)qDebug()
+#define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
 #endif
 
 //! \brief Module to calculate simulation data by AST Finite Volume Method

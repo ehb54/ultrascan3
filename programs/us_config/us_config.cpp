@@ -7,6 +7,7 @@
 #include "us_license_t.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_constants.h"
 
 int main( int argc, char* argv[] )
 {
@@ -146,7 +147,8 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   QGridLayout* otherSettings = new QGridLayout();
 
   // Temperature Tolerance
-  QLabel* temperature = us_label( "Temperature Tolerance (ºC):" );
+  QLabel* temperature = us_label( tr( "Temperature Tolerance (" ) + DEGC
+        + "):" );
   otherSettings->addWidget( temperature, row, 0 );
 
   sb_temperature_tol = new QDoubleSpinBox();

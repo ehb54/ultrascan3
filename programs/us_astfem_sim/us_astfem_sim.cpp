@@ -146,7 +146,9 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    // Saved Scans
    plot2 = new US_Plot( scanPlot, tr( "Saved Scans" ), 
          tr( "Radius (cm)" ), tr( "Concentration" ) );
-   us_grid  ( scanPlot );
+   QwtPlotGrid* grid2 = us_grid  ( scanPlot );
+   grid2->enableX(    true );
+   grid2->enableY(    true );
    scanPlot->setMinimumSize( 600, 275);
    scanPlot->setAxisScale( QwtPlot::yLeft,   0.0, 2.0 );
    scanPlot->setAxisScale( QwtPlot::xBottom, 5.8, 7.2 );
@@ -355,6 +357,7 @@ void US_Astfem_Sim::start_simulation( void )
 {
 
    astfem_rsa = new US_Astfem_RSA( system, simparams );
+
    connect( astfem_rsa, SIGNAL( new_scan( QVector< double >*, double* ) ), 
                  SLOT( update_movie_plot( QVector< double >*, double* ) ) );
    connect( astfem_rsa, SIGNAL( current_component( int ) ), 
@@ -659,12 +662,16 @@ void US_Astfem_Sim::plot( void )
    {
       scanPlot->setAxisAutoScale( QwtPlot::xBottom );
       scanPlot->setAxisAutoScale( QwtPlot::yLeft   );
-      QwtPlotGrid* grid2 = us_grid  ( scanPlot );
-      grid2->enableY(    true );
    }
 
    else
+   {
       scanPlot->setAxisScale( QwtPlot::yLeft, 0, total_conc * 2.0 );
+   }
+
+   QwtPlotGrid* grid2 = us_grid( scanPlot );
+   grid2->enableX(    true );
+   grid2->enableY(    true );
 
    // Plot the simulation
    if ( ! stopFlag )
@@ -950,10 +957,10 @@ void US_Astfem_Sim::dump_association( US_Model::Association& as )
 {
    qDebug() << "keq" << as.k_eq;
    qDebug() << "koff" << as.k_off;
-   qDebug() << "react list size " << as.reaction_components.size();
-   qDebug() << "react list " << as.reaction_components;
-   qDebug() << "stoich list size " << as.stoichiometry.size();
-   qDebug() << "stoich list " << as.stoichiometry;
+   qDebug() << "rcomps list size " << as.rcomps.size();
+   qDebug() << "rcomps list " << as.rcomps;
+   qDebug() << "stoichs list size " << as.stoichs.size();
+   qDebug() << "stoichs list " << as.stoichs;
 }
 
 void US_Astfem_Sim::dump_simparms( void )

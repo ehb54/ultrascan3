@@ -243,7 +243,7 @@ void US_Investigator::update( void )
    {
       QMessageBox::information( this,
             tr( "Attention" ),
-            tr( "You must select an Investagator from the DB to update." ) );
+            tr( "You must select an Investigator from the DB to update." ) );
       return;
    }
 

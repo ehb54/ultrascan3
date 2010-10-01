@@ -333,7 +333,7 @@ class US_EXTERN US_AstfemMath
       class ReactionGroup
       {
          public:
-         QVector< int > association;    //!< assocation flags 
+         QVector< int > association;    //!< association flags 
          QVector< int > GroupComponent; //!< group component flags
       };
 
@@ -342,11 +342,10 @@ class US_EXTERN US_AstfemMath
       {
          public:
          int            comp_index; //!< index of this component
-         QVector< int > assoc;      //!< assoc index where this component occurs
-         QVector< int > react;      //!< role of component in each association, 
-                                    //!<  = 1: if as reactant; =-1, if as product
-         QVector< int > st;         //!< stoichiometry of each component in 
-                                    //!< each assoc., index is linked to assoc.
+         QVector< int > rcomps;     //!< assoc index where this component occurs
+         QVector< int > stoichs;    //!< stoichiometry of each component in 
+                                    //!< each assoc., index is linked to assoc.;
+                                    //!< sign: +ve.->reactant, -ve.->product.
       };
 
       //! \brief Parameters for finite element solution
