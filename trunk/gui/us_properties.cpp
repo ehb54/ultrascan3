@@ -354,13 +354,13 @@ void US_Properties::set_stoich( double stoich )
 
    inUpdate = true;
 
-   sc->mw /= sc->stoichiometry;  // Get monomer mw
-   sc->mw *= stoich;             // Now adjust for new stoichiometry
-   le_mw->setText( QString::number( sc->mw, 'e', 3 ) );
+   //sc->mw /= sc->stoichiometry;  // Get monomer mw
+   //sc->mw *= stoich;             // Now adjust for new stoichiometry
+   //le_mw->setText( QString::number( sc->mw, 'e', 3 ) );
 
-   sc->extinction /= sc->stoichiometry;
-   sc->extinction *= stoich;
-   le_extinction->setText( QString::number( sc->extinction, 'e', 4 ) );
+   //sc->extinction /= sc->stoichiometry;
+   //sc->extinction *= stoich;
+   //le_extinction->setText( QString::number( sc->extinction, 'e', 4 ) );
 
    sc->stoichiometry = (int) stoich;
 
@@ -373,8 +373,9 @@ void US_Properties::set_stoich( double stoich )
    hydro_data.calculate( NORMAL_TEMP );
 
    set_molar();
-   inUpdate = false;
+   //inUpdate = false;
    select_shape( sc->shape );
+   inUpdate = false;
 }
 
 void US_Properties::edit_component( void )
@@ -744,7 +745,7 @@ void US_Properties::simulate( void )
 
 
    working_data     = hydro_data; // working_data will be updated
-   working_data.mw /= sc->stoichiometry;
+   //working_data.mw /= sc->stoichiometry;
 
    US_Predict1* dialog = new US_Predict1( 
          working_data, investigator, analyte, db_access, true );
@@ -762,7 +763,7 @@ void US_Properties::new_hydro( US_Analyte ad )
    US_Model::SimulationComponent* sc = &model.components[ row ];
 
    hydro_data       = working_data;
-   working_data.mw *= sc->stoichiometry;
+   //working_data.mw *= sc->stoichiometry;
    analyte          = ad;
 
    hydro_data.calculate( NORMAL_TEMP );

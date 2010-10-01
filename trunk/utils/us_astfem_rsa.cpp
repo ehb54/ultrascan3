@@ -60,21 +60,23 @@ DbgLv(1) << "RSA:  af_c0size" << initial_npts;
       US_Model::SimulationComponent* sc = &system.components[ k ];
       US_Model::Association*         as;
       reacting[ k ] = false;
+DbgLv(1) << "RSA:  k assoc.size" << k << system.associations.size();
 
       for ( int j = 0; j <  system.associations.size(); j++ )
       {
          as  = &system.associations[ j ];
+DbgLv(1) << "RSA:   j react.size" << k << as->rcomps.size();
 
-         for ( int n = 0; n < as->reaction_components.size(); n++ )
+         for ( int n = 0; n < as->rcomps.size(); n++ )
          {
-            if ( k == (int)as->reaction_components[ n ] )
+            if ( k == (int)as->rcomps[ n ] )
             {
                 reacting[ k ] = true;
                 current_assoc = j;
                 break;   // Since a comp appears at most once in an assoc rule
             }
-DbgLv(1) << "RSA:  k j current_assoc" << k << j << current_assoc;
          }
+DbgLv(1) << "RSA:  k j current_assoc" << k << j << current_assoc;
       }
 
       current_time  = 0.0;
@@ -137,13 +139,13 @@ DbgLv(1) << "RSA:  k j current_assoc" << k << j << current_assoc;
       {
          initialize_conc( k, CT0, true );
 
-         af_params.s.clear();  
-         af_params.D.clear();
-         af_params.kext.clear();
+         af_params.s   .resize( 1 );
+         af_params.D   .resize( 1 );
+         af_params.kext.resize( 1 );
 
-         af_params.s    .append( sc->s );
-         af_params.D    .append( sc->D );
-         af_params.kext .append( sc->extinction );
+         af_params.s   [ 0 ] = sc->s;
+         af_params.D   [ 0 ] = sc->D;
+         af_params.kext[ 0 ] = sc->extinction;
          
          for ( int step = 0; step < simparams.speed_step.size(); step++ )
          {
@@ -249,65 +251,65 @@ DbgLv(1) << "RSA:  k j current_assoc" << k << j << current_assoc;
    }
 
    // Resize af_params.local_index
-   af_params.local_index.clear();
    af_params.local_index.resize( size_cv );
    
    US_AstfemMath::ComponentRole cr;
 
    for ( int group = 0; group < rg.size(); group++ )
    {
-      //int num_comp = rg[ group ].GroupComponent.size();
-      int num_rule = rg[ group ].association.size();
       int num_comp = rg[ group ].GroupComponent.size();
+      int num_rule = rg[ group ].association.size();
       af_params.rg_index = group;
 DbgLv(1) << "RSA:  group nrule ncomp" << group << num_rule << num_comp;
-      
-      af_params.s          .clear();
-      af_params.D          .clear();
-      af_params.kext       .clear();
-      af_params.role       .clear();
-      af_params.association.clear();
+      af_params.s          .resize( num_comp );
+      af_params.D          .resize( num_comp );
+      af_params.kext       .resize( num_comp );
+      af_params.role       .resize( num_comp );
+      af_params.association.resize( num_rule );
 
       for ( int m = 0; m < num_rule; m++ )
-         af_params.association.append( 
-               system.associations[ rg[ group ].association[ m ] ] );
+      {
+         af_params.association[ m ] =
+               system.associations[ rg[ group ].association[ m ] ];
+      }
 
       for ( int j = 0; j < num_comp; j++ )
       {
-         int                            index = rg[ group ].GroupComponent[ j ];
+         int index = rg[ group ].GroupComponent[ j ];
 DbgLv(1) << "RSA:    j index" << j << index;
-         US_Model::SimulationComponent* sc    = &system.components[ index ];
-         af_params.s    .append( sc->s );
-         af_params.D    .append( sc->D );
-         af_params.kext .append( sc->extinction );
+
+         US_Model::SimulationComponent* sc = &system.components[ index ];
+         af_params.s   [ j ] = sc->s;
+         af_params.D   [ j ] = sc->D;
+         af_params.kext[ j ] = sc->extinction;
          
          // Global to local index
          af_params.local_index[ index ] = j;
 
-         af_params.role.append(  cr );  // Add j'th rule      
+         af_params.role[ j ] =  cr;  // Add j'th rule      
 
          af_params.role[ j ].comp_index = index;
-         af_params.role[ j ].assoc.clear();
-         af_params.role[ j ].react.clear();
-         af_params.role[ j ].st.clear();
+         af_params.role[ j ].rcomps .clear();
+         af_params.role[ j ].stoichs.clear();
 
          // Check all assoc rule in this rg
          for ( int m = 0; m < rg[ group ].association.size(); m++ ) 
          {
             // Check all comp in rule
-            int                    rule = rg[ group ].association[ m ];
-DbgLv(1) << "RSA:    m rule" << m << rule;
+            int rule   = rg[ group ].association[ m ];
+DbgLv(1) << "RSA:     m rule" << m << rule;
             US_Model::Association* as   = &system.associations[ rule ];
 
-            for ( int n = 0; n < as->reaction_components.size(); n++ )
+            for ( int n = 0; n < as->rcomps.size(); n++ )
             {
+DbgLv(1) << "RSA:      n af-index as-react" << n
+ << af_params.role[j].comp_index << as->rcomps[n];
                if ( af_params.role[ j ].comp_index ==
-                    as->reaction_components[ n ] )
+                    as->rcomps[ n ] )
                {
                   // local index for the rule
-                  af_params.role[ j ].assoc.append( m );
-                  af_params.role[ j ].react.append( as->reaction_components[ n ] );
-                  af_params.role[ j ].st   .append( as->stoichiometry[ n ] );
+                  af_params.role[ j ].rcomps .append( m );
+                  af_params.role[ j ].stoichs.append( as->stoichs[ n ] );
                   break;
                }
             }
@@ -317,10 +319,11 @@ DbgLv(1) << "RSA:    m rule" << m << rule;
       for ( int m = 0; m < num_rule; m++ )
       {
          US_Model::Association* as = &af_params.association[ m ];
-          for ( int n = 0; n < as->reaction_components.size(); n++ )
+          for ( int n = 0; n < as->rcomps.size(); n++ )
           {
-            as->reaction_components[ n ] = 
-               af_params.local_index[ as->reaction_components[ n ] ];
+            as->rcomps[ n ] = 
+               af_params.local_index[ as->rcomps[ n ] ];
+DbgLv(1) << "RSA:     m n rcn" << m << n << as->rcomps[n];
           }
       }
 
@@ -340,6 +343,7 @@ DbgLv(1) << "RSA:    m rule" << m << rule;
       {
          CT0.radius.clear();
          CT0.concentration.clear();
+DbgLv(1) << "RSA:      j in_npts" << j << initial_npts;
 
          for ( int i = 0; i < initial_npts; i++ )
          {
@@ -350,6 +354,7 @@ DbgLv(1) << "RSA:    m rule" << m << rule;
          initialize_conc( rg[ group ].GroupComponent[ j ], CT0, false );
          vC0[ j ] = CT0;
       }
+
       decompose( vC0 );
 
       for ( int ss = 0; ss < simparams.speed_step.size(); ss++ )
@@ -520,23 +525,29 @@ void US_Astfem_RSA::update_assocv( void )
 {
    for ( int ii = 0; ii < system.associations.size(); ii++ )
    {
-      US_Model::Association* as    = &system.associations[ ii ];
-      int                    ncomp = as->reaction_components.size();
+      US_Model::Association* as      = &system.associations[ ii ];
+      int ncomp   = as->rcomps.size();
+      int stoich1 = as->stoichs[ 0 ];
+      int stoich2 = as->stoichs[ 1 ];
+DbgLv(1) << "AFRSA:  ncomp st1 st2" << ncomp << stoich1 << stoich2;
       
       if ( ncomp == 2 )
       {
-         int stoich1                  = as->stoichiometry[ 0 ];
-         as->stoichiometry[ 0 ]       = as->stoichiometry[ 1 ];
-         as->stoichiometry[ 1 ]       = stoich1;
-         as->reaction_components[ 0 ] = 1;
-         as->reaction_components[ 1 ] = -1;
+         as->stoichs[ 1 ] = stoich2 < 0 ? stoich2 : -stoich2;
+         as->stoichs[ 0 ] = stoich1 > 0 ? stoich1 : -stoich1;
+         //as->rcomps[  0 ] = 0;
+         //as->rcomps[  1 ] = 1;
       }
 
       else if ( ncomp == 3 )
       {
-         as->reaction_components[ 0 ] = 1;
-         as->reaction_components[ 1 ] = 1;
-         as->reaction_components[ 2 ] = -1;
+         int stoich3      = as->stoichs[ 2 ];
+         as->stoichs[ 0 ] = stoich1 > 0 ? stoich1 : -stoich1;
+         as->stoichs[ 1 ] = stoich2 > 0 ? stoich2 : -stoich2;
+         as->stoichs[ 2 ] = stoich3 < 0 ? stoich3 : -stoich3;
+         //as->rcomps[ 0 ] = 1;
+         //as->rcomps[ 1 ] = 1;
+         //as->rcomps[ 2 ] = 0;
       }
    }
 }
@@ -600,12 +611,12 @@ void US_Astfem_RSA::initialize_rg( void )
    tmp_rg.association.clear();
    
    tmp_rg.association   .append( 0 );
-   tmp_rg.GroupComponent.append( as->reaction_components[ 0 ] );
-   tmp_rg.GroupComponent.append( as->reaction_components[ 1 ] );
+   tmp_rg.GroupComponent.append( as->rcomps[ 0 ] );
+   tmp_rg.GroupComponent.append( as->rcomps[ 1 ] );
 
    // Only 2 components react in first reaction
-   if ( as->reaction_components.size() > 2 )
-      tmp_rg.GroupComponent .append( as->reaction_components[ 2 ] );
+   if ( as->rcomps.size() > 2 )
+      tmp_rg.GroupComponent .append( as->rcomps[ 2 ] );
    
    reaction_used[ 0 ] = true;
 
@@ -631,10 +642,10 @@ void US_Astfem_RSA::initialize_rg( void )
       for ( int counter = 1; counter < system.associations.size(); counter++ ) 
       {
          US_Model::Association* av    = &system.associations[ counter ];
-         ncomp      = av->reaction_components.size();
-         component1 = ( ncomp > 0 ) ? av->reaction_components[ 0 ] : 0;
-         component2 = ( ncomp > 1 ) ? av->reaction_components[ 1 ] : 0;
-         component3 = ( ncomp > 2 ) ? av->reaction_components[ 2 ] : 0;
+         ncomp      = av->rcomps.size();
+         component1 = ( ncomp > 0 ) ? av->rcomps[ 0 ] : 0;
+         component2 = ( ncomp > 1 ) ? av->rcomps[ 1 ] : 0;
+         component3 = ( ncomp > 2 ) ? av->rcomps[ 2 ] : 0;
 
          while ( reaction_used[ counter ] )
          {
@@ -735,10 +746,10 @@ void US_Astfem_RSA::initialize_rg( void )
          }
 
          US_Model::Association* avj = &system.associations[ j ];
-         ncomp      = avj->reaction_components.size();
-         component1 = ( ncomp > 0 ) ? avj->reaction_components[ 0 ] : 0;
-         component2 = ( ncomp > 1 ) ? avj->reaction_components[ 1 ] : 0;
-         component3 = ( ncomp > 2 ) ? avj->reaction_components[ 2 ] : 0;
+         ncomp      = avj->rcomps.size();
+         component1 = ( ncomp > 0 ) ? avj->rcomps[ 0 ] : 0;
+         component2 = ( ncomp > 1 ) ? avj->rcomps[ 1 ] : 0;
+         component3 = ( ncomp > 2 ) ? avj->rcomps[ 2 ] : 0;
          
          if ( j < system.associations.size() )
          {
@@ -767,6 +778,7 @@ void US_Astfem_RSA::initialize_rg( void )
 void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0, 
       bool noninteracting ) 
 {
+DbgLv(1) << "RSA: init_conc() ENTER kk" << kk;
    US_Model::SimulationComponent* sc = &system.components[ kk ];
 
    // We don't have an existing CT0 concentration vector. Build up the initial
@@ -844,6 +856,7 @@ void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0,
             CT0.concentration[ j ] += C.concentration[ j ];
       }
    }
+DbgLv(1) << "RSA: init_conc() RETURN";
 }
 
 // Non-interacting solute, constant speed
@@ -1766,44 +1779,47 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
 
    // Note: all components must be defined on the same radial grids
    int Npts = C0[ 0 ].radius.size();  
+DbgLv(1) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
 
    // Special case:  self-association  n A <--> An
    if ( num_comp == 2 )       // Only 2 components and one association rule
    {
-      int    st0 = af_params.association[ 0 ].stoichiometry[ 0 ];
-      int    st1 = af_params.association[ 0 ].stoichiometry[ 1 ];
+      int    st0 = af_params.association[ 0 ].stoichs[ 0 ];
+      int    st1 = af_params.association[ 0 ].stoichs[ 1 ];
       double keq = af_params.association[ 0 ].k_eq;
 
       for ( int j = 0; j < Npts; j++ )
       {
           double c1;
           double ct = C0[ 0 ].concentration[ j ] + C0[ 1 ].concentration[ j ] ;
+DbgLv(1) << "RSA:  j st0 st1" << j << st0 << st1;
           
-          if ( st0 == 2 && st1 == 1 )                // mono <--> dimer
+          if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
              c1 = ( sqrt( 1.0 + 4.0 * keq * ct ) - 1.0 ) / ( 2.0 * keq );
           
-          else if ( st0 == 3 && st1 == 1 )           // mono <--> trimer
+          else if ( st0 == 3 && st1 == -1 )           // mono <--> trimer
              c1 = US_AstfemMath::cube_root( -ct / keq, 1.0 / keq, 0.0 );
           
-          else if ( st0 > 3 && st1 == 1 )           // mono <--> n-mer
+          else if ( st0 > 3 && st1 == -1 )           // mono <--> n-mer
              c1 = US_AstfemMath::find_C1_mono_Nmer( st0, keq, ct );
           
           else
           {
              qDebug() << "Warning: invalid stoichiometry in decompose()";
+               qDebug() << "  st0 st1 c1" << st0 << st1 << c1;
              return;
           }
 
-          double c2 = keq * pow( c1, (double) st0 );
+          double c2 = keq * pow( c1, (double)st0 );
 
-          if ( af_params.role[ 0 ].react[ 0 ] == 1 )    // c1=reactant
+          if ( af_params.role[ 0 ].stoichs[ 0 ] > 0 )    // c1=reactant
           {
               C0[ 0 ].concentration[ j ] = c1 ;
               C0[ 1 ].concentration[ j ] = c2 ;
           }
           else
           {
-              C0[ 0 ].concentration[ j ] = c2 ;  // c1=product
+              C0[ 0 ].concentration[ j ] = c2 ;          // c1=product
               C0[ 1 ].concentration[ j ] = c1 ;
           }
       }
@@ -1909,8 +1925,8 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
 
        // Current rule used
        int    rule = rg[ af_params.rg_index ].association[ 0 ]; 
-       int    st0  = system.associations[ rule ].stoichiometry[ 0 ];
-       int    st1  = system.associations[ rule ].stoichiometry[ 1 ];
+       int    st0  = system.associations[ rule ].stoichs[ 0 ];
+       int    st1  = system.associations[ rule ].stoichs[ 1 ];
        double keq  = system.associations[ rule ].k_eq;
        double koff = system.associations[ rule ].k_off;
 
@@ -1922,13 +1938,13 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
           double dvb = timeStep * koff + 2.;
           double dvc = timeStep * koff * ct + 2.0 * C1[ 0 ][ j ];
           
-          if ( st0 == 2 && st1 == 1 )                // mono <--> dimer
+          if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
              uhat = 2 * dvc / ( dvb + sqrt( dvb * dvb + 4 * dva * dvc ) );
           
-          else if ( st0 ==3 && st1 == 1 )           // mono <--> trimer
+          else if ( st0 == 3 && st1 == -1 )           // mono <--> trimer
              uhat = US_AstfemMath::cube_root( -dvc / dva, dvb / dva, 0.0 );
           
-          else if ( st0 > 3 && st1 == 1 )           // mono <--> n-mer
+          else if ( st0  > 3 && st1 == -1 )            // mono <--> n-mer
              uhat = US_AstfemMath::find_C1_mono_Nmer( st0, dva / dvb, dvc / dvb);
          
           else
@@ -1937,13 +1953,14 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
              return;
           }
 
-          if ( af_params.role[ 0 ].react[ 0 ] == 1 )   // c1=reactant
+          if ( af_params.role[ 0 ].stoichs[ 0 ] > 0 )   // c1=reactant
           {
               C1[ 0 ][ j ] = 2 * uhat - C1[ 0 ][ j ];
               C1[ 1 ][ j ] = ct - C1[ 0 ][ j ];
           }
+
           else
-          {
+          {                                             // c1=product
               C1[ 1 ][ j ] = 2 * uhat - C1[ 1 ][ j ];
               C1[ 0 ][ j ] = ct - C1[ 1 ][ j ];
           }
@@ -2037,22 +2054,23 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
        double Q_reactant = 1.0;
        double Q_product  = 1.0;
         
-       for ( int n = 0; n < as->reaction_components.size(); n++ )
+       for ( int n = 0; n < as->rcomps.size(); n++ )
        {
           // local index of the n-th component in assoc[rule]
-          int ind_cn = as->reaction_components[ n ] ;
+          int    ind_cn = as->rcomps[  n ] ;
            
-          // stoich of n-th comp in the rule
-          int stn    = as->stoichiometry[ n ] ;
+          // stoichiometry of n-th component in the rule
+          int    kstoi  = as->stoichs[ n ] ;
+          int    react  = ( kstoi < 0 ) ? -1 : 1;
+          double rstoi  = (double)( kstoi * react );
            
-          // comp[n] here is reactant
-          if ( as->reaction_components[ n ] == 1 ) 
+          if ( react > 0 ) // comp[n] here is reactant
           {
-             Q_reactant *= pow( y0[ ind_cn ], (double) stn );
+             Q_reactant *= pow( y0[ ind_cn ], rstoi );
           }
-          else
+          else             // comp[n] here is product
           {
-             Q_product  *= pow( y0[ ind_cn ], (double) stn );
+             Q_product  *= pow( y0[ ind_cn ], rstoi );
           }
        }
 
@@ -2062,12 +2080,12 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
     for ( int i = 0; i < num_comp; i++ )
     {
        yt[ i ] = 0.0;
+       US_AstfemMath::ComponentRole* cr = &af_params.role[ i ];
 
-       for ( int m = 0; m < af_params.role[ i ].assoc.size(); m++ )
+       for ( int m = 0; m < cr->rcomps.size(); m++ )
        {
-          yt[ i ] +=      - af_params.role[ i ].react[ m ] * 
-                   (double) af_params.role[ i ].st   [ m ] *
-                         Q[ af_params.role[ i ].assoc[ m ] ];
+          yt[ i ] += ( qAbs( (double)cr->stoichs[ m ] ) *
+                         Q[ cr->rcomps[ m ] ] );
        }
     }
 
@@ -2096,33 +2114,33 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
          double deriv_r    = 0.0;
          double deriv_p    = 0.0;
            
-         for( int n = 0; n < as->reaction_components.size(); n++ )
+         for( int n = 0; n < as->rcomps.size(); n++ )
          {
             // Local index of the n-th component in assoc[rule]
+            int    ind_cn = as->rcomps[ n ] ;
               
-            int ind_cn = as->reaction_components[ n ] ;
-              
-            // Stoich of n-th comp in the rule
-            double stn = as->stoichiometry[ n ];
+            // Stoichiometry of n-th comp in the rule
+            int    kstoi  = as->stoichs[ n ] ;
+            int    react  = ( kstoi < 0 ) ? -1 : 1;
+            double rstoi  = (double)( kstoi * react );
 
             // comp[j] is in the rule
-            if ( as->reaction_components[ n ] == j ) 
+            if ( as->rcomps[ n ] == j ) 
             {
-               // comp[n] is reactant
-               if ( as->reaction_components[ n ] == 1 )   
-                  deriv_r = stn * pow( y0[ ind_cn ], stn - 1.0 );
+               if ( react > 0 ) // comp[n] is reactant
+                  deriv_r = rstoi * pow( y0[ ind_cn ], rstoi - 1.0 );
                   
-               else      // comp[n] in this rule is reactant
-                  deriv_p = stn * pow( y0[ ind_cn ], stn - 1.0 );
+               else             // comp[n] in this rule is product
+                  deriv_p = rstoi * pow( y0[ ind_cn ], rstoi - 1.0 );
             }
-            else              // comp[j] is not in the rule
+
+            else                // comp[j] is not in the rule
             {
-               // comp[n] is reactant
-               if ( as->reaction_components[ n ] == 1 )
-                  Q_reactant *= pow( y0[ ind_cn ], stn );
+               if ( react > 0 ) // comp[n] is reactant
+                  Q_reactant *= pow( y0[ ind_cn ], rstoi );
                   
-               else    // comp[n] in this rule is reactant
-                  Q_product *= pow( y0[ ind_cn ], stn );
+               else             // comp[n] in this rule is product
+                  Q_product *= pow( y0[ ind_cn ], rstoi );
             }
          }
 
@@ -2132,15 +2150,16 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
 
    for ( int i = 0; i < num_comp; i++ )
    {
+      US_AstfemMath::ComponentRole* cr = &af_params.role[ i ];
+
       for ( int j = 0; j < num_comp; j++ )
       {
          dfdy[ i ][ j ] = 0.0;
 
-         for ( int m = 0; m < af_params.role[ i ].assoc.size(); m++ )
+         for ( int m = 0; m < cr->rcomps.size(); m++ )
          {
-            dfdy[ i ][ j ] += - af_params.role[ i ].react[ m ] * 
-                       (double) af_params.role[ i ].st   [ m ] * 
-                            QC[ af_params.role[ i ].assoc[ m ] ][ j ];
+            dfdy[ i ][ j ] += ( qAbs( (double)cr->stoichs[ m ] ) * 
+                                 QC[ cr->rcomps[ m ] ][ j ] );
          }
       }
    }
@@ -2764,7 +2783,6 @@ void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData&     edata,
 
    edata.description = fdata.id;
    edata.cell        = fdata.cell;
-   edata.scanData.clear();
    edata.scanData.resize( nscan );
 
    for ( int ii = 0; ii < nscan; ii++ )
@@ -2777,18 +2795,18 @@ void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData&     edata,
       escan->seconds     = fscan->time;
       escan->omega2t     = fscan->omega_s_t;
       escan->plateau     = fdata.radius[ nconc - 1 ];
-      escan->readings.clear();
+      escan->readings.resize( nconc );
 
       for ( int jj = 0; jj < nconc; jj++ )
       {
-         escan->readings.append( US_DataIO2::Reading( fscan->conc[ jj ] ) );
+         escan->readings[ jj ] = US_DataIO2::Reading( fscan->conc[ jj ] );
       }
    }
 
-   edata.x.clear();
+   edata.x.resize( nconc );
 
    for ( int jj = 0; jj < nconc; jj++ )
    {
-      edata.x.append( fdata.radius[ jj ] );
+      edata.x[ jj ] = fdata.radius[ jj ];
    }
 }

@@ -147,15 +147,15 @@ class US_EXTERN US_Model
          double      extinction;           //!< Coefficient of light extinction
                                            //!<   at model wavelength
          double      axial_ratio;          //!< Ratio of major/minor shape axes
-         double      sigma;   //!< Concentration dependency of s
-         double      delta;   //!< Concentration dependency of D
+         double      sigma;         //!< Concentration dependency of s
+         double      delta;         //!< Concentration dependency of D
          int         stoichiometry; //!< Molecule count for this experiment
                                     //!<   (e.g. dimer = 2)
-         ShapeType   shape;   //!< Classification of shape
-         QString     name;    //!< Descriptive name
-         int         analyte_type; //!< Protein, RNA, DNA, Corbohydrate, etc
-         MfemInitial c0;      //!< The radius/concentration points for a
-                              //!<   user-defined initial concentration grid
+         ShapeType   shape;         //!< Classification of shape
+         QString     name;          //!< Descriptive name
+         int         analyte_type;  //!< Protein, RNA, DNA, Corbohydrate, etc
+         MfemInitial c0;            //!< The radius/concentration points for a
+                                    //!< user-defined initial concentration grid
       };
 
       //! The chemical constants associated with a reaction.
@@ -163,15 +163,13 @@ class US_EXTERN US_Model
       {
          public:
          Association();
-         double k_eq;  //!< Equilibrium Constant
-         double k_off; //!< Dissociation Constant 
-      
-         //! A list of all system components involved in this reaction
-         QVector< int >  reaction_components;   
-
-         //! Stoichiometry of components in chemical equation.
-         //! Positive for reactant, negative for product
-         QVector< int >  stoichiometry; 
+         double k_eq;             //!< Equilibrium Constant
+         double k_off;            //!< Dissociation Constant 
+         QVector< int > rcomps;   //!< List of all system components
+                                  //!<  involved in this reaction
+         QVector< int > stoichs;  //!< List of Stoichiometry values of
+                                  //!<  components in chemical equation.
+                                  //!<  Positive->reactant; negative->product
 
          //! A test for equal Associations
          bool operator== ( const Association& ) const;

@@ -66,11 +66,13 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
   
    QStringList headers;
    headers << "" << "Analyte 1" << "Analyte 2" << "<==>" << "Product" 
-           << "K_dissociation\n(molar units)" << "k_off Rate\n(moles/sec)";
-   tw->setMinimumWidth( 550 );
-   tw->setRowHeight( 0, fm->height() + 4 );
-   tw->setColumnWidth( 0, fm->width( "D" ) + 6 );
-   tw->setColumnWidth( 3, fm->width( "<==>" ) + 6 );
+           << "K_equilibrium\n(molar units)" << "k_off Rate\n(moles/sec)";
+   tw->setMinimumWidth( 580 );
+   tw->setRowHeight(   0, fm->height() + 4 );
+   tw->setColumnWidth( 0, fm->width( "D"          ) + 6 );
+   tw->setColumnWidth( 3, fm->width( "<==>"       ) - 2 );
+   tw->setColumnWidth( 5, fm->width( "1.1234e+00" ) + 6 );
+   tw->setColumnWidth( 6, fm->width( "1.1234e+00" ) + 6 );
 
    new_row();
 
@@ -111,17 +113,17 @@ void US_AssociationsGui::populate( void )
       US_Model::Association* as    = &model.associations[ i ];
       
       // First set koff and keq
-      QString s = QString::number( as->k_eq, 'e', 4 );
+      QString s = QString::number( as->k_eq,  'e', 4 );
       tw->setItem( i, 5, new QTableWidgetItem( s ) );
 
-      s = QString::number( as->k_off, 'e', 4 );
+              s = QString::number( as->k_off, 'e', 4 );
       tw->setItem( i, 6, new QTableWidgetItem( s ) );
 
 
       // reaction_components must be size 2 or 3 
       set_component( index++, i, 1 );
       
-      if ( as->reaction_components.size() > 2 )
+      if ( as->rcomps.size() > 2 )
          set_component( index++, i, 2 );
 
       set_component( index++, i, 4 );
@@ -132,8 +134,11 @@ void US_AssociationsGui::set_component( int index, int row, int col )
 {
    US_Model::Association* as = &model.associations[ row ];
          
-   int     component = as->reaction_components[ index ];
+   int     component = as->rcomps[ index ];
    QString s         = lw_analytes->item( component )->text();
+   int     kstoi     = model.components[ component ].stoichiometry;
+           kstoi     = ( kstoi < 0 ) ? -kstoi : kstoi;
+           s         = s.left( 1 ) + QString::number( kstoi );
    tw->setItem( row, col, new QTableWidgetItem( s ) );
 
    qApp->processEvents();  // Let the signals work
@@ -145,7 +150,7 @@ void US_AssociationsGui::set_component( int index, int row, int col )
    w              = L->itemAt( 0 )->widget();
    QwtCounter*  c = dynamic_cast< QwtCounter* >( w );
 
-   c->setValue( fabs( as->stoichiometry[ index ] ) ); 
+   c->setValue( fabs( as->stoichs[ index ] ) ); 
 }
 
 void US_AssociationsGui::changed( int row, int col )
@@ -159,10 +164,12 @@ void US_AssociationsGui::changed( int row, int col )
       double value = item->text().toDouble();
       item->setText( QString::number( value, 'e', 4 ) );
    }
+
    else if ( col == 3 )
    {
       item->setText( QString() );
    }
+
    else
    {
       QWidget*     w = new QWidget;
@@ -175,8 +182,18 @@ void US_AssociationsGui::changed( int row, int col )
       L->addWidget( c );
 
       QString text = item->text().left( 1 );
+      QString sscr = item->text().mid( 1 );
+
+      if ( sscr.startsWith( " " ) )
+      {
+         int index = lw_analytes->currentRow();
+         int cstoi = model.components[ index ].stoichiometry;
+             cstoi = ( cstoi < 0 ) ? -cstoi : cstoi;
+             sscr  = QString::number( cstoi );
+      }
+
       delete item;
-      QLabel* label = us_label( text + "<sub>1</sub>" );
+      QLabel* label = us_label( text + "<sub>" + sscr + "</sub>" );
       label->setPalette( US_GuiSettings::editColor() );
       L->addWidget( label );
       tw->setCellWidget( row, col, w );
@@ -237,7 +254,7 @@ void US_AssociationsGui::complete( void )
 
       // If koff and keq are not set, the default is zero
       item = tw->item( i, 5 );
-      if ( item != 0 ) association.k_eq = item->text().toDouble();
+      if ( item != 0 ) association.k_eq  = item->text().toDouble();
 
       item = tw->item( i, 6 );
       if ( item != 0 ) association.k_off = item->text().toDouble();
@@ -253,11 +270,11 @@ void US_AssociationsGui::complete( void )
             w     = L->itemAt( 0 )->widget();
             c     = dynamic_cast< QwtCounter* >( w );
             count = (int) c->value(); 
-            association.stoichiometry << count;
+            association.stoichs << count;
 
             w     = L->itemAt( 1 )->widget();
             index = dynamic_cast< QLabel* >( w )->text().at( 0 ).cell() - 'A';
-            association.reaction_components << index;
+            association.rcomps  << index;
 
             stoich = model.components[ index ].stoichiometry;
 
@@ -276,11 +293,11 @@ void US_AssociationsGui::complete( void )
             w     = L->itemAt( 0 )->widget();
             c     = dynamic_cast< QwtCounter* >( w );
             count = (int) c->value(); 
-            association.stoichiometry << count;
+            association.stoichs << count;
 
             w     = L->itemAt( 1 )->widget();
             index = dynamic_cast< QLabel* >( w )->text().at( 0 ).cell() - 'A';
-            association.reaction_components << index;
+            association.rcomps  << index;
 
             stoich = model.components[ index ].stoichiometry;
 
@@ -299,11 +316,11 @@ void US_AssociationsGui::complete( void )
             w     = L->itemAt( 0 )->widget();
             c     = dynamic_cast< QwtCounter* >( w );
             count = (int) c->value(); 
-            association.stoichiometry << -count;
+            association.stoichs << -count;
 
             w     = L->itemAt( 1 )->widget();
             index = dynamic_cast< QLabel* >( w )->text().at( 0 ).cell() - 'A';
-            association.reaction_components << index;
+            association.rcomps  << index;
 
             stoich = model.components[ index ].stoichiometry;
 

@@ -60,16 +60,16 @@ US_Model::Association::Association()
 {
    k_eq  = 0.0;
    k_off = 0.0;
-   reaction_components.clear();
-   stoichiometry      .clear();
+   rcomps .clear();
+   stoichs.clear();
 }
 
 bool US_Model::Association::operator== ( const Association& a ) const
 {
-   if ( k_eq                != a.k_eq                ) return false;
-   if ( k_off               != a.k_off               ) return false;
-   if ( reaction_components != a.reaction_components ) return false;
-   if ( stoichiometry       != a.stoichiometry       ) return false;
+   if ( k_eq    != a.k_eq    ) return false;
+   if ( k_off   != a.k_off   ) return false;
+   if ( rcomps  != a.rcomps  ) return false;
+   if ( stoichs != a.stoichs ) return false;
 
    return true;
 }
@@ -528,6 +528,10 @@ void US_Model::mfem_scans( QXmlStreamReader& xml, SimulationComponent& sc )
 
 void US_Model::get_associations( QXmlStreamReader& xml, Association& as )
 {
+   QXmlStreamAttributes a = xml.attributes();
+   as.k_eq  = a.value( "k_eq"  ).toString().toDouble();
+   as.k_off = a.value( "k_off" ).toString().toDouble();
+
    while ( ! xml.atEnd() )
    {
       xml.readNext();
@@ -536,10 +540,10 @@ void US_Model::get_associations( QXmlStreamReader& xml, Association& as )
       {
          if ( xml.name() == "component" )
          {
-            QXmlStreamAttributes a = xml.attributes();
+            a = xml.attributes();
 
-            as.reaction_components << a.value( "index"  ).toString().toInt();
-            as.stoichiometry       << a.value( "stoich" ).toString().toInt();
+            as.rcomps  << a.value( "index"  ).toString().toInt();
+            as.stoichs << a.value( "stoich" ).toString().toInt();
          }
          else 
             break;
@@ -716,15 +720,15 @@ void US_Model::write_temp( QTemporaryFile& file )
    {
       Association* as = &associations[ i ];
       xml.writeStartElement( "association" );
-      xml.writeAttribute( "k_eq", QString::number( as->k_eq ) );
+      xml.writeAttribute( "k_eq",  QString::number( as->k_eq  ) );
       xml.writeAttribute( "k_off", QString::number( as->k_off ) );
 
-      for ( int j = 0; j < as->reaction_components.size(); j++ )
+      for ( int j = 0; j < as->rcomps.size(); j++ )
       {
          xml.writeStartElement( "component" );
 
-         QString index  = QString::number( as->reaction_components[ j ] );
-         QString stoich = QString::number( as->stoichiometry      [ j ] );
+         QString index  = QString::number( as->rcomps [ j ] );
+         QString stoich = QString::number( as->stoichs[ j ] );
 
          xml.writeAttribute( "index",  index  );
          xml.writeAttribute( "stoich", stoich );
