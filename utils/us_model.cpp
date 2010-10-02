@@ -477,6 +477,8 @@ int US_Model::load( const QString& filename )
             sc.molar_concentration  = a.value( "molar"  ).toString().toDouble();
             sc.signal_concentration = a.value( "signal" ).toString().toDouble();
             sc.stoichiometry        = a.value( "stoich" ).toString().toInt();
+            if ( sc.stoichiometry == 0 )
+               sc.stoichiometry        = 1;
             sc.shape                =
                (ShapeType)a.value( "shape"  ).toString().toInt();
             sc.analyte_type         = a.value( "type"   ).toString().toInt();

@@ -26,6 +26,7 @@ US_Properties::US_Properties(
 
    oldRow   = -1;
    inUpdate = false;
+   chgStoi  = false;
 
    normal = US_GuiSettings::editColor();
 
@@ -143,7 +144,7 @@ US_Properties::US_Properties(
 
    // Row
    QGridLayout* mw_layout = us_checkbox( 
-      tr( "Molecular Wt/Stoichiometry" ), cb_mw );
+      tr( "Molecular Wt/Stoichiometry" ), cb_mw, true );
    connect( cb_mw, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( mw_layout, row, 0 );
 
@@ -165,7 +166,7 @@ US_Properties::US_Properties(
 
    // Row
    QGridLayout* f_f0_layout = 
-      us_checkbox( tr( "Frictional Ratio (f/f0) (20W)" ), cb_f_f0 );
+      us_checkbox( tr( "Frictional Ratio (f/f0) (20W)" ), cb_f_f0, true );
    
    connect( cb_f_f0, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( f_f0_layout, row, 0 );
@@ -178,7 +179,7 @@ US_Properties::US_Properties(
    
    // Row 
    QGridLayout* s_layout = us_checkbox(
-      tr( "Sedimentation Coeff. (s) (20W)" ), cb_s, true );
+      tr( "Sedimentation Coeff. (s) (20W)" ), cb_s );
    connect( cb_s, SIGNAL( toggled( bool ) ), SLOT( calculate( bool) ) );
    main->addLayout( s_layout, row, 0 );
 
@@ -188,7 +189,7 @@ US_Properties::US_Properties(
 
    // Row
    QGridLayout* D_layout = us_checkbox(
-      tr( "Diffusion Coeff. (D) (20W)" ), cb_D, true );
+      tr( "Diffusion Coeff. (D) (20W)" ), cb_D );
    connect( cb_D, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( D_layout, row, 0 );
 
@@ -354,13 +355,16 @@ void US_Properties::set_stoich( double stoich )
 
    inUpdate = true;
 
-   //sc->mw /= sc->stoichiometry;  // Get monomer mw
-   //sc->mw *= stoich;             // Now adjust for new stoichiometry
-   //le_mw->setText( QString::number( sc->mw, 'e', 3 ) );
+   sc->mw /= sc->stoichiometry;  // Get monomer mw
+   sc->mw *= stoich;             // Now adjust for new stoichiometry
+   le_mw->setText( QString::number( sc->mw, 'e', 3 ) );
 
-   //sc->extinction /= sc->stoichiometry;
-   //sc->extinction *= stoich;
-   //le_extinction->setText( QString::number( sc->extinction, 'e', 4 ) );
+   if ( ! cb_mw->isChecked() )
+      enable( le_mw  , false, gray );
+
+   sc->extinction /= sc->stoichiometry;
+   sc->extinction *= stoich;
+   le_extinction->setText( QString::number( sc->extinction, 'e', 4 ) );
 
    sc->stoichiometry = (int) stoich;
 
@@ -374,8 +378,32 @@ void US_Properties::set_stoich( double stoich )
 
    set_molar();
    //inUpdate = false;
-   select_shape( sc->shape );
-   inUpdate = false;
+   //select_shape( sc->shape );
+
+   bool mwuck = ! cb_mw->isChecked();
+   bool scck  = cb_s ->isChecked();
+
+   if ( mwuck )
+   {  // if MW unchecked, fake it for re-calculate coeffs phase
+     cb_mw->setChecked( true  );
+     cb_s ->setChecked( false );
+   }
+
+   inUpdate  = false;
+   chgStoi   = true;
+
+   // re-calculate coefficients based on stoichiometry,mw changes
+   calculate();
+
+   chgStoi   = false;
+   if ( mwuck )
+   {  // if MW was unchecked, restore check state to pre-calc state
+      inUpdate  = true;
+      cb_mw->setChecked( false );
+      cb_s ->setChecked( scck );
+      checkbox();
+      inUpdate  = false;
+   }
 }
 
 void US_Properties::edit_component( void )
@@ -735,6 +763,11 @@ void US_Properties::simulate( void )
    else
       analyte.analyteGUID = sc->analyteGUID;
 
+   if ( sc->name.isEmpty() )
+      analyte.description.clear();
+   else
+      analyte.description = sc->name;
+
    //hydro_data.density     = buffer.density;
    //hydro_data.viscosity   = buffer.viscosity;
    //hydro_data.vbar        = analyte.vbar20;
@@ -788,29 +821,29 @@ void US_Properties::new_hydro( US_Analyte ad )
    sc->analyteGUID = ad.analyteGUID;
 
    // Set extinction
-   double          value = 0.0;
-   QList< double > keys;
+   double exval = sc->extinction;
+   //QList< double > keys;
 
    switch ( model.optics )
    {
       case US_Model::ABSORBANCE:
          if ( analyte.extinction.size() > 0 )
-            value = analyte.extinction[ model.wavelength ] * sc->stoichiometry;
+            exval = analyte.extinction[ model.wavelength ] * sc->stoichiometry;
          break;
 
       case US_Model::INTERFERENCE:
          if ( analyte.refraction.size() > 0 )
-            value = analyte.refraction[ model.wavelength ] * sc->stoichiometry;
+            exval = analyte.refraction[ model.wavelength ] * sc->stoichiometry;
          break;
 
       case US_Model::FLUORESCENCE:
          if ( analyte.fluorescence.size() > 0 )
-            value = analyte.fluorescence[ model.wavelength ] * sc->stoichiometry;
+            exval = analyte.fluorescence[ model.wavelength ] * sc->stoichiometry;
          break;
    }
 
-   le_extinction->setText( QString::number( value, 'e', 4 ) );
-   sc->extinction = value;
+   le_extinction->setText( QString::number( exval, 'e', 4 ) );
+   sc->extinction = exval;
 
    // Set vbar(20), mw
    le_mw  ->setText( QString::number( hydro_data.mw,   'e', 3 ) );
@@ -950,13 +983,16 @@ bool US_Properties::keep_standard( void )
 
 void US_Properties::calculate( void )
 {
-   if ( inUpdate )
+   int    row  = lw_components->currentRow();
+
+   if ( inUpdate  ||  row < 0 )
       return;
+
+   US_Model::SimulationComponent* sc = &model.components[ row ];
 
    checkbox();
 
    // First do some sanity checking
-   int    row  = lw_components->currentRow();
    double vbar = le_vbar->text().toDouble();
 
    if ( row < 0  ||  vbar <= 0.0 )
@@ -980,10 +1016,9 @@ void US_Properties::calculate( void )
    cb_s   ->setEnabled( cb_s   ->isChecked() );
    cb_D   ->setEnabled( cb_D   ->isChecked() );
    
-   US_Model::SimulationComponent* sc = &model.components[ row ];
-
    // set values for checked boxes; clear others
-   sc->mw   = cb_mw  ->isChecked() ? le_mw  ->text().toDouble() : 0.0;
+   sc->mw   = cb_mw  ->isChecked() ? le_mw  ->text().toDouble() :
+                         ( chgStoi ? sc->mw : 0.0 );
    sc->f_f0 = cb_f_f0->isChecked() ? le_f_f0->text().toDouble() : 0.0;
    sc->f    = cb_f   ->isChecked() ? le_f   ->text().toDouble() : 0.0;
    sc->s    = cb_s   ->isChecked() ? le_s   ->text().toDouble() : 0.0;
