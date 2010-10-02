@@ -42,11 +42,14 @@ class US_Properties : public US_WidgetsDialog
       // Passed parameters
       US_Buffer  buffer;
       US_Model&  model;
+
       int        investigator;
-      bool       db_access;
-                
-      bool       inUpdate;
       int        oldRow;
+
+      bool       db_access;
+      bool       inUpdate;
+      bool       chgStoi;
+                
       US_Analyte analyte;
 
       enum { MW, S, D, F, F_F0 }  check_type;

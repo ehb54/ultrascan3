@@ -66,7 +66,7 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
   
    QStringList headers;
    headers << "" << "Analyte 1" << "Analyte 2" << "<==>" << "Product" 
-           << "K_equilibrium\n(molar units)" << "k_off Rate\n(moles/sec)";
+           << "K_association\n(molar units)" << "K_off Rate\n(1/sec)";
    tw->setMinimumWidth( 580 );
    tw->setRowHeight(   0, fm->height() + 4 );
    tw->setColumnWidth( 0, fm->width( "D"          ) + 6 );
