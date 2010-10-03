@@ -248,8 +248,6 @@ RunDetails_F::~RunDetails_F()
 
 void RunDetails_F::create_gui()
 {
-
-   int xpos, ypos;
    unsigned int i, j, k;
    QString str;
 
@@ -263,10 +261,8 @@ void RunDetails_F::create_gui()
    diagnose_plt->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
    diagnose_plt->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    diagnose_plt->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-   //diagnose_plt->setPlotBackground(USglobal->global_colors.plot);      //old version
    diagnose_plt->setCanvasBackground(USglobal->global_colors.plot);      //new version
    diagnose_plt->setMargin(USglobal->config_list.margin);
-   //   diagnose_plt->setGeometry(0, 0, 666, 285);
    diagnose_plt->enableAxis(QwtPlot::yLeft);
    diagnose_plt->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    diagnose_plt->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -276,96 +272,68 @@ void RunDetails_F::create_gui()
    diagnose_plt->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    diagnose_plt->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   xpos = 7;
-   ypos = 291;
-
    pb_help = new QPushButton(tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setAutoDefault(false);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   pb_help->setGeometry(xpos, ypos, 70, 31);
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
-
-   xpos += 72;
 
    pb_cancel = new QPushButton(tr("Cancel"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setAutoDefault(false);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   pb_cancel->setGeometry(xpos, ypos, 70, 31);
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
    connect(pb_cancel, SIGNAL(clicked()), SIGNAL(clicked()));
-
-   xpos += 72;
 
    pb_accept = new QPushButton(tr("Accept"), this);
    Q_CHECK_PTR(pb_accept);
    pb_accept->setAutoDefault(false);
    pb_accept->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_accept->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   pb_accept->setGeometry(xpos, ypos, 70, 31);
    connect(pb_accept, SIGNAL(clicked()), SLOT(accept()));
    connect(pb_accept, SIGNAL(clicked()), SIGNAL(clicked()));
-
-   xpos += 72;
 
    pb_plot_type = new QPushButton(tr("Time Plot"), this);
    Q_CHECK_PTR(pb_plot_type);
    pb_plot_type->setAutoDefault(false);
    pb_plot_type->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_plot_type->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   pb_plot_type->setGeometry(xpos, ypos, 98, 31);
    connect(pb_plot_type, SIGNAL(clicked()), SLOT(plot_type()));
    connect(pb_plot_type, SIGNAL(clicked()), SIGNAL(clicked()));
-
-
-   xpos += 105;
 
    directory_lbl1 = new QLabel(tr(" Data Directory:"), this);
    directory_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    directory_lbl1->setAlignment(AlignLeft|AlignVCenter);
-   directory_lbl1->setGeometry(xpos, ypos, 331, 31);
    directory_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    directory_le = new QLineEdit(this);
-   directory_le->setGeometry(xpos+108, ypos+3, 220, 26);
    directory_le->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    directory_le->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    directory_le->setReadOnly(true);
 
-   xpos = 7;
-   ypos += 38;
-
    temperature_lbl = new QLabel(tr(" Temperature Check:"), this);
    temperature_lbl->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    temperature_lbl->setAlignment(AlignLeft|AlignVCenter);
-   temperature_lbl->setGeometry(xpos, ypos, 207, 31);
    temperature_lbl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lcd1 = new QLabel("", this);
-   lcd1->setGeometry(xpos+140, ypos+7, 20, 16);
    lcd1->setFixedSize(20, 16);
    lcd1->setFrameStyle(QFrame::WinPanel|Sunken);
    lcd1->setPalette( QPalette(USglobal->global_colors.cg_dk_green, USglobal->global_colors.cg_dk_green, USglobal->global_colors.cg_dk_green) );
 
    lcd2 = new QLabel("", this);
-   lcd2->setGeometry(xpos+170, ypos+7, 20, 16);
    lcd2->setFixedSize(20, 16);
    lcd2->setFrameStyle(QFrame::WinPanel|Sunken);
    lcd2->setPalette( QPalette(USglobal->global_colors.cg_dk_red, USglobal->global_colors.cg_dk_red, USglobal->global_colors.cg_dk_red) );
 
-   xpos += 214;
-
    run_id_lbl1 = new QLabel(tr(" Run Identification:"), this);
    run_id_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    run_id_lbl1->setAlignment(AlignLeft|AlignVCenter);
-   run_id_lbl1->setGeometry(xpos, ypos, 214, 31);
    run_id_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    run_id_le = new QLineEdit(this);
-   run_id_le->setGeometry(xpos+120, ypos+3, 92, 26);
    run_id_le->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    run_id_le->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    run_id_le->setText((*run_inf).run_id);
@@ -380,71 +348,50 @@ void RunDetails_F::create_gui()
       run_id_le->setReadOnly(true);
    }
 
-   xpos += 222;
-
    data_cells_lbl1 = new QLabel(tr(" Cells with Data:"), this);
    data_cells_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    data_cells_lbl1->setAlignment(AlignLeft|AlignVCenter);
-   data_cells_lbl1->setGeometry(xpos, ypos, 216, 31);
    data_cells_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    data_cells_lbl2 = new QLabel("", this);
    data_cells_lbl2->setFrameStyle(QFrame::WinPanel|Sunken);
    data_cells_lbl2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    data_cells_lbl2->setAlignment(AlignLeft|AlignVCenter);
-   data_cells_lbl2->setGeometry(xpos+105, ypos+3, 108, 26);
    data_cells_lbl2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-   xpos = 7;
-   ypos += 33;
 
    avg_temperature_lbl1 = new QLabel(tr(" Avg. Temperature:"), this);
    avg_temperature_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    avg_temperature_lbl1->setAlignment(AlignLeft|AlignVCenter);
-   avg_temperature_lbl1->setGeometry(xpos, ypos, 207, 31);
    avg_temperature_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    avg_temperature_lbl2 = new QLabel("", this);
    avg_temperature_lbl2->setFrameStyle(QFrame::WinPanel|Sunken);
    avg_temperature_lbl2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    avg_temperature_lbl2->setAlignment(AlignLeft|AlignVCenter);
-   avg_temperature_lbl2->setGeometry(xpos+120, ypos+3, 84, 26);
    avg_temperature_lbl2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-   xpos += 214;
 
    cell_description_lbl1 = new QLabel(tr(" Cell Description:"), this);
    cell_description_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    cell_description_lbl1->setAlignment(AlignLeft|AlignVCenter);
-   cell_description_lbl1->setGeometry(xpos, ypos, 438, 31);
    cell_description_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    cell_description = new QLineEdit(this);
-   cell_description->setGeometry(xpos+120, ypos+3, 315, 26);
    cell_description->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    cell_description->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cell_description, SIGNAL(textChanged(const QString &)), this, SLOT(update_cell(const QString &)));
 
-   xpos = 7;
-   ypos += 33;
-
    run_length_lbl1 = new QLabel(tr(" Length of Run:"), this);
    run_length_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    run_length_lbl1->setAlignment(AlignLeft|AlignVCenter);
-   run_length_lbl1->setGeometry(xpos, ypos, 207, 31);
    run_length_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    run_length_lbl2 = new QLabel("", this);
    run_length_lbl2->setFrameStyle(QFrame::WinPanel|Sunken);
    run_length_lbl2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    run_length_lbl2->setAlignment(AlignLeft|AlignVCenter);
-   run_length_lbl2->setGeometry(xpos+120, ypos+3, 84, 26);
    run_length_lbl2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   xpos += 214;
-
    cell_select = new QListBox(this, "Model");
-   cell_select->setGeometry(xpos,ypos, 100, 97);
    cell_select->insertItem(tr("Cell 1"));
    cell_select->insertItem(tr("Cell 2"));
    cell_select->insertItem(tr("Cell 3"));
@@ -459,52 +406,39 @@ void RunDetails_F::create_gui()
    cell_select->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    connect(cell_select, SIGNAL(highlighted(int)), SLOT(show_cell(int)));
 
-   xpos += 107;
-
    wavelength1_lbl1 = new QLabel(tr(" Wavelength 1:"), this);
    wavelength1_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    wavelength1_lbl1->setAlignment(AlignLeft|AlignVCenter);
-   wavelength1_lbl1->setGeometry(xpos, ypos, 207, 31);
    wavelength1_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    wavelength1_lbl2 = new QLabel(tr("no Data available"), this);
    wavelength1_lbl2->setFrameStyle(QFrame::WinPanel|Sunken);
    wavelength1_lbl2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    wavelength1_lbl2->setAlignment(AlignLeft|AlignVCenter);
-   wavelength1_lbl2->setGeometry(xpos+90, ypos+3, 114, 26);
    wavelength1_lbl2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-   xpos += 207;
 
    scans1_lbl1 = new QLabel(tr(" Scans:"), this);
    scans1_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    scans1_lbl1->setAlignment(AlignLeft|AlignVCenter);
-   scans1_lbl1->setGeometry(xpos, ypos, 124, 31);
    scans1_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    scans1_lbl2 = new QLabel("", this);
    scans1_lbl2->setFrameStyle(QFrame::WinPanel|Sunken);
    scans1_lbl2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    scans1_lbl2->setAlignment(AlignLeft|AlignVCenter);
-   scans1_lbl2->setGeometry(xpos+50, ypos+3, 71, 26);
    scans1_lbl2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-   xpos = 7;
-   ypos += 33;
 
    if (edit_type == 1 || edit_type == 3 || edit_type == 5)
    {
       time_correction_lbl1 = new QLabel(tr(" Time Correction:"), this);
       time_correction_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
       time_correction_lbl1->setAlignment(AlignLeft|AlignVCenter);
-      time_correction_lbl1->setGeometry(xpos, ypos, 207, 31);
       time_correction_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
       time_correction_lbl2 = new QLabel("", this);
       time_correction_lbl2->setFrameStyle(QFrame::WinPanel|Sunken);
       time_correction_lbl2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
       time_correction_lbl2->setAlignment(AlignLeft|AlignVCenter);
-      time_correction_lbl2->setGeometry(xpos+120, ypos+3, 84, 26);
       time_correction_lbl2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    }
    else if (edit_type == 2 || edit_type == 4)
@@ -513,11 +447,9 @@ void RunDetails_F::create_gui()
       rpm_list_lbl = new QLabel(tr(" Available\n Rotor\n Speeds:"), this);
       rpm_list_lbl->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
       rpm_list_lbl->setAlignment(AlignLeft|AlignVCenter);
-      rpm_list_lbl->setGeometry(xpos, ypos, 207, 64);
       rpm_list_lbl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
       rpm_list = new QListBox(this, "Speeds");
       rpm_list->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-      rpm_list->setGeometry(xpos+100,ypos+3, 104, 58);
       rpm_list->setFixedSize(104, 58);
       rpm_list->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
       connect(rpm_list, SIGNAL(highlighted(const QString &)), SLOT(show_speed(const QString &)));
@@ -538,92 +470,77 @@ void RunDetails_F::create_gui()
       }
       cell_select->setSelected(0, TRUE);
    }
-   xpos += 321;
 
    wavelength2_lbl1 = new QLabel(tr(" Wavelength 2:"), this);
    wavelength2_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    wavelength2_lbl1->setAlignment(AlignLeft|AlignVCenter);
-   wavelength2_lbl1->setGeometry(xpos, ypos, 207, 31);
    wavelength2_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    wavelength2_lbl2 = new QLabel(tr("no Data available"), this);
    wavelength2_lbl2->setFrameStyle(QFrame::WinPanel|Sunken);
    wavelength2_lbl2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    wavelength2_lbl2->setAlignment(AlignLeft|AlignVCenter);
-   wavelength2_lbl2->setGeometry(xpos+90, ypos+3, 114, 26);
    wavelength2_lbl2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-   xpos += 207;
 
    scans2_lbl1 = new QLabel(tr(" Scans:"), this);
    scans2_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    scans2_lbl1->setAlignment(AlignLeft|AlignVCenter);
-   scans2_lbl1->setGeometry(xpos, ypos, 124, 31);
    scans2_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    scans2_lbl2 = new QLabel("", this);
    scans2_lbl2->setFrameStyle(QFrame::WinPanel|Sunken);
    scans2_lbl2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    scans2_lbl2->setAlignment(AlignLeft|AlignVCenter);
-   scans2_lbl2->setGeometry(xpos+50, ypos+3, 71, 26);
    scans2_lbl2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-   xpos = 7;
-   ypos += 33;
 
    if (edit_type == 1 || edit_type == 3 || edit_type == 5)
    {
       speed_lbl1 = new QLabel(tr(" Rotor Speed:"), this);
       speed_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
       speed_lbl1->setAlignment(AlignLeft|AlignVCenter);
-      speed_lbl1->setGeometry(xpos, ypos, 207, 31);
       speed_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
       speed_lbl2 = new QLabel(tr("0 rpm"), this);
       speed_lbl2->setFrameStyle(QFrame::WinPanel|Sunken);
       speed_lbl2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
       speed_lbl2->setAlignment(AlignLeft|AlignVCenter);
-      speed_lbl2->setGeometry(xpos+120, ypos+3, 84, 26);
       speed_lbl2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    }
 
-   xpos += 321;
+   cellbottom_lbl1 = new QLabel(tr(" Bottom for this cell:"), this);
+   cellbottom_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
+   cellbottom_lbl1->setAlignment(AlignLeft|AlignVCenter);
+   cellbottom_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
+   cellbottom_lbl2 = new QLabel(tr(""), this);
+   cellbottom_lbl2->setFrameStyle(QFrame::WinPanel|Sunken);
+   cellbottom_lbl2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   cellbottom_lbl2->setAlignment(AlignLeft|AlignVCenter);
+   cellbottom_lbl2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   
    wavelength3_lbl1 = new QLabel(tr(" Wavelength 3:"), this);
    wavelength3_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    wavelength3_lbl1->setAlignment(AlignLeft|AlignVCenter);
-   wavelength3_lbl1->setGeometry(xpos, ypos, 207, 31);
    wavelength3_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    wavelength3_lbl2 = new QLabel(tr("no Data available"), this);
    wavelength3_lbl2->setFrameStyle(QFrame::WinPanel|Sunken);
    wavelength3_lbl2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    wavelength3_lbl2->setAlignment(AlignLeft|AlignVCenter);
-   wavelength3_lbl2->setGeometry(xpos+90, ypos+3, 114, 26);
    wavelength3_lbl2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-   xpos += 207;
 
    scans3_lbl1 = new QLabel(tr(" Scans:"), this);
    scans3_lbl1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
    scans3_lbl1->setAlignment(AlignLeft|AlignVCenter);
-   scans3_lbl1->setGeometry(xpos, ypos, 124, 31);
    scans3_lbl1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    scans3_lbl2 = new QLabel("", this);
    scans3_lbl2->setFrameStyle(QFrame::WinPanel|Sunken);
    scans3_lbl2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    scans3_lbl2->setAlignment(AlignLeft|AlignVCenter);
-   scans3_lbl2->setGeometry(xpos+50, ypos+3, 71, 26);
    scans3_lbl2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
    show_cell(0);
-   /*
-     global_Xpos += 30;
-     global_Ypos += 30;
-     setFixedSize(666,500);
-     move(global_Xpos, global_Ypos);
-   */
    setup_GUI();
    qApp->processEvents();
    plot_type();
@@ -638,8 +555,6 @@ void RunDetails_F::setup_GUI()
    button->addWidget(pb_cancel);
    button->addWidget(pb_accept);
    button->addWidget(pb_plot_type);
-   button->addWidget(directory_lbl1);
-   button->addWidget(directory_le);
    background->addLayout(button,1,0);
 
    QGridLayout * panel1 = new QGridLayout(5,2,2);
@@ -662,6 +577,8 @@ void RunDetails_F::setup_GUI()
       panel1->addWidget(time_correction_lbl2,3,1);
       panel1->addWidget(speed_lbl1,4,0);
       panel1->addWidget(speed_lbl2,4,1);
+      panel1->addWidget(cellbottom_lbl1,5,0);
+      panel1->addWidget(cellbottom_lbl2,5,1);
    }
    else if (edit_type == 2 || edit_type == 4)
    {
@@ -676,12 +593,14 @@ void RunDetails_F::setup_GUI()
    }
    panel2->setColStretch(1, 3);
    panel2->setColStretch(3, 2);
-   panel2->addWidget(run_id_lbl1,0,0);
-   panel2->addWidget(run_id_le,0,1);
-   panel2->addWidget(data_cells_lbl1,0,2);
-   panel2->addWidget(data_cells_lbl2,0,3);
-   panel2->addWidget(cell_description_lbl1,1,0);
-   panel2->addMultiCellWidget(cell_description,1,1,1,3);
+   panel2->addWidget(directory_lbl1,0,0);
+   panel2->addMultiCellWidget(directory_le,0,0,1,3);
+   panel2->addWidget(run_id_lbl1,1,0);
+   panel2->addWidget(run_id_le,1,1);
+   panel2->addWidget(data_cells_lbl1,1,2);
+   panel2->addWidget(data_cells_lbl2,1,3);
+   panel2->addWidget(cell_description_lbl1,2,0);
+   panel2->addMultiCellWidget(cell_description,2,2,1,3);
 
    QGridLayout * panel3 = new QGridLayout(3,5,2);
    for (int i=0; i<3; i++)
@@ -1054,10 +973,42 @@ void RunDetails_F::show_cell(int current_cell)
       scans2_lbl2->setText(tr("No Scans"));
       wavelength3_lbl2->setText(tr("No Data available"));
       scans3_lbl2->setText(tr("No Scans"));
+      if (edit_type == 1 || edit_type == 3 || edit_type == 5)
+      {
+         cellbottom_lbl2->setText("");
+      }      
    }
    else
    {
       cell_description->setText((*run_inf).cell_id[current_cell]);
+      if (edit_type == 1 || edit_type == 3 || edit_type == 5)
+      {
+         vector < rotorInfo > rotor_list;
+         vector <struct centerpieceInfo> cp_list;
+         cp_list.clear();
+         rotor_list.clear();
+         if (!readCenterpieceInfo(&cp_list))
+         {
+            QMessageBox::critical(0, "UltraScan Fatal Error:", "There was a problem opening the\n"
+                                  "centerpiece database file:\n\n"
+                                  + USglobal->config_list.system_dir + "/etc/centerpiece.dat\n\n"
+                                  "Please install the centerpiece database file\n"
+                                  "before proceeding.", QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+            exit(-1);
+         }
+         if (!readRotorInfo(&rotor_list))
+         {
+            QMessageBox::critical(0, "UltraScan Fatal Error:", "There was a problem opening the\n"
+                                  "rotor database file:\n\n"
+                                  + USglobal->config_list.system_dir + "/etc/rotor.dat\n\n"
+                                  "Please install the rotor database file\n"
+                                  "before proceeding.", QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+            exit(-1);
+         }
+         float bottom = calc_bottom(rotor_list, cp_list, (*run_inf).rotor, (*run_inf).centerpiece[current_cell],
+               0, (*run_inf).rpm[current_cell][0][0]);
+         cellbottom_lbl2->setText(str.sprintf(" %6.4f cm", bottom));
+      }
       wavelength1_lbl2->setText(str.sprintf("%d nm", (*run_inf).wavelength[current_cell][0]));
       scans1_lbl2->setText(str.sprintf("%d", (*run_inf).scans[current_cell][0]));
       if ((*run_inf).wavelength[current_cell][1] != 0)

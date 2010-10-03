@@ -11,7 +11,9 @@
 #include "us_util.h"
 #include "us_pixmap.h"
 #include "us_edscan.h"
+#include "us_math.h"
 #include <qradiobt.h>
+
 
 struct experiment_type
 {
@@ -127,6 +129,8 @@ class RunDetails_F : public QFrame
       QLabel *run_length_lbl2;
       QLabel *speed_lbl1;
       QLabel *speed_lbl2;
+      QLabel *cellbottom_lbl1;
+      QLabel *cellbottom_lbl2;
       QLabel *time_correction_lbl1;
       QLabel *time_correction_lbl2;
       QLabel *rpm_list_lbl;

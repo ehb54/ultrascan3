@@ -227,6 +227,7 @@ SOURCES += \
   src/us_register.cpp \
   src/us_reorder.cpp \
   src/us_resplot.cpp \
+  src/us_rotor_stretch.cpp \
   src/us_rundetails.cpp \
   src/us_sa2d.cpp \
   src/us_sa2d_control.cpp \
@@ -436,6 +437,7 @@ HEADERS += \
   include/us_register.h \
   include/us_reorder.h \
   include/us_resplot.h \
+  include/us_rotor_stretch.h \
   include/us_revision.h \
   include/us_rundetails.h \
   include/us_sa2d.h \
