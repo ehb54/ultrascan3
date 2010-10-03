@@ -1,3 +1,3 @@
 !include ( ../generic.pri ) error( "../generic.pri missing.  Aborting..." )
 
-TARGET = us_radial_calibration
+TARGET = us_radial_correction

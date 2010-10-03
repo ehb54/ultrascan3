@@ -39,8 +39,10 @@ class US_EXTERN US_RadialCorrection : public QFrame
       QPushButton *pb_process;
       QPushButton *pb_help;
       QPushButton *pb_close;
+      QPushButton *pb_reset;
       QLabel *lbl_banner1;
       QLabel *lbl_correction;
+      QLabel *lbl_scans;
       QwtCounter *cnt_correction;
       QProgressBar *pgb_progress;
 
@@ -59,6 +61,7 @@ class US_EXTERN US_RadialCorrection : public QFrame
       void process();
       void load();
       void help();
+      void reset();
       void set_correction(double);
 
 };

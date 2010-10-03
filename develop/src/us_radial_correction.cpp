@@ -1,5 +1,6 @@
 #include "../include/us_radial_correction.h"
 
+
 US_RadialCorrection::US_RadialCorrection(QWidget *p , const char *name) : QFrame(p, name)
 {
    USglobal = new US_Config();
@@ -8,7 +9,7 @@ US_RadialCorrection::US_RadialCorrection(QWidget *p , const char *name) : QFrame
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("UltraScan: Radial Correction Utility"));
 
-   lbl_banner1 = new QLabel(tr("Radial Calibration\nCorrection Routine"), this);
+   lbl_banner1 = new QLabel(tr(" Radial Calibration\nCorrection Routine "), this);
    Q_CHECK_PTR(lbl_banner1);
    lbl_banner1->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_banner1->setAlignment(AlignCenter|AlignVCenter);
@@ -25,7 +26,13 @@ US_RadialCorrection::US_RadialCorrection(QWidget *p , const char *name) : QFrame
    pb_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load, SIGNAL(clicked()), SLOT(load()));
 
-   lbl_correction = new QLabel(tr("Radial Calibration Correction distance (cm):"), this);
+   lbl_scans = new QLabel(tr(""), this);
+   Q_CHECK_PTR(lbl_scans);
+   lbl_scans->setAlignment(AlignLeft|AlignVCenter);
+   lbl_scans->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+   lbl_scans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+   lbl_correction = new QLabel(tr(" Radial Calibration Correction distance (cm): "), this);
    Q_CHECK_PTR(lbl_correction);
    lbl_correction->setAlignment(AlignLeft|AlignVCenter);
    lbl_correction->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -39,7 +46,7 @@ US_RadialCorrection::US_RadialCorrection(QWidget *p , const char *name) : QFrame
    cnt_correction->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_correction, SIGNAL(valueChanged(double)), SLOT(set_correction(double)));
 
-   pb_process = new QPushButton(tr("Apply Radial Correction"), this);
+   pb_process = new QPushButton(tr(" Apply Radial Correction "), this);
    Q_CHECK_PTR(pb_process);
    pb_process->setAutoDefault(false);
    pb_process->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -53,6 +60,13 @@ US_RadialCorrection::US_RadialCorrection(QWidget *p , const char *name) : QFrame
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
+   pb_reset = new QPushButton(tr("Reset"), this);
+   Q_CHECK_PTR(pb_reset);
+   pb_reset->setAutoDefault(false);
+   pb_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_reset->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_reset, SIGNAL(clicked()), SLOT(reset()));
+   
    pb_close = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_close);
    pb_close->setAutoDefault(false);
@@ -90,12 +104,14 @@ void US_RadialCorrection::setup_GUI()
    }
    grid->addMultiCellWidget(lbl_banner1, j, j, 0, 1);
    j++;
-   grid->addMultiCellWidget(pb_load, j, j, 0, 1);
+   grid->addWidget(pb_load, j, 0);
+   grid->addWidget(lbl_scans, j, 1);
    j++;
    grid->addWidget(lbl_correction, j, 0);
    grid->addWidget(cnt_correction, j, 1);
    j++;
-   grid->addMultiCellWidget(pb_process, j, j, 0, 1);
+   grid->addWidget(pb_process, j, 0);
+   grid->addWidget(pb_reset, j, 1);
    j++;
    grid->addMultiCellWidget(pgb_progress, j, j, 0, 1);
    j++;
@@ -111,19 +127,38 @@ void US_RadialCorrection::setup_GUI()
    this->setGeometry(global_Xpos, global_Ypos, r.width()+2*spacing, r.height()+2*spacing);
 }
 
+void US_RadialCorrection::reset()
+{
+   filenames.clear();
+   lbl_scans->setText("");
+   set_correction(0);
+   cnt_correction->setValue(0);
+   correction = 0.0;
+	pgb_progress->reset();
+}
+
 void US_RadialCorrection::load()
 {
-   QString filter, fileName, str, str1;
+   QString filter, fileName, str, str1, ext, c[8];
    QStringList sl;
+   unsigned int k;
    QFile f;
    filter = "*.RA? *.ra?";
-
+   reset();
+   for (k=0; k<8; k++)
+   {
+      c[k]="";
+   }
    // allow multiple files to be selected:
 
    sl = QFileDialog::getOpenFileNames(filter, USglobal->config_list.data_dir, 0, 0);
    for (QStringList::Iterator it=sl.begin(); it!=sl.end(); it++)
    {
       fileName = *it;
+      
+      ext = fileName.right(1);
+      k = ext.toUInt();
+      c[k-1] = ext;
       if (!fileName.isEmpty())
       {
          filenames.push_back(fileName);
@@ -147,6 +182,15 @@ void US_RadialCorrection::load()
          }
       }
    }
+   ext = "";
+   for (k=0; k<8; k++)
+   {
+      if (c[k] != "")
+      {
+         ext += c[k] + " "; 
+      }
+   }
+   lbl_scans->setText("Scans from cell " + ext + "are selected...");
 }
 
 void US_RadialCorrection::process()
@@ -165,6 +209,8 @@ void US_RadialCorrection::process()
       f.setName(filenames[i]);
       if (f.open(IO_ReadOnly))
       {
+         lbl_scans->setText("Updating " + filenames[i]);
+         qApp->processEvents();
          QTextStream ts(&f);
          str1 = ts.readLine();
          str2 = ts.readLine();
