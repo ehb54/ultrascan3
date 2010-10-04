@@ -136,9 +136,8 @@ void US_AssociationsGui::set_component( int index, int row, int col )
          
    int     component = as->rcomps[ index ];
    QString s         = lw_analytes->item( component )->text();
-   int     kstoi     = model.components[ component ].stoichiometry;
-           kstoi     = ( kstoi < 0 ) ? -kstoi : kstoi;
-           s         = s.left( 1 ) + QString::number( kstoi );
+   int     koligo    = model.components[ component ].oligomer;
+           s         = s.left( 1 ) + QString::number( koligo );
    tw->setItem( row, col, new QTableWidgetItem( s ) );
 
    qApp->processEvents();  // Let the signals work
@@ -187,9 +186,8 @@ void US_AssociationsGui::changed( int row, int col )
       if ( sscr.startsWith( " " ) )
       {
          int index = lw_analytes->currentRow();
-         int cstoi = model.components[ index ].stoichiometry;
-             cstoi = ( cstoi < 0 ) ? -cstoi : cstoi;
-             sscr  = QString::number( cstoi );
+         int colig = model.components[ index ].oligomer;
+             sscr  = QString::number( colig );
       }
 
       delete item;
@@ -247,7 +245,7 @@ void US_AssociationsGui::complete( void )
       QwtCounter* c;
       int         index;
       int         count;
-      int         stoich;
+      int         koligo;
       
       US_Model::Association association;
       QTableWidgetItem*     item;
@@ -276,9 +274,9 @@ void US_AssociationsGui::complete( void )
             index = dynamic_cast< QLabel* >( w )->text().at( 0 ).cell() - 'A';
             association.rcomps  << index;
 
-            stoich = model.components[ index ].stoichiometry;
+            koligo = model.components[ index ].oligomer;
 
-            moles_left += count * stoich;
+            moles_left += count * koligo;
          }
       }
 
@@ -299,9 +297,9 @@ void US_AssociationsGui::complete( void )
             index = dynamic_cast< QLabel* >( w )->text().at( 0 ).cell() - 'A';
             association.rcomps  << index;
 
-            stoich = model.components[ index ].stoichiometry;
+            koligo = model.components[ index ].oligomer;
 
-            moles_left += count * stoich;
+            moles_left += count * koligo;
          }
       }
 
@@ -322,9 +320,9 @@ void US_AssociationsGui::complete( void )
             index = dynamic_cast< QLabel* >( w )->text().at( 0 ).cell() - 'A';
             association.rcomps  << index;
 
-            stoich = model.components[ index ].stoichiometry;
+            koligo = model.components[ index ].oligomer;
 
-            moles_right += count * stoich;
+            moles_right += count * koligo;
          }
       }
 

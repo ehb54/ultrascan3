@@ -53,7 +53,6 @@ class US_ModelGui : public US_WidgetsDialog
 
       QLineEdit*     le_description;              
       QLineEdit*     le_investigator;
-      QLineEdit*     le_buffer;
       QLineEdit*     le_density;
       QLineEdit*     le_viscosity;
       QLineEdit*     le_compressibility;
@@ -87,8 +86,6 @@ class US_ModelGui : public US_WidgetsDialog
       void get_person        ( void );
       void update_person     ( int, const QString&, const QString& );
       void check_db          ( void );
-      void get_buffer        ( void );
-      void update_buffer     ( US_Buffer );
       void new_model         ( void );
       void delete_model      ( void );
       void associations      ( void );

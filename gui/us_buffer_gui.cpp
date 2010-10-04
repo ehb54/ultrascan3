@@ -1392,7 +1392,7 @@ void US_BufferGui::recalc_density( void )
      template file */
 void US_BufferGui::recalc_viscosity( void )
 {
-   buffer.viscosity = 100.0 * VISC_20W;
+   buffer.viscosity = VISC_20W;
 
    // Iterate over all components in this buffer
    for ( int i = 0; i < buffer.component.size(); i++) 
@@ -1415,7 +1415,7 @@ void US_BufferGui::recalc_viscosity( void )
          + bc->visc_coeff[ 3 ] * 1.0e-3 * c2 
          + bc->visc_coeff[ 4 ] * 1.0e-4 * c3
          + bc->visc_coeff[ 5 ] * 1.0e-6 * c4
-         - 100.0 * VISC_20W;
+         - VISC_20W;
       }
    }
 }

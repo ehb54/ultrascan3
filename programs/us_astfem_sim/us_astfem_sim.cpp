@@ -937,7 +937,7 @@ void US_Astfem_Sim::dump_simComponent( US_Model::SimulationComponent& sc )
    qDebug() << "axial_ratio" << sc.axial_ratio;
    qDebug() << "sigma" << sc.sigma;
    qDebug() << "delta" << sc.delta;
-   qDebug() << "stoichiometry" << sc.stoichiometry;
+   qDebug() << "oligomer" << sc.oligomer;
    qDebug() << "shape" << sc.shape;
    qDebug() << "name" << sc.name;
    qDebug() << "analyte_type" << sc.analyte_type;

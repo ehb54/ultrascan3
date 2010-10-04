@@ -24,15 +24,13 @@ class US_EXTERN US_Model
       enum ModelType { MANUAL, TWODSA, TWODSA_MW, GA, GA_MW, GA_RA, ONEDSA,
                        COFS, FE, GLOBAL };
 
-      int        iterations;      //!< The number of iterations accomplished in the analysis
-      double     density;         //!< The density of the buffer
-      double     viscosity;       //!< The viscosity of the buffer
-      double     compressibility; //!< The compressibility of the buffer
+      int        iterations;      //!< Number of iterations accomplished
+      double     density;         //!< Density of the buffer (water 20 d. C)
+      double     viscosity;       //!< Viscosity of buffer (water at 20 d. C)
+      double     compressibility; //!< Compressibility of the buffer (0)
       double     wavelength;      //!< Wavlength of the data acquisition
-      double     temperature;     //!< Temperature (C) of the acquisition
+      double     temperature;     //!< Temperature (20 C) of the acquisition
       QString    editGUID;        //!< Identifier of the edit data
-      QString    bufferGUID;      //!< Identifier of the buffer
-      QString    bufferDesc;      //!< Text description ofo the buffer
       QString    description;     //!< Text description of th emodel
       QString    modelGUID;       //!< Identifier of the model
       OpticsType optics;          //!< The optics used for the data acquisition
@@ -54,13 +52,13 @@ class US_EXTERN US_Model
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
       //!                    should be searched for the model
       //! \param guid      - The guid of the model to be loaded
-      //! \param db        - For DB access, A pointer to an open database connection
+      //! \param db        - For DB access, pointer to open database connection
       //! \returns         - The \ref US_DB2 retrun code for the operation
       int load( bool, const QString&, US_DB2* = 0 );
 
       //! An overloaded function to read a model from a database
       //! \param id        - Database ModelID
-      //! \param db        - For DB access, a pointer to an open database connection
+      //! \param db        - For DB access, pointer to open database connection
       //! \returns         - The \ref US_DB2 retrun code for the operation
       int load( const QString&, US_DB2* ); 
 
@@ -74,14 +72,15 @@ class US_EXTERN US_Model
       bool operator== ( const US_Model& ) const;      
 
       //! A test for model inequality
-      inline bool operator!= ( const US_Model& m ) const { return ! operator==(m); }
+      inline bool operator!= ( const US_Model& m )
+         const { return ! operator==(m); }
 
       //! Write a model to the disk or database
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
       //!                    should be used to save the model
       //! \param filename  - The filename (with path) where the xml file
       //!                    be written if disk access is specified
-      //! \param db        - For DB access, a pointer to an open database connection
+      //! \param db        - For DB access, pointer to open database connection
       //! \returns         - The \ref US_DB2 retrun code for the operation
       int write( bool, const QString&, US_DB2* = 0 );
 
@@ -149,7 +148,7 @@ class US_EXTERN US_Model
          double      axial_ratio;          //!< Ratio of major/minor shape axes
          double      sigma;         //!< Concentration dependency of s
          double      delta;         //!< Concentration dependency of D
-         int         stoichiometry; //!< Molecule count for this experiment
+         int         oligomer;      //!< Molecule count for this experiment
                                     //!<   (e.g. dimer = 2)
          ShapeType   shape;         //!< Classification of shape
          QString     name;          //!< Descriptive name

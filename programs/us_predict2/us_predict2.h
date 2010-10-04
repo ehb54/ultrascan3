@@ -62,7 +62,7 @@ class US_EXTERN US_Predict2 : public US_Widgets
       QPushButton* pb_mw_d;
       QPushButton* pb_s_d;
 
-      bool   check_valid( double, double );
+      bool   check_valid( double );
       double root       ( int   , double );
 
 	public slots:

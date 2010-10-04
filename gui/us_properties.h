@@ -20,13 +20,11 @@ class US_Properties : public US_WidgetsDialog
 
 	public:
       //! Constructor.
-      //! \param buf - The buffer to use in the analyte calculations
       //! \param mod - The model to use
       //! \param invID - The investigator ID in the database (-1 if not defined)
       //! \param access - A flag to determine if analyte data access should be
       //!          disk (false) or DB (true)
-      US_Properties( const US_Buffer&, 
-                     US_Model&,
+      US_Properties( US_Model&,
                      int  = -1,
                      bool = false );
    signals:
@@ -40,7 +38,6 @@ class US_Properties : public US_WidgetsDialog
 
    private:
       // Passed parameters
-      US_Buffer  buffer;
       US_Model&  model;
 
       int        investigator;
@@ -88,7 +85,7 @@ class US_Properties : public US_WidgetsDialog
       QCheckBox*   cb_f_f0;
       QCheckBox*   cb_co_sed;
 
-      QwtCounter*  ct_stoich;
+      QwtCounter*  ct_oligomer;
 
       void setInvalid    ( void );
       int  countChecks   ( void );
@@ -113,7 +110,7 @@ class US_Properties : public US_WidgetsDialog
       void load_c0       ( void );
       void co_sed        ( int );
       void set_molar     ( void );
-      void set_stoich    ( double );
+      void set_oligomer  ( double );
            
       void del_component ( void );
       void edit_component( void );

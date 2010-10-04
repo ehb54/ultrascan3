@@ -401,15 +401,15 @@ void US_Math2::data_correction( double t, SolutionData& d )
 
       exponent = ( c1 * t20 - c2 * sq( t20 ) ) / ( t + c3 );
       
-      d.viscosity_wt = 100.0 * VISC_20W * pow( 10.0, exponent );
+      d.viscosity_wt = VISC_20W * pow( 10.0, exponent );
    }
 
    d.density_tb   = d.density * d.density_wt / DENS_20W;
-   d.viscosity_tb = d.viscosity * d.viscosity_wt / ( 100.0 * VISC_20W );
+   d.viscosity_tb = d.viscosity * d.viscosity_wt / VISC_20W;
    d.buoyancyb    = 1.0 - d.vbar * d.density_tb;
    d.buoyancyw    = 1.0 - d.vbar20 * DENS_20W;
    d.correction   = d.buoyancyw / d.buoyancyb * 
-                    d.viscosity_tb / ( 100.0 * VISC_20W );
+                    d.viscosity_tb / VISC_20W;
 }
 
 double US_Math2::normal_distribution( double sigma, double mean, double x )
