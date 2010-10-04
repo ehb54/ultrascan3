@@ -800,6 +800,10 @@ void US_ExpData_DB::update_rotor( int rotor )
    case 2:
       lbl_rt->setText( "AN60" );
       break;
+
+   case 3:
+      lbl_rt->setText( "AN60-Titanium" );
+      break;
    }
 }
 

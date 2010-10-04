@@ -18,33 +18,33 @@ namespace us_win_data
    enum
       {
          P_CONFIG = 300, P_ADMIN ,
-         P_VELOC_ABSORB, P_VELOC_INTERF, P_VELOC_FLUOR,
-         P_EQUIL_ABSORB, P_EQUIL_INTERF, P_EQUIL_FLUOR,
+         P_VELOC_ABSORB, P_VELOC_INTERF,   P_VELOC_FLUOR,
+         P_EQUIL_ABSORB, P_EQUIL_INTERF,   P_EQUIL_FLUOR,
          P_EDIT_WAVE,    P_VIEW_MWL,   
 
-         P_VHW_ENH,      P_FEMATCH,      P_FEMATCH_RA,   P_GAINIT1, P_GAINIT2,
-         P_FEDUD,        P_SECM,         P_DCDT,         P_DCDR,    P_COFS,
+         P_VHW_ENH,      P_FEMATCH,        P_FEMATCH_RA,   P_GAINIT1,      P_GAINIT2,
+         P_FEDUD,        P_SECM,           P_DCDT,         P_DCDR,         P_COFS,
 
-         P_PREDICT,      P_EQTIME,       P_GFIT,         P_LNC,
+         P_PREDICT,      P_EQTIME,         P_GFIT,         P_LNC,
 
          P_EXTINCT,      P_SPECTRUM,
 
-         P_CPU,          P_MEM,          P_SYSLOAD,
-         P_COMBINE,      P_COMBINE_MW,   P_COMBINE_COFS, P_COMBINE_COFMW,
-         P_COMBINE_COFD, P_PSEUDO3D,     P_CREATEG,
+         P_CPU,          P_MEM,            P_SYSLOAD,
+         P_COMBINE,      P_COMBINE_MW,     P_COMBINE_COFS, P_COMBINE_COFMW,
+         P_COMBINE_COFD, P_PSEUDO3D,       P_CREATEG,
 
-         P_ARCHIVE,      P_REORDER,      P_MERGE,        P_PSEUDOABS,
-         P_DIAG,         P_RADIAL_CORR,  P_NUCL_DB,      P_CALC_HYDRO,   P_VBAR_DB,
-         P_DMA60,        P_COLORG,       /* P_EXTINCT again */
+         P_ARCHIVE,      P_REORDER,        P_MERGE,        P_PSEUDOABS,
+         P_DIAG,         P_ROTOR_STRETCH,  P_RADIAL_CORR,  P_NUCL_DB,      P_CALC_HYDRO,
+			P_VBAR_DB,      P_DMA60,          P_COLORG,    /* P_EXTINCT again */
 
-         P_ASTFEM,       P_EQULILSIM,    P_EQUILTIMESIM, P_SASSOC,
-         P_MODEL1,       P_MODEL2,       P_HYDRODYN,
+         P_ASTFEM,       P_EQULILSIM,      P_EQUILTIMESIM, P_SASSOC,
+         P_MODEL1,       P_MODEL2,         P_HYDRODYN,
 
-         P_DB_VELOC,     P_DB_EQUIL,     P_DB_EQUILP,    P_DB_MC,
-         P_DB_INV,       P_DB_DATE,      P_DB_DESC,      P_DB_TYPE,
-         P_DB_REQ,       P_DB_STATUS,    P_DB_IMAGE,     P_DB_SAMP, P_DB_RUNR,
-         P_INV_DATA,     P_DB_BUFF,      P_DB_VBAR,      P_DB_DNA,  P_DB_RAW,
-         P_DB_TEMP, P_FIT_MENISCUS,
+         P_DB_VELOC,     P_DB_EQUIL,       P_DB_EQUILP,    P_DB_MC,
+         P_DB_INV,       P_DB_DATE,        P_DB_DESC,      P_DB_TYPE,
+         P_DB_REQ,       P_DB_STATUS,      P_DB_IMAGE,     P_DB_SAMP,      P_DB_RUNR,
+         P_INV_DATA,     P_DB_BUFF,        P_DB_VBAR,      P_DB_DNA,       P_DB_RAW,
+         P_DB_TEMP,      P_FIT_MENISCUS,
 
          P_END
       };
@@ -227,9 +227,13 @@ namespace us_win_data
            "Loading UltraScan Diagnostics Utilities",
            "UltraScan Diagnostics Utilities" },
 
+         { P_ROTOR_STRETCH,          NULL, "us_rotor_stretch",
+           "Loading Rotor Stretch Utility",
+           "UltraScan Rotor Stretch Calculation Utility" },
+
          { P_RADIAL_CORR,          NULL, "us_radial_correction",
            "Loading Radial Correction Routine",
-           "UltraScan Diagnostics Utilities" },
+           "UltraScan Radial Correction Utility" },
 
          { P_NUCL_DB,       NULL, "us_nucleotide_db",
            "Loading Nucleotide Sqeuence Table",
@@ -591,14 +595,15 @@ UsWin::UsWin( QWidget* parent, const char* name ): US_Widgets( parent, name )
    util->insertItem(tr( "&Update Meniscus for Velocity Run"          ), DS_MENISCUS );
    util->insertItem(tr( "&Combine Distribution Data"), combine );
 
-   util->insertItem( tr( "Scan &Diagnostics"              ), P_DIAG       );
-   util->insertItem( tr( "Radial Calibration Correction " ), P_RADIAL_CORR);
-   util->insertItem( tr( "Calculate &DNA/RNA MW"          ), P_NUCL_DB    );
-   util->insertItem( tr( "&Buffer Corrections"            ), P_CALC_HYDRO );
-   util->insertItem( tr( "Calculate &Protein MW and vbar" ), P_VBAR_DB    );
-   util->insertItem( tr( "Start Anton Paar DMA 60"        ), P_DMA60      );
-   util->insertItem( tr( "Gradient Color Editor"          ), P_COLORG     );
-   util->insertItem( tr( "Global &Extinction Fit"         ), P_EXTINCT    );
+   util->insertItem( tr( "Scan &Diagnostics"              ), P_DIAG          );
+   util->insertItem( tr( "Rotor Stretch Calculation"      ), P_ROTOR_STRETCH );
+   util->insertItem( tr( "Radial Calibration Correction " ), P_RADIAL_CORR   );
+   util->insertItem( tr( "Calculate &DNA/RNA MW"          ), P_NUCL_DB       );
+   util->insertItem( tr( "&Buffer Corrections"            ), P_CALC_HYDRO    );
+   util->insertItem( tr( "Calculate &Protein MW and vbar" ), P_VBAR_DB       );
+   util->insertItem( tr( "Start Anton Paar DMA 60"        ), P_DMA60         );
+   util->insertItem( tr( "Gradient Color Editor"          ), P_COLORG        );
+   util->insertItem( tr( "Global &Extinction Fit"         ), P_EXTINCT       );
 
    // Simulation
    QPopupMenu* sim = popupmenu();

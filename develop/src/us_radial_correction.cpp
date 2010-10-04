@@ -40,7 +40,7 @@ US_RadialCorrection::US_RadialCorrection(QWidget *p , const char *name) : QFrame
 
    cnt_correction= new QwtCounter(this);
    Q_CHECK_PTR(cnt_correction);
-   cnt_correction->setRange(-1.0, 1.0, 0.001);
+   cnt_correction->setRange(-1.0, 1.0, 0.0001);
    cnt_correction->setValue(correction);
    cnt_correction->setNumButtons(3);
    cnt_correction->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
