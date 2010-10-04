@@ -47,7 +47,7 @@ US_ManageData::US_ManageData() : US_Widgets()
 
    setWindowTitle( tr( "Manage US DB/Local Data Sets" ) );
    setPalette( US_GuiSettings::frameColor() );
-qDebug() << "GUI setup begun";
+DbgLv(1) << "GUI setup begun";
 
    // primary layouts
    QHBoxLayout* mainLayout  = new QHBoxLayout( this );
@@ -71,9 +71,10 @@ qDebug() << "GUI setup begun";
    statLayout->setContentsMargins( 0, 0, 0, 0 );
    tctlLayout->setSpacing        ( 1 );
    tctlLayout->setContentsMargins( 0, 0, 0, 0 );
+   dbg_level     = US_Settings::us_debug();
 
    // fill in the GUI components
-   int row   = 0;
+   int row       = 0;
 
    pb_invtor     = us_pushbutton( tr( "Investigator" ) );
    dctlLayout->addWidget( pb_invtor, row,   0, 1, 1 );
@@ -163,7 +164,7 @@ qDebug() << "GUI setup begun";
    int   fonth  = fm.lineSpacing();
    int   minsw  = fontw * 40 + 10;
    int   minsh  = fonth * 18 + 10;
-qDebug() << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
+DbgLv(1) << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
    te_status->setMinimumSize( minsw, minsh );
    te_status->adjustSize();
 
@@ -211,7 +212,6 @@ qDebug() << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
    mainLayout->setStretchFactor( rghtLayout, 8 );
 
    show();    // display main window before password dialog appears
-qDebug() << "show complete";
 
    // insure we can connect to the database
    US_Passwd pw;
@@ -226,7 +226,7 @@ qDebug() << "show complete";
    }
 
    personID      = 0;
-qDebug() << "db passwd complete";
+DbgLv(2) << "db passwd complete";
 
    // if possible get db investigator from user name
    investig      = QDir( QDir::homePath() ).dirName();
@@ -240,30 +240,26 @@ qDebug() << "db passwd complete";
             this,       SLOT( sel_investigator()    ) );
    connect( le_invtor,  SIGNAL( editingFinished()   ),
             this,       SLOT( chg_investigator() )  );
-qDebug() << "GUI setup complete";
+DbgLv(1) << "GUI setup complete";
    // set up for synchronizing experiments
    //syncExper      = new US_SyncExperiment( db, investig, this );
 
    // create a class to handle the data itself
    da_model       = new US_DataModel(                      this );
-qDebug() << "da_model created";
 
 // set needed pointers for class interaction in model object
    da_model->setDatabase( db,         investig  );
    da_model->setProgress( progress,   lb_status );
-qDebug() << "db/progress sets complete";
 
    // create a class to handle processing the data (upload,download,remove)
    da_process     = new US_DataProcess( da_model,          this );
-qDebug() << "da_process created";
 
    // create a class to handle the data tree display
    da_tree        = new US_DataTree(    da_model, tw_recs, this );
-qDebug() << "da_tree created";
 
    // set needed pointers to sibline classes in model object
    da_model->setSiblings( (QObject*)da_process, (QObject*)da_tree   );
-qDebug() << "classes setup complete";
+DbgLv(1) << "classes setup complete";
 
    // set up initial state of GUI
    connect( pb_helpdt,  SIGNAL( clicked()     ),
@@ -526,7 +522,7 @@ void US_ManageData::assign_investigator( int invID,
 // handle a right-mouse click of a row cell
 void US_ManageData::clickedItem( QTreeWidgetItem* item )
 {
-//qDebug() << "TABLE ITEM CLICKED rbtn_click" << rbtn_click;
+//DbgLv(2) << "TABLE ITEM CLICKED rbtn_click" << rbtn_click;
 
    if ( rbtn_click )
    {  // only bring up context menu if right-mouse-button was clicked

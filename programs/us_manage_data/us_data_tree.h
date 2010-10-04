@@ -79,6 +79,7 @@ class US_EXTERN US_DataTree : public QObject
       int           nlmods;
       int           nlnois;
       int           kdmy;
+      int           dbg_level;
 
    private slots:
       void record_type(      int,     QString& );

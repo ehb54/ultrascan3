@@ -13,6 +13,10 @@
 #include "us_help.h"
 #include "us_dataIO2.h"
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
+#endif
+
 class US_EXTERN US_DataModel : public QObject
 {
    Q_OBJECT
@@ -85,6 +89,7 @@ class US_EXTERN US_DataModel : public QObject
  
 
       int           personID;
+      int           dbg_level;
 
       QString       invID;
       QString       run_name;

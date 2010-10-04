@@ -25,6 +25,7 @@ US_DataTree::US_DataTree( US_DataModel* dmodel, QTreeWidget* treewidg,
    da_model   = dmodel;
    tw_recs    = treewidg;
    parentw    = (QWidget*)parent;
+   dbg_level  = US_Settings::us_debug();
 
    QStringList theads;
 
@@ -44,7 +45,7 @@ void US_DataTree::toggle_expand( QString c1str, bool show )
    QList< QTreeWidgetItem* > listi = tw_recs->findItems(
       c1str, Qt::MatchExactly | Qt::MatchWrap | Qt::MatchRecursive, 0 );
 
-qDebug() << "DT: togl_exp str show" << c1str << show;
+DbgLv(1) << "DT: togl_exp str show" << c1str << show;
    for ( int ii = 0; ii < listi.size(); ii++ )
       listi.at( ii )->setExpanded( show );
 }
@@ -164,7 +165,7 @@ void US_DataTree::build_dtree( )
             {
                fbru    = QBrush( colorRed );
                rsrc    = "Conflict";
-qDebug() << "CONFLICT cont1 cont2" << cont1 << cont2;
+DbgLv(1) << "CONFLICT cont1 cont2" << cont1 << cont2;
             }
          }
 
@@ -273,11 +274,11 @@ void US_DataTree::row_context_menu( QTreeWidgetItem* item )
 {
    tw_item  = item;
    int irow = item->type() - (int)QTreeWidgetItem::UserType;
-qDebug() << "    context_menu row" << irow+1;
+DbgLv(2) << "    context_menu row" << irow+1;
    da_model->setCurrent( irow );
-qDebug() << "    context_menu RTN setCurrent";
+DbgLv(2) << "    context_menu RTN setCurrent";
    cdesc    = da_model->current_datadesc();
-qDebug() << "    context_menu RTN current_datadesc";
+DbgLv(2) << "    context_menu RTN current_datadesc";
 
    QMenu*   cmenu   = new QMenu();
    QAction* upldact = new QAction( tr( " upload to DB" ),      parentw );
@@ -293,7 +294,7 @@ qDebug() << "    context_menu RTN current_datadesc";
    cmenu->addAction( rmloact );
    cmenu->addAction( rmboact );
    cmenu->addAction( shdeact );
-qDebug() << "    context_menu RTN addAction";
+DbgLv(2) << "    context_menu RTN addAction";
 
    connect( upldact, SIGNAL( triggered() ),
             this,    SLOT(   item_upload()     ) );
@@ -325,7 +326,7 @@ qDebug() << "    context_menu RTN addAction";
    }
 
    // display the context menu and act on selection
-qDebug() << "    context_menu CALL cmenu exec";
+DbgLv(2) << "    context_menu CALL cmenu exec";
    cmenu->exec( QCursor::pos() );
 
 }
@@ -395,7 +396,7 @@ void US_DataTree::item_upload()
    QMessageBox msgBox( parentw );
    QString     item_exs = tr( "Local disk only" );
    QString     item_act = tr( "DB create" );
-qDebug() << "ITEM Upload";
+DbgLv(2) << "ITEM Upload";
    int irow = tw_item->type() - (int)QTreeWidgetItem::UserType;
    da_model->setCurrent( irow );
    cdesc    = da_model->current_datadesc();
@@ -417,7 +418,7 @@ qDebug() << "ITEM Upload";
 
    if ( msgBox.exec() == QMessageBox::Yes )
    {
-qDebug() << " ITEM ACTION: YES";
+DbgLv(2) << " ITEM ACTION: YES";
       int stat1  = da_process->record_upload( irow );
 
       action_result( stat1, item_act );
@@ -425,7 +426,7 @@ qDebug() << " ITEM ACTION: YES";
 
    else
    {
-qDebug() << " ITEM ACTION: NO";
+DbgLv(2) << " ITEM ACTION: NO";
       action_result( 999, item_act );
    }
 
@@ -437,7 +438,7 @@ void US_DataTree::item_download()
    QMessageBox msgBox( parentw );
    QString     item_exs = tr( "Database only" );
    QString     item_act = tr( "Local file create" );
-qDebug() << "ITEM Download";
+DbgLv(2) << "ITEM Download";
    int irow = tw_item->type() - (int)QTreeWidgetItem::UserType;
    da_model->setCurrent( irow );
    cdesc    = da_model->current_datadesc();
@@ -459,7 +460,7 @@ qDebug() << "ITEM Download";
 
    if ( msgBox.exec() == QMessageBox::Yes )
    {
-qDebug() << " ITEM ACTION: YES";
+DbgLv(2) << " ITEM ACTION: YES";
       int stat1  = da_process->record_download( irow );
 
       action_result( stat1, item_act );
@@ -467,7 +468,7 @@ qDebug() << " ITEM ACTION: YES";
 
    else
    {
-qDebug() << " ITEM ACTION: NO";
+DbgLv(2) << " ITEM ACTION: NO";
       action_result( 999, item_act );
    }
 }
@@ -475,7 +476,7 @@ qDebug() << " ITEM ACTION: NO";
 // perform item remove-from-db action
 void US_DataTree::item_remove_db()
 {
-qDebug() << "ITEM Remove from DB";
+DbgLv(2) << "ITEM Remove from DB";
    QString     item_exs = tr( "Database only" );
    QString     item_act = tr( "DB remove" );
    QMessageBox msgBox( parentw );
@@ -500,7 +501,7 @@ qDebug() << "ITEM Remove from DB";
 
    if ( msgBox.exec() == QMessageBox::Yes )
    {
-qDebug() << " ITEM ACTION: YES";
+DbgLv(2) << " ITEM ACTION: YES";
       int stat1  = da_process->record_remove_db( irow );
 
       action_result( stat1, item_act );
@@ -508,7 +509,7 @@ qDebug() << " ITEM ACTION: YES";
 
    else
    {
-qDebug() << " ITEM ACTION: NO";
+DbgLv(2) << " ITEM ACTION: NO";
       action_result( 999, item_act );
    }
 }
@@ -516,7 +517,7 @@ qDebug() << " ITEM ACTION: NO";
 // perform item remove-from-local action
 void US_DataTree::item_remove_loc()
 {
-qDebug() << "ITEM Remove from Local";
+DbgLv(2) << "ITEM Remove from Local";
    QString     item_exs = tr( "Local disk only" );
    QString     item_act = tr( "Local remove" );
    QMessageBox msgBox( parentw );
@@ -541,7 +542,7 @@ qDebug() << "ITEM Remove from Local";
 
    if ( msgBox.exec() == QMessageBox::Yes )
    {
-qDebug() << " ITEM ACTION: YES";
+DbgLv(2) << " ITEM ACTION: YES";
       int stat1  = da_process->record_remove_local( irow );
 
       action_result( stat1, item_act );
@@ -549,7 +550,7 @@ qDebug() << " ITEM ACTION: YES";
 
    else
    {
-qDebug() << " ITEM ACTION: NO";
+DbgLv(2) << " ITEM ACTION: NO";
       action_result( 999, item_act );
    }
 }
@@ -557,7 +558,7 @@ qDebug() << " ITEM ACTION: NO";
 // perform item remove-from-all action
 void US_DataTree::item_remove_all()
 {
-qDebug() << "ITEM Remove Both DB and Local";
+DbgLv(2) << "ITEM Remove Both DB and Local";
    QString     item_exs = tr( "both DB and Local" );
    QString     item_act = tr( "DB+Local remove" );
    QMessageBox msgBox( parentw );
@@ -576,7 +577,7 @@ qDebug() << "ITEM Remove Both DB and Local";
 
    if ( msgBox.exec() == QMessageBox::Yes )
    {
-qDebug() << " ITEM ACTION: YES";
+DbgLv(2) << " ITEM ACTION: YES";
       int stat1  = da_process->record_remove_local( irow );
       stat1     += da_process->record_remove_db(    irow );
 
@@ -585,7 +586,7 @@ qDebug() << " ITEM ACTION: YES";
 
    else
    {
-qDebug() << " ITEM ACTION: NO";
+DbgLv(2) << " ITEM ACTION: NO";
       action_result( 999, item_act );
    }
 }
@@ -597,7 +598,7 @@ void US_DataTree::item_details(  )
    QString     fileexts = tr( "Text,Log files (*.txt *.log);;" )
       + tr( "All files (*)" );
    int         irow     = tw_item->type() - (int)QTreeWidgetItem::UserType;
-qDebug() << "DT: i_details row" << irow;
+DbgLv(2) << "DT: i_details row" << irow;
 
    da_model->setCurrent( irow++ );   // get description record, index as 1...
    cdesc    = da_model->current_datadesc();

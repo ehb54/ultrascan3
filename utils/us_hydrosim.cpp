@@ -36,8 +36,8 @@ void US_Hydrosim::calculate( double temperature )
    solution.viscosity = viscosity;
    solution.vbar      = vbar;
    solution.vbar20    = vbar20;
-qDebug() << "    Hydrosim Calc dens visc vbar temp vbar20"
-   << density << viscosity << vbar << temperature << vbar20;
+//qDebug() << "    Hydrosim Calc dens visc vbar temp vbar20"
+//   << density << viscosity << vbar << temperature << vbar20;
    
    US_Math2::data_correction( temperature, solution );
 
@@ -46,8 +46,8 @@ qDebug() << "    Hydrosim Calc dens visc vbar temp vbar20"
    US_Model::SimulationComponent sc_pro;
    US_Model::SimulationComponent sc_rod;
 
-qDebug() << "     Math2 visc visc_wt visc_tb"
-   << solution.viscosity << solution.viscosity_wt << solution.viscosity_tb;
+//qDebug() << "     Math2 visc visc_wt visc_tb"
+//   << solution.viscosity << solution.viscosity_wt << solution.viscosity_tb;
    double vol_per_molecule = solution.vbar * mw / AVOGADRO;
    double rad_sphere       =
                  pow( vol_per_molecule * 3.0 / ( 4.0 * M_PI ), 1.0 / 3.0 );
@@ -143,22 +143,22 @@ qDebug() << "     Math2 visc visc_wt visc_tb"
    rod.a         = ar;
    rod.b         = br;
    rod.volume    = vol_per_molecule;
-qDebug() << "SPHERE  hyd  ff0 mw" << sphere.f_f0 << mw
-  << " s D f" << sphere.s << sphere.D << sphere.f;
-qDebug() << "SPHERE  mod  ff0 mw" << sc_sph.f_f0 << sc_sph.mw
-  << " s D f" << sc_sph.s << sc_sph.D << sc_sph.f;
-qDebug() << "OBLATE  hyd  ff0 mw" << oblate.f_f0 << mw
-  << " s D f" << oblate.s << oblate.D << oblate.f;
-qDebug() << "OBLATE  mod  ff0 mw" << sc_obl.f_f0 << sc_obl.mw
-  << " s D f" << sc_obl.s << sc_obl.D << sc_obl.f;
-qDebug() << "PROLATE hyd  ff0 mw" << prolate.f_f0 << mw
-  << " s D f" << prolate.s << prolate.D << prolate.f;
-qDebug() << "PROLATE mod  ff0 mw" << sc_pro.f_f0 << sc_pro.mw
-  << " s D f" << sc_pro.s << sc_pro.D << sc_pro.f;
-qDebug() << "ROD     hyd  ff0 mw" << rod.f_f0 << mw
-  << " s D f" << rod.s << rod.D << rod.f;
-qDebug() << "ROD     mod  ff0 mw" << sc_rod.f_f0 << sc_rod.mw
-  << " s D f" << sc_rod.s << sc_rod.D << sc_rod.f;
+//qDebug() << "SPHERE  hyd  ff0 mw" << sphere.f_f0 << mw
+//  << " s D f" << sphere.s << sphere.D << sphere.f;
+//qDebug() << "SPHERE  mod  ff0 mw" << sc_sph.f_f0 << sc_sph.mw
+//  << " s D f" << sc_sph.s << sc_sph.D << sc_sph.f;
+//qDebug() << "OBLATE  hyd  ff0 mw" << oblate.f_f0 << mw
+//  << " s D f" << oblate.s << oblate.D << oblate.f;
+//qDebug() << "OBLATE  mod  ff0 mw" << sc_obl.f_f0 << sc_obl.mw
+//  << " s D f" << sc_obl.s << sc_obl.D << sc_obl.f;
+//qDebug() << "PROLATE hyd  ff0 mw" << prolate.f_f0 << mw
+//  << " s D f" << prolate.s << prolate.D << prolate.f;
+//qDebug() << "PROLATE mod  ff0 mw" << sc_pro.f_f0 << sc_pro.mw
+//  << " s D f" << sc_pro.s << sc_pro.D << sc_pro.f;
+//qDebug() << "ROD     hyd  ff0 mw" << rod.f_f0 << mw
+//  << " s D f" << rod.s << rod.D << rod.f;
+//qDebug() << "ROD     mod  ff0 mw" << sc_rod.f_f0 << sc_rod.mw
+//  << " s D f" << sc_rod.s << sc_rod.D << sc_rod.f;
 }
 
 /*
