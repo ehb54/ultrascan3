@@ -54,5 +54,7 @@ class US_EXTERN US_SyncExperiment : public QObject
       QString     rawID;
 
       QString expGUIDauc( QString );  // get exper GUID from AUC-related file
+
+      int           dbg_level;
 };
 #endif

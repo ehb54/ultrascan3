@@ -15,6 +15,7 @@
 #include "us_analyte.h"
 #include "us_help.h"
 #include "us_dataIO2.h"
+#include "us_settings.h"
 
 class US_EXTERN US_ManageData : public US_Widgets
 {
@@ -102,6 +103,7 @@ class US_EXTERN US_ManageData : public US_Widgets
       int           nlmods;
       int           nlnois;
       int           kdmy;
+      int           dbg_level;
 
       bool          rbtn_click;
 

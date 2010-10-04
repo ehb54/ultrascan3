@@ -14,6 +14,7 @@ US_DataProcess::US_DataProcess( US_DataModel* dmodel, QWidget* parent /*=0*/ )
    QString investig = da_model->invtext();
    QString invID    = investig.section( ":", 0, 0 );
    db               = da_model->dbase();
+   dbg_level        = US_Settings::us_debug();
 
    syncExper        = new US_SyncExperiment( db, invID, parent );
 }
@@ -21,7 +22,7 @@ US_DataProcess::US_DataProcess( US_DataModel* dmodel, QWidget* parent /*=0*/ )
 // perform a record upload to the database from local disk
 int US_DataProcess::record_upload( int irow )
 {
-qDebug() << "REC_ULD: row" << irow+1;
+DbgLv(1) << "REC_ULD: row" << irow+1;
    int stat = 0;
 
    cdesc            = da_model->row_datadesc( irow );
@@ -39,12 +40,12 @@ qDebug() << "REC_ULD: row" << irow+1;
       QString runID    = filename.section( ".",  0,  0 );
       QString tripl    = filename.section( ".", -4, -2 )
                          .replace( ".", " / " );
-qDebug() << "REC_ULD:RAW: runID" << runID << "  tripl" << tripl;
+DbgLv(1) << "REC_ULD:RAW: runID" << runID << "  tripl" << tripl;
 
       //US_DataIO2::readRawData( filepath, rdata );
 
       stat = syncExper->synchronize( cdesc );
-qDebug() << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
+DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
       QString expGUID  = cdesc.parentGUID;
 
       if ( stat == 0 )
@@ -80,11 +81,11 @@ qDebug() << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
       else
       {
          db->next();
-         qDebug() << "editUpld: rawGUID" << rawGUID;
+         DbgLv(1) << "editUpld: rawGUID" << rawGUID;
 
          QString rawDataID = db->value( 0 ).toString();
 
-         qDebug() << "editUpld: rawDataID" << rawDataID;
+         DbgLv(1) << "editUpld: rawDataID" << rawDataID;
          query.clear();
 
          if ( idData < 0 )
@@ -94,13 +95,13 @@ qDebug() << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
             db->query( query );
             idData   = db->lastInsertID();
             editID   = QString::number( idData );
-            qDebug() << "editUpld: NEW idData" << idData << editID;
+            DbgLv(1) << "editUpld: NEW idData" << idData << editID;
          }
 
          query << "update_editedData" << editID << rawDataID << editGUID
             << label << filename << cdesc.description;
          db->query( query );
-         qDebug() << "editUpld: label" << label;
+         DbgLv(1) << "editUpld: label" << label;
 
          stat = db->writeBlobToDB( filepath,
                                    QString( "upload_editData" ),
@@ -126,9 +127,9 @@ qDebug() << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
    else if ( cdesc.recType == 4 )
    {  // upload a Noise record
       US_Noise noise;
-qDebug() << "NOISE: (1) filepath" << filepath;
+DbgLv(2) << "NOISE: (1) filepath" << filepath;
       filepath = get_noise_filename( cdesc.dataGUID );
-qDebug() << "NOISE: (2) filepath" << filepath;
+DbgLv(2) << "NOISE: (2) filepath" << filepath;
 
       noise.load( filepath );
       stat   = noise.write( db );

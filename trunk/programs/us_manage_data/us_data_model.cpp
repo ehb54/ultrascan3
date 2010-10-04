@@ -18,6 +18,8 @@ US_DataModel::US_DataModel( QWidget* parwidg /*=0*/ )
    ddescs.clear();         // db descriptions
    ldescs.clear();         // local descriptions
    adescs.clear();         // all descriptions
+
+   dbg_level  = US_Settings::us_debug();
 }
 
 // set database related pointers
@@ -167,11 +169,11 @@ void US_DataModel::scan_dbase( )
       QString expID = db->value( 0 ).toString();
       QString runID = db->value( 1 ).toString();
       QString etype = db->value( 2 ).toString();
-      qDebug() << " expID runID type" << expID << runID << etype;
+      DbgLv(1) << " expID runID type" << expID << runID << etype;
       expIDs << expID;
    }
 
-   qDebug() << "  expID expGUID runID label comment date";
+   DbgLv(1) << "  expID expGUID runID label comment date";
 
    for ( int ii = 0; ii < expIDs.size(); ii++ )
    {
@@ -186,7 +188,7 @@ void US_DataModel::scan_dbase( )
       QString comment = db->value( 10 ).toString();
       QString date    = US_Util::toUTCDatetimeText( db->value( 12 )
                         .toDateTime().toString( Qt::ISODate ), true );
-      qDebug() << "  " << expID << expGUID << runID << label << comment << date;
+      DbgLv(1) << "  " << expID << expGUID << runID << label << comment << date;
    }
 //*DEBUG*
 QString labID = db->value( 3 ).toString();
@@ -200,7 +202,7 @@ while ( db->next() )
   rotorIDs << db->value(0).toString();
   locNames << db->value(1).toString();
 }
-qDebug() << "ROTOR ID lname name serial absname stretch omeg2t GUID";
+DbgLv(2) << "ROTOR ID lname name serial absname stretch omeg2t GUID";
 for ( int ii=0; ii<rotorIDs.size(); ii++ )
 {
   QString rotorID = rotorIDs.at(ii);
@@ -216,11 +218,11 @@ for ( int ii=0; ii<rotorIDs.size(); ii++ )
   QString stretchF  = db->value(3).toString();
   QString omega2t   = db->value(4).toString();
   QString abrotName = db->value(5).toString();
-  qDebug() << "   " << rotorID << locName << rotorName << serialNum
+  DbgLv(2) << "   " << rotorID << locName << rotorName << serialNum
      << abrotName << stretchF << omega2t << rotorGUID;
   }
   else
-    qDebug() << "   *** get_rotor_info *ERROR* rotorID" << rotorID;
+    DbgLv(2) << "   *** get_rotor_info *ERROR* rotorID" << rotorID;
 }
 //*DEBUG*
 
@@ -273,7 +275,7 @@ for ( int ii=0; ii<rotorIDs.size(); ii++ )
    nnois = noiIDs.size();
    nstep = istep + ( nraws * 5 ) + ( nedts * 5 ) + nmods + nnois;
    progress->setMaximum( nstep );
-qDebug() << "BrDb: kr ke km kn"
+DbgLv(1) << "BrDb: kr ke km kn"
  << rawIDs.size() << edtIDs.size() << modIDs.size() << noiIDs.size();
 
    for ( int ii = 0; ii < nraws; ii++ )
@@ -307,9 +309,9 @@ qDebug() << "BrDb: kr ke km kn"
       db->next();
 
       QString expGUID   = db->value( 0 ).toString();
-//qDebug() << "BrDb:     raw expGid" << expGUID;
+//DbgLv(2) << "BrDb:     raw expGid" << expGUID;
 
-//qDebug() << "BrDb:       (R)contents" << contents;
+//DbgLv(2) << "BrDb:       (R)contents" << contents;
 
       cdesc.recordID    = irecID;
       cdesc.recType     = 1;
@@ -359,15 +361,15 @@ qDebug() << "BrDb: kr ke km kn"
       contents          = cksum + " " + recsize;
 
               rawGUID   = rawGUIDs.at( rawIDs.indexOf( rawID ) );
-qDebug() << "BrDb:     edt ii id eGID rGID label date"
+DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
  << ii << irecID << editGUID << rawGUID << label << date;
-//qDebug() << "BrDb:       (E)contents" << contents;
+//DbgLv(2) << "BrDb:       (E)contents" << contents;
 
       if ( ! filename.contains( "/" ) )
          filename          = US_Settings::resultDir() + "/"
                              + filename.section( ".", 0, 0 ) + "/"
                              + filename;
-//qDebug() << "BrDb:       fname" << filename;
+//DbgLv(2) << "BrDb:       fname" << filename;
 
       cdesc.recordID    = irecID;
       cdesc.recType     = 2;
@@ -420,10 +422,10 @@ qDebug() << "BrDb:     edt ii id eGID rGID label date"
       QString editGUID  = ( jj < 1 ) ? "" :
                           contents.mid( jj ).section( QChar( '"' ), 1, 1 );
       contents          = cksum + " " + recsize;
-//qDebug() << "BrDb:       mod ii id mGID dsc"
+//DbgLv(2) << "BrDb:       mod ii id mGID dsc"
 //   << ii << irecID << modelGUID << descript;
 
-//qDebug() << "BrDb:         det: cont" << contents;
+//DbgLv(2) << "BrDb:         det: cont" << contents;
 
       cdesc.recordID    = irecID;
       cdesc.recType     = 3;
@@ -471,9 +473,9 @@ qDebug() << "BrDb:     edt ii id eGID rGID label date"
                           .toDateTime().toString( Qt::ISODate ), true );
       QString cksum     = db->value( 7 ).toString();
       QString recsize   = db->value( 8 ).toString();
-//qDebug() << "BrDb: contents================================================";
-//qDebug() << contents.left( 200 );
-//qDebug() << "BrDb: contents================================================";
+//DbgLv(3) << "BrDb: contents================================================";
+//DbgLv(3) << contents.left( 200 );
+//DbgLv(3) << "BrDb: contents================================================";
 
       contents          = cksum + " " + recsize;
 
@@ -491,7 +493,7 @@ qDebug() << "BrDb:     edt ii id eGID rGID label date"
       cdesc.label       = label;
       cdesc.description = descript;
       cdesc.lastmodDate = date;
-qDebug() << "BrDb:       noi ii id nGID dsc typ noityp"
+DbgLv(2) << "BrDb:       noi ii id nGID dsc typ noityp"
    << ii << irecID << noiseGUID << descript << cdesc.subType << noiseType;
 
       if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
@@ -533,7 +535,7 @@ void US_DataModel::scan_local( )
    int         nmodf   = modfils.size();
    int         nnoif   = noifils.size();
    int         nstep   = naucd * 4 + nmodf + nnoif;
-qDebug() << "BrLoc:  nau nmo nno nst" << naucd << nmodf << nnoif << nstep;
+DbgLv(1) << "BrLoc:  nau nmo nno nst" << naucd << nmodf << nnoif << nstep;
    aucfilt << "*.auc";
    edtfilt << "*.xml";
    rdir    = rdir + "/";
@@ -557,13 +559,13 @@ qDebug() << "BrLoc:  nau nmo nno nst" << naucd << nmodf << nnoif << nstep;
          QString aucfile  = subdir + "/" + fname;
          QString descr    = "";
          QString expGUID  = expGUIDauc( aucfile );
-qDebug() << "BrLoc: ii jj file" << ii << jj << aucfile;
+DbgLv(2) << "BrLoc: ii jj file" << ii << jj << aucfile;
 
          // read in the raw data and build description record
          US_DataIO2::readRawData( aucfile, rdata );
 
          contents         = US_Util::md5sum_file( aucfile );
-qDebug() << "BrLoc:      contents" << contents;
+DbgLv(2) << "BrLoc:      contents" << contents;
 
          char uuid[ 37 ];
          uuid_unparse( (uchar*)rdata.rawGUID, uuid );
@@ -594,7 +596,7 @@ qDebug() << "BrLoc:      contents" << contents;
          // now load edit files associated with this auc file
          edtfilt.clear();
          edtfilt << runid + ".*." + tripl + ".xml";
-qDebug() << "BrLoc:  edtfilt" << edtfilt;
+DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
 
          QStringList edtfiles = QDir( subdir )
             .entryList( edtfilt, QDir::Files, QDir::Name );
@@ -605,13 +607,13 @@ qDebug() << "BrLoc:  edtfilt" << edtfilt;
             QString editid   = efname.section( ".", 1, 3 );
             QString edtfile  = subdir + "/" + efname;
                     contents = "";
-//qDebug() << "BrLoc:    kk file" << kk << edtfile;
+//DbgLv(2) << "BrLoc:    kk file" << kk << edtfile;
 
             // read EditValues for the edit data and build description record
             US_DataIO2::readEdits( edtfile, edval );
 
             contents          = US_Util::md5sum_file( edtfile );
-//qDebug() << "BrLoc:      (E)contents edtfile" << contents << edtfile;
+//DbgLv(2) << "BrLoc:      (E)contents edtfile" << contents << edtfile;
 
             cdesc.recordID    = -1;
             cdesc.recType     = 2;
@@ -738,7 +740,7 @@ void US_DataModel::merge_dblocal( )
 
    DataDesc  descd = ddescs.at( 0 );
    DataDesc  descl = ldescs.at( 0 );
-//qDebug() << "MERGE: nd nl dlab llab"
+//DbgLv(2) << "MERGE: nd nl dlab llab"
 // << nddes << nldes << descd.label << descl.label;
 
    lb_status->setText( tr( "Merging Data ..." ) );
@@ -763,7 +765,7 @@ void US_DataModel::merge_dblocal( )
          descd.contents     = descd.contents + " " + descl.contents;
 
          adescs << descd;                  // output combo record
-//qDebug() << "MERGE:  kar jdr jlr (1)GID" << kar << jdr << jlr << descd.dataGUID;
+//DbgLv(2) << "MERGE:  kar jdr jlr (1)GID" << kar << jdr << jlr << descd.dataGUID;
          kar++;
 
          if ( ++jdr < nddes )              // bump db count and test if done
@@ -789,7 +791,7 @@ void US_DataModel::merge_dblocal( )
       while ( descd.recType > descl.recType )
       {  // output db records that are left-over children
          adescs << descd;
-//qDebug() << "MERGE:  kar jdr jlr (2)GID" << kar << jdr << jlr << descd.dataGUID;
+//DbgLv(2) << "MERGE:  kar jdr jlr (2)GID" << kar << jdr << jlr << descd.dataGUID;
          kar++;
 
          if ( ++jdr < nddes )
@@ -804,7 +806,7 @@ void US_DataModel::merge_dblocal( )
       while ( descl.recType > descd.recType )
       {  // output local records that are left-over children
          adescs << descl;
-//qDebug() << "MERGE:  kar jdr jlr (3)GID" << kar << jdr << jlr << descl.dataGUID;
+//DbgLv(2) << "MERGE:  kar jdr jlr (3)GID" << kar << jdr << jlr << descl.dataGUID;
          kar++;
 
          if ( ++jlr < nldes )
@@ -829,7 +831,7 @@ void US_DataModel::merge_dblocal( )
       if ( descd.label < descl.label )
       {  // output db record first based on alphabetic label sort
          adescs << descd;
-//qDebug() << "MERGE:  kar jdr jlr (4)GID" << kar << jdr << jlr << descd.dataGUID;
+//DbgLv(2) << "MERGE:  kar jdr jlr (4)GID" << kar << jdr << jlr << descd.dataGUID;
          kar++;
 
          if ( ++jdr < nddes )
@@ -841,7 +843,7 @@ void US_DataModel::merge_dblocal( )
       else
       {  // output local record first based on alphabetic label sort
          adescs << descl;
-//qDebug() << "MERGE:  kar jdr jlr (5)GID" << kar << jdr << jlr << descl.dataGUID;
+//DbgLv(2) << "MERGE:  kar jdr jlr (5)GID" << kar << jdr << jlr << descl.dataGUID;
          kar++;
 
          if ( ++jlr < nldes )
@@ -861,7 +863,7 @@ void US_DataModel::merge_dblocal( )
    {
       adescs << ddescs.at( jdr++ );
 //descd=ddescs.at(jlr-1);
-//qDebug() << "MERGE:  kar jdr jlr (8)GID" << kar << jdr << jlr << descd.dataGUID;
+//DbgLv(2) << "MERGE:  kar jdr jlr (8)GID" << kar << jdr << jlr << descd.dataGUID;
       kar++;
       progress->setValue( kar );
    }
@@ -870,13 +872,13 @@ void US_DataModel::merge_dblocal( )
    {
       adescs << ldescs.at( jlr++ );
 //descl=ldescs.at(jlr-1);
-//qDebug() << "MERGE:  kar jdr jlr (9)GID" << kar << jdr << jlr << descl.dataGUID;
+//DbgLv(2) << "MERGE:  kar jdr jlr (9)GID" << kar << jdr << jlr << descl.dataGUID;
       kar++;
       progress->setValue( kar );
    }
 
-//qDebug() << "MERGE: nddes nldes kar" << nddes << nldes << --kar;
-//qDebug() << " a/d/l sizes" << adescs.size() << ddescs.size() << ldescs.size();
+//DbgLv(2) << "MERGE: nddes nldes kar" << nddes << nldes << --kar;
+//DbgLv(2) << " a/d/l sizes" << adescs.size() << ddescs.size() << ldescs.size();
 
    progress->setValue( nstep );
    lb_status->setText( tr( "Data Merge Complete" ) );
@@ -1017,8 +1019,8 @@ void US_DataModel::sort_descs( QVector< DataDesc >& descs )
       sortm << dsorts;
       orphm << dsorts;
       tdess.append( cdesc );
-//qDebug() << "N orphan:" << orphn.at( ii );
-//qDebug() << "  M dummy:" << dsorts;
+//DbgLv(2) << "N orphan:" << orphn.at( ii );
+//DbgLv(2) << "  M dummy:" << dsorts;
    }
 
    ndmy   = 0;
@@ -1088,8 +1090,8 @@ void US_DataModel::sort_descs( QVector< DataDesc >& descs )
       sorte << dsorts;
       orphe << dsorts;
       tdess.append( cdesc );
-//qDebug() << "M orphan:" << orphm.at( ii );
-//qDebug() << "  E dummy:" << dsorts;
+//DbgLv(2) << "M orphan:" << orphm.at( ii );
+//DbgLv(2) << "  E dummy:" << dsorts;
    }
 
    ndmy   = 0;
@@ -1158,12 +1160,12 @@ void US_DataModel::sort_descs( QVector< DataDesc >& descs )
 
       sortr << dsorts;
       tdess.append( cdesc );
-qDebug() << "E orphan:" << orphe.at( ii );
-qDebug() << "  R dummy:" << dsorts;
+DbgLv(2) << "E orphan:" << orphe.at( ii );
+DbgLv(2) << "  R dummy:" << dsorts;
    }
 
 //for ( int ii = 0; ii < sortr.size(); ii++ )
-// qDebug() << "R entry:" << sortr.at( ii );
+// DbgLv(2) << "R entry:" << sortr.at( ii );
    int countR = sortr.size();    // count of each kind in sorted lists
    int countE = sorte.size();
    int countM = sortm.size();
@@ -1173,7 +1175,7 @@ qDebug() << "  R dummy:" << dsorts;
    sorte.sort();
    sortm.sort();
    sortn.sort();
-qDebug() << "sort/dumy: count REMN" << countR << countE << countM << countN;
+DbgLv(1) << "sort/dumy: count REMN" << countR << countE << countM << countN;
 
    int noutR  = 0;               // count of each kind in hierarchical output
    int noutE  = 0;
@@ -1270,9 +1272,9 @@ qDebug() << "sort/dumy: count REMN" << countR << countE << countM << countN;
    if ( noutR != countR  ||  noutE != countE  ||
         noutM != countM  ||  noutN != countN )
    {  // not all accounted for, so we will need some dummy parents
-      qDebug() << "sort_desc: count REMN"
+      DbgLv(1) << "sort_desc: count REMN"
          << countR << countE << countM << countN;
-      qDebug() << "sort_desc: nout REMN"
+      DbgLv(1) << "sort_desc: nout REMN"
          << noutR << noutE << noutM << noutN;
    }
 }
@@ -1303,7 +1305,7 @@ bool US_DataModel::review_descs( QStringList& sorts,
       rtyp   = "DB " + rtyp;
    else
       rtyp   = "Local " + rtyp;
-qDebug() << "RvwD: ii ityp rtyp nrecs" << ii << ityp << rtyp << nrecs;
+DbgLv(2) << "RvwD: ii ityp rtyp nrecs" << ii << ityp << rtyp << nrecs;
 
    for ( int ii = 1; ii < nrecs; ii++ )
    {  // do a pass to determine if there are duplicate GUIDs
@@ -1334,10 +1336,10 @@ qDebug() << "RvwD: ii ityp rtyp nrecs" << ii << ityp << rtyp << nrecs;
          multis << ii;
          nmult++;
       }
-//qDebug() << "RvwD:   ii kmult nmult" << ii << kmult << nmult;
+//DbgLv(2) << "RvwD:   ii kmult nmult" << ii << kmult << nmult;
    }
 
-qDebug() << "RvwD:      nmult" << nmult;
+DbgLv(1) << "RvwD:      nmult" << nmult;
    if ( nmult > 0 )
    {  // there were multiple instances of the same GUID
       QMessageBox msgBox;
@@ -1427,7 +1429,7 @@ qDebug() << "RvwD:      nmult" << nmult;
          abort = false;     // signal to proceed with data tree build
       }
    }
-qDebug() << "review_descs   abort" << abort;
+DbgLv(1) << "review_descs   abort" << abort;
 
    return abort;
 }

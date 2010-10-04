@@ -2,14 +2,16 @@
 
 #include "us_sync_exper.h"
 #include "us_util.h"
+#include "us_settings.h"
 
 // Check synchronizing of experiment on database and local with raw data
 US_SyncExperiment::US_SyncExperiment( US_DB2* a_db, QString a_invID,
       QWidget* parent /*= 0*/ )
 {
-   db       = a_db;
-   invID    = a_invID;
-   parentw  = parent;
+   db         = a_db;
+   invID      = a_invID;
+   parentw    = parent;
+   dbg_level  = US_Settings::us_debug();
 
    // get lists of experimental IDs and run IDs
    QStringList query;
@@ -84,13 +86,13 @@ int US_SyncExperiment::synchronize( US_DataModel::DataDesc& cdesc )
             db->query( query );
             db->next();
             dexpGUID   = db->value( 0 ).toString();
-qDebug() << "db get_exp_inf: expGUID" << dexpGUID;
-qDebug() << "db get_exp_inf: projID " << db->value(1).toString();
-qDebug() << "db get_exp_inf: runID  " << db->value(2).toString();
-qDebug() << "db get_exp_inf: rotorID" << db->value(6).toString();
-qDebug() << "db get_exp_inf: type   " << db->value(7).toString();
-qDebug() << "db get_exp_inf: comment" << db->value(10).toString();
-qDebug() << "db get_exp_inf: dateUpd" << db->value(12).toString();
+DbgLv(1) << "db get_exp_inf: expGUID" << dexpGUID;
+DbgLv(1) << "db get_exp_inf: projID " << db->value(1).toString();
+DbgLv(1) << "db get_exp_inf: runID  " << db->value(2).toString();
+DbgLv(1) << "db get_exp_inf: rotorID" << db->value(6).toString();
+DbgLv(1) << "db get_exp_inf: type   " << db->value(7).toString();
+DbgLv(1) << "db get_exp_inf: comment" << db->value(10).toString();
+DbgLv(1) << "db get_exp_inf: dateUpd" << db->value(12).toString();
             if ( dexpGUID.isEmpty()  ||  dexpGUID.startsWith( "0000" ) )
             {  // try to set DB experiment GUID
                QString projID    = db->value(  1 ).toString();
@@ -117,12 +119,12 @@ qDebug() << "db get_exp_inf: dateUpd" << db->value(12).toString();
 
                if ( stat == US_DB2::OK )
                {
-                  qDebug() << "Successful EXP update, GUID" << dexpGUID;
+                  DbgLv(1) << "Successful EXP update, GUID" << dexpGUID;
                   rexpGUID         = dexpGUID;
                   haverexp         = true;
                   cdesc.parentGUID = rexpGUID;
                   cdesc.parentID   = expID.toInt();
-                  qDebug() << "   EXP update, ID runID" << expID << runID;
+                  DbgLv(1) << "   EXP update, ID runID" << expID << runID;
                }
                else
                {
