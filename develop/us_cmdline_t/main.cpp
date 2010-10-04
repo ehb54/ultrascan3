@@ -745,6 +745,7 @@ int main (int argc, char **argv)
 
    // #define DEBUG_CHECK_LIMITS
    // #define CHECK_LIMITS_EXTRA_INFO
+   // #define DEBUG_STRETCH
 
    if (cmds[0].lower() == "check_limits") 
    {
@@ -787,6 +788,61 @@ int main (int argc, char **argv)
       QStringList bottoms = qsl.grep("# bottom of cell position (cm)");
       bottoms.gres(remove_comment, "");
 
+
+      // each experiment has its own # of speed steps
+      QStringList speed_steps = qsl.grep("# Number of speed step profiles");
+      speed_steps.gres(remove_comment, "");
+
+      QStringList rotor_speeds = qsl.grep("# rotor speed for profile");
+      rotor_speeds.gres(remove_comment, "");
+
+      // ok, now rotor_speeds_vector contains lists for each, 
+      // but each have a variable # of steps
+
+      // find minimum rotor speeds
+      vector < unsigned int > min_rotor_speeds;
+      min_rotor_speeds.resize(bottoms.size());
+
+      unsigned int rotor_speeds_pos = 0;
+      for ( unsigned int i = 0; i < min_rotor_speeds.size(); i++ )
+      {
+         min_rotor_speeds[i] = 1000000;
+         for ( unsigned int j = 0; j < (*speed_steps.at(i)).toUInt(); j++ )
+         {
+            unsigned int this_speed = (*rotor_speeds.at(rotor_speeds_pos)).toUInt();
+#if defined(DEBUG_STRETCH)
+            printf("rotor speed %u %u %u %u\n", i, j, rotor_speeds_pos, this_speed);
+#endif
+            if ( this_speed < min_rotor_speeds[i] )
+            {
+               min_rotor_speeds[i] = this_speed;
+            }
+            rotor_speeds_pos++;
+         }
+#if defined(DEBUG_STRETCH)
+         printf("minimum rotor speeds[%u] = %u\n", i, min_rotor_speeds[i]);
+#endif
+      }
+
+      QStringList rotor_serial_numbers = qsl.grep("# Rotor serial number");
+      rotor_serial_numbers.gres(remove_comment, "");
+#if defined(DEBUG_STRETCH)
+      for ( unsigned int i = 0; i < rotor_serial_numbers.size(); i++ )
+      {
+         printf("rotor serial %d\n", (*rotor_serial_numbers.at(i)).toInt());
+      }
+#endif
+
+      vector < double > rotor_stretches;
+      rotor_stretches.resize(min_rotor_speeds.size());
+      for ( unsigned int i = 0; i < min_rotor_speeds.size(); i++ )
+      {
+         rotor_stretches[i] = stretch((*rotor_serial_numbers.at(i)).toInt(), min_rotor_speeds[i]);
+#if defined(DEBUG_STRETCH)
+         printf("rotor stretches[%u] %g\n", i, rotor_stretches[i]);
+#endif
+      }
+
       QStringList radii_exps = qsl.grep(QRegExp("# radius value|# experiment.id"));
 
 #if defined(CHECK_LIMITS_EXTRA_INFO)
@@ -804,6 +860,7 @@ int main (int argc, char **argv)
          printf("on read %d <%s>\n", i, tmp.ascii());
       }
 #endif
+
 
       QStringList exps = qsl.grep("# experiment.id");
 
@@ -856,7 +913,10 @@ int main (int argc, char **argv)
 #if defined(DEBUG_CHECK_LIMITS)
          printf("bottom %d %f <%s>\n", i, (*bottoms.at(i)).toFloat(), (*bottoms.at(i)).ascii());
 #endif
-         bottom_values[i] = (*bottoms.at(i)).toFloat();
+         bottom_values[i] = (*bottoms.at(i)).toFloat() + rotor_stretches[i];
+#if defined(DEBUG_STRETCH)
+         printf("bottom %u was %f, now is %f\n", i, (*bottoms.at(i)).toFloat(), bottom_values[i]);
+#endif
       }
 
       vector < float > min_radii;
