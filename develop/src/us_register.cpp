@@ -325,7 +325,7 @@ QString US_Register::encode( QString str1, QString str2 )
   QString STR1, STR2, SUM, SUM1, SUM2, code;
   QChar c;
   int sum1 = 0, sum2 = 0, x;
-  float j;
+  double j;
 
   STR1 = str1.upper();
   STR2 = str2.upper();
@@ -346,7 +346,7 @@ QString US_Register::encode( QString str1, QString str2 )
   
   SUM2 = QString::number( sum2 );
   SUM  = SUM1 + SUM2;
-  j    = SUM.toFloat();
+  j    = SUM.toDouble();
   x    = int( fabs( sin( j ) ) * 65535 );
 
   code.sprintf("000%x", x);
