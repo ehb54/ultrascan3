@@ -3,19 +3,16 @@
 #include "us_properties.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_buffer_gui.h"
 #include "us_constants.h"
 #include "us_model.h"
 
 #include "qwt_arrow_button.h"
 
 US_Properties::US_Properties( 
-      const US_Buffer&               buf, 
       US_Model&                      mod,
       int                            invID,
       bool                           access )
    : US_WidgetsDialog( 0, 0 ), 
-     buffer      ( buf ),
      model       ( mod ),
      investigator( invID ),
      db_access   ( access )
@@ -32,7 +29,7 @@ US_Properties::US_Properties(
 
    // Very light gray
    gray = normal;
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   gray.setColor( QPalette::Base, QColor( 0xd0, 0xd0, 0xd0 ) );
    
    // Initialize the check icon
    check = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
@@ -144,7 +141,7 @@ US_Properties::US_Properties(
 
    // Row
    QGridLayout* mw_layout = us_checkbox( 
-      tr( "Molecular Wt/Stoichiometry" ), cb_mw, true );
+      tr( "Molecular Wt. (mw) / Oligomer" ), cb_mw, true );
    connect( cb_mw, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
    main->addLayout( mw_layout, row, 0 );
 
@@ -156,11 +153,11 @@ US_Properties::US_Properties(
    le_mw->setReadOnly( true );
    mw_layout2->addWidget( le_mw );
 
-   ct_stoich = us_counter( 1, 1.0, 10.0, 1.0 );
-   ct_stoich->setStep( 1.0 );
-   connect( ct_stoich, SIGNAL( valueChanged ( double ) ), 
-                       SLOT  ( set_stoich   ( double ) ) );
-   mw_layout2->addWidget( ct_stoich );
+   ct_oligomer = us_counter( 1, 1.0, 10.0, 1.0 );
+   ct_oligomer->setStep( 1.0 );
+   connect( ct_oligomer, SIGNAL( valueChanged ( double ) ), 
+                         SLOT  ( set_oligomer ( double ) ) );
+   mw_layout2->addWidget( ct_oligomer );
 
    main->addLayout( mw_layout2, row++, 1 );
 
@@ -264,10 +261,10 @@ void US_Properties::clear_entries( void )
    le_sigma      ->clear();
    le_delta      ->clear();
 
-   cmb_shape ->setCurrentIndex( 0 );
-   ct_stoich ->setValue( 1.0 );
-   pb_load_c0->setIcon( QIcon() );
-   cb_co_sed ->setChecked( false );
+   cmb_shape  ->setCurrentIndex( 0 );
+   ct_oligomer->setValue( 1.0 );
+   pb_load_c0 ->setIcon( QIcon() );
+   cb_co_sed  ->setChecked( false );
 }
 
 void US_Properties::newAnalyte( void )
@@ -346,7 +343,7 @@ void US_Properties::update_lw( void )
       lw_components->addItem( model.components[ i ].name );
 }
 
-void US_Properties::set_stoich( double stoich )
+void US_Properties::set_oligomer( double oligomer )
 {
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
@@ -355,22 +352,23 @@ void US_Properties::set_stoich( double stoich )
 
    inUpdate = true;
 
-   sc->mw /= sc->stoichiometry;  // Get monomer mw
-   sc->mw *= stoich;             // Now adjust for new stoichiometry
+   sc->mw /= sc->oligomer;  // Get monomer mw
+   sc->mw *= oligomer;             // Now adjust for new oligomer count
    le_mw->setText( QString::number( sc->mw, 'e', 3 ) );
 
    if ( ! cb_mw->isChecked() )
-      enable( le_mw  , false, gray );
+      enable( le_mw, true, gray );
 
-   sc->extinction /= sc->stoichiometry;
-   sc->extinction *= stoich;
+   sc->extinction /= sc->oligomer;
+   sc->extinction *= oligomer;
    le_extinction->setText( QString::number( sc->extinction, 'e', 4 ) );
 
-   sc->stoichiometry = (int) stoich;
+   sc->oligomer = (int) oligomer;
 
-   hydro_data.mw          = sc->mw;
-   hydro_data.density     = buffer.density;
-   hydro_data.viscosity   = buffer.viscosity;
+   //hydro_data.mw          = sc->mw;
+   hydro_data.mw          = le_mw->text().toDouble();
+   hydro_data.density     = DENS_20W;
+   hydro_data.viscosity   = VISC_20W;
    hydro_data.vbar        = sc->vbar20;
    hydro_data.axial_ratio = sc->axial_ratio;
 
@@ -379,6 +377,21 @@ void US_Properties::set_stoich( double stoich )
    set_molar();
    //inUpdate = false;
    //select_shape( sc->shape );
+
+   if ( oligomer > 1 )
+   {  // if oligomer count greater than 1, must check MW and frictional ratio
+      if ( ! ( cb_mw->isChecked() && cb_f_f0->isChecked() ) )
+      {  // mw,f_f0 not both checked, so make it so
+         cb_mw  ->setChecked( true  );
+         cb_f_f0->setChecked( true  );
+         cb_s   ->setChecked( false );
+         cb_D   ->setChecked( false );
+         cb_f   ->setChecked( false );
+         checkbox();
+      }
+
+      enable( le_mw, true, gray );  // MW entry always disabled w oligomer > 1
+   }
 
    bool mwuck = ! cb_mw->isChecked();
    bool scck  = cb_s ->isChecked();
@@ -392,7 +405,7 @@ void US_Properties::set_stoich( double stoich )
    inUpdate  = false;
    chgStoi   = true;
 
-   // re-calculate coefficients based on stoichiometry,mw changes
+   // re-calculate coefficients based on oligomer,mw changes
    calculate();
 
    chgStoi   = false;
@@ -716,8 +729,8 @@ void US_Properties::update( int /* row */ )
    
    // Update hydro data
    hydro_data.mw          = sc->mw;
-   hydro_data.density     = buffer.density;
-   hydro_data.viscosity   = buffer.viscosity;
+   hydro_data.density     = DENS_20W;
+   hydro_data.viscosity   = VISC_20W;
    hydro_data.vbar        = sc->vbar20;
    hydro_data.axial_ratio = sc->axial_ratio;
 
@@ -732,7 +745,7 @@ void US_Properties::update( int /* row */ )
       default:                cmb_shape->setCurrentIndex( 3 ); break;
    }
 
-   ct_stoich->setValue( sc->stoichiometry );
+   ct_oligomer->setValue( sc->oligomer );
 
    // Set characteristics
    le_mw   ->setText( QString::number( sc->mw   , 'e', 3 ) );
@@ -768,8 +781,8 @@ void US_Properties::simulate( void )
    else
       analyte.description = sc->name;
 
-   //hydro_data.density     = buffer.density;
-   //hydro_data.viscosity   = buffer.viscosity;
+   //hydro_data.density     = DENS_20W;
+   //hydro_data.viscosity   = VISC_20W;
    //hydro_data.vbar        = analyte.vbar20;
    //hydro_data.temperature = NORMAL_TEMP;
    //hydro_data.mw          = analyte.mw;
@@ -778,7 +791,7 @@ void US_Properties::simulate( void )
 
 
    working_data     = hydro_data; // working_data will be updated
-   //working_data.mw /= sc->stoichiometry;
+   //working_data.mw /= sc->oligomer;
 
    US_Predict1* dialog = new US_Predict1( 
          working_data, investigator, analyte, db_access, true );
@@ -796,7 +809,7 @@ void US_Properties::new_hydro( US_Analyte ad )
    US_Model::SimulationComponent* sc = &model.components[ row ];
 
    hydro_data       = working_data;
-   //working_data.mw *= sc->stoichiometry;
+   //working_data.mw *= sc->oligomer;
    analyte          = ad;
 
    hydro_data.calculate( NORMAL_TEMP );
@@ -828,17 +841,17 @@ void US_Properties::new_hydro( US_Analyte ad )
    {
       case US_Model::ABSORBANCE:
          if ( analyte.extinction.size() > 0 )
-            exval = analyte.extinction[ model.wavelength ] * sc->stoichiometry;
+            exval = analyte.extinction[ model.wavelength ] * sc->oligomer;
          break;
 
       case US_Model::INTERFERENCE:
          if ( analyte.refraction.size() > 0 )
-            exval = analyte.refraction[ model.wavelength ] * sc->stoichiometry;
+            exval = analyte.refraction[ model.wavelength ] * sc->oligomer;
          break;
 
       case US_Model::FLUORESCENCE:
          if ( analyte.fluorescence.size() > 0 )
-            exval = analyte.fluorescence[ model.wavelength ] * sc->stoichiometry;
+            exval = analyte.fluorescence[ model.wavelength ] * sc->oligomer;
          break;
    }
 
@@ -896,6 +909,9 @@ void US_Properties::checkbox( void )
    
    ( cb_f_f0->isChecked() ) ? enable( le_f_f0, false, normal ) 
                             : enable( le_f_f0, true , gray   );
+
+   if ( (int)ct_oligomer->value() > 1 )
+      enable( le_mw,   true,  gray   );
 }
 
 void US_Properties::enable( QLineEdit* le, bool status, const QPalette& p )

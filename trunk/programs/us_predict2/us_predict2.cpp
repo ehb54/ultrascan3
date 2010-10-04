@@ -2,6 +2,7 @@
 #include "us_predict2.h"
 #include "us_gui_settings.h"
 #include "us_constants.h"
+#include "us_model.h"
 #include "us_buffer_gui.h"
 #include "us_analyte_gui.h"
 #include "us_constants.h"
@@ -12,7 +13,7 @@ US_Predict2::US_Predict2() : US_Widgets()
 
    temperature = NORMAL_TEMP;
    d.density   = DENS_20W;
-   d.viscosity = VISC_20W * 100.0;
+   d.viscosity = VISC_20W;
    d.vbar20    = TYPICAL_VBAR;
    d.vbar      = TYPICAL_VBAR + ( 4.25e-4 * ( temperature - 20.0 ) );
 
@@ -46,7 +47,7 @@ US_Predict2::US_Predict2() : US_Widgets()
    controls->addWidget( pb_viscosity, c_row, 0 );
 
    le_viscosity = us_lineedit();
-   le_viscosity->setText( QString::number( VISC_20W * 100.0 ) );
+   le_viscosity->setText( QString::number( VISC_20W ) );
    connect( le_viscosity, SIGNAL( textChanged( const QString& ) ), 
                           SLOT  ( viscosity  ( const QString& ) ) );
    controls->addWidget( le_viscosity, c_row++, 1 );
@@ -303,12 +304,18 @@ void US_Predict2::do_s_d()
 
 void US_Predict2::update( void )
 {
+   US_Model::SimulationComponent sc;
    double vol_per_molecule;
    double rad_sphere;
    double f0;
    double frict_coeff;
 
-   double t = temperature + K0;
+   sc.vbar20      = d.vbar20;
+   sc.mw          = 0.0;
+   sc.s           = 0.0;
+   sc.D           = 0.0;
+   sc.f           = 0.0;
+   sc.f_f0        = 0.0;
 
    if ( model == None )
    {
@@ -336,17 +343,13 @@ void US_Predict2::update( void )
          return;
       }
 
-      vol_per_molecule = d.vbar * mw / AVOGADRO;
-      rad_sphere       = pow( vol_per_molecule * ( 3.0 / 4.0 ) / M_PI, 1.0 / 3.0 );
-      f0               = rad_sphere * 6.0 * M_PI * d.viscosity_tb * 0.01;
+      sc.mw            = mw;
+      sc.s             = sed_coeff;
 
-      // Recaluclate volume to put into cubic angstroms:
+      US_Model::calc_coefficients( sc );
 
-      vol_per_molecule = ( 4.0 / 3.0 ) * M_PI * pow( rad_sphere * 1.0e+08,  3.0 );
-      diff_coeff       = sed_coeff * R * t / ( d.buoyancyb * mw );
-      frict_coeff      = mw * d.buoyancyb / ( sed_coeff * AVOGADRO );
-      
-      if ( ! check_valid( frict_coeff, f0 ) ) return;
+      diff_coeff       = sc.D;
+      frict_coeff      = sc.f;
 
       le_param3->setText( QString::number( diff_coeff, 'e', 4 ) );
    }
@@ -369,17 +372,13 @@ void US_Predict2::update( void )
          return;
       }
 
-      vol_per_molecule = d.vbar * mw / AVOGADRO;
-      rad_sphere       = pow( vol_per_molecule * ( 3.0 / 4.0 ) / M_PI, 1.0 / 3.0 );
-      f0               = rad_sphere * 6.0 * M_PI * d.viscosity_tb * 0.01;
+      sc.mw            = mw;
+      sc.D             = diff_coeff;
 
-      // Recalculate volume to put into cubic angstroms:
+      US_Model::calc_coefficients( sc );
 
-      vol_per_molecule = ( 4.0 / 3.0 ) * M_PI * pow( rad_sphere * 1.0e+08, 3.0 );
-      sed_coeff        = diff_coeff * d.buoyancyb * mw / ( R * t );
-      frict_coeff      = mw * d.buoyancyb / ( sed_coeff * AVOGADRO );
-      
-      if ( ! check_valid( frict_coeff, f0 ) ) return;
+      sed_coeff        = sc.s;
+      frict_coeff      = sc.f;
       
       le_param3->setText( QString::number( sed_coeff, 'e', 4 ) );
    }
@@ -402,34 +401,41 @@ void US_Predict2::update( void )
          return;
       }
 
-      mw               = sed_coeff * R * t / ( diff_coeff * d.buoyancyb );
-      vol_per_molecule = d.vbar * mw / AVOGADRO;
-      rad_sphere       = pow( vol_per_molecule * ( 3.0 / 4.0 ) / M_PI, 1.0 / 3.0 );
-      f0               = rad_sphere * 6.0 * M_PI * d.viscosity_tb * 0.01;
+      sc.s             = sed_coeff;
+      sc.D             = diff_coeff;
 
+      US_Model::calc_coefficients( sc );
 
-      // Recaluclate volume to put into cubic angstroms:
-
-      vol_per_molecule = ( 4.0 / 3.0 ) * M_PI * pow( rad_sphere * 1.0e+08 , 3.0 );
-      frict_coeff      = mw * d.buoyancyb / ( sed_coeff * AVOGADRO );
+      mw               = sc.mw;
+      frict_coeff      = sc.f;
       
-      if ( ! check_valid( frict_coeff, f0 ) ) return;
-     
       le_param3->setText( QString::number( mw, 'e', 4 ) );
    }
 
-   le_fCoef ->setText( QString::number( frict_coeff,          'e', 4 ) );
-   le_r0    ->setText( QString::number( rad_sphere * 1.0e+08, 'e', 4 ) );
-   le_f0    ->setText( QString::number( f0,                   'e', 4 ) );
-   le_volume->setText( QString::number( vol_per_molecule,     'e', 4 ) );
-   le_ff0   ->setText( QString::number( frict_coeff / f0,     'e', 4 ) );
+   vol_per_molecule = d.vbar * mw / AVOGADRO;
+   rad_sphere       = pow( vol_per_molecule * 0.75 / M_PI, 1.0 / 3.0 );
+
+   double ff0   = sc.f_f0;
+   double r0    = rad_sphere * 1.0e+08;
+   f0           = frict_coeff / ff0;
+
+   if ( ! check_valid( ff0 ) )
+      return;
+
+   // Recalculate volume to put into cubic angstroms:
+   vol_per_molecule = 4.0 * M_PI / 3.0 * pow( r0, 3.0 );
+      
+   le_fCoef ->setText( QString::number( frict_coeff,      'e', 4 ) );
+   le_r0    ->setText( QString::number( r0,               'e', 4 ) );
+   le_f0    ->setText( QString::number( f0,               'e', 4 ) );
+   le_volume->setText( QString::number( vol_per_molecule, 'e', 4 ) );
+   le_ff0   ->setText( QString::number( ff0,              'e', 4 ) );
 
    // prolate ellipsoid
 
-   double ff0 = frict_coeff / f0;
    double ratio = root( PROLATE, ff0 );
-   double ap = 1.0e+08 * rad_sphere * pow( ratio, 2.0 / 3.0 );
-   double bp = ap / ratio;
+   double ap    = r0 * pow( ratio, 2.0 / 3.0 );
+   double bp    = ap / ratio;
 
    le_prolate_a ->setText( QString::number( ap,    'e', 4 ) );
    le_prolate_b ->setText( QString::number( bp,    'e', 4 ) );
@@ -437,9 +443,9 @@ void US_Predict2::update( void )
 
    // oblate ellipsoid
 
-   ratio = root( OBLATE, ff0 );
-   double bo = 1.0e+08 * rad_sphere / pow( ratio, 2.0 / 3.0 );
-   double ao = ratio * bo;
+   ratio        = root( OBLATE, ff0 );
+   double bo    = r0 / pow( ratio, 2.0 / 3.0 );
+   double ao    = ratio * bo;
    le_oblate_a ->setText( QString::number( ao,    'e', 4 ) );
    le_oblate_b ->setText( QString::number( bo,    'e', 4 ) );
    le_oblate_ab->setText( QString::number( ratio, 'e', 4 ) );
@@ -448,9 +454,9 @@ void US_Predict2::update( void )
 
    if ( ff0 > 1.32 )
    {
-      ratio = root( ROD, ff0 );
-      double br = 1.0e+08 * pow( 2.0/ ( 3.0 * ratio ), 1.0 / 3.0 ) * rad_sphere;
-      double ar = ratio * br;
+      ratio        = root( ROD, ff0 );
+      double br    = r0 * pow( 2.0 / ( 3.0 * ratio ), 1.0 / 3.0 );
+      double ar    = ratio * br;
       le_rod_a ->setText( QString::number( ar, 'e', 4 ) );
       le_rod_b ->setText( QString::number( br, 'e', 4 ) );
       le_rod_ab->setText( QString::number( ratio, 'e', 4 ) );
@@ -463,14 +469,14 @@ void US_Predict2::update( void )
    }
 }
 
-bool US_Predict2::check_valid( double f, double f0 )
+bool US_Predict2::check_valid( double f_f0 )
 {
-   if (  f / f0  < 1.0 )
+   if (  f_f0  < 1.0 )
    {
       QMessageBox::information( this,
             tr( "Attention:" ), 
             tr( "This model is physically impossible!\n"
-                "The f/f0 ratio is less than 1." ) );
+                "The f/f0 ratio (%1) is less than 1." ).arg( f_f0 ) );
       
       sed_coeff  = 0.0;
       diff_coeff = 0.0;

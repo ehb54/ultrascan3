@@ -1333,7 +1333,7 @@ void US_FeMatch::load_model( )
    US_Math2::data_correction( avgTemp, solution );
 
    double scorrec  = 1.0 / solution.correction;
-   double dcorrec  = ( ( K0 + avgTemp ) * 100.0 * VISC_20W )
+   double dcorrec  = ( ( K0 + avgTemp ) * VISC_20W )
       / ( K20 * solution.viscosity );
 
    int    ncomp    = model.components.size();       // components count
@@ -1371,7 +1371,7 @@ DbgLv(1) << "  viscosity" << solution.viscosity << solution.viscosity_tb;
       mw         = ( s20w / D20w ) * ( R * K20 ) / ( 1.0 - vbar20 * DENS_20W );
       vol        = vbar20 * mw / AVOGADRO;
       rad_sphere = pow( ( vol * 0.75 ) / M_PI, 1.0 / 3.0 );
-      f0         = rad_sphere * 6.0 * M_PI * VISC_20W;
+      f0         = rad_sphere * 0.06 * M_PI * VISC_20W;
       fv         = ( mw * ( 1.0 - vbar20 * DENS_20W ) ) / ( s20w * AVOGADRO );
       f_f0       = fv / f0;
       sc->s     *= scorrec;
@@ -1894,7 +1894,7 @@ void US_FeMatch::write_cofs()
    int    ccount   = model.components.size();
    double avgTemp  = average_temperature( edata );
    double scorrec  = 1.0 / solution.correction;
-   double dcorrec  = ( ( K0 + avgTemp ) * 100.0 * VISC_20W )
+   double dcorrec  = ( ( K0 + avgTemp ) * VISC_20W )
       / ( K20 * solution.viscosity );
 
    QString filename = US_Settings::resultDir() + "/" + edata->runID + "."

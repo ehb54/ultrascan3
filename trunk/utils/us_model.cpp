@@ -21,7 +21,7 @@ US_Model::SimulationComponent::SimulationComponent()
    extinction           = 0.0;
    sigma                = 0.0;
    delta                = 0.0;
-   stoichiometry        = 1;
+   oligomer             = 1;
    shape                = SPHERE;
    axial_ratio          = 10.0;
    analyte_type         = 0;  // Protein
@@ -45,7 +45,7 @@ bool US_Model::SimulationComponent::operator==
    if ( extinction           != sc.extinction            ) return false;
    if ( sigma                != sc.sigma                 ) return false;
    if ( delta                != sc.delta                 ) return false;
-   if ( stoichiometry        != sc.stoichiometry         ) return false;
+   if ( oligomer             != sc.oligomer              ) return false;
    if ( shape                != sc.shape                 ) return false;
    if ( axial_ratio          != sc.axial_ratio           ) return false;
    if ( analyte_type         != sc.analyte_type          ) return false;
@@ -76,6 +76,7 @@ bool US_Model::Association::operator== ( const Association& a ) const
 
 US_Model::US_Model()
 {
+   density         = DENS_20W;
    viscosity       = VISC_20W;
    compressibility = 0;
    temperature     = NORMAL_TEMP;
@@ -87,7 +88,6 @@ US_Model::US_Model()
    iterations      = 1;
    editGUID        = QString( "00000000-0000-0000-0000-000000000000" );
    modelGUID   .clear();
-   bufferGUID  .clear();
    components  .clear();
    associations.clear();
 }
@@ -101,8 +101,6 @@ bool US_Model::operator== ( const US_Model& m ) const
    if ( temperature     != m.temperature     ) return false;
    if ( modelGUID       != m.modelGUID       ) return false;
    if ( editGUID        != m.editGUID        ) return false;
-   if ( bufferGUID      != m.bufferGUID      ) return false;
-   if ( bufferDesc      != m.bufferDesc      ) return false;
    if ( description     != m.description     ) return false;
    if ( optics          != m.optics          ) return false;
    if ( type            != m.type            ) return false;
@@ -180,7 +178,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    t              = K0 + 20.0;          // temperature kelvin
    vol_fac        = 0.75 / M_PI;        // various factors used in calcs below
    onethird       = 1.0 / 3.0;
-   rsph_fac       = 6.0 * M_PI * VISC_20W;
+   rsph_fac       = 0.06 * M_PI * VISC_20W;
    buoyancyb      = 1.0 - vbar * DENS_20W;
 
    s              = component.s;        // component coefficient values
@@ -196,7 +194,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    d.density      = DENS_20W;
    d.viscosity    = VISC_20W;
 
-   US_Math2::data_correction( 20.0, d );
+   US_Math2::data_correction( NORMAL_TEMP, d );
 //qDebug() << "CC: b_b b_w dn dn_t vi vi_t corr"
 //   << d.buoyancyb << d.buoyancyw << d.density << d.density_tb
 //   << d.viscosity << d.viscosity_tb << d.correction;
@@ -222,8 +220,8 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
                                                  ///////////////
       else if ( f_f0 != 0.0 )                    // s and f_f0
       {                                          ///////////////
-         double numer   = 2.0 * s * f_f0 * vbar * VISC_20W;
-         f0             = 9.0 * VISC_20W * M_PI * sqrt( numer / buoyancyb );
+         double numer   = 0.02 * s * f_f0 * vbar * VISC_20W;
+         f0             = 0.09 * VISC_20W * M_PI * sqrt( numer / buoyancyb );
          fv             = f_f0 * f0;
          D              = R * t / ( AVOGADRO * fv );
          mw             = s * R * t / ( D * buoyancyb );
@@ -292,7 +290,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
       {                                          ///////////////
          fv             = R * t / ( AVOGADRO * D );
          f0             = fv / f_f0;
-         radius_sphere  = f0 / ( 6.0 * M_PI * VISC_20W );
+         radius_sphere  = f0 / ( 0.06 * M_PI * VISC_20W );
          double volume  = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
          mw             = volume * AVOGADRO / vbar;
          s              = mw * buoyancyb / ( AVOGADRO * fv );
@@ -308,7 +306,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    {                                             ///////////////
       f0             = fv / f_f0;
       D              = R * t / ( AVOGADRO * fv );
-      radius_sphere  = f0 / ( 6.0 * M_PI * VISC_20W );
+      radius_sphere  = f0 / ( 0.06 * M_PI * VISC_20W );
       double volume  = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
       mw             = volume * AVOGADRO / vbar;
       s              = mw * buoyancyb / ( AVOGADRO * fv );
@@ -441,8 +439,6 @@ int US_Model::load( const QString& filename )
             description     = a.value( "description"    ).toString();
             modelGUID       = a.value( "modelGUID"      ).toString();
             editGUID        = a.value( "editGUID"       ).toString();
-            bufferGUID      = a.value( "bufferGUID"     ).toString();
-            bufferDesc      = a.value( "bufferDesc"     ).toString();
             density         = a.value( "density"        ).toString().toDouble();
             viscosity       = a.value( "viscosity"      ).toString().toDouble();
             compressibility = a.value( "compressibility").toString().toDouble();
@@ -453,6 +449,10 @@ int US_Model::load( const QString& filename )
             type            =
                (ModelType)a.value( "type"   ).toString().toInt();
             iterations      = a.value( "iterations"     ).toString().toInt();
+            // force buffer-related parameters to water-at-20 values
+            density         = DENS_20W;
+            viscosity       = VISC_20W;
+            temperature     = NORMAL_TEMP;
          }
 
          else if ( xml.name() == "analyte" )
@@ -474,11 +474,13 @@ int US_Model::load( const QString& filename )
             sc.sigma       = a.value( "sigma"      ).toString().toDouble();
             sc.delta       = a.value( "delta"      ).toString().toDouble();
 
-            sc.molar_concentration  = a.value( "molar"  ).toString().toDouble();
-            sc.signal_concentration = a.value( "signal" ).toString().toDouble();
-            sc.stoichiometry        = a.value( "stoich" ).toString().toInt();
-            if ( sc.stoichiometry == 0 )
-               sc.stoichiometry        = 1;
+            sc.molar_concentration  = a.value( "molar"    ).toString().toDouble();
+            sc.signal_concentration = a.value( "signal"   ).toString().toDouble();
+            sc.oligomer             = a.value( "oligomer" ).toString().toInt();
+            if ( sc.oligomer == 0 )
+            sc.oligomer             = a.value( "stoich"   ).toString().toInt();
+            if ( sc.oligomer == 0 )
+               sc.oligomer             = 1;
             sc.shape                =
                (ShapeType)a.value( "shape"  ).toString().toInt();
             sc.analyte_type         = a.value( "type"   ).toString().toInt();
@@ -664,8 +666,6 @@ void US_Model::write_temp( QTemporaryFile& file )
    xml.writeAttribute   ( "description",     description );
    xml.writeAttribute   ( "modelGUID",       modelGUID   );
    xml.writeAttribute   ( "editGUID",        editGUID    );
-   xml.writeAttribute   ( "bufferGUID",      bufferGUID  );
-   xml.writeAttribute   ( "bufferDesc",      bufferDesc  );
    xml.writeAttribute   ( "density",         QString::number( density        ));
    xml.writeAttribute   ( "viscosity",       QString::number( viscosity      ));
    xml.writeAttribute   ( "compressibility", QString::number( compressibility));
@@ -697,7 +697,7 @@ void US_Model::write_temp( QTemporaryFile& file )
       xml.writeAttribute( "axial",      QString::number( sc->axial_ratio   ) );
       xml.writeAttribute( "sigma",      QString::number( sc->sigma         ) );
       xml.writeAttribute( "delta",      QString::number( sc->delta         ) );
-      xml.writeAttribute( "stoich",     QString::number( sc->stoichiometry ) );
+      xml.writeAttribute( "oligomer",   QString::number( sc->oligomer      ) );
       xml.writeAttribute( "shape",      QString::number( sc->shape         ) );
       xml.writeAttribute( "type",       QString::number( sc->analyte_type  ) );
 
@@ -752,8 +752,6 @@ void US_Model::debug( void )
    qDebug() << "desc" << description;
    qDebug() << "model guid" << modelGUID;
    qDebug() << "edit guid" << editGUID;
-   qDebug() << "buf guid" << bufferGUID;
-   qDebug() << "buf desc" << bufferDesc;
    qDebug() << "density" << density;
    qDebug() << "visc" << viscosity;
    qDebug() << "comp" << compressibility;
@@ -780,7 +778,7 @@ void US_Model::debug( void )
       qDebug() << "  delta" << sc->delta;
       qDebug() << "  molar C" << sc->molar_concentration;
       qDebug() << "  signal C" << sc->signal_concentration;
-      qDebug() << "  stoich" << sc->stoichiometry;
+      qDebug() << "  oligomer" << sc->oligomer;
       qDebug() << "  shape" << (int)sc->shape;
       qDebug() << "  type" << (int)sc->analyte_type;
 

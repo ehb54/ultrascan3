@@ -13,6 +13,7 @@
 #      2 = circular
 #      3 = synthetic
 #      4 = band forming
+#      5 = meniscus matching
 # next Field: pathlength in cm
 # next Field: angle in degrees of sector width
 # next Field: width of channel if centerpiece is rectanglar
@@ -21,6 +22,9 @@
 1 Epon 1 7.2 0 1.2 2.5 0
 2 Aluminum 1 7.15 0 1.2 2.5 0
 3 Epon 3 6.111 6.613 7.104 1 1.2 0 0.323
-4 Titanium 1 7.15 0 1.2 2.5 0
+4 Titanium 1 7.111 0 1.2 2.5 0
 5 Titanium 3 6.170 6.690 7.210 1 1.2 0 0.320
 6 Epon 1 7.2 4 1.2 2.5 0
+7 Epon-Helmut 1 7.17 4 1.2 2.5 0
+8 SVEL60 1 7.2 0 1.2 2.0 0
+9 SVEL60-MM 1 7.2 5 1.2 2.0 0

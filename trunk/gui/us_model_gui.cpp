@@ -6,7 +6,6 @@
 #include "us_constants.h"
 #include "us_properties.h"
 #include "us_investigator.h"
-#include "us_buffer_gui.h"
 #include "us_util.h"
 #include "us_passwd.h"
 #include "us_associations_gui.h"
@@ -94,42 +93,11 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    connect( pb_associations, SIGNAL( clicked() ), SLOT( associations() ) );
    main->addWidget( pb_associations, row++, 1 );
 
-   QPushButton* pb_buffer = us_pushbutton( tr( "Select Buffer" ) );
-   connect( pb_buffer, SIGNAL( clicked() ), SLOT( get_buffer() ) );
-   main->addWidget( pb_buffer, row, 0 );
-
-   le_buffer = us_lineedit( );
-   main->addWidget( le_buffer, row++, 1 );
-
-   QLabel* lb_density = us_label( tr( "Density:" ) );
-   main->addWidget( lb_density, row, 0 );
-
-   le_density = us_lineedit( );
-   main->addWidget( le_density, row++, 1 );
-
-   QLabel* lb_viscosity = us_label( tr( "Viscosity:" ) );
-   main->addWidget( lb_viscosity, row, 0 );
-
-   le_viscosity = us_lineedit( );
-   main->addWidget( le_viscosity, row++, 1 );
-
-   QLabel* lb_compressibility = us_label( tr( "Compressibility:" ) );
-   main->addWidget( lb_compressibility, row, 0 );
-
-   le_compressibility = us_lineedit( );
-   main->addWidget( le_compressibility, row++, 1 );
-
    QLabel* lb_wavelength = us_label( tr( "Wavelength:" ) );
    main->addWidget( lb_wavelength, row, 0 );
 
    le_wavelength = us_lineedit( );
    main->addWidget( le_wavelength, row++, 1 );
-
-   QLabel* lb_temperature = us_label( tr( "Temperature:" ) );
-   main->addWidget( lb_temperature, row, 0 );
-
-   le_temperature = us_lineedit( "20.0" );
-   main->addWidget( le_temperature, row++, 1 );
 
    QLabel* lb_optics = us_label( tr( "Optical System:" ) );
    main->addWidget( lb_optics, row, 0 );
@@ -153,6 +121,40 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
       le_guid->setVisible( false );
    }
  
+   QLabel* lb_density = us_label( tr( "Density:" ) );
+   main->addWidget( lb_density, row, 0 );
+
+   le_density         = us_lineedit( QString::number( DENS_20W, 'f', 6 ) );
+   main->addWidget( le_density, row++, 1 );
+   
+   QLabel* lb_viscosity = us_label( tr( "Viscosity:" ) );
+   main->addWidget( lb_viscosity, row, 0 );
+
+   le_viscosity       = us_lineedit( QString::number( VISC_20W, 'f', 5 ) );
+   main->addWidget( le_viscosity, row++, 1 );
+
+   QLabel* lb_compressibility = us_label( tr( "Compressibility:" ) );
+   main->addWidget( lb_compressibility, row, 0 );
+
+   le_compressibility = us_lineedit( "0" );
+   main->addWidget( le_compressibility, row++, 1 );
+
+   QLabel* lb_temperature = us_label( tr( "Temperature:" ) );
+   main->addWidget( lb_temperature, row, 0 );
+
+   le_temperature     = us_lineedit( "20 " + DEGC );
+   main->addWidget( le_temperature, row++, 1 );
+
+   le_density        ->setReadOnly( true );
+   le_viscosity      ->setReadOnly( true );
+   le_compressibility->setReadOnly( true );
+   le_temperature    ->setReadOnly( true );
+   le_guid->setPalette( gray );
+   le_density        ->setPalette( gray );
+   le_viscosity      ->setPalette( gray );
+   le_compressibility->setPalette( gray );
+   le_temperature    ->setPalette( gray );
+
    QPushButton* pb_save = us_pushbutton( tr( "Save / Update Model" ) );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save_model() ) );
    main->addWidget( pb_save, row, 0 );
@@ -333,17 +335,9 @@ void US_ModelGui::select_model( QListWidgetItem* item )
    recent_row    = index;
 
    // Populate 
-   buffer.GUID   = model.bufferGUID;
-
    le_description    ->setText( model.description );
-   le_buffer         ->setText( model.bufferDesc  );
+   le_wavelength     ->setText( QString::number( model.wavelength, 'f', 1 ) );
 
-   le_density        ->setText( QString::number( model.density,        'f', 4));
-   le_viscosity      ->setText( QString::number( model.viscosity,      'f', 4));
-   le_compressibility->setText( QString::number( model.compressibility,'e', 3));
-   le_wavelength     ->setText( QString::number( model.wavelength,     'f', 1));
-   le_temperature    ->setText( QString::number( model.temperature,    'f', 1));
-   
    le_guid           ->setText( model.modelGUID );
 
    cb_optics         ->setCurrentIndex( model.optics );
@@ -461,32 +455,6 @@ void US_ModelGui::update_person( int            ID,
             QString::number( ID ) + ": " + lname + ", " + fname );
 }
 
-void US_ModelGui::get_buffer( void )
-{
-   US_BufferGui* dialog = new US_BufferGui( investigator, true, buffer, 
-         rb_disk->isChecked() );
-   
-   connect( dialog, SIGNAL( valueChanged ( US_Buffer ) ),
-                    SLOT  ( update_buffer( US_Buffer ) ) );
-
-   dialog->exec();
-}
-
-void US_ModelGui::update_buffer( US_Buffer buf )
-{
-   buffer = buf;
-   le_density        ->setText( QString::number( buf.density        , 'f', 4 ));
-   le_viscosity      ->setText( QString::number( buf.viscosity      , 'f', 4 ));
-   le_compressibility->setText( QString::number( buf.compressibility, 'e', 3 ));
-   le_buffer         ->setText( buf.description );
-
-   model.density         = buf.density;
-   model.viscosity       = buf.viscosity;
-   model.compressibility = buf.compressibility;
-   model.bufferGUID      = buf.GUID;
-   model.bufferDesc      = buf.description;
-}
-
 void US_ModelGui::manage_components( void )
 {
    int index = lw_models->currentRow();
@@ -500,19 +468,11 @@ void US_ModelGui::manage_components( void )
       return;
    }
 
-   if ( le_density->text().isEmpty() )
-   {
-      QMessageBox::information( this,
-         tr( "Buffer not selected" ),
-         tr( "Please select a buffer first.\n" ) );
-      return;
-   }
-
    bool dbAccess = rb_db->isChecked();
    working_model = model;
 
    US_Properties* dialog = 
-      new US_Properties( buffer, working_model, investigator, dbAccess );
+      new US_Properties( working_model, investigator, dbAccess );
    
    connect( dialog, SIGNAL( done() ), SLOT( update_sim() ) );
    dialog->exec();
@@ -610,12 +570,11 @@ void US_ModelGui::save_model( void )
 {
    if ( ! verify_model() ) return;
 
-   model.bufferDesc      = le_buffer         ->text();
-   model.density         = le_density        ->text().toDouble();
-   model.viscosity       = le_viscosity      ->text().toDouble();
-   model.compressibility = le_compressibility->text().toDouble();
    model.wavelength      = le_wavelength     ->text().toDouble();
-   model.temperature     = le_temperature    ->text().toDouble();
+   model.density         = DENS_20W;
+   model.viscosity       = VISC_20W;
+   model.compressibility = 0.0;
+   model.temperature     = NORMAL_TEMP;
 
    if ( rb_disk->isChecked() )
    {
