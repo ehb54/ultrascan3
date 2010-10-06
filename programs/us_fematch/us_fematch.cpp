@@ -131,14 +131,14 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    te_desc->setReadOnly( true );
 
    lw_triples = us_listwidget();
-   lw_triples->setMaximumHeight( fontHeight * 3 + 12 );
+   lw_triples->setMaximumHeight( fontHeight * 2 + 12 );
 
 
    runInfoLayout->addWidget( lb_info   , 0, 0, 1, 4 );
-   runInfoLayout->addWidget( lb_id     , 1, 0, 1, 2 );
-   runInfoLayout->addWidget( le_id     , 1, 2, 1, 2 );
-   runInfoLayout->addWidget( lb_temp   , 2, 0, 1, 2 );
-   runInfoLayout->addWidget( le_temp   , 2, 2, 1, 2 );
+   runInfoLayout->addWidget( lb_id     , 1, 0, 1, 1 );
+   runInfoLayout->addWidget( le_id     , 1, 1, 1, 3 );
+   runInfoLayout->addWidget( lb_temp   , 2, 0, 1, 1 );
+   runInfoLayout->addWidget( le_temp   , 2, 1, 1, 3 );
    runInfoLayout->addWidget( te_desc   , 3, 0, 2, 4 );
    runInfoLayout->addWidget( lb_triples, 5, 0, 1, 4 );
    runInfoLayout->addWidget( lw_triples, 6, 0, 5, 4 );
@@ -151,6 +151,8 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    le_viscosity = us_lineedit( "1.001940" );
    pb_vbar      = us_pushbutton( tr( "Vbar"   ) );
    le_vbar      = us_lineedit( "0.7200" );
+   pb_compress  = us_pushbutton( tr( "Compressibility" ) );
+   le_compress  = us_lineedit( "0      " );
    pb_showmodel = us_pushbutton( tr( "Show Model #"   ) );
    lb_rmsd      = us_label     ( tr( "RMSD:"  ) );
    le_rmsd      = us_lineedit( "0.0" );
@@ -162,6 +164,13 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    ct_component = us_counter( 3, 1, 50, 1 );
    ct_component->setMinimumWidth( 170 );
    ct_component->setStep( 1.0 );
+   QFontMetrics fme( pb_compress->font() );
+   int pwid = fme.width( pb_compress->text() + 6 );
+   int lwid = pwid * 3 / 4;
+   pb_vbar    ->setMinimumWidth( pwid );
+   le_vbar    ->setMinimumWidth( lwid );
+   pb_compress->setMinimumWidth( pwid );
+   le_compress->setMinimumWidth( lwid );
 
    QLabel* lb_experiment   = us_banner( tr( "Experimental Parameters (at 20" ) 
       + DEGC + "):" );
@@ -196,13 +205,16 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             this,         SLOT( get_buffer() ) );
    connect( pb_vbar,      SIGNAL( clicked() ),
             this,         SLOT( get_vbar() ) );
+   connect( pb_compress,  SIGNAL( clicked() ),
+            this,         SLOT( get_buffer() ) );
    connect( ct_component, SIGNAL( valueChanged( double ) ),
             this,         SLOT  ( comp_number(  double ) ) );
    le_rmsd->setReadOnly( true );
 
-   density   = 0.998234;
-   viscosity = 1.001940;
-   vbar      = 0.72;
+   density   = DENS_20W;
+   viscosity = VISC_20W;
+   vbar      = TYPICAL_VBAR;
+   compress  = 0.0;
 
    ct_simpoints->setValue( 200 );
    ct_bldvolume->setValue( 0.015 );
@@ -225,6 +237,8 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    parameterLayout->addWidget( le_viscosity    , 1, 3, 1, 1 );
    parameterLayout->addWidget( pb_vbar         , 2, 0, 1, 1 );
    parameterLayout->addWidget( le_vbar         , 2, 1, 1, 1 );
+   parameterLayout->addWidget( pb_compress     , 2, 2, 1, 1 );
+   parameterLayout->addWidget( le_compress     , 2, 3, 1, 1 );
    parameterLayout->addWidget( lb_variance     , 3, 0, 1, 1 );
    parameterLayout->addWidget( le_variance     , 3, 1, 1, 1 );
    parameterLayout->addWidget( lb_rmsd         , 3, 2, 1, 1 );
@@ -713,6 +727,8 @@ void US_FeMatch::get_buffer( void )
    US_BufferGui* bdiag = new US_BufferGui( -1, true );
    connect( bdiag, SIGNAL( valueChanged(  double, double ) ),
             this,  SLOT  ( update_buffer( double, double ) ) );
+   connect( bdiag, SIGNAL( valueChanged(  US_Buffer      ) ),
+            this,  SLOT  ( update_buffer( US_Buffer      ) ) );
    bdiag->exec();
    qApp->processEvents();
 }
@@ -724,7 +740,18 @@ void US_FeMatch::update_buffer( double new_dens, double new_visc )
    viscosity  = new_visc;
 
    le_density  ->setText( QString::number( density,   'f', 6 ) );
-   le_viscosity->setText( QString::number( viscosity, 'f', 6 ) );
+   le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
+}
+
+void US_FeMatch::update_buffer( US_Buffer buffer )
+{
+   density    = buffer.density;
+   viscosity  = buffer.viscosity;
+   compress   = buffer.compressibility;
+
+   le_density  ->setText( QString::number( density,   'f', 6 ) );
+   le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
+   le_compress ->setText( QString::number( compress,  'e', 3 ) );
 }
 
 // open dialog and get vbar information
@@ -1311,8 +1338,7 @@ void US_FeMatch::load_model( )
    else
       return;                     // Cancel:  bail out now
 
-   double avgTemp  = average_temperature( edata );
-
+#if 0
    if ( model.viscosity != 0.0 )
    {
       viscosity  = model.viscosity;
@@ -1324,7 +1350,16 @@ void US_FeMatch::load_model( )
       density    = model.density;
       le_density  ->setText( QString::number( density,   'f', 6 ) );
    }
+#endif
 
+   model_loaded = model;   // save model exactly as loaded
+
+   int ncomp    = model.components.size();       // components count
+   int nassoc   = model.associations.size();     // associations count
+   isRA         = ( nassoc > 1 );                // RA if #assocs > 1
+
+#if 0
+   double avgTemp     = average_temperature( edata );
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
    solution.vbar      = le_vbar     ->text().toDouble();
@@ -1335,10 +1370,6 @@ void US_FeMatch::load_model( )
    double scorrec  = 1.0 / solution.correction;
    double dcorrec  = ( ( K0 + avgTemp ) * VISC_20W )
       / ( K20 * solution.viscosity );
-
-   int    ncomp    = model.components.size();       // components count
-   int    nassoc   = model.associations.size();     // associations count
-   isRA        = ( nassoc > 1 );                    // RA if #assocs > 1
    double s20w;
    double D20w;
    double vbar20;
@@ -1376,8 +1407,7 @@ DbgLv(1) << "  viscosity" << solution.viscosity << solution.viscosity_tb;
       f_f0       = fv / f0;
       sc->s     *= scorrec;
       sc->D     *= dcorrec;
-if(jj==0)
-DbgLv(1) << "  s20w s" << s20w << sc->s << "  D20w D" << D20w << sc->D;
+DbgLv(1) << " cx" << jj+1 << "s20w s" << s20w << sc->s << "  D20w D" << D20w << sc->D;
 
       sc->vbar20 = vbar20;
       sc->mw     = mw;
@@ -1387,6 +1417,7 @@ DbgLv(1) << "  s20w s" << s20w << sc->s << "  D20w D" << D20w << sc->D;
       if ( sc->extinction > 0.0 )
          sc->molar_concentration = sc->signal_concentration / sc->extinction;
    }
+#endif
 
    ct_component->setMaxValue( (double)ncomp );
 
@@ -1405,6 +1436,48 @@ DbgLv(1) << "  s20w s" << s20w << sc->s << "  D20w D" << D20w << sc->D;
    // see if there are any noise files to load
    load_noise();
 
+}
+
+void US_FeMatch::adjust_model()
+{
+   model              = model_loaded;
+
+   // build model component correction factors
+   double avgTemp     = average_temperature( edata );
+
+   solution.density   = le_density  ->text().toDouble();
+   solution.viscosity = le_viscosity->text().toDouble();
+   solution.vbar      = le_vbar     ->text().toDouble();
+   solution.vbar20    = US_Math2::adjust_vbar( solution.vbar, avgTemp );
+
+   US_Math2::data_correction( avgTemp, solution );
+
+   double scorrec  = 1.0 / solution.correction;
+   double dcorrec  = ( ( K0 + avgTemp ) * VISC_20W )
+      / ( K20 * solution.viscosity );
+
+   // fill out components values and adjust s,D based on buffer
+
+   for ( int jj = 0; jj < model.components.size(); jj++ )
+   {
+      US_Model::SimulationComponent* sc = &model.components[ jj ];
+
+      double s20w = fabs( sc->s );
+      double D20w = sc->D;
+      sc->mw      = 0.0;
+      sc->f       = 0.0;
+      sc->f_f0    = 0.0;
+
+      model.calc_coefficients( *sc );
+
+      sc->s      *= scorrec;
+      sc->D      *= dcorrec;
+DbgLv(1) << " cx" << jj+1
+ << "s20w s" << s20w << sc->s << "  D20w D" << D20w << sc->D;
+
+      if ( sc->extinction > 0.0 )
+         sc->molar_concentration = sc->signal_concentration / sc->extinction;
+   }
 }
 
 // load noise record(s) if there are any and user so chooses
@@ -1541,6 +1614,8 @@ DbgLv(1) << " nscan nconc" << nscan << nconc;
 DbgLv(1) << " radlo radhi" << radlo << radhi;
 DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
 
+   adjust_model();
+
    sdata          = new US_DataIO2::RawData();
 
    // initialize simulation parameters using edited data information
@@ -1598,10 +1673,12 @@ DbgLv(1) << " afrsa init";
 if ( dbg_level > 1 )
  simparams.save_simparms( US_Settings::appBaseDir() + "/etc/sp_fematch.xml" );
 
+   compress  = le_compress->text().toDouble();
+
    if ( model.components[ 0 ].sigma == 0.0  &&
         model.components[ 0 ].delta == 0.0  &&
         model.coSedSolute           <  0.0  &&
-        model.compressibility       == 0.0 )
+        compress                    == 0.0 )
    {
       US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
    
@@ -1613,9 +1690,9 @@ DbgLv(1) << " afrsa calc";
 
    else
    {
-      US_LammAstfvm *astfvm  = new US_LammAstfvm( model, simparams );
+      US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
 
-      astfvm->calculate( *sdata );
+      astfvm->calculate(     *sdata );
    }
 
 nscan = sdata->scanData.size();

@@ -13,6 +13,8 @@
 #include "us_simparms.h"
 #include "us_help.h"
 #include "us_astfem_rsa.h"
+#include "us_lamm_astfvm.h"
+#include "us_buffer.h"
 #include "us_dataIO2.h"
 
 #ifndef DbgLv
@@ -43,10 +45,13 @@ class US_Astfem_Sim : public US_Widgets
                     
       QPushButton*   pb_saveExp;
       QPushButton*   pb_saveSim;
+      QPushButton*   pb_buffer;
       QPushButton*   pb_simParms;
       QPushButton*   pb_changeModel;
       QPushButton*   pb_start;
       QPushButton*   pb_stop;
+
+      QTextEdit*     te_status;
 
       QLabel*        lb_progress;
                     
@@ -68,7 +73,9 @@ class US_Astfem_Sim : public US_Widgets
       int            progress_maximum;
 
       US_Astfem_RSA*          astfem_rsa;
+      US_LammAstfvm*          astfvm;
       US_Model                system;
+      US_Buffer               buffer;
       US_SimulationParameters simparams;
       US_SimulationParameters working_simparams;
       US_DataIO2::RawData     sim_data;
@@ -93,11 +100,11 @@ class US_Astfem_Sim : public US_Widgets
       void dump_mfem_scan   ( US_DataIO2::Scan& );
 
    private slots:
-      void load_experiment ( void );
-      void save_experiment ( void );
       void new_model       ( void );
       void change_model    ( US_Model );
-      void load_model      ( void );
+      void new_buffer      ( void );
+      void change_buffer   ( US_Buffer );
+      void change_status   ( void );
       void set_parameters  ( void );
       void sim_parameters  ( void );
       void start_simulation( void );

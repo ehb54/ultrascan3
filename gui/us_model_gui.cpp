@@ -121,40 +121,6 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
       le_guid->setVisible( false );
    }
  
-   QLabel* lb_density = us_label( tr( "Density:" ) );
-   main->addWidget( lb_density, row, 0 );
-
-   le_density         = us_lineedit( QString::number( DENS_20W, 'f', 6 ) );
-   main->addWidget( le_density, row++, 1 );
-   
-   QLabel* lb_viscosity = us_label( tr( "Viscosity:" ) );
-   main->addWidget( lb_viscosity, row, 0 );
-
-   le_viscosity       = us_lineedit( QString::number( VISC_20W, 'f', 5 ) );
-   main->addWidget( le_viscosity, row++, 1 );
-
-   QLabel* lb_compressibility = us_label( tr( "Compressibility:" ) );
-   main->addWidget( lb_compressibility, row, 0 );
-
-   le_compressibility = us_lineedit( "0" );
-   main->addWidget( le_compressibility, row++, 1 );
-
-   QLabel* lb_temperature = us_label( tr( "Temperature:" ) );
-   main->addWidget( lb_temperature, row, 0 );
-
-   le_temperature     = us_lineedit( "20 " + DEGC );
-   main->addWidget( le_temperature, row++, 1 );
-
-   le_density        ->setReadOnly( true );
-   le_viscosity      ->setReadOnly( true );
-   le_compressibility->setReadOnly( true );
-   le_temperature    ->setReadOnly( true );
-   le_guid->setPalette( gray );
-   le_density        ->setPalette( gray );
-   le_viscosity      ->setPalette( gray );
-   le_compressibility->setPalette( gray );
-   le_temperature    ->setPalette( gray );
-
    QPushButton* pb_save = us_pushbutton( tr( "Save / Update Model" ) );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save_model() ) );
    main->addWidget( pb_save, row, 0 );
@@ -570,11 +536,7 @@ void US_ModelGui::save_model( void )
 {
    if ( ! verify_model() ) return;
 
-   model.wavelength      = le_wavelength     ->text().toDouble();
-   model.density         = DENS_20W;
-   model.viscosity       = VISC_20W;
-   model.compressibility = 0.0;
-   model.temperature     = NORMAL_TEMP;
+   model.wavelength      = le_wavelength->text().toDouble();
 
    if ( rb_disk->isChecked() )
    {

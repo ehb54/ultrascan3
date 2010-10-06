@@ -53,11 +53,7 @@ class US_ModelGui : public US_WidgetsDialog
 
       QLineEdit*     le_description;              
       QLineEdit*     le_investigator;
-      QLineEdit*     le_density;
-      QLineEdit*     le_viscosity;
-      QLineEdit*     le_compressibility;
       QLineEdit*     le_wavelength;
-      QLineEdit*     le_temperature;
       QLineEdit*     le_guid;
 
       US_ListWidget* lw_models;

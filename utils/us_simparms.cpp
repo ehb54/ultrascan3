@@ -4,6 +4,7 @@
 #include "us_astfem_math.h"
 #include "us_hardware.h"
 #include "us_settings.h"
+#include "us_constants.h"
 
 US_SimulationParameters::US_SimulationParameters()
 {
@@ -21,6 +22,7 @@ US_SimulationParameters::US_SimulationParameters()
    rnoise            = 0.0;  
    tinoise           = 0.0;      
    rinoise           = 0.0;     
+   temperature       = NORMAL_TEMP;
    rotorSerial       = "UTHSCSA 1001";      
    rotorType         = "Simulation";      
    band_forming      = false;   
@@ -46,7 +48,8 @@ US_SimulationParameters::SpeedProfile::SpeedProfile()
 }
 
 // Set simulation parameter values from an experimental EditedData set.
-void US_SimulationParameters::initFromData( US_DB2* db, US_DataIO2::EditedData& editdata )
+void US_SimulationParameters::initFromData( US_DB2* db,
+   US_DataIO2::EditedData& editdata )
 {
    SpeedProfile sp;
 
@@ -201,27 +204,31 @@ int US_SimulationParameters::load_simparms( QString fname )
                kk        = gridlist.indexOf( astr );
                gridType  = (US_SimulationParameters::GridType)kk;
             }
-            astr  = a.value( "simpoints" ).toString();
+            astr  = a.value( "simpoints"   ).toString();
             if ( !astr.isEmpty() )
-               simpoints = astr.toInt();
-            astr  = a.value( "radialres" ).toString();
+               simpoints    = astr.toInt();
+            astr  = a.value( "radialres"   ).toString();
             if ( !astr.isEmpty() )
                radial_resolution = astr.toDouble();
-            astr  = a.value( "meniscus"  ).toString();
+            astr  = a.value( "meniscus"    ).toString();
             if ( !astr.isEmpty() )
-               meniscus  = astr.toDouble();
-            astr  = a.value( "bottom"    ).toString();
+               meniscus     = astr.toDouble();
+            astr  = a.value( "bottom"      ).toString();
             if ( !astr.isEmpty() )
-               bottom    = astr.toDouble();
-            astr  = a.value( "rnoise"    ).toString();
+               bottom       = astr.toDouble();
+            astr  = a.value( "rnoise"      ).toString();
             if ( !astr.isEmpty() )
-               rnoise    = astr.toDouble();
-            astr  = a.value( "tinoise"   ).toString();
+               rnoise       = astr.toDouble();
+            astr  = a.value( "tinoise"     ).toString();
             if ( !astr.isEmpty() )
-               tinoise   = astr.toDouble();
-            astr  = a.value( "rinoise"   ).toString();
-               rinoise   = astr.toDouble();
-            astr  = a.value( "bandform"  ).toString();
+               tinoise      = astr.toDouble();
+            astr  = a.value( "rinoise"     ).toString();
+            if ( !astr.isEmpty() )
+               rinoise      = astr.toDouble();
+            astr  = a.value( "temperature" ).toString();
+            if ( !astr.isEmpty() )
+               temperature  = astr.toDouble();
+            astr  = a.value( "bandform"    ).toString();
             if ( !astr.isEmpty() )
                band_forming = ( astr == "yes" );
             astr  = a.value( "rotorSerial" ).toString();
@@ -245,28 +252,28 @@ int US_SimulationParameters::load_simparms( QString fname )
          {
             a     = xml.attributes();
 
-            astr  = a.value( "dura_hours"   ).toString();
+            astr  = a.value( "duration_hrs"  ).toString();
             if ( !astr.isEmpty() )
                sp.duration_hours    = astr.toInt();
-            astr  = a.value( "dura_minutes" ).toString();
+            astr  = a.value( "duration_mins" ).toString();
             if ( !astr.isEmpty() )
                sp.duration_minutes  = astr.toInt();
-            astr  = a.value( "dlay_hours"   ).toString();
+            astr  = a.value( "delay_hrs"     ).toString();
             if ( !astr.isEmpty() )
                sp.delay_hours       = astr.toInt();
-            astr  = a.value( "dlay_minutes" ).toString();
+            astr  = a.value( "delay_mins"    ).toString();
             if ( !astr.isEmpty() )
                sp.delay_minutes     = astr.toDouble();
-            astr  = a.value( "rotorspeed"   ).toString();
+            astr  = a.value( "rotorspeed"    ).toString();
             if ( !astr.isEmpty() )
                sp.rotorspeed        = astr.toInt();
-            astr  = a.value( "acceleration" ).toString();
+            astr  = a.value( "acceleration"  ).toString();
             if ( !astr.isEmpty() )
                sp.acceleration      = astr.toInt();
-            astr  = a.value( "accelerflag"  ).toString();
+            astr  = a.value( "accelerflag"   ).toString();
             if ( !astr.isEmpty() )
                sp.acceleration_flag = ( astr == "yes" );
-            astr  = a.value( "scans"        ).toString();
+            astr  = a.value( "scans"         ).toString();
             if ( !astr.isEmpty() )
                sp.scans             = astr.toInt();
 
@@ -315,15 +322,16 @@ int US_SimulationParameters::save_simparms( QString fname )
       xml.writeAttribute   ( "version", "1.0" );
 
       xml.writeStartElement( "params" );
-      xml.writeAttribute   ( "meshType",  QString( mesh[ (int)meshType ] ) );
-      xml.writeAttribute   ( "gridType",  QString( grid[ (int)gridType ] ) );
-      xml.writeAttribute   ( "simpoints", QString::number( simpoints ) );
+      xml.writeAttribute   ( "meshType",    QString( mesh[ (int)meshType ] ) );
+      xml.writeAttribute   ( "gridType",    QString( grid[ (int)gridType ] ) );
+      xml.writeAttribute   ( "simpoints",   QString::number( simpoints ) );
       xml.writeAttribute   ( "radialres", QString::number( radial_resolution ));
-      xml.writeAttribute   ( "meniscus",  QString::number( meniscus ) );
-      xml.writeAttribute   ( "bottom",    QString::number( bottom ) );
-      xml.writeAttribute   ( "rnoise",    QString::number( rnoise ) );
-      xml.writeAttribute   ( "tinoise",   QString::number( tinoise ) );
-      xml.writeAttribute   ( "rinoise",   QString::number( rinoise ) );
+      xml.writeAttribute   ( "meniscus",    QString::number( meniscus ) );
+      xml.writeAttribute   ( "bottom",      QString::number( bottom ) );
+      xml.writeAttribute   ( "rnoise",      QString::number( rnoise ) );
+      xml.writeAttribute   ( "tinoise",     QString::number( tinoise ) );
+      xml.writeAttribute   ( "rinoise",     QString::number( rinoise ) );
+      xml.writeAttribute   ( "temperature", QString::number( temperature ) );
 
       if ( ! rotorSerial.isEmpty() )
          xml.writeAttribute   ( "rotorSerial", rotorSerial );
@@ -357,22 +365,22 @@ int US_SimulationParameters::save_simparms( QString fname )
          spi = &speed_step[ ii ];
 
          xml.writeStartElement( "speedstep" );
-         xml.writeAttribute   ( "dura_hours",
-            QString::number( spi->duration_hours ) );
-         xml.writeAttribute   ( "dura_minutes",
+         xml.writeAttribute   ( "duration_hrs",
+            QString::number( spi->duration_hours   ) );
+         xml.writeAttribute   ( "duration_mins",
             QString::number( spi->duration_minutes ) );
-         xml.writeAttribute   ( "dlay_hours",
-            QString::number( spi->delay_hours ) );
-         xml.writeAttribute   ( "dlay_minutes",
-            QString::number( spi->delay_minutes ) );
+         xml.writeAttribute   ( "delay_hrs",
+            QString::number( spi->delay_hours      ) );
+         xml.writeAttribute   ( "delay_mins",
+            QString::number( spi->delay_minutes    ) );
          xml.writeAttribute   ( "rotorspeed",
-            QString::number( spi->rotorspeed ) );
+            QString::number( spi->rotorspeed       ) );
          xml.writeAttribute   ( "acceleration",
-            QString::number( spi->acceleration ) );
+            QString::number( spi->acceleration     ) );
          xml.writeAttribute   ( "accelerflag",
             spi->acceleration_flag ? "yes" : "no" );
          xml.writeAttribute   ( "scans",
-            QString::number( spi->scans ) );
+            QString::number( spi->scans            ) );
          xml.writeEndElement  ();  // speedstep
       }
 

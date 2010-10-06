@@ -1503,7 +1503,7 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 
 void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
 {
-   QVector< double > zz;  // temperary array for adaptive grids
+   QVector< double > zz;  // temporary array for adaptive grids
    zz.clear();
    
    if ( US_AstfemMath::minval( af_params.s ) > 0 ) // All species with s>0

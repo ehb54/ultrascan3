@@ -6,14 +6,13 @@
 #include "us_license_t.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-//#include "us_model_editor.h"
-//#include "us_model_selection.h"
 #include "us_astfem_sim.h"
 #include "us_simulationparameters.h"
 #include "us_math2.h"
 #include "us_defines.h"
 #include "us_clipdata.h"
 #include "us_model_gui.h"
+#include "us_buffer_gui.h"
 #include "us_util.h"
 #include "us_lamm_astfvm.h"
 
@@ -47,32 +46,24 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    movieFlag           = false;
    time_correctionFlag = true;
 
+   astfem_rsa          = NULL;
+   astfvm              = NULL;
+
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
    main->setColumnStretch( 1, 1 );
    
    QBoxLayout* buttonbox = new QVBoxLayout;
-/*
-   QPushButton* pb_loadExperiment = us_pushbutton( tr( "Load Experiment") );
-   connect ( pb_loadExperiment, SIGNAL( clicked() ), SLOT( load_experiment() ) );
-   buttonbox->addWidget( pb_loadExperiment );
 
-   pb_saveExp = us_pushbutton( tr( "Save Experiment"), false );
-   buttonbox->addWidget( pb_saveExp );
-*/
    QPushButton* pb_new = us_pushbutton( tr( "Model Control") );
    connect( pb_new, SIGNAL( clicked() ), SLOT( new_model() ) );
    buttonbox->addWidget( pb_new );
-/*   
-   QPushButton* pb_loadModel = us_pushbutton( tr( "Load Model") );
-   connect( pb_loadModel, SIGNAL( clicked() ), SLOT( load_model() ) );
-   buttonbox->addWidget( pb_loadModel );
 
-   pb_changeModel = us_pushbutton( tr( "Change/Review Model"), false );
-   connect ( pb_changeModel, SIGNAL( clicked() ) , SLOT( change_model() ) );
-   buttonbox->addWidget( pb_changeModel );
-*/   
+   pb_buffer   = us_pushbutton( tr( "Define Buffer"), false );
+   connect( pb_buffer, SIGNAL( clicked() ), SLOT( new_buffer() ) );
+   buttonbox->addWidget( pb_buffer );
+
    pb_simParms = us_pushbutton( tr( "Simulation Parameters"), false );
    connect ( pb_simParms, SIGNAL( clicked() ), SLOT( sim_parameters() ) );
    buttonbox->addWidget( pb_simParms );
@@ -109,7 +100,19 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    buttonbox->addWidget( pb_close );
    connect( pb_close, SIGNAL( clicked() ), SLOT( close()) );
 
+   QPalette pa( pb_close->palette() );
+   te_status   = us_textedit();
+   te_status->setPalette( pa );
+   te_status->setTextBackgroundColor( pa.color( QPalette::Window ) );
+   te_status->setTextColor(           pa.color( QPalette::WindowText ) );
+   QFontMetrics fm( te_status->font() );
+   te_status->setMaximumHeight( fm.lineSpacing() * 17 / 2 );
+
+   change_status();
+
+   buttonbox->addWidget( te_status );
    buttonbox->addStretch();
+
    main->addLayout( buttonbox, 0, 0 );
 
    // Right Column
@@ -217,65 +220,6 @@ void US_Astfem_Sim::init_simparams( void )
    simparams.band_forming      = false;
 }
 
-void US_Astfem_Sim::load_experiment( void )
-{
-   QString fn = QFileDialog::getOpenFileName( this, 
-         tr( "Select Experiment File" ),
-         US_Settings::resultDir(), "*.us_system" );
-
-   if ( ! fn.isEmpty() )
-   {
-      /*
-      int error_code = US_FemGlobal::read_experiment( system, simparams, fn );
-      
-      if ( error_code < 0 )
-      {
-         QMessageBox::information( this, 
-               tr( "Simulation Module" ), 
-               tr( "Unable to load System: ") + fn + tr( "\n\nError code: " ) +
-               QString::number( error_code ) ); 
-         return;
-      }
-      else
-      {
-         pb_simParms   ->setEnabled( true );
-         pb_changeModel->setEnabled( true );
-         pb_start      ->setEnabled( true );
-
-         QMessageBox::information( this, 
-               tr( "Simulation Module" ), 
-               tr( "Successfully loaded System:\n\n" ) + system.description );
-      }
-      */
-   }
-}
-
-void US_Astfem_Sim::save_experiment( void )
-{
-   QString fn = QFileDialog::getSaveFileName( this, 
-         tr( "Save Experiment File" ), US_Settings::resultDir(), "*.us_system" );
-   
-   if ( ! fn.isEmpty() )
-   {
-      /*
-      int error_code = US_FemGlobal::write_experiment( system, simparams, fn );
-
-      if ( error_code < 0 )
-      {
-         QMessageBox::information( this, 
-            tr( "Simulation Module "), 
-            tr( "Unable to save System: " ) + fn + "\n\nError code: " +
-            QString::number( error_code ) );
-         return;
-      }
-      else
-         QMessageBox::information( this, 
-              tr( "Simulation Module" ), 
-              tr( "Successfully saved System:\n\n") + system.description );
-      */
-   }
-}
-
 void US_Astfem_Sim::new_model( void )
 {
    US_ModelGui* dialog = new US_ModelGui( system );
@@ -287,45 +231,76 @@ void US_Astfem_Sim::new_model( void )
 void US_Astfem_Sim::change_model( US_Model m )
 {
    system = m;
+   pb_buffer  ->setEnabled( true );
    pb_simParms->setEnabled( true );
 
    // set default of FVM if model is non-ideal
    if ( system.components[ 0 ].sigma != 0.0  ||
         system.components[ 0 ].delta != 0.0  ||
         system.coSedSolute           >= 0    ||
-        system.compressibility       >  0.0 )
+        buffer.compressibility       >  0.0 )
       simparams.meshType = US_SimulationParameters::ASTFVM;
 
    else  // normal (ideal) default
       simparams.meshType = US_SimulationParameters::ASTFEM;
+
+   change_status();
 }
 
-void US_Astfem_Sim::load_model( void )
+void US_Astfem_Sim::new_buffer( void )
 {
-   QString fn = QFileDialog::getOpenFileName( this, tr( "Select the model to load" ),
-         US_Settings::resultDir(), "*.model.?? *.model-?.?? *model-??.??" );
-   
-   if ( fn.isEmpty() ) return;
-/*
-   int error_code = US_FemGlobal::read_modelSystem( system, fn );
-   if ( error_code < 0 )
-   {
-      QMessageBox::information( this, 
-            tr( "Simulation Module" ), 
-            tr( "Unable to load model: ") + fn + tr( "\n\nError code: " ) +
-            QString::number( error_code ) ); 
-      return;
-   }
-   else
-   {
-      pb_simParms   ->setEnabled( true );
-      pb_changeModel->setEnabled( true );
+   US_BufferGui* dialog = new US_BufferGui( 0, true, buffer, true );
 
-      QMessageBox::information( this, 
-            tr( "Simulation Module" ), 
-            tr( "Successfully loaded System:\n\n" ) + system.description );
+   connect( dialog, SIGNAL( valueChanged( US_Buffer ) ), 
+                    SLOT  ( change_buffer( US_Buffer ) ) );
+
+   dialog->exec();
+   qApp->processEvents();
+}
+
+void US_Astfem_Sim::change_buffer( US_Buffer b )
+{
+   buffer = b;
+
+   if ( buffer.compressibility  >  0.0 )
+      simparams.meshType = US_SimulationParameters::ASTFVM;
+
+   change_status();
+}
+
+void US_Astfem_Sim::change_status()
+{
+   QStringList mtyps;
+   mtyps << "ASTFEM" << "CLAVERIE" << "MOVING_HAT" << "USER" << "ASTFVM";
+   QString simtype = mtyps[ (int)simparams.meshType ];
+
+   int dhrs  = simparams.speed_step[ 0 ].duration_hours;
+   int dmns  = simparams.speed_step[ 0 ].duration_minutes;
+   int scns  = simparams.speed_step[ 0 ].scans;
+
+   for ( int ii = 1; ii < simparams.speed_step.size(); ii++ )
+   {
+      dhrs     += simparams.speed_step[ ii ].duration_hours;
+      dmns     += simparams.speed_step[ ii ].duration_minutes;
+      scns     += simparams.speed_step[ ii ].scans;
    }
-*/
+
+   if ( dmns > 59 )
+   {
+      int khrs = dmns / 60;
+      dmns    -= ( khrs * 60 );
+      dhrs    += khrs;
+   }
+
+   te_status->setText( tr(
+      "Model:\n  %1\n"
+      "Buffer (density/viscosity/compress.):\n  %2 / %3 / %4\n"
+      "SimParams (type/duration/scans):\n  %5 / %6 h %7 m / %8" )
+      .arg( system.description ).arg( buffer.density ).arg( buffer.viscosity )
+      .arg( buffer.compressibility ).arg( simtype )
+      .arg( simparams.speed_step[ 0 ].duration_hours )
+      .arg( simparams.speed_step[ 0 ].duration_minutes )
+      .arg( simparams.speed_step[ 0 ].scans ) );
 }
 
 void US_Astfem_Sim::sim_parameters( void )
@@ -345,31 +320,20 @@ void US_Astfem_Sim::set_parameters( void )
    simparams = working_simparams;
 
    pb_start  ->setEnabled( true );
+
+   change_status();
 }
 
 void US_Astfem_Sim::stop_simulation( void )
 {
    stopFlag = ! stopFlag;
-   astfem_rsa->setStopFlag( stopFlag );
+
+   if ( astfem_rsa )
+      astfem_rsa->setStopFlag( stopFlag );
 }
 
 void US_Astfem_Sim::start_simulation( void )
 {
-
-   astfem_rsa = new US_Astfem_RSA( system, simparams );
-
-   connect( astfem_rsa, SIGNAL( new_scan( QVector< double >*, double* ) ), 
-                 SLOT( update_movie_plot( QVector< double >*, double* ) ) );
-   connect( astfem_rsa, SIGNAL( current_component( int ) ), 
-                        SLOT  ( update_progress  ( int ) ) );
-   connect( astfem_rsa, SIGNAL( new_time   ( double ) ), 
-                        SLOT  ( update_time( double ) ) );
-   connect( astfem_rsa, SIGNAL( current_speed( int ) ), 
-                        SLOT  ( update_speed ( int ) ) );
-   connect( astfem_rsa, SIGNAL( calc_progress( int ) ), 
-                        SLOT  ( show_progress( int ) ) );
-   connect( astfem_rsa, SIGNAL( calc_done( void ) ), 
-                        SLOT  ( calc_over( void ) ) );
 
    moviePlot->clear();
    moviePlot->replot();
@@ -384,11 +348,9 @@ void US_Astfem_Sim::start_simulation( void )
    //pb_saveExp->setEnabled( false );
    pb_saveSim->setEnabled( false );
 
-   astfem_rsa->set_movie_flag( cb_movie->isChecked() );
- 
-   // The astfem simulation routine expects a dataset structure that is
-   // initialized with a time and radius grid, and all concentration points
-   // need to be set to zero.  Each speed is a separate mfem_data set.
+   // The astfem/astfvm simulation routines expects a dataset structure that
+   // is initialized with a time and radius grid, and all concentration points
+   // need to be set to zero. Each speed is a separate mfem_data set.
    sim_data.x       .clear();
    sim_data.scanData.clear();
 
@@ -473,20 +435,39 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
    progress->reset();
    lcd_component->display( 0 );
 
-   // Interpolate simulation onto desired grid based on time, not based on
-   // omega-square-t integral
-   astfem_rsa->setTimeInterpolation( true ); 
-   astfem_rsa->setTimeCorrection( time_correctionFlag );
-   
    stopFlag = false;
-   astfem_rsa->setStopFlag( stopFlag );
    
    simparams.mesh_radius.clear();
    simparams.band_firstScanIsConcentration = false;
 
    // Run the simulation
+
    if ( simparams.meshType != US_SimulationParameters::ASTFVM )
    {  // the normal case:  ASTFEM (finite element)
+
+      astfem_rsa = new US_Astfem_RSA( system, simparams );
+
+      connect( astfem_rsa, SIGNAL( new_scan( QVector< double >*, double* ) ), 
+                    SLOT( update_movie_plot( QVector< double >*, double* ) ) );
+      connect( astfem_rsa, SIGNAL( current_component( int ) ), 
+                           SLOT  ( update_progress  ( int ) ) );
+      connect( astfem_rsa, SIGNAL( new_time   ( double ) ), 
+                           SLOT  ( update_time( double ) ) );
+      connect( astfem_rsa, SIGNAL( current_speed( int ) ), 
+                           SLOT  ( update_speed ( int ) ) );
+      connect( astfem_rsa, SIGNAL( calc_progress( int ) ), 
+                           SLOT  ( show_progress( int ) ) );
+      connect( astfem_rsa, SIGNAL( calc_done( void ) ), 
+                           SLOT  ( calc_over( void ) ) );
+
+      astfem_rsa->set_movie_flag( cb_movie->isChecked() );
+ 
+      // Interpolate simulation onto desired grid based on time, not based on
+      // omega-square-t integral
+      astfem_rsa->setTimeInterpolation( true ); 
+      astfem_rsa->setTimeCorrection( time_correctionFlag );
+      astfem_rsa->setStopFlag( stopFlag );
+   
       astfem_rsa->calculate( sim_data );
 
       if ( dbg_level > 0 )
@@ -527,10 +508,9 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
 
    else
    {  // special case:  ASTFVM (finite volume)
-      delete astfem_rsa;      // destroy astfem solver
 
       // create ASTFVM solver
-      US_LammAstfvm* astfvm = new US_LammAstfvm( system, simparams, this );
+      astfvm = new US_LammAstfvm( system, simparams, this );
 
       // set up to report progress
       connect( astfvm, SIGNAL( calc_start( int ) ), 
@@ -548,6 +528,9 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       // initialize LCD with component "1"
       lcd_component->setMode( QLCDNumber::Dec );
       lcd_component->display( 1 );
+
+      if ( buffer.compressibility > 0 )
+         astfvm->set_buffer( buffer );
 
       // solve using ASTFVM
       int rc = astfvm->calculate( sim_data );
@@ -912,13 +895,13 @@ void US_Astfem_Sim::dump_system( void )
    qDebug() << "component vector size" << system.components.size();
    for ( int i = 0; i < system.components.size(); i++ ) 
    {
-      qDebug() << "component " << i;
+      qDebug() << "component " << i + 1;
       dump_simComponent( system.components[ i ] );
    }
    qDebug() << "association vector size" << system.associations.size();
    for ( int i = 0; i < system.associations.size(); i++ )
    {
-      qDebug() << "Association vector " << i;
+      qDebug() << "Association vector " << i + 1;
       dump_association( system.associations[ i ] );
    }
 }

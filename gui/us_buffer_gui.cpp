@@ -384,11 +384,11 @@ void US_BufferGui::init_buffer( void )
    else
    {
       le_description->setText( buffer.description );
-      le_density    ->setText( QString::number( buffer.density,   'f', 4 ) );
-      le_viscosity  ->setText( QString::number( buffer.viscosity, 'f', 4 ) );
+      le_density    ->setText( QString::number( buffer.density,   'f', 6 ) );
+      le_viscosity  ->setText( QString::number( buffer.viscosity, 'f', 5 ) );
       le_ph         ->setText( QString::number( buffer.pH,        'f', 4 ) );
       le_compressibility->setText( 
-                         QString::number( buffer.compressibility, 'f', 4 ) );
+                         QString::number( buffer.compressibility, 'e', 4 ) );
    }
 }
 
@@ -670,11 +670,11 @@ void US_BufferGui::select_buffer( QListWidgetItem* item )
    // Write values to screen
    le_description->setText( buffer.description );
    le_guid       ->setText( buffer.GUID );
-   le_density    ->setText( QString::number( buffer.density,   'f', 4 ) );
-   le_viscosity  ->setText( QString::number( buffer.viscosity, 'f', 4 ) );
+   le_density    ->setText( QString::number( buffer.density,   'f', 6 ) );
+   le_viscosity  ->setText( QString::number( buffer.viscosity, 'f', 5 ) );
    le_ph         ->setText( QString::number( buffer.pH,        'f', 4 ) );
    le_compressibility->setText( 
-                      QString::number( buffer.compressibility, 'f', 4 ) );
+                      QString::number( buffer.compressibility, 'e', 4 ) );
 
    lw_buffer->clear();
 
@@ -1000,10 +1000,10 @@ void US_BufferGui::save_db( void )
       QStringList q( "new_buffer" );
       q << buffer.GUID
         << buffer.description
-        << QString::number( buffer.compressibility, 'f', 4 )
+        << QString::number( buffer.compressibility, 'e', 4 )
         << QString::number( buffer.pH             , 'f', 4 )
-        << QString::number( buffer.density        , 'f', 4 )
-        << QString::number( buffer.viscosity      , 'f', 4 );
+        << QString::number( buffer.density        , 'f', 6 )
+        << QString::number( buffer.viscosity      , 'f', 5 );
 
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
@@ -1111,10 +1111,10 @@ void US_BufferGui::update_db( void )
       QStringList q( "update_buffer" );
       q << buffer.bufferID
         << buffer.description
-        << QString::number( buffer.compressibility, 'f', 4 )
+        << QString::number( buffer.compressibility, 'e', 4 )
         << QString::number( buffer.pH             , 'f', 4 )
-        << QString::number( buffer.density        , 'f', 4 )
-        << QString::number( buffer.viscosity      , 'f', 4 );
+        << QString::number( buffer.density        , 'f', 6 )
+        << QString::number( buffer.viscosity      , 'f', 5 );
 
       db.statusQuery( q );
 
@@ -1228,11 +1228,11 @@ void US_BufferGui::add_component( void )
    recalc_density();
    recalc_viscosity();
 
-   le_density      ->setText( QString::number( buffer.density,   'f', 4 ) );
-   le_viscosity    ->setText( QString::number( buffer.viscosity, 'f', 4 ) );
+   le_density      ->setText( QString::number( buffer.density,   'f', 6 ) );
+   le_viscosity    ->setText( QString::number( buffer.viscosity, 'f', 5 ) );
    le_concentration->setText( "" );
    le_compressibility
-                   ->setText( QString::number( buffer.compressibility, 'f', 4));
+                   ->setText( QString::number( buffer.compressibility, 'e', 4));
    
    pb_save->setEnabled( true );
    bufferCurrent = false;
@@ -1266,8 +1266,8 @@ void US_BufferGui::remove_component( QListWidgetItem* item )
    recalc_viscosity();
    recalc_density();
    
-   le_density  ->setText( QString::number( buffer.density,   'f', 4 ) );
-   le_viscosity->setText( QString::number( buffer.viscosity, 'f', 4 ) );
+   le_density  ->setText( QString::number( buffer.density,   'f', 6 ) );
+   le_viscosity->setText( QString::number( buffer.viscosity, 'f', 5 ) );
    
    QListWidgetItem* oldItem = lw_buffer->takeItem( row );
    delete oldItem;
