@@ -1,5 +1,5 @@
 #include "us_simulationparameters.h"
-//#include "us_femglobal.h"
+#include "us_constants.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
 
@@ -20,23 +20,22 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    int row = 0;
 
    QLabel* lb_info = us_banner( tr( "Simulation Run Parameter Setup" ) );
-   main->addWidget( lb_info, row++, 0, 1, 4 );
+   main->addWidget( lb_info, row++, 0, 1, 8 );
 
    // Left column
 
    // Speed Profile count
    QLabel* lb_speeds = us_label( tr( "Number of Speed Profiles:" ) );
-   main->addWidget( lb_speeds, row, 0 );
+   main->addWidget( lb_speeds, row, 0, 1, 3 );
 
    cnt_speeds = us_counter( 2, 1, 100, 1 );
    cnt_speeds->setStep    ( 1 );
    
-   main->addWidget( cnt_speeds, row++, 1 );
+   main->addWidget( cnt_speeds, row++, 3, 1, 1 );
    connect( cnt_speeds, SIGNAL( valueChanged ( double ) ), 
                         SLOT  ( update_speeds( double ) ) );
    // Speeds combo box
    cmb_speeds = us_comboBox();
-   main->addWidget( cmb_speeds, row++, 0, 1, 2 );
 
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ 0 ];
 
@@ -51,12 +50,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
             QString::number( spi->rotorspeed       ) + " rpm" );
    }
 
+   main->addWidget( cmb_speeds, row++, 0, 1, 4 );
    connect( cmb_speeds, SIGNAL( activated           ( int ) ), 
                         SLOT  ( select_speed_profile( int ) ) );
 
    // Experiment hours
    QLabel* lb_hours = us_label( tr( "Length of Experiment (Hours):" ) );
-   main->addWidget( lb_hours, row, 0 );
+   main->addWidget( lb_hours, row, 0, 1, 3 );
 
    cnt_duration_hours = us_counter( 3, 0, 5000, sp->duration_hours );
    cnt_duration_hours->setStep    ( 1 );
@@ -64,13 +64,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_duration_hours->setIncSteps( QwtCounter::Button2,  10 );
    cnt_duration_hours->setIncSteps( QwtCounter::Button3, 100 );
    
-   main->addWidget( cnt_duration_hours, row++, 1 );
+   main->addWidget( cnt_duration_hours, row++, 3, 1, 1 );
    connect( cnt_duration_hours, SIGNAL( valueChanged         ( double ) ), 
                                 SLOT  ( update_duration_hours( double ) ) );
 
    // Experiment minutes
    QLabel* lb_mins = us_label( tr( "Length of Experiment (Minutes):" ) );
-   main->addWidget( lb_mins, row, 0 );
+   main->addWidget( lb_mins, row, 0, 1, 3 );
 
    cnt_duration_mins = us_counter( 3, 0, 59, sp->duration_minutes );
    cnt_duration_mins->setStep    ( 1 );
@@ -78,13 +78,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_duration_mins->setIncSteps( QwtCounter::Button2,  10 );
    cnt_duration_mins->setIncSteps( QwtCounter::Button3,  10 );
    
-   main->addWidget( cnt_duration_mins, row++, 1 );
+   main->addWidget( cnt_duration_mins, row++, 3, 1, 1 );
    connect( cnt_duration_mins, SIGNAL( valueChanged        ( double ) ), 
                                SLOT  ( update_duration_mins( double ) ) );
 
    // Delay hours
    QLabel* lb_delay_hours = us_label( tr( "Time Delay for Scans (Hours):" ) );
-   main->addWidget( lb_delay_hours, row, 0 );
+   main->addWidget( lb_delay_hours, row, 0, 1, 3 );
 
    cnt_delay_hours = us_counter( 3, 0, 5000, sp->delay_hours );
    cnt_delay_hours->setStep    ( 1 );
@@ -92,13 +92,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_delay_hours->setIncSteps( QwtCounter::Button2,  10 );
    cnt_delay_hours->setIncSteps( QwtCounter::Button3, 100 );
    
-   main->addWidget( cnt_delay_hours, row++, 1 );
+   main->addWidget( cnt_delay_hours, row++, 3, 1, 1 );
    connect( cnt_delay_hours, SIGNAL( valueChanged      ( double ) ), 
                              SLOT  ( update_delay_hours( double ) ) );
 
    // Delay minutes
    QLabel* lb_delay_mins = us_label( tr( "Time Delay for Scans (Minutes):" ) );
-   main->addWidget( lb_delay_mins, row, 0 );
+   main->addWidget( lb_delay_mins, row, 0, 1, 3 );
 
    cnt_delay_mins = us_counter( 3, 0, 59, sp->delay_minutes );
    cnt_delay_mins->setStep    ( 1 );
@@ -106,13 +106,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_delay_mins->setIncSteps( QwtCounter::Button2, 10 );
    cnt_delay_mins->setIncSteps( QwtCounter::Button3, 10 );
 
-   main->addWidget( cnt_delay_mins, row++, 1 );
+   main->addWidget( cnt_delay_mins, row++, 3, 1, 1 );
    connect( cnt_delay_mins, SIGNAL( valueChanged     ( double ) ), 
                             SLOT  ( update_delay_mins( double ) ) );
 
    // Rotor Speed
    QLabel* lb_rotor = us_label( tr( "Rotor Speed (rpm):" ) );
-   main->addWidget( lb_rotor, row, 0 );
+   main->addWidget( lb_rotor, row, 0, 1, 3 );
 
    cnt_rotorspeed = us_counter( 3, 1000, 100000, sp->rotorspeed );
    cnt_rotorspeed->setStep    ( 100 );
@@ -123,25 +123,25 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    QFontMetrics fm( cnt_rotorspeed->font() );
    cnt_rotorspeed->setMinimumWidth( fm.maxWidth() * 12 );
    
-   main->addWidget( cnt_rotorspeed, row++, 1 );
+   main->addWidget( cnt_rotorspeed, row++, 3, 1, 1 );
    connect( cnt_rotorspeed, SIGNAL( valueChanged     ( double ) ), 
                             SLOT  ( update_rotorspeed( double ) ) );
 
    // Simulate rotor accel checkbox
    QLabel* lb_rotorAccel = us_label( tr( "Simulate Rotor Acceleration:" ) );
-   main->addWidget( lb_rotorAccel, row, 0 );
+   main->addWidget( lb_rotorAccel, row, 0, 1, 3 );
 
    QGridLayout* acceleration_flag = us_checkbox( tr( "(Check to enable)" ), 
          cb_acceleration_flag, sp->acceleration_flag );
 
-   main->addLayout( acceleration_flag, row++, 1 );
+   main->addLayout( acceleration_flag, row++, 3, 1, 1 );
    
    connect( cb_acceleration_flag, SIGNAL( clicked          () ), 
                                   SLOT  ( acceleration_flag() ) );
 
    // Acceleration Profile
-   QLabel* lb_accelProfile = us_label( tr( "Acceleration Profile (rpm/sec):" ) );
-   main->addWidget( lb_accelProfile, row, 0 );
+   QLabel* lb_accelProfile = us_label( tr( "Acceleration Profile (rpm/sec):" ));
+   main->addWidget( lb_accelProfile, row, 0, 1, 3 );
 
    cnt_acceleration = us_counter( 3, 5, 400 );
    cnt_acceleration->setStep    ( 5 );
@@ -151,13 +151,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
 
    cnt_acceleration->setValue( sp->acceleration );
    
-   main->addWidget( cnt_acceleration, row++, 1 );
+   main->addWidget( cnt_acceleration, row++, 3, 1, 1 );
    connect( cnt_acceleration, SIGNAL( valueChanged       ( double ) ), 
                               SLOT  ( update_acceleration( double ) ) );
 
    // Scans to be saved
    QLabel* lb_scans = us_label( tr( "Scans to be saved:" ) );
-   main->addWidget( lb_scans, row, 0 );
+   main->addWidget( lb_scans, row, 0, 1, 3 );
 
    cnt_scans = us_counter( 3, 2, 1000, sp->scans );
    cnt_scans->setStep    ( 1 );
@@ -165,13 +165,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_scans->setIncSteps( QwtCounter::Button2,  10 );
    cnt_scans->setIncSteps( QwtCounter::Button3, 100 );
 
-   main->addWidget( cnt_scans, row++, 1 );
+   main->addWidget( cnt_scans, row++, 3, 1, 1 );
    connect( cnt_scans, SIGNAL( valueChanged( double ) ), 
                        SLOT  ( update_scans( double ) ) );
 
    // Speed profile
    QLabel* lb_speedProfile = us_label( tr( "Select a Speed Profile:" ) );
-   main->addWidget( lb_speedProfile, row, 0 );
+   main->addWidget( lb_speedProfile, row, 0, 1, 3 );
 
    current_speed_step = 0;
    cnt_selected_speed = us_counter( 3, 1, simparams.speed_step.size(), 0 );
@@ -179,8 +179,8 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_selected_speed->setIncSteps( QwtCounter::Button1, 1 );
    cnt_selected_speed->setIncSteps( QwtCounter::Button2, 1 );
    cnt_selected_speed->setIncSteps( QwtCounter::Button3, 1 );
+   main->addWidget( cnt_selected_speed, row++, 3, 1, 1 );
 
-   main->addWidget( cnt_selected_speed, row++, 1 );
    // Right Column
    row = 1;
    // Centerpiece
@@ -188,19 +188,19 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    QGridLayout* rb1 = us_radiobutton( tr( "Standard Centerpiece" ), 
          rb_standard, ! simparams.band_forming ); 
 
-   main->addLayout( rb1, row, 2 );
+   main->addLayout( rb1, row,   4, 1, 2 );
 
    QGridLayout* rb2 = us_radiobutton( tr( "Band-forming Centerpiece" ), 
          rb_band, simparams.band_forming );
    
-   main->addLayout( rb2, row++, 3 );
+   main->addLayout( rb2, row++, 6, 1, 2 );
    
    connect( rb_standard, SIGNAL( toggled           ( bool ) ), 
                          SLOT  ( select_centerpiece( bool ) ) );
 
    // Band loading
    QLabel* lb_lamella = us_label( tr( "Band loading volume (ml):" ) );
-   main->addWidget( lb_lamella, row, 2 );
+   main->addWidget( lb_lamella, row, 4, 1, 3 );
 
    cnt_lamella = us_counter( 3, 0.001, 0.1, simparams.band_volume );
    cnt_lamella->setStep    ( 0.0001 );
@@ -208,13 +208,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_lamella->setIncSteps( QwtCounter::Button2,  10 );
    cnt_lamella->setEnabled( false );
 
-   main->addWidget( cnt_lamella, row++, 3 );
+   main->addWidget( cnt_lamella, row++, 7, 1, 1 );
    connect( cnt_lamella, SIGNAL( valueChanged  ( double ) ), 
                          SLOT  ( update_lamella( double ) ) );
 
    // Meniscus position 
    QLabel* lb_meniscus = us_label( tr( "Meniscus Position (cm):" ) );
-   main->addWidget( lb_meniscus, row, 2 );
+   main->addWidget( lb_meniscus, row, 4, 1, 3 );
 
    cnt_meniscus = us_counter( 3, 5.8, 7.2, simparams.meniscus );
    cnt_meniscus->setStep    ( 0.001 );
@@ -222,13 +222,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_meniscus->setIncSteps( QwtCounter::Button2,  10 );
    cnt_meniscus->setIncSteps( QwtCounter::Button3, 100 );
 
-   main->addWidget( cnt_meniscus, row++, 3 );
+   main->addWidget( cnt_meniscus, row++, 7, 1, 1 );
    connect( cnt_meniscus, SIGNAL( valueChanged   ( double ) ), 
                           SLOT  ( update_meniscus( double ) ) );
    
    // Cell bottom
    QLabel* lb_bottom = us_label( tr( "Bottom of Cell Position (cm):" ) );
-   main->addWidget( lb_bottom, row, 2 );
+   main->addWidget( lb_bottom, row, 4, 1, 3 );
 
    cnt_bottom = us_counter( 3, 5.8, 7.5, simparams.bottom );
    cnt_bottom->setStep    ( 0.001 );
@@ -236,13 +236,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_bottom->setIncSteps( QwtCounter::Button2,  10 );
    cnt_bottom->setIncSteps( QwtCounter::Button3, 100 );
 
-   main->addWidget( cnt_bottom, row++, 3 );
+   main->addWidget( cnt_bottom, row++, 7, 1, 1 );
    connect( cnt_bottom, SIGNAL( valueChanged ( double ) ), 
                         SLOT  ( update_bottom( double ) ) );
    
    // Radial Discretization
    QLabel* lb_simpoints = us_label( tr( "Radial Discretization (points):" ) );
-   main->addWidget( lb_simpoints, row, 2 );
+   main->addWidget( lb_simpoints, row, 4, 1, 3 );
 
    cnt_simpoints = us_counter( 3, 50, 5000, simparams.simpoints );
    cnt_simpoints->setStep    ( 10 );
@@ -250,13 +250,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_simpoints->setIncSteps( QwtCounter::Button2,  10 );
    cnt_simpoints->setIncSteps( QwtCounter::Button3, 100 );
 
-   main->addWidget( cnt_simpoints, row++, 3 );
+   main->addWidget( cnt_simpoints, row++, 7, 1, 1 );
    connect( cnt_simpoints, SIGNAL( valueChanged    ( double ) ), 
                            SLOT  ( update_simpoints( double ) ) );
    
    // Radial Resolution
    QLabel* lb_radial_res = us_label( tr( "Radial Resolution (cm):" ) );
-   main->addWidget( lb_radial_res, row, 2 );
+   main->addWidget( lb_radial_res, row, 4, 1, 3 );
 
    cnt_radial_res = us_counter( 3, 1e-5, 0.1, simparams.radial_resolution );
    cnt_radial_res->setStep    ( 1e-5 );
@@ -264,13 +264,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_radial_res->setIncSteps( QwtCounter::Button2,  10 );
    cnt_radial_res->setIncSteps( QwtCounter::Button3, 100 );
 
-   main->addWidget( cnt_radial_res, row++, 3 );
+   main->addWidget( cnt_radial_res, row++, 7, 1, 1 );
    connect( cnt_radial_res, SIGNAL( valueChanged     ( double ) ), 
                             SLOT  ( update_radial_res( double ) ) );
    
    // Random noise   
    QLabel* lb_rnoise = us_label( tr( "Random Noise (% Conc.):" ) );
-   main->addWidget( lb_rnoise, row, 2 );
+   main->addWidget( lb_rnoise, row, 4, 1, 3 );
 
    cnt_rnoise = us_counter( 3, 0, 10, simparams.rnoise );
    cnt_rnoise->setStep    ( 0.01 );
@@ -278,7 +278,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_rnoise->setIncSteps( QwtCounter::Button2,  10 );
    cnt_rnoise->setIncSteps( QwtCounter::Button3, 100 );
 
-   main->addWidget( cnt_rnoise, row++, 3 );
+   main->addWidget( cnt_rnoise, row++, 7, 1, 1 );
    connect( cnt_rnoise, SIGNAL( valueChanged ( double ) ), 
                         SLOT  ( update_rnoise( double ) ) );
 
@@ -287,7 +287,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
 
    // Time invariant noise
    QLabel* lb_tinoise = us_label( tr( "Time Invariant Noise (% Conc.):" ) );
-   main->addWidget( lb_tinoise, row, 2 );
+   main->addWidget( lb_tinoise, row, 4, 1, 3 );
 
    cnt_tinoise = us_counter( 3, 0, 10, simparams.tinoise );
    cnt_tinoise->setStep    ( 0.01 );
@@ -295,13 +295,13 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_tinoise->setIncSteps( QwtCounter::Button2,  10 );
    cnt_tinoise->setIncSteps( QwtCounter::Button3, 100 );
 
-   main->addWidget( cnt_tinoise, row++, 3 );
+   main->addWidget( cnt_tinoise, row++, 7, 1, 1 );
    connect( cnt_tinoise, SIGNAL( valueChanged  ( double ) ), 
                          SLOT  ( update_tinoise( double ) ) );
    
    // Radially invariant noise
-   QLabel* lb_rinoise = us_label( tr( "Radially Invariant Noise (% Conc.):" ) );
-   main->addWidget( lb_rinoise, row, 2 );
+   QLabel* lb_rinoise = us_label( tr( "Radially Invar. Noise (% Conc.):" ) );
+   main->addWidget( lb_rinoise, row, 4, 1, 3 );
 
    cnt_rinoise = us_counter( 3, 0, 10, simparams.tinoise );
    cnt_rinoise->setStep    ( 0.01 );
@@ -309,10 +309,24 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_rinoise->setIncSteps( QwtCounter::Button2,  10 );
    cnt_rinoise->setIncSteps( QwtCounter::Button3, 100 );
 
-   main->addWidget( cnt_rinoise, row++, 3 );
+   main->addWidget( cnt_rinoise, row++, 7, 1, 1 );
    connect( cnt_rinoise, SIGNAL( valueChanged  ( double ) ), 
                          SLOT  ( update_rinoise( double ) ) );
   
+   // Temperature
+   QLabel* lb_temperature  = us_label( tr( "Temperature (%1):" )
+         .arg( DEGC ) );
+   main->addWidget( lb_temperature,  row, 4, 1, 3 );
+
+   cnt_temperature    = us_counter( 3, 10.0, 40.0, NORMAL_TEMP );
+   cnt_temperature->setStep    ( 0.1 );
+   cnt_temperature->setIncSteps( QwtCounter::Button1,   1 );
+   cnt_temperature->setIncSteps( QwtCounter::Button2,  10 );
+   cnt_temperature->setIncSteps( QwtCounter::Button3, 100 );
+   main->addWidget( cnt_temperature, row++, 7, 1, 1 );
+   connect( cnt_temperature, SIGNAL( valueChanged( double ) ), 
+                             SLOT  ( update_temp(  double ) ) );
+
    // Mesh combo box
    cmb_mesh = us_comboBox();
    cmb_mesh->setMaxVisibleItems( 5 );
@@ -323,7 +337,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cmb_mesh->addItem( "AST Finite Volume Method (ASTFVM)" );
    cmb_mesh->setCurrentIndex( (int)simparams.meshType );
    
-   main->addWidget( cmb_mesh, row++, 2, 1, 2 );
+   main->addWidget( cmb_mesh, row++, 4, 1, 4 );
 
    connect( cmb_mesh, SIGNAL( activated  ( int ) ), 
                       SLOT  ( update_mesh( int ) ) );
@@ -337,7 +351,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    connect( cmb_moving, SIGNAL( activated    ( int ) ), 
                         SLOT  ( update_moving( int ) ) );
    
-   main->addWidget( cmb_moving, row++, 2, 1, 2 );
+   main->addWidget( cmb_moving, row++, 4, 1, 4 );
 
    // Button bar
    QBoxLayout* buttons = new QHBoxLayout();
@@ -362,7 +376,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
    buttons ->addWidget( pb_accept );
 
-   main->addLayout( buttons, row++, 0, 1, 4 );
+   main->addLayout( buttons, row++, 0, 1, 8 );
 }
 
 void US_SimulationParametersGui::accepted( void )
@@ -798,6 +812,7 @@ void US_SimulationParametersGui::load( void )
       cnt_rnoise          ->setValue( simparams.rnoise            );
       cnt_tinoise         ->setValue( simparams.tinoise           );
       cnt_rinoise         ->setValue( simparams.rinoise           );
+      cnt_temperature     ->setValue( simparams.temperature       );
 
       cmb_mesh            ->setCurrentIndex( (int)simparams.meshType );
       cmb_moving          ->setCurrentIndex( (int)simparams.gridType );

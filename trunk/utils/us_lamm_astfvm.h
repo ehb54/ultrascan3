@@ -6,6 +6,7 @@
 #include "us_extern.h"
 #include "us_model.h"
 #include "us_simparms.h"
+#include "us_buffer.h"
 #include "us_dataIO2.h"
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
@@ -129,26 +130,14 @@ class US_EXTERN US_LammAstfvm : public QObject
       //! \returns        Non-zero if multiple non-ideal conditions
       int  calculate( US_DataIO2::RawData& );
 
+      //! \brief Set buffer parameters: density, compressibility
+      //! \param buffer Buffer object to examine
+      void set_buffer( US_Buffer );
+
       //! \brief Calculate solution for a model component
       //! \param compx Index to model component to use in solution pass
       //! \returns     Non-zero if multiple non-ideal conditions
       int  solve_component( int ); 
-
-      //! \brief Get the non-ideal case number from model parameters
-      //! \returns Non-zero if multiple non-ideal conditions
-      int  nonIdealCaseNo( void );
-
-      //! \brief Set up non-ideal case type 1 (concentration-dependent)
-      //! \param sigma_k Sigma constant to modify sedimentation coefficient
-      //! \param delta_k Delta constant to modify diffusion coefficient
-      void SetNonIdealCase_1( double, double );
-
-      //! \brief Set up non-ideal case type 2 (co-sedimenting)
-      void SetNonIdealCase_2( void   );
-
-      //! \brief Set up non-ideal case type 3 (compressibility)
-      //! \param cmpress Compressibility factor
-      void SetNonIdealCase_3( double );
 
       //! \brief Set the mesh speed factor: 1.0 (moving) or 0.0 (non-moving)
       //! \param speed   Mesh speed factor of 1.0 or 0.0
@@ -196,6 +185,7 @@ class US_EXTERN US_LammAstfvm : public QObject
                                // non-ideal case
                                // s = s_0/(1+sigma*C), D=D_0/(1+delta*C)
 
+      double  density;         // buffer density
       double  compressib;      // factor for compressibility
 
       SaltData* saltdata;      // data handle for cosedimenting
@@ -218,6 +208,23 @@ class US_EXTERN US_LammAstfvm : public QObject
       double  err_tol;         // error tolerance for mesh refinement
 
       // private functions
+
+      //! \brief Get the non-ideal case number from model parameters
+      //! \returns Non-zero if multiple non-ideal conditions
+      int  nonIdealCaseNo( void );
+
+      //! \brief Set up non-ideal case type 1 (concentration-dependent)
+      //! \param sigma_k Sigma constant to modify sedimentation coefficient
+      //! \param delta_k Delta constant to modify diffusion coefficient
+      void SetNonIdealCase_1( double, double );
+
+      //! \brief Set up non-ideal case type 2 (co-sedimenting)
+      void SetNonIdealCase_2( void   );
+
+      //! \brief Set up non-ideal case type 3 (compressibility)
+      //! \param mropt   Reference to mesh refine option flag to set
+      //! \param err_tol Reference to error tolerance factor to set
+      void SetNonIdealCase_3( int&, double& );
 
       // Lamm equation step for sedimentation difference - predict
       void LammStepSedDiff_P( double, double, int, double*, double*, double* );

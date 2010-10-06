@@ -53,6 +53,7 @@ class US_SimulationParametersGui : public US_WidgetsDialog
       QwtCounter*   cnt_rnoise;
       QwtCounter*   cnt_tinoise;
       QwtCounter*   cnt_rinoise;
+      QwtCounter*   cnt_temperature;
                    
       QCheckBox*    cb_acceleration_flag;
       
@@ -112,6 +113,9 @@ class US_SimulationParametersGui : public US_WidgetsDialog
 
       void select_centerpiece   ( bool )
          { simparams.band_forming = rb_band->isChecked(); };
+
+      void update_temp          ( double temp )
+         { simparams.temperature   = temp;   };
 
       void help                 ( void )
          { showhelp.show_help( "manual/simulation_parameters.html" ); };

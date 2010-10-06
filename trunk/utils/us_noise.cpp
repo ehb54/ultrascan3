@@ -63,7 +63,7 @@ int US_Noise::load( const QString& id, US_DB2* db )
    temporary.open();
    temporary.write( contents );
    temporary.close();
-qDebug() << "NOI: ldIdDb: length contents" << QString(contents).length();
+//qDebug() << "NOI: ldIdDb: length contents" << QString(contents).length();
 
    QString file = temporary.fileName();
    return load( file );
@@ -116,8 +116,10 @@ int US_Noise::load( const QString& filename )
          }
       }
    }
-qDebug() << "NOI: ldFile: count valsize" << count << values.size();
-//debug();
+//qDebug() << "NOI: ldFile: count valsize" << count << values.size();
+   if ( US_Settings::us_debug() > 2 )
+      debug();
+
    return US_DB2::OK;
 }
 
@@ -167,13 +169,13 @@ int US_Noise::write( US_DB2* db )
          q << "new_noise" << noiseGUID << editID << modelID << modelGUID
            << typen << contents;
          message = QObject::tr( "created" );
-qDebug() << "get_noiseID stat GUID" << db->lastErrno() << noiseGUID;
+//qDebug() << "get_noiseID stat GUID" << db->lastErrno() << noiseGUID;
       }
       else
       {
          db->next();
          QString noiseID = db->value( 0 ).toString();
-qDebug() << "get_noiseID ID GUID" << noiseID << noiseGUID;
+//qDebug() << "get_noiseID ID GUID" << noiseID << noiseGUID;
          //q << "update_noise" << noiseID << noiseGUID << description << typen 
          //  << contents << modelGUID;
          q << "update_noise" << noiseID << noiseGUID << editID << modelID
@@ -181,10 +183,10 @@ qDebug() << "get_noiseID ID GUID" << noiseID << noiseGUID;
          message = QObject::tr( "updated" );
       }
 
-//      return db->statusQuery( q );
-int updstat = db->statusQuery( q );
-qDebug() << "new/update_noise stat" << updstat;
-return updstat;
+      return db->statusQuery( q );
+//int updstat = db->statusQuery( q );
+//qDebug() << "new/update_noise stat" << updstat;
+//return updstat;
 }
 
 // write noise to local disk

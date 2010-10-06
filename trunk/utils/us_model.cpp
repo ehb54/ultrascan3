@@ -76,10 +76,6 @@ bool US_Model::Association::operator== ( const Association& a ) const
 
 US_Model::US_Model()
 {
-   density         = DENS_20W;
-   viscosity       = VISC_20W;
-   compressibility = 0;
-   temperature     = NORMAL_TEMP;
    optics          = ABSORBANCE;
    description     = "New Model";
    wavelength      = 0.0;
@@ -94,11 +90,7 @@ US_Model::US_Model()
 
 bool US_Model::operator== ( const US_Model& m ) const
 {
-   if ( density         != m.density         ) return false;
-   if ( viscosity       != m.viscosity       ) return false;
-   if ( compressibility != m.compressibility ) return false;
    if ( wavelength      != m.wavelength      ) return false;
-   if ( temperature     != m.temperature     ) return false;
    if ( modelGUID       != m.modelGUID       ) return false;
    if ( editGUID        != m.editGUID        ) return false;
    if ( description     != m.description     ) return false;
@@ -151,7 +143,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    double volume;           // e.g., vbar * mw / AVOGADRO
    double vol_fac;          // volume factor, e.g., 0.75 / M_PI
    double radius_sphere;    // e.g., pow( volume * vol_fac, 1/3 );
-   double rsph_fac;         // radius_sphere factor; e.g., 6 * PI * VISC * 0.01
+   double rsph_fac;         // radius_sphere factor; e.g., 0.06 * PI * VISC
    double onethird;         // one third ( 1.0 / 3.0 )
    double c;                // concentration
    double t;                // temperature in kelvin
@@ -439,20 +431,12 @@ int US_Model::load( const QString& filename )
             description     = a.value( "description"    ).toString();
             modelGUID       = a.value( "modelGUID"      ).toString();
             editGUID        = a.value( "editGUID"       ).toString();
-            density         = a.value( "density"        ).toString().toDouble();
-            viscosity       = a.value( "viscosity"      ).toString().toDouble();
-            compressibility = a.value( "compressibility").toString().toDouble();
             wavelength      = a.value( "wavelength"     ).toString().toDouble();
-            temperature     = a.value( "temperature"    ).toString().toDouble();
             coSedStr        = a.value( "coSedSolute"    ).toString();
             coSedSolute     = ( coSedStr.isEmpty() ) ? -1 : coSedStr.toInt();
             type            =
                (ModelType)a.value( "type"   ).toString().toInt();
             iterations      = a.value( "iterations"     ).toString().toInt();
-            // force buffer-related parameters to water-at-20 values
-            density         = DENS_20W;
-            viscosity       = VISC_20W;
-            temperature     = NORMAL_TEMP;
          }
 
          else if ( xml.name() == "analyte" )
@@ -460,30 +444,33 @@ int US_Model::load( const QString& filename )
             SimulationComponent sc;
             a = xml.attributes();
 
-            sc.analyteGUID = a.value( "analyteGUID").toString();;
+            sc.analyteGUID  = a.value( "analyteGUID" ).toString();
 
-            sc.name        = a.value( "name"       ).toString();
-            sc.vbar20      = a.value( "vbar20"     ).toString().toDouble();
-            sc.mw          = a.value( "mw"         ).toString().toDouble();
-            sc.s           = a.value( "s"          ).toString().toDouble();
-            sc.D           = a.value( "D"          ).toString().toDouble();
-            sc.f           = a.value( "f"          ).toString().toDouble();
-            sc.f_f0        = a.value( "f_f0"       ).toString().toDouble();
-            sc.extinction  = a.value( "extinction" ).toString().toDouble();
-            sc.axial_ratio = a.value( "axial"      ).toString().toDouble();
-            sc.sigma       = a.value( "sigma"      ).toString().toDouble();
-            sc.delta       = a.value( "delta"      ).toString().toDouble();
+            sc.name         = a.value( "name"       ).toString();
+            sc.vbar20       = a.value( "vbar20"     ).toString().toDouble();
+            sc.mw           = a.value( "mw"         ).toString().toDouble();
+            sc.s            = a.value( "s"          ).toString().toDouble();
+            sc.D            = a.value( "D"          ).toString().toDouble();
+            sc.f            = a.value( "f"          ).toString().toDouble();
+            sc.f_f0         = a.value( "f_f0"       ).toString().toDouble();
+            sc.extinction   = a.value( "extinction" ).toString().toDouble();
+            sc.axial_ratio  = a.value( "axial"      ).toString().toDouble();
+            sc.sigma        = a.value( "sigma"      ).toString().toDouble();
+            sc.delta        = a.value( "delta"      ).toString().toDouble();
 
-            sc.molar_concentration  = a.value( "molar"    ).toString().toDouble();
-            sc.signal_concentration = a.value( "signal"   ).toString().toDouble();
-            sc.oligomer             = a.value( "oligomer" ).toString().toInt();
-            if ( sc.oligomer == 0 )
-            sc.oligomer             = a.value( "stoich"   ).toString().toInt();
-            if ( sc.oligomer == 0 )
-               sc.oligomer             = 1;
-            sc.shape                =
-               (ShapeType)a.value( "shape"  ).toString().toInt();
-            sc.analyte_type         = a.value( "type"   ).toString().toInt();
+            sc.molar_concentration  = a.value( "molar"  ).toString().toDouble();
+            sc.signal_concentration = a.value( "signal" ).toString().toDouble();
+            sc.oligomer     = a.value( "oligomer"   ).toString().toInt();
+
+            if ( sc.oligomer < 1 )
+            {
+               sc.oligomer     = a.value( "stoich"     ).toString().toInt();
+               sc.oligomer     = ( sc.oligomer > 0 ) ? sc.oligomer : 1;
+            }
+
+            sc.shape        =
+                   (ShapeType)a.value( "shape"      ).toString().toInt();
+            sc.analyte_type = a.value( "type"       ).toString().toInt();
 
             mfem_scans( xml, sc );
 
@@ -503,7 +490,10 @@ int US_Model::load( const QString& filename )
          }
       }
    }
-//debug();
+
+   if ( US_Settings::us_debug() > 2 )
+      debug();
+
    return US_DB2::OK;
 }
 
@@ -663,18 +653,14 @@ void US_Model::write_temp( QTemporaryFile& file )
    xml.writeAttribute   ( "version", "1.0" );
 
    xml.writeStartElement( "model" );
-   xml.writeAttribute   ( "description",     description );
-   xml.writeAttribute   ( "modelGUID",       modelGUID   );
-   xml.writeAttribute   ( "editGUID",        editGUID    );
-   xml.writeAttribute   ( "density",         QString::number( density        ));
-   xml.writeAttribute   ( "viscosity",       QString::number( viscosity      ));
-   xml.writeAttribute   ( "compressibility", QString::number( compressibility));
-   xml.writeAttribute   ( "wavelength",      QString::number( wavelength     ));
-   xml.writeAttribute   ( "temperature",     QString::number( temperature    ));
-   xml.writeAttribute   ( "coSedSolute",     QString::number( coSedSolute    ));
-   xml.writeAttribute   ( "optics",          QString::number( optics         ));
-   xml.writeAttribute   ( "type",            QString::number( type           ));
-   xml.writeAttribute   ( "iterations",      QString::number( iterations ) );
+   xml.writeAttribute   ( "description", description );
+   xml.writeAttribute   ( "modelGUID",   modelGUID   );
+   xml.writeAttribute   ( "editGUID",    editGUID    );
+   xml.writeAttribute   ( "wavelength",  QString::number( wavelength   ) );
+   xml.writeAttribute   ( "coSedSolute", QString::number( coSedSolute  ) );
+   xml.writeAttribute   ( "optics",      QString::number( optics       ) );
+   xml.writeAttribute   ( "type",        QString::number( type         ) );
+   xml.writeAttribute   ( "iterations",  QString::number( iterations   ) );
 
    char uuid[ 37 ];
    uuid[ 36 ] = 0;
@@ -701,16 +687,18 @@ void US_Model::write_temp( QTemporaryFile& file )
       xml.writeAttribute( "shape",      QString::number( sc->shape         ) );
       xml.writeAttribute( "type",       QString::number( sc->analyte_type  ) );
 
-      xml.writeAttribute( "molar",      QString::number( sc->molar_concentration  ) );
-      xml.writeAttribute( "signal",     QString::number( sc->signal_concentration ) );
+      xml.writeAttribute( "molar",  QString::number( sc->molar_concentration ));
+      xml.writeAttribute( "signal", QString::number( sc->signal_concentration));
 
       for ( int j = 0; j < sc->c0.radius.size(); j++ )
       {
          xml.writeStartElement( "mfem_scan" );
 
          MfemInitial* scan = &sc->c0;
-         xml.writeAttribute( "radius", QString::number( scan->radius       [ j ] ) );
-         xml.writeAttribute( "conc",   QString::number( scan->concentration[ j ] ) );
+         xml.writeAttribute( "radius",
+            QString::number( scan->radius       [ j ] ) );
+         xml.writeAttribute( "conc",
+            QString::number( scan->concentration[ j ] ) );
          xml.writeEndElement();  // mfem_scan
       }
 
@@ -752,19 +740,15 @@ void US_Model::debug( void )
    qDebug() << "desc" << description;
    qDebug() << "model guid" << modelGUID;
    qDebug() << "edit guid" << editGUID;
-   qDebug() << "density" << density;
-   qDebug() << "visc" << viscosity;
-   qDebug() << "comp" << compressibility;
-   qDebug() << "wl" << wavelength;
-   qDebug() << "T" << temperature;
-   qDebug() << "cosed" << coSedSolute;
+   qDebug() << "waveln" << wavelength;
+   qDebug() << "coSed" << coSedSolute;
    qDebug() << "iterations" << iterations;
    qDebug() << "type" << (int)type;
 
    for ( int i = 0; i < components.size(); i++ )
    {
       SimulationComponent* sc = &components[ i ];
-      qDebug() << " component";
+      qDebug() << " component" << ( i + 1 );
       qDebug() << "  name" << sc->name;
       qDebug() << "  vbar20" << sc->vbar20;
       qDebug() << "  mw" << sc->mw;
@@ -784,7 +768,9 @@ void US_Model::debug( void )
 
       for ( int j = 0; j < sc->c0.radius.size(); j++ )
       {
-         qDebug() << "    c0" << sc->c0.radius[ j ] <<  sc->c0.concentration[ j ];
+         qDebug() << "   c0 r c"
+            << sc->c0.radius[ j ] << sc->c0.concentration[ j ];
       }
    }
 }
+

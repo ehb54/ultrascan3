@@ -54,6 +54,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QLineEdit*    le_density;
       QLineEdit*    le_viscosity;
       QLineEdit*    le_vbar;
+      QLineEdit*    le_compress;
       QLineEdit*    le_rmsd;
       QLineEdit*    le_sedcoeff;
       QLineEdit*    le_difcoeff;
@@ -94,6 +95,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QPushButton*  pb_density;
       QPushButton*  pb_viscosity;
       QPushButton*  pb_vbar;
+      QPushButton*  pb_compress;
       QPushButton*  pb_rmsd;
       QPushButton*  pb_exclude;
       QPushButton*  pb_loadmodel;
@@ -130,6 +132,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       US_DB2*                     db;
 
       US_Model                    model;
+      US_Model                    model_loaded;
       US_Noise                    ri_noise;
       US_Noise                    ti_noise;
 
@@ -157,7 +160,9 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void simulate_model( void );
       void view_report(    void );
       void exclude   (     void );
+      void adjust_model(   void );
       void update_buffer(    double, double );
+      void update_buffer(    US_Buffer      );
       void update_vbar(      double );
       void exclude_from(     double );
       void exclude_to  (     double );
@@ -201,6 +206,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       double       density;
       double       viscosity;
       double       vbar;
+      double       compress;
 
       // Layouts
       QBoxLayout*  mainLayout;

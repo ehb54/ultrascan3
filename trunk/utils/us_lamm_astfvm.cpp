@@ -612,6 +612,8 @@ US_LammAstfvm::US_LammAstfvm( US_Model&                rmodel,
 
    sigma           = 0.;   // default: s=s_0
    delta           = 0.;   // default: D=D_0
+   density         = DENS_20W;
+   compressib      = 0.0;
 
    err_tol         = 1.0e-4;
 
@@ -757,10 +759,7 @@ DbgLv(1) << "LAsc:   sigma delta" << model.components[comp_x].sigma
 
    else if ( NonIdealCaseNo == 3 )              // compressibility
    {
-      SetNonIdealCase_3( model.compressibility );
-
-      mropt          = 0;
-      err_tol        = 1.0e-5;
+      SetNonIdealCase_3( mropt, err_tol );
    }
 
    else
@@ -1013,10 +1012,16 @@ DbgLv(1) << "compx" << comp_x << "times 1-6"
    return 0;
 }
 
+void US_LammAstfvm::set_buffer( US_Buffer buffer )
+{
+   density     = buffer.density;             // for compressibility
+   compressib  = buffer.compressibility;
+}
+
 void US_LammAstfvm::SetNonIdealCase_1( double sigma_k, double delta_k )
 {
-   sigma     = sigma_k;                     // for concentration dependency
-   delta     = delta_k;
+   sigma       = sigma_k;                   // for concentration dependency
+   delta       = delta_k;
 }
 
 void US_LammAstfvm::SetNonIdealCase_2( )
@@ -1027,9 +1032,10 @@ void US_LammAstfvm::SetNonIdealCase_2( )
    saltdata->initSalt();
 }
 
-void US_LammAstfvm::SetNonIdealCase_3( double cmpress )
+void US_LammAstfvm::SetNonIdealCase_3( int& mropt, double& err_tol )
 {
-   compressib      = cmpress;
+   mropt           = 0;
+   err_tol         = 1.0e-5;
 }
 
 void US_LammAstfvm::SetMeshSpeedFactor( double speed )
@@ -1456,20 +1462,19 @@ DbgLv(3) << "AdjSD:  times 1 2" << kst1 << kst2;
          {
             double phip  = vbar;     // apparent specific volume
             double alpha = 1.0;
-            double dens  = model.density;
-            double factn = 0.5 * dens * param_w2 * model.compressibility;
+            double factn = 0.5 * density * param_w2 * compressib;
             double msq   = param_m * param_m;
             double sA    = 1.0 - vbar * rho_w;
 
             for ( int jj = 0; jj < Nv; jj++ )
             {
-               rho          = dens
+               rho          = density
                               / ( 1.0 - factn * ( x[ jj ] * x[ jj ] - msq ) );
                double beta  = ( 1.0 - phip * rho ) / sA;
                s_adj[ jj ]  = param_s * alpha * beta;
                D_adj[ jj ]  = param_D * alpha;
             }
-DbgLv(3) << "AdjSD: compr dens" << model.compressibility << dens;
+DbgLv(3) << "AdjSD: compr dens" << compressib << density;
 DbgLv(3) << "AdjSD:    factn msq sa" << factn << msq << sA;
 DbgLv(3) << "AdjSD:   sadj 0 m n" << s_adj[0] << s_adj[Nv/2] << s_adj[Nv-1];
 DbgLv(3) << "AdjSD:   Dadj 0 m n" << D_adj[0] << D_adj[Nv/2] << D_adj[Nv-1];
@@ -1703,7 +1708,7 @@ int US_LammAstfvm::nonIdealCaseNo()
       NonIdealCaseNo = 2;
    }
 
-   if ( model.compressibility > 0.0 )
+   if ( compressib > 0.0 )
    {  // compressibility factor positive:       compressibility
       if ( NonIdealCaseNo != 0 )
          rc          = 3;

@@ -88,13 +88,12 @@ class US_EXTERN US_SimulationParameters
    GridType  gridType;          //!< Designation if grid is fixed or can move
    double    radial_resolution; //!< The radial datapoint increment/resolution 
                                 //!< of the final data
-
    double    meniscus;          //!< Meniscus position at first constant speed
                                 //!< For multiple speeds, the user must measure 
                                 //!< the meniscus at the first constant speed 
                                 //!< and use that to initialize the routine
-   
-   double    bottom;            //!< Bottom of cell position without rotor stretch
+   double    bottom;            //!< Bottom of cell position w/o rotor stretch
+   double    temperature;       //!< Temperature in degrees centigrade
    double    rnoise;            //!< Random noise
    double    tinoise;           //!< Time invariant noise
    double    rinoise;           //!< Radially invariant noise
