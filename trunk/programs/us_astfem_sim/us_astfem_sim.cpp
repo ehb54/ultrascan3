@@ -383,7 +383,7 @@ void US_Astfem_Sim::start_simulation( void )
    {
       US_DataIO2::Scan* scan = &sim_data.scanData[ i ];
 
-      scan->temperature = system.temperature;
+      scan->temperature = simparams.temperature;
       scan->rpm         = rpm;
       scan->omega2t     = 0.0;
       scan->wavelength  = system.wavelength;

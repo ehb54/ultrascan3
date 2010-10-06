@@ -317,10 +317,10 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
    xml.writeAttribute( "guid"       , GUID     );
    xml.writeAttribute( "description", description );
    xml.writeAttribute( "ph"         , QString::number( pH       , 'f', 5 ) );
-   xml.writeAttribute( "density"    , QString::number( density  , 'f', 5 ) );
+   xml.writeAttribute( "density"    , QString::number( density  , 'f', 6 ) );
    xml.writeAttribute( "viscosity"  , QString::number( viscosity, 'f', 5 ) );
    xml.writeAttribute( "compressibility", 
-      QString::number( compressibility, 'e', 5 ) );
+      QString::number( compressibility, 'e', 4 ) );
 
    for ( int i = 0; i < component.size(); i++ )
    {
