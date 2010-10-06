@@ -167,7 +167,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
       component.vbar20 = vbar;
    }
 
-   t              = K0 + 20.0;          // temperature kelvin
+   t              = K20;                // temperature kelvin of 20 degr. C
    vol_fac        = 0.75 / M_PI;        // various factors used in calcs below
    onethird       = 1.0 / 3.0;
    rsph_fac       = 0.06 * M_PI * VISC_20W;

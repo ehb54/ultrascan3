@@ -25,14 +25,10 @@ class US_EXTERN US_Model
                        COFS, FE, GLOBAL };
 
       int        iterations;      //!< Number of iterations accomplished
-      double     density;         //!< Density of the buffer (water 20 d. C)
-      double     viscosity;       //!< Viscosity of buffer (water at 20 d. C)
-      double     compressibility; //!< Compressibility of the buffer (0)
-      double     wavelength;      //!< Wavlength of the data acquisition
-      double     temperature;     //!< Temperature (20 C) of the acquisition
-      QString    editGUID;        //!< Identifier of the edit data
-      QString    description;     //!< Text description of th emodel
+      double     wavelength;      //!< Wavelength of the data acquisition
+      QString    description;     //!< Text description of the model
       QString    modelGUID;       //!< Identifier of the model
+      QString    editGUID;        //!< Identifier of the edit data
       OpticsType optics;          //!< The optics used for the data acquisition
       ModelType  type;            //!< The analysis used with this model
 
