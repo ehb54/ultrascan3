@@ -39,7 +39,8 @@ HEADERS      = \
                us_sassoc.h              \
                us_table.h               \
                us_widgets.h             \
-               us_widgets_dialog.h
+               us_widgets_dialog.h      \
+               us_solution_gui.h
 
 SOURCES      = \
                us_analysis_base2.cpp      \
@@ -65,5 +66,6 @@ SOURCES      = \
                us_sassoc.cpp              \
                us_table.cpp               \
                us_widgets.cpp             \
-               us_widgets_dialog.cpp
+               us_widgets_dialog.cpp      \
+               us_solution_gui.cpp
 
