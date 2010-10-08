@@ -145,14 +145,17 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 
    // Parameters
 
+   density      = DENS_20W;
+   viscosity    = VISC_20W;
+   compress     = 0.0;
    pb_density   = us_pushbutton( tr( "Density"   ) );
-   le_density   = us_lineedit( "0.998234" );
+   le_density   = us_lineedit( QString::number( density,   'f', 6 ) );
    pb_viscosity = us_pushbutton( tr( "Viscosity" ) );
-   le_viscosity = us_lineedit( "1.001940" );
+   le_viscosity = us_lineedit( QString::number( viscosity, 'f', 5 ) );
    pb_vbar      = us_pushbutton( tr( "Vbar"   ) );
    le_vbar      = us_lineedit( "0.7200" );
    pb_compress  = us_pushbutton( tr( "Compressibility" ) );
-   le_compress  = us_lineedit( "0      " );
+   le_compress  = us_lineedit( "0.0"     );
    pb_showmodel = us_pushbutton( tr( "Show Model #"   ) );
    lb_rmsd      = us_label     ( tr( "RMSD:"  ) );
    le_rmsd      = us_lineedit( "0.0" );
@@ -171,6 +174,12 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    le_vbar    ->setMinimumWidth( lwid );
    pb_compress->setMinimumWidth( pwid );
    le_compress->setMinimumWidth( lwid );
+   connect( le_density,   SIGNAL( editingFinished() ),
+            this,         SLOT(   buffer_text()     ) );
+   connect( le_viscosity, SIGNAL( editingFinished() ),
+            this,         SLOT(   buffer_text()     ) );
+   connect( le_compress,  SIGNAL( editingFinished() ),
+            this,         SLOT(   buffer_text()     ) );
 
    QLabel* lb_experiment   = us_banner( tr( "Experimental Parameters (at 20" ) 
       + DEGC + "):" );
@@ -361,6 +370,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    set_ra_visible( false );
 
    dataLoaded = false;
+   buffLoaded = false;
    haveSim    = false;
    mfilter    = "";
    investig   = "USER";
@@ -408,25 +418,28 @@ void US_FeMatch::load( void )
    triples.      clear();
 
    dataLoaded = false;
+   buffLoaded = false;
    dataLatest = ck_edit->isChecked();
 
-   US_DataLoader* dialog = new US_DataLoader( true, dataLatest, def_local, dfilter,
-         investig, db );
+   US_DataLoader* dialog =
+      new US_DataLoader( true, dataLatest, def_local, dfilter, investig, db );
 
    if ( dialog->exec() == QDialog::Accepted )
    {
       db         = dialog->settings( def_local, investig, dfilter );
-DbgLv(1) << "DLd:  loc vest filt" << def_local << investig << dfilter;
-DbgLv(1) << "DLd: dd" << dialog->description();
+DbgLv(1) << "DLd:  local invest filter" << def_local << investig << dfilter;
+DbgLv(1) << "DLd:   desc" << dialog->description();
 
       dialog->load_edit( dataList, rawList, triples );
-DbgLv(1) << "DLd: triples[0]" << triples.at(0);
+DbgLv(1) << "DLd:    triples[0]" << triples.at(0);
 
       delete dialog;
    }
 
-   else
+   else                     // load was aborted
       return;
+
+   qApp->processEvents();
 
    for ( int ii = 0; ii < triples.size(); ii++ )
       lw_triples->addItem( triples.at( ii ) );
@@ -461,6 +474,56 @@ DbgLv(1) << "DLd: triples[0]" << triples.at(0);
 
    rbd_pos    = this->pos() + QPoint( 100, 100 );
    epd_pos    = this->pos() + QPoint( 200, 200 );
+
+   // set up buffer values implied from experimental data
+   QString bufid;
+   QString bguid;
+   QString bdesc;
+   QString bdens = le_density  ->text();
+   QString bvisc = le_viscosity->text();
+   QString bcomp = le_compress ->text();
+   bool    bufin = false;
+
+   if ( def_local )
+   {  // data from local disk:  get buffer vals (disk or db)
+      bufin  = bufinfo_disk( edata, bufid, bguid, bdesc );
+DbgLv(2) << "L:IL: bufin bdesc" << bufin << bdesc;
+      bufin  = bufin ? bufin :
+               bufinfo_db(   edata, bufid, bguid, bdesc );
+DbgLv(2) << "L:ID: bufin bdesc" << bufin << bdesc;
+      bufin  = bufvals_disk( bufid, bguid, bdesc, bdens, bvisc, bcomp );
+DbgLv(2) << "L:VL: bufin bdens" << bufin << bdens;
+      bufin  = bufin ? bufin :
+               bufvals_db(   bufid, bguid, bdesc, bdens, bvisc, bcomp );
+DbgLv(2) << "L:VD: bufin bdens" << bufin << bdens;
+   }
+
+   else
+   {  // data from db:          get buffer vals (db or disk)
+      bufin  = bufinfo_db(   edata, bufid, bguid, bdesc );
+DbgLv(2) << "D:ID: bufin bdesc" << bufin << bdesc;
+      bufin  = bufin ? bufin :
+               bufinfo_disk( edata, bufid, bguid, bdesc );
+DbgLv(2) << "D:IL: bufin bdesc" << bufin << bdesc;
+      bufin  = bufvals_db(   bufid, bguid, bdesc, bdens, bvisc, bcomp );
+DbgLv(2) << "D:VD: bufin bdens" << bufin << bdens;
+      bufin  = bufin ? bufin :
+               bufvals_disk( bufid, bguid, bdesc, bdens, bvisc, bcomp );
+DbgLv(2) << "D:VL: bufin bdens" << bufin << bdens;
+   }
+
+   if ( bufin )
+   {
+      buffLoaded  = false;
+      le_density  ->setText( bdens );
+      le_viscosity->setText( bvisc );
+      le_compress ->setText( bcomp );
+      buffLoaded  = true;
+      density     = bdens.toDouble();
+      viscosity   = bvisc.toDouble();
+      compress    = bcomp.toDouble();
+   }
+
 }
 
 // details
@@ -725,40 +788,41 @@ void US_FeMatch::update_viscosity( double new_visc )
 void US_FeMatch::get_buffer( void )
 {
    US_BufferGui* bdiag = new US_BufferGui( -1, true );
-   connect( bdiag, SIGNAL( valueChanged(  double, double ) ),
-            this,  SLOT  ( update_buffer( double, double ) ) );
-   connect( bdiag, SIGNAL( valueChanged(  US_Buffer      ) ),
-            this,  SLOT  ( update_buffer( US_Buffer      ) ) );
+   connect( bdiag, SIGNAL( valueChanged(  US_Buffer ) ),
+            this,  SLOT  ( update_buffer( US_Buffer ) ) );
    bdiag->exec();
    qApp->processEvents();
 }
 
-// update buffer
-void US_FeMatch::update_buffer( double new_dens, double new_visc )
-{
-   density    = new_dens;
-   viscosity  = new_visc;
-
-   le_density  ->setText( QString::number( density,   'f', 6 ) );
-   le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
-}
-
+// slot to update parameters after buffer dialog
 void US_FeMatch::update_buffer( US_Buffer buffer )
 {
-   density    = buffer.density;
-   viscosity  = buffer.viscosity;
-   compress   = buffer.compressibility;
+   bool changed = true;
 
-   le_density  ->setText( QString::number( density,   'f', 6 ) );
-   le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
-   le_compress ->setText( QString::number( compress,  'e', 3 ) );
+   // if we still have experiment buffer, allow user to abort changes
+   if ( buffLoaded )
+      changed = verify_buffer();
+
+   // if experiment buffer is to be overridden, proceed with it
+   if ( changed )
+   {
+      density    = buffer.density;
+      viscosity  = buffer.viscosity;
+      compress   = buffer.compressibility;
+
+      buffLoaded = false;
+      le_density  ->setText( QString::number( density,   'f', 6 ) );
+      le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
+      le_compress ->setText( QString::number( compress,  'e', 3 ) );
+      qApp->processEvents();
+   }
 }
 
 // open dialog and get vbar information
 void US_FeMatch::get_vbar( void )
 {
    US_AnalyteGui* vdiag = new US_AnalyteGui( -1, true );
-   connect( vdiag, SIGNAL( valueChanged( double ) ),
+   connect( vdiag,  SIGNAL( valueChanged( double ) ),
              this,  SLOT  ( update_vbar ( double ) ) );
    vdiag->exec();
    qApp->processEvents();
@@ -1338,86 +1402,12 @@ void US_FeMatch::load_model( )
    else
       return;                     // Cancel:  bail out now
 
-#if 0
-   if ( model.viscosity != 0.0 )
-   {
-      viscosity  = model.viscosity;
-      le_viscosity->setText( QString::number( viscosity, 'f', 6 ) );
-   }
-
-   if ( model.density != 0.0 )
-   {
-      density    = model.density;
-      le_density  ->setText( QString::number( density,   'f', 6 ) );
-   }
-#endif
-
+   qApp->processEvents();
    model_loaded = model;   // save model exactly as loaded
 
    int ncomp    = model.components.size();       // components count
    int nassoc   = model.associations.size();     // associations count
    isRA         = ( nassoc > 1 );                // RA if #assocs > 1
-
-#if 0
-   double avgTemp     = average_temperature( edata );
-   solution.density   = le_density  ->text().toDouble();
-   solution.viscosity = le_viscosity->text().toDouble();
-   solution.vbar      = le_vbar     ->text().toDouble();
-   solution.vbar20    = US_Math2::adjust_vbar( solution.vbar, avgTemp );
-
-   US_Math2::data_correction( avgTemp, solution );
-
-   double scorrec  = 1.0 / solution.correction;
-   double dcorrec  = ( ( K0 + avgTemp ) * VISC_20W )
-      / ( K20 * solution.viscosity );
-   double s20w;
-   double D20w;
-   double vbar20;
-   double mw;
-   double vol;
-   double f0;
-   double fv;
-   double f_f0;
-   double rad_sphere;
-   US_Model::SimulationComponent* sc;
-DbgLv(1) << "dialog mfilter" << mfilter;
-DbgLv(1) << "dialog investig" << investig;
-DbgLv(1) << "dialog mdesc" << mdesc;
-DbgLv(1) << "dialog model.desc" << model.description;
-DbgLv(1) << "dialog ncomp" << ncomp;
-DbgLv(1) << "dialog nassoc" << nassoc;
-DbgLv(1) << "dialog isRA" << isRA;
-DbgLv(1) << "scorrec dcorrec" << scorrec << dcorrec;
-DbgLv(1) << "  viscosity" << solution.viscosity << solution.viscosity_tb;
-
-   // fill out components values
-
-   for ( int jj = 0; jj < ncomp; jj++ )
-   {
-      sc         = &model.components[ jj ];
-      s20w       = fabs( sc->s );
-      D20w       = sc->D;
-      vbar20     = sc->vbar20;
-      vbar20     = ( vbar20 > 0.0 ) ? vbar20 : TYPICAL_VBAR;
-      mw         = ( s20w / D20w ) * ( R * K20 ) / ( 1.0 - vbar20 * DENS_20W );
-      vol        = vbar20 * mw / AVOGADRO;
-      rad_sphere = pow( ( vol * 0.75 ) / M_PI, 1.0 / 3.0 );
-      f0         = rad_sphere * 0.06 * M_PI * VISC_20W;
-      fv         = ( mw * ( 1.0 - vbar20 * DENS_20W ) ) / ( s20w * AVOGADRO );
-      f_f0       = fv / f0;
-      sc->s     *= scorrec;
-      sc->D     *= dcorrec;
-DbgLv(1) << " cx" << jj+1 << "s20w s" << s20w << sc->s << "  D20w D" << D20w << sc->D;
-
-      sc->vbar20 = vbar20;
-      sc->mw     = mw;
-      sc->f      = fv;
-      sc->f_f0   = f_f0;
-
-      if ( sc->extinction > 0.0 )
-         sc->molar_concentration = sc->signal_concentration / sc->extinction;
-   }
-#endif
 
    ct_component->setMaxValue( (double)ncomp );
 
@@ -1454,7 +1444,7 @@ void US_FeMatch::adjust_model()
 
    double scorrec  = 1.0 / solution.correction;
    double dcorrec  = ( ( K0 + avgTemp ) * VISC_20W )
-      / ( K20 * solution.viscosity );
+                     / ( K20 * solution.viscosity );
 
    // fill out components values and adjust s,D based on buffer
 
@@ -1969,10 +1959,9 @@ void US_FeMatch::write_cofs()
    int    row      = lw_triples->currentRow();
    edata           = &dataList[ row ];
    int    ccount   = model.components.size();
-   double avgTemp  = average_temperature( edata );
+   double avgTemp  = average_temperature( edata ) + K0;
    double scorrec  = 1.0 / solution.correction;
-   double dcorrec  = ( ( K0 + avgTemp ) * VISC_20W )
-      / ( K20 * solution.viscosity );
+   double dcorrec  = ( avgTemp * VISC_20W ) / ( K20 * solution.viscosity );
 
    QString filename = US_Settings::resultDir() + "/" + edata->runID + "."
       + text_model( model, 0 ) + "_dis." + edata->cell + wave_index( row );
@@ -2225,13 +2214,11 @@ double US_FeMatch::average_temperature( US_DataIO2::EditedData* d )
 // slot to make sure all windows and dialogs get closed
 void US_FeMatch::close_all()
 {
-#if 1
    if ( rbmapd )
       rbmapd->close();
 
    if ( eplotcd )
       eplotcd->close();
-#endif
 
    close();
 }
@@ -2418,5 +2405,444 @@ int US_FeMatch::noises_in_model( bool ondisk, QString mGUID,
    }
 
    return nGUIDs.size();
+}
+
+// get buffer info from DB: ID, GUID, description
+bool US_FeMatch::bufinfo_db( US_DataIO2::EditedData* edata,
+      QString& bufId, QString& bufGuid, QString& bufDesc )
+{
+   bool bufinfo = false;
+
+   QStringList query;
+   QString rawGUID  = edata->dataGUID;
+
+   if ( db == NULL )
+   {
+      US_Passwd pw;
+      db            = new US_DB2( pw.getPasswd() );
+      if ( db == NULL )
+         return bufinfo;
+   }
+
+   query << "get_rawDataID_from_GUID" << rawGUID;
+   db->query( query );
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      qDebug() << "***Unable to get raw Data ID from GUID" << rawGUID
+         << " lastErrno" << db->lastErrno();
+      return bufinfo;
+   }
+   db->next();
+   QString rawID    = db->value( 0 ).toString();
+   QString soluID   = db->value( 2 ).toString();
+DbgLv(2) << "BInfD: rawGUID rawID soluID" << rawGUID << rawID << soluID;
+
+   query.clear();
+   query << "get_solutionBuffer" << soluID;
+   db->query( query );
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      qDebug() << "***Unable to get solutionBuffer from soluID" << soluID
+         << " lastErrno" << db->lastErrno();
+      //return bufinfo;
+   }
+   db->next();
+   QString id       = db->value( 0 ).toString();
+   QString guid     = db->value( 1 ).toString();
+   QString desc     = db->value( 2 ).toString();
+DbgLv(2) << "BInfD: id guid desc" << id << guid << desc;
+
+   if ( !id.isEmpty() )
+   {
+      bufId         = id;
+      bufGuid       = guid.isEmpty() ? bufGuid : guid;
+      bufDesc       = desc.isEmpty() ? bufDesc : desc;
+      bufinfo       = true;
+   }
+ 
+//*DEBUG
+QString invID  = investig.section( ":", 0, 0 );
+query.clear();
+query << "get_experiment_desc" << invID;
+db->query( query );
+QStringList expIDs;
+while ( db->next() ) expIDs << db->value(0).toString();
+DbgLv(2) << "esbDbg:invID nexpIDs" << invID << expIDs.size();
+for ( int ii=0; ii<expIDs.size(); ii++ )
+{
+ DbgLv(2) << "esbDbg: ii expID" << ii << expIDs[ii];
+ QStringList solIDs;
+ query.clear();
+ query << "get_solutionIDs" << expIDs[ii];
+ db->query( query );
+ while ( db->next() ) solIDs << db->value(0).toString();
+ for ( int jj=0; jj<solIDs.size(); jj++ )
+ {
+  DbgLv(2) << "esbDbg:   jj solID" << jj << solIDs[jj];
+  query.clear();
+  query << "get_solutionBuffer" << solIDs[jj];
+  db->query( query );
+  db->next();
+  DbgLv(2) << "esbDbg      bId bDesc bGuid" << db->value(0).toString()
+   << db->value(2).toString() << db->value(1).toString();
+ }
+}
+//*DEBUG
+
+   return bufinfo;
+}
+
+// get buffer info from local disk: ID, GUID, description
+bool US_FeMatch::bufinfo_disk( US_DataIO2::EditedData* edata,
+   QString& bufId, QString& bufGuid, QString& bufDesc )
+{
+   bool    bufinfo  = false;
+   QString soluGUID = "";
+
+   QString exppath = US_Settings::resultDir() + "/" + edata->runID + "/"
+      + edata->runID + "." + edata->dataType + ".xml";
+
+   QFile filei( exppath );
+   if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+      return bufinfo;
+
+   QXmlStreamReader xml( &filei );
+
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isStartElement()  &&  xml.name() == "buffer" )
+      {
+         QXmlStreamAttributes ats = xml.attributes();
+
+         if ( xml.name() == "buffer" )
+         {
+            QString id    = ats.value( "id"   ).toString();
+            QString guid  = ats.value( "guid" ).toString();
+            QString desc  = ats.value( "desc" ).toString();
+       
+            if ( ! id.isEmpty()  ||  ! guid.isEmpty() )
+            {
+               bufId         = id  .isEmpty() ? bufId   : id;
+               bufGuid       = guid.isEmpty() ? bufGuid : guid;
+               bufDesc       = desc.isEmpty() ? bufDesc : desc;
+               bufinfo       = true;
+               bufId         = bufId.isEmpty() ? "N/A"  : bufId;
+            }
+            break;
+         }
+
+         else if ( xml.name() == "solution" )
+         {
+            soluGUID      = ats.value( "guid" ).toString();
+         }
+      }
+   }
+
+   filei.close();
+
+   if ( ! bufinfo  &&  ! soluGUID.isEmpty() )
+   {  // no buffer info yet, but solution GUID found:  get buffer from solution
+      QString spath = US_Settings::dataDir() + "/solutions";
+      QDir    f( spath );
+      spath         = spath + "/";
+      QStringList filter( "S*.xml" );
+      QStringList names = f.entryList( filter, QDir::Files, QDir::Name );
+      QString fname;
+      QString bdens;
+      QString bvisc;
+      QString bcomp;
+
+      for ( int ii = 0; ii < names.size(); ii++ )
+      {
+         fname      = spath + names[ ii ];
+         QFile filei( fname );
+
+         if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            continue;
+
+         QXmlStreamReader xml( &filei );
+
+         while ( ! xml.atEnd() )
+         {
+            xml.readNext();
+
+            if ( xml.isStartElement() )
+            {
+               QXmlStreamAttributes ats = xml.attributes();
+
+               if (  xml.name() == "solution" )
+               {
+                  QString sguid = ats.value( "guid" ).toString();
+                  if ( sguid != soluGUID )
+                     break;
+               }
+
+               else if (  xml.name() == "buffer" )
+               {
+                  QString bid   = ats.value( "id"   ).toString();
+                  QString bguid = ats.value( "guid" ).toString();
+                  QString bdesc = ats.value( "desc" ).toString();
+       
+                  if ( ! bid.isEmpty()  ||  ! bguid.isEmpty() )
+                  {
+                     bufId         = bid  .isEmpty() ? bufId   : bid;
+                     bufId         = bufId.isEmpty() ? "N/A"   : bufId;
+                     bufGuid       = bguid.isEmpty() ? bufGuid : bguid;
+                     bufDesc       = bdesc.isEmpty() ? bufDesc : bdesc;
+                     bufinfo       = true;
+                  }
+                  break;
+               }
+            }
+            if ( bufinfo )
+               break;
+         }
+         if ( bufinfo )
+            break;
+      }
+   }
+
+   return bufinfo;
+}
+
+// get buffer values from DB: density, viscosity, compressiblity
+bool US_FeMatch::bufvals_db( QString& bufId, QString& bufGuid, QString& bufDesc,
+      QString& dens, QString& visc, QString& comp )
+{
+   bool bufvals = false;
+
+   if ( db == NULL )
+   {
+      US_Passwd pw;
+       db           = new US_DB2( pw.getPasswd() );
+      if ( db == NULL )
+         return bufvals;
+   }
+
+   QStringList query;
+   int idBuf     = bufId.isEmpty() ? -1    : bufId.toInt();
+   bufId         = ( idBuf < 1  )  ? "N/A" : bufId;
+
+   if ( bufId == "N/A"  &&  ! bufGuid.isEmpty() )
+   {
+      query.clear();
+      query << "get_bufferID" << bufGuid;
+      db->query( query );
+      if ( db->lastErrno() != US_DB2::OK )
+         qDebug() << "***Unable to get bufferID from GUID" << bufGuid
+            << " lastErrno" << db->lastErrno();
+      db->next();
+      bufId         = db->value( 0 ).toString();
+      bufId         = bufId.isEmpty() ? "N/A" : bufId;
+   }
+
+   if ( bufId != "N/A" )
+   {
+      query.clear();
+      query << "get_buffer_info" << bufId;
+      db->query( query );
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         qDebug() << "***Unable to get buffer info from bufID" << bufId
+            << " lastErrno" << db->lastErrno();
+         return bufvals;
+      }
+      db->next();
+      QString ddens = db->value( 5 ).toString();
+      QString dvisc = db->value( 4 ).toString();
+      QString dcomp = db->value( 2 ).toString();
+      dens          = ddens.isEmpty() ? dens : ddens;
+      visc          = dvisc.isEmpty() ? visc : dvisc;
+      comp          = dcomp.isEmpty() ? comp : dcomp;
+      bufvals       = true;
+   }
+
+   else
+   {
+      QString invID  = investig.section( ":", 0, 0 );
+      query.clear();
+      query << "get_buffer_desc" << invID;
+      db->query( query );
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         qDebug() << "***Unable to get buffer desc from invID" << invID
+            << " lastErrno" << db->lastErrno();
+         return bufvals;
+      }
+
+      while ( db->next() )
+      {
+         QString desc = db->value( 1 ).toString();
+         
+         if ( desc == bufDesc )
+         {
+            bufId         = db->value( 0 ).toString();
+            break;
+         }
+      }
+
+      if ( ! bufId.isEmpty() )
+      {
+         query.clear();
+         query << "get_buffer_info" << bufId;
+         db->query( query );
+         if ( db->lastErrno() != US_DB2::OK )
+         {
+            qDebug() << "***Unable to get buffer info from bufID" << bufId
+               << " lastErrno" << db->lastErrno();
+            return bufvals;
+         }
+         db->next();
+         QString ddens = db->value( 5 ).toString();
+         QString dvisc = db->value( 4 ).toString();
+         QString dcomp = db->value( 2 ).toString();
+         dens          = ddens.isEmpty() ? dens : ddens;
+         visc          = dvisc.isEmpty() ? visc : dvisc;
+         comp          = dcomp.isEmpty() ? comp : dcomp;
+         bufvals       = true;
+      }
+   }
+
+   return bufvals;
+}
+
+// get buffer values from local disk: density, viscosity, compressiblity
+bool US_FeMatch::bufvals_disk( QString& bufId, QString& bufGuid,
+      QString& bufDesc, QString& dens, QString& visc, QString& comp )
+{
+   bool bufvals  = false;
+   bool dfound   = false;
+   QString bpath = US_Settings::dataDir() + "/buffers";
+   QDir    f( bpath );
+   bpath         = bpath + "/";
+   QStringList filter( "B*.xml" );
+   QStringList names = f.entryList( filter, QDir::Files, QDir::Name );
+   QString fname;
+   QString bdens;
+   QString bvisc;
+   QString bcomp;
+
+   for ( int ii = 0; ii < names.size(); ii++ )
+   {
+      fname      = bpath + names[ ii ];
+      QFile filei( fname );
+
+      if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         continue;
+
+DbgLv(2) << "  bvL: ii fname" << ii << names[ii];
+      QXmlStreamReader xml( &filei );
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "buffer" )
+         {
+            QXmlStreamAttributes ats = xml.attributes();
+            QString bid   = ats.value( "id"          ).toString();
+            QString bguid = ats.value( "guid"        ).toString();
+            QString bdesc = ats.value( "description" ).toString();
+
+            if ( bguid == bufGuid  ||  bid == bufId )
+            {
+               bdens    = ats.value( "density"         ).toString();
+               bvisc    = ats.value( "viscosity"       ).toString();
+               bcomp    = ats.value( "compressibility" ).toString();
+               dens     = bdens.isEmpty() ? dens : bdens;
+               visc     = bvisc.isEmpty() ? visc : bvisc;
+               comp     = bcomp.isEmpty() ? comp : bcomp;
+               bufvals  = true;
+DbgLv(2) << "  bvL:   i/g I/G dens" << bid << bguid << bufId << bufGuid << dens;
+            }
+
+            else if ( bdesc == bufDesc )
+            {
+               bdens    = ats.value( "density"         ).toString();
+               bvisc    = ats.value( "viscosity"       ).toString();
+               bcomp    = ats.value( "compressibility" ).toString();
+               dfound   = true;
+            }
+
+            break;
+         }
+      }
+
+      if ( bufvals )
+         break;
+   }
+
+DbgLv(2) << "  bvL:    bufvals dfound" << bufvals << dfound;
+   if ( ! bufvals  &&  dfound )
+   {
+      dens     = bdens.isEmpty() ? dens : bdens;
+      visc     = bvisc.isEmpty() ? visc : bvisc;
+      comp     = bcomp.isEmpty() ? comp : bcomp;
+      bufvals  = true;
+   }
+
+   return bufvals;
+}
+
+// use dialogs to alert user to change in experiment buffer
+bool US_FeMatch::verify_buffer( )
+{
+   bool changed = true;
+
+   if ( buffLoaded )
+   {  // only need verify buffer change while experiment values are loaded
+      if ( QMessageBox::No == QMessageBox::warning( this,
+               tr( "Warning" ),
+               tr( "Attention:\n"
+                   "You are attempting to override buffer parameters\n"
+                   "that have been set from the experimental data!\n\n"
+                   "Do you really want to override them?" ),
+               QMessageBox::Yes, QMessageBox::No ) )
+      {  // "No":  retain loaded values, mark unchanged
+         QMessageBox::information( this,
+            tr( "Buffer Retained" ),
+            tr( "Buffer parameters from the experiment will be retained" ) );
+         changed    = false;
+      }
+
+      else
+      {  // "Yes":  change values,  mark experiment values no longer used
+         QMessageBox::information( this,
+            tr( "Buffer Overridden" ),
+            tr( "Buffer parameters from the experiment will be overridden" ) );
+         buffLoaded = false;
+      }
+   }
+
+   return changed;
+}
+
+// slot to respond to text box change to buffer parameter
+void US_FeMatch::buffer_text( )
+{
+   if ( buffLoaded )
+   {  // only need verify desire to change while experiment values are loaded
+      bool changed = verify_buffer();
+
+      if ( changed )
+      {  // "Yes" to change: pick up values as entered and turn off loaded flag
+         buffLoaded   = false;
+         density      = le_density  ->text().toDouble();
+         viscosity    = le_viscosity->text().toDouble();
+         compress     = le_vbar     ->text().toDouble();
+      }
+
+      else
+      {  // "No" to change:  restore text and insure loaded flag still on
+         buffLoaded   = false;
+         le_density  ->setText( QString::number( density,   'f', 6 ) );
+         le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
+         le_compress ->setText( QString::number( compress,  'e', 3 ) );
+         qApp->processEvents();
+         buffLoaded   = true;
+      }
+   }
 }
 

@@ -111,6 +111,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       bool          haveSim;
       bool          dataLatest;
       bool          def_local;
+      bool          buffLoaded;
 
       QString       run_name;
       QString       cell;
@@ -161,7 +162,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void view_report(    void );
       void exclude   (     void );
       void adjust_model(   void );
-      void update_buffer(    double, double );
       void update_buffer(    US_Buffer      );
       void update_vbar(      double );
       void exclude_from(     double );
@@ -188,6 +188,16 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void    calc_residuals( void );
       double  average_temperature( US_DataIO2::EditedData* );
       void    close_all( void );
+      bool    bufinfo_db(   US_DataIO2::EditedData*,
+                            QString&, QString&, QString& );
+      bool    bufinfo_disk( US_DataIO2::EditedData*,
+                            QString&, QString&, QString& );
+      bool    bufvals_db(   QString&, QString&, QString&,
+                            QString&, QString&, QString& );
+      bool    bufvals_disk( QString&, QString&, QString&,
+                            QString&, QString&, QString& );
+      bool    verify_buffer( void );
+      void    buffer_text(   void );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };
