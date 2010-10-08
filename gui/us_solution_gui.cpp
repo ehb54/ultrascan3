@@ -408,8 +408,8 @@ void US_SolutionGui::loadDB( void )
       QString newID = db.value( 0 ).toString();
       IDs          << newID;
       descriptions << db.value( 1 ).toString();
-      GUIDs        << QString( NULL );
-      filenames    << QString( NULL );
+      GUIDs        << QString( "" );
+      filenames    << QString( "" );
    }
 
    loadSolutions();
@@ -487,38 +487,35 @@ void US_SolutionGui::addAnalyte( void )
 // Get information about selected analyte
 void US_SolutionGui::assignAnalyte( US_Analyte data )
 {
+   US_Solution::AnalyteInfo currentAnalyte;
+   currentAnalyte.analyteGUID = data.analyteGUID;
+   currentAnalyte.analyteDesc = data.description;
+   currentAnalyte.analyteID   = data.analyteID.toInt();   // May not be accurate
+
+   // Now get info from db if we have it
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
    US_DB2 db( masterPW );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() == US_DB2::OK )
    {
-      db_error( db.lastError() );
-      return;
+      // Get analyteID
+      QStringList q( "get_analyteID" );
+      q << currentAnalyte.analyteGUID;
+      db.query( q );
+   
+      if ( db.next() )
+         currentAnalyte.analyteID = db.value( 0 ).toInt();
+   
+      // Now get the corresponding description 
+      q.clear();
+      q << "get_analyte_info";
+      q << QString::number( currentAnalyte.analyteID );
+      db.query( q );
+   
+      if ( db.next() )
+         currentAnalyte.analyteDesc = db.value( 4 ).toString();
    }
-
-   US_Solution::AnalyteInfo currentAnalyte;
-   currentAnalyte.analyteGUID = data.analyteGUID;
-
-   // Get analyteID
-   QStringList q( "get_analyteID" );
-   q << currentAnalyte.analyteGUID;
-
-   db.query( q );
-   if ( db.lastErrno() != US_DB2::OK ) return;
-
-   db.next();
-   currentAnalyte.analyteID = db.value( 0 ).toInt();
-
-   // Now get the corresponding description 
-   q.clear();
-   q << "get_analyte_info";
-   q << QString::number( currentAnalyte.analyteID );
-   db.query( q );
-
-   currentAnalyte.analyteDesc = QString( "Analyte description missing" );
-   if ( db.next() )
-      currentAnalyte.analyteDesc = db.value( 4 ).toString();
 
    // Make sure item has not been added already
    if ( solution.analytes.contains( currentAnalyte ) )
@@ -578,16 +575,18 @@ void US_SolutionGui::selectBuffer( void )
 {
    US_BufferGui* buffer_dialog = new US_BufferGui( solution.invID, true );         // Ask for a signal
 
-   connect( buffer_dialog, SIGNAL( valueBufferID ( const QString& ) ),
-            this,          SLOT  ( assignBuffer  ( const QString& ) ) );
+   connect( buffer_dialog, SIGNAL( valueChanged ( US_Buffer ) ),
+            this,          SLOT  ( assignBuffer ( US_Buffer ) ) );
 
    buffer_dialog->exec();
 }
 
 // Get information about selected buffer
-void US_SolutionGui::assignBuffer( const QString& bufferID )
+void US_SolutionGui::assignBuffer( US_Buffer buffer )
 {
-   solution.bufferID = bufferID.toInt();
+   solution.bufferID = buffer.bufferID.toInt();
+   solution.bufferGUID = buffer.GUID;
+   solution.bufferDesc = buffer.description;
 
    // Now get the corresponding description 
    US_Passwd pw;
@@ -601,7 +600,7 @@ void US_SolutionGui::assignBuffer( const QString& bufferID )
    }
 
    QStringList q( "get_buffer_info" );
-   q << bufferID;
+   q << QString::number( solution.bufferID );
    db.query( q );
 
    if ( db.next() )

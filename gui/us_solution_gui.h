@@ -5,6 +5,7 @@
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_widgets_dialog.h"
+#include "us_buffer.h"
 #include "us_analyte.h"
 #include "us_solution.h"
 #include "us_help.h"
@@ -129,11 +130,11 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       void loadSolutions      ( void );
       void selectSolution     ( QListWidgetItem* );
       void addAnalyte         ( void );
-      void assignAnalyte      ( US_Analyte data );
+      void assignAnalyte      ( US_Analyte );
       void selectAnalyte      ( QListWidgetItem* );
       void removeAnalyte      ( void );
       void selectBuffer       ( void );
-      void assignBuffer       ( const QString&  );
+      void assignBuffer       ( US_Buffer );
       void saveAmount         ( double );
       void saveDescription    ( const QString& );
       void saveTemperature    ( const QString& );
