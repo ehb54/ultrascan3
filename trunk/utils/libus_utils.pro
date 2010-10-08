@@ -36,7 +36,8 @@ HEADERS      = us_analyte.h     \
                us_settings.h    \
                us_stiffbase.h   \
                us_simparms.h    \
-               us_util.h
+               us_util.h        \
+               us_solution.h
 
 SOURCES      = us_analyte.cpp     \
                us_astfem_math.cpp \
@@ -58,7 +59,8 @@ SOURCES      = us_analyte.cpp     \
                us_settings.cpp    \
                us_simparms.cpp    \
                us_stiffbase.cpp   \
-               us_util.cpp
+               us_util.cpp        \
+               us_solution.cpp
 
 # Only include us_crypto when not on a supercomputer
 

@@ -146,7 +146,7 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
       return( db.lastError() );
 
    q.clear();
-   q  << "delete_solution" 
+   q  << "delete_experiment_solutions" 
       << QString::number( ExpData.expID );
    status = db.statusQuery( q );
 

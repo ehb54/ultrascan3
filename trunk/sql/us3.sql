@@ -321,7 +321,7 @@ CREATE  TABLE IF NOT EXISTS solution (
   solutionID int(11) NOT NULL AUTO_INCREMENT ,
   solutionGUID CHAR(36) NULL ,
   description VARCHAR(80) NOT NULL ,
-  storageTemp TINYINT NULL DEFAULT NULL ,
+  storageTemp FLOAT DEFAULT NULL ,
   notes TEXT NULL DEFAULT NULL ,
   PRIMARY KEY (solutionID) )
 ENGINE = InnoDB;
