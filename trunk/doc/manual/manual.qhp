@@ -23,22 +23,24 @@
                 <section title="Additional Information"      ref="index.html#additional"/>
             </section>
         </toc>
+        <!-- The keyword id attribute appears to be needed, although the
+             documentation does not say so -->
         <keywords>
-            <keyword name="password" id="UltraScan::pw" ref="master_pw.html"/>
-            <keyword name="configuration"               ref="config.html"/>
-            <keyword name="gradient"                    ref="colorgradient.html"/>
-            <keyword name="investigator"                ref="us_investigator.html"/>
-            <keyword name="buffer"                      ref="us_buffer.html"/>
-            <keyword name="pseudo3d-combine"            ref="pseudo3d_combine.html"/>
-            <keyword name="ga-initialize"               ref="ga_initialize.html"/>
-            <keyword name="vhw-enhanced"                ref="vhw_enhanced.html"/>
-            <keyword name="vhw-distrib-plot"            ref="vhw_distrib_plot.html"/>
-            <keyword name="model-loader"                ref="load_model_distrib.html"/>
-            <keyword name="noise-loader"                ref="load_noise.html"/>
-            <keyword name="fe-model"                    ref="fe_match.html"/>
-            <keyword name="license"                     ref="register.html"/>
-            <keyword name="register"                    ref="register.html"/>
-            <keyword name="manage-data"                 ref="manage_data.html"/>
+            <keyword id="b1" name="buffer"        ref="us_buffer.html"/>
+            <keyword id="c1" name="configuration" ref="config.html"/>
+            <keyword id="f1" name="fe-model"      ref="fe_match.html"/>
+            <keyword id="g1" name="ga-initialize" ref="ga_initialize.html"/>
+            <keyword id="g2" name="gradient"      ref="colorgradient.html"/>
+            <keyword id="i1" name="investigator"  ref="us_investigator.html"/>
+            <keyword id="l1" name="license"       ref="register.html"/>
+            <keyword id="m1" name="manage-data"   ref="manage_data.html"/>
+            <keyword id="m2" name="model-loader" ref="load_model_distrib.html"/>
+            <keyword id="n1" name="noise-loader"  ref="load_noise.html"/>
+            <keyword id="p1" name="password"      ref="master_pw.html"/>
+            <keyword id="p2" name="pseudo3d-combine" ref="pseudo3d_combine.html"/>
+            <keyword id="r1" name="register"      ref="register.html"/>
+            <keyword id="v1" name="vhw-distrib-plot" ref="vhw_distrib_plot.html"/>
+            <keyword id="v2" name="vhw-enhanced"  ref="vhw_enhanced.html"/>
         </keywords>
         <files>
             <file>mainstyle.css</file>
@@ -78,6 +80,7 @@
 
             <file>us_buffer.html</file>
             <file>images/us_buffer.png</file>
+            <file>images/us_buffer_spect.png</file>
 
             <file>pseudo3d_combine.html</file>
             <file>images/pseudo3d_combine.png</file>

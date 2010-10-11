@@ -9,55 +9,82 @@
     system or in the current database.  You must be identified as the
     investigator to delete or update a buffer description in the database.</p>
 
-    <p>Pushbuttons:</p>
+    <p>Dialog Items:</p>
 
     <ul>
-      <li>Select Investigator.  This button brings up a window that
+      <li><b>Select Investigator</b> This button brings up a window that
       allows selecting the current investigator for limiting buffer
       descriptions.  The <b>Search</b> item also limits the display
       of buffer descriptions.</li>
 
-      <li>Load Buffer from HD.  Brings up a dialog to load a buffer definition
-      form the hard disk.</li>
+      <li><b>Use Database</b> Check to select read or write of the buffer
+      definition to or from the database.</li>
       
-      <li>Save Buffer to HD.  Saves the current buffer definition to the hard
-      disk.</li>
+      <li><b>Use Local Disk</b> Check to select read or write of the buffer
+      definition to or from the hard disk.</li>
       
-      <li>Query Buffer Descriptions from DB.  Loads the buffer descriptions
-      for the selected investigator from the database.  If no investigator
-      is selected, all buffers in the database are shown.</li>
+      <li><b>Query Descriptions</b> This button initiates a read of buffer
+      definitions and population of the buffer list widget.</li>
       
-      <li>Save Buffer to DB.  Saves the current buffer definition as 
-      a new entry in the database.</li>
+      <li><b>Save Buffer</b> Saves the current buffer definition to the hard
+      disk or database.</li>
+      
+      <li><b>Update Buffer</b> Updates the current buffer definition
+      in the database or on the hard disk.</li>
+      
+      <li><b>Delete Buffer</b> Deletes the current buffer from the database
+      or hard disk.</li>
 
-      <li>Update Buffer in DB.  Updates the current buffer definition
-      in the database.</li>
-      
-      <li>Delete Buffer from DB.  Deletes the current buffer from
-      the database.</li>
+      <li><b>Density</b> Density value set by buffer choice but also
+      editable here.</li>
 
-      <li>Synch components with DB.  For efficiency, buffer component
-      definitions are saved on the hard disk.  These components 
-      rarely change, however this button will update the locally
-      saved data from the current database values.  These values
-      are considered global across multiple databases.</li>
+      <li><b>Viscosity</b> Viscosity value set by buffer choice but also
+      editable here.</li>
+
+      <li><b>pH</b> pH value set by buffer choice but also
+      editable here.</li>
+
+      <li><b>Compressibility</b> Compressibility value set by buffer choice
+      but also editable here.</li>
+
+      <li><b>Optics</b> Type of optics: Absorbance, Interference, or
+      Flourescence.</li>
+
+      <li><b>Manage Spectrum</b> This button brings up a
+      <a href="images/us_buffer_spect.png">Manage Spectrum dialog</a>
+      to set Wavelength and Extinction pairs.</li>
+
+      <li><b>Buffer Description</b> Description set by buffer choice, but also
+      editable, especially when defining a new buffer.</li>
+
+      <li><b>Global Identifier</b> Read-only global identifier of the
+      buffer.</li>
+
+      <li><b>Please select a Buffer Component</b> Once a component item has
+      been chosen in the lower left list, enter a purely numeric concentration
+      value in indicated units to add the component.</li>
+
+      <li><b>Synch components with DB</b> Not normally needed, this button
+      effects a download from the database of the components list to a file
+      on the local hard disk.</li>
+
+      <li><b>Reset</b> Reset all buffer values to default setting.</li>
+
+      <li><b>Help</b> Show this documentation.</li>
+
+      <li><b>Close</b> Close the dialog and possibly return buffer selections
+      to the caller.</li>
+
     </ul>
 
     <p>To display a buffer description from the database, double-click
-    on the title after getting the descriptions from the database.</p>
+    on the title after getting the descriptions from the database or local
+    disk.</p>
 
     <p>To add or change a component to the current buffer, select the component
-    in the lower left box and input the concentration using the units
-    indicated.  To delete a component, double-click the component in the 
+    in the lower left box and input the numeric concentration using the units
+    indicated. To delete a component, double-click the component in the 
     lower right box. Density and viscosity are automatically updated when
     a component is added, updated, or removed.</p>
-
-    <p>Manually updated items:</p>
-
-    <ul>
-      <li>pH</li>
-      <li>Description</li>
-      <li>Spectrum - A series of wavelength/extinction values</li>
-    </ul>
 
 [% INCLUDE footer.us3 %]
