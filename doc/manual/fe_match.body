@@ -149,7 +149,7 @@
        </li>
 
        <li>
-          <b>Viscosity</b> Vbar value for the loaded experiment. Change
+          <b>Viscosity</b> Viscosity value for the loaded experiment. Change
           the text value or click the button to change value(s) in a
           <a href="us_buffer.html">Buffer Management dialog</a>.
        </li>
@@ -157,7 +157,17 @@
        <li>
           <b>Vbar</b> Vbar value for the loaded experiment. Change
           the text value or click the button to change value(s) in a
-          <a href="us_buffer.html">Buffer Management dialog</a>.
+          <a href="us_analytes.html">Analytes Management dialog</a>.
+       </li>
+
+       <li>
+          <b>Compressibility</b> Compressibility value for the loaded
+          experiment. Change the text value or click the button to change
+          value(s) in a <a href="us_buffer.html">Buffer Management dialog</a>.
+          <b>*NOTE*</b> Density, Viscosity, Compressibility values should
+          rarely be changed. They are set from the experimental data loaded.
+          If you do choose to change any buffer-related parameters, a warning
+          dialog gives you the opportunity to abort that choice.
        </li>
 
        <li>
