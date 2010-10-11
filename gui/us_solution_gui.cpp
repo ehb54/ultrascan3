@@ -492,29 +492,19 @@ void US_SolutionGui::assignAnalyte( US_Analyte data )
    currentAnalyte.analyteDesc = data.description;
    currentAnalyte.analyteID   = data.analyteID.toInt();   // May not be accurate
 
-   // Now get info from db if we have it
+   // Now get analyteID from db if we can
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
    US_DB2 db( masterPW );
 
    if ( db.lastErrno() == US_DB2::OK )
    {
-      // Get analyteID
       QStringList q( "get_analyteID" );
       q << currentAnalyte.analyteGUID;
       db.query( q );
    
       if ( db.next() )
          currentAnalyte.analyteID = db.value( 0 ).toInt();
-   
-      // Now get the corresponding description 
-      q.clear();
-      q << "get_analyte_info";
-      q << QString::number( currentAnalyte.analyteID );
-      db.query( q );
-   
-      if ( db.next() )
-         currentAnalyte.analyteDesc = db.value( 4 ).toString();
    }
 
    // Make sure item has not been added already
@@ -588,25 +578,20 @@ void US_SolutionGui::assignBuffer( US_Buffer buffer )
    solution.bufferGUID = buffer.GUID;
    solution.bufferDesc = buffer.description;
 
-   // Now get the corresponding description 
+   // Now get the corresponding bufferID, if we can
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
    US_DB2 db( masterPW );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() == US_DB2::OK )
    {
-      db_error( db.lastError() );
-      return;
-   }
+      QStringList q( "get_bufferID" );
+      q << solution.bufferGUID;
+      db.query( q );
+   
+      if ( db.next() )
+         solution.bufferID = db.value( 0 ).toInt();
 
-   QStringList q( "get_buffer_info" );
-   q << QString::number( solution.bufferID );
-   db.query( q );
-
-   if ( db.next() )
-   {
-      solution.bufferGUID = db.value( 0 ).toString();
-      solution.bufferDesc = db.value( 1 ).toString();
    }
 
    reset();
