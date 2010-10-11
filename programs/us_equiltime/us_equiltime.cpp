@@ -404,7 +404,7 @@ double US_EquilTime::rpmFromSigma( double sigma )
    double T     = K0 + 20.0;  // 20C for now
    double mw    = model.components[ 0 ].mw;
    double vbar  = model.components[ 0 ].vbar20;
-   double rho   = model.density;
+   double rho   = DENS_20W; //model.density;
 
    double rpm   = 30.0 / M_PI * 
                   sqrt( sigma * R * T * 2 / ( mw * ( 1 - vbar * rho ) ) );
@@ -419,7 +419,7 @@ double US_EquilTime::sigmaFromRpm( double rpm )
    double T     = K0 + 20.0;  // 20C for now
    double mw    = model.components[ 0 ].mw;
    double vbar  = model.components[ 0 ].vbar20;
-   double rho   = model.density;
+   double rho   = DENS_20W; //model.density;
 
    double sigma = mw * ( 1 - vbar * rho ) * sq( M_PI / 30.0 * rpm ) / 
                   ( 2 * R * T );
@@ -575,7 +575,7 @@ void US_EquilTime::load_experiment( void )
    }
 
    // Initialize.  Can be updated in model editor
-   model.density = DENS_20W;
+   //model.density = DENS_20W;
    update_speeds( speed_type );
 }
 
@@ -641,7 +641,7 @@ void US_EquilTime::load_model( void )
    }
 */
    // Initialize.  Can be updated in model editor
-   model.density = DENS_20W;
+   //model.density = DENS_20W;
    update_speeds( speed_type );
 }
 
