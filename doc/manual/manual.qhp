@@ -26,6 +26,8 @@
         <!-- The keyword id attribute appears to be needed, although the
              documentation does not say so -->
         <keywords>
+            <keyword id="a1" name="analyte"       ref="analytes.html"/>
+            <keyword id="a2" name="astfem_sim"    ref="astfem_sim.html"/>
             <keyword id="b1" name="buffer"        ref="us_buffer.html"/>
             <keyword id="c1" name="configuration" ref="config.html"/>
             <keyword id="f1" name="fe-model"      ref="fe_match.html"/>
@@ -152,6 +154,16 @@
             <file>images/manage_data_conf.png</file>
             <file>images/manage_data_thelp-1.png</file>
             <file>images/manage_data_thelp-2.png</file>
+
+            <file>analytes.html</file>
+            <file>images/analytes.png</file>
+            <file>images/analyte_details.png</file>
+            <file>images/sequence.png</file>
+
+            <file>astfem_sim.html</file>
+            <file>simparams.html</file>
+            <file>images/astfem_sim.png</file>
+            <file>images/simparams.png</file>
         </files>
     </filterSection>
 </QtHelpProject> 

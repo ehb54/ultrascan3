@@ -1,0 +1,172 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Simulation Parameters'
+%]
+
+    <h2> <i>UltraScan</i> Simulation Parameters:</h2>
+
+    <p> An option in <b><i>UltraScan III US_Astfem_Sim</i></b>, this dialog
+    allows specifying parameters governing a simulation.</p>
+
+    <p> The dialog allows multiple speed profiles in the course of the
+    simulation. Items along the left side of the dialog refer to the currently
+    selected speed step. Those on the right are for the general properties of
+    the simulation, including radial ranges and simulation method.</p>
+
+    <h3> Main Window:</h3>
+
+    <img src="images/simparams.png" alt="Simulation Parameters Window"/>
+
+    <h3> Dialog Items:</h3>
+
+    <ul>
+       <li>
+          <b>Number of Speed Profiles:</b> Specify the total number of
+          speed profiles to define.
+       </li>
+
+       <li>
+          <b>(Speed Profile...)</b> Select the speed profile for which
+          parameters to be specified below apply.
+       </li>
+
+       <li>
+          <b>Length of Experiment (Hours):</b> Current speed step duration
+          in hours.
+       </li>
+
+       <li>
+          <b>Length of Experiment (Minutes):</b> Current speed step duration
+          in residual minutes (beyond duration given in hours).
+       </li>
+
+       <li>
+          <b>Time Delay for Scans (Hours):</b> Current speed step time delay
+          in hours.
+       </li>
+
+       <li>
+          <b>Time Delay for Scans (Minutes):</b> Current speed step time delay
+          in residual minutes (beyond delay given in hours).
+       </li>
+
+       <li>
+          <b>Rotor Speed (rpm):</b> Current speed step rotor speed in
+          revolutions per minute.
+       </li>
+
+       <li>
+          <b>Simulate Rotor Acceleration:</b> Check the box to the right to
+          enable simulation of gradual acceleration of the rotor initially
+          or between steps with differing rotor speeds.
+       </li>
+
+       <li>
+          <b>Acceleration Profile (rpm/sec):</b> If rotor acceleration is to
+          be simulated, the value here gives the acceleration as a change in
+          revolutions per minute for each second.
+       </li>
+
+       <li>
+          <b>Scans to be saved:</b> The number of scans to be simulated and
+          saved for this speed step.
+       </li>
+
+       <li>
+          <b>Select a Speed Profile</b> Selecting a number here is an alternate
+          way (to the "Speed Profile..." drop-down) to specify the speed step
+          for which parameters above apply.
+       </li>
+
+       <li>
+          <b>Standard Centerpiece</b> Check to specify a standard,
+          non-band-forming centerpiece.
+       </li>
+
+       <li>
+          <b>Band-forming Centerpiece</b> Check to specify a band-forming
+          centerpiece.
+       </li>
+
+       <li>
+          <b>Band-loading volume (ml):</b> Specify any band-loading volume
+          in milliliters.
+       </li>
+
+       <li>
+          <b>Meniscus Position (cm):</b> Specify the radial position of
+          the meniscus.
+       </li>
+
+       <li>
+          <b>Bottom of Cell Position (cm):</b> Specify the radial position of
+          the simulation data bottom.
+       </li>
+
+       <li>
+          <b>Radial Discretization (points):</b> Specify the number points for
+          which concentrations are calculated over the radial range.
+       </li>
+
+       <li>
+          <b>Radial Resolution (cm):</b> Specify the resolution of the radial
+          range, the increment in centimeters between radius points.
+       </li>
+
+       <li>
+          <b>Random Noise (% Conc.):</b> Specify the percent concentration of
+          random noise to calculate and add to the simulation.
+       </li>
+
+       <li>
+          <b>Time Invariant Noise (% Conc.):</b> Specify the percent
+          concentration of time-invariant noise to calculate and add to the
+          simulation.
+       </li>
+
+       <li>
+          <b>Radially Invar. Noise (% Conc.):</b> Specify the percent
+          concentration of radially-invariant noise to calculate and add to
+          the simulation.
+       </li>
+
+       <li>
+          <b>Temperature (&deg;C):</b> Specify the temperature in degrees
+          centigrade to assign to scans.
+       </li>
+
+       <li>
+          <b>(mesh type):</b> Select the mesh or method type to use in the 
+          simulation: ASTFEM, CLAVERIE, MOVING-HAT, USER, ASTFVM.
+       </li>
+
+       <li>
+          <b>(grid type):</b> Select the grid type to use in the 
+          simulation: MOVING, FIXED.
+       </li>
+
+       <li>
+          <b>Load Profile</b> Open a dialog to load a previously saved
+          simulation parameters profile in "sp-*.xml" name form.
+       </li>
+
+       <li>
+          <b>Save Profile</b> Open a dialog to save the current simulation
+          parameters to a profile file in "sp-*.xml" name form.
+       </li>
+
+       <li>
+          <b>Help</b> Display this documentation.
+       </li>
+
+       <li>
+          <b>Cancel</b> Exit this dialog without returning parameter values
+          to the caller.
+       </li>
+
+       <li>
+          <b>Accept</b> Exit this dialog and return parameter values
+          to the caller.
+       </li>
+    </ul>
+
+[% INCLUDE footer.us3 %]

@@ -125,7 +125,7 @@ class US_Astfem_Sim : public US_Widgets
          { lcd_speed->display( (int) speed ); };
 
       void help            ( void )
-         { showhelp.show_help( "manual/astfem_simulation.html" ); }; 
+         { showhelp.show_help( "manual/astfem_sim.html" ); }; 
 
       void update_time_corr( void )
          { time_correctionFlag = cb_timeCorr->isChecked(); };

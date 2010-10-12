@@ -1195,7 +1195,7 @@ void US_AnalyteGui::sel_investigator( void )
 void US_AnalyteGui::assign_investigator( int invID,
       const QString& lname, const QString& fname)
 {
-   le_investigator->setText( "InvID (" + QString::number( invID ) + "): " +
+   le_investigator->setText( QString::number( invID ) + ": " +
          lname + ", " + fname );
 
    personID = invID;
@@ -1238,6 +1238,9 @@ void US_AnalyteGui::list( void )
       list_from_db();
    else
       list_from_disk();
+
+   le_search->setEnabled(  true  );
+   le_search->setReadOnly( false );
 }
 
 void US_AnalyteGui::list_from_db( void )

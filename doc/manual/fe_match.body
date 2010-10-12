@@ -157,7 +157,7 @@
        <li>
           <b>Vbar</b> Vbar value for the loaded experiment. Change
           the text value or click the button to change value(s) in a
-          <a href="us_analytes.html">Analytes Management dialog</a>.
+          <a href="analytes.html">Analytes Management dialog</a>.
        </li>
 
        <li>
