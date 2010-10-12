@@ -9,9 +9,9 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO2.h"
-#include "us_analyte.h"
 #include "us_expinfo.h"
-#include "us_solution_gui.h"
+#include "us_solution.h"
+//#include "us_solution_gui.h"
 
 class US_EXTERN US_Convert : public US_Widgets
 {
@@ -45,6 +45,26 @@ class US_EXTERN US_Convert : public US_Widgets
          HD_ONLY,                             //!< The file has been saved to the HD
          DB_SYNC,                             //!< The HD file has been synchronized with the DB
          BOTH                                 //!< The file has been saved to both HD and DB
+      };
+
+      //! \brief  Class that contains information about relevant 
+      //!         cell/channel/wavelength combinations
+      class TripleInfo
+      {
+         public:
+         int              tripleID;           //!< The ID of this c/c/w combination
+         QString          tripleDesc;         //!< The description of this triple ( e.g., "2 / A / 260" )
+         QString          description;        //!< A text description of this triple
+         char             tripleGUID[16];     //!< The GUID of this triple
+         QString          tripleFilename;     //!< The filename of this auc file
+         bool             excluded;           //!< Whether this triple has been dropped or not
+         int              centerpiece;        //!< The ID of the centerpiece that was used
+         int              solutionID;         //!< The ID of the solution for this triple
+         QString          solutionGUID;       //!< The GUID of the solution for this triple
+         QString          solutionDesc;       //!< A description of the solution 
+         TripleInfo();                        //!< A generic constructor
+         void             clear( void );
+         void             show( void );       // temporary
       };
 
       //! \brief Class to contain a list of scans to exclude from a data set
@@ -81,8 +101,7 @@ class US_EXTERN US_Convert : public US_Widgets
       QLineEdit*    le_runID;
       QLineEdit*    le_dir;
       QLineEdit*    le_description;
-      QLineEdit*    le_bufferInfo;
-      QLineEdit*    le_analyteInfo;
+      QLineEdit*    le_solutionDesc;
 
       QLabel*       lb_triple;
       QListWidget*  lw_triple;                        // cell, channel, wavelength
@@ -97,6 +116,7 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_loadUS3HD;
       QPushButton*  pb_loadUS3DB;
       QPushButton*  pb_details;
+      QPushButton*  pb_applyAll;
       QPushButton*  pb_solution;
       QPushButton*  pb_exclude;
       QPushButton*  pb_include;
@@ -134,7 +154,7 @@ class US_EXTERN US_Convert : public US_Widgets
 
       bool show_plot_progress;
       US_ExpInfo::ExperimentInfo      ExpData; 
-      QList< US_SolutionGui::TripleInfo > triples;
+      QList< TripleInfo >             triples;
       int                             currentTriple;
       QStringList                     centerpieceTypes;
 
@@ -176,8 +196,9 @@ class US_EXTERN US_Convert : public US_Widgets
       void updateExpInfo   ( US_ExpInfo::ExperimentInfo& );
       void cancelExpInfo   ( void );
       void getSolutionInfo ( void );
-      void updateSolutionInfo( QList< US_SolutionGui::TripleInfo >&, int& );
+      void updateSolutionInfo( US_Solution& );
       void cancelSolutionInfo( void );
+      void tripleApplyAll    ( void );
       void runDetails      ( void );
       void changeTriple    ( QListWidgetItem* );
       void getCenterpieceIndex( int );

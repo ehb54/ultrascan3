@@ -3,7 +3,6 @@
 #define US_EXPINFO_H
 
 #include "us_extern.h"
-#include "us_widgets.h"
 #include "us_widgets_dialog.h"
 #include "us_help.h"
 #include "us_selectbox.h"

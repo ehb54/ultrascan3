@@ -519,3 +519,81 @@ BEGIN
 
 END$$
 
+-- adds a new cell table record, relating an experiment to the cell and centerpiece info
+DROP PROCEDURE IF EXISTS new_cell_experiment$$
+CREATE PROCEDURE new_cell_experiment ( p_personGUID   CHAR(36),
+                                       p_password     VARCHAR(80),
+                                       p_cellGUID     CHAR(36),
+                                       p_name         TEXT,
+                                       p_abstractCenterpieceID INT,
+                                       p_experimentID INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
+    INSERT INTO cell SET
+      cellGUID     = p_cellGUID,
+      name         = p_name,
+      experimentID = p_experimentID,
+      abstractCenterpieceID = p_abstractCenterpieceID,
+      dateUpdated  = NOW();
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- SELECTs all cell table records relating to an experiment
+DROP PROCEDURE IF EXISTS all_cell_experiments$$
+CREATE PROCEDURE all_cell_experiments ( p_personGUID   CHAR(36),
+                                        p_password     VARCHAR(80),
+                                        p_experimentID INT )
+  READS SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
+    SELECT @OK AS status;
+
+    SELECT   cellID, cellGUID, name, abstractCenterpieceID
+    FROM     cell
+    WHERE    experimentID = p_experimentID
+    ORDER BY dateUpdated DESC;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+-- DELETEs all cell table records associated with an experiment
+DROP PROCEDURE IF EXISTS delete_cell_experiments$$
+CREATE PROCEDURE delete_cell_experiments ( p_personGUID   CHAR(36),
+                                           p_password     VARCHAR(80),
+                                           p_experimentID INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
+    DELETE FROM cell
+    WHERE experimentID = p_experimentID;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+

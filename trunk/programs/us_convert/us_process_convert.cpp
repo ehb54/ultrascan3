@@ -2,11 +2,9 @@
 
 #include <uuid/uuid.h>
 
-#include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_math2.h"
-#include "us_db2.h"
-#include "us_passwd.h"
+#include "us_util.h"
 #include "us_process_convert.h"
 #include "us_convertio.h"
 
@@ -202,7 +200,7 @@ void US_ProcessConvert::readLegacyData(
 void US_ProcessConvert::convertLegacyData( 
      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
      QVector< US_DataIO2::RawData  >&     rawConvertedData,
-     QList< US_SolutionGui::TripleInfo >&     triples,
+     QList< US_Convert::TripleInfo >&     triples,
      QString                              runType,
      double                               tolerance,
      QList< double >&                     ss_limits // For RA data
@@ -271,7 +269,7 @@ void US_ProcessConvert::writeConvertedData(
      int& status,
      QVector< US_DataIO2::RawData >& rawConvertedData,
      US_ExpInfo::ExperimentInfo& ExpData,
-     QList< US_SolutionGui::TripleInfo >& triples,
+     QList< US_Convert::TripleInfo >& triples,
      QVector< US_Convert::Excludes >& allExcludes,
      QString runType,
      QString runID,
@@ -344,15 +342,9 @@ void US_ProcessConvert::writeConvertedData(
       }
 
       // Same with solutionGUID
-      uuid_unparse( (unsigned char*) triples[ i ].solutionGUID, uuidc );
-      if ( ! saveGUIDs || ! rx.exactMatch( QString( uuidc ) ) )
-      {
-         // Calculate and save the solution guid for this triple
-         uuid_t uuid;
-         uuid_generate( uuid );
-         memcpy( triples [ i ].solutionGUID, (char*) uuid, 16 );
-      }
-         
+      if ( ! saveGUIDs || ! rx.exactMatch( triples[ i ].solutionGUID ) )
+         triples[ i ].solutionGUID = US_Util::new_guid();
+
       // Save the filename of this triple
       triples[ i ].tripleFilename = filename;
 
@@ -418,7 +410,7 @@ void US_ProcessConvert::reloadUS3Data(
      QString dir,
      QVector< US_DataIO2::RawData >& rawConvertedData,
      US_ExpInfo::ExperimentInfo& ExpData,
-     QList< US_SolutionGui::TripleInfo >& triples,
+     QList< US_Convert::TripleInfo >& triples,
      QString& runType ,
      QString runID
      )
@@ -455,7 +447,7 @@ void US_ProcessConvert::reloadUS3Data(
       part.clear();
       part = files[ i ].split( "." );
 
-      US_SolutionGui::TripleInfo t;
+      US_Convert::TripleInfo t;
       t.tripleDesc = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
       t.excluded   = false;
       triples << t;
@@ -804,7 +796,7 @@ void US_ProcessConvert::splitRAData(
 
 void US_ProcessConvert::setTriples( 
      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-     QList< US_SolutionGui::TripleInfo >& triples,
+     QList< US_Convert::TripleInfo >&     triples,
      QString                              runType,
      double                               tolerance )
 {
@@ -818,7 +810,7 @@ void US_ProcessConvert::setTriples(
 
 void US_ProcessConvert::setCcwTriples( 
      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-     QList< US_SolutionGui::TripleInfo >& triples,
+     QList< US_Convert::TripleInfo >&     triples,
      double                               tolerance )
 {
    // Most triples are ccw
@@ -895,7 +887,7 @@ void US_ProcessConvert::setCcwTriples(
       }
       if ( ! found )
       {
-         US_SolutionGui::TripleInfo triple;
+         US_Convert::TripleInfo triple;
          triple.tripleDesc = t;
          triple.tripleID   = triples.size();    // The next number
          triples << triple;
@@ -905,7 +897,7 @@ void US_ProcessConvert::setCcwTriples(
 
 void US_ProcessConvert::setCcrTriples( 
      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-     QList< US_SolutionGui::TripleInfo >& triples,
+     QList< US_Convert::TripleInfo >&     triples,
      double                               tolerance )
 {
    // First of all, wavelength triples are ccr.
@@ -983,7 +975,7 @@ void US_ProcessConvert::setCcrTriples(
       }
       if ( ! found )
       {
-         US_SolutionGui::TripleInfo triple;
+         US_Convert::TripleInfo triple;
          triple.tripleID   = triples.size();    // The next number
          triple.tripleDesc = t;
          triples << triple;

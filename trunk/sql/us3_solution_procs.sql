@@ -107,7 +107,6 @@ CREATE PROCEDURE get_solutionID_from_GUID ( p_personGUID   CHAR(36),
 BEGIN
   DECLARE count_solution  INT;
   DECLARE l_solutionID    INT;
-  DECLARE l_experimentID INT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -125,18 +124,17 @@ BEGIN
     SELECT @US3_LAST_ERRNO AS status;
 
   ELSE
-    -- Let's get both the solutionID and the experimentID so we can verify permission
-    SELECT s.solutionID, esc.experimentID
-    INTO   l_solutionID, l_experimentID
-    FROM   solution s, experimentSolutionChannel esc
+    -- Let's get the solutionID so we can verify permission
+    SELECT solutionID
+    INTO   l_solutionID
+    FROM   solution
     WHERE  solutionGUID = p_solutionGUID
-    AND    s.solutionID = esc.solutionID
     LIMIT  1;                           -- should be only 1
 
-    IF ( verify_experiment_permission( p_personGUID, p_password, l_experimentID ) = @OK ) THEN
+    IF ( verify_solution_permission( p_personGUID, p_password, l_solutionID ) = @OK ) THEN
       SELECT @OK AS status;
 
-      SELECT l_solutionID AS solutionID, l_experimentID AS experimentID;
+      SELECT l_solutionID AS solutionID;
 
     ELSE
       SELECT @US3_LAST_ERRNO AS status;
@@ -253,18 +251,16 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT     esc.solutionID, description, esc.experimentID, esc.channelID
-        FROM       solutionPerson sp, solution s, experimentSolutionChannel esc
+        SELECT     s.solutionID, description
+        FROM       solutionPerson sp, solution s
         WHERE      sp.personID = p_ID
-        AND        sp.solutionID = esc.solutionID
-        AND        esc.solutionID = s.solutionID
+        AND        sp.solutionID = s.solutionID
         ORDER BY   s.description;
 
       ELSE
-        SELECT     esc.solutionID, description, esc.experimentID, esc.channelID
-        FROM       solutionPerson sp, solution s, experimentSolutionChannel esc
-        WHERE      sp.solutionID = esc.solutionID
-        AND        esc.solutionID = s.solutionID
+        SELECT     s.solutionID, description
+        FROM       solutionPerson sp, solution s
+        WHERE      sp.solutionID = s.solutionID
         ORDER BY   s.description;
 
       END IF;
@@ -289,11 +285,10 @@ BEGIN
       -- Ok, user wants his own info
       SELECT @OK AS status;
 
-      SELECT     esc.solutionID, description, esc.experimentID, esc.channelID
-      FROM       solutionPerson sp, solution s, experimentSolutionChannel esc
+      SELECT     s.solutionID, description
+      FROM       solutionPerson sp, solution s
       WHERE      sp.personID = @US3_ID
-      AND        sp.solutionID = esc.solutionID
-      AND        esc.solutionID = s.solutionID
+      AND        sp.solutionID = s.solutionID
       ORDER BY   s.description;
 
     END IF;
@@ -326,7 +321,7 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
-  IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
  
     -- A user is creating a solution
     INSERT INTO solution SET
@@ -342,16 +337,26 @@ BEGIN
     ELSE
       SET @LAST_INSERT_ID  = LAST_INSERT_ID();
 
-      -- Now associate solution with experiment
-      INSERT INTO experimentSolutionChannel SET
-        experimentID = p_experimentID,
-        solutionID   = @LAST_INSERT_ID,
-        channelID    = p_channelID;
-
       -- Establish ownership of this solution
       INSERT INTO solutionPerson SET
         solutionID   = @LAST_INSERT_ID,
         personID     = @US3_ID;
+
+      -- Now associate solution with experiment, if we can
+      IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
+        INSERT INTO experimentSolutionChannel SET
+          experimentID = p_experimentID,
+          solutionID   = @LAST_INSERT_ID,
+          channelID    = p_channelID;
+
+      ELSE
+        -- just use the default experimentID
+        INSERT INTO experimentSolutionChannel SET
+          experimentID = 1,
+          solutionID   = @LAST_INSERT_ID,
+          channelID    = p_channelID;
+
+      END IF;
 
       -- Don't update @LAST_INSERT_ID, because the user is not interested in this one
 
@@ -449,7 +454,35 @@ BEGIN
 
 END$$
 
--- DELETEs all solutions related to an experiment, plus information in related tables
+-- Creates a new relationship between an experiment and a solution
+DROP PROCEDURE IF EXISTS new_experiment_solution$$
+CREATE PROCEDURE new_experiment_solution ( p_personGUID   CHAR(36),
+                                           p_password     VARCHAR(80),
+                                           p_experimentID INT,
+                                           p_solutionID   INT,
+                                           p_channelID    INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) &&
+       ( verify_solution_permission  ( p_personGUID, p_password, p_solutionID   ) = @OK ) ) THEN
+
+    INSERT INTO experimentSolutionChannel SET
+      experimentID  = p_experimentID,
+      solutionID    = p_solutionID,
+      channelID     = p_channelID;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- DELETEs all the relationships between any solutions and an experiment
 -- Most likely used if you're updating an experiment 
 DROP PROCEDURE IF EXISTS delete_experiment_solutions$$
 CREATE PROCEDURE delete_experiment_solutions ( p_personGUID   CHAR(36),
@@ -464,28 +497,6 @@ BEGIN
 
   IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
 
-    -- Make sure records match if they have related tables or not
-    -- Have to do it in a couple of stages because of the constraints
-    DELETE      solutionBuffer
-    FROM        experimentSolutionChannel, solutionBuffer 
-    WHERE       experimentSolutionChannel.experimentID = p_experimentID
-    AND         experimentSolutionChannel.solutionID   = solutionBuffer.solutionID;
-
-    DELETE      solutionAnalyte
-    FROM        experimentSolutionChannel, solutionAnalyte
-    WHERE       experimentSolutionChannel.experimentID = p_experimentID
-    AND         experimentSolutionChannel.solutionID   = solutionAnalyte.solutionID;
-    
-    DELETE      solutionPerson
-    FROM        experimentSolutionChannel, solutionPerson
-    WHERE       experimentSolutionChannel.experimentID = p_experimentID
-    AND         experimentSolutionChannel.solutionID   = solutionPerson.solutionID;
-    
-    DELETE      solution
-    FROM        experimentSolutionChannel, solution
-    WHERE       experimentSolutionChannel.experimentID = p_experimentID
-    AND         experimentSolutionChannel.solutionID   = solution.solutionID;
-    
     DELETE FROM experimentSolutionChannel
     WHERE       experimentID = p_experimentID;
 

@@ -241,7 +241,7 @@ void US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
    q << solutionGUID;
    db->query( q );
 
-   int solutionID = 0;
+   solutionID = 0;
    int status = db->lastErrno();
    if ( status == US_DB2::OK && db->next() )
    {
