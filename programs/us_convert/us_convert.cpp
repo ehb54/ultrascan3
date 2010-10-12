@@ -9,9 +9,8 @@
 #include "us_run_details2.h"
 #include "us_plot.h"
 #include "us_math2.h"
-#include "us_buffer_gui.h"
-#include "us_analyte_gui.h"
 #include "us_convert.h"
+#include "us_solution_gui.h"
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "us_process_convert.h"
@@ -108,18 +107,18 @@ US_Convert::US_Convert() : US_Widgets()
    QGridLayout* ccw = new QGridLayout();
 
    lb_triple = us_banner( tr( "Cell / Channel / Wavelength" ), -1 );
-   ccw->addWidget( lb_triple, row++, 0, 1, 4 );
+   ccw->addWidget( lb_triple, row++, 0, 1, 3 );
 
    lw_triple = us_listwidget();
    lw_triple->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
-   lw_triple->setMaximumHeight( 120 );
+   lw_triple->setMaximumHeight( 110 );
    lw_triple->setMaximumWidth ( 120 );
    connect( lw_triple, SIGNAL( itemClicked ( QListWidgetItem* ) ),
                        SLOT  ( changeTriple( QListWidgetItem* ) ) );
-   ccw->addWidget( lw_triple, row, 0, 4, 1 );
+   ccw->addWidget( lw_triple, row, 0, 3, 1 );
 
    QLabel* lb_ccwinfo = us_label( tr( "Enter Associated c/c/w Info:" ) );
-   ccw->addWidget( lb_ccwinfo, row++, 1, 1, 3 );
+   ccw->addWidget( lb_ccwinfo, row++, 1, 1, 2 );
 
    // Set up centerpiece drop-down
    centerpieceInfo();
@@ -127,28 +126,24 @@ US_Convert::US_Convert() : US_Widgets()
    cb_centerpiece -> addItems( centerpieceTypes );
    connect( cb_centerpiece, SIGNAL( currentIndexChanged( int ) ), 
                             SLOT  ( getCenterpieceIndex( int ) ) );
-   ccw->addWidget( cb_centerpiece, row, 1, 1, 2 );
+   ccw->addWidget( cb_centerpiece, row++, 1, 1, 2 );
 
    // External program to enter solution information
    pb_solution = us_pushbutton( tr( "Manage Solutions" ), false );
    connect( pb_solution, SIGNAL( clicked() ), SLOT( getSolutionInfo() ) );
-   ccw->addWidget( pb_solution, row++, 3 );
+   ccw->addWidget( pb_solution, row, 1 );
 
-   QLabel* lb_buffer = us_label( tr( "Buffer:" ) );
-   ccw->addWidget( lb_buffer, row, 1 );
+   pb_applyAll = us_pushbutton( tr( "Apply to All" ), false );
+   connect( pb_applyAll, SIGNAL( clicked() ), SLOT( tripleApplyAll() ) );
+   ccw->addWidget( pb_applyAll, row++, 2 );
 
-   le_bufferInfo = us_lineedit( "", 1 );
-   le_bufferInfo ->setPalette ( gray );
-   le_bufferInfo ->setReadOnly( true );
-   ccw->addWidget( le_bufferInfo, row++, 2, 1, 2 );
+   QLabel* lb_solution = us_label( tr( "Solution:" ) );
+   ccw->addWidget( lb_solution, row, 0 );
 
-   QLabel* lb_analyte = us_label( tr( "Analyte:" ) );
-   ccw->addWidget( lb_analyte, row, 1 );
-
-   le_analyteInfo = us_lineedit( "", 1 );
-   le_analyteInfo ->setPalette ( gray );
-   le_analyteInfo ->setReadOnly( true );
-   ccw->addWidget( le_analyteInfo, row++, 2, 1, 2 );
+   le_solutionDesc = us_lineedit( "", 1 );
+   le_solutionDesc ->setPalette ( gray );
+   le_solutionDesc ->setReadOnly( true );
+   ccw->addWidget( le_solutionDesc, row++, 1, 1, 2 );
 
    settings->addLayout( ccw, row++, 0, 1, 2 );
 
@@ -274,14 +269,13 @@ US_Convert::US_Convert() : US_Widgets()
 
 void US_Convert::reset( void )
 {
-   lw_triple     ->clear();
+   lw_triple       ->clear();
 
-   le_dir        ->setText( "" );
+   le_dir          ->setText( "" );
 
-   le_description->setText( "" );
-   le_runID      ->setText( "" );
-   le_bufferInfo ->setText( "" );
-   le_analyteInfo->setText( "" );
+   le_description  ->setText( "" );
+   le_runID        ->setText( "" );
+   le_solutionDesc ->setText( "" );
 
    pb_load       ->setEnabled( true  );
    pb_loadUS3HD  ->setEnabled( true  );
@@ -296,6 +290,7 @@ void US_Convert::reset( void )
    pb_solution   ->setEnabled( false );
    pb_editRuninfo ->setEnabled( false );
    pb_savetoDB    ->setEnabled( false );
+   pb_applyAll    ->setEnabled( false );
 
 //   pb_reload     ->setEnabled( true  );
    ct_tolerance  ->setEnabled( true  );
@@ -317,20 +312,20 @@ void US_Convert::reset( void )
    allExcludes.clear();
    triples.clear();
    allData.clear();
-   Pseudo_averaged        = false;
+   Pseudo_averaged    = false;
    show_plot_progress = true;
    ExpData.rpms.clear();
 
-   data_plot      ->detachItems();
-   picker         ->disconnect();
-   data_plot      ->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
-   data_plot      ->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
-   grid           = us_grid( data_plot );
-   data_plot      ->replot();
+   data_plot     ->detachItems();
+   picker        ->disconnect();
+   data_plot     ->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
+   data_plot     ->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
+   grid          = us_grid( data_plot );
+   data_plot     ->replot();
 
-   pb_define      ->setEnabled( false );
-   pb_process     ->setEnabled( false );
-   step           = NONE;
+   pb_define     ->setEnabled( false );
+   pb_process    ->setEnabled( false );
+   step          = NONE;
 
    enableRunIDControl( true );
 
@@ -458,8 +453,7 @@ void US_Convert::reload( void )
 
       triples.clear();
 
-      le_bufferInfo ->setText( "" );
-      le_analyteInfo->setText( "" );
+      le_solutionDesc ->setText( "" );
    
       // Figure out all the triple combinations and convert data
       success = convert();
@@ -545,6 +539,18 @@ void US_Convert::enableControls( void )
          ct_tolerance->setValue       ( scanTolerance );
       }
 
+      // Let's calculate if we're eligible to copy this triple info to all
+      // or to save it
+      // We have to check against GUID's, because solutions won't have
+      // solutionID's yet if they are created as needed offline
+      QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+
+      pb_applyAll     -> setEnabled( false );
+      if ( triples.size() > 1 && rx.exactMatch( triples[ currentTriple ].solutionGUID ) )
+      {   
+         pb_applyAll  -> setEnabled( true );
+      }
+
       enableRunIDControl( saveStatus == NOT_SAVED );
          
       enableSyncDB();
@@ -607,13 +613,14 @@ void US_Convert::enableSyncDB( void )
    }
 
    // Have we filled out all the c/c/w info?
+   // Check GUIDs, because solutionID's may not be present yet.
+   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
    for ( int i = 0; i < triples.size(); i++ )
    {
-      US_SolutionGui::TripleInfo triple = triples[ i ];
+      TripleInfo triple = triples[ i ];
       if ( triple.excluded ) continue;
 
-      if ( triple.bufferID  == 0 ||
-           triple.analyteID == 0 )
+      if ( ! rx.exactMatch( triple.solutionGUID ) )
       {
          pb_savetoDB ->setEnabled( false );
          return;
@@ -664,7 +671,7 @@ void US_Convert::runIDChanged( void )
    // If the runID has changed, a number of other things need to change too,
    // for instance GUID's.
    ExpData.clear();
-   foreach( US_SolutionGui::TripleInfo triple, triples )
+   foreach( TripleInfo triple, triples )
       triple.clear();
    le_runID->setText( runID );
    ExpData.runID = runID;
@@ -754,8 +761,7 @@ void US_Convert::loadUS3HD( QString dir )
    // Update triple information on screen
    setTripleInfo();
 
-   le_bufferInfo  -> setText( triples[ currentTriple ].bufferDesc  );
-   le_analyteInfo -> setText( triples[ currentTriple ].analyteDesc );
+   le_solutionDesc  -> setText( triples[ currentTriple ].solutionDesc  );
 
    // Restore description
    le_description->setText( allData[ 0 ].description );
@@ -827,14 +833,14 @@ void US_Convert:: loadUS3DB( void )
    if ( dialog.exec() == QDialog::Rejected )
       return;
 
-   if ( runID == NULL )
+   if ( runID == QString( "" ) )
       return;
 
    // Now that we have the runID, let's copy the DB info to HD
    QDir        readDir( US_Settings::resultDir() );
    QString     dirname = readDir.absolutePath() + "/" + runID + "/";
    QString status = US_ConvertIO::readDBExperiment( runID, dirname );
-   if ( status  != NULL )
+   if ( status  != QString( "" ) )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -952,14 +958,19 @@ void US_Convert::getSolutionInfo( void )
 {
    ExpData.runID = le_runID -> text();
 
-   // Copy some info into the triple structure
-   for ( int i = 0; i < allData.size(); i++ )
-      triples[ i ].description = allData[ i ].description;
+   US_Solution solution;
+   solution.solutionID   = triples[ currentTriple ].solutionID;
+   solution.solutionGUID = triples[ currentTriple ].solutionGUID;
+   solution.solutionDesc = triples[ currentTriple ].solutionDesc;
 
-   US_SolutionGui* solutionInfo = new US_SolutionGui( triples, currentTriple, ExpData.invID );
+   US_SolutionGui* solutionInfo = new US_SolutionGui( ExpData.invID,
+                                                      ExpData.expID,
+                                                      1,      // channelID (figure out later ?? )
+                                                      true,   // signal wanted
+                                                      solution );
 
-   connect( solutionInfo, SIGNAL( updateSolutionGuiSelection( QList< US_SolutionGui::TripleInfo >&, int& ) ),
-            this,         SLOT  ( updateSolutionInfo        ( QList< US_SolutionGui::TripleInfo >&, int& ) ) );
+   connect( solutionInfo, SIGNAL( updateSolutionGuiSelection( US_Solution& ) ),
+            this,         SLOT  ( updateSolutionInfo        ( US_Solution& ) ) );
 
    connect( solutionInfo, SIGNAL( cancelSolutionGuiSelection() ),
             this,         SLOT  ( cancelSolutionInfo        () ) );
@@ -968,17 +979,16 @@ void US_Convert::getSolutionInfo( void )
 }
 
 // Updating after user has selected info from experiment dialog
-void US_Convert::updateSolutionInfo( QList< US_SolutionGui::TripleInfo >& t, int& current )
+void US_Convert::updateSolutionInfo( US_Solution& s )
 {
    // Update local copy
-   triples = t;
+//   triples[ currentTriple ].solution = s;
 
-   // Update current triple
-   currentTriple = current;
-   lw_triple->setCurrentRow( currentTriple );
+   triples[ currentTriple ].solutionID   = s.solutionID;
+   triples[ currentTriple ].solutionGUID = s.solutionGUID;
+   triples[ currentTriple ].solutionDesc = s.solutionDesc;
 
-   le_bufferInfo  ->setText( triples[ currentTriple ].bufferDesc  );
-   le_analyteInfo ->setText( triples[ currentTriple ].analyteDesc );
+   le_solutionDesc  ->setText( triples[ currentTriple ].solutionDesc  );
 
    plot_current();
 
@@ -988,6 +998,26 @@ void US_Convert::updateSolutionInfo( QList< US_SolutionGui::TripleInfo >& t, int
 void US_Convert::cancelSolutionInfo( void )
 {
    enableControls();
+}
+
+// Function to copy the current triple's data to all triples
+void US_Convert::tripleApplyAll( void )
+{
+   TripleInfo triple = triples[ currentTriple ];
+
+   // Copy selected fields only
+   for ( int i = 0; i < triples.size(); i++ )
+   {
+      if ( triples[ i ].excluded ) continue;
+
+      triples[ i ].centerpiece  = triple.centerpiece;
+      triples[ i ].solutionID   = triple.solutionID;
+      triples[ i ].solutionGUID = triple.solutionGUID;
+      triples[ i ].solutionDesc = triple.solutionDesc;
+   }
+
+   QMessageBox::information( this, tr( "C/c/w Apply to All" ),
+         tr( "The current c/c/w information has been copied to all\n" ) );
 }
 
 void US_Convert::runDetails( void )
@@ -1019,10 +1049,9 @@ void US_Convert::changeTriple( QListWidgetItem* )
          currentTriple = i;
    }
    
-   le_dir         -> setText( currentDir );
-   le_description -> setText( allData[ currentTriple ].description );
-   le_bufferInfo  -> setText( triples[ currentTriple ].bufferDesc  );
-   le_analyteInfo -> setText( triples[ currentTriple ].analyteDesc );
+   le_dir          -> setText( currentDir );
+   le_description  -> setText( allData[ currentTriple ].description );
+   le_solutionDesc -> setText( triples[ currentTriple ].solutionDesc  );
    
    // Reset maximum scan control values
    enableScanControls();
@@ -1429,11 +1458,9 @@ void US_Convert::drop_reference( void )
    triples[ currentTriple ].excluded = true;
    setTripleInfo();           // Resets currentTriple
 
-   le_dir         -> setText( currentDir );
-   le_description -> setText( saveDescription );
-
-   le_bufferInfo  -> setText( triples[ currentTriple ].bufferDesc  );
-   le_analyteInfo -> setText( triples[ currentTriple ].analyteDesc );
+   le_dir          -> setText( currentDir );
+   le_description  -> setText( saveDescription );
+   le_solutionDesc -> setText( triples[ currentTriple ].solutionDesc  );
 
    enableControls();
 
@@ -1522,8 +1549,8 @@ int US_Convert::savetoHD( void )
       // xml data is missing for one or more triples
       QMessageBox::information( this,
             tr( "Warning" ),
-            tr( "Buffer and/or analyte information is incomplete. Please click on the " ) +
-            tr( "'Enter Current c/c/w Info' button for each "  ) +
+            tr( "Solution information is incomplete. Please click on the " ) +
+            tr( "'Manage Solutions' button for each "  ) +
             tr( "cell, channel, and wavelength combination \n\n " ) +
             QString::number( fileCount ) + " "                + 
             runID + tr( " files written." ) );
@@ -1557,7 +1584,7 @@ void US_Convert::savetoDB( void )
    if ( status != OK )
       return;
 
-   QString error = NULL;
+   QString error = QString( "" );
 
    // Get the directory where the auc files are
    QDir        resultDir( US_Settings::resultDir() );
@@ -1616,7 +1643,7 @@ void US_Convert::savetoDB( void )
       return;
    }
 
-   if ( error != NULL )
+   if ( error != QString( "" ) )
    {
       db_error( error );
       return;
@@ -1642,7 +1669,6 @@ bool US_Convert::read( void )
 
    dir.replace( "\\", "/" );  // WIN32 issue
 
-   reset();
    return( read( dir ) );
 }
 
@@ -1963,4 +1989,42 @@ void US_Convert::db_error( const QString& error )
 {
    QMessageBox::warning( this, tr( "Database Problem" ),
          tr( "Database returned the following error: \n" ) + error );
+}
+
+// Initializations
+US_Convert::TripleInfo::TripleInfo()
+{
+   clear();
+}
+
+void US_Convert::TripleInfo::clear( void )
+{
+   tripleID     = 0;
+   tripleDesc   = QString( "" );
+   description  = QString( "" );
+   excluded     = false;
+   centerpiece  = 0;
+   memset( tripleGUID, 0, 16 );
+   tripleFilename = QString( "" );
+   solutionID   = 0;
+   solutionGUID = QString( "" );
+   solutionDesc = QString( "" );
+}
+
+void US_Convert::TripleInfo::show( void )
+{
+   char uuidc[ 37 ];
+   uuid_unparse( (unsigned char*)tripleGUID, uuidc );
+   
+   qDebug() << "tripleID     = " << tripleID     << '\n'
+            << "tripleDesc   = " << tripleDesc   << '\n'
+            << "description  = " << description  << '\n'
+            << "centerpiece  = " << centerpiece  << '\n'
+            << "tripleGUID   = " << QString( uuidc )  << '\n'
+            << "tripleFilename = " << tripleFilename << '\n'
+            << "solutionID   = " << QString::number( solutionID ) << '\n'
+            << "solutionGUID = " << solutionGUID << '\n'
+            << "solutionDesc = " << solutionDesc;
+
+   if ( excluded ) qDebug() << "excluded";
 }

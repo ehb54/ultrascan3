@@ -3,6 +3,7 @@
 #define US_SOLUTION_H
 
 #include "us_extern.h"
+#include "us_db2.h"
 
 /*! \class US_Solution
            This class provides the ability to associate the solution

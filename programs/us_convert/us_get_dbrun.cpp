@@ -1,11 +1,9 @@
 //! \file us_get_dbrun.cpp
 
 #include "us_get_dbrun.h"
-#include "us_widgets.h"
-#include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_passwd.h"
 #include "us_db2.h"
+#include "us_passwd.h"
 
 // Primary constructor to establish the dialog
 US_GetDBRun::US_GetDBRun( QString& r ) 

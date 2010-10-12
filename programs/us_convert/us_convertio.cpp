@@ -5,11 +5,11 @@
 #include <uuid/uuid.h>
 
 #include "us_settings.h"
-#include "us_math2.h"
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "us_convert.h"
 #include "us_convertio.h"
+#include "us_util.h"
 
 // Generic constructor
 US_ConvertIO::US_ConvertIO( void )
@@ -39,7 +39,7 @@ int US_ConvertIO::checkRunID( QString runID )
 }
 
 QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, 
-                                       QList< US_SolutionGui::TripleInfo >& triples,
+                                       QList< US_Convert::TripleInfo >& triples,
                                        QString dir )
 {
    US_Passwd pw;
@@ -82,7 +82,7 @@ QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData,
 }
 
 QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, 
-                                          QList< US_SolutionGui::TripleInfo >& triples,
+                                          QList< US_Convert::TripleInfo >& triples,
                                           QString dir )
 {
    // Update database
@@ -126,7 +126,7 @@ QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData,
 }
 
 QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData, 
-                                        QList< US_SolutionGui::TripleInfo >& triples,
+                                        QList< US_Convert::TripleInfo >& triples,
                                         QString dir )
 {
    // Update database
@@ -156,58 +156,31 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
    // We assume there are files, because calling program checked
 
    // Read all data
-   QString error = NULL;
+   QString error = QString( "" );
    for ( int i = 0; i < triples.size(); i++ )
    {
-      US_SolutionGui::TripleInfo triple = triples[ i ];
+      US_Convert::TripleInfo triple = triples[ i ];
       if ( triple.excluded ) continue;
 
       // Convert uuid's to long form
       char triple_uuidc[ 37 ];
-      char solution_uuidc[ 37 ];
       uuid_unparse( (unsigned char*) triple.tripleGUID, triple_uuidc );
-      uuid_unparse( (unsigned char*) triple.solutionGUID, solution_uuidc );
 
-      // Create solution db entries
+      // Verify solutionID
       q.clear();
-      q  << "new_solution" 
-         << QString( solution_uuidc )
-         << triple.solutionDesc
-         << QString::number( triple.storageTemp )
-         << triple.notes
-         << QString::number( ExpData.expID )
-         << "1" ;           // channel ID
+      q  << "get_solutionID_from_GUID"
+         << triple.solutionGUID;
+      db.query( q );
 
-      status = db.statusQuery( q );
+      if ( db.lastErrno() == US_DB2::OK && db.next() )
+         triple.solutionID = db.value( 0 ).toInt();
 
-      int solutionID = db.lastInsertID();
-
-      if ( status == US_DB2::OK )
+      if ( triple.solutionID == 0 )
       {
-         q.clear();
-         q  << "new_solutionBuffer"
-            << QString::number( solutionID )
-            << ""           // skip bufferID and use GUID instead 
-            << triple.bufferGUID;
-
-         status = db.statusQuery( q );
-         if ( status != US_DB2::OK )
-            error += "Error associating buffer with solution in database: " +  db.lastError() + "\n";
-
-         q.clear();
-         q  << "new_solutionAnalyte"
-            << QString::number( solutionID )
-            << ""           // skip analyteID and use GUID instead
-            << triple.analyteGUID
-            << "1";         // a dummy amount for now
-
-         status = db.statusQuery( q );
-         if ( status != US_DB2::OK )
-            error += "Error associating analyte with solution in database: " + db.lastError() + "\n";
+         // This means that the solutionGUID doesn't exist in the db yet
+         error += "Error processing solution: GUID " + triple.solutionGUID + '\n' +
+                  "doesn't exist in the database.";
       }
-
-      else
-         error += "Error writing solution information: " + db.lastError() + "\n";
 
       QStringList q( "new_rawData" );
       q  << QString( triple_uuidc )
@@ -215,7 +188,7 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
          << triple.tripleFilename       // needs to be base name only
          << ExpData.comments
          << QString::number( ExpData.expID )
-         << QString::number( solutionID )
+         << QString::number( triple.solutionID )
          << "1" ;           // channel ID
 
       status = db.statusQuery( q );
@@ -248,12 +221,28 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
          error += "Error returned processing file: " + triple.tripleFilename + "\n" +
                   db.lastError() + "\n";
       }
+
+      // Write cell table record
+      QString cellGUID     = US_Util::new_guid();
+      QStringList parts    = triple.tripleDesc.split(" / ");
+      QString cell         = parts[ 0 ];
+      q.clear();
+      q  << "new_cell_experiment"
+         << cellGUID
+         << cell
+         << QString::number( triple.centerpiece )
+         << QString::number( ExpData.expID );
+      int status = db.statusQuery( q );
+      if ( status != US_DB2::OK )
+         error += "Error returned writing cell record: " + cellGUID + "\n" +
+                  db.lastError() + "\n";
+
    }
 
-   if ( error != NULL )
+   if ( error != QString( "" ) )
       return( error );
 
-   return( NULL );
+   return( QString( "" ) );
 }
 
 // Function to read the experiment info and binary auc files to disk
@@ -268,7 +257,7 @@ QString US_ConvertIO::readDBExperiment( QString runID,
       return( db.lastError() );
 
    US_ExpInfo::ExperimentInfo ExpData;       // A local copy
-   QList< US_SolutionGui::TripleInfo > triples;  // a local copy
+   QList< US_Convert::TripleInfo > triples;  // a local copy
    QStringList q( "get_experiment_info_by_runID" );
    q << runID;
    db.query( q );
@@ -299,12 +288,12 @@ QString US_ConvertIO::readDBExperiment( QString runID,
       return( db.lastError() );
 
    QString status = readExperimentInfoDB( ExpData );
-   if ( status != NULL )
+   if ( status != QString( "" ) )
       return status;
 
    // Now read the auc data
    status = readRawDataFromDB( ExpData, triples, dir );
-   if ( status != NULL )
+   if ( status != QString( "" ) )
       return status;
 
    // Now try to write the xml file
@@ -324,12 +313,12 @@ QString US_ConvertIO::readDBExperiment( QString runID,
    else if ( xmlStatus != US_Convert::OK )
       return( "Unspecified error writing xml file." );
 
-   return( NULL );
+   return( QString( "" ) );
 }
 
 // Function to read the auc files to disk
 QString US_ConvertIO::readRawDataFromDB( US_ExpInfo::ExperimentInfo& ExpData, 
-                                         QList< US_SolutionGui::TripleInfo >& triples,
+                                         QList< US_Convert::TripleInfo >& triples,
                                          QString& dir )
 {
    US_Passwd pw;
@@ -369,12 +358,21 @@ QString US_ConvertIO::readRawDataFromDB( US_ExpInfo::ExperimentInfo& ExpData,
       db.readBlobFromDB( f, QString( "download_aucData" ), rawDataIDs[ i ].toInt() );
    }
 
+   // Now get the centerpiece info
+   int commonCenterpiece = 0;
+   q.clear();
+   q  << "all_cell_experiments"
+      << QString::number( ExpData.expID );
+   db.query( q );
+   if ( db.next() )
+      commonCenterpiece = db.value( 3 ).toInt();
+
    // Get the other db info and create triples
-   QString error = NULL;
+   QString error = QString( "" );
    triples.clear();
    for ( int i = 0; i < rawDataIDs.size(); i++ )
    {
-      US_SolutionGui::TripleInfo triple;
+      US_Convert::TripleInfo triple;
 
       q.clear();
       q  << "get_rawData"
@@ -389,51 +387,32 @@ QString US_ConvertIO::readRawDataFromDB( US_ExpInfo::ExperimentInfo& ExpData,
          triple.tripleFilename = db.value( 2 ).toString();
          //triple.tripleComments = db.value( 3 ).toString();
          triple.tripleID       = rawDataIDs[ i ].toInt();
-         int solutionID        = db.value( 5 ).toInt();
+         triple.solutionID     = db.value( 5 ).toInt();
 
          QStringList part      = triple.tripleFilename.split( "." );
          triple.tripleDesc     = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
          triple.excluded       = false;
 
-         triple.centerpiece    = 0;           // default values
-         triple.bufferID       = 0;
-         triple.analyteID      = 0;
+         triple.centerpiece    = commonCenterpiece;
+/*         // Try to get solution info
+         q.clear();
+         q  << "get_solutionID_from_GUID"
+            << triple.solutionGUID;
+      db.query( q );
 
-         // Try to get buffer info
+      if ( db.lastErrno() == US_DB2::OK && db.next() )
+         triple.solutionID = db.value( 0 ).toInt();
+*/
+
          q.clear();
          q  << "get_solution"
-            << QString::number( solutionID );
+            << QString::number( triple.solutionID );
          db.query( q );
 
          if ( db.next() )
          {
-            uuidc               = db.value( 0 ).toString();
-            uuid_parse( uuidc.toAscii(), (unsigned char*) triple.solutionGUID );
+            triple.solutionGUID = db.value( 0 ).toString();
             triple.solutionDesc = db.value( 1 ).toString();
-            triple.storageTemp  = db.value( 2 ).toInt();
-            triple.notes        = db.value( 3 ).toString();
-
-            q.clear();
-            q  << "get_solutionBuffer"
-               << QString::number( solutionID );
-            db.query( q );
-            if ( db.next() )
-            {
-               triple.bufferID   = db.value( 0 ).toInt();
-               triple.bufferGUID = db.value( 1 ).toString();
-               triple.bufferDesc = db.value( 2 ).toString();
-            }
-
-            q.clear();
-            q  << "get_solutionAnalyte"
-               << QString::number( solutionID );
-            db.query( q );
-            if ( db.next() )
-            {
-               triple.analyteID   = db.value( 0 ).toInt();
-               triple.analyteGUID = db.value( 1 ).toString();
-               triple.analyteDesc = db.value( 2 ).toString();
-            }
          }
 
          // save it   
@@ -449,10 +428,10 @@ QString US_ConvertIO::readRawDataFromDB( US_ExpInfo::ExperimentInfo& ExpData,
    QStringList part = triples[ 0 ].tripleFilename.split( "." );
    ExpData.opticalSystem = part[ 1 ].toAscii();
 
-   if ( error != NULL )
+   if ( error != QString( "" ) )
       return( error );
 
-   return( NULL );
+   return( QString( "" ) );
 }
 
 // Function to read the ExperimentInfo structure from DB
@@ -475,24 +454,6 @@ QString US_ConvertIO::readExperimentInfoDB( US_ExpInfo::ExperimentInfo& expInfo 
       expInfo.lastName  = db.value( 1 ).toString();
       expInfo.invGUID   = db.value( 9 ).toString();
    }
-
-/*
-   // Experiment Info
-   opticalSystem
-   rpms??
-
-   // Triples
-   tripleID;      
-   centerpiece;   
-   bufferID;      
-   bufferGUID;    
-   bufferDesc;    
-   analyteID;     
-   analyteGUID;   
-   analyteDesc;   
-   tripleGUID[16];
-   tripleFilename;
-*/
 
    // Hardware info
    expInfo.operatorGUID = QString( "" );
@@ -530,12 +491,12 @@ QString US_ConvertIO::readExperimentInfoDB( US_ExpInfo::ExperimentInfo& expInfo 
       expInfo.rotorSerial = db.value( 2 ).toString();
    }
 
-   return( NULL );
+   return( QString( "" ) );
 }
 
 int US_ConvertIO::writeXmlFile(
     US_ExpInfo::ExperimentInfo& ExpData,
-    QList< US_SolutionGui::TripleInfo >& triples,
+    QList< US_Convert::TripleInfo >& triples,
     QString runType,
     QString runID,
     QString dirname )
@@ -603,7 +564,7 @@ int US_ConvertIO::writeXmlFile(
       // loop through the following for c/c/w combinations
       for ( int i = 0; i < triples.size(); i++ )
       {
-         US_SolutionGui::TripleInfo t = triples[ i ];
+         US_Convert::TripleInfo t = triples[ i ];
          if ( t.excluded ) continue;
 
          QString triple         = t.tripleDesc;
@@ -626,25 +587,10 @@ int US_ConvertIO::writeXmlFile(
             xml.writeAttribute   ( "id", QString::number( t.centerpiece ) );
             xml.writeEndElement  ();
 
-            uuid_unparse( (unsigned char*)t.solutionGUID, uuidc );
             xml.writeStartElement( "solution" );
-            xml.writeAttribute   ( "guid", QString( uuidc ) );
-            int st = ( t.storageTemp ) ? 1 : 0;
-            xml.writeAttribute   ( "storageTemp", QString::number( st ) );
-            xml.writeTextElement ( "description", t.solutionDesc );
-            xml.writeTextElement ( "notes", t.notes );
-            xml.writeEndElement  ();
-
-            xml.writeStartElement( "buffer" );
-            xml.writeAttribute   ( "id",   QString::number( t.bufferID ) );
-            xml.writeAttribute   ( "guid", t.bufferGUID );
-            xml.writeAttribute   ( "desc", t.bufferDesc );
-            xml.writeEndElement  ();
-
-            xml.writeStartElement( "analyte" );
-            xml.writeAttribute   ( "id",   QString::number( t.analyteID ) );
-            xml.writeAttribute   ( "guid", t.analyteGUID );
-            xml.writeAttribute   ( "desc", t.analyteDesc );
+            xml.writeAttribute   ( "id",   QString::number( t.solutionID ) );
+            xml.writeAttribute   ( "guid", t.solutionGUID );
+            xml.writeAttribute   ( "desc", t.solutionDesc );
             xml.writeEndElement  ();
 
          xml.writeEndElement   ();
@@ -674,7 +620,7 @@ int US_ConvertIO::writeXmlFile(
 
 int US_ConvertIO::readXmlFile( 
     US_ExpInfo::ExperimentInfo& ExpData,
-    QList< US_SolutionGui::TripleInfo >& triples,
+    QList< US_Convert::TripleInfo >& triples,
     QString runType,
     QString runID,
     QString dirname )
@@ -718,7 +664,7 @@ int US_ConvertIO::readXmlFile(
 void US_ConvertIO::readExperiment( 
      QXmlStreamReader& xml, 
      US_ExpInfo::ExperimentInfo& ExpData,
-     QList< US_SolutionGui::TripleInfo >& triples,
+     QList< US_Convert::TripleInfo >& triples,
      QString runType,
      QString runID )
 {
@@ -861,7 +807,7 @@ void US_ConvertIO::readExperiment(
    }
 }
 
-void US_ConvertIO::readDataset( QXmlStreamReader& xml, US_SolutionGui::TripleInfo& triple )
+void US_ConvertIO::readDataset( QXmlStreamReader& xml, US_Convert::TripleInfo& triple )
 {
    while ( ! xml.atEnd() )
    {
@@ -880,60 +826,17 @@ void US_ConvertIO::readDataset( QXmlStreamReader& xml, US_SolutionGui::TripleInf
          else if ( xml.name() == "solution" )
          {
             QXmlStreamAttributes a = xml.attributes();
-            QString uuidc = a.value( "guid" ).toString();
-            uuid_parse( uuidc.toAscii(), (unsigned char*) triple.solutionGUID );
-            int st                 = a.value( "storageTemp" ).toString().toInt();
-            triple.storageTemp     = ( st == 1 );
-
-            readSolutionInfo( xml, triple );
+            triple.solutionID   = a.value( "id"   ).toString().toInt();
+            triple.solutionGUID = a.value( "guid" ).toString();
+            triple.solutionDesc = a.value( "desc" ).toString();
          }
 
-         else if ( xml.name() == "buffer" )
-         {
-            QXmlStreamAttributes a = xml.attributes();
-            triple.bufferID        = a.value( "id" )  .toString().toInt();
-            triple.bufferGUID      = a.value( "guid" ).toString();
-            triple.bufferDesc      = a.value( "desc" ).toString();
-         }
-   
-         else if ( xml.name() == "analyte" )
-         {
-            QXmlStreamAttributes a = xml.attributes();
-            triple.analyteID       = a.value( "id" ).toString().toInt();
-            triple.analyteGUID     = a.value( "guid" ).toString();
-            triple.analyteDesc     = a.value( "desc" ).toString();
-         }
-      }
-   }
-}
-
-void US_ConvertIO::readSolutionInfo( QXmlStreamReader& xml, US_SolutionGui::TripleInfo& triple )
-{
-   while ( ! xml.atEnd() )
-   {
-      xml.readNext();
-
-      if ( xml.isEndElement()  &&  xml.name() == "solution" ) return;
-
-      if ( xml.isStartElement() )
-      {
-         if ( xml.name() == "description" )
-         {
-            xml.readNext();
-            triple.solutionDesc = xml.text().toString();
-         }
-
-         if ( xml.name() == "notes" )
-         {
-            xml.readNext();
-            triple.notes = xml.text().toString();
-         }
       }
    }
 }
 
 int US_ConvertIO::verifyXml( US_ExpInfo::ExperimentInfo& ExpData,
-                             QList< US_SolutionGui::TripleInfo >& triples )
+                             QList< US_Convert::TripleInfo >& triples )
 {
    US_Passwd pw;
    US_DB2 db( pw.getPasswd() );
