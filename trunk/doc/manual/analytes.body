@@ -1,0 +1,96 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Analytes Window'
+%]
+    <h2> Analyte Management: </h2>
+    <p class='center'><img src="images/analytes.png" 
+    alt="Analyte Window"/></p>
+
+    <p> Using this window, you can manage analyte information on your local
+    system or in the current database. You must be identified as the
+    investigator to delete or update an analyte description in the database.</p>
+
+    <p>Dialog Items:</p>
+
+    <ul>
+      <li> (Analyte Type>: Specify the type of analyte by checking one of
+      <b>Protein</b> or <b>DNA</b> or <b>RNA</b> or <b>Carbohydrate</b>.</li>
+
+      <li><b>Select Investigator</b> This button brings up a window that
+      allows selecting the current investigator for limiting buffer
+      descriptions.</li>
+      
+      <li><b>Search</b> Enter any sequence of characters to filter the analyte
+      description list to entries containing the entered string.</li>
+
+      <li><b>Use Database</b> Check to select read or write of the analyte
+      definition to or from the database.</li>
+      
+      <li><b>Use Local Disk</b> Check to select read or write of the analyte
+      definition to or from the hard disk.</li>
+      
+      <li><b>List Descriptions</b> This button initiates a read of analyte
+      definitions and population of the analyte list widget.</li>
+      
+      <li><b>New Analyte</b> Create a new analyte. The initial "New Analyte"
+      description in the list can be changed in the "Analyte Description"
+      text box.</li>
+      
+      <li><b>Save Analyte</b> Saves the current analyte definition to the hard
+      disk or database.</li>
+      
+      <li><b>Delete Analyte</b> Deletes the currently selected analyte from
+      the database or hard disk.</li>
+
+      <li><b>Manage Sequence</b> This button brings up a
+      <a href="images/sequence.png">Manage Sequence dialog</a>
+      to enter sequences that define the analyte.</li>
+
+      <li><b>Manage Spectrum</b> This button brings up a
+      <a href="images/us_buffer_spect.png">Manage Spectrum dialog</a>
+      to set Wavelength and Extinction pairs.</li>
+
+      <li><b>More Info</b> Bring up an
+      <a href="images/analyte_details.png">Analyte Details text dialog</a>
+      to list details about the current analyte.</li>
+
+      <li><b>(Optics)</b> Type of optics: Absorbance, Interference, or
+      Flourescence.</li>
+
+      <li><b>Analyte Description</b> Description set by analyte choice, but also
+      editable, especially when defining a new analyte.</li>
+
+      <li><b>Global Identifier</b> Read-only global identifier of the
+      analyte.</li>
+
+      <li><b>MW (Daltons):</b> Read-only molecular weight text for selected
+      analyte.</li>
+
+      <li><b>VBar (cm<sup>3</sup>/g at 20&deg;C):</b> Read-only VBar at 20
+      degrees Centigrade.</li>
+
+      <li><b>Temperature (&deg;C):</b> Read-only temperature at 20 degrees
+      Centigrade of selected analyte.</li>
+
+      <li><b>VBar (cm<sup>3</sup>/g at T &deg;C):</b> Editable VBar at given
+      temperature.</li>
+
+      <li><b>Residue count:</b> Residue count for selected analyte.</li>
+
+      <li><b>Reset</b> Reset all analyte values to default setting.</li>
+
+      <li><b>Help</b> Show this documentation.</li>
+
+      <li><b>Cancel</b> Close the dialog and do not return analyte selections
+      to the caller.</li>
+
+      <li><b>Accept</b> Close the dialog and return analyte selections
+      to the caller.</li>
+
+    </ul>
+
+    <p>To create a new analyte, click the "New Analyte" button; enter a
+    description string in the "Analyte Description" box; modify the editable
+    fields and dialogs that specify the analyte properties; and, finally,
+    click on the "Save Analyte" button.</p>
+
+[% INCLUDE footer.us3 %]
