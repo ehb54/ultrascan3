@@ -764,18 +764,38 @@ void US_AddResidue::add()
    int item = -1;
    unsigned int i, j;
    QString str1;
-   int sum=0;
-   for (i=0; i<new_residue.r_bead.size(); i++)
+   double sum = 0e0;
+   for (i = 0; i < new_residue.r_bead.size(); i++)
    {
-      sum += (int) (new_residue.r_bead[i].volume * 10000 + 0.5); //
+      sum += (double)new_residue.r_bead[i].volume;
    }
-   str1.sprintf("Residue volume: %7.2f A^3, Sum of beads: %7.2f A^3\n\n"
-                "Please correct the bead volume and try again...", new_residue.molvol, (float) (sum/10000));
-   if (fabs(sum - (new_residue.molvol * 10000 + 0.5)) > 1)
+   QString cmp1 = QString("").sprintf("%7.2f", new_residue.molvol);
+   QString cmp2 = QString("").sprintf("%7.2f", sum);
+
+   if ( cmp1 != cmp2 )
    {
-      QMessageBox::message("Attention:", "The residue volume does not match the volume of the beads:\n\n" + str1);
-      pb_add->setEnabled(false);
-      return;
+      switch ( QMessageBox::warning(this, 
+                                    tr("Attention:"),
+                                    tr("The residue volume does not match the volume of the beads:\n\n") +
+                                    QString(tr("Residue volume: %1 A^3, Sum of beads: %2 A^3\n\n"))
+                                    .arg(cmp1).arg(cmp2) +
+                                    tr("What would you like to do?\n"),
+                                    tr("&Correct the bead volume manually"), 
+                                    tr("&Override"),
+                                    0, 
+                                    0,
+                                    0 
+                                    ) )
+      {
+      case 0 : // correct manually
+         pb_add->setEnabled(false);
+         return;
+         break;
+      case 1 : // override
+         break;
+      }
+      //      QMessageBox::message("Attention:", "The residue volume does not match the volume of the beads:\n\n" + str1);
+      //      return;
    }
    for (i=0; i<residue_list.size(); i++)
    {
