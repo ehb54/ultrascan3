@@ -738,9 +738,8 @@ DbgLv(2) << "      II POINTS" << ii << points;
          {  // accumulate coordinates of simulation curve
             rr         = sdata->radius( jj );
             vv         = sdata->value( ii, jj++ );
-DbgLv(2) << "       JJ rr vv" << jj << rr << vv;
+DbgLv(3) << "       JJ rr vv" << jj << rr << vv;
 
-            //if ( rr > rl  &&  vv < vh )
             if ( rr > rl )
             {
                r[ count   ] = rr;
@@ -2435,7 +2434,9 @@ bool US_FeMatch::bufinfo_db( US_DataIO2::EditedData* edata,
    db->next();
    QString rawID    = db->value( 0 ).toString();
    QString soluID   = db->value( 2 ).toString();
-DbgLv(2) << "BInfD: rawGUID rawID soluID" << rawGUID << rawID << soluID;
+QString expID=db->value(1).toString();
+DbgLv(2) << "BInfD: rawGUID rawID expID soluID"
+ << rawGUID << rawID << expID << soluID;
 
    query.clear();
    query << "get_solutionBuffer" << soluID;
@@ -2444,6 +2445,21 @@ DbgLv(2) << "BInfD: rawGUID rawID soluID" << rawGUID << rawID << soluID;
    {
       qDebug() << "***Unable to get solutionBuffer from soluID" << soluID
          << " lastErrno" << db->lastErrno();
+      query.clear();
+      query << "get_solutionIDs" << expID;
+      db->query( query );
+      db->next();
+      soluID = db->value( 0 ).toString();
+      query.clear();
+      query << "get_solutionBuffer" << soluID;
+      db->query( query );
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         qDebug() << "***Unable to get solutionBuffer from soluID" << soluID
+            << " lastErrno" << db->lastErrno();
+      }
+      else
+         qDebug() << "+++ Got solutionBuffer from soluID" << soluID;
       //return bufinfo;
    }
    db->next();
@@ -2478,7 +2494,13 @@ for ( int ii=0; ii<expIDs.size(); ii++ )
  while ( db->next() ) solIDs << db->value(0).toString();
  for ( int jj=0; jj<solIDs.size(); jj++ )
  {
-  DbgLv(2) << "esbDbg:   jj solID" << jj << solIDs[jj];
+  query.clear();
+  query << "get_solution" << solIDs[jj];
+  db->query( query );
+  db->next();
+  DbgLv(2) << "esbDbg:   jj solID sGUID temp desc notes" << jj << solIDs[jj]
+   << db->value(0).toString() << db->value(2).toString()
+   << db->value(1).toString() << db->value(3).toString();
   query.clear();
   query << "get_solutionBuffer" << solIDs[jj];
   db->query( query );
@@ -2506,13 +2528,14 @@ bool US_FeMatch::bufinfo_disk( US_DataIO2::EditedData* edata,
    if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
       return bufinfo;
 
+DbgLv(2) << "BInfL: runID dType" << edata->runID << edata->dataType;
    QXmlStreamReader xml( &filei );
 
    while ( ! xml.atEnd() )
    {
       xml.readNext();
 
-      if ( xml.isStartElement()  &&  xml.name() == "buffer" )
+      if ( xml.isStartElement() )
       {
          QXmlStreamAttributes ats = xml.attributes();
 
@@ -2536,6 +2559,7 @@ bool US_FeMatch::bufinfo_disk( US_DataIO2::EditedData* edata,
          else if ( xml.name() == "solution" )
          {
             soluGUID      = ats.value( "guid" ).toString();
+DbgLv(2) << "BInfL:   soluGUID" << soluGUID;
          }
       }
    }
