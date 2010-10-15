@@ -5,7 +5,7 @@
 
     <h2> Color Configuration Panel: </h2>
 
-    <p class='center'>img src="images/color-1.png"> </p>
+    <p class='center'> <img src="images/color-1.png"> </p>
 
     <p> The color configuration control can be invoked from the <a href=
     "config.html">configuration panel</a> by clicking on the <em>Change</em>

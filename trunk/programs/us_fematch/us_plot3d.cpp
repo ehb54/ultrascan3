@@ -10,13 +10,14 @@
 #include <qwt3d_plot.h>
 
 using namespace Qwt3D;
-using namespace std;
+//using namespace std;
 
 // constructor:  3-d plot mainwindow widget
 US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
    : QMainWindow( p, 0 )
 {
-   model   = m;
+   model     = m;
+   dbg_level = US_Settings::us_debug();
 
    // lay out the GUI
    setWindowTitle( tr( "Model Solute 3-Dimensional Viewer" ) );
@@ -263,7 +264,7 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
                        US_GuiSettings::fontSize() );
    dataWidget->setTitleFont( titleFont.family(), titleFont.pointSize(),
       titleFont.weight() );
-   dataWidget->setTitle( tr( "Model 3-D Plot" ) );
+   dataWidget->setTitle( tr( "Model 3-D Plot " ) );
 
    dataWidget->setPlotStyle(       FILLEDMESH );
    dataWidget->setFloorStyle(      NOFLOOR    );
@@ -298,7 +299,7 @@ void US_Plot3D::setTypes( int tx, int ty, int tz )
    typex = tx;
    typey = ty;
    typez = tz;
-qDebug() << "P3D:sT: type xyz" << typex << typey << typez;
+DbgLv(1) << "P3D:sT: type xyz" << typex << typey << typez;
 
    // determine the range of values for each of the 3 dimensions
    sc    = &model->components[ 0 ];          // first component
@@ -340,8 +341,8 @@ qDebug() << "P3D:sT: type xyz" << typex << typey << typez;
    x_norm  = 9.99 / xmax;
    y_norm  = 9.99 / ymax;
    z_norm  = 9.99 / zmax;
-qDebug() << "P3D:sR: xmax ymax xnorm ynorm" << xmax << ymax << x_norm << y_norm;
-qDebug() << "P3D:sR:  zmin zmax" << zmin << zmax;
+DbgLv(1) << "P3D:sR: xmax ymax xnorm ynorm" << xmax << ymax << x_norm << y_norm;
+DbgLv(1) << "P3D:sR:  zmin zmax" << zmin << zmax;
    powrx   = qRound( log10( x_norm ) );
    powry   = qRound( log10( y_norm ) );
    powrz   = qRound( log10( z_norm ) );
@@ -369,39 +370,14 @@ qDebug() << "P3D:sR:  zmin zmax" << zmin << zmax;
 
 //z_norm=1.0;
 //z_norm=2.0/zmax;
-qDebug() << "P3D:sR: powx powy xnorm ynorm" << powrx << powry << x_norm << y_norm;
+DbgLv(1) << "P3D:sR: powx powy xnorm ynorm" << powrx << powry << x_norm << y_norm;
    xmax   *= x_norm;
    ymax   *= y_norm;
-
-   if ( ( xmax * 4.0 ) < ymax )
-   {
-      xmax   *= 4.0;
-      x_norm *= 4.0;
-   }
-
-   else if ( ( xmax * 2.0 ) < ymax )
-   {
-      xmax   *= 2.0;
-      x_norm *= 2.0;
-   }
-
-   else if ( ( ymax * 4.0 ) < xmax )
-   {
-      ymax   *= 4.0;
-      y_norm *= 4.0;
-   }
-
-   else if ( ( ymax * 2.0 ) < xmax )
-   {
-      ymax   *= 2.0;
-      y_norm *= 2.0;
-   }
-
    xmin   *= x_norm;
    ymin   *= y_norm;
    zmin   *= z_norm;
    zmax   *= z_norm;
-qDebug() << "P3D:sR: xmin xmax ymin ymax" << xmin << xmax << ymin << ymax;
+DbgLv(1) << "P3D:sR: xmin xmax ymin ymax" << xmin << xmax << ymin << ymax;
    xmin    = (double)( (int)( xmin * 10.0 )     ) * 0.1;
    xmax    = (double)( (int)( xmax * 10.0 ) + 1 ) * 0.1;
    xmin    = ( xmin < 0.0 ) ? ( xmin - 0.1 ) : xmin;
@@ -411,7 +387,7 @@ qDebug() << "P3D:sR: xmin xmax ymin ymax" << xmin << xmax << ymin << ymax;
    zmin    = (double)( (int)( zmin * 10.0 )     ) * 0.1;
    zmax    = (double)( (int)( zmax * 10.0 ) + 1 ) * 0.1;
    zmin    = ( zmin < 0.0 ) ? ( zmin - 0.1 ) : zmin;
-qDebug() << "P3D:sR:  xmin xmax" << xmin << xmax
+DbgLv(1) << "P3D:sR:  xmin xmax" << xmin << xmax
  << " ymin ymax" << ymin << ymax << " zmin zmax" << zmin << zmax;
 }
 
@@ -487,14 +463,14 @@ void US_Plot3D::calculateData( QVector< QVector< double > >& zdat )
           * beta / ( M_PI * 0.5 * sqrt( 2.0 ) );  // max xy-diff at small zpkf
    nxd  = qRound( xdif * xpinc );                 // reasonable x point radius
    nyd  = qRound( xdif * ypinc );                 // reasonable y point radius
-qDebug() << " xdif nxd nyd" << xdif << nxd << nyd;
+DbgLv(1) << " xdif nxd nyd" << xdif << nxd << nyd;
    nxd  = nxd * 2 + 2;                            // fudge each up a bit
    nyd  = nyd * 2 + 2;                            //  just to be extra careful
    nxd  = ( nxd < hixd ) ? nxd : hixd;            // at most, a 5th of extent
    nyd  = ( nyd < hiyd ) ? nyd : hiyd;
    nxd  = ( nxd > loxd ) ? nxd : loxd;            // at least 5 pixels
    nyd  = ( nyd > loyd ) ? nyd : loyd;
-qDebug() << "  nxd nyd" << nxd << nyd;
+DbgLv(1) << "  nxd nyd" << nxd << nyd;
 //nxd=hixd;nyd=hiyd;
 
    for ( int ii = 0; ii < nrows; ii++ )      // initialize raster to zmin
@@ -547,19 +523,19 @@ qDebug() << "  nxd nyd" << nxd << nyd;
                zdat[ ii ][ jj ] += ( ( zval *
                      ( pow( cos( dist * dfac ), alpha ) ) ) * zfact );
             }
-//else {qDebug() << "  *dist>beta* dist beta iijj" << dist << beta << ii << jj;}
+//else {DbgLv(1) << "  *dist>beta* dist beta iijj" << dist << beta << ii << jj;}
 //*DBG*
 //if ( kk>(ncomp/2-2) && kk<(ncomp/2+2) ) {
 //if ( ii>3 && ii<9 && jj>5 && jj<11 ) {
-// qDebug() << "kk" << kk << "rx ry ii jj" << rx << ry << ii << jj
+// DbgLv(1) << "kk" << kk << "rx ry ii jj" << rx << ry << ii << jj
 //  << "zout"  << zdat[ii][jj] << " zfac" << (pow(cos(dist*dfac),alpha));
-// qDebug() << "  dist" << dist << "dfac alpha beta zval" << dfac
+// DbgLv(1) << "  dist" << dist << "dfac alpha beta zval" << dfac
 //  << alpha << beta << zval;
 //}
 //*DBG*
          }
       }
-//qDebug() << "P3D:cD:  kk fx lx fy ly" << kk << fx << lx << fy << ly
+//DbgLv(1) << "P3D:cD:  kk fx lx fy ly" << kk << fx << lx << fy << ly
 // << "  xval yval zval" << xval << yval << zval;
    }
 }
@@ -570,14 +546,14 @@ void US_Plot3D::replot()
    unsigned int krows = (unsigned int)nrows;
 
    double** wdata = new double* [ ncols ];
-qDebug() << "P3D: replot: ncols nrows" << ncols << nrows;
+DbgLv(1) << "P3D: replot: ncols nrows" << ncols << nrows;
 
    double zdmx    = zmin;
    double zfac    = 1.0;
 
    for ( int ii = 0; ii < ncols; ii++ )
    {  // copy data to work 2D vector and get new z-max
-if ((ii&63)==1) qDebug() << "P3D:  rp: row" << ii;
+if ((ii&63)==1) DbgLv(1) << "P3D:  rp: row" << ii;
       wdata[ ii ] = new double [ nrows ];
 
       for ( int jj = 0; jj < nrows; jj++ )
@@ -585,7 +561,7 @@ if ((ii&63)==1) qDebug() << "P3D:  rp: row" << ii;
          double zval       = zdata[ ii ][ jj ];
          wdata[ ii ][ jj ] = zval;
          zdmx              = zdmx > zval ? zdmx : zval;
-if ((ii&63)==1&&(jj&63)==1) qDebug() << "P3D:    rp: col" << jj
+if ((ii&63)==1&&(jj&63)==1) DbgLv(1) << "P3D:    rp: col" << jj
  << "  wdat" << zval;
       }
    }
@@ -628,12 +604,25 @@ if ((ii&63)==1&&(jj&63)==1) qDebug() << "P3D:    rp: col" << jj
    dataWidget->coordinates()->setNumberFont( US_GuiSettings::fontFamily(),
                                              US_GuiSettings::fontSize() );
 
-   x_scale  = xmax / ymax;
+   x_scale  = ymax / xmax;
    y_scale  = 1.0;
    z_scale  = zscale;
    xatitle  = xyAxisTitle( typex, x_norm );
    yatitle  = xyAxisTitle( typey, y_norm );
    zatitle  = zAxisTitle(  typez );
+
+DbgLv(1) << "P3D:rP:  xmin xmax" << xmin << xmax
+ << " ymin ymax" << ymin << ymax << " xscl yscl" << x_scale << y_scale;
+   if ( x_scale > 4.0 )
+   {
+      x_scale /= 4.0;
+   }
+
+   else if ( x_scale < 0.25 )
+   {
+      x_scale *= 2.0;
+   }
+DbgLv(1) << "P3D:rP:  xscl yscl" << x_scale << y_scale;
 
    dataWidget->coordinates()->axes[X1].setLabelString( xatitle );
    dataWidget->coordinates()->axes[X2].setLabelString( xatitle );
@@ -647,7 +636,7 @@ if ((ii&63)==1&&(jj&63)==1) qDebug() << "P3D:    rp: col" << jj
    dataWidget->coordinates()->axes[Z2].setLabelString( zatitle );
    dataWidget->coordinates()->axes[Z3].setLabelString( zatitle );
    dataWidget->coordinates()->axes[Z4].setLabelString( zatitle );
-qDebug() << "P3D:rp:xatitle yatitle" << xatitle << yatitle;
+DbgLv(1) << "P3D:rp:xatitle yatitle" << xatitle << yatitle;
 
    dataWidget->setScale( x_scale, y_scale, z_scale );
 
@@ -687,16 +676,16 @@ QString US_Plot3D::xyAxisTitle( int type, double sclnorm )
    if ( sclnorm != 1.0 )
       atitle  = atitle + " * " + QString::number( sclnorm );
 
-qDebug() << "P3D: xyAT: type atitle" << type << atitle;
+DbgLv(1) << "P3D: xyAT: type atitle" << type << atitle;
    return atitle;
 }
 
 QString US_Plot3D::zAxisTitle( int type )
 {
-   QString atitle = tr( "Concentration" );
+   QString atitle = tr( "Concentration " );
 
    if ( type == 2 )
-      atitle      = tr( "Mol.Concentr." );
+      atitle      = tr( "Mol.Concentr. " );
 
    return atitle;
 }
@@ -945,7 +934,7 @@ void US_Plot3D::createToolBar()
    setMinimumSize( wdim, hdim );
    adjustSize();
 wdim  = qRound( (double)size().width() * 0.75 );
-qDebug() << "  min x,y dim" << wdim;
+DbgLv(1) << "  min x,y dim" << wdim;
 }
 
 // get simulation component x/y/z value of given type
@@ -993,27 +982,25 @@ double US_Plot3D::comp_value( US_Model::SimulationComponent* sc, int type,
 // standard button clicked
 void US_Plot3D::std_button()
 {
-qDebug() << "std_button";
-
    setStandardView();
 }
 
 // lighting button clicked
 void US_Plot3D::light_button()
 {
-qDebug() << "light_button";
+DbgLv(1) << "light_button";
 }
 
 // image format chosen in combo box
 void US_Plot3D::ifmt_chosen( int index )
 {
-qDebug() << "ifmt_chosen" << index << cb_ifmt->itemText(index);
+DbgLv(1) << "ifmt_chosen" << index << cb_ifmt->itemText(index);
 }
 
 // lighting checked
 void US_Plot3D::light_check( int state )
 {
-qDebug() << "light_check" << (state==Qt::Checked);
+DbgLv(1) << "light_check" << (state==Qt::Checked);
 
    pb_light->setEnabled( ( state == Qt::Checked ) );
 }
@@ -1021,21 +1008,21 @@ qDebug() << "light_check" << (state==Qt::Checked);
 // ortho checked
 void US_Plot3D::ortho_check( int state )
 {
-qDebug() << "ortho_check" << (state==Qt::Checked);
+DbgLv(1) << "ortho_check" << (state==Qt::Checked);
    dataWidget->setOrtho( state );
 }
 
 // legend checked
 void US_Plot3D::legnd_check( int state )
 {
-qDebug() << "legnd_check" << (state==Qt::Checked);
+DbgLv(1) << "legnd_check" << (state==Qt::Checked);
    dataWidget->showColorLegend( state );
 }
 
 // autoscale checked
 void US_Plot3D::autsc_check( int state )
 {
-qDebug() << "autsc_check" << (state==Qt::Checked);
+DbgLv(1) << "autsc_check" << (state==Qt::Checked);
    dataWidget->coordinates()->setAutoScale( state );
    dataWidget->updateGL();
 }
@@ -1043,20 +1030,20 @@ qDebug() << "autsc_check" << (state==Qt::Checked);
 // mouse checked
 void US_Plot3D::mouse_check( int state )
 {
-qDebug() << "mouse_check" << (state==Qt::Checked);
+DbgLv(1) << "mouse_check" << (state==Qt::Checked);
 }
 
 // shading checked
 void US_Plot3D::shade_check( int state )
 {
-qDebug() << "shade_check" << (state==Qt::Checked);
+DbgLv(1) << "shade_check" << (state==Qt::Checked);
    dataWidget->setShading( state ? GOURAUD : FLAT );
 }
 
 // polygon offset slider moved
 void US_Plot3D::poffs_slide( int pos )
 {
-qDebug() << "poffs_slide" << pos;
+DbgLv(1) << "poffs_slide" << pos;
    dataWidget->setPolygonOffset( (double)pos / 10.0 );
    dataWidget->updateData();
    dataWidget->updateGL();
@@ -1065,7 +1052,7 @@ qDebug() << "poffs_slide" << pos;
 // resolution slider moved
 void US_Plot3D::resol_slide( int pos )
 {
-qDebug() << "resol_slide" << pos;
+DbgLv(1) << "resol_slide" << pos;
    dataWidget->setResolution( pos );
    dataWidget->updateData();
    dataWidget->updateGL();
@@ -1073,7 +1060,7 @@ qDebug() << "resol_slide" << pos;
 // movie (animation) toggled
 void US_Plot3D::movie_toggle( bool isOn )
 {
-qDebug() << "P3D:movie_toggle" << isOn << redrawWait;
+DbgLv(1) << "P3D:movie_toggle" << isOn << redrawWait;
    if ( isOn )
    {
       timer->start( redrawWait );  // wait a bit, then redraw
@@ -1255,7 +1242,7 @@ void US_Plot3D::floor_empty_on( bool isOn )
 // set show-normals on
 void US_Plot3D::normals_on( bool isOn )
 {
-qDebug() << "normals_on" << isOn;
+DbgLv(1) << "normals_on" << isOn;
    dataWidget->showNormals( isOn );
    dataWidget->updateNormals();
    dataWidget->updateGL();
@@ -1263,7 +1250,7 @@ qDebug() << "normals_on" << isOn;
 // set normal length
 void US_Plot3D::norml_slide( int val )
 {
-qDebug() << "norml_slide" << val;
+DbgLv(1) << "norml_slide" << val;
    dataWidget->setNormalLength( (double)val / 400.0 );
    dataWidget->updateNormals();
    dataWidget->updateGL();
@@ -1271,7 +1258,7 @@ qDebug() << "norml_slide" << val;
 // set normal quality
 void US_Plot3D::normq_slide( int val )
 {
-qDebug() << "normq_slide" << val;
+DbgLv(1) << "normq_slide" << val;
    dataWidget->setNormalQuality( val );
    dataWidget->updateNormals();
    dataWidget->updateGL();
@@ -1292,13 +1279,13 @@ void US_Plot3D::rotate()
 // open file selected
 void US_Plot3D::open_file( ) 
 {
-qDebug() << "open_file";
+DbgLv(1) << "open_file";
 }
 
 // exit selected
 void US_Plot3D::close_all( ) 
 {
-qDebug() << "close_all";
+DbgLv(1) << "close_all";
    for ( int ii = 0; ii < nrows; ii++ )
       zdata[ ii ].clear();
 
@@ -1493,9 +1480,9 @@ void US_Plot3D::dump_contents()
       + "_" + datetime + "_plot3d." + fileext;
 
    bool ok = IO::save( dataWidget, ofname, imagetype );
-//qDebug() << " oformats" << IO::outputFormatList();
-qDebug() << " dump_contents" << ofname << "  OK " << ok;
-qDebug() << " imagetype" << imagetype;
+//DbgLv(1) << " oformats" << IO::outputFormatList();
+DbgLv(1) << " dump_contents" << ofname << "  OK " << ok;
+DbgLv(1) << " imagetype" << imagetype;
 
    if ( ok )
    {
