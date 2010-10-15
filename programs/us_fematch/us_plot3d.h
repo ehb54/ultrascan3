@@ -123,6 +123,7 @@ class US_EXTERN US_Plot3D : public QMainWindow
       int           powrx;
       int           powry;
       int           redrawWait;
+      int           dbg_level;
 
       double        xmin;
       double        xmax;

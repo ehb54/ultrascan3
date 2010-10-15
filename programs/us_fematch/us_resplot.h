@@ -41,6 +41,8 @@ class US_EXTERN US_ResidPlot : public US_WidgetsDialog
       bool          have_bm;
       bool          skip_plot;
 
+      int           dbg_level;
+
    protected:
       QwtPlot*      data_plot1;
       QwtPlot*      data_plot2;

@@ -18,6 +18,8 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    QSize p1size( 560, 240 );
    QSize p2size( 560, 240 );
 
+   dbg_level       = US_Settings::us_debug();
+
    mainLayout      = new QHBoxLayout( this );
    leftLayout      = new QVBoxLayout();
    rightLayout     = new QVBoxLayout();
@@ -166,7 +168,7 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
       QWidget* caller = (QWidget*)((US_PlotControl*)p)->caller();
       if ( caller )
       {
-qDebug() << "RP: grandparent" << caller->objectName();
+DbgLv(1) << "RP: grandparent" << caller->objectName();
          US_FeMatch* fem = (US_FeMatch*)caller;
          edata           = fem->fem_editdata();
          sdata           = fem->fem_simdata();
@@ -178,11 +180,11 @@ qDebug() << "RP: grandparent" << caller->objectName();
          have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
          have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
          have_bm         = ( resbmap != 0 );
-qDebug() << "RP:edata  " << have_ed;
-qDebug() << "RP:sdata  " << have_sd;
-qDebug() << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
-qDebug() << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
-qDebug() << "RP:resbmap" << have_bm;
+DbgLv(1) << "RP:edata  " << have_ed;
+DbgLv(1) << "RP:sdata  " << have_sd;
+DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
+DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
+DbgLv(1) << "RP:resbmap" << have_bm;
       }
       else
       {
@@ -612,23 +614,23 @@ void US_ResidPlot::plot_rdata()
       rmsd    = sqrt( rmsd );
       le_rmsd->setText( QString::number( rmsd ) );
 //*Debug
-//qDebug() << "BEFORE data00" << edata->value(0,0);
+//DbgLv(1) << "BEFORE data00" << edata->value(0,0);
 //ti_noise->apply_to_data(*edata);
-//qDebug() << " TIrmv  data00" << edata->value(0,0);
+//DbgLv(1) << " TIrmv  data00" << edata->value(0,0);
 //ti_noise->apply_to_data(*edata,false);
-//qDebug() << "  TIadd  data00" << edata->value(0,0);
+//DbgLv(1) << "  TIadd  data00" << edata->value(0,0);
 //ri_noise->apply_to_data(*edata);
-//qDebug() << " RIrmv  data00" << edata->value(0,0);
+//DbgLv(1) << " RIrmv  data00" << edata->value(0,0);
 //ri_noise->apply_to_data(*edata,false);
-//qDebug() << "  RIadd  data00" << edata->value(0,0);
+//DbgLv(1) << "  RIadd  data00" << edata->value(0,0);
 //US_Noise::apply_noise(*edata,ti_noise);
-//qDebug() << " TIrmv  data00" << edata->value(0,0);
+//DbgLv(1) << " TIrmv  data00" << edata->value(0,0);
 //US_Noise::apply_noise(*edata,ti_noise,false);
-//qDebug() << "  TIadd  data00" << edata->value(0,0);
+//DbgLv(1) << "  TIadd  data00" << edata->value(0,0);
 //US_Noise::apply_noise(*edata,ri_noise);
-//qDebug() << " RIrmv  data00" << edata->value(0,0);
+//DbgLv(1) << " RIrmv  data00" << edata->value(0,0);
 //US_Noise::apply_noise(*edata,ri_noise,false);
-//qDebug() << "  RIadd  data00" << edata->value(0,0);
+//DbgLv(1) << "  RIadd  data00" << edata->value(0,0);
    }
 
    else if ( do_plttin )
@@ -769,7 +771,7 @@ void US_ResidPlot::plot_rdata()
 // react to residual bitmap having been closed
 void US_ResidPlot::resids_closed()
 {
-qDebug() << "Resids BitMap Closed!!!";
+DbgLv(1) << "Resids BitMap Closed!!!";
    resbmap = 0;
    have_bm = false;
    ck_shorbm->setChecked( false );
