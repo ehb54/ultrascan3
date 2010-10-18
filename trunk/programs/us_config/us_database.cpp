@@ -18,6 +18,16 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   setWindowTitle( "Database Configuration" );
   setAttribute( Qt::WA_DeleteOnClose );
 
+  QByteArray currentHash = US_Settings::UltraScanPW();
+
+  if ( currentHash.isEmpty() )
+  {
+     QMessageBox::information( this,
+        tr( "No master password" ),
+        tr( "The Master Password has not been set." ) );
+     close();
+  }
+
   // Set up the database list window
   QLabel* banner = us_banner( tr( "Database List" ) );
 
