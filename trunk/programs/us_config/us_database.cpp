@@ -309,6 +309,8 @@ void US_Database::check_add()
   US_Settings::set_databases( dblist );
   update_lw( le_description->text() );
 
+  if ( lw_entries->count() == 1 ) save_default();
+
   pb_save       ->setEnabled( true );
   pb_delete     ->setEnabled( true );
 } 
