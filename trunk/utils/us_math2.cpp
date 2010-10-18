@@ -466,20 +466,19 @@ int US_Math2::randomize( void )
    return seed;
 }
 
-int US_Math2::nnls( double * a, int a_dim1, int m, int n,
-                    double * b,
-                    double * x,
-                    double * rnorm,
-                    double * wp,  
-                    double * zzp,
-                    int    * indexp 
+int US_Math2::nnls( double* a, int a_dim1, int m, int n,
+                    double* b,
+                    double* x,
+                    double* rnorm,
+                    double* wp,  
+                    double* zzp,
+                    int*    indexp 
          ) 
 {
-   int pfeas, ret=0, iz, jz;
+   int pfeas, ret = 0, iz, jz;
    double d1, d2, sm, up, ss;
    int k, j=0, l, izmax=0, ii, jj=0, ip;
    double temp, wmax, t, alpha, asave, dummy, unorm, ztest, cc;
-
 
    /* Check the parameters and data */
    if ( m <= 0 || n <= 0 || a == NULL || b == NULL || x == NULL ) return 2;
@@ -487,7 +486,7 @@ int US_Math2::nnls( double * a, int a_dim1, int m, int n,
    /* Allocate memory for working space, if required */
    double* w;
 
-   if( wp !=NULL ) 
+   if ( wp !=NULL ) 
       w = wp; 
    else 
       w = (double*)calloc( n, sizeof(double) );
@@ -506,7 +505,7 @@ int US_Math2::nnls( double * a, int a_dim1, int m, int n,
    else 
       index= (int*)calloc( n, sizeof(int) );
 
-   if( w == NULL || zz == NULL || index == NULL ) return 2;
+   if ( w == NULL || zz == NULL || index == NULL ) return 2;
 
    /* Initialize the arrays index[] and x[] */
    for( int k = 0; k < n; k++ ) 
@@ -525,7 +524,7 @@ int US_Math2::nnls( double * a, int a_dim1, int m, int n,
    
    int iter  = 0; 
    int itmax = n * 3;
-   
+
    while ( iz1 <= iz2 && nsetp < m ) 
    {
       /* Compute components of the dual (negative gradient) vector W[] */
@@ -766,16 +765,16 @@ int US_Math2::nnls( double * a, int a_dim1, int m, int n,
 
    /* Compute the norm of the final residual vector */
    
-   sm=0.0;
+   sm = 0.0;
 
    if ( npp1 < m ) 
       for ( k = npp1; k < m; k++ ) 
-         sm += ( b[ k ] * b[k] );
+         sm += ( b[ k ] * b[ k ] );
    else 
       for( j = 0; j < n; j++ ) 
          w[ j ] = 0.0;
 
-   *rnorm = sqrt( sm );
+   if ( rnorm != NULL ) *rnorm = sqrt( sm );
 
    /* Free working space, if it was allocated here */
    

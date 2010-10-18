@@ -166,7 +166,8 @@ class US_EXTERN US_Math2
       
       \param a      The m by n matrix A. On exit, a[] contains the
                     product matrix Q*A, where Q is an m by n orthogonal 
-                    matrix generated implicitly by this function.
+                    matrix generated implicitly by this function.  The
+                    matrix is column major.
       
       \param a_dim1 Since matrix A is processed as a set of vectors, 
                     a_dim1 is needed to specify the storage increment between
@@ -180,7 +181,8 @@ class US_EXTERN US_Math2
 
       \param x      On exit, x[] will contain the solution vector.
       \param rnorm  On exit, rnorm contains the Euclidean norm of the
-                    residual vector
+                    residual vector.  It may be set to NULL if the 
+                    retruned value is not needed.
 
       \param wp     An n-array of working space, w[].  On exit, w[] will 
                     contain the dual solution vector.
