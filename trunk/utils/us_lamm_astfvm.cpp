@@ -493,16 +493,18 @@ DbgLv(1) << "SaltD: sa sc0 sec omg" << sa_data.scanData[0].seconds
    Cs0        = new double [ Nx ];
    Cs1        = new double [ Nx ];
 
-   // save a copy of the salt data set so that it may be plotted for QC
-   QString safile  = US_Settings::resultDir() + "/salt_data";
-   QDir dir;
+   if ( dbg_level > 2 )
+   { // save a copy of the salt data set so that it may be plotted for QC
+      QString safile  = US_Settings::resultDir() + "/salt_data";
+      QDir dir;
 
-   if ( ! dir.exists( safile ) )
-   {
-      if ( dir.mkpath( safile ) )
+      if ( ! dir.exists( safile ) )
       {
-         safile       = safile + "/salt_data.RA.1.S.260.auc";
-         US_DataIO2::writeRawData( safile, sa_data );
+         if ( dir.mkpath( safile ) )
+         {
+            safile       = safile + "/salt_data.RA.1.S.260.auc";
+            US_DataIO2::writeRawData( safile, sa_data );
+         }
       }
    }
 
