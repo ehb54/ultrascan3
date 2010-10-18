@@ -20,7 +20,7 @@ US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags )
   header->setMinimumHeight( buttonh * 3 / 2 );
     
   QString oldPass = US_Settings::UltraScanPW();
-  QLabel* oldPW;
+  QLabel* oldPW = NULL;
 
   if ( ! oldPass.isEmpty() ) 
   {
@@ -141,7 +141,9 @@ void US_Admin::save( void )
   // to   le_passwd1->text()
 
   QStringList defaultDB = US_Settings::defaultDB();
-  QString     oldPass   = le_oldPasswd->text();
+  QString     oldPass;
+  
+  if ( le_oldPasswd != NULL ) oldPass = le_oldPasswd->text();
 
   if ( defaultDB.size() > 0 )
   {
