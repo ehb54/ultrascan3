@@ -19,7 +19,7 @@ US_SolutionGui::US_SolutionGui(
       bool  signal_wanted,
       const US_Solution& dataIn ) : US_WidgetsDialog( 0, 0 )
 {
-   solution.invID = invID;
+   investigatorID = invID;
    experimentID   = expID,
    channelID      = chID,
    signal         = signal_wanted;
@@ -53,15 +53,15 @@ US_SolutionGui::US_SolutionGui(
    main->addWidget( pb_investigator, row++, 0 );
 
    // Available solutions
-   QLabel* lb_banner2 = us_banner( tr( "Double-click on solution to select" ), -2  );
+   QLabel* lb_banner2 = us_banner( tr( "Click on solution to select" ), -2  );
    lb_banner2->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lb_banner2->setMinimumWidth( 400 );
    main->addWidget( lb_banner2, row++, 0 );
 
    lw_solutions = us_listwidget();
    lw_solutions-> setSortingEnabled( true );
-   connect( lw_solutions, SIGNAL( itemDoubleClicked ( QListWidgetItem* ) ),
-                          SLOT  ( selectSolution    ( QListWidgetItem* ) ) );
+   connect( lw_solutions, SIGNAL( itemClicked    ( QListWidgetItem* ) ),
+                          SLOT  ( selectSolution ( QListWidgetItem* ) ) );
    main->addWidget( lw_solutions, row, 0, 7, 1 );
 
    row += 7;
@@ -86,9 +86,12 @@ US_SolutionGui::US_SolutionGui(
    lw_analytes-> setSortingEnabled( true );
    connect( lw_analytes, SIGNAL( itemClicked  ( QListWidgetItem* ) ),
                          SLOT  ( selectAnalyte( QListWidgetItem* ) ) );
-   main->addWidget( lw_analytes, row, 0, 6, 1 );
 
-   row += 6;
+   int add_rows = ( US_Settings::us_debug() == 0 ) ? 6 : 8;
+
+   main->addWidget( lw_analytes, row, 0, add_rows, 1 );
+
+   row += add_rows;
 
    // Second column
    row = 1;
@@ -99,52 +102,47 @@ US_SolutionGui::US_SolutionGui(
 
    QGridLayout* db_layout = us_radiobutton( tr( "Use Database" ), rb_db );
    connect( rb_db, SIGNAL( clicked() ),  SLOT( check_db() ) );
+   rb_db->setChecked( true );
    main->addLayout( db_layout, row, 1 );
 
    QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk );
    connect( rb_disk, SIGNAL( clicked() ),  SLOT( check_disk() ) );
-   //disk ? rb_disk->setChecked( true ) : rb_db->setChecked( true );
-   rb_disk->setChecked( true );  // for now
    main->addLayout( disk_layout, row++, 2 );
 
    pb_query = us_pushbutton( tr( "Query Solutions" ), true );
    connect( pb_query, SIGNAL( clicked() ), SLOT( load() ) );
    main->addWidget( pb_query, row, 1 );
 
-   pb_newSolution = us_pushbutton( tr( "New solution" ), true );
-   connect( pb_newSolution, SIGNAL( clicked() ), SLOT( newSolution() ) );
-   main->addWidget( pb_newSolution, row++, 2 );
-
    pb_save = us_pushbutton( tr( "Save Solution" ), false );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
-   main->addWidget( pb_save, row, 1 );
-
-   pb_del = us_pushbutton( tr( "Delete Solution" ), false );
-   connect( pb_del, SIGNAL( clicked() ), SLOT( delete_solution() ) );
-   main->addWidget( pb_del, row++, 2 );
+   main->addWidget( pb_save, row++, 2 );
 
    pb_addAnalyte = us_pushbutton( tr( "Add Analyte" ), true );
    connect( pb_addAnalyte, SIGNAL( clicked() ), SLOT( addAnalyte() ) );
    main->addWidget( pb_addAnalyte, row, 1 );
 
+   pb_del = us_pushbutton( tr( "Delete Solution" ), false );
+   connect( pb_del, SIGNAL( clicked() ), SLOT( delete_solution() ) );
+   main->addWidget( pb_del, row++, 2 );
+
    pb_removeAnalyte = us_pushbutton( tr( "Remove Analyte" ), false );
    connect( pb_removeAnalyte, SIGNAL( clicked() ), SLOT( removeAnalyte() ) );
-   main->addWidget( pb_removeAnalyte, row++, 2 );
+   main->addWidget( pb_removeAnalyte, row, 1 );
 
    pb_buffer = us_pushbutton( tr( "Select Buffer" ), true );
    connect( pb_buffer, SIGNAL( clicked() ), SLOT( selectBuffer() ) );
-   main->addWidget( pb_buffer, row, 1 );
+   main->addWidget( pb_buffer, row++, 2 );
 
    le_bufferInfo = us_lineedit( "", 1 );
    le_bufferInfo ->setPalette ( gray );
    le_bufferInfo ->setReadOnly( true );
-   main->addWidget( le_bufferInfo, row++, 2 );
+   main->addWidget( le_bufferInfo, row++, 1, 1, 2 );
 
    QLabel* lb_banner4 = us_banner( tr( "Edit solution properties" ), -2  );
    lb_banner4->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_banner4, row++, 1, 1, 2 );
 
-   QLabel* lb_solutionDesc = us_label( tr( "Description of Solution:" ) );
+   QLabel* lb_solutionDesc = us_label( tr( "Solution Name:" ) );
    main->addWidget( lb_solutionDesc, row++, 1, 1, 2 );
 
    le_solutionDesc = us_lineedit( "", 1 );
@@ -171,6 +169,20 @@ US_SolutionGui::US_SolutionGui(
    te_notes->setReadOnly( false );
    row += 6;
 
+   QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
+   main->addWidget( lb_guid, row++, 1, 1, 2 );
+
+   le_guid = us_lineedit( "" ); 
+   le_guid->setPalette ( gray );
+   le_guid->setReadOnly( true );
+   main->addWidget( le_guid, row++, 1, 1, 2 );
+ 
+   if ( US_Settings::us_debug() == 0 )
+   {
+      lb_guid->setVisible( false );
+      le_guid->setVisible( false );
+   }
+
    // Some pushbuttons
    QHBoxLayout* buttons = new QHBoxLayout;
 
@@ -182,7 +194,7 @@ US_SolutionGui::US_SolutionGui(
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
    buttons->addWidget( pb_help );
 
-   QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
+   pb_accept = us_pushbutton( tr( "Close" ) );
 
    if ( signal )
    {
@@ -216,12 +228,12 @@ void US_SolutionGui::reset( void )
    le_solutionDesc -> setText( solution.solutionDesc );
    le_storageTemp  -> setText( QString::number( solution.storageTemp )  );
    te_notes        -> setText( solution.notes        );
+   le_guid         -> setText( solution.solutionGUID );
    ct_amount       -> disconnect();
    ct_amount       -> setEnabled( false );
    ct_amount       -> setValue( 0                    );
 
    pb_buffer       -> setEnabled( true );
-   pb_newSolution  -> setEnabled( true );
 
    pb_addAnalyte   -> setEnabled( true );
    pb_removeAnalyte-> setEnabled( false );
@@ -229,8 +241,7 @@ void US_SolutionGui::reset( void )
    // Let's calculate if we're eligible to save this solution
    pb_save         -> setEnabled( false );
    if ( analytes.size() > 0    &&
-        ! bufferDesc.isEmpty() && 
-        bufferDesc != QString( "New Solution" ) )
+        ! bufferDesc.isEmpty() )
    {
       pb_save      -> setEnabled( true );
    }
@@ -258,6 +269,22 @@ void US_SolutionGui::reset( void )
    QPalette p = lb_amount->palette();
    p.setColor( QPalette::WindowText, Qt::white );
    lb_amount->setPalette( p );
+
+   // Figure out if the accept button should be enabled
+   if ( ! signal )      // Then it's just a close button
+      pb_accept->setEnabled( true );
+
+   else if ( saveStatus == US_Solution::BOTH )
+      pb_accept->setEnabled( true );
+
+   else if ( rb_disk->isChecked() && saveStatus == US_Solution::HD_ONLY )
+      pb_accept->setEnabled( true );
+
+   else if ( rb_db  ->isChecked() && saveStatus == US_Solution::DB_ONLY )
+      pb_accept->setEnabled( true );
+
+   else
+      pb_accept->setEnabled( false );
 }
 
 // Function to accept the current set of solutions and return
@@ -280,6 +307,7 @@ void US_SolutionGui::accept( void )
       emit updateSolutionGuiSelection( solution );
    }
 
+   newSolution(); //solution.clear();
    close();
 }
 
@@ -289,13 +317,14 @@ void US_SolutionGui::cancel( void )
    if ( signal )
       emit cancelSolutionGuiSelection();
 
+   newSolution(); //solution.clear();
    close();
 }
 
 // Function to select the current investigator
 void US_SolutionGui::sel_investigator( void )
 {
-   US_Investigator* inv_dialog = new US_Investigator( true, solution.invID );
+   US_Investigator* inv_dialog = new US_Investigator( true, investigatorID );
 
    connect( inv_dialog,
       SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
@@ -308,7 +337,7 @@ void US_SolutionGui::sel_investigator( void )
 void US_SolutionGui::assign_investigator( int invID,
       const QString& lname, const QString& fname)
 {
-   solution.invID = invID;
+   investigatorID = invID;
    le_investigator->setText( QString::number( invID ) + ": " +
          lname + ", " + fname );
 }
@@ -393,7 +422,7 @@ void US_SolutionGui::loadDB( void )
    }
 
    QStringList q( "all_solutionIDs" );
-   q << QString::number( 0 );
+   q << QString::number( investigatorID );
    db.query( q );
 
    if ( db.lastErrno() != US_DB2::OK ) return;
@@ -475,7 +504,7 @@ void US_SolutionGui::selectSolution( QListWidgetItem* item )
 // Function to add analyte to solution
 void US_SolutionGui::addAnalyte( void )
 {
-   US_AnalyteGui* analyte_dialog = new US_AnalyteGui( solution.invID, true );
+   US_AnalyteGui* analyte_dialog = new US_AnalyteGui( investigatorID, true );
 
    connect( analyte_dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
             this,           SLOT  ( assignAnalyte ( US_Analyte ) ) );
@@ -518,14 +547,13 @@ void US_SolutionGui::assignAnalyte( US_Analyte data )
       return;
    }
 
-   currentAnalyte.amount = 0;
-
    solution.analytes << currentAnalyte;
 
    // We're maintaining a map to account for automatic sorting of the list
    QListWidgetItem* item = new QListWidgetItem( currentAnalyte.analyteDesc, lw_analytes );
    analyteMap[ item ] = solution.analytes.size() - 1;      // The one we just added
 
+   saveStatus = US_Solution::NOT_SAVED;
    reset();
 }
 
@@ -557,13 +585,14 @@ void US_SolutionGui::removeAnalyte( void )
    solution.analytes.removeAt( ndx );
    lw_analytes ->removeItemWidget( item );
 
+   saveStatus = US_Solution::NOT_SAVED;
    reset();
 }
 
 // Create a dialog to request a buffer selection
 void US_SolutionGui::selectBuffer( void )
 {
-   US_BufferGui* buffer_dialog = new US_BufferGui( solution.invID, true );         // Ask for a signal
+   US_BufferGui* buffer_dialog = new US_BufferGui( investigatorID, true );      // Ask for a signal
 
    connect( buffer_dialog, SIGNAL( valueChanged ( US_Buffer ) ),
             this,          SLOT  ( assignBuffer ( US_Buffer ) ) );
@@ -594,6 +623,7 @@ void US_SolutionGui::assignBuffer( US_Buffer buffer )
 
    }
 
+   saveStatus = US_Solution::NOT_SAVED;
    reset();
 }
 
@@ -607,24 +637,28 @@ void US_SolutionGui::saveAmount( double amount )
 
    int ndx = analyteMap[ item ];
    solution.analytes[ ndx ].amount = amount;
+   saveStatus = US_Solution::NOT_SAVED;
 }
 
 // Function to update the description associated with the current solution
 void US_SolutionGui::saveDescription( const QString& )
 {
    solution.solutionDesc = le_solutionDesc ->text();
+   saveStatus = US_Solution::NOT_SAVED;
 }
 
 // Function to update the storage temperature associated with the current solution
 void US_SolutionGui::saveTemperature( const QString& )
 {
    solution.storageTemp = le_storageTemp ->text().toFloat();
+   saveStatus = US_Solution::NOT_SAVED;
 }
 
 // Function to update the notes associated with the current solution
 void US_SolutionGui::saveNotes( void )
 {
    solution.notes        = te_notes        ->toPlainText();
+   saveStatus = US_Solution::NOT_SAVED;
 }
 
 // Function to create a new solution
@@ -734,7 +768,12 @@ void US_SolutionGui::check_db( void )
          tr( "There is no default database set." ) );
    }
    else
-      solution.invID = US_Settings::us_inv_ID();
+   {
+      investigatorID = US_Settings::us_inv_ID();
+
+      if ( investigatorID > 0 )
+         le_investigator->setText( US_Settings::us_inv_name() );
+   }
 
    // Clear out solution list
    solutionMap.clear();

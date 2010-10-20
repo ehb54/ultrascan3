@@ -23,13 +23,15 @@ class US_EXTERN US_Solution
          int           analyteID;          //!< The ID of the analyte that was associated
          QString       analyteGUID;        //!< The GUID of the analyte
          QString       analyteDesc;        //!< The corresponding analyte description
-         float         amount;             //!< The amount of this component in the solution
+         double        amount;             //!< The amount of this component in the solution
+
+         //! \brief    Generic constructor for the AnalyteInfo class
+         AnalyteInfo();
 
          //! \brief    Generic operator== to test for equality
          bool          operator== ( const AnalyteInfo & ) const;
       };
 
-      int              invID;              //!< The ID of the investigator
       int              solutionID;         //!< The ID of the solution for this triple
       QString          solutionGUID;       //!< The GUID of the solution for this triple
       QString          solutionDesc;       //!< A description of the solution 
@@ -37,7 +39,7 @@ class US_EXTERN US_Solution
       QString          bufferGUID;         //!< The GUID of the buffer
       QString          bufferDesc;         //!< The corresponding buffer description
       QList< AnalyteInfo > analytes;       //!< A list of the analyte information
-      float            storageTemp;        //!< The temperature that the solution was stored
+      double           storageTemp;        //!< The temperature that the solution was stored
       QString          notes;              //!< Notes on the channel solution
 
       //! \brief Generic constructor for the US_Solution class.
