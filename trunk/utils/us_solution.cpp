@@ -412,6 +412,7 @@ bool US_Solution::diskFilename( const QString& guid, QString& filename )
       }
 
       file.close();
+      if ( found ) break;  // Break out of this loop too
    }
 
    if ( ! found )
@@ -516,6 +517,7 @@ void US_Solution::clear( void )
    bufferDesc   = QString( "" );
    storageTemp  = 20.0;
    notes        = QString( "" );
+   saveStatus   = NOT_SAVED;
    analytes.clear();
 }
 
@@ -528,7 +530,8 @@ void US_Solution::show( void )
             << "bufferGUID   = " << bufferGUID   << '\n'
             << "bufferDesc   = " << bufferDesc   << '\n'
             << "storageTemp  = " << storageTemp  << '\n'
-            << "notes        = " << notes        << '\n';
+            << "notes        = " << notes        << '\n'
+            << "saveStatus   = " << saveStatus   << '\n';
 
    qDebug() << "Analytes...";
    foreach( AnalyteInfo analyte, analytes )

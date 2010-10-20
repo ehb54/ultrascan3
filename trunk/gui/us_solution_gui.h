@@ -82,8 +82,6 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       int                         channelID;
       bool                        signal;
       US_Solution                 solution;
-      US_Solution::solutionStatus saveStatus;
-
 
       QStringList   IDs;
       QStringList   descriptions;

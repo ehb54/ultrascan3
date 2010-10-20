@@ -59,9 +59,7 @@ class US_EXTERN US_Convert : public US_Widgets
          QString          tripleFilename;     //!< The filename of this auc file
          bool             excluded;           //!< Whether this triple has been dropped or not
          int              centerpiece;        //!< The ID of the centerpiece that was used
-         int              solutionID;         //!< The ID of the solution for this triple
-         QString          solutionGUID;       //!< The GUID of the solution for this triple
-         QString          solutionDesc;       //!< A description of the solution 
+         US_Solution      solution;           //!< The solution information for this triple
          TripleInfo();                        //!< A generic constructor
          void             clear( void );
          void             show( void );       // temporary

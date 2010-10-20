@@ -342,8 +342,11 @@ void US_ProcessConvert::writeConvertedData(
       }
 
       // Same with solutionGUID
-      if ( ! saveGUIDs || ! rx.exactMatch( triples[ i ].solutionGUID ) )
-         triples[ i ].solutionGUID = US_Util::new_guid();
+      if ( ! saveGUIDs || ! rx.exactMatch( triples[ i ].solution.solutionGUID ) )
+      {
+         triples[ i ].solution.solutionGUID = US_Util::new_guid();
+         triples[ i ].solution.solutionDesc = "New Solution";
+      }
 
       // Save the filename of this triple
       triples[ i ].tripleFilename = filename;

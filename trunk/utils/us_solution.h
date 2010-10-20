@@ -32,22 +32,6 @@ class US_EXTERN US_Solution
          bool          operator== ( const AnalyteInfo & ) const;
       };
 
-      int              solutionID;         //!< The ID of the solution for this triple
-      QString          solutionGUID;       //!< The GUID of the solution for this triple
-      QString          solutionDesc;       //!< A description of the solution 
-      int              bufferID;           //!< The ID of the buffer that was associated
-      QString          bufferGUID;         //!< The GUID of the buffer
-      QString          bufferDesc;         //!< The corresponding buffer description
-      QList< AnalyteInfo > analytes;       //!< A list of the analyte information
-      double           storageTemp;        //!< The temperature that the solution was stored
-      QString          notes;              //!< Notes on the channel solution
-
-      //! \brief Generic constructor for the US_Solution class.
-      US_Solution();
-
-      //! A null destructor. 
-      ~US_Solution() {};
-
       //! \brief   Some status codes to keep track of where solution data has been saved to
       enum solutionStatus
       {
@@ -57,6 +41,23 @@ class US_EXTERN US_Solution
          DB_ONLY,                             //!< The file has been saved to the DB
          BOTH                                 //!< The file has been saved to both HD and DB
       };
+
+      int              solutionID;         //!< The ID of the solution for this triple
+      QString          solutionGUID;       //!< The GUID of the solution for this triple
+      QString          solutionDesc;       //!< A description of the solution 
+      int              bufferID;           //!< The ID of the buffer that was associated
+      QString          bufferGUID;         //!< The GUID of the buffer
+      QString          bufferDesc;         //!< The corresponding buffer description
+      QList< AnalyteInfo > analytes;       //!< A list of the analyte information
+      double           storageTemp;        //!< The temperature that the solution was stored
+      QString          notes;              //!< Notes on the channel solution
+      solutionStatus   saveStatus;         //!< Most recent save status
+
+      //! \brief Generic constructor for the US_Solution class.
+      US_Solution();
+
+      //! A null destructor. 
+      ~US_Solution() {};
 
       /*! \brief    Function to read an entire solution structure from the disk
 

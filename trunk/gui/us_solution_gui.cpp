@@ -212,8 +212,6 @@ US_SolutionGui::US_SolutionGui(
    
    main->addLayout( buttons, row, 0, 1, 3 );
    
-   saveStatus = US_Solution::NOT_SAVED;
-
    reset();
 }
 
@@ -274,17 +272,23 @@ void US_SolutionGui::reset( void )
    if ( ! signal )      // Then it's just a close button
       pb_accept->setEnabled( true );
 
-   else if ( saveStatus == US_Solution::BOTH )
+   else if ( solution.saveStatus == US_Solution::BOTH )
       pb_accept->setEnabled( true );
 
-   else if ( rb_disk->isChecked() && saveStatus == US_Solution::HD_ONLY )
+   else if ( rb_disk->isChecked() && solution.saveStatus == US_Solution::HD_ONLY )
       pb_accept->setEnabled( true );
 
-   else if ( rb_db  ->isChecked() && saveStatus == US_Solution::DB_ONLY )
+   else if ( rb_db  ->isChecked() && solution.saveStatus == US_Solution::DB_ONLY )
       pb_accept->setEnabled( true );
 
    else
       pb_accept->setEnabled( false );
+
+   // Display investigator
+   if ( investigatorID == 0 )
+      investigatorID = US_Settings::us_inv_ID();
+   if ( investigatorID > 0 )
+      le_investigator->setText( QString::number( investigatorID ) + ": " + US_Settings::us_inv_name() );
 }
 
 // Function to accept the current set of solutions and return
@@ -307,7 +311,6 @@ void US_SolutionGui::accept( void )
       emit updateSolutionGuiSelection( solution );
    }
 
-   newSolution(); //solution.clear();
    close();
 }
 
@@ -317,7 +320,6 @@ void US_SolutionGui::cancel( void )
    if ( signal )
       emit cancelSolutionGuiSelection();
 
-   newSolution(); //solution.clear();
    close();
 }
 
@@ -481,7 +483,10 @@ void US_SolutionGui::selectSolution( QListWidgetItem* item )
    solution.clear();
 
    if ( rb_disk -> isChecked() )
+   {
       solution.readFromDisk( solutionGUID );
+      solution.saveStatus = US_Solution::HD_ONLY;
+   }
 
    else
    {
@@ -496,6 +501,7 @@ void US_SolutionGui::selectSolution( QListWidgetItem* item )
       }
 
       solution.readFromDB  ( solutionID, &db );
+      solution.saveStatus = US_Solution::DB_ONLY;
    }
 
    reset();
@@ -553,7 +559,7 @@ void US_SolutionGui::assignAnalyte( US_Analyte data )
    QListWidgetItem* item = new QListWidgetItem( currentAnalyte.analyteDesc, lw_analytes );
    analyteMap[ item ] = solution.analytes.size() - 1;      // The one we just added
 
-   saveStatus = US_Solution::NOT_SAVED;
+   solution.saveStatus = US_Solution::NOT_SAVED;
    reset();
 }
 
@@ -585,7 +591,7 @@ void US_SolutionGui::removeAnalyte( void )
    solution.analytes.removeAt( ndx );
    lw_analytes ->removeItemWidget( item );
 
-   saveStatus = US_Solution::NOT_SAVED;
+   solution.saveStatus = US_Solution::NOT_SAVED;
    reset();
 }
 
@@ -623,7 +629,7 @@ void US_SolutionGui::assignBuffer( US_Buffer buffer )
 
    }
 
-   saveStatus = US_Solution::NOT_SAVED;
+   solution.saveStatus = US_Solution::NOT_SAVED;
    reset();
 }
 
@@ -637,28 +643,32 @@ void US_SolutionGui::saveAmount( double amount )
 
    int ndx = analyteMap[ item ];
    solution.analytes[ ndx ].amount = amount;
-   saveStatus = US_Solution::NOT_SAVED;
+   solution.saveStatus = US_Solution::NOT_SAVED;
 }
 
 // Function to update the description associated with the current solution
 void US_SolutionGui::saveDescription( const QString& )
 {
    solution.solutionDesc = le_solutionDesc ->text();
-   saveStatus = US_Solution::NOT_SAVED;
+   solution.saveStatus   = US_Solution::NOT_SAVED;
 }
 
 // Function to update the storage temperature associated with the current solution
 void US_SolutionGui::saveTemperature( const QString& )
 {
    solution.storageTemp = le_storageTemp ->text().toFloat();
-   saveStatus = US_Solution::NOT_SAVED;
+   solution.saveStatus  = US_Solution::NOT_SAVED;
 }
 
 // Function to update the notes associated with the current solution
 void US_SolutionGui::saveNotes( void )
 {
-   solution.notes        = te_notes        ->toPlainText();
-   saveStatus = US_Solution::NOT_SAVED;
+   // Let's see if the notes have actually changed
+   if ( solution.notes != te_notes->toPlainText() )
+   {
+      solution.notes        = te_notes        ->toPlainText();
+      solution.saveStatus   = US_Solution::NOT_SAVED;
+   }
 }
 
 // Function to create a new solution
@@ -698,8 +708,8 @@ void US_SolutionGui::save( void )
    {
       solution.saveToDisk();
 
-      saveStatus = ( saveStatus == US_Solution::DB_ONLY ) 
-                 ? US_Solution::BOTH : US_Solution::HD_ONLY;
+      solution.saveStatus = ( solution.saveStatus == US_Solution::DB_ONLY ) 
+                          ? US_Solution::BOTH : US_Solution::HD_ONLY;
    }
 
    else
@@ -716,8 +726,8 @@ void US_SolutionGui::save( void )
 
       solution.saveToDB( experimentID, channelID, &db );
 
-      saveStatus = ( saveStatus == US_Solution::HD_ONLY ) 
-                 ? US_Solution::BOTH : US_Solution::DB_ONLY;
+      solution.saveStatus = ( solution.saveStatus == US_Solution::HD_ONLY ) 
+                          ? US_Solution::BOTH : US_Solution::DB_ONLY;
    }
 
    QMessageBox::information( this,
@@ -749,7 +759,7 @@ void US_SolutionGui::delete_solution( void )
    solution.clear();
    analyteMap.clear();
    load();
-   saveStatus = US_Solution::NOT_SAVED;
+   solution.saveStatus = US_Solution::NOT_SAVED;
    reset();
 
    QMessageBox::information( this,
@@ -766,13 +776,6 @@ void US_SolutionGui::check_db( void )
       QMessageBox::warning( this,
          tr( "Attention" ),
          tr( "There is no default database set." ) );
-   }
-   else
-   {
-      investigatorID = US_Settings::us_inv_ID();
-
-      if ( investigatorID > 0 )
-         le_investigator->setText( US_Settings::us_inv_name() );
    }
 
    // Clear out solution list

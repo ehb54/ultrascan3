@@ -697,18 +697,25 @@ US_ExpInfo::ExperimentInfo::ExperimentInfo()
 void US_ExpInfo::ExperimentInfo::clear( void )
 {
    invID              = 0;
+   invGUID            = QString( "" );
    lastName           = QString( "" );
    firstName          = QString( "" );
    expID              = 0;
+   expGUID            = QString( "" );
    projectID          = 0;
    runID              = QString( "" );
    labID              = 0;
+   labGUID            = QString( "" );
    instrumentID       = 0;
+   instrumentSerial   = QString( "" );
    operatorID         = 0;
+   operatorGUID       = QString( "" );
    rotorID            = 0;
-   rpms.clear();
+   rotorGUID          = QString( "" );
+   rotorSerial        = QString( "" );
    expType            = QString( "" );
    opticalSystem      = QByteArray( "  " );
+   rpms.clear();
    runTemp            = QString( "" );
    label              = QString( "" );
    comments           = QString( "" );
@@ -722,15 +729,21 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
    if ( this != &rhs )            // Guard against self assignment
    {
       invID         = rhs.invID;
+      invGUID       = rhs.invGUID;
       lastName      = rhs.lastName;
       firstName     = rhs.firstName;
       expID         = rhs.expID;
+      expGUID       = rhs.expGUID;
       projectID     = rhs.projectID;
       runID         = rhs.runID;
       labID         = rhs.labID;
+      labGUID       = rhs.labGUID;
       instrumentID  = rhs.instrumentID;
+      instrumentSerial  = rhs.instrumentSerial;
       operatorID    = rhs.operatorID;
       rotorID       = rhs.rotorID;
+      rotorGUID     = rhs.rotorGUID;
+      rotorSerial   = rhs.rotorSerial;
       expType       = rhs.expType;
       opticalSystem = rhs.opticalSystem;
       runTemp       = rhs.runTemp;
@@ -751,15 +764,22 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
 void US_ExpInfo::ExperimentInfo::show( void )
 {
    qDebug() << "invID        = " << invID << '\n'
+            << "invGUID      = " << invGUID << '\n'
             << "lastName     = " << lastName << '\n'
             << "firstName    = " << firstName << '\n'
             << "expID        = " << expID << '\n'
+            << "expGUID      = " << expGUID << '\n'
             << "projectID    = " << projectID << '\n'
             << "runID        = " << runID << '\n'
             << "labID        = " << labID << '\n'
+            << "labGUID      = " << labGUID << '\n'
             << "instrumentID = " << instrumentID << '\n'
+            << "instrumentSerial = " << instrumentSerial << '\n'
             << "operatorID   = " << operatorID << '\n'
+            << "operatorGUID = " << operatorGUID << '\n'
             << "rotorID      = " << rotorID << '\n'
+            << "rotorGUID    = " << rotorGUID << '\n'
+            << "rotorSerial  = " << rotorSerial << '\n'
             << "expType      = " << expType << '\n'
             << "opticalSystem = " << opticalSystem << '\n'
             << "runTemp      = " << runTemp << '\n'
