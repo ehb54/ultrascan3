@@ -197,10 +197,10 @@ class US_EXTERN US_Math2
          double* a, int a_dim1, int m, int n,
          double* b,
          double* x,
-         double* rnorm,
-         double* wp,  
-         double* zzp, 
-         int*    indexp 
+         double* rnorm  = NULL,
+         double* wp     = NULL,  
+         double* zzp    = NULL, 
+         int*    indexp = NULL
          );
       
       private:
