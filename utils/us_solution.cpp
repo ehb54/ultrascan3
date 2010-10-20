@@ -105,7 +105,7 @@ void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
             analyte.analyteID       = a.value( "id" ).toString().toInt();
             analyte.analyteGUID     = a.value( "guid" ).toString();
             analyte.analyteDesc     = a.value( "desc" ).toString();
-            analyte.amount          = a.value( "amount" ).toString().toFloat();
+            analyte.amount          = a.value( "amount" ).toString().toDouble();
 
             analytes << analyte;
          }
@@ -126,7 +126,7 @@ void US_Solution::readFromDB  ( int solutionID, US_DB2* db )
       this->solutionID = solutionID;
       solutionGUID     = db->value( 0 ).toString();
       solutionDesc     = db->value( 1 ).toString();
-      storageTemp      = db->value( 2 ).toFloat();
+      storageTemp      = db->value( 2 ).toDouble();
       notes            = db->value( 3 ).toString();
 
       q.clear();
@@ -151,7 +151,7 @@ void US_Solution::readFromDB  ( int solutionID, US_DB2* db )
          analyte.analyteID   = db->value( 0 ).toInt();
          analyte.analyteGUID = db->value( 1 ).toString();
          analyte.analyteDesc = db->value( 2 ).toString();
-         analyte.amount      = db->value( 3 ).toFloat();
+         analyte.amount      = db->value( 3 ).toDouble();
 
          analytes << analyte;
       }
@@ -491,6 +491,14 @@ QString US_Solution::get_filename(
    return path + "/S" + QString().sprintf( "%07i", number + 1 ) + ".xml";
 }
 
+US_Solution::AnalyteInfo::AnalyteInfo()
+{
+  analyteID     = 0;
+  analyteGUID   = QString( "" );
+  analyteDesc   = QString( "" );
+  amount        = 1;
+}
+
 bool US_Solution::AnalyteInfo::operator== ( const AnalyteInfo& ai ) const
 {
    if ( analyteGUID != ai.analyteGUID ) return false;
@@ -500,22 +508,20 @@ bool US_Solution::AnalyteInfo::operator== ( const AnalyteInfo& ai ) const
 
 void US_Solution::clear( void )
 {
-   invID        = 0;
    solutionID   = 0;
    solutionGUID = QString( "" );
    solutionDesc = QString( "" );
    bufferID     = 0;
    bufferGUID   = QString( "" );
    bufferDesc   = QString( "" );
-   storageTemp  = 0.0;
+   storageTemp  = 20.0;
    notes        = QString( "" );
    analytes.clear();
 }
 
 void US_Solution::show( void )
 {
-   qDebug() << "invID        = " << invID        << '\n'
-            << "solutionID   = " << solutionID   << '\n'
+   qDebug() << "solutionID   = " << solutionID   << '\n'
             << "solutionGUID = " << solutionGUID << '\n'
             << "solutionDesc = " << solutionDesc << '\n'
             << "bufferID     = " << bufferID     << '\n'

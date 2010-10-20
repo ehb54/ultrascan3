@@ -77,6 +77,7 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       };
 
       QList< SolutionInfo >       info;
+      int                         investigatorID;
       int                         experimentID;
       int                         channelID;
       bool                        signal;
@@ -97,6 +98,7 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       QLineEdit*    le_bufferInfo;
       QLineEdit*    le_solutionDesc;
       QLineEdit*    le_storageTemp;
+      QLineEdit*    le_guid;
       QwtCounter*   ct_amount;
 
       QListWidget*  lw_solutions;
@@ -111,6 +113,7 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       QPushButton*  pb_del;
       QPushButton*  pb_addAnalyte;
       QPushButton*  pb_removeAnalyte;
+      QPushButton*  pb_accept;
 
       QRadioButton* rb_db;
       QRadioButton* rb_disk;
