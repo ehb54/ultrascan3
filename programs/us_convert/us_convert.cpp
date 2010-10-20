@@ -546,7 +546,7 @@ void US_Convert::enableControls( void )
       QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
       pb_applyAll     -> setEnabled( false );
-      if ( triples.size() > 1 && rx.exactMatch( triples[ currentTriple ].solutionGUID ) )
+      if ( triples.size() > 1 && rx.exactMatch( triples[ currentTriple ].solution.solutionGUID ) )
       {   
          pb_applyAll  -> setEnabled( true );
       }
@@ -620,7 +620,7 @@ void US_Convert::enableSyncDB( void )
       TripleInfo triple = triples[ i ];
       if ( triple.excluded ) continue;
 
-      if ( ! rx.exactMatch( triple.solutionGUID ) )
+      if ( ! rx.exactMatch( triple.solution.solutionGUID ) )
       {
          pb_savetoDB ->setEnabled( false );
          return;
@@ -761,7 +761,7 @@ void US_Convert::loadUS3HD( QString dir )
    // Update triple information on screen
    setTripleInfo();
 
-   le_solutionDesc  -> setText( triples[ currentTriple ].solutionDesc  );
+   le_solutionDesc  -> setText( triples[ currentTriple ].solution.solutionDesc  );
 
    // Restore description
    le_description->setText( allData[ 0 ].description );
@@ -958,10 +958,7 @@ void US_Convert::getSolutionInfo( void )
 {
    ExpData.runID = le_runID -> text();
 
-   US_Solution solution;
-   solution.solutionID   = triples[ currentTriple ].solutionID;
-   solution.solutionGUID = triples[ currentTriple ].solutionGUID;
-   solution.solutionDesc = triples[ currentTriple ].solutionDesc;
+   US_Solution solution = triples[ currentTriple ].solution;
 
    US_SolutionGui* solutionInfo = new US_SolutionGui( ExpData.invID,
                                                       ExpData.expID,
@@ -982,13 +979,9 @@ void US_Convert::getSolutionInfo( void )
 void US_Convert::updateSolutionInfo( US_Solution& s )
 {
    // Update local copy
-//   triples[ currentTriple ].solution = s;
+   triples[ currentTriple ].solution = s;
 
-   triples[ currentTriple ].solutionID   = s.solutionID;
-   triples[ currentTriple ].solutionGUID = s.solutionGUID;
-   triples[ currentTriple ].solutionDesc = s.solutionDesc;
-
-   le_solutionDesc  ->setText( triples[ currentTriple ].solutionDesc  );
+   le_solutionDesc  ->setText( triples[ currentTriple ].solution.solutionDesc  );
 
    plot_current();
 
@@ -1011,13 +1004,15 @@ void US_Convert::tripleApplyAll( void )
       if ( triples[ i ].excluded ) continue;
 
       triples[ i ].centerpiece  = triple.centerpiece;
-      triples[ i ].solutionID   = triple.solutionID;
-      triples[ i ].solutionGUID = triple.solutionGUID;
-      triples[ i ].solutionDesc = triple.solutionDesc;
+      triples[ i ].solution     = triple.solution;
    }
 
    QMessageBox::information( this, tr( "C/c/w Apply to All" ),
          tr( "The current c/c/w information has been copied to all\n" ) );
+
+   plot_current();
+
+   enableControls();
 }
 
 void US_Convert::runDetails( void )
@@ -1051,7 +1046,7 @@ void US_Convert::changeTriple( QListWidgetItem* )
    
    le_dir          -> setText( currentDir );
    le_description  -> setText( allData[ currentTriple ].description );
-   le_solutionDesc -> setText( triples[ currentTriple ].solutionDesc  );
+   le_solutionDesc -> setText( triples[ currentTriple ].solution.solutionDesc  );
    
    // Reset maximum scan control values
    enableScanControls();
@@ -1460,7 +1455,7 @@ void US_Convert::drop_reference( void )
 
    le_dir          -> setText( currentDir );
    le_description  -> setText( saveDescription );
-   le_solutionDesc -> setText( triples[ currentTriple ].solutionDesc  );
+   le_solutionDesc -> setText( triples[ currentTriple ].solution.solutionDesc  );
 
    enableControls();
 
@@ -2006,9 +2001,7 @@ void US_Convert::TripleInfo::clear( void )
    centerpiece  = 0;
    memset( tripleGUID, 0, 16 );
    tripleFilename = QString( "" );
-   solutionID   = 0;
-   solutionGUID = QString( "" );
-   solutionDesc = QString( "" );
+   solution.clear();
 }
 
 void US_Convert::TripleInfo::show( void )
@@ -2022,9 +2015,9 @@ void US_Convert::TripleInfo::show( void )
             << "centerpiece  = " << centerpiece  << '\n'
             << "tripleGUID   = " << QString( uuidc )  << '\n'
             << "tripleFilename = " << tripleFilename << '\n'
-            << "solutionID   = " << QString::number( solutionID ) << '\n'
-            << "solutionGUID = " << solutionGUID << '\n'
-            << "solutionDesc = " << solutionDesc;
+            << "solutionID   = " << QString::number( solution.solutionID ) << '\n'
+            << "solutionGUID = " << solution.solutionGUID << '\n'
+            << "solutionDesc = " << solution.solutionDesc;
 
    if ( excluded ) qDebug() << "excluded";
 }

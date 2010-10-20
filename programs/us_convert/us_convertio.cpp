@@ -169,16 +169,16 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
       // Verify solutionID
       q.clear();
       q  << "get_solutionID_from_GUID"
-         << triple.solutionGUID;
+         << triple.solution.solutionGUID;
       db.query( q );
 
       if ( db.lastErrno() == US_DB2::OK && db.next() )
-         triple.solutionID = db.value( 0 ).toInt();
+         triple.solution.solutionID = db.value( 0 ).toInt();
 
-      if ( triple.solutionID == 0 )
+      if ( triple.solution.solutionID == 0 )
       {
          // This means that the solutionGUID doesn't exist in the db yet
-         error += "Error processing solution: GUID " + triple.solutionGUID + '\n' +
+         error += "Error processing solution: GUID " + triple.solution.solutionGUID + '\n' +
                   "doesn't exist in the database.";
       }
 
@@ -188,7 +188,7 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
          << triple.tripleFilename       // needs to be base name only
          << ExpData.comments
          << QString::number( ExpData.expID )
-         << QString::number( triple.solutionID )
+         << QString::number( triple.solution.solutionID )
          << "1" ;           // channel ID
 
       status = db.statusQuery( q );
@@ -235,7 +235,7 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
       int status = db.statusQuery( q );
       if ( status != US_DB2::OK )
          error += "Error returned writing cell record: " + cellGUID + "\n" +
-                  db.lastError() + "\n";
+                  status + " " + db.lastError() + "\n";
 
    }
 
@@ -383,11 +383,11 @@ QString US_ConvertIO::readRawDataFromDB( US_ExpInfo::ExperimentInfo& ExpData,
       {
          QString uuidc         = db.value( 0 ).toString();
          uuid_parse( uuidc.toAscii(), (unsigned char*) triple.tripleGUID );
-         //triple.label          = db.value( 1 ).toString();
-         triple.tripleFilename = db.value( 2 ).toString();
-         //triple.tripleComments = db.value( 3 ).toString();
-         triple.tripleID       = rawDataIDs[ i ].toInt();
-         triple.solutionID     = db.value( 5 ).toInt();
+         //triple.label             = db.value( 1 ).toString();
+         triple.tripleFilename      = db.value( 2 ).toString();
+         //triple.tripleComments    = db.value( 3 ).toString();
+         triple.tripleID            = rawDataIDs[ i ].toInt();
+         triple.solution.solutionID = db.value( 5 ).toInt();
 
          QStringList part      = triple.tripleFilename.split( "." );
          triple.tripleDesc     = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
@@ -397,22 +397,22 @@ QString US_ConvertIO::readRawDataFromDB( US_ExpInfo::ExperimentInfo& ExpData,
 /*         // Try to get solution info
          q.clear();
          q  << "get_solutionID_from_GUID"
-            << triple.solutionGUID;
+            << triple.solution.solutionGUID;
       db.query( q );
 
       if ( db.lastErrno() == US_DB2::OK && db.next() )
-         triple.solutionID = db.value( 0 ).toInt();
+         triple.solution.solutionID = db.value( 0 ).toInt();
 */
 
          q.clear();
          q  << "get_solution"
-            << QString::number( triple.solutionID );
+            << QString::number( triple.solution.solutionID );
          db.query( q );
 
          if ( db.next() )
          {
-            triple.solutionGUID = db.value( 0 ).toString();
-            triple.solutionDesc = db.value( 1 ).toString();
+            triple.solution.solutionGUID = db.value( 0 ).toString();
+            triple.solution.solutionDesc = db.value( 1 ).toString();
          }
 
          // save it   
@@ -501,7 +501,11 @@ int US_ConvertIO::writeXmlFile(
     QString runID,
     QString dirname )
 { 
-   if ( ExpData.invID == 0 ) return( US_Convert::NOXML ); 
+   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+
+
+   if ( ExpData.expGUID.isEmpty() || ! rx.exactMatch( ExpData.expGUID ) )
+      ExpData.expGUID = US_Util::new_guid();
 
    if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
    QString writeFile = runID      + "." 
@@ -588,9 +592,9 @@ int US_ConvertIO::writeXmlFile(
             xml.writeEndElement  ();
 
             xml.writeStartElement( "solution" );
-            xml.writeAttribute   ( "id",   QString::number( t.solutionID ) );
-            xml.writeAttribute   ( "guid", t.solutionGUID );
-            xml.writeAttribute   ( "desc", t.solutionDesc );
+            xml.writeAttribute   ( "id",   QString::number( t.solution.solutionID ) );
+            xml.writeAttribute   ( "guid", t.solution.solutionGUID );
+            xml.writeAttribute   ( "desc", t.solution.solutionDesc );
             xml.writeEndElement  ();
 
          xml.writeEndElement   ();
@@ -826,9 +830,9 @@ void US_ConvertIO::readDataset( QXmlStreamReader& xml, US_Convert::TripleInfo& t
          else if ( xml.name() == "solution" )
          {
             QXmlStreamAttributes a = xml.attributes();
-            triple.solutionID   = a.value( "id"   ).toString().toInt();
-            triple.solutionGUID = a.value( "guid" ).toString();
-            triple.solutionDesc = a.value( "desc" ).toString();
+            triple.solution.solutionID   = a.value( "id"   ).toString().toInt();
+            triple.solution.solutionGUID = a.value( "guid" ).toString();
+            triple.solution.solutionDesc = a.value( "desc" ).toString();
          }
 
       }
