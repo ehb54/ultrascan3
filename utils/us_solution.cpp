@@ -49,7 +49,8 @@ void US_Solution::readFromDisk( QString& guid )
             QXmlStreamAttributes a = xml.attributes();
             solutionID   = a.value( "id" ).toString().toInt();
             solutionGUID = a.value( "guid" ).toString();
-            storageTemp  = a.value( "storageTemp" ).toString().toInt();
+            commonVbar20 = a.value( "commonVbar20" ).toString().toDouble();
+            storageTemp  = a.value( "storageTemp" ).toString().toDouble();
 
             readSolutionInfo( xml );
          }
@@ -106,6 +107,8 @@ void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
             analyte.analyteGUID     = a.value( "guid" ).toString();
             analyte.analyteDesc     = a.value( "desc" ).toString();
             analyte.amount          = a.value( "amount" ).toString().toDouble();
+            analyte.mw              = a.value( "mw" ).toString().toDouble();
+            analyte.vbar20          = a.value( "vbar20" ).toString().toDouble();
 
             analytes << analyte;
          }
@@ -126,8 +129,9 @@ void US_Solution::readFromDB  ( int solutionID, US_DB2* db )
       this->solutionID = solutionID;
       solutionGUID     = db->value( 0 ).toString();
       solutionDesc     = db->value( 1 ).toString();
-      storageTemp      = db->value( 2 ).toDouble();
-      notes            = db->value( 3 ).toString();
+      commonVbar20     = db->value( 2 ).toDouble();
+      storageTemp      = db->value( 3 ).toDouble();
+      notes            = db->value( 4 ).toString();
 
       q.clear();
       q  << "get_solutionBuffer"
@@ -152,6 +156,8 @@ void US_Solution::readFromDB  ( int solutionID, US_DB2* db )
          analyte.analyteGUID = db->value( 1 ).toString();
          analyte.analyteDesc = db->value( 2 ).toString();
          analyte.amount      = db->value( 3 ).toDouble();
+         analyte.mw          = db->value( 4 ).toDouble();
+         analyte.vbar20      = db->value( 5 ).toDouble();
 
          analytes << analyte;
       }
@@ -198,6 +204,7 @@ void US_Solution::saveToDisk( void )
    xml.writeStartElement( "solution" );
    xml.writeAttribute   ( "id", QString::number( solutionID ) );
    xml.writeAttribute   ( "guid", solutionGUID );
+   xml.writeAttribute   ( "commonVbar20", QString::number( commonVbar20 ) );
    xml.writeAttribute   ( "storageTemp", QString::number( storageTemp ) );
    xml.writeTextElement ( "description", solutionDesc );
    xml.writeTextElement ( "notes", notes );
@@ -218,6 +225,8 @@ void US_Solution::saveToDisk( void )
          xml.writeAttribute   ( "guid", analyte.analyteGUID );
          xml.writeAttribute   ( "desc", analyte.analyteDesc );
          xml.writeAttribute   ( "amount", QString::number( analyte.amount  ) );
+         xml.writeAttribute   ( "mw", QString::number( analyte.mw  ) );
+         xml.writeAttribute   ( "vbar20", QString::number( analyte.vbar20  ) );
          xml.writeEndElement  ();
       }
 
@@ -252,6 +261,7 @@ void US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
          << QString::number( solutionID )
          << solutionGUID
          << solutionDesc
+         << QString::number( commonVbar20 )
          << QString::number( storageTemp )
          << notes;
 
@@ -265,6 +275,7 @@ void US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
       q  << "new_solution"
          << solutionGUID
          << solutionDesc
+         << QString::number( commonVbar20 )
          << QString::number( storageTemp )
          << notes
          << QString::number( expID )
@@ -497,6 +508,8 @@ US_Solution::AnalyteInfo::AnalyteInfo()
   analyteID     = 0;
   analyteGUID   = QString( "" );
   analyteDesc   = QString( "" );
+  vbar20        = 0.0;
+  mw            = 0.0;
   amount        = 1;
 }
 
@@ -515,6 +528,7 @@ void US_Solution::clear( void )
    bufferID     = 0;
    bufferGUID   = QString( "" );
    bufferDesc   = QString( "" );
+   commonVbar20 = 0.0;
    storageTemp  = 20.0;
    notes        = QString( "" );
    saveStatus   = NOT_SAVED;
@@ -529,6 +543,7 @@ void US_Solution::show( void )
             << "bufferID     = " << bufferID     << '\n'
             << "bufferGUID   = " << bufferGUID   << '\n'
             << "bufferDesc   = " << bufferDesc   << '\n'
+            << "commonVbar20 = " << commonVbar20 << '\n'
             << "storageTemp  = " << storageTemp  << '\n'
             << "notes        = " << notes        << '\n'
             << "saveStatus   = " << saveStatus   << '\n';
@@ -539,6 +554,8 @@ void US_Solution::show( void )
       qDebug() << "analyteID   = " << analyte.analyteID   << '\n'
                << "analyteGUID = " << analyte.analyteGUID << '\n'
                << "analyteDesc = " << analyte.analyteDesc << '\n'
+               << "vbar20      = " << analyte.vbar20      << '\n'
+               << "mw          = " << analyte.mw          << '\n'
                << "amount      = " << analyte.amount      << '\n';
    }
 }

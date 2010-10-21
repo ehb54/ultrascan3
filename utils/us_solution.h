@@ -23,6 +23,8 @@ class US_EXTERN US_Solution
          int           analyteID;          //!< The ID of the analyte that was associated
          QString       analyteGUID;        //!< The GUID of the analyte
          QString       analyteDesc;        //!< The corresponding analyte description
+         double        vbar20;             //!< The vbar of this analyte at 20C
+         double        mw;                 //!< The molecular weight
          double        amount;             //!< The amount of this component in the solution
 
          //! \brief    Generic constructor for the AnalyteInfo class
@@ -49,6 +51,7 @@ class US_EXTERN US_Solution
       QString          bufferGUID;         //!< The GUID of the buffer
       QString          bufferDesc;         //!< The corresponding buffer description
       QList< AnalyteInfo > analytes;       //!< A list of the analyte information
+      double           commonVbar20;       //!< The weighted average vbar of all analytes present ( 20 degrees C)
       double           storageTemp;        //!< The temperature that the solution was stored
       QString          notes;              //!< Notes on the channel solution
       solutionStatus   saveStatus;         //!< Most recent save status

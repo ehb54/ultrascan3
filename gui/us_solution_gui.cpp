@@ -150,6 +150,14 @@ US_SolutionGui::US_SolutionGui(
                              SLOT  ( saveDescription ( const QString&   ) ) );
    main->addWidget( le_solutionDesc, row++, 1, 1, 2 );
 
+   QLabel* lb_commonVbar20 = us_label( tr( "Common VBar (20C):" ) );
+   main->addWidget( lb_commonVbar20, row, 1 );
+
+   le_commonVbar20 = us_lineedit( "", 1 );
+   connect( le_commonVbar20, SIGNAL( textEdited       ( const QString&   ) ),
+                             SLOT  ( saveCommonVbar20 ( const QString&   ) ) );
+   main->addWidget( le_commonVbar20, row++, 2 );
+
    QLabel* lb_storageTemp = us_label( tr( "Storage Temperature:" ) );
    main->addWidget( lb_storageTemp, row, 1 );
 
@@ -164,10 +172,10 @@ US_SolutionGui::US_SolutionGui(
    te_notes = us_textedit();
    connect( te_notes, SIGNAL( textChanged( void ) ),
                       SLOT  ( saveNotes  ( void ) ) );
-   main->addWidget( te_notes, row, 1, 6, 2 );
+   main->addWidget( te_notes, row, 1, 5, 2 );
    te_notes->setMinimumHeight( 200 );
    te_notes->setReadOnly( false );
-   row += 6;
+   row += 5;
 
    QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
    main->addWidget( lb_guid, row++, 1, 1, 2 );
@@ -224,12 +232,13 @@ void US_SolutionGui::reset( void )
 
    le_bufferInfo   -> setText( solution.bufferDesc   );
    le_solutionDesc -> setText( solution.solutionDesc );
-   le_storageTemp  -> setText( QString::number( solution.storageTemp )  );
+   le_commonVbar20 -> setText( QString::number( solution.commonVbar20 ) );
+   le_storageTemp  -> setText( QString::number( solution.storageTemp  ) );
    te_notes        -> setText( solution.notes        );
    le_guid         -> setText( solution.solutionGUID );
    ct_amount       -> disconnect();
    ct_amount       -> setEnabled( false );
-   ct_amount       -> setValue( 0                    );
+   ct_amount       -> setValue( 1 );
 
    pb_buffer       -> setEnabled( true );
 
@@ -526,6 +535,8 @@ void US_SolutionGui::assignAnalyte( US_Analyte data )
    currentAnalyte.analyteGUID = data.analyteGUID;
    currentAnalyte.analyteDesc = data.description;
    currentAnalyte.analyteID   = data.analyteID.toInt();   // May not be accurate
+   currentAnalyte.vbar20      = data.vbar20;
+   currentAnalyte.mw          = data.mw;
 
    // Now get analyteID from db if we can
    US_Passwd pw;
@@ -554,6 +565,8 @@ void US_SolutionGui::assignAnalyte( US_Analyte data )
    }
 
    solution.analytes << currentAnalyte;
+
+   calcCommonVbar20();
 
    // We're maintaining a map to account for automatic sorting of the list
    QListWidgetItem* item = new QListWidgetItem( currentAnalyte.analyteDesc, lw_analytes );
@@ -591,8 +604,34 @@ void US_SolutionGui::removeAnalyte( void )
    solution.analytes.removeAt( ndx );
    lw_analytes ->removeItemWidget( item );
 
+   calcCommonVbar20();
+
    solution.saveStatus = US_Solution::NOT_SAVED;
    reset();
+}
+
+// Function to calculate the default commonVbar20 value
+void US_SolutionGui::calcCommonVbar20( void )
+{
+   solution.commonVbar20 = 0.0;
+
+   if ( solution.analytes.size() == 1 )
+      solution.commonVbar20 = solution.analytes[ 0 ].vbar20;
+
+   else     // multiple analytes
+   {
+      double numerator   = 0.0;
+      double denominator = 0.0;
+      foreach ( US_Solution::AnalyteInfo analyte, solution.analytes )
+      {
+         numerator   += analyte.vbar20 * analyte.mw * analyte.amount;
+         denominator += analyte.mw * analyte.amount;
+      }
+
+      solution.commonVbar20 = ( denominator == 0 ) ? 0.0 : ( numerator / denominator );
+
+   }
+
 }
 
 // Create a dialog to request a buffer selection
@@ -644,6 +683,11 @@ void US_SolutionGui::saveAmount( double amount )
    int ndx = analyteMap[ item ];
    solution.analytes[ ndx ].amount = amount;
    solution.saveStatus = US_Solution::NOT_SAVED;
+
+   calcCommonVbar20();
+
+   // Update commonVbar20 value in GUI
+   le_commonVbar20 -> setText( QString::number( solution.commonVbar20 ) );
 }
 
 // Function to update the description associated with the current solution
@@ -653,10 +697,17 @@ void US_SolutionGui::saveDescription( const QString& )
    solution.saveStatus   = US_Solution::NOT_SAVED;
 }
 
+// Function to update the common vbar associated with the current solution
+void US_SolutionGui::saveCommonVbar20( const QString& )
+{
+   solution.commonVbar20 = le_commonVbar20 ->text().toDouble();
+   solution.saveStatus  = US_Solution::NOT_SAVED;
+}
+
 // Function to update the storage temperature associated with the current solution
 void US_SolutionGui::saveTemperature( const QString& )
 {
-   solution.storageTemp = le_storageTemp ->text().toFloat();
+   solution.storageTemp = le_storageTemp ->text().toDouble();
    solution.saveStatus  = US_Solution::NOT_SAVED;
 }
 
