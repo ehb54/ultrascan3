@@ -321,6 +321,7 @@ CREATE  TABLE IF NOT EXISTS solution (
   solutionID int(11) NOT NULL AUTO_INCREMENT ,
   solutionGUID CHAR(36) NULL ,
   description VARCHAR(80) NOT NULL ,
+  commonVbar20 DOUBLE DEFAULT 0.0,
   storageTemp FLOAT DEFAULT NULL ,
   notes TEXT NULL DEFAULT NULL ,
   PRIMARY KEY (solutionID) )

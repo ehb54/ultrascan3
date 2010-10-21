@@ -95,6 +95,7 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       QLineEdit*    le_investigator;
       QLineEdit*    le_bufferInfo;
       QLineEdit*    le_solutionDesc;
+      QLineEdit*    le_commonVbar20;
       QLineEdit*    le_storageTemp;
       QLineEdit*    le_guid;
       QwtCounter*   ct_amount;
@@ -134,10 +135,12 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       void assignAnalyte      ( US_Analyte );
       void selectAnalyte      ( QListWidgetItem* );
       void removeAnalyte      ( void );
+      void calcCommonVbar20   ( void );
       void selectBuffer       ( void );
       void assignBuffer       ( US_Buffer );
       void saveAmount         ( double );
       void saveDescription    ( const QString& );
+      void saveCommonVbar20   ( const QString& );
       void saveTemperature    ( const QString& );
       void saveNotes          ( void );
       void newSolution        ( void );
