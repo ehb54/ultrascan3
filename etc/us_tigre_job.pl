@@ -10,10 +10,10 @@
 @bcfdowncount = `/opt/torque/bin/pbsnodes -l`;
 # laredo is down
 @laredodowncount = `ssh laredo /opt/torque/bin/pbsnodes -l`;
-@alamodowncount = `ssh alamo pbsnodes -l`;
+@alamodowncount = `ssh alamo /opt/torque/bin/pbsnodes -l`;
 
 $bcf_no_procs = 38 - 2 * @bcfdowncount;
-$alamo_no_procs = 31 - 2 * @alamodowncount;
+$alamo_no_procs = 32 - 2 * @alamodowncount;
 $laredo_no_procs = 40 - 4 * @laredodowncount;
 
 # END USER EDITABLE SECTION
@@ -191,14 +191,14 @@ sub gsiget {
     my $port = $_[1];
     my $sfile = $_[2];
     my $dfile = $_[3];
-    my $cmd = "gsissh -p $port $sys ls -l $sfile | awk '{ print \$5 }'";
+    my $cmd = "$gsi[$usesys]ssh -p $port $sys ls -l $sfile | awk '{ print \$5 }'";
     print "$cmd\n";
     my $res = $execute ? `$cmd` : '1234 not run';
     chomp $res;
     print "result <$res>\n";
     my $count = 0;
     do {
-	$cmd = "gsiscp -C -P $port $sys:$sfile $dfile";
+	$cmd = "$gsi[$usesys]scp -C -P $port $sys:$sfile $dfile";
 	print "$cmd\n";
 	my $newres = $execute ? `$cmd` : '4321 not run';
 	print "result <$newres>\n";
@@ -210,7 +210,7 @@ sub gsiget {
 	print "result <$newres>\n";
 	if ( $newres != $res ) {
 	    $count++;
-	    print "gsiscp failed try $count of $maxtry\n";
+	    print "$gsi[$usesys]scp failed try $count of $maxtry\n";
 	    return if $count >= $maxtry;
 	} else {
 	    return;
@@ -257,6 +257,7 @@ if($default_system eq 'meta') {
     die "ERROR: meta requested and no GRMS_CLIENT_LOCATION\n";
 }
 
+print "cmdline: $0 $gcfile $total_points $email $timestamp $basedir $experiment $solutes $default_system\n";
 
 if($default_system =~ /hlrb2/) {
     $util = .1;
@@ -340,57 +341,6 @@ $results
 }
 
 $ULTRASCAN = $ENV{'ULTRASCAN'};
-if($default_system ne 'meta') {
- do {
-    $result = `perl $ULTRASCAN/etc/check_tigre.pl $default_system`;
-    if($result =~ /ERROR/) {
-	print STDERR "$result";
-	if(!$messagesent) {
-	    $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
-				   To      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
-				   Subject =>  "TIGRE ERROR on $default_system",
-				   Data    => "There is an error when trying to initialize a TIGRE job on $default_system
---------------------------------------------------------------------------------
-jobtype    $jobtype
-expname    $expname
-gcfile     $gcfile
-email      $email
-timestamp  $timestamp
-id         $id
-basedir    $basedir
-experiment $experiment
-solutes    $solutes
---------------------------------------------------------------------------------
-$result
-"
-				   );
-	    $msg->send('smtp', 'smtp.uthscsa.edu');
-	    $messagesent++;
-	}
-	sleep 120;
-    }
-} while($result =~ /ERROR/);
-if($messagesent) {
-    $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
-			   To      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
-			   Subject =>  "TIGRE service restored on $default_system",
-			   Data    => "TIGRE service restored on $default_system
---------------------------------------------------------------------------------
-jobtype    $jobtype
-expname    $expname
-gcfile     $gcfile
-email      $email
-timestamp  $timestamp
-id         $id
-basedir    $basedir
-experiment $experiment
-solutes    $solutes
---------------------------------------------------------------------------------
-"
-				   );
-    $msg->send('smtp', 'smtp.uthscsa.edu');
- }
-}
 
 
 @systems = (
@@ -407,6 +357,7 @@ solutes    $solutes
 	    'ng2.vpac.monash.edu.au' ,
             'queenbee.loni-lsu.teragrid.org' ,
             'gatekeeper.bigred.iu.teragrid.org' ,
+            'gatekeeper.ranger.tacc.teragrid.org' ,
 	    'meta' 
 	    );
 
@@ -429,6 +380,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 		 8443 ,
 		 8443 , # queenbee
 		 8443 , # bigred
+		 0, # gatekeeper.ranger
 		 0 
 		 );
 
@@ -446,6 +398,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	      22 ,
 	      22 , # queenbee
 	      22 , # bigred
+	      22 , # ranger
 	      0 ,
 	      );
 
@@ -463,6 +416,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	 '/home/grid-ultrascan' ,
 	 '/work/brookes' ,
 	 '/N/dc/scratch/tg-ebrookes' , # bigred
+	 '/work/01314/ultrasca' , # ranger
 	 '' 
 	 );
 
@@ -480,8 +434,9 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	       'PBS' ,
 	       'PBS' ,
 	       'Loadleveler' , # bigred
-	       'PBS' ,
-               '' 
+	       '' , # ranger
+               'PBS' ,  # ?
+	       '' 
 	       );
 
 @bins = (
@@ -498,6 +453,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
          'bin'   , #ng2.vpac.monash
 	 'bin64' ,  #queenbee
 	 'bin' ,  # bigred
+	 'bin64' ,  # ranger
 	 'bin64'   #meta
        );
 @executable = (
@@ -514,6 +470,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
        'us_fe_nnls_t_mpi' , #ng2.vpac.monash
        'us_fe_nnls_t.sh' , #queenbee
        'us_fe_nnls_t_mpi' , #bigred
+       'us_fe_nnls_t_mpi.sh' , #ranger
        'us_fe_nnls_t_mpi' , #meta
        );
 
@@ -532,6 +489,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   '' ,  #ng2.vpac.monash
 	   '' ,  #queenbee
 	   '<queue>NORMAL</queue>' , # bigred
+	   '' , #ranger / determined based upon runtime
 	   '' #meta
 	   );
 
@@ -586,6 +544,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
   </environment>
 ' , # queenbee
 	   '', # bigred
+	   '', # ranger
 	   '' # meta
 	   );
 
@@ -621,6 +580,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   32 , # ng2.vpac.monash
 	   64 , # queenbee
 	   64 , # bigred
+	   128 , # ranger
 	   64 #meta
 	   );
 
@@ -638,9 +598,44 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   10000 , # ng2.monash
 	   2880 ,  # queenbee
 	   2880 ,  # bigred
+	   2880 ,  # ranger
 	   2880    # meta
 	   );
+@gsi = (
+	'gsi' ,    # lonestar
+	'gsi' ,  # ranger
+	'gsi' ,   # cosmos
+	'gsi' ,   # antaeus
+	'gsi' ,   # gridgate
+	'gsi' ,   # eldorado
+	'gsi' , # bcf
+	'gsi' , # alamo
+	'gsi' , # laredo
+	'gsi' ,  # a01.hlrb2
+	'gsi' , # ng2.monash
+	'gsi' ,  # queenbee
+	'gsi' ,  # bigred
+	'' ,  # ranger
+	'gsi'    # meta
+	);
 
+@gfac = (
+	 0 ,    # lonestar
+	 0 ,  # ranger
+	 0 ,   # cosmos
+	 0 ,   # antaeus
+	 0 ,   # gridgate
+	 0 ,   # eldorado
+	 0 , # bcf
+	 0 , # alamo
+	 0 , # laredo
+	 0 ,  # a01.hlrb2
+	 0 , # ng2.monash
+	 0 ,  # queenbee
+	 0 ,  # bigred
+	 1 ,  # ranger
+	 0    # meta
+	 );
 
 # here is where we would select the system to run on via load levels
 # for debugging, otherwise, parse $gcfile for utilization to get $np
@@ -729,6 +724,7 @@ $max_time[1] = $max_time[0];
 $max_time[9] = $max_time[0];
 $max_time[11] = $max_time[0];  # queenbee
 $max_time[12] = $max_time[0];  # bigred
+$max_time[13] = $max_time[0];  # ranger
 
 print "Maximum time[0]=$max_time[0]\n";
 
@@ -756,6 +752,59 @@ if( $systems[$usesys] ne $default_system) {
 }
 
 print "using tigre system $default_system\n";
+
+if($default_system ne 'meta' && !$gfac[$usesys]) {
+    do {
+	$result = `perl $ULTRASCAN/etc/check_tigre.pl $default_system`;
+	if($result =~ /ERROR/) {
+	    print STDERR "$result";
+	    if(!$messagesent) {
+		$msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
+				       To      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
+				       Subject =>  "TIGRE ERROR on $default_system",
+				       Data    => "There is an error when trying to initialize a TIGRE job on $default_system
+--------------------------------------------------------------------------------
+jobtype    $jobtype
+expname    $expname
+gcfile     $gcfile
+email      $email
+timestamp  $timestamp
+id         $id
+basedir    $basedir
+experiment $experiment
+solutes    $solutes
+--------------------------------------------------------------------------------
+$result
+"
+				       );
+		$msg->send('smtp', 'smtp.uthscsa.edu');
+		$messagesent++;
+	    }
+	sleep 120;
+	}
+    } while($result =~ /ERROR/);
+    if($messagesent) {
+	$msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
+			       To      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
+			       Subject =>  "TIGRE service restored on $default_system",
+			       Data    => "TIGRE service restored on $default_system
+--------------------------------------------------------------------------------
+jobtype    $jobtype
+expname    $expname
+gcfile     $gcfile
+email      $email
+timestamp  $timestamp
+id         $id
+basedir    $basedir
+experiment $experiment
+solutes    $solutes
+--------------------------------------------------------------------------------
+"
+			       );
+	$msg->send('smtp', 'smtp.uthscsa.edu');
+    }
+}
+
 print "max np $max_np[$usesys]\n";
 $np = $max_np[$usesys] if $np > $max_np[$usesys];
 
@@ -774,8 +823,24 @@ if ( $default_system =~ /bigred/ )
     print $hc;
 }
 
-print "np is $np\n";
+if( $default_system =~ /gatekeeper.ranger/ )
+{
+    $np = 16 * ( int( $np / 16 ) + 1);
+    $np = $max_np[$usesys] if $np > $max_np[$usesys];
+}
 
+print "np is $np\n";
+if( $default_system =~ /gatekeeper.ranger/ )
+{
+    if ( $max_time[$usesys] > 1440 )
+    {
+	$queues[$usesys] = 'long';
+    } else {
+	$queues[$usesys] = 'normal';
+    }
+    print "submitting to ranger via '$queues[$usesys]' queue\n";
+}
+    
 $SYSTEM = $systems[$usesys];
 $GSI_SYSTEM = $SYSTEM;
 $GSI_SYSTEM = "brecca.vpac.monash.edu.au" if $SYSTEM =~ /ng2.vpac.monash.edu.au/;
@@ -820,10 +885,10 @@ if($default_system ne 'meta') {
 if($default_system ne 'meta') {
     &check_is_resubmit();
     $cmd = 
-	"gsissh -p $PORT_SSH $GSI_SYSTEM rm -fr $WORKRUN
-gsissh -p $PORT_SSH $GSI_SYSTEM mkdir -p $WORKRUN
-gsiscp -P $PORT_SSH $experiment $GSI_SYSTEM:${WORKRUN}/experiments${timestamp}.dat
-gsiscp -P $PORT_SSH $solutes $GSI_SYSTEM:${WORKRUN}/solutes${timestamp}.dat\n";
+	"$gsi[$usesys]ssh -p $PORT_SSH $GSI_SYSTEM rm -fr $WORKRUN
+$gsi[$usesys]ssh -p $PORT_SSH $GSI_SYSTEM mkdir -p $WORKRUN
+$gsi[$usesys]scp -P $PORT_SSH $experiment $GSI_SYSTEM:${WORKRUN}/experiments${timestamp}.dat
+$gsi[$usesys]scp -P $PORT_SSH $solutes $GSI_SYSTEM:${WORKRUN}/solutes${timestamp}.dat\n";
     print $cmd;
     print `$cmd` if $execute;
 }
@@ -837,12 +902,10 @@ if($default_system eq 'meta') {
 
 chdir $id;
 
-
 if(!open(JD, ">$xmlfile")) {
     &failmsg("xml output file create error! $xmlfile");
     die "couldn't xml open output file $xmlfile\n";
 }
-
 
 if($default_system eq 'meta') {
     print JD
@@ -920,52 +983,66 @@ if($default_system eq 'meta') {
     print `echo tigre_job_start $pr_line > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
 } else {
     &check_is_resubmit();
-    $cmd = "globusrun-ws -submit -batch -term 12/31/2099 -F https://${SYSTEM}:${PORT_GLOBUS}/wsrf/services/ManagedJobFactoryService -factory-type $FACTORYTYPE -f $xmlfile > $eprfile\n";
-    print $cmd;
-    print `$cmd` if $execute;
-    if ($default_system =~ /bcf.uthscsa.edu/) {
-    # special bcf handling 
-	print "special bcf handling\n";
-    # check for immediate fail
-	$ecount = 0;
-	$max_ecount = 10;
-	print "check the nodes\n";
-	$cmd = qq/gsissh bcf.uthscsa.edu 'rcom "uname -n; ls .globus"'\n/;
+    if ( !$gfac[$usesys] ) {
+	$cmd = "globusrun-ws -submit -batch -term 12/31/2099 -F https://${SYSTEM}:${PORT_GLOBUS}/wsrf/services/ManagedJobFactoryService -factory-type $FACTORYTYPE -f $xmlfile > $eprfile\n";
 	print $cmd;
-	print `$cmd`;
+	print `$cmd` if $execute;
+	if ($default_system =~ /bcf.uthscsa.edu/) {
+	    # special bcf handling 
+	    print "special bcf handling\n";
+	    # check for immediate fail
+	    $ecount = 0;
+	    $max_ecount = 10;
+	    print "check the nodes\n";
+	    $cmd = qq/$gsi[$usesys]ssh bcf.uthscsa.edu 'rcom "uname -n; ls .globus"'\n/;
+	    print $cmd;
+	    print `$cmd`;
 	
-	do {
-	    print "check submit 0:\n";
-	    sleep 10;
-	    $status = `globusrun-ws -status -job-epr-file $eprfile 2> /lustre/tmp/gc_tigre_${id}_globus_stderr`;
-	    print "status is <$status>\n";
-	    $stderr = `cat /lustre/tmp/gc_tigre_${id}_globus_stderr`;
-	    print "stderr is <$stderr>\n";
-	    print STDERR $stderr;
-	    if($stderr =~ /SOAP Fault/ &&
-	       $status != /^$/) {
-		print "Soap Fault: ignoring bogus status <$status>\n";
-		$status = '';
-	    }
-	    $lastfail = 0;
-	    if(
-	       $status =~ /Failed/ ||
-	       $status =~ /FAILED/ ||
-	       $stderr =~ /failed/ ) {
-		# kill & restart
-		$lastfail = 1;
-		$ecount++;
-		print "resubmitting $ecount of $max_ecount bcf initial job fail\n";
-		$cmd = "globusrun-ws -kill -job-epr-file $eprfile 2>&1";
-		print $cmd;
-		print `$cmd` if $execute;
-		sleep $ecount * 10;
-		&check_is_resubmit();
-		$cmd = "globusrun-ws -submit -batch -term 12/31/2099 -F https://${SYSTEM}:${PORT_GLOBUS}/wsrf/services/ManagedJobFactoryService -factory-type $FACTORYTYPE -f $xmlfile > $eprfile\n";
-		print $cmd;
-		print `$cmd` if $execute;
-	    }
-	} while($lastfail && $ecount && $ecount <= $max_ecount);
+	    do {
+		print "check submit 0:\n";
+		sleep 10;
+		$status = `globusrun-ws -status -job-epr-file $eprfile 2> /lustre/tmp/gc_tigre_${id}_globus_stderr`;
+		print "status is <$status>\n";
+		$stderr = `cat /lustre/tmp/gc_tigre_${id}_globus_stderr`;
+		print "stderr is <$stderr>\n";
+		print STDERR $stderr;
+		if($stderr =~ /SOAP Fault/ &&
+		   $status != /^$/) {
+		    print "Soap Fault: ignoring bogus status <$status>\n";
+		    $status = '';
+		}
+		$lastfail = 0;
+		if(
+		   $status =~ /Failed/ ||
+		   $status =~ /FAILED/ ||
+		   $stderr =~ /failed/ ) {
+		    # kill & restart
+		    $lastfail = 1;
+		    $ecount++;
+		    print "resubmitting $ecount of $max_ecount bcf initial job fail\n";
+		    $cmd = "globusrun-ws -kill -job-epr-file $eprfile 2>&1";
+		    print $cmd;
+		    print `$cmd` if $execute;
+		    sleep $ecount * 10;
+		    &check_is_resubmit();
+		    $cmd = "globusrun-ws -submit -batch -term 12/31/2099 -F https://${SYSTEM}:${PORT_GLOBUS}/wsrf/services/ManagedJobFactoryService -factory-type $FACTORYTYPE -f $xmlfile > $eprfile\n";
+		    print $cmd;
+		    print `$cmd` if $execute;
+		}
+	    } while($lastfail && $ecount && $ecount <= $max_ecount);
+	}
+    } else {
+	$cmd = "perl $US/etc/us_asta_run.pl $SYSTEM ${WORKRUN}/experiments${timestamp}.dat ${WORKRUN}/solutes${timestamp}.dat $jid $np $max_time[$usesys] $queues[$usesys]\n";
+	print $cmd;
+	if ( $execute ) {
+	    $result = `$cmd`;
+	    print $result;
+	    ( $exp_tag ) = $result =~ /(Experiment-.*)( |$)/;
+   	    print "experiment tag is <$exp_tag>\n";
+            $cmd = "echo 'gfac~$exp_tag' > $eprfile\n";
+            print $cmd;
+            print `$cmd`;
+        }
     }
 }
 
@@ -975,13 +1052,20 @@ do {
     if($default_system eq 'meta') {
 	$status = `grms-client job_info $grms_id 2> /dev/null | grep Status | awk '{ print \$3 }'`;
     } else {
-	$status = `globusrun-ws -status -job-epr-file $eprfile 2> /lustre/tmp/gc_tigre_${id}_globus_stderr`;
-	$stderr = `cat /lustre/tmp/gc_tigre_${id}_globus_stderr`;
-	print STDERR $stderr;
-	if($stderr =~ /SOAP Fault/ &&
-	   $status != /^$/) {
-	    print "Soap Fault: ignoring bogus status <$status>\n";
-	    $status = '';
+	if ( !$gfac[$usesys] ) {
+	    $status = `globusrun-ws -status -job-epr-file $eprfile 2> /lustre/tmp/gc_tigre_${id}_globus_stderr`;
+	    $stderr = `cat /lustre/tmp/gc_tigre_${id}_globus_stderr`;
+	    print STDERR $stderr;
+	    if($stderr =~ /SOAP Fault/ &&
+	       $status != /^$/) {
+		print "Soap Fault: ignoring bogus status <$status>\n";
+		$status = '';
+	    }
+	} else {
+            $cmd = "$US/etc/us_asta_status.pl $exp_tag\n";
+            print $cmd;
+            $status = `$cmd`;
+            $status = "FINISHED\n" if $status =~ /COMPLETED/;
 	}
     }
     print $status;
@@ -1012,8 +1096,8 @@ do {
 	    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "/lustre/tmp/us_job${id}.stderr");
 	    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "/lustre/tmp/us_job${id}.stdout");
 #	    $cmd = 
-#"gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
-#gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
+#"$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
+#$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
 #";
 #	    print $cmd;
 #	    print `$cmd` if $execute;
@@ -1027,7 +1111,24 @@ do {
 	die "tigre job failed submission on $default_system\n";
     }
 } while($status ne 'Done' && $status ne 'FINISHED');
-# get results (gsiscp models & emails)
+# get results ($gsi[$usesys]scp models & emails)
+
+if ( $gfac[$usesys] ) {
+    $cmd = "$US/etc/us_asta_dir.pl $exp_tag\n";
+    my $tries = 0;
+    do {
+	print $cmd;
+	$WORKRUN = `$cmd`;
+	chomp $WORKRUN;
+	print "workrun now <$WORKRUN>\n";
+	if ( !length($WORKRUN) )
+	{
+	    $tries++;
+	    print "no directory yet (try $tries) from $cmd, sleeping " , ($tries * 30), "s\n";
+	    sleep $tries * 30;
+	} 
+    } while (!length($WORKRUN));
+}
 
 if($default_system eq 'meta') {
     $cmd = 
@@ -1035,18 +1136,24 @@ if($default_system eq 'meta') {
 mv us_job${id}.stdout /lustre/tmp/us_job${id}.stdout
 ";
 } else {
-    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "/lustre/tmp/us_job${id}.stderr");
-    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "/lustre/tmp/us_job${id}.stdout");
-#    $cmd = "gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
-#    gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
+    if ( $gfac[$usesys] ) {
+	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stderr", "/lustre/tmp/us_job${id}.stderr");
+	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stdout", "/lustre/tmp/us_job${id}.stdout");
+    } else {
+	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "/lustre/tmp/us_job${id}.stderr");
+	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "/lustre/tmp/us_job${id}.stdout");
+    }
+#    $cmd = "$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
+#    $gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
     $cmd =
-"gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/email_* .
-gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.model* .
-gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*noise* .
-gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.simulation_parameters .
-gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/checkpoint*.dat .
+	"$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/email_* .
+$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.model* .
+$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*noise* .
+$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.simulation_parameters .
+$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/checkpoint*.dat .
 ";
 }
+
 print $cmd;
 print `$cmd` if $execute;
 print "----tail us_job${id}.stderr --- from $default_system ---\n";
@@ -1083,7 +1190,7 @@ print `perl $ENV{'ULTRASCAN'}/bin64/us_email.pl email_list_* email_msg` if $exec
 if($default_system eq 'meta') {
     print `echo tigre_job_end $grms_id > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
 } else {
-    $cmd = "gsissh -p $PORT_SSH ${GSI_SYSTEM} rm -fr $WORKRUN\n";
+    $cmd = "$gsi[$usesys]ssh -p $PORT_SSH ${GSI_SYSTEM} rm -fr $WORKRUN\n";
     print "not run: $cmd";
 # print `$cmd` if $execute;
     print `echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;

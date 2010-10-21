@@ -14,12 +14,13 @@ $ENV{'GLOBUS_LOCATION'} = '/share/apps/tigre/globus';
 	     'ng2.vpac.monash.edu.au',
 	     'queenbee.loni-lsu.teragrid.org' ,
 	     'gatekeeper.bigred.iu.teragrid.org' ,
+	     'gatekeeper.ranger.tacc.teragrid.org' ,
 
 	     'bcf.uthscsa.edu', 
 	     'alamo.uthscsa.edu', 
 	     'laredo.uthscsa.edu' 
 	     );
-$cutoff = 6;
+$cutoff = 7;
 # @systemssize = ( 4, 2, 2 );
 @globusport = ( 
 		8443, # lonestar
@@ -31,6 +32,7 @@ $cutoff = 6;
 		8443, # ng2.vpac.monash
 		8443, # queenbee.loni-lsu.teragrid.org
 		8443, # gatekeeper.bigred.iu.teragrid.org
+		2119, # gatekeeper.ranger.tacc.teragrid.org
 
 		9443, # bcf
 		9443, # alamo
@@ -151,8 +153,3 @@ open(FH, "$ultrascan/etc/tigre_sysstat");
 flock(FH, 2) || print STDERR "$0: Warning can not flock $ultrascan/etc/tigre_sysstat\n";
 system("mv $ultrascan/etc/tigre_sysstat.new $ultrascan/etc/tigre_sysstat");
 close(FH);
-
-
-
-       
-

@@ -49,6 +49,8 @@ sub dblock {
     if (!flock(DBLOCK, LOCK_EX)) {
 	do {
 	    print STDERR "$0: warning: error trying to lock file $dblock <$!>\n";
+	    close DBLOCK;
+	    open(DBLOCK, $dblock) || die "couldn't access dblock file $dblock <$!>\n";
 	    sleep 5;
 	} while (!flock(DBLOCK, LOCK_EX));
     }
@@ -76,6 +78,8 @@ sub dbunlock {
 
 sub dbopen {
     print "dbopen\n" if $debugdb;
+    undef $DB;
+    undef %db;
     open(DBLOCK, $dblock) || die "couldn't access dblock file $dblock <$!>\n";
     dblock();
     $DB = tie %db, "DB_File", $dbfile || die "can not tie $dbfile: $!\n";
@@ -308,15 +312,32 @@ sub tigre_del {
 #    dbdel($tigre{'eprseq|' . $eprfile});
 #    dbdel('eprstatus|' . $eprfile);
     dbunlock();
+    dbclose();
     print STDERR "$0: tigre_del $eprfile\n" if $debug;
 }
     
+sub is_gfac {
+    open(GIN, $_[0]);
+    my $gfac = <GIN>;
+    close GIN;
+    chomp $gfac;
+    $gfac =~ /^gfac~(.*)$/ ? $gfac = $1 : undef $gfac;
+    print STDERR "epr $_[0]\n";
+    print STDERR $gfac ? "gfac set\n" : "gfac not set\n";
+    print STDERR `echo echo cat $_[0]; cat $_[0]`;
+    return $gfac;
+}
+    
+
 sub startjob_tigre_status {
     print STDERR "$0: start tigre status job process $_[0]\n" if $debug;
     my $child;
     if(!($child = fork)) {
+	close DBLOCK;
 	print STDERR "$0: child status started tigre job\n" if $debug;
+	sleep $globus_statusupdate;
 	while (1) {
+            $gfac = is_gfac($_[0]);
 	    dbopen();
 	    $DB->sync;
 	    if (length(dbread('epr|' . $_[0])) == 0) {
@@ -325,14 +346,19 @@ sub startjob_tigre_status {
 	    }
 	    dbclose();
 	    print "startjob_tigre_status: <$_[0]>\n";
-	    my $status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $_[0]");
+	    my $status = &timedexec($globustimeout, 
+                                    $gfac ? 
+                                    "$us/etc/us_asta_status.pl $gfac" :
+                                    "globusrun-ws -status -job-epr-file $_[0]"
+                                    );
 	    chomp $status;
 	    if(length($status)) {
+                $status = "Current job state: $status" if $gfac;
 		dbopen();
 		$DB->sync;
 		dbwrite('eprstatus|' . $_[0], $status);
 		dbclose();
-		if ($status =~ /Done/) {
+		if ($status =~ /(Done|FINISHED|COMPLETED)/ ) {
 		    &tigre_del($_[0]);
 		    print STDERR "$0: child status exited job Done $_[0]\n" if $debug;
 		    exit;
@@ -356,6 +382,7 @@ sub write_status {
     print STDERR "$0: write_status $_[0]\n" if $debug;
     my $child;
     if(!($child = fork)) {
+	close DBLOCK;
 	print STDERR "$0: child started write_status\n" if $debug;
 	my $outfile = $_[0];
 	print STDERR "$0: write statusqueue status into $outfile\n" if $debug;
@@ -435,6 +462,7 @@ sub status_daemon {
     print STDERR "$0: start status_daemon\n" if $debug;
     my $child;
     if(!($child = fork)) {
+	close DBLOCK;
 	while(1) {
 	    print STDERR "$: internal_status_update\n" if $debug;
 	    &write_status($status_file);
@@ -456,6 +484,7 @@ sub remove_status
     my $child;
     if (!($child = fork)) 
     {
+	close DBLOCK;
 	print STDERR "$0: child started remove_status\n" if $debug;
 	my $outfile = $_[0];
 	my $remove = $_[1];
@@ -515,13 +544,21 @@ sub remove_status
 sub tigre_kill {
     print STDERR "$0: tigre_kill $_[0]\n" if $debug;
     if(!(my $child = fork)) {
+	close DBLOCK;
+        my $gfac = is_gfac($_[0]);
 	my $reps = 0;
-	do {
-	    my $status = `globusrun-ws -kill -job-epr-file $_[0] 2>&1`;
-	    print STDERR "$0: tigre_kill $_[0] returned <$status>\n" if $debug;
-	    exit if $status =~ /Destroying job\.\.\.Done./;
-	    sleep $killupdate;
-	} while($reps++ < $maxkillreps);
+        if ( $gfac ) {
+            my $cmd = "$us/etc/us_asta_cancel.pl $gfac\n";
+            print STDERR "$0: $cmd";
+            print STDERR `$cmd`;
+        } else {
+            do {
+                my $status = `globusrun-ws -kill -job-epr-file $_[0] 2>&1`;
+                print STDERR "$0: tigre_kill $_[0] returned <$status>\n" if $debug;
+                exit if $status =~ /Destroying job\.\.\.Done./;
+                sleep $killupdate;
+            } while($reps++ < $maxkillreps);
+        }
 	exit;
     }
 }
@@ -534,6 +571,7 @@ sub tigre_kill {
 sub handle_request {
     print STDERR "$0: handle request $_[0]\n" if $debug;
     if(!(my $child = fork)) {
+	close DBLOCK;
 	print STDERR "$0: received $line\n" if $debug;
 	undef $valid;
 	if($line =~ /^gc_tigre (.*) (.*)$/) {
@@ -571,22 +609,36 @@ sub handle_request {
 	    chomp $date;
 	    dbopen();
 	    $seq = dbnxtseq();
+	    dbclose();
 	    $pr_line = sprintf("%d %s %s tigre %s %-26s %-25s %-20s %-4s %s",
 			       $seq, $db_login_database, $HPCAnalysisID, $date, $system, $email, $exp_file_info[0], $analysis_type, $gcfile);
 	    print "prline <$pr_line>\n";
 
 	    print STDERR "$0: email $email analysis_type $analysis_type\n";
 	    print STDERR "$0: add job $job\n" if $debug;
-	    dblock();
-	    $DB->sync;
-	    $db{'epr|'. $eprfile} =  $pr_line;
-	    $db{'eprsystem|' . $eprfile} =  $system;
-	    $db{'eprseq|' . $eprfile} =  $seq;
-	    $db{'eprstatus|' . $eprfile} = "Current job state: Initialized";
-	    $db{$seq} = $eprfile;
-	    $DB->sync;
-	    dbunlock();
-	    dbclose();
+	    undef $mcnt;
+	    my %vdb;
+	    do {
+		$mcnt++;
+		print "updating db $mcnt with epr|$eprfile\n";
+		dbopen();
+		dblock();
+#		$DB->sync;
+		$db{'epr|'. $eprfile} =  $pr_line;
+		$db{'eprsystem|' . $eprfile} =  $system;
+		$db{'eprseq|' . $eprfile} =  $seq;
+		$db{'eprstatus|' . $eprfile} = "Current job state: Initialized";
+		$db{$seq} = $eprfile;
+		$DB->sync;
+		dbunlock();
+		dbclose();
+		dbopen();
+		undef %vdb;
+		%vdb = dbrocopy();
+		dbclose();
+		my $ky = 'eprseq|' . $eprfile;
+		print "org: vdb{$ky} = $vdb{$ky} vs $seq\n" if $vdb{'eprseq|' . $eprfile} ne $seq;
+	    } while ($vdb{'eprseq|' . $eprfile} ne $seq);
 	    &startjob_tigre($job);
 	    print STDERR "$0: tigre_job_run SEQ=$seq $eprfile\n" if $debug;
 	}
@@ -620,19 +672,32 @@ sub handle_request {
 	    $pr_line = sprintf("%d %s %s tigre %s %-26s %-25s %-20s %-4s %s",
 			       $seq, $db, $analysisid, $date, $system, $email, $experiment, $analysis_type, $gcfile);
 	    print "pr_line <$pr_line>\n";
-
-	    dblock();
-	    $DB->sync;
-	    if ($rewrite) {
-		$db{'epr|'. $eprfile} =  $pr_line;
-		$db{'eprsystem|' . $eprfile} =  $system;
-		$db{'eprseq|' . $eprfile} =  $seq;
-		$db{$seq} = $eprfile;
-	    } 
-	    $db{'eprstatus|' . $eprfile} = "Current job state: Initializing_globus";
-	    $DB->sync;
-	    dbunlock();
 	    dbclose();
+	    undef $mcnt;
+	    my %vdb;
+	    do {
+		$mcnt++;
+		print "updating db $mcnt with epr|$eprfile rewrite $rewrite\n";
+		dbopen();
+		dblock();
+#		$DB->sync;
+		if ($rewrite) {
+		    $db{'epr|'. $eprfile} =  $pr_line;
+		    $db{'eprsystem|' . $eprfile} =  $system;
+		    $db{'eprseq|' . $eprfile} =  $seq;
+		    $db{$seq} = $eprfile;
+		} 
+		$db{'eprstatus|' . $eprfile} = "Current job state: Initializing_globus";
+		$DB->sync;
+		dbunlock();
+		dbclose();
+		dbopen();
+		undef %vdb;
+		%vdb = dbrocopy();
+		dbclose();
+		my $ky = 'eprseq|' . $eprfile;
+		print "rew: vdb{$ky} = $vdb{$ky} vs $seq\n" if $vdb{'eprseq|' . $eprfile} ne $seq;
+	    } while ($vdb{'eprseq|' . $eprfile} ne $seq);
 	    &startjob_tigre_status($eprfile);
 
 	    print STDERR "$0: tigre_job_start SEQ=$seq $eprfile\n" if $debug;
@@ -663,9 +728,14 @@ sub handle_request {
 	    foreach $i (keys %tigre) {
 		if ($i =~ /^epr\|/) {
 		    ( $use_i ) = $i =~ /^epr\|(.*)$/;
-		    $status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $use_i");
+                    my $gfac = is_gfac($use_i);
+                    my $status = &timedexec($globustimeout, 
+                                            $gfac ? 
+                                            "$us/etc/us_asta_status.pl $gfac" :
+                                            "globusrun-ws -status -job-epr-file $use_i"
+                                            );
 		    chomp $status;
-		    if(!length($status) || $status eq 'FINISHED' || $status eq 'FAILED') {
+		    if( !length($status) || $status =~ 'FINISHED' || $status =~ 'FAILED' || $status =~ 'Done' ) {
 			&tigre_del($use_i);
 		    }
 		    print STDERR "$0: tigre_job_clear removed $tigre{$i}\n" if $debug;
