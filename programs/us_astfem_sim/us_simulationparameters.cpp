@@ -101,10 +101,10 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_delay_mins, row, 0, 1, 3 );
 
    cnt_delay_mins = us_counter( 3, 0, 59, sp->delay_minutes );
-   cnt_delay_mins->setStep    ( 1 );
-   cnt_delay_mins->setIncSteps( QwtCounter::Button1,  1 );
-   cnt_delay_mins->setIncSteps( QwtCounter::Button2, 10 );
-   cnt_delay_mins->setIncSteps( QwtCounter::Button3, 10 );
+   cnt_delay_mins->setStep    ( 0.1 );
+   cnt_delay_mins->setIncSteps( QwtCounter::Button1,   1 );
+   cnt_delay_mins->setIncSteps( QwtCounter::Button2,  10 );
+   cnt_delay_mins->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_delay_mins, row++, 3, 1, 1 );
    connect( cnt_delay_mins, SIGNAL( valueChanged     ( double ) ), 

@@ -21,7 +21,7 @@ US_Properties::US_Properties(
    setWindowTitle( tr( "Set Analyte Properties" ) );
    setAttribute  ( Qt::WA_DeleteOnClose );
 
-   oldRow   = -1;
+   oldRow   = -2;
    inUpdate = false;
    chgStoi  = false;
 
@@ -265,10 +265,33 @@ void US_Properties::clear_entries( void )
    ct_oligomer->setValue( 1.0 );
    pb_load_c0 ->setIcon( QIcon() );
    cb_co_sed  ->setChecked( false );
+
+   if ( oldRow == (-2) )
+   {
+      le_vbar       ->setEnabled( false );
+      le_extinction ->setEnabled( false );
+      le_analyteConc->setEnabled( false );
+      le_mw         ->setEnabled( false );
+      le_f_f0       ->setEnabled( false );
+      le_s          ->setEnabled( false );
+      le_D          ->setEnabled( false );
+      le_f          ->setEnabled( false );
+      le_sigma      ->setEnabled( false );
+      le_delta      ->setEnabled( false );
+      ct_oligomer   ->setEnabled( false );
+      cb_co_sed     ->setEnabled( false );
+      cb_mw         ->setEnabled( false );
+      cb_f_f0       ->setEnabled( false );
+      cb_s          ->setEnabled( false );
+      cb_D          ->setEnabled( false );
+      cb_f          ->setEnabled( false );
+   }
 }
 
 void US_Properties::newAnalyte( void )
 {
+   update( 0 );
+
    save_changes( lw_components->currentRow() );
    oldRow = -1;
 
@@ -296,6 +319,7 @@ void US_Properties::update_analyte( US_Analyte new_analyte )
 {
    analyte  = new_analyte;
    int last = model.components.size() - 1;
+   update( 0 );
    
    US_Model::SimulationComponent* sc = &model.components[ last ];
 
@@ -303,6 +327,7 @@ void US_Properties::update_analyte( US_Analyte new_analyte )
    sc->analyteGUID = analyte.analyteGUID;
    sc->mw          = analyte.mw;
    sc->vbar20      = analyte.vbar20;
+   sc->extinction  = analyte.extinction[ model.wavelength ];
 
    le_guid->setText( sc->analyteGUID );
    update_lw();
@@ -692,19 +717,32 @@ void US_Properties::save_changes( int row )
 
 void US_Properties::update( int /* row */ )
 {
+   if ( oldRow == (-2) )
+   {
+      le_vbar       ->setEnabled( true );
+      le_extinction ->setEnabled( true );
+      le_analyteConc->setEnabled( true );
+      le_mw         ->setEnabled( true );
+      le_f_f0       ->setEnabled( true );
+      le_sigma      ->setEnabled( true );
+      le_delta      ->setEnabled( true );
+      ct_oligomer   ->setEnabled( true );
+      cb_co_sed     ->setEnabled( true );
+      cb_mw         ->setEnabled( true );
+      cb_f_f0       ->setEnabled( true );
+      oldRow = -1;
+   }
+
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
 
-   char uuid[ 37 ];
-   uuid[ 36 ] = 0;
-
    // Save current data 
    save_changes( oldRow );
-
    oldRow = row;
 
    // Update to current data
    US_Model::SimulationComponent* sc = &model.components[ row ];
+qDebug() << "PROP:upd: row mw ff0" << row << sc->mw << sc->f_f0;
 
    le_description->setText( sc->name );
 
@@ -745,8 +783,6 @@ void US_Properties::update( int /* row */ )
       default:                cmb_shape->setCurrentIndex( 3 ); break;
    }
 
-   ct_oligomer->setValue( sc->oligomer );
-
    // Set characteristics
    le_mw   ->setText( QString::number( sc->mw   , 'e', 3 ) );
    le_f_f0 ->setText( QString::number( sc->f_f0 , 'e', 3 ) );
@@ -759,9 +795,11 @@ void US_Properties::update( int /* row */ )
    // Set load_co indication
    ( sc->c0.radius.size() > 0 ) ? pb_load_c0->setIcon( check )
                                 : pb_load_c0->setIcon( QIcon() );
-   // Set co-setimenting solute
+   // Set co-sedimenting solute
    ( row == model.coSedSolute ) ? cb_co_sed->setChecked( true  )
                                 : cb_co_sed->setChecked( false );
+
+   ct_oligomer->setValue( sc->oligomer );
    inUpdate = false;
 }
 

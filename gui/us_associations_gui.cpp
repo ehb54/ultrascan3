@@ -86,6 +86,24 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    main->addWidget( tw, row, 0, 5, 2 );
    row += 5;
 
+   // Brief help label
+   QTextEdit* te_help = us_textedit();
+   QPalette pa( US_GuiSettings::labelColor() );
+   te_help->setPalette( pa );
+   te_help->setTextBackgroundColor( pa.color( QPalette::Window ) );
+   te_help->setTextColor(           pa.color( QPalette::WindowText ) );
+   QFontMetrics fm( te_help->font() );
+   te_help->setMaximumHeight( fm.lineSpacing() * 13 / 2 );
+   te_help->setText( tr(
+      "* Drag each component from the upper list and drop it in an"
+      " Analyte or Product cell.\n"
+      "* Set the stoichiometry counter to the left of each component.\n"
+      "* Enter values for K_association and K_off Rate in their text cells.\n"
+      "* Click on the \"D\" on the left side of any row to delete that row.\n"
+      "* Click the \"Accept\" button when all equations are as desired." ) );
+   main->addWidget( te_help, row, 0, 5, 2 );
+   row += 5;
+
    // Pushbuttons
    QBoxLayout* buttonbox = new QHBoxLayout;
 
@@ -102,6 +120,7 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    connect( pb_accept, SIGNAL( clicked() ), SLOT( complete()) );
 
    main->addLayout( buttonbox, row++, 0, 1, 2 );
+
    populate();
 }
 

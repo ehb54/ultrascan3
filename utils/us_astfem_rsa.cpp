@@ -1792,7 +1792,7 @@ DbgLv(1) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
       {
           double c1;
           double ct = C0[ 0 ].concentration[ j ] + C0[ 1 ].concentration[ j ] ;
-DbgLv(1) << "RSA:  j st0 st1" << j << st0 << st1;
+//DbgLv(1) << "RSA:  j st0 st1" << j << st0 << st1;
           
           if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
              c1 = ( sqrt( 1.0 + 4.0 * keq * ct ) - 1.0 ) / ( 2.0 * keq );

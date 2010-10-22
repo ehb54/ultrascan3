@@ -26,14 +26,17 @@ class US_ModelGui : public US_WidgetsDialog
 
    signals:
       
-      //! \brief A signal that retruns the model loaded or created
+      //! \brief A signal that returns the model loaded or created
       //! \param model - The parameters of the model
       void valueChanged( US_Model model );
 
    private:
       int       investigator;
       int       recent_row;
+
       bool      newFile;
+      bool      model_saved;
+
       US_Model  model;
       US_Model  working_model;
       US_Buffer buffer;
@@ -57,6 +60,9 @@ class US_ModelGui : public US_WidgetsDialog
       QLineEdit*     le_guid;
 
       US_ListWidget* lw_models;
+
+      QPushButton*   pb_save;
+      QPushButton*   pb_delete;
 
       QRadioButton*  rb_db;
       QRadioButton*  rb_disk;

@@ -25,8 +25,10 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    QPalette gray = US_GuiSettings::editColor();
    gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
 
-   US_Model m;
-   model = working_model = m;
+   //US_Model m;
+   //model = working_model = m;
+   working_model = model;
+   model_saved   = true;
   
    recent_row   = -1;
    investigator = -1;
@@ -47,12 +49,13 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    le_investigator->setReadOnly( true );
    main->addWidget( le_investigator, row++, 1 );
    
-   QGridLayout* db_layout = us_radiobutton( tr( "Use Database" ), rb_db );
+   QGridLayout* db_layout   = us_radiobutton( tr( "Use Database" ),   rb_db );
    main->addLayout( db_layout, row, 0 );
+   rb_db  ->setChecked( true  );
 
    QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk );
    connect( rb_db, SIGNAL( clicked() ), SLOT( check_db() ) );
-   rb_disk->setChecked( true );
+   rb_disk->setChecked( false );
    main->addLayout( disk_layout, row++, 1 );
 
    QPushButton* pb_models = us_pushbutton( tr( "List Available Models" ) );
@@ -121,13 +124,16 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
       le_guid->setVisible( false );
    }
  
-   QPushButton* pb_save = us_pushbutton( tr( "Save / Update Model" ) );
+   pb_save   = us_pushbutton( tr( "Save / Update Model" ) );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save_model() ) );
-   main->addWidget( pb_save, row, 0 );
+   main->addWidget( pb_save,   row,   0 );
 
-   QPushButton* pb_delete = us_pushbutton( tr( "Delete Selected Model" ) );
+   pb_delete = us_pushbutton( tr( "Delete Selected Model" ) );
    connect( pb_delete, SIGNAL( clicked() ), SLOT( delete_model() ) );
    main->addWidget( pb_delete, row++, 1 );
+
+   pb_save  ->setEnabled( false );
+   pb_delete->setEnabled( false );
 
    // Pushbuttons
    QBoxLayout* buttonbox = new QHBoxLayout;
@@ -146,6 +152,28 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
 
    main->addLayout( buttonbox, row++, 0, 1, 4 );
 
+   if ( model.description != "New Model" )
+   {  // if re-loading a previous model, list that model
+      ModelDesc desc;
+      desc.description = model.description;
+      desc.DB_id       = -1;
+      desc.filename .clear();
+      desc.modelGUID   = model.modelGUID;
+      desc.editGUID    = model.editGUID;
+
+      working_model = model;
+      model_descriptions << desc;
+      show_model_desc();
+      recent_row    = 0;
+
+      le_description->setText( model.description );
+      le_wavelength ->setText( QString::number( model.wavelength, 'f', 1 ) );
+      le_guid       ->setText( model.modelGUID );
+      cb_optics     ->setCurrentIndex( model.optics );
+      lw_models     ->setCurrentRow( recent_row );
+   }
+
+   check_db();
    adjustSize();
 }
 
@@ -156,6 +184,12 @@ void US_ModelGui::new_model( void )
    US_Model m;  // Create a new model
    m.description    = le_description->text().trimmed();
 
+   if ( m.description.isEmpty() )
+   {
+      m.description    = "New Model";
+      le_description->setText( m.description );
+   }
+
    ModelDesc desc;
    desc.description = m.description;
    desc.DB_id       = "-1";
@@ -165,6 +199,7 @@ void US_ModelGui::new_model( void )
 
    model         = m;
    working_model = m;
+   model_saved   = false;
 
    model_descriptions << desc;
    show_model_desc();
@@ -224,6 +259,12 @@ void US_ModelGui::edit_description( void )
    QString desc = le_description->text().trimmed();
    if ( desc.isEmpty() ) return;
 
+   if ( desc != "New Model" )
+   {
+      pb_save  ->setEnabled( true );
+      pb_delete->setEnabled( true );
+   }
+
    if ( desc == lw_models->item( row )->text() ) return;
 
    // Find index into model_descriptions
@@ -254,10 +295,14 @@ void US_ModelGui::select_model( QListWidgetItem* item )
    }
 
    // Get the current index
-   if ( model_descriptions.size() == 0 ) return;
+   if ( model_descriptions.size() == 0 )
+      return;
+
    int     index = item->listWidget()-> currentRow();
    QString mdesc = item->text();
    int     modlx = modelIndex( mdesc, model_descriptions );
+qDebug() << "SelM: modlx md.desc md.GUID" << modlx
+   << mdesc << model_descriptions[modlx].modelGUID;
    
    // For the case of the user clicking on "New Model"
    if ( model_descriptions[ modlx ].modelGUID.isEmpty() )
@@ -266,11 +311,11 @@ void US_ModelGui::select_model( QListWidgetItem* item )
       model.modelGUID   = "";
       le_description->setText( model.description );
       le_guid       ->setText( model.modelGUID   );
+qDebug() << "SelM:   NEW mx md.desc" << modlx << model.description;
       return;
    }
 
    QString        file;
-   QTemporaryFile temporary;
 
    if ( rb_disk->isChecked() ) // Load from disk
    {
@@ -292,6 +337,8 @@ void US_ModelGui::select_model( QListWidgetItem* item )
 
       QString modelID = model_descriptions[ modlx ].DB_id;
       model.load( modelID, &db );
+qDebug() << "SelM:  DB ID GUID" << modelID << model.modelGUID;
+   
    }
 
    model_descriptions[ modlx ].editGUID = model.editGUID;
@@ -446,7 +493,8 @@ void US_ModelGui::manage_components( void )
 
 void US_ModelGui::update_sim( void )
 {
-   model = working_model;
+   model       = working_model;
+   model_saved = false;
 }
 
 void US_ModelGui::associations( void )
@@ -480,13 +528,30 @@ void US_ModelGui::associations( void )
 
 void US_ModelGui::update_assoc( void )
 {
-   model = working_model;
+   model       = working_model;
+   model_saved = false;
 }
 
 void US_ModelGui::accept_model( void )
 {
-   if ( ! ignore_changes() ) return;
-   emit valueChanged( model );
+qDebug() << "MG:accept:  saved? desc" << model_saved << model.description;
+   if ( ! ignore_changes() )
+      return;
+
+   if ( ! model_saved )
+   {
+      int response = QMessageBox::question( this,
+         tr( "Model Changed" ),
+         tr( "The model may have changed and not been saved.\n"
+             "Do you want to accept the possibly unsaved model?" ),
+         QMessageBox::Cancel, QMessageBox::Yes );
+
+      if ( response == QMessageBox::Cancel ) return;
+   }
+
+   if ( recent_row >= 0 )
+      emit valueChanged( model );
+
    close();
 }
 
@@ -588,12 +653,14 @@ void US_ModelGui::save_model( void )
             tr( "The model has been %1 in the database." ).arg( model.message ) );
          
          working_model = model;
+         le_guid->setText( model.modelGUID   );
       }
       else
          QMessageBox::information( this,
             tr( "Database Error" ),
             tr( "The model could not be saved:\n" ) + model.message );
    }
+   model_saved = true;
 }
 
 bool US_ModelGui::verify_model( void )
@@ -610,8 +677,10 @@ bool US_ModelGui::verify_model( void )
         model.description.trimmed() == "New Model" )
    {
       QMessageBox::information( this,
-            tr( "Model Error" ),
-            tr( "The model does not have an acceptable name." ) );
+            tr( "Model Name Error" ),
+            tr( "The model does not have an acceptable name.\n"
+                "Enter a non-blank, non-\"New Model\" name in the\n"
+                "Model Description field. You may then save the model." ) );
       return false;
    }
 
@@ -626,6 +695,7 @@ void US_ModelGui::list_models( void )
    if ( ! US_Model::model_path( path ) ) return;
 
    model_descriptions.clear();
+   le_description->clear();
 
    if ( rb_disk->isChecked() )
    {
