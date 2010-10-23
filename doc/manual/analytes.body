@@ -12,7 +12,7 @@
     <p>Dialog Items:</p>
 
     <ul>
-      <li> (Analyte Type>: Specify the type of analyte by checking one of
+      <li><b>(analyte type)</b> Specify the type of analyte by checking one of
       <b>Protein</b> or <b>DNA</b> or <b>RNA</b> or <b>Carbohydrate</b>.</li>
 
       <li><b>Select Investigator</b> This button brings up a window that
@@ -53,8 +53,8 @@
       <a href="images/analyte_details.png">Analyte Details text dialog</a>
       to list details about the current analyte.</li>
 
-      <li><b>(Optics)</b> Type of optics: Absorbance, Interference, or
-      Flourescence.</li>
+      <li><b>(optics type)</b> Select type of optics: <b>Absorbance</b>,
+      <b>Interference</b>, or <b>Flourescence</b>.</li>
 
       <li><b>Analyte Description</b> Description set by analyte choice, but also
       editable, especially when defining a new analyte.</li>

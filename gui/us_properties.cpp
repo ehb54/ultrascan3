@@ -80,7 +80,7 @@ US_Properties::US_Properties(
    }
 
    // Row
-   QLabel* lb_vbar = us_label( tr( "vbar at 20 " ) + DEGC + " (ml/g):" );
+   QLabel* lb_vbar = us_label( tr( "Vbar at 20 " ) + DEGC + " (ml/g):" );
    main->addWidget( lb_vbar, row, 0 );
 
    le_vbar = us_lineedit( "" );
@@ -403,7 +403,7 @@ void US_Properties::set_oligomer( double oligomer )
    //inUpdate = false;
    //select_shape( sc->shape );
 
-   if ( oligomer > 1 )
+   if ( oligomer > 1.0 )
    {  // if oligomer count greater than 1, must check MW and frictional ratio
       if ( ! ( cb_mw->isChecked() && cb_f_f0->isChecked() ) )
       {  // mw,f_f0 not both checked, so make it so
@@ -724,6 +724,9 @@ void US_Properties::update( int /* row */ )
       le_analyteConc->setEnabled( true );
       le_mw         ->setEnabled( true );
       le_f_f0       ->setEnabled( true );
+      le_s          ->setEnabled( true );
+      le_D          ->setEnabled( true );
+      le_f          ->setEnabled( true );
       le_sigma      ->setEnabled( true );
       le_delta      ->setEnabled( true );
       ct_oligomer   ->setEnabled( true );
@@ -742,7 +745,6 @@ void US_Properties::update( int /* row */ )
 
    // Update to current data
    US_Model::SimulationComponent* sc = &model.components[ row ];
-qDebug() << "PROP:upd: row mw ff0" << row << sc->mw << sc->f_f0;
 
    le_description->setText( sc->name );
 

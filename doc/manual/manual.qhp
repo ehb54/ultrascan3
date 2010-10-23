@@ -27,16 +27,20 @@
              documentation does not say so -->
         <keywords>
             <keyword id="a1" name="analyte"       ref="analytes.html"/>
-            <keyword id="a2" name="astfem_sim"    ref="astfem_sim.html"/>
+            <keyword id="a2" name="associations"  ref="associations.html"/>
+            <keyword id="a3" name="astfem_sim"    ref="astfem_sim.html"/>
             <keyword id="b1" name="buffer"        ref="us_buffer.html"/>
-            <keyword id="c1" name="configuration" ref="config.html"/>
+            <keyword id="c1" name="components"    ref="components.html"/>
+            <keyword id="c2" name="configuration" ref="config.html"/>
             <keyword id="f1" name="fe-model"      ref="fe_match.html"/>
             <keyword id="g1" name="ga-initialize" ref="ga_initialize.html"/>
             <keyword id="g2" name="gradient"      ref="colorgradient.html"/>
             <keyword id="i1" name="investigator"  ref="us_investigator.html"/>
             <keyword id="l1" name="license"       ref="register.html"/>
             <keyword id="m1" name="manage-data"   ref="manage_data.html"/>
-            <keyword id="m2" name="model-loader" ref="load_model_distrib.html"/>
+            <keyword id="m2" name="model-editor"  ref="model_editor.html"/>
+            <keyword id="m3" name="model-loader" ref="load_model_distrib.html"/>
+            <keyword id="m4" name="model-shapes"  ref="predict1.html"/>
             <keyword id="n1" name="noise-loader"  ref="load_noise.html"/>
             <keyword id="p1" name="password"      ref="master_pw.html"/>
             <keyword id="p2" name="pseudo3d-combine" ref="pseudo3d_combine.html"/>
@@ -164,6 +168,15 @@
             <file>simparams.html</file>
             <file>images/astfem_sim.png</file>
             <file>images/simparams.png</file>
+
+            <file>model_editor.html</file>
+            <file>associations.html</file>
+            <file>components.html</file>
+            <file>predict1.html</file>
+            <file>images/model_editor.png</file>
+            <file>images/associations.png</file>
+            <file>images/components.png</file>
+            <file>images/predict1.png</file>
         </files>
     </filterSection>
 </QtHelpProject> 
