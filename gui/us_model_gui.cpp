@@ -341,6 +341,12 @@ qDebug() << "SelM:  DB ID GUID" << modelID << model.modelGUID;
    
    }
 
+   if ( mdesc != "New Model" )
+   {
+      pb_save  ->setEnabled( true );
+      pb_delete->setEnabled( true );
+   }
+
    model_descriptions[ modlx ].editGUID = model.editGUID;
  
    working_model = model;
