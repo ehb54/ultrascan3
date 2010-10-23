@@ -1,0 +1,11 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Modeling for Shapes'
+%]
+    <h2> Modeling for Shapes: </h2>
+    <p> In this dialog, you select an axial ratio to model component
+    parameters for 4 basic shapes.</p>
+
+    <p class='center'><img src="images/predict1.png" 
+    alt="Model Shapes"/></p>
+
+[% INCLUDE footer.us3 %]

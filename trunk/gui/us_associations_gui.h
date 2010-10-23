@@ -45,7 +45,7 @@ class US_AssociationsGui : public US_WidgetsDialog
       void complete     ( void     );
 
       void help    ( void )
-      { showhelp.show_help( "model_editor.html#associations" ); };
+      { showhelp.show_help( "associations.html" ); };
 };
 
 //! \brief An overloaded QPushButton to allow an index to be set and a 

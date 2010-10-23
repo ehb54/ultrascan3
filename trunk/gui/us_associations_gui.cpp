@@ -95,7 +95,7 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    QFontMetrics fm( te_help->font() );
    te_help->setMaximumHeight( fm.lineSpacing() * 13 / 2 );
    te_help->setText( tr(
-      "* Drag each component from the upper list and drop it in an"
+      "* Drag a component from the upper list and drop it in an"
       " Analyte or Product cell.\n"
       "* Set the stoichiometry counter to the left of each component.\n"
       "* Enter values for K_association and K_off Rate in their text cells.\n"

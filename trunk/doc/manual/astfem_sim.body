@@ -58,7 +58,7 @@
     <ul>
        <li>
           <b>Model Control</b> Load a model from database or local disk using a
-           <a href="load_model_distrib.html">Model Loader dialog</a>.
+           <a href="model_editor.html">Model Editor dialog</a>.
        </li>
 
        <li>
@@ -101,7 +101,7 @@
           <b>Save Simulation</b> Clicking this button leads to a standard
           output directory dialog in which you may specify a ./results
           folder on local disk into which to save a simulated raw experiment
-          data set. This data set may be desirable to testing purposes,
+          data set. This data set may be desirable for testing purposes,
           in which case it will need further editing through US_Edit.
        </li>
 
