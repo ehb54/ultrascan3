@@ -106,7 +106,7 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    {
       top->setRowStretch(i, 0);
    }
-   top->setRowStretch(row-3, 0.1);
+   //top->setRowStretch(row-3, 1);
 }
 
 void US_RotorCalibration::reset()
@@ -222,6 +222,7 @@ void US_RotorCalibration::plot_all( void )
          title += ", type " + QString::QString(allData[i].type);
          */
          QString title="";
+         /*
          QTextStream ts(&title);
          ts << "Cell " << allData[i].cell
          << ", Channel " << allData[i].channel
@@ -229,13 +230,29 @@ void US_RotorCalibration::plot_all( void )
          << ", Scan " << j
          << ", GUID " << allData[i].rawGUID
          << ", Type " << allData[i].type;
-               
-         qDebug() << title;
+         */
+           
+         qDebug() << "Cell"    << allData[ i ].cell;
+         qDebug() << "Channel" << QChar( allData[ i ].channel );
+         qDebug() << "Speed"   << allData[ i ].scanData[ j ].rpm;
+         qDebug() << "Scan"    << j;
+
+         char guid[ 37 ];
+         uuid_unparse( (const uchar*)allData[ i ].rawGUID, guid );
+
+         qDebug() << "GUID"    << guid;
+
+         char type[ 3 ];
+         type[ 2 ] = '\0';
+         memcpy( type, allData[ i ].type, 2 );
+         qDebug() << "Type"    << type;
+
+         //qDebug() << title;
 
                //title.sprintf("Cell %i, Channel %c, Speed %f, Scan %d, GUID: %s, type: %s ", allData[i].cell, allData[i].channel, allData[i].scanData[j].rpm, j, allData[i].rawGUID, allData[i].type);
-         QwtPlotCurve* c = us_curve( data_plot, title);
+         QwtPlotCurve* c = us_curve( data_plot, title );
          c->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
-         qDebug() << title;
+         
          int size = allData[i].scanData[j].readings.size();
          double *x = new double [size];
          double *y = new double [size];
