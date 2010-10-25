@@ -34,7 +34,7 @@ class US_DataIO2
       //!  A constant value that identifies the format of the auc raw data.
       //!  Internal programs use this value to determine if the format of the
       //!  file is known.
-      static const uint format_version = 3;
+      static const uint format_version = 4;
 
       //! A class to aid in representation of radius/wavelength data
       class XValue
