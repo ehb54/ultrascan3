@@ -31,6 +31,8 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
 
       QIcon              check;
 
+      QPushButton*      pb_reset;
+
       QString            workingDir;
       QString            runID;
       QString            editID;
@@ -39,7 +41,6 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
       QStringList        triples;
                       
       QwtPlot*           data_plot;
-      QwtPlotCurve*      raw_curve;
       QwtPlotCurve*      fit_curve;
       QwtPlotCurve*      v_line;
       QwtPlotCurve*      minimum_curve;
@@ -57,12 +58,13 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
       QRadioButton*      rb_cells;
 
    public slots:
-      void help ( void )
+      void help (void)
       {
          showHelp.show_help( "manual/rotor_calibration.html" );
       };
-      void reset ( void );
-      void load ( void );
+      void reset (void);
+      void load (void);
+      void plot_all (void);
 
 };
 #endif

@@ -54,7 +54,8 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    top->addWidget( pb_load, row, 0 );
    
-   QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
+   pb_reset = us_pushbutton( tr( "Reset" ) );
+   pb_reset->setEnabled (false);
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
    top->addWidget( pb_reset, row, 1 );
    
@@ -112,6 +113,7 @@ void US_RotorCalibration::reset()
 {
    data.scanData .clear();
    allData.clear();
+   pb_reset->setEnabled (false);
    le_instructions->setText("Please load a calibration data set...");
 }
 
@@ -189,11 +191,63 @@ void US_RotorCalibration::load( void )
 
    if ( dataType != "RI" )
    {
-      le_instructions->setText( "Attention - " + runID + " is not intensity data!");
+      le_instructions->setText("Attention - " + runID + " is not intensity data!");
 //      return;
    }
-   
+
+   plot_all();
    data = allData[ 0 ];
+   
    //plot_current( 0 );
+   pb_reset->setEnabled (true);
 }
 
+void US_RotorCalibration::plot_all( void )
+{
+   
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   data_plot->clear();
+   for (int i=0; i<allData.size(); i++) // all the triples
+   {
+      for (int j=0; j<allData[i].scanData.size(); j++) //all scans in each triple
+      {
+         //qDebug() << allData[i].description << allData[i].cell << allData[i].channel;
+         /*
+         QString title="", str;
+         title += "Cell " + str.setNum(allData[i].cell);
+         title += ", Channel " + QString::QString(allData[i].channel);
+         title += ", Speed " + str.setNum(allData[i].scanData[j].rpm);
+         title += ", Scan " + str.setNum(j);
+         title += ", GUID " + QString::QString(allData[i].rawGUID);
+         title += ", type " + QString::QString(allData[i].type);
+         */
+         QString title="";
+         QTextStream ts(&title);
+         ts << "Cell " << allData[i].cell
+         << ", Channel " << allData[i].channel
+         << ", Speed " << allData[i].scanData[j].rpm
+         << ", Scan " << j
+         << ", GUID " << allData[i].rawGUID
+         << ", Type " << allData[i].type;
+               
+         qDebug() << title;
+
+               //title.sprintf("Cell %i, Channel %c, Speed %f, Scan %d, GUID: %s, type: %s ", allData[i].cell, allData[i].channel, allData[i].scanData[j].rpm, j, allData[i].rawGUID, allData[i].type);
+         QwtPlotCurve* c = us_curve( data_plot, title);
+         c->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
+         qDebug() << title;
+         int size = allData[i].scanData[j].readings.size();
+         double *x = new double [size];
+         double *y = new double [size];
+         for (int k=0; k<size; k++)
+         {
+            x[k] = allData[i].x[k].radius;
+            y[k] = allData[i].scanData[j].readings[k].value;
+         }
+         c->setData( x, y, allData[i].scanData[j].readings.size() );
+         delete x;
+         delete y;
+      }
+   }
+   data_plot->replot();
+}
