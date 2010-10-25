@@ -84,6 +84,12 @@ int US_DataIO2::writeRawData( const QString& file, RawData& data )
    // Write data type
    write( ds, data.type, 2, crc );
 
+   // Write cell
+   write( ds, (const char*)&data.cell, 1, crc );
+
+   // Write channel
+   write( ds, (const char*)&data.channel, 1, crc );
+
    // Create and write a guid
    write( ds, data.rawGUID, 16, crc );
 
@@ -300,7 +306,7 @@ int US_DataIO2::readRawData( const QString& file, RawData& data )
       unsigned char ver[ 2 ];
       read( ds, (char*) ver, 2, crc );
       quint32 version = ( ( ver[ 0 ] & 0x0f ) << 8 ) | ( ver[ 1 ] & 0x0f );
-      if ( version != format_version  && version != 2 ) throw BAD_VERSION;
+      if ( version != format_version ) throw BAD_VERSION;
 
       // Read and get the file type
       char type[ 3 ];
@@ -312,7 +318,21 @@ int US_DataIO2::readRawData( const QString& file, RawData& data )
     
       if ( ! types.contains( QString( type ) ) ) throw BADTYPE;
       strncpy( data.type, type, 2 );
-    
+
+      // Get the cell
+      union 
+      { char c[ 4 ];
+        int  i;
+      } cell;
+
+      cell.i = 0;
+
+      read( ds, cell.c, 1, crc );
+      data.cell = qFromLittleEndian( cell.i );
+
+      // Get the channel
+      read( ds, &data.channel, 1, crc );
+
       // Get the guid
       read( ds, data.rawGUID, 16, crc );
     
@@ -345,27 +365,14 @@ int US_DataIO2::readRawData( const QString& file, RawData& data )
       double min_radius;
       //double max_radius;  //unused
 
-      // Workaround to read old versions of auc files
-      if ( version == 2 )
-      {
-         read( ds, si.c, 2, crc );
-         min_radius = qFromLittleEndian( si.I ) / 1000.0;
+      read( ds, u1.c, 4, crc );
+      u2.I = qFromLittleEndian( u1.I );
+      min_radius = u2.f;
 
-         read( ds, si.c, 2, crc );
-         // Unused
-         //max_radius = qFromLittleEndian( si.I ) / 1000.0;
-      }
-      else  // version > 2 
-      {
-         read( ds, u1.c, 4, crc );
-         u2.I = qFromLittleEndian( u1.I );
-         min_radius = u2.f;
-
-         read( ds, u1.c, 4, crc );
-         // Unused
-         //u2.I = qFromLittleEndian( u1.I );
-         //min_radius = u2.f;
-      }
+      read( ds, u1.c, 4, crc );
+      // Unused
+      //u2.I = qFromLittleEndian( u1.I );
+      //min_radius = u2.f;
 
       read( ds, u1.c, 4, crc );
       u2.I = qFromLittleEndian( u1.I );
