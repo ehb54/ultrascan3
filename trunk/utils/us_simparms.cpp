@@ -414,3 +414,41 @@ int US_SimulationParameters::put_simparms( US_SimulationParameters& sparms,
    return sparms.save_simparms( fname );
 }
 
+void US_SimulationParameters::debug( void )
+{
+   qDebug() << "Sim parms Dump";
+   qDebug() << "Mesh radius size:" << mesh_radius.size();
+   qDebug() << "Simpoints       :" << simpoints;
+   qDebug() << "Mesh Type       :" << meshType;
+   qDebug() << "Grid Type       :" << gridType;
+   qDebug() << "Radial Res      :" << radial_resolution;
+   qDebug() << "Meniscus        :" << meniscus;
+   qDebug() << "Bottom          :" << bottom;
+   qDebug() << "Temperature     :" << temperature;
+   qDebug() << "Random noise    :" << rnoise;
+   qDebug() << "Time Inv Noise  :" << tinoise;
+   qDebug() << "Radial Inv Noise:" << rinoise;
+   qDebug() << "Rotor Serial    :" << rotorSerial;
+   qDebug() << "Band Forming    :" << band_forming;
+   qDebug() << "Band Volume     :" << band_volume;
+   qDebug() << "Bottom Pos      :" << bottom_position;
+   qDebug() << "Rotor Type      :" << rotorType;
+   qDebug() << "Rotor Coef      :" << rotorcoeffs[ 0 ] 
+                                   << rotorcoeffs[ 1 ]
+                                   << rotorcoeffs[ 2 ]
+                                   << rotorcoeffs[ 3 ]
+                                   << rotorcoeffs[ 4 ];
+
+   for ( int i = 0; i < speed_step.size(); i++ )
+   {
+      qDebug() << "  Step" << i;
+      qDebug() << "   Duration Hours" << speed_step[ i ].duration_hours;
+      qDebug() << "   Duration Mins " << speed_step[ i ].duration_minutes;
+      qDebug() << "   Delay Hours   " << speed_step[ i ].delay_hours;
+      qDebug() << "   Delay Mins    " << speed_step[ i ].delay_minutes;
+      qDebug() << "   Scans         " << speed_step[ i ].scans;
+      qDebug() << "   Acceleration  " << speed_step[ i ].acceleration;
+      qDebug() << "   Rotor Speed   " << speed_step[ i ].rotorspeed;
+      qDebug() << "   Accel Flag    " << speed_step[ i ].acceleration_flag;
+   }
+}

@@ -70,6 +70,10 @@ class US_EXTERN US_SimulationParameters
    //! \returns      Status flag:  0 if able to write to file
    static int put_simparms( US_SimulationParameters&, QString );
 
+   //! \brief Dump class contents to stderr
+   void debug( void );
+
+
    //! The radii from a user-selected mesh file (mesh == USER)
    QVector< double > mesh_radius; 
 
