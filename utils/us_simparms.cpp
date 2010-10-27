@@ -84,7 +84,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
       file.close();
    }
 
-   bottom_position     = 72.0;
+   bottom_position     = 7.2;
    meniscus            = editdata.meniscus;
 
    speed_step.clear();
@@ -122,12 +122,17 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    sp.rotorspeed       = (int)rpm;
    speed_step.append( sp );
 
+#ifndef NO_DB
    // set rotor coefficients, channel bottom position from hardware files
    setHardware( db, rotorSerial, 0, 0 );
 
    // calculate bottom using RPM, start bottom, and rotor coefficients
    bottom              = US_AstfemMath::calc_bottom( rpm, bottom_position,
                                                      rotorcoeffs );
+#else
+   // For NO_DB (back end) the bottom needs to be set after this function
+   bottom = bottom_position;
+#endif
 }
 
 // Set parameters from hardware files, related to rotor and centerpiece
@@ -135,7 +140,7 @@ void US_SimulationParameters::setHardware( US_DB2* db, QString serial,
       int cp, int ch )
 {
    rotorSerial      = serial;
-   bottom_position  = 72.0;
+   bottom_position  = 7.2;
 
    QVector< US_Hardware::CenterpieceInfo > cp_list;
    QMap   < QString, QString             > rotor_map;
