@@ -203,6 +203,18 @@ void US_Settings::set_beckmanBug( bool setBug )
 }
 
 // us_debug
+#ifdef NO_DB
+static int us_settings_debug = 0;
+int US_Settings::us_debug( void )
+{
+   return us_settings_debug;
+}
+
+void US_Settings::set_us_debug( int level )
+{
+   us_settings_debug = level;
+}
+#else
 int US_Settings::us_debug( void )
 {
   QSettings settings( "UTHSCSA", "UltraScan" );
@@ -217,6 +229,7 @@ void US_Settings::set_us_debug( int level )
   else
     settings.setValue( "us_debug", level );
 }
+#endif
 
 // debug text
 QStringList US_Settings::debug_text( void )
