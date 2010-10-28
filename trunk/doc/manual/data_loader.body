@@ -1,23 +1,23 @@
 [% INCLUDE header.us3/
-   title = 'UltraScan III Load Model Distributions'
+   title = 'UltraScan III Data Loader'
 %]
 
-    <h2> <i>UltraScan</i> Load Model Distributions: </h2>
+    <h2> <i>UltraScan</i> Data Loader: </h2>
 
-    <p> A number of <b><i>UltraScan III</i></b> applications load model
-    distribution data for processing. These applications use the
-    US_ModelLoader dialog class to allow the user to choose the model(s).</p>
+    <p> A number of <b><i>UltraScan III</i></b> applications load raw or
+    edited experiment data for processing. These applications use the
+    US_DataLoader dialog class to allow the user to choose the data.</p>
 
-    <p> The dialog presented when a US_ModelLoader is executed allows a
-    list of model choices from local disk or from the database. A Search
+    <p> The dialog presented when a US_DataLoader is executed allows a
+    list of edited or raw data choices from database or local disk. A Search
     button and text field allow the list to be pared down to those of
-    interest. After a model or set of models is selected in the list, an
-    Accept button passes model data to the caller. </p>
+    interest. After a data set is selected in the list, a Load button passes
+    experiment data to the caller.</p>
     
     <table>
       <tr>
         <td>
-          <img src="images/load_model_distrib.png" alt="ModelLoader Dialog"/>
+          <img src="images/data_loader.png" alt="DataLoader Dialog"/>
         </td>
         <td>
           <ul>
@@ -28,7 +28,7 @@
             
             <li>
               <b>Use Local Disk</b> Check this radio button to generate a
-              model list from local disk */ultrascan/data/models files.
+              raw/edit list from local disk */ultrascan/results files.
             </li>
 
             <li>
@@ -49,22 +49,19 @@
             
             <li>
               <b>Search</b> After filling the text box to its right with
-              enough of a partial model description, click the Search button
-              or hit the Return/Enter key to pare down the model list to
+              enough of a partial data description, click the Search button
+              or hit the Return/Enter key to pare down the data list to
               descriptions that match the field. Note that the search is
               case-insensitive. Enter a blank field to restore the full list.
             </li>
             
             <li>
-              <b>(model list)</b> The list of model descriptions is generated
-              either from local disk or db. Click on one or more entries to
-              indicate your choice(s) of data to load. Click an entry with
-              the right mouse button to get a <a href="load_model_dis-MID.html">
-              Model Information Dialog</a> detailing model information. If
-              models are selected, a right-mouse-button click displays
-              information for all selected model entries. If there are no
-              selections, the right-mouse-button click gives information for
-              the row at which the cursor is positioned.
+              <b>(data list)</b> The list of data descriptions is generated
+              either from local disk or db. Click on an entry to indicate
+              your choice of data to load. Depending on how the dialog was
+              invoked, the list is of raw (AUC) data sets, all edited data
+              sets, or edited data sets that are the latest edit of each
+              experiment.
             </li>
             
             <li>
@@ -76,8 +73,8 @@
             </li>
             
             <li>
-              <b>Accept</b> Click to accept the choice(s) highlighted in the
-              model list and pass distribution data to the caller.
+              <b>Load</b> Click to accept the choice highlighted in the
+              data list and pass data back to the caller.
             </li>
           </ul>
         </td>

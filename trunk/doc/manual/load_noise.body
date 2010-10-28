@@ -9,7 +9,7 @@
     US_NoiseLoader dialog class to allow the user to choose the vector(s).</p>
 
     <p> The dialog presented when a US_NoiseLoader is executed allows
-    a choice of noise vectors from local disk or from the database.
+    a choice of noise vectors from the database or from local disk.
     The source (database or disk) and the loaded model for which noise
     may be desired are part of the dialog creation. Noise choices are
     presented in a tree in which the top level consists of models that
@@ -18,10 +18,12 @@
     lower list of selected noise vectors. Double-clicking on a vector
     in the lower list removes it from the select list.<p>
 
-    <p> You may choose up to one time-invariant ("ti") and one
-    radially-invariant ("ri") noise vector. Once selections are as
-    desired, a "Load" button passes noise data to the caller.
-    Details for all available noise vectors can be displayed.</p>
+    <p> You may choose multiple noise records. Once selections are as desired,
+    a "Load" button passes noise data to the caller. If there are
+    multiple selected noise vectors of any one type - time-invariant ("ti") or
+    radially-invariant ("ri") - the vectors are summed before being passed
+    back to the caller. Details for all available noise vectors can be
+    displayed.</p>
     
     <table>
       <tr>
@@ -38,11 +40,9 @@
             </li>
             
             <li>
-              <b>Selected Noise Vectors</b> This list will contain a list
-              of no, one, or two selected noise vectors. There will be at
-              most one each of "ti" and "ri" vectors. Any existing "ti"
-              or "ri" in this list will be replaced if a new like vector
-              is selected. Double click an entry here to remove it.
+              <b>Selected Noise Vectors</b> This list will contain all selected
+              noise vectors. There may be multiple selections of each of "ti"
+              and "ri" vectors. Double click an entry here to remove it.
             </li>
 
             <li>
@@ -58,8 +58,8 @@
             </li>
             
             <li>
-              <b>Load</b> Click this button to load selected noise
-              vector(s) and exit the dialog.
+              <b>Load</b> Click this button to load (and sum any like-type)
+              selected noise vector(s) and exit the dialog.
             </li>
           </ul>
         </td>

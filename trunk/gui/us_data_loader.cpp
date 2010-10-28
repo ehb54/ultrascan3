@@ -13,14 +13,13 @@
 
 // main constructor with flags for edit, latest-edit and local-data
 US_DataLoader::US_DataLoader( bool editsel, bool late, bool local,
-      QString search, QString invtext, US_DB2* dbP ) :US_WidgetsDialog( 0, 0 )
+      QString search, QString invtext ) :US_WidgetsDialog( 0, 0 )
 {
    ldedit    = editsel;
    latest    = late;
    ondisk    = local;
    dsearch   = search;
    dinvtext  = invtext;
-   db        = dbP;
 
    if ( ldedit )
       setWindowTitle( tr( "Load Edited Data" ) );
@@ -65,7 +64,7 @@ US_DataLoader::US_DataLoader( bool editsel, bool late, bool local,
    connect( rb_disk,     SIGNAL( toggled(     bool ) ),
             this,        SLOT(   select_disk( bool ) ) );
    connect( pb_invest,   SIGNAL( clicked()           ),
-            this,        SLOT(   investigator()      ) );
+            this,        SLOT(   get_person()        ) );
    connect( le_invest,   SIGNAL( returnPressed()     ),
             this,        SLOT(   investigator()      ) );
    connect( pb_filtdata, SIGNAL( clicked()           ),
@@ -100,7 +99,17 @@ US_DataLoader::US_DataLoader( bool editsel, bool late, bool local,
 
    // Default investigator; possibly to current user, based on home directory
    if ( dinvtext.compare( QString( "USER" ) ) == 0 )
-      dinvtext = QDir( QDir::homePath() ).dirName();
+   {
+      QStringList DB     = US_Settings::defaultDB();
+      int         idPers = US_Settings::us_inv_ID();
+
+      if ( DB.size() < 5  ||  idPers < 1 )
+         dinvtext = QDir( QDir::homePath() ).dirName();
+
+      else
+         dinvtext = QString::number( idPers ) + ": "
+                    + US_Settings::us_inv_name();
+   }
 
    le_invest->setText( dinvtext );
 
@@ -156,6 +165,8 @@ int US_DataLoader::load_raw( QVector< US_DataIO2::RawData >& rawList,
 
    else
    {  // load data from database
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
       QStringList query;
       QStringList rawIDs;
       QStringList rawFNs;
@@ -167,12 +178,12 @@ int US_DataLoader::load_raw( QVector< US_DataIO2::RawData >& rawList,
       rawFNs.clear();
 
       query << "all_rawDataIDs" << invID;
-      db->query( query );
+      db.query( query );
 
-      while ( db->next() )
+      while ( db.next() )
       {
-         rawIDs << db->value( 0 ).toString();
-         rawFNs << db->value( 2 ).toString();
+         rawIDs << db.value( 0 ).toString();
+         rawFNs << db.value( 2 ).toString();
       }
 
       for ( int ii = 0; ii < rawIDs.size(); ii++ )
@@ -190,7 +201,7 @@ int US_DataLoader::load_raw( QVector< US_DataIO2::RawData >& rawList,
 
             QString afn = tempdir + fname;
 
-            db->readBlobFromDB( afn, "download_aucData", recID.toInt() );
+            db.readBlobFromDB( afn, "download_aucData", recID.toInt() );
 
             US_DataIO2::readRawData( afn, rdata );
             rawList << rdata;
@@ -252,6 +263,8 @@ int US_DataLoader::load_edit( QVector< US_DataIO2::EditedData >& dataList,
 
    else
    {  // load data from database
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
       QStringList query;
       QStringList edtIDs;
       QString invID   = le_invest->text().section( ":", 0, 0 );
@@ -261,10 +274,10 @@ int US_DataLoader::load_edit( QVector< US_DataIO2::EditedData >& dataList,
       edtIDs.clear();
 
       query << "all_editedDataIDs" << invID;
-      db->query( query );
+      db.query( query );
 
-      while ( db->next() )
-         edtIDs << db->value( 0 ).toString();
+      while ( db.next() )
+         edtIDs << db.value( 0 ).toString();
 
       for ( int ii = 0; ii < edtIDs.size(); ii++ )
       {
@@ -273,12 +286,12 @@ int US_DataLoader::load_edit( QVector< US_DataIO2::EditedData >& dataList,
 
          query.clear();
          query << "get_editedData" << recID;
-         db->query( query );
-         db->next();
+         db.query( query );
+         db.next();
 
-         QString aucID    = db->value( 0 ).toString();
-         QString recGUID  = db->value( 1 ).toString();
-         QString fname    = db->value( 3 ).toString().replace( "\\", "/" );
+         QString aucID    = db.value( 0 ).toString();
+         QString recGUID  = db.value( 1 ).toString();
+         QString fname    = db.value( 3 ).toString().replace( "\\", "/" );
          QString erunid   = fname.section( ".", 0, 0 );
          QString ecode    = fname.section( ".", 1, 1 );
          QString etype    = fname.section( ".", 2, 2 );
@@ -293,9 +306,9 @@ int US_DataLoader::load_edit( QVector< US_DataIO2::EditedData >& dataList,
             QString afn = tempdir + aucfn;
             QString efn = tempdir + fname;
 
-            db->readBlobFromDB( afn, "download_aucData", aucID.toInt() );
+            db.readBlobFromDB( afn, "download_aucData", aucID.toInt() );
 
-            db->readBlobFromDB( efn, "download_editData", idRec );
+            db.readBlobFromDB( efn, "download_editData", idRec );
 
             US_DataIO2::loadData( tempdir, fname, dataList, rawList );
 
@@ -335,13 +348,13 @@ QString US_DataLoader::description( )
 }
 
 // Public method to return DB pointer and last-used settings
-US_DB2* US_DataLoader::settings( bool& local, QString& invtext,
+void US_DataLoader::settings( bool& local, QString& invtext,
       QString& search )
 {
    local     = rb_disk->isChecked();
    invtext   = le_invest->text();
    search    = le_dfilter->text();
-   return db;
+   return;
 }
 
 // Slot to respond to change in disk/db radio button select
@@ -356,19 +369,15 @@ void US_DataLoader::select_disk( bool checked )
    if ( !checked )
    {  // Disk unchecked (DB checked):  fill edit/raw list from DB
       US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
 
-      if ( db == NULL )
+      if ( db.lastErrno() != US_DB2::OK )
       {
-         db = new US_DB2( pw.getPasswd() );
-
-         if ( db->lastErrno() != US_DB2::OK )
-         {
-            QMessageBox::information( this,
-                  tr( "DB Connection Problem" ),
-                  tr( "There was an error connecting to the database:\n" )
-                  + db->lastError() );
-            return;
-         }
+         QMessageBox::information( this,
+             tr( "DB Connection Problem" ),
+             tr( "There was an error connecting to the database:\n" )
+             + db.lastError() );
+         return;
       }
 
       US_Investigator::US_InvestigatorData data;
@@ -378,21 +387,21 @@ void US_DataLoader::select_disk( bool checked )
       bool        haveInv = false;
 
       query << "get_people" << invtext;
-      db->query( query );
+      db.query( query );
 
-      if ( db->numRows() < 1 )
+      if ( db.numRows() < 1 )
       {  // Investigator text yields nothing:  retry with blank field
          query.clear();
          query << "get_people" << "";
-         db->query( query );
+         db.query( query );
       }
 
-      while ( db->next() )
+      while ( db.next() )
       {  // Loop through investigators looking for match
-         data.invID     = db->value( 0 ).toInt();
-         data.lastName  = db->value( 1 ).toString();
-         data.firstName = db->value( 2 ).toString();
-         if ( db->numRows() < 2  ||
+         data.invID     = db.value( 0 ).toInt();
+         data.lastName  = db.value( 1 ).toString();
+         data.firstName = db.value( 2 ).toString();
+         if ( db.numRows() < 2  ||
               data.lastName.contains(  invtext, Qt::CaseInsensitive )  ||
               data.firstName.contains( invtext, Qt::CaseInsensitive ) )
          {  // Single investigator or a match to last,first name
@@ -415,6 +424,29 @@ void US_DataLoader::select_disk( bool checked )
 void US_DataLoader::investigator()
 {
    select_disk( false );
+}
+
+// Investigator button clicked:  get investigator from dialog
+void US_DataLoader::get_person()
+{
+   QString invtext         = le_invest->text();
+   int     invID           = invtext.section( ":", 0, 0 ).toInt();
+   US_Investigator* dialog = new US_Investigator( true, invID );
+
+   connect(
+      dialog,
+      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
+      SLOT(   update_person(         int, const QString&, const QString& ) ));
+
+   dialog->exec();
+}
+
+// Slot to handle accept in investigator dialog
+void US_DataLoader::update_person( int ID, const QString& lname,
+      const QString& fname )
+{
+   le_invest->setText( QString::number( ID ) + ": " + lname + ", " + fname );
+   return;
 }
 
 // List data choices (disk/db and possibly filtered by search text)
@@ -518,23 +550,25 @@ void US_DataLoader::accepted()
 // scan database for edit sets
 int US_DataLoader::scan_dbase_edit()
 {
-   setWindowTitle( tr( "Load Edited Data from DB" ) );
-
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
    int nall = 0;
    int nrec = 0;
    QStringList query;
    QStringList edtIDs;
    QString invID  = le_invest->text().section( ":", 0, 0 );
 
+   setWindowTitle( tr( "Load Edited Data from DB" ) );
+
    query.clear();
    edtIDs.clear();
 
    query << "all_editedDataIDs" << invID;
-   db->query( query );
+   db.query( query );
 
-   while ( db->next() )
+   while ( db.next() )
    {
-      edtIDs << db->value( 0 ).toString();
+      edtIDs << db.value( 0 ).toString();
    }
 
    nall    = edtIDs.size();
@@ -546,13 +580,13 @@ int US_DataLoader::scan_dbase_edit()
 
       query.clear();
       query << "get_editedData" << recID;
-      db->query( query );
-      db->next();
+      db.query( query );
+      db.next();
 
-      QString parID    = db->value( 0 ).toString();
-      QString recGUID  = db->value( 1 ).toString();
-      QString descrip  = db->value( 2 ).toString();
-      QString filename = db->value( 3 ).toString().replace( "\\", "/" );
+      QString parID    = db.value( 0 ).toString();
+      QString recGUID  = db.value( 1 ).toString();
+      QString descrip  = db.value( 2 ).toString();
+      QString filename = db.value( 3 ).toString().replace( "\\", "/" );
       QString filebase = filename.section( "/", -1, -1 );
       QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, 0 )
                          : descrip;
@@ -563,10 +597,10 @@ int US_DataLoader::scan_dbase_edit()
 
       query.clear();
       query << "get_rawData" << parID;
-      db->query( query );
-      db->next();
+      db.query( query );
+      db.next();
 
-      QString parGUID  = db->value( 0 ).toString();
+      QString parGUID  = db.value( 0 ).toString();
       QString label    = runID + "." + editCode + "." + subType;
       QString baselabl = label;
       int nextdup      = 2;
@@ -601,22 +635,24 @@ int US_DataLoader::scan_dbase_edit()
 // scan database for raw sets
 int US_DataLoader::scan_dbase_raw()
 {
-   setWindowTitle( tr( "Load AUC Data from DB" ) );
-
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
    int nrec = 0;
    QStringList query;
    QStringList rawIDs;
    QString invID  = le_invest->text().section( ":", 0, 0 );
 
+   setWindowTitle( tr( "Load AUC Data from DB" ) );
+
    query.clear();
    rawIDs.clear();
 
    query << "all_rawDataIDs" << invID;
-   db->query( query );
+   db.query( query );
 
-   while ( db->next() )
+   while ( db.next() )
    {
-      rawIDs << db->value( 0 ).toString();
+      rawIDs << db.value( 0 ).toString();
    }
 
    nrec    = rawIDs.size();
@@ -628,13 +664,13 @@ int US_DataLoader::scan_dbase_raw()
 
       query.clear();
       query << "get_rawData" << recID;
-      db->query( query );
-      db->next();
+      db.query( query );
+      db.next();
 
-      QString recGUID  = db->value( 0 ).toString();
+      QString recGUID  = db.value( 0 ).toString();
+      QString descrip  = db.value( 1 ).toString();
+      QString filename = db.value( 2 ).toString().replace( "\\", "/" );
       QString parGUID  = recGUID;
-      QString descrip  = db->value( 1 ).toString();
-      QString filename = db->value( 2 ).toString().replace( "\\", "/" );
       QString filebase = filename.section( "/", -1, -1 );
       QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, 0 )
                          : descrip;

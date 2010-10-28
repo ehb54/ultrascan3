@@ -42,13 +42,13 @@ US_ModelLoader::US_ModelLoader( bool multisel, bool local, QString search,
 
    pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    top->addWidget( pb_investigator, row,   0 );
-   connect( pb_investigator, SIGNAL( clicked() ),
-            this,            SLOT( investigator() ) );
+   connect( pb_investigator, SIGNAL( clicked()       ),
+            this,            SLOT(   get_person()    ) );
    le_investigator = us_lineedit();
    le_investigator->setReadOnly( false );
    top->addWidget( le_investigator, row++, 1 );
    connect( le_investigator, SIGNAL( returnPressed() ),
-            this,            SLOT( investigator() ) );
+            this,            SLOT(   investigator()  ) );
 
    pb_filtmodels   = us_pushbutton( tr( "Search" ) );
    top->addWidget( pb_filtmodels,   row,   0 );
@@ -92,7 +92,17 @@ US_ModelLoader::US_ModelLoader( bool multisel, bool local, QString search,
 
    // Default investigator; possibly to current user, based on home directory
    if ( dinvtext.compare( QString( "USER" ) ) == 0 )
-      dinvtext = QDir( QDir::homePath() ).dirName();
+   {
+      QStringList DB     = US_Settings::defaultDB();
+      int         idPers = US_Settings::us_inv_ID();
+
+      if ( DB.size() < 5  ||  idPers < 1 )  // no default DB:  use user name
+         dinvtext = QDir( QDir::homePath() ).dirName();
+
+      else                                  // investigator from default DB
+         dinvtext = QString::number( idPers ) + ": "
+                    + US_Settings::us_inv_name();
+   }
 
    le_investigator->setText( dinvtext );
 
@@ -259,6 +269,28 @@ void US_ModelLoader::investigator()
    select_disk( false );
 }
 
+// Investigator button clicked:  get investigator from dialog
+void US_ModelLoader::get_person()
+{
+   dinvtext      = le_investigator->text();
+   int idPers    = dinvtext.section( ":", 0, 0 ).toInt();
+   US_Investigator* dialog = new US_Investigator( true, idPers );
+
+   connect( dialog,
+      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
+      SLOT(   update_person(         int, const QString&, const QString& ) ) );
+
+   dialog->exec();
+}
+
+// Slot to handle accept in investigator dialog
+void US_ModelLoader::update_person( int ID, const QString& lname,
+      const QString& fname)
+{
+   dinvtext      = QString::number( ID ) + ": " + lname + ", " + fname;
+   le_investigator->setText( dinvtext );
+}
+      
 // List model choices (disk/db and possibly filtered by search text)
 void US_ModelLoader::list_models()
 {

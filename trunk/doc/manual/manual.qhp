@@ -32,6 +32,7 @@
             <keyword id="b1" name="buffer"        ref="us_buffer.html"/>
             <keyword id="c1" name="components"    ref="components.html"/>
             <keyword id="c2" name="configuration" ref="config.html"/>
+            <keyword id="d1" name="data-loader"   ref="data_loader.html"/>
             <keyword id="f1" name="fe-model"      ref="fe_match.html"/>
             <keyword id="g1" name="ga-initialize" ref="ga_initialize.html"/>
             <keyword id="g2" name="gradient"      ref="colorgradient.html"/>
@@ -83,6 +84,7 @@
 
             <file>us_investigator.html</file>
             <file>images/us_investigator.png</file>
+            <file>images/us_investigator-2.png</file>
 
             <file>us_buffer.html</file>
             <file>images/us_buffer.png</file>
@@ -177,6 +179,9 @@
             <file>images/associations.png</file>
             <file>images/components.png</file>
             <file>images/predict1.png</file>
+
+            <file>data_loader.html</file>
+            <file>images/data_loader.png</file>
         </files>
     </filterSection>
 </QtHelpProject> 

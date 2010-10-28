@@ -112,6 +112,8 @@ class US_EXTERN US_ModelLoader : public US_WidgetsDialog
    private slots:
       void select_disk ( bool );
       void investigator( void );
+      void get_person(   void );
+      void update_person( int, const QString&, const QString& );
       void list_models ( void );
       void cancelled(    void );
       void accepted(     void );

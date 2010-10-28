@@ -25,8 +25,7 @@ class US_EXTERN US_DataLoader : public US_WidgetsDialog
       //! \param local    Flag: default data source to local disk
       //! \param search   Default list search string (list filter)
       //! \param invtext  Default investigator search text or "USER"
-      //! \param dbP      Database pointer to opened connection
-      US_DataLoader( bool, bool, bool, QString, QString, US_DB2* );
+      US_DataLoader( bool, bool, bool, QString, QString );
 
       //! \brief Load the vector of raw data sets for selected runID
       //! \param rawList A reference to a vector of rawData objects
@@ -62,8 +61,7 @@ class US_EXTERN US_DataLoader : public US_WidgetsDialog
       //! \param local   Reference to boolean: is local selected?
       //! \param invtext Reference to current investigator text.
       //! \param search  Reference to current search string.
-      //! \return        Pointer to any opened database connection.
-      US_DB2* settings( bool&, QString&, QString& );
+      void    settings( bool&, QString&, QString& );
 
    private:
       US_Help showHelp;
@@ -96,8 +94,6 @@ class US_EXTERN US_DataLoader : public US_WidgetsDialog
 
       US_ListWidget* lw_data;     // data list widget
 
-      US_DB2*        db;          // pointer to opened DB connection
-
       bool           ldedit;      // current load-edits flag (F -> raw)
       bool           latest;      // current use-lastest-edit flag
       bool           ondisk;      // current from-disk flag (F -> DB)
@@ -108,6 +104,8 @@ class US_EXTERN US_DataLoader : public US_WidgetsDialog
    private slots:
       void select_disk (    bool );
       void investigator(    void );
+      void get_person(      void );
+      void update_person(   int, const QString&, const QString& );
       void list_data   (    void );
       void cancelled(       void );
       void accepted(        void );

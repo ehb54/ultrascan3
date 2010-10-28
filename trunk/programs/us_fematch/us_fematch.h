@@ -15,6 +15,7 @@
 #include "us_math2.h"
 #include "us_run_details2.h"
 #include "us_buffer_gui.h"
+#include "us_analyte.h"
 #include "qwt_plot_marker.h"
 
 #ifndef DbgLv
@@ -130,8 +131,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       US_DataIO2::RawData*        rdata;
       US_DataIO2::RawData*        sdata;
 
-      US_DB2*                     db;
-
       US_Model                    model;
       US_Model                    model_loaded;
       US_Noise                    ri_noise;
@@ -162,8 +161,8 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void view_report(    void );
       void exclude   (     void );
       void adjust_model(   void );
-      void update_buffer(    US_Buffer      );
-      void update_vbar(      double );
+      void update_buffer(    US_Buffer  );
+      void update_vbar(      US_Analyte );
       void exclude_from(     double );
       void exclude_to  (     double );
       void comp_number (     double );
@@ -198,6 +197,8 @@ class US_EXTERN US_FeMatch : public US_Widgets
                             QString&, QString&, QString& );
       bool    verify_buffer( void );
       void    buffer_text(   void );
+      bool    verify_vbar(   void );
+      void    vbar_text(     void );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };

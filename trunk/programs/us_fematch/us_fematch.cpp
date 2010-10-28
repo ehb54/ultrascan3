@@ -37,7 +37,7 @@ int main( int argc, char* argv[] )
 US_FeMatch::US_FeMatch() : US_Widgets()
 {
    setObjectName( "US_FeMatch" );
-   def_local  = true;
+   def_local  = false;
    dbg_level  = US_Settings::us_debug();
 
    // set up the GUI
@@ -174,12 +174,14 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    le_vbar    ->setMinimumWidth( lwid );
    pb_compress->setMinimumWidth( pwid );
    le_compress->setMinimumWidth( lwid );
-   connect( le_density,   SIGNAL( editingFinished() ),
-            this,         SLOT(   buffer_text()     ) );
-   connect( le_viscosity, SIGNAL( editingFinished() ),
-            this,         SLOT(   buffer_text()     ) );
-   connect( le_compress,  SIGNAL( editingFinished() ),
-            this,         SLOT(   buffer_text()     ) );
+   connect( le_density,   SIGNAL( returnPressed() ),
+            this,         SLOT(   buffer_text()   ) );
+   connect( le_viscosity, SIGNAL( returnPressed() ),
+            this,         SLOT(   buffer_text()   ) );
+   connect( le_compress,  SIGNAL( returnPressed() ),
+            this,         SLOT(   buffer_text()   ) );
+   connect( le_vbar,      SIGNAL( returnPressed() ),
+            this,         SLOT(   vbar_text()     ) );
 
    QLabel* lb_experiment   = us_banner( tr( "Experimental Parameters (at 20" ) 
       + DEGC + "):" );
@@ -384,7 +386,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    ri_noise.count = 0;
 
    sdata          = 0;
-   db             = NULL;
 }
 
 // public function to get pointer to edit data
@@ -422,15 +423,14 @@ void US_FeMatch::load( void )
    dataLatest = ck_edit->isChecked();
 
    US_DataLoader* dialog =
-      new US_DataLoader( true, dataLatest, def_local, dfilter, investig, db );
+      new US_DataLoader( true, dataLatest, def_local, dfilter, investig );
 
    if ( dialog->exec() == QDialog::Accepted )
    {
-      db         = dialog->settings( def_local, investig, dfilter );
+      dialog->settings(  def_local, investig, dfilter );
+      dialog->load_edit( dataList,  rawList,  triples );
 DbgLv(1) << "DLd:  local invest filter" << def_local << investig << dfilter;
 DbgLv(1) << "DLd:   desc" << dialog->description();
-
-      dialog->load_edit( dataList, rawList, triples );
 DbgLv(1) << "DLd:    triples[0]" << triples.at(0);
 
       delete dialog;
@@ -786,7 +786,10 @@ void US_FeMatch::update_viscosity( double new_visc )
 // open dialog and get buffer information
 void US_FeMatch::get_buffer( void )
 {
-   US_BufferGui* bdiag = new US_BufferGui( -1, true );
+   int idPers  = investig.section( ":", 0, 0 ).toInt();
+   US_Buffer buff;
+
+   US_BufferGui* bdiag = new US_BufferGui( idPers, true, buff, def_local );
    connect( bdiag, SIGNAL( valueChanged(  US_Buffer ) ),
             this,  SLOT  ( update_buffer( US_Buffer ) ) );
    bdiag->exec();
@@ -820,9 +823,12 @@ void US_FeMatch::update_buffer( US_Buffer buffer )
 // open dialog and get vbar information
 void US_FeMatch::get_vbar( void )
 {
-   US_AnalyteGui* vdiag = new US_AnalyteGui( -1, true );
-   connect( vdiag,  SIGNAL( valueChanged( double ) ),
-             this,  SLOT  ( update_vbar ( double ) ) );
+   int idPers  = investig.section( ":", 0, 0 ).toInt();
+   QString aguid = "";
+
+   US_AnalyteGui* vdiag = new US_AnalyteGui( idPers, true, aguid, !def_local );
+   connect( vdiag,  SIGNAL( valueChanged( US_Analyte ) ),
+             this,  SLOT  ( update_vbar ( US_Analyte ) ) );
    vdiag->exec();
    qApp->processEvents();
 }
@@ -870,10 +876,20 @@ void US_FeMatch::view_report( )
 }
 
 // update vbar
-void US_FeMatch::update_vbar( double new_vbar )
+void US_FeMatch::update_vbar( US_Analyte analyte )
 {
-   vbar = new_vbar;
-   le_vbar->setText( QString::number( new_vbar, 'f', 4 ) );
+   bool changed = true;
+
+   if ( buffLoaded )
+      changed   = verify_vbar();
+
+   if ( changed )
+   {
+      vbar       = analyte.vbar20;
+      buffLoaded = false;
+      le_vbar->setText( QString::number( vbar, 'f', 5 ) );
+      qApp->processEvents();
+   }
 }
 
 void US_FeMatch::exclude_from( double from )
@@ -1554,14 +1570,16 @@ for (int jj=0;jj<nenois;jj++)
 
       if ( msgBox.exec() == QMessageBox::Yes )
       {
-         US_Passwd    pw;
+         US_Passwd pw;
+         US_DB2    db( pw.getPasswd() );
+         US_DB2*   dbP = NULL;
 
          if ( !def_local )
-             db           = new US_DB2( pw.getPasswd() );
+             dbP          = &db;
 
          if ( nenois > 1 )
          {
-            US_NoiseLoader* nldiag = new US_NoiseLoader( db,
+            US_NoiseLoader* nldiag = new US_NoiseLoader( dbP,
                mieGUIDs, nieGUIDs, ti_noise, ri_noise );
             nldiag->move( this->pos() + QPoint( 200, 200 ) );
             nldiag->exec();
@@ -1577,10 +1595,10 @@ for (int jj=0;jj<nenois;jj++)
             lnoisGUID     = lnoisGUID.section( ":", 0, 0 );
 
             if ( typen == "ti" )
-               ti_noise.load( !def_local, lnoisGUID, db );
+               ti_noise.load( !def_local, lnoisGUID, dbP );
 
             else
-               ri_noise.load( !def_local, lnoisGUID, db );
+               ri_noise.load( !def_local, lnoisGUID, dbP );
          }
       }
    }
@@ -1608,7 +1626,7 @@ DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
    sdata          = new US_DataIO2::RawData();
 
    // initialize simulation parameters using edited data information
-   simparams.initFromData( db, *edata );
+   simparams.initFromData( NULL, *edata );
 DbgLv(1) << " initFrDat serial type coeffs" << simparams.rotorSerial
    << simparams.rotorType      << simparams.rotorcoeffs[0]
    << simparams.rotorcoeffs[1] << simparams.rotorcoeffs[2]
@@ -2277,10 +2295,10 @@ int US_FeMatch::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs 
 
    else
    {
-      US_Passwd    pw;
-      db  = ( db == NULL ) ? new US_DB2( pw.getPasswd() ) : db;
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
 
-      if ( db->lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != US_DB2::OK )
       {
          return 0;
       }
@@ -2291,12 +2309,12 @@ int US_FeMatch::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs 
       query.clear();
 
       query << "get_model_desc" << invID;
-      db->query( query );
+      db.query( query );
 
-      while ( db->next() )
+      while ( db.next() )
       {  // accumulate from db desc entries matching editGUID;
-         xmGUID  = db->value( 1 ).toString();
-         xeGUID  = db->value( 3 ).toString();
+         xmGUID  = db.value( 1 ).toString();
+         xeGUID  = db.value( 3 ).toString();
 DbgLv(2) << "MIE(db): xm/xe/e GUID" << xmGUID << xeGUID << eGUID;
 
          if ( xeGUID == eGUID )
@@ -2364,13 +2382,11 @@ int US_FeMatch::noises_in_model( bool ondisk, QString mGUID,
 
    else
    {
-      US_Passwd    pw;
-      db  = ( db == NULL ) ? new US_DB2( pw.getPasswd() ) : db;
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
 
-      if ( db->lastErrno() != US_DB2::OK )
-      {
+      if ( db.lastErrno() != US_DB2::OK )
          return 0;
-      }
 
       QStringList query;
       QString     invID  = investig.section( ":", 0, 0 );
@@ -2380,20 +2396,20 @@ int US_FeMatch::noises_in_model( bool ondisk, QString mGUID,
 
       query.clear();
       query << "get_modelID" << mGUID;
-      db->query( query );
-      db->next();
-      modlID  = db->value( 0 ).toString();
+      db.query( query );
+      db.next();
+      modlID  = db.value( 0 ).toString();
 
       query.clear();
       query << "get_noise_desc" << invID;
-      db->query( query );
+      db.query( query );
 
-      while ( db->next() )
+      while ( db.next() )
       {  // accumulate from db desc entries matching editGUID;
-         xnoiID  = db->value( 0 ).toString();
-         xnGUID  = db->value( 1 ).toString();
-         xmodID  = db->value( 3 ).toString();
-         xntype  = db->value( 4 ).toString();
+         xnoiID  = db.value( 0 ).toString();
+         xnGUID  = db.value( 1 ).toString();
+         xmodID  = db.value( 3 ).toString();
+         xntype  = db.value( 4 ).toString();
          xntype  = xntype.contains( "ri_nois", Qt::CaseInsensitive ) ?
                    "ri" : "ti";
 
@@ -2415,57 +2431,52 @@ bool US_FeMatch::bufinfo_db( US_DataIO2::EditedData* edata,
    QStringList query;
    QString rawGUID  = edata->dataGUID;
 
-   if ( db == NULL )
-   {
-      US_Passwd pw;
-      db            = new US_DB2( pw.getPasswd() );
-      if ( db == NULL )
-         return bufinfo;
-   }
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
 
    query << "get_rawDataID_from_GUID" << rawGUID;
-   db->query( query );
-   if ( db->lastErrno() != US_DB2::OK )
+   db.query( query );
+   if ( db.lastErrno() != US_DB2::OK )
    {
       qDebug() << "***Unable to get raw Data ID from GUID" << rawGUID
-         << " lastErrno" << db->lastErrno();
+         << " lastErrno" << db.lastErrno();
       return bufinfo;
    }
-   db->next();
-   QString rawID    = db->value( 0 ).toString();
-   QString soluID   = db->value( 2 ).toString();
-QString expID=db->value(1).toString();
+   db.next();
+   QString rawID    = db.value( 0 ).toString();
+   QString soluID   = db.value( 2 ).toString();
+QString expID=db.value(1).toString();
 DbgLv(2) << "BInfD: rawGUID rawID expID soluID"
  << rawGUID << rawID << expID << soluID;
 
    query.clear();
    query << "get_solutionBuffer" << soluID;
-   db->query( query );
-   if ( db->lastErrno() != US_DB2::OK )
+   db.query( query );
+   if ( db.lastErrno() != US_DB2::OK )
    {
       qDebug() << "***Unable to get solutionBuffer from soluID" << soluID
-         << " lastErrno" << db->lastErrno();
+         << " lastErrno" << db.lastErrno();
       query.clear();
       query << "get_solutionIDs" << expID;
-      db->query( query );
-      db->next();
-      soluID = db->value( 0 ).toString();
+      db.query( query );
+      db.next();
+      soluID = db.value( 0 ).toString();
       query.clear();
       query << "get_solutionBuffer" << soluID;
-      db->query( query );
-      if ( db->lastErrno() != US_DB2::OK )
+      db.query( query );
+      if ( db.lastErrno() != US_DB2::OK )
       {
          qDebug() << "***Unable to get solutionBuffer from soluID" << soluID
-            << " lastErrno" << db->lastErrno();
+            << " lastErrno" << db.lastErrno();
       }
       else
          qDebug() << "+++ Got solutionBuffer from soluID" << soluID;
       //return bufinfo;
    }
-   db->next();
-   QString id       = db->value( 0 ).toString();
-   QString guid     = db->value( 1 ).toString();
-   QString desc     = db->value( 2 ).toString();
+   db.next();
+   QString id       = db.value( 0 ).toString();
+   QString guid     = db.value( 1 ).toString();
+   QString desc     = db.value( 2 ).toString();
 DbgLv(2) << "BInfD: id guid desc" << id << guid << desc;
 
    if ( !id.isEmpty() )
@@ -2480,9 +2491,9 @@ DbgLv(2) << "BInfD: id guid desc" << id << guid << desc;
 QString invID  = investig.section( ":", 0, 0 );
 query.clear();
 query << "get_experiment_desc" << invID;
-db->query( query );
+db.query( query );
 QStringList expIDs;
-while ( db->next() ) expIDs << db->value(0).toString();
+while ( db.next() ) expIDs << db.value(0).toString();
 DbgLv(2) << "esbDbg:invID nexpIDs" << invID << expIDs.size();
 for ( int ii=0; ii<expIDs.size(); ii++ )
 {
@@ -2490,23 +2501,23 @@ for ( int ii=0; ii<expIDs.size(); ii++ )
  QStringList solIDs;
  query.clear();
  query << "get_solutionIDs" << expIDs[ii];
- db->query( query );
- while ( db->next() ) solIDs << db->value(0).toString();
+ db.query( query );
+ while ( db.next() ) solIDs << db.value(0).toString();
  for ( int jj=0; jj<solIDs.size(); jj++ )
  {
   query.clear();
   query << "get_solution" << solIDs[jj];
-  db->query( query );
-  db->next();
+  db.query( query );
+  db.next();
   DbgLv(2) << "esbDbg:   jj solID sGUID temp desc notes" << jj << solIDs[jj]
-   << db->value(0).toString() << db->value(2).toString()
-   << db->value(1).toString() << db->value(3).toString();
+   << db.value(0).toString() << db.value(2).toString()
+   << db.value(1).toString() << db.value(3).toString();
   query.clear();
   query << "get_solutionBuffer" << solIDs[jj];
-  db->query( query );
-  db->next();
-  DbgLv(2) << "esbDbg      bId bDesc bGuid" << db->value(0).toString()
-   << db->value(2).toString() << db->value(1).toString();
+  db.query( query );
+  db.next();
+  DbgLv(2) << "esbDbg      bId bDesc bGuid" << db.value(0).toString()
+   << db.value(2).toString() << db.value(1).toString();
  }
 }
 //*DEBUG
@@ -2637,13 +2648,8 @@ bool US_FeMatch::bufvals_db( QString& bufId, QString& bufGuid, QString& bufDesc,
 {
    bool bufvals = false;
 
-   if ( db == NULL )
-   {
-      US_Passwd pw;
-       db           = new US_DB2( pw.getPasswd() );
-      if ( db == NULL )
-         return bufvals;
-   }
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
 
    QStringList query;
    int idBuf     = bufId.isEmpty() ? -1    : bufId.toInt();
@@ -2653,12 +2659,12 @@ bool US_FeMatch::bufvals_db( QString& bufId, QString& bufGuid, QString& bufDesc,
    {
       query.clear();
       query << "get_bufferID" << bufGuid;
-      db->query( query );
-      if ( db->lastErrno() != US_DB2::OK )
+      db.query( query );
+      if ( db.lastErrno() != US_DB2::OK )
          qDebug() << "***Unable to get bufferID from GUID" << bufGuid
-            << " lastErrno" << db->lastErrno();
-      db->next();
-      bufId         = db->value( 0 ).toString();
+            << " lastErrno" << db.lastErrno();
+      db.next();
+      bufId         = db.value( 0 ).toString();
       bufId         = bufId.isEmpty() ? "N/A" : bufId;
    }
 
@@ -2666,17 +2672,17 @@ bool US_FeMatch::bufvals_db( QString& bufId, QString& bufGuid, QString& bufDesc,
    {
       query.clear();
       query << "get_buffer_info" << bufId;
-      db->query( query );
-      if ( db->lastErrno() != US_DB2::OK )
+      db.query( query );
+      if ( db.lastErrno() != US_DB2::OK )
       {
          qDebug() << "***Unable to get buffer info from bufID" << bufId
-            << " lastErrno" << db->lastErrno();
+            << " lastErrno" << db.lastErrno();
          return bufvals;
       }
-      db->next();
-      QString ddens = db->value( 5 ).toString();
-      QString dvisc = db->value( 4 ).toString();
-      QString dcomp = db->value( 2 ).toString();
+      db.next();
+      QString ddens = db.value( 5 ).toString();
+      QString dvisc = db.value( 4 ).toString();
+      QString dcomp = db.value( 2 ).toString();
       dens          = ddens.isEmpty() ? dens : ddens;
       visc          = dvisc.isEmpty() ? visc : dvisc;
       comp          = dcomp.isEmpty() ? comp : dcomp;
@@ -2688,21 +2694,21 @@ bool US_FeMatch::bufvals_db( QString& bufId, QString& bufGuid, QString& bufDesc,
       QString invID  = investig.section( ":", 0, 0 );
       query.clear();
       query << "get_buffer_desc" << invID;
-      db->query( query );
-      if ( db->lastErrno() != US_DB2::OK )
+      db.query( query );
+      if ( db.lastErrno() != US_DB2::OK )
       {
          qDebug() << "***Unable to get buffer desc from invID" << invID
-            << " lastErrno" << db->lastErrno();
+            << " lastErrno" << db.lastErrno();
          return bufvals;
       }
 
-      while ( db->next() )
+      while ( db.next() )
       {
-         QString desc = db->value( 1 ).toString();
+         QString desc = db.value( 1 ).toString();
          
          if ( desc == bufDesc )
          {
-            bufId         = db->value( 0 ).toString();
+            bufId         = db.value( 0 ).toString();
             break;
          }
       }
@@ -2711,17 +2717,17 @@ bool US_FeMatch::bufvals_db( QString& bufId, QString& bufGuid, QString& bufDesc,
       {
          query.clear();
          query << "get_buffer_info" << bufId;
-         db->query( query );
-         if ( db->lastErrno() != US_DB2::OK )
+         db.query( query );
+         if ( db.lastErrno() != US_DB2::OK )
          {
             qDebug() << "***Unable to get buffer info from bufID" << bufId
-               << " lastErrno" << db->lastErrno();
+               << " lastErrno" << db.lastErrno();
             return bufvals;
          }
-         db->next();
-         QString ddens = db->value( 5 ).toString();
-         QString dvisc = db->value( 4 ).toString();
-         QString dcomp = db->value( 2 ).toString();
+         db.next();
+         QString ddens = db.value( 5 ).toString();
+         QString dvisc = db.value( 4 ).toString();
+         QString dcomp = db.value( 2 ).toString();
          dens          = ddens.isEmpty() ? dens : ddens;
          visc          = dvisc.isEmpty() ? visc : dvisc;
          comp          = dcomp.isEmpty() ? comp : dcomp;
@@ -2855,7 +2861,7 @@ void US_FeMatch::buffer_text( )
          buffLoaded   = false;
          density      = le_density  ->text().toDouble();
          viscosity    = le_viscosity->text().toDouble();
-         compress     = le_vbar     ->text().toDouble();
+         compress     = le_compress ->text().toDouble();
       }
 
       else
@@ -2864,6 +2870,62 @@ void US_FeMatch::buffer_text( )
          le_density  ->setText( QString::number( density,   'f', 6 ) );
          le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
          le_compress ->setText( QString::number( compress,  'e', 3 ) );
+         qApp->processEvents();
+         buffLoaded   = true;
+      }
+   }
+}
+
+// use dialogs to alert user to change in experiment solution common vbar
+bool US_FeMatch::verify_vbar( )
+{
+   bool changed = true;
+
+   if ( buffLoaded )
+   {  // only need verify vbar change while experiment values are loaded
+      if ( QMessageBox::No == QMessageBox::warning( this,
+               tr( "Warning" ),
+               tr( "Attention:\n"
+                   "You are attempting to override the vbar parameter\n"
+                   "that has been set from the experimental data!\n\n"
+                   "Do you really want to override it?" ),
+               QMessageBox::Yes, QMessageBox::No ) )
+      {  // "No":  retain loaded value, mark unchanged
+         QMessageBox::information( this,
+            tr( "Vbar Retained" ),
+            tr( "Vbar parameter from the experiment will be retained" ) );
+         changed    = false;
+      }
+
+      else
+      {  // "Yes":  change value,  mark experiment values no longer used
+         QMessageBox::information( this,
+            tr( "Vbar Overridden" ),
+            tr( "Vbar parameter from the experiment will be overridden" ) );
+         buffLoaded = false;
+      }
+   }
+
+   qApp->processEvents();
+   return changed;
+}
+
+// slot to respond to text box change to vbar parameter
+void US_FeMatch::vbar_text( )
+{
+   if ( buffLoaded )
+   {  // only need verify desire to change while experiment values are loaded
+      bool changed = verify_vbar();
+      buffLoaded   = false;
+
+      if ( changed )
+      {  // "Yes" to change: pick up values as entered and turn off loaded flag
+         vbar         = le_vbar->text().toDouble();
+      }
+
+      else
+      {  // "No" to change:  restore text and insure loaded flag still on
+         le_vbar->setText( QString::number( vbar, 'f', 5 ) );
          qApp->processEvents();
          buffLoaded   = true;
       }

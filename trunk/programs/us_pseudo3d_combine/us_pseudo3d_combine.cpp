@@ -234,7 +234,8 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
             this,       SLOT( close() ) );
 
    // set up plot component window on right side
-   xa_title_s  = tr( "Sedimentation Coefficient corrected for water at 20" )
+   xa_title_s  = tr( "Sedimentation Coefficient (1e-13)"
+                     " corrected for water at 20" )
       + DEGC;
    xa_title_mw = tr( "Molecular Weight (Dalton)" );
    xa_title    = xa_title_s;
@@ -266,7 +267,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    main->setStretchFactor( left, 2 );
    main->setStretchFactor( plot, 5 );
 
-   def_local  = true;
+   def_local  = false;
    mfilter    = "";
    investig   = "USER";
 
@@ -361,9 +362,11 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    // get current distro
    DisSys* tsys   = (DisSys*)&system.at( curr_distr );
-   QList< Solute >& sol_s = tsys->s_distro;
+   QList< Solute >* sol_d = &tsys->s_distro;
+
    if ( !plot_s )
-      sol_s    = tsys->mw_distro;
+      sol_d    = &tsys->mw_distro;
+
    colormap = tsys->colormap;
    cmapname = tsys->cmapname;
 
@@ -379,7 +382,7 @@ void US_Pseudo3D_Combine::plot_data( void )
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
 
    spec_dat.setRastRanges( xreso, yreso, resolu, zfloor );
-   spec_dat.setRaster( sol_s );
+   spec_dat.setRaster( *sol_d );
 
    d_spectrogram->attach( data_plot );
 
@@ -520,10 +523,14 @@ void US_Pseudo3D_Combine::select_autolim()
       ct_plt_smax->setRange( 0.0, 10000.0, 0.01 );
    }
 }
-void US_Pseudo3D_Combine::select_plot_s() { plot_s     = cb_plot_s->isChecked();
+void US_Pseudo3D_Combine::select_plot_s()
+{
+   plot_s     = cb_plot_s->isChecked();
    cb_plot_mw->setChecked( !plot_s );
    xa_title   = plot_s ? xa_title_s : xa_title_mw;
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
+
+   plot_data();
 }
 
 void US_Pseudo3D_Combine::select_plot_mw()
@@ -532,6 +539,8 @@ void US_Pseudo3D_Combine::select_plot_mw()
    cb_plot_s->setChecked( plot_s );
    xa_title   = plot_s ? xa_title_s : xa_title_mw;
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
+
+   plot_data();
 }
 
 void US_Pseudo3D_Combine::load_distro()

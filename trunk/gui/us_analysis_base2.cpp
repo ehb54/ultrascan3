@@ -8,6 +8,9 @@
 #include "us_run_details2.h"
 #include "us_analyte_gui.h"
 #include "us_buffer_gui.h"
+#include "us_data_loader.h"
+#include "us_db2.h"
+#include "us_passwd.h"
 
 US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 {
@@ -123,20 +126,20 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    QPushButton* pb_viscosity = us_pushbutton( tr( "Viscosity" ) );
    connect( pb_viscosity, SIGNAL( clicked() ), SLOT( get_buffer() ) );
    
-   QPushButton* pb_vbar = us_pushbutton( tr( "vbar"   ) );
+   QPushButton* pb_vbar = us_pushbutton( tr( "Vbar"   ) );
    connect( pb_vbar, SIGNAL( clicked() ), SLOT( get_vbar() ) );
    
    QLabel* lb_skipped   = us_label     ( tr( "Skipped:"  ) );
 
-   le_density   = us_lineedit( "0.998234" );
-   le_viscosity = us_lineedit( "1.001940" );
-   le_vbar      = us_lineedit( "0.7200" );
+   density      = DENS_20W;
+   viscosity    = VISC_20W;
+   vbar         = TYPICAL_VBAR;
+
+   le_density   = us_lineedit( QString::number( density,   'f', 6 ) );
+   le_viscosity = us_lineedit( QString::number( viscosity, 'f', 5 ) );
+   le_vbar      = us_lineedit( QString::number( vbar,      'f', 5 ) );
    le_skipped   = us_lineedit( "0" );
    le_skipped->setReadOnly( true );
-
-   density   = 0.998234;
-   viscosity = 1.001940;
-   vbar      = 0.72;
 
    parameterLayout->addWidget( pb_density  , 0, 0 );
    parameterLayout->addWidget( le_density  , 0, 1 );
@@ -199,36 +202,23 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    controlsLayout->addWidget( pb_exclude        , 6, 0, 1, 4 );
 
    dataLoaded = false;
+   buffLoaded = false;
+   def_local  = false;
+   dfilter    = "";
+   investig   = "USER";
+
+   connect( le_density,   SIGNAL( returnPressed() ),
+            this,         SLOT(   buffer_text()     ) );
+   connect( le_viscosity, SIGNAL( returnPressed() ),
+            this,         SLOT(   buffer_text()     ) );
+   connect( le_vbar,      SIGNAL( returnPressed() ),
+            this,         SLOT(   vbar_text()       ) );
 }
 
 void US_AnalysisBase2::load( void )
 {
    // Determine the edit ID
    dataLoaded = false;
-   reset();
-   QString filter = "*.*.*.*.*.*.xml";
-
-   QString filename = QFileDialog::getOpenFileName( this, 
-         tr( "Select a file with the desired Edit ID" ),
-         US_Settings::resultDir(),
-         filter );
-
-   if ( filename.isEmpty() ) return;
-
-   QStringList sl = filename.split( "." );
-   runID  = sl[ 0 ];
-   editID = sl[ 1 ];
-
-   filename.replace( "\\", "/" );  // For WIN32
-   directory = filename.left( filename.lastIndexOf( "/" ) );
-   
-   // Get the raw data and edit parameters file names
-   filter = "*." + editID + ".*.*.*.*.xml";
-   
-   QDir d( directory );
-   sl = d.entryList( QStringList() << filter, 
-                     QDir::Files | QDir::Readable, QDir::Name );
-
    lw_triples  ->disconnect();
    lw_triples  ->clear();
    dataList     .clear();
@@ -236,29 +226,24 @@ void US_AnalysisBase2::load( void )
    excludedScans.clear();
    triples      .clear();
 
-   // Read the data into the structure
-   try
+   reset();
+
+   US_DataLoader* dialog =
+      new US_DataLoader( true, false, def_local, dfilter, investig );
+
+   if ( dialog->exec() == QDialog::Accepted )
    {
-      for ( int i = 0; i < sl.size(); i++ )
-      {
-         filename = sl[ i ];
-         US_DataIO2::loadData( directory, filename, dataList, rawList );
+      dialog->settings(  def_local, investig, dfilter );
+      dialog->load_edit( dataList,  rawList,  triples );
 
-         US_DataIO2::EditedData* ed = &dataList[ i ];
-
-         QString ccw = ed->cell + " / " + ed->channel + " / " + ed->wavelength;
-
-         lw_triples->addItem( ccw );
-         triples << ccw;
-      }
+      delete dialog;
    }
-   catch ( US_DataIO2::ioError error )
-   {
-      // There was an error reading filname or it's associated raw data
-      QString message = US_DataIO2::errorString( error );
-      QMessageBox::critical( this, tr( "Bad Data" ), message );
+
+   else                         // load was aborted
       return;
-   }
+
+   for ( int ii=0; ii < triples.size(); ii++ )
+      lw_triples->addItem( triples.at( ii ) );
 
    savedValues.clear();
 
@@ -292,7 +277,51 @@ void US_AnalysisBase2::load( void )
 
    connect( ct_from, SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_from( double ) ) );
+
+   // set up solution/buffer values implied from experimental data
+   QString solID;
+   QString bufID;
+   QString bguid;
+   QString bdesc;
+   QString bdens  = le_density  ->text();
+   QString bvisc  = le_viscosity->text();
+   QString svbar  = le_vbar     ->text();
+   bool    bufin  = false;
+
+   if ( def_local )
+   {  // data from local disk:  get solution/buffer vals (disk or db)
+      bufin  = solinfo_disk( &dataList[ 0 ], svbar, bufID, bguid, bdesc );
+      bufin  = bufin ? bufin :
+               solinfo_db(   &dataList[ 0 ], svbar, bufID, bguid, bdesc );
+      bufin  = bufvals_disk( bufID, bguid, bdesc, bdens, bvisc );
+      bufin  = bufin ? bufin :
+               bufvals_db(   bufID, bguid, bdesc, bdens, bvisc );
+   }
+
+   else
+   {  // data from database:    get solution/buffer vals (db or disk)
+      bufin  = solinfo_db(   &dataList[ 0 ], svbar, bufID, bguid, bdesc );
+      bufin  = bufin ? bufin :
+               solinfo_disk( &dataList[ 0 ], svbar, bufID, bguid, bdesc );
+      bufin  = bufvals_db(   bufID, bguid, bdesc, bdens, bvisc );
+      bufin  = bufin ? bufin :
+               bufvals_disk( bufID, bguid, bdesc, bdens, bvisc );
+   }
+
+   if ( bufin )
+   {
+      buffLoaded  = false;
+      le_density  ->setText( bdens );
+      le_viscosity->setText( bvisc );
+      le_vbar     ->setText( svbar );
+      density     = bdens.toDouble();
+      viscosity   = bvisc.toDouble();
+      vbar        = svbar.toDouble();
+      buffLoaded  = true;
+   }
+
    dataLoaded = true;
+   qApp->processEvents();
 }
 
 void US_AnalysisBase2::update( int selection )
@@ -344,35 +373,59 @@ void US_AnalysisBase2::details( void )
 
 void US_AnalysisBase2::get_vbar( void )
 {
-   US_AnalyteGui* vbar_dialog = new US_AnalyteGui( -1, true );
-   connect( vbar_dialog, SIGNAL( valueChanged( double ) ),
-                         SLOT  ( update_vbar ( double ) ) );
-   vbar_dialog->exec();
+   US_AnalyteGui* vbdiag = new US_AnalyteGui( -1, true );
+   connect( vbdiag, SIGNAL( valueChanged( US_Analyte ) ),
+                    SLOT  ( update_vbar ( US_Analyte ) ) );
+   vbdiag->exec();
    qApp->processEvents();
 }
 
-void US_AnalysisBase2::update_vbar( double new_vbar )
+void US_AnalysisBase2::update_vbar( US_Analyte analyte )
 {
-   vbar = new_vbar;
-   le_vbar->setText( QString::number( new_vbar, 'f', 4 ) );
+   bool changed = true;
+
+   if ( buffLoaded )
+      changed   = verify_vbar();
+
+   if ( changed )
+   {
+      vbar       = analyte.vbar20;
+
+      buffLoaded = false;
+      le_vbar->setText( QString::number( vbar, 'f', 5 ) );
+      qApp->processEvents();
+   }
 }
 
 void US_AnalysisBase2::get_buffer( void )
 {
-   US_BufferGui* buf_dialog = new US_BufferGui( true ); // Delete on close set
-   connect( buf_dialog, SIGNAL( valueChanged ( double, double ) ),
-                        SLOT  ( update_buffer( double, double ) ) );
-   buf_dialog->exec();
+   int IdInv = investig.section( ":", 0, 0 ).toInt();
+
+   US_BufferGui* bdiag =
+      new US_BufferGui( IdInv, true, buff, def_local );
+   connect( bdiag, SIGNAL( valueChanged ( double, double ) ),
+                   SLOT  ( update_buffer( double, double ) ) );
+   bdiag->exec();
    qApp->processEvents();
 }
 
 void US_AnalysisBase2::update_buffer( double new_density, double new_viscosity )
 {
-   density   = new_density;
-   viscosity = new_viscosity;
+   bool changed = true;
 
-   le_density  ->setText( QString::number( new_density,   'f', 6 ) );
-   le_viscosity->setText( QString::number( new_viscosity, 'f', 6 ) );
+   if ( buffLoaded )
+      changed = verify_buffer();
+
+   if ( changed )
+   {
+      density    = new_density;
+      viscosity  = new_viscosity;
+
+      buffLoaded = false;
+      le_density  ->setText( QString::number( density,   'f', 6 ) );
+      le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
+      qApp->processEvents();
+   }
 }
 
 void US_AnalysisBase2::data_plot( void )
@@ -416,7 +469,8 @@ void US_AnalysisBase2::data_plot( void )
    for ( int i = 0; i < scanCount; i++ ) sum += d->scanData[ i ].temperature;
 
    double avgTemp  = sum / scanCount;
-   solution.vbar20 = US_Math2::adjust_vbar( solution.vbar, avgTemp );
+   //solution.vbar20 = US_Math2::adjust_vbar( solution.vbar, avgTemp );
+   solution.vbar20 = solution.vbar;
    US_Math2::data_correction( avgTemp, solution );
 
    // Draw curves
@@ -791,14 +845,14 @@ void US_AnalysisBase2::reset( void )
 
    excludedScans.clear();
 
-   le_density  ->setText( "0.998234" );
-   le_viscosity->setText( "1.001940" );
-   le_vbar     ->setText( "0.7200"   );
-   le_skipped  ->setText( "0" );
+   density      = DENS_20W;
+   viscosity    = VISC_20W;
+   vbar         = TYPICAL_VBAR;
 
-   density   = 0.998234;
-   viscosity = 1.001940;
-   vbar      = 0.72;
+   le_density  ->setText( QString::number( density,   'f', 6 ) );
+   le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
+   le_vbar     ->setText( QString::number( vbar,      'f', 5 ) );
+   le_skipped  ->setText( "0" );
 
    // Restore saved data
    int                     index  = lw_triples->currentRow();
@@ -967,6 +1021,15 @@ QString US_AnalysisBase2::run_details( void ) const
 
 QString US_AnalysisBase2::hydrodynamics( void ) const
 {
+   // set up hydrodynamics values
+   US_Math2::SolutionData solution = this->solution;
+   solution.vbar      = le_vbar     ->text().toDouble();
+   solution.density   = le_density  ->text().toDouble();
+   solution.viscosity = le_viscosity->text().toDouble();
+   double avgTemp     = le_temp     ->text().section( " ", 0, 0 ).toDouble();
+   solution.vbar20    = solution.vbar;
+   US_Math2::data_correction( avgTemp, solution );
+
    QString s = tr( "<h3>Hydrodynamic Settings:</h3>\n" ) + 
                "<table>\n";
   
@@ -1067,4 +1130,485 @@ bool US_AnalysisBase2::mkdir( const QString& baseDir, const QString& subdir )
    return false;
 }
 
+// get solution/buffer info from DB: ID, GUID, description
+bool US_AnalysisBase2::solinfo_db( US_DataIO2::EditedData* edata,
+      QString& svbar, QString& bufId, QString& bufGuid, QString& bufDesc )
+{
+   bool bufinfo = false;
+
+   QStringList query;
+   QString rawGUID  = edata->dataGUID;
+
+   US_Passwd pw;
+   US_DB2 db( pw.getPasswd() );
+
+   query << "get_rawDataID_from_GUID" << rawGUID;
+   db.query( query );
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      qDebug() << "***Unable to get raw Data ID from GUID" << rawGUID
+         << " lastErrno" << db.lastErrno();
+      return bufinfo;
+   }
+   db.next();
+   QString rawID    = db.value( 0 ).toString();
+   QString expID    = db.value( 1 ).toString();
+   QString soluID   = db.value( 2 ).toString();
+
+   query.clear();
+   query << "get_solutionBuffer" << soluID;
+   db.query( query );
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      qDebug() << "***Unable to get solutionBuffer from soluID" << soluID
+         << " lastErrno" << db.lastErrno();
+      query.clear();
+      query << "get_solutionIDs" << expID;
+      db.query( query );
+      db.next();
+      soluID = db.value( 0 ).toString();
+
+      query.clear();
+      query << "get_solutionBuffer" << soluID;
+      db.query( query );
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         qDebug() << "***Unable to get solutionBuffer from soluID" << soluID
+            << " lastErrno" << db.lastErrno();
+      }
+      else
+         qDebug() << "+++ Got solutionBuffer from soluID" << soluID;
+      //return bufinfo;
+   }
+   db.next();
+   QString id       = db.value( 0 ).toString();
+   QString guid     = db.value( 1 ).toString();
+   QString desc     = db.value( 2 ).toString();
+
+   if ( !id.isEmpty() )
+   {
+      bufId         = id;
+      bufGuid       = guid.isEmpty() ? bufGuid : guid;
+      bufDesc       = desc.isEmpty() ? bufDesc : desc;
+      bufinfo       = true;
+   }
+ 
+   query.clear();
+   query << "get_solution" << soluID;
+   db.query( query );
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      qDebug() << "***Unable to get solution vbar from soluID" << soluID
+         << " lastErrno" << db.lastErrno();
+   }
+   else
+   {
+      db.next();
+      svbar  = db.value( 2 ).toString();
+      qDebug() << "+++ Got solution vbar from soluID" << soluID
+         << ": " << svbar;
+//qDebug() << "    sGUID" << db.value(0).toString();
+//qDebug() << "    sDesc" << db.value(1).toString();
+//qDebug() << "    sTemp" << db.value(3).toString();
+//qDebug() << "    notes" << db.value(4).toString();
+   }
+
+   return bufinfo;
+}
+
+// get solution/buffer info from local disk: ID, GUID, description
+bool US_AnalysisBase2::solinfo_disk( US_DataIO2::EditedData* edata,
+   QString& svbar, QString& bufId, QString& bufGuid, QString& bufDesc )
+{
+   bool    bufinfo  = false;
+   QString soluGUID = "";
+
+   QString exppath = US_Settings::resultDir() + "/" + edata->runID + "/"
+      + edata->runID + "." + edata->dataType + ".xml";
+
+   QFile filei( exppath );
+   if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+      return bufinfo;
+
+   QXmlStreamReader xml( &filei );
+
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isStartElement() )
+      {
+         QXmlStreamAttributes ats = xml.attributes();
+
+         if ( xml.name() == "buffer" )
+         {
+            QString id    = ats.value( "id"   ).toString();
+            QString guid  = ats.value( "guid" ).toString();
+            QString desc  = ats.value( "desc" ).toString();
+       
+            if ( ! id.isEmpty()  ||  ! guid.isEmpty() )
+            {
+               bufId         = id  .isEmpty() ? bufId   : id;
+               bufGuid       = guid.isEmpty() ? bufGuid : guid;
+               bufDesc       = desc.isEmpty() ? bufDesc : desc;
+               bufinfo       = true;
+               bufId         = bufId.isEmpty() ? "N/A"  : bufId;
+            }
+            break;
+         }
+
+         else if ( xml.name() == "solution" )
+         {
+            soluGUID      = ats.value( "guid"         ).toString();
+         }
+      }
+   }
+
+   filei.close();
+
+   if ( ! bufinfo  &&  ! soluGUID.isEmpty() )
+   {  // no buffer info yet, but solution GUID found:  get buffer from solution
+      QString spath = US_Settings::dataDir() + "/solutions";
+      QDir    f( spath );
+      spath         = spath + "/";
+      QStringList filter( "S*.xml" );
+      QStringList names = f.entryList( filter, QDir::Files, QDir::Name );
+      QString fname;
+      QString bdens;
+      QString bvisc;
+
+      for ( int ii = 0; ii < names.size(); ii++ )
+      {
+         fname      = spath + names[ ii ];
+         QFile filei( fname );
+
+         if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            continue;
+
+         QXmlStreamReader xml( &filei );
+
+         while ( ! xml.atEnd() )
+         {
+            xml.readNext();
+
+            if ( xml.isStartElement() )
+            {
+               QXmlStreamAttributes ats = xml.attributes();
+
+               if (  xml.name() == "solution" )
+               {
+                  QString sguid = ats.value( "guid"         ).toString();
+                  if ( sguid != soluGUID )
+                     break;
+                  svbar         = ats.value( "commonVbar20" ).toString();
+                  qDebug() << "+++ Got solution vbar from file:" << svbar
+                     << " for GUID" << soluGUID;
+               }
+
+               else if (  xml.name() == "buffer" )
+               {
+                  QString bid   = ats.value( "id"   ).toString();
+                  QString bguid = ats.value( "guid" ).toString();
+                  QString bdesc = ats.value( "desc" ).toString();
+       
+                  if ( ! bid.isEmpty()  ||  ! bguid.isEmpty() )
+                  {
+                     bufId         = bid  .isEmpty() ? bufId   : bid;
+                     bufId         = bufId.isEmpty() ? "N/A"   : bufId;
+                     bufGuid       = bguid.isEmpty() ? bufGuid : bguid;
+                     bufDesc       = bdesc.isEmpty() ? bufDesc : bdesc;
+                     bufinfo       = true;
+                  }
+                  break;
+               }
+            }
+            if ( bufinfo )
+               break;
+         }
+         if ( bufinfo )
+            break;
+      }
+   }
+
+   return bufinfo;
+}
+
+// get buffer values from DB:  density, viscosity
+bool US_AnalysisBase2::bufvals_db( QString& bufId, QString& bufGuid,
+      QString& bufDesc, QString& dens, QString& visc )
+{
+   bool bufvals = false;
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   QStringList query;
+   int idBuf     = bufId.isEmpty() ? -1    : bufId.toInt();
+   bufId         = ( idBuf < 1  )  ? "N/A" : bufId;
+
+   if ( bufId == "N/A"  &&  ! bufGuid.isEmpty() )
+   {
+      query.clear();
+      query << "get_bufferID" << bufGuid;
+      db.query( query );
+      if ( db.lastErrno() != US_DB2::OK )
+         qDebug() << "***Unable to get bufferID from GUID" << bufGuid
+            << " lastErrno" << db.lastErrno();
+      db.next();
+      bufId         = db.value( 0 ).toString();
+      bufId         = bufId.isEmpty() ? "N/A" : bufId;
+   }
+
+   if ( bufId != "N/A" )
+   {
+      query.clear();
+      query << "get_buffer_info" << bufId;
+      db.query( query );
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         qDebug() << "***Unable to get buffer info from bufID" << bufId
+            << " lastErrno" << db.lastErrno();
+         return bufvals;
+      }
+      db.next();
+      QString ddens = db.value( 5 ).toString();
+      QString dvisc = db.value( 4 ).toString();
+      dens          = ddens.isEmpty() ? dens : ddens;
+      visc          = dvisc.isEmpty() ? visc : dvisc;
+      bufvals       = true;
+   }
+
+   else
+   {
+      QString invID  = investig.section( ":", 0, 0 );
+      query.clear();
+      query << "get_buffer_desc" << invID;
+      db.query( query );
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         qDebug() << "***Unable to get buffer desc from invID" << invID
+            << " lastErrno" << db.lastErrno();
+         return bufvals;
+      }
+
+      while ( db.next() )
+      {
+         QString desc = db.value( 1 ).toString();
+         
+         if ( desc == bufDesc )
+         {
+            bufId         = db.value( 0 ).toString();
+            break;
+         }
+      }
+
+      if ( ! bufId.isEmpty() )
+      {
+         query.clear();
+         query << "get_buffer_info" << bufId;
+         db.query( query );
+         if ( db.lastErrno() != US_DB2::OK )
+         {
+            qDebug() << "***Unable to get buffer info from bufID" << bufId
+               << " lastErrno" << db.lastErrno();
+            return bufvals;
+         }
+         db.next();
+         QString ddens = db.value( 5 ).toString();
+         QString dvisc = db.value( 4 ).toString();
+         dens          = ddens.isEmpty() ? dens : ddens;
+         visc          = dvisc.isEmpty() ? visc : dvisc;
+         bufvals       = true;
+      }
+   }
+
+   return bufvals;
+}
+
+// get buffer values from local disk:  density, viscosity
+bool US_AnalysisBase2::bufvals_disk( QString& bufId, QString& bufGuid,
+      QString& bufDesc, QString& dens, QString& visc )
+{
+   bool bufvals  = false;
+   bool dfound   = false;
+   QString bpath = US_Settings::dataDir() + "/buffers";
+   QDir    f( bpath );
+   bpath         = bpath + "/";
+   QStringList filter( "B*.xml" );
+   QStringList names = f.entryList( filter, QDir::Files, QDir::Name );
+   QString fname;
+   QString bdens;
+   QString bvisc;
+
+   for ( int ii = 0; ii < names.size(); ii++ )
+   {
+      fname      = bpath + names[ ii ];
+      QFile filei( fname );
+
+      if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         continue;
+
+      QXmlStreamReader xml( &filei );
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "buffer" )
+         {
+            QXmlStreamAttributes ats = xml.attributes();
+            QString bid   = ats.value( "id"          ).toString();
+            QString bguid = ats.value( "guid"        ).toString();
+            QString bdesc = ats.value( "description" ).toString();
+
+            if ( bguid == bufGuid  ||  bid == bufId )
+            {
+               bdens    = ats.value( "density"         ).toString();
+               bvisc    = ats.value( "viscosity"       ).toString();
+               dens     = bdens.isEmpty() ? dens : bdens;
+               visc     = bvisc.isEmpty() ? visc : bvisc;
+               bufvals  = true;
+            }
+
+            else if ( bdesc == bufDesc )
+            {
+               bdens    = ats.value( "density"         ).toString();
+               bvisc    = ats.value( "viscosity"       ).toString();
+               dfound   = true;
+            }
+
+            break;
+         }
+      }
+
+      if ( bufvals )
+         break;
+   }
+
+   if ( ! bufvals  &&  dfound )
+   {
+      dens     = bdens.isEmpty() ? dens : bdens;
+      visc     = bvisc.isEmpty() ? visc : bvisc;
+      bufvals  = true;
+   }
+
+   return bufvals;
+}
+
+// use dialogs to alert user to change in experiment buffer
+bool US_AnalysisBase2::verify_buffer( )
+{
+   bool changed = true;
+
+   if ( buffLoaded )
+   {  // only need verify buffer change while experiment values are loaded
+      if ( QMessageBox::No == QMessageBox::warning( this,
+               tr( "Warning" ),
+               tr( "Attention:\n"
+                   "You are attempting to override buffer parameters\n"
+                   "that have been set from the experimental data!\n\n"
+                   "Do you really want to override them?" ),
+               QMessageBox::Yes, QMessageBox::No ) )
+      {  // "No":  retain loaded values, mark unchanged
+         QMessageBox::information( this,
+            tr( "Buffer Retained" ),
+            tr( "Buffer parameters from the experiment will be retained" ) );
+         changed    = false;
+      }
+
+      else
+      {  // "Yes":  change values,  mark experiment values no longer used
+         QMessageBox::information( this,
+            tr( "Buffer Overridden" ),
+            tr( "Buffer parameters from the experiment will be overridden" ) );
+         buffLoaded = false;
+      }
+   }
+
+   qApp->processEvents();
+   return changed;
+}
+
+// slot to respond to text box change to buffer parameter
+void US_AnalysisBase2::buffer_text( )
+{
+   if ( buffLoaded )
+   {  // only need verify desire to change while experiment values are loaded
+      bool changed = verify_buffer();
+      buffLoaded   = false;
+      le_skipped->setFocus( Qt::OtherFocusReason );
+
+      if ( changed )
+      {  // "Yes" to change: use values as entered and leave loaded flag off
+         density      = le_density  ->text().toDouble();
+         viscosity    = le_viscosity->text().toDouble();
+      }
+
+      else
+      {  // "No" to change:  restore text and insure loaded flag turned on
+         buffLoaded   = false;
+         le_density  ->setText( QString::number( density,   'f', 6 ) );
+         le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
+         qApp->processEvents();
+         buffLoaded   = true;
+      }
+
+      //le_skipped->setFocus( Qt::OtherFocusReason );
+   }
+}
+
+// use dialogs to alert user to change in experiment solution common vbar
+bool US_AnalysisBase2::verify_vbar( )
+{
+   bool changed = true;
+
+   if ( buffLoaded )
+   {  // only need verify vbar change while experiment values are loaded
+      if ( QMessageBox::No == QMessageBox::warning( this,
+               tr( "Warning" ),
+               tr( "Attention:\n"
+                   "You are attempting to override the vbar parameter\n"
+                   "that has been set from the experimental data!\n\n"
+                   "Do you really want to override it?" ),
+               QMessageBox::Yes, QMessageBox::No ) )
+      {  // "No":  retain loaded values, mark unchanged
+         QMessageBox::information( this,
+            tr( "Vbar Retained" ),
+            tr( "Vbar parameter from the experiment will be retained" ) );
+         changed    = false;
+      }
+
+      else
+      {  // "Yes":  change values,  mark experiment values no longer used
+         QMessageBox::information( this,
+            tr( "Vbar Overridden" ),
+            tr( "Vbar parameter from the experiment will be overridden" ) );
+         buffLoaded = false;
+      }
+   }
+
+   qApp->processEvents();
+   return changed;
+}
+
+// slot to respond to text box change to vbar parameter
+void US_AnalysisBase2::vbar_text( )
+{
+   if ( buffLoaded )
+   {  // only need verify desire to change while experiment values are loaded
+      bool changed = verify_vbar();
+      buffLoaded   = false;
+
+      if ( changed )
+      {  // "Yes" to change: use value as entered and leave loaded flag off
+         vbar         = le_vbar->text().toDouble();
+      }
+
+      else
+      {  // "No" to change:  restore text and insure loaded flag still on
+         le_vbar->setText( QString::number( vbar, 'f', 4 ) );
+         qApp->processEvents();
+         buffLoaded   = true;
+      }
+   }
+}
 

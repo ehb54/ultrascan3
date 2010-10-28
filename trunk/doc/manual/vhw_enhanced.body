@@ -4,133 +4,156 @@
 
     <h2> <i>UltraScan</i> van Holde - Weischet Enhanced Analysis: </h2>
 
-    <p> The method of van Holde and Weischet (vHW) is a versatile, model-independent
-    approach to determine sedimentation coefficient distribution by graphically
-    analyzing sedimentation velocity experimental data. The vHW method's strength
-    derives from its ability to differentiate boundary spreading due to diffusion
-    from boundary spreading due to heterogeneity in the sedimentation coefficient.
-    This program uses a number of enhanced techniques for vHW analysis.</p>
+    <p> The method of van Holde and Weischet (vHW) is a versatile,
+    model-independent approach to determine sedimentation coefficient
+    distribution by graphically analyzing sedimentation velocity experimental
+    data. The vHW method's strength derives from its ability to differentiate
+    boundary spreading due to diffusion from boundary spreading due
+    to heterogeneity in the sedimentation coefficient. This program uses a
+    number of enhanced techniques for vHW analysis.</p>
 
     <img src="images/vhw_enhanced.png" alt="van Holde - Weischet Main Window"/>
 
     <ul>
-            <li>
-              <b>Load Data</b> Click on this button and, in the resulting file
-              dialog, choose a folder containing desired raw and edit data.
-            </li>
+        <li>
+            <b>Load Data</b> Click on this button and, in the resulting file
+            dialog, choose a folder containing desired raw and edit data.
+        </li>
             
-            <li>
-              <b>Run Details</b> Bring up a dialog with a summary of data and run details.
-            </li>
+        <li>
+            <b>Run Details</b> Bring up a dialog with a summary of data
+            and run details.
+        </li>
 
-            <li>
-              <b>View Data Report</b> Create a results text file and display its
-              contents in a text dialog.
-            </li>
+        <li>
+            <b>View Data Report</b> Create a results text file and display
+            its contents in a text dialog.
+        </li>
 
-            <li>
-              <b>Save Data</b> Create several data and report files based on input
-              data and vHW parameters.
-            </li>
+        <li>
+            <b>Save Data</b> Create several data and report files based on
+            input data and vHW parameters.
+        </li>
             
-            <li>
-              <b>Run ID / Edit ID:</b> The main run title of the data and an edit
-              identifier are displayed.
-            </li>
+        <li>
+            <b>Run ID / Edit ID:</b> The main run title of the data and
+            an edit identifier are displayed.
+        </li>
             
-            <li>
-              <b>Avg Temperature:</b> The average temperature of solute is displayed
-              in Celsius.
-            </li>
+        <li>
+            <b>Avg Temperature:</b> The average temperature of solute is
+            displayed in Celsius.
+        </li>
 
-            <li>
-              <b>(description)</b> The text box below the one for temperature shows
-              a full data description string.
-            </li>
+        <li>
+            <b>(description)</b> The text box below the one for temperature
+            shows a full data description string.
+        </li>
 
-            <li>
-              <b>Cell / Channel / Wavelength</b> The text box below this label gives cell, channel and
-              wavelength triples available in this data set. Highlight the desired value.
-            </li>
+        <li>
+            <b>Cell / Channel / Wavelength</b> The text box below this label
+            gives cell, channel and wavelength triples available in this
+            data set. Highlight the desired value.
+        </li>
 
-            <li>
-              <b>Density</b> Density is displayed.
-            </li>
+        <li>
+            <b>Density</b> Density is displayed.
+            The initial value after data load is the experiment solution
+            buffer value. Although rarely required or desirable, the value
+            can be changed by editing the text and hitting the Return/Enter
+            key or by clicking the Density button to open a buffer dialog.
+        </li>
 
-            <li>
-              <b>Viscosity</b> Viscosity is displayed.
-            </li>
+        <li>
+            <b>Viscosity</b> Viscosity is displayed.
+            The initial value after data load is the experiment solution
+            buffer value. Although rarely required or desirable, the value
+            can be changed by editing the text and hitting the Return/Enter
+            key or by clicking the Viscosity button to open a buffer dialog.
+        </li>
 
-            <li>
-              <b>Vbar</b> Vbar is displayed.
-            </li>
+        <li>
+            <b>Vbar</b> Vbar is displayed.
+            The initial value after data load is the experiment solution
+            value. Although rarely required or desirable, the value
+            can be changed by editing the text and hitting the Return/Enter
+            key or by clicking the Vbar button to open an analyte dialog.
+        </li>
 
-            <li>
-              <b>Skipped</b> A count of early scans not fully clearing the meniscus is given. Portions
-              of these scans will be excluded from analysis.
-            </li>
+        <li>
+            <b>Skipped</b> A count of early scans not fully clearing the
+            meniscus is given. Portions of these scans will be excluded
+            from analysis.
+        </li>
 
-            <li>
-              <b>Distribution Plot</b> Click for a plot dialog that shows a distribution plot or a histogram
-              plot illustrating sedimentation coefficient power related to separate species.
-            </li>
+        <li>
+            <b>Distribution Plot</b> Click for a plot dialog that shows a
+            distribution plot or a histogram plot illustrating sedimentation
+            coefficient power related to separate species.
+        </li>
 
-            <li>
-              <b>Select Groups</b> Click on this button to begin a session of choosing vHW Extrapolation Plot
-              division groups. As an initial pop-up dialog explains, you must click first above any group of
-              division lines and then below it. Multiple groups may be chosen, with division line overlap between
-              groups. Note that the button label becomes <b>Clear Groups</b> after selection, allowing the
-              set of selected groups to be discarded in favor of a new set of selections.
-            </li>
+        <li>
+            <b>Select Groups</b> Click on this button to begin a session of
+            choosing vHW Extrapolation Plot division groups. As an initial
+            pop-up dialog explains, you must click first above any group of
+            division lines and then below it. Multiple groups may be chosen,
+            with division line overlap between groups. Note that the button
+            label becomes <b>Clear Groups</b> after selection, allowing the
+            set of selected groups to be discarded in favor of a new set
+            of selections.
+        </li>
 
-            <li>
-              <b>Back Diffusion Tolerance:</b> Select a tolerance value to fine tune exclusion of points
-              affected by back diffusion.
-            </li>
+        <li>
+            <b>Back Diffusion Tolerance:</b> Select a tolerance value to
+            fine tune exclusion of points affected by back diffusion.
+        </li>
 
-            <li>
-              <b>Divisions:</b> Choose the number of divisions to use in vHW analysis.
-            </li>
+        <li>
+            <b>Divisions:</b> Choose the number of divisions to use in
+            vHW analysis.
+        </li>
             
-            <li>
-              <b>Data Smoothing:</b> Choose the number of points to use for any smoothing of raw
-              input data.
-            </li>
+        <li>
+            <b>Data Smoothing:</b> Choose the number of points to use for
+            any smoothing of raw input data.
+        </li>
             
-            <li>
-              <b>% of Boundary:</b> Choose the percentage of the range from concentration baseline to
-              plateau that is to be used for analysis.
-            </li>
+        <li>
+            <b>% of Boundary:</b> Choose the percentage of the range from
+            concentration baseline to plateau that is to be used for analysis.
+        </li>
             
-            <li>
-              <b>Boundary Position (%):</b> Choose the percent of the plateau-baseline range that is
-              to be added to the baseline to form the beginning of analysis span.
-            </li>
+        <li>
+            <b>Boundary Position (%):</b> Choose the percent of the
+            plateau-baseline range that is to be added to the baseline to
+            form the beginning of analysis span.
+        </li>
             
-            <li>
-              <b>From:</b> Choose the first of a range of scan numbers that may potentially
-              be excluded from analysis.
-            </li>
+        <li>
+            <b>From:</b> Choose the first of a range of scan numbers that
+            may potentially be excluded from analysis.
+        </li>
             
-            <li>
-              <b>To:</b> Choose the end of a range of scan numbers that may potentially
-              be excluded from analysis. The From/To scan range is illustrated in both
-              plots to the right.
-            </li>
+        <li>
+            <b>To:</b> Choose the end of a range of scan numbers that may
+            potentially be excluded from analysis. The From/To scan range
+            is illustrated in both plots to the right.
+        </li>
             
-            <li>
-              <b>Exclude Scan Range</b> If the From/To scan range selections are as desired, click on
-              this button to exclude the indicated scans from analysis.
-            </li>
+        <li>
+            <b>Exclude Scan Range</b> If the From/To scan range selections
+            are as desired, click on this button to exclude the indicated
+            scans from analysis.
+        </li>
             
-            <li>
-              <b>Reset</b> Indicate that parameters are to be reset and the plots re-displayed
-              based on original parameters.
-            </li>
+        <li>
+            <b>Reset</b> Indicate that parameters are to be reset and the
+            plots re-displayed based on original parameters.
+        </li>
             
-            <li>
-              <b>Help:</b> Display detailed vHW-Enhanced help.
-            </li>
-          </ul>
+        <li>
+            <b>Help:</b> Display detailed vHW-Enhanced help.
+        </li>
+    </ul>
 
 [% INCLUDE footer.us3 %]

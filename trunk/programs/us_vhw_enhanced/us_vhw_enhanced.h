@@ -126,7 +126,6 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase2
       void save_data(   void );
       void view_report( void );
       void sel_groups(  void );
-      void details(     void );
       void div_seds(    void );
       void update_density(   double );
       void update_viscosity( double );
