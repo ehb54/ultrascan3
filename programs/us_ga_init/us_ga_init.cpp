@@ -357,7 +357,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    plot_dim   = 2;          // default plot dimension
    plot_s     = true;       // default s/MW X type
    rbtn_click = false;      // default right-button clicked
-   def_local  = true;       // default local/DB flag
+   def_local  = false;      // default local/DB flag
    investig   = "USER";     // default investigator
    mfilter    = "";         // default model list filter
 
@@ -1080,8 +1080,7 @@ void US_GA_Initialize::load_distro()
       mdesc     = dialog->description( 0 );
       mfilter   = dialog->search_filter();
       investig  = dialog->investigator_text();
-qDebug() << "LOAD ACCEPT";
-qDebug() << "  Description:\n " << mdesc;
+//qDebug() << "LOAD ACCEPT  Description:\n " << mdesc;
       sep       = mdesc.left( 1 );
       mfnam     = mdesc.section( sep, 2, 2 );
 

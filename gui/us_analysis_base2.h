@@ -10,6 +10,9 @@
 #include "us_plot.h"
 #include "us_math2.h"
 #include "us_help.h"
+#include "us_db2.h"
+#include "us_analyte.h"
+#include "us_buffer.h"
 
 #include "qwt_counter.h"
 
@@ -44,14 +47,21 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       US_Math2::SolutionData            solution;
       
       bool         dataLoaded;      //!< A flag to indicate data is loaded
-      double       time_correction; //!< Time correction for centrifuge acceleration
+      bool         def_local;       //!< Flag if default source is local
+      bool         buffLoaded;      //!< Flag to indicate buffer is loaded
+
       QString      directory;       //!< Data directory of analysis files.
       QString      editID;          //!< Current edit ID.  Ususally a date-time.
       QString      runID;           //!< User specified run ID string
+      QString      dfilter;         //!< Data files filter
+      QString      investig;        //!< Investigator string
+
+      US_Buffer    buff;            //!< Currently loaded buffer
 
       //! A class to display help in the US Help viewer
       US_Help      showHelp;
 
+      double       time_correction; //!< Time correction, centrifuge acceler.
       double       density;         //!< Density of the buffer
       double       viscosity;       //!< Viscosity of the buffer
       double       vbar;            //!< Specific volume of the analyte
@@ -152,7 +162,7 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
    private slots:
       void details      ( void   );
       void get_vbar     ( void   );
-      void update_vbar  ( double );
+      void update_vbar  ( US_Analyte );
       void get_buffer   ( void   );
       void update_buffer( double, double );
       void boundary_pct ( double );
@@ -161,5 +171,15 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       void exclude_to   ( double );
       void exclude      ( void   );
       void smoothing    ( double );
+      bool solinfo_db(   US_DataIO2::EditedData*, QString&, QString&,
+                         QString&, QString& );
+      bool solinfo_disk( US_DataIO2::EditedData*, QString&, QString&,
+                         QString&, QString& );
+      bool bufvals_db(   QString&, QString&, QString&, QString&, QString& );
+      bool bufvals_disk( QString&, QString&, QString&, QString&, QString& );
+      bool verify_buffer( void );
+      void buffer_text(   void );
+      bool verify_vbar(   void );
+      void vbar_text(     void );
 };
 #endif

@@ -115,108 +115,13 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
 // load data
 void US_vHW_Enhanced::load( void )
 {
-   dataLoaded = false;
-   // query the directory where .auc and .xml file are
-   workingDir = QFileDialog::getExistingDirectory( this,
-         tr( "Raw Data Directory" ),
-         US_Settings::resultDir(),
-         QFileDialog::DontResolveSymlinks );
 
-   if ( workingDir.isEmpty() )
-      return;
-
-   // insure we have a .auc file
-   QStringList nameFilters = QStringList( "*.auc" );
-   workingDir.replace( "\\", "/" );
-   QDir wdir( workingDir );
-   files    = wdir.entryList( nameFilters,
-         QDir::Files | QDir::Readable, QDir::Name );
-
-   if ( files.size() == 0 )
-   {
-      QMessageBox::warning( this,
-            tr( "No Files Found" ),
-            tr( "There were no files of the form *.auc\n"
-                "found in the specified directory." ) );
-      return;
-   }
-
-   // Look for cell / channel / wavelength combinations
-   lw_triples->clear();
-   dataList.clear();
-   rawList.clear();
-   excludedScans.clear();
-   triples.clear();
-
-   // Read all data
-   if ( workingDir.right( 1 ) != "/" )
-      workingDir += "/"; // Ensure trailing '/'
-
-   files       = wdir.entryList( QStringList() << "*.*.*.*.*.*.xml",
-         QDir::Files | QDir::Readable, QDir::Name );
-   files    = last_edit_files( files );
-
-   for ( int ii = 0; ii < files.size(); ii++ )
-   {  // load all data in directory; get triples
-      QString file     = files[ ii ];
-      QStringList part = file.split( "." );
-      QString filename = workingDir + file;
- 
-      // load edit data (xml) and raw data (auc)
-      int result = US_DataIO2::loadData( workingDir, file, dataList, rawList );
-
-      if ( result != US_DataIO2::OK )
-      {
-         QMessageBox::warning( this,
-            tr( "UltraScan Error" ),
-            tr( "Could not read edit file.\n" ) 
-            + US_DataIO2::errorString( result ) + "\n" + filename );
-         return;
-      }
-
-      QString t = part[ 3 ] + " / " + part[ 4 ] + " / " + part[ 5 ];
-      runID     = part[ 0 ];
-      editID    = part[ 1 ];
-
-      if ( ! triples.contains( t ) )
-      {  // update ListWidget with cell / channel / wavelength triple
-         triples << t;
-         lw_triples->addItem( t );
-      } 
-   }
-
-   lw_triples->setCurrentRow( 0 );
-
-   d         = &dataList[ 0 ];
-   scanCount = d->scanData.size();
-   le_id->setText( d->runID + " / " + d->editID );  // set ID text
-
-   savedValues.clear();
-
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {  // save the data to be used in any smoothing
-      s          = &d->scanData[ ii ];
-      valueCount = s->readings.size();
-      QVector< double > v;
-      v.resize( valueCount );
-
-      for ( int jj = 0; jj < valueCount; jj++ )
-      {
-         v[ jj ] = s->readings[ jj ].value;
-      }
-
-      savedValues << v;
-   }
-
-   // Enable pushbuttons
-   pb_details->setEnabled( true );
-   pb_save   ->setEnabled( true );
-   pb_view   ->setEnabled( true );
-   pb_exclude->setEnabled( true );
    connect( pb_save,    SIGNAL( clicked() ),
             this,       SLOT(   save_data() ) );
    connect( pb_view,    SIGNAL( clicked() ),
             this,       SLOT(   view_report() ) );
+
+   US_AnalysisBase2::load();
 
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
@@ -230,28 +135,12 @@ void US_vHW_Enhanced::load( void )
             this,       SLOT( groupClick( const QwtDoublePoint& ) ) );
    groupstep   = NONE;
 
-   pb_details->disconnect( );                        // reset details connect
-   connect( pb_details, SIGNAL( clicked() ),
-            this,       SLOT(   details() ) );
    pb_selegr->setEnabled( true );
    pb_dstrpl->setEnabled( true );
 
    dataLoaded = true;
 
    update( 0 );
-
-   //le_temp->setText( t );                            // set avg temp text
-}
-
-// details
-void US_vHW_Enhanced::details( void )
-{
-   US_RunDetails2* dialog
-      = new US_RunDetails2( rawList, runID, workingDir, triples );
-   dialog->move( this->pos() + QPoint( 100, 100 ) );
-   dialog->exec();
-   qApp->processEvents();
-   delete dialog;
 }
 
 // distribution plot
@@ -1582,7 +1471,7 @@ qDebug() << "WR: filename " << filename;
    sd.density   = density;
    sd.viscosity = viscosity;
    QString tavt = le_temp->text();
-   double  davt = tavt.split( QRegExp( "\\s+" ) ).at( 0 ).toDouble();
+   double  davt = tavt.section( " ", 0, 0 ).toDouble();
 
    US_Math2::data_correction( davt, sd );
 
@@ -1598,7 +1487,6 @@ qDebug() << "WR: filename " << filename;
 
    ts << tr( "Detailed Run Information:\n\n" );
    ts << tr( "Cell Description:       " ) << d->description << "\n";
-   ts << tr( "Data Directory:         " ) << workingDir << "\n";
    ts << tr( "Rotor Speed:            " ) << d->scanData[ 0 ].rpm << " rpm\n";
    ts << tr( "Average Temperature:    " ) << tavt << "\n";
    ts << tr( "Temperature Variation:  Within Tolerance\n" );

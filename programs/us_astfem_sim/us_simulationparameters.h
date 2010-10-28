@@ -118,7 +118,7 @@ class US_SimulationParametersGui : public US_WidgetsDialog
          { simparams.temperature   = temp;   };
 
       void help                 ( void )
-         { showhelp.show_help( "manual/simulation_parameters.html" ); };
+         { showhelp.show_help( "manual/simparams.html" ); };
 };
 #endif
 
