@@ -325,6 +325,8 @@ void US_Hydrodyn::setupGUI()
    configuration->insertItem(tr("&Save Current Configuration"), this, SLOT(write_config()));
    configuration->insertItem(tr("&Reset to Default Configuration"), this, SLOT(reset()));
    configuration->insertItem(tr("&Advanced Configuration"), this, SLOT(show_advanced_config()));
+   configuration->insertItem(tr("S&ystem Configuration"), this, SLOT(run_us_config()));
+   configuration->insertItem(tr("A&dministrator"), this, SLOT(run_us_admin()));
 
    QFrame *frame;
    frame = new QFrame(this);
@@ -3599,4 +3601,58 @@ QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, 
 
 void US_Hydrodyn::dmd_run()
 {
+}
+
+void US_Hydrodyn::run_us_config()
+{
+   QProcess* process = new QProcess( this );
+   process->setCommunication( 0 );
+#ifndef Q_WS_MAC
+   process->addArgument( "us_config" );
+#else
+   QString procbin = USglobal->config_list.system_dir + "/bin/" + "us_config";
+   QString procapp = procbin + ".app";
+
+   if ( !QFile( procapp ).exists()  &&  QFile( procbin ).exists() )
+      procapp         = procbin;
+
+   process->addArgument( "open" );
+   process->addArgument( "-a" );
+   process->addArgument( procapp );
+#endif
+
+   if ( ! process->start() )
+   {
+      QMessageBox::information( this,
+                                tr( "Error" ),
+                                tr( "There was a problem creating a subprocess\n"
+                                    "for " ) + QString("us_config").upper() );
+   }
+}
+
+void US_Hydrodyn::run_us_admin()
+{
+   QProcess* process = new QProcess( this );
+   process->setCommunication( 0 );
+#ifndef Q_WS_MAC
+   process->addArgument( "us_admin" );
+#else
+   QString procbin = USglobal->config_list.system_dir + "/bin/" + "us_admin";
+   QString procapp = procbin + ".app";
+
+   if ( !QFile( procapp ).exists()  &&  QFile( procbin ).exists() )
+      procapp         = procbin;
+
+   process->addArgument( "open" );
+   process->addArgument( "-a" );
+   process->addArgument( procapp );
+#endif
+
+   if ( ! process->start() )
+   {
+      QMessageBox::information( this,
+                                tr( "Error" ),
+                                tr( "There was a problem creating a subprocess\n"
+                                    "for " ) + QString("us_admin").upper() );
+   }
 }

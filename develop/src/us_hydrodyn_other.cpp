@@ -1029,13 +1029,17 @@ int US_Hydrodyn::read_bead_model(QString filename)
          
          // make sure it is a valid file
 
-         bool damaver = (qsl.grep("Number of atoms written").count() > 0);
+         bool damaver = (qsl.grep("Number of atoms written").count() > 0 &&
+                         !qsl.grep("Atomic radius").count() );
          bool dammin = (qsl.grep("Number of particle atoms").count() > 0);
          bool dammif = (qsl.grep("Dummy atoms in output phase").count() > 0);
+         bool damfilt = (qsl.grep("Number of atoms written").count() > 0 &&
+                         qsl.grep("Atomic radius").count() );
 
          if ( !damaver &&
               !dammin &&
-              !dammif )
+              !dammif &&
+              !damfilt)
          {
             editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'Dummy atoms in output phase' or 'Number of particle atoms' of 'Number of atoms written'\n");
             f.close();
@@ -1187,7 +1191,32 @@ int US_Hydrodyn::read_bead_model(QString filename)
             radius = rx.cap(1).toFloat();
          }
 
-         editor->append(QString("DAMMIN/DAMMIF/DAMAVER model atom radius %1\n").arg(radius));
+         if ( damfilt ) {
+            puts("damfilt");
+            
+            do {
+               tmp = ts.readLine();
+               ++linepos;
+            } while ( !ts.atEnd() && 
+                      !tmp.contains("Atomic radius") );
+               
+            if ( ts.atEnd() )
+            {
+               editor->append("Error in DAMFILT file: couldn't find 'Atomic radius'\n");
+               return 1;
+            }
+            
+            rx.setPattern("Atomic radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
+            
+            if ( rx.search(tmp) == -1 ) 
+            {
+               editor->append("Error in DAMFILT file: couldn't find radius in 'Atomic radius' line\n");
+               return 1;
+            }
+            radius = rx.cap(1).toFloat();
+         }
+
+         editor->append(QString("DAMMIN/DAMMIF/DAMAVER/DAMFILT model atom radius %1\n").arg(radius));
          
          // enter MW and PSV
          float mw = 0.0;
@@ -1375,6 +1404,10 @@ int US_Hydrodyn::read_bead_model(QString filename)
          if ( damaver )
          {
             bead_model_suffix = "damaver";
+         }
+         if ( damfilt )
+         {
+            bead_model_suffix = "damfilt";
          }
 
          le_bead_model_suffix->setText(bead_model_suffix);
@@ -4962,7 +4995,11 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
                 !tmp.contains("Number of atoms written")
                 );
 
-      if ( ts.atEnd() )
+      if ( ts.atEnd() &
+           !tmp.contains("Dummy atoms in output phase") &&
+           !tmp.contains("Number of particle atoms") &&
+           !tmp.contains("Number of atoms written")
+           )
       {
          f.close();
          return false;

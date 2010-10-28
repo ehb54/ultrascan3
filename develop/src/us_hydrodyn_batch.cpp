@@ -700,9 +700,34 @@ void US_Hydrodyn_Batch::load_somo()
          bool result;
          QString file = get_file_name(i);
          QColor save_color = editor->color();
-         if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
+         if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
+              !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
          {
             // no save/restore settings for load into somo
+            if ( 
+                ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues != batch->missing_residues ||
+                ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms != batch->missing_atoms )
+            {
+               switch ( QMessageBox::question(this, 
+                                              tr("UltraScan Notice"),
+                                              QString(tr("Please note:\n\n"
+                                                         "You are loading a PDB file and the current Batch Operation\n"
+                                                         "PDB parsing options don't match SOMO's current settings\n"
+                                                         "What would you like to do?\n")),
+                                              tr("Use &Batch current mode settings"), 
+                                              tr("Keep &SOMO's setting"),
+                                              QString::null,
+                                              0, // Stop == button 0
+                                              0 // Escape == button 0
+                                             ) )
+               {
+               case 0 : 
+                  save_us_hydrodyn_settings();
+                  break;
+               case 1 : 
+                  break;
+               }
+            }
             result = ((US_Hydrodyn *)us_hydrodyn)->screen_pdb(file, true);
          } else {
             result = screen_bead_model(file);

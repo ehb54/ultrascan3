@@ -596,6 +596,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int run_anaflex();
       int run_anaflex( int use_mode, int sub_mode = 0 );
 
+      // admin
+      void run_us_config();
+      void run_us_admin();
+      
    protected slots:
 
       void closeEvent(QCloseEvent *);
