@@ -54,6 +54,10 @@ class US_EXTERN US_Plot : public QVBoxLayout
       //! Make access to the zoom button public
       QToolButton* btnZoom;
 
+	signals:
+		//! \brief A signal that provides the bounding rectangle of a zoomed area
+		void zoomedCorners(QwtDoubleRect);
+
    private:
       US_PlotConfig* configWidget;
       QwtPlot*       plot;
@@ -67,6 +71,7 @@ class US_EXTERN US_Plot : public QVBoxLayout
       void print             ( void );
       void svg               ( void );
       void config            ( void );
+
 };
 
 //! \brief A specialized push button class for US_Plot to automatically
