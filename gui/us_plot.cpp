@@ -147,7 +147,7 @@ void US_Plot::zoom( bool on )
       zoomer->setTrackerMode  ( QwtPicker::ActiveOnly );
       zoomer->setTrackerPen   ( QColor( Qt::white ) );
 
-		connect( zoomer, SIGNAL ( zoomed(        QwtDoubleRect ) ), 
+      connect( zoomer, SIGNAL ( zoomed(        QwtDoubleRect ) ), 
                        SIGNAL ( zoomedCorners( QwtDoubleRect ) ) );
       
       panner = new QwtPlotPanner( plot->canvas() );
