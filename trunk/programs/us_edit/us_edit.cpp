@@ -52,7 +52,7 @@ US_Edit::US_Edit() : US_Widgets()
 
    // Put the Run Info across the entire window
    QHBoxLayout* runInfo = new QHBoxLayout();
-   QLabel* lb_info = us_label( "Run Info:", -1 );
+   QLabel* lb_info = us_label( tr( "Run Info:" ), -1 );
    runInfo->addWidget( lb_info );
 
    le_info = us_lineedit( "", 1 );
@@ -743,7 +743,7 @@ void US_Edit::plot_current( int index )
             + "\nCell: " + cell + " Wavelength: " + wl;
       data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Fringes " ) );
 
-      // Eanble Air Gap
+      // Enable Air Gap
       pb_airGap->setHidden( false );
       le_airGap->setHidden( false );
    }

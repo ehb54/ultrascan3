@@ -18,8 +18,8 @@ unix {
     INCLUDEPATH  += ../utils ../db 
   }
   else {
-    DEPENDPATH   += ../gui ../utils ../db $$QWTPATH/include
-    INCLUDEPATH  += ../gui ../utils ../db $$QWTPATH/include $$QCAPATH/include/QtCrypto
+    DEPENDPATH   += ../gui ../utils ../db $$QWTPATH/src
+    INCLUDEPATH  += ../gui ../utils ../db $$QWTPATH/src $$QCAPATH/include/QtCrypto
   }
   DEFINES      += INTEL LINUX
   LIBS         += -luuid

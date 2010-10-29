@@ -31,9 +31,15 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
 {
    check  = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
    unsigned int row=0;
+   step = 0; // step=0: left counterbalance
+             // step=1: right counterbalance
+             // step=2: left cells
+             // step=3: right cells
 
    setWindowTitle( tr( "Edit Rotor Calibration" ) );
    setPalette( US_GuiSettings::frameColor() );
+   check  = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
+   
 
    QGridLayout* top = new QGridLayout( this );
    top->setSpacing         ( 2 );
@@ -44,58 +50,102 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
 
    le_instructions = us_lineedit( "", 1 );
    le_instructions->setReadOnly( true );
+   le_instructions->setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize()-1 ) );
    le_instructions->setText("Please load a calibration data set...");
-   top->addWidget( le_instructions, row, 1, 1, 3 );
+   top->addWidget( le_instructions, row, 1, 1, 2 );
 
    row++;
    
-   // Row 2
    QPushButton* pb_load = us_pushbutton( tr( "Load Calibration Data" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    top->addWidget( pb_load, row, 0 );
    
+   row++;
+   
    pb_reset = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled (false);
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
-   top->addWidget( pb_reset, row, 1 );
+   top->addWidget( pb_reset, row, 0 );
    
    row++;
    
-   // Row 3
-   QGridLayout* lo_counterbalance = us_radiobutton( tr( "Show Counterbalance" ), rb_counterbalance );
-   rb_counterbalance->setChecked( false );
+   QGridLayout* lo_counterbalance = us_radiobutton( tr( "Show only Counterbalance" ), rb_counterbalance );
    top->addLayout( lo_counterbalance, row, 0 );
-
-   QGridLayout* lo_cells = us_radiobutton( tr( "Show Cells" ), rb_cells );
-   rb_cells->setChecked( true );
-   top->addLayout( lo_cells, row, 1 );
+   connect( rb_counterbalance, SIGNAL( clicked() ), SLOT( plot_all() ) );
+   connect( rb_counterbalance, SIGNAL( clicked() ), SLOT( showCounterbalance() ) );
 
    row++;
    
-   // Row 4
+   QGridLayout* lo_cells = us_radiobutton( tr( "Show only Cells" ), rb_cells );
+   top->addLayout( lo_cells, row, 0 );
+   connect( rb_cells, SIGNAL( clicked() ), SLOT( plot_all() ) );
+   connect( rb_cells, SIGNAL( clicked() ), SLOT( showCells() ) );
 
+   row++;
+   
+   QGridLayout* lo_all = us_radiobutton( tr( "Show all" ), rb_all );
+   top->addLayout( lo_all, row, 0 );
+   connect( rb_all, SIGNAL( clicked() ), SLOT( plot_all() ) );
+   connect( rb_all, SIGNAL( clicked() ), SLOT( showAll() ) );
+
+   row++;
+   
+   pb_leftCounterbalance = us_pushbutton( tr( "Left side, Counterbalance" ) );
+   connect( pb_leftCounterbalance, SIGNAL( clicked() ), SLOT( leftCounterbalance() ) );
+   top->addWidget( pb_leftCounterbalance, row, 0 );
+
+   row++;
+   
+   pb_rightCounterbalance = us_pushbutton( tr( "Right side, Counterbalance" ) );
+   connect( pb_rightCounterbalance, SIGNAL( clicked() ), SLOT( rightCounterbalance() ) );
+   top->addWidget( pb_rightCounterbalance, row, 0 );
+
+   row++;
+   
+   pb_leftCells = us_pushbutton( tr( "Left side, Cells" ) );
+   connect( pb_leftCells, SIGNAL( clicked() ), SLOT( leftCells() ) );
+   top->addWidget( pb_leftCells, row, 0 );
+
+   row++;
+   
+   pb_rightCells = us_pushbutton( tr( "Right side, Cells" ) );
+   connect( pb_rightCells, SIGNAL( clicked() ), SLOT( rightCells() ) );
+   top->addWidget( pb_rightCells, row, 0 );
+
+   row++;
+
+   QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
+   top->addWidget( pb_accept, row, 0 );
+   
+   row++;
+   
    QLabel* lbl_spacer = us_banner( tr( "" ) );
-   top->addWidget( lbl_spacer, row, 0, 1, 2 );
+   top->addWidget( lbl_spacer, row, 0, 1, 1 );
    
    row++;
    
-   // Row 5
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
    top->addWidget( pb_help, row, 0 );
 
+   row++;
+   
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
    connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
-   top->addWidget( pb_close, row, 1 );
+   top->addWidget( pb_close, row, 0 );
    
    // Plot layout on right side of window
    plot = new US_Plot( data_plot,
-         tr( "Absorbance Data" ),
-         tr( "Radius (in cm)" ), tr( "Absorbance" ) );
-   data_plot->setMinimumSize( 600, 400 );
+         tr( "Intensity Data (Channel A in red, Channel B in green)" ),
+         tr( "Radius (in cm)" ), tr( "Intensity" ) );
+   data_plot->setMinimumSize( 700, 400 );
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );
-   top->addLayout(plot, 1, 2, row, 2);
+   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
+   data_plot->setAxisAutoScale( QwtPlot::yLeft );
+   top->addLayout(plot, 1, 1, row, 1);
+   connect (plot, SIGNAL (zoomedCorners (QwtDoubleRect)), this, SLOT (currentRect(QwtDoubleRect)) );
 
    pick = new US_PlotPicker( data_plot );
    // Set rubber band to display for Control+Left Mouse Button
@@ -106,13 +156,18 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    {
       top->setRowStretch(i, 0);
    }
-   //top->setRowStretch(row-3, 1);
+   top->setRowStretch( row-2, 1 );
+   top->setColumnStretch( 0, 0 );
+   top->setColumnStretch( 1, 1 );
 }
 
 void US_RotorCalibration::reset()
 {
    data.scanData .clear();
    allData.clear();
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   data_plot->clear();
+   data_plot->replot();
    pb_reset->setEnabled (false);
    le_instructions->setText("Please load a calibration data set...");
 }
@@ -154,8 +209,6 @@ void US_RotorCalibration::load( void )
       if ( ! triples.contains( t ) ) triples << t;
    }
 
-   le_instructions->setText( runID + "; please review data...");
-
    // Read all data
    if ( workingDir.right( 1 ) != "/" ) workingDir += "/"; // Ensure trailing /
 
@@ -191,7 +244,7 @@ void US_RotorCalibration::load( void )
 
    if ( dataType != "RI" )
    {
-      le_instructions->setText("Attention - " + runID + " is not intensity data!");
+      le_instructions->setText( tr("Attention - ") + runID + tr(" is not intensity data!"));
 //      return;
    }
 
@@ -200,6 +253,7 @@ void US_RotorCalibration::load( void )
    
    //plot_current( 0 );
    pb_reset->setEnabled (true);
+   leftCounterbalance();
 }
 
 void US_RotorCalibration::plot_all( void )
@@ -207,52 +261,37 @@ void US_RotorCalibration::plot_all( void )
    
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    data_plot->clear();
+   QwtPlotCurve* c;
+   QPen channelAPen( Qt::red );
+   QPen channelBPen( Qt::green );
    for (int i=0; i<allData.size(); i++) // all the triples
    {
       for (int j=0; j<allData[i].scanData.size(); j++) //all scans in each triple
       {
-         //qDebug() << allData[i].description << allData[i].cell << allData[i].channel;
-         /*
-         QString title="", str;
-         title += "Cell " + str.setNum(allData[i].cell);
-         title += ", Channel " + QString::QString(allData[i].channel);
-         title += ", Speed " + str.setNum(allData[i].scanData[j].rpm);
-         title += ", Scan " + str.setNum(j);
-         title += ", GUID " + QString::QString(allData[i].rawGUID);
-         title += ", type " + QString::QString(allData[i].type);
-         */
+         if (rb_counterbalance->isChecked() && allData[i].cell < 4)
+         {
+            break;
+         }
+         else if (rb_cells->isChecked() && allData[i].cell == 4)
+         {
+            break;
+         }
          QString title="";
-         /*
-         QTextStream ts(&title);
-         ts << "Cell " << allData[i].cell
-         << ", Channel " << allData[i].channel
-         << ", Speed " << allData[i].scanData[j].rpm
-         << ", Scan " << j
-         << ", GUID " << allData[i].rawGUID
-         << ", Type " << allData[i].type;
-         */
-           
-         qDebug() << "Cell"    << allData[ i ].cell;
-         qDebug() << "Channel" << QChar( allData[ i ].channel );
-         qDebug() << "Speed"   << allData[ i ].scanData[ j ].rpm;
-         qDebug() << "Scan"    << j;
-
          char guid[ 37 ];
          uuid_unparse( (const uchar*)allData[ i ].rawGUID, guid );
-
-         qDebug() << "GUID"    << guid;
-
          char type[ 3 ];
          type[ 2 ] = '\0';
          memcpy( type, allData[ i ].type, 2 );
-         qDebug() << "Type"    << type;
-
-         //qDebug() << title;
-
-               //title.sprintf("Cell %i, Channel %c, Speed %f, Scan %d, GUID: %s, type: %s ", allData[i].cell, allData[i].channel, allData[i].scanData[j].rpm, j, allData[i].rawGUID, allData[i].type);
-         QwtPlotCurve* c = us_curve( data_plot, title );
+         QTextStream ts(&title);
+         ts << tr("Cell ") << allData[i].cell
+         << tr( ", Channel ") << allData[i].channel
+         << tr(", Speed ") << allData[i].scanData[j].rpm
+         << tr(", Scan ") << j
+         << tr(", GUID ") << guid
+         << tr(", Type ") << type;
+           
+         c = us_curve( data_plot, title );
          c->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
-         
          int size = allData[i].scanData[j].readings.size();
          double *x = new double [size];
          double *y = new double [size];
@@ -261,10 +300,169 @@ void US_RotorCalibration::plot_all( void )
             x[k] = allData[i].x[k].radius;
             y[k] = allData[i].scanData[j].readings[k].value;
          }
+         title = "";
+         ts << allData[i].channel;
+         if (title == "A")
+         {
+            c->setPen(channelAPen);
+         }
+         else
+         {
+            c->setPen(channelBPen);
+         }
          c->setData( x, y, allData[i].scanData[j].readings.size() );
          delete x;
          delete y;
       }
    }
    data_plot->replot();
+}
+
+void US_RotorCalibration::currentRect (QwtDoubleRect rect)
+{
+   limits[step] = rect;
+}
+
+void US_RotorCalibration::accept ()
+{
+   QPalette p;
+   switch(step)
+   {
+      case 0:
+      {
+         pb_leftCounterbalance->setIcon(check);
+         p.setColor( QPalette::Button, Qt::green );
+         pb_leftCounterbalance->setPalette(p);
+         break;
+      }
+      case 1:
+      {
+         pb_rightCounterbalance->setIcon(check);
+         p.setColor( QPalette::Button, Qt::green );
+         pb_rightCounterbalance->setPalette(p);
+         break;
+      }
+      case 2:
+      {
+         pb_leftCells->setIcon(check);
+         p.setColor( QPalette::Button, Qt::green );
+         pb_leftCells->setPalette(p);
+         break;
+      }
+      case 3:
+      {
+         pb_rightCells->setIcon(check);
+         p.setColor( QPalette::Button, Qt::green );
+         pb_rightCells->setPalette(p);
+         break;
+      }
+   }
+   if (step < 3)
+   {
+      step++;
+      next();
+   }
+   else
+   {
+      calculate();
+   }
+}
+
+void US_RotorCalibration::leftCounterbalance ()
+{
+   QPalette p = US_GuiSettings::pushbColor();
+   pb_leftCounterbalance->setIcon(QIcon());
+   pb_leftCounterbalance->setPalette(p);
+   step = 0;
+   next();
+}
+   
+void US_RotorCalibration::rightCounterbalance ()
+{
+   QPalette p = US_GuiSettings::pushbColor();
+   pb_rightCounterbalance->setIcon(QIcon());
+   pb_rightCounterbalance->setPalette(p);
+   step = 1;
+   next();
+}
+   
+void US_RotorCalibration::leftCells ()
+{
+   QPalette p = US_GuiSettings::pushbColor();
+   pb_leftCells->setIcon(QIcon());
+   pb_leftCells->setPalette(p);
+   step = 2;
+   next();
+}
+   
+void US_RotorCalibration::rightCells ()
+{
+   QPalette p = US_GuiSettings::pushbColor();
+   pb_rightCells->setIcon(QIcon());
+   pb_rightCells->setPalette(p);
+   step = 3;
+   next();
+}
+   
+void US_RotorCalibration::next()
+{
+   plot->btnZoom->setChecked(false);
+   switch(step)
+   {
+      case 0:
+      {
+         rb_counterbalance->setChecked(true);
+         data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 6.1 );
+         le_instructions->setText("Please zoom the left vertical region of the counterbalance, and click \"Accept\" when done zooming...");
+         break;
+      }
+      case 1:
+      {
+         rb_counterbalance->setChecked(true);
+         data_plot->setAxisScale( QwtPlot::xBottom, 6.9, 7.3 );
+         le_instructions->setText("Please zoom the right vertical region of the counterbalance, and click \"Accept\" when done zooming...");
+         break;
+      }
+      case 2:
+      {
+         rb_cells->setChecked(true);
+         data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 6.1 );
+         le_instructions->setText("Please zoom the left vertical region of the cells, and click \"Accept\" when done zooming...");
+         break;
+      }
+      case 3:
+      {
+         rb_cells->setChecked(true);
+         data_plot->setAxisScale( QwtPlot::xBottom, 6.9, 7.3 );
+         le_instructions->setText("Please zoom the right vertical region of the cells, and click \"Accept\" when done zooming...");
+         break;
+      }
+   }
+   plot_all();
+   plot->btnZoom->setChecked(true);
+}
+
+void US_RotorCalibration::showCounterbalance ()
+{
+   plot->btnZoom->setChecked(false);
+   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
+   plot_all();
+}
+
+void US_RotorCalibration::showCells ()
+{
+   plot->btnZoom->setChecked(false);
+   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
+   plot_all();
+}
+
+void US_RotorCalibration::showAll()
+{
+   plot->btnZoom->setChecked(false);
+   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
+   plot_all();
+}
+
+void US_RotorCalibration::calculate()
+{
 }
