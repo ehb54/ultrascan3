@@ -120,14 +120,14 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 
    // Parameters
 
-   QPushButton* pb_density = us_pushbutton( tr( "Density"   ) );
-   connect( pb_density, SIGNAL( clicked() ), SLOT( get_buffer() ) );
+   QPushButton* pb_density   = us_pushbutton( tr( "Density"   ) );
+   connect( pb_density,   SIGNAL( clicked() ), SLOT( get_buffer() ) );
    
    QPushButton* pb_viscosity = us_pushbutton( tr( "Viscosity" ) );
    connect( pb_viscosity, SIGNAL( clicked() ), SLOT( get_buffer() ) );
    
-   QPushButton* pb_vbar = us_pushbutton( tr( "Vbar"   ) );
-   connect( pb_vbar, SIGNAL( clicked() ), SLOT( get_vbar() ) );
+   QPushButton* pb_vbar      = us_pushbutton( tr( "Vbar"   ) );
+   connect( pb_vbar,      SIGNAL( clicked() ), SLOT( get_vbar()   ) );
    
    QLabel* lb_skipped   = us_label     ( tr( "Skipped:"  ) );
 
@@ -373,7 +373,10 @@ void US_AnalysisBase2::details( void )
 
 void US_AnalysisBase2::get_vbar( void )
 {
-   US_AnalyteGui* vbdiag = new US_AnalyteGui( -1, true );
+   int idPers    = investig.section( ":", 0, 0 ).toInt();
+   QString aguid = "";
+
+   US_AnalyteGui* vbdiag = new US_AnalyteGui( idPers, true, aguid, !def_local );
    connect( vbdiag, SIGNAL( valueChanged( US_Analyte ) ),
                     SLOT  ( update_vbar ( US_Analyte ) ) );
    vbdiag->exec();
@@ -394,15 +397,18 @@ void US_AnalysisBase2::update_vbar( US_Analyte analyte )
       buffLoaded = false;
       le_vbar->setText( QString::number( vbar, 'f', 5 ) );
       qApp->processEvents();
+
+      if ( dataLoaded )
+         data_plot();
    }
 }
 
 void US_AnalysisBase2::get_buffer( void )
 {
-   int IdInv = investig.section( ":", 0, 0 ).toInt();
+   int idPers    = investig.section( ":", 0, 0 ).toInt();
 
    US_BufferGui* bdiag =
-      new US_BufferGui( IdInv, true, buff, def_local );
+      new US_BufferGui( idPers, true, buff, def_local );
    connect( bdiag, SIGNAL( valueChanged ( double, double ) ),
                    SLOT  ( update_buffer( double, double ) ) );
    bdiag->exec();
@@ -425,6 +431,9 @@ void US_AnalysisBase2::update_buffer( double new_density, double new_viscosity )
       le_density  ->setText( QString::number( density,   'f', 6 ) );
       le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
       qApp->processEvents();
+
+      if ( dataLoaded )
+         data_plot();
    }
 }
 
@@ -1554,6 +1563,9 @@ void US_AnalysisBase2::buffer_text( )
 
       //le_skipped->setFocus( Qt::OtherFocusReason );
    }
+
+   if ( dataLoaded )
+      data_plot();
 }
 
 // use dialogs to alert user to change in experiment solution common vbar
@@ -1610,5 +1622,8 @@ void US_AnalysisBase2::vbar_text( )
          buffLoaded   = true;
       }
    }
+
+   if ( dataLoaded )
+      data_plot();
 }
 
