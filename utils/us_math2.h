@@ -69,17 +69,18 @@ class US_EXTERN US_Math2
       class SolutionData
       {
          public:
-         double density;       //!< density
-         double density_wt;    //!< density wt
-         double density_tb;    //!< density tb
-         double viscosity;     //!< viscosity
-         double viscosity_wt;  //!< viscosity wt
-         double viscosity_tb;  //!< viscosity tb
-         double buoyancyb;     //!< buoyancy b
-         double buoyancyw;     //!< buoyancy w
-         double vbar;          //!< partial specific volume
-         double vbar20;        //!< partial specific volume at 20 deg.
-         double correction;    //!< correction
+         double density;          //!< density
+         double viscosity;        //!< viscosity
+         double vbar;             //!< partial specific volume
+         double vbar20;           //!< partial specific volume at 20 deg.
+         double density_wt;       //!< density wt - output
+         double density_tb;       //!< density tb - output
+         double viscosity_wt;     //!< viscosity wt - output
+         double viscosity_tb;     //!< viscosity tb - output
+         double buoyancyb;        //!< buoyancy b - output
+         double buoyancyw;        //!< buoyancy w - output
+         double s20w_correction;  //!< s correction - output
+         double D20w_correction;  //!< D correction - output
       };
 
 

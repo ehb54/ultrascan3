@@ -193,7 +193,7 @@ void US_vHW_Enhanced::data_plot( void )
    boundPct   = ct_boundaryPercent->value() / 100.0;
    positPct   = ct_boundaryPos    ->value() / 100.0;
    baseline   = calc_baseline();
-   correc     = solution.correction * 1.0e13;
+   correc     = solution.s20w_correction * 1.0e13;
 	C0         = 0.0;
 	Swavg      = 0.0;
    omega      = d->scanData[ 0 ].rpm * M_PI / 30.0;

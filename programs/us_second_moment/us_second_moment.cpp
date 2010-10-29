@@ -122,7 +122,7 @@ void US_SecondMoment::data_plot( void )
 
       // second moment s
       smSeconds[ i ] = 
-         1.0e13 * solution.correction * log( smPoints[ i ] / d->meniscus ) /
+         1.0e13 * solution.s20w_correction * log( smPoints[ i ] / d->meniscus ) /
          ( sq( omega ) * ( d->scanData[ i ].seconds - time_correction ) );
    }
 
