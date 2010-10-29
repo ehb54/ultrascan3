@@ -477,7 +477,9 @@ int US_DataIO2::readRawData( const QString& file, RawData& data )
       }
 
       // Calculate the radius vector
+      data.x.clear();
       double  radius  = min_radius;
+      
       for ( int j = 0; j < valueCount; j++ )
       {
          data.x << XValue( radius );
