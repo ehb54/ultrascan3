@@ -12,14 +12,14 @@ CONFIG       += $$DEBUGORRELEASE qt thread warn
 
 unix {
   LIBS       += -lus_utils -lus_gui -lus_db -L../../lib
-  LIBS       += -lqca2
+  LIBS       += -lqca
   LIBS       += -lqwt -L$$QWTPATH/lib
   LIBS       += -lmysqlclient -L$$MYSQLDIR 
   LIBS       += -lqwtplot3d-qt4 
   DEFINES    += INTEL LINUX
 
-  DEPENDPATH   += ../../gui ../../utils ../../db $$QWTPATH/src ..
-  INCLUDEPATH  += ../../gui ../../utils ../../db $$QWTPATH/src ..
+  DEPENDPATH   += ../../gui ../../utils ../../db $$QWTPATH/include ..
+  INCLUDEPATH  += ../../gui ../../utils ../../db $$QWTPATH/include ..
 }
 
 win32 {
