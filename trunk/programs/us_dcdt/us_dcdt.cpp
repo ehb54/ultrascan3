@@ -245,7 +245,7 @@ void US_Dcdt::data_plot( void )
          double radius = d->radius( j );
 
          sValues[ count ][ size ] = 
-            solution.correction * 1.0e13 * log( radius / meniscus ) /
+            solution.s20w_correction * 1.0e13 * log( radius / meniscus ) /
             ( sq( omega ) * ( prevScan->seconds + dt / 2.0 ) );
 
          size++;

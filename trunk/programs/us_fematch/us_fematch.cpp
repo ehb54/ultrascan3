@@ -1457,7 +1457,7 @@ void US_FeMatch::adjust_model()
 
    US_Math2::data_correction( avgTemp, solution );
 
-   double scorrec  = 1.0 / solution.correction;
+   double scorrec  = 1.0 / solution.s20w_correction;
    double dcorrec  = ( ( K0 + avgTemp ) * VISC_20W )
                      / ( K20 * solution.viscosity );
 
@@ -1900,7 +1900,7 @@ void US_FeMatch::write_res()
    ts << tr( "Buoyancy (Water, " ) << t20d << "):  "
       << solution.buoyancyw << "\n";
    ts << tr( "Buoyancy (absolute):     " ) << solution.buoyancyb << "\n";
-   ts << tr( "Correction Factor:       " ) << solution.correction << "\n\n\n";
+   ts << tr( "s20w Correction Factor:       " ) << solution.s20w_correction << "\n\n\n";
 
    ts << tr( "Data Analysis Settings:\n\n" );
    ts << tr( "Number of Components:    " ) << ccount << "\n";
@@ -1977,7 +1977,7 @@ void US_FeMatch::write_cofs()
    edata           = &dataList[ row ];
    int    ccount   = model.components.size();
    double avgTemp  = average_temperature( edata ) + K0;
-   double scorrec  = 1.0 / solution.correction;
+   double scorrec  = 1.0 / solution.s20w_correction;
    double dcorrec  = ( avgTemp * VISC_20W ) / ( K20 * solution.viscosity );
 
    QString filename = US_Settings::resultDir() + "/" + edata->runID + "."

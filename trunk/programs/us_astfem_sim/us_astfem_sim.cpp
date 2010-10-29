@@ -444,6 +444,25 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
 
    if ( simparams.meshType != US_SimulationParameters::ASTFVM )
    {  // the normal case:  ASTFEM (finite element)
+dump_system();
+qDebug() << "Test system";
+
+      US_Model model;
+      US_Model::SimulationComponent component;
+      component.s = 1.0;
+      component.D = 6.3e-16;
+      ///component.signal_concentration = 0.027446;
+      ///component.vbar20               = 0.71298;
+      //component.mw                   = 14000;
+      /////component.s                    = 1.3947e-13;
+      /////component.D                    = 1.2086e-07;
+      //component.f                    = 0.0;
+      //component.f_f0                 = 1.25;
+
+      model.components << component;
+
+      system = model;
+      dump_system();
 
       astfem_rsa = new US_Astfem_RSA( system, simparams );
 

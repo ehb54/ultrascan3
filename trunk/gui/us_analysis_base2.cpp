@@ -1050,7 +1050,7 @@ QString US_AnalysisBase2::hydrodynamics( void ) const
         table_row( tr( "Buoyancy (absolute)" ),
                    QString::number( solution.buoyancyb, 'f', 6 ) ) +
         table_row( tr( "Correction Factor:" ),
-                   QString::number( solution.correction, 'f', 6 ) ) + 
+                   QString::number( solution.s20w_correction, 'f', 6 ) ) + 
         "</table>\n";
 
    return s;
