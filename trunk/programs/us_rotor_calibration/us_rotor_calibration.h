@@ -14,6 +14,13 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO2.h"
+#include "us_matrix.h"
+
+struct Average
+{
+   double top, bottom;
+   int cell, rpm, channel, top_count, bottom_count;
+};
 
 class US_EXTERN US_RotorCalibration : public US_Widgets
 {
@@ -26,15 +33,20 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
 
       US_DataIO2::RawData            data;
       QVector< US_DataIO2::RawData > allData;
+      QVector <Average> avg;
+      QVector <QVector <double> > reading;
+      QVector <double> stretch_factors, std_dev;
+      bool leftCB, rightCB, leftCL, rightCL, newlimit;
 
       double            left, right, top, bottom;
-      int               step;
+      int               step, maxcell;
       
       US_Help            showHelp;
 
       QIcon              check;
 
       QPushButton*      pb_reset;
+      QPushButton*      pb_accept;
       QPushButton*      pb_leftCells;
       QPushButton*      pb_leftCounterbalance;
       QPushButton*      pb_rightCells;
@@ -74,7 +86,7 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
       };
       void reset (void);
       void load (void);
-      void plot_all (void);
+      void plotAll (void);
       void currentRect (QwtDoubleRect);
       void leftCounterbalance (void);
       void rightCounterbalance (void);
@@ -86,5 +98,7 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
       void next(void);
       void accept(void);
       void calculate(void);
+      double findAverage(QwtDoubleRect, US_DataIO2::RawData, int);
+      void checkAccept(void);
 };
 #endif
