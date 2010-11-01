@@ -42,22 +42,22 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    rightCL = false;
    newlimit = false;
 
+   rotor = "Default Rotor";
+
    setWindowTitle( tr( "Edit Rotor Calibration" ) );
    setPalette( US_GuiSettings::frameColor() );
    check  = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
-   
 
    QGridLayout* top = new QGridLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
    
-   lbl_instructions = us_label( "Instructions:", -1 );
+   QLabel *lbl_instructions = us_label( tr("Instructions:"), -1 );
    top->addWidget( lbl_instructions, row, 0 );
 
-   le_instructions = us_lineedit( "", 1 );
+   le_instructions = us_lineedit( "", -1 );
    le_instructions->setReadOnly( true );
-   le_instructions->setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize()-1 ) );
-   le_instructions->setText("Please load a calibration data set...");
+   le_instructions->setText( tr("Please load a calibration data set..."));
    top->addWidget( le_instructions, row, 1, 1, 2 );
 
    row++;
@@ -68,11 +68,22 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    
    row++;
    
-   pb_reset = us_pushbutton( tr( "Reset" ) );
-   pb_reset->setEnabled (false);
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
-   top->addWidget( pb_reset, row, 0 );
+   pb_loadRotor = us_pushbutton( tr( "Load Rotor" ) );
+   connect( pb_loadRotor, SIGNAL( clicked() ), SLOT( loadRotor() ) );
+   top->addWidget( pb_loadRotor, row, 0 );
    
+   row++;
+   
+   QLabel *lbl_rotor = us_label( tr("Selected Rotor:"), -1 );
+   top->addWidget( lbl_rotor, row, 0 );
+
+   row++;
+   
+   le_rotorInfo = us_lineedit( "", -1 );
+   le_rotorInfo->setReadOnly( true );
+   le_rotorInfo->setText( tr("Not selected..."));
+   top->addWidget( le_rotorInfo, row, 1, 1, 2 );
+
    row++;
    
    QGridLayout* lo_counterbalance = us_radiobutton( tr( "Show only Counterbalance" ), rb_counterbalance );
@@ -136,10 +147,31 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    
    row++;
    
+   pb_save = us_pushbutton( tr( "Save Rotor Calibration" ) );
+   connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
+   pb_save->setEnabled(false);
+   top->addWidget( pb_save, row, 0 );
+   
+   row++;
+   
+   pb_view = us_pushbutton( tr( "View Calibration Report" ) );
+   connect( pb_view, SIGNAL( clicked() ), SLOT( view() ) );
+   pb_view->setEnabled(false);
+   top->addWidget( pb_view, row, 0 );
+   
+   row++;
+   
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
    top->addWidget( pb_help, row, 0 );
 
+   row++;
+   
+   pb_reset = us_pushbutton( tr( "Reset" ) );
+   pb_reset->setEnabled (false);
+   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+   top->addWidget( pb_reset, row, 0 );
+   
    row++;
    
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
@@ -201,6 +233,8 @@ void US_RotorCalibration::reset()
    pb_rightCounterbalance->setEnabled(false);
    pb_leftCells->setEnabled(false);
    pb_rightCells->setEnabled(false);
+   pb_save->setEnabled(false);
+   pb_view->setEnabled(false);
    rb_counterbalance->setChecked(true);
    plot->btnZoom->setChecked(false);   
 }
@@ -285,13 +319,12 @@ void US_RotorCalibration::load( void )
    if ( dataType != "RI" )
    {
       le_instructions->setText( tr("Attention - ") + runID + tr(" is not intensity data!"));
-//      return;
+      return;
    }
 
    plotAll();
-   data = allData[ 0 ];
+//   data = allData[ 0 ];
    
-   //plot_current( 0 );
    pb_reset->setEnabled (true);
    pb_leftCounterbalance->setEnabled(true);
    pb_rightCounterbalance->setEnabled(true);
@@ -306,6 +339,9 @@ void US_RotorCalibration::plotAll( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    data_plot->clear();
+   data_plot->setTitle(tr( "Intensity Data (Channel A in red, Channel B in green)" ));
+   data_plot->setAxisTitle( QwtPlot::xBottom, tr( "Radius (in cm)" ) );
+   data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Intensity" ) );
    QwtPlotCurve* c;
    QPen channelAPen( Qt::red );
    QPen channelBPen( Qt::green );
@@ -370,8 +406,14 @@ void US_RotorCalibration::plotAll( void )
 // afterwards to prevent automatic zoom actions to override a zoom limit
 void US_RotorCalibration::currentRect (QwtDoubleRect rect)
 {
+   QPalette p;
+   p.setColor( QPalette::Button, Qt::green );
+  
    if (newlimit)
    {
+      p.setColor( QPalette::Button, Qt::green );
+      pb_accept->setPalette(p);
+      
       limits[step] = rect;
       switch (step)
       {
@@ -417,34 +459,31 @@ void US_RotorCalibration::checkAccept()
 // stretch coefficients.
 void US_RotorCalibration::accept()
 {
-   QPalette p;
+   QPalette p = US_GuiSettings::pushbColor();
+   pb_accept->setPalette(p);
    switch(step)
    {
       case 0:
       {
          pb_leftCounterbalance->setIcon(check);
-         p.setColor( QPalette::Button, Qt::green );
          pb_leftCounterbalance->setPalette(p);
          break;
       }
       case 1:
       {
          pb_rightCounterbalance->setIcon(check);
-         p.setColor( QPalette::Button, Qt::green );
          pb_rightCounterbalance->setPalette(p);
          break;
       }
       case 2:
       {
          pb_leftCells->setIcon(check);
-         p.setColor( QPalette::Button, Qt::green );
          pb_leftCells->setPalette(p);
          break;
       }
       case 3:
       {
          pb_rightCells->setIcon(check);
-         p.setColor( QPalette::Button, Qt::green );
          pb_rightCells->setPalette(p);
          break;
       }
@@ -459,7 +498,10 @@ void US_RotorCalibration::accept()
 
 void US_RotorCalibration::leftCounterbalance ()
 {
-   QPalette p = US_GuiSettings::pushbColor();
+   pb_save->setEnabled(false);
+   pb_view->setEnabled(false);
+   QPalette p;
+   p.setColor( QPalette::Button, Qt::green );
    pb_leftCounterbalance->setIcon(QIcon());
    pb_leftCounterbalance->setPalette(p);
    step = 0;
@@ -468,7 +510,10 @@ void US_RotorCalibration::leftCounterbalance ()
    
 void US_RotorCalibration::rightCounterbalance ()
 {
-   QPalette p = US_GuiSettings::pushbColor();
+   pb_save->setEnabled(false);
+   pb_view->setEnabled(false);
+   QPalette p;
+   p.setColor( QPalette::Button, Qt::green );
    pb_rightCounterbalance->setIcon(QIcon());
    pb_rightCounterbalance->setPalette(p);
    step = 1;
@@ -477,7 +522,10 @@ void US_RotorCalibration::rightCounterbalance ()
    
 void US_RotorCalibration::leftCells ()
 {
-   QPalette p = US_GuiSettings::pushbColor();
+   pb_save->setEnabled(false);
+   pb_view->setEnabled(false);
+   QPalette p;
+   p.setColor( QPalette::Button, Qt::green );
    pb_leftCells->setIcon(QIcon());
    pb_leftCells->setPalette(p);
    step = 2;
@@ -486,7 +534,10 @@ void US_RotorCalibration::leftCells ()
    
 void US_RotorCalibration::rightCells ()
 {
-   QPalette p = US_GuiSettings::pushbColor();
+   pb_save->setEnabled(false);
+   pb_view->setEnabled(false);
+   QPalette p;
+   p.setColor( QPalette::Button, Qt::green );
    pb_rightCells->setIcon(QIcon());
    pb_rightCells->setPalette(p);
    step = 3;
@@ -497,6 +548,8 @@ void US_RotorCalibration::rightCells ()
 // the corresponding limit[] entry
 void US_RotorCalibration::next()
 {
+   QPalette p;
+   p.setColor( QPalette::Button, Qt::green );
    pb_accept->setEnabled(true);
    plot->btnZoom->setChecked(false);
    switch(step)
@@ -504,6 +557,7 @@ void US_RotorCalibration::next()
       case 0:
       {
          rb_counterbalance->setChecked(true);
+         pb_leftCounterbalance->setPalette(p);
          data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 6.1 );
          le_instructions->setText("Please zoom the left vertical region of the counterbalance, and click \"Accept\" when done zooming...");
          break;
@@ -511,6 +565,7 @@ void US_RotorCalibration::next()
       case 1:
       {
          rb_counterbalance->setChecked(true);
+         pb_rightCounterbalance->setPalette(p);
          data_plot->setAxisScale( QwtPlot::xBottom, 6.9, 7.3 );
          le_instructions->setText("Please zoom the right vertical region of the counterbalance, and click \"Accept\" when done zooming...");
          break;
@@ -518,6 +573,7 @@ void US_RotorCalibration::next()
       case 2:
       {
          rb_cells->setChecked(true);
+         pb_leftCells->setPalette(p);
          data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 6.1 );
          le_instructions->setText("Please zoom the left vertical region of the cells, and click \"Accept\" when done zooming...");
          break;
@@ -525,6 +581,7 @@ void US_RotorCalibration::next()
       case 3:
       {
          rb_cells->setChecked(true);
+         pb_rightCells->setPalette(p);
          data_plot->setAxisScale( QwtPlot::xBottom, 6.9, 7.3 );
          le_instructions->setText("Please zoom the right vertical region of the cells, and click \"Accept\" when done zooming...");
          break;
@@ -569,7 +626,9 @@ void US_RotorCalibration::showAll()
 // values to assure that the zeroth-order coefficient is close to zero. 
 void US_RotorCalibration::calculate()
 {
-   int i, j, k, l;
+   int i, j, k, l, m, n;
+   double sum1, sum2;
+   QString str="";
    avg.clear();
    Average tmp_avg;
    /*
@@ -704,7 +763,7 @@ void US_RotorCalibration::calculate()
             "speed:" << avg2[i].rpm << "top:" << avg2[i].top << "bottom:" << avg2[i].bottom;
    }
    collect all averages for each cell, channel and speed in a 2-dimensional array
-   where each row in another cell, channel or top and bottom position (reading[i]), and each column is another speed (reading[i][j]). On the second dimension the entries are ordered
+   where each row is another cell, channel or top and bottom position (reading[i]), and each column is another speed (reading[i][j]). On the second dimension the entries are ordered
    with increasing speed. Each 'reading' now contains the combined average of a respective
    cell, channel, top and bottom position, ordered by speed in the second dimension of 'reading'.
    */
@@ -736,7 +795,6 @@ void US_RotorCalibration::calculate()
       }
    }
    /*
-   QString str="";
    for (i=0; i<reading.size(); i++)
    {
       str="";
@@ -764,7 +822,6 @@ void US_RotorCalibration::calculate()
    /*
    calculate the averages and standard deviations for all entries for a given speed:
    */
-   double sum1, sum2;
    stretch_factors.clear();
    std_dev.clear();
    //qDebug() << "Speedsize: " << speeds.size();
@@ -791,7 +848,7 @@ void US_RotorCalibration::calculate()
       }
       std_dev.push_back(pow(sum2/k, 0.5));
    }
-   double *x, *y, *sd1, *sd2;
+   
    x = new double [stretch_factors.size()+1];
    y = new double [stretch_factors.size()+1];
    sd1 = new double [stretch_factors.size()+1];
@@ -817,7 +874,7 @@ void US_RotorCalibration::calculate()
    QwtSymbol sym1, sym2;
    
    sym1.setStyle(QwtSymbol::Ellipse);
-   sym1.setBrush(QColor(Qt::yellow));
+   sym1.setBrush(QColor(Qt::cyan));
    sym1.setPen(QColor(Qt::white));
    sym1.setSize(10);
    
@@ -840,7 +897,6 @@ void US_RotorCalibration::calculate()
    c3->setData( x, sd2, stretch_factors.size()+1 );
    c3->setSymbol(sym2);
    c3->setStyle(QwtPlotCurve::NoCurve);
-   double coef[3];
    if ( ! US_Matrix::lsfit( coef, x, y, stretch_factors.size()+1, 3 ) )
    {
       QMessageBox::warning( this,
@@ -851,8 +907,7 @@ void US_RotorCalibration::calculate()
    coef[0] = 0.0; // force the zeroth order coefficient to be zero
    double *xfit = new double [501];
    double *yfit = new double [501];
-
-   //qDebug() << coef[0] << coef[1] << coef[2];
+   
    for (i=0; i<501; i ++)
    {
       xfit[i] = (double) i*60000/500;
@@ -865,8 +920,8 @@ void US_RotorCalibration::calculate()
    c4->setPen(QColor(Qt::yellow));
 
    data_plot->setTitle(tr("Rotor Stretch (Error bars = 1 standard deviation)"));
-   data_plot->setAxisTitle( QwtPlot::xBottom, "Revolutions per minute" );
-   data_plot->setAxisTitle( QwtPlot::yLeft, "Stretch (in cm)" );
+   data_plot->setAxisTitle( QwtPlot::xBottom, tr("Revolutions per minute") );
+   data_plot->setAxisTitle( QwtPlot::yLeft, tr("Stretch (in cm)") );
    data_plot->setAxisAutoScale( QwtPlot::xBottom );
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
    data_plot->replot();
@@ -877,6 +932,63 @@ void US_RotorCalibration::calculate()
    delete yfit;
    delete sd1;
    delete sd2;
+   pb_save->setEnabled(true);
+   pb_view->setEnabled(true);
+
+   QDateTime now = QDateTime::currentDateTime();
+   fileText = "CALIBRATION REPORT FOR ROTOR: " + rotor + "\nPERFORMED ON: " + now.toString();
+   fileText += "\n\nThe following equation was fitted to the measured stretch values for this rotor:\n\n";
+   fileText += "Stretch = " + QString("%1").arg(coef[1], 0, 'e', 5 ) + " rpm + " + QString("%1").arg(coef[2], 0, 'e', 5 ) + " rpm^2\n\n";
+   fileText += "Below is a listing of the stretching values as a function of speed:\n\n";
+   fileText += "Speed: Stretch (cm): Standard Dev.:\n";
+   fileText += QString("%1").arg( 0, 5, 10) + "   "
+             + QString("%1").arg(0.0, 0, 'e', 5 ) + "   "
+             + QString("%1").arg(0.0, 0, 'e', 5 ) + "\n";
+   for (i=0; i<stretch_factors.size(); i++)
+   {
+      fileText += QString("%1").arg(speeds[i+1], 5, 10) + "   "
+                + QString("%1").arg(stretch_factors[i], 0, 'e', 5 ) + "   "
+                + QString("%1").arg(std_dev[i], 0, 'e', 5 ) + "\n";
+   }
+   fileText += "\nBased on these stretching factors, the bottom of each cell and channel at\n";
+   fileText += "rest is estimated to be as follows:\n\n";
+   fileText += "Cell: Channel:      Top:       Bottom:     Length:     Center:\n";
+   for (j=0; j<cells.size(); j++)
+   {
+      for (k=0; k<2; k++)
+      {
+         sum1 = 0;
+         sum2 = 0;
+         m = 0;
+         n = 0;
+         for (i=0; i<speeds.size(); i++)
+         {
+            for (l=0; l<avg2.size(); l++)
+            {
+               if (avg2[l].rpm == speeds[i] && avg2[l].cell == j && avg2[l].channel == k)
+               {
+                  if ((int) avg2[l].top != 0)
+                  {
+                     sum1 += avg2[l].top - (coef[1] * speeds[i] + coef[2] * speeds[i] * speeds[i]);
+                     m++;
+                  }
+                  if ((int) avg2[l].bottom != 0)
+                  {
+                     sum2 += avg2[l].bottom - (coef[1] * speeds[i] + coef[2] * speeds[i] * speeds[i]);
+                     n++;
+                  }
+               }
+            }
+         }
+         fileText += QString("%1").arg(j+1, 2, 10) + "      "
+                   + QString("%1").arg(k+1, 2, 10) + "      "
+                   + QString("%1").arg(sum1/m, 0, 'e', 5 ) + " "
+                   + QString("%1").arg(sum2/n, 0, 'e', 5 ) + " "
+                   + QString("%1").arg((sum2/n) - (sum1/m), 0, 'e', 5 ) + " "
+                   + QString("%1").arg((sum1/m) + ((sum2/n) - (sum1/m))/2.0, 0, 'e', 5 ) + "\n";
+      }
+   }
+   qDebug() << fileText;
 }
 
 double US_RotorCalibration::findAverage(QwtDoubleRect rect, US_DataIO2::RawData data, int i)
@@ -904,5 +1016,24 @@ double US_RotorCalibration::findAverage(QwtDoubleRect rect, US_DataIO2::RawData 
    {
       return (average/(double)k);
    }
+}
+
+void US_RotorCalibration::loadRotor()
+{
+}
+
+void US_RotorCalibration::save()
+{
+}
+
+void US_RotorCalibration::view()
+{
+   US_Editor *edit = new US_Editor ( US_Editor::LOAD, true );
+   edit->setWindowTitle( tr("Rotor Calibration Report") );
+   edit->move( this->pos() + QPoint( 100, 100 ) );
+   edit->resize( 600, 500 );
+   edit->e->setFont( US_Widgets::fixedFont() );
+   edit->e->setText( fileText );
+   edit->show();
 }
 

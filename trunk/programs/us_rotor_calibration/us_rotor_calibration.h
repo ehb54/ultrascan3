@@ -15,6 +15,7 @@
 #include "us_plot.h"
 #include "us_dataIO2.h"
 #include "us_matrix.h"
+#include "us_editor.h"
 
 struct Average
 {
@@ -38,20 +39,25 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
       QVector <double> stretch_factors, std_dev;
       bool leftCB, rightCB, leftCL, rightCL, newlimit;
 
-      double            left, right, top, bottom;
-      int               step, maxcell;
+      double             left, right, top, bottom, coef[3];
+      double             *x, *y, *sd1, *sd2;
+      int                step, maxcell;
+      QString            rotor, fileText;
       
       US_Help            showHelp;
 
       QIcon              check;
 
-      QPushButton*      pb_reset;
-      QPushButton*      pb_accept;
-      QPushButton*      pb_leftCells;
-      QPushButton*      pb_leftCounterbalance;
-      QPushButton*      pb_rightCells;
-      QPushButton*      pb_rightCounterbalance;
-      
+      QPushButton*       pb_reset;
+      QPushButton*       pb_accept;
+      QPushButton*       pb_leftCells;
+      QPushButton*       pb_leftCounterbalance;
+      QPushButton*       pb_rightCells;
+      QPushButton*       pb_rightCounterbalance;
+      QPushButton*       pb_save;
+      QPushButton*       pb_loadRotor;
+      QPushButton*       pb_view;
+            
       QString            workingDir;
       QString            runID;
       QString            editID;
@@ -70,10 +76,11 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
       US_PlotPicker*     pick;
       US_Plot*           plot;
       
-      QLabel*            lbl_instructions;
-      QLabel*            lbl_spacer;
+//      QLabel*            lbl_instructions;
+//      QLabel*            lbl_spacer;
 
       QLineEdit*         le_instructions;
+      QLineEdit*         le_rotorInfo;
                         
       QRadioButton*      rb_counterbalance;
       QRadioButton*      rb_cells;
@@ -100,5 +107,8 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
       void calculate(void);
       double findAverage(QwtDoubleRect, US_DataIO2::RawData, int);
       void checkAccept(void);
+      void save(void);
+      void view(void);
+      void loadRotor(void);
 };
 #endif

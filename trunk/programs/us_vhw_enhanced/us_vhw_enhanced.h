@@ -143,7 +143,6 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase2
       void write_dis(      void );
       void write_res(      void );
       void write_model(    void );
-      QFont   fixed_font(  void );
       QString text_time( double, int );
       QString text_time( double );
       QStringList last_edit_files( QStringList );

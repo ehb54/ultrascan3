@@ -350,3 +350,51 @@ void US_ListWidget::mousePressEvent( QMouseEvent* event )
 }
 
 
+// find this system's best fixedPitch font
+QFont US_Widgets::fixedFont()
+{
+   //QFontDataBase database;
+   int           fsize  =  US_GuiSettings::fontSize();
+   QFont         ffont( "monospace", fsize );
+   QFont         tfont( "monospace", fsize );
+   QFontInfo     finfo( tfont );
+   QString       family;
+   bool          fmatch;
+   bool          ffixed;
+   const char*   preffam[] = {
+      "Liberation Mono",
+      "FreeMono",
+      "DejaVu Sans Mono",
+      "DejaVu LGC San Mono",
+      "Monaco",
+      "Andale Mono",
+      "Nimbus Mono L",
+      "Luxi Mono",
+      "QuickType mono",
+      "Courier New",
+      "Courier 10 Pitch",
+      "Courier"
+   };
+   const int     pfsize = sizeof( preffam ) / sizeof( preffam[ 0 ] );
+
+   for ( int ii = 0; ii < pfsize; ii++ )
+   {
+      family   = QString( preffam[ ii ] );
+      tfont    = QFont( family );
+      finfo    = QFontInfo( tfont );
+      fmatch   = finfo.exactMatch();
+      ffixed   = finfo.fixedPitch();
+      if ( fmatch  &&  ffixed )
+      {
+         ffont    = tfont;
+
+         if ( family.contains( "New" )  ||
+              family.contains( "FreeM" ) )
+            ffont    = QFont( family, fsize, QFont::DemiBold );
+
+         break;
+      }
+   }
+   return ffont;
+}
+
