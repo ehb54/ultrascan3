@@ -85,6 +85,27 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
    ck_autosc        = new QCheckBox( tr( "Autoscale" ) );
    ck_mouse         = new QCheckBox( tr( "Mouse" ) );
    ck_shade         = new QCheckBox( tr( "Shading" ) );
+
+   QPalette pal     = US_GuiSettings::normalColor();
+   QFont    font    = QFont( US_GuiSettings::fontFamily(),
+                             US_GuiSettings::fontSize(),
+                             QFont::Normal );
+   ck_ortho ->setFont( font );
+   ck_ortho ->setPalette( pal );
+   ck_ortho ->setAutoFillBackground( true );
+   ck_legend->setFont( font );
+   ck_legend->setPalette( pal );
+   ck_legend->setAutoFillBackground( true );
+   ck_autosc->setFont( font );
+   ck_autosc->setPalette( pal );
+   ck_autosc->setAutoFillBackground( true );
+   ck_mouse ->setFont( font );
+   ck_mouse ->setPalette( pal );
+   ck_mouse ->setAutoFillBackground( true );
+   ck_shade ->setFont( font );
+   ck_shade ->setPalette( pal );
+   ck_shade ->setAutoFillBackground( true );
+
    QLabel* normLabl = new QLabel( tr( "Normals" ) );
    rsliderLayout->addWidget( normLabl,    0, 0,  1, 2 );
    rsliderLayout->addWidget( normqSlider, 1, 0, 20, 1 );
@@ -105,6 +126,9 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
    pb_std  ->setStatusTip( tr( "Set standard view"  ) );
    pb_light->setStatusTip( tr( "Calibrate Lighting"  ) );
    ck_light->setStatusTip( tr( "Turn Lighting On/Off"  ) );
+   ck_light ->setFont( font );
+   ck_light ->setPalette( pal );
+   ck_light ->setAutoFillBackground( true );
 
    QLabel* offsLabl = new QLabel( tr( "Polygon Offset" ) );
    QLabel* resoLabl = new QLabel( tr( "Resolution" ) );

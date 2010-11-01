@@ -38,17 +38,28 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
 
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
-   ck_plteda = new QCheckBox( tr( "Plot Experimental Data" ) );
-   ck_subtin = new QCheckBox( tr( "Subtract Time Invariant Noise" ) );
-   ck_subrin = new QCheckBox( tr( "Subtract Radially Invariant Noise" ) );
-   ck_pltsda = new QCheckBox( tr( "Plot Simulated/Modeled Data" ) );
-   ck_addtin = new QCheckBox( tr( "Add Time Invariant Noise" ) );
-   ck_addrin = new QCheckBox( tr( "Add Radially Invariant Noise" ) );
-   ck_pltres = new QCheckBox( tr( "Plot Residuals" ) );
-   ck_plttin = new QCheckBox( tr( "Plot Time Invariant Noise" ) );
-   ck_pltrin = new QCheckBox( tr( "Plot Radially Invariant Noise" ) );
-   ck_pltran = new QCheckBox( tr( "Plot Random Noise" ) );
-   ck_shorbm = new QCheckBox( tr( "Show Residuals Bitmap" ) );
+   QLayout* lo_plteda =
+      us_checkbox( tr( "Plot Experimental Data" ),      ck_plteda, true );
+   QLayout* lo_subtin =
+      us_checkbox( tr( "Subtract Time Invariant Noise" ),     ck_subtin );
+   QLayout* lo_subrin =
+      us_checkbox( tr( "Subtract Radially Invariant Noise" ), ck_subrin );
+   QLayout* lo_pltsda =
+      us_checkbox( tr( "Plot Simulated/Modeled Data" ),       ck_pltsda );
+   QLayout* lo_addtin =
+      us_checkbox( tr( "Add Time Invariant Noise" ),          ck_addtin );
+   QLayout* lo_addrin =
+      us_checkbox( tr( "Add Radially Invariant Noise" ),      ck_addrin );
+   QLayout* lo_pltres =
+      us_checkbox( tr( "Plot Residuals" ),                    ck_pltres );
+   QLayout* lo_plttin =
+      us_checkbox( tr( "Plot Time Invariant Noise" ),         ck_plttin );
+   QLayout* lo_pltrin =
+      us_checkbox( tr( "Plot Radially Invariant Noise" ),     ck_pltrin );
+   QLayout* lo_pltran =
+      us_checkbox( tr( "Plot Random Noise"     ),             ck_pltran  );
+   QLayout* lo_shorbm =
+      us_checkbox( tr( "Show Residuals Bitmap" ),             ck_shorbm );
 
    le_vari   = us_lineedit();
    le_rmsd   = us_lineedit();
@@ -56,52 +67,25 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    le_rmsd->setReadOnly( true );
 
    datctrlsLayout->addWidget( lb_datctrls, 0, 0, 1, 8 );
-   datctrlsLayout->addWidget( ck_plteda,   1, 0, 1, 8 );
-   datctrlsLayout->addWidget( ck_subtin,   2, 1, 1, 7 );
-   datctrlsLayout->addWidget( ck_subrin,   3, 1, 1, 7 );
-   datctrlsLayout->addWidget( ck_pltsda,   4, 0, 1, 8 );
-   datctrlsLayout->addWidget( ck_addtin,   5, 1, 1, 7 );
-   datctrlsLayout->addWidget( ck_addrin,   6, 1, 1, 7 );
+   datctrlsLayout->addLayout( lo_plteda,   1, 0, 1, 8 );
+   datctrlsLayout->addLayout( lo_subtin,   2, 1, 1, 7 );
+   datctrlsLayout->addLayout( lo_subrin,   3, 1, 1, 7 );
+   datctrlsLayout->addLayout( lo_pltsda,   4, 0, 1, 8 );
+   datctrlsLayout->addLayout( lo_addtin,   5, 1, 1, 7 );
+   datctrlsLayout->addLayout( lo_addrin,   6, 1, 1, 7 );
 
    resctrlsLayout->addWidget( lb_resctrls, 0, 0, 1, 8 );
-   resctrlsLayout->addWidget( ck_pltres,   1, 0, 1, 8 );
-   resctrlsLayout->addWidget( ck_plttin,   2, 0, 1, 8 );
-   resctrlsLayout->addWidget( ck_pltrin,   3, 0, 1, 8 );
-   resctrlsLayout->addWidget( ck_pltran,   4, 0, 1, 8 );
-   resctrlsLayout->addWidget( ck_shorbm,   5, 0, 1, 8 );
+   resctrlsLayout->addLayout( lo_pltres,   1, 0, 1, 8 );
+   resctrlsLayout->addLayout( lo_plttin,   2, 0, 1, 8 );
+   resctrlsLayout->addLayout( lo_pltrin,   3, 0, 1, 8 );
+   resctrlsLayout->addLayout( lo_pltran,   4, 0, 1, 8 );
+   resctrlsLayout->addLayout( lo_shorbm,   5, 0, 1, 8 );
    resctrlsLayout->addWidget( lb_vari,     6, 0, 1, 3 );
    resctrlsLayout->addWidget( le_vari,     6, 3, 1, 5 );
    resctrlsLayout->addWidget( lb_rmsd,     7, 0, 1, 3 );
    resctrlsLayout->addWidget( le_rmsd,     7, 3, 1, 5 );
 
-   buttonsLayout->addWidget( pb_close );
-
-   ck_plteda->setChecked( true  );
-   ck_subtin->setChecked( false );
-
-   ck_plteda->setFont( pb_close->font() );
-   ck_subtin->setFont( pb_close->font() );
-   ck_subrin->setFont( pb_close->font() );
-   ck_pltsda->setFont( pb_close->font() );
-   ck_addtin->setFont( pb_close->font() );
-   ck_addrin->setFont( pb_close->font() );
-   ck_pltres->setFont( pb_close->font() );
-   ck_plttin->setFont( pb_close->font() );
-   ck_pltrin->setFont( pb_close->font() );
-   ck_pltran->setFont( pb_close->font() );
-   ck_shorbm->setFont( pb_close->font() );
-
-   ck_plteda->setPalette( US_GuiSettings::normalColor() );
-   ck_subtin->setPalette( US_GuiSettings::normalColor() );
-   ck_subrin->setPalette( US_GuiSettings::normalColor() );
-   ck_pltsda->setPalette( US_GuiSettings::normalColor() );
-   ck_addtin->setPalette( US_GuiSettings::normalColor() );
-   ck_addrin->setPalette( US_GuiSettings::normalColor() );
-   ck_pltres->setPalette( US_GuiSettings::normalColor() );
-   ck_plttin->setPalette( US_GuiSettings::normalColor() );
-   ck_pltrin->setPalette( US_GuiSettings::normalColor() );
-   ck_pltran->setPalette( US_GuiSettings::normalColor() );
-   ck_shorbm->setPalette( US_GuiSettings::normalColor() );
+   buttonsLayout ->addWidget( pb_close );
 
    plotLayout1 = new US_Plot( data_plot1,
          tr( "Experimental Data" ),

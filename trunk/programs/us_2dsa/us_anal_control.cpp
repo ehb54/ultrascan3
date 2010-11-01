@@ -63,9 +63,12 @@ US_AnalControl::US_AnalControl( QWidget* p, US_Model* amodel )
    QPushButton* pb_help    = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close   = us_pushbutton( tr( "Close" ) );
 
-   ck_tinoise = new QCheckBox( tr( "Fit Time-Invariant Noise"  ) );
-   ck_rinoise = new QCheckBox( tr( "Fit Radially-Inv. Noise"   ) );
-   ck_autoupd = new QCheckBox( tr( "Automatically Update Plot" ) );
+   QLayout* lo_tinois      =
+      us_checkbox( tr( "Fit Time-Invariant Noise"  ), ck_tinoise );
+   QLayout* lo_rinois      =
+      us_checkbox( tr( "Fit Radially-Inv. Noise"   ), ck_tinoise );
+   QLayout* lo_autupd      =
+      us_checkbox( tr( "Automatically Update Plot" ), ck_tinoise );
 
    ct_lolimits  = us_counter( 3,    1,    5, 0.01 );
    ct_uplimits  = us_counter( 3,    5,   10, 0.01 );
@@ -83,19 +86,19 @@ US_AnalControl::US_AnalControl( QWidget* p, US_Model* amodel )
 
    b_progress   = us_progressBar( 0, 100, 0 );
 
-   ck_unifgr    = new QCheckBox( "" );
-   ck_locugr    = new QCheckBox( "" );
-   ck_ranlgr    = new QCheckBox( "" );
-   ck_soluco    = new QCheckBox( "" );
-   ck_clipcs    = new QCheckBox( "" );
-   ck_regulz    = new QCheckBox( "" );
+   QLayout*  lo_unifgr  =
+      us_checkbox( tr( "Uniform Grid"                      ), ck_unifgr, true );
+   QLayout*  lo_locugr  =
+      us_checkbox( tr( "Local Uniform Grid"                ), ck_locugr );
+   QLayout*  lo_ranlgr  =
+      us_checkbox( tr( "Random Local Grid"                 ), ck_ranlgr );
+   QLayout*  lo_soluco  =
+      us_checkbox( tr( "Solute Coalescing"                 ), ck_soluco );
+   QLayout*  lo_clipcs  =
+      us_checkbox( tr( "Clip Lowest Concentration Solutes" ), ck_clipcs );
+   QLayout*  lo_regulz  =
+      us_checkbox( tr( "Regularization"                    ), ck_regulz );
 
-   QLabel*   lb_unifgr  = us_banner( tr( "Uniform Grid"             ) );
-   QLabel*   lb_locugr  = us_banner( tr( "Local Uniform Grid"       ) );
-   QLabel*   lb_ranlgr  = us_banner( tr( "Random Local Grid"        ) );
-   QLabel*   lb_soluco  = us_banner( tr( "Solute Coalescing"        ) );
-   QLabel*   lb_clipcs  = us_banner( tr( "Clip Lowest Concentration Solute" ) );
-   QLabel*   lb_regulz  = us_banner( tr( "Regularization"           ) );
 
    ct_grrefine  = us_counter( 3,    1,   20,    1 );
    ct_repetitl  = us_counter( 3,    1,   20,    1 );
@@ -122,9 +125,9 @@ US_AnalControl::US_AnalControl( QWidget* p, US_Model* amodel )
    controlsLayout->addWidget( ct_nstepsk,    6, 2, 1, 2 );
    controlsLayout->addWidget( lb_threadcnt,  7, 0, 1, 2 );
    controlsLayout->addWidget( ct_threadcnt,  7, 2, 1, 2 );
-   controlsLayout->addWidget( ck_tinoise,    8, 0, 1, 2 );
-   controlsLayout->addWidget( ck_rinoise,    8, 2, 1, 2 );
-   controlsLayout->addWidget( ck_autoupd,    9, 0, 1, 2 );
+   controlsLayout->addLayout( lo_tinois,     8, 0, 1, 2 );
+   controlsLayout->addLayout( lo_rinois,     8, 2, 1, 2 );
+   controlsLayout->addLayout( lo_autupd,     9, 0, 1, 2 );
    controlsLayout->addWidget( pb_strtfit,    9, 2, 1, 2 );
    controlsLayout->addWidget( pb_plot,      10, 0, 1, 2 );
    controlsLayout->addWidget( pb_save,      10, 2, 1, 2 );
@@ -143,37 +146,31 @@ US_AnalControl::US_AnalControl( QWidget* p, US_Model* amodel )
    controlsLayout->addWidget( lb_status,    17, 0, 1, 1 );
    controlsLayout->addWidget( b_progress,   17, 1, 1, 3 );
 
-   optimizeLayout->addWidget( lb_optimiz,    0, 0, 1, 8 );
-   optimizeLayout->addWidget( ck_unifgr,     1, 0, 1, 1 );
-   optimizeLayout->addWidget( lb_unifgr,     1, 1, 1, 7 );
-   optimizeLayout->addWidget( lb_grrefine,   2, 0, 1, 4 );
-   optimizeLayout->addWidget( ct_grrefine,   2, 4, 1, 4 );
-   optimizeLayout->addWidget( ck_locugr,     3, 0, 1, 1 );
-   optimizeLayout->addWidget( lb_locugr,     3, 1, 1, 7 );
-   optimizeLayout->addWidget( lb_repetitl,   4, 0, 1, 4 );
-   optimizeLayout->addWidget( ct_repetitl,   4, 4, 1, 4 );
-   optimizeLayout->addWidget( lb_scfactor,   5, 0, 1, 4 );
-   optimizeLayout->addWidget( ct_scfactor,   5, 4, 1, 4 );
-   optimizeLayout->addWidget( lb_scfact2,    6, 0, 1, 4 );
-   optimizeLayout->addWidget( ct_scfact2,    6, 4, 1, 4 );
-   optimizeLayout->addWidget( ck_ranlgr,     7, 0, 1, 1 );
-   optimizeLayout->addWidget( lb_ranlgr,     7, 1, 1, 7 );
-   optimizeLayout->addWidget( lb_repetitr,   8, 0, 1, 4 );
-   optimizeLayout->addWidget( ct_repetitr,   8, 4, 1, 4 );
-   optimizeLayout->addWidget( lb_stddevia,   9, 0, 1, 4 );
-   optimizeLayout->addWidget( ct_stddevia,   9, 4, 1, 4 );
-   optimizeLayout->addWidget( ck_soluco,    10, 0, 1, 1 );
-   optimizeLayout->addWidget( lb_soluco,    10, 1, 1, 7 );
-   optimizeLayout->addWidget( lb_coaldist,  11, 0, 1, 4 );
-   optimizeLayout->addWidget( ct_coaldist,  11, 4, 1, 4 );
-   optimizeLayout->addWidget( ck_clipcs,    12, 0, 1, 1 );
-   optimizeLayout->addWidget( lb_clipcs,    12, 1, 1, 7 );
-   optimizeLayout->addWidget( lb_nbrclips,  13, 0, 1, 4 );
-   optimizeLayout->addWidget( ct_nbrclips,  13, 4, 1, 4 );
-   optimizeLayout->addWidget( ck_regulz,    14, 0, 1, 1 );
-   optimizeLayout->addWidget( lb_regulz,    14, 1, 1, 7 );
-   optimizeLayout->addWidget( lb_regufact,  15, 0, 1, 4 );
-   optimizeLayout->addWidget( ct_regufact,  15, 4, 1, 4 );
+   optimizeLayout->addWidget( lb_optimiz,    0, 0, 1, 2 );
+   optimizeLayout->addLayout( lo_unifgr,     1, 0, 1, 2 );
+   optimizeLayout->addWidget( lb_grrefine,   2, 0, 1, 1 );
+   optimizeLayout->addWidget( ct_grrefine,   2, 1, 1, 1 );
+   optimizeLayout->addLayout( lo_locugr,     3, 0, 1, 2 );
+   optimizeLayout->addWidget( lb_repetitl,   4, 0, 1, 1 );
+   optimizeLayout->addWidget( ct_repetitl,   4, 1, 1, 1 );
+   optimizeLayout->addWidget( lb_scfactor,   5, 0, 1, 1 );
+   optimizeLayout->addWidget( ct_scfactor,   5, 1, 1, 1 );
+   optimizeLayout->addWidget( lb_scfact2,    6, 0, 1, 1 );
+   optimizeLayout->addWidget( ct_scfact2,    6, 1, 1, 1 );
+   optimizeLayout->addLayout( lo_ranlgr,     7, 0, 1, 2 );
+   optimizeLayout->addWidget( lb_repetitr,   8, 0, 1, 1 );
+   optimizeLayout->addWidget( ct_repetitr,   8, 1, 1, 1 );
+   optimizeLayout->addWidget( lb_stddevia,   9, 0, 1, 1 );
+   optimizeLayout->addWidget( ct_stddevia,   9, 1, 1, 1 );
+   optimizeLayout->addLayout( lo_soluco,    10, 0, 1, 2 );
+   optimizeLayout->addWidget( lb_coaldist,  11, 0, 1, 1 );
+   optimizeLayout->addWidget( ct_coaldist,  11, 1, 1, 1 );
+   optimizeLayout->addLayout( lo_clipcs,    12, 0, 1, 2 );
+   optimizeLayout->addWidget( lb_nbrclips,  13, 0, 1, 1 );
+   optimizeLayout->addWidget( ct_nbrclips,  13, 1, 1, 1 );
+   optimizeLayout->addLayout( lo_regulz,    14, 0, 1, 2 );
+   optimizeLayout->addWidget( lb_regufact,  15, 0, 1, 1 );
+   optimizeLayout->addWidget( ct_regufact,  15, 1, 1, 1 );
 
    ct_lolimits ->setValue(   1 );
    ct_uplimits ->setValue(  10 );
@@ -234,7 +231,7 @@ US_AnalControl::US_AnalControl( QWidget* p, US_Model* amodel )
             this,      SLOT( close_all() ) );
 
 qDebug() << "Pre-adjust size" << size();
-   resize( 700, 450 );
+   resize( 740, 440 );
 qDebug() << "Post-adjust size" << size();
 }
 
