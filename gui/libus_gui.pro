@@ -33,8 +33,10 @@ HEADERS      = \
                us_noise_loader.h        \
                us_passwd.h              \
                us_plot.h                \
+               us_plot3d.h              \
                us_predict1.h            \
                us_properties.h          \
+               us_resids_bitmap.h       \
                us_run_details2.h        \
                us_sassoc.h              \
                us_table.h               \
@@ -60,8 +62,10 @@ SOURCES      = \
                us_noise_loader.cpp        \
                us_passwd.cpp              \
                us_plot.cpp                \
+               us_plot3d.cpp              \
                us_predict1.cpp            \
                us_properties.cpp          \
+               us_resids_bitmap.cpp       \
                us_run_details2.cpp        \
                us_sassoc.cpp              \
                us_table.cpp               \
@@ -69,3 +73,4 @@ SOURCES      = \
                us_widgets_dialog.cpp      \
                us_solution_gui.cpp
 
+RESOURCES     = images.qrc
