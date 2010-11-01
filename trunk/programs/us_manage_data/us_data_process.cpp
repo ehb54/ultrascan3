@@ -487,7 +487,7 @@ QString US_DataProcess::get_noise_filename( QString guid )
    // if no guid match found, create new file name with a numeric part from
    //   the first gap in the file list sequence or from count plus one
    if ( ! found )
-      fname     = path + "/M" + QString().sprintf( "%07i", newnum ) + ".xml";
+      fname     = path + "/N" + QString().sprintf( "%07i", newnum ) + ".xml";
 
    return fname;
 }
