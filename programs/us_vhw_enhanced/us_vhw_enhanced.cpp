@@ -734,7 +734,7 @@ qDebug() << "view_report";
    edit->setWindowTitle( "Results:  van Holde - Weischet Analysis" );
    edit->move( this->pos() + QPoint( 100, 100 ) );
    edit->resize( 600, 500 );
-   edit->e->setFont( fixed_font() );
+   edit->e->setFont( US_Widgets::fixedFont() );
    edit->e->setText( mtext );
    edit->show();
 }
@@ -1768,55 +1768,6 @@ QString US_vHW_Enhanced::text_time( double seconds, int type )
 QString US_vHW_Enhanced::text_time( double seconds )
 {  // default mins,secs text
    return  text_time( seconds, 0 );
-}
-
-// find this system's best fixedPitch font
-QFont US_vHW_Enhanced::fixed_font()
-{
-   //QFontDataBase database;
-   int           fsize  =  US_GuiSettings::fontSize();
-   QFont         ffont( "monospace", fsize );
-   QFont         tfont( "monospace", fsize );
-   QFontInfo     finfo( tfont );
-   QString       family;
-   bool          fmatch;
-   bool          ffixed;
-   const char*   preffam[] = {
-      "Liberation Mono",
-      "FreeMono",
-      "DejaVu Sans Mono",
-      "DejaVu LGC San Mono",
-      "Monaco",
-      "Andale Mono",
-      "Nimbus Mono L",
-      "Luxi Mono",
-      "QuickType mono",
-      "Courier New",
-      "Courier 10 Pitch",
-      "Courier"
-   };
-   const int     pfsize = sizeof( preffam ) / sizeof( preffam[ 0 ] );
-
-   for ( int ii = 0; ii < pfsize; ii++ )
-   {
-      family   = QString( preffam[ ii ] );
-      tfont    = QFont( family );
-      finfo    = QFontInfo( tfont );
-      fmatch   = finfo.exactMatch();
-      ffixed   = finfo.fixedPitch();
-qDebug() << family << " MATCH" << fmatch << " FIXED" << ffixed;
-      if ( fmatch  &&  ffixed )
-      {
-         ffont    = tfont;
-
-         if ( family.contains( "New" )  ||
-              family.contains( "FreeM" ) )
-            ffont    = QFont( family, fsize, QFont::DemiBold );
-
-         break;
-      }
-   }
-   return ffont;
 }
 
 

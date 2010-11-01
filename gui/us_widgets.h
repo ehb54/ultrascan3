@@ -143,6 +143,9 @@ class US_EXTERN US_Widgets : public QFrame
     //! * US_GuiSettings::plotPicker()
     QwtPlotPicker* us_picker( QwtPlot* );
 
+    //! * returns a good match for a fixed font
+	 QFont fixedFont(void);
+
 };
 
 //! \brief Set a custom list widget that can override the default size

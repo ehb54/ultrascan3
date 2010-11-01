@@ -616,7 +616,13 @@ void US_Edit::load( void )
       allData << data;
       data.scanData.clear();
    }
-
+   for (int l=0; l<allData.size(); l++)
+   {
+      for (int m=0; m<allData[l].scanData.size(); m++)
+      {
+         qDebug() << "dataset:" << l << "scan:" << m << "Datasize:" << allData[l].x.size();
+      }
+   }
    if ( allData.isEmpty() )
    {
       QMessageBox::warning( this,
