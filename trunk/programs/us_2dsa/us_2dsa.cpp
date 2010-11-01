@@ -5,6 +5,7 @@
 #include "us_2dsa.h"
 #include "us_resids_bitmap.h"
 #include "us_plot_control.h"
+#include "us_anal_control.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -17,7 +18,6 @@
 #include "us_data_loader.h"
 #include "us_util.h"
 #include "us_investigator.h"
-#include "us_lamm_astfvm.h"
 
 //! \brief Main program for us_2dsa. Loads translators and starts
 //         the class US_2dsa.
@@ -69,6 +69,7 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    QPushButton* pb_pltres  = us_pushbutton( tr( "Residual Plot" ) );
    connect( pb_plt3d,   SIGNAL( clicked() ), SLOT( open_3dplot()  ) );
    connect( pb_pltres,  SIGNAL( clicked() ), SLOT( open_resplot() ) );
+   connect( pb_fitcntl, SIGNAL( clicked() ), SLOT( open_fitcntl() ) );
 
    // To modify controls layout, first make Base elements invisible
    QWidget* widg;
@@ -424,5 +425,13 @@ qDebug() << "Open 3dplot";
    eplotcd = new US_PlotControl( this, &model );
    eplotcd->move( epd_pos );
    eplotcd->show();
+}
+
+void US_2dsa::open_fitcntl()
+{
+qDebug() << "Open 3dplot";
+   analcd = new US_AnalControl( this, &model );
+   analcd->move( epd_pos );
+   analcd->show();
 }
 

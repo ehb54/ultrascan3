@@ -2,6 +2,7 @@
 #define US_2DSA_H
 
 #include "us_plot_control.h"
+#include "us_anal_control.h"
 #include "us_noise_loader.h"
 #include "us_resplot.h"
 #include "us_dataIO2.h"
@@ -47,6 +48,7 @@ class US_2dsa : public US_AnalysisBase2
 
       QPointer< US_ResidPlot >    resplotd;
       QPointer< US_PlotControl >  eplotcd;
+      QPointer< US_AnalControl >  analcd;
 
       US_Model             model;
       US_Model             model_loaded;
@@ -55,6 +57,7 @@ class US_2dsa : public US_AnalysisBase2
 
       QPoint               rbd_pos;
       QPoint               epd_pos;
+      QPoint               acd_pos;
 
       QTextEdit*           te_status;
       QProgressBar*        b_progress;
@@ -62,6 +65,7 @@ class US_2dsa : public US_AnalysisBase2
    private slots:
       void open_resplot( void );
       void open_3dplot(  void );
+      void open_fitcntl( void );
       void data_plot( void );
       void view     ( void );
       void save     ( void );
