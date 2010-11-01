@@ -47,17 +47,6 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    parameterLayout->addWidget( pb_dstrpl, 2, 0, 1, 2 );
    parameterLayout->addWidget( pb_selegr, 2, 2, 1, 2 );
 
-   QLayoutItem* litem = parameterLayout->itemAtPosition( 1, 0 );
-   QWidget*     witem = litem->widget();
-
-   if ( witem )
-   {  // change "vbar" to "Vbar" on pushbutton
-      QPushButton* bitem = (QPushButton*)witem;
-      bitem->setText( "Vbar" );
-   }
-   else
-      qDebug() << "parLay 1,0 item is NOT widget";
-
    QLabel* lb_analysis     = us_banner( tr( "Analysis Controls"      ) );
    QLabel* lb_scan         = us_banner( tr( "Scan Control"           ) );
    QLabel* lb_smoothing    = us_label ( tr( "Data Smoothing:"        ) );
@@ -1336,8 +1325,7 @@ qDebug() << "      find_root:  goal test" << goal << test
 // calculate back diffusion coefficient
 double US_vHW_Enhanced::back_diff_coeff( double sedc )
 {
-   double  tempera  = le_temp->text().split( QRegExp( "\\s+" ) )
-                         .at( 0 ).toDouble();
+   double  tempera  = le_temp->text().section( " ", 0, 0 ).toDouble();
    double  RT       = R * ( K0 + tempera );
    double  D1       = AVOGADRO * 0.06 * M_PI * viscosity;
    double  D2       = 0.045 * sedc * vbar * viscosity;

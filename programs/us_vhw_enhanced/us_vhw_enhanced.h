@@ -42,9 +42,6 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase2
       QLabel*       lb_division;
 
       QLineEdit*    le_temper;
-      QLineEdit*    le_densit;
-      QLineEdit*    le_viscos;
-      QLineEdit*    le_vbar;
 
       US_Help       showHelp;
  
@@ -56,9 +53,6 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase2
       US_PlotPicker* gpick;
 
       QPushButton*  pb_dstrpl;
-      QPushButton*  pb_densit;
-      QPushButton*  pb_viscos;
-      QPushButton*  pb_vbar;
       QPushButton*  pb_rsetda;
       QPushButton*  pb_selegr;
 

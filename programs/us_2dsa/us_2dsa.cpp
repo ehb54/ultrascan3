@@ -3,10 +3,21 @@
 #include <QApplication>
 
 #include "us_2dsa.h"
+#include "us_resids_bitmap.h"
+#include "us_plot_control.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_matrix.h"
+#include "us_constants.h"
+#include "us_analyte_gui.h"
+#include "us_passwd.h"
+#include "us_db2.h"
+#include "us_data_loader.h"
+#include "us_util.h"
+#include "us_investigator.h"
+#include "us_lamm_astfvm.h"
 
 //! \brief Main program for us_2dsa. Loads translators and starts
 //         the class US_2dsa.
@@ -24,10 +35,13 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
+// constructor, based on AnalysisBase
 US_2dsa::US_2dsa() : US_AnalysisBase2()
 {
    setWindowTitle( tr( "2-Dimensional Spectrum Analysis" ) );
+   setObjectName( "US_2dsa" );
 
+   // Build local and 2dsa-specific GUI elements
    te_results = NULL;
 
    QLabel* lb_analysis = us_banner( tr( "Analysis Controls" ) );
@@ -53,7 +67,16 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    QPushButton* pb_loadfit = us_pushbutton( tr( "Load Fit"      ) );
    QPushButton* pb_plt3d   = us_pushbutton( tr( "3-D Plot"      ) );
    QPushButton* pb_pltres  = us_pushbutton( tr( "Residual Plot" ) );
+   connect( pb_plt3d,   SIGNAL( clicked() ), SLOT( open_3dplot()  ) );
+   connect( pb_pltres,  SIGNAL( clicked() ), SLOT( open_resplot() ) );
 
+   // To modify controls layout, first make Base elements invisible
+   QWidget* widg;
+   for ( int ii = 0; ii < controlsLayout->count(); ii++ )
+      if ( ( widg = controlsLayout->itemAt( ii )->widget() ) != 0 )
+         widg->setVisible( false );
+
+   // Reconstruct controls  layout with some 2dsa-specific elements
    controlsLayout->addWidget( lb_analysis,  0, 0, 1, 4 );
    controlsLayout->addWidget( lb_status,    1, 0, 4, 1 );
    controlsLayout->addWidget( te_status,    1, 1, 4, 3 );
@@ -68,6 +91,7 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    controlsLayout->addWidget( ct_to,        8, 3, 1, 1 );
    controlsLayout->addWidget( pb_exclude,   9, 0, 1, 4 );
 
+   // Set initial status text
    te_status->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
    te_status->setText( tr(
        "Solution not initiated...\n"
@@ -75,6 +99,7 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
        "Variance: 0.000000e-05 .\n"
        "Iterations:  0" ) );
 
+   // Add progress bar at the bottom of the left-side layout
    progressLayout   = new QGridLayout();
    QLabel* lb_progress = us_label( tr( "Status:" ) );
    b_progress          = us_progressBar( 0, 100, 0 );
@@ -85,6 +110,13 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
    connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
+
+   resplotd     = 0;
+   eplotcd      = 0;
+   rbd_pos      = this->pos() + QPoint( 100, 100 );
+   epd_pos      = this->pos() + QPoint( 200, 200 );
+
+   sdata        = 0;
 }
 
 void US_2dsa::data_plot( void )
@@ -99,8 +131,6 @@ void US_2dsa::data_plot( void )
 
    int     scanCount   = d->scanData.size();
    int     exclude     = 0;
-   double  boundaryPct = ct_boundaryPercent->value() / 100.0;
-   double  positionPct = ct_boundaryPos    ->value() / 100.0;
    double  baseline    = calc_baseline();
 
    for ( int i = 0; i < scanCount; i++ )
@@ -126,55 +156,9 @@ void US_2dsa::data_plot( void )
    data_plot1->setAxisTitle( QwtPlot::yLeft  , 
          tr( "Correc. Sed. Coeff. (1e-13 s)" ) );
 
-   if ( smPoints  != NULL ) delete [] smPoints;
-   if ( smSeconds != NULL ) delete [] smSeconds;
-
-   smPoints  = new double[ scanCount ];
-   smSeconds = new double[ scanCount ];
-
    // Calculate the 2nd moment
    for ( int i = 0; i < scanCount; i++ )
    {
-      double sum1  = 0.0;
-      double sum2  = 0.0;
-      int    count = 0;
-
-      // The span is the boundary portion that is going to be analyzed (in
-      // percent)
-
-      double range  = ( d->scanData[ i ].plateau - baseline ) * boundaryPct;
-      double test_y = range * positionPct;
-
-      while ( d->scanData[ i ].readings[ count ].value - baseline < test_y ) 
-         count++;
-
-      int points = d->scanData[ i ].readings.size();
-
-      if ( count == 0 ) count = 1;
-
-      while ( count < points )
-      {   
-         double value  = d->scanData[ i ].readings[ count ].value - baseline;
-         double radius = d->x[ count ].radius;
-
-         if ( value >= test_y + range ) break;
-      
-         double v0 = d->scanData[ i ].readings[ count - 1 ].value - baseline;
-         double dC = value - v0;
-
-         sum1 += dC * sq( radius );
-         sum2 += dC;
-         count++;
-      }
-
-      smPoints [ i ] = sqrt( sum1 / sum2 ); // second moment points in cm
-
-      double omega = d->scanData[ i ].rpm * M_PI / 30.0;
-
-      // second moment s
-      smSeconds[ i ] = 
-         1.0e13 * solution.correction * log( smPoints[ i ] / d->meniscus ) /
-         ( sq( omega ) * ( d->scanData[ i ].seconds - time_correction ) );
    }
 
    double* x = new double[ scanCount ];
@@ -328,9 +312,9 @@ void US_2dsa::save( void )
       return;
    }
 
+#if 0
    QTextStream ts_data( &sm_data );
 
-#if 0
    int scanCount = d->scanData.size();
    int excludes  = le_skipped->text().toInt();
    
@@ -415,3 +399,30 @@ void US_2dsa::save( void )
          + plot2File + "\n" 
          + textFile  + "\n" );
 }
+
+US_DataIO2::EditedData*     US_2dsa::mw_editdata() { return edata;     }
+US_DataIO2::RawData*        US_2dsa::mw_simdata()  { return sdata;     }
+US_Model*                   US_2dsa::mw_model()    { return &model;    }
+US_Noise*                   US_2dsa::mw_ti_noise() { return &ti_noise; }
+US_Noise*                   US_2dsa::mw_ri_noise() { return &ti_noise; }
+
+void US_2dsa::open_resplot()
+{
+qDebug() << "Open Resplot";
+   resplotd = new US_ResidPlot( this );
+   resplotd->setVisible( true );
+}
+
+void US_2dsa::open_3dplot()
+{
+qDebug() << "Open 3dplot";
+   if ( eplotcd )
+   {
+      epd_pos  = eplotcd->pos();
+      eplotcd->close();
+   }
+   eplotcd = new US_PlotControl( this, &model );
+   eplotcd->move( epd_pos );
+   eplotcd->show();
+}
+
