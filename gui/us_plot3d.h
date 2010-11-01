@@ -15,7 +15,7 @@
 #include "qwt3d_plot.h"
 
 #ifndef DbgLv
-#define DbgLv(a) if(dbg_level>=a)qDebug()
+#define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
 #endif
 
 //! \brief A class to provide a window for a qwtplot3d surface plot
@@ -25,8 +25,8 @@ class US_EXTERN US_Plot3D : public QMainWindow
    Q_OBJECT
 
    public:
-      //! \param parent  A pointer to the parent widget of this one
-      //! \param modl    A pointer to the model whose data is to be plotted
+      //! \param p  A pointer to the parent widget of this one
+      //! \param m  A pointer to the model whose data is to be plotted
       US_Plot3D( QWidget*, US_Model* );
 
       //! \brief Public function to set 3 coordinate type flags
@@ -159,7 +159,7 @@ class US_EXTERN US_Plot3D : public QMainWindow
       Qwt3D::SurfacePlot*          dataWidget;
 
    protected:
-      US_Model*     model;
+      US_Model*     model;     //!< model to plot in 3 dimensions
 
    private slots:
 
