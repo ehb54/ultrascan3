@@ -49,16 +49,27 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
-   QCheckBox*   ck_xmwt   = new QCheckBox( tr( "x=MW"   ) );
-   QCheckBox*   ck_ymwt   = new QCheckBox( tr( "y=MW"   ) );
-   QCheckBox*   ck_xsed   = new QCheckBox( tr( "x=s"    ) );
-   QCheckBox*   ck_ysed   = new QCheckBox( tr( "y=s"    ) );
-   QCheckBox*   ck_xdif   = new QCheckBox( tr( "x=D"    ) );
-   QCheckBox*   ck_ydif   = new QCheckBox( tr( "y=D"    ) );
-   QCheckBox*   ck_xfco   = new QCheckBox( tr( "x=f"    ) );
-   QCheckBox*   ck_yfco   = new QCheckBox( tr( "y=f"    ) );
-   QCheckBox*   ck_xfra   = new QCheckBox( tr( "x=f/f0" ) );
-   QCheckBox*   ck_yfra   = new QCheckBox( tr( "y=f/f0" ) );
+   QCheckBox*   ck_xmwt;
+   QCheckBox*   ck_ymwt;
+   QCheckBox*   ck_xsed;
+   QCheckBox*   ck_ysed;
+   QCheckBox*   ck_xdif;
+   QCheckBox*   ck_ydif;
+   QCheckBox*   ck_xfco;
+   QCheckBox*   ck_yfco;
+   QCheckBox*   ck_xfra;
+   QCheckBox*   ck_yfra;
+
+   QLayout*     lo_xmwt   = us_checkbox( tr( "x=mw"   ), ck_xmwt, true  );
+   QLayout*     lo_ymwt   = us_checkbox( tr( "y=mw"   ), ck_ymwt, false );
+   QLayout*     lo_xsed   = us_checkbox( tr( "x=s"    ), ck_xsed, false );
+   QLayout*     lo_ysed   = us_checkbox( tr( "y=s"    ), ck_ysed, false );
+   QLayout*     lo_xdif   = us_checkbox( tr( "x=D"    ), ck_xdif, false );
+   QLayout*     lo_ydif   = us_checkbox( tr( "y=D"    ), ck_ydif, false );
+   QLayout*     lo_xfco   = us_checkbox( tr( "x=f"    ), ck_xfco, false );
+   QLayout*     lo_yfco   = us_checkbox( tr( "y=f"    ), ck_yfco, false );
+   QLayout*     lo_xfra   = us_checkbox( tr( "x=f/f0" ), ck_xfra, false );
+   QLayout*     lo_yfra   = us_checkbox( tr( "y=f/f0" ), ck_yfra, true  );
 
    QwtCounter* ct_zscalefac = us_counter( 3,  0.1,   10, 0.01 );
    QwtCounter* ct_gridreso  = us_counter( 3,   50,  300,   10 );
@@ -69,20 +80,20 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    controlsLayout->addWidget( lb_dimen1,     1, 2, 1, 1 );
    controlsLayout->addWidget( lb_dimen2,     1, 3, 1, 1 );
    controlsLayout->addWidget( lb_molwt,      2, 0, 1, 2 );
-   controlsLayout->addWidget( ck_xmwt,       2, 2, 1, 1 );
-   controlsLayout->addWidget( ck_ymwt,       2, 3, 1, 1 );
+   controlsLayout->addLayout( lo_xmwt,       2, 2, 1, 1 );
+   controlsLayout->addLayout( lo_ymwt,       2, 3, 1, 1 );
    controlsLayout->addWidget( lb_sedcoeff,   3, 0, 1, 2 );
-   controlsLayout->addWidget( ck_xsed,       3, 2, 1, 1 );
-   controlsLayout->addWidget( ck_ysed,       3, 3, 1, 1 );
+   controlsLayout->addLayout( lo_xsed,       3, 2, 1, 1 );
+   controlsLayout->addLayout( lo_ysed,       3, 3, 1, 1 );
    controlsLayout->addWidget( lb_diffcoeff,  4, 0, 1, 2 );
-   controlsLayout->addWidget( ck_xdif,       4, 2, 1, 1 );
-   controlsLayout->addWidget( ck_ydif,       4, 3, 1, 1 );
+   controlsLayout->addLayout( lo_xdif,       4, 2, 1, 1 );
+   controlsLayout->addLayout( lo_ydif,       4, 3, 1, 1 );
    controlsLayout->addWidget( lb_friccoeff,  5, 0, 1, 2 );
-   controlsLayout->addWidget( ck_xfco,       5, 2, 1, 1 );
-   controlsLayout->addWidget( ck_yfco,       5, 3, 1, 1 );
+   controlsLayout->addLayout( lo_xfco,       5, 2, 1, 1 );
+   controlsLayout->addLayout( lo_yfco,       5, 3, 1, 1 );
    controlsLayout->addWidget( lb_fricratio,  6, 0, 1, 2 );
-   controlsLayout->addWidget( ck_xfra,       6, 2, 1, 1 );
-   controlsLayout->addWidget( ck_yfra,       6, 3, 1, 1 );
+   controlsLayout->addLayout( lo_xfra,       6, 2, 1, 1 );
+   controlsLayout->addLayout( lo_yfra,       6, 3, 1, 1 );
    controlsLayout->addWidget( lb_zscalefac,  7, 0, 1, 2 );
    controlsLayout->addWidget( ct_zscalefac,  7, 2, 1, 2 );
    controlsLayout->addWidget( lb_gridreso,   8, 0, 1, 2 );
@@ -95,17 +106,6 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    buttonsLayout->addWidget( pb_plot3d );
    buttonsLayout->addWidget( pb_help   );
    buttonsLayout->addWidget( pb_close  );
-
-   ck_xmwt->setChecked( true  );
-   ck_ymwt->setChecked( false );
-   ck_xsed->setChecked( false );
-   ck_ysed->setChecked( false );
-   ck_xdif->setChecked( false );
-   ck_ydif->setChecked( false );
-   ck_xfco->setChecked( false );
-   ck_yfco->setChecked( false );
-   ck_xfra->setChecked( false );
-   ck_yfra->setChecked( true  );
 
    ck_ymwt->setEnabled( false );
    ck_xfra->setEnabled( false );
@@ -123,18 +123,6 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    yCheck[ 2 ] = ck_ydif;
    yCheck[ 3 ] = ck_yfco;
    yCheck[ 4 ] = ck_yfra;
-
-   QPalette gpalette = US_GuiSettings::normalColor();
-   ck_xmwt->setPalette( gpalette );
-   ck_ymwt->setPalette( gpalette );
-   ck_xsed->setPalette( gpalette );
-   ck_ysed->setPalette( gpalette );
-   ck_xdif->setPalette( gpalette );
-   ck_ydif->setPalette( gpalette );
-   ck_xfco->setPalette( gpalette );
-   ck_yfco->setPalette( gpalette );
-   ck_xfra->setPalette( gpalette );
-   ck_yfra->setPalette( gpalette );
 
    zscale   = 2.0;
    gridres  = 150.0;
