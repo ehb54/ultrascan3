@@ -504,8 +504,29 @@ BEGIN
 
   IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
 
+    -- Make sure records match if they have related tables or not
+    -- Have to do it in a couple of stages because of the constraints
+    DELETE      noise
+    FROM        rawData
+    LEFT JOIN   editedData  ON ( editedData.rawDataID = rawData.rawDataID )
+    LEFT JOIN   model       ON ( model.editedDataID   = editedData.editedDataID )
+    LEFT JOIN   noise       ON ( noise.modelID        = model.modelID )
+    WHERE       rawData.experimentID = p_experimentID;
+
+    DELETE      model, modelPerson
+    FROM        rawData
+    LEFT JOIN   editedData  ON ( editedData.rawDataID = rawData.rawDataID )
+    LEFT JOIN   model       ON ( model.editedDataID   = editedData.editedDataID )
+    LEFT JOIN   modelPerson ON ( modelPerson.modelID  = model.modelID )
+    WHERE       rawData.experimentID = p_experimentID;
+
+    DELETE      editedData
+    FROM        rawData
+    LEFT JOIN   editedData  ON ( editedData.rawDataID = rawData.rawDataID )
+    WHERE       rawData.experimentID = p_experimentID;
+
     DELETE FROM rawData
-    WHERE experimentID = p_experimentID;
+    WHERE       experimentID = p_experimentID;
 
     DELETE FROM experimentPerson
     WHERE experimentID = p_experimentID;

@@ -395,11 +395,17 @@ BEGIN
 
     -- Make sure records match if they have related tables or not
     -- Have to do it in a couple of stages because of the constraints
-    DELETE      model, noise, modelPerson
+    DELETE      noise
     FROM        rawData
     LEFT JOIN   editedData  ON ( editedData.rawDataID = rawData.rawDataID )
     LEFT JOIN   model       ON ( model.editedDataID   = editedData.editedDataID )
     LEFT JOIN   noise       ON ( noise.modelID        = model.modelID )
+    WHERE       rawData.experimentID = p_experimentID;
+
+    DELETE      model, modelPerson
+    FROM        rawData
+    LEFT JOIN   editedData  ON ( editedData.rawDataID = rawData.rawDataID )
+    LEFT JOIN   model       ON ( model.editedDataID   = editedData.editedDataID )
     LEFT JOIN   modelPerson ON ( modelPerson.modelID  = model.modelID )
     WHERE       rawData.experimentID = p_experimentID;
 

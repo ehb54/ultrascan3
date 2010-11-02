@@ -21,7 +21,7 @@ INSERT INTO abstractRotor SET
   magnetOffset      = 0.0,
   cellCenter        = 6.5,        -- cm
   defaultStretch    = '0 0 0 0 0',
-  manufacturer      = 'None',
+  manufacturer      = NULL,
   materialRefURI    = '',
   dateUpdated       = NOW();
 
