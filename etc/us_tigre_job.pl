@@ -12,9 +12,12 @@
 @laredodowncount = `ssh laredo /opt/torque/bin/pbsnodes -l`;
 @alamodowncount = `ssh alamo /opt/torque/bin/pbsnodes -l`;
 
-$bcf_no_procs = 38 - 2 * @bcfdowncount;
+$bcf_no_procs = 20 - 2 * @bcfdowncount;
 $alamo_no_procs = 32 - 2 * @alamodowncount;
-$laredo_no_procs = 40 - 4 * @laredodowncount;
+$laredo_no_procs = 20 - 4 * @laredodowncount;
+
+$MAX_RETRIES = 12;
+$MAX_RETRIES_SHORT = 2;
 
 # END USER EDITABLE SECTION
 
@@ -24,6 +27,7 @@ $startdate = `date +'\%Y-\%m-\%d \%T'`;
 chomp $startdate;
 
 use MIME::Lite;
+use IO::CaptureOutput qw/capture/;
 
 $US = $ENV{'ULTRASCAN'};
 
@@ -46,6 +50,29 @@ sub check_is_resubmit {
     $is_resubmit = `$cmd`;
     die "tigre job was resubmitted\n" if $is_resubmit == 1;
 }    
+
+sub if_gfac_set_workrun {
+    if ( $gfac[$usesys] ) {
+	$cmd = "$US/etc/us_asta_dir.pl $exp_tag\n";
+	my $tries = 0;
+	do {
+	    print $cmd;
+	    $WORKRUN = `$cmd`;
+	    chomp $WORKRUN;
+	    print "workrun now <$WORKRUN>\n";
+	    if ( !length($WORKRUN) )
+	    {
+		$tries++;
+		if ( $tries <= $MAX_RETRIES ) {
+		    print "no directory yet (try $tries) from $cmd, sleeping " , ($tries * 30), "s\n";
+		    sleep $tries * 30;
+		} else {
+		    print "couldn't get workrun directory & too many retries\n";
+		}
+	    } 
+	} while (!length($WORKRUN) && $tries <= $MAX_RETRIES_SHORT);
+    }
+}
 
 sub ifbigcompress {
     my $file = $_[0];
@@ -185,7 +212,9 @@ jid $id
     $msg->send('smtp', 'smtp.uthscsa.edu');
 };
 
+
 sub gsiget {
+    print "sub gsiget:\n";
     my $maxtry = 5;
     my $sys = $_[0];
     my $port = $_[1];
@@ -193,14 +222,60 @@ sub gsiget {
     my $dfile = $_[3];
     my $cmd = "$gsi[$usesys]ssh -p $port $sys ls -l $sfile | awk '{ print \$5 }'";
     print "$cmd\n";
-    my $res = $execute ? `$cmd` : '1234 not run';
+    my $retry;
+    my $stderr;
+    my $result;
+    if ( $execute ) {
+	$retry = 0;
+	do {
+	    my $tosleep = $retry * 30;
+	    if ( $retry ) {
+		print "can not run <$cmd>, retry $retry, sleeping $tosleep\n";
+		sleep $tosleep;
+	    }
+	    capture sub {
+		system($cmd);
+	    } => \$result, \$stderr;
+	    $stderr =~ s/\s*//g;
+	    $stderr =~ s/Warning:Noxauthdata;usingfakeauthenticationdataforX11forwarding.//g;
+	    $stderr =~ s/\s*//g;
+	    $retry++;
+	    print "$cmd results:\n\tstdout <$result>\n\tstderr <$stderr>\n";
+	    if ( $retry > $MAX_RETRIES ) {
+		print "ERROR too many retries\n";
+	    }
+	} while (length($stderr) && $retry <= $MAX_RETRIES);
+    }
+
+    my $res = $execute ? $result : '1234 not run';
     chomp $res;
     print "result <$res>\n";
     my $count = 0;
     do {
 	$cmd = "$gsi[$usesys]scp -C -P $port $sys:$sfile $dfile";
 	print "$cmd\n";
-	my $newres = $execute ? `$cmd` : '4321 not run';
+	if ( $execute ) {
+	    $retry = 0;
+	    do {
+		my $tosleep = $retry * 30;
+		if ( $retry ) {
+		    print "can not run <$cmd>, retry $retry, sleeping $tosleep\n";
+		    sleep $tosleep;
+		}
+		capture sub {
+		    system($cmd);
+		} => \$result, \$stderr;
+		$stderr =~ s/\s*//g;
+		$stderr =~ s/Warning:Noxauthdata;usingfakeauthenticationdataforX11forwarding.//g;
+		$stderr =~ s/\s*//g;
+		$retry++;
+		print "$cmd results:\n\tstdout <$result>\n\tstderr <$stderr>\n";
+		if ( $retry > $MAX_RETRIES ) {
+		    print "ERROR too many retries\n";
+		}
+	    } while (length($stderr) && $retry <= $MAX_RETRIES);
+	}
+	my $newres = $execute ? $result : '4321 not run';
 	print "result <$newres>\n";
 	chomp $newres;
 	$cmd = "ls -l $dfile | awk '{ print \$5 }'\n";
@@ -716,6 +791,7 @@ solutes    $solutes
 }    
     
 
+$max_time[0] = int($max_time[0] + .5);
 $max_time[0] = 2880 if $max_time[0] > 2880;
 $max_time[5] = $max_time[0];
 $max_time[3] = $max_time[0];
@@ -740,8 +816,8 @@ $esttime = 120; # we should do better
 $hostfile = "$ENV{'ULTRASCAN'}/etc/us_tigre_hosts";
 
 if(!$default_system) {
-    use SelectResource;
-    ($default_system, $np) = SelectResource::select_tigre($hostfile, $np, $max_time[$usesys]);
+#    use SelectResource;
+#    ($default_system, $np) = SelectResource::select_tigre($hostfile, $np, $max_time[$usesys]);
 }
 
 $usesys = $reversesystems{$default_system};
@@ -882,6 +958,36 @@ if($default_system ne 'meta') {
 }
 
 # put files to TIGRE client
+
+sub check_staged_files {
+    $check_cmd = "$gsi[$usesys]ssh -p $PORT_SSH $GSI_SYSTEM ls ${WORKRUN}/\n"; # experiments${timestamp}.dat ${WORKRUN}/solutes${timestamp}.dat\n";
+    print $check_cmd;
+    my $retry = 0;
+    if ( $execute ) {
+	$result = `$check_cmd`;
+	print $result;
+	while ( 
+		! ( $result =~ /experiments${timestamp}.dat/ ) ||
+		! ( $result =~ /solutes${timestamp}.dat/ ) )
+        {
+	    $retry++;
+	    my $tosleep = $retry * 30;
+	    print "Files not properly staged, retry $retry, sleeping $tosleep\n";
+	    sleep $tosleep;
+	    $cmd = 
+		"$gsi[$usesys]ssh -p $PORT_SSH $GSI_SYSTEM rm -fr $WORKRUN
+$gsi[$usesys]ssh -p $PORT_SSH $GSI_SYSTEM mkdir -p $WORKRUN
+$gsi[$usesys]scp -P $PORT_SSH $experiment $GSI_SYSTEM:${WORKRUN}/experiments${timestamp}.dat
+$gsi[$usesys]scp -P $PORT_SSH $solutes $GSI_SYSTEM:${WORKRUN}/solutes${timestamp}.dat\n";
+	    print $cmd;
+	    print `$cmd`;
+	    print $check_cmd;
+	    $result = `$check_cmd`;
+	    print $result;
+	}
+    }
+}
+    
 if($default_system ne 'meta') {
     &check_is_resubmit();
     $cmd = 
@@ -891,7 +997,9 @@ $gsi[$usesys]scp -P $PORT_SSH $experiment $GSI_SYSTEM:${WORKRUN}/experiments${ti
 $gsi[$usesys]scp -P $PORT_SSH $solutes $GSI_SYSTEM:${WORKRUN}/solutes${timestamp}.dat\n";
     print $cmd;
     print `$cmd` if $execute;
+    &check_staged_files();
 }
+
 # create xml
 
 chdir $basedir;
@@ -1092,9 +1200,23 @@ do {
     }
     if($status eq 'Failed' ||
        $status eq 'FAILED') {
+	&if_gfac_set_workrun();
 	if($default_system ne 'meta') {
-	    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "/lustre/tmp/us_job${id}.stderr");
-	    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "/lustre/tmp/us_job${id}.stdout");
+	    if ( $gfac[$usesys] ) {
+		if ( length($WORKRUN) ) {
+		    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stderr", "/lustre/tmp/us_job${id}.stderr");
+		    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stdout", "/lustre/tmp/us_job${id}.stdout");
+		}
+		$cmd = "$US/etc/us_asta_message.pl $exp_tag\n";
+		print $cmd;
+		print "GFAC Message:----------\n";
+		print `$cmd`;
+		print "-----------------------\n";
+	    } else {
+		&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "/lustre/tmp/us_job${id}.stderr");
+		&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "/lustre/tmp/us_job${id}.stdout");
+	    }
+		
 #	    $cmd = 
 #"$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
 #$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
@@ -1113,21 +1235,143 @@ do {
 } while($status ne 'Done' && $status ne 'FINISHED');
 # get results ($gsi[$usesys]scp models & emails)
 
-if ( $gfac[$usesys] ) {
-    $cmd = "$US/etc/us_asta_dir.pl $exp_tag\n";
-    my $tries = 0;
+&if_gfac_set_workrun();
+
+sub retrieve_result_files {
+# step 1, get list of files in workrun
+    print "sub: retrieve results files:\n";
+    my $tosleep;
+    my $retry = 0;
+    my $result;
+    my @stderr;
+    my @results;
+    my $i;
+    my @local_files;
+    my @missing;
+
+    my $cmd = 
+	"$gsi[$usesys]ssh -p $PORT_SSH $GSI_SYSTEM 'bash -c \"ls $WORKRUN 2>/dev/null\"'";
+    
     do {
-	print $cmd;
-	$WORKRUN = `$cmd`;
-	chomp $WORKRUN;
-	print "workrun now <$WORKRUN>\n";
-	if ( !length($WORKRUN) )
-	{
-	    $tries++;
-	    print "no directory yet (try $tries) from $cmd, sleeping " , ($tries * 30), "s\n";
-	    sleep $tries * 30;
-	} 
-    } while (!length($WORKRUN));
+	$tosleep = $retry * 30;
+	if ( $retry ) {
+	    print "can not read results directory, retry $retry, sleeping $tosleep\n";
+	    sleep $tosleep;
+	}
+	capture sub {
+	    system($cmd);
+	} => \$result, \$stderr;
+	$stderr =~ s/\s*//g;
+	$stderr =~ s/Warning:Noxauthdata;usingfakeauthenticationdataforX11forwarding.//g;
+	$stderr =~ s/\s*//g;
+	$retry++;
+	print "$cmd results:\n\tstdout <$result>\n\tstderr <$stderr>\n";
+	if ( $retry > $MAX_RETRIES ) {
+	    print "ERROR too many retries\n";
+	}
+    } while (length($stderr) && $retry <= $MAX_RETRIES);
+
+#    print "result <$result>\n";
+
+# prune result files list
+    @results = split /\n/, $result;
+    grep chomp, @results;
+    for($i = 0; $i < @results; $i++) {
+	print "$i: $results[$i]\n";
+    }
+    @results = grep (/(^email_|\.simulation_parameters$|^checkpoint.*dat$|noise|\.model)/, @results);
+    for($i = 0; $i < @results; $i++) {
+	print "$i: $results[$i]\n";
+    }
+    my @getlist;
+    push @getlist, 'email_*' if grep /^email_/, @results;
+    push @getlist, '*.simulation_parameters' if grep /\.simulation_parameters$/, @results;
+    push @getlist, 'checkpoint.*dat' if grep /^checkpoint.*dat$/, @results;
+    push @getlist, '*noise*' if grep /noise/, @results;
+    push @getlist, '*.model*' if grep /\.model/, @results;
+
+    for($i = 0; $i < @getlist; $i++) {
+	print "$i: $getlist[$i]\n";
+    }
+
+# now get these files
+    for ( $i = 0; $i < @getlist; $i++ ) {
+	$cmd = 
+	    "$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/$getlist[$i] .\n";
+	print "$cmd";
+	$retry = 0;
+	do {
+	    $tosleep = $retry * 30;
+	    if ( $retry ) {
+		print "can not get files $getlist[i], retry $retry, sleeping $tosleep\n";
+		sleep $tosleep;
+	    }
+	    capture sub {
+		system($cmd);
+	    } => \$result, \$stderr;
+	    $stderr =~ s/\s*//g;
+	    $stderr =~ s/Warning:Noxauthdata;usingfakeauthenticationdataforX11forwarding.//g;
+	    $stderr =~ s/\s*//g;
+	    $retry++;
+	    print "$cmd results:\n\tstdout <$result>\n\tstderr <$stderr>\n";
+	    if ( $retry > $MAX_RETRIES ) {
+		print "ERROR too many retries\n";
+	    }
+	} while (length($stderr) && $retry <= $MAX_RETRIES);
+    }
+
+# did we get them all?
+    @local_files = `ls`;
+    @missing;
+    grep chomp, @local_files;
+    for($i = 0; $i < @results; $i++) {
+	push @missing, $results[$i] if !grep(/$results[$i]/, @local_files);
+    }
+    print "files missing:\n";
+    for($i = 0; $i < @missing; $i++) {
+	print "$i: $missing[$i]\n";
+    }
+
+# reget the missing ones
+    for ( $i = 0; $i < @missing; $i++ ) {
+	$cmd = 
+	    "$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/$missing[$i] .\n";
+	print "$cmd";
+	$retry = 0;
+	do {
+	    $tosleep = $retry * 30;
+	    if ( $retry ) {
+		print "can not get files $missing[i], retry $retry, sleeping $tosleep\n";
+		sleep $tosleep;
+	    }
+	    capture sub {
+		system($cmd);
+	    } => \$result, \$stderr;
+	    $stderr =~ s/\s*//g;
+	    $stderr =~ s/Warning:Noxauthdata;usingfakeauthenticationdataforX11forwarding.//g;
+	    $stderr =~ s/\s*//g;
+	    $retry++;
+	    print "$cmd results:\n\tstdout <$result>\n\tstderr <$stderr>\n";
+	    if ( $retry > $MAX_RETRIES ) {
+		print "ERROR too many retries\n";
+	    }
+	} while (length($stderr) && $retry <= $MAX_RETRIES);
+    }
+
+# check one more time
+    @local_files = `ls`;
+    undef @missing;
+    my @missing;
+    grep chomp, @local_files;
+    for($i = 0; $i < @results; $i++) {
+	push @missing, $results[$i] if !grep(/$results[$i]/, @local_files);
+    }
+    if ( @missing ) {
+	print "ERROR: files still missing:\n";
+	for($i = 0; $i < @missing; $i++) {
+	    print "$i: $missing[$i]\n";
+	}
+    }
 }
 
 if($default_system eq 'meta') {
@@ -1145,13 +1389,15 @@ mv us_job${id}.stdout /lustre/tmp/us_job${id}.stdout
     }
 #    $cmd = "$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
 #    $gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
-    $cmd =
-	"$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/email_* .
-$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.model* .
-$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*noise* .
-$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.simulation_parameters .
-$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/checkpoint*.dat .
-";
+    &retrieve_result_files();
+
+#    $cmd =
+#	"$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/email_* .
+#$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.model* .
+#$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*noise* .
+#$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.simulation_parameters .
+#$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/checkpoint*.dat .
+# ";
 }
 
 print $cmd;
