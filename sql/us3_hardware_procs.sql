@@ -9,10 +9,270 @@
 DELIMITER $$
 
 --
+-- Rotor Calibration procedures
+--
+
+-- Returns the count of all calibration profiles associated with a given rotor
+DROP FUNCTION IF EXISTS count_rotor_calibrations$$
+CREATE FUNCTION count_rotor_calibrations ( p_personGUID CHAR(36),
+                                           p_password   VARCHAR(80),
+                                           p_rotorID    INT )
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE count_profiles INT;
+  DECLARE count_rotors      INT;
+
+  CALL config();
+  SET count_profiles = 0;
+
+  SELECT     COUNT(*)
+  INTO       count_rotors
+  FROM       rotor
+  WHERE      rotorID = p_rotorID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_rotors < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_ROTOR;
+      SET @US3_LAST_ERROR = CONCAT('MySQL: No rotor with ID ',
+                                   p_rotorID,
+                                   ' exists' );
+
+    ELSE
+      SELECT    COUNT(*)
+      INTO      count_profiles
+      FROM      rotorCalibration
+      WHERE     rotorID = p_rotorID;
+
+    END IF;
+
+  END IF;
+
+  RETURN( count_profiles );
+
+END$$
+
+-- SELECTs names of all rotor calibration profiles associated with a rotor
+DROP PROCEDURE IF EXISTS get_rotor_calibration_profiles$$
+CREATE PROCEDURE get_rotor_calibration_profiles ( p_personGUID CHAR(36),
+                                                  p_password   VARCHAR(80),
+                                                  p_rotorID    INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_profiles INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    SELECT    COUNT(*)
+    INTO      count_profiles
+    FROM      rotorCalibration
+    WHERE     rotorID = p_rotorID;
+
+    IF ( count_profiles = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+ 
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   rotorCalibrationID, description
+      FROM     rotorCalibration
+      WHERE    rotorID = p_rotorID
+      ORDER BY description;
+ 
+    END IF;
+
+  END IF;
+
+END$$
+
+-- Returns a more complete list of information about one rotor calibration profile
+DROP PROCEDURE IF EXISTS get_rotor_calibration_info$$
+CREATE PROCEDURE get_rotor_calibration_info ( p_personGUID CHAR(36),
+                                              p_password   VARCHAR(80),
+                                              p_calibrationID INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_profiles INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_profiles
+  FROM       rotorCalibration
+  WHERE      rotorCalibrationID = p_calibrationID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_profiles = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   rotorCalibrationGUID, description, report, coeff1, coeff2, 
+               omega2_t, dateUpdated, calibrationExperimentID
+      FROM     rotorCalibration
+      WHERE    rotorCalibrationID = p_calibrationID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+-- adds a new rotor calibration profile
+-- the experimentID is the ID of the calibration experiment
+DROP PROCEDURE IF EXISTS add_rotor_calibration$$
+CREATE PROCEDURE add_rotor_calibration ( p_personGUID        CHAR(36),
+                                         p_password          VARCHAR(80),
+                                         p_rotorID           INT,
+                                         p_calibrationGUID   CHAR(36),
+                                         p_description       TEXT,
+                                         p_report            TEXT,
+                                         p_coeff1            FLOAT,
+                                         p_coeff2            FLOAT,
+                                         p_omega2_t          FLOAT,
+                                         p_experimentID      INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_rotors      INT;
+  DECLARE count_experiments INT;
+
+  DECLARE duplicate_key TINYINT DEFAULT 0;
+  DECLARE null_field    TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR 1062
+    SET duplicate_key = 1;
+
+  DECLARE CONTINUE HANDLER FOR 1048
+    SET null_field = 1;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  SELECT     COUNT(*)
+  INTO       count_rotors
+  FROM       rotor
+  WHERE      rotorID = p_rotorID;
+
+  SELECT     COUNT(*)
+  INTO       count_experiments
+  FROM       experiment
+  WHERE      experimentID = p_experimentID;
+
+  IF ( ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN         ) = @OK ) &&
+       ( check_GUID      ( p_personGUID, p_password, p_calibrationGUID  ) = @OK ) ) THEN
+    IF ( count_rotors < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_ROTOR;
+      SET @US3_LAST_ERROR = CONCAT('MySQL: No rotor with ID ',
+                                   p_rotorID,
+                                   ' exists' );
+
+    ELSEIF ( count_experiments < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_EXPERIMENT;
+      SET @US3_LAST_ERROR = CONCAT('MySQL: No experiment with ID ',
+                                   p_experimentID,
+                                   ' exists' );
+
+    ELSE
+      INSERT INTO rotorCalibration SET
+        rotorID                 = p_rotorID,
+        rotorCalibrationGUID    = p_calibrationGUID,
+        description             = p_description,
+        report                  = p_report,
+        coeff1                  = p_coeff1,
+        coeff2                  = p_coeff2,
+        omega2_t                = p_omega2_t,
+        dateUpdated             = NOW(),
+        calibrationExperimentID = p_experimentID;
+        
+      IF ( duplicate_key = 1 ) THEN
+        SET @US3_LAST_ERRNO = @INSERTDUP;
+        SET @US3_LAST_ERROR = "MySQL: Duplicate entry for rotorCalibrationGUID field";
+  
+      ELSEIF ( null_field = 1 ) THEN
+        SET @US3_LAST_ERRNO = @INSERTNULL;
+        SET @US3_LAST_ERROR = "MySQL: NULL value for rotorCalibrationGUID field";
+  
+      ELSE
+        SET @LAST_INSERT_ID = LAST_INSERT_ID();
+  
+      END IF;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- Translate a rotorCalibrationGUID into a rotorCalibrationID
+DROP PROCEDURE IF EXISTS get_rotorCalibrationID_from_GUID$$
+CREATE PROCEDURE get_rotorCalibrationID_from_GUID ( p_rotorGUID   CHAR(36),
+                                                    p_password     VARCHAR(80),
+                                                    p_lookupGUID   CHAR(36) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_profile INT;
+  DECLARE l_rotorCalibrationID     INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_profile
+  FROM       rotorCalibration
+  WHERE      rotorCalibrationGUID = p_lookupGUID;
+
+  IF ( count_profile = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+    SELECT rotorCalibrationID
+    INTO   l_rotorCalibrationID
+    FROM   rotorCalibration
+    WHERE  rotorCalibrationGUID = p_lookupGUID
+    LIMIT  1;                           -- should be only 1
+
+    SELECT @OK AS status;
+
+    SELECT l_rotorCalibrationID AS rotorCalibrationID;
+
+  END IF;
+
+END$$
+
+--
 -- Rotor procedures
 --
 
--- Returns the count of all rotors in db
+-- Returns the count of all rotors in the lab
 DROP FUNCTION IF EXISTS count_rotors$$
 CREATE FUNCTION count_rotors ( p_personGUID CHAR(36),
                                p_password   VARCHAR(80),
@@ -39,7 +299,7 @@ BEGIN
 
 END$$
 
--- SELECTs names of all rotors
+-- SELECTs names of all rotors in the lab
 DROP PROCEDURE IF EXISTS get_rotor_names$$
 CREATE PROCEDURE get_rotor_names ( p_personGUID CHAR(36),
                                    p_password   VARCHAR(80),
@@ -68,9 +328,9 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT rotorID, name
-      FROM rotor
-      WHERE labID = p_labID
+      SELECT   rotorID, name
+      FROM     rotor
+      WHERE    labID = p_labID
       ORDER BY name;
  
     END IF;
@@ -108,8 +368,8 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   r.rotorGUID, r.name, serialNumber, stretchFunction, 
-               omega2_t, a.name, r.abstractRotorID
+      SELECT   r.rotorGUID, r.name, serialNumber,  
+               a.name, r.abstractRotorID
       FROM     rotor r, abstractRotor a
       WHERE    r.abstractRotorID = a.abstractRotorID
       AND      rotorID = p_rotorID;
@@ -178,20 +438,12 @@ BEGIN
                                    ' exists' );
 
     ELSE
-      SELECT    defaultStretch
-      INTO      l_defaultStretch
-      FROM      abstractRotor
-      WHERE     abstractRotorID = p_abstractRotorID;
-
       INSERT INTO rotor SET
         abstractRotorID   = p_abstractRotorID,
         labID             = p_labID,
         name              = p_name,
         rotorGUID         = p_rotorGUID,
-        serialNumber      = p_serialNumber,
-        stretchFunction   = l_defaultStretch,
-        omega2_t          = 0.0,
-        dateUpdated       = NOW();
+        serialNumber      = p_serialNumber;
         
       IF ( duplicate_key = 1 ) THEN
         SET @US3_LAST_ERRNO = @INSERTDUP;

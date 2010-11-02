@@ -131,9 +131,6 @@ CREATE  TABLE IF NOT EXISTS rotor (
   rotorGUID CHAR(36) NOT NULL UNIQUE,
   name TEXT NULL ,
   serialNumber TEXT NULL ,
-  stretchFunction TEXT NULL ,
-  omega2_t FLOAT NULL ,
-  dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (rotorID) ,
   INDEX ndx_rotor_abstractRotorID (abstractRotorID ASC) ,
   INDEX ndx_rotor_labID (labID ASC) ,
@@ -151,6 +148,37 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
+-- Table rotorCalibration
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS rotorCalibration ;
+
+CREATE  TABLE IF NOT EXISTS rotorCalibration (
+  rotorCalibrationID int(11) NOT NULL AUTO_INCREMENT ,
+  rotorID int(11) NULL ,
+  rotorCalibrationGUID CHAR(36) NOT NULL UNIQUE,
+  description TEXT NULL ,
+  report TEXT NULL ,
+  coeff1 FLOAT default 0.0,
+  coeff2 FLOAT default 0.0,
+  omega2_t FLOAT NULL ,
+  dateUpdated TIMESTAMP NULL ,
+  calibrationExperimentID int(11) NULL ,
+  PRIMARY KEY (rotorCalibrationID) ,
+  INDEX ndx_rotorCalibration_rotorID (rotorID ASC) ,
+  INDEX ndx_rotorCalibration_experimentID (calibrationExperimentID ASC) ,
+  CONSTRAINT fk_rotorCalibration_rotorID
+    FOREIGN KEY (rotorID )
+    REFERENCES rotor (rotorID )
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_rotorCalibration_experimentID
+    FOREIGN KEY (calibrationExperimentID )
+    REFERENCES experiment (experimentID )
+    ON DELETE SET NULL
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
 -- Table experiment
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS experiment ;
@@ -163,6 +191,7 @@ CREATE  TABLE IF NOT EXISTS experiment (
   instrumentID int(11) NOT NULL ,
   operatorID int(11) NULL ,
   rotorID int(11) NULL ,
+  rotorCalibrationID int(11) NULL ,
   experimentGUID CHAR(36) NULL UNIQUE,
   type ENUM('velocity', 'equilibrium', 'other') NULL ,
   runType ENUM( 'RA', 'RI', 'IP', 'FI', 'WA', 'WI' ) NULL DEFAULT NULL,
@@ -576,7 +605,7 @@ DROP TABLE IF EXISTS bufferComponent ;
 
 CREATE  TABLE IF NOT EXISTS bufferComponent (
   bufferComponentID int(11) NOT NULL UNIQUE ,
-  units VARCHAR(8) NOT NULL DEFAULT 'mM', 
+  units VARCHAR(16) NOT NULL DEFAULT 'mM', 
   description TEXT NULL DEFAULT NULL ,
   viscosity TEXT NULL DEFAULT NULL ,
   density TEXT NULL DEFAULT NULL ,
