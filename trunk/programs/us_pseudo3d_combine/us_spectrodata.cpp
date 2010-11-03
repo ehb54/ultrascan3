@@ -235,7 +235,7 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
       }
    }
    else
-   {   // for resolution=100, make all points in cirle have zval value
+   {   // for resolution=100, make all points in circle have zval value
       for ( int kk = 0; kk < nsol; kk++ )
       {   // spread z values for each distribution point
          xval    = solu.at( kk ).s;                    // x,y,z
