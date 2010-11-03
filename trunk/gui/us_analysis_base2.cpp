@@ -204,6 +204,10 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    dataLoaded = false;
    buffLoaded = false;
    def_local  = false;
+
+   if ( US_Settings::debug_match( "LoadLocal" ) )
+      def_local  = true;
+
    dfilter    = "";
    investig   = "USER";
 
