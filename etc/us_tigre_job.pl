@@ -16,7 +16,7 @@ $bcf_no_procs = 20 - 2 * @bcfdowncount;
 $alamo_no_procs = 32 - 2 * @alamodowncount;
 $laredo_no_procs = 20 - 4 * @laredodowncount;
 
-$MAX_RETRIES = 12;
+$MAX_RETRIES = 11;
 $MAX_RETRIES_SHORT = 2;
 
 # END USER EDITABLE SECTION
@@ -63,7 +63,7 @@ sub if_gfac_set_workrun {
 	    if ( !length($WORKRUN) )
 	    {
 		$tries++;
-		if ( $tries <= $MAX_RETRIES ) {
+		if ( $tries <= $MAX_RETRIES_SHORT ) {
 		    print "no directory yet (try $tries) from $cmd, sleeping " , ($tries * 30), "s\n";
 		    sleep $tries * 30;
 		} else {
@@ -683,9 +683,9 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	'gsi' ,   # antaeus
 	'gsi' ,   # gridgate
 	'gsi' ,   # eldorado
-	'gsi' , # bcf
-	'gsi' , # alamo
-	'gsi' , # laredo
+	'' , # bcf
+	'' , # alamo
+	'' , # laredo
 	'gsi' ,  # a01.hlrb2
 	'gsi' , # ng2.monash
 	'gsi' ,  # queenbee
@@ -1206,12 +1206,17 @@ do {
 		if ( length($WORKRUN) ) {
 		    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stderr", "/lustre/tmp/us_job${id}.stderr");
 		    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stdout", "/lustre/tmp/us_job${id}.stdout");
+		} else {
+		    $cmd = "$US/etc/us_asta_message.pl $exp_tag\n";
+		    $gfac_out = $cmd;
+		    $gfac_out .= "GFAC Message:----------\n";
+		    $gfac_out .=  `$cmd`;
+		    $gfac_out .=  "-----------------------\n";
+		    print $gfac_out;
+		    open (GFACERR, ">/lustre/tmp/us_job${id}.stderr");
+		    print GFACERR $gfac_out;
+		    close GFACERR;
 		}
-		$cmd = "$US/etc/us_asta_message.pl $exp_tag\n";
-		print $cmd;
-		print "GFAC Message:----------\n";
-		print `$cmd`;
-		print "-----------------------\n";
 	    } else {
 		&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "/lustre/tmp/us_job${id}.stderr");
 		&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "/lustre/tmp/us_job${id}.stdout");
@@ -1286,7 +1291,7 @@ sub retrieve_result_files {
     my @getlist;
     push @getlist, 'email_*' if grep /^email_/, @results;
     push @getlist, '*.simulation_parameters' if grep /\.simulation_parameters$/, @results;
-    push @getlist, 'checkpoint.*dat' if grep /^checkpoint.*dat$/, @results;
+    push @getlist, 'checkpoint*.dat' if grep /^checkpoint.*dat$/, @results;
     push @getlist, '*noise*' if grep /noise/, @results;
     push @getlist, '*.model*' if grep /\.model/, @results;
 
@@ -1383,6 +1388,8 @@ mv us_job${id}.stdout /lustre/tmp/us_job${id}.stdout
     if ( $gfac[$usesys] ) {
 	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stderr", "/lustre/tmp/us_job${id}.stderr");
 	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stdout", "/lustre/tmp/us_job${id}.stdout");
+	print $cmd;
+	print `$cmd` if $execute;
     } else {
 	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "/lustre/tmp/us_job${id}.stderr");
 	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "/lustre/tmp/us_job${id}.stdout");
@@ -1400,8 +1407,6 @@ mv us_job${id}.stdout /lustre/tmp/us_job${id}.stdout
 # ";
 }
 
-print $cmd;
-print `$cmd` if $execute;
 print "----tail us_job${id}.stderr --- from $default_system ---\n";
 print `tail /lustre/tmp/us_job${id}.stderr` if $execute;
 print "----end us_job${id}.stderr ---\n";
