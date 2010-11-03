@@ -53,7 +53,8 @@
             
             <li>
               <b>Load Gradient</b> Load gradient selections from a previously
-              saved color gradient XML file.
+              saved color gradient XML file. The dialog initiated is a
+              <a href="load_colormap.html">Load Color Map dialog</a>.
             </li>
             
             <li>
@@ -69,7 +70,8 @@
               file. A standard file dialog is used. After giving the name of
               the XML file, you will be given the option of also saving a PNG
               file that contains the color legend at the displayed size and
-              with the same base name as the XML file.
+              with the same base name as the XML file. The dialog initiated is a
+              <a href="save_colormap.html">Save Color Map dialog</a>.
             </li>
             
             <li>

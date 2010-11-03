@@ -209,16 +209,42 @@ void US_ColorGradient::save_gradient( void )
    QString save_file = grad_dir + "/new_gradient.xml";
    save_file = QFileDialog::getSaveFileName( this,
       tr( "Specify XML File Name for Gradient Save" ), grad_dir,
-      tr( "XML files (*.xml)" ) );
+      tr( "Color Map files (cm*.xml);;"
+          "Any XML files (*.xml);;Any files (*)" ) );
+
+   save_file    = save_file.replace( "\\", "/" );
+   int     jj   = save_file.lastIndexOf( "/" ) + 1;
+   QString fdir = save_file.left( jj );
+   QString fnam = save_file.mid( jj );
 
    if ( !save_file.isEmpty() )
    {
       out_filename = save_file;
 
-      if ( !save_file.endsWith( "." )  &&  !save_file.endsWith( ".xml" ) )
-      {
-         out_filename = save_file + ".xml";
+      // Make sure file name is in "cm_<name>.xml" form
+      if ( save_file.endsWith( "." ) )
+      {  // ending with '.' signals no ".xml" to be added
+         save_file = save_file.left( save_file.length() - 1 );
+         fnam      = fnam     .left( fnam     .length() - 1 );
       }
+
+      else if ( ! save_file.endsWith( ".xml" ) )
+      {  // if no .xml extension, add one
+         save_file = save_file + ".xml";
+         fnam      = fnam      + ".xml";
+      }
+
+      if ( fnam.startsWith( "." ) )
+      {  // starting with '.' signals no "cm-" prefix
+         save_file = fdir + fnam.mid( 1 );
+      }
+
+      else if ( ! fnam.startsWith( "cm-" ) )
+      {  // if no cm- prefix, add one
+         save_file = fdir + "cm-" + fnam;
+      }
+
+      out_filename = save_file;
 
       have_save    = true;
       new_mods     = false;
@@ -336,7 +362,8 @@ void US_ColorGradient::load_gradient( void )
    QString load_file = grad_dir + "/old_gradient.xml";
    load_file = QFileDialog::getOpenFileName( this,
          tr( "Select XML File Name for Gradient Load" ), grad_dir,
-         tr( "XML files (*.xml)" ) );
+         tr( "Color Map files (cm*.xml);;"
+             "Any XML files (*.xml);;Any files (*)" ) );
 
    if ( !load_file.isEmpty() )
    {

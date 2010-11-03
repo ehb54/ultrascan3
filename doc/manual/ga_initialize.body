@@ -105,8 +105,8 @@
        </li>
 
        <li>
-          <b>Load Distribution</b> Load distribution data as specified through
-          a file dialog.
+          <b>Load Distribution</b> Load model distribution data as specified
+          through a <a href="load_model_distrib.html">Model Loader dialog</a>.
        </li>
 
        <li>
@@ -114,8 +114,9 @@
        </li>
 
        <li>
-          <b>Load Color File</b> Load color map for Z dimension display
-          as specified through a file dialog.
+          <b>Load Color File</b> Load a color map for Z dimension display
+          as specified through a file dialog (
+          <a href="load_colormap.html">Color Map Load dialog</a> ).
        </li>
 
        <li>

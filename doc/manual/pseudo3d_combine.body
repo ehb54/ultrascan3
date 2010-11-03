@@ -27,13 +27,15 @@
             </li>
 
             <li>
-              <b>Z Floor Percent:</b> Choose the percent of the Z (Frequency) range
-              to add below the minimum Z in order to affect display of faint values.
+              <b>Z Floor Percent:</b> Choose the percent of the Z (Frequency)
+              range to add below the minimum Z in order to affect display
+              of faint values.
             </li>
             
             <li>
               <b>Automatic Plot Limits</b> Select to automatically set X and Y
-              plot range limits or unselect to allow explicitly setting these values.
+              plot range limits or unselect to allow explicitly setting these
+              values.
             </li>
             
             <li>
@@ -45,37 +47,43 @@
             </li>
 
             <li>
-              <b>Plot Limit s min:</b> Choose the lower plot limit for sedimentation (or MW).
+              <b>Plot Limit s min:</b> Choose the lower plot limit for
+              sedimentation (or MW).
             </li>
 
             <li>
-              <b>Plot Limit s max:</b> Choose the upper plot limit for sedimentation (or MW).
+              <b>Plot Limit s max:</b> Choose the upper plot limit for
+              sedimentation (or MW).
             </li>
 
             <li>
-              <b>Current Distro:</b> Choose the index (1 to n) of the distribution to make the current one.
+              <b>Current Distro:</b> Choose the index (1 to n) of the
+              distribution to make the current one.
             </li>
 
             <li>
-              <b>Plot f/f0 vs s</b> Select to plot f/f0 versus sedimentation coefficient corrected
-              for water at 20<span>&deg;</span>Celsius.
+              <b>Plot f/f0 vs s</b> Select to plot f/f0 versus sedimentation
+              coefficient corrected for water at 20<span>&deg;</span>Celsius.
             </li>
 
             <li>
-              <b>Plot f/f0 vs MW</b> Select to plot f/f0 versus molecular weight (Dalton).
+              <b>Plot f/f0 vs MW</b> Select to plot f/f0 versus molecular
+              weight (Dalton).
             </li>
 
             <li>
-              <b>Plot All Distros</b> Loop to successively plot all loaded distributions.
+              <b>Plot All Distros</b> Loop to successively plot all loaded
+              model distributions.
             </li>
             
             <li>
-              <b>Stop Plotting Loop</b> Stop the successive plot of all loaded distributions.
+              <b>Stop Plotting Loop</b> Stop the successive plot of all loaded
+              model distributions.
             </li>
             
             <li>
-              <b>Refresh Pseudo-3D Plot</b> Refresh the pseudo-3d plot with current settings,
-              current color map and current distribution data.
+              <b>Refresh Pseudo-3D Plot</b> Refresh the pseudo-3d plot with
+              current settings, current color map and current distribution data.
             </li>
             
             <li>
@@ -83,13 +91,16 @@
             </li>
             
             <li>
-              <b>Load Distribution</b> Load distribution data as specified through a file dialog.
+              <b>Load Distribution</b> Load model distribution data as
+              specified through a
+              <a href="load_model_distrib.html">Model Loader dialog</a>.
               Multiple distribution files may be selected.
             </li>
             
             <li>
-              <b>Load Color File</b> Load color map for Z dimension display
-              as specified through a file dialog.
+              <b>Load Color File</b> Load a color map for Z dimension display
+              as specified through a file dialog (
+              <a href="load_colormap.html">Color Map Load dialog</a> ).
             </li>
             
             <li>
