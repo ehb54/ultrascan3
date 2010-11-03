@@ -253,7 +253,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    data_plot->setAxisScale( QwtPlot::xBottom, 1.0, 40.0 );
    data_plot->setAxisScale( QwtPlot::yLeft,   1.0,  4.0 );
    data_plot->setAxisScale( QwtPlot::yRight,  0.0,  0.2 );
-   data_plot->setCanvasBackground( Qt::darkBlue );
+   data_plot->setCanvasBackground( Qt::white );
 
    pick = new US_PlotPicker( data_plot );
    pick->setRubberBand( QwtPicker::RectRubberBand );
@@ -278,7 +278,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
 void US_Pseudo3D_Combine::reset( void )
 {
-   data_plot->clear();
+   data_plot->detachItems();
    data_plot->replot();
  
    minmax     = false;
@@ -370,9 +370,8 @@ void US_Pseudo3D_Combine::plot_data( void )
    colormap = tsys->colormap;
    cmapname = tsys->cmapname;
 
-   data_plot->clear();
-   //data_plot->setCanvasBackground( colormap->color1() ); 
-   data_plot->setCanvasBackground( Qt::darkBlue );
+   data_plot->detachItems();
+   data_plot->setCanvasBackground( colormap->color1() ); 
 
    // set up spectrogram data
    QwtPlotSpectrogram *d_spectrogram = new QwtPlotSpectrogram();
