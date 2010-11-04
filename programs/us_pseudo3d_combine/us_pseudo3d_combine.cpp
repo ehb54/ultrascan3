@@ -267,9 +267,10 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    main->setStretchFactor( left, 2 );
    main->setStretchFactor( plot, 5 );
 
-   def_local  = false;
    mfilter    = "";
    investig   = "USER";
+   def_local  = false;
+   def_local  = US_Settings::debug_match( "LoadLocal" ) ? true : def_local;
 
    // set up variables and initial state of GUI
 
