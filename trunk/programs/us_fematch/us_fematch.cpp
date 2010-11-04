@@ -38,6 +38,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 {
    setObjectName( "US_FeMatch" );
    def_local  = false;
+   def_local  = US_Settings::debug_match( "LoadLocal" ) ? true : def_local;
    dbg_level  = US_Settings::us_debug();
 
    // set up the GUI

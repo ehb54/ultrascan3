@@ -358,6 +358,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    plot_s     = true;       // default s/MW X type
    rbtn_click = false;      // default right-button clicked
    def_local  = false;      // default local/DB flag
+   def_local  = US_Settings::debug_match( "LoadLocal" ) ? true : def_local;
    investig   = "USER";     // default investigator
    mfilter    = "";         // default model list filter
 
