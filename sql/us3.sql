@@ -747,11 +747,9 @@ CREATE  TABLE IF NOT EXISTS model (
   modelID int(11) NOT NULL AUTO_INCREMENT ,
   editedDataID int(11) NOT NULL DEFAULT 1,
   modelGUID CHAR(36) NOT NULL UNIQUE ,
-  iterations int(11) NOT NULL default 0 ,
-  meniscus double NOT NULL default '0',
-  RMSD double NOT NULL default '0',
   description VARCHAR(80) NULL DEFAULT NULL,
   contents TEXT NULL DEFAULT NULL ,
+  globalType ENUM( 'NORMAL', 'MENISCUS', 'GLOBAL', 'SUPERGLOBAL' ) DEFAULT 'NORMAL',
   lastUpdated DATETIME NULL ,
   PRIMARY KEY (modelID) ,
   INDEX ndx_model_editedDataID (editedDataID ASC) ,
@@ -1140,6 +1138,28 @@ CREATE TABLE IF NOT EXISTS HPCSoluteData (
   CONSTRAINT fk_HPCSoluteData_GA_SettingsID
     FOREIGN KEY (GA_SettingsID)
     REFERENCES GA_Settings (GA_SettingsID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION)
+ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table structure for table modelResult
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS modelResult;
+
+CREATE TABLE IF NOT EXISTS modelResult (
+  modelResultID int(11) NOT NULL AUTO_INCREMENT,
+  modelID int(11) NOT NULL,
+  modelGUID CHAR(36) NOT NULL UNIQUE,
+  HPCAnalysisRequestGUID CHAR(36) NOT NULL UNIQUE,
+  meniscus double NOT NULL default '0',
+  RMSD double NOT NULL default '0',
+  PRIMARY KEY (modelResultID),
+  INDEX ndx_modelResult_model (modelID ASC),
+  CONSTRAINT fk_modelResult_modelID
+    FOREIGN KEY (modelID)
+    REFERENCES model (modelID)
     ON DELETE CASCADE
     ON UPDATE NO ACTION)
 ENGINE=InnoDB;
