@@ -170,6 +170,7 @@ CREATE PROCEDURE new_experiment ( p_personGUID   CHAR(36),
                                   p_instrumentID INT,
                                   p_operatorID   INT,
                                   p_rotorID      INT,
+                                  p_calibrationID INT,
                                   p_type         ENUM('velocity', 'equilibrium', 'other'),
                                   p_runTemp      FLOAT,
                                   p_label        VARCHAR(80),
@@ -215,6 +216,7 @@ BEGIN
         instrumentID       = p_instrumentID,
         operatorID         = p_operatorID,
         rotorID            = p_rotorID,
+        rotorCalibrationID = p_calibrationID,
         type               = p_type,
         runTemp            = p_runTemp,
         label              = p_label,
@@ -255,6 +257,7 @@ CREATE PROCEDURE update_experiment ( p_personGUID   CHAR(36),
                                      p_instrumentID INT,
                                      p_operatorID   INT,
                                      p_rotorID      INT,
+                                     p_calibrationID INT,
                                      p_type         ENUM('velocity', 'equilibrium', 'other'),
                                      p_runTemp      FLOAT,
                                      p_label        VARCHAR(80),
@@ -300,6 +303,7 @@ BEGIN
         instrumentID       = p_instrumentID,
         operatorID         = p_operatorID,
         rotorID            = p_rotorID,
+        rotorCalibrationID = p_calibrationID,
         type               = p_type,
         runTemp            = p_runTemp,
         label              = p_label,
@@ -425,7 +429,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   experimentGUID, projectID, runID, labID, instrumentID, 
-               operatorID, rotorID, type, runTemp, label, comment, 
+               operatorID, rotorID, rotorCalibrationID, type, runTemp, label, comment, 
                centrifugeProtocol, timestamp2UTC( dateUpdated) AS UTC_dateUpdated, 
                personID
       FROM     experiment e, experimentPerson ep
@@ -474,7 +478,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT projectID, e.experimentID, experimentGUID, labID, instrumentID, 
-             operatorID, rotorID, type, runTemp, label, comment, 
+             operatorID, rotorID, rotorCalibrationID, type, runTemp, label, comment, 
              centrifugeProtocol, dateUpdated, personID
       FROM   experiment e, experimentPerson p
       WHERE  e.experimentID = p.experimentID
