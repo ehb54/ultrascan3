@@ -76,26 +76,32 @@ bool US_Model::Association::operator== ( const Association& a ) const
 
 US_Model::US_Model()
 {
-   optics          = ABSORBANCE;
-   description     = "New Model";
+   monteCarlo      = false;
    wavelength      = 0.0;
+   description     = "New Model";
+   optics          = ABSORBANCE;
+   analysis        = MANUAL;
+   global          = NONE;
+
    coSedSolute     = -1;
-   type            = MANUAL;
-   iterations      = 1;
-   editGUID        = QString( "00000000-0000-0000-0000-000000000000" );
    modelGUID   .clear();
+   editGUID    .clear();
+   requestGUID .clear();
    components  .clear();
    associations.clear();
 }
 
 bool US_Model::operator== ( const US_Model& m ) const
 {
+   if ( monteCarlo      != m.monteCarlo      ) return false;
    if ( wavelength      != m.wavelength      ) return false;
    if ( modelGUID       != m.modelGUID       ) return false;
    if ( editGUID        != m.editGUID        ) return false;
+   if ( requestGUID     != m.requestGUID     ) return false;
    if ( description     != m.description     ) return false;
    if ( optics          != m.optics          ) return false;
-   if ( type            != m.type            ) return false;
+   if ( analysis        != m.analysis        ) return false;
+   if ( global          != m.global          ) return false;
    if ( coSedSolute     != m.coSedSolute     ) return false;
    if ( associations.size() != m.associations.size() ) return false;
 
@@ -428,15 +434,20 @@ int US_Model::load( const QString& filename )
          {
             a = xml.attributes();
 
+            monteCarlo      = a.value( "monteCarlo"     ).toString().toInt();
+            wavelength      = a.value( "wavelength"     ).toString().toDouble();
             description     = a.value( "description"    ).toString();
             modelGUID       = a.value( "modelGUID"      ).toString();
             editGUID        = a.value( "editGUID"       ).toString();
-            wavelength      = a.value( "wavelength"     ).toString().toDouble();
+            requestGUID     = a.value( "requestGUID"    ).toString();
             coSedStr        = a.value( "coSedSolute"    ).toString();
             coSedSolute     = ( coSedStr.isEmpty() ) ? -1 : coSedStr.toInt();
-            type            =
-               (ModelType)a.value( "type"   ).toString().toInt();
-            iterations      = a.value( "iterations"     ).toString().toInt();
+            analysis        =
+                (AnalysisType)a.value( "analysisType"   ).toString().toInt();
+            global          =
+                (GlobalType)  a.value( "globalType"   ).toString().toInt();
+            optics          =
+                (OpticsType)  a.value( "opticsType"   ).toString().toInt();
          }
 
          else if ( xml.name() == "analyte" )
@@ -658,9 +669,9 @@ void US_Model::write_temp( QTemporaryFile& file )
    xml.writeAttribute   ( "editGUID",    editGUID    );
    xml.writeAttribute   ( "wavelength",  QString::number( wavelength   ) );
    xml.writeAttribute   ( "coSedSolute", QString::number( coSedSolute  ) );
-   xml.writeAttribute   ( "optics",      QString::number( optics       ) );
-   xml.writeAttribute   ( "type",        QString::number( type         ) );
-   xml.writeAttribute   ( "iterations",  QString::number( iterations   ) );
+   xml.writeAttribute   ( "opticsType",  QString::number( optics       ) );
+   xml.writeAttribute   ( "analysisType",QString::number( analysis     ) );
+   xml.writeAttribute   ( "globalType",  QString::number( global       ) );
 
    char uuid[ 37 ];
    uuid[ 36 ] = 0;
@@ -740,10 +751,13 @@ void US_Model::debug( void )
    qDebug() << "desc" << description;
    qDebug() << "model guid" << modelGUID;
    qDebug() << "edit guid" << editGUID;
+   qDebug() << "request guid" << requestGUID;
    qDebug() << "waveln" << wavelength;
+   qDebug() << "monte carlo" << monteCarlo;
    qDebug() << "coSed" << coSedSolute;
-   qDebug() << "iterations" << iterations;
-   qDebug() << "type" << (int)type;
+   qDebug() << "AnalysisType" << (int)analysis;
+   qDebug() << "GlobalType" << (int)global;
+   qDebug() << "OpticsType" << (int)optics;
 
    for ( int i = 0; i < components.size(); i++ )
    {
