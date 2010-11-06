@@ -572,7 +572,7 @@ bool US_ModelLoader::eventFilter( QObject* obj, QEvent* e )
 
 // Get type string corresponding to the type int enum
 QString US_ModelLoader::typeText( US_Model::AnalysisType mtype,
-   int nassoc, int iters )
+   int nassoc, US_Model::GlobalType gtype, bool monteCarlo )
 {
    struct typemap
    {
@@ -587,7 +587,6 @@ QString US_ModelLoader::typeText( US_Model::AnalysisType mtype,
       { US_Model::TWODSA_MW, QObject::tr( "2DSA-MW" ) },
       { US_Model::GA,        QObject::tr( "GA"      ) },
       { US_Model::GA_MW,     QObject::tr( "GA-MW"   ) },
-      { US_Model::GA_RA,     QObject::tr( "GA-RA"   ) },
       { US_Model::COFS,      QObject::tr( "COFS"    ) },
       { US_Model::FE,        QObject::tr( "FE"      ) },
       { US_Model::ONEDSA,    QObject::tr( "1DSA"    ) }
@@ -605,10 +604,19 @@ QString US_ModelLoader::typeText( US_Model::AnalysisType mtype,
          tdesco       = tmap[ jj ].typedesc;  // base type
 
          if ( nassoc > 0 )
-            tdesco       = tdesco + "-RA";    // RA subtype
+            tdesco       = tdesco + "-RA";    // Reversible Associations subtype
 
-         if ( iters > 1 )
-            tdesco       = tdesco + "-MC";    // MC subtype
+         if ( gtype == US_Model::MENISCUS )
+            tdesco       = tdesco + "-MN";    // Meniscus subtype
+
+         else if ( gtype == US_Model::GLOBAL )
+            tdesco       = tdesco + "-GL";    // Global subtype
+
+         else if ( gtype == US_Model::SUPERGLOBAL )
+            tdesco       = tdesco + "-SG";    // SuperGlobal subtype
+
+         if ( monteCarlo )
+            tdesco       = tdesco + "-MC";    // MonteCarlo subtype
 
          break;                               // break to return description
       }
@@ -693,7 +701,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
       mtype    = model.analysis;                           // model info
       ncomp    = model.components.size();
       nassoc   = model.associations.size();
-      tdesc    = typeText( mtype, nassoc, iters );
+      tdesc    = typeText( mtype, nassoc, model.global, model.monteCarlo );
       runid    = mdesc.section( ".", 0, 0 );
       mdlid    = frDisk ?
          model_descriptions[ mdx ].filename :              // ID is filename
@@ -732,14 +740,10 @@ void US_ModelLoader::show_model_info( QPoint pos )
       runid    = mdesc.section( ".", 0, 0 );              // model info
       mtype    = model.analysis;
       nassoc   = model.associations.size();
-      tdesc    = typeText( mtype, nassoc, iters );
+      tdesc    = typeText( mtype, nassoc, model.global, model.monteCarlo );
       aruni    = runid;                           // potential common values
       atype    = tdesc;
       aegid    = model.editGUID;
-#if 0
-aegid=model.guid;
-eguid=model.guid;
-#endif
 
       // make a pass to see if runID and type are common
 
@@ -753,7 +757,7 @@ eguid=model.guid;
 
          runid    = mdesc.section( ".", 0, 0 );
          tdesc    = typeText( model.analysis, model.associations.size(),
-               0 );
+                              model.global, model.monteCarlo );
          eguid    = model.editGUID;
 
          if ( !aruni.isEmpty()  &&  aruni.compare( runid ) != 0 )
@@ -796,7 +800,7 @@ eguid=model.guid;
          mtype    = model.analysis;                           // model info
          ncomp    = model.components.size();
          nassoc   = model.associations.size();
-         tdesc    = typeText( mtype, nassoc, iters );
+         tdesc    = typeText( mtype, nassoc, model.global, model.monteCarlo );
          runid    = mdesc.section( ".", 0, 0 );
          mdlid    = frDisk ?
             model_descriptions[ mdx ].filename :              // ID is filename

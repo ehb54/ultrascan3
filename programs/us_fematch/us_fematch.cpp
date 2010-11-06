@@ -2084,17 +2084,16 @@ QString US_FeMatch::text_model( US_Model model, int width )
    switch ( (int)model.analysis )
    {
       case (int)US_Model::TWODSA:
-         title = ( width == 0 ) ? "sa2d" :
+         title = ( width == 0 ) ? "2dsa" :
             tr( "2-Dimensional Spectrum Analysis" );
          break;
 
       case (int)US_Model::TWODSA_MW:
-         title = ( width == 0 ) ? "sa2d-mw" :
+         title = ( width == 0 ) ? "2dsa-mw" :
             tr( "2-Dimensional Spectrum Analysis" );
          break;
 
       case (int)US_Model::GA:
-      case (int)US_Model::GA_RA:
          title = ( width == 0 ) ? "ga" :
             tr( "Genetic Algorithm Analysis" );
          break;
@@ -2113,37 +2112,56 @@ QString US_FeMatch::text_model( US_Model model, int width )
          title = ( width == 0 ) ? "fe" :
             tr( "Finite Element Analysis" );
          break;
-/*
-      case (int)US_Model::GLOBAL:
-         title = ( width == 0 ) ? "global" :
-            tr( "Global Algorithm Analysis" );
-         break;
-*/
+
       case (int)US_Model::ONEDSA:
-         title = ( width == 0 ) ? "sa1d" :
+         title = ( width == 0 ) ? "1dsa" :
             tr( "1-Dimensional Spectrum Analysis" );
          break;
 
       case (int)US_Model::MANUAL:
       default:
-         title = ( width == 0 ) ? "sa2d" :
+         title = ( width == 0 ) ? "2dsa" :
             tr( "2-Dimensional Spectrum Analysis" );
          break;
    }
 
    if ( width == 0 )
-   {  // short title (file node):  add any "ra" or "mc"
+   {  // short title (file node):  add any "ra", "gl" ,... "mc"
 
       if ( model.associations.size() > 1 )
          title = title + "-ra";
 
-      //if ( model.iterations > 1 )
-      //   title = title + "-mc";
+      if ( model.global == US_Model::MENISCUS )
+         title = title + "-mn";
+
+      else if ( model.global == US_Model::GLOBAL )
+         title = title + "-gl";
+
+      else if ( model.global == US_Model::SUPERGLOBAL )
+         title = title + "-sg";
+
+      if ( model.monteCarlo )
+         title = title + "-mc";
 
    }
 
    else if ( width > title.length() )
    {  // long title centered:  center it in fixed-length string
+      if ( model.associations.size() > 1 )
+         title = title + " (RA)";
+
+      if ( model.global == US_Model::MENISCUS )
+         title = title + " (Menis.)";
+
+      else if ( model.global == US_Model::GLOBAL )
+         title = title + " (Global)";
+
+      else if ( model.global == US_Model::SUPERGLOBAL )
+         title = title + " (S.Global)";
+
+      if ( model.monteCarlo )
+         title = title + " (MC)";
+
       int lent = title.length();
       int lenl = ( width - lent ) / 2;
       int lenr = width - lent - lenl;
