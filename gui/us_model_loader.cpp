@@ -571,13 +571,13 @@ bool US_ModelLoader::eventFilter( QObject* obj, QEvent* e )
 }
 
 // Get type string corresponding to the type int enum
-QString US_ModelLoader::typeText( US_Model::ModelType mtype,
+QString US_ModelLoader::typeText( US_Model::AnalysisType mtype,
    int nassoc, int iters )
 {
    struct typemap
    {
-      US_Model::ModelType  typeval;
-      QString              typedesc;
+      US_Model::AnalysisType typeval;
+      QString                typedesc;
    };
 
    const typemap tmap[] =
@@ -590,9 +590,9 @@ QString US_ModelLoader::typeText( US_Model::ModelType mtype,
       { US_Model::GA_RA,     QObject::tr( "GA-RA"   ) },
       { US_Model::COFS,      QObject::tr( "COFS"    ) },
       { US_Model::FE,        QObject::tr( "FE"      ) },
-      { US_Model::GLOBAL,    QObject::tr( "GLOBAL"  ) },
       { US_Model::ONEDSA,    QObject::tr( "1DSA"    ) }
    };
+
    const int ntmap = sizeof( tmap ) / sizeof( tmap[ 0 ] );
 
    QString tdesco  = QString( tr( "Unknown" ) );
@@ -637,7 +637,7 @@ int US_ModelLoader::modelIndex( QString mdesc, QList< ModelDesc > mds )
 // Show selected-model(s) information in text dialog
 void US_ModelLoader::show_model_info( QPoint pos )
 {
-   US_Model::ModelType mtype;
+   US_Model::AnalysisType mtype;
 
    QString mdesc;
    QString tdesc;
@@ -690,8 +690,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
 
       load_model( model, mdx );                            // load model
 
-      mtype    = model.type;                               // model info
-      iters    = model.iterations;
+      mtype    = model.analysis;                           // model info
       ncomp    = model.components.size();
       nassoc   = model.associations.size();
       tdesc    = typeText( mtype, nassoc, iters );
@@ -731,8 +730,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
       load_model( model, mdx );                           // load model
 
       runid    = mdesc.section( ".", 0, 0 );              // model info
-      mtype    = model.type;
-      iters    = model.iterations;
+      mtype    = model.analysis;
       nassoc   = model.associations.size();
       tdesc    = typeText( mtype, nassoc, iters );
       aruni    = runid;                           // potential common values
@@ -754,8 +752,8 @@ eguid=model.guid;
          load_model( model, mdx );                           // load model
 
          runid    = mdesc.section( ".", 0, 0 );
-         tdesc    = typeText( model.type, model.associations.size(),
-               model.iterations );
+         tdesc    = typeText( model.analysis, model.associations.size(),
+               0 );
          eguid    = model.editGUID;
 
          if ( !aruni.isEmpty()  &&  aruni.compare( runid ) != 0 )
@@ -795,8 +793,7 @@ eguid=model.guid;
 
          load_model( model, mdx );                            // load model
 
-         mtype    = model.type;                               // model info
-         iters    = model.iterations;
+         mtype    = model.analysis;                           // model info
          ncomp    = model.components.size();
          nassoc   = model.associations.size();
          tdesc    = typeText( mtype, nassoc, iters );
