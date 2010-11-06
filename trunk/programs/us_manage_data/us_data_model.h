@@ -112,7 +112,7 @@ class US_EXTERN US_DataModel : public QObject
 
       int         record_state_flag( DataDesc, int );
       QString     sort_string(       DataDesc, int );
-      QString     model_type(        int, int, int );
+      QString     model_type(        int, int, int, bool );
       QString     model_type(        US_Model      );
       QString     model_type(        QString       );
       QString     expGUIDauc(        QString       );

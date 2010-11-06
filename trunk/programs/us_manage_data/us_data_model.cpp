@@ -1525,7 +1525,7 @@ QString US_DataModel::sort_string( DataDesc ddesc, int indx )
 }
 
 // compose string describing model type
-QString US_DataModel::model_type( int imtype, int nassoc, int niters )
+QString US_DataModel::model_type( int imtype, int nassoc, int gtype, bool isMC )
 {
    QString mtype;
 
@@ -1533,15 +1533,16 @@ QString US_DataModel::model_type( int imtype, int nassoc, int niters )
    switch ( imtype )
    {
       default:
-      case (int)US_Model::TWODSA:
       case (int)US_Model::MANUAL:
+         mtype = "MANUAL";
+         break;
+      case (int)US_Model::TWODSA:
          mtype = "2DSA";
          break;
       case (int)US_Model::TWODSA_MW:
          mtype = "2DSA-MW";
          break;
       case (int)US_Model::GA:
-      case (int)US_Model::GA_RA:
          mtype = "GA";
          break;
       case (int)US_Model::GA_MW:
@@ -1553,9 +1554,6 @@ QString US_DataModel::model_type( int imtype, int nassoc, int niters )
       case (int)US_Model::FE:
          mtype = "FE";
          break;
-      //case (int)US_Model::GLOBAL:
-      //   mtype = "GLOBAL";
-      //   break;
       case (int)US_Model::ONEDSA:
          mtype = "1DSA";
          break;
@@ -1565,8 +1563,18 @@ QString US_DataModel::model_type( int imtype, int nassoc, int niters )
    if ( nassoc > 1 )
       mtype = mtype + "-RA";
 
-   // add MC for Monte Carlo (if iterations count > 1)
-   if ( niters > 1 )
+   // add MN | GL | SG for MENISCUS|GLOBAL|SUPERGLOBAL
+   if ( gtype == (int)US_Model::MENISCUS )
+      mtype = mtype + "-MN";
+
+   else if ( gtype == (int)US_Model::GLOBAL )
+      mtype = mtype + "-GL";
+
+   else if ( gtype == (int)US_Model::SUPERGLOBAL )
+      mtype = mtype + "-SG";
+
+   // add MC for Monte Carlo
+   if ( isMC )
       mtype = mtype + "-MC";
 
    return mtype;
@@ -1575,11 +1583,9 @@ QString US_DataModel::model_type( int imtype, int nassoc, int niters )
 // compose string describing model type
 QString US_DataModel::model_type( US_Model model )
 {
-   // return model type string based on integer flags in the model object
-   return model_type( (int)model.analysis,
-                      model.associations.size(),
-                      //model.iterations );
-                      1 );
+   // return model type string based on flags in the model object
+   return model_type( (int)model.analysis, model.associations.size(),
+                      (int)model.global,   model.monteCarlo );
 }
 
 // compose string describing model type
@@ -1589,21 +1595,26 @@ QString US_DataModel::model_type( QString modxml )
    int   jj;
    int   imtype;
    int   nassoc;
-   int   niters;
+   int   gtype;
+   bool  isMC;
 
    // model type number from type attribute
-   jj       = modxml.indexOf( " type=" );
+   jj       = modxml.indexOf( " analysisType=" );
    imtype   = ( jj < 1 ) ? 0 : modxml.mid( jj ).section( quo, 1, 1 ).toInt();
 
    // count of associations is count of k_eq attributes present
    nassoc   = modxml.count( "k_eq=" );
 
-   // number of iterations from iterations attribute value
-   jj       = modxml.indexOf( " iterations=" );
-   niters   = ( jj < 1 ) ? 0 : modxml.mid( jj ).section( quo, 1, 1 ).toInt();
+   // global type number from type attribute
+   jj       = modxml.indexOf( " globalType=" );
+   gtype    = ( jj < 1 ) ? 0 : modxml.mid( jj ).section( quo, 1, 1 ).toInt();
+
+   // flag if MonteCarlo
+   jj       = modxml.indexOf( " MonteCarlo=\"1" );
+   isMC     = ( jj > 0 );
 
    // return model type string based on integer flags
-   return model_type( imtype, nassoc, niters );
+   return model_type( imtype, nassoc, gtype, isMC );
 }
 
 void US_DataModel::dummy_data()

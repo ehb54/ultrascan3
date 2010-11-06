@@ -435,6 +435,9 @@ int US_Model::load( const QString& filename )
             a = xml.attributes();
 
             monteCarlo      = a.value( "monteCarlo"     ).toString().toInt();
+            QString iter    = a.value( "iterations"     ).toString();
+            monteCarlo      = monteCarlo ? monteCarlo
+                            : ( iter.isEmpty() ? false : ( iter.toInt() > 1 ) );
             wavelength      = a.value( "wavelength"     ).toString().toDouble();
             description     = a.value( "description"    ).toString();
             modelGUID       = a.value( "modelGUID"      ).toString();
@@ -442,8 +445,12 @@ int US_Model::load( const QString& filename )
             requestGUID     = a.value( "requestGUID"    ).toString();
             coSedStr        = a.value( "coSedSolute"    ).toString();
             coSedSolute     = ( coSedStr.isEmpty() ) ? -1 : coSedStr.toInt();
-            analysis        =
-                (AnalysisType)a.value( "analysisType"   ).toString().toInt();
+            QString anal1   = a.value( "type"           ).toString();
+            QString anal2   = a.value( "analysisType"   ).toString();
+            analysis        = anal1.isEmpty() ? analysis
+                                              : (AnalysisType)anal1.toInt();
+            analysis        = anal2.isEmpty() ? analysis
+                                              : (AnalysisType)anal2.toInt();
             global          =
                 (GlobalType)  a.value( "globalType"   ).toString().toInt();
             optics          =
@@ -654,7 +661,10 @@ int US_Model::write( const QString& filename )
 
 void US_Model::write_temp( QTemporaryFile& file )
 {
-   file.open();// QIODevice::WriteOnly | QIODevice::Text );
+   if ( modelGUID.size() != 36 )
+      modelGUID = US_Util::new_guid();
+
+   file.open();        // QIODevice::WriteOnly | QIODevice::Text );
    QXmlStreamWriter xml( &file );
    xml.setAutoFormatting( true );
 
@@ -673,8 +683,8 @@ void US_Model::write_temp( QTemporaryFile& file )
    xml.writeAttribute   ( "analysisType",QString::number( analysis     ) );
    xml.writeAttribute   ( "globalType",  QString::number( global       ) );
 
-   char uuid[ 37 ];
-   uuid[ 36 ] = 0;
+   if ( monteCarlo )
+      xml.writeAttribute   ( "monteCarlo",  "1"                             );
 
    // Write components
    for ( int i = 0; i < components.size(); i++ )
