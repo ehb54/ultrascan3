@@ -1253,7 +1253,8 @@ qDebug() << "  NO Model components";
    w_distro.clear();
 
    // pick up number of monte carlo iterations in case needed
-   mc_iters  = ( model.iterations > 1 ) ? model.iterations : 1;
+   //mc_iters  = ( model.iterations > 1 ) ? model.iterations : 1;
+   mc_iters  = 1;
 
    tstr      = run_name + "." + cell + wavelength + "\n" + method;
    data_plot->setTitle( tstr );

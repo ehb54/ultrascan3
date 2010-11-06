@@ -120,7 +120,7 @@ class US_EXTERN US_ModelLoader : public US_WidgetsDialog
       void help  (       void )
       { showHelp.show_help( "load_model_distrib.html" ); };
 
-      QString typeText(        US_Model::ModelType, int, int );
+      QString typeText(        US_Model::AnalysisType, int, int );
       int     modelIndex(      QString mdesc, QList< ModelDesc > );
       void    show_model_info( QPoint );
 

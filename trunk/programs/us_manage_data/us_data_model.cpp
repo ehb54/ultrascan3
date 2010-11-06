@@ -1553,9 +1553,9 @@ QString US_DataModel::model_type( int imtype, int nassoc, int niters )
       case (int)US_Model::FE:
          mtype = "FE";
          break;
-      case (int)US_Model::GLOBAL:
-         mtype = "GLOBAL";
-         break;
+      //case (int)US_Model::GLOBAL:
+      //   mtype = "GLOBAL";
+      //   break;
       case (int)US_Model::ONEDSA:
          mtype = "1DSA";
          break;
@@ -1576,9 +1576,10 @@ QString US_DataModel::model_type( int imtype, int nassoc, int niters )
 QString US_DataModel::model_type( US_Model model )
 {
    // return model type string based on integer flags in the model object
-   return model_type( (int)model.type,
+   return model_type( (int)model.analysis,
                       model.associations.size(),
-                      model.iterations );
+                      //model.iterations );
+                      1 );
 }
 
 // compose string describing model type

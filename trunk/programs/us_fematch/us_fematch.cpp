@@ -2081,7 +2081,7 @@ QString US_FeMatch::text_model( US_Model model, int width )
 {
    QString title;
 
-   switch ( (int)model.type )
+   switch ( (int)model.analysis )
    {
       case (int)US_Model::TWODSA:
          title = ( width == 0 ) ? "sa2d" :
@@ -2113,12 +2113,12 @@ QString US_FeMatch::text_model( US_Model model, int width )
          title = ( width == 0 ) ? "fe" :
             tr( "Finite Element Analysis" );
          break;
-
+/*
       case (int)US_Model::GLOBAL:
          title = ( width == 0 ) ? "global" :
             tr( "Global Algorithm Analysis" );
          break;
-
+*/
       case (int)US_Model::ONEDSA:
          title = ( width == 0 ) ? "sa1d" :
             tr( "1-Dimensional Spectrum Analysis" );
@@ -2137,8 +2137,8 @@ QString US_FeMatch::text_model( US_Model model, int width )
       if ( model.associations.size() > 1 )
          title = title + "-ra";
 
-      if ( model.iterations > 1 )
-         title = title + "-mc";
+      //if ( model.iterations > 1 )
+      //   title = title + "-mc";
 
    }
 
