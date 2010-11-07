@@ -22,7 +22,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       //! \param buf    The default buffer
       //! \param disk   An indicatior of whether to search the disk
       //!               (default) or DB for the default buffer
-      US_BufferGui( int = - 1,                  
+      US_BufferGui( int = -1,                  
                     bool = false, 
                     const US_Buffer& = US_Buffer(), 
                     bool = true );
