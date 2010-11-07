@@ -29,6 +29,7 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
 
 	public:
 		US_RotorCalibration();
+		~US_RotorCalibration();
 
 	private:
 

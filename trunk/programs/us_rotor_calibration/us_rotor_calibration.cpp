@@ -204,6 +204,10 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    top->setColumnStretch( 1, 1 );
 }
 
+US_RotorCalibration::~US_RotorCalibration()
+{
+}
+
 void US_RotorCalibration::reset()
 {
    leftCB = false;
