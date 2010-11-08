@@ -277,12 +277,6 @@ CREATE PROCEDURE delete_rotor_calibration ( p_personGUID   CHAR(36),
 
 BEGIN
   DECLARE count_experiments          INT;
-  DECLARE calibration_experimentID   INT;
-  DECLARE count_calibration_exp      INT;
-  DECLARE not_found                  TINYINT DEFAULT 0;
-
-  DECLARE CONTINUE HANDLER FOR NOT FOUND
-    SET not_found = 1;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -303,26 +297,6 @@ BEGIN
     ELSE
       -- We are verified as an admin, and no experiments with this
       -- rotorCalibrationID exist
-
-      -- DELETE the associated calibration experiment
-      -- Let's be sure there aren't multiple calibrations pointing to the same experiment
-      SELECT     COUNT(*)
-      INTO       count_calibration_exp
-      FROM       experiment
-      WHERE      rotorCalibrationID = p_rotor_calibrationID;
-
-      SELECT calibrationExperimentID
-      INTO   calibration_experimentID
-      FROM   rotorCalibration
-      WHERE  rotorCalibrationID = p_rotor_calibrationID;
-
-      -- Avoid trying to delete records that aren't there
-      IF ( ( not_found = 0 ) && ( count_calibration_exp = 1 ) ) THEN 
-        call delete_experiment( p_personGUID, p_password, p_rotor_calibrationID );
-
-      END IF;
-
-      -- Now delete the rotor calibration profile itself
       DELETE FROM rotorCalibration
       WHERE       rotorCalibrationID   = p_rotor_calibrationID;
         
