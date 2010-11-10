@@ -5,7 +5,7 @@
 #include "us_2dsa.h"
 #include "us_resids_bitmap.h"
 #include "us_plot_control.h"
-#include "us_anal_control.h"
+#include "us_analysis_control.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -455,7 +455,7 @@ void US_2dsa::open_fitcntl()
    int row = lw_triples->currentRow();
    edata   = ( row >= 0 ) ? &dataList[ row ] : 0;
 qDebug() << "Open fitcntl";
-   analcd  = new US_AnalControl( edata, this );
+   analcd  = new US_AnalysisControl( edata, this );
    analcd->move( epd_pos );
    analcd->show();
 }

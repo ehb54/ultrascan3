@@ -1,22 +1,22 @@
-//! \file us_anal_control.cpp
+//! \file us_analysis_control.cpp
 
 #include "us_2dsa.h"
-#include "us_anal_control.h"
+#include "us_analysis_control.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
 #include <qwt_legend.h>
 
 // constructor:  enhanced plot control widget
-US_AnalControl::US_AnalControl( US_DataIO2::EditedData* dat_exp, QWidget* p )
-   : US_WidgetsDialog( p, 0 )
+US_AnalysisControl::US_AnalysisControl( US_DataIO2::EditedData* dat_exp,
+    QWidget* p ) : US_WidgetsDialog( p, 0 )
 {
    edata          = dat_exp;
    parentw        = p;
    processor      = 0;
    dbg_level      = US_Settings::us_debug();
 
-   setObjectName( "US_AnalControl" );
+   setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
    setPalette( US_GuiSettings::frameColor() );
    setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
@@ -112,7 +112,7 @@ DbgLv(1) << "idealThrCout" << nthr;
       us_checkbox( tr( "Regularization"                    ), ck_regulz );
 
 
-   ct_grrefine  = us_counter( 2,    1,   20,    1 );
+   ct_grrefine  = us_counter( 2,    1,   20,    3 );
    ct_repetitl  = us_counter( 2,    1,   20,    1 );
    ct_scfactor  = us_counter( 3, 0.01, 10.0,  0.3 );
    ct_scfact2   = us_counter( 3, 0.01, 10.0,  0.9 );
@@ -194,6 +194,11 @@ DbgLv(1) << "idealThrCout" << nthr;
    optimizeLayout->addWidget( lb_regufact,  15, 0, 1, 1 );
    optimizeLayout->addWidget( ct_regufact,  15, 1, 1, 1 );
 
+   QLabel* lb_optspace     = us_banner( "" );
+   int kr                  = optimizeLayout->rowCount();
+   optimizeLayout->addWidget( lb_optspace,  kr, 0, 1, 2 );
+   optimizeLayout->setRowStretch( kr, 2 );
+
    le_estmemory->setReadOnly( true );
    le_iteration->setReadOnly( true );
    le_oldvari  ->setReadOnly( true );
@@ -243,13 +248,51 @@ DbgLv(1) << "idealThrCout" << nthr;
    connect( pb_close,   SIGNAL( clicked() ),
             this,       SLOT( close_all() ) );
 
+   // make disabled/invisible those GUI elements not yet implemented
+   ck_locugr  ->setEnabled( false );
+   ck_ranlgr  ->setEnabled( false );
+   ck_soluco  ->setEnabled( false );
+   ck_clipcs  ->setEnabled( false );
+   ck_regulz  ->setEnabled( false );
+   ck_locugr  ->setEnabled( false );
+#if 0
+   ck_locugr  ->setVisible( false );
+   ck_ranlgr  ->setVisible( false );
+   ck_soluco  ->setVisible( false );
+   ck_clipcs  ->setVisible( false );
+   ck_regulz  ->setVisible( false );
+   ck_locugr  ->setVisible( false );
+#endif
+   lb_repetitl->setVisible( false );
+   lb_scfactor->setVisible( false );
+   lb_scfact2 ->setVisible( false );
+   lb_repetitr->setVisible( false );
+   lb_stddevia->setVisible( false );
+   lb_coaldist->setVisible( false );
+   lb_nbrclips->setVisible( false );
+   lb_regufact->setVisible( false );
+   ct_repetitl->setVisible( false );
+   ct_scfactor->setVisible( false );
+   ct_scfact2 ->setVisible( false );
+   ct_repetitr->setVisible( false );
+   ct_stddevia->setVisible( false );
+   ct_coaldist->setVisible( false );
+   ct_nbrclips->setVisible( false );
+   ct_regufact->setVisible( false );
+   lo_locugr  ->setEnabled( false );
+   lo_ranlgr  ->setEnabled( false );
+   lo_soluco  ->setEnabled( false );
+   lo_clipcs  ->setEnabled( false );
+   lo_regulz  ->setEnabled( false );
+
+
 DbgLv(1) << "Pre-adjust size" << size();
    resize( 740, 440 );
 DbgLv(1) << "Post-adjust size" << size();
 }
 
 // enable/disable optimize counters based on chosen method
-void US_AnalControl::optimize_options()
+void US_AnalysisControl::optimize_options()
 {
    ct_grrefine->setEnabled( ck_unifgr->isChecked() );
    ct_repetitl->setEnabled( ck_locugr->isChecked() );
@@ -263,7 +306,7 @@ void US_AnalControl::optimize_options()
 }
 
 // uncheck optimize options other than one just checked
-void US_AnalControl::uncheck_optimize( int ckflag )
+void US_AnalysisControl::uncheck_optimize( int ckflag )
 {
    if ( ckflag != 1 ) ck_unifgr->setChecked( false );
    if ( ckflag != 2 ) ck_locugr->setChecked( false );
@@ -274,43 +317,43 @@ void US_AnalControl::uncheck_optimize( int ckflag )
 }
 
 // handle uniform grid checked
-void US_AnalControl::checkUniGrid( bool checked )
+void US_AnalysisControl::checkUniGrid( bool checked )
 {
    if ( checked ) { uncheck_optimize( 1 ); optimize_options(); }
 }
 
 // handle local uniform grid checked
-void US_AnalControl::checkLocalUni( bool checked )
+void US_AnalysisControl::checkLocalUni( bool checked )
 {
    if ( checked ) { uncheck_optimize( 2 ); optimize_options(); }
 }
 
 // handle random local grid checked
-void US_AnalControl::checkRandLoc( bool checked )
+void US_AnalysisControl::checkRandLoc( bool checked )
 {
    if ( checked ) { uncheck_optimize( 3 ); optimize_options(); }
 }
 
 // handle solute coalescing checked
-void US_AnalControl::checkSoluCoal( bool checked )
+void US_AnalysisControl::checkSoluCoal( bool checked )
 {
    if ( checked ) { uncheck_optimize( 4 ); optimize_options(); }
 }
 
 // handle clip lowest conc. solute checked
-void US_AnalControl::checkClipLow( bool checked )
+void US_AnalysisControl::checkClipLow( bool checked )
 {
    if ( checked ) { uncheck_optimize( 5 ); optimize_options(); }
 }
 
 // handle regularization checked
-void US_AnalControl::checkRegular( bool checked )
+void US_AnalysisControl::checkRegular( bool checked )
 {
    if ( checked ) { uncheck_optimize( 6 ); optimize_options(); }
 }
 
 // start fit button clicked
-void US_AnalControl::start()
+void US_AnalysisControl::start()
 {
    if ( processor == 0 )
       processor   = new US_2dsaProcess( edata, this );
@@ -362,18 +405,18 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
 }
 
 // plot button clicked
-void US_AnalControl::plot()
+void US_AnalysisControl::plot()
 {
 }
 
 // close button clicked
-void US_AnalControl::close_all()
+void US_AnalysisControl::close_all()
 {
    close();
 }
 
 // reset memory estimate when grid steps count or repetitions changes
-void US_AnalControl::grid_change()
+void US_AnalysisControl::grid_change()
 {
    int    nsteps = (int)ct_nstepss ->value();               // # steps s
    int    nstepk = (int)ct_nstepsk ->value();               // # steps k
@@ -406,7 +449,7 @@ DbgLv(1) << "GC: isizm c d x s r" << isizm << isizc << isizd << isizx
 }
 
 // slot to handle progress update
-void US_AnalControl::update_progress( int ksteps )
+void US_AnalysisControl::update_progress( int ksteps )
 {
    ncsteps += ksteps;
    b_progress->setValue( ncsteps );
@@ -415,13 +458,13 @@ DbgLv(1) << "UpdPr: ks ncs nts" << ksteps << ncsteps << nctotal;
 }
 
 // slot to handle completed refinement step
-void US_AnalControl::completed_refine( int /*kctask*/ )
+void US_AnalysisControl::completed_refine( int /*kctask*/ )
 {
    //le_iteration->setText( QString::number( kctask ) );
 }
 
 // slot to handle updated progress message
-void US_AnalControl::progress_message( QString pmsg )
+void US_AnalysisControl::progress_message( QString pmsg )
 {
    mw_stattext->setText( tr( "Subgrid solutions being calculated..." )
          + "\n" + pmsg );
@@ -429,7 +472,7 @@ void US_AnalControl::progress_message( QString pmsg )
 }
 
 // slot to handle completed subgrids
-void US_AnalControl::completed_subgrids()
+void US_AnalysisControl::completed_subgrids()
 {
    ncsteps      = ( nctotal * 4 ) / 5;
    b_progress->setValue( ncsteps );
@@ -438,7 +481,7 @@ void US_AnalControl::completed_subgrids()
 }
 
 // slot to handle completed processing
-void US_AnalControl::completed_process()
+void US_AnalysisControl::completed_process()
 {
    b_progress->setValue( nctotal );
    mw_progbar->setValue( nctotal );
