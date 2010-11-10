@@ -19,22 +19,19 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   
+
    US_RotorGui w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
 
-US_RotorGui::US_RotorGui( int investigatorID ) : US_WidgetsDialog(0, 0)
+US_RotorGui::US_RotorGui( ) : US_WidgetsDialog(0, 0)
 {
-   this->investigatorID = investigatorID;
    setupGui();
 }
 
-US_RotorGui::US_RotorGui( int investigatorID,
-                          rotorCalibration calibration ) : US_WidgetsDialog(0, 0)
+US_RotorGui::US_RotorGui( rotorCalibration calibration ) : US_WidgetsDialog(0, 0)
 {
-   this->investigatorID = investigatorID;
    setupGui();
    this->currentCalibration = calibration;
 }
@@ -114,7 +111,7 @@ void US_RotorGui::setupGui()
    pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, SIGNAL( clicked() ), this, SLOT( selectInvestigator() ) );
    top->addWidget( pb_investigator, row, 0, 1, 2 );
-   
+
    le_investigator = us_lineedit( tr( "Not Selected" ) );
    le_investigator->setReadOnly( true );
    top->addWidget( le_investigator, row, 2, 1, 2 );
@@ -124,7 +121,7 @@ void US_RotorGui::setupGui()
    pb_listRotors = us_pushbutton( tr( "List Rotors" ) );
    connect( pb_listRotors, SIGNAL( clicked() ), this, SLOT( listRotors() ) );
    top->addWidget( pb_listRotors, row, 0, 1, 2 );
-   
+
    pb_addRotor = us_pushbutton( tr( "Add new Rotor" ) );
    connect( pb_addRotor, SIGNAL( clicked() ), this, SLOT( addRotor() ) );
    top->addWidget( pb_addRotor, row, 2, 1, 2);
@@ -134,7 +131,7 @@ void US_RotorGui::setupGui()
    QLabel* lbl_bannerRotor = us_banner( tr( "Click to select a Rotor: " ), -1 );
    lbl_bannerRotor->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    top->addWidget( lbl_bannerRotor, row, 0, 1, 2 );
-   
+
    pb_deleteRotor = us_pushbutton( tr( "Delete Rotor" ) );
    connect( pb_deleteRotor, SIGNAL( clicked() ), this, SLOT( deleteRotor() ) );
    top->addWidget( pb_deleteRotor, row, 2, 1, 2);
@@ -154,35 +151,35 @@ void US_RotorGui::setupGui()
    le_laboratory = us_lineedit( "", -1 );
    le_laboratory->setText( tr("< not selected >"));
    top->addWidget( le_laboratory, row, 3);
-   
+
    row++;
 
    QLabel *lbl_name = us_label( tr("Name of Rotor:"), -1 );
    top->addWidget( lbl_name, row, 2 );
-   
+
    le_name = us_lineedit( "", -1 );
    le_name->setText( tr("< not selected >"));
    top->addWidget( le_name, row, 3);
    connect( le_name, SIGNAL( textEdited  ( const QString & ) ),
             SLOT  ( updateName ( const QString & ) ) );
-   
+
    row++;
 
    QLabel *lbl_serialNumber = us_label( tr("Rotor Serial Number:"), -1 );
    top->addWidget( lbl_serialNumber, row, 2 );
-   
+
    le_serialNumber = us_lineedit( "", -1 );
    le_serialNumber->setText( tr("< not selected >"));
    top->addWidget( le_serialNumber, row, 3);
    connect( le_serialNumber, SIGNAL( textEdited  ( const QString & ) ),
             SLOT  ( updateName ( const QString & ) ) );
-   
+
    row++;
 
    QLabel* lbl_bannerCalibration = us_banner( tr( "Click to select a Rotor Calibration: " ), -1 );
    lbl_bannerCalibration->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    top->addWidget( lbl_bannerCalibration, row, 0, 1, 2);
-   
+
    pb_saveCalibration = us_pushbutton( tr( "Save Calibration Data" ) );
    connect( pb_saveCalibration, SIGNAL( clicked() ), this, SLOT( saveCalibration() ) );
    top->addWidget( pb_saveCalibration, row, 2, 1, 2);
@@ -209,32 +206,32 @@ void US_RotorGui::setupGui()
 
    QLabel *lbl_coefficients = us_label( tr("Rotor Stretch Coefficients:"), -1 );
    top->addWidget( lbl_coefficients, row, 2 );
-   
+
    le_coefficients = us_lineedit( "", -1 );
    le_coefficients->setText( tr("< not available >"));
    le_coefficients->setReadOnly(true);
    top->addWidget( le_coefficients, row, 3);
-   
+
    row++;
 
    QLabel *lbl_date = us_label( tr("Calibration performed on:"), -1 );
    top->addWidget( lbl_date, row, 2 );
-   
+
    le_date = us_lineedit( "", -1 );
    le_date->setText( tr("< not available >"));
    le_date->setReadOnly(true);
    top->addWidget( le_date, row, 3);
-   
+
    row++;
 
    QLabel *lbl_force = us_label( tr("Total Rotor Revolutions:"), -1 );
    top->addWidget( lbl_force, row, 2 );
-   
+
    le_force = us_lineedit( "", -1 );
    le_force->setText( tr("< not available >"));
    le_force->setReadOnly(true);
    top->addWidget( le_force, row, 3);
-   
+
    row++;
 
    pb_help = us_pushbutton( tr( "Help" ) );
@@ -256,11 +253,13 @@ void US_RotorGui::setupGui()
 
 void US_RotorGui::selectInvestigator( void )
 {
+   /*
    US_Investigator* inv_dialog = new US_Investigator( true, investigatorID );
    connect( inv_dialog,
       SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
       SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
    inv_dialog->exec();
+   */
 }
 
 void US_RotorGui::listRotors( void )
@@ -362,7 +361,7 @@ void US_RotorGui::readFromDisk( QString& guid )
                << guid;
       return;
    }
-   
+
    QFile file( filename );
    if ( !file.open( QIODevice::ReadOnly | QIODevice::Text) )
    {
@@ -396,7 +395,7 @@ void US_RotorGui::readFromDisk( QString& guid )
 
    file.close();
 
-   if ( xml.hasError() ) 
+   if ( xml.hasError() )
    {
       qDebug() << "Error: xml error: \n"
                << xml.errorString();
@@ -434,7 +433,7 @@ void US_RotorGui::readSolutionInfo( QXmlStreamReader& xml )
             bufferGUID      = a.value( "guid" ).toString();
             bufferDesc      = a.value( "desc" ).toString();
          }
-   
+
          else if ( xml.name() == "analyte" )
          {
             AnalyteInfo analyte;
@@ -515,8 +514,8 @@ void US_RotorGui::saveToDisk( void )
    if ( ! diskPath( path ) ) return;
 
    bool    newFile;
-   QString filename = get_filename( 
-                         path, 
+   QString filename = get_filename(
+                         path,
                          newFile );
 
    QFile file( filename );
@@ -551,7 +550,7 @@ void US_RotorGui::saveToDisk( void )
       xml.writeAttribute   ( "guid", bufferGUID );
       xml.writeAttribute   ( "desc", bufferDesc );
       xml.writeEndElement  ();
-   
+
       // Loop through all the analytes
       for ( int i = 0; i < analytes.size(); i++ )
       {
@@ -637,7 +636,7 @@ void US_RotorGui::saveToDB( int expID, int channelID, US_DB2* db )
 
    status = db->statusQuery( q );
    if ( status != US_DB2::OK )
-      qDebug() << "MySQL error associating buffer with solution in database: " 
+      qDebug() << "MySQL error associating buffer with solution in database: "
                << db->lastError();
 
    // Remove analyte associations; we'll create new ones
@@ -658,10 +657,10 @@ void US_RotorGui::saveToDB( int expID, int channelID, US_DB2* db )
          << QString( "" )          // skip analyteID and use GUID instead
          << analyte.analyteGUID
          << QString::number( analyte.amount );
-   
+
       status = db->statusQuery( q );
       if ( status != US_DB2::OK )
-         qDebug() << "MySQL error associating analyte with solution in database: " 
+         qDebug() << "MySQL error associating analyte with solution in database: "
                   << db->lastError();
    }
 }
@@ -677,7 +676,7 @@ void US_RotorGui::deleteFromDisk( void )
       // No file to delete
       return;
    }
-   
+
    // Delete it
    QFile file( filename );
    if ( file.exists() )
@@ -697,7 +696,7 @@ void US_RotorGui::deleteFromDB( US_DB2* db )
       q << "get_solutionID_from_GUID"
         << solutionGUID;
       db->query( q );
-   
+
       if ( db->next() )
          solutionID = db->value( 0 ).toInt();
 
@@ -708,7 +707,7 @@ void US_RotorGui::deleteFromDB( US_DB2* db )
       q.clear();
       q << "delete_solution"
         << QString::number( solutionID );
-   
+
       int status = db->statusQuery( q );
       if ( status != US_DB2::OK )
          qDebug() << "MySQL error: " << db->lastError();
@@ -782,7 +781,7 @@ bool US_RotorGui::diskPath( QString& path )
    {
       if ( ! dir.mkpath( path ) )
       {
-         qDebug() << "Error: Could not create default directory for solutions\n" 
+         qDebug() << "Error: Could not create default directory for solutions\n"
                   << path;
          return false;
       }
