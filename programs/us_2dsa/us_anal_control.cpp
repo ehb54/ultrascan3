@@ -77,10 +77,10 @@ US_AnalControl::US_AnalControl( US_DataIO2::EditedData* dat_exp, QWidget* p )
 DbgLv(1) << "idealThrCout" << nthr;
    ct_lolimits  = us_counter( 3,  0.1,    5,   1 );
    ct_uplimits  = us_counter( 3,    5,   10,  10 );
-   ct_nstepss   = us_counter( 3,    1, 1000, 150 );
+   ct_nstepss   = us_counter( 3,    1, 1000, 100 );
    ct_lolimitk  = us_counter( 3, 0.01,    3,   1 );
    ct_uplimitk  = us_counter( 3,    3,    6,   4 );
-   ct_nstepsk   = us_counter( 3,    1, 1000, 150 );
+   ct_nstepsk   = us_counter( 3,    1, 1000,  40 );
    ct_threadcnt = us_counter( 2,    1,   64, nthr );
    ct_lolimits ->setStep(  0.1 );
    ct_uplimits ->setStep(  0.1 );
@@ -425,6 +425,7 @@ void US_AnalControl::progress_message( QString pmsg )
 {
    mw_stattext->setText( tr( "Subgrid solutions being calculated..." )
          + "\n" + pmsg );
+   qApp->processEvents();
 }
 
 // slot to handle completed subgrids
@@ -433,6 +434,7 @@ void US_AnalControl::completed_subgrids()
    ncsteps      = ( nctotal * 4 ) / 5;
    b_progress->setValue( ncsteps );
    mw_progbar->setValue( ncsteps );
+   qApp->processEvents();
 }
 
 // slot to handle completed processing
@@ -440,5 +442,6 @@ void US_AnalControl::completed_process()
 {
    b_progress->setValue( nctotal );
    mw_progbar->setValue( nctotal );
+   qApp->processEvents();
 }
 
