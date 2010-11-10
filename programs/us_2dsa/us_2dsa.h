@@ -32,9 +32,12 @@ class US_2dsa : public US_AnalysisBase2
 
       US_DataIO2::EditedData*     mw_editdata();
       US_DataIO2::RawData*        mw_simdata();
+      US_DataIO2::RawData*        mw_resdata();
       US_Model*                   mw_model();
       US_Noise*                   mw_ti_noise();
       US_Noise*                   mw_ri_noise();
+      QPointer< QProgressBar >    mw_progress_bar();
+      QPointer< QTextEdit >       mw_status_text();
 
    private:
       QGridLayout*         progressLayout;
@@ -42,16 +45,14 @@ class US_2dsa : public US_AnalysisBase2
       US_Editor*           te_results;
 
       US_DataIO2::EditedData*     edata;
-      US_DataIO2::Scan*           dscan;
-      US_DataIO2::RawData*        rdata;
-      US_DataIO2::RawData*        sdata;
+      US_DataIO2::RawData         sdata;
+      US_DataIO2::RawData         rdata;
 
       QPointer< US_ResidPlot >    resplotd;
       QPointer< US_PlotControl >  eplotcd;
       QPointer< US_AnalControl >  analcd;
 
       US_Model             model;
-      US_Model             model_loaded;
       US_Noise             ri_noise;
       US_Noise             ti_noise;
 
@@ -61,6 +62,11 @@ class US_2dsa : public US_AnalysisBase2
 
       QTextEdit*           te_status;
       QProgressBar*        b_progress;
+
+      QPushButton*         pb_fitcntl;
+      QPushButton*         pb_loadfit;
+      QPushButton*         pb_plt3d;
+      QPushButton*         pb_pltres;
 
    private slots:
       void open_resplot( void );

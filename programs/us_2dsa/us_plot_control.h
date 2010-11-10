@@ -25,6 +25,7 @@ class US_EXTERN US_PlotControl : public US_WidgetsDialog
       US_PlotControl( QWidget* p = 0, US_Model* = 0 );
 
    private:
+
       QVBoxLayout*  mainLayout;
       QGridLayout*  controlsLayout;
       QHBoxLayout*  buttonsLayout;
