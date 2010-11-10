@@ -2,7 +2,7 @@
 #define US_2DSA_H
 
 #include "us_plot_control.h"
-#include "us_anal_control.h"
+#include "us_analysis_control.h"
 #include "us_noise_loader.h"
 #include "us_resplot.h"
 #include "us_dataIO2.h"
@@ -48,9 +48,9 @@ class US_2dsa : public US_AnalysisBase2
       US_DataIO2::RawData         sdata;
       US_DataIO2::RawData         rdata;
 
-      QPointer< US_ResidPlot >    resplotd;
-      QPointer< US_PlotControl >  eplotcd;
-      QPointer< US_AnalControl >  analcd;
+      QPointer< US_ResidPlot >        resplotd;
+      QPointer< US_PlotControl >      eplotcd;
+      QPointer< US_AnalysisControl >  analcd;
 
       US_Model             model;
       US_Noise             ri_noise;
