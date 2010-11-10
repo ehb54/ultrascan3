@@ -25,16 +25,18 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-US_RotorGui::US_RotorGui() : US_WidgetsDialog(0, 0)
+US_RotorGui::US_RotorGui( int investigatorID ) : US_WidgetsDialog(0, 0)
 {
-   
+   this->investigatorID = investigatorID;
    setupGui();
 }
 
-US_RotorGui::US_RotorGui( rotorCalibration calibration ) : US_WidgetsDialog(0, 0)
+US_RotorGui::US_RotorGui( int investigatorID,
+                          rotorCalibration calibration ) : US_WidgetsDialog(0, 0)
 {
-   this->currentCalibration = calibration;
+   this->investigatorID = investigatorID;
    setupGui();
+   this->currentCalibration = calibration;
 }
 
 US_RotorGui::~US_RotorGui()
@@ -254,6 +256,11 @@ void US_RotorGui::setupGui()
 
 void US_RotorGui::selectInvestigator( void )
 {
+   US_Investigator* inv_dialog = new US_Investigator( true, investigatorID );
+   connect( inv_dialog,
+      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
+      SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
+   inv_dialog->exec();
 }
 
 void US_RotorGui::listRotors( void )
