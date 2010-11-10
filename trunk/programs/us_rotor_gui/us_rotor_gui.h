@@ -95,7 +95,9 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
       abstractRotor     currentAbstractRotor;   //!< Current abstractRotor structure
       rotor             currentRotor;           //!< Current rotor structure
       rotorCalibration  currentCalibration;     //!< Current calibration structure
-      US_Help            showHelp;
+      US_Help           showHelp;
+
+      int investigatorID;
 
       /*! \brief Functions to read an entire abstractrotor structure from the disk
 
