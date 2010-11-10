@@ -24,6 +24,7 @@ class US_EXTERN US_Model
       enum AnalysisType { MANUAL, TWODSA, TWODSA_MW, GA, GA_MW, ONEDSA,
                           COFS, FE };
 
+      //! The type of global analysis used with the model
       enum GlobalType { NONE, MENISCUS, GLOBAL, SUPERGLOBAL };
 
 

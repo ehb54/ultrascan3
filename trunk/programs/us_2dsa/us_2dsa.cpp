@@ -52,24 +52,25 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    QLabel* lb_from     = us_label ( tr( "From:" ) );
    QLabel* lb_to       = us_label ( tr( "to:"   ) );
 
-   pb_exclude = us_pushbutton( tr( "Exclude Scan Range" ) );
+   pb_exclude   = us_pushbutton( tr( "Exclude Scan Range" ) );
    pb_exclude->setEnabled( false );
    connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude() ) );
 
-   ct_from            = us_counter( 2, 0, 0 );
-   ct_to              = us_counter( 2, 0, 0 );
+   ct_from      = us_counter( 2, 0, 0 );
+   ct_to        = us_counter( 2, 0, 0 );
 
    connect( ct_from, SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_from( double ) ) );
    connect( ct_to,   SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_to  ( double ) ) );
-   QPushButton* pb_fitcntl = us_pushbutton( tr( "Fit Control"   ) );
-   QPushButton* pb_loadfit = us_pushbutton( tr( "Load Fit"      ) );
-   QPushButton* pb_plt3d   = us_pushbutton( tr( "3-D Plot"      ) );
-   QPushButton* pb_pltres  = us_pushbutton( tr( "Residual Plot" ) );
+   pb_fitcntl   = us_pushbutton( tr( "Fit Control"   ) );
+   pb_loadfit   = us_pushbutton( tr( "Load Fit"      ) );
+   pb_plt3d     = us_pushbutton( tr( "3-D Plot"      ) );
+   pb_pltres    = us_pushbutton( tr( "Residual Plot" ) );
+
+   connect( pb_fitcntl, SIGNAL( clicked() ), SLOT( open_fitcntl() ) );
    connect( pb_plt3d,   SIGNAL( clicked() ), SLOT( open_3dplot()  ) );
    connect( pb_pltres,  SIGNAL( clicked() ), SLOT( open_resplot() ) );
-   connect( pb_fitcntl, SIGNAL( clicked() ), SLOT( open_fitcntl() ) );
 
    // To modify controls layout, first make Base elements invisible
    QWidget* widg;
@@ -112,18 +113,29 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
    connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
 
+   pb_fitcntl->setEnabled( false );
+   pb_loadfit->setEnabled( false );
+   pb_plt3d  ->setEnabled( false );
+   pb_pltres ->setEnabled( false );
+   pb_exclude->setEnabled( false );
+   ct_from   ->setEnabled( false );
+   ct_to     ->setEnabled( false );
+
+   edata        = 0;
    resplotd     = 0;
    eplotcd      = 0;
    rbd_pos      = this->pos() + QPoint( 100, 100 );
    epd_pos      = this->pos() + QPoint( 200, 200 );
-
-   sdata        = 0;
 }
 
 void US_2dsa::data_plot( void )
 {
    US_AnalysisBase2::data_plot();
 
+   pb_fitcntl->setEnabled( true );
+   pb_loadfit->setEnabled( true );
+   ct_from   ->setEnabled( true );
+   ct_to     ->setEnabled( true );
 #if 0
    //time_correction = US_Math::time_correction( dataList );
 
@@ -401,11 +413,22 @@ void US_2dsa::save( void )
          + textFile  + "\n" );
 }
 
-US_DataIO2::EditedData*     US_2dsa::mw_editdata() { return edata;     }
-US_DataIO2::RawData*        US_2dsa::mw_simdata()  { return sdata;     }
+US_DataIO2::EditedData* US_2dsa::mw_editdata()
+{
+   int row = lw_triples->currentRow();
+   edata   = ( row >= 0 ) ? &dataList[ row ] : 0;
+qDebug() << "mw_edit: row" << row;
+
+   return edata;
+}
+
+US_DataIO2::RawData*        US_2dsa::mw_simdata()  { return &sdata;    }
+US_DataIO2::RawData*        US_2dsa::mw_resdata()  { return &rdata;    }
 US_Model*                   US_2dsa::mw_model()    { return &model;    }
 US_Noise*                   US_2dsa::mw_ti_noise() { return &ti_noise; }
 US_Noise*                   US_2dsa::mw_ri_noise() { return &ti_noise; }
+QPointer< QProgressBar >    US_2dsa::mw_progress_bar() { return b_progress; }
+QPointer< QTextEdit    >    US_2dsa::mw_status_text()  { return te_status;  }
 
 void US_2dsa::open_resplot()
 {
@@ -429,8 +452,10 @@ qDebug() << "Open 3dplot";
 
 void US_2dsa::open_fitcntl()
 {
-qDebug() << "Open 3dplot";
-   analcd = new US_AnalControl( this, &model );
+   int row = lw_triples->currentRow();
+   edata   = ( row >= 0 ) ? &dataList[ row ] : 0;
+qDebug() << "Open fitcntl";
+   analcd  = new US_AnalControl( edata, this );
    analcd->move( epd_pos );
    analcd->show();
 }

@@ -47,10 +47,10 @@ int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
 
    int npts      = af_data.scan[ 0 ].conc.size();
    initial_npts  = ( initial_npts < npts ) ? initial_npts : npts;
-DbgLv(1) << "RSA: rotorspeed" << af_params.first_speed;
-DbgLv(1) << "RSA: simpoints" << af_params.simpoints;
-DbgLv(1) << "RSA:  scan0size" << npts;
-DbgLv(1) << "RSA:  af_c0size" << initial_npts;
+DbgLv(2) << "RSA: rotorspeed" << af_params.first_speed;
+DbgLv(2) << "RSA: simpoints" << af_params.simpoints;
+DbgLv(2) << "RSA:  scan0size" << npts;
+DbgLv(2) << "RSA:  af_c0size" << initial_npts;
    update_assocv();
    initialize_rg();  // Reaction group
    adjust_limits( simparams.speed_step[ 0 ].rotorspeed );
@@ -60,12 +60,12 @@ DbgLv(1) << "RSA:  af_c0size" << initial_npts;
       US_Model::SimulationComponent* sc = &system.components[ k ];
       US_Model::Association*         as;
       reacting[ k ] = false;
-DbgLv(1) << "RSA:  k assoc.size" << k << system.associations.size();
+DbgLv(2) << "RSA:  k assoc.size" << k << system.associations.size();
 
       for ( int j = 0; j <  system.associations.size(); j++ )
       {
          as  = &system.associations[ j ];
-DbgLv(1) << "RSA:   j react.size" << k << as->rcomps.size();
+DbgLv(2) << "RSA:   j react.size" << k << as->rcomps.size();
 
          for ( int n = 0; n < as->rcomps.size(); n++ )
          {
@@ -76,7 +76,7 @@ DbgLv(1) << "RSA:   j react.size" << k << as->rcomps.size();
                 break;   // Since a comp appears at most once in an assoc rule
             }
          }
-DbgLv(1) << "RSA:  k j current_assoc" << k << j << current_assoc;
+DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
       }
 
       current_time  = 0.0;
@@ -260,7 +260,7 @@ DbgLv(1) << "RSA:  k j current_assoc" << k << j << current_assoc;
       int num_comp = rg[ group ].GroupComponent.size();
       int num_rule = rg[ group ].association.size();
       af_params.rg_index = group;
-DbgLv(1) << "RSA:  group nrule ncomp" << group << num_rule << num_comp;
+DbgLv(2) << "RSA:  group nrule ncomp" << group << num_rule << num_comp;
       af_params.s          .resize( num_comp );
       af_params.D          .resize( num_comp );
       af_params.kext       .resize( num_comp );
@@ -276,7 +276,7 @@ DbgLv(1) << "RSA:  group nrule ncomp" << group << num_rule << num_comp;
       for ( int j = 0; j < num_comp; j++ )
       {
          int index = rg[ group ].GroupComponent[ j ];
-DbgLv(1) << "RSA:    j index" << j << index;
+DbgLv(2) << "RSA:    j index" << j << index;
 
          US_Model::SimulationComponent* sc = &system.components[ index ];
          af_params.s   [ j ] = sc->s;
@@ -297,12 +297,12 @@ DbgLv(1) << "RSA:    j index" << j << index;
          {
             // Check all comp in rule
             int rule   = rg[ group ].association[ m ];
-DbgLv(1) << "RSA:     m rule" << m << rule;
+DbgLv(2) << "RSA:     m rule" << m << rule;
             US_Model::Association* as   = &system.associations[ rule ];
 
             for ( int n = 0; n < as->rcomps.size(); n++ )
             {
-DbgLv(1) << "RSA:      n af-index as-react" << n
+DbgLv(2) << "RSA:      n af-index as-react" << n
  << af_params.role[j].comp_index << as->rcomps[n];
                if ( af_params.role[ j ].comp_index ==
                     as->rcomps[ n ] )
@@ -323,7 +323,7 @@ DbgLv(1) << "RSA:      n af-index as-react" << n
           {
             as->rcomps[ n ] = 
                af_params.local_index[ as->rcomps[ n ] ];
-DbgLv(1) << "RSA:     m n rcn" << m << n << as->rcomps[n];
+DbgLv(2) << "RSA:     m n rcn" << m << n << as->rcomps[n];
           }
       }
 
@@ -343,7 +343,7 @@ DbgLv(1) << "RSA:     m n rcn" << m << n << as->rcomps[n];
       {
          CT0.radius.clear();
          CT0.concentration.clear();
-DbgLv(1) << "RSA:      j in_npts" << j << initial_npts;
+DbgLv(2) << "RSA:      j in_npts" << j << initial_npts;
 
          for ( int i = 0; i < initial_npts; i++ )
          {
@@ -529,7 +529,7 @@ void US_Astfem_RSA::update_assocv( void )
       int ncomp   = as->rcomps.size();
       int stoich1 = as->stoichs[ 0 ];
       int stoich2 = as->stoichs[ 1 ];
-DbgLv(1) << "AFRSA:  ncomp st1 st2" << ncomp << stoich1 << stoich2;
+DbgLv(2) << "AFRSA:  ncomp st1 st2" << ncomp << stoich1 << stoich2;
       
       if ( ncomp == 2 )
       {
@@ -584,7 +584,7 @@ double US_Astfem_RSA::stretch( double* rotorcoeffs, int rpm )
       rpmpow  *= rpmval;                     // next rpm power ( rpm^(i+1) )
    }
 
-//DbgLv(1) << "AFRSA: stretch rpm" << stretch << rpm;
+//DbgLv(2) << "AFRSA: stretch rpm" << stretch << rpm;
    return stretch;
 }
 
@@ -778,13 +778,13 @@ void US_Astfem_RSA::initialize_rg( void )
 void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0, 
       bool noninteracting ) 
 {
-DbgLv(1) << "RSA: init_conc() ENTER kk" << kk;
+DbgLv(2) << "RSA: init_conc() ENTER kk" << kk;
    US_Model::SimulationComponent* sc = &system.components[ kk ];
 
    // We don't have an existing CT0 concentration vector. Build up the initial
    // concentration vector with constant concentration
  
-//DbgLv(1) << "size(af_c0)" << af_c0.concentration.size();
+//DbgLv(2) << "size(af_c0)" << af_c0.concentration.size();
    //if ( sc->c0.concentration.size() == 0 ) 
    if ( af_c0.concentration.size() == 0 ) 
    {
@@ -856,7 +856,7 @@ DbgLv(1) << "RSA: init_conc() ENTER kk" << kk;
             CT0.concentration[ j ] += C.concentration[ j ];
       }
    }
-DbgLv(1) << "RSA: init_conc() RETURN";
+DbgLv(2) << "RSA: init_conc() RETURN";
 }
 
 // Non-interacting solute, constant speed
@@ -1779,7 +1779,7 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
 
    // Note: all components must be defined on the same radial grids
    int Npts = C0[ 0 ].radius.size();  
-DbgLv(1) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
+DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
 
    // Special case:  self-association  n A <--> An
    if ( num_comp == 2 )       // Only 2 components and one association rule
@@ -1792,7 +1792,7 @@ DbgLv(1) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
       {
           double c1;
           double ct = C0[ 0 ].concentration[ j ] + C0[ 1 ].concentration[ j ] ;
-//DbgLv(1) << "RSA:  j st0 st1" << j << st0 << st1;
+//DbgLv(2) << "RSA:  j st0 st1" << j << st0 << st1;
           
           if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
              c1 = ( sqrt( 1.0 + 4.0 * keq * ct ) - 1.0 ) / ( 2.0 * keq );
@@ -1868,7 +1868,7 @@ DbgLv(1) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
    {
       if ( show_movie  &&  (ti%8) == 0 )
       {
-//DbgLv(1) << "AR: calc_progr ti" << ti;
+//DbgLv(2) << "AR: calc_progr ti" << ti;
          emit calc_progress( ti );
          qApp->processEvents();
          //US_Sleep::msleep( 10 );

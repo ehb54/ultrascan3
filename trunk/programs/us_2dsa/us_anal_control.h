@@ -8,8 +8,10 @@
 #include "us_widgets_dialog.h"
 #include "us_dataIO2.h"
 #include "us_model.h"
+#include "us_noise.h"
 #include "us_plot.h"
 #include "us_help.h"
+#include "us_2dsa_process.h"
 
 //! \brief A class to provide a window with enhanced plot controls
 
@@ -19,16 +21,37 @@ class US_EXTERN US_AnalControl : public US_WidgetsDialog
 
    public:
       //! \brief US_AnalControl constructor
-      //! \param parent Pointer to the parent of this widget
-      //! \param model  Pointer to the model to be plotted
-      US_AnalControl( QWidget* p = 0, US_Model* = 0 );
+      //! \param dat_exp Pointer to the experiment data
+      //! \param         Pointer to the parent of this widget
+      US_AnalControl( US_DataIO2::EditedData*, QWidget* p = 0 );
+
+   public slots:
+      void update_progress (   int );
+      void completed_refine(   int );
+      void progress_message(   QString );
+      void completed_subgrids( void );
+      void completed_process(  void );
 
    private:
+      int           dbg_level;
+      int           ncsteps;
+      int           nctotal;
+
       QHBoxLayout*  mainLayout;
       QGridLayout*  controlsLayout;
       QGridLayout*  optimizeLayout;
 
-      US_Model*     model;
+      US_DataIO2::EditedData*      edata;
+      US_DataIO2::RawData*         sdata;
+      US_DataIO2::RawData*         rdata;
+      US_Model*                    model;
+      US_Noise*                    ri_noise;
+      US_Noise*                    ti_noise;
+      QPointer< QProgressBar >     mw_progbar;
+      QPointer< QTextEdit    >     mw_stattext;
+
+      QWidget*                     parentw;
+      US_2dsaProcess*              processor;
 
       QwtCounter*   ct_lolimits;
       QwtCounter*   ct_uplimits;
@@ -76,6 +99,8 @@ class US_EXTERN US_AnalControl : public US_WidgetsDialog
       void checkSoluCoal(    bool );
       void checkClipLow (    bool );
       void checkRegular (    bool );
+      void grid_change(      void );
+      void start(            void );
       void plot(             void );
       void close_all(        void );
 
