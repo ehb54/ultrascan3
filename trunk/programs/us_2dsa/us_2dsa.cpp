@@ -128,6 +128,31 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    epd_pos      = this->pos() + QPoint( 200, 200 );
 }
 
+void US_2dsa::analysis_done()
+{
+   QString analysID  = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
+   QString editID    = edata->editID;
+   editID            = editID.startsWith( "20" ) ? editID.mid( 2 ) : editID;
+   model.editGUID    = edata->editGUID;
+   model.description = edata->runID + ".2DSA_e" + editID + "_a" + analysID
+      + "_model.11";
+
+qDebug() << "Analysis Done";
+qDebug() << "  model components size" << model.components.size();
+qDebug() << "  edat0 sdat0 rdat0"
+ << edata->value(0,0) << sdata.value(0,0) << rdata.value(0,0);
+//*DEBUG*
+QString mfilename = US_Settings::dataDir() + "/models/M0000999.xml";
+model.write( mfilename );
+//*DEBUG*
+qDebug() << model.description << "\n to file" << mfilename;
+
+   pb_plt3d ->setEnabled( true );
+   pb_pltres->setEnabled( true );
+
+   data_plot();
+}
+
 void US_2dsa::data_plot( void )
 {
    US_AnalysisBase2::data_plot();
@@ -136,121 +161,110 @@ void US_2dsa::data_plot( void )
    pb_loadfit->setEnabled( true );
    ct_from   ->setEnabled( true );
    ct_to     ->setEnabled( true );
-#if 0
-   //time_correction = US_Math::time_correction( dataList );
 
-   int                     index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* d      = &dataList[ index ];
+   if ( ! dataLoaded )
+      return;
 
-   int     scanCount   = d->scanData.size();
-   int     exclude     = 0;
-   double  baseline    = calc_baseline();
+   if ( sdata.scanData.size() != edata->scanData.size() )
+      return;
 
-   for ( int i = 0; i < scanCount; i++ )
+
+   int nscans  = edata->scanData.size();
+   int npoints = edata->x.size();
+   int count   = ( npoints > nscans ) ? npoints : nscans;
+
+   QVector< double > rvec( count, 0.0 );
+   QVector< double > vvec( count, 0.0 );
+   double* ra = rvec.data();
+   double* va = vvec.data();
+   QString title;
+   QwtPlotCurve* cc;
+   QPen pen_red(  Qt::red );
+   QPen pen_cyan( Qt::cyan );
+   QPen pen_plot( Qt::green );
+
+   double rl = edata->radius( 0 );
+   double vh = edata->value( 0, 0 ) * 0.05;
+   rl       -= 0.05;
+   vh       += ( vh - edata->value( 0, 0 ) ) * 0.05;
+
+   for ( int ii = 0; ii < nscans; ii++ )
    {
-      if ( excludedScans.contains( i ) ) continue;
-      
-      double range  = d->scanData[ i ].plateau - baseline;
-      double test_y = baseline + range * positionPct;
-      
-      if ( d->scanData[ i ].readings[ 0 ].value > test_y ) exclude++;
+      if ( excludedScans.contains( ii ) ) continue;
+
+      int    jj  = 0;
+      int    kk  = 0;
+      double rr  = 0.0;
+      double vv  = 0.0;
+
+      while ( jj < npoints )
+      {
+         rr    = sdata.radius( jj );
+         vv    = sdata.value( ii, jj++ );
+         if ( jj > rl )
+         {
+            ra[ kk   ] = rr;
+            va[ kk++ ] = vv;
+         }
+      }
+      title = "SimCurve " + QString::number( ii );
+      cc    = us_curve( data_plot2, title );
+      cc->setPen( pen_red );
+      cc->setData( ra, va, kk );
    }
 
-   le_skipped->setText( QString::number( exclude ) );
+   data_plot2->replot();
 
-   // Draw plot
+   data_plot1->detachItems();
    data_plot1->clear();
+
    us_grid( data_plot1 );
+   data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
+   data_plot1->setAxisTitle( QwtPlot::yLeft,   tr( "OD Difference" ) );
+   double rmsd  = 0.0;
+   double xmin  = 99999.9;
+   double xmax  = -99999.9;
+   double ymin  = xmin;
+   double ymax  = xmax;
 
-   QString triptitl = lw_triples->item( index )->text();
-   data_plot1->setTitle( triptitl + tr( " - 2-D Spectrum Plot" ) );
-
-   data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "Scan Number" ) );
-   data_plot1->setAxisTitle( QwtPlot::yLeft  , 
-         tr( "Correc. Sed. Coeff. (1e-13 s)" ) );
-
-   // Calculate the 2nd moment
-   for ( int i = 0; i < scanCount; i++ )
+   for ( int jj = 0; jj < npoints; jj++ )
    {
+      double rv = sdata.radius( jj );
+      ra[ jj ]  = rv;
+      xmin      = ( xmin < rv ) ? xmin : rv;
+      xmax      = ( xmax > rv ) ? xmax : rv;
    }
 
-   double* x = new double[ scanCount ];
-   double* y = new double[ scanCount ];
-   
-   // Sedimentation coefficients from all scans that have not cleared the
-   // meniscus form a separate plot that will be plotted in red, and will not
-   // be included in the line fit:
-    
-   QwtPlotCurve* curve;
-   QwtSymbol     sym;
-   
-   int count = 0;
-
-   // Curve 1
-   for ( int i = 0; i < exclude; i++ )
+   for ( int ii = 0; ii < nscans; ii++ )
    {
-      if ( excludedScans.contains( i ) ) continue;
-      
-      x[ count ] = (double)( count + 1 );
-      y[ count ] = smSeconds[ i ];
-      count++;
+      for ( int jj = 0; jj < npoints; jj++ )
+      {
+         double evalu = edata->value( ii, jj );
+         double svalu = sdata .value( ii, jj );
+         evalu        = evalu - svalu;
+         va[ jj ]     = evalu;
+         rmsd        += ( evalu * evalu );
+         ymin         = ( ymin < evalu ) ? ymin : evalu;
+         ymax         = ( ymax > evalu ) ? ymax : evalu;
+      }
+
+      title    = "resids " + QString::number( ii );
+      cc       = us_curve( data_plot1, title );
+      cc->setPen(   pen_plot );
+      cc->setStyle( QwtPlotCurve::Dots );
+      cc->setData(  ra, va, npoints );
    }
 
-   curve = us_curve( data_plot1, tr( "Non-cleared Sedimentation Coefficients" ) );
+   data_plot1->setAxisAutoScale( QwtPlot::xBottom );
+   data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
+   data_plot1->setTitle( tr( "Residuals" ) );
 
-   sym.setStyle( QwtSymbol::Ellipse );
-   sym.setPen  ( QPen( Qt::white ) );
-   sym.setBrush( QBrush( Qt::red ) );
-   sym.setSize ( 8 );
-   
-   curve->setStyle ( QwtPlotCurve::NoCurve );
-   curve->setSymbol( sym );
-   curve->setData  ( x, y, count );
-
-   // Curve 2
-   count          = 0;
-   double average = 0.0;
-
-   for ( int i = exclude; i < scanCount; i++ )
-   {
-      if ( excludedScans.contains( i ) ) continue;
-      
-      x[ count ] = (double)( count + 1 + exclude );
-      y[ count ] = smSeconds[ i ];
-      average   += smSeconds[ i ];
-      count++;
-   }
-
-   average_2nd = (count > 0 ) ? average / count : 0.0;
-
-   sym.setPen  ( QPen  ( Qt::blue  ) );
-   sym.setBrush( QBrush( Qt::white ) );
-   
-   curve = us_curve( data_plot1, tr( "Cleared Sedimentation Coefficients" ) );
-   curve->setSymbol( sym );
-   curve->setData( x, y, count );
-   
-   // Curve 3
-
-   x[ 0 ] = 0.0;
-   x[ 1 ] = (double)( scanCount - excludedScans.size() );
-   y[ 0 ] = average_2nd;
-   y[ 1 ] = average_2nd;
-
-   if ( count > 0 )
-   {
-      curve = us_curve( data_plot1, tr( "Average" ) );
-      curve->setPen( QPen( Qt::green ) );
-      curve->setData( x, y, 2 );
-   }
-
-   data_plot1->setAxisScale   ( QwtPlot::xBottom, 0.0, x[ 1 ] + 0.25, 1.0 );
-   data_plot1->setAxisMaxMinor( QwtPlot::xBottom, 0 );
    data_plot1->replot();
 
-   delete [] x;
-   delete [] y;
-#endif
+   rmsd    /= (double)( nscans * npoints );
+   QString pmsg = te_status->toPlainText() +
+      tr( "\nRMSD: %1\nVariance: %2" ).arg( sqrt( rmsd ) ).arg( rmsd );
+   te_status->setPlainText( pmsg );
 }
 
 void US_2dsa::view( void )
@@ -454,7 +468,10 @@ void US_2dsa::open_fitcntl()
 {
    int row = lw_triples->currentRow();
    edata   = ( row >= 0 ) ? &dataList[ row ] : 0;
+   edata->dataType = edata->dataType + QString().sprintf(
+         " %.6f %.5f %5f", density, viscosity, vbar );
 qDebug() << "Open fitcntl";
+qDebug() << " dens visc vbar" << density << viscosity << vbar;
    analcd  = new US_AnalysisControl( edata, this );
    analcd->move( epd_pos );
    analcd->show();

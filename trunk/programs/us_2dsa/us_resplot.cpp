@@ -184,10 +184,10 @@ DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
    data_plot1->resize( p1size );
    data_plot2->resize( p2size );
 
-   //plot_data();
+   plot_data();
 
    setVisible( true );
-   //resize( p2size );
+   resize( p2size );
 }
 
 // plot-experimental-data box [un]checked

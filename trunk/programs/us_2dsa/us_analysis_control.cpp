@@ -73,7 +73,8 @@ US_AnalysisControl::US_AnalysisControl( US_DataIO2::EditedData* dat_exp,
    QLayout* lo_autupd      =
       us_checkbox( tr( "Automatically Update Plot" ), ck_autoupd );
 
-   int nthr     = QThread::idealThreadCount();
+   int nthr     = US_Settings::threads();
+   nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
 DbgLv(1) << "idealThrCout" << nthr;
    ct_lolimits  = us_counter( 3,  0.1,    5,   1 );
    ct_uplimits  = us_counter( 3,    5,   10,  10 );
@@ -384,15 +385,15 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
                    ( ck_rinoise->isChecked() ? 2 : 0 );
 
    ncsteps       = 0;
-   nctotal       = ( nss * nks * 5 ) / 4;
+   nctotal       = ( nss * nks * 9 ) / 4;
    b_progress->setMaximum( nctotal );
    mw_progbar->setMaximum( nctotal );
 
-   connect( processor, SIGNAL( progress_update( int ) ),
-            this,      SLOT(   update_progress( int ) ) );
-   connect( processor, SIGNAL( refine_complete( int ) ),
-            this,      SLOT(   completed_refine(  int ) ) );
-   connect( processor, SIGNAL( message_update( QString ) ),
+   connect( processor, SIGNAL( progress_update(  int ) ),
+            this,      SLOT(   update_progress(  int ) ) );
+   connect( processor, SIGNAL( refine_complete(  int ) ),
+            this,      SLOT(   completed_refine( int ) ) );
+   connect( processor, SIGNAL( message_update(   QString ) ),
             this,      SLOT(   progress_message( QString ) ) );
    connect( processor, SIGNAL( subgrids_complete( )      ),
             this,      SLOT(   completed_subgrids()      ) );
@@ -466,15 +467,20 @@ void US_AnalysisControl::completed_refine( int /*kctask*/ )
 // slot to handle updated progress message
 void US_AnalysisControl::progress_message( QString pmsg )
 {
-   mw_stattext->setText( tr( "Subgrid solutions being calculated..." )
-         + "\n" + pmsg );
+   if ( pmsg.length() < 100 )
+      mw_stattext->setText( tr( "Subgrid solutions being calculated..." )
+            + "\n" + pmsg );
+
+   else
+      mw_stattext->setText( pmsg );
+
    qApp->processEvents();
 }
 
 // slot to handle completed subgrids
 void US_AnalysisControl::completed_subgrids()
 {
-   ncsteps      = ( nctotal * 4 ) / 5;
+   ncsteps      = ( nctotal * 8 ) / 9;
    b_progress->setValue( ncsteps );
    mw_progbar->setValue( ncsteps );
    qApp->processEvents();
@@ -485,6 +491,15 @@ void US_AnalysisControl::completed_process()
 {
    b_progress->setValue( nctotal );
    mw_progbar->setValue( nctotal );
+   //mw_stattext->setText( tr( "Computations are now complete." ) );
    qApp->processEvents();
+
+   processor->get_results( sdata, rdata, model, ti_noise, ri_noise );
+
+   if ( parentw )
+   {
+      US_2dsa* mainw = (US_2dsa*)parentw;
+      mainw->analysis_done();
+   }
 }
 
