@@ -21,10 +21,8 @@
     This class represents the s,k,c values of a solute that is
     input to or output from the 2DSA analysis.
 */
-class Solute : public QObject
+class Solute
 {
-   Q_OBJECT
-
    public:
       double s;     // sedimentation coefficent of solute
       double k;     // frictional ratio (f/f0) of solute
@@ -58,15 +56,15 @@ class Solute : public QObject
 //! \brief Worker thread job-defining arguments
 typedef struct work_define_s
 {
-   double  ll_s;       // grid lower-limit s
-   double  ul_s;       // grid upper-limit s
-   double  delta_s;    // grid delta in s
-   double  ll_k;       // grid lower-limit k
-   double  ul_k;       // grid upper-limit k
-   double  delta_k;    // grid delta in k
    int     thrx;       // thread index (1,...)
    int     taskx;      // task index (1,...)
-   US_DataIO2::EditedData*  edata;    // pointer to experiment data
+   int     noisf;      // noise flag
+   double  ll_s;       // subgrid lower-limit s
+   double  ll_k;       // subgrid lower-limit k
+
+   QVector< Solute >       isolutes; // input solutes
+
+   US_DataIO2::EditedData* edata;    // pointer to experiment data
 } WorkDefine;
 
 //! \brief Worker thread results-output arguments
@@ -77,11 +75,7 @@ typedef struct work_results_s
    double ll_s;
    double ll_k;
 
-   QVector< Solute* >  csolutes;  // computed solutes
-
-   US_DataIO2::RawData sdata;     // simulation data
-   US_DataIO2::RawData rdata;     // residuals data
-   US_Model            model;     // composite model data
+   QVector< Solute > csolutes;  // computed solutes
 } WorkResult;
 
 //! \brief Worker thread to do actual work of 2DSA analysis
@@ -108,23 +102,21 @@ class WorkerThread : public QThread
       void work_complete( WorkerThread* );
 
    private:
+
+      void calc_residuals( void );
+
       QMutex mutex;
       QWaitCondition condition;
 
       double  llim_s;
-      double  ulim_s;
-      double  delta_s;
       double  llim_k;
-      double  ulim_k;
-      double  delta_k;
 
-      int     nscan;
-      int     nconc;
-      int     ngls;
-      int     nglk;
-      int     ngltot;
       int     thrx;
       int     taskx;
+      int     nscans;
+      int     npoints;
+      int     nsolutes;
+      int     noisflag;
       int     dbg_level;
 
       US_DataIO2::EditedData* edata;
@@ -135,8 +127,8 @@ class WorkerThread : public QThread
       US_Noise                ri_noise;
       US_Noise                ti_noise;
       US_Noise                ra_noise;
-      QVector< Solute* >      solute_i;
-      QVector< Solute* >      solute_c;
+      QVector< Solute >       solute_i;
+      QVector< Solute >       solute_c;
 };
 
 //! \brief 2DSA Simulation object
@@ -180,6 +172,11 @@ class US_EXTERN US_2dsaProcess : public QObject
       bool get_results( US_DataIO2::RawData*, US_DataIO2::RawData*,
                         US_Model*, US_Noise*, US_Noise* );
 
+      QVector< Solute > create_solutes( double, double, double,
+                                        double, double, double );
+
+      void final_computes(  void    );
+
       //! \brief Get message for last error
       //! \returns       Message about last error
       QString lastError( void ) { return errMsg; }
@@ -199,6 +196,7 @@ class US_EXTERN US_2dsaProcess : public QObject
 
       public slots:
       void thread_finished( WorkerThread* );
+      void final_finished(  WorkerThread* );
       void step_progress( int );
 
       signals:
@@ -252,9 +250,7 @@ class US_EXTERN US_2dsaProcess : public QObject
       double     sdelta_s;     // subgrid delta in s
       double     sdelta_k;     // subgrid delta in k
 
-      QString get_model_filename( QString );
-      QString get_noise_filename( QString );
-
+      QTime      timer;        // timer for elapsed time measure
 };
 #endif
 

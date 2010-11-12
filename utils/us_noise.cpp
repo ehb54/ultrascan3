@@ -27,7 +27,6 @@ bool US_Noise::operator== ( const US_Noise& n ) const
    if ( description     != n.description     ) return false;
    if ( noiseGUID       != n.noiseGUID       ) return false;
    if ( modelGUID       != n.modelGUID       ) return false;
-   if ( count           != n.count           ) return false;
    if ( minradius       != n.minradius       ) return false;
    if ( maxradius       != n.maxradius       ) return false;
    if ( values.size()   != n.values.size()   ) return false;
@@ -104,7 +103,6 @@ int US_Noise::load( const QString& filename )
             modelGUID   = a.value( "modelGUID"   ).toString();
             minradius   = a.value( "minradius"   ).toString().toDouble();
             maxradius   = a.value( "maxradius"   ).toString().toDouble();
-            count       = a.value( "count"       ).toString().toInt();
             values.clear();
          }
 
@@ -116,7 +114,9 @@ int US_Noise::load( const QString& filename )
          }
       }
    }
-//qDebug() << "NOI: ldFile: count valsize" << count << values.size();
+
+   count       = values.size();
+//qDebug() << "NOI: ldFile: count" << count;
    if ( US_Settings::us_debug() > 2 )
       debug();
 
@@ -218,6 +218,7 @@ int US_Noise::apply_to_data( US_DataIO2::EditedData& editdata, bool remove )
    int    jj;
    double vnoise;
    double applyf = remove ? -1.0 : 1.0;                    // apply factor
+   count         = values.size();
 
    if ( count == 0 )
    {
@@ -398,8 +399,6 @@ void US_Noise::write_temp( QTemporaryFile& file )
       xml.writeAttribute   ( "maxradius",   QString::number( maxradius ) );
    }
 
-   xml.writeAttribute   ( "count",       QString::number( count     ) );
-
    // Write values
    for ( int ii = 0; ii < values.size(); ii++ )
    {
@@ -427,7 +426,6 @@ void US_Noise::debug( void )
    qDebug() << "desc" << description;
    qDebug() << "model guid" << modelGUID;
    qDebug() << "noise guid" << noiseGUID;;
-   qDebug() << "count" << count;
    qDebug() << "values size" << values.size();
 
    for ( int ii = 0; ii < values.size(); ii++ )

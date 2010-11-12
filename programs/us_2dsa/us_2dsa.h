@@ -30,6 +30,8 @@ class US_2dsa : public US_AnalysisBase2
    public:
       US_2dsa();
 
+      void analysis_done( void );
+
       US_DataIO2::EditedData*     mw_editdata();
       US_DataIO2::RawData*        mw_simdata();
       US_DataIO2::RawData*        mw_resdata();
