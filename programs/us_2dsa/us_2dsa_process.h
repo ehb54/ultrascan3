@@ -34,22 +34,22 @@ class Solute
          s = s0;
          k = k0;
          c = c0;
-      }
+      };
 
       bool operator== ( const Solute& solute )
       {
          return ( s == solute.s  &&  k == solute.k );
-      }
+      };
 
       bool operator!= ( const Solute& solute )
       {
          return ( s != solute.s  ||  k != solute.k );
-      }
+      };
 
       bool operator<  ( const Solute& solute )
       {
          return ( s < solute.s  ||  ( s == solute.s && k < solute.k ) );
-      }
+      };
 
 };
 

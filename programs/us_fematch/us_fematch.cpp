@@ -1570,7 +1570,7 @@ for (int jj=0;jj<nenois;jj++)
       msgBox.setDefaultButton( QMessageBox::Yes );
 
       if ( msgBox.exec() == QMessageBox::Yes )
-      {
+      {  // user said "yes":  load noise
          US_Passwd pw;
          US_DB2    db( pw.getPasswd() );
          US_DB2*   dbP = NULL;
@@ -1579,7 +1579,7 @@ for (int jj=0;jj<nenois;jj++)
              dbP          = &db;
 
          if ( nenois > 1 )
-         {
+         {  // more than 1:  get choice from noise loader dialog
             US_NoiseLoader* nldiag = new US_NoiseLoader( dbP,
                mieGUIDs, nieGUIDs, ti_noise, ri_noise );
             nldiag->move( this->pos() + QPoint( 200, 200 ) );
@@ -1590,7 +1590,7 @@ for (int jj=0;jj<nenois;jj++)
          }
 
          else
-         {
+         {  // only 1:  just load it
             lnoisGUID     = nieGUIDs.at( 0 );
             QString typen = lnoisGUID.section( ":", 1, 1 );
             lnoisGUID     = lnoisGUID.section( ":", 0, 0 );
@@ -1600,6 +1600,45 @@ for (int jj=0;jj<nenois;jj++)
 
             else
                ri_noise.load( !def_local, lnoisGUID, dbP );
+         }
+
+         // noise loaded:  insure that counts jive with data
+         int ntinois = ti_noise.values.size();
+         int nrinois = ri_noise.values.size();
+         int nscans  = dataList[ 0 ].scanData.size();
+         int npoints = dataList[ 0 ].x.size();
+         int npadded = 0;
+
+         if ( ntinois > 0  &&  ntinois < npoints )
+         {  // pad out ti noise values to radius count
+            int jj      = ntinois;
+            while ( jj++ < npoints )
+               ti_noise.values << 0.0;
+            ti_noise.count = ti_noise.values.size();
+            npadded++;
+         }
+
+         if ( nrinois > 0  &&  nrinois < nscans )
+         {  // pad out ri noise values to scan count
+            int jj      = nrinois;
+            while ( jj++ < nscans )
+               ri_noise.values << 0.0;
+            ri_noise.count = ri_noise.values.size();
+            npadded++;
+         }
+
+         if ( npadded  > 0 )
+         {  // let user know that padding occurred
+            QString pmsg;
+
+            if ( npadded == 1 )
+               pmsg = tr( "The noise file was padded out with zeroes\n"
+                          "in order to match the data range." );
+            else
+               pmsg = tr( "The noise files were padded out with zeroes\n"
+                          "in order to match the data ranges." );
+
+            QMessageBox::information( this, tr( "Noise Padded Out" ), pmsg );
          }
       }
    }
