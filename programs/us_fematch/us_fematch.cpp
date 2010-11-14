@@ -430,9 +430,9 @@ void US_FeMatch::load( void )
    {
       dialog->settings(  def_local, investig, dfilter );
       dialog->load_edit( dataList,  rawList,  triples );
-DbgLv(1) << "DLd:  local invest filter" << def_local << investig << dfilter;
-DbgLv(1) << "DLd:   desc" << dialog->description();
-DbgLv(1) << "DLd:    triples[0]" << triples.at(0);
+      workingDir = dialog->description();
+      workingDir = workingDir.section( workingDir.left( 1 ), 4, 4 );
+      workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
 
       delete dialog;
    }
@@ -549,7 +549,8 @@ void US_FeMatch::update( int row )
 {
    edata          = &dataList[ row ];
    scanCount      = edata->scanData.size();
-   le_id->  setText( edata->runID + " / " + edata->editID );
+   runID          = edata->runID;
+   le_id->  setText( runID + " / " + edata->editID );
 
    le_temp->setText( QString::number( average_temperature( edata ), 'f', 1 )
          + " " + DEGC );

@@ -30,7 +30,7 @@ class US_2dsa : public US_AnalysisBase2
    public:
       US_2dsa();
 
-      void analysis_done( void );
+      void analysis_done( bool );
 
       US_DataIO2::EditedData*     mw_editdata();
       US_DataIO2::RawData*        mw_simdata();
@@ -70,10 +70,15 @@ class US_2dsa : public US_AnalysisBase2
       QPushButton*         pb_plt3d;
       QPushButton*         pb_pltres;
 
+      double               rmsd;
+
    private slots:
       void open_resplot( void );
       void open_3dplot(  void );
       void open_fitcntl( void );
+      QString distrib_info( void );
+      QString table5_row( const QString&, const QString&, const QString&,
+                          const QString&, const QString& );
       void data_plot( void );
       void view     ( void );
       void save     ( void );

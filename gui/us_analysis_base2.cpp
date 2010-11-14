@@ -239,6 +239,9 @@ void US_AnalysisBase2::load( void )
    {
       dialog->settings(  def_local, investig, dfilter );
       dialog->load_edit( dataList,  rawList,  triples );
+      directory = dialog->description();
+      directory = directory.section( directory.left( 1 ), 4, 4 );
+      directory = directory.left( directory.lastIndexOf( "/" ) );
 
       delete dialog;
    }
@@ -332,7 +335,8 @@ void US_AnalysisBase2::update( int selection )
 {
    US_DataIO2::EditedData* d = &dataList[ selection ];
    int scanCount = d->scanData.size();
-   le_id->setText( d->runID + " / " + d->editID );
+   runID         = d->runID;
+   le_id->setText( runID + " / " + d->editID );
 
    double sum = 0.0;
    
