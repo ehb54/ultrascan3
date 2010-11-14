@@ -128,14 +128,15 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    epd_pos      = this->pos() + QPoint( 200, 200 );
 }
 
-void US_2dsa::analysis_done()
+// slot to handle the completion of 2-D spectrum analysis
+void US_2dsa::analysis_done( bool autoplot )
 {
    QString analysID  = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
    QString editID    = edata->editID;
    editID            = editID.startsWith( "20" ) ? editID.mid( 2 ) : editID;
    model.editGUID    = edata->editGUID;
-   model.description = edata->runID + ".2DSA_e" + editID + "_a" + analysID
-      + "_model.11";
+   model.description = edata->runID + "_2DSA_e" + editID + "_a" + analysID
+      + ".model.11";
 
 qDebug() << "Analysis Done";
 qDebug() << "  model components size" << model.components.size();
@@ -151,14 +152,20 @@ qDebug() << model.description << "\n to file" << mfilename;
    pb_pltres->setEnabled( true );
 
    data_plot();
+
+   if ( autoplot )
+   {
+      open_resplot();
+      open_3dplot();
+   }
 }
 
+// plot the data
 void US_2dsa::data_plot( void )
 {
-   US_AnalysisBase2::data_plot();
+   US_AnalysisBase2::data_plot();      // plot experiment data
 
    pb_fitcntl->setEnabled( true );
-   pb_loadfit->setEnabled( true );
    ct_from   ->setEnabled( true );
    ct_to     ->setEnabled( true );
 
@@ -168,7 +175,7 @@ void US_2dsa::data_plot( void )
    if ( sdata.scanData.size() != edata->scanData.size() )
       return;
 
-
+   // set up to plot simulation data and residuals
    int nscans  = edata->scanData.size();
    int npoints = edata->x.size();
    int count   = ( npoints > nscans ) ? npoints : nscans;
@@ -188,6 +195,7 @@ void US_2dsa::data_plot( void )
    rl       -= 0.05;
    vh       += ( vh - edata->value( 0, 0 ) ) * 0.05;
 
+   // plot the simulation data in red on top of experiment data
    for ( int ii = 0; ii < nscans; ii++ )
    {
       if ( excludedScans.contains( ii ) ) continue;
@@ -213,7 +221,7 @@ void US_2dsa::data_plot( void )
       cc->setData( ra, va, kk );
    }
 
-   data_plot2->replot();
+   data_plot2->replot();           // replot combined exper,simul data
 
    data_plot1->detachItems();
    data_plot1->clear();
@@ -221,20 +229,13 @@ void US_2dsa::data_plot( void )
    us_grid( data_plot1 );
    data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   tr( "OD Difference" ) );
-   double rmsd  = 0.0;
-   double xmin  = 99999.9;
-   double xmax  = -99999.9;
-   double ymin  = xmin;
-   double ymax  = xmax;
+   double vari  = 0.0;
 
+   // build vector of radius values
    for ( int jj = 0; jj < npoints; jj++ )
-   {
-      double rv = sdata.radius( jj );
-      ra[ jj ]  = rv;
-      xmin      = ( xmin < rv ) ? xmin : rv;
-      xmax      = ( xmax > rv ) ? xmax : rv;
-   }
+      ra[ jj ]  = sdata.radius( jj );
 
+   // build and plot residual points
    for ( int ii = 0; ii < nscans; ii++ )
    {
       for ( int jj = 0; jj < npoints; jj++ )
@@ -243,11 +244,10 @@ void US_2dsa::data_plot( void )
          double svalu = sdata .value( ii, jj );
          evalu        = evalu - svalu;
          va[ jj ]     = evalu;
-         rmsd        += ( evalu * evalu );
-         ymin         = ( ymin < evalu ) ? ymin : evalu;
-         ymax         = ( ymax > evalu ) ? ymax : evalu;
+         vari        += ( evalu * evalu );
       }
 
+      // plot dots of residuals at current scan
       title    = "resids " + QString::number( ii );
       cc       = us_curve( data_plot1, title );
       cc->setPen(   pen_plot );
@@ -261,19 +261,22 @@ void US_2dsa::data_plot( void )
 
    data_plot1->replot();
 
-   rmsd    /= (double)( nscans * npoints );
+   // report on variance and rmsd
+   vari    /= (double)( nscans * npoints );
+   rmsd     = sqrt( vari );
    QString pmsg = te_status->toPlainText() +
-      tr( "\nRMSD: %1\nVariance: %2" ).arg( sqrt( rmsd ) ).arg( rmsd );
+      tr( "\nRMSD: %1\nVariance: %2" ).arg( rmsd ).arg( vari );
    te_status->setPlainText( pmsg );
 }
 
+// view data report
 void US_2dsa::view( void )
 {
    // Create US_Editor
    if ( te_results == NULL )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
-      te_results->resize( 500, 400 );
+      te_results->resize( 560, 400 );
       QPoint p = g.global_position();
       te_results->move( p.x() + 30, p.y() + 30 );
       te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
@@ -283,23 +286,20 @@ void US_2dsa::view( void )
    int                     index  = lw_triples->currentRow();
    US_DataIO2::EditedData* d      = &dataList[ index ];
 
-   QString sm_results = 
-        table_row( tr( "Average Second Moment S: " ),
-                   QString::number( index,       'f', 5 ) + " s * 10e-13" );
-
    // Add results to window
    QString s = 
       "<html><head>\n"
       "<style>td { padding-right: 1em;}</style>\n"
       "</head><body>\n" +
-      tr( "<h1>Second Moment Analysis</h1>\n" )   +
-      tr( "<h2>Data Report for Run \"" ) + d->runID + tr( "\", Cell " ) + d->cell +
+      tr( "<h1>2-Dimensional Spectrum Analysis</h1>\n" )   +
+      tr( "<h2>Data Report for Run \"" ) + d->runID +
+      tr( "\", Cell " ) + d->cell +
       tr(  ", Wavelength " ) + d->wavelength + "</h2>\n";
    
    s += run_details();
    s += hydrodynamics();
-   s += analysis( sm_results );
    s += scan_info();
+   s += distrib_info();
    s += "</body></html>\n";
 
    te_results->e->setHtml( s );
@@ -436,21 +436,32 @@ qDebug() << "mw_edit: row" << row;
    return edata;
 }
 
-US_DataIO2::RawData*        US_2dsa::mw_simdata()  { return &sdata;    }
-US_DataIO2::RawData*        US_2dsa::mw_resdata()  { return &rdata;    }
-US_Model*                   US_2dsa::mw_model()    { return &model;    }
-US_Noise*                   US_2dsa::mw_ti_noise() { return &ti_noise; }
-US_Noise*                   US_2dsa::mw_ri_noise() { return &ti_noise; }
+// Return pointers to main window data and GUI elements
+
+US_DataIO2::RawData*        US_2dsa::mw_simdata()      { return &sdata;    }
+US_DataIO2::RawData*        US_2dsa::mw_resdata()      { return &rdata;    }
+US_Model*                   US_2dsa::mw_model()        { return &model;    }
+US_Noise*                   US_2dsa::mw_ti_noise()     { return &ti_noise; }
+US_Noise*                   US_2dsa::mw_ri_noise()     { return &ri_noise; }
 QPointer< QProgressBar >    US_2dsa::mw_progress_bar() { return b_progress; }
 QPointer< QTextEdit    >    US_2dsa::mw_status_text()  { return te_status;  }
 
+// Open residuals plot window
 void US_2dsa::open_resplot()
 {
 qDebug() << "Open Resplot";
+   if ( resplotd )
+   {
+      rbd_pos  = resplotd->pos();
+      resplotd->close();
+   }
+
    resplotd = new US_ResidPlot( this );
+   resplotd->move( rbd_pos );
    resplotd->setVisible( true );
 }
 
+// Open 3-D plot window
 void US_2dsa::open_3dplot()
 {
 qDebug() << "Open 3dplot";
@@ -459,11 +470,13 @@ qDebug() << "Open 3dplot";
       epd_pos  = eplotcd->pos();
       eplotcd->close();
    }
+
    eplotcd = new US_PlotControl( this, &model );
    eplotcd->move( epd_pos );
    eplotcd->show();
 }
 
+// Open fit analysis control window
 void US_2dsa::open_fitcntl()
 {
    int row = lw_triples->currentRow();
@@ -475,5 +488,74 @@ qDebug() << " dens visc vbar" << density << viscosity << vbar;
    analcd  = new US_AnalysisControl( edata, this );
    analcd->move( epd_pos );
    analcd->show();
+}
+
+// Distribution information HTML string
+QString US_2dsa::distrib_info()
+{
+   int ncomp     = model.components.size();
+   
+   if ( ncomp == 0 )
+      return "";
+
+   QString mstr = tr( "<h3>Data Analysis Settings:</h3>\n" ) + "<table>\n";
+
+   mstr += table_row( tr( "Number of Components:" ),
+                      QString::number( ncomp ) );
+   mstr += table_row( tr( "Residual RMS Deviation:" ),
+                      QString::number( rmsd )  );
+
+   double sum_mw  = 0.0;
+   double sum_s   = 0.0;
+   double sum_D   = 0.0;
+   double sum_c   = 0.0;
+
+   for ( int ii = 0; ii < ncomp; ii++ )
+   {
+      double conc = model.components[ ii ].signal_concentration;
+      sum_c      += conc;
+      sum_mw     += model.components[ ii ].mw * conc;
+      sum_s      += model.components[ ii ].s  * conc;
+      sum_D      += model.components[ ii ].D  * conc;
+   }
+
+   mstr += table_row( tr( "Weight Average s20,W:" ),
+                      QString().sprintf( "%6.4e\n", ( sum_s  / sum_c ) ) );
+   mstr += table_row( tr( "Weight Average D20,W:" ),
+                      QString().sprintf( "%6.4e\n", ( sum_D  / sum_c ) ) );
+   mstr += table_row( tr( "W.A. Molecular Weight:" ),
+                      QString().sprintf( "%6.4e\n", ( sum_mw / sum_c ) ) );
+   mstr += table_row( tr( "Total Concentration:" ),
+                      QString().sprintf( "%6.4e\n", sum_c ) );
+   mstr += "</table>\n\n";
+
+   mstr += tr( "<h3>Distribution Information:</h3>\n" ) + "<table>\n";
+   mstr += table5_row( tr( "Molecular Wt." ), tr( "S 20,W" ), tr( "D 20,W" ),
+                       tr( "f / f0" ), tr( "Concentration" ) );
+
+   for ( int ii = 0; ii < ncomp; ii++ )
+   {
+      double conc = model.components[ ii ].signal_concentration;
+      double perc = 100.0 * conc / sum_c;
+      mstr       += table5_row(
+            QString().sprintf( "%10.4e", model.components[ ii ].mw   ),
+            QString().sprintf( "%10.4e", model.components[ ii ].s    ),
+            QString().sprintf( "%10.4e", model.components[ ii ].D    ),
+            QString().sprintf( "%10.4e", model.components[ ii ].f_f0 ),
+            QString().sprintf( "%10.4e (%5.2f %%)", conc, perc       ) );
+   }
+
+   mstr += "</table>";
+   
+   return mstr;
+}
+
+// Table HTML table row string for 5 columns
+QString US_2dsa::table5_row( const QString& s1, const QString& s2,
+                             const QString& s3, const QString& s4,
+                             const QString& s5 )
+{
+   return "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
+       + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n";
 }
 

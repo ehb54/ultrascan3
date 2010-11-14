@@ -46,7 +46,7 @@ class Solute
          return ( s != solute.s  ||  k != solute.k );
       };
 
-      bool operator<  ( const Solute& solute )
+      bool operator<  ( const Solute& solute ) const
       {
          return ( s < solute.s  ||  ( s == solute.s && k < solute.k ) );
       };
@@ -76,6 +76,8 @@ typedef struct work_results_s
    double ll_k;
 
    QVector< Solute > csolutes;  // computed solutes
+   QVector< double > ti_noise;  // computed ti noise
+   QVector< double > ri_noise;  // computed ri noise
 } WorkResult;
 
 //! \brief Worker thread to do actual work of 2DSA analysis
@@ -103,7 +105,38 @@ class WorkerThread : public QThread
 
    private:
 
-      void calc_residuals( void );
+      void calc_residuals(    void );
+      void compute_a_tilde(  QVector< double >& );
+      void compute_L_tildes( int, int, int,
+                             QVector< double >&,
+                             const QVector< double >& );
+      void compute_L_tilde(  QVector< double >&,
+                             const QVector< double >& );
+      void compute_L(        int, int,
+                             QVector< double >&,
+                             const QVector< double >&,
+                             const QVector< double >& );
+      void ri_small_a_and_b( int, int, int,
+                             QVector< double >&,
+                             QVector< double >&,
+                             const QVector< double >&,
+                             const QVector< double >&,
+                             const QVector< double >& );
+      void ti_small_a_and_b( int, int, int,
+                             QVector< double >&,
+                             QVector< double >&,
+                             const QVector< double >&,
+                             const QVector< double >&,
+                             const QVector< double >& );
+      void compute_L_bar(    QVector< double >&,
+                             const QVector< double >&,
+                             const QVector< double >& );
+      void compute_a_bar(    QVector< double >&,
+                             const QVector< double >& );
+      void compute_L_bars(   int, int, int, int,
+                             QVector< double >&,
+                             const QVector< double >&,
+                             const QVector< double >& );
 
       QMutex mutex;
       QWaitCondition condition;
@@ -234,6 +267,8 @@ class US_EXTERN US_2dsaProcess : public QObject
       int        ngrefine;     // number of grid refinements
       int        ntpsteps;     // number of total progress steps
       int        kcpsteps;     // count of completed progress steps
+      int        simult;       // step increment multiplier
+      int        sidivi;       // step increment divisor
       int        noisflag;     // noise out flag: 0(none), 1(ti), 2(ri), 3(both)
       int        nscans;       // number of experiment scans
       int        npoints;      // number of reading points per experiment scan

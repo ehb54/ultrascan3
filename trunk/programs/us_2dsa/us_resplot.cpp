@@ -554,6 +554,7 @@ void US_ResidPlot::plot_rdata()
 
    if ( do_pltres )
    {  // plot residuals
+      data_plot2->setTitle( tr( "Residuals" ) );
       points   = sdata->scanData[ 0 ].readings.size();
       count    = sdata->scanData.size();
 
@@ -609,6 +610,7 @@ void US_ResidPlot::plot_rdata()
 
    else if ( do_plttin )
    {  // plot time-invariant noise
+      data_plot2->setTitle( tr( "Time-Invariant Noise" ) );
       points   = edata->scanData[ 0 ].readings.size();
 
       for ( jj = 0; jj < points; jj++ )
@@ -626,6 +628,7 @@ void US_ResidPlot::plot_rdata()
 
    else if ( do_pltrin )
    {  // plot radially-invariant noise
+      data_plot2->setTitle( tr( "Radially-Invariant Noise" ) );
       count    = edata->scanData.size();
 
       for ( ii = 0; ii < count; ii++ )
@@ -644,6 +647,7 @@ void US_ResidPlot::plot_rdata()
 
    else if ( do_pltran )
    {  // plot random noise
+      data_plot2->setTitle( tr( "Random Noise" ) );
       points   = sdata->scanData[ 0 ].readings.size();
       count    = sdata->scanData.size();
 

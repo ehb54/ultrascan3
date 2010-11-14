@@ -286,6 +286,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    lo_clipcs  ->setEnabled( false );
    lo_regulz  ->setEnabled( false );
 
+   grid_change();
 
 DbgLv(1) << "Pre-adjust size" << size();
    resize( 740, 440 );
@@ -383,6 +384,10 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    int    nthr   = (int)ct_threadcnt->value();
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
+   ti_noise->values.clear();
+   ri_noise->values.clear();
+   ti_noise->count = 0;
+   ri_noise->count = 0;
 
    ncsteps       = 0;
    nctotal       = ( nss * nks * 9 ) / 4;
@@ -440,11 +445,14 @@ void US_AnalysisControl::grid_change()
    isizx         = isizx * nconc;         // size x vector in data
    isizr         = isizr * nconc;         // size c vector in data
    isizd         = isizd + isizs + isizx + isizr;  // size one full data
-DbgLv(1) << "GC: isizm c d x s r" << isizm << isizc << isizd << isizx
-   << isizs << isizr;
-   double megs   = ( (double)ntstep * ( (double)isizm / 1024.0 )
-                   + (double)ngrrep * ( (double)isizd /  512.0 ) )
-                   / 1024.0 + 16.3576;
+//DbgLv(1) << "GC: isizm c d x s r" << isizm << isizc << isizd << isizx
+//   << isizs << isizr;
+   double megs   = (double)ntstep * ( (double)isizm / 1024.0 )
+                 + (double)ngrrep * ( (double)isizd /  512.0 );
+   isizx         = nsteps * nstepk  + 1;
+   isizm         = sizeof( Solute ) * ntstep;
+   megs         += ( ( (double)isizx / 1024.0 ) * (double)isizm );
+   megs          = megs / 1024.0 + 16.3576;
 
    le_estmemory->setText( QString().sprintf( "%.1f MB", megs ) );
 }
@@ -495,11 +503,19 @@ void US_AnalysisControl::completed_process()
    qApp->processEvents();
 
    processor->get_results( sdata, rdata, model, ti_noise, ri_noise );
+qDebug() << "AC: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
+
+   double varinew  = rdata->scanData[ 0 ].delta_r;
+   double variold  = le_newvari->text().toDouble();
+   double vimprov  = varinew - variold;
+   le_oldvari->setText( QString::number( variold ) );
+   le_newvari->setText( QString::number( varinew ) );
+   le_improve->setText( QString::number( vimprov ) );
 
    if ( parentw )
    {
       US_2dsa* mainw = (US_2dsa*)parentw;
-      mainw->analysis_done();
+      mainw->analysis_done( ck_autoupd->isChecked() );
    }
 }
 
