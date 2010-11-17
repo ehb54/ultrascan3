@@ -286,6 +286,7 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
 #if defined(DEBUG)
                print_af();
 #endif
+
                calculate_ni(current_speed, (*simparams).speed_step[ss].rotorspeed, &CT0, &simdata, true);
 
                // add the acceleration time:
@@ -1099,6 +1100,10 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
       print_af(outf);
    }
 #endif
+
+// wmc test
+      print_af();
+// end test
 
    (*simdata).radius.clear();
    (*simdata).scan.clear();
@@ -2615,7 +2620,7 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
 {
    unsigned int num_comp, num_rule;
    unsigned int i, m, n, ind_cn;
-   double k1, k_1, stn;
+   double k1, k_1, stn, extn;
    double *Q, Q_reactant, Q_product;
 
    num_comp = rg[af_params.rg_index].GroupComponent.size();
@@ -2633,13 +2638,15 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
          ind_cn = af_params.association[m].comp[n] ;
          // stoich of n-th comp in the rule
          stn = (double)af_params.association[m].stoich[n] ;
+         // extinction coeffieint of n-th comp 
+         extn = af_params.kext[ rg[af_params.rg_index].GroupComponent[ind_cn] ];		
          if( af_params.association[m].react[n] == 1 )       // comp[n] here is reactant
          {
-            Q_reactant *= pow( y[ind_cn], stn );
+            Q_reactant *= pow( y[ind_cn]/extn, stn );			
          }
          else                                              // comp[n] here is reactant
          {
-            Q_product  *= pow( y[ind_cn], stn );
+            Q_product  *= pow( y[ind_cn]/extn, stn );		
          }
       }
       Q[m] = k1 * Q_reactant - k_1 * Q_product;
@@ -2653,6 +2660,8 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
          yt[i] += -af_params.role[i].react[m] * (double)af_params.role[i].st[m]
             * Q[ af_params.role[i].assoc[m] ];
       }
+      yt[i] *= af_params.kext[ rg[af_params.rg_index].GroupComponent[i] ];		// convert into signal conc.
+
    }
 
    /*  print
@@ -2677,7 +2686,7 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
 {
    unsigned int num_comp, num_rule;
    unsigned int i, j, m, n, ind_cn;
-   double k1, k_1, stn;
+   double k1, k_1, stn, extn;
    double **QC, Q_reactant, Q_product, deriv_r, deriv_p;
 
    num_comp = rg[af_params.rg_index].GroupComponent.size();
@@ -2702,26 +2711,29 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
             ind_cn = af_params.association[m].comp[n] ;
             // stoich of n-th comp in the rule
             stn = (double)af_params.association[m].stoich[n];
+            // extinction coeffieint of n-th comp 
+            extn = af_params.kext[ rg[af_params.rg_index].GroupComponent[ind_cn] ];		
+
             if( af_params.association[m].comp[n] == j )          // comp[j] is in the rule
             {
                if( af_params.association[m].react[n] == 1 )    // comp[n] is reactant
                {
-                  deriv_r = stn * pow( y[ind_cn], stn - 1. );
+                  deriv_r = stn / extn * pow( y[ind_cn]/extn, stn - 1. );		
                }
                else                                              // comp[n] in this rule is reactant
                {
-                  deriv_p = stn * pow( y[ind_cn], stn - 1. );
+                  deriv_p = stn / extn * pow( y[ind_cn]/extn, stn - 1. );	
                }
             }
             else                                                // comp[j] is not in the rule
             {
                if( af_params.association[m].react[n] == 1 )    // comp[n] is reactant
                {
-                  Q_reactant *= pow( y[ind_cn], stn );
+                  Q_reactant *= pow( y[ind_cn]/extn, stn ); 	
                }
                else                                              // comp[n] in this rule is reactant
                {
-                  Q_product  *= pow( y[ind_cn], stn );
+                   Q_product  *= pow( y[ind_cn]/extn, stn ); 
                }
             }
          }
@@ -2739,6 +2751,7 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
          {
             dfdy[i][j] += -af_params.role[i].react[m] * (double)af_params.role[i].st[m] * QC[ af_params.role[i].assoc[m] ][j];
          }
+         dfdy[i][j] *= af_params.kext[ rg[af_params.rg_index].GroupComponent[i] ];		// convert into signal conc.
       }
    }
 
@@ -2930,6 +2943,7 @@ void US_Astfem_RSA::print_af()
          cout << "reaction position[" << j << "]:\t\t" << af_params.association[i].react[j] << endl;
       }
    }
+
 }
 
 void US_Astfem_RSA::print_af(FILE *outf)
