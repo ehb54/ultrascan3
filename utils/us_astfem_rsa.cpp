@@ -2042,8 +2042,9 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
 
 void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
 {
-    int    num_comp  = rg[ af_params.rg_index ].GroupComponent.size();
-    int    num_rule  = rg[ af_params.rg_index ].association.size();
+    US_AstfemMath::ReactionGroup* rgp = &rg[ af_params.rg_index ];
+    int    num_comp  = rgp->GroupComponent.size();
+    int    num_rule  = rgp->association.size();
     double* Q         = new double [ num_rule ];
 
     for ( int m = 0; m < num_rule; m++ )
@@ -2063,14 +2064,17 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
           int    kstoi  = as->stoichs[ n ] ;
           int    react  = ( kstoi < 0 ) ? -1 : 1;
           double rstoi  = (double)( kstoi * react );
+
+          // extinction coefficient of n'th component
+          double extn   = af_params.kext[ rgp->GroupComponent[ ind_cn ] ];
            
           if ( react > 0 ) // comp[n] here is reactant
           {
-             Q_reactant *= pow( y0[ ind_cn ], rstoi );
+             Q_reactant *= pow( y0[ ind_cn ] / extn, rstoi );
           }
           else             // comp[n] here is product
           {
-             Q_product  *= pow( y0[ ind_cn ], rstoi );
+             Q_product  *= pow( y0[ ind_cn ] / extn, rstoi );
           }
        }
 
@@ -2096,8 +2100,9 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
 {
    double** QC;
 
-   int num_comp = rg[ af_params.rg_index ].GroupComponent.size();
-   int num_rule = rg[ af_params.rg_index ].association.size();
+   US_AstfemMath::ReactionGroup* rgp = &rg[ af_params.rg_index ];
+   int num_comp  = rgp->GroupComponent.size();
+   int num_rule  = rgp->association.size();
 
    US_AstfemMath::initialize_2d( num_rule, num_comp, &QC );
 
@@ -2124,23 +2129,26 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
             int    react  = ( kstoi < 0 ) ? -1 : 1;
             double rstoi  = (double)( kstoi * react );
 
+            // Extinction coefficient of n'th component
+            double extn   = af_params.kext[ rgp->GroupComponent[ ind_cn ] ];
+
             // comp[j] is in the rule
             if ( as->rcomps[ n ] == j ) 
             {
                if ( react > 0 ) // comp[n] is reactant
-                  deriv_r = rstoi * pow( y0[ ind_cn ], rstoi - 1.0 );
+                  deriv_r = rstoi * pow( y0[ ind_cn ] / extn, rstoi - 1.0 );
                   
                else             // comp[n] in this rule is product
-                  deriv_p = rstoi * pow( y0[ ind_cn ], rstoi - 1.0 );
+                  deriv_p = rstoi * pow( y0[ ind_cn ] / extn, rstoi - 1.0 );
             }
 
             else                // comp[j] is not in the rule
             {
                if ( react > 0 ) // comp[n] is reactant
-                  Q_reactant *= pow( y0[ ind_cn ], rstoi );
+                  Q_reactant *= pow( y0[ ind_cn ] / extn, rstoi );
                   
                else             // comp[n] in this rule is product
-                  Q_product *= pow( y0[ ind_cn ], rstoi );
+                  Q_product  *= pow( y0[ ind_cn ] / extn, rstoi );
             }
          }
 
@@ -2161,6 +2169,8 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
             dfdy[ i ][ j ] += ( qAbs( (double)cr->stoichs[ m ] ) * 
                                  QC[ cr->rcomps[ m ] ][ j ] );
          }
+
+         dfdy[ i ][ j ] *= af_params.kext[ rgp->GroupComponent[ i ] ];
       }
    }
 
