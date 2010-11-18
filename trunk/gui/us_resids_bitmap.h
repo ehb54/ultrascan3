@@ -17,8 +17,14 @@ class US_EXTERN US_ResidsBitmap : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      //! \param resids A reference to a vector of scans,points residual values
-      US_ResidsBitmap( QVector< QVector< double > >& );
+      //! Constructor
+      //! \param resids  A reference to a vector of scans,points residual values
+      //! \param wparent Pointer to parent widget
+      US_ResidsBitmap( QVector< QVector< double > >&, QWidget* = 0 );
+
+      //! Re-plot new residuals matrix to existing bitmap
+      //! \param resids  A reference to a vector of scans,points residual values
+      void replot( QVector< QVector< double > >& );
 
    private:
       QLabel*       lb_bitmap;

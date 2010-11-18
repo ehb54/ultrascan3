@@ -7,8 +7,9 @@
 #include <qwt_legend.h>
 
 // constructor:  residuals bitmap widget
-US_ResidsBitmap::US_ResidsBitmap( QVector< QVector< double > >& resids )
-   : US_WidgetsDialog( 0, 0 )
+US_ResidsBitmap::US_ResidsBitmap( QVector< QVector< double > >& resids,
+   QWidget* wparent )
+   : US_WidgetsDialog( wparent, 0 )
 {
 
    setWindowTitle( tr( "Residuals Pixel Map" ) );
@@ -22,6 +23,13 @@ US_ResidsBitmap::US_ResidsBitmap( QVector< QVector< double > >& resids )
 
    main->addWidget( lb_bitmap );
 
+   replot( resids );
+
+   setAttribute( Qt::WA_DeleteOnClose, true );
+}
+
+void US_ResidsBitmap::replot( QVector< QVector< double > >& resids )
+{
    // get standard deviation of residuals
    int    scanCount  = resids.size();
    int    valCount   = resids[ 0 ].size();
@@ -82,7 +90,5 @@ US_ResidsBitmap::US_ResidsBitmap( QVector< QVector< double > >& resids )
    pmap = pmap.fromImage( res_image.scaled( mwid, mhgt ) );
 
    lb_bitmap->setPixmap( pmap );
-
-   setAttribute( Qt::WA_DeleteOnClose, true );
 }
 

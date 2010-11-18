@@ -61,6 +61,8 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    pb_load    = us_pushbutton( tr( "Load Data" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    pb_details = us_pushbutton( tr( "Run Details" ) );
+   QLayout* lo_edlast =
+                us_checkbox(   tr( "Latest Data Edit" ), ck_edlast, true ); 
    connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
    pb_view    = us_pushbutton( tr( "View Data Report" ) );
    pb_save    = us_pushbutton( tr( "Save Data" ) );
@@ -69,10 +71,12 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    pb_view   ->setEnabled( false );
    pb_save   ->setEnabled( false );
 
-   analysisLayout->addWidget( pb_load,    0, 0 );
-   analysisLayout->addWidget( pb_details, 0, 1 );
-   analysisLayout->addWidget( pb_view,    1, 0 );
-   analysisLayout->addWidget( pb_save,    1, 1 );
+   int row        = 0;
+   analysisLayout->addWidget( pb_load,    row,   0, 1, 1 );
+   analysisLayout->addWidget( pb_details, row++, 1, 1, 1 );
+   analysisLayout->addLayout( lo_edlast,  row++, 0, 1, 1 );
+   analysisLayout->addWidget( pb_view,    row,   0, 1, 1 );
+   analysisLayout->addWidget( pb_save,    row++, 1, 1, 1 );
 
    // Standard buttons
    pb_reset = us_pushbutton( tr( "Reset" ) );
@@ -108,15 +112,22 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    le_id     ->setReadOnly( true );
    le_temp   ->setReadOnly( true );
    te_desc   ->setReadOnly( true );
+   QPalette gray = US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   le_id     ->setPalette( gray );
+   le_temp   ->setPalette( gray );
+   te_desc   ->setPalette( gray );
 
-   runInfoLayout->addWidget( lb_info   , 0, 0, 1, 2 );
-   runInfoLayout->addWidget( lb_id     , 1, 0 );
-   runInfoLayout->addWidget( le_id     , 1, 1 );
-   runInfoLayout->addWidget( lb_temp   , 2, 0 );
-   runInfoLayout->addWidget( le_temp   , 2, 1 );
-   runInfoLayout->addWidget( te_desc   , 3, 0, 2, 2 );
-   runInfoLayout->addWidget( lb_triples, 5, 0, 1, 2 );
-   runInfoLayout->addWidget( lw_triples, 6, 0, 4, 2 );
+   row            = 0;
+   runInfoLayout->addWidget( lb_info   , row++, 0, 1, 2 );
+   runInfoLayout->addWidget( lb_id     , row,   0 );
+   runInfoLayout->addWidget( le_id     , row++, 1 );
+   runInfoLayout->addWidget( lb_temp   , row,   0 );
+   runInfoLayout->addWidget( le_temp   , row++, 1 );
+   runInfoLayout->addWidget( te_desc   , row,   0, 2, 2 );
+   row           += 2;
+   runInfoLayout->addWidget( lb_triples, row++, 0, 1, 2 );
+   runInfoLayout->addWidget( lw_triples, row++, 0, 4, 2 );
 
    // Parameters
 
@@ -140,15 +151,17 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    le_vbar      = us_lineedit( QString::number( vbar,      'f', 5 ) );
    le_skipped   = us_lineedit( "0" );
    le_skipped->setReadOnly( true );
+   le_skipped->setPalette(  gray );
 
-   parameterLayout->addWidget( pb_density  , 0, 0 );
-   parameterLayout->addWidget( le_density  , 0, 1 );
-   parameterLayout->addWidget( pb_viscosity, 0, 2 );
-   parameterLayout->addWidget( le_viscosity, 0, 3 );
-   parameterLayout->addWidget( pb_vbar     , 1, 0 );
-   parameterLayout->addWidget( le_vbar     , 1, 1 );
-   parameterLayout->addWidget( lb_skipped  , 1, 2 );
-   parameterLayout->addWidget( le_skipped  , 1, 3 );
+   row            = 0;
+   parameterLayout->addWidget( pb_density  , row,   0 );
+   parameterLayout->addWidget( le_density  , row,   1 );
+   parameterLayout->addWidget( pb_viscosity, row,   2 );
+   parameterLayout->addWidget( le_viscosity, row++, 3 );
+   parameterLayout->addWidget( pb_vbar     , row,   0 );
+   parameterLayout->addWidget( le_vbar     , row,   1 );
+   parameterLayout->addWidget( lb_skipped  , row,   2 );
+   parameterLayout->addWidget( le_skipped  , row++, 3 );
 
    // Analysis Controls
 
@@ -187,19 +200,20 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    connect( ct_to,   SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_to  ( double ) ) );
 
-   controlsLayout->addWidget( lb_analysis       , 0, 0, 1, 4 );
-   controlsLayout->addWidget( lb_smoothing      , 1, 0, 1, 2 );
-   controlsLayout->addWidget( ct_smoothing      , 1, 2, 1, 2 );
-   controlsLayout->addWidget( lb_boundPercent   , 2, 0, 1, 2 );
-   controlsLayout->addWidget( ct_boundaryPercent, 2, 2, 1, 2 );
-   controlsLayout->addWidget( lb_boundPos       , 3, 0, 1, 2 );
-   controlsLayout->addWidget( ct_boundaryPos    , 3, 2, 1, 2 );
-   controlsLayout->addWidget( lb_scan           , 4, 0, 1, 4 );
-   controlsLayout->addWidget( lb_from           , 5, 0 );
-   controlsLayout->addWidget( ct_from           , 5, 1 );
-   controlsLayout->addWidget( lb_to             , 5, 2 );
-   controlsLayout->addWidget( ct_to             , 5, 3 );
-   controlsLayout->addWidget( pb_exclude        , 6, 0, 1, 4 );
+   row            = 0;
+   controlsLayout->addWidget( lb_scan           , row++, 0, 1, 4 );
+   controlsLayout->addWidget( lb_from           , row,   0 );
+   controlsLayout->addWidget( ct_from           , row,   1 );
+   controlsLayout->addWidget( lb_to             , row,   2 );
+   controlsLayout->addWidget( ct_to             , row++, 3 );
+   controlsLayout->addWidget( pb_exclude        , row++, 0, 1, 4 );
+   controlsLayout->addWidget( lb_analysis       , row++, 0, 1, 4 );
+   controlsLayout->addWidget( lb_smoothing      , row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_smoothing      , row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_boundPercent   , row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_boundaryPercent, row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_boundPos       , row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_boundaryPos    , row++, 2, 1, 2 );
 
    dataLoaded = false;
    buffLoaded = false;
@@ -232,8 +246,10 @@ void US_AnalysisBase2::load( void )
 
    reset();
 
+   bool edload    = true;
+   bool edlast    = ck_edlast->isChecked();
    US_DataLoader* dialog =
-      new US_DataLoader( true, false, def_local, dfilter, investig );
+      new US_DataLoader( edload, edlast, def_local, dfilter, investig );
 
    if ( dialog->exec() == QDialog::Accepted )
    {
