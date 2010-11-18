@@ -28,7 +28,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
    public slots:
       void update_progress (   int );
       void completed_refine(   int );
-      void progress_message(   QString );
+      void progress_message(   QString, bool = true );
       void completed_subgrids( void );
       void completed_process(  void );
 
@@ -47,7 +47,6 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       US_Model*                    model;
       US_Noise*                    ri_noise;
       US_Noise*                    ti_noise;
-      QPointer< QProgressBar >     mw_progbar;
       QPointer< QTextEdit    >     mw_stattext;
 
       QWidget*                     parentw;
@@ -59,32 +58,44 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       QwtCounter*   ct_lolimitk;
       QwtCounter*   ct_uplimitk;
       QwtCounter*   ct_nstepsk;
-      QwtCounter*   ct_threadcnt;
+      QwtCounter*   ct_thrdcnt;
       QwtCounter*   ct_grrefine;
-      QwtCounter*   ct_repetitl;
+      QwtCounter*   ct_menisrng;
+      QwtCounter*   ct_menispts;
+      QwtCounter*   ct_repetloc;
       QwtCounter*   ct_scfactor;
       QwtCounter*   ct_scfact2;
-      QwtCounter*   ct_repetitr;
+      QwtCounter*   ct_repetran;
       QwtCounter*   ct_stddevia;
       QwtCounter*   ct_coaldist;
       QwtCounter*   ct_nbrclips;
       QwtCounter*   ct_regufact;
+      QwtCounter*   ct_iters;
 
       QCheckBox*    ck_tinoise;
       QCheckBox*    ck_rinoise;
       QCheckBox*    ck_autoupd;
       QCheckBox*    ck_unifgr;
+      QCheckBox*    ck_menisc;
       QCheckBox*    ck_locugr;
       QCheckBox*    ck_ranlgr;
       QCheckBox*    ck_soluco;
       QCheckBox*    ck_clipcs;
       QCheckBox*    ck_regulz;
+      QCheckBox*    ck_iters;
 
       QLineEdit*    le_estmemory;
       QLineEdit*    le_iteration;
       QLineEdit*    le_oldvari;
       QLineEdit*    le_newvari;
       QLineEdit*    le_improve;
+
+      QTextEdit*    te_status;
+
+      QPushButton*  pb_strtfit;
+      QPushButton*  pb_stopfit;
+      QPushButton*  pb_plot;
+      QPushButton*  pb_save;
 
    protected:
       US_Help       showHelp;
@@ -94,6 +105,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       void optimize_options( void );
       void uncheck_optimize( int  );
       void checkUniGrid (    bool );
+      void checkMeniscus(    bool );
       void checkLocalUni(    bool );
       void checkRandLoc (    bool );
       void checkSoluCoal(    bool );
@@ -101,6 +113,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       void checkRegular (    bool );
       void grid_change(      void );
       void start(            void );
+      void stop_fit(         void );
       void plot(             void );
       void close_all(        void );
 

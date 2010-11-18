@@ -4,6 +4,7 @@
 #include "us_fematch.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_math2.h"
 
 #include <qwt_legend.h>
 
@@ -44,13 +45,13 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    QLayout* lo_subrin =
       us_checkbox( tr( "Subtract Radially Invariant Noise" ), ck_subrin );
    QLayout* lo_pltsda =
-      us_checkbox( tr( "Plot Simulated/Modeled Data" ),       ck_pltsda );
+      us_checkbox( tr( "Plot Simulated/Modeled Data" ),       ck_pltsda, true );
    QLayout* lo_addtin =
       us_checkbox( tr( "Add Time Invariant Noise" ),          ck_addtin );
    QLayout* lo_addrin =
       us_checkbox( tr( "Add Radially Invariant Noise" ),      ck_addrin );
    QLayout* lo_pltres =
-      us_checkbox( tr( "Plot Residuals" ),                    ck_pltres );
+      us_checkbox( tr( "Plot Residuals" ),                    ck_pltres, true );
    QLayout* lo_plttin =
       us_checkbox( tr( "Plot Time Invariant Noise" ),         ck_plttin );
    QLayout* lo_pltrin =
@@ -62,8 +63,12 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
 
    le_vari   = us_lineedit();
    le_rmsd   = us_lineedit();
+   QPalette gray = US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
    le_vari->setReadOnly( true );
    le_rmsd->setReadOnly( true );
+   le_vari->setPalette(  gray );
+   le_rmsd->setPalette(  gray );
 
    datctrlsLayout->addWidget( lb_datctrls, 0, 0, 1, 8 );
    datctrlsLayout->addLayout( lo_plteda,   1, 0, 1, 8 );
@@ -155,7 +160,7 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
       QWidget* caller = (QWidget*)((US_PlotControl*)p)->caller();
       if ( caller )
       {
-DbgLv(1) << "RP: grandparent" << caller->objectName();
+//DbgLv(1) << "RP: grandparent" << caller->objectName();
          US_FeMatch* fem = (US_FeMatch*)caller;
          edata           = fem->fem_editdata();
          sdata           = fem->fem_simdata();
@@ -192,6 +197,8 @@ DbgLv(1) << "RP:resbmap" << have_bm;
    ck_plttin->setEnabled( have_ti );
    ck_pltrin->setEnabled( have_ri );
    ck_pltrin->setEnabled( have_ri );
+   ck_subtin->setChecked( have_ti );
+   ck_subrin->setChecked( have_ri );
 
    skip_plot = false;
    data_plot1->resize( p1size );
@@ -350,6 +357,9 @@ void US_ResidPlot::srbmCheck( bool chkd )
 // close button clicked
 void US_ResidPlot::close_all()
 {
+   if ( resbmap != 0 )
+      resbmap->close();
+
    close();
 }
 
@@ -379,8 +389,6 @@ void US_ResidPlot::plot_edata()
 
    int    points    = 0;
    int    count     = 0;
-   int    ii;
-   int    jj;
    double tinoi     = 0.0;
    double rinoi     = 0.0;
    double rl        = 0.0;
@@ -401,6 +409,15 @@ void US_ResidPlot::plot_edata()
       data_plot1->replot();
       return;
    }
+
+   if (      do_plteda  &&  !do_pltsda )
+      data_plot1->setTitle( tr( "Experimental Data" ) );
+
+   else if ( do_plteda  &&  do_pltsda  )
+      data_plot1->setTitle( tr( "Experimental and Simulated Data" ) );
+
+   else if ( do_pltsda )
+      data_plot1->setTitle( tr( "Simulated Data" ) );
 
    us_grid( data_plot1 );
 
@@ -424,8 +441,10 @@ void US_ResidPlot::plot_edata()
 
    count    = ( points > count ) ? points : count;  // maximum array count
 
-   double* rr  = new double[ count ];
-   double* vv  = new double[ count ];
+   QVector< double > rvec( count, 0.0 );
+   QVector< double > vvec( count, 0.0 );
+   double* rr  = rvec.data();
+   double* vv  = vvec.data();
 
    QString       title;
    QwtPlotCurve* curv;
@@ -436,18 +455,20 @@ void US_ResidPlot::plot_edata()
    {  // plot experimental curves
       points   = edata->scanData[ 0 ].readings.size();
       count    = edata->scanData.size();
+      rinoi    = 0.0;
+      tinoi    = 0.0;
 
-      for ( jj = 0; jj < points; jj++ )
+      for ( int jj = 0; jj < points; jj++ )
       {  // get radii (x) just once
          rr[ jj ] = edata->radius( jj );
       }
 
-      for ( ii = 0; ii < count; ii++ )
+      for ( int ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
          if ( do_subrin )
             rinoi    = ri_noise->values[ ii ];
 
-         for ( jj = 0; jj < points; jj++ )
+         for ( int jj = 0; jj < points; jj++ )
          {  // each y is reading, optionally minus some noise
             if ( do_subtin )
                tinoi    = ti_noise->values[ jj ];
@@ -467,18 +488,20 @@ void US_ResidPlot::plot_edata()
    {  // plot simulation curves
       points   = sdata->scanData[ 0 ].readings.size();
       count    = sdata->scanData.size();
+      rinoi    = 0.0;
+      tinoi    = 0.0;
 
-      for ( jj = 0; jj < points; jj++ )
+      for ( int jj = 0; jj < points; jj++ )
       {  // get radii (x) just once
          rr[ jj ] = sdata->radius( jj );
       }
 
-      for ( ii = 0; ii < count; ii++ )
+      for ( int ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
          if ( do_addrin )
             rinoi    = ri_noise->values[ ii ];
 
-         for ( jj = 0; jj < points; jj++ )
+         for ( int jj = 0; jj < points; jj++ )
          {  // each y is reading, optionally plus some noise
             if ( do_addtin )
                tinoi    = ti_noise->values[ jj ];
@@ -487,7 +510,7 @@ void US_ResidPlot::plot_edata()
                sval     = sdata->value( ii, jj ) + rinoi + tinoi;
 
             else
-               sval     = edata->value( ii, jj ) + rinoi + tinoi;
+               sval     = edata->value( ii, jj ) - rinoi - tinoi;
 
             if ( sval > vh )
                sval     = vv[ jj - 1 ];
@@ -504,9 +527,6 @@ void US_ResidPlot::plot_edata()
    }
 
    data_plot1->replot();
-
-   delete [] rr;
-   delete [] vv;
 }
 
 // plot the residual data
@@ -527,12 +547,9 @@ void US_ResidPlot::plot_rdata()
 
    int    points    = 0;
    int    count     = 0;
-   int    ii;
-   int    jj;
    double tinoi     = 0.0;
    double rinoi     = 0.0;
    double evalu     = 0.0;
-   double svalu     = 0.0;
    double rmsd      = 0.0;
 
    if ( !do_pltres  &&  !do_plttin  && !do_pltrin  &&
@@ -557,8 +574,10 @@ void US_ResidPlot::plot_rdata()
 
    count    = ( points > count ) ? points : count;
 
-   double* rr  = new double[ count ];
-   double* vv  = new double[ count ];
+   QVector< double > rvec( count, 0.0 );
+   QVector< double > vvec( count, 0.0 );
+   double* rr  = rvec.data();
+   double* vv  = vvec.data();
 
    QString       title;
    QwtPlotCurve* curv;
@@ -567,24 +586,38 @@ void US_ResidPlot::plot_rdata()
 
    if ( do_pltres )
    {  // plot residuals
+      data_plot2->setTitle( tr( "Residuals" ) );
       points   = sdata->scanData[ 0 ].readings.size();
       count    = sdata->scanData.size();
+      rinoi    = 0.0;
+      tinoi    = 0.0;
 
-      for ( jj = 0; jj < points; jj++ )
+      for ( int jj = 0; jj < points; jj++ )
       {  // get radii (x) just once
          rr[ jj ] = sdata->radius( jj );
       }
 
-      for ( ii = 0; ii < count; ii++ )
+      for ( int ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
+         rinoi    = 0.0;
+         if ( do_subrin )
+            rinoi    = ri_noise->values[ ii ];
+         if ( do_addrin )
+            rinoi   += ri_noise->values[ ii ];
 
-         for ( jj = 0; jj < points; jj++ )
+         for ( int jj = 0; jj < points; jj++ )
          {  // each residual is e-value minus s-value
-            evalu    = edata->value( ii, jj );
-            svalu    = sdata->value( ii, jj );
-            evalu   -= svalu;
+            tinoi    = 0.0;
+            if ( do_subtin )
+               tinoi    = ti_noise->values[ jj ];
+            if ( do_addtin )
+               tinoi   += ti_noise->values[ jj ];
+
+            evalu    = edata->value( ii, jj )
+                     - sdata->value( ii, jj )
+                     - rinoi - tinoi;
             vv[ jj ] = evalu;
-            rmsd    += ( evalu * evalu );
+            rmsd    += sq( evalu );
          }
 
          title   = tr( "resids " ) + QString::number( ii );
@@ -622,9 +655,10 @@ void US_ResidPlot::plot_rdata()
 
    else if ( do_plttin )
    {  // plot time-invariant noise
+      data_plot2->setTitle( tr( "Time-Invariant Noise" ) );
       points   = edata->scanData[ 0 ].readings.size();
 
-      for ( jj = 0; jj < points; jj++ )
+      for ( int jj = 0; jj < points; jj++ )
       {  // accumulate radii and noise values
          rr[ jj ] = edata->radius( jj );
          vv[ jj ] = ti_noise->values[ jj ];
@@ -639,9 +673,10 @@ void US_ResidPlot::plot_rdata()
 
    else if ( do_pltrin )
    {  // plot radially-invariant noise
+      data_plot2->setTitle( tr( "Radially-Invariant Noise" ) );
       count    = edata->scanData.size();
 
-      for ( ii = 0; ii < count; ii++ )
+      for ( int ii = 0; ii < count; ii++ )
       {  // accumulate scan numbers and noise values
          rr[ ii ] = (double)( ii + 1 );
          vv[ ii ] = ri_noise->values[ ii ];
@@ -657,28 +692,27 @@ void US_ResidPlot::plot_rdata()
 
    else if ( do_pltran )
    {  // plot random noise
+      data_plot2->setTitle( tr( "Random Noise" ) );
       points   = sdata->scanData[ 0 ].readings.size();
       count    = sdata->scanData.size();
 
-      for ( jj = 0; jj < points; jj++ )
+      for ( int jj = 0; jj < points; jj++ )
       {  // get radii (x) just once
          rr[ jj ] = sdata->radius( jj );
       }
 
-      for ( ii = 0; ii < count; ii++ )
+      for ( int ii = 0; ii < count; ii++ )
       {  // get random noise (y) for each scan
-         rinoi    = ( do_addrin ? ri_noise->values[ ii ] : 0.0 );
-         rinoi   += ( do_subrin ? ri_noise->values[ ii ] : 0.0 );
+         rinoi    = ( have_ri ? ri_noise->values[ ii ] : 0.0   );
 
-         for ( jj = 0; jj < points; jj++ )
+         for ( int jj = 0; jj < points; jj++ )
          {  // each random value is e-value minus s-value with optional noise
-            evalu    = edata->value( ii, jj );
-            svalu    = sdata->value( ii, jj );
-            tinoi    = ( do_addtin ? ti_noise->values[ jj ] : 0.0 );
-            tinoi   += ( do_subtin ? ti_noise->values[ jj ] : 0.0 );
-            evalu   -= svalu;
+            tinoi    = ( have_ti ? ti_noise->values[ jj ] : 0.0   );
+            evalu    = edata->value( ii, jj )
+                     - sdata->value( ii, jj )
+                     - rinoi - tinoi;
             vv[ jj ] = evalu - rinoi - tinoi;
-            rmsd    += ( evalu * evalu );
+            rmsd    += sq( evalu );
          }
 
          title   = tr( "random noise " ) + QString::number( ii );
@@ -700,59 +734,70 @@ void US_ResidPlot::plot_rdata()
    if ( do_shorbm )
    {  // show residuals bitmap (if not already shown)
 
+      QVector< QVector< double > > resids;
+      QVector< double >            resscan;
+
+      points   = sdata->scanData[ 0 ].readings.size();
+      count    = sdata->scanData.size();
+      rinoi    = 0.0;
+      tinoi    = 0.0;
+      resids .resize( count );
+      resscan.resize( points );
+
+      for ( int ii = 0; ii < count; ii++ )
+      {  // build a vector for each scan
+         rinoi    = 0.0;
+         if ( do_subrin )
+            rinoi    = ri_noise->values[ ii ];
+         if ( do_addrin )
+            rinoi   += ri_noise->values[ ii ];
+
+         for ( int jj = 0; jj < points; jj++ )
+         {  // build residual values within a scan
+            tinoi    = 0.0;
+            if ( do_subtin )
+               tinoi    = ti_noise->values[ jj ];
+            if ( do_addtin )
+               tinoi   += ti_noise->values[ jj ];
+
+            evalu         = edata->value( ii, jj )
+                          - sdata->value( ii, jj )
+                          - rinoi - tinoi;
+            resscan[ jj ] = evalu;
+            rmsd         += sq( evalu );
+         }
+
+         resids[ ii ] = resscan;
+      }
+
+      rmsd   /= (double)( count * points );
+      le_vari->setText( QString::number( rmsd ) );
+      rmsd    = sqrt( rmsd );
+      le_rmsd->setText( QString::number( rmsd ) );
+
       if ( resbmap )
-      {  // already have resbmap:  just raise existing window
+      {  // already have resbmap:  just replot residuals bitmap
+         resbmap->replot( resids );
          resbmap->raise();
          resbmap->activateWindow();
       }
 
       else
-      {  // need to create new resbmap
-         QVector< QVector< double > > resids;
-         QVector< double >            resscan;
-
-         points   = sdata->scanData[ 0 ].readings.size();
-         count    = sdata->scanData.size();
-         resids .resize( count );
-         resscan.resize( points );
-
-         for ( ii = 0; ii < count; ii++ )
-         {  // build a vector for each scan
-
-            for ( jj = 0; jj < points; jj++ )
-            {  // build residual values within a scan
-               evalu         = edata->value( ii, jj );
-               svalu         = sdata->value( ii, jj );
-               evalu        -= svalu;
-               resscan[ jj ] = evalu;
-               rmsd         += ( evalu * evalu );
-            }
-
-            resids[ ii ] = resscan;
-         }
-
-         rmsd   /= (double)( count * points );
-         le_vari->setText( QString::number( rmsd ) );
-         rmsd    = sqrt( rmsd );
-         le_rmsd->setText( QString::number( rmsd ) );
-
-         // pop up a little dialog with residuals bitmap
+      {  // pop up a little dialog with residuals bitmap
          resbmap = new US_ResidsBitmap( resids );
          connect( resbmap, SIGNAL( destroyed() ),
                   this,    SLOT(   resids_closed() ) );
          resbmap->move( this->pos() + QPoint( 100, 100 ) );
          resbmap->show();
          resbmap->raise();
-         qApp->processEvents();
       }
+
+      qApp->processEvents();
    }
 
    // display curves we have created; then clean up
 
    data_plot2->replot();
-
-   delete [] rr;
-   delete [] vv;
 }
 
 // react to residual bitmap having been closed

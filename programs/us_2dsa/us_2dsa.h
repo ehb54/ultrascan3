@@ -30,7 +30,7 @@ class US_2dsa : public US_AnalysisBase2
    public:
       US_2dsa();
 
-      void analysis_done( bool );
+      void analysis_done( int );
 
       US_DataIO2::EditedData*     mw_editdata();
       US_DataIO2::RawData*        mw_simdata();
@@ -38,7 +38,6 @@ class US_2dsa : public US_AnalysisBase2
       US_Model*                   mw_model();
       US_Noise*                   mw_ti_noise();
       US_Noise*                   mw_ri_noise();
-      QPointer< QProgressBar >    mw_progress_bar();
       QPointer< QTextEdit >       mw_status_text();
 
    private:
@@ -62,11 +61,12 @@ class US_2dsa : public US_AnalysisBase2
       QPoint               epd_pos;
       QPoint               acd_pos;
 
+      QLineEdit*           le_vari;
+      QLineEdit*           le_rmsd;
+
       QTextEdit*           te_status;
-      QProgressBar*        b_progress;
 
       QPushButton*         pb_fitcntl;
-      QPushButton*         pb_loadfit;
       QPushButton*         pb_plt3d;
       QPushButton*         pb_pltres;
 

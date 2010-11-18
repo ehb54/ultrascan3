@@ -98,6 +98,7 @@ class WorkerThread : public QThread
       void define_work( WorkDefine& );
       void get_result(  WorkResult& );
       void run();
+      void flag_abort();
 
    signals:
       void work_progress( int );
@@ -151,6 +152,8 @@ class WorkerThread : public QThread
       int     nsolutes;
       int     noisflag;
       int     dbg_level;
+
+      bool    abort;
 
       US_DataIO2::EditedData* edata;
       US_DataIO2::RawData     sdata;
@@ -208,7 +211,9 @@ class US_EXTERN US_2dsaProcess : public QObject
       QVector< Solute > create_solutes( double, double, double,
                                         double, double, double );
 
-      void final_computes(  void    );
+      void final_computes( void );
+
+      void stop_fit(       void );
 
       //! \brief Get message for last error
       //! \returns       Message about last error
@@ -237,9 +242,13 @@ class US_EXTERN US_2dsaProcess : public QObject
       void refine_complete(   int     );
       void subgrids_complete( void    );
       void process_complete(  void    );
-      void message_update(    QString );
+      void message_update(    QString, bool );
 
       private:
+
+      long int maxrss;
+
+      long int max_rss( void );
 
       QList< WorkerThread* > wthreads;    // worker threads
       QList< WorkDefine >    workdefs;
@@ -275,6 +284,8 @@ class US_EXTERN US_2dsaProcess : public QObject
       int        nsubgrid;     // number of subgrids (tasks)
       int        kctask;       // count of completed subgrid tasks
       int        kstask;       // count of started subgrid tasks;
+
+      bool       abort;        // flag used with stop_fit clicked
 
       double     slolim;       // s lower limit
       double     suplim;       // s upper limit

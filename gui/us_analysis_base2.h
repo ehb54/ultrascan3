@@ -101,15 +101,17 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       QLineEdit*   le_density;      //!< Display/change the density used
       QLineEdit*   le_viscosity;    //!< Display/change the viscosity
       QLineEdit*   le_vbar;         //!< Display/change the specific volume
-      QLineEdit*   le_skipped;      //!< Display the number os scans skipped
-      //
-      //!< Counter for the number of coefficients in a polynomial smoothing function
-      QwtCounter*  ct_smoothing;   
-      QwtCounter*  ct_boundaryPercent;  //!< Counter for boundary percentage specification
-      QwtCounter*  ct_boundaryPos;      //!< Counter for bountry starting point
-      QwtCounter*  ct_from;             //!< Counter for specifying start of exclude range
-      QwtCounter*  ct_to;               //!< Counter for specifying end of exclude range
+      QLineEdit*   le_skipped;      //!< Display the number of scans skipped
 
+      QwtCounter*  ct_smoothing;
+        //!< Counter for the number of coefficients in a polynomial smoothing function
+      QwtCounter*  ct_boundaryPercent;
+        //!< Counter for boundary percentage specification
+      QwtCounter*  ct_boundaryPos;  //!< Counter for boundary starting point
+      QwtCounter*  ct_from;         //!< Counter for specifying start of exclude range
+      QwtCounter*  ct_to;           //!< Counter for specifying end of exclude range
+
+      QCheckBox*   ck_edlast;           //!< Checkbox for edit-lastest flag
       virtual void update   ( int );    //!< Update the screen for a new dataset
       virtual void data_plot( void );   //!< Update the data plot
 

@@ -9,6 +9,8 @@
 #include "us_math2.h"
 #include "us_constants.h"
 
+#include <sys/user.h>
+
 // Class to process 2DSA simulations
 US_2dsaProcess::US_2dsaProcess( US_DataIO2::EditedData* da_exper,
       QObject* parent /*=0*/ ) : QObject( parent )
@@ -16,6 +18,22 @@ US_2dsaProcess::US_2dsaProcess( US_DataIO2::EditedData* da_exper,
    edata            = da_exper;
    parentw          = parent;
    dbg_level        = US_Settings::us_debug();
+   maxrss           = 0;
+}
+
+long int US_2dsaProcess::max_rss( void )
+{
+   // Read /prod/$pid/stat
+   QFile f( "/proc/" + QString::number( getpid() ) + "/stat" );
+   f.open( QIODevice::ReadOnly );
+   QByteArray ba = f.read( 512 );
+   f.close();
+
+   const static int kk = PAGE_SIZE / 1024;
+
+   maxrss = max( maxrss, QString( ba ).section( " ", 23, 23 ).toLong() * kk );
+
+   return maxrss;
 }
 
 // Start a specified 2DSA fit run
@@ -24,6 +42,7 @@ void US_2dsaProcess::start_fit( double sll, double sul,  int nss,
                                 int    ngr, int    nthr, int noif )
 {
 DbgLv(1) << "2P(2dsaProc): start_fit()";
+   abort       = false;
    slolim      = sll;
    suplim      = sul;
    nssteps     = nss;
@@ -34,6 +53,7 @@ DbgLv(1) << "2P(2dsaProc): start_fit()";
    nthreads    = nthr;
    noisflag    = noif;
    errMsg      = tr( "NO ERROR: start" );
+   maxrss      = 0;
 
    wthreads.clear();
    workdefs.clear();
@@ -57,7 +77,13 @@ DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
 
    nsubgrid    = ngrefine * ngrefine;
    ntpsteps    = nksteps * nssteps;
-   ntpsteps    = ( ntpsteps * 9 ) / 4;
+
+   if ( noisflag == 0 )
+      ntpsteps    = ntpsteps * 8 / 3;
+
+   else
+      ntpsteps    = ntpsteps * 8;
+
    kcpsteps    = 0;
    simult      = 1;
    sidivi      = 1;
@@ -68,6 +94,8 @@ DbgLv(1) << "2P:   nscans npoints" << nscans << npoints << " gdlts gdltk"
  << gdelta_s << gdelta_k << " sdlts sdltk" << sdelta_s << sdelta_k;
 DbgLv(1) << "2P:   nsubgrid ntpsteps nthreads"
  << nsubgrid << ntpsteps << nthreads;
+   max_rss();
+DbgLv(1) << "2P: (1)maxrss" << maxrss;
 
    int    ktask = 0;
    double llss  = slolim;
@@ -117,16 +145,45 @@ DbgLv(1) << "2P:   nsubgrid ntpsteps nthreads"
       wthr->start();
    }
 
+   max_rss();
    kstask = nthreads;     // count of started tasks is initially thread count
 
    emit message_update(
       tr( "Starting computations of %1 subgrids\n using %2 threads ..." )
-      .arg( nsubgrid ).arg( nthreads ) );
+      .arg( nsubgrid ).arg( nthreads ), true );
+}
+
+// abort a fit run
+void US_2dsaProcess::stop_fit()
+{
+   abort   = true;
+
+   for ( int ii = 0; ii < wthreads.size(); ii++ )
+   {
+DbgLv(1) << "StopFit test Thread" << ii + 1;
+      WorkerThread* wthr = wthreads[ ii ];
+
+
+      if ( wthr != 0  &&  wthr->isRunning() )
+      {
+         wthr->flag_abort();
+DbgLv(1) << "  STOPTHR:  thread aborted";
+      }
+
+      wthreads[ ii ] = 0;
+   }
+
+   wthreads.clear();
+   workdefs.clear();
+   workouts.clear();
+
+   emit message_update( tr( "All computations have been aborted." ), false );
 }
 
 // Slot for thread step progress:  signal control/main progress bars
 void US_2dsaProcess::step_progress( int ksteps )
 {
+   max_rss();
    kcpsteps  += ksteps;
    int osteps = ( ksteps * simult ) / sidivi;
    osteps     = ( osteps < 2 ) ? 1 : osteps;
@@ -137,11 +194,15 @@ void US_2dsaProcess::step_progress( int ksteps )
 // If more work left, start a new thread for a new work unit.
 void US_2dsaProcess::thread_finished( WorkerThread* wthrd )
 {
+   if ( abort ) return;
+
    WorkResult wresult;
 
    wthrd->get_result( wresult );   // get results of thread task
    int thrx   = wresult.thrx;      // thread index of task
    int taskx  = wresult.taskx;     // task index of task
+
+   max_rss();
 
    if ( kctask == 0 )
       c_solutes.clear();
@@ -153,12 +214,13 @@ DbgLv(1) << "THR_FIN: thrx" << thrx << " taskx" << taskx << " ll_s ll_k"
  << wresult.ll_s << wresult.ll_k << " kct kst" << kctask << kstask;
    int tx = thrx - 1;              // get index into thread list
    delete wthreads[ tx ];          // destroy thread
+   wthreads[ tx ] = 0;
 
    emit refine_complete( kctask ); 
 
    emit message_update( 
       tr( "Computations for %1 of %2 subgrids are complete" )
-      .arg( kctask ).arg( nsubgrid ) );
+      .arg( kctask ).arg( nsubgrid ), false );
 
    if ( kctask >= nsubgrid )
    {  // all subgrids computed
@@ -192,8 +254,11 @@ DbgLv(1) << "THR_FIN: thrx" << thrx << " taskx" << taskx << " ll_s ll_k"
 // Use a worker thread one last time to compute, using all computed solutes
 void US_2dsaProcess::final_computes()
 {
+   if ( abort ) return;
+
    emit subgrids_complete();
 
+   max_rss();
    WorkDefine* wdef = &workdefs[ 0 ];
    wdef->taskx      = -1;          // special task index signalling final task
    wdef->noisf      = noisflag;    // in this case, we use the noise flag
@@ -211,12 +276,8 @@ qDebug() << "FinalComp:   kcp ntp nstr nsor" << kcpsteps << ntpsteps
    wdef->isolutes.clear();
 
    for ( int ii = 0; ii < c_solutes.size(); ii++ )
-   {
-      if ( c_solutes[ ii ].c > 0.0 )
-         wdef->isolutes << c_solutes[ ii ];
-   }
-DbgLv(1) << "FinalComp: szSoluC szSoluI"
- << c_solutes.size() << wdef->isolutes.size();
+      wdef->isolutes << c_solutes[ ii ];
+DbgLv(1) << "FinalComp: szSoluC" << wdef->isolutes.size();
 
    WorkerThread* wthr = new WorkerThread( this );
    wthr->define_work( *wdef );
@@ -227,7 +288,7 @@ DbgLv(1) << "FinalComp: szSoluC szSoluI"
             this, SLOT(   step_progress(  int           ) ) );
 
    QString pmsg = tr( "Computing final NNLS ..." );
-   emit message_update( pmsg );
+   emit message_update( pmsg, false );
 
    wthreads[ 0 ] = wthr;
    wthr->start( );
@@ -236,6 +297,8 @@ DbgLv(1) << "FinalComp: szSoluC szSoluI"
 // Final pass to use composite computed solutes
 void US_2dsaProcess::final_finished( WorkerThread* wthrd )
 {
+   if ( abort ) return;
+
    WorkResult wresult;
 
    wthrd->get_result( wresult );  // get results of thread task
@@ -347,27 +410,34 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[0].c << c_solutes[nsolutes-1].c;
 
    // compose final status message
    QString pmsg =
-      tr( "Solution converged...\n"
-          "Iterations: 1\n"
-          "Threads: %1\n"
-          "Subgrids: %2\n"
-          "Number of s Points: %3\n"
-          "Number of f/f0 Points: %4\n"
-          "Elapsed wall clock time:\n  " )
+      tr( "The Solution has converged...\n"
+          "Iterations:  1\n"
+          "Threads:  %1 ;   Subgrids:  %2\n"
+          "Grid points (s x f/f0):  %3 x %4\n"
+          "Run time:  " )
       .arg( nthreads ).arg( nsubgrid ).arg( nssteps ).arg( nksteps );
 
    if ( ktimeh > 0 )
-      pmsg = pmsg + tr( "%1 hour(s), %2 minute(s), %3 second(s)" )
+      pmsg += tr( "%1 hr., %2 min., %3 sec.\n" )
          .arg( ktimeh ).arg( ktimem ).arg( ktimes );
 
    else
-      pmsg = pmsg + tr( "%1 minute(s), %2 second(s)" )
+      pmsg += tr( "%1 min., %2 sec.\n" )
          .arg( ktimem ).arg( ktimes );
 
-   emit message_update( pmsg );  // signal final message
-   emit process_complete();      // signal that processing is complete
+   max_rss();
+   double memmb  = (double)maxrss / 1024.0;
 
-   delete wthreads[ 0 ];         // destroy thread
+   pmsg += tr( "Maximum memory used:  " )
+           + QString().sprintf( "%.1f", memmb ) + " MB";
+
+   emit message_update( pmsg, false );  // signal final message
+   emit process_complete();             // signal that processing is complete
+
+   delete wthreads[ 0 ];                // destroy thread
+   wthreads[ 0 ]  = 0;
+DbgLv(1) << "FIN_FIN: maxrss memmb nthr nsubg nssteps nksteps noisf"
+ << maxrss << memmb << nthreads << nsubgrid << nssteps << nksteps << noisflag;
 }
 
 // Get results upon completion of all refinements
@@ -378,6 +448,8 @@ bool US_2dsaProcess::get_results( US_DataIO2::RawData* da_sim,
                                   US_Noise*            da_rin )
 {
    bool all_ok = true;
+
+   if ( abort ) return false;
 
    *da_sim     = sdata;                           // copy simulation data
    *da_res     = rdata;                           // copy residuals data
@@ -412,7 +484,8 @@ QVector< Solute > US_2dsaProcess::create_solutes(
 WorkerThread::WorkerThread( QObject* parent )
    : QThread( parent )
 {
-   dbg_level        = US_Settings::us_debug();
+   dbg_level  = US_Settings::us_debug();
+   abort      = false;
 //DbgLv(1) << "2P(WT): Thread created";
 }
 
@@ -425,7 +498,7 @@ WorkerThread::~WorkerThread()
    //mutex.unlock();
 
    wait();
-//DbgLv(1) << "2P(WT):   Thread destroyed";
+DbgLv(1) << "2P(WT):   Thread destroyed";
 }
 
 // define work for a worker thread
@@ -468,6 +541,11 @@ DbgLv(1) << "THR RUN: lls llk" << llim_s << llim_k;
 //DbgLv(1) << "  RUN return";
 
    emit work_complete( this );
+}
+
+void WorkerThread::flag_abort()
+{
+   abort      = true;
 }
 
 // do the real work of a thread:  subgrid solution from solutes set
@@ -523,6 +601,8 @@ qDebug() << "TM:BEG:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
    }
    avgtemp /= (double)nscans;
 
+   if ( abort ) return;
+
    // determine s correction factor
    US_Math2::SolutionData solution;
    solution.density   = density;
@@ -539,6 +619,7 @@ DbgLv(1) << "   CR: dens visc vbar temp corr" << density << viscosity
 
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
+      if ( abort ) return;
       // set model with s,k point; update other coefficients
       double sval                = solute_i[ cc ].s;
       double kval                = solute_i[ cc ].k;
@@ -555,6 +636,7 @@ DbgLv(1) << "   CR: dens visc vbar temp corr" << density << viscosity
       // calculate Astfem_RSA solution
       US_Astfem_RSA astfem_rsa( model, simpars );
       astfem_rsa.calculate( sdata );
+      if ( abort ) return;
 
       // Populate the A matrix for the NNLS routine with the model function
       for ( int ss = 0; ss < nscans; ss++ )
@@ -571,11 +653,13 @@ DbgLv(1) << "   CR: dens visc vbar temp corr" << density << viscosity
    }
 
    emit work_progress( nsolutes - lstep );
+   int kstodo = nsolutes;
+   if ( abort ) return;
 
 qDebug() << "TM:BEG:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
    if ( ( noisflag & 1 ) != 0 )
    {
-//qDebug() << "  compute A_TILDE";
+      if ( abort ) return;
       // Compute a_tilde, the average experiment signal at each time
       QVector< double > a_tilde( nrinois, 0.0 );
 
@@ -583,18 +667,16 @@ qDebug() << "TM:BEG:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
          compute_a_tilde( a_tilde );
 
       // Compute a_bar, the average experiment signal at each radius
-//qDebug() << "  compute A_BAR";
       QVector< double > a_bar( ntinois, 0.0 );
       compute_a_bar( a_bar, a_tilde );
 
       // Compute L_tildes, the average signal at each radius;
-//qDebug() << "  compute L_TILDES";
       QVector< double > L_tildes( nrinois * nsolutes, 0.0 );
 
       if ( noisflag == 3 )
          compute_L_tildes( nrinois, ntotal, nsolutes, L_tildes, nnls_a );
 
-//qDebug() << "  compute L_BARS";
+      // Compute L_bars
       QVector< double > L_bars(   ntinois * nsolutes, 0.0 );
       compute_L_bars( nsolutes, nrinois, ntinois, ntotal,
                       L_bars, nnls_a, L_tildes );
@@ -606,32 +688,33 @@ qDebug() << "  set SMALL_A+B";
 
       ti_small_a_and_b( nsolutes, ntotal, ntinois,
                         small_a, small_b, a_bar, L_bars, nnls_a );
+      if ( abort ) return;
+      kstodo     = 4;
 
       // This is Sum( concentration * Lamm ) for the models after NNLS
 qDebug() << "  noise small NNLS";
       US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes,
                       small_b.data(), nnls_x.data() );
+      if ( abort ) return;
+      kstodo     = 2;
+      emit work_progress( kstodo );
 
       // This is Sum( concentration * Lamm ) for the models after NNLS
-//qDebug() << "  compute L";
       QVector< double > L( ntotal, 0.0 );
       compute_L( ntotal, nsolutes, L, nnls_a, nnls_x );
 
       // Now L contains the best fit sum of L equations
       // Compute L_tilde, the average model signal at each radius
-//qDebug() << "  compute L_TILDE";
       QVector< double > L_tilde( nrinois, 0.0 );
 
       if ( noisflag == 3 )
          compute_L_tilde( L_tilde, L );
 
       // Compute L_bar, the average model signal at each radius
-//qDebug() << "  compute L_BAR";
       QVector< double > L_bar(   ntinois, 0.0 );
       compute_L_bar( L_bar, L, L_tilde );
 
       // Compute ti noise
-//qDebug() << "    compute NOISE";
       for ( int ii = 0; ii < ntinois; ii++ )
          tinvec[ ii ] = a_bar[ ii ] - L_bar[ ii ];
 
@@ -640,10 +723,13 @@ qDebug() << "  noise small NNLS";
          for ( int ii = 0; ii < nrinois; ii++ )
             rinvec[ ii ] = a_tilde[ ii ] - L_tilde[ ii ];
       }
+
+      emit work_progress( kstodo );
    }  // End tinoise and optional rinoise calculation
 
    else if ( ( noisflag & 2 ) != 0 )
    {
+      if ( abort ) return;
       // Compute a_tilde, the average experiment signal at each time
       QVector< double > a_tilde( nrinois, 0.0 );
       compute_a_tilde( a_tilde );
@@ -655,11 +741,14 @@ qDebug() << "  noise small NNLS";
       // Set up small_a, small_b for the nnls
       QVector< double > small_a( nsolutes * nsolutes, 0.0 );
       QVector< double > small_b( nsolutes,            0.0 );
+      if ( abort ) return;
       ri_small_a_and_b( nsolutes, ntotal, nrinois, small_a, small_b,
                         a_tilde, L_tildes, nnls_a );
+      if ( abort ) return;
 
       US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes,
                       small_b.data(), nnls_x.data() );
+      if ( abort ) return;
 
       // This is sum( concentration * Lamm ) for the models after NNLS
       QVector< double > L( ntotal, 0.0 );
@@ -673,13 +762,21 @@ qDebug() << "  noise small NNLS";
       // Compute ri_noise  (Is this correct????)
       for ( int ii = 0; ii < nrinois; ii++ )
          rinvec[ ii ] = a_tilde[ ii ] - L_tilde[ ii ];
+
+      emit work_progress( kstodo );
    }  // End rinoise alone calculation
 
    else
    {
+      if ( abort ) return;
+      emit work_progress( 2 );
+      kstodo -= 2;
+
       US_Math2::nnls( nnls_a.data(), ntotal, ntotal, nsolutes,
                       nnls_b.data(), nnls_x.data() );
+      if ( abort ) return;
 
+      emit work_progress( kstodo );
       // Note:  ti_noise and ri_noise are already zero
 
    }  // End of core calculations
@@ -692,6 +789,7 @@ qDebug() << "TM:END:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
          sdata.scanData[ ss ].readings[ rr ] = US_DataIO2::Reading( 0.0 );
 
    solute_c.clear();
+   if ( abort ) return;
 
    // Populate simulation data and computed solutes
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -713,6 +811,7 @@ qDebug() << "TM:END:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
          solute_c << solute_i[ cc ];
       }
    }
+   if ( abort ) return;
 
    // Fill noise objects with any calculated vectors
    if ( ( noisflag & 1 ) != 0 )
@@ -728,7 +827,6 @@ qDebug() << "TM:END:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
    }
 
 qDebug() << "TM:END:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
-   emit work_progress( nsolutes );
 }
 
 
@@ -857,6 +955,11 @@ qDebug() << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
    }
 #endif
 #if 1
+   int kstodo = nsolutes;
+   int inprgr = kstodo / 50;
+   inprgr     = ( inprgr < 1  ) ? 1  : inprgr;
+   inprgr     = ( inprgr > 50 ) ? 50 : inprgr;
+
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
       int    jjna  = cc * ntotal;
@@ -908,6 +1011,15 @@ qDebug() << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
                                   * ( nnls_a[ jja2++ ] - Ltil2 ) );
          }
       }
+
+      if ( ( cc % inprgr ) == 0 )
+      {
+         emit work_progress( inprgr );
+         kstodo   -= inprgr;  
+         kstodo    = ( kstodo < 2 ) ? 2 : kstodo;
+      }
+
+      if ( abort ) return;
    }
 #endif
 qDebug() << "TM:END:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
@@ -953,6 +1065,11 @@ qDebug() << "TM:BEG:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
    }
 #endif
 #if 1
+   int kstodo = nsolutes;
+   int inprgr = kstodo / 50;
+   inprgr     = ( inprgr < 1  ) ? 1  : inprgr;
+   inprgr     = ( inprgr > 50 ) ? 50 : inprgr;
+
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
       int jjsa  = cc;
@@ -1008,7 +1125,18 @@ qDebug() << "TM:BEG:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
          }
          jjsa     += nsolutes;  
       }
+
+      if ( ( cc % inprgr ) == 0 )
+      {
+         emit work_progress( inprgr );
+         kstodo   -= inprgr;  
+         kstodo    = ( kstodo < 2 ) ? 2 : kstodo;
+      }
+
+      if ( abort ) return;
    }
+
+   emit work_progress( kstodo );
 #endif
 qDebug() << "TM:END:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
 }

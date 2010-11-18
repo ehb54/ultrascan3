@@ -119,9 +119,13 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    QLabel* lb_temp    = us_label ( tr( "Average Temperature:" ) );
 
    le_id      = us_lineedit();
-   le_id->setReadOnly( true );
    le_temp    = us_lineedit();
+   QPalette gray = US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   le_id  ->setReadOnly( true );
    le_temp->setReadOnly( true );
+   le_id  ->setPalette(  gray );
+   le_temp->setPalette(  gray );
 
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
@@ -130,6 +134,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    te_desc    = us_textedit();
    te_desc->setMaximumHeight( fontHeight * 1 + 12 );  // Add for border
    te_desc->setReadOnly( true );
+   te_desc->setPalette(  gray );
 
    lw_triples = us_listwidget();
    lw_triples->setMaximumHeight( fontHeight * 2 + 12 );
@@ -175,6 +180,11 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    le_vbar    ->setMinimumWidth( lwid );
    pb_compress->setMinimumWidth( pwid );
    le_compress->setMinimumWidth( lwid );
+   le_rmsd    ->setReadOnly( true );
+   le_variance->setReadOnly( true );
+   le_rmsd    ->setPalette(  gray );
+   le_variance->setPalette(  gray );
+
    connect( le_density,   SIGNAL( returnPressed() ),
             this,         SLOT(   buffer_text()   ) );
    connect( le_viscosity, SIGNAL( returnPressed() ),
@@ -221,7 +231,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             this,         SLOT( get_buffer() ) );
    connect( ct_component, SIGNAL( valueChanged( double ) ),
             this,         SLOT  ( comp_number(  double ) ) );
-   le_rmsd->setReadOnly( true );
 
    density   = DENS_20W;
    viscosity = VISC_20W;

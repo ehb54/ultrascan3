@@ -64,7 +64,6 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    connect( ct_to,   SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_to  ( double ) ) );
    pb_fitcntl   = us_pushbutton( tr( "Fit Control"   ) );
-   pb_loadfit   = us_pushbutton( tr( "Load Fit"      ) );
    pb_plt3d     = us_pushbutton( tr( "3-D Plot"      ) );
    pb_pltres    = us_pushbutton( tr( "Residual Plot" ) );
 
@@ -78,20 +77,38 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
       if ( ( widg = controlsLayout->itemAt( ii )->widget() ) != 0 )
          widg->setVisible( false );
 
-   // Reconstruct controls  layout with some 2dsa-specific elements
-   controlsLayout->addWidget( lb_analysis,  0, 0, 1, 4 );
-   controlsLayout->addWidget( lb_status,    1, 0, 4, 1 );
-   controlsLayout->addWidget( te_status,    1, 1, 4, 3 );
-   controlsLayout->addWidget( pb_fitcntl,   5, 0, 1, 2 );
-   controlsLayout->addWidget( pb_loadfit,   5, 2, 1, 2 );
-   controlsLayout->addWidget( pb_plt3d,     6, 0, 1, 2 );
-   controlsLayout->addWidget( pb_pltres,    6, 2, 1, 2 );
-   controlsLayout->addWidget( lb_scan,      7, 0, 1, 4 );
-   controlsLayout->addWidget( lb_from,      8, 0, 1, 1 );
-   controlsLayout->addWidget( ct_from,      8, 1, 1, 1 );
-   controlsLayout->addWidget( lb_to,        8, 2, 1, 1 );
-   controlsLayout->addWidget( ct_to,        8, 3, 1, 1 );
-   controlsLayout->addWidget( pb_exclude,   9, 0, 1, 4 );
+   // Add variance and rmsd to parameters layout
+   QLabel* lb_vari     = us_label ( tr( "Variance:" ) );
+   le_vari             = us_lineedit( "0.00000" );
+   QLabel* lb_rmsd     = us_label ( tr( "RMSD:" ) );
+   le_rmsd             = us_lineedit( "0.00000" );
+   int row   = parameterLayout->rowCount();
+   QPalette gray = US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   le_vari->setPalette(  gray );
+   le_rmsd->setPalette(  gray );
+   le_vari->setReadOnly( true );
+   le_rmsd->setReadOnly( true );
+   parameterLayout->addWidget( lb_vari,     row,   0, 1, 1 );
+   parameterLayout->addWidget( le_vari,     row,   1, 1, 1 );
+   parameterLayout->addWidget( lb_rmsd,     row,   2, 1, 1 );
+   parameterLayout->addWidget( le_rmsd,     row++, 3, 1, 1 );
+
+   // Reconstruct controls layout with some 2dsa-specific elements
+   row       = 0;
+   controlsLayout->addWidget( lb_scan,      row++, 0, 1, 4 );
+   controlsLayout->addWidget( lb_from,      row,   0, 1, 1 );
+   controlsLayout->addWidget( ct_from,      row,   1, 1, 1 );
+   controlsLayout->addWidget( lb_to,        row,   2, 1, 1 );
+   controlsLayout->addWidget( ct_to,        row++, 3, 1, 1 );
+   controlsLayout->addWidget( pb_exclude,   row++, 0, 1, 4 );
+   controlsLayout->addWidget( lb_analysis,  row++, 0, 1, 4 );
+   controlsLayout->addWidget( pb_fitcntl,   row++, 0, 1, 2 );
+   controlsLayout->addWidget( pb_plt3d,     row,   0, 1, 2 );
+   controlsLayout->addWidget( pb_pltres,    row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_status,    row,   0, 3, 1 );
+   controlsLayout->addWidget( te_status,    row,   1, 3, 3 );
+   row      += 3;
 
    // Set initial status text
    te_status->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
@@ -100,21 +117,13 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
        "RMSD:  0.000000,\n"
        "Variance: 0.000000e-05 .\n"
        "Iterations:  0" ) );
-
-   // Add progress bar at the bottom of the left-side layout
-   progressLayout   = new QGridLayout();
-   QLabel* lb_progress = us_label( tr( "Status:" ) );
-   b_progress          = us_progressBar( 0, 100, 0 );
-   progressLayout->addWidget( lb_progress,  0, 0, 1, 1 );
-   progressLayout->addWidget( b_progress,   0, 1, 1, 3 );
-   leftLayout->addLayout( progressLayout );
+   te_status->setPalette(  gray );
 
    connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
    connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
 
    pb_fitcntl->setEnabled( false );
-   pb_loadfit->setEnabled( false );
    pb_plt3d  ->setEnabled( false );
    pb_pltres ->setEnabled( false );
    pb_exclude->setEnabled( false );
@@ -124,13 +133,24 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    edata        = 0;
    resplotd     = 0;
    eplotcd      = 0;
-   rbd_pos      = this->pos() + QPoint( 100, 100 );
-   epd_pos      = this->pos() + QPoint( 200, 200 );
+   analcd       = 0;
+
+   rbd_pos      = this->pos() + QPoint(  100, 100 );
+   epd_pos      = this->pos() + QPoint(  400, 200 );
+   acd_pos      = this->pos() + QPoint(  500,  50 );
 }
 
 // slot to handle the completion of 2-D spectrum analysis
-void US_2dsa::analysis_done( bool autoplot )
+void US_2dsa::analysis_done( int updflag )
 {
+   if ( updflag < 0 )
+   {
+      qApp->processEvents();
+      return;
+   }
+
+   bool autoplot     = updflag > 0;
+
    QString analysID  = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
    QString editID    = edata->editID;
    editID            = editID.startsWith( "20" ) ? editID.mid( 2 ) : editID;
@@ -240,11 +260,10 @@ void US_2dsa::data_plot( void )
    {
       for ( int jj = 0; jj < npoints; jj++ )
       {
-         double evalu = edata->value( ii, jj );
-         double svalu = sdata .value( ii, jj );
-         evalu        = evalu - svalu;
+         double evalu = edata->value( ii, jj )
+                      - sdata .value( ii, jj );
          va[ jj ]     = evalu;
-         vari        += ( evalu * evalu );
+         vari        += sq( evalu );
       }
 
       // plot dots of residuals at current scan
@@ -264,9 +283,8 @@ void US_2dsa::data_plot( void )
    // report on variance and rmsd
    vari    /= (double)( nscans * npoints );
    rmsd     = sqrt( vari );
-   QString pmsg = te_status->toPlainText() +
-      tr( "\nRMSD: %1\nVariance: %2" ).arg( rmsd ).arg( vari );
-   te_status->setPlainText( pmsg );
+   le_vari->setText( QString::number( vari ) );
+   le_rmsd->setText( QString::number( rmsd ) );
 }
 
 // view data report
@@ -443,7 +461,6 @@ US_DataIO2::RawData*        US_2dsa::mw_resdata()      { return &rdata;    }
 US_Model*                   US_2dsa::mw_model()        { return &model;    }
 US_Noise*                   US_2dsa::mw_ti_noise()     { return &ti_noise; }
 US_Noise*                   US_2dsa::mw_ri_noise()     { return &ri_noise; }
-QPointer< QProgressBar >    US_2dsa::mw_progress_bar() { return b_progress; }
 QPointer< QTextEdit    >    US_2dsa::mw_status_text()  { return te_status;  }
 
 // Open residuals plot window
@@ -455,6 +472,8 @@ qDebug() << "Open Resplot";
       rbd_pos  = resplotd->pos();
       resplotd->close();
    }
+   else
+      rbd_pos  = this->pos() + QPoint(  100, 100 );
 
    resplotd = new US_ResidPlot( this );
    resplotd->move( rbd_pos );
@@ -470,6 +489,8 @@ qDebug() << "Open 3dplot";
       epd_pos  = eplotcd->pos();
       eplotcd->close();
    }
+   else
+      epd_pos  = this->pos() + QPoint(  400, 200 );
 
    eplotcd = new US_PlotControl( this, &model );
    eplotcd->move( epd_pos );
@@ -485,9 +506,19 @@ void US_2dsa::open_fitcntl()
          " %.6f %.5f %5f", density, viscosity, vbar );
 qDebug() << "Open fitcntl";
 qDebug() << " dens visc vbar" << density << viscosity << vbar;
+
+   if ( analcd != 0 )
+   {
+      acd_pos  = analcd->pos();
+      analcd->close();
+   }
+   else
+      acd_pos  = this->pos() + QPoint(  500,  50 );
+
    analcd  = new US_AnalysisControl( edata, this );
-   analcd->move( epd_pos );
+   analcd->move( acd_pos );
    analcd->show();
+   qApp->processEvents();
 }
 
 // Distribution information HTML string
