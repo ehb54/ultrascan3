@@ -6,14 +6,11 @@
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
-#include "us_dataIO2.h"
-#include "us_model.h"
-#include "us_noise.h"
+#include "us_2dsa_process.h"
 #include "us_plot.h"
 #include "us_help.h"
-#include "us_2dsa_process.h"
 
-//! \brief A class to provide a window with enhanced plot controls
+//! \brief A class to provide a window with 2DSA analysis controls
 
 class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
 {
@@ -29,7 +26,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       void update_progress (   int );
       void completed_refine(   int );
       void progress_message(   QString, bool = true );
-      void completed_subgrids( void );
+      void completed_subgrids( int,     int );
       void completed_process(  void );
 
    private:
@@ -47,6 +44,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       US_Model*                    model;
       US_Noise*                    ri_noise;
       US_Noise*                    ti_noise;
+      US_SimulationParameters*     sparms;
       QPointer< QTextEdit    >     mw_stattext;
 
       QWidget*                     parentw;
@@ -74,7 +72,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
 
       QCheckBox*    ck_tinoise;
       QCheckBox*    ck_rinoise;
-      QCheckBox*    ck_autoupd;
+      QCheckBox*    ck_autoplt;
       QCheckBox*    ck_unifgr;
       QCheckBox*    ck_menisc;
       QCheckBox*    ck_locugr;
@@ -116,6 +114,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       void stop_fit(         void );
       void plot(             void );
       void close_all(        void );
+      void advanced(         void );
 
       void help     ( void )
       { showHelp.show_help( "us_2dsa_analctl.html" ); };

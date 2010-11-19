@@ -2,12 +2,13 @@
 
 #include "us_2dsa.h"
 #include "us_analysis_control.h"
+#include "us_adv_analysis.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
 #include <qwt_legend.h>
 
-// constructor:  enhanced plot control widget
+// constructor:  2dsa analysis controls widget
 US_AnalysisControl::US_AnalysisControl( US_DataIO2::EditedData* dat_exp,
     QWidget* p ) : US_WidgetsDialog( p, 0 )
 {
@@ -53,13 +54,6 @@ US_AnalysisControl::US_AnalysisControl( US_DataIO2::EditedData* dat_exp,
    QLabel* lb_grrefine     = us_label(  tr( "Grid Refinements:" ) );
    QLabel* lb_menisrng     = us_label(  tr( "Meniscus Fit Range (cm):" ) );
    QLabel* lb_menispts     = us_label(  tr( "Meniscus Grid Points:" ) );
-   QLabel* lb_repetloc     = us_label(  tr( "Repetitions:" ) );
-   QLabel* lb_scfactor     = us_label(  tr( "Scaling Factor:" ) );
-   QLabel* lb_scfact2      = us_label(  tr( "Scaling Factor 2:" ) );
-   QLabel* lb_repetran     = us_label(  tr( "Repetitions:" ) );
-   QLabel* lb_stddevia     = us_label(  tr( "Standard Deviation:" ) );
-   QLabel* lb_coaldist     = us_label(  tr( "Coalescing Distance:" ) );
-   QLabel* lb_nbrclips     = us_label(  tr( "# of Clipped Solutes:" ) );
    QLabel* lb_regufact     = us_label(  tr( "Regularization Factor:" ) );
    QLabel* lb_iters        = us_label(  tr( "Maximum Iterations:" ) );
    QLabel* lb_statinfo     = us_banner( tr( "Status Information:" ) );
@@ -70,14 +64,15 @@ US_AnalysisControl::US_AnalysisControl( US_DataIO2::EditedData* dat_exp,
    pb_save                 = us_pushbutton( tr( "Save Results" ), false );
    QPushButton* pb_help    = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close   = us_pushbutton( tr( "Close" ) );
+   QPushButton* pb_advance = us_pushbutton( tr( "Advanced Analysis Controls" ));
    te_status               = us_textedit();
 
    QLayout* lo_tinois      =
-      us_checkbox( tr( "Fit Time-Invariant Noise"  ), ck_tinoise );
+      us_checkbox( tr( "Fit Time-Invariant Noise"     ), ck_tinoise );
    QLayout* lo_rinois      =
-      us_checkbox( tr( "Fit Radially-Inv. Noise"   ), ck_rinoise );
-   QLayout* lo_autupd      =
-      us_checkbox( tr( "Automatically Update Plot" ), ck_autoupd );
+      us_checkbox( tr( "Fit Radially-Invariant Noise" ), ck_rinoise );
+   QLayout* lo_autoplt     =
+      us_checkbox( tr( "Automatically Plot"           ), ck_autoplt );
 
    int nthr     = US_Settings::threads();
    nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
@@ -111,14 +106,6 @@ DbgLv(1) << "idealThrCout" << nthr;
       us_checkbox( tr( "Uniform Grid"                      ), ck_unifgr, true );
    QLayout*  lo_menisc  =
       us_checkbox( tr( "Float Meniscus Position"           ), ck_menisc );
-   QLayout*  lo_locugr  =
-      us_checkbox( tr( "Local Uniform Grid"                ), ck_locugr );
-   QLayout*  lo_ranlgr  =
-      us_checkbox( tr( "Random Local Grid"                 ), ck_ranlgr );
-   QLayout*  lo_soluco  =
-      us_checkbox( tr( "Solute Coalescing"                 ), ck_soluco );
-   QLayout*  lo_clipcs  =
-      us_checkbox( tr( "Clip Lowest Concentration Solutes" ), ck_clipcs );
    QLayout*  lo_regulz  =
       us_checkbox( tr( "Regularization"                    ), ck_regulz );
 
@@ -127,24 +114,10 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_grrefine  = us_counter( 2,    1,   20,    7 );
    ct_menisrng  = us_counter( 3, 0.55, 0.65,  0.6 );
    ct_menispts  = us_counter( 2,    1,   20,   10 );
-   ct_repetloc  = us_counter( 2,    1,   20,    1 );
-   ct_scfactor  = us_counter( 3, 0.01, 10.0,  0.3 );
-   ct_scfact2   = us_counter( 3, 0.01, 10.0,  0.9 );
-   ct_repetran  = us_counter( 2,    1,   20,    1 );
-   ct_stddevia  = us_counter( 3, 0.01, 10.0,  0.1 );
-   ct_coaldist  = us_counter( 3, 0.01, 10.0,  0.1 );
-   ct_nbrclips  = us_counter( 2,    1,   20,    1 );
    ct_regufact  = us_counter( 3, 0.01, 10.0,  0.9 );
    ct_grrefine ->setStep(    1 );
    ct_menisrng ->setStep( 0.01 );
    ct_menispts ->setStep(    1 );
-   ct_repetloc ->setStep(    1 );
-   ct_scfactor ->setStep( 0.01 );
-   ct_scfact2  ->setStep( 0.01 );
-   ct_repetran ->setStep(    1 );
-   ct_stddevia ->setStep( 0.01 );
-   ct_coaldist ->setStep( 0.01 );
-   ct_nbrclips ->setStep(    1 );
    ct_regufact ->setStep( 0.01 );
    ct_iters    ->setStep(    1 );
 
@@ -166,7 +139,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( ct_thrdcnt,    row++, 2, 1, 2 );
    controlsLayout->addLayout( lo_tinois,     row,   0, 1, 2 );
    controlsLayout->addLayout( lo_rinois,     row++, 2, 1, 2 );
-   controlsLayout->addLayout( lo_autupd,     row++, 0, 1, 2 );
+   controlsLayout->addLayout( lo_autoplt,    row++, 0, 1, 2 );
    controlsLayout->addWidget( pb_strtfit,    row,   0, 1, 2 );
    controlsLayout->addWidget( pb_stopfit,    row++, 2, 1, 2 );
    controlsLayout->addWidget( pb_plot,       row,   0, 1, 2 );
@@ -196,27 +169,10 @@ DbgLv(1) << "idealThrCout" << nthr;
    optimizeLayout->addWidget( ct_menisrng,   row++, 1, 1, 1 );
    optimizeLayout->addWidget( lb_menispts,   row,   0, 1, 1 );
    optimizeLayout->addWidget( ct_menispts,   row++, 1, 1, 1 );
-   optimizeLayout->addLayout( lo_locugr,     row++, 0, 1, 2 );
-   optimizeLayout->addWidget( lb_repetloc,   row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_repetloc,   row++, 1, 1, 1 );
-   optimizeLayout->addWidget( lb_scfactor,   row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_scfactor,   row++, 1, 1, 1 );
-   optimizeLayout->addWidget( lb_scfact2,    row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_scfact2,    row++, 1, 1, 1 );
-   optimizeLayout->addLayout( lo_ranlgr,     row++, 0, 1, 2 );
-   optimizeLayout->addWidget( lb_repetran,   row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_repetran,   row++, 1, 1, 1 );
-   optimizeLayout->addWidget( lb_stddevia,   row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_stddevia,   row++, 1, 1, 1 );
-   optimizeLayout->addLayout( lo_soluco,     row++, 0, 1, 2 );
-   optimizeLayout->addWidget( lb_coaldist,   row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_coaldist,   row++, 1, 1, 1 );
-   optimizeLayout->addLayout( lo_clipcs,     row++, 0, 1, 2 );
-   optimizeLayout->addWidget( lb_nbrclips,   row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_nbrclips,   row++, 1, 1, 1 );
    optimizeLayout->addLayout( lo_regulz,     row++, 0, 1, 2 );
    optimizeLayout->addWidget( lb_regufact,   row,   0, 1, 1 );
    optimizeLayout->addWidget( ct_regufact,   row++, 1, 1, 1 );
+   optimizeLayout->addWidget( pb_advance,    row++, 0, 1, 2 );
    optimizeLayout->addLayout( lo_iters,      row++, 0, 1, 2 );
    optimizeLayout->addWidget( lb_iters,      row,   0, 1, 1 );
    optimizeLayout->addWidget( ct_iters,      row++, 1, 1, 1 );
@@ -253,14 +209,6 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,  SLOT( checkUniGrid(  bool ) ) );
    connect( ck_menisc, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkMeniscus( bool ) ) );
-   connect( ck_locugr, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkLocalUni( bool ) ) );
-   connect( ck_ranlgr, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkRandLoc(  bool ) ) );
-   connect( ck_soluco, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkSoluCoal( bool ) ) );
-   connect( ck_clipcs, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkClipLow(  bool ) ) );
    connect( ck_regulz, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkRegular(  bool ) ) );
 
@@ -283,47 +231,19 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,       SLOT(   help()      ) );
    connect( pb_close,   SIGNAL( clicked()   ),
             this,       SLOT(   close_all() ) );
+   connect( pb_advance, SIGNAL( clicked()   ),
+            this,       SLOT(   advanced()  ) );
 
-   // make disabled/invisible those GUI elements not yet implemented
-   ck_locugr  ->setEnabled( false );
+   // disable those GUI elements not yet implemented
    ck_menisc  ->setEnabled( false );
-   ck_ranlgr  ->setEnabled( false );
-   ck_soluco  ->setEnabled( false );
-   ck_clipcs  ->setEnabled( false );
    ck_regulz  ->setEnabled( false );
    ck_iters   ->setEnabled( false );
-#if 0
-   ck_locugr  ->setVisible( false );
-   ck_ranlgr  ->setVisible( false );
-   ck_soluco  ->setVisible( false );
-   ck_clipcs  ->setVisible( false );
-   ck_regulz  ->setVisible( false );
-   ck_locugr  ->setVisible( false );
-#endif
-   lb_repetloc->setVisible( false );
-   lb_scfactor->setVisible( false );
-   lb_scfact2 ->setVisible( false );
-   lb_repetran->setVisible( false );
-   lb_stddevia->setVisible( false );
-   lb_coaldist->setVisible( false );
-   lb_nbrclips->setVisible( false );
-   lb_regufact->setVisible( false );
-   ct_repetloc->setVisible( false );
-   ct_scfactor->setVisible( false );
-   ct_scfact2 ->setVisible( false );
-   ct_repetran->setVisible( false );
-   ct_stddevia->setVisible( false );
-   ct_coaldist->setVisible( false );
-   ct_nbrclips->setVisible( false );
-   ct_regufact->setVisible( false );
-   lo_locugr  ->setEnabled( false );
-   lo_ranlgr  ->setEnabled( false );
-   lo_soluco  ->setEnabled( false );
-   lo_clipcs  ->setEnabled( false );
-   lo_regulz  ->setEnabled( false );
-   lo_iters   ->setEnabled( false );
 
    grid_change();
+
+   // initialize simulation parameters from data
+   sparms         = new US_SimulationParameters();
+   sparms->initFromData( NULL, *edata );
 
 DbgLv(1) << "Pre-adjust size" << size();
    resize( 740, 440 );
@@ -336,13 +256,6 @@ void US_AnalysisControl::optimize_options()
    ct_grrefine->setEnabled( ck_unifgr->isChecked() );
    ct_menisrng->setEnabled( ck_menisc->isChecked() );
    ct_menispts->setEnabled( ck_menisc->isChecked() );
-   ct_repetloc->setEnabled( ck_locugr->isChecked() );
-   ct_scfactor->setEnabled( ck_locugr->isChecked() );
-   ct_scfact2 ->setEnabled( ck_locugr->isChecked() );
-   ct_repetran->setEnabled( ck_ranlgr->isChecked() );
-   ct_stddevia->setEnabled( ck_ranlgr->isChecked() );
-   ct_coaldist->setEnabled( ck_soluco->isChecked() );
-   ct_nbrclips->setEnabled( ck_clipcs->isChecked() );
    ct_regufact->setEnabled( ck_regulz->isChecked() );
 }
 
@@ -351,10 +264,6 @@ void US_AnalysisControl::uncheck_optimize( int ckflag )
 {
    if ( ckflag != 1 ) ck_unifgr->setChecked( false );
    if ( ckflag != 2 ) ck_menisc->setChecked( false );
-   if ( ckflag != 3 ) ck_locugr->setChecked( false );
-   if ( ckflag != 4 ) ck_ranlgr->setChecked( false );
-   if ( ckflag != 4 ) ck_soluco->setChecked( false );
-   if ( ckflag != 6 ) ck_clipcs->setChecked( false );
    if ( ckflag != 7 ) ck_regulz->setChecked( false );
 }
 
@@ -404,7 +313,7 @@ void US_AnalysisControl::checkRegular(  bool checked )
 void US_AnalysisControl::start()
 {
    if ( processor == 0 )
-      processor   = new US_2dsaProcess( edata, this );
+      processor   = new US_2dsaProcess( edata, sparms, this );
 
    if ( parentw )
    {
@@ -434,9 +343,13 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    ti_noise->count = 0;
    ri_noise->count = 0;
 
+   int kksubg    = nss * nks;
+   int kkcsol    = kksubg / 8;
+   int kknnls    = kkcsol + kkcsol / 50;
+   if ( noif > 0 )
+      kknnls       += ( sq( kkcsol ) / 10 );
+   nctotal       = kksubg + kkcsol + kknnls + 10;
    ncsteps       = 0;
-   nctotal       = nss * nks;
-   nctotal       = ( noif == 0 ) ? ( nctotal * 8 / 3 ) : ( nctotal * 8 );
 
    b_progress->setMaximum( nctotal );
 
@@ -446,8 +359,8 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
             this,      SLOT(   completed_refine( int ) ) );
    connect( processor, SIGNAL( message_update(   QString, bool ) ),
             this,      SLOT(   progress_message( QString, bool ) ) );
-   connect( processor, SIGNAL( subgrids_complete( )      ),
-            this,      SLOT(   completed_subgrids()      ) );
+   connect( processor, SIGNAL( subgrids_complete(  int, int )  ),
+            this,      SLOT(   completed_subgrids( int, int )  ) );
    connect( processor, SIGNAL( process_complete()        ),
             this,      SLOT(   completed_process()       ) );
 
@@ -583,15 +496,15 @@ void US_AnalysisControl::progress_message( QString pmsg, bool append )
 }
 
 // slot to handle completed subgrids
-void US_AnalysisControl::completed_subgrids()
+void US_AnalysisControl::completed_subgrids( int kcs, int nct )
 {
-   if ( ck_tinoise->isChecked() || ck_rinoise->isChecked() )
-      ncsteps      = ( nctotal * 1 ) / 4;
 
-   else
-      ncsteps      = ( nctotal * 3 ) / 4;
+   ncsteps      = kcs;
+   nctotal      = nct;
 
-   b_progress->setValue( ncsteps );
+   b_progress->setMaximum( nctotal );
+   b_progress->setValue(   ncsteps );
+
    qApp->processEvents();
 }
 
@@ -614,11 +527,42 @@ qDebug() << "AC: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
    if ( parentw )
    {
       US_2dsa* mainw = (US_2dsa*)parentw;
-      mainw->analysis_done( ck_autoupd->isChecked() ? 1 : 0 );
+      mainw->analysis_done( ck_autoplt->isChecked() ? 1 : 0 );
    }
    pb_strtfit->setEnabled( true  );
    pb_stopfit->setEnabled( false );
    pb_plot   ->setEnabled( true  );
    pb_save   ->setEnabled( true  );
+}
+
+// slot to handle advanced analysis controls
+void US_AnalysisControl::advanced()
+{
+   US_AdvAnalysis* aadiag = new US_AdvAnalysis( sparms, this );
+   if ( aadiag->exec() == QDialog::Accepted )
+   {
+      int    grtype = 0;
+      double grpar1 = 0.0;
+      double grpar2 = 0.0;
+      double grpar3 = 0.0;
+      bool   men    = false;
+      double mepar1 = 0.0;
+      double mepar2 = 0.0;
+      bool   reg    = false;
+      double repar1 = 0.0;
+      aadiag->get_parameters( grtype, grpar1, grpar2, grpar3,
+                              men,    mepar1, mepar2,
+                              reg,    repar1 );
+qDebug() << "Adv ACCEPT";
+qDebug() << "Adv grtype par123" << grtype << grpar1 << grpar2 << grpar3;
+qDebug() << "Adv men    par12 " << men    << mepar1 << mepar2;
+qDebug() << "Adv reg    par1  " << reg    << repar1;
+   }
+else
+qDebug() << "Adv REJECT";
+
+   qApp->processEvents();
+
+   delete aadiag;
 }
 

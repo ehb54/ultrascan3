@@ -177,15 +177,15 @@ DbgLv(1) << "RP:edata  " << have_ed;
       qDebug() << "*ERROR* unable to get RP parent";
    }
 
-   ck_plteda->setChecked( true );
    ck_subtin->setEnabled( have_ti );
    ck_subrin->setEnabled( have_ri );
-   ck_addtin->setEnabled( false );
-   ck_addrin->setEnabled( false );
+   ck_addtin->setEnabled( have_ti );
+   ck_addrin->setEnabled( have_ri );
    ck_plttin->setEnabled( have_ti );
    ck_pltrin->setEnabled( have_ri );
    ck_pltrin->setEnabled( have_ri );
 
+   ck_plteda->setChecked( true    );
    ck_subtin->setChecked( have_ti );
    ck_subrin->setChecked( have_ri );
 
@@ -576,12 +576,21 @@ void US_ResidPlot::plot_rdata()
    QwtPlotCurve* curv;
    QPen          pen_plot( Qt::green );
 
+   points  = edata->scanData[ 0 ].readings.size();
+   count   = edata->scanData.size();
+
+   // plot a zero line in red
+   rr[ 0 ] = !do_pltrin ? 6.0 : 0.0;
+   rr[ 1 ] = !do_pltrin ? 7.2 : double( count );
+   vv[ 0 ] = 0.0;
+   vv[ 1 ] = 0.0;
+   curv    = us_curve( data_plot2, "zero-line" );
+   curv->setPen( QPen( QBrush( Qt::red ), 2 ) );
+   curv->setData( rr, vv, 2 );
 
    if ( do_pltres )
    {  // plot residuals
       data_plot2->setTitle( tr( "Residuals" ) );
-      points   = sdata->scanData[ 0 ].readings.size();
-      count    = sdata->scanData.size();
 
       for ( int jj = 0; jj < points; jj++ )
       {  // get radii (x) just once
@@ -648,7 +657,6 @@ void US_ResidPlot::plot_rdata()
    else if ( do_plttin )
    {  // plot time-invariant noise
       data_plot2->setTitle( tr( "Time-Invariant Noise" ) );
-      points   = edata->scanData[ 0 ].readings.size();
 
       for ( int jj = 0; jj < points; jj++ )
       {  // accumulate radii and noise values
@@ -666,7 +674,6 @@ void US_ResidPlot::plot_rdata()
    else if ( do_pltrin )
    {  // plot radially-invariant noise
       data_plot2->setTitle( tr( "Radially-Invariant Noise" ) );
-      count    = edata->scanData.size();
 
       for ( int ii = 0; ii < count; ii++ )
       {  // accumulate scan numbers and noise values
@@ -685,8 +692,6 @@ void US_ResidPlot::plot_rdata()
    else if ( do_pltran )
    {  // plot random noise
       data_plot2->setTitle( tr( "Random Noise" ) );
-      points   = sdata->scanData[ 0 ].readings.size();
-      count    = sdata->scanData.size();
 
       for ( int jj = 0; jj < points; jj++ )
       {  // get radii (x) just once
@@ -730,8 +735,6 @@ void US_ResidPlot::plot_rdata()
       QVector< QVector< double > > resids;
       QVector< double >            resscan;
 
-      points   = sdata->scanData[ 0 ].readings.size();
-      count    = sdata->scanData.size();
       resids .resize( count );
       resscan.resize( points );
 
