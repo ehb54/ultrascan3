@@ -210,6 +210,8 @@ void US_2dsa::data_plot( void )
    QPen pen_cyan( Qt::cyan );
    QPen pen_plot( Qt::green );
 
+   bool have_ri = ri_noise.count > 0;
+   bool have_ti = ti_noise.count > 0;
    double rl = edata->radius( 0 );
    double vh = edata->value( 0, 0 ) * 0.05;
    rl       -= 0.05;
@@ -220,15 +222,16 @@ void US_2dsa::data_plot( void )
    {
       if ( excludedScans.contains( ii ) ) continue;
 
-      int    jj  = 0;
       int    kk  = 0;
       double rr  = 0.0;
       double vv  = 0.0;
+      double rn  = have_ri ? ri_noise.values[ ii ] : 0.0;
 
-      while ( jj < npoints )
+      for ( int jj = 0; jj < npoints; jj++ )
       {
-         rr    = sdata.radius( jj );
-         vv    = sdata.value( ii, jj++ );
+         double tn  = have_ti ? ti_noise.values[ jj ] : 0.0;
+         rr         = sdata.radius( jj );
+         vv         = sdata.value( ii, jj++ ) + rn + tn;
          if ( jj > rl )
          {
             ra[ kk   ] = rr;
@@ -258,10 +261,13 @@ void US_2dsa::data_plot( void )
    // build and plot residual points
    for ( int ii = 0; ii < nscans; ii++ )
    {
+      double rinoi = have_ri ? ri_noise.values[ ii ] : 0.0;
+
       for ( int jj = 0; jj < npoints; jj++ )
       {
+         double tinoi = have_ti ? ti_noise.values[ jj ] : 0.0;
          double evalu = edata->value( ii, jj )
-                      - sdata .value( ii, jj );
+                      - sdata .value( ii, jj ) - tinoi - rinoi;
          va[ jj ]     = evalu;
          vari        += sq( evalu );
       }
@@ -278,6 +284,16 @@ void US_2dsa::data_plot( void )
    data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
    data_plot1->setTitle( tr( "Residuals" ) );
 
+   // plot zero line through residuals plot
+   ra[ 0 ] = 6.0;
+   ra[ 1 ] = 7.2;
+   va[ 0 ] = 0.0;
+   va[ 1 ] = 0.0;
+   cc      = us_curve( data_plot1, "zero-line" );
+   cc->setPen( QPen( QBrush( Qt::red ), 2 ) );
+   cc->setData( ra, va, 2 );
+
+   // draw the plot
    data_plot1->replot();
 
    // report on variance and rmsd

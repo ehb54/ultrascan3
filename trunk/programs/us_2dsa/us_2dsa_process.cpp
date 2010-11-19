@@ -4,7 +4,6 @@
 #include "us_settings.h"
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
-#include "us_model.h"
 #include "us_sleep.h"
 #include "us_math2.h"
 #include "us_constants.h"
@@ -13,9 +12,11 @@
 
 // Class to process 2DSA simulations
 US_2dsaProcess::US_2dsaProcess( US_DataIO2::EditedData* da_exper,
-      QObject* parent /*=0*/ ) : QObject( parent )
+   US_SimulationParameters* sim_pars, QObject* parent /*=0*/ )
+   : QObject( parent )
 {
    edata            = da_exper;
+   simparms         = sim_pars;
    parentw          = parent;
    dbg_level        = US_Settings::us_debug();
    maxrss           = 0;
@@ -56,7 +57,7 @@ DbgLv(1) << "2P(2dsaProc): start_fit()";
    maxrss      = 0;
 
    wthreads.clear();
-   workdefs.clear();
+   worktsks.clear();
    workouts.clear();
 
 DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
@@ -76,24 +77,21 @@ DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
    sdelta_k    = gdelta_k * (double)ngrefine;
 
    nsubgrid    = ngrefine * ngrefine;
-   ntpsteps    = nksteps * nssteps;
+   int kksubg  = nksteps * nssteps;
+   int kkcsol  = kksubg / 8;
+   int kknnls  = kkcsol + kkcsol / 50;
+   if ( noisflag > 0 )
+      kknnls     += ( sq( kkcsol ) / 10 );
+   nctotal     = kksubg + kkcsol + kknnls + 10;
 
-   if ( noisflag == 0 )
-      ntpsteps    = ntpsteps * 8 / 3;
-
-   else
-      ntpsteps    = ntpsteps * 8;
-
-   kcpsteps    = 0;
-   simult      = 1;
-   sidivi      = 1;
+   kcsteps     = 0;
    kctask      = 0;
    kstask      = 0;
    nthreads    = ( nthreads < nsubgrid ) ? nthreads : nsubgrid;
 DbgLv(1) << "2P:   nscans npoints" << nscans << npoints << " gdlts gdltk"
  << gdelta_s << gdelta_k << " sdlts sdltk" << sdelta_s << sdelta_k;
-DbgLv(1) << "2P:   nsubgrid ntpsteps nthreads"
- << nsubgrid << ntpsteps << nthreads;
+DbgLv(1) << "2P:   nsubgrid nctotal nthreads"
+ << nsubgrid << nctotal << nthreads;
    max_rss();
 DbgLv(1) << "2P: (1)maxrss" << maxrss;
 
@@ -107,17 +105,22 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
 
       for ( int jj = 0; jj < ngrefine; jj++ )
       {
-         WorkDefine wdef;
+         WorkPacket wdef;
          wdef.thrx      = 0;
          wdef.taskx     = ++ktask;       // task index
          wdef.noisf     = 0;             // no noise for initial passes
+         wdef.typeref   = UGRID;         // uniform grid type
+         wdef.state     = READY;         // initialized state, ready for job
+         wdef.depth     = 0;             // depth 0:  subgrid calcs
+         wdef.iter      = 1;             // iteration 1
          wdef.ll_s      = llss;          // lower limit s
          wdef.ll_k      = llsk;          // lower limit k
          wdef.edata     = edata;         // pointer to experiment data
+         wdef.sparms    = simparms;      // pointer to simulation parameters
                                          // solutes for subgrid
          wdef.isolutes  = create_solutes( llss, suplim, sdelta_s,
                                           llsk, kuplim, sdelta_k );
-         workdefs << wdef;
+         worktsks << wdef;
 
          llsk          += gdelta_k;
       }
@@ -130,7 +133,7 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
    // that they have completed their work.
    for ( int ii = 0; ii < nthreads; ii++ )
    {
-      WorkDefine*   wdef = &workdefs[ ii ];
+      WorkPacket*   wdef = &worktsks[ ii ];
       WorkerThread* wthr = new WorkerThread( this );
       wthreads << wthr;
       wdef->thrx         = ii + 1;
@@ -150,7 +153,7 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
 
    emit message_update(
       tr( "Starting computations of %1 subgrids\n using %2 threads ..." )
-      .arg( nsubgrid ).arg( nthreads ), true );
+      .arg( nsubgrid ).arg( nthreads ), false );
 }
 
 // abort a fit run
@@ -174,7 +177,7 @@ DbgLv(1) << "  STOPTHR:  thread aborted";
    }
 
    wthreads.clear();
-   workdefs.clear();
+   worktsks.clear();
    workouts.clear();
 
    emit message_update( tr( "All computations have been aborted." ), false );
@@ -184,10 +187,9 @@ DbgLv(1) << "  STOPTHR:  thread aborted";
 void US_2dsaProcess::step_progress( int ksteps )
 {
    max_rss();
-   kcpsteps  += ksteps;
-   int osteps = ( ksteps * simult ) / sidivi;
-   osteps     = ( osteps < 2 ) ? 1 : osteps;
-   emit progress_update( osteps );   // pass progress on to control and main
+   kcsteps   += ksteps;
+   ksteps     = ( ksteps < 2 ) ? 1 : ksteps;
+   emit progress_update( ksteps );   // pass progress on to control and main
 }
 
 // Slot to handle a worker thread having finished. Accumulate computed solutes.
@@ -196,7 +198,7 @@ void US_2dsaProcess::thread_finished( WorkerThread* wthrd )
 {
    if ( abort ) return;
 
-   WorkResult wresult;
+   WorkPacket wresult;
 
    wthrd->get_result( wresult );   // get results of thread task
    int thrx   = wresult.thrx;      // thread index of task
@@ -235,7 +237,7 @@ DbgLv(1) << "THR_FIN: thrx" << thrx << " taskx" << taskx << " ll_s ll_k"
    }
 
    // get next task definition and create new thread
-   WorkDefine*   wdef = &workdefs[ kstask ];
+   WorkPacket*   wdef = &worktsks[ kstask ];
    WorkerThread* wthr = new WorkerThread( this );
 
    wthreads[ tx ]     = wthr;      // set up next thread
@@ -256,19 +258,32 @@ void US_2dsaProcess::final_computes()
 {
    if ( abort ) return;
 
-   emit subgrids_complete();
-
    max_rss();
-   WorkDefine* wdef = &workdefs[ 0 ];
-   wdef->taskx      = -1;          // special task index signalling final task
-   wdef->noisf      = noisflag;    // in this case, we use the noise flag
+   WorkPacket* wdef = &worktsks[ 0 ];
+   wdef->taskx   = -1;          // special task index signalling final task
+   wdef->noisf   = noisflag;    // in this case, we use the noise flag
 
-   int nstprem      = ntpsteps - kcpsteps;  // steps remaining
-   int nsolrem      = c_solutes.size();     // solutes remaining
-   simult           = nstprem / 2;          // progress step incr. multiplier
-   sidivi           = nsolrem;              // progress step incr. divisor
-qDebug() << "FinalComp:   kcp ntp nstr nsor" << kcpsteps << ntpsteps
- << nstprem << nsolrem << "simult sidivi" << simult << sidivi;
+   int nsolest   = ( nksteps * nssteps ) / 8;   // solutes estimated
+   int nsolact   = c_solutes.size();            // solutes actually computed
+   int todoest   = nsolest + nsolest / 50;      // count to-do estimated
+   int todoact   = nsolact + nsolact / 50;      // count to-do actual
+   if ( noisflag > 0 )
+   {
+      todoest      += ( sq( nsolest ) / 10 );   // if noise, a lot more!
+      todoact      += ( sq( nsolact ) / 10 );
+   }
+   todoest      += 10;
+   todoact      += 10;
+
+DbgLv(1) << "FinalComp:   (est)kcp ntp nsol ntodo" <<  kcsteps << nctotal
+ << nsolest << todoest;
+   // adjust the estimate of total progress steps
+   nctotal       = kcsteps + todoact;    
+DbgLv(1) << "FinalComp:   (new)kcp ntp nsol ntodo" <<  kcsteps << nctotal
+ << nsolact << todoact;
+
+   emit subgrids_complete( kcsteps, nctotal );
+
 
    // This time, input solutes are all the subgrid-computed ones where
    // the concentration is positive.
@@ -299,7 +314,7 @@ void US_2dsaProcess::final_finished( WorkerThread* wthrd )
 {
    if ( abort ) return;
 
-   WorkResult wresult;
+   WorkPacket wresult;
 
    wthrd->get_result( wresult );  // get results of thread task
 DbgLv(1) << "FIN_FIN: thrx taskx ll_s ll_k"
@@ -373,11 +388,9 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
    model.update_coefficients();
 DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[0].c << c_solutes[nsolutes-1].c;
 
-   US_SimulationParameters simpars;
-   simpars.initFromData( NULL, *edata );
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
-   US_Astfem_RSA astfem_rsa( model, simpars );
+   US_Astfem_RSA astfem_rsa( model, *simparms );
 
    // calculate the simulation data
    astfem_rsa.calculate( sdata );
@@ -477,734 +490,5 @@ QVector< Solute > US_2dsaProcess::create_solutes(
          solu << Solute( sval, kval );
 
    return solu;
-}
-
-
-// construct worker thread
-WorkerThread::WorkerThread( QObject* parent )
-   : QThread( parent )
-{
-   dbg_level  = US_Settings::us_debug();
-   abort      = false;
-//DbgLv(1) << "2P(WT): Thread created";
-}
-
-// worker thread destructor
-WorkerThread::~WorkerThread()
-{
-//DbgLv(1) << "2P(WT):  Thread destructor";
-   //mutex.lock();
-   //condition.wakeOne();
-   //mutex.unlock();
-
-   wait();
-DbgLv(1) << "2P(WT):   Thread destroyed";
-}
-
-// define work for a worker thread
-void WorkerThread::define_work( WorkDefine& workin )
-{
-   thrx        = workin.thrx;
-   taskx       = workin.taskx;
-   edata       = workin.edata;
-   noisflag    = workin.noisf;
-   llim_s      = workin.ll_s;
-   llim_k      = workin.ll_k;
-
-   solute_i    = workin.isolutes;
-}
-
-// get results of a completed worker thread
-void WorkerThread::get_result( WorkResult& workout )
-{
-   workout.thrx     = thrx;
-   workout.taskx    = taskx;
-   workout.ll_s     = llim_s;
-   workout.ll_k     = llim_k;
-
-   workout.csolutes = solute_c;
-   workout.ti_noise = ti_noise.values;
-   workout.ri_noise = ri_noise.values;
-}
-
-// run the worker thread
-void WorkerThread::run()
-{
-DbgLv(1) << "THR RUN: lls llk" << llim_s << llim_k;
-
-   calc_residuals();
-
-//DbgLv(1) << "  RUN call quit";
-   quit();
-//DbgLv(1) << "  RUN call exec";
-   exec();
-//DbgLv(1) << "  RUN return";
-
-   emit work_complete( this );
-}
-
-void WorkerThread::flag_abort()
-{
-   abort      = true;
-}
-
-// do the real work of a thread:  subgrid solution from solutes set
-void WorkerThread::calc_residuals()
-{
-   // set up for single-component model
-   model.components.resize( 1 );
-   US_Model::SimulationComponent zcomponent;
-   zcomponent.s     = 0.0;
-   zcomponent.D     = 0.0;
-   zcomponent.mw    = 0.0;
-   zcomponent.f     = 0.0;
-   zcomponent.f_f0  = 0.0;
-
-   // populate simulation parameters based on experiment data
-   US_SimulationParameters simpars;
-   simpars.initFromData( NULL, *edata );
-
-   nscans           = edata->scanData.size();
-   npoints          = edata->x.size();
-   int nsolutes     = solute_i.size();
-   int ntotal       = npoints * nscans;
-   int navalues     = ntotal  * nsolutes;
-   int increp       = nsolutes / 10;
-       increp       = ( increp < 10 ) ? 10 : increp;
-   int kstep        = 0;
-   int lstep        = 0;
-   int ntinois      = npoints;
-   int nrinois      = nscans;
-
-   QVector< double > nnls_a( navalues, 0.0 );
-   QVector< double > nnls_b( ntotal,   0.0 );
-   QVector< double > nnls_x( nsolutes, 0.0 );
-   QVector< double > tinvec( ntinois,  0.0 );
-   QVector< double > rinvec( nrinois,  0.0 );
-DbgLv(1) << "   CR:na nb nx" << navalues << ntotal << nsolutes;
-
-   QString dvv      = edata->dataType;
-   double density   = dvv.section( " ", 1, 1 ).toDouble();
-   double viscosity = dvv.section( " ", 2, 2 ).toDouble();
-   double vbar      = dvv.section( " ", 3, 3 ).toDouble();
-   double avgtemp   = 0.0;
-   int    kk        = 0;
-
-qDebug() << "TM:BEG:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
-   // populate b array with experiment data concentrations
-   for ( int ss = 0; ss < nscans; ss++ )
-   {
-      for ( int rr = 0; rr < npoints; rr++ )
-         nnls_b[ kk++ ] = edata->value( ss, rr );
-
-      avgtemp += edata->scanData[ ss ].temperature;
-   }
-   avgtemp /= (double)nscans;
-
-   if ( abort ) return;
-
-   // determine s correction factor
-   US_Math2::SolutionData solution;
-   solution.density   = density;
-   solution.viscosity = viscosity;
-   solution.vbar20    = vbar;
-   solution.vbar      = vbar;
-   US_Math2::data_correction( avgtemp, solution );
-DbgLv(1) << "   CR: dens visc vbar temp corr" << density << viscosity
-   << vbar << avgtemp << solution.s20w_correction;
-   double sfactor     = 1.0e-13 / solution.s20w_correction;
-
-   // simulate data using models with single s,f/f0 component
-   kk  = 0;
-
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      if ( abort ) return;
-      // set model with s,k point; update other coefficients
-      double sval                = solute_i[ cc ].s;
-      double kval                = solute_i[ cc ].k;
-      model.components[ 0 ]      = zcomponent;
-      model.components[ 0 ].s    = qAbs( sval ) * sfactor;
-      model.components[ 0 ].f_f0 = kval;
-      model.update_coefficients();
-//DbgLv(1) << "  TR:   s k D" << sval << kval << model.components[0].D;
-
-      // initialize simulation data with experiment grid
-      US_AstfemMath::initSimData( sdata, *edata, 0.0 );
-
-//DbgLv(1) << "  TR:     astfem_rsa calc";
-      // calculate Astfem_RSA solution
-      US_Astfem_RSA astfem_rsa( model, simpars );
-      astfem_rsa.calculate( sdata );
-      if ( abort ) return;
-
-      // Populate the A matrix for the NNLS routine with the model function
-      for ( int ss = 0; ss < nscans; ss++ )
-         for ( int rr = 0; rr < npoints; rr++ )
-            nnls_a[ kk++ ] = sdata.value( ss, rr );
-
-      kstep++;
-
-      if ( ( kstep % increp ) == 0 )
-      {
-         emit work_progress( increp );
-         lstep = kstep;
-      }
-   }
-
-   emit work_progress( nsolutes - lstep );
-   int kstodo = nsolutes;
-   if ( abort ) return;
-
-qDebug() << "TM:BEG:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
-   if ( ( noisflag & 1 ) != 0 )
-   {
-      if ( abort ) return;
-      // Compute a_tilde, the average experiment signal at each time
-      QVector< double > a_tilde( nrinois, 0.0 );
-
-      if ( noisflag == 3 )
-         compute_a_tilde( a_tilde );
-
-      // Compute a_bar, the average experiment signal at each radius
-      QVector< double > a_bar( ntinois, 0.0 );
-      compute_a_bar( a_bar, a_tilde );
-
-      // Compute L_tildes, the average signal at each radius;
-      QVector< double > L_tildes( nrinois * nsolutes, 0.0 );
-
-      if ( noisflag == 3 )
-         compute_L_tildes( nrinois, ntotal, nsolutes, L_tildes, nnls_a );
-
-      // Compute L_bars
-      QVector< double > L_bars(   ntinois * nsolutes, 0.0 );
-      compute_L_bars( nsolutes, nrinois, ntinois, ntotal,
-                      L_bars, nnls_a, L_tildes );
-
-      // Set up small_a, small_b for alternate nnls
-qDebug() << "  set SMALL_A+B";
-      QVector< double > small_a( nsolutes * nsolutes, 0.0 );
-      QVector< double > small_b( nsolutes           , 0.0 );
-
-      ti_small_a_and_b( nsolutes, ntotal, ntinois,
-                        small_a, small_b, a_bar, L_bars, nnls_a );
-      if ( abort ) return;
-      kstodo     = 4;
-
-      // This is Sum( concentration * Lamm ) for the models after NNLS
-qDebug() << "  noise small NNLS";
-      US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes,
-                      small_b.data(), nnls_x.data() );
-      if ( abort ) return;
-      kstodo     = 2;
-      emit work_progress( kstodo );
-
-      // This is Sum( concentration * Lamm ) for the models after NNLS
-      QVector< double > L( ntotal, 0.0 );
-      compute_L( ntotal, nsolutes, L, nnls_a, nnls_x );
-
-      // Now L contains the best fit sum of L equations
-      // Compute L_tilde, the average model signal at each radius
-      QVector< double > L_tilde( nrinois, 0.0 );
-
-      if ( noisflag == 3 )
-         compute_L_tilde( L_tilde, L );
-
-      // Compute L_bar, the average model signal at each radius
-      QVector< double > L_bar(   ntinois, 0.0 );
-      compute_L_bar( L_bar, L, L_tilde );
-
-      // Compute ti noise
-      for ( int ii = 0; ii < ntinois; ii++ )
-         tinvec[ ii ] = a_bar[ ii ] - L_bar[ ii ];
-
-      if ( noisflag == 3 )
-      {  // Compute ri_noise  (Is this correct????)
-         for ( int ii = 0; ii < nrinois; ii++ )
-            rinvec[ ii ] = a_tilde[ ii ] - L_tilde[ ii ];
-      }
-
-      emit work_progress( kstodo );
-   }  // End tinoise and optional rinoise calculation
-
-   else if ( ( noisflag & 2 ) != 0 )
-   {
-      if ( abort ) return;
-      // Compute a_tilde, the average experiment signal at each time
-      QVector< double > a_tilde( nrinois, 0.0 );
-      compute_a_tilde( a_tilde );
-
-      // Compute L_tildes, the average signal at each radius
-      QVector< double > L_tildes( nrinois * nsolutes, 0.0 );
-      compute_L_tildes( nrinois, ntotal, nsolutes, L_tildes, nnls_a );
-
-      // Set up small_a, small_b for the nnls
-      QVector< double > small_a( nsolutes * nsolutes, 0.0 );
-      QVector< double > small_b( nsolutes,            0.0 );
-      if ( abort ) return;
-      ri_small_a_and_b( nsolutes, ntotal, nrinois, small_a, small_b,
-                        a_tilde, L_tildes, nnls_a );
-      if ( abort ) return;
-
-      US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes,
-                      small_b.data(), nnls_x.data() );
-      if ( abort ) return;
-
-      // This is sum( concentration * Lamm ) for the models after NNLS
-      QVector< double > L( ntotal, 0.0 );
-      compute_L( ntotal, nsolutes, L, nnls_a, nnls_x );
-
-      // Now L contains the best fit sum of L equations
-      // Compute L_tilde, the average model signal at each radius
-      QVector< double > L_tilde( nrinois, 0.0 );
-      compute_L_tilde( L_tilde, L );
-
-      // Compute ri_noise  (Is this correct????)
-      for ( int ii = 0; ii < nrinois; ii++ )
-         rinvec[ ii ] = a_tilde[ ii ] - L_tilde[ ii ];
-
-      emit work_progress( kstodo );
-   }  // End rinoise alone calculation
-
-   else
-   {
-      if ( abort ) return;
-      emit work_progress( 2 );
-      kstodo -= 2;
-
-      US_Math2::nnls( nnls_a.data(), ntotal, ntotal, nsolutes,
-                      nnls_b.data(), nnls_x.data() );
-      if ( abort ) return;
-
-      emit work_progress( kstodo );
-      // Note:  ti_noise and ri_noise are already zero
-
-   }  // End of core calculations
-qDebug() << "TM:END:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
-
-
-   // Clear simulation data and computed solutes
-   for ( int ss = 0; ss < nscans; ss++ )
-      for ( int rr = 0; rr < npoints; rr++ )
-         sdata.scanData[ ss ].readings[ rr ] = US_DataIO2::Reading( 0.0 );
-
-   solute_c.clear();
-   if ( abort ) return;
-
-   // Populate simulation data and computed solutes
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      double soluval = nnls_x[ cc ];
-
-      if ( soluval > 0.0 )
-      {
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            for ( int rr = 0; rr < npoints; rr++ )
-            {
-               sdata.scanData[ ss ].readings[ rr ] = 
-                  US_DataIO2::Reading( soluval * edata->value( ss, rr ) );
-            }
-         }
-
-         solute_i[ cc ].c = soluval;
-         solute_c << solute_i[ cc ];
-      }
-   }
-   if ( abort ) return;
-
-   // Fill noise objects with any calculated vectors
-   if ( ( noisflag & 1 ) != 0 )
-   {
-      ti_noise.values << tinvec;
-      ti_noise.count  =  ntinois;
-   }
-
-   if ( ( noisflag & 2 ) != 0 )
-   {
-      ri_noise.values << rinvec;
-      ri_noise.count  =  nrinois;
-   }
-
-qDebug() << "TM:END:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
-}
-
-
-// Compute a_tilde, the average experiment signal at each time
-void WorkerThread::compute_a_tilde( QVector< double >& a_tilde )
-{
-   double avgscale = 1.0 / (double)npoints;
-
-   for ( int ss = 0; ss < nscans; ss++ )
-   {
-      for ( int rr = 0; rr < npoints; rr++ )
-        a_tilde[ ss ] += edata->value( ss, rr );
-
-      a_tilde[ ss ] *= avgscale;
-   }
-}
-
-// Compute L_tildes, the average signal at each radius
-void WorkerThread::compute_L_tildes( int                      nrinois,
-                                     int                      ntotal,
-                                     int                      nsolutes,
-                                     QVector< double >&       L_tildes,
-                                     const QVector< double >& nnls_a )
-{
-   double avgscale = 1.0 / (double)npoints;
-
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      int solute_index = cc * ntotal;
-
-      for ( int ss = 0; ss < nscans; ss++ )
-      {
-         int index      = cc * nrinois + ss;
-         int scan_index = solute_index + ss * npoints;
-
-         for ( int rr = 0; rr < npoints; rr++ )
-            L_tildes[ index ] += nnls_a[ scan_index + rr ];
-
-         L_tildes[ index ] *= avgscale;
-      }
-   }
-}
-
-// Compute L_tilde, the average model signal at each radius
-void WorkerThread::compute_L_tilde( QVector< double >&       L_tilde,
-                                    const QVector< double >& L )
-{
-   double avgscale = 1.0 / (double)npoints;
-
-   for ( int ss = 0; ss < nscans; ss++ )
-   {
-      int s_index  = ss;
-      int L_offset = ss * npoints;
-
-      for ( int rr = 0; rr < npoints; rr++ )
-         L_tilde[ s_index ] += L[ L_offset  + rr ];
-
-      L_tilde[ s_index] *= avgscale;
-   }
-}
-
-void WorkerThread::compute_L( int                      ntotal,
-                              int                      nsolutes,
-                              QVector< double >&       L,
-                              const QVector< double >& nnls_a,
-                              const QVector< double >& nnls_x )
-{
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      if ( nnls_x[ cc ] > 0 )
-      {
-         int kk      = 0;
-
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            for ( int rr = 0; rr < npoints; rr++ )
-            {
-               L[ kk++ ] += ( nnls_x[ cc ] *
-                              nnls_a[ cc * ntotal + ss * npoints + rr ] );
-            }
-         }
-      }
-   }
-}
-
-void WorkerThread::ri_small_a_and_b( int                      nsolutes,
-                                     int                      ntotal,
-                                     int                      nrinois,
-                                     QVector< double >&       small_a,
-                                     QVector< double >&       small_b,
-                                     const QVector< double >& a_tilde,
-                                     const QVector< double >& L_tildes,
-                                     const QVector< double >& nnls_a )
-{
-qDebug() << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
-#if 0
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      for ( int rr = 0; rr < npoints; rr++ )
-      {
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            small_b[ cc ] +=
-               ( edata->value( ss, rr ) - a_tilde[ ss ] )
-               *
-               ( nnls_a[ cc * ntotal + ss * npoints + rr ] 
-                 -
-                 L_tildes[ cc * nrinois + ss ]
-               );
-
-            for ( int kk = 0; kk < nsolutes; kk++ )
-            {
-               small_a[ kk * nsolutes + cc ] +=
-                  ( nnls_a[ kk * ntotal + ss * npoints + rr ]
-                    - 
-                    L_tildes[ kk * nrinois + ss  ]
-                  ) 
-                  *
-                  ( nnls_a[ cc * ntotal + ss * npoints + rr ]
-                    -  
-                    L_tildes[ cc * nrinois + ss ]
-                  );
-            }
-         }
-      }
-   }
-#endif
-#if 1
-   int kstodo = nsolutes;
-   int inprgr = kstodo / 50;
-   inprgr     = ( inprgr < 1  ) ? 1  : inprgr;
-   inprgr     = ( inprgr > 50 ) ? 50 : inprgr;
-
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      int    jjna  = cc * ntotal;
-      int    jjlt  = cc * nrinois;
-      int    jsa2  = jjna;
-      int    jst2  = jjlt;
-
-      for ( int ss = 0; ss < nscans; ss++ )
-      {
-         // small_b[ cc ] +=
-         //    ( edata->value( ss, rr ) - a_tilde[ ss ] )
-         //    *
-         //    ( nnls_a[ cc * ntotal + ss * npoints + rr ] 
-         //      -
-         //      L_tildes[ cc * nrinois + ss ] );
-         double atil  = a_tilde [ ss ];
-         double Ltil  = L_tildes[ jjlt++ ];
-
-         for ( int rr = 0; rr < npoints; rr++ )
-            small_b[ cc ] += ( ( edata->value( ss, rr ) - atil )
-                             * ( nnls_a[ jjna++ ]       - Ltil ) );
-
-      }
-
-      for ( int kk = 0; kk < nsolutes; kk++ )
-      {
-         //small_a[ kk * nsolutes + cc ] +=
-         //   ( nnls_a[ kk * ntotal + ss * npoints + rr ]
-         //     - 
-         //     L_tildes[ kk * nrinois + ss  ]
-         //   ) 
-         //   *
-         //   ( nnls_a[ cc * ntotal + ss * npoints + rr ]
-         //     -  
-         //     L_tildes[ cc * nrinois + ss ] );
-         int    jjma  = kk * nsolutes + cc;
-         int    jja1  = kk * ntotal;
-         int    jjt1  = kk * nrinois;
-         int    jja2  = jsa2;
-         int    jjt2  = jst2;
-
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            double Ltil1 = L_tildes[ jjt1++ ];
-            double Ltil2 = L_tildes[ jjt2++ ];
-
-            for ( int rr = 0; rr < npoints; rr++ )
-               small_a[ jjma ] += ( ( nnls_a[ jja1++ ] - Ltil1 )
-                                  * ( nnls_a[ jja2++ ] - Ltil2 ) );
-         }
-      }
-
-      if ( ( cc % inprgr ) == 0 )
-      {
-         emit work_progress( inprgr );
-         kstodo   -= inprgr;  
-         kstodo    = ( kstodo < 2 ) ? 2 : kstodo;
-      }
-
-      if ( abort ) return;
-   }
-#endif
-qDebug() << "TM:END:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
-}
-
-void WorkerThread::ti_small_a_and_b( int                      nsolutes,
-                                     int                      ntotal,
-                                     int                      ntinois,
-                                     QVector< double >&       small_a,
-                                     QVector< double >&       small_b,
-                                     const QVector< double >& a_bar,
-                                     const QVector< double >& L_bars,
-                                     const QVector< double >& nnls_a )
-{
-qDebug() << "TM:BEG:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
-#if 0
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      for ( int rr = 0; rr < npoints; rr++ )
-      {
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            small_b[ cc ] += 
-               ( edata->value( ss, rr ) - a_bar[ rr ] )
-                 *
-               ( nnls_a[ cc * ntotal + ss * npoints + rr ]
-                 -
-                 L_bars[ cc * ntinois + rr ] );
-
-            for ( int kk = 0; kk < nsolutes; kk++ )
-            {
-               small_a[ kk * nsolutes + cc ] +=
-                  ( nnls_a[ kk * ntotal + ss * npoints + rr ]
-                    -
-                    L_bars[ kk * ntinois + rr ] )
-                  *
-                  ( nnls_a[ cc * ntotal + ss * npoints + rr ]
-                    -
-                    L_bars[ cc * ntinois + rr ] );
-            }
-         }
-      }
-   }
-#endif
-#if 1
-   int kstodo = nsolutes;
-   int inprgr = kstodo / 50;
-   inprgr     = ( inprgr < 1  ) ? 1  : inprgr;
-   inprgr     = ( inprgr > 50 ) ? 50 : inprgr;
-
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      int jjsa  = cc;
-      int jjna  = cc * ntotal;
-
-      //small_b[ cc ] += 
-      //   ( edata->value( ss, rr ) - a_bar[ rr ] )
-      //     *
-      //   ( nnls_a[ cc * ntotal + ss * npoints + rr ]
-      //     -
-      //     L_bars[ cc * ntinois + rr ] );
-
-      for ( int ss = 0; ss < nscans; ss++ )
-      {
-         int jjlb  = cc * ntinois;
-
-         for ( int rr = 0; rr < npoints; rr++ )
-            small_b[ cc ] += ( edata->value( ss, rr ) - a_bar [ rr ]     )
-                           * ( nnls_a[ jjna++ ]       - L_bars[ jjlb++ ] );
-      }
-
-      //small_a[ kk * nsolutes + cc ] +=
-      //   ( nnls_a[ kk * ntotal  + ss * npoints + rr ]
-      //     -
-      //     L_bars[ kk * ntinois + rr ] )
-      //   *
-      //   ( nnls_a[ cc * ntotal  + ss * npoints + rr ]
-      //     -
-      //     L_bars[ cc * ntinois + rr ] );
-      for ( int kk = 0; kk < nsolutes; kk++ )
-      {
-         int jsna1 = kk * ntotal;
-         int jslb1 = kk * ntinois;
-         int jsna2 = cc * ntotal;
-         int jslb2 = cc * ntinois;
-
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            int jjna1 = jsna1;
-            int jjlb1 = jslb1;
-            int jjna2 = jsna2;
-            int jjlb2 = jslb2;
-
-            for ( int rr = 0; rr < npoints; rr++ )
-            {
-               small_a[ jjsa ] +=
-                  ( nnls_a[ jjna1++ ] - L_bars[ jjlb1++ ] ) *
-                  ( nnls_a[ jjna2++ ] - L_bars[ jjlb2++ ] );
-            }
-
-            jsna1    += npoints;  
-            jsna2    += npoints;  
-         }
-         jjsa     += nsolutes;  
-      }
-
-      if ( ( cc % inprgr ) == 0 )
-      {
-         emit work_progress( inprgr );
-         kstodo   -= inprgr;  
-         kstodo    = ( kstodo < 2 ) ? 2 : kstodo;
-      }
-
-      if ( abort ) return;
-   }
-
-   emit work_progress( kstodo );
-#endif
-qDebug() << "TM:END:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
-}
-
-void WorkerThread::compute_L_bar( QVector< double >&       L_bar,
-                                  const QVector< double >& L,
-                                  const QVector< double >& L_tilde )
-{
-   double avgscale = 1.0 / (double)nscans;
-
-   for ( int rr = 0; rr < npoints; rr++)
-   {
-      // Note  L_tilde is always zero when rinoise has not been requested
-      for ( int ss = 0; ss < nscans; ss++ )
-         L_bar[ rr ] += ( L[ ss * npoints + rr ] - L_tilde[ ss ] );
-
-      L_bar[ rr ] *= avgscale;
-   }
-}
-
-// Calculate the average measured concentration at each radius point
-void WorkerThread::compute_a_bar( QVector< double >&       a_bar,
-                                  const QVector< double >& a_tilde )
-{
-   double avgscale = 1.0 / (double)nscans;
-
-   for ( int rr = 0; rr < npoints; rr++ )
-   {
-      // Note: a_tilde is always zero when rinoise has not been requested
-      for ( int ss = 0; ss < nscans; ss++ )
-         a_bar[ rr ] += ( edata->value( ss, rr ) - a_tilde[ ss ] );
-
-      a_bar[ rr ] *= avgscale;
-   }
-}
-
-// Calculate the average simulated concentration at each radius point
-void WorkerThread::compute_L_bars( int                      nsolutes,
-                                   int                      nrinois,
-                                   int                      ntinois,
-                                   int                      ntotal,
-                                   QVector< double >&       L_bars,
-                                   const QVector< double >& nnls_a,
-                                   const QVector< double >& L_tildes )
-{
-   double avgscale = 1.0 / (double)nscans;
-
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      int solute_offset = cc * ntotal;
-
-      for ( int rr = 0; rr < npoints; rr++ )
-      {
-         int r_index = cc * ntinois + rr;
-
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            // Note: L_tildes is always zero when rinoise has not been 
-            // requested
-               
-            int n_index = solute_offset + ss * npoints + rr;
-            int s_index = cc * nrinois + ss;
-
-            L_bars[ r_index ] += ( nnls_a[ n_index ] - L_tildes[ s_index ] );
-         }
-
-         L_bars[ r_index ] *= avgscale;
-      }
-   }
 }
 
