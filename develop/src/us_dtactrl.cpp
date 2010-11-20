@@ -2306,7 +2306,7 @@ void Data_Control_W::details()
          mval[i] = run_inf.meniscus[i];
       }
       US_MeniscusDialog *meniscus_dlg;
-      meniscus_dlg = new US_MeniscusDialog(mval);
+      meniscus_dlg = new US_MeniscusDialog(mval, run_inf.run_id);
       meniscus_dlg->show();
       if (meniscus_dlg->exec())
       {

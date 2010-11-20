@@ -17,10 +17,14 @@ class US_EXTERN US_MeniscusDialog : public QDialog
    Q_OBJECT
    
    public:
-      US_MeniscusDialog(float *, QWidget *p=0, const char *name = 0);
+      US_MeniscusDialog(float *, QString, QWidget *p=0, const char *name = 0);
       ~US_MeniscusDialog();
       
       float *meniscus;
+      QString runid;
+      int current_meniscus;
+      bool meniscus_ok1[8];
+      bool meniscus_ok2[8];
 
       QLabel *lbl_info;
       QLabel *lbl_meniscus1;
@@ -31,6 +35,7 @@ class US_EXTERN US_MeniscusDialog : public QDialog
       QLabel *lbl_meniscus6;
       QLabel *lbl_meniscus7;
       QLabel *lbl_meniscus8;
+      QLabel *lbl_runid;
 
       QLineEdit *le_meniscus1;
       QLineEdit *le_meniscus2;
@@ -58,6 +63,7 @@ class US_EXTERN US_MeniscusDialog : public QDialog
       void update_meniscus6(const QString &);
       void update_meniscus7(const QString &);
       void update_meniscus8(const QString &);
+      bool check_meniscus();
 
    protected slots:
       void setup_GUI();

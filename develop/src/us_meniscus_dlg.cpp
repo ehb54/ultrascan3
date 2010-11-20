@@ -1,21 +1,35 @@
 #include "../include/us_meniscus_dlg.h"
 
-US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *name) : QDialog(p, name)
+US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QString runid, QWidget *p, const char *name) : QDialog(p, name)
 {
    this->meniscus = meniscus;
+   this->runid = runid;
    QString str;
    USglobal=new US_Config();
+   current_meniscus = 1;
+   for (int i=0; i<8; i++)
+   {
+      meniscus_ok1[i] = true;
+      meniscus_ok2[i] = true;
+   }
    
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    
    setCaption(tr("Meniscus Dialog"));
 
-   lbl_info = new QLabel(tr("  Meniscus Update Dialog  "), this);
+   lbl_info = new QLabel(tr("  Meniscus Update Dialog for: "), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(AlignCenter|AlignVCenter);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   lbl_runid = new QLabel(runid, this);
+   Q_CHECK_PTR(lbl_runid);
+   lbl_runid->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_runid->setAlignment(AlignCenter|AlignVCenter);
+   lbl_runid->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_runid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_meniscus1 = new QLabel("  Meniscus Cell 1: ",this);
    lbl_meniscus1->setAlignment(AlignCenter|AlignVCenter);
@@ -68,9 +82,10 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus1 = new QLineEdit( this, "meniscus1" );
    le_meniscus1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_meniscus1->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   if (meniscus[0] == 0)
+   if ((int) meniscus[0] == 0)
    {
-      //le_meniscus1->setEnabled(false);
+      le_meniscus1->setEnabled(false);
+      le_meniscus1->setReadOnly(true);
    }
    le_meniscus1->setText(str.sprintf("%8.5f", meniscus[0]));
    connect(le_meniscus1, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus1(const QString &)));
@@ -78,9 +93,10 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus2 = new QLineEdit( this, "meniscus2" );
    le_meniscus2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_meniscus2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   if (meniscus[1] == 0)
+   if ((int) meniscus[1] == 0)
    {
-      //le_meniscus2->setEnabled(false);
+      le_meniscus2->setEnabled(false);
+      le_meniscus2->setReadOnly(true);
    }
    le_meniscus2->setText(str.sprintf("%8.5f", meniscus[1]));
    connect(le_meniscus2, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus2(const QString &)));
@@ -88,9 +104,10 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus3 = new QLineEdit( this, "meniscus3" );
    le_meniscus3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_meniscus3->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   if (meniscus[2] == 0)
+   if ((int) meniscus[2] == 0)
    {
-      //le_meniscus3->setEnabled(false);
+      le_meniscus3->setEnabled(false);
+      le_meniscus3->setReadOnly(true);
    }
    le_meniscus3->setText(str.sprintf("%8.5f", meniscus[2]));
    connect(le_meniscus3, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus3(const QString &)));
@@ -98,9 +115,10 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus4 = new QLineEdit( this, "meniscus4" );
    le_meniscus4->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_meniscus4->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   if (meniscus[3] == 0)
+   if ((int) meniscus[3] == 0)
    {
-     // le_meniscus4->setEnabled(false);
+      le_meniscus4->setEnabled(false);
+      le_meniscus4->setReadOnly(true);
    }
    le_meniscus4->setText(str.sprintf("%8.5f", meniscus[3]));
    connect(le_meniscus4, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus4(const QString &)));
@@ -108,9 +126,10 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus5 = new QLineEdit( this, "meniscus5" );
    le_meniscus5->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_meniscus5->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   if (meniscus[4] == 0)
+   if ((int) meniscus[4] == 0)
    {
-      //le_meniscus5->setEnabled(false);
+      le_meniscus5->setEnabled(false);
+      le_meniscus5->setReadOnly(true);
    }
    le_meniscus5->setText(str.sprintf("%8.5f", meniscus[4]));
    connect(le_meniscus5, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus5(const QString &)));
@@ -118,9 +137,10 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus6 = new QLineEdit( this, "meniscus6" );
    le_meniscus6->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_meniscus6->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   if (meniscus[5] == 0)
+   if ((int) meniscus[5] == 0)
    {
-      //le_meniscus6->setEnabled(false);
+      le_meniscus6->setEnabled(false);
+      le_meniscus6->setReadOnly(true);
    }
    le_meniscus6->setText(str.sprintf("%8.5f", meniscus[5]));
    connect(le_meniscus6, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus6(const QString &)));
@@ -128,9 +148,10 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus7 = new QLineEdit( this, "meniscus7" );
    le_meniscus7->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_meniscus7->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   if (meniscus[6] == 0)
+   if ((int) meniscus[6] == 0)
    {
-      //le_meniscus7->setEnabled(false);
+      le_meniscus7->setEnabled(false);
+      le_meniscus7->setReadOnly(true);
    }
    le_meniscus7->setText(str.sprintf("%8.5f", meniscus[6]));
    connect(le_meniscus7, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus7(const QString &)));
@@ -138,9 +159,10 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus8 = new QLineEdit( this, "meniscus8" );
    le_meniscus8->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_meniscus8->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   if (meniscus[7] == 0)
+   if ((int) meniscus[7] == 0)
    {
-      //le_meniscus8->setEnabled(false);
+      le_meniscus8->setEnabled(false);
+      le_meniscus8->setReadOnly(true);
    }
    le_meniscus8->setText(str.sprintf("%8.5f", meniscus[7]));
    connect(le_meniscus8, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus8(const QString &)));
@@ -160,7 +182,7 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    global_Xpos += 30;
    global_Ypos += 30;
    setGeometry(global_Xpos, global_Ypos, 0, 0);
-
+   
    setup_GUI();
 }
 
@@ -175,6 +197,11 @@ void US_MeniscusDialog::cancel()
 
 void US_MeniscusDialog::ok()
 {
+   for (int i=0; i<8; i++)
+   {
+      current_meniscus = i+1;
+      if (!check_meniscus()) return;
+   }
    accept();
 }
 
@@ -182,6 +209,7 @@ void US_MeniscusDialog::setup_GUI()
 {
    QBoxLayout *topbox=new QVBoxLayout(this, 3);
    topbox->addWidget(lbl_info);
+   topbox->addWidget(lbl_runid);
 
    int rows = 9, columns = 2, spacing = 2, j=0;
    QGridLayout *controlGrid = new QGridLayout(topbox, rows, columns, spacing);
@@ -230,40 +258,168 @@ void US_MeniscusDialog::setup_GUI()
 
 void US_MeniscusDialog::update_meniscus1(const QString &str)
 {
-   meniscus[0] = str.toFloat();
+   bool ok;
+   current_meniscus = 1;
+   meniscus_ok1[0] = true;
+   meniscus_ok2[0] = true;
+   str.stripWhiteSpace();
+   meniscus[0] = str.toFloat(&ok);
+   if (!ok)
+   {
+      meniscus_ok1[0] = false;
+   }
+   else if (meniscus[0] > 7.2 | meniscus[0] < 5.8)
+   {
+      meniscus_ok2[0] = false;
+   }
 }
 
 void US_MeniscusDialog::update_meniscus2(const QString &str)
 {
-   meniscus[1] = str.toFloat();
+   bool ok;
+   current_meniscus = 2;
+   meniscus_ok1[1] = true;
+   meniscus_ok2[1] = true;
+   str.stripWhiteSpace();
+   meniscus[1] = str.toFloat(&ok);
+   if (!ok)
+   {
+      meniscus_ok1[1] = false;
+   }
+   else if (meniscus[1] > 7.2 | meniscus[1] < 5.8)
+   {
+      meniscus_ok2[1] = false;
+   }
 }
 
 void US_MeniscusDialog::update_meniscus3(const QString &str)
 {
-   meniscus[2] = str.toFloat();
+   bool ok;
+   current_meniscus = 3;
+   meniscus_ok1[2] = true;
+   meniscus_ok2[2] = true;
+   str.stripWhiteSpace();
+   meniscus[2] = str.toFloat(&ok);
+   if (!ok)
+   {
+      meniscus_ok1[2] = false;
+   }
+   else if (meniscus[2] > 7.2 | meniscus[2] < 5.8)
+   {
+      meniscus_ok2[2] = false;
+   }
 }
 
 void US_MeniscusDialog::update_meniscus4(const QString &str)
 {
-   meniscus[3] = str.toFloat();
+   bool ok;
+   current_meniscus = 4;
+   meniscus_ok1[3] = true;
+   meniscus_ok2[3] = true;
+   str.stripWhiteSpace();
+   meniscus[3] = str.toFloat(&ok);
+   if (!ok)
+   {
+      meniscus_ok1[3] = false;
+   }
+   else if (meniscus[3] > 7.2 | meniscus[3] < 5.8)
+   {
+      meniscus_ok2[3] = false;
+   }
 }
 
 void US_MeniscusDialog::update_meniscus5(const QString &str)
 {
-   meniscus[4] = str.toFloat();
+   bool ok;
+   current_meniscus = 5;
+   meniscus_ok1[4] = true;
+   meniscus_ok2[4] = true;
+   str.stripWhiteSpace();
+   meniscus[4] = str.toFloat(&ok);
+   if (!ok)
+   {
+      meniscus_ok1[4] = false;
+   }
+   else if (meniscus[4] > 7.2 | meniscus[4] < 5.8)
+   {
+      meniscus_ok2[4] = false;
+   }
 }
 
 void US_MeniscusDialog::update_meniscus6(const QString &str)
 {
-   meniscus[5] = str.toFloat();
+   bool ok;
+   current_meniscus = 6;
+   meniscus_ok1[5] = true;
+   meniscus_ok2[5] = true;
+   str.stripWhiteSpace();
+   meniscus[5] = str.toFloat(&ok);
+   if (!ok)
+   {
+      meniscus_ok1[5] = false;
+   }
+   else if (meniscus[5] > 7.2 | meniscus[5] < 5.8)
+   {
+      meniscus_ok2[5] = false;
+   }
 }
 
 void US_MeniscusDialog::update_meniscus7(const QString &str)
 {
-   meniscus[6] = str.toFloat();
+   bool ok;
+   current_meniscus = 7;
+   meniscus_ok1[6] = true;
+   meniscus_ok2[6] = true;
+   str.stripWhiteSpace();
+   meniscus[6] = str.toFloat(&ok);
+   if (!ok)
+   {
+      meniscus_ok1[6] = false;
+   }
+   else if (meniscus[6] > 7.2 | meniscus[6] < 5.8)
+   {
+      meniscus_ok2[6] = false;
+   }
 }
 
 void US_MeniscusDialog::update_meniscus8(const QString &str)
 {
-   meniscus[7] = str.toFloat();
+   bool ok;
+   current_meniscus = 8;
+   meniscus_ok1[7] = true;
+   meniscus_ok2[7] = true;
+   str.stripWhiteSpace();
+   meniscus[7] = str.toFloat(&ok);
+   if (!ok)
+   {
+      meniscus_ok1[7] = false;
+   }
+   else if (meniscus[7] > 7.2 | meniscus[7] < 5.8)
+   {
+      meniscus_ok2[7] = false;
+   }
+}
+
+bool US_MeniscusDialog::check_meniscus()
+{
+   bool ok=true;
+   if (!meniscus_ok1[current_meniscus-1] && meniscus_ok2[current_meniscus-1])
+   {
+      QString str;
+      QMessageBox::message(tr("Attention: Data Input Error:"), tr("Invalid meniscus value for meniscus ") + str.sprintf("%d", current_meniscus) + tr("\nPlease try again!"));
+      ok=false;
+   }
+   if (!meniscus_ok2[current_meniscus-1] && meniscus_ok1[current_meniscus-1])
+   {
+      QString str;
+      QMessageBox::message(tr("Attention: Data Input Error:"), tr("Invalid range for meniscus ") + str.sprintf("%d", current_meniscus) + tr("\nPlease try again!"));
+      ok=false;
+   }
+   if (!meniscus_ok2[current_meniscus-1] && !meniscus_ok1[current_meniscus-1])
+   {
+      QString str;
+      QMessageBox::message(tr("Attention: Data Input Error:"), tr("Invalid value and range for meniscus ") + str.sprintf("%d", current_meniscus) + tr("\nPlease try again!"));
+      ok=false;
+   }
+   return ok;
 }
