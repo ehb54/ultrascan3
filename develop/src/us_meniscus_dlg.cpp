@@ -259,11 +259,12 @@ void US_MeniscusDialog::setup_GUI()
 void US_MeniscusDialog::update_meniscus1(const QString &str)
 {
    bool ok;
+   QString str2 = str.stripWhiteSpace();
    current_meniscus = 1;
    meniscus_ok1[0] = true;
    meniscus_ok2[0] = true;
-   str.stripWhiteSpace();
-   meniscus[0] = str.toFloat(&ok);
+   
+   meniscus[0] = str2.toFloat(&ok);
    if (!ok)
    {
       meniscus_ok1[0] = false;
@@ -277,11 +278,12 @@ void US_MeniscusDialog::update_meniscus1(const QString &str)
 void US_MeniscusDialog::update_meniscus2(const QString &str)
 {
    bool ok;
+   QString str2 = str.stripWhiteSpace();
    current_meniscus = 2;
    meniscus_ok1[1] = true;
    meniscus_ok2[1] = true;
-   str.stripWhiteSpace();
-   meniscus[1] = str.toFloat(&ok);
+   
+   meniscus[1] = str2.toFloat(&ok);
    if (!ok)
    {
       meniscus_ok1[1] = false;
@@ -295,11 +297,12 @@ void US_MeniscusDialog::update_meniscus2(const QString &str)
 void US_MeniscusDialog::update_meniscus3(const QString &str)
 {
    bool ok;
+   QString str2 = str.stripWhiteSpace();
    current_meniscus = 3;
    meniscus_ok1[2] = true;
    meniscus_ok2[2] = true;
-   str.stripWhiteSpace();
-   meniscus[2] = str.toFloat(&ok);
+   
+   meniscus[2] = str2.toFloat(&ok);
    if (!ok)
    {
       meniscus_ok1[2] = false;
@@ -313,11 +316,12 @@ void US_MeniscusDialog::update_meniscus3(const QString &str)
 void US_MeniscusDialog::update_meniscus4(const QString &str)
 {
    bool ok;
+   QString str2 = str.stripWhiteSpace();
    current_meniscus = 4;
    meniscus_ok1[3] = true;
    meniscus_ok2[3] = true;
-   str.stripWhiteSpace();
-   meniscus[3] = str.toFloat(&ok);
+   
+   meniscus[3] = str2.toFloat(&ok);
    if (!ok)
    {
       meniscus_ok1[3] = false;
@@ -331,11 +335,11 @@ void US_MeniscusDialog::update_meniscus4(const QString &str)
 void US_MeniscusDialog::update_meniscus5(const QString &str)
 {
    bool ok;
+   QString str2 = str.stripWhiteSpace();
    current_meniscus = 5;
    meniscus_ok1[4] = true;
    meniscus_ok2[4] = true;
-   str.stripWhiteSpace();
-   meniscus[4] = str.toFloat(&ok);
+   meniscus[4] = str2.toFloat(&ok);
    if (!ok)
    {
       meniscus_ok1[4] = false;
@@ -349,11 +353,12 @@ void US_MeniscusDialog::update_meniscus5(const QString &str)
 void US_MeniscusDialog::update_meniscus6(const QString &str)
 {
    bool ok;
+   QString str2 = str.stripWhiteSpace();
    current_meniscus = 6;
    meniscus_ok1[5] = true;
    meniscus_ok2[5] = true;
-   str.stripWhiteSpace();
-   meniscus[5] = str.toFloat(&ok);
+   
+   meniscus[5] = str2.toFloat(&ok);
    if (!ok)
    {
       meniscus_ok1[5] = false;
@@ -367,11 +372,12 @@ void US_MeniscusDialog::update_meniscus6(const QString &str)
 void US_MeniscusDialog::update_meniscus7(const QString &str)
 {
    bool ok;
+   QString str2 = str.stripWhiteSpace();
    current_meniscus = 7;
    meniscus_ok1[6] = true;
    meniscus_ok2[6] = true;
-   str.stripWhiteSpace();
-   meniscus[6] = str.toFloat(&ok);
+   
+   meniscus[6] = str2.toFloat(&ok);
    if (!ok)
    {
       meniscus_ok1[6] = false;
@@ -385,11 +391,12 @@ void US_MeniscusDialog::update_meniscus7(const QString &str)
 void US_MeniscusDialog::update_meniscus8(const QString &str)
 {
    bool ok;
+   QString str2 = str.stripWhiteSpace();
    current_meniscus = 8;
    meniscus_ok1[7] = true;
    meniscus_ok2[7] = true;
-   str.stripWhiteSpace();
-   meniscus[7] = str.toFloat(&ok);
+   
+   meniscus[7] = str2.toFloat(&ok);
    if (!ok)
    {
       meniscus_ok1[7] = false;
