@@ -159,14 +159,14 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 
    QBoxLayout* completion = new QHBoxLayout;
 
-   QLabel* lb_component = us_label( tr( "Component:" ) );
+   lb_component  = us_label( tr( "Component:" ) );
    lb_component->setAlignment ( Qt::AlignCenter );
    completion->addWidget( lb_component );
 
    lcd_component = us_lcd( 2, 0 );
    completion->addWidget( lcd_component );
 
-   lb_progress = us_label( tr( "% Completed:" ) );
+   lb_progress   = us_label( tr( "% Completed:" ) );
    lb_progress->setAlignment ( Qt::AlignCenter );
    completion->addWidget( lb_progress );
 
@@ -445,6 +445,11 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
    if ( simparams.meshType != US_SimulationParameters::ASTFVM )
    {  // the normal case:  ASTFEM (finite element)
 
+      if ( system.associations.size() > 0 )
+         lb_component->setText( tr( "RA Step:"   ) );
+      else
+         lb_component->setText( tr( "Component:" ) );
+
       astfem_rsa = new US_Astfem_RSA( system, simparams );
 
       connect( astfem_rsa, SIGNAL( new_scan( QVector< double >*, double* ) ), 
@@ -567,7 +572,10 @@ void US_Astfem_Sim::finish( void )
 
    // If we didn't interrupt, we need to set to 100 % complete at end of run
    if ( ! stopFlag )
-      progress->setValue( system.components.size() ); 
+   {
+      update_progress( progress->maximum() );
+//DbgLv(1) << "FIN:  progress maxsize" << progress->maximum();
+   }
 
    stopFlag = false;
 
@@ -810,14 +818,22 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
 void US_Astfem_Sim::update_progress( int component )
 {
    if ( component == -1 )
-   {
-      progress->setValue( system.components.size() );
+   {  // -1 component flags reset to maximum
+      progress->setValue( progress->maximum() );
       lcd_component->setMode( QLCDNumber::Hex );
       lcd_component->display( "rA " );
    }
+
+   else if ( component < 0 )
+   {  // other negative component flags set maximum
+      progress->setMaximum( -component );
+      lcd_component->setMode( QLCDNumber::Dec );
+      lcd_component->display( 0 );
+   }
+
    else
-   {
-      progress->setValue( component - 1 );
+   {  // normal call sets progress value
+      progress->setValue( component );
       lcd_component->setMode( QLCDNumber::Dec );
       lcd_component->display( component );
    }

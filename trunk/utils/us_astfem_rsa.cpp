@@ -244,7 +244,7 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
             qApp->processEvents();
 
          } // Speed step loop
-         
+
          emit current_component( k + 1 );
          qApp->processEvents();
       }
@@ -356,6 +356,7 @@ DbgLv(2) << "RSA:      j in_npts" << j << initial_npts;
       }
 
       decompose( vC0 );
+DbgLv(2) << "RSA: decompose OUT";
 
       for ( int ss = 0; ss < simparams.speed_step.size(); ss++ )
       {
@@ -392,8 +393,8 @@ DbgLv(2) << "RSA:      j in_npts" << j << initial_npts;
             accel_time    = af_params.dt * af_params.time_steps;
             current_time += accel_time;
  
-            emit new_time( current_time );
-            qApp->processEvents();
+            //emit new_time( current_time );
+            //qApp->processEvents();
 
             if ( stopFlag ) return 1;
          }  // End of for acceleration
@@ -439,11 +440,13 @@ DbgLv(2) << "RSA:      j in_npts" << j << initial_npts;
 
          af_params.start_time = current_time;
 
+DbgLv(2) << "RSA:   tsteps sttime" << af_params.time_steps << current_time;
          calculate_ra2( (double) sp->rotorspeed, (double) sp->rotorspeed, 
                vC0, simdata, false );
          
          // Set the current time to the last scan of this speed step
          current_time = sp->duration_hours * 3600. + sp->duration_minutes * 60.;
+DbgLv(2) << "RSA:    current_time" << current_time;
          
          // Interpolate the simulated data onto the experimental 
          // time and radius grid
@@ -458,9 +461,9 @@ DbgLv(2) << "RSA:      j in_npts" << j << initial_npts;
          if ( stopFlag ) return 1 ; 
       } // Speed step loop
    }
+DbgLv(2) << "RSA: Speed step OUT";
 
-   // k is out of scope here!!!!!!!
-   //emit current_component( k + 1 );
+   //emit current_component( -1 );
    qApp->processEvents();
 
    if ( time_correction  &&  !simout_flag )
@@ -508,6 +511,7 @@ DbgLv(2) << "RSA:      j in_npts" << j << initial_npts;
          soff += nscans;
       }
    }
+DbgLv(2) << "RSA: Time Corr OUT";
 
    if ( vC0 != NULL ) delete [] vC0;
    delete [] reacting;
@@ -1787,6 +1791,7 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
       int    st0 = af_params.association[ 0 ].stoichs[ 0 ];
       int    st1 = af_params.association[ 0 ].stoichs[ 1 ];
       double keq = af_params.association[ 0 ].k_eq;
+      emit current_component( -Npts );
 
       for ( int j = 0; j < Npts; j++ )
       {
@@ -1806,7 +1811,7 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
           else
           {
              qDebug() << "Warning: invalid stoichiometry in decompose()";
-               qDebug() << "  st0 st1 c1" << st0 << st1 << c1;
+             qDebug() << "  st0 st1 c1" << st0 << st1 << c1;
              return;
           }
 
@@ -1822,7 +1827,9 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
               C0[ 0 ].concentration[ j ] = c2 ;          // c1=product
               C0[ 1 ].concentration[ j ] = c1 ;
           }
+          emit current_component( j + 1 );
       }
+DbgLv(2) << "RSA:  decompose NCOMP=2 return";
       return;
    }
 
@@ -1837,7 +1844,6 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
    {
       for( int j = 0; j < Npts; j++ )
       {
-         //qDebug() << i << j;
           C1[ i ][ j ] = C0[ i ].concentration[ j ];
           C2[ i ][ j ] = C1[ i ][ j ];
       }
@@ -1859,10 +1865,11 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
 
    // Max number of time steps to get to equilibrium
    const int time_max     = 100; 
-   double     timeStepSize = - log( 1.0e-7 ) / ( k_min * time_max );
+   double    timeStepSize = - log( 1.0e-7 ) / ( k_min * time_max );
 
    // time loop
    emit calc_start( time_max );
+   emit current_component( -time_max );
 
    for ( int ti = 0; ti < time_max; ti++ )
    {
@@ -1889,7 +1896,16 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
          }
       }
 
-      if ( diff < 1.0e-5 * ct ) break;
+      emit current_component( ti + 1 );
+      qApp->processEvents();
+
+      if ( diff < 1.0e-5 * ct )
+      {
+         int step = ti + 1;
+         emit current_component( -step );
+         emit current_component( step );
+         break;
+      }
    } // end time steps
 
    if ( show_movie )
@@ -2043,8 +2059,8 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
 void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
 {
     US_AstfemMath::ReactionGroup* rgp = &rg[ af_params.rg_index ];
-    int    num_comp  = rgp->GroupComponent.size();
-    int    num_rule  = rgp->association.size();
+    int     num_comp  = rgp->GroupComponent.size();
+    int     num_rule  = rgp->association.size();
     double* Q         = new double [ num_rule ];
 
     for ( int m = 0; m < num_rule; m++ )
@@ -2088,9 +2104,11 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
 
        for ( int m = 0; m < cr->rcomps.size(); m++ )
        {
-          yt[ i ] += ( qAbs( (double)cr->stoichs[ m ] ) *
-                         Q[ cr->rcomps[ m ] ] );
+          yt[ i ] -= ( (double)cr->stoichs[ m ] * Q[ cr->rcomps[ m ] ] );
        }
+
+       // convert molar into signal concentration
+       yt[ i ] *= af_params.kext[ rgp->GroupComponent[ i ] ];
     }
 
     delete [] Q;
@@ -2131,24 +2149,25 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
 
             // Extinction coefficient of n'th component
             double extn   = af_params.kext[ rgp->GroupComponent[ ind_cn ] ];
+            double yext   = y0[ ind_cn ] / extn;
 
             // comp[j] is in the rule
             if ( as->rcomps[ n ] == j ) 
             {
                if ( react > 0 ) // comp[n] is reactant
-                  deriv_r = rstoi * pow( y0[ ind_cn ] / extn, rstoi - 1.0 );
+                  deriv_r = rstoi / extn * pow( yext, rstoi - 1.0 );
                   
                else             // comp[n] in this rule is product
-                  deriv_p = rstoi * pow( y0[ ind_cn ] / extn, rstoi - 1.0 );
+                  deriv_p = rstoi / extn * pow( yext, rstoi - 1.0 );
             }
 
             else                // comp[j] is not in the rule
             {
                if ( react > 0 ) // comp[n] is reactant
-                  Q_reactant *= pow( y0[ ind_cn ] / extn, rstoi );
+                  Q_reactant *= pow( yext, rstoi );
                   
                else             // comp[n] in this rule is product
-                  Q_product  *= pow( y0[ ind_cn ] / extn, rstoi );
+                  Q_product  *= pow( yext, rstoi );
             }
          }
 
@@ -2166,10 +2185,11 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
 
          for ( int m = 0; m < cr->rcomps.size(); m++ )
          {
-            dfdy[ i ][ j ] += ( qAbs( (double)cr->stoichs[ m ] ) * 
-                                 QC[ cr->rcomps[ m ] ][ j ] );
+            dfdy[ i ][ j ] -= ( (double)cr->stoichs[ m ]
+                              *  QC[ cr->rcomps[ m ] ][ j ] );
          }
 
+         // convert molar into signal concentration
          dfdy[ i ][ j ] *= af_params.kext[ rgp->GroupComponent[ i ] ];
       }
    }
@@ -2193,11 +2213,13 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    QVector< double > nu;
    nu.clear();
 
+DbgLv(2) << "RSA:     cra2: Mcomp" << Mcomp;
    for ( int i = 0; i < Mcomp; i++ )
    {
       double sw2 = af_params.s[ i ] * sq( rpm_stop * M_PI / 30 );
       nu .append( sw2 / af_params.D[ i ] );
    }
+DbgLv(2) << "RSA:     cra2:  nu[N]" << nu[nu.size()-1];
 
    mesh_gen( nu, simparams.meshType );
 
@@ -2369,6 +2391,14 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
 
    // Time evolution
    double* right_hand_side = new double [N];
+   int     stepinc = 1000;
+   int     stepmax = ( NN + 2 ) / stepinc + 1;
+   bool    repprog = stepmax > 1;
+   if ( repprog )
+   {
+      emit current_component( -stepmax );
+      emit current_component( 0 );
+   }
 
    for ( int kkk = 0; kkk < NN + 2; kkk += 2 )   // two steps in together
    {
@@ -2598,7 +2628,14 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
          //US_Sleep::msleep( 10 ); // 10 ms to let the display update.
          //US_Sleep::msleep( 1 );  // 1 ms to let the display update.
       }
+
+      if ( repprog  &&  ( ( kkk + 1 ) & stepinc ) == 0 )
+      {
+         emit current_component( ( kkk + 1 ) / stepinc );
+      }
+
    } // time loop
+DbgLv(2) << "RSA:     cra2:  NN" << NN;
 
    for ( int i = 0; i < Mcomp; i++ )
    {

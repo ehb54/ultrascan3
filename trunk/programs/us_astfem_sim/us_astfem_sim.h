@@ -53,6 +53,7 @@ class US_Astfem_Sim : public US_Widgets
 
       QTextEdit*     te_status;
 
+      QLabel*        lb_component;
       QLabel*        lb_progress;
                     
       QLCDNumber*    lcd_time;
