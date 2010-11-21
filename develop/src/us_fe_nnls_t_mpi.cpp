@@ -11,6 +11,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <qregexp.h>
+#include <qiodevice.h> 
 #define MIN_EXPERIMENT_SIZE 100
 // MIN_EXPERIMENT_SIZE is so that unions have room to work with extremely small grids
 // #define MAX_ITERATIONS 15
@@ -1115,14 +1116,32 @@ US_fe_nnls_t::init_run(const QString & data_file,
       cout <<
          tr
          ("Please check the path, file name and read permissions...\n\n");
-      return (-1);
+      MPI_Abort(MPI_COMM_WORLD, -20001);
+      exit(-20001);
    }
    else
    {
+      QByteArray qba = f.readAll();
+      if ( f.status() != IO_Ok ) 
+      {
+         cout << tr("Low level disk error reading the file: ") << data_file <<
+            tr(" for input\n");
+         MPI_Abort(MPI_COMM_WORLD, -20002);
+         exit(-20002);
+      }
+      if ( f.size() != qba.size() ) 
+      {
+         cout << tr("Could not read file: ") << data_file <<
+            tr(" for input") << " file size " << f.size() << " read size " << qba.size() << endl;
+         MPI_Abort(MPI_COMM_WORLD, -20003);
+         exit(-20003);
+      }
+      //      QDataStream ds(&f);
+      QDataStream ds(qba, IO_ReadOnly);
+         
       struct mfem_data temp_experiment;
       struct mfem_scan temp_scan;
       vector < double >concentration;
-      QDataStream ds(&f);
       ds >> email;
       cout << "email: " + email + "\n";
       ds >> analysis_type;
@@ -2162,9 +2181,26 @@ US_fe_nnls_t::init_run(const QString & data_file,
       }
       else
       {
+         QByteArray qba = f.readAll();
+         if ( f.status() != IO_Ok ) 
+         {
+            cout << tr("Low level disk error reading the file: ") << solute_file <<
+               tr(" for input\n");
+            MPI_Abort(MPI_COMM_WORLD, -21002);
+            exit(-21002);
+         }
+         if ( f.size() != qba.size() ) 
+         {
+            cout << tr("Could not read file: ") << solute_file <<
+               tr(" for input") << " file size " << f.size() << " read size " << qba.size() << endl;
+            MPI_Abort(MPI_COMM_WORLD, -21003);
+            exit(-21003);
+         }
+         //      QDataStream ds(&f);
+         QDataStream ds(qba, IO_ReadOnly);
+
          Solute temp_solute;
          gene temp_gene;
-         QDataStream ds(&f);
          solutions.clear();
          ds >> count1;
          for (unsigned int i = 0; i < count1; i++)
