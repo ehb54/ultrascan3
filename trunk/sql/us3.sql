@@ -110,9 +110,9 @@ CREATE  TABLE IF NOT EXISTS abstractRotor (
   numHoles INT NULL ,
   maxRPM INT NULL ,
   magnetOffset FLOAT NULL ,
-  cellCenter FLOAT NULL ,
+  cellCenter FLOAT 6.5 ,
   defaultStretch TEXT NULL ,
-  manufacturer enum( 'Beckman' ) NULL ,
+  manufacturer enum( 'Beckman', 'SpinAnalytical' ) NULL ,
   materialRefURI TEXT NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (abstractRotorID) )
