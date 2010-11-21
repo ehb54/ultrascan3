@@ -7,12 +7,16 @@ DESTDIR      = ../../bin
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 
+isEmpty( QCA ) {
+  QCA = -lqca
+}
+
 
 CONFIG       += $$DEBUGORRELEASE qt thread warn
 
 unix {
   LIBS       += -lus_utils -lus_gui -lus_db -L../../lib
-  LIBS       += -lqca
+  LIBS       += $$QCA
   LIBS       += -lqwt -L$$QWTPATH/lib
   LIBS       += -lmysqlclient -L$$MYSQLDIR 
   LIBS       += -lqwtplot3d-qt4 
