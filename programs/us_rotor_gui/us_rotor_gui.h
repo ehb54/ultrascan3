@@ -13,12 +13,12 @@
 #include "us_widgets_dialog.h"
 #include "us_help.h"
 #include "us_editor.h"
-
+#include "us_investigator.h"
 
 //! \brief the abstractRotor structure describes a generic 4- or 8-hole rotor
 struct abstractRotor
 {
-   int abstractRotorID;
+   int ID;
    QString GUID;
    QString name;
    QString material;
@@ -33,6 +33,7 @@ struct rotor
 {
    int ID;
    int abstractRotorID;
+   QString abstractRotorGUID;
    int labID;                 //!< The ID of the laboratory which owns this rotor
    QString GUID;
    QString name;
@@ -44,6 +45,7 @@ struct rotorCalibration
 {
    int ID;
    QString GUID;
+   QString rotorGUID;   //!< The GUID of the rotor this calibration is associated with
    QString calibrationExperimentGUID; //!< The GUID of the experiment that contains the calibration data
    double coeff1;       //!< The first order coefficient for the second order polynomial
    double coeff2;       //!< The second order coefficient for the second order polynomial
@@ -96,8 +98,7 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
       rotor             currentRotor;           //!< Current rotor structure
       rotorCalibration  currentCalibration;     //!< Current calibration structure
       US_Help           showHelp;
-
-      int investigatorID;
+      int               labID;
 
       /*! \brief Functions to read an entire abstractrotor structure from the disk
 
@@ -153,17 +154,12 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
       QPushButton       *pb_reset;
       QPushButton       *pb_accept;
       QPushButton       *pb_close;
-      QPushButton       *pb_investigator;
-      QPushButton       *pb_listRotors;
       QPushButton       *pb_addRotor;
       QPushButton       *pb_deleteRotor;
       QPushButton       *pb_saveCalibration;
       QPushButton       *pb_deleteCalibration;
       QPushButton       *pb_viewReport;
-      QPushButton       *pb_laboratory;
 
-      QLineEdit         *le_investigator;
-      QLineEdit         *le_laboratory;
       QLineEdit         *le_name;
       QLineEdit         *le_serialNumber;
       QLineEdit         *le_coefficients;
@@ -175,6 +171,8 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
 
       QRadioButton      *rb_db;
       QRadioButton      *rb_disk;
+
+      QComboBox         *cb_lab;
       
       void setupGui              ( void );
       void resetAbstractRotor    ( void );
@@ -189,11 +187,9 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
       
       void check_db           ( void );
       void check_disk         ( void );
-      void selectInvestigator ( void );
-      void listRotors         ( void );
+      bool loadRotors         ( const int & );
       void addRotor           ( void );
       void deleteRotor        ( void );
-      void getLaboratory      ( void );
       void updateName         ( const QString & );
       void updateSerialNumber ( const QString & );
       void saveCalibration    ( void );
@@ -205,7 +201,74 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
       {
          showHelp.show_help( "manual/rotor.html" );
       };
-      void reset (void);
-      void accept (void);
+      void reset              ( void );
+      void accept             ( void );
+      bool loadLabs           ( void );
+      void changeLab          ( int );
+      void connect_error      ( const QString & );
+      int  getIndex           ( const QString & );
+      void db_error           ( const QString & );
+      void newRotor           ( void );
+};
+
+class US_EXTERN US_AbstractRotorGui : public US_WidgetsDialog
+{
+
+   Q_OBJECT
+         
+   public:
+
+      //! \brief Generic constructor for the US_AbstractRotorGui class used to add a new rotor.
+      
+      US_AbstractRotorGui(abstractRotor *, rotor *);
+      /*! 
+          \param abstractRotor The abstractRotor structure from which the rotor will be derived
+          \param rotor The Rotor structure that will be added to the database
+      */
+      int rotorID;
+
+      abstractRotor     *currentAbstractRotor;
+      rotor             *currentRotor;
+      
+      QPushButton       *pb_help;
+      QPushButton       *pb_reset;
+      QPushButton       *pb_accept;
+      QPushButton       *pb_close;
+      
+      QRadioButton      *rb_db;
+      QRadioButton      *rb_disk;
+
+      QLineEdit         *le_name;
+      QLineEdit         *le_serialNumber;
+      
+      QComboBox         *cb_rotors;
+      
+      QTextEdit         *te_details;
+
+      QVector <abstractRotor> abstractRotorList;
+
+      US_Help           showHelp;
+      
+      //! A destructor.
+      ~US_AbstractRotorGui();
+
+   private slots:
+
+      void setupGui           ( void );
+      void select             ( void );
+      void reset              ( void );
+      void check_db           ( void );
+      void check_disk         ( void );
+      bool loadAbstractRotors ( void );
+      void changeRotor        ( int  );
+      int  getIndex           ( const QString & );
+      void connect_error      ( const QString & );
+      void help (void)
+      {
+         showHelp.show_help( "manual/abstractrotor.html" );
+      };
+      void setAbstractRotorInfo ( int id );
+      void updateName           ( const QString & );
+      void updateSerialNumber   ( const QString & );
 };
 #endif

@@ -46,7 +46,7 @@ void US_RotorGui::reset( void )
 
 void US_RotorGui::resetAbstractRotor( void )
 {
-   currentAbstractRotor.abstractRotorID = -1;
+   currentAbstractRotor.ID = -1;
    currentAbstractRotor.GUID = "";
    currentAbstractRotor.name = "";
    currentAbstractRotor.material = "";
@@ -108,23 +108,18 @@ void US_RotorGui::setupGui()
 
    row++;
 
-   pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), this, SLOT( selectInvestigator() ) );
-   top->addWidget( pb_investigator, row, 0, 1, 2 );
-
-   le_investigator = us_lineedit( tr( "Not Selected" ) );
-   le_investigator->setReadOnly( true );
-   top->addWidget( le_investigator, row, 2, 1, 2 );
-
-   row++;
-
-   pb_listRotors = us_pushbutton( tr( "List Rotors" ) );
-   connect( pb_listRotors, SIGNAL( clicked() ), this, SLOT( listRotors() ) );
-   top->addWidget( pb_listRotors, row, 0, 1, 2 );
-
-   pb_addRotor = us_pushbutton( tr( "Add new Rotor" ) );
-   connect( pb_addRotor, SIGNAL( clicked() ), this, SLOT( addRotor() ) );
-   top->addWidget( pb_addRotor, row, 2, 1, 2);
+   // labID
+   QLabel* lbl_lab = us_label( tr( " Please select a Laboratory:" ) );
+   top->addWidget( lbl_lab, row, 0, 1, 2 );
+   cb_lab = new QComboBox( this );
+   connect( cb_lab, SIGNAL( activated ( int ) ),      // Only if the user has changed it
+                    SLOT  ( changeLab( int ) ) );
+   top->addWidget( cb_lab, row, 2, 1, 2 );
+   if(!loadLabs())
+   {
+      qDebug() << "Problem loading Labs...";
+   }
+   labID = getIndex(cb_lab->currentText());
 
    row++;
 
@@ -132,9 +127,9 @@ void US_RotorGui::setupGui()
    lbl_bannerRotor->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    top->addWidget( lbl_bannerRotor, row, 0, 1, 2 );
 
-   pb_deleteRotor = us_pushbutton( tr( "Delete Rotor" ) );
-   connect( pb_deleteRotor, SIGNAL( clicked() ), this, SLOT( deleteRotor() ) );
-   top->addWidget( pb_deleteRotor, row, 2, 1, 2);
+   pb_addRotor = us_pushbutton( tr( "Add new Rotor" ) );
+   connect( pb_addRotor, SIGNAL( clicked() ), this, SLOT( addRotor() ) );
+   top->addWidget( pb_addRotor, row, 2, 1, 2);
 
    row++;
 
@@ -144,17 +139,18 @@ void US_RotorGui::setupGui()
                          SLOT  ( selectRotor( QListWidgetItem* ) ) );
    top->addWidget( lw_rotors, row, 0, 3, 2);
 
-   pb_laboratory = us_pushbutton( tr( "Select Laboratory" ) );
-   connect( pb_laboratory, SIGNAL( clicked() ), this, SLOT( getLaboratory() ) );
-   top->addWidget( pb_laboratory, row, 2);
+   pb_deleteRotor = us_pushbutton( tr( "Delete Rotor" ) );
+   connect( pb_deleteRotor, SIGNAL( clicked() ), this, SLOT( deleteRotor() ) );
+   top->addWidget( pb_deleteRotor, row, 2, 1, 2);
 
-   le_laboratory = us_lineedit( "", -1 );
-   le_laboratory->setText( tr("< not selected >"));
-   top->addWidget( le_laboratory, row, 3);
-
+   if(!loadRotors(labID))
+   {
+      qDebug() << "Problem loading Rotors...";
+   }
+   
    row++;
 
-   QLabel *lbl_name = us_label( tr("Name of Rotor:"), -1 );
+   QLabel *lbl_name = us_label( tr(" Name of Rotor:"), -1 );
    top->addWidget( lbl_name, row, 2 );
 
    le_name = us_lineedit( "", -1 );
@@ -165,14 +161,14 @@ void US_RotorGui::setupGui()
 
    row++;
 
-   QLabel *lbl_serialNumber = us_label( tr("Rotor Serial Number:"), -1 );
+   QLabel *lbl_serialNumber = us_label( tr(" Rotor Serial Number:"), -1 );
    top->addWidget( lbl_serialNumber, row, 2 );
 
    le_serialNumber = us_lineedit( "", -1 );
    le_serialNumber->setText( tr("< not selected >"));
    top->addWidget( le_serialNumber, row, 3);
    connect( le_serialNumber, SIGNAL( textEdited  ( const QString & ) ),
-            SLOT  ( updateName ( const QString & ) ) );
+            SLOT  ( updateSerialNumber ( const QString & ) ) );
 
    row++;
 
@@ -204,7 +200,7 @@ void US_RotorGui::setupGui()
 
    row++;
 
-   QLabel *lbl_coefficients = us_label( tr("Rotor Stretch Coefficients:"), -1 );
+   QLabel *lbl_coefficients = us_label( tr(" Rotor Stretch Coefficients:"), -1 );
    top->addWidget( lbl_coefficients, row, 2 );
 
    le_coefficients = us_lineedit( "", -1 );
@@ -214,7 +210,7 @@ void US_RotorGui::setupGui()
 
    row++;
 
-   QLabel *lbl_date = us_label( tr("Calibration performed on:"), -1 );
+   QLabel *lbl_date = us_label( tr(" Calibration performed on:"), -1 );
    top->addWidget( lbl_date, row, 2 );
 
    le_date = us_lineedit( "", -1 );
@@ -224,7 +220,7 @@ void US_RotorGui::setupGui()
 
    row++;
 
-   QLabel *lbl_force = us_label( tr("Total Rotor Revolutions:"), -1 );
+   QLabel *lbl_force = us_label( tr(" Total Rotor Revolutions:"), -1 );
    top->addWidget( lbl_force, row, 2 );
 
    le_force = us_lineedit( "", -1 );
@@ -251,30 +247,64 @@ void US_RotorGui::setupGui()
    top->addWidget( pb_close, row, 3 );
 }
 
-void US_RotorGui::selectInvestigator( void )
+int US_RotorGui::getIndex( const QString &str )
 {
-   /*
-   US_Investigator* inv_dialog = new US_Investigator( true, investigatorID );
-   connect( inv_dialog,
-      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
-      SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
-   inv_dialog->exec();
-   */
-}
-
-void US_RotorGui::listRotors( void )
-{
+   int pos = str.indexOf(":");
+   QString str1 = str.left(pos);
+   return str1.toInt();
 }
 
 void US_RotorGui::addRotor( void )
 {
+   resetAbstractRotor();
+   resetRotor();
+   US_AbstractRotorGui *abstractRotorWin = new US_AbstractRotorGui(&currentAbstractRotor, &currentRotor);
+   connect(abstractRotorWin, SIGNAL (accepted()), this, SLOT (newRotor())); 
+   abstractRotorWin->show();
+}
+
+void US_RotorGui::newRotor( void )
+{
+   currentRotor.labID = labID;
+   currentRotor.GUID = US_Util::new_guid();
+   le_name->setText(currentRotor.name);
+   le_serialNumber->setText(currentRotor.serialNumber);
+   if ( rb_disk -> isChecked() )
+   {
+      /*
+      solution.saveToDisk();
+
+      solution.saveStatus = ( solution.saveStatus == US_Solution::DB_ONLY ) 
+                          ? US_Solution::BOTH : US_Solution::HD_ONLY;
+      */
+   }
+   else
+   {
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+   
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         db_error( db.lastError() );
+         return;
+      }
+
+   }
+
+   QMessageBox::information( this,
+         tr( "Please note:" ),
+         tr( "The new rotor definition has been saved to the database." ) );
+   // now get new rotorID and update the list box.
+}
+
+void US_RotorGui::db_error( const QString &error )
+{
+   QMessageBox::warning( this, tr( "Database Problem" ),
+         tr( "Database returned the following error: \n" ) + error );
 }
 
 void US_RotorGui::deleteRotor( void )
-{
-}
-
-void US_RotorGui::getLaboratory( void )
 {
 }
 
@@ -288,6 +318,7 @@ void US_RotorGui::deleteCalibration( void )
 
 void US_RotorGui::selectRotor( QListWidgetItem *item )
 {
+   
 }
 
 void US_RotorGui::selectCalibration( QListWidgetItem *item )
@@ -343,8 +374,368 @@ void US_RotorGui::accept( void )
 {
 }
 
+// Function to change the current lab
+void US_RotorGui::changeLab( int id )
+{
+   labID = getIndex(cb_lab->itemText(id));
+   loadRotors(labID);
+}
+
+bool US_RotorGui::loadLabs( void )
+{
+   // Find out what labs we have
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return( false );
+   }
+
+   QStringList q( "get_lab_names" );
+   db.query( q );
+
+   int k=0;
+   QString str1, str2, str3;
+   cb_lab->clear();
+   while ( db.next() )
+   {
+      str1 = db.value( 0 ).toString();
+      str2 = db.value( 1 ).toString();
+      str3 = str1 + ": " + str2;
+      cb_lab->insertItem(k, str3);
+      k++;
+   }
+   return( true );
+}
+
+bool US_RotorGui::loadRotors( const int &id )
+{
+   // Find out what rotors we have
+
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return( false );
+   }
+
+   QStringList q( "get_rotor_names" );
+   q << QString::number( id );     // find rotors from this lab
+   db.query( q );
+
+   int k=0;
+   QString str1, str2, str3;
+   lw_rotors->clear();
+   while ( db.next() )
+   {
+      str1 = db.value( 0 ).toString();
+      str2 = db.value( 1 ).toString();
+      str3 = str1 + ": " + str2;
+      lw_rotors->addItem(str3);
+      k++;
+   }
+   return( true );   
+}
+
+void US_RotorGui::connect_error( const QString& error )
+{
+   QMessageBox::warning( this, tr( "Connection Problem" ),
+         tr( "Could not connect to databasee \n" ) + error );
+}
+
+US_AbstractRotorGui::US_AbstractRotorGui( abstractRotor *currentAbstractRotor,
+                                          rotor *currentRotor ) : US_WidgetsDialog(0, 0)
+{
+   this->setModal(true);
+   this->currentAbstractRotor = currentAbstractRotor;
+   this->currentRotor = currentRotor;
+   setupGui();
+}
 
 
+US_AbstractRotorGui::~US_AbstractRotorGui()
+{
+}
+
+void US_AbstractRotorGui::setupGui()
+{
+   setWindowTitle( tr( "Rotor Type Selection" ) );
+   setPalette( US_GuiSettings::frameColor() );
+
+   QGridLayout* top = new QGridLayout( this );
+   top->setSpacing         ( 2 );
+   top->setContentsMargins ( 2, 2, 2, 2 );
+
+   int row = 0;
+   QStringList DB = US_Settings::defaultDB();
+   if ( DB.isEmpty() ) DB << "Undefined";
+
+   QLabel* lbl_bannerDB = us_banner( tr( "Current Database: " ) + DB.at( 0 ) );
+   lbl_bannerDB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   top->addWidget( lbl_bannerDB, row, 0, 1, 2 );
+
+   row++;
+
+   QGridLayout *lo_db = us_radiobutton( tr( "Use Database" ), rb_db );
+   top->addLayout( lo_db, row, 0, 1, 1);
+   connect( rb_db, SIGNAL( clicked() ), this, SLOT( check_db() ) );
+   rb_db->setChecked( true );
+
+   QGridLayout *lo_disk = us_radiobutton( tr( "Use Local Disk" ), rb_disk );
+   top->addLayout( lo_disk, row, 1, 1, 1 );
+   connect( rb_disk, SIGNAL( clicked() ), this, SLOT( check_disk() ) );
+
+   row++;
+   
+   QLabel* lbl_lab = us_label( tr( " Please select a Rotor Type: " ) );
+   top->addWidget( lbl_lab, row, 0, 1, 1 );
+   cb_rotors = new QComboBox( this );
+   connect( cb_rotors, SIGNAL( activated ( int ) ),      // Only if the user has changed it
+                    SLOT  ( changeRotor( int ) ) );
+   top->addWidget( cb_rotors, row, 1, 1, 1 );
+   if(!loadAbstractRotors())
+   {
+      qDebug() << "Problem loading Abstract Rotors...";
+   }
+   rotorID = getIndex(cb_rotors->currentText());
+   
+   row++;
+   QFont currentFont = QFont( "Courier", US_GuiSettings::fontSize()-1, QFont::Bold );
+
+
+   te_details = new QTextEdit(this);
+   te_details->setTextBackgroundColor ( Qt::white );
+   te_details->setText(tr("Rotor Type Details:"));
+   te_details->setFont          ( currentFont );
+   te_details->setPalette       ( US_GuiSettings::editColor() );
+   te_details->setAcceptRichText( true );
+   te_details->setWordWrapMode  ( QTextOption::WrapAtWordBoundaryOrAnywhere );
+   te_details->setReadOnly      ( true );
+   te_details->setMinimumSize(80, 200);
+   top->addWidget(te_details, row, 0, 1, 2);
+
+   changeRotor(cb_rotors->currentIndex());
+   
+   row++;
+
+   QLabel *lbl_name = us_label( tr(" Rotor name: "), -1 );
+   top->addWidget( lbl_name, row, 0 );
+
+   le_name = us_lineedit( "", -1 );
+   le_name->setText( "" );
+   top->addWidget( le_name, row, 1);
+   connect( le_name, SIGNAL( textEdited  ( const QString & ) ),
+            SLOT  ( updateName ( const QString & ) ) );
+
+   row++;
+
+   QLabel *lbl_serialNumber = us_label( tr(" Rotor serial number: "), -1 );
+   top->addWidget( lbl_serialNumber, row, 0 );
+
+   le_serialNumber = us_lineedit( "", -1 );
+   le_serialNumber->setText( "" );
+   top->addWidget( le_serialNumber, row, 1);
+   connect( le_serialNumber, SIGNAL( textEdited  ( const QString & ) ),
+            SLOT  ( updateSerialNumber ( const QString & ) ) );
+
+   row++;
+   
+   pb_help = us_pushbutton( tr( "Help" ) );
+   connect( pb_help, SIGNAL( clicked() ), this, SLOT( help() ) );
+   top->addWidget( pb_help, row, 0 );
+
+   pb_reset = us_pushbutton( tr( "Reset" ) );
+   connect( pb_reset, SIGNAL( clicked() ), this, SLOT( reset() ) );
+   top->addWidget( pb_reset, row, 1 );
+
+   row++;
+
+   pb_accept = us_pushbutton( tr( "Select Current Rotor" ) );
+   connect( pb_accept, SIGNAL( clicked() ), this, SLOT( select() ) );
+   top->addWidget( pb_accept, row, 0 );
+
+   pb_close = us_pushbutton( tr( "Cancel" ) );
+   connect( pb_close, SIGNAL( clicked() ), this, SLOT( close() ) );
+   top->addWidget( pb_close, row, 1 );
+}
+
+void US_AbstractRotorGui::reset( void )
+{
+}
+
+void US_AbstractRotorGui::check_db( void )
+{
+   QStringList DB = US_Settings::defaultDB();
+
+   if ( DB.size() < 5 )
+   {
+      QMessageBox::warning( this,
+         tr( "Attention" ),
+         tr( "There is no default database set." ) );
+   }
+}
+
+void US_AbstractRotorGui::check_disk( void )
+{
+}
+
+bool US_AbstractRotorGui::loadAbstractRotors( void )
+{
+   // Find out what rotors we have
+
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return( false );
+   }
+
+   QStringList q( "get_abstractRotor_names" );
+   db.query( q );
+
+   int k=0;
+   QString str1, str2, str3;
+   cb_rotors->clear();
+   while ( db.next() )
+   {
+      str1 = db.value( 0 ).toString();
+      str2 = db.value( 1 ).toString();
+      str3 = str1 + ": " + str2;
+      cb_rotors->addItem(str3);
+      k++;
+   }
+   //load abstract rotor properties for each entry from database:
+   abstractRotorList.clear();
+   abstractRotor ar;
+   ar.ID = 1;
+   ar.GUID = "GUID1";
+   ar.name = "Simulation";
+   ar.material = "Simulation";
+   ar.numHoles = 1;
+   ar.maxRPM = 100000;
+   ar.cellCenter = 6.5;
+   ar.manufacturer = "Simulation";
+   abstractRotorList.push_back(ar);
+   ar.ID = 2;
+   ar.GUID = "GUID2";
+   ar.name = "AN50";
+   ar.material = "Titanium";
+   ar.numHoles = 8;
+   ar.maxRPM = 50000;
+   ar.cellCenter = 6.5;
+   ar.manufacturer = "Beckman";
+   abstractRotorList.push_back(ar);
+   ar.ID = 3;
+   ar.GUID = "GUID3";
+   ar.name = "AN60";
+   ar.material = "Titanium";
+   ar.numHoles = 4;
+   ar.maxRPM = 60000;
+   ar.cellCenter = 6.5;
+   ar.manufacturer = "Beckman";
+   abstractRotorList.push_back(ar);
+   ar.ID = 4;
+   ar.GUID = "GUID4";
+   ar.name = "CFA";
+   ar.material = "CarbonFiber";
+   ar.numHoles = 8;
+   ar.maxRPM = 60000;
+   ar.cellCenter = 6.5;
+   ar.manufacturer = "SpinAnalytical";
+   abstractRotorList.push_back(ar);
+   return( true );   
+}
+
+int US_AbstractRotorGui::getIndex( const QString &str )
+{
+   int pos = str.indexOf(":");
+   QString str1 = str.left(pos);
+   return str1.toInt();
+}
+
+void US_AbstractRotorGui::connect_error( const QString& error )
+{
+   QMessageBox::warning( this, tr( "Connection Problem" ),
+         tr( "Could not connect to databasee \n" ) + error );
+}
+
+// this function updates the two passed in structures (rotor and abstract rotor) before returning control
+// to the calling program. This program does not update the rotor ID and GUID, or lab ID, that needs to be
+// done by the calling program.
+
+void US_AbstractRotorGui::select()
+{
+   setAbstractRotorInfo(cb_rotors->currentIndex());
+   if ((*currentRotor).name == "" && (*currentRotor).serialNumber == "" )
+   {
+      QMessageBox::warning( this, tr( "Please provide the missing information:" ),
+                        tr( "You need to provide a rotor name and serial number"));
+      return;
+   }
+   else if ((*currentRotor).name == "" && (*currentRotor).serialNumber != "" )
+   {
+      QMessageBox::warning( this, tr( "Please provide the missing information:" ),
+                        tr( "You need to provide a rotor name"));
+      return;
+   }
+   else if ((*currentRotor).name != "" && (*currentRotor).serialNumber == "" )
+   {
+      QMessageBox::warning( this, tr( "Please provide the missing information:" ),
+                        tr( "You need to provide a rotor serial number"));
+      return;
+   }
+   (*currentRotor).ID = (*currentAbstractRotor).ID;
+   (*currentRotor).abstractRotorGUID = (*currentAbstractRotor).GUID;
+      
+   accept();
+}
+
+// Function to change the current rotor
+void US_AbstractRotorGui::changeRotor( int id )
+{
+   rotorID = getIndex(cb_rotors->itemText(id));
+   QString text = tr("Details for the ") + abstractRotorList[id].name + tr(" Rotor Type:\n\n");
+   text += "Database ID:     " + QString::number(abstractRotorList[id].ID) + "\n";
+   text += "GUID:            " + abstractRotorList[id].GUID + "\n";
+   text += "Number of Holes: " + QString::number(abstractRotorList[id].numHoles) + "\n";
+   text += "Maximum Speed:   " + QString::number(abstractRotorList[id].maxRPM) + " rpm\n";
+   text += "Cell Center:     " + QString::number(abstractRotorList[id].cellCenter) + " cm\n";
+   text += "Material:        " + abstractRotorList[id].material + "\n";
+   text += "Manufacturer:    " + abstractRotorList[id].manufacturer;
+   te_details->clear();
+   te_details->setText(text);
+}
+
+void US_AbstractRotorGui::setAbstractRotorInfo( int id )
+{
+   (*currentAbstractRotor).ID              = abstractRotorList[id].ID;
+   (*currentAbstractRotor).GUID            = abstractRotorList[id].GUID;
+   (*currentAbstractRotor).name            = abstractRotorList[id].name;
+   (*currentAbstractRotor).material        = abstractRotorList[id].material;
+   (*currentAbstractRotor).numHoles        = abstractRotorList[id].numHoles;
+   (*currentAbstractRotor).maxRPM          = abstractRotorList[id].maxRPM;
+   (*currentAbstractRotor).cellCenter      = abstractRotorList[id].cellCenter;
+   (*currentAbstractRotor).manufacturer    = abstractRotorList[id].manufacturer;
+}
+
+void US_AbstractRotorGui::updateName( const QString &name)
+{
+   (*currentRotor).name = name;
+}
+
+void US_AbstractRotorGui::updateSerialNumber( const QString &number)
+{
+   (*currentRotor).serialNumber = number;
+}
 
 
 /*
