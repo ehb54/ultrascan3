@@ -203,7 +203,15 @@ class US_EXTERN US_Math2
          double* zzp    = NULL, 
          int*    indexp = NULL
          );
-      
+
+      /*! \brief Remove high frequency noise from a signal
+          \param array   Data to be smoothed.  This array will be modified.
+          \param smooth  Number of values to smooth to be considered when 
+                         smoothing
+      */
+
+      void gaussian_smoothing( QVector< double >&, int );
+
       private:
 
       static void _nnls_g1 ( double a, double b, double*, double*, double* );
