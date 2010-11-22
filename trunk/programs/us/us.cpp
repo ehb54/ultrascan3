@@ -535,7 +535,7 @@ void US_Win::help( int index )
             "Department of Biochemistry\n"
             "7703 Floyd Curl Drive\n"
             "San Antonio, Texas 78229-3900\n"
-            "voice: (210) 567-6592\n"
+            "voice: (210) 767-3332\n"
             "Fax:   (210) 567-6595\n"
             "E-mail: demeler@biochem.uthscsa.edu" ).arg( US_Version ).arg( REVISION ) );
 
