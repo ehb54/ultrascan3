@@ -149,7 +149,7 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DataSet* dataset )
          dataset->viscosity   = a.value( "value" ).toString().toDouble();
       }
       
-      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_bottom" )
+      if ( xml.isStartElement()  &&  xml.name() == "static_bottom" )
       {
          a                      = xml.attributes();
          dataset->centerpiece_bottom = a.value( "value" ).toString().toDouble();

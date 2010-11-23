@@ -1,4 +1,5 @@
 #include "us_mpi_analysis.h"
+#include "us_math2.h"
 
 #include <mpi.h>
 #include <sys/user.h>
@@ -8,7 +9,7 @@ int main( int argc, char* argv[] )
    MPI_Init( &argc, &argv );
    QCoreApplication application( argc, argv );
    new US_MPI_Analysis( argv[ 1 ] );
-   //return application.exec();
+   // return application.exec();
 }
 
 // Constructor
@@ -20,15 +21,20 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& xmlfile ) : QObject()
    if ( my_rank == 0 ) 
       socket = new QUdpSocket( this );
 
-   maxrss     = 0;
-   iterations = 0;
-   set_count  = 0;
+   maxrss         = 0;
+   set_count      = 0;
+   iterations     = 1;
+
+   previous_values.variance = 1.0e99;  // A large number
+
    data_sets .clear();
    parameters.clear();
+   analysisDate = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
 
    // Clear old list of output files if it exists
    QFile::remove( "analysis_files.txt" );
 
+   US_Math2::randomize();   // Set system random sequence
 
    parse( xmlfile );
    send_udp( "Starting" );
@@ -55,7 +61,6 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& xmlfile ) : QObject()
          abort( msg, error );
       }
 
-/*
       for ( int j = 0; j < d->noise_files.size(); j++ )
       {
           US_Noise noise;
@@ -72,15 +77,68 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& xmlfile ) : QObject()
              abort( msg );
           }
       }
-      int result = d->model.load( d->model_file );
-
-      if ( result != US_DataIO2::OK )
-      {
-         QString msg = "Abort.  Bad model file " +  d->model_file;
-         abort( msg );
-      }
-*/         
    }
+
+   max_iterations  = parameters[ "max_iterations" ].toInt();
+   max_iterations  = max( max_iterations, 1 );
+
+   mc_iterations   = parameters[ "mc_iterations" ].toInt();
+   mc_iterations   = max( mc_iterations, 1 );
+
+   meniscus_range  = parameters[ "meniscus_range"  ].toDouble();
+   meniscus_points = parameters[ "meniscus_points" ].toInt();
+   meniscus_points = max( meniscus_points, 1 );
+
+   // Do some parameter checking
+   bool global_fit = data_sets.size() > 1;
+
+   if ( global_fit  &&  meniscus_points > 1 )
+   {
+      abort( "Meniscus fit is not compatible with multiple data sets" );
+   }
+
+   if ( meniscus_points > 1  &&  mc_iterations > 1 )
+   {
+      abort( "Meniscus fit is not compatible with Monte Carlo analysis" );
+   }
+
+   bool noise = parameters[ "rinoise_option" ].toInt() > 0  ||
+                parameters[ "rinoise_option" ].toInt() > 0;
+
+   if ( mc_iterations > 1  &&  noise )
+   {
+      abort( "Monte Carlo iteration is not compatible with noise computation" );
+   }
+
+   if ( global_fit && noise )
+   {
+      abort( "Global fit is not compatible with noise computation" );
+   }
+
+   // Calculate meniscus values
+   meniscus_offsets.resize( meniscus_points );
+
+   double meniscus_start = data_sets[ 0 ]->run_data.meniscus 
+                         - meniscus_range / 2.0;
+   
+   double dm = ( meniscus_points > 1 ) ? meniscus_range / ( meniscus_points - 1 ): 0.0;
+
+   for ( int i = 0; i < meniscus_points; i++ )
+   {
+      meniscus_offsets[ i ] = meniscus_start + dm * i;
+   }
+
+   // Get lower limit of data and last (largest) meniscus value
+   double start_range   = data_sets[ 0 ]->run_data.radius( 0 );
+   double last_meniscus = meniscus_offsets[ meniscus_points - 1 ];
+
+   if ( last_meniscus >= start_range )
+   {
+      abort( "Meniscus offset extends into data" );
+   }
+
+   meniscus_run = 0;
+   mc_iteration = 0;
 
    start();
 }
@@ -89,7 +147,6 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& xmlfile ) : QObject()
 void US_MPI_Analysis::start( void )
 {
    // Real processing goes here
-
    if ( analysis_type == "2DSA" )
    {
       iterations = parameters[ "montecarlo_value" ].toInt();
@@ -136,11 +193,11 @@ long int US_MPI_Analysis::max_rss( void )
    QByteArray ba = f.read( 1000 );
    f.close();
 
-   QString s( ba );
-   QStringList sl = s.split( " " );
-   
-   // Item 23 is the rss in pages.  Convert to KB
-   return sl[ 23 ].toLong() * PAGE_SIZE / 1024;
+   //The 23rd entry is RSS in 4K pages.  Convert to kilobytes.
+
+   const static int k = PAGE_SIZE / 1024;
+   maxrss = max( maxrss, QString( ba ).section( " ", 23, 23 ).toLong() * k );
+   return maxrss;
 }
 
 void US_MPI_Analysis::abort( const QString& message, int error )

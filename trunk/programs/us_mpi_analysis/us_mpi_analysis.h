@@ -7,6 +7,7 @@
 
 #include "us_model.h"
 #include "us_dataIO2.h"
+#include "us_noise.h"
 
 #define MPI_COMM_WORLD2  (((MPI_Comm)(void*)&(ompi_mpi_comm_world)))
 #define MPI_BYTE2        (((MPI_Datatype)(void*)&(ompi_mpi_byte)))
@@ -26,20 +27,43 @@ class US_MPI_Analysis : public QObject
     void start( void );
      
   private:
-    int          node_count;
-    int          my_rank;
-    int          iterations;
-    long int     maxrss;
+    int                 node_count;
+    int                 my_rank;
+    int                 iterations;           // Master only - Iterative
+    int                 max_iterations;       // Master only = Iterative
+    int                 mc_iterations;        // Monte Carlo
+    int                 mc_iteration;         // Monte Carlo current iteration
+    int                 max_experiment_size;
+    long int            maxrss;
+    static const int    min_experiment_size = 100;
+    static const double min_variance_improvement = 1.0e-100;
+                        
+    QVector< int >      worker_status;
+    QVector< int >      worker_depth;
+    int                 max_depth;
+    enum                WorkerStatus { INIT, READY, WORKING };
+                        
+    int                 meniscus_points;
+    int                 meniscus_run;
+    double              meniscus_range;   // Only used by master
+    double              meniscus_offset;  // Only used by worker
+    QVector< double >   meniscus_offsets;
 
-    QHostAddress server;
-    quint16      port;
-    QUdpSocket*  socket;
-    
-    QString      requestID;
-    QString      directory;
-    QString      analysis_type;
-    QString      cluster;
-    QString      db_name;
+    QVector< double >   mc_data;
+    QVector< double >   sigmas;
+    US_DataIO2::RawData sim_data;
+
+    QHostAddress        server;
+    quint16             port;
+    QUdpSocket*         socket;
+                       
+    QString             requestID;
+    QString             directory;
+    QString             analysis_type;
+    QString             cluster;
+    QString             db_name;
+    QString             modelGUID;
+    QString             analysisDate;
 
     QMap< QString, QString > parameters;
     
@@ -73,7 +97,7 @@ class US_MPI_Analysis : public QObject
             static const int MASTER = 0;
             static const int TAG3   = 3;
 
-            enum Command { IDLE, PROCESS, WAIT, SHUTDOWN, WAKEUP_SENT };
+            enum Command { IDLE, PROCESS, WAIT, SHUTDOWN, WAKEUP_SENT, NEWDATA };
             enum Status  { TAG0, READY, RESULTS };
 
             int     solution;
@@ -129,8 +153,19 @@ class US_MPI_Analysis : public QObject
           }
     };
 
+    QList< QVector< Solute > > orig_solutes;
+
+    class _2dsa_Job
+    {
+       public:
+          MPI_Job           mpi_job;
+          QVector< Solute > solutes;
+    };
+
+    QList< _2dsa_Job > job_queue;
+
     static const int solute_doubles = sizeof( Solute ) / sizeof( double );
-    QVector< Solute > calculated_solutes;
+    QList< QVector< Solute > > calculated_solutes;
 
     class Simulation
     {
@@ -141,6 +176,9 @@ class US_MPI_Analysis : public QObject
          QVector< double > ri_noise;
          QVector< Solute > solutes;
     };
+
+    Simulation simulation_values;
+    Simulation previous_values;
 
     void     parse        ( const QString& );
     void     parse_job    ( QXmlStreamReader& );
@@ -155,8 +193,16 @@ class US_MPI_Analysis : public QObject
 
     // Master
     void     _2dsa_master      ( void );
-    void     get_results       ( const MPI_Status&, const int* );
+    void     submit            ( _2dsa_Job&, int );
+    void     process_results   ( int, const int* );
+    void     shutdown_all      ( void );
     void     write_2dsa        ( void );
+    void     write_noise       ( US_Noise::NoiseType, const QVector< double>& );
+    void     iterate           ( void );
+    void     set_meniscus      ( void );
+    void     set_monteCarlo    ( void );
+    void     write_output      ( void );
+    void     set_gaussians     ( void );
 
     // Worker
     void     _2dsa_worker      ( void );
@@ -164,6 +210,40 @@ class US_MPI_Analysis : public QObject
 
     void     calc_residuals    ( int, int, Simulation& );
     double   calc_bottom       ( int, double );
+    void     compute_a_tilde   ( int, int, QVector< double >& );
+    void     compute_L_tildes  ( int, int, int, int, int,
+                                 QVector< double >&, 
+                                 const QVector< double >& );
+    void     compute_L_tilde   ( int, int,
+                                 QVector< double >&,
+                                 const QVector< double >& );
+    void     compute_L         ( int, int, int, int, 
+                                 QVector< double >&,
+                                 const QVector< double >&,
+                                 const QVector< double >& );
+    void     ri_small_a_and_b  ( int, int, int, int, int,
+                                 QVector< double >&,
+                                 QVector< double >&,
+                                 const QVector< double >&,
+                                 const QVector< double >&,
+                                 const QVector< double >& );
+    void     ti_small_a_and_b  ( int, int, int, int, int,
+                                 QVector< double >&,
+                                 QVector< double >&,
+                                 const QVector< double >&,
+                                 const QVector< double >&,
+                                 const QVector< double >& );
+    void     compute_L_bar     ( int, int, 
+                                 QVector< double >&,
+                                 const QVector< double >&,
+                                 const QVector< double >& );
+    void     compute_a_bar     ( int, int, 
+                                 QVector< double >&,
+                                 const QVector< double >& );
+    void     compute_L_bars    ( int, int, int, int, int, int, 
+                                 QVector< double >&,
+                                 const QVector< double >&,
+                                 const QVector< double >& );
 };
 #endif
 
