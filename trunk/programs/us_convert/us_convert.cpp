@@ -121,9 +121,9 @@ US_Convert::US_Convert() : US_Widgets()
    ccw->addWidget( lb_ccwinfo, row++, 1, 1, 2 );
 
    // Set up centerpiece drop-down
+   cb_centerpiece = new US_SelectBox( this );
    centerpieceInfo();
-   cb_centerpiece = us_comboBox();
-   cb_centerpiece -> addItems( centerpieceTypes );
+   cb_centerpiece -> load();
    connect( cb_centerpiece, SIGNAL( currentIndexChanged( int ) ), 
                             SLOT  ( getCenterpieceIndex( int ) ) );
    ccw->addWidget( cb_centerpiece, row++, 1, 1, 2 );
@@ -276,6 +276,8 @@ void US_Convert::reset( void )
    le_description  ->setText( "" );
    le_runID        ->setText( "" );
    le_solutionDesc ->setText( "" );
+
+//   cb_centerpiece  ->load();
 
    pb_load       ->setEnabled( true  );
    pb_loadUS3HD  ->setEnabled( true  );
@@ -771,7 +773,7 @@ void US_Convert::loadUS3HD( QString dir )
    enableScanControls();
 
    // The centerpiece combo box
-   cb_centerpiece->setCurrentIndex( triples[ currentTriple ].centerpiece );
+   cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
 
    // Redo plot
    init_excludes();
@@ -1052,7 +1054,7 @@ void US_Convert::changeTriple( QListWidgetItem* )
    enableScanControls();
    
    // The centerpiece combo box
-   cb_centerpiece->setCurrentIndex( triples[ currentTriple ].centerpiece );
+   cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
    
    // Redo plot
    plot_current();
@@ -1075,9 +1077,9 @@ void US_Convert::setTripleInfo( void )
    lw_triple->setItemSelected( item, true );
 }
 
-void US_Convert::getCenterpieceIndex( int ndx )
+void US_Convert::getCenterpieceIndex( int )
 {
-   triples[ currentTriple ].centerpiece = ndx;
+   triples[ currentTriple ].centerpiece = cb_centerpiece->getLogicalID();
 }
 
 void US_Convert::focus_from( double scan )
@@ -1463,7 +1465,7 @@ void US_Convert::drop_reference( void )
    enableScanControls();
 
    // The centerpiece combo box
-   cb_centerpiece->setCurrentIndex( triples[ currentTriple ].centerpiece );
+   cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
 
    // Redo plot
    plot_current();
@@ -1727,36 +1729,35 @@ bool US_Convert::convert( void )
 
 bool US_Convert::centerpieceInfo( void )
 {
-   QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
-   QFile f( home + "/etc/centerpiece.dat" );
-   if ( ! f.open( QIODevice::ReadOnly | QIODevice::Text ) ) return false;
-   QTextStream ts( &f );
+   // Verify connectivity
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
 
-   centerpieceTypes.clear();
-   while ( ! ts.atEnd() )
+   if ( db.lastErrno() != US_DB2::OK )
    {
-      // Read a line at a time
-      QString line      = ts.readLine();
+      QMessageBox::information( this,
+             tr( "Error" ),
+             tr( "Database connectivity error" ) );
 
-      // Make sure we skip the comments
-      if ( line[ 0 ] != '#' ) 
-      {
-         QStringList parts = line.split(" ", QString::SkipEmptyParts );
-         QString material = parts[ 1 ].toAscii();
-         QString channels = QString::number( parts[ 2 ].toInt() * 2 );
-
-         int pl_index = parts[ 2 ].toInt() + 4;           // bottom position for each channel
-         QString pathlength = parts[ pl_index ].toAscii();
-
-         QString c = material   + ", "
-                   + channels   + " channels, "
-                   + pathlength + "cm";
-
-         centerpieceTypes << c;
-      }
+      return( false );
    }
 
-   f.close();
+   QStringList q( "get_abstractCenterpiece_names" );
+   db.query( q );
+
+   QList<listInfo> options;
+   while ( db.next() )
+   {
+      struct listInfo option;
+      option.ID      = db.value( 0 ).toString();
+      option.text    = db.value( 1 ).toString();
+      options << option;
+   }
+
+   cb_centerpiece->clear();
+   if ( options.size() > 0 )
+      cb_centerpiece->addOptions( options );
 
    return true;
 }
