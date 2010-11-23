@@ -106,12 +106,12 @@ CREATE  TABLE IF NOT EXISTS abstractRotor (
   abstractRotorID int(11) NOT NULL UNIQUE ,
   abstractRotorGUID CHAR(36) NULL ,
   name enum( 'Simulation', 'AN50', 'AN60', 'CFA' ) NULL ,
-  materialName enum( 'Titanium', 'CarbonFiber' ) NULL ,
+  materialName enum( 'Titanium', 'CarbonFiber', 'Simulation' ) NULL ,
   numHoles INT NULL ,
   maxRPM INT NULL ,
   magnetOffset FLOAT NULL ,
-  cellCenter FLOAT 6.5 ,
-  manufacturer enum( 'Beckman', 'SpinAnalytical' ) NULL ,
+  cellCenter FLOAT DEFAULT 6.5 ,
+  manufacturer enum( 'Beckman', 'SpinAnalytical', 'Simulation' ) NULL,
   PRIMARY KEY (abstractRotorID) )
 ENGINE = InnoDB;
 

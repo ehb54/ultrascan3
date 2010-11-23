@@ -19,6 +19,48 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
 
    public:
 
+      //! \brief  Class that contains information about all the labs, instruments,
+      //!         operators, rotors, and rotor calibrations
+      class HardwareInfo
+      {
+         public:
+         struct CalibrationInfo
+         {
+            int              calibrationID;      //!< The ID of the rotor calibration
+            double           rotorCoeff1;        //!< The first rotor stretch calibration coefficient
+            double           rotorCoeff2;        //!< The second rotor stretch coefficient
+         };
+
+         struct RotorInfo
+         {
+            int              rotorID;            //!< The rotor that was used
+            QString          rotorGUID;          //!< The GUID of the rotor
+            QString          rotorSerial;        //!< The serial number of the rotor
+            QList< CalibrationInfo > calibrationInfo; //!< All available calibration profiles for this rotor
+         };
+
+         struct OperatorInfo
+         {
+            int              operatorID;         //!< The personID of the person who operated the centrifuge
+            QString          operatorGUID;       //!< The GUID of the operator
+         };
+
+         struct InstrumentInfo
+         {
+            int              instrumentID;       //!< The identifier of the ultra-centrifuge
+            QString          instrumentSerial;   //!< The serial number of the instrument
+            QList< RotorInfo > rotorInfo;        //!< All available rotors 
+            QList< OperatorInfo > operatorInfo;  //!< Who can operate the instrument
+         };
+
+         struct LabInfo
+         {
+            int              labID;              //!< The lab in which the experiment was conducted
+            QString          labGUID;            //!< The GUID of the lab
+            QList< InstrumentInfo > instrumentInfo; //!< All the instruments in the lab
+         };
+      };
+
       //! \brief  Class that contains information about the hardware and other
       //!         associations
       class ExperimentInfo
@@ -42,6 +84,9 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          int              rotorID;            //!< The rotor that was used
          QString          rotorGUID;          //!< The GUID of the rotor
          QString          rotorSerial;        //!< The serial number of the rotor
+         int              calibrationID;      //!< The ID of the rotor calibration
+         double           rotorCoeff1;        //!< The first rotor stretch calibration coefficient
+         double           rotorCoeff2;        //!< The second rotor stretch coefficient
          QString          expType;            //!< The type of experiment
          QByteArray       opticalSystem;      //!< The type of optical system used
          QList< double >  rpms;               //!< A list of rotor speeds observed during the experiment
@@ -88,6 +133,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       void cancelExpInfoSelection( void );
 
    private:
+      HardwareInfo           hwInfo;
       ExperimentInfo&        expInfo;
       bool                   cb_changed;
 
@@ -116,6 +162,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       void reset             ( void );
       bool load              ( void );
       void reload            ( void );
+      void syncHardware      ( void );
       void selectInvestigator( void );
       void assignInvestigator( int, const QString&, const QString& );
       void getInvestigatorInfo( int );

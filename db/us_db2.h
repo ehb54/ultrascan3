@@ -70,7 +70,14 @@ class US_EXTERN US_DB2
       NO_ANALYTE     = 504,     //!< No analyte with the specified ID exists
       NO_LAB         = 505,     //!< No lab with the specified ID exists
       NO_PERSON      = 506,     //!< No person with the specified ID exists
-      NO_MODEL       = 507      //!< No model with the specified ID exists 
+      NO_MODEL       = 507,     //!< No model with the specified ID exists 
+      NO_EXPERIMENT  = 508,     //!< No experiment with the specified ID exists
+      NO_RAWDATA     = 509,     //!< No raw data with the specified ID exists
+      NO_EDITDATA    = 510,     //!< No edit profile with the specified ID exists
+      NO_SOLUTION    = 511,     //!< No solution with the specified ID exists
+      CALEB_IN_USE   = 512,     //!< The specified rotor calibration profile is in use,
+                                //!< and cannot be deleted
+      ROTOR_IN_USE   = 513      //!< The specified rotor is in use, and cannot be deleted
     };
 
     //! Some user levels used by the US3 database procedures

@@ -51,6 +51,7 @@ BEGIN
   SET @NO_EDITDATA    = 510;
   SET @NO_SOLUTION    = 511;
   SET @CALIB_IN_USE   = 512;    -- the rotor calibration profile is in use
+  SET @ROTOR_IN_USE   = 513;    -- the rotor is in use
 
   -- Some user levels
   SET @US3_USER       = 0;

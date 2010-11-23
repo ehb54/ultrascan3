@@ -57,6 +57,7 @@ QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData,
       << QString::number( ExpData.instrumentID )
       << QString::number( ExpData.operatorID )
       << QString::number( ExpData.rotorID )
+      << QString::number( ExpData.calibrationID )
       << ExpData.expType
       << ExpData.runTemp
       << ExpData.label
@@ -102,6 +103,7 @@ QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData,
       << QString::number( ExpData.instrumentID )
       << QString::number( ExpData.operatorID )
       << QString::number( ExpData.rotorID )
+      << QString::number( ExpData.calibrationID )
       << ExpData.expType
       << ExpData.runTemp
       << ExpData.label
@@ -272,13 +274,14 @@ QString US_ConvertIO::readDBExperiment( QString runID,
       ExpData.instrumentID       = db.value( 4 ).toInt();
       ExpData.operatorID         = db.value( 5 ).toInt();
       ExpData.rotorID            = db.value( 6 ).toInt();
-      ExpData.expType            = db.value( 7 ).toString();
-      ExpData.runTemp            = db.value( 8 ).toString();
-      ExpData.label              = db.value( 9 ).toString();
-      ExpData.comments           = db.value( 10 ).toString();
-      ExpData.centrifugeProtocol = db.value( 11 ).toString();
-      ExpData.date               = db.value( 12 ).toString();
-      ExpData.invID              = db.value( 13 ).toInt();
+      ExpData.calibrationID      = db.value( 7 ).toInt();
+      ExpData.expType            = db.value( 8 ).toString();
+      ExpData.runTemp            = db.value( 9 ).toString();
+      ExpData.label              = db.value( 10 ).toString();
+      ExpData.comments           = db.value( 11 ).toString();
+      ExpData.centrifugeProtocol = db.value( 12 ).toString();
+      ExpData.date               = db.value( 13 ).toString();
+      ExpData.invID              = db.value( 14 ).toInt();
    }
 
    else if ( db.lastErrno() == US_DB2::NOROWS )
@@ -404,12 +407,21 @@ QString US_ConvertIO::readRawDataFromDB( US_ExpInfo::ExperimentInfo& ExpData,
          triple.solution.solutionID = db.value( 0 ).toInt();
 */
 
+         // Try to get more solution info
+         triple.solution.solutionGUID = QString( "" );
+         triple.solution.solutionDesc = QString( "" );
          q.clear();
          q  << "get_solution"
             << QString::number( triple.solution.solutionID );
          db.query( q );
 
-         if ( db.next() )
+         if ( db.lastErrno() == US_DB2::NO_SOLUTION )
+         {
+            // no solution was found
+            triple.solution.solutionID = 0;
+         }
+
+         else if ( db.next() )
          {
             triple.solution.solutionGUID = db.value( 0 ).toString();
             triple.solution.solutionDesc = db.value( 1 ).toString();
@@ -491,6 +503,15 @@ QString US_ConvertIO::readExperimentInfoDB( US_ExpInfo::ExperimentInfo& expInfo 
       expInfo.rotorSerial = db.value( 2 ).toString();
    }
 
+   // For now, get the first calibration profile
+   expInfo.calibrationID = 0;
+   q.clear();
+   q << QString( "get_rotor_calibration_profiles" )
+     << QString::number( expInfo.rotorID );
+   db.query( q );
+   if ( db.next() )
+      expInfo.calibrationID = db.value( 0 ).toInt();
+
    return( QString( "" ) );
 }
 
@@ -563,6 +584,7 @@ int US_ConvertIO::writeXmlFile(
       xml.writeAttribute   ( "id",     QString::number( ExpData.rotorID   ) );
       xml.writeAttribute   ( "guid",   ExpData.rotorGUID );
       xml.writeAttribute   ( "serial", ExpData.rotorSerial );
+      xml.writeAttribute   ( "calibrationID", QString::number( ExpData.calibrationID ) );
       xml.writeEndElement  ();
 
       // loop through the following for c/c/w combinations
@@ -727,6 +749,7 @@ void US_ConvertIO::readExperiment(
             ExpData.rotorID        = a.value( "id"     ).toString().toInt();
             ExpData.rotorGUID      = a.value( "guid"   ).toString();
             ExpData.rotorSerial    = a.value( "serial" ).toString();
+            ExpData.calibrationID  = a.value( "calibrationID" ).toString().toInt();
          }
    
          else if ( xml.name() == "dataset" )
@@ -921,9 +944,10 @@ int US_ConvertIO::verifyXml( US_ExpInfo::ExperimentInfo& ExpData,
 
    if ( db.lastErrno() != US_DB2::OK )
    {
-      ExpData.rotorID     = 0;
-      ExpData.rotorGUID   = QString( "" );
-      ExpData.rotorSerial = QString( "" );
+      ExpData.rotorID       = 0;
+      ExpData.calibrationID = 0;
+      ExpData.rotorGUID     = QString( "" );
+      ExpData.rotorSerial   = QString( "" );
       status = US_Convert::BADGUID;
    }
 
@@ -940,6 +964,15 @@ int US_ConvertIO::verifyXml( US_ExpInfo::ExperimentInfo& ExpData,
          ExpData.rotorGUID   = db.value( 0 ).toString();
          ExpData.rotorSerial = db.value( 2 ).toString();
       }
+
+      // For now, use first calibrationID
+      ExpData.calibrationID = 0;
+      q.clear();
+      q << QString( "get_rotor_calibration_profiles" )
+        << QString::number( ExpData.rotorID );
+      db.query( q );
+      if ( db.next() )
+         ExpData.calibrationID = db.value( 0 ).toInt();
    }
 
    // Double check lab GUID

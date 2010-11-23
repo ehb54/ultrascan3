@@ -428,6 +428,7 @@ DROP PROCEDURE IF EXISTS add_rotor$$
 CREATE PROCEDURE add_rotor ( p_personGUID        CHAR(36),
                              p_password          VARCHAR(80),
                              p_abstractRotorID   INT,
+                             p_abstractRotorGUID CHAR(36),
                              p_labID             INT,
                              p_rotorGUID         CHAR(36),
                              p_name              TEXT,
@@ -435,9 +436,12 @@ CREATE PROCEDURE add_rotor ( p_personGUID        CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
-  DECLARE count_abstract_rotors INT;
-  DECLARE count_labs            INT;
-  DECLARE l_defaultStretch      TEXT;
+  DECLARE count_abstract_rotors      INT;
+  DECLARE count_labs                 INT;
+  DECLARE l_abstractRotorID          INT;
+  DECLARE l_abstractRotorID_count    INT;
+  DECLARE l_abstractRotorGUID        CHAR(36);
+  DECLARE l_abstractRotorGUID_count  INT;
 
   DECLARE duplicate_key TINYINT DEFAULT 0;
   DECLARE null_field    TINYINT DEFAULT 0;
@@ -453,10 +457,47 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
+  -- User can specify either abstractRotorID or abstractRotorGUID
+  SELECT COUNT(*)
+  INTO   l_abstractRotorGUID_count
+  FROM   abstractRotor
+  WHERE  abstractRotorGUID = p_abstractRotorGUID
+  LIMIT  1;                         -- should be exactly 1, if p_abstractRotorGUID is supplied
+
+  SELECT COUNT(*)
+  INTO   l_abstractRotorID_count
+  FROM   abstractRotor
+  WHERE  abstractRotorID = p_abstractRotorID
+  LIMIT  1;                         -- should be exactly 1, if p_abstractRotorID is supplied
+
+  IF ( l_abstractRotorGUID_count = 1 ) THEN -- prefer the GUID
+    SET l_abstractRotorGUID = p_abstractRotorGUID;
+
+    SELECT abstractRotorID
+    INTO   l_abstractRotorID
+    FROM   abstractRotor
+    WHERE  abstractRotorGUID = p_abstractRotorGUID
+    LIMIT  1;
+
+  ELSEIF ( l_abstractRotorID_count = 1 ) THEN
+    SET l_abstractRotorID = p_abstractRotorID;
+
+    SELECT abstractRotorGUID
+    INTO   l_abstractRotorGUID
+    FROM   abstractRotor
+    WHERE  abstractRotorID = p_abstractRotorID;
+
+  ELSE
+    -- rotor doesn't correspond to any abstractRotor
+    SET l_abstractRotorID   = 0;
+    SET l_abstractRotorGUID = p_abstractRotorGUID;
+
+  END IF;
+
   SELECT     COUNT(*)
   INTO       count_abstract_rotors
   FROM       abstractRotor
-  WHERE      abstractRotorID = p_abstractRotorID;
+  WHERE      abstractRotorID = l_abstractRotorID;
 
   SELECT     COUNT(*)
   INTO       count_labs
@@ -469,6 +510,8 @@ BEGIN
       SET @US3_LAST_ERRNO = @NO_ROTOR;
       SET @US3_LAST_ERROR = CONCAT('MySQL: No abstract rotor with ID ',
                                    p_abstractRotorID,
+                                   ' and/or GUID ',
+                                   p_abstractRotorGUID,
                                    ' exists' );
 
     ELSEIF ( count_labs < 1 ) THEN
@@ -479,7 +522,7 @@ BEGIN
 
     ELSE
       INSERT INTO rotor SET
-        abstractRotorID   = p_abstractRotorID,
+        abstractRotorID   = l_abstractRotorID,
         labID             = p_labID,
         name              = p_name,
         rotorGUID         = p_rotorGUID,
@@ -547,6 +590,47 @@ BEGIN
 
 END$$
 
+-- DELETEs an individual rotor, unless it is used in an experiment
+-- This should include a rotor calibration experiment, so one test ought to do
+DROP PROCEDURE IF EXISTS delete_rotor$$
+CREATE PROCEDURE delete_rotor ( p_personGUID   CHAR(36),
+                                p_password     VARCHAR(80),
+                                p_rotorID      INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_experiments          INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_experiments
+  FROM       experiment
+  WHERE      rotorID = p_rotorID;
+
+  IF ( ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) ) THEN
+    IF ( count_experiments > 0 ) THEN
+      -- There are experiments that use this rotor
+      SET @US3_LAST_ERRNO = @ROTOR_IN_USE;
+      SET @US3_LAST_ERROR = CONCAT( "MySQL: the rotor is in use, ",
+                                    "and cannot be deleted\n" );
+
+    ELSE
+      -- We are verified as an admin, and no experiments with this
+      -- rotorID exist
+      DELETE FROM rotor
+      WHERE       rotorID   = p_rotorID;
+        
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
 -- Get a list of abstract rotor names
 DROP PROCEDURE IF EXISTS get_abstractRotor_names$$
 CREATE PROCEDURE get_abstractRotor_names ( p_personGUID CHAR(36),
@@ -579,6 +663,90 @@ BEGIN
       ORDER BY name;
  
     END IF;
+
+  END IF;
+
+END$$
+
+-- Translate an abstractRotorGUID into an abstractRotorID
+DROP PROCEDURE IF EXISTS get_abstractRotorID_from_GUID$$
+CREATE PROCEDURE get_abstractRotorID_from_GUID ( p_abstractRotorGUID   CHAR(36),
+                                                 p_password     VARCHAR(80),
+                                                 p_lookupGUID   CHAR(36) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_abstractRotor  INT;
+  DECLARE l_abstractRotorID    INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_abstractRotor
+  FROM       abstractRotor
+  WHERE      abstractRotorGUID = p_lookupGUID;
+
+  IF ( count_abstractRotor = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+    SELECT abstractRotorID
+    INTO   l_abstractRotorID
+    FROM   abstractRotor
+    WHERE  abstractRotorGUID = p_lookupGUID
+    LIMIT  1;                           -- should be only 1
+
+    SELECT @OK AS status;
+
+    SELECT l_abstractRotorID AS abstractRotorID;
+
+  END IF;
+
+END$$
+
+-- Returns a more complete list of information about one abstractRotor
+DROP PROCEDURE IF EXISTS get_abstractRotor_info$$
+CREATE PROCEDURE get_abstractRotor_info ( p_personGUID CHAR(36),
+                                          p_password   VARCHAR(80),
+                                          p_abstractRotorID    INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_abstractRotors INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_abstractRotors
+  FROM       abstractRotor
+  WHERE      abstractRotorID = p_abstractRotorID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_abstractRotors = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   abstractRotorGUID, name, materialName, numHoles,
+               maxRPM, magnetOffset, cellCenter, manufacturer
+      FROM     abstractRotor
+      WHERE    abstractRotorID = p_abstractRotorID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
 
   END IF;
 

@@ -90,6 +90,16 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    QLabel* lb_hardware_banner = us_banner( tr( "Hardware: " ) );
    hardware->addWidget( lb_hardware_banner, row++, 0, 1, 2 );
 
+   // sync local hardware info with db
+/*
+   QLabel* lb_sync = us_label( tr( "Update local hardware info:" ) );
+   hardware->addWidget( lb_sync, row, 0 );
+   QPushButton* pb_sync = us_pushbutton( tr( "Sync Hardware" ) );
+   connect( pb_sync, SIGNAL( clicked() ), SLOT( syncHardware() ) );
+   pb_sync->setEnabled( true );
+   hardware->addWidget( pb_sync, row++, 1 );
+*/
+
    // labID
    QLabel* lb_lab = us_label( tr( "Lab:" ) );
    hardware->addWidget( lb_lab, row, 0 );
@@ -383,6 +393,10 @@ void US_ExpInfo::reload( void )
    }
 }
 
+void US_ExpInfo::syncHardware( void )
+{
+}
+
 void US_ExpInfo::selectInvestigator( void )
 {
    US_Investigator* inv_dialog = new US_Investigator( true );
@@ -587,6 +601,30 @@ void US_ExpInfo::setRotorList( void )
 
       // Replace rotor ID with one from the list
       expInfo.rotorID = options[ index ].ID.toInt();
+
+      // For now get the first rotor calibration profile for this rotor
+      q.clear();
+      q  << QString( "get_rotor_calibration_profiles" )
+         << QString::number( expInfo.rotorID );
+      db.query( q );
+
+      expInfo.calibrationID = 0;
+      expInfo.rotorCoeff1   = 0.0;
+      expInfo.rotorCoeff2   = 0.0;
+      if ( db.next() )
+      {
+         expInfo.calibrationID = db.value( 0 ).toInt();
+
+         q.clear();
+         q  << QString( "get_rotor_calibration_info" )
+            << QString::number( expInfo.calibrationID );
+         db.query( q );
+         if ( db.next() )
+         {
+            expInfo.rotorCoeff1 = db.value( 3 ).toDouble();
+            expInfo.rotorCoeff2 = db.value( 4 ).toDouble();
+         }
+      }
    }
 }
 
@@ -711,6 +749,9 @@ void US_ExpInfo::ExperimentInfo::clear( void )
    operatorID         = 0;
    operatorGUID       = QString( "" );
    rotorID            = 0;
+   calibrationID      = 0;
+   rotorCoeff1        = 0.0;
+   rotorCoeff2        = 0.0;
    rotorGUID          = QString( "" );
    rotorSerial        = QString( "" );
    expType            = QString( "" );
@@ -742,6 +783,9 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
       instrumentSerial  = rhs.instrumentSerial;
       operatorID    = rhs.operatorID;
       rotorID       = rhs.rotorID;
+      calibrationID = rhs.calibrationID;
+      rotorCoeff1   = rhs.rotorCoeff1;
+      rotorCoeff2   = rhs.rotorCoeff2;
       rotorGUID     = rhs.rotorGUID;
       rotorSerial   = rhs.rotorSerial;
       expType       = rhs.expType;
@@ -778,6 +822,9 @@ void US_ExpInfo::ExperimentInfo::show( void )
             << "operatorID   = " << operatorID << '\n'
             << "operatorGUID = " << operatorGUID << '\n'
             << "rotorID      = " << rotorID << '\n'
+            << "calibrationID = " << calibrationID << '\n'
+            << "rotorCoeff1  = " << rotorCoeff1 << '\n'
+            << "rotorCoeff2  = " << rotorCoeff2 << '\n'
             << "rotorGUID    = " << rotorGUID << '\n'
             << "rotorSerial  = " << rotorSerial << '\n'
             << "expType      = " << expType << '\n'

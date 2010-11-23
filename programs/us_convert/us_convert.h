@@ -11,6 +11,7 @@
 #include "us_dataIO2.h"
 #include "us_expinfo.h"
 #include "us_solution.h"
+#include "us_selectbox.h"
 //#include "us_solution_gui.h"
 
 class US_EXTERN US_Convert : public US_Widgets
@@ -127,7 +128,7 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_savetoHD;
       QPushButton*  pb_savetoDB;
 
-      QComboBox*    cb_centerpiece;
+      US_SelectBox*  cb_centerpiece;
 
       QList< US_DataIO2::BeckmanRawScan > legacyData; // legacy data from file
       QVector< US_DataIO2::RawData >      allData;    // all the data, separated by c/c/w
@@ -154,7 +155,6 @@ class US_EXTERN US_Convert : public US_Widgets
       US_ExpInfo::ExperimentInfo      ExpData; 
       QList< TripleInfo >             triples;
       int                             currentTriple;
-      QStringList                     centerpieceTypes;
 
       void reset           ( void );
       void enableRunIDControl( bool );
