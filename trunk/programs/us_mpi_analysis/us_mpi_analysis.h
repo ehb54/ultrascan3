@@ -46,8 +46,8 @@ class US_MPI_Analysis : public QObject
     int                 meniscus_points;
     int                 meniscus_run;
     double              meniscus_range;   // Only used by master
-    double              meniscus_offset;  // Only used by worker
-    QVector< double >   meniscus_offsets;
+    double              meniscus_value;  // Only used by worker
+    QVector< double >   meniscus_values;
 
     QVector< double >   mc_data;
     QVector< double >   sigmas;
@@ -104,15 +104,15 @@ class US_MPI_Analysis : public QObject
             int     length;
             Command command;
             int     depth;
-            double  meniscus_offset;
+            double  meniscus_value;
 
             MPI_Job()
             {
-                solution        = 0;
-                length          = 0;
-                command         = IDLE;
-                depth           = 0;
-                meniscus_offset = 0.0;
+                solution       = 0;
+                length         = 0;
+                command        = IDLE;
+                depth          = 0;
+                meniscus_value = 0.0;
             };
     };
 

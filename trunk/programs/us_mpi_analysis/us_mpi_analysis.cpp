@@ -116,7 +116,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& xmlfile ) : QObject()
    }
 
    // Calculate meniscus values
-   meniscus_offsets.resize( meniscus_points );
+   meniscus_values.resize( meniscus_points );
 
    double meniscus_start = data_sets[ 0 ]->run_data.meniscus 
                          - meniscus_range / 2.0;
@@ -125,21 +125,20 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& xmlfile ) : QObject()
 
    for ( int i = 0; i < meniscus_points; i++ )
    {
-      meniscus_offsets[ i ] = meniscus_start + dm * i;
+      meniscus_values[ i ] = meniscus_start + dm * i;
    }
 
    // Get lower limit of data and last (largest) meniscus value
    double start_range   = data_sets[ 0 ]->run_data.radius( 0 );
-   double last_meniscus = meniscus_offsets[ meniscus_points - 1 ];
+   double last_meniscus = meniscus_values[ meniscus_points - 1 ];
 
    if ( last_meniscus >= start_range )
    {
-      abort( "Meniscus offset extends into data" );
+      abort( "Meniscus value extends into data" );
    }
 
    meniscus_run = 0;
    mc_iteration = 0;
-
    start();
 }
 

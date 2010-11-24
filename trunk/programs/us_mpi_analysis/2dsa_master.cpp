@@ -110,7 +110,7 @@ top:
          iterations = 0;
 
          // Fit meniscus 
-         if ( ++meniscus_run < meniscus_offsets.size() )
+         if ( ++meniscus_run < meniscus_values.size() )
          {
             write_output();
             set_meniscus();
@@ -161,8 +161,11 @@ top:
       }
    } 
 
+qDebug() << "Finishing up";
    // Finish up
    shutdown_all();
+
+qDebug() << "Writing last";
    write_output();
 }
 
@@ -427,10 +430,10 @@ void US_MPI_Analysis::shutdown_all( void )
 /////////////////////
 void US_MPI_Analysis::submit( _2dsa_Job& job, int worker )
 {
-   job.mpi_job.command         = MPI_Job::PROCESS;
-   job.mpi_job.length          = job.solutes.size(); 
-   job.mpi_job.meniscus_offset = meniscus_offsets[ meniscus_run ];
-   job.mpi_job.solution        = mc_iteration;
+   job.mpi_job.command        = MPI_Job::PROCESS;
+   job.mpi_job.length         = job.solutes.size(); 
+   job.mpi_job.meniscus_value = meniscus_values[ meniscus_run ];
+   job.mpi_job.solution       = mc_iteration;
 
    // Tell worker that solutes are coming
    MPI_Send( &job.mpi_job, 
@@ -646,12 +649,14 @@ void US_MPI_Analysis::write_2dsa( void )
 
    QTextStream out( &f );
 
-   QString offset   = QString::number( meniscus_offsets[ meniscus_run ], 'e', 4 );
-   QString variance = QString::number( simulation_values.variance,       'e', 4 );
+   int current_run = meniscus_run - 1;
 
-   out << fn << ";meniscus_offset=" << offset
-             << ";MC_iteration="    << mc_iteration 
-             << ";variance="        << variance
+   QString meniscus = QString::number( meniscus_values[ current_run ], 'e', 4 );
+   QString variance = QString::number( simulation_values.variance,      'e', 4 );
+
+   out << fn << ";meniscus_value=" << meniscus
+             << ";MC_iteration="   << mc_iteration 
+             << ";variance="       << variance
              << "\n";
    f.close();
 }

@@ -41,15 +41,13 @@ void US_MPI_Analysis::_2dsa_worker( void )
          QVector< US_DataIO2::Scan >* scans = 
             &data_sets[ i ]->run_data.scanData;
          
-         double concentration = concentrations[ i ];
-
          for ( int j = 0; j < scans->size(); j++ ) //scan
          {
             // Get a pointer to the jth scan in the ith data set
             US_DataIO2::Scan* scan = scans->data() + j;
 
             for ( int k = 0; k < scan->readings.size(); k++ ) // concentration
-               scan->readings[ k ].value /= concentration;
+               scan->readings[ k ].value /= concentrations[ i ];
          }
       }
    }
@@ -81,7 +79,7 @@ void US_MPI_Analysis::_2dsa_worker_loop( int offset, int dataset_count )
                 MPI_COMM_WORLD2,
                 &status );        // status not used
 
-      meniscus_offset = job.meniscus_offset;
+      meniscus_value = job.meniscus_value;
 
       switch( job.command )
       {
@@ -257,7 +255,8 @@ void US_MPI_Analysis::calc_residuals( int         offset,
          // Calculation of centerpiece bottom - just use 1st rpm for now
          double rpm = params.speed_step[ 0 ].rotorspeed;
          params.bottom = calc_bottom( e, rpm );
-         params.meniscus += meniscus_offset;
+
+         params.meniscus = meniscus_value;
          //params.debug();
 
          double vbar20 = data_sets[ e ]->vbar20;
