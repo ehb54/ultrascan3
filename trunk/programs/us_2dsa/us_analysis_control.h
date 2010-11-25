@@ -23,11 +23,11 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       US_AnalysisControl( US_DataIO2::EditedData*, QWidget* p = 0 );
 
    public slots:
-      void update_progress (   int );
-      void completed_refine(   int );
-      void progress_message(   QString, bool = true );
-      void completed_subgrids( int,     int );
-      void completed_process(  void );
+      void update_progress (  int  );
+      void completed_refine(  int  );
+      void completed_process( void );
+      void progress_message(  QString, bool = true );
+      void reset_steps(       int,     int );
 
    private:
       int           dbg_level;

@@ -73,33 +73,34 @@ class WorkerThread : public QThread
       QMutex mutex;
       QWaitCondition condition;
 
-      double  llim_s;
-      double  llim_k;
+      double  llim_s;        // lower limit in s (UGRID)
+      double  llim_k;        // lower limit in k (UGRID)
 
-      int     thrx;
-      int     taskx;
-      int     depth;
-      int     iter;
-      int     typeref;
-      int     nscans;
-      int     npoints;
-      int     nsolutes;
-      int     noisflag;
-      int     dbg_level;
+      int     thrn;          // thread number (1,...)
+      int     taskx;         // grid refinement task index
+      int     depth;         // depth index
+      int     iter;          // iteration index
+      int     menmcx;        // meniscus / monte carlo index
+      int     typeref;       // type of refinement (0=UGRID, ...)
+      int     nscans;        // number of scans in experiment
+      int     npoints;       // number of radius points in experiment
+      int     nsolutes;      // number of input solutes for this task
+      int     noisflag;      // noise flag (0-3 for NONE|TI|RI|BOTH)
+      int     dbg_level;     // debug flag
 
-      bool    abort;
+      bool    abort;         // should this thread be aborted?
 
-      US_DataIO2::EditedData* edata;
-      US_DataIO2::RawData     sdata;
-      US_DataIO2::RawData     rdata;
-      US_Model                model;
-      US_Noise                ri_noise;
-      US_Noise                ti_noise;
-      US_Noise                ra_noise;
-      US_SimulationParameters simparms;
+      US_DataIO2::EditedData* edata;       // experiment data (pointer)
+      US_DataIO2::RawData     sdata;       // simulation data
+      US_DataIO2::RawData     rdata;       // residuals
+      US_Model                model;       // output model
+      US_Noise                ri_noise;    // computed radially-invariant noise
+      US_Noise                ti_noise;    // computed time-invariant noise
+      US_Noise                ra_noise;    // computed random noise
+      US_SimulationParameters simparms;    // simulation parameters
 
-      QVector< Solute >       solute_i;
-      QVector< Solute >       solute_c;
+      QVector< Solute >       solute_i;    // input solutes
+      QVector< Solute >       solute_c;    // computed solutes
 };
 
 #endif

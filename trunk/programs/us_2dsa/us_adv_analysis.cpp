@@ -315,7 +315,7 @@ void US_AdvAnalysis::select()
 {
    sparms->band_forming = rb_bandcp  ->isChecked();
    sparms->band_volume  = ct_bandload->value();
-   sparms->simpoints    = ct_spoints ->value();
+   sparms->simpoints    = (int)ct_spoints ->value();
    sparms->meshType     = (US_SimulationParameters::MeshType)
                           cmb_mesh   ->currentIndex();
    sparms->gridType     = (US_SimulationParameters::GridType)
