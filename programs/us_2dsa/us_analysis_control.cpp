@@ -315,6 +315,9 @@ void US_AnalysisControl::start()
    if ( processor == 0 )
       processor   = new US_2dsaProcess( edata, sparms, this );
 
+   else
+      processor->disconnect();
+
    if ( parentw )
    {
       US_2dsa* mainw = (US_2dsa*)parentw;
@@ -343,15 +346,19 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    ti_noise->count = 0;
    ri_noise->count = 0;
 
+   int mintsols  = 100;
+   int noissols  = mintsols / 4;
    int kksubg    = nss * nks;
-   int kkcsol    = kksubg / 8;
+   int kkdep1    = ( ( kksubg / 8 ) * 9 ) / ( mintsols * 5 );
+   int kkcsol    = kkdep1 * mintsols;
    int kknnls    = kkcsol + kkcsol / 50;
    if ( noif > 0 )
-      kknnls       += ( sq( kkcsol ) / 10 );
+      kknnls       += ( sq( noissols ) / 10 + 2 );
    nctotal       = kksubg + kkcsol + kknnls + 10;
    ncsteps       = 0;
 
-   b_progress->setMaximum( nctotal );
+   //b_progress->setMaximum( nctotal );
+   reset_steps( ncsteps, nctotal );
 
    connect( processor, SIGNAL( progress_update(  int ) ),
             this,      SLOT(   update_progress(  int ) ) );
@@ -359,10 +366,18 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
             this,      SLOT(   completed_refine( int ) ) );
    connect( processor, SIGNAL( message_update(   QString, bool ) ),
             this,      SLOT(   progress_message( QString, bool ) ) );
-   connect( processor, SIGNAL( subgrids_complete(  int, int )  ),
-            this,      SLOT(   completed_subgrids( int, int )  ) );
+   connect( processor, SIGNAL( stage_complete(   int, int )  ),
+            this,      SLOT(   reset_steps(      int, int )  ) );
    connect( processor, SIGNAL( process_complete()        ),
             this,      SLOT(   completed_process()       ) );
+
+   int    mxiter = (int)ct_iters->value();
+   int    mciter = (int)ct_menispts->value();
+   int    mniter = (int)ct_menispts->value();
+   double vtoler = 1.0e-9;
+   double menrng = ct_menisrng->value();
+
+   processor->set_iters( mxiter, mciter, mniter, vtoler, menrng );
 
    processor->start_fit( slo, sup, nss, klo, kup, nks,
          ngrr, nthr, noif );
@@ -438,9 +453,9 @@ void US_AnalysisControl::grid_change()
    long   szmat  = sq( ngstep / 5 ) * szval;          // size matrices
    if ( ck_tinoise->isChecked() || ck_rinoise->isChecked() )
       szmat        *= 2L;
-DbgLv(1) << "GC: ngst nsst ngrr nthr" << ngstep << nsstep << ngrrep << nthrd;
-DbgLv(1) << "GC:  szsol szval szgso szsso szmat" << szsol << szval << szgso
-   << szsso << szmat;
+//DbgLv(1) << "GC: ngst nsst ngrr nthr" << ngstep << nsstep << ngrrep << nthrd;
+//DbgLv(1) << "GC:  szsol szval szgso szsso szmat" << szsol << szval << szgso
+//   << szsso << szmat;
    double mbase  = 38.0;
    double mgfac  = 0.250 / 1024.0;
    double msfac  = 2.400 / 1024.0;
@@ -449,7 +464,7 @@ DbgLv(1) << "GC:  szsol szval szgso szsso szmat" << szsol << szval << szgso
    double msubg  = (double)szsso * msfac;
    double mmatr  = (double)szmat * mmfac;
    int    megs   = qRound( mbase + mgrid + msubg + mmatr );
-DbgLv(1) << "GC:  mgrid msubg mmatr megs" << mgrid << msubg << mmatr << megs;
+//DbgLv(1) << "GC:  mgrid msubg mmatr megs" << mgrid << msubg << mmatr << megs;
 
    le_estmemory->setText( QString::number( megs ) + " MB" );
 }
@@ -495,10 +510,10 @@ void US_AnalysisControl::progress_message( QString pmsg, bool append )
    qApp->processEvents();
 }
 
-// slot to handle completed subgrids
-void US_AnalysisControl::completed_subgrids( int kcs, int nct )
+// Slot to handle resetting progress
+void US_AnalysisControl::reset_steps( int kcs, int nct )
 {
-
+DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
    ncsteps      = kcs;
    nctotal      = nct;
 
@@ -515,7 +530,7 @@ void US_AnalysisControl::completed_process()
    qApp->processEvents();
 
    processor->get_results( sdata, rdata, model, ti_noise, ri_noise );
-qDebug() << "AC: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
+DbgLv(1) << "AC: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 
    double varinew  = rdata->scanData[ 0 ].delta_r;
    double variold  = le_newvari->text().toDouble();
@@ -553,13 +568,13 @@ void US_AnalysisControl::advanced()
       aadiag->get_parameters( grtype, grpar1, grpar2, grpar3,
                               men,    mepar1, mepar2,
                               reg,    repar1 );
-qDebug() << "Adv ACCEPT";
-qDebug() << "Adv grtype par123" << grtype << grpar1 << grpar2 << grpar3;
-qDebug() << "Adv men    par12 " << men    << mepar1 << mepar2;
-qDebug() << "Adv reg    par1  " << reg    << repar1;
+DbgLv(1) << "Adv ACCEPT";
+DbgLv(1) << "Adv grtype par123" << grtype << grpar1 << grpar2 << grpar3;
+DbgLv(1) << "Adv men    par12 " << men    << mepar1 << mepar2;
+DbgLv(1) << "Adv reg    par1  " << reg    << repar1;
    }
 else
-qDebug() << "Adv REJECT";
+DbgLv(1) << "Adv REJECT";
 
    qApp->processEvents();
 

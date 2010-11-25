@@ -34,13 +34,16 @@ DbgLv(1) << "2P(WT):   Thread destroyed";
 // define work for a worker thread
 void WorkerThread::define_work( WorkPacket& workin )
 {
-   thrx        = workin.thrx;
-   taskx       = workin.taskx;
-   edata       = workin.edata;
-   simparms    = *workin.sparms;
-   noisflag    = workin.noisf;
    llim_s      = workin.ll_s;
    llim_k      = workin.ll_k;
+   thrn        = workin.thrn;
+   taskx       = workin.taskx;
+   depth       = workin.depth;
+   iter        = workin.iter;
+   menmcx      = workin.menmcx;
+   noisflag    = workin.noisf;
+   edata       = workin.edata;
+   simparms    = *workin.sparms;
 
    solute_i    = workin.isolutes;
 }
@@ -48,10 +51,14 @@ void WorkerThread::define_work( WorkPacket& workin )
 // get results of a completed worker thread
 void WorkerThread::get_result( WorkPacket& workout )
 {
-   workout.thrx     = thrx;
-   workout.taskx    = taskx;
    workout.ll_s     = llim_s;
    workout.ll_k     = llim_k;
+   workout.thrn     = thrn;
+   workout.taskx    = taskx;
+   workout.depth    = depth;
+   workout.iter     = iter;
+   workout.menmcx   = menmcx;
+   workout.noisf    = noisflag;
 
    workout.csolutes = solute_c;
    workout.ti_noise = ti_noise.values;
@@ -61,7 +68,7 @@ void WorkerThread::get_result( WorkPacket& workout )
 // run the worker thread
 void WorkerThread::run()
 {
-DbgLv(1) << "THR RUN: lls llk" << llim_s << llim_k;
+DbgLv(1) << "THR RUN: taskx thrn" << taskx << thrn;
 
    calc_residuals();
 
@@ -79,7 +86,7 @@ void WorkerThread::flag_abort()
    abort      = true;
 }
 
-// do the real work of a thread:  subgrid solution from solutes set
+// do the real work of a thread:  solution from solutes set
 void WorkerThread::calc_residuals()
 {
    // set up for single-component model
@@ -95,16 +102,16 @@ void WorkerThread::calc_residuals()
    npoints          = edata->x.size();
    int nsolutes     = solute_i.size();
    int ntotal       = npoints * nscans;
-   int navalues     = ntotal  * nsolutes;
+   int navals       = ntotal  * nsolutes;
    int ntinois      = npoints;
    int nrinois      = nscans;
 
-   QVector< double > nnls_a( navalues, 0.0 );
+   QVector< double > nnls_a( navals,   0.0 );
    QVector< double > nnls_b( ntotal,   0.0 );
    QVector< double > nnls_x( nsolutes, 0.0 );
    QVector< double > tinvec( ntinois,  0.0 );
    QVector< double > rinvec( nrinois,  0.0 );
-DbgLv(1) << "   CR:na nb nx" << navalues << ntotal << nsolutes;
+DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
 
    QString dvv      = edata->dataType;
    double density   = dvv.section( " ", 1, 1 ).toDouble();
@@ -113,7 +120,7 @@ DbgLv(1) << "   CR:na nb nx" << navalues << ntotal << nsolutes;
    double avgtemp   = 0.0;
    int    kk        = 0;
 
-qDebug() << "TM:BEG:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DbgLv(1) << "TM:BEG:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
    // populate b array with experiment data concentrations
    for ( int ss = 0; ss < nscans; ss++ )
    {
@@ -135,7 +142,7 @@ qDebug() << "TM:BEG:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
    US_Math2::data_correction( avgtemp, solution );
 DbgLv(1) << "   CR: dens visc vbar temp corr" << density << viscosity
    << vbar << avgtemp << solution.s20w_correction;
-   double sfactor = 1.0e-13 / solution.s20w_correction;
+   double sfactor = 1.0 / solution.s20w_correction;
 
    // simulate data using models with single s,f/f0 component
    int    increp  = nsolutes / 10;
@@ -184,7 +191,7 @@ DbgLv(1) << "   CR: dens visc vbar temp corr" << density << viscosity
    int kstodo = nsolutes / 50;
    kstodo     = max( kstodo, 2 );
 
-qDebug() << "TM:BEG:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DbgLv(1) << "TM:BEG:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
    if ( ( noisflag & 1 ) != 0 )
    {
       if ( abort ) return;
@@ -210,7 +217,7 @@ qDebug() << "TM:BEG:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
                       L_bars, nnls_a, L_tildes );
 
       // Set up small_a, small_b for alternate nnls
-qDebug() << "  set SMALL_A+B";
+DbgLv(1) << "  set SMALL_A+B";
       QVector< double > small_a( nsolutes * nsolutes, 0.0 );
       QVector< double > small_b( nsolutes           , 0.0 );
 
@@ -219,7 +226,7 @@ qDebug() << "  set SMALL_A+B";
       if ( abort ) return;
 
       // This is Sum( concentration * Lamm ) for the models after NNLS
-qDebug() << "  noise small NNLS";
+DbgLv(1) << "  noise small NNLS";
       US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes,
                       small_b.data(), nnls_x.data() );
       if ( abort ) return;
@@ -303,13 +310,7 @@ qDebug() << "  noise small NNLS";
       // Note:  ti_noise and ri_noise are already zero
 
    }  // End of core calculations
-qDebug() << "TM:END:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
-
-
-   // Clear simulation data and computed solutes
-   for ( int ss = 0; ss < nscans; ss++ )
-      for ( int rr = 0; rr < npoints; rr++ )
-         sdata.scanData[ ss ].readings[ rr ] = US_DataIO2::Reading( 0.0 );
+DbgLv(1) << "TM:END:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
 
    solute_c.clear();
    if ( abort ) return;
@@ -326,7 +327,7 @@ qDebug() << "TM:END:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
             for ( int rr = 0; rr < npoints; rr++ )
             {
                sdata.scanData[ ss ].readings[ rr ] = 
-                  US_DataIO2::Reading( soluval * edata->value( ss, rr ) );
+                  US_DataIO2::Reading( soluval * sdata.value( ss, rr ) );
             }
          }
 
@@ -349,7 +350,7 @@ qDebug() << "TM:END:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
       ri_noise.count  =  nrinois;
    }
 
-qDebug() << "TM:END:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DbgLv(1) << "TM:END:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
 }
 
 
@@ -444,40 +445,7 @@ void WorkerThread::ri_small_a_and_b( int                      nsolutes,
                                      const QVector< double >& L_tildes,
                                      const QVector< double >& nnls_a )
 {
-qDebug() << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
-#if 0
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      for ( int rr = 0; rr < npoints; rr++ )
-      {
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            small_b[ cc ] +=
-               ( edata->value( ss, rr ) - a_tilde[ ss ] )
-               *
-               ( nnls_a[ cc * ntotal + ss * npoints + rr ] 
-                 -
-                 L_tildes[ cc * nrinois + ss ]
-               );
-
-            for ( int kk = 0; kk < nsolutes; kk++ )
-            {
-               small_a[ kk * nsolutes + cc ] +=
-                  ( nnls_a[ kk * ntotal + ss * npoints + rr ]
-                    - 
-                    L_tildes[ kk * nrinois + ss  ]
-                  ) 
-                  *
-                  ( nnls_a[ cc * ntotal + ss * npoints + rr ]
-                    -  
-                    L_tildes[ cc * nrinois + ss ]
-                  );
-            }
-         }
-      }
-   }
-#endif
-#if 1
+DbgLv(1) << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
    int kstodo = sq( nsolutes ) / 10;
    int incprg = nsolutes / 20;
    incprg     = max( incprg,  1 );
@@ -549,8 +517,7 @@ qDebug() << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
 
    if ( kstodo > 0 )
       emit work_progress( kstodo );
-#endif
-qDebug() << "TM:END:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DbgLv(1) << "TM:END:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
 }
 
 void WorkerThread::ti_small_a_and_b( int                      nsolutes,
@@ -562,37 +529,7 @@ void WorkerThread::ti_small_a_and_b( int                      nsolutes,
                                      const QVector< double >& L_bars,
                                      const QVector< double >& nnls_a )
 {
-qDebug() << "TM:BEG:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
-#if 0
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      for ( int rr = 0; rr < npoints; rr++ )
-      {
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            small_b[ cc ] += 
-               ( edata->value( ss, rr ) - a_bar[ rr ] )
-                 *
-               ( nnls_a[ cc * ntotal + ss * npoints + rr ]
-                 -
-                 L_bars[ cc * ntinois + rr ] );
-
-            for ( int kk = 0; kk < nsolutes; kk++ )
-            {
-               small_a[ kk * nsolutes + cc ] +=
-                  ( nnls_a[ kk * ntotal + ss * npoints + rr ]
-                    -
-                    L_bars[ kk * ntinois + rr ] )
-                  *
-                  ( nnls_a[ cc * ntotal + ss * npoints + rr ]
-                    -
-                    L_bars[ cc * ntinois + rr ] );
-            }
-         }
-      }
-   }
-#endif
-#if 1
+DbgLv(1) << "TM:BEG:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
    int kstodo = sq( nsolutes ) / 10;
    int incprg = nsolutes / 20;
    incprg     = max( incprg,  1 );
@@ -668,8 +605,7 @@ qDebug() << "TM:BEG:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
 
    if ( kstodo > 0 )
       emit work_progress( kstodo );
-#endif
-qDebug() << "TM:END:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DbgLv(1) << "TM:END:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
 }
 
 void WorkerThread::compute_L_bar( QVector< double >&       L_bar,

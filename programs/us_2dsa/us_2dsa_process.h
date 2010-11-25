@@ -36,7 +36,7 @@ class US_EXTERN US_2dsaProcess : public QObject
       enum RefineType { UGRID, LUGRID, RLGRID, SOLCO, CLIPLO };
 
       //! The state of a task
-      enum TaskState  { READY, RUNNING, COMPLETE, ABORTED };
+      enum TaskState  { READY, WORKING, ABORTED };
 
       //! \brief Create a 2DSA processor object
       //! \param da_exper  Pointer to input experiment data
@@ -59,6 +59,14 @@ class US_EXTERN US_2dsaProcess : public QObject
       void start_fit( double, double, int, double, double, int,
                       int, int, int );
 
+      //! \brief Set up iteration-related parameters for a fit
+      //! \param mxiter  Maximum refinement iterations
+      //! \param mciter  Number of monte carlo iterations
+      //! \param mniter  Number of meniscus iterations
+      //! \param vtoler  Variance difference tolerance
+      //! \param menrng  Meniscus range
+      void set_iters( int, int, int, double, double );
+
       //! \brief Get results upon completion of all refinements
       //! \param da_sim  Calculated simulation data
       //! \param da_res  Residuals data (exper - simul)
@@ -69,11 +77,6 @@ class US_EXTERN US_2dsaProcess : public QObject
       bool get_results( US_DataIO2::RawData*, US_DataIO2::RawData*,
                         US_Model*, US_Noise*, US_Noise* );
 
-      QVector< Solute > create_solutes( double, double, double,
-                                        double, double, double );
-
-      void final_computes( void );
-
       void stop_fit(       void );
 
       //! \brief Get message for last error
@@ -81,13 +84,11 @@ class US_EXTERN US_2dsaProcess : public QObject
       QString lastError( void ) { return errMsg; }
 
       static const int solute_doubles = sizeof( Solute ) / sizeof( double );
-      QVector< Solute > c_solutes;  // calculated solutes
 
       class Simulation
       {
          public:
             double variance;
-            QVector< double > variances;
             QVector< double > ti_noise;
             QVector< double > ri_noise;
             QVector< Solute > solutes;
@@ -99,11 +100,21 @@ class US_EXTERN US_2dsaProcess : public QObject
       void step_progress( int );
 
       signals:
-      void progress_update(   int     );
-      void refine_complete(   int     );
-      void subgrids_complete( int,     int  );
-      void process_complete(  void    );
-      void message_update(    QString, bool );
+      void progress_update(  int  );
+      void refine_complete(  int  );
+      void process_complete( void );
+      void stage_complete(   int,     int  );
+      void message_update(   QString, bool );
+
+      private slots:
+      QVector< Solute > create_solutes( double, double, double,
+                                        double, double, double );
+      void queue_task(     WorkPacket&, double, double,
+                           int, int, int, QVector< Solute > );
+      void final_computes( void );
+      void iterate(        void );
+      void submit_job(     WorkPacket&, int );
+      void process_job(    WorkerThread*    );
 
       private:
 
@@ -111,22 +122,34 @@ class US_EXTERN US_2dsaProcess : public QObject
 
       long int max_rss( void );
 
-      QList< WorkerThread* >   wthreads;   // worker threads
-      QList< WorkPacket >      worktsks;   // worker task packets
-      QList< WorkPacket >      workouts;   // worker task packets returned
+      QList< WorkerThread* >     wthreads;   // worker threads
+      QList< WorkPacket >        job_queue;  // job queue
 
-      US_DataIO2::EditedData*  edata;      // experimental data
+      QVector< int >             thstates;   // thread states
+      QVector< int >             wkdepths;   // work packet depths
 
-      US_DataIO2::RawData      sdata;      // simulation data
+      QList< double >            itvaris;    // iteration variances
 
-      US_DataIO2::RawData      rdata;      // residuals data
+      QVector< Solute >          c_solutes;  // calculated solutes
+      QVector< Solute >          d_solutes;  // next-depth calculated solutes
 
-      US_Model                 model;      // constructed model
+      QList< QVector< Solute > > orig_sols;  // original solutes
+      QList< QVector< Solute > > icmp_sols;  // iteration computed solutes
 
-      US_Noise                 ti_noise;   // time-invariant noise
-      US_Noise                 ri_noise;   // radially-invariant noise
+      US_DataIO2::EditedData*    edata;      // experimental data (mc_iter)
+      US_DataIO2::EditedData*    bdata;      // base experimental data
+      US_DataIO2::EditedData     wdata;      // work experimental data
 
-      US_SimulationParameters* simparms;   // simulation parameters
+      US_DataIO2::RawData        sdata;      // simulation data
+
+      US_DataIO2::RawData        rdata;      // residuals data
+
+      US_Model                   model;      // constructed model
+
+      US_Noise                   ti_noise;   // time-invariant noise
+      US_Noise                   ri_noise;   // radially-invariant noise
+
+      US_SimulationParameters*   simparms;   // simulation parameters
 
       QObject*   parentw;      // parent object
 
@@ -145,6 +168,14 @@ class US_EXTERN US_2dsaProcess : public QObject
       int        nsubgrid;     // number of subgrids (tasks)
       int        kctask;       // count of completed subgrid tasks
       int        kstask;       // count of started subgrid tasks;
+      int        mmiters;      // number of meniscus or monte carlo iterations
+      int        mmtype;       // mm type: 0,1,2 for NONE|MENISCUS|MONTECARLO
+      int        maxtsols;     // maximum number of task solutes
+      int        mintsols;     // minimum number of depth 1ff task solutes
+      int        deptho;       // depth of current outputs
+      int        maxiters;     // maximum number of refinement iterations
+      int        r_iter;       // refinement iteration index
+      int        mm_iter;      // meniscus/MC iteration index
 
       bool       abort;        // flag used with stop_fit clicked
 
@@ -156,6 +187,8 @@ class US_EXTERN US_2dsaProcess : public QObject
       double     gdelta_k;     // grid delta in k
       double     sdelta_s;     // subgrid delta in s
       double     sdelta_k;     // subgrid delta in k
+      double     varitol;      // variance difference tolerance
+      double     menrange;     // meniscus range
 
       QTime      timer;        // timer for elapsed time measure
 };

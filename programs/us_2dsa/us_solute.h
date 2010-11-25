@@ -50,16 +50,17 @@ class Solute
 
 };
 
-//! \brief Worker thread task packet arguments
+//! \brief Worker thread task packet
 typedef struct work_packet_s
 {
-   int     thrx;       // thread index (1,...)
-   int     taskx;      // task index (1,...)
-   int     noisf;      // noise flag
-   int     depth;      // depth index
-   int     iter;       // iteration index
-   int     typeref;    // refinement-type flag
-   int     state;      // state flag
+   int     thrn;       // thread number (1,...)
+   int     taskx;      // task index (0,...)
+   int     depth;      // depth index (0,...)
+   int     iter;       // iteration index (0,...)
+   int     menmcx;     // meniscus/monte-carlo index (0,...)
+   int     typeref;    // refinement-type flag (0,... for UGRID,...)
+   int     state;      // state flag (0-3 for READY,RUNNING,COMPLETE,ABORTED)
+   int     noisf;      // noise flag (0-3 for NONE,TI,RI,BOTH)
 
    double  ll_s;       // subgrid lower-limit s
    double  ll_k;       // subgrid lower-limit k

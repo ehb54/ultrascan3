@@ -461,11 +461,11 @@ void US_2dsa::save( void )
          + textFile  + "\n" );
 }
 
+// Return pointer to main window edited data
 US_DataIO2::EditedData* US_2dsa::mw_editdata()
 {
    int row = lw_triples->currentRow();
    edata   = ( row >= 0 ) ? &dataList[ row ] : 0;
-qDebug() << "mw_edit: row" << row;
 
    return edata;
 }
@@ -482,7 +482,6 @@ QPointer< QTextEdit    >    US_2dsa::mw_status_text()  { return te_status;  }
 // Open residuals plot window
 void US_2dsa::open_resplot()
 {
-qDebug() << "Open Resplot";
    if ( resplotd )
    {
       rbd_pos  = resplotd->pos();
@@ -499,7 +498,6 @@ qDebug() << "Open Resplot";
 // Open 3-D plot window
 void US_2dsa::open_3dplot()
 {
-qDebug() << "Open 3dplot";
    if ( eplotcd )
    {
       epd_pos  = eplotcd->pos();
@@ -520,8 +518,6 @@ void US_2dsa::open_fitcntl()
    edata   = ( row >= 0 ) ? &dataList[ row ] : 0;
    edata->dataType = edata->dataType + QString().sprintf(
          " %.6f %.5f %5f", density, viscosity, vbar );
-qDebug() << "Open fitcntl";
-qDebug() << " dens visc vbar" << density << viscosity << vbar;
 
    if ( analcd != 0 )
    {
