@@ -251,7 +251,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 
    cnt_simpoints= new QwtCounter(this);
    cnt_simpoints->setNumButtons(3);
-   cnt_simpoints->setRange(50, 5000, 10);
+   cnt_simpoints->setRange(50, 10000, 10);
    cnt_simpoints->setValue((double)(*simparams).simpoints);
    cnt_simpoints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cnt_simpoints->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));

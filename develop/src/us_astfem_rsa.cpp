@@ -938,9 +938,10 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
    for (i=0; i<af_params.time_steps+1; i++) // calculate all time steps f
    {
       rpm_current = rpm_start + (rpm_stop - rpm_start) * (i+0.5)/af_params.time_steps;
-      if (guiFlag) 
+      if (guiFlag)
       {
          emit current_speed((unsigned int) rpm_current);
+         qApp->processEvents();
       }
 
       // printf("rpm=%12.5e time_steps i=%d C_ttl=%20.10e \n", rpm_current, i,
