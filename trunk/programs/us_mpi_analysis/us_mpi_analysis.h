@@ -8,6 +8,7 @@
 #include "us_model.h"
 #include "us_dataIO2.h"
 #include "us_noise.h"
+#include "us_simparms.h"
 
 #define MPI_COMM_WORLD2  (((MPI_Comm)(void*)&(ompi_mpi_comm_world)))
 #define MPI_BYTE2        (((MPI_Datatype)(void*)&(ompi_mpi_byte)))
@@ -34,6 +35,10 @@ class US_MPI_Analysis : public QObject
     int                 mc_iterations;        // Monte Carlo
     int                 mc_iteration;         // Monte Carlo current iteration
     int                 max_experiment_size;
+
+    int                 current_dataset;      // For global fit
+    int                 datasets_to_process;  // For global fit
+
     long int            maxrss;
     static const int    min_experiment_size = 100;
     static const double min_variance_improvement = 1.0e-100;
@@ -46,12 +51,15 @@ class US_MPI_Analysis : public QObject
     int                 meniscus_points;
     int                 meniscus_run;
     double              meniscus_range;   // Only used by master
-    double              meniscus_value;  // Only used by worker
+    double              meniscus_value;   // Only used by worker
     QVector< double >   meniscus_values;
 
     QVector< double >   mc_data;
     QVector< double >   sigmas;
-    US_DataIO2::RawData sim_data;
+    //US_DataIO2::RawData sim_data;
+
+    US_DataIO2::RawData residuals;       // Populated in calc_residuals
+    US_DataIO2::RawData solution;        // Populated in calc_residuals
 
     QHostAddress        server;
     quint16             port;
@@ -66,7 +74,10 @@ class US_MPI_Analysis : public QObject
     QString             analysisDate;
 
     QMap< QString, QString > parameters;
-    
+   
+#define MESH US_SimulationParameters::MeshType
+#define GRID US_SimulationParameters::GridType
+
     class DataSet
     {
         public:
@@ -79,8 +90,10 @@ class US_MPI_Analysis : public QObject
             US_Model               model;    
             int                    simpoints;
             double                 band_volume;
-            int                    radial_grid;
-            int                    time_grid;
+            
+            MESH                   radial_grid;
+            GRID                   time_grid;
+            
             double                 vbar20;
             double                 viscosity;
             double                 density;
@@ -105,6 +118,8 @@ class US_MPI_Analysis : public QObject
             Command command;
             int     depth;
             double  meniscus_value;
+            int     dataset_offset;
+            int     dataset_count;
 
             MPI_Job()
             {
@@ -113,6 +128,8 @@ class US_MPI_Analysis : public QObject
                 command        = IDLE;
                 depth          = 0;
                 meniscus_value = 0.0;
+                dataset_offset = 0;
+                dataset_count  = 1;
             };
     };
 
@@ -203,6 +220,7 @@ class US_MPI_Analysis : public QObject
     void     set_monteCarlo    ( void );
     void     write_output      ( void );
     void     set_gaussians     ( void );
+    void     global_fit        ( void );
 
     // Worker
     void     _2dsa_worker      ( void );
