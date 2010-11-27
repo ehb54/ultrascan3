@@ -128,13 +128,13 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DataSet* dataset )
       if ( xml.isStartElement()  &&  xml.name() == "radial_grid" )
       {
          a                    = xml.attributes();
-         dataset->radial_grid = a.value( "value" ).toString().toInt();
+         dataset->radial_grid = (MESH)a.value( "value" ).toString().toInt();
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "time_grid" )
       {
          a                    = xml.attributes();
-         dataset->time_grid   = a.value( "value" ).toString().toInt();
+         dataset->time_grid   = (GRID)a.value( "value" ).toString().toInt();
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "density" )

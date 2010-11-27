@@ -1,16 +1,19 @@
 #include "us_mpi_analysis.h"
 #include "us_constants.h"
 #include "us_math2.h"
-#include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
 #include "us_simparms.h"
 
 void US_MPI_Analysis::_2dsa_worker( void )
 {
+   // Start at offset 0 and a daatset size of 1
+   _2dsa_worker_loop( 0, 1 );
+
    // When we get here, all datasets and parameters have been read into memory.
    // First go through each dataset individually and scale the concentrations.
    // Then run monte carlo iterations on the combined data.
 
+/*
    DataSet* current_data;
    int      dataset_size = data_sets.size();
 
@@ -51,6 +54,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
          }
       }
    }
+*/
 }
 
 void US_MPI_Analysis::_2dsa_worker_loop( int offset, int dataset_count )
@@ -80,6 +84,8 @@ void US_MPI_Analysis::_2dsa_worker_loop( int offset, int dataset_count )
                 &status );        // status not used
 
       meniscus_value = job.meniscus_value;
+      offset         = job.dataset_offset;
+      dataset_count  = job.dataset_count;
 
       switch( job.command )
       {
@@ -163,15 +169,16 @@ void US_MPI_Analysis::_2dsa_worker_loop( int offset, int dataset_count )
 
                int index = 0;
 
-               for ( int e = 0; e < dataset_count; e++ )
+               for ( int e = job.dataset_offset; e < job.dataset_count; e++ )
                {
-                  int scan_count    = data_sets[ e ]->run_data.scanData.size();
-                  int radius_points = data_sets[ e ]->run_data.x.size();
+                  US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+
+                  int scan_count    = data->scanData.size();
+                  int radius_points = data->x.size();
 
                   for ( int s = 0; s < scan_count; s++ )
                   {
-                     US_DataIO2::Scan* scan = 
-                        &data_sets[ e ]->run_data.scanData[ s ];
+                     US_DataIO2::Scan* scan = &data->scanData[ s ];
 
                      for ( int r = 0; r < radius_points; r++ )
                      {
@@ -248,9 +255,17 @@ void US_MPI_Analysis::calc_residuals( int         offset,
    {
       for ( int e = offset; e < offset + dataset_count; e++ )
       {
+         DataSet* data = data_sets[ e ];
+
          // Create simulation parameters from experimental data
          US_SimulationParameters params;
-         params.initFromData( NULL, data_sets[ e ]->run_data );
+         params.initFromData( NULL, data->run_data );
+         params.simpoints   = data->simpoints;
+         params.meshType    = data->radial_grid;
+         params.gridType    = data->time_grid;
+         
+         params.band_volume = data->band_volume;
+         if ( params.band_volume > 0.0 ) params.band_forming = true;
 
          // Calculation of centerpiece bottom - just use 1st rpm for now
          double rpm = params.speed_step[ 0 ].rotorspeed;
@@ -259,7 +274,7 @@ void US_MPI_Analysis::calc_residuals( int         offset,
          params.meniscus = meniscus_value;
          //params.debug();
 
-         double vbar20 = data_sets[ e ]->vbar20;
+         double vbar20 = data->vbar20;
          double s20w   = fabs( simulation_values.solutes[ i ].s );
          double f_f0   = simulation_values.solutes[ i ].k;
 
@@ -273,18 +288,18 @@ void US_MPI_Analysis::calc_residuals( int         offset,
 
          // Get the temperature for this run
          double sum           = 0.0;
-         int    scan_count    = data_sets[ e ]->run_data.scanData.size();
-         int    radius_points = data_sets[ e ]->run_data.x.size();
+         int    scan_count    = data->run_data.scanData.size();
+         int    radius_points = data->run_data.x.size();
 
          for ( int i = 0; i < scan_count; i++ )
-            sum += data_sets[ e ]->run_data.scanData[ i ].temperature;
+            sum += data->run_data.scanData[ i ].temperature;
 
          double temperature = sum / scan_count;
 
          // Determine corrections for experimental space
          US_Math2::SolutionData solution;
-         solution.density   = data_sets[ e ]->density;
-         solution.viscosity = data_sets[ e ]->viscosity;
+         solution.density   = data->density;
+         solution.viscosity = data->viscosity;
          solution.vbar20    = vbar20;
          solution.vbar      = US_Math2::adjust_vbar20( vbar20, temperature );
 
@@ -303,7 +318,7 @@ void US_MPI_Analysis::calc_residuals( int         offset,
 
          // Create raw data structures and set cardinality
          US_DataIO2::RawData sim_data;
-         US_AstfemMath::initSimData( sim_data, data_sets[ e ]->run_data, 0.0 );
+         US_AstfemMath::initSimData( sim_data, data->run_data, 0.0 );
 
          // Run the simulation
          astfem_rsa.calculate( sim_data );
@@ -318,7 +333,6 @@ void US_MPI_Analysis::calc_residuals( int         offset,
                nnls_a[ count++ ] = sim_data.value( s, r );
             }
          }
-
       } // for each dataset
    } // for each solute
 
@@ -446,23 +460,25 @@ void US_MPI_Analysis::calc_residuals( int         offset,
 
    } // End of core calculations
 
-   // Clear residuals
-   QList< US_AstfemMath::MfemData > residuals;
-   US_AstfemMath::MfemData          data;
-   US_AstfemMath::MfemScan          scan;
+   // Initialize structures.  Note that the elements of both residuals and
+   // solution are not really needed at the same time so the solution data
+   // structure could be used to store the residuals to save memory.
+
+   residuals.scanData.clear();
+   solution .scanData.clear();
+
+   US_DataIO2::Scan scan;
 
    for ( int e = offset; e < offset + dataset_count; e++ )
    {
       int radius_points = data_sets[ e ]->run_data.x.size();
       int scan_count    = data_sets[ e ]->run_data.scanData.size();
-      int index         = e - offset;
-      residuals << data;
+      //int index         = e - offset;
+      
+      scan.readings.fill( US_DataIO2::Reading(), radius_points );
 
-      for ( int s = 0; s < scan_count; s++ )
-      {
-         residuals[ index ].scan << scan;
-         residuals[ index ].scan[ s ].conc.fill( 0.0, radius_points );
-      }
+      solution .scanData.fill( scan, scan_count );
+      residuals.scanData.fill( scan, scan_count );
    }
 
    // Scale readings and store in residuals structure
@@ -474,16 +490,16 @@ void US_MPI_Analysis::calc_residuals( int         offset,
          {
             int radius_points = data_sets[ e ]->run_data.x.size();
             int scan_count    = data_sets[ e ]->run_data.scanData.size();
-            int index         = e - offset;
+            //int index         = e - offset;
 
             // Scale the data
             for ( int s = 0; s < scan_count; s++ )
             {
                for ( int r = 0; r < radius_points; r++ )
                {
-                  residuals[ index ].scan[ s ].conc[ r ] =
-                     nnls_x[ solute ] *
-                     data_sets[ e ]->run_data.scanData[ s ].readings[ r ].value;
+                  solution.scanData[ s ].readings[ r ].value +=
+                     nnls_x     [ solute ] *
+                     simulations[ solute ].value( s, r );
                }
             }
          }
@@ -492,7 +508,7 @@ void US_MPI_Analysis::calc_residuals( int         offset,
    } // for each solute
 
    double variance = 0.0;
-   double rmsds[ data_sets.size() ];
+   double rmsds[ dataset_count ];
 
    int ti_noise_offset = 0;
    int ri_noise_offset = 0;
@@ -500,8 +516,9 @@ void US_MPI_Analysis::calc_residuals( int         offset,
    // Calculate residuals and rmsd values
    for ( int e = offset; e < offset + dataset_count; e++ )
    {
-      int radius_points = data_sets[ e ]->run_data.x.size();
-      int scan_count    = data_sets[ e ]->run_data.scanData.size();
+      US_DataIO2::EditedData* data =  &data_sets[ e ]->run_data;
+      int radius_points = data->x.size();
+      int scan_count    = data->scanData.size();
       int index         = e - offset;
 
       rmsds[ index ] = 0.0;
@@ -510,15 +527,16 @@ void US_MPI_Analysis::calc_residuals( int         offset,
       {
          for ( int r = 0; r < radius_points; r++)
          {
-            residuals[ index ].scan[ s ].conc[ r ] =
-              data_sets  [ e ]->run_data.scanData[ s ].readings[ r ].value
-            - residuals[ index ].scan[ s ].conc[ r ]
-            - ti_noise[ r + ti_noise_offset ]
-            - ri_noise[ s + ri_noise_offset ];
+            // TODO: multi experiment
+            residuals.scanData[ s ].readings[ r ].value =
+              data_sets[ e ]->run_data.value( s, r )   // actual data
+            - solution.value( s, r )                   // simulation data
+            - ti_noise[ r + ti_noise_offset ]          // time invariant noise
+            - ri_noise[ s + ri_noise_offset ];         // radial invariant noise
 
-            double r2 = sq( residuals[ index ].scan[ s ].conc[ r ] );
+            double r2 = sq( residuals.value( s, r ) );
 
-            variance   += r2;
+            variance       += r2;
             rmsds[ index ] += r2;
          }
       }
@@ -538,7 +556,6 @@ void US_MPI_Analysis::calc_residuals( int         offset,
       int index         = e - offset;
 
       variances[ index ] = rmsds[ index ] / ( radius_points * scan_count );
-      rmsds    [ index ] = sqrt( rmsds[ index ] );
    }
 
    QVector< Solute > solutes = simulation_values.solutes;
@@ -547,7 +564,7 @@ void US_MPI_Analysis::calc_residuals( int         offset,
    // Store solutes for return
    for ( int i = 0; i < solute_count; i++ )
    {
-      if ( nnls_x[ i ] > 0 )
+      if ( nnls_x[ i ] > 0.0 )
       {
          solutes[ i ].c = nnls_x [ i ];
          simulation_values.solutes << solutes[ i ];

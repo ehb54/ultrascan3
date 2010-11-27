@@ -85,6 +85,9 @@ void US_MPI_Analysis::_2dsa_master( void )
       job_queue << job;
    }
 
+   current_dataset     = 0;
+   datasets_to_process = 1;  // Process one dataset at a time for now
+
    while ( true )
    {
       int worker;
@@ -109,25 +112,22 @@ top:
            
          iterations = 0;
 
-         // Fit meniscus 
-         if ( ++meniscus_run < meniscus_values.size() )
-         {
-            write_output();
-            set_meniscus();
-         }
+         // Manage multiple data sets
+         if ( data_sets.size() > 1  &&  datasets_to_process == 1 ) global_fit();
+         if ( ! job_queue.isEmpty() ) goto top;;
 
+         write_output();
+
+         // Fit meniscus 
+         if ( ++meniscus_run < meniscus_values.size() ) set_meniscus(); 
          if ( ! job_queue.isEmpty() ) goto top;;
          
          // Monte Carlo
-         if ( ++mc_iteration < mc_iterations )
-         {
-            write_output();
-            set_monteCarlo();
-         }
-
+         if ( ++mc_iteration < mc_iterations ) set_monteCarlo(); 
          if ( ! job_queue.isEmpty() ) goto top;;
 
-         break;   // All done.  Break out of main loop.
+         shutdown_all();  // All done
+         break;           // Break out of main loop.
       }
 
       // Wait for worker to send a message
@@ -160,13 +160,94 @@ top:
             break;
       }
    } 
+}
 
-qDebug() << "Finishing up";
-   // Finish up
-   shutdown_all();
+//////////////////
+void US_MPI_Analysis::global_fit( void )
+{
+   // To do a global fit across multiple data sets:
+   // 1. Each individual data set must be run
+   // 2. Sum the total concentration of all returned solutes
+   // 3. Divide all experiment concentrations by the total concentration
+   // 4. Send the concentration data to the workers
+   // 5. Do an additional run against the combined datasets for the baseline
+   // Any additional Monte Carlo runs will use the adjusted data for all
+   // data sets.
+   
+   double concentration = 0.0;
 
-qDebug() << "Writing last";
-   write_output();
+   // The first dataset is done automatically.
+   for ( int solute = 0; solute < simulation_values.solutes.size(); solute++ )
+   {
+      concentration += simulation_values.solutes[ solute ].c;
+   }
+
+   // Point to current dataset
+   US_DataIO2::EditedData* data = &data_sets[ current_dataset ]->run_data;
+
+   int scan_count    = data->scanData.size();
+   int radius_points = data->x.size();
+   int index         = 0;
+
+   QVector< double > scaled_data( scan_count * radius_points );
+
+   // Scale the data
+   for ( int s = 0; s < scan_count; s++ )
+   {
+      for ( int r = 0; r < radius_points; r++ )
+      {
+         scaled_data[ index++ ] = data->value( s, r ) / concentration;
+      }
+   }
+
+   // Send the scaled data to the workers
+   // Broadcast Monte Carlo data to all workers
+   MPI_Job job;
+   job.command        = MPI_Job::NEWDATA;
+   job.length         = scaled_data.size();
+   job.dataset_offset = current_dataset;
+   job.dataset_count  = 1;
+
+   // Tell each worker that new data coming
+   // Can't use a broadcast because the worker is expecting a Send
+   for ( int worker = 1; worker < node_count; worker++ )
+   {
+      MPI_Send( &job, 
+          sizeof( MPI_Job ), 
+          MPI_BYTE2,
+          worker,   
+          MPI_Job::MASTER,
+          MPI_COMM_WORLD2 );
+   }
+
+   MPI_Bcast( scaled_data.data(), 
+              scaled_data.size(), 
+              MPI_DOUBLE, 
+              MPI_Job::MASTER, 
+              MPI_COMM_WORLD2 );
+
+   // Go to the next dataset
+   current_dataset++;
+   
+   // If all datasets have been scaled, do all datasets from now on
+   if ( current_dataset >= data_sets.size() )
+   {
+      datasets_to_process = data_sets.size();
+      current_dataset     = 0;
+   }
+
+   for ( int i = 0; i < orig_solutes.size(); i++ )
+   {
+      _2dsa_Job job;
+      job.solutes                = orig_solutes[ i ];
+      job.mpi_job.dataset_offset = current_dataset;
+      job.mpi_job.dataset_count  = datasets_to_process;
+
+      job_queue << job;
+   }
+
+   worker_depth.fill( 0 );
+   max_depth = 0;
 }
 
 //////////////////
@@ -191,33 +272,54 @@ void US_MPI_Analysis::set_monteCarlo( void )
    // Set up new data modified by a gaussian distribution
    if ( mc_iteration == 1 ) set_gaussians();
 
-   int scan_count    = data_sets[ 0 ]->run_data.scanData.size();
-   int radius_points = data_sets[ 0 ]->run_data.x.size();
-   int index         = 0;
+   int total_points = 0;
+
+   for ( int e = 0; e < data_sets.size(); e++ )
+   {
+      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+
+      int scan_count    = data->scanData.size();
+      int radius_points = data->x.size();
+
+      total_points += scan_count * radius_points;
+   }
+
+   mc_data.resize( total_points );
+
+   int index = 0;
 
    // Get a randomized variation of the concentrations
-   for ( int s = 0; s < scan_count; s++ )
+   // Use a gaussian distribution with the residual as the standard deviation
+   for ( int e = 0; e < data_sets.size(); e++ )
    {
-      for ( int r = 0; r < radius_points; r++ )
+      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+
+      int scan_count    = data->scanData.size();
+      int radius_points = data->x.size();
+
+      for ( int s = 0; s < scan_count; s++ )
       {
-         double value     = sim_data.value( s, r );
-         double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
-         // Add gaussian variation here
-         mc_data[ index ] = value + variation;
-         index++;
+         for ( int r = 0; r < radius_points; r++ )
+         {
+            double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
+            mc_data[ index ] = solution.value( s, r ) + variation;
+            index++;
+         }
       }
    }
 
    // Broadcast Monte Carlo data to all workers
-   MPI_Job job;
-   job.command = MPI_Job::NEWDATA;
-   job.length  = mc_data.size();
+   MPI_Job newdata;
+   newdata.command        = MPI_Job::NEWDATA;
+   newdata.length         = total_points;
+   newdata.dataset_offset = 0;
+   newdata.dataset_count  = data_sets.size();
 
    // Tell each worker that new data coming
-   // Can't use a broadcast because the work is expecting a Send
+   // Can't use a broadcast because the worker is expecting a Send
    for ( int worker = 1; worker < node_count; worker++ )
    {
-      MPI_Send( &job, 
+      MPI_Send( &newdata, 
           sizeof( MPI_Job ), 
           MPI_BYTE2,
           worker,   
@@ -226,10 +328,15 @@ void US_MPI_Analysis::set_monteCarlo( void )
    }
 
    MPI_Bcast( mc_data.data(), 
-              mc_data.size(), 
+              total_points, 
               MPI_DOUBLE, 
               MPI_Job::MASTER, 
               MPI_COMM_WORLD2 );
+
+   _2dsa_Job job;
+   job.mpi_job.dataset_offset = 0;
+   job.mpi_job.dataset_count  = data_sets.size();
+
 
    // Set up to run the next Monte Carlo iteration
    for ( int i = 0; i < orig_solutes.size(); i++ )
@@ -250,108 +357,31 @@ void US_MPI_Analysis::set_monteCarlo( void )
 //  data in Monte Carlo iterations
 void US_MPI_Analysis::set_gaussians( void )
 {
-   // Count the data points
-   static int data_point_count = 0;
-   static int dataset_size = data_sets.size();
-
-   for ( int e = 0; e < e < dataset_size; e++ )
-   {
-      int scan_count    = data_sets[ e ]->run_data.scanData.size();
-      int radius_points = data_sets[ e ]->run_data.x.size();
-
-      data_point_count += scan_count * radius_points;
-   }
-
-   int    scan_count    = data_sets[ 0 ]->run_data.scanData.size();
-   int    radius_points = data_sets[ 0 ]->run_data.x.size();
-
-   mc_data.resize( data_point_count );
-
-   // Create an array standard deviations based on residuals
-   US_Model                model;
-   US_SimulationParameters params;
-   params.initFromData( NULL, data_sets[ 0 ]->run_data );
-   
-   double rpm = params.speed_step[ 0 ].rotorspeed;
-   params.bottom = calc_bottom( 0, rpm );
-
-   double vbar20 = data_sets[ 0 ]->vbar20;
-
-   // Get the temperature for this run
-   double sum           = 0.0;
-
-   for ( int i = 0; i < scan_count; i++ )
-      sum += data_sets[ 0 ]->run_data.scanData[ i ].temperature;
-
-   double temperature = sum / scan_count;
-
-   // Determine corrections for experimental space
-   US_Math2::SolutionData solution;
-   solution.density   = data_sets[ 0 ]->density;
-   solution.viscosity = data_sets[ 0 ]->viscosity;
-   solution.vbar20    = vbar20;
-   solution.vbar      = US_Math2::adjust_vbar20( vbar20, temperature );
-
-   US_Math2::data_correction( temperature, solution );
-
-   // Create raw data structures and set cardinality
-   US_AstfemMath::initSimData( sim_data, data_sets[ 0 ]->run_data, 0.0 );
-
-   for ( int i = 0; i < simulation_values.solutes.size(); i++ )
-   {
-      double s20w   = fabs( simulation_values.solutes[ i ].s );
-      double f_f0   = simulation_values.solutes[ i ].k;
-
-      double D20w = R * K20 /
-         ( AVOGADRO * 18.0 * M_PI *
-           pow( f_f0 * VISC_20W / 100.0, 3.0 / 2.0 ) *
-           sqrt( s20w * vbar20  /
-                 ( 2.0 * ( 1.0 - vbar20 * DENS_20W ) )
-               )
-         );
-
-      US_Model::SimulationComponent component;
-
-      component.s = s20w / solution.s20w_correction;
-      component.D = D20w / solution.D20w_correction;
-
-      model.components << component;
-   }
-
-   US_Astfem_RSA astfem_rsa( model, params );
-
-   // Calculate the simulation data
-   astfem_rsa.calculate( sim_data );
-
-   // Create residual structure and set cardinality
-   US_DataIO2::RawData residuals;
-   US_AstfemMath::initSimData( residuals, data_sets[ 0 ]->run_data, 0.0 );
-
-   for ( int s = 0; s < scan_count; s++ )
-   {
-      for ( int r = 0; r < radius_points; r++ )
-      {
-         residuals.scanData[ s ].readings[ r ].value = 
-            fabs( sim_data.value( s, r ) - 
-                  data_sets[ 0 ]->run_data.value( s, r ) );
-      }
-   }
+   calc_residuals( 0, data_sets.size(), simulation_values );
 
    sigmas.clear();
 
-   // Smooth the data and place into a single vector for convenience
-   for ( int s = 0; s < scan_count; s++ )
+   for ( int e = 0; e < data_sets.size(); e++ )
    {
-      QVector< double > v( radius_points );
+      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
 
-      for ( int r = 0; r < radius_points; r++ )
+      int scan_count    = data->scanData.size();
+      int radius_points = data->x.size();
+
+      // Smooth the data and place into a single vector for convenience
+      for ( int s = 0; s < scan_count; s++ )
       {
-         v[ r ] = fabs( residuals.value( s, r ) );
-      }
+         QVector< double > v( radius_points );
 
-      // Smooth using 5 points to the left and right of each point
-      US_Math2::gaussian_smoothing( v, 5 );
-      sigmas << v;
+         for ( int r = 0; r < radius_points; r++ )
+         {
+            v[ r ] = fabs( residuals.value( s, r ) );
+         }
+
+         // Smooth using 5 points to the left and right of each point
+         US_Math2::gaussian_smoothing( v, 5 );
+         sigmas << v;
+      }
    }
 }
 //////////////////
@@ -381,12 +411,13 @@ void US_MPI_Analysis::iterate( void )
    
    // Set up for another round at depth 0
    _2dsa_Job job;
+   job.mpi_job.dataset_offset = current_dataset;
+   job.mpi_job.dataset_count  = datasets_to_process;
 
    QVector< Solute > prev_solutes = simulation_values.solutes;
    
    for ( int i = 0; i < orig_solutes.size(); i++ )
    {
-      _2dsa_Job job;
       job.solutes = orig_solutes[ i ];
 
       // Add back all non-zero Solutes to each job
@@ -434,6 +465,8 @@ void US_MPI_Analysis::submit( _2dsa_Job& job, int worker )
    job.mpi_job.length         = job.solutes.size(); 
    job.mpi_job.meniscus_value = meniscus_values[ meniscus_run ];
    job.mpi_job.solution       = mc_iteration;
+   job.mpi_job.dataset_offset = current_dataset;
+   job.mpi_job.dataset_count  = datasets_to_process;
 
    // Tell worker that solutes are coming
    MPI_Send( &job.mpi_job, 
@@ -522,8 +555,10 @@ void US_MPI_Analysis::process_results( int        worker,
    {
       // Put current solutes on queue at depth + 1
       _2dsa_Job job;
-      job.solutes         = calculated_solutes[ depth ];
-      job.mpi_job.depth   = depth + 1;
+      job.solutes                = calculated_solutes[ depth ];
+      job.mpi_job.depth          = depth + 1;
+      job.mpi_job.dataset_offset = current_dataset;
+      job.mpi_job.dataset_count  = datasets_to_process;
       job_queue << job;
 
       max_depth = max( depth + 1, max_depth );
@@ -565,8 +600,10 @@ void US_MPI_Analysis::process_results( int        worker,
       if ( ! working && ! queued && remainder > 0 )
       {
          _2dsa_Job job;
-         job.solutes         = calculated_solutes[ d ];
-         job.mpi_job.depth   = d + 1;
+         job.solutes                = calculated_solutes[ d ];
+         job.mpi_job.depth          = d + 1;
+         job.mpi_job.dataset_offset = current_dataset;
+         job.mpi_job.dataset_count  = datasets_to_process;
          job_queue << job;
 
          calculated_solutes[ d ].clear();
@@ -591,8 +628,10 @@ void US_MPI_Analysis::process_results( int        worker,
         calculated_solutes[ depth ].size() > simulation_values.solutes.size() )
    {
          _2dsa_Job job;
-         job.solutes       = calculated_solutes[ depth ];
-         job.mpi_job.depth = depth + 1;
+         job.solutes                = calculated_solutes[ depth ];
+         job.mpi_job.depth          = depth + 1;
+         job.mpi_job.dataset_offset = current_dataset;
+         job.mpi_job.dataset_count  = datasets_to_process;
          job_queue << job;
 
          calculated_solutes[ depth ].clear();
