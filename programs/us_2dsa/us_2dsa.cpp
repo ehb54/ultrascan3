@@ -155,18 +155,14 @@ void US_2dsa::analysis_done( int updflag )
    QString editID    = edata->editID;
    editID            = editID.startsWith( "20" ) ? editID.mid( 2 ) : editID;
    model.editGUID    = edata->editGUID;
-   model.description = edata->runID + "_2DSA_e" + editID + "_a" + analysID
-      + ".model.11";
+   model.analysis    = US_Model::TWODSA;
+   model.description = edata->runID + ".2DSA_e" + editID + "_a" + analysID
+      + ".model." + edata->cell + "1";
 
 qDebug() << "Analysis Done";
 qDebug() << "  model components size" << model.components.size();
 qDebug() << "  edat0 sdat0 rdat0"
  << edata->value(0,0) << sdata.value(0,0) << rdata.value(0,0);
-//*DEBUG*
-QString mfilename = US_Settings::dataDir() + "/models/M0000999.xml";
-model.write( mfilename );
-//*DEBUG*
-qDebug() << model.description << "\n to file" << mfilename;
 
    pb_plt3d ->setEnabled( true );
    pb_pltres->setEnabled( true );
@@ -340,17 +336,111 @@ void US_2dsa::view( void )
    te_results->show();
 }
 
+// Save data (model,noise) files and report files
 void US_2dsa::save( void )
 {
-   int                     index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* d      = &dataList[ index ];
-   QString                 dir    = US_Settings::reportDir();
+   QString rpath  = US_Settings::reportDir();
+   QString mpath;
+   QString npath;
 
-   if ( ! mkdir( dir, d->runID ) ) return;
+   // Save the model file
+
+   if ( ! US_Model::model_path( mpath ) )
+   {
+      qDebug() << "*** Unable to create or find the model directory ***";
+      return;
+   }
+
+   QStringList ffilt( "M*.xml" );
+   QDir        dirm( mpath );
+   QStringList names =  dirm.entryList( ffilt, QDir::Files, QDir::Name );
+   QString     mname = "M0000000.xml";
+   QString     nname = "N0000000.xml";
+   QString     nnam1 = nname;
+   int         indx  = 1;
+
+   while( indx > 0 )
+   {
+      mname = "M" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      if ( ! names.contains( mname ) )
+         break;
+   }
+
+   mname  = mpath + "/" + mname;
+   model.write( mname );
+
+   // Save any noise files
+
+   int     nnois  = min( ti_noise.count, 1 ) + min( ri_noise.count, 1 );
+   if ( nnois > 0 )
+   {
+      if ( ! US_Noise::noise_path( npath ) )
+      {
+         qDebug() << "*** Unable to create or find the noise directory ***";
+         return;
+      }
+
+      QString tidsc = model.description.replace( ".model.", ".ti_noise." );
+      QString ridsc = model.description.replace( ".model.", ".ri_noise." );
+      QDir    dirn( npath );
+      ffilt.clear();
+      ffilt << "N*.xml";
+      names         = dirn.entryList( ffilt, QDir::Files, QDir::Name );
+      int     knois = 0;
+              indx  = 1;
+
+      while ( knois < nnois )
+      {
+         nname = "N" + QString().sprintf( "%07i", indx++ ) + ".xml";
+         if ( ! names.contains( nname ) )
+         {
+            if ( ++knois < nnois )
+            {
+               nnam1 = nname;
+            }
+         }
+      }
+
+      nname  = npath + "/" + nname;
+      nnam1  = npath + "/" + ( nnois == 1 ? nname : nnam1 );
+
+      if ( ti_noise.count > 0 )
+      {
+         ti_noise.type        = US_Noise::TI;
+         ti_noise.description = tidsc;
+         ti_noise.noiseGUID   = US_Util::new_guid();
+         ti_noise.modelGUID   = model.modelGUID;
+
+         ti_noise.write( nnam1 );
+
+         if ( ri_noise.count > 0 )
+         {
+            ri_noise.type        = US_Noise::RI;
+            ri_noise.description = ridsc;
+            ri_noise.noiseGUID   = US_Util::new_guid();
+            ri_noise.modelGUID   = model.modelGUID;
+
+            ri_noise.write( nname );
+         }
+      }
+
+      else
+      {
+         ri_noise.type        = US_Noise::RI;
+         ri_noise.description = ridsc;
+         ri_noise.noiseGUID   = US_Util::new_guid();
+         ri_noise.modelGUID   = model.modelGUID;
+
+         ri_noise.write( nname );
+      }
+   }
+
+   US_DataIO2::EditedData* d = edata;
+   if ( ! mkdir( rpath, d->runID ) ) return;
 
    // Note: d->runID is both directory and first segment of file name
-   QString filebase = dir + "/" + d->runID + "/" + d->runID + "." + d->cell + 
-       + "." + d->channel + "." + d->wavelength;
+   QString filebase  = rpath + "/" + d->runID + "/" + d->runID
+      + "." + d->cell + + "." + d->channel + "." + d->wavelength;
    
    QString plot1File = filebase + ".sm_plot1.svg";
    QString plot2File = filebase + ".sm_plot2.svg";
@@ -452,13 +542,15 @@ void US_2dsa::save( void )
 #endif
 
    // Tell user
-   QMessageBox::warning( this,
-         tr( "Success" ),
-         tr( "Wrote:\n" ) 
-         + htmlFile  + "\n" 
-         + plot1File + "\n" 
-         + plot2File + "\n" 
-         + textFile  + "\n" );
+   QString wmsg = tr( "Wrote:\n" ) + mname + "\n";
+   if ( nnois > 1 )
+      wmsg = wmsg + nnam1 + "\n" + nname + "\n";
+   else if ( nnois > 0 )
+      wmsg = wmsg + nname + "\n";
+   wmsg = wmsg + htmlFile  + "\n" + plot1File + "\n"
+               + plot2File + "\n" + textFile  + "\n";
+
+   QMessageBox::warning( this, tr( "Success" ), wmsg );
 }
 
 // Return pointer to main window edited data

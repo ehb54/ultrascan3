@@ -21,14 +21,14 @@ US_2dsaProcess::US_2dsaProcess( US_DataIO2::EditedData* da_exper,
    parentw          = parent; 
    dbg_level        = US_Settings::us_debug();
    maxrss           = 0;              // max memory
-   deptho           = 0;              // depth index of current tasks
+   maxdepth         = 0;              // maximum depth index of tasks
    varitol          = 1e-9;           // variance difference tolerance
    r_iter           = 0;              // refinement iteration index
    mm_iter          = 0;              // meniscus/MC iteration index
-   mintsols         = 100;            // minimum depth 1ff solutes
+   mintsols         = 100;            // minimum solutes per task, depth 1 ff.
 
    itvaris  .clear();                 // iteration variances
-   icmp_sols.clear();                 // iteration final computed solutes
+   ical_sols.clear();                 // iteration final calculated solutes
 }
 
 // Get maximum used memory
@@ -65,19 +65,19 @@ DbgLv(1) << "2P(2dsaProc): start_fit()";
    noisflag    = noif;
    errMsg      = tr( "NO ERROR: start" );
    maxrss      = 0;
-   deptho      = 0;
+   maxdepth    = 0;
    r_iter      = 0;
    mm_iter     = 0;
 
+   wkstates .resize(  nthreads );
    wthreads .clear();
-   thstates .clear();
-   wkdepths .clear();
+   tkdepths .clear();
    job_queue.clear();
    c_solutes.clear();
 
    orig_sols.clear();
    itvaris  .clear();
-   icmp_sols.clear();
+   ical_sols.clear();
 
 DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
  << " kll kul nks" << klolim << kuplim << nksteps
@@ -95,15 +95,11 @@ DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
    // subgrid deltas  (increments between subgrid points)
    sdelta_s    = gdelta_s * (double)ngrefine;
    sdelta_k    = gdelta_k * (double)ngrefine;
+   maxtsols    = mintsols;
 
    nsubgrid    = ngrefine * ngrefine;
    int kksubg  = nksteps * nssteps;
-   int kkdep1  = ( ( kksubg / 8 ) * 9 ) / ( mintsols * 5 );
-   int kkcsol  = kkdep1 * mintsols;
-   int kknnls  = kkcsol + kkcsol / 50;
-   if ( noisflag > 0 )
-      kknnls     += ( sq( ( mintsols / 4 ) ) / 10 + 2 );
-   nctotal     = kksubg + kkcsol + kknnls + 10;
+   nctotal     = kksubg + estimate_steps( ( kksubg / 8 ) );
 
    kcsteps     = 0;
    emit stage_complete( kcsteps, nctotal );
@@ -119,7 +115,6 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
 
    int    ktask = 0;
    double llss  = slolim;
-   maxtsols     = 0;
 
    // Define work unit parameters, including solutes for each subgrid
    for ( int ii = 0; ii < ngrefine; ii++ )
@@ -145,12 +140,12 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
    }
 
    // Start the first threads. This will begin the first work units (subgrids).
-   // Thereafter, work units are started in new threads when threads signal
-   // that they have completed their work.
+   // Thereafter, work units are started in new threads when previous
+   // threads signal that they have completed their work.
+
    for ( int ii = 0; ii < nthreads; ii++ )
    {
       wthreads << 0;
-      thstates << READY;
 
       WorkPacket wtask = job_queue.takeFirst();
       submit_job( wtask, ii );
@@ -182,7 +177,7 @@ void US_2dsaProcess::stop_fit()
 {
    abort   = true;
 
-   for ( int ii = 0; ii < wthreads.size(); ii++ )
+   for ( int ii = 0; ii < nthreads; ii++ )
    {
 DbgLv(1) << "StopFit test Thread" << ii + 1;
       WorkerThread* wthr = wthreads[ ii ];
@@ -196,12 +191,10 @@ DbgLv(1) << "  STOPTHR:  thread aborted";
       wthreads[ ii ] = 0;
    }
 
-   wthreads .clear();
    job_queue.clear();
-   thstates .clear();
-   wkdepths .clear();
+   tkdepths .clear();
    c_solutes.clear();
-   deptho    = 0;
+   maxdepth  = 0;
 
    emit message_update( tr( "All computations have been aborted." ), false );
 }
@@ -210,18 +203,10 @@ DbgLv(1) << "  STOPTHR:  thread aborted";
 void US_2dsaProcess::step_progress( int ksteps )
 {
    max_rss();
+   kcsteps   += ksteps;              // bump completed steps count
+//DbgLv(2) << "StpPr: ks kcs    " << ksteps << kcsteps;
 
-   ksteps     = ( ksteps < 2 ) ? 1 : ksteps;
-   kcsteps   += ksteps;
-//DbgLv(1) << "StpPr: ks kcs    " << ksteps << kcsteps;
-   emit progress_update( ksteps );   // pass progress on to control and main
-}
-
-// Slot to handle a worker thread having finished. Accumulate computed solutes.
-// If more work left, start a new thread for a new work unit.
-void US_2dsaProcess::thread_finished( WorkerThread* wthrd )
-{
-   process_job( wthrd );
+   emit progress_update( ksteps );   // pass progress on to control window
 }
 
 // Use a worker thread one last time to compute, using all computed solutes
@@ -234,8 +219,8 @@ void US_2dsaProcess::final_computes()
    WorkPacket wtask;
 
    wtask.thrn     = 0;
-   wtask.taskx    = -1;          // special task index signalling final task
-   wtask.depth    = deptho;
+   wtask.taskx    = tkdepths.size();
+   wtask.depth    = maxdepth;
    wtask.noisf    = noisflag;    // in this case, we use the noise flag
    wtask.edata    = edata;
    wtask.sparms   = simparms;
@@ -243,7 +228,7 @@ void US_2dsaProcess::final_computes()
    wtask.ti_noise.clear();
    wtask.ri_noise.clear();
 
-   wkdepths << wtask.depth;
+   tkdepths << wtask.depth;
 
    // This time, input solutes are all the subgrid-computed ones where
    // the concentration is positive.
@@ -261,30 +246,41 @@ DbgLv(1) << "FinalComp: szSoluI" << wtask.isolutes.size();
    c_solutes.clear();
 
    WorkerThread* wthr = new WorkerThread( this );
+
+   int thrx = wkstates.indexOf( READY );
+   while ( thrx < 0 )
+   {
+      US_Sleep::msleep( 1 );
+      thrx = wkstates.indexOf( READY );
+   }
+
+   wtask.thrn = thrx + 1;
    wthr->define_work( wtask );
 
-   connect( wthr, SIGNAL( work_complete(  WorkerThread* ) ),
-            this, SLOT(   final_finished( WorkerThread* ) ) );
-   connect( wthr, SIGNAL( work_progress(  int           ) ),
-            this, SLOT(   step_progress(  int           ) ) );
+   connect( wthr, SIGNAL( work_complete( WorkerThread* ) ),
+            this, SLOT(   process_final( WorkerThread* ) ) );
+   connect( wthr, SIGNAL( work_progress( int           ) ),
+            this, SLOT(   step_progress( int           ) ) );
 
    emit message_update( tr( "Computing final NNLS ..." ), false );
 
-   wthreads[ 0 ] = wthr;
+DbgLv(1) << "(FC)SUBMIT_JOB taskx" << wtask.taskx << "depth" << wtask.depth;
+   wthreads[ thrx ] = wthr;
    wthr->start( );
 }
 
-// Final pass to use composite computed solutes
-void US_2dsaProcess::final_finished( WorkerThread* wthrd )
+// Slot to handle output of final pass on composite calculated solutes
+void US_2dsaProcess::process_final( WorkerThread* wthrd )
 {
    if ( abort ) return;
 
    WorkPacket wresult;
 
-   wthrd->get_result( wresult );  // get results of thread task
-DbgLv(1) << "FIN_FIN: thrn taskx" << wresult.thrn << wresult.taskx;
+   wthrd->get_result( wresult );     // get results of thread task
+DbgLv(1) << "(FF)PROCESS_JOB thrn" << wresult.thrn << "taskx" << wresult.taskx
+ << "depth" << wresult.depth;
 
-   c_solutes    = wresult.csolutes;
+   c_solutes    = wresult.csolutes;  // final iteration calculated solutes
    int nsolutes = c_solutes.size();
 DbgLv(1) << "FIN_FIN:    c_sol size" << nsolutes;
 
@@ -292,7 +288,7 @@ DbgLv(1) << "FIN_FIN:    c_sol size" << nsolutes;
    QVector< double > rinvec( nscans,   0.0 );
 
    if ( ( noisflag & 1 ) != 0 )
-   {
+   {  // copy TI noise to caller and internal vector
       ti_noise.values.resize( npoints );
       ti_noise.count = npoints;
 
@@ -304,7 +300,7 @@ DbgLv(1) << "FIN_FIN:    c_sol size" << nsolutes;
    }
 
    if ( ( noisflag & 2 ) != 0 )
-   {
+   {  // copy RI noise to caller and internal vector
       ri_noise.values.resize( nscans );
       ri_noise.count = nscans;
 
@@ -316,15 +312,14 @@ DbgLv(1) << "FIN_FIN:    c_sol size" << nsolutes;
    }
 DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
 
+   // pick up solution/buffer values passed via data's dataType string
    QString dvv      = edata->dataType;
    double density   = dvv.section( " ", 1, 1 ).toDouble();
    double viscosity = dvv.section( " ", 2, 2 ).toDouble();
    double vbar      = dvv.section( " ", 3, 3 ).toDouble();
-   double avgtemp   = 0.0;
-   for ( int ii = 0; ii < nscans; ii++ )
-         avgtemp += edata->scanData[ ii ].temperature;
-   avgtemp /= (double)nscans;
+   double avgtemp   = edata->average_temperature();
 
+   // computed s,D correction factors
    US_Math2::SolutionData solution;
    solution.density   = density;
    solution.viscosity = viscosity;
@@ -332,13 +327,15 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
    solution.vbar      = vbar;
    US_Math2::data_correction( avgtemp, solution );
    double sfactor     = 1.0 / solution.s20w_correction;
+   double dfactor     = 1.0 / solution.D20w_correction;
    model.components.resize( nsolutes );
 
    // build the final model
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
       US_Model::SimulationComponent mcomp;
-      mcomp.s     = qAbs( c_solutes[ cc ].s ) * sfactor;
+      //mcomp.s     = qAbs( c_solutes[ cc ].s ) * sfactor;
+      mcomp.s     = qAbs( c_solutes[ cc ].s );
       mcomp.D     = 0.0;
       mcomp.mw    = 0.0;
       mcomp.f     = 0.0;
@@ -346,17 +343,21 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
       mcomp.signal_concentration
                   = c_solutes[ cc ].c;
 
+      model.calc_coefficients( mcomp );
+
+      mcomp.s    *= sfactor;
+      mcomp.D    *= dfactor;
+
       model.components[ cc ]  = mcomp;
    }
 
-   model.update_coefficients();
 DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[0].c << c_solutes[nsolutes-1].c;
+   // calculate the simulation data
 
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
    US_Astfem_RSA astfem_rsa( model, *simparms );
 
-   // calculate the simulation data
    astfem_rsa.calculate( sdata );
 
    nscans           = edata->scanData.size();
@@ -370,17 +371,17 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[0].c << c_solutes[nsolutes-1].c;
       {
          double rval = edata->value( ss, rr ) - sdata.value( ss, rr )
                        - tinvec[ rr ] - rinvec[ ss ];
-         vari       += ( rval * rval );
+         vari       += sq( rval );
 
          rdata.scanData[ ss ].readings[ rr ] = US_DataIO2::Reading( rval );
       }
    }
 
-   // communicate variance through scan0's delta_r value
+   // communicate variance to control through residual scan0's delta_r value
    vari      /= (double)( nscans * npoints );
    rdata.scanData[ 0 ].delta_r = vari;
    itvaris   << vari;
-   icmp_sols << c_solutes;
+   ical_sols << c_solutes;
 
    // determine elapsed time
    int ktimes = ( timer.elapsed() + 500 ) / 1000;
@@ -388,17 +389,15 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[0].c << c_solutes[nsolutes-1].c;
    int ktimem = ( ktimes - ktimeh * 3600 ) / 60;
    ktimes     = ktimes - ktimeh * 3600 - ktimem * 60;
 
-   r_iter++;
-
-   // compose final status message
+   // compose final iteration status message
    QString pmsg =
       tr( "The Solution has converged...\n"
           "Iterations:  %1\n"
           "Threads:  %2 ;   Subgrids:  %3\n"
           "Grid points (s x f/f0):  %4 x %5\n"
           "Run time:  " )
-      .arg( r_iter  ).arg( nthreads ).arg( nsubgrid )
-      .arg( nssteps ).arg( nksteps  );
+      .arg( r_iter + 1 )
+      .arg( nthreads ).arg( nsubgrid ).arg( nssteps ).arg( nksteps );
 
    if ( ktimeh > 0 )
       pmsg += tr( "%1 hr., %2 min., %3 sec.\n" )
@@ -415,61 +414,71 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[0].c << c_solutes[nsolutes-1].c;
            + QString().sprintf( "%.1f", memmb ) + " MB";
 
    emit message_update( pmsg, false );  // signal final message
-   emit process_complete();             // signal that processing is complete
 
-   delete wthreads[ 0 ];                // destroy thread
-   wthreads[ 0 ]  = 0;
+   int thrx   = wresult.thrn - 1;
+   free_worker( thrx );
 DbgLv(1) << "FIN_FIN: maxrss memmb nthr nsubg nssteps nksteps noisf"
  << maxrss << memmb << nthreads << nsubgrid << nssteps << nksteps << noisflag;
 
-   bool   doit  = false;       // do-iteration false by default
+   bool   neediter = false;       // need-more-iterations false by default
 
-   if ( r_iter < maxiters )
-   {  // possibly iterate if below maximum iterations
+   if ( ( r_iter + 1 ) < maxiters )
+   {  // possibly iterate if not yet at maximum iterations
 
-      if ( r_iter < 2 )
+      if ( r_iter < 1 )
       {  // if max is 2 or more, we must do at least 2 iterations to compare
-         doit         = true;
+         neediter     = true;
       }
 
       else
       {  // otherwise, we must compare solutes and variance difference
-         int    jc     = r_iter - 1;
-         int    jp     = r_iter - 2;
+         int    jc     = r_iter;
+         int    jp     = r_iter - 1;
          double pvari  = itvaris[   jp ];
-         double dvari  = vari - pvari;
-         int    nccsol = icmp_sols[ jc ].size();
-         int    npcsol = icmp_sols[ jp ].size();
+         double dvari  = pvari - vari;
+         int    nccsol = ical_sols[ jc ].size();
+         int    npcsol = ical_sols[ jp ].size();
+         bool   sdiffs = true;
 
          if ( nccsol == npcsol )
          {  // determine if calculated solutes match previous in s and k
+            sdiffs       = false;
             for ( int jj = 0; jj < nccsol; jj++ )
             {
-               if ( icmp_sols[ jc ][ jj ] != icmp_sols[ jp ][ jj ] )
+               if ( ical_sols[ jc ][ jj ] != ical_sols[ jp ][ jj ] )
                {  // if any mismatch, we may need to iterate
-                  doit         = true;
+                  sdiffs       = true;
                   break;
                }
             }
          }
 
-         if ( doit  &&  dvari < varitol )
-         {  // if non-matching solutes and small variance change, turn off iters
-            doit         = false;
-         }
+         // iterate if solutes different and variance change large enough
+         neediter     = ( sdiffs  &&  dvari > varitol ); 
+DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
+ << " dvari varitol" << dvari << varitol << " iter" << r_iter;
       }
    }
 
-   if ( doit )
+   if ( neediter )
    {  // we must iterate
-      iterate();
+      emit process_complete( false );   // signal that iteration is complete
+      iterate();                        // reset to run another iteration
       return;
    }
 
+   // Convert model components s,D back to 20,w form for output
+   for ( int cc = 0; cc < nsolutes; cc++ )
+   {
+      model.components[ cc ].s *= solution.s20w_correction;
+      model.components[ cc ].D *= solution.D20w_correction;
+   }
+
+   emit process_complete( true );       // signal that processing is complete
    // done with iterations:   check for meniscus or MC iteration
 }
 
-// Get results upon completion of all refinements
+// Public slot to get results upon completion of all refinements
 bool US_2dsaProcess::get_results( US_DataIO2::RawData* da_sim,
                                   US_DataIO2::RawData* da_res,
                                   US_Model*            da_mdl,
@@ -518,20 +527,22 @@ void US_2dsaProcess::submit_job( WorkPacket& wtask, int thrx )
 
    WorkerThread* wthr = new WorkerThread( this );
    wthreads[ thrx ]   = wthr;
-   thstates[ thrx ]   = WORKING;
+   wkstates[ thrx ]   = WORKING;
 
    wthr->define_work( wtask );
 
-   connect( wthr, SIGNAL( work_complete(   WorkerThread* ) ),
-            this, SLOT(   thread_finished( WorkerThread* ) ) );
-   connect( wthr, SIGNAL( work_progress(   int           ) ),
-            this, SLOT(   step_progress  ( int           ) ) );
-DbgLv(1) << "SUBMIT_JOB depth taskx" << wtask.depth << wtask.taskx;
+   connect( wthr, SIGNAL( work_complete( WorkerThread* ) ),
+            this, SLOT(   process_job(   WorkerThread* ) ) );
+   connect( wthr, SIGNAL( work_progress( int           ) ),
+            this, SLOT(   step_progress( int           ) ) );
+DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx << "depth" << wtask.depth;
 
    wthr->start();
 }
 
-// Process job output
+// Slot to handle the results of a just-completed worker thread.
+// Accumulate computed solutes.
+// If there is more work to do, start a new thread for a new work unit.
 void US_2dsaProcess::process_job( WorkerThread* wthrd )
 {
    WorkPacket wresult;
@@ -540,18 +551,12 @@ void US_2dsaProcess::process_job( WorkerThread* wthrd )
    int thrn   = wresult.thrn;      // thread number of task
    int thrx   = thrn - 1;          // index into thread list
    int taskx  = wresult.taskx;     // task index of task
-DbgLv(1) << "PROCESS_JOB thrn taskx depth" << thrn << taskx << wresult.depth;
+DbgLv(1) << "PROCESS_JOB thrn" << thrn << "taskx" << taskx
+ << "depth" << wresult.depth;
 
    max_rss();
 
-   if ( thrx < wthreads.size() )
-   {
-      if ( wthreads[ thrx ] != 0 )
-         delete wthreads[ thrx ];       // destroy thread
-
-      wthreads[ thrx ] = 0;
-      thstates[ thrx ] = READY;
-   }
+   free_worker( thrx );            // free up this worker thread
 
    if ( abort )
       return;
@@ -559,10 +564,10 @@ DbgLv(1) << "PROCESS_JOB thrn taskx depth" << thrn << taskx << wresult.depth;
    int nextc    = c_solutes.size() + wresult.csolutes.size();
 
    if ( nextc > maxtsols )
-   {  // new solutes takes count over limit:  queue a depth job
+   {  // if new solutes push count over limit, queue a job at next depth
       WorkPacket wtask = wresult;
-      int        taskx = wkdepths.size();
-      int        depth = wresult.depth + 1;
+      int taskx    = tkdepths.size();
+      int depth    = wresult.depth + 1;
 
       queue_task( wtask, slolim, klolim, taskx, depth, 0, c_solutes );
 
@@ -573,11 +578,10 @@ DbgLv(1) << "THR_FIN: depth" << wtask.depth << " #solutes"
    }
 
    if ( wresult.depth == 0 )
-   {
+   {  // this result is from depth 0, it is from initial subgrids pass
       c_solutes << wresult.csolutes; // build composite of all computed solutes
       kctask++;                      // bump count of completed subgrid tasks
 
-      emit refine_complete( kctask ); 
 DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
  << " kct kst" << kctask << kstask << "csols size" << c_solutes.size();
 
@@ -586,13 +590,13 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
          .arg( kctask ).arg( nsubgrid ), false );
 
       if ( kctask == nsubgrid )
-      {  // all subgrids computed
+      {  // all subgrid tasks are now complete
 
          if ( c_solutes.size() > 0 )
-         {  // queue job with remainder of depth 1 input solutes
+         {  // queue a job with the remainder of depth 1 input solutes
             WorkPacket wtask = wresult;
-            int        taskx = wkdepths.size();
-            int        depth = wresult.depth + 1;
+            int taskx     = tkdepths.size();
+            int depth     = wresult.depth + 1;
 
             queue_task( wtask, slolim, klolim, taskx, depth, 0, c_solutes );
 
@@ -601,37 +605,32 @@ DbgLv(1) << "THR_FIN: depth" << wtask.depth
  << " #fsolutes" << wtask.isolutes.size();
          }
 
-         int nsolest   = ( nksteps * nssteps ) / 8;   // solutes estimated
-         int nsolact   = 0;                           // sols actually computed
-         for ( int jj = 0; jj < job_queue.size(); jj++ )
-             nsolact  += job_queue[ jj ].isolutes.size();
-         int kdep1e    = ( nsolest * 9 ) / ( mintsols * 5 );
-         int kdep1a    = ( nsolact * 9 ) / ( mintsols * 5 ); 
-         int ksolest   = kdep1e * mintsols;
-         int ksolact   = kdep1a * mintsols;
-         int todoest   = ksolest * 2 + ksolest / 50;  // count to-do estimated
-         int todoact   = ksolact * 2 + ksolact / 50;  // count to-do actual
-         if ( noisflag > 0 )
-         {  // if noise, there are more steps
-            int noiadd    = sq( ( mintsols / 4 ) ) / 10 + 2;
-            todoest      += noiadd;
-            todoact      += noiadd;
-         }
-         todoest      += 10;
-         todoact      += 10;
+         if ( r_iter == 0 )
+         {  // in 1st iteration, re-estimate total progress steps
+            int nsolest   = ( nksteps * nssteps ) / 8;  // solutes estimated
+            int nsolact   = 0;                          // actually computed
 
-DbgLv(1) << "THR_FIN:   (est)kcp ntp nsol ntodo" <<  kcsteps << nctotal
- << nsolest << todoest;
-         // adjust the estimate of total progress steps
-         nctotal       = kcsteps + todoact;    
-DbgLv(1) << "THR_FIN:   (new)kcp ntp nsol ntodo" <<  kcsteps << nctotal
- << nsolact << todoact;
+            for ( int jj = 0; jj < job_queue.size(); jj++ )
+                nsolact  += job_queue[ jj ].isolutes.size();
+
+            int todoest   = estimate_steps( nsolest );
+            int todoact   = estimate_steps( nsolact );
+
+DbgLv(1) << "THR_FIN:   (est)kcst ncto" <<  kcsteps << nctotal
+ << " nsol ntodo" << nsolest << todoest;
+            // adjust the estimate of total progress steps
+            nctotal       = kcsteps + todoact;
+DbgLv(1) << "THR_FIN:   (new)kcst ncto" <<  kcsteps << nctotal
+ << " nsol ntodo" << nsolact << todoact;
+         }
 
          emit stage_complete( kcsteps, nctotal );
+
          emit message_update( tr( "Computing depth 1ff solutions..." ), false );
 
-         deptho         = 1;
-         maxtsols       = max( maxtsols, mintsols );
+         maxdepth       = 1;
+         mxdepthc       = 0;
+         d_solutes.clear();
       }
    }
 
@@ -640,19 +639,21 @@ DbgLv(1) << "THR_FIN:   (new)kcp ntp nsol ntodo" <<  kcsteps << nctotal
       int depthw = wresult.depth;
       int depthn = depthw + 1;
       int wtaskx = wresult.taskx;
-      int ltaskx = wkdepths.lastIndexOf( depthw );
+      int ltaskx = tkdepths.lastIndexOf( depthw );
 DbgLv(1) << "THR_FIN: depth" << depthw << " w ltaskx" << wtaskx << ltaskx;
 
-      if ( depthw == deptho )
+      if ( depthw == maxdepth )
       {  // working on the same depth:  add to solutes; queue task
          c_solutes << wresult.csolutes;
 
          if ( wtaskx == ltaskx )
          {  // last result for this depth:  clear out remaining solutes
+            maxdepth       = depthn;
+            mxdepthc       = depthw;
 
-DbgLv(1) << "THR_FIN: dpth" << depthw << " csolsz dsolsz"
+DbgLv(1) << "THR_FIN: dpth task" << depthw << wtaskx << " csolsz dsolsz"
  << c_solutes.size() << d_solutes.size();
-            if ( wkdepths.count( depthn ) == 0 )
+            if ( tkdepths.count( depthn ) == 0 )
             {  // this will be only task at this depth:  at final compute
                c_solutes << d_solutes;
 
@@ -663,26 +664,26 @@ DbgLv(1) << "THR_FIN: dpth" << depthw << " csolsz dsolsz"
 
             // Queue up task to handle remaining solutes for depth
             WorkPacket wtask = wresult;
-            int        taskx = wkdepths.size();
+            int        taskx = tkdepths.size();
 
             queue_task( wtask, slolim, klolim, taskx, depthn, 0, c_solutes );
 
-DbgLv(1) << "THR_FIN: depth" << depthn << " #fsolutes" << wtask.isolutes.size();
+DbgLv(1) << "THR_FIN: depth task" << depthn << taskx
+ << " #fsolutes" << wtask.isolutes.size();
             c_solutes      = d_solutes;
             d_solutes.clear();
-            deptho         = depthn;
          }
       }
 
-      else if ( depthw > deptho )
-      {  // Results from next depth before this one is complete:  save solutes
+      else if ( depthw > mxdepthc )
+      {  // Results from next depth before previous complete:  save solutes
          d_solutes << wresult.csolutes;
       }
 
    }
 
-   // Submit jobs while queue is not empty and a thread is ready
-   while ( ! job_queue.isEmpty() && ( thrx = thstates.indexOf( READY ) ) >= 0 )
+   // Submit jobs while queue is not empty and a worker thread is ready
+   while ( ! job_queue.isEmpty() && ( thrx = wkstates.indexOf( READY ) ) >= 0 )
    {
       WorkPacket wtask = job_queue.takeFirst();
 
@@ -690,11 +691,12 @@ DbgLv(1) << "THR_FIN: depth" << depthn << " #fsolutes" << wtask.isolutes.size();
       kstask++;                       // bump count of started worker threads
 
       if ( wtask.depth > 1  &&
-           wtask.taskx == wkdepths.indexOf( wtask.depth ) )
+           wtask.taskx == tkdepths.indexOf( wtask.depth ) )
       {  // submitting the first job of a depth pass
          QString pmsg = tr( "Computing depth %1 solutions..." )
                         .arg( wtask.depth );
          emit message_update( pmsg, false );
+DbgLv(1) << pmsg;
       }
    }
 
@@ -721,7 +723,7 @@ void US_2dsaProcess::queue_task( WorkPacket& wtask, double llss, double llsk,
    wtask.ti_noise.clear();
    wtask.ri_noise.clear();
 
-   wkdepths << depth;              // record work task depth
+   tkdepths << depth;              // record work task depth
 
    job_queue << wtask;             // put the task on the queue
 
@@ -730,5 +732,131 @@ void US_2dsaProcess::queue_task( WorkPacket& wtask, double llss, double llsk,
 // queue up jobs for a new iteration
 void US_2dsaProcess::iterate()
 {
+   r_iter++;                         // bump iteration index
+
+   tkdepths .clear();
+   job_queue.clear();
+
+DbgLv(1) << "2P: start of iteration" << r_iter+1;
+   kcsteps      = 0;
+   emit stage_complete( kcsteps, nctotal );
+   kctask       = 0;
+   kstask       = 0;
+   maxdepth     = 0;
+   maxtsols     = 0;
+   max_rss();
+   c_solutes    = ical_sols[ r_iter - 1 ];
+   int    ncsol = c_solutes.size();  // number of solutes calculated last iter
+
+   for ( int ii = 0; ii < ncsol; ii++ )
+      c_solutes[ ii ].c = 0.0;       // clear concentration for compares
+
+
+   int    ktask = 0;                 // task index
+   double llss  = slolim;            // lower limit s to identify each subgrid
+
+   // Build and queue the subgrid tasks
+
+   for ( int ii = 0; ii < ngrefine; ii++ )
+   {
+      double llsk  = klolim;         // lower limit k to identify each subgrid
+
+      for ( int jj = 0; jj < ngrefine; jj++ )
+      {
+         // get the solutes originally created for this subgrid
+         QVector< Solute > isolutes = orig_sols[ ktask ];
+
+         // add any calculated solutes not already in subgrid
+         for ( int cc = 0; cc < ncsol; cc++ )
+            if ( ! isolutes.contains( c_solutes[ cc ] ) )
+               isolutes << c_solutes[ cc ];
+DbgLv(1) << "THR_FIN: iterate nisol o a c"
+ << orig_sols[ktask].size() << isolutes.size() << ncsol;
+
+         // queue a subgrid task and update maximum task solute count
+         WorkPacket wtask;
+         queue_task( wtask, llss, llsk, ktask++, 0, 0, isolutes );
+
+         maxtsols       = max( maxtsols, isolutes.size() );
+         llsk          += gdelta_k;
+      }
+
+      llss     += gdelta_s;
+   }
+
+   // bump total steps estimate by additional solutes in subgrids
+   if ( r_iter == 1 )
+      nctotal  += ( ktask * c_solutes.size() );
+   c_solutes.clear();
+
+   // Start the first threads. This will begin the first work units (subgrids).
+   // Thereafter, work units are started in new threads when threads signal
+   // that they have completed their work.
+   for ( int ii = 0; ii < nthreads; ii++ )
+   {
+      WorkPacket wtask = job_queue.takeFirst();
+      submit_job( wtask, ii );
+   }
+
+   max_rss();
+   kstask = nthreads;     // count of started tasks is initially thread count
+
+   emit message_update(
+      tr( "Starting iteration %1 computations of %2 subgrids\n"
+          "  using %3 threads ..." )
+      .arg( r_iter + 1 ).arg( nsubgrid ).arg( nthreads ), true );
+
+}
+
+// Free up a worker thread
+void US_2dsaProcess::free_worker( int tx )
+{
+   if ( tx >= 0  &&  tx < nthreads )
+   {
+      if ( wthreads[ tx ] != 0 )
+         delete wthreads[ tx ];       // destroy thread
+
+      wthreads[ tx ] = 0;             // set thread pointer to null
+      wkstates[ tx ] = READY;         // mark its slot at available
+   }
+}
+
+// Estimate progress steps after depth 0 from given total of calculated steps
+//   For maxtsols=100, estimate 85 solutes per task
+//   Calculate tasks needed for given depth 0 calculated steps
+//   Add 2 to solutes per task as NNLS factor
+//   Multiply steps per task times number of tasks
+//     Repeat for subsequent depths, assuming depth steps 1/8 of previous
+int US_2dsaProcess::estimate_steps( int ncsol )
+{
+   // Estimate number of solutes and steps per task
+   int ktcsol  = maxtsols - 15;
+   int ktstep  = ktcsol + 2;
+   // Estimate number of depth 1 tasks, solutes,and steps
+   int n1task  = ncsol  / ktcsol + 1;
+   int n1csol  = n1task * ktcsol;
+   int n1step  = n1task * ktstep;
+   // Estimate number of solutes for depths beyond 1
+   int n2csol  = n1csol / 8;
+   int n2task  = n2csol / ktcsol + 1;
+       n2csol  = n2task * ktcsol;
+   int n2step  = n2task * ktstep;
+   // Sum depth 1 steps plus depth 2 steps plus final-pass steps
+   n1step      = n1step + n2step + ktstep;
+
+   while ( n2csol > maxtsols )
+   {  // Sum in steps for depth 3 and following until steps left less than 100
+      n2csol     /= 8;
+      n2task      = n2csol / ktcsol + 1;
+      n2csol      = n2task * ktcsol;
+      n2step      = n2task * ktstep;
+      n1step     += n2step;
+   }
+
+   // Add noise steps if there are any
+   int nnstep  = ( noisflag > 0 ) ? ( sq( ktcsol ) / 10 + 2 ) : 0;
+
+   // Return estimate of remaining steps
+   return ( n1step + n2step + nnstep + 10 );
 }
 

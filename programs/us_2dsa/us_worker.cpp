@@ -117,19 +117,14 @@ DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
    double density   = dvv.section( " ", 1, 1 ).toDouble();
    double viscosity = dvv.section( " ", 2, 2 ).toDouble();
    double vbar      = dvv.section( " ", 3, 3 ).toDouble();
-   double avgtemp   = 0.0;
-   int    kk        = 0;
+   double avgtemp   = edata->average_temperature();
 
 DbgLv(1) << "TM:BEG:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
    // populate b array with experiment data concentrations
+   int    kk        = 0;
    for ( int ss = 0; ss < nscans; ss++ )
-   {
       for ( int rr = 0; rr < npoints; rr++ )
          nnls_b[ kk++ ] = edata->value( ss, rr );
-
-      avgtemp += edata->scanData[ ss ].temperature;
-   }
-   avgtemp /= (double)nscans;
 
    if ( abort ) return;
 
@@ -140,8 +135,8 @@ DbgLv(1) << "TM:BEG:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
    solution.vbar20    = vbar;
    solution.vbar      = vbar;
    US_Math2::data_correction( avgtemp, solution );
-DbgLv(1) << "   CR: dens visc vbar temp corr" << density << viscosity
-   << vbar << avgtemp << solution.s20w_correction;
+if (taskx==0) DbgLv(1) << "   CR: dens visc vbar temp corr" << density
+ << viscosity << vbar << avgtemp << solution.s20w_correction;
    double sfactor = 1.0 / solution.s20w_correction;
 
    // simulate data using models with single s,f/f0 component
@@ -149,28 +144,29 @@ DbgLv(1) << "   CR: dens visc vbar temp corr" << density << viscosity
           increp  = ( increp < 10 ) ? 10 : increp;
    int    kstep   = 0;
           kk      = 0;
+//DbgLv(1) << "  TR:     BEG astfem_rsa loop";
 
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
       if ( abort ) return;
       // set model with s,k point; update other coefficients
-      double sval                = solute_i[ cc ].s;
-      double kval                = solute_i[ cc ].k;
       model.components[ 0 ]      = zcomponent;
-      model.components[ 0 ].s    = qAbs( sval ) * sfactor;
-      model.components[ 0 ].f_f0 = kval;
+      model.components[ 0 ].s    = qAbs( solute_i[ cc ].s ) * sfactor;
+      model.components[ 0 ].f_f0 = solute_i[ cc ].k;
       model.update_coefficients();
-//DbgLv(1) << "  TR:   s k D" << sval << kval << model.components[0].D;
+//DbgLv(2) << "  TR:   cc" << cc << "   s k D"
+// << model.components[0].s << model.components[0].k << model.components[0].D;
 
       // initialize simulation data with experiment grid
       US_AstfemMath::initSimData( sdata, *edata, 0.0 );
 
-//DbgLv(1) << "  TR:     astfem_rsa calc";
+//DbgLv(2) << "  TR:     astfem_rsa calc  cc" << cc;
       // calculate Astfem_RSA solution
       US_Astfem_RSA astfem_rsa( model, simparms );
       astfem_rsa.calculate( sdata );
       if ( abort ) return;
 
+//DbgLv(2) << "  TR:     populate nnls_a";
       // Populate the A matrix for the NNLS routine with the model function
       for ( int ss = 0; ss < nscans; ss++ )
          for ( int rr = 0; rr < npoints; rr++ )
@@ -182,6 +178,7 @@ DbgLv(1) << "   CR: dens visc vbar temp corr" << density << viscosity
          kstep = 0;
       }
    }
+//DbgLv(1) << "  TR:     END astfem_rsa loop";
 
    if ( kstep > 0 )
       emit work_progress( kstep );

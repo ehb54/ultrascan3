@@ -24,8 +24,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
 
    public slots:
       void update_progress (  int  );
-      void completed_refine(  int  );
-      void completed_process( void );
+      void completed_process( bool );
       void progress_message(  QString, bool = true );
       void reset_steps(       int,     int );
 
@@ -104,6 +103,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       void uncheck_optimize( int  );
       void checkUniGrid (    bool );
       void checkMeniscus(    bool );
+      void checkIterate (    bool );
       void checkLocalUni(    bool );
       void checkRandLoc (    bool );
       void checkSoluCoal(    bool );
