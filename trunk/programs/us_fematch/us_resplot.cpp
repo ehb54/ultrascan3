@@ -343,6 +343,7 @@ void US_ResidPlot::srbmCheck( bool chkd )
 {
    if ( chkd )
    {  // bitmap checked:  replot to possibly build new map
+      have_bm         = ( resbmap != 0 );
 
       if ( have_bm )
       {  // if bitmap exists already, detect when closed
@@ -397,8 +398,7 @@ void US_ResidPlot::plot_edata()
 
    if ( have_ed )
    {
-      points   = edata->scanData[ 0 ].readings.size();
-      //count    = edata->scanData.size();
+      points   = edata->x.size();
       rl       = edata->radius( 0 );
       vh       = edata->value( 0, points - 1 );
       vh      *= 1.05;
@@ -425,7 +425,7 @@ void US_ResidPlot::plot_edata()
    {  // set title and values count for experimental data
       data_plot1->setAxisTitle( QwtPlot::yLeft,
          tr( "Absorbance at " ) + edata->wavelength + tr( " nm" ) );
-      points   = edata->scanData[ 0 ].readings.size();
+      points   = edata->x.size();
    }
 
    if ( do_pltsda )
@@ -436,7 +436,7 @@ void US_ResidPlot::plot_edata()
       else
          data_plot1->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance" ) );
 
-      count    = sdata->scanData[ 0 ].readings.size();
+      count    = sdata->x.size();
    }
 
    count    = ( points > count ) ? points : count;  // maximum array count
@@ -453,7 +453,7 @@ void US_ResidPlot::plot_edata()
 
    if ( do_plteda )
    {  // plot experimental curves
-      points   = edata->scanData[ 0 ].readings.size();
+      points   = edata->x.size();
       count    = edata->scanData.size();
       rinoi    = 0.0;
       tinoi    = 0.0;
@@ -486,7 +486,7 @@ void US_ResidPlot::plot_edata()
 
    if ( do_pltsda )
    {  // plot simulation curves
-      points   = sdata->scanData[ 0 ].readings.size();
+      points   = sdata->x.size();
       count    = sdata->scanData.size();
       rinoi    = 0.0;
       tinoi    = 0.0;
@@ -545,8 +545,8 @@ void US_ResidPlot::plot_rdata()
    bool   do_addrin = have_ri  &&  ck_addrin->isChecked();
    bool   do_subrin = have_ri  &&  ck_subrin->isChecked();
 
-   int    points    = 0;
-   int    count     = 0;
+   int    points    = edata->x.size();
+   int    count     = edata->scanData.size();
    double tinoi     = 0.0;
    double rinoi     = 0.0;
    double evalu     = 0.0;
@@ -562,41 +562,36 @@ void US_ResidPlot::plot_rdata()
    us_grid( data_plot2 );
    data_plot2->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
 
-   if ( have_ed )
-   {
-      points   = edata->scanData[ 0 ].readings.size();
-   }
+   int    vsize = max( sdata->x.size(), max( points, count ) );
 
-   if ( have_sd )
-   {
-      count    = sdata->scanData[ 0 ].readings.size();
-   }
-
-   count    = ( points > count ) ? points : count;
-
-   QVector< double > rvec( count, 0.0 );
-   QVector< double > vvec( count, 0.0 );
-   double* rr  = rvec.data();
-   double* vv  = vvec.data();
+   QVector< double > rvec( vsize, 0.0 );
+   QVector< double > vvec( vsize, 0.0 );
+   double* rr   = rvec.data();
+   double* vv   = vvec.data();
 
    QString       title;
    QwtPlotCurve* curv;
    QPen          pen_plot( Qt::green );
 
+   // plot a zero line in red
+   rr[ 0 ] = !do_pltrin ? 6.0 : 0.0;
+   rr[ 1 ] = !do_pltrin ? 7.2 : double( count );
+   vv[ 0 ] = 0.0;
+   vv[ 1 ] = 0.0;
+   curv    = us_curve( data_plot2, "zero-line" );
+   curv->setPen( QPen( QBrush( Qt::red ), 2 ) );
+   curv->setData( rr, vv, 2 );
 
    if ( do_pltres )
    {  // plot residuals
       data_plot2->setTitle( tr( "Residuals" ) );
-      points   = sdata->scanData[ 0 ].readings.size();
-      count    = sdata->scanData.size();
-      rinoi    = 0.0;
-      tinoi    = 0.0;
 
       for ( int jj = 0; jj < points; jj++ )
       {  // get radii (x) just once
          rr[ jj ] = sdata->radius( jj );
       }
 
+qDebug() << "PLTRES rmsd0" << rmsd;
       for ( int ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
          rinoi    = 0.0;
@@ -629,6 +624,7 @@ void US_ResidPlot::plot_rdata()
       }
 
       // display variance and RMSD
+qDebug() << "PLTRES vari n" << rmsd << (count*points);
       rmsd   /= (double)( count * points );
       le_vari->setText( QString::number( rmsd ) );
       rmsd    = sqrt( rmsd );
@@ -656,7 +652,6 @@ void US_ResidPlot::plot_rdata()
    else if ( do_plttin )
    {  // plot time-invariant noise
       data_plot2->setTitle( tr( "Time-Invariant Noise" ) );
-      points   = edata->scanData[ 0 ].readings.size();
 
       for ( int jj = 0; jj < points; jj++ )
       {  // accumulate radii and noise values
@@ -674,7 +669,6 @@ void US_ResidPlot::plot_rdata()
    else if ( do_pltrin )
    {  // plot radially-invariant noise
       data_plot2->setTitle( tr( "Radially-Invariant Noise" ) );
-      count    = edata->scanData.size();
 
       for ( int ii = 0; ii < count; ii++ )
       {  // accumulate scan numbers and noise values
@@ -693,7 +687,7 @@ void US_ResidPlot::plot_rdata()
    else if ( do_pltran )
    {  // plot random noise
       data_plot2->setTitle( tr( "Random Noise" ) );
-      points   = sdata->scanData[ 0 ].readings.size();
+      points   = sdata->x.size();
       count    = sdata->scanData.size();
 
       for ( int jj = 0; jj < points; jj++ )
@@ -703,15 +697,15 @@ void US_ResidPlot::plot_rdata()
 
       for ( int ii = 0; ii < count; ii++ )
       {  // get random noise (y) for each scan
-         rinoi    = ( have_ri ? ri_noise->values[ ii ] : 0.0   );
+         rinoi    = have_ri ? ri_noise->values[ ii ] : 0.0;
 
          for ( int jj = 0; jj < points; jj++ )
          {  // each random value is e-value minus s-value with optional noise
-            tinoi    = ( have_ti ? ti_noise->values[ jj ] : 0.0   );
+            tinoi    = have_ti ? ti_noise->values[ jj ] : 0.0;
             evalu    = edata->value( ii, jj )
                      - sdata->value( ii, jj )
                      - rinoi - tinoi;
-            vv[ jj ] = evalu - rinoi - tinoi;
+            vv[ jj ] = evalu;
             rmsd    += sq( evalu );
          }
 
@@ -737,12 +731,10 @@ void US_ResidPlot::plot_rdata()
       QVector< QVector< double > > resids;
       QVector< double >            resscan;
 
-      points   = sdata->scanData[ 0 ].readings.size();
-      count    = sdata->scanData.size();
-      rinoi    = 0.0;
-      tinoi    = 0.0;
       resids .resize( count );
       resscan.resize( points );
+      rmsd     = 0.0;
+qDebug() << "SHORBM rmsd0" << rmsd;
 
       for ( int ii = 0; ii < count; ii++ )
       {  // build a vector for each scan
@@ -770,6 +762,7 @@ void US_ResidPlot::plot_rdata()
          resids[ ii ] = resscan;
       }
 
+qDebug() << "SHORBM vari n" << rmsd << (count*points);
       rmsd   /= (double)( count * points );
       le_vari->setText( QString::number( rmsd ) );
       rmsd    = sqrt( rmsd );
