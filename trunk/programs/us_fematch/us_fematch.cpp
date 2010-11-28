@@ -724,6 +724,10 @@ DbgLv(1) << "R,V points count" << points << count;
       double vh = edata->value( scanCount - 1, points - 1 );
       rl       -= 0.05;
       vh       += ( vh - edata->value( 0, 0 ) ) * 0.05;
+      double rnoi = 0.0;
+      double tnoi = 0.0;
+      bool   have_ri = ri_noise.count > 0;
+      bool   have_ti = ti_noise.count > 0;
 DbgLv(1) << "  RL" << rl << "  VH" << vh;
 int nscan=scanCount;
 int nconc=sdata->scanData[0].readings.size();
@@ -745,11 +749,13 @@ DbgLv(2) << "      II POINTS" << ii << points;
          int jj    = 0;
          double rr = 0.0;
          double vv = 0.0;
+         rnoi      = have_ri ? ri_noise.values[ ii ] : 0.0;
 
          while ( jj < points )
          {  // accumulate coordinates of simulation curve
-            rr         = sdata->radius( jj );
-            vv         = sdata->value( ii, jj++ );
+            tnoi      = have_ti ? ti_noise.values[ jj ] : 0.0;
+            rr        = sdata->radius( jj );
+            vv        = sdata->value( ii, jj++ ) + rnoi + tnoi;
 DbgLv(3) << "       JJ rr vv" << jj << rr << vv;
 
             if ( rr > rl )
@@ -2222,7 +2228,7 @@ QString US_FeMatch::text_model( US_Model model, int width )
 }
 
 
-// calculate residual absorbance values (data - sim)
+// calculate residual absorbance values (data - sim - noise)
 void US_FeMatch::calc_residuals()
 {
    int     dsize  = edata->scanData[ 0 ].readings.size();
@@ -2235,6 +2241,10 @@ void US_FeMatch::calc_residuals()
    //double  rl     = edata->radius( 0 );
    //double  vh     = edata->value( scanCount - 1, dsize - 1 );
    double  rmsd   = 0.0;
+   double  tnoi   = 0.0;
+   double  rnoi   = 0.0;
+   bool    ftin   = ti_noise.count > 0;
+   bool    frin   = ri_noise.count > 0;
 
    QVector< double > resscan;
 
@@ -2253,6 +2263,7 @@ void US_FeMatch::calc_residuals()
 
    for ( int ii = 0; ii < scanCount; ii++ )
    {
+      rnoi     = frin ? ri_noise.values[ ii ] : 0.0;
 
       for ( int jj = 0; jj < ssize; jj++ )
       {
@@ -2261,12 +2272,11 @@ void US_FeMatch::calc_residuals()
 
       for ( int jj = 0; jj < dsize; jj++ )
       {
+         tnoi          = ftin ? ti_noise.values[ jj ] : 0.0;
          sval          = interp_sval( xx[ jj ], sx, sy, ssize );
-         yval          = edata->value( ii, jj ) - sval;
-
+         yval          = edata->value( ii, jj ) - sval - rnoi - tnoi;
          //if ( xx[ jj ] < rl )
          //   yval          = 0.0;
-
          rmsd         += sq( yval );
          resscan[ jj ] = yval;
       }

@@ -91,9 +91,6 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
 
    buttonsLayout ->addWidget( pb_close );
 
-   ck_plteda->setChecked( true  );
-   ck_subtin->setChecked( false );
-
    plotLayout1 = new US_Plot( data_plot1,
          tr( "Experimental Data" ),
          tr( "Radius (cm)" ),
@@ -189,14 +186,14 @@ DbgLv(1) << "RP:resbmap" << have_bm;
       qDebug() << "*ERROR* unable to get RP parent";
    }
 
-   ck_plteda->setChecked( true );
    ck_subtin->setEnabled( have_ti );
    ck_subrin->setEnabled( have_ri );
-   ck_addtin->setEnabled( false );
-   ck_addrin->setEnabled( false );
+   ck_addtin->setEnabled( have_ti );
+   ck_addrin->setEnabled( have_ri );
    ck_plttin->setEnabled( have_ti );
    ck_pltrin->setEnabled( have_ri );
-   ck_pltrin->setEnabled( have_ri );
+
+   ck_plteda->setChecked( true );
    ck_subtin->setChecked( have_ti );
    ck_subrin->setChecked( have_ri );
 
@@ -410,7 +407,7 @@ void US_ResidPlot::plot_edata()
       return;
    }
 
-   if (      do_plteda  &&  !do_pltsda )
+   if      ( do_plteda  &&  !do_pltsda )
       data_plot1->setTitle( tr( "Experimental Data" ) );
 
    else if ( do_plteda  &&  do_pltsda  )
@@ -591,7 +588,6 @@ void US_ResidPlot::plot_rdata()
          rr[ jj ] = sdata->radius( jj );
       }
 
-qDebug() << "PLTRES rmsd0" << rmsd;
       for ( int ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
          rinoi    = 0.0;
@@ -624,7 +620,6 @@ qDebug() << "PLTRES rmsd0" << rmsd;
       }
 
       // display variance and RMSD
-qDebug() << "PLTRES vari n" << rmsd << (count*points);
       rmsd   /= (double)( count * points );
       le_vari->setText( QString::number( rmsd ) );
       rmsd    = sqrt( rmsd );
@@ -734,7 +729,6 @@ qDebug() << "PLTRES vari n" << rmsd << (count*points);
       resids .resize( count );
       resscan.resize( points );
       rmsd     = 0.0;
-qDebug() << "SHORBM rmsd0" << rmsd;
 
       for ( int ii = 0; ii < count; ii++ )
       {  // build a vector for each scan
@@ -762,7 +756,6 @@ qDebug() << "SHORBM rmsd0" << rmsd;
          resids[ ii ] = resscan;
       }
 
-qDebug() << "SHORBM vari n" << rmsd << (count*points);
       rmsd   /= (double)( count * points );
       le_vari->setText( QString::number( rmsd ) );
       rmsd    = sqrt( rmsd );

@@ -183,7 +183,6 @@ DbgLv(1) << "RP:edata  " << have_ed;
    ck_addrin->setEnabled( have_ri );
    ck_plttin->setEnabled( have_ti );
    ck_pltrin->setEnabled( have_ri );
-   ck_pltrin->setEnabled( have_ri );
 
    ck_plteda->setChecked( true    );
    ck_subtin->setChecked( have_ti );
@@ -388,8 +387,7 @@ void US_ResidPlot::plot_edata()
 
    if ( have_ed )
    {
-      points   = edata->scanData[ 0 ].readings.size();
-      //count    = edata->scanData.size();
+      points   = edata->x.size();
       rl       = edata->radius( 0 );
       vh       = edata->value( 0, points - 1 );
       vh      *= 1.05;
@@ -416,7 +414,7 @@ void US_ResidPlot::plot_edata()
    {  // set title and values count for experimental data
       data_plot1->setAxisTitle( QwtPlot::yLeft,
          tr( "Absorbance at " ) + edata->wavelength + tr( " nm" ) );
-      points   = edata->scanData[ 0 ].readings.size();
+      points   = edata->x.size();
    }
 
    if ( do_pltsda )
@@ -427,7 +425,7 @@ void US_ResidPlot::plot_edata()
       else
          data_plot1->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance" ) );
 
-      count    = sdata->scanData[ 0 ].readings.size();
+      count    = sdata->x.size();
    }
 
    count    = ( points > count ) ? points : count;  // maximum array count
@@ -445,7 +443,7 @@ void US_ResidPlot::plot_edata()
 
    if ( do_plteda )
    {  // plot experimental curves
-      points   = edata->scanData[ 0 ].readings.size();
+      points   = edata->x.size();
       count    = edata->scanData.size();
       rinoi    = 0.0;
       tinoi    = 0.0;
@@ -478,7 +476,7 @@ void US_ResidPlot::plot_edata()
 
    if ( do_pltsda )
    {  // plot simulation curves
-      points   = sdata->scanData[ 0 ].readings.size();
+      points   = sdata->x.size();
       count    = sdata->scanData.size();
       rinoi    = 0.0;
       tinoi    = 0.0;
@@ -537,8 +535,8 @@ void US_ResidPlot::plot_rdata()
    bool   do_addrin = have_ri  &&  ck_addrin->isChecked();
    bool   do_subrin = have_ri  &&  ck_subrin->isChecked();
 
-   int    points    = 0;
-   int    count     = 0;
+   int    points    = edata->x.size();
+   int    count     = edata->scanData.size();
    double tinoi     = 0.0;
    double rinoi     = 0.0;
    double evalu     = 0.0;
@@ -554,20 +552,10 @@ void US_ResidPlot::plot_rdata()
    us_grid( data_plot2 );
    data_plot2->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
 
-   if ( have_ed )
-   {
-      points   = edata->scanData[ 0 ].readings.size();
-   }
+   int vsize = max( sdata->x.size(), max( points, count ) );
 
-   if ( have_sd )
-   {
-      count    = sdata->scanData[ 0 ].readings.size();
-   }
-
-   count    = ( points > count ) ? points : count;
-
-   QVector< double > rvec( count, 0.0 );
-   QVector< double > vvec( count, 0.0 );
+   QVector< double > rvec( vsize, 0.0 );
+   QVector< double > vvec( vsize, 0.0 );
 
    double* rr  = rvec.data();
    double* vv  = vvec.data();
@@ -576,7 +564,7 @@ void US_ResidPlot::plot_rdata()
    QwtPlotCurve* curv;
    QPen          pen_plot( Qt::green );
 
-   points  = edata->scanData[ 0 ].readings.size();
+   points  = edata->x.size();
    count   = edata->scanData.size();
 
    // plot a zero line in red

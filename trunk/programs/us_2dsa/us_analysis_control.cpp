@@ -44,7 +44,7 @@ US_AnalysisControl::US_AnalysisControl( US_DataIO2::EditedData* dat_exp,
    QLabel* lb_nstepsk      = us_label(  tr( "Number Grid Points (f/f0):" ) );
    QLabel* lb_thrdcnt      = us_label(  tr( "Thread Count:" ) );
    QLabel* lb_estmemory    = us_label(  tr( "Estimated Memory:" ) );
-   QLabel* lb_iteration    = us_label(  tr( "Iteration:" ) );
+   QLabel* lb_iteration    = us_label(  tr( "Completed Iteration:" ) );
    QLabel* lb_oldvari      = us_label(  tr( "Old Variance:" ) );
    QLabel* lb_newvari      = us_label(  tr( "New Variance:" ) );
    QLabel* lb_improve      = us_label(  tr( "Improvement:" ) );
@@ -93,7 +93,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_thrdcnt ->setStep(    1 );
 
    le_estmemory = us_lineedit( "100 MB" );
-   le_iteration = us_lineedit( "1" );
+   le_iteration = us_lineedit( "0" );
    le_oldvari   = us_lineedit( "0.000e-05" );
    le_newvari   = us_lineedit( "0.000e-05" );
    le_improve   = us_lineedit( "0.000e-08" );
@@ -112,12 +112,12 @@ DbgLv(1) << "idealThrCout" << nthr;
 
    ct_iters     = us_counter( 2,    1,    8,    1 );
    ct_grrefine  = us_counter( 2,    1,   20,    7 );
-   ct_menisrng  = us_counter( 3, 0.55, 0.65,  0.6 );
-   ct_menispts  = us_counter( 2,    1,   20,   10 );
+   ct_menisrng  = us_counter( 3, 0.55, 0.65, 0.03 );
+   ct_menispts  = us_counter( 2,    3,   21,    5 );
    ct_regufact  = us_counter( 3, 0.01, 10.0,  0.9 );
    ct_grrefine ->setStep(    1 );
    ct_menisrng ->setStep( 0.01 );
-   ct_menispts ->setStep(    1 );
+   ct_menispts ->setStep(    2 );
    ct_regufact ->setStep( 0.01 );
    ct_iters    ->setStep(    1 );
 
@@ -200,7 +200,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    te_status   ->setPalette( gray );
 
    ck_unifgr->setChecked( true  );
-   ck_iters ->setEnabled( false );
+   ck_iters ->setEnabled( true  );
    ct_iters ->setEnabled( false );
 
    optimize_options();
@@ -211,6 +211,8 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,  SLOT( checkMeniscus( bool ) ) );
    connect( ck_regulz, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkRegular(  bool ) ) );
+   connect( ck_iters,  SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkIterate(  bool ) ) );
 
    connect( ct_nstepss,  SIGNAL( valueChanged( double ) ),
             this,        SLOT(   grid_change()          ) );
@@ -237,13 +239,15 @@ DbgLv(1) << "idealThrCout" << nthr;
    // disable those GUI elements not yet implemented
    ck_menisc  ->setEnabled( false );
    ck_regulz  ->setEnabled( false );
-   ck_iters   ->setEnabled( false );
+   //ck_iters   ->setEnabled( false );
 
    grid_change();
 
    // initialize simulation parameters from data
    sparms         = new US_SimulationParameters();
    sparms->initFromData( NULL, *edata );
+if ( dbg_level > 0 )
+ sparms->save_simparms( US_Settings::appBaseDir() + "/etc/sp_2dsa.xml" );
 
 DbgLv(1) << "Pre-adjust size" << size();
    resize( 740, 440 );
@@ -309,6 +313,13 @@ void US_AnalysisControl::checkRegular(  bool checked )
    if ( checked ) { uncheck_optimize( 7 ); optimize_options(); }
 }
 
+// handle iterations checked
+void US_AnalysisControl::checkIterate(  bool checked )
+{
+   ct_iters->setEnabled( checked );
+   ct_iters->setValue( ( checked ? 3 : 1 ) );
+}
+
 // start fit button clicked
 void US_AnalysisControl::start()
 {
@@ -331,6 +342,11 @@ void US_AnalysisControl::start()
 DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    }
 
+   le_iteration->setText( "0" );
+   le_oldvari  ->setText( "0.000e-05" );
+   le_newvari  ->setText( "0.000e-05" );
+   le_improve  ->setText( "0.000e-08" );
+
    double slo    = ct_lolimits->value();
    double sup    = ct_uplimits->value();
    int    nss    = (int)ct_nstepss->value();
@@ -346,30 +362,16 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    ti_noise->count = 0;
    ri_noise->count = 0;
 
-   int mintsols  = 100;
-   int noissols  = mintsols / 4;
-   int kksubg    = nss * nks;
-   int kkdep1    = ( ( kksubg / 8 ) * 9 ) / ( mintsols * 5 );
-   int kkcsol    = kkdep1 * mintsols;
-   int kknnls    = kkcsol + kkcsol / 50;
-   if ( noif > 0 )
-      kknnls       += ( sq( noissols ) / 10 + 2 );
-   nctotal       = kksubg + kkcsol + kknnls + 10;
-   ncsteps       = 0;
+   nctotal         = 10000;
 
-   //b_progress->setMaximum( nctotal );
-   reset_steps( ncsteps, nctotal );
-
-   connect( processor, SIGNAL( progress_update(  int ) ),
-            this,      SLOT(   update_progress(  int ) ) );
-   connect( processor, SIGNAL( refine_complete(  int ) ),
-            this,      SLOT(   completed_refine( int ) ) );
-   connect( processor, SIGNAL( message_update(   QString, bool ) ),
-            this,      SLOT(   progress_message( QString, bool ) ) );
-   connect( processor, SIGNAL( stage_complete(   int, int )  ),
-            this,      SLOT(   reset_steps(      int, int )  ) );
-   connect( processor, SIGNAL( process_complete()        ),
-            this,      SLOT(   completed_process()       ) );
+   connect( processor, SIGNAL( progress_update(   int ) ),
+            this,      SLOT(   update_progress(   int ) ) );
+   connect( processor, SIGNAL( message_update(    QString, bool ) ),
+            this,      SLOT(   progress_message(  QString, bool ) ) );
+   connect( processor, SIGNAL( stage_complete(    int, int )  ),
+            this,      SLOT(   reset_steps(       int, int )  ) );
+   connect( processor, SIGNAL( process_complete(  bool ) ),
+            this,      SLOT(   completed_process( bool ) ) );
 
    int    mxiter = (int)ct_iters->value();
    int    mciter = (int)ct_menispts->value();
@@ -481,31 +483,27 @@ void US_AnalysisControl::update_progress( int ksteps )
    }
 
    b_progress->setValue( ncsteps );
-DbgLv(1) << "UpdPr: ks ncs nts" << ksteps << ncsteps << nctotal;
-}
-
-// slot to handle completed refinement step
-void US_AnalysisControl::completed_refine( int /*kctask*/ )
-{
-   //le_iteration->setText( QString::number( kctask ) );
+DbgLv(2) << "UpdPr: ks ncs nts" << ksteps << ncsteps << nctotal;
 }
 
 // slot to handle updated progress message
 void US_AnalysisControl::progress_message( QString pmsg, bool append )
 {
+   QString amsg;
+
    if ( append )
    {
-      QString amsg = te_status->toPlainText() + "\n" + pmsg;
-
-      mw_stattext->setText( amsg );
-      te_status  ->setText( amsg );
+      amsg   = te_status->toPlainText() + "\n" + pmsg;
    }
 
    else
    {
-      mw_stattext->setText( pmsg );
-      te_status  ->setText( pmsg );
+      int kk = le_iteration->text().toInt() + 1;
+      amsg   = tr( "Iteration %1" ).arg( kk ) + ":\n" + pmsg;
    }
+
+   mw_stattext->setText( amsg );
+   te_status  ->setText( amsg );
 
    qApp->processEvents();
 }
@@ -524,30 +522,37 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
 }
 
 // slot to handle completed processing
-void US_AnalysisControl::completed_process()
+void US_AnalysisControl::completed_process( bool alldone )
 {
+DbgLv(1) << "AC:cp: alldone" << alldone;
    b_progress->setValue( nctotal );
    qApp->processEvents();
 
    processor->get_results( sdata, rdata, model, ti_noise, ri_noise );
-DbgLv(1) << "AC: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
+DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 
+   int    iternum  = le_iteration->text().toInt() + 1;
    double varinew  = rdata->scanData[ 0 ].delta_r;
-   double variold  = le_newvari->text().toDouble();
-   double vimprov  = varinew - variold;
-   le_oldvari->setText( QString::number( variold ) );
-   le_newvari->setText( QString::number( varinew ) );
-   le_improve->setText( QString::number( vimprov ) );
+   double variold  = le_newvari  ->text().toDouble();
+   double vimprov  = variold - varinew;
+   le_iteration->setText( QString::number( iternum ) );
+   le_oldvari  ->setText( QString::number( variold ) );
+   le_newvari  ->setText( QString::number( varinew ) );
+   le_improve  ->setText( QString::number( vimprov ) );
 
-   if ( parentw )
+   if ( alldone )
    {
-      US_2dsa* mainw = (US_2dsa*)parentw;
-      mainw->analysis_done( ck_autoplt->isChecked() ? 1 : 0 );
+      if ( parentw )
+      {
+         US_2dsa* mainw = (US_2dsa*)parentw;
+         mainw->analysis_done( ck_autoplt->isChecked() ? 1 : 0 );
+      }
+
+      pb_strtfit->setEnabled( true  );
+      pb_stopfit->setEnabled( false );
+      pb_plot   ->setEnabled( true  );
+      pb_save   ->setEnabled( true  );
    }
-   pb_strtfit->setEnabled( true  );
-   pb_stopfit->setEnabled( false );
-   pb_plot   ->setEnabled( true  );
-   pb_save   ->setEnabled( true  );
 }
 
 // slot to handle advanced analysis controls

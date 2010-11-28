@@ -78,6 +78,7 @@ class US_EXTERN US_2dsaProcess : public QObject
                         US_Model*, US_Noise*, US_Noise* );
 
       void stop_fit(       void );
+      int  estimate_steps( int  );
 
       //! \brief Get message for last error
       //! \returns       Message about last error
@@ -94,27 +95,11 @@ class US_EXTERN US_2dsaProcess : public QObject
             QVector< Solute > solutes;
       };
 
-      public slots:
-      void thread_finished( WorkerThread* );
-      void final_finished(  WorkerThread* );
-      void step_progress( int );
-
       signals:
       void progress_update(  int  );
-      void refine_complete(  int  );
-      void process_complete( void );
+      void process_complete( bool );
       void stage_complete(   int,     int  );
       void message_update(   QString, bool );
-
-      private slots:
-      QVector< Solute > create_solutes( double, double, double,
-                                        double, double, double );
-      void queue_task(     WorkPacket&, double, double,
-                           int, int, int, QVector< Solute > );
-      void final_computes( void );
-      void iterate(        void );
-      void submit_job(     WorkPacket&, int );
-      void process_job(    WorkerThread*    );
 
       private:
 
@@ -125,8 +110,8 @@ class US_EXTERN US_2dsaProcess : public QObject
       QList< WorkerThread* >     wthreads;   // worker threads
       QList< WorkPacket >        job_queue;  // job queue
 
-      QVector< int >             thstates;   // thread states
-      QVector< int >             wkdepths;   // work packet depths
+      QVector< int >             wkstates;   // worker thread states
+      QVector< int >             tkdepths;   // task packet depths
 
       QList< double >            itvaris;    // iteration variances
 
@@ -134,7 +119,7 @@ class US_EXTERN US_2dsaProcess : public QObject
       QVector< Solute >          d_solutes;  // next-depth calculated solutes
 
       QList< QVector< Solute > > orig_sols;  // original solutes
-      QList< QVector< Solute > > icmp_sols;  // iteration computed solutes
+      QList< QVector< Solute > > ical_sols;  // iteration calculated solutes
 
       US_DataIO2::EditedData*    edata;      // experimental data (mc_iter)
       US_DataIO2::EditedData*    bdata;      // base experimental data
@@ -172,7 +157,8 @@ class US_EXTERN US_2dsaProcess : public QObject
       int        mmtype;       // mm type: 0,1,2 for NONE|MENISCUS|MONTECARLO
       int        maxtsols;     // maximum number of task solutes
       int        mintsols;     // minimum number of depth 1ff task solutes
-      int        deptho;       // depth of current outputs
+      int        maxdepth;     // maximum depth of iteration jobs
+      int        mxdepthc;     // maximum depth completed
       int        maxiters;     // maximum number of refinement iterations
       int        r_iter;       // refinement iteration index
       int        mm_iter;      // meniscus/MC iteration index
@@ -191,6 +177,19 @@ class US_EXTERN US_2dsaProcess : public QObject
       double     menrange;     // meniscus range
 
       QTime      timer;        // timer for elapsed time measure
+
+   private slots:
+      QVector< Solute > create_solutes( double, double, double,
+                                        double, double, double );
+      void queue_task(     WorkPacket&, double, double,
+                           int, int, int, QVector< Solute > );
+      void process_job(    WorkerThread* );
+      void process_final(  WorkerThread* );
+      void step_progress( int );
+      void final_computes( void );
+      void iterate(        void );
+      void submit_job(     WorkPacket&, int );
+      void free_worker(    int  );
 };
 #endif
 
