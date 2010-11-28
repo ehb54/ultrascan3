@@ -4,17 +4,19 @@
 
 #include <QtCore>
 
+//! \brief Data structures and methods to read/write experimental data
+//!
 /*! The US_DataIO2 class provides data structures and static methods to
     read and write experimental data.
-
+   
     For memory efficiency, there is only a single vector of radius
     values that applies to all the scans. So for instance, if you have
     an instance of RawData or EditedData like this:
-
+   
     EditedData* data;
-
+   
     you could refer to an individual scan reading value like this:
-
+   
     data->scanData[ scanIndex ].readings[ readingIndex ].value
 
     and the corresponding radius value could be specified like this:
@@ -24,9 +26,7 @@
     In wavelength data, the wavelength would be specified like this:
 
     data->scanWavelength( readingIndex )
-
 */
-
 class US_DataIO2
 {
    public:
@@ -75,18 +75,19 @@ class US_DataIO2
          Reading( double v )           { value = v; stdDev = 0.0; } //!< Alternate Constructor
       };
 
-      /*!  This is the structure of a Beckman raw data file.  The file
-       *   types are:
-       *   - I intensity
-       *   - P interference
-       *   - R absorbance
-       *   - W multi-wavelength
-       *   - F fluorescence
-       *
-       *   For multi wavelength data, the wavelength and radius data are in
-       *   opposite positions.
+      //! \brief Beckman Raw data scan
+      //!
+      /*! This is the structure of a Beckman raw data file.  The file
+          types are:
+           - I intensity
+           - P interference
+           - R absorbance
+           - W multi-wavelength
+           - F fluorescence
+        
+           For multi wavelength data, the wavelength and radius data are in
+           opposite positions.
        */
-
       class BeckmanRawScan
       {
          public:
@@ -108,9 +109,11 @@ class US_DataIO2
          QVector< RawReading > readings;  //!< The scan readings
       };
 
-      //!  The scanned data in the UltraScan III format and the specified
-      //!  plateau after editing.  The Beckman data is interpolated so there
-      //!  are no missing entries.  
+      //! \brief Single scan parameter and readings
+      //!
+      //! The scanned data in the UltraScan III format and the specified
+      //! plateau after editing.  The Beckman data is interpolated so there
+      //! are no missing entries.  
       class Scan
       {
          public:
@@ -118,22 +121,18 @@ class US_DataIO2
          double rpm;             //!< RPM of rotor for this scan
          double seconds;         //!< Time elapsed since start of run
          double omega2t;         //!< Calculated integration of w2t since start of run
-         double wavelength;      //!< Wavlength setting of optical system
+         double wavelength;      //!< Wavelength setting of optical system
          double plateau;         //!< Reading value
          double delta_r;         //!< Radial distance between Readings
          QVector< Reading > readings; //!< The scan readings
-         //! A bit array.  One bit for each Reading.  0 is an actual Reading and
-         //! 1 is an interpolated Reading.
-         QByteArray interpolated; 
+         QByteArray interpolated; //!< Bit array, 1 ea. Reading: 0=actual; 1=interpolated
       };
 
-      //!  All data associated with a cell / channel / wavelength (CCW)
+      //! All data associated with a cell / channel / wavelength (CCW)
       class RawData
       {
          public:
-         char    type[ 2 ];         //!< Data type: "RA", "IP", "RI", "FI"
-                                    //!< "WA" << "WI";
-
+         char    type[ 2 ];         //!< Data type: "RA"|"IP"|"RI"|"FI"|"WA"|"WI"
          char    rawGUID[ 16 ];     //!< A generated globally unique identifier
          int     cell;              //!< Cell (hole) of rotor for this data
          char    channel;           //!< Channel ('A', 'B', etc) of scan data
@@ -148,8 +147,15 @@ class US_DataIO2
          double value  ( int i, int j )
             { return scanData[ i ].readings[ j ].value; }
                                        //!< Convenience function returning a reading
+         double average_temperature()  
+            { double sum = 0.0;
+              for ( int i = 0; i < scanData.size(); i++ )
+                 sum += scanData[ i ].temperature;
+              return sum / (double)scanData.size(); } //!< Average temperature of scans
       };
 
+      //! \brief Changes made to a scan value
+      //!
       //! Holds changes made to a scan value.  Created by the data editor and
       //! applied when Reading data for analysis.
       class EditedPoint
@@ -160,7 +166,9 @@ class US_DataIO2
          double value;   //!< The new value
       };
 
-      //! A class that holds all entries associated with the edits of
+      //! \brief Entries for edits of a scan.
+      //!
+      //!< A class that holds all entries associated with the edits of
       //! a scan.
       class EditValues
       {
@@ -183,7 +191,7 @@ class US_DataIO2
          QString              runID;       //!< Specified runID of raw data
          QString              cell;        //!< Cell (hole) of rotor for this data
          QString              channel;     //!< Channel ('A', 'B', etc) of scan data
-         QString              wavelength;  //!< Wavlength setting of optical system
+         QString              wavelength;  //!< Wavelength setting of optical system
          QString              editGUID;    //!< A globally unique ID for edit
          QString              dataGUID;    //!< A globally unique ID for data
          double               meniscus;    //!< Designated radius of meniscus
@@ -197,13 +205,9 @@ class US_DataIO2
          QList< int >         excludes;    //!< A list of scans excluded from the raw data
          QList< EditedPoint > editedPoints; //!< A list of points specifically changed
          int                  noiseOrder;   //!< The order of the polynomial for noise removal
-         double               invert;       //!< A setting to invert the sign of the data.
-                                            //!< Valid values are 1.0 and -1.0
-         bool                 removeSpikes; //!< A setting designating whether the spike
-                                            //!< removal algorithm should be run
-         bool                 floatingData; //!< A value indicating that the density of
-                                            //!< the analyte is less than the density of
-                                            //!< the buffer.
+         double               invert;       //!< Setting to invert sign of data: 1.0 or -1.0
+         bool                 removeSpikes; //!< Flag if spike removal algorithm should be run
+         bool                 floatingData; //!< Flag density of analyte less than density of buffer.
       };
 
       //! The CCW data after edits are applied
@@ -211,24 +215,20 @@ class US_DataIO2
       {
          public:
          QString       runID;       //!< Specified runID of raw data
-         QString       editID;      //!< The identifier of the file that contained
-                                    //!< the edits for the data
+         QString       editID;      //!< Identifier of file that contained edits for the data
          QString       dataType;    //!< Sensor type
          QString       cell;        //!< Cell (hole) of rotor for this data
          QString       channel;     //!< Channel ('A', 'B', etc) of scan data
-         QString       wavelength;  //!< Wavlength setting of optical system
+         QString       wavelength;  //!< Wavelength setting of optical system
          QString       description; //!< ASCII description of the data
          QString       editGUID;    //!< A globally unique ID for edit
          QString       dataGUID;    //!< A globally unique ID for data
          double        meniscus;    //!< Designated radius of meniscus
          double        plateau;     //!< Location of maximum value of data.  A radius value.
          double        baseline;    //!< Designated baseline value of data
-         bool          floatingData; //!< A value indicating that the density of
-                                     //!< the analyte is less than the density of
-                                     //!< the buffer.
+         bool          floatingData; //!< Flag density of analyte less than density of buffer.
          QVector< XValue > x;        //!< Wavelength or radius information
-         QVector< Scan > scanData;   //!< The actual data.  The interpolated data 
-                                     //!< array is omitted
+         QVector< Scan > scanData;   //!< The actual data. Interpolated array is omitted
          double radius ( int i )    
             { return x[ i ].radius; } //!< A convenience function returning a radius value
          double scanWavelength( int i ) 
@@ -236,6 +236,11 @@ class US_DataIO2
          double value  ( int i, int j ) 
             { return scanData[ i ].readings[ j ].value; } 
                                       //!< A convenience function returning a reading value
+         double average_temperature()  
+            { double sum = 0.0;
+              for ( int i = 0; i < scanData.size(); i++ )
+                 sum += scanData[ i ].temperature;
+              return sum / (double)scanData.size(); } //!< Average temperature of scans
       };
 
       //! The CCW data after edits are applied
@@ -243,23 +248,19 @@ class US_DataIO2
       {
          public:
          QString       runID;       //!< Specified runID of raw data
-         QString       editID;      //!< The identifier of the file that contained
-                                    //!< the edits for the data
+         QString       editID;      //!< Identifier of file that contained edits for the data
          QString       dataType;    //!< Sensor type
          QString       cell;        //!< Cell (hole) of rotor for this data
          QString       channel;     //!< Channel ('A', 'B', etc) of scan data
-         QString       wavelength;  //!< Wavlength setting of optical system
+         QString       wavelength;  //!< Wavelength setting of optical system
          QString       description; //!< ASCII description of the data
          QString       editGUID;    //!< A globally unique ID for edit
          QString       dataGUID;    //!< A globally unique ID for data
          double        meniscus;    //!< Designated radius of meniscus
          double        plateau;     //!< Location of maximum value of data.  A radius value.
          double        baseline;    //!< Designated baseline value of data
-         bool          floatingData; //!< A value indicating that the density of
-                                     //!< the analyte is less than the density of
-                                     //!< the buffer.
-         QVector< Scan > scanData;   //!< The actual data.  The interpolated data 
-                                     //!< array is omitted
+         bool          floatingData; //!< Flag density of analyte less than density of buffer.
+         QVector< Scan > scanData;   //!< The actual data. Interpolated array is omitted
       };
 
       //! Values that are returned for various errors when managing scan data
@@ -338,19 +339,20 @@ class US_DataIO2
 
       /*! Adjust interference data by aligning air gaps at zero fringes 
           \param data A reference to the RawData structure to be adjusted
-          \param w    The EditValues used for the adjustment.  Only
+          \param ev   The EditValues used for the adjustment.  Only
                       airGapLeft, airGapRight, and includes are needed.
        */
 
       static void    adjust_interference( RawData&, const EditValues& );
   
-      /*! Align integal fringe shifts within the valid data range 
+      /*! Align integral fringe shifts within the valid data range 
           \param data A reference to the RawData structure to be adjusted
-          \param w    The EditValues used for the adjustment.  Only
+          \param e    The EditValues used for the adjustment.  Only
                       rangeLeft, rangeRight, and gapTolerance are needed.
        */
 
       static void    calc_integral ( RawData&, const EditValues& );
+  
    private:
 
       //!  \private A private convenience class

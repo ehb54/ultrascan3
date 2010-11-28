@@ -185,7 +185,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QString text_model( US_Model, int );
       double  calc_baseline(  int  );
       void    calc_residuals( void );
-      double  average_temperature( US_DataIO2::EditedData* );
       void    close_all( void );
       bool    bufinfo_db(   US_DataIO2::EditedData*,
                             QString&, QString&, QString& );

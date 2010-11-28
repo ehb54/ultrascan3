@@ -456,7 +456,7 @@ void US_FeMatch::load( void )
 
    edata     = &dataList[ 0 ];
    scanCount = edata->scanData.size();
-   double avgTemp = average_temperature( edata );
+   double avgTemp = edata->average_temperature();
 
    // set ID, description, and avg temperature text
    le_id  ->setText( edata->runID + " / " + edata->editID );
@@ -561,7 +561,8 @@ void US_FeMatch::update( int row )
    runID          = edata->runID;
    le_id->  setText( runID + " / " + edata->editID );
 
-   le_temp->setText( QString::number( average_temperature( edata ), 'f', 1 )
+   double avgTemp = edata->average_temperature();
+   le_temp->setText( QString::number( avgTemp, 'f', 1 )
          + " " + DEGC );
    te_desc->setText( edata->description );
 
@@ -631,7 +632,7 @@ DbgLv(1) << "R,V points count" << points << count;
       baseline        = dscan->readings[ jj ].value;
 
    baseline       /= 11.0;
-   double avgTemp  = average_temperature( edata );
+   double avgTemp  = edata->average_temperature();
    solution.vbar20 = US_Math2::adjust_vbar( solution.vbar, avgTemp );
    US_Math2::data_correction( avgTemp, solution );
 
@@ -1459,7 +1460,7 @@ void US_FeMatch::adjust_model()
    model              = model_loaded;
 
    // build model component correction factors
-   double avgTemp     = average_temperature( edata );
+   double avgTemp     = edata->average_temperature();
 
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
@@ -1469,8 +1470,7 @@ void US_FeMatch::adjust_model()
    US_Math2::data_correction( avgTemp, solution );
 
    double scorrec  = 1.0 / solution.s20w_correction;
-   double dcorrec  = ( ( K0 + avgTemp ) * VISC_20W )
-                     / ( K20 * solution.viscosity );
+   double dcorrec  = 1.0 / solution.D20w_correction;
 
    // fill out components values and adjust s,D based on buffer
 
@@ -1478,18 +1478,16 @@ void US_FeMatch::adjust_model()
    {
       US_Model::SimulationComponent* sc = &model.components[ jj ];
 
-      double s20w = fabs( sc->s );
-      double D20w = sc->D;
       sc->mw      = 0.0;
       sc->f       = 0.0;
       sc->f_f0    = 0.0;
 
       model.calc_coefficients( *sc );
 
+DbgLv(1) << " cx" << jj+1 << "s20w s" << sc->s << (sc->s*scorrec)
+ << "  D20w D" << sc->D << (sc->D*dcorrec);
       sc->s      *= scorrec;
       sc->D      *= dcorrec;
-DbgLv(1) << " cx" << jj+1
- << "s20w s" << s20w << sc->s << "  D20w D" << D20w << sc->D;
 
       if ( sc->extinction > 0.0 )
          sc->molar_concentration = sc->signal_concentration / sc->extinction;
@@ -1709,8 +1707,9 @@ DbgLv(1) << "  delay_minutes" << simparams.speed_step[0].delay_minutes;
 
    // make a simulation copy of the experimental data without actual readings
 
-   US_AstfemMath::initSimData( *sdata, *edata,
-         model.components[ 0 ].signal_concentration );
+   //US_AstfemMath::initSimData( *sdata, *edata,
+   //      model.components[ 0 ].signal_concentration );
+   US_AstfemMath::initSimData( *sdata, *edata, 0.0 );
 
    sdata->cell        = rdata->cell;
    sdata->channel     = rdata->channel;
@@ -1875,17 +1874,19 @@ double US_FeMatch::interp_sval( double xv, double* sx, double* sy, int ssize )
 
       if ( xv < sx[ jj ] )
       {  // given x lower than array x: interpolate between point and previous
-         double dx = sx[ jj ] - sx[ jj - 1 ];
-         double dy = sy[ jj ] - sy[ jj - 1 ];
-         return ( sy[ jj ] + ( xv - sx[ jj - 1 ] ) * dy / dx );
+         int    ii = jj - 1;
+         double dx = sx[ jj ] - sx[ ii ];
+         double dy = sy[ jj ] - sy[ ii ];
+         return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
       }
    }
 
    // given x position not found:  interpolate using last two points
    int    jj = ssize - 1;
-   double dx = sx[ jj ] - sx[ jj - 1 ];
-   double dy = sy[ jj ] - sy[ jj - 1 ];
-   return ( sy[ jj ] + ( xv - sx[ jj - 1 ] ) * dy / dx );
+   int    ii = jj - 1;
+   double dx = sx[ jj ] - sx[ ii ];
+   double dy = sy[ jj ] - sy[ ii ];
+   return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
 }
 
 // write the results text file
@@ -2026,9 +2027,8 @@ void US_FeMatch::write_cofs()
    int    row      = lw_triples->currentRow();
    edata           = &dataList[ row ];
    int    ccount   = model.components.size();
-   double avgTemp  = average_temperature( edata ) + K0;
    double scorrec  = 1.0 / solution.s20w_correction;
-   double dcorrec  = ( avgTemp * VISC_20W ) / ( K20 * solution.viscosity );
+   double dcorrec  = 1.0 / solution.D20w_correction;
 
    QString filename = US_Settings::resultDir() + "/" + edata->runID + "."
       + text_model( model, 0 ) + "_dis." + edata->cell + wave_index( row );
@@ -2282,18 +2282,6 @@ void US_FeMatch::calc_residuals()
    delete [] xx;
    delete [] sx;
    delete [] sy;
-}
-
-// calculate average temperature across scans
-double US_FeMatch::average_temperature( US_DataIO2::EditedData* d )
-{
-   int    sCount   = d->scanData.size();
-   double sumTemp  = 0.0;
-
-   for ( int ii = 0; ii < sCount; ii++ )
-      sumTemp += d->scanData[ ii ].temperature;
-
-   return ( sumTemp / (double)sCount );
 }
 
 // slot to make sure all windows and dialogs get closed
