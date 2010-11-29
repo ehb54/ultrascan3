@@ -572,8 +572,10 @@ void US_SimulationParameters::load()
    QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.simulation_parameters", 0);
    if ( !filename.isEmpty() )
    {
-      US_FemGlobal fg;
-      if (fg.read_simulationParameters(simparams, filename) == 0)
+      US_FemGlobal *fg;
+      fg = new US_FemGlobal();
+      connect(fg, SIGNAL(simparams_name(QString)), this, SIGNAL(simparams_name(QString)));
+      if (fg->read_simulationParameters(simparams, filename) == 0)
       {
          cnt_number_of_speeds->setValue((*simparams).speed_step.size());
          cmb_speeds->clear();

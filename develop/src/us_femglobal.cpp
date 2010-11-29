@@ -24,6 +24,12 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename, boo
    vector <QString> qsv;
    QFile f;
    f.setName(filename);
+   int pos = filename.findRev(".model");
+   filename.truncate(pos);
+   pos = filename.findRev(".us_");
+   filename.truncate(pos);
+   emit model_name(filename);
+
    if (f.open(IO_ReadOnly | IO_Translate))
    {
       QTextStream ts(&f);
@@ -535,7 +541,10 @@ int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, QSt
    vector <QString> qsv;
    QFile f;
    f.setName(filename);
-   cout << "FILE NAME: " << filename << endl;
+   int pos = filename.findRev(".us_system");
+   filename.truncate(pos);
+   emit simparams_name(filename);
+   //cout << "FILE NAME: " << filename << endl;
    if (f.open(IO_ReadOnly | IO_Translate))
    {
       QTextStream ts(&f);

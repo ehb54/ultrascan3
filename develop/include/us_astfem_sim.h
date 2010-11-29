@@ -77,6 +77,12 @@ class US_EXTERN US_Astfem_Sim : public QFrame
       QLabel *lbl_time;
       QLabel *lbl_component;
       QLabel *lbl_progress;
+      QLabel *lbl_experiment_name;
+      QLabel *lbl_model_name;
+      QLabel *lbl_simparams_name;
+      QLineEdit *le_experiment_name;
+      QLineEdit *le_model_name;
+      QLineEdit *le_simparams_name;
       QLCDNumber *lcd_speed;
       QLCDNumber *lcd_component;
       QLCDNumber *lcd_time;
@@ -115,6 +121,8 @@ class US_EXTERN US_Astfem_Sim : public QFrame
       void printError(const int &);
       void save_xla(const QString &);
       void save_ultrascan(const QString &);
+      void update_simparams_name(QString);
+      void update_model_name(QString);
 };
 
 #endif

@@ -128,6 +128,9 @@ class US_EXTERN US_SimulationParameters : public QDialog
       void save(const QString &);
       void printError(const int &);
       void check_params();
+
+   signals:
+      void simparams_name(QString);
 };
 
 #endif

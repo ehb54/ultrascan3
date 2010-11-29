@@ -129,7 +129,43 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
    pb_save_scans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    pb_save_scans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(pb_save_scans, SIGNAL(clicked()), SLOT(save_scans()) );
+   
+   lbl_experiment_name = new QLabel(tr(" Current Experiment: "), this);
+   lbl_experiment_name->setAlignment(AlignCenter|AlignVCenter);
+   lbl_experiment_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   lbl_experiment_name->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_experiment_name->setMinimumHeight(26);
 
+   lbl_model_name = new QLabel(tr(" Current Model: "), this);
+   lbl_model_name->setAlignment(AlignCenter|AlignVCenter);
+   lbl_model_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   lbl_model_name->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_model_name->setMinimumHeight(26);
+
+   lbl_simparams_name = new QLabel(tr(" Current Simulation Parameters: "), this);
+   lbl_simparams_name->setAlignment(AlignCenter|AlignVCenter);
+   lbl_simparams_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   lbl_simparams_name->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_simparams_name->setMinimumHeight(26);
+
+   le_experiment_name = new QLineEdit(this, "experiment_name");
+   le_experiment_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_experiment_name->setReadOnly(true);
+   le_experiment_name->setText(tr("<not selected>"));
+   le_experiment_name->setMinimumHeight(26);
+   
+   le_model_name = new QLineEdit(this, "model_name");
+   le_model_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_model_name->setReadOnly(true);
+   le_model_name->setText(tr("<not selected>"));
+   le_model_name->setMinimumHeight(26);
+   
+   le_simparams_name = new QLineEdit(this, "simparams_name");
+   le_simparams_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_simparams_name->setReadOnly(true);
+   le_simparams_name->setText(tr("<not selected>"));
+   le_simparams_name->setMinimumHeight(26);
+   
    pb_help = new QPushButton( tr("Help"), this );
    pb_help->setAutoDefault(false);
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -257,6 +293,12 @@ void US_Astfem_Sim::setup_GUI()
    buttonBox->addWidget(pb_stop_simulation);
    buttonBox->addWidget(pb_dcdt_window);
    buttonBox->addWidget(pb_save_scans);
+   buttonBox->addWidget(lbl_experiment_name);
+   buttonBox->addWidget(le_experiment_name);
+   buttonBox->addWidget(lbl_model_name);
+   buttonBox->addWidget(le_model_name);
+   buttonBox->addWidget(lbl_simparams_name);
+   buttonBox->addWidget(le_simparams_name);
    buttonBox->addWidget(pb_help);
    buttonBox->addWidget(pb_close);
 
@@ -330,6 +372,11 @@ void US_Astfem_Sim::load_model()
    if ( !fn.isEmpty() )
    {
       load_model(fn);
+      int pos = fn.findRev(".model");
+      fn.truncate(pos);
+      pos = fn.findRev(".us_");
+      fn.truncate(pos);
+      le_model_name->setText(fn);
    }
 }
 
@@ -746,15 +793,22 @@ void US_Astfem_Sim::load_system()
    if ( !fn.isEmpty() )
    {
       load_system(fn);
+      int len = fn.length();
+      len -= 10;
+      fn.truncate(len);
+      le_experiment_name->setText(fn);
    }
 }
 
 void US_Astfem_Sim::load_system(const QString &filename)
 {
    int error_code;
-   US_FemGlobal fg;
+   US_FemGlobal *fg;
+   fg = new US_FemGlobal();
+   connect(fg, SIGNAL(simparams_name(QString)), this, SLOT(update_simparams_name(QString)));
+   connect(fg, SIGNAL(model_name(QString)), this, SLOT(update_model_name(QString)));
    QString str;
-   error_code = fg.read_experiment(&system, &simparams, filename);
+   error_code = fg->read_experiment(&system, &simparams, filename);
    if (error_code < 0)
    {
       str.sprintf("Unable to load System: " + filename + "\n\nError code: %d", error_code);
@@ -769,6 +823,16 @@ void US_Astfem_Sim::load_system(const QString &filename)
       pb_start_simulation->setEnabled(true);
       printError(5);
    }
+}
+
+void US_Astfem_Sim::update_simparams_name(QString filename)
+{
+   le_simparams_name->setText(filename);
+}
+
+void US_Astfem_Sim::update_model_name(QString filename)
+{
+   le_model_name->setText(filename);
 }
 
 void US_Astfem_Sim::save_system()
@@ -868,6 +932,7 @@ void US_Astfem_Sim::simulation_parameters()
 {
    US_SimulationParameters *sp;
    sp = new US_SimulationParameters(&simparams, this);
+   connect(sp, SIGNAL(simparams_name(QString)), this, SLOT(update_simparams_name(QString)));
    if (sp->exec())
    {
       pb_start_simulation->setEnabled(true);

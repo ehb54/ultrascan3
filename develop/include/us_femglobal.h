@@ -220,6 +220,8 @@ class US_EXTERN US_FemGlobal : public QObject
 
    signals:
       void new_error(QString);
+      void simparams_name(QString);
+      void model_name(QString);
 };
 
 #endif
