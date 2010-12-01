@@ -146,6 +146,11 @@ class US_EXTERN US_Widgets : public QFrame
     //! * returns a good match for a fixed font
 	 QFont fixedFont(void);
 
+    //! \param fontAdjust -  adjustment to default font size\n
+    //! \param weight      - QFont::{Light,Normal,DemiBold,Bold,Black}\n
+    //! * Color is set to US_GuiSettings::normalColor()
+    QTabWidget* us_tabwidget( int = 0,
+                              int = QFont::Bold );
 };
 
 //! \brief Set a custom list widget that can override the default size
