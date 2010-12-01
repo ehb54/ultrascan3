@@ -42,6 +42,7 @@ class US_EXTERN US_AdvAnalysis : public US_WidgetsDialog
       QwtCounter*   ct_grrefine;
       QwtCounter*   ct_menisrng;
       QwtCounter*   ct_menispts;
+      QwtCounter*   ct_mciters;
       QwtCounter*   ct_repetloc;
       QwtCounter*   ct_scfactor;
       QwtCounter*   ct_scfact2;
@@ -59,6 +60,7 @@ class US_EXTERN US_AdvAnalysis : public US_WidgetsDialog
       QCheckBox*    ck_soluco;
       QCheckBox*    ck_clipcs;
       QCheckBox*    ck_menisc;
+      QCheckBox*    ck_mcarlo;
       QCheckBox*    ck_regulz;
 
       QRadioButton* rb_stndcp;
@@ -79,6 +81,7 @@ class US_EXTERN US_AdvAnalysis : public US_WidgetsDialog
       void checkSoluCoal(    bool );
       void checkClipLow (    bool );
       void checkMeniscus(    bool );
+      void checkMonteCar(    bool );
       void checkRegular (    bool );
       void select(           void );
 

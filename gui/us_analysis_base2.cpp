@@ -359,7 +359,7 @@ void US_AnalysisBase2::update( int selection )
    for ( int i = 0; i < scanCount; i++ ) 
       sum += d->scanData[ i ].temperature;
 
-   le_temp->setText( QString::number( sum / scanCount, 'f', 1 ) + " " + DEGC );
+   le_temp->setText( QString::number( sum / scanCount, 'f', 1 ) + " " + MLDEGC );
 
    te_desc->setText( d->description );
 
@@ -1001,7 +1001,7 @@ QString US_AnalysisBase2::run_details( void ) const
 
    QString average = QString::number( sum / d->scanData.size(), 'f', 1 );
 
-   s += table_row( tr( "Average Temperature:" ), average + " " + DEGC );
+   s += table_row( tr( "Average Temperature:" ), average + " " + MLDEGC );
 
    if ( maxTemp - minTemp <= US_Settings::tempTolerance() )
       s += table_row( tr( "Temperature Variation:" ), tr( "Within tolerance" ) );
@@ -1042,8 +1042,9 @@ QString US_AnalysisBase2::run_details( void ) const
         table_row( tr( "Meniscus Position:     " ),           
                    QString::number( d->meniscus, 'f', 3 ) + " cm" );
 
-   double left  =  d->x[ 0 ].radius;
-   double right =  d->x[ 0 ].radius;
+   int    rrx   =  d->x.size() - 1;
+   double left  =  d->x[ 0   ].radius;
+   double right =  d->x[ rrx ].radius;
 
    s += table_row( tr( "Edited Data starts at: " ), 
                    QString::number( left,  'f', 3 ) + " cm" ) +
@@ -1076,14 +1077,16 @@ QString US_AnalysisBase2::hydrodynamics( void ) const
                    QString::number( solution.density_tb, 'f', 6 ) + " g/ccm" ) +
         table_row( tr( "Vbar:" ), 
                    QString::number( solution.vbar, 'f', 4 ) + " ccm/g" ) +
-        table_row( tr( "Vbar corrected for 20 " ) + DEGC + ":",
+        table_row( tr( "Vbar corrected for 20 " ) + MLDEGC + ":",
                    QString::number( solution.vbar20, 'f', 4 ) + " ccm/g" ) +
-        table_row( tr( "Buoyancy (Water, 20 " ) + DEGC + "): ",
+        table_row( tr( "Buoyancy (Water, 20 " ) + MLDEGC + "): ",
                    QString::number( solution.buoyancyw, 'f', 6 ) ) +
         table_row( tr( "Buoyancy (absolute)" ),
                    QString::number( solution.buoyancyb, 'f', 6 ) ) +
-        table_row( tr( "Correction Factor:" ),
+        table_row( tr( "Correction Factor (s):" ),
                    QString::number( solution.s20w_correction, 'f', 6 ) ) + 
+        table_row( tr( "Correction Factor (D):" ),
+                   QString::number( solution.D20w_correction, 'f', 6 ) ) + 
         "</table>\n";
 
    return s;
@@ -1334,8 +1337,8 @@ bool US_AnalysisBase2::solinfo_disk( US_DataIO2::EditedData* edata,
                   if ( sguid != soluGUID )
                      break;
                   svbar         = ats.value( "commonVbar20" ).toString();
-                  qDebug() << "+++ Got solution vbar from file:" << svbar
-                     << " for GUID" << soluGUID;
+                  qDebug() << "+++ Got solution vbar" << svbar
+                     << "from file, for GUID" << soluGUID;
                }
 
                else if (  xml.name() == "buffer" )

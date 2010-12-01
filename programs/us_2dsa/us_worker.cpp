@@ -215,8 +215,8 @@ DbgLv(1) << "TM:BEG:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
 
       // Set up small_a, small_b for alternate nnls
 DbgLv(1) << "  set SMALL_A+B";
-      QVector< double > small_a( nsolutes * nsolutes, 0.0 );
-      QVector< double > small_b( nsolutes           , 0.0 );
+      QVector< double > small_a( sq( nsolutes ), 0.0 );
+      QVector< double > small_b( nsolutes,       0.0 );
 
       ti_small_a_and_b( nsolutes, ntotal, ntinois,
                         small_a, small_b, a_bar, L_bars, nnls_a );
@@ -268,11 +268,12 @@ DbgLv(1) << "  noise small NNLS";
       compute_L_tildes( nrinois, ntotal, nsolutes, L_tildes, nnls_a );
 
       // Set up small_a, small_b for the nnls
-      QVector< double > small_a( nsolutes * nsolutes, 0.0 );
-      QVector< double > small_b( nsolutes,            0.0 );
+      QVector< double > small_a( sq( nsolutes ), 0.0 );
+      QVector< double > small_b( nsolutes,       0.0 );
       if ( abort ) return;
-      ri_small_a_and_b( nsolutes, ntotal, nrinois, small_a, small_b,
-                        a_tilde, L_tildes, nnls_a );
+
+      ri_small_a_and_b( nsolutes, ntotal, nrinois,
+                        small_a, small_b, a_tilde, L_tildes, nnls_a );
       if ( abort ) return;
 
       US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes,
@@ -417,16 +418,18 @@ void WorkerThread::compute_L( int                      ntotal,
 {
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
-      if ( nnls_x[ cc ] > 0 )
+      double concentration = nnls_x[ cc ];
+
+      if ( concentration > 0 )
       {
-         int kk      = 0;
+         int r_index = cc * ntotal;
+         int count   = 0;
 
          for ( int ss = 0; ss < nscans; ss++ )
          {
             for ( int rr = 0; rr < npoints; rr++ )
             {
-               L[ kk++ ] += ( nnls_x[ cc ] *
-                              nnls_a[ cc * ntotal + ss * npoints + rr ] );
+               L[ count++ ] += ( concentration * nnls_a[ r_index++ ] );
             }
          }
       }
@@ -443,19 +446,19 @@ void WorkerThread::ri_small_a_and_b( int                      nsolutes,
                                      const QVector< double >& nnls_a )
 {
 DbgLv(1) << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
-   int kstodo = sq( nsolutes ) / 10;
-   int incprg = nsolutes / 20;
+   int kstodo = sq( nsolutes ) / 10;   // progress steps to report
+   int incprg = nsolutes / 20;         // increment between reports
    incprg     = max( incprg,  1 );
    incprg     = min( incprg, 10 );
-   int jstprg = ( kstodo * incprg ) / nsolutes;
-   int kstep  = 0;
+   int jstprg = ( kstodo * incprg ) / nsolutes;  // steps for each report
+   int kstep  = 0;                               // progress counter
 
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
-      int    jjna  = cc * ntotal;
-      int    jjlt  = cc * nrinois;
-      int    jsa2  = jjna;
-      int    jst2  = jjlt;
+      int    jsa2  = cc * ntotal;
+      int    jst2  = cc * nrinois;
+      int    jjna  = jsa2;
+      int    jjlt  = jst2;
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
@@ -527,12 +530,12 @@ void WorkerThread::ti_small_a_and_b( int                      nsolutes,
                                      const QVector< double >& nnls_a )
 {
 DbgLv(1) << "TM:BEG:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
-   int kstodo = sq( nsolutes ) / 10;
-   int incprg = nsolutes / 20;
+   int kstodo = sq( nsolutes ) / 10;   // progress steps to report
+   int incprg = nsolutes / 20;         // increment between reports
    incprg     = max( incprg,  1 );
    incprg     = min( incprg, 10 );
-   int jstprg = ( kstodo * incprg ) / nsolutes;
-   int kstep  = 0;
+   int jstprg = ( kstodo * incprg ) / nsolutes;  // steps for each report
+   int kstep  = 0;                               // progress counter
 
    for ( int cc = 0; cc < nsolutes; cc++ )
    {

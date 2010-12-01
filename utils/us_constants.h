@@ -148,7 +148,8 @@
 
 
 //! Declare miscellaneous constants
-const QString DEGC = QString( QChar( 176 ) ) + "C"; //!< Degree-symbol + "C"
+const QString DEGC   = QString( QChar( 176 ) ) + "C"; //!< Degree-symbol + "C"
+const QString MLDEGC = QString( "&deg;C" );   //!< HTML degree-symbol + "C"
 
 
 namespace US_ConstantModels

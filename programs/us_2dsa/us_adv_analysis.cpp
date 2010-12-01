@@ -42,6 +42,7 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    QLabel* lb_grrefine     = us_label(  tr( "Grid Refinements:" ) );
    QLabel* lb_menisrng     = us_label(  tr( "Meniscus Fit Range (cm):" ) );
    QLabel* lb_menispts     = us_label(  tr( "Meniscus Grid Points:" ) );
+   QLabel* lb_mciters      = us_label(  tr( "Monte Carlo Iterations:" ) );
    QLabel* lb_repetloc     = us_label(  tr( "Repetitions:" ) );
    QLabel* lb_scfactor     = us_label(  tr( "Scaling Factor:" ) );
    QLabel* lb_scfact2      = us_label(  tr( "Scaling Factor 2:" ) );
@@ -71,6 +72,8 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
       us_checkbox( tr( "Uniform Grid"                      ), ck_unifgr, true );
    QLayout*  lo_menisc  =
       us_checkbox( tr( "Float Meniscus Position"           ), ck_menisc );
+   QLayout*  lo_mcarlo  =
+      us_checkbox( tr( "Monte Carlo Iterations"            ), ck_mcarlo );
    QLayout*  lo_locugr  =
       us_checkbox( tr( "Local Uniform Grid"                ), ck_locugr );
    QLayout*  lo_ranlgr  =
@@ -90,8 +93,9 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    ct_stddevia  = us_counter( 3, 0.01, 10.0,  0.1 );
    ct_coaldist  = us_counter( 3, 0.01, 10.0,  0.1 );
    ct_nbrclips  = us_counter( 2,    1,   20,    1 );
-   ct_menisrng  = us_counter( 3, 0.55, 0.65,  0.6 );
+   ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
    ct_menispts  = us_counter( 2,    1,   20,   10 );
+   ct_mciters   = us_counter( 3,    1, 2000,   20 );
    ct_regufact  = us_counter( 3, 0.01, 10.0,  0.9 );
 
    ct_grrefine ->setStep(    1 );
@@ -104,6 +108,7 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    ct_nbrclips ->setStep(    1 );
    ct_menisrng ->setStep( 0.01 );
    ct_menispts ->setStep(    1 );
+   ct_mciters  ->setStep(    1 );
    ct_regufact ->setStep( 0.01 );
 
    cmb_mesh     = us_comboBox();
@@ -161,6 +166,9 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    simparmsLayout->addWidget( ct_menisrng,   row++, 4, 1, 2 );
    simparmsLayout->addWidget( lb_menispts,   row,   0, 1, 4 );
    simparmsLayout->addWidget( ct_menispts,   row++, 4, 1, 2 );
+   simparmsLayout->addLayout( lo_mcarlo,     row++, 0, 1, 6 );
+   simparmsLayout->addWidget( lb_mciters,    row,   0, 1, 4 );
+   simparmsLayout->addWidget( ct_mciters,    row++, 4, 1, 2 );
    simparmsLayout->addLayout( lo_regulz,     row++, 0, 1, 6 );
    simparmsLayout->addWidget( lb_regufact,   row,   0, 1, 4 );
    simparmsLayout->addWidget( ct_regufact,   row++, 4, 1, 2 );
@@ -185,6 +193,12 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
             this,  SLOT( checkSoluCoal( bool ) ) );
    connect( ck_clipcs, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkClipLow(  bool ) ) );
+   connect( ck_menisc, SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkMeniscus( bool ) ) );
+   connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkMonteCar( bool ) ) );
+   connect( ck_regulz, SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkRegular(  bool ) ) );
 
    connect( pb_help,    SIGNAL( clicked() ),
             this,       SLOT(   help()    ) );
@@ -193,11 +207,21 @@ US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
    connect( pb_accept,  SIGNAL( clicked() ),
             this,       SLOT(   select()  ) );
 
+   ck_menisc->setChecked( false );
+   ck_mcarlo->setChecked( false );
+   ck_regulz->setChecked( false );
+
+   ct_menisrng->setEnabled( false );
+   ct_menispts->setEnabled( false );
+   ct_mciters ->setEnabled( false );
+   ct_regufact->setEnabled( false );
+
 qDebug() << "Pre-adjust size" << size();
    adjustSize();
 qDebug() << "Post-adjust size" << size();
    resize( 740, 330 );
 qDebug() << "Post-resize size" << size();
+   qApp->processEvents();
 }
 
 // public slot to get dialog parameters
@@ -246,6 +270,7 @@ void US_AdvAnalysis::get_parameters(
 void US_AdvAnalysis::optimize_options()
 {
    ct_grrefine->setEnabled( ck_unifgr->isChecked() );
+   ct_mciters ->setEnabled( ck_mcarlo->isChecked() );
    ct_repetloc->setEnabled( ck_locugr->isChecked() );
    ct_scfactor->setEnabled( ck_locugr->isChecked() );
    ct_scfact2 ->setEnabled( ck_locugr->isChecked() );
@@ -297,11 +322,22 @@ void US_AdvAnalysis::checkClipLow(  bool checked )
    if ( checked ) { uncheck_optimize( 5 ); optimize_options(); }
 }
 
-// handle float meniscus position checkec
+// handle float meniscus position checked
 void US_AdvAnalysis::checkMeniscus( bool checked )
 {
-   ct_menisrng->setEnabled( checked );
-   ct_menispts->setEnabled( checked );
+qDebug() << "SET MENISRNG enabled" << checked;
+   ct_menisrng->setEnabled(  checked );
+   ct_menispts->setEnabled(  checked );
+   if ( checked )
+      ck_mcarlo  ->setChecked( !checked );
+}
+
+// handle monte carlo iterations checked
+void US_AdvAnalysis::checkMonteCar( bool checked )
+{
+   ct_mciters ->setEnabled( checked );
+   if ( checked )
+      ck_menisc  ->setChecked( !checked );
 }
 
 // handle regularization checked

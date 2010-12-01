@@ -54,7 +54,7 @@ US_AnalysisControl::US_AnalysisControl( US_DataIO2::EditedData* dat_exp,
    QLabel* lb_grrefine     = us_label(  tr( "Grid Refinements:" ) );
    QLabel* lb_menisrng     = us_label(  tr( "Meniscus Fit Range (cm):" ) );
    QLabel* lb_menispts     = us_label(  tr( "Meniscus Grid Points:" ) );
-   QLabel* lb_regufact     = us_label(  tr( "Regularization Factor:" ) );
+   QLabel* lb_mciters      = us_label(  tr( "Monte Carlo Iterations:" ) );
    QLabel* lb_iters        = us_label(  tr( "Maximum Iterations:" ) );
    QLabel* lb_statinfo     = us_banner( tr( "Status Information:" ) );
 
@@ -106,19 +106,19 @@ DbgLv(1) << "idealThrCout" << nthr;
       us_checkbox( tr( "Uniform Grid"                      ), ck_unifgr, true );
    QLayout*  lo_menisc  =
       us_checkbox( tr( "Float Meniscus Position"           ), ck_menisc );
-   QLayout*  lo_regulz  =
-      us_checkbox( tr( "Regularization"                    ), ck_regulz );
+   QLayout*  lo_mcarlo  =
+      us_checkbox( tr( "Monte Carlo Iterations"            ), ck_mcarlo );
 
 
    ct_iters     = us_counter( 2,    1,    8,    1 );
    ct_grrefine  = us_counter( 2,    1,   20,    7 );
-   ct_menisrng  = us_counter( 3, 0.55, 0.65, 0.03 );
-   ct_menispts  = us_counter( 2,    3,   21,    5 );
-   ct_regufact  = us_counter( 3, 0.01, 10.0,  0.9 );
+   ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
+   ct_menispts  = us_counter( 2,    3,   21,   10 );
+   ct_mciters   = us_counter( 3,    3, 2000,   20 );
    ct_grrefine ->setStep(    1 );
    ct_menisrng ->setStep( 0.01 );
-   ct_menispts ->setStep(    2 );
-   ct_regufact ->setStep( 0.01 );
+   ct_menispts ->setStep(    1 );
+   ct_mciters  ->setStep(    1 );
    ct_iters    ->setStep(    1 );
 
    int row       = 0;
@@ -169,9 +169,9 @@ DbgLv(1) << "idealThrCout" << nthr;
    optimizeLayout->addWidget( ct_menisrng,   row++, 1, 1, 1 );
    optimizeLayout->addWidget( lb_menispts,   row,   0, 1, 1 );
    optimizeLayout->addWidget( ct_menispts,   row++, 1, 1, 1 );
-   optimizeLayout->addLayout( lo_regulz,     row++, 0, 1, 2 );
-   optimizeLayout->addWidget( lb_regufact,   row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_regufact,   row++, 1, 1, 1 );
+   optimizeLayout->addLayout( lo_mcarlo,     row++, 0, 1, 2 );
+   optimizeLayout->addWidget( lb_mciters,    row,   0, 1, 1 );
+   optimizeLayout->addWidget( ct_mciters,    row++, 1, 1, 1 );
    optimizeLayout->addWidget( pb_advance,    row++, 0, 1, 2 );
    optimizeLayout->addLayout( lo_iters,      row++, 0, 1, 2 );
    optimizeLayout->addWidget( lb_iters,      row,   0, 1, 1 );
@@ -209,8 +209,8 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,  SLOT( checkUniGrid(  bool ) ) );
    connect( ck_menisc, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkMeniscus( bool ) ) );
-   connect( ck_regulz, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkRegular(  bool ) ) );
+   connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkMonteCar( bool ) ) );
    connect( ck_iters,  SIGNAL( toggled( bool ) ),
             this,  SLOT( checkIterate(  bool ) ) );
 
@@ -237,9 +237,9 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,       SLOT(   advanced()  ) );
 
    // disable those GUI elements not yet implemented
-   ck_menisc  ->setEnabled( false );
-   ck_regulz  ->setEnabled( false );
-   //ck_iters   ->setEnabled( false );
+   ck_menisc->setEnabled( false );
+   ck_mcarlo->setEnabled( false );
+   //ck_iters ->setEnabled( false );
 
    grid_change();
 
@@ -249,9 +249,9 @@ DbgLv(1) << "idealThrCout" << nthr;
 if ( dbg_level > 0 )
  sparms->save_simparms( US_Settings::appBaseDir() + "/etc/sp_2dsa.xml" );
 
-DbgLv(1) << "Pre-adjust size" << size();
-   resize( 740, 440 );
-DbgLv(1) << "Post-adjust size" << size();
+DbgLv(1) << "Pre-resize AC size" << size();
+   resize( 710, 440 );
+DbgLv(1) << "Post-resize AC size" << size();
 }
 
 // enable/disable optimize counters based on chosen method
@@ -260,7 +260,7 @@ void US_AnalysisControl::optimize_options()
    ct_grrefine->setEnabled( ck_unifgr->isChecked() );
    ct_menisrng->setEnabled( ck_menisc->isChecked() );
    ct_menispts->setEnabled( ck_menisc->isChecked() );
-   ct_regufact->setEnabled( ck_regulz->isChecked() );
+   ct_mciters ->setEnabled( ck_mcarlo->isChecked() );
 }
 
 // uncheck optimize options other than one just checked
@@ -268,7 +268,7 @@ void US_AnalysisControl::uncheck_optimize( int ckflag )
 {
    if ( ckflag != 1 ) ck_unifgr->setChecked( false );
    if ( ckflag != 2 ) ck_menisc->setChecked( false );
-   if ( ckflag != 7 ) ck_regulz->setChecked( false );
+   if ( ckflag != 3 ) ck_mcarlo->setChecked( false );
 }
 
 // handle uniform grid checked
@@ -283,34 +283,40 @@ void US_AnalysisControl::checkMeniscus( bool checked )
    if ( checked ) { uncheck_optimize( 2 ); optimize_options(); }
 }
 
+// handle Monte Carlo checked
+void US_AnalysisControl::checkMonteCar( bool checked )
+{
+   if ( checked ) { uncheck_optimize( 3 ); optimize_options(); }
+}
+
 // handle local uniform grid checked
 void US_AnalysisControl::checkLocalUni( bool checked )
 {
-   if ( checked ) { uncheck_optimize( 3 ); optimize_options(); }
+   if ( checked ) { uncheck_optimize( 4 ); optimize_options(); }
 }
 
 // handle random local grid checked
 void US_AnalysisControl::checkRandLoc(  bool checked )
 {
-   if ( checked ) { uncheck_optimize( 4 ); optimize_options(); }
+   if ( checked ) { uncheck_optimize( 5 ); optimize_options(); }
 }
 
 // handle solute coalescing checked
 void US_AnalysisControl::checkSoluCoal( bool checked )
 {
-   if ( checked ) { uncheck_optimize( 5 ); optimize_options(); }
+   if ( checked ) { uncheck_optimize( 6 ); optimize_options(); }
 }
 
 // handle clip lowest conc. solute checked
 void US_AnalysisControl::checkClipLow(  bool checked )
 {
-   if ( checked ) { uncheck_optimize( 6 ); optimize_options(); }
+   if ( checked ) { uncheck_optimize( 7 ); optimize_options(); }
 }
 
-// handle regularization checked
+// handle Regularization checked
 void US_AnalysisControl::checkRegular(  bool checked )
 {
-   if ( checked ) { uncheck_optimize( 7 ); optimize_options(); }
+   if ( checked ) { uncheck_optimize( 8 ); optimize_options(); }
 }
 
 // handle iterations checked
@@ -374,9 +380,9 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
             this,      SLOT(   completed_process( bool ) ) );
 
    int    mxiter = (int)ct_iters->value();
-   int    mciter = (int)ct_menispts->value();
+   int    mciter = (int)ct_mciters ->value();
    int    mniter = (int)ct_menispts->value();
-   double vtoler = 1.0e-9;
+   double vtoler = 1.0e-11;
    double menrng = ct_menisrng->value();
 
    processor->set_iters( mxiter, mciter, mniter, vtoler, menrng );

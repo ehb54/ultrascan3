@@ -154,6 +154,7 @@ void US_2dsa::analysis_done( int updflag )
    QString analysID  = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
    QString editID    = edata->editID;
    editID            = editID.startsWith( "20" ) ? editID.mid( 2 ) : editID;
+   model.modelGUID   = US_Util::new_guid();
    model.editGUID    = edata->editGUID;
    model.analysis    = US_Model::TWODSA;
    model.description = edata->runID + ".2DSA_e" + editID + "_a" + analysID
@@ -336,23 +337,42 @@ void US_2dsa::view( void )
    te_results->show();
 }
 
-// Save data (model,noise) files and report files
+// Save data (model,noise), report, and PNG image files
 void US_2dsa::save( void )
 {
-   QString rpath  = US_Settings::reportDir();
-   QString mpath;
-   QString npath;
+   QString analysID = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
+   QString runID    = edata->runID;
+   QString editID   = edata->editID;
+   editID           = editID.startsWith( "20" ) ? editID.mid( 2 ) : editID;
+   QString dbase    = runID + ".2DSA_e" + editID + "_a" + analysID + ".";
+   QString dext     = "." + edata->cell + "1";
+
+   model.modelGUID      = US_Util::new_guid();
+   model.editGUID       = edata->editGUID;
+   model.analysis       = US_Model::TWODSA;
+   model.description    = dbase + "model"    + dext;
+   ti_noise.description = dbase + "ti_noise" + dext;
+   ti_noise.type        = US_Noise::TI;
+   ti_noise.modelGUID   = model.modelGUID;
+   ri_noise.description = dbase + "ri_noise" + dext;
+   ri_noise.type        = US_Noise::RI;
+   ri_noise.modelGUID   = model.modelGUID;
+
+   QString reppath  = US_Settings::reportDir();
+   QString respath  = US_Settings::resultDir();
+   QString mdlpath;
+   QString noipath;
 
    // Save the model file
 
-   if ( ! US_Model::model_path( mpath ) )
+   if ( ! US_Model::model_path( mdlpath ) )
    {
       qDebug() << "*** Unable to create or find the model directory ***";
       return;
    }
 
    QStringList ffilt( "M*.xml" );
-   QDir        dirm( mpath );
+   QDir        dirm( mdlpath );
    QStringList names =  dirm.entryList( ffilt, QDir::Files, QDir::Name );
    QString     mname = "M0000000.xml";
    QString     nname = "N0000000.xml";
@@ -366,7 +386,7 @@ void US_2dsa::save( void )
          break;
    }
 
-   mname  = mpath + "/" + mname;
+   mname  = mdlpath + "/" + mname;
    model.write( mname );
 
    // Save any noise files
@@ -374,15 +394,13 @@ void US_2dsa::save( void )
    int     nnois  = min( ti_noise.count, 1 ) + min( ri_noise.count, 1 );
    if ( nnois > 0 )
    {
-      if ( ! US_Noise::noise_path( npath ) )
+      if ( ! US_Noise::noise_path( noipath ) )
       {
          qDebug() << "*** Unable to create or find the noise directory ***";
          return;
       }
 
-      QString tidsc = model.description.replace( ".model.", ".ti_noise." );
-      QString ridsc = model.description.replace( ".model.", ".ri_noise." );
-      QDir    dirn( npath );
+      QDir    dirn( noipath );
       ffilt.clear();
       ffilt << "N*.xml";
       names         = dirn.entryList( ffilt, QDir::Files, QDir::Name );
@@ -401,154 +419,57 @@ void US_2dsa::save( void )
          }
       }
 
-      nname  = npath + "/" + nname;
-      nnam1  = npath + "/" + ( nnois == 1 ? nname : nnam1 );
+      nname  = noipath + "/" + nname;
+      nnam1  = noipath + "/" + ( nnois == 1 ? nname : nnam1 );
 
       if ( ti_noise.count > 0 )
       {
-         ti_noise.type        = US_Noise::TI;
-         ti_noise.description = tidsc;
          ti_noise.noiseGUID   = US_Util::new_guid();
-         ti_noise.modelGUID   = model.modelGUID;
-
          ti_noise.write( nnam1 );
 
          if ( ri_noise.count > 0 )
          {
-            ri_noise.type        = US_Noise::RI;
-            ri_noise.description = ridsc;
             ri_noise.noiseGUID   = US_Util::new_guid();
-            ri_noise.modelGUID   = model.modelGUID;
-
             ri_noise.write( nname );
          }
       }
 
       else
       {
-         ri_noise.type        = US_Noise::RI;
-         ri_noise.description = ridsc;
          ri_noise.noiseGUID   = US_Util::new_guid();
-         ri_noise.modelGUID   = model.modelGUID;
-
          ri_noise.write( nname );
       }
    }
 
-   US_DataIO2::EditedData* d = edata;
-   if ( ! mkdir( rpath, d->runID ) ) return;
+   if ( ! mkdir( reppath, runID ) ) return;
 
-   // Note: d->runID is both directory and first segment of file name
-   QString filebase  = rpath + "/" + d->runID + "/" + d->runID
-      + "." + d->cell + + "." + d->channel + "." + d->wavelength;
-   
-   QString plot1File = filebase + ".sm_plot1.svg";
-   QString plot2File = filebase + ".sm_plot2.svg";
-   QString textFile  = filebase + ".sm_data.txt";
-   QString htmlFile  = filebase + ".sm_report.html";
+   QString filebase  = reppath + "/" + runID + "/";
+   QString htmlFile  = filebase + "2dsa_report" + dext + ".html";
+   QString plot1File = filebase + "2dsa_resid"  + dext + ".png";
+   QString plot2File = filebase + "2dsa_edited" + dext + ".png";
+   QString plot3File = filebase + "2dsa_pixmap" + dext + ".png";
 
+   // Write HTML report file
+   write_report( htmlFile );
 
    // Write plots
-   write_plot( plot1File, data_plot1 );
-   write_plot( plot2File, data_plot2 );
+   write_png( plot1File, data_plot1 );
+   write_png( plot2File, data_plot2 );
+   write_png( plot3File, NULL       );
    
-   // Write moment data
-   QFile sm_data( textFile );
-   if ( ! sm_data.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
-   {
-      QMessageBox::warning( this,
-            tr( "IO Error" ),
-            tr( "Could not open\n" ) + textFile + "\n" +
-                tr( "\nfor writing" ) );
-      return;
-   }
-
-#if 0
-   QTextStream ts_data( &sm_data );
-
-   int scanCount = d->scanData.size();
-   int excludes  = le_skipped->text().toInt();
-   
-   if ( excludes == scanCount )
-      ts_data << "No valid scans\n";
-   else
-   {
-      int count = 0;
-      for ( int i = excludes; i < scanCount; i++ )
-      {
-         if ( excludedScans.contains( i ) ) continue;
-
-         ts_data << count + 1 << "\t" << smPoints[ i ] 
-                 << "\t" << smSeconds[ i ] << "\n";
-         count++;
-      }
-   }
-
-   sm_data.close();
-
-   // Write report
-   QFile report( htmlFile );
-
-   if ( ! report.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
-   {
-      QMessageBox::warning( this,
-            tr( "IO Error" ),
-            tr( "Could not open\n" ) + htmlFile + "\n" +
-                tr( "\nfor writing" ) );
-      return;
-   }
-
-   QTextStream report_ts( &report );
-
-   report_ts << "<html><head>\n"
-         "<style>td { padding-right: 1em;}</style>\n"
-         "</head><body>\n";
-
-   report_ts << tr( "<h1>Second Moment Analysis</h1>\n" ) 
-             << tr( "<h2>Data Report for Run \"" ) + d->runID 
-                    + tr( "\", Cell " ) + d->cell 
-                    + tr(  ", Wavelength " ) + d->wavelength + "</h2>\n";
-
-   QString sm_results = 
-        table_row( tr( "Average Second Moment S: " ),
-                   QString::number( average_2nd, 'f', 5 ) + " s * 10e-13" );
-
-   report_ts << run_details()
-             << hydrodynamics()
-             << analysis( sm_results )
-             << scan_info();
-
-   // Remove directory from string
-   filebase = d->runID + "." + d->cell + "." + d->channel + "." + d->wavelength;
-
-   report_ts << "<h3><a href='" + filebase + ".sm_data.txt'>" 
-                 "Text File of Second Moment Plot Data</a></h3>\n"
-
-         "<div><h3>Second Moment Plot</h3>\n"
-         "<object data='" + filebase + ".sm_plot1.svg' type='image/svg+xml' "
-         "width='"  + QString::number( data_plot1->size().width()  * 1.4 ) + "' "
-         "height='" + QString::number( data_plot1->size().height() * 1.4 ) + 
-         "'></object></div>\n"
-         
-         "<div><h3>Velocity Plot</h3>\n"
-         "<object data='" + filebase + ".sm_plot2.svg' type='image/svg+xml' "
-         "width='"  + QString::number( data_plot2->size().width()  * 1.4 ) + "' "
-         "height='" + QString::number( data_plot2->size().height() * 1.4 ) + 
-         "'></object></div>\n"
-
-         "</body></html>\n";
-
-   report.close();
-#endif
-
    // Tell user
    QString wmsg = tr( "Wrote:\n" ) + mname + "\n";
+
    if ( nnois > 1 )
       wmsg = wmsg + nnam1 + "\n" + nname + "\n";
+
    else if ( nnois > 0 )
       wmsg = wmsg + nname + "\n";
-   wmsg = wmsg + htmlFile  + "\n" + plot1File + "\n"
-               + plot2File + "\n" + textFile  + "\n";
+
+   wmsg = wmsg + htmlFile  + "\n"
+               + plot1File + "\n"
+               + plot2File + "\n"
+               + plot3File + "\n";
 
    QMessageBox::warning( this, tr( "Success" ), wmsg );
 }
@@ -692,5 +613,84 @@ QString US_2dsa::table5_row( const QString& s1, const QString& s2,
 {
    return "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
        + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n";
+}
+
+// Write HTML report file
+void US_2dsa::write_report( QString htmlFile )
+{
+   // output the report to the specified file
+   QFile rep_f( htmlFile );
+
+   if ( ! rep_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      return;
+
+   QTextStream ts( &rep_f );
+
+   ts << "<html><head>\n";
+   ts << "<style>td { padding-right: 1em;}</style>\n";
+   ts << "</head><body>\n";
+   ts << tr( "<h1>2-Dimensional Spectrum Analysis</h1>\n" );
+   ts << tr( "<h2>Data Report for Run \"" ) + edata->runID +
+         tr( "\", Cell " ) + edata->cell +
+         tr(  ", Wavelength " ) + edata->wavelength + "</h2>\n";
+   
+   ts << run_details();
+   ts << hydrodynamics();
+   ts << scan_info();
+   ts << distrib_info();
+   ts << "</body></html>\n";
+
+   rep_f.close();
+}
+
+// Write PNG plot file
+void US_2dsa::write_png( QString plotFile, QWidget* pwidget )
+{
+   QWidget*         plwidg = pwidget;
+   QPixmap          pixmap;
+   US_ResidsBitmap* resbmap;
+
+   if ( pwidget == NULL )
+   {  // non-existing plot widget:   create a pixmap of the resids bitmap
+      bool have_ri = ri_noise.count > 0;
+      bool have_ti = ti_noise.count > 0;
+      int  nscans  = edata->scanData.size();
+      int  npoints = edata->x.size();
+      QVector< double >            resscn( npoints );
+      QVector< QVector< double > > resids( nscans  );
+
+      for ( int ii = 0; ii < nscans; ii++ )
+      {
+         double rnoi  = have_ri ? ri_noise.values[ ii ] : 0.0;
+
+         for ( int jj = 0; jj < npoints; jj++ )
+         {
+            double tnoi  = have_ti ? ti_noise.values[ jj ] : 0.0;
+            resscn[ jj ] = edata->value( ii, jj )
+                         - sdata.value(  ii, jj ) - rnoi - tnoi;
+         }
+
+         resids[ ii ] = resscn;
+      }
+
+      resbmap = new US_ResidsBitmap( resids );
+      pixmap = QPixmap::grabWidget( resbmap, 0, 0,
+            resbmap->width(), resbmap->height() );
+
+      plwidg = resbmap;
+   }
+
+   pixmap = QPixmap::grabWidget( plwidg, 0, 0,
+                                 plwidg->width(), plwidg->height() );
+
+//qDebug() << "Widget w x h" << plwidg->width() << plwidg->height();
+//qDebug() << "Pixmap w x h" << pixmap.width()  << pixmap.height();
+
+   // Save the pixmap to the specified file
+   if ( ! pixmap.save( plotFile ) )
+      qDebug() << "*ERROR* Unable to write file" << plotFile;
+
+   if ( pwidget == NULL )
+      resbmap->close();
 }
 
