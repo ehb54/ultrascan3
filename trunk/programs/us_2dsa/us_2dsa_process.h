@@ -111,13 +111,12 @@ class US_EXTERN US_2dsaProcess : public QObject
       QList< WorkPacket >        job_queue;  // job queue
 
       QVector< int >             wkstates;   // worker thread states
+      QVector< int >             wkdepths;   // worker thread depths
       QVector< int >             tkdepths;   // task packet depths
 
       QList< double >            itvaris;    // iteration variances
 
-      QVector< Solute >          c_solutes;  // calculated solutes
-      QVector< Solute >          d_solutes;  // next-depth calculated solutes
-
+      QList< QVector< Solute > > c_solutes;  // calculated solutes
       QList< QVector< Solute > > orig_sols;  // original solutes
       QList< QVector< Solute > > ical_sols;  // iteration calculated solutes
 
@@ -164,6 +163,7 @@ class US_EXTERN US_2dsaProcess : public QObject
       int        mm_iter;      // meniscus/MC iteration index
 
       bool       abort;        // flag used with stop_fit clicked
+      bool       fnoionly;     // flag to use noise flag on final call only
 
       double     slolim;       // s lower limit
       double     suplim;       // s upper limit
@@ -190,6 +190,9 @@ class US_EXTERN US_2dsaProcess : public QObject
       void iterate(        void );
       void submit_job(     WorkPacket&, int );
       void free_worker(    int  );
+      int  running_at_depth( int );
+      int  queued_at_depth(  int );
+      int  jobs_at_depth(    int );
 };
 #endif
 

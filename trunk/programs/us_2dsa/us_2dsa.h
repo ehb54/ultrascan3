@@ -80,6 +80,8 @@ class US_2dsa : public US_AnalysisBase2
       QString table5_row( const QString&, const QString&, const QString&,
                           const QString&, const QString& );
       void data_plot( void );
+      void write_report( QString );
+      void write_png(    QString, QWidget* );
       void view     ( void );
       void save     ( void );
       void help     ( void )

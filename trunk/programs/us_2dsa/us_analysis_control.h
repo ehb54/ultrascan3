@@ -66,7 +66,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       QwtCounter*   ct_stddevia;
       QwtCounter*   ct_coaldist;
       QwtCounter*   ct_nbrclips;
-      QwtCounter*   ct_regufact;
+      QwtCounter*   ct_mciters;
       QwtCounter*   ct_iters;
 
       QCheckBox*    ck_tinoise;
@@ -78,7 +78,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       QCheckBox*    ck_ranlgr;
       QCheckBox*    ck_soluco;
       QCheckBox*    ck_clipcs;
-      QCheckBox*    ck_regulz;
+      QCheckBox*    ck_mcarlo;
       QCheckBox*    ck_iters;
 
       QLineEdit*    le_estmemory;
@@ -108,6 +108,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       void checkRandLoc (    bool );
       void checkSoluCoal(    bool );
       void checkClipLow (    bool );
+      void checkMonteCar(    bool );
       void checkRegular (    bool );
       void grid_change(      void );
       void start(            void );
