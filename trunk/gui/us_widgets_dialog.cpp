@@ -307,3 +307,22 @@ QwtPlotPicker* US_WidgetsDialog::us_picker( QwtPlot* plot )
   return pick;
 }
 
+// tabWidget
+QTabWidget* US_WidgetsDialog::us_tabwidget(  int fontAdjust,
+                                             int weight )
+{
+  QTabWidget* newtw = new QTabWidget( this );
+
+  newtw->setAutoFillBackground( true );
+
+  newtw->setFont(
+      QFont( US_GuiSettings::fontFamily(),
+             US_GuiSettings::fontSize  () + fontAdjust,
+             weight ) );
+
+  newtw->setPalette( US_GuiSettings::normalColor() );
+
+  return newtw;
+}
+
+

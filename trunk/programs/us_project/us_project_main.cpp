@@ -1,13 +1,13 @@
-//! \file us_solution_main.cpp
+//! \file us_project_main.cpp
 
 #include <QApplication>
 
-#include "us_solution_gui.h"
+#include "us_project_gui.h"
 #include "us_license_t.h"
 #include "us_license.h"
 
-//! \brief Main program for US_Solution. Loads translators and starts
-//    the class US_Solution.
+//! \brief Main program for US_Project. Loads translators and starts
+//    the class US_Project.
 
 int main( int argc, char* argv[] )
 {
@@ -16,7 +16,7 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   US_SolutionGui* w = new US_SolutionGui;
+   US_ProjectGui* w = new US_ProjectGui;
    w->show();                   //!< \memberof QWidget
-   return  application.exec();  //!< \memberof QApplication
+   return application.exec();   //!< \memberof QApplication
 }
