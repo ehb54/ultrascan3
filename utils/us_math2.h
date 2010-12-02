@@ -210,7 +210,7 @@ class US_EXTERN US_Math2
                          smoothing
       */
 
-      void gaussian_smoothing( QVector< double >&, int );
+      static void gaussian_smoothing( QVector< double >&, int );
 
       private:
 

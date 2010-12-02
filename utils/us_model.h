@@ -113,6 +113,9 @@ class US_EXTERN US_Model
       //!               if the path cannot be created
       static bool       model_path( QString& );
 
+      //! Dump model data for debugging
+      void debug( void );
+
       //! A class representing the initial concentration distribution of a
       //! solute in the buffer.
       class MfemInitial
@@ -189,6 +192,5 @@ class US_EXTERN US_Model
                            
       void write_temp      ( QTemporaryFile& );
 
-      void debug( void );
 };
 #endif
