@@ -22,10 +22,13 @@ US_2dsaProcess::US_2dsaProcess( US_DataIO2::EditedData* da_exper,
    dbg_level        = US_Settings::us_debug();
    maxrss           = 0;              // max memory
    maxdepth         = 0;              // maximum depth index of tasks
-   varitol          = 1e-11;          // variance difference tolerance
+   varitol          = 1e-12;          // variance difference tolerance
    r_iter           = 0;              // refinement iteration index
    mm_iter          = 0;              // meniscus/MC iteration index
    mintsols         = 100;            // minimum solutes per task, depth 1 ff.
+   maxiters         = 1;              // maximum refinement iterations
+   mmtype           = 0;              // meniscus/montecarlo type (NONE)
+   mmiters          = 0;              // meniscus/montecarlo iterations
    fnoionly         = US_Settings::debug_match( "2dsaFinalNoiseOnly" );
 
    itvaris  .clear();                 // iteration variances
@@ -87,8 +90,23 @@ DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
 
    timer.start();              // start a timer to measure run time
 
+   edata       = bdata;        // initial iteration base experiment data
+
+   if ( mmtype > 0 )
+   {  // for meniscus or monte carlo, make a working copy of the base data
+      wdata = *bdata;
+
+      if ( mmtype == 1 )
+      {  // if meniscus, use the start meniscus value
+         edata            = &wdata;
+         double bmeniscus = bdata->meniscus;
+         edata->meniscus  = bmeniscus - menrange * 0.5;
+DbgLv(1) << "MENISC: mm_iter meniscus bmeniscus"
+ << mm_iter << edata->meniscus << bmeniscus;
+      }
+   }
+
    // data dimensions
-   edata       = bdata;        // initial mc-iteration base experiment data
    nscans      = edata->scanData.size();
    npoints     = edata->x.size();
    // grid deltas     (overall increment between points)
@@ -161,7 +179,7 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
    kstask = nthreads;     // count of started tasks is initially thread count
 DbgLv(1) << "2P:   kstask nthreads" << kstask << nthreads << job_queue.size();
 
-   emit message_update(
+   emit message_update( pmessage_head() +
       tr( "Starting computations of %1 subgrids\n using %2 threads ..." )
       .arg( nsubgrid ).arg( nthreads ), false );
 }
@@ -171,8 +189,8 @@ void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
                                 double vtoler, double menrng )
 {
    maxiters   = mxiter;
-   mmtype     = ( mciter > 0 ) ? 1 : 0;
-   mmtype     = ( mniter > 0 ) ? 2 : mmtype;
+   mmtype     = ( mniter > 1 ) ? 1 : 0;
+   mmtype     = ( mciter > 1 ) ? 2 : mmtype;
    mmiters    = ( mmtype == 0 ) ? 0 : max( mciter, mniter );
    varitol    = vtoler;
    menrange   = menrng;
@@ -202,7 +220,8 @@ DbgLv(1) << "  STOPTHR:  thread aborted";
    c_solutes.clear();
    maxdepth  = 0;
 
-   emit message_update( tr( "All computations have been aborted." ), false );
+   emit message_update( pmessage_head() +
+      tr( "All computations have been aborted." ), false );
 }
 
 // Slot for thread step progress:  signal control progress bar
@@ -269,7 +288,8 @@ DbgLv(1) << "FinalComp: szSoluI" << wtask.isolutes.size();
    connect( wthr, SIGNAL( work_progress( int           ) ),
             this, SLOT(   step_progress( int           ) ) );
 
-   emit message_update( tr( "Computing final NNLS ..." ), false );
+   emit message_update( pmessage_head() + tr( "Computing final NNLS ..." ),
+      false );
 
 DbgLv(1) << "(FC)SUBMIT_JOB taskx" << wtask.taskx << "depth" << wtask.depth;
    wthreads[ thrx ] = wthr;
@@ -387,11 +407,15 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
       }
    }
 
-   // communicate variance to control through residual scan0's delta_r value
+   // set variance and communicate to control through residual's scan 0
    vari      /= (double)( nscans * npoints );
-   rdata.scanData[ 0 ].delta_r = vari;
    itvaris   << vari;
    ical_sols << c_solutes[ maxdepth ];
+   US_DataIO2::Scan* rscan0 = &rdata.scanData[ 0 ];
+   rscan0->delta_r    = vari;
+   rscan0->rpm        = (double)( r_iter + 1 );
+   rscan0->seconds    = ( mmtype == 0 ) ? 0.0 : (double)( mm_iter + 1 );
+   rscan0->plateau    = ( mmtype != 1 ) ? 0.0 : edata->meniscus;
 
    // determine elapsed time
    int ktimes = ( timer.elapsed() + 500 ) / 1000;
@@ -400,7 +424,7 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
    ktimes     = ktimes - ktimeh * 3600 - ktimem * 60;
 
    // compose final iteration status message
-   QString pmsg =
+   QString pmsg = pmessage_head() +
       tr( "The Solution has converged...\n"
           "Iterations:  %1\n"
           "Threads:  %2 ;   Subgrids:  %3\n"
@@ -423,7 +447,7 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
    pmsg += tr( "Maximum memory used:  " )
            + QString().sprintf( "%.1f", memmb ) + " MB";
 
-   emit message_update( pmsg, false );  // signal final message
+   emit message_update( pmsg, false );          // signal final message
 
    int thrx   = wresult.thrn - 1;
    free_worker( thrx );
@@ -473,7 +497,7 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
 
    if ( neediter )
    {  // we must iterate
-      emit process_complete( false );   // signal that iteration is complete
+      emit process_complete( 0 );       // signal that iteration is complete
       iterate();                        // reset to run another iteration
       return;
    }
@@ -485,8 +509,22 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
       model.components[ cc ].D *= solution.D20w_correction;
    }
 
-   emit process_complete( true );       // signal that processing is complete
    // done with iterations:   check for meniscus or MC iteration
+
+   if ( mmtype > 0  &&  ++mm_iter < mmiters )
+   {  // doing meniscus or monte carlo and more to do
+      emit process_complete( mmtype );  // signal that iteration is complete
+
+      if ( mmtype == 1 )
+         set_meniscus();
+
+      else if ( mmtype == 2 )
+         set_monteCarlo();
+
+      return;
+   }
+
+   emit process_complete( 9 );     // signal that all processing is complete
 }
 
 // Public slot to get results upon completion of all refinements
@@ -603,7 +641,7 @@ DbgLv(1) << "THR_FIN: depth" << wtask.depth << " #solutes"
 DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
  << " kct kst" << kctask << kstask << "csols size" << c_solutes.size();
 
-      emit message_update( 
+      emit message_update( pmessage_head() +
          tr( "Computations for %1 of %2 subgrids are complete" )
          .arg( kctask ).arg( nsubgrid ), false );
 
@@ -631,7 +669,8 @@ DbgLv(1) << "THR_FIN:   (new)kcst ncto" <<  kcsteps << nctotal
 
          emit stage_complete( kcsteps, nctotal );
 
-         emit message_update( tr( "Computing depth 1 ff.solutions..." ),
+         emit message_update( pmessage_head() +
+                              tr( "Computing depth 1 ff. solutions..." ),
                               false );
 
          maxdepth       = 1;
@@ -721,6 +760,7 @@ void US_2dsaProcess::queue_task( WorkPacket& wtask, double llss, double llsk,
    {  // if first task at this depth, report it
       emit message_update( tr( "Submitting first depth %1 calculations..." )
                            .arg( depth ), true );
+DbgLv(1) << "Submit 1st calcs, depth" << depth;
    }
 }
 
@@ -733,20 +773,36 @@ void US_2dsaProcess::iterate()
    job_queue.clear();
    QVector< Solute > csolutes = c_solutes[ maxdepth ];
 
-DbgLv(1) << "ITER: start of iteration" << r_iter+1;
-   nctotal      = ( r_iter == 1 ) ? max( kcsteps, nctotal ) : kcsteps;
-   kcsteps      = 0;
-   emit stage_complete( kcsteps, nctotal );
-   kctask       = 0;
-   kstask       = 0;
-   maxdepth     = 0;
-   max_rss();
 
    int    ncsol = csolutes.size();   // number of solutes calculated last iter
 
    for ( int ii = 0; ii < ncsol; ii++ )
       csolutes[ ii ].c = 0.0;        // clear concentration for compares
 
+DbgLv(1) << "ITER: start of iteration" << r_iter+1;
+   // Bump total steps estimate based on additional solutes in subgrids
+   if ( r_iter == 1 )
+   {
+      nctotal     = max( kcsteps, nctotal );
+DbgLv(1) << "ITER:  r-iter0 ncto ncsol" << nctotal << ncsol;
+      int kadd    = noisflag > 0 ?
+                    ( ( ncsol + 3 ) * ncsol * nsubgrid ) :
+                    ( ( ncsol * nsubgrid * 70 ) / 100 );
+      nctotal    += kadd;
+DbgLv(1) << "ITER:  r-iter1 ncto (diff)" << nctotal << kadd;
+   }
+
+   else
+   {  // For second and subsequent, average actual and estimated steps count
+      nctotal     = ( kcsteps + nctotal ) / 2;
+   }
+
+   kcsteps      = 0;
+   emit stage_complete( kcsteps, nctotal );
+   kctask       = 0;
+   kstask       = 0;
+   maxdepth     = 0;
+   max_rss();
 
    int    ktask = 0;                 // task index
    int    jdpth = 0;
@@ -768,8 +824,14 @@ DbgLv(1) << "ITER: start of iteration" << r_iter+1;
          for ( int cc = 0; cc < ncsol; cc++ )
             if ( ! isolutes.contains( csolutes[ cc ] ) )
                isolutes << csolutes[ cc ];
-DbgLv(1) << "ITER: iterate nisol o a c"
- << orig_sols[ktask].size() << isolutes.size() << ncsol;
+//*DEBUG
+int kosz=orig_sols[ktask].size();
+int kasz=isolutes.size();
+int kadd=kasz-kosz;
+if ( kadd < ncsol )
+DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
+ << kosz << kasz << ncsol << kadd;
+//*DEBUG
 
          // queue a subgrid task and update maximum task solute count
          WorkPacket wtask;
@@ -780,14 +842,6 @@ DbgLv(1) << "ITER: iterate nisol o a c"
       }
 
       llss     += gdelta_s;
-   }
-
-   // Bump total steps estimate by additional solutes in subgrids
-   if ( r_iter == 1 )
-   {
-DbgLv(1) << "ITER:  r-iter0 ncto ncsol" << nctotal << ncsol;
-      nctotal    += ( ( ncsol * nsubgrid * 70 ) / 100 );
-DbgLv(1) << "ITER:  r-iter1 ncto (diff)" << nctotal << (ncsol*nsubgrid*70)/100;
    }
 
    // Make sure calculated solutes are cleared out for new iteration
@@ -827,8 +881,8 @@ void US_2dsaProcess::free_worker( int tx )
    }
 }
 
-// Estimate progress steps after depth 0 from given total of calculated steps
-//   For maxtsols=100, estimate 85 solutes per task
+// Estimate progress steps after depth 0 from given total of calculated solutes.
+//   For maxtsols=100, estimate 95 solutes per task
 //   Calculate tasks needed for given depth 0 calculated steps
 //   Add 2 to solutes per task as NNLS factor
 //   Multiply steps per task times number of tasks
@@ -898,5 +952,127 @@ int US_2dsaProcess::running_at_depth( int depth )
 int US_2dsaProcess::jobs_at_depth( int depth )
 {
    return queued_at_depth( depth ) + running_at_depth( depth );
+}
+
+// Set up for another meniscus pass
+void US_2dsaProcess::set_meniscus()
+{
+   // Give the working data set an appropriate meniscus value
+   double bmeniscus = bdata->meniscus;
+   double mendelta  = menrange / (double)( mmiters - 1 );
+   double smeniscus = bmeniscus - menrange * 0.5;
+   edata->meniscus  = smeniscus + (double)mm_iter * mendelta;
+DbgLv(1) << "MENISC: mm_iter meniscus" << mm_iter << edata->meniscus;
+
+   // Re-queue all the original subgrid tasks
+
+   requeue_tasks();
+}
+
+// Set up for another monte carlo pass
+void US_2dsaProcess::set_monteCarlo()
+{
+DbgLv(1) << "MCARLO: mm_iter" << mm_iter;
+   // Set up new data modified by a gaussian distribution (MC iteration 2 start)
+   if ( mm_iter == 1 )
+      set_gaussians();
+
+   // Get a randomized variation of the cencentrations
+   // Use a gaussian distribution with the residual as the standard deviation
+   int kk = 0;
+
+   for ( int ss = 0; ss < nscans; ss++ )
+   {
+      for ( int rr = 0; rr < npoints; rr++ )
+      {
+         double variation = US_Math2::box_muller( 0.0, sigmas[ kk++ ] );
+         wdata.scanData[ ss ].readings[ rr ] =
+            US_DataIO2::Reading( sdata.value( ss, rr ) + variation );
+      }
+   }
+
+   edata       = &wdata;
+DbgLv(1) << "MCARLO: mm_iter" << mm_iter << " sigma0 c0 v0 cn vn"
+ << sigmas[0] << bdata->value(0,0) << edata->value(0,0)
+ << bdata->value(nscans-1,npoints-1) << edata->value(nscans-1,npoints-1);
+
+   // Re-queue all the original subgrid tasks
+
+   requeue_tasks();
+}
+
+// Re-queue all the original subgrid tasks
+void US_2dsaProcess::requeue_tasks()
+{
+   kcsteps      = 0;
+   emit stage_complete( kcsteps, nctotal );
+
+   int    ktask = 0;
+   int    jdpth = 0;
+   int    jnois = 0;
+   double llss  = slolim;
+
+   for ( int ii = 0; ii < ngrefine; ii++ )
+   {
+      double llsk  = klolim;
+
+      for ( int jj = 0; jj < ngrefine; jj++ )
+      {
+         QVector< Solute > isolutes = orig_sols[ ktask ];
+         WorkPacket wtask;
+         queue_task( wtask, llss, llsk, ktask++, jdpth, jnois, isolutes );
+         llsk          += gdelta_k;
+      }
+      llss     += gdelta_s;
+   }
+
+   // Make sure calculated solutes are cleared out for new iteration
+   for ( int ii = 0; ii < c_solutes.size(); ii++ )
+      c_solutes[ ii ].clear();
+
+   // Start the first threads
+   for ( int ii = 0; ii < nthreads; ii++ )
+   {
+      WorkPacket wtask = job_queue.takeFirst();
+      submit_job( wtask, ii );
+   }
+
+   kstask = nthreads;
+   kctask       = 0;
+   maxdepth     = 0;
+   r_iter       = 0;
+
+   emit message_update(
+      tr( "Starting iteration %1 computations of %2 subgrids\n"
+          "  using %3 threads ..." )
+      .arg( r_iter + 1 ).arg( nsubgrid ).arg( nthreads ), true );
+}
+
+void US_2dsaProcess::set_gaussians()
+{
+   sigmas.clear();
+DbgLv(1) << "MCARLO:setgau";
+
+   for ( int ss = 0; ss < nscans; ss++ )
+   {
+      QVector< double > vv( npoints );
+
+      for ( int rr = 0; rr < npoints; rr++ )
+      {
+         vv[ rr ] = fabs( rdata.value( ss, rr ) );
+      }
+
+      // Smooth using 5 points to the left and right of each point
+if ( ss < 2 ) DbgLv(1) << "MCARLO:setgau:gausmoo vv9" << vv[9];
+      US_Math2::gaussian_smoothing( vv, 5 );
+if ( ss < 2 ) DbgLv(1) << "MCARLO:setgau:smoothd vv9" << vv[9];
+      sigmas << vv;
+   }
+}
+
+QString US_2dsaProcess::pmessage_head()
+{
+   return tr( "Model %1,  Iteration %2:\n" )
+          .arg( mm_iter + 1 ).arg( r_iter + 1 );
 }
 

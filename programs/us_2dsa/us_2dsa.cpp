@@ -144,7 +144,16 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
 void US_2dsa::analysis_done( int updflag )
 {
    if ( updflag < 0 )
-   {
+   {  // flag either fit stopped (-1) or intermediate stage (-2)
+      if ( updflag < (-1) )
+      {  // with upflag=-2, update model,noise lists
+         models << model;
+         if ( ri_noise.count > 0 )
+            rinoises << ri_noise;
+         if ( ti_noise.count > 0 )
+            tinoises << ti_noise;
+      }
+
       qApp->processEvents();
       return;
    }

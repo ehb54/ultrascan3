@@ -1957,9 +1957,10 @@ void US_FeMatch::write_res()
    ts << tr( "Buoyancy (Water, " ) << t20d << "):  "
       << solution.buoyancyw << "\n";
    ts << tr( "Buoyancy (absolute):     " ) << solution.buoyancyb << "\n";
-   ts << tr( "s20w Correction Factor:       " ) << solution.s20w_correction << "\n\n\n";
+   ts << tr( "s20w Correction Factor:  " ) << solution.s20w_correction << "\n";
+   ts << tr( "D20w Correction Factor:  " ) << solution.D20w_correction << "\n";
 
-   ts << tr( "Data Analysis Settings:\n\n" );
+   ts << tr( "\n\nData Analysis Settings:\n\n" );
    ts << tr( "Number of Components:    " ) << ccount << "\n";
    ts << tr( "Residual RMS Deviation:  " ) << le_rmsd->text() << "\n\n";
 
