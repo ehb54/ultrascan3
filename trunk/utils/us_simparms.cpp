@@ -132,6 +132,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
 #else
    // For NO_DB (back end) the bottom needs to be set after this function
    bottom = bottom_position;
+   db = NULL; // Stop compiler warning
 #endif
 }
 
