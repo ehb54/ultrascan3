@@ -236,11 +236,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    connect( pb_advance, SIGNAL( clicked()   ),
             this,       SLOT(   advanced()  ) );
 
-   // disable those GUI elements not yet implemented
-   ck_menisc->setEnabled( false );
-   ck_mcarlo->setEnabled( false );
-   //ck_iters ->setEnabled( false );
-
    grid_change();
 
    // initialize simulation parameters from data
@@ -261,32 +256,50 @@ void US_AnalysisControl::optimize_options()
    ct_menisrng->setEnabled( ck_menisc->isChecked() );
    ct_menispts->setEnabled( ck_menisc->isChecked() );
    ct_mciters ->setEnabled( ck_mcarlo->isChecked() );
+
+   ck_tinoise ->setEnabled( ! ck_mcarlo->isChecked() );
+   ck_rinoise ->setEnabled( ! ck_mcarlo->isChecked() );
+
+   if ( ck_mcarlo->isChecked() )
+   {
+      ck_tinoise ->setChecked( false );
+      ck_rinoise ->setChecked( false ); 
+   }
 }
 
 // uncheck optimize options other than one just checked
 void US_AnalysisControl::uncheck_optimize( int ckflag )
 {
-   if ( ckflag != 1 ) ck_unifgr->setChecked( false );
-   if ( ckflag != 2 ) ck_menisc->setChecked( false );
-   if ( ckflag != 3 ) ck_mcarlo->setChecked( false );
+   if ( ckflag >  3 ) ck_unifgr->setChecked( false );
+   if ( ckflag == 3 ) ck_menisc->setChecked( false );
+   if ( ckflag == 2 ) ck_mcarlo->setChecked( false );
 }
 
 // handle uniform grid checked
 void US_AnalysisControl::checkUniGrid(  bool checked )
 {
-   if ( checked ) { uncheck_optimize( 1 ); optimize_options(); }
+   if ( checked )
+      uncheck_optimize( 1 );
+   
+   optimize_options();
 }
 
 // handle float meniscus position checkec
 void US_AnalysisControl::checkMeniscus( bool checked )
 {
-   if ( checked ) { uncheck_optimize( 2 ); optimize_options(); }
+   if ( checked )
+      uncheck_optimize( 2 );
+
+   optimize_options();
 }
 
 // handle Monte Carlo checked
 void US_AnalysisControl::checkMonteCar( bool checked )
 {
-   if ( checked ) { uncheck_optimize( 3 ); optimize_options(); }
+   if ( checked )
+      uncheck_optimize( 3 );
+
+   optimize_options();
 }
 
 // handle local uniform grid checked
@@ -376,13 +389,15 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
             this,      SLOT(   progress_message(  QString, bool ) ) );
    connect( processor, SIGNAL( stage_complete(    int, int )  ),
             this,      SLOT(   reset_steps(       int, int )  ) );
-   connect( processor, SIGNAL( process_complete(  bool ) ),
-            this,      SLOT(   completed_process( bool ) ) );
+   connect( processor, SIGNAL( process_complete(  int  ) ),
+            this,      SLOT(   completed_process( int  ) ) );
 
    int    mxiter = (int)ct_iters->value();
-   int    mciter = (int)ct_mciters ->value();
-   int    mniter = (int)ct_menispts->value();
-   double vtoler = 1.0e-11;
+   int    mniter = ck_menisc->isChecked() ?
+                   (int)ct_menispts->value() : 0;
+   int    mciter = ck_mcarlo->isChecked() ?
+                   (int)ct_mciters ->value() : 0;
+   double vtoler = 1.0e-12;
    double menrng = ct_menisrng->value();
 
    processor->set_iters( mxiter, mciter, mniter, vtoler, menrng );
@@ -504,8 +519,9 @@ void US_AnalysisControl::progress_message( QString pmsg, bool append )
 
    else
    {
-      int kk = le_iteration->text().toInt() + 1;
-      amsg   = tr( "Iteration %1" ).arg( kk ) + ":\n" + pmsg;
+      //int kk = le_iteration->text().toInt() + 1;
+      //amsg   = tr( "Iteration %1" ).arg( kk ) + ":\n" + pmsg;
+      amsg   = pmsg;
    }
 
    mw_stattext->setText( amsg );
@@ -528,29 +544,58 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
 }
 
 // slot to handle completed processing
-void US_AnalysisControl::completed_process( bool alldone )
+void US_AnalysisControl::completed_process( int stage )
 {
-DbgLv(1) << "AC:cp: alldone" << alldone;
+   bool alldone = ( stage == 9 );
+DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
+
    b_progress->setValue( nctotal );
    qApp->processEvents();
 
    processor->get_results( sdata, rdata, model, ti_noise, ri_noise );
 DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 
-   int    iternum  = le_iteration->text().toInt() + 1;
-   double varinew  = rdata->scanData[ 0 ].delta_r;
+   US_DataIO2::Scan* rscan0 = &rdata->scanData[ 0 ];
+   //int    iternum  = le_iteration->text().toInt() + 1;
+   int    iternum  = (int)rscan0->rpm;
+   int    mmitnum  = (int)rscan0->seconds;
+   double varinew  = rscan0->delta_r;
+   double meniscus = rscan0->plateau;
    double variold  = le_newvari  ->text().toDouble();
    double vimprov  = variold - varinew;
-   le_iteration->setText( QString::number( iternum ) );
    le_oldvari  ->setText( QString::number( variold ) );
    le_newvari  ->setText( QString::number( varinew ) );
    le_improve  ->setText( QString::number( vimprov ) );
+
+   if ( mmitnum == 0 )   // simple refinement iteration (no MC/Meniscus)
+      le_iteration->setText( QString::number( iternum ) );
+
+   else if ( ck_menisc->isChecked() )
+   {  // Meniscus
+      model->description = QString( "MMITER=%1 VARI=%2 MENISCUS=%3" )
+                           .arg( mmitnum ).arg( varinew ).arg( meniscus );
+      le_iteration->setText( QString::number( iternum  ) + "   ( Model " +
+                             QString::number( mmitnum  ) + " , Meniscus " +
+                             QString::number( meniscus ) + " )" );
+   }
+
+   else
+   {  // Monte Carlo
+      model->description = QString( "MMITER=%1 VARI=%2 " )
+                           .arg( mmitnum ).arg( varinew );
+      le_iteration->setText( QString::number( iternum ) + "   ( MC Model " +
+                             QString::number( mmitnum ) + " )" );
+   }
+
+   US_2dsa* mainw = (US_2dsa*)parentw;
 
    if ( alldone )
    {
       if ( parentw )
       {
-         US_2dsa* mainw = (US_2dsa*)parentw;
+         if ( mmitnum > 0 )
+            mainw->analysis_done( -2 );
+
          mainw->analysis_done( ck_autoplt->isChecked() ? 1 : 0 );
       }
 
@@ -558,6 +603,12 @@ DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
       pb_stopfit->setEnabled( false );
       pb_plot   ->setEnabled( true  );
       pb_save   ->setEnabled( true  );
+   }
+
+   else if ( mmitnum > 0  &&  stage > 0 )
+   {  // signal main to update lists of models,noises
+      if ( parentw )
+         mainw->analysis_done( -2 );
    }
 }
 

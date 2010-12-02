@@ -57,6 +57,10 @@ class US_2dsa : public US_AnalysisBase2
       US_Noise             ri_noise;
       US_Noise             ti_noise;
 
+      QList< US_Model >    models;
+      QList< US_Noise >    rinoises;
+      QList< US_Noise >    tinoises;
+
       QPoint               rbd_pos;
       QPoint               epd_pos;
       QPoint               acd_pos;

@@ -97,7 +97,7 @@ class US_EXTERN US_2dsaProcess : public QObject
 
       signals:
       void progress_update(  int  );
-      void process_complete( bool );
+      void process_complete( int  );
       void stage_complete(   int,     int  );
       void message_update(   QString, bool );
 
@@ -113,6 +113,8 @@ class US_EXTERN US_2dsaProcess : public QObject
       QVector< int >             wkstates;   // worker thread states
       QVector< int >             wkdepths;   // worker thread depths
       QVector< int >             tkdepths;   // task packet depths
+
+      QVector< double >          sigmas;     // monte carlo sigma variations
 
       QList< double >            itvaris;    // iteration variances
 
@@ -181,18 +183,23 @@ class US_EXTERN US_2dsaProcess : public QObject
    private slots:
       QVector< Solute > create_solutes( double, double, double,
                                         double, double, double );
-      void queue_task(     WorkPacket&, double, double,
-                           int, int, int, QVector< Solute > );
-      void process_job(    WorkerThread* );
-      void process_final(  WorkerThread* );
-      void step_progress( int );
-      void final_computes( void );
-      void iterate(        void );
-      void submit_job(     WorkPacket&, int );
-      void free_worker(    int  );
+      void queue_task( WorkPacket&, double, double,
+                       int, int, int, QVector< Solute > );
+      void process_job(      WorkerThread* );
+      void process_final(    WorkerThread* );
+      void step_progress(    int );
+      void final_computes(   void );
+      void iterate(          void );
+      void set_meniscus(     void );
+      void set_monteCarlo(   void );
+      void set_gaussians(    void );
+      void requeue_tasks(    void );
+      void submit_job(       WorkPacket&, int );
+      void free_worker(      int  );
       int  running_at_depth( int );
       int  queued_at_depth(  int );
       int  jobs_at_depth(    int );
+      QString pmessage_head( void );
 };
 #endif
 

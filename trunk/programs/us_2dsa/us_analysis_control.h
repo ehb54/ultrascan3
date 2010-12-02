@@ -24,7 +24,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
 
    public slots:
       void update_progress (  int  );
-      void completed_process( bool );
+      void completed_process( int  );
       void progress_message(  QString, bool = true );
       void reset_steps(       int,     int );
 
