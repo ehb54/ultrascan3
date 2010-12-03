@@ -154,31 +154,22 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
 
    if ( p )
    {
-      QWidget* caller = (QWidget*)((US_PlotControl*)p)->caller();
-      if ( caller )
-      {
-//DbgLv(1) << "RP: grandparent" << caller->objectName();
-         US_FeMatch* fem = (US_FeMatch*)caller;
-         edata           = fem->fem_editdata();
-         sdata           = fem->fem_simdata();
-         ti_noise        = fem->fem_ti_noise();
-         ri_noise        = fem->fem_ri_noise();
-         resbmap         = fem->fem_resbmap();
-         have_ed         = ( edata != 0 );
-         have_sd         = ( sdata != 0 );
-         have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
-         have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
-         have_bm         = ( resbmap != 0 );
+      US_FeMatch* fem = (US_FeMatch*)p;
+      edata           = fem->fem_editdata();
+      sdata           = fem->fem_simdata();
+      ti_noise        = fem->fem_ti_noise();
+      ri_noise        = fem->fem_ri_noise();
+      resbmap         = fem->fem_resbmap();
+      have_ed         = ( edata != 0 );
+      have_sd         = ( sdata != 0 );
+      have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
+      have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
+      have_bm         = ( resbmap != 0 );
 DbgLv(1) << "RP:edata  " << have_ed;
 DbgLv(1) << "RP:sdata  " << have_sd;
 DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
 DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
 DbgLv(1) << "RP:resbmap" << have_bm;
-      }
-      else
-      {
-         qDebug() << "*ERROR* unable to get RP grandparent";
-      }
    }
 
    else

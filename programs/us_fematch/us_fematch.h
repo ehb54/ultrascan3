@@ -16,6 +16,7 @@
 #include "us_run_details2.h"
 #include "us_buffer_gui.h"
 #include "us_analyte.h"
+#include "us_analysis_base2.h"
 #include "qwt_plot_marker.h"
 
 #ifndef DbgLv
@@ -90,6 +91,8 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QPushButton*  pb_save;
       QPushButton*  pb_distrib;
       QPushButton*  pb_advanced;
+      QPushButton*  pb_plot3d;
+      QPushButton*  pb_plotres;
       QPushButton*  pb_reset;
       QPushButton*  pb_help;
       QPushButton*  pb_close;
@@ -138,9 +141,11 @@ class US_EXTERN US_FeMatch : public US_Widgets
 
       QPointer< US_ResidsBitmap > rbmapd;
       QPointer< US_PlotControl >  eplotcd;
+      QPointer< US_ResidPlot >    resplotd;
 
-      QPoint                      rbd_pos;
+      QPoint                      bmd_pos;
       QPoint                      epd_pos;
+      QPoint                      rpd_pos;
 
    private slots:
 
@@ -150,6 +155,8 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void details(     void );
       void reset(       void );
       void advanced(    void );
+      void plot3d(      void );
+      void plotres(     void );
       void update(      int  );
       void update_density(   double );
       void update_viscosity( double );

@@ -292,7 +292,7 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
 
    dataWidget->setPlotStyle(       FILLEDMESH );
    dataWidget->setFloorStyle(      NOFLOOR    );
-   dataWidget->setCoordinateStyle( NOCOORD    );
+   dataWidget->setCoordinateStyle( FRAME      );
 
    skip_plot  = false;
    x_scale    = 1.0;
