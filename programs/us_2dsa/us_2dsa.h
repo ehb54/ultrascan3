@@ -89,6 +89,6 @@ class US_2dsa : public US_AnalysisBase2
       void view     ( void );
       void save     ( void );
       void help     ( void )
-      { showHelp.show_help( "manual/us_2dsa.html" ); };
+      { showHelp.show_help( "manual/2dsa.html" ); };
 };
 #endif
