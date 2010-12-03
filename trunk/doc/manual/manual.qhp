@@ -26,6 +26,7 @@
         <!-- The keyword id attribute appears to be needed, although the
              documentation does not say so -->
         <keywords>
+            <keyword id="21" name="2dsa"          ref="2dsa.html"/>
             <keyword id="a1" name="analyte"       ref="analytes.html"/>
             <keyword id="a2" name="associations"  ref="associations.html"/>
             <keyword id="a3" name="astfem_sim"    ref="astfem_sim.html"/>
@@ -172,6 +173,16 @@
             <file>simparams.html</file>
             <file>images/astfem_sim.png</file>
             <file>images/simparams.png</file>
+
+            <file>2dsa.html</file>
+            <file>2dsa_analys.html</file>
+            <file>2dsa_advan.html</file>
+            <file>images/2dsa_main-o.png</file>
+            <file>images/2dsa_main-c.png</file>
+            <file>images/2dsa_analys.png</file>
+            <file>images/2dsa_advan.png</file>
+            <file>images/2dsa_3dplot.png</file>
+            <file>images/2dsa_resplot.png</file>
 
             <file>model_editor.html</file>
             <file>associations.html</file>

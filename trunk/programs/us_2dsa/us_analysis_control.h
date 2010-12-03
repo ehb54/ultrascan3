@@ -118,7 +118,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       void advanced(         void );
 
       void help     ( void )
-      { showHelp.show_help( "us_2dsa_analctl.html" ); };
+      { showHelp.show_help( "2dsa_analys.html" ); };
 };
 #endif
 

@@ -86,7 +86,7 @@ class US_EXTERN US_AdvAnalysis : public US_WidgetsDialog
       void select(           void );
 
       void help     ( void )
-      { showHelp.show_help( "us_2dsa_advanal.html" ); };
+      { showHelp.show_help( "2dsa_advan.html" ); };
 };
 #endif
 
