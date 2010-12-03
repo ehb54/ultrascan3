@@ -20,21 +20,18 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
 
    // lay out the GUI
-   setWindowTitle( tr( "Enhanced Plotting Controls" ) );
+   setWindowTitle( tr( "3-D Plotting Controls" ) );
 
    mainLayout      = new QVBoxLayout( this );
    controlsLayout  = new QGridLayout( );
-   plotbtnLayout   = new QHBoxLayout( );
    buttonsLayout   = new QHBoxLayout( );
 
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
    mainLayout->addLayout( controlsLayout );
-   mainLayout->addLayout( plotbtnLayout  );
    mainLayout->addLayout( buttonsLayout  );
 
-   QLabel* lb_controls    = us_banner( tr( "3D Plotting Controls" ) );
    QLabel* lb_dimens      = us_label(  tr( "Dimension:" ) );
    QLabel* lb_molwt       = us_label(  tr( "Molecular Weight:" ) );
    QLabel* lb_sedcoeff    = us_label(  tr( "Sedimentation Coefficient:" ) );
@@ -48,7 +45,6 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QLabel* lb_dimen1      = us_label(  tr( "1 (x)" ) );
    QLabel* lb_dimen2      = us_label(  tr( "2 (y)" ) );
 
-   QPushButton* pb_rplot  = us_pushbutton( tr( "Residuals Plot" ) );
    QPushButton* pb_plot3d = us_pushbutton( tr( "3D Plot" ) );
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
@@ -80,36 +76,35 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QwtCounter* ct_peaksmoo  = us_counter( 3,    1,  200,    1 );
    QwtCounter* ct_peakwidth = us_counter( 3, 0.01, 10.0, 0.01 );
 
-   controlsLayout->addWidget( lb_controls,   0, 0, 1, 4 );
-   controlsLayout->addWidget( lb_dimens,     1, 0, 1, 2 );
-   controlsLayout->addWidget( lb_dimen1,     1, 2, 1, 1 );
-   controlsLayout->addWidget( lb_dimen2,     1, 3, 1, 1 );
-   controlsLayout->addWidget( lb_molwt,      2, 0, 1, 2 );
-   controlsLayout->addLayout( lo_xmwt,       2, 2, 1, 1 );
-   controlsLayout->addLayout( lo_ymwt,       2, 3, 1, 1 );
-   controlsLayout->addWidget( lb_sedcoeff,   3, 0, 1, 2 );
-   controlsLayout->addLayout( lo_xsed,       3, 2, 1, 1 );
-   controlsLayout->addLayout( lo_ysed,       3, 3, 1, 1 );
-   controlsLayout->addWidget( lb_diffcoeff,  4, 0, 1, 2 );
-   controlsLayout->addLayout( lo_xdif,       4, 2, 1, 1 );
-   controlsLayout->addLayout( lo_ydif,       4, 3, 1, 1 );
-   controlsLayout->addWidget( lb_friccoeff,  5, 0, 1, 2 );
-   controlsLayout->addLayout( lo_xfco,       5, 2, 1, 1 );
-   controlsLayout->addLayout( lo_yfco,       5, 3, 1, 1 );
-   controlsLayout->addWidget( lb_fricratio,  6, 0, 1, 2 );
-   controlsLayout->addLayout( lo_xfra,       6, 2, 1, 1 );
-   controlsLayout->addLayout( lo_yfra,       6, 3, 1, 1 );
-   controlsLayout->addWidget( lb_zscalefac,  7, 0, 1, 2 );
-   controlsLayout->addWidget( ct_zscalefac,  7, 2, 1, 2 );
-   controlsLayout->addWidget( lb_gridreso,   8, 0, 1, 2 );
-   controlsLayout->addWidget( ct_gridreso,   8, 2, 1, 2 );
-   controlsLayout->addWidget( lb_peaksmoo,   9, 0, 1, 2 );
-   controlsLayout->addWidget( ct_peaksmoo,   9, 2, 1, 2 );
-   controlsLayout->addWidget( lb_peakwidth, 10, 0, 1, 2 );
-   controlsLayout->addWidget( ct_peakwidth, 10, 2, 1, 2 );
+   int row = 0;
+   controlsLayout->addWidget( lb_dimens,    row,   0, 1, 2 );
+   controlsLayout->addWidget( lb_dimen1,    row,   2, 1, 1 );
+   controlsLayout->addWidget( lb_dimen2,    row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_molwt,     row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xmwt,      row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_ymwt,      row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_sedcoeff,  row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xsed,      row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_ysed,      row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_diffcoeff, row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xdif,      row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_ydif,      row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_friccoeff, row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xfco,      row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_yfco,      row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_fricratio, row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xfra,      row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_yfra,      row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_zscalefac, row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_zscalefac, row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_gridreso,  row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_gridreso,  row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_peaksmoo,  row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_peaksmoo,  row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_peakwidth, row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_peakwidth, row++, 2, 1, 2 );
 
-   plotbtnLayout->addWidget( pb_plot3d );
-   plotbtnLayout->addWidget( pb_rplot  );
+   buttonsLayout->addWidget( pb_plot3d );
    buttonsLayout->addWidget( pb_help   );
    buttonsLayout->addWidget( pb_close  );
 
@@ -173,8 +168,6 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    connect( ct_peakwidth, SIGNAL( valueChanged( double ) ),
             this,         SLOT(    peakw_value( double ) ) );
 
-   connect( pb_rplot,  SIGNAL( clicked() ),
-            this,      SLOT( rplot_btn() ) );
    connect( pb_plot3d, SIGNAL( clicked() ),
             this,      SLOT( plot3_btn() ) );
    connect( pb_help,   SIGNAL( clicked() ),
@@ -182,7 +175,6 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    connect( pb_close,  SIGNAL( clicked() ),
             this,      SLOT( close_all() ) );
 
-   resplotd = 0;
    plot3d_w = 0;
 
    lb_sedcoeff ->adjustSize();
@@ -309,15 +301,6 @@ void US_PlotControl::peakw_value( double value )
    pkwidth  = value;
 }
 
-// residual plot button clicked
-void US_PlotControl::rplot_btn()
-{
-   resplotd = new US_ResidPlot( this );
-   resplotd->setVisible( true );
-   //rplotd->exec();
-   //qApp->processEvents();
-}
-
 // 3d plot button clicked
 void US_PlotControl::plot3_btn()
 {
@@ -340,8 +323,8 @@ void US_PlotControl::plot3_btn()
 // close button clicked
 void US_PlotControl::close_all()
 {
-   if ( resplotd )
-      resplotd->close();
+   if ( plot3d_w != 0 )
+      plot3d_w->close();
 
    close();
 }

@@ -32,14 +32,12 @@ class US_EXTERN US_PlotControl : public US_WidgetsDialog
    private:
       QVBoxLayout*  mainLayout;
       QGridLayout*  controlsLayout;
-      QHBoxLayout*  plotbtnLayout;
       QHBoxLayout*  buttonsLayout;
 
       QVector< QCheckBox* >    xCheck;
       QVector< QCheckBox* >    yCheck;
 
       QWidget*                 wparent;
-      QPointer< US_ResidPlot > resplotd;
       QPointer< US_Plot3D    > plot3d_w;
       US_Model*                model;
 
@@ -67,7 +65,6 @@ class US_EXTERN US_PlotControl : public US_WidgetsDialog
       void gridr_value( double );
       void peaks_value( double );
       void peakw_value( double );
-      void rplot_btn( void );
       void plot3_btn( void );
       void close_all( void );
       int  dimensionType( QVector< QCheckBox* >& );

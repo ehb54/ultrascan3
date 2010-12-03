@@ -232,6 +232,20 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    connect( ct_component, SIGNAL( valueChanged( double ) ),
             this,         SLOT  ( comp_number(  double ) ) );
 
+   pb_advanced = us_pushbutton( tr( "Advanced"      ) );
+   pb_plot3d   = us_pushbutton( tr( "3D Plot"       ) );
+   pb_plotres  = us_pushbutton( tr( "Residual Plot" ) );
+
+   connect( pb_advanced, SIGNAL( clicked()  ),
+            this,        SLOT(   advanced() ) );
+   connect( pb_plot3d,   SIGNAL( clicked()  ),
+            this,        SLOT(   plot3d()   ) );
+   connect( pb_plotres,  SIGNAL( clicked()  ),
+            this,        SLOT(   plotres()  ) );
+
+   pb_plot3d ->setEnabled( false );
+   pb_plotres->setEnabled( false );
+
    density   = DENS_20W;
    viscosity = VISC_20W;
    vbar      = TYPICAL_VBAR;
@@ -251,40 +265,44 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    cb_mesh     ->setEnabled( true  );
    cb_grid     ->setEnabled( true  );
 
-   parameterLayout->addWidget( lb_experiment   , 0, 0, 1, 4 );
-   parameterLayout->addWidget( pb_density      , 1, 0, 1, 1 );
-   parameterLayout->addWidget( le_density      , 1, 1, 1, 1 );
-   parameterLayout->addWidget( pb_viscosity    , 1, 2, 1, 1 );
-   parameterLayout->addWidget( le_viscosity    , 1, 3, 1, 1 );
-   parameterLayout->addWidget( pb_vbar         , 2, 0, 1, 1 );
-   parameterLayout->addWidget( le_vbar         , 2, 1, 1, 1 );
-   parameterLayout->addWidget( pb_compress     , 2, 2, 1, 1 );
-   parameterLayout->addWidget( le_compress     , 2, 3, 1, 1 );
-   parameterLayout->addWidget( lb_variance     , 3, 0, 1, 1 );
-   parameterLayout->addWidget( le_variance     , 3, 1, 1, 1 );
-   parameterLayout->addWidget( lb_rmsd         , 3, 2, 1, 1 );
-   parameterLayout->addWidget( le_rmsd         , 3, 3, 1, 1 );
-   parameterLayout->addWidget( lb_sedcoeff     , 4, 0, 1, 2 );
-   parameterLayout->addWidget( le_sedcoeff     , 4, 2, 1, 2 );
-   parameterLayout->addWidget( lb_difcoeff     , 5, 0, 1, 2 );
-   parameterLayout->addWidget( le_difcoeff     , 5, 2, 1, 2 );
-   parameterLayout->addWidget( lb_partconc     , 6, 0, 1, 2 );
-   parameterLayout->addWidget( le_partconc     , 6, 2, 1, 2 );
-   parameterLayout->addWidget( lb_moweight     , 7, 0, 1, 2 );
-   parameterLayout->addWidget( le_moweight     , 7, 2, 1, 2 );
-   parameterLayout->addWidget( lb_component    , 8, 0, 1, 2 );
-   parameterLayout->addWidget( ct_component    , 8, 2, 1, 2 );
+   int row  = 0;
+   parameterLayout->addWidget( lb_experiment   , row++, 0, 1, 4 );
+   parameterLayout->addWidget( pb_density      , row,   0, 1, 1 );
+   parameterLayout->addWidget( le_density      , row,   1, 1, 1 );
+   parameterLayout->addWidget( pb_viscosity    , row,   2, 1, 1 );
+   parameterLayout->addWidget( le_viscosity    , row++, 3, 1, 1 );
+   parameterLayout->addWidget( pb_vbar         , row,   0, 1, 1 );
+   parameterLayout->addWidget( le_vbar         , row,   1, 1, 1 );
+   parameterLayout->addWidget( pb_compress     , row,   2, 1, 1 );
+   parameterLayout->addWidget( le_compress     , row++, 3, 1, 1 );
+   parameterLayout->addWidget( lb_variance     , row,   0, 1, 1 );
+   parameterLayout->addWidget( le_variance     , row,   1, 1, 1 );
+   parameterLayout->addWidget( lb_rmsd         , row,   2, 1, 1 );
+   parameterLayout->addWidget( le_rmsd         , row++, 3, 1, 1 );
+   parameterLayout->addWidget( pb_advanced     , row++, 0, 1, 2 );
+   parameterLayout->addWidget( pb_plot3d       , row,   0, 1, 2 );
+   parameterLayout->addWidget( pb_plotres      , row++, 2, 1, 2 );
+   parameterLayout->addWidget( lb_sedcoeff     , row,   0, 1, 2 );
+   parameterLayout->addWidget( le_sedcoeff     , row++, 2, 1, 2 );
+   parameterLayout->addWidget( lb_difcoeff     , row,   0, 1, 2 );
+   parameterLayout->addWidget( le_difcoeff     , row++, 2, 1, 2 );
+   parameterLayout->addWidget( lb_partconc     , row,   0, 1, 2 );
+   parameterLayout->addWidget( le_partconc     , row++, 2, 1, 2 );
+   parameterLayout->addWidget( lb_moweight     , row,   0, 1, 2 );
+   parameterLayout->addWidget( le_moweight     , row++, 2, 1, 2 );
+   parameterLayout->addWidget( lb_component    , row,   0, 1, 2 );
+   parameterLayout->addWidget( ct_component    , row++, 2, 1, 2 );
 
-   parameterLayout->addWidget( lb_simpoints    , 10, 0, 1, 2 );
-   parameterLayout->addWidget( ct_simpoints    , 10, 2, 1, 2 );
-   parameterLayout->addWidget( lb_bldvolume    , 11, 0, 1, 2 );
-   parameterLayout->addWidget( ct_bldvolume    , 11, 2, 1, 2 );
-   parameterLayout->addWidget( lb_parameter    , 12, 0, 1, 2 );
-   parameterLayout->addWidget( ct_parameter    , 12, 2, 1, 2 );
-   parameterLayout->addWidget( pb_showmodel    , 13, 0, 1, 2 );
-   parameterLayout->addWidget( ct_modelnbr     , 13, 2, 1, 2 );
-   parameterLayout->addWidget( cb_mesh         , 14, 0, 1, 4 );
-   parameterLayout->addWidget( cb_grid         , 15, 0, 1, 4 );
+   parameterLayout->addWidget( lb_simpoints    , row,   0, 1, 2 );
+   parameterLayout->addWidget( ct_simpoints    , row++, 2, 1, 2 );
+   parameterLayout->addWidget( lb_bldvolume    , row,   0, 1, 2 );
+   parameterLayout->addWidget( ct_bldvolume    , row++, 2, 1, 2 );
+   parameterLayout->addWidget( lb_parameter    , row,   0, 1, 2 );
+   parameterLayout->addWidget( ct_parameter    , row++, 2, 1, 2 );
+   parameterLayout->addWidget( pb_showmodel    , row,   0, 1, 2 );
+   parameterLayout->addWidget( ct_modelnbr     , row++, 2, 1, 2 );
+   parameterLayout->addWidget( cb_mesh         , row++, 0, 1, 4 );
+   parameterLayout->addWidget( cb_grid         , row++, 0, 1, 4 );
 
    // Scan Controls
 
@@ -349,12 +367,10 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    data_plot2->setMinimumSize( 560, 240 );
 
    // Standard buttons
-   pb_advanced = us_pushbutton( tr( "Advanced" ) );
    pb_reset    = us_pushbutton( tr( "Reset" ) );
    pb_help     = us_pushbutton( tr( "Help"  ) );
    pb_close    = us_pushbutton( tr( "Close" ) );
 
-   buttonLayout->addWidget( pb_advanced );
    buttonLayout->addWidget( pb_reset    );
    buttonLayout->addWidget( pb_help     );
    buttonLayout->addWidget( pb_close    );
@@ -365,18 +381,16 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             this,        SLOT(   close_all() ) );
    connect( pb_help,     SIGNAL( clicked() ),
             this,        SLOT(   help()      ) );
-   connect( pb_advanced, SIGNAL( clicked() ),
-            this,        SLOT(   advanced()  ) );
 
    rightLayout->addLayout( plotLayout1 );
    rightLayout->addWidget( gb_modelsim );
    rightLayout->addLayout( plotLayout2 );
-   rightLayout->setStretchFactor( plotLayout1, 3 );
-   rightLayout->setStretchFactor( plotLayout2, 2 );
+   rightLayout->setStretchFactor( plotLayout1, 2 );
+   rightLayout->setStretchFactor( plotLayout2, 3 );
 
    mainLayout->addLayout( leftLayout  );
    mainLayout->addLayout( rightLayout );
-   mainLayout->setStretchFactor( leftLayout, 2 );
+   mainLayout->setStretchFactor( leftLayout, 3 );
    mainLayout->setStretchFactor( rightLayout, 5 );
 
    set_ra_visible( false );
@@ -389,8 +403,10 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    resids.clear();
    rbmapd     = 0;
    eplotcd    = 0;
-   rbd_pos    = this->pos() + QPoint( 100, 100 );
+   resplotd   = 0;
+   bmd_pos    = this->pos() + QPoint( 100, 100 );
    epd_pos    = this->pos() + QPoint( 200, 200 );
+   rpd_pos    = this->pos() + QPoint( 300, 400 );
 
    ti_noise.count = 0;
    ri_noise.count = 0;
@@ -482,8 +498,9 @@ void US_FeMatch::load( void )
    connect( ct_from, SIGNAL( valueChanged( double ) ),
             this,    SLOT(   exclude_from( double ) ) );
 
-   rbd_pos    = this->pos() + QPoint( 100, 100 );
+   bmd_pos    = this->pos() + QPoint( 100, 100 );
    epd_pos    = this->pos() + QPoint( 200, 200 );
+   rpd_pos    = this->pos() + QPoint( 300, 300 );
 
    // set up buffer values implied from experimental data
    QString bufid;
@@ -1382,6 +1399,34 @@ void US_FeMatch::advanced( )
    set_ra_visible( visible );
 }
 
+// open 3d plot dialog
+void US_FeMatch::plot3d( )
+{
+   if ( eplotcd != 0 )
+   {
+      epd_pos  = eplotcd->pos();
+      eplotcd->close();
+   }
+
+   eplotcd = new US_PlotControl( this, &model );
+   eplotcd->move( epd_pos );
+   eplotcd->show();
+}
+
+// open residual plot dialog
+void US_FeMatch::plotres( )
+{
+   if ( resplotd != 0 )
+   {
+      rpd_pos  = resplotd->pos();
+      resplotd->close();
+   }
+
+   resplotd = new US_ResidPlot( this );
+   resplotd->move( rpd_pos );
+   resplotd->show();
+}
+
 // reset excluded scan range
 void US_FeMatch::reset( )
 {
@@ -1585,12 +1630,13 @@ for (int jj=0;jj<nenois;jj++)
 
       if ( msgBox.exec() == QMessageBox::Yes )
       {  // user said "yes":  load noise
-         US_Passwd pw;
-         US_DB2    db( pw.getPasswd() );
          US_DB2*   dbP = NULL;
 
          if ( !def_local )
-             dbP          = &db;
+         {
+            US_Passwd pw;
+            dbP          = new US_DB2( pw.getPasswd() );
+         }
 
          if ( nenois > 1 )
          {  // more than 1:  get choice from noise loader dialog
@@ -1776,6 +1822,8 @@ DbgLv(1) << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
    pb_distrib->setEnabled( true );
    pb_view   ->setEnabled( true );
    pb_save   ->setEnabled( true );
+   pb_plot3d ->setEnabled( true );
+   pb_plotres->setEnabled( true );
 
    calc_residuals();             // calculate residuals
 
@@ -1783,25 +1831,19 @@ DbgLv(1) << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
 
    data_plot();                  // re-plot data+simulation
 
-   if ( rbmapd )
+   if ( rbmapd != 0 )
    {
-      rbd_pos  = rbmapd->pos();
+      bmd_pos  = rbmapd->pos();
       rbmapd->close();
    }
 
    rbmapd = new US_ResidsBitmap( resids );
-   rbmapd->move( rbd_pos );
+   rbmapd->move( bmd_pos );
    rbmapd->show();
 
-   if ( eplotcd )
-   {
-      epd_pos  = eplotcd->pos();
-      eplotcd->close();
-   }
+   plot3d();
 
-   eplotcd = new US_PlotControl( this, &model );
-   eplotcd->move( epd_pos );
-   eplotcd->show();
+   plotres();
 }
 
 // pare down files list by including only the last-edit versions
