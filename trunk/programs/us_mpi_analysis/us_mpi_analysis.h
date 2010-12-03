@@ -31,7 +31,7 @@ class US_MPI_Analysis : public QObject
     int                 node_count;
     int                 my_rank;
     int                 iterations;           // Master only - Iterative
-    int                 max_iterations;       // Master only = Iterative
+    int                 max_iterations;       // Master only - Iterative
     int                 mc_iterations;        // Monte Carlo
     int                 mc_iteration;         // Monte Carlo current iteration
     int                 max_experiment_size;
@@ -40,7 +40,7 @@ class US_MPI_Analysis : public QObject
     int                 datasets_to_process;  // For global fit
 
     long int            maxrss;
-    static const int    min_experiment_size = 100;
+    static const int    min_experiment_size      = 100;
     static const double min_variance_improvement = 1.0e-100;
                         
     QVector< int >      worker_status;
@@ -56,7 +56,6 @@ class US_MPI_Analysis : public QObject
 
     QVector< double >   mc_data;
     QVector< double >   sigmas;
-    //US_DataIO2::RawData sim_data;
 
     US_DataIO2::RawData residuals;       // Populated in calc_residuals
     US_DataIO2::RawData solution;        // Populated in calc_residuals
@@ -110,7 +109,7 @@ class US_MPI_Analysis : public QObject
             static const int MASTER = 0;
             static const int TAG3   = 3;
 
-            enum Command { IDLE, PROCESS, WAIT, SHUTDOWN, WAKEUP_SENT, NEWDATA };
+            enum Command { IDLE, PROCESS, WAIT, SHUTDOWN, NEWDATA };
             enum Status  { TAG0, READY, RESULTS };
 
             int     solution;
@@ -224,41 +223,45 @@ class US_MPI_Analysis : public QObject
 
     // Worker
     void     _2dsa_worker      ( void );
-    void     _2dsa_worker_loop ( int, int );
 
     void     calc_residuals    ( int, int, Simulation& );
     double   calc_bottom       ( int, double );
-    void     compute_a_tilde   ( int, int, QVector< double >& );
-    void     compute_L_tildes  ( int, int, int, int, int,
+    void     compute_a_tilde   ( QVector< double >& );
+    
+    void     compute_L_tildes  ( int, int, int,
                                  QVector< double >&, 
                                  const QVector< double >& );
-    void     compute_L_tilde   ( int, int,
-                                 QVector< double >&,
+    
+    void     compute_L_tilde   ( QVector< double >&,
                                  const QVector< double >& );
-    void     compute_L         ( int, int, int, int, 
+    
+    void     compute_L         ( int, 
                                  QVector< double >&,
                                  const QVector< double >&,
                                  const QVector< double >& );
-    void     ri_small_a_and_b  ( int, int, int, int, int,
-                                 QVector< double >&,
-                                 QVector< double >&,
-                                 const QVector< double >&,
-                                 const QVector< double >&,
-                                 const QVector< double >& );
-    void     ti_small_a_and_b  ( int, int, int, int, int,
+    
+    void     ri_small_a_and_b  ( int, int,
                                  QVector< double >&,
                                  QVector< double >&,
                                  const QVector< double >&,
                                  const QVector< double >&,
                                  const QVector< double >& );
-    void     compute_L_bar     ( int, int, 
+    
+    void     ti_small_a_and_b  ( int, int, 
+                                 QVector< double >&,
                                  QVector< double >&,
                                  const QVector< double >&,
+                                 const QVector< double >&,
                                  const QVector< double >& );
-    void     compute_a_bar     ( int, int, 
-                                 QVector< double >&,
+    
+    void     compute_L_bar     ( QVector< double >&,
+                                 const QVector< double >&,
                                  const QVector< double >& );
-    void     compute_L_bars    ( int, int, int, int, int, int, 
+    
+    void     compute_a_bar     ( QVector< double >&,
+                                 const QVector< double >& );
+    
+    void     compute_L_bars    ( int, int, int, 
                                  QVector< double >&,
                                  const QVector< double >&,
                                  const QVector< double >& );

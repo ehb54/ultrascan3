@@ -64,7 +64,8 @@ void US_MPI_Analysis::_2dsa_master( void )
       }
    }
 
-   QTime time;  // For debug/timing
+   QTime   time;  // For debug/timing
+   QString time_string;
 
    worker_status.resize( node_count );
    worker_depth .resize( node_count );
@@ -88,6 +89,9 @@ void US_MPI_Analysis::_2dsa_master( void )
    current_dataset     = 0;
    datasets_to_process = 1;  // Process one dataset at a time for now
 
+time                = QTime::currentTime();
+qDebug() << "Start" << time.toString( "HHmmss.zzz" );
+
    while ( true )
    {
       int worker;
@@ -97,36 +101,61 @@ top:
       {
          worker                 = worker_status.indexOf( READY );
          _2dsa_Job job          = job_queue.takeFirst();
-
          submit( job, worker );
          worker_depth [ worker ] = job.mpi_job.depth;
          worker_status[ worker ] = WORKING;
       }
 
+time        = QTime::currentTime();
+time_string = time.toString( "HHmmss.zzz" );
+
       // All done with the pass if no jobs are ready or running
       if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
       {
          // Iterative refinement
-         if ( iterations < max_iterations + 1 ) iterate();
+         if ( iterations < max_iterations + 1 )
+         {   
+qDebug() << "Iterations/variance/diff" << iterations 
+         << previous_values.variance 
+         << simulation_values.variance 
+         << fabs( previous_values.variance - simulation_values.variance ) 
+         << time_string;
+
+            iterate();
+         }
          if ( ! job_queue.isEmpty() ) goto top;;
            
-         iterations = 0;
+         iterations = 1;
 
          // Manage multiple data sets
-         if ( data_sets.size() > 1  &&  datasets_to_process == 1 ) global_fit();
+         if ( data_sets.size() > 1  &&  datasets_to_process == 1 )
+         {
+qDebug() << "Data set" <<  current_dataset << simulation_values.variance << time_string;
+            global_fit();
+         }
          if ( ! job_queue.isEmpty() ) goto top;;
-
+qDebug() << "Variances" << simulation_values.variances; 
          write_output();
 
          // Fit meniscus 
-         if ( ++meniscus_run < meniscus_values.size() ) set_meniscus(); 
+         if ( meniscus_run + 1 < meniscus_values.size() )
+         {
+qDebug() << "Fit meniscus" << meniscus_run << simulation_values.variance << time_string;
+            set_meniscus(); 
+         }
+
          if ( ! job_queue.isEmpty() ) goto top;;
          
          // Monte Carlo
-         if ( ++mc_iteration < mc_iterations ) set_monteCarlo(); 
+         if ( ++mc_iteration < mc_iterations )
+         {
+qDebug() << "MC Iteration" << mc_iteration << simulation_values.variance << time_string;
+            set_monteCarlo(); 
+         }
          if ( ! job_queue.isEmpty() ) goto top;;
 
          shutdown_all();  // All done
+qDebug() << "Done" << time_string;
          break;           // Break out of main loop.
       }
 
@@ -201,7 +230,6 @@ void US_MPI_Analysis::global_fit( void )
    }
 
    // Send the scaled data to the workers
-   // Broadcast Monte Carlo data to all workers
    MPI_Job job;
    job.command        = MPI_Job::NEWDATA;
    job.length         = scaled_data.size();
@@ -219,6 +247,9 @@ void US_MPI_Analysis::global_fit( void )
           MPI_Job::MASTER,
           MPI_COMM_WORLD2 );
    }
+
+   // Get everybody synced up
+   MPI_Barrier( MPI_COMM_WORLD2 );
 
    MPI_Bcast( scaled_data.data(), 
               scaled_data.size(), 
@@ -246,6 +277,8 @@ void US_MPI_Analysis::global_fit( void )
       job_queue << job;
    }
 
+   // Make sure we get ready signals before proceeding
+   worker_status.fill( INIT );
    worker_depth.fill( 0 );
    max_depth = 0;
 }
@@ -253,6 +286,8 @@ void US_MPI_Analysis::global_fit( void )
 //////////////////
 void US_MPI_Analysis::set_meniscus( void )
 {
+   meniscus_run++;
+
    // We incremented meniscus_run above.  Just rerun from the beginning.
    for ( int i = 0; i < orig_solutes.size(); i++ )
    {
@@ -262,6 +297,8 @@ void US_MPI_Analysis::set_meniscus( void )
       job_queue << job;
    }
 
+   // Make sure we get ready signals before proceeding
+   worker_status.fill( INIT );
    worker_depth.fill( 0 );
    max_depth = 0;
 }
@@ -327,6 +364,9 @@ void US_MPI_Analysis::set_monteCarlo( void )
           MPI_COMM_WORLD2 );
    }
 
+   // Get everybody synced up
+   MPI_Barrier( MPI_COMM_WORLD2 );
+
    MPI_Bcast( mc_data.data(), 
               total_points, 
               MPI_DOUBLE, 
@@ -337,7 +377,6 @@ void US_MPI_Analysis::set_monteCarlo( void )
    job.mpi_job.dataset_offset = 0;
    job.mpi_job.dataset_count  = data_sets.size();
 
-
    // Set up to run the next Monte Carlo iteration
    for ( int i = 0; i < orig_solutes.size(); i++ )
    {
@@ -347,6 +386,8 @@ void US_MPI_Analysis::set_monteCarlo( void )
       job_queue << job;
    }
 
+   // Make sure we get ready signals before proceeding
+   worker_status.fill( INIT );
    worker_depth.fill( 0 );
    max_depth = 0;
 }
@@ -357,6 +398,10 @@ void US_MPI_Analysis::set_monteCarlo( void )
 //  data in Monte Carlo iterations
 void US_MPI_Analysis::set_gaussians( void )
 {
+
+   simulation_values.solutes = calculated_solutes[ max_depth ];
+   meniscus_value            = meniscus_values[ 0 ];
+
    calc_residuals( 0, data_sets.size(), simulation_values );
 
    sigmas.clear();
@@ -647,7 +692,7 @@ void US_MPI_Analysis::write_2dsa( void )
    // Fill in and write out the model file
    US_Model model;
 
-   model.monteCarlo  = false;  // For now
+   model.monteCarlo  = mc_iteration > 1;
    model.wavelength  = data->wavelength.toDouble();
    model.modelGUID   = US_Util::new_guid();
    model.editGUID    = data->editGUID;
@@ -655,8 +700,8 @@ void US_MPI_Analysis::write_2dsa( void )
    model.analysis    = US_Model::TWODSA;
    model.global      = US_Model::NONE;   // For now.  Will change later.
 
-   model.description = data->runID + ".2DSA e" + data->editID + 
-                       " a" + analysisDate + " " +
+   model.description = data->runID + ".2DSA a" + analysisDate + 
+                       " e" + data->editID +
                        db_name + "-" + requestID;
 
    // Save as class variable for later reference
@@ -688,9 +733,7 @@ void US_MPI_Analysis::write_2dsa( void )
 
    QTextStream out( &f );
 
-   int current_run = meniscus_run - 1;
-
-   QString meniscus = QString::number( meniscus_values[ current_run ], 'e', 4 );
+   QString meniscus = QString::number( meniscus_values[ meniscus_run ], 'e', 4 );
    QString variance = QString::number( simulation_values.variance,      'e', 4 );
 
    out << fn << ";meniscus_value=" << meniscus
@@ -712,9 +755,9 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    if ( type == US_Noise::TI ) 
    {
       type_name         = "ti";
-      noise.minradius   = data_sets[ 0 ]->run_data.radius( 0 );
-      int radii         = data_sets[ 0 ]->run_data.x.size();
-      noise.maxradius   = data_sets[ 0 ]->run_data.radius( radii - 1 );
+      int radii         = data->x.size();
+      noise.minradius   = data->radius( 0 );
+      noise.maxradius   = data->radius( radii - 1 );
    }
    else
    {
