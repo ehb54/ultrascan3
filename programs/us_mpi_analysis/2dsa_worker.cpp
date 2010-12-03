@@ -6,65 +6,14 @@
 
 void US_MPI_Analysis::_2dsa_worker( void )
 {
-   // Start at offset 0 and a daatset size of 1
-   _2dsa_worker_loop( 0, 1 );
-
-   // When we get here, all datasets and parameters have been read into memory.
-   // First go through each dataset individually and scale the concentrations.
-   // Then run monte carlo iterations on the combined data.
-
-/*
-   DataSet* current_data;
-   int      dataset_size = data_sets.size();
-
-// Note: this won't work for dataset_size > 1
-// Need to coordinate this with master
-   for ( int i = 0; i < dataset_size; i++ )
-   {
-      current_data = data_sets[ i ];
-      _2dsa_worker_loop( i, 1 );
-   }
-
-   // If we have more than one dataset, scale all data
-   if ( dataset_size > 1 )
-   {
-      MPI_Barrier( MPI_COMM_WORLD );
-
-      double concentrations[ dataset_size ];
-
-      // This is a receive since it is a worker
-      MPI_Bcast( concentrations,
-                 dataset_size,
-                 MPI_DOUBLE2,
-                 MPI_Job::MASTER,
-                 MPI_COMM_WORLD);
-
-      for ( int i = 0; i < dataset_size; i++ )  // dataset
-      {
-         QVector< US_DataIO2::Scan >* scans = 
-            &data_sets[ i ]->run_data.scanData;
-         
-         for ( int j = 0; j < scans->size(); j++ ) //scan
-         {
-            // Get a pointer to the jth scan in the ith data set
-            US_DataIO2::Scan* scan = scans->data() + j;
-
-            for ( int k = 0; k < scan->readings.size(); k++ ) // concentration
-               scan->readings[ k ].value /= concentrations[ i ];
-         }
-      }
-   }
-*/
-}
-
-void US_MPI_Analysis::_2dsa_worker_loop( int offset, int dataset_count )
-{
    bool repeat_loop = true;
    MPI_Job     job;
    MPI_Status  status;
 
    while ( repeat_loop )
    {
+      // Use 3 here becasue the master will be reading 3 with the
+      // same instruction when reading ::READY or ::RESULTS.
       int x[ 3 ];
 
       MPI_Send( x, // Basically don't care
@@ -83,9 +32,9 @@ void US_MPI_Analysis::_2dsa_worker_loop( int offset, int dataset_count )
                 MPI_COMM_WORLD2,
                 &status );        // status not used
 
-      meniscus_value = job.meniscus_value;
-      offset         = job.dataset_offset;
-      dataset_count  = job.dataset_count;
+      meniscus_value     = job.meniscus_value;
+      int offset         = job.dataset_offset;
+      int dataset_count  = job.dataset_count;
 
       switch( job.command )
       {
@@ -156,9 +105,11 @@ void US_MPI_Analysis::_2dsa_worker_loop( int offset, int dataset_count )
 
             break;
 
-         case MPI_Job::NEWDATA:  // Reset data for Monte Carlo calcs
+         case MPI_Job::NEWDATA:  // Reset data for Monte Carlo or global fit
             { 
                mc_data.resize( job.length );
+
+               MPI_Barrier( MPI_COMM_WORLD2 );
 
                // This is a receive
                MPI_Bcast( mc_data.data(),
@@ -169,7 +120,7 @@ void US_MPI_Analysis::_2dsa_worker_loop( int offset, int dataset_count )
 
                int index = 0;
 
-               for ( int e = job.dataset_offset; e < job.dataset_count; e++ )
+               for ( int e = offset; e < offset + dataset_count; e++ )
                {
                   US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
 
@@ -233,8 +184,10 @@ void US_MPI_Analysis::calc_residuals( int         offset,
 
    for ( int e = offset; e < offset + dataset_count; e++ )
    {
-      int scan_count    = data_sets[ e ]->run_data.scanData.size();
-      int radius_points = data_sets[ e ]->run_data.x.size();
+      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+
+      int radius_points = data->x.size();
+      int scan_count    = data->scanData.size();
 
       // Populate the b vector for the NNLS routine with the model
       // function:
@@ -242,8 +195,7 @@ void US_MPI_Analysis::calc_residuals( int         offset,
       {
          for ( int r = 0; r < radius_points; r++ )
          {
-            nnls_b[ count++ ] =
-               data_sets[ e ]->run_data.scanData[ s ].readings[ r ].value;
+            nnls_b[ count++ ] = data->value( s, r );
          }
       }
    }
@@ -268,7 +220,7 @@ void US_MPI_Analysis::calc_residuals( int         offset,
          if ( params.band_volume > 0.0 ) params.band_forming = true;
 
          // Calculation of centerpiece bottom - just use 1st rpm for now
-         double rpm = params.speed_step[ 0 ].rotorspeed;
+         double rpm    = params.speed_step[ 0 ].rotorspeed;
          params.bottom = calc_bottom( e, rpm );
 
          params.meniscus = meniscus_value;
@@ -312,7 +264,6 @@ void US_MPI_Analysis::calc_residuals( int         offset,
          component.D = D20w / solution.D20w_correction;
 
          model.components << component;
-         //model.debug();
 
          US_Astfem_RSA astfem_rsa( model, params );
 
@@ -343,33 +294,32 @@ void US_MPI_Analysis::calc_residuals( int         offset,
 
       if ( parameters[ "rinoise_option" ].toInt() > 0 )
       {
-         compute_a_tilde( offset, dataset_count, a_tilde );
+         compute_a_tilde( a_tilde );
       }
 
       // Compute a_bar, the average experiment signal at each radius
       QVector< double > a_bar( ti_noise_size, 0.0 );
-      compute_a_bar( offset, dataset_count, a_bar, a_tilde );
+      compute_a_bar( a_bar, a_tilde );
 
       // Compute L_tildes, the average signal at each radius
       QVector< double > L_tildes( ri_noise_size * solute_count, 0.0 );
 
       if ( parameters[ "rinoise_option" ].toInt() > 0 ) 
       {
-         compute_L_tildes( offset, dataset_count, ri_noise_size, total_points,
+         compute_L_tildes( ri_noise_size, total_points,
                            solute_count, L_tildes, nnls_a );
       }
 
       QVector< double > L_bars( ti_noise_size * solute_count, 0.0 );
-      compute_L_bars( offset, dataset_count, solute_count, ri_noise_size, 
-                      ri_noise_size, total_points, L_bars, nnls_a, L_tildes );
+      compute_L_bars( solute_count, ri_noise_size, ti_noise_size, 
+                      L_bars, nnls_a, L_tildes );
 
       // Setup small_a, small_b for the alternate nnls
       QVector< double > small_a( sq( solute_count ), 0.0 );
       QVector< double > small_b( solute_count,       0.0 );
 
-      ti_small_a_and_b(  
-            offset, dataset_count, solute_count, total_points, ti_noise_size,
-            small_a, small_b, a_bar, L_bars, nnls_a );
+      ti_small_a_and_b( solute_count, ti_noise_size, small_a, 
+                        small_b, a_bar, L_bars, nnls_a );
 
       US_Math2::nnls( small_a.data(), solute_count, solute_count, solute_count,
                       small_b.data(),
@@ -377,8 +327,7 @@ void US_MPI_Analysis::calc_residuals( int         offset,
 
       // This is Sum( concentration * Lamm ) for the models after NNLS
       QVector< double > L( total_points, 0.0 );
-      compute_L( offset, dataset_count, total_points, solute_count,
-                 L, nnls_a, nnls_x );
+      compute_L( solute_count, L, nnls_a, nnls_x );
 
       // Now L contains the best fit sum of L equations
       // Compute L_tilde, the average model signal at each radius
@@ -386,12 +335,12 @@ void US_MPI_Analysis::calc_residuals( int         offset,
 
       if ( parameters[ "rinoise_option" ].toInt() > 0 ) 
       {
-         compute_L_tilde( offset, dataset_count, L_tilde, L );
+         compute_L_tilde( L_tilde, L );
       }
 
       // Compute L_bar, the average model signal at each radius
       QVector< double > L_bar( ti_noise_size, 0.0 );
-      compute_L_bar( offset, dataset_count, L_bar, L, L_tilde );
+      compute_L_bar( L_bar, L, L_tilde );
 
       // Compute ti_noise
       for ( int i = 0; i < ti_noise_size; i++ )
@@ -413,21 +362,20 @@ void US_MPI_Analysis::calc_residuals( int         offset,
    {
       // Compute a_tilde, the average experiment signal at each time
       QVector< double > a_tilde( ri_noise_size, 0.0 );
-      compute_a_tilde( offset, dataset_count, a_tilde );
+      compute_a_tilde( a_tilde );
 
       // Compute L_tildes, the average signal at each radius
       QVector< double > L_tildes( ri_noise_size * solute_count, 0.0 );
 
-      compute_L_tildes( offset, dataset_count, ri_noise_size, total_points,
+      compute_L_tildes( ri_noise_size, total_points,
                         solute_count, L_tildes, nnls_a );
 
       // Setup small_a, small_b for the nnls
       QVector< double > small_a( sq( solute_count ), 0.0 );
       QVector< double > small_b( solute_count,       0.0 );
 
-      ri_small_a_and_b(  
-            offset, dataset_count, solute_count, total_points, ri_noise_size, 
-            small_a, small_b, a_tilde, L_tildes, nnls_a );
+      ri_small_a_and_b(  solute_count, ri_noise_size, small_a, small_b, 
+                         a_tilde, L_tildes, nnls_a );
 
       US_Math2::nnls( small_a.data(), solute_count, solute_count, solute_count,
                       small_b.data(),
@@ -436,14 +384,13 @@ void US_MPI_Analysis::calc_residuals( int         offset,
       // This is sum( concentration * Lamm ) for the models after NNLS
       QVector< double > L( total_points, 0.0 );
       
-      compute_L( offset, dataset_count, total_points, solute_count,
-                 L, nnls_a, nnls_x );
+      compute_L( solute_count, L, nnls_a, nnls_x );
 
       // Now L contains the best fit sum of L equations
       // Compute L_tilde, the average model signal at each radius
       QVector< double > L_tilde( ri_noise_size, 0.0 );
 
-      compute_L_tilde( offset, dataset_count, L_tilde, L );
+      compute_L_tilde( L_tilde, L );
 
       // Compute ri_noise, Is this correct???
       for ( int i = 0; i < ri_noise_size; i++ )
@@ -471,41 +418,54 @@ void US_MPI_Analysis::calc_residuals( int         offset,
 
    for ( int e = offset; e < offset + dataset_count; e++ )
    {
-      int radius_points = data_sets[ e ]->run_data.x.size();
-      int scan_count    = data_sets[ e ]->run_data.scanData.size();
-      //int index         = e - offset;
-      
-      scan.readings.fill( US_DataIO2::Reading(), radius_points );
+      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+      int radius_points            = data->x.size();
+      int scan_count               = data->scanData.size();
 
-      solution .scanData.fill( scan, scan_count );
-      residuals.scanData.fill( scan, scan_count );
+      scan.readings.fill( US_DataIO2::Reading( 0.0 ), radius_points );
+
+      for ( int s = 0; s < scan_count; s++ )
+      {
+         solution .scanData << scan;
+         residuals.scanData << scan;
+      }
    }
 
-   // Scale readings and store in residuals structure
+   // This is a little tricky.  The simulations structure was created 
+   // above in a loop that alternates experiments within each
+   // solute.  In the loop below, the solution structure alters that
+   // order to gouup all solutes for each experiment together.
    for ( int solute = 0; solute < solute_count; solute++ )
    {
       if ( nnls_x[ solute ] != 0.0 )
       {
+         int scan_index = 0;
+
          for ( int e = offset; e < offset + dataset_count; e++ )
          {
-            int radius_points = data_sets[ e ]->run_data.x.size();
-            int scan_count    = data_sets[ e ]->run_data.scanData.size();
-            //int index         = e - offset;
+            US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+            int radius_points            = data->x.size();
+            int scan_count               = data->scanData.size();
+            int sim_index                = solute * dataset_count + ( e - offset );
 
             // Scale the data
             for ( int s = 0; s < scan_count; s++ )
             {
+               int scan = scan_index + s;
+
                for ( int r = 0; r < radius_points; r++ )
                {
-                  solution.scanData[ s ].readings[ r ].value +=
+                  solution.scanData[ scan ].readings[ r ].value +=
                      nnls_x     [ solute ] *
-                     simulations[ solute ].value( s, r );
+                     simulations[ sim_index ].value( s, r );
                }
             }
-         }
 
-      } // if ( nnls_x[ i ] != 0 )
-   } // for each solute
+            scan_index += scan_count;
+         }
+      }
+   }
+
 
    double variance = 0.0;
    double rmsds[ dataset_count ];
@@ -513,34 +473,38 @@ void US_MPI_Analysis::calc_residuals( int         offset,
    int ti_noise_offset = 0;
    int ri_noise_offset = 0;
 
+   int s_offset = 0;
+
    // Calculate residuals and rmsd values
    for ( int e = offset; e < offset + dataset_count; e++ )
    {
-      US_DataIO2::EditedData* data =  &data_sets[ e ]->run_data;
-      int radius_points = data->x.size();
-      int scan_count    = data->scanData.size();
-      int index         = e - offset;
+      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+      int radius_points            = data->x.size();
+      int scan_count               = data->scanData.size();
+      int index                    = e - offset;
 
       rmsds[ index ] = 0.0;
 
       for ( int s = 0; s < scan_count; s++ )
       {
+         int s_index = s + s_offset;
+
          for ( int r = 0; r < radius_points; r++)
          {
-            // TODO: multi experiment
-            residuals.scanData[ s ].readings[ r ].value =
-              data_sets[ e ]->run_data.value( s, r )   // actual data
-            - solution.value( s, r )                   // simulation data
-            - ti_noise[ r + ti_noise_offset ]          // time invariant noise
-            - ri_noise[ s + ri_noise_offset ];         // radial invariant noise
+            residuals.scanData[ s_index ].readings[ r ].value =
+              data->value( s, r )                        // actual data
+              - solution.value( s_index, r )             // simulation data
+              - ti_noise[ r + ti_noise_offset ]          // time invariant noise
+              - ri_noise[ s + ri_noise_offset ];         // radial invariant noise
 
-            double r2 = sq( residuals.value( s, r ) );
+            double r2 = sq( residuals.value( s_index, r ) );
 
             variance       += r2;
             rmsds[ index ] += r2;
          }
       }
 
+      s_offset        += scan_count;
       ti_noise_offset += radius_points;
       ri_noise_offset += scan_count;
    }
@@ -588,151 +552,113 @@ double US_MPI_Analysis::calc_bottom( int index, double rpm )
 }
 
 // Compute a_tilde, the average experiment signal at each time
-void US_MPI_Analysis:: compute_a_tilde( int                offset, 
-                                        int                dataset_count, 
-                                        QVector< double >& a_tilde )
+void US_MPI_Analysis:: compute_a_tilde( QVector< double >& a_tilde )
 {
-   int s_offset = 0;
+   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
+   
+   int radius_points = data->x.size();
+   int scan_count    = data->scanData.size();
 
-   for ( int e = offset; e < offset + dataset_count; e++ )
+   for ( int s = 0; s < scan_count; s++ )
    {
-      int radius_points = data_sets[ e ]->run_data.x.size();
-      int scan_count    = data_sets[ e ]->run_data.scanData.size();
-
-      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
-
-      for ( int s = 0; s < scan_count; s++ )
+      for ( int r = 0; r < radius_points; r++ )
       {
-         int s_index = s + s_offset;
-
-         for ( int r = 0; r < radius_points; r++ )
-         {
-           a_tilde[ s_index ] += data->value( s, r );
-         }
-
-         a_tilde[ s_index ] /= radius_points;
+        a_tilde[ s ] += data->value( s, r );
       }
 
-      s_offset += scan_count;
+      a_tilde[ s ] /= radius_points;
    }
 }
 
 // Compute L_tildes, the average signal at each radius
-void US_MPI_Analysis::compute_L_tildes( int                      offset,  
-                                        int                      dataset_count,
-                                        int                      ri_noise_size,
+void US_MPI_Analysis::compute_L_tildes( int                      ri_noise_size,
                                         int                      total_points,
                                         int                      solute_count,
                                         QVector< double >&       L_tildes,
                                         const QVector< double >& nnls_a )
 {
-   int exp_offset = 0;
-   int s_offset   = 0;
+   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
+   
+   int radius_points = data->x.size();
+   int scan_count    = data->scanData.size();
 
-   for ( int e = offset; e < offset + dataset_count; e++ )
+   for ( int solute = 0; solute < solute_count; solute++ )
    {
-      int radius_points = data_sets[ e ]->run_data.x.size();
-      int scan_count    = data_sets[ e ]->run_data.scanData.size();;
+      int solute_index = solute * total_points;
 
-      for ( int solute = 0; solute < solute_count; solute++ )
+      for ( int s = 0; s < scan_count; s++ )
       {
-         int solute_index = solute * total_points + exp_offset;
+         int index      = solute * ri_noise_size + s;
+         int scan_index = solute_index + s * radius_points;
 
-         for ( int s = 0; s < scan_count; s++ )
+         for ( int r = 0; r < radius_points; r++ )
          {
-            int index      = solute * ri_noise_size + s + s_offset;
-            int scan_index = solute_index + s * radius_points;
-
-            for ( int r = 0; r < radius_points; r++ )
-            {
-               L_tildes[ index ] += nnls_a[ scan_index + r ];
-            }
-
-            L_tildes[ index ] /= radius_points;
+            L_tildes[ index ] += nnls_a[ scan_index + r ];
          }
-      }
 
-      s_offset   += scan_count;
-      exp_offset += scan_count * radius_points;
+         L_tildes[ index ] /= radius_points;
+      }
    }
 }
 
 // Compute L_tilde, the average model signal at each radius
-void US_MPI_Analysis::compute_L_tilde( int                      offset,
-                                       int                      dataset_count,
-                                       QVector< double >&       L_tilde,
+void US_MPI_Analysis::compute_L_tilde( QVector< double >&       L_tilde,
                                        const QVector< double >& L )
 {
-   int exp_offset = 0;
-   int s_offset   = 0;
+   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
+   
+   int radius_points = data->x.size();
+   int scan_count    = data->scanData.size();
 
-   for ( int e = offset; e < offset + dataset_count; e++ )
+   for ( int s = 0; s < scan_count; s++ )
    {
-      int radius_points = data_sets[ e ]->run_data.x.size();
-      int scan_count    = data_sets[ e ]->run_data.scanData.size();
+      int L_offset = s * radius_points;
 
-      for ( int s = 0; s < scan_count; s++ )
+      for ( int r = 0; r < radius_points; r++ )
       {
-         int s_index  = s + s_offset;
-         int L_offset = exp_offset + s * radius_points;
-
-         for ( int r = 0; r < radius_points; r++ )
-         {
-            L_tilde[ s_index ] += L[ L_offset  + r ];
-         }
-
-         L_tilde[ s_index ] /= radius_points;
+         L_tilde[ s ] += L[ L_offset + r ];
       }
 
-      s_offset   += scan_count;
-      exp_offset += scan_count * radius_points;
+      L_tilde[ s ] /= radius_points;
    }
 }
 
-void US_MPI_Analysis::compute_L( int                      offset,
-                                 int                      dataset_count,
-                                 int                      total_points,
-                                 int                      solute_count,
+void US_MPI_Analysis::compute_L( int                      solute_count,
                                  QVector< double >&       L,
                                  const QVector< double >& nnls_a,
                                  const QVector< double >& nnls_x )
 {
+
+   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
+   
+   int radius_points = data->x.size();
+   int scan_count    = data->scanData.size();
+
+   int total_points  = radius_points * scan_count;
+
    for ( int solute = 0; solute < solute_count; solute++ )
    {
-      if ( nnls_x[ solute ] > 0 )
+      double concentration = nnls_x[ solute ];
+
+      if ( concentration > 0 )
       {
-         int count      = 0;
-         int exp_offset = 0;
+         int count        = 0;
+         int solute_index = solute * total_points;
 
-         for ( int e = offset; e < offset + dataset_count; e++ )
+         for ( int s = 0; s < scan_count; s++ )
          {
-            int radius_points = data_sets[ e ]->run_data.x.size();
-            int scan_count    = data_sets[ e ]->run_data.scanData.size();
+            int s_index = s * radius_points + solute_index;
 
-            for ( int s = 0; s < scan_count; s++ )
+            for ( int r = 0; r < radius_points; r++ )
             {
-               for ( int r = 0; r < radius_points; r++ )
-               {
-                  L[ count++ ] +=
-                     nnls_x[ solute ] *
-                     nnls_a[ solute * total_points +
-                             exp_offset +
-                             s * radius_points +
-                             r
-                           ];
-               }
+               L[ count++ ] += concentration * nnls_a[ s_index + r ];
             }
-
-            exp_offset += radius_points * scan_count;
          }
       }
    }
 }
 
-void US_MPI_Analysis::ri_small_a_and_b( int                      offset,
-                                        int                      dataset_count,
-                                        int                      solute_count,
-                                        int                      total_points,
+void US_MPI_Analysis::ri_small_a_and_b( int                      solute_count,
                                         int                      ri_noise_size,
                                         QVector< double >&       small_a,
                                         QVector< double >&       small_b,
@@ -740,70 +666,54 @@ void US_MPI_Analysis::ri_small_a_and_b( int                      offset,
                                         const QVector< double >& L_tildes,
                                         const QVector< double >& nnls_a )
 {
-   int exp_offset = 0;
-   int s_offset   = 0;
+   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
 
-   for ( int e = offset; e < offset + dataset_count; e++ )
-   {
-      int radius_points = data_sets[ e ]->run_data.x.size();
-      int scan_count    = data_sets[ e ]->run_data.scanData.size();;
+   int radius_points = data->x.size();
+   int scan_count    = data->scanData.size();
+   int total_points  = radius_points * scan_count;
 
-      US_DataIO2::EditedData* run_data = &data_sets[ e ]->run_data;
+  for ( int solute = 0; solute < solute_count; solute++ )
+  {
+     for ( int r = 0; r < radius_points; r++ )
+     {
+        for ( int s = 0; s < scan_count; s++ )
+        {
+           small_b[ solute ] +=
+              ( data->value( s, r ) - a_tilde[ s ] )
+              *
+              ( nnls_a[ solute * total_points + 
+                        s * radius_points + 
+                        r
+                      ] 
+                -
+                L_tildes[ solute * ri_noise_size + s ]
+              );
 
-      for ( int solute = 0; solute < solute_count; solute++ )
-      {
-         for ( int r = 0; r < radius_points; r++ )
-         {
-            for ( int s = 0; s < scan_count; s++ )
-            {
-               int s_index = s + s_offset;
-
-               small_b[ solute ] +=
-                  ( run_data->value( s, r ) - a_tilde[ s_index ] )
-                  *
-                  ( nnls_a[ solute * total_points + 
-                            exp_offset +
-                            s * radius_points + 
-                            r
-                          ] 
-                    -
-                    L_tildes[ solute * ri_noise_size + s_index ]
-                  );
-
-               for ( int k = 0; k < solute_count; k++ )
-               {
-                  small_a[ k * solute_count + solute ] +=
-                     ( nnls_a[ k * total_points + 
-                               exp_offset + 
-                               s * radius_points + 
-                               r
-                             ]
-                       - 
-                       L_tildes[ k * ri_noise_size + s_index  ]
-                     ) 
-                     *
-                     ( nnls_a[ solute * total_points + 
-                               exp_offset + 
-                               s * radius_points + 
-                               r
-                             ]
-                       -  
-                       L_tildes[ solute * ri_noise_size + s_index ]
-                     );
-               }
-            }
-         }
-      }
-
-      exp_offset += radius_points * scan_count;
-      s_offset   += scan_count;
-   }
+           for ( int k = 0; k < solute_count; k++ )
+           {
+              small_a[ k * solute_count + solute ] +=
+                 ( nnls_a[ k * total_points + 
+                           s * radius_points + 
+                           r
+                         ]
+                   - 
+                   L_tildes[ k * ri_noise_size + s  ]
+                 ) 
+                 *
+                 ( nnls_a[ solute * total_points + 
+                           s * radius_points + 
+                           r
+                         ]
+                   -  
+                   L_tildes[ solute * ri_noise_size + s ]
+                 );
+           }
+        }
+     }
+  }
 }
 
-void US_MPI_Analysis::ti_small_a_and_b( int                      offset,
-                                        int                      dataset_count,
-                                        int                      solute_count,
-                                        int                      total_points,
+void US_MPI_Analysis::ti_small_a_and_b( int                      solute_count,
                                         int                      ti_noise_size,
                                         QVector< double >&       small_a,
                                         QVector< double >&       small_b,
@@ -811,183 +721,128 @@ void US_MPI_Analysis::ti_small_a_and_b( int                      offset,
                                         const QVector< double >& L_bars,
                                         const QVector< double >& nnls_a )
 {
-   int exp_offset = 0;
-   int r_offset   = 0;
+   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
 
-   for ( int e = offset; e < offset + dataset_count; e++ )
+   int radius_points = data->x.size();
+   int scan_count    = data->scanData.size();
+   int total_points  = radius_points * scan_count;
+
+   for ( int solute = 0; solute < solute_count; solute++ )
    {
-      int radius_points = data_sets[ e ]->run_data.x.size();
-      int scan_count    = data_sets[ e ]->run_data.scanData.size();
+      int solute_index = solute * total_points;
+      int noise_index  = solute * ti_noise_size;
 
-      US_DataIO2::EditedData* run_data = &data_sets[ e ]->run_data;
-
-      for ( int solute = 0; solute < solute_count; solute++ )
+      for ( int r = 0; r < radius_points; r++ )
       {
-         for ( int r = 0; r < radius_points; r++ )
+         for ( int s = 0; s < scan_count; s++ )
          {
-            int r_index = r + r_offset;
+            int s_index = s * radius_points;
 
-            for ( int s = 0; s < scan_count; s++ )
+            small_b[ solute ] +=
+               ( data->value( s, r ) - a_bar[ r ] ) 
+               *
+               ( nnls_a[ solute_index + s_index + r ]
+                 -
+                 L_bars[ noise_index + r ]
+               );
+
+            for ( int k = 0; k < solute_count; k++ )
             {
-               small_b[ solute ] +=
-                  ( run_data->value( s, r ) - a_bar[ r_index ] ) 
-                  *
-                  ( nnls_a[ solute * total_points +
-                            exp_offset +
-                            s * radius_points +
-                            r
-                          ]
+               small_a[ k * solute_count + solute ] +=
+                  ( nnls_a[ k * total_points + s_index + r ]
                     -
-                    L_bars[ solute * ti_noise_size + r_index ]
+                    L_bars[ k * ti_noise_size + r ]
+                  )
+                  *
+                  ( nnls_a[ solute_index + s_index + r ]
+                    -
+                    L_bars[ noise_index + r ]
                   );
-
-               for ( int k = 0; k < solute_count; k++ )
-               {
-                  small_a[ k * solute_count + solute ] +=
-                     ( nnls_a[ k * total_points +
-                               exp_offset +
-                               s * radius_points +
-                               r
-                             ]
-                       -
-                       L_bars[ k * ti_noise_size + r_index ]
-                     )
-                     *
-                     ( nnls_a[ solute * total_points +
-                               exp_offset +
-                               s * radius_points +
-                               r
-                             ]
-                       -
-                       L_bars[ solute * ti_noise_size + r_index ]
-                     );
-               }
             }
          }
       }
-
-      exp_offset += radius_points * scan_count;
-      r_offset   += radius_points;
    }
 }
 
-void US_MPI_Analysis::compute_L_bar( int                      offset,
-                                     int                      dataset_count,
-                                     QVector< double >&       L_bar,
+void US_MPI_Analysis::compute_L_bar( QVector< double >&       L_bar,
                                      const QVector< double >& L,
                                      const QVector< double >& L_tilde )
 {
-   int exp_offset = 0;
-   int s_offset   = 0;
-   int r_offset   = 0;
+   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
+   
+   int radius_points = data->x.size();
+   int scan_count    = data->scanData.size();
 
-   for ( int e = offset; e < offset + dataset_count; e++ )
+   for ( int r = 0; r < radius_points; r++)
    {
-      int radius_points = data_sets[ e ]->run_data.x.size();
-      int scan_count    = data_sets[ e ]->run_data.scanData.size();
-
-      for ( int r = 0; r < radius_points; r++)
+      // Note  L_tilde is always zero when rinoise has not been requested
+      for ( int s = 0; s < scan_count; s++ )
       {
-         int r_index = r + r_offset;
+         int L_index = s * radius_points + r;
 
-         // Note  L_tilde is always zero when rinoise has not been requested
-         for ( int s = 0; s < scan_count; s++ )
-         {
-            int L_index = exp_offset + s * radius_points + r;
-            int s_index = s + s_offset;
-
-            L_bar[ r_index ] += L[ L_index ] - L_tilde[ s_index ];
-         }
-
-         L_bar[ r_index ] /= scan_count;
+         L_bar[ r ] += L[ L_index ] - L_tilde[ s ];
       }
 
-      s_offset   += scan_count;
-      r_offset   += radius_points;
-      exp_offset += scan_count * radius_points;
+      L_bar[ r ] /= scan_count;
    }
 }
 
 // Calculate the average measured concentration at each radius point
-void US_MPI_Analysis::compute_a_bar( int                      offset,
-                                     int                      dataset_count,
-                                     QVector< double >&       a_bar,
+void US_MPI_Analysis::compute_a_bar( QVector< double >&       a_bar,
                                      const QVector< double >& a_tilde )
 {
-   int s_offset = 0;
-   int r_offset = 0;
+   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
 
-   for ( int e = offset; e < offset + dataset_count; e++ )
+   int radius_points = data->x.size();
+   int scan_count    = data->scanData.size();
+
+   for ( int r = 0; r < radius_points; r++ )
    {
-      int radius_points = data_sets[ e ]->run_data.x.size();
-      int scan_count    = data_sets[ e ]->run_data.scanData.size();
-      
-      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
-
-      for ( int r = 0; r < radius_points; r++ )
+      // Note: a_tilde is always zero when rinoise has not been requested
+      for ( int s = 0; s < scan_count; s++ )
       {
-         int r_index = r + r_offset;
-
-         // Note: a_tilde is always zero when rinoise has not been requested
-         for ( int s = 0; s < scan_count; s++ )
-         {
-            a_bar[ r_index ] += data->value( s, r ) - a_tilde[ s + s_offset ];
-         }
-
-         a_bar[ r_index ] /= scan_count;
+         a_bar[ r ] += data->value( s, r ) - a_tilde[ s ];
       }
 
-      r_offset += radius_points;
-      s_offset += scan_count;
+      a_bar[ r ] /= scan_count;
    }
 }
 
 // Calculate the average simulated concentration at each radius point
-void US_MPI_Analysis::compute_L_bars( int                      offset,
-                                      int                      dataset_count,
-                                      int                      solute_count,
+void US_MPI_Analysis::compute_L_bars( int                      solute_count,
                                       int                      ri_noise_size,
                                       int                      ti_noise_size,
-                                      int                      total_points,
                                       QVector< double >&       L_bars,
                                       const QVector< double >& nnls_a,
                                       const QVector< double >& L_tildes )
 {
-   int exp_offset = 0;
-   int s_offset   = 0;
-   int r_offset   = 0;
 
-   for ( int e = offset; e < offset + dataset_count; e++ )
+   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
+
+   int radius_points = data->x.size();
+   int scan_count    = data->scanData.size();
+   int total_points  = radius_points * scan_count;
+
+   for ( int solute = 0; solute < solute_count; solute++ )
    {
-      int radius_points = data_sets[ e ]->run_data.x.size();
-      int scan_count    = data_sets[ e ]->run_data.scanData.size();
+      int solute_offset = solute * total_points;
 
-      for ( int solute = 0; solute < solute_count; solute++ )
+      for ( int r = 0; r < radius_points; r++ )
       {
-         int solute_offset = solute * total_points + exp_offset;
+         int r_index = solute * ti_noise_size + r;
 
-         for ( int r = 0; r < radius_points; r++ )
+         for ( int s = 0; s < scan_count; s++ )
          {
-            int r_index = solute * ti_noise_size + r_offset + r;
+            // Note: L_tildes is always zero when rinoise has not been 
+            // requested
+            
+            int nnls_index = solute_offset + s * radius_points + r;
+            int s_index    = solute * ri_noise_size + s;
 
-            for ( int s = 0; s < scan_count; s++ )
-            {
-               // Note: L_tildes is always zero when rinoise has not been 
-               // requested
-               
-               int nnls_index = solute_offset + s * radius_points + r;
-               int s_index    = solute * ri_noise_size + s_offset + s;
-
-               L_bars[ r_index ] +=
-                  nnls_a[ nnls_index ] - L_tildes[ s_index ];
-            }
-
-            L_bars[ r_index ] /= scan_count;
+            L_bars[ r_index ] += nnls_a[ nnls_index ] - L_tildes[ s_index ];
          }
-      }
 
-      exp_offset += sq( scan_count );
-      r_offset   += radius_points;
-      s_offset   += scan_count;
+         L_bars[ r_index ] /= scan_count;
+      }
    }
 }
