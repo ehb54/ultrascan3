@@ -1,10 +1,9 @@
 //! \file us_fe_match.cpp
 
 #include <QApplication>
+#include <QtSvg>
 
 #include "us_fematch.h"
-#include "us_resids_bitmap.h"
-#include "us_plot_control.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -13,7 +12,6 @@
 #include "us_constants.h"
 #include "us_analyte_gui.h"
 #include "us_passwd.h"
-#include "us_db2.h"
 #include "us_data_loader.h"
 #include "us_util.h"
 #include "us_investigator.h"
@@ -37,6 +35,7 @@ int main( int argc, char* argv[] )
 US_FeMatch::US_FeMatch() : US_Widgets()
 {
    setObjectName( "US_FeMatch" );
+
    def_local  = false;
    def_local  = US_Settings::debug_match( "LoadLocal" ) ? true : def_local;
    dbg_level  = US_Settings::us_debug();
@@ -383,10 +382,12 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             this,        SLOT(   help()      ) );
 
    rightLayout->addLayout( plotLayout1 );
-   rightLayout->addWidget( gb_modelsim );
+   //rightLayout->addWidget( gb_modelsim );
    rightLayout->addLayout( plotLayout2 );
    rightLayout->setStretchFactor( plotLayout1, 2 );
    rightLayout->setStretchFactor( plotLayout2, 3 );
+   rightLayout->addWidget( gb_modelsim );
+   rightLayout->setStretchFactor( gb_modelsim, 0 );
 
    mainLayout->addLayout( leftLayout  );
    mainLayout->addLayout( rightLayout );
@@ -564,16 +565,12 @@ void US_FeMatch::details( void )
    qApp->processEvents();
 
    delete dialog;
-//DEBUG: for now, use details button to toggle RA visibility
-//bool visible=lb_simpoints->isVisible();
-//qDebug() << "debug isRA" << !visible;
-//set_ra_visible( !visible );
 }
 
 // update based on selected triples row
-void US_FeMatch::update( int row )
+void US_FeMatch::update( int drow )
 {
-   edata          = &dataList[ row ];
+   edata          = &dataList[ drow ];
    scanCount      = edata->scanData.size();
    runID          = edata->runID;
    le_id->  setText( runID + " / " + edata->editID );
@@ -600,8 +597,8 @@ void US_FeMatch::data_plot( void )
    if ( !dataLoaded )
       return;
 
-   int row     = lw_triples->currentRow();
-   edata       = &dataList[ row ];
+   int drow    = lw_triples->currentRow();
+   edata       = &dataList[ drow ];
    data_plot2->setTitle(
       tr( "Velocity Data for " ) + edata->runID );
    data_plot2->setAxisTitle( QwtPlot::yLeft,
@@ -622,7 +619,6 @@ void US_FeMatch::data_plot( void )
    if ( haveSim )
    {
       count     = sdata->scanData[ 0 ].readings.size();
-DbgLv(1) << "R,V points count" << points << count;
       count     = points > count ? points : count;
    }
 
@@ -641,8 +637,8 @@ DbgLv(1) << "R,V points count" << points << count;
    solution.vbar      = le_vbar     ->text().toDouble();
 
    dscan           = &edata->scanData.last();
-   int    point    = US_DataIO2::index( *dscan, dataList[ row ].x,
-                        dataList[ row ].baseline );
+   int    point    = US_DataIO2::index( *dscan, dataList[ drow ].x,
+                        dataList[ drow ].baseline );
    double baseline = 0.0;
 
    for ( int jj = point - 5; jj <= point + 5; jj++ )
@@ -798,12 +794,123 @@ DbgLv(1) << "Sim plot scan count" << ii << count
    return;
 }
 
-// save the enhanced data
+// save the report and image data
 void US_FeMatch::save_data( void )
 { 
-   write_res();
+   QStringList files;
+   QString htmlFile;
 
-   write_cofs();
+   // save the report to a file
+   write_rep( htmlFile );
+   files << htmlFile;
+
+   int     jj        = htmlFile.lastIndexOf( "report." );
+   QString basename  = htmlFile.left( jj ).replace( "\\", "/" );
+   QString fileext   = ".svg";
+   QString img01File = basename + "velocity"   + fileext;
+   QString img02File = basename + "residuals"  + fileext;
+   QString img03File = basename + "s_distrib"  + fileext;
+   QString img04File = basename + "mw_distrib" + fileext;
+   QString img05File = basename + "D_distrib"  + fileext;
+   QString img06File = basename + "ff0_vs_s"   + fileext;
+   QString img07File = basename + "ff0_vs_mw"  + fileext;
+   QString img08File = basename + "D_vs_s"     + fileext;
+   QString img09File = basename + "D_vs_mw"    + fileext;
+   QString img10File = basename + "3dplot"     + ".png";
+   QString img11File = basename + "rbitmap"    + ".png";
+   QString img12File = basename + "tinoise"    + fileext;
+   QString img13File = basename + "rinoise"    + fileext;
+
+   // save image files from main window
+   write_plot( img01File, data_plot2 );
+   files << img01File;
+
+   distrib_plot_resids();
+   write_plot( img02File, data_plot1 );
+   files << img02File;
+
+   distrib_plot_stick( 0 );
+   write_plot( img03File, data_plot1 );
+   files << img03File;
+
+   distrib_plot_stick( 1 );
+   write_plot( img04File, data_plot1 );
+   files << img04File;
+
+   distrib_plot_stick( 2 );
+   write_plot( img05File, data_plot1 );
+   files << img05File;
+
+   distrib_plot_2d(    3 );
+   write_plot( img06File, data_plot1 );
+   files << img06File;
+
+   distrib_plot_2d(    4 );
+   write_plot( img07File, data_plot1 );
+   files << img07File;
+
+   distrib_plot_2d(    5 );
+   write_plot( img08File, data_plot1 );
+   files << img08File;
+
+   distrib_plot_2d(    6 );
+   write_plot( img09File, data_plot1 );
+   files << img09File;
+
+   distrib_plot_resids();
+
+   // save 3-d plot
+   write_plot( img10File, NULL );
+   files << img10File;
+
+   // save residual bitmap
+   write_plot( img11File, NULL );
+   files << img11File;
+
+   // save any noise plots
+   if ( ti_noise.count > 0 )
+   {
+      if ( resplotd == 0 )
+      {
+         resplotd = new US_ResidPlot( this );
+         resplotd->move( rpd_pos );
+         resplotd->show();
+      }
+
+      resplotd->set_plot( 1 );
+      QwtPlot* nois_plot = resplotd->rp_data_plot2();
+      write_plot( img12File, nois_plot );
+      files << img12File;
+   }
+
+   if ( ri_noise.count > 0 )
+   {
+      if ( resplotd == 0 )
+      {
+         resplotd = new US_ResidPlot( this );
+         resplotd->move( rpd_pos );
+         resplotd->show();
+      }
+
+      resplotd->set_plot( 2 );
+      QwtPlot* nois_plot = resplotd->rp_data_plot2();
+      write_plot( img13File, nois_plot );
+      files << img13File;
+   }
+
+   // report the files created
+   QString umsg     = tr( "In directory " )
+                    + basename.left( basename.lastIndexOf( "/" ) )
+                    + tr( " ,\nwrote:\n" );
+
+   for ( int ii = 0; ii < files.length(); ii++ )
+   {
+      QString fname = files[ ii ];
+      umsg          = umsg + "    "
+                           + fname.mid( fname.lastIndexOf( "/" ) + 1 ) + "\n";
+   }
+
+   QMessageBox::information( this, tr( "Successfully Written" ), umsg );
 }
 
 // update density
@@ -870,29 +977,28 @@ void US_FeMatch::get_vbar( void )
 
 void US_FeMatch::view_report( )
 {
+   QString filename;
    QString mtext;
-   int     row    = lw_triples->currentRow();
-   edata          = &dataList[ row ];
+   int     drow   = lw_triples->currentRow();
+   edata          = &dataList[ drow ];
 
    // generate the report file
-   write_res();
+   write_rep( filename );
 
    // open it
-   QString filename = US_Settings::resultDir() + "/" + edata->runID + "."
-      + text_model( model, 0 ) + "_res." + edata->cell + wave_index( row );
-   QFile   res_f( filename );
-   QString fileexts = tr( "Result files (*_res*);;" )
+   QFile   rep_f( filename );
+   QString fileexts = tr( "Report files (*_rep*);;" )
       + tr( "RunID files (" ) + edata->runID + "*);;"
       + tr( "All files (*)" );
 
-   if ( res_f.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   if ( rep_f.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
-      QTextStream ts( &res_f );
+      QTextStream ts( &rep_f );
 
       while ( !ts.atEnd() )
          mtext.append( ts.readLine() + "\n" );
 
-      res_f.close();
+      rep_f.close();
    }
 
    else
@@ -901,12 +1007,13 @@ void US_FeMatch::view_report( )
    }
 
    // display the report dialog
-   US_Editor* editd = new US_Editor( US_Editor::LOAD, true, fileexts );
-   editd->setWindowTitle( tr( "Results:  FE Match Model Simulation" ) );
+   US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true, fileexts, this );
+   editd->setWindowTitle( tr( "Report:  FE Match Model Simulation" ) );
    editd->move( this->pos() + QPoint( 100, 100 ) );
-   editd->resize( 600, 500 );
-   editd->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
-   editd->e->setText( mtext );
+   editd->resize( 600, 700 );
+   editd->e->setFont( QFont( US_GuiSettings::fontFamily(),
+                             US_GuiSettings::fontSize() ) );
+   editd->e->setHtml( mtext );
    editd->show();
 }
 
@@ -1535,8 +1642,6 @@ void US_FeMatch::adjust_model()
 
       model.calc_coefficients( *sc );
 
-DbgLv(1) << " cx" << jj+1 << "s20w s" << sc->s << (sc->s*scorrec)
- << "  D20w D" << sc->D << (sc->D*dcorrec);
       sc->s      *= scorrec;
       sc->D      *= dcorrec;
 
@@ -1707,10 +1812,10 @@ for (int jj=0;jj<nenois;jj++)
 // do model simulation
 void US_FeMatch::simulate_model( )
 {
-   int    row     = lw_triples->currentRow();
+   int    drow    = lw_triples->currentRow();
    US_SimulationParameters simparams;
-   US_DataIO2::RawData*    rdata   = &rawList[  row ];
-   US_DataIO2::EditedData* edata   = &dataList[ row ];
+   US_DataIO2::RawData*    rdata   = &rawList[  drow ];
+   US_DataIO2::EditedData* edata   = &dataList[ drow ];
    US_DataIO2::Reading     reading;
    int    nscan   = rdata->scanData.size();
    int    nconc   = edata->x.size();
@@ -1937,185 +2042,45 @@ double US_FeMatch::interp_sval( double xv, double* sx, double* sy, int ssize )
    return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
 }
 
-// write the results text file
-void US_FeMatch::write_res()
+// write the report HTML text file
+void US_FeMatch::write_rep( QString& htmlFile )
 {
-   int     row      = lw_triples->currentRow();
-   edata            = &dataList[ row ];
-   QString filename = US_Settings::resultDir() + "/" + edata->runID + "."
-      + text_model( model, 0 ) + "_res." + edata->cell + wave_index( row );
-   QFile   res_f( filename );
+   int drow = lw_triples->currentRow();
+   mkdir( US_Settings::reportDir(), edata->runID );
 
-   if ( !res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
-   {
+   htmlFile = US_Settings::reportDir() + "/" + edata->runID + "/fem_"
+      + text_model( model, 0 ) + "." + edata->cell + wave_index( drow )
+      + ".report.html";
+   QFile rep_f( htmlFile );
+   if ( ! rep_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
       return;
-   }
 
-   dscan            = &edata->scanData[ 0 ];
-   int     vcount   = dscan->readings.size();
-   int     scount   = edata->scanData.size();
-   int     ccount   = model.components.size();
-   QString t20d     = QString( "20" ) + DEGC;
-   QString stars    = QString( "*" ).repeated( 60 );
-   double  tcorrec  = US_Math2::time_correction( dataList );
-   double  baseline = calc_baseline( lw_triples->currentRow() );
+   QTextStream ts( &rep_f );
 
-   QTextStream ts( &res_f );
+   ts << "<html><head>\n";
+   ts << "<style>td { padding-right: 1em;}</style>\n";
+   ts << "</head><body>\n";
+   ts << "<h1>" + text_model( model, 9 ) + "</h1>\n";
+   ts << tr( "<h2>Data Report for Run \"" ) << edata->runID;
+   ts << "\",<br>\n&nbsp;" << tr( " Cell " ) << edata->cell;
+   ts << tr( ", Channel " ) << edata->channel;
+   ts << tr( ", Wavelength " ) << edata->wavelength;
+   ts << ",<br>\n&nbsp;" << tr( " Edited Dataset " );
+   ts << edata->editID << "</h2>\n";
 
-   ts << stars << "\n";
-   ts << "*" << text_model( model, 58 ) << "*\n";
-   ts << stars << "\n\n\n";
-   ts << tr( "Data Report for Run \"" ) << edata->runID
-      << tr( "\",\n Cell " ) << edata->cell
-      << tr( ", Channel " ) << edata->channel
-      << tr( ", Wavelength " ) << edata->wavelength
-      << tr( ", Edited Dataset " ) << edata->editID << "\n\n";
+   ts << data_details();
+   ts << hydrodynamics();
+   ts << scan_info();
+   ts << distrib_info();
+   ts << "</body></html>\n";
 
-   ts << tr( "Detailed Run Information:\n\n" );
-   ts << tr( "Cell Description:        " ) << edata->description << "\n";
-   ts << tr( "Raw Data Directory:      " ) << workingDir << "\n";
-   ts << tr( "Rotor Speed:             " ) << dscan->rpm << " rpm\n";
-   ts << tr( "Average Temperature:     " ) << le_temp->text() << "\n";
-   ts << tr( "Temperature Variation:   Within Tolerance\n" );
-   ts << tr( "Time Correction:         " ) << text_time( tcorrec, 1 ) << "\n";
-   ts << tr( "Run Duration:            " )
-      << text_time( edata->scanData[ scount - 1 ].seconds, 2 ) << "\n";
-   ts << tr( "Wavelength:              " ) << edata->wavelength << " nm\n";
-   ts << tr( "Baseline Absorbance:     " ) << baseline << " OD\n";
-   ts << tr( "Meniscus Position:       " ) << edata->meniscus << " cm\n";
-   ts << tr( "Edited Data starts at:   " ) << edata->radius( 0 ) << " cm\n";
-   ts << tr( "Edited Data stops at:    " )
-      << edata->radius( vcount - 1 ) << " cm\n\n\n";
-
-   ts << tr( "Hydrodynamic Settings:\n\n" );
-   ts << tr( "Viscosity correction:    " ) << solution.viscosity << "\n";
-   ts << tr( "Viscosity (absolute):    " ) << solution.viscosity_tb << "\n";
-   ts << tr( "Density correction:      " ) << solution.density << " g/ccm\n";
-   ts << tr( "Density (absolute):      " )
-      << solution.density_tb << " g/ccm\n";
-   ts << tr( "Vbar:                    " ) << solution.vbar << " ccm/g\n";
-   ts << tr( "Vbar corrected for " ) << t20d << ": "
-      << solution.vbar20 << " ccm/g\n";
-   ts << tr( "Buoyancy (Water, " ) << t20d << "):  "
-      << solution.buoyancyw << "\n";
-   ts << tr( "Buoyancy (absolute):     " ) << solution.buoyancyb << "\n";
-   ts << tr( "s20w Correction Factor:  " ) << solution.s20w_correction << "\n";
-   ts << tr( "D20w Correction Factor:  " ) << solution.D20w_correction << "\n";
-
-   ts << tr( "\n\nData Analysis Settings:\n\n" );
-   ts << tr( "Number of Components:    " ) << ccount << "\n";
-   ts << tr( "Residual RMS Deviation:  " ) << le_rmsd->text() << "\n\n";
-
-   double sum_mw   = 0.0;
-   double sum_s    = 0.0;
-   double sum_D    = 0.0;
-   double sum_c    = 0.0;
-   double ctime    = 0.0;
-
-   for ( int jj = 0; jj < ccount; jj++ )
-   {
-      double conc;
-      conc     = model.components[ jj ].signal_concentration;
-      sum_c   += conc;
-      sum_mw  += model.components[ jj ].mw * conc;
-      sum_s   += model.components[ jj ].s  * conc;
-      sum_D   += model.components[ jj ].D  * conc;
-   }
-
-   ts << tr( "Weight Averages:\n\n" );
-   ts << tr( "Weight Average s20,W:    " )
-      << QString().sprintf( "%6.4e\n", (sum_s  / sum_c ) );
-   ts << tr( "Weight Average D20,W:    " )
-      << QString().sprintf( "%6.4e\n", (sum_D  / sum_c ) );
-   ts << tr( "W.A. Molecular Weight:   " )
-      << QString().sprintf( "%6.4e\n", (sum_mw / sum_c ) );
-   ts << tr( "Total Concentration:     " )
-      << QString().sprintf( "%6.4e\n", sum_c ) << "\n\n";
-
-   ts << tr( "Distribution Information:\n\n" );
-   ts << tr( "Molecular Weight    " )
-      << tr( "S 20,W         " )
-      << tr( "D 20,W         " )
-      << tr( "Concentration\n" );
-
-   for ( int jj = 0; jj < ccount; jj++ )
-   {
-      double conc;
-      double perc;
-      conc     = model.components[ jj ].signal_concentration;
-      perc     = 100.0 * conc / sum_c;
-      ts << QString().sprintf( " %12.5e  %14.5e %14.5e %14.5e  (%5.2f",
-         model.components[ jj ].mw, model.components[ jj ].s,
-         model.components[ jj ].D,  conc, perc ) << " %)\n";
-   }
-
-   ts << tr( "\n\nScan Information:\n\n" );
-   ts << tr( "Scan" )
-      << tr( "     Corrected Time" )
-      << tr( "  Plateau Concentration" )
-      << tr( "  (Ed,Sim Omega_s_t)\n" );
-
-   for ( int ii = 0; ii < scount; ii++ )
-   {
-      dscan     = &edata->scanData[ ii ];
-      ctime     = dscan->seconds - tcorrec;
-      ts << QString().sprintf( "%4i:", ( ii + 1 ) );
-      ts << "   " << text_time( ctime, 0 );
-      ts << QString().sprintf( "%14.6f OD  (%9.3e, %9.3e)\n",
-            dscan->plateau, dscan->omega2t, sdata->scanData[ ii ].omega2t );
-   }
-
-   ts << "\n";
-
-   res_f.close();
-}
-
-// write the results text file
-void US_FeMatch::write_cofs()
-{
-   int    row      = lw_triples->currentRow();
-   edata           = &dataList[ row ];
-   int    ccount   = model.components.size();
-   double scorrec  = 1.0 / solution.s20w_correction;
-   double dcorrec  = 1.0 / solution.D20w_correction;
-
-   QString filename = US_Settings::resultDir() + "/" + edata->runID + "."
-      + text_model( model, 0 ) + "_dis." + edata->cell + wave_index( row );
-   QFile   res_f( filename );
-
-   if ( !res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
-   {
-      return;
-   }
-
-   QTextStream ts( &res_f );
-
-   ts << tr( "S_apparent" )
-      << tr( "  S_20,W    " )
-      << tr( "  D_apparent" )
-      << tr( "  D_20,W    " )
-      << tr( "  MW        " )
-      << tr( "  Frequency " )
-      << tr( "  f/f0(20,W)\n" );
-
-   for ( int jj = 0; jj < ccount; jj++ )
-   {
-      ts << QString().sprintf(
-         "%10.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e",
-         model.components[ jj ].s,  model.components[ jj ].s / scorrec,
-         model.components[ jj ].D,  model.components[ jj ].D / dcorrec,
-         model.components[ jj ].mw, model.components[ jj ].signal_concentration,
-         model.components[ jj ].f_f0 )
-         << "\n";
-   }
-
-   res_f.close();
+   rep_f.close();
 }
 
 // format a wavelength index number string
-QString US_FeMatch::wave_index( int row )
+QString US_FeMatch::wave_index( int drow )
 {
-   QString cwaveln = dataList[ row ].wavelength;
+   QString cwaveln = dataList[ drow ].wavelength;
    QStringList wavelns;
 
    wavelns << dataList[ 0 ].wavelength;  // start list of wavelengths
@@ -2134,36 +2099,10 @@ QString US_FeMatch::wave_index( int row )
    return QString::number( wavelns.indexOf( cwaveln ) + 1 );
 }
 
-// text of minutes,seconds or hours,minutes for a given total seconds value
-QString US_FeMatch::text_time( double seconds, int type )
-{
-   int mins = (int)( seconds / 60.0 );
-   int secs = (int)( seconds - (double)mins * 60.0 );
-
-   if ( type == 0 )
-   {  // fixed-field mins,secs text
-      QString tmin = QString().sprintf( "%4d", mins );
-      QString tsec = QString().sprintf( "%3d", secs );
-      return tr( "%1 min %2 sec" ).arg( tmin ).arg( tsec );
-   }
-
-   else if ( type == 1 )
-   {  // minutes,seconds text
-      return tr( "%1 minute(s) %2 second(s)" ).arg( mins ).arg( secs );
-   }
-
-   else
-   {  // hours,minutes text
-      int hrs   = (int)( seconds / 3600.0 );
-      mins      = qRound( ( seconds - (double)hrs * 3600.0 ) / 60.0 );
-      return tr( "%1 hour(s) %2 minute(s)" ).arg( hrs ).arg( mins );
-   }
-}
-
 // calculate average baseline absorbance
-double US_FeMatch::calc_baseline( int row )
+double US_FeMatch::calc_baseline( int drow ) const
 {
-   US_DataIO2::EditedData* dd = &dataList[ row ];
+   const US_DataIO2::EditedData* dd = &dataList[ drow ];
    const US_DataIO2::Scan* ss = &dd->scanData.last();
    int                     nn = US_DataIO2::index( *ss, dd->x, dd->baseline );
    double                  bl = 0.0;
@@ -2243,28 +2182,31 @@ QString US_FeMatch::text_model( US_Model model, int width )
 
    }
 
-   else if ( width > title.length() )
-   {  // long title centered:  center it in fixed-length string
+   else
+   {  // long title:  add any suffixes and check need to center
       if ( model.associations.size() > 1 )
          title = title + " (RA)";
 
       if ( model.global == US_Model::MENISCUS )
-         title = title + " (Menis.)";
+         title = title + " (Menisc.)";
 
       else if ( model.global == US_Model::GLOBAL )
          title = title + " (Global)";
 
       else if ( model.global == US_Model::SUPERGLOBAL )
-         title = title + " (S.Global)";
+         title = title + " (S.Glob.)";
 
       if ( model.monteCarlo )
          title = title + " (MC)";
 
-      int lent = title.length();
-      int lenl = ( width - lent ) / 2;
-      int lenr = width - lent - lenl;
-      title    = QString( " " ).repeated( lenl ) + title
-               + QString( " " ).repeated( lenr );
+      if ( width > title.length() )
+      {  // long title centered:  center it in fixed-length string
+         int lent = title.length();
+         int lenl = ( width - lent ) / 2;
+         int lenr = width - lent - lenl;
+         title    = QString( " " ).repeated( lenl ) + title
+                  + QString( " " ).repeated( lenr );
+      }
    }
 
    return title;
@@ -3039,5 +2981,310 @@ void US_FeMatch::vbar_text( )
          buffLoaded   = true;
       }
    }
+}
+
+QString US_FeMatch::table_row( const QString& s1, const QString& s2 ) const
+{
+   QString s = "<tr><td>" + s1 + "</td><td>" + s2 + "</td></tr>\n";
+   return s;
+}
+
+QString US_FeMatch::table_row( const QString& s1, const QString& s2, 
+                                     const QString& s3 ) const
+{
+   QString s = "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3 
+             + "</td></tr>\n";
+   return s;
+}
+
+// Table HTML table row string for 5 columns
+QString US_FeMatch::table_row( const QString& s1, const QString& s2,
+                               const QString& s3, const QString& s4,
+                               const QString& s5 ) const
+{
+   return "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
+       + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n";
+}
+
+QString US_FeMatch::data_details( void ) const
+{
+   int    drow     = lw_triples->currentRow();
+   const US_DataIO2::EditedData* d      = &dataList[ drow ];
+   double baseline = calc_baseline( drow );
+
+   QString s =  
+        tr( "<h3>Detailed Run Information:</h3>\n" ) + "<table>\n" +
+        table_row( tr( "Cell Description:" ), d->description )     +
+        table_row( tr( "Data Directory:"   ), workingDir )         +
+        table_row( tr( "Rotor Speed:"      ),  
+            QString::number( (int)d->scanData[ 0 ].rpm ) + " rpm" );
+
+   // Temperature data
+   double sum     =  0.0;
+   double maxTemp = -1.0e99;
+   double minTemp =  1.0e99;
+
+   for ( int i = 0; i < d->scanData.size(); i++ )
+   {
+      double t = d->scanData[ i ].temperature;
+      sum += t;
+      maxTemp = max( maxTemp, t );
+      minTemp = min( minTemp, t );
+   }
+
+   QString average = QString::number( sum / d->scanData.size(), 'f', 1 );
+
+   s += table_row( tr( "Average Temperature:" ), average + " " + MLDEGC );
+
+   if ( maxTemp - minTemp <= US_Settings::tempTolerance() )
+      s += table_row( tr( "Temperature Variation:" ), tr( "Within tolerance" ) );
+   else 
+      s += table_row( tr( "Temperature Variation:" ), 
+                      tr( "(!) OUTSIDE TOLERANCE (!)" ) );
+
+   // Time data
+   double  tcorrec  = US_Math2::time_correction( dataList );
+   int minutes = (int)tcorrec / 60;
+   int seconds = (int)tcorrec % 60;
+
+   QString m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
+   QString sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds"  );
+   s += table_row( tr( "Time Correction:" ), 
+                   QString::number( minutes ) + m +
+                   QString::number( seconds ) + sec );
+
+   double duration = rawList.last().scanData.last().seconds;
+
+   int hours = (int) duration / 3600;
+   minutes   = (int) duration / 60 - hours * 60;
+   seconds   = (int) duration % 60;
+
+   QString h;
+   h   = ( hours   == 1 ) ? tr( " hour "   ) : tr( " hours "   );
+   m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
+   sec = ( seconds == 1 ) ? tr( " second " ) : tr( " seconds " );
+
+   s += table_row( tr( "Run Duration:" ),
+                   QString::number( hours   ) + h + 
+                   QString::number( minutes ) + m + 
+                   QString::number( seconds ) + sec );
+
+   // Wavelength, baseline, meniscus, range
+   s += table_row( tr( "Wavelength:" ), d->wavelength + " nm" )  +
+        table_row( tr( "Baseline Absorbance:" ),
+                   QString::number( baseline,    'f', 6 ) + " OD" ) + 
+        table_row( tr( "Meniscus Position:     " ),           
+                   QString::number( d->meniscus, 'f', 3 ) + " cm" );
+
+   int    rrx   =  d->x.size() - 1;
+   double left  =  d->x[ 0   ].radius;
+   double right =  d->x[ rrx ].radius;
+
+   s += table_row( tr( "Edited Data starts at: " ), 
+                   QString::number( left,  'f', 3 ) + " cm" ) +
+        table_row( tr( "Edited Data stops at:  " ), 
+                   QString::number( right, 'f', 3 ) + " cm" ) + "</table>\n";
+   return s;
+}
+
+QString US_FeMatch::hydrodynamics( void ) const
+{
+   // set up hydrodynamics values
+   US_Math2::SolutionData solution = this->solution;
+   solution.vbar      = le_vbar     ->text().toDouble();
+   solution.density   = le_density  ->text().toDouble();
+   solution.viscosity = le_viscosity->text().toDouble();
+   double avgTemp     = le_temp     ->text().section( " ", 0, 0 ).toDouble();
+   solution.vbar20    = solution.vbar;
+   US_Math2::data_correction( avgTemp, solution );
+
+   QString s = tr( "<h3>Hydrodynamic Settings:</h3>\n" ) + 
+               "<table>\n";
+  
+   s += table_row( tr( "Viscosity corrected:" ), 
+                   QString::number( solution.viscosity, 'f', 5 ) ) +
+        table_row( tr( "Viscosity (absolute):" ),
+                   QString::number( solution.viscosity_tb, 'f', 5 ) ) +
+        table_row( tr( "Density corrected:" ),
+                   QString::number( solution.density, 'f', 6 ) + " g/ccm" ) +
+        table_row( tr( "Density (absolute):" ),
+                   QString::number( solution.density_tb, 'f', 6 ) + " g/ccm" ) +
+        table_row( tr( "Vbar:" ), 
+                   QString::number( solution.vbar, 'f', 4 ) + " ccm/g" ) +
+        table_row( tr( "Vbar corrected for 20 " ) + MLDEGC + ":",
+                   QString::number( solution.vbar20, 'f', 4 ) + " ccm/g" ) +
+        table_row( tr( "Buoyancy (Water, 20 " ) + MLDEGC + "): ",
+                   QString::number( solution.buoyancyw, 'f', 6 ) ) +
+        table_row( tr( "Buoyancy (absolute)" ),
+                   QString::number( solution.buoyancyb, 'f', 6 ) ) +
+        table_row( tr( "Correction Factor (s):" ),
+                   QString::number( solution.s20w_correction, 'f', 6 ) ) + 
+        table_row( tr( "Correction Factor (D):" ),
+                   QString::number( solution.D20w_correction, 'f', 6 ) ) + 
+        "</table>\n";
+
+   return s;
+}
+
+QString US_FeMatch::scan_info( void ) const
+{
+   int                           drow   = lw_triples->currentRow();
+   const US_DataIO2::EditedData* d      = &dataList[ drow ];
+   double time_correction  = US_Math2::time_correction( dataList );
+
+   QString s = tr( "<h3>Scan Information:</h3>\n" ) +
+               "<table>\n"; 
+         
+   s += table_row( tr( "Scan" ), tr( "Corrected Time" ), 
+                   tr( "Plateau Concentration" ) );
+
+   for ( int i = 0; i < d->scanData.size(); i++ )
+   {
+      QString s1;
+      QString s2;
+      QString s3;
+
+      double od   = d->scanData[ i ].plateau;
+      int    time = (int)( d->scanData[ i ].seconds - time_correction ); 
+
+      s1 = s1.sprintf( "%4d",             i + 1 );
+      s2 = s2.sprintf( "%4d min %2d sec", time / 60, time % 60 );
+      s3 = s3.sprintf( "%.6f OD",         od ); 
+
+      s += table_row( s1, s2, s3 );
+   }
+
+   s += "</table>";
+   
+   return s;
+}
+
+// Distribution information HTML string
+QString US_FeMatch::distrib_info() const
+{
+   int ncomp     = model.components.size();
+   
+   if ( ncomp == 0 )
+      return "";
+
+   QString mstr = tr( "<h3>Data Analysis Settings:</h3>\n" ) + "<table>\n";
+
+   mstr += table_row( tr( "Number of Components:" ),
+                      QString::number( ncomp ) );
+   mstr += table_row( tr( "Residual RMS Deviation:" ),
+                      le_rmsd->text()  );
+
+   double sum_mw  = 0.0;
+   double sum_s   = 0.0;
+   double sum_D   = 0.0;
+   double sum_c   = 0.0;
+
+   for ( int ii = 0; ii < ncomp; ii++ )
+   {
+      double conc = model.components[ ii ].signal_concentration;
+      sum_c      += conc;
+      sum_mw     += model.components[ ii ].mw * conc;
+      sum_s      += model.components[ ii ].s  * conc;
+      sum_D      += model.components[ ii ].D  * conc;
+   }
+
+   mstr += table_row( tr( "Weight Average s20,W:" ),
+                      QString().sprintf( "%6.4e\n", ( sum_s  / sum_c ) ) );
+   mstr += table_row( tr( "Weight Average D20,W:" ),
+                      QString().sprintf( "%6.4e\n", ( sum_D  / sum_c ) ) );
+   mstr += table_row( tr( "W.A. Molecular Weight:" ),
+                      QString().sprintf( "%6.4e\n", ( sum_mw / sum_c ) ) );
+   mstr += table_row( tr( "Total Concentration:" ),
+                      QString().sprintf( "%6.4e\n", sum_c ) );
+   mstr += "</table>\n\n";
+
+   mstr += tr( "<h3>Distribution Information:</h3>\n" ) + "<table>\n";
+   mstr += table_row( tr( "Molecular Wt." ), tr( "S 20,W" ), tr( "D 20,W" ),
+                      tr( "f / f0" ), tr( "Concentration" ) );
+
+   for ( int ii = 0; ii < ncomp; ii++ )
+   {
+      double conc = model.components[ ii ].signal_concentration;
+      double perc = 100.0 * conc / sum_c;
+      mstr       += table_row(
+            QString().sprintf( "%10.4e", model.components[ ii ].mw   ),
+            QString().sprintf( "%10.4e", model.components[ ii ].s    ),
+            QString().sprintf( "%10.4e", model.components[ ii ].D    ),
+            QString().sprintf( "%10.4e", model.components[ ii ].f_f0 ),
+            QString().sprintf( "%10.4e (%5.2f %%)", conc, perc       ) );
+   }
+
+   mstr += "</table>";
+   
+   return mstr;
+}
+
+void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
+{
+   if ( plot != 0 )
+   {  // standard SVG file
+       QSvgGenerator generator;
+       generator.setSize( plot->size() );
+       generator.setFileName( filename );
+       plot->print( generator );
+   }
+
+   else if ( filename.endsWith( "rbitmap.png" ) )
+   {  // special case of rbitmap PNG
+      if ( rbmapd == 0 )
+      {  // if it is not currently displayed, display it
+         rbmapd = new US_ResidsBitmap( resids );
+         rbmapd->move( bmd_pos );
+         rbmapd->show();
+         rbmapd->raise();
+      }
+
+      else
+      {  // if already displayed,  replot and re-activate
+         rbmapd->replot( resids );
+         rbmapd->raise();
+         rbmapd->activateWindow();
+      }
+
+      QPixmap pixmap = QPixmap::grabWidget( rbmapd, 0, 0,
+                                            rbmapd->width(), rbmapd->height() );
+      if ( ! pixmap.save( filename ) )
+         qDebug() << "*ERROR* Unable to write file" << filename;
+   }
+
+   else if ( filename.endsWith( "3dplot.png" ) )
+   {  // special case of 3dplot PNG
+      if ( eplotcd == 0 )
+      {  // if no 3d plot control up,  create it now
+         eplotcd = new US_PlotControl( this, &model );
+         eplotcd->move( epd_pos );
+         eplotcd->show();
+      }
+
+      eplotcd->do_3dplot();
+
+      QGLWidget* dataw = eplotcd->data_3dplot();
+
+      QPixmap pixmap = dataw->renderPixmap( dataw->width(), dataw->height(),
+                                            true  );
+
+      if ( ! pixmap.save( filename ) )
+         qDebug() << "*ERROR* Unable to write file" << filename;
+   }
+}
+
+bool US_FeMatch::mkdir( const QString& baseDir, const QString& subdir )
+{
+   QDir folder( baseDir );
+
+   if ( folder.exists( subdir ) ) return true;
+           
+   if ( folder.mkdir( subdir ) ) return true;
+   
+   QMessageBox::warning( this,
+      tr( "File error" ),
+      tr( "Could not create the directory:\n" ) + baseDir + "/" + subdir );
+   
+   return false;
 }
 

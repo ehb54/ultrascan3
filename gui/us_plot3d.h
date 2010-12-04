@@ -37,6 +37,9 @@ class US_EXTERN US_Plot3D : public QMainWindow
       void calculateData( QVector< QVector< double > >& );
       //! \brief Public function to replot the 3D data
       void replot       ( void );
+      //! \brief Public function to return the data widget pointer
+      //! returns Pointer to 3D Plot data widget
+      QGLWidget* dataWidgetP( void );
 
    private:
       QWidget*      centralWidget;

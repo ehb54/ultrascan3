@@ -198,6 +198,26 @@ DbgLv(1) << "RP:resbmap" << have_bm;
    resize( p2size );
 }
 
+// externally force a specific plot for lower plot
+void US_ResidPlot::set_plot( int plotf )
+{
+   if ( plotf == 1 )
+   {  // ti_noise plot
+      ck_plttin->setChecked( true );
+   }
+
+   else if ( plotf == 2 )
+   {  // ri_noise plot
+      ck_pltrin->setChecked( true );
+   }
+}
+
+// return a pointer to the QwtPlot for the lower plot
+QwtPlot* US_ResidPlot::rp_data_plot2()
+{
+   return data_plot2;
+}
+
 // plot-experimental-data box [un]checked
 void US_ResidPlot::pedaCheck( bool chkd )
 {
