@@ -29,6 +29,12 @@ class US_EXTERN US_PlotControl : public US_WidgetsDialog
       //! \returns Pointer to the QWidget that created this plot control
       QWidget* caller( void );
 
+      //! \brief Force (re-)plot of currently specified 3-D plot
+      void do_3dplot( void );
+
+      //! \brief Return 3-d plot data widget pointer
+      QGLWidget* data_3dplot( void );
+
    private:
       QVBoxLayout*  mainLayout;
       QGridLayout*  controlsLayout;

@@ -188,6 +188,20 @@ QWidget* US_PlotControl::caller( void )
    return wparent;
 }
 
+// public slot to force (re-)plot of currently specified 3-D plot
+void US_PlotControl::do_3dplot()
+{
+   plot3_btn();
+}
+
+// public slot to return a pointer to the 3D plot data widget
+QGLWidget* US_PlotControl::data_3dplot( void )
+{
+   plot3_btn();
+
+   return plot3d_w->dataWidgetP();
+}
+
 // mw x box checked
 void US_PlotControl::xmwtCheck( bool chkd )
 {

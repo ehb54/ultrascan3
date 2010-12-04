@@ -185,14 +185,12 @@ class US_EXTERN US_FeMatch : public US_Widgets
       int     models_in_edit(   bool, QString, QStringList& );
       int     noises_in_model ( bool, QString, QStringList& );
       double  interp_sval( double, double*, double*,  int );
-      void    write_res();
-      void    write_cofs();
-      QString wave_index( int  );
-      QString text_time(  double,   int );
-      QString text_model( US_Model, int );
-      double  calc_baseline(  int  );
+      void    write_rep(      QString& );
+      QString wave_index(     int  );
+      QString text_model(     US_Model, int );
+      double  calc_baseline(  int  )  const;
       void    calc_residuals( void );
-      void    close_all( void );
+      void    close_all(      void );
       bool    bufinfo_db(   US_DataIO2::EditedData*,
                             QString&, QString&, QString& );
       bool    bufinfo_disk( US_DataIO2::EditedData*,
@@ -205,6 +203,18 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void    buffer_text(   void );
       bool    verify_vbar(   void );
       void    vbar_text(     void );
+      QString table_row( const QString&, const QString& ) const;
+      QString table_row( const QString&, const QString&,
+                         const QString& )                 const;
+      QString table_row( const QString&, const QString&,
+                         const QString&, const QString&,
+                         const QString& )                 const;
+      QString data_details  ( void )                      const;
+      QString hydrodynamics ( void )                      const;
+      QString scan_info     ( void )                      const;
+      QString distrib_info  ( void )                      const;
+      void    write_plot( const QString&, const QwtPlot* );
+      bool    mkdir(      const QString&, const QString& );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };

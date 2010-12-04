@@ -672,6 +672,15 @@ DbgLv(2) << "P3D:rp:xatitle yatitle" << xatitle << yatitle;
    delete [] wdata;
 }
 
+// Public method to return a pointer to the data widget
+QGLWidget* US_Plot3D::dataWidgetP( void )
+{
+   dataWidget->updateData();
+   dataWidget->updateGL();
+
+   return (QGLWidget*)dataWidget;
+}
+
 QString US_Plot3D::xyAxisTitle( int type, double sclnorm )
 {
    QString atitle = tr( "s" );
