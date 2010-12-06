@@ -80,12 +80,14 @@ class US_2dsa : public US_AnalysisBase2
       void open_resplot( void );
       void open_3dplot(  void );
       void open_fitcntl( void );
-      QString distrib_info( void );
+      QString distrib_info(   void );
+      QString iteration_info( void );
       QString table5_row( const QString&, const QString&, const QString&,
                           const QString&, const QString& );
       void data_plot( void );
       void write_report( QString );
       void write_png(    QString, QWidget* );
+      void load     ( void );
       void view     ( void );
       void save     ( void );
       void help     ( void )

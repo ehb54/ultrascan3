@@ -123,6 +123,8 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
    connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
 
+   pb_view   ->setEnabled( false );
+   pb_save   ->setEnabled( false );
    pb_fitcntl->setEnabled( false );
    pb_plt3d  ->setEnabled( false );
    pb_pltres ->setEnabled( false );
@@ -140,34 +142,48 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    acd_pos      = this->pos() + QPoint(  500,  50 );
 }
 
-// slot to handle the completion of 2-D spectrum analysis
+// slot to handle the completion of a 2-D spectrum analysis stage
 void US_2dsa::analysis_done( int updflag )
 {
-   if ( updflag < 0 )
-   {  // flag either fit stopped (-1) or intermediate stage (-2)
-      if ( updflag < (-1) )
-      {  // with upflag=-2, update model,noise lists
-         models << model;
-         if ( ri_noise.count > 0 )
-            rinoises << ri_noise;
-         if ( ti_noise.count > 0 )
-            tinoises << ti_noise;
-      }
+   if ( updflag == (-1) )
+   {  // fit has been aborted or reset for new fit
+      pb_view   ->setEnabled( false );
+      pb_save   ->setEnabled( false );
+      pb_plt3d  ->setEnabled( false );
+      pb_pltres ->setEnabled( false );
+      models.clear();
+      tinoises.clear();
+      rinoises.clear();
 
       qApp->processEvents();
       return;
    }
 
-   bool autoplot     = updflag > 0;
+   if ( updflag == (-2) )
+   {  // update model,noise lists and RMSD
+      models << model;
 
-   QString analysID  = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
-   QString editID    = edata->editID;
-   editID            = editID.startsWith( "20" ) ? editID.mid( 2 ) : editID;
-   model.modelGUID   = US_Util::new_guid();
-   model.editGUID    = edata->editGUID;
-   model.analysis    = US_Model::TWODSA;
-   model.description = edata->runID + ".2DSA_e" + editID + "_a" + analysID
-      + ".model." + edata->cell + "1";
+      if ( ti_noise.count > 0 )
+         tinoises << ti_noise;
+
+      if ( ri_noise.count > 0 )
+         rinoises << ri_noise;
+
+      QString mdesc = model.description;
+      QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
+      double  vari  = avari.section( " ", 0, 0 ).toDouble();
+      double  rmsd  = sqrt( vari );
+      le_vari->setText( QString::number( vari ) );
+      le_rmsd->setText( QString::number( rmsd ) );
+
+      qApp->processEvents();
+      return;
+   }
+
+   // if here, an analysis is all done
+
+   bool plotdata     = updflag == 1;
+   bool savedata     = updflag == 2;
 
 qDebug() << "Analysis Done";
 qDebug() << "  model components size" << model.components.size();
@@ -176,14 +192,30 @@ qDebug() << "  edat0 sdat0 rdat0"
 
    pb_plt3d ->setEnabled( true );
    pb_pltres->setEnabled( true );
+   pb_view  ->setEnabled( true );
+   pb_save  ->setEnabled( true );
 
    data_plot();
 
-   if ( autoplot )
+   if ( plotdata )
    {
-      open_resplot();
       open_3dplot();
+      open_resplot();
    }
+
+   else if ( savedata )
+   {
+      save();
+   }
+}
+
+// load the experiment data, mostly thru AnalysisBase; then disable view,save
+void US_2dsa::load( void )
+{
+   US_AnalysisBase2::load();
+
+   pb_view->setEnabled( false );
+   pb_save->setEnabled( false );
 }
 
 // plot the data
@@ -195,10 +227,8 @@ void US_2dsa::data_plot( void )
    ct_from   ->setEnabled( true );
    ct_to     ->setEnabled( true );
 
-   if ( ! dataLoaded )
-      return;
-
-   if ( sdata.scanData.size() != edata->scanData.size() )
+   if ( ! dataLoaded  ||
+        sdata.scanData.size() != edata->scanData.size() )
       return;
 
    // set up to plot simulation data and residuals
@@ -340,6 +370,7 @@ void US_2dsa::view( void )
    s += hydrodynamics();
    s += scan_info();
    s += distrib_info();
+   s += iteration_info();
    s += "</body></html>\n";
 
    te_results->e->setHtml( s );
@@ -350,29 +381,32 @@ void US_2dsa::view( void )
 void US_2dsa::save( void )
 {
    QString analysID = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
+   QString reqGUID  = US_Util::new_guid();
    QString runID    = edata->runID;
    QString editID   = edata->editID;
    editID           = editID.startsWith( "20" ) ? editID.mid( 2 ) : editID;
-   QString dbase    = runID + ".2DSA_e" + editID + "_a" + analysID + ".";
+   bool    fitMeni  = ( model.global == US_Model::MENISCUS );
+   bool    montCar  = model.monteCarlo;
+   QString anType   = fitMeni ? "2DSA-FM" : ( montCar ? "2DSA-MC" : "2DSA" );
+   QString dbase    = runID + "_" + anType + "_e" + editID 
+                            + "_a" + analysID + ".";
    QString dext     = "." + edata->cell + "1";
-
-   model.modelGUID      = US_Util::new_guid();
-   model.editGUID       = edata->editGUID;
-   model.analysis       = US_Model::TWODSA;
-   model.description    = dbase + "model"    + dext;
-   ti_noise.description = dbase + "ti_noise" + dext;
-   ti_noise.type        = US_Noise::TI;
-   ti_noise.modelGUID   = model.modelGUID;
-   ri_noise.description = dbase + "ri_noise" + dext;
-   ri_noise.type        = US_Noise::RI;
-   ri_noise.modelGUID   = model.modelGUID;
 
    QString reppath  = US_Settings::reportDir();
    QString respath  = US_Settings::resultDir();
    QString mdlpath;
    QString noipath;
+   int     nmodels  = models.size();             // number of models to save
+   int     knois    = min( ti_noise.count, 1 ) 
+                    + min( ri_noise.count, 1 );  // noise files per model
+   int     nnoises  = nmodels * knois;           // number of noises to save
 
-   // Save the model file
+   // Test existence or create needed subdirectories
+   if ( ! mkdir( reppath, runID ) )
+   {
+      qDebug() << "*** Unable to create or find the report directory ***";
+      return;
+   }
 
    if ( ! US_Model::model_path( mdlpath ) )
    {
@@ -380,83 +414,107 @@ void US_2dsa::save( void )
       return;
    }
 
-   QStringList ffilt( "M*.xml" );
-   QDir        dirm( mdlpath );
-   QStringList names =  dirm.entryList( ffilt, QDir::Files, QDir::Name );
-   QString     mname = "M0000000.xml";
-   QString     nname = "N0000000.xml";
-   QString     nnam1 = nname;
-   int         indx  = 1;
-
-   while( indx > 0 )
+   if ( knois > 0  && ! US_Noise::noise_path( noipath ) )
    {
-      mname = "M" + QString().sprintf( "%07i", indx++ ) + ".xml";
-      if ( ! names.contains( mname ) )
-         break;
+      qDebug() << "*** Unable to create or find the noise directory ***";
+      return;
    }
 
-   mname  = mdlpath + "/" + mname;
-   model.write( mname );
+   // Save the model and any noise file(s)
 
-   // Save any noise files
+   QDir        dirm( mdlpath );
+   QDir        dirn( noipath );
+   QStringList mfilt( "M*.xml" );
+   QStringList nfilt( "N*.xml" );
+   QStringList mdnams   =  dirm.entryList( mfilt, QDir::Files, QDir::Name );
+   QStringList ndnams   =  dirn.entryList( nfilt, QDir::Files, QDir::Name );
+   QStringList mnames;
+   QStringList nnames;
+   QString     mname    = "M0000000.xml";
+   QString     nname    = "N0000000.xml";
+   int         indx     = 1;
+   int         kmodels  = 0;
+   int         knoises  = 0;
+   bool        have_ti  = ( tinoises.size() > 0 );
+   bool        have_ri  = ( rinoises.size() > 0 );
 
-   int     nnois  = min( ti_noise.count, 1 ) + min( ri_noise.count, 1 );
-   if ( nnois > 0 )
-   {
-      if ( ! US_Noise::noise_path( noipath ) )
-      {
-         qDebug() << "*** Unable to create or find the noise directory ***";
-         return;
+   while( indx > 0 )
+   {  // build a list of available model file names
+      mname = "M" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      if ( ! mdnams.contains( mname ) )
+      {  // no name with this index exists, so add it new-name list
+         mnames << mname;
+         if ( ++kmodels >= nmodels )
+            break;
       }
+   }
 
-      QDir    dirn( noipath );
-      ffilt.clear();
-      ffilt << "N*.xml";
-      names         = dirn.entryList( ffilt, QDir::Files, QDir::Name );
-      int     knois = 0;
-              indx  = 1;
+   indx   = 1;
 
-      while ( knois < nnois )
-      {
-         nname = "N" + QString().sprintf( "%07i", indx++ ) + ".xml";
-         if ( ! names.contains( nname ) )
-         {
-            if ( ++knois < nnois )
-            {
-               nnam1 = nname;
-            }
-         }
+   while( indx > 0 )
+   {  // build a list of available noise file names
+      nname = "N" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      if ( ! ndnams.contains( nname ) )
+      {  // add to the list of new-name noises
+         nnames << nname;
+         if ( ++knoises >= nnoises )
+            break;
       }
+   }
 
-      nname  = noipath + "/" + nname;
-      nnam1  = noipath + "/" + ( nnois == 1 ? nname : nnam1 );
+   for ( int jj = 0; jj < nmodels; jj++ )
+   {  // loop to output models and noises
+      model             = models[ jj ];         // model to output
+      QString mdesc     = model.description;    // description from processor
+      QString menisd    = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                          .replace( ".", "" ).leftJustified( 5, '0' );
+      QString iterad    = QString().sprintf( "%04i", jj + 1 );
+      // create the iteration part of model description:
+      // e.g., "" normally; "m60190" for meniscus; "i0001" for monte carlo
+      QString iterName  = fitMeni ? ( "m" + menisd + "." ) :
+                        ( montCar ? ( "i" + iterad + "." ) : "" );
+      // fill in actual model parameters needed for output
+      model.description = dbase + iterName + "model" + dext;
+      mname             = mdlpath + "/" + mnames[ jj ];
+      model.modelGUID   = US_Util::new_guid();
+      model.editGUID    = edata->editGUID;
+      model.requestGUID = reqGUID;
+      model.analysis    = US_Model::TWODSA;
+      // output the model
+      model.write( mname );
 
-      if ( ti_noise.count > 0 )
-      {
+      int kk  = jj * knois;
+
+      if ( have_ti )
+      {  // output a TI noise
+         ti_noise             = tinoises[ jj ];
+         ti_noise.description = dbase + iterName + "ti_noise" + dext;
+         ti_noise.type        = US_Noise::TI;
+         ti_noise.modelGUID   = model.modelGUID;
          ti_noise.noiseGUID   = US_Util::new_guid();
-         ti_noise.write( nnam1 );
-
-         if ( ri_noise.count > 0 )
-         {
-            ri_noise.noiseGUID   = US_Util::new_guid();
-            ri_noise.write( nname );
-         }
+         nname                = noipath + "/" + nnames[ kk++ ];
+         ti_noise.write( nname );
       }
 
-      else
-      {
+      if ( have_ri )
+      {  // output an RI noise
+         ri_noise             = rinoises[ jj ];
+         ri_noise.description = dbase + iterName + "ri_noise" + dext;
+         ri_noise.type        = US_Noise::RI;
+         ri_noise.modelGUID   = model.modelGUID;
          ri_noise.noiseGUID   = US_Util::new_guid();
+         nname                = noipath + "/" + nnames[ kk++ ];
          ri_noise.write( nname );
       }
    }
 
-   if ( ! mkdir( reppath, runID ) ) return;
-
-   QString filebase  = reppath + "/" + runID + "/";
-   QString htmlFile  = filebase + "2dsa_report" + dext + ".html";
-   QString plot1File = filebase + "2dsa_resid"  + dext + ".png";
-   QString plot2File = filebase + "2dsa_edited" + dext + ".png";
-   QString plot3File = filebase + "2dsa_pixmap" + dext + ".png";
+   QString filebase  = reppath + "/" + runID + "/"
+                    + ( fitMeni ? "2dsa-fm" : ( montCar ? "2dsa-mc" : "2dsa" ) )
+                    + dext + ".";
+   QString htmlFile  = filebase + "report.html";
+   QString plot1File = filebase + "residuals.png";
+   QString plot2File = filebase + "velocity.png";
+   QString plot3File = filebase + "rbitmap.png";
 
    // Write HTML report file
    write_report( htmlFile );
@@ -466,28 +524,61 @@ void US_2dsa::save( void )
    write_png( plot2File, data_plot2 );
    write_png( plot3File, NULL       );
    
-   // Tell user
-   QString wmsg = tr( "Wrote:\n" ) + mname + "\n";
+   // use a dialog to tell the user what we've output
+   QString wmsg = tr( "Wrote:\n" );
 
-   if ( nnois > 1 )
-      wmsg = wmsg + nnam1 + "\n" + nname + "\n";
+   mname = mdlpath + "/" + mnames[ 0 ];
+   wmsg  = wmsg + mname + "\n";                // list 1st (only?) model file
 
-   else if ( nnois > 0 )
-      wmsg = wmsg + nname + "\n";
+   if ( knois > 0 )
+   {
+      nname = noipath + "/" + nnames[ 0 ];     // list 1st noise file(s)
+      wmsg  = wmsg + nname + "\n";
 
+      if ( knois > 1 )
+      {
+         nname = noipath + "/" + nnames[ 1 ];
+         wmsg  = wmsg + nname + "\n";
+      }
+   }
+
+   if ( nmodels > 1 )
+   {
+      int kk = ( nmodels - 2 ) * ( knois + 1 );
+      wmsg   = wmsg + " ...  ( "
+                    + QString::number( kk ) + tr( " files unshown )\n" );
+      kk     = nmodels - 1;
+      mname  = mdlpath + "/" + mnames[ kk ];   // list last model file
+      wmsg   = wmsg + mname + "\n";
+
+      if ( knois > 0 )
+      {                                        // list last noise file(s)
+         kk    *= knois;
+         nname  = noipath + "/" + nnames[ kk++ ];
+         wmsg   = wmsg + nname + "\n";
+
+         if ( knois > 1 )
+         {
+            nname  = noipath + "/" + nnames[ kk ];
+            wmsg   = wmsg + nname + "\n";
+         }
+      }
+   }
+
+   // list report and plot files
    wmsg = wmsg + htmlFile  + "\n"
                + plot1File + "\n"
                + plot2File + "\n"
                + plot3File + "\n";
 
-   QMessageBox::warning( this, tr( "Success" ), wmsg );
+   QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
 }
 
 // Return pointer to main window edited data
 US_DataIO2::EditedData* US_2dsa::mw_editdata()
 {
-   int row = lw_triples->currentRow();
-   edata   = ( row >= 0 ) ? &dataList[ row ] : 0;
+   int drow = lw_triples->currentRow();
+   edata    = ( drow >= 0 ) ? &dataList[ drow ] : 0;
 
    return edata;
 }
@@ -517,7 +608,7 @@ void US_2dsa::open_resplot()
    resplotd->setVisible( true );
 }
 
-// Open 3-D plot window
+// Open 3-D plot control window
 void US_2dsa::open_3dplot()
 {
    if ( eplotcd )
@@ -615,6 +706,86 @@ QString US_2dsa::distrib_info()
    return mstr;
 }
 
+// Iteration information HTML string
+QString US_2dsa::iteration_info()
+{
+   int nmodels   = models.size();
+   
+   if ( nmodels < 2 )
+      return "";
+
+   model            = models[ nmodels - 1 ];
+   bool    fitMeni  = ( model.global == US_Model::MENISCUS );
+   bool    montCar  = model.monteCarlo;
+   QString anType   = montCar ? "Monte Carlo" : "Fit Meniscus";
+
+   QString mstr   = tr( "<h3>Multiple Model Settings:</h3>\n" ) + "<table>\n";
+
+   mstr += table_row( tr( "Number of Model Iterations:" ),
+                      QString::number( nmodels ) );
+   mstr += table_row( tr( "Iteration Analysis Type:" ), anType );
+
+   if ( fitMeni )
+   {
+      QString mdesc    = models[ 0 ].description;
+      QString mend1    = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 );
+              mdesc    = model.description;
+      QString mend2    = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 );
+      double  bmenis   = edata->meniscus;
+      double  smenis   = mend1.toDouble();
+      double  emenis   = mend2.toDouble();
+      double  rmenis   = emenis - smenis;
+      mstr += table_row( tr( "Meniscus Range:" ),
+                         QString::number( rmenis ) );
+      mstr += table_row( tr( "Base Experiment Meniscus:" ),
+                         QString::number( bmenis ) );
+      mstr += table_row( tr( "Start Fit Meniscus:" ),
+                         QString::number( smenis ) );
+      mstr += table_row( tr( "End Fit Meniscus:" ),
+                         QString::number( emenis ) );
+   }
+
+   mstr += "</table>\n\n";
+
+   mstr += tr( "<h3>Fit / Iteration Information:</h3>\n" ) + "<table>\n";
+
+   if ( montCar )
+      mstr += table_row( tr( "Iteration" ),
+                         tr( "Iteration ID" ),
+                         tr( "RMSD" ) );
+
+   else
+      mstr += table_row( tr( "Iteration" ),
+                         tr( "Meniscus" ),
+                         tr( "RMSD" ) );
+
+   for ( int ii = 0; ii < nmodels; ii++ )
+   {
+      QString itnum = QString::number( ii + 1 ).rightJustified( 4, '_' );
+      QString mdesc = models[ ii ].description;
+      QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
+      double  rmsd  = sqrt( avari.section( " ", 0, 0 ).toDouble() );
+      QString armsd = QString().sprintf( "%10.8f", rmsd );
+
+      if ( montCar )
+      {
+         QString itID  = QString().sprintf( "i%04i", ii + 1 );
+         mstr         += table_row( itnum, itID, armsd );
+      }
+
+      else
+      {
+         QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                         .section( " ", 0, 0 );
+         mstr         += table_row( itnum, ameni, armsd );
+      }
+   }
+
+   mstr += "</table>";
+   
+   return mstr;
+}
+
 // Table HTML table row string for 5 columns
 QString US_2dsa::table5_row( const QString& s1, const QString& s2,
                              const QString& s3, const QString& s4,
@@ -647,6 +818,7 @@ void US_2dsa::write_report( QString htmlFile )
    ts << hydrodynamics();
    ts << scan_info();
    ts << distrib_info();
+   ts << iteration_info();
    ts << "</body></html>\n";
 
    rep_f.close();
