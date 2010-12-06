@@ -98,9 +98,10 @@ DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
 
       if ( mmtype == 1 )
       {  // if meniscus, use the start meniscus value
-         edata            = &wdata;
-         double bmeniscus = bdata->meniscus;
-         edata->meniscus  = bmeniscus - menrange * 0.5;
+         edata              = &wdata;
+         double bmeniscus   = bdata->meniscus;
+         edata->meniscus    = bmeniscus - menrange * 0.5;
+         simparms->meniscus = edata->meniscus;
 DbgLv(1) << "MENISC: mm_iter meniscus bmeniscus"
  << mm_iter << edata->meniscus << bmeniscus;
       }
@@ -958,10 +959,11 @@ int US_2dsaProcess::jobs_at_depth( int depth )
 void US_2dsaProcess::set_meniscus()
 {
    // Give the working data set an appropriate meniscus value
-   double bmeniscus = bdata->meniscus;
-   double mendelta  = menrange / (double)( mmiters - 1 );
-   double smeniscus = bmeniscus - menrange * 0.5;
-   edata->meniscus  = smeniscus + (double)mm_iter * mendelta;
+   double bmeniscus   = bdata->meniscus;
+   double mendelta    = menrange / (double)( mmiters - 1 );
+   double smeniscus   = bmeniscus - menrange * 0.5;
+   edata->meniscus    = smeniscus + (double)mm_iter * mendelta;
+   simparms->meniscus = edata->meniscus;
 DbgLv(1) << "MENISC: mm_iter meniscus" << mm_iter << edata->meniscus;
 
    // Re-queue all the original subgrid tasks

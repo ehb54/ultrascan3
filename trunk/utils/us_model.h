@@ -55,19 +55,19 @@ class US_EXTERN US_Model
       //!                    should be searched for the model
       //! \param guid      - The guid of the model to be loaded
       //! \param db        - For DB access, pointer to open database connection
-      //! \returns         - The \ref US_DB2 retrun code for the operation
+      //! \returns         - The \ref US_DB2 return code for the operation
       int load( bool, const QString&, US_DB2* = 0 );
 
       //! An overloaded function to read a model from a database
       //! \param id        - Database ModelID
       //! \param db        - For DB access, pointer to open database connection
-      //! \returns         - The \ref US_DB2 retrun code for the operation
+      //! \returns         - The \ref US_DB2 return code for the operation
       int load( const QString&, US_DB2* ); 
 
 
       //! An overloaded function to read a model from the disk
       //! \param filename  The name, including full path, of the analyte file
-      //! \returns         - The \ref US_DB2 retrun code for the operation
+      //! \returns         - The \ref US_DB2 return code for the operation
       int load( const QString& );  
       
       //! A test for model equality
@@ -83,17 +83,17 @@ class US_EXTERN US_Model
       //! \param filename  - The filename (with path) where the xml file
       //!                    be written if disk access is specified
       //! \param db        - For DB access, pointer to open database connection
-      //! \returns         - The \ref US_DB2 retrun code for the operation
+      //! \returns         - The \ref US_DB2 return code for the operation
       int write( bool, const QString&, US_DB2* = 0 );
 
       //! An overloaded function to write a model to the DB
       //! \param db        - A pointer to an open database connection 
-      //! \returns         - The \ref US_DB2 retrun code for the operation
+      //! \returns         - The \ref US_DB2 return code for the operation
       int write( US_DB2* );
 
       //! An overloaded function to write a model to a file on disk
       //! \param filename  - The filename to write
-      //! \returns         - The \ref US_DB2 retrun code for the operation
+      //! \returns         - The \ref US_DB2 return code for the operation
       int write( const QString& );
 
       //! Update any missing analyte coefficient values

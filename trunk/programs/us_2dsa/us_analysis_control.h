@@ -114,6 +114,7 @@ class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
       void start(            void );
       void stop_fit(         void );
       void plot(             void );
+      void save(             void );
       void close_all(        void );
       void advanced(         void );
 

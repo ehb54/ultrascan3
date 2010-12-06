@@ -434,10 +434,11 @@ int US_Model::load( const QString& filename )
          {
             a = xml.attributes();
 
-            monteCarlo      = a.value( "monteCarlo"     ).toString().toInt();
+            QString mcst    = a.value( "monteCarlo"     ).toString();
+            monteCarlo      = ( ! mcst.isEmpty()  &&  mcst != "0" );
             QString iter    = a.value( "iterations"     ).toString();
-            monteCarlo      = monteCarlo ? monteCarlo
-                            : ( iter.isEmpty() ? false : ( iter.toInt() > 1 ) );
+            monteCarlo      = monteCarlo ? monteCarlo :
+                            ( iter.isEmpty() ? false : ( iter.toInt() > 1 ) );
             wavelength      = a.value( "wavelength"     ).toString().toDouble();
             description     = a.value( "description"    ).toString();
             modelGUID       = a.value( "modelGUID"      ).toString();
@@ -682,6 +683,9 @@ void US_Model::write_temp( QTemporaryFile& file )
    xml.writeAttribute   ( "opticsType",  QString::number( optics       ) );
    xml.writeAttribute   ( "analysisType",QString::number( analysis     ) );
    xml.writeAttribute   ( "globalType",  QString::number( global       ) );
+
+   if ( requestGUID.length() > 0 )
+      xml.writeAttribute   ( "requestGUID", requestGUID                     );
 
    if ( monteCarlo )
       xml.writeAttribute   ( "monteCarlo",  "1"                             );

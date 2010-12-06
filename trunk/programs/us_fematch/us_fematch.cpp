@@ -806,20 +806,21 @@ void US_FeMatch::save_data( void )
 
    int     jj        = htmlFile.lastIndexOf( "report." );
    QString basename  = htmlFile.left( jj ).replace( "\\", "/" );
-   QString fileext   = ".svg";
-   QString img01File = basename + "velocity"   + fileext;
-   QString img02File = basename + "residuals"  + fileext;
-   QString img03File = basename + "s_distrib"  + fileext;
-   QString img04File = basename + "mw_distrib" + fileext;
-   QString img05File = basename + "D_distrib"  + fileext;
-   QString img06File = basename + "ff0_vs_s"   + fileext;
-   QString img07File = basename + "ff0_vs_mw"  + fileext;
-   QString img08File = basename + "D_vs_s"     + fileext;
-   QString img09File = basename + "D_vs_mw"    + fileext;
-   QString img10File = basename + "3dplot"     + ".png";
-   QString img11File = basename + "rbitmap"    + ".png";
-   QString img12File = basename + "tinoise"    + fileext;
-   QString img13File = basename + "rinoise"    + fileext;
+   const QString svgext( ".svg" );
+   const QString pngext( ".png" );
+   QString img01File = basename + "velocity"   + svgext;
+   QString img02File = basename + "residuals"  + pngext;
+   QString img03File = basename + "s_distrib"  + svgext;
+   QString img04File = basename + "mw_distrib" + svgext;
+   QString img05File = basename + "D_distrib"  + svgext;
+   QString img06File = basename + "ff0_vs_s"   + svgext;
+   QString img07File = basename + "ff0_vs_mw"  + svgext;
+   QString img08File = basename + "D_vs_s"     + svgext;
+   QString img09File = basename + "D_vs_mw"    + svgext;
+   QString img10File = basename + "3dplot"     + pngext;
+   QString img11File = basename + "rbitmap"    + pngext;
+   QString img12File = basename + "tinoise"    + svgext;
+   QString img13File = basename + "rinoise"    + svgext;
 
    // save image files from main window
    write_plot( img01File, data_plot2 );
@@ -2169,7 +2170,7 @@ QString US_FeMatch::text_model( US_Model model, int width )
          title = title + "-ra";
 
       if ( model.global == US_Model::MENISCUS )
-         title = title + "-mn";
+         title = title + "-fm";
 
       else if ( model.global == US_Model::GLOBAL )
          title = title + "-gl";
@@ -3221,12 +3222,12 @@ QString US_FeMatch::distrib_info() const
 
 void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
 {
-   if ( plot != 0 )
+   if ( filename.endsWith( ".svg" ) )
    {  // standard SVG file
-       QSvgGenerator generator;
-       generator.setSize( plot->size() );
-       generator.setFileName( filename );
-       plot->print( generator );
+      QSvgGenerator generator;
+      generator.setSize( plot->size() );
+      generator.setFileName( filename );
+      plot->print( generator );
    }
 
    else if ( filename.endsWith( "rbitmap.png" ) )
@@ -3267,6 +3268,16 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
 
       QPixmap pixmap = dataw->renderPixmap( dataw->width(), dataw->height(),
                                             true  );
+
+      if ( ! pixmap.save( filename ) )
+         qDebug() << "*ERROR* Unable to write file" << filename;
+   }
+
+   else if ( filename.endsWith( ".png" ) )
+   {  // general case of PNG
+      int     iwid   = plot->width();
+      int     ihgt   = plot->height();
+      QPixmap pixmap = QPixmap::grabWidget( (QWidget*)plot, 0, 0, iwid, ihgt );
 
       if ( ! pixmap.save( filename ) )
          qDebug() << "*ERROR* Unable to write file" << filename;

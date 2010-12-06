@@ -229,6 +229,8 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,       SLOT(   stop_fit()  ) );
    connect( pb_plot,    SIGNAL( clicked()   ),
             this,       SLOT(   plot()      ) );
+   connect( pb_save,    SIGNAL( clicked()   ),
+            this,       SLOT(   save()      ) );
    connect( pb_help,    SIGNAL( clicked()   ),
             this,       SLOT(   help()      ) );
    connect( pb_close,   SIGNAL( clicked()   ),
@@ -358,6 +360,8 @@ void US_AnalysisControl::start()
       ti_noise       = mainw->mw_ti_noise();
       ri_noise       = mainw->mw_ri_noise();
       mw_stattext    = mainw->mw_status_text();
+
+      mainw->analysis_done( -1 );   // reset counters to zero
 DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    }
 
@@ -448,6 +452,15 @@ DbgLv(1) << "AC:SF: processor deleted";
 // plot button clicked
 void US_AnalysisControl::plot()
 {
+   US_2dsa* mainw = (US_2dsa*)parentw;
+   mainw->analysis_done( 1 );
+}
+
+// save button clicked
+void US_AnalysisControl::save()
+{
+   US_2dsa* mainw = (US_2dsa*)parentw;
+   mainw->analysis_done( 2 );
 }
 
 // close button clicked
@@ -556,7 +569,6 @@ DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
 DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 
    US_DataIO2::Scan* rscan0 = &rdata->scanData[ 0 ];
-   //int    iternum  = le_iteration->text().toInt() + 1;
    int    iternum  = (int)rscan0->rpm;
    int    mmitnum  = (int)rscan0->seconds;
    double varinew  = rscan0->delta_r;
@@ -572,6 +584,7 @@ DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 
    else if ( ck_menisc->isChecked() )
    {  // Meniscus
+      model->global      = US_Model::MENISCUS;
       model->description = QString( "MMITER=%1 VARI=%2 MENISCUS=%3" )
                            .arg( mmitnum ).arg( varinew ).arg( meniscus );
       le_iteration->setText( QString::number( iternum  ) + "   ( Model " +
@@ -581,6 +594,7 @@ DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 
    else
    {  // Monte Carlo
+      model->monteCarlo  = true;
       model->description = QString( "MMITER=%1 VARI=%2 " )
                            .arg( mmitnum ).arg( varinew );
       le_iteration->setText( QString::number( iternum ) + "   ( MC Model " +
@@ -591,13 +605,9 @@ DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 
    if ( alldone )
    {
-      if ( parentw )
-      {
-         if ( mmitnum > 0 )
-            mainw->analysis_done( -2 );
+      mainw->analysis_done( -2 );
 
-         mainw->analysis_done( ck_autoplt->isChecked() ? 1 : 0 );
-      }
+      mainw->analysis_done( ck_autoplt->isChecked() ? 1 : 0 );
 
       pb_strtfit->setEnabled( true  );
       pb_stopfit->setEnabled( false );
@@ -607,8 +617,7 @@ DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 
    else if ( mmitnum > 0  &&  stage > 0 )
    {  // signal main to update lists of models,noises
-      if ( parentw )
-         mainw->analysis_done( -2 );
+      mainw->analysis_done( -2 );
    }
 }
 
