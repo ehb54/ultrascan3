@@ -123,12 +123,13 @@ int US_ModelLoader::models_count()
 // Public method to load model data by index
 int US_ModelLoader::load_model( US_Model& model, int index )
 {
-   int rc = 0;
+   int  rc      = 0;
+   bool isLocal = rb_disk->isChecked();
 
    model.components.clear();
    model.associations.clear();
 
-   if ( rb_disk->isChecked() )
+   if ( isLocal )
    {
       QString   filename = model_descriptions[ index ].filename;
 
@@ -160,6 +161,40 @@ int US_ModelLoader::load_model( US_Model& model, int index )
 //qDebug() << "Model load RETURN" << rc;
    }
 
+   if ( model_descriptions[ index ].iterations > 1 )
+   {  // multiple model load
+      US_DB2* dbP = 0;
+
+      if  ( !isLocal )
+      {
+         US_Passwd pw;
+         dbP = new US_DB2( pw.getPasswd() );
+      }
+
+      int nn = model_descriptions[ index ].iterations;
+      int kk = model_descriptions[ index ].asd_index;
+
+      for ( int ii = 1; ii < nn; ii++ )
+      {
+         US_Model model2;
+
+         if ( isLocal )
+         {
+            QString filename = all_single_descrs[ ++kk ].filename;
+            rc   = model2.load( filename );
+         }
+
+         else
+         {
+            QString modelID  = all_single_descrs[ ++kk ].DB_id;
+            rc   = model2.load( modelID, dbP );
+         }
+
+         // append group member's components to the original
+         model.components << model2.components;
+      }
+   }
+         
    return rc;
 }
 
@@ -174,9 +209,9 @@ QString US_ModelLoader::description( int index )
    // create and return a composite description string
    QString cdesc  = sep + model_descriptions[ index ].description
                   + sep + model_descriptions[ index ].filename
-                  + sep + model_descriptions[ index ].guid
+                  + sep + model_descriptions[ index ].modelGUID
                   + sep + model_descriptions[ index ].DB_id
-                  + sep + model_descriptions[ index ].editguid;
+                  + sep + model_descriptions[ index ].editGUID;
    return cdesc;
 }
 
@@ -195,7 +230,7 @@ QString US_ModelLoader::investigator_text()
 // Public method to set Edit GUID for possible list filtering
 void US_ModelLoader::set_edit_guid( QString guid )
 {
-   edguid   = guid;           // edit GUID
+   editGUID = guid;           // edit GUID
 
    select_disk( ondisk );     // trigger list delayed at constructor
 }
@@ -295,19 +330,21 @@ void US_ModelLoader::update_person( int ID, const QString& lname,
 void US_ModelLoader::list_models()
 {
    QString mfilt = le_mfilter->text();
-   bool listall  = mfilt.isEmpty();
-   bool listdesc = !listall;
-   bool listedit = !listall;
+   bool listall  = mfilt.isEmpty();          // unfiltered?
+   bool listdesc = !listall;                 // description filtered?
+   bool listedit = !listall;                 // edit filtered?
+   bool listsing = false;                    // show singles of MC groups?
    QRegExp mpart = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
    ondisk     = rb_disk->isChecked();
-   model_descriptions.clear();         // clear model descriptions
+   model_descriptions.clear();               // clear model descriptions
 
-   if ( !listall )
+   if ( listdesc )
    {  // filter is not empty
       listedit = mfilt.contains( "=edit" );  // edit filtered?
       listdesc = !listedit;                  // description filtered?
+      listsing = mfilt.contains( "=s" );     // show singles of MC groups?
 
-      if ( listedit  &&  edguid.isEmpty() )
+      if ( listedit  &&  editGUID.isEmpty() )
       {  // disallow edit filter if no edit GUID has been given
          QMessageBox::information( this,
                tr( "Edit GUID Problem" ),
@@ -317,10 +354,24 @@ void US_ModelLoader::list_models()
          listedit = false;
          le_mfilter->setText( "" );
       }
+
+      if ( listsing )
+      {  // if showing MC singles, re-check for filtering
+         if ( mfilt.contains( "=s" )  &&  !listedit )
+         {  // a filter can be added atfer "=s "
+            int jj   = mfilt.indexOf( "=s" );
+            mfilt    = ( jj == 0 ) ? 
+                       mfilt.mid( jj + 3 ).simplified() :
+                       mfilt.left( jj ).simplified();
+            listdesc = !mfilt.isEmpty();
+            listall  = !listdesc;
+            mpart    = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
+//qDebug() << "=listsing= jj mfilt mpart" << jj << mfilt << mpart.pattern();
+         }
+      }
    }
 //qDebug() << "listall" << listall;
-//qDebug() << "  listdesc" << listdesc;
-//qDebug() << "  listedit" << listedit;
+//qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
          
    if ( ondisk )
    {  // Models from local disk files
@@ -338,7 +389,7 @@ void US_ModelLoader::list_models()
 //qDebug() << "   md size" << all_model_descrips.size();
 //qDebug() << "   fn size" << f_names.size();
 
-      if ( f_names.size() != all_model_descrips.size() )
+      if ( f_names.size() != all_model_descrips.size()  ||  !listsing )
       { // only re-fetch all-models list if we don't yet have it
          QXmlStreamAttributes attr;
 
@@ -364,16 +415,19 @@ void US_ModelLoader::list_models()
                   ModelDesc desc;
                   attr             = xml.attributes();
                   desc.description = attr.value( "description" ).toString();
-                  desc.guid        = attr.value( "modelGUID"   ).toString();
+                  desc.modelGUID   = attr.value( "modelGUID"   ).toString();
                   desc.filename    = fname;
                   desc.DB_id       = "-1";
-                  desc.editguid    = attr.value( "editGUID"    ).toString();
+                  desc.editGUID    = attr.value( "editGUID"    ).toString();
+                  desc.reqGUID     = attr.value( "requestGUID" ).toString();
+                  QString mCarl    = attr.value( "monteCarlo"  ).toString();
+                  desc.iterations  = mCarl.toInt() == 0 ?  0 : 1;
 //*DEBUG
 //if (!listall) {
 //qDebug() << " ddesc" << desc.description;
 //qDebug() << "   mpart" << mpart.pattern();
-//qDebug() << "   degid" << desc.editguid;
-//qDebug() << "   edgid" << edguid;
+//qDebug() << "   degid" << desc.editGUID;
+//qDebug() << "   edgid" << editGUID;
 //}
 //*DEBUG
 
@@ -384,6 +438,12 @@ void US_ModelLoader::list_models()
 
             m_file.close();
          }
+
+         if ( !listsing )
+            compress_list();       // default: compress MC groups
+
+         else
+            dup_singles();         // duplicate model list as singles
       }
       db_id1            = -2;
       db_id2            = -2;
@@ -437,14 +497,57 @@ void US_ModelLoader::list_models()
          while ( db.next() )
          {
             ModelDesc desc;
-            desc.DB_id        = db.value( 0 ).toString();
-            desc.guid         = db.value( 1 ).toString();
-            desc.description  = db.value( 2 ).toString();
-            desc.editguid     = db.value( 3 ).toString();
+            desc.DB_id       = db.value( 0 ).toString();
+            desc.modelGUID   = db.value( 1 ).toString();
+            desc.description = db.value( 2 ).toString();
+            desc.editGUID    = db.value( 3 ).toString();
             desc.filename.clear();
+            desc.reqGUID     = "needed";
+            desc.iterations  = 0;
 
             all_model_descrips << desc;   // add to full models list
          }
+
+         for ( int ii = 0; ii < all_model_descrips.size(); ii++ )
+         {  // loop to get requestID and flag if monte carlo
+            ModelDesc desc = all_model_descrips[ ii ];
+            QString recID  = desc.DB_id;
+            query.clear();
+            query << "get_model_info" << recID;
+            db.query( query );
+            db.next();
+            QString mxml   = db.value( 2 ).toString();
+            int     jj     = mxml.indexOf( "requestGUID=" );
+            int     kk     = mxml.indexOf( "monteCarlo=" );
+
+            if ( jj > 0 )
+            {
+               desc.reqGUID     = mxml.mid( jj ).section( '"', 1, 1 );
+
+               if ( kk > 0 )
+               {
+                  QString mCarl    = mxml.mid( kk ).section( '"', 1, 1 );
+                  desc.iterations  = mCarl.toInt() == 0 ?  0 : 1;
+               }
+
+               else
+                  desc.iterations  = 0;
+            }
+
+            else
+            {
+               desc.reqGUID     = "";
+               desc.iterations  = 0;
+            }
+
+            all_model_descrips[ ii ] = desc;
+         }
+
+         if ( !listsing )
+            compress_list();          // default: compress MC groups
+
+         else
+            dup_singles();            // duplicate model list as singles
       }
    }
 
@@ -462,13 +565,13 @@ void US_ModelLoader::list_models()
    {
       for ( int jj = 0; jj < all_model_descrips.size(); jj++ )
       {
-         if ( all_model_descrips[ jj ].editguid.contains(    edguid ) )
+         if ( all_model_descrips[ jj ].editGUID.contains( editGUID ) )
          {  // edit filter matches
             model_descriptions << all_model_descrips[ jj ];
 //ModelDesc desc = all_model_descrips[jj];
 //qDebug() << " ddesc" << desc.description;
-//qDebug() << "   degid" << desc.editguid;
-//qDebug() << "   edgid" << edguid;
+//qDebug() << "   degid" << desc.editGUID;
+//qDebug() << "   edgid" << editGUID;
          }
       }
    }
@@ -570,61 +673,6 @@ bool US_ModelLoader::eventFilter( QObject* obj, QEvent* e )
    }
 }
 
-// Get type string corresponding to the type int enum
-QString US_ModelLoader::typeText( US_Model::AnalysisType mtype,
-   int nassoc, US_Model::GlobalType gtype, bool monteCarlo )
-{
-   struct typemap
-   {
-      US_Model::AnalysisType typeval;
-      QString                typedesc;
-   };
-
-   const typemap tmap[] =
-   {
-      { US_Model::MANUAL,    QObject::tr( "Manual"  ) },
-      { US_Model::TWODSA,    QObject::tr( "2DSA"    ) },
-      { US_Model::TWODSA_MW, QObject::tr( "2DSA-MW" ) },
-      { US_Model::GA,        QObject::tr( "GA"      ) },
-      { US_Model::GA_MW,     QObject::tr( "GA-MW"   ) },
-      { US_Model::COFS,      QObject::tr( "COFS"    ) },
-      { US_Model::FE,        QObject::tr( "FE"      ) },
-      { US_Model::ONEDSA,    QObject::tr( "1DSA"    ) }
-   };
-
-   const int ntmap = sizeof( tmap ) / sizeof( tmap[ 0 ] );
-
-   QString tdesco  = QString( tr( "Unknown" ) );
-
-   for ( int jj = 0; jj < ntmap; jj++ )
-   {  // look for model type match
-
-      if ( mtype == tmap[ jj ].typeval )
-      {  // we have a match:  build match type description
-         tdesco       = tmap[ jj ].typedesc;  // base type
-
-         if ( nassoc > 0 )
-            tdesco       = tdesco + "-RA";    // Reversible Associations subtype
-
-         if ( gtype == US_Model::MENISCUS )
-            tdesco       = tdesco + "-MN";    // Meniscus subtype
-
-         else if ( gtype == US_Model::GLOBAL )
-            tdesco       = tdesco + "-GL";    // Global subtype
-
-         else if ( gtype == US_Model::SUPERGLOBAL )
-            tdesco       = tdesco + "-SG";    // SuperGlobal subtype
-
-         if ( monteCarlo )
-            tdesco       = tdesco + "-MC";    // MonteCarlo subtype
-
-         break;                               // break to return description
-      }
-   }
-
-   return tdesco;
-}
-
 // Get index in model description list of a model description
 int US_ModelLoader::modelIndex( QString mdesc, QList< ModelDesc > mds )
 {
@@ -699,10 +747,16 @@ void US_ModelLoader::show_model_info( QPoint pos )
       load_model( model, mdx );                            // load model
 
       mtype    = model.analysis;                           // model info
+      mdesc    = mdesc.length() < 50 ? mdesc :
+                 mdesc.left( 23 ) + "..." + mdesc.right( 24 );
       ncomp    = model.components.size();
       nassoc   = model.associations.size();
-      tdesc    = typeText( mtype, nassoc, model.global, model.monteCarlo );
+      tdesc    = model.typeText();
+      iters    = !model.monteCarlo ? 0 :
+                 model_descriptions[ mdx ].iterations;
       runid    = mdesc.section( ".", 0, 0 );
+      int jts  = runid.indexOf( "_" + tdesc );
+      runid    = jts > 0 ? runid.left( jts ) : runid;
       mdlid    = frDisk ?
          model_descriptions[ mdx ].filename :              // ID is filename
          model_descriptions[ mdx ].DB_id;                  // ID is DB id
@@ -715,8 +769,10 @@ void US_ModelLoader::show_model_info( QPoint pos )
          + tr( "\n  Type:                  " ) + tdesc
          + "  (" + QString::number( (int)mtype ) + ")"
          + tr( "\n  Model Global ID:       " ) + model.modelGUID
-         + tr( "\n  Description Global ID: " ) + model_descriptions[ mdx ].guid
+         + tr( "\n  Description Global ID: " ) + model_descriptions[ mdx ]
+                                                 .modelGUID
          + tr( "\n  Edit Global ID:        " ) + model.editGUID
+         + tr( "\n  Request Global ID:     " ) + model.requestGUID
          + lblid + mdlid
          + tr( "\n  Iterations:            " ) + QString::number( iters )
          + tr( "\n  Components Count:      " ) + QString::number( ncomp )
@@ -740,7 +796,9 @@ void US_ModelLoader::show_model_info( QPoint pos )
       runid    = mdesc.section( ".", 0, 0 );              // model info
       mtype    = model.analysis;
       nassoc   = model.associations.size();
-      tdesc    = typeText( mtype, nassoc, model.global, model.monteCarlo );
+      tdesc    = model.typeText();
+      int jts  = runid.indexOf( "_" + tdesc );
+      runid    = jts > 0 ? runid.left( jts ) : runid;
       aruni    = runid;                           // potential common values
       atype    = tdesc;
       aegid    = model.editGUID;
@@ -756,8 +814,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
          load_model( model, mdx );                           // load model
 
          runid    = mdesc.section( ".", 0, 0 );
-         tdesc    = typeText( model.analysis, model.associations.size(),
-                              model.global, model.monteCarlo );
+         tdesc    = model.typeText();
          eguid    = model.editGUID;
 
          if ( !aruni.isEmpty()  &&  aruni.compare( runid ) != 0 )
@@ -798,15 +855,21 @@ void US_ModelLoader::show_model_info( QPoint pos )
          load_model( model, mdx );                            // load model
 
          mtype    = model.analysis;                           // model info
+         mdesc    = mdesc.length() < 50 ? mdesc :
+                    mdesc.left( 23 ) + "..." + mdesc.right( 24 );
          ncomp    = model.components.size();
          nassoc   = model.associations.size();
-         tdesc    = typeText( mtype, nassoc, model.global, model.monteCarlo );
+         tdesc    = model.typeText();
          runid    = mdesc.section( ".", 0, 0 );
          mdlid    = frDisk ?
             model_descriptions[ mdx ].filename :              // ID is filename
             model_descriptions[ mdx ].DB_id;                  // ID is DB id
-         mdlid    = mdlid.length() < 50 ?  mdlid :
+         mdlid    = mdlid.length() < 50 ? mdlid :
             "*/" + mdlid.section( "/", -3, -1 );              // short filename
+         mdlid    = mdlid.length() < 50 ? mdlid :
+            mdlid.left( 23 ) + "..." + mdlid.right( 24 );     // short filename
+         iters    = !model.monteCarlo ? 0 :
+                    model_descriptions[ mdx ].iterations;
 
          dtext    = dtext + tr( "\n\nModel Information: (" )
             + QString::number( ( jj + 1 ) ) + "):"
@@ -815,8 +878,10 @@ void US_ModelLoader::show_model_info( QPoint pos )
             + tr( "\n  Type:                  " ) + tdesc
             + "  (" + QString::number( (int)mtype ) + ")"
             + tr( "\n  Model Global ID:       " ) + model.modelGUID
-            + tr( "\n  Description Global ID: " ) + model_descriptions[ mdx ].guid
+            + tr( "\n  Description Global ID: " ) + model_descriptions[ mdx ]
+                                                    .modelGUID
             + tr( "\n  Edit Global ID:        " ) + model.editGUID
+            + tr( "\n  Request Global ID:     " ) + model.requestGUID
             + lblid + mdlid
             + tr( "\n  Iterations:            " ) + QString::number( iters )
             + tr( "\n  Components Count:      " ) + QString::number( ncomp )
@@ -833,5 +898,83 @@ void US_ModelLoader::show_model_info( QPoint pos )
    edit->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
    edit->e->setText( dtext );
    edit->show();
+}
+
+// Compress all-models description list for MC groups
+void US_ModelLoader::compress_list( void )
+{
+   // First, produce a sorted singles copy of all-descriptions list
+   dup_singles();
+
+   // Now, produce all-models list with only first singles of groups
+   all_model_descrips.clear();
+   int     kiter  = 0;          // count of MC iterations in group
+   QString pReqID = "";         // previous request GUID
+   QString pEdiID = "";         // previous edit GUID
+
+//qDebug() << "compress_list:";
+   for ( int ii = 0; ii < all_single_descrs.size(); ii++ )
+   {  // review each single model description
+      ModelDesc desc  = all_single_descrs[ ii ];  // model description object
+      QString cReqID  = desc.reqGUID;             // current request GUID
+      QString cEdiID  = desc.editGUID;            // current edit GUID
+      // protect against missing or dummy GUIDs causing false grouping
+      cReqID  = ( cReqID.length() != 36  ||  cReqID.startsWith( "000" ) ) ?
+                QString::number( ii ) : cReqID;
+      cEdiID  = ( cEdiID.length() != 36  ||  cEdiID.startsWith( "000" ) ) ?
+                QString::number( ii ) : cEdiID;
+//qDebug() << " c_l ii desc" << ii << desc.description << " kiter" << kiter;
+
+      if ( kiter > 0  && ( cReqID != pReqID || cEdiID != pEdiID ) )
+      {  // previous was end of group:  update the iterations count
+         all_model_descrips.last().iterations = kiter;
+         kiter = 0;
+      }
+
+      if ( desc.iterations == 0 )
+      {  // not monte carlo:  copy the model description as is
+         all_model_descrips << desc;
+         kiter = 0;
+      }
+
+      else
+      {  // monte carlo:  bump iterations count and copy if first
+         if ( ++kiter == 1 )
+            all_model_descrips << desc;
+      }
+
+      pReqID  = cReqID;      // save request,edit GUIDs for next pass
+      pEdiID  = cEdiID;
+   }
+}
+
+// Duplicate all-models description list to show singles in MC groups
+void US_ModelLoader::dup_singles( void )
+{
+   QStringList descrs;
+   QStringList sdescs;
+
+   for ( int ii = 0; ii < all_model_descrips.size(); ii++ )
+   { // create duplicate lists of concatenated descripion+GUID
+      descrs << all_model_descrips[ ii ].description + "^"
+             +  all_model_descrips[ ii ].modelGUID;
+      sdescs << all_model_descrips[ ii ].description + "^"
+             +  all_model_descrips[ ii ].modelGUID;
+   }
+
+   sdescs.sort();                // create a sorted version of desc+guid list
+   all_single_descrs.clear();    // clear all-singles list
+
+   for ( int ii = 0; ii < descrs.size(); ii++ )
+   {  // find sorted entry in unsorted list; append that full model description
+      int jj = descrs.indexOf( sdescs[ ii ] );
+      ModelDesc desc  = all_model_descrips[ jj ];
+      desc.asd_index  = ii; 
+
+      all_single_descrs << desc;
+   }
+
+   // copy sorted all-singles list to all-models list
+   all_model_descrips = all_single_descrs;
 }
 

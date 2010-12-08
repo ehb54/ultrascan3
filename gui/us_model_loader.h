@@ -74,17 +74,22 @@ class US_EXTERN US_ModelLoader : public US_WidgetsDialog
       US_Help showHelp;
 
       class ModelDesc
-      {
+      {  // model description object
          public:
-         QString description;
-         QString filename;
-         QString guid;
-         QString DB_id;
-         QString editguid;
+         QString description;   // description string
+         QString filename;      // local file name
+         QString modelGUID;     // model GUID
+         QString DB_id;         // database ID (-1 if local)
+         QString editGUID;      // edit GUID
+         QString reqGUID;       // request GUID
+         int     iterations;    // Monte Carlo iterations
+         int     asd_index;     // all-single-descriptions index
       };
 
-      QList< ModelDesc > model_descriptions;
-      QList< ModelDesc > all_model_descrips;
+      QList< ModelDesc > model_descriptions; // listed models
+      QList< ModelDesc > all_model_descrips; // all models/groups
+      QList< ModelDesc > all_single_descrs;  // all single models
+
       US_Model           model;
 
       QRadioButton*  rb_db;
@@ -106,22 +111,22 @@ class US_EXTERN US_ModelLoader : public US_WidgetsDialog
 
       QString        dsearch;
       QString        dinvtext;
-      QString        edguid;
-      QString        daguid;
+      QString        editGUID;
+      QString        reqGUID;
 
    private slots:
-      void select_disk ( bool );
-      void investigator( void );
-      void get_person(   void );
+      void select_disk (  bool );
+      void investigator(  void );
+      void get_person(    void );
       void update_person( int, const QString&, const QString& );
-      void list_models ( void );
-      void cancelled(    void );
-      void accepted(     void );
-      void help  (       void )
+      void list_models (  void );
+      void compress_list( void );
+      void dup_singles(   void );
+      void cancelled(     void );
+      void accepted(      void );
+      void help  (        void )
       { showHelp.show_help( "load_model_distrib.html" ); };
 
-      QString typeText(        US_Model::AnalysisType, int, 
-            US_Model::GlobalType, bool );
       int     modelIndex(      QString mdesc, QList< ModelDesc > );
       void    show_model_info( QPoint );
 

@@ -344,14 +344,6 @@ void US_Pseudo3D_Combine::reset( void )
 // plot the data
 void US_Pseudo3D_Combine::plot_data( void )
 {
-   const char* cdtyp[] = 
-   {
-      "cofs",       "fe",         "sa2d",       "ga_mc",
-      "sa2d_mc",    "ga",         "global",     "sa2d_mw",
-      "ga_mw",      "sa2d_mw_mc", "ga_mw_mc",   "global",
-      "global_mc",  "model"
-   };
-
    if ( curr_distr < 0  ||  curr_distr >= system.size() )
    {   // current distro index somehow out of valid range
       int syssiz = system.size();
@@ -411,8 +403,11 @@ void US_Pseudo3D_Combine::plot_data( void )
       data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
    }
 
-   QString tstr = tsys->run_name + "." + tsys->cell +
-      tsys->wavelength + "\n" + tsys->method;
+   QString tstr = tsys->run_name;
+   tstr         = ( tstr.length() > 40 ) ?
+                  ( tstr.left( 18 ) + "..." + tstr.right( 19 ) ) : tstr;
+   tstr         = tstr + "." + tsys->cell + tsys->wavelength
+                  + "\n" + tsys->method;
    QwtText qwtTitle( tstr );
    if ( tstr.length() > 40 )
    {
@@ -433,9 +428,9 @@ void US_Pseudo3D_Combine::plot_data( void )
    if ( !dirof.exists( ) )
       QDir( US_Settings::reportDir() ).mkdir( tsys->run_name );
    QString celli  = "." + tsys->cell + tsys->wavelength;
-   QString methi  = QString( cdtyp[tsys->distro_type-1] );
+   QString methi  = tsys->method;
    methi          = methi + "_pseudo3d_f" + ( plot_s ? "s" : "mw" );
-   if ( tsys->distro_type == 12 )
+   if ( tsys->distro_type == (int)US_Model::MANUAL )
       methi          = methi + ".00";
    QString ofname = ofdir + "/" + methi + celli + ".png";
 
@@ -582,26 +577,6 @@ void US_Pseudo3D_Combine::load_distro( US_ModelLoader* dialog, int index )
 {
    US_Model model;
 
-   // model type table:  DescPartialName, Method, MonteCarlo
-   const char* cdtyp[] =
-   {
-      "cofs_dis",        "C(s)",                               "F",
-      "fe_dis",          "FE",                                 "F",
-      "sa2d_dis",        "2DSA",                               "F",
-      "ga_mc_dis",       "GA-MC",                              "T",
-      "sa2d_mc_dis",     "2DSA-MC",                            "T",
-      "ga_dis",          "GA",                                 "F",
-      "global_dis",      "Global",                             "F",
-      "sa2d_mw_dis",     "2DSA, MW Constrained",               "F",
-      "ga_mw_dis",       "GA, MW Constrained",                 "F",
-      "sa2d_mw_mc_dis",  "2DSA, MW Constrained, Monte Carlo",  "T",
-      "ga_mw_mc_dis",    "GA, MW Constrained, Monte Carlo",    "T",
-      "global_dis",      "Global Distro",                      "T",
-      "global_mc_dis",   "Global MC Distro",                   "T",
-      "model",           "2DSA",                               "F" 
-   };
-   int         ncdte = sizeof( cdtyp ) / sizeof( char* );
-
    DisSys      tsys;
    Solute      sol_s;
    Solute      sol_w;
@@ -633,33 +608,24 @@ void US_Pseudo3D_Combine::load_distro( US_ModelLoader* dialog, int index )
    tsys.cell        = tstr.left( 1 );
    tstr             = mdesc.right( kk - jj - 2 );
    tsys.wavelength  = tstr;
-   tsys.run_name    = mdesc.section( ".", 0, 0 );
-   tsys.distro_type = 0;
-
-   // find type in table and set values accordingly
-   for ( jj = 0; jj < ncdte; jj += 3 )
-   {
-      QString fnp( cdtyp[ jj ] );
-
-      if ( mdesc.contains( fnp, Qt::CaseInsensitive ) )
-      {
-         tsys.distro_type = jj / 3 + 1;
-         tsys.monte_carlo = QString( cdtyp[ jj+2 ] ).contains( "T" );
-         tsys.method      = QString( cdtyp[ jj+1 ] );
-         break;
-      }
-   }
+   tsys.run_name    = mdesc.section( ".", 0, -3 );
+   tsys.distro_type = (int)model.analysis;
+   tsys.monte_carlo = model.monteCarlo;
+   tsys.method      = model.typeText();
 
    tstr    = "Run " + tsys.run_name + "." + tsys.cell +
       tsys.wavelength + " (" + tsys.method + ")";
    le_distr_info->setText( tstr );
 
-   tstr    = tsys.run_name + "." + tsys.cell +
-      tsys.wavelength + "\n" + tsys.method;
+   tstr    = tsys.run_name;
+   tstr    = ( tstr.length() > 40 ) ?
+             ( tstr.left( 18 ) + "..." + tstr.right( 19 ) ) : tstr;
+   tstr    = tstr + "." + tsys.cell + tsys.wavelength
+             + "\n" + tsys.method;
    data_plot->setTitle( tstr );
 
    // read in and set distribution s,c,k values
-   if ( tsys.distro_type > 0 )
+   if ( tsys.distro_type != (int)US_Model::COFS )
    {
       for ( jj = 0; jj < model.components.size(); jj++ )
       {
@@ -901,6 +867,8 @@ void US_Pseudo3D_Combine::sort_distro( QList< Solute >& listsols,
       QList< Solute >::iterator jj = listsols.begin();
       sol1     = *jj;
       reduced.append( *jj );     // output first entry
+      int kdup = 0;
+      int jdup = 0;
 
       while ( (++jj) != listsols.end() )
       {     // loop to compare each entry to previous
@@ -910,6 +878,7 @@ void US_Pseudo3D_Combine::sort_distro( QList< Solute >& listsols,
                ! equivalent( sol1.k, sol2.k, epsilon ) )
           {   // not a duplicate, so output to temporary list
              reduced.append( sol2 );
+             jdup    = 0;
           }
 
           else
@@ -918,13 +887,23 @@ void US_Pseudo3D_Combine::sort_distro( QList< Solute >& listsols,
              sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average s,k
              sol2.k  = ( sol1.k + sol2.k ) * 0.5;
              reduced.replace( reduced.size() - 1, sol2 );
+             kdup    = max( kdup, ++jdup );
           }
 
           sol1    = sol2;        // save entry for next iteration
       }
 
-      if ( reduced.size() < sizi )
+      if ( kdup > 0 )
       {   // if some reduction happened, replace list with reduced version
+         double sc = 1.0 / (double)( kdup + 1 );
+qDebug() << "KDUP" << kdup;
+sc = 1.0;
+
+         for ( int ii = 0; ii < reduced.size(); ii++ )
+         {  // first scale c values by reciprocal of maximum replicate count
+            reduced[ ii ].c *= sc;
+         }
+
          listsols = reduced;
       }
    }

@@ -149,25 +149,26 @@ class US_EXTERN US_FeMatch : public US_Widgets
 
    private slots:
 
-      void load(        void );
-      void data_plot(   void );
-      void save_data(   void );
-      void details(     void );
-      void reset(       void );
-      void advanced(    void );
-      void plot3d(      void );
-      void plotres(     void );
-      void update(      int  );
+      void load(      void );
+      void data_plot( void );
+      void save_data( void );
+      void details(   void );
+      void reset(     void );
+      void advanced(  void );
+      void plot3d(    void );
+      void plotres(   void );
+      void update(    int  );
       void update_density(   double );
       void update_viscosity( double );
-      void get_buffer(     void );
-      void get_vbar  (     void );
-      void load_model(     void );
-      void distrib_type(   void );
-      void simulate_model( void );
-      void view_report(    void );
-      void exclude   (     void );
-      void adjust_model(   void );
+      void get_buffer(       void );
+      void get_vbar  (       void );
+      void load_model(       void );
+      void distrib_type(     void );
+      void simulate_model(   void );
+      void view_report(      void );
+      void exclude   (       void );
+      void adjust_model(     void );
+      void adjust_mc_model(  void );
       void update_buffer(    US_Buffer  );
       void update_vbar(      US_Analyte );
       void exclude_from(     double );
