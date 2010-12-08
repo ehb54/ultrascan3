@@ -320,6 +320,8 @@ DbgLv(1) << "FIN_FIN:    c_sol size" << nsolutes;
 
    if ( ( noisflag & 1 ) != 0 )
    {  // copy TI noise to caller and internal vector
+      ti_noise.minradius = edata->radius( 0 );
+      ti_noise.maxradius = edata->radius( npoints - 1 );
       ti_noise.values.resize( npoints );
       ti_noise.count = npoints;
 

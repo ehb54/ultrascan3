@@ -113,6 +113,10 @@ class US_EXTERN US_Model
       //!               if the path cannot be created
       static bool       model_path( QString& );
 
+      //! Model type text
+      //! \returns    - A short text string describing the type of model
+      QString typeText( void );
+
       //! Dump model data for debugging
       void debug( void );
 

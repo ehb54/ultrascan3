@@ -756,7 +756,10 @@ void US_GA_Initialize::plot_3dim( void )
    data_plot->detachItems();
 
    data_plot->setCanvasBackground( colormap->color1() ); 
-   QString tstr = run_name + "." + cell + wavelength + "\n" + method;
+   QString tstr = run_name;
+   tstr         = ( tstr.length() > 40 ) ?
+                  ( tstr.left( 18 ) + "..." + tstr.right( 19 ) ) : tstr;
+   tstr         = tstr + "." + cell + wavelength + "\n" + method;
    data_plot->setTitle( tstr );
 
    // set up spectrogram data
@@ -1112,103 +1115,6 @@ qDebug() << "  NO Model components";
       return;
    }
 
-//*DEBUG*
-#if 0
-   double i_s    = model.components[0].s;
-   double i_D    = model.components[0].D;
-   double i_mw   = model.components[0].mw;
-   double i_f    = model.components[0].f;
-   double i_ff0  = model.components[0].f_f0;
-   double i_c    = model.components[0].signal_concentration;
-   qDebug() << QString().sprintf(
-      "    INPUT     s/D/mw/f/ff0/c %13.4e%13.4e%13.4e%13.4e%13.4e%13.4e"
-      ,i_s,i_D,i_mw,i_f,i_ff0,i_c);
-   for ( int ii = 0; ii < 10; ii++ )
-   {
-      double c_s    = i_s;
-      double c_D    = i_D;
-      double c_mw   = i_mw;
-      double c_f    = i_f;
-      double c_ff0  = i_ff0;
-      QString  oper="";
-      switch ( ii )
-      {
-         case 0:
-            oper="s+D   ";
-            c_mw = c_ff0 = 0.0;
-            break;
-         case 1:
-            oper="s+mw  ";
-            c_D = c_ff0 = 0.0;
-            break;
-         case 2:
-            oper="s+ff0 ";
-            c_mw = c_D = 0.0;
-            break;
-         case 3:
-            oper="s+f   ";
-            c_mw = c_D = c_ff0 = 0.0;
-            break;
-         case 4:
-            oper="mw+D  ";
-            c_s = c_ff0 = 0.0;
-            break;
-         case 5:
-            oper="mw+ff0";
-            c_s = c_D = 0.0;
-            break;
-         case 6:
-            oper="mw+f  ";
-            c_s = c_D = c_ff0 = 0.0;
-            break;
-         case 7:
-            oper="D+ff0 ";
-            c_s = c_mw = 0.0;
-            break;
-         case 8:
-            oper="D+f   ";
-            c_s = c_mw = c_ff0 = 0.0;
-            break;
-         case 9:
-         default:
-            oper="f+ff0 ";
-            c_s = c_mw = c_D = 0.0;
-            break;
-      }
-      model.components[0].s    = c_s;
-      model.components[0].D    = c_D;
-      model.components[0].mw   = c_mw;
-      model.components[0].f    = c_f;
-      model.components[0].f_f0 = c_ff0;
-
-      bool uok = model.update_coefficients();
-
-      qDebug() << oper << " OUTp s/D/mw/f/ff0/c"
-         << QString().sprintf("%13.4e%13.4e%13.4e%13.4e%13.4e%13.4e",
-         model.components[ 0 ].s,model.components[ 0 ].D,model.components[ 0 ].mw,
-         model.components[ 0 ].f,model.components[ 0 ].f_f0,
-         model.components[ 0 ].signal_concentration) << uok;
-      if ( ii == 0 )
-      {
-         US_Math2::SolutionData d;
-         d.vbar20 = model.components[0].vbar20;
-         //d.vbar = model.components[0].vbar20;
-         d.density = DENS_20W;
-         d.viscosity = VISC_20W;
-         US_Math2::data_correction( 20.0, d );
-
-         //qDebug() << "fIN fOUT  ratioOI" << i_f << model.components[0].f << " " << model.components[0].f/i_f;
-         //qDebug() << " V20W vTB  bB bW" << VISC_20W << d.viscosity_tb << " " << d.buoyancyb << d.buoyancyw;
-      }
-   }
-   model.components[0].s    = i_s;
-   model.components[0].D    = i_D;
-   model.components[0].mw   = i_mw;
-   model.components[0].f    = i_f;
-   model.components[0].f_f0 = i_ff0;
-   model.components[0].signal_concentration = i_c;
-#endif
-//*DEBUG*
    // insure all model coefficient properties are set
    if ( ! model.update_coefficients() )
    {
@@ -1218,7 +1124,7 @@ qDebug() << "  NO Model components";
    // parse model information from its description
    mdesc        = mdesc.section( sep, 1, 1 );
 
-   run_name     = mdesc.section( ".", 0, 0 );
+   run_name     = mdesc.section( ".", 0, -3 );
    int jj       = mdesc.lastIndexOf( "." );
    int kk       = mdesc.length();
 
@@ -1256,7 +1162,10 @@ qDebug() << "  NO Model components";
    //mc_iters  = ( model.iterations > 1 ) ? model.iterations : 1;
    mc_iters  = 1;
 
-   tstr      = run_name + "." + cell + wavelength + "\n" + method;
+   tstr      = run_name;
+   tstr      = ( tstr.length() > 40 ) ?
+               ( tstr.left( 18 ) + "..." + tstr.right( 19 ) ) : tstr;
+   tstr      = tstr + "." + cell + wavelength + "\n" + method;
    data_plot->setTitle( tstr );
 
    // read in and set distribution s,c,k,d values
@@ -1507,6 +1416,8 @@ void US_GA_Initialize::sort_distro( QList< Solute >& listsols,
       QList< Solute >::iterator jj = listsols.begin();
       sol1     = *jj;
       reduced.append( *jj );     // output first entry
+      int kdup = 0;
+      int jdup = 0;
 
       while ( (++jj) != listsols.end() )
       {     // loop to compare each entry to previous
@@ -1516,6 +1427,7 @@ void US_GA_Initialize::sort_distro( QList< Solute >& listsols,
                !equivalent( sol1.k, sol2.k, epsilon ) )
           {   // not a duplicate, so output to temporary list
              reduced.append( sol2 );
+             jdup    = 0;
           }
 
           else
@@ -1524,6 +1436,7 @@ void US_GA_Initialize::sort_distro( QList< Solute >& listsols,
              sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average s,k
              sol2.k  = ( sol1.k + sol2.k ) * 0.5;
              reduced.replace( reduced.size()-1, sol2 );
+             kdup    = max( kdup, ++jdup );
           }
 
           sol1    = sol2;        // save entry for next iteration
@@ -1531,6 +1444,11 @@ void US_GA_Initialize::sort_distro( QList< Solute >& listsols,
 
       if ( reduced.size() < sizi )
       {   // if some reduction happened, replace list with reduced version
+         //double sc = 1.0 / (double)( kdup + 1 );
+
+         //for ( int ii = 0; ii < reduced.size(); ii++ )
+         //   reduced[ ii ].c *= sc;
+
          listsols = reduced;
       }
    }

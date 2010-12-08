@@ -1589,6 +1589,13 @@ void US_FeMatch::load_model( )
       return;                     // Cancel:  bail out now
 
    qApp->processEvents();
+
+//   if ( model.monteCarlo )
+//      adjust_mc_model();
+DbgLv(1) << "post-Load m,e,r GUIDs" << model.modelGUID << model.editGUID
+   << model.requestGUID;
+DbgLv(1) << "post-Load def_local" << def_local;
+
    model_loaded = model;   // save model exactly as loaded
 
    int ncomp    = model.components.size();       // components count
@@ -1614,6 +1621,7 @@ void US_FeMatch::load_model( )
 
 }
 
+// adjust model components based on buffer, vbar, and temperature
 void US_FeMatch::adjust_model()
 {
    model              = model_loaded;
@@ -1651,6 +1659,69 @@ void US_FeMatch::adjust_model()
    }
 }
 
+// compress and average monte carlo model components
+void US_FeMatch::adjust_mc_model()
+{
+   model_loaded       = model;
+   int ncomp          = model.components.size();
+//DbgLv(1) << "AMM: ncomp" << ncomp;
+
+   QStringList mlistn;
+   QStringList mlistx;
+
+   // build a set of lists that will enable components sorted by s,k
+   for ( int ii = 0; ii < ncomp; ii++ )
+   {
+      double  sval = model.components[ ii ].s;
+      double  kval = model.components[ ii ].f_f0;
+      int     isv  = qRound( sval * 1.0e+19 );
+      int     ikv  = qRound( kval * 1.0e+06 );
+      QString amx  = QString().sprintf( "%09i:%09i:%04i", isv, ikv, ii );
+
+      mlistx << amx;
+      mlistn << amx.section( ':', 0, 1 );
+//if ( ii<3 || (ncomp-ii)<4 )
+//DbgLv(1) << "AMM:  ii" << ii << " amx" << amx;
+   }
+
+   // sort the lists
+   mlistn.sort();
+   mlistx.sort();
+   model.components.clear();
+
+   // re-order, compress, and average the model
+
+   for ( int ii = 0; ii < ncomp; ii++ )
+   {
+      int    jj    = mlistx[ ii ].section( ':', 2, 2 ).toInt();
+      int    kdup  = mlistn.count( mlistn[ ii ] );
+      US_Model::SimulationComponent mcomp = model_loaded.components[ jj ];
+
+      if ( kdup == 1 )
+      {  // if a single version of this component, output it as is
+         model.components << mcomp;
+      }
+
+      else
+      {  // for multiples find average concentration; use modified componenta
+         double cconc = mcomp.signal_concentration;
+//DbgLv(1) << "AMM:  ii kdup" << ii << kdup << "  cconc0" << cconc;
+
+         for ( int cc = 1; cc < kdup; cc++ )
+         {
+            int    kk    = mlistx[ ++ii ].section( ':', 2, 2 ).toInt();
+            cconc       += model_loaded.components[ kk ].signal_concentration;
+         }
+
+         mcomp.signal_concentration = cconc / (double)kdup;
+//DbgLv(1) << "AMM:      ii" << ii << " cconc" << cconc;
+
+         model.components << mcomp;
+      }
+   }
+//DbgLv(1) << "AMM:  kcomp" << model.components.size();
+}
+
 // load noise record(s) if there are any and user so chooses
 void US_FeMatch::load_noise( )
 {
@@ -1674,24 +1745,27 @@ DbgLv(1) << "modelGUID " << modelGUID;
 
    // get a list of noises tied to the loaded model
    int nmnois  = noises_in_model( def_local, modelGUID, nimGUIDs );
-   int kk      = 0;           // start of noise-in-edit search
 
-   // move the loaded model to the head of the models-in-edit list
-   if ( nmnois > 0 )
-   {  // if loaded model has noise, make sure it's in noise-in-edit list
-
-      if ( nemods > 1  &&  mieGUIDs.removeOne( modelGUID ) )
-      {  // make sure loaded model goes to head of model-in-edit list
-         mieGUIDs.insert( 0, modelGUID );
+   // insure that the loaded model is at the head of the model-in-edit list
+   if ( modelGUID != mieGUIDs[ 0 ] )
+   {
+      if ( ! mieGUIDs.removeOne( modelGUID ) )
+      {
+         qDebug( "*ERROR* Loaded model not in model-in-edit list!" );
+         return;
       }
 
-      kk        = 1;          // skip 1st model for noise-in-edit search
+      mieGUIDs.insert( 0, modelGUID );
+   }
+
+   if ( nmnois > 0 )
+   {  // if loaded model has noise, put noise in list
       nieGUIDs << nimGUIDs;   // initialize noise-in-edit list
    }
 
    int nenois  = nmnois;      // initial noise-in-edit count is noises in model
 
-   for ( int ii = kk; ii < nemods; ii++ )
+   for ( int ii = 1; ii < nemods; ii++ )
    {  // search through models in edit
       lmodlGUID  = mieGUIDs[ ii ];                    // this model's GUID
       modelIndx  = QString().sprintf( "%4.4d", ii );  // models-in-edit index
@@ -2297,8 +2371,11 @@ int US_FeMatch::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs 
 {
    QString xmGUID;
    QString xeGUID;
+   QString xrGUID;
+   QStringList reGUIDs;
 
    mGUIDs.clear();
+DbgLv(1) << "MIE: ondisk" << ondisk;
 
    if ( ondisk )
    {  // Models from local disk files
@@ -2335,6 +2412,20 @@ int US_FeMatch::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs 
                attr    = xml.attributes();
                xeGUID  = attr.value( "editGUID"    ).toString();
                xmGUID  = attr.value( "modelGUID"   ).toString();
+               xrGUID  = attr.value( "requestGUID" ).toString();
+               int kmc = attr.value( "monteCarlo"  ).toString().toInt();
+
+               if ( xeGUID != eGUID )
+                  continue;
+
+               if ( kmc == 1  &&  xrGUID.length() == 36 )
+               {  // treat monte carlo specially
+                  if ( reGUIDs.contains( xrGUID ) )
+                  {  // already have this request GUID:  skip
+                     continue;
+                  }
+                  reGUIDs << xrGUID;  // this is 1st:  save it for compare
+               }
 
                if ( xeGUID == eGUID )
                   mGUIDs << xmGUID;
@@ -2352,11 +2443,14 @@ int US_FeMatch::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs 
 
       if ( db.lastErrno() != US_DB2::OK )
       {
+         qDebug() << "*** DB ERROR: " << db.lastErrno();
          return 0;
       }
 
-      QStringList query;
-      QString     invID  = investig.section( ":", 0, 0 );
+      QList< int > mDbIDs;
+      QStringList  query;
+      QString      invID  = investig.section( ":", 0, 0 );
+DbgLv(1) << "MIE(db): invID" << invID;
 
       query.clear();
 
@@ -2370,8 +2464,49 @@ int US_FeMatch::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs 
 DbgLv(2) << "MIE(db): xm/xe/e GUID" << xmGUID << xeGUID << eGUID;
 
          if ( xeGUID == eGUID )
+         {
             mGUIDs << xmGUID;
+            mDbIDs << db.value( 0 ).toString().toInt();
+         }
       }
+DbgLv(1) << "MIE(db): pass 1 mGUIDs size" << mGUIDs.size() << mDbIDs.size();
+
+      qSort( mDbIDs );            // sort model db IDs into ascending order
+
+      // Make a pass thru models to exclude MC's beyond first
+
+      for ( int ii = 0; ii < mDbIDs.size(); ii++ )
+      {
+         query.clear();
+         query << "get_model_info" << QString::number( mDbIDs.at( ii ) );
+         db.query( query );
+         db.next();
+         QString mxml = db.value( 2 ).toString();
+         int     jj   = mxml.indexOf( "requestGUID="  );
+         int     kk   = mxml.indexOf( "monteCarlo=" );
+         xrGUID       = ( jj < 0 ) ? "" : mxml.mid( jj ).section( '"', 1, 1 );
+         int     kmc  = ( kk < 0 ) ? 0 :
+                        mxml.mid( kk ).section( '"', 1, 1 ).toInt();
+DbgLv(2) << "MIE(db):  ii kmc rGlen" << ii << kmc << xrGUID.length()
+ << " DbID" << mDbIDs.at( ii );
+
+         if ( kmc == 1  &&  xrGUID.length() == 36 )
+         {  // treat monte carlo specially
+
+            if ( reGUIDs.contains( xrGUID ) )
+            {  // already have this request GUID:  remove this model
+               mGUIDs.removeOne( db.value( 0 ).toString() );
+DbgLv(2) << "MIE(db):    mGI rmvd" << db.value( 0 ).toString();
+            }
+
+            else
+            {  // this is 1st:  save it for compare
+               reGUIDs << xrGUID;
+DbgLv(2) << "MIE(db):    dsc savd" << db.value( 1 ).toString();
+            }
+         }
+      }
+DbgLv(1) << "MIE(db): pass 2 mGUIDs size" << mGUIDs.size() << mDbIDs.size();
    }
 
    return mGUIDs.size();

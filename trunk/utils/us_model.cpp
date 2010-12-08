@@ -211,7 +211,10 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
          radius_sphere  = pow( volume * vol_fac, onethird );
          f0             = radius_sphere * rsph_fac;
          fv             = mw * buoyancyb / ( s20w * AVOGADRO );
+         double ff0sv   = f_f0;
          f_f0           = fv / f0;
+         double ffdif   = qAbs( ff0sv - f_f0 );
+         f_f0           = ( ffdif < 1.e-5 ) ? ff0sv : f_f0;
       }
 
       // next check s and k (f_f0)
@@ -350,6 +353,61 @@ bool US_Model::model_path( QString& path )
    return true;
 }
 
+// short text string describing the model type
+QString US_Model::typeText( void )
+{
+   struct typemap
+   {
+      AnalysisType typeval;
+      QString      typedesc;
+   };
+
+   const typemap tmap[] =
+   {
+      { MANUAL,    QObject::tr( "Manual"  ) },
+      { TWODSA,    QObject::tr( "2DSA"    ) },
+      { TWODSA_MW, QObject::tr( "2DSA-MW" ) },
+      { GA,        QObject::tr( "GA"      ) },
+      { GA_MW,     QObject::tr( "GA-MW"   ) },
+      { COFS,      QObject::tr( "COFS"    ) },
+      { FE,        QObject::tr( "FE"      ) },
+      { ONEDSA,    QObject::tr( "1DSA"    ) }
+   };
+
+   const int ntmap = sizeof( tmap ) / sizeof( tmap[ 0 ] );
+
+   QString tdesc = tmap[ 0 ].typedesc;
+
+   for ( int jj = 0; jj < ntmap; jj++ )
+   {  // look for model type match
+
+      if ( analysis == tmap[ jj ].typeval )
+      {  // we have a match:  build type description
+         tdesc    = tmap[ jj ].typedesc;    // set basic model analyis type
+
+         if ( associations.size() > 0 )     // Reversible Associations subtype
+            tdesc    = tdesc + "-RA";
+
+         if ( global == MENISCUS )          // Fit Meniscus subtype
+            tdesc    = tdesc + "-FM";
+
+         else if ( global == GLOBAL )       // Global subtype
+            tdesc    = ( jj > 0 ) ? tdesc + "-GL" : "Global";
+
+         else if ( global == SUPERGLOBAL )  // SuperGlobal subtype
+            tdesc    = ( jj > 0 ) ? tdesc + "-SG" : "SuperGlobal";
+
+         if ( monteCarlo )                  // Monte Carlo subtype
+            tdesc    = tdesc + "-MC";
+
+         break;
+      }
+   }
+
+   return tdesc;                            // return type description text
+}
+
+// load model from local disk
 int US_Model::load_disk( const QString& guid )
 {
    int error = US_DB2::ERROR;  // Error by default
