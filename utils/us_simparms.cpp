@@ -236,7 +236,7 @@ int US_SimulationParameters::load_simparms( QString fname )
                temperature  = astr.toDouble();
             astr  = a.value( "bandform"    ).toString();
             if ( !astr.isEmpty() )
-               band_forming = ( astr == "yes" );
+               band_forming = ( astr == "yes" || astr == "1" );
             astr  = a.value( "rotorSerial" ).toString();
             if ( !astr.isEmpty() )
                rotorSerial  = astr;
@@ -278,7 +278,7 @@ int US_SimulationParameters::load_simparms( QString fname )
                sp.acceleration      = astr.toInt();
             astr  = a.value( "accelerflag"   ).toString();
             if ( !astr.isEmpty() )
-               sp.acceleration_flag = ( astr == "yes" );
+               sp.acceleration_flag = ( astr == "yes" || astr == "1" );
             astr  = a.value( "scans"         ).toString();
             if ( !astr.isEmpty() )
                sp.scans             = astr.toInt();
@@ -353,7 +353,7 @@ int US_SimulationParameters::save_simparms( QString fname )
             rotorcoeffs[ 3 ], rotorcoeffs[ 4 ] ) );
       }
 
-      xml.writeAttribute   ( "bandform",  band_forming ? "yes" : "no" );
+      xml.writeAttribute   ( "bandform",  band_forming ? "1" : "0" );
 
       if ( meshType == US_SimulationParameters::USER )
       {
@@ -384,7 +384,7 @@ int US_SimulationParameters::save_simparms( QString fname )
          xml.writeAttribute   ( "acceleration",
             QString::number( spi->acceleration     ) );
          xml.writeAttribute   ( "accelerflag",
-            spi->acceleration_flag ? "yes" : "no" );
+            spi->acceleration_flag ? "1" : "0" );
          xml.writeAttribute   ( "scans",
             QString::number( spi->scans            ) );
          xml.writeEndElement  ();  // speedstep

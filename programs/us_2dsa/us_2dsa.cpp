@@ -480,6 +480,10 @@ void US_2dsa::save( void )
       model.editGUID    = edata->editGUID;
       model.requestGUID = reqGUID;
       model.analysis    = US_Model::TWODSA;
+
+      for ( int cc = 0; cc < model.components.size(); cc++ )
+         model.components[ cc ].name = QString().sprintf( "A%05i", cc + 1 );
+
       // output the model
       model.write( mname );
 

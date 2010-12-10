@@ -1044,30 +1044,9 @@ void US_GA_Initialize::select_plot_mw()
 // load the solute distribution from a file
 void US_GA_Initialize::load_distro()
 {
-   Solute      sol_s;
-   Solute      sol_w;
-
-   // model type table:  DescPartialName, Method, MonteCarlo
-   const char* cdtyp[] =
-   {
-      "cofs_dis",        "C(s)",                               "F",
-      "fe_dis",          "FE",                                 "F",
-      "sa2d_dis",        "2DSA",                               "F",
-      "ga_mc_dis",       "GA-MC",                              "T",
-      "sa2d_mc_dis",     "2DSA-MC",                            "T",
-      "ga_dis",          "GA",                                 "F",
-      "global_dis",      "Global",                             "F",
-      "sa2d_mw_dis",     "2DSA, MW Constrained",               "F",
-      "ga_mw_dis",       "GA, MW Constrained",                 "F",
-      "sa2d_mw_mc_dis",  "2DSA, MW Constrained, Monte Carlo",  "T",
-      "ga_mw_mc_dis",    "GA, MW Constrained, Monte Carlo",    "T",
-      "global_dis",      "Global Distro",                      "T",
-      "global_mc_dis",   "Global MC Distro",                   "T",
-      "model",           "2DSA",                               "T"
-   };
-   int ncdte = sizeof( cdtyp ) / sizeof( char* );
-
-   US_Model model;
+   Solute          sol_s;
+   Solute          sol_w;
+   US_Model        model;
 
    US_ModelLoader* dialog = new US_ModelLoader( false, def_local,
       mfilter, investig );
@@ -1076,6 +1055,7 @@ void US_GA_Initialize::load_distro()
    QString         mdesc;
    QString         mfnam;
    QString         sep;
+   QString         aiters;
 
    if ( dialog->exec() == QDialog::Accepted )
    {
@@ -1087,6 +1067,7 @@ void US_GA_Initialize::load_distro()
 //qDebug() << "LOAD ACCEPT  Description:\n " << mdesc;
       sep       = mdesc.left( 1 );
       mfnam     = mdesc.section( sep, 2, 2 );
+      aiters    = mdesc.section( sep, 6, 6 );
 
       if ( mfnam.isEmpty() )
       {  // from db:  make ID the "filename"; default to db next time
@@ -1140,27 +1121,13 @@ qDebug() << "  NO Model components";
    cell         = tstr.left( 1 );
    tstr         = mdesc.right( kk - jj - 2 );
    wavelength   = tstr;
-   distro_type  = 0;
+   method       = model.typeText();
+   monte_carlo  = model.monteCarlo;
+   mc_iters     = monte_carlo ? aiters.toInt() : 1;
+qDebug() << "MC" << monte_carlo << " iters" << mc_iters;
 
-   // find type in table and set values accordingly
-   for ( jj = 0; jj < ncdte; jj += 3 )
-   {
-      QString fnp( cdtyp[ jj ] );
-
-      if ( mdesc.contains( fnp, Qt::CaseInsensitive ) )
-      {
-         distro_type = jj / 3 + 1;
-         monte_carlo = QString( cdtyp[ jj+2 ] ).contains( "T" );
-         method      = QString( cdtyp[ jj+1 ] );
-         break;
-      }
-   }
    s_distro.clear();
    w_distro.clear();
-
-   // pick up number of monte carlo iterations in case needed
-   //mc_iters  = ( model.iterations > 1 ) ? model.iterations : 1;
-   mc_iters  = 1;
 
    tstr      = run_name;
    tstr      = ( tstr.length() > 40 ) ?
@@ -1169,7 +1136,7 @@ qDebug() << "  NO Model components";
    data_plot->setTitle( tstr );
 
    // read in and set distribution s,c,k,d values
-   if ( distro_type > 0 )
+   if ( model.analysis != US_Model::COFS )
    {
       for ( int jj = 0; jj < model.components.size(); jj++ )
       {

@@ -1,20 +1,20 @@
 [% INCLUDE header.us3/
-   title = 'UltraScan III FE Match Enhanced Plot Controls'
+   title = 'UltraScan III FE Match Plot Controls'
 %]
 
-    <h2> FE Match Enhanced Plot Controls:</h2>
+    <h2> FE Match Plot Controls:</h2>
 
-    <p> Upon completion of FE Match simulation, a dialog of enhanced plot
-    controls appears. Its "3D Plot" button launches a 3-dimensional plot
-    window whose primary control resides in this dialog. There are size,
-    orientation, and other controls that are in the 3D dialog itself.
-    The control "Residuals Plot" button launches a set of data and
+    <p> Upon completion of FE Match simulation, a pair of enhanced plot
+    controls dialogs appears. The "3D Plot" button in the first of these
+    launches a 3-dimensional plot window whose primary control resides in
+    this dialog. There are size, orientation, and other controls that are
+    in the 3D dialog itself. A second dialog displays a set of data and
     residuals plots that are more refined and controllable than those
     in the main FE Match window.</p>
 
     <img src="images/fe_match_sim5.png" alt="Enh. Plot Controls"/>
 
-    <h3> Functions: </h3>
+    <h3> 3D Plot Control Functions: </h3>
 
     <ul>
        <li>
@@ -49,10 +49,6 @@
        </li>
 
        <li>
-          <b>Residuals Plot</b> Click to launch the advanced residuals plot.
-       </li>
-
-       <li>
           <b>Help</b> Click for this documentation.
        </li>
 
@@ -73,8 +69,10 @@
 
     <img src="images/fe_match_3dplot.png" alt="3D Plot Window"/>
 
-    <p>Below is a Residuals plot dialog sample. The check boxes that
-    control plot contents are self-explanatory.</p>
+    <p>The image below is a Residuals plot dialog sample. The check boxes that
+    control plot contents are self-explanatory. It appears automatically
+    upon simulation completion and may be brought up any time using the
+    <b>Residual Plot</b> button in the main window.</p>
 
     <img src="images/fe_match_resplot.png" alt="Residuals Plot Dialog"/>
 

@@ -212,6 +212,11 @@ QString US_ModelLoader::description( int index )
                   + sep + model_descriptions[ index ].modelGUID
                   + sep + model_descriptions[ index ].DB_id
                   + sep + model_descriptions[ index ].editGUID;
+
+   if ( model_descriptions[ index ].iterations > 1 )
+      cdesc  = cdesc + sep
+         + QString::number( model_descriptions[ index ].iterations );
+
    return cdesc;
 }
 
@@ -358,7 +363,7 @@ void US_ModelLoader::list_models()
       if ( listsing )
       {  // if showing MC singles, re-check for filtering
          if ( mfilt.contains( "=s" )  &&  !listedit )
-         {  // a filter can be added atfer "=s "
+         {  // a filter can be added after "=s "
             int jj   = mfilt.indexOf( "=s" );
             mfilt    = ( jj == 0 ) ? 
                        mfilt.mid( jj + 3 ).simplified() :
@@ -467,6 +472,7 @@ void US_ModelLoader::list_models()
       QString     invID = le_investigator->text().section( ":", 0, 0 );
 
       int countMD = all_model_descrips.size();
+      int countSD = all_single_descrs .size();
       int kid1    = -3;
       int kid2    = -3;
 //qDebug() << " md count" << countMD;
@@ -474,7 +480,7 @@ void US_ModelLoader::list_models()
 //      int countDB = db.statusQuery( query );
 //qDebug() << " db count" << countDB;
 
-      if ( countMD > 0 )
+      if ( countMD > 0  &&  countMD == countSD )
       {
          kid1 = all_model_descrips[ 0           ].DB_id.toInt();
          kid2 = all_model_descrips[ countMD - 1 ].DB_id.toInt();
