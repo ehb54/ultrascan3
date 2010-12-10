@@ -382,11 +382,11 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             this,        SLOT(   help()      ) );
 
    rightLayout->addLayout( plotLayout1 );
-   //rightLayout->addWidget( gb_modelsim );
+   rightLayout->addWidget( gb_modelsim );
    rightLayout->addLayout( plotLayout2 );
    rightLayout->setStretchFactor( plotLayout1, 2 );
    rightLayout->setStretchFactor( plotLayout2, 3 );
-   rightLayout->addWidget( gb_modelsim );
+   //rightLayout->addWidget( gb_modelsim );
    rightLayout->setStretchFactor( gb_modelsim, 0 );
 
    mainLayout->addLayout( leftLayout  );

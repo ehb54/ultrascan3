@@ -22,11 +22,6 @@ WorkerThread::WorkerThread( QObject* parent )
 // worker thread destructor
 WorkerThread::~WorkerThread()
 {
-//DbgLv(1) << "2P(WT):  Thread destructor";
-   //mutex.lock();
-   //condition.wakeOne();
-   //mutex.unlock();
-
    wait();
 DbgLv(1) << "2P(WT):   Thread destroyed";
 }
@@ -70,7 +65,7 @@ void WorkerThread::run()
 {
 DbgLv(1) << "THR RUN: taskx thrn" << taskx << thrn;
 
-   calc_residuals();
+   calc_residuals();              // do all the work here
 
 //DbgLv(1) << "  RUN call quit";
    quit();
@@ -78,9 +73,10 @@ DbgLv(1) << "THR RUN: taskx thrn" << taskx << thrn;
    exec();
 //DbgLv(1) << "  RUN return";
 
-   emit work_complete( this );
+   emit work_complete( this );    // signal that a thread's work is done
 }
 
+// set a flag so that a worker thread will abort as soon as possible
 void WorkerThread::flag_abort()
 {
    abort      = true;
@@ -92,12 +88,14 @@ void WorkerThread::calc_residuals()
    // set up for single-component model
    model.components.resize( 1 );
    US_Model::SimulationComponent zcomponent;
+   // use a zeroed component for initializing models
    zcomponent.s     = 0.0;
    zcomponent.D     = 0.0;
    zcomponent.mw    = 0.0;
    zcomponent.f     = 0.0;
    zcomponent.f_f0  = 0.0;
 
+   // get dimensions
    nscans           = edata->scanData.size();
    npoints          = edata->x.size();
    int nsolutes     = solute_i.size();
@@ -106,6 +104,7 @@ void WorkerThread::calc_residuals()
    int ntinois      = npoints;
    int nrinois      = nscans;
 
+   // set up and clear work vectors
    QVector< double > nnls_a( navals,   0.0 );
    QVector< double > nnls_b( ntotal,   0.0 );
    QVector< double > nnls_x( nsolutes, 0.0 );
@@ -113,6 +112,7 @@ void WorkerThread::calc_residuals()
    QVector< double > rinvec( nrinois,  0.0 );
 DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
 
+   // get buffer,solution values communicated through edited data
    QString dvv      = edata->dataType;
    double density   = dvv.section( " ", 1, 1 ).toDouble();
    double viscosity = dvv.section( " ", 2, 2 ).toDouble();
@@ -140,10 +140,10 @@ if (taskx==0) DbgLv(1) << "   CR: dens visc vbar temp corr" << density
    double sfactor = 1.0 / solution.s20w_correction;
 
    // simulate data using models with single s,f/f0 component
-   int    increp  = nsolutes / 10;
+   int    increp  = nsolutes / 10;                 // progress report increment
           increp  = ( increp < 10 ) ? 10 : increp;
-   int    kstep   = 0;
-          kk      = 0;
+   int    kstep   = 0;                             // progress step count
+          kk      = 0;                             // nnls_a output index
 //DbgLv(1) << "  TR:     BEG astfem_rsa loop";
 
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -206,7 +206,7 @@ DbgLv(1) << "TM:BEG:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
       QVector< double > L_tildes( nrinois * nsolutes, 0.0 );
 
       if ( noisflag == 3 )
-         compute_L_tildes( nrinois, ntotal, nsolutes, L_tildes, nnls_a );
+         compute_L_tildes( nrinois, nsolutes, L_tildes, nnls_a );
 
       // Compute L_bars
       QVector< double > L_bars(   ntinois * nsolutes, 0.0 );
@@ -265,7 +265,7 @@ DbgLv(1) << "  noise small NNLS";
 
       // Compute L_tildes, the average signal at each radius
       QVector< double > L_tildes( nrinois * nsolutes, 0.0 );
-      compute_L_tildes( nrinois, ntotal, nsolutes, L_tildes, nnls_a );
+      compute_L_tildes( nrinois, nsolutes, L_tildes, nnls_a );
 
       // Set up small_a, small_b for the nnls
       QVector< double > small_a( sq( nsolutes ), 0.0 );
@@ -368,26 +368,23 @@ void WorkerThread::compute_a_tilde( QVector< double >& a_tilde )
 
 // Compute L_tildes, the average signal at each radius
 void WorkerThread::compute_L_tildes( int                      nrinois,
-                                     int                      ntotal,
                                      int                      nsolutes,
                                      QVector< double >&       L_tildes,
                                      const QVector< double >& nnls_a )
 {
    double avgscale = 1.0 / (double)npoints;
+   int    a_index  = 0;
 
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
-      int solute_index = cc * ntotal;
+      int t_index      = cc * nrinois;
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         int index      = cc * nrinois + ss;
-         int scan_index = solute_index + ss * npoints;
-
          for ( int rr = 0; rr < npoints; rr++ )
-            L_tildes[ index ] += nnls_a[ scan_index + rr ];
+            L_tildes[ t_index ] += nnls_a[ a_index++ ];
 
-         L_tildes[ index ] *= avgscale;
+         L_tildes[ t_index++ ] *= avgscale;
       }
    }
 }
@@ -397,16 +394,14 @@ void WorkerThread::compute_L_tilde( QVector< double >&       L_tilde,
                                     const QVector< double >& L )
 {
    double avgscale = 1.0 / (double)npoints;
+   int    index    = 0;
 
    for ( int ss = 0; ss < nscans; ss++ )
    {
-      int s_index  = ss;
-      int L_offset = ss * npoints;
-
       for ( int rr = 0; rr < npoints; rr++ )
-         L_tilde[ s_index ] += L[ L_offset  + rr ];
+         L_tilde[ ss ] += L[ index++ ];
 
-      L_tilde[ s_index] *= avgscale;
+      L_tilde[ ss ] *= avgscale;
    }
 }
 

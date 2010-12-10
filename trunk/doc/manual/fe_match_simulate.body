@@ -96,13 +96,20 @@
 
     <img src="images/fe_match_sim4.png" alt="Residuals Bit Map"/>
     
-    <p><b>Enhanced 3-D/Residuals Controls</b> An enhanced view of
-    various data is controlled by a dialog launched after simulation
-    computations. It controls both 3-dimensional model plots and a
-    more advanced set of data/residuals/noise plots. See
+    <p><b>3-D Controls</b> A 3-dimensional view of model data is controlled
+    by a dialog launched after simulation computations. This dialog may also
+    be launched at any time via the main window <b>3D Plot</b> button. See
     <a href="fe_match_controls.html">Plot Controls Details</a>.</p>
 
-    <img src="images/fe_match_sim5.png" alt="Enhanced Plot Controls"/>
+    <img src="images/fe_match_sim5.png" alt="3-D Plot Controls"/>
+    
+    <p><b>Residual Plots</b> Another dialog launched at simulation completion
+    is one that presents a more advanced set of data/residuals/noise plots.
+    It also may be launched at any time via the main window <b>Residual Plot</b>
+    button. See
+    <a href="fe_match_controls.html">Plot Controls Details</a>.</p>
+
+    <img src="images/fe_match_resplot.png" alt="Residual Plots"/>
     
     <p><b>Data Reports/Files</b> The "Save Data" button produces a
     set of report files. One of these is displayable via the
@@ -111,7 +118,8 @@
 
     <img src="images/fe_match_sim6.png" alt="View Report"/>
 
-    <p>Below are text portions of two output report files.</p>
+    <p>Below is the same sample scrolled down to the bottom, showing
+    analysis settings and distribution information.</p>
 
     <img src="images/fe_match_sim7.png" alt="Out Files"/>
 

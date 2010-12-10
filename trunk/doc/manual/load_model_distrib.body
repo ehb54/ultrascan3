@@ -53,6 +53,7 @@
               or hit the Return/Enter key to pare down the model list to
               descriptions that match the field. Note that the search is
               case-insensitive. Enter a blank field to restore the full list.
+              See detailed notes below on special search field text.
             </li>
             
             <li>
@@ -83,5 +84,27 @@
         </td>
       </tr>
     </table>
+
+    <h3> Search Field Details: </h3>
+
+    <p> Text you enter in the search field limits the models listed to those
+    that match the implied criteria. In the simpliest and most common case,
+    a string entered pares down the list to models whose description contains
+    the given phrase without regard to case. For example, a search field of
+    <b>"mc"</b> results in models with "mc", "MC", "Mc", or "mC" in their 
+    descriptions.</p>
+
+    <p> The search field <b>"=edit"</b> results in only models that derive
+    from a specific edited data set. This facility applies in applications that
+    preceed the model loader dialog with an edited velocity data set loader
+    dialog.</p>
+
+    <p> Another special field - <b>"=s"</b> - designates that Monte Carlo
+    model sets normally presented as a composite model be separated out into
+    each of the single models comprising the group. Use of this field should
+    rarely be needed and be limited to advanced or developer users. If used,
+    it may be combined with other fields. So, entries like "=s demo1",
+    "demo1=s", "=edit=s" can be used to specify "single MC models" as well as
+    a description filter on the list.</p>
 
 [% INCLUDE footer.us3 %]

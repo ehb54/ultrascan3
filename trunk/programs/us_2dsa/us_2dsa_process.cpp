@@ -120,7 +120,8 @@ DbgLv(1) << "MENISC: mm_iter meniscus bmeniscus"
 
    nsubgrid    = ngrefine * ngrefine;
    int ktcsol  = maxtsols - 5;
-   int nnstep  = ( noisflag > 0 ) ? ( nsubgrid * sq( ktcsol ) / 10 + 2 ) : 0;
+   int nnstep  = ( noisflag > 0 ) ? ( sq( ktcsol ) / 10 + 2 ) : 2;
+   nnstep     *= nsubgrid;
    int kksubg  = nksteps * nssteps;
    nctotal     = kksubg + nnstep + estimate_steps( ( kksubg / 8 ) );
 
@@ -652,9 +653,8 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
       {  // all subgrid tasks are now complete
          if ( r_iter == 0 )
          {  // in 1st iteration, re-estimate total progress steps
-            int nsolest   = nksteps * nssteps;  // solutes estimated
-                nsolest  /= 8;
-            int nsolact   = 0;                  // solutes actually computed
+            int nsolest   = ( nksteps * nssteps ) / 8 ;  // solutes estimated
+            int nsolact   = 0;                           // actually computed
 
             for ( int jj = 0; jj < job_queue.size(); jj++ )
                 nsolact  += job_queue[ jj ].isolutes.size();
@@ -776,29 +776,24 @@ void US_2dsaProcess::iterate()
    job_queue.clear();
    QVector< Solute > csolutes = c_solutes[ maxdepth ];
 
-
    int    ncsol = csolutes.size();   // number of solutes calculated last iter
 
    for ( int ii = 0; ii < ncsol; ii++ )
       csolutes[ ii ].c = 0.0;        // clear concentration for compares
-
 DbgLv(1) << "ITER: start of iteration" << r_iter+1;
-   // Bump total steps estimate based on additional solutes in subgrids
-   if ( r_iter == 1 )
-   {
-      nctotal     = max( kcsteps, nctotal );
-DbgLv(1) << "ITER:  r-iter0 ncto ncsol" << nctotal << ncsol;
-      int kadd    = noisflag > 0 ?
-                    ( ( ncsol + 3 ) * ncsol * nsubgrid ) :
-                    ( ( ncsol * nsubgrid * 70 ) / 100 );
-      nctotal    += kadd;
-DbgLv(1) << "ITER:  r-iter1 ncto (diff)" << nctotal << kadd;
-   }
 
-   else
-   {  // For second and subsequent, average actual and estimated steps count
-      nctotal     = ( kcsteps + nctotal ) / 2;
-   }
+   // Bump total steps estimate based on additional solutes in subgrids
+   nctotal      = ( r_iter == 1 ) ? nctotal : ( ( nctotal + kcsteps ) / 2 );
+   nctotal      = max( kcsteps, nctotal ) + 10;
+DbgLv(1) << "ITER:   r-iter0 ncto ncsol" << nctotal << ncsol;
+   int ktisol   = maxtsols - 5;
+   int ktask    = nsubgrid + 1;
+   int kstep    = ( r_iter == 1 ) ? ( ncsol + 4 ) : 4;
+   int knois    = ktask * ( ( kstep * ktisol * 2 + sq( kstep ) ) / 10 );
+DbgLv(1) << "ITER:    nsubg ktask kstep knois" << nsubgrid << ktask << kstep << knois;
+   int kadd     = ( ktask * kstep ) + ( ( noisflag == 0 ) ? 0 : knois );
+   nctotal     += kadd;
+DbgLv(1) << "ITER:   r-iter1 ncto (diff)" << nctotal << kadd;
 
    kcsteps      = 0;
    emit stage_complete( kcsteps, nctotal );
@@ -807,7 +802,7 @@ DbgLv(1) << "ITER:  r-iter1 ncto (diff)" << nctotal << kadd;
    maxdepth     = 0;
    max_rss();
 
-   int    ktask = 0;                 // task index
+   ktask        = 0;                 // task index
    int    jdpth = 0;
    int    jnois = fnoionly ? 0 : noisflag;
    double llss  = slolim;            // lower limit s to identify each subgrid
@@ -887,38 +882,41 @@ void US_2dsaProcess::free_worker( int tx )
 // Estimate progress steps after depth 0 from given total of calculated solutes.
 //   For maxtsols=100, estimate 95 solutes per task
 //   Calculate tasks needed for given depth 0 calculated steps
-//   Add 2 to solutes per task as NNLS factor
+//   Bump a bit for NNLS and any noise
 //   Multiply steps per task times number of tasks
-//     Repeat for subsequent depths, assuming depth steps 1/8 of previous
+//     Repeat for subsequent depths, assuming calculated solutes 1/8 of input
 int US_2dsaProcess::estimate_steps( int ncsol )
 {
    // Estimate number of solutes and steps per task
-   int ktcsol  = maxtsols - 5;
-   int nnstep  = ( noisflag > 0 ) ? ( sq( ktcsol ) / 10 + 2 ) : 0;
-   int ktstep  = ktcsol + nnstep + 1;
-   // Estimate number of depth 1 tasks, solutes,and steps
-   int n1task  = ncsol  / ktcsol + 1;
-   int n1csol  = n1task * ktcsol + ncsol;
-   int n1step  = n1task * ktstep + ncsol;
-   // Estimate number of solutes for depths beyond 1
-   int n2csol  = n1csol / 8;
-   int n2task  = n2csol / ktcsol + 1;
-       n2csol  = n2task * ktcsol;
-   int n2step  = n2task * ktstep + ncsol;
-   // Sum depth 1 steps plus depth 2 steps plus final-pass steps
-   n1step      = n1step + n2step + ktstep;
+   int ktisol  = maxtsols - 5;
+   int ktcsol  = ktisol / 8 + 1;
+   int ktstep  = ktisol + ( ( noisflag > 0 ) ? ( sq( ktisol ) / 10 + 12 ) : 2 );
+DbgLv(1) << "ES: ncsol ktisol ktcsol ktstep" << ncsol << ktisol
+ << ktcsol << ktstep;
 
-   while ( n2csol > maxtsols )
-   {  // Sum in steps for depth 3 and following until steps left less than 100
-      n2csol     /= 8;
-      n2task      = n2csol / ktcsol + 1;
-      n2csol      = n2task * ktcsol;
-      n2step      = n2task * ktstep;
-      n1step     += n2step;
+   // Estimate number of depth 1 tasks, solutes,and steps
+   int n1task  = ( ncsol + ktisol / 2 ) / ktisol + 1;
+   int ntasks  = n1task + 1;
+   int n1csol  = n1task * ktcsol;
+DbgLv(1) << "ES: D1 n1task n1csol" << n1task << n1csol;
+
+   // Estimate number of solutes for depths beyond 1
+   n1task      = ( n1csol + ktisol / 2 ) / ktisol + 1;
+   ntasks     += n1task;
+   n1csol      = n1task * ktcsol;
+DbgLv(1) << "ES: D2 n1task n1csol" << n1task << n1csol;
+
+   while ( n1task >  1 )
+   {  // Sum in steps for depth 3 and following until just 1 task left
+      n1task      = ( n1csol + ktisol / 2 ) / ktisol + 1;
+      ntasks     += n1task;
+      n1csol      = n1task * ktcsol;
+DbgLv(1) << "ES:  D3ff n1task n1csol" << n1task << n1csol;
    }
 
    // Return estimate of remaining steps
-   return ( n1step + n2step + nnstep + 10 );
+DbgLv(1) << "ES: returned nsteps ntasks" << (ntasks*ktstep) << ntasks;
+   return ( ntasks * ktstep );
 }
 
 // count queued jobs at a given depth

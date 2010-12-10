@@ -26,25 +26,25 @@
 
     <ul>
        <li>
-          1. <b>Load Experimental Data:</b> First, load experimental velocity
+          <b>Load Experimental Data:</b> First, load experimental velocity
           data. Click on "Load Data" to select an edited velocity data set from
           the database or from local disk.
        </li>
           
        <li>
-          2. <b>Load a Simulation Model:</b> Secondly, select a model from
+          <b>Load a Simulation Model:</b> Secondly, select a model from
           database or disk. Simply click on "Load Model" and choose a model
           in the resulting dialog. If they exist, you will be given the choice
           of also loading noise vectors.
        </li>
           
        <li>
-          3. <b>Simulate the Model:</b> Next, simulate the loaded model with a
+          <b>Simulate the Model:</b> Next, simulate the loaded model with a
           finite element solution by clicking "Simulate Model".
        </li>
           
        <li>
-          4. <b>Display and Save Results:</b> After simulation, a variety of
+          <b>Display and Save Results:</b> After simulation, a variety of
           options are available for displaying simulation results, residuals,
           and distributions. Report text files and graphics plot files can
           also be generated.
@@ -179,6 +179,24 @@
        </li>
 
        <li>
+          <b>Advanced</b> Reveal advanced controls. The label of this button
+          is then changed to <b>Basic</b>, allowing a return to the original
+          main window controls configuration.
+       </li>
+
+       <li>
+          <b>3D Plot</b> Show a dialog of plot controls for a 3-dimensional
+          model plot. See
+          <a href="fe_match_controls.html">Plot Controls Details</a>.
+       </li>
+
+       <li>
+          <b>Residual Plot</b> Show a plot dialog with a more advanced set of
+          data/residuals/noise plots. See
+          <a href="fe_match_controls.html">Plot Controls Details</a>.
+       </li>
+
+       <li>
           <b>Sedimentation Coefficient:</b> (Advanced) Sedimentation
           coefficient for the currently selected model component.
        </li>
@@ -201,34 +219,6 @@
        <li>
           <b>Component:</b> (Advanced) Specify the index of the component
           for which the above values are to be displayed.
-       </li>
-
-       <li>
-          <b>Scan Control:</b> Select a scan <b>From:</b> and <b>To:</b> range
-          of values for exclusion from analysis.
-       </li>
-
-       <li>
-          <b>Exclude Scan Range</b> Initiate exclusion of the scans given
-          in the above controls.
-       </li>
-
-       <li>
-          <b>Advanced</b> Reveal advanced controls. The label of this button
-          is then changed to <b>Basic</b>, allowing a return to the original
-          main window controls configuration.
-       </li>
-
-       <li>
-          <b>Reset</b> Reset display parameters to defaults.
-       </li>
-
-       <li>
-          <b>Help</b> Display this and other documentation.
-       </li>
-
-       <li>
-          <b>Close</b> Close all windows and exit.
        </li>
 
        <li>
@@ -257,6 +247,28 @@
        <li>
           <b>(grid type)</b> (Advanced) Select a moving-time or
           constant-time grid type.
+       </li>
+
+       <li>
+          <b>Scan Control:</b> Select a scan <b>From:</b> and <b>To:</b> range
+          of values for exclusion from analysis.
+       </li>
+
+       <li>
+          <b>Exclude Scan Range</b> Initiate exclusion of the scans given
+          in the above controls.
+       </li>
+
+       <li>
+          <b>Reset</b> Reset display parameters to defaults.
+       </li>
+
+       <li>
+          <b>Help</b> Display this and other documentation.
+       </li>
+
+       <li>
+          <b>Close</b> Close all windows and exit.
        </li>
 
        <li>

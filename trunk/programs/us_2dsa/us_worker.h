@@ -39,7 +39,7 @@ class WorkerThread : public QThread
 
       void calc_residuals(    void );
       void compute_a_tilde(  QVector< double >& );
-      void compute_L_tildes( int, int, int,
+      void compute_L_tildes( int, int,
                              QVector< double >&,
                              const QVector< double >& );
       void compute_L_tilde(  QVector< double >&,
@@ -69,9 +69,6 @@ class WorkerThread : public QThread
                              QVector< double >&,
                              const QVector< double >&,
                              const QVector< double >& );
-
-      QMutex mutex;
-      QWaitCondition condition;
 
       double  llim_s;        // lower limit in s (UGRID)
       double  llim_k;        // lower limit in k (UGRID)
