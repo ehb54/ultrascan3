@@ -1,5 +1,6 @@
 #include "us_mpi_analysis.h"
 #include "us_math2.h"
+#include "us_tar.h"
 
 #include <mpi.h>
 #include <sys/user.h>
@@ -8,18 +9,52 @@ int main( int argc, char* argv[] )
 {
    MPI_Init( &argc, &argv );
    QCoreApplication application( argc, argv );
+   //US_MPI_Analysis* program = new US_MPI_Analysis( argv[ 1 ] );
    new US_MPI_Analysis( argv[ 1 ] );
-   // return application.exec();
+   
+   //QTimer::singleShot( 10, program, SLOT( start() ) );
+   //return application.exec();
 }
 
 // Constructor
-US_MPI_Analysis::US_MPI_Analysis( const QString& xmlfile ) : QObject()
+US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
 {
    MPI_Comm_size( MPI_COMM_WORLD2, &node_count );
    MPI_Comm_rank( MPI_COMM_WORLD2, &my_rank );
 
    if ( my_rank == 0 ) 
       socket = new QUdpSocket( this );
+
+   QString output_dir = "output";
+   QDir    d( "." );
+
+   if ( my_rank == 0 )
+   {
+      // Unpack the input tarfile
+      US_Tar tar;
+
+      int result = tar.extract( tarfile );
+
+      if ( result != TAR_OK ) abort( "Could not unpack " + tarfile );
+      
+      // Create a dedicated output directory and make sure it's empty
+      // During testing, it may not always be empty
+      QDir output( "." );
+      output.mkdir  ( output_dir );
+      output.setPath( output_dir );
+
+      QStringList files = output.entryList( QStringList( "*" ), QDir::Files );
+      QString     file;
+
+      foreach( file, files ) output.remove( file );
+   }
+ 
+   MPI_Barrier( MPI_COMM_WORLD2 ); // Sync everybody up
+
+   QStringList files = d.entryList( QStringList( "hpc*.xml" ) );
+   if ( files.size() != 1 ) abort( "Could not find unique hpc input file." );
+   
+   QString xmlfile = files[ 0 ];
 
    maxrss         = 0;
    set_count      = 0;
@@ -32,7 +67,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& xmlfile ) : QObject()
    analysisDate = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
 
    // Clear old list of output files if it exists
-   QFile::remove( "analysis_files.txt" );
+   //QFile::remove( "analysis_files.txt" );
 
    US_Math2::randomize();   // Set system random sequence
 
@@ -79,6 +114,10 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& xmlfile ) : QObject()
       }
    }
 
+   // After reading all input, set the working directory for file output.
+   QDir::setCurrent( output_dir );
+
+   // Set some minimums
    max_iterations  = parameters[ "max_iterations" ].toInt();
    max_iterations  = max( max_iterations, 1 );
 
@@ -156,19 +195,32 @@ void US_MPI_Analysis::start( void )
       else
           _2dsa_worker();
    }
-   
-   if ( my_rank == 0 )
-   {
-      send_udp( "Finished: " + QString::number( maxrss) );
-      debug   ( "Finished: " + QString::number( maxrss) );
-   }
-
    /*
    else if ( analysis_type == "GA" )
    {
 
    }
    */
+   
+   if ( my_rank == 0 )
+   {
+      send_udp( "Finished: " + QString::number( maxrss) );
+      qDebug() << "Finished: " + QString::number( maxrss );
+   }
+
+   // Pack results
+   if ( my_rank == 0 )
+   {
+      QDir        d( "." );
+      QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
+
+      US_Tar tar;
+      tar.create( "analysis-results.tar", files );
+
+      // Remove the files we just put into the tar archive
+      QString file;
+      foreach( file, files ) d.remove( file );
+   }
 
    MPI_Finalize();
    exit ( 0 );
@@ -206,10 +258,3 @@ void US_MPI_Analysis::abort( const QString& message, int error )
     MPI_Abort( MPI_COMM_WORLD2, error );
     exit( error );
 }
-
-// This can probably go away
-void US_MPI_Analysis::debug( const QString& s )
-{
-   qDebug() << s;
-}
-

@@ -5,6 +5,131 @@
 #include "us_simparms.h"
 #include "us_constants.h"
 
+void US_MPI_Analysis::_2dsa_master( void )
+{
+   init_solutes();
+   fill_queue();
+
+   current_dataset     = 0;
+   datasets_to_process = 1;  // Process one dataset at a time for now
+
+QTime   time;  // For debug/timing
+QString time_string;
+time                = QTime::currentTime();
+qDebug() << "Start" << time.toString( "HHmmss.zzz" );
+
+   while ( true )
+   {
+      int worker;
+
+      // Give the jobs to the workers
+      while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
+      {
+         worker                 = worker_status.indexOf( READY );
+         _2dsa_Job job          = job_queue.takeFirst();
+         submit( job, worker );
+         worker_depth [ worker ] = job.mpi_job.depth;
+         worker_status[ worker ] = WORKING;
+      }
+
+      QString progress = 
+         "Iteration: "    + QString::number( iterations ) +
+         "; Dataset: "    + QString::number( current_dataset ) +
+         "; Meniscus: "   + 
+              QString::number( meniscus_values[ meniscus_run ], 'f', 3 ) +
+         "; MonteCarlo: " + QString::number( mc_iteration );
+      
+      send_udp( progress );
+
+time        = QTime::currentTime();
+time_string = time.toString( "HHmmss.zzz" );
+
+      // All done with the pass if no jobs are ready or running
+      if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
+      {
+         // Iterative refinement
+         if ( iterations < max_iterations + 1 )
+         {   
+qDebug() << "Iterations/variance/diff" << iterations 
+         << previous_values.variance 
+         << simulation_values.variance 
+         << fabs( previous_values.variance - simulation_values.variance ) 
+         << time_string;
+
+            iterate();
+         }
+         
+         if ( ! job_queue.isEmpty() ) continue;
+           
+         iterations = 1;
+
+         // Manage multiple data sets
+         if ( data_sets.size() > 1  &&  datasets_to_process == 1 )
+         {
+qDebug() << "Data set" <<  current_dataset << simulation_values.variance << time_string;
+            global_fit();
+         }
+
+         if ( ! job_queue.isEmpty() ) continue;
+qDebug() << "Variances" << simulation_values.variances; 
+         write_output();
+
+         // Fit meniscus 
+         if ( meniscus_run + 1 < meniscus_values.size() )
+         {
+qDebug() << "Fit meniscus" << meniscus_run << simulation_values.variance << time_string;
+            set_meniscus(); 
+         }
+
+         if ( ! job_queue.isEmpty() ) continue;
+         
+         // Monte Carlo
+         if ( ++mc_iteration < mc_iterations )
+         {
+qDebug() << "MC Iteration" << mc_iteration << simulation_values.variance << time_string;
+            set_monteCarlo(); 
+         }
+         if ( ! job_queue.isEmpty() ) continue;
+
+qDebug() << "shutdown all" << time_string;
+         shutdown_all();  // All done
+qDebug() << "Done" << time_string;
+         break;           // Break out of main loop.
+      }
+
+      // Wait for worker to send a message
+      int        size[ 3 ];
+      MPI_Status status;
+
+      MPI_Recv( &size, 
+                3, 
+                MPI_INT2,
+                MPI_ANY_SOURCE,
+                MPI_ANY_TAG,
+                MPI_COMM_WORLD2,
+                &status);
+
+      switch( status.MPI_TAG )
+      {
+         case MPI_Job::READY: // Ready for work
+            worker = status.MPI_SOURCE;
+            worker_status[ worker ] = READY;
+            break;
+
+         case MPI_Job::RESULTS: // Return solute data
+            process_results( status.MPI_SOURCE, size );
+            break;
+
+         default:  // Should never happen
+            QString msg =  "Master 2DSA:  Received invalid status " +
+                           QString::number( status.MPI_TAG );
+            abort( msg );
+            break;
+      }
+   } 
+}
+
+//////////////////
 QVector< US_MPI_Analysis::Solute > US_MPI_Analysis::create_solutes( 
         double s_min,   double s_max,   double s_step,
         double ff0_min, double ff0_max, double ff0_step )
@@ -24,7 +149,7 @@ QVector< US_MPI_Analysis::Solute > US_MPI_Analysis::create_solutes(
 }
 
 //////////////////
-void US_MPI_Analysis::_2dsa_master( void )
+void US_MPI_Analysis::init_solutes( void )
 {
 // For now assume one data set
    calculated_solutes.clear();
@@ -63,10 +188,11 @@ void US_MPI_Analysis::_2dsa_master( void )
    
       }
    }
+}
 
-   QTime   time;  // For debug/timing
-   QString time_string;
-
+//////////////////
+void US_MPI_Analysis::fill_queue( void )
+{
    worker_status.resize( node_count );
    worker_depth .resize( node_count );
 
@@ -85,110 +211,6 @@ void US_MPI_Analysis::_2dsa_master( void )
       job.solutes         = orig_solutes[ i ];
       job_queue << job;
    }
-
-   current_dataset     = 0;
-   datasets_to_process = 1;  // Process one dataset at a time for now
-
-time                = QTime::currentTime();
-qDebug() << "Start" << time.toString( "HHmmss.zzz" );
-
-   while ( true )
-   {
-      int worker;
-top:
-      // Give the jobs to the workers
-      while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
-      {
-         worker                 = worker_status.indexOf( READY );
-         _2dsa_Job job          = job_queue.takeFirst();
-         submit( job, worker );
-         worker_depth [ worker ] = job.mpi_job.depth;
-         worker_status[ worker ] = WORKING;
-      }
-
-time        = QTime::currentTime();
-time_string = time.toString( "HHmmss.zzz" );
-
-      // All done with the pass if no jobs are ready or running
-      if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
-      {
-         // Iterative refinement
-         if ( iterations < max_iterations + 1 )
-         {   
-qDebug() << "Iterations/variance/diff" << iterations 
-         << previous_values.variance 
-         << simulation_values.variance 
-         << fabs( previous_values.variance - simulation_values.variance ) 
-         << time_string;
-
-            iterate();
-         }
-         if ( ! job_queue.isEmpty() ) goto top;;
-           
-         iterations = 1;
-
-         // Manage multiple data sets
-         if ( data_sets.size() > 1  &&  datasets_to_process == 1 )
-         {
-qDebug() << "Data set" <<  current_dataset << simulation_values.variance << time_string;
-            global_fit();
-         }
-         if ( ! job_queue.isEmpty() ) goto top;;
-qDebug() << "Variances" << simulation_values.variances; 
-         write_output();
-
-         // Fit meniscus 
-         if ( meniscus_run + 1 < meniscus_values.size() )
-         {
-qDebug() << "Fit meniscus" << meniscus_run << simulation_values.variance << time_string;
-            set_meniscus(); 
-         }
-
-         if ( ! job_queue.isEmpty() ) goto top;;
-         
-         // Monte Carlo
-         if ( ++mc_iteration < mc_iterations )
-         {
-qDebug() << "MC Iteration" << mc_iteration << simulation_values.variance << time_string;
-            set_monteCarlo(); 
-         }
-         if ( ! job_queue.isEmpty() ) goto top;;
-
-         shutdown_all();  // All done
-qDebug() << "Done" << time_string;
-         break;           // Break out of main loop.
-      }
-
-      // Wait for worker to send a message
-      int        size[ 3 ];
-      MPI_Status status;
-
-      MPI_Recv( &size, 
-                3, 
-                MPI_INT2,
-                MPI_ANY_SOURCE,
-                MPI_ANY_TAG,
-                MPI_COMM_WORLD2,
-                &status);
-
-      switch( status.MPI_TAG )
-      {
-         case MPI_Job::READY: // Ready for work
-            worker = status.MPI_SOURCE;
-            worker_status[ worker ] = READY;
-            break;
-
-         case MPI_Job::RESULTS: // Return solute data
-            process_results( status.MPI_SOURCE, size );
-            break;
-
-         default:  // Should never happen
-            QString msg =  "Master 2DSA:  Received invalid status " +
-                           QString::number( status.MPI_TAG );
-            abort( msg );
-            break;
-      }
-   } 
 }
 
 //////////////////
@@ -696,6 +718,7 @@ void US_MPI_Analysis::write_2dsa( void )
    model.wavelength  = data->wavelength.toDouble();
    model.modelGUID   = US_Util::new_guid();
    model.editGUID    = data->editGUID;
+   model.requestGUID = requestGUID;
    //model.optics      = ???  How to get this?  Is is needed?
    model.analysis    = US_Model::TWODSA;
    model.global      = US_Model::NONE;   // For now.  Will change later.
