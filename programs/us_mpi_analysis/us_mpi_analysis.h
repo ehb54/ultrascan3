@@ -22,8 +22,6 @@ class US_MPI_Analysis : public QObject
   public:
     US_MPI_Analysis( const QString& );
 
-    static void debug( const QString& );
-
   public slots:
     void start( void );
      
@@ -70,6 +68,7 @@ class US_MPI_Analysis : public QObject
     QString             cluster;
     QString             db_name;
     QString             modelGUID;
+    QString             requestGUID;
     QString             analysisDate;
 
     QMap< QString, QString > parameters;
@@ -206,6 +205,8 @@ class US_MPI_Analysis : public QObject
 
     QVector< Solute > create_solutes( double, double, double,
                                       double, double, double );
+    void              init_solutes  ( void );
+    void              fill_queue    ( void );
 
     // Master
     void     _2dsa_master      ( void );

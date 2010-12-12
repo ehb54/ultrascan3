@@ -74,11 +74,12 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
          port   = a.value( "port" ).toString().toInt();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "requestID" )
+      if ( xml.isStartElement()  &&  xml.name() == "request" )
       {
          a       = xml.attributes();
          QString s;
-         requestID = s.sprintf( "%06d", a.value( "id" ).toString().toInt() );
+         requestID   = s.sprintf( "%06d", a.value( "id" ).toString().toInt() );
+         requestGUID = a.value( "guid" ).toString();
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "jobParameters" )
@@ -149,7 +150,7 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DataSet* dataset )
          dataset->viscosity   = a.value( "value" ).toString().toDouble();
       }
       
-      if ( xml.isStartElement()  &&  xml.name() == "static_bottom" )
+      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_bottom" )
       {
          a                      = xml.attributes();
          dataset->centerpiece_bottom = a.value( "value" ).toString().toDouble();
