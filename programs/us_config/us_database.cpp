@@ -452,6 +452,21 @@ void US_Database::deleteDB( void )
 
 bool US_Database::test_connect( void )
 {
+   if ( le_host              ->text().isEmpty() ||  
+        le_dbname            ->text().isEmpty() ||
+        le_username          ->text().isEmpty() || 
+        le_password          ->text().isEmpty() ||
+        le_investigator_email->text().isEmpty() || 
+        le_investigator_pw   ->text().isEmpty() )
+   {
+      QMessageBox::warning( this,
+        tr( "Missing Data" ),
+        tr( "Please fill in all fields before testing the connection." ) );
+
+      return false;
+   }
+
+
    QString error;
    US_DB2  db;
    bool ok = db.test_secure_connection( 
