@@ -22,6 +22,8 @@ US_2dsaProcess::US_2dsaProcess( US_DataIO2::EditedData* da_exper,
    dbg_level        = US_Settings::us_debug();
    maxrss           = 0;              // max memory
    maxdepth         = 0;              // maximum depth index of tasks
+   ntisols          = 0;              // number total task input solutes
+   ntcsols          = 0;              // number total task computed solutes
    varitol          = 1e-12;          // variance difference tolerance
    r_iter           = 0;              // refinement iteration index
    mm_iter          = 0;              // meniscus/MC iteration index
@@ -70,6 +72,8 @@ DbgLv(1) << "2P(2dsaProc): start_fit()";
    errMsg      = tr( "NO ERROR: start" );
    maxrss      = 0;
    maxdepth    = 0;
+   ntisols     = 0;
+   ntcsols     = 0;
    r_iter      = 0;
    mm_iter     = 0;
 
@@ -107,22 +111,28 @@ DbgLv(1) << "MENISC: mm_iter meniscus bmeniscus"
       }
    }
 
-   // data dimensions
+   // experiment data dimensions
    nscans      = edata->scanData.size();
    npoints     = edata->x.size();
-   // grid deltas     (overall increment between points)
-   gdelta_s    = ( suplim - slolim ) / (double)( nssteps - 1 );
-   gdelta_k    = ( kuplim - klolim ) / (double)( nksteps - 1 );
    // subgrid deltas  (increments between subgrid points)
-   sdelta_s    = gdelta_s * (double)ngrefine;
-   sdelta_k    = gdelta_k * (double)ngrefine;
-   maxtsols    = mintsols;
+   int nsubp_s = ( nssteps + ngrefine - 1 ) / ngrefine;
+   int nsubp_k = ( nksteps + ngrefine - 1 ) / ngrefine;
+   sdelta_s    = ( suplim - slolim ) / (double)( max( nsubp_s - 1, 1 ) );
+   sdelta_k    = ( kuplim - klolim ) / (double)( max( nsubp_k - 1, 1 ) );
+   // grid deltas     (overall increment between grid points)
+   gdelta_s    = sdelta_s / (double)ngrefine;
+   gdelta_k    = sdelta_k / (double)ngrefine;
+   nsubgrid    = sq( ngrefine );
+   int kgref   = ngrefine - 1;
+   int kgrefsq = sq( kgref );
+   int kksubg  = nksteps * nssteps
+                 - ( kgref + kgrefsq ) * ( nsubp_s + nsubp_k ) + kgrefsq;
+DbgLv(1) << "2P:    kgref kgrefsq kksubg" << kgref << kgrefsq << kksubg;
+   maxtsols    = nsubp_s * nsubp_k;
+   maxtsols    = max( maxtsols, mintsols );
 
-   nsubgrid    = ngrefine * ngrefine;
    int ktcsol  = maxtsols - 5;
-   int nnstep  = ( noisflag > 0 ) ? ( sq( ktcsol ) / 10 + 2 ) : 2;
-   nnstep     *= nsubgrid;
-   int kksubg  = nksteps * nssteps;
+   int nnstep  = ( noisflag > 0 ? ( sq( ktcsol ) / 10 + 2 ) : 2 ) * nsubgrid;
    nctotal     = kksubg + nnstep + estimate_steps( ( kksubg / 8 ) );
 
    kcsteps     = 0;
@@ -130,10 +140,11 @@ DbgLv(1) << "MENISC: mm_iter meniscus bmeniscus"
    kctask      = 0;
    kstask      = 0;
    nthreads    = ( nthreads < nsubgrid ) ? nthreads : nsubgrid;
-DbgLv(1) << "2P:   nscans npoints" << nscans << npoints << " gdlts gdltk"
- << gdelta_s << gdelta_k << " sdlts sdltk" << sdelta_s << sdelta_k;
-DbgLv(1) << "2P:   nsubgrid nctotal nthreads"
- << nsubgrid << nctotal << nthreads;
+DbgLv(1) << "2P:   nscans npoints" << nscans << npoints;
+DbgLv(1) << "2P:   gdelta_s gdelta_k" << gdelta_s << gdelta_k
+ << " sdelta_s sdelta_k" << sdelta_s << sdelta_k;
+DbgLv(1) << "2P:   nsubgrid nctotal nthreads maxtsols"
+ << nsubgrid << nctotal << nthreads << maxtsols;
    max_rss();
 DbgLv(1) << "2P: (1)maxrss" << maxrss;
 
@@ -221,6 +232,8 @@ DbgLv(1) << "  STOPTHR:  thread aborted";
    tkdepths .clear();
    c_solutes.clear();
    maxdepth  = 0;
+   ntisols   = 0;
+   ntcsols   = 0;
 
    emit message_update( pmessage_head() +
       tr( "All computations have been aborted." ), false );
@@ -455,6 +468,7 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
 
    int thrx   = wresult.thrn - 1;
    free_worker( thrx );
+DbgLv(1) << "FIN_FIN: Run Time: hr min sec" << ktimeh << ktimem << ktimes;
 DbgLv(1) << "FIN_FIN: maxrss memmb nthr" << maxrss << memmb << nthreads
  << " nsubg nsst nkst noisf" << nsubgrid << nssteps << nksteps << noisflag;
 DbgLv(1) << "FIN_FIN:   kcsteps nctotal" << kcsteps << nctotal;
@@ -608,6 +622,10 @@ void US_2dsaProcess::process_job( WorkerThread* wthrd )
    int depth  = wresult.depth;     // depth of result
 DbgLv(1) << "PROCESS_JOB thrn" << thrn << "taskx" << taskx
  << "depth" << wresult.depth;
+   int nrcso  = wresult.csolutes.size();
+   ntcsols   += nrcso;
+if ( taskx < 9 || taskx > (nsubgrid-4) )
+DbgLv(1) << "PJ: taskx csolutes size tot" << taskx << nrcso << ntcsols;
 
    max_rss();
 
@@ -654,10 +672,7 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
          if ( r_iter == 0 )
          {  // in 1st iteration, re-estimate total progress steps
             int nsolest   = ( nksteps * nssteps ) / 8 ;  // solutes estimated
-            int nsolact   = 0;                           // actually computed
-
-            for ( int jj = 0; jj < job_queue.size(); jj++ )
-                nsolact  += job_queue[ jj ].isolutes.size();
+            int nsolact   = ntcsols;                     // actually computed
 
             int todoest   = estimate_steps( nsolest );
             int todoact   = estimate_steps( nsolact );
@@ -677,6 +692,9 @@ DbgLv(1) << "THR_FIN:   (new)kcst ncto" <<  kcsteps << nctotal
                               false );
 
          maxdepth       = 1;
+
+         if ( nextc < maxtsols  &&  jobs_at_depth( 1 ) == 0 )
+            maxdepth       = 0;  // handle no depth 1 jobs yet submitted
       }
    }
 
@@ -694,6 +712,7 @@ DbgLv(1) << "THR_FIN:   (new)kcst ncto" <<  kcsteps << nctotal
          WorkPacket wtask = wresult;
          int taskx    = tkdepths.size();
          int depthn   = dd + 1;
+DbgLv(1) << "THR_FIN:    QT: taskx depth solsz" << taskx << depth << c_solutes[dd].size();
          queue_task( wtask, slolim, klolim, taskx, depthn, jnois,
                      c_solutes[ dd ] );
 
@@ -702,12 +721,12 @@ DbgLv(1) << "THR_FIN:   (new)kcst ncto" <<  kcsteps << nctotal
    }
 
    // Is anyone working?
-   bool working = wkstates.indexOf( WORKING ) >= 0;
+   bool no_working = wkstates.indexOf( WORKING ) < 0;
 
    // Submit one last time with all solutes if necessary
    if ( depth == maxdepth    &&
         job_queue.isEmpty()  &&
-        ! working            &&
+        no_working           &&
         c_solutes[ depth ].size() > wresult.csolutes.size() )
    {
       final_computes();
@@ -754,6 +773,10 @@ void US_2dsaProcess::queue_task( WorkPacket& wtask, double llss, double llsk,
    wtask.csolutes.clear();         // clear output vectors
    wtask.ti_noise.clear();
    wtask.ri_noise.clear();
+   int nrisols    = isolutes.size();
+   ntisols       += nrisols;
+if ( taskx < 9 || taskx > (nsubgrid-4) )
+DbgLv(1) << "QT: taskx isolutes size tot" << taskx << nrisols << ntisols;
 
    tkdepths << depth;              // record work task depth
 
@@ -788,8 +811,8 @@ DbgLv(1) << "ITER: start of iteration" << r_iter+1;
 DbgLv(1) << "ITER:   r-iter0 ncto ncsol" << nctotal << ncsol;
    int ktisol   = maxtsols - 5;
    int ktask    = nsubgrid + 1;
-   int kstep    = ( r_iter == 1 ) ? ( ncsol + 4 ) : 4;
-   int knois    = ktask * ( ( kstep * ktisol * 2 + sq( kstep ) ) / 10 );
+   int kstep    = ( r_iter == 1 ) ? ( ncsol + 8 ) : 4;
+   int knois    = ktask * ( ( kstep * ktisol + sq( kstep ) ) / 10 );
 DbgLv(1) << "ITER:    nsubg ktask kstep knois" << nsubgrid << ktask << kstep << knois;
    int kadd     = ( ktask * kstep ) + ( ( noisflag == 0 ) ? 0 : knois );
    nctotal     += kadd;
@@ -800,6 +823,8 @@ DbgLv(1) << "ITER:   r-iter1 ncto (diff)" << nctotal << kadd;
    kctask       = 0;
    kstask       = 0;
    maxdepth     = 0;
+   ntisols      = 0;
+   ntcsols      = 0;
    max_rss();
 
    ktask        = 0;                 // task index
@@ -890,7 +915,7 @@ int US_2dsaProcess::estimate_steps( int ncsol )
    // Estimate number of solutes and steps per task
    int ktisol  = maxtsols - 5;
    int ktcsol  = ktisol / 8 + 1;
-   int ktstep  = ktisol + ( ( noisflag > 0 ) ? ( sq( ktisol ) / 10 + 12 ) : 2 );
+   int ktstep  = ktisol + ( ( noisflag > 0 ) ? ( sq( ktisol ) / 10 + 2 ) : 2 );
 DbgLv(1) << "ES: ncsol ktisol ktcsol ktstep" << ncsol << ktisol
  << ktcsol << ktstep;
 
@@ -1042,6 +1067,8 @@ void US_2dsaProcess::requeue_tasks()
    kstask = nthreads;
    kctask       = 0;
    maxdepth     = 0;
+   ntisols      = 0;
+   ntcsols      = 0;
    r_iter       = 0;
 
    emit message_update(

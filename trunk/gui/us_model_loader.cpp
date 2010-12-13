@@ -427,6 +427,12 @@ void US_ModelLoader::list_models()
                   desc.reqGUID     = attr.value( "requestGUID" ).toString();
                   QString mCarl    = attr.value( "monteCarlo"  ).toString();
                   desc.iterations  = mCarl.toInt() == 0 ?  0 : 1;
+
+                  if ( desc.description.simplified().length() < 2 )
+                  {
+                     desc.description = " ( GUID " + desc.modelGUID.left( 8 ) +
+                                        "... : " + tr( "empty description )" );
+                  }
 //*DEBUG
 //if (!listall) {
 //qDebug() << " ddesc" << desc.description;
@@ -510,6 +516,13 @@ void US_ModelLoader::list_models()
             desc.filename.clear();
             desc.reqGUID     = "needed";
             desc.iterations  = 0;
+
+
+            if ( desc.description.simplified().length() < 2 )
+            {
+               desc.description = " ( ID " + desc.DB_id
+                                  + tr( " : empty description )" );
+            }
 
             all_model_descrips << desc;   // add to full models list
          }

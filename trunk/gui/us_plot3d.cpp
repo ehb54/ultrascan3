@@ -874,9 +874,9 @@ void US_Plot3D::createToolBar()
    frameGroup->addAction( noneAct   );
    movieAct->setCheckable( true );
    frameAct->setCheckable( true );
-   boxAct->  setCheckable( true );
-   noneAct-> setCheckable( true );
-   noneAct-> setChecked(   true );
+   boxAct  ->setCheckable( true );
+   noneAct ->setCheckable( true );
+   frameAct->setChecked(   true );
 
    fileToolBar->addAction( gridfrAct );
    fileToolBar->addAction( gridbAct  );
