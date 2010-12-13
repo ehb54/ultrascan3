@@ -23,7 +23,7 @@ WorkerThread::WorkerThread( QObject* parent )
 WorkerThread::~WorkerThread()
 {
    wait();
-DbgLv(1) << "2P(WT):   Thread destroyed";
+//DbgLv(1) << "2P(WT):   Thread destroyed";
 }
 
 // define work for a worker thread
@@ -67,11 +67,8 @@ DbgLv(1) << "THR RUN: taskx thrn" << taskx << thrn;
 
    calc_residuals();              // do all the work here
 
-//DbgLv(1) << "  RUN call quit";
    quit();
-//DbgLv(1) << "  RUN call exec";
    exec();
-//DbgLv(1) << "  RUN return";
 
    emit work_complete( this );    // signal that a thread's work is done
 }
@@ -119,7 +116,7 @@ DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
    double vbar      = dvv.section( " ", 3, 3 ).toDouble();
    double avgtemp   = edata->average_temperature();
 
-DbgLv(1) << "TM:BEG:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DebugTime("BEG:calcres");
    // populate b array with experiment data concentrations
    int    kk        = 0;
    for ( int ss = 0; ss < nscans; ss++ )
@@ -144,7 +141,6 @@ if (taskx==0) DbgLv(1) << "   CR: dens visc vbar temp corr" << density
           increp  = ( increp < 10 ) ? 10 : increp;
    int    kstep   = 0;                             // progress step count
           kk      = 0;                             // nnls_a output index
-//DbgLv(1) << "  TR:     BEG astfem_rsa loop";
 
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
@@ -154,19 +150,15 @@ if (taskx==0) DbgLv(1) << "   CR: dens visc vbar temp corr" << density
       model.components[ 0 ].s    = qAbs( solute_i[ cc ].s ) * sfactor;
       model.components[ 0 ].f_f0 = solute_i[ cc ].k;
       model.update_coefficients();
-//DbgLv(2) << "  TR:   cc" << cc << "   s k D"
-// << model.components[0].s << model.components[0].k << model.components[0].D;
 
       // initialize simulation data with experiment grid
       US_AstfemMath::initSimData( sdata, *edata, 0.0 );
 
-//DbgLv(2) << "  TR:     astfem_rsa calc  cc" << cc;
       // calculate Astfem_RSA solution
       US_Astfem_RSA astfem_rsa( model, simparms );
       astfem_rsa.calculate( sdata );
       if ( abort ) return;
 
-//DbgLv(2) << "  TR:     populate nnls_a";
       // Populate the A matrix for the NNLS routine with the model function
       for ( int ss = 0; ss < nscans; ss++ )
          for ( int rr = 0; rr < npoints; rr++ )
@@ -178,7 +170,6 @@ if (taskx==0) DbgLv(1) << "   CR: dens visc vbar temp corr" << density
          kstep = 0;
       }
    }
-//DbgLv(1) << "  TR:     END astfem_rsa loop";
 
    if ( kstep > 0 )
       emit work_progress( kstep );
@@ -188,7 +179,7 @@ if (taskx==0) DbgLv(1) << "   CR: dens visc vbar temp corr" << density
    int kstodo = nsolutes / 50;
    kstodo     = max( kstodo, 2 );
 
-DbgLv(1) << "TM:BEG:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DebugTime("BEG:clcr-nn");
    if ( ( noisflag & 1 ) != 0 )
    {
       if ( abort ) return;
@@ -308,7 +299,7 @@ DbgLv(1) << "  noise small NNLS";
       // Note:  ti_noise and ri_noise are already zero
 
    }  // End of core calculations
-DbgLv(1) << "TM:END:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DebugTime("END:clcr-nn");
 
    solute_c.clear();
    if ( abort ) return;
@@ -348,7 +339,7 @@ DbgLv(1) << "TM:END:clcr-nn" << QTime::currentTime().toString("hh:mm:ss.zzz");
       ri_noise.count  =  nrinois;
    }
 
-DbgLv(1) << "TM:END:calcres" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DebugTime("END:calcres");
 }
 
 
@@ -440,7 +431,7 @@ void WorkerThread::ri_small_a_and_b( int                      nsolutes,
                                      const QVector< double >& L_tildes,
                                      const QVector< double >& nnls_a )
 {
-DbgLv(1) << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DebugTime("BEG:ri_smab");
    int kstodo = sq( nsolutes ) / 10;   // progress steps to report
    int incprg = nsolutes / 20;         // increment between reports
    incprg     = max( incprg,  1 );
@@ -454,6 +445,7 @@ DbgLv(1) << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
       int    jst2  = cc * nrinois;
       int    jjna  = jsa2;
       int    jjlt  = jst2;
+      double sum_b = small_b[ cc ];
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
@@ -467,10 +459,14 @@ DbgLv(1) << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
          double Ltil  = L_tildes[ jjlt++ ];
 
          for ( int rr = 0; rr < npoints; rr++ )
-            small_b[ cc ] += ( ( edata->value( ss, rr ) - atil )
-                             * ( nnls_a[ jjna++ ]       - Ltil ) );
+         {
+            sum_b += ( ( edata->value( ss, rr ) - atil )
+                     * ( nnls_a[ jjna++ ]       - Ltil ) );
+         }
 
       }
+
+      small_b[ cc ] = sum_b;
 
       for ( int kk = 0; kk < nsolutes; kk++ )
       {
@@ -485,9 +481,10 @@ DbgLv(1) << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
          //     L_tildes[ cc * nrinois + ss ] );
          int    jjma  = kk * nsolutes + cc;
          int    jja1  = kk * ntotal;
-         int    jjt1  = kk * nrinois;
          int    jja2  = jsa2;
+         int    jjt1  = kk * nrinois;
          int    jjt2  = jst2;
+         double sum_a = small_a[ jjma ];
 
          for ( int ss = 0; ss < nscans; ss++ )
          {
@@ -495,9 +492,13 @@ DbgLv(1) << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
             double Ltil2 = L_tildes[ jjt2++ ];
 
             for ( int rr = 0; rr < npoints; rr++ )
-               small_a[ jjma ] += ( ( nnls_a[ jja1++ ] - Ltil1 )
-                                  * ( nnls_a[ jja2++ ] - Ltil2 ) );
+            {
+               sum_a += ( ( nnls_a[ jja1++ ] - Ltil1 )
+                        * ( nnls_a[ jja2++ ] - Ltil2 ) );
+            }
          }
+
+         small_a[ jjma ] = sum_a;
       }
 
       if ( ++kstep == incprg )
@@ -512,7 +513,7 @@ DbgLv(1) << "TM:BEG:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
 
    if ( kstodo > 0 )
       emit work_progress( kstodo );
-DbgLv(1) << "TM:END:ri-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DebugTime("END:ri_smab");
 }
 
 void WorkerThread::ti_small_a_and_b( int                      nsolutes,
@@ -524,7 +525,7 @@ void WorkerThread::ti_small_a_and_b( int                      nsolutes,
                                      const QVector< double >& L_bars,
                                      const QVector< double >& nnls_a )
 {
-DbgLv(1) << "TM:BEG:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DebugTime("BEG:ti-smab");
    int kstodo = sq( nsolutes ) / 10;   // progress steps to report
    int incprg = nsolutes / 20;         // increment between reports
    incprg     = max( incprg,  1 );
@@ -535,7 +536,9 @@ DbgLv(1) << "TM:BEG:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
       int jjsa  = cc;
-      int jjna  = cc * ntotal;
+      int jssa  = cc * ntotal;
+      int jssb  = cc * ntinois;
+      int jjna  = jssa;
 
       //small_b[ cc ] += 
       //   ( edata->value( ss, rr ) - a_bar[ rr ] )
@@ -543,15 +546,20 @@ DbgLv(1) << "TM:BEG:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
       //   ( nnls_a[ cc * ntotal + ss * npoints + rr ]
       //     -
       //     L_bars[ cc * ntinois + rr ] );
+      double sum_b = small_b[ cc ];
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         int jjlb  = cc * ntinois;
+         int jjlb  = jssb;
 
          for ( int rr = 0; rr < npoints; rr++ )
-            small_b[ cc ] += ( edata->value( ss, rr ) - a_bar [ rr ]     )
-                           * ( nnls_a[ jjna++ ]       - L_bars[ jjlb++ ] );
+         {
+            sum_b  += ( ( edata->value( ss, rr ) - a_bar [ rr ]     )
+                      * ( nnls_a[ jjna++ ]       - L_bars[ jjlb++ ] ) );
+         }
       }
+
+      small_b[ cc ] = sum_b;
 
       //small_a[ kk * nsolutes + cc ] +=
       //   ( nnls_a[ kk * ntotal  + ss * npoints + rr ]
@@ -563,28 +571,25 @@ DbgLv(1) << "TM:BEG:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
       //     L_bars[ cc * ntinois + rr ] );
       for ( int kk = 0; kk < nsolutes; kk++ )
       {
-         int jsna1 = kk * ntotal;
-         int jslb1 = kk * ntinois;
-         int jsna2 = cc * ntotal;
-         int jslb2 = cc * ntinois;
+         int    jjna1 = kk * ntotal;
+         int    jjna2 = jssa;
+         int    jslb1 = kk * ntinois;
+         int    jslb2 = jssb;
+         double sum_a = small_a[ jjsa ];
 
          for ( int ss = 0; ss < nscans; ss++ )
          {
-            int jjna1 = jsna1;
             int jjlb1 = jslb1;
-            int jjna2 = jsna2;
             int jjlb2 = jslb2;
 
             for ( int rr = 0; rr < npoints; rr++ )
             {
-               small_a[ jjsa ] +=
-                  ( nnls_a[ jjna1++ ] - L_bars[ jjlb1++ ] ) *
-                  ( nnls_a[ jjna2++ ] - L_bars[ jjlb2++ ] );
+               sum_a += ( ( nnls_a[ jjna1++ ] - L_bars[ jjlb1++ ] )
+                        * ( nnls_a[ jjna2++ ] - L_bars[ jjlb2++ ] ) );
             }
-
-            jsna1    += npoints;  
-            jsna2    += npoints;  
          }
+
+         small_a[ jjsa ] = sum_a;
          jjsa     += nsolutes;  
       }
 
@@ -600,7 +605,7 @@ DbgLv(1) << "TM:BEG:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
 
    if ( kstodo > 0 )
       emit work_progress( kstodo );
-DbgLv(1) << "TM:END:ti-smab" << QTime::currentTime().toString("hh:mm:ss.zzz");
+DebugTime("END:ti-smab");
 }
 
 void WorkerThread::compute_L_bar( QVector< double >&       L_bar,
@@ -668,5 +673,12 @@ void WorkerThread::compute_L_bars( int                      nsolutes,
          L_bars[ r_index ] *= avgscale;
       }
    }
+}
+
+// debug message with thread number and time value
+void WorkerThread::DebugTime( QString mtext )
+{
+DbgLv(1) << "w" << thrn << "TM:"
+ << mtext + " " + QTime::currentTime().toString("hh:mm:ss.zzz");
 }
 

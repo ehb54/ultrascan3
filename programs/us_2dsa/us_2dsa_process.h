@@ -159,10 +159,11 @@ class US_EXTERN US_2dsaProcess : public QObject
       int        maxtsols;     // maximum number of task solutes
       int        mintsols;     // minimum number of depth 1ff task solutes
       int        maxdepth;     // maximum depth of iteration jobs
-      int        mxdepthc;     // maximum depth completed
       int        maxiters;     // maximum number of refinement iterations
       int        r_iter;       // refinement iteration index
       int        mm_iter;      // meniscus/MC iteration index
+      int        ntisols;      // number total task input solutes
+      int        ntcsols;      // number total task computed solutes
 
       bool       abort;        // flag used with stop_fit clicked
       bool       fnoionly;     // flag to use noise flag on final call only

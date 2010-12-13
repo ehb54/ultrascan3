@@ -1217,7 +1217,7 @@ void US_FeMatch::distrib_plot_stick( int type )
    QwtPlotGrid*  data_grid = us_grid( data_plot1 );
    QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
 
-   int     dsize  = model.components.size();
+   int     dsize  = model_loaded.components.size();
    double* xx     = new double[ dsize ];
    double* yy     = new double[ dsize ];
    double  xmin   = 1.0e30;
@@ -1230,10 +1230,10 @@ void US_FeMatch::distrib_plot_stick( int type )
 
    for ( int jj = 0; jj < dsize; jj++ )
    {
-      xval     = ( type == 0 ) ? model.components[ jj ].s :
-               ( ( type == 1 ) ? model.components[ jj ].mw :
-                                 model.components[ jj ].D );
-      yval     = model.components[ jj ].signal_concentration;
+      xval     = ( type == 0 ) ? model_loaded.components[ jj ].s :
+               ( ( type == 1 ) ? model_loaded.components[ jj ].mw :
+                                 model_loaded.components[ jj ].D );
+      yval     = model_loaded.components[ jj ].signal_concentration;
       xx[ jj ] = xval;
       yy[ jj ] = yval;
       xmin     = min( xval, xmin );
@@ -1318,7 +1318,7 @@ void US_FeMatch::distrib_plot_2d( int type )
    QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
    QwtSymbol     symbol;
 
-   int     dsize  = model.components.size();
+   int     dsize  = model_loaded.components.size();
    double* xx     = new double[ dsize ];
    double* yy     = new double[ dsize ];
    double  xmin   = 1.0e30;
@@ -1331,10 +1331,10 @@ void US_FeMatch::distrib_plot_2d( int type )
 
    for ( int jj = 0; jj < dsize; jj++ )
    {
-      xval     = ( ( type & 1 ) == 1 ) ? model.components[ jj ].s :
-                                         model.components[ jj ].mw;
-      yval     = ( type < 5          ) ? model.components[ jj ].f_f0 :
-                                         model.components[ jj ].D;
+      xval     = ( ( type & 1 ) == 1 ) ? model_loaded.components[ jj ].s :
+                                         model_loaded.components[ jj ].mw;
+      yval     = ( type < 5          ) ? model_loaded.components[ jj ].f_f0 :
+                                         model_loaded.components[ jj ].D;
       xx[ jj ] = xval;
       yy[ jj ] = yval;
       xmin     = min( xval, xmin );
@@ -3298,7 +3298,7 @@ QString US_FeMatch::scan_info( void ) const
 // Distribution information HTML string
 QString US_FeMatch::distrib_info() const
 {
-   int ncomp     = model.components.size();
+   int ncomp      = model_loaded.components.size();
    
    if ( ncomp == 0 )
       return "";
@@ -3317,11 +3317,11 @@ QString US_FeMatch::distrib_info() const
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {
-      double conc = model.components[ ii ].signal_concentration;
+      double conc = model_loaded.components[ ii ].signal_concentration;
       sum_c      += conc;
-      sum_mw     += model.components[ ii ].mw * conc;
-      sum_s      += model.components[ ii ].s  * conc;
-      sum_D      += model.components[ ii ].D  * conc;
+      sum_mw     += ( model_loaded.components[ ii ].mw * conc );
+      sum_s      += ( model_loaded.components[ ii ].s  * conc );
+      sum_D      += ( model_loaded.components[ ii ].D  * conc );
    }
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
@@ -3340,18 +3340,18 @@ QString US_FeMatch::distrib_info() const
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {
-      double conc = model.components[ ii ].signal_concentration;
+      double conc = model_loaded.components[ ii ].signal_concentration;
       double perc = 100.0 * conc / sum_c;
       mstr       += table_row(
-            QString().sprintf( "%10.4e", model.components[ ii ].mw   ),
-            QString().sprintf( "%10.4e", model.components[ ii ].s    ),
-            QString().sprintf( "%10.4e", model.components[ ii ].D    ),
-            QString().sprintf( "%10.4e", model.components[ ii ].f_f0 ),
+            QString().sprintf( "%10.4e", model_loaded.components[ ii ].mw   ),
+            QString().sprintf( "%10.4e", model_loaded.components[ ii ].s    ),
+            QString().sprintf( "%10.4e", model_loaded.components[ ii ].D    ),
+            QString().sprintf( "%10.4e", model_loaded.components[ ii ].f_f0 ),
             QString().sprintf( "%10.4e (%5.2f %%)", conc, perc       ) );
    }
 
    mstr += "</table>";
-   
+
    return mstr;
 }
 

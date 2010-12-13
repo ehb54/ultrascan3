@@ -69,6 +69,7 @@ class WorkerThread : public QThread
                              QVector< double >&,
                              const QVector< double >&,
                              const QVector< double >& );
+      void DebugTime( QString );
 
       double  llim_s;        // lower limit in s (UGRID)
       double  llim_k;        // lower limit in k (UGRID)

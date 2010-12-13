@@ -79,10 +79,10 @@ US_AnalysisControl::US_AnalysisControl( US_DataIO2::EditedData* dat_exp,
 DbgLv(1) << "idealThrCout" << nthr;
    ct_lolimits  = us_counter( 3,  0.1,    5,   1 );
    ct_uplimits  = us_counter( 3,    5,   10,  10 );
-   ct_nstepss   = us_counter( 3,    1, 1000, 100 );
+   ct_nstepss   = us_counter( 3,    1, 1000,  60 );
    ct_lolimitk  = us_counter( 3, 0.01,    3,   1 );
    ct_uplimitk  = us_counter( 3,    3,    6,   4 );
-   ct_nstepsk   = us_counter( 3,    1, 1000,  40 );
+   ct_nstepsk   = us_counter( 3,    1, 1000,  60 );
    ct_thrdcnt   = us_counter( 2,    1,   64, nthr );
    ct_lolimits->setStep(  0.1 );
    ct_uplimits->setStep(  0.1 );
@@ -111,7 +111,7 @@ DbgLv(1) << "idealThrCout" << nthr;
 
 
    ct_iters     = us_counter( 2,    1,    8,    1 );
-   ct_grrefine  = us_counter( 2,    1,   20,    7 );
+   ct_grrefine  = us_counter( 2,    1,   20,    6 );
    ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
    ct_menispts  = us_counter( 2,    3,   21,   10 );
    ct_mciters   = us_counter( 3,    3, 2000,   20 );
@@ -526,14 +526,12 @@ void US_AnalysisControl::progress_message( QString pmsg, bool append )
    QString amsg;
 
    if ( append )
-   {
+   {  // append to existing progress message
       amsg   = te_status->toPlainText() + "\n" + pmsg;
    }
 
    else
-   {
-      //int kk = le_iteration->text().toInt() + 1;
-      //amsg   = tr( "Iteration %1" ).arg( kk ) + ":\n" + pmsg;
+   {  // create a new progress message
       amsg   = pmsg;
    }
 

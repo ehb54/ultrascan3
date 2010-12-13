@@ -497,26 +497,37 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
    if ( m <= 0 || n <= 0 || a == NULL || b == NULL || x == NULL ) return 2;
 
    /* Allocate memory for working space, if required */
+   QVector< double > wVec;
+   QVector< double > zVec;
+   QVector< int >    iVec;
+
    double* w;
-
-   if ( wp !=NULL ) 
-      w = wp; 
-   else 
-      w = (double*)calloc( n, sizeof(double) );
-
    double* zz;
+   int*    index;
 
-   if ( zzp != NULL ) 
-      zz = zzp; 
-   else 
-      zz = (double*)calloc( m, sizeof(double) );
+   if ( wp != NULL )
+      w     = wp;
+   else
+   {
+      wVec.fill( 0.0, n );
+      w     = wVec.data();
+   }
 
-   int* index;
+   if ( zzp != NULL )
+      zz    = zzp;
+   else
+   {
+      zVec.fill( 0.0, m );
+      zz    = zVec.data();
+   }
 
-   if ( indexp != NULL ) 
-      index = indexp; 
-   else 
-      index= (int*)calloc( n, sizeof(int) );
+   if ( indexp != NULL )
+      index = indexp;
+   else
+   {
+      iVec.fill( 0, n );
+      index = iVec.data();
+   }
 
    if ( w == NULL || zz == NULL || index == NULL ) return 2;
 
@@ -537,6 +548,7 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
    
    int iter  = 0; 
    int itmax = n * 3;
+   int ja_dim1;
 
    while ( iz1 <= iz2 && nsetp < m ) 
    {
@@ -544,10 +556,11 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
       for ( iz = iz1; iz <= iz2; iz++ ) 
       {
          j  = index[ iz ]; 
+         ja_dim1 = j * a_dim1;
          sm = 0.0; 
          
          for( l = npp1; l < m; l++ ) 
-            sm += a[ l + j * a_dim1 ] * b[ l ];
+            sm += a[ l + ja_dim1 ] * b[ l ];
 
          w[ j ] = sm;
       }
@@ -576,8 +589,9 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
          /* Begin the transformation and check new diagonal element to avoid */
          /* near linear dependence. */
 
-         asave = a[ npp1 + j * a_dim1 ];
-         _nnls_h12( 1, npp1, npp1 + 1, m, &a[ j * a_dim1 ], 
+         ja_dim1 = j * a_dim1;
+         asave = a[ npp1 + ja_dim1 ];
+         _nnls_h12( 1, npp1, npp1 + 1, m, &a[ ja_dim1 ], 
                     1, &up, &dummy, 1, 1, 0 );
          
          unorm = 0.0;
@@ -585,13 +599,13 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
          if ( nsetp != 0 ) 
             for ( l = 0; l < nsetp; l++ ) 
             { 
-               d1     = a[ l + j * a_dim1 ]; 
+               d1     = a[ l + ja_dim1 ]; 
                unorm += d1 * d1;
             }
 
          unorm = sqrt( unorm );
 
-         d2 = unorm + ( d1 = a[ npp1 + j * a_dim1 ], fabs( d1 ) ) * 0.01;
+         d2 = unorm + ( d1 = a[ npp1 + ja_dim1 ], fabs( d1 ) ) * 0.01;
          
          if ( ( d2 - unorm ) > 0.0 ) 
          {
@@ -600,10 +614,10 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
 
             for ( l = 0; l < m; l++ ) zz[ l ] =b[ l ];
 
-            _nnls_h12( 2, npp1, npp1 + 1, m, &a[ j * a_dim1 ], 
+            _nnls_h12( 2, npp1, npp1 + 1, m, &a[ ja_dim1 ], 
                        1, &up, zz, 1, 1, 1 );
 
-            ztest = zz[ npp1 ] / a[ npp1 + j * a_dim1 ];
+            ztest = zz[ npp1 ] / a[ npp1 + ja_dim1 ];
 
             /* See if ztest is positive */
             if ( ztest > 0.0 ) break;
@@ -611,8 +625,8 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
 
          /* Reject j as a candidate to be moved from set Z to set P. Restore */
          /* A[npp1,j], set W[j]=0., and loop back to test dual coeffs again */
-         a[ npp1 + j * a_dim1 ] = asave; 
-         w[ j ]                 = 0.0;
+         a[ npp1 + ja_dim1 ] = asave; 
+         w[ j ]              = 0.0;
 
       } // while( true )
       
@@ -624,8 +638,8 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
       
       for ( l = 0; l < m; ++l ) b[ l ] =zz[ l ];
 
-      index[ iz  ] =index[ iz1 ]; 
-      index[ iz1 ] =j; 
+      index[ iz  ] = index[ iz1 ]; 
+      index[ iz1 ] = j; 
       iz1++; 
       nsetp        = npp1 + 1; 
       npp1++;
@@ -634,13 +648,13 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
          for ( jz = iz1; jz <= iz2; jz++ ) 
          {
             jj = index[ jz ];
-            _nnls_h12( 2, nsetp - 1, npp1, m, &a[ j * a_dim1 ], 
+            _nnls_h12( 2, nsetp - 1, npp1, m, &a[ ja_dim1 ], 
                        1, &up, &a[ jj * a_dim1 ], 1, a_dim1, 1 );
-      }
+         }
 
       if ( nsetp !=m ) 
          for ( l = npp1; l < m; l++ ) 
-            a[ l + j * a_dim1 ] = 0.0;
+            a[ l + ja_dim1 ] = 0.0;
 
       w[ j ]= 0.0;
 
@@ -705,19 +719,21 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
                jj++;
                for ( j = jj + 1; j < nsetp; j++ ) 
                {
-                  ii             = index[ j ]; 
+                  ii             = index[ j ];
+                  int  iia_dim1  = ii * a_dim1;
                   index[ j - 1 ] = ii;
 
-                  _nnls_g1( a [ j - 1 + ii * a_dim1 ], a[ j + ii * a_dim1 ], 
-                            &cc, &ss, &a[ j - 1 + ii * a_dim1 ] );
+                  _nnls_g1( a [ j - 1 + iia_dim1 ], a[ j + iia_dim1 ], 
+                            &cc, &ss, &a[ j - 1 + iia_dim1 ] );
 
-                  for ( a[ j + ii * a_dim1 ] = 0.0, l = 0; l < n; l++ ) 
+                  for ( a[ j + iia_dim1 ] = 0.0, l = 0; l < n; l++ ) 
                      if ( l != ii ) 
                      {
+                        int  jla_dim1  = j + l * a_dim1;
                         /* Apply procedure G2 (CC,SS,A(J-1,L),A(J,L)) */
-                        temp = a[ j - 1 + l * a_dim1 ];
-                        a[ j - 1 + l * a_dim1 ] =   cc * temp + ss * a[ j + l * a_dim1 ];
-                        a[ j + l * a_dim1     ] = - ss * temp + cc * a[ j + l * a_dim1 ];
+                        temp = a[ jla_dim1 - 1 ];
+                        a[ jla_dim1 - 1 ] =  cc * temp + ss * a[ jla_dim1 ];
+                        a[ jla_dim1     ] = -ss * temp + cc * a[ jla_dim1 ];
                      }
 
                   /* Apply procedure G2 (CC,SS,B(J-1),B(J)) */
@@ -788,12 +804,6 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
          w[ j ] = 0.0;
 
    if ( rnorm != NULL ) *rnorm = sqrt( sm );
-
-   /* Free working space, if it was allocated here */
-   
-   if ( wp     == NULL ) free( w ); 
-   if ( zzp    == NULL ) free( zz ); 
-   if ( indexp == NULL ) free( index );
 
    return ret;
 }
