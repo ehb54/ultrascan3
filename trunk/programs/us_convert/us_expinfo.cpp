@@ -9,6 +9,7 @@
 #include "us_investigator.h"
 #include "us_expinfo.h"
 #include "us_convertio.h"
+#include "us_project_gui.h"
 
 US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    US_WidgetsDialog( 0, 0 ), expInfo( dataIn )
@@ -47,8 +48,15 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    // Project
    QLabel* lb_project = us_label( tr( "Project:" ) );
    experiment->addWidget( lb_project, row, 0 );
-   cb_project = new US_SelectBox( this );
-   experiment->addWidget( cb_project, row++, 1 );
+   QPushButton* pb_project = us_pushbutton( tr( "Select Project" ) );
+   connect( pb_project, SIGNAL( clicked() ), SLOT( selectProject() ) );
+   pb_project->setEnabled( true );
+   experiment->addWidget( pb_project, row++, 1 );
+
+   le_project = us_lineedit();
+   le_project->setPalette ( gray );
+   le_project->setReadOnly( true );
+   experiment->addWidget( le_project, row++, 0, 1, 2 );
 
    // Experiment type
    QLabel* lb_expType = us_label( tr( "Experiment Type:" ) );
@@ -222,9 +230,9 @@ void US_ExpInfo::reset( void )
    le_investigator ->clear();
    le_label        ->clear();
    le_runID        ->setText( expInfo.runID );
+   le_project      ->setText( expInfo.projectDesc );
    te_comment      ->clear();
 
-   cb_project      ->load();
    cb_lab          ->load();
    cb_instrument   ->load();
    cb_operator     ->load();
@@ -240,7 +248,6 @@ void US_ExpInfo::reset( void )
 
    le_label        ->setText( expInfo.label                );
    te_comment      ->setText( expInfo.comments             );
-   cb_project      ->setLogicalIndex( expInfo.projectID    );
          
    // Experiment types combo
    cb_expType->setCurrentIndex( 3 );  // default is "other"
@@ -268,6 +275,10 @@ void US_ExpInfo::reset( void )
          //  the current runID doesn't exist in the db
          pb_accept       ->setEnabled( true );
       }
+
+      // However, project needs to be selected
+      if ( expInfo.projectID == 0 )
+         pb_accept       ->setEnabled( false );
    }
 }
 
@@ -346,43 +357,6 @@ void US_ExpInfo::reload( void )
       return;
    }
 
-   // Populate the project combo box if we can
-   if ( expInfo.invID > 0 )
-   {
-      QStringList q( "get_project_desc" );
-      q << QString::number( expInfo.invID );
-      db.query( q );
-   
-      QList<listInfo> options;
-      while ( db.next() )
-      {
-         struct listInfo option;
-         option.ID      = db.value( 0 ).toString();
-         option.text    = db.value( 1 ).toString();
-         options << option;
-      }
-   
-      cb_project->clear();
-      if ( options.size() > 0 )
-      {
-          cb_project->addOptions( options );
-
-         // is the project ID in the list?
-         int index = 0;
-         for ( int i = 0; i < options.size(); i++ )
-         {
-            if ( expInfo.projectID == options[ i ].ID.toInt() )
-            {
-               index = i;
-               break;
-            }
-         }
-   
-         // Replace projectID with one from the list
-         expInfo.projectID = options[ index ].ID.toInt();
-      }
-   }
-
    if ( cb_changed )
    {
       setInstrumentList();
@@ -445,6 +419,36 @@ void US_ExpInfo::getInvestigatorInfo( int invID )
       expInfo.invGUID   = db.value( 9 ).toString();
    }
    
+}
+
+void US_ExpInfo::selectProject( void )
+{
+   US_Project project;
+   project.projectID   = expInfo.projectID;
+   project.projectDesc = expInfo.projectDesc;
+
+   US_ProjectGui* projInfo = new US_ProjectGui( expInfo.invID, true, project );
+   connect( projInfo, 
+      SIGNAL( updateProjectGuiSelection( US_Project& ) ),
+      SLOT  ( assignProject            ( US_Project& ) ) );
+   connect( projInfo, 
+      SIGNAL( cancelProjectGuiSelection( ) ),
+      SLOT  ( cancelProject            ( ) ) );
+   projInfo->exec();
+}
+
+void US_ExpInfo::assignProject( US_Project& project )
+{
+   expInfo.projectID   = project.projectID;
+   expInfo.projectDesc = project.projectDesc;
+   expInfo.projectGUID = project.projectGUID;
+
+   reset();
+}
+
+void US_ExpInfo::cancelProject( void )
+{
+  reset();
 }
 
 QComboBox* US_ExpInfo::us_expTypeComboBox( void )
@@ -637,7 +641,6 @@ void US_ExpInfo::change_lab( int )
                    : cb_lab->getLogicalID();
  
    // Save other elements on the page too
-   expInfo.projectID     = cb_project ->getLogicalID();
    expInfo.label         = le_label   ->text(); 
    expInfo.comments      = te_comment ->toPlainText();
    expInfo.expType       = cb_expType ->currentText();
@@ -655,7 +658,6 @@ void US_ExpInfo::change_instrument( int )
                           : cb_instrument->getLogicalID();
 
    // Save other elements on the page too
-   expInfo.projectID     = cb_project ->getLogicalID();
    expInfo.label         = le_label   ->text(); 
    expInfo.comments      = te_comment ->toPlainText();
    expInfo.expType       = cb_expType ->currentText();
@@ -693,7 +695,6 @@ void US_ExpInfo::accept( void )
    expInfo.invID = components.last().toInt();
  
    // Other experiment information
-   expInfo.projectID     = cb_project       ->getLogicalID();
    expInfo.runID         = le_runID         ->text();
    expInfo.labID         = cb_lab           ->getLogicalID();
    expInfo.instrumentID  = cb_instrument    ->getLogicalID();
@@ -741,6 +742,8 @@ void US_ExpInfo::ExperimentInfo::clear( void )
    expID              = 0;
    expGUID            = QString( "" );
    projectID          = 0;
+   projectGUID        = QString( "" );
+   projectDesc        = QString( "" );
    runID              = QString( "" );
    labID              = 0;
    labGUID            = QString( "" );
@@ -776,6 +779,8 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
       expID         = rhs.expID;
       expGUID       = rhs.expGUID;
       projectID     = rhs.projectID;
+      projectGUID   = rhs.projectGUID;
+      projectDesc   = rhs.projectDesc;
       runID         = rhs.runID;
       labID         = rhs.labID;
       labGUID       = rhs.labGUID;
@@ -814,6 +819,8 @@ void US_ExpInfo::ExperimentInfo::show( void )
             << "expID        = " << expID << '\n'
             << "expGUID      = " << expGUID << '\n'
             << "projectID    = " << projectID << '\n'
+            << "projectGUID  = " << projectGUID << '\n'
+            << "projectDesc  = " << projectDesc << '\n'
             << "runID        = " << runID << '\n'
             << "labID        = " << labID << '\n'
             << "labGUID      = " << labGUID << '\n'

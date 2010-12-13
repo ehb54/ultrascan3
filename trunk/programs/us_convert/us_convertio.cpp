@@ -562,7 +562,8 @@ int US_ConvertIO::writeXmlFile(
       xml.writeEndElement  ();
       
       xml.writeStartElement( "project" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.projectID ) );
+      xml.writeAttribute   ( "id",   QString::number( ExpData.projectID ) );
+      xml.writeAttribute   ( "guid", ExpData.projectGUID );
       xml.writeEndElement  ();
       
       xml.writeStartElement( "lab" );
@@ -719,7 +720,8 @@ void US_ConvertIO::readExperiment(
          else if ( xml.name() == "project" )
          {
             QXmlStreamAttributes a = xml.attributes();
-            ExpData.projectID      = a.value( "id" ).toString().toInt();
+            ExpData.projectID      = a.value( "id"   ).toString().toInt();
+            ExpData.projectGUID    = a.value( "guid" ).toString();
          }
    
          else if ( xml.name() == "lab" )

@@ -46,6 +46,7 @@ DROP TABLE IF EXISTS project ;
 
 CREATE  TABLE IF NOT EXISTS project (
   projectID int(11) NOT NULL AUTO_INCREMENT ,
+  projectGUID CHAR(36) NOT NULL UNIQUE,
   goals TEXT NULL ,
   molecules TEXT NULL ,
   purity VARCHAR(10) NULL ,
@@ -744,6 +745,9 @@ CREATE  TABLE IF NOT EXISTS model (
   modelID int(11) NOT NULL AUTO_INCREMENT ,
   editedDataID int(11) NOT NULL DEFAULT 1,
   modelGUID CHAR(36) NOT NULL UNIQUE ,
+  meniscus double NOT NULL default '0',
+  MCIteration int(11) NOT NULL DEFAULT 1,
+  variance double NOT NULL default 0,
   description VARCHAR(80) NULL DEFAULT NULL,
   contents TEXT NULL DEFAULT NULL ,
   globalType ENUM( 'NORMAL', 'MENISCUS', 'GLOBAL', 'SUPERGLOBAL' ) DEFAULT 'NORMAL',
@@ -963,12 +967,12 @@ CREATE TABLE IF NOT EXISTS 2DSA_Settings (
   ff0_max double NOT NULL default '4',
   ff0_resolution double NOT NULL default '10',
   uniform_grid int(11) NOT NULL default '6',
-  montecarlo_value int(11) NOT NULL default '0',
+  mc_iterations int(11) NOT NULL default 1,
   tinoise_option tinyint(1) NOT NULL default '0',
   regularization int(11) NOT NULL default '0',
-  meniscus_value double NOT NULL default '0.01',
+  meniscus_range double NOT NULL default '0.01',
   meniscus_points double NOT NULL default '3',
-  iterations_value int(11) NOT NULL default '3',
+  max_iterations int(11) NOT NULL default 1,
   rinoise_option tinyint(1) NOT NULL default '0',
   PRIMARY KEY  (2DSA_SettingsID),
   INDEX ndx_2DSA_Settings_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
@@ -1135,28 +1139,6 @@ CREATE TABLE IF NOT EXISTS HPCSoluteData (
   CONSTRAINT fk_HPCSoluteData_GA_SettingsID
     FOREIGN KEY (GA_SettingsID)
     REFERENCES GA_Settings (GA_SettingsID)
-    ON DELETE CASCADE
-    ON UPDATE NO ACTION)
-ENGINE=InnoDB;
-
-
--- -----------------------------------------------------
--- Table structure for table modelResult
--- -----------------------------------------------------
-DROP TABLE IF EXISTS modelResult;
-
-CREATE TABLE IF NOT EXISTS modelResult (
-  modelResultID int(11) NOT NULL AUTO_INCREMENT,
-  modelID int(11) NOT NULL,
-  modelGUID CHAR(36) NOT NULL UNIQUE,
-  HPCAnalysisRequestGUID CHAR(36) NOT NULL UNIQUE,
-  meniscus double NOT NULL default '0',
-  RMSD double NOT NULL default '0',
-  PRIMARY KEY (modelResultID),
-  INDEX ndx_modelResult_model (modelID ASC),
-  CONSTRAINT fk_modelResult_modelID
-    FOREIGN KEY (modelID)
-    REFERENCES model (modelID)
     ON DELETE CASCADE
     ON UPDATE NO ACTION)
 ENGINE=InnoDB;

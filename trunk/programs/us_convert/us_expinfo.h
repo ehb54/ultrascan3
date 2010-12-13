@@ -6,6 +6,7 @@
 #include "us_widgets_dialog.h"
 #include "us_help.h"
 #include "us_selectbox.h"
+#include "us_project.h"
 
 /*! \class US_ExpInfo
            This class provides the ability to associate raw data with
@@ -74,6 +75,8 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          int              expID;              //!< The ID of the experiment itself
          QString          expGUID;            //!< The GUID of the experiment
          int              projectID;          //!< The project this experiment is associated with
+         QString          projectGUID;        //!< The GUID of the project
+         QString          projectDesc;        //!< A short description of the project
          QString          runID;              //!< The run ID
          int              labID;              //!< The lab in which the experiment was conducted
          QString          labGUID;            //!< The GUID of the lab
@@ -142,7 +145,6 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       QStringList            experimentTypes;
       QComboBox*             cb_expType;
 
-      US_SelectBox*          cb_project;
       US_SelectBox*          cb_lab;
       US_SelectBox*          cb_instrument;
       US_SelectBox*          cb_operator;
@@ -150,12 +152,14 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
                           
       QLineEdit*             le_investigator;
       QLineEdit*             le_runID;
+      QLineEdit*             le_project;
       QLineEdit*             le_runTemp;
       QLineEdit*             le_label;
       QTextEdit*             te_comment;
                           
       QListWidget*           lw_rotorSpeeds;
 
+      QPushButton*           pb_project;
       QPushButton*           pb_accept;
 
   private slots:
@@ -166,6 +170,9 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       void selectInvestigator( void );
       void assignInvestigator( int, const QString&, const QString& );
       void getInvestigatorInfo( int );
+      void selectProject     ( void );
+      void assignProject     ( US_Project& );
+      void cancelProject     ( void );
       QComboBox* us_expTypeComboBox         ( void );
       void setInstrumentList ( void );
       void setOperatorList   ( void );
