@@ -147,7 +147,7 @@ void US_LoadDB::populate_tree( void )
    {
       QString rawDataID = db.value( 0 ).toString();
       QString filename  = db.value( 2 ).toString();
-      QString date      = db.value( 4 ).toString();
+      QString date      = db.value( 5 ).toString();
 
       QStringList sl    = filename.split( "." );
       QString     runID = sl[ 0 ];
