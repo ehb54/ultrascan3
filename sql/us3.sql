@@ -829,7 +829,6 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisRequest (
   requestXMLFile text NULL ,
   requestXMLFilename varchar(255) NOT NULL default '',
   submitTime datetime NOT NULL default '0000-00-00 00:00:00',
-  rotor_stretch VARCHAR(80) NULL, 
   clusterName varchar(80) default NULL,
   method enum('2DSA','2DSA_MW','GA','GA_MW','GA_SC') NOT NULL default '2DSA',
   PRIMARY KEY (HPCAnalysisRequestID) )
@@ -848,6 +847,7 @@ CREATE TABLE IF NOT EXISTS HPCDataset (
   band_volume double default NULL,
   radial_grid tinyint(4) default NULL,
   time_grid tinyint(4) default NULL,
+  rotor_stretch VARCHAR(80) NULL, 
   INDEX ndx_HPCDataset_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
   INDEX ndx_HPCDataset_editedDataID (editedDataID ASC),
   PRIMARY KEY (HPCDatasetID),
