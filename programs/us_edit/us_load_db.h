@@ -19,16 +19,22 @@ class US_EXTERN US_LoadDB : public US_WidgetsDialog
       QTreeWidget* tree;
       QString&     workingDir;
       QLineEdit*   le_investigator;
+      QLineEdit*   le_search;
 
       QMap< QString, QTreeWidgetItem* > runIDs;
       QMap< QString, QStringList      > dbIDs;
       QMap< QString, QStringList      > filenames;
+      QMap< QString, QString          > investigators;
 
       void populate_tree      ( void );       
 
    private slots:
-      void load               ( void );
-      void sel_investigator   ( void );
-      void assign_investigator( int, const QString&, const QString& );
+      void    load               ( void );
+      void    expand             ( void );
+      void    collapse           ( void );
+      void    sel_investigator   ( void );
+      void    assign_investigator( int, const QString&, const QString& );
+      void    limit_data         ( const QString& );
+      QString investigator_name  ( const QString& );
 };
 #endif

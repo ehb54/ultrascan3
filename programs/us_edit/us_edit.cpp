@@ -616,13 +616,7 @@ void US_Edit::load( void )
       allData << data;
       data.scanData.clear();
    }
-   for (int l=0; l<allData.size(); l++)
-   {
-      for (int m=0; m<allData[l].scanData.size(); m++)
-      {
-         qDebug() << "dataset:" << l << "scan:" << m << "Datasize:" << allData[l].x.size();
-      }
-   }
+
    if ( allData.isEmpty() )
    {
       QMessageBox::warning( this,
@@ -2207,6 +2201,7 @@ void US_Edit::write( void )
          // Save edit file to DB
          q.clear();
          q << "new_editedData" << rawDataID << editGUID << runID << filename << "";
+
          db.query( q );
 
          int insertID = db.lastInsertID();
@@ -2260,6 +2255,7 @@ void US_Edit::apply_prior( void )
 
       q.clear();
       q << "get_editedDataIDs" << rawDataID;
+
       db.query( q );
 
 
@@ -2276,7 +2272,7 @@ void US_Edit::apply_prior( void )
       {
          QMessageBox::warning( this,
            tr( "Edit data is not in DB" ),
-           tr( "Cannot find any edit rcdords in the database.\n" ) );
+           tr( "Cannot find any edit records in the database.\n" ) );
 
          return;
       }
