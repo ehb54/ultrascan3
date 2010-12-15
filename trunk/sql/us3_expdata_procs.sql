@@ -219,7 +219,8 @@ BEGIN
         SELECT     rawDataID, rawData.label, rawData.filename,
                    rawData.experimentID, rawData.solutionID, 
                    timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
-                   MD5( rawData.data ) AS checksum, LENGTH( rawData.data ) AS size
+                   MD5( rawData.data ) AS checksum, LENGTH( rawData.data ) AS size,
+                   experimentPerson.personID
         FROM       rawData, experiment, experimentPerson
         WHERE      experimentPerson.personID = p_ID
         AND        experiment.experimentID = experimentPerson.experimentID
@@ -230,7 +231,8 @@ BEGIN
         SELECT     rawDataID, rawData.label, rawData.filename,
                    rawData.experimentID, rawData.solutionID,
                    timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
-                   MD5( rawData.data ) AS checksum, LENGTH( rawData.data ) AS size
+                   MD5( rawData.data ) AS checksum, LENGTH( rawData.data ) AS size,
+                   experimentPerson.personID
         FROM       rawData, experiment, experimentPerson
         WHERE      experiment.experimentID = experimentPerson.experimentID
         AND        rawData.experimentID = experiment.experimentID
@@ -261,7 +263,8 @@ BEGIN
       SELECT     rawDataID, rawData.label, rawData.filename,
                  rawData.experimentID, rawData.solutionID, 
                  timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
-                 MD5( rawData.data ) AS checksum, LENGTH( rawData.data ) AS size
+                 MD5( rawData.data ) AS checksum, LENGTH( rawData.data ) AS size,
+                 experimentPerson.personID
       FROM       rawData, experiment, experimentPerson
       WHERE      experimentPerson.personID = @US3_ID
       AND        experiment.experimentID = experimentPerson.experimentID

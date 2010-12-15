@@ -827,6 +827,7 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisRequest (
   submitterGUID CHAR(36) NOT NULL,        -- maps to person.personGUID
   experimentID int(11) NULL,
   requestXMLFile text NULL ,
+  requestXMLFilename varchar(255) NOT NULL default '',
   submitTime datetime NOT NULL default '0000-00-00 00:00:00',
   rotor_stretch VARCHAR(80) NULL, 
   clusterName varchar(80) default NULL,
