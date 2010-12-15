@@ -827,7 +827,7 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisRequest (
   submitterGUID CHAR(36) NOT NULL,        -- maps to person.personGUID
   experimentID int(11) NULL,
   requestXMLFile text NULL ,
-  requestXMLFilename varchar(255) NOT NULL default '',
+  editXMLFilename varchar(255) NOT NULL default '',
   submitTime datetime NOT NULL default '0000-00-00 00:00:00',
   clusterName varchar(80) default NULL,
   method enum('2DSA','2DSA_MW','GA','GA_MW','GA_SC') NOT NULL default '2DSA',
