@@ -3,6 +3,7 @@
 
 #include "us_resids_bitmap.h"
 #include "us_plot_control.h"
+#include "us_advanced.h"
 #include "us_noise_loader.h"
 #include "us_resplot.h"
 #include "us_dataIO2.h"
@@ -119,7 +120,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QPointer< US_ResidsBitmap > rbmapd;
       QPointer< US_PlotControl >  eplotcd;
       QPointer< US_ResidPlot >    resplotd;
-      QPointer< US_WidgetsDialog> advdiag;
+      QPointer< US_Advanced >     advdiag;
 
       QPoint                      bmd_pos;
       QPoint                      epd_pos;
@@ -195,7 +196,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QString scan_info     ( void )                      const;
       QString distrib_info  ( void )                      const;
       void    load_progress(  void );
-      void    adv_accepted(   void );
       void    write_plot( const QString&, const QwtPlot* );
       bool    mkdir(      const QString&, const QString& );
       void    new_triple( int );

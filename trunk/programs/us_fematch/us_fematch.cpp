@@ -322,9 +322,9 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    ri_noise.count = 0;
 
    adv_vals[ "simpoints" ] = "200";
-   adv_vals[ "bldvolume" ] = "200";
-   adv_vals[ "parameter" ] = "200";
-   adv_vals[ "modelnbr"  ] = "200";
+   adv_vals[ "bldvolume" ] = "0.015";
+   adv_vals[ "parameter" ] = "0";
+   adv_vals[ "modelnbr"  ] = "0";
    adv_vals[ "meshtype"  ] = "ASTFEM";
    adv_vals[ "gridtype"  ] = "Moving";
    adv_vals[ "modelsim"  ] = "model";
@@ -376,7 +376,7 @@ void US_FeMatch::load( void )
       QTimer* ld_timer = new QTimer( this );
       connect( ld_timer, SIGNAL( timeout()     ),
                          SLOT( load_progress() ) );
-      te_desc->setText( tr( "Loading Experiment Data ... " ) );
+      te_desc->setText( tr( "<b>Loading Experiment Data ... </b>" ) );
       ld_timer->start( 100 );
       dialog->load_edit( dataList,  rawList,  triples );
       ld_timer->stop();
@@ -1394,14 +1394,11 @@ void US_FeMatch::distrib_plot_resids( )
    delete [] yy;
 }
 
-// toggle advanced/basic display components
+// open dialog with advanced analysis parameters
 void US_FeMatch::advanced( )
 {
-   US_Advanced* adiag = new US_Advanced( &model_loaded, (QWidget*)this );
-   connect( adiag, SIGNAL( accepted()   ),
-            this,  SLOT( adv_accepted() ) );
-   advdiag = (US_WidgetsDialog*)adiag;
-   adiag->show();
+   advdiag = new US_Advanced( &model_loaded, adv_vals, (QWidget*)this );
+   advdiag->show();
 }
 
 // open 3d plot dialog
@@ -1805,6 +1802,7 @@ DbgLv(1) << " initFrDat serial type coeffs" << simparams.rotorSerial
 
    QString mtyp = adv_vals[ "meshtype" ];
    QString gtyp = adv_vals[ "gridtype" ];
+DbgLv(1) << "  meshtype" << mtyp;
 
    if ( mtyp.contains( "Claverie" ) )
       simparams.meshType = US_SimulationParameters::CLAVERIE;
@@ -3334,11 +3332,7 @@ void US_FeMatch::new_triple( int trow )
 void US_FeMatch::load_progress()
 {
    QString pmsg = te_desc->toPlainText();
-   te_desc->setText( pmsg + "*" );
+   te_desc->setText( "<b>" + pmsg + "*</b>" );
    qApp->processEvents();
 }
 
-void US_FeMatch::adv_accepted()
-{
-qDebug() << "Advanced ACCEPTED";
-}

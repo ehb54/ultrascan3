@@ -6,9 +6,10 @@
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
-#include "us_fematch.h"
+#include "us_model.h"
 #include "us_plot.h"
 #include "us_help.h"
+#include <qwt_plot.h>
 
 //! \brief A class to provide a window for advanced analysis controls
 
@@ -20,13 +21,11 @@ class US_EXTERN US_Advanced : public US_WidgetsDialog
       //! \brief US_Advanced constructor
       //! \param model Pointer to model
       //! \param       Pointer to the parent of this widget
-      US_Advanced( US_Model*, QWidget* p = 0 );
-
-   public slots:
-      void get_parameters( QMap< QString, QString >& );
+      US_Advanced( US_Model*, QMap< QString, QString>&, QWidget* p = 0 );
 
    private:
-      US_Model*     model;
+      US_Model*                 model;
+      QMap< QString, QString >& parmap;
 
       int           ncomp;
 
@@ -65,6 +64,9 @@ class US_EXTERN US_Advanced : public US_WidgetsDialog
 
    private slots:
 
+      void done(           void );
+      void next_component( void );
+      void set_component(  double );
       void help     ( void )
       { showHelp.show_help( "fem_advanced.html" ); };
 };
