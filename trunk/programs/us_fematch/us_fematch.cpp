@@ -4,6 +4,7 @@
 #include <QtSvg>
 
 #include "us_fematch.h"
+#include "us_advanced.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -66,7 +67,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    leftLayout->addLayout( buttonLayout    );
 
    // Analysis buttons
-   pb_load      = us_pushbutton( tr( "Load Data" ) );
+   pb_load      = us_pushbutton( tr( "Load Experiment" ) );
    pb_details   = us_pushbutton( tr( "Run Details" ) );
    ck_edit      = new QCheckBox( tr( "Latest Data Edit" ) );
    pb_distrib   = us_pushbutton( tr( "s20,W Distribution" ) );
@@ -138,7 +139,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    lw_triples = us_listwidget();
    lw_triples->setMaximumHeight( fontHeight * 2 + 12 );
 
-
    runInfoLayout->addWidget( lb_info   , 0, 0, 1, 4 );
    runInfoLayout->addWidget( lb_id     , 1, 0, 1, 1 );
    runInfoLayout->addWidget( le_id     , 1, 1, 1, 3 );
@@ -161,17 +161,9 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    le_vbar      = us_lineedit( "0.7200" );
    pb_compress  = us_pushbutton( tr( "Compressibility" ) );
    le_compress  = us_lineedit( "0.0"     );
-   pb_showmodel = us_pushbutton( tr( "Show Model #"   ) );
    lb_rmsd      = us_label     ( tr( "RMSD:"  ) );
    le_rmsd      = us_lineedit( "0.0" );
    le_variance  = us_lineedit( "0.0" );
-   le_sedcoeff  = us_lineedit( "" );
-   le_difcoeff  = us_lineedit( "" );
-   le_partconc  = us_lineedit( "" );
-   le_moweight  = us_lineedit( "" );
-   ct_component = us_counter( 3, 1, 50, 1 );
-   ct_component->setMinimumWidth( 170 );
-   ct_component->setStep( 1.0 );
    QFontMetrics fme( pb_compress->font() );
    int pwid = fme.width( pb_compress->text() + 6 );
    int lwid = pwid * 3 / 4;
@@ -196,29 +188,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    QLabel* lb_experiment   = us_banner( tr( "Experimental Parameters (at 20" ) 
       + DEGC + "):" );
    QLabel* lb_variance     = us_label ( tr( "Variance:" ) );
-           lb_sedcoeff     = us_label ( tr( "Sedimentation Coefficient:" ) );
-           lb_difcoeff     = us_label ( tr( "Diffusion Coefficient:" ) );
-           lb_partconc     = us_label ( tr( "Partial Concentration:" ) );
-           lb_moweight     = us_label ( tr( "Molecular Weight, f/f0:" ) );
-           lb_component    = us_label ( tr( "Component:" ) );
-           lb_simpoints    = us_label ( tr( "Simulation Points:" ) );
-           lb_bldvolume    = us_label ( tr( "Band-loading Volume:" ) );
-           lb_parameter    = us_label ( tr( "Parameter:" ) );
-
-   cb_mesh      = us_comboBox();
-   cb_mesh->addItem( tr( "Adaptive Space Time Mesh (ASTFEM)" )   );
-   cb_mesh->addItem( tr( "Claverie Mesh" ) );
-   cb_mesh->addItem( tr( "Moving Hat Mesh" ) );
-   cb_mesh->addItem( tr( "File: \"$ULTRASCAN/mesh.dat\"" ) );
-   cb_mesh->addItem( tr( "AST Finite Volume Method (ASTFVM)" )   );
-   cb_grid      = us_comboBox();
-   cb_grid->addItem( tr( "Moving Time Grid" )   );
-   cb_grid->addItem( tr( "Constant Time Grid" ) );
-   
-   ct_simpoints = us_counter( 3, 0, 500, 1 );
-   ct_bldvolume = us_counter( 3, 0, 1, 0.001 );
-   ct_parameter = us_counter( 3, 1, 50, 1 );
-   ct_modelnbr  = us_counter( 2, 1, 50, 1 );
 
    connect( pb_density,   SIGNAL( clicked() ),
             this,         SLOT( get_buffer() ) );
@@ -228,12 +197,11 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             this,         SLOT( get_vbar() ) );
    connect( pb_compress,  SIGNAL( clicked() ),
             this,         SLOT( get_buffer() ) );
-   connect( ct_component, SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( comp_number(  double ) ) );
 
-   pb_advanced = us_pushbutton( tr( "Advanced"      ) );
+   pb_advanced = us_pushbutton( tr( "Advanced Analysis Controls" ) );
    pb_plot3d   = us_pushbutton( tr( "3D Plot"       ) );
    pb_plotres  = us_pushbutton( tr( "Residual Plot" ) );
+   pb_advanced->setEnabled( false );
 
    connect( pb_advanced, SIGNAL( clicked()  ),
             this,        SLOT(   advanced() ) );
@@ -250,20 +218,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    vbar      = TYPICAL_VBAR;
    compress  = 0.0;
 
-   ct_simpoints->setValue( 200 );
-   ct_bldvolume->setValue( 0.015 );
-   ct_parameter->setValue( 0 );
-   ct_modelnbr ->setValue( 0 );
-   ct_simpoints->setMinimumWidth( 170 );
-
-   ct_simpoints->setEnabled( true  );
-   ct_bldvolume->setEnabled( true  );
-   ct_parameter->setEnabled( true  );
-   pb_showmodel->setEnabled( false );
-   ct_modelnbr ->setEnabled( false );
-   cb_mesh     ->setEnabled( true  );
-   cb_grid     ->setEnabled( true  );
-
    int row  = 0;
    parameterLayout->addWidget( lb_experiment   , row++, 0, 1, 4 );
    parameterLayout->addWidget( pb_density      , row,   0, 1, 1 );
@@ -278,30 +232,9 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    parameterLayout->addWidget( le_variance     , row,   1, 1, 1 );
    parameterLayout->addWidget( lb_rmsd         , row,   2, 1, 1 );
    parameterLayout->addWidget( le_rmsd         , row++, 3, 1, 1 );
-   parameterLayout->addWidget( pb_advanced     , row++, 0, 1, 2 );
+   parameterLayout->addWidget( pb_advanced     , row++, 0, 1, 4 );
    parameterLayout->addWidget( pb_plot3d       , row,   0, 1, 2 );
    parameterLayout->addWidget( pb_plotres      , row++, 2, 1, 2 );
-   parameterLayout->addWidget( lb_sedcoeff     , row,   0, 1, 2 );
-   parameterLayout->addWidget( le_sedcoeff     , row++, 2, 1, 2 );
-   parameterLayout->addWidget( lb_difcoeff     , row,   0, 1, 2 );
-   parameterLayout->addWidget( le_difcoeff     , row++, 2, 1, 2 );
-   parameterLayout->addWidget( lb_partconc     , row,   0, 1, 2 );
-   parameterLayout->addWidget( le_partconc     , row++, 2, 1, 2 );
-   parameterLayout->addWidget( lb_moweight     , row,   0, 1, 2 );
-   parameterLayout->addWidget( le_moweight     , row++, 2, 1, 2 );
-   parameterLayout->addWidget( lb_component    , row,   0, 1, 2 );
-   parameterLayout->addWidget( ct_component    , row++, 2, 1, 2 );
-
-   parameterLayout->addWidget( lb_simpoints    , row,   0, 1, 2 );
-   parameterLayout->addWidget( ct_simpoints    , row++, 2, 1, 2 );
-   parameterLayout->addWidget( lb_bldvolume    , row,   0, 1, 2 );
-   parameterLayout->addWidget( ct_bldvolume    , row++, 2, 1, 2 );
-   parameterLayout->addWidget( lb_parameter    , row,   0, 1, 2 );
-   parameterLayout->addWidget( ct_parameter    , row++, 2, 1, 2 );
-   parameterLayout->addWidget( pb_showmodel    , row,   0, 1, 2 );
-   parameterLayout->addWidget( ct_modelnbr     , row++, 2, 1, 2 );
-   parameterLayout->addWidget( cb_mesh         , row++, 0, 1, 4 );
-   parameterLayout->addWidget( cb_grid         , row++, 0, 1, 4 );
 
    // Scan Controls
 
@@ -336,25 +269,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             tr( "Radius (cm)" ),
             tr( "OD Difference" ) );
 
-   gb_modelsim         = new QGroupBox( 
-      tr( "Simulate data using parameters from"
-          " model or from Monte Carlo statistics" ) );
-   gb_modelsim->setFlat( true );
-   QRadioButton* rb_curmod = new QRadioButton( tr( "Current Model" ) );
-   QRadioButton* rb_mode   = new QRadioButton( tr( "Mode" ) );
-   QRadioButton* rb_mean   = new QRadioButton( tr( "Mean" ) );
-   QRadioButton* rb_median = new QRadioButton( tr( "Median" ) );
-   gb_modelsim ->setFont( pb_load->font() );
-   gb_modelsim ->setPalette( US_GuiSettings::normalColor() );
-   QHBoxLayout* msbox = new QHBoxLayout();
-   msbox->addWidget( rb_curmod );
-   msbox->addWidget( rb_mode   );
-   msbox->addWidget( rb_mean   );
-   msbox->addWidget( rb_median );
-   msbox->setSpacing       ( 0 );
-   gb_modelsim->setLayout( msbox );
-   rb_curmod->setChecked( true );
-
    plotLayout2 = new US_Plot( data_plot2,
             tr( "Velocity Data" ),
             tr( "Radius (cm)" ),
@@ -382,19 +296,14 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             this,        SLOT(   help()      ) );
 
    rightLayout->addLayout( plotLayout1 );
-   rightLayout->addWidget( gb_modelsim );
    rightLayout->addLayout( plotLayout2 );
    rightLayout->setStretchFactor( plotLayout1, 2 );
    rightLayout->setStretchFactor( plotLayout2, 3 );
-   //rightLayout->addWidget( gb_modelsim );
-   rightLayout->setStretchFactor( gb_modelsim, 0 );
 
    mainLayout->addLayout( leftLayout  );
    mainLayout->addLayout( rightLayout );
    mainLayout->setStretchFactor( leftLayout, 3 );
    mainLayout->setStretchFactor( rightLayout, 5 );
-
-   set_ra_visible( false );
 
    dataLoaded = false;
    buffLoaded = false;
@@ -411,6 +320,14 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 
    ti_noise.count = 0;
    ri_noise.count = 0;
+
+   adv_vals[ "simpoints" ] = "200";
+   adv_vals[ "bldvolume" ] = "200";
+   adv_vals[ "parameter" ] = "200";
+   adv_vals[ "modelnbr"  ] = "200";
+   adv_vals[ "meshtype"  ] = "ASTFEM";
+   adv_vals[ "gridtype"  ] = "Moving";
+   adv_vals[ "modelsim"  ] = "model";
 
    sdata          = 0;
 }
@@ -439,6 +356,7 @@ void US_FeMatch::load( void )
    QString     file;
    QStringList files;
    QStringList parts;
+   lw_triples->  disconnect();
    lw_triples->  clear();
    dataList.     clear();
    rawList.      clear();
@@ -455,10 +373,21 @@ void US_FeMatch::load( void )
    if ( dialog->exec() == QDialog::Accepted )
    {
       dialog->settings(  def_local, investig, dfilter );
+      QTimer* ld_timer = new QTimer( this );
+      connect( ld_timer, SIGNAL( timeout()     ),
+                         SLOT( load_progress() ) );
+      te_desc->setText( tr( "Loading Experiment Data ... " ) );
+      ld_timer->start( 100 );
       dialog->load_edit( dataList,  rawList,  triples );
+      ld_timer->stop();
       workingDir = dialog->description();
-      workingDir = workingDir.section( workingDir.left( 1 ), 4, 4 );
-      workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
+
+      if ( def_local )
+         workingDir = workingDir.section( workingDir.left( 1 ), 4, 4 )
+                      .left( workingDir.lastIndexOf( "/" ) );
+
+      else
+         workingDir = tr( "(database)" );
 
       delete dialog;
    }
@@ -468,7 +397,13 @@ void US_FeMatch::load( void )
 
    qApp->processEvents();
 
-   for ( int ii = 0; ii < triples.size(); ii++ )
+   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
+   QFontMetrics fm( font );
+   int fontHeight = fm.lineSpacing();
+   int ntriples   = triples.size();
+   lw_triples->setMaximumHeight( fontHeight * min( ntriples, 4 ) + 12 );
+
+   for ( int ii = 0; ii < ntriples; ii++ )
       lw_triples->addItem( triples.at( ii ) );
 
    edata     = &dataList[ 0 ];
@@ -481,6 +416,8 @@ void US_FeMatch::load( void )
    le_temp->setText( QString::number( avgTemp, 'f', 1 ) + " " + DEGC );
 
    lw_triples->setCurrentRow( 0 );
+   connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
+                        SLOT(   new_triple(        int ) ) );
 
    dataLoaded = true;
    haveSim    = false;
@@ -502,6 +439,39 @@ void US_FeMatch::load( void )
    bmd_pos    = this->pos() + QPoint( 100, 100 );
    epd_pos    = this->pos() + QPoint( 200, 200 );
    rpd_pos    = this->pos() + QPoint( 300, 300 );
+
+}
+
+// details
+void US_FeMatch::details( void )
+{
+   US_RunDetails2* dialog
+      = new US_RunDetails2( rawList, runID, workingDir, triples );
+
+   dialog->move( this->pos() + QPoint( 100, 100 ) );
+   dialog->exec();
+   qApp->processEvents();
+
+   delete dialog;
+}
+
+// update based on selected triples row
+void US_FeMatch::update( int drow )
+{
+   edata          = &dataList[ drow ];
+   scanCount      = edata->scanData.size();
+   runID          = edata->runID;
+   le_id->  setText( runID + " / " + edata->editID );
+
+   double avgTemp = edata->average_temperature();
+   le_temp->setText( QString::number( avgTemp, 'f', 1 )
+         + " " + DEGC );
+   te_desc->setText( edata->description );
+
+   ct_from->setMaxValue( scanCount - excludedScans.size() );
+   ct_to  ->setMaxValue( scanCount - excludedScans.size() );
+   ct_from->setStep( 1.0 );
+   ct_to  ->setStep( 1.0 );
 
    // set up buffer values implied from experimental data
    QString bufid;
@@ -551,39 +521,6 @@ DbgLv(2) << "D:VL: bufin bdens" << bufin << bdens;
       viscosity   = bvisc.toDouble();
       compress    = bcomp.toDouble();
    }
-
-}
-
-// details
-void US_FeMatch::details( void )
-{
-   US_RunDetails2* dialog
-      = new US_RunDetails2( rawList, runID, workingDir, triples );
-
-   dialog->move( this->pos() + QPoint( 100, 100 ) );
-   dialog->exec();
-   qApp->processEvents();
-
-   delete dialog;
-}
-
-// update based on selected triples row
-void US_FeMatch::update( int drow )
-{
-   edata          = &dataList[ drow ];
-   scanCount      = edata->scanData.size();
-   runID          = edata->runID;
-   le_id->  setText( runID + " / " + edata->editID );
-
-   double avgTemp = edata->average_temperature();
-   le_temp->setText( QString::number( avgTemp, 'f', 1 )
-         + " " + DEGC );
-   te_desc->setText( edata->description );
-
-   ct_from->setMaxValue( scanCount - excludedScans.size() );
-   ct_to  ->setMaxValue( scanCount - excludedScans.size() );
-   ct_from->setStep( 1.0 );
-   ct_to  ->setStep( 1.0 );
 
    data_plot();
 }
@@ -1092,38 +1029,8 @@ void US_FeMatch::exclude( void )
    ct_to  ->setMaxValue( totalScans - excludedScans.size() );
 }
 
-void US_FeMatch::set_ra_visible( bool visible )
+void US_FeMatch::set_ra_visible( bool /*visible*/ )
 {
-   lb_sedcoeff ->setVisible( true );
-   adjustSize(); 
-   QSize pl1siz = data_plot1->size();
-   QSize pl2siz = data_plot2->size();
-   lb_simpoints->setVisible( visible );  // visibility of RA experimental pars
-   ct_simpoints->setVisible( visible );
-   lb_bldvolume->setVisible( visible );
-   ct_bldvolume->setVisible( visible );
-   lb_parameter->setVisible( visible );
-   ct_parameter->setVisible( visible );
-   pb_showmodel->setVisible( visible );
-   ct_modelnbr ->setVisible( visible );
-   cb_mesh     ->setVisible( visible );
-   cb_grid     ->setVisible( visible );
-   lb_sedcoeff ->setVisible( visible );
-   le_sedcoeff ->setVisible( visible );
-   lb_difcoeff ->setVisible( visible );
-   le_difcoeff ->setVisible( visible );
-   lb_partconc ->setVisible( visible );
-   le_partconc ->setVisible( visible );
-   lb_moweight ->setVisible( visible );
-   le_moweight ->setVisible( visible );
-   lb_component->setVisible( visible );
-   ct_component->setVisible( visible );
-
-   gb_modelsim ->setVisible( visible );  // visibility model simulate group box
-
-   data_plot1->resize( pl1siz );
-   data_plot2->resize( pl2siz );
-   adjustSize(); 
 }
 
 // respond to click of current type of distribution plot
@@ -1490,21 +1397,11 @@ void US_FeMatch::distrib_plot_resids( )
 // toggle advanced/basic display components
 void US_FeMatch::advanced( )
 {
-   bool visible = !lb_simpoints->isVisible();
-
-   if ( pb_advanced->text() == "Advanced" )
-   {
-      pb_advanced->setText( "Basic" );
-      visible  = true;
-   }
-
-   else
-   {
-      pb_advanced->setText( "Advanced" );
-      visible  = false;
-   }
-
-   set_ra_visible( visible );
+   US_Advanced* adiag = new US_Advanced( &model_loaded, (QWidget*)this );
+   connect( adiag, SIGNAL( accepted()   ),
+            this,  SLOT( adv_accepted() ) );
+   advdiag = (US_WidgetsDialog*)adiag;
+   adiag->show();
 }
 
 // open 3d plot dialog
@@ -1559,15 +1456,14 @@ void US_FeMatch::reset( )
 // load model data and detect if RA
 void US_FeMatch::load_model( )
 {
-   bool     visible = lb_simpoints->isVisible();  // current RA visibility
-   bool     isRA;                                 // is model RA?
+   int      drow    = lw_triples->currentRow();
    QString  mdesc;
 
    // load model
    US_ModelLoader* dialog = new US_ModelLoader( false, def_local,
       mfilter, investig );
    dialog->move( this->pos() + QPoint( 200, 200 ) );
-   dialog->set_edit_guid( dataList[ 0 ].editGUID );
+   dialog->set_edit_guid( dataList[ drow ].editGUID );
 
    if ( dialog->exec() == QDialog::Accepted )
    {
@@ -1598,27 +1494,18 @@ DbgLv(1) << "post-Load def_local" << def_local;
 
    model_loaded = model;   // save model exactly as loaded
 
-   int ncomp    = model.components.size();       // components count
-   int nassoc   = model.associations.size();     // associations count
-   isRA         = ( nassoc > 1 );                // RA if #assocs > 1
-
-   ct_component->setMaxValue( (double)ncomp );
-
-   // set values for component 1
-   component_values( 0 );
-
-   if ( ( isRA && !visible )  ||  ( !isRA && visible ) )
-   {  // new RA visibility state out of sync:  change it
-      set_ra_visible( isRA );  // change visible components based on RA
-
-      adjustSize();            // adjust overall size to visible components
+   if ( model.components.size() == 0 )
+   {
+      QMessageBox::critical( this, tr( "Empty Model" ),
+            tr( "Loaded model has ZERO components!" ) );
+      return;
    }
 
+   pb_advanced ->setEnabled( true );
    pb_simumodel->setEnabled( true );
 
    // see if there are any noise files to load
    load_noise();
-
 }
 
 // adjust model components based on buffer, vbar, and temperature
@@ -1916,8 +1803,8 @@ DbgLv(1) << " initFrDat serial type coeffs" << simparams.rotorSerial
    simparams.gridType          = US_SimulationParameters::MOVING;
    simparams.radial_resolution = ( radhi - radlo ) / (double)( nconc - 1 );
 
-   QString mtyp = cb_mesh->currentText();
-   QString gtyp = cb_grid->currentText();
+   QString mtyp = adv_vals[ "meshtype" ];
+   QString gtyp = adv_vals[ "gridtype" ];
 
    if ( mtyp.contains( "Claverie" ) )
       simparams.meshType = US_SimulationParameters::CLAVERIE;
@@ -1925,7 +1812,7 @@ DbgLv(1) << " initFrDat serial type coeffs" << simparams.rotorSerial
       simparams.meshType = US_SimulationParameters::MOVING_HAT;
    else if ( mtyp.contains( "File:"      ) )
       simparams.meshType = US_SimulationParameters::USER;
-   else if ( mtyp.contains( "Space Volu" ) )
+   else if ( mtyp.contains( "ASTFVM"     ) )
       simparams.meshType = US_SimulationParameters::ASTFVM;
 
    if ( gtyp.contains( "Constant" ) )
@@ -2073,8 +1960,9 @@ QStringList US_FeMatch::last_edit_files( QStringList files )
 }
 
 // set values for component at index
-void US_FeMatch::component_values( int index )
+void US_FeMatch::component_values( int /*index*/ )
 {
+#if 0
    le_sedcoeff->setText( QString::number( model.components[ index ].s ) );
    le_difcoeff->setText( QString::number( model.components[ index ].D ) );
    le_partconc->setText(
@@ -2082,6 +1970,7 @@ void US_FeMatch::component_values( int index )
    le_moweight->setText(
       QString( "%1 kD,  %2" ).arg( model.components[ index ].mw / 1000.0 )
       .arg( model.components[ index ].f_f0 ) );
+#endif
 }
 
 // component number changed
@@ -3434,3 +3323,22 @@ bool US_FeMatch::mkdir( const QString& baseDir, const QString& subdir )
    return false;
 }
 
+void US_FeMatch::new_triple( int trow )
+{
+   update( trow );
+
+   reset();
+   data_plot();
+}
+
+void US_FeMatch::load_progress()
+{
+   QString pmsg = te_desc->toPlainText();
+   te_desc->setText( pmsg + "*" );
+   qApp->processEvents();
+}
+
+void US_FeMatch::adv_accepted()
+{
+qDebug() << "Advanced ACCEPTED";
+}
