@@ -1662,6 +1662,9 @@ float US_FeMatch_W::calc_residuals_ra()
    //US_FemGlobal fg;
    //fg.write_simulationParameters(&sp, "simparams.out");
    sp.simpoints = 200;
+   //sp.simpoints = 10000;
+   //sp.mesh = 1; // 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 3 = user-selected mesh, 4 = nonuniform constant mesh
+   //sp.moving_grid = 0; // use adaptive time steps = 1, fixed time steps = 0
    if(!ti_noise_avail && sp.band_forming) {
       // cout << "band_firstScanIsConcentration = true\n";
       sp.band_firstScanIsConcentration = true;
