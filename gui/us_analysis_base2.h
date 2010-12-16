@@ -183,5 +183,6 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       void buffer_text(   void );
       bool verify_vbar(   void );
       void vbar_text(     void );
+      void load_progress( void );
 };
 #endif

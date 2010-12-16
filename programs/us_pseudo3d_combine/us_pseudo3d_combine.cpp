@@ -364,7 +364,11 @@ void US_Pseudo3D_Combine::plot_data( void )
    cmapname = tsys->cmapname;
 
    data_plot->detachItems();
-   data_plot->setCanvasBackground( colormap->color1() ); 
+   QColor bg   = colormap->color1();
+   data_plot->setCanvasBackground( bg );
+   int    csum = bg.red() + bg.green() + bg.blue();
+   pick->setTrackerPen( QPen( csum > 600 ? QColor( Qt::black ) :
+                                           QColor( Qt::white ) ) );
 
    // set up spectrogram data
    QwtPlotSpectrogram *d_spectrogram = new QwtPlotSpectrogram();

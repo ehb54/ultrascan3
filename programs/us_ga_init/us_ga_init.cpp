@@ -754,8 +754,14 @@ void US_GA_Initialize::plot_2dim( void )
 void US_GA_Initialize::plot_3dim( void )
 {
    data_plot->detachItems();
+   QColor bg = colormap->color1();
 
-   data_plot->setCanvasBackground( colormap->color1() ); 
+   data_plot->setCanvasBackground( bg );
+
+   int csum  = bg.red() + bg.green() + bg.blue();
+   pick->setTrackerPen( QPen( ( csum > 600 ) ? QColor( Qt::black ) :
+                                               QColor( Qt::white ) ) );
+
    QString tstr = run_name;
    tstr         = ( tstr.length() > 40 ) ?
                   ( tstr.left( 18 ) + "..." + tstr.right( 19 ) ) : tstr;

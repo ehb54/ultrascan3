@@ -69,19 +69,29 @@ class US_EXTERN US_DataLoader : public US_WidgetsDialog
       class DataDesc   // description of each data set in the list presented
       {
          public:
+         QString runID;           // run identifier string
+         QString tripID;          // triple identifier string
+         QString editID;          // edit identifier string
          QString label;           // identifying label for choice list
          QString descript;        // full descriptive string
          QString filename;        // file name
          QString dataGUID;        // data Global Identifier
          QString aucGUID;         // AUC GUID (same as dataGUID for raw)
+         QString date;            // date/time last updated
          int     DB_id;           // database ID number
+         int     tripknt;         // count of triples per run
+         int     tripndx;         // index of triple in run
+         int     editknt;         // count of edits per triple
+         int     editndx;         // index of edit in triple
          bool    isEdit;          // flag:  is this edit? False->raw
          bool    isLatest;        // flag:  are edits latest ones
       };
 
       QMap< QString, DataDesc >  datamap;  // map of labels,data-desc-objs
 
-      DataDesc       ddesc;       // current selected data's descripton object
+      DataDesc       ddesc;       // current selected data's description object
+
+      QList< DataDesc > sdescs;   // list of descriptions of selected items
 
       QRadioButton*  rb_db;       // radio button: database load
       QRadioButton*  rb_disk;     // radio button: local disk load
@@ -92,7 +102,7 @@ class US_EXTERN US_DataLoader : public US_WidgetsDialog
       QLineEdit*     le_invest;   // investigator text entry
       QLineEdit*     le_dfilter;  // data search filter text entry
 
-      US_ListWidget* lw_data;     // data list widget
+      QTreeWidget*   tw_data;     // data list widget
 
       bool           ldedit;      // current load-edits flag (F -> raw)
       bool           latest;      // current use-lastest-edit flag

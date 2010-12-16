@@ -42,14 +42,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QLabel*       lb_tolerance;
       QLabel*       lb_division;
       QLabel*       lb_rmsd;
-      QLabel*       lb_simpoints;
-      QLabel*       lb_bldvolume;
-      QLabel*       lb_parameter;
-      QLabel*       lb_sedcoeff;
-      QLabel*       lb_difcoeff;
-      QLabel*       lb_partconc;
-      QLabel*       lb_moweight;
-      QLabel*       lb_component;
 
       QLineEdit*    le_id;
       QLineEdit*    le_temp;
@@ -58,28 +50,14 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QLineEdit*    le_vbar;
       QLineEdit*    le_compress;
       QLineEdit*    le_rmsd;
-      QLineEdit*    le_sedcoeff;
-      QLineEdit*    le_difcoeff;
-      QLineEdit*    le_partconc;
       QLineEdit*    le_variance;
-      QLineEdit*    le_moweight;
 
       QTextEdit*    te_desc;
 
       QCheckBox*    ck_edit;
 
-      QComboBox*    cb_mesh;
-      QComboBox*    cb_grid;
-
-      QGroupBox*    gb_modelsim;
-
       QwtCounter*   ct_from;
       QwtCounter*   ct_to;
-      QwtCounter*   ct_component;
-      QwtCounter*   ct_simpoints;
-      QwtCounter*   ct_bldvolume;
-      QwtCounter*   ct_parameter;
-      QwtCounter*   ct_modelnbr;
 
       QwtPlotCurve*  curve;
       QwtPlotCurve*  dcurve;
@@ -104,7 +82,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QPushButton*  pb_exclude;
       QPushButton*  pb_loadmodel;
       QPushButton*  pb_simumodel;
-      QPushButton*  pb_showmodel;
 
       QListWidget*  lw_triples;
 
@@ -142,10 +119,13 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QPointer< US_ResidsBitmap > rbmapd;
       QPointer< US_PlotControl >  eplotcd;
       QPointer< US_ResidPlot >    resplotd;
+      QPointer< US_WidgetsDialog> advdiag;
 
       QPoint                      bmd_pos;
       QPoint                      epd_pos;
       QPoint                      rpd_pos;
+
+      QMap< QString, QString >    adv_vals;
 
    private slots:
 
@@ -214,8 +194,11 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QString hydrodynamics ( void )                      const;
       QString scan_info     ( void )                      const;
       QString distrib_info  ( void )                      const;
+      void    load_progress(  void );
+      void    adv_accepted(   void );
       void    write_plot( const QString&, const QwtPlot* );
       bool    mkdir(      const QString&, const QString& );
+      void    new_triple( int );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };
