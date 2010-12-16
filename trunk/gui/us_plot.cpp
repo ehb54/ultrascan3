@@ -103,29 +103,30 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_
    plot->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
    plot->setAutoReplot( false );
   
+   QFont font( US_GuiSettings::fontFamily(),
+               US_GuiSettings::fontSize(),
+               QFont::Bold );
+           
+   font.setPointSizeF( US_GuiSettings::fontSize() * 1.4 );
+
    QwtText qwtTitle( title );
-   qwtTitle.setFont( QFont( US_GuiSettings::fontFamily(),
-                            US_GuiSettings::fontSize() + 2,
-                            QFont::Bold ) );
-  
+   qwtTitle.setFont( font );
    plot->setTitle( qwtTitle );
   
    plot->setMargin( US_GuiSettings::plotMargin() );
 
-   QFont axisFont( US_GuiSettings::fontFamily(),
-                   US_GuiSettings::fontSize() - 2, 
-                   QFont::Bold );
-  
-   qwtTitle.setFont( axisFont );
+   font.setPointSizeF( US_GuiSettings::fontSize() * 1.0 );
+   qwtTitle.setFont( font );
    qwtTitle.setText( x_axis );  
    plot->setAxisTitle( QwtPlot::xBottom, qwtTitle );
 
    qwtTitle.setText( y_axis );
    plot->setAxisTitle( QwtPlot::yLeft  , qwtTitle );
   
-   axisFont.setBold ( false );
-   plot->setAxisFont( QwtPlot::xBottom, axisFont );
-   plot->setAxisFont( QwtPlot::yLeft,   axisFont );
+   font.setBold ( false );
+   font.setPointSizeF( US_GuiSettings::fontSize() * 0.9 );
+   plot->setAxisFont( QwtPlot::xBottom, font );
+   plot->setAxisFont( QwtPlot::yLeft,   font );
   
    plot->setAutoFillBackground( true );
    plot->setPalette ( US_GuiSettings::plotColor() );
