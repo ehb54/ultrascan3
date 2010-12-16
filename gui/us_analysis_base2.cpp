@@ -258,7 +258,7 @@ void US_AnalysisBase2::load( void )
       QTimer* ld_timer = new QTimer( this );
       connect( ld_timer, SIGNAL( timeout() ),
                          SLOT( load_progress() ) );
-      te_desc->setText( tr( "Loading Experiment Data ... " ) );
+      te_desc->setText( tr( "<b>Loading Experiment Data ... </b>" ) );
       ld_timer->start( 100 );
       dialog->load_edit( dataList,  rawList,  triples );
       ld_timer->stop();
@@ -1672,7 +1672,7 @@ void US_AnalysisBase2::vbar_text( )
 void US_AnalysisBase2::load_progress( )
 {
    QString pmsg = te_desc->toPlainText();
-   te_desc->setText( pmsg + "*" );
+   te_desc->setText( "<b>" + pmsg + "*</b>" );
    qApp->processEvents();
 }
 

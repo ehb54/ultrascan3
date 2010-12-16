@@ -1,13 +1,13 @@
 //! \file us_advanced.cpp
 
-#include "us_fematch.h"
 #include "us_advanced.h"
+#include "us_fematch.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
 // constructor:  advanced analysis control widget
-US_Advanced::US_Advanced( US_Model* amodel,
-    QWidget* p ) : US_WidgetsDialog( p, 0 )
+US_Advanced::US_Advanced( US_Model* amodel, QMap< QString, QString >& adv_vals,
+    QWidget* p ) : US_WidgetsDialog( p, 0 ), parmap( adv_vals )
 {
    model          = amodel;
    parentw        = p;
@@ -87,10 +87,10 @@ US_Advanced::US_Advanced( US_Model* amodel,
       tr( "Simulate data using parameters from model"
           " or from Monte Carlo statistics" ) );
    gb_modelsim->setFlat( true );
-   QRadioButton* rb_curmod = new QRadioButton( tr( "Current Model" ) );
-   QRadioButton* rb_mode   = new QRadioButton( tr( "Mode"          ) );
-   QRadioButton* rb_mean   = new QRadioButton( tr( "Mean"          ) );
-   QRadioButton* rb_median = new QRadioButton( tr( "Median"        ) );
+   rb_curmod    = new QRadioButton( tr( "Current Model" ) );
+   rb_mode      = new QRadioButton( tr( "Mode"          ) );
+   rb_mean      = new QRadioButton( tr( "Mean"          ) );
+   rb_median    = new QRadioButton( tr( "Median"        ) );
    gb_modelsim->setFont( pb_showmodel->font() );
    gb_modelsim->setPalette( US_GuiSettings::normalColor() );
    QHBoxLayout* mosbox = new QHBoxLayout();
@@ -151,19 +151,24 @@ US_Advanced::US_Advanced( US_Model* amodel,
    ct_parameter->setStep(     1 );
    ct_modelnbr ->setStep(     1 );
    ct_component->setStep(     1 );
+   ct_component->setMaxValue( model->components.size() );
 
    pb_showmodel->setEnabled( false );
    ct_modelnbr ->setEnabled( false );
 
-   //connect( ck_regulz, SIGNAL( toggled( bool ) ),
-   //         this,  SLOT( checkRegular(  bool ) ) );
+   connect( pb_component, SIGNAL( clicked()        ),
+            this,         SLOT(   next_component() ) );
+   connect( ct_component, SIGNAL( valueChanged(  double ) ),
+            this,         SLOT(   set_component( double ) ) );
+
+   set_component( 1.0 );
 
    connect( pb_help,    SIGNAL( clicked() ),
             this,       SLOT(   help()    ) );
    connect( pb_cancel,  SIGNAL( clicked() ),
             this,       SLOT(   reject()  ) );
    connect( pb_accept,  SIGNAL( clicked() ),
-            this,       SLOT(   accept()  ) );
+            this,       SLOT(   done()    ) );
 
 qDebug() << "Pre-adjust size" << size();
    adjustSize();
@@ -173,8 +178,8 @@ qDebug() << "Post-resize size" << size();
    qApp->processEvents();
 }
 
-// public slot to get dialog parameters
-void US_Advanced::get_parameters( QMap< QString, QString >& parmap )
+// private slot to pass parameters then close with an accepted() signal
+void US_Advanced::done( void )
 {
    parmap[ "simpoints" ] = QString::number( ct_simpoints->value() );
    parmap[ "bldvolume" ] = QString::number( ct_bldvolume->value() );
@@ -186,5 +191,34 @@ void US_Advanced::get_parameters( QMap< QString, QString >& parmap )
                          ( rb_mode  ->isChecked() ? "mode"   :
                          ( rb_mean  ->isChecked() ? "mean"   :
                          ( rb_median->isChecked() ? "median" : "" ) ) );
+
+   accept();
+}
+
+// private slot to advance to the next model component
+void US_Advanced::next_component( void )
+{
+   int icomp = (int)ct_component->value();
+   int ncomp = model->components.size();
+
+   icomp     = ( icomp < ncomp ) ? ( icomp + 1 ) : 1;
+   ct_component->setValue( (double)icomp );
+}
+
+// private slot to set the model component index and fill in the implied text
+void US_Advanced::set_component( double compx )
+{
+   int icomp  = (int)compx - 1;
+
+   if ( icomp < 0 )
+      return;
+
+   le_sedcoeff->setText( QString::number( model->components[ icomp ].s ) );
+   le_difcoeff->setText( QString::number( model->components[ icomp ].D ) );
+   le_moweight->setText(
+      QString::number( model->components[ icomp ].mw / 1000.0 ) );
+   le_friratio->setText( QString::number( model->components[ icomp ].f_f0 ) );
+   le_partconc->setText(
+      QString::number( model->components[ icomp ].signal_concentration ) );
 }
 
