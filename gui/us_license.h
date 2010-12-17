@@ -84,6 +84,9 @@ class US_EXTERN US_License : public US_Widgets
     QLineEdit* le_zip;
     QLineEdit* le_phone;
     QLineEdit* le_email;
+    QLineEdit* le_platform;
+    QLineEdit* le_expiration;
+    QLineEdit* le_registration;
 
     QLabel*    lbl_version;
     QLabel*    lbl_platform;

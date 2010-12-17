@@ -191,54 +191,63 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   lbl_version = us_label( tr( "Version:" ), 0, QFont::Bold );
   lbl_version->setGeometry( xpos, ypos, smallColumn, rowHeight );
 
-  //xpos += smallColumn + spacing;
-  const int adjust = 20;
-  const int center = spacing + width / 2;
-
-  xpos  = center - spacing - ( buttonw + adjust ) * 3 / 2;
+  xpos  = spacing;
   ypos += 2 * rowHeight + spacing;
 
-  // Row 7 - Platform/Expiration/License Status
-  lbl_platform = us_label( "", 0, QFont::Bold );
-  lbl_platform->setAlignment( Qt::AlignHCenter);
-  lbl_platform->setGeometry( xpos, ypos, buttonw + adjust, rowHeight );
+  QLabel* status = us_banner( tr( "License Status" ) );
+  status->setGeometry( QRect( xpos, ypos, width, spacing + rowHeight ) );
 
-  xpos += buttonw + spacing + adjust;
-  //xpos = center - ( buttonw + adjust ) / 2;
 
-  lbl_expiration = us_label( "", 0, QFont::Bold );
-  lbl_expiration->setAlignment( Qt::AlignHCenter);
-  lbl_expiration->setGeometry( xpos, ypos, buttonw + adjust, rowHeight );
+  // Very light gray, for read-only line edits
+  QPalette gray = US_GuiSettings::editColor();
+  gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
 
-  xpos += buttonw + spacing + adjust;
+  // Row 7 - Platform
+  xpos  = spacing;
+  ypos += rowHeight + 2 * spacing;
 
-  lbl_valid = us_label( "", 0, QFont::Bold );
-  lbl_valid->setAlignment( Qt::AlignHCenter);
-  lbl_valid->setGeometry( xpos, ypos, buttonw + adjust, rowHeight );
+  lbl_platform = us_label( "Platform / OS:", 0, QFont::Bold );
+  lbl_platform->setGeometry( xpos, ypos, buttonw, rowHeight );
 
-  //xpos += buttonw + spacing;
+  xpos += buttonw + spacing;
+
+  le_platform = us_lineedit( "", 0 );
+  le_platform->setPalette ( gray );
+  le_platform->setReadOnly( true );
+  le_platform->setGeometry( xpos, ypos, full_buttonw, rowHeight );
+
+  // Row 8 - Expiration
+  xpos  = spacing;
+  ypos += rowHeight + 2 * spacing;
   
+  lbl_expiration = us_label( "Expiration:", 0, QFont::Bold );
+  lbl_expiration->setGeometry( xpos, ypos, buttonw, rowHeight );
 
-  // Row 9 - Pushbuttons
+  xpos += buttonw + spacing;
+
+  le_expiration = us_lineedit( "", 0 );
+  le_expiration->setPalette ( gray );
+  le_expiration->setReadOnly( true );
+  le_expiration->setGeometry( xpos, ypos, full_buttonw, rowHeight );
+
+  // Row 9 - Version
+  xpos  = spacing;
+  ypos += rowHeight + 2 * spacing;
+
+  lbl_valid = us_label( "UltraScan III Version:", 0, QFont::Bold );
+  lbl_valid->setGeometry( xpos, ypos, buttonw, rowHeight );
+
+  xpos += buttonw + spacing;
+
+  le_registration = us_lineedit( "", 0 );
+  le_registration->setPalette ( gray );
+  le_registration->setReadOnly( true );
+  le_registration->setGeometry( xpos, ypos, full_buttonw, rowHeight );
+
+  // Row 10 - Pushbuttons
   xpos  = spacing + pushbutton + spacing;
   ypos += spacing + rowHeight;
   
-  //pb_request = us_pushbutton( tr( "Request New" ) );
-  //pb_request->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  //connect( pb_request, SIGNAL( clicked() ), SLOT( request() ) );
-
-  //xpos += pushbutton + spacing;
-
-  //pb_import = us_pushbutton( tr( "E-mail Import" ) );
-  //pb_import->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  //connect( pb_import, SIGNAL( clicked() ), SLOT( import() ) );
-
-  //xpos += pushbutton + spacing;
-
-  //pb_save = us_pushbutton( tr( "Save" ) );
-  //pb_save->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  //connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
-
   pb_update = us_pushbutton( tr( "Register" ) );
   pb_update->setGeometry( xpos, ypos, pushbutton, rowHeight );
   connect( pb_update, SIGNAL( clicked() ), SLOT( update() ) );
@@ -271,7 +280,6 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
 
   // Finish up
-
   ypos += 30;    
   setMinimumSize( spacing + width + spacing, ypos );
 
@@ -354,18 +362,18 @@ void US_License::load_current( void )
 
 void US_License::update_screen( void )
 {
-  le_firstname  ->setText( firstname   );
-  le_lastname   ->setText( lastname    );
-  le_institution->setText( institution );
-  le_address    ->setText( address     );
-  le_city       ->setText( city        );
-  le_zip        ->setText( zip         );
-  le_phone      ->setText( phone       );
-  le_email      ->setText( email       );
+  le_firstname   ->setText( firstname   );
+  le_lastname    ->setText( lastname    );
+  le_institution ->setText( institution );
+  le_address     ->setText( address     );
+  le_city        ->setText( city        );
+  le_zip         ->setText( zip         );
+  le_phone       ->setText( phone       );
+  le_email       ->setText( email       );
 
-  lbl_expiration->setText( "Expiration: " + expiration );
-  lbl_version   ->setText( "Version: " + version );
-  lbl_platform  ->setText( "Platform: " + platform + " / OS: " + os );
+  le_platform    ->setText( platform + " / " + os );
+  le_expiration  ->setText( expiration );
+  le_registration->setText( version );
 
   // License type
   for ( int i = 0; i < types.count(); i++ )
@@ -420,7 +428,7 @@ void US_License::update_screen( void )
       validMsg = "Unknown";
   }
 
-  lbl_valid->setText( validMsg );
+  //lbl_valid->setText( validMsg );
 }
 
 void US_License::update( void )
