@@ -48,5 +48,6 @@ class US_Database : public US_Widgets
     void save_default( void );
     void deleteDB    ( void );
     bool test_connect( void );
+    void update_inv  ( void );
 };
 #endif
