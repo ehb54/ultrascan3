@@ -23,11 +23,13 @@ US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
-   QString hmsg     = tr( "Double-click on a tree noise entry to add it\n" )
+   QString hmsg     = tr( "You may select multiple noise records.\n\n" )
+                    + tr( "Click on a tree noise entry to add it\n" )
                     + tr( "   to the list below of selected noise records.\n" )
-                    + tr( "Double-click on a selected-noise list entry\n" )
-                    + tr( "   to remove it from the selected list.\n\n" )
-                    + tr( "You may select multiple noise records.\n\n" )
+                    + tr( "Click on a top-level entry to add all\n" )
+                    + tr( "   of its children to the selected list.\n" )
+                    + tr( "Ctrl-click on multiple noise entries\n" )
+                    + tr( "   to add them to the selected list.\n\n" )
                     + tr( "Click the \"Load\" button to load selected noise\n" )
                     + tr( "    or the \"Cancel\" button to select no noise.\n" )
                     + tr( "Click \"Details\" for noise entry details." );
@@ -44,8 +46,9 @@ US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
 
    tw_noises        = new QTreeWidget( this );
    tw_noises->setFrameStyle( QFrame::NoFrame );
-   tw_noises->setPalette( US_GuiSettings::frameColor() );
+   tw_noises->setPalette( US_GuiSettings::editColor() );
    tw_noises->setFont(    font );
+   tw_noises->setSelectionMode( QAbstractItemView::ExtendedSelection );
 
    lw_selects       = us_listwidget();
    lw_selects->setMaximumHeight( fontHeight * 3 + 12 );
@@ -105,10 +108,8 @@ qDebug() << "NL:   ii ndx nie" << ii << ndx << nie;
       tw_noises->expandItem( items.at( 0 ) );
    }
 
-   connect( tw_noises,  SIGNAL( itemDoubleClicked( QTreeWidgetItem*, int ) ),
-            this,       SLOT(   itemSelect(        QTreeWidgetItem*, int ) ) );
-   connect( lw_selects, SIGNAL( doubleClicked( const QModelIndex& ) ),
-            this,       SLOT(   itemDeselect(  const QModelIndex& ) ) );
+   connect( tw_noises,  SIGNAL( itemSelectionChanged() ),
+            this,       SLOT(   itemsSelected()        ) );
    connect( pb_detail,  SIGNAL( clicked()      ),
             this,       SLOT(   view_details() ) );
    connect( pb_cancel,  SIGNAL( clicked()      ),
@@ -117,99 +118,34 @@ qDebug() << "NL:   ii ndx nie" << ii << ndx << nie;
             this,       SLOT(   selected()     ) );
 }
 
-// move selected tree item to selects list
-void US_NoiseLoader::itemSelect( QTreeWidgetItem* item, int )
+void US_NoiseLoader::itemsSelected( void )
 {
-   QString itemtext = item->text( 0 );
-   QString itemtype = itemtext.left( 2 );
+   QList< QTreeWidgetItem* > selitems = tw_noises->selectedItems();
+   int nsels = selitems.size();
+   lw_selects->clear();
 
-   if ( itemtype != "ti"  &&  itemtype != "ri" )
-      return;     // ignore select if it was not a noise line
-
-   int nsels        = lw_selects->count();
-   
    if ( nsels == 0 )
-   {  // if no selects yet, just add item
-      lw_selects->addItem( itemtext );
-   }
+      return;
 
-   else
-   {  // otherwise, insert the item in the select list
-      QStringList selects;
-      QString     temptext;
-      int ricount = 0;
-      int ticount = 0;
-      int secount = lw_selects->count();
+   for ( int ii = 0; ii < nsels; ii++ )
+   {
+      QTreeWidgetItem* item = selitems[ ii ];
+      QString itemtext = item->text( 0 );
+      QString itemtype = itemtext.left( 2 );
 
-      for ( int ii = 0; ii < secount; ii++ )
-      {  // review what is currently in the selects list
-         temptext = lw_selects->item( ii )->text();
-
-         selects << temptext;  // build a string list of selects
-
-         if ( temptext.startsWith( "ti", Qt::CaseSensitive ) )
-            ticount++;         // bump "ti" count
-
-         else
-            ricount++;         // bump "ri" count
-
-         if ( temptext == itemtext )
-            return;            // abort now if already in select list
-
-      }
-
-      // The following inserts the selected noise entry into the select list.
-      // The goal is to have "ti" entries first, "ri" entries second.
-
-      if ( itemtype == "ti" )
-      {  // item to add is "ti_*"
-
-         if ( ticount == 0  ||  itemtext == "ti_noise 0000" )
-         {  // there wasn't one before, so insert the new one
-            lw_selects->insertItem( 0, itemtext );
-         }
-
-         else if ( ricount == 0 )
-         {  // have ti's and no ri's, so just append
-            lw_selects->addItem( itemtext );
-         }
-
-         else
-         {  // one or more exist, so insert before any ri entries
-            lw_selects->insertItem( ticount, itemtext );
-         }
-      }
-
-      else if ( itemtext == "ri_noise 0000" )
-      {  // insure primary ri is the first one of the ri part of the list
-         lw_selects->insertItem( ticount, itemtext );
-      }
-
-      else
-      {  // item to add is "ri_*" (not 0000), so just add it to the end
-
+      if ( itemtype == "ti"  ||  itemtype == "ri" )
+      {
          lw_selects->addItem( itemtext );
       }
+
+      else if ( itemtype == "Lo"  ||  itemtype == "Mo" )
+      {
+         for ( int jj = 0; jj < item->childCount(); jj++ )
+         {
+            lw_selects->addItem( item->child( jj )->text( 0 ) );
+         }
+      }
    }
-}
-
-// clear select list of item chosen
-void US_NoiseLoader::itemDeselect( const QModelIndex& mx )
-{
-   int sx    = mx.row();
-   int nrows = lw_selects->count();
-//qDebug() << "NL: itemDeselect row" << lw_selects->item( sx )->text();
-
-   if ( nrows == 1 )
-   {  // if there was only 1 item, list will now be clear
-      lw_selects->clear();
-   }
-
-   else
-   {  // otherwise, remove the item
-      lw_selects->takeItem( sx );
-   }
-
 }
 
 // close with check of need to clear noises

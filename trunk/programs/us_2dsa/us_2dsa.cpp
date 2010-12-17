@@ -321,11 +321,15 @@ void US_2dsa::data_plot( void )
    data_plot1->setTitle( tr( "Residuals" ) );
 
    // plot zero line through residuals plot
-   ra[ 0 ] = 6.0;
-   ra[ 1 ] = 7.2;
-   va[ 0 ] = 0.0;
-   va[ 1 ] = 0.0;
-   cc      = us_curve( data_plot1, "zero-line" );
+   double xlo = edata->radius( 0 );
+   double xhi = edata->radius( npoints - 1 );
+   xlo        = 0.1 * (double)( (int)( xlo * 10.0 ) );
+   xhi        = 0.1 * (double)( qRound( xhi * 10.0 + 0.5 ) );
+   ra[ 0 ]    = xlo;
+   ra[ 1 ]    = xhi;
+   va[ 0 ]    = 0.0;
+   va[ 1 ]    = 0.0;
+   cc         = us_curve( data_plot1, "zero-line" );
    cc->setPen( QPen( QBrush( Qt::red ), 2 ) );
    cc->setData( ra, va, 2 );
 

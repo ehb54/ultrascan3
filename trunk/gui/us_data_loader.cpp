@@ -81,6 +81,7 @@ US_DataLoader::US_DataLoader( bool editsel, bool late, bool local,
    tw_data->setFrameStyle( QFrame::NoFrame );
    tw_data->setPalette( US_GuiSettings::editColor() );
    tw_data->setFont(    font );
+   tw_data->setSelectionMode( QAbstractItemView::ExtendedSelection );
 
    tw_data->installEventFilter( this );
    main->addWidget( tw_data );
@@ -238,9 +239,10 @@ int US_DataLoader::load_edit( QVector< US_DataIO2::EditedData >& dataList,
       {
          ddesc            = sdescs[ ii ];
          QString filename = ddesc.filename;
-         QString triple   = ddesc.tripID;
+         QString triple   = ddesc.tripID.replace( ".", " / " );
          QString filedir  = filename.section( "/", 0, -2 );
          filename         = filename.section( "/", -1, -1 );
+
 
          if ( !triples.contains( triple ) )
             triples << triple;
@@ -260,7 +262,7 @@ int US_DataLoader::load_edit( QVector< US_DataIO2::EditedData >& dataList,
       {
          ddesc            = sdescs[ ii ];
          int     idRec    = ddesc.DB_id;
-         QString triple   = ddesc.tripID;
+         QString triple   = ddesc.tripID.replace( ".", " / " );
          QString filename = ddesc.filename;
          QString recID    = QString::number( idRec );
          QString invID    = le_invest->text().section( ":", 0, 0 );
