@@ -43,8 +43,8 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   // Populate db_list
   lw_entries->setCurrentRow( 0 );
-  connect( lw_entries, SIGNAL( itemPressed( QListWidgetItem* ) ), 
-           this,       SLOT  ( select_db  ( QListWidgetItem* ) ) );
+  connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
+           this,       SLOT  ( select_db        ( QListWidgetItem* ) ) );
 
   update_lw();  // Fill in the list widget
   topbox->addWidget( lw_entries );
@@ -115,41 +115,39 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   topbox->addLayout( details );
 
   //Pushbuttons
-
   row = 0;
   QGridLayout* buttons = new QGridLayout();
 
-  pb_add = us_pushbutton( tr( "Add New Entry" ) );
-  connect( pb_add, SIGNAL( clicked() ), this, SLOT( check_add() ) );
-  buttons->addWidget( pb_add, row, 0 );
+  pb_save = us_pushbutton( tr( "Save Entry" ) );
+  pb_save->setEnabled( false );
+  connect( pb_save, SIGNAL( clicked() ), this, SLOT( check_add() ) );
+  buttons->addWidget( pb_save, row, 0 );
 
   pb_delete = us_pushbutton( tr( "Delete Current Entry" ) );
   pb_delete->setEnabled( false );
   connect( pb_delete, SIGNAL( clicked() ), this, SLOT( deleteDB() ) );
   buttons->addWidget( pb_delete, row++, 1 );
 
-  pb_save = us_pushbutton( tr( "Save as Default" ) );
-  pb_save->setEnabled( false );
-  connect( pb_save, SIGNAL( clicked() ), this, SLOT( save_default() ) );
-  buttons->addWidget( pb_save, row, 0 );
-
-  pb_reset = us_pushbutton( tr( "Reset" ) );
-  connect( pb_reset, SIGNAL( clicked() ), this, SLOT( reset() ) );
-  buttons->addWidget( pb_reset, row++, 1 );
-
   pb_testConnect = us_pushbutton( tr( "Test Database Connectivity" ) );
   connect( pb_testConnect, SIGNAL( clicked() ), this, SLOT( test_connect() ) );
   buttons->addWidget( pb_testConnect, row++, 0, 1, 2 );
 
+  QHBoxLayout* std_buttons = new QHBoxLayout;
+
+  pb_reset = us_pushbutton( tr( "Reset" ) );
+  connect( pb_reset, SIGNAL( clicked() ), this, SLOT( reset() ) );
+  std_buttons->addWidget( pb_reset );
+
   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
   connect( pb_help, SIGNAL( clicked() ), this, SLOT( help() ) );
-  buttons->addWidget( pb_help, row, 0 );
+  std_buttons->addWidget( pb_help );
 
   QPushButton* pb_cancel = us_pushbutton( tr( "Close" ) );
   connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( close() ) );
-  buttons->addWidget( pb_cancel, row++, 1 );
+  std_buttons->addWidget( pb_cancel );
 
   topbox->addLayout( buttons );
+  topbox->addLayout( std_buttons );
 }
 
 void US_Database::select_db( QListWidgetItem* entry )
@@ -187,12 +185,43 @@ void US_Database::select_db( QListWidgetItem* entry )
      
       uuid = dblist.at( i ).at( 9 );
 
-      pb_save       ->setEnabled( true );
-      pb_delete     ->setEnabled( true );
+      // Set the default DB and user for that DB
+      US_Settings::set_defaultDB( dblist.at( i ) );
+      update_lw();
+      update_inv();
+
+      pb_save  ->setEnabled( true );
+      pb_delete->setEnabled( true );
 
       break;
     }
   }
+}
+
+void US_Database::update_inv( void )
+{
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+         tr( "Error" ),
+         tr( "Error making the DB connection.\n" ) );
+
+      return;
+   }
+
+   QStringList q( "get_user_info" );
+   db.query( q );
+   db.next();
+
+   int ID        = db.value( 0 ).toInt();
+   QString fname = db.value( 1 ).toString();
+   QString lname = db.value( 2 ).toString();
+
+   US_Settings::set_us_inv_name( lname + ", " + fname );
+   US_Settings::set_us_inv_ID( ID );
 }
 
 void US_Database::check_add()
@@ -321,8 +350,8 @@ void US_Database::check_add()
 
   if ( lw_entries->count() == 1 ) save_default();
 
-  pb_save       ->setEnabled( true );
-  pb_delete     ->setEnabled( true );
+  pb_save  ->setEnabled( true );
+  pb_delete->setEnabled( true );
 } 
 
 void US_Database::update_lw( const QString& current )
@@ -466,7 +495,6 @@ bool US_Database::test_connect( void )
       return false;
    }
 
-
    QString error;
    US_DB2  db;
    bool ok = db.test_secure_connection( 
@@ -474,7 +502,6 @@ bool US_Database::test_connect( void )
                le_username          ->text(), le_password       ->text(), 
                le_investigator_email->text(), le_investigator_pw->text(), 
                error );
-
    if ( ok ) 
    {
       uuid = db.value( 0 ).toString();   // Set class variable uuid

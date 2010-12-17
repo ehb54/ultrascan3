@@ -99,7 +99,7 @@ class US_EXTERN US_Settings
     //! \brief Get the last set investigator name
     static QString     us_inv_name( void );
     //! \brief Set the last set investigator name
-    static void        set_us_inv_name( QString& );
+    static void        set_us_inv_name( const QString& );
 
     //! \brief Get the last set investigator ID
     static int         us_inv_ID( void );

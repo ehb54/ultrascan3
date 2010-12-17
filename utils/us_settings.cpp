@@ -259,7 +259,7 @@ QString US_Settings::us_inv_name( void )
    return settings.value( "us_investigator_name", "" ).toString();
 }
 
-void US_Settings::set_us_inv_name( QString& name )
+void US_Settings::set_us_inv_name( const QString& name )
 {
   QSettings settings( "UTHSCSA", "UltraScan" );
   if ( name == "" )
