@@ -564,15 +564,19 @@ void US_ResidPlot::plot_rdata()
    QwtPlotCurve* curv;
    QPen          pen_plot( Qt::green );
 
-   points  = edata->x.size();
-   count   = edata->scanData.size();
+   points     = edata->x.size();
+   count      = edata->scanData.size();
 
    // plot a zero line in red
-   rr[ 0 ] = !do_pltrin ? 6.0 : 0.0;
-   rr[ 1 ] = !do_pltrin ? 7.2 : double( count );
-   vv[ 0 ] = 0.0;
-   vv[ 1 ] = 0.0;
-   curv    = us_curve( data_plot2, "zero-line" );
+   double xlo = edata->radius( 0 );
+   double xhi = edata->radius( points - 1 );
+   xlo        = 0.1 * (double)( (int) ( xlo * 10.0       ) );
+   xhi        = 0.1 * (double)( qRound( xhi * 10.0 + 0.5 ) );
+   rr[ 0 ]    = !do_pltrin ? xlo : 0.0;
+   rr[ 1 ]    = !do_pltrin ? xhi : double( count );
+   vv[ 0 ]    = 0.0;
+   vv[ 1 ]    = 0.0;
+   curv       = us_curve( data_plot2, "zero-line" );
    curv->setPen( QPen( QBrush( Qt::red ), 2 ) );
    curv->setData( rr, vv, 2 );
 
@@ -725,6 +729,7 @@ void US_ResidPlot::plot_rdata()
 
       resids .resize( count );
       resscan.resize( points );
+      rmsd     = 0.0;
 
       for ( int ii = 0; ii < count; ii++ )
       {  // build a vector for each scan

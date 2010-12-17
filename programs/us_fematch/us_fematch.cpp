@@ -480,14 +480,15 @@ void US_FeMatch::update( int drow )
    QString bdens = le_density  ->text();
    QString bvisc = le_viscosity->text();
    QString bcomp = le_compress ->text();
+   QString svbar = le_vbar     ->text();
    bool    bufin = false;
 
    if ( def_local )
    {  // data from local disk:  get buffer vals (disk or db)
-      bufin  = bufinfo_disk( edata, bufid, bguid, bdesc );
+      bufin  = bufinfo_disk( edata, svbar, bufid, bguid, bdesc );
 DbgLv(2) << "L:IL: bufin bdesc" << bufin << bdesc;
       bufin  = bufin ? bufin :
-               bufinfo_db(   edata, bufid, bguid, bdesc );
+               bufinfo_db(   edata, svbar, bufid, bguid, bdesc );
 DbgLv(2) << "L:ID: bufin bdesc" << bufin << bdesc;
       bufin  = bufvals_disk( bufid, bguid, bdesc, bdens, bvisc, bcomp );
 DbgLv(2) << "L:VL: bufin bdens" << bufin << bdens;
@@ -498,10 +499,10 @@ DbgLv(2) << "L:VD: bufin bdens" << bufin << bdens;
 
    else
    {  // data from db:          get buffer vals (db or disk)
-      bufin  = bufinfo_db(   edata, bufid, bguid, bdesc );
+      bufin  = bufinfo_db(   edata, svbar, bufid, bguid, bdesc );
 DbgLv(2) << "D:ID: bufin bdesc" << bufin << bdesc;
       bufin  = bufin ? bufin :
-               bufinfo_disk( edata, bufid, bguid, bdesc );
+               bufinfo_disk( edata, svbar, bufid, bguid, bdesc );
 DbgLv(2) << "D:IL: bufin bdesc" << bufin << bdesc;
       bufin  = bufvals_db(   bufid, bguid, bdesc, bdens, bvisc, bcomp );
 DbgLv(2) << "D:VD: bufin bdens" << bufin << bdens;
@@ -516,6 +517,7 @@ DbgLv(2) << "D:VL: bufin bdens" << bufin << bdens;
       le_density  ->setText( bdens );
       le_viscosity->setText( bvisc );
       le_compress ->setText( bcomp );
+      le_vbar     ->setText( svbar );
       buffLoaded  = true;
       density     = bdens.toDouble();
       viscosity   = bvisc.toDouble();
@@ -1609,15 +1611,16 @@ void US_FeMatch::adjust_mc_model()
 // load noise record(s) if there are any and user so chooses
 void US_FeMatch::load_noise( )
 {
+   int         dd = lw_triples->currentRow();
    QStringList mieGUIDs;  // list of GUIDs of models-in-edit
    QStringList nimGUIDs;  // list of GUIDs:type:index of noises-in-models
    QStringList nieGUIDs;  // list of GUIDS:type:index of noises-in-edit
    QStringList tmpGUIDs;  // temporary noises-in-model list
-   QString     editGUID  = dataList[ 0 ].editGUID; // loaded edit GUID
-   QString     modelGUID = model.modelGUID;        // loaded model GUID
-   QString     lmodlGUID;                          // list model GUID
-   QString     lnoisGUID;                          // list noise GUID
-   QString     modelIndx;                          // "0001" style model index
+   QString     editGUID  = dataList[ dd ].editGUID; // loaded edit GUID
+   QString     modelGUID = model.modelGUID;         // loaded model GUID
+   QString     lmodlGUID;                           // list model GUID
+   QString     lnoisGUID;                           // list noise GUID
+   QString     modelIndx;                           // "0001" style model index
 DbgLv(1) << "editGUID  " << editGUID;
 DbgLv(1) << "modelGUID " << modelGUID;
 
@@ -1729,8 +1732,8 @@ for (int jj=0;jj<nenois;jj++)
          // noise loaded:  insure that counts jive with data
          int ntinois = ti_noise.values.size();
          int nrinois = ri_noise.values.size();
-         int nscans  = dataList[ 0 ].scanData.size();
-         int npoints = dataList[ 0 ].x.size();
+         int nscans  = dataList[ dd ].scanData.size();
+         int npoints = dataList[ dd ].x.size();
          int npadded = 0;
 
          if ( ntinois > 0  &&  ntinois < npoints )
@@ -2314,8 +2317,8 @@ DbgLv(1) << "MIE: ondisk" << ondisk;
                   reGUIDs << xrGUID;  // this is 1st:  save it for compare
                }
 
-               if ( xeGUID == eGUID )
-                  mGUIDs << xmGUID;
+               // save the GUID of each model with a matching edit GUID
+               mGUIDs << xmGUID;
             }
          }
 
@@ -2498,7 +2501,7 @@ int US_FeMatch::noises_in_model( bool ondisk, QString mGUID,
 
 // get buffer info from DB: ID, GUID, description
 bool US_FeMatch::bufinfo_db( US_DataIO2::EditedData* edata,
-      QString& bufId, QString& bufGuid, QString& bufDesc )
+      QString& svbar, QString& bufId, QString& bufGuid, QString& bufDesc )
 {
    bool bufinfo = false;
 
@@ -2544,7 +2547,7 @@ DbgLv(2) << "BInfD: rawGUID rawID expID soluID"
             << " lastErrno" << db.lastErrno();
       }
       else
-         qDebug() << "+++ Got solutionBuffer from soluID" << soluID;
+         DbgLv(1) << "+++ Got solutionBuffer from soluID" << soluID;
       //return bufinfo;
    }
    db.next();
@@ -2561,47 +2564,29 @@ DbgLv(2) << "BInfD: id guid desc" << id << guid << desc;
       bufinfo       = true;
    }
  
-//*DEBUG
-QString invID  = investig.section( ":", 0, 0 );
-query.clear();
-query << "get_experiment_desc" << invID;
-db.query( query );
-QStringList expIDs;
-while ( db.next() ) expIDs << db.value(0).toString();
-DbgLv(2) << "esbDbg:invID nexpIDs" << invID << expIDs.size();
-for ( int ii=0; ii<expIDs.size(); ii++ )
-{
- DbgLv(2) << "esbDbg: ii expID" << ii << expIDs[ii];
- QStringList solIDs;
- query.clear();
- query << "get_solutionIDs" << expIDs[ii];
- db.query( query );
- while ( db.next() ) solIDs << db.value(0).toString();
- for ( int jj=0; jj<solIDs.size(); jj++ )
- {
-  query.clear();
-  query << "get_solution" << solIDs[jj];
-  db.query( query );
-  db.next();
-  DbgLv(2) << "esbDbg:   jj solID sGUID temp desc notes" << jj << solIDs[jj]
-   << db.value(0).toString() << db.value(2).toString()
-   << db.value(1).toString() << db.value(3).toString();
-  query.clear();
-  query << "get_solutionBuffer" << solIDs[jj];
-  db.query( query );
-  db.next();
-  DbgLv(2) << "esbDbg      bId bDesc bGuid" << db.value(0).toString()
-   << db.value(2).toString() << db.value(1).toString();
- }
-}
-//*DEBUG
+   query.clear();
+   query << "get_solution" << soluID;
+   db.query( query );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      qDebug() << "***Unable to get solution vbar from soluID" << soluID
+         << " lastErrno" << db.lastErrno();
+   }
+   else
+   {
+      db.next();
+      svbar  = db.value( 2 ).toString();
+      DbgLv(1) << "+++ Got solution vbar from soluID" << soluID
+         << ": " << svbar;
+   }
 
    return bufinfo;
 }
 
 // get buffer info from local disk: ID, GUID, description
 bool US_FeMatch::bufinfo_disk( US_DataIO2::EditedData* edata,
-   QString& bufId, QString& bufGuid, QString& bufDesc )
+   QString& svbar, QString& bufId, QString& bufGuid, QString& bufDesc )
 {
    bool    bufinfo  = false;
    QString soluGUID = "";
@@ -2683,9 +2668,12 @@ DbgLv(2) << "BInfL:   soluGUID" << soluGUID;
 
                if (  xml.name() == "solution" )
                {
-                  QString sguid = ats.value( "guid" ).toString();
+                  QString sguid = ats.value( "guid"         ).toString();
                   if ( sguid != soluGUID )
                      break;
+                  svbar         = ats.value( "commonVbar20" ).toString();
+                  DbgLv(1) << "+++ Got solution vbar" << svbar
+                     << "from file, for GUID" << soluGUID;
                }
 
                else if (  xml.name() == "buffer" )

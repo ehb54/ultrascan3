@@ -39,12 +39,11 @@ class US_EXTERN US_NoiseLoader : public US_WidgetsDialog
       QHBoxLayout*  btnsLayout;
 
    private slots:
-      void itemSelect  ( QTreeWidgetItem*, int );
-      void itemDeselect( const QModelIndex& );
-      void view_details( void );
-      void cancelled(    void );
-      void selected (    void );
-      void close_all(    void );
+      void itemsSelected( void );
+      void view_details(  void );
+      void cancelled(     void );
+      void selected (     void );
+      void close_all(     void );
 
 };
 #endif

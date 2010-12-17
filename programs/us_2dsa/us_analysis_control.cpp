@@ -77,20 +77,20 @@ US_AnalysisControl::US_AnalysisControl( US_DataIO2::EditedData* dat_exp,
    int nthr     = US_Settings::threads();
    nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
 DbgLv(1) << "idealThrCout" << nthr;
-   ct_lolimits  = us_counter( 3,  0.1,    5,   1 );
-   ct_uplimits  = us_counter( 3,    5,   10,  10 );
+   ct_lolimits  = us_counter( 3,    1,   10,   1 );
+   ct_uplimits  = us_counter( 3,    4,  100,  10 );
    ct_nstepss   = us_counter( 3,    1, 1000,  60 );
-   ct_lolimitk  = us_counter( 3, 0.01,    3,   1 );
-   ct_uplimitk  = us_counter( 3,    3,    6,   4 );
+   ct_lolimitk  = us_counter( 3,    1,    8,   1 );
+   ct_uplimitk  = us_counter( 3,    2,   10,   4 );
    ct_nstepsk   = us_counter( 3,    1, 1000,  60 );
    ct_thrdcnt   = us_counter( 2,    1,   64, nthr );
-   ct_lolimits->setStep(  0.1 );
-   ct_uplimits->setStep(  0.1 );
-   ct_nstepss ->setStep(    1 );
-   ct_lolimitk->setStep( 0.01 );
-   ct_uplimitk->setStep( 0.01 );
-   ct_nstepsk ->setStep(    1 );
-   ct_thrdcnt ->setStep(    1 );
+   ct_lolimits->setStep( 0.1 );
+   ct_uplimits->setStep( 0.1 );
+   ct_nstepss ->setStep(   1 );
+   ct_lolimitk->setStep( 0.1 );
+   ct_uplimitk->setStep( 0.1 );
+   ct_nstepsk ->setStep(   1 );
+   ct_thrdcnt ->setStep(   1 );
 
    le_estmemory = us_lineedit( "100 MB" );
    le_iteration = us_lineedit( "0" );
@@ -577,8 +577,12 @@ DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
    le_newvari  ->setText( QString::number( varinew ) );
    le_improve  ->setText( QString::number( vimprov ) );
 
-   if ( mmitnum == 0 )   // simple refinement iteration (no MC/Meniscus)
+   if ( mmitnum == 0 )
+   {  // simple refinement iteration (no MC/Meniscus)
       le_iteration->setText( QString::number( iternum ) );
+      model->description = QString( "MMITER=%1 VARI=%2 " )
+                           .arg( mmitnum ).arg( varinew );
+   }
 
    else if ( ck_menisc->isChecked() )
    {  // Meniscus
