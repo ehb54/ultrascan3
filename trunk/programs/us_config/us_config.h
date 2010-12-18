@@ -78,20 +78,22 @@ private:
   QPushButton*    pb_password;
   QPushButton*    pb_advanced;
 
+  US_Disk_DB_Controls* disk_db_control;
 
 private slots:
 
-  void open_browser   ( void );
-  void open_dataDir   ( void );
-  void open_resultDir ( void );
-  void open_reportDir ( void );
-  void open_archiveDir( void );
-  void open_tmpDir    ( void );
-  void update_colors  ( void );
-  void update_font    ( void );
-  void update_db      ( void );
-  void update_password( void );
-  void update_advanced( void );
-  void save           ( void );
-  void help           ( void );
+  void open_browser     ( void );
+  void open_dataDir     ( void );
+  void open_resultDir   ( void );
+  void open_reportDir   ( void );
+  void open_archiveDir  ( void );
+  void open_tmpDir      ( void );
+  void update_colors    ( void );
+  void update_font      ( void );
+  void update_db        ( void );
+  void update_password  ( void );
+  void update_advanced  ( void );
+  void save             ( void );
+  void help             ( void );
+  void set_data_location( void );
 };

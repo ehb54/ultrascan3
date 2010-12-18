@@ -219,9 +219,11 @@ void US_Database::update_inv( void )
    int ID        = db.value( 0 ).toInt();
    QString fname = db.value( 1 ).toString();
    QString lname = db.value( 2 ).toString();
+   int     level = db.value( 5 ).toInt();
 
-   US_Settings::set_us_inv_name( lname + ", " + fname );
-   US_Settings::set_us_inv_ID( ID );
+   US_Settings::set_us_inv_name ( lname + ", " + fname );
+   US_Settings::set_us_inv_ID   ( ID );
+   US_Settings::set_us_inv_level( level );
 }
 
 void US_Database::check_add()
