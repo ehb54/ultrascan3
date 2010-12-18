@@ -146,6 +146,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   row = 0;
   QGridLayout* otherSettings = new QGridLayout();
 
+/* Not used any more.  Hard coded to 0.5C.
   // Temperature Tolerance
   QLabel* temperature = us_label( tr( "Temperature Tolerance (" ) + DEGC
         + "):" );
@@ -160,13 +161,16 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   sb_temperature_tol->setFont( QFont( US_GuiSettings::fontFamily(), 
                                       US_GuiSettings::fontSize() ) );
   otherSettings->addWidget( sb_temperature_tol, row++, 1 );
+*/
 
+
+/*  Not used any more
   // Beckman Bug
   QLabel* beckman = us_label( "Beckman Time Bug Correction:" );
   otherSettings->addWidget( beckman, row, 0 );
 
   QGridLayout* radiobutton = new QGridLayout();
-  radiobutton->setSpacing( 0 );
+  radiobutton->setSpacing        ( 0 );
   radiobutton->setContentsMargins( 0, 0, 0, 0 );
 
   QLabel* lb_background = new QLabel;
@@ -180,6 +184,14 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   radiobutton->addLayout( rb2, 0, 1 );
 
   otherSettings->addLayout( radiobutton, row++, 1 );
+*/
+  // Disk/DB preference
+  QLabel* lb_disk_db = us_label( "Default Data Location:" );
+  otherSettings->addWidget( lb_disk_db, row, 0 );
+
+  disk_db_control = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
+  otherSettings->addLayout( disk_db_control, row++, 1 );
+  connect( disk_db_control, SIGNAL( changed() ), SLOT( set_data_location() ) );
 
   // Color Preferences
   QLabel* color = us_label( "Color Preferences:" );
@@ -247,7 +259,7 @@ void US_Config::help( void )
 
 void US_Config::save( void )
 {
-   US_Settings::set_tempTolerance( sb_temperature_tol->value() );
+//   US_Settings::set_tempTolerance( sb_temperature_tol->value() );
    US_Settings::set_browser      ( le_browser    ->text()      );
    US_Settings::set_dataDir      ( le_dataDir    ->text()      );
    US_Settings::set_resultDir    ( le_resultDir  ->text()      );
@@ -259,6 +271,14 @@ void US_Config::save( void )
    QMessageBox::information( this,
          tr( "Settings Saved" ),
          tr( "The settings were successfully saved" ) );
+}
+
+void US_Config::set_data_location( void )
+{
+   if ( disk_db_control->db() ) 
+      US_Settings::set_default_data_location( US_Disk_DB_Controls::DB );
+   else
+      US_Settings::set_default_data_location( US_Disk_DB_Controls::Disk );
 }
 
 void US_Config::update_colors( void )
