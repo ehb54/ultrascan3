@@ -202,6 +202,22 @@ void US_Settings::set_beckmanBug( bool setBug )
     settings.setValue( "beckmanBug", true );
 }
 
+// Default data location  1 = DB, 2 = Disk
+int US_Settings::default_data_location( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  return settings.value( "dataLocation", 1 ).toInt(); 
+}
+
+void US_Settings::set_default_data_location( int location )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( location == 1 )
+    settings.remove( "dataLocation" );
+  else
+    settings.setValue( "dataLocation", location );
+}
+
 // us_debug
 #ifdef NO_DB
 static int us_settings_debug = 0;
@@ -281,6 +297,21 @@ void US_Settings::set_us_inv_ID( int id )
     settings.remove( "us_investigator_ID" );
   else
     settings.setValue( "us_investigator_ID", id );
+}
+
+int US_Settings::us_inv_level( void )
+{
+   QSettings settings( "UTHSCSA", "UltraScan" );
+   return settings.value( "us_investigator_level", 0 ).toInt();
+}
+
+void US_Settings::set_us_inv_level( int level )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( level == 0 )
+    settings.remove( "us_investigator_level" );
+  else
+    settings.setValue( "us_investigator_level", level );
 }
 
 // advanced level
