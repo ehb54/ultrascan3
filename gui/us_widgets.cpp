@@ -1,6 +1,7 @@
 //! \file us_widgets.cpp
 #include "us_widgets.h"
 #include "us_gui_settings.h"
+#include "us_settings.h"
 
 US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFrame( w, f )
 {
@@ -414,6 +415,42 @@ QTabWidget* US_Widgets::us_tabwidget(  int fontAdjust,
   newtw->setPalette( US_GuiSettings::normalColor() );
 
   return newtw;
+}
+
+//////////////////  New class
+
+US_Disk_DB_Controls::US_Disk_DB_Controls( int state )
+{
+   US_Widgets*   w     = new US_Widgets;
+   QButtonGroup* group = new QButtonGroup;
+
+   QGridLayout* db_layout   = w->us_radiobutton( tr( "Database" ),   rb_db );
+   QGridLayout* disk_layout = w->us_radiobutton( tr( "Local Disk" ), rb_disk );
+
+   group->addButton( rb_db );
+   group->addButton( rb_disk );
+
+   if ( state == Default ) state = US_Settings::default_data_location();
+
+   ( state == Disk ) ? rb_disk->setChecked( true ) : rb_db->setChecked( true );
+
+   setSpacing        ( 0 );
+   setContentsMargins( 0, 0, 0, 0 );
+
+   addLayout( db_layout );
+   addLayout( disk_layout );
+
+   connect( rb_db, SIGNAL( toggled( bool ) ), SLOT( rb_changed( bool ) ) );
+}
+
+bool US_Disk_DB_Controls::db( void )
+{
+   return rb_db->isChecked();
+}
+
+void US_Disk_DB_Controls::rb_changed( bool /* state */ )
+{
+   emit changed();;
 }
 
 
