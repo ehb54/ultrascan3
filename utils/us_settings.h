@@ -90,6 +90,11 @@ class US_EXTERN US_Settings
     static bool        beckmanBug( void );
     //! \brief Set the Beckman Bug flag
     static void        set_beckmanBug( bool );
+    
+    //! \brief Get the default data location
+    static int         default_data_location( void );
+    //! \brief Set the default data  setting
+    static void        set_default_data_location( int );
 
     //! \brief Get the US_Debug setting
     static int         us_debug( void );
@@ -100,6 +105,11 @@ class US_EXTERN US_Settings
     static QString     us_inv_name( void );
     //! \brief Set the last set investigator name
     static void        set_us_inv_name( const QString& );
+
+    //! \brief Get the last set investigator user level
+    int                us_inv_level( void );
+    //! \brief Set the last set investigator user level
+    static void        set_us_inv_level( int );
 
     //! \brief Get the last set investigator ID
     static int         us_inv_ID( void );
