@@ -40,15 +40,16 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   lw_entries->setPalette( US_GuiSettings::editColor() );
   lw_entries->setFont( QFont( US_GuiSettings::fontFamily(),
                               US_GuiSettings::fontSize() ) );
-
-  // Populate db_list
-  lw_entries->setCurrentRow( 0 );
-  connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
-           this,       SLOT  ( select_db        ( QListWidgetItem* ) ) );
-
-  update_lw();  // Fill in the list widget
   topbox->addWidget( lw_entries );
 
+  // Populate db_list
+  QStringList DB = US_Settings::defaultDB();
+  QString     defaultDB;
+  if ( DB.size() > 0 ) defaultDB = US_Settings::defaultDB().at( 0 );
+  update_lw( defaultDB );
+
+  connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
+                       SLOT  ( select_db        ( QListWidgetItem* ) ) );
   // Detail info
   QLabel* info = us_banner( tr( "Database Detailed  Information" ) );
   topbox->addWidget( info );
@@ -153,7 +154,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 void US_Database::select_db( QListWidgetItem* entry )
 {
   // When this is run, we will always have a current dblist
-  
+
   // Delete trailing (default) if that is present
   QString item = entry->text().remove( " (default)" );
 
@@ -187,9 +188,13 @@ void US_Database::select_db( QListWidgetItem* entry )
 
       // Set the default DB and user for that DB
       US_Settings::set_defaultDB( dblist.at( i ) );
-      update_lw();
-      update_inv();
 
+      update_inv();
+      update_lw( item );
+
+      QMessageBox::information( this,
+            tr( "Database Selected" ),
+            tr( "The default database has been updated." ) );
       pb_save  ->setEnabled( true );
       pb_delete->setEnabled( true );
 
@@ -370,7 +375,7 @@ void US_Database::update_lw( const QString& current )
   {
     QString desc    = dblist.at( i ).at( 0 );
     QString display = desc;
-    
+
     if ( desc == defaultDBname ) display.append( " (default)" );
     
     QListWidgetItem* widget = new QListWidgetItem( display );
@@ -463,6 +468,7 @@ void US_Database::deleteDB( void )
       
       // Check if the default DB matches
       QStringList defaultDB = US_Settings::defaultDB();
+
       if ( defaultDB.at( 0 ) == item )
         US_Settings::set_defaultDB( QStringList() );
       
