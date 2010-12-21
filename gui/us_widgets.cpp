@@ -421,11 +421,10 @@ QTabWidget* US_Widgets::us_tabwidget(  int fontAdjust,
 
 US_Disk_DB_Controls::US_Disk_DB_Controls( int state )
 {
-   US_Widgets*   w     = new US_Widgets;
    QButtonGroup* group = new QButtonGroup;
 
-   QGridLayout* db_layout   = w->us_radiobutton( tr( "Database" ),   rb_db );
-   QGridLayout* disk_layout = w->us_radiobutton( tr( "Local Disk" ), rb_disk );
+   QGridLayout* db_layout   = us_radiobutton( tr( "Database" ),   rb_db );
+   QGridLayout* disk_layout = us_radiobutton( tr( "Local Disk" ), rb_disk );
 
    group->addButton( rb_db );
    group->addButton( rb_disk );
@@ -448,9 +447,53 @@ bool US_Disk_DB_Controls::db( void )
    return rb_db->isChecked();
 }
 
-void US_Disk_DB_Controls::rb_changed( bool /* state */ )
+void US_Disk_DB_Controls::set_db( void )
 {
-   emit changed();;
+   rb_db->disconnect();
+   rb_db->setChecked( true );
+   connect( rb_db, SIGNAL( toggled( bool ) ), SLOT( rb_changed( bool ) ) );
 }
 
+void US_Disk_DB_Controls::set_disk( void )
+{
+   rb_db  ->disconnect();
+   rb_disk->setChecked( true );
+   connect( rb_db, SIGNAL( toggled( bool ) ), SLOT( rb_changed( bool ) ) );
+}
 
+void US_Disk_DB_Controls::rb_changed( bool /* state */ )
+{
+   emit changed( rb_db->isChecked() );
+}
+
+// Copy from US_Widgets so global is not needed.
+QGridLayout* US_Disk_DB_Controls::us_radiobutton( 
+      const QString& text, QRadioButton*& rb, bool state )
+{
+  QPalette p    = US_GuiSettings::normalColor();
+  QFont    font = QFont( US_GuiSettings::fontFamily(),
+                         US_GuiSettings::fontSize  (),
+                         QFont::Bold );
+
+  QFontMetrics fm( font );
+
+  QLabel* lb_spacer = new QLabel;
+  lb_spacer->setFixedWidth        ( fm.width( "w" ) ); // Space as wide as a 'w'
+  lb_spacer->setAutoFillBackground( true );
+  lb_spacer->setPalette           ( p );
+
+  rb = new QRadioButton( text.toAscii() );
+  rb->setAutoFillBackground( true  );
+  rb->setFont              ( font  );
+  rb->setPalette           ( p     );
+  rb->setChecked           ( state );
+
+  QGridLayout* layout = new QGridLayout;
+  layout->setSpacing        ( 0 );
+  layout->setContentsMargins( 0, 0, 0, 0 );
+
+  layout->addWidget( lb_spacer, 0, 0 );
+  layout->addWidget( rb       , 0, 1 );
+
+  return layout;
+}

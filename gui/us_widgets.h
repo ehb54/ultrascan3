@@ -195,18 +195,23 @@ class US_EXTERN US_Disk_DB_Controls : public QHBoxLayout
    Q_OBJECT
 
    public:
-      enum { Default, DB, Disk };
+      enum type { Default, DB, Disk };
 
       US_Disk_DB_Controls( int= Default );
       bool db( void );
+      void set_disk( void );
+      void set_db  ( void );
 
    signals:
       //!  A signal to indicate that the current selection has changed
-      void changed( void );
+      void changed( bool );
 
    private:
       QRadioButton* rb_disk;
       QRadioButton* rb_db;
+
+      QGridLayout* us_radiobutton( 
+            const QString& text, QRadioButton*& rb, bool state = false );
 
    private slots:
       void rb_changed( bool );
