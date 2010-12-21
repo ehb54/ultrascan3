@@ -107,7 +107,7 @@ class US_EXTERN US_Settings
     static void        set_us_inv_name( const QString& );
 
     //! \brief Get the last set investigator user level
-    int                us_inv_level( void );
+    static int          us_inv_level( void );
     //! \brief Set the last set investigator user level
     static void        set_us_inv_level( int );
 

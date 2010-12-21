@@ -9,9 +9,9 @@
 #include <qwt_legend.h>
 
 US_RunDetails2::US_RunDetails2( const QVector< US_DataIO2::RawData >& data, 
-                              const QString&                       runID, 
-                              const QString&                       dataDir, 
-                              const QStringList&                   cell_ch_wl )
+                                const QString&                        runID, 
+                                const QString&                        dataDir, 
+                                const QStringList&                    cell_ch_wl )
    : US_WidgetsDialog( 0, 0 ), dataList( data ), triples( cell_ch_wl )
 {
    setWindowTitle( tr( "Details for Raw Data" ) );

@@ -23,11 +23,13 @@ class US_EXTERN US_RunDetails2 : public US_WidgetsDialog
       //! \param cell_ch_wl A list of formatted cell/channel/wavelength
       //!                   strings that descripe each raw data structure
       US_RunDetails2( const QVector< US_DataIO2::RawData >&, 
-            const QString&, const QString&, const QStringList& );
+                      const QString&, 
+                      const QString&, 
+                      const QStringList& );
 
    private:
       const QVector< US_DataIO2::RawData >& dataList;
-      const QStringList&                   triples;
+      const QStringList&                    triples;
       
       // key = rpm, value = triple + scan#
       QMultiMap< int, QString >          map; 
