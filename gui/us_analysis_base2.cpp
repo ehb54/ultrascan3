@@ -16,7 +16,7 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 {
    setPalette( US_GuiSettings::frameColor() );
 
-   mainLayout      = new QHBoxLayout( this );
+   mainLayout      = new QGridLayout( this );
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
@@ -54,8 +54,10 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    rightLayout->addLayout( plotLayout1 );
    rightLayout->addLayout( plotLayout2 );
 
-   mainLayout->addLayout( leftLayout  );
-   mainLayout->addLayout( rightLayout );
+   mainLayout->addLayout( leftLayout,  0, 0 );
+   mainLayout->addLayout( rightLayout, 0, 1 );
+   mainLayout->setColumnStretch( 0, 0 );
+   mainLayout->setColumnStretch( 1, 99 );
 
    // Analysis buttons
    pb_load    = us_pushbutton( tr( "Load Experiment" ) );
@@ -64,6 +66,9 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    QLayout* lo_edlast =
                 us_checkbox(   tr( "Latest Data Edit" ), ck_edlast, true ); 
    connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
+
+   disk_controls = new US_Disk_DB_Controls;
+
    pb_view    = us_pushbutton( tr( "View Data Report" ) );
    pb_save    = us_pushbutton( tr( "Save Data" ) );
 
@@ -71,12 +76,13 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    pb_view   ->setEnabled( false );
    pb_save   ->setEnabled( false );
 
-   int row        = 0;
-   analysisLayout->addWidget( pb_load,    row,   0, 1, 1 );
-   analysisLayout->addWidget( pb_details, row++, 1, 1, 1 );
-   analysisLayout->addLayout( lo_edlast,  row++, 0, 1, 1 );
-   analysisLayout->addWidget( pb_view,    row,   0, 1, 1 );
-   analysisLayout->addWidget( pb_save,    row++, 1, 1, 1 );
+   int row = 0;
+   analysisLayout->addWidget( pb_load,       row,   0, 1, 1 );
+   analysisLayout->addWidget( pb_details,    row++, 1, 1, 1 );
+   analysisLayout->addLayout( lo_edlast,     row,   0, 1, 1 );
+   analysisLayout->addLayout( disk_controls, row++, 1, 1, 1 );
+   analysisLayout->addWidget( pb_view,       row,   0, 1, 1 );
+   analysisLayout->addWidget( pb_save,       row++, 1, 1, 1 );
 
    // Standard buttons
    pb_reset = us_pushbutton( tr( "Reset" ) );
@@ -101,7 +107,8 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    te_desc    = us_textedit();
    lw_triples = us_listwidget();
 
-   QFont        font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
+   QFont        font( US_GuiSettings::fontFamily(), 
+                      US_GuiSettings::fontSize() );
    QFontMetrics fm  ( font );
 
    int fontHeight = fm.lineSpacing();
@@ -118,14 +125,14 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    le_temp   ->setPalette( gray );
    te_desc   ->setPalette( gray );
 
-   row            = 0;
+   row = 0;
    runInfoLayout->addWidget( lb_info   , row++, 0, 1, 2 );
    runInfoLayout->addWidget( lb_id     , row,   0 );
    runInfoLayout->addWidget( le_id     , row++, 1 );
    runInfoLayout->addWidget( lb_temp   , row,   0 );
    runInfoLayout->addWidget( le_temp   , row++, 1 );
    runInfoLayout->addWidget( te_desc   , row,   0, 2, 2 );
-   row           += 2;
+   row += 2;
    runInfoLayout->addWidget( lb_triples, row++, 0, 1, 2 );
    runInfoLayout->addWidget( lw_triples, row++, 0, 4, 2 );
 
@@ -151,9 +158,9 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    le_vbar      = us_lineedit( QString::number( vbar,      'f', 5 ) );
    le_skipped   = us_lineedit( "0" );
    le_skipped->setReadOnly( true );
-   le_skipped->setPalette(  gray );
+   le_skipped->setPalette ( gray );
 
-   row            = 0;
+   row = 0;
    parameterLayout->addWidget( pb_density  , row,   0 );
    parameterLayout->addWidget( le_density  , row,   1 );
    parameterLayout->addWidget( pb_viscosity, row,   2 );
@@ -164,7 +171,6 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    parameterLayout->addWidget( le_skipped  , row++, 3 );
 
    // Analysis Controls
-
    QLabel* lb_analysis     = us_banner( tr( "Analysis Controls"  ) ); 
    QLabel* lb_scan         = us_banner( tr( "Scan Control"       ) ); 
    QLabel* lb_smoothing    = us_label ( tr( "Data Smoothing:"    ) ); 
@@ -177,6 +183,10 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    pb_exclude = us_pushbutton( tr( "Exclude Scan Range" ) );
    pb_exclude->setEnabled( false );
    connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude() ) );
+
+   pb_reset_exclude = us_pushbutton( tr( "Reset Scan Range" ) );
+   pb_reset_exclude->setEnabled( false );
+   connect( pb_reset_exclude, SIGNAL( clicked() ), SLOT( reset_excludes() ) );
 
    ct_smoothing = us_counter( 2,  1,  50,  1 );
    ct_smoothing->setStep( 1.0 );
@@ -200,13 +210,14 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    connect( ct_to,   SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_to  ( double ) ) );
 
-   row            = 0;
+   row = 0;
    controlsLayout->addWidget( lb_scan           , row++, 0, 1, 4 );
    controlsLayout->addWidget( lb_from           , row,   0 );
    controlsLayout->addWidget( ct_from           , row,   1 );
    controlsLayout->addWidget( lb_to             , row,   2 );
    controlsLayout->addWidget( ct_to             , row++, 3 );
-   controlsLayout->addWidget( pb_exclude        , row++, 0, 1, 4 );
+   controlsLayout->addWidget( pb_exclude        , row,   0, 1, 2 );
+   controlsLayout->addWidget( pb_reset_exclude  , row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_analysis       , row++, 0, 1, 4 );
    controlsLayout->addWidget( lb_smoothing      , row,   0, 1, 2 );
    controlsLayout->addWidget( ct_smoothing      , row++, 2, 1, 2 );
@@ -233,12 +244,15 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
             this,         SLOT(   vbar_text()       ) );
 }
 
+void US_AnalysisBase2::update_disk_db( bool db )
+{
+   ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
+}
+
 void US_AnalysisBase2::load( void )
 {
    // Determine the edit ID
    dataLoaded = false;
-   lw_triples  ->disconnect();
-   lw_triples  ->clear();
    dataList     .clear();
    rawList      .clear();
    excludedScans.clear();
@@ -248,8 +262,12 @@ void US_AnalysisBase2::load( void )
 
    bool edload    = true;
    bool edlast    = ck_edlast->isChecked();
+
+   int local = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                       : US_Disk_DB_Controls::Disk;
+//////////
    US_DataLoader* dialog =
-      new US_DataLoader( edload, edlast, def_local, dfilter, investig );
+      new US_DataLoader( edload, edlast, local, dfilter, investig );
 
    if ( dialog->exec() == QDialog::Accepted )
    {
@@ -276,7 +294,7 @@ void US_AnalysisBase2::load( void )
 
    else                         // load was aborted
       return;
-
+////////////
    for ( int ii=0; ii < triples.size(); ii++ )
       lw_triples->addItem( triples.at( ii ) );
 
@@ -313,21 +331,86 @@ void US_AnalysisBase2::load( void )
    connect( ct_from, SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_from( double ) ) );
 
+   // Set up solution/buffer values implied from experimental data
+   QString solID;
+   QString bufID;
+   QString bguid;
+   QString bdesc;
+   QString bdens  = le_density  ->text();
+   QString bvisc  = le_viscosity->text();
+   QString svbar  = le_vbar     ->text();
+   bool    bufin  = false;
+
+   if ( local )
+   {  // Data from local disk:  get solution/buffer vals (disk or db)
+      bufin  = solinfo_disk( &dataList[ 0 ], svbar, bufID, bguid, bdesc );
+      
+      if ( ! bufin )
+      {
+         QMessageBox::warning( this,
+            tr( "Data missing" ),
+            tr( "Unable to get solution values" ) );
+
+         return;
+      }
+
+      //bufin  = bufin ? bufin :
+      //         solinfo_db(   eda, svbar, bufID, bguid, bdesc );
+      bufin  = bufvals_disk( bufID, bguid, bdesc, bdens, bvisc );
+
+      if ( ! bufin )
+      {
+         QMessageBox::warning( this,
+            tr( "Data missing" ),
+            tr( "Unable to get buffer values" ) );
+
+         return;
+      }
+
+      //bufin  = bufin ? bufin :
+      //         bufvals_db(   bufID, bguid, bdesc, bdens, bvisc );
+   }
+   else
+   {  // Data from database:    get solution/buffer vals (db or disk)
+      bufin  = solinfo_db( &dataList[ 0 ], svbar, bufID, bguid, bdesc );
+      bufin  = bufin ? bufin :
+               solinfo_disk( &dataList[ 0 ], svbar, bufID, bguid, bdesc );
+      bufin  = bufvals_db(   bufID, bguid, bdesc, bdens, bvisc );
+      bufin  = bufin ? bufin :
+               bufvals_disk( bufID, bguid, bdesc, bdens, bvisc );
+   }
+
+   if ( bufin )
+   {
+      buffLoaded  = false;
+      le_density  ->setText( bdens );
+      le_viscosity->setText( bvisc );
+      le_vbar     ->setText( svbar );
+      density     = bdens.toDouble();
+      viscosity   = bvisc.toDouble();
+      vbar        = svbar.toDouble();
+      buffLoaded  = true;
+   }
+
    dataLoaded = true;
    qApp->processEvents();
 }
 
 void US_AnalysisBase2::update( int selection )
 {
-   US_DataIO2::EditedData* eda = &dataList[ selection ];
-   int scanCount = eda->scanData.size();
-   runID         = eda->runID;
-   le_id->setText( runID + " / " + eda->editID );
+   US_DataIO2::EditedData* d = &dataList[ selection ];
+   int scanCount = d->scanData.size();
+   runID         = d->runID;
+   le_id->setText( runID + " / " + d->editID );
 
-   double avgTemp = eda->average_temperature();
-   
-   le_temp->setText( QString::number( avgTemp, 'f', 1 ) + " " + DEGC );
-   te_desc->setText( eda->description );
+   double sum = 0.0;
+
+   for ( int i = 0; i < scanCount; i++ )
+      sum += d->scanData[ i ].temperature;
+
+   le_temp->setText( QString::number( sum / scanCount, 'f', 1 ) + " " + DEGC );
+
+   te_desc->setText( d->description );
 
    ct_smoothing      ->disconnect();
    ct_boundaryPercent->disconnect();
@@ -349,50 +432,10 @@ void US_AnalysisBase2::update( int selection )
    ct_to  ->setMaxValue( scanCount - excludedScans.size() );
    ct_to  ->setStep( 1.0 );
 
-   // set up solution/buffer values implied from experimental data
-   QString solID;
-   QString bufID;
-   QString bguid;
-   QString bdesc;
-   QString bdens  = le_density  ->text();
-   QString bvisc  = le_viscosity->text();
-   QString svbar  = le_vbar     ->text();
-   bool    bufin  = false;
-
-   if ( def_local )
-   {  // data from local disk:  get solution/buffer vals (disk or db)
-      bufin  = solinfo_disk( eda, svbar, bufID, bguid, bdesc );
-      bufin  = bufin ? bufin :
-               solinfo_db(   eda, svbar, bufID, bguid, bdesc );
-      bufin  = bufvals_disk( bufID, bguid, bdesc, bdens, bvisc );
-      bufin  = bufin ? bufin :
-               bufvals_db(   bufID, bguid, bdesc, bdens, bvisc );
-   }
-
-   else
-   {  // data from database:    get solution/buffer vals (db or disk)
-      bufin  = solinfo_db(   eda, svbar, bufID, bguid, bdesc );
-      bufin  = bufin ? bufin :
-               solinfo_disk( eda, svbar, bufID, bguid, bdesc );
-      bufin  = bufvals_db(   bufID, bguid, bdesc, bdens, bvisc );
-      bufin  = bufin ? bufin :
-               bufvals_disk( bufID, bguid, bdesc, bdens, bvisc );
-   }
-
-   if ( bufin )
-   {
-      buffLoaded  = false;
-      le_density  ->setText( bdens );
-      le_viscosity->setText( bvisc );
-      le_vbar     ->setText( svbar );
-      density     = bdens.toDouble();
-      viscosity   = bvisc.toDouble();
-      vbar        = svbar.toDouble();
-      buffLoaded  = true;
-   }
-
    data_plot();
 }
+
+
 
 void US_AnalysisBase2::details( void )
 {
@@ -420,27 +463,28 @@ void US_AnalysisBase2::update_vbar( US_Analyte analyte )
    bool changed = true;
 
    if ( buffLoaded )
-      changed   = verify_vbar();
+      changed = verify_vbar();
 
    if ( changed )
    {
-      vbar       = analyte.vbar20;
+      vbar = analyte.vbar20;
 
       buffLoaded = false;
       le_vbar->setText( QString::number( vbar, 'f', 5 ) );
       qApp->processEvents();
 
-      if ( dataLoaded )
-         data_plot();
+      if ( dataLoaded ) data_plot();
    }
 }
 
 void US_AnalysisBase2::get_buffer( void )
 {
-   int idPers    = investig.section( ":", 0, 0 ).toInt();
-
+   int idPers = US_Settings::us_inv_ID();
+   int local  = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
    US_BufferGui* bdiag =
-      new US_BufferGui( idPers, true, buff, def_local );
+      new US_BufferGui( idPers, true, buff, local );
+
    connect( bdiag, SIGNAL( valueChanged ( double, double ) ),
                    SLOT  ( update_buffer( double, double ) ) );
    bdiag->exec();
@@ -510,7 +554,6 @@ void US_AnalysisBase2::data_plot( void )
    for ( int i = 0; i < scanCount; i++ ) sum += d->scanData[ i ].temperature;
 
    double avgTemp  = sum / scanCount;
-   //solution.vbar20 = US_Math2::adjust_vbar( solution.vbar, avgTemp );
    solution.vbar20 = solution.vbar;
    US_Math2::data_correction( avgTemp, solution );
 
@@ -685,6 +728,25 @@ void US_AnalysisBase2::exclude( void )
    ct_to  ->setMaxValue( totalScans - excludedScans.size() );
 }
 
+void US_AnalysisBase2::reset_excludes( void )
+{
+   int                     index      = lw_triples->currentRow();
+   US_DataIO2::EditedData* d          = &dataList[ index ];
+   int                     totalScans = d->scanData.size();
+
+   excludedScans.clear();
+   le_skipped->setText( "0" );
+
+   ct_from->setMaxValue( totalScans );
+   ct_to  ->setMaxValue( totalScans );
+
+   if ( ct_to->value() != 0 )
+      ct_to ->setValue( 0 );
+   else
+      data_plot();
+
+   pb_reset_exclude->setEnabled( false );
+}
 
 void US_AnalysisBase2::smoothing( double smoothCount )
 {
@@ -792,7 +854,7 @@ double US_AnalysisBase2::smooth_point(
    int position = 0;
    int k        = start;
    
-   do 
+   while ( true )
    {
       position++;
       double value = savedValues[ scan ][ k ];
@@ -821,7 +883,7 @@ double US_AnalysisBase2::smooth_point(
       }
 
       k += direction;
-   } while ( true );
+   }
 
    // Add the center point
    sum   += savedValues[ scan ][ point ] * y_weights[ 0 ];
@@ -844,7 +906,7 @@ double US_AnalysisBase2::smooth_point(
    position = 0;
    k        = start;
 
-   do
+   while( true )
    {
       position++;
       double value = savedValues[ scan ][ k ];
@@ -874,7 +936,7 @@ double US_AnalysisBase2::smooth_point(
       }
 
       k += direction;
-   } while ( true );
+   }
 
    // Normalize by the sum of all weights that were used 
    return sum / sum_y;
@@ -941,19 +1003,14 @@ void US_AnalysisBase2::new_triple( int index )
 {
    // Save the data for the new triple
    US_DataIO2::EditedData* d = &dataList[ index ];
-   savedValues.clear();
    
    for ( int i = 0; i < d->scanData.size(); i++ )
    {
-      savedValues << QVector< double >();
       US_DataIO2::Scan* s = &d->scanData[ i ];
-      savedValues[ i ].resize( s->readings.size() );
 
       for ( int j = 0; j < s->readings.size(); j++ )
          savedValues[ i ][ j ] = s->readings[ j ].value;
    }
-
-   update( index );
 
    reset();
    data_plot();
@@ -979,7 +1036,7 @@ double US_AnalysisBase2::calc_baseline( void ) const
    const US_DataIO2::Scan* scan  = &dataList[ row ].scanData.last();
    int                     point = US_DataIO2::index( *scan, dataList[ row ].x, 
                                    dataList[ row ].baseline );
-   double                 sum   = 0.0;
+   double                  sum   = 0.0;
    
    for ( int j = point - 5;  j <= point + 5; j++ )
       sum += scan->readings[ j ].value;
@@ -1028,6 +1085,7 @@ QString US_AnalysisBase2::run_details( void ) const
 
    QString m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
    QString sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds"  );
+
    s += table_row( tr( "Time Correction:" ), 
                    QString::number( minutes ) + m +
                    QString::number( seconds ) + sec );
@@ -1068,7 +1126,7 @@ QString US_AnalysisBase2::run_details( void ) const
 
 QString US_AnalysisBase2::hydrodynamics( void ) const
 {
-   // set up hydrodynamics values
+   // Set up hydrodynamics values
    US_Math2::SolutionData solution = this->solution;
    solution.vbar      = le_vbar     ->text().toDouble();
    solution.density   = le_density  ->text().toDouble();
@@ -1156,11 +1214,11 @@ QString US_AnalysisBase2::scan_info( void ) const
    return s;
 }
 
-void US_AnalysisBase2::write_plot( const QString& filename, const QwtPlot* plot )
+void US_AnalysisBase2::write_plot( const QString& fname, const QwtPlot* plot )
 {
     QSvgGenerator generator;
     generator.setSize( plot->size() );
-    generator.setFileName( filename );
+    generator.setFileName( fname );
     plot->print( generator );
 }
 
@@ -1179,7 +1237,7 @@ bool US_AnalysisBase2::mkdir( const QString& baseDir, const QString& subdir )
    return false;
 }
 
-// get solution/buffer info from DB: ID, GUID, description
+// Get solution/buffer info from DB: ID, GUID, description
 bool US_AnalysisBase2::solinfo_db( US_DataIO2::EditedData* edata,
       QString& svbar, QString& bufId, QString& bufGuid, QString& bufDesc )
 {
@@ -1195,10 +1253,14 @@ bool US_AnalysisBase2::solinfo_db( US_DataIO2::EditedData* edata,
    db.query( query );
    if ( db.lastErrno() != US_DB2::OK )
    {
-      qDebug() << "***Unable to get raw Data ID from GUID" << rawGUID
-         << " lastErrno" << db.lastErrno();
+      QMessageBox::warning( this,
+         tr( "Data missing" ),
+         tr( "Unable to get raw data ID from GUID " ) + rawGUID + "\n" +
+           db.lastError() );
+
       return bufinfo;
    }
+
    db.next();
    QString rawID    = db.value( 0 ).toString();
    QString expID    = db.value( 1 ).toString();
@@ -1207,10 +1269,14 @@ bool US_AnalysisBase2::solinfo_db( US_DataIO2::EditedData* edata,
    query.clear();
    query << "get_solutionBuffer" << soluID;
    db.query( query );
+   
    if ( db.lastErrno() != US_DB2::OK )
    {
-      qDebug() << "***Unable to get solutionBuffer from soluID" << soluID
-         << " lastErrno" << db.lastErrno();
+      QMessageBox::warning( this,
+         tr( "Data missing" ),
+         tr( "Unable to get solutionBuffer from solution ID " ) +
+         soluID + "\n" + db.lastError() );
+
       query.clear();
       query << "get_solutionIDs" << expID;
       db.query( query );
@@ -1222,19 +1288,19 @@ bool US_AnalysisBase2::solinfo_db( US_DataIO2::EditedData* edata,
       db.query( query );
       if ( db.lastErrno() != US_DB2::OK )
       {
-         qDebug() << "***Unable to get solutionBuffer from soluID" << soluID
-            << " lastErrno" << db.lastErrno();
+         QMessageBox::warning( this,
+            tr( "Data missing" ),
+            tr( "Unable to get solutionBuffer from solution ID" ) +
+              soluID + "\n" + db.lastError() );
       }
-      else
-         qDebug() << "+++ Got solutionBuffer from soluID" << soluID;
-      //return bufinfo;
    }
+
    db.next();
    QString id       = db.value( 0 ).toString();
    QString guid     = db.value( 1 ).toString();
    QString desc     = db.value( 2 ).toString();
 
-   if ( !id.isEmpty() )
+   if ( ! id.isEmpty() )
    {
       bufId         = id;
       bufGuid       = guid.isEmpty() ? bufGuid : guid;
@@ -1245,27 +1311,24 @@ bool US_AnalysisBase2::solinfo_db( US_DataIO2::EditedData* edata,
    query.clear();
    query << "get_solution" << soluID;
    db.query( query );
+   
    if ( db.lastErrno() != US_DB2::OK )
    {
-      qDebug() << "***Unable to get solution vbar from soluID" << soluID
-         << " lastErrno" << db.lastErrno();
+      QMessageBox::warning( this,
+         tr( "Data missing" ),
+         tr( "Unable to get solution vbar from solution ID" ) +
+           soluID + "\n" + db.lastError() );
    }
    else
    {
       db.next();
       svbar  = db.value( 2 ).toString();
-      qDebug() << "+++ Got solution vbar from soluID" << soluID
-         << ": " << svbar;
-//qDebug() << "    sGUID" << db.value(0).toString();
-//qDebug() << "    sDesc" << db.value(1).toString();
-//qDebug() << "    sTemp" << db.value(3).toString();
-//qDebug() << "    notes" << db.value(4).toString();
    }
 
    return bufinfo;
 }
 
-// get solution/buffer info from local disk: ID, GUID, description
+// Get solution/buffer info from local disk: ID, GUID, description
 bool US_AnalysisBase2::solinfo_disk( US_DataIO2::EditedData* edata,
    QString& svbar, QString& bufId, QString& bufGuid, QString& bufDesc )
 {
@@ -1308,7 +1371,7 @@ bool US_AnalysisBase2::solinfo_disk( US_DataIO2::EditedData* edata,
 
          else if ( xml.name() == "solution" )
          {
-            soluGUID      = ats.value( "guid"         ).toString();
+            soluGUID = ats.value( "guid" ).toString();
          }
       }
    }
@@ -1316,10 +1379,10 @@ bool US_AnalysisBase2::solinfo_disk( US_DataIO2::EditedData* edata,
    filei.close();
 
    if ( ! bufinfo  &&  ! soluGUID.isEmpty() )
-   {  // no buffer info yet, but solution GUID found:  get buffer from solution
-      QString spath = US_Settings::dataDir() + "/solutions";
+   {  // No buffer info yet, but solution GUID found:  get buffer from solution
+      QString spath = US_Settings::dataDir() + "/solutions/";
       QDir    f( spath );
-      spath         = spath + "/";
+
       QStringList filter( "S*.xml" );
       QStringList names = f.entryList( filter, QDir::Files, QDir::Name );
       QString fname;
@@ -1328,10 +1391,10 @@ bool US_AnalysisBase2::solinfo_disk( US_DataIO2::EditedData* edata,
 
       for ( int ii = 0; ii < names.size(); ii++ )
       {
-         fname      = spath + names[ ii ];
+         fname = spath + names[ ii ];
          QFile filei( fname );
 
-         if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
             continue;
 
          QXmlStreamReader xml( &filei );
@@ -1346,12 +1409,11 @@ bool US_AnalysisBase2::solinfo_disk( US_DataIO2::EditedData* edata,
 
                if (  xml.name() == "solution" )
                {
-                  QString sguid = ats.value( "guid"         ).toString();
-                  if ( sguid != soluGUID )
-                     break;
-                  svbar         = ats.value( "commonVbar20" ).toString();
-                  qDebug() << "+++ Got solution vbar" << svbar
-                     << "from file, for GUID" << soluGUID;
+                  QString sguid = ats.value( "guid" ).toString();
+
+                  if ( sguid != soluGUID ) break;
+
+                  svbar  = ats.value( "commonVbar20" ).toString();
                }
 
                else if (  xml.name() == "buffer" )
@@ -1382,29 +1444,37 @@ bool US_AnalysisBase2::solinfo_disk( US_DataIO2::EditedData* edata,
    return bufinfo;
 }
 
-// get buffer values from DB:  density, viscosity
+// Get buffer values from DB:  density, viscosity
 bool US_AnalysisBase2::bufvals_db( QString& bufId, QString& bufGuid,
       QString& bufDesc, QString& dens, QString& visc )
 {
-   bool bufvals = false;
+   bool      bufvals = false;
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
 
    QStringList query;
-   int idBuf     = bufId.isEmpty() ? -1    : bufId.toInt();
-   bufId         = ( idBuf < 1  )  ? "N/A" : bufId;
+   int idBuf = bufId.isEmpty() ? -1    : bufId.toInt();
+   bufId     = ( idBuf < 1  )  ? "N/A" : bufId;
 
    if ( bufId == "N/A"  &&  ! bufGuid.isEmpty() )
    {
       query.clear();
       query << "get_bufferID" << bufGuid;
       db.query( query );
+      
       if ( db.lastErrno() != US_DB2::OK )
-         qDebug() << "***Unable to get bufferID from GUID" << bufGuid
-            << " lastErrno" << db.lastErrno();
-      db.next();
-      bufId         = db.value( 0 ).toString();
-      bufId         = bufId.isEmpty() ? "N/A" : bufId;
+      {
+        QMessageBox::warning( this,
+            tr( "Data missing" ),
+            tr( "Unable to get buffer ID from buffer GUID " ) + bufGuid + "\n" +
+              db.lastError() );
+      }
+      else
+      {
+         db.next();
+         bufId = db.value( 0 ).toString();
+         bufId = bufId.isEmpty() ? "N/A" : bufId;
+      }
    }
 
    if ( bufId != "N/A" )
@@ -1414,10 +1484,14 @@ bool US_AnalysisBase2::bufvals_db( QString& bufId, QString& bufGuid,
       db.query( query );
       if ( db.lastErrno() != US_DB2::OK )
       {
-         qDebug() << "***Unable to get buffer info from bufID" << bufId
-            << " lastErrno" << db.lastErrno();
+         QMessageBox::warning( this,
+            tr( "Data missing" ),
+            tr( "Unable to get buffer information from buffer ID " ) +
+              bufId + "\n" + db.lastError() );
+
          return bufvals;
       }
+
       db.next();
       QString ddens = db.value( 5 ).toString();
       QString dvisc = db.value( 4 ).toString();
@@ -1425,17 +1499,20 @@ bool US_AnalysisBase2::bufvals_db( QString& bufId, QString& bufGuid,
       visc          = dvisc.isEmpty() ? visc : dvisc;
       bufvals       = true;
    }
-
    else
    {
-      QString invID  = investig.section( ":", 0, 0 );
+      QString invID  = QString::number( US_Settings::us_inv_ID() );
       query.clear();
       query << "get_buffer_desc" << invID;
       db.query( query );
+
       if ( db.lastErrno() != US_DB2::OK )
       {
-         qDebug() << "***Unable to get buffer desc from invID" << invID
-            << " lastErrno" << db.lastErrno();
+         QMessageBox::warning( this,
+            tr( "Data missing" ),
+            tr( "Unable to get buffer description for investigator " ) +
+              invID + "\n" + db.lastError() );
+
          return bufvals;
       }
 
@@ -1455,12 +1532,17 @@ bool US_AnalysisBase2::bufvals_db( QString& bufId, QString& bufGuid,
          query.clear();
          query << "get_buffer_info" << bufId;
          db.query( query );
+
          if ( db.lastErrno() != US_DB2::OK )
          {
-            qDebug() << "***Unable to get buffer info from bufID" << bufId
-               << " lastErrno" << db.lastErrno();
+           QMessageBox::warning( this,
+               tr( "Data missing" ),
+               tr( "Unable to get buffer information for buffer ID " ) +
+                 bufId + "\n" + db.lastError() );
+
             return bufvals;
          }
+
          db.next();
          QString ddens = db.value( 5 ).toString();
          QString dvisc = db.value( 4 ).toString();
@@ -1473,15 +1555,15 @@ bool US_AnalysisBase2::bufvals_db( QString& bufId, QString& bufGuid,
    return bufvals;
 }
 
-// get buffer values from local disk:  density, viscosity
+// Get buffer values from local disk:  density, viscosity
 bool US_AnalysisBase2::bufvals_disk( QString& bufId, QString& bufGuid,
       QString& bufDesc, QString& dens, QString& visc )
 {
-   bool bufvals  = false;
-   bool dfound   = false;
-   QString bpath = US_Settings::dataDir() + "/buffers";
+   bool    bufvals = false;
+   bool    dfound  = false;
+   QString bpath   = US_Settings::dataDir() + "/buffers/";
    QDir    f( bpath );
-   bpath         = bpath + "/";
+
    QStringList filter( "B*.xml" );
    QStringList names = f.entryList( filter, QDir::Files, QDir::Name );
    QString fname;
@@ -1490,10 +1572,10 @@ bool US_AnalysisBase2::bufvals_disk( QString& bufId, QString& bufGuid,
 
    for ( int ii = 0; ii < names.size(); ii++ )
    {
-      fname      = bpath + names[ ii ];
+      fname = bpath + names[ ii ];
       QFile filei( fname );
 
-      if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+      if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
          continue;
 
       QXmlStreamReader xml( &filei );
@@ -1511,8 +1593,8 @@ bool US_AnalysisBase2::bufvals_disk( QString& bufId, QString& bufGuid,
 
             if ( bguid == bufGuid  ||  bid == bufId )
             {
-               bdens    = ats.value( "density"         ).toString();
-               bvisc    = ats.value( "viscosity"       ).toString();
+               bdens    = ats.value( "density"       ).toString();
+               bvisc    = ats.value( "viscosity"     ).toString();
                dens     = bdens.isEmpty() ? dens : bdens;
                visc     = bvisc.isEmpty() ? visc : bvisc;
                bufvals  = true;
@@ -1520,8 +1602,8 @@ bool US_AnalysisBase2::bufvals_disk( QString& bufId, QString& bufGuid,
 
             else if ( bdesc == bufDesc )
             {
-               bdens    = ats.value( "density"         ).toString();
-               bvisc    = ats.value( "viscosity"       ).toString();
+               bdens    = ats.value( "density"       ).toString();
+               bvisc    = ats.value( "viscosity"     ).toString();
                dfound   = true;
             }
 
@@ -1535,21 +1617,21 @@ bool US_AnalysisBase2::bufvals_disk( QString& bufId, QString& bufGuid,
 
    if ( ! bufvals  &&  dfound )
    {
-      dens     = bdens.isEmpty() ? dens : bdens;
-      visc     = bvisc.isEmpty() ? visc : bvisc;
-      bufvals  = true;
+      dens    = bdens.isEmpty() ? dens : bdens;
+      visc    = bvisc.isEmpty() ? visc : bvisc;
+      bufvals = true;
    }
 
    return bufvals;
 }
 
-// use dialogs to alert user to change in experiment buffer
-bool US_AnalysisBase2::verify_buffer( )
+// Use dialogs to alert user to change in experiment buffer
+bool US_AnalysisBase2::verify_buffer( void )
 {
    bool changed = true;
 
    if ( buffLoaded )
-   {  // only need verify buffer change while experiment values are loaded
+   {  // Only need verify buffer change while experiment values are loaded
       if ( QMessageBox::No == QMessageBox::warning( this,
                tr( "Warning" ),
                tr( "Attention:\n"
@@ -1561,7 +1643,7 @@ bool US_AnalysisBase2::verify_buffer( )
          QMessageBox::information( this,
             tr( "Buffer Retained" ),
             tr( "Buffer parameters from the experiment will be retained" ) );
-         changed    = false;
+         changed = false;
       }
 
       else
@@ -1577,11 +1659,11 @@ bool US_AnalysisBase2::verify_buffer( )
    return changed;
 }
 
-// slot to respond to text box change to buffer parameter
-void US_AnalysisBase2::buffer_text( )
+// Slot to respond to text box change to buffer parameter
+void US_AnalysisBase2::buffer_text( void )
 {
    if ( buffLoaded )
-   {  // only need verify desire to change while experiment values are loaded
+   {  // Only need verify desire to change while experiment values are loaded
       bool changed = verify_buffer();
       buffLoaded   = false;
       le_skipped->setFocus( Qt::OtherFocusReason );
@@ -1600,21 +1682,19 @@ void US_AnalysisBase2::buffer_text( )
          qApp->processEvents();
          buffLoaded   = true;
       }
-
-      //le_skipped->setFocus( Qt::OtherFocusReason );
    }
 
    if ( dataLoaded )
       data_plot();
 }
 
-// use dialogs to alert user to change in experiment solution common vbar
-bool US_AnalysisBase2::verify_vbar( )
+// Use dialogs to alert user to change in experiment solution common vbar
+bool US_AnalysisBase2::verify_vbar( void )
 {
    bool changed = true;
 
    if ( buffLoaded )
-   {  // only need verify vbar change while experiment values are loaded
+   {  // Only need verify vbar change while experiment values are loaded
       if ( QMessageBox::No == QMessageBox::warning( this,
                tr( "Warning" ),
                tr( "Attention:\n"
@@ -1642,34 +1722,33 @@ bool US_AnalysisBase2::verify_vbar( )
    return changed;
 }
 
-// slot to respond to text box change to vbar parameter
-void US_AnalysisBase2::vbar_text( )
+// Slot to respond to text box change to vbar parameter
+void US_AnalysisBase2::vbar_text( void )
 {
    if ( buffLoaded )
-   {  // only need verify desire to change while experiment values are loaded
+   {  // Only need verify desire to change while experiment values are loaded
       bool changed = verify_vbar();
       buffLoaded   = false;
 
       if ( changed )
       {  // "Yes" to change: use value as entered and leave loaded flag off
-         vbar         = le_vbar->text().toDouble();
+         vbar = le_vbar->text().toDouble();
       }
 
       else
       {  // "No" to change:  restore text and insure loaded flag still on
          le_vbar->setText( QString::number( vbar, 'f', 4 ) );
          qApp->processEvents();
-         buffLoaded   = true;
+         buffLoaded = true;
       }
    }
 
-   if ( dataLoaded )
-      data_plot();
+   if ( dataLoaded ) data_plot();
 }
 
 
-// slot to give load-data progress feedback
-void US_AnalysisBase2::load_progress( )
+// Slot to give load-data progress feedback
+void US_AnalysisBase2::load_progress( void )
 {
    QString pmsg = te_desc->toPlainText();
    te_desc->setText( "<b>" + pmsg + "*</b>" );

@@ -67,7 +67,7 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       double       vbar;            //!< Specific volume of the analyte
 
       // Layouts
-      QBoxLayout*  mainLayout;      //!< Overall Layout
+      QGridLayout* mainLayout;      //!< Overall Layout
       QBoxLayout*  leftLayout;      //!< Layout of the left column
       QBoxLayout*  rightLayout;     //!< Layout of the right column
       QBoxLayout*  buttonLayout;    //!< Layout of the bottom button row
@@ -92,6 +92,7 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       QPushButton* pb_help;         //!< Pushbutton to show help
       QPushButton* pb_close;        //!< Pushbutton to close the application
       QPushButton* pb_exclude;      //!< Pushbutton to exclude specified scans
+      QPushButton* pb_reset_exclude;//!< PB to revert the excluded scan range
 
       QLineEdit*   le_id;           //!< Display the current RunID
       QLineEdit*   le_temp;         //!< Display/change the temperature used
@@ -112,6 +113,9 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       QwtCounter*  ct_to;           //!< Counter for specifying end of exclude range
 
       QCheckBox*   ck_edlast;           //!< Checkbox for edit-lastest flag
+
+      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
+
       virtual void update   ( int );    //!< Update the screen for a new dataset
       virtual void data_plot( void );   //!< Update the data plot
 
@@ -155,6 +159,13 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       //! available above the boundary.
       double       calc_baseline( void )                           const;
 
+      //! Exclude scans in the specified range
+      virtual void exclude( void );
+
+      //! Restore excluded scans
+      virtual void reset_excludes( void );
+
+
    private:
       double* x_weights;
       double* y_weights;
@@ -162,27 +173,27 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       double smooth_point( int, int, int, int, int = 0 );
 
    private slots:
-      void details      ( void   );
-      void get_vbar     ( void   );
-      void update_vbar  ( US_Analyte );
-      void get_buffer   ( void   );
-      void update_buffer( double, double );
-      void boundary_pct ( double );
-      void boundary_pos ( double );
-      void exclude_from ( double );
-      void exclude_to   ( double );
-      void exclude      ( void   );
-      void smoothing    ( double );
-      bool solinfo_db(   US_DataIO2::EditedData*, QString&, QString&,
-                         QString&, QString& );
-      bool solinfo_disk( US_DataIO2::EditedData*, QString&, QString&,
-                         QString&, QString& );
-      bool bufvals_db(   QString&, QString&, QString&, QString&, QString& );
-      bool bufvals_disk( QString&, QString&, QString&, QString&, QString& );
-      bool verify_buffer( void );
-      void buffer_text(   void );
-      bool verify_vbar(   void );
-      void vbar_text(     void );
-      void load_progress( void );
+      void details       ( void   );
+      void get_vbar      ( void   );
+      void update_vbar   ( US_Analyte );
+      void get_buffer    ( void   );
+      void update_buffer ( double, double );
+      void boundary_pct  ( double );
+      void boundary_pos  ( double );
+      void exclude_from  ( double );
+      void exclude_to    ( double );
+      void smoothing     ( double );
+      void update_disk_db( bool );
+      bool solinfo_db    ( US_DataIO2::EditedData*, QString&, QString&,
+                           QString&, QString& );
+      bool solinfo_disk  ( US_DataIO2::EditedData*, QString&, QString&,
+                           QString&, QString& );
+      bool bufvals_db    ( QString&, QString&, QString&, QString&, QString& );
+      bool bufvals_disk  ( QString&, QString&, QString&, QString&, QString& );
+      bool verify_buffer ( void );
+      void buffer_text   ( void );
+      bool verify_vbar   ( void );
+      void vbar_text     ( void );
+      void load_progress ( void );
 };
 #endif
