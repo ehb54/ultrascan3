@@ -103,6 +103,22 @@ void US_Dcdt::subtract_bl( void )
    data_plot();
 }
 
+void US_Dcdt::exclude( void )
+{
+   if ( ! dataLoaded ) return;
+   US_AnalysisBase2::exclude();
+   
+   data_plot();
+}
+
+void US_Dcdt::reset_excludes( void )
+{
+   if ( ! dataLoaded ) return;
+   US_AnalysisBase2::reset_excludes();
+   
+   data_plot();
+}
+
 void US_Dcdt::reset( void )
 {
    if ( ! dataLoaded ) return;
@@ -129,7 +145,7 @@ void US_Dcdt::data_plot( void )
 {
    US_AnalysisBase2::data_plot();
 
-   int                    index  = lw_triples->currentRow();
+   int                     index  = lw_triples->currentRow();
    US_DataIO2::EditedData* d      = &dataList[ index ];
 
    int     scanCount   = d->scanData.size();
@@ -329,8 +345,9 @@ next: avgDcdt[ j ] /= ( count - 1 );
    data_plot1->clear();
    us_grid( data_plot1 );
 
-   data_plot1->setTitle( tr( "Run " ) + d->runID + tr( ": Cell " ) + d->cell
-         + " (" + d->wavelength + tr( " nm) - Time Derivative (dC/dt)" ) );
+   data_plot1->setTitle( tr( "Time Derivative (dC/dt)\n" ) +
+         tr( "Run " ) + d->runID + tr( ": Cell " ) + d->cell
+         + " (" + d->wavelength + tr( " nm)" ) );
 
    data_plot1->setAxisTitle( QwtPlot::yLeft  , tr( "g<sup>*</sup>(s)" ) );
 

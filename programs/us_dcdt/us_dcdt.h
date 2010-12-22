@@ -37,13 +37,16 @@ class US_Dcdt : public US_AnalysisBase2
       QString results    ( void );     
 
    private slots:
-      void    view       ( void );
-      void    save       ( void );
-      void    set_graph  ( int  );
-      void    reset      ( void );
-      void    subtract_bl( void );
-      void    sMaxChanged( double );
-      void    help       ( void )
+      void    view          ( void );
+      void    save          ( void );
+      void    set_graph     ( int  );
+      void    reset         ( void );
+      void    subtract_bl   ( void );
+      void    sMaxChanged   ( double );
+      void    exclude       ( void );
+      void    reset_excludes( void );
+
+      void    help          ( void )
       { showHelp.show_help( "manual/us_dcdt.html" ); };
 };
 #endif
