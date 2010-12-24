@@ -28,6 +28,7 @@ HEADERS      = \
                us_help.h                \
                us_investigator.h        \
                us_license.h             \
+               us_loadable_noise.h      \
                us_model_gui.h           \
                us_model_loader.h        \
                us_noise_loader.h        \
@@ -58,6 +59,7 @@ SOURCES      = \
                us_help.cpp                \
                us_investigator.cpp        \
                us_license.cpp             \
+               us_loadable_noise.cpp      \
                us_model_gui.cpp           \
                us_model_loader.cpp        \
                us_noise_loader.cpp        \
