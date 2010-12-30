@@ -23,6 +23,17 @@ struct Average
    int cell, rpm, channel, top_count, bottom_count;
 };
 
+struct Limit
+{
+   // this structure contains 2 limits:
+   //    [0] = top of channel
+   //    [1] = bottom of channel
+   QwtDoubleRect  rect[2];
+   bool           used[2];
+   int            cell;
+   QString        channel;
+};
+
 class US_EXTERN US_RotorCalibration : public US_Widgets
 {
 	Q_OBJECT
@@ -38,12 +49,13 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
       QVector <Average> avg;
       QVector <QVector <double> > reading;
       QVector <double> stretch_factors, std_dev;
-      bool leftCB, rightCB, leftCL, rightCL, newlimit;
+      QVector <Limit> limit;
 
       double             left, right, top, bottom, coef[3];
       double             *x, *y, *sd1, *sd2;
-      int                step, maxcell;
-      QString            rotor, fileText;
+      int                maxcell, current_triple, current_cell;
+      bool               top_of_cell, newlimit;
+      QString            rotor, fileText, current_channel;
       
       US_Help            showHelp;
 
@@ -51,11 +63,9 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
 
       QPushButton*       pb_reset;
       QPushButton*       pb_accept;
-      QPushButton*       pb_leftCells;
-      QPushButton*       pb_leftCounterbalance;
-      QPushButton*       pb_rightCells;
-      QPushButton*       pb_rightCounterbalance;
+      QPushButton*       pb_calculate;
       QPushButton*       pb_save;
+      QPushButton*       pb_load;
       QPushButton*       pb_loadRotor;
       QPushButton*       pb_view;
             
@@ -72,7 +82,9 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
       QwtPlotCurve*      minimum_curve;
       QwtPlotGrid*       grid;
       QwtPlotMarker*     marker;
-      QwtDoubleRect      limits[4];
+      QwtCounter*        ct_cell;
+      QwtCounter*        ct_channel;
+      
 
       US_PlotPicker*     pick;
       US_Plot*           plot;
@@ -83,33 +95,32 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
       QLineEdit*         le_instructions;
       QLineEdit*         le_rotorInfo;
                         
-      QRadioButton*      rb_counterbalance;
-      QRadioButton*      rb_cells;
-      QRadioButton*      rb_all;
+      QRadioButton*      rb_channel;
+      QRadioButton*      rb_top;
+      QRadioButton*      rb_bottom;
 
+      QCheckBox*         cb_assigned;
+      
    public slots:
       void help (void)
       {
          showHelp.show_help( "manual/rotor_calibration.html" );
       };
-      void reset (void);
-      void load (void);
-      void plotAll (void);
-      void currentRect (QwtDoubleRect);
-      void leftCounterbalance (void);
-      void rightCounterbalance (void);
-      void leftCells (void);
-      void rightCells (void);
-      void showAll (void);
-      void showCells (void);
-      void showCounterbalance (void);
+      void reset(void);
+      void load(void);
+      void plotAll(void);
+      void currentRect(QwtDoubleRect);
+      void findTriple(void);
       void next(void);
-      void accept(void);
       void calculate(void);
       double findAverage(QwtDoubleRect, US_DataIO2::RawData, int);
-      void checkAccept(void);
       void save(void);
       void view(void);
       void loadRotor(void);
+      void update_used();
+      void update_cell(double);
+      void update_channel(double);
+      void update_position();
+      void update_plot();
 };
 #endif

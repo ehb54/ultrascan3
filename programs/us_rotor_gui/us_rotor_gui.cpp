@@ -270,6 +270,7 @@ void US_RotorGui::newRotor( void )
    currentRotor.GUID = US_Util::new_guid();
    le_name->setText(currentRotor.name);
    le_serialNumber->setText(currentRotor.serialNumber);
+   QStringList q;
    if ( rb_disk -> isChecked() )
    {
       /*
@@ -290,9 +291,26 @@ void US_RotorGui::newRotor( void )
          db_error( db.lastError() );
          return;
       }
-
+      q.clear();
+      q << "add_rotor";
+      q << QString::number(currentRotor.abstractRotorID);
+      q << currentRotor.abstractRotorGUID;
+      q << QString::number(currentRotor.labID);
+      q << currentRotor.name;
+      q << currentRotor.serialNumber;
+      db.query( q );
+      q.clear();
+      q << "last_error";
+      db.query( q );
+      db.next();
+      QString s = db.value( 0).toString();
+      q.clear();
+      q << "last_insert_id";
+      db.query( q );
+      //db.next();
+      int id = db.value( 0 ).toInt();
+      qDebug() << "ID: " << id;
    }
-
    QMessageBox::information( this,
          tr( "Please note:" ),
          tr( "The new rotor definition has been saved to the database." ) );

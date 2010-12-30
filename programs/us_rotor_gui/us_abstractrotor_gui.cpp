@@ -76,7 +76,7 @@ void US_AbstractRotorGui::setupGui()
    te_details->setAcceptRichText( true );
    te_details->setWordWrapMode  ( QTextOption::WrapAtWordBoundaryOrAnywhere );
    te_details->setReadOnly      ( true );
-   te_details->setMinimumSize(80, 200);
+   te_details->setMinimumSize(280, 250);
    top->addWidget(te_details, row, 0, 1, 2);
 
    changeRotor(cb_rotors->currentIndex());
@@ -160,16 +160,21 @@ bool US_AbstractRotorGui::loadAbstractRotors( void )
 
    QStringList q( "get_abstractRotor_names" );
    db.query( q );
+   q.clear();
    QString str1, str2, str3;
-   cb_rotors->clear();
-   int k=0;
    while ( db.next() )
    {
       str1 = db.value( 0 ).toString();
       str2 = db.value( 1 ).toString();
       str3 = str1 + ": " + str2;
-      cb_rotors->addItem(str3);
-      k++;
+      q << str3;
+   }
+   q.sort();
+   cb_rotors->clear();
+   int k = q.size();
+   for (int i=0; i<k; i++)
+   {
+      cb_rotors->addItem(q[i]);
    }
    abstractRotorList.clear();
    abstractRotor ar;
