@@ -378,7 +378,7 @@ void US_FeMatch::load( void )
    if ( dialog->exec() != QDialog::Accepted ) return;
 
    workingDir = description.section( description.left( 1 ), 4, 4 );
-   workingDir = description.left   ( workingDir.lastIndexOf( "/" ) );
+   workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
 
    qApp->processEvents();
 
