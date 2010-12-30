@@ -95,5 +95,5 @@ private slots:
   void update_advanced  ( void );
   void save             ( void );
   void help             ( void );
-  void set_data_location( void );
+  void set_data_location( bool );
 };

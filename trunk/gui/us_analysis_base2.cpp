@@ -114,7 +114,7 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    int fontHeight = fm.lineSpacing();
 
    te_desc   ->setMaximumHeight( fontHeight * 2 + 12 );  // Add for border
-   lw_triples->setMaximumHeight( fontHeight * 4 + 12 );
+   lw_triples->setMaximumHeight( fontHeight * 6 + 12 );
 
    le_id     ->setReadOnly( true );
    le_temp   ->setReadOnly( true );
@@ -260,41 +260,26 @@ void US_AnalysisBase2::load( void )
 
    reset();
 
-   bool edload    = true;
-   bool edlast    = ck_edlast->isChecked();
+   bool edlast = ck_edlast->isChecked();
+   int  local  = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                         : US_Disk_DB_Controls::Disk;
+   QString description;
 
-   int local = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
-                                       : US_Disk_DB_Controls::Disk;
-//////////
-   US_DataLoader* dialog =
-      new US_DataLoader( edload, edlast, local, dfilter, investig );
+   US_DataLoader* dialog = new US_DataLoader(
+         edlast, local, rawList, dataList, triples, description );
 
-   if ( dialog->exec() == QDialog::Accepted )
-   {
-      dialog->settings(  def_local, investig, dfilter );
+   connect( dialog, SIGNAL( changed( bool ) ), SLOT( update_disk_db( bool ) ) );
+   connect( dialog, SIGNAL( progress    ( const QString& ) ), 
+                    SLOT  ( set_progress( const QString& ) ) );
 
-      QTimer* ld_timer = new QTimer( this );
-      connect( ld_timer, SIGNAL( timeout() ),
-                         SLOT( load_progress() ) );
-      te_desc->setText( tr( "<b>Loading Experiment Data ... </b>" ) );
-      ld_timer->start( 100 );
-      dialog->load_edit( dataList,  rawList,  triples );
-      ld_timer->stop();
-      directory = dialog->description();
+   if ( dialog->exec() != QDialog::Accepted ) return;
 
-      if ( def_local )
-         directory = directory.section( directory.left( 1 ), 4, 4 )
-                     .left( directory.lastIndexOf( "/" ) );
+   directory = description.section( description.left( 1 ), 4, 4 );
+   directory = description.left   ( directory.lastIndexOf( "/" ) );
 
-      else
-         directory = tr( "(database)" );
+   lw_triples->disconnect();
+   lw_triples->clear();
 
-      delete dialog;
-   }
-
-   else                         // load was aborted
-      return;
-////////////
    for ( int ii=0; ii < triples.size(); ii++ )
       lw_triples->addItem( triples.at( ii ) );
 
@@ -316,7 +301,6 @@ void US_AnalysisBase2::load( void )
    lw_triples->setCurrentRow( 0 );
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ), 
                         SLOT  ( new_triple       ( int ) ) );
-
    update( 0 );
 
    // Enable other buttons
@@ -342,7 +326,7 @@ void US_AnalysisBase2::load( void )
    bool    bufin  = false;
 
    if ( local )
-   {  // Data from local disk:  get solution/buffer vals (disk or db)
+   {  // Data from local disk: get solution/buffer vals (disk or db)
       bufin  = solinfo_disk( &dataList[ 0 ], svbar, bufID, bguid, bdesc );
       
       if ( ! bufin )
@@ -354,8 +338,6 @@ void US_AnalysisBase2::load( void )
          return;
       }
 
-      //bufin  = bufin ? bufin :
-      //         solinfo_db(   eda, svbar, bufID, bguid, bdesc );
       bufin  = bufvals_disk( bufID, bguid, bdesc, bdens, bvisc );
 
       if ( ! bufin )
@@ -1754,4 +1736,15 @@ void US_AnalysisBase2::load_progress( void )
    te_desc->setText( "<b>" + pmsg + "*</b>" );
    qApp->processEvents();
 }
+
+// Slot to give load-data progress feedback
+void US_AnalysisBase2::set_progress( const QString& message )
+{
+   QString pmsg = te_desc->toPlainText();
+   te_desc->setText( "<b>" + message + "*</b>" );
+   qApp->processEvents();
+}
+
+
+
 

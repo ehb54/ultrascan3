@@ -195,5 +195,6 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       bool verify_vbar   ( void );
       void vbar_text     ( void );
       void load_progress ( void );
+      void set_progress  ( const QString& );
 };
 #endif

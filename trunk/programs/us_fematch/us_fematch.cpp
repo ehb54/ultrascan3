@@ -367,33 +367,18 @@ void US_FeMatch::load( void )
    buffLoaded = false;
    dataLatest = ck_edit->isChecked();
 
-   US_DataLoader* dialog =
-      new US_DataLoader( true, dataLatest, def_local, dfilter, investig );
+   // US_DataLoader* dialog =
+   //   new US_DataLoader( true, dataLatest, def_local, dfilter, investig );
 
-   if ( dialog->exec() == QDialog::Accepted )
-   {
-      dialog->settings(  def_local, investig, dfilter );
-      QTimer* ld_timer = new QTimer( this );
-      connect( ld_timer, SIGNAL( timeout()     ),
-                         SLOT( load_progress() ) );
-      te_desc->setText( tr( "<b>Loading Experiment Data ... </b>" ) );
-      ld_timer->start( 100 );
-      dialog->load_edit( dataList,  rawList,  triples );
-      ld_timer->stop();
-      workingDir = dialog->description();
+   QString description;
 
-      if ( def_local )
-         workingDir = workingDir.section( workingDir.left( 1 ), 4, 4 )
-                      .left( workingDir.lastIndexOf( "/" ) );
+   US_DataLoader* dialog = new US_DataLoader(
+      dataLatest, def_local, rawList, dataList, triples, description );
 
-      else
-         workingDir = tr( "(database)" );
+   if ( dialog->exec() == QDialog::Accepted ) return;
 
-      delete dialog;
-   }
-
-   else                     // load was aborted
-      return;
+   workingDir = description.section( description.left( 1 ), 4, 4 );
+   workingDir = description.left   ( workingDir.lastIndexOf( "/" ) );
 
    qApp->processEvents();
 
