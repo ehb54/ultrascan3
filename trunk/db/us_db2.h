@@ -116,7 +116,7 @@ class US_EXTERN US_DB2
         \param password The unencrypted password for the database/user.
         \param email    The email address of the investigator
         \param pw       The investigator's password
-        \param error    A reference to a string for error responses.
+        \param err      A reference to a string for error responses.
     */
     bool test_secure_connection( const QString&, const QString&, 
                                  const QString&, const QString&, 
@@ -128,7 +128,7 @@ class US_EXTERN US_DB2
         uses an SSL connection.
 
         \param masterPW Master password to decrypt DB password
-        \param error    A reference to a string for error responses.
+        \param err      A reference to a string for error responses.
     */
     bool          connect     ( const QString&, QString& );
 
