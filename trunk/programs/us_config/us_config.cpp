@@ -266,7 +266,7 @@ void US_Config::save( void )
    US_Settings::set_reportDir    ( le_reportDir  ->text()      );
    US_Settings::set_archiveDir   ( le_archiveDir ->text()      );
    US_Settings::set_tmpDir       ( le_tmpDir     ->text()      );
-   US_Settings::set_beckmanBug   ( rb_on         ->isChecked() );
+//   US_Settings::set_beckmanBug   ( rb_on         ->isChecked() );
 
    QMessageBox::information( this,
          tr( "Settings Saved" ),
