@@ -995,7 +995,7 @@ void US_AnalysisBase2::new_triple( int index )
    }
 
    reset();
-   data_plot();
+   update( index );
 }
 
 QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2 ) const
