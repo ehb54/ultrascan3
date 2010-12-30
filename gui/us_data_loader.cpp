@@ -659,11 +659,9 @@ void US_DataLoader::scan_local_edit( void )
 // Pare down data description map to only latest edit
 void US_DataLoader::pare_to_latest( void )
 {
-   int nrec = datamap.size();
-
    QStringList keys = datamap.keys();
 
-   for ( int ii = 0; ii < nrec - 1; ii++ )
+   for ( int ii = 0; ii < datamap.size() - 1; ii++ )
    {
       int jj = ii + 1;
 
@@ -684,7 +682,6 @@ void US_DataLoader::pare_to_latest( void )
 
       // this record's label differs from next only by edit code: remove it
       datamap.remove( clabel );
-      nrec--;
    }
 }
 
