@@ -400,9 +400,6 @@ void US_Investigator::close( void )
 
          return;
       }
-
-      emit investigator_accepted( le_invID->text().toInt(), 
-            le_lname->text(), le_fname->text() );
    }
 
    if ( le_invID->text().toInt() > 0 )
@@ -410,7 +407,14 @@ void US_Investigator::close( void )
       QString s = le_lname->text() + ", " + le_fname->text();
 
       US_Settings::set_us_inv_name( s );
-      US_Settings::set_us_inv_ID  ( le_invID->text().toInt() );
+      US_Settings::set_us_inv_ID( le_invID->text().toInt() );
+   }
+
+   // Send signal *after* updating settings.
+   if ( signal_wanted )
+   {
+      emit investigator_accepted( le_invID->text().toInt(), 
+            le_lname->text(), le_fname->text() );
    }
 
    accept();

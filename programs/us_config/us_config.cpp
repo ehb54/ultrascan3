@@ -191,8 +191,8 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
   disk_db_control = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
   otherSettings->addLayout( disk_db_control, row++, 1 );
-  connect( disk_db_control, SIGNAL( changed() ), SLOT( set_data_location() ) );
-
+  connect( disk_db_control, SIGNAL( changed        ( bool ) ), 
+                            SLOT( set_data_location( bool ) ) );
   // Color Preferences
   QLabel* color = us_label( "Color Preferences:" );
   otherSettings->addWidget( color, row, 0 );
@@ -273,7 +273,7 @@ void US_Config::save( void )
          tr( "The settings were successfully saved" ) );
 }
 
-void US_Config::set_data_location( void )
+void US_Config::set_data_location( bool )
 {
    if ( disk_db_control->db() ) 
       US_Settings::set_default_data_location( US_Disk_DB_Controls::DB );

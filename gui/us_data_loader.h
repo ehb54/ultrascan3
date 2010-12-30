@@ -20,48 +20,27 @@ class US_EXTERN US_DataLoader : public US_WidgetsDialog
 
       //! \brief Main constructor for dialog to select edit or raw
       //!        data and load it
-      //! \param editsel  Flag: load edit (true) or raw (false)
       //! \param late     Flag: present only latest if editsel=true
       //! \param local    Flag: default data source to local disk
-      //! \param search   Default list search string (list filter)
-      //! \param invtext  Default investigator search text or "USER"
-      US_DataLoader( bool, bool, bool, QString, QString );
-
-      //! \brief Load the vector of raw data sets for selected runID
-      //! \param rawList A reference to a vector of rawData objects
-      //! \param triples A reference to a list of triples to fill
-      //! \return        The count of objects returned
-      int     load_raw(   QVector< US_DataIO2::RawData >&,
-                          QStringList& );
-
-      //! \brief Load the vector of edited data sets for selected edit
-      //!        along with parallel AUC data sets
-      //! \param dataList A reference to a vector of editedData objects
       //! \param rawList  A reference to a vector of rawData objects
+      //! \param dataList A reference to a vector of editedData objects
       //! \param triples  A reference to a list of triples to fill
-      //! \return         The count of objects returned
-      int     load_edit(  QVector< US_DataIO2::EditedData >&,
-                          QVector< US_DataIO2::RawData    >&,
-                          QStringList& );
+      //! \param description A concatenatination of DataDesc information.
 
-      //! \brief Get a description of the data last selected
-      //! \return      QString that concatenates DataDesc information.
-      //!              First character is separator.
-      //!              Remaining fields in the string, available with 
-      //!              QString::section(), are:
-      //!                1,1 - Label string;
-      //!                2,2 - Description string;
-      //!                3,3 - db ID (-1 if from disk).
-      //!                4,4 - Data file name
-      //!                5,5 - GUID of data;
-      //!                6,6 - GUID of related AUC;
-      QString description(       void );
+      US_DataLoader( bool, int,
+                     QVector< US_DataIO2::RawData >&,
+                     QVector< US_DataIO2::EditedData >&,
+                     QStringList&,
+                     QString& );
+ 
+   signals:
+      //! \brief A signal to tell the parent when the disk/db selection
+      //!        has changed
+      //! \param db  True if DB is selected
+      void changed( bool );
 
-      //! \brief Get current settings to use as defaults in next call
-      //! \param local   Reference to boolean: is local selected?
-      //! \param invtext Reference to current investigator text.
-      //! \param search  Reference to current search string.
-      void    settings( bool&, QString&, QString& );
+      //! \brief A signal to provide the parent with a progress message
+      void progress( const QString& );
 
    private:
       US_Help showHelp;
@@ -87,47 +66,44 @@ class US_EXTERN US_DataLoader : public US_WidgetsDialog
          bool    isLatest;        // flag:  are edits latest ones
       };
 
-      QMap< QString, DataDesc >  datamap;  // map of labels,data-desc-objs
+      QMap< QString, DataDesc > datamap;  // map of labels,data-desc-objs
 
       DataDesc       ddesc;       // current selected data's description object
-
-      QList< DataDesc > sdescs;   // list of descriptions of selected items
-
-      QRadioButton*  rb_db;       // radio button: database load
-      QRadioButton*  rb_disk;     // radio button: local disk load
-
-      QPushButton*   pb_invest;   // investigator button
-      QPushButton*   pb_filtdata; // data search filter button
+      QStringList    dlabels;     // keys for datamap
 
       QLineEdit*     le_invest;   // investigator text entry
       QLineEdit*     le_dfilter;  // data search filter text entry
 
       QTreeWidget*   tw_data;     // data list widget
 
-      bool           ldedit;      // current load-edits flag (F -> raw)
       bool           latest;      // current use-lastest-edit flag
-      bool           ondisk;      // current from-disk flag (F -> DB)
 
       QString        dsearch;     // current data search string
       QString        dinvtext;    // current data investigator string
 
-   private slots:
-      void select_disk (    bool );
-      void investigator(    void );
-      void get_person(      void );
-      void update_person(   int, const QString&, const QString& );
-      void list_data   (    void );
-      void cancelled(       void );
-      void accepted(        void );
-      int  scan_dbase_edit( void );
-      int  scan_dbase_raw(  void );
-      int  scan_local_edit( void );
-      int  scan_local_raw(  void );
-      int  pare_to_latest(  void );
-      void show_data_info(  QPoint );
-      void help  (          void )
-      { showHelp.show_help( "data_loader.html" ); };
+      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
+      QVector< US_DataIO2::RawData    >& rawData;
+      QVector< US_DataIO2::EditedData >& editedData;
+      QStringList&                       triples;
+      QString&                           description;
+
+      bool load_edit      ( void );
+      void describe       ( void );
+      void scan_dbase_edit( void );
+      void scan_local_edit( void );
+      void pare_to_latest ( void );
+      void show_data_info ( QPoint );
+
+   private slots:
+      void list_data      ( bool = true);
+      void get_person     ( void );
+      void update_person  ( int, const QString&, const QString& );
+      void search         ( const QString& );
+      void cancelled      ( void );
+      void accepted       ( void );
+      void help           ( void )
+      { showHelp.show_help( "data_loader.html" ); };
 
    protected:
       //! \brief Event filter to flag whether a mouse click is
