@@ -275,7 +275,7 @@ void US_AnalysisBase2::load( void )
    if ( dialog->exec() != QDialog::Accepted ) return;
 
    directory = description.section( description.left( 1 ), 4, 4 );
-   directory = description.left   ( directory.lastIndexOf( "/" ) );
+   directory = directory.left( directory.lastIndexOf( "/" ) );
 
    lw_triples->disconnect();
    lw_triples->clear();
