@@ -18,14 +18,14 @@ class US_EXTERN US_DataLoader : public US_WidgetsDialog
 
    public:
 
-      //! \brief Main constructor for dialog to select edit or raw
+      //! \brief Main constructor for dialog to select edit and raw
       //!        data and load it
       //! \param late     Flag: present only latest if editsel=true
       //! \param local    Flag: default data source to local disk
-      //! \param rawList  A reference to a vector of rawData objects
-      //! \param dataList A reference to a vector of editedData objects
-      //! \param triples  A reference to a list of triples to fill
-      //! \param description A concatenatination of DataDesc information.
+      //! \param rData    A reference to a vector of rawData objects
+      //! \param eData    A reference to a vector of editedData objects
+      //! \param trips    A reference to a list of triples to fill
+      //! \param desc     A concatenatination of DataDesc information.
 
       US_DataLoader( bool, int,
                      QVector< US_DataIO2::RawData >&,
@@ -36,8 +36,8 @@ class US_EXTERN US_DataLoader : public US_WidgetsDialog
    signals:
       //! \brief A signal to tell the parent when the disk/db selection
       //!        has changed
-      //! \param db  True if DB is selected
-      void changed( bool );
+      //! \param DB True if DB is selected
+      void changed( bool DB );
 
       //! \brief A signal to provide the parent with a progress message
       void progress( const QString& );

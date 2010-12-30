@@ -195,11 +195,23 @@ class US_EXTERN US_Disk_DB_Controls : public QHBoxLayout
    Q_OBJECT
 
    public:
+      //! Define a type of data access
       enum type { Default, DB, Disk };
 
+      //! \brief Build a widget with radio buttons for selection of disk or
+      //!        database access
+      //! \param state Indicates the button to be initially set.  The 
+      //               Default set gets the setting from US_Settings
       US_Disk_DB_Controls( int= Default );
+
+      //! \brief A function to determine if the DB radio buttone is set
+      //! \returns True if the DB radio button is set
       bool db( void );
+
+      //! \brief A utility routine to set the disk radio button
       void set_disk( void );
+
+      //! \brief A utility routine to set the DB radio button
       void set_db  ( void );
 
    signals:
