@@ -479,7 +479,7 @@ void US_DataLoader::scan_dbase_edit()
    setWindowTitle( tr( "Load Edited Data from DB" ) );
 
    query << "all_editedDataIDs" << invID;
-qDebug() << "all editedDataIDs" << query;
+
    db.query( query );
 
    while ( db.next() )

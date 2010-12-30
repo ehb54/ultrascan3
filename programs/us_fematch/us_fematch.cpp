@@ -375,7 +375,7 @@ void US_FeMatch::load( void )
    US_DataLoader* dialog = new US_DataLoader(
       dataLatest, def_local, rawList, dataList, triples, description );
 
-   if ( dialog->exec() == QDialog::Accepted ) return;
+   if ( dialog->exec() != QDialog::Accepted ) return;
 
    workingDir = description.section( description.left( 1 ), 4, 4 );
    workingDir = description.left   ( workingDir.lastIndexOf( "/" ) );
