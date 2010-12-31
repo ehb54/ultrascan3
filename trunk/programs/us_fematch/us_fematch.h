@@ -64,6 +64,8 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QwtPlotCurve*  dcurve;
       US_PlotPicker* gpick;
 
+      US_Disk_DB_Controls* dkdb_cntrls;
+
       QPushButton*  pb_load;
       QPushButton*  pb_details;
       QPushButton*  pb_view;
@@ -195,7 +197,8 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QString hydrodynamics ( void )                      const;
       QString scan_info     ( void )                      const;
       QString distrib_info  ( void )                      const;
-      void    load_progress(  void );
+      void    set_progress(   const QString& );
+      void    update_disk_db( bool );
       void    write_plot( const QString&, const QwtPlot* );
       bool    mkdir(      const QString&, const QString& );
       void    new_triple( int );
