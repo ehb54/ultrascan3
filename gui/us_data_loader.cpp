@@ -173,9 +173,23 @@ bool US_DataLoader::load_edit( void )
                tr( "Only one edit from each triple may be selected." ) );
          return false;
       }
-      else
+   }
+
+   // If we have only a top level item, add the first edit item from
+   // each triple
+
+   if ( selections.size() == 1  &&  selections[ 0 ]->parent() == NULL )
+   {
+      indexes.clear();
+      twi = selections[ 0 ];
+
+      for ( int i = 0; i < twi->childCount(); i++ )
       {
-         triples << triple;
+         QTreeWidgetItem* child = twi->child( i );
+         if ( child == NULL ) continue;
+
+         // Get type of grandchild
+         indexes << child->child( 0 )->type();
       }
    }
 
@@ -187,6 +201,8 @@ bool US_DataLoader::load_edit( void )
          DataDesc ddesc    = datamap[ key ];
          QString  filename = ddesc.filename;
          QString  triple   = ddesc.tripID.replace( ".", " / " );
+         triples << triple;
+
          QString  filedir  = filename.section( "/", 0, -2 );
          filename          = filename.section( "/", -1, -1 );
          QString  message  = tr( "Loading triple " ) + triple;
@@ -220,6 +236,8 @@ bool US_DataLoader::load_edit( void )
          DataDesc ddesc    = datamap[ key ];
          int      idRec    = ddesc.DB_id;
          QString  triple   = ddesc.tripID.replace( ".", " / " );
+         triples << triple;
+
          QString  filename = ddesc.filename;
          QString  recID    = QString::number( idRec );
          QString  invID    = QString::number( US_Settings::us_inv_ID() );
@@ -661,7 +679,7 @@ void US_DataLoader::pare_to_latest( void )
 {
    QStringList keys = datamap.keys();
 
-   for ( int ii = 0; ii < datamap.size() - 1; ii++ )
+   for ( int ii = 0; ii < keys.size() - 1; ii++ )
    {
       int jj = ii + 1;
 
