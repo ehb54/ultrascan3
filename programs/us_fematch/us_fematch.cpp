@@ -16,6 +16,7 @@
 #include "us_data_loader.h"
 #include "us_util.h"
 #include "us_investigator.h"
+#include "us_loadable_noise.h"
 #include "us_lamm_astfvm.h"
 
 // main program
@@ -37,8 +38,8 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 {
    setObjectName( "US_FeMatch" );
 
-   def_local  = false;
-   def_local  = US_Settings::debug_match( "LoadLocal" ) ? true : def_local;
+   int local  = US_Settings::default_data_location();
+   def_local  = ( local == US_Disk_DB_Controls::Disk );
    dbg_level  = US_Settings::us_debug();
 
    // set up the GUI
@@ -67,18 +68,20 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    leftLayout->addLayout( buttonLayout    );
 
    // Analysis buttons
+   dkdb_cntrls  = new US_Disk_DB_Controls( local );
    pb_load      = us_pushbutton( tr( "Load Experiment" ) );
    pb_details   = us_pushbutton( tr( "Run Details" ) );
-   ck_edit      = new QCheckBox( tr( "Latest Data Edit" ) );
+   QLayout* lo_edit
+                = us_checkbox(   tr( "Latest Data Edit" ), ck_edit, true );
    pb_distrib   = us_pushbutton( tr( "s20,W Distribution" ) );
    pb_loadmodel = us_pushbutton( tr( "Load Model" ) );
    pb_simumodel = us_pushbutton( tr( "Simulate Model" ) );
    pb_view      = us_pushbutton( tr( "View Data Report" ) );
    pb_save      = us_pushbutton( tr( "Save Data" ) );
-   ck_edit     ->setChecked( true );
-   ck_edit     ->setFont( pb_load->font() );
-   ck_edit     ->setPalette( US_GuiSettings::normalColor() );
+   //ck_edit     ->setChecked( true );
 
+   connect( dkdb_cntrls,  SIGNAL( changed(      bool ) ),
+            this,         SLOT( update_disk_db( bool ) ) );
    connect( pb_load,      SIGNAL( clicked() ),
             this,         SLOT(   load() ) );
    connect( pb_details,   SIGNAL( clicked() ),
@@ -103,14 +106,18 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    pb_view     ->setEnabled( false );
    pb_save     ->setEnabled( false );
 
-   analysisLayout->addWidget( pb_load,      0, 0 );
-   analysisLayout->addWidget( pb_details,   0, 1 );
-   analysisLayout->addWidget( ck_edit,      1, 0 );
-   analysisLayout->addWidget( pb_distrib,   1, 1 );
-   analysisLayout->addWidget( pb_loadmodel, 2, 0 );
-   analysisLayout->addWidget( pb_simumodel, 2, 1 );
-   analysisLayout->addWidget( pb_view,      3, 0 );
-   analysisLayout->addWidget( pb_save,      3, 1 );
+   QLabel* lb_splot   = us_label ( tr( "Simulation Plot:" ) );
+   int row  = 0;
+   analysisLayout->addWidget( pb_load,      row,   0 );
+   analysisLayout->addWidget( pb_details,   row++, 1 );
+   analysisLayout->addLayout( lo_edit,      row,   0 );
+   analysisLayout->addLayout( dkdb_cntrls,  row++, 1 );
+   analysisLayout->addWidget( lb_splot,     row,   0 );
+   analysisLayout->addWidget( pb_distrib,   row++, 1 );
+   analysisLayout->addWidget( pb_loadmodel, row,   0 );
+   analysisLayout->addWidget( pb_simumodel, row++, 1 );
+   analysisLayout->addWidget( pb_view,      row,   0 );
+   analysisLayout->addWidget( pb_save,      row++, 1 );
 
    // Run info
    QLabel* lb_info    = us_banner( tr( "Information for this Run" ) );
@@ -139,14 +146,15 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    lw_triples = us_listwidget();
    lw_triples->setMaximumHeight( fontHeight * 2 + 12 );
 
-   runInfoLayout->addWidget( lb_info   , 0, 0, 1, 4 );
-   runInfoLayout->addWidget( lb_id     , 1, 0, 1, 1 );
-   runInfoLayout->addWidget( le_id     , 1, 1, 1, 3 );
-   runInfoLayout->addWidget( lb_temp   , 2, 0, 1, 1 );
-   runInfoLayout->addWidget( le_temp   , 2, 1, 1, 3 );
-   runInfoLayout->addWidget( te_desc   , 3, 0, 2, 4 );
-   runInfoLayout->addWidget( lb_triples, 5, 0, 1, 4 );
-   runInfoLayout->addWidget( lw_triples, 6, 0, 5, 4 );
+   row      = 0;
+   runInfoLayout->addWidget( lb_info   , row++, 0, 1, 4 );
+   runInfoLayout->addWidget( lb_id     , row,   0, 1, 1 );
+   runInfoLayout->addWidget( le_id     , row++, 1, 1, 3 );
+   runInfoLayout->addWidget( lb_temp   , row,   0, 1, 1 );
+   runInfoLayout->addWidget( le_temp   , row++, 1, 1, 3 );
+   runInfoLayout->addWidget( te_desc   , row,   0, 2, 4 ); row += 2;
+   runInfoLayout->addWidget( lb_triples, row++, 0, 1, 4 );
+   runInfoLayout->addWidget( lw_triples, row++, 0, 5, 4 );
 
    // Parameters
 
@@ -218,7 +226,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    vbar      = TYPICAL_VBAR;
    compress  = 0.0;
 
-   int row  = 0;
+   row      = 0;
    parameterLayout->addWidget( lb_experiment   , row++, 0, 1, 4 );
    parameterLayout->addWidget( pb_density      , row,   0, 1, 1 );
    parameterLayout->addWidget( le_density      , row,   1, 1, 1 );
@@ -366,19 +374,28 @@ void US_FeMatch::load( void )
    dataLoaded = false;
    buffLoaded = false;
    dataLatest = ck_edit->isChecked();
+   int local  = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
+                                  : US_Disk_DB_Controls::Disk;
 
-   // US_DataLoader* dialog =
-   //   new US_DataLoader( true, dataLatest, def_local, dfilter, investig );
+   US_DataLoader* dialog =
+      new US_DataLoader( dataLatest, local, rawList, dataList,
+            triples, workingDir );
 
-   QString description;
+   connect( dialog, SIGNAL( changed(      bool ) ),
+            this,   SLOT( update_disk_db( bool ) ) );
+   connect( dialog, SIGNAL( progress(     const QString& ) ),
+            this,   SLOT( set_progress(   const QString& ) ) );
 
-   US_DataLoader* dialog = new US_DataLoader(
-      dataLatest, def_local, rawList, dataList, triples, description );
+   if ( dialog->exec() != QDialog::Accepted )  return;
 
-   if ( dialog->exec() != QDialog::Accepted ) return;
+   if ( def_local )
+   {
+      workingDir = workingDir.section( workingDir.left( 1 ), 4, 4 );
+      workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
+   }
 
-   workingDir = description.section( description.left( 1 ), 4, 4 );
-   workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
+   else
+      workingDir = tr( "(database)" );
 
    qApp->processEvents();
 
@@ -413,7 +430,6 @@ void US_FeMatch::load( void )
    pb_loadmodel->setEnabled( true );
    pb_exclude  ->setEnabled( true );
    mfilter     = QString( "=edit" );
-   dfilter     = QString( "" );
 
    ct_from->disconnect();
    ct_from->setValue( 0 );
@@ -467,36 +483,31 @@ void US_FeMatch::update( int drow )
    QString bcomp = le_compress ->text();
    QString svbar = le_vbar     ->text();
    bool    bufin = false;
+   bool    bufvl = false;
 
    if ( def_local )
-   {  // data from local disk:  get buffer vals (disk or db)
+   {  // data from local disk:  get buffer vals from disk, if possible
       bufin  = bufinfo_disk( edata, svbar, bufid, bguid, bdesc );
 DbgLv(2) << "L:IL: bufin bdesc" << bufin << bdesc;
-      bufin  = bufin ? bufin :
-               bufinfo_db(   edata, svbar, bufid, bguid, bdesc );
-DbgLv(2) << "L:ID: bufin bdesc" << bufin << bdesc;
-      bufin  = bufvals_disk( bufid, bguid, bdesc, bdens, bvisc, bcomp );
+      bufvl  = bufvals_disk( bufid, bguid, bdesc, bdens, bvisc, bcomp );
 DbgLv(2) << "L:VL: bufin bdens" << bufin << bdens;
-      bufin  = bufin ? bufin :
-               bufvals_db(   bufid, bguid, bdesc, bdens, bvisc, bcomp );
-DbgLv(2) << "L:VD: bufin bdens" << bufin << bdens;
    }
 
    else
-   {  // data from db:          get buffer vals (db or disk)
+   {  // data from db:          get buffer vals (try db, then disk)
       bufin  = bufinfo_db(   edata, svbar, bufid, bguid, bdesc );
 DbgLv(2) << "D:ID: bufin bdesc" << bufin << bdesc;
       bufin  = bufin ? bufin :
                bufinfo_disk( edata, svbar, bufid, bguid, bdesc );
 DbgLv(2) << "D:IL: bufin bdesc" << bufin << bdesc;
-      bufin  = bufvals_db(   bufid, bguid, bdesc, bdens, bvisc, bcomp );
+      bufvl  = bufvals_db(   bufid, bguid, bdesc, bdens, bvisc, bcomp );
 DbgLv(2) << "D:VD: bufin bdens" << bufin << bdens;
-      bufin  = bufin ? bufin :
+      bufvl  = bufvl ? bufvl :
                bufvals_disk( bufid, bguid, bdesc, bdens, bvisc, bcomp );
 DbgLv(2) << "D:VL: bufin bdens" << bufin << bdens;
    }
 
-   if ( bufin )
+   if ( bufvl )
    {
       buffLoaded  = false;
       le_density  ->setText( bdens );
@@ -507,6 +518,16 @@ DbgLv(2) << "D:VL: bufin bdens" << bufin << bdens;
       density     = bdens.toDouble();
       viscosity   = bvisc.toDouble();
       compress    = bcomp.toDouble();
+
+      if ( ! bufin )
+         QMessageBox::warning( this, tr( "Data Missing" ),
+            tr( "Unable to load solution value (vbar) from data" ) );
+   }
+
+   else
+   {
+      QMessageBox::warning( this, tr( "Data Missing" ),
+         tr( "Unable to load solution/buffer values from data" ) );
    }
 
    data_plot();
@@ -1596,162 +1617,86 @@ void US_FeMatch::adjust_mc_model()
 // load noise record(s) if there are any and user so chooses
 void US_FeMatch::load_noise( )
 {
-   int         dd = lw_triples->currentRow();
    QStringList mieGUIDs;  // list of GUIDs of models-in-edit
-   QStringList nimGUIDs;  // list of GUIDs:type:index of noises-in-models
    QStringList nieGUIDs;  // list of GUIDS:type:index of noises-in-edit
-   QStringList tmpGUIDs;  // temporary noises-in-model list
-   QString     editGUID  = dataList[ dd ].editGUID; // loaded edit GUID
+   QString     editGUID  = edata->editGUID;         // loaded edit GUID
    QString     modelGUID = model.modelGUID;         // loaded model GUID
-   QString     lmodlGUID;                           // list model GUID
-   QString     lnoisGUID;                           // list noise GUID
-   QString     modelIndx;                           // "0001" style model index
 DbgLv(1) << "editGUID  " << editGUID;
 DbgLv(1) << "modelGUID " << modelGUID;
 
-   // get a list of models tied to the loaded edit
-   int nemods  = models_in_edit(  def_local, editGUID, mieGUIDs );
+   US_LoadableNoise lnoise;
+   int nenois  = lnoise.count_noise( def_local, edata, &model,
+         mieGUIDs, nieGUIDs );
 
-   if ( nemods == 0 )
-      return;                 // go no further if no models in edit
-
-   // get a list of noises tied to the loaded model
-   int nmnois  = noises_in_model( def_local, modelGUID, nimGUIDs );
-
-   // insure that the loaded model is at the head of the model-in-edit list
-   if ( modelGUID != mieGUIDs[ 0 ] )
-   {
-      if ( ! mieGUIDs.removeOne( modelGUID ) )
-      {
-         qDebug( "*ERROR* Loaded model not in model-in-edit list!" );
-         return;
-      }
-
-      mieGUIDs.insert( 0, modelGUID );
-   }
-
-   if ( nmnois > 0 )
-   {  // if loaded model has noise, put noise in list
-      nieGUIDs << nimGUIDs;   // initialize noise-in-edit list
-   }
-
-   int nenois  = nmnois;      // initial noise-in-edit count is noises in model
-
-   for ( int ii = 1; ii < nemods; ii++ )
-   {  // search through models in edit
-      lmodlGUID  = mieGUIDs[ ii ];                    // this model's GUID
-      modelIndx  = QString().sprintf( "%4.4d", ii );  // models-in-edit index
-
-      // find the noises tied to this model
-      int kenois = noises_in_model( def_local, lmodlGUID, tmpGUIDs );
-
-      if ( kenois > 0 )
-      {  // if we have 1 or 2 noises, add to noise-in-edit list
-         nenois    += kenois;
-         // adjust entry to have the right model-in-edit index
-         lnoisGUID  = tmpGUIDs.at( 0 ).section( ":", 0, 1 )
-            + ":" + modelIndx;
-         nieGUIDs << lnoisGUID;
-         if ( kenois > 1 )
-         {  // add a second noise to the list
-            lnoisGUID  = tmpGUIDs.at( 1 ).section( ":", 0, 1 )
-               + ":" + modelIndx;
-            nieGUIDs << lnoisGUID;
-         }
-      }
-   }
-DbgLv(1) << "nemods nmnois nenois" << nemods << nmnois << nenois;
 for (int jj=0;jj<nenois;jj++)
  DbgLv(1) << " jj nieG" << jj << nieGUIDs.at(jj);
 
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
-      QMessageBox msgBox;
-      QString     msg;
+      US_Passwd pw;
+      US_DB2* dbP  = def_local ? NULL : new US_DB2( pw.getPasswd() );
 
       if ( nenois > 1 )
-         msg = tr( "There are noise files. Do you want to load them?" );
+      {  // more than 1:  get choice from noise loader dialog
+         US_NoiseLoader* nldiag = new US_NoiseLoader( dbP,
+            mieGUIDs, nieGUIDs, ti_noise, ri_noise );
+         nldiag->move( this->pos() + QPoint( 200, 200 ) );
+         nldiag->exec();
+         qApp->processEvents();
+
+         delete nldiag;
+      }
 
       else
-         msg = tr( "There is a noise file. Do you want to load it?" );
+      {  // only 1:  just load it
+         QString noiID = nieGUIDs.at( 0 );
+         QString typen = noiID.section( ":", 1, 1 );
+         noiID         = noiID.section( ":", 0, 0 );
 
-      msgBox.setWindowTitle( tr( "Edit/Model Associated Noise" ) );
-      msgBox.setText( msg );
-      msgBox.setStandardButtons( QMessageBox::No | QMessageBox::Yes );
-      msgBox.setDefaultButton( QMessageBox::Yes );
-
-      if ( msgBox.exec() == QMessageBox::Yes )
-      {  // user said "yes":  load noise
-         US_DB2*   dbP = NULL;
-
-         if ( !def_local )
-         {
-            US_Passwd pw;
-            dbP          = new US_DB2( pw.getPasswd() );
-         }
-
-         if ( nenois > 1 )
-         {  // more than 1:  get choice from noise loader dialog
-            US_NoiseLoader* nldiag = new US_NoiseLoader( dbP,
-               mieGUIDs, nieGUIDs, ti_noise, ri_noise );
-            nldiag->move( this->pos() + QPoint( 200, 200 ) );
-            nldiag->exec();
-            qApp->processEvents();
-
-            delete nldiag;
-         }
+         if ( typen == "ti" )
+            ti_noise.load( !def_local, noiID, dbP );
 
          else
-         {  // only 1:  just load it
-            lnoisGUID     = nieGUIDs.at( 0 );
-            QString typen = lnoisGUID.section( ":", 1, 1 );
-            lnoisGUID     = lnoisGUID.section( ":", 0, 0 );
+            ri_noise.load( !def_local, noiID, dbP );
+      }
 
-            if ( typen == "ti" )
-               ti_noise.load( !def_local, lnoisGUID, dbP );
+      // noise loaded:  insure that counts jive with data
+      int ntinois = ti_noise.values.size();
+      int nrinois = ri_noise.values.size();
+      int nscans  = edata->scanData.size();
+      int npoints = edata->x.size();
+      int npadded = 0;
 
-            else
-               ri_noise.load( !def_local, lnoisGUID, dbP );
-         }
+      if ( ntinois > 0  &&  ntinois < npoints )
+      {  // pad out ti noise values to radius count
+         int jj      = ntinois;
+         while ( jj++ < npoints )
+            ti_noise.values << 0.0;
+         ti_noise.count = ti_noise.values.size();
+         npadded++;
+      }
 
-         // noise loaded:  insure that counts jive with data
-         int ntinois = ti_noise.values.size();
-         int nrinois = ri_noise.values.size();
-         int nscans  = dataList[ dd ].scanData.size();
-         int npoints = dataList[ dd ].x.size();
-         int npadded = 0;
+      if ( nrinois > 0  &&  nrinois < nscans )
+      {  // pad out ri noise values to scan count
+         int jj      = nrinois;
+         while ( jj++ < nscans )
+            ri_noise.values << 0.0;
+         ri_noise.count = ri_noise.values.size();
+         npadded++;
+      }
 
-         if ( ntinois > 0  &&  ntinois < npoints )
-         {  // pad out ti noise values to radius count
-            int jj      = ntinois;
-            while ( jj++ < npoints )
-               ti_noise.values << 0.0;
-            ti_noise.count = ti_noise.values.size();
-            npadded++;
-         }
+      if ( npadded  > 0 )
+      {  // let user know that padding occurred
+         QString pmsg;
 
-         if ( nrinois > 0  &&  nrinois < nscans )
-         {  // pad out ri noise values to scan count
-            int jj      = nrinois;
-            while ( jj++ < nscans )
-               ri_noise.values << 0.0;
-            ri_noise.count = ri_noise.values.size();
-            npadded++;
-         }
+         if ( npadded == 1 )
+            pmsg = tr( "The noise file was padded out with zeroes\n"
+                       "in order to match the data range." );
+         else
+            pmsg = tr( "The noise files were padded out with zeroes\n"
+                       "in order to match the data ranges." );
 
-         if ( npadded  > 0 )
-         {  // let user know that padding occurred
-            QString pmsg;
-
-            if ( npadded == 1 )
-               pmsg = tr( "The noise file was padded out with zeroes\n"
-                          "in order to match the data range." );
-            else
-               pmsg = tr( "The noise files were padded out with zeroes\n"
-                          "in order to match the data ranges." );
-
-            QMessageBox::information( this, tr( "Noise Padded Out" ), pmsg );
-         }
+         QMessageBox::information( this, tr( "Noise Padded Out" ), pmsg );
       }
    }
 }
@@ -2500,8 +2445,9 @@ bool US_FeMatch::bufinfo_db( US_DataIO2::EditedData* edata,
    db.query( query );
    if ( db.lastErrno() != US_DB2::OK )
    {
-      qDebug() << "***Unable to get raw Data ID from GUID" << rawGUID
-         << " lastErrno" << db.lastErrno();
+      rawGUID = rawGUID.isEmpty() ? "(empty)" : rawGUID;
+DbgLv(1) << "***Unable to get raw Data ID from GUID" << rawGUID
+   << "lastErrno" << db.lastErrno();
       return bufinfo;
    }
    db.next();
@@ -2516,8 +2462,6 @@ DbgLv(2) << "BInfD: rawGUID rawID expID soluID"
    db.query( query );
    if ( db.lastErrno() != US_DB2::OK )
    {
-      qDebug() << "***Unable to get solutionBuffer from soluID" << soluID
-         << " lastErrno" << db.lastErrno();
       query.clear();
       query << "get_solutionIDs" << expID;
       db.query( query );
@@ -2528,11 +2472,11 @@ DbgLv(2) << "BInfD: rawGUID rawID expID soluID"
       db.query( query );
       if ( db.lastErrno() != US_DB2::OK )
       {
-         qDebug() << "***Unable to get solutionBuffer from soluID" << soluID
-            << " lastErrno" << db.lastErrno();
+         soluID = soluID.isEmpty() ? "(empty)" : soluID;
+DbgLv(1) << "***Unable to get solutionBuffer from soluID" << soluID
+   << "lastErrno" << db.lastErrno();
       }
-      else
-         DbgLv(1) << "+++ Got solutionBuffer from soluID" << soluID;
+else DbgLv(1) << "+++ Got solutionBuffer from soluID" << soluID;
       //return bufinfo;
    }
    db.next();
@@ -2555,15 +2499,14 @@ DbgLv(2) << "BInfD: id guid desc" << id << guid << desc;
 
    if ( db.lastErrno() != US_DB2::OK )
    {
-      qDebug() << "***Unable to get solution vbar from soluID" << soluID
-         << " lastErrno" << db.lastErrno();
+DbgLv(1) << "***Unable to get solution vbar from soluID" << soluID
+   << "lastErrno" << db.lastErrno();
    }
    else
    {
       db.next();
       svbar  = db.value( 2 ).toString();
-      DbgLv(1) << "+++ Got solution vbar from soluID" << soluID
-         << ": " << svbar;
+DbgLv(1) << "+++ Got solution vbar from soluID" << soluID << ": " << svbar;
    }
 
    return bufinfo;
@@ -2606,7 +2549,6 @@ DbgLv(2) << "BInfL: runID dType" << edata->runID << edata->dataType;
                bufGuid       = guid.isEmpty() ? bufGuid : guid;
                bufDesc       = desc.isEmpty() ? bufDesc : desc;
                bufinfo       = true;
-               bufId         = bufId.isEmpty() ? "N/A"  : bufId;
             }
             break;
          }
@@ -2657,8 +2599,7 @@ DbgLv(2) << "BInfL:   soluGUID" << soluGUID;
                   if ( sguid != soluGUID )
                      break;
                   svbar         = ats.value( "commonVbar20" ).toString();
-                  DbgLv(1) << "+++ Got solution vbar" << svbar
-                     << "from file, for GUID" << soluGUID;
+DbgLv(1) << "+++ Got solution vbar" << svbar << "from file, GUID" << soluGUID;
                }
 
                else if (  xml.name() == "buffer" )
@@ -2670,7 +2611,6 @@ DbgLv(2) << "BInfL:   soluGUID" << soluGUID;
                   if ( ! bid.isEmpty()  ||  ! bguid.isEmpty() )
                   {
                      bufId         = bid  .isEmpty() ? bufId   : bid;
-                     bufId         = bufId.isEmpty() ? "N/A"   : bufId;
                      bufGuid       = bguid.isEmpty() ? bufGuid : bguid;
                      bufDesc       = bdesc.isEmpty() ? bufDesc : bdesc;
                      bufinfo       = true;
@@ -2699,31 +2639,33 @@ bool US_FeMatch::bufvals_db( QString& bufId, QString& bufGuid, QString& bufDesc,
    US_DB2    db( pw.getPasswd() );
 
    QStringList query;
-   int idBuf     = bufId.isEmpty() ? -1    : bufId.toInt();
-   bufId         = ( idBuf < 1  )  ? "N/A" : bufId;
+   int idBuf     = bufId.isEmpty() ? -1 : bufId.toInt();
+   bufId         = ( idBuf < 1  )  ? "" : bufId;
 
-   if ( bufId == "N/A"  &&  ! bufGuid.isEmpty() )
+   if ( bufId.isEmpty()  &&  ! bufGuid.isEmpty() )
    {
       query.clear();
       query << "get_bufferID" << bufGuid;
       db.query( query );
       if ( db.lastErrno() != US_DB2::OK )
-         qDebug() << "***Unable to get bufferID from GUID" << bufGuid
-            << " lastErrno" << db.lastErrno();
+      {
+         bufGuid = bufGuid.isEmpty() ? "(empty)" : bufGuid;
+DbgLv(1) << "***Unable to get bufferID from GUID" << bufGuid
+   << "lastErrno" << db.lastErrno();
+      }
       db.next();
       bufId         = db.value( 0 ).toString();
-      bufId         = bufId.isEmpty() ? "N/A" : bufId;
    }
 
-   if ( bufId != "N/A" )
+   if ( ! bufId.isEmpty() )
    {
       query.clear();
       query << "get_buffer_info" << bufId;
       db.query( query );
       if ( db.lastErrno() != US_DB2::OK )
       {
-         qDebug() << "***Unable to get buffer info from bufID" << bufId
-            << " lastErrno" << db.lastErrno();
+DbgLv(1) << "***Unable to get buffer info from bufID" << bufId
+   << "lastErrno" << db.lastErrno();
          return bufvals;
       }
       db.next();
@@ -2744,8 +2686,8 @@ bool US_FeMatch::bufvals_db( QString& bufId, QString& bufGuid, QString& bufDesc,
       db.query( query );
       if ( db.lastErrno() != US_DB2::OK )
       {
-         qDebug() << "***Unable to get buffer desc from invID" << invID
-            << " lastErrno" << db.lastErrno();
+DbgLv(1) << "***Unable to get buffer desc from InvID" << invID
+   << "lastErrno" << db.lastErrno();
          return bufvals;
       }
 
@@ -2767,8 +2709,9 @@ bool US_FeMatch::bufvals_db( QString& bufId, QString& bufGuid, QString& bufDesc,
          db.query( query );
          if ( db.lastErrno() != US_DB2::OK )
          {
-            qDebug() << "***Unable to get buffer info from bufID" << bufId
-               << " lastErrno" << db.lastErrno();
+            bufId = bufId.isEmpty() ? "(empty)" : bufId;
+DbgLv(1) << "***Unable to get buffer info from bufID" << bufId
+   << "lastErrno" << db.lastErrno();
             return bufvals;
          }
          db.next();
@@ -2833,6 +2776,7 @@ DbgLv(2) << "  bvL: ii fname" << ii << names[ii];
                comp     = bcomp.isEmpty() ? comp : bcomp;
                bufvals  = true;
 DbgLv(2) << "  bvL:   i/g I/G dens" << bid << bguid << bufId << bufGuid << dens;
+DbgLv(2) << "  bvL:      visc comp" << visc << comp;
             }
 
             else if ( bdesc == bufDesc )
@@ -3245,7 +3189,8 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
       QPixmap pixmap = QPixmap::grabWidget( rbmapd, 0, 0,
                                             rbmapd->width(), rbmapd->height() );
       if ( ! pixmap.save( filename ) )
-         qDebug() << "*ERROR* Unable to write file" << filename;
+         QMessageBox::warning( this, tr( "File Write Error" ),
+            tr( "Unable to write file" ) + filename );
    }
 
    else if ( filename.endsWith( "3dplot.png" ) )
@@ -3265,7 +3210,8 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
                                             true  );
 
       if ( ! pixmap.save( filename ) )
-         qDebug() << "*ERROR* Unable to write file" << filename;
+         QMessageBox::warning( this, tr( "File Write Error" ),
+            tr( "Unable to write file" ) + filename );
    }
 
    else if ( filename.endsWith( ".png" ) )
@@ -3275,7 +3221,8 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
       QPixmap pixmap = QPixmap::grabWidget( (QWidget*)plot, 0, 0, iwid, ihgt );
 
       if ( ! pixmap.save( filename ) )
-         qDebug() << "*ERROR* Unable to write file" << filename;
+         QMessageBox::warning( this, tr( "File Write Error" ),
+            tr( "Unable to write file" ) + filename );
    }
 }
 
@@ -3302,10 +3249,15 @@ void US_FeMatch::new_triple( int trow )
    data_plot();
 }
 
-void US_FeMatch::load_progress()
+void US_FeMatch::set_progress( const QString& message )
 {
-   QString pmsg = te_desc->toPlainText();
-   te_desc->setText( "<b>" + pmsg + "*</b>" );
-   qApp->processEvents();
+   te_desc->setText( "<b>" + message + " ...</b>" );
+}
+
+void US_FeMatch::update_disk_db( bool isDB )
+{
+   def_local    = ! isDB;
+
+   isDB ?  dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
 }
 

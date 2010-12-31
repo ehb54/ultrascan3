@@ -18,6 +18,8 @@
 #include "us_data_loader.h"
 #include "us_util.h"
 #include "us_investigator.h"
+#include "us_noise_loader.h"
+#include "us_loadable_noise.h"
 
 //! \brief Main program for us_2dsa. Loads translators and starts
 //         the class US_2dsa.
@@ -40,6 +42,7 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
 {
    setWindowTitle( tr( "2-Dimensional Spectrum Analysis" ) );
    setObjectName( "US_2dsa" );
+   dbg_level  = US_Settings::us_debug();
 
    // Build local and 2dsa-specific GUI elements
    te_results = NULL;
@@ -185,9 +188,9 @@ void US_2dsa::analysis_done( int updflag )
    bool plotdata     = updflag == 1;
    bool savedata     = updflag == 2;
 
-qDebug() << "Analysis Done";
-qDebug() << "  model components size" << model.components.size();
-qDebug() << "  edat0 sdat0 rdat0"
+DbgLv(1) << "Analysis Done";
+DbgLv(1) << "  model components size" << model.components.size();
+DbgLv(1) << "  edat0 sdat0 rdat0"
  << edata->value(0,0) << sdata.value(0,0) << rdata.value(0,0);
 
    pb_plt3d ->setEnabled( true );
@@ -212,10 +215,18 @@ qDebug() << "  edat0 sdat0 rdat0"
 // load the experiment data, mostly thru AnalysisBase; then disable view,save
 void US_2dsa::load( void )
 {
-   US_AnalysisBase2::load();
+   US_AnalysisBase2::load();       // load edited experiment data
 
-   pb_view->setEnabled( false );
+   pb_view->setEnabled( false );   // disable view,save buttons for now
    pb_save->setEnabled( false );
+
+   int ndset  = dataList.size();   // initialize noise-load flags
+   noiflags.fill( -1, ndset );
+
+   def_local  = ! disk_controls->db();
+   edata      = &dataList[ 0 ];    // point to first loaded data
+
+   new_triple( 0 );                // choose 1st triple initially
 }
 
 // plot the data
@@ -392,9 +403,9 @@ void US_2dsa::save( void )
    bool    fitMeni  = ( model.global == US_Model::MENISCUS );
    bool    montCar  = model.monteCarlo;
    QString anType   = fitMeni ? "2DSA-FM" : ( montCar ? "2DSA-MC" : "2DSA" );
-   QString dbase    = runID + "_" + anType + "_e" + editID 
+   QString descbase = runID + "." + anType + "_e" + editID 
                             + "_a" + analysID + ".";
-   QString dext     = "." + edata->cell + "1";
+   QString dext     = "." + edata->cell + edata->channel + edata->wavelength; 
 
    QString reppath  = US_Settings::reportDir();
    QString respath  = US_Settings::resultDir();
@@ -426,6 +437,8 @@ void US_2dsa::save( void )
 
    // Save the model and any noise file(s)
 
+   US_Passwd   pw;
+   US_DB2*     dbp      = def_local ? NULL : new US_DB2( pw.getPasswd() );
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
    QStringList mfilt( "M*.xml" );
@@ -478,7 +491,7 @@ void US_2dsa::save( void )
       QString iterName  = fitMeni ? ( "m" + menisd + "." ) :
                         ( montCar ? ( "i" + iterad + "." ) : "" );
       // fill in actual model parameters needed for output
-      model.description = dbase + iterName + "model" + dext;
+      model.description = descbase + iterName + "model" + dext;
       mname             = mdlpath + "/" + mnames[ jj ];
       model.modelGUID   = US_Util::new_guid();
       model.editGUID    = edata->editGUID;
@@ -491,28 +504,37 @@ void US_2dsa::save( void )
       // output the model
       model.write( mname );
 
+      if ( dbp != NULL )
+         model.write( dbp );
+
       int kk  = jj * knois;
 
       if ( have_ti )
       {  // output a TI noise
          ti_noise             = tinoises[ jj ];
-         ti_noise.description = dbase + iterName + "ti_noise" + dext;
+         ti_noise.description = descbase + iterName + "ti_noise" + dext;
          ti_noise.type        = US_Noise::TI;
          ti_noise.modelGUID   = model.modelGUID;
          ti_noise.noiseGUID   = US_Util::new_guid();
          nname                = noipath + "/" + nnames[ kk++ ];
          ti_noise.write( nname );
+
+         if ( dbp != NULL )
+            ti_noise.write( dbp );
       }
 
       if ( have_ri )
       {  // output an RI noise
          ri_noise             = rinoises[ jj ];
-         ri_noise.description = dbase + iterName + "ri_noise" + dext;
+         ri_noise.description = descbase + iterName + "ri_noise" + dext;
          ri_noise.type        = US_Noise::RI;
          ri_noise.modelGUID   = model.modelGUID;
          ri_noise.noiseGUID   = US_Util::new_guid();
          nname                = noipath + "/" + nnames[ kk++ ];
          ri_noise.write( nname );
+
+         if ( dbp != NULL )
+            ri_noise.write( dbp );
       }
    }
 
@@ -635,8 +657,8 @@ void US_2dsa::open_3dplot()
 // Open fit analysis control window
 void US_2dsa::open_fitcntl()
 {
-   int row = lw_triples->currentRow();
-   edata   = ( row >= 0 ) ? &dataList[ row ] : 0;
+   int drow = lw_triples->currentRow();
+   edata    = ( drow >= 0 ) ? &dataList[ drow ] : 0;
    edata->dataType = edata->dataType + QString().sprintf(
          " %.6f %.5f %5f", density, viscosity, vbar );
 
@@ -835,9 +857,9 @@ void US_2dsa::write_report( QString htmlFile )
 // Write PNG plot file
 void US_2dsa::write_png( QString plotFile, QWidget* pwidget )
 {
-   QWidget*         plwidg = pwidget;
+   QWidget*         plwidg  = pwidget;
    QPixmap          pixmap;
-   US_ResidsBitmap* resbmap;
+   US_ResidsBitmap* resbmap = NULL;
 
    if ( pwidget == NULL )
    {  // non-existing plot widget:   create a pixmap of the resids bitmap
@@ -863,17 +885,13 @@ void US_2dsa::write_png( QString plotFile, QWidget* pwidget )
       }
 
       resbmap = new US_ResidsBitmap( resids );
-      pixmap = QPixmap::grabWidget( resbmap, 0, 0,
-            resbmap->width(), resbmap->height() );
-
-      plwidg = resbmap;
+      pixmap  = QPixmap::grabWidget( resbmap, 0, 0,
+                                     resbmap->width(), resbmap->height() );
+      plwidg  = resbmap;
    }
 
-   pixmap = QPixmap::grabWidget( plwidg, 0, 0,
-                                 plwidg->width(), plwidg->height() );
-
-//qDebug() << "Widget w x h" << plwidg->width() << plwidg->height();
-//qDebug() << "Pixmap w x h" << pixmap.width()  << pixmap.height();
+   pixmap  = QPixmap::grabWidget( plwidg, 0, 0,
+                                  plwidg->width(), plwidg->height() );
 
    // Save the pixmap to the specified file
    if ( ! pixmap.save( plotFile ) )
@@ -881,5 +899,60 @@ void US_2dsa::write_png( QString plotFile, QWidget* pwidget )
 
    if ( pwidget == NULL )
       resbmap->close();
+}
+
+// Handle selecting a new triple
+void US_2dsa::new_triple( int drow )
+{
+   US_AnalysisBase2::new_triple( drow );
+
+   edata      = &dataList[ drow ];
+   US_LoadableNoise lnoise;
+   QStringList mieGUIDs;
+   QStringList nieGUIDs;
+
+   if ( noiflags[ drow ] >= 0 )
+      return;                 // done if this triple's noise already selected
+
+   noiflags[ drow ] = 0;      // initially flag no noise to subtract
+
+   // get count of edit-related noise and any GUID lists
+   int nenois = lnoise.count_noise( def_local, edata, NULL,
+                                    mieGUIDs, nieGUIDs );
+   if ( nenois == 0 )
+      return;                 // skip selection if no noise available
+
+   // Use noise loader dialog so user can select input noise(s) to subtract
+   US_NoiseLoader nloader( NULL, mieGUIDs, nieGUIDs, ti_noise_in, ri_noise_in );
+   nloader.exec();
+
+   int nrinoi  = ri_noise_in.count;
+   int ntinoi  = ti_noise_in.count;
+   int nscans  = edata->scanData.size();
+   int npoints = edata->x.size();
+
+   if ( nrinoi > 0  ||  ntinoi > 0 )
+   {  // some noise was input:  subtract it from the experiment
+      noiflags[ drow ] = min( nrinoi, 1 ) + 2 * min( ntinoi, 1 );
+
+      for ( int ii = 0; ii < nscans; ii++ )
+      {
+         int    iin   = min( ii, ( nrinoi - 1 ) );
+         double rinoi = ( nrinoi > 0 ) ? ri_noise_in.values[ iin ] : 0.0;
+         US_DataIO2::Scan* escan = &edata->scanData[ ii ];
+
+         for ( int jj = 0; jj < npoints; jj++ )
+         {
+            int    jjn   = min( jj, ( ntinoi - 1 ) );
+            double tinoi = ( ntinoi > 0 ) ? ti_noise_in.values[ jjn ] : 0.0;
+
+            double cnew  = edata->value( ii, jj ) - rinoi - tinoi;
+
+            escan->readings[ jj ] = US_DataIO2::Reading( cnew );
+         }
+      }
+
+      data_plot();             // re-plot experiment with noise subtracted
+   }
 }
 

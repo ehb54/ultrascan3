@@ -56,6 +56,10 @@ class US_2dsa : public US_AnalysisBase2
       US_Model             model;
       US_Noise             ri_noise;
       US_Noise             ti_noise;
+      US_Noise             ri_noise_in;
+      US_Noise             ti_noise_in;
+
+      QVector< int >       noiflags;
 
       QList< US_Model >    models;
       QList< US_Noise >    rinoises;
@@ -76,6 +80,8 @@ class US_2dsa : public US_AnalysisBase2
 
       double               rmsd;
 
+      int                  dbg_level;
+
    private slots:
       void open_resplot( void );
       void open_3dplot(  void );
@@ -87,6 +93,7 @@ class US_2dsa : public US_AnalysisBase2
       void data_plot( void );
       void write_report( QString );
       void write_png(    QString, QWidget* );
+      void new_triple(   int );
       void load     ( void );
       void view     ( void );
       void save     ( void );

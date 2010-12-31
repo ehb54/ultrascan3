@@ -486,16 +486,16 @@ void US_AnalysisControl::grid_change()
    long   szval  = sizeof( double );                  // size vector value
    long   szgso  = ngstep * szsol;                    // size grid solutes
    long   szsso  = nsstep * szsol * nthrd;            // size subg solutes
-   long   szmat  = sq( ngstep / 5 ) * szval;          // size matrices
+   long   szmat  = sq( nsstep ) * szval * nthrd;      // size matrices
    if ( ck_tinoise->isChecked() || ck_rinoise->isChecked() )
       szmat        *= 2L;
 //DbgLv(1) << "GC: ngst nsst ngrr nthr" << ngstep << nsstep << ngrrep << nthrd;
 //DbgLv(1) << "GC:  szsol szval szgso szsso szmat" << szsol << szval << szgso
 //   << szsso << szmat;
-   double mbase  = 38.0;
-   double mgfac  = 0.250 / 1024.0;
-   double msfac  = 2.400 / 1024.0;
-   double mmfac  = 0.010 / 1024.0;
+   double mbase  = 80.0;
+   double mgfac  = 4.000 / sq( 1024.0 );
+   double msfac  = 32.00 / sq( 1024.0 );
+   double mmfac  = 32.00 / sq( 1024.0 );
    double mgrid  = (double)szgso * mgfac;
    double msubg  = (double)szsso * msfac;
    double mmatr  = (double)szmat * mmfac;
