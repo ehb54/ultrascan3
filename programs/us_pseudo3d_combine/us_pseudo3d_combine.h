@@ -79,6 +79,8 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
 
       QwtLinearColorMap* colormap;
 
+      US_Disk_DB_Controls* dkdb_cntrls;
+
       QPushButton*  pb_pltall;
       QPushButton*  pb_stopplt;
       QPushButton*  pb_refresh;
@@ -116,42 +118,41 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       bool          auto_lim;
       bool          plot_s;
       bool          looping;
-      bool          def_local;
 
       QString       xa_title_s;
       QString       xa_title_mw;
       QString       xa_title;
       QString       cmapname;
       QString       mfilter;
-      QString       investig;
 
    private slots:
 
-      void update_resolu( double );
-      void update_xreso( double );
-      void update_yreso( double );
-      void update_zfloor( double );
+      void update_resolu(     double );
+      void update_xreso(      double );
+      void update_yreso(      double );
+      void update_zfloor(     double );
       void update_curr_distr( double );
-      void update_plot_fmin( double );
-      void update_plot_fmax( double );
-      void update_plot_smin( double );
-      void update_plot_smax( double );
-      void plot_data( int );
-      void plot_data( void );
+      void update_plot_fmin(  double );
+      void update_plot_fmax(  double );
+      void update_plot_smin(  double );
+      void update_plot_smax(  double );
+      void plot_data(      int );
+      void plot_data(      void );
       void select_autolim( void );
-      void select_plot_s( void );
+      void select_plot_s(  void );
       void select_plot_mw( void );
-      void load_distro( void );
-      void load_distro( US_ModelLoader*, int );
-      void load_color( void );
-      void plotall( void );
-      void stop( void );
-      void reset( void );
-      void set_limits( void );
+      void update_disk_db( bool );
+      void load_distro(    void );
+      void load_distro(    US_Model, QString );
+      void load_color(     void );
+      void plotall(     void );
+      void stop(        void );
+      void reset(       void );
+      void set_limits(  void );
       void sort_distro( QList< Solute >&, bool );
-      bool equivalent( double, double, double );
+      bool equivalent(  double, double, double );
 
-      void help     ( void )
+      void help       ( void )
       { showHelp.show_help( "pseudo3d_combine.html" ); };
 
    protected:

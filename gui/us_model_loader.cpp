@@ -9,13 +9,35 @@
 #include "us_db2.h"
 #include "us_editor.h"
 
-// main constructor with flags for multiple-selection and local-data
-US_ModelLoader::US_ModelLoader( bool multisel, bool local, QString search,
-      QString invtext )
-  :US_WidgetsDialog( 0, 0 ), multi( multisel ), ondisk( local ),
-   dsearch( search ), dinvtext( invtext )
+// Main constructor for loading a single model
+US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
+      US_Model& amodel, QString& adescr, const QString eGUID )
+  :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+   omodel( amodel ), odescr( adescr ), omodels( wmodels ), odescrs( mdescrs ) 
 {
-   setWindowTitle( tr( "Load Distribution Model" ) );
+   multi    = false;
+   editGUID = eGUID;
+
+   build_dialog();
+}
+
+// Alternate constructor that allows loading multiple models
+US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
+      QList< US_Model >& amodels, QStringList& adescrs )
+  :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+   omodel( model ), odescr( search ), omodels( amodels ), odescrs( adescrs ) 
+{
+   multi    = true;
+   editGUID = "";
+
+   build_dialog();
+}
+
+// Main shared method to build the model loader dialog
+void US_ModelLoader::build_dialog( void )
+{
+   setWindowTitle( multi ? tr( "Load Distribution Model(s)" )
+                         : tr( "Load Distribution Model" ) );
    setPalette( US_GuiSettings::frameColor() );
    setMinimumSize( 320, 300 );
 
@@ -29,38 +51,43 @@ US_ModelLoader::US_ModelLoader( bool multisel, bool local, QString search,
 
    // Top layout: buttons and fields above list widget
    QGridLayout* top  = new QGridLayout( );
-   int row           = 0;
 
-   QGridLayout* db_layout   =
-      us_radiobutton( tr( "Use Database" ),   rb_db,  !ondisk );
-   QGridLayout* disk_layout =
-      us_radiobutton( tr( "Use Local Disk" ), rb_disk, ondisk );
-   top->addLayout( db_layout,   row,   0 );
-   top->addLayout( disk_layout, row++, 1 );
-   connect( rb_disk, SIGNAL( toggled(     bool ) ),
-            this,    SLOT(   select_disk( bool ) ) );
+   int iload         = loadDB ? US_Disk_DB_Controls::DB
+                              : US_Disk_DB_Controls::Disk;
+   dkdb_cntrls       = new US_Disk_DB_Controls( iload );
+
+   connect( dkdb_cntrls, SIGNAL( changed(     bool ) ),
+            this,        SLOT(   select_diskdb()     ) );
+
+   QPalette gray   = US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
 
    pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   top->addWidget( pb_investigator, row,   0 );
    connect( pb_investigator, SIGNAL( clicked()       ),
             this,            SLOT(   get_person()    ) );
-   le_investigator = us_lineedit();
-   le_investigator->setReadOnly( false );
-   top->addWidget( le_investigator, row++, 1 );
-   connect( le_investigator, SIGNAL( returnPressed() ),
-            this,            SLOT(   investigator()  ) );
+   le_investigator = us_lineedit( QString::number( US_Settings::us_inv_ID() )
+                                + ": " + US_Settings::us_inv_name() );
+   le_investigator->setPalette(  gray );
+   le_investigator->setReadOnly( true );
 
    pb_filtmodels   = us_pushbutton( tr( "Search" ) );
-   top->addWidget( pb_filtmodels,   row,   0 );
    connect( pb_filtmodels, SIGNAL( clicked() ),
             this,          SLOT( list_models() ) );
    le_mfilter      = us_lineedit();
    le_mfilter->setReadOnly( false );
    dsearch         = dsearch.isEmpty() ? QString( "" ) : dsearch;
    le_mfilter->setText( dsearch );
-   top->addWidget( le_mfilter,      row++, 1 );
    connect( le_mfilter,    SIGNAL( returnPressed() ),
-            this,          SLOT( list_models() ) );
+            this,          SLOT(   list_models()   ) );
+   connect( le_mfilter,    SIGNAL( textChanged( const QString& ) ),
+            this,          SLOT(   msearch(     const QString& ) ) );
+
+   int row          = 0;
+   top->addLayout( dkdb_cntrls,     row++, 0, 1, 2 );
+   top->addWidget( pb_investigator, row,   0 );
+   top->addWidget( le_investigator, row++, 1 );
+   top->addWidget( pb_filtmodels,   row,   0 );
+   top->addWidget( le_mfilter,      row++, 1 );
 
    main->addLayout( top );
 
@@ -90,57 +117,23 @@ US_ModelLoader::US_ModelLoader( bool multisel, bool local, QString search,
 
    main->addLayout( buttons );
 
-   // Default investigator; possibly to current user, based on home directory
-   if ( dinvtext.compare( QString( "USER" ) ) == 0 )
-   {
-      QStringList DB     = US_Settings::defaultDB();
-      int         idPers = US_Settings::us_inv_ID();
-
-      if ( DB.size() < 5  ||  idPers < 1 )  // no default DB:  use user name
-         dinvtext = QDir( QDir::homePath() ).dirName();
-
-      else                                  // investigator from default DB
-         dinvtext = QString::number( idPers ) + ": "
-                    + US_Settings::us_inv_name();
-   }
-
-   le_investigator->setText( dinvtext );
-
-   db_id1     = -2;
+   db_id1     = -2;      // flag all_models start,end IDs unknown
    db_id2     = -2;
 
-   // Trigger models list from disk or db source
-   if ( !dsearch.contains( "=edit" ) )
-      select_disk( ondisk );           // only list if not "=edit" filtered
+   // Trigger models list from db or disk source
+   select_diskdb();
 }
 
-// Public method to return count of models selected
-int US_ModelLoader::models_count()
-{
-   return modelsCount;
-}
-
-// Public method to load model data by index
+// Load model data by index
 int US_ModelLoader::load_model( US_Model& model, int index )
 {
    int  rc      = 0;
-   bool isLocal = rb_disk->isChecked();
+   loadDB       = dkdb_cntrls->db();
 
    model.components.clear();
    model.associations.clear();
 
-   if ( isLocal )
-   {
-      QString   filename = model_descriptions[ index ].filename;
-
-//qDebug() << "Model load from file" << filename;
-      rc   = model.load( filename );
-//qDebug() << "Model load RETURN" << rc;
-//qDebug() << "LD model desc" << model.description;
-//qDebug() << "LD model components count" << model.components.size();
-   }
-
-   else
+   if ( loadDB )
    {
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
@@ -156,20 +149,20 @@ int US_ModelLoader::load_model( US_Model& model, int index )
 
       QString   modelID  = model_descriptions[ index ].DB_id;
 
-//qDebug() << "Model load from modelID" << modelID;
       rc   = model.load( modelID, &db );
-//qDebug() << "Model load RETURN" << rc;
+   }
+
+   else
+   {
+      QString   filename = model_descriptions[ index ].filename;
+
+      rc   = model.load( filename );
    }
 
    if ( model_descriptions[ index ].iterations > 1 )
-   {  // multiple model load
-      US_DB2* dbP = 0;
-
-      if  ( !isLocal )
-      {
-         US_Passwd pw;
-         dbP = new US_DB2( pw.getPasswd() );
-      }
+   {  // Multiple model load
+      US_Passwd pw;
+      US_DB2* dbP = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
 
       int nn = model_descriptions[ index ].iterations;
       int kk = model_descriptions[ index ].asd_index;
@@ -178,19 +171,19 @@ int US_ModelLoader::load_model( US_Model& model, int index )
       {
          US_Model model2;
 
-         if ( isLocal )
-         {
-            QString filename = all_single_descrs[ ++kk ].filename;
-            rc   = model2.load( filename );
-         }
-
-         else
+         if ( loadDB )
          {
             QString modelID  = all_single_descrs[ ++kk ].DB_id;
             rc   = model2.load( modelID, dbP );
          }
 
-         // append group member's components to the original
+         else
+         {
+            QString filename = all_single_descrs[ ++kk ].filename;
+            rc   = model2.load( filename );
+         }
+
+         // Append group member's components to the original
          model.components << model2.components;
       }
    }
@@ -198,7 +191,7 @@ int US_ModelLoader::load_model( US_Model& model, int index )
    return rc;
 }
 
-// Public method to return description string for model by index
+// Return a description string for a model by index
 QString US_ModelLoader::description( int index )
 {
    QString sep    = ";";     // use semi-colon as separator
@@ -206,7 +199,7 @@ QString US_ModelLoader::description( int index )
    if ( model_descriptions[ index ].description.contains( sep ) )
       sep            = "^";  // use carat if semi-colon already in use
 
-   // create and return a composite description string
+   // Create and return a composite description string
    QString cdesc  = sep + model_descriptions[ index ].description
                   + sep + model_descriptions[ index ].filename
                   + sep + model_descriptions[ index ].modelGUID
@@ -220,101 +213,25 @@ QString US_ModelLoader::description( int index )
    return cdesc;
 }
 
-// Public method to return the current search string
-QString US_ModelLoader::search_filter()
-{
-   return le_mfilter->text();
-}
-
-// Public method to return the current investigator string
-QString US_ModelLoader::investigator_text()
-{
-   return le_investigator->text();
-}
-
-// Public method to set Edit GUID for possible list filtering
-void US_ModelLoader::set_edit_guid( QString guid )
-{
-   editGUID = guid;           // edit GUID
-
-   select_disk( ondisk );     // trigger list delayed at constructor
-}
-
 // Slot to respond to change in disk/db radio button select
-void US_ModelLoader::select_disk( bool checked )
+void US_ModelLoader::select_diskdb()
 {
-   // Disable investigator field if from disk; Enable if from db
-   pb_investigator->setEnabled( !rb_disk->isChecked() );
-   le_investigator->setEnabled( !rb_disk->isChecked() );
+   // Disable investigator field if from disk or normal user; Enable otherwise
+   loadDB       = dkdb_cntrls->db();
+   pb_investigator->setEnabled( loadDB && ( US_Settings::us_inv_level() > 0 ) );
 
-   lw_models->clear();
-
-   if ( !checked )
-   {  // Disk unchecked (DB checked):  fill models list from DB
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
-
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         QMessageBox::information( this,
-               tr( "DB Connection Problem" ),
-               tr( "There was an error connecting to the database:\n" )
-               + db.lastError() );
-         return;
-      }
-
-      US_Investigator::US_InvestigatorData data;
-      QStringList query;
-      QString     invtext = le_investigator->text();
-      QString     newinve = invtext;
-      bool        haveInv = false;
-
-      query << "get_people" << invtext;
-      db.query( query );
-
-      if ( db.numRows() < 1 )
-      {  // Investigator text yields nothing:  retry with blank field
-         query.clear();
-         query << "get_people" << "";
-         db.query( query );
-      }
-
-      while ( db.next() )
-      {  // Loop through investigators looking for match
-         data.invID     = db.value( 0 ).toInt();
-         data.lastName  = db.value( 1 ).toString();
-         data.firstName = db.value( 2 ).toString();
-         if ( db.numRows() < 2  ||
-              data.lastName.contains( invtext, Qt::CaseInsensitive )  ||
-              data.firstName.contains( invtext, Qt::CaseInsensitive ) )
-         {  // Single investigator or a match to last,first name
-            haveInv     = true;
-            newinve     = QString::number( data.invID )
-               + ": " + data.lastName+ ", " + data.firstName;
-            break;
-         }
-      }
-
-      if ( haveInv )
-         le_investigator->setText( newinve );
-   }
+   // Signal model-loader caller that Disk/DB source has changed
+   emit changed( loadDB );
 
    // Show the list of available models
    list_models();
 }
 
-// Investigator text changed:  act like DB radio button just checked
-void US_ModelLoader::investigator()
-{
-   select_disk( false );
-}
-
 // Investigator button clicked:  get investigator from dialog
 void US_ModelLoader::get_person()
 {
-   dinvtext      = le_investigator->text();
-   int idPers    = dinvtext.section( ":", 0, 0 ).toInt();
-   US_Investigator* dialog = new US_Investigator( true, idPers );
+   int invID     = US_Settings::us_inv_ID();
+   US_Investigator* dialog = new US_Investigator( true, invID );
 
    connect( dialog,
       SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
@@ -327,8 +244,10 @@ void US_ModelLoader::get_person()
 void US_ModelLoader::update_person( int ID, const QString& lname,
       const QString& fname)
 {
-   dinvtext      = QString::number( ID ) + ": " + lname + ", " + fname;
-   le_investigator->setText( dinvtext );
+   le_investigator->setText(
+      QString::number( ID ) + ": " + lname + ", " + fname );
+
+   list_models();
 }
       
 // List model choices (disk/db and possibly filtered by search text)
@@ -340,7 +259,6 @@ void US_ModelLoader::list_models()
    bool listedit = !listall;                 // edit filtered?
    bool listsing = false;                    // show singles of MC groups?
    QRegExp mpart = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
-   ondisk     = rb_disk->isChecked();
    model_descriptions.clear();               // clear model descriptions
 
    if ( listdesc )
@@ -378,7 +296,117 @@ void US_ModelLoader::list_models()
 //qDebug() << "listall" << listall;
 //qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
          
-   if ( ondisk )
+   if ( loadDB )
+   {  // Model list from DB
+      US_Passwd   pw;
+      US_DB2      db( pw.getPasswd() );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::information( this,
+               tr( "DB Connection Problem" ),
+               tr( "There was an error connecting to the database:\n" )
+               + db.lastError() );
+         return;
+      }
+
+      QStringList query;
+      QString     invID = le_investigator->text().section( ":", 0, 0 );
+
+      int countMD = all_model_descrips.size();
+      int countSD = all_single_descrs .size();
+      int kid1    = -3;
+      int kid2    = -3;
+//qDebug() << " md count" << countMD;
+//      query << "count_models" << invID;
+//      int countDB = db.statusQuery( query );
+//qDebug() << " db count" << countDB;
+
+      if ( countMD > 0  &&  countMD == countSD )
+      {
+         kid1 = all_model_descrips[ 0           ].DB_id.toInt();
+         kid2 = all_model_descrips[ countMD - 1 ].DB_id.toInt();
+      }
+//qDebug() << "  kid1 kid2" << kid1 << kid2;
+//qDebug() << "  db_id1 db_id2" << db_id1 << db_id2;
+
+      if ( countMD == 0  ||  kid1 != db_id1  ||  kid2 != db_id2 )
+      { // only re-fetch all-models list if we don't yet have it
+         db_id1            = kid1;  // save start,end all_models IDs
+         db_id2            = kid2;
+//qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
+         all_model_descrips.clear();
+         query.clear();
+
+         query << "get_model_desc" << invID;
+         db.query( query );
+//qDebug() << " NumRows" << db.numRows();
+
+         while ( db.next() )
+         {
+            ModelDesc desc;
+            desc.DB_id       = db.value( 0 ).toString();
+            desc.modelGUID   = db.value( 1 ).toString();
+            desc.description = db.value( 2 ).toString();
+            desc.editGUID    = db.value( 3 ).toString();
+            desc.filename.clear();
+            desc.reqGUID     = "needed";
+            desc.iterations  = 0;
+
+
+            if ( desc.description.simplified().length() < 2 )
+            {
+               desc.description = " ( ID " + desc.DB_id
+                                  + tr( " : empty description )" );
+            }
+
+            all_model_descrips << desc;   // add to full models list
+         }
+
+         for ( int ii = 0; ii < all_model_descrips.size(); ii++ )
+         {  // loop to get requestID and flag if monte carlo
+            ModelDesc desc = all_model_descrips[ ii ];
+            QString recID  = desc.DB_id;
+            query.clear();
+            query << "get_model_info" << recID;
+            db.query( query );
+            db.next();
+            QString mxml   = db.value( 2 ).toString();
+            int     jj     = mxml.indexOf( "requestGUID=" );
+            int     kk     = mxml.indexOf( "monteCarlo=" );
+
+            if ( jj > 0 )
+            {
+               desc.reqGUID     = mxml.mid( jj ).section( '"', 1, 1 );
+
+               if ( kk > 0 )
+               {
+                  QString mCarl    = mxml.mid( kk ).section( '"', 1, 1 );
+                  desc.iterations  = mCarl.toInt() == 0 ?  0 : 1;
+               }
+
+               else
+                  desc.iterations  = 0;
+            }
+
+            else
+            {
+               desc.reqGUID     = "";
+               desc.iterations  = 0;
+            }
+
+            all_model_descrips[ ii ] = desc;
+         }
+
+         if ( !listsing )
+            compress_list();          // default: compress MC groups
+
+         else
+            dup_singles();            // duplicate model list as singles
+      }
+   }
+
+   else
    {  // Models from local disk files
       QDir    dir;
       QString path = US_Settings::dataDir() + "/models";
@@ -456,119 +484,10 @@ void US_ModelLoader::list_models()
          else
             dup_singles();         // duplicate model list as singles
       }
-      db_id1            = -2;
+      db_id1            = -2;      // flag all_models start,end IDs unknown
       db_id2            = -2;
    }
 
-   else
-   {  // Model list from DB
-      US_Passwd   pw;
-      US_DB2      db( pw.getPasswd() );
-
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         QMessageBox::information( this,
-               tr( "DB Connection Problem" ),
-               tr( "There was an error connecting to the database:\n" )
-               + db.lastError() );
-         return;
-      }
-
-      QStringList query;
-      QString     invID = le_investigator->text().section( ":", 0, 0 );
-
-      int countMD = all_model_descrips.size();
-      int countSD = all_single_descrs .size();
-      int kid1    = -3;
-      int kid2    = -3;
-//qDebug() << " md count" << countMD;
-//      query << "count_models" << invID;
-//      int countDB = db.statusQuery( query );
-//qDebug() << " db count" << countDB;
-
-      if ( countMD > 0  &&  countMD == countSD )
-      {
-         kid1 = all_model_descrips[ 0           ].DB_id.toInt();
-         kid2 = all_model_descrips[ countMD - 1 ].DB_id.toInt();
-      }
-//qDebug() << "  kid1 kid2" << kid1 << kid2;
-//qDebug() << "  db_id1 db_id2" << db_id1 << db_id2;
-
-      if ( countMD == 0  ||  kid1 != db_id1  ||  kid2 != db_id2 )
-      { // only re-fetch all-models list if we don't yet have it
-         db_id1            = kid1;
-         db_id2            = kid2;
-//qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
-         all_model_descrips.clear();
-         query.clear();
-
-         query << "get_model_desc" << invID;
-         db.query( query );
-//qDebug() << " NumRows" << db.numRows();
-
-         while ( db.next() )
-         {
-            ModelDesc desc;
-            desc.DB_id       = db.value( 0 ).toString();
-            desc.modelGUID   = db.value( 1 ).toString();
-            desc.description = db.value( 2 ).toString();
-            desc.editGUID    = db.value( 3 ).toString();
-            desc.filename.clear();
-            desc.reqGUID     = "needed";
-            desc.iterations  = 0;
-
-
-            if ( desc.description.simplified().length() < 2 )
-            {
-               desc.description = " ( ID " + desc.DB_id
-                                  + tr( " : empty description )" );
-            }
-
-            all_model_descrips << desc;   // add to full models list
-         }
-
-         for ( int ii = 0; ii < all_model_descrips.size(); ii++ )
-         {  // loop to get requestID and flag if monte carlo
-            ModelDesc desc = all_model_descrips[ ii ];
-            QString recID  = desc.DB_id;
-            query.clear();
-            query << "get_model_info" << recID;
-            db.query( query );
-            db.next();
-            QString mxml   = db.value( 2 ).toString();
-            int     jj     = mxml.indexOf( "requestGUID=" );
-            int     kk     = mxml.indexOf( "monteCarlo=" );
-
-            if ( jj > 0 )
-            {
-               desc.reqGUID     = mxml.mid( jj ).section( '"', 1, 1 );
-
-               if ( kk > 0 )
-               {
-                  QString mCarl    = mxml.mid( kk ).section( '"', 1, 1 );
-                  desc.iterations  = mCarl.toInt() == 0 ?  0 : 1;
-               }
-
-               else
-                  desc.iterations  = 0;
-            }
-
-            else
-            {
-               desc.reqGUID     = "";
-               desc.iterations  = 0;
-            }
-
-            all_model_descrips[ ii ] = desc;
-         }
-
-         if ( !listsing )
-            compress_list();          // default: compress MC groups
-
-         else
-            dup_singles();            // duplicate model list as singles
-      }
-   }
 
    // possibly pare down models list based on search field
 
@@ -665,6 +584,26 @@ void US_ModelLoader::accepted()
             tr( "No Model Selected" ),
             tr( "You have not selected a model.\nSelect+Accept or Cancel" ) );
       return;
+   }
+
+   if ( ! multi )
+   {  // in single-select mode, load the model and set the description
+      load_model( omodel, 0 );
+      odescr     = description( 0 );
+   }
+
+   else
+   {  // in multiple-select mode, load all models and descriptions
+      omodels.clear();
+      odescrs.clear();
+
+      for ( int ii = 0; ii < modelsCount; ii++ )
+      {
+         load_model( model, ii );
+
+         omodels << model;
+         odescrs << description( ii );
+      }
    }
 
    accept();        // signal that selection was accepted
@@ -995,5 +934,13 @@ void US_ModelLoader::dup_singles( void )
 
    // copy sorted all-singles list to all-models list
    all_model_descrips = all_single_descrs;
+}
+
+// Slot to re-list models when search text has changed
+void US_ModelLoader::msearch( const QString& search_string )
+{
+   dsearch  = search_string;
+
+   list_models();
 }
 

@@ -70,6 +70,7 @@ class US_EXTERN US_GA_Initialize : public US_Widgets
       QwtPlotCurve*       pc1;
       QwtLinearColorMap*  colormap;
       US_PlotPicker*      pick;
+      US_Disk_DB_Controls* dkdb_cntrls;
 
       US_SoluteData*      soludata;
 
@@ -132,7 +133,6 @@ class US_EXTERN US_GA_Initialize : public US_Widgets
       bool          monte_carlo;
       bool          plot_s;
       bool          rbtn_click;
-      bool          def_local;
 
       QString       run_name;
       QString       cell;
@@ -148,7 +148,6 @@ class US_EXTERN US_GA_Initialize : public US_Widgets
       QString       stdfline;
       QString       stnpline;
       QString       mfilter;
-      QString       investig;
 
    private slots:
 
@@ -186,18 +185,19 @@ class US_EXTERN US_GA_Initialize : public US_Widgets
       void setBucketPens( void );
       void highlight_solute( QwtPlotCurve* );
       void highlight_solute( int );
-      void getMouseDown( const QwtDoublePoint& );
-      void getMouseUp(   const QwtDoublePoint& );
-      void sclick_sbdata( const QModelIndex& );
-      void dclick_sbdata( const QModelIndex& );
+      void getMouseDown(     const QwtDoublePoint& );
+      void getMouseUp(       const QwtDoublePoint& );
+      void sclick_sbdata(    const QModelIndex& );
+      void dclick_sbdata(    const QModelIndex& );
       void changeBucketRect( int, QRectF& );
       QwtPlotCurve* drawBucketRect( int, QRectF );
       QwtPlotCurve* drawBucketRect( int, QPointF, QPointF );
-      QwtPlotCurve* bucketCurveAt( int );
-      void erase_buckets( bool );
+      QwtPlotCurve* bucketCurveAt(  int );
+      void erase_buckets(   bool );
       void erase_buckets();
       void removeSoluteBin( int );
-      bool equivalent( double, double, double );
+      bool equivalent(      double, double, double );
+      void update_disk_db(  bool );
 
       void help     ( void )
       { showHelp.show_help( "ga_initialize.html" ); };

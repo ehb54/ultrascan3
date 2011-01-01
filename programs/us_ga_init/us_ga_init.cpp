@@ -207,6 +207,12 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( cb_plot_mw, SIGNAL( clicked() ),
             this,       SLOT( select_plot_mw() ) );
 
+   dkdb_cntrls   = new US_Disk_DB_Controls(
+         US_Settings::default_data_location() );
+   spec->addLayout( dkdb_cntrls, s_row++, 0, 1, 2 );
+   connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
+            this,   SLOT( update_disk_db( bool ) ) );
+
    pb_lddistr    = us_pushbutton( tr( "Load Distribution" ) );
    pb_lddistr->setEnabled( true );
    spec->addWidget( pb_lddistr, s_row, 0 );
@@ -357,9 +363,6 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    plot_dim   = 2;          // default plot dimension
    plot_s     = true;       // default s/MW X type
    rbtn_click = false;      // default right-button clicked
-   def_local  = false;      // default local/DB flag
-   def_local  = US_Settings::debug_match( "LoadLocal" ) ? true : def_local;
-   investig   = "USER";     // default investigator
    mfilter    = "";         // default model list filter
 
    reset();
@@ -1047,58 +1050,47 @@ void US_GA_Initialize::select_plot_mw()
             this,      SLOT(   update_wsbuck( double ) ) );
 }
 
-// load the solute distribution from a file
+// load the solute distribution from a file or from DB
 void US_GA_Initialize::load_distro()
 {
    Solute          sol_s;
    Solute          sol_w;
    US_Model        model;
-
-   US_ModelLoader* dialog = new US_ModelLoader( false, def_local,
-      mfilter, investig );
-   dialog->move( this->pos() + QPoint( 200, 200 ) );
-
    QString         mdesc;
+   bool            loadDB = dkdb_cntrls->db();
+
+   US_ModelLoader dialog( loadDB, mfilter, model, mdesc );
+   dialog.move( this->pos() + QPoint( 200, 200 ) );
+
+   connect( &dialog, SIGNAL(   changed( bool ) ),
+            this, SLOT( update_disk_db( bool ) ) );
+
    QString         mfnam;
    QString         sep;
    QString         aiters;
 
-   if ( dialog->exec() == QDialog::Accepted )
-   {
-      dialog->load_model( model, 0 );
+   if ( dialog.exec() != QDialog::Accepted )
+      return;
 
-      mdesc     = dialog->description( 0 );
-      mfilter   = dialog->search_filter();
-      investig  = dialog->investigator_text();
+
 //qDebug() << "LOAD ACCEPT  Description:\n " << mdesc;
-      sep       = mdesc.left( 1 );
-      mfnam     = mdesc.section( sep, 2, 2 );
-      aiters    = mdesc.section( sep, 6, 6 );
+   sep       = mdesc.left( 1 );
+   mfnam     = mdesc.section( sep, 2, 2 );
+   aiters    = mdesc.section( sep, 6, 6 );
 
-      if ( mfnam.isEmpty() )
-      {  // from db:  make ID the "filename"; default to db next time
-         mfnam     = "db ID " + mdesc.section( sep, 4, 4 );
-         def_local = false;
-      }
-
-      else
-      {  // from disk:  use base file name; default to disk next time
-         mfnam     = QFileInfo( mfnam ).baseName();
-         def_local = true;
-      }
-
-      delete dialog;
-
-      if ( model.components.size() < 1 )
-      {
-qDebug() << "  NO Model components";
-         return;
-      }
+   if ( mfnam.isEmpty() )
+   {  // From db:  make ID the "filename"
+      mfnam     = "db ID " + mdesc.section( sep, 4, 4 );
    }
 
    else
+   {  // From disk:  use base file name
+      mfnam     = QFileInfo( mfnam ).baseName();
+   }
+
+   if ( model.components.size() < 1 )
    {
-      delete dialog;
+qDebug() << "  NO Model components";
       return;
    }
 
@@ -1110,15 +1102,27 @@ qDebug() << "  NO Model components";
 
    // parse model information from its description
    mdesc        = mdesc.section( sep, 1, 1 );
+   method       = model.typeText();
+   QString str0 = method + "_";
+   QString str1 = "." + str0;
+   QString str2 = "_" + str0;
+   int jjd      = mdesc.indexOf( str1 );
+   int jju      = mdesc.indexOf( str2 );
+
+   if ( jjd < 0  ||  ( jju > 0 && jju < jjd ) )
+      mdesc        = mdesc.replace( str2, str1 );
+
+   mdesc        = mdesc.replace( str1, "." );
 
    run_name     = mdesc.section( ".", 0, -3 );
+
    int jj       = mdesc.lastIndexOf( "." );
    int kk       = mdesc.length();
 
    if ( jj < 0 )
    {  // for model not really a distribution, fake it
       jj           = kk;
-      mdesc        = mdesc + ".model.11";
+      mdesc        = mdesc + ".model.1A260";
       kk           = mdesc.length();
    }
 
@@ -1127,7 +1131,6 @@ qDebug() << "  NO Model components";
    cell         = tstr.left( 1 );
    tstr         = mdesc.right( kk - jj - 2 );
    wavelength   = tstr;
-   method       = model.typeText();
    monte_carlo  = model.monteCarlo;
    mc_iters     = monte_carlo ? aiters.toInt() : 1;
 qDebug() << "MC" << monte_carlo << " iters" << mc_iters;
@@ -1799,9 +1802,16 @@ void US_GA_Initialize::removeSoluteBin( int sx )
    return;
 }
 
-// flag whether two values are effectively equal within a given epsilon
+// Flag whether two values are effectively equal within a given epsilon
 bool US_GA_Initialize::equivalent( double a, double b, double eps )
 {
    return ( qAbs( ( a - b ) / a ) <= eps );
 }
+
+// Reset Disk_DB control whenever data source is changed in any dialog
+void US_GA_Initialize::update_disk_db( bool isDB )
+{
+   isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
+}
+
 
