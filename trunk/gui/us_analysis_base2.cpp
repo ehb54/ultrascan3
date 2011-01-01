@@ -228,13 +228,8 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 
    dataLoaded = false;
    buffLoaded = false;
-   def_local  = false;
-
-   if ( US_Settings::debug_match( "LoadLocal" ) )
-      def_local  = true;
 
    dfilter    = "";
-   investig   = "USER";
 
    connect( le_density,   SIGNAL( returnPressed() ),
             this,         SLOT(   buffer_text()     ) );
@@ -261,12 +256,12 @@ void US_AnalysisBase2::load( void )
    reset();
 
    bool edlast = ck_edlast->isChecked();
-   int  local  = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+   int  dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                          : US_Disk_DB_Controls::Disk;
    QString description;
 
    US_DataLoader* dialog = new US_DataLoader(
-         edlast, local, rawList, dataList, triples, description );
+         edlast, dbdisk, rawList, dataList, triples, description );
 
    connect( dialog, SIGNAL( changed( bool ) ), SLOT( update_disk_db( bool ) ) );
    connect( dialog, SIGNAL( progress    ( const QString& ) ), 
@@ -274,8 +269,14 @@ void US_AnalysisBase2::load( void )
 
    if ( dialog->exec() != QDialog::Accepted ) return;
 
-   directory = description.section( description.left( 1 ), 4, 4 );
-   directory = directory.left( directory.lastIndexOf( "/" ) );
+   if ( disk_controls->db() )
+      directory = tr( "(database)" );
+
+   else
+   {
+      directory = description.section( description.left( 1 ), 4, 4 );
+      directory = directory.left( directory.lastIndexOf( "/" ) );
+   }
 
    lw_triples->disconnect();
    lw_triples->clear();
@@ -325,7 +326,7 @@ void US_AnalysisBase2::load( void )
    QString svbar  = le_vbar     ->text();
    bool    bufin  = false;
 
-   if ( local )
+   if ( dbdisk == US_Disk_DB_Controls::Disk )
    {  // Data from local disk: get solution/buffer vals (disk or db)
       bufin  = solinfo_disk( &dataList[ 0 ], svbar, bufID, bguid, bdesc );
       
@@ -348,10 +349,8 @@ void US_AnalysisBase2::load( void )
 
          return;
       }
-
-      //bufin  = bufin ? bufin :
-      //         bufvals_db(   bufID, bguid, bdesc, bdens, bvisc );
    }
+
    else
    {  // Data from database:    get solution/buffer vals (db or disk)
       bufin  = solinfo_db( &dataList[ 0 ], svbar, bufID, bguid, bdesc );
@@ -418,7 +417,6 @@ void US_AnalysisBase2::update( int selection )
 }
 
 
-
 void US_AnalysisBase2::details( void )
 {
    US_RunDetails2* dialog
@@ -430,10 +428,11 @@ void US_AnalysisBase2::details( void )
 
 void US_AnalysisBase2::get_vbar( void )
 {
-   int idPers    = investig.section( ":", 0, 0 ).toInt();
+   int  idPers   = US_Settings::us_inv_ID();
+   bool loadDB   = disk_controls->db();
    QString aguid = "";
 
-   US_AnalyteGui* vbdiag = new US_AnalyteGui( idPers, true, aguid, !def_local );
+   US_AnalyteGui* vbdiag = new US_AnalyteGui( idPers, true, aguid, loadDB );
    connect( vbdiag, SIGNAL( valueChanged( US_Analyte ) ),
                     SLOT  ( update_vbar ( US_Analyte ) ) );
    vbdiag->exec();
@@ -462,8 +461,8 @@ void US_AnalysisBase2::update_vbar( US_Analyte analyte )
 void US_AnalysisBase2::get_buffer( void )
 {
    int idPers = US_Settings::us_inv_ID();
-   int local  = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
-                                        : US_Disk_DB_Controls::Disk;
+   bool local = ! disk_controls->db();
+
    US_BufferGui* bdiag =
       new US_BufferGui( idPers, true, buff, local );
 
@@ -521,22 +520,21 @@ void US_AnalysisBase2::data_plot( void )
    double  boundaryPct = ct_boundaryPercent->value() / 100.0;
    double  positionPct = ct_boundaryPos    ->value() / 100.0;
    double  baseline    = calc_baseline();
-   double* r           = new double[ points ];
-   double* v           = new double[ points ];
+
+   QVector< double > rvec( points );
+   QVector< double > vvec( points );
+   double* r           = rvec.data();
+   double* v           = vvec.data();
 
    // Calculate basic parameters for other functions
-   time_correction = US_Math2::time_correction( dataList );
+   time_correction    = US_Math2::time_correction( dataList );
 
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
    solution.vbar      = le_vbar     ->text().toDouble();
+   double avgTemp     = d->average_temperature();
+   solution.vbar20    = solution.vbar;
 
-   double sum = 0.0;
-
-   for ( int i = 0; i < scanCount; i++ ) sum += d->scanData[ i ].temperature;
-
-   double avgTemp  = sum / scanCount;
-   solution.vbar20 = solution.vbar;
    US_Math2::data_correction( avgTemp, solution );
 
    // Draw curves
@@ -631,8 +629,7 @@ void US_AnalysisBase2::data_plot( void )
 
    data_plot2->replot();
 
-   delete [] r;
-   delete [] v;
+   return;
 }
 
 void US_AnalysisBase2::boundary_pct( double percent )
@@ -940,15 +937,18 @@ void US_AnalysisBase2::reset( void )
    le_skipped  ->setText( "0" );
 
    // Restore saved data
-   int                     index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* d      = &dataList[ index ];
-   
-   for ( int i = 0; i < d->scanData.size(); i++ )
+   if ( dataList.size() > 0 )
    {
-      US_DataIO2::Scan* s = &d->scanData[ i ];
+      int                     index  = lw_triples->currentRow();
+      US_DataIO2::EditedData* d      = &dataList[ index ];
+   
+      for ( int i = 0; i < d->scanData.size(); i++ )
+      {
+         US_DataIO2::Scan* s = &d->scanData[ i ];
 
-      for ( int j = 0; j < s->readings.size(); j++ )
-         s->readings[ j ].value = savedValues[ i ][ j ];
+         for ( int j = 0; j < s->readings.size(); j++ )
+            s->readings[ j ].value = savedValues[ i ][ j ];
+      }
    }
 
    ct_from           ->disconnect();
@@ -1728,20 +1728,10 @@ void US_AnalysisBase2::vbar_text( void )
    if ( dataLoaded ) data_plot();
 }
 
-
-// Slot to give load-data progress feedback
-void US_AnalysisBase2::load_progress( void )
-{
-   QString pmsg = te_desc->toPlainText();
-   te_desc->setText( "<b>" + pmsg + "*</b>" );
-   qApp->processEvents();
-}
-
 // Slot to give load-data progress feedback
 void US_AnalysisBase2::set_progress( const QString& message )
 {
-   QString pmsg = te_desc->toPlainText();
-   te_desc->setText( "<b>" + message + "*</b>" );
+   te_desc->setText( "<b>" + message + " ...</b>" );
    qApp->processEvents();
 }
 

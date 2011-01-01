@@ -94,7 +94,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       bool          dataLoaded;
       bool          haveSim;
       bool          dataLatest;
-      bool          def_local;
       bool          buffLoaded;
 
       QString       run_name;
@@ -105,7 +104,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QString       editID;
       QString       dfilter;
       QString       mfilter;
-      QString       investig;
 
       QStringList   files;
 
@@ -166,8 +164,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void distrib_plot_resids( void );
 
       void    load_noise(       void );
-      int     models_in_edit(   bool, QString, QStringList& );
-      int     noises_in_model ( bool, QString, QStringList& );
       double  interp_sval( double, double*, double*,  int );
       void    write_rep(      QString& );
       QString wave_index(     int  );

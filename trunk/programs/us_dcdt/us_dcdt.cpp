@@ -89,6 +89,8 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
    connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
+
+   qApp->processEvents();
 }
 
 void US_Dcdt::subtract_bl( void )
@@ -122,10 +124,16 @@ void US_Dcdt::reset_excludes( void )
 void US_Dcdt::reset( void )
 {
    if ( ! dataLoaded ) return;
+
    US_AnalysisBase2::reset();
+
+   ct_sValue->disconnect();
    ct_sValue->setValue( sMax );
    rb_radius->click();
    pb_baseline->setIcon( QIcon() );
+   connect( ct_sValue, SIGNAL( valueChanged ( double ) ), 
+                       SLOT  ( sMaxChanged  ( double ) ) );
+   qApp->processEvents();
 }
 
 void US_Dcdt::sMaxChanged( double /* value */ )
@@ -178,7 +186,7 @@ void US_Dcdt::data_plot( void )
    // Delete old arrays if they exist to handle the case of changed triple
    if ( dcdt != NULL )
    {
-      for ( int i = 0; i < scanCount; i++ )
+      for ( int i = 0; i < pscanCount; i++ )
       {
          delete [] dcdt   [ i ];
          delete [] sValues[ i ];
@@ -201,6 +209,7 @@ void US_Dcdt::data_plot( void )
    avgS       = new double  [ points ];
    arraySizes = new int     [ scanCount ];
    arrayStart = new int     [ scanCount ];
+   pscanCount = scanCount;
 
    for ( int i = 0; i < scanCount; i++ )
    {
@@ -287,6 +296,7 @@ void US_Dcdt::data_plot( void )
 
          connect( ct_sValue, SIGNAL( valueChanged ( double ) ), 
                              SLOT  ( sMaxChanged  ( double ) ) );
+         qApp->processEvents();
       }
 
       sMax = s_max;
@@ -407,6 +417,8 @@ next: avgDcdt[ j ] /= ( count - 1 );
          data_plot1->setAxisScale( QwtPlot::xBottom, 0.0, ct_sValue->value() );
          break;
    }
+
+   qApp->processEvents();
 
    data_plot1->replot();
 

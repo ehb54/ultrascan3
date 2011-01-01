@@ -209,6 +209,12 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    connect( pb_reset,   SIGNAL( clicked() ),
             this,       SLOT( reset() ) );
 
+   dkdb_cntrls   = new US_Disk_DB_Controls(
+         US_Settings::default_data_location() );
+   spec->addLayout( dkdb_cntrls, s_row++, 0, 1, 2 );
+   connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
+            this,   SLOT( update_disk_db( bool ) ) );
+
    pb_lddistr    = us_pushbutton( tr( "Load Distribution" ) );
    pb_lddistr->setEnabled( true );
    spec->addWidget( pb_lddistr, s_row, 0 );
@@ -235,8 +241,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    // set up plot component window on right side
    xa_title_s  = tr( "Sedimentation Coefficient (1e-13)"
-                     " corrected for water at 20" )
-      + DEGC;
+                     " for water at 20" ) + DEGC;
    xa_title_mw = tr( "Molecular Weight (Dalton)" );
    xa_title    = xa_title_s;
 
@@ -268,9 +273,6 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    main->setStretchFactor( plot, 5 );
 
    mfilter    = "";
-   investig   = "USER";
-   def_local  = false;
-   def_local  = US_Settings::debug_match( "LoadLocal" ) ? true : def_local;
 
    // set up variables and initial state of GUI
 
@@ -545,77 +547,70 @@ void US_Pseudo3D_Combine::select_plot_mw()
 void US_Pseudo3D_Combine::load_distro()
 {
    // get a model description or set of descriptions for distribution data
-   US_ModelLoader* dialog = new US_ModelLoader( true, def_local, mfilter,
-      investig );
-   dialog->move( this->pos() + QPoint( 200, 200 ) );
+   QList< US_Model > models;
+   QStringList       mdescs;
+   bool              loadDB = dkdb_cntrls->db();
 
-   if ( dialog->exec() == QDialog::Accepted )
-   {
-      // detect whether db or disk source; default next load accordingly
-      QString md = dialog->description( 0 );
-      mfilter    = dialog->search_filter();
-      investig   = dialog->investigator_text();
-      QString mf = md.section( md.left( 1 ), 2, 2 );
-      def_local  = mf.isEmpty() ? false : true;
-//qDebug() << "accept SEARCH"       << mfilter;
-//qDebug() << "accept INVESTIGATOR" << investig;
+   US_ModelLoader dialog( loadDB, mfilter, models, mdescs );
+   dialog.move( this->pos() + QPoint( 200, 200 ) );
 
-      for ( int jj = 0; jj < dialog->models_count(); jj++ )
-      {  // load each selected distribution model
-         load_distro( dialog, jj );
-      }
+   connect( &dialog, SIGNAL(   changed( bool ) ),
+            this, SLOT( update_disk_db( bool ) ) );
+
+   if ( dialog.exec() != QDialog::Accepted )
+      return;  // no selection made
+
+   for ( int jj = 0; jj < models.count(); jj++ )
+   {  // load each selected distribution model
+      load_distro( models[ jj ], mdescs[ jj ] );
    }
-
-   else
-   {  // no selection made
-      delete dialog;
-      return;
-   }
-
-   delete dialog;
 
    plot_data();
 }
 
-void US_Pseudo3D_Combine::load_distro( US_ModelLoader* dialog, int index )
+void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
 {
-   US_Model model;
-
    DisSys      tsys;
    Solute      sol_s;
    Solute      sol_w;
 
-   dialog->load_model( model, index );   // load a model
-
    model.update_coefficients();          // fill in any missing coefficients
 
-   QString mdesc = dialog->description( index );
-   mdesc         = mdesc.section( mdesc.left( 1 ), 1, 1 );
+   QString mdesc = mdescr.section( mdescr.left( 1 ), 1, 1 );
 
    // load current colormap
    tsys.colormap = colormap;
    tsys.cmapname = cmapname;
 
    // set values based on description
-   int jj           = mdesc.lastIndexOf( "." );
-   int kk           = mdesc.length();
+   int jj        = mdesc.lastIndexOf( "." );
+   int kk        = mdesc.length();
 
    if ( jj < 0 )
    {  // for model not really a distribution, fake it
-      jj               = kk;
-      mdesc            = mdesc + ".model.11";
-      kk               = mdesc.length();
+      jj            = kk;
+      mdesc         = mdesc + ".model.11";
+      kk            = mdesc.length();
    }
 
    QString tstr     = mdesc.right( kk - jj - 1 );
 
+   tsys.method      = model.typeText();
    tsys.cell        = tstr.left( 1 );
    tstr             = mdesc.right( kk - jj - 2 );
    tsys.wavelength  = tstr;
+   QString meth0    = tsys.method + "_";
+   QString meth1    = "." + meth0;
+   QString meth2    = "_" + meth0;
+   jj   = mdesc.indexOf( meth1 );
+   kk   = mdesc.indexOf( meth2 );
+   if ( kk > 0  &&  jj < 0 )
+      mdesc         = mdesc.replace( meth2, meth1 );
+   mdesc            = mdesc.replace( meth1, "." );
    tsys.run_name    = mdesc.section( ".", 0, -3 );
+
    tsys.distro_type = (int)model.analysis;
    tsys.monte_carlo = model.monteCarlo;
-   tsys.method      = model.typeText();
 
    tstr    = "Run " + tsys.run_name + "." + tsys.cell +
       tsys.wavelength + " (" + tsys.method + ")";
@@ -943,9 +938,15 @@ void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
    ct_curr_distr->setValue( curr_distr+1 );
 }
 
-// flag whether two values are effectively equal within a given epsilon
+// Flag whether two values are effectively equal within a given epsilon
 bool US_Pseudo3D_Combine::equivalent( double a, double b, double eps )
 {
    return ( qAbs( ( a - b ) / a ) <= eps );
+}
+
+// Reset Disk_DB control whenever data source is changed in any dialog
+void US_Pseudo3D_Combine::update_disk_db( bool isDB )
+{
+   isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
 }
 

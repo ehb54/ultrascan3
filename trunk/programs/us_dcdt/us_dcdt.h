@@ -16,6 +16,7 @@ class US_Dcdt : public US_AnalysisBase2
       int           graphType;
       int*          arraySizes;
       int*          arrayStart;
+      int           pscanCount;
                     
       static const int arrayLength = 400;
                     

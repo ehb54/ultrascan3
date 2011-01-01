@@ -39,7 +39,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    setObjectName( "US_FeMatch" );
 
    int local  = US_Settings::default_data_location();
-   def_local  = ( local == US_Disk_DB_Controls::Disk );
    dbg_level  = US_Settings::us_debug();
 
    // set up the GUI
@@ -317,7 +316,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    buffLoaded = false;
    haveSim    = false;
    mfilter    = "";
-   investig   = "USER";
    resids.clear();
    rbmapd     = 0;
    eplotcd    = 0;
@@ -388,7 +386,7 @@ void US_FeMatch::load( void )
 
    if ( dialog->exec() != QDialog::Accepted )  return;
 
-   if ( def_local )
+   if ( ! dkdb_cntrls->db() )
    {
       workingDir = workingDir.section( workingDir.left( 1 ), 4, 4 );
       workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
@@ -485,15 +483,7 @@ void US_FeMatch::update( int drow )
    bool    bufin = false;
    bool    bufvl = false;
 
-   if ( def_local )
-   {  // data from local disk:  get buffer vals from disk, if possible
-      bufin  = bufinfo_disk( edata, svbar, bufid, bguid, bdesc );
-DbgLv(2) << "L:IL: bufin bdesc" << bufin << bdesc;
-      bufvl  = bufvals_disk( bufid, bguid, bdesc, bdens, bvisc, bcomp );
-DbgLv(2) << "L:VL: bufin bdens" << bufin << bdens;
-   }
-
-   else
+   if ( dkdb_cntrls->db() )
    {  // data from db:          get buffer vals (try db, then disk)
       bufin  = bufinfo_db(   edata, svbar, bufid, bguid, bdesc );
 DbgLv(2) << "D:ID: bufin bdesc" << bufin << bdesc;
@@ -505,6 +495,14 @@ DbgLv(2) << "D:VD: bufin bdens" << bufin << bdens;
       bufvl  = bufvl ? bufvl :
                bufvals_disk( bufid, bguid, bdesc, bdens, bvisc, bcomp );
 DbgLv(2) << "D:VL: bufin bdens" << bufin << bdens;
+   }
+
+   else
+   {  // data from local disk:  get buffer vals from disk, if possible
+      bufin  = bufinfo_disk( edata, svbar, bufid, bguid, bdesc );
+DbgLv(2) << "L:IL: bufin bdesc" << bufin << bdesc;
+      bufvl  = bufvals_disk( bufid, bguid, bdesc, bdens, bvisc, bcomp );
+DbgLv(2) << "L:VL: bufin bdens" << bufin << bdens;
    }
 
    if ( bufvl )
@@ -874,10 +872,11 @@ void US_FeMatch::update_viscosity( double new_visc )
 // open dialog and get buffer information
 void US_FeMatch::get_buffer( void )
 {
-   int idPers  = investig.section( ":", 0, 0 ).toInt();
+   int idPers  = US_Settings::us_inv_ID();
    US_Buffer buff;
+   bool loadDB = dkdb_cntrls->db();
 
-   US_BufferGui* bdiag = new US_BufferGui( idPers, true, buff, def_local );
+   US_BufferGui* bdiag = new US_BufferGui( idPers, true, buff, !loadDB );
    connect( bdiag, SIGNAL( valueChanged(  US_Buffer ) ),
             this,  SLOT  ( update_buffer( US_Buffer ) ) );
    bdiag->exec();
@@ -911,10 +910,11 @@ void US_FeMatch::update_buffer( US_Buffer buffer )
 // open dialog and get vbar information
 void US_FeMatch::get_vbar( void )
 {
-   int idPers  = investig.section( ":", 0, 0 ).toInt();
-   QString aguid = "";
+   int     idPers  = US_Settings::us_inv_ID();
+   QString aguid   = "";
+   bool    loadDB  = dkdb_cntrls->db();
 
-   US_AnalyteGui* vdiag = new US_AnalyteGui( idPers, true, aguid, !def_local );
+   US_AnalyteGui* vdiag = new US_AnalyteGui( idPers, true, aguid, loadDB );
    connect( vdiag,  SIGNAL( valueChanged( US_Analyte ) ),
              this,  SLOT  ( update_vbar ( US_Analyte ) ) );
    vdiag->exec();
@@ -1465,28 +1465,17 @@ void US_FeMatch::load_model( )
    QString  mdesc;
 
    // load model
-   US_ModelLoader* dialog = new US_ModelLoader( false, def_local,
-      mfilter, investig );
-   dialog->move( this->pos() + QPoint( 200, 200 ) );
-   dialog->set_edit_guid( dataList[ drow ].editGUID );
+   bool loadDB = dkdb_cntrls->db();
 
-   if ( dialog->exec() == QDialog::Accepted )
-   {
-      mfilter       = dialog->search_filter();     // next search filter
-      investig      = dialog->investigator_text(); // next investigator
-      mdesc         = dialog->description( 0 );
+   US_ModelLoader dialog( loadDB, mfilter, model,
+      mdesc, dataList[ drow ].editGUID );
 
-      dialog->load_model( model, 0 );              // load selected model
+   connect( &dialog, SIGNAL( changed(      bool ) ),
+            this,    SLOT( update_disk_db( bool ) ) );
 
-      if ( mdesc.section( mdesc.left( 1 ), 2, 2 ).isEmpty() )
-         def_local     = false;  // empty filename:      default to db next
-      else
-         def_local     = true;   // non-empty filename:  default to local next
+   dialog.move( this->pos() + QPoint( 200, 200 ) );
 
-      delete dialog;
-   }
-
-   else
+   if ( dialog.exec() != QDialog::Accepted )
       return;                     // Cancel:  bail out now
 
    qApp->processEvents();
@@ -1494,8 +1483,8 @@ void US_FeMatch::load_model( )
 //   if ( model.monteCarlo )
 //      adjust_mc_model();
 DbgLv(1) << "post-Load m,e,r GUIDs" << model.modelGUID << model.editGUID
-   << model.requestGUID;
-DbgLv(1) << "post-Load def_local" << def_local;
+ << model.requestGUID;
+DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
 
    model_loaded = model;   // save model exactly as loaded
 
@@ -1513,7 +1502,7 @@ DbgLv(1) << "post-Load def_local" << def_local;
    load_noise();
 }
 
-// adjust model components based on buffer, vbar, and temperature
+// Adjust model components based on buffer, vbar, and temperature
 void US_FeMatch::adjust_model()
 {
    model              = model_loaded;
@@ -1625,7 +1614,8 @@ DbgLv(1) << "editGUID  " << editGUID;
 DbgLv(1) << "modelGUID " << modelGUID;
 
    US_LoadableNoise lnoise;
-   int nenois  = lnoise.count_noise( def_local, edata, &model,
+   bool loadDB = dkdb_cntrls->db();
+   int nenois  = lnoise.count_noise( !loadDB, edata, &model,
          mieGUIDs, nieGUIDs );
 
 for (int jj=0;jj<nenois;jj++)
@@ -1634,7 +1624,7 @@ for (int jj=0;jj<nenois;jj++)
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
       US_Passwd pw;
-      US_DB2* dbP  = def_local ? NULL : new US_DB2( pw.getPasswd() );
+      US_DB2* dbP  = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
 
       if ( nenois > 1 )
       {  // more than 1:  get choice from noise loader dialog
@@ -1654,10 +1644,10 @@ for (int jj=0;jj<nenois;jj++)
          noiID         = noiID.section( ":", 0, 0 );
 
          if ( typen == "ti" )
-            ti_noise.load( !def_local, noiID, dbP );
+            ti_noise.load( loadDB, noiID, dbP );
 
          else
-            ri_noise.load( !def_local, noiID, dbP );
+            ri_noise.load( loadDB, noiID, dbP );
       }
 
       // noise loaded:  insure that counts jive with data
@@ -2186,249 +2176,6 @@ void US_FeMatch::close_all()
    close();
 }
 
-// build a list of models(GUIDs) for a given edit(GUID)
-int US_FeMatch::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs )
-{
-   QString xmGUID;
-   QString xeGUID;
-   QString xrGUID;
-   QStringList reGUIDs;
-
-   mGUIDs.clear();
-DbgLv(1) << "MIE: ondisk" << ondisk;
-
-   if ( ondisk )
-   {  // Models from local disk files
-      QDir    dir;
-      QString path = US_Settings::dataDir() + "/models";
-
-      if ( !dir.exists( path ) )
-         dir.mkpath( path );
-
-      dir          = QDir( path );
-
-      QStringList filter( "M*.xml" );
-      QStringList f_names = dir.entryList( filter, QDir::Files, QDir::Name );
-
-      QXmlStreamAttributes attr;
-
-      for ( int ii = 0; ii < f_names.size(); ii++ )
-      {
-         QString fname( path + "/" + f_names[ ii ] );
-         QFile   m_file( fname );
-
-         if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
-            continue;
-
-         QXmlStreamReader xml( &m_file );
-
-
-         while ( ! xml.atEnd() )
-         {  // Search XML elements until we find "model"
-            xml.readNext();
-
-            if ( xml.isStartElement()  &&  xml.name() == "model" )
-            {  // test for desired editGUID
-               attr    = xml.attributes();
-               xeGUID  = attr.value( "editGUID"    ).toString();
-               xmGUID  = attr.value( "modelGUID"   ).toString();
-               xrGUID  = attr.value( "requestGUID" ).toString();
-               int kmc = attr.value( "monteCarlo"  ).toString().toInt();
-
-               if ( xeGUID != eGUID )
-                  continue;
-
-               if ( kmc == 1  &&  xrGUID.length() == 36 )
-               {  // treat monte carlo specially
-                  if ( reGUIDs.contains( xrGUID ) )
-                  {  // already have this request GUID:  skip
-                     continue;
-                  }
-                  reGUIDs << xrGUID;  // this is 1st:  save it for compare
-               }
-
-               // save the GUID of each model with a matching edit GUID
-               mGUIDs << xmGUID;
-            }
-         }
-
-         m_file.close();
-      }
-   }
-
-   else
-   {
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
-
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         qDebug() << "*** DB ERROR: " << db.lastErrno();
-         return 0;
-      }
-
-      QList< int > mDbIDs;
-      QStringList  query;
-      QString      invID  = investig.section( ":", 0, 0 );
-DbgLv(1) << "MIE(db): invID" << invID;
-
-      query.clear();
-
-      query << "get_model_desc" << invID;
-      db.query( query );
-
-      while ( db.next() )
-      {  // accumulate from db desc entries matching editGUID;
-         xmGUID  = db.value( 1 ).toString();
-         xeGUID  = db.value( 3 ).toString();
-DbgLv(2) << "MIE(db): xm/xe/e GUID" << xmGUID << xeGUID << eGUID;
-
-         if ( xeGUID == eGUID )
-         {
-            mGUIDs << xmGUID;
-            mDbIDs << db.value( 0 ).toString().toInt();
-         }
-      }
-DbgLv(1) << "MIE(db): pass 1 mGUIDs size" << mGUIDs.size() << mDbIDs.size();
-
-      qSort( mDbIDs );            // sort model db IDs into ascending order
-
-      // Make a pass thru models to exclude MC's beyond first
-
-      for ( int ii = 0; ii < mDbIDs.size(); ii++ )
-      {
-         query.clear();
-         query << "get_model_info" << QString::number( mDbIDs.at( ii ) );
-         db.query( query );
-         db.next();
-         QString mxml = db.value( 2 ).toString();
-         int     jj   = mxml.indexOf( "requestGUID="  );
-         int     kk   = mxml.indexOf( "monteCarlo=" );
-         xrGUID       = ( jj < 0 ) ? "" : mxml.mid( jj ).section( '"', 1, 1 );
-         int     kmc  = ( kk < 0 ) ? 0 :
-                        mxml.mid( kk ).section( '"', 1, 1 ).toInt();
-DbgLv(2) << "MIE(db):  ii kmc rGlen" << ii << kmc << xrGUID.length()
- << " DbID" << mDbIDs.at( ii );
-
-         if ( kmc == 1  &&  xrGUID.length() == 36 )
-         {  // treat monte carlo specially
-
-            if ( reGUIDs.contains( xrGUID ) )
-            {  // already have this request GUID:  remove this model
-               mGUIDs.removeOne( db.value( 0 ).toString() );
-DbgLv(2) << "MIE(db):    mGI rmvd" << db.value( 0 ).toString();
-            }
-
-            else
-            {  // this is 1st:  save it for compare
-               reGUIDs << xrGUID;
-DbgLv(2) << "MIE(db):    dsc savd" << db.value( 1 ).toString();
-            }
-         }
-      }
-DbgLv(1) << "MIE(db): pass 2 mGUIDs size" << mGUIDs.size() << mDbIDs.size();
-   }
-
-   return mGUIDs.size();
-}
-
-// build a list of noise(GUIDs) for a given model(GUID)
-int US_FeMatch::noises_in_model( bool ondisk, QString mGUID,
-      QStringList& nGUIDs )
-{
-   QString xnGUID;
-   QString xmGUID;
-   QString xntype;
-
-   nGUIDs.clear();
-   if ( ondisk )
-   {  // Noises from local disk files
-      QDir    dir;
-      QString path = US_Settings::dataDir() + "/noises";
-
-      if ( !dir.exists( path ) )
-         dir.mkpath( path );
-
-      dir          = QDir( path );
-
-      QStringList filter( "N*.xml" );
-      QStringList f_names = dir.entryList( filter, QDir::Files, QDir::Name );
-
-      QXmlStreamAttributes attr;
-
-      for ( int ii = 0; ii < f_names.size(); ii++ )
-      {
-         QString fname( path + "/" + f_names[ ii ] );
-         QFile   m_file( fname );
-
-         if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
-            continue;
-
-         QXmlStreamReader xml( &m_file );
-
-
-         while ( ! xml.atEnd() )
-         {  // Search XML elements until we find "noise"
-            xml.readNext();
-
-            if ( xml.isStartElement()  &&  xml.name() == "noise" )
-            {  // test for desired editGUID
-               attr    = xml.attributes();
-               xmGUID  = attr.value( "modelGUID"   ).toString();
-               xnGUID  = attr.value( "noiseGUID"   ).toString();
-               xntype  = attr.value( "type"        ).toString();
-
-               if ( xmGUID == mGUID )
-                  nGUIDs << xnGUID + ":" + xntype + ":0000";
-            }
-         }
-
-         m_file.close();
-      }
-   }
-
-   else
-   {
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
-
-      if ( db.lastErrno() != US_DB2::OK )
-         return 0;
-
-      QStringList query;
-      QString     invID  = investig.section( ":", 0, 0 );
-      QString     xnoiID;
-      QString     xmodID;
-      QString     modlID;
-
-      query.clear();
-      query << "get_modelID" << mGUID;
-      db.query( query );
-      db.next();
-      modlID  = db.value( 0 ).toString();
-
-      query.clear();
-      query << "get_noise_desc" << invID;
-      db.query( query );
-
-      while ( db.next() )
-      {  // accumulate from db desc entries matching editGUID;
-         xnoiID  = db.value( 0 ).toString();
-         xnGUID  = db.value( 1 ).toString();
-         xmodID  = db.value( 3 ).toString();
-         xntype  = db.value( 4 ).toString();
-         xntype  = xntype.contains( "ri_nois", Qt::CaseInsensitive ) ?
-                   "ri" : "ti";
-
-//DbgLv(2) << "NIM(db): xm/xe/e ID" << xnoiID << xmodID << modlID;
-         if ( xmodID == modlID )
-            nGUIDs << xnGUID + ":" + xntype + ":0000";
-      }
-   }
-
-   return nGUIDs.size();
-}
-
 // get buffer info from DB: ID, GUID, description
 bool US_FeMatch::bufinfo_db( US_DataIO2::EditedData* edata,
       QString& svbar, QString& bufId, QString& bufGuid, QString& bufDesc )
@@ -2680,7 +2427,7 @@ DbgLv(1) << "***Unable to get buffer info from bufID" << bufId
 
    else
    {
-      QString invID  = investig.section( ":", 0, 0 );
+      QString invID  = QString::number( US_Settings::us_inv_ID() );
       query.clear();
       query << "get_buffer_desc" << invID;
       db.query( query );
@@ -3256,8 +3003,6 @@ void US_FeMatch::set_progress( const QString& message )
 
 void US_FeMatch::update_disk_db( bool isDB )
 {
-   def_local    = ! isDB;
-
    isDB ?  dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
 }
 
