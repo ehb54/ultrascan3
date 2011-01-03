@@ -195,6 +195,8 @@
 
             <file>data_loader.html</file>
             <file>images/data_loader.png</file>
+            <file>images/data_loader-trips.png</file>
+            <file>images/data_loader-edits.png</file>
 
             <file>load_colormap.html</file>
             <file>save_colormap.html</file>

@@ -217,6 +217,8 @@ void US_2dsa::load( void )
 {
    US_AnalysisBase2::load();       // load edited experiment data
 
+   if ( !dataLoaded )  return;
+
    pb_view->setEnabled( false );   // disable view,save buttons for now
    pb_save->setEnabled( false );
 

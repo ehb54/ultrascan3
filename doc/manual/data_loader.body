@@ -4,15 +4,15 @@
 
     <h2> <i>UltraScan</i> Data Loader: </h2>
 
-    <p> A number of <b><i>UltraScan III</i></b> applications load raw or
-    edited experiment data for processing. These applications use the
-    US_DataLoader dialog class to allow the user to choose the data.</p>
+    <p> A number of <b><i>UltraScan III</i></b> applications load edited
+    experiment data for processing. These applications use the US_DataLoader
+    dialog class to allow the user to choose the data.</p>
 
     <p> The dialog presented when a US_DataLoader is executed allows a
-    list of edited or raw data choices from database or local disk. A Search
-    button and text field allow the list to be pared down to those of
-    interest. After a data set is selected in the list, a Load button passes
-    experiment data to the caller.</p>
+    list of edited data choices from database or local disk. A Search text
+    field allows the list to be pared down to those of interest. After a data
+    set is selected in the list, a Load button passes experiment data to the
+    caller.</p>
     
     <table>
       <tr>
@@ -22,46 +22,39 @@
         <td>
           <ul>
             <li>
-              <b>Use Database</b> Check this radio button to generate a
-              list from the database.
+              <b>Database</b> Check this radio button to generate a list from
+              the database.
             </li>
             
             <li>
-              <b>Use Local Disk</b> Check this radio button to generate a
-              raw/edit list from local disk */ultrascan/results files.
+              <b>Local Disk</b> Check this radio button to generate an edit
+              list from local disk */ultrascan/results files.
             </li>
 
             <li>
               <b>Select Investigator</b> Click on this button to open an
               <a href="us_investigator.html">Investigator Dialog</a>
               that enables you to browse potential database investigators
-              and select one.
+              and select one. This button is disabled for normal non-privileged
+              users and whenever Local Disk is selected.
             </li>
             
             <li>
-              <b>(investigator text)</b> Fill the text box with a partial name,
-              and hit the Return/Enter key to generate a list for the implied
-              investigator. The default is created from the configured default
-              database or from the current user name. Upon successfully finding
-              a matching investigator, the text becomes the full database
-              investigator ID, last name, and first name.
+              <b>(investigator text)</b> This read-only text box displays the
+              current investigator ID, last name, and first name.
             </li>
             
             <li>
-              <b>Search</b> After filling the text box to its right with
-              enough of a partial data description, click the Search button
-              or hit the Return/Enter key to pare down the data list to
-              descriptions that match the field. Note that the search is
-              case-insensitive. Enter a blank field to restore the full list.
+              <b>Search</b> As characters are entered in the text box to the
+              right of the Search label, the list of data sets is modified to
+              consist of matching entries. A blank field restores the full
+              list. Note that the search is case-insensitive.
             </li>
             
             <li>
               <b>(data list)</b> The list of data descriptions is generated
               either from local disk or db. Click on an entry to indicate
-              your choice of data to load. Depending on how the dialog was
-              invoked, the list is of raw (AUC) data sets, all edited data
-              sets, or edited data sets that are the latest edit of each
-              experiment.
+              your choice of edited data to load.
             </li>
             
             <li>
@@ -73,12 +66,35 @@
             </li>
             
             <li>
-              <b>Load</b> Click to accept the choice highlighted in the
+              <b>Load</b> Click to accept the choice(s) highlighted in the
               data list and pass data back to the caller.
             </li>
           </ul>
         </td>
       </tr>
     </table>
+
+    <h3> Data Set Selection </h3>
+
+    <p> Most often, you need not expand the list tree and need only select
+    the top level run ID description. This effectively selects all triples
+    for the run and selects the first listed edit for each triple. In the
+    default case where Latest Data Edit was checked in the calling dialog,
+    there will be only one edit (the latest) for each triple. If Latest
+    Data Edit was not checked, there may be multiple edits for triples. In
+    this case, selecting a Run description or a Triple description effectively
+    selects the earliest edit(s).</p>
+
+    <p> You may, of course, select specific triples of a run.</p>
+
+    <img src="images/data_loader-trips.png" alt="DataLoader Triples"/>
+
+    <p> Similarly, in the case where Lastest Data Edit was not checked, you
+    may select any edit of a triple.</p>
+
+    <img src="images/data_loader-edits.png" alt="DataLoader Edits"/>
+
+    <p> Note that multiple selections must all be from the same run. Only one
+    selection is allowed for each triple.</p>
 
 [% INCLUDE footer.us3 %]

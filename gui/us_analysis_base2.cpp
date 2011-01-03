@@ -460,10 +460,10 @@ void US_AnalysisBase2::update_vbar( US_Analyte analyte )
 
 void US_AnalysisBase2::get_buffer( void )
 {
-   bool local = ! disk_controls->db();
+   int  dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                         : US_Disk_DB_Controls::Disk;
 
-
-   US_BufferGui* dialog = new US_BufferGui( true, buff, local );
+   US_BufferGui* dialog = new US_BufferGui( true, buff, dbdisk );
 
    connect( dialog, SIGNAL( valueChanged ( double, double ) ),
                     SLOT  ( update_buffer( double, double ) ) );

@@ -69,18 +69,26 @@
 
     <ul>
        <li>
-          <b>Load Data</b> Load the experimental data.
-       </li>
-
-       <li>
-          <b>Latest Data Edit</b> Uncheck to allow choosing an edit other
-          than the latest one for the raw experimental data. The effect of
-          checking or unchecking can be seen in the
-           <a href="data_loader.html">Load Data Dialogs</a> documentation.
+          <b>Load Experiment</b> Click here and, in the resulting
+          <a href="data_loader.html">Load Data Dialog</a>, select an edited
+          data set to load.
        </li>
 
        <li>
           <b>Run Details</b> Pop up a dialog showing run details.
+       </li>
+
+       <li>
+          <b>Latest Data Edit</b> Uncheck to allow choosing an edit other
+          than the latest one for the raw experimental data.
+       </li>
+
+       <li>
+          <b>Database</b> Check to specify data input from the database.
+       </li>
+
+       <li>
+          <b>Local Disk</b> Check to specify data input from local disk.
        </li>
 
        <li>
