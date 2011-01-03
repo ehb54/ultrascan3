@@ -71,6 +71,8 @@ class US_EXTERN US_DataLoader : public US_WidgetsDialog
       DataDesc       ddesc;       // current selected data's description object
       QStringList    dlabels;     // keys for datamap
 
+      QPushButton*   pb_invest;   // investigator button
+
       QLineEdit*     le_invest;   // investigator text entry
       QLineEdit*     le_dfilter;  // data search filter text entry
 
@@ -96,8 +98,9 @@ class US_EXTERN US_DataLoader : public US_WidgetsDialog
       void show_data_info ( QPoint );
 
    private slots:
-      void list_data      ( bool = true);
+      void list_data      ( void );
       void get_person     ( void );
+      void update_disk_db(  bool );
       void update_person  ( int, const QString&, const QString& );
       void search         ( const QString& );
       void cancelled      ( void );

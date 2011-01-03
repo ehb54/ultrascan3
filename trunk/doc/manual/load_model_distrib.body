@@ -22,12 +22,12 @@
         <td>
           <ul>
             <li>
-              <b>Use Database</b> Check this radio button to generate a
+              <b>Database</b> Check this radio button to generate a
               list from the database.
             </li>
             
             <li>
-              <b>Use Local Disk</b> Check this radio button to generate a
+              <b>Local Disk</b> Check this radio button to generate a
               model list from local disk */ultrascan/data/models files.
             </li>
 
@@ -35,23 +35,20 @@
               <b>Select Investigator</b> Click on this button to open an
               <a href="us_investigator.html">Investigator Dialog</a>
               that enables you to browse potential database investigators
-              and select one.
+              and select one. This button is diabled for normal unprivileged
+              users and when Local Disk is selected.
             </li>
             
             <li>
-              <b>(investigator text)</b> Fill the text box with a partial name,
-              and hit the Return/Enter key to generate a list for the implied
-              investigator. The default is created from the configured default
-              database or from the current user name. Upon successfully finding
-              a matching investigator, the text becomes the full database
-              investigator ID, last name, and first name.
+              <b>(investigator text)</b> This read-only text box displays the
+              current investigator identifier number, last name, and first
+              name.
             </li>
             
             <li>
-              <b>Search</b> After filling the text box to its right with
-              enough of a partial model description, click the Search button
-              or hit the Return/Enter key to pare down the model list to
-              descriptions that match the field. Note that the search is
+              <b>Search</b> As characters are typed in the search text box,
+              the list of models is pared down to those whose description
+              matches the search field. Note that the search is
               case-insensitive. Enter a blank field to restore the full list.
               See detailed notes below on special search field text.
             </li>

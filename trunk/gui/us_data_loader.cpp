@@ -43,14 +43,15 @@ US_DataLoader::US_DataLoader(
 
    // Disk/ DB
    disk_controls = new US_Disk_DB_Controls( local );
-   connect( disk_controls, SIGNAL( changed  ( bool ) ),
-                           SLOT  ( list_data( bool ) ) );
+   connect( disk_controls, SIGNAL( changed     ( bool ) ),
+                           SLOT( update_disk_db( bool ) ) );
    top->addLayout( disk_controls, row++, 0, 1, 2 );
 
    // Investigator
    // Only enable the investigator button for privileged users
-   QPushButton* pb_invest = us_pushbutton( tr( "Select Investigator" ) );
-   pb_invest->setEnabled( US_Settings::us_inv_level() > 0 );
+   pb_invest = us_pushbutton( tr( "Select Investigator" ) );
+   pb_invest->setEnabled( ( US_Settings::us_inv_level() > 0 )  &&
+                          disk_controls->db() );
    connect( pb_invest, SIGNAL( clicked() ), SLOT( get_person() ) );
    top->addWidget( pb_invest, row, 0 );
 
@@ -321,24 +322,18 @@ void US_DataLoader::update_person( int ID, const QString& lname,
    list_data();
 }
 
-// List data choices (from disk or db)
-void US_DataLoader::list_data( bool /* db */ )
+// List data choices (from db or disk)
+void US_DataLoader::list_data()
 {
-   le_dfilter->disconnect();
-   le_dfilter->clear();
-   emit changed( disk_controls->db() );
-   connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
-                         SLOT  ( search     ( const QString& ) ) );
-
    datamap.clear();
 
-   if ( ! disk_controls->db() ) // Scan local disk data
+   if ( disk_controls->db() ) // Scan database data
+   {
+      scan_dbase_edit();
+   }
+   else                       // Scan local disk data
    {
       scan_local_edit();
-   }
-   else  // Scan database data
-   {
-       scan_dbase_edit();
    }
 
    tw_data->clear();
@@ -770,5 +765,19 @@ void US_DataLoader::show_data_info( QPoint pos )
    edit->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
    edit->e->setText( dtext );
    edit->show();
+}
+
+// Slot to update disk/db selection
+void US_DataLoader::update_disk_db( bool db )
+{
+   emit changed( db );
+
+   le_dfilter->disconnect();
+   le_dfilter->clear();
+   connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
+                         SLOT  ( search     ( const QString& ) ) );
+   pb_invest->setEnabled( ( US_Settings::us_inv_level() > 0 ) && db );
+
+   list_data();
 }
 

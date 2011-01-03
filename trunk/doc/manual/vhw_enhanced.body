@@ -16,13 +16,27 @@
 
     <ul>
         <li>
-            <b>Load Data</b> Click on this button and, in the resulting file
-            dialog, choose a folder containing desired raw and edit data.
+            <b>Load Experiment</b> Click on this button and, in the resulting
+            <a href="data_loader.html">Load Data Dialog</a>, select an edited
+            data set to load.
         </li>
             
         <li>
             <b>Run Details</b> Bring up a dialog with a summary of data
             and run details.
+        </li>
+
+        <li>
+            <b>Latest Data Edit</b> Uncheck to allow choosing an edit other
+            than the latest one for the experimental data.
+        </li>
+
+        <li>
+            <b>Database</b> Check to specify data input from the database.
+        </li>
+
+        <li>
+            <b>Local Disk</b> Check to specify data input from local disk.
         </li>
 
         <li>
