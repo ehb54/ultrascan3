@@ -637,7 +637,7 @@ void US_SolutionGui::calcCommonVbar20( void )
 // Create a dialog to request a buffer selection
 void US_SolutionGui::selectBuffer( void )
 {
-   US_BufferGui* buffer_dialog = new US_BufferGui( investigatorID, true );      // Ask for a signal
+   US_BufferGui* buffer_dialog = new US_BufferGui( true );      // Ask for a signal
 
    connect( buffer_dialog, SIGNAL( valueChanged ( US_Buffer ) ),
             this,          SLOT  ( assignBuffer ( US_Buffer ) ) );

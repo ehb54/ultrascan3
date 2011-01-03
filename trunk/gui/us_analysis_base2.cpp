@@ -460,15 +460,16 @@ void US_AnalysisBase2::update_vbar( US_Analyte analyte )
 
 void US_AnalysisBase2::get_buffer( void )
 {
-   int idPers = US_Settings::us_inv_ID();
    bool local = ! disk_controls->db();
 
-   US_BufferGui* bdiag =
-      new US_BufferGui( idPers, true, buff, local );
 
-   connect( bdiag, SIGNAL( valueChanged ( double, double ) ),
-                   SLOT  ( update_buffer( double, double ) ) );
-   bdiag->exec();
+   US_BufferGui* dialog = new US_BufferGui( true, buff, local );
+
+   connect( dialog, SIGNAL( valueChanged ( double, double ) ),
+                    SLOT  ( update_buffer( double, double ) ) );
+
+   connect( dialog, SIGNAL( use_db( bool ) ), SLOT( update_disk_db( bool ) ) );
+   dialog->exec();
    qApp->processEvents();
 }
 

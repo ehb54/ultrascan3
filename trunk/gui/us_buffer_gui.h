@@ -6,6 +6,7 @@
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
+#include "us_widgets.h"
 #include "us_buffer.h"
 #include "us_help.h"
 
@@ -16,16 +17,14 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
 
    public:
       //! Main constructor
-      //! \param invID  The investigator ID in the current database
       //! \param signal_wanted A flag to specify if one of the signals
       //!               should be emitted when terminating the dialog
       //! \param buf    The default buffer
-      //! \param disk   An indicatior of whether to search the disk
-      //!               (default) or DB for the default buffer
-      US_BufferGui( int = -1,                  
-                    bool = false, 
+      //! \param db     An indicatior of whether to search the disk
+      //!               or DB for the default buffer
+      US_BufferGui( bool             = false, 
                     const US_Buffer& = US_Buffer(), 
-                    bool = true );
+                    int              = US_Disk_DB_Controls::Default );
    signals:
       //! Return the main values
       //! \param density of the buffer
@@ -42,7 +41,16 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       //! \param bufferID A string value of the returned ID
       void valueBufferID( const QString& bufferID );
 
+      //! A signal to indicate that the current disk/db selection has changed. 
+      //! /param DB True if DB is the new selection
+      void use_db( bool DB );
+
    private:
+      bool          signal;
+      bool          bufferCurrent;
+      bool          manualUpdate;
+      int           personID;
+                   
       //!< The currently active buffer Data. 
       US_Buffer buffer;    
       
@@ -62,11 +70,6 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
 
       QList< BufferInfo > buffer_metadata;
 
-      bool          signal;
-      bool          bufferCurrent;
-      bool          manualUpdate;
-      int           personID;
-                   
       QStringList   filenames;
       QStringList   descriptions;
       QStringList   GUIDs;
@@ -79,8 +82,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
                    
       QComboBox*    cmb_optics;
 
-      QRadioButton* rb_db;
-      QRadioButton* rb_disk;
+      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
       QListWidget*  lw_buffer_db;
       QListWidget*  lw_ingredients;
@@ -122,7 +124,6 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       void    delete_disk     ( void );
       void    update_db       ( void );
       bool    up_to_date      ( void );
-      void    set_investigator( void );
       void    init_buffer     ( void );
       
     private slots:
@@ -145,6 +146,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       void select_buffer      ( QListWidgetItem* );
       void search             ( const QString& = QString() );
       void assign_investigator( int, const QString&, const QString& );
+      void source_changed     ( bool );
      
       void help ( void ) { showHelp.show_help( "us_buffer.html" ); };
 };

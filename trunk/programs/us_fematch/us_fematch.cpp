@@ -872,13 +872,17 @@ void US_FeMatch::update_viscosity( double new_visc )
 // open dialog and get buffer information
 void US_FeMatch::get_buffer( void )
 {
-   int idPers  = US_Settings::us_inv_ID();
    US_Buffer buff;
-   bool loadDB = dkdb_cntrls->db();
+      
+   int local  = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
+                                  : US_Disk_DB_Controls::Disk;
 
-   US_BufferGui* bdiag = new US_BufferGui( idPers, true, buff, !loadDB );
+   US_BufferGui* bdiag = new US_BufferGui( true, buff, local );
    connect( bdiag, SIGNAL( valueChanged(  US_Buffer ) ),
             this,  SLOT  ( update_buffer( US_Buffer ) ) );
+
+   connect( bdiag, SIGNAL( use_db( bool ) ), SLOT( update_disk_db( bool ) ) );
+
    bdiag->exec();
    qApp->processEvents();
 }

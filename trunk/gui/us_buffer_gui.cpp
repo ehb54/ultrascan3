@@ -11,17 +11,14 @@
 #include "us_math2.h"
 
 US_BufferGui::US_BufferGui( 
-      int              invID, 
       bool             signal_wanted,
       const US_Buffer& buf, 
-      bool             disk 
-   ) : US_WidgetsDialog( 0, 0 )
+      int              select_db_disk
+   ) : US_WidgetsDialog( 0, 0 ), signal( signal_wanted ), buffer( buf )
 {
-   signal        = signal_wanted;
-   personID      = invID;
+   personID      = US_Settings::us_inv_ID();
    bufferCurrent = false;
    manualUpdate  = false;
-   buffer        = buf;
 
    US_BufferComponent::getAllFromHD( component_list );
 
@@ -47,9 +44,12 @@ US_BufferGui::US_BufferGui(
    lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_DB, row++, 0, 1, 3 );
 
-   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
-   main->addWidget( pb_investigator, row++, 0 );
+   if ( US_Settings::us_inv_level() > 0 )
+   {
+      QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+      connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+      main->addWidget( pb_investigator, row++, 0 );
+   }
 
    QBoxLayout* search = new QHBoxLayout;
 
@@ -133,18 +133,20 @@ US_BufferGui::US_BufferGui(
 
    row = 1;
 
-   // Investigator
-   le_investigator = us_lineedit( tr( "Not Selected" ) );
-   le_investigator->setReadOnly( true );
-   main->addWidget( le_investigator, row++, 1, 1, 2 );
+   if ( US_Settings::us_inv_level() > 0 )
+   {
+      // Investigator
+      QString number  = QString::number( US_Settings::us_inv_ID() ) + ": ";
+      le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
+      le_investigator->setReadOnly( true );
+      le_investigator->setPalette( gray );
+      main->addWidget( le_investigator, row++, 1, 1, 2 );
+   }
 
-   QGridLayout* db_layout = us_radiobutton( tr( "Use Database" ), rb_db );
-   connect( rb_db, SIGNAL( clicked() ),  SLOT( check_db() ) );
-   main->addLayout( db_layout, row, 1 );
-
-   QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk );
-   disk ? rb_disk->setChecked( true ) : rb_db->setChecked( true );
-   main->addLayout( disk_layout, row++, 2 );
+   disk_controls = new US_Disk_DB_Controls( select_db_disk );
+   connect( disk_controls, SIGNAL( changed       ( bool ) ), 
+                           SLOT  ( source_changed( bool ) ) );
+   main->addLayout( disk_controls, row++, 1, 1, 2 );
 
    QLabel* lb_banner3 = us_banner( tr( "Database/Disk Functions" ), -2 );
    lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -277,8 +279,8 @@ US_BufferGui::US_BufferGui(
 
    main->addLayout( buttons, row, 0, 1, 3 );
 
-   set_investigator();
    init_buffer();
+   query();
 }
 
 void US_BufferGui::check_db( void )
@@ -349,7 +351,7 @@ void US_BufferGui::init_buffer( void )
    {
       query();
 
-      if ( rb_disk->isChecked() ) // Disk access
+      if ( ! disk_controls->db() ) // Disk access
       {
          // Search for GUID
          for ( int i = 0; i < GUIDs.size(); i++ )
@@ -389,18 +391,6 @@ void US_BufferGui::init_buffer( void )
       le_ph         ->setText( QString::number( buffer.pH,        'f', 4 ) );
       le_compressibility->setText( 
                          QString::number( buffer.compressibility, 'e', 4 ) );
-   }
-}
-
-void US_BufferGui::set_investigator( void )
-{
-   if ( personID > 0 )
-   {
-      QString lname;
-      QString fname;
-
-      if ( US_Investigator::get_person_info( personID, lname, fname ) )
-         assign_investigator( personID, lname, fname );
    }
 }
 
@@ -478,8 +468,8 @@ bool US_BufferGui::buffer_path( QString& path )
     select the buffer files from the investigator. */
 void US_BufferGui::query( void )
 {
-   if ( rb_disk->isChecked() ) read_buffer();
-   else                        read_db(); 
+   if ( ! disk_controls->db() ) read_buffer();
+   else                         read_db(); 
 
    le_description->setEnabled( true );
 }
@@ -664,8 +654,8 @@ void US_BufferGui::spectrum( void )
 */
 void US_BufferGui::select_buffer( QListWidgetItem* item )
 {
-   if ( rb_disk->isChecked() ) read_from_disk( item );
-   else                        read_from_db  ( item ); 
+   if ( ! disk_controls->db() ) read_from_disk( item );
+   else                         read_from_db  ( item ); 
    
    // Write values to screen
    le_description->setText( buffer.description );
@@ -827,8 +817,8 @@ void US_BufferGui::delete_buffer( void )
    
    if ( response != QMessageBox::Ok ) return;
    
-   if ( rb_disk->isChecked() ) delete_disk();
-   else                        delete_db(); 
+   if ( ! disk_controls->db() ) delete_disk();
+   else                         delete_db(); 
 
    reset();
    query();
@@ -954,8 +944,8 @@ void US_BufferGui::save( void )
 
    buffer.GUID = le_guid->text();
 
-   if ( rb_disk->isChecked() ) save_disk();
-   else                        save_db(); 
+   if ( ! disk_controls->db() ) save_disk();
+   else                         save_db(); 
    
    bufferCurrent = true;
 }
@@ -1058,8 +1048,8 @@ void US_BufferGui::update( void )
    update_buffer();
    buffer.GUID = le_guid->text();
 
-   if ( rb_disk->isChecked() ) save_disk();
-   else                        update_db(); 
+   if ( ! disk_controls->db() ) save_disk();
+   else                         update_db(); 
 
    bufferCurrent = true;
 }
@@ -1326,7 +1316,6 @@ void US_BufferGui::reset( void )
    lb_selected       ->setText( "" );
                     
    le_density        ->setText( "0.0" );
-                     
    le_viscosity      ->setText( "0.0" );
                      
    le_description    ->clear();
@@ -1341,15 +1330,14 @@ void US_BufferGui::reset( void )
    lb_units          ->setText( "" );
    le_concentration  ->clear();
 
-   le_investigator   ->setText( "Not Selected" );
-
    if ( personID > 0 )
    {
-      QString lname;
-      QString fname;
-
-      if ( US_Investigator::get_person_info( personID, lname, fname ) )
-         assign_investigator( personID, lname, fname );
+      QString number  = QString::number( US_Settings::us_inv_ID() ) + ": ";
+      le_investigator->setText( number + US_Settings::us_inv_name() );
+   }
+   else
+   {
+      le_investigator   ->setText( "Not Selected" );
    }
 
    // Allow query of all buffers
@@ -1449,7 +1437,7 @@ void US_BufferGui::new_description()
    {  // matching description:  get GUID, but ask user if new or update
       buffer.GUID   = GUIDs[ row ];
 
-      if ( buffer.GUID.isEmpty()  &&  rb_db->isChecked() )
+      if ( buffer.GUID.isEmpty()  &&  disk_controls->db() )
       {  // if no GUID yet and from DB, read GUID
          QString bufferID = bufferIDs[ row ];
          US_Passwd pw;
@@ -1502,5 +1490,12 @@ void US_BufferGui::new_description()
       lw_buffer_db->setCurrentRow( row );
       le_guid->setText( buffer.GUID );
    }
+}
+
+void US_BufferGui::source_changed( bool db )
+{
+   emit use_db( db );
+   query();
+   qApp->processEvents();
 }
 
