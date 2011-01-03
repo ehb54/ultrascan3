@@ -348,7 +348,7 @@ void US_Predict1::update_vbar( const US_Analyte ad )
 
 void US_Predict1::get_buffer( void )
 {
-   US_BufferGui* dialog = new US_BufferGui( investigator, true );
+   US_BufferGui* dialog = new US_BufferGui( true );
    connect( dialog, SIGNAL( valueChanged ( US_Buffer ) ),
                     SLOT  ( update_buffer( US_Buffer ) ) );
    dialog->exec();

@@ -249,7 +249,7 @@ void US_Astfem_Sim::change_model( US_Model m )
 
 void US_Astfem_Sim::new_buffer( void )
 {
-   US_BufferGui* dialog = new US_BufferGui( 0, true, buffer, true );
+   US_BufferGui* dialog = new US_BufferGui( true, buffer );
 
    connect( dialog, SIGNAL( valueChanged( US_Buffer ) ), 
                     SLOT  ( change_buffer( US_Buffer ) ) );
