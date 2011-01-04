@@ -325,6 +325,8 @@ void US_AnalysisBase2::load( void )
    QString bvisc  = le_viscosity->text();
    QString svbar  = le_vbar     ->text();
    bool    bufin  = false;
+   dbdisk         = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                            : US_Disk_DB_Controls::Disk;
 
    if ( dbdisk == US_Disk_DB_Controls::Disk )
    {  // Data from local disk: get solution/buffer vals (disk or db)
@@ -384,12 +386,9 @@ void US_AnalysisBase2::update( int selection )
    runID         = d->runID;
    le_id->setText( runID + " / " + d->editID );
 
-   double sum = 0.0;
+   double avTemp = d->average_temperature();
 
-   for ( int i = 0; i < scanCount; i++ )
-      sum += d->scanData[ i ].temperature;
-
-   le_temp->setText( QString::number( sum / scanCount, 'f', 1 ) + " " + DEGC );
+   le_temp->setText( QString::number( avTemp, 'f', 1 ) + " " + DEGC );
 
    te_desc->setText( d->description );
 
@@ -995,7 +994,6 @@ void US_AnalysisBase2::new_triple( int index )
          savedValues[ i ][ j ] = s->readings[ j ].value;
    }
 
-   reset();
    update( index );
 }
 

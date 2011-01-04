@@ -374,14 +374,15 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
    solution.vbar      = vbar;
    US_Math2::data_correction( avgtemp, solution );
    double sfactor     = 1.0 / solution.s20w_correction;
-   double dfactor     = 1.0 / solution.D20w_correction;
+DbgLv(1) << "FIN_FIN: dens visc vbar" << density << viscosity << vbar
+ << " s20w_corr" << solution.s20w_correction;
    model.components.resize( nsolutes );
 
    // build the final model
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
       US_Model::SimulationComponent mcomp;
-      mcomp.s     = qAbs( c_solutes[ maxdepth ][ cc ].s );
+      mcomp.s     = qAbs( c_solutes[ maxdepth ][ cc ].s ) * sfactor;
       mcomp.D     = 0.0;
       mcomp.mw    = 0.0;
       mcomp.f     = 0.0;
@@ -390,9 +391,6 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
                   = c_solutes[ maxdepth ][ cc ].c;
 
       model.calc_coefficients( mcomp );
-
-      mcomp.s    *= sfactor;
-      mcomp.D    *= dfactor;
 
       model.components[ cc ]  = mcomp;
    }
@@ -403,6 +401,14 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
 
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
+DbgLv(1) << "FIN_FIN: dens visc vbar" << density << viscosity << vbar;
+DbgLv(1) << "FIN_FIN: rotorcoefs" << simparms->rotorcoeffs[0]
+   << simparms->rotorcoeffs[1] << simparms->rotorcoeffs[2]
+   << simparms->rotorcoeffs[3] << simparms->rotorcoeffs[4];
+DbgLv(1) << "FIN_FIN: bottom bposition" << simparms->bottom
+   << simparms->bottom_position;
+DbgLv(1) << "FIN_FIN: rreso menisc temp" << simparms->radial_resolution
+   << simparms->meniscus << simparms->temperature;
    US_Astfem_RSA astfem_rsa( model, *simparms );
 
    astfem_rsa.calculate( sdata );
