@@ -178,11 +178,14 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QProgressBar *progress;
 
+   public slots:
+      void show_plot_saxs_sans();
+      void show_plot_pr();
+
    private slots:
 
       void setupGUI();
       void set_saxs_sans(int);
-      void show_plot_saxs_sans();
       void load_saxs_sans();
       void show_plot_saxs();
       void load_saxs();
@@ -191,7 +194,6 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void load_sans();
       void update_bin_size(double);
       void set_curve(int);
-      void show_plot_pr();
       void load_pr();
       void clear_plot_pr();
       void cancel();

@@ -35,6 +35,43 @@
 #include "../include/us_hydrodyn_supc.h"
 #include "../include/us_hydrodyn_pat.h"
 
+// #define USE_THREADS
+// only define exactly one of MODE_1 & MODE_2 below
+#define MODE_1 
+// #define MODE_2
+// #define DEBUG_THREAD
+#if defined(USE_THREADS)
+  static int threads;
+  static vector < supc_thr_t* > supc_thr_threads;
+#endif
+
+#define SHOW_TIMING
+#if defined(SHOW_TIMING)
+# include <sys/time.h>
+  static struct timeval s3tv0;
+//  static struct timeval tv1;
+//  static struct timeval tv2;
+  static struct timeval s3tv3;
+  static struct timeval s3tv4;
+  static struct timeval s3tv5;
+//  static struct timeval tv6;
+  static struct timeval s3tv7;
+  static struct timeval s3tv8;
+  static struct timeval s3tv9;
+  static struct timeval s1tv0;
+  static struct timeval s1tv9;
+  static struct timeval s2tv0;
+  static struct timeval s2tv9;
+  unsigned long cholsl_s1;
+  unsigned long cholsl_s2;
+  unsigned long supc3_s1;
+  unsigned long supc3_s2;
+  unsigned long supc1_tot;
+  unsigned long supc2_tot;
+  unsigned long supc3_tot;
+  unsigned long supc_tot;
+#endif
+
 #undef R // it's defined as a us #define above & we use R as a local variable
 
 static double ETAo;
@@ -332,6 +369,7 @@ static void dww(char *s) {
 static struct dati1_supc *dt = 0;   // [2 * NMAX];
 static struct dati1_supc *dtn = 0;   // [NMAX];
 static float *rRi = 0;      // [3 * NMAX];
+static float *rRis = 0;      // [3 * NMAX];
 static float *b1 = 0;      // [3 * NMAX];
 static float *p = 0;      // [3 * NMAX];
 static float *gp = 0;      // [NMAX][9];
@@ -379,6 +417,11 @@ supc_free_alloced()
    if (rRi)
    {
       free(rRi);
+      rRi = 0;
+   }
+   if (rRis)
+   {
+      free(rRis);
       rRi = 0;
    }
    if (b1)
@@ -453,6 +496,17 @@ supc_alloc()
       return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
    }
    memset(rRi, 0, nmax * 3 * sizeof(float));
+
+#if defined(USE_THREADS)
+   rRis = (float *) malloc(nmax * 3 * sizeof(float));
+   if (!rRis)
+   {
+      supc_free_alloced();
+      fprintf(stderr, "memory allocation error\n");
+      return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
+   }
+   memset(rRis, 0, nmax * 3 * sizeof(float));
+#endif
 
    b1 = (float *) malloc(nmax * 3 * sizeof(float));
    if (!b1)
@@ -577,6 +631,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    dt = 0;
    dtn = 0;
    rRi = 0;
+   rRis = 0;
    b1 = 0;   
    p = 0;   
    gp = 0;   
@@ -1493,7 +1548,40 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          return -1;
       }
 
+#if defined(SHOW_TIMING)
+      cholsl_s1 = 0l;
+      cholsl_s2 = 0l;
+      supc3_s1 = 0l;
+      supc3_s2 = 0l;
+      supc3_tot = 0l;
+
+      supc1_tot = 0l;
+      supc2_tot = 0l;
+
+      supc_tot = 0l;
+#endif
+#if defined(USE_THREADS)
+      US_Config *USglobal = new US_Config();
+      threads = USglobal->config_list.numThreads;
+      if ( threads > 1 )
+      {
+         // create threads
+
+         cout << QString("Using %1 threads for matrix inversion.\n").arg(threads);
+         // editor->append(QString("Using %1 threads for matrix inversion.\n").arg(threads));
+         
+         supc_thr_threads.resize(threads);
+         for ( int j = 0; j < threads; j++ )
+         {
+            supc_thr_threads[j] = new supc_thr_t(j);
+            supc_thr_threads[j]->start();
+         }
+      }
+      delete USglobal;
+#endif
+         
       riempimatrice();
+
       progress->setProgress(ppos++); // 8
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
@@ -1503,8 +1591,57 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       }
 
       inverti(nat);
+
       printf("- Matrix S_ij     : ");
       printf("calculated\n");
+
+#if defined(SHOW_TIMING)
+      supc_tot = supc1_tot + supc2_tot + supc3_tot;
+      printf("supc timing:\n"
+             "supc1 tot      %lu %.2g\n"
+             "supc2 tot      %lu %.2g\n"
+             "supc3 s1       %lu %.2g\n"
+             "cholsl loop 1  %lu %.2g\n"
+             "cholsl loop 2  %lu %.2g\n"
+             "supc3 s2       %lu %.2g\n"
+             "supc3 tot      %lu %.2g\n"
+             "supc tot       %lu\n"
+             , supc1_tot, (double) supc1_tot / (double) supc_tot
+             , supc2_tot, (double) supc2_tot / (double) supc_tot
+             , supc3_s1, (double) supc3_s1 / (double) supc_tot
+             , cholsl_s1, (double) cholsl_s1 / (double) supc_tot
+             , cholsl_s2, (double) cholsl_s2 / (double) supc_tot
+             , supc3_s2, (double) supc3_s2 / (double) supc_tot
+             , supc3_tot, (double) supc3_s1 / (double) supc_tot
+             , supc_tot
+             );
+#endif
+
+#if defined(USE_THREADS)
+      if ( threads > 1 ) 
+      {
+         // destroy threads
+
+         int j;
+    
+         for ( j = 0; j < threads; j++ )
+         {
+            supc_thr_threads[j]->supc_thr_shutdown();
+         }
+         
+         for ( j = 0; j < threads; j++ )
+         {
+            supc_thr_threads[j]->wait();
+         }
+         
+         for ( j = 0; j < threads; j++ )
+         {
+            delete supc_thr_threads[j];
+         }
+      }
+#endif
+
+
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -3835,6 +3972,9 @@ riempimatrice()
 
    editor->append("Supermatrix inversion Cycle 1 of 3\n");
    qApp->processEvents();
+#if defined(SHOW_TIMING)
+   gettimeofday(&s1tv0, NULL);
+#endif
    for (i = 0; i < nat; i++)
    {
 
@@ -3866,6 +4006,11 @@ riempimatrice()
       printf("%c", '\r');
 
    }
+
+#if defined(SHOW_TIMING)
+   gettimeofday(&s1tv9, NULL);
+   supc1_tot = 1000000l * (s1tv9.tv_sec - s1tv0.tv_sec) + s1tv9.tv_usec - s1tv0.tv_usec;
+#endif
 
    printf("\n\n");
 
@@ -3929,22 +4074,130 @@ static void
 cholsl(int N)
 {
 
-   int i, k;
-   float sum;
+   int i = 0;
+   int k = 0;
+   float sum = 0.0;
+
+#if defined(SHOW_TIMING)
+   gettimeofday(&s3tv3, NULL);
+#endif
 
    for (i = 0; i < 3 * N; i++)
    {
+      // this sum could be parallized
       for (sum = b1[i], k = i - 1; k >= 0; k--)
          sum -= a[i * (3 * nat) + k] * rRi[k];
       rRi[i] = sum / p[i];
    }
 
+#if defined(SHOW_TIMING)
+   gettimeofday(&s3tv4, NULL);
+#endif
+
+#if defined(USE_THREADS)
+   //   int threads_used = 0;
+   //   int threads_not_used = 0;
+   if ( threads > 1 )
+   {
+      vector < float > psum(threads);
+#if defined(MODE_1) 
+      for (i = 3 * N - 1; i >= 0; i--)
+      {
+         if ( 3 * N - i < 4600 )
+         {
+            //            threads_not_used++;
+            for (sum = rRi[i], k = i + 1; k < 3 * N; k++)
+               sum -= a[k * (3 * nat) + i] * rRi[k];
+         } else {
+            //            threads_used++;
+            int j;
+            sum = rRi[i];             
+            for ( j = 0; j < threads; j++ )
+            {
+# if defined(DEBUG_THREAD)
+               cout << "thread " << j << endl;
+# endif            
+               psum[j] = 0.0;
+               supc_thr_threads[j]->supc_thr_setup(
+                                                   threads,
+                                                   1, // mode 1, loop over k
+                                                   p,
+                                                   rRi,
+                                                   rRi,
+                                                   a,
+                                                   N,
+                                                   i,
+                                                   nat,
+                                                   &psum[j]
+                                                   );
+            }
+            for ( j = 0; j < threads; j++ )
+            {
+               supc_thr_threads[j]->supc_thr_wait();
+               sum += psum[j];
+            }
+         }
+         rRi[i] = sum / p[i];
+      }
+#endif
+#if defined(MODE_2)
+      int j;
+      memcpy(rRis, rRi, sizeof(float) * nmax * 3);
+      for ( j = 0; j < threads; j++ )
+      {
+# if defined(DEBUG_THREAD)
+         cout << "thread " << j << endl;
+# endif            
+         supc_thr_threads[j]->supc_thr_setup(
+                                             threads,
+                                             2, // mode 2 loop over i
+                                             p,
+                                             rRis,
+                                             rRi,
+                                             a,
+                                             N,
+                                             i,
+                                             nat,
+                                             &psum[j]
+                                             );
+      }
+      for ( j = 0; j < threads; j++ )
+      {
+         supc_thr_threads[j]->supc_thr_wait();
+      }
+#endif
+   } else {
+      for (i = 3 * N - 1; i >= 0; i--)
+      {
+         for (sum = rRi[i], k = i + 1; k < 3 * N; k++)
+            sum -= a[k * (3 * nat) + i] * rRi[k];
+         rRi[i] = sum / p[i];
+      }
+   }
+#else
    for (i = 3 * N - 1; i >= 0; i--)
    {
       for (sum = rRi[i], k = i + 1; k < 3 * N; k++)
          sum -= a[k * (3 * nat) + i] * rRi[k];
       rRi[i] = sum / p[i];
    }
+#endif
+
+
+#if defined(SHOW_TIMING)
+   gettimeofday(&s3tv5, NULL);
+   cholsl_s1 += 1000000l * (s3tv4.tv_sec - s3tv3.tv_sec) + s3tv4.tv_usec - s3tv3.tv_usec;
+   cholsl_s2 += 1000000l * (s3tv5.tv_sec - s3tv4.tv_sec) + s3tv5.tv_usec - s3tv4.tv_usec;
+#endif
+#if defined(USE_THREADSX)
+   if ( threads > 1 ) 
+   {
+      printf("\n cholsl threads used %d, not used %d",
+             threads_used,
+             threads_not_used);
+   }
+#endif
+          
 }
 
 /*************************************************************************/
@@ -3968,10 +4221,10 @@ inizializza_b1()
 // diff.c
 
 /**********************************************************************/
-/*                              */
+/*                                                                    */
 /* Function that computes the relaxation times for a rigid model      */
 /* Changed the taoh and taom means 3/6/2004 (always five times)       */
-/*                              */
+/*                                                                    */
 /**********************************************************************/
 
 static void
@@ -4994,7 +5247,18 @@ inverti(int N)
    int i, j, k1, k2, k3, k4, k5;
 
    printf("MATRIX DECOMPOSITION (Chol.Dec.)\n\n");
-   choldc(N);
+
+#if defined(SHOW_TIMING)
+   gettimeofday(&s2tv0, NULL);
+#endif
+
+   choldc(N); // cycle 2
+
+#if defined(SHOW_TIMING)
+   gettimeofday(&s2tv9, NULL);
+   supc2_tot = 1000000l * (s2tv9.tv_sec - s2tv0.tv_sec) + s2tv9.tv_usec - s2tv0.tv_usec;
+#endif
+
    if (us_hydrodyn->stopFlag)
    {
       return;
@@ -5008,6 +5272,10 @@ inverti(int N)
    editor->append("Supermatrix inversion Cycle 3 of 3\n");
    qApp->processEvents();
 
+#if defined(SHOW_TIMING)
+      gettimeofday(&s3tv0, NULL);
+#endif
+      
    for (j = 1; j <= 3 * N; j++)
    {
       progress->setProgress(ppos++);
@@ -5033,6 +5301,9 @@ inverti(int N)
       }
 
       cholsl(N);
+#if defined(SHOW_TIMING)
+      gettimeofday(&s3tv7, NULL);
+#endif
 
       for (i = 1; i <= 3 * N; i++)
       {
@@ -5043,7 +5314,28 @@ inverti(int N)
       }
 
       printf("%c", '\r');
+#if defined(SHOW_TIMING)
+      gettimeofday(&s3tv8, NULL);
+      supc3_s2 = 1000000l * (s3tv8.tv_sec - s3tv7.tv_sec) + s3tv8.tv_usec - s3tv7.tv_usec;
+#endif
    }
+#if defined(SHOW_TIMING)
+   gettimeofday(&s3tv9, NULL);
+   supc3_s1 = cholsl_s1 + cholsl_s2;
+   supc3_tot = 1000000l * (s3tv9.tv_sec - s3tv0.tv_sec) + s3tv9.tv_usec - s3tv0.tv_usec;
+   printf("supc timing:\n"
+          "cholsl loop 1 %lu %.2g\n"
+          "cholsl loop 2 %lu %.2g\n"
+          "supc3 s1      %lu %.2g\n"
+          "supc3 s2      %lu %.2g\n"
+          "supc3 tot     %lu\n"
+          , cholsl_s1, (double) cholsl_s1 / (double) supc3_tot
+          , cholsl_s2, (double) cholsl_s2 / (double) supc3_tot
+          , supc3_s1, (double) supc3_s1 / (double) supc3_tot
+          , supc3_s2, (double) supc3_s2 / (double) supc3_tot
+          , supc3_tot
+          );
+#endif
 
    printf("\n");
 }
@@ -6169,3 +6461,166 @@ main()
    us_hydro_supc_main(use_nmax);
 }
 #endif
+
+
+//--------- thread for supc -----------
+
+// #define DEBUG_THREAD
+
+supc_thr_t::supc_thr_t(int a_thread) : QThread()
+{
+   thread = a_thread;
+   work_to_do = 0;
+   work_done = 1;
+   work_to_do_waiters = 0;
+   work_done_waiters = 0;
+}
+
+void supc_thr_t::supc_thr_setup(
+                                unsigned int threads,
+                                int mode,
+                                float *p,
+                                float *rRis,
+                                float *rRi,
+                                float *a,
+                                int N,
+                                int i,
+                                int nat,
+                                float *sum
+                                )
+{
+   /* this starts up a new work load for the thread */
+   this->threads = threads;
+
+   this->mode = mode;
+
+   this->p = p;
+   this->rRis = rRis;
+   this->rRi = rRi;
+   this->a = a;
+   this->N = N;
+   this->i = i;
+   this->nat = nat;
+   this->sum = sum;
+
+   work_mutex.lock();
+   work_to_do = 1;
+   work_done = 0;
+   work_mutex.unlock();
+   cond_work_to_do.wakeOne();
+#if defined(DEBUG_THREAD)
+   cerr << "thread " << thread << " has new work to do\n";
+#endif
+}
+
+void supc_thr_t::supc_thr_shutdown()
+{
+   /* this signals the thread to exit the run method */
+   work_mutex.lock();
+   work_to_do = -1;
+   work_mutex.unlock();
+   cond_work_to_do.wakeOne();
+
+#if defined(DEBUG_THREAD)
+   cerr << "thread " << thread << " shutdown requested\n";
+#endif
+}
+
+void supc_thr_t::supc_thr_wait()
+{
+   /* this is for the master thread to wait until the work is done */
+   work_mutex.lock();
+
+#if defined(DEBUG_THREAD)
+   cerr << "thread " << thread << " has a waiter\n";
+#endif
+
+   while(!work_done) {
+      cond_work_done.wait(&work_mutex);
+   }
+   work_done = 0;
+   work_mutex.unlock();
+
+#if defined(DEBUG_THREAD)
+   cerr << "thread " << thread << " waiter released\n";
+#endif
+}
+
+int supc_thr_t::supc_thr_work_status()
+{
+   work_mutex.lock();
+   int retval = work_done;
+   work_mutex.unlock();
+   return retval;
+}
+
+void supc_thr_t::run()
+{
+   while(1)
+   {
+      work_mutex.lock();
+#if defined(DEBUG_THREAD)
+      cerr << "thread " << thread << " waiting for work\n";
+#endif
+      work_to_do_waiters++;
+
+      while(!work_to_do)
+      {
+         cond_work_to_do.wait(&work_mutex);
+      }
+
+      if(work_to_do == -1)
+      {
+#if defined(DEBUG_THREAD)
+         cerr << "thread " << thread << " shutting down\n";
+#endif
+         work_mutex.unlock();
+         return;
+      }
+
+      work_to_do_waiters = 0;
+      work_mutex.unlock();
+#if defined(DEBUG_THREAD)
+      cerr << "thread " << thread << " starting work\n";
+#endif
+      
+      switch ( mode ) {
+      case 1: // update partial sum
+         {
+            for ( int k = i + 1 + thread; k <  3 * N; k += threads )
+            {
+#if defined(DEBUG_THREAD)
+               cerr << "thread " << thread << " i = " << i << endl;
+#endif
+               *sum -= a[k * (3 * nat) + i] * rRi[k];
+            }
+         }
+         break;
+
+      case 2: // update rRi
+         {
+            int k;
+            float sum;
+            for (i = 3 * N - 1 - thread; i >= 0; i -= threads )
+            {
+               for (sum = rRis[i], k = i + 1; k < 3 * N; k++)
+                  sum -= a[k * (3 * nat) + i] * rRis[k];
+               rRi[i] = sum / p[i];
+            }
+         }
+         break;
+      }
+
+#if defined(DEBUG_THREAD)
+      cerr << "thread " << thread << " finished work\n";
+#endif
+      work_mutex.lock();
+      work_done = 1;
+      work_to_do = 0;
+      work_mutex.unlock();
+      cond_work_done.wakeOne();
+   }
+}
+
+//--------- end thread for supc --------------
+

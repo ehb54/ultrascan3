@@ -46,6 +46,10 @@ struct batch_info
    bool mm_all;
    bool somo;
    bool grid;
+   bool iqq;
+   bool prr;
+   bool csv_saxs;
+   QString csv_saxs_name;
    bool hydro;
    bool avg_hydro;
    QString avg_hydro_name;
@@ -107,11 +111,16 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QLabel        *lbl_process;
       QCheckBox     *cb_mm_first;
       QCheckBox     *cb_mm_all;
-      QCheckBox     *cb_somo;
       QCheckBox     *cb_grid;
+      QCheckBox     *cb_somo;
+      QCheckBox     *cb_iqq;
+      QCheckBox     *cb_prr;
+      QCheckBox     *cb_csv_saxs;
+      QLineEdit     *le_csv_saxs_name;
       QCheckBox     *cb_hydro;
       QCheckBox     *cb_avg_hydro;
       QLineEdit     *le_avg_hydro_name;
+
       QPushButton   *pb_select_save_params;
       QPushButton   *pb_start;
       QProgressBar  *progress;
@@ -151,9 +160,24 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 
       vector < QString >   status_color;
 
+      QString saxs_header_iqq;
+      QString saxs_header_prr;
+      vector < QString > csv_source_name_iqq;
+      vector < QString > csv_source_name_prr;
+      vector < double > saxs_q;
+      vector < vector < double > > saxs_iqq;
+      vector < vector < double > > saxs_iqqa;
+      vector < vector < double > > saxs_iqqc;
+      vector < double > saxs_r;
+      vector < vector < double > > saxs_prr;
+      vector < vector < double > > saxs_prr_norm;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      void save_csv_saxs_iqq();
+      void save_csv_saxs_prr();
+      QString vector_double_to_csv( vector < double > vd );
       
    public :
       void add_file( QString filename );
@@ -180,8 +204,12 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void set_somo();
       void set_grid();
       void set_hydro();
+      void set_iqq();
+      void set_prr();
       void set_avg_hydro();
       void update_avg_hydro_name(const QString &);
+      void set_csv_saxs();
+      void update_csv_saxs_name(const QString &);
       void select_save_params();
       void set_saveParams();
       void stop();

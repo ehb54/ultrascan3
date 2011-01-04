@@ -552,6 +552,8 @@ int US_Hydrodyn::read_pdb(const QString &filename)
             editor->append("\nResidue sequence from " + project +".pdb model " +
                            QString("%1").arg(model_vector.size() + 1) + ": \n");
             str = "";
+            QString sstr = "";
+            
             // the residue list is wrong if there are unknown residues
             for ( unsigned int i = 0; i < temp_model.molecule.size(); i++ )
             {
@@ -561,6 +563,9 @@ int US_Hydrodyn::read_pdb(const QString &filename)
                   if ( temp_model.molecule[i].atom[j].resSeq != lastResSeq )
                   {
                      str += temp_model.molecule[i].atom[j].resName + " ";
+                     sstr += 
+                        residue_short_names.count(temp_model.molecule[i].atom[j].resName) ? 
+                        QString(residue_short_names[temp_model.molecule[i].atom[j].resName]) : "?"; 
                      lastResSeq = temp_model.molecule[i].atom[j].resSeq;
                   }
                }
@@ -570,6 +575,8 @@ int US_Hydrodyn::read_pdb(const QString &filename)
             //   str += temp_model.residue[m].name + " ";
             // }
             editor->append(str);
+            editor->append("\n" + sstr + "\n");
+            
             // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
             calc_vbar(&temp_model); // update the calculated vbar for this model
             model_vector.push_back(temp_model); // save the model in the model vector.
@@ -652,6 +659,7 @@ int US_Hydrodyn::read_pdb(const QString &filename)
       temp_model.molecule.push_back(temp_chain);
       editor->append("\nResidue sequence from " + project +".pdb:\n");
       str = "";
+      QString sstr = "";
       // the residue list is wrong if there are unknown residues
       for ( unsigned int i = 0; i < temp_model.molecule.size(); i++ )
       {
@@ -661,6 +669,9 @@ int US_Hydrodyn::read_pdb(const QString &filename)
             if ( temp_model.molecule[i].atom[j].resSeq != lastResSeq )
             {
                str += temp_model.molecule[i].atom[j].resName + " ";
+               sstr += 
+                  residue_short_names.count(temp_model.molecule[i].atom[j].resName) ? 
+                  QString(residue_short_names[temp_model.molecule[i].atom[j].resName]) : "?"; 
                lastResSeq = temp_model.molecule[i].atom[j].resSeq;
             }
          }
@@ -670,6 +681,7 @@ int US_Hydrodyn::read_pdb(const QString &filename)
       //   str += temp_model.residue[m].name + " ";
       // }
       editor->append(str);
+      editor->append("\n" + sstr + "\n");
       temp_model.model_id = 1;
       // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
       calc_vbar(&temp_model); // update the calculated vbar for this model

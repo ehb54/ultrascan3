@@ -26,7 +26,13 @@ using namespace std;
 
 struct DMD_Options
 {
-   bool notany;
+   bool force_chem;
+
+   float threshold_pb_pb;
+   float threshold_pb_sc;
+   float threshold_sc_sc;
+
+   bool pdb_static_pairs;
 };
 
 class US_EXTERN US_Hydrodyn_DMD_Options : public QFrame
@@ -44,6 +50,19 @@ class US_EXTERN US_Hydrodyn_DMD_Options : public QFrame
       US_Config *USglobal;
 
       QLabel *lbl_info;
+      QLabel *lbl_info_model_creation;
+
+      QLabel *lbl_threshold_pb_pb;
+      QLabel *lbl_threshold_pb_sc;
+      QLabel *lbl_threshold_sc_sc;
+
+      QCheckBox *cb_force_chem;
+      QCheckBox *cb_pdb_static_pairs;
+
+      QwtCounter *cnt_threshold_pb_pb;
+      QwtCounter *cnt_threshold_pb_sc;
+      QwtCounter *cnt_threshold_sc_sc;
+
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -51,6 +70,13 @@ class US_EXTERN US_Hydrodyn_DMD_Options : public QFrame
    private slots:
       
       void setupGUI();
+
+      void update_threshold_pb_pb(double);
+      void update_threshold_pb_sc(double);
+      void update_threshold_sc_sc(double);
+
+      void set_pdb_static_pairs();
+      void set_force_chem();
 
       void cancel();
       void help();

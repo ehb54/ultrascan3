@@ -19,3 +19,92 @@
 #   define SLASH "\\"
 #endif
 
+// compute the AtomPairs for the pdb
+
+void US_Hydrodyn::dmd_static_pairs()
+{
+   // for simplicity, 1st build a vector of all the atoms
+   vector < PDB_atom *> atoms;
+   vector < int > chainseq;
+   
+   for ( unsigned int use_model = 0; use_model < (unsigned int)lb_model->numRows(); use_model++ )
+   {
+      if ( 0 || lb_model->isSelected(use_model) )
+      {
+         for ( unsigned int j = 0; j < model_vector[use_model].molecule.size(); j++ )
+         {
+            for ( unsigned int k = 0; k < model_vector[use_model].molecule[j].atom.size(); k++ )
+            {
+               atoms.push_back(&(model_vector[use_model].molecule[j].atom[k]));
+               chainseq.push_back(use_model + 1);
+            }
+         }
+      }
+   }
+
+   // just doing atom-atom distance for now
+
+   double d;
+   QString out;
+   QString out2;
+   for ( unsigned int i = 0; i < atoms.size(); i++ )
+   {
+      out += 
+         QString("Static \t %1.%2.%3\n")
+         .arg(chainseq[i])
+         .arg(atoms[i]->resSeq)
+         .arg(atoms[i]->name);
+   }
+
+   for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
+   {
+      for ( unsigned int j = i + 1; j < atoms.size() - 1; j++ )
+      {
+         d = dist( atoms[i]->coordinate, atoms[j]->coordinate );
+         if ( d <= dmd_options.threshold_pb_pb )
+         {
+            out2 += 
+               QString("AtomPair \t %1.%2.%3 \t %4.%5.%6 \t Static\n")
+               .arg(chainseq[i])
+               .arg(atoms[i]->resSeq)
+               .arg(atoms[i]->name)
+               .arg(chainseq[j])
+               .arg(atoms[j]->resSeq)
+               .arg(atoms[j]->name)
+               ;
+         }
+      }
+   }
+
+   {
+      QString filename = 
+         project + ".dmd_constr";
+      QString basename = 
+         somo_dir + SLASH + "dmd" + SLASH + filename;
+      QFile f(basename);
+      if ( !f.open(IO_WriteOnly) )
+      {
+         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         return;
+      }
+      QTextStream ts(&f);
+      ts << out;
+      f.close();
+   }
+
+   {
+      QString filename = 
+         project + ".dmd_constr2";
+      QString basename = 
+         somo_dir + SLASH + "dmd" + SLASH + filename;
+      QFile f(basename);
+      if ( !f.open(IO_WriteOnly) )
+      {
+         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         return;
+      }
+      QTextStream ts(&f);
+      ts << out2;
+      f.close();
+   }
+}

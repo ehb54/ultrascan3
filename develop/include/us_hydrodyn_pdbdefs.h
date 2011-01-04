@@ -179,6 +179,7 @@ struct residue
    QString      name;
    QString      unique_name;
    QString      comment;
+   QChar        onecharname;
    unsigned int type;            // 0: amino acid
                                  // 1: sugar
                                  // 2: nucleotide

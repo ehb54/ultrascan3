@@ -1281,7 +1281,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          SLASH + "somo" + SLASH + "saxs" + SLASH + sprr_filestring();
 
       bool ok_to_write = true;
-      if ( QFile::exists(fpr_name) )
+      if ( QFile::exists(fpr_name) &&
+           !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
       {
          switch( QMessageBox::information( this, 
                                            tr("Overwrite file:") + "SAXS P(r) vs. r" + tr("output file"),
@@ -1306,13 +1307,24 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          if ( fpr ) 
          {
             editor->append(tr("P(r) curve file: ") + fpr_name + tr(" created.\n"));
-            fprintf(fpr,
-                    "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f\n"
-                    , model_filename.ascii()
-                    , US_Version.ascii()
-                    , REVISION
-                    , delta
-                    );
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
+               QString("")
+               .sprintf(
+                        "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f\n"
+                        , model_filename.ascii()
+                        , US_Version.ascii()
+                        , REVISION
+                        , delta
+                        );
+            fprintf(fpr, "%s",
+                    ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
             vector < double > pr;
             vector < double > pr_n;
             pr.resize(hist.size());
@@ -1328,6 +1340,9 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             {
                if ( hist[i] ) {
                   fprintf(fpr, "%.6e\t%.6e\t%.6e\n", i * delta, pr[i], pr_n[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(i * delta);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
                }
             }
             fclose(fpr);
@@ -2331,10 +2346,11 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       cout << "output file " << fsaxs_name << endl;
 #endif
       bool ok_to_write = true;
-      if ( QFile::exists(fsaxs_name) )
+      if ( QFile::exists(fsaxs_name) &&
+           !((US_Hydrodyn *)us_hydrodyn)->overwrite )
       {
          switch( QMessageBox::information( this, 
-                                           tr("Overwrite file:") + "SAXS P(r) vs. r" + tr("output file"),
+                                           tr("Overwrite file:") + "SAXS I(q) vs. q" + tr("output file"),
                                            tr("The file named \"") + 
                                            saxs_filestring() +
                                            + tr("\" will be overwriten"),
@@ -2359,7 +2375,16 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             cout << "writing " << fsaxs_name << endl;
 #endif
             editor->append(tr("SAXS curve file: ") + fsaxs_name + tr(" created.\n"));
-            fprintf(fsaxs,
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
+               QString("")
+               .sprintf(
                     "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
                     , model_filename.ascii()
                     , US_Version.ascii()
@@ -2368,9 +2393,15 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                     , our_saxs_options->end_q
                     , our_saxs_options->delta_q
                     );
+            fprintf(fsaxs, "%s",
+                    ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
             for ( unsigned int i = 0; i < q.size(); i++ )
             {
                fprintf(fsaxs, "%.6e\t%.6e\t%.6e\t%.6e\n", q[i], I[i], Ia[i], Ic[i]);
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.push_back(q[i]);
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.push_back(I[i]);
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.push_back(Ia[i]);
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.push_back(Ic[i]);
             }
             fclose(fsaxs);
          } 

@@ -130,12 +130,24 @@ class US_EXTERN US_Hydrodyn : public QFrame
   #pragma warning ( disable: 4251 )
 #endif
       vector < QString > movie_text;
+      QString last_saxs_header;
+
+      vector < double > last_saxs_q;
+      vector < double > last_saxs_iqq;
+      vector < double > last_saxs_iqqa;
+      vector < double > last_saxs_iqqc;
+      vector < double > last_saxs_r;
+      vector < double > last_saxs_prr;
+      vector < double > last_saxs_prr_norm;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
       bool is_dammin_dammif(QString filename);
 
    private:
+      US_Config *USglobal;
+
       bool residue_widget;
       bool atom_widget;
       bool hybrid_widget;
@@ -209,8 +221,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString bead_model_selected_filter;
 
       point last_molecular_cog;
-
-      US_Config *USglobal;
 
       QLabel *lbl_info1;
       QLabel *lbl_info2;
@@ -420,6 +430,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, float > dammix_match_remember_mw;
       map < QString, bool >  dammix_match_remember_write_bead_model;
 
+      map < QString, QChar > residue_short_names;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -432,6 +444,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int calc_grid_pdb(); // compute grid model from pdb
       int calc_grid();     // compute grid model from bead model
       int calc_hydro();
+      int calc_iqq(bool bead_model);      // bring up saxs window if needed and compute iqq curve
+      int calc_prr(bool bead_model);      // bring up saxs window if needed and compute prr curve
       void select_save_params();
       void show_saxs_options();
       void show_bd_options();
@@ -456,6 +470,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void stop_calc(); // stop some operations
       void visualize(bool movie_frame = false, QString dir = "", float scale = 1.0, bool black_background = false);
+
+      void dmd_static_pairs();
 
    private slots:
       void browflex_readFromStdout();

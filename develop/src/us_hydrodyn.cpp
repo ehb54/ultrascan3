@@ -205,6 +205,36 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    results.asa_rg_pos = 0.0;
    results.asa_rg_neg = 0.0;
 
+   // move to save/restore
+   dmd_options.force_chem = true;
+   dmd_options.pdb_static_pairs = false;
+   dmd_options.threshold_pb_pb = 5;
+   dmd_options.threshold_pb_sc = 5;
+   dmd_options.threshold_sc_sc = 5;
+
+   // this should be stored in the residue file, hardcoded for now
+
+   residue_short_names["GLY"] = 'G';
+   residue_short_names["ALA"] = 'A';
+   residue_short_names["VAL"] = 'V';
+   residue_short_names["LEU"] = 'L';
+   residue_short_names["ILE"] = 'I';
+   residue_short_names["MET"] = 'M';
+   residue_short_names["PHE"] = 'F';
+   residue_short_names["TRP"] = 'W';
+   residue_short_names["PRO"] = 'P';
+   residue_short_names["SER"] = 'S';
+   residue_short_names["THR"] = 'T';
+   residue_short_names["CYS"] = 'C';
+   residue_short_names["TYR"] = 'Y';
+   residue_short_names["ASN"] = 'N';
+   residue_short_names["GLN"] = 'Q';
+   residue_short_names["ASP"] = 'D';
+   residue_short_names["GLU"] = 'E';
+   residue_short_names["LYS"] = 'K';
+   residue_short_names["ARG"] = 'R';
+   residue_short_names["HIS"] = 'H';
+
    rasmol = new QProcess(this);
    rasmol->setWorkingDirectory(
                                QDir(USglobal->config_list.system_dir + SLASH +
@@ -1556,6 +1586,12 @@ void US_Hydrodyn::load_pdb()
    {
       select_model(0);
    }
+
+   if ( dmd_options.pdb_static_pairs )
+   {
+      dmd_static_pairs();
+   }
+
    if ( advanced_config.auto_calc_somo  &&
         !errors_found )
    {
@@ -3194,6 +3230,20 @@ void US_Hydrodyn::clear_display()
    editor->clear();
    editor->setText("\n");
    display_default_differences();
+}
+
+int US_Hydrodyn::calc_iqq(bool bead_model)
+{
+   bead_model ? bead_saxs() : pdb_saxs();
+   saxs_plot_window->show_plot_saxs_sans();
+   return 0;
+}
+
+int US_Hydrodyn::calc_prr(bool bead_model)
+{
+   bead_model ? bead_saxs() : pdb_saxs();
+   saxs_plot_window->show_plot_pr();
+   return 0;
 }
 
 void US_Hydrodyn::pdb_saxs()

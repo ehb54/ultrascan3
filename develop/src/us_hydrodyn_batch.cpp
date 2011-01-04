@@ -4,9 +4,11 @@
 
 #ifndef WIN32
 #   include <unistd.h>
+#   define SLASH "/"
 #else
 #   include <direct.h>
 #   define BW_LISTBOX
+#   define SLASH "\\"
 #endif
 
 #if defined(OSX)
@@ -55,6 +57,10 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    batch->mm_all = false;
    disable_updates = false;
    any_pdb_in_list = false;
+   batch->prr = false;
+   batch->iqq = false;
+   batch->csv_saxs = false;
+   batch->csv_saxs_name = "results";
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -301,6 +307,35 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_grid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_grid, SIGNAL(clicked()), this, SLOT(set_grid()));
 
+   cb_iqq = new QCheckBox(this);
+   cb_iqq->setText(tr(" Compute SAXS I(q) vs q curve "));
+   cb_iqq->setChecked(batch->iqq);
+   cb_iqq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iqq->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iqq, SIGNAL(clicked()), this, SLOT(set_iqq()));
+
+   cb_prr = new QCheckBox(this);
+   cb_prr->setText(tr(" Compute SAXS P(r) vs r curve "));
+   cb_prr->setChecked(batch->prr);
+   cb_prr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_prr->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_prr, SIGNAL(clicked()), this, SLOT(set_prr()));
+
+   cb_csv_saxs = new QCheckBox(this);
+   cb_csv_saxs->setText(tr(" Single SAXS Results File:"));
+   cb_csv_saxs->setChecked(batch->csv_saxs);
+   cb_csv_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_csv_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_csv_saxs, SIGNAL(clicked()), this, SLOT(set_csv_saxs()));
+
+   le_csv_saxs_name = new QLineEdit(this, "csv_saxs_name Line Edit");
+   le_csv_saxs_name->setText(batch->csv_saxs_name);
+   le_csv_saxs_name->setAlignment(AlignCenter|AlignVCenter);
+   le_csv_saxs_name->setMinimumWidth(100);
+   le_csv_saxs_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_csv_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   connect(le_csv_saxs_name, SIGNAL(textChanged(const QString &)), SLOT(update_csv_saxs_name(const QString &)));
+
    cb_hydro = new QCheckBox(this);
    cb_hydro->setText(tr(" Calculate Hydrodynamics "));
    cb_hydro->setChecked(batch->hydro);
@@ -422,6 +457,18 @@ void US_Hydrodyn_Batch::setupGUI()
    hbl_hydro->addWidget(cb_avg_hydro);
    hbl_hydro->addWidget(le_avg_hydro_name);
 
+   QHBoxLayout *hbl_somo_grid = new QHBoxLayout;
+   hbl_somo_grid->addWidget(cb_somo);
+   hbl_somo_grid->addWidget(cb_grid);
+
+   QHBoxLayout *hbl_iqq_prr = new QHBoxLayout;
+   hbl_iqq_prr->addWidget(cb_iqq);
+   hbl_iqq_prr->addWidget(cb_prr);
+
+   QHBoxLayout *hbl_csv_saxs = new QHBoxLayout;
+   hbl_csv_saxs->addWidget(cb_csv_saxs);
+   hbl_csv_saxs->addWidget(le_csv_saxs_name);
+
    QHBoxLayout *hbl_save = new QHBoxLayout;
    hbl_save->addWidget(pb_select_save_params);
    hbl_save->addWidget(cb_saveParams);
@@ -448,8 +495,9 @@ void US_Hydrodyn_Batch::setupGUI()
    leftside->addWidget(lbl_process);
    leftside->addWidget(cb_mm_first);
    leftside->addWidget(cb_mm_all);
-   leftside->addWidget(cb_somo);
-   leftside->addWidget(cb_grid);
+   leftside->addLayout(hbl_somo_grid);
+   leftside->addLayout(hbl_iqq_prr);
+   leftside->addLayout(hbl_csv_saxs);
    leftside->addWidget(cb_hydro);
    leftside->addLayout(hbl_hydro);
    leftside->addLayout(hbl_save);
@@ -777,6 +825,10 @@ void US_Hydrodyn_Batch::update_enables()
    cb_mm_all->setEnabled(any_pdb_in_list);
    cb_somo->setEnabled(any_pdb_in_list);
    cb_grid->setEnabled(any_pdb_in_list);
+   cb_prr->setEnabled(lb_files->numRows());
+   cb_iqq->setEnabled(lb_files->numRows());
+   cb_csv_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr));
+   le_csv_saxs_name->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
    pb_start->setEnabled(count_selected);
    pb_remove_files->setEnabled(count_selected);
    pb_screen->setEnabled(count_selected);
@@ -785,7 +837,7 @@ void US_Hydrodyn_Batch::update_enables()
    {
       pb_make_movie->setEnabled(count_selected > 1);
    }
-   cb_hydro->setEnabled(lb_files->numRows());
+   cb_hydro->setEnabled(lb_files->numRows() && ( batch->somo || batch->grid ) );
    cb_avg_hydro->setEnabled(lb_files->numRows() && batch->hydro);
    le_avg_hydro_name->setEnabled(lb_files->numRows() && batch->hydro && batch->avg_hydro);
    pb_select_save_params->setEnabled(lb_files->numRows() && batch->hydro);
@@ -920,17 +972,77 @@ void US_Hydrodyn_Batch::set_mm_all()
 
 void US_Hydrodyn_Batch::set_somo()
 {
-   cb_grid->setChecked(!cb_somo->isChecked());
+   if ( cb_somo->isChecked() ||
+        !( batch->iqq || batch->prr ) )
+   {
+      cb_grid->setChecked(!cb_somo->isChecked());
+   }
    batch->somo = cb_somo->isChecked();
    batch->grid = cb_grid->isChecked();
+   update_enables();
 }
 
 void US_Hydrodyn_Batch::set_grid()
 {
-   cb_somo->setChecked(!cb_grid->isChecked());
+   if ( cb_grid->isChecked() ||
+        !( batch->iqq || batch->prr ) )
+   {
+      cb_somo->setChecked(!cb_grid->isChecked());
+   }
    batch->somo = cb_somo->isChecked();
    batch->grid = cb_grid->isChecked();
+   update_enables();
 }
+
+void US_Hydrodyn_Batch::set_prr()
+{
+   if ( !cb_iqq->isChecked() && 
+        !cb_prr->isChecked() &&
+        !cb_grid->isChecked() &&
+        !cb_somo->isChecked() )
+   {
+      cb_somo->setChecked(true);
+      batch->somo = cb_somo->isChecked();      
+   }
+   //   cb_grid->setChecked(false);
+   //   cb_somo->setChecked(false);
+   // batch->somo = cb_somo->isChecked();
+   //   batch->grid = cb_grid->isChecked();
+   batch->prr = cb_prr->isChecked();
+   //   batch->iqq = cb_iqq->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_iqq()
+{
+   //   cb_grid->setChecked(false);
+   if ( !cb_iqq->isChecked() && 
+        !cb_prr->isChecked() &&
+        !cb_grid->isChecked() &&
+        !cb_somo->isChecked() )
+   {
+      cb_somo->setChecked(true);
+      batch->somo = cb_somo->isChecked();      
+   }
+
+   //   batch->grid = cb_grid->isChecked();
+   //   batch->prr = cb_prr->isChecked();
+   batch->iqq = cb_iqq->isChecked();
+   
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_csv_saxs()
+{
+   batch->csv_saxs = cb_csv_saxs->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::update_csv_saxs_name(const QString &str)
+{
+   batch->csv_saxs_name = str;
+}
+
 
 void US_Hydrodyn_Batch::set_hydro()
 {
@@ -974,6 +1086,8 @@ void US_Hydrodyn_Batch::disable_after_start()
    cb_mm_all->setEnabled(false);
    cb_somo->setEnabled(false);
    cb_grid->setEnabled(false);
+   cb_iqq->setEnabled(false);
+   cb_prr->setEnabled(false);
    cb_hydro->setEnabled(false);
    cb_avg_hydro->setEnabled(false);
    le_avg_hydro_name->setEnabled(false);
@@ -999,6 +1113,8 @@ void US_Hydrodyn_Batch::enable_after_stop()
    cb_mm_all->setEnabled(true);
    cb_somo->setEnabled(true);
    cb_grid->setEnabled(true);
+   cb_iqq->setEnabled(true);
+   cb_prr->setEnabled(true);
    cb_hydro->setEnabled(true);
    pb_select_save_params->setEnabled(true);
    cb_saveParams->setEnabled(true);
@@ -1082,6 +1198,19 @@ void US_Hydrodyn_Batch::start()
       ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
    }
 
+   if ( batch->csv_saxs )
+   {
+      csv_source_name_iqq.clear();
+      saxs_q.clear();
+      saxs_iqq.clear();
+      saxs_iqqa.clear();
+      saxs_iqqc.clear();
+      csv_source_name_prr.clear();
+      saxs_r.clear();
+      saxs_prr.clear();
+      saxs_prr_norm.clear();
+   }
+
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       progress->setProgress( i * 2 );
@@ -1137,8 +1266,10 @@ void US_Hydrodyn_Batch::start()
                }
                return;
             }
-            if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
-                 !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) ) 
+            bool pdb_mode =
+               file.contains(QRegExp(".(pdb|PDB)$")) &&
+               !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file);
+            if ( pdb_mode )
             {
                save_us_hydrodyn_settings();
                if ( batch->mm_all ) 
@@ -1148,9 +1279,80 @@ void US_Hydrodyn_Batch::start()
                if ( batch->somo )
                {
                   result = ((US_Hydrodyn *)us_hydrodyn)->calc_somo() ? false : true;
-               } else {
+               } 
+               if ( batch->grid )
+               {
                   result = ((US_Hydrodyn *)us_hydrodyn)->calc_grid_pdb() ? false : true;
                }
+               restore_us_hydrodyn_settings();
+            } 
+            if ( stopFlag )
+            {
+               editor->setColor("dark red");
+               editor->append("Stopped by user");
+               enable_after_stop();
+               editor->setColor(save_color);
+               disable_updates = false;
+               save_batch_active = false;
+               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+               if ( overwriteForcedOn )
+               {
+                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
+               }
+               return;
+            }
+            if ( result && batch->iqq )
+            {
+               save_us_hydrodyn_settings();
+               result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode) ? false : true;
+               if ( batch->csv_saxs )
+               {
+                  csv_source_name_iqq.push_back(file);
+                  saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
+                  saxs_header_iqq.replace(QRegExp("from .* by"),"by");
+                  if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
+                  {
+                     saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
+                  }
+                  saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
+                  saxs_iqqa.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa);
+                  saxs_iqqc.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc);
+               }                  
+               restore_us_hydrodyn_settings();
+            } 
+            if ( stopFlag )
+            {
+               editor->setColor("dark red");
+               editor->append("Stopped by user");
+               enable_after_stop();
+               editor->setColor(save_color);
+               disable_updates = false;
+               save_batch_active = false;
+               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+               if ( overwriteForcedOn )
+               {
+                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
+               }
+               return;
+            }
+            if ( result && batch->prr )
+            {
+               save_us_hydrodyn_settings();
+               result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode) ? false : true;
+               if ( batch->csv_saxs )
+               {
+                  csv_source_name_prr.push_back(file);
+                  saxs_header_prr = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
+                  saxs_header_prr.replace(QRegExp("from .* by"),"by");
+                  if ( saxs_r.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.size() )
+                  {
+                     saxs_r = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r;
+                  }
+                  saxs_prr.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr);
+                  saxs_prr_norm.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm);
+               }                  
                restore_us_hydrodyn_settings();
             } 
             progress->setProgress( 1 + i * 2 );
@@ -1170,7 +1372,8 @@ void US_Hydrodyn_Batch::start()
                }
                return;
             }
-            if ( result && batch->hydro )
+            if ( result && batch->hydro &&
+                 ( !pdb_mode || batch->somo || batch->grid ) )
             {
                save_us_hydrodyn_settings();
                result = ((US_Hydrodyn *)us_hydrodyn)->calc_hydro() ? false : true;
@@ -1194,6 +1397,28 @@ void US_Hydrodyn_Batch::start()
          lb_files->setSelected(i, result);
          editor->setColor(save_color);
       }
+      this->isVisible() ? this->raise() : this->show();
+      qApp->processEvents();
+   }
+   if ( batch->csv_saxs )
+   {
+      if ( batch->iqq && saxs_q.size() )
+      {
+         save_csv_saxs_iqq();
+      }
+      if ( batch->prr && saxs_r.size() )
+      {
+         save_csv_saxs_prr();
+      }
+      csv_source_name_iqq.clear();
+      saxs_q.clear();
+      saxs_iqq.clear();
+      saxs_iqqa.clear();
+      saxs_iqqc.clear();
+      csv_source_name_prr.clear();
+      saxs_r.clear();
+      saxs_prr.clear();
+      saxs_prr_norm.clear();
    }
    if ( save_batch_active )
    {
@@ -1705,4 +1930,85 @@ void US_Hydrodyn_Batch::make_movie()
    disable_updates = false;
    update_enables();
 #endif
+}
+
+QString US_Hydrodyn_Batch::vector_double_to_csv( vector < double > vd )
+{
+   QString result;
+   for ( unsigned int i = 0; i < vd.size(); i++ )
+   {
+      result += QString("%1,").arg(vd[i]);
+   }
+   return result;
+}
+
+void US_Hydrodyn_Batch::save_csv_saxs_iqq()
+{
+   QString fname = 
+      ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
+      batch->csv_saxs_name + "_iqq.csv";
+   FILE *of = fopen(fname, "wb");
+   if ( of )
+   {
+      //  header: "name","type",q1,q2,...,qn, header info
+      fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
+              vector_double_to_csv(saxs_q).ascii(),
+              saxs_header_iqq.remove("\n").ascii());
+      for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
+      {
+         fprintf(of, "\"%s\",\"%s\",%s\n", 
+                 csv_source_name_iqq[i].ascii(),
+                 "I(q)",
+                 vector_double_to_csv(saxs_iqq[i]).ascii());
+         fprintf(of, "\"%s\",\"%s\",%s\n", 
+                 csv_source_name_iqq[i].ascii(),
+                 "Ia(q)",
+                 vector_double_to_csv(saxs_iqqa[i]).ascii());
+         fprintf(of, "\"%s\",\"%s\",%s\n", 
+                 csv_source_name_iqq[i].ascii(),
+                 "Ic(q)",
+                 vector_double_to_csv(saxs_iqqc[i]).ascii());
+      }
+      fclose(of);
+      editor->append(tr("Created file: " + fname + "\n"));
+   } else {
+      QColor save_color = editor->color();
+      editor->setColor("red");
+      editor->append(tr("ERROR creating file: " + fname + "\n"));
+      editor->setColor(save_color);
+   }
+}
+
+void US_Hydrodyn_Batch::save_csv_saxs_prr()
+{
+   QString fname = 
+      ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
+      batch->csv_saxs_name + "_prr.csv";
+   FILE *of = fopen(fname, "wb");
+   if ( of )
+   {
+      //  header: "name","type",r1,r2,...,rn, header info
+      fprintf(of, "\"Name\",\"Type; r:\",%s,\"%s\"\n", 
+              vector_double_to_csv(saxs_r).ascii(),
+              saxs_header_prr.remove("\n").ascii()
+              );
+      for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
+      {
+         fprintf(of, "\"%s\",\"%s\",%s\n", 
+                 csv_source_name_prr[i].ascii(),
+                 "P(r)",
+                 vector_double_to_csv(saxs_prr[i]).ascii());
+         fprintf(of, "\"%s\",\"%s\",%s\n", 
+                 csv_source_name_prr[i].ascii(),
+                 "P(r) normed",
+                 vector_double_to_csv(saxs_prr_norm[i]).ascii());
+      }
+      fclose(of);
+      editor->append(tr("Created file: " + fname + "\n"));
+   } else {
+      QColor save_color = editor->color();
+      editor->setColor("red");
+      editor->append(tr("ERROR creating file: " + fname + "\n"));
+      editor->setColor(save_color);
+   }
 }

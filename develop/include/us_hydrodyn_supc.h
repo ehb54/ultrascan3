@@ -43,4 +43,54 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #define US_HYDRODYN_SUPC_OVERLAPS_EXIST     -6
 #define US_HYDRODYN_SUPC_NO_SEL_MODELS      -7
 
+#include <qthread.h>
+#include <qwaitcondition.h>
+#include <qmutex.h>
+
+class supc_thr_t : public QThread
+{
+ public:
+  supc_thr_t(int);
+  void supc_thr_setup(
+                      unsigned int threads,
+                      int mode,
+                      float *p,
+                      float *rRis,
+                      float *rRi,
+                      float *a,
+                      int N,
+                      int i,
+                      int nat,
+                      float *sum
+                      );
+  void supc_thr_shutdown();
+  void supc_thr_wait();
+  int supc_thr_work_status();
+  virtual void run();
+
+ private:
+
+  unsigned int threads;
+
+  int mode;
+
+  float *p;
+  float *rRis;
+  float *rRi;
+  float *a;
+  int N;
+  int i;
+  int nat;
+  float *sum;
+
+  int thread;
+  QMutex work_mutex;
+  int work_to_do;
+  QWaitCondition cond_work_to_do;
+  int work_done;
+  QWaitCondition cond_work_done;
+  int work_to_do_waiters;
+  int work_done_waiters;
+};
+
 #endif
