@@ -13,10 +13,10 @@
     The source (database or disk) and the loaded model for which noise
     may be desired are part of the dialog creation. Noise choices are
     presented in a tree in which the top level consists of models that
-    all share the same ancestor edit as the loaded model. Double-clicking
+    all share the same ancestor edit as the loaded model. Clicking
     on a noise description in the second level copies the selection to a
-    lower list of selected noise vectors. Double-clicking on a vector
-    in the lower list removes it from the select list.<p>
+    lower list of selected noise vectors. Clicking on a top-level description
+    line chooses all of its noise vector children.</p>
 
     <p> You may choose multiple noise records. Once selections are as desired,
     a "Load" button passes noise data to the caller. If there are
@@ -35,14 +35,16 @@
             <li>
               <b>Models-in-Edit / Noises-in-Model</b> Top-level model tree
               entries can be expanded ("+") or contracted ("-") to reveal
-              or hide noise vectors. Double click each desired noise to
-              copy it to the select list below.
+              or hide noise vectors. Click on a desired noise to copy it to the
+              select list below or click on a top-level entry to select all
+              of its noise vector children. Use ctrl-click or shift-click to
+              select multiple entries.
             </li>
             
             <li>
               <b>Selected Noise Vectors</b> This list will contain all selected
               noise vectors. There may be multiple selections of each of "ti"
-              and "ri" vectors. Double click an entry here to remove it.
+              and "ri" vectors.
             </li>
 
             <li>

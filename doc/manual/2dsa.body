@@ -84,11 +84,11 @@
        </li>
 
        <li>
-          <b>Database</b> Check to specify data input from the database.
+          <b>Database</b> Select to specify data input from the database.
        </li>
 
        <li>
-          <b>Local Disk</b> Check to specify data input from local disk.
+          <b>Local Disk</b> Select to specify data input from local disk.
        </li>
 
        <li>

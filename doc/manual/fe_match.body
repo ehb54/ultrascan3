@@ -19,8 +19,8 @@
 
     <p> The main US_Fematch window may need additional controls when the model
     loaded includes Reversible Associations (RA). These controls can be
-    revealed using the <i>Advanced</i> button or hidden again via the
-    <i>Basic</i> button.</p>
+    revealed using the <i>Advanced Analysis Controls</i> button to invoke
+    a separate dialog.</p>
 
     <h3> Process:</h3>
 
@@ -51,30 +51,26 @@
        </li>
     </ul>
           
-    <h3> Main Windows:</h3>
+    <h3> Main Window:</h3>
 
     <img src="images/fe_match.png" alt="FE_Match Main Window"/>
 
-    <p> An alternate main window may be revealed by clicking on the
-    <b>Advanced</b> button when an RA model has been loaded. This choice
-    is available even in non-RA cases, when the extra controls seem
-    useful. The default window configuration is again available by
-    clicking on the same button, now relabelled <b>Basic</b>.</p>
-
-    <img src="images/fe_match_ra.png" alt="FE_Match-RA Main Window"/>
-          
     <h3> Functions:</h3>
 
     <ul>
        <li>
-          <b>Load Data</b> Load the experimental data.
+          <b>Load Experiment</b> Click here and, in the resulting
+          <a href="data_loader.html">Load Data Dialog</a>, select an edited
+          data set to load.
+       </li>
+
+       <li>
+          <b>Run Details</b> Pop up a dialog showing run details.
        </li>
 
        <li>
           <b>Latest Data Edit</b> Uncheck to allow choosing an edit other
-          than the latest one for the raw experimental data. The effect of
-          checking or unchecking can be seen in the
-           <a href="fe_match_lddat.html">Load Data Dialogs</a> documentation.
+          than the latest one for the raw experimental data.
        </li>
 
        <li>
@@ -96,7 +92,15 @@
        </li>
 
        <li>
-          <b>s20,W Distribution</b> This is one of several alternate choices
+          <b>Database</b> Select to specify data input from the database.
+       </li>
+
+       <li>
+          <b>Local Disk</b> Select to specify data input from local disk.
+       </li>
+
+       <li>
+          <b>s20,w distribution</b> This is one of several alternate choices
           of upper plots showing residuals or distributions. The choices are
           as follows.
           <ul>
@@ -179,9 +183,10 @@
        </li>
 
        <li>
-          <b>Advanced</b> Reveal advanced controls. The label of this button
-          is then changed to <b>Basic</b>, allowing a return to the original
-          main window controls configuration.
+          <b>Advanced Analysis Controls</b> Click to reveal an
+          <a href="fe_match_adv.html">Advanced Analysis Dialog</a>, with
+          options to set parameters related to Reversible Associations (RA)
+          models or to show details on model components.
        </li>
 
        <li>
@@ -194,59 +199,6 @@
           <b>Residual Plot</b> Show a plot dialog with a more advanced set of
           data/residuals/noise plots. See
           <a href="fe_match_controls.html">Plot Controls Details</a>.
-       </li>
-
-       <li>
-          <b>Sedimentation Coefficient:</b> (Advanced) Sedimentation
-          coefficient for the currently selected model component.
-       </li>
-
-       <li>
-          <b>Diffusion Coefficient:</b> (Advanced) Diffusion coefficient
-          for the selected component.
-       </li>
-
-       <li>
-          <b>Partial Concentration:</b> (Advanced) Partial concentration
-          value for the selected component.
-       </li>
-
-       <li>
-          <b>Molecular Weight, f/f0:</b> (Advanced) Molecular weight and
-          frictional ratio for the selected component.
-       </li>
-
-       <li>
-          <b>Component:</b> (Advanced) Specify the index of the component
-          for which the above values are to be displayed.
-       </li>
-
-       <li>
-          <b>Simulation Points:</b> (Advanced/RA) Specify simulation points.
-       </li>
-
-       <li>
-          <b>Band-loading Volume:</b> (Advanced/RA) Specify a band-loading
-          volume value.
-       </li>
-
-       <li>
-          <b>Parameter:</b> (Advanced/RA) Choose a parameter value.
-       </li>
-
-       <li>
-          <b>Show Model #</b> (Advanced/RA) Choose a number.
-       </li>
-
-       <li>
-          <b>(mesh type)</b> (Advanced) Select from one of several mesh
-          types, including Adaptive Space Time (ASTFEM), Claverie, Moving
-          Hat, user File, or Adaptive Space Volume (ASVFEM).
-       </li>
-
-       <li>
-          <b>(grid type)</b> (Advanced) Select a moving-time or
-          constant-time grid type.
        </li>
 
        <li>
@@ -269,14 +221,6 @@
 
        <li>
           <b>Close</b> Close all windows and exit.
-       </li>
-
-       <li>
-          <b>(model/Monte Carlo)</b> (Advanced/RA) Select one of the four
-          choices for initial scan partial concentrations: Current Model;
-          MC Mode value; MC Mean value; MC Median value. Make one choice by
-          selecting a radio button in the parameter area between plots
-          before clicking "Simulate Model".
        </li>
 
     </ul>
