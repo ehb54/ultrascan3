@@ -661,8 +661,9 @@ void US_2dsa::open_fitcntl()
 {
    int drow = lw_triples->currentRow();
    edata    = ( drow >= 0 ) ? &dataList[ drow ] : 0;
-   edata->dataType = edata->dataType + QString().sprintf(
-         " %.6f %.5f %5f", density, viscosity, vbar );
+   edata->dataType = edata->dataType.section( " ", 0, 0 )
+      + QString().sprintf( " %.6f %.5f %5f", density, viscosity, vbar );
+DbgLv(1) << "  OFitCntl: dens visc vbar" << edata->dataType;
 
    if ( analcd != 0 )
    {
@@ -675,6 +676,7 @@ void US_2dsa::open_fitcntl()
    analcd  = new US_AnalysisControl( edata, this );
    analcd->move( acd_pos );
    analcd->show();
+DbgLv(1) << "  AFitCntl: dens visc vbar" << edata->dataType;
    qApp->processEvents();
 }
 
@@ -925,7 +927,9 @@ void US_2dsa::new_triple( int drow )
       return;                 // skip selection if no noise available
 
    // Use noise loader dialog so user can select input noise(s) to subtract
-   US_NoiseLoader nloader( NULL, mieGUIDs, nieGUIDs, ti_noise_in, ri_noise_in );
+   US_Passwd   pw;
+   US_DB2*     dbp      = def_local ? NULL : new US_DB2( pw.getPasswd() );
+   US_NoiseLoader nloader( dbp, mieGUIDs, nieGUIDs, ti_noise_in, ri_noise_in );
    nloader.exec();
 
    int nrinoi  = ri_noise_in.count;

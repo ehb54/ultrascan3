@@ -363,6 +363,7 @@ void US_AnalysisControl::start()
 
       mainw->analysis_done( -1 );   // reset counters to zero
 DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
+DbgLv(1) << "AnaC:  dens/visc/vbar" << edata->dataType;
    }
 
    le_iteration->setText( "0" );
