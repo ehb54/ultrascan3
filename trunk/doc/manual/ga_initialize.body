@@ -105,6 +105,14 @@
        </li>
 
        <li>
+          <b>Database</b> Select to specify data input from the database.
+       </li>
+
+       <li>
+          <b>Local Disk</b> Select to specify data input from local disk.
+       </li>
+
+       <li>
           <b>Load Distribution</b> Load model distribution data as specified
           through a <a href="load_model_distrib.html">Model Loader dialog</a>.
        </li>

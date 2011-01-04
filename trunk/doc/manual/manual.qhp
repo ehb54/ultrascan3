@@ -117,15 +117,11 @@
             <file>images/load_noise_details.png</file>
 
             <file>fe_match.html</file>
-            <file>fe_match_lddat.html</file>
+            <file>fe_match_adv.html</file>
             <file>fe_match_simulate.html</file>
             <file>fe_match_controls.html</file>
             <file>images/fe_match.png</file>
-            <file>images/fe_match_ra.png</file>
-            <file>images/fe_match_lddat1.png</file>
-            <file>images/fe_match_lddat2.png</file>
-            <file>images/fe_match_lddat3.png</file>
-            <file>images/fe_match_lddat4.png</file>
+            <file>images/fe_match_adv.png</file>
             <file>images/fe_match_sim1.png</file>
             <file>images/fe_match_sim2.png</file>
             <file>images/fe_match_sim3_1b.png</file>
