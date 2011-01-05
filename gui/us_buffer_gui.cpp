@@ -44,12 +44,12 @@ US_BufferGui::US_BufferGui(
    lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_DB, row++, 0, 1, 3 );
 
-   if ( US_Settings::us_inv_level() > 0 )
-   {
-      QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-      connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
-      main->addWidget( pb_investigator, row++, 0 );
-   }
+   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   main->addWidget( pb_investigator, row++, 0 );
+
+   if ( US_Settings::us_inv_level() < 1 )
+      pb_investigator->setEnabled( false );
 
    QBoxLayout* search = new QHBoxLayout;
 
@@ -133,15 +133,12 @@ US_BufferGui::US_BufferGui(
 
    row = 1;
 
-   if ( US_Settings::us_inv_level() > 0 )
-   {
-      // Investigator
-      QString number  = QString::number( US_Settings::us_inv_ID() ) + ": ";
-      le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
-      le_investigator->setReadOnly( true );
-      le_investigator->setPalette( gray );
-      main->addWidget( le_investigator, row++, 1, 1, 2 );
-   }
+   // Investigator
+   QString number  = QString::number( US_Settings::us_inv_ID() ) + ": ";
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
+   le_investigator->setReadOnly( true );
+   le_investigator->setPalette( gray );
+   main->addWidget( le_investigator, row++, 1, 1, 2 );
 
    disk_controls = new US_Disk_DB_Controls( select_db_disk );
    connect( disk_controls, SIGNAL( changed       ( bool ) ), 

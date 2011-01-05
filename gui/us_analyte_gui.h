@@ -5,6 +5,7 @@
 #include <QtGui>
 
 #include "us_widgets_dialog.h"
+#include "us_widgets.h"
 #include "us_extern.h"
 #include "us_help.h"
 #include "us_math2.h"
@@ -44,15 +45,13 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
 
    public:
       //! Constructor.
-      //! \param invID  - The investigator ID in the DB (-1 for unspecified)
       //! \param signal - A flag to indicate that a signal is wanted
       //! \param GUID   - The global identifier of the current analyte
-      //! \param access - A flag to indicate DB (true) or disk (false) access
+      //! \param access - A flag to indicate 
       //! \param temp   - The the temperature of the simulation
-      US_AnalyteGui( int             = -1, 
-                     bool            = false, 
+      US_AnalyteGui( bool            = false, 
                      const QString&  = QString(),
-                     bool            = false,
+                     int             = US_Disk_DB_Controls::Default,
                      double          = NORMAL_TEMP );
 
    signals:
@@ -61,11 +60,14 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       //! \param data - The updated analyte data
       void valueChanged( US_Analyte data );
 
+      //! A signal to indicate that the current disk/db selection has changed.
+      //! /param DB True if DB is the new selection
+      void use_db( bool DB );
+
    private:
       int           personID;
       bool          signal_wanted;
       QString       guid;
-      bool          db_access;
       double        temperature;
 
       bool          inReset;
@@ -121,9 +123,9 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       QWidget*      protein_widget;
       QWidget*      dna_widget;
       QWidget*      carbs_widget;
-
-      QRadioButton* rb_db;
-      QRadioButton* rb_disk;
+      
+      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
+      
       QRadioButton* rb_protein;
       QRadioButton* rb_dna;
       QRadioButton* rb_rna;
@@ -170,7 +172,6 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       void sel_investigator   ( void );
       void search             ( const QString& = QString() );
       void select_analyte     ( QListWidgetItem* );
-      void access_type        ( bool );
       void check_db           ( void );
 
       void new_analyte        ( void );
@@ -190,6 +191,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       void update_nucleotide  ( bool );
       void update_nucleotide  ( double );
       void update_nucleotide  ( void );
+      void source_changed     ( bool );
 
       void reset              ( void );
       void close              ( void );

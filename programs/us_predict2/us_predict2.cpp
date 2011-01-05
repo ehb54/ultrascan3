@@ -685,7 +685,7 @@ void US_Predict2::get_peptide( void )
       return;
    }
 
-   US_AnalyteGui* dialog = new US_AnalyteGui( -1, true );
+   US_AnalyteGui* dialog = new US_AnalyteGui( true );
    connect( dialog, SIGNAL( valueChanged( double ) ),
                     SLOT  ( update_vbar ( double ) ) );
    dialog->setWindowTitle( tr( "VBar Calculation" ) );

@@ -299,7 +299,7 @@ void US_Properties::newAnalyte( void )
    model.components << sc;
 
    US_AnalyteGui* dialog =
-      new US_AnalyteGui( investigator, true, QString(), db_access );
+      new US_AnalyteGui( true, QString(), db_access );
 
    connect( dialog, SIGNAL( valueChanged   ( US_Analyte ) ),
                     SLOT  ( update_analyte ( US_Analyte ) ) );
