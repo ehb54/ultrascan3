@@ -64,11 +64,10 @@ class US_ModelGui : public US_WidgetsDialog
       QPushButton*   pb_save;
       QPushButton*   pb_delete;
 
-      QRadioButton*  rb_db;
-      QRadioButton*  rb_disk;
-
       QComboBox*     cb_optics;
                     
+      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
+
       bool    verify_model   ( void );
       bool    status_query   ( const QStringList& );
       bool    database_ok    ( US_DB2& );
@@ -86,12 +85,12 @@ class US_ModelGui : public US_WidgetsDialog
       void update_sim        ( void );
       void edit_description  ( void );
       void get_person        ( void );
-      void update_person     ( int, const QString&, const QString& );
       void check_db          ( void );
       void new_model         ( void );
       void delete_model      ( void );
       void associations      ( void );
       void update_assoc      ( void );
+      void source_changed    ( bool );
       int  modelIndex        ( QString, QList< ModelDesc > );
 
       void help( void ){ showhelp.show_help( "model_editor.html" ); };
