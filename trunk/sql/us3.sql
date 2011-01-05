@@ -643,7 +643,7 @@ DROP TABLE IF EXISTS bufferPerson ;
 CREATE  TABLE IF NOT EXISTS bufferPerson (
   bufferID int(11) NOT NULL ,
   personID int(11) NOT NULL ,
-  private TINYINT NOT NULL DEFAULT 0,
+  private TINYINT NOT NULL DEFAULT 1,
   PRIMARY KEY (bufferID) ,
   INDEX ndx_bufferPerson_personID (personID ASC) ,
   INDEX ndx_bufferPerson_bufferID (bufferID ASC) ,
