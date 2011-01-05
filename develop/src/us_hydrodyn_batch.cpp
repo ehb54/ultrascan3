@@ -1305,20 +1305,58 @@ void US_Hydrodyn_Batch::start()
             if ( result && batch->iqq )
             {
                save_us_hydrodyn_settings();
-               result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode) ? false : true;
-               if ( batch->csv_saxs )
+               if ( batch->mm_all && 
+                    ((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows() > 1 )
                {
-                  csv_source_name_iqq.push_back(file);
-                  saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
-                  saxs_header_iqq.replace(QRegExp("from .* by"),"by");
-                  if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
+                  // loop through them:
+                  for ( unsigned int i = 0;
+                        i < (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows(); 
+                        i++ ) 
                   {
-                     saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
+                     // select only one
+                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(i, true);
+                     for ( unsigned int j = 0;
+                           j < (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows(); 
+                           j++ ) 
+                     {
+                        if ( i != j )
+                        {
+                           ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(j, false);
+                        }
+                     }
+                     result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode) ? false : true;
+                     if ( batch->csv_saxs )
+                     {
+                        csv_source_name_iqq.push_back( file + " " + 
+                                                       ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(i) );
+                        saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
+                        saxs_header_iqq.replace(QRegExp("from .* by"),"by");
+                        if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
+                        {
+                           saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
+                        }
+                        saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
+                        saxs_iqqa.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa);
+                        saxs_iqqc.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc);
+                     }
                   }
-                  saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
-                  saxs_iqqa.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa);
-                  saxs_iqqc.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc);
-               }                  
+               } else {
+                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode) ? false : true;
+                  if ( batch->csv_saxs )
+                  {
+                     csv_source_name_iqq.push_back( file + " " + 
+                                                    ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+                     saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
+                     saxs_header_iqq.replace(QRegExp("from .* by"),"by");
+                     if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
+                     {
+                        saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
+                     }
+                     saxs_iqq.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq);
+                     saxs_iqqa.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa);
+                     saxs_iqqc.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc);
+                  }               
+               }   
                restore_us_hydrodyn_settings();
             } 
             if ( stopFlag )
@@ -1340,18 +1378,55 @@ void US_Hydrodyn_Batch::start()
             if ( result && batch->prr )
             {
                save_us_hydrodyn_settings();
-               result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode) ? false : true;
-               if ( batch->csv_saxs )
+               if ( batch->mm_all && 
+                    ((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows() > 1 )
                {
-                  csv_source_name_prr.push_back(file);
-                  saxs_header_prr = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
-                  saxs_header_prr.replace(QRegExp("from .* by"),"by");
-                  if ( saxs_r.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.size() )
+                  // loop through them:
+                  for ( unsigned int i = 0;
+                        i < (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows(); 
+                        i++ ) 
                   {
-                     saxs_r = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r;
+                     // select only one
+                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(i, true);
+                     for ( unsigned int j = 0;
+                           j < (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows(); 
+                           j++ ) 
+                     {
+                        if ( i != j )
+                        {
+                           ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(j, false);
+                        }
+                     }
+                     result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode) ? false : true;
+                     if ( batch->csv_saxs )
+                     {
+                        csv_source_name_prr.push_back( file + " " + 
+                                                       ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(i) );
+                        saxs_header_prr = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
+                        saxs_header_prr.replace(QRegExp("from .* by"),"by");
+                        if ( saxs_r.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.size() )
+                        {
+                           saxs_r = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r;
+                        }
+                        saxs_prr.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr);
+                        saxs_prr_norm.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm);
+                     }
                   }
-                  saxs_prr.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr);
-                  saxs_prr_norm.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm);
+               } else {
+                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode) ? false : true;
+                  if ( batch->csv_saxs )
+                  {
+                     csv_source_name_prr.push_back( file + " " + 
+                                                    ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+                     saxs_header_prr = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
+                     saxs_header_prr.replace(QRegExp("from .* by"),"by");
+                     if ( saxs_r.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.size() )
+                     {
+                        saxs_r = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r;
+                     }
+                     saxs_prr.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr);
+                     saxs_prr_norm.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm);
+                  }
                }                  
                restore_us_hydrodyn_settings();
             } 

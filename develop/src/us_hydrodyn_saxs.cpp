@@ -1414,6 +1414,94 @@ void US_Hydrodyn_Saxs::load_pr()
    unsigned int pop_last = 0;
    if ( f.open(IO_ReadOnly) )
    {
+      if ( ext == "csv" )
+      {
+         // attempt to read a csv file
+         QStringList qsl;
+         QTextStream ts(&f);
+         while ( !ts.atEnd() )
+         {
+            qsl << ts.readLine();
+         }
+         f.close();
+
+         QStringList qsl_headers = qsl.grep("\"Name\",\"Type; r:\"");
+         if ( qsl_headers.size() == 0 ) 
+         {
+            QMessageBox mb(tr("UltraScan Warning"),
+                           tr("The csv file ") + filename + tr(" does not appear to contain a correct header.\n"
+                                                               "Please manually correct the csv file."),
+                           QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+            mb.exec();
+            return;
+         }
+         if ( qsl_headers.size() > 1 ) 
+         {
+            QString ref = *(qsl_headers.at(0));
+            for ( unsigned int i = 1; i < qsl_headers.size(); i++ )
+            {
+               if ( ref != *(qsl_headers.at(i)) )
+               {
+                  QMessageBox mb(tr("UltraScan Warning"),
+                                 tr("The csv file ") + filename + tr(" contains multiple different headers\n"
+                                                                     "Please manually correct the csv file."),
+                                 QMessageBox::Critical,
+                                 QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+                  mb.exec();
+                  return;
+               }
+            }
+         }
+         QStringList qsl_data = qsl.grep(",\"P(r)\",");
+         if ( qsl_data.size() == 0 )
+         {
+            QMessageBox mb(tr("UltraScan Warning"),
+                           tr("The csv file ") + filename + tr(" does not appear to contain any data rows.\n"),
+                           QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+            mb.exec();
+            return;
+         }
+         // get the r values
+         QStringList qsl_r = QStringList::split(",",*(qsl_headers.at(0)),true);
+         if ( qsl_r.size() < 4 )
+         {
+            QMessageBox mb(tr("UltraScan Warning"),
+                           tr("The csv file ") + filename + tr(" does not appear to contain and r values in the header rows.\n"),
+                           QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+            mb.exec();
+            return;
+         }
+         r.push_back((*qsl_r.at(2)).toDouble());
+            
+         for ( QStringList::iterator it = qsl_r.at(3); it != qsl_r.end(); it++ )
+         {
+            if ( (*it).toDouble() > r[r.size() - 1] )
+            {
+               r.push_back((*it).toDouble());
+            } else {
+               break;
+            }
+         }
+
+         cout << "r values: ";
+         for ( unsigned int i = 0; i < r.size(); i++ )
+         {
+
+            cout << r[i] << ",";
+         }
+         cout << endl;
+      
+         // build a list of names
+         QStringList qsl_names;
+
+         // ask for the names to load if more than one present (cb list? )
+
+         return;
+      }
+
       if ( !ext.contains(QRegExp("^sprr(|_(x|n|r))")) )
       {
          // check for gnom output
