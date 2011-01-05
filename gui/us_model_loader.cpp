@@ -51,6 +51,7 @@ void US_ModelLoader::build_dialog( void )
 
    // Top layout: buttons and fields above list widget
    QGridLayout* top  = new QGridLayout( );
+   singprev          = false;
 
    int iload         = loadDB ? US_Disk_DB_Controls::DB
                               : US_Disk_DB_Controls::Disk;
@@ -291,7 +292,13 @@ void US_ModelLoader::list_models()
             mpart    = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
 //qDebug() << "=listsing= jj mfilt mpart" << jj << mfilt << mpart.pattern();
          }
+
+         if ( !singprev )
+            db_id1 = -2;  // flag re-list when list-singles flag changes
       }
+
+      else if ( singprev )
+         db_id1 = -2;     // flag re-list when list-singles flag changes
    }
 //qDebug() << "listall" << listall;
 //qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
@@ -546,6 +553,8 @@ void US_ModelLoader::list_models()
    {
       lw_models->addItem( "No models found." );
    }
+
+   singprev   = listsing;    // save list-singles flag
 }
 
 // Cancel button:  no models returned
