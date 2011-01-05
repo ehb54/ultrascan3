@@ -677,11 +677,10 @@ void US_AnalyteGui::reset( void )
 
    if ( US_Settings::us_inv_ID() > 0 )
    {
-      QString lname;
-      QString fname;
+      QString inv = QString::number( US_Settings::us_inv_ID() ) + ": " +
+                    US_Settings::us_inv_name();
 
-      if ( US_Investigator::get_person_info( personID, lname, fname ) )
-         assign_investigator( personID, lname, fname );
+      le_investigator->setText( inv );
    }
 
    le_search->clear();

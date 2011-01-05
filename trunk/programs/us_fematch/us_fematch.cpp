@@ -914,12 +914,14 @@ void US_FeMatch::update_buffer( US_Buffer buffer )
 // open dialog and get vbar information
 void US_FeMatch::get_vbar( void )
 {
-   QString aguid   = "";
-   bool    loadDB  = dkdb_cntrls->db();
+   QString aguid = "";
+   int     local = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
+                                     : US_Disk_DB_Controls::Disk;
 
-   US_AnalyteGui* vdiag = new US_AnalyteGui( true, aguid, loadDB );
-   connect( vdiag,  SIGNAL( valueChanged( US_Analyte ) ),
-             this,  SLOT  ( update_vbar ( US_Analyte ) ) );
+   US_AnalyteGui* vdiag = new US_AnalyteGui( true, aguid, local );
+
+   connect( vdiag, SIGNAL( valueChanged( US_Analyte ) ),
+             this, SLOT  ( update_vbar ( US_Analyte ) ) );
 
    connect( vdiag, SIGNAL( use_db( bool ) ), SLOT( update_disk_db( bool ) ) );
 
