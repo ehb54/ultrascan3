@@ -20,7 +20,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       //! \param signal_wanted A flag to specify if one of the signals
       //!               should be emitted when terminating the dialog
       //! \param buf    The default buffer
-      //! \param db     An indicatior of whether to search the disk
+      //! \param select_db_disk An indicatior of whether to search the disk
       //!               or DB for the default buffer
       US_BufferGui( bool             = false, 
                     const US_Buffer& = US_Buffer(), 
