@@ -10,21 +10,20 @@
 
 #include <uuid/uuid.h>
 
-US_AnalyteGui::US_AnalyteGui( int             invID, 
-                              bool            signal, 
+US_AnalyteGui::US_AnalyteGui( bool            signal, 
                               const QString&  GUID,
-                              bool            access,
+                              int             access,
                               double          temp )
    : US_WidgetsDialog( 0, 0 ), 
-     personID     ( invID ), 
      signal_wanted( signal ),
      guid         ( GUID ), 
-     db_access    ( access ),
      temperature  ( temp )
 {
    setWindowTitle( tr( "Analyte Management" ) );
    setPalette( US_GuiSettings::frameColor() );
    setAttribute( Qt::WA_DeleteOnClose );
+
+   personID = US_Settings::us_inv_ID();
 
    QPalette normal = US_GuiSettings::editColor();
 
@@ -75,7 +74,14 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
    main->addWidget( pb_investigator, row, 0 );
 
-   le_investigator = us_lineedit( tr( "Not Selected" ) );
+   QString investigator = QString::number( US_Settings::us_inv_ID() ) + ": " +
+                          US_Settings::us_inv_name();
+
+   if ( US_Settings::us_inv_level() < 1 ) 
+      pb_investigator->setEnabled( false );
+
+   le_investigator = us_lineedit( investigator );
+   le_investigator->setReadOnly( true );
    le_investigator->setPalette( gray );
    main->addWidget( le_investigator, row++, 1, 1, 2 );
 
@@ -131,23 +137,10 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
 
    // Go back to top of 2nd column
    row = 3;
-
-   QButtonGroup* io = new QButtonGroup;
-
-   QGridLayout* db_layout = us_radiobutton( tr( "Use Database" ), rb_db );
-   connect( rb_db, SIGNAL( clicked() ),  SLOT( check_db() ) );
-   io->addButton( rb_db );
-   main->addLayout( db_layout, row, 1 );
-
-   QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk );
-   if ( db_access )
-      rb_db->setChecked( true );
-   else
-      rb_disk->setChecked( true );
-
-   connect( rb_disk, SIGNAL( toggled( bool ) ), SLOT( access_type( bool ) ) );
-   io->addButton( rb_disk );
-   main->addLayout( disk_layout, row++, 2 );
+   disk_controls = new US_Disk_DB_Controls( access );
+   connect( disk_controls, SIGNAL( changed       ( bool ) ),
+                           SLOT  ( source_changed( bool ) ) );
+   main->addLayout( disk_controls, row++, 1, 1, 2 );
 
    QLabel* lb_banner3 = us_banner( tr( "Database/Disk Functions" ), -2 );
    lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -455,7 +448,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
       int result;
       analyte.analyteGUID = guid;
 
-      if ( db_access )
+      if ( disk_controls->db() )
       {
          US_Passwd pw;
          US_DB2    db( pw.getPasswd() );
@@ -467,8 +460,17 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
       if ( result == US_DB2::OK )
          populate();
    }
+
+   list();
 }
 
+void US_AnalyteGui::source_changed( bool db )
+{
+   emit use_db( db );
+   list();
+   qApp->processEvents();
+}
+
 void US_AnalyteGui::new_analyte( void )
 {
    if ( ! discard_changes() ) return;
@@ -512,12 +514,6 @@ void US_AnalyteGui::check_db( void )
       if ( personID > 0 )
          le_investigator->setText( US_Settings::us_inv_name() );
    }
-}
-
-void US_AnalyteGui::access_type( bool state )
-{
-   db_access = ! state;  // db_access is the opposite of rb_disk state
-   //reset();
 }
 
 void US_AnalyteGui::value_changed( const QString& )
@@ -679,7 +675,7 @@ void US_AnalyteGui::reset( void )
 
    le_investigator->setText( tr( "Not Selected" ) );
 
-   if ( personID > 0 )
+   if ( US_Settings::us_inv_ID() > 0 )
    {
       QString lname;
       QString fname;
@@ -1234,7 +1230,7 @@ void US_AnalyteGui::list( void )
 {
    reset();
 
-   if ( db_access )
+   if ( disk_controls->db() )
       list_from_db();
    else
       list_from_disk();
@@ -1310,7 +1306,6 @@ void US_AnalyteGui::list_from_disk( void )
    filenames   .clear();
    descriptions.clear();
    GUIDs       .clear();
-   db_access = false;
 
    QDir f( path );
    QStringList filter( "A*.xml" );
@@ -1454,7 +1449,7 @@ void US_AnalyteGui::select_analyte( QListWidgetItem* /* item */ )
 
    try
    {
-      if ( db_access )
+      if ( disk_controls->db() )
          select_from_db();
       else
          select_from_disk();
@@ -1545,7 +1540,7 @@ void US_AnalyteGui::save( void )
 
    int result;
 
-   if ( rb_db->isChecked() )
+   if ( disk_controls->db() )
    {
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
@@ -1577,10 +1572,10 @@ void US_AnalyteGui::delete_analyte( void )
    //TODO  What if we select new and then want to delete that?
    if ( analyte.analyteGUID.size() != 36 ) return;
 
-   if ( rb_disk->isChecked() )
-      delete_from_disk();
-   else
+   if ( disk_controls->db() )
       delete_from_db();
+   else
+      delete_from_disk();
 
    list();
 }

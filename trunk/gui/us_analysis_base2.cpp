@@ -427,14 +427,16 @@ void US_AnalysisBase2::details( void )
 
 void US_AnalysisBase2::get_vbar( void )
 {
-   int  idPers   = US_Settings::us_inv_ID();
-   bool loadDB   = disk_controls->db();
-   QString aguid = "";
+   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
 
-   US_AnalyteGui* vbdiag = new US_AnalyteGui( idPers, true, aguid, loadDB );
-   connect( vbdiag, SIGNAL( valueChanged( US_Analyte ) ),
+   US_AnalyteGui* dialog = new US_AnalyteGui( true, QString(), dbdisk );
+
+   connect( dialog, SIGNAL( valueChanged( US_Analyte ) ),
                     SLOT  ( update_vbar ( US_Analyte ) ) );
-   vbdiag->exec();
+
+   connect( dialog, SIGNAL( use_db( bool ) ), SLOT( update_disk_db( bool ) ) );
+   dialog->exec();
    qApp->processEvents();
 }
 
@@ -459,8 +461,8 @@ void US_AnalysisBase2::update_vbar( US_Analyte analyte )
 
 void US_AnalysisBase2::get_buffer( void )
 {
-   int  dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
-                                         : US_Disk_DB_Controls::Disk;
+   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
 
    US_BufferGui* dialog = new US_BufferGui( true, buff, dbdisk );
 

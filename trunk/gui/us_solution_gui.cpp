@@ -519,7 +519,7 @@ void US_SolutionGui::selectSolution( QListWidgetItem* item )
 // Function to add analyte to solution
 void US_SolutionGui::addAnalyte( void )
 {
-   US_AnalyteGui* analyte_dialog = new US_AnalyteGui( investigatorID, true );
+   US_AnalyteGui* analyte_dialog = new US_AnalyteGui( true );
 
    connect( analyte_dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
             this,           SLOT  ( assignAnalyte ( US_Analyte ) ) );
