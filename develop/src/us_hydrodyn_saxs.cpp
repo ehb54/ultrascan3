@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_options.h"
+#include "../include/us_hydrodyn_saxs_load_csv.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 
@@ -201,7 +202,6 @@ void US_Hydrodyn_Saxs::refresh(
    model_filename = filename;
    pb_stop->setEnabled(false);
 }
-
 
 void US_Hydrodyn_Saxs::setupGUI()
 {
@@ -1395,6 +1395,13 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    // pb_plot_saxs_sans->setEnabled(source ? false : true);
    pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(true);
+
+   QColor save_color = editor->color();
+   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
+   editor->setColor(plot_colors[p % plot_colors.size()]);
+   editor->append(QString("P(r): Bin size: %1 \"%2\"\n").arg(delta).arg(QFileInfo(model_filename).fileName()));
+   editor->setColor(save_color);
+   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
 }
 
 void US_Hydrodyn_Saxs::load_pr()
@@ -1468,7 +1475,7 @@ void US_Hydrodyn_Saxs::load_pr()
          if ( qsl_r.size() < 4 )
          {
             QMessageBox mb(tr("UltraScan Warning"),
-                           tr("The csv file ") + filename + tr(" does not appear to contain and r values in the header rows.\n"),
+                           tr("The csv file ") + filename + tr(" does not appear to contain any r values in the header rows.\n"),
                            QMessageBox::Critical,
                            QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
             mb.exec();
@@ -1486,19 +1493,138 @@ void US_Hydrodyn_Saxs::load_pr()
             }
          }
 
-         cout << "r values: ";
+         cout << "r values (" << r.size() << "): ";
+         
          for ( unsigned int i = 0; i < r.size(); i++ )
          {
-
             cout << r[i] << ",";
          }
          cout << endl;
       
          // build a list of names
          QStringList qsl_names;
+         for ( QStringList::iterator it = qsl_data.begin();
+               it != qsl_data.end();
+               it++ )
+         {
+            QStringList qsl_tmp = QStringList::split(",",*it,true);
+            qsl_names << *qsl_tmp.at(0);
+         }
 
          // ask for the names to load if more than one present (cb list? )
+         QStringList qsl_sel_names;
+         US_Hydrodyn_Saxs_Load_Csv *hslc =
+            new US_Hydrodyn_Saxs_Load_Csv(
+                                          "Select models to load",
+                                          &qsl_names,
+                                          &qsl_sel_names
+                                          );
+         hslc->exec();
+            
+         delete hslc;
+         
+         // ok, now qsl_sel_names should have the load list
+         // loop through qsl_data and match up 
+         // create a map to avoid a double loop
 
+         map < QString, bool > map_sel_names;
+         for ( QStringList::iterator it = qsl_sel_names.begin();
+               it != qsl_sel_names.end();
+               it++ )
+         {
+            map_sel_names[*it] = true;
+         }
+
+         // now go through qsl_data and load up any that map_sel_names contains
+         bool plotted = false;
+         for ( QStringList::iterator it = qsl_data.begin();
+               it != qsl_data.end();
+               it++ )
+         {
+            QStringList qsl_tmp = QStringList::split(",",*it,true);
+            if ( map_sel_names.count(*qsl_tmp.at(0)) )
+            {
+               cout << "loading: " << *qsl_tmp.at(0) << endl;
+
+               pr.clear();
+
+               // get the pr values
+
+               QStringList qsl_pr = QStringList::split(",",*it,true);
+               if ( qsl_pr.size() < 4 )
+               {
+                  QString msg = tr("The csv file ") + filename + tr(" does not appear to contain sufficient p(r) values in data row " + *qsl_tmp.at(0) + "\n");
+                  QColor save_color = editor->color();
+                  editor->setColor("red");
+                  editor->append(msg);
+                  editor->setColor(save_color);
+                  QMessageBox mb(tr("UltraScan Warning"),
+                                 msg,
+                                 QMessageBox::Critical,
+                                 QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+                  mb.exec();
+                  break;
+               }
+               pr.push_back((*qsl_pr.at(2)).toDouble());
+            
+               for ( QStringList::iterator it = qsl_pr.at(3); it != qsl_pr.end(); it++ )
+               {
+                  pr.push_back((*it).toDouble());
+               }
+
+               cout << "pr values (" << pr.size() << "): ";
+               
+               for ( unsigned int i = 0; i < pr.size(); i++ )
+               {
+                  cout << pr[i] << ",";
+               }
+               cout << endl;
+      
+               // plot it
+               vector < double > this_r = r;
+               // r has the ordinates for the longest data, some will likely be shorter
+               if ( r.size() > pr.size() )
+               {
+                  this_r.resize(pr.size());
+               }
+               // occasionally one may have a zero in the last p(r) position
+               if ( pr.size() > r.size() )
+               {
+                  pr.resize(r.size());
+               }
+
+               long ppr = plot_pr->insertCurve("p(r) vs r");
+               plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
+               plotted_r.push_back(this_r);
+               if ( cb_normalize->isChecked() )
+               {
+                  normalize_pr(&pr);
+               }
+               plotted_pr.push_back(pr);
+               unsigned int p = plotted_r.size() - 1;
+               
+               plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
+               plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+               plot_pr->replot();
+               
+               if ( !plotted )
+               {
+                  plotted = true;
+                  editor->append("P(r) plot legend:\n");
+               }
+               QColor save_color = editor->color();
+               editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
+               editor->setColor(plot_colors[p % plot_colors.size()]);
+               editor->append(QFileInfo(filename).fileName() + " " + *qsl_tmp.at(0) + "\n");
+               editor->setColor(save_color);
+            }
+         }
+         if ( plotted )
+         {
+            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+            editor->append("P(r) plot done\n");
+         }
+         
          return;
       }
 
@@ -1525,7 +1651,7 @@ void US_Hydrodyn_Saxs::load_pr()
       }
 
       QTextStream ts(&f);
-      editor->append(QString("\nLoading pr(r) data from %1 %2\n").arg(filename).arg(res));
+      //      editor->append(QString("\nLoading pr(r) data from %1 %2\n").arg(filename).arg(res));
       editor->append(ts.readLine());
       while ( startline > 0 )
       {
@@ -1549,6 +1675,7 @@ void US_Hydrodyn_Saxs::load_pr()
          pop_last--;
       }
 
+
       long ppr = plot_pr->insertCurve("p(r) vs r");
       plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
       plotted_r.push_back(r);
@@ -1562,6 +1689,13 @@ void US_Hydrodyn_Saxs::load_pr()
       plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
       plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
       plot_pr->replot();
+
+      QColor save_color = editor->color();
+      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
+      editor->setColor(plot_colors[p % plot_colors.size()]);
+      editor->append("P(r): " + QFileInfo(filename).fileName() + "\n");
+      editor->setColor(save_color);
+      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
    }
 }
 
@@ -2719,6 +2853,7 @@ void US_Hydrodyn_Saxs::load_sans()
 void US_Hydrodyn_Saxs::clear_display()
 {
    editor->clear();
+   editor->append("\n\n");
 }
 
 void US_Hydrodyn_Saxs::update_font()
