@@ -992,7 +992,8 @@ void US_BufferGui::save_db( void )
         << QString::number( buffer.compressibility, 'e', 4 )
         << QString::number( buffer.pH             , 'f', 4 )
         << QString::number( buffer.density        , 'f', 6 )
-        << QString::number( buffer.viscosity      , 'f', 5 );
+        << QString::number( buffer.viscosity      , 'f', 5 )
+        << "1";  // Private
 
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
@@ -1103,7 +1104,8 @@ void US_BufferGui::update_db( void )
         << QString::number( buffer.compressibility, 'e', 4 )
         << QString::number( buffer.pH             , 'f', 4 )
         << QString::number( buffer.density        , 'f', 6 )
-        << QString::number( buffer.viscosity      , 'f', 5 );
+        << QString::number( buffer.viscosity      , 'f', 5 )
+        << "1";  // Private
 
       db.statusQuery( q );
 
