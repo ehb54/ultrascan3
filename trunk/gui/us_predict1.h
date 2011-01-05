@@ -25,17 +25,14 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
    public:
       //! \brief Constructor.
       //! \param parm - Reference to molecular characteristics
-      //! \param invID - The investigator ID for DB access.  -1 for unpecified.
       //! \param a_data - Analyte data for initialization
       //! \param disk_access - A value to pass to \ref US_Analyte to initial
       //!                      use disk or DB access
       //! \param signal_wanted - A value to indicate if signals are wanted.
       US_Predict1( US_Hydrosim&, 
-                   int = -1, 
                    US_Analyte = US_Analyte(),
-                   bool = true,
-                   bool = false );
-
+                   int        = US_Disk_DB_Controls::Default,
+                   bool       = false );
 
    signals:
       //! \brief Return a data set of current analyte values.  This
@@ -49,11 +46,14 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       //! \brief A signal to indicate that the class is finished and is closing.
       void done   ( void );
 
+      //! A signal to indicate that the current disk/db selection has changed.
+      //! /param DB True if DB is the new selection
+      void use_db( bool DB );
+
    private:
       US_Hydrosim&            allparams;
-      int                     investigator;
       US_Analyte              base_analyte;
-      bool                    access;
+      int                     access;
       bool                    signal;
 
       US_Math2::SolutionData  solution;
@@ -113,6 +113,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       void get_peptide  ( void                    ); 
       void complete     ( void                    );
       void debug        ( void                    );
+      void source_changed( bool                   );
 
       void update_buffer( const US_Buffer         );
       void update_vbar  ( const US_Analyte        );

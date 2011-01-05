@@ -21,12 +21,10 @@ class US_Properties : public US_WidgetsDialog
 	public:
       //! Constructor.
       //! \param mod - The model to use
-      //! \param invID - The investigator ID in the database (-1 if not defined)
       //! \param access - A flag to determine if analyte data access should be
-      //!          disk (false) or DB (true)
+      //!                 disk or DB
       US_Properties( US_Model&,
-                     int  = -1,
-                     bool = false );
+                     int = US_Disk_DB_Controls::Default );
    signals:
       //! A signal that the class is complete
       //! \param hydro - this will probably change soon
@@ -36,6 +34,10 @@ class US_Properties : public US_WidgetsDialog
       //! has been updated.
       void done( void );
 
+      //! A signal to indicate that the current disk/db selection has changed.
+      //! /param DB True if DB is the new selection
+      void use_db( bool DB );
+
    private:
       // Passed parameters
       US_Model&  model;
@@ -43,7 +45,7 @@ class US_Properties : public US_WidgetsDialog
       int        investigator;
       int        oldRow;
 
-      bool       db_access;
+      int        db_access;
       bool       inUpdate;
       bool       chgStoi;
                 
@@ -111,6 +113,7 @@ class US_Properties : public US_WidgetsDialog
       void co_sed        ( int );
       void set_molar     ( void );
       void set_oligomer  ( double );
+      void source_changed( bool );
            
       void del_component ( void );
       void edit_component( void );

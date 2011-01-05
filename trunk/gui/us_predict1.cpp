@@ -8,13 +8,11 @@
 #include "qwt_legend.h"
 
 US_Predict1::US_Predict1( US_Hydrosim&     parm, 
-                          int              invID,
                           const US_Analyte a_data,
-                          bool             disk_access,
+                          int              disk_access,
                           bool             signal_wanted )
    : US_WidgetsDialog( 0, 0 ), 
      allparams   ( parm ), 
-     investigator( invID ),
      base_analyte( a_data ),
      access      ( disk_access ),
      signal      ( signal_wanted )
@@ -330,6 +328,9 @@ void US_Predict1::get_peptide( void )
 
    connect( dialog, SIGNAL( valueChanged( US_Analyte ) ),
                     SLOT  ( update_vbar ( US_Analyte ) ) );
+
+   connect( dialog, SIGNAL( use_db        ( bool ) ),
+                    SLOT  ( source_changed( bool ) ) );
    dialog->exec();
 }
 
@@ -348,9 +349,16 @@ void US_Predict1::update_vbar( const US_Analyte ad )
 
 void US_Predict1::get_buffer( void )
 {
-   US_BufferGui* dialog = new US_BufferGui( true );
+   US_Buffer buffer;
+
+   US_BufferGui* dialog = new US_BufferGui( true, buffer, access );
+
    connect( dialog, SIGNAL( valueChanged ( US_Buffer ) ),
                     SLOT  ( update_buffer( US_Buffer ) ) );
+
+   connect( dialog, SIGNAL( use_db        ( bool ) ),
+                    SLOT  ( source_changed( bool ) ) );
+
    dialog->exec();
 }
 
@@ -490,6 +498,12 @@ void US_Predict1::update()
    lb_rod[ 6 ]    ->setText( QString::number( allparams.rod.b         , 'e', 4 ) );
    lb_rod[ 7 ]    ->setText( QString::number( allparams.rod.volume    , 'e', 4 ) );
    if ( signal ) emit changed();
+}
+
+void US_Predict1::source_changed( bool db )
+{
+   emit use_db( db );
+   qApp->processEvents();
 }
 
 void US_Predict1::debug( void )

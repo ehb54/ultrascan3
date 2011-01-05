@@ -25,8 +25,6 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    QPalette gray = US_GuiSettings::editColor();
    gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
 
-   //US_Model m;
-   //model = working_model = m;
    working_model = model;
    model_saved   = true;
   
@@ -42,6 +40,10 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    // Start widgets
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, SIGNAL( clicked() ), SLOT( get_person() ) );
+
+   if ( US_Settings::us_inv_level() < 1 )
+      pb_investigator->setEnabled( false );
+   
    main->addWidget( pb_investigator, row, 0 );
 
    le_investigator = us_lineedit( );
@@ -49,14 +51,8 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    le_investigator->setReadOnly( true );
    main->addWidget( le_investigator, row++, 1 );
    
-   QGridLayout* db_layout   = us_radiobutton( tr( "Use Database" ),   rb_db );
-   main->addLayout( db_layout, row, 0 );
-   rb_db  ->setChecked( true  );
-
-   QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk );
-   connect( rb_db, SIGNAL( clicked() ), SLOT( check_db() ) );
-   rb_disk->setChecked( false );
-   main->addLayout( disk_layout, row++, 1 );
+   disk_controls = new US_Disk_DB_Controls;
+   main->addLayout( disk_controls, row++, 0, 1, 2 );
 
    QPushButton* pb_models = us_pushbutton( tr( "List Available Models" ) );
    connect( pb_models, SIGNAL( clicked() ), SLOT( list_models() ) );
@@ -77,13 +73,8 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
 
    // Models List Box
    lw_models = new US_ListWidget;
-
-   //connect( lw_models, SIGNAL( currentRowChanged( int  ) ),
-   //                    SLOT  ( change_model     ( int  ) ) );
-
-   //connect( lw_models, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
-   connect( lw_models, SIGNAL( itemClicked      ( QListWidgetItem* ) ),
-                       SLOT  ( select_model     ( QListWidgetItem* ) ) );
+   connect( lw_models, SIGNAL( itemClicked ( QListWidgetItem* ) ),
+                       SLOT  ( select_model( QListWidgetItem* ) ) );
 
    main->addWidget( lw_models, row, 0, 5, 2 );
    row += 5;
@@ -301,8 +292,6 @@ void US_ModelGui::select_model( QListWidgetItem* item )
    int     index = item->listWidget()-> currentRow();
    QString mdesc = item->text();
    int     modlx = modelIndex( mdesc, model_descriptions );
-qDebug() << "SelM: modlx md.desc md.GUID" << modlx
-   << mdesc << model_descriptions[modlx].modelGUID;
    
    // For the case of the user clicking on "New Model"
    if ( model_descriptions[ modlx ].modelGUID.isEmpty() )
@@ -311,13 +300,12 @@ qDebug() << "SelM: modlx md.desc md.GUID" << modlx
       model.modelGUID   = "";
       le_description->setText( model.description );
       le_guid       ->setText( model.modelGUID   );
-qDebug() << "SelM:   NEW mx md.desc" << modlx << model.description;
       return;
    }
 
    QString        file;
 
-   if ( rb_disk->isChecked() ) // Load from disk
+   if ( ! disk_controls->db() ) // Load from disk
    {
       file = model_descriptions[ modlx ].filename;
       if ( file.isEmpty() ) return;
@@ -337,8 +325,6 @@ qDebug() << "SelM:   NEW mx md.desc" << modlx << model.description;
 
       QString modelID = model_descriptions[ modlx ].DB_id;
       model.load( modelID, &db );
-qDebug() << "SelM:  DB ID GUID" << modelID << model.modelGUID;
-   
    }
 
    if ( mdesc != "New Model" )
@@ -372,7 +358,7 @@ void US_ModelGui::delete_model( void )
 
    // Delete from DB or disk
 
-   if ( rb_disk->isChecked() )
+   if ( ! disk_controls->db() )
    {
       QString path;
       if ( ! US_Model::model_path( path ) ) return;
@@ -452,26 +438,15 @@ bool US_ModelGui::database_ok( US_DB2& db )
 
 void US_ModelGui::get_person( void )
 {
-   US_Investigator* dialog = new US_Investigator( true, investigator );
-   
-   connect( dialog, 
-      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
-      SLOT  ( update_person        ( int, const QString&, const QString& ) ) );
-
+   US_Investigator* dialog = new US_Investigator;
    dialog->exec();
-}
+   
+   investigator = US_Settings::us_inv_ID();
 
-void US_ModelGui::update_person( int            ID, 
-                                 const QString& lname, 
-                                 const QString& fname )
-{
-   investigator = ID;
+   QString inv_text = QString::number( investigator ) + ": "
+                      +  US_Settings::us_inv_name();
 
-   if ( ID < 0 ) 
-      le_investigator->setText( "" );
-   else
-      le_investigator->setText( 
-            QString::number( ID ) + ": " + lname + ", " + fname );
+   le_investigator->setText( inv_text );
 }
 
 void US_ModelGui::manage_components( void )
@@ -487,13 +462,14 @@ void US_ModelGui::manage_components( void )
       return;
    }
 
-   bool dbAccess = rb_db->isChecked();
+   int dbdisk  = disk_controls->db() ? US_Disk_DB_Controls::DB
+                                     : US_Disk_DB_Controls::Disk;
    working_model = model;
 
-   US_Properties* dialog = 
-      new US_Properties( working_model, investigator, dbAccess );
+   US_Properties* dialog = new US_Properties( working_model, dbdisk );
    
-   connect( dialog, SIGNAL( done() ), SLOT( update_sim() ) );
+   connect( dialog, SIGNAL( done  ( void ) ), SLOT( update_sim    ( void ) ) );
+   connect( dialog, SIGNAL( use_db( bool ) ), SLOT( source_changed( bool ) ) );
    dialog->exec();
 }
 
@@ -609,7 +585,7 @@ void US_ModelGui::save_model( void )
 
    model.wavelength      = le_wavelength->text().toDouble();
 
-   if ( rb_disk->isChecked() )
+   if ( ! disk_controls->db() )
    {
       QString path;
       if ( ! US_Model::model_path( path ) ) return;
@@ -703,7 +679,7 @@ void US_ModelGui::list_models( void )
    model_descriptions.clear();
    le_description->clear();
 
-   if ( rb_disk->isChecked() )
+   if ( ! disk_controls->db() )
    {
       QDir f( path );
       QStringList filter( "M*.xml" );
@@ -815,5 +791,12 @@ int US_ModelGui::modelIndex( QString mdesc, QList< ModelDesc > mds )
    }
 
    return -1;
+}
+
+void US_ModelGui::source_changed( bool db )
+{
+   ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
+   list_models();
+   qApp->processEvents();
 }
 

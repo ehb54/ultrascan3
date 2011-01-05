@@ -8,13 +8,9 @@
 
 #include "qwt_arrow_button.h"
 
-US_Properties::US_Properties( 
-      US_Model&                      mod,
-      int                            invID,
-      bool                           access )
+US_Properties::US_Properties( US_Model& mod, int access )
    : US_WidgetsDialog( 0, 0 ), 
      model       ( mod ),
-     investigator( invID ),
      db_access   ( access )
 {
    setPalette    ( US_GuiSettings::frameColor() );
@@ -301,9 +297,12 @@ void US_Properties::newAnalyte( void )
    US_AnalyteGui* dialog =
       new US_AnalyteGui( true, QString(), db_access );
 
-   connect( dialog, SIGNAL( valueChanged   ( US_Analyte ) ),
-                    SLOT  ( update_analyte ( US_Analyte ) ) );
-   
+   connect( dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
+                    SLOT  ( update_analyte( US_Analyte ) ) );
+
+   connect( dialog, SIGNAL( use_db        ( bool ) ), 
+                    SLOT  ( source_changed( bool ) ) );
+
    // If accepted, work is done by update_analyte
    if ( dialog->exec() == QDialog::Rejected )
    {
@@ -830,14 +829,16 @@ void US_Properties::simulate( void )
    //hydro_data.guid        = analyte.guid;
 
 
-   working_data     = hydro_data; // working_data will be updated
-   //working_data.mw /= sc->oligomer;
+   working_data = hydro_data; // working_data will be updated
 
    US_Predict1* dialog = new US_Predict1( 
-         working_data, investigator, analyte, db_access, true );
+         working_data, analyte, db_access, true );
 
-   connect( dialog, SIGNAL( changed  ( US_Analyte ) ), 
-                    SLOT  ( new_hydro( US_Analyte ) ) );
+   connect( dialog, SIGNAL( changed       ( US_Analyte ) ), 
+                    SLOT  ( new_hydro     ( US_Analyte ) ) );
+
+   connect( dialog, SIGNAL( use_db        ( bool ) ), 
+                    SLOT  ( source_changed( bool ) ) );
    dialog->exec();
 }
 
@@ -1089,5 +1090,11 @@ void US_Properties::calculate( void )
    le_s   ->setText( QString::number( sc->s   , 'e', 4 ) );
    le_D   ->setText( QString::number( sc->D   , 'e', 4 ) );
    le_f   ->setText( QString::number( sc->f   , 'e', 4 ) );
+}
+
+void US_Properties::source_changed( bool db )
+{
+   emit use_db( db );  // Just pass on the signal
+   qApp->processEvents();
 }
 
