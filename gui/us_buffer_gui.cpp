@@ -555,6 +555,8 @@ void US_BufferGui::read_db( void )
    le_search->setText( "" );
    le_search->setReadOnly( true );
 
+   if ( buffer.personID < 1 ) buffer.personID = US_Settings::us_inv_ID();
+
    QStringList q( "get_buffer_desc" );
    q << QString::number( buffer.personID );
 
