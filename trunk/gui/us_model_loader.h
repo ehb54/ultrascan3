@@ -93,6 +93,8 @@ class US_EXTERN US_ModelLoader : public US_WidgetsDialog
       int                  db_id1;
       int                  db_id2;
 
+      bool                 singprev;
+
       QString              reqGUID;
 
       QStringList          mdescrs;
