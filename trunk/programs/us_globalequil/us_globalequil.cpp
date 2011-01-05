@@ -57,6 +57,15 @@ US_GlobalEquil::US_GlobalEquil() : US_Widgets( true )
    QLabel*      lb_prjname   = us_label(      tr( "Project Name:"       ) );
    QLineEdit*   le_prjname   = us_lineedit();
 
+   pb_details ->setEnabled( false );
+   pb_view    ->setEnabled( false );
+   pb_unload  ->setEnabled( false );
+   pb_scdiags ->setEnabled( false );
+   pb_ckscfit ->setEnabled( false );
+   pb_conchist->setEnabled( false );
+   pb_resetsl ->setEnabled( false );
+   le_prjname ->setText( tr( "SampleFit" ) );
+
    connect( pb_loadExp,  SIGNAL( clicked() ),
                          SLOT(   load()    ) );
    connect( pb_details,  SIGNAL( clicked() ),
@@ -101,6 +110,11 @@ US_GlobalEquil::US_GlobalEquil() : US_Widgets( true )
    QPushButton* pb_fitcntrl  = us_pushbutton( tr( "Fitting Control"     ) );
    QPushButton* pb_loadFit   = us_pushbutton( tr( "Load Fit"            ) );
    QPushButton* pb_monCarlo  = us_pushbutton( tr( "Monte Carlo"         ) );
+
+   pb_selModel->setEnabled( false );
+   pb_modlCtrl->setEnabled( false );
+   pb_fitcntrl->setEnabled( false );
+   pb_monCarlo->setEnabled( false );
    
    row     = 0;
    modlFitLayout->addWidget( lb_mfitinfo, row++, 0, 1, 2 );
@@ -117,6 +131,9 @@ US_GlobalEquil::US_GlobalEquil() : US_Widgets( true )
    QPushButton* pb_close     = us_pushbutton( tr( "Close"                 ) );
    QLabel*      lb_scselect  = us_label(      tr( "Scan Selector:"      ) );
    QwtCounter*  ct_scselect  = us_counter( 2, 0, 50, 1 );
+
+   pb_floatPar->setEnabled( false );
+   pb_initPars->setEnabled( false );
    ct_scselect->setStep(  1.0 );
    ct_scselect->setValue( 0.0 );
 
@@ -147,12 +164,13 @@ US_GlobalEquil::US_GlobalEquil() : US_Widgets( true )
    // Simulation plot
 
    QBoxLayout* plot = new US_Plot( equilibrium_plot, 
-         tr( "Experimental Equilibrium Data" ),
-         tr( "Radius" ), tr( "Concentration" ) );
+         tr( "Experiment Equilibrium Data" ),
+         tr( "Radius" ),
+         tr( "Absorbance (280 nm)" ) );
    us_grid( equilibrium_plot );
    
    equilibrium_plot->setMinimumSize( 600, 400 );
-   equilibrium_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
+   equilibrium_plot->setAxisScale( QwtPlot::yLeft  , 0.1, 0.601 );
    equilibrium_plot->setAxisScale( QwtPlot::xBottom, 5.9, 6.2 );
 
    QLabel*      lb_status    = us_label(    tr( "Status/Information:" ) );
@@ -165,6 +183,10 @@ US_GlobalEquil::US_GlobalEquil() : US_Widgets( true )
    QLineEdit*   le_mxfringe  = us_lineedit( tr( "0.90" ) );
    QLabel*      lb_mxfnotes  = us_label(    tr( "(set to zero to inactivate"
                                                 " high conc. limits)"  ) );
+   le_status  ->setAlignment( Qt::AlignCenter );
+   le_currmodl->setAlignment( Qt::AlignCenter );
+   le_mxfringe->setAlignment( Qt::AlignCenter );
+
    row     = 0;
    statusLayout ->addWidget( lb_status,   row,   0, 1, 2 );
    statusLayout ->addWidget( le_status,   row++, 2, 1, 4 );
