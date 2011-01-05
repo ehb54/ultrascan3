@@ -65,17 +65,34 @@ BEGIN
   CALL config();
   SET count_buffers = 0;
 
-  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    -- This is an admin; he can get more info
     IF ( p_ID > 0 ) THEN
       SELECT COUNT(*)
-      INTO count_buffers
-      FROM bufferPerson
-      WHERE personID   = p_ID;
+      INTO   count_buffers
+      FROM   bufferPerson
+      WHERE  personID = p_ID;
 
     ELSE
       SELECT COUNT(*)
-      INTO count_buffers
-      FROM bufferPerson;
+      INTO   count_buffers
+      FROM   bufferPerson;
+
+    END IF;
+
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
+      -- Uh oh, can't do that
+      SET @US3_LAST_ERRNO = @NOTPERMITTED;
+      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view those buffers';
+
+    ELSE
+      -- This person is asking about his own buffers
+      -- Ignore p_ID and return user's own
+      SELECT COUNT(*)
+      INTO   count_buffers
+      FROM   bufferPerson
+      WHERE  personID = @US3_ID;
 
     END IF;
 
@@ -94,7 +111,8 @@ CREATE PROCEDURE new_buffer ( p_personGUID      CHAR(36),
                               p_compressibility FLOAT,
                               p_pH              FLOAT,
                               p_density         FLOAT,
-                              p_viscosity       FLOAT )
+                              p_viscosity       FLOAT,
+                              p_private         TINYINT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -137,7 +155,8 @@ BEGIN
 
       INSERT INTO bufferPerson SET
         bufferID    = @LAST_INSERT_ID,
-        personID    = @US3_ID;
+        personID    = @US3_ID,
+        private     = p_private;
     END IF;
 
   END IF;
@@ -155,7 +174,8 @@ CREATE PROCEDURE update_buffer ( p_personGUID      CHAR(36),
                                  p_compressibility FLOAT,
                                  p_pH              FLOAT,
                                  p_density         FLOAT,
-                                 p_viscosity       FLOAT )
+                                 p_viscosity       FLOAT,
+                                 p_private         TINYINT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -183,6 +203,10 @@ BEGIN
 
     ELSE
       SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+      UPDATE bufferPerson SET
+        private       = p_private
+      WHERE bufferID  = p_bufferID;
 
     END IF;
 
@@ -241,6 +265,7 @@ END$$
 
 -- Returns the bufferID and description of all buffers associated with p_ID
 --  If p_ID = 0, retrieves information about all buffers in db
+--  Regular user can only get info about his own buffers and public ones
 DROP PROCEDURE IF EXISTS get_buffer_desc$$
 CREATE PROCEDURE get_buffer_desc ( p_personGUID CHAR(36),
                                    p_password   VARCHAR(80),
@@ -253,7 +278,35 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    -- This is an admin; he can get more info
+    IF ( count_buffers( p_personGUID, p_password, p_ID ) < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+  
+      IF ( p_ID > 0 ) THEN
+        SELECT   b.bufferID, description
+        FROM     buffer b, bufferPerson
+        WHERE    b.bufferID = bufferPerson.bufferID
+        AND      bufferPerson.personID = p_ID
+        ORDER BY b.bufferID DESC;
+   
+      ELSE
+        SELECT   b.bufferID, description
+        FROM     buffer b, bufferPerson
+        WHERE    b.bufferID = bufferPerson.bufferID
+        ORDER BY b.bufferID DESC;
+
+      END IF;
+
+    END IF;
+
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_buffers( p_personGUID, p_password, p_ID ) < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -261,19 +314,22 @@ BEGIN
       SELECT @US3_LAST_ERRNO AS status;
 
     ELSE
+      -- Ok, user wants his own info
       SELECT @OK AS status;
 
       IF ( p_ID > 0 ) THEN
         SELECT   b.bufferID, description
         FROM     buffer b, bufferPerson
         WHERE    b.bufferID = bufferPerson.bufferID
-        AND      bufferPerson.personID = p_ID
+        AND      bufferPerson.personID = @US3_ID 
         ORDER BY b.bufferID DESC;
  
       ELSE
         SELECT   b.bufferID, description
         FROM     buffer b, bufferPerson
         WHERE    b.bufferID = bufferPerson.bufferID
+        AND      ( ( bufferPerson.personID = @US3_ID ) ||
+                 ( private = 0 ) )
         ORDER BY b.bufferID DESC;
       END IF;
 
@@ -292,17 +348,26 @@ CREATE PROCEDURE get_buffer_info ( p_personGUID CHAR(36),
 
 BEGIN
   DECLARE count_buffers INT;
+  DECLARE is_private    TINYINT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
+  SET is_private      = 1;
 
   SELECT     COUNT(*)
   INTO       count_buffers
   FROM       buffer
   WHERE      bufferID = p_bufferID;
 
-  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+  SELECT     private
+  INTO       is_private
+  FROM       bufferPerson
+  WHERE      bufferID = p_bufferID;
+
+  -- Either the user needs access permissions or the buffer needs to be public
+  IF ( ( verify_buffer_permission( p_personGUID, p_password, p_bufferID ) = @OK ) ||
+       ( ( verify_user( p_personGUID, p_password ) = @OK ) && ! is_private ) ) THEN
     IF ( count_buffers = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
@@ -507,12 +572,20 @@ CREATE PROCEDURE get_buffer_components ( p_personGUID CHAR(36),
 
 BEGIN
   DECLARE count_components INT;
+  DECLARE is_private       TINYINT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+  SELECT     private
+  INTO       is_private
+  FROM       bufferPerson
+  WHERE      bufferID = p_bufferID;
+
+  -- Either the user needs access permissions or the buffer needs to be public
+  IF ( ( verify_buffer_permission( p_personGUID, p_password, p_bufferID ) = @OK ) ||
+       ( ( verify_user( p_personGUID, p_password ) = @OK ) && ! is_private ) ) THEN
     SELECT    COUNT(*)
     INTO      count_components
     FROM      bufferLink
