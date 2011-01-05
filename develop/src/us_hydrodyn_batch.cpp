@@ -2035,10 +2035,18 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq()
                  csv_source_name_iqq[i].ascii(),
                  "I(q)",
                  vector_double_to_csv(saxs_iqq[i]).ascii());
+      }
+      fprintf(of, "\n");
+      for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
+      {
          fprintf(of, "\"%s\",\"%s\",%s\n", 
                  csv_source_name_iqq[i].ascii(),
                  "Ia(q)",
                  vector_double_to_csv(saxs_iqqa[i]).ascii());
+      }
+      fprintf(of, "\n");
+      for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
+      {
          fprintf(of, "\"%s\",\"%s\",%s\n", 
                  csv_source_name_iqq[i].ascii(),
                  "Ic(q)",
@@ -2073,6 +2081,10 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
                  csv_source_name_prr[i].ascii(),
                  "P(r)",
                  vector_double_to_csv(saxs_prr[i]).ascii());
+      }
+      fprintf(of, "\n");
+      for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
+      {
          fprintf(of, "\"%s\",\"%s\",%s\n", 
                  csv_source_name_prr[i].ascii(),
                  "P(r) normed",
