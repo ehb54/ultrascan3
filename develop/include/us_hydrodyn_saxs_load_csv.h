@@ -27,8 +27,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
                                 QStringList *qsl_sel_names,
                                 bool *create_avg,
                                 bool *create_std_dev,
+                                bool *only_plot_stats,
                                 bool *save_to_csv,
                                 QString *csv_filename,
+                                bool *save_original_data,
                                 QWidget *p = 0, 
                                 const char *name = 0
                                 );
@@ -42,9 +44,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
 
       QCheckBox   *cb_create_avg;
       QCheckBox   *cb_create_std_dev;
+      QCheckBox   *cb_only_plot_stats;
       QCheckBox   *cb_save_to_csv;
 
       QLineEdit   *le_csv_filename;
+
+      QCheckBox   *cb_save_original_data;
 
       QPushButton *pb_select_all;
       QPushButton *pb_ok;
@@ -61,8 +66,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
 
       bool *create_avg;
       bool *create_std_dev;
+      bool *only_plot_stats;
       bool *save_to_csv;
       QString *csv_filename;
+      bool *save_original_data;
 
       void update_enables();
 
@@ -72,8 +79,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
 
       void set_create_avg();
       void set_create_std_dev();
+      void set_only_plot_stats();
       void set_save_to_csv();
       void update_csv_filename(const QString &);
+      void set_save_original_data();
 
       void select_all();
       void ok();

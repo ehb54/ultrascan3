@@ -6,8 +6,10 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
                                                      QStringList *qsl_sel_names,
                                                      bool *create_avg,
                                                      bool *create_std_dev,
+                                                     bool *only_plot_stats,
                                                      bool *save_to_csv,
                                                      QString *csv_filename,
+                                                     bool *save_original_data,
                                                      QWidget *p,
                                                      const char *name
                                                      ) : QDialog(p, name)
@@ -17,8 +19,10 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
    this->qsl_sel_names = qsl_sel_names;
    this->create_avg = create_avg;
    this->create_std_dev = create_std_dev;
+   this->only_plot_stats = only_plot_stats;
    this->save_to_csv = save_to_csv;
    this->csv_filename = csv_filename;
+   this->save_original_data = save_original_data;
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -72,6 +76,14 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    cb_create_std_dev->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_create_std_dev, SIGNAL(clicked()), this, SLOT(set_create_std_dev()));
 
+   cb_only_plot_stats = new QCheckBox(this);
+   cb_only_plot_stats->setText(tr(" Only plot stats"));
+   cb_only_plot_stats->setEnabled(true);
+   cb_only_plot_stats->setChecked(*only_plot_stats);
+   cb_only_plot_stats->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_only_plot_stats->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_only_plot_stats, SIGNAL(clicked()), this, SLOT(set_only_plot_stats()));
+
    cb_save_to_csv = new QCheckBox(this);
    cb_save_to_csv->setText(tr(" Save to csv"));
    cb_save_to_csv->setEnabled(true);
@@ -87,6 +99,14 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    le_csv_filename->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_csv_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    connect(le_csv_filename, SIGNAL(textChanged(const QString &)), SLOT(update_csv_filename(const QString &)));
+
+   cb_save_original_data = new QCheckBox(this);
+   cb_save_original_data->setText(tr(" Include source data"));
+   cb_save_original_data->setEnabled(true);
+   cb_save_original_data->setChecked(*save_original_data);
+   cb_save_original_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_save_original_data->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_save_original_data, SIGNAL(clicked()), this, SLOT(set_save_original_data()));
 
    pb_select_all = new QPushButton(tr("Select All"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -106,7 +126,7 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_ok = new QPushButton(tr("Close"), this);
+   pb_ok = new QPushButton(tr("Plot"), this);
    pb_ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_ok->setMinimumHeight(minHeight1);
    pb_ok->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -129,8 +149,10 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    hbl_avg_std->addSpacing(5);
    hbl_avg_std->addWidget(cb_create_avg);
    hbl_avg_std->addWidget(cb_create_std_dev);
+   hbl_avg_std->addWidget(cb_only_plot_stats);
    hbl_avg_std->addWidget(cb_save_to_csv);
    hbl_avg_std->addWidget(le_csv_filename);
+   hbl_avg_std->addWidget(cb_save_original_data);
    hbl_avg_std->addSpacing(5);
 
    QVBoxLayout *background = new QVBoxLayout(this);
@@ -217,9 +239,21 @@ void US_Hydrodyn_Saxs_Load_Csv::set_create_std_dev()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Load_Csv::set_only_plot_stats()
+{
+   *only_plot_stats = cb_only_plot_stats->isChecked();
+   update_enables();
+}
+
 void US_Hydrodyn_Saxs_Load_Csv::set_save_to_csv()
 {
    *save_to_csv = cb_save_to_csv->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Load_Csv::set_save_original_data()
+{
+   *save_original_data = cb_save_original_data->isChecked();
    update_enables();
 }
 
@@ -227,6 +261,8 @@ void US_Hydrodyn_Saxs_Load_Csv::update_enables()
 {
    cb_create_avg->setEnabled(qsl_sel_names->size() > 1);
    cb_create_std_dev->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 2);
+   cb_only_plot_stats->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
    cb_save_to_csv->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
    le_csv_filename->setEnabled(cb_save_to_csv->isChecked() && qsl_sel_names->size() > 1);
+   cb_save_original_data->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
 }

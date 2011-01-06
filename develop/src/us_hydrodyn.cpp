@@ -164,7 +164,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    anaflex_ready_to_run = false;
    bd_last_file = "";
    anaflex_last_file = "";
-
+   state = NOTHING_LOADED;
    setupGUI();
    //   global_Xpos += 30;
    //   global_Ypos += 30;
@@ -524,7 +524,7 @@ void US_Hydrodyn::setupGUI()
    Q_CHECK_PTR(pb_pdb_saxs);
    pb_pdb_saxs->setMinimumHeight(minHeight1);
    pb_pdb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_pdb_saxs->setEnabled(false);
+   pb_pdb_saxs->setEnabled(true);
    pb_pdb_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_pdb_saxs, SIGNAL(clicked()), SLOT(pdb_saxs()));
 
@@ -865,7 +865,7 @@ void US_Hydrodyn::set_disabled()
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_visualize->setEnabled(false);
-   pb_pdb_saxs->setEnabled(false);
+   //   pb_pdb_saxs->setEnabled(false);
 
    bd_anaflex_enables(false);
 
@@ -1559,6 +1559,7 @@ void US_Hydrodyn::load_pdb()
       editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
       bead_models.clear();
       somo_processed.clear();
+      state = PDB_LOADED;
    }
    else
    {
@@ -1743,6 +1744,7 @@ bool US_Hydrodyn::screen_bead_model(QString filename)
    le_bead_model_file->setText( QDir::convertSeparators( filename ) );
    if (!read_bead_model(filename))
    {
+      state = BEAD_MODEL_LOADED;
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
       pb_grid->setEnabled(true);
@@ -1755,6 +1757,7 @@ bool US_Hydrodyn::screen_bead_model(QString filename)
    {
       pb_visualize->setEnabled(true);
       pb_bead_saxs->setEnabled(false);
+      pb_pdb_saxs->setEnabled(true);
       return false;
    }
 }
@@ -1794,7 +1797,7 @@ void US_Hydrodyn::select_model(int val)
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_visualize->setEnabled(false);
-   pb_pdb_saxs->setEnabled(true);
+   //   pb_pdb_saxs->setEnabled(true);
    bd_anaflex_enables( ( ( browflex && browflex->isRunning() ) ||
                          ( anaflex && anaflex->isRunning() ) ) ? false : true );
 }
@@ -1881,18 +1884,19 @@ void US_Hydrodyn::load_bead_model()
       le_bead_model_file->setText( QDir::convertSeparators( filename ) );
       if (!read_bead_model(filename))
       {
+         state = BEAD_MODEL_LOADED;
          pb_visualize->setEnabled(true);
          pb_calc_hydro->setEnabled(true);
          pb_grid->setEnabled(true);
          pb_bead_saxs->setEnabled(true);
          pb_pdb_saxs->setEnabled(false);
-
          bd_anaflex_enables(false);
       }
       else
       {
          pb_visualize->setEnabled(true);
          pb_bead_saxs->setEnabled(false);
+         pb_pdb_saxs->setEnabled(true);
       }
       // bead_model_prefix = "";
    }
@@ -3232,21 +3236,21 @@ void US_Hydrodyn::clear_display()
    display_default_differences();
 }
 
-int US_Hydrodyn::calc_iqq(bool bead_model)
+int US_Hydrodyn::calc_iqq( bool bead_model, bool create_native_saxs )
 {
-   bead_model ? bead_saxs() : pdb_saxs();
+   bead_model ? bead_saxs( create_native_saxs ) : pdb_saxs( create_native_saxs );
    saxs_plot_window->show_plot_saxs_sans();
    return 0;
 }
 
-int US_Hydrodyn::calc_prr(bool bead_model)
+int US_Hydrodyn::calc_prr( bool bead_model, bool create_native_saxs )
 {
-   bead_model ? bead_saxs() : pdb_saxs();
+   bead_model ? bead_saxs( create_native_saxs ) : pdb_saxs( create_native_saxs );
    saxs_plot_window->show_plot_pr();
    return 0;
 }
 
-void US_Hydrodyn::pdb_saxs()
+void US_Hydrodyn::pdb_saxs( bool create_native_saxs )
 {
    vector < unsigned int > selected_models;
    for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
@@ -3256,10 +3260,10 @@ void US_Hydrodyn::pdb_saxs()
          selected_models.push_back(i);
       }
    }
-   if ( selected_models.size() != 1 )
+   if ( selected_models.size() > 1 )
    {
       QMessageBox::message(tr("Please note:"),
-                           tr("You must select exactly one model to perform SAXS functions.."));
+                           tr("You must select exactly one model to perform SAXS functions."));
    } 
    else
    {
@@ -3274,7 +3278,8 @@ void US_Hydrodyn::pdb_saxs()
                                    selected_models,
                                    multi_residue_map,
                                    residue_atom_hybrid_map,
-                                   0
+                                   0,
+                                   create_native_saxs
                                    );
          saxs_plot_window->raise();
       }
@@ -3291,6 +3296,7 @@ void US_Hydrodyn::pdb_saxs()
                                                  multi_residue_map,
                                                  residue_atom_hybrid_map,
                                                  0, 
+                                                 create_native_saxs,
                                                  this,
                                                  0
                                                  );
@@ -3299,7 +3305,7 @@ void US_Hydrodyn::pdb_saxs()
    }
 }
 
-void US_Hydrodyn::bead_saxs()
+void US_Hydrodyn::bead_saxs( bool create_native_saxs )
 {
    vector < unsigned int > selected_models;
    for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
@@ -3341,7 +3347,8 @@ void US_Hydrodyn::bead_saxs()
                                    selected_models,
                                    multi_residue_map,
                                    residue_atom_hybrid_map,
-                                   1
+                                   1,
+                                   create_native_saxs
                                    );
          saxs_plot_window->raise();
       }
@@ -3358,6 +3365,7 @@ void US_Hydrodyn::bead_saxs()
                                                  multi_residue_map,
                                                  residue_atom_hybrid_map,
                                                  1, 
+                                                 create_native_saxs,
                                                  this,
                                                  0
                                                  );
@@ -3705,4 +3713,9 @@ void US_Hydrodyn::run_us_admin()
                                 tr( "There was a problem creating a subprocess\n"
                                     "for " ) + QString("us_admin").upper() );
    }
+}
+
+
+void US_Hydrodyn::update_enables()
+{
 }

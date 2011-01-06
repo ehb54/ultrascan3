@@ -59,6 +59,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                        map < QString, vector <int> >  multi_residue_map,
                        map < QString, QString >       residue_atom_hybrid_map,
                        int                            source, 
+                       bool                           create_native_saxs,
                        void                           *us_hydrodyn,
                        QWidget                        *p = 0, 
                        const char                     *name = 0
@@ -73,7 +74,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                    vector < unsigned int >        selected_models,
                    map < QString, vector <int> >  multi_residue_map,
                    map < QString, QString >       residue_atom_hybrid_map,
-                   int                            source
+                   int                            source,
+                   bool                           create_native_saxs
                    );
       
    public:
@@ -121,6 +123,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QRadioButton *rb_curve_saxs_dry;
       QRadioButton *rb_curve_saxs;
       QRadioButton *rb_curve_sans;
+
+      QCheckBox *cb_create_native_saxs;
 
       QFont ft;
 
@@ -175,6 +179,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString saxs_filename;
       
       bool stopFlag;
+      bool create_native_saxs;
 
       QProgressBar *progress;
 
@@ -218,6 +223,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_saxs_sans();
       QString saxs_filestring();
       QString sprr_filestring();
+      void set_create_native_saxs();
 
    protected slots:
 

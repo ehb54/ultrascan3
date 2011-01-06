@@ -49,6 +49,7 @@ struct batch_info
    bool iqq;
    bool prr;
    bool csv_saxs;
+   bool create_native_saxs;
    QString csv_saxs_name;
    bool hydro;
    bool avg_hydro;
@@ -118,6 +119,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QCheckBox     *cb_prr;
       QCheckBox     *cb_csv_saxs;
       QLineEdit     *le_csv_saxs_name;
+      QCheckBox     *cb_create_native_saxs;
       QCheckBox     *cb_hydro;
       QCheckBox     *cb_avg_hydro;
       QLineEdit     *le_avg_hydro_name;
@@ -212,6 +214,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void update_avg_hydro_name(const QString &);
       void set_csv_saxs();
       void update_csv_saxs_name(const QString &);
+      void set_create_native_saxs();
       void select_save_params();
       void set_saveParams();
       void stop();

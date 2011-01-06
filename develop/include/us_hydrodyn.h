@@ -432,6 +432,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       map < QString, QChar > residue_short_names;
 
+      enum load_state { NOTHING_LOADED, PDB_LOADED, BEAD_MODEL_LOADED };
+      load_state state;
+      void update_enables();
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -444,8 +448,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int calc_grid_pdb(); // compute grid model from pdb
       int calc_grid();     // compute grid model from bead model
       int calc_hydro();
-      int calc_iqq(bool bead_model);      // bring up saxs window if needed and compute iqq curve
-      int calc_prr(bool bead_model);      // bring up saxs window if needed and compute prr curve
+      int calc_iqq(bool bead_model, bool create_native_saxs = true);      // bring up saxs window if needed and compute iqq curve
+      int calc_prr(bool bead_model, bool create_native_saxs = true);      // bring up saxs window if needed and compute prr curve
       void select_save_params();
       void show_saxs_options();
       void show_bd_options();
@@ -473,8 +477,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void dmd_static_pairs();
 
-      void pdb_saxs();
-      void bead_saxs();
+      void pdb_saxs( bool create_native_saxs = true );
+      void bead_saxs( bool create_native_saxs = true );
 
    private slots:
       void browflex_readFromStdout();

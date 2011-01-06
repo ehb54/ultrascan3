@@ -61,6 +61,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    batch->iqq = false;
    batch->csv_saxs = false;
    batch->csv_saxs_name = "results";
+   batch->create_native_saxs = true;
    if ( !batch->somo && !batch->grid && !batch->iqq && !batch->iqq )
    {
       batch->somo = true;
@@ -333,7 +334,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_prr, SIGNAL(clicked()), this, SLOT(set_prr()));
 
    cb_csv_saxs = new QCheckBox(this);
-   cb_csv_saxs->setText(tr(" Single SAXS Results File:"));
+   cb_csv_saxs->setText(tr(" Combined SAXS Results File:"));
    cb_csv_saxs->setChecked(batch->csv_saxs);
    cb_csv_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_csv_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -342,10 +343,17 @@ void US_Hydrodyn_Batch::setupGUI()
    le_csv_saxs_name = new QLineEdit(this, "csv_saxs_name Line Edit");
    le_csv_saxs_name->setText(batch->csv_saxs_name);
    le_csv_saxs_name->setAlignment(AlignCenter|AlignVCenter);
-   le_csv_saxs_name->setMinimumWidth(100);
+   le_csv_saxs_name->setMinimumWidth(150);
    le_csv_saxs_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_csv_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    connect(le_csv_saxs_name, SIGNAL(textChanged(const QString &)), SLOT(update_csv_saxs_name(const QString &)));
+
+   cb_create_native_saxs = new QCheckBox(this);
+   cb_create_native_saxs->setText(tr(" Create Single Saxs Results Files"));
+   cb_create_native_saxs->setChecked(batch->create_native_saxs);
+   cb_create_native_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_create_native_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_create_native_saxs, SIGNAL(clicked()), this, SLOT(set_create_native_saxs()));
 
    cb_hydro = new QCheckBox(this);
    cb_hydro->setText(tr(" Calculate Hydrodynamics "));
@@ -355,7 +363,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_hydro, SIGNAL(clicked()), this, SLOT(set_hydro()));
 
    cb_avg_hydro = new QCheckBox(this);
-   cb_avg_hydro->setText(tr(" Single Hydro Results File:"));
+   cb_avg_hydro->setText(tr(" Combined Hydro Results File:"));
    cb_avg_hydro->setChecked(batch->avg_hydro);
    cb_avg_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_avg_hydro->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -480,6 +488,7 @@ void US_Hydrodyn_Batch::setupGUI()
    QHBoxLayout *hbl_csv_saxs = new QHBoxLayout;
    hbl_csv_saxs->addWidget(cb_csv_saxs);
    hbl_csv_saxs->addWidget(le_csv_saxs_name);
+   hbl_csv_saxs->addWidget(cb_create_native_saxs);
 
    QHBoxLayout *hbl_save = new QHBoxLayout;
    hbl_save->addWidget(pb_select_save_params);
@@ -882,6 +891,7 @@ void US_Hydrodyn_Batch::update_enables()
    cb_iqq->setEnabled(lb_files->numRows());
    cb_csv_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr));
    le_csv_saxs_name->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
+   cb_create_native_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
    pb_start->setEnabled(count_selected);
    pb_remove_files->setEnabled(count_selected);
    pb_screen->setEnabled(count_selected);
@@ -1092,11 +1102,16 @@ void US_Hydrodyn_Batch::set_csv_saxs()
    update_enables();
 }
 
+void US_Hydrodyn_Batch::set_create_native_saxs()
+{
+   batch->create_native_saxs = cb_create_native_saxs->isChecked();
+   update_enables();
+}
+
 void US_Hydrodyn_Batch::update_csv_saxs_name(const QString &str)
 {
    batch->csv_saxs_name = str;
 }
-
 
 void US_Hydrodyn_Batch::set_hydro()
 {
@@ -1378,7 +1393,9 @@ void US_Hydrodyn_Batch::start()
                            ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(j, false);
                         }
                      }
-                     result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode) ? false : true;
+                     result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode, 
+                                                                     !batch->csv_saxs || batch->create_native_saxs
+                                                                     ) ? false : true;
                      if ( batch->csv_saxs )
                      {
                         csv_source_name_iqq.push_back( file + " " + 
@@ -1395,7 +1412,9 @@ void US_Hydrodyn_Batch::start()
                      }
                   }
                } else {
-                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode) ? false : true;
+                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_iqq(!pdb_mode,
+                                                                  !batch->csv_saxs || batch->create_native_saxs
+                                                                  ) ? false : true;
                   if ( batch->csv_saxs )
                   {
                      csv_source_name_iqq.push_back( file + " " + 
@@ -1451,7 +1470,9 @@ void US_Hydrodyn_Batch::start()
                            ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(j, false);
                         }
                      }
-                     result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode) ? false : true;
+                     result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode,
+                                                                     !batch->csv_saxs || batch->create_native_saxs
+                                                                     ) ? false : true;
                      if ( batch->csv_saxs )
                      {
                         csv_source_name_prr.push_back( file + " " + 
@@ -1467,7 +1488,9 @@ void US_Hydrodyn_Batch::start()
                      }
                   }
                } else {
-                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode) ? false : true;
+                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_prr(!pdb_mode,
+                                                                  !batch->csv_saxs || batch->create_native_saxs
+                                                                  ) ? false : true;
                   if ( batch->csv_saxs )
                   {
                      csv_source_name_prr.push_back( file + " " + 
