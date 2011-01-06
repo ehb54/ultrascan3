@@ -473,6 +473,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void dmd_static_pairs();
 
+      void pdb_saxs();
+      void bead_saxs();
+
    private slots:
       void browflex_readFromStdout();
       void browflex_readFromStderr();
@@ -534,8 +537,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void update_bead_model_file(const QString &);
       void update_bead_model_prefix(const QString &);
       void radial_reduction();
-      void pdb_saxs();
-      void bead_saxs();
       void show_hydro_results();
       void open_hydro_results();
       void write_bead_asa(QString, vector <PDB_atom> *);

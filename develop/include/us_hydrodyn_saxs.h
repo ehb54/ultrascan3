@@ -178,6 +178,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QProgressBar *progress;
 
+   private:
+
+      QString vector_double_to_csv( vector < double > vd );
+
    public slots:
       void show_plot_saxs_sans();
       void show_plot_pr();

@@ -4,10 +4,12 @@
 // QT defs:
 
 #include <qlabel.h>
+#include <qcheckbox.h>
 #include <qpushbutton.h>
 #include <qdialog.h>
 #include <qstringlist.h>
 #include <qlistbox.h>
+#include <qlineedit.h>
 
 #include "us_util.h"
 
@@ -23,6 +25,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
                                 QString msg,
                                 QStringList *qsl_names,
                                 QStringList *qsl_sel_names,
+                                bool *create_avg,
+                                bool *create_std_dev,
+                                bool *save_to_csv,
+                                QString *csv_filename,
                                 QWidget *p = 0, 
                                 const char *name = 0
                                 );
@@ -32,7 +38,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
 
       QLabel *lbl_info;
 
-      QListBox *lb_names;
+      QListBox    *lb_names;
+
+      QCheckBox   *cb_create_avg;
+      QCheckBox   *cb_create_std_dev;
+      QCheckBox   *cb_save_to_csv;
+
+      QLineEdit   *le_csv_filename;
 
       QPushButton *pb_select_all;
       QPushButton *pb_ok;
@@ -47,9 +59,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       QStringList *qsl_names;
       QStringList *qsl_sel_names;
 
+      bool *create_avg;
+      bool *create_std_dev;
+      bool *save_to_csv;
+      QString *csv_filename;
+
+      void update_enables();
+
    private slots:
 
       void update_selected();
+
+      void set_create_avg();
+      void set_create_std_dev();
+      void set_save_to_csv();
+      void update_csv_filename(const QString &);
 
       void select_all();
       void ok();

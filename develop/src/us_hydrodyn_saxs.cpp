@@ -129,6 +129,14 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    plot_colors.push_back(Qt::cyan);
    plot_colors.push_back(Qt::blue);
    plot_colors.push_back(Qt::red);
+   plot_colors.push_back(Qt::magenta);
+   plot_colors.push_back(Qt::darkYellow);
+   plot_colors.push_back(Qt::darkGreen);
+   plot_colors.push_back(Qt::darkCyan);
+   plot_colors.push_back(Qt::darkBlue);
+   plot_colors.push_back(Qt::darkRed);
+   plot_colors.push_back(Qt::darkMagenta);
+   plot_colors.push_back(Qt::white);
 }
 
 US_Hydrodyn_Saxs::~US_Hydrodyn_Saxs()
@@ -1425,6 +1433,7 @@ void US_Hydrodyn_Saxs::load_pr()
       {
          // attempt to read a csv file
          QStringList qsl;
+         QStringList qsl_data_lines_plotted;  // for potential later average save
          QTextStream ts(&f);
          while ( !ts.atEnd() )
          {
@@ -1483,6 +1492,8 @@ void US_Hydrodyn_Saxs::load_pr()
          }
          r.push_back((*qsl_r.at(2)).toDouble());
             
+         QString header_tag = qsl_r.last();
+
          for ( QStringList::iterator it = qsl_r.at(3); it != qsl_r.end(); it++ )
          {
             if ( (*it).toDouble() > r[r.size() - 1] )
@@ -1493,6 +1504,7 @@ void US_Hydrodyn_Saxs::load_pr()
             }
          }
 
+#if defined(DEBUG_PR)
          cout << "r values (" << r.size() << "): ";
          
          for ( unsigned int i = 0; i < r.size(); i++ )
@@ -1500,6 +1512,7 @@ void US_Hydrodyn_Saxs::load_pr()
             cout << r[i] << ",";
          }
          cout << endl;
+#endif
       
          // build a list of names
          QStringList qsl_names;
@@ -1513,11 +1526,20 @@ void US_Hydrodyn_Saxs::load_pr()
 
          // ask for the names to load if more than one present (cb list? )
          QStringList qsl_sel_names;
+         bool create_avg = false;
+         bool create_std_dev = false;
+         bool save_to_csv = false;
+         QString csv_filename = "summary";
+         
          US_Hydrodyn_Saxs_Load_Csv *hslc =
             new US_Hydrodyn_Saxs_Load_Csv(
-                                          "Select models to load",
+                                          "Select models to load\n" + header_tag,
                                           &qsl_names,
-                                          &qsl_sel_names
+                                          &qsl_sel_names,
+                                          &create_avg,
+                                          &create_std_dev,
+                                          &save_to_csv,
+                                          &csv_filename
                                           );
          hslc->exec();
             
@@ -1533,6 +1555,15 @@ void US_Hydrodyn_Saxs::load_pr()
                it++ )
          {
             map_sel_names[*it] = true;
+         }
+
+         // setup for average & stdev
+         vector < double > sum_pr(r.size());
+         vector < double > sum_pr2(r.size());
+         unsigned int sum_count = 0;
+         for ( unsigned int i = 0; i < r.size(); i++ )
+         {
+            sum_pr[i] = sum_pr2[i] = 0e0;
          }
 
          // now go through qsl_data and load up any that map_sel_names contains
@@ -1565,6 +1596,7 @@ void US_Hydrodyn_Saxs::load_pr()
                   mb.exec();
                   break;
                }
+               qsl_data_lines_plotted << *it;
                pr.push_back((*qsl_pr.at(2)).toDouble());
             
                for ( QStringList::iterator it = qsl_pr.at(3); it != qsl_pr.end(); it++ )
@@ -1572,6 +1604,7 @@ void US_Hydrodyn_Saxs::load_pr()
                   pr.push_back((*it).toDouble());
                }
 
+#if defined(DEBUG_PR)
                cout << "pr values (" << pr.size() << "): ";
                
                for ( unsigned int i = 0; i < pr.size(); i++ )
@@ -1579,7 +1612,7 @@ void US_Hydrodyn_Saxs::load_pr()
                   cout << pr[i] << ",";
                }
                cout << endl;
-      
+#endif
                // plot it
                vector < double > this_r = r;
                // r has the ordinates for the longest data, some will likely be shorter
@@ -1592,6 +1625,13 @@ void US_Hydrodyn_Saxs::load_pr()
                {
                   pr.resize(r.size());
                }
+
+               for ( unsigned int i = 0; i < pr.size(); i++ )
+               {
+                  sum_pr[i] += pr[i];
+                  sum_pr2[i] += pr[i] * pr[i];
+               }
+               sum_count++;
 
                long ppr = plot_pr->insertCurve("p(r) vs r");
                plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
@@ -1619,10 +1659,212 @@ void US_Hydrodyn_Saxs::load_pr()
                editor->setColor(save_color);
             }
          }
-         if ( plotted )
+         if ( create_avg && sum_count )
          {
-            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-            editor->append("P(r) plot done\n");
+            pr = sum_pr;
+            for ( unsigned int i = 0; i < sum_pr.size(); i++ )
+            {
+               pr[i] /= (double)sum_count;
+            }
+            vector < double > this_r = r;
+            if ( r.size() > pr.size() )
+            {
+               this_r.resize(pr.size());
+            }
+            if ( pr.size() > r.size() )
+            {
+               pr.resize(r.size());
+            }
+            vector < double > pr_avg = pr;
+
+            long ppr = plot_pr->insertCurve("p(r) vs r");
+            plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
+            plotted_r.push_back(this_r);
+            if ( cb_normalize->isChecked() )
+            {
+               normalize_pr(&pr);
+            }
+            plotted_pr.push_back(pr);
+            unsigned int p = plotted_r.size() - 1;
+            
+            plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
+            plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+            plot_pr->replot();
+            
+            QColor save_color = editor->color();
+            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
+            editor->setColor(plot_colors[p % plot_colors.size()]);
+            editor->append("Average\n");
+            editor->setColor(save_color);
+            
+            vector < double > pr_std_dev;
+            vector < double > pr_avg_minus_std_dev;
+            vector < double > pr_avg_plus_std_dev;
+
+            if ( create_std_dev && sum_count > 2 )
+            {
+               vector < double > std_dev(sum_pr.size());
+               for ( unsigned int i = 0; i < sum_pr.size(); i++ )
+               {
+                  std_dev[i] = sqrt(
+                                    ( 1e0 / ((double)sum_count - 1e0) ) *
+                                    ( sum_pr2[i] - ((sum_pr[i] * sum_pr[i]) / (double)sum_count) ) );
+               }
+
+               pr_std_dev = std_dev;
+
+#if defined(DEBUG_STD_DEV)
+               cout << "sum pr (" << sum_pr.size() << "): ";
+               
+               for ( unsigned int i = 0; i < sum_pr.size(); i++ )
+               {
+                  cout << sum_pr[i] << ",";
+               }
+               cout << endl;
+               
+               cout << "sum pr2 (" << sum_pr2.size() << "): ";
+               
+               for ( unsigned int i = 0; i < sum_pr2.size(); i++ )
+               {
+                  cout << sum_pr2[i] << ",";
+               }
+               cout << endl;
+               
+               cout << "std values (" << std_dev.size() << "): ";
+               
+               for ( unsigned int i = 0; i < std_dev.size(); i++ )
+               {
+                  cout << std_dev[i] << ",";
+               }
+               cout << endl;
+#endif
+               pr = sum_pr;
+               for ( unsigned int i = 0; i < sum_pr.size(); i++ )
+               {
+                  pr[i] /= (double)sum_count;
+                  pr[i] -= std_dev[i];
+               }
+               vector < double > this_r = r;
+               if ( r.size() > pr.size() )
+               {
+                  this_r.resize(pr.size());
+               }
+               if ( pr.size() > r.size() )
+               {
+                  pr.resize(r.size());
+               }
+               pr_avg_minus_std_dev = pr;
+
+               {
+                  long ppr = plot_pr->insertCurve("p(r) vs r");
+                  plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
+                  plotted_r.push_back(this_r);
+                  if ( cb_normalize->isChecked() )
+                  {
+                     normalize_pr(&pr);
+                  }
+                  plotted_pr.push_back(pr);
+                  unsigned int p = plotted_r.size() - 1;
+                  
+                  plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
+                  plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+                  plot_pr->replot();
+
+                  QColor save_color = editor->color();
+                  editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
+                  editor->setColor(plot_colors[p % plot_colors.size()]);
+                  editor->append("Average minus 1 std dev\n");
+                  editor->setColor(save_color);
+               }
+               
+               pr = sum_pr;
+               for ( unsigned int i = 0; i < sum_pr.size(); i++ )
+               {
+                  pr[i] /= (double)sum_count;
+                  pr[i] += std_dev[i];
+               }
+               this_r = r;
+               if ( r.size() > pr.size() )
+               {
+                  this_r.resize(pr.size());
+               }
+               if ( pr.size() > r.size() )
+               {
+                  pr.resize(r.size());
+               }
+               pr_avg_plus_std_dev = pr;
+
+               {
+                  long ppr = plot_pr->insertCurve("p(r) vs r");
+                  plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
+                  plotted_r.push_back(this_r);
+                  if ( cb_normalize->isChecked() )
+                  {
+                     normalize_pr(&pr);
+                  }
+                  plotted_pr.push_back(pr);
+                  unsigned int p = plotted_r.size() - 1;
+                  
+                  plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
+                  plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+                  plot_pr->replot();
+
+                  QColor save_color = editor->color();
+                  editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
+                  editor->setColor(plot_colors[p % plot_colors.size()]);
+                  editor->append("Average plus 1 std dev\n");
+                  editor->setColor(save_color);
+               }
+            }
+            if ( save_to_csv )
+            {
+               editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+               editor->append("P(r) plot done\n");
+
+               QString fname = 
+                  ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
+                  csv_filename + "_prr.csv";
+               FILE *of = fopen(fname, "wb");
+               if ( of )
+               {
+                  //  header: "name","type",r1,r2,...,rn, header info
+                  fprintf(of, "\"Name\",\"Type; r:\",%s,%s\n", 
+                          vector_double_to_csv(r).ascii(),
+                          header_tag.ascii()
+                          // QString("Average of : " + qsl_sel_names.join(";").replace("\"","")).ascii()
+                          );
+                  fprintf(of, "%s\n", qsl_data_lines_plotted.join("\n").ascii());
+                  fprintf(of, "\"%s\",\"%s\",%s\n", 
+                             "Average",
+                             "P(r)",
+                             vector_double_to_csv(pr_avg).ascii());
+                  fprintf(of, "\"%s\",\"%s\",%s\n", 
+                             "Standard deviation",
+                             "P(r)",
+                             vector_double_to_csv(pr_std_dev).ascii());
+                  fprintf(of, "\"%s\",\"%s\",%s\n", 
+                             "Average minus 1 standard deviation",
+                             "P(r)",
+                             vector_double_to_csv(pr_avg_minus_std_dev).ascii());
+                  fprintf(of, "\"%s\",\"%s\",%s\n", 
+                             "Average plus 1 standard deviation",
+                             "P(r)",
+                             vector_double_to_csv(pr_avg_plus_std_dev).ascii());
+                  fclose(of);
+                  editor->append(tr("Created file: " + fname + "\n"));
+               } else {
+                  QColor save_color = editor->color();
+                  editor->setColor("red");
+                  editor->append(tr("ERROR creating file: " + fname + "\n"));
+                  editor->setColor(save_color);
+               }
+            }
+         } else {
+            if ( plotted )
+            {
+               editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+               editor->append("P(r) plot done\n");
+            }
          }
          
          return;
@@ -3069,5 +3311,15 @@ QString US_Hydrodyn_Saxs::sprr_filestring()
       QString(".sprr_%1")
       .arg( rb_curve_raw->isChecked() ? "r" :
             ( rb_curve_saxs->isChecked() ? "x" : "n" ) );
+   return result;
+}
+
+QString US_Hydrodyn_Saxs::vector_double_to_csv( vector < double > vd )
+{
+   QString result;
+   for ( unsigned int i = 0; i < vd.size(); i++ )
+   {
+      result += QString("%1,").arg(vd[i]);
+   }
    return result;
 }

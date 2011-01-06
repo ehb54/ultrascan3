@@ -61,6 +61,10 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    batch->iqq = false;
    batch->csv_saxs = false;
    batch->csv_saxs_name = "results";
+   if ( !batch->somo && !batch->grid && !batch->iqq && !batch->iqq )
+   {
+      batch->somo = true;
+   }
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -159,6 +163,13 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_load_somo->setMinimumHeight(minHeight1);
    pb_load_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_somo, SIGNAL(clicked()), SLOT(load_somo()));
+
+   pb_load_saxs = new QPushButton(tr("Load into SAXS"), this);
+   Q_CHECK_PTR(pb_load_saxs);
+   pb_load_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_saxs->setMinimumHeight(minHeight1);
+   pb_load_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_load_saxs, SIGNAL(clicked()), SLOT(load_saxs()));
 
 #if defined(WIN32)
    pb_make_movie = (QPushButton *) 0;
@@ -430,6 +441,7 @@ void US_Hydrodyn_Batch::setupGUI()
    hbl_selection_ops->addWidget(pb_select_all);
    hbl_selection_ops->addWidget(pb_remove_files);
    hbl_selection_ops->addWidget(pb_load_somo);
+   hbl_selection_ops->addWidget(pb_load_saxs);
    if ( pb_make_movie )
    {
       hbl_selection_ops->addWidget(pb_make_movie);
@@ -797,6 +809,72 @@ void US_Hydrodyn_Batch::load_somo()
    update_enables();
 }
 
+void US_Hydrodyn_Batch::load_saxs()
+{
+   disable_updates = true;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected(i) )
+      {
+         bool result;
+         QString file = get_file_name(i);
+         QColor save_color = editor->color();
+         if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
+              !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
+         {
+            // no save/restore settings for load into somo
+            if ( 
+                ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues != batch->missing_residues ||
+                ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms != batch->missing_atoms )
+            {
+               switch ( QMessageBox::question(this, 
+                                              tr("UltraScan Notice"),
+                                              QString(tr("Please note:\n\n"
+                                                         "You are loading a PDB file and the current Batch Operation\n"
+                                                         "PDB parsing options don't match SOMO's current settings\n"
+                                                         "What would you like to do?\n")),
+                                              tr("Use &Batch current mode settings"), 
+                                              tr("Keep &SOMO's setting"),
+                                              QString::null,
+                                              0, // Stop == button 0
+                                              0 // Escape == button 0
+                                             ) )
+               {
+               case 0 : 
+                  save_us_hydrodyn_settings();
+                  break;
+               case 1 : 
+                  break;
+               }
+            }
+            result = ((US_Hydrodyn *)us_hydrodyn)->screen_pdb(file, true);
+         } else {
+            result = screen_bead_model(file);
+         }
+         if ( result ) 
+         {
+            editor->setColor("dark blue");
+            editor->append(QString(tr("Screening: %1 ok.").arg(file)));
+         } else {
+            editor->setColor("red");
+            editor->append(QString(tr("Screening: %1 FAILED.").arg(file)));
+         }
+         editor->setColor(save_color);
+
+         if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
+              !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
+         {
+            ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
+         } else {
+         ((US_Hydrodyn *)us_hydrodyn)->bead_saxs();
+         }
+         break;
+      }
+   }
+   disable_updates = false;
+   update_enables();
+}
+
 void US_Hydrodyn_Batch::update_enables()
 {
    if ( disable_updates )
@@ -833,6 +911,7 @@ void US_Hydrodyn_Batch::update_enables()
    pb_remove_files->setEnabled(count_selected);
    pb_screen->setEnabled(count_selected);
    pb_load_somo->setEnabled(count_selected == 1);
+   pb_load_saxs->setEnabled(count_selected);
    if ( pb_make_movie )
    {
       pb_make_movie->setEnabled(count_selected > 1);

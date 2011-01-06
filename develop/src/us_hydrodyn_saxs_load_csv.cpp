@@ -4,6 +4,10 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
                                                      QString msg,
                                                      QStringList *qsl_names,
                                                      QStringList *qsl_sel_names,
+                                                     bool *create_avg,
+                                                     bool *create_std_dev,
+                                                     bool *save_to_csv,
+                                                     QString *csv_filename,
                                                      QWidget *p,
                                                      const char *name
                                                      ) : QDialog(p, name)
@@ -11,6 +15,10 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
    this->msg = msg;
    this->qsl_names = qsl_names;
    this->qsl_sel_names = qsl_sel_names;
+   this->create_avg = create_avg;
+   this->create_std_dev = create_std_dev;
+   this->save_to_csv = save_to_csv;
+   this->csv_filename = csv_filename;
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -48,6 +56,38 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    lb_names->setEnabled(true);
    connect(lb_names, SIGNAL(selectionChanged()), SLOT(update_selected()));
 
+   cb_create_avg = new QCheckBox(this);
+   cb_create_avg->setText(tr(" Create average curve"));
+   cb_create_avg->setEnabled(true);
+   cb_create_avg->setChecked(*create_avg);
+   cb_create_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_create_avg->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_create_avg, SIGNAL(clicked()), this, SLOT(set_create_avg()));
+
+   cb_create_std_dev = new QCheckBox(this);
+   cb_create_std_dev->setText(tr(" Create std deviation curves"));
+   cb_create_std_dev->setEnabled(true);
+   cb_create_std_dev->setChecked(*create_std_dev);
+   cb_create_std_dev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_create_std_dev->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_create_std_dev, SIGNAL(clicked()), this, SLOT(set_create_std_dev()));
+
+   cb_save_to_csv = new QCheckBox(this);
+   cb_save_to_csv->setText(tr(" Save to csv"));
+   cb_save_to_csv->setEnabled(true);
+   cb_save_to_csv->setChecked(*save_to_csv);
+   cb_save_to_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_save_to_csv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_save_to_csv, SIGNAL(clicked()), this, SLOT(set_save_to_csv()));
+
+   le_csv_filename = new QLineEdit(this, "csv_filename Line Edit");
+   le_csv_filename->setText(*csv_filename);
+   le_csv_filename->setAlignment(AlignCenter|AlignVCenter);
+   le_csv_filename->setMinimumWidth(100);
+   le_csv_filename->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_csv_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   connect(le_csv_filename, SIGNAL(textChanged(const QString &)), SLOT(update_csv_filename(const QString &)));
+
    pb_select_all = new QPushButton(tr("Select All"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_all->setMinimumHeight(minHeight1);
@@ -73,7 +113,6 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    connect(pb_ok, SIGNAL(clicked()), SLOT(ok()));
 
    // build layout
-   // left box / possible
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout;
    hbl_bottom->addSpacing(5);
@@ -86,14 +125,26 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    hbl_bottom->addWidget(pb_ok);
    hbl_bottom->addSpacing(5);
 
+   QHBoxLayout *hbl_avg_std = new QHBoxLayout;
+   hbl_avg_std->addSpacing(5);
+   hbl_avg_std->addWidget(cb_create_avg);
+   hbl_avg_std->addWidget(cb_create_std_dev);
+   hbl_avg_std->addWidget(cb_save_to_csv);
+   hbl_avg_std->addWidget(le_csv_filename);
+   hbl_avg_std->addSpacing(5);
+
    QVBoxLayout *background = new QVBoxLayout(this);
    background->addSpacing(5);
    background->addWidget(lbl_info);
    background->addSpacing(5);
    background->addWidget(lb_names);
    background->addSpacing(5);
+   background->addLayout(hbl_avg_std);
+   background->addSpacing(5);
    background->addLayout(hbl_bottom);
    background->addSpacing(5);
+
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Load_Csv::select_all()
@@ -146,4 +197,36 @@ void US_Hydrodyn_Saxs_Load_Csv::update_selected()
          *qsl_sel_names << lb_names->text(i);
       }
    }
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Load_Csv::update_csv_filename(const QString &str)
+{
+   *csv_filename = str;
+}
+
+void US_Hydrodyn_Saxs_Load_Csv::set_create_avg()
+{
+   *create_avg = cb_create_avg->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Load_Csv::set_create_std_dev()
+{
+   *create_std_dev = cb_create_std_dev->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Load_Csv::set_save_to_csv()
+{
+   *save_to_csv = cb_save_to_csv->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Load_Csv::update_enables()
+{
+   cb_create_avg->setEnabled(qsl_sel_names->size() > 1);
+   cb_create_std_dev->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 2);
+   cb_save_to_csv->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
+   le_csv_filename->setEnabled(cb_save_to_csv->isChecked() && qsl_sel_names->size() > 1);
 }
