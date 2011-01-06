@@ -1545,6 +1545,8 @@ void US_Hydrodyn_Saxs::load_pr()
             
          delete hslc;
          
+         this->isVisible() ? this->raise() : this->show();
+
          // ok, now qsl_sel_names should have the load list
          // loop through qsl_data and match up 
          // create a map to avoid a double loop
