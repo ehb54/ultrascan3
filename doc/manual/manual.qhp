@@ -31,6 +31,7 @@
             <keyword id="a2" name="associations"  ref="associations.html"/>
             <keyword id="a3" name="astfem_sim"    ref="astfem_sim.html"/>
             <keyword id="b1" name="buffer"        ref="us_buffer.html"/>
+            <keyword id="s1" name="solution"      ref="us_solution.html"/>
             <keyword id="c1" name="components"    ref="components.html"/>
             <keyword id="c2" name="configuration" ref="config.html"/>
             <keyword id="d1" name="data-loader"   ref="data_loader.html"/>
@@ -92,6 +93,11 @@
             <file>us_buffer.html</file>
             <file>images/us_buffer.png</file>
             <file>images/us_buffer_spect.png</file>
+
+            <file>us_solution.html</file>
+            <file>images/us_solution1.png</file>
+            <file>images/us_solution2.png</file>
+            <file>images/us_solution3.png</file>
 
             <file>pseudo3d_combine.html</file>
             <file>images/pseudo3d_combine.png</file>
