@@ -10,6 +10,7 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_investigator.h"
 #include "us_run_details2.h"
 #include "us_exclude_profile.h"
 #include "us_ri_noise.h"
@@ -69,12 +70,28 @@ US_Edit::US_Edit() : US_Widgets()
    int s_row = 0;
 
    // Row 1
-   QGridLayout* db_layout = us_radiobutton( tr( "Use Database" ), rb_db );
-   specs->addLayout( db_layout, s_row, 0, 1, 2 );
+   // Investigator
 
-   QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk );
-   rb_disk->setChecked( true );
-   specs->addLayout( disk_layout, s_row++, 2, 1, 2 );
+   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   specs->addWidget( pb_investigator, s_row, 0 );
+
+   if ( US_Settings::us_inv_level() < 1 )
+      pb_investigator->setEnabled( false );
+
+   // Very light gray for read only line edit widgets
+   QPalette gray = US_GuiSettings::editColor();;
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+
+   QString number  = QString::number( US_Settings::us_inv_ID() ) + ": ";
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1 );
+   le_investigator->setReadOnly( true );
+   le_investigator->setPalette( gray );
+   specs->addWidget( le_investigator, s_row++, 1, 1, 3 );
+
+   // Row 1A
+   disk_controls = disk_controls = new US_Disk_DB_Controls;
+   specs->addLayout( disk_controls, s_row++, 0, 1, 4 );
 
    // Row 2
    QPushButton* pb_load = us_pushbutton( tr( "Load Data" ) );
@@ -270,6 +287,21 @@ US_Edit::US_Edit() : US_Widgets()
    top ->addLayout( main );
 
    reset();
+}
+
+void US_Edit::sel_investigator( void )
+{
+   int investigator = US_Settings::us_inv_ID();
+
+   US_Investigator* dialog = new US_Investigator( false, investigator );
+   dialog->exec();
+
+   investigator = US_Settings::us_inv_ID();
+
+   QString inv_text = QString::number( investigator ) + ": "
+                      +  US_Settings::us_inv_name();
+   
+   le_investigator->setText( inv_text );
 }
 
 void US_Edit::reset( void )
@@ -537,7 +569,7 @@ void US_Edit::gap_check( void )
 
 void US_Edit::load( void )
 {  
-   if ( rb_db->isChecked() )
+   if ( disk_controls->db() )
    {
       US_LoadDB dialog( workingDir );
       if ( dialog.exec() == QDialog::Rejected ) return;
@@ -2172,7 +2204,7 @@ void US_Edit::write( void )
 
    f.close();
 
-   if ( rb_db->isChecked() )
+   if ( disk_controls->db() )
    {
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
@@ -2220,7 +2252,7 @@ void US_Edit::apply_prior( void )
    QString filename;
    int     index1;
 
-   if ( rb_db->isChecked() )
+   if ( disk_controls->db() )
    {
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
