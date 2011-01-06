@@ -1,0 +1,109 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Solution Window'
+%]
+    <h2> Manage Solution Information: </h2>
+    <p class='center'><img src="images/us_solution1.png" 
+    alt="Solution Window"/></p>
+
+    <p> Using this window, you can manage solution information on your local
+    disk or in the current database.  You must be identified as the
+    investigator to delete or update a solution description in the database.</p>
+
+    <p>To load solution information into the current window, first select
+    the Use Database or the Use Local Disk radio button. Then click the
+    Query Solutions button.</p>
+
+    <p>To display information about a single solution, click on the solution 
+    name listed in the click on solution to select widget. Edit the Solution
+    Name, Common VBar, Storage Temperature, or Solution notes by editing
+    the appropriate box in the lower right-hand part of the window. Click
+    on the Save Solution button to save any changes. </p>
+
+    <p class='center'><img src="images/us_solution2.png" 
+    alt="Solution Window"/></p>
+
+    <p>To add or change a component to the current solution, click on the
+    Add Analyte button and create or select a new solution component. Select
+    the new component in the Current solution contents widget and edit the
+    Analyte Molar Ratio control to indicate the relative concentration of the
+    new component.</p>
+
+    <p class='center'><img src="images/us_solution3.png" 
+    alt="Solution Window"/></p>
+
+    <p>To remove a component of the current solution, select the appropriate
+    component in the Current solution contents widget and then click the
+    Remove Analyte button. </p>
+
+    <p>To identify the buffer used in this solution, click on the Select
+    Buffer button.</p>
+
+    <p>After making the appropriate changes, be sure to click the Save
+    Solution button to save your changes.</p>
+
+    <h4>Dialog Items:</h4>
+
+    <ul>
+      <li><b>Click on solution to select</b> After clicking on the Query Solutions 
+      button, this widget will contain a list of solutions available in the current 
+      location (database or local disk). Click on a solution in the widget
+      to select.</li>
+
+      <li><b>Analyte Molar Ratio</b> Once a solution has been selected and a
+      solution contents item (analyte) has been chosen, use this to enter the 
+      comparative amount of that analyte that is in the solution.</li>
+
+      <li><b>Current solution contents</b> A list of analytes contained in the
+      solution. Click on the Add Analyte button to add another component, or
+      click on the Remove Analyte button to remove the selected component.</li>
+
+      <li><b>Use Database</b> Check to select read or write of the solution
+      definition to or from the database.</li>
+      
+      <li><b>Use Local Disk</b> Check to select read or write of the solution
+      definition to or from the hard disk.</li>
+      
+      <li><b>Query Solutions</b> This button initiates a read of solution
+      definitions and population of the solution list widget.</li>
+      
+      <li><b>Save Solution</b> Saves the current solution definition to the hard
+      disk or database.</li>
+      
+      <li><b>Add Analyte</b> Initiates a dialog to create or add an existing
+      analyte to the current solution definition in the database or on the 
+      hard disk.</li>
+      
+      <li><b>Delete Solution</b> Deletes the current solution from the database
+      or hard disk.</li>
+
+      <li><b>Remove Analyte</b> Removes the analyte currently selected in the
+      current solution contents list widget from the solution definition.</li>
+
+      <li><b>Select Buffer</b> Initiates a dialog to create or select an existing
+      buffer to the current solution definition in the database or on the
+      hard disk.</li>
+
+      <li><b>Solution Name</b> The name of the solution currently selected in
+      the Click on solution to select list widget, or a new name when creating
+      a new solution definition in the database or on the hard disk.</li>
+
+      <li><b>Common VBar (20C)</b> The common vbar at a temperature of 20 degrees C.</li>
+
+      <li><b>Storage Temperature</b> The average temperature of all the runs.</li>
+
+      <li><b>Solution notes</b> User editable notes about the currently selected
+      solution.</li>
+
+      <li><b>Global Identifier</b> Read-only global identifier of the
+      solution.</li>
+
+      <li><b>Reset</b> Reset all solution values to default setting.</li>
+
+      <li><b>Help</b> Show this documentation.</li>
+
+      <li><b>Close</b> Close the dialog and possibly return solution selections
+      to the caller.</li>
+
+    </ul>
+
+[% INCLUDE footer.us3 %]

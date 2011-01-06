@@ -13,17 +13,15 @@
 #include "us_solution_gui.h"
 
 US_SolutionGui::US_SolutionGui( 
-      int   invID,
       int   expID,
       int   chID,
       bool  signal_wanted,
-      const US_Solution& dataIn ) : US_WidgetsDialog( 0, 0 )
+      int   select_db_disk,
+      const US_Solution& dataIn 
+      ) : US_WidgetsDialog( 0, 0 ), experimentID( expID ), channelID( chID ),
+        signal( signal_wanted ), solution( dataIn )
 {
-   investigatorID = invID;
-   experimentID   = expID,
-   channelID      = chID,
-   signal         = signal_wanted;
-   solution       = dataIn;
+   investigatorID = US_Settings::us_inv_ID();
 
    setWindowTitle( tr( "Solution Management" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -51,6 +49,9 @@ US_SolutionGui::US_SolutionGui(
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
    main->addWidget( pb_investigator, row++, 0 );
+
+   if ( US_Settings::us_inv_level() < 1 )
+      pb_investigator->setEnabled( false );
 
    // Available solutions
    QLabel* lb_banner2 = us_banner( tr( "Click on solution to select" ), -2  );
@@ -100,14 +101,10 @@ US_SolutionGui::US_SolutionGui(
    le_investigator->setReadOnly( true );
    main->addWidget( le_investigator, row++, 1, 1, 2 );
 
-   QGridLayout* db_layout = us_radiobutton( tr( "Use Database" ), rb_db );
-   connect( rb_db, SIGNAL( clicked() ),  SLOT( check_db() ) );
-   rb_db->setChecked( true );
-   main->addLayout( db_layout, row, 1 );
-
-   QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk );
-   connect( rb_disk, SIGNAL( clicked() ),  SLOT( check_disk() ) );
-   main->addLayout( disk_layout, row++, 2 );
+   disk_controls = new US_Disk_DB_Controls( select_db_disk );
+   connect( disk_controls, SIGNAL( changed       ( bool ) ),
+                           SLOT  ( source_changed( bool ) ) );
+   main->addLayout( disk_controls, row++, 1, 1, 2 );
 
    pb_query = us_pushbutton( tr( "Query Solutions" ), true );
    connect( pb_query, SIGNAL( clicked() ), SLOT( load() ) );
@@ -284,10 +281,10 @@ void US_SolutionGui::reset( void )
    else if ( solution.saveStatus == US_Solution::BOTH )
       pb_accept->setEnabled( true );
 
-   else if ( rb_disk->isChecked() && solution.saveStatus == US_Solution::HD_ONLY )
+   else if ( ( ! disk_controls->db() ) && solution.saveStatus == US_Solution::HD_ONLY )
       pb_accept->setEnabled( true );
 
-   else if ( rb_db  ->isChecked() && solution.saveStatus == US_Solution::DB_ONLY )
+   else if ( ( ! disk_controls->db() ) && solution.saveStatus == US_Solution::DB_ONLY )
       pb_accept->setEnabled( true );
 
    else
@@ -298,6 +295,8 @@ void US_SolutionGui::reset( void )
       investigatorID = US_Settings::us_inv_ID();
    if ( investigatorID > 0 )
       le_investigator->setText( QString::number( investigatorID ) + ": " + US_Settings::us_inv_name() );
+   else
+      le_investigator->setText( "Not Selected" );
 }
 
 // Function to accept the current set of solutions and return
@@ -356,11 +355,11 @@ void US_SolutionGui::assign_investigator( int invID,
 // Function to load solutions into solutions list widget
 void US_SolutionGui::load( void )
 {
-   if ( rb_disk -> isChecked() )
-      loadDisk();
+   if ( disk_controls->db() )
+      loadDB();
 
    else
-      loadDB();
+      loadDisk();
 
 }
 
@@ -432,6 +431,8 @@ void US_SolutionGui::loadDB( void )
       return;
    }
 
+   if ( investigatorID < 1 ) investigatorID = US_Settings::us_inv_ID();
+
    QStringList q( "all_solutionIDs" );
    q << QString::number( investigatorID );
    db.query( q );
@@ -491,13 +492,7 @@ void US_SolutionGui::selectSolution( QListWidgetItem* item )
 
    solution.clear();
 
-   if ( rb_disk -> isChecked() )
-   {
-      solution.readFromDisk( solutionGUID );
-      solution.saveStatus = US_Solution::HD_ONLY;
-   }
-
-   else
+   if ( disk_controls->db() )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
@@ -513,18 +508,31 @@ void US_SolutionGui::selectSolution( QListWidgetItem* item )
       solution.saveStatus = US_Solution::DB_ONLY;
    }
 
+   else
+   {
+      solution.readFromDisk( solutionGUID );
+      solution.saveStatus = US_Solution::HD_ONLY;
+   }
+
    reset();
 }
 
 // Function to add analyte to solution
 void US_SolutionGui::addAnalyte( void )
 {
-   US_AnalyteGui* analyte_dialog = new US_AnalyteGui( true );
+   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
+
+   US_AnalyteGui* analyte_dialog = new US_AnalyteGui( true, QString(), dbdisk );
 
    connect( analyte_dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
             this,           SLOT  ( assignAnalyte ( US_Analyte ) ) );
 
+   connect( analyte_dialog, SIGNAL( use_db        ( bool ) ), 
+                            SLOT  ( update_disk_db( bool ) ) );
+
    analyte_dialog->exec();
+   qApp->processEvents();
 
 }
 
@@ -589,9 +597,9 @@ void US_SolutionGui::selectAnalyte( QListWidgetItem* item )
    lb_amount->setPalette( p );
 
    pb_removeAnalyte ->setEnabled( true );
+   ct_amount        ->setEnabled( true );
    connect( ct_amount, SIGNAL( valueChanged ( double ) ),      // if the user has changed it
                        SLOT  ( saveAmount   ( double ) ) );
-   ct_amount -> setEnabled( true );
 }
 
 // Function to add analyte to solution
@@ -637,12 +645,19 @@ void US_SolutionGui::calcCommonVbar20( void )
 // Create a dialog to request a buffer selection
 void US_SolutionGui::selectBuffer( void )
 {
-   US_BufferGui* buffer_dialog = new US_BufferGui( true );      // Ask for a signal
+   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
+
+   US_BufferGui* buffer_dialog = new US_BufferGui( true, US_Buffer(), dbdisk );
 
    connect( buffer_dialog, SIGNAL( valueChanged ( US_Buffer ) ),
             this,          SLOT  ( assignBuffer ( US_Buffer ) ) );
 
+   connect( buffer_dialog, SIGNAL( use_db        ( bool ) ), 
+                           SLOT  ( update_disk_db( bool ) ) );
+
    buffer_dialog->exec();
+   qApp->processEvents();
 }
 
 // Get information about selected buffer
@@ -755,15 +770,7 @@ void US_SolutionGui::save( void )
    if ( le_storageTemp->text().isEmpty() )
       solution.storageTemp = 0;
 
-   if ( rb_disk -> isChecked() )
-   {
-      solution.saveToDisk();
-
-      solution.saveStatus = ( solution.saveStatus == US_Solution::DB_ONLY ) 
-                          ? US_Solution::BOTH : US_Solution::HD_ONLY;
-   }
-
-   else
+   if ( disk_controls->db() )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
@@ -781,6 +788,14 @@ void US_SolutionGui::save( void )
                           ? US_Solution::BOTH : US_Solution::DB_ONLY;
    }
 
+   else
+   {
+      solution.saveToDisk();
+
+      solution.saveStatus = ( solution.saveStatus == US_Solution::DB_ONLY ) 
+                          ? US_Solution::BOTH : US_Solution::HD_ONLY;
+   }
+
    QMessageBox::information( this,
          tr( "Save results" ),
          tr( "Solution saved" ) );
@@ -789,10 +804,7 @@ void US_SolutionGui::save( void )
 // Function to delete a solution from disk, db, or in the current form
 void US_SolutionGui::delete_solution( void )
 {
-   if ( rb_disk -> isChecked() )
-      solution.deleteFromDisk();
-
-   else
+   if ( disk_controls->db() )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
@@ -807,6 +819,9 @@ void US_SolutionGui::delete_solution( void )
       solution.deleteFromDB( &db );
    }
 
+   else
+      solution.deleteFromDisk();
+
    solution.clear();
    analyteMap.clear();
    load();
@@ -818,31 +833,31 @@ void US_SolutionGui::delete_solution( void )
          tr( "Solution Deleted" ) );
 }
 
-void US_SolutionGui::check_db( void )
+void US_SolutionGui::source_changed( bool db )
 {
    QStringList DB = US_Settings::defaultDB();
 
-   if ( DB.size() < 5 )
+   if ( db && ( DB.size() < 5 ) )
    {
       QMessageBox::warning( this,
          tr( "Attention" ),
          tr( "There is no default database set." ) );
    }
 
+   emit use_db( db );
+   qApp->processEvents();
+
    // Clear out solution list
    solutionMap.clear();
    lw_solutions->clear();
 
+   load();
    reset();
 }
 
-void US_SolutionGui::check_disk( void )
+void US_SolutionGui::update_disk_db( bool db )
 {
-   // Clear out solution list
-   solutionMap.clear();
-   lw_solutions->clear();
-
-   reset();
+   ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
 }
 
 // Function to display an error returned from the database

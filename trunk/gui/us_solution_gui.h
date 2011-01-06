@@ -26,21 +26,21 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
                  instantiate the class a calling function must
                  provide a structure to contain all the data.
 
-          \param invID   An integer value that indicates the ID of
-                         the current user
           \param expID   An integer value that indicates the ID of
                          the associated experiment
           \param chID    An integer value that indicates the ID of
                          the channel used
           \param signal_wanted A boolean value indicating whether the caller
                          wants a signal to be emitted
+          \param select_db_disk Indicates whether the default search is on
+                         the local disk or in the DB
           \param dataIn  A reference to a structure that contains
                          the currently selected c/c/w dataset.
       */
-      US_SolutionGui( int = 0,
-                      int = 1,
-                      int = 1,
+      US_SolutionGui( int  = 1,
+                      int  = 1,
                       bool = false,
+                      int  = US_Disk_DB_Controls::Default,
                       const US_Solution& = US_Solution() );
 
       //! A null destructor. 
@@ -64,6 +64,10 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
                  are erased.
       */
       void cancelSolutionGuiSelection( void );
+
+      //! A signal to indicate that the current disk/db selection has changed.
+      //! /param DB True if DB is the new selection
+      void use_db( bool DB );
 
    private:
       class SolutionInfo
@@ -104,6 +108,8 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       QListWidget*  lw_analytes;
 
       QTextEdit*    te_notes;
+
+      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
       QPushButton*  pb_query;
       QPushButton*  pb_buffer;
@@ -146,8 +152,8 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       void newSolution        ( void );
       void save               ( void );
       void delete_solution    ( void );
-      void check_db           ( void );
-      void check_disk         ( void );
+      void source_changed     ( bool );
+      void update_disk_db     ( bool );
       void db_error           ( const QString& );
       void help               ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
