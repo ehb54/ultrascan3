@@ -87,7 +87,7 @@ class US_EXTERN US_DB2
       PRIV           = 1,       //!< Privileged user
       ANALYST        = 2,       //!< Data Analyst
       SUPER          = 3,       //!< Super User
-      ADMIN          = 4,       //!< Admin
+      ADMIN          = 4        //!< Admin
     };
 
     // Methods
