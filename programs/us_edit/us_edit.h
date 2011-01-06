@@ -73,6 +73,7 @@ class US_EXTERN US_Edit : public US_Widgets
       
       QLabel*            lb_gaps;
 
+      QLineEdit*         le_investigator;
       QLineEdit*         le_info;
       QLineEdit*         le_meniscus;
       QLineEdit*         le_airGap;
@@ -100,8 +101,7 @@ class US_EXTERN US_Edit : public US_Widgets
       QPushButton*       pb_float;
       QPushButton*       pb_undo;
                         
-      QRadioButton*      rb_db;
-      QRadioButton*      rb_disk;
+      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
       QComboBox*         cb_triple;
                         
@@ -146,6 +146,7 @@ class US_EXTERN US_Edit : public US_Widgets
       void include           ( void );
       void apply_prior       ( void );
 
+      void sel_investigator  ( void );
       void set_fringe_tolerance( double ); 
       void set_meniscus      ( void );
       void set_airGap        ( void );
