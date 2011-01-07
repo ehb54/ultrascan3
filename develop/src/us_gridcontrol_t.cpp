@@ -1596,6 +1596,7 @@ void US_GridControl_T::write_experiment()
           analysis_type == "2DSA_MW_RA")
       {
          cerr << "2dsa_mw\n";
+         cout << "vx1\n";
          QString cellwave;
          QDateTime startDateTime = QDateTime::currentDateTime();
          cellwave = cellwave.sprintf(".%d%d", experiment[0].cell + 1, experiment[0].wavelength + 1);
@@ -1641,6 +1642,7 @@ void US_GridControl_T::write_experiment()
          {
             for(step_k = 0; step_k < steps_k; step_k++)
             {
+               solutes.component.clear();
                if(f_partition > 1)
                {
                   inc_k = step_k * (ff0_diff) / ((f_partition - 1) * steps);
@@ -1651,7 +1653,6 @@ void US_GridControl_T::write_experiment()
                }
                for (m = 0; m < mw_partition; m++)
                {
-                  solutes.component.clear();
                   for(l = 1; l <= SA2D_Params.max_mer; l++)
                   {
                      if((SA2D_Params.max_mer_string.ascii())[l-1] != '1')
@@ -1730,10 +1731,10 @@ void US_GridControl_T::write_experiment()
                         } // n
                      } // else
                   } // l
-                  printf("solute size on push back %u\n", (unsigned int) solutes.component.size());
-                  solutions.push_back(solutes);
-                  total_solutes += solutes.component.size();
                } // m
+               printf("solute size on push back %u\n", (unsigned int) solutes.component.size());
+               solutions.push_back(solutes);
+               total_solutes += solutes.component.size();
             } // step_k
          } // step_mw
          fflush(stdout);
