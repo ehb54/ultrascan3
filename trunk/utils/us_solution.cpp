@@ -325,7 +325,8 @@ void US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
       status = db->statusQuery( q );
       if ( status != US_DB2::OK )
          qDebug() << "MySQL error associating analyte with solution in database: " 
-                  << db->lastError();
+                  << db->lastError() + "\n"
+                  << "Error no = " + db->lastErrno();
    }
 }
 

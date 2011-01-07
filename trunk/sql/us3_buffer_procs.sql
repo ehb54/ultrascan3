@@ -18,28 +18,38 @@ CREATE FUNCTION verify_buffer_permission( p_personGUID CHAR(36),
   READS SQL DATA
 
 BEGIN
-  DECLARE count_buffer   INT;
-  DECLARE status         INT;
+  DECLARE count_buffers     INT;
+  DECLARE count_permissions INT;
+  DECLARE status            INT;
 
   CALL config();
   SET status   = @ERROR;
 
   SELECT COUNT(*)
-  INTO   count_buffer
+  INTO   count_buffers
+  FROM   buffer
+  WHERE  bufferID = p_bufferID;
+
+  SELECT COUNT(*)
+  INTO   count_permissions
   FROM   bufferPerson
   WHERE  bufferID = p_bufferID
   AND    personID = @US3_ID;
- 
-  IF ( verify_user( p_personGUID, p_password ) = @OK &&
-       count_buffer > 0 ) THEN
-    SET status = @OK;
+
+  IF ( count_buffers = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NO_BUFFER;
+    SET @US3_LAST_ERROR = 'MySQL: the specified buffer does not exist';
 
   ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     SET status = @OK;
 
+  ELSEIF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+           ( count_permissions > 0                         ) ) THEN
+    SET status = @OK;
+
   ELSE
     SET @US3_LAST_ERRNO = @NOTPERMITTED;
-    SET @US3_LAST_ERROR = 'MySQL: you do not have permission to modify this buffer';
+    SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view or modify this buffer';
 
     SET status = @NOTPERMITTED;
 
