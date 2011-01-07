@@ -31,7 +31,6 @@
             <keyword id="a2" name="associations"  ref="associations.html"/>
             <keyword id="a3" name="astfem_sim"    ref="astfem_sim.html"/>
             <keyword id="b1" name="buffer"        ref="us_buffer.html"/>
-            <keyword id="s1" name="solution"      ref="us_solution.html"/>
             <keyword id="c1" name="components"    ref="components.html"/>
             <keyword id="c2" name="configuration" ref="config.html"/>
             <keyword id="d1" name="data-loader"   ref="data_loader.html"/>
@@ -50,6 +49,7 @@
             <keyword id="p2" name="pseudo3d-combine" ref="pseudo3d_combine.html"/>
             <keyword id="r1" name="register"      ref="register.html"/>
             <keyword id="s1" name="save-colormap" ref="save_colormap.html"/>
+            <keyword id="s2" name="solution"      ref="us_solution.html"/>
             <keyword id="v1" name="vhw-distrib-plot" ref="vhw_distrib_plot.html"/>
             <keyword id="v2" name="vhw-enhanced"  ref="vhw_enhanced.html"/>
         </keywords>
