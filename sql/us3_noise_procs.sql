@@ -18,24 +18,34 @@ CREATE FUNCTION verify_noise_permission( p_personGUID  CHAR(36),
   READS SQL DATA
 
 BEGIN
-  DECLARE count_noise  INT;
-  DECLARE status       INT;
+  DECLARE count_noise       INT;
+  DECLARE count_permissions INT;
+  DECLARE status            INT;
 
   CALL config();
   SET status   = @ERROR;
 
   SELECT COUNT(*)
-  INTO   count_noise 
+  INTO   count_noise
+  FROM   noise
+  WHERE  noiseID = p_noiseID;
+
+  SELECT COUNT(*)
+  INTO   count_permissions
   FROM   noise, modelPerson
   WHERE  noise.noiseID = p_noiseID
   AND    noise.modelID = modelPerson.modelID
   AND    personID = @US3_ID;
- 
-  IF ( verify_user( p_personGUID, p_password ) = @OK &&
-       count_noise > 0 ) THEN
-    SET status = @OK;
+
+  IF ( count_noise = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NO_NOISE;
+    SET @US3_LAST_ERROR = 'MySQL: the specified noise file does not exist';
 
   ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    SET status = @OK;
+
+  ELSEIF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+           ( count_permissions > 0                         ) ) THEN
     SET status = @OK;
 
   ELSE

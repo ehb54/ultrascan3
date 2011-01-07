@@ -19,6 +19,7 @@ CREATE FUNCTION verify_experiment_permission( p_personGUID   CHAR(36),
 
 BEGIN
   DECLARE count_experiments INT;
+  DECLARE count_permissions INT;
   DECLARE status            INT;
 
   CALL config();
@@ -26,15 +27,24 @@ BEGIN
 
   SELECT COUNT(*)
   INTO   count_experiments
+  FROM   experiment
+  WHERE  experimentID = p_experimentID;
+
+  SELECT COUNT(*)
+  INTO   count_permissions
   FROM   experimentPerson
   WHERE  experimentID = p_experimentID
   AND    personID = @US3_ID;
- 
-  IF ( verify_user( p_personGUID, p_password ) = @OK &&
-       count_experiments > 0 ) THEN
-    SET status = @OK;
+
+  IF ( count_experiments = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NO_EXPERIMENT;
+    SET @US3_LAST_ERROR = 'MySQL: the specified experiment does not exist';
 
   ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    SET status = @OK;
+
+  ELSEIF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+           ( count_permissions > 0                         ) ) THEN
     SET status = @OK;
 
   ELSE

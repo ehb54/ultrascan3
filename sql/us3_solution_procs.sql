@@ -20,26 +20,33 @@ CREATE FUNCTION verify_solution_permission( p_personGUID   CHAR(36),
   READS SQL DATA
 
 BEGIN
-  DECLARE count_solutions INT;
-  DECLARE status          INT;
+  DECLARE count_solutions   INT;
+  DECLARE count_permissions INT;
+  DECLARE status            INT;
 
   CALL config();
   SET status   = @ERROR;
 
   SELECT COUNT(*)
   INTO   count_solutions
+  FROM   solution
+  WHERE  solutionID = p_solutionID;
+
+  SELECT COUNT(*)
+  INTO   count_permissions
   FROM   solutionPerson
   WHERE  solutionID = p_solutionID
   AND    personID = @US3_ID;
- 
+
   IF ( count_solutions = 0 ) THEN
     SET @US3_LAST_ERRNO = @NO_SOLUTION;
     SET @US3_LAST_ERROR = 'MySQL: the specified solution does not exist';
 
-  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     SET status = @OK;
 
-  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+  ELSEIF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+           ( count_permissions > 0                         ) ) THEN
     SET status = @OK;
 
   ELSE

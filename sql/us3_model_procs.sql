@@ -18,23 +18,33 @@ CREATE FUNCTION verify_model_permission( p_personGUID  CHAR(36),
   READS SQL DATA
 
 BEGIN
-  DECLARE count_models INT;
-  DECLARE status       INT;
+  DECLARE count_models   INT;
+  DECLARE count_permissions INT;
+  DECLARE status            INT;
 
   CALL config();
   SET status   = @ERROR;
 
   SELECT COUNT(*)
   INTO   count_models
+  FROM   model
+  WHERE  modelID = p_modelID;
+
+  SELECT COUNT(*)
+  INTO   count_permissions
   FROM   modelPerson
   WHERE  modelID = p_modelID
   AND    personID = @US3_ID;
- 
-  IF ( verify_user( p_personGUID, p_password ) = @OK &&
-       count_models > 0 ) THEN
-    SET status = @OK;
+
+  IF ( count_models = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NO_MODEL;
+    SET @US3_LAST_ERROR = 'MySQL: the specified model does not exist';
 
   ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    SET status = @OK;
+
+  ELSEIF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+           ( count_permissions > 0                         ) ) THEN
     SET status = @OK;
 
   ELSE

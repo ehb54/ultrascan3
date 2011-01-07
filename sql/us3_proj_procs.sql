@@ -18,23 +18,33 @@ CREATE FUNCTION verify_project_permission( p_personGUID  CHAR(36),
   READS SQL DATA
 
 BEGIN
-  DECLARE count_projects INT;
-  DECLARE status         INT;
+  DECLARE count_projects   INT;
+  DECLARE count_permissions INT;
+  DECLARE status            INT;
 
   CALL config();
   SET status   = @ERROR;
 
   SELECT COUNT(*)
   INTO   count_projects
+  FROM   project
+  WHERE  projectID = p_projectID;
+
+  SELECT COUNT(*)
+  INTO   count_permissions
   FROM   projectPerson
   WHERE  projectID = p_projectID
   AND    personID = @US3_ID;
- 
-  IF ( verify_user( p_personGUID, p_password ) = @OK &&
-       count_projects > 0 ) THEN
-    SET status = @OK;
+
+  IF ( count_projects = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NO_PROJECT;
+    SET @US3_LAST_ERROR = 'MySQL: the specified project does not exist';
 
   ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    SET status = @OK;
+
+  ELSEIF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+           ( count_permissions > 0                         ) ) THEN
     SET status = @OK;
 
   ELSE
