@@ -462,20 +462,30 @@ double US_Math2::time_correction( const QVector< US_DataIO2::EditedData >& dataL
    return c[ 0 ]; // Return the time value corresponding to zero omega2t
 }
 
-int US_Math2::randomize( void )
+uint US_Math2::randomize( void )
 {
    QTime now = QTime::currentTime();
 
-   int seed = now.msec() 
-            + now.second() *    1000 
-            + now.minute() *   60000 
-            + now.hour()   * 3600000;
+   uint seed = now.msec() 
+             + now.second() *    1000 
+             + now.minute() *   60000 
+             + now.hour()   * 3600000;
 
 #ifdef UNIX
    seed -= getpid();
 #endif
 
-   srand( (uint) seed );
+   srand( seed );
+   return seed;
+}
+
+uint US_Math2::randomize( uint seed )
+{
+   if ( seed == 0 ) 
+      seed = randomize();
+   else
+      srand( seed );
+
    return seed;
 }
 
@@ -486,7 +496,7 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
                     double* wp,  
                     double* zzp,
                     int*    indexp 
-         ) 
+                  ) 
 {
    int pfeas, ret = 0, iz, jz;
    double d1, d2, sm, up, ss;

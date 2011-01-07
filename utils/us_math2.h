@@ -149,7 +149,12 @@ class US_EXTERN US_Math2
 
       //! \brief Set the sysem random sequence.
       //! \return The seed used to set the system time
-      static int randomize( void );
+      static uint randomize( void );
+
+      //! \brief Set the sysem random sequence.
+      //! \param seed A predetermined seed 
+      //! \return The seed used to set the system time
+      static uint randomize( uint );
 
       /*! Algorithm NNLS (Non-negative least-squares)
  
