@@ -3,6 +3,7 @@
 #define US_PROJECT_GUI_H
 
 #include "us_extern.h"
+#include "us_widgets.h"
 #include "us_widgets_dialog.h"
 #include "us_project.h"
 #include "us_help.h"
@@ -13,6 +14,7 @@ class US_EXTERN GeneralTab : public QWidget
 
    public:
       GeneralTab( int*,
+                  int,
                   QWidget* parent = 0 );
 
       //! A centralized place to reset all the controls in all the tabs
@@ -30,9 +32,8 @@ class US_EXTERN GeneralTab : public QWidget
       QPushButton*  pb_del;
       QPushButton*  pb_resetAll;
    
-      QRadioButton* rb_db;
-      QRadioButton* rb_disk;
-      
+      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
+
       int*          investigatorID;
 
       void          setGUID( QString );
@@ -40,14 +41,13 @@ class US_EXTERN GeneralTab : public QWidget
       QString       getDesc( void    );
 
    signals:
-      void check_db           ( void );       //!< \brief Emitted when the user clicks the db radio button
-      void check_disk         ( void );       //!< \brief Emitted when the user clicks the disk radio button
       void newProject         ( void );       //!< \brief Emitted when the user clicks the new project button
       void load               ( void );       //!< \brief Emitted when the user clicks the Query Projects button
       void selectProject      ( QListWidgetItem* ); //!< \brief Emitted when the user selects a project
       void saveDescription    ( const QString& );   //!< \brief Emitted when the description changes
       void save               ( void );       //!< \brief Emitted when the user saves the project
       void deleteProject      ( void );       //!< \brief Emitted when the user deletes the project
+      void source_changed     ( bool );       //!< \brief Emitted when the user changes data source (disk/db)
 
    private slots:
       void sel_investigator   ( void );
@@ -181,15 +181,15 @@ class US_EXTERN US_ProjectGui : public US_WidgetsDialog
                  instantiate the class a calling function must
                  provide a structure to contain all the data.
 
-          \param invID   An integer value that indicates the ID of
-                         the current user
           \param signal_wanted A boolean value indicating whether the caller
                          wants a signal to be emitted
+          \param select_db_disk Indicates whether the default search is on
+                         the local disk or in the DB
           \param dataIn  A reference to a structure that contains
                          the currently selected project information.
       */
-      US_ProjectGui( int = 0,
-                     bool = false,
+      US_ProjectGui( bool = false,
+                     int  = US_Disk_DB_Controls::Default,
                      const US_Project& = US_Project() );
 
       //! A null destructor. 
@@ -233,6 +233,10 @@ class US_EXTERN US_ProjectGui : public US_WidgetsDialog
       */
       void cancelProjectGuiSelection( void );
 
+      //! A signal to indicate that the current disk/db selection has changed.
+      //! /param DB True if DB is the new selection
+      void use_db( bool DB );
+
    private:
       bool          signal;
 
@@ -253,14 +257,13 @@ class US_EXTERN US_ProjectGui : public US_WidgetsDialog
       QPushButton*  pb_accept;
 
    public slots:
-      void check_db           ( void );
-      void check_disk         ( void );
       void newProject         ( void );
       void load               ( void );
       void selectProject      ( QListWidgetItem* );
       void saveDescription    ( const QString& );
       void saveProject        ( void );
       void deleteProject      ( void );
+      void source_changed     ( bool );
 
    private slots:
       void reset              ( void );

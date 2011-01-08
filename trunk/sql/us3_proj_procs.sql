@@ -130,7 +130,8 @@ CREATE PROCEDURE new_project ( p_personGUID       CHAR(36),
                                p_status           ENUM('submitted', 'designed', 
                                                        'scheduled', 'uploaded', 
                                                        'anlyzed',   'invoiced', 
-                                                       'paid',      'other') )
+                                                       'paid',      'other'),
+                               p_ownerID          INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -169,7 +170,7 @@ BEGIN
     
       INSERT INTO projectPerson SET
         projectID = @LAST_INSERT_ID,
-        personID  = @US3_ID;
+        personID  = p_ownerID;
 
     END IF;
 

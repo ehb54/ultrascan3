@@ -120,7 +120,8 @@ CREATE PROCEDURE new_model ( p_personGUID    CHAR(36),
                              p_modelGUID   CHAR(36),
                              p_description TEXT,
                              p_contents    TEXT,
-                             p_editGUID    CHAR(36) )
+                             p_editGUID    CHAR(36),
+                             p_ownerID     INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -180,7 +181,7 @@ BEGIN
 
       INSERT INTO modelPerson SET
         modelID   = @LAST_INSERT_ID,
-        personID  = @US3_ID;
+        personID  = p_ownerID;
 
     END IF;
 

@@ -11,13 +11,12 @@
 #include "us_project_gui.h"
 
 US_ProjectGui::US_ProjectGui( 
-      int   invID,
       bool  signal_wanted,
-      const US_Project& dataIn ) : US_WidgetsDialog( 0, 0 )
+      int   select_db_disk,
+      const US_Project& dataIn 
+      ) : US_WidgetsDialog( 0, 0 ), signal( signal_wanted ), project( dataIn )
 {
-   investigatorID = invID;
-   signal         = signal_wanted;
-   project        = dataIn;
+   investigatorID = US_Settings::us_inv_ID();
 
    setWindowTitle( tr( "Project Management" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -37,7 +36,7 @@ US_ProjectGui::US_ProjectGui(
 
    // Second row - tab widget
    tabWidget           = us_tabwidget();
-   generalTab          = new GeneralTab( &investigatorID );
+   generalTab          = new GeneralTab( &investigatorID, select_db_disk );
    goalsTab            = new GoalsTab( );
    moleculesTab        = new MoleculesTab( );
    purityTab           = new PurityTab( );
@@ -85,11 +84,8 @@ US_ProjectGui::US_ProjectGui(
    buttons->addWidget( pb_accept );
    
    // Global signals
-   connect( generalTab, SIGNAL( check_db   ( ) ),
-                        SLOT  ( check_db   ( ) ) );
-
-   connect( generalTab, SIGNAL( check_disk ( ) ),
-                        SLOT  ( check_disk ( ) ) );
+   connect( generalTab, SIGNAL( source_changed ( bool ) ),
+                        SLOT  ( source_changed ( bool ) ) );
 
    connect( generalTab, SIGNAL( newProject ( ) ),
                         SLOT  ( newProject ( ) ) );
@@ -167,10 +163,10 @@ void US_ProjectGui::enableButtons( void )
    else if ( project.saveStatus == US_Project::BOTH )
       pb_accept->setEnabled( true );
 
-   else if ( generalTab->rb_disk->isChecked() && project.saveStatus == US_Project::HD_ONLY )
+   else if ( ! generalTab->disk_controls->db() && project.saveStatus == US_Project::HD_ONLY )
       pb_accept->setEnabled( true );
 
-   else if ( generalTab->rb_db  ->isChecked() && project.saveStatus == US_Project::DB_ONLY )
+   else if ( ! generalTab->disk_controls->db() && project.saveStatus == US_Project::DB_ONLY )
       pb_accept->setEnabled( true );
 
    else
@@ -223,33 +219,6 @@ void US_ProjectGui::cancel( void )
    close();
 }
 
-void US_ProjectGui::check_db( void )
-{
-   QStringList DB = US_Settings::defaultDB();
-
-   if ( DB.size() < 5 )
-   {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "There is no default database set." ) );
-   }
-
-   // Clear out project list
-   projectMap.clear();
-   generalTab->lw_projects->clear();
-
-   reset();
-}
-
-void US_ProjectGui::check_disk( void )
-{
-   // Clear out project list
-   projectMap.clear();
-   generalTab->lw_projects->clear();
-
-   reset();
-}
-
 // Function to create a new project
 void US_ProjectGui::newProject( void )
 {
@@ -291,11 +260,11 @@ void US_ProjectGui::newProject( void )
 // Function to load projects into projects list widget
 void US_ProjectGui::load( void )
 {
-   if ( generalTab->rb_disk->isChecked() )
-      loadDisk();
+   if ( generalTab->disk_controls->db() )
+      loadDB();
 
    else
-      loadDB();
+      loadDisk();
 }
 
 // Function to load projects from disk
@@ -366,6 +335,8 @@ void US_ProjectGui::loadDB( void )
       return;
    }
 
+   if ( investigatorID < 1 ) investigatorID = US_Settings::us_inv_ID();
+
    QStringList q( "get_project_desc" );
    q << QString::number( investigatorID );
    db.query( q );
@@ -424,13 +395,7 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
 
    project.clear();
 
-   if ( generalTab->rb_disk->isChecked() )
-   {
-      project.readFromDisk( projectGUID );
-      project.saveStatus = US_Project::HD_ONLY;
-   }
-
-   else
+   if ( generalTab->disk_controls->db() )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
@@ -444,6 +409,12 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
 
       project.readFromDB  ( projectID, &db );
       project.saveStatus = US_Project::DB_ONLY;
+   }
+
+   else
+   {
+      project.readFromDisk( projectGUID );
+      project.saveStatus = US_Project::HD_ONLY;
    }
 
    reset();
@@ -468,6 +439,7 @@ void US_ProjectGui::saveDescription( const QString& )
 void US_ProjectGui::saveProject( void )
 {
    // Load information from tabs
+   project.projectDesc      = generalTab          ->getDesc();
    project.goals            = goalsTab            ->getGoals();
    project.molecules        = moleculesTab        ->getMolecules();
    project.purity           = purityTab           ->getPurity();
@@ -477,15 +449,7 @@ void US_ProjectGui::saveProject( void )
    project.AUC_questions    = auc_questionsTab    ->getAUC_questions();
    project.notes            = notesTab            ->getNotes();
 
-   if ( generalTab->rb_disk->isChecked() )
-   {
-      project.saveToDisk();
-
-      project.saveStatus = ( project.saveStatus == US_Project::DB_ONLY ) 
-                           ? US_Project::BOTH : US_Project::HD_ONLY;
-   }
-
-   else
+   if ( generalTab->disk_controls->db() )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
@@ -503,6 +467,14 @@ void US_ProjectGui::saveProject( void )
                           ? US_Project::BOTH : US_Project::DB_ONLY;
    }
 
+   else
+   {
+      project.saveToDisk();
+
+      project.saveStatus = ( project.saveStatus == US_Project::DB_ONLY ) 
+                           ? US_Project::BOTH : US_Project::HD_ONLY;
+   }
+
    QMessageBox::information( this,
          tr( "Save results" ),
          tr( "Project saved" ) );
@@ -511,10 +483,7 @@ void US_ProjectGui::saveProject( void )
 // Function to delete a project from disk, db, or in the current form
 void US_ProjectGui::deleteProject( void )
 {
-   if ( generalTab->rb_disk->isChecked() )
-      project.deleteFromDisk();
-
-   else
+   if ( generalTab->disk_controls->db() )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
@@ -529,6 +498,9 @@ void US_ProjectGui::deleteProject( void )
       project.deleteFromDB( &db );
    }
 
+   else
+      project.deleteFromDisk();
+
    project.clear();
    load();
    project.saveStatus = US_Project::NOT_SAVED;
@@ -539,6 +511,28 @@ void US_ProjectGui::deleteProject( void )
          tr( "Project Deleted" ) );
 }
 
+void US_ProjectGui::source_changed( bool db )
+{
+   QStringList DB = US_Settings::defaultDB();
+
+   if ( DB.size() < 5 )
+   {
+      QMessageBox::warning( this,
+         tr( "Attention" ),
+         tr( "There is no default database set." ) );
+   }
+
+   emit use_db( db );
+   qApp->processEvents();
+
+   // Clear out project list
+   projectMap.clear();
+   generalTab->lw_projects->clear();
+
+   load();
+   reset();
+}
+
 // Function to display an error returned from the database
 void US_ProjectGui::db_error( const QString& error )
 {
@@ -547,6 +541,7 @@ void US_ProjectGui::db_error( const QString& error )
 }
 
 GeneralTab::GeneralTab( int* invID,
+                        int  select_db_disk,
                         QWidget* parent ) : QWidget( parent )
 {
    investigatorID = invID;
@@ -568,6 +563,9 @@ GeneralTab::GeneralTab( int* invID,
    connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
    general->addWidget( pb_investigator, row, 0 );
 
+   if ( US_Settings::us_inv_level() < 1 )
+      pb_investigator->setEnabled( false );
+
    le_investigator = usWidget->us_lineedit( tr( "Not Selected" ) );
    le_investigator->setReadOnly( true );
    general->addWidget( le_investigator, row++, 1, 1, 2 );
@@ -579,14 +577,10 @@ GeneralTab::GeneralTab( int* invID,
    general->addWidget( lb_banner2, row, 0 );
 
    // Radio buttons
-   QGridLayout* db_layout = usWidget->us_radiobutton( tr( "Use Database" ), rb_db );
-   connect( rb_db, SIGNAL( clicked() ),  SIGNAL( check_db() ) );
-   rb_db->setChecked( true );
-   general->addLayout( db_layout, row, 1 );
-
-   QGridLayout* disk_layout = usWidget->us_radiobutton( tr( "Use Local Disk" ), rb_disk );
-   connect( rb_disk, SIGNAL( clicked() ),  SIGNAL( check_disk() ) );
-   general->addLayout( disk_layout, row++, 2 );
+   disk_controls = new US_Disk_DB_Controls( select_db_disk );
+   connect( disk_controls, SIGNAL( changed       ( bool ) ),
+                           SIGNAL( source_changed( bool ) ) );
+   general->addLayout( disk_controls, row++, 1, 1, 2 );
 
    // Row 3
    lw_projects = usWidget->us_listwidget();
@@ -652,6 +646,8 @@ void GeneralTab::reset( void )
       *investigatorID = US_Settings::us_inv_ID();
    if ( *investigatorID > 0 )
       le_investigator->setText( QString::number( *investigatorID ) + ": " + US_Settings::us_inv_name() );
+   else
+      le_investigator->setText( "Not Selected" );
 }
 
 // Function to select the current investigator

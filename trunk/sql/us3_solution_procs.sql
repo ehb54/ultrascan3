@@ -314,7 +314,8 @@ CREATE PROCEDURE new_solution ( p_personGUID   CHAR(36),
                                 p_storageTemp  FLOAT,
                                 p_notes        TEXT,
                                 p_experimentID INT,
-                                p_channelID    INT )
+                                p_channelID    INT,
+                                p_ownerID      INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -349,7 +350,7 @@ BEGIN
       -- Establish ownership of this solution
       INSERT INTO solutionPerson SET
         solutionID   = @LAST_INSERT_ID,
-        personID     = @US3_ID;
+        personID     = p_ownerID;
 
       -- Now associate solution with experiment, if we can
       IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN

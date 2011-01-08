@@ -279,7 +279,8 @@ void US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
          << QString::number( storageTemp )
          << notes
          << QString::number( expID )
-         << QString::number( channelID );
+         << QString::number( channelID )
+         << QString::number( US_Settings::us_inv_ID() );
 
       status = db->statusQuery( q );
       solutionID = db->lastInsertID();

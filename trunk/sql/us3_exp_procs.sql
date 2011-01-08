@@ -185,7 +185,8 @@ CREATE PROCEDURE new_experiment ( p_personGUID   CHAR(36),
                                   p_runTemp      FLOAT,
                                   p_label        VARCHAR(80),
                                   p_comment      TEXT,
-                                  p_centrifugeProtocol TEXT )
+                                  p_centrifugeProtocol TEXT,
+                                  p_ownerID      INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -243,7 +244,7 @@ BEGIN
     
         INSERT INTO experimentPerson SET
           experimentID = @LAST_INSERT_ID,
-          personID     = @US3_ID;
+          personID     = p_ownerID;
 
       END IF;
 
