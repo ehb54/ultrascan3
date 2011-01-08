@@ -27,7 +27,12 @@ class US_EXTERN US_GridControl_T : public QObject
    Q_OBJECT
    
    public:
-      US_GridControl_T(const QString &, const QString &, const QString &, QObject *p = 0, const char *name = 0);
+      US_GridControl_T(const QString &, 
+                       const QString &, 
+                       const QString &, 
+                       const QString &,
+                       QObject *p = 0, 
+                       const char *name = 0);
       ~US_GridControl_T();
 
       US_Config *USglobal;
@@ -40,6 +45,7 @@ class US_EXTERN US_GridControl_T : public QObject
       QString gcfile;
       QString gridopt;
       QString system_name;
+      QString gnuplot;
 
       struct channelData channel_data;
       struct control_parameters Control_Params;

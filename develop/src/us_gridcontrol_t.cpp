@@ -10,7 +10,11 @@
 // this constructor is used for non-gui calls from the command line. It
 // reads an input file with all the details assigned from a web interface
 US_GridControl_T::US_GridControl_T(const QString &control_file,
-                                   const QString &gridopt, const QString &system_name, QObject *p, const char *name) : QObject(p, name)
+                                   const QString &gridopt, 
+                                   const QString &system_name, 
+                                   const QString &gnuplot, 
+                                   QObject *p, 
+                                   const char *name) : QObject(p, name)
 {
    cout.precision(8);
    cerr.precision(8);
@@ -20,6 +24,8 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
    cerr << "gridopt: " << gridopt << endl;
    this->system_name = system_name;
    cerr << "system: " << system_name << endl;
+   this->gnuplot = gnuplot;
+   cerr << "gnuplot: " << gnuplot << endl;
    cerr << "non-gui\n";
    timestamp = QDateTime::currentDateTime();
    timestamp_string = timestamp.toString("yyMMddhhmmss");
@@ -1760,6 +1766,16 @@ void US_GridControl_T::write_experiment()
 
       f_name.sprintf(USglobal->config_list.result_dir + "/solutes%s-%d.dat", timestamp_string.ascii(), i);
       write_solutes(f_name); // write the solutions vector to a file
+
+      if ( gnuplot.lower() == "plot" )
+      {
+         QString cmd = 
+            QString("us_cmdline_t plot_solutes %1 ").arg(f_name) + 
+            QString("").sprintf(USglobal->config_list.result_dir + "/solutes%s-%d.txt", timestamp_string.ascii(), i) + "\n";
+         cout << "cmd is: <" << cmd << ">\n";
+         system(cmd.ascii());
+      }
+
       QString mpifilebase = "> /lustre/tmp/gc_mpi_" + timestamp_string + ".%1";
       if(gridopt == "TIGRE")
       {

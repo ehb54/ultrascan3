@@ -5,9 +5,10 @@ int main (int argc, char **argv)
    QString infile;
    QString gridopt = "none";
    QString system_name = "none";
+   QString gnuplot = "no";
    if(argc < 2)
    {
-      cout << "Usage: us_gridcontrol <path/input_file>\n\n";
+      cout << "Usage: us_gridcontrol <path/input_gc_file> {|TIGRE|none} {systemname} {plot}\n\n";
       return(-1);
    }
    else
@@ -19,9 +20,12 @@ int main (int argc, char **argv)
       if(argc > 3) {
          system_name = argv[3];
       }
+      if(argc > 4) {
+         gnuplot = argv[4];
+      }
    }
    QApplication a(argc, argv, QApplication::Tty);
    US_GridControl_T *gridcontrol_t;
-   gridcontrol_t = new US_GridControl_T(infile, gridopt, system_name);
+   gridcontrol_t = new US_GridControl_T(infile, gridopt, system_name, gnuplot );
    return a.exec();
 }
