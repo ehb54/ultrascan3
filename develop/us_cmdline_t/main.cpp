@@ -1433,6 +1433,9 @@ int main (int argc, char **argv)
       f_out_g.close();
       f_out_s_all.close();
       f_in.close();
+      QString cmd = "gnuplot " + f_out_g.name() + "\n";
+      cout << "running gnuplot $ " + cmd;
+      system(cmd);
       exit(0);
    }
 
