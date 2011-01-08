@@ -123,7 +123,8 @@ CREATE PROCEDURE new_analyte ( p_personGUID  CHAR(36),
                                p_vbar        FLOAT,
                                p_description TEXT,
                                p_spectrum    TEXT,
-                               p_mweight     FLOAT )
+                               p_mweight     FLOAT,
+                               p_ownerID     INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -167,7 +168,7 @@ BEGIN
 
       INSERT INTO analytePerson SET
         analyteID   = @LAST_INSERT_ID,
-        personID    = @US3_ID;
+        personID    = p_ownerID;
 
     END IF;
 

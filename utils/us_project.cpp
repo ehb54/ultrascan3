@@ -269,7 +269,9 @@ void US_Project::saveToDB( US_DB2* db )
          << AUC_questions
          << notes
          << projectDesc
-         << status;
+         << status
+         << QString::number( US_Settings::us_inv_ID() );
+
 
       db_status = db->statusQuery( q );
       projectID = db->lastInsertID();

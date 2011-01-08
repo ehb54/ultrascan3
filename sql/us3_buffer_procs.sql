@@ -122,7 +122,8 @@ CREATE PROCEDURE new_buffer ( p_personGUID      CHAR(36),
                               p_pH              FLOAT,
                               p_density         FLOAT,
                               p_viscosity       FLOAT,
-                              p_private         TINYINT )
+                              p_private         TINYINT,
+                              p_ownerID         INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -165,7 +166,7 @@ BEGIN
 
       INSERT INTO bufferPerson SET
         bufferID    = @LAST_INSERT_ID,
-        personID    = @US3_ID,
+        personID    = p_ownerID,
         private     = p_private;
     END IF;
 
