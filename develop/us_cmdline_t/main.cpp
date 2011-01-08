@@ -237,6 +237,7 @@ int main (int argc, char **argv)
              "dump_model     \tinfile outfile\tConvert a binary experiment or model file to ascii\n"
              "dump_analysis  \tinfile outfile\tConvert an experiment analysis file to ascii\n"
              "dump_solutes   \tinfile outfile\tConvert an solute analysis file to ascii\n"
+             "plot_solutes   \tinfile outfile\tConvert an solute analysis file to multiple output files including gnuplot cmds and png's\n"
              "create_solutes \toutfile #_of_grids smin smax sres fmin fmax fres\n"
              "               \t              \tCreate a solute file\n"
              "create_solutes2 \toutfile s_1 ff0_1 s_2 ff0_2\n"
@@ -1296,6 +1297,143 @@ int main (int argc, char **argv)
       puts("not finished");
       exit(0);
       
+   }
+
+   if (cmds[0].lower() == "plot_solutes") 
+   {
+      // create multipe png's for individual and merged grids
+      // merged needs to be done with a replot and a single plot (due to issues writing png from gnuplot
+      // one cmd file should create it all
+      
+      if (cmds.size() != 3) 
+      {
+         printf(
+                "usage: %s %s infile outfile\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(-901);
+      }
+      if (cmds[1] == cmds[2])
+      {
+         printf("%s error: infile must not be the same as outfile\n", argv[0]);
+         exit(-902);
+      }
+      QFile f_in(cmds[1]);
+      if (!f_in.open(IO_ReadOnly))
+      {
+         fprintf(stderr, "%s: File open error : %s\n", argv[0], argv[2]);
+         exit(-903);
+      }
+      QFile f_out(cmds[2]);
+      if (!f_out.open(IO_WriteOnly))
+      {
+         f_in.close();
+         fprintf(stderr, "%s: File create error : %s\n", argv[0], argv[3]);
+         exit(-904);
+      }
+      QString ourbasename = QFileInfo(cmds[2]).dirPath() + QDir::separator() + QFileInfo(cmds[2]).baseName();
+      cout << "base name " << ourbasename << endl;
+
+      QFile f_out_g(ourbasename + "-gnuplot.txt");
+      cout << "creating file: " << f_out_g.name() << endl;
+      if (!f_out_g.open(IO_WriteOnly))
+      {
+         f_in.close();
+         f_out.close();
+         fprintf(stderr, "%s: File create error : %s\n", argv[0], f_out_g.name().ascii());
+         exit(-905);
+      }
+
+      QTextStream ts_g(&f_out_g);
+      ts_g << "set term png picsize 640 480\n";
+
+      QFile f_out_s_all(ourbasename + "-sall.txt");
+      cout << "creating file: " << f_out_s_all.name() << endl;
+      if (!f_out_s_all.open(IO_WriteOnly))
+      {
+         f_in.close();
+         f_out.close();
+         f_out_g.close();
+         fprintf(stderr, "%s: File create error : %s\n", argv[0], f_out_s_all.name().ascii());
+         exit(-906);
+      }
+      QTextStream ts_s_all(&f_out_s_all);
+
+      Solute temp_solute;
+      QDataStream ds(&f_in);
+      QTextStream ts(&f_out);
+      unsigned int no_of_sets;
+      ds >> no_of_sets;
+      ts << no_of_sets << "\t# number of solute sets\n";
+
+      QStringList qsl_replots;
+
+      for (unsigned int i = 0; i < no_of_sets; i++)
+      {
+         unsigned int no_of_elements;
+         ds >> no_of_elements;
+         ts << no_of_elements << "\t# number of elements in set " << i << "\n";
+
+         QFile f_out_s(ourbasename + QString("-s%1.txt").arg(i+1));
+         cout << "creating file: " << f_out_s.name() << endl;
+         if (!f_out_s.open(IO_WriteOnly))
+         {
+            f_in.close();
+            f_out.close();
+            f_out_g.close();
+            f_out_s_all.close();
+            fprintf(stderr, "%s: File create error : %s\n", argv[0], f_out_s.name().ascii());
+            exit(-907);
+         }
+         QTextStream ts_s(&f_out_s);
+         
+         ts_g << 
+            "set output \"" + ourbasename + QString("-s%1.png").arg(i+1) + "\"\n" +
+            "plot \"" + f_out_s.name() + "\" with points\n";
+         qsl_replots << (i ? "re" : "");
+         qsl_replots << "plot \"" + f_out_s.name() + "\" with points\n";
+
+         for (unsigned int j = 0; j < no_of_elements; j++)
+         {
+            ds >> temp_solute.s;
+            ds >> temp_solute.k;
+            ds >> temp_solute.c;
+            ts << temp_solute.s << "," << temp_solute.k << "\t# s,k element " << j << "\n";
+            ts_s << temp_solute.s << "\t" << temp_solute.k << endl;
+            ts_s_all << temp_solute.s << "\t" << temp_solute.k << endl;
+         }
+      }
+      ts_g << 
+         "set output \"" + ourbasename + "-sall.png\n" +
+         "plot \"" + f_out_s_all.name() + "\" with points\n";
+      ts_g << 
+         "set output \"" + ourbasename + "-sallr.png\n";
+      ts_g << qsl_replots.join("") << "exit\n";
+
+      unsigned int float_params;
+      ds >> float_params;
+      ts << float_params << "\t# number of float params\n";
+      float float_val;
+      for (unsigned int i = 0; i < float_params; i++)
+      {
+         ds >> float_val;
+         ts << float_val << "\t# float param " << i << "\n";
+      }
+      unsigned int int_params;
+      ds >> int_params;
+      ts << int_params << "\t# number of int params\n";
+      int int_val;
+      for (unsigned int i = 0; i < int_params; i++)
+      {
+         ds >> int_val;
+         ts << int_val << "\t# int param " << i << "\n";
+      }
+      f_out.close();
+      f_out_g.close();
+      f_out_s_all.close();
+      f_in.close();
+      exit(0);
    }
 
    printf("%s error: %s unknown command\n", argv[0], argv[1]);
