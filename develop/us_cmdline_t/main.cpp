@@ -1346,7 +1346,7 @@ int main (int argc, char **argv)
       }
 
       QTextStream ts_g(&f_out_g);
-      ts_g << "set term png picsize 640 480\n";
+      ts_g << "set term png\n";  // note: some gnuplots use size instead of picsize? "picsize 640 480\n";
 
       QFile f_out_s_all(ourbasename + "-sall.txt");
       cout << "creating file: " << f_out_s_all.name() << endl;
