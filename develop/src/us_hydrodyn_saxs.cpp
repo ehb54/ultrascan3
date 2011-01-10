@@ -3586,7 +3586,10 @@ p         cout << "use_A.push_back " << it->second[i] << endl;
            (double *)&nnls_zzp[0],
            (int *)&nnls_indexp[0]);
 
-   assert(result == 0);
+   if ( result != 0 )
+   {
+      editor->append("NNLS error!\n");
+   }
 
    editor->append(QString("residual euclidian norm %1\n").arg(nnls_rmsd));
    
