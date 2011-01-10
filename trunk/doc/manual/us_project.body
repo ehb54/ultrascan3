@@ -1,0 +1,81 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Project Window'
+%]
+    <h2> Manage Project Information: </h2>
+    <p class='center'><img src="images/us_project1.png" 
+    alt="Project Window"/></p>
+
+    <p> Using this window, you can manage project information on your local
+    disk or in the current database.  You must be identified as the
+    investigator to delete or update a project description in the database.</p>
+
+    <p>To load project information into the current window, first select
+    the Use Database or the Use Local Disk radio button. Then click the
+    Query Projects button.</p>
+
+    <p class='center'><img src="images/us_project2.png" 
+    alt="Project Window"/></p>
+
+    <p>To display information about a single project, click on the project 
+    name listed in the click on project to select widget. Edit the Project
+    Name by editing the appropriate box in the lower right-hand part of the 
+    window. Edit the project goals, molecules, purity, expense, buffer components,
+    salt information, AUC Questions and other notes by clicking on the
+    appropriate tab at the top of the window. All of the fields are required
+    to be completed before saving the project information. Click on the Save Project 
+    button to save any changes. </p>
+
+    <p class='center'><img src="images/us_project3.png" 
+    alt="Project Window"/></p>
+
+    <p>To delete a project, select the appropriate project in the
+    click on project to select widget, and then click the
+    Delete Project button. </p>
+
+    <p>After making the appropriate changes, be sure to click the Save
+    Project button to save your changes.</p>
+
+    <h4>Dialog Items:</h4>
+
+    <ul>
+      <li><b>Click on project to select</b> After clicking on the Query Projects 
+      button, this widget will contain a list of projects available in the current 
+      location (database or local disk). Click on a project in the widget
+      to select.</li>
+
+      <li><b>Use Database</b> Check to select read or write of the project
+      definition to or from the database.</li>
+      
+      <li><b>Use Local Disk</b> Check to select read or write of the project
+      definition to or from the hard disk.</li>
+      
+      <li><b>Query Projects</b> This button initiates a read of project
+      definitions and population of the project list widget.</li>
+      
+      <li><b>Save Project</b> Saves the current project definition to the hard
+      disk or database.</li>
+      
+      <li><b>New Project</b> Creates a new project by returning all values
+      to their defaults. Work through each tab to change the current contents
+      as appropriate, and then click on the Save Project button.</li>
+      
+      <li><b>Delete Project</b> Deletes the current project from the database
+      or hard disk.</li>
+
+      <li><b>Project Name</b> The name of the project currently selected in
+      the Click on project to select list widget, or a new name when creating
+      a new project definition in the database or on the hard disk.</li>
+
+      <li><b>Global Identifier</b> Read-only global identifier of the
+      project.</li>
+
+      <li><b>Reset</b> Reset all project values to default setting.</li>
+
+      <li><b>Help</b> Show this documentation.</li>
+
+      <li><b>Close</b> Close the dialog and possibly return project selections
+      to the caller.</li>
+
+    </ul>
+
+[% INCLUDE footer.us3 %]

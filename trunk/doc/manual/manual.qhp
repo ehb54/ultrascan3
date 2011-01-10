@@ -46,7 +46,8 @@
             <keyword id="m4" name="model-shapes"  ref="predict1.html"/>
             <keyword id="n1" name="noise-loader"  ref="load_noise.html"/>
             <keyword id="p1" name="password"      ref="master_pw.html"/>
-            <keyword id="p2" name="pseudo3d-combine" ref="pseudo3d_combine.html"/>
+            <keyword id="p2" name="project"       ref="us_project.html"/>
+            <keyword id="p3" name="pseudo3d-combine" ref="pseudo3d_combine.html"/>
             <keyword id="r1" name="register"      ref="register.html"/>
             <keyword id="s1" name="save-colormap" ref="save_colormap.html"/>
             <keyword id="s2" name="solution"      ref="us_solution.html"/>
@@ -98,6 +99,11 @@
             <file>images/us_solution1.png</file>
             <file>images/us_solution2.png</file>
             <file>images/us_solution3.png</file>
+
+            <file>us_project.html</file>
+            <file>images/us_project1.png</file>
+            <file>images/us_project2.png</file>
+            <file>images/us_project3.png</file>
 
             <file>pseudo3d_combine.html</file>
             <file>images/pseudo3d_combine.png</file>
