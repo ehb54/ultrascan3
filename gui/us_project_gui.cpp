@@ -14,8 +14,9 @@ US_ProjectGui::US_ProjectGui(
       bool  signal_wanted,
       int   select_db_disk,
       const US_Project& dataIn 
-      ) : US_WidgetsDialog( 0, 0 ), signal( signal_wanted ), project( dataIn )
+      ) : US_WidgetsDialog( 0, 0 ), project( dataIn )
 {
+   signal         = signal_wanted;
    investigatorID = US_Settings::us_inv_ID();
 
    setWindowTitle( tr( "Project Management" ) );
@@ -36,7 +37,7 @@ US_ProjectGui::US_ProjectGui(
 
    // Second row - tab widget
    tabWidget           = us_tabwidget();
-   generalTab          = new GeneralTab( &investigatorID, select_db_disk );
+   generalTab          = new US_ProjectGuiGeneral( &investigatorID, select_db_disk );
    goalsTab            = new GoalsTab( );
    moleculesTab        = new MoleculesTab( );
    purityTab           = new PurityTab( );
@@ -233,7 +234,7 @@ void US_ProjectGui::newProject( void )
                                                    "so we can assess the biological significance "
                                                    "of this research." ) );
    moleculesTab        ->setMolecules        ( tr( "Please include their approximate molecular weights" ) );
-   purityTab           ->setPurity           ( tr( "You can express it in percent." ) );
+   purityTab           ->setPurity           ( tr( "%" ) );
    expenseTab          ->setExpense          ( tr( "Would this expense be acceptable? If not, what amount "
                                                    "would you feel comfortable with?" ) );
    bufferComponentsTab ->setBufferComponents ( tr( "What buffers do you plan to use? Is phosphate or "
@@ -385,7 +386,7 @@ void US_ProjectGui::loadProjects( void )
    }
 }
 
-// Function to handle when analyte listwidget item is selected
+// Function to handle when project listwidget item is selected
 void US_ProjectGui::selectProject( QListWidgetItem* item )
 {
    // Account for the fact that the list has been sorted
@@ -511,6 +512,7 @@ void US_ProjectGui::deleteProject( void )
          tr( "Project Deleted" ) );
 }
 
+// Function to change the data source (disk/db)
 void US_ProjectGui::source_changed( bool db )
 {
    QStringList DB = US_Settings::defaultDB();
@@ -540,9 +542,9 @@ void US_ProjectGui::db_error( const QString& error )
          tr( "Database returned the following error: \n" ) + error );
 }
 
-GeneralTab::GeneralTab( int* invID,
-                        int  select_db_disk,
-                        QWidget* parent ) : QWidget( parent )
+US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
+                                            int  select_db_disk,
+                                            QWidget* parent ) : QWidget( parent )
 {
    investigatorID = invID;
 
@@ -639,7 +641,7 @@ GeneralTab::GeneralTab( int* invID,
 
 // Function to refresh the display with values from the project structure,
 //  and to enable/disable features
-void GeneralTab::reset( void )
+void US_ProjectGuiGeneral::reset( void )
 {
    // Display investigator
    if ( *investigatorID == 0 )
@@ -651,7 +653,7 @@ void GeneralTab::reset( void )
 }
 
 // Function to select the current investigator
-void GeneralTab::sel_investigator( void )
+void US_ProjectGuiGeneral::sel_investigator( void )
 {
    US_Investigator* inv_dialog = new US_Investigator( true, *investigatorID );
 
@@ -663,7 +665,7 @@ void GeneralTab::sel_investigator( void )
 }
 
 // Function to assign the selected investigator as current
-void GeneralTab::assign_investigator( int invID,
+void US_ProjectGuiGeneral::assign_investigator( int invID,
       const QString& lname, const QString& fname)
 {
    *investigatorID = invID;
@@ -671,22 +673,22 @@ void GeneralTab::assign_investigator( int invID,
          lname + ", " + fname );
 }
 
-void GeneralTab::setGUID( QString newGUID )
+void US_ProjectGuiGeneral::setGUID( QString newGUID )
 {
    le_guid->setText( newGUID );
 }
 
-void GeneralTab::setDesc( QString newDesc )
+void US_ProjectGuiGeneral::setDesc( QString newDesc )
 {
    le_projectDesc->setText( newDesc );
 }
 
-QString GeneralTab::getDesc( void )
+QString US_ProjectGuiGeneral::getDesc( void )
 {
    return( le_projectDesc->text() );
 }
 
-GoalsTab::GoalsTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::GoalsTab::GoalsTab( QWidget* parent ) : QWidget( parent )
 {
    QVBoxLayout* goals = new QVBoxLayout;
 
@@ -704,17 +706,17 @@ GoalsTab::GoalsTab( QWidget* parent ) : QWidget( parent )
    setLayout( goals );
 }
 
-void GoalsTab::setGoals( QString newGoals )
+void US_ProjectGui::GoalsTab::setGoals( QString newGoals )
 {
    te_goals->setText( newGoals );
 }
 
-QString GoalsTab::getGoals( void )
+QString US_ProjectGui::GoalsTab::getGoals( void )
 {
    return( te_goals->toPlainText() );
 }
 
-MoleculesTab::MoleculesTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::MoleculesTab::MoleculesTab( QWidget* parent ) : QWidget( parent )
 {
    QVBoxLayout* molecules = new QVBoxLayout;
 
@@ -731,17 +733,17 @@ MoleculesTab::MoleculesTab( QWidget* parent ) : QWidget( parent )
    setLayout( molecules );
 }
 
-void MoleculesTab::setMolecules( QString newMolecules )
+void US_ProjectGui::MoleculesTab::setMolecules( QString newMolecules )
 {
    te_molecules->setText( newMolecules );
 }
 
-QString MoleculesTab::getMolecules( void )
+QString US_ProjectGui::MoleculesTab::getMolecules( void )
 {
    return( te_molecules->toPlainText() );
 }
 
-PurityTab::PurityTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::PurityTab::PurityTab( QWidget* parent ) : QWidget( parent )
 {
    QVBoxLayout* purity = new QVBoxLayout;
 
@@ -749,26 +751,26 @@ PurityTab::PurityTab( QWidget* parent ) : QWidget( parent )
    QLabel* lb_purity = usWidget->us_label( tr( "Please indicate the approximate purity of your sample(s)." ) );
    purity->addWidget( lb_purity );
 
-   te_purity = usWidget->us_textedit();
-   purity->addWidget( te_purity );
-   te_purity->setMinimumHeight( 200 );
-   te_purity->setReadOnly( false );
+   le_purity = usWidget->us_lineedit();
+   purity->addWidget( le_purity );
+//   le_purity->setMinimumHeight( 200 );
+   le_purity->setReadOnly( false );
 
    purity -> addStretch( 1 );
    setLayout( purity );
 }
 
-void PurityTab::setPurity( QString newPurity )
+void US_ProjectGui::PurityTab::setPurity( QString newPurity )
 {
-   te_purity->setText( newPurity );
+   le_purity->setText( newPurity );
 }
 
-QString PurityTab::getPurity( void )
+QString US_ProjectGui::PurityTab::getPurity( void )
 {
-   return( te_purity->toPlainText() );
+   return( le_purity->text() );
 }
 
-ExpenseTab::ExpenseTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::ExpenseTab::ExpenseTab( QWidget* parent ) : QWidget( parent )
 {
    QVBoxLayout* expense = new QVBoxLayout;
 
@@ -786,17 +788,17 @@ ExpenseTab::ExpenseTab( QWidget* parent ) : QWidget( parent )
    setLayout( expense );
 }
 
-void ExpenseTab::setExpense( QString newExpense )
+void US_ProjectGui::ExpenseTab::setExpense( QString newExpense )
 {
    te_expense->setText( newExpense );
 }
 
-QString ExpenseTab::getExpense( void )
+QString US_ProjectGui::ExpenseTab::getExpense( void )
 {
    return( te_expense->toPlainText() );
 }
 
-BufferComponentsTab::BufferComponentsTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::BufferComponentsTab::BufferComponentsTab( QWidget* parent ) : QWidget( parent )
 {
    QVBoxLayout* bufferComponents = new QVBoxLayout;
 
@@ -814,17 +816,17 @@ BufferComponentsTab::BufferComponentsTab( QWidget* parent ) : QWidget( parent )
    setLayout( bufferComponents );
 }
 
-void BufferComponentsTab::setBufferComponents( QString newBufferComponents )
+void US_ProjectGui::BufferComponentsTab::setBufferComponents( QString newBufferComponents )
 {
    te_bufferComponents->setText( newBufferComponents );
 }
 
-QString BufferComponentsTab::getBufferComponents( void )
+QString US_ProjectGui::BufferComponentsTab::getBufferComponents( void )
 {
    return( te_bufferComponents->toPlainText() );
 }
 
-SaltInformationTab::SaltInformationTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::SaltInformationTab::SaltInformationTab( QWidget* parent ) : QWidget( parent )
 {
    QVBoxLayout* saltInformation = new QVBoxLayout;
 
@@ -842,17 +844,17 @@ SaltInformationTab::SaltInformationTab( QWidget* parent ) : QWidget( parent )
    setLayout( saltInformation );
 }
 
-void SaltInformationTab::setSaltInformation( QString newSaltInformation )
+void US_ProjectGui::SaltInformationTab::setSaltInformation( QString newSaltInformation )
 {
    te_saltInformation->setText( newSaltInformation );
 }
 
-QString SaltInformationTab::getSaltInformation( void )
+QString US_ProjectGui::SaltInformationTab::getSaltInformation( void )
 {
    return( te_saltInformation->toPlainText() );
 }
 
-AUC_questionsTab::AUC_questionsTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::AUC_questionsTab::AUC_questionsTab( QWidget* parent ) : QWidget( parent )
 {
    QVBoxLayout* auc_questions = new QVBoxLayout;
 
@@ -870,17 +872,17 @@ AUC_questionsTab::AUC_questionsTab( QWidget* parent ) : QWidget( parent )
    setLayout( auc_questions );
 }
 
-void AUC_questionsTab::setAUC_questions( QString newAUC_questions )
+void US_ProjectGui::AUC_questionsTab::setAUC_questions( QString newAUC_questions )
 {
    te_auc_questions->setText( newAUC_questions );
 }
 
-QString AUC_questionsTab::getAUC_questions( void )
+QString US_ProjectGui::AUC_questionsTab::getAUC_questions( void )
 {
    return( te_auc_questions->toPlainText() );
 }
 
-NotesTab::NotesTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::NotesTab::NotesTab( QWidget* parent ) : QWidget( parent )
 {
    QVBoxLayout* notes = new QVBoxLayout;
 
@@ -897,12 +899,12 @@ NotesTab::NotesTab( QWidget* parent ) : QWidget( parent )
    setLayout( notes );
 }
 
-void NotesTab::setNotes( QString newNotes )
+void US_ProjectGui::NotesTab::setNotes( QString newNotes )
 {
    te_notes->setText( newNotes );
 }
 
-QString NotesTab::getNotes( void )
+QString US_ProjectGui::NotesTab::getNotes( void )
 {
    return( te_notes->toPlainText() );
 }

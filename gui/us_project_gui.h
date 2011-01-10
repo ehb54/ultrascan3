@@ -8,164 +8,87 @@
 #include "us_project.h"
 #include "us_help.h"
 
-class US_EXTERN GeneralTab : public QWidget
+/*! \class US_ProjectGuiGeneral
+           This class forms the content of the general tab in the US_Project GUI.
+           Most management of the information itself takes place here.
+*/
+class US_EXTERN US_ProjectGuiGeneral : public QWidget
 {
    Q_OBJECT
 
    public:
-      GeneralTab( int*,
-                  int,
-                  QWidget* parent = 0 );
+   /*! \brief Generic constructor for the US_ProjectGuiGeneral class. To 
+              instantiate the class a calling function must
+              provide the ID of the investigator.
+       \param invID   A pointer to the current investigator ID
+       \param select_db_disk Indicates whether the default search is on
+                      the local disk or in the DB
+       \param parent  The parent of the widget
+   */
+   US_ProjectGuiGeneral( int*,
+                         int,
+                         QWidget* parent = 0 );
 
-      //! A centralized place to reset all the controls in all the tabs
-      void reset    ( void );
+   //! \brief Resets all the controls on the general tab
+   void          reset  ( void    );
 
-      QLineEdit*    le_investigator;
-      QLineEdit*    le_projectDesc;
-      QLineEdit*    le_guid;
-   
-      QListWidget*  lw_projects;
-   
-      QPushButton*  pb_query;
-      QPushButton*  pb_save;
-      QPushButton*  pb_newProject;
-      QPushButton*  pb_del;
-      QPushButton*  pb_resetAll;
-   
-      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
+   //! \brief Sets the GUID line edit value
+   //! \param newGUID The new GUID value to load into the form
+   void          setGUID( QString );
 
-      int*          investigatorID;
+   //! \brief Sets the Description textbox value
+   //! \param newDesc The new description to load into the text box
+   void          setDesc( QString );
 
-      void          setGUID( QString );
-      void          setDesc( QString );
-      QString       getDesc( void    );
+   //! \brief Returns the description from the form
+   QString       getDesc( void    );
+
+   QLineEdit*    le_investigator;         //!< Stores the investigator information
+   QLineEdit*    le_projectDesc;          //!< A description of the project
+   QLineEdit*    le_guid;                 //!< The unique GUID of the project
+
+   int*          investigatorID;          //!< Stores the investiator ID locally
+
+   QListWidget*  lw_projects;             //!< Lists the projects retrieved
+
+   QPushButton*  pb_query;                //!< The query projects button
+   QPushButton*  pb_save;                 //!< The save projects button
+   QPushButton*  pb_newProject;           //!< The new project button
+   QPushButton*  pb_del;                  //!< The delete project button
+   QPushButton*  pb_resetAll;             //!< Resets everything on the form
+
+   US_Disk_DB_Controls* disk_controls;    //!< Radiobuttons for disk/db choice
 
    signals:
-      void newProject         ( void );       //!< \brief Emitted when the user clicks the new project button
-      void load               ( void );       //!< \brief Emitted when the user clicks the Query Projects button
-      void selectProject      ( QListWidgetItem* ); //!< \brief Emitted when the user selects a project
-      void saveDescription    ( const QString& );   //!< \brief Emitted when the description changes
-      void save               ( void );       //!< \brief Emitted when the user saves the project
-      void deleteProject      ( void );       //!< \brief Emitted when the user deletes the project
-      void source_changed     ( bool );       //!< \brief Emitted when the user changes data source (disk/db)
+   //! \brief Emitted when the new project button is clicked
+   void newProject         ( void );
 
+   //! \brief Emitted when the Query Projects button is clicked
+   void load               ( void );
+
+   //! \brief Emitted when the user selects a project
+   //! \param item The currently selected item in the project list widget
+   void selectProject      ( QListWidgetItem* );
+
+   //! \brief Emitted when the description changes
+   void saveDescription    ( const QString& );
+
+   //! \brief Emitted when the user saves the project
+   void save               ( void );
+
+   //! \brief Emitted when the user deletes the project
+   void deleteProject      ( void );
+
+   //! \brief Emitted when the user changes data source (disk/db)
+   //! \param db True for db, false for disk
+   void source_changed     ( bool );
+
+private:
    private slots:
-      void sel_investigator   ( void );
-      void assign_investigator( int, const QString&, const QString& );
+   void sel_investigator   ( void );
+   void assign_investigator( int, const QString&, const QString& );
 };
     
-class US_EXTERN GoalsTab : public QWidget
-{
-   Q_OBJECT
-
-   public:
-      GoalsTab                ( QWidget* parent = 0 );
-      QString getGoals        ( void );
-      void    setGoals        ( QString );
-
-   private:
-      QTextEdit*              te_goals;
-   
-};
-
-class US_EXTERN MoleculesTab : public QWidget
-{
-   Q_OBJECT
-
-   public:
-      MoleculesTab            ( QWidget* parent = 0 );
-      QString getMolecules    ( void );
-      void    setMolecules    ( QString );
-
-   private:
-      QTextEdit*              te_molecules;
-   
-};
-
-class US_EXTERN PurityTab : public QWidget
-{
-   Q_OBJECT
-
-   public:
-      PurityTab               ( QWidget* parent = 0 );
-      QString getPurity       ( void );
-      void    setPurity       ( QString );
-
-   private:
-      QTextEdit*              te_purity;
-   
-};
-
-class US_EXTERN ExpenseTab : public QWidget
-{
-   Q_OBJECT
-
-   public:
-      ExpenseTab              ( QWidget* parent = 0 );
-      QString getExpense      ( void );
-      void    setExpense      ( QString );
-
-   private:
-      QTextEdit*              te_expense;
-   
-};
-
-class US_EXTERN BufferComponentsTab : public QWidget
-{
-   Q_OBJECT
-
-   public:
-      BufferComponentsTab         ( QWidget* parent = 0 );
-      QString getBufferComponents ( void );
-      void    setBufferComponents ( QString );
-
-   private:
-      QTextEdit*                  te_bufferComponents;
-   
-};
-
-class US_EXTERN SaltInformationTab : public QWidget
-{
-   Q_OBJECT
-
-   public:
-      SaltInformationTab          ( QWidget* parent = 0 );
-      QString getSaltInformation  ( void );
-      void    setSaltInformation  ( QString );
-
-   private:
-      QTextEdit*                  te_saltInformation;
-   
-};
-
-class US_EXTERN AUC_questionsTab : public QWidget
-{
-   Q_OBJECT
-
-   public:
-      AUC_questionsTab            ( QWidget* parent = 0 );
-      QString getAUC_questions    ( void );
-      void    setAUC_questions    ( QString );
-
-   private:
-      QTextEdit*                  te_auc_questions;
-   
-};
-
-class US_EXTERN NotesTab : public QWidget
-{
-   Q_OBJECT
-
-   public:
-      NotesTab                    ( QWidget* parent = 0 );
-      QString getNotes            ( void );
-      void    setNotes            ( QString );
-
-   private:
-      QTextEdit*                  te_notes;
-   
-};
-
 /*! \class US_ProjectGui
            This class provides the ability to enter/edit the project
            parameters.
@@ -192,29 +115,199 @@ class US_EXTERN US_ProjectGui : public US_WidgetsDialog
                      int  = US_Disk_DB_Controls::Default,
                      const US_Project& = US_Project() );
 
-      //! A null destructor. 
+      //! \brief A null destructor. 
       ~US_ProjectGui() {};
 
+      //! \class ProjectInfo
+      //! \brief Information that is useful throughout US_ProjectGui
       class ProjectInfo
       {
          public:
-         int        projectID;
-         QString    GUID;
-         QString    description;
-         QString    filename;
-         int        index;
+         int        projectID;    //!< The ID of the project
+         QString    GUID;         //!< The GUID associated with the project
+         QString    description;  //!< The overall description of the project
+         QString    filename;     //!< The filename if saved to disk
+         int        index;        //!< Used when indexing the information
       };
    
-      QList< ProjectInfo >       info;
-      int           investigatorID;
-      US_Project    project;
+      /*! \class GoalsTab
+          \brief This class forms the content of the Goals tab in the US_Project GUI.
+      */
+      class GoalsTab : public QWidget
+      {
+         public:
+         //! \brief Generic constructor for the GoalsTab class
+         GoalsTab                ( QWidget* parent = 0 );
+
+         //! \brief Returns the content entered by the user
+         QString getGoals        ( void );
+
+         //! \brief Loads the content of this tab
+         //! \param newGoals The text to load into the text widget 
+         void    setGoals        ( QString );
+    
+         private:
+         QTextEdit*              te_goals;
+         
+      };
+    
+      /*! \class MoleculesTab
+          \brief This class forms the content of the molecules tab in the US_Project GUI.
+      */
+      class MoleculesTab : public QWidget
+      {
+         public:
+         //! \brief Generic constructor for the MoleculesTab class
+         MoleculesTab            ( QWidget* parent = 0 );
+
+         //! \brief Returns the content entered by the user
+         QString getMolecules    ( void );
+
+         //! \brief Loads the content of this tab
+         //! \param newMolecules The text to load into the text widget 
+         void    setMolecules    ( QString );
+    
+         private:
+         QTextEdit*              te_molecules;
+         
+      };
+    
+      /*! \class PurityTab
+          \brief This class forms the content of the purity tab in the US_Project GUI.
+      */
+      class PurityTab : public QWidget
+      {
+         public:
+         //! \brief Generic constructor for the PurityTab class
+         PurityTab               ( QWidget* parent = 0 );
+
+         //! \brief Returns the content entered by the user
+         QString getPurity       ( void );
+
+         //! \brief Loads the content of this tab
+         //! \param newPurity The text to load into the text widget 
+         void    setPurity       ( QString );
+    
+         private:
+         QLineEdit*              le_purity;
+         
+      };
+    
+      /*! \class ExpenseTab
+          \brief This class forms the content of the expense tab in the US_Project GUI.
+      */
+      class ExpenseTab : public QWidget
+      {
+         public:
+         //! \brief Generic constructor for the ExpenseTab class
+         ExpenseTab              ( QWidget* parent = 0 );
+
+         //! \brief Returns the content entered by the user
+         QString getExpense      ( void );
+
+         //! \brief Loads the content of this tab
+         //! \param newExpense The text to load into the text widget 
+         void    setExpense      ( QString );
+    
+         private:
+         QTextEdit*              te_expense;
+         
+      };
+    
+      /*! \class BufferComponentsTab
+          \brief This class forms the content of the buffer components tab in the US_Project GUI.
+      */
+      class BufferComponentsTab : public QWidget
+      {
+         public:
+         //! \brief Generic constructor for the BufferComponentsTab class
+         BufferComponentsTab         ( QWidget* parent = 0 );
+
+         //! \brief Returns the content entered by the user
+         QString getBufferComponents ( void );
+
+         //! \brief Loads the content of this tab
+         //! \param newBufferComponents The text to load into the text widget 
+         void    setBufferComponents ( QString );
+    
+         private:
+         QTextEdit*                  te_bufferComponents;
+         
+      };
+    
+      /*! \class SaltInformationTab
+          \brief This class forms the content of the salt information tab in the US_Project GUI.
+      */
+      class SaltInformationTab : public QWidget
+      {
+         public:
+         //! \brief Generic constructor for the SaltInformationTab class
+         SaltInformationTab          ( QWidget* parent = 0 );
+
+         //! \brief Returns the content entered by the user
+         QString getSaltInformation  ( void );
+
+         //! \brief Loads the content of this tab
+         //! \param newSaltInformation The text to load into the text widget 
+         void    setSaltInformation  ( QString );
+    
+         private:
+         QTextEdit*                  te_saltInformation;
+         
+      };
+
+      /*! \class AUC_questionsTab
+          \brief This class forms the content of the AUC_questions tab in the US_Project GUI.
+      */
+      class AUC_questionsTab : public QWidget
+      {
+         public:
+         //! \brief Generic constructor for the AUC_questionsTab class
+         AUC_questionsTab            ( QWidget* parent = 0 );
+
+         //! \brief Returns the content entered by the user
+         QString getAUC_questions    ( void );
+
+         //! \brief Loads the content of this tab
+         //! \param newAUC_questions The text to load into the text widget 
+         void    setAUC_questions    ( QString );
+      
+         private:
+         QTextEdit*                  te_auc_questions;
+         
+      };
+
+      /*! \class NotesTab
+          \brief This class forms the content of the notes tab in the US_Project GUI.
+      */
+      class NotesTab : public QWidget
+      {
+         public:
+         //! \brief Generic constructor for the NotesTab class
+         NotesTab                    ( QWidget* parent = 0 );
+
+         //! \brief Returns the content entered by the user
+         QString getNotes            ( void );
+
+         //! \brief Loads the content of this tab
+         //! \param newNotes The text to load into the text widget 
+         void    setNotes            ( QString );
+      
+         private:
+         QTextEdit*                  te_notes;
+         
+      };
+
+      QList< ProjectInfo >  info;      //!< Information to populate the project list widget
+      int           investigatorID;    //!< Stores the ID of the current investigator
+      US_Project    project;           //!< Stores all the information about the project
    
-      QStringList   IDs;
-      QStringList   descriptions;
-      QStringList   GUIDs;
-      QStringList   filenames;
+      QStringList   IDs;               //!< The IDs of the items in the project list
+      QStringList   descriptions;      //!< The descriptions in the project list
+      QStringList   GUIDs;             //!< The GUIDs of the items in the project list
+      QStringList   filenames;         //!< The filenames associated with disk saves
    
-      QMap< QListWidgetItem*, int > projectMap;
+      QMap< QListWidgetItem*, int > projectMap; //!< Maps the IDs with the listwidget items
    
    signals:
 
@@ -238,31 +331,44 @@ class US_EXTERN US_ProjectGui : public US_WidgetsDialog
       void use_db( bool DB );
 
    private:
-      bool          signal;
+      bool                    signal;
 
-      US_Help       showHelp;
+      US_Help                 showHelp;
 
-      QTabWidget*   tabWidget;
+      QTabWidget*             tabWidget;
 
-      GeneralTab*          generalTab;
-      GoalsTab*            goalsTab;
-      MoleculesTab*        moleculesTab;
-      PurityTab*           purityTab;
-      ExpenseTab*          expenseTab;
-      BufferComponentsTab* bufferComponentsTab;
-      SaltInformationTab*  saltInformationTab;
-      AUC_questionsTab*    auc_questionsTab;
-      NotesTab*            notesTab;
+      US_ProjectGuiGeneral*   generalTab;
+      GoalsTab*               goalsTab;
+      MoleculesTab*           moleculesTab;
+      PurityTab*              purityTab;
+      ExpenseTab*             expenseTab;
+      BufferComponentsTab*    bufferComponentsTab;
+      SaltInformationTab*     saltInformationTab;
+      AUC_questionsTab*       auc_questionsTab;
+      NotesTab*               notesTab;
 
-      QPushButton*  pb_accept;
+      QPushButton*            pb_accept;
 
    public slots:
+      //! \brief Creates a new project
       void newProject         ( void );
+
+      //! \brief Loads projects into the projects list widget
       void load               ( void );
+
+      //! \brief Handles when project listwidget item is selected
       void selectProject      ( QListWidgetItem* );
+
+      //! \brief Updates the description associated with the current project
       void saveDescription    ( const QString& );
+
+      //! \brief Saves the project information from all tabs to disk or db
       void saveProject        ( void );
+
+      //! \brief Deletes the currently selected project from disk or db
       void deleteProject      ( void );
+
+      //! \brief Change data source (disk/db)
       void source_changed     ( bool );
 
    private slots:
@@ -276,6 +382,6 @@ class US_EXTERN US_ProjectGui : public US_WidgetsDialog
       void loadProjects       ( void );
       void db_error           ( const QString& );
       void help               ( void )
-        { showHelp.show_help( "manual/us_convert.html" ); };
+        { showHelp.show_help( "manual/us_project.html" ); };
 };
 #endif
