@@ -165,6 +165,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map < QString, vector <int> >  multi_residue_map;
       map < QString, QString >       residue_atom_hybrid_map;
 
+      map < QString, vector < double > > nnls_A;
+      map < QString,  double >           nnls_x;
+      vector < double >                  nnls_B;
+      vector < double >                  nnls_r;
+      double                             nnls_rmsd;
+
 #ifdef WIN32
      #pragma warning ( default: 4251 )
 #endif      
@@ -186,6 +192,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
    private:
 
       QString vector_double_to_csv( vector < double > vd );
+      void calc_nnls_fit();
+      void plot_one_pr(vector < double > r, vector < double > pr, QString name);
+      bool plotted;
 
    public slots:
       void show_plot_saxs_sans();

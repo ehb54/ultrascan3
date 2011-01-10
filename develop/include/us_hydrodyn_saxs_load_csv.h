@@ -31,6 +31,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
                                 bool *save_to_csv,
                                 QString *csv_filename,
                                 bool *save_original_data,
+                                bool *run_nnls,
+                                QString *nnls_target,
+                                bool expert_mode,
                                 QWidget *p = 0, 
                                 const char *name = 0
                                 );
@@ -51,6 +54,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
 
       QCheckBox   *cb_save_original_data;
 
+      QCheckBox   *cb_run_nnls;
+      QLabel      *lbl_nnls_target;
+
       QPushButton *pb_select_all;
       QPushButton *pb_ok;
       QPushButton *pb_cancel;
@@ -70,6 +76,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       bool *save_to_csv;
       QString *csv_filename;
       bool *save_original_data;
+      bool *run_nnls;
+      QString *nnls_target;
+      bool expert_mode;
 
       void update_enables();
 
@@ -83,6 +92,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       void set_save_to_csv();
       void update_csv_filename(const QString &);
       void set_save_original_data();
+      void set_run_nnls();
 
       void select_all();
       void ok();

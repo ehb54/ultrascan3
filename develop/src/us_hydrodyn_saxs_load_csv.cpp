@@ -10,6 +10,9 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
                                                      bool *save_to_csv,
                                                      QString *csv_filename,
                                                      bool *save_original_data,
+                                                     bool *run_nnls,
+                                                     QString *nnls_target,
+                                                     bool expert_mode,
                                                      QWidget *p,
                                                      const char *name
                                                      ) : QDialog(p, name)
@@ -23,6 +26,9 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
    this->save_to_csv = save_to_csv;
    this->csv_filename = csv_filename;
    this->save_original_data = save_original_data;
+   this->run_nnls = run_nnls;
+   this->nnls_target = nnls_target;
+   this->expert_mode = expert_mode;
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -107,6 +113,23 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    cb_save_original_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_save_original_data->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_save_original_data, SIGNAL(clicked()), this, SLOT(set_save_original_data()));
+   
+   if ( expert_mode )
+   {
+      cb_run_nnls = new QCheckBox(this);
+      cb_run_nnls->setText(tr(" NNLS fit"));
+      cb_run_nnls->setEnabled(true);
+      cb_run_nnls->setChecked(*run_nnls);
+      cb_run_nnls->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_run_nnls->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_run_nnls, SIGNAL(clicked()), this, SLOT(set_run_nnls()));
+      
+      lbl_nnls_target = new QLabel(*nnls_target, this);
+      lbl_nnls_target->setAlignment(AlignCenter|AlignVCenter);
+      lbl_nnls_target->setMinimumHeight(minHeight2);
+      lbl_nnls_target->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      lbl_nnls_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+   }
 
    pb_select_all = new QPushButton(tr("Select All"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -153,7 +176,7 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    hbl_avg_std->addWidget(cb_save_to_csv);
    hbl_avg_std->addWidget(le_csv_filename);
    hbl_avg_std->addWidget(cb_save_original_data);
-   hbl_avg_std->addSpacing(5);
+      hbl_avg_std->addSpacing(5);
 
    QVBoxLayout *background = new QVBoxLayout(this);
    background->addSpacing(5);
@@ -162,6 +185,13 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    background->addWidget(lb_names);
    background->addSpacing(5);
    background->addLayout(hbl_avg_std);
+   if ( expert_mode )
+   {
+      QHBoxLayout *hbl_nnls = new QHBoxLayout;
+      hbl_nnls->addWidget(cb_run_nnls);
+      hbl_nnls->addWidget(lbl_nnls_target);
+      background->addLayout(hbl_nnls);
+   }
    background->addSpacing(5);
    background->addLayout(hbl_bottom);
    background->addSpacing(5);
@@ -257,12 +287,32 @@ void US_Hydrodyn_Saxs_Load_Csv::set_save_original_data()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Load_Csv::set_run_nnls()
+{
+   *run_nnls = cb_run_nnls->isChecked();
+   if ( *run_nnls )
+   {
+      if ( qsl_sel_names->size() )
+      {
+         *nnls_target = *(qsl_sel_names->at(0));
+      } else {
+         *nnls_target = *(qsl_names->at(0));
+      }
+      lbl_nnls_target->setText(tr("Target model: ") + *nnls_target);
+   }
+   update_enables();
+}
+
 void US_Hydrodyn_Saxs_Load_Csv::update_enables()
 {
    cb_create_avg->setEnabled(qsl_sel_names->size() > 1);
    cb_create_std_dev->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 2);
    cb_only_plot_stats->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
-   cb_save_to_csv->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
-   le_csv_filename->setEnabled(cb_save_to_csv->isChecked() && qsl_sel_names->size() > 1);
+   cb_save_to_csv->setEnabled(
+                              ( cb_create_avg->isChecked() || ( expert_mode && cb_run_nnls->isChecked() ) )
+                              && qsl_sel_names->size() > 1);
+   le_csv_filename->setEnabled(
+                               ( cb_create_avg->isChecked() || ( expert_mode && cb_run_nnls->isChecked() ) )
+                               && qsl_sel_names->size() > 1);
    cb_save_original_data->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
 }

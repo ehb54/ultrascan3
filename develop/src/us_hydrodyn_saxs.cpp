@@ -3,6 +3,7 @@
 #include "../include/us_hydrodyn_saxs_load_csv.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
+#include "../include/us_math.h"
 
 #include <time.h>
 #include <qstringlist.h>
@@ -1588,6 +1589,8 @@ void US_Hydrodyn_Saxs::load_pr()
          bool save_to_csv = false;
          QString csv_filename = "summary";
          bool save_original_data = false;
+         bool run_nnls = false;
+         QString nnls_target = "";
          
          US_Hydrodyn_Saxs_Load_Csv *hslc =
             new US_Hydrodyn_Saxs_Load_Csv(
@@ -1599,7 +1602,10 @@ void US_Hydrodyn_Saxs::load_pr()
                                           &only_plot_stats,
                                           &save_to_csv,
                                           &csv_filename,
-                                          &save_original_data
+                                          &save_original_data,
+                                          &run_nnls,
+                                          &nnls_target,
+                                          ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode
                                           );
          hslc->exec();
             
@@ -1628,8 +1634,17 @@ void US_Hydrodyn_Saxs::load_pr()
             sum_pr[i] = sum_pr2[i] = 0e0;
          }
 
+         // setup for nnls
+         if ( run_nnls )
+         {
+            nnls_A.clear();
+            nnls_x.clear();
+            nnls_B.clear();
+            nnls_rmsd = 0e0;
+         }
+
          // now go through qsl_data and load up any that map_sel_names contains
-         bool plotted = false;
+         plotted = false;
          for ( QStringList::iterator it = qsl_data.begin();
                it != qsl_data.end();
                it++ )
@@ -1666,6 +1681,16 @@ void US_Hydrodyn_Saxs::load_pr()
                   pr.push_back((*it).toDouble());
                }
 
+               if ( run_nnls )
+               {
+                  if ( *qsl_tmp.at(0) == nnls_target )
+                  {
+                     nnls_B = pr;
+                  } else {
+                     nnls_A[*qsl_tmp.at(0)] = pr;
+                     nnls_x[*qsl_tmp.at(0)] = 0;
+                  }
+               }
 #if defined(DEBUG_PR)
                cout << "pr values (" << pr.size() << "): ";
                
@@ -1695,7 +1720,7 @@ void US_Hydrodyn_Saxs::load_pr()
                }
                sum_count++;
 
-               if ( !(create_avg && only_plot_stats) )
+               if ( !(create_avg && only_plot_stats) && !run_nnls )
                {
                   long ppr = plot_pr->insertCurve("p(r) vs r");
                   plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
@@ -1724,7 +1749,7 @@ void US_Hydrodyn_Saxs::load_pr()
                }
             }
          }
-         if ( create_avg && sum_count )
+         if ( create_avg && sum_count && !run_nnls)
          {
             pr = sum_pr;
             for ( unsigned int i = 0; i < sum_pr.size(); i++ )
@@ -1944,6 +1969,12 @@ void US_Hydrodyn_Saxs::load_pr()
                }
             }
          } else {
+            if ( run_nnls )
+            {
+               nnls_r = r;
+               calc_nnls_fit();
+               // then plot the nnls fit & target ?
+            }
             if ( plotted )
             {
                editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
@@ -3435,4 +3466,192 @@ QString US_Hydrodyn_Saxs::vector_double_to_csv( vector < double > vd )
       result += QString("%1,").arg(vd[i]);
    }
    return result;
+}
+
+
+void US_Hydrodyn_Saxs::calc_nnls_fit()
+{
+   // setup nnls run:
+   editor->append("setting up nnls run\n");
+   // unify dimension of nnls_A vectors
+   unsigned int max_pr_len = 0;
+
+   // #define DEBUG_NNLS
+#if defined(DEBUG_NNLS)
+   nnls_A.clear();
+   nnls_A["one"].push_back(1e0);
+   nnls_A["one"].push_back(1e0);
+   nnls_A["one"].push_back(1e0);
+   nnls_A["one"].push_back(1e0);
+   
+   nnls_A["two"].push_back(1e0);
+   nnls_A["two"].push_back(2e0);
+   nnls_A["two"].push_back(2e0);
+   nnls_A["two"].push_back(2e0);
+
+   nnls_A["three"].push_back(1e0);
+   nnls_A["three"].push_back(1e0);
+   nnls_A["three"].push_back(3e0);
+   nnls_A["three"].push_back(3e0);
+   
+   nnls_B.clear();
+   // ideal conc .5 1 2
+   nnls_B.push_back(3.5e0);
+   nnls_B.push_back(4.5e0);
+   nnls_B.push_back(8.5e0);
+   nnls_B.push_back(8.5e0);
+#endif
+
+   for ( map < QString, vector < double > >::iterator it = nnls_A.begin();
+        it != nnls_A.end();
+        it++ )
+   {
+      if ( it->second.size() > max_pr_len ) 
+      {
+         max_pr_len = it->second.size();
+      }
+   }
+
+   editor->append(QString("a size %1\n").arg(nnls_A.size()));
+   editor->append(QString("b size %1\n").arg(max_pr_len));
+
+   vector < double > use_A;
+
+   vector < QString > model_names;
+
+   for ( map < QString, vector < double > >::iterator it = nnls_A.begin();
+        it != nnls_A.end();
+        it++ )
+   {
+      unsigned int org_size = it->second.size();
+      it->second.resize(max_pr_len);
+      for ( unsigned int i = org_size; i < max_pr_len; i++ )
+      {
+         it->second[i] = 0e0;
+      }
+      model_names.push_back(it->first);
+      for ( unsigned int i = 0; i < max_pr_len; i++ )
+      {
+         use_A.push_back(it->second[i]);
+#if defined(DEBUG_NNLS)
+p         cout << "use_A.push_back " << it->second[i] << endl;
+#endif
+      }
+   }
+
+   unsigned int org_size = nnls_B.size();
+   nnls_B.resize(max_pr_len);
+   for ( unsigned int i = org_size; i < max_pr_len; i++ )
+   {
+      nnls_B[i] = 0e0;
+   }
+   vector < double > use_B = nnls_B;
+   vector < double > use_x(nnls_A.size());
+   vector < double > nnls_wp(nnls_A.size());
+   vector < double > nnls_zzp(use_B.size());
+   vector < int > nnls_indexp(nnls_A.size());
+
+   editor->append(QString("running nnls %1 %2\n").arg(nnls_A.size()).arg(use_B.size()));
+#if defined(DEBUG_NNLS)
+   cout << "use A size " << use_A.size() << endl;
+   int a_size = nnls_A.size();
+   int b_size = nnls_B.size();
+   cout << "matrix: \n";
+   for ( int i = 0; i < a_size; i++ )
+   {
+      for ( int j = 0; j < b_size; j++ )
+      {
+         cout << use_A[i * b_size + j] << ",";
+      }
+      cout << endl;
+   }
+   cout << "b: \n";
+   for ( int j = 0; j < b_size; j++ )
+   {
+      cout << use_B[j] << ",";
+   }
+   cout << endl;
+#endif
+
+   int result =
+      nnls(
+           (double *)&use_A[0],
+           (int) max_pr_len,
+           (int) max_pr_len,
+           (int) nnls_A.size(),
+           (double *)&use_B[0],
+           (double *)&use_x[0],
+           &nnls_rmsd,
+           (double *)&nnls_wp[0],
+           (double *)&nnls_zzp[0],
+           (int *)&nnls_indexp[0]);
+
+   assert(result == 0);
+
+   editor->append(QString("residual euclidian norm %1\n").arg(nnls_rmsd));
+   
+   // list models & concs
+
+   for ( unsigned int i = 0; i < use_x.size(); i++ )
+   {
+      editor->append(QString("%1 %2\n").arg(model_names[i]).arg(use_x[i]));
+   }
+
+   // build model & residuals
+   vector < double > model(use_B.size());
+   vector < double > residual(use_B.size());
+
+   for ( unsigned int i = 0; i < use_B.size(); i++ )
+   {
+      model[i] = 0e0;
+      for ( unsigned int j = 0; j < use_x.size(); j++ )
+      {
+         model[i] += use_x[j] * nnls_A[model_names[j]][i];
+      }
+      residual[i] = fabs(model[i] - nnls_B[i]);
+   }
+
+   // plot 
+   plot_one_pr(nnls_r, model, "Model");
+   plot_one_pr(nnls_r, residual, "Residual");
+   plot_one_pr(nnls_r, nnls_B, "Target");
+
+   // save as csv
+}
+
+void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QString name)
+{
+   if ( r.size() < pr.size() )
+   {
+      pr.resize(r.size());
+   }
+   if ( pr.size() < r.size() )
+   {
+      r.resize(pr.size());
+   }
+
+   long ppr = plot_pr->insertCurve("p(r) vs r");
+   plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
+   plotted_r.push_back(r);
+   if ( cb_normalize->isChecked() )
+   {
+      normalize_pr(&pr);
+   }
+   plotted_pr.push_back(pr);
+   unsigned int p = plotted_r.size() - 1;
+                  
+   plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
+   plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+   plot_pr->replot();
+                  
+   if ( !plotted )
+   {
+      plotted = true;
+      editor->append("P(r) plot legend:\n");
+   }
+   QColor save_color = editor->color();
+   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
+   editor->setColor(plot_colors[p % plot_colors.size()]);
+   editor->append(name + "\n");
+   editor->setColor(save_color);
 }
