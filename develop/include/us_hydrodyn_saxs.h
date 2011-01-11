@@ -195,6 +195,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void calc_nnls_fit();
       void plot_one_pr(vector < double > r, vector < double > pr, QString name);
       bool plotted;
+      bool save_to_csv;
+      QString csv_filename;
 
    public slots:
       void show_plot_saxs_sans();

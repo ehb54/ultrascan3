@@ -235,6 +235,12 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    residue_short_names["ARG"] = 'R';
    residue_short_names["HIS"] = 'H';
 
+   residue_short_names["G"] = 'g';
+   residue_short_names["A"] = 'a';
+   residue_short_names["C"] = 'c';
+   residue_short_names["T"] = 't';
+   residue_short_names["U"] = 'u';
+
    rasmol = new QProcess(this);
    rasmol->setWorkingDirectory(
                                QDir(USglobal->config_list.system_dir + SLASH +

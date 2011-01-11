@@ -504,8 +504,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    editor->setReadOnly(true);
    editor->setMinimumWidth(300);
    editor->setMinimumHeight(minHeight1 * 6);
-   m = new QMenuBar(editor, "menu" );
-   m->setMinimumHeight(minHeight1);
+   m = new QMenuBar(this, "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
    m->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    QPopupMenu * file = new QPopupMenu(editor);
    m->insertItem( tr("&File"), file );
@@ -577,6 +577,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(pb_clear_plot_pr, j, 1);
    j++;
    
+   background->addMultiCellWidget(m, j, j, 0, 1);
+   j++;
    background->addMultiCellWidget(editor, j, j, 0, 1);
    //   background->addMultiCellWidget(editor, j, j+3, 0, 1);
    // background->addMultiCellWidget(plot_pr, j-2, j+3, 2, 2);
@@ -1586,8 +1588,8 @@ void US_Hydrodyn_Saxs::load_pr()
          bool create_avg = false;
          bool create_std_dev = false;
          bool only_plot_stats = true;
-         bool save_to_csv = false;
-         QString csv_filename = "summary";
+         save_to_csv = false;
+         csv_filename = "summary";
          bool save_original_data = false;
          bool run_nnls = false;
          QString nnls_target = "";
@@ -1722,30 +1724,7 @@ void US_Hydrodyn_Saxs::load_pr()
 
                if ( !(create_avg && only_plot_stats) && !run_nnls )
                {
-                  long ppr = plot_pr->insertCurve("p(r) vs r");
-                  plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
-                  plotted_r.push_back(this_r);
-                  if ( cb_normalize->isChecked() )
-                  {
-                     normalize_pr(&pr);
-                  }
-                  plotted_pr.push_back(pr);
-                  unsigned int p = plotted_r.size() - 1;
-                  
-                  plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
-                  plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
-                  plot_pr->replot();
-                  
-                  if ( !plotted )
-                  {
-                     plotted = true;
-                     editor->append("P(r) plot legend:\n");
-                  }
-                  QColor save_color = editor->color();
-                  editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
-                  editor->setColor(plot_colors[p % plot_colors.size()]);
-                  editor->append(QFileInfo(filename).fileName() + " " + *qsl_tmp.at(0) + "\n");
-                  editor->setColor(save_color);
+                  plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " " + *qsl_tmp.at(0));
                }
             }
          }
@@ -1767,31 +1746,8 @@ void US_Hydrodyn_Saxs::load_pr()
             }
             vector < double > pr_avg = pr;
 
-            long ppr = plot_pr->insertCurve("p(r) vs r");
-            plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
-            plotted_r.push_back(this_r);
-            if ( cb_normalize->isChecked() )
-            {
-               normalize_pr(&pr);
-            }
-            plotted_pr.push_back(pr);
-            unsigned int p = plotted_r.size() - 1;
-            
-            plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
-            plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
-            plot_pr->replot();
-            
-            if ( !plotted )
-            {
-               plotted = true;
-               editor->append("P(r) plot legend:\n");
-            }
-            QColor save_color = editor->color();
-            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
-            editor->setColor(plot_colors[p % plot_colors.size()]);
-            editor->append("Average\n");
-            editor->setColor(save_color);
-            
+            plot_one_pr(this_r, pr, "Average");
+
             vector < double > pr_std_dev;
             vector < double > pr_avg_minus_std_dev;
             vector < double > pr_avg_plus_std_dev;
@@ -1850,32 +1806,7 @@ void US_Hydrodyn_Saxs::load_pr()
                }
                pr_avg_minus_std_dev = pr;
 
-               {
-                  if ( !plotted )
-                  {
-                     plotted = true;
-                     editor->append("P(r) plot legend:\n");
-                  }
-                  long ppr = plot_pr->insertCurve("p(r) vs r");
-                  plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
-                  plotted_r.push_back(this_r);
-                  if ( cb_normalize->isChecked() )
-                  {
-                     normalize_pr(&pr);
-                  }
-                  plotted_pr.push_back(pr);
-                  unsigned int p = plotted_r.size() - 1;
-                  
-                  plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
-                  plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
-                  plot_pr->replot();
-
-                  QColor save_color = editor->color();
-                  editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
-                  editor->setColor(plot_colors[p % plot_colors.size()]);
-                  editor->append("Average minus 1 std dev\n");
-                  editor->setColor(save_color);
-               }
+               plot_one_pr(this_r, pr, "Average minus 1 std dev");
                
                pr = sum_pr;
                for ( unsigned int i = 0; i < sum_pr.size(); i++ )
@@ -1894,27 +1825,7 @@ void US_Hydrodyn_Saxs::load_pr()
                }
                pr_avg_plus_std_dev = pr;
 
-               {
-                  long ppr = plot_pr->insertCurve("p(r) vs r");
-                  plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
-                  plotted_r.push_back(this_r);
-                  if ( cb_normalize->isChecked() )
-                  {
-                     normalize_pr(&pr);
-                  }
-                  plotted_pr.push_back(pr);
-                  unsigned int p = plotted_r.size() - 1;
-                  
-                  plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
-                  plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
-                  plot_pr->replot();
-
-                  QColor save_color = editor->color();
-                  editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
-                  editor->setColor(plot_colors[p % plot_colors.size()]);
-                  editor->append("Average plus 1 std dev\n");
-                  editor->setColor(save_color);
-               }
+               plot_one_pr(this_r, pr, "Average plus 1 std dev");
             }
             if ( plotted )
             {
@@ -2032,27 +1943,7 @@ void US_Hydrodyn_Saxs::load_pr()
          pop_last--;
       }
 
-
-      long ppr = plot_pr->insertCurve("p(r) vs r");
-      plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
-      plotted_r.push_back(r);
-      if ( cb_normalize->isChecked() )
-      {
-         normalize_pr(&pr);
-      }
-      plotted_pr.push_back(pr);
-      unsigned int p = plotted_r.size() - 1;
-
-      plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
-      plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
-      plot_pr->replot();
-
-      QColor save_color = editor->color();
-      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
-      editor->setColor(plot_colors[p % plot_colors.size()]);
-      editor->append("P(r): " + QFileInfo(filename).fileName() + "\n");
-      editor->setColor(save_color);
-      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+      plot_one_pr(r, pr, "P(r): " + QFileInfo(filename).fileName());
    }
 }
 
@@ -3657,4 +3548,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    editor->setColor(plot_colors[p % plot_colors.size()]);
    editor->append(name + "\n");
    editor->setColor(save_color);
+
+   // to save to csv, write just contributing models?, target, model & residual
+   // don't forget to make target part of it even if it isn't selected.
 }
