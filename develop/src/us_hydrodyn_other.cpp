@@ -553,6 +553,7 @@ int US_Hydrodyn::read_pdb(const QString &filename)
                            QString("%1").arg(model_vector.size() + 1) + ": \n");
             str = "";
             QString sstr = "";
+            int sstr_pos = 0;
             
             // the residue list is wrong if there are unknown residues
             for ( unsigned int i = 0; i < temp_model.molecule.size(); i++ )
@@ -566,6 +567,11 @@ int US_Hydrodyn::read_pdb(const QString &filename)
                      sstr += 
                         residue_short_names.count(temp_model.molecule[i].atom[j].resName) ? 
                         QString(residue_short_names[temp_model.molecule[i].atom[j].resName]) : "?"; 
+                     sstr_pos++;
+                     if ( !( sstr_pos % 42 ) )
+                     {
+                        sstr += "\n";
+                     }
                      lastResSeq = temp_model.molecule[i].atom[j].resSeq;
                   }
                }
@@ -575,7 +581,14 @@ int US_Hydrodyn::read_pdb(const QString &filename)
             //   str += temp_model.residue[m].name + " ";
             // }
             editor->append(str);
-            editor->append("\n" + sstr + "\n");
+            {
+               QFont save_font = editor->currentFont();
+               QFont new_font = QFont("Courier");
+               editor->append(tr("\nSequence in one letter code:\n"));
+               editor->setCurrentFont(new_font);
+               editor->append(sstr + "\n\n");
+               editor->setCurrentFont(save_font);
+            }
             
             // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
             calc_vbar(&temp_model); // update the calculated vbar for this model
