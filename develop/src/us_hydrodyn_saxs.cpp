@@ -219,6 +219,7 @@ void US_Hydrodyn_Saxs::refresh(
 
 void US_Hydrodyn_Saxs::setupGUI()
 {
+   int minHeight0 = 22;
    int minHeight1 = 30;
    lbl_info = new QLabel(tr("SAXS/SANS Plotting Functions:"), this);
    Q_CHECK_PTR(lbl_info);
@@ -504,7 +505,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    editor->setReadOnly(true);
    editor->setMinimumWidth(300);
    editor->setMinimumHeight(minHeight1 * 6);
-   m = new QMenuBar(this, "menu" );
+
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight0);
+
+   m = new QMenuBar(frame, "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    QPopupMenu * file = new QPopupMenu(editor);
@@ -577,7 +583,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(pb_clear_plot_pr, j, 1);
    j++;
    
-   background->addMultiCellWidget(m, j, j, 0, 1);
+   background->addMultiCellWidget(frame, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(editor, j, j, 0, 1);
    //   background->addMultiCellWidget(editor, j, j+3, 0, 1);
