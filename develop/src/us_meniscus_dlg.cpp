@@ -269,7 +269,7 @@ void US_MeniscusDialog::update_meniscus1(const QString &str)
    {
       meniscus_ok1[0] = false;
    }
-   else if (meniscus[0] > 7.2 | meniscus[0] < 5.8)
+   else if (meniscus[0] > 7.2 | meniscus[0] < 5.75)
    {
       meniscus_ok2[0] = false;
    }
@@ -288,7 +288,7 @@ void US_MeniscusDialog::update_meniscus2(const QString &str)
    {
       meniscus_ok1[1] = false;
    }
-   else if (meniscus[1] > 7.2 | meniscus[1] < 5.8)
+   else if (meniscus[1] > 7.2 | meniscus[1] < 5.75)
    {
       meniscus_ok2[1] = false;
    }
@@ -307,7 +307,7 @@ void US_MeniscusDialog::update_meniscus3(const QString &str)
    {
       meniscus_ok1[2] = false;
    }
-   else if (meniscus[2] > 7.2 | meniscus[2] < 5.8)
+   else if (meniscus[2] > 7.2 | meniscus[2] < 5.75)
    {
       meniscus_ok2[2] = false;
    }
@@ -326,7 +326,7 @@ void US_MeniscusDialog::update_meniscus4(const QString &str)
    {
       meniscus_ok1[3] = false;
    }
-   else if (meniscus[3] > 7.2 | meniscus[3] < 5.8)
+   else if (meniscus[3] > 7.2 | meniscus[3] < 5.75)
    {
       meniscus_ok2[3] = false;
    }
@@ -344,7 +344,7 @@ void US_MeniscusDialog::update_meniscus5(const QString &str)
    {
       meniscus_ok1[4] = false;
    }
-   else if (meniscus[4] > 7.2 | meniscus[4] < 5.8)
+   else if (meniscus[4] > 7.2 | meniscus[4] < 5.75)
    {
       meniscus_ok2[4] = false;
    }
@@ -363,7 +363,7 @@ void US_MeniscusDialog::update_meniscus6(const QString &str)
    {
       meniscus_ok1[5] = false;
    }
-   else if (meniscus[5] > 7.2 | meniscus[5] < 5.8)
+   else if (meniscus[5] > 7.2 | meniscus[5] < 5.75)
    {
       meniscus_ok2[5] = false;
    }
@@ -382,7 +382,7 @@ void US_MeniscusDialog::update_meniscus7(const QString &str)
    {
       meniscus_ok1[6] = false;
    }
-   else if (meniscus[6] > 7.2 | meniscus[6] < 5.8)
+   else if (meniscus[6] > 7.2 | meniscus[6] < 5.75)
    {
       meniscus_ok2[6] = false;
    }
@@ -401,7 +401,7 @@ void US_MeniscusDialog::update_meniscus8(const QString &str)
    {
       meniscus_ok1[7] = false;
    }
-   else if (meniscus[7] > 7.2 | meniscus[7] < 5.8)
+   else if (meniscus[7] > 7.2 | meniscus[7] < 5.75)
    {
       meniscus_ok2[7] = false;
    }

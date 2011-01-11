@@ -889,10 +889,19 @@ struct peptideDetails US_Vbar_DB::export_vbar(int id)
       //   da = cur.value("File").toByteArray();
       //   sequence = get_sequence(da);
       sequence = cur.value("Sequence").toString();
-      calc_vbar(&pep, &sequence, &temperature);
-      Vbar.vbar = pep.vbar;
-      Vbar.vbar20 = pep.vbar20;
-      Vbar.e280 = pep.e280;
+		if (sequence.stripWhiteSpace() != "") // if there is no sequence check if a manual vbar is entered
+		{
+      	calc_vbar(&pep, &sequence, &temperature);
+      	Vbar.vbar = pep.vbar;
+      	Vbar.vbar20 = pep.vbar20;
+      	Vbar.e280 = pep.e280;
+		}
+		else
+		{
+			Vbar.vbar = cur.value("vbar").toDouble();
+			Vbar.vbar20 = cur.value("vbar").toDouble();
+			Vbar.e280 = cur.value("e280").toDouble();
+		}
       QString res_file = USglobal->config_list.result_dir +"/" + QString::number(id) + ".pep_res";
       result_output(res_file);
    }

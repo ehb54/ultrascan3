@@ -909,6 +909,7 @@ cout << "Range_left: " << run_inf.range_left[i][j][k] << ", Range_right: " << ru
             {
               Vbar_info = vbar_db_dlg->export_vbar(run_inf.peptide_serialnumber[i][j][k]);
               Vbar20[i][j][k] = Vbar_info.vbar20;
+				  //cout << run_inf.peptide_serialnumber[i][j][k] << ", " << Vbar20[i][j][k]  <<endl;
               vbar_from_db = true;
             }
             else
