@@ -6,6 +6,7 @@ unix: TARGET = us_utils
 
 macx {
       TARGET = us_utils
+      LIBS  += -L/usr/local/lib/mysql -lmysqlclient
       LIBS  += -L../lib -lus_gui 
 }
 
