@@ -91,6 +91,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QLabel *lbl_core_progress;
       QLabel *lbl_info_prr;
       QLabel *lbl_bin_size;
+      QLabel *lbl_guinier_cutoff;
 
       QTextEdit *te_filename2;
 
@@ -102,6 +103,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_plot_pr;
       QPushButton *pb_load_pr;
       QPushButton *pb_clear_plot_pr;
+      QPushButton *pb_load_gmon;
       QPushButton *pb_select_atom_file;
       QPushButton *pb_select_hybrid_file;
       QPushButton *pb_select_saxs_file;
@@ -117,6 +119,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QRadioButton *rb_sans;
 
       QCheckBox *cb_normalize;
+      QCheckBox *cb_guinier;
+
+      QwtCounter *cnt_guinier_cutoff;
 
       QButtonGroup *bg_curve;
       QRadioButton *rb_curve_raw;
@@ -194,9 +199,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString vector_double_to_csv( vector < double > vd );
       void calc_nnls_fit();
       void plot_one_pr(vector < double > r, vector < double > pr, QString name);
+      void plot_one_iqq(vector < double > q, vector < double > I, QString name);
       bool plotted;
       bool save_to_csv;
       QString csv_filename;
+      double guinier_cutoff;
 
    public slots:
       void show_plot_saxs_sans();
@@ -213,6 +220,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void show_plot_sans();
       void load_sans();
       void update_bin_size(double);
+      void update_guinier_cutoff(double);
       void set_curve(int);
       void load_pr();
       void clear_plot_pr();
@@ -235,6 +243,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString saxs_filestring();
       QString sprr_filestring();
       void set_create_native_saxs();
+      void load_gmon();
 
    protected slots:
 
