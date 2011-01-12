@@ -15,20 +15,19 @@ isEmpty( QCA ) {
 CONFIG       += $$DEBUGORRELEASE qt thread warn
 
 unix {
-  LIBS       += -lus_utils -lus_gui -lus_db -L../../lib
+  LIBS       += -lus_utils -lus_gui -L../../lib
   LIBS       += $$QCA
   LIBS       += -lqwt -L$$QWTPATH/lib
   LIBS       += -lmysqlclient -L$$MYSQLDIR 
   LIBS       += -lqwtplot3d-qt4 
   DEFINES    += INTEL LINUX
 
-  DEPENDPATH   += ../../gui ../../utils ../../db $$QWTPATH/include ..
-  INCLUDEPATH  += ../../gui ../../utils ../../db $$QWTPATH/include ..
+  DEPENDPATH   += ../../gui ../../utils $$QWTPATH/include ..
+  INCLUDEPATH  += ../../gui ../../utils $$QWTPATH/include ..
 }
 
 win32 {
   LIBS       += ../../lib/libus_utils.lib
-  LIBS       += ../../lib/libus_db.lib
   LIBS       += ../../lib/libus_gui.lib
   LIBS       += $$QWTLIB
   DEFINES     += INTEL
@@ -37,13 +36,13 @@ win32 {
   QMAKE_CXXFLAGS_DEBUG   += /wd4996
   QMAKE_CXXFLAGS_RELEASE += /wd4996
 
-  DEPENDPATH   += ../../gui ../../utils ../../db $$QWTPATH/src ..
-  INCLUDEPATH  += ../../gui ../../utils ../../db $$QWTPATH/src ..
+  DEPENDPATH   += ../../gui ../../utils $$QWTPATH/src ..
+  INCLUDEPATH  += ../../gui ../../utils $$QWTPATH/src ..
 }
 
 macx {
   CONFIG     += i386 ppc
-  LIBS       += -L../../lib -lus_utils -lus_gui -lus_db
+  LIBS       += -L../../lib -lus_utils -lus_gui 
   LIBS       += $$QWTLIB $$QCALIB
   LIBS       += -L$$MYSQLDIR -lmysqlclient
   DEFINES    += MAC OSX 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for d in utils gui db programs/*
+for d in utils gui programs/*
 do
   pushd $d
   make clean

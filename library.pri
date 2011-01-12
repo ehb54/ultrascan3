@@ -14,12 +14,12 @@ QT          += xml
 unix {
   contains( DEFINES, NO_DB ) {
     # NO_DB is for the supercomputer back end with no gui, mysql, or qca
-    DEPENDPATH   += ../utils ../db 
-    INCLUDEPATH  += ../utils ../db 
+    DEPENDPATH   += ../utils  
+    INCLUDEPATH  += ../utils  
   }
   else {
-    DEPENDPATH   += ../gui ../utils ../db $$QWTPATH/include
-    INCLUDEPATH  += ../gui ../utils ../db $$QWTPATH/include $$QCAPATH/include/QtCrypto
+    DEPENDPATH   += ../gui ../utils $$QWTPATH/include
+    INCLUDEPATH  += ../gui ../utils $$QWTPATH/include $$QCAPATH/include/QtCrypto
   }
   DEFINES      += INTEL LINUX
   LIBS         += -luuid
@@ -39,8 +39,8 @@ win32 {
 
 macx {
   CONFIG       += i386 ppc
-  DEPENDPATH   += ../gui ../utils ../db $$QWTPATH/include
-  INCLUDEPATH  += ../gui ../utils ../db $$QWTPATH/include $$QCAPATH/include/QtCrypto
+  DEPENDPATH   += ../gui ../utils $$QWTPATH/include
+  INCLUDEPATH  += ../gui ../utils $$QWTPATH/include $$QCAPATH/include/QtCrypto
   DEFINES      += MAC OSX
   LIBS         += -luuid $$QCALIB $$QWTLIB
   DESTDIR       = ../lib
