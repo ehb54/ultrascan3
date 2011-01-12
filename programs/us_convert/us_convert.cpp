@@ -17,6 +17,7 @@
 #include "us_convertio.h"
 #include "us_intensity.h"
 #include "us_get_dbrun.h"
+#include "us_investigator.h"
 
 int main( int argc, char* argv[] )
 {
@@ -33,6 +34,8 @@ int main( int argc, char* argv[] )
 
 US_Convert::US_Convert() : US_Widgets()
 {
+   ExpData.invID = US_Settings::us_inv_ID();
+
    setWindowTitle( tr( "Convert Legacy Raw Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
@@ -44,6 +47,68 @@ US_Convert::US_Convert() : US_Widgets()
 
    int row = 0;
 
+   // First row
+   QStringList DB = US_Settings::defaultDB();
+   if ( DB.isEmpty() ) DB << "Undefined";
+   QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
+   lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   settings->addWidget( lb_DB, row++, 0, 1, 3 );
+
+   // Investigator
+   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   settings->addWidget( pb_investigator, row, 0 );
+
+   if ( US_Settings::us_inv_level() < 1 )
+      pb_investigator->setEnabled( false );
+
+   le_investigator = us_lineedit( tr( "Not Selected" ) );
+   le_investigator->setReadOnly( true );
+   settings->addWidget( le_investigator, row++, 1, 1, 2 );
+
+   // Radio buttons
+   disk_controls = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
+   connect( disk_controls, SIGNAL( changed       ( bool ) ),
+                           SLOT  ( source_changed( bool ) ) );
+   settings->addLayout( disk_controls, row++, 0, 1, 2 );
+
+   // Display Run ID
+   QLabel* lb_runID = us_label( tr( "Run ID:" ) );
+   // Add this later, after tabs:settings->addWidget( lb_runID, row, 0 );
+   lb_runID->setVisible( false ); // for now
+
+   le_runID = us_lineedit( "", 1 );
+   le_runID ->setMinimumWidth( 225 );
+   // Add this later, after tabs: settings->addWidget( le_runID, row++, 1 );
+   le_runID ->setPalette ( gray );                // This one is read-only
+   le_runID ->setReadOnly( true );
+   le_runID ->setVisible ( false );  // for now
+
+   // Load the run
+   QLabel* lb_run = us_banner( tr( "Load the Run" ) );
+   settings->addWidget( lb_run, row++, 0, 1, 2 );
+
+   // Pushbuttons to load and reload data
+   pb_import = us_pushbutton( tr( "Import Legacy Run from HD" ) );
+   connect( pb_import, SIGNAL( clicked() ), SLOT( import() ) );
+   settings->addWidget( pb_import, row, 0 );
+
+   // External program to enter experiment information
+   pb_editRuninfo = us_pushbutton( tr( "Edit Run Information" ) );
+   connect( pb_editRuninfo, SIGNAL( clicked() ), SLOT( editRuninfo() ) );
+   settings->addWidget( pb_editRuninfo, row++, 1 );
+   pb_editRuninfo->setEnabled( false );
+
+   // load US3 data ( that perhaps has been done offline )
+   pb_loadUS3 = us_pushbutton( tr( "Load US3 Run" ), true );
+   connect( pb_loadUS3, SIGNAL( clicked() ), SLOT( loadUS3() ) );
+   settings->addWidget( pb_loadUS3, row, 0 );
+
+   // Run details
+   pb_details = us_pushbutton( tr( "Run Details" ), false );
+   connect( pb_details, SIGNAL( clicked() ), SLOT( runDetails() ) );
+   settings->addWidget( pb_details, row++, 1 );
+
    // Set the wavelength tolerance for c/c/w determination
    QLabel* lb_tolerance = us_label( tr( "Dataset Separation Tolerance:" ) );
    settings->addWidget( lb_tolerance, row, 0 );
@@ -52,40 +117,17 @@ US_Convert::US_Convert() : US_Widgets()
    ct_tolerance->setStep( 1 );
    ct_tolerance->setMinimumWidth( 160 );
    settings->addWidget( ct_tolerance, row++, 1 );
-   connect( ct_tolerance, SIGNAL( valueChanged         ( double ) ),      // if the user has changed it
+   // connect whenever the user has changed it
+   connect( ct_tolerance, SIGNAL( valueChanged         ( double ) ),
                           SLOT  ( toleranceValueChanged( double ) ) );
 
-   pb_details = us_pushbutton( tr( "Run Details" ), false );
-   connect( pb_details, SIGNAL( clicked() ), SLOT( runDetails() ) );
-   settings->addWidget( pb_details, row++, 0, 1, 2 );
-
-   // Pushbuttons to load and reload data
-   pb_load = us_pushbutton( tr( "Import Legacy Run from HD" ) );
-   connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
-   settings->addWidget( pb_load, row, 0 );
-
-   // load US3 data ( that perhaps has been done offline )
-   pb_loadUS3HD = us_pushbutton( tr( "Load US3 Run from HD" ), true );
-   connect( pb_loadUS3HD, SIGNAL( clicked() ), SLOT( loadUS3HD() ) );
-   settings->addWidget( pb_loadUS3HD, row++, 1 );
-
-   // External program to enter experiment information
-   pb_editRuninfo = us_pushbutton( tr( "Edit Run Information" ) );
-   connect( pb_editRuninfo, SIGNAL( clicked() ), SLOT( editRuninfo() ) );
-   settings->addWidget( pb_editRuninfo, row, 0 );
-   pb_editRuninfo->setEnabled( false );
-
-   pb_loadUS3DB = us_pushbutton( tr( "Load US3 Run from DB" ) );
-   connect( pb_loadUS3DB, SIGNAL( clicked() ), SLOT( loadUS3DB() ) );
-   settings->addWidget( pb_loadUS3DB, row++, 1 );
-
    // Change Run ID
-   QLabel* lb_runID = us_label( tr( "Run ID:" ) );
-   settings->addWidget( lb_runID, row, 0 );
+   QLabel* lb_runID2 = us_label( tr( "Run ID:" ) );
+   settings->addWidget( lb_runID2, row, 0 );
 
-   le_runID = us_lineedit( "", 1 );
-   le_runID ->setMinimumWidth( 225 );
-   settings->addWidget( le_runID, row++, 1 );
+   le_runID2 = us_lineedit( "", 1 );
+   le_runID2 ->setMinimumWidth( 225 );
+   settings->addWidget( le_runID2, row++, 1 );
 
    // Directory
    QLabel* lb_dir = us_label( tr( "Directory:" ) );
@@ -111,11 +153,10 @@ US_Convert::US_Convert() : US_Widgets()
 
    lw_triple = us_listwidget();
    lw_triple->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
-   lw_triple->setMaximumHeight( 110 );
    lw_triple->setMaximumWidth ( 120 );
    connect( lw_triple, SIGNAL( itemClicked ( QListWidgetItem* ) ),
                        SLOT  ( changeTriple( QListWidgetItem* ) ) );
-   ccw->addWidget( lw_triple, row, 0, 3, 1 );
+   ccw->addWidget( lw_triple, row, 0, 6, 1 );
 
    QLabel* lb_ccwinfo = us_label( tr( "Enter Associated c/c/w Info:" ) );
    ccw->addWidget( lb_ccwinfo, row++, 1, 1, 2 );
@@ -136,6 +177,34 @@ US_Convert::US_Convert() : US_Widgets()
    pb_applyAll = us_pushbutton( tr( "Apply to All" ), false );
    connect( pb_applyAll, SIGNAL( clicked() ), SLOT( tripleApplyAll() ) );
    ccw->addWidget( pb_applyAll, row++, 2 );
+
+   // Defining data subsets
+   pb_define = us_pushbutton( tr( "Define Subsets" ), false );
+   connect( pb_define, SIGNAL( clicked() ), SLOT( define_subsets() ) );
+   ccw->addWidget( pb_define, row, 1 );
+
+   pb_process = us_pushbutton( tr( "Process Subsets" ) , false );
+   connect( pb_process, SIGNAL( clicked() ), SLOT( process_subsets() ) );
+   ccw->addWidget( pb_process, row++, 2 );
+
+   // Choosing reference channel
+   pb_reference = us_pushbutton( tr( "Define Reference Scans" ), false );
+   connect( pb_reference, SIGNAL( clicked() ), SLOT( define_reference() ) );
+   ccw->addWidget( pb_reference, row, 1 );
+
+   pb_cancelref = us_pushbutton( tr( "Undo Reference Scans" ), false );
+   connect( pb_cancelref, SIGNAL( clicked() ), SLOT( cancel_reference() ) );
+   ccw->addWidget( pb_cancelref, row++, 2 );
+
+   // Define intensity profile
+   pb_intensity = us_pushbutton( tr( "Show Intensity Profile" ) , false );
+   connect( pb_intensity, SIGNAL( clicked() ), SLOT( show_intensity() ) );
+   ccw->addWidget( pb_intensity, row, 1 );
+
+   // drop scan
+   pb_dropScan = us_pushbutton( tr( "Drop Current c/c/w" ), false );
+   connect( pb_dropScan, SIGNAL( clicked() ), SLOT( drop_reference() ) );
+   ccw->addWidget( pb_dropScan, row++, 2 );
 
    QLabel* lb_solution = us_label( tr( "Solution:" ) );
    ccw->addWidget( lb_solution, row, 0 );
@@ -179,44 +248,6 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_include, row++, 1 );
    pb_include ->setEnabled( false );
 
-   // Defining data subsets
-   pb_define = us_pushbutton( tr( "Define Subsets" ), false );
-   connect( pb_define, SIGNAL( clicked() ), SLOT( define_subsets() ) );
-   settings->addWidget( pb_define, row, 0 );
-
-   pb_process = us_pushbutton( tr( "Process Subsets" ) , false );
-   connect( pb_process, SIGNAL( clicked() ), SLOT( process_subsets() ) );
-   settings->addWidget( pb_process, row++, 1 );
-
-   // Choosing reference channel
-   pb_reference = us_pushbutton( tr( "Define Reference Scans" ), false );
-   connect( pb_reference, SIGNAL( clicked() ), SLOT( define_reference() ) );
-   settings->addWidget( pb_reference, row, 0 );
-
-   pb_cancelref = us_pushbutton( tr( "Undo Reference Scans" ), false );
-   connect( pb_cancelref, SIGNAL( clicked() ), SLOT( cancel_reference() ) );
-   settings->addWidget( pb_cancelref, row++, 1 );
-
-   // Define intensity profile
-   pb_intensity = us_pushbutton( tr( "Show Intensity Profile" ) , false );
-   connect( pb_intensity, SIGNAL( clicked() ), SLOT( show_intensity() ) );
-   settings->addWidget( pb_intensity, row, 0 );
-
-   // drop scan
-   pb_dropScan = us_pushbutton( tr( "Drop Current c/c/w" ), false );
-   connect( pb_dropScan, SIGNAL( clicked() ), SLOT( drop_reference() ) );
-   settings->addWidget( pb_dropScan, row++, 1 );
-
-   // Write pushbuttons
-   pb_savetoHD = us_pushbutton( tr( "Save US3 Run to HD" ), false );
-   connect( pb_savetoHD, SIGNAL( clicked() ), SLOT( savetoHD() ) );
-   settings->addWidget( pb_savetoHD, row, 0 );
-
-   // sync data with DB
-   pb_savetoDB = us_pushbutton( tr( "Save US3 Run to DB" ), false );
-   connect( pb_savetoDB, SIGNAL( clicked() ), SLOT( savetoDB() ) );
-   settings->addWidget( pb_savetoDB, row++, 1 );
-
    // Standard pushbuttons
    QBoxLayout* buttons = new QHBoxLayout;
 
@@ -228,9 +259,13 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
    buttons->addWidget( pb_help );
 
-   QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
-   buttons->addWidget( pb_accept );
+   pb_saveUS3 = us_pushbutton( tr( "Save" ) );
+   connect( pb_saveUS3, SIGNAL( clicked() ), SLOT( saveUS3() ) );
+   buttons->addWidget( pb_saveUS3 );
+
+   QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
+   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   buttons->addWidget( pb_close );
 
    // Plot layout for the right side of window
    QBoxLayout* plot = new US_Plot( data_plot,
@@ -265,6 +300,8 @@ US_Convert::US_Convert() : US_Widgets()
 
    main->setStretch( 0, 2 );
    main->setStretch( 1, 4 );
+
+   reset();
 }
 
 void US_Convert::reset( void )
@@ -275,26 +312,25 @@ void US_Convert::reset( void )
 
    le_description  ->setText( "" );
    le_runID        ->setText( "" );
+   le_runID2       ->setText( "" );
    le_solutionDesc ->setText( "" );
 
 //   cb_centerpiece  ->load();
 
-   pb_load       ->setEnabled( true  );
-   pb_loadUS3HD  ->setEnabled( true  );
-   pb_loadUS3DB  ->setEnabled( true  );
+   pb_import     ->setEnabled( true  );
+   pb_loadUS3    ->setEnabled( true  );
    pb_exclude    ->setEnabled( false );
    pb_include    ->setEnabled( false );
-   pb_savetoHD   ->setEnabled( false );
    pb_details    ->setEnabled( false );
    pb_intensity  ->setEnabled( false );
    pb_cancelref  ->setEnabled( false );
    pb_dropScan   ->setEnabled( false );
    pb_solution   ->setEnabled( false );
    pb_editRuninfo ->setEnabled( false );
-   pb_savetoDB    ->setEnabled( false );
-   pb_applyAll    ->setEnabled( false );
+   pb_applyAll   ->setEnabled( false );
+   pb_saveUS3    ->setEnabled( false );
 
-//   pb_reload     ->setEnabled( true  );
+//   pb_reimport     ->setEnabled( true  );
    ct_tolerance  ->setEnabled( true  );
 
    cb_centerpiece->setEnabled( false );
@@ -336,6 +372,16 @@ void US_Convert::reset( void )
    isPseudo         = false;
 
    pb_reference   ->setEnabled( false );
+
+   // Display investigator
+   ExpData.invID = US_Settings::us_inv_ID();
+
+   if ( ExpData.invID > 0 )
+      le_investigator->setText( QString::number( ExpData.invID ) + ": " 
+         + US_Settings::us_inv_name() );
+
+   else
+      le_investigator->setText( "Not Selected" );
 }
 
 void US_Convert::resetAll( void )
@@ -363,16 +409,53 @@ void US_Convert::resetAll( void )
    scanTolerance   = 5.0;
 }
 
+// Function to select the current investigator
+void US_Convert::sel_investigator( void )
+{
+   US_Investigator* inv_dialog = new US_Investigator( true, ExpData.invID );
+
+   connect( inv_dialog,
+      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
+      SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
+
+   inv_dialog->exec();
+}
+
+// Function to assign the selected investigator as current
+void US_Convert::assign_investigator( int invID,
+      const QString& lname, const QString& fname)
+{
+   ExpData.invID = invID;
+   le_investigator->setText( QString::number( invID ) + ": " +
+         lname + ", " + fname );
+}
+
+// Function to change the data source (disk/db)
+void US_Convert::source_changed( bool )
+{
+   QStringList DB = US_Settings::defaultDB();
+
+   if ( DB.size() < 5 )
+   {
+      QMessageBox::warning( this,
+         tr( "Attention" ),
+         tr( "There is no default database set." ) );
+   }
+
+   // Reinvestigate whether to enable the buttons
+   enableControls();
+}
+
 // User changed the dataset separation tolerance
 void US_Convert::toleranceValueChanged( double )
 {
    toleranceChanged = true;
    scanTolerance    = ct_tolerance->value();
-   reload();
+   reimport();
 }
 
-// User pressed the load data button
-void US_Convert::load( QString dir )
+// User pressed the import data button
+void US_Convert::import( QString dir )
 {
    bool success = false;
 
@@ -443,9 +526,9 @@ void US_Convert::load( QString dir )
    enableControls();
 }
 
-// User pressed the reload data button
+// User pressed the reimport data button
 // Legacy data is already supposed to be present
-void US_Convert::reload( void )
+void US_Convert::reimport( void )
 {
    if ( toleranceChanged )
    {
@@ -495,7 +578,8 @@ void US_Convert::enableControls( void )
    else
    {
       // Ok to enable some buttons now
-      pb_savetoHD    ->setEnabled( true );
+      if ( ! disk_controls->db() )
+        pb_saveUS3   ->setEnabled( true );
       pb_details     ->setEnabled( true );
       pb_solution    ->setEnabled( true );
       cb_centerpiece ->setEnabled( true );
@@ -517,9 +601,8 @@ void US_Convert::enableControls( void )
       } 
 
       // Disable load buttons if there is data
-      pb_load        ->setEnabled( false );
-      pb_loadUS3HD   ->setEnabled( false );
-      pb_loadUS3DB   ->setEnabled( false );
+      pb_import        ->setEnabled( false );
+      pb_loadUS3       ->setEnabled( false );
       
       // Most triples are ccw
       lb_triple   ->setText( tr( "Cell / Channel / Wavelength" ) );
@@ -567,17 +650,17 @@ void US_Convert::enableRunIDControl( bool setEnable )
 
    if ( setEnable )
    {
-      le_runID->setPalette ( US_GuiSettings::normalColor() );
-      le_runID->setReadOnly( false );
-      connect( le_runID, SIGNAL( editingFinished() ),
-                         SLOT  ( runIDChanged   () ) );
+      le_runID2->setPalette ( US_GuiSettings::normalColor() );
+      le_runID2->setReadOnly( false );
+      connect( le_runID2, SIGNAL( editingFinished() ),
+                          SLOT  ( runIDChanged   () ) );
    }
 
    else
    {
-      le_runID->disconnect();
-      le_runID->setPalette ( gray );
-      le_runID->setReadOnly( true );
+      le_runID2->disconnect();
+      le_runID2->setPalette ( gray );
+      le_runID2->setReadOnly( true );
    }
          
 }
@@ -606,11 +689,13 @@ void US_Convert::enableScanControls( void )
 // Enable the "sync with DB" button, if appropriate
 void US_Convert::enableSyncDB( void )
 {
+   if ( ! disk_controls->db() ) return;  // already handled
+
    // Have we made connection with the db?
-   if ( ExpData.invID == 0 ||
+   if ( ! ExpData.syncOK ||
         triples.size() == 0 )
    {
-      pb_savetoDB ->setEnabled( false );
+      pb_saveUS3 ->setEnabled( false );
       return;
    }
 
@@ -624,17 +709,17 @@ void US_Convert::enableSyncDB( void )
 
       if ( ! rx.exactMatch( triple.solution.solutionGUID ) )
       {
-         pb_savetoDB ->setEnabled( false );
+         pb_saveUS3 ->setEnabled( false );
          return;
       }
    }
 
    // We have to have saved it to the HD before, to have auc files
-   if ( saveStatus == NOT_SAVED )
+/*   if ( saveStatus == NOT_SAVED )
    {
-      pb_savetoDB ->setEnabled( false );
       return;
    }
+*/
 
    // Information is there, but we need to see if the runID exists in the 
    // DB. If we didn't load it from there, then we shouldn't be able to sync
@@ -642,19 +727,19 @@ void US_Convert::enableSyncDB( void )
    if ( recStatus == -1 )
    {
       // We can't sync to the DB if we can't connect to it
-      pb_savetoDB ->setEnabled( false );
+      pb_saveUS3 ->setEnabled( false );
       return;
    }
 
    // if a record is found but saveStatus == BOTH, then we are editing that record
    else if ( ( recStatus > 0 ) && ( saveStatus != BOTH ) ) 
    {
-      pb_savetoDB ->setEnabled( false );
+      pb_saveUS3 ->setEnabled( false );
       return;
    }
 
    // If we made it here, user can sync with DB
-   pb_savetoDB ->setEnabled( true );
+   pb_saveUS3 ->setEnabled( true );
 }
 
 // Process when the user changes the runID
@@ -662,7 +747,7 @@ void US_Convert::runIDChanged( void )
 {
    // See if we need to update the runID
    QRegExp rx( "^[A-Za-z0-9_-]{1,20}$" );
-   QString new_runID = le_runID->text();
+   QString new_runID = le_runID2->text();
       
    if ( rx.indexIn( new_runID ) >= 0 )
    {
@@ -675,7 +760,8 @@ void US_Convert::runIDChanged( void )
    ExpData.clear();
    foreach( TripleInfo triple, triples )
       triple.clear();
-   le_runID->setText( runID );
+   le_runID2->setText( runID );
+   le_runID ->setText( runID );
    ExpData.runID = runID;
 
    saveStatus = NOT_SAVED;
@@ -725,23 +811,37 @@ void US_Convert::editRuninfo( void )
    getExpInfo( );
 }
 
-void US_Convert::loadUS3HD( void )
+// Function to load US3 data
+void US_Convert::loadUS3( QString dir )
+{
+   if ( disk_controls->db() )
+      loadUS3DB();
+
+   else if ( dir.isEmpty() )
+      loadUS3Disk();
+
+   else
+      loadUS3Disk( dir );
+
+}
+
+void US_Convert::loadUS3Disk( void )
 {
    // Ask for data directory
    QString dir = QFileDialog::getExistingDirectory( this, 
          tr("US3 Raw Data Directory"),
          US_Settings::resultDir(),
          QFileDialog::DontResolveSymlinks );
-
+   
    if ( dir.isEmpty() ) return; 
-
+   
    dir.replace( "\\", "/" );  // WIN32 issue
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
-   loadUS3HD( dir );
+   loadUS3Disk( dir );
 }
 
-void US_Convert::loadUS3HD( QString dir )
+void US_Convert::loadUS3Disk( QString dir )
 {
    resetAll();
 
@@ -749,6 +849,7 @@ void US_Convert::loadUS3HD( QString dir )
    QStringList components =  dir.split( "/", QString::SkipEmptyParts );  
    runID    = components.last();
    le_runID ->setText( runID );
+   le_runID2->setText( runID );
    le_dir   ->setText( dir );
    currentDir  = QString( dir );
 
@@ -787,7 +888,9 @@ void US_Convert::loadUS3HD( QString dir )
 
    // Ok to enable some buttons now
    enableControls();
-   pb_savetoHD    ->setEnabled( true );
+   if ( ! disk_controls->db() ) 
+      pb_saveUS3  ->setEnabled( true );
+
    pb_details     ->setEnabled( true );
    pb_solution    ->setEnabled( true );
    cb_centerpiece ->setEnabled( true );
@@ -851,10 +954,10 @@ void US_Convert:: loadUS3DB( void )
    }
 
    // and load it
-   loadUS3HD( dirname );
+   loadUS3Disk( dirname );
    enableControls();
 
-   saveStatus = BOTH;         // override from loadUS3HD()
+   saveStatus = BOTH;         // override from loadUS3Disk()
 }
 
 void US_Convert::getExpInfo( void )
@@ -960,12 +1063,15 @@ void US_Convert::getSolutionInfo( void )
 {
    ExpData.runID = le_runID -> text();
 
+   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
+
    US_Solution solution = triples[ currentTriple ].solution;
 
-   US_SolutionGui* solutionInfo = new US_SolutionGui( ExpData.invID,
-                                                      ExpData.expID,
+   US_SolutionGui* solutionInfo = new US_SolutionGui( ExpData.expID,
                                                       1,      // channelID (figure out later ?? )
                                                       true,   // signal wanted
+                                                      dbdisk, // data source
                                                       solution );
 
    connect( solutionInfo, SIGNAL( updateSolutionGuiSelection( US_Solution& ) ),
@@ -1236,7 +1342,7 @@ void US_Convert::process_subsets( void )
 
    // Now that we know we're subdividing, let's reconvert the file
    reset();
-   load( currentDir );
+   import( currentDir );
 
    // We don't need this any more, and it interferes with subsequent
    //  loads of RA data. 
@@ -1471,7 +1577,18 @@ void US_Convert::drop_reference( void )
    plot_current();
 }
 
-int US_Convert::savetoHD( void )
+// Function to save US3 data
+void US_Convert::saveUS3( void )
+{
+   if ( disk_controls->db() )
+      saveUS3DB();
+
+   else
+      saveUS3Disk();
+
+}
+
+int US_Convert::saveUS3Disk( void )
 {
    if ( allData[ 0 ].scanData.empty() ) return NODATA; 
 
@@ -1501,7 +1618,7 @@ int US_Convert::savetoHD( void )
    int status;
 
    // Check to see if we have all the data to write
-   if ( ExpData.invID == 0 )
+   if ( ! ExpData.syncOK )
    {
       status = QMessageBox::information( this,
                tr( "Warning" ),
@@ -1575,9 +1692,9 @@ int US_Convert::savetoHD( void )
    return( OK );
 }
 
-void US_Convert::savetoDB( void )
+void US_Convert::saveUS3DB( void )
 {
-   int status = savetoHD();
+   int status = saveUS3Disk();
    if ( status != OK )
       return;
 
@@ -1680,6 +1797,7 @@ bool US_Convert::read( QString dir )
    QStringList components = dir.split( "/", QString::SkipEmptyParts );
    runID    = components.last();
    le_runID ->setText( runID );
+   le_runID2->setText( runID );
    le_dir   ->setText( dir );
    currentDir  = QString( dir );
 
@@ -1795,49 +1913,49 @@ void US_Convert::plot_titles( void )
 
    if ( strncmp( currentData.type, "RA", 2 ) == 0 )
    {
-      title = "Radial Absorbance Data\nRun ID: "
-            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      title = "Radial Absorbance Data\nRun ID: " + runID + "\n"  +
+              "Cell: " + cell + " Wavelength: " + wl;
    }
 
    else if ( ( strncmp( currentData.type, "RI", 2 ) == 0 ) && isPseudo )
    {
-      title = "Pseudo Absorbance Data\nRun ID: "
-            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      title = "Pseudo Absorbance Data\nRun ID: " + runID + "\n"  +
+              "Cell: " + cell + " Wavelength: " + wl;
    }
 
    else if ( strncmp( currentData.type, "RI", 2 ) == 0 )
    {
-      title = "Radial Intensity Data\nRun ID: "
-            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      title = "Radial Intensity Data\nRun ID: " + runID + "\n"  +
+              "Cell: " + cell + " Wavelength: " + wl;
       yLegend = "Radial Intensity";
    }
 
    else if ( strncmp( currentData.type, "IP", 2 ) == 0 )
    {
-      title = "Interference Data\nRun ID: "
-            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      title = "Interference Data\nRun ID: " + runID + "\n"  +
+              "Cell: " + cell + " Wavelength: " + wl;
       yLegend = "Fringes";
    }
 
    else if ( strncmp( currentData.type, "FI", 2 ) == 0 )
    {
-      title = "Fluorescence Intensity Data\nRun ID: "
-            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      title = "Fluorescence Intensity Data\nRun ID: " + runID + "\n"  +
+              "Cell: " + cell + " Wavelength: " + wl;
       yLegend = "Fluorescence Intensity";
    }
       
    else if ( strncmp( currentData.type, "WA", 2 ) == 0 )
    {
-      title = "Wavelength Data\nRun ID: "
-            + runID + " Cell: " + cell + " Radius: " + wl;
+      title = "Wavelength Data\nRun ID: " + runID + "\n"  +
+              "Cell: " + cell + " Radius: " + wl;
       xLegend = "Wavelength";
       yLegend = "Value";
    }
 
    else if ( strncmp( currentData.type, "WI", 2 ) == 0 )
    {
-      title = "Wavelength Intensity Data\nRun ID: "
-            + runID + " Cell: " + cell + " Radius: " + wl;
+      title = "Wavelength Intensity Data\nRun ID: " + runID + "\n"  +
+              "Cell: " + cell + " Radius: " + wl;
       xLegend = "Wavelength";
       yLegend = "Value";
    }

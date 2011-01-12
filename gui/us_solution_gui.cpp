@@ -284,7 +284,7 @@ void US_SolutionGui::reset( void )
    else if ( ( ! disk_controls->db() ) && solution.saveStatus == US_Solution::HD_ONLY )
       pb_accept->setEnabled( true );
 
-   else if ( ( ! disk_controls->db() ) && solution.saveStatus == US_Solution::DB_ONLY )
+   else if ( (   disk_controls->db() ) && solution.saveStatus == US_Solution::DB_ONLY )
       pb_accept->setEnabled( true );
 
    else
