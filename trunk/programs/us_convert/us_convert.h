@@ -83,6 +83,12 @@ class US_EXTERN US_Convert : public US_Widgets
 
       };
 
+      US_Disk_DB_Controls* disk_controls;    //!< Radiobuttons for disk/db choice
+
+  signals:
+
+  public slots:
+
   private:
 
       enum { SPLIT, REFERENCE, NONE } step;
@@ -96,8 +102,10 @@ class US_EXTERN US_Convert : public US_Widgets
 
       QLabel*       lb_description;
 
+      QLineEdit*    le_investigator;
       QString       runID;
       QLineEdit*    le_runID;
+      QLineEdit*    le_runID2;
       QLineEdit*    le_dir;
       QLineEdit*    le_description;
       QLineEdit*    le_solutionDesc;
@@ -111,9 +119,8 @@ class US_EXTERN US_Convert : public US_Widgets
       QwtCounter*   ct_tolerance;
 
       QPushButton*  pb_editRuninfo;
-      QPushButton*  pb_load;
-      QPushButton*  pb_loadUS3HD;
-      QPushButton*  pb_loadUS3DB;
+      QPushButton*  pb_import;
+      QPushButton*  pb_loadUS3;
       QPushButton*  pb_details;
       QPushButton*  pb_applyAll;
       QPushButton*  pb_solution;
@@ -125,8 +132,7 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_intensity;
       QPushButton*  pb_cancelref;
       QPushButton*  pb_dropScan;
-      QPushButton*  pb_savetoHD;
-      QPushButton*  pb_savetoDB;
+      QPushButton*  pb_saveUS3;
 
       US_SelectBox*  cb_centerpiece;
 
@@ -182,14 +188,25 @@ class US_EXTERN US_Convert : public US_Widgets
       void db_error        ( const QString& );
 
   private slots:
-      void load            ( QString dir = "" );
-      void reload          ( void );
+      //! \brief Select the current investigator
+      void sel_investigator( void );
+
+      /*! \brief Assign the selected investigator as current
+          \param invID  The ID of the selected investigator
+          \param lname  The last name of the investigator
+          \param fname  The first name of the investigator
+      */
+      void assign_investigator( int, const QString&, const QString& );
+
+      void import          ( QString dir = "" );
+      void reimport        ( void );
       void enableControls  ( void );
       void runIDChanged    ( void );
       void toleranceValueChanged( double );           // signal to notify of change
       void editRuninfo     ( void );
-      void loadUS3HD       ( void );
-      void loadUS3HD       ( QString );
+      void loadUS3         ( QString dir = "" );
+      void loadUS3Disk     ( void );
+      void loadUS3Disk     ( QString );
       void loadUS3DB       ( void );
       void updateExpInfo   ( US_ExpInfo::ExperimentInfo& );
       void cancelExpInfo   ( void );
@@ -211,9 +228,11 @@ class US_EXTERN US_Convert : public US_Widgets
       void show_intensity  ( void );
       void cancel_reference( void );
       void drop_reference  ( void );
-      int  savetoHD        ( void );
-      void savetoDB        ( void );
+      void saveUS3         ( void );
+      int  saveUS3Disk     ( void );
+      void saveUS3DB       ( void );
       void resetAll        ( void );
+      void source_changed  ( bool );
       void help            ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
 };

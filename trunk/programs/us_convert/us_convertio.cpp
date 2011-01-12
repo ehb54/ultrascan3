@@ -457,13 +457,13 @@ QString US_ConvertIO::readExperimentInfoDB( US_ExpInfo::ExperimentInfo& expInfo 
       return( db.lastError() );
 
    // Investigator info
+   expInfo.invID = US_Settings::us_inv_ID();
+   expInfo.name  = US_Settings::us_inv_name();
    QStringList q( "get_person_info" );
    q << QString::number( expInfo.invID );
    db.query( q );
    if ( db.next() )
    {
-      expInfo.firstName = db.value( 0 ).toString();
-      expInfo.lastName  = db.value( 1 ).toString();
       expInfo.invGUID   = db.value( 9 ).toString();
    }
 
@@ -557,8 +557,7 @@ int US_ConvertIO::writeXmlFile(
       xml.writeEndElement  ();
       
       xml.writeStartElement( "name" );
-      xml.writeAttribute   ( "first", ExpData.firstName );
-      xml.writeAttribute   ( "last",  ExpData.lastName  );
+      xml.writeAttribute   ( "value", ExpData.name );
       xml.writeEndElement  ();
       
       xml.writeStartElement( "project" );
@@ -713,8 +712,7 @@ void US_ConvertIO::readExperiment(
          else if ( xml.name() == "name" )
          {
             QXmlStreamAttributes a = xml.attributes();
-            ExpData.firstName      = a.value( "first" ).toString();
-            ExpData.lastName       = a.value( "last"  ).toString();
+            ExpData.name           = a.value( "value" ).toString();
          }
 
          else if ( xml.name() == "project" )

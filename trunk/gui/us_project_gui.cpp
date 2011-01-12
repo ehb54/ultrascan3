@@ -110,6 +110,9 @@ US_ProjectGui::US_ProjectGui(
    
    main->addLayout( buttons );
    
+   // Load the project descriptions
+   load();
+
    generalTab->reset();
 }
 
@@ -167,7 +170,7 @@ void US_ProjectGui::enableButtons( void )
    else if ( ! generalTab->disk_controls->db() && project.saveStatus == US_Project::HD_ONLY )
       pb_accept->setEnabled( true );
 
-   else if ( ! generalTab->disk_controls->db() && project.saveStatus == US_Project::DB_ONLY )
+   else if (   generalTab->disk_controls->db() && project.saveStatus == US_Project::DB_ONLY )
       pb_accept->setEnabled( true );
 
    else

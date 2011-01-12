@@ -11,7 +11,8 @@
 #include "us_convertio.h"
 #include "us_project_gui.h"
 
-US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
+US_ExpInfo::US_ExpInfo( 
+      ExperimentInfo& dataIn ) :
    US_WidgetsDialog( 0, 0 ), expInfo( dataIn )
 {
    setPalette( US_GuiSettings::frameColor() );
@@ -168,13 +169,13 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
    buttons->addWidget( pb_help );
 
-   pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
-   buttons->addWidget( pb_accept );
-
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
    buttons->addWidget( pb_cancel );
+
+   pb_accept = us_pushbutton( tr( "Accept" ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
+   buttons->addWidget( pb_accept );
 
    // Now let's assemble the page
    QGridLayout* main = new QGridLayout( this );
@@ -190,8 +191,10 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, SIGNAL( clicked() ), SLOT( selectInvestigator() ) );
-   pb_investigator->setEnabled( true );
    main->addWidget( pb_investigator, row, 0 );
+
+   if ( US_Settings::us_inv_level() < 1 )
+      pb_investigator->setEnabled( false );
 
    le_investigator = us_lineedit( "", 1 );
    le_investigator->setReadOnly( true );
@@ -260,11 +263,13 @@ void US_ExpInfo::reset( void )
       }
    }
    
+   // Display investigator
+   expInfo.invID = US_Settings::us_inv_ID();
+
    if ( expInfo.invID > 0 )
    {
-      // Investigator
-      le_investigator->setText( "InvID (" + QString::number( expInfo.invID ) + "): " +
-               expInfo.lastName + ", " + expInfo.firstName );
+      le_investigator->setText( QString::number( expInfo.invID ) + ": " 
+         + US_Settings::us_inv_name() );
 
       if ( expInfo.expID > 0 )
          pb_accept       ->setEnabled( true );
@@ -280,6 +285,10 @@ void US_ExpInfo::reset( void )
       if ( expInfo.projectID == 0 )
          pb_accept       ->setEnabled( false );
    }
+
+   else
+      le_investigator->setText( "Not Selected" );
+
 }
 
 // function to load what we can initially
@@ -293,7 +302,7 @@ bool US_ExpInfo::load( void )
       if ( inv > -1 )
       {
          expInfo.invID     = inv;
-         getInvestigatorInfo( expInfo.invID );
+         getInvestigatorInfo();
       }
    }
 
@@ -373,29 +382,24 @@ void US_ExpInfo::syncHardware( void )
 
 void US_ExpInfo::selectInvestigator( void )
 {
-   US_Investigator* inv_dialog = new US_Investigator( true );
+   US_Investigator* inv_dialog = new US_Investigator( true, expInfo.invID );
+
    connect( inv_dialog, 
       SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
       SLOT  ( assignInvestigator   ( int, const QString&, const QString& ) ) );
+
    inv_dialog->exec();
 }
 
 void US_ExpInfo::assignInvestigator( int invID,
-      const QString& , const QString& )
+      const QString& lname, const QString& fname )
 {
-   getInvestigatorInfo( invID );
-
-   if ( US_ConvertIO::checkRunID( expInfo.runID ) > 0 )
-   {
-      QMessageBox::information( this,
-                tr( "Error" ),
-                tr( "This run ID is already in the database" ) );
-   }
-
-   reset();
+   expInfo.invID = invID;
+   le_investigator->setText( QString::number( invID ) + ": " +
+         lname + ", " + fname );
 }
 
-void US_ExpInfo::getInvestigatorInfo( int invID )
+void US_ExpInfo::getInvestigatorInfo( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
@@ -407,15 +411,14 @@ void US_ExpInfo::getInvestigatorInfo( int invID )
       return;
    }
 
-   expInfo.invID = invID;                 // just to be sure
+   expInfo.invID = US_Settings::us_inv_ID();     // just to be sure
+   expInfo.name  = US_Settings::us_inv_name();
    QStringList q( "get_person_info" );
    q << QString::number( expInfo.invID );
    db.query( q );
 
    if ( db.next() )
    {
-      expInfo.firstName = db.value( 0 ).toString();
-      expInfo.lastName  = db.value( 1 ).toString();
       expInfo.invGUID   = db.value( 9 ).toString();
    }
    
@@ -427,7 +430,7 @@ void US_ExpInfo::selectProject( void )
    project.projectID   = expInfo.projectID;
    project.projectDesc = expInfo.projectDesc;
 
-   US_ProjectGui* projInfo = new US_ProjectGui( expInfo.invID, true, project );
+   US_ProjectGui* projInfo = new US_ProjectGui( true, US_Disk_DB_Controls::DB, project );
    connect( projInfo, 
       SIGNAL( updateProjectGuiSelection( US_Project& ) ),
       SLOT  ( assignProject            ( US_Project& ) ) );
@@ -681,19 +684,10 @@ void US_ExpInfo::accept( void )
    // Overwrite data directly from the form
 
    // First get the invID
-   QString invInfo = le_investigator->text();
-   if ( invInfo.isEmpty() )
-   {
-      QMessageBox::information( this,
-                tr( "Error" ),
-                tr( "You must choose an investigator before accepting" ) );
-      return;
-   }
+   expInfo.invID   = US_Settings::us_inv_ID();
+   expInfo.name    = US_Settings::us_inv_name();
+   getInvestigatorInfo();
 
-   QStringList components = invInfo.split( ")", QString::SkipEmptyParts );
-   components = components[0].split( "(", QString::SkipEmptyParts );
-   expInfo.invID = components.last().toInt();
- 
    // Other experiment information
    expInfo.runID         = le_runID         ->text();
    expInfo.labID         = cb_lab           ->getLogicalID();
@@ -705,9 +699,9 @@ void US_ExpInfo::accept( void )
    expInfo.label         = le_label         ->text(); 
    expInfo.comments      = te_comment       ->toPlainText();
 
-   // Other investigator and experiment information
-   //getInvestigatorInfo( expInfo.invID );
+   // Experiment information
    QString status = US_ConvertIO::readExperimentInfoDB( expInfo );
+   expInfo.syncOK = ( status.isEmpty() );
 
    emit updateExpInfoSelection( expInfo );
    close();
@@ -735,10 +729,9 @@ US_ExpInfo::ExperimentInfo::ExperimentInfo()
 // Zero out all data structures
 void US_ExpInfo::ExperimentInfo::clear( void )
 {
-   invID              = 0;
+   invID              = US_Settings::us_inv_ID();
    invGUID            = QString( "" );
-   lastName           = QString( "" );
-   firstName          = QString( "" );
+   name               = US_Settings::us_inv_name();
    expID              = 0;
    expGUID            = QString( "" );
    projectID          = 0;
@@ -765,6 +758,7 @@ void US_ExpInfo::ExperimentInfo::clear( void )
    comments           = QString( "" );
    centrifugeProtocol = QString( "" );
    date               = QString( "" );
+   syncOK             = false;
 
 }
 
@@ -774,8 +768,7 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
    {
       invID         = rhs.invID;
       invGUID       = rhs.invGUID;
-      lastName      = rhs.lastName;
-      firstName     = rhs.firstName;
+      name          = rhs.name;
       expID         = rhs.expID;
       expGUID       = rhs.expGUID;
       projectID     = rhs.projectID;
@@ -800,6 +793,7 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
       comments      = rhs.comments;
       centrifugeProtocol = rhs.centrifugeProtocol;
       date          = rhs.date;
+      syncOK        = rhs.syncOK;
 
       rpms.clear();
       for ( int i = 0; i < rhs.rpms.size(); i++ )
@@ -812,10 +806,11 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
 
 void US_ExpInfo::ExperimentInfo::show( void )
 {
+   QString syncOK_text = ( syncOK ) ? "true" : "false";
+
    qDebug() << "invID        = " << invID << '\n'
             << "invGUID      = " << invGUID << '\n'
-            << "lastName     = " << lastName << '\n'
-            << "firstName    = " << firstName << '\n'
+            << "name         = " << name << '\n'
             << "expID        = " << expID << '\n'
             << "expGUID      = " << expGUID << '\n'
             << "projectID    = " << projectID << '\n'
@@ -840,7 +835,8 @@ void US_ExpInfo::ExperimentInfo::show( void )
             << "label        = " << label << '\n'
             << "comments     = " << comments << '\n'
             << "centrifugeProtocol = " << centrifugeProtocol << '\n'
-            << "date         = " << date << '\n';
+            << "date         = " << date << '\n'
+            << "syncOK       = " << syncOK_text << '\n';
 
    for ( int i = 0; i < rpms.size(); i++ )
    {

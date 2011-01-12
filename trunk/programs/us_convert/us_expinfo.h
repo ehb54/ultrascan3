@@ -70,8 +70,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          int              invID;              //!< The personID of the investigator
          QString          invGUID;            //!< The GUID of the investigator
          
-         QString          lastName;           //!< The last name of the investigator
-         QString          firstName;          //!< The first name of the investigator
+         QString          name;               //!< The name of the investigator
          int              expID;              //!< The ID of the experiment itself
          QString          expGUID;            //!< The GUID of the experiment
          int              projectID;          //!< The project this experiment is associated with
@@ -98,6 +97,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          QString          comments;           //!< Comments that were associated with the experiment
          QString          centrifugeProtocol; //!< The governing centrifuge protocol
          QString          date;               //!< The date the record was entered or last updated
+         bool             syncOK;             //!< The user has connected with the db
          ExperimentInfo();                    //!< A generic constructor
          ExperimentInfo&  operator=( const ExperimentInfo& ); //!< An overloaded assignment operator
          void updateDB( void );               //!< Function to update the database with changes
@@ -108,11 +108,10 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       /*! \brief Generic constructor for the US_ExpInfo class. To 
                  instantiate the class a calling function must
                  provide a structure to contain all the data.
-
           \param dataIn  A reference to a structure that contains
                          previously selected experiment data, if any.
       */
-      US_ExpInfo( ExperimentInfo& );
+      US_ExpInfo( ExperimentInfo&  );
 
       //! A null destructor. 
       ~US_ExpInfo() {};
@@ -169,7 +168,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       void syncHardware      ( void );
       void selectInvestigator( void );
       void assignInvestigator( int, const QString&, const QString& );
-      void getInvestigatorInfo( int );
+      void getInvestigatorInfo( void );
       void selectProject     ( void );
       void assignProject     ( US_Project& );
       void cancelProject     ( void );
