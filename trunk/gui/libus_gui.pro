@@ -4,11 +4,11 @@ unix:   TARGET = us_gui
 
 win32 {
         TARGET = libus_gui
-        LIBS  += ../lib/libus_utils.lib ../lib/libus_db.lib
+        LIBS  += ../lib/libus_utils.lib 
 }
 
 macx {
-        LIBS   += -L../lib/ -lus_utils -lus_db
+        LIBS   += -L../lib/ -lus_utils 
 }
 
 QT          += network svg

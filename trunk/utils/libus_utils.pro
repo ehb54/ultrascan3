@@ -6,7 +6,7 @@ unix: TARGET = us_utils
 
 macx {
       TARGET = us_utils
-      LIBS  += -L../lib -lus_gui -lus_db
+      LIBS  += -L../lib -lus_gui 
 }
 
 win32:TARGET = libus_utils
@@ -23,6 +23,7 @@ HEADERS      = us_analyte.h     \
                us_constants.h   \
                us_crc.h         \
                us_dataIO2.h     \
+               us_db2.h         \
                us_global.h      \
                us_hardware.h    \ 
                us_hydrosim.h    \ 
@@ -47,6 +48,7 @@ SOURCES      = us_analyte.cpp     \
                us_constants.cpp   \
                us_crc.cpp         \
                us_dataIO2.cpp     \
+               us_db2.cpp         \
                us_hardware.cpp    \
                us_hydrosim.cpp    \
                us_global.cpp      \

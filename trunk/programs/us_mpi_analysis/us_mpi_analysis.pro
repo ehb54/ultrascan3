@@ -20,9 +20,9 @@ SOURCES      += us_mpi_analysis.cpp \
 
 HEADERS      += us_mpi_analysis.h
 
-INCLUDEPATH  += utils db
-DEPENDPATH   += utils db
-LIBS         += -lus_utils -lus_db -Llib
+INCLUDEPATH  += utils 
+DEPENDPATH   += utils
+LIBS         += -lus_utils -Llib
 
 # mpi references
 DEFINES      += OMPI_SKIP_MPICXX 
