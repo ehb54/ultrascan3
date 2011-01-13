@@ -375,6 +375,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
       //                                  maps molecule #|resSeq to flag indicating broken head of chain
       map < QString, bool >               unknown_residues;
       //                                  maps resName to flag for unknown residue
+
+      map < QString, int  >               use_residue;
+      //                                  maps molecule #|resSeq to correct residue in residue_list to use
+      map < QString, bool  >              skip_residue;
+      //                                  flags molecule "#|resSeq|residue_list entry" to be ignored
       
       QString last_abb_msgs; // automatic bead builder message log
       vector <struct PDB_model> model_vector;

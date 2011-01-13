@@ -448,6 +448,8 @@ void US_Hydrodyn::build_molecule_maps(PDB_model *model)
    molecules_residue_missing_atoms.clear();
    molecules_residue_missing_atoms_beads.clear();
    molecules_residue_missing_atoms_skip.clear();
+   use_residue.clear();
+   skip_residue.clear();
 
    // pass 1 setup molecule basic maps
    for (unsigned int j = 0; j < model->molecule.size(); j++)
@@ -484,6 +486,7 @@ void US_Hydrodyn::build_molecule_maps(PDB_model *model)
             {
                residue_list[multi_residue_map[resName][j]].r_atom[r].tmp_used = false;
             }
+            skip_residue[QString("%1|%2").arg(idx).arg(multi_residue_map[resName][j])] = false;
 
             // now set flags
             // first check for non-coded atoms
@@ -568,42 +571,82 @@ void US_Hydrodyn::build_molecule_maps(PDB_model *model)
             printf("unknown residue %s\n", resName.ascii());
          }
       }
+      {
+         int k = molecules_residue_min_missing[idx];
+         if ( k > -1  &&
+              molecules_residue_missing_atoms[idx][k].size() == 0 &&
+              molecules_residue_missing_atoms_beads[idx][k].size() == 0
+              )
+         {
+            if ( advanced_config.debug_1 )
+            {
+               cout << 
+                  QString("Molecule idx <%1> resName <%2> pos <%3> no errors, should be ok\n")
+                  .arg(idx).arg(resName).arg(k);
+            }
+            use_residue[idx] = multi_residue_map[resName][k];
+            // skip the rest
+            for (unsigned int j = 0; j < multi_residue_map[resName].size(); j++)
+            {
+               if ( j != (unsigned int) k )
+               {
+                  skip_residue[QString("%1|%2").arg(idx).arg(multi_residue_map[resName][j])] = true;
+                  if ( advanced_config.debug_1 )
+                  {
+                     cout << 
+                        QString("Setup skip idx %1|%2\n")
+                        .arg(idx).arg(multi_residue_map[resName][j]);
+                  }
+               }
+            }
+            molecules_residue_errors[idx].clear();
+            molecules_residue_missing_counts[idx].clear();
+            molecules_residue_missing_atoms[idx].clear();
+            molecules_residue_missing_atoms_beads[idx].clear();
+         } else {
+            use_residue[idx] = -1;
+         }
+      }
    }
 
-#if defined(BUILD_MAPS_DEBUG)
-   cout << "--------molecules_residue_errors---------\n";
-   for (unsigned int i = 0; i < molecules_idx_seq.size(); i++)
+   if ( advanced_config.debug_1 )
    {
-      QString idx = molecules_idx_seq[i];
-      QString resName = molecules_residue_name[idx];
-      if (molecules_residue_errors[idx].size())
+      cout << "--------molecules_residue_errors---------\n";
+      for (unsigned int i = 0; i < molecules_idx_seq.size(); i++)
       {
-         for (unsigned int j = 0; j < molecules_residue_errors[idx].size(); j++) 
+         QString idx = molecules_idx_seq[i];
+         QString resName = molecules_residue_name[idx];
+         if (molecules_residue_errors[idx].size())
          {
-            if (molecules_residue_errors[idx][j].length()) 
+            for (unsigned int j = 0; j < molecules_residue_errors[idx].size(); j++) 
             {
-               cout << QString("Molecule idx <%1> resName <%2> match <%3> errors:\n")
-                  .arg(idx).arg(resName).arg(j);
-               cout << molecules_residue_errors[idx][j] << endl;
+               if (molecules_residue_errors[idx][j].length()) 
+               {
+                  cout << QString("Molecule idx <%1> resName <%2> match <%3> errors:\n")
+                     .arg(idx).arg(resName).arg(j);
+                  cout << molecules_residue_errors[idx][j] << endl;
+               } else {
+                  cout << QString("Molecule idx <%1> resName <%2> match <%3> good match\n")
+                     .arg(idx).arg(resName).arg(j);
+               }
             }
-         }
-         if ( molecules_residue_min_missing[idx] > -1 )
-         {
-            int k = molecules_residue_min_missing[idx];
-            cout << QString("^^^ Minimum missing position <%1> ma.sz %2 mab.sz %3\n")
-               .arg(k)
-               .arg(molecules_residue_missing_atoms[idx][k].size())
-               .arg(molecules_residue_missing_atoms_beads[idx][k].size());
-            for ( unsigned int j = 0; j < molecules_residue_missing_atoms[idx][k].size(); j++ )
+            if ( molecules_residue_min_missing[idx] > -1 )
             {
-               cout << QString(".... missing atom %1 bead %2\n")
-                  .arg(molecules_residue_missing_atoms[idx][k][j])
-                  .arg(molecules_residue_missing_atoms_beads[idx][k][j]);
+               int k = molecules_residue_min_missing[idx];
+               cout << QString("^^^ Minimum missing position <%1> ma.sz %2 mab.sz %3\n")
+                  .arg(k)
+                  .arg(molecules_residue_missing_atoms[idx][k].size())
+                  .arg(molecules_residue_missing_atoms_beads[idx][k].size());
+               for ( unsigned int j = 0; j < molecules_residue_missing_atoms[idx][k].size(); j++ )
+               {
+                  cout << QString(".... missing atom %1 bead %2\n")
+                     .arg(molecules_residue_missing_atoms[idx][k][j])
+                     .arg(molecules_residue_missing_atoms_beads[idx][k][j]);
+               }
             }
          }
       }
    }
-#endif    
 }
 
 int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model)
@@ -665,6 +708,11 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
             .arg(this_atom->resName)
             .arg(this_atom->resSeq);
 
+         QString res_idx =
+            QString("%1|%2")
+            .arg(j)
+            .arg(this_atom->resSeq);
+
          if (!bead_exceptions[count_idx])
          {
             bead_exceptions[count_idx] = 1;
@@ -687,6 +735,17 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 
          for ( unsigned int m = 0; m < residue_list.size(); m++ )
          {
+            if ( residue_list[m].name == this_atom->resName &&
+                 skip_residue.count(QString("%1|%2").arg(res_idx).arg(m)) &&
+                 skip_residue[QString("%1|%2").arg(res_idx).arg(m)] == true )
+            {
+               if ( advanced_config.debug_1 )
+               {
+                  cout << 
+                     QString("(check for missing atoms) skipping %1 %2\n").arg(res_idx).arg(m) << endl;
+               }
+               continue;
+            }
             if ((residue_list[m].name == this_atom->resName &&
                  (int)residue_list[m].r_atom.size() ==
                  atom_counts[count_idx] - has_OXT[count_idx] &&
@@ -805,6 +864,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                                     this_error += "\n";
                                     for (unsigned int t = 0; t < molecules_residue_errors[idx].size(); t++)
                                     {
+                                       if ( advanced_config.debug_1 )
+                                       {
+                                          this_error += " d1";
+                                       }
                                        this_error += QString("    Residue file entry %1: %2\n").
                                           arg(t+1).arg(molecules_residue_errors[idx][t]);
                                     }
@@ -980,6 +1043,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                            this_error += "\n";
                            for (unsigned int t = 0; t < molecules_residue_errors[idx].size(); t++)
                            {
+                              if ( advanced_config.debug_1 )
+                              {
+                                 this_error += " d2";
+                              }
                               this_error += QString("    Residue file entry %1: %2\n").
                                  arg(t+1).arg(molecules_residue_errors[idx][t]);
                            }
@@ -1006,6 +1073,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
          {
             // find atom in residues atoms
             int atompos = -1;
+            if ( advanced_config.debug_1 )
+            {
+               printf("now find atom in residues atoms\n");
+            }
             for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
             {
                if (residue_list[respos].r_atom[m].name == this_atom->name ||
@@ -1094,6 +1165,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         this_error += "\n";
                         for (unsigned int t = 0; t < molecules_residue_errors[idx].size(); t++)
                         {
+                           if ( advanced_config.debug_1 )
+                           {
+                              this_error += " d3";
+                           }
                            this_error += QString("    Residue file entry %1: %2\n").
                               arg(t+1).arg(molecules_residue_errors[idx][t]);
                         }
@@ -1131,16 +1206,17 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                   .arg(j)
                   .arg(residue_list[lastResPos].r_atom[l].name)
                   .arg(lastResSeq);
-#if defined(DEBUG)
-               printf("dbg x pdb_parse.missing_atoms %d bead_exceptions[%s] %d residue_list[%d].r_atom[%d].tmp_flag %d\n"
-                      , pdb_parse.missing_atoms
-                      , count_idx.ascii()
-                      , bead_exceptions[count_idx]
-                      , lastResPos
-                      , l
-                      , residue_list[lastResPos].r_atom[l].tmp_flag
-                      );
-#endif
+               if ( advanced_config.debug_1 )
+               {
+                  printf("dbg x pdb_parse.missing_atoms %d bead_exceptions[%s] %d residue_list[%d].r_atom[%d].tmp_flag %d\n"
+                         , pdb_parse.missing_atoms
+                         , count_idx.ascii()
+                         , bead_exceptions[count_idx]
+                         , lastResPos
+                         , l
+                         , residue_list[lastResPos].r_atom[l].tmp_flag
+                         );
+               }
                       
                if (pdb_parse.missing_atoms == 0)
                {
@@ -1181,6 +1257,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         this_error += "\n";
                         for (unsigned int t = 0; t < molecules_residue_errors[idx].size(); t++)
                         {
+                           if ( advanced_config.debug_1 )
+                           {
+                              this_error += " d4";
+                           }
                            this_error += QString("    Residue file entry %1: %2\n").
                               arg(t+1).arg(molecules_residue_errors[idx][t]);
                         }
@@ -2192,9 +2272,26 @@ int US_Hydrodyn::create_beads(QString *error_string)
          {
             restype = residue_list[multi_residue_map[this_atom->resName][0]].type;
          }
-         
+
+         QString res_idx =
+            QString("%1|%2")
+            .arg(j)
+            .arg(this_atom->resSeq);
+
          for (unsigned int m = 0; m < residue_list.size(); m++)
          {
+            if ( residue_list[m].name == this_atom->resName &&
+                 skip_residue.count(QString("%1|%2").arg(res_idx).arg(m)) &&
+                 skip_residue[QString("%1|%2").arg(res_idx).arg(m)] == true )
+            {
+               if ( advanced_config.debug_1 )
+               {
+                  cout << 
+                     QString("(create beads) skipping %1 %2\n").arg(res_idx).arg(m) << endl;
+               }
+               continue;
+            }
+
             if ((residue_list[m].name == this_atom->resName &&
                  (int)residue_list[m].r_atom.size() ==
                  atom_counts[count_idx] - has_OXT[count_idx] &&
