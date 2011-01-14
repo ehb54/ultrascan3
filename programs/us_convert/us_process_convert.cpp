@@ -202,16 +202,9 @@ void US_ProcessConvert::convertLegacyData(
      QVector< US_DataIO2::RawData  >&     rawConvertedData,
      QList< US_Convert::TripleInfo >&     triples,
      QString                              runType,
-     double                               tolerance,
-     QList< double >&                     ss_limits // For RA data
+     double                               tolerance 
      ) 
 {
-   if ( runType == "RA"  && ss_limits.size() > 2 )
-   {
-      // We need to subdivide this data
-      splitRAData( rawLegacyData, ss_limits );
-   }
-
    setTriples( rawLegacyData, triples, runType, tolerance );
 
    US_DataIO2::RawData newRawData;     // filtered legacy data in new raw format
@@ -755,46 +748,117 @@ void US_ProcessConvert::convert(
    }
 }
 
+// Subdivides existing RA triple into subsets
 void US_ProcessConvert::splitRAData( 
-     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-     QList< double >&                     ss_limits )
+     QVector< US_DataIO2::RawData >&  rawConvertedData,
+     QList< US_Convert::TripleInfo >& triples,
+     int                              currentTriple,
+     QList< double >&                 subsets )
 {
-   QList< US_DataIO2::BeckmanRawScan > temp = rawLegacyData;
-   rawLegacyData.clear();
+   this ->setLabel( tr( "Subdividing:" ) );
+   this ->setRange( 0, rawConvertedData.size() );
+   this ->setValue( 0 );
 
-   for ( int i = 0; i < temp.size(); i++ )
+   QVector< US_DataIO2::RawData > oldData = rawConvertedData;
+   rawConvertedData.clear();
+
+   QList< US_Convert::TripleInfo > oldTriples = triples;
+   triples.clear();
+
+   for ( int i = 0; i < oldData.size(); i++ )
    {
-      US_DataIO2::BeckmanRawScan data = temp[ i ];
+      US_DataIO2::RawData oldRawData = oldData[ i ];
 
-      // We are subdividing the scans for RA data
-      US_DataIO2::BeckmanRawScan data2 = data;
-   
-      US_DataIO2::RawReading r;
-   
-      for ( int x = 0; x < ss_limits.size() - 1; x++ )
+      if ( i != currentTriple )
       {
-         data2.readings.clear();                  // Only need to alter readings for sub-datasets
-   
-         // Go through all the readings to see which ones to include
-         for ( int y = 0; y < data.readings.size(); y++ )
-         {
-            if ( data.readings[ y ].d.radius > ss_limits[ x ] &&
-               data.readings[ y ].d.radius < ss_limits[ x + 1 ] )
-            {
-               // Create the current dataset point
-               // Scale the radius to the same range of radii
-               r.d.radius = data.readings[ y ].d.radius - ss_limits[ x ] + 5.7;
-               r.value    = data.readings[ y ].value;
-               r.stdDev   = data.readings[ y ].stdDev;
-               data2.readings << r;
-            }
-   
-         }
-   
-         rawLegacyData << data2;                  // Send the current data subset
-         data2.channel++;                         // increment the channel letter
+         // Copy this triple over as is
+         rawConvertedData << oldRawData;
+         triples << oldTriples[ i ];
       }
+
+      else
+      {
+         for ( int j = 1; j < subsets.size(); j++ )  // 4 limits define 3 regions
+         {
+            US_DataIO2::RawData newRawData;
+
+            // Modify the raw data information
+            strncpy( newRawData.type, oldRawData.type, 2 );
+            // rawGUID is done by us_convert ??
+            newRawData.cell        = oldRawData.cell;
+            newRawData.channel     = oldRawData.channel + (j-1) * 2;
+            newRawData.description = oldRawData.description + 
+                                     " (subset: " + QString::number( j ) +
+                                     ")";
+
+            // Copy the radius subset just once
+            for ( int k = 0; k < oldRawData.x.size(); k++ )
+               if ( ( oldRawData.radius( k ) >= subsets[ j - 1 ] ) &&
+                    ( oldRawData.radius( k ) <= subsets[ j ]     ) )
+                  newRawData.x << oldRawData.radius( k );
+
+            // Now copy the parent scan information
+            newRawData.scanData.clear();
+            for ( int k = 0; k < oldRawData.scanData.size(); k++ )
+               newRawData.scanData << newScanSubset( oldRawData.scanData[ k ] ,
+                                                     oldRawData.x ,
+                                                     subsets[ j - 1 ] ,
+                                                     subsets[ j ] );
+
+            // Add to the new data set
+            rawConvertedData << newRawData;
+
+            // Modify the triple information
+            US_Convert::TripleInfo t = oldTriples[ i ];
+            QStringList parts        = t.tripleDesc.split(" / ");
+            QString     wavelength   = parts[ 2 ];
+
+            t.tripleDesc = QString::number( newRawData.cell    ) + " / " +
+                           QString        ( newRawData.channel ) + " / " +
+                           wavelength;
+            triples << t;
+         }
+
+      }
+      this->setValue( i );
    }
+
+   // Renumber the triple ID's
+   for ( int i = 0; i < triples.size(); i++ )
+      triples[ i ].tripleID = i;
+
+   this->hide();
+   this->close();
+}
+
+// Returns a new scan, but only with readings in a specified range
+US_DataIO2::Scan US_ProcessConvert::newScanSubset(
+     US_DataIO2::Scan& oldScan,
+     QVector< US_DataIO2::XValue >& x, 
+     double r_start,
+     double r_end )
+{
+   US_DataIO2::Scan s;
+
+   s.temperature = oldScan.temperature;
+   s.rpm         = oldScan.rpm;
+   s.seconds     = oldScan.seconds;
+   s.omega2t     = oldScan.omega2t;
+   s.wavelength  = oldScan.wavelength;
+   s.plateau     = oldScan.plateau;
+   s.delta_r     = oldScan.delta_r;
+
+   // Now copy the readings that are in this subset
+   s.readings.clear();
+   for ( int i = 0; i < oldScan.readings.size(); i++ )
+   {
+      if ( ( x[ i ].radius >= r_start ) &&
+           ( x[ i ].radius <= r_end   ) )
+         s.readings << oldScan.readings[ i ];  // copy this dataset point
+   }
+   // interpolated??
+
+   return s;
 }
 
 void US_ProcessConvert::setTriples( 
