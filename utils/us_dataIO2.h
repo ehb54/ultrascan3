@@ -154,6 +154,18 @@ class US_DataIO2
               return sum / (double)scanData.size(); } //!< Average temperature of scans
       };
 
+      //! Additional data for each triplet, if equilibrium data
+      class SpeedData // For equilibrium sets
+      {
+         public:
+            int        first_scan;  //!< First scan index (1,...) of this triplet/speed set
+            int        scan_count;  //!< Number of scans in this triplet/speed set
+            double     speed;       //!< Speed (rpm) of this set
+            double     meniscus;    //!< Meniscus radius
+            double     dataLeft;    //!< Minimum radius of valid data, this set
+            double     dataRight;   //!< Maximum radius of valid data, this set
+      };
+
       //! \brief Changes made to a scan value
       //!
       //! Holds changes made to a scan value.  Created by the data editor and
@@ -188,6 +200,8 @@ class US_DataIO2
             airGapRight  = 9.0;
          };
 
+         QString              expType;     //!< Experiment type
+         QList< SpeedData >   speedData;   //!< Speed step data list
          QString              runID;       //!< Specified runID of raw data
          QString              cell;        //!< Cell (hole) of rotor for this data
          QString              channel;     //!< Channel ('A', 'B', etc) of scan data
@@ -214,6 +228,9 @@ class US_DataIO2
       class EditedData
       {
          public:
+         QString       expType;     //!< Experiment type: velocity|equilibrium|diffusion|other
+         QList< SpeedData > speedData;  //!< Speed step data list for equilibrium data
+
          QString       runID;       //!< Specified runID of raw data
          QString       editID;      //!< Identifier of file that contained edits for the data
          QString       dataType;    //!< Sensor type
