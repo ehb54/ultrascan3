@@ -31,13 +31,23 @@ class US_EXTERN US_Edit : public US_Widgets
 
       QList< Edits >                 changed_points;
       US_DataIO2::RawData            data;
+      QList< US_DataIO2::SpeedData > sData;
       QVector< US_DataIO2::RawData > allData;
 
       bool               changes_made;
       bool               spikes;
       bool               floatingData;
+      bool               expIsVelo;
+      bool               expIsEquil;
+      bool               expIsDiff;
+      bool               expIsOther;
+      bool               all_edits;
+
       int                noise_order;
       int                triple_index;
+      int                total_speeds;
+      int                total_edits;
+
       double             meniscus;
       double             meniscus_left;
       double             airGap_left;
@@ -47,6 +57,8 @@ class US_EXTERN US_Edit : public US_Widgets
       double             baseline;
       double             invert;
       double             plateau;
+
+      QList< int >       sdoffs;    // speed data offsets, ea. triple
       QList< int >       includes;
       QList< double >    residuals;
 
@@ -58,8 +70,10 @@ class US_EXTERN US_Edit : public US_Widgets
       QString            runID;
       QString            editID;
       QString            dataType;
+      QString            expType;
       QStringList        files;
       QStringList        triples;
+      QStringList        trip_rpms;
                       
       QwtPlot*           data_plot;
       QwtPlotCurve*      raw_curve;
@@ -71,7 +85,9 @@ class US_EXTERN US_Edit : public US_Widgets
       US_PlotPicker*     pick;
       US_Plot*           plot;
       
+      QLabel*            lb_edtrsp;
       QLabel*            lb_gaps;
+      QLabel*            lb_rpms;
 
       QLineEdit*         le_investigator;
       QLineEdit*         le_info;
@@ -80,6 +96,7 @@ class US_EXTERN US_Edit : public US_Widgets
       QLineEdit*         le_dataRange;
       QLineEdit*         le_plateau;
       QLineEdit*         le_baseline;
+      QLineEdit*         le_edtrsp;
                         
       QPushButton*       pb_details;
       QPushButton*       pb_exclude;
@@ -98,12 +115,15 @@ class US_EXTERN US_Edit : public US_Widgets
       QPushButton*       pb_write;
       QPushButton*       pb_residuals;
       QPushButton*       pb_priorEdits;
+      QPushButton*       pb_reviewep;
+      QPushButton*       pb_nexttrip;
       QPushButton*       pb_float;
       QPushButton*       pb_undo;
                         
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
       QComboBox*         cb_triple;
+      QComboBox*         cb_rpms;
                         
       QwtCounter*        ct_from;
       QwtCounter*        ct_to;
@@ -121,6 +141,7 @@ class US_EXTERN US_Edit : public US_Widgets
       void plot_range        ( void );
       void plot_last         ( void );
       void plot_current      ( int  );
+      void plot_scan         ( void );
       void init_includes     ( void );
       
       void reset_excludes    ( void );
@@ -131,6 +152,7 @@ class US_EXTERN US_Edit : public US_Widgets
       void load              ( void );
       void details           ( void );
       void new_triple        ( int  );
+      void new_rpmval        ( int  );
 
       void focus_from        ( double );
       void focus_to          ( double );
@@ -162,6 +184,9 @@ class US_EXTERN US_Edit : public US_Widgets
       void undo              ( void );
       void floating          ( void );
       void write             ( void );
+      void write_triple      ( void );
+      void review_edits      ( void );
+      void next_triple       ( void );
                              
       void reset             ( void );
       void help              ( void )
