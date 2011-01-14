@@ -398,7 +398,7 @@ void US_Convert::resetAll( void )
    reset();
 
    ExpData.clear();
-   ss_limits.clear();
+   subsets.clear();
    reference_start = 0;
    reference_end   = 0;
 
@@ -594,7 +594,7 @@ void US_Convert::enableControls( void )
       if ( runType == "RI" )
          pb_reference->setEnabled( true );
    
-      else if ( runType == "RA" && ss_limits.size() < 2 )
+      else if ( runType == "RA" && subsets.size() < 1 )
       {
          // Allow user to define subsets, if he hasn't already
          pb_define   ->setEnabled( true );
@@ -904,7 +904,7 @@ void US_Convert::loadUS3Disk( QString dir )
    if ( runType == "RI" )
       pb_reference->setEnabled( true );
 
-   else if ( runType == "RA" && ss_limits.size() < 2 )
+   else if ( runType == "RA" && subsets.size() < 1 )
    {
       // Allow user to define subsets, if he hasn't already
       pb_define   ->setEnabled( true );
@@ -1163,6 +1163,8 @@ void US_Convert::changeTriple( QListWidgetItem* )
    cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
    
    // Redo plot
+   init_excludes();
+
    plot_current();
 }
 
@@ -1301,52 +1303,60 @@ void US_Convert::include( void )
 // User pressed the define subsets button while processing equil-abs data
 void US_Convert::define_subsets( void )
 {
-   ss_limits.clear();
+   subsets.clear();
 
+   pb_define  ->setEnabled( false );
    pb_process ->setEnabled( true );
 
    connect( picker, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                     SLOT  ( cClick  ( const QwtDoublePoint& ) ) );
 
    step = SPLIT;
-
 }
 
 void US_Convert::process_subsets( void )
 {
-   pb_process ->setEnabled( false );
-   pb_define  ->setEnabled( false );
-   picker   ->disconnect();
-
-   if ( ss_limits.size() < 2 )
+   if ( subsets.size() < 1 )
    {
       // Not enough clicks to work with
-      ss_limits.clear();
+      subsets.clear();
       pb_process ->setEnabled( true );
       return;
    }
 
+   // Add the top and bottom boundaries
+   subsets << 5.7
+           << 7.3;
+
    // Let's make sure the points are in sorted order
-   for ( int i = 0; i < ss_limits.size() - 1; i++ )
-      for ( int j = i + 1; j < ss_limits.size(); j++ )
-         if ( ss_limits[ i ] > ss_limits[ j ] )
+   for ( int i = 0; i < subsets.size() - 1; i++ )
+      for ( int j = i + 1; j < subsets.size(); j++ )
+         if ( subsets[ i ] > subsets[ j ] )
          {
-            double temp = ss_limits[ i ];
-            ss_limits[ i ] = ss_limits[ j ];
-            ss_limits[ j ] = temp;
+            double temp  = subsets[ i ];
+            subsets[ i ] = subsets[ j ];
+            subsets[ j ] = temp;
          }
 
-   // Let's make sure all the data is included somewhere
-   ss_limits[ 0 ] = 5.7;
-   ss_limits[ ss_limits.size() - 1 ] = 7.3;
+   pb_process ->setEnabled( false );
+   picker   ->disconnect();
 
-   // Now that we know we're subdividing, let's reconvert the file
-   reset();
-   import( currentDir );
+   // Now let's split the triple
+   US_ProcessConvert* dialog 
+      = new US_ProcessConvert( this );
+      dialog->splitRAData( allData, triples, currentTriple, subsets );
 
-   // We don't need this any more, and it interferes with subsequent
-   //  loads of RA data. 
-   ss_limits.clear();
+   delete dialog;
+
+   // We don't need this any more
+   subsets.clear();
+
+   // Reinitialize some things
+   setTripleInfo();
+   init_excludes();
+   enableControls();
+   
+   plot_current();
 }
 
 // User pressed the Define reference button while analyzing intensity data
@@ -1420,7 +1430,8 @@ void US_Convert::cClick( const QwtDoublePoint& p )
       case SPLIT :
          // process equil-abs data
          draw_vline( p.x() );
-         ss_limits << p.x();
+         subsets << p.x();
+
          break;
 
       case REFERENCE :
@@ -1825,7 +1836,7 @@ bool US_Convert::convert( void )
    US_ProcessConvert* dialog 
       = new US_ProcessConvert( this );
       dialog->convertLegacyData( legacyData, allData, triples, 
-                                 runType, tolerance, ss_limits );
+                                 runType, tolerance );
    delete dialog;
 
    if ( allData.size() == 0 ) return( false );

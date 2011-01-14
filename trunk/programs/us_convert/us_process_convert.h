@@ -134,8 +134,7 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
                     QVector< US_DataIO2::RawData        >& ,
                     QList< US_Convert::TripleInfo >& ,
                     QString ,
-                    double ,
-                    QList< double >& );
+                    double );
 
       /*! \brief Writes the converted US3 data to disk. 
 
@@ -196,6 +195,22 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
                     QString&,
                     QString );
 
+      /*! \brief Splits existing raw converted data into multiple datasets. 
+                 Also rearranges triples in the data accordingly.
+
+          \param rawConvertedData A reference to a structure that contains
+                        the US3 raw converted data.
+          \param triples A reference to a structure that contains the different
+                        cell/channel/wavelength combinations in the data. 
+          \param currentTriple The triple that will be split.
+          \param subsets A list of radius limits that define where a dataset 
+                         begins and ends.
+      */
+      void splitRAData   ( QVector< US_DataIO2::RawData >& ,
+                           QList< US_Convert::TripleInfo >& ,
+                           int ,
+                           QList< double >& );
+
    private:
       US_Help            showHelp;
 
@@ -204,9 +219,6 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
                            QString                       triple, 
                            QString                       runType,
                            double                        tolerance );
-
-      void splitRAData   ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-                           QList< double >&                     ss_limits );
 
       void setTriples    ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
                            QList< US_Convert::TripleInfo >& triples,
@@ -223,6 +235,12 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
       
       void setInterpolated ( unsigned char*, int );
       
+      US_DataIO2::Scan newScanSubset(
+                           US_DataIO2::Scan& oldScan,
+                           QVector< US_DataIO2::XValue >& radii, 
+                           double r_start,
+                           double r_end );
+
    private slots:
       void help          ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };

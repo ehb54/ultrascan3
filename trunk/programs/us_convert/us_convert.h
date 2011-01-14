@@ -83,7 +83,9 @@ class US_EXTERN US_Convert : public US_Widgets
 
       };
 
-      US_Disk_DB_Controls* disk_controls;    //!< Radiobuttons for disk/db choice
+      US_Disk_DB_Controls* disk_controls;     //!< Radiobuttons for disk/db choice
+
+      QList< double > subsets;                //!< A list of subset boundaries
 
   signals:
 
@@ -147,7 +149,6 @@ class US_EXTERN US_Convert : public US_Widgets
       QwtPlot*      data_plot;
       QwtPlotGrid*  grid;
 
-      QList< double > ss_limits;                      // list of subset boundaries
       double        reference_start;                  // boundary of reference scans
       double        reference_end;
       bool          Pseudo_averaged;                      // true if RI averages have been done
