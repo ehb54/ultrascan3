@@ -525,6 +525,12 @@ int US_DataIO2::readEdits( const QString& filename, EditValues& parameters )
          
          else if ( xml.name() == "run" ) 
             run( xml, parameters );
+
+         else if ( xml.name() == "experiment" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            parameters.expType     = a.value( "type" ).toString();
+         }
       }
    }
 
@@ -593,23 +599,51 @@ void US_DataIO2::run( QXmlStreamReader& xml, EditValues& parameters )
 
 void US_DataIO2::params( QXmlStreamReader& xml, EditValues& parameters )
 {
+   parameters.speedData.clear();
+   bool isEquil = ( parameters.expType == "Equilibrium" );
+   int  spx     = 0;
+
    while ( ! xml.atEnd() )
    {
       if ( xml.isEndElement()  &&  xml.name() == "parameters" ) return;
 
-      if ( xml.isStartElement()  &&  xml.name() == "meniscus" )
+      else if ( !xml.isStartElement() )
+      {
+         if ( xml.isEndElement()  &&  xml.name() == "speed" )
+            spx++;
+
+         xml.readNext();
+         continue;
+      }
+
+      else if ( xml.name() == "speed" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         parameters.speedData << SpeedData();
+         parameters.speedData[ spx ].speed
+            = a.value( "value"     ).toString().toDouble();
+         parameters.speedData[ spx ].first_scan
+            = a.value( "scanStart" ).toString().toInt();
+         parameters.speedData[ spx ].scan_count
+            = a.value( "scanCount" ).toString().toInt();
+      }
+
+      else if ( xml.name() == "meniscus" )
       {
          QXmlStreamAttributes a = xml.attributes();
          parameters.meniscus = a.value( "radius" ).toString().toDouble();
+
+         if ( isEquil )
+            parameters.speedData[ spx ].meniscus = parameters.meniscus;
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "plateau" )
+      else if ( xml.name() == "plateau" )
       {
          QXmlStreamAttributes a = xml.attributes();
          parameters.plateau = a.value( "radius" ).toString().toDouble();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "air_gap" )
+      else if ( xml.name() == "air_gap" )
       {
          QXmlStreamAttributes a  = xml.attributes();
          parameters.airGapLeft   = a.value( "left"      ).toString().toDouble();
@@ -617,17 +651,23 @@ void US_DataIO2::params( QXmlStreamReader& xml, EditValues& parameters )
          parameters.gapTolerance = a.value( "tolerance" ).toString().toDouble();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "baseline" )
+      else if ( xml.name() == "baseline" )
       {
          QXmlStreamAttributes a = xml.attributes();
          parameters.baseline = a.value( "radius" ).toString().toDouble();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "data_range" )
+      else if ( xml.name() == "data_range" )
       {
          QXmlStreamAttributes a = xml.attributes();
          parameters.rangeLeft  = a.value( "left"  ).toString().toDouble();
          parameters.rangeRight = a.value( "right" ).toString().toDouble();
+
+         if ( isEquil )
+         {
+            parameters.speedData[ spx ].dataLeft  = parameters.rangeLeft;
+            parameters.speedData[ spx ].dataRight = parameters.rangeRight;
+         }
       }
 
       xml.readNext();
@@ -761,12 +801,16 @@ int US_DataIO2::loadData( const QString&         directory,
    ed.channel     = sl[ 4 ];
    ed.wavelength  = sl[ 5 ];
    ed.description = d.description;
+   ed.expType     = ev.expType;
    ed.dataGUID    = ev.dataGUID;
    ed.editGUID    = ev.editGUID;
    ed.meniscus    = ev.meniscus;
    ed.plateau     = ev.plateau;
    ed.baseline    = ev.baseline;
    ed.floatingData= ev.floatingData;
+
+   if ( ed.expType == "Equilibrium" )
+      ed.speedData << ev.speedData;
 
    // Invert values before updating edited points
    if ( ev.invert < 0 )
