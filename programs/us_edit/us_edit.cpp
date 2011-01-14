@@ -41,8 +41,11 @@ int main( int argc, char* argv[] )
 
 US_Edit::US_Edit() : US_Widgets()
 {
-   check  = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
-   invert = 1.0;
+   check        = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
+   invert       = 1.0;
+   all_edits    = false;
+   total_speeds = 0;
+   total_edits  = 0;
 
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -111,6 +114,15 @@ US_Edit::US_Edit() : US_Widgets()
                        SLOT  ( new_triple         ( int ) ) );
    specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
 
+   lb_rpms   = us_label( tr( "Speed Step (RPM) of triple" ), -1 );
+   cb_rpms   = us_comboBox();
+   connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
+                       SLOT  ( new_rpmval         ( int ) ) );
+   specs->addWidget( lb_rpms,   s_row,   0, 1, 2 );
+   specs->addWidget( cb_rpms,   s_row++, 2, 1, 2 );
+   lb_rpms->setVisible( false );
+   cb_rpms->setVisible( false );
+
    // Row 4
    lb_gaps = us_label( tr( "Threshold for Scan Gaps" ), -1 );
    specs->addWidget( lb_gaps, s_row, 0, 1, 2 );
@@ -166,13 +178,22 @@ US_Edit::US_Edit() : US_Widgets()
    QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
    specs->addWidget( lb_edit, s_row++, 0, 1, 4 );
 
+   // Edit Triple:Speed display (Equilibrium only)
+   lb_edtrsp   = us_label( tr( "Edit Triple:Speed :" ), -1 );
+   specs->addWidget( lb_edtrsp, s_row,   0, 1, 2 );
+   le_edtrsp   = us_lineedit( "" );
+   specs->addWidget( le_edtrsp, s_row++, 2, 1, 2 );
+   lb_edtrsp->setVisible(  false );
+   le_edtrsp->setVisible(  false );
+   le_edtrsp->setReadOnly( true  );
+
    // Meniscus row
    pb_meniscus = us_pushbutton( tr( "Specify Meniscus" ), false );
    connect( pb_meniscus, SIGNAL( clicked() ), SLOT( set_meniscus() ) );
    specs->addWidget( pb_meniscus, s_row, 0, 1, 2 );
 
    le_meniscus = us_lineedit( "", 1 );
-   le_meniscus->setReadOnly( true );
+   //le_meniscus->setReadOnly( true );
    specs->addWidget( le_meniscus, s_row++, 2, 1, 2 );
 
    // Air Gap row (hidden by default)
@@ -196,7 +217,7 @@ US_Edit::US_Edit() : US_Widgets()
    le_dataRange->setReadOnly( true );
    specs->addWidget( le_dataRange, s_row++, 2, 1, 2 );
 
-   // Plataeu row
+   // Plateau row
    pb_plateau = us_pushbutton( tr( "Specify Plateau" ), false );
    connect( pb_plateau, SIGNAL( clicked() ), SLOT( set_plateau() ) );
    specs->addWidget( pb_plateau, s_row, 0, 1, 2 );
@@ -238,6 +259,16 @@ US_Edit::US_Edit() : US_Widgets()
    pb_undo = us_pushbutton( tr( "Undo Noise and Spikes" ), false );
    connect( pb_undo, SIGNAL( clicked() ), SLOT( undo() ) );
    specs->addWidget( pb_undo, s_row++, 2, 1, 2 );
+
+   pb_reviewep = us_pushbutton( tr( "Review Edit Profile" ), false );
+   connect( pb_reviewep, SIGNAL( clicked() ), SLOT( review_edits() ) );
+   specs->addWidget( pb_reviewep, s_row,   0, 1, 2 );
+
+   pb_nexttrip = us_pushbutton( tr( "Next Triple" ),         false );
+   connect( pb_nexttrip, SIGNAL( clicked() ), SLOT( next_triple()  ) );
+   specs->addWidget( pb_nexttrip, s_row++, 2, 1, 2 );
+   pb_reviewep->setVisible( false );
+   pb_nexttrip->setVisible( false );
 
    pb_float = us_pushbutton( tr( "Mark Data as Floating" ), false );
    connect( pb_float, SIGNAL( clicked() ), SLOT( floating() ) );
@@ -390,11 +421,15 @@ void US_Edit::reset( void )
    pb_float       ->setIcon( QIcon() );
    pb_write       ->setIcon( QIcon() );
 
-   //allData       .clear();   // Not here -- load()
    editID        .clear();
    data.scanData .clear();
    includes      .clear();
    changed_points.clear();
+   trip_rpms     .clear();
+   cb_rpms      ->disconnect();
+   cb_rpms      ->clear();
+   connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
+                       SLOT  ( new_rpmval         ( int ) ) );
 
    set_pbColors( NULL );
 }
@@ -580,13 +615,15 @@ void US_Edit::load( void )
       workingDir = QFileDialog::getExistingDirectory( this, 
             tr("Raw Data Directory"),
             US_Settings::resultDir(),
-            QFileDialog::DontResolveSymlinks );
+            QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
 
       if ( workingDir.isEmpty() ) return; 
    }
 
    reset();
    allData.clear();
+   sData  .clear();
+   sdoffs .clear();
    cb_triple->clear();
 
    workingDir.replace( "\\", "/" );  // WIN32 issue
@@ -681,7 +718,148 @@ void US_Edit::load( void )
       ct_gaps->setNumButtons( 1 );
    }
 
+   file    = files[ 0 ];
+   file    = workingDir + file.section( ".", 0, 0 )
+                  + "." + file.section( ".", 1, 1 ) + ".xml";
+   expType = "";
+   QFile xf( file );
+
+   if ( xf.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QXmlStreamReader xml( &xf );
+
+      while( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "experiment" )
+         {
+            QXmlStreamAttributes xa = xml.attributes();
+            expType   = xa.value( "type" ).toString();
+            break;
+         }
+      }
+
+      xf.close();
+   }
+
+   if ( expType.isEmpty()  &&  disk_controls->db() )
+   {  // no experiment type yet and data read from DB:  try for DB exp type
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
+
+      QStringList query;
+      query << "get_experiment_info_by_runID" << runID;
+      db.query( query );
+      db.next();
+      expType    = db.value( 8 ).toString();
+   }
+
+   if ( expType.isEmpty() )  // if no experiment type, assume Velocity
+      expType    = "Velocity";
+
+   else                      // insure Ulll... form, e.g., "Equilibrium"
+      expType    = expType.left( 1 ).toUpper() +
+                   expType.mid(  1 ).toLower();
+
    data = allData[ 0 ];
+
+   // Set booleans for experiment type
+   expIsVelo  = ( expType.compare( "Velocity",    Qt::CaseInsensitive ) == 0 );
+   expIsEquil = ( expType.compare( "Equilibrium", Qt::CaseInsensitive ) == 0 );
+   expIsDiff  = ( expType.compare( "Diffusion",   Qt::CaseInsensitive ) == 0 );
+   expIsOther = ( !expIsVelo  &&  !expIsEquil  &&  !expIsDiff );
+   expType    = expIsOther ? "Other" : expType;
+
+   if ( expIsEquil )
+   {  // Equilibrium
+      lb_rpms    ->setVisible( true  );
+      cb_rpms    ->setVisible( true  );
+      pb_plateau ->setVisible( false );
+      le_plateau ->setVisible( false ); 
+      pb_baseline->setVisible( false );
+      le_baseline->setVisible( false ); 
+      lb_edtrsp  ->setVisible( true  );
+      le_edtrsp  ->setVisible( true  );
+      pb_reviewep->setVisible( true  );
+      pb_nexttrip->setVisible( true  );
+      pb_write   ->setText( tr( "Save Edit Profiles" ) );
+
+      sData.clear();
+      US_DataIO2::SpeedData ssDat;
+      int ksd    = 0;
+
+      for ( int jd = 0; jd < allData.size(); jd++ )
+      {
+         data  = allData[ jd ];
+         sdoffs << ksd;
+         trip_rpms.clear();
+
+         for ( int ii = 0; ii < data.scanData.size(); ii++ )
+         {
+            double  drpm = data.scanData[ ii ].rpm;
+            QString arpm = QString::number( drpm );
+            if ( ! trip_rpms.contains( arpm ) )
+            {
+               trip_rpms << arpm;
+               ssDat.first_scan = ii + 1;
+               ssDat.scan_count = 1;
+               ssDat.speed      = drpm;
+               ssDat.meniscus   = 0.0;
+               ssDat.dataLeft   = 0.0;
+               ssDat.dataRight  = 0.0;
+               sData << ssDat;
+               ksd++;
+            }
+
+            else
+            {
+               int jj = trip_rpms.indexOf( arpm );
+               ssDat  = sData[ jj ];
+               ssDat.scan_count++;
+               sData[ jj ].scan_count++;
+            }
+         }
+
+         if ( jd == 0 )
+            cb_rpms->addItems( trip_rpms );
+
+         total_speeds += trip_rpms.size();
+      }
+
+      if ( allData.size() > 1 )
+      {
+         data   = allData[ 0 ];
+         ksd    = sdoffs[ 1 ];
+         trip_rpms.clear();
+         cb_rpms ->clear();
+         for ( int ii = 0; ii < ksd; ii++ )
+         {
+            QString arpm = QString::number( sData[ ii ].speed );
+            trip_rpms << arpm;
+         }
+
+         cb_rpms->addItems( trip_rpms );
+      }
+
+   }
+
+   else
+   {  // non-Equilibrium
+      lb_rpms    ->setVisible( false );
+      cb_rpms    ->setVisible( false );
+      pb_plateau ->setVisible( true  );
+      le_plateau ->setVisible( true  ); 
+      pb_baseline->setVisible( true  );
+      le_baseline->setVisible( true  ); 
+      lb_edtrsp  ->setVisible( false );
+      le_edtrsp  ->setVisible( false );
+      pb_reviewep->setVisible( false );
+      pb_nexttrip->setVisible( false );
+
+      pb_write   ->setText( tr( "Save Current Edit Profile" ) );
+   }
+
    plot_current( 0 );
 
    // Enable pushbuttons
@@ -837,6 +1015,36 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             draw_vline( meniscus );
          }
 
+         else if ( expIsEquil )
+         {  // Equilibrium
+            meniscus_left = p.x();
+            int ii        = US_DataIO2::index( data.scanData[ 0 ], data.x,
+                               meniscus_left );
+            draw_vline( meniscus_left );
+            meniscus      = data.x[ ii ].radius;
+            le_meniscus->setText( QString::number( meniscus, 'f', 3 ) );
+
+            // Create a marker
+            marker = new QwtPlotMarker;
+            QBrush brush( Qt::white );
+            QPen   pen  ( brush, 2.0 );
+            
+            marker->setValue( meniscus, meniscus_left );
+            marker->setSymbol( QwtSymbol( QwtSymbol::Cross, brush, pen,
+                        QSize ( 8, 8 ) ) );
+
+            marker->attach( data_plot );
+
+            data_plot->replot();
+
+            pb_meniscus->setIcon( check );
+         
+            pb_dataRange->setEnabled( true );
+        
+            next_step();
+            break;
+         }
+
          else if ( meniscus_left == 0.0  )
          {
             meniscus_left = p.x();
@@ -968,6 +1176,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
          {
             range_left = p.x();
             draw_vline( range_left );
+            break;
          }
          else
          {
@@ -1012,7 +1221,84 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             pb_noise    ->setEnabled( true );
             pb_baseline ->setEnabled( true );
             pb_spikes   ->setEnabled( true );
-            next_step();
+
+            if ( ! expIsEquil )
+            {  // non-Equilibrium
+               next_step();
+            }
+
+            else
+            {  // Equilibrium
+               plot_range();
+
+               int index    = cb_triple->currentIndex();
+               int row      = cb_rpms->currentIndex();
+               int jsd      = sdoffs[ index ] + row;
+               QString arpm = cb_rpms->itemText( row );
+
+               if ( sData[ jsd ].meniscus == 0.0  &&
+                     meniscus > 0.0 )
+                  total_edits++;
+
+               sData[ jsd ].meniscus  = meniscus;
+               sData[ jsd ].dataLeft  = range_left;
+               sData[ jsd ].dataRight = range_right;
+
+               if ( ++row >= cb_rpms->count() )
+               {
+                  row          = index + 1;
+                  if ( row < cb_triple->count() )
+                  {
+                     cb_triple->setCurrentIndex( row );
+                     step         = MENISCUS;
+                     QString trsp =
+                        cb_triple->currentText() + " : " + trip_rpms[ 0 ];
+                     le_edtrsp->setText( trsp );
+
+                     data = allData[ row ];
+                     cb_rpms->clear();
+
+                     for ( int ii = 0; ii < data.scanData.size(); ii++ )
+                     {
+                        QString arpm =
+                           QString::number( data.scanData[ ii ].rpm );
+
+                        if ( ! trip_rpms.contains( arpm ) )
+                           trip_rpms << arpm;
+                     }
+
+                     cb_rpms->addItems( trip_rpms );
+                     cb_rpms->setCurrentIndex( 0 );
+
+                     set_meniscus();
+                  }
+
+                  else
+                  {
+                     pb_write   ->setEnabled( true );
+                     pb_reviewep->setEnabled( true );
+                     pb_nexttrip->setEnabled( true );
+                     next_step();
+                  }
+               }
+
+               else
+               {
+                  cb_rpms->setCurrentIndex( row );
+                  step         = MENISCUS;
+                  QString trsp =
+                     cb_triple->currentText() + " : " + trip_rpms[ row ];
+                  le_edtrsp->setText( trsp );
+
+                  set_meniscus();
+               }
+            }
+
+            if ( total_edits >= total_speeds )
+            {
+               all_edits = true;
+               pb_write->setEnabled( true );
+            }
          }
 
          break;
@@ -1167,7 +1453,7 @@ void US_Edit::set_meniscus( void )
    pb_plateau  ->setIcon( QIcon() );
    pb_baseline ->setEnabled( false );
    pb_baseline ->setIcon( QIcon() );
-   pb_write    ->setEnabled( false );
+   pb_write    ->setEnabled( all_edits );
    pb_write    ->setIcon( QIcon() );
 
    spikes = false;
@@ -1179,7 +1465,12 @@ void US_Edit::set_meniscus( void )
             
    // Reset data and plot
    undo();
-   plot_all();
+
+   if ( ! expIsEquil )
+      plot_all();
+
+   else
+      plot_scan();
 }
 
 void US_Edit::set_airGap( void )
@@ -1205,7 +1496,7 @@ void US_Edit::set_airGap( void )
    pb_plateau  ->setIcon( QIcon() );
    pb_baseline ->setEnabled( false );
    pb_baseline ->setIcon( QIcon() );
-   pb_write    ->setEnabled( false );
+   pb_write    ->setEnabled( all_edits );
    pb_write    ->setIcon( QIcon() );;
 
    spikes = false;
@@ -1235,7 +1526,7 @@ void US_Edit::set_dataRange( void )
    pb_plateau  ->setIcon( QIcon() );
    pb_baseline ->setEnabled( false );
    pb_baseline ->setIcon( QIcon() );
-   pb_write    ->setEnabled( false );
+   pb_write    ->setEnabled( all_edits );
    pb_write    ->setIcon( QIcon() );;
 
    spikes = false;
@@ -1260,7 +1551,7 @@ void US_Edit::set_plateau( void )
    pb_plateau  ->setIcon( QIcon() );
    pb_baseline ->setEnabled( false );
    pb_baseline ->setIcon( QIcon() );
-   pb_write    ->setEnabled( false );
+   pb_write    ->setEnabled( all_edits );
    pb_write    ->setIcon( QIcon() );;
 
    undo();
@@ -1306,7 +1597,7 @@ void US_Edit::set_baseline( void )
    set_pbColors( pb_baseline );
 
    pb_baseline ->setIcon( QIcon() );
-   pb_write    ->setEnabled( false );
+   pb_write    ->setEnabled( all_edits );
    pb_write    ->setIcon( QIcon() );;
    
    // Only display last curve
@@ -1370,11 +1661,18 @@ void US_Edit::plot_all( void )
 void US_Edit::plot_range( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
-   
+
+   int rsize   = data.scanData[ 0 ].readings.size();
+   QVector< double > rvec( rsize );
+   QVector< double > vvec( rsize );
+   double* r   = rvec.data();
+   double* v   = vvec.data();
    double maxR = -1.0e99;
    double minR =  1.0e99;
    double maxV = -1.0e99;
    double minV =  1.0e99;
+   int indext  = cb_triple->currentIndex();
+   int mxndxt  = cb_triple->count() - 1;
 
    // For each scan
    for ( int i = 0; i < data.scanData.size(); i++ )
@@ -1385,11 +1683,58 @@ void US_Edit::plot_range( void )
       
       int indexLeft  = US_DataIO2::index( *s, data.x, range_left );
       int indexRight = US_DataIO2::index( *s, data.x, range_right );
+      double menp    = 0.0;
+
+      if ( expIsEquil )
+      {
+         double rngl  = range_left;
+         double rngr  = range_right;
+         int    tScan = i + 1;
+         int    isd   = sdoffs[ indext ];
+         int    ksd   = indext < mxndxt ? sdoffs[ indext + 1 ] : sData.size();
+
+         for ( int jj = isd; jj < ksd; jj++ )
+         {
+            int sScan  = sData[ jj ].first_scan;
+            int eScan  = sData[ jj ].scan_count + sScan - 1;
+            if ( tScan < sScan  ||  tScan > eScan )
+               continue;
+
+            rngl       = sData[ jj ].dataLeft;
+            rngr       = sData[ jj ].dataRight;
+            menp       = sData[ jj ].meniscus;
+            break;
+         }
+
+         indexLeft  = US_DataIO2::index( *s, data.x, rngl );
+         indexRight = US_DataIO2::index( *s, data.x, rngr );
+
+         int inxm   = US_DataIO2::index( *s, data.x, menp );
+
+         if ( inxm < 2 )
+            return;
+
+         r[ 0 ]     = data.x[ inxm ].radius;
+         v[ 0 ]     = s->readings[ indexLeft ].value;
+         r[ 2 ]     = data.x[ inxm + 2 ].radius;
+         v[ 2 ]     = s->readings[ indexLeft + 4 ].value;
+         r[ 1 ]     = r[ 0 ];
+         v[ 1 ]     = v[ 2 ];
+         r[ 3 ]     = r[ 2 ];
+         v[ 3 ]     = v[ 0 ];
+         r[ 4 ]     = r[ 0 ];
+         v[ 4 ]     = v[ 0 ];
+
+         QwtPlotCurve* c = us_curve( data_plot, tr( "Meniscus at" ) + 
+                  QString::number( tScan ) );
+         c->setBrush( QBrush( Qt::cyan ) );
+         c->setPen(   QPen(   Qt::cyan ) );
+         c->setData( r, v, 5 );
+         minR = min( minR, r[ 0 ] );
+         minV = min( minV, v[ 0 ] );
+      }
       
       int     count  = 0;
-      uint    size   = s->readings.size();
-      double* r      = new double[ size ];
-      double* v      = new double[ size ];
       
       for ( int j = indexLeft; j <= indexRight; j++ )
       {
@@ -1409,9 +1754,6 @@ void US_Edit::plot_range( void )
 
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setData( r, v, count );
-
-      delete [] r;
-      delete [] v;
    }
 
    // Reset the scan curves within the new limits
@@ -1479,6 +1821,67 @@ void US_Edit::plot_last( void )
 
    delete [] r;
    delete [] v;
+}
+
+void US_Edit::plot_scan( void )
+{
+   int    rsize = data.scanData[ 0 ].readings.size();
+   int    ssize = data.scanData.size();
+   int    count = 0;
+   QVector< double > rvec( rsize );
+   QVector< double > vvec( rsize );
+   double* r    = rvec.data();
+   double* v    = vvec.data();
+
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
+
+   double maxR  = -1.0e99;
+   double minR  =  1.0e99;
+   double maxV  = -1.0e99;
+   double minV  =  1.0e99;
+   QString srpm = cb_rpms->currentText();
+
+   // Plot only the currently selected scan(s)
+   //
+   for ( int ii = 0; ii < ssize; ii++ )
+   {
+      US_DataIO2::Scan* s = &data.scanData[ ii ];
+
+      QString arpm        = QString::number( s->rpm );
+
+      if ( arpm != srpm )
+         continue;
+
+      count = 0;
+
+      for ( int jj = 0; jj < rsize; jj++ )
+      {
+         r[ count ] = data.x[ jj ].radius;
+         v[ count ] = s->readings[ jj ].value * invert;
+
+         maxR = max( maxR, r[ count ] );
+         minR = min( minR, r[ count ] );
+         maxV = max( maxV, v[ count ] );
+         minV = min( minV, v[ count ] );
+
+         count++;
+      }
+
+      QString title = tr( "Raw Data at " )
+         + QString::number( s->seconds ) + tr( " seconds" );
+
+      QwtPlotCurve* c = us_curve( data_plot, title );
+      c->setData( r, v, count );
+
+      // Reset the scan curves within the new limits
+      double padR = ( maxR - minR ) / 30.0;
+      double padV = ( maxV - minV ) / 30.0;
+
+      data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
+      data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
+   }
+
+   data_plot->replot();
 }
 
 void US_Edit::focus_from( double scan )
@@ -1550,14 +1953,15 @@ void US_Edit::set_colors( const QList< int >& focus )
    QPen   p   = curves[ 0 ]->pen();
    QBrush b   = curves[ 0 ]->brush();
    QColor std = US_GuiSettings::plotCurve();
+   QColor foc = Qt::red;
 
    // Mark these scans in red
    for ( int i = 0; i < curves.size(); i++ )
    {
       if ( focus.contains( i ) )
       {
-         p.setColor( Qt::red );
-         b.setColor( Qt::red );
+         p.setColor( foc );
+         b.setColor( foc );
       }
       else
       {
@@ -1986,8 +2390,41 @@ void US_Edit::new_triple( int index )
    connect( ct_to,   SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_to     ( double ) ) );
 
+   if ( expIsEquil )
+   {  // Equilibrium
+      cb_rpms->clear();
+      trip_rpms.clear();
+
+      for ( int ii = 0; ii < data.scanData.size(); ii++ )
+      {  // build unique-rpm list for triple
+         QString arpm = QString::number( data.scanData[ ii ].rpm );
+
+         if ( ! trip_rpms.contains( arpm ) )
+         {
+            trip_rpms << arpm;
+         }
+      }
+      cb_rpms->addItems( trip_rpms );
+
+      le_edtrsp->setText( cb_triple->currentText() + " : " + trip_rpms[ 0 ] );
+   }
+
+   else
+   {  // non-Equilibrium
+      step = MENISCUS;
+      set_pbColors( pb_meniscus );
+   }
+}
+
+void US_Edit::new_rpmval( int index )
+{
+   QString srpm = cb_rpms->itemText( index );
+
    step = MENISCUS;
-   set_pbColors( pb_meniscus );
+
+   le_edtrsp->setText( cb_triple->currentText() + " : " + srpm );
+
+   plot_scan();
 }
 
 void US_Edit::floating( void )
@@ -1999,9 +2436,43 @@ void US_Edit::floating( void )
       pb_float->setIcon( QIcon() );
 
 }
+
 void US_Edit::write( void )
 {
+   if ( !expIsEquil )
+   {  // non-Equilibrium:  write single current edit
+      triple_index = cb_triple->currentIndex();
+
+      write_triple();
+   }
+
+   else
+   {  // Equilibrium:  loop to write all edits
+      for ( int jr = 0; jr < triples.size(); jr++ )
+      {
+         triple_index = jr;
+         data         = allData[ jr ];
+
+         write_triple();
+      }
+   }
+
+   changes_made = false;
+   pb_write->setEnabled( false );
+   pb_write->setIcon   ( check );
+}
+
+void US_Edit::write_triple( void )
+{
    QString s;
+
+   meniscus  = le_meniscus->text().toDouble();
+
+   if ( expIsEquil )
+   {  // Equilibrium:  set baseline,plateau as flag that those are "done"
+      baseline = range_left;
+      plateau  = range_right;
+   }
 
    // Check if complete
    if ( meniscus == 0.0 )
@@ -2018,7 +2489,7 @@ void US_Edit::write( void )
    if ( ! s.isEmpty() )
    {
       QMessageBox::information( this,
-            tr( "Date missing" ),
+            tr( "Data missing" ),
             tr( "You must define the " ) + s 
             + tr( "before writing the edit profile." ) );
       return;
@@ -2027,7 +2498,7 @@ void US_Edit::write( void )
    // Ask for editID if not yet defined
    if ( editID.isEmpty() )
    {
-      QString now =  QDateTime::currentDateTime().toString( "yyyyMMddhhmm" );
+      QString now =  QDateTime::currentDateTime().toString( "yyMMddhhmm" );
 
       bool ok;
       editID = QInputDialog::getText( this, 
@@ -2045,7 +2516,7 @@ void US_Edit::write( void )
    // workingDir + runID + editID + data type + cell + channel + wavelength 
    //            + ".xml"
 
-   QString filename = files[ cb_triple->currentIndex() ];
+   QString filename = files[ triple_index ];
    int     index = filename.indexOf( '.' ) + 1;
    filename.insert( index, editID + "." );
    filename.replace( QRegExp( "auc$" ), "xml" );
@@ -2061,66 +2532,74 @@ void US_Edit::write( void )
       return;
    }
 
-   QTextStream ts( &f );
+   if ( expType.isEmpty()  ||
+        expType.compare( "other", Qt::CaseInsensitive ) == 0 )
+      expType = "Velocity";
 
-   QDomDocument doc( "UltraScanEdits" );
-   QDomElement root = doc.createElement( "experiment" );
-   doc.appendChild( root );
+   QXmlStreamWriter xml( &f );
+
+   xml.setAutoFormatting( true );
+   xml.writeStartDocument();
+   xml.writeDTD         ( "<!DOCTYPE UltraScanEdits>" );
+   xml.writeStartElement( "experiment" );
+   xml.writeAttribute   ( "type", expType );
 
    // Write identification
-   QDomElement id = doc.createElement( "identification" );
-   root.appendChild( id );
+   xml.writeStartElement( "identification" );
 
-   QDomElement runid = doc.createElement( "runid" );
-   runid.setAttribute( "value", runID );
-   id.appendChild( runid );
+   xml.writeStartElement( "runid" );
+   xml.writeAttribute   ( "value", runID );
+   xml.writeEndElement  ();
 
-   QDomElement eguid = doc.createElement( "editGUID" );
    QString editGUID = US_Util::new_guid();
-   eguid.setAttribute( "value", editGUID );
-   id.appendChild( eguid );
+   xml.writeStartElement( "editGUID" );
+   xml.writeAttribute   ( "value", editGUID );
+   xml.writeEndElement  ();
 
-   QDomElement dguid = doc.createElement( "rawDataGUID" );
    char uuid[ 37 ];
    uuid_unparse( (unsigned char*)data.rawGUID, uuid );
-   dguid.setAttribute( "value", uuid );
-   id.appendChild( dguid );
+   QString rawGUID  = QString( uuid );
+   xml.writeStartElement( "rawDataGUID" );
+   xml.writeAttribute   ( "value", rawGUID );
+   xml.writeEndElement  ();
 
-   QString     triple  = cb_triple->currentText();
+   xml.writeEndElement  ();  // identification
+
+   QString     triple  = triples.at( triple_index );
+
    QStringList parts   = triple.split( " / " );
 
    QString     cell    = parts[ 0 ];
    QString     channel = parts[ 1 ];
-   QString     wl      = parts[ 2 ];
+   QString     waveln  = parts[ 2 ];
 
-   QDomElement run = doc.createElement( "run" );
-   run.setAttribute( "cell"      , cell );
-   run.setAttribute( "channel"   , channel );
-   run.setAttribute( "wavelength", wl );
-   root.appendChild( run );
+   xml.writeStartElement( "run" );
+   xml.writeAttribute   ( "cell",       cell    );
+   xml.writeAttribute   ( "channel",    channel );
+   xml.writeAttribute   ( "wavelength", waveln  );
 
    // Write excluded scans
    if ( data.scanData.size() > includes.size() )
    {
-      QDomElement excludes = doc.createElement( "excludes" );
-      run.appendChild( excludes );
+      xml.writeStartElement( "excludes" );
 
       for ( int i = 0; i < data.scanData.size(); i++ )
       {
          if ( ! includes.contains( i ) )
          {
-            QDomElement exclude = doc.createElement( "exclude" );
-            exclude.setAttribute( "scan", i );
-            excludes.appendChild( exclude );
+            xml.writeStartElement( "exclude" );
+            xml.writeAttribute   ( "scan", QString::number( i ) );
+            xml.writeEndElement  ();
          }
       }
+
+      xml.writeEndElement  ();  // excludes
    }
 
    // Write edits
    if ( ! changed_points.isEmpty() )
    {
-      QDomElement edited = doc.createElement( "edited" );
-      run.appendChild( edited );
+      xml.writeStartElement( "edited" );
 
       for ( int i = 0; i < changed_points.size(); i++ )
       {
@@ -2128,79 +2607,150 @@ void US_Edit::write( void )
 
          for ( int j = 0; j < e->changes.size(); j++ )
          {
-            QDomElement edit = doc.createElement( "edit" );
-            edit.setAttribute( "scan"  , e->scan );
-            edit.setAttribute( "radius", e->changes[ j ].x() );
-            edit.setAttribute( "value" , e->changes[ j ].y() );
-            edited.appendChild( edit );
+            xml.writeStartElement( "edit" );
+            xml.writeAttribute   ( "scan",   QString::number( e->scan ) );
+            xml.writeAttribute   ( "radius",
+               QString::number( e->changes[ j ].x(), 'f', 4 ) );
+            xml.writeAttribute   ( "value",
+               QString::number( e->changes[ j ].y(), 'f', 4 ) );
+            xml.writeEndElement  ();
          }
       }
+
+      xml.writeEndElement  ();  // edited
    }
 
    // Write meniscus, range, plataeu, baseline
-   QDomElement parameters = doc.createElement( "parameters" );
-   run.appendChild( parameters );
+   xml.writeStartElement( "parameters" );
 
-   QDomElement m = doc.createElement( "meniscus" );
-   m.setAttribute( "radius", meniscus );
-   parameters.appendChild( m );
+   if ( ! expIsEquil )
+   {  // non-Equilibrium
+      xml.writeStartElement( "meniscus" );
+      xml.writeAttribute   ( "radius",
+         QString::number( meniscus, 'f', 4 ) );
+      xml.writeEndElement  ();
 
-   if ( dataType == "IP" )
-   {
-      QDomElement airGap = doc.createElement( "air_gap" );
-      airGap.setAttribute( "left" ,     airGap_left );
-      airGap.setAttribute( "right",     airGap_right );
-      airGap.setAttribute( "tolerance", ct_gaps->value() );
-      parameters.appendChild( airGap );
+      if ( dataType == "IP" )
+      {
+         xml.writeStartElement( "air_gap" );
+         xml.writeAttribute   ( "left",
+            QString::number( airGap_left,      'f', 4 ) );
+         xml.writeAttribute   ( "right",
+            QString::number( airGap_right,     'f', 4 ) );
+         xml.writeAttribute   ( "tolerance",
+            QString::number( ct_gaps->value(), 'f', 4 ) );
+         xml.writeEndElement  ();
+      }
+
+      xml.writeStartElement( "data_range" );
+      xml.writeAttribute   ( "left",
+         QString::number( range_left,  'f', 4 ) );
+      xml.writeAttribute   ( "right",
+         QString::number( range_right, 'f', 4 ) );
+      xml.writeEndElement  ();
+
+      xml.writeStartElement( "plateau" );
+      xml.writeAttribute   ( "radius",
+         QString::number( plateau,  'f', 4 ) );
+      xml.writeEndElement  ();
+
+      xml.writeStartElement( "baseline" );
+      xml.writeAttribute   ( "radius",
+         QString::number( baseline, 'f', 4 ) );
+      xml.writeEndElement  ();
    }
 
-   QDomElement dataRange = doc.createElement( "data_range" );
-   dataRange.setAttribute( "left" , range_left );
-   dataRange.setAttribute( "right", range_right );
-   parameters.appendChild( dataRange );
+   else
+   {  // Equilibrium
+      if ( dataType == "IP" )
+      {
+         xml.writeStartElement( "air_gap" );
+         xml.writeAttribute   ( "left",
+            QString::number( airGap_left,      'f', 4 ) );
+         xml.writeAttribute   ( "right",
+            QString::number( airGap_right,     'f', 4 ) );
+         xml.writeAttribute   ( "tolerance",
+            QString::number( ct_gaps->value(), 'f', 4 ) );
+         xml.writeEndElement  ();
+      }
 
-   QDomElement p = doc.createElement( "plateau" );
-   p.setAttribute( "radius" , plateau );
-   parameters.appendChild( p );
+      int jsd  = sdoffs[ triple_index ];
+      int trx1 = triple_index + 1;
+      int mxtx = triples.size() - 1;
 
-   QDomElement bl = doc.createElement( "baseline" );
-   bl.setAttribute( "radius", baseline );
-   parameters.appendChild( bl );
-   
-   QDomElement operations = doc.createElement( "operations" );
-   run.appendChild( operations );
+      int ksd  = ( trx1 > mxtx ) ? sData.size() : sdoffs[ trx1 ];
+
+      for ( int ii = jsd; ii < ksd; ii++ )
+      {
+         double speed     = sData[ ii ].speed;
+         int    sStart    = sData[ ii ].first_scan;
+         int    sCount    = sData[ ii ].scan_count;
+         double meniscus  = sData[ ii ].meniscus;
+         double dataLeft  = sData[ ii ].dataLeft;
+         double dataRight = sData[ ii ].dataRight;
+
+         xml.writeStartElement( "speed" );
+         xml.writeAttribute   ( "value",     QString::number( speed )  );
+         xml.writeAttribute   ( "scanStart", QString::number( sStart ) );
+         xml.writeAttribute   ( "scanCount", QString::number( sCount ) );
+
+         xml.writeStartElement( "meniscus" );
+         xml.writeAttribute   ( "radius", QString::number( meniscus, 'f', 4 ) );
+         xml.writeEndElement  ();  // meniscus
+
+         xml.writeStartElement( "data_range" );
+         xml.writeAttribute   ( "left",  QString::number( dataLeft,  'f', 4 ) );
+         xml.writeAttribute   ( "right", QString::number( dataRight, 'f', 4 ) );
+         xml.writeEndElement  ();  // data_range
+
+         xml.writeEndElement  ();  // speed
+      }
+   }
  
-   // Write RI Noise
-   if ( ! pb_residuals->icon().isNull() )
+   xml.writeEndElement  ();  // parameters
+
+   if ( ! pb_residuals->icon().isNull()  ||
+        ! pb_spikes->icon().isNull()     ||
+        invert == -1.0                   ||
+        floatingData )
    {
-      QDomElement riNoise = doc.createElement( "subtract_ri_noise" );
-      riNoise.setAttribute( "order", noise_order );
-      operations.appendChild( riNoise );
+      xml.writeStartElement( "operations" );
+ 
+      // Write RI Noise
+      if ( ! pb_residuals->icon().isNull() )
+      {
+         xml.writeStartElement( "subtract_ri_noise" );
+         xml.writeAttribute   ( "order", QString::number( noise_order ) );
+         xml.writeEndElement  ();
+      }
+
+      // Write Remove Spikes
+      if ( ! pb_spikes->icon().isNull() )
+      {
+         xml.writeStartElement( "remove_spikes" );
+         xml.writeEndElement  ();
+      }
+
+      // Write Invert
+      if ( invert == -1.0 )
+      {
+         xml.writeStartElement( "invert" );
+         xml.writeEndElement  ();
+      }
+
+      // Write indication of floating data
+      if ( floatingData )
+      {
+         xml.writeStartElement( "floating_data" );
+         xml.writeEndElement  ();
+      }
+
+      xml.writeEndElement  ();  // operations
    }
 
-   // Write Remove Spikes
-   if ( ! pb_spikes->icon().isNull() )
-   {
-      QDomElement spikes = doc.createElement( "remove_spikes" );
-      operations.appendChild( spikes );
-   }
-
-   // Write Invert
-   if ( invert == -1.0 )
-   {
-      QDomElement invert = doc.createElement( "invert" );
-      operations.appendChild( invert );
-   }
-
-   // Write indication of floating data
-   if ( floatingData )
-   {
-      QDomElement floating = doc.createElement( "floating_data" );
-      operations.appendChild( floating );
-   }
-
-   const int indentSize = 4;
-   doc.save( ts, indentSize );
+   xml.writeEndElement  ();  // run
+   xml.writeEndElement  ();  // experiment
+   xml.writeEndDocument ();
 
    f.close();
 
@@ -2212,12 +2762,12 @@ void US_Edit::write( void )
       if ( db.lastErrno() != US_DB2::OK )
       {
          QMessageBox::warning( this, tr( "Connection Problem" ),
-           tr( "Could not connect to databasee \n" ) + db.lastError() );
+           tr( "Could not connect to database \n" ) + db.lastError() );
          return;
       }
 
       QStringList q( "get_rawDataID_from_GUID" );
-      q << QString( uuid );
+      q << rawGUID;
       db.query( q );
 
       if ( db.lastErrno() != US_DB2::OK )
@@ -2232,7 +2782,8 @@ void US_Edit::write( void )
          QString rawDataID = db.value( 0 ).toString();
          // Save edit file to DB
          q.clear();
-         q << "new_editedData" << rawDataID << editGUID << runID << filename << "";
+         q << "new_editedData" << rawDataID << editGUID << runID
+           << filename << "";
 
          db.query( q );
 
@@ -2241,10 +2792,6 @@ void US_Edit::write( void )
          db.writeBlobToDB( workingDir + filename, "upload_editData", insertID );
       }
    }
-
-   changes_made = false;
-   pb_write->setEnabled( false );
-   pb_write->setIcon   ( check );
 }
 
 void US_Edit::apply_prior( void )
@@ -2369,7 +2916,25 @@ void US_Edit::apply_prior( void )
    // Specified parameters
    QString s;
 
-   meniscus = parameters.meniscus;
+   meniscus    = parameters.meniscus;
+   range_left  = parameters.rangeLeft;
+   range_right = parameters.rangeRight;
+   plateau     = parameters.plateau;
+   baseline    = parameters.baseline;
+
+   if ( parameters.speedData.size() > 0 )
+   {
+      meniscus    = parameters.speedData[ 0 ].meniscus;
+      range_left  = parameters.speedData[ 0 ].dataLeft;
+      range_right = parameters.speedData[ 0 ].dataRight;
+      baseline    = range_left;
+      plateau     = range_right;
+
+      int ksd     = sData.size();
+      sdoffs << ksd;
+      sData  << parameters.speedData;
+   }
+
    le_meniscus->setText( s.sprintf( "%.3f", meniscus ) );
    pb_meniscus->setIcon( check );
    pb_meniscus->setEnabled( true );
@@ -2387,21 +2952,15 @@ void US_Edit::apply_prior( void )
       pb_airGap->setEnabled( true );
    }
 
-   range_left  = parameters.rangeLeft;
-   range_right = parameters.rangeRight;
-   
    le_dataRange->setText( s.sprintf( "%.3f - %.3f",
            range_left, range_right ) );
    pb_dataRange->setIcon( check );
    pb_dataRange->setEnabled( true );
    
-   plateau = parameters.plateau;
    le_plateau->setText( s.sprintf( "%.3f", plateau ) );
    pb_plateau->setIcon( check );
    pb_plateau->setEnabled( true );
 
-   baseline = parameters.baseline;
-   
    US_DataIO2::Scan scan  = data.scanData.last();
    int              pt    = US_DataIO2::index( scan, data.x, baseline );
    double           sum   = 0.0;
@@ -2487,4 +3046,20 @@ void US_Edit::apply_prior( void )
    plot_range();
 }
 
+void US_Edit::review_edits( void )
+{
+   cb_triple->setCurrentIndex( cb_triple->count() - 1 );
+
+   next_triple();
+}
+
+void US_Edit::next_triple( void )
+{
+   int row = cb_triple->currentIndex() + 1;
+   row     = ( row < cb_triple->count() ) ? row : 0;
+   data    = allData[ row ];
+   cb_triple->setCurrentIndex( row );
+
+   plot_range();
+}
 
