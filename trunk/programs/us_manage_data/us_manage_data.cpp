@@ -229,7 +229,8 @@ DbgLv(1) << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
 DbgLv(2) << "db passwd complete";
 
    // if possible get db investigator from user name
-   investig      = QDir( QDir::homePath() ).dirName();
+   investig      = QString::number( US_Settings::us_inv_ID() )
+      + ": " + US_Settings::us_inv_name();
    le_invtor->setText( investig );
 
    find_investigator(  investig );

@@ -39,6 +39,7 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
+// Constructor
 US_Edit::US_Edit() : US_Widgets()
 {
    check        = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
@@ -320,6 +321,7 @@ US_Edit::US_Edit() : US_Widgets()
    reset();
 }
 
+// Select DB investigator
 void US_Edit::sel_investigator( void )
 {
    int investigator = US_Settings::us_inv_ID();
@@ -335,6 +337,7 @@ void US_Edit::sel_investigator( void )
    le_investigator->setText( inv_text );
 }
 
+// Reset parameters to their defaults
 void US_Edit::reset( void )
 {
    changes_made = false;
@@ -401,7 +404,7 @@ void US_Edit::reset( void )
    pb_residuals   ->setEnabled( false );
    pb_spikes      ->setEnabled( false );
    pb_invert      ->setEnabled( false );
-   pb_priorEdits  ->setEnabled( false );
+   //pb_priorEdits  ->setEnabled( false );
    pb_undo        ->setEnabled( false );
    
    pb_float       ->setEnabled( false );
@@ -426,6 +429,7 @@ void US_Edit::reset( void )
    includes      .clear();
    changed_points.clear();
    trip_rpms     .clear();
+   triples       .clear();
    cb_rpms      ->disconnect();
    cb_rpms      ->clear();
    connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
@@ -434,6 +438,7 @@ void US_Edit::reset( void )
    set_pbColors( NULL );
 }
 
+// Display run details
 void US_Edit::details( void )
 {  
    US_RunDetails2* dialog 
@@ -443,8 +448,9 @@ void US_Edit::details( void )
    delete dialog;
 }
 
+// Do a Gap check against threshold value
 void US_Edit::gap_check( void )
-{  
+{
    int threshold = (int)ct_gaps->value();
             
    US_DataIO2::Scan s;
@@ -602,8 +608,9 @@ void US_Edit::gap_check( void )
    }
 }
 
+// Load an AUC data set
 void US_Edit::load( void )
-{  
+{
    if ( disk_controls->db() )
    {
       US_LoadDB dialog( workingDir );
@@ -621,6 +628,7 @@ void US_Edit::load( void )
    }
 
    reset();
+
    allData.clear();
    sData  .clear();
    sdoffs .clear();
@@ -884,10 +892,19 @@ void US_Edit::load( void )
    connect( ct_to,   SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_to     ( double ) ) );
 
+   pb_priorEdits->disconnect();
+
+   if ( expIsEquil )
+      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
+
+   else
+      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
+
    step = MENISCUS;
    set_pbColors( pb_meniscus );
 }
 
+// Set pushbutton colors
 void US_Edit::set_pbColors( QPushButton* pb )
 {
    QPalette p = US_GuiSettings::pushbColor();
@@ -905,6 +922,7 @@ void US_Edit::set_pbColors( QPushButton* pb )
    }
 }
 
+// Plot the current data set
 void US_Edit::plot_current( int index )
 {
    // Read the data
@@ -979,6 +997,7 @@ void US_Edit::plot_current( int index )
                   SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
 }
 
+// Re-plot
 void US_Edit::replot( void )
 {
    switch( step )
@@ -998,6 +1017,7 @@ void US_Edit::replot( void )
    }
 }
 
+// Handle a mouse click according to the current pick step
 void US_Edit::mouse( const QwtDoublePoint& p )
 {
    double maximum;
@@ -1361,6 +1381,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
    }
 }
 
+// Draw a vertical pick line
 void US_Edit::draw_vline( double radius )
 {
    double r[ 2 ];
@@ -1385,6 +1406,7 @@ void US_Edit::draw_vline( double radius )
    data_plot->replot();
 }
 
+// Set the step flag for the next step
 void US_Edit::next_step( void )
 {
    QPushButton* pb;
@@ -1423,6 +1445,7 @@ void US_Edit::next_step( void )
    set_pbColors( pb );
 }
 
+// Set up for a meniscus pick
 void US_Edit::set_meniscus( void )
 {
    le_meniscus ->setText( "" );
@@ -1473,6 +1496,7 @@ void US_Edit::set_meniscus( void )
       plot_scan();
 }
 
+// Set up for an Air Gap pick
 void US_Edit::set_airGap( void )
 {
    le_airGap   ->setText( "" );
@@ -1507,6 +1531,7 @@ void US_Edit::set_airGap( void )
    plot_all();
 }
 
+// Set up for a data range pick
 void US_Edit::set_dataRange( void )
 {
    le_dataRange->setText( "" );
@@ -1537,6 +1562,7 @@ void US_Edit::set_dataRange( void )
    plot_all();
 }
 
+// Set up for a Plateau pick
 void US_Edit::set_plateau( void )
 {
    le_plateau  ->setText( "" );
@@ -1558,6 +1584,7 @@ void US_Edit::set_plateau( void )
    plot_range();
 }
 
+// Set up for a Fringe Tolerance pick
 void US_Edit::set_fringe_tolerance( double /* tolerance */)
 {
    // This is only valid for interference data
@@ -1589,6 +1616,7 @@ void US_Edit::set_fringe_tolerance( double /* tolerance */)
    replot();
 }
 
+// Set up for a Baseline pick
 void US_Edit::set_baseline( void )
 {
    le_baseline->setText( "" );
@@ -1604,6 +1632,7 @@ void US_Edit::set_baseline( void )
    plot_last();
 }
 
+// Plot all curves
 void US_Edit::plot_all( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); 
@@ -1658,6 +1687,7 @@ void US_Edit::plot_all( void )
    delete [] v;
 }
 
+// Plot curves within the picked range
 void US_Edit::plot_range( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
@@ -1768,6 +1798,7 @@ void US_Edit::plot_range( void )
    data_plot->replot();
 }
 
+// Plot the last picked curve
 void US_Edit::plot_last( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
@@ -1823,6 +1854,7 @@ void US_Edit::plot_last( void )
    delete [] v;
 }
 
+// Plot a single scan curve
 void US_Edit::plot_scan( void )
 {
    int    rsize = data.scanData[ 0 ].readings.size();
@@ -1884,6 +1916,7 @@ void US_Edit::plot_scan( void )
    data_plot->replot();
 }
 
+// Set focus FROM scan value
 void US_Edit::focus_from( double scan )
 {
    int from = (int)scan;
@@ -1902,6 +1935,7 @@ void US_Edit::focus_from( double scan )
    focus( from, to );
 }
 
+// Set focus TO scan value
 void US_Edit::focus_to( double scan )
 {
    int to   = (int)scan;
@@ -1920,6 +1954,7 @@ void US_Edit::focus_to( double scan )
    focus( from, to );
 }
 
+// Set focus From/To
 void US_Edit::focus( int from, int to )
 {
    if ( from == 0 )
@@ -1938,6 +1973,7 @@ void US_Edit::focus( int from, int to )
    set_colors( focus );
 }
 
+// Set curve colors
 void US_Edit::set_colors( const QList< int >& focus )
 {
    // Get pointers to curves
@@ -1976,12 +2012,14 @@ void US_Edit::set_colors( const QList< int >& focus )
    data_plot->replot();
 }
 
+// Initialize includes
 void US_Edit::init_includes( void )
 {
    includes.clear();
    for ( int i = 0; i < data.scanData.size(); i++ ) includes << i;
 }
 
+// Reset excludes
 void US_Edit::reset_excludes( void )
 {
    ct_from->disconnect();
@@ -2002,6 +2040,7 @@ void US_Edit::reset_excludes( void )
    replot();
 }
 
+// Set excludes as indicated in counters
 void US_Edit::exclude_range( void )
 {
    int scanStart = (int)ct_from->value();
@@ -2014,6 +2053,7 @@ void US_Edit::exclude_range( void )
    reset_excludes();
 }
 
+// Show exclusion profile
 void US_Edit::exclusion( void )
 {
    reset_excludes();
@@ -2033,17 +2073,20 @@ void US_Edit::exclusion( void )
    delete exclude;
 }
 
+// Update based on exclusion profile
 void US_Edit::update_excludes( QList< int > scanProfile )
 {
    set_colors( scanProfile );
 }
 
+// Cancel all excludes
 void US_Edit::cancel_excludes( void )
 {
    QList< int > focus;
    set_colors( focus );  // Focus on no curves
 }
 
+// Process excludes to rebuild include list
 void US_Edit::finish_excludes( QList< int > excludes )
 {
    for ( int i = 0; i < excludes.size(); i++ )
@@ -2053,6 +2096,7 @@ void US_Edit::finish_excludes( QList< int > excludes )
    reset_excludes();
 }
 
+// Edit a scan
 void US_Edit::edit_scan( void )
 {
    int index1 = (int)ct_from->value();
@@ -2067,6 +2111,7 @@ void US_Edit::edit_scan( void )
    delete dialog;
 }
 
+// Update scan points
 void US_Edit::update_scan( QList< QPointF > changes )
 {
    // Handle excluded scans
@@ -2147,12 +2192,14 @@ void US_Edit::update_scan( QList< QPointF > changes )
    delete [] v;
 }
 
+// Handle include profile
 void US_Edit::include( void )
 {
    init_includes();
    reset_excludes();
 }
 
+// Reset pushbutton and plot with invert flag change
 void US_Edit::invert_values( void )
 {
    if ( invert == 1.0 )
@@ -2169,6 +2216,7 @@ void US_Edit::invert_values( void )
    replot();
 }
 
+// Check the Spike setting
 bool US_Edit::spike_check( const US_DataIO2::Scan& s, 
       int point, int start, int end, double* value )
 {
@@ -2213,6 +2261,7 @@ bool US_Edit::spike_check( const US_DataIO2::Scan& s,
    return false;  // Not a spike
 }
 
+// Remove spikes
 void US_Edit::remove_spikes( void )
 {
    double smoothed_value;
@@ -2250,6 +2299,7 @@ void US_Edit::remove_spikes( void )
    replot();
 }
 
+// Undo changes
 void US_Edit::undo( void )
 {
    // Copy from allData to data
@@ -2304,6 +2354,7 @@ void US_Edit::undo( void )
    pb_spikes      ->setIcon( QIcon() );
 }
 
+// Calculate and apply noise
 void US_Edit::noise( void )
 {
    residuals.clear();
@@ -2323,6 +2374,7 @@ void US_Edit::noise( void )
    delete dialog;
 }
 
+// Subtract residuals
 void US_Edit::subtract_residuals( void )
 {
    for ( int i = 0; i < data.scanData.size(); i++ )
@@ -2336,6 +2388,7 @@ void US_Edit::subtract_residuals( void )
    replot();
 }
 
+// Select a new triple
 void US_Edit::new_triple( int index )
 {
    if ( changes_made )
@@ -2383,6 +2436,7 @@ void US_Edit::new_triple( int index )
    pb_spikes   ->setEnabled( true );
    pb_invert   ->setEnabled( true );
    pb_undo     ->setEnabled( true );
+   pb_write    ->setEnabled( all_edits );
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_from   ( double ) ) );
@@ -2416,6 +2470,7 @@ void US_Edit::new_triple( int index )
    }
 }
 
+// Select a new speed within a triple
 void US_Edit::new_rpmval( int index )
 {
    QString srpm = cb_rpms->itemText( index );
@@ -2427,6 +2482,7 @@ void US_Edit::new_rpmval( int index )
    plot_scan();
 }
 
+// Mark data as floating
 void US_Edit::floating( void )
 {
    floatingData = ! floatingData;
@@ -2437,6 +2493,7 @@ void US_Edit::floating( void )
 
 }
 
+// Save edit profile(s)
 void US_Edit::write( void )
 {
    if ( !expIsEquil )
@@ -2462,6 +2519,7 @@ void US_Edit::write( void )
    pb_write->setIcon   ( check );
 }
 
+// Save edits for a triple
 void US_Edit::write_triple( void )
 {
    QString s;
@@ -2794,6 +2852,7 @@ void US_Edit::write_triple( void )
    }
 }
 
+// Apply a prior edit profile for Velocity and like data
 void US_Edit::apply_prior( void )
 {
    QString filename;
@@ -2922,19 +2981,6 @@ void US_Edit::apply_prior( void )
    plateau     = parameters.plateau;
    baseline    = parameters.baseline;
 
-   if ( parameters.speedData.size() > 0 )
-   {
-      meniscus    = parameters.speedData[ 0 ].meniscus;
-      range_left  = parameters.speedData[ 0 ].dataLeft;
-      range_right = parameters.speedData[ 0 ].dataRight;
-      baseline    = range_left;
-      plateau     = range_right;
-
-      int ksd     = sData.size();
-      sdoffs << ksd;
-      sData  << parameters.speedData;
-   }
-
    le_meniscus->setText( s.sprintf( "%.3f", meniscus ) );
    pb_meniscus->setIcon( check );
    pb_meniscus->setEnabled( true );
@@ -3046,6 +3092,341 @@ void US_Edit::apply_prior( void )
    plot_range();
 }
 
+// Apply prior edits to an Equilibrium set
+void US_Edit::prior_equil( void )
+{
+   int     cndxt     = cb_triple->currentIndex();
+   int     cndxs     = cb_rpms  ->currentIndex();
+   int     index1;
+   QString filename;
+   QStringList cefnames;
+   data    = allData[ 0 ];
+
+   if ( disk_controls->db() )
+   {
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Connection Problem" ),
+           tr( "Could not connect to databasee \n" ) + db.lastError() );
+         return;
+      }
+
+      QStringList q( "get_rawDataID_from_GUID" );
+      
+      char uuid[ 37 ];
+      uuid_unparse( (uchar*)data.rawGUID, uuid );
+      q << QString( uuid );
+
+      db.query( q );
+
+      // Error check    
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this,
+           tr( "AUC Data is not in DB" ),
+           tr( "Cannot find the raw data in the database.\n" ) );
+
+         return;
+      }
+      
+      db.next();
+      QString rawDataID = db.value( 0 ).toString();
+
+      q.clear();
+      q << "get_editedDataIDs" << rawDataID;
+
+      db.query( q );
+
+
+      QStringList editDataIDs;
+      QStringList filenames;
+
+      while ( db.next() )
+      {
+         editDataIDs << db.value( 0 ).toString();
+         filenames   << db.value( 2 ).toString();
+      }
+
+      if ( editDataIDs.size() == 0 )
+      {
+         QMessageBox::warning( this,
+           tr( "Edit data is not in DB" ),
+           tr( "Cannot find any edit records in the database.\n" ) );
+
+         return;
+      }
+
+      int index;
+      US_GetEdit dialog( index, filenames );
+      if ( dialog.exec() == QDialog::Rejected ) return;
+
+      if ( index < 0 )
+         return;
+
+      filename   = filenames[ index ];
+      int dataID = editDataIDs[ index ].toInt();
+
+      QString editID = filename.section( ".", 1, 1 );
+      filename   = workingDir + filename;
+      db.readBlobFromDB( filename, "download_editData", dataID );
+
+      cefnames << filename;   // save the first file name
+
+      // Loop to get files with same edit ID from other triples
+      for ( int ii = 1; ii < allData.size(); ii++ )
+      {
+         data    = allData[ ii ];
+         uuid_unparse( (uchar*)data.rawGUID, uuid );
+         q.clear();
+         q << "get_rawDataID_from_GUID" << QString( uuid );
+         db.query( q );
+         db.next();
+         rawDataID = db.value( 0 ).toString();
+
+         q.clear();
+         q << "get_editedDataIDs" << rawDataID;
+         db.query( q );
+         filename.clear();
+         bool found = false;
+
+         while ( db.next() )
+         {
+            dataID      = db.value( 0 ).toString().toInt();
+            filename    = db.value( 2 ).toString();
+            QString eid = filename.section( ".", 1, 1 );
+            
+            if ( eid == editID )
+            {
+               found = true;
+               filename = workingDir + filename;
+               db.readBlobFromDB( filename, "download_editData", dataID );
+               cefnames << filename;
+               break;
+            }
+         }
+
+         if ( ! found )
+            cefnames << "";
+      }
+   }
+   else
+   {
+      QString filter = files[ cb_triple->currentIndex() ];
+      index1 = filter.indexOf( '.' ) + 1;
+
+      filter.insert( index1, "*." );
+      filter.replace( QRegExp( "auc$" ), "xml" );
+      
+      // Ask for edit file
+      filename = QFileDialog::getOpenFileName( this, 
+            tr( "Select a saved edit file" ),
+            workingDir, filter );
+
+      if ( filename.isEmpty() ) return; 
+
+      filename = filename.replace( "\\", "/" );
+      QString editID = filename.section( "/", -1, -1 ).section( ".", 1, 1 );
+      QString runID  = filename.section( "/", -1, -1 ).section( ".", 0, 0 );
+
+      for ( int ii = 0; ii < files.size(); ii++ )
+      {
+         filename  = files[ ii ];
+         filename  = runID + "." + editID + "."
+                     + filename.section( ".", 1, -2 ) + ".xml";
+         filename  = workingDir + filename;
+
+         if ( QFile( filename ).exists() )
+            cefnames << filename;
+
+         else
+            cefnames << "";
+      }
+   }
+
+   int ksd   = 0;
+   sdoffs.clear();
+   sData .clear();
+
+   for ( int ii = 0; ii < cefnames.size(); ii++ )
+   {
+      data     = allData[ ii ];
+      filename = cefnames[ ii ];
+
+      // Read the edits
+      US_DataIO2::EditValues parameters;
+
+      int result = US_DataIO2::readEdits( filename, parameters );
+
+      if ( result != US_DataIO2::OK )
+      {
+         QMessageBox::warning( this,
+               tr( "XML Error" ),
+               tr( "An error occurred when reading edit file\n\n" ) 
+               +  US_DataIO2::errorString( result ) );
+         continue;
+      }
+
+      char uuid[ 37 ];
+      uuid_unparse( (unsigned char*)data.rawGUID, uuid );
+
+      if ( parameters.dataGUID != uuid )
+      {
+         QMessageBox::warning( this,
+               tr( "Data Error" ),
+               tr( "The edit file was not created using the current data" ) );
+         continue;
+      }
+   
+      // Apply the edits
+      QString s;
+
+      meniscus    = parameters.meniscus;
+      range_left  = parameters.rangeLeft;
+      range_right = parameters.rangeRight;
+      plateau     = parameters.plateau;
+      baseline    = parameters.baseline;
+
+      if ( parameters.speedData.size() > 0 )
+      {
+         meniscus    = parameters.speedData[ 0 ].meniscus;
+         range_left  = parameters.speedData[ 0 ].dataLeft;
+         range_right = parameters.speedData[ 0 ].dataRight;
+         baseline    = range_left;
+         plateau     = range_right;
+
+         ksd         = sData.size();
+         sdoffs << ksd;
+         sData  << parameters.speedData;
+      }
+
+      le_meniscus->setText( s.sprintf( "%.3f", meniscus ) );
+      pb_meniscus->setIcon( check );
+      pb_meniscus->setEnabled( true );
+
+      airGap_left  = parameters.airGapLeft;
+      airGap_right = parameters.airGapRight;
+
+      if ( dataType == "IP" )
+      {
+         US_DataIO2::adjust_interference( data, parameters );
+         US_DataIO2::calc_integral      ( data, parameters );
+         le_airGap->setText( s.sprintf( "%.3f - %.3f", 
+                  airGap_left, airGap_right ) ); 
+         pb_airGap->setIcon( check );
+         pb_airGap->setEnabled( true );
+      }
+
+      le_dataRange->setText( s.sprintf( "%.3f - %.3f",
+              range_left, range_right ) );
+      pb_dataRange->setIcon( check );
+      pb_dataRange->setEnabled( true );
+   
+      le_plateau->setText( s.sprintf( "%.3f", plateau ) );
+      pb_plateau->setIcon( check );
+      pb_plateau->setEnabled( true );
+
+      US_DataIO2::Scan scan  = data.scanData.last();
+      int              pt    = US_DataIO2::index( scan, data.x, baseline );
+      double           sum   = 0.0;
+
+      // Average the value for +/- 5 points
+      for ( int j = pt - 5; j <= pt + 5; j++ )
+         sum += scan.readings[ j ].value;
+
+      le_baseline->setText( s.sprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
+      pb_baseline->setIcon( check );
+      pb_baseline->setEnabled( true );
+
+      // Invert
+      invert = parameters.invert;
+   
+      if ( invert == -1.0 ) pb_invert->setIcon( check );
+      else                  pb_invert->setIcon( QIcon() );
+
+      // Excluded scans
+      init_includes();
+      reset_excludes(); // Zero exclude combo boxes
+      qSort( parameters.excludes );
+
+      for ( int i = parameters.excludes.size(); i > 0; i-- )
+         includes.removeAt( parameters.excludes[ i - 1 ] );
+
+      // Edited points
+      changed_points.clear();
+
+      for ( int i = 0; i < parameters.editedPoints.size(); i++ )
+      {
+         int    scan   = parameters.editedPoints[ i ].scan;
+         int    index1 = (int)parameters.editedPoints[ i ].radius;
+         double value  = parameters.editedPoints[ i ].value;
+      
+         Edits e;
+         e.scan = scan;
+         e.changes << QPointF( index1, value );
+     
+         changed_points << e;
+      
+         data.scanData[ scan ].readings[ index1 ].value = value;
+      }
+
+      // Spikes
+      spikes = parameters.removeSpikes;
+
+      pb_spikes->setIcon( QIcon() );
+      pb_spikes->setEnabled( true );
+      if ( spikes ) remove_spikes();
+   
+      // Noise
+      noise_order = parameters.noiseOrder;
+      if ( noise_order > 0 )
+      {
+         US_RiNoise::calc_residuals( data, includes, range_left, range_right, 
+               noise_order, residuals );
+      
+         subtract_residuals();
+      }
+      else
+      {
+         pb_noise    ->setIcon( QIcon() );
+         pb_residuals->setIcon( QIcon() );
+         pb_residuals->setEnabled( false );
+      }
+
+      // Floating data
+      floatingData = parameters.floatingData;
+
+      if ( floatingData )
+         pb_float->setIcon( check );
+
+      else
+         pb_float->setIcon( QIcon() );
+   }
+
+   step        = FINISHED;
+   set_pbColors( NULL );
+
+   pb_undo ->setEnabled( true );
+   pb_write->setEnabled( true );
+
+   cndxt       = ( cndxt < 0 ) ? 0 : cndxt;
+   cndxs       = ( cndxs < 0 ) ? 0 : cndxs;
+   cb_triple->setCurrentIndex( cndxt );
+   cb_rpms  ->setCurrentIndex( cndxs );
+
+   changes_made= false;
+   plot_range();
+
+   pb_reviewep->setEnabled( true );
+   pb_nexttrip->setEnabled( true );
+
+   all_edits = all_edits_done();
+   pb_write   ->setEnabled( all_edits );
+}
+
+// Initialize edit review for first triple
 void US_Edit::review_edits( void )
 {
    cb_triple->setCurrentIndex( cb_triple->count() - 1 );
@@ -3053,6 +3434,7 @@ void US_Edit::review_edits( void )
    next_triple();
 }
 
+// Advance to next triple and plot edited curves
 void US_Edit::next_triple( void )
 {
    int row = cb_triple->currentIndex() + 1;
@@ -3061,5 +3443,55 @@ void US_Edit::next_triple( void )
    cb_triple->setCurrentIndex( row );
 
    plot_range();
+}
+
+// Evaluate whether all edits are complete
+bool US_Edit::all_edits_done( void )
+{
+   bool all_ed_done = false;
+
+   if ( expIsEquil )
+   {
+      int ntrip    = allData.size();
+      int loffx    = sData  .size();
+      total_edits  = 0;
+      total_speeds = 0;
+
+      for ( int jd = 0; jd < ntrip; jd++ )
+      {
+         int jsd = sdoffs[ jd ];
+         int ksd = ( ( jd + 1 ) < ntrip ) ? sdoffs[ jd + 1 ] : loffx;
+         QList< double > drpms;
+         US_DataIO2::RawData* rdata = &allData[ jd ];
+
+         // count edits done on this data set
+         for ( int js = jsd; js < ksd; js++ )
+         {
+            if ( sData[ js ].meniscus > 0.0 )
+               total_edits++;
+         }
+
+         // count speeds present in this data set
+         for ( int js = 0; js < rdata->scanData.size(); js++ )
+         {
+            double  drpm = rdata->scanData[ js ].rpm;
+
+            if ( ! drpms.contains( drpm ) )
+               drpms << drpm;
+         }
+
+         total_speeds += drpms.size();
+      }
+
+      all_ed_done = ( total_edits == total_speeds );
+qDebug() << "AllEdits: total_edits total_speeds" << total_edits << total_speeds
+   << " all_ed_done" << all_ed_done;
+   }
+
+   else
+   {
+   }
+
+   return all_ed_done;
 }
 

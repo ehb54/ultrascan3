@@ -167,6 +167,7 @@ class US_EXTERN US_Edit : public US_Widgets
       void update_scan       ( QList< QPointF > );
       void include           ( void );
       void apply_prior       ( void );
+      void prior_equil       ( void );
 
       void sel_investigator  ( void );
       void set_fringe_tolerance( double ); 
@@ -187,6 +188,7 @@ class US_EXTERN US_Edit : public US_Widgets
       void write_triple      ( void );
       void review_edits      ( void );
       void next_triple       ( void );
+      bool all_edits_done    ( void );
                              
       void reset             ( void );
       void help              ( void )

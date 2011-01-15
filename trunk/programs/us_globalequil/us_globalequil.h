@@ -7,11 +7,17 @@
 #include "us_plot.h"
 #include "us_editor.h"
 #include "us_model.h"
+#include "us_dataIO2.h"
+#include "us_db2.h"
 #include "us_simparms.h"
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
 
 #include "qwt_counter.h"
+
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
 
 class US_EXTERN US_GlobalEquil : public US_Widgets
 {
@@ -21,68 +27,86 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
 		US_GlobalEquil();
 
 	private:
-      US_Model                     model;
-      US_SimulationParameters      simparams;
+      QVector< US_DataIO2::EditedData > dataList;
+      QVector< US_DataIO2::RawData >    rawList;
+      QList< int >                      excludedScans;
+      QStringList                       triples;
 
-      US_DataIO2::EditedData*      edata;
+      US_Model                 model;
+      US_SimulationParameters  simparams;
 
+      US_DataIO2::EditedData*  edata;
 
-      int     current_shape;
-      int     current_position;
-      int     speed_type;
-             
-      double  rpm_start;
-      double  rpm_stop;
-      double  sigma_start;
-      double  sigma_stop;
-      int     speed_count;
+      US_Disk_DB_Controls*     dkdb_cntrls;
 
-      double* sim_radius;
-      double* concentration;
-      uint    radius_points;
-
-      double  current_time;
-      double  step_time;
-      double  next_scan_time;
-
-      QList< double > speed_steps;
+      QList< double >          speed_steps;
 
       US_Help        showHelp;
       QwtPlot*       equilibrium_plot;
       QwtPlotCurve*  current_curve;
       US_Astfem_RSA* astfem_rsa;
 
-      QLabel*       lb_lowspeed;
-      QLabel*       lb_highspeed;
+      QwtCounter*    ct_scselect;
 
-      QwtCounter*   ct_scselect;
+      QCheckBox*     ck_edlast;
 
-      QCheckBox*    ck_edlast;
-      US_Disk_DB_Controls* dkdb_cntrls;
+      QTextEdit*     te_equiscns;
 
-      QTextEdit*    te_equiscns;
+      QLineEdit*     le_prjname;
+      QLineEdit*     le_status;
+      QLineEdit*     le_currmodl;
+      QLineEdit*     le_mxfringe;
 
-      QLineEdit*    le_prjname;
+      QPushButton*   pb_details;
+      QPushButton*   pb_view;
+      QPushButton*   pb_unload;
+      QPushButton*   pb_scdiags;
+      QPushButton*   pb_ckscfit;
+      QPushButton*   pb_conchist;
+      QPushButton*   pb_resetsl;
+      QPushButton*   pb_selModel;
+      QPushButton*   pb_modlCtrl;
+      QPushButton*   pb_fitcntrl;
+      QPushButton*   pb_loadFit;
+      QPushButton*   pb_monCarlo;
+      QPushButton*   pb_floatPar;
+      QPushButton*   pb_initPars;
 
-      QPushButton*  pb_view;
-      QPushButton*  pb_unload;
-      QPushButton*  pb_scdiags;
+      QString        workingDir;
 
-      void   init_simparams    ( void );
-      void   init_astfem_data  ( void );
+      int            dbg_level;
+      int            dbdisk;
+             
+      double         rpm_start;
+
+      bool           dataLoaded;
+      bool           buffLoaded;
+      bool           modelLoaded;
+      bool           dataLatest;
 
    private slots:
-      void details           ( void );
       void load              ( void );
-      void new_model         ( void );
-      void change_model      ( void );
+      void details           ( void );
+      void view_report       ( void );
+      void unload            ( void );
+      void scan_diags        ( void );
+      void check_scan_fit    ( void );
+      void conc_histogram    ( void );
+      void reset_scan_lims   ( void );
       void load_model        ( void );
-      void simulate          ( void );
-
-      void set_time          ( double time )
-      { step_time = time; };
+      void new_project_name  ( const QString& );
+      void select_model      ( void );
+      void model_control     ( void );
+      void fitting_control   ( void );
+      void load_fit          ( void );
+      void monte_carlo       ( void );
+      void float_params      ( void );
+      void init_params       ( void );
+      void close_all         ( void );
+      void scan_select       ( double );
+      void update_disk_db    ( bool );
 
       void help              ( void )
-      { showHelp.show_help("manual/global_equil.html"); };
+      { showHelp.show_help("global_equil.html"); };
 };
 #endif
