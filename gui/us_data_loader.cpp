@@ -199,7 +199,7 @@ bool US_DataLoader::load_edit( void )
       for ( int ii = 0; ii < indexes.size(); ii++ )
       {
          QString  key      = dlabels[ indexes[ ii ] ];
-         DataDesc ddesc    = datamap[ key ];
+         ddesc             = datamap[ key ];
          QString  filename = ddesc.filename;
          QString  triple   = ddesc.tripID.replace( ".", " / " );
          triples << triple;
@@ -234,7 +234,7 @@ bool US_DataLoader::load_edit( void )
       for ( int ii = 0; ii < indexes.size(); ii++ )
       {
          QString  key      = dlabels[ indexes[ ii ] ];
-         DataDesc ddesc    = datamap[ key ];
+         ddesc             = datamap[ key ];
          int      idRec    = ddesc.DB_id;
          QString  triple   = ddesc.tripID.replace( ".", " / " );
          triples << triple;
@@ -390,7 +390,6 @@ void US_DataLoader::list_data()
       }
       else
       {  // Same triple as before
-         ndxt = 1;
          ndxe++;
       }
 
@@ -425,11 +424,12 @@ void US_DataLoader::list_data()
          ndxt          = ddesc.tripknt;
          ndxe          = ddesc.editknt;
          prlabel       = crlabel;
+         ptlabel       = "";
       }
+
       else
       {  // Same run:  update triple count
          ddesc.tripknt = ndxt;
-         ddesc.editknt = ndxe;
          update        = true;
       }
 
@@ -438,6 +438,7 @@ void US_DataLoader::list_data()
          ndxe          = ddesc.editknt;
          ptlabel       = ctlabel;
       }
+
       else
       {  // Same triple:  update edit count
          ddesc.editknt = ndxe;
@@ -522,8 +523,6 @@ void US_DataLoader::scan_dbase_edit()
       QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, 0 )
                          : descrip;
       QString editID   = filebase.section( ".", 1, 1 );
-      editID           = ( editID.length() == 12 ) ? editID
-                         : editID + "0000";
       QString tripID   = filebase.section( ".", -4, -2 );
 
       query.clear();
@@ -588,9 +587,11 @@ void US_DataLoader::scan_local_edit( void )
       QString tripl     = aucfbase.section( ".", 2, 4 );
 
       edtfilt.clear();
-      edtfilt <<  runID + ".*."  + subType + "." + tripl + ".xml";
+      //edtfilt <<  runID + ".*."  + subType + "." + tripl + ".xml";
+      edtfilt <<  runID + ".*."  + subType + ".*.xml";
       QStringList edtfiles = QDir( subdir ).entryList( 
             edtfilt, QDir::Files, QDir::Name );
+      edtfiles.sort();
 
       if ( edtfiles.size() < 1 )
          continue;
@@ -601,8 +602,8 @@ void US_DataLoader::scan_local_edit( void )
          QString filename = subdir + "/" + filebase;
          QString runID    = filebase.section( ".", 0, 0 );
          QString editID   = filebase.section( ".", 1, 1 );
-         editID           = ( editID.length() == 12 ) ? editID
-                                                      : editID + "0000";
+         editID  = ( editID.length() == 12  &&  editID.startsWith( "20" ) ) ?
+                   editID.mid( 2 ) : editID;
          QString tripID   = filebase.section( ".", -4, -2 );
          QString label    = runID;
          QString descrip  = runID + "." + tripID + "." + editID;
@@ -613,9 +614,8 @@ void US_DataLoader::scan_local_edit( void )
          if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
             continue;
 
-         QString date = US_Util::toUTCDatetimeText( 
-            QFileInfo( filename ).lastModified().toUTC().toString( Qt::ISODate ),
-            true );
+         QString date = US_Util::toUTCDatetimeText( QFileInfo( filename )
+            .lastModified().toUTC().toString( Qt::ISODate ), true );
          
          QXmlStreamReader xml( &filei );
          QXmlStreamAttributes a;
