@@ -45,6 +45,7 @@ US_Edit::US_Edit() : US_Widgets()
    check        = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
    invert       = 1.0;
    all_edits    = false;
+   men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
    total_speeds = 0;
    total_edits  = 0;
 
@@ -136,8 +137,6 @@ US_Edit::US_Edit() : US_Widgets()
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
    specs->addWidget( lb_scan, s_row++, 0, 1, 4 );
    
-   // Row 6
-
    // Scans
    QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
@@ -307,7 +306,8 @@ US_Edit::US_Edit() : US_Widgets()
    pick = new US_PlotPicker( data_plot );
    // Set rubber band to display for Control+Left Mouse Button
    pick->setRubberBand  ( QwtPicker::VLineRubberBand );
-   pick->setMousePattern( QwtEventPattern::MouseSelect1, Qt::LeftButton, Qt::ControlModifier );
+   pick->setMousePattern( QwtEventPattern::MouseSelect1,
+                          Qt::LeftButton, Qt::ControlModifier );
 
    left->addLayout( specs );
    left->addStretch();
@@ -375,7 +375,6 @@ void US_Edit::reset( void )
    ct_to->setValue   ( 0 );
 
    cb_triple->disconnect();
-   //cb_triple->clear();     // Not here -- load()
 
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    data_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );
@@ -404,7 +403,9 @@ void US_Edit::reset( void )
    pb_residuals   ->setEnabled( false );
    pb_spikes      ->setEnabled( false );
    pb_invert      ->setEnabled( false );
-   //pb_priorEdits  ->setEnabled( false );
+   pb_priorEdits  ->setEnabled( false );
+   pb_reviewep    ->setEnabled( false );
+   pb_nexttrip    ->setEnabled( false );
    pb_undo        ->setEnabled( false );
    
    pb_float       ->setEnabled( false );
@@ -436,6 +437,51 @@ void US_Edit::reset( void )
                        SLOT  ( new_rpmval         ( int ) ) );
 
    set_pbColors( NULL );
+}
+
+// Reset parameters for a new triple
+void US_Edit::reset_triple( void )
+{
+   step          = MENISCUS;
+   meniscus      = 0.0;
+   meniscus_left = 0.0;
+   airGap_left   = 0.0;
+   airGap_right  = 9.0;
+   range_left    = 0.0;
+   range_right   = 9.0;
+   plateau       = 0.0;
+   baseline      = 0.0;
+   invert        = 1.0;  // Multiplier = 1.0 or -1.0
+   noise_order   = 0;
+
+   le_info     ->setText( "" );
+   le_meniscus ->setText( "" );
+   le_airGap   ->setText( "" );
+   le_dataRange->setText( "" );
+   le_plateau  ->setText( "" );
+   le_baseline ->setText( "" );
+
+   ct_gaps->setValue( 0.4 );
+
+   ct_from->disconnect();
+   ct_from->setMinValue( 0 );
+   ct_from->setMaxValue( 0 );
+   ct_from->setValue   ( 0 );
+
+   ct_to->disconnect();
+   ct_to->setMinValue( 0 );
+   ct_to->setMaxValue( 0 );
+   ct_to->setValue   ( 0 );
+
+   data.scanData .clear();
+   includes      .clear();
+   changed_points.clear();
+   trip_rpms     .clear();
+
+   cb_rpms      ->disconnect();
+   cb_rpms      ->clear();
+   connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
+                       SLOT  ( new_rpmval         ( int ) ) );
 }
 
 // Display run details
@@ -631,7 +677,8 @@ void US_Edit::load( void )
 
    allData.clear();
    sData  .clear();
-   sdoffs .clear();
+   sd_offs.clear();
+   sd_knts.clear();
    cb_triple->clear();
 
    workingDir.replace( "\\", "/" );  // WIN32 issue
@@ -800,7 +847,11 @@ void US_Edit::load( void )
       for ( int jd = 0; jd < allData.size(); jd++ )
       {
          data  = allData[ jd ];
-         sdoffs << ksd;
+         sd_offs << ksd;
+
+         if ( jd > 0 )
+            sd_knts << ( ksd - sd_offs[ jd - 1 ] );
+
          trip_rpms.clear();
 
          for ( int ii = 0; ii < data.scanData.size(); ii++ )
@@ -835,10 +886,12 @@ void US_Edit::load( void )
          total_speeds += trip_rpms.size();
       }
 
+      sd_knts << ( ksd - sd_offs[ allData.size() - 1 ] );
+
       if ( allData.size() > 1 )
       {
          data   = allData[ 0 ];
-         ksd    = sdoffs[ 1 ];
+         ksd    = sd_knts[ 0 ];
          trip_rpms.clear();
          cb_rpms ->clear();
          for ( int ii = 0; ii < ksd; ii++ )
@@ -850,6 +903,14 @@ void US_Edit::load( void )
          cb_rpms->addItems( trip_rpms );
       }
 
+      init_includes();
+      pick     ->disconnect();
+      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+
+      pb_priorEdits->disconnect();
+      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
+      plot_scan();
    }
 
    else
@@ -866,9 +927,11 @@ void US_Edit::load( void )
       pb_nexttrip->setVisible( false );
 
       pb_write   ->setText( tr( "Save Current Edit Profile" ) );
-   }
 
-   plot_current( 0 );
+      pb_priorEdits->disconnect();
+      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
+      plot_current( 0 );
+   }
 
    // Enable pushbuttons
    pb_details   ->setEnabled( true );
@@ -891,14 +954,6 @@ void US_Edit::load( void )
 
    connect( ct_to,   SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_to     ( double ) ) );
-
-   pb_priorEdits->disconnect();
-
-   if ( expIsEquil )
-      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
-
-   else
-      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
 
    step = MENISCUS;
    set_pbColors( pb_meniscus );
@@ -1035,7 +1090,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             draw_vline( meniscus );
          }
 
-         else if ( expIsEquil )
+         else if ( expIsEquil || men_1click )
          {  // Equilibrium
             meniscus_left = p.x();
             int ii        = US_DataIO2::index( data.scanData[ 0 ], data.x,
@@ -1043,17 +1098,6 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             draw_vline( meniscus_left );
             meniscus      = data.x[ ii ].radius;
             le_meniscus->setText( QString::number( meniscus, 'f', 3 ) );
-
-            // Create a marker
-            marker = new QwtPlotMarker;
-            QBrush brush( Qt::white );
-            QPen   pen  ( brush, 2.0 );
-            
-            marker->setValue( meniscus, meniscus_left );
-            marker->setSymbol( QwtSymbol( QwtSymbol::Cross, brush, pen,
-                        QSize ( 8, 8 ) ) );
-
-            marker->attach( data_plot );
 
             data_plot->replot();
 
@@ -1249,11 +1293,10 @@ void US_Edit::mouse( const QwtDoublePoint& p )
 
             else
             {  // Equilibrium
-               plot_range();
 
                int index    = cb_triple->currentIndex();
-               int row      = cb_rpms->currentIndex();
-               int jsd      = sdoffs[ index ] + row;
+               int row      = cb_rpms  ->currentIndex();
+               int jsd      = sd_offs[ index ] + row;
                QString arpm = cb_rpms->itemText( row );
 
                if ( sData[ jsd ].meniscus == 0.0  &&
@@ -1266,16 +1309,15 @@ void US_Edit::mouse( const QwtDoublePoint& p )
 
                if ( ++row >= cb_rpms->count() )
                {
-                  row          = index + 1;
-                  if ( row < cb_triple->count() )
+                  if ( ++index < cb_triple->count() )
                   {
-                     cb_triple->setCurrentIndex( row );
+                     cb_triple->setCurrentIndex( index );
                      step         = MENISCUS;
                      QString trsp =
                         cb_triple->currentText() + " : " + trip_rpms[ 0 ];
                      le_edtrsp->setText( trsp );
 
-                     data = allData[ row ];
+                     data = allData[ index ];
                      cb_rpms->clear();
 
                      for ( int ii = 0; ii < data.scanData.size(); ii++ )
@@ -1298,7 +1340,11 @@ void US_Edit::mouse( const QwtDoublePoint& p )
                      pb_write   ->setEnabled( true );
                      pb_reviewep->setEnabled( true );
                      pb_nexttrip->setEnabled( true );
+                     step         = FINISHED;
                      next_step();
+
+                     if ( total_edits >= total_speeds )
+                        review_edits();
                   }
                }
 
@@ -1702,7 +1748,6 @@ void US_Edit::plot_range( void )
    double maxV = -1.0e99;
    double minV =  1.0e99;
    int indext  = cb_triple->currentIndex();
-   int mxndxt  = cb_triple->count() - 1;
 
    // For each scan
    for ( int i = 0; i < data.scanData.size(); i++ )
@@ -1719,14 +1764,15 @@ void US_Edit::plot_range( void )
       {
          double rngl  = range_left;
          double rngr  = range_right;
-         int    tScan = i + 1;
-         int    isd   = sdoffs[ indext ];
-         int    ksd   = indext < mxndxt ? sdoffs[ indext + 1 ] : sData.size();
+         int tScan    = i + 1;
+         int jsd      = sd_offs[ indext ];
+         int ksd      = jsd + sd_knts[ indext ];
 
-         for ( int jj = isd; jj < ksd; jj++ )
+         for ( int jj = jsd; jj < ksd; jj++ )
          {
             int sScan  = sData[ jj ].first_scan;
             int eScan  = sData[ jj ].scan_count + sScan - 1;
+
             if ( tScan < sScan  ||  tScan > eScan )
                continue;
 
@@ -1741,7 +1787,7 @@ void US_Edit::plot_range( void )
 
          int inxm   = US_DataIO2::index( *s, data.x, menp );
 
-         if ( inxm < 2 )
+         if ( inxm < 1 )
             return;
 
          r[ 0 ]     = data.x[ inxm ].radius;
@@ -2414,14 +2460,13 @@ void US_Edit::new_triple( int index )
    }
 
    triple_index = index;
-   reset(); 
+   reset_triple(); 
 
    // Need to reconnect after reset
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
                        SLOT  ( new_triple         ( int ) ) );
 
    data = allData[ index ];
-   plot_current( index );
 
    // Enable pushbuttons
    pb_details  ->setEnabled( true );
@@ -2461,13 +2506,17 @@ void US_Edit::new_triple( int index )
       cb_rpms->addItems( trip_rpms );
 
       le_edtrsp->setText( cb_triple->currentText() + " : " + trip_rpms[ 0 ] );
+
+      init_includes();
    }
 
    else
    {  // non-Equilibrium
-      step = MENISCUS;
       set_pbColors( pb_meniscus );
+      plot_current( index );
    }
+
+   step = MENISCUS;
 }
 
 // Select a new speed within a triple
@@ -2528,8 +2577,12 @@ void US_Edit::write_triple( void )
 
    if ( expIsEquil )
    {  // Equilibrium:  set baseline,plateau as flag that those are "done"
-      baseline = range_left;
-      plateau  = range_right;
+      int jsd     = sd_offs[ triple_index ];
+      meniscus    = sData[ jsd ].meniscus;
+      range_left  = sData[ jsd ].dataLeft;
+      range_right = sData[ jsd ].dataRight;
+      baseline    = range_left;
+      plateau     = range_right;
    }
 
    // Check if complete
@@ -2549,7 +2602,7 @@ void US_Edit::write_triple( void )
       QMessageBox::information( this,
             tr( "Data missing" ),
             tr( "You must define the " ) + s 
-            + tr( "before writing the edit profile." ) );
+            + tr( " before writing the edit profile." ) );
       return;
    }
 
@@ -2732,11 +2785,8 @@ void US_Edit::write_triple( void )
          xml.writeEndElement  ();
       }
 
-      int jsd  = sdoffs[ triple_index ];
-      int trx1 = triple_index + 1;
-      int mxtx = triples.size() - 1;
-
-      int ksd  = ( trx1 > mxtx ) ? sData.size() : sdoffs[ trx1 ];
+      int jsd  = sd_offs[ triple_index ];
+      int ksd  = jsd + sd_knts[ triple_index ];
 
       for ( int ii = jsd; ii < ksd; ii++ )
       {
@@ -2961,6 +3011,8 @@ void US_Edit::apply_prior( void )
 
    if ( parameters.dataGUID != uuid )
    {
+qDebug() << "DataErr: dataGUID" << parameters.dataGUID;
+qDebug() << "DataErr: rawGUID" << uuid;
       QMessageBox::warning( this,
             tr( "Data Error" ),
             tr( "The edit file was not created using the current data" ) );
@@ -3103,7 +3155,7 @@ void US_Edit::prior_equil( void )
    data    = allData[ 0 ];
 
    if ( disk_controls->db() )
-   {
+   {  // Get prior equilibrium edits from DB
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
 
@@ -3212,8 +3264,9 @@ void US_Edit::prior_equil( void )
             cefnames << "";
       }
    }
+
    else
-   {
+   {  // Get prior equilibrium edits from Local Disk
       QString filter = files[ cb_triple->currentIndex() ];
       index1 = filter.indexOf( '.' ) + 1;
 
@@ -3246,12 +3299,8 @@ void US_Edit::prior_equil( void )
       }
    }
 
-   int ksd   = 0;
-   sdoffs.clear();
-   sData .clear();
-
    for ( int ii = 0; ii < cefnames.size(); ii++ )
-   {
+   {  // Read and apply edits from edit files
       data     = allData[ ii ];
       filename = cefnames[ ii ];
 
@@ -3297,9 +3346,10 @@ void US_Edit::prior_equil( void )
          baseline    = range_left;
          plateau     = range_right;
 
-         ksd         = sData.size();
-         sdoffs << ksd;
-         sData  << parameters.speedData;
+         int jsd     = sd_offs[ ii ];
+
+         for ( int jj = 0; jj < sd_knts[ ii ]; jj++ )
+            sData[ jsd++ ] = parameters.speedData[ jj ];
       }
 
       le_meniscus->setText( s.sprintf( "%.3f", meniscus ) );
@@ -3417,19 +3467,27 @@ void US_Edit::prior_equil( void )
    cb_rpms  ->setCurrentIndex( cndxs );
 
    changes_made= false;
-   plot_range();
+   //plot_range();
 
    pb_reviewep->setEnabled( true );
    pb_nexttrip->setEnabled( true );
 
    all_edits = all_edits_done();
    pb_write   ->setEnabled( all_edits );
+
+   review_edits();
 }
 
 // Initialize edit review for first triple
 void US_Edit::review_edits( void )
 {
+   cb_triple->disconnect();
    cb_triple->setCurrentIndex( cb_triple->count() - 1 );
+
+   le_meniscus ->setText( "" );
+   le_dataRange->setText( "" );
+   pb_plateau  ->setIcon( QIcon() );
+   pb_dataRange->setIcon( QIcon() );
 
    next_triple();
 }
@@ -3440,7 +3498,17 @@ void US_Edit::next_triple( void )
    int row = cb_triple->currentIndex() + 1;
    row     = ( row < cb_triple->count() ) ? row : 0;
    data    = allData[ row ];
+
+   cb_triple->disconnect();
    cb_triple->setCurrentIndex( row );
+   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+                       SLOT  ( new_triple         ( int ) ) );
+
+   if ( le_edtrsp->isVisible() )
+   {
+      QString trsp = cb_triple->currentText() + " : " + trip_rpms[ 0 ];
+      le_edtrsp->setText( trsp );
+   }
 
    plot_range();
 }
@@ -3452,26 +3520,24 @@ bool US_Edit::all_edits_done( void )
 
    if ( expIsEquil )
    {
-      int ntrip    = allData.size();
-      int loffx    = sData  .size();
       total_edits  = 0;
       total_speeds = 0;
 
-      for ( int jd = 0; jd < ntrip; jd++ )
-      {
-         int jsd = sdoffs[ jd ];
-         int ksd = ( ( jd + 1 ) < ntrip ) ? sdoffs[ jd + 1 ] : loffx;
+      for ( int jd = 0; jd < allData.size(); jd++ )
+      {  // Examine each data set to evaluate whether edits complete
+         int jsd = sd_offs[ jd ];
+         int ksd = jsd + sd_knts[ jd ];
          QList< double > drpms;
          US_DataIO2::RawData* rdata = &allData[ jd ];
 
-         // count edits done on this data set
+         // Count edits done on this data set
          for ( int js = jsd; js < ksd; js++ )
          {
             if ( sData[ js ].meniscus > 0.0 )
                total_edits++;
          }
 
-         // count speeds present in this data set
+         // Count speeds present in this data set
          for ( int js = 0; js < rdata->scanData.size(); js++ )
          {
             double  drpm = rdata->scanData[ js ].rpm;
@@ -3483,9 +3549,8 @@ bool US_Edit::all_edits_done( void )
          total_speeds += drpms.size();
       }
 
+      // Set flag:  are all edits complete?
       all_ed_done = ( total_edits == total_speeds );
-qDebug() << "AllEdits: total_edits total_speeds" << total_edits << total_speeds
-   << " all_ed_done" << all_ed_done;
    }
 
    else
