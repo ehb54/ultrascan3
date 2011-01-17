@@ -42,6 +42,7 @@ class US_EXTERN US_Edit : public US_Widgets
       bool               expIsDiff;
       bool               expIsOther;
       bool               all_edits;
+      bool               men_1click;
 
       int                noise_order;
       int                triple_index;
@@ -58,7 +59,8 @@ class US_EXTERN US_Edit : public US_Widgets
       double             invert;
       double             plateau;
 
-      QList< int >       sdoffs;    // speed data offsets, ea. triple
+      QList< int >       sd_offs;    // speed data offsets, ea. triple
+      QList< int >       sd_knts;    // speed data counts, ea. triple
       QList< int >       includes;
       QList< double >    residuals;
 
@@ -191,6 +193,7 @@ class US_EXTERN US_Edit : public US_Widgets
       bool all_edits_done    ( void );
                              
       void reset             ( void );
+      void reset_triple      ( void );
       void help              ( void )
       { showHelp.show_help( "manual/edit_velocity.html" ); };
 };
