@@ -105,18 +105,29 @@ US_GlobalEquil::US_GlobalEquil() : US_Widgets( true )
 
    QLabel*      lb_equiscns  = us_banner( tr( "List of available Equilibrium"
                                               " Scans:" ) );
-   QTextEdit*   te_equiscns  = us_textedit();
-   QFont font( US_GuiSettings::fontFamily(),
-               US_GuiSettings::fontSize(),
-               QFont::Bold );
+   tw_equiscns = new QTableWidget( 15, 5, this );
+   tw_equiscns->setPalette( US_GuiSettings::editColor() );
+   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize(),
+         QFont::Bold );
    QFontMetrics fm( font );
    int fontHeight = fm.lineSpacing();
-   te_equiscns->setMaximumHeight( fontHeight * 15 + 12 );
+   tw_equiscns->setMaximumHeight( fontHeight * 60 + 12 );
+   tw_equiscns->setRowHeight( 0, fontHeight );
+
+   QString icondirn = US_Settings::appBaseDir() + "/etc/";
+   const QString bluarrfn( "bluearrow.png" );
+   const QString grnarrfn( "greenarrow.png" );
+   const QString redarrfn( "redarrow.png" );
+   blue_arrow  = QIcon( QPixmap( icondirn + bluarrfn ) );
+   green_arrow = QIcon( QPixmap( icondirn + grnarrfn ) );
+   red_arrow   = QIcon( QPixmap( icondirn + redarrfn ) );
+qDebug() << "ArrowIcon isNull" << blue_arrow.isNull();
 
    row     = 0;
    scnListLayout->addWidget( lb_equiscns, row++, 0, 1, 2 );
-   scnListLayout->addWidget( te_equiscns, row,   0, 5, 2 );
+   scnListLayout->addWidget( tw_equiscns, row,   0, 5, 2 );
    row    += 5;
+   lb_equiscns->setMaximumHeight( lb_prjname->height() );
 
    QLabel*      lb_mfitinfo  = us_banner(     tr( "Model and Fitting"
                                                   " Information:" ) );
@@ -187,21 +198,23 @@ US_GlobalEquil::US_GlobalEquil() : US_Widgets( true )
    leftLayout->addLayout( scnListLayout );
    leftLayout->addLayout( modlFitLayout );
    leftLayout->addLayout( paramLayout   );
+   leftLayout->setStretchFactor( scnListLayout, 10 );
+   leftLayout->setStretchFactor( modlFitLayout,  1 );
 
 
    // Right Column
 
    // Simulation plot
 
-   QBoxLayout* plot = new US_Plot( equilibrium_plot, 
+   QBoxLayout* plot = new US_Plot( equil_plot, 
          tr( "Experiment Equilibrium Data" ),
-         tr( "Radius" ),
+         tr( "Radius (cm)" ),
          tr( "Absorbance (280 nm)" ) );
-   us_grid( equilibrium_plot );
+   us_grid( equil_plot );
    
-   equilibrium_plot->setMinimumSize( 600, 400 );
-   equilibrium_plot->setAxisScale( QwtPlot::yLeft  , 0.1, 0.601 );
-   equilibrium_plot->setAxisScale( QwtPlot::xBottom, 5.9, 6.2 );
+   equil_plot->setMinimumSize( 600, 400 );
+   equil_plot->setAxisScale( QwtPlot::yLeft  , 0.1, 0.601 );
+   equil_plot->setAxisScale( QwtPlot::xBottom, 5.9, 6.2 );
 
    QLabel*      lb_status    = us_label(    tr( "Status/Information:" ) );
                 le_status    = us_lineedit( tr( "Please select an edited"
@@ -283,11 +296,96 @@ pb_initPars->setEnabled( true );
    }
 qDebug() << " workingDir" << workingDir;
 qDebug() << " dataList size" << dataList.size();
-for ( int jj=0;jj<triples.size();jj++ ) qDebug() << "  " << triples[jj];
+//for ( int jj=0;jj<triples.size();jj++ ) qDebug() << "  " << triples[jj];
 
    qApp->processEvents();
 
+   int nscans = 0;
+
+   for ( int jd = 0; jd < dataList.size(); jd++ )
+      nscans += dataList[ jd ].speedData.size();
+
+   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize(),
+         QFont::Bold );
+   QFontMetrics fm( font );
+   int fontHeight = fm.lineSpacing();
+   int rowHght    = fontHeight;
+   tw_equiscns->setMaximumHeight( fontHeight * 60 + 12 );
+   tw_equiscns->setRowCount( nscans );
+   QString hdr1 = tr( "Scan" );
+   QString hdr2 = tr( "Cell/Chan/WaveL" );
+   QString hdr3 = tr( "Speed (RPM)" );
+   QString hdr4 = tr( "CCW Scan" );
+   int     whd1 = fm.width( hdr1 + " " );
+   int     whd2 = fm.width( hdr2 + " " );
+   int     whd3 = fm.width( hdr3 + " " );
+   int     whd4 = fm.width( hdr4 + " " );
+   QStringList headers;
+
+   headers << "" << hdr1 << hdr2 << hdr3 << hdr4;
+   tw_equiscns->setHorizontalHeaderLabels( headers );
+   tw_equiscns->verticalHeader()->hide();
+   tw_equiscns->setShowGrid( false );
+   tw_equiscns->setSelectionBehavior( QAbstractItemView::SelectRows );
+   tw_equiscns->setColumnWidth( 0, whd1 );
+   tw_equiscns->setColumnWidth( 1, whd1 );
+   tw_equiscns->setColumnWidth( 2, whd2 );
+   tw_equiscns->setColumnWidth( 3, whd3 );
+   tw_equiscns->setColumnWidth( 4, whd4 );
+   tw_equiscns->setMinimumWidth(  400 );
+   tw_equiscns->setMinimumHeight( 200 );
+
+   int jsscn = 0;
+
+   for ( int jd = 0; jd < dataList.size(); jd++ )
+   {
+      edata          = &dataList[ jd ];
+      QString triple = triples[ jd ];
+
+      for ( int jr = 0; jr < edata->speedData.size(); jr++, jsscn++ )
+      {
+         QTableWidgetItem* item;
+         double  drpm  = edata->speedData[ jr ].speed;
+         int     iscn  = edata->speedData[ jr ].first_scan;
+         int     lscn  = iscn + edata->speedData[ jr ].scan_count - 1;
+         QString ascn  = QString::number( iscn );
+
+         if ( lscn != iscn )
+            ascn       = ascn + " - " + QString::number( lscn );
+
+         item = new QTableWidgetItem( blue_arrow, "" );
+//if(iscn==3) item=new QTableWidgetItem( green_arrow, "" );
+//if(iscn==5) item=new QTableWidgetItem( red_arrow, "" );
+         tw_equiscns->setItem( jsscn, 0, item );
+
+         item = new QTableWidgetItem( QString::number( jsscn + 1 ) );
+         item->setFlags( item->flags() ^ Qt::ItemIsEditable );
+         tw_equiscns->setItem( jsscn, 1, item );
+
+         item = new QTableWidgetItem( triple );
+         item->setFlags( item->flags() ^ Qt::ItemIsEditable );
+         tw_equiscns->setItem( jsscn, 2, item );
+
+         item = new QTableWidgetItem( QString::number( drpm ) );
+         item->setFlags( item->flags() ^ Qt::ItemIsEditable );
+         tw_equiscns->setItem( jsscn, 3, item );
+
+         item = new QTableWidgetItem( ascn );
+         item->setFlags( item->flags() ^ Qt::ItemIsEditable );
+         tw_equiscns->setItem( jsscn, 4, item );
+
+         tw_equiscns->setRowHeight( jsscn, rowHght );
+      }
+   }
+
+   connect( tw_equiscns, SIGNAL( itemClicked( QTableWidgetItem* ) ),
+            this,        SLOT(   clickedItem( QTableWidgetItem* ) ) );
+
+   le_status->setText( tr( "To edit scan limits:  click, move, and "
+                           "release mouse in the plot area." ) );
+
    edata       = &dataList[ 0 ];
+qDebug() << "eData readings size" << edata->scanData[0].readings.size();
    dataLoaded  = true;
 }
 
@@ -353,5 +451,136 @@ void US_GlobalEquil::update_disk_db( bool dbaccess )
       dkdb_cntrls->set_disk();
       dbdisk    = US_Disk_DB_Controls::Disk;
    }
+}
+
+void US_GlobalEquil::clickedItem( QTableWidgetItem* item )
+{
+   int row = item->row();
+//qDebug() << "TableItemClicked row col" << row << item->column();
+
+   QTableWidget* tabw = item->tableWidget();
+
+   QString triple = tabw->item( row, 2 )->text();
+   double  drpm   = tabw->item( row, 3 )->text().toDouble();
+//qDebug() << " Clicked: triple" << triple << "rpm" << drpm;
+   int     jdx    = -1;
+   int     jsx    = -1;
+
+   bool    found  = findData( triple, drpm, jdx, jsx );
+//qDebug() << " Clicked:   found" << found << " jdx jsx" << jdx << jsx;
+
+   if ( found )  edata_plot();
+}
+
+bool US_GlobalEquil::findData( QString trip, double drpm, int& jdx, int& jsx )
+{
+   bool found = false;
+   jdx    = -1;
+   jsx    = -1;
+
+   while ( ++jdx < dataList.size() )
+   {
+      jsx  = -1;
+
+      if ( trip == triples[ jdx ] )
+      {
+         while ( ++jsx < dataList[ jdx ].speedData.size() )
+         {
+            if ( dataList[ jdx ].speedData[ jsx ].speed == drpm )
+            {
+               edata  = &dataList[ jdx ];
+               spdata = &edata->speedData[ jsx ];
+               found  = true;
+               break;
+            }
+         }
+      }
+
+      if ( found )  break;
+   }
+
+   return found;
+}
+
+void US_GlobalEquil::edata_plot()
+{
+   int     npoints = edata->x.size();
+   int     iscan   = spdata->first_scan;
+   int     kscan   = spdata->scan_count;
+   double  drpm    = spdata->speed;
+   double  radl    = spdata->dataLeft;
+   double  radr    = spdata->dataRight;
+   QString runID   = edata->runID;
+   QString editID  = edata->editID;
+   QString cell    = edata->cell;
+   QString chan    = edata->channel;
+   QString waveln  = edata->wavelength;
+
+   equil_plot->detachItems();
+   equil_plot->setTitle(
+      tr( "Run: " ) + runID + tr( "  Edit: " ) + editID + "\n" +
+      tr( "Cell: " ) + cell + tr( "  Channel: " ) + chan +
+      tr( "  Speed: " ) + QString::number( drpm ) + tr( " rpm" ) );
+   equil_plot->setAxisTitle( QwtPlot::yLeft,
+      tr( "Absorbance (" ) + waveln + tr( " nm)" ) );
+
+   QwtPlotGrid* grid = us_grid( equil_plot );
+   grid->enableYMin( true );
+   grid->enableY   ( true );
+   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
+
+   QVector< double > rvec( npoints, 0.0 );
+   QVector< double > vvec( npoints, 0.0 );
+   double* ra  = rvec.data();
+   double* va  = vvec.data();
+
+   int jsc     = iscan - 1;
+   int count   = 0;
+   double rlo  = 9e+10;
+   double rhi  = -9e+10;
+   double vlo  = 9e+10;
+   double vhi  = -9e+10;
+
+   for ( int ii = jsc; ii < jsc + kscan; ii++ )
+   {
+      for ( int jj = 0; jj < npoints; jj++ )
+      {
+         double rv = edata->radius( jj );
+
+         if ( rv >= radl  &&  rv <= radr )
+         {
+            double vv     = edata->value( ii, jj );
+            ra[ count   ] = rv;
+            va[ count++ ] = vv;
+            rlo           = min( rlo, rv );
+            rhi           = max( rhi, rv );
+            vlo           = min( vlo, vv );
+            vhi           = max( vhi, vv );
+         }
+      }
+   }
+
+   double rpad = ( rhi - rlo ) * 0.05;
+   double vpad = ( vhi - vlo ) * 0.05;
+   rlo -= rpad;
+   rhi += rpad;
+   vlo -= vpad;
+   vhi += vpad;
+
+   equil_plot->setAxisScale( QwtPlot::xBottom, rlo, rhi );
+   equil_plot->setAxisScale( QwtPlot::yLeft,   vlo, vhi );
+   QwtPlotCurve* curve = us_curve( equil_plot, "Equil Data" );
+   QwtSymbol sym;
+   sym.setStyle( QwtSymbol::Ellipse );
+   sym.setPen  ( QPen( Qt::blue ) );
+   sym.setBrush( QBrush( Qt::yellow ) );
+   sym.setSize ( 10 );
+   curve->setStyle( QwtPlotCurve::NoCurve );
+   curve->setSymbol( sym );
+   curve->setData( ra, va, count );
+
+   equil_plot->replot();
+
 }
 

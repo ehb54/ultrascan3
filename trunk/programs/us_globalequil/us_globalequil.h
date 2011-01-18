@@ -36,13 +36,14 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       US_SimulationParameters  simparams;
 
       US_DataIO2::EditedData*  edata;
+      US_DataIO2::SpeedData*   spdata;
 
       US_Disk_DB_Controls*     dkdb_cntrls;
 
       QList< double >          speed_steps;
 
       US_Help        showHelp;
-      QwtPlot*       equilibrium_plot;
+      QwtPlot*       equil_plot;
       QwtPlotCurve*  current_curve;
       US_Astfem_RSA* astfem_rsa;
 
@@ -50,7 +51,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
 
       QCheckBox*     ck_edlast;
 
-      QTextEdit*     te_equiscns;
+      QTableWidget*  tw_equiscns;
 
       QLineEdit*     le_prjname;
       QLineEdit*     le_status;
@@ -71,6 +72,10 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       QPushButton*   pb_monCarlo;
       QPushButton*   pb_floatPar;
       QPushButton*   pb_initPars;
+
+      QIcon          blue_arrow;
+      QIcon          green_arrow;
+      QIcon          red_arrow;
 
       QString        workingDir;
 
@@ -105,6 +110,9 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       void close_all         ( void );
       void scan_select       ( double );
       void update_disk_db    ( bool );
+      void clickedItem       ( QTableWidgetItem* );
+      bool findData( QString, double, int&, int& );
+      void edata_plot        ( void );
 
       void help              ( void )
       { showHelp.show_help("global_equil.html"); };
