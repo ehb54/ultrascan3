@@ -56,6 +56,10 @@ US_Edit::US_Edit() : US_Widgets()
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
+   // Very light gray for read only line edit widgets
+   QPalette gray = US_GuiSettings::editColor();;
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+
    // Put the Run Info across the entire window
    QHBoxLayout* runInfo = new QHBoxLayout();
    QLabel* lb_info = us_label( tr( "Run Info:" ), -1 );
@@ -63,6 +67,7 @@ US_Edit::US_Edit() : US_Widgets()
 
    le_info = us_lineedit( "", 1 );
    le_info->setReadOnly( true );
+   le_info->setPalette( gray );
    runInfo->addWidget( le_info );
 
    top->addLayout( runInfo );
@@ -83,10 +88,6 @@ US_Edit::US_Edit() : US_Widgets()
 
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
-
-   // Very light gray for read only line edit widgets
-   QPalette gray = US_GuiSettings::editColor();;
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
 
    QString number  = QString::number( US_Settings::us_inv_ID() ) + ": ";
    le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1 );
@@ -186,6 +187,7 @@ US_Edit::US_Edit() : US_Widgets()
    lb_edtrsp->setVisible(  false );
    le_edtrsp->setVisible(  false );
    le_edtrsp->setReadOnly( true  );
+   le_edtrsp->setPalette( gray );
 
    // Meniscus row
    pb_meniscus = us_pushbutton( tr( "Specify Meniscus" ), false );
@@ -193,7 +195,6 @@ US_Edit::US_Edit() : US_Widgets()
    specs->addWidget( pb_meniscus, s_row, 0, 1, 2 );
 
    le_meniscus = us_lineedit( "", 1 );
-   //le_meniscus->setReadOnly( true );
    specs->addWidget( le_meniscus, s_row++, 2, 1, 2 );
 
    // Air Gap row (hidden by default)
@@ -203,6 +204,7 @@ US_Edit::US_Edit() : US_Widgets()
 
    le_airGap = us_lineedit( "", 1 );
    le_airGap->setReadOnly( true );
+   le_airGap->setPalette( gray );
    specs->addWidget( le_airGap, s_row++, 2, 1, 2 );
 
    pb_airGap->setHidden( true );
@@ -215,6 +217,7 @@ US_Edit::US_Edit() : US_Widgets()
 
    le_dataRange = us_lineedit( "", 1 );
    le_dataRange->setReadOnly( true );
+   le_dataRange->setPalette( gray );
    specs->addWidget( le_dataRange, s_row++, 2, 1, 2 );
 
    // Plateau row
@@ -224,6 +227,7 @@ US_Edit::US_Edit() : US_Widgets()
 
    le_plateau = us_lineedit( "", 1 );
    le_plateau->setReadOnly( true );
+   le_plateau->setPalette( gray );
    specs->addWidget( le_plateau, s_row++, 2, 1, 2 );
 
    // Baseline row
@@ -233,6 +237,7 @@ US_Edit::US_Edit() : US_Widgets()
 
    le_baseline = us_lineedit( "", 1 );
    le_baseline->setReadOnly( true );
+   le_baseline->setPalette( gray );
    specs->addWidget( le_baseline, s_row++, 2, 1, 2 );
 
    // Noise
