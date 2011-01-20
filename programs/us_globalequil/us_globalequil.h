@@ -27,6 +27,19 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
 		US_GlobalEquil();
 
 	private:
+
+      class ScanEdits
+      {
+         public:
+            int    dsindex;    // Data set index of this scan
+            int    speedx;     // Speed index within data set
+            int    sscanx;     // Scan index within data set
+            double rad_lo;     // Low radius value after edit
+            double rad_hi;     // High radius value after edit
+            bool   edited;     // Flag:  has scan been edited?
+      };
+
+      QVector< ScanEdits >              scedits;
       QVector< US_DataIO2::EditedData > dataList;
       QVector< US_DataIO2::RawData >    rawList;
       QList< int >                      excludedScans;
@@ -43,6 +56,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       QList< double >          speed_steps;
 
       US_Help        showHelp;
+      US_Plot*       eplot;
       QwtPlot*       equil_plot;
       QwtPlotCurve*  current_curve;
       US_Astfem_RSA* astfem_rsa;
@@ -54,9 +68,9 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       QTableWidget*  tw_equiscns;
 
       QLineEdit*     le_prjname;
-      QLineEdit*     le_status;
       QLineEdit*     le_currmodl;
       QLineEdit*     le_mxfringe;
+      QTextEdit*     te_status;
 
       QPushButton*   pb_details;
       QPushButton*   pb_view;
@@ -77,17 +91,31 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       QIcon          green_arrow;
       QIcon          red_arrow;
 
+      QVector< double > rvec;
+      QVector< double > vvec;
+
       QString        workingDir;
 
       int            dbg_level;
       int            dbdisk;
+      int            iconw;
+      int            vecknt;
+      int            ntscns;
              
       double         rpm_start;
+      double         sRadLo;
+      double         sRadHi;
+      double         sRadMv;
+      double         cRadLo;
+      double         cRadHi;
 
       bool           dataLoaded;
       bool           buffLoaded;
       bool           modelLoaded;
       bool           dataLatest;
+      bool           mDown;
+      bool           mMoved;
+      bool           mLowerH;
 
    private slots:
       void load              ( void );
@@ -112,7 +140,11 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       void update_disk_db    ( bool );
       void clickedItem       ( QTableWidgetItem* );
       bool findData( QString, double, int&, int& );
+      void pMouseDown        ( const QwtDoublePoint& );
+      void pMouseUp          ( const QwtDoublePoint& );
+      void pMouseMoved       ( const QwtDoublePoint& );
       void edata_plot        ( void );
+      void edited_plot       ( void );
 
       void help              ( void )
       { showHelp.show_help("global_equil.html"); };
