@@ -113,7 +113,8 @@ class US_EXTERN US_Solution
       */
       bool diskPath          ( QString& );
 
-      void show              ( void );       // temporary
+      //! \brief Displays the contents of the class variables in qDebug() statements
+      void show              ( void );
 
    private:
 

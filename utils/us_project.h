@@ -66,8 +66,6 @@ class US_EXTERN US_Project
 
       /*! \brief    Function to save the project information to db
 
-          \param    expID The ID of the experiment this project is associated with
-          \param    channelID The ID of the channel
           \param    db For database access, an open database connection
       */
       void saveToDB          ( US_DB2* = 0 );
@@ -96,7 +94,8 @@ class US_EXTERN US_Project
       */
       bool diskPath          ( QString& );
 
-      void show              ( void );       // temporary
+      //! \brief Displays the contents of the class variables in qDebug() statements
+      void show              ( void );
 
    private:
 

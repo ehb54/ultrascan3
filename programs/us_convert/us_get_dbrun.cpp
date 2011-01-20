@@ -1,6 +1,7 @@
 //! \file us_get_dbrun.cpp
 
 #include "us_get_dbrun.h"
+#include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_db2.h"
 #include "us_passwd.h"
@@ -109,16 +110,10 @@ bool US_GetDBRun::loadData( void )
    }
 
    // Get all the experiment ID's
-   QStringList q( "get_user_info" );
-   db.query( q );
-   db.next();
-   int myID = db.value( 0 ).toInt();
-
    QStringList expIDs;
    expIDs.clear();
-   q.clear();
-   q  << QString( "get_experiment_desc" )
-      << QString::number( myID );
+   QStringList q( "get_experiment_desc" );
+   q << QString::number( US_Settings::us_inv_ID() );
    db.query( q );
    while( db.next() )
       expIDs << db.value( 0 ).toString();

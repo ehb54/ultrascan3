@@ -28,7 +28,8 @@ int US_ConvertIO::checkRunID( QString runID )
 
    // Let's see if we can find the run ID
    QStringList q( "get_experiment_info_by_runID" );
-   q << runID;
+   q << runID
+     << QString::number( US_Settings::us_inv_ID() );
    db.query( q );
 
    if ( db.lastErrno() == US_DB2::NOROWS )
@@ -62,7 +63,8 @@ QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData,
       << ExpData.runTemp
       << ExpData.label
       << ExpData.comments
-      << ExpData.centrifugeProtocol;
+      << ExpData.centrifugeProtocol
+      << QString::number( US_Settings::us_inv_ID() );
 
    int status = db.statusQuery( q );
    if ( status != US_DB2::OK )
@@ -261,7 +263,8 @@ QString US_ConvertIO::readDBExperiment( QString runID,
    US_ExpInfo::ExperimentInfo ExpData;       // A local copy
    QList< US_Convert::TripleInfo > triples;  // a local copy
    QStringList q( "get_experiment_info_by_runID" );
-   q << runID;
+   q << runID
+     << QString::number( US_Settings::us_inv_ID() );
    db.query( q );
  
    if ( db.next() )
@@ -294,6 +297,12 @@ QString US_ConvertIO::readDBExperiment( QString runID,
    if ( status != QString( "" ) )
       return status;
 
+   // Clear out the directory, in case the user has messed with it locally
+   QDir d( dir );
+   QStringList files = d.entryList( QDir::NoDotAndDotDot | QDir::Files );
+   foreach ( QString file, files )
+      d.remove( file );
+   
    // Now read the auc data
    status = readRawDataFromDB( ExpData, triples, dir );
    if ( status != QString( "" ) )
@@ -467,6 +476,19 @@ QString US_ConvertIO::readExperimentInfoDB( US_ExpInfo::ExperimentInfo& expInfo 
       expInfo.invGUID   = db.value( 9 ).toString();
    }
 
+   // Project info
+   expInfo.projectGUID = QString( "" );
+   expInfo.projectDesc = QString( "" );
+   q.clear();
+   q << "get_project_info" 
+     << QString::number( expInfo.projectID );
+   db.query( q );
+   if ( db.next() )
+   {
+      expInfo.projectGUID   = db.value( 1  ).toString();
+      expInfo.projectDesc   = db.value( 10 ).toString();
+   }
+
    // Hardware info
    expInfo.operatorGUID = QString( "" );
    q.clear();
@@ -563,6 +585,7 @@ int US_ConvertIO::writeXmlFile(
       xml.writeStartElement( "project" );
       xml.writeAttribute   ( "id",   QString::number( ExpData.projectID ) );
       xml.writeAttribute   ( "guid", ExpData.projectGUID );
+      xml.writeAttribute   ( "desc", ExpData.projectDesc );
       xml.writeEndElement  ();
       
       xml.writeStartElement( "lab" );
@@ -720,6 +743,7 @@ void US_ConvertIO::readExperiment(
             QXmlStreamAttributes a = xml.attributes();
             ExpData.projectID      = a.value( "id"   ).toString().toInt();
             ExpData.projectGUID    = a.value( "guid" ).toString();
+            ExpData.projectDesc    = a.value( "desc" ).toString();
          }
    
          else if ( xml.name() == "lab" )
