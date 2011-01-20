@@ -1,6 +1,8 @@
 <RCC>
     <qresource>
+        <file>images/bluearrow.png</file>
         <file>images/box.png</file>
+        <file>images/check.png</file>
         <file>images/filecell.png</file>
         <file>images/fileopen.png</file>
         <file>images/filledmesh.png</file>
@@ -9,6 +11,7 @@
         <file>images/flooriso.png</file>
         <file>images/floormesh.png</file>
         <file>images/frame.png</file>
+        <file>images/greenarrow.png</file>
         <file>images/grid.png</file>
         <file>images/gridb.png</file>
         <file>images/gridc.png</file>
@@ -24,8 +27,10 @@
         <file>images/normals.png</file>
         <file>images/polygon.png</file>
         <file>images/qwtplot.png</file>
+        <file>images/redarrow.png</file>
         <file>images/savecontent.png</file>
         <file>images/scattered.png</file>
+        <file>images/us3-splash.png</file>
         <file>images/wireframe.png</file>
     </qresource>
 </RCC>

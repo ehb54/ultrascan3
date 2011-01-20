@@ -10,6 +10,7 @@
 #include "us_defines.h"
 #include "us_revision.h"
 #include "us_sleep.h"
+#include "us_images.h"
 
 using namespace US_WinData;
 
@@ -417,9 +418,8 @@ void US_Win::splash( void )
 
 void US_Win::logo( int width )
 {
-  // splash image directory for now (later, Ultrascan system dir?)
-  QString dir = US_Settings::appBaseDir() + "/etc/";
-  QPixmap rawpix( dir + "us3-splash.png" );
+  // Splash image
+  QPixmap rawpix = US_Images::getImage( US_Images::US3_SPLASH );
 
   int ph = rawpix.height();
   int pw = rawpix.width();
@@ -485,7 +485,7 @@ void US_Win::help( int index )
       QMessageBox::information( this,
         tr( "UltraScan Credits" ),
         tr( "UltraScan III version %1\n"
-            "Copyright 1998 - 2010\n"
+            "Copyright 1989 - 2011\n"
             "Borries Demeler and the University of Texas System\n\n"
             " - Credits -\n\n"
             "The development of this software has been supported by grants\n"
@@ -526,7 +526,7 @@ void US_Win::help( int index )
         tr( "About UltraScan..." ),
         tr( "UltraScan III version %1\n"
             "%2\n"
-            "Copyright 1989 - 2010\n"
+            "Copyright 1989 - 2011\n"
             "Borries Demeler and the University of Texas System\n\n"
             "For more information, please visit:\n"
             "http://www.ultrascan.uthscsa.edu/\n\n"

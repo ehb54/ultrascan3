@@ -26,6 +26,7 @@ HEADERS      = \
                us_editor_gui.h          \
                us_gui_settings.h        \
                us_help.h                \
+               us_images.h              \
                us_investigator.h        \
                us_license.h             \
                us_loadable_noise.h      \
@@ -57,6 +58,7 @@ SOURCES      = \
                us_editor_gui.cpp          \
                us_gui_settings.cpp        \ 
                us_help.cpp                \
+               us_images.cpp              \
                us_investigator.cpp        \
                us_license.cpp             \
                us_loadable_noise.cpp      \
