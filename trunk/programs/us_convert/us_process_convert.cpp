@@ -282,6 +282,10 @@ void US_ProcessConvert::writeConvertedData(
    this ->setRange( 0, triples.size() );
    this ->setValue( 0 );
 
+   // Make sure directory is empty
+   QDir d( dirname );
+   d.remove( "*" );
+
    for ( int i = 0; i < triples.size(); i++ )
    {
       if ( triples[ i ].excluded ) continue;
@@ -759,20 +763,23 @@ void US_ProcessConvert::splitRAData(
    this ->setRange( 0, rawConvertedData.size() );
    this ->setValue( 0 );
 
-   QVector< US_DataIO2::RawData > oldData = rawConvertedData;
+   // Create a place to store the old data temporarily
+   QVector< US_DataIO2::RawData >* oldData = new QVector< US_DataIO2::RawData >;
+   *oldData = rawConvertedData;
    rawConvertedData.clear();
+
+   // A pointer to the individual old RawData records
+   US_DataIO2::RawData* oldRawData = oldData->data();
 
    QList< US_Convert::TripleInfo > oldTriples = triples;
    triples.clear();
 
-   for ( int i = 0; i < oldData.size(); i++ )
+   for ( int i = 0; i < oldData->size(); i++ )
    {
-      US_DataIO2::RawData oldRawData = oldData[ i ];
-
       if ( i != currentTriple )
       {
          // Copy this triple over as is
-         rawConvertedData << oldRawData;
+         rawConvertedData << oldRawData[ i ];
          triples << oldTriples[ i ];
       }
 
@@ -783,25 +790,23 @@ void US_ProcessConvert::splitRAData(
             US_DataIO2::RawData newRawData;
 
             // Modify the raw data information
-            strncpy( newRawData.type, oldRawData.type, 2 );
+            strncpy( newRawData.type, oldRawData[ i ].type, 2 );
             // rawGUID is done by us_convert ??
-            newRawData.cell        = oldRawData.cell;
-            newRawData.channel     = oldRawData.channel + (j-1) * 2;
-            newRawData.description = oldRawData.description + 
-                                     " (subset: " + QString::number( j ) +
-                                     ")";
+            newRawData.cell        = oldRawData[ i ].cell;
+            newRawData.channel     = oldRawData[ i ].channel + (j-1) * 2;
+            newRawData.description = oldRawData[ i ].description + ")";
 
             // Copy the radius subset just once
-            for ( int k = 0; k < oldRawData.x.size(); k++ )
-               if ( ( oldRawData.radius( k ) >= subsets[ j - 1 ] ) &&
-                    ( oldRawData.radius( k ) <= subsets[ j ]     ) )
-                  newRawData.x << oldRawData.radius( k );
+            for ( int k = 0; k < oldRawData[ i ].x.size(); k++ )
+               if ( ( oldRawData[ i ].radius( k ) >= subsets[ j - 1 ] ) &&
+                    ( oldRawData[ i ].radius( k ) <= subsets[ j ]     ) )
+                  newRawData.x << oldRawData[ i ].radius( k );
 
             // Now copy the parent scan information
             newRawData.scanData.clear();
-            for ( int k = 0; k < oldRawData.scanData.size(); k++ )
-               newRawData.scanData << newScanSubset( oldRawData.scanData[ k ] ,
-                                                     oldRawData.x ,
+            for ( int k = 0; k < oldRawData[ i ].scanData.size(); k++ )
+               newRawData.scanData << newScanSubset( oldRawData[ i ].scanData[ k ] ,
+                                                     oldRawData[ i ].x ,
                                                      subsets[ j - 1 ] ,
                                                      subsets[ j ] );
 
@@ -822,6 +827,10 @@ void US_ProcessConvert::splitRAData(
       }
       this->setValue( i );
    }
+
+   // Finished with the old data now
+   oldData->clear();
+   delete oldData;
 
    // Renumber the triple ID's
    for ( int i = 0; i < triples.size(); i++ )
@@ -850,13 +859,35 @@ US_DataIO2::Scan US_ProcessConvert::newScanSubset(
 
    // Now copy the readings that are in this subset
    s.readings.clear();
+   int first_reading = 0;
    for ( int i = 0; i < oldScan.readings.size(); i++ )
    {
       if ( ( x[ i ].radius >= r_start ) &&
            ( x[ i ].radius <= r_end   ) )
+      {
          s.readings << oldScan.readings[ i ];  // copy this dataset point
+         if ( first_reading == 0 ) first_reading = i;
+      }
    }
-   // interpolated??
+
+   // Now copy the interpolation bitflags for this subset
+   // They might not be on the same byte boundary as the originals
+   int bitmap_size = ( s.readings.size() + 7 ) / 8;
+   uchar* interpolated = new uchar[ bitmap_size ];
+   bzero( interpolated, bitmap_size );
+
+   for ( int i = first_reading; i < first_reading + s.readings.size(); i++ )
+   {
+      int byte = i / 8;
+      int bit  = i % 8;
+      int mask = 1 << ( 7 - bit );
+
+      if ( ( oldScan.interpolated[ byte ] & mask ) != 0x00 )
+         setInterpolated( interpolated, i - first_reading );
+   }
+      
+   s.interpolated = QByteArray( (char*)interpolated, bitmap_size );
+   delete [] interpolated;
 
    return s;
 }

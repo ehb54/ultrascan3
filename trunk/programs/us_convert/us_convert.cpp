@@ -805,7 +805,6 @@ void US_Convert::editRuninfo( void )
    
       ExpData.expGUID = QString( uuidc );
 
-      saveStatus = EDITING;
    }
 
    getExpInfo( );
@@ -910,7 +909,7 @@ void US_Convert::loadUS3Disk( QString dir )
       pb_define   ->setEnabled( true );
    } 
 
-   saveStatus = ( ExpData.expID == 0 ) ? HD_ONLY : DB_SYNC;
+   saveStatus = ( ExpData.expID == 0 ) ? HD_ONLY : BOTH;
    //pb_editRuninfo  ->setEnabled ( saveStatus == HD_ONLY );
 
    enableSyncDB();
@@ -955,9 +954,11 @@ void US_Convert:: loadUS3DB( void )
 
    // and load it
    loadUS3Disk( dirname );
-   enableControls();
 
    saveStatus = BOTH;         // override from loadUS3Disk()
+   ExpData.syncOK = true;     // since we just read it from there
+
+   enableControls();
 }
 
 void US_Convert::getExpInfo( void )
@@ -1228,7 +1229,7 @@ void US_Convert::focus_to( double scan )
 
 void US_Convert::focus( int from, int to )
 {
-   if ( from == 0 )
+   if ( from == 0 && to == 0 )
    {
       pb_exclude->setEnabled( false );
       pb_include->setEnabled( false );
@@ -1258,30 +1259,37 @@ void US_Convert::init_excludes( void )
 // Function to exclude user-selected scans
 void US_Convert::exclude_scans( void )
 {
-   int scanStart = (int)ct_from->value();
-   int scanEnd   = (int)ct_to  ->value();
+   Excludes excludes = allExcludes[ currentTriple ];
 
-   // Create a new list temporarily, to avoid accounting for them twice
-   QList< int > newExcludes;
-   newExcludes.clear();
+   // Scans actually start at index 0
+   int scanStart = (int)ct_from->value() - 1;
+   int scanEnd   = (int)ct_to  ->value() - 1;
 
-   for ( int i = scanStart - 1; i < scanEnd; i++ )
+   // Sometimes the user leaves this at 0
+   scanStart = ( scanStart < 0 ) ? 0 : scanStart;
+   int scanCount = scanEnd - scanStart + 1;
+
+   // Find the first scan to exclude, but account for the already excluded
+   int scanNdx = 0;
+   while ( scanNdx < scanStart )
    {
-      // Find all lower-numbered excluded scans, to account for them
-      int excludeCount = 0;
-      for ( int j = 0; j < scanStart; j++ )
-         if ( allExcludes[ currentTriple ].contains( j ) )
-            excludeCount++;
+      if ( excludes.contains( scanNdx ) )
+         scanStart++;
 
-      // Make a list of current exclusions, accounting for previous ones
-      newExcludes << ( i + excludeCount );
+      scanNdx++;
    }
 
-   // Now add new excludes to existing ones
-   for ( int i = 0; i < newExcludes.size(); i++ )
+   // Now we have the starting point, so exclude some scans
+   int excluded = 0;
+   while ( excluded < scanCount )
    {
-      if ( ! allExcludes[ currentTriple ].contains( newExcludes[ i ] ) )
-         allExcludes[ currentTriple ] << newExcludes[ i ];
+      if ( ! excludes.contains( scanNdx ) )
+      {
+         excluded++;
+         allExcludes[ currentTriple ] << scanNdx;
+      }
+
+      scanNdx++;
    }
 
    enableScanControls();
@@ -1606,7 +1614,8 @@ int US_Convert::saveUS3Disk( void )
    QDir        writeDir( US_Settings::resultDir() );
    QString     dirname = writeDir.absolutePath() + "/" + runID + "/";
 
-   if ( saveStatus == NOT_SAVED && writeDir.exists( runID ) )
+   if ( saveStatus == NOT_SAVED  && 
+        writeDir.exists( runID ) )
    {
         QMessageBox::information( this,
               tr( "Error" ),
@@ -1643,7 +1652,7 @@ int US_Convert::saveUS3Disk( void )
    }
 
    // Write the data
-   bool saveGUIDs = saveStatus != NOT_SAVED && saveStatus != EDITING;
+   bool saveGUIDs = saveStatus != NOT_SAVED ;
    US_ProcessConvert* dialog 
       = new US_ProcessConvert( this );
       dialog->writeConvertedData( status, allData, ExpData, triples, 
@@ -1695,7 +1704,7 @@ int US_Convert::saveUS3Disk( void )
          QString::number( fileCount ) + " " + 
          runID + tr( " files written." ) );
   
-   if ( saveStatus == NOT_SAVED || saveStatus == EDITING )
+   if ( saveStatus == NOT_SAVED )
       saveStatus = HD_ONLY;
 
    enableRunIDControl( false );

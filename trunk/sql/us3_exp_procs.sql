@@ -278,6 +278,7 @@ CREATE PROCEDURE update_experiment ( p_personGUID   CHAR(36),
 
 BEGIN
   DECLARE l_count_runID  INT;
+  DECLARE l_expGUID      CHAR(36);
   DECLARE duplicate_key  TINYINT DEFAULT 0;
 
   DECLARE CONTINUE HANDLER FOR 1062
@@ -306,26 +307,53 @@ BEGIN
       SET @US3_LAST_ERROR = "MySQL: Duplicate runID in experiment table";
 
     ELSE
-      UPDATE experiment SET
-        experimentGUID     = p_expGUID,
-        projectID          = p_projectID,
-        runID              = p_runID,
-        labID              = p_labID,
-        instrumentID       = p_instrumentID,
-        operatorID         = p_operatorID,
-        rotorID            = p_rotorID,
-        rotorCalibrationID = p_calibrationID,
-        type               = p_type,
-        runTemp            = p_runTemp,
-        label              = p_label,
-        comment            = p_comment,
-        centrifugeProtocol = p_centrifugeProtocol,
-        dateUpdated        = NOW()
-      WHERE experimentID   = p_experimentID;
+      -- Keep MySQL from having trouble with duplicate GUID's (
+      SELECT experimentGUID
+      INTO   l_expGUID
+      FROM   experiment
+      WHERE  experimentID = p_experimentID;
 
-      IF ( duplicate_key = 1 ) THEN
-        SET @US3_LAST_ERRNO = @INSERTDUP;
-        SET @US3_LAST_ERROR = "MySQL: Duplicate entry for experimentGUID field";
+      IF ( STRCMP( l_expGUID, p_expGUID ) = 0 ) THEN
+        UPDATE experiment SET
+          -- don't update experimentGUID here
+          projectID          = p_projectID,
+          runID              = p_runID,
+          labID              = p_labID,
+          instrumentID       = p_instrumentID,
+          operatorID         = p_operatorID,
+          rotorID            = p_rotorID,
+          rotorCalibrationID = p_calibrationID,
+          type               = p_type,
+          runTemp            = p_runTemp,
+          label              = p_label,
+          comment            = p_comment,
+          centrifugeProtocol = p_centrifugeProtocol,
+          dateUpdated        = NOW()
+        WHERE experimentID   = p_experimentID;
+
+      ELSE
+        UPDATE experiment SET
+          experimentGUID     = p_expGUID,
+          projectID          = p_projectID,
+          runID              = p_runID,
+          labID              = p_labID,
+          instrumentID       = p_instrumentID,
+          operatorID         = p_operatorID,
+          rotorID            = p_rotorID,
+          rotorCalibrationID = p_calibrationID,
+          type               = p_type,
+          runTemp            = p_runTemp,
+          label              = p_label,
+          comment            = p_comment,
+          centrifugeProtocol = p_centrifugeProtocol,
+          dateUpdated        = NOW()
+        WHERE experimentID   = p_experimentID;
+
+        IF ( duplicate_key = 1 ) THEN
+          SET @US3_LAST_ERRNO = @INSERTDUP;
+          SET @US3_LAST_ERROR = "MySQL: Duplicate entry for experimentGUID field";
+    
+        END IF;
 
       END IF;
 
@@ -457,11 +485,12 @@ BEGIN
 END$$
 
 -- Returns a more complete list of information about one experiment
--- Differs from previous procedure by searching by runID
+-- Differs from previous procedure by searching by runID and personID
 DROP PROCEDURE IF EXISTS get_experiment_info_by_runID$$
 CREATE PROCEDURE get_experiment_info_by_runID ( p_personGUID CHAR(36),
                                                 p_password   VARCHAR(80),
-                                                p_runID      VARCHAR(80) )
+                                                p_runID      VARCHAR(80),
+                                                p_ID         INT )
   READS SQL DATA
 
 BEGIN
@@ -471,7 +500,40 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    -- This is an admin; he can get more info
+
+    -- In this particular case, setting p_ID = 0 isn't particularly useful,
+    --  so replace 0 with admin user's own
+    IF ( p_ID = 0 ) THEN SET p_ID = @US3_ID; END IF;
+
+    SELECT COUNT(*)
+    INTO   count_experiments
+    FROM   experiment e, experimentPerson p
+    WHERE  e.experimentID = p.experimentID
+    AND    p.personID     = p_ID
+    AND    e.runID        = p_runID;
+
+    IF ( count_experiments = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+  
+      SELECT projectID, e.experimentID, experimentGUID, labID, instrumentID, 
+             operatorID, rotorID, rotorCalibrationID, type, runTemp, label, comment, 
+             centrifugeProtocol, dateUpdated, personID
+      FROM   experiment e, experimentPerson p
+      WHERE  e.experimentID = p.experimentID
+      AND    p.personID     = p_ID
+      AND    e.runID        = p_runID;
+
+    END IF;
+
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT COUNT(*)
     INTO   count_experiments
     FROM   experiment e, experimentPerson p

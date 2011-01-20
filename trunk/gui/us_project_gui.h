@@ -68,7 +68,7 @@ class US_EXTERN US_ProjectGuiGeneral : public QWidget
 
    //! \brief Emitted when the user selects a project
    //! \param item The currently selected item in the project list widget
-   void selectProject      ( QListWidgetItem* );
+   void selectProject      ( QListWidgetItem* item );
 
    //! \brief Emitted when the description changes
    void saveDescription    ( const QString& );
@@ -81,7 +81,7 @@ class US_EXTERN US_ProjectGuiGeneral : public QWidget
 
    //! \brief Emitted when the user changes data source (disk/db)
    //! \param db True for db, false for disk
-   void source_changed     ( bool );
+   void source_changed     ( bool db );
 
 private:
    private slots:
@@ -318,7 +318,7 @@ class US_EXTERN US_ProjectGui : public US_WidgetsDialog
           \param project A reference to a structure that contains the
                         project information
       */
-      void updateProjectGuiSelection( US_Project& );
+      void updateProjectGuiSelection( US_Project& project );
 
       /*! \brief The signal that is emitted when the user chooses
                  to cancel the current selection. In this case all

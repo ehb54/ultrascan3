@@ -233,7 +233,7 @@ void US_ExpInfo::reset( void )
    le_investigator ->clear();
    le_label        ->clear();
    le_runID        ->setText( expInfo.runID );
-   le_project      ->setText( expInfo.projectDesc );
+   le_project      ->clear();
    te_comment      ->clear();
 
    cb_lab          ->load();
@@ -250,6 +250,7 @@ void US_ExpInfo::reset( void )
    cb_rotor        ->setLogicalIndex( expInfo.rotorID      );
 
    le_label        ->setText( expInfo.label                );
+   le_project      ->setText( expInfo.projectDesc          );
    te_comment      ->setText( expInfo.comments             );
          
    // Experiment types combo

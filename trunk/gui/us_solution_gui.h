@@ -56,7 +56,7 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
                         solution, buffer and analyte choices for a 
                         single c/c/w combination 
       */
-      void updateSolutionGuiSelection( US_Solution& );
+      void updateSolutionGuiSelection( US_Solution& solution );
 
       /*! \brief The signal that is emitted when the user chooses
                  to cancel the current selection. In this case all
