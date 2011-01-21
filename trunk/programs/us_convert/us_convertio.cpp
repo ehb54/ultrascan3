@@ -31,12 +31,13 @@ int US_ConvertIO::checkRunID( QString runID )
    q << runID
      << QString::number( US_Settings::us_inv_ID() );
    db.query( q );
-
    if ( db.lastErrno() == US_DB2::NOROWS )
       return 0;
    
    // Ok, let's return the experiment ID
-   return ( db.value( 1 ).toInt() );
+   db.next();
+   int expID = db.value( 1 ).toString().toInt();
+   return ( expID );
 }
 
 QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, 

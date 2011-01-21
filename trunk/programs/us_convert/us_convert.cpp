@@ -4,6 +4,7 @@
 
 #include "us_license_t.h"
 #include "us_license.h"
+#include "us_util.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_run_details2.h"
@@ -797,13 +798,7 @@ void US_Convert::editRuninfo( void )
       ExpData.clear();
    
       // Create a new GUID for the experiment as a whole
-      uuid_t uuid;
-      char uuidc[ 37 ];
-   
-      uuid_generate( uuid );
-      uuid_unparse( (unsigned char*)uuid, uuidc );
-   
-      ExpData.expGUID = QString( uuidc );
+      ExpData.expGUID = US_Util::new_guid();
 
    }
 
@@ -967,6 +962,7 @@ void US_Convert::getExpInfo( void )
 
    // Check if the run ID already exists in the DB
    int recStatus = US_ConvertIO::checkRunID( ExpData.runID );
+
    if ( recStatus == -1 )
    {
       QMessageBox::information( this,
@@ -1164,8 +1160,6 @@ void US_Convert::changeTriple( QListWidgetItem* )
    cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
    
    // Redo plot
-   init_excludes();
-
    plot_current();
 }
 
@@ -1293,6 +1287,9 @@ void US_Convert::exclude_scans( void )
    }
 
    enableScanControls();
+//qDebug() << "excludes.size = " << allExcludes[ currentTriple].excludes.size();
+//for ( int i = 0; i < allExcludes[ currentTriple ].excludes.size(); i++ )
+//qDebug() << "exclude[ " << i << "] = " << allExcludes[ currentTriple ].excludes[i];
 
    replot();
 }
@@ -2012,11 +2009,13 @@ void US_Convert::plot_all( void )
       if ( currentExcludes.contains( i ) ) continue;
       US_DataIO2::Scan* s = &currentData.scanData[ i ];
 
+//qDebug() << "readings.size = " << size;
       for ( int j = 0; j < size; j++ )
       {
          r[ j ] = currentData.radius( j );
          v[ j ] = s->readings  [ j ].value;
 
+//qDebug() << "(r, v) = ( " << r[j] << ", " << v[j] << ")";
          if ( v[ j ] > 1.0e99 )
          {
             // For some reason v[j] is going off the scale

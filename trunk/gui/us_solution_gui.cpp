@@ -218,6 +218,23 @@ US_SolutionGui::US_SolutionGui(
    main->addLayout( buttons, row, 0, 1, 3 );
    
    reset();
+
+   // Load the solution descriptions
+   load();
+
+   // Select the current one if we know what it is
+   if ( solution.solutionID > 0 )
+   {
+      QList< QListWidgetItem* > items 
+        = lw_solutions->findItems( solution.solutionDesc, Qt::MatchExactly );
+
+      // should be exactly 1, but let's make sure
+      if ( items.size() == 1 )
+      {
+         selectSolution( items[ 0 ] );
+         lw_solutions->setCurrentItem( items[ 0 ] );
+      }
+   }
 }
 
 // Function to refresh the display with values from the solution structure,

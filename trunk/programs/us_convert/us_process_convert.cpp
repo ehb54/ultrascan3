@@ -794,7 +794,7 @@ void US_ProcessConvert::splitRAData(
             // rawGUID is done by us_convert ??
             newRawData.cell        = oldRawData[ i ].cell;
             newRawData.channel     = oldRawData[ i ].channel + (j-1) * 2;
-            newRawData.description = oldRawData[ i ].description + ")";
+            newRawData.description = oldRawData[ i ].description;
 
             // Copy the radius subset just once
             for ( int k = 0; k < oldRawData[ i ].x.size(); k++ )

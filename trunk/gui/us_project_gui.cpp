@@ -113,7 +113,19 @@ US_ProjectGui::US_ProjectGui(
    // Load the project descriptions
    load();
 
-   generalTab->reset();
+   // Select the current one if we know what it is
+   if ( project.projectID > 0 )
+   {
+      QList< QListWidgetItem* > items 
+        = generalTab->lw_projects->findItems( project.projectDesc, Qt::MatchExactly );
+
+      // should be exactly 1, but let's make sure
+      if ( items.size() == 1 )
+      {
+         selectProject( items[ 0 ] );
+         generalTab->lw_projects->setCurrentItem( items[ 0 ] );
+      }
+   }
 }
 
 // Function to enable/disable buttons
