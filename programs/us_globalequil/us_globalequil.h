@@ -44,6 +44,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       QVector< US_DataIO2::RawData >    rawList;
       QList< int >                      excludedScans;
       QStringList                       triples;
+      QStringList                       models;
 
       US_Model                 model;
       US_SimulationParameters  simparams;
@@ -54,6 +55,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       US_Disk_DB_Controls*     dkdb_cntrls;
 
       QList< double >          speed_steps;
+      QList< double >          aud_params;
 
       US_Help        showHelp;
       US_Plot*       eplot;
@@ -101,6 +103,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       int            iconw;
       int            vecknt;
       int            ntscns;
+      int            modelx;
              
       double         rpm_start;
       double         sRadLo;

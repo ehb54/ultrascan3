@@ -77,7 +77,7 @@ class US_EXTERN US_Images
 
       //! \brief Get the full expanded embedded image name
       //! \param  bname Base name of embedded image (e.g., "check")
-      //! \return       Full embedded image name (e.g., ":/check.png")
+      //! \return       Full embedded image name (e.g., ":/images/check.png")
       static const QString expanded_name( const QString& );
 };
 
