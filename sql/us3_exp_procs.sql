@@ -502,19 +502,22 @@ BEGIN
 
   IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     -- This is an admin; he can get more info
-
-    -- In this particular case, setting p_ID = 0 isn't particularly useful,
-    --  so replace 0 with admin user's own
-    IF ( p_ID = 0 ) THEN SET p_ID = @US3_ID; END IF;
-
     SELECT COUNT(*)
     INTO   count_experiments
-    FROM   experiment e, experimentPerson p
-    WHERE  e.experimentID = p.experimentID
-    AND    p.personID     = p_ID
-    AND    e.runID        = p_runID;
+    FROM   experiment exp, experimentPerson ep
+    WHERE  exp.experimentID = ep.experimentID
+    AND    ep.personID      = p_ID
+    AND    runID            = p_runID;
 
-    IF ( count_experiments = 0 ) THEN
+    -- In this particular case, setting p_ID = 0 isn't particularly useful
+    --  and can lead to confusion, so let's trap it
+    IF ( p_ID = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_PERSON;
+      SET @US3_LAST_ERROR = 'MySQL: No user with that ID exists';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSEIF ( count_experiments = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
 
@@ -522,24 +525,24 @@ BEGIN
 
     ELSE
       SELECT @OK AS status;
-  
-      SELECT projectID, e.experimentID, experimentGUID, labID, instrumentID, 
+
+      SELECT projectID, ep.experimentID, experimentGUID, labID, instrumentID, 
              operatorID, rotorID, rotorCalibrationID, type, runTemp, label, comment, 
              centrifugeProtocol, dateUpdated, personID
-      FROM   experiment e, experimentPerson p
-      WHERE  e.experimentID = p.experimentID
-      AND    p.personID     = p_ID
-      AND    e.runID        = p_runID;
+      FROM   experiment exp, experimentPerson ep
+      WHERE  exp.experimentID   = ep.experimentID
+      AND    ep.personID        = p_ID
+      AND    runID              = p_runID;
 
     END IF;
 
   ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT COUNT(*)
     INTO   count_experiments
-    FROM   experiment e, experimentPerson p
-    WHERE  e.experimentID = p.experimentID
-    AND    p.personID     = @US3_ID
-    AND    e.runID        = p_runID;
+    FROM   experiment exp, experimentPerson ep
+    WHERE  exp.experimentID = ep.experimentID
+    AND    ep.personID      = @US3_ID
+    AND    runID            = p_runID;
 
     IF ( count_experiments = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
@@ -550,13 +553,13 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT projectID, e.experimentID, experimentGUID, labID, instrumentID, 
+      SELECT projectID, ep.experimentID, experimentGUID, labID, instrumentID, 
              operatorID, rotorID, rotorCalibrationID, type, runTemp, label, comment, 
              centrifugeProtocol, dateUpdated, personID
-      FROM   experiment e, experimentPerson p
-      WHERE  e.experimentID = p.experimentID
-      AND    p.personID     = @US3_ID
-      AND    e.runID        = p_runID;
+      FROM   experiment exp, experimentPerson ep
+      WHERE  exp.experimentID   = ep.experimentID
+      AND    ep.personID        = @US3_ID
+      AND    runID              = p_runID;
 
     END IF;
 
@@ -631,6 +634,8 @@ BEGIN
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
+  SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS;
+  SET @@FOREIGN_KEY_CHECKS=0;
 
   IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
     INSERT INTO cell SET
@@ -641,6 +646,8 @@ BEGIN
       dateUpdated  = NOW();
 
   END IF;
+
+  SET @@FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 
   SELECT @US3_LAST_ERRNO AS status;
 
