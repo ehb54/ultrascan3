@@ -1,6 +1,7 @@
 //! file us_globalequil.cpp
 #include <QApplication>
 #include "us_globalequil.h"
+#include "us_model_select.h"
 #include "us_images.h"
 #include "us_license_t.h"
 #include "us_license.h"
@@ -227,7 +228,7 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
                 te_status    = us_textedit();
    te_status->setWordWrapMode( QTextOption::WordWrap );
    te_status->setText( tr( "Please select an edited Equilibrium"
-                           "Dataset with \"Load Experiment\"" ) );
+                           " Dataset with \"Load Experiment\"" ) );
    QLabel*      lb_currmodl  = us_label(    tr( "Current Model:"      ) );
                 le_currmodl  = us_lineedit( tr( "-- none selected --" ) );
    QLabel*      lb_mxfringe  = us_label(    tr( "Max. OD/Fringe:"     ) );
@@ -481,8 +482,25 @@ void US_GlobalEquil::load_model( void )
 { DbgLv(1) << "LOAD_MODEL()"; }
 void US_GlobalEquil::new_project_name( const QString& newpname )
 { DbgLv(1) << "NEW_PROJECT_NAME()" << newpname; }
+
+// Select the model
 void US_GlobalEquil::select_model( void )
-{ DbgLv(1) << "SELECT_MODEL()"; }
+{
+DbgLv(1) << "SELECT_MODEL()";
+   US_ModelSelect* mdiag = new US_ModelSelect( modelx, models, aud_params );
+
+   mdiag->exec();
+
+int na=aud_params.size();
+DbgLv(1) << "  modelx" << modelx << " nbr aud params" << na;
+if(modelx<0) return;
+DbgLv(1) << "   model" << models[modelx];
+if(na==1) DbgLv(1) << "   par1: "   << aud_params[0];
+if(na==2) DbgLv(1) << "   par1-2: " << aud_params[0] << aud_params[1];
+if(na==4) DbgLv(1) << "   par1-4: " << aud_params[0] << aud_params[1]
+   << aud_params[2] << aud_params[3];
+}
+
 void US_GlobalEquil::model_control( void )
 { DbgLv(1) << "MODEL_CONTROL()"; }
 void US_GlobalEquil::fitting_control( void )
@@ -590,19 +608,28 @@ bool US_GlobalEquil::findData( QString trip, double drpm, int& jdx, int& jrx )
 // Plot equilibrium data as ellipses in radius,absorbance plane
 void US_GlobalEquil::edata_plot()
 {
-   int     nrpts   = edata->x.size();
+   int     jsscn   = tw_equiscns->currentRow();
+
+   if ( jsscn < 0 )
+   {
+      jsscn  = 0;
+      tw_equiscns->setCurrentCell( jsscn, 0 );
+      edata  = &dataList[ 0 ];
+      spdata = &edata->speedData[ 0 ];
+   }
+
    int     iscan   = spdata->first_scan;
    int     kscan   = spdata->scan_count;
-   int     jsscn   = tw_equiscns->currentRow();
    int     jscan   = tw_equiscns->item( jsscn, 4 )->text().toInt();
 
    if ( jscan < iscan  ||  jscan >= ( iscan + kscan ) )
    {
-      qDebug() << "Scan " << iscan << " not within speed data scan range:"
+      qDebug() << "Scan " << jscan << " not within speed data scan range:"
          << iscan << " for" << kscan;
       return;
    }
 
+   int     nrpts   = edata->x.size();
    double  drpm    = spdata->speed;
    double  radl    = spdata->dataLeft;
    double  radr    = spdata->dataRight;
