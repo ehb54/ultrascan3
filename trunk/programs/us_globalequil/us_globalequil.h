@@ -6,14 +6,9 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_editor.h"
-#include "us_model.h"
 #include "us_dataIO2.h"
 #include "us_db2.h"
-#include "us_simparms.h"
-#include "us_astfem_math.h"
-#include "us_astfem_rsa.h"
-
-#include "qwt_counter.h"
+#include "us_globeq_data.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -27,27 +22,15 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
 		US_GlobalEquil();
 
 	private:
+      QVector< ScanEdit >               scedits;
+      QVector< EqScanFit >              scanfits;
+      EqRunFit                          runfit;
 
-      class ScanEdits
-      {
-         public:
-            int    dsindex;    // Data set index of this scan
-            int    speedx;     // Speed index within data set
-            int    sscanx;     // Scan index within data set
-            double rad_lo;     // Low radius value after edit
-            double rad_hi;     // High radius value after edit
-            bool   edited;     // Flag:  has scan been edited?
-      };
-
-      QVector< ScanEdits >              scedits;
       QVector< US_DataIO2::EditedData > dataList;
       QVector< US_DataIO2::RawData >    rawList;
       QList< int >                      excludedScans;
       QStringList                       triples;
       QStringList                       models;
-
-      US_Model                 model;
-      US_SimulationParameters  simparams;
 
       US_DataIO2::EditedData*  edata;
       US_DataIO2::SpeedData*   spdata;
@@ -60,8 +43,6 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       US_Help        showHelp;
       US_Plot*       eplot;
       QwtPlot*       equil_plot;
-      QwtPlotCurve*  current_curve;
-      US_Astfem_RSA* astfem_rsa;
 
       QwtCounter*    ct_scselect;
 
@@ -97,6 +78,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       QVector< double > vvec;
 
       QString        workingDir;
+      QString        modelname;
 
       int            dbg_level;
       int            dbdisk;
@@ -148,6 +130,8 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       void pMouseMoved       ( const QwtDoublePoint& );
       void edata_plot        ( void );
       void edited_plot       ( void );
+      void assign_scanfit    ( void );
+      void setup_runfit      ( void );
 
       void help              ( void )
       { showHelp.show_help("global_equil.html"); };
