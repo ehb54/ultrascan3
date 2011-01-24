@@ -301,6 +301,13 @@ DbgLv(1) << "BrDb: kr ke km kn"
       QString runID     = filebase.section( ".", 0, 0 );
       QString subType   = "";
       contents          = cksum + " " + recsize;
+
+      if ( comment.isEmpty() )
+         comment        = filename.section( ".", 0, -2 );
+
+      if ( ! label.contains( "." ) )
+         label          = filename.section( ".", 0, -2 );
+
       rawGUIDs << rawGUID;
 
       query.clear();
@@ -309,7 +316,8 @@ DbgLv(1) << "BrDb: kr ke km kn"
       db->next();
 
       QString expGUID   = db->value( 0 ).toString();
-//DbgLv(2) << "BrDb:     raw expGid" << expGUID;
+DbgLv(2) << "BrDb:     raw expGid" << expGUID;
+DbgLv(2) << "BrDb:      label filename comment" << label << filename << comment;
 
 //DbgLv(2) << "BrDb:       (R)contents" << contents;
 
@@ -322,9 +330,7 @@ DbgLv(1) << "BrDb: kr ke km kn"
       cdesc.filename    = filename;
       cdesc.contents    = contents;
       cdesc.label       = label;
-      cdesc.description = ( comment.isEmpty() ) ?
-                          filename.section( ".", 0, 2 ) :
-                          comment;
+      cdesc.description = comment;
       cdesc.lastmodDate = date;
 
       if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
@@ -624,7 +630,7 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
             cdesc.filename    = edtfile;
             cdesc.contents    = contents;
             cdesc.label       = runid + "." + editid;
-            cdesc.description = cdesc.label;
+            cdesc.description = efname.section( ".", 0, -2 );
             cdesc.lastmodDate = US_Util::toUTCDatetimeText( QFileInfo( edtfile )
                                 .lastModified().toUTC().toString( Qt::ISODate )
                                 , true );
@@ -762,6 +768,7 @@ void US_DataModel::merge_dblocal( )
          descd.recState    |= descl.recState;     // OR states
          descd.filename     = descl.filename;     // filename from local
          descd.lastmodDate  = descl.lastmodDate;  // last mod date from local
+         descd.description  = descl.description;  // description from local
          descd.contents     = descd.contents + " " + descl.contents;
 
          adescs << descd;                  // output combo record

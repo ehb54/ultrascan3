@@ -2,11 +2,8 @@
 #define US_MODELADPARS_H
 
 #include "us_extern.h"
-#include "us_widgets.h"
+#include "us_widgets_dialog.h"
 #include "us_help.h"
-#include "us_plot.h"
-#include "us_editor.h"
-#include "us_model.h"
 
 class US_EXTERN US_ModelAdPars : public US_WidgetsDialog
 {

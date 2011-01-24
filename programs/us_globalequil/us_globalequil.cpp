@@ -118,9 +118,9 @@ US_GlobalEquil::US_GlobalEquil() : US_Widgets( true )
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize(),
          QFont::Bold );
    QFontMetrics fm( font );
-   int fontHeight = fm.lineSpacing();
-   tw_equiscns->setMaximumHeight( fontHeight * 60 + 12 );
-   tw_equiscns->setRowHeight( 0, fontHeight );
+   int rowHgt = fm.lineSpacing();
+   tw_equiscns->setMaximumHeight( rowHgt * 60 + 12 );
+   tw_equiscns->setRowHeight( 0, rowHgt );
    tw_equiscns->setFont(
       QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
 
@@ -239,8 +239,8 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
    le_currmodl->setAlignment( Qt::AlignCenter );
    te_status  ->setPalette( gray );
    le_currmodl->setPalette( gray );
-   te_status  ->setMinimumHeight( fontHeight * 2 + 12 );
-   te_status  ->setFixedHeight(   fontHeight * 2 + 12 );
+   te_status  ->setMinimumHeight( rowHgt * 2 + 12 );
+   te_status  ->setFixedHeight(   rowHgt * 2 + 12 );
 
    row     = 0;
    statusLayout ->addWidget( lb_status,   row,   0, 1, 2 );
@@ -266,21 +266,6 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
 void US_GlobalEquil::load( void )
 {
 DbgLv(1) << "LOAD()";
-pb_details ->setEnabled( true );
-pb_view    ->setEnabled( true );
-pb_unload  ->setEnabled( true );
-pb_scdiags ->setEnabled( true );
-pb_ckscfit ->setEnabled( true );
-pb_conchist->setEnabled( true );
-pb_resetsl ->setEnabled( true );
-pb_selModel->setEnabled( true );
-pb_modlCtrl->setEnabled( true );
-pb_fitcntrl->setEnabled( true );
-pb_loadFit ->setEnabled( true );
-pb_monCarlo->setEnabled( true );
-pb_floatPar->setEnabled( true );
-pb_initPars->setEnabled( true );
-
    excludedScans.clear();
    dataList     .clear();
    rawList      .clear();
@@ -325,9 +310,8 @@ DbgLv(1) << " dataList size" << dataList.size();
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize(),
          QFont::Bold );
    QFontMetrics fm( font );
-   int fontHeight = fm.lineSpacing();
-   int rowHght    = fontHeight;
-   tw_equiscns->setMaximumHeight( fontHeight * 60 + 12 );
+   int rowHgt   = fm.lineSpacing();
+   tw_equiscns->setMaximumHeight( rowHgt * 60 + 12 );
    tw_equiscns->setRowCount( ntscns );
    QString hdr1 = tr( "Scan" );
    QString hdr2 = tr( "CCW Triple" );
@@ -338,12 +322,12 @@ DbgLv(1) << " dataList size" << dataList.size();
    int     whd3 = fm.width( hdr3 + "W" );
    int     whd4 = fm.width( hdr4 + "W" );
    int     whd0 = ( iconw * 3 ) / 2;
-DbgLv(1) << "fontHeight" << fontHeight;
-DbgLv(1) << hdr1 << " w " << whd1;
-DbgLv(1) << hdr2 << " w " << whd2;
-DbgLv(1) << hdr3 << " w " << whd3;
-DbgLv(1) << hdr4 << " w " << whd4;
-DbgLv(1) << " 0" << " w " << whd0;
+DbgLv(1) << "rowHgt" << rowHgt;
+DbgLv(1) << "hdr" << hdr1 << " width" << whd1;
+DbgLv(1) << "hdr" << hdr2 << " width" << whd2;
+DbgLv(1) << "hdr" << hdr3 << " width" << whd3;
+DbgLv(1) << "hdr" << hdr4 << " width" << whd4;
+DbgLv(1) << "hdr" << " 0" << " width" << whd0;
    QStringList headers;
 
    headers << "" << hdr1 << hdr2 << hdr3 << hdr4;
@@ -356,10 +340,11 @@ DbgLv(1) << " 0" << " w " << whd0;
    tw_equiscns->setColumnWidth( 2, whd2 );
    tw_equiscns->setColumnWidth( 3, whd3 );
    tw_equiscns->setColumnWidth( 4, whd4 );
-   tw_equiscns->setMinimumWidth(  300 );
-   tw_equiscns->setMinimumHeight( 200 );
+   tw_equiscns->setMinimumWidth(  160 );
+   tw_equiscns->setMinimumHeight( 160 );
 
-   scedits.resize( ntscns );
+   scedits .resize( ntscns );
+   scanfits.clear();
 
    int jsscn = 0;
 
@@ -368,9 +353,8 @@ DbgLv(1) << " 0" << " w " << whd0;
       edata          = &dataList[ jd ];
       QString triple = triples[ jd ];
       QString tdesc  = edata->description;
-      int lrx        = edata->x.size() - 1;
-      sRadLo         = edata->radius(   0 ); 
-      sRadHi         = edata->radius( lrx );
+      sRadLo         = edata->radius( 0 ); 
+      sRadHi         = edata->radius( edata->x.size() - 1 );
 
       for ( int jr = 0; jr < edata->speedData.size(); jr++ )
       {  // Add a table entry for each speed step of each triple
@@ -408,22 +392,25 @@ DbgLv(1) << " 0" << " w " << whd0;
             item->setToolTip( tdesc );
             tw_equiscns->setItem( jsscn, 4, item );
 
-            tw_equiscns->setRowHeight( jsscn, rowHght );
+            tw_equiscns->setRowHeight( jsscn, rowHgt );
 
             // Build a scan edit record
-DbgLv(1) << "  jsscn jr js" << jsscn << jr << js;
             scedits[ jsscn ].dsindex  = jd;
             scedits[ jsscn ].speedx   = jr;
             scedits[ jsscn ].sscanx   = js;
             scedits[ jsscn ].rad_lo   = sRadLo;
             scedits[ jsscn ].rad_hi   = sRadHi;
             scedits[ jsscn ].edited   = false;
-DbgLv(1) << "    sRadLo sRadHi" << sRadLo << sRadHi;
+DbgLv(1) << "  jsscn jd js" << jsscn << jd << js
+ << "  sRadLo sRadHi" << sRadLo << sRadHi;
 
             jsscn++;
          }
       }
    }
+
+   assign_scanfit();
+   setup_runfit();
 
    // Reset the range of the scan counter to scans available
    ct_scselect->setRange( 1.0, (double)jsscn, 1.0 );
@@ -438,6 +425,10 @@ DbgLv(1) << "    sRadLo sRadHi" << sRadLo << sRadHi;
    edata       = &dataList[ 0 ];
 DbgLv(1) << "eData readings size" << edata->scanData[0].readings.size();
    dataLoaded  = true;
+   pb_details ->setEnabled( true );
+   pb_unload  ->setEnabled( true );
+   pb_selModel->setEnabled( true );
+
 }
 
 // Open a dialog to display details of the data selected
@@ -453,8 +444,30 @@ DbgLv(1) << "DETAILS()";
 
 void US_GlobalEquil::view_report( void )
 { DbgLv(1) << "VIEW_REPORT()"; }
+
+// Unload all data
 void US_GlobalEquil::unload( void )
-{ DbgLv(1) << "UNLOAD()"; }
+{
+DbgLv(1) << "UNLOAD()";
+   dataList.clear();
+   rawList .clear();
+   triples .clear();
+   scedits .clear();
+
+   tw_equiscns->clear();
+
+   equil_plot->detachItems();
+   equil_plot->setTitle( tr( "Experiment Equilibrium Data" ) );
+
+   assign_scanfit();
+   setup_runfit();
+
+   dataLoaded  = false;
+   pb_details ->setEnabled( false );
+   pb_unload  ->setEnabled( false );
+   pb_selModel->setEnabled( false );
+   pb_scdiags ->setEnabled( false );
+}
 void US_GlobalEquil::scan_diags( void )
 { DbgLv(1) << "SCAN_DIAGS()"; }
 void US_GlobalEquil::check_scan_fit( void )
@@ -476,6 +489,7 @@ DbgLv(1) << "RESET_SCAN_LIMS()";
    }
 
    edata_plot();
+   pb_resetsl->setEnabled( false );
 }
 
 void US_GlobalEquil::load_model( void )
@@ -493,12 +507,20 @@ DbgLv(1) << "SELECT_MODEL()";
 
 int na=aud_params.size();
 DbgLv(1) << "  modelx" << modelx << " nbr aud params" << na;
-if(modelx<0) return;
-DbgLv(1) << "   model" << models[modelx];
+   if ( modelx >= 0 )
+   {
+      modelname  = models[ modelx ];
+      le_currmodl->setText( modelname );
+      pb_scdiags ->setEnabled( true );
+DbgLv(1) << "   model" << modelname;
 if(na==1) DbgLv(1) << "   par1: "   << aud_params[0];
 if(na==2) DbgLv(1) << "   par1-2: " << aud_params[0] << aud_params[1];
 if(na==4) DbgLv(1) << "   par1-4: " << aud_params[0] << aud_params[1]
    << aud_params[2] << aud_params[3];
+
+      if ( modelx == 3 )
+         setup_runfit();
+   }
 }
 
 void US_GlobalEquil::model_control( void )
@@ -660,16 +682,10 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr;
    // Set up the picker for mouse down, moves and up
    QwtPlotPicker* pick = new US_PlotPicker( equil_plot );
    pick->setRubberBand( QwtPicker::CrossRubberBand );
-   //connect( pick, SIGNAL( mouseDown(   const QwtDoublePoint& ) ),
-   //               SLOT(   pMouseDown(  const QwtDoublePoint& ) ) );
-   //connect( pick, SIGNAL( mouseUp(     const QwtDoublePoint& ) ),
-   //               SLOT(   pMouseUp(    const QwtDoublePoint& ) ) );
    connect( pick, SIGNAL( cMouseDown(   const QwtDoublePoint& ) ),
                   SLOT(   pMouseDown(  const QwtDoublePoint& ) ) );
    connect( pick, SIGNAL( cMouseUp(     const QwtDoublePoint& ) ),
                   SLOT(   pMouseUp(    const QwtDoublePoint& ) ) );
-   //connect( pick, SIGNAL( moved(       const QwtDoublePoint& ) ),
-   //               SLOT(   pMouseMoved( const QwtDoublePoint& ) ) );
    connect( pick, SIGNAL( cMouseDrag(   const QwtDoublePoint& ) ),
                   SLOT(   pMouseMoved( const QwtDoublePoint& ) ) );
 
@@ -871,6 +887,8 @@ DbgLv(1) << "pMouseUp sRadLo sRadHi" << sRadLo << sRadHi
 
    // Re-draw the full edited plot
    edata_plot();
+
+   pb_resetsl->setEnabled( true );
 }
 
 // Respond to mouse button being moved - redraw curve with edited points
@@ -887,5 +905,142 @@ void US_GlobalEquil::pMouseMoved( const QwtDoublePoint& p )
 
    edited_plot();       // Re-draw plot curves showing edited points
 //DbgLv(1) << "pMouseMoved pos" << p.x() << p.y();
+}
+
+void US_GlobalEquil::assign_scanfit()
+{
+   EqScanFit scanfit;
+   scanfits.clear();
+   QStringList channs;
+   
+   for ( int jes = 0; jes < scedits.size(); jes++ )
+   {
+      int    jed   = scedits[ jes ].dsindex;
+      int    jer   = scedits[ jes ].speedx;
+      int    jds   = scedits[ jes ].sscanx - 1;
+      edata        = &dataList[ jed ];
+      QString trip = triples[ jed ];
+      QString chan = trip.section( "/", 1, 1 ).simplified();
+
+      if ( ! channs.contains( chan ) )
+         channs << chan;
+
+      scanfit.scanFit    = false;
+      scanfit.autoExcl   = false;
+      scanfit.limsModd   = false;
+      scanfit.points     = edata->x.size();
+      scanfit.nbr_posr   = 0;
+      scanfit.nbr_negr   = 0;
+      scanfit.runs       = 0;
+      scanfit.start_ndx  = 0;
+      scanfit.stop_ndx   = scanfit.points - 1;
+      scanfit.cell       = trip.section( "/", 0, 0 ).simplified().toInt();
+      scanfit.channel    = channs.indexOf( chan ) + 1;
+      scanfit.lambda     = trip.section( "/", 2, 2 ).simplified().toInt();
+      scanfit.meniscus   = edata->meniscus;
+      scanfit.baseline   = edata->baseline;
+      scanfit.pathlen    = 1.2;
+      scanfit.density    = DENS_20W;
+      scanfit.tempera    = edata->scanData[  jds ].temperature;
+      scanfit.rpm        = edata->speedData[ jer ].speed;
+
+      scanfit.xvs     .clear();
+      scanfit.yvs     .clear();
+      scanfit.amp_vals.clear();
+      scanfit.amp_ndxs.clear();
+      scanfit.amp_rngs.clear();
+      scanfit.amp_fits.clear();
+      scanfit.amp_bnds.clear();
+      scanfit.extincts.clear();
+      scanfit.integral.clear();
+
+      scanfits << scanfit;
+   }
+}
+
+void US_GlobalEquil::setup_runfit()
+{
+   runfit.nbr_comps    = 1;
+   runfit.nbr_assocs   = 0;
+   runfit.nbr_runs     = 0;
+   runfit.runs_percent = 0.0;
+   runfit.runs_expect  = 0.0;
+   runfit.runs_vari    = 0.0;
+
+   switch ( modelx )
+   {
+      case 0:
+         runfit.nbr_comps    = 1;
+         runfit.nbr_assocs   = 0;
+         break;
+      case 1:
+         runfit.nbr_comps    = 2;
+         runfit.nbr_assocs   = 0;
+         break;
+      case 2:
+         runfit.nbr_comps    = 3;
+         runfit.nbr_assocs   = 0;
+         break;
+      case 3:
+         runfit.nbr_comps    = (int)aud_params[ 1 ];
+         runfit.nbr_assocs   = 1;
+         break;
+      case 4:
+      case 5:
+      case 6:
+      case 7:
+      case 8:
+      case 9:
+      case 10:
+         runfit.nbr_comps    = 1;
+         runfit.nbr_assocs   = 1;
+         break;
+      case 11:
+      case 12:
+      case 13:
+         runfit.nbr_comps    = 1;
+         runfit.nbr_assocs   = 2;
+         break;
+      case 14:
+      case 16:
+      case 17:
+      case 19:
+         runfit.nbr_comps    = 2;
+         runfit.nbr_assocs   = 1;
+         break;
+      case 15:
+         runfit.nbr_comps    = 2;
+         runfit.nbr_assocs   = 2;
+      case 18:
+         runfit.nbr_comps    = 2;
+         runfit.nbr_assocs   = 0;
+      default:
+         break;
+   }
+
+   runfit.mw_vals  .fill(   0.0, runfit.nbr_comps );
+   runfit.mw_ndxs  .fill(     0, runfit.nbr_comps );
+   runfit.mw_rngs  .fill(   0.0, runfit.nbr_comps );
+   runfit.mw_fits  .fill( false, runfit.nbr_comps );
+   runfit.mw_bnds  .fill( false, runfit.nbr_comps );
+   runfit.vbar_vals.fill(  0.72, runfit.nbr_comps );
+   runfit.vbar_ndxs.fill(     0, runfit.nbr_comps );
+   runfit.vbar_rngs.fill( 0.144, runfit.nbr_comps );
+   runfit.vbar_fits.fill( false, runfit.nbr_comps );
+   runfit.vbar_bnds.fill( false, runfit.nbr_comps );
+   runfit.viri_vals.fill(   0.0, runfit.nbr_comps );
+   runfit.viri_ndxs.fill(     0, runfit.nbr_comps );
+   runfit.viri_rngs.fill(   0.0, runfit.nbr_comps );
+   runfit.viri_fits.fill( false, runfit.nbr_comps );
+   runfit.viri_bnds.fill( false, runfit.nbr_comps );
+
+   for ( int ii = 0; ii < runfit.nbr_assocs; ii++ )
+   {
+      runfit.eq_vals[ ii ] = 0.0;
+      runfit.eq_ndxs[ ii ] = 0;
+      runfit.eq_rngs[ ii ] = 0.0;
+      runfit.eq_fits[ ii ] = false;
+      runfit.eq_bnds[ ii ] = false;
+   }
 }
 
