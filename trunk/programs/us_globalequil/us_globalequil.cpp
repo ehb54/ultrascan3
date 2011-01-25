@@ -10,6 +10,7 @@
 #include "us_run_details2.h"
 #include "us_settings.h"
 #include "us_constants.h"
+#include "us_editor.h"
 #include "us_math2.h"
 
 // main program
@@ -353,8 +354,6 @@ DbgLv(1) << "hdr" << " 0" << " width" << whd0;
       edata          = &dataList[ jd ];
       QString triple = triples[ jd ];
       QString tdesc  = edata->description;
-      sRadLo         = edata->radius( 0 ); 
-      sRadHi         = edata->radius( edata->x.size() - 1 );
 
       for ( int jr = 0; jr < edata->speedData.size(); jr++ )
       {  // Add a table entry for each speed step of each triple
@@ -362,6 +361,8 @@ DbgLv(1) << "hdr" << " 0" << " width" << whd0;
          double  drpm   = edata->speedData[ jr ].speed;
          int     iscn   = edata->speedData[ jr ].first_scan;
          int     kscn   = edata->speedData[ jr ].scan_count;
+         sRadLo         = edata->speedData[ jr ].dataLeft;
+         sRadHi         = edata->speedData[ jr ].dataRight;
 
          for ( int js = iscn; js < iscn + kscn; js++ )
          {
@@ -468,8 +469,312 @@ DbgLv(1) << "UNLOAD()";
    pb_selModel->setEnabled( false );
    pb_scdiags ->setEnabled( false );
 }
+
+// Generate and display scan diagnostics
 void US_GlobalEquil::scan_diags( void )
-{ DbgLv(1) << "SCAN_DIAGS()"; }
+{
+DbgLv(1) << "SCAN_DIAGS()";
+   if ( ! dataLoaded )
+      return;
+
+   QString rs;
+
+   QString asters;
+   asters.fill( '*', 80 ).append( "\n" );
+   QString plsrd = tr( "PLEASE READ THIS!" );
+   //int nls       = ( 80 - plsrd.length() ) / 2 + 10;
+
+   // Compose opening general notes
+   rs  = "\n" + centerInLine( plsrd, 80, false, ' ' ) + "\n\n";
+   rs += tr( "Below is a listing of the ratios of slopes in the endpoints"
+             " of each indicated\n" );
+   rs += tr( "scan. If the ratios are less than 30, then there is little"
+             " information content\n" );
+   rs += tr( "in the scan and chances are that the experiment was improperly"
+             " set up and\n" );
+   rs += tr( "should be repeated.\n\n" );
+   rs += tr( "Additional warnings will be generated if the scan does not"
+             " contain enough\n" );
+   rs += tr( "data points or if the experimenter did not use the majority"
+             " of the linear\n" );
+   rs += tr( "absorbance range available (at least 0.6 OD between 0.0 OD"
+             " and 0.9 OD).\n\n" );
+   rs += tr( "These warnings are for your information only; they have no"
+             " effect on the rest\n" );
+   rs += tr( "of the program, since there are valid exceptions to these"
+             " warnings when\n" );
+   rs += tr( "including such scans is appropriate. Please refer to the"
+             " global equilibrium\n" );
+   rs += tr( "analysis tutorial for more information.\n\n" );
+
+   bool scprobs  = false;
+   int  dimvs    = dataList[ 0 ].x.size() * 3 / 2;
+   QVector< double > xvec( dimvs );
+   QVector< double > yvec( dimvs );
+   double* xx    = xvec.data();
+   double* yy    = yvec.data();
+
+   // Compose notes on each scan
+   for ( int jes = 0; jes < scedits.size(); jes++ )
+   {
+      int    jdx   = scedits[ jes ].dsindex;  // data set index
+      double radlo = scedits[ jes ].rad_lo;   // radius low value
+      double radhi = scedits[ jes ].rad_hi;   // radius high value
+      QString s_scnn  = QString::number( jes + 1 );
+      QString s_trip  = triples[ jdx ];
+      QString s_cell  = s_trip.section( "/", 0, 0 ).simplified();
+      QString s_chan  = s_trip.section( "/", 1, 1 ).simplified();
+      QString s_wave  = s_trip.section( "/", 2, 2 ).simplified();
+      QString s_rpm   = QString::number( scanfits[ jes ].rpm );
+
+      // Scan information header
+      rs += "\n";
+      rs += asters;
+      rs += tr( "Information for Scan " ) + s_scnn;
+      rs += tr( ",  Cell " ) + s_cell + tr( ", Channel " ) + s_chan;
+      rs += tr( ", Wavelength " ) + s_wave + " nm,  " + s_rpm + tr( " rpm\n" );
+      rs += "[  " + scanfits[ jes ].descript + "  ]\n";
+      rs += asters;
+
+      // Point to data, scan and this scan's data range
+      US_DataIO2::EditedData* sdata = &dataList[ jdx ];
+      int ivstx = index_radius( sdata, radlo );
+      int ivenx = index_radius( sdata, radhi );
+      int ivenn = ivenx + 1;
+      int npts  = ivenn - ivstx;
+      scanfits[ jes ].start_ndx = ivstx;
+      scanfits[ jes ].stop_ndx  = ivenx;
+
+      if ( npts > dimvs )
+      {  // If need be (unlikely), resize the work x,y vectors
+         dimvs  = npts + 10;
+         xvec.resize( dimvs );
+         yvec.resize( dimvs );
+         xx     = xvec.data();
+         yy     = yvec.data();
+      }
+DbgLv(1) << "SDiag: jes" << jes << "ivstx ivenx npts" << ivstx << ivenx << npts;
+DbgLv(1) << "SDiag:  radlo radhi" << radlo << radhi
+   << " rs re" << sdata->radius(ivstx) << sdata->radius(ivenx)
+   << " r0 rn" << sdata->radius(0) << sdata->radius(sdata->x.size()-1);
+
+      int nwarns = 0;             // Initialize for scan analysis
+
+      if ( npts > 50 )
+      {  // If sufficient points, analyze slopes and ratios
+         int nspts  = npts / 5;
+         int knt    = 0;
+         double slope1 = 0.0;
+         double slope2 = 0.0;
+         double icept  = 0.0;
+         double sigma  = 0.0;
+         double corr   = 0.0;
+
+         for ( int jj = ivstx; jj < ivstx + nspts; jj++ )
+         {  // Acculumate work arrays of beginning points
+            xx[ knt ] = scanfits[ jes ].xvs[ jj ];
+            yy[ knt ] = scanfits[ jes ].yvs[ jj ];
+            knt++;
+         }
+
+         // Get the slope at the beginning, then get ystart
+         US_Math2::linefit( &xx, &yy, &slope1, &icept, &sigma, &corr, knt );
+DbgLv(1) << "SDiag:   knt slope1 icept" << knt << slope1 << icept;
+         double xstart = xx[ 0 ];
+         double ystart = slope1 * xstart + icept;
+
+         knt        = 0;
+         nspts      = npts / 10;
+
+         for ( int jj = ivenn - nspts; jj < ivenn; jj++ )
+         {  // Accumulate work arrays of ending points
+            xx[ knt ] = scanfits[ jes ].xvs[ jj ];
+            yy[ knt ] = scanfits[ jes ].yvs[ jj ];
+            knt++;
+         }
+
+         // Get the slope at the end, then get yend
+         US_Math2::linefit( &xx, &yy, &slope2, &icept, &sigma, &corr, knt );
+DbgLv(1) << "SDiag:   knt slope2 icept" << knt << slope2 << icept;
+DbgLv(1) << "SDiag:    y0 y1 ym yn" << yy[0] << yy[1] << yy[knt-2] << yy[knt-1];
+         double xend   = xx[ knt - 1 ];
+         double yend   = slope2 * xend + icept;
+DbgLv(1) << "SDiag:     xend yend" << xend << yend << icept;
+
+         // Get slope ratio and absorbance range
+         slope1        = ( slope1 == 0.0 ) ? 9.999999e-21 : slope1;
+         double ratio  = slope2 / slope1;
+         double rangea = yend - ystart;
+DbgLv(1) << "SDiag:     ratio rangea" << ratio << rangea;
+
+         rs += tr( "Slope at beginning: %1,  Slope at end %2,  "
+                   "Ratio: %3\n\n" ).arg( slope1 ).arg( slope2 ).arg( ratio );
+
+         // Determine and add notes for any warnings
+
+         if ( ratio > 0.0  &&  ratio < 1.5 )
+         {
+            rs += tr( "Warning: The ratio is very small - there is"
+                      " probably not enough\n" );
+            rs += tr( "information in this scan.\n" );
+            rs += tr( "Suggestion: use a higher speed. Also, check"
+                      " for aggregation!\n\n" );
+            nwarns++;
+         }
+
+         if ( slope1 < 0.0 )
+         {
+            rs += tr( "Warning: The start point slope for this scan"
+                      " is negative!\n" );
+            rs += tr( "Possible reasons: excessive noise in the data,"
+                      " or time invariant noise\n" );
+            rs += tr( "from interference data has not been subtracted.\n\n" );
+            nwarns++;
+         }
+
+         if ( slope2 < 0.0 )
+         {
+            rs += tr( "Warning: The end point slope for this scan"
+                      " is negative!\n" );
+            rs += tr( "Possible reasons: excessive noise in the data,"
+                      " or time invariant noise\n" );
+            rs += tr( "from interference data has not been subtracted.\n\n" );
+            nwarns++;
+         }
+
+         if ( rangea < 0.4 )
+         {
+            rs += tr( "Warning: This scan only spans %1 OD of the"
+                      " possible\n" ). arg( rangea );
+            rs += tr( "0.9 - 1.0 OD range the instrument allows.\n\n" );
+            nwarns++;
+         }
+
+         if ( yend < 0.6 )
+         {
+            rs += tr( "Warning: This scan's maximum absorbance is only "
+                      " %1 OD.\n" ).arg( yend );
+            rs += tr( "This is lower than the linear range of the XL-A"
+                      " which generally extends\n" );
+            rs += tr( "up to ~0.9 OD. You may be discarding information."
+                      " Check for Aggregation!\n\n" );
+            nwarns++;
+         }
+      }
+
+      // Add final notes on points and warnings
+
+      rs += tr( "Number of points in this scan: %1" ).arg( npts );
+
+      if ( npts >= 100 )
+         rs += tr( "\n\n" );
+
+      else
+      {
+         if ( npts >= 50 )
+            rs += tr( " (low!)\n\n" );
+         else
+            rs += tr( " (too low! Are the data below the OD cutoff?)\n\n" );
+         nwarns++;
+      }
+
+      if ( nwarns == 1 )
+         rs += tr( "There was 1 warning generated for this scan.\n" );
+
+      else
+         rs += tr( "There were %1 warnings generated for this scan.\n" )
+            .arg( nwarns );
+
+      if ( nwarns > 2 )
+      {
+         rs += tr( "Please check the scan to make sure it is appropriate"
+                   " for inclusion in a global fit!\n\n" );
+      }
+
+      else
+         rs += "\n";
+
+      QTableWidgetItem* item = tw_equiscns->item( jes, 0 );
+
+      if ( nwarns == 0 )
+      {  // Mark scan as fit/non-excluded
+         scanfits[ jes ].scanFit  = true;
+         scanfits[ jes ].autoExcl = false;
+         item->setIcon( green_arrow );
+      }
+
+      else
+      {  // Mark scan as non-fit/excluded
+         scanfits[ jes ].scanFit  = false;
+         scanfits[ jes ].autoExcl = true;
+         scprobs                  = true;
+         item->setIcon( blue_arrow );
+      }
+   }  // End:  scans loop
+
+   if ( scprobs )
+   {  // Pop up dialog warning of potential problems
+      QString wmsg = tr( "One or more scans have been excluded from the\n"
+                         "fit. The Diagnostics report will help you to\n"
+                         "determine which problems occurred. You can manually\n"
+                         "override scan exclusions and include them once\n"
+                         "you identify the reasons for the exclusion." );
+
+      QMessageBox::warning( this, tr( "Scan Problem(s)" ), wmsg );
+   }
+
+   // Display scan diagnostics in an editor text dialog
+   US_Editor* ediag = new US_Editor( US_Editor::DEFAULT, true, "*.res", this );
+   ediag->setWindowTitle( tr( "Scan Diagnostics" ) );
+   QFont efont( US_GuiSettings::fontFamily(),
+                US_GuiSettings::fontSize() - 2 );
+   ediag->e->setFont( efont );
+   ediag->e->setText( rs );
+   QFontMetrics fm( efont );
+   int dwid = fm.width( asters ) + fm.width( "WW" );
+   int dhgt = fm.lineSpacing() * 50;
+   dwid     = ( ( dwid / 20 + 1 ) * 20 );
+   dhgt     = ( ( dhgt / 20 + 1 ) * 20 );
+   ediag->resize( dwid, dhgt );
+   ediag->move( pos() + QPoint( 400, 100 ) );
+   ediag->show();
+
+   // Output the text, also, to a reports file
+   QString basedir  = US_Settings::reportDir();
+   QString repdir   = edata->runID;
+   QDir folder( basedir );
+
+   if ( ! folder.exists( repdir ) )
+   {
+      if ( ! folder.mkdir( repdir ) )
+      {
+         QMessageBox::warning( this, tr( "File Error" ),
+            tr( "Could not create the directory:\n" )
+            + basedir + "/" + repdir );
+         return;
+      }
+   }
+
+   repdir = basedir + "/" + repdir + "/";
+   QString filename = repdir + "globeq.diagnostics.rpt";
+   QFile drf( filename );
+
+   if ( ! drf.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      QMessageBox::warning( this, tr( "File Error" ),
+         tr( "Unable to open the file:\n" ) + filename );
+      return;
+   }
+
+   QTextStream ts( &drf );
+   ts << rs;
+   drf.close();
+
+   pb_conchist->setEnabled( true );
+   pb_modlCtrl->setEnabled( true );
+   pb_initPars->setEnabled( true );
+}
+
 void US_GlobalEquil::check_scan_fit( void )
 { DbgLv(1) << "CHECK_SCAN_FIT()"; }
 void US_GlobalEquil::conc_histogram( void )
@@ -486,6 +791,7 @@ DbgLv(1) << "RESET_SCAN_LIMS()";
 
       scedits[ js ].rad_lo = dataList[ jdx ].speedData[ jrx ].dataLeft;
       scedits[ js ].rad_hi = dataList[ jdx ].speedData[ jrx ].dataRight;
+      scedits[ js ].edited = false;
    }
 
    edata_plot();
@@ -735,8 +1041,8 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr
       }
    }
 
-   cRadLo = rlo;
-   cRadHi = rhi;
+   cRadLo = radl;
+   cRadHi = radr;
 DbgLv(1) << "EdataPlot:  cRadLo cRadHi" << cRadLo << cRadHi;
 DbgLv(1) << "EdataPlot:  dr0 drn" << edata->radius(0) << edata->radius(nrpts-1);
 DbgLv(1) << "EdataPlot:   ra0 rak" << ra[0] << ra[count-1];
@@ -915,11 +1221,14 @@ void US_GlobalEquil::assign_scanfit()
    
    for ( int jes = 0; jes < scedits.size(); jes++ )
    {
-      int    jed   = scedits[ jes ].dsindex;
-      int    jer   = scedits[ jes ].speedx;
-      int    jds   = scedits[ jes ].sscanx - 1;
-      edata        = &dataList[ jed ];
-      QString trip = triples[ jed ];
+      int    jdx   = scedits[ jes ].dsindex;
+      int    jrx   = scedits[ jes ].speedx;
+      int    jsx   = scedits[ jes ].sscanx - 1;
+      double radlo = scedits[ jes ].rad_lo;
+      double radhi = scedits[ jes ].rad_hi;
+      edata        = &dataList[ jdx ];
+      US_DataIO2::Scan* dscan = &edata->scanData[ jsx ];
+      QString trip = triples[ jdx ];
       QString chan = trip.section( "/", 1, 1 ).simplified();
 
       if ( ! channs.contains( chan ) )
@@ -932,8 +1241,8 @@ void US_GlobalEquil::assign_scanfit()
       scanfit.nbr_posr   = 0;
       scanfit.nbr_negr   = 0;
       scanfit.runs       = 0;
-      scanfit.start_ndx  = 0;
-      scanfit.stop_ndx   = scanfit.points - 1;
+      scanfit.start_ndx  = index_radius( edata, radlo );
+      scanfit.stop_ndx   = index_radius( edata, radhi );
       scanfit.cell       = trip.section( "/", 0, 0 ).simplified().toInt();
       scanfit.channel    = channs.indexOf( chan ) + 1;
       scanfit.lambda     = trip.section( "/", 2, 2 ).simplified().toInt();
@@ -941,11 +1250,13 @@ void US_GlobalEquil::assign_scanfit()
       scanfit.baseline   = edata->baseline;
       scanfit.pathlen    = 1.2;
       scanfit.density    = DENS_20W;
-      scanfit.tempera    = edata->scanData[  jds ].temperature;
-      scanfit.rpm        = edata->speedData[ jer ].speed;
+      scanfit.tempera    = dscan->temperature;
+      scanfit.rpm        = (int)edata->speedData[ jrx ].speed;
+      scanfit.runID      = edata->runID;
+      scanfit.descript   = edata->description;
 
-      scanfit.xvs     .clear();
-      scanfit.yvs     .clear();
+      scanfit.xvs.resize( scanfit.points );
+      scanfit.yvs.resize( scanfit.points );
       scanfit.amp_vals.clear();
       scanfit.amp_ndxs.clear();
       scanfit.amp_rngs.clear();
@@ -953,6 +1264,12 @@ void US_GlobalEquil::assign_scanfit()
       scanfit.amp_bnds.clear();
       scanfit.extincts.clear();
       scanfit.integral.clear();
+
+      for ( int jj = 0; jj < scanfit.points; jj++ )
+      {
+         scanfit.xvs[ jj ] = edata->radius( jj );
+         scanfit.yvs[ jj ] = edata->value( jsx, jj );
+      }
 
       scanfits << scanfit;
    }
@@ -1042,5 +1359,48 @@ void US_GlobalEquil::setup_runfit()
       runfit.eq_fits[ ii ] = false;
       runfit.eq_bnds[ ii ] = false;
    }
+}
+
+// Determine the index in the radius vector of a given radius
+int US_GlobalEquil::index_radius( US_DataIO2::EditedData* edat, double radius )
+{
+   int l_index = edat->x.size() - 1;
+   int r_index = -1;
+
+   while ( ++r_index < l_index )
+   {
+      if ( radius <= edat->radius( r_index ) )
+         break;
+   }
+
+   return r_index;
+}
+
+// Compose a string that centers a title string within a line
+QString US_GlobalEquil::centerInLine( const QString& titl_text, int linelen,
+      bool rightPad, const QChar end_char )
+{
+   int  tlen     = titl_text.length();       // title text length
+   int  plen     = ( linelen - tlen ) / 2;   // pad characters length
+   bool have_end = ( ! end_char.isNull() && end_char != ' ' );  // end char?
+
+   // Pad to the left in order to center the given text
+   QString linestr = QString().fill( ' ', plen ) + titl_text;
+
+   if ( rightPad )
+   {  // If also right-padding, add pad spaces to the right
+      plen     = linelen - tlen - plen;
+      linestr += QString().fill( ' ', plen );
+
+      // If an end character was given, use it at the end of the line
+      if ( have_end )
+         linestr.replace( linestr.length() - 1, 1, end_char );
+   }
+
+   // If an end character was given, use it at the beginning of the line
+   if ( have_end )
+      linestr.replace( 0, 1, end_char );
+
+   return linestr;
 }
 

@@ -60,6 +60,7 @@ US_ModelSelect::US_ModelSelect(
    for ( int ii = 0; ii < models.size(); ii++ )
       lw_models->addItem( models.at( ii ) );
 
+   lw_models->setCurrentRow( 0 );
    main->addWidget( lw_models );
 
    // Button Row

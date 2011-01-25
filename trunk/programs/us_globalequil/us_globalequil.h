@@ -132,6 +132,8 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       void edited_plot       ( void );
       void assign_scanfit    ( void );
       void setup_runfit      ( void );
+      int  index_radius      ( US_DataIO2::EditedData*, double );
+      QString centerInLine( const QString&, int, bool, const QChar );
 
       void help              ( void )
       { showHelp.show_help("global_equil.html"); };
