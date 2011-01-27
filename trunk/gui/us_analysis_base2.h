@@ -184,12 +184,6 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       void exclude_to    ( double );
       void smoothing     ( double );
       void update_disk_db( bool );
-      bool solinfo_db    ( US_DataIO2::EditedData*, QString&, QString&,
-                           QString&, QString& );
-      bool solinfo_disk  ( US_DataIO2::EditedData*, QString&, QString&,
-                           QString&, QString& );
-      bool bufvals_db    ( QString&, QString&, QString&, QString&, QString& );
-      bool bufvals_disk  ( QString&, QString&, QString&, QString&, QString& );
       bool verify_buffer ( void );
       void buffer_text   ( void );
       bool verify_vbar   ( void );
