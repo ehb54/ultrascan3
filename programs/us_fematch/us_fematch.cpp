@@ -12,6 +12,7 @@
 #include "us_matrix.h"
 #include "us_constants.h"
 #include "us_analyte_gui.h"
+#include "us_solution_vals.h"
 #include "us_passwd.h"
 #include "us_data_loader.h"
 #include "us_util.h"
@@ -480,30 +481,15 @@ void US_FeMatch::update( int drow )
    QString bvisc = le_viscosity->text();
    QString bcomp = le_compress ->text();
    QString svbar = le_vbar     ->text();
-   bool    bufin = false;
+   //bool    bufin = false;
    bool    bufvl = false;
 
-   if ( dkdb_cntrls->db() )
-   {  // data from db:          get buffer vals (try db, then disk)
-      bufin  = bufinfo_db(   edata, svbar, bufid, bguid, bdesc );
-DbgLv(2) << "D:ID: bufin bdesc" << bufin << bdesc;
-      bufin  = bufin ? bufin :
-               bufinfo_disk( edata, svbar, bufid, bguid, bdesc );
-DbgLv(2) << "D:IL: bufin bdesc" << bufin << bdesc;
-      bufvl  = bufvals_db(   bufid, bguid, bdesc, bdens, bvisc, bcomp );
-DbgLv(2) << "D:VD: bufin bdens" << bufin << bdens;
-      bufvl  = bufvl ? bufvl :
-               bufvals_disk( bufid, bguid, bdesc, bdens, bvisc, bcomp );
-DbgLv(2) << "D:VL: bufin bdens" << bufin << bdens;
-   }
-
-   else
-   {  // data from local disk:  get buffer vals from disk, if possible
-      bufin  = bufinfo_disk( edata, svbar, bufid, bguid, bdesc );
-DbgLv(2) << "L:IL: bufin bdesc" << bufin << bdesc;
-      bufvl  = bufvals_disk( bufid, bguid, bdesc, bdens, bvisc, bcomp );
-DbgLv(2) << "L:VL: bufin bdens" << bufin << bdens;
-   }
+   QString errmsg;
+   US_Passwd pw;
+   US_DB2* dbP = dkdb_cntrls->db() ?
+                 new US_DB2( pw.getPasswd() ) : 0;
+   bufvl = US_SolutionVals::values( dbP, edata, svbar, bdens,
+                                    bvisc, bcomp, errmsg );
 
    if ( bufvl )
    {
@@ -516,16 +502,12 @@ DbgLv(2) << "L:VL: bufin bdens" << bufin << bdens;
       density     = bdens.toDouble();
       viscosity   = bvisc.toDouble();
       compress    = bcomp.toDouble();
-
-      if ( ! bufin )
-         QMessageBox::warning( this, tr( "Data Missing" ),
-            tr( "Unable to load solution value (vbar) from data" ) );
    }
 
    else
    {
-      QMessageBox::warning( this, tr( "Data Missing" ),
-         tr( "Unable to load solution/buffer values from data" ) );
+      QMessageBox::warning( this, tr( "Solution/Buffer Fetch" ),
+            errmsg );
    }
 
    data_plot();
@@ -582,10 +564,11 @@ void US_FeMatch::data_plot( void )
    dscan           = &edata->scanData.last();
    int    point    = US_DataIO2::index( *dscan, dataList[ drow ].x,
                         dataList[ drow ].baseline );
+   point           = ( point < 5 ) ? 5 : point;
    double baseline = 0.0;
 
-   for ( int jj = point - 5; jj <= point + 5; jj++ )
-      baseline        = dscan->readings[ jj ].value;
+   for ( int jj = point - 5; jj < point + 6; jj++ )
+      baseline       += dscan->readings[ jj ].value;
 
    baseline       /= 11.0;
    double avgTemp  = edata->average_temperature();
@@ -2182,384 +2165,6 @@ void US_FeMatch::close_all()
       eplotcd->close();
 
    close();
-}
-
-// get buffer info from DB: ID, GUID, description
-bool US_FeMatch::bufinfo_db( US_DataIO2::EditedData* edata,
-      QString& svbar, QString& bufId, QString& bufGuid, QString& bufDesc )
-{
-   bool bufinfo = false;
-
-   QStringList query;
-   QString rawGUID  = edata->dataGUID;
-
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-
-   query << "get_rawDataID_from_GUID" << rawGUID;
-   db.query( query );
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      rawGUID = rawGUID.isEmpty() ? "(empty)" : rawGUID;
-DbgLv(1) << "***Unable to get raw Data ID from GUID" << rawGUID
-   << "lastErrno" << db.lastErrno();
-      return bufinfo;
-   }
-   db.next();
-   QString rawID    = db.value( 0 ).toString();
-   QString soluID   = db.value( 2 ).toString();
-QString expID=db.value(1).toString();
-DbgLv(2) << "BInfD: rawGUID rawID expID soluID"
- << rawGUID << rawID << expID << soluID;
-
-   query.clear();
-   query << "get_solutionBuffer" << soluID;
-   db.query( query );
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      query.clear();
-      query << "get_solutionIDs" << expID;
-      db.query( query );
-      db.next();
-      soluID = db.value( 0 ).toString();
-      query.clear();
-      query << "get_solutionBuffer" << soluID;
-      db.query( query );
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         soluID = soluID.isEmpty() ? "(empty)" : soluID;
-DbgLv(1) << "***Unable to get solutionBuffer from soluID" << soluID
-   << "lastErrno" << db.lastErrno();
-      }
-else DbgLv(1) << "+++ Got solutionBuffer from soluID" << soluID;
-      //return bufinfo;
-   }
-   db.next();
-   QString id       = db.value( 0 ).toString();
-   QString guid     = db.value( 1 ).toString();
-   QString desc     = db.value( 2 ).toString();
-DbgLv(2) << "BInfD: id guid desc" << id << guid << desc;
-
-   if ( !id.isEmpty() )
-   {
-      bufId         = id;
-      bufGuid       = guid.isEmpty() ? bufGuid : guid;
-      bufDesc       = desc.isEmpty() ? bufDesc : desc;
-      bufinfo       = true;
-   }
- 
-   query.clear();
-   query << "get_solution" << soluID;
-   db.query( query );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-DbgLv(1) << "***Unable to get solution vbar from soluID" << soluID
-   << "lastErrno" << db.lastErrno();
-   }
-   else
-   {
-      db.next();
-      svbar  = db.value( 2 ).toString();
-DbgLv(1) << "+++ Got solution vbar from soluID" << soluID << ": " << svbar;
-   }
-
-   return bufinfo;
-}
-
-// get buffer info from local disk: ID, GUID, description
-bool US_FeMatch::bufinfo_disk( US_DataIO2::EditedData* edata,
-   QString& svbar, QString& bufId, QString& bufGuid, QString& bufDesc )
-{
-   bool    bufinfo  = false;
-   QString soluGUID = "";
-
-   QString exppath = US_Settings::resultDir() + "/" + edata->runID + "/"
-      + edata->runID + "." + edata->dataType + ".xml";
-
-   QFile filei( exppath );
-   if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
-      return bufinfo;
-
-DbgLv(2) << "BInfL: runID dType" << edata->runID << edata->dataType;
-   QXmlStreamReader xml( &filei );
-
-   while ( ! xml.atEnd() )
-   {
-      xml.readNext();
-
-      if ( xml.isStartElement() )
-      {
-         QXmlStreamAttributes ats = xml.attributes();
-
-         if ( xml.name() == "buffer" )
-         {
-            QString id    = ats.value( "id"   ).toString();
-            QString guid  = ats.value( "guid" ).toString();
-            QString desc  = ats.value( "desc" ).toString();
-       
-            if ( ! id.isEmpty()  ||  ! guid.isEmpty() )
-            {
-               bufId         = id  .isEmpty() ? bufId   : id;
-               bufGuid       = guid.isEmpty() ? bufGuid : guid;
-               bufDesc       = desc.isEmpty() ? bufDesc : desc;
-               bufinfo       = true;
-            }
-            break;
-         }
-
-         else if ( xml.name() == "solution" )
-         {
-            soluGUID      = ats.value( "guid" ).toString();
-DbgLv(2) << "BInfL:   soluGUID" << soluGUID;
-         }
-      }
-   }
-
-   filei.close();
-
-   if ( ! bufinfo  &&  ! soluGUID.isEmpty() )
-   {  // no buffer info yet, but solution GUID found:  get buffer from solution
-      QString spath = US_Settings::dataDir() + "/solutions";
-      QDir    f( spath );
-      spath         = spath + "/";
-      QStringList filter( "S*.xml" );
-      QStringList names = f.entryList( filter, QDir::Files, QDir::Name );
-      QString fname;
-      QString bdens;
-      QString bvisc;
-      QString bcomp;
-
-      for ( int ii = 0; ii < names.size(); ii++ )
-      {
-         fname      = spath + names[ ii ];
-         QFile filei( fname );
-
-         if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
-            continue;
-
-         QXmlStreamReader xml( &filei );
-
-         while ( ! xml.atEnd() )
-         {
-            xml.readNext();
-
-            if ( xml.isStartElement() )
-            {
-               QXmlStreamAttributes ats = xml.attributes();
-
-               if (  xml.name() == "solution" )
-               {
-                  QString sguid = ats.value( "guid"         ).toString();
-                  if ( sguid != soluGUID )
-                     break;
-                  svbar         = ats.value( "commonVbar20" ).toString();
-DbgLv(1) << "+++ Got solution vbar" << svbar << "from file, GUID" << soluGUID;
-               }
-
-               else if (  xml.name() == "buffer" )
-               {
-                  QString bid   = ats.value( "id"   ).toString();
-                  QString bguid = ats.value( "guid" ).toString();
-                  QString bdesc = ats.value( "desc" ).toString();
-       
-                  if ( ! bid.isEmpty()  ||  ! bguid.isEmpty() )
-                  {
-                     bufId         = bid  .isEmpty() ? bufId   : bid;
-                     bufGuid       = bguid.isEmpty() ? bufGuid : bguid;
-                     bufDesc       = bdesc.isEmpty() ? bufDesc : bdesc;
-                     bufinfo       = true;
-                  }
-                  break;
-               }
-            }
-            if ( bufinfo )
-               break;
-         }
-         if ( bufinfo )
-            break;
-      }
-   }
-
-   return bufinfo;
-}
-
-// get buffer values from DB: density, viscosity, compressiblity
-bool US_FeMatch::bufvals_db( QString& bufId, QString& bufGuid, QString& bufDesc,
-      QString& dens, QString& visc, QString& comp )
-{
-   bool bufvals = false;
-
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-
-   QStringList query;
-   int idBuf     = bufId.isEmpty() ? -1 : bufId.toInt();
-   bufId         = ( idBuf < 1  )  ? "" : bufId;
-
-   if ( bufId.isEmpty()  &&  ! bufGuid.isEmpty() )
-   {
-      query.clear();
-      query << "get_bufferID" << bufGuid;
-      db.query( query );
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         bufGuid = bufGuid.isEmpty() ? "(empty)" : bufGuid;
-DbgLv(1) << "***Unable to get bufferID from GUID" << bufGuid
-   << "lastErrno" << db.lastErrno();
-      }
-      db.next();
-      bufId         = db.value( 0 ).toString();
-   }
-
-   if ( ! bufId.isEmpty() )
-   {
-      query.clear();
-      query << "get_buffer_info" << bufId;
-      db.query( query );
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-DbgLv(1) << "***Unable to get buffer info from bufID" << bufId
-   << "lastErrno" << db.lastErrno();
-         return bufvals;
-      }
-      db.next();
-      QString ddens = db.value( 5 ).toString();
-      QString dvisc = db.value( 4 ).toString();
-      QString dcomp = db.value( 2 ).toString();
-      dens          = ddens.isEmpty() ? dens : ddens;
-      visc          = dvisc.isEmpty() ? visc : dvisc;
-      comp          = dcomp.isEmpty() ? comp : dcomp;
-      bufvals       = true;
-   }
-
-   else
-   {
-      QString invID  = QString::number( US_Settings::us_inv_ID() );
-      query.clear();
-      query << "get_buffer_desc" << invID;
-      db.query( query );
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-DbgLv(1) << "***Unable to get buffer desc from InvID" << invID
-   << "lastErrno" << db.lastErrno();
-         return bufvals;
-      }
-
-      while ( db.next() )
-      {
-         QString desc = db.value( 1 ).toString();
-         
-         if ( desc == bufDesc )
-         {
-            bufId         = db.value( 0 ).toString();
-            break;
-         }
-      }
-
-      if ( ! bufId.isEmpty() )
-      {
-         query.clear();
-         query << "get_buffer_info" << bufId;
-         db.query( query );
-         if ( db.lastErrno() != US_DB2::OK )
-         {
-            bufId = bufId.isEmpty() ? "(empty)" : bufId;
-DbgLv(1) << "***Unable to get buffer info from bufID" << bufId
-   << "lastErrno" << db.lastErrno();
-            return bufvals;
-         }
-         db.next();
-         QString ddens = db.value( 5 ).toString();
-         QString dvisc = db.value( 4 ).toString();
-         QString dcomp = db.value( 2 ).toString();
-         dens          = ddens.isEmpty() ? dens : ddens;
-         visc          = dvisc.isEmpty() ? visc : dvisc;
-         comp          = dcomp.isEmpty() ? comp : dcomp;
-         bufvals       = true;
-      }
-   }
-
-   return bufvals;
-}
-
-// get buffer values from local disk: density, viscosity, compressiblity
-bool US_FeMatch::bufvals_disk( QString& bufId, QString& bufGuid,
-      QString& bufDesc, QString& dens, QString& visc, QString& comp )
-{
-   bool bufvals  = false;
-   bool dfound   = false;
-   QString bpath = US_Settings::dataDir() + "/buffers";
-   QDir    f( bpath );
-   bpath         = bpath + "/";
-   QStringList filter( "B*.xml" );
-   QStringList names = f.entryList( filter, QDir::Files, QDir::Name );
-   QString fname;
-   QString bdens;
-   QString bvisc;
-   QString bcomp;
-
-   for ( int ii = 0; ii < names.size(); ii++ )
-   {
-      fname      = bpath + names[ ii ];
-      QFile filei( fname );
-
-      if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
-         continue;
-
-DbgLv(2) << "  bvL: ii fname" << ii << names[ii];
-      QXmlStreamReader xml( &filei );
-
-      while ( ! xml.atEnd() )
-      {
-         xml.readNext();
-
-         if ( xml.isStartElement()  &&  xml.name() == "buffer" )
-         {
-            QXmlStreamAttributes ats = xml.attributes();
-            QString bid   = ats.value( "id"          ).toString();
-            QString bguid = ats.value( "guid"        ).toString();
-            QString bdesc = ats.value( "description" ).toString();
-
-            if ( bguid == bufGuid  ||  bid == bufId )
-            {
-               bdens    = ats.value( "density"         ).toString();
-               bvisc    = ats.value( "viscosity"       ).toString();
-               bcomp    = ats.value( "compressibility" ).toString();
-               dens     = bdens.isEmpty() ? dens : bdens;
-               visc     = bvisc.isEmpty() ? visc : bvisc;
-               comp     = bcomp.isEmpty() ? comp : bcomp;
-               bufvals  = true;
-DbgLv(2) << "  bvL:   i/g I/G dens" << bid << bguid << bufId << bufGuid << dens;
-DbgLv(2) << "  bvL:      visc comp" << visc << comp;
-            }
-
-            else if ( bdesc == bufDesc )
-            {
-               bdens    = ats.value( "density"         ).toString();
-               bvisc    = ats.value( "viscosity"       ).toString();
-               bcomp    = ats.value( "compressibility" ).toString();
-               dfound   = true;
-            }
-
-            break;
-         }
-      }
-
-      if ( bufvals )
-         break;
-   }
-
-DbgLv(2) << "  bvL:    bufvals dfound" << bufvals << dfound;
-   if ( ! bufvals  &&  dfound )
-   {
-      dens     = bdens.isEmpty() ? dens : bdens;
-      visc     = bvisc.isEmpty() ? visc : bvisc;
-      comp     = bcomp.isEmpty() ? comp : bcomp;
-      bufvals  = true;
-   }
-
-   return bufvals;
 }
 
 // use dialogs to alert user to change in experiment buffer

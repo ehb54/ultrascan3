@@ -171,14 +171,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       double  calc_baseline(  int  )  const;
       void    calc_residuals( void );
       void    close_all(      void );
-      bool    bufinfo_db(   US_DataIO2::EditedData*,
-                            QString&, QString&, QString&, QString& );
-      bool    bufinfo_disk( US_DataIO2::EditedData*,
-                            QString&, QString&, QString&, QString& );
-      bool    bufvals_db(   QString&, QString&, QString&,
-                            QString&, QString&, QString& );
-      bool    bufvals_disk( QString&, QString&, QString&,
-                            QString&, QString&, QString& );
       bool    verify_buffer( void );
       void    buffer_text(   void );
       bool    verify_vbar(   void );

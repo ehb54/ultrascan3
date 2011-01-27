@@ -11,6 +11,7 @@
 #include "us_data_loader.h"
 #include "us_db2.h"
 #include "us_passwd.h"
+#include "us_solution_vals.h"
 
 US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 {
@@ -324,44 +325,16 @@ void US_AnalysisBase2::load( void )
    QString bdens  = le_density  ->text();
    QString bvisc  = le_viscosity->text();
    QString svbar  = le_vbar     ->text();
-   bool    bufin  = false;
+   QString bcomp  = "";
+   QString errmsg = "";
    dbdisk         = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                             : US_Disk_DB_Controls::Disk;
+   US_Passwd pw;
+   US_DB2*   dbP  = ( dbdisk == US_Disk_DB_Controls::DB ) ?
+                    new US_DB2( pw.getPasswd() ) : 0;
 
-   if ( dbdisk == US_Disk_DB_Controls::Disk )
-   {  // Data from local disk: get solution/buffer vals (disk or db)
-      bufin  = solinfo_disk( &dataList[ 0 ], svbar, bufID, bguid, bdesc );
-      
-      if ( ! bufin )
-      {
-         QMessageBox::warning( this,
-            tr( "Data missing" ),
-            tr( "Unable to get solution values" ) );
-
-         return;
-      }
-
-      bufin  = bufvals_disk( bufID, bguid, bdesc, bdens, bvisc );
-
-      if ( ! bufin )
-      {
-         QMessageBox::warning( this,
-            tr( "Data missing" ),
-            tr( "Unable to get buffer values" ) );
-
-         return;
-      }
-   }
-
-   else
-   {  // Data from database:    get solution/buffer vals (db or disk)
-      bufin  = solinfo_db( &dataList[ 0 ], svbar, bufID, bguid, bdesc );
-      bufin  = bufin ? bufin :
-               solinfo_disk( &dataList[ 0 ], svbar, bufID, bguid, bdesc );
-      bufin  = bufvals_db(   bufID, bguid, bdesc, bdens, bvisc );
-      bufin  = bufin ? bufin :
-               bufvals_disk( bufID, bguid, bdesc, bdens, bvisc );
-   }
+   bool    bufin  = US_SolutionVals::values( dbP, &dataList[ 0 ], svbar,
+                                             bdens, bvisc, bcomp, errmsg );
 
    if ( bufin )
    {
@@ -373,6 +346,12 @@ void US_AnalysisBase2::load( void )
       viscosity   = bvisc.toDouble();
       vbar        = svbar.toDouble();
       buffLoaded  = true;
+   }
+
+   else
+   {
+      QMessageBox::warning( this, tr( "Solution/Buffer Values Fetch" ),
+         errmsg );
    }
 
    dataLoaded = true;
@@ -1015,13 +994,15 @@ QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2,
 
 double US_AnalysisBase2::calc_baseline( void ) const
 {
-   int                     row   = lw_triples->currentRow();
-   const US_DataIO2::Scan* scan  = &dataList[ row ].scanData.last();
-   int                     point = US_DataIO2::index( *scan, dataList[ row ].x, 
-                                   dataList[ row ].baseline );
-   double                  sum   = 0.0;
+   int    row   = lw_triples->currentRow();
+   const US_DataIO2::Scan*
+          scan  = &dataList[ row ].scanData.last();
+   int    point = US_DataIO2::index( *scan, dataList[ row ].x, 
+                                      dataList[ row ].baseline );
+          point = ( point < 5 ) ? 5 : point;
+   double sum   = 0.0;
    
-   for ( int j = point - 5;  j <= point + 5; j++ )
+   for ( int j = point - 5;  j < point + 6; j++ )
       sum += scan->readings[ j ].value;
 
    return sum / 11.0;
@@ -1218,394 +1199,6 @@ bool US_AnalysisBase2::mkdir( const QString& baseDir, const QString& subdir )
       tr( "Could not create the directory:\n" ) + baseDir + "/" + subdir );
    
    return false;
-}
-
-// Get solution/buffer info from DB: ID, GUID, description
-bool US_AnalysisBase2::solinfo_db( US_DataIO2::EditedData* edata,
-      QString& svbar, QString& bufId, QString& bufGuid, QString& bufDesc )
-{
-   bool bufinfo = false;
-
-   QStringList query;
-   QString rawGUID  = edata->dataGUID;
-
-   US_Passwd pw;
-   US_DB2 db( pw.getPasswd() );
-
-   query << "get_rawDataID_from_GUID" << rawGUID;
-   db.query( query );
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      QMessageBox::warning( this,
-         tr( "Data missing" ),
-         tr( "Unable to get raw data ID from GUID " ) + rawGUID + "\n" +
-           db.lastError() );
-
-      return bufinfo;
-   }
-
-   db.next();
-   QString rawID    = db.value( 0 ).toString();
-   QString expID    = db.value( 1 ).toString();
-   QString soluID   = db.value( 2 ).toString();
-
-   query.clear();
-   query << "get_solutionBuffer" << soluID;
-   db.query( query );
-   
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      QMessageBox::warning( this,
-         tr( "Data missing" ),
-         tr( "Unable to get solutionBuffer from solution ID " ) +
-         soluID + "\n" + db.lastError() );
-
-      query.clear();
-      query << "get_solutionIDs" << expID;
-      db.query( query );
-      db.next();
-      soluID = db.value( 0 ).toString();
-
-      query.clear();
-      query << "get_solutionBuffer" << soluID;
-      db.query( query );
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         QMessageBox::warning( this,
-            tr( "Data missing" ),
-            tr( "Unable to get solutionBuffer from solution ID" ) +
-              soluID + "\n" + db.lastError() );
-      }
-   }
-
-   db.next();
-   QString id       = db.value( 0 ).toString();
-   QString guid     = db.value( 1 ).toString();
-   QString desc     = db.value( 2 ).toString();
-
-   if ( ! id.isEmpty() )
-   {
-      bufId         = id;
-      bufGuid       = guid.isEmpty() ? bufGuid : guid;
-      bufDesc       = desc.isEmpty() ? bufDesc : desc;
-      bufinfo       = true;
-   }
- 
-   query.clear();
-   query << "get_solution" << soluID;
-   db.query( query );
-   
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      QMessageBox::warning( this,
-         tr( "Data missing" ),
-         tr( "Unable to get solution vbar from solution ID" ) +
-           soluID + "\n" + db.lastError() );
-   }
-   else
-   {
-      db.next();
-      svbar  = db.value( 2 ).toString();
-   }
-
-   return bufinfo;
-}
-
-// Get solution/buffer info from local disk: ID, GUID, description
-bool US_AnalysisBase2::solinfo_disk( US_DataIO2::EditedData* edata,
-   QString& svbar, QString& bufId, QString& bufGuid, QString& bufDesc )
-{
-   bool    bufinfo  = false;
-   QString soluGUID = "";
-
-   QString exppath = US_Settings::resultDir() + "/" + edata->runID + "/"
-      + edata->runID + "." + edata->dataType + ".xml";
-
-   QFile filei( exppath );
-   if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
-      return bufinfo;
-
-   QXmlStreamReader xml( &filei );
-
-   while ( ! xml.atEnd() )
-   {
-      xml.readNext();
-
-      if ( xml.isStartElement() )
-      {
-         QXmlStreamAttributes ats = xml.attributes();
-
-         if ( xml.name() == "buffer" )
-         {
-            QString id    = ats.value( "id"   ).toString();
-            QString guid  = ats.value( "guid" ).toString();
-            QString desc  = ats.value( "desc" ).toString();
-       
-            if ( ! id.isEmpty()  ||  ! guid.isEmpty() )
-            {
-               bufId         = id  .isEmpty() ? bufId   : id;
-               bufGuid       = guid.isEmpty() ? bufGuid : guid;
-               bufDesc       = desc.isEmpty() ? bufDesc : desc;
-               bufinfo       = true;
-               bufId         = bufId.isEmpty() ? "N/A"  : bufId;
-            }
-            break;
-         }
-
-         else if ( xml.name() == "solution" )
-         {
-            soluGUID = ats.value( "guid" ).toString();
-         }
-      }
-   }
-
-   filei.close();
-
-   if ( ! bufinfo  &&  ! soluGUID.isEmpty() )
-   {  // No buffer info yet, but solution GUID found:  get buffer from solution
-      QString spath = US_Settings::dataDir() + "/solutions/";
-      QDir    f( spath );
-
-      QStringList filter( "S*.xml" );
-      QStringList names = f.entryList( filter, QDir::Files, QDir::Name );
-      QString fname;
-      QString bdens;
-      QString bvisc;
-
-      for ( int ii = 0; ii < names.size(); ii++ )
-      {
-         fname = spath + names[ ii ];
-         QFile filei( fname );
-
-         if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
-            continue;
-
-         QXmlStreamReader xml( &filei );
-
-         while ( ! xml.atEnd() )
-         {
-            xml.readNext();
-
-            if ( xml.isStartElement() )
-            {
-               QXmlStreamAttributes ats = xml.attributes();
-
-               if (  xml.name() == "solution" )
-               {
-                  QString sguid = ats.value( "guid" ).toString();
-
-                  if ( sguid != soluGUID ) break;
-
-                  svbar  = ats.value( "commonVbar20" ).toString();
-               }
-
-               else if (  xml.name() == "buffer" )
-               {
-                  QString bid   = ats.value( "id"   ).toString();
-                  QString bguid = ats.value( "guid" ).toString();
-                  QString bdesc = ats.value( "desc" ).toString();
-       
-                  if ( ! bid.isEmpty()  ||  ! bguid.isEmpty() )
-                  {
-                     bufId         = bid  .isEmpty() ? bufId   : bid;
-                     bufId         = bufId.isEmpty() ? "N/A"   : bufId;
-                     bufGuid       = bguid.isEmpty() ? bufGuid : bguid;
-                     bufDesc       = bdesc.isEmpty() ? bufDesc : bdesc;
-                     bufinfo       = true;
-                  }
-                  break;
-               }
-            }
-            if ( bufinfo )
-               break;
-         }
-         if ( bufinfo )
-            break;
-      }
-   }
-
-   return bufinfo;
-}
-
-// Get buffer values from DB:  density, viscosity
-bool US_AnalysisBase2::bufvals_db( QString& bufId, QString& bufGuid,
-      QString& bufDesc, QString& dens, QString& visc )
-{
-   bool      bufvals = false;
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-
-   QStringList query;
-   int idBuf = bufId.isEmpty() ? -1    : bufId.toInt();
-   bufId     = ( idBuf < 1  )  ? "N/A" : bufId;
-
-   if ( bufId == "N/A"  &&  ! bufGuid.isEmpty() )
-   {
-      query.clear();
-      query << "get_bufferID" << bufGuid;
-      db.query( query );
-      
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-        QMessageBox::warning( this,
-            tr( "Data missing" ),
-            tr( "Unable to get buffer ID from buffer GUID " ) + bufGuid + "\n" +
-              db.lastError() );
-      }
-      else
-      {
-         db.next();
-         bufId = db.value( 0 ).toString();
-         bufId = bufId.isEmpty() ? "N/A" : bufId;
-      }
-   }
-
-   if ( bufId != "N/A" )
-   {
-      query.clear();
-      query << "get_buffer_info" << bufId;
-      db.query( query );
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         QMessageBox::warning( this,
-            tr( "Data missing" ),
-            tr( "Unable to get buffer information from buffer ID " ) +
-              bufId + "\n" + db.lastError() );
-
-         return bufvals;
-      }
-
-      db.next();
-      QString ddens = db.value( 5 ).toString();
-      QString dvisc = db.value( 4 ).toString();
-      dens          = ddens.isEmpty() ? dens : ddens;
-      visc          = dvisc.isEmpty() ? visc : dvisc;
-      bufvals       = true;
-   }
-   else
-   {
-      QString invID  = QString::number( US_Settings::us_inv_ID() );
-      query.clear();
-      query << "get_buffer_desc" << invID;
-      db.query( query );
-
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         QMessageBox::warning( this,
-            tr( "Data missing" ),
-            tr( "Unable to get buffer description for investigator " ) +
-              invID + "\n" + db.lastError() );
-
-         return bufvals;
-      }
-
-      while ( db.next() )
-      {
-         QString desc = db.value( 1 ).toString();
-         
-         if ( desc == bufDesc )
-         {
-            bufId         = db.value( 0 ).toString();
-            break;
-         }
-      }
-
-      if ( ! bufId.isEmpty() )
-      {
-         query.clear();
-         query << "get_buffer_info" << bufId;
-         db.query( query );
-
-         if ( db.lastErrno() != US_DB2::OK )
-         {
-           QMessageBox::warning( this,
-               tr( "Data missing" ),
-               tr( "Unable to get buffer information for buffer ID " ) +
-                 bufId + "\n" + db.lastError() );
-
-            return bufvals;
-         }
-
-         db.next();
-         QString ddens = db.value( 5 ).toString();
-         QString dvisc = db.value( 4 ).toString();
-         dens          = ddens.isEmpty() ? dens : ddens;
-         visc          = dvisc.isEmpty() ? visc : dvisc;
-         bufvals       = true;
-      }
-   }
-
-   return bufvals;
-}
-
-// Get buffer values from local disk:  density, viscosity
-bool US_AnalysisBase2::bufvals_disk( QString& bufId, QString& bufGuid,
-      QString& bufDesc, QString& dens, QString& visc )
-{
-   bool    bufvals = false;
-   bool    dfound  = false;
-   QString bpath   = US_Settings::dataDir() + "/buffers/";
-   QDir    f( bpath );
-
-   QStringList filter( "B*.xml" );
-   QStringList names = f.entryList( filter, QDir::Files, QDir::Name );
-   QString fname;
-   QString bdens;
-   QString bvisc;
-
-   for ( int ii = 0; ii < names.size(); ii++ )
-   {
-      fname = bpath + names[ ii ];
-      QFile filei( fname );
-
-      if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
-         continue;
-
-      QXmlStreamReader xml( &filei );
-
-      while ( ! xml.atEnd() )
-      {
-         xml.readNext();
-
-         if ( xml.isStartElement()  &&  xml.name() == "buffer" )
-         {
-            QXmlStreamAttributes ats = xml.attributes();
-            QString bid   = ats.value( "id"          ).toString();
-            QString bguid = ats.value( "guid"        ).toString();
-            QString bdesc = ats.value( "description" ).toString();
-
-            if ( bguid == bufGuid  ||  bid == bufId )
-            {
-               bdens    = ats.value( "density"       ).toString();
-               bvisc    = ats.value( "viscosity"     ).toString();
-               dens     = bdens.isEmpty() ? dens : bdens;
-               visc     = bvisc.isEmpty() ? visc : bvisc;
-               bufvals  = true;
-            }
-
-            else if ( bdesc == bufDesc )
-            {
-               bdens    = ats.value( "density"       ).toString();
-               bvisc    = ats.value( "viscosity"     ).toString();
-               dfound   = true;
-            }
-
-            break;
-         }
-      }
-
-      if ( bufvals )
-         break;
-   }
-
-   if ( ! bufvals  &&  dfound )
-   {
-      dens    = bdens.isEmpty() ? dens : bdens;
-      visc    = bvisc.isEmpty() ? visc : bvisc;
-      bufvals = true;
-   }
-
-   return bufvals;
 }
 
 // Use dialogs to alert user to change in experiment buffer
