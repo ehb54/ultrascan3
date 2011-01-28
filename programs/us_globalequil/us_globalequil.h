@@ -9,6 +9,8 @@
 #include "us_dataIO2.h"
 #include "us_db2.h"
 #include "us_globeq_data.h"
+#include "us_eqmodel_control.h"
+#include "us_eqreporter.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -20,6 +22,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
 	
 	public:
 		US_GlobalEquil();
+
 
 	private:
       QVector< ScanEdit >               scedits;
@@ -37,8 +40,13 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
 
       US_Disk_DB_Controls*     dkdb_cntrls;
 
+      US_EqModelControl*       emodctrl;
+      US_EqReporter*           ereporter;
+
       QList< double >          speed_steps;
       QList< double >          aud_params;
+      QList< double >          ds_vbar20s;
+      QList< double >          ds_densities;
 
       US_Help        showHelp;
       US_Plot*       eplot;
@@ -86,6 +94,8 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       int            vecknt;
       int            ntscns;
       int            modelx;
+      int            sscanx;
+      int            sscann;
              
       double         rpm_start;
       double         sRadLo;
@@ -101,6 +111,8 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       bool           mDown;
       bool           mMoved;
       bool           mLowerH;
+      bool           model_widget;
+      bool           signal_mc;
 
    private slots:
       void load              ( void );
@@ -132,8 +144,8 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       void edited_plot       ( void );
       void assign_scanfit    ( void );
       void setup_runfit      ( void );
+      void new_scan( int );
       int  index_radius      ( US_DataIO2::EditedData*, double );
-      QString centerInLine( const QString&, int, bool, const QChar );
 
       void help              ( void )
       { showHelp.show_help("global_equil.html"); };

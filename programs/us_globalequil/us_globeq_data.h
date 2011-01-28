@@ -10,7 +10,7 @@ typedef struct ScanEdit_s
 {
    int    dsindex;    // Data set index of this scan
    int    speedx;     // Speed index within data set
-   int    sscanx;     // Scan index within data set
+   int    scannbr;    // Scan number within data set
    double rad_lo;     // Low radius value after edit
    double rad_hi;     // High radius value after edit
    bool   edited;     // Flag:  has scan been edited?

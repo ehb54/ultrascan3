@@ -1,7 +1,5 @@
 //! file us_globalequil.cpp
 #include <QApplication>
-#include "us_globalequil.h"
-#include "us_model_select.h"
 #include "us_images.h"
 #include "us_license_t.h"
 #include "us_license.h"
@@ -12,6 +10,12 @@
 #include "us_constants.h"
 #include "us_editor.h"
 #include "us_math2.h"
+#include "us_db2.h"
+#include "us_passwd.h"
+#include "us_solution_vals.h"
+#include "us_globalequil.h"
+#include "us_model_select.h"
+#include "us_eqreporter.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -261,16 +265,32 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
    mainLayout->addLayout( rightLayout ); 
    mainLayout->setStretchFactor( leftLayout,   3 );
    mainLayout->setStretchFactor( rightLayout,  5 );
+
+   emodctrl     = 0;
+   ereporter    = 0;
+   model_widget = false;
+   signal_mc    = true;
+}
+
+// Public slot to respond to a new scan selection, signalled externally
+void US_GlobalEquil::new_scan( int newscan )
+{
+   signal_mc = false;
+
+   scan_select( (double)newscan );
+
+   signal_mc = true;
 }
 
 // Load equilibrium data
 void US_GlobalEquil::load( void )
 {
-DbgLv(1) << "LOAD()";
    excludedScans.clear();
    dataList     .clear();
    rawList      .clear();
    triples      .clear();
+   ds_vbar20s   .clear();
+   ds_densities .clear();
 
    dataLoaded  = false;
    buffLoaded  = false;
@@ -287,33 +307,51 @@ DbgLv(1) << "LOAD()";
 
    if ( dialog->exec() != QDialog::Accepted )  return;
 
+   US_DB2* dbP   = NULL;
+
    if ( dkdb_cntrls->db() )
+   {
+      US_Passwd pw;
+      dbP        = new US_DB2( pw.getPasswd() );
+
       workingDir = tr( "(database)" );
+   }
 
    else
    {
       workingDir = workingDir.section( workingDir.left( 1 ), 4, 4 );
       workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
    }
-DbgLv(1) << " workingDir" << workingDir;
-DbgLv(1) << " dataList size" << dataList.size();
-//for ( int jj=0;jj<triples.size();jj++ ) DbgLv(1) << "  " << triples[jj];
 
    qApp->processEvents();
 
-   // Count the scans available in the data sets
+   // Count the total scans available in the data sets and get vbars,densities
    ntscns     = 0;
 
    for ( int jd = 0; jd < dataList.size(); jd++ )
+   {
       ntscns += dataList[ jd ].scanData.size();
 
+      QString s_vbar = QString::number( TYPICAL_VBAR );
+      QString s_dens = QString::number( DENS_20W );
+      QString s_visc;
+      QString s_comp;
+      QString s_emsg;
+      US_SolutionVals::values( dbP, &dataList[ jd ],
+                               s_vbar, s_dens, s_visc, s_comp, s_emsg );
+      ds_vbar20s   << s_vbar.toDouble();
+      ds_densities << s_dens.toDouble();
+   }
+DbgLv(1) << "  jd vbar20 density" << 0 << ds_vbar20s[0] << ds_densities[0];
+int nn=dataList.size()-1;
+DbgLv(1) << "  jd vbar20 density" << nn << ds_vbar20s[nn] << ds_densities[nn];
+
    // Build the table of available scans
-   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize(),
-         QFont::Bold );
+   QStringList headers;
+   QFont font( US_GuiSettings::fontFamily(),
+               US_GuiSettings::fontSize(), QFont::Bold );
    QFontMetrics fm( font );
    int rowHgt   = fm.lineSpacing();
-   tw_equiscns->setMaximumHeight( rowHgt * 60 + 12 );
-   tw_equiscns->setRowCount( ntscns );
    QString hdr1 = tr( "Scan" );
    QString hdr2 = tr( "CCW Triple" );
    QString hdr3 = tr( "Speed" );
@@ -323,15 +361,10 @@ DbgLv(1) << " dataList size" << dataList.size();
    int     whd3 = fm.width( hdr3 + "W" );
    int     whd4 = fm.width( hdr4 + "W" );
    int     whd0 = ( iconw * 3 ) / 2;
-DbgLv(1) << "rowHgt" << rowHgt;
-DbgLv(1) << "hdr" << hdr1 << " width" << whd1;
-DbgLv(1) << "hdr" << hdr2 << " width" << whd2;
-DbgLv(1) << "hdr" << hdr3 << " width" << whd3;
-DbgLv(1) << "hdr" << hdr4 << " width" << whd4;
-DbgLv(1) << "hdr" << " 0" << " width" << whd0;
-   QStringList headers;
 
    headers << "" << hdr1 << hdr2 << hdr3 << hdr4;
+   tw_equiscns->setMaximumHeight( rowHgt * 60 + 12 );
+   tw_equiscns->setRowCount( ntscns );
    tw_equiscns->setHorizontalHeaderLabels( headers );
    tw_equiscns->verticalHeader()->hide();
    tw_equiscns->setShowGrid( false );
@@ -398,7 +431,7 @@ DbgLv(1) << "hdr" << " 0" << " width" << whd0;
             // Build a scan edit record
             scedits[ jsscn ].dsindex  = jd;
             scedits[ jsscn ].speedx   = jr;
-            scedits[ jsscn ].sscanx   = js;
+            scedits[ jsscn ].scannbr  = js;
             scedits[ jsscn ].rad_lo   = sRadLo;
             scedits[ jsscn ].rad_hi   = sRadHi;
             scedits[ jsscn ].edited   = false;
@@ -435,10 +468,7 @@ DbgLv(1) << "eData readings size" << edata->scanData[0].readings.size();
 // Open a dialog to display details of the data selected
 void US_GlobalEquil::details( void )
 {
-DbgLv(1) << "DETAILS()";
-   QString runID  = edata->runID;
-
-   US_RunDetails2 dialog( rawList, runID, workingDir, triples );
+   US_RunDetails2 dialog( rawList, edata->runID, workingDir, triples );
    dialog.exec();
    qApp->processEvents();
 }
@@ -449,7 +479,6 @@ void US_GlobalEquil::view_report( void )
 // Unload all data
 void US_GlobalEquil::unload( void )
 {
-DbgLv(1) << "UNLOAD()";
    dataList.clear();
    rawList .clear();
    triples .clear();
@@ -474,309 +503,43 @@ DbgLv(1) << "UNLOAD()";
 void US_GlobalEquil::scan_diags( void )
 {
 DbgLv(1) << "SCAN_DIAGS()";
-   if ( ! dataLoaded )
+   if ( ! dataLoaded )                  // Don't bother if no data yet
       return;
 
-   QString rs;
+   if ( ereporter == 0 )                // Create reporter (1st time)
+      ereporter  = new US_EqReporter( dataList,
+          triples, scedits, scanfits, runfit, this );
 
-   QString asters;
-   asters.fill( '*', 80 ).append( "\n" );
-   QString plsrd = tr( "PLEASE READ THIS!" );
-   //int nls       = ( 80 - plsrd.length() ) / 2 + 10;
+   ereporter->scan_diagnostics();       // Generate and display report
 
-   // Compose opening general notes
-   rs  = "\n" + centerInLine( plsrd, 80, false, ' ' ) + "\n\n";
-   rs += tr( "Below is a listing of the ratios of slopes in the endpoints"
-             " of each indicated\n" );
-   rs += tr( "scan. If the ratios are less than 30, then there is little"
-             " information content\n" );
-   rs += tr( "in the scan and chances are that the experiment was improperly"
-             " set up and\n" );
-   rs += tr( "should be repeated.\n\n" );
-   rs += tr( "Additional warnings will be generated if the scan does not"
-             " contain enough\n" );
-   rs += tr( "data points or if the experimenter did not use the majority"
-             " of the linear\n" );
-   rs += tr( "absorbance range available (at least 0.6 OD between 0.0 OD"
-             " and 0.9 OD).\n\n" );
-   rs += tr( "These warnings are for your information only; they have no"
-             " effect on the rest\n" );
-   rs += tr( "of the program, since there are valid exceptions to these"
-             " warnings when\n" );
-   rs += tr( "including such scans is appropriate. Please refer to the"
-             " global equilibrium\n" );
-   rs += tr( "analysis tutorial for more information.\n\n" );
-
-   bool scprobs  = false;
-   int  dimvs    = dataList[ 0 ].x.size() * 3 / 2;
-   QVector< double > xvec( dimvs );
-   QVector< double > yvec( dimvs );
-   double* xx    = xvec.data();
-   double* yy    = yvec.data();
-
-   // Compose notes on each scan
+   // Modify scans list icons based on new fit flags
    for ( int jes = 0; jes < scedits.size(); jes++ )
    {
-      int    jdx   = scedits[ jes ].dsindex;  // data set index
-      double radlo = scedits[ jes ].rad_lo;   // radius low value
-      double radhi = scedits[ jes ].rad_hi;   // radius high value
-      QString s_scnn  = QString::number( jes + 1 );
-      QString s_trip  = triples[ jdx ];
-      QString s_cell  = s_trip.section( "/", 0, 0 ).simplified();
-      QString s_chan  = s_trip.section( "/", 1, 1 ).simplified();
-      QString s_wave  = s_trip.section( "/", 2, 2 ).simplified();
-      QString s_rpm   = QString::number( scanfits[ jes ].rpm );
+      if ( scanfits[ jes ].scanFit )    // Mark scan as fit/non-excluded
+         tw_equiscns->item( jes, 0 )->setIcon( green_arrow );
 
-      // Scan information header
-      rs += "\n";
-      rs += asters;
-      rs += tr( "Information for Scan " ) + s_scnn;
-      rs += tr( ",  Cell " ) + s_cell + tr( ", Channel " ) + s_chan;
-      rs += tr( ", Wavelength " ) + s_wave + " nm,  " + s_rpm + tr( " rpm\n" );
-      rs += "[  " + scanfits[ jes ].descript + "  ]\n";
-      rs += asters;
-
-      // Point to data, scan and this scan's data range
-      US_DataIO2::EditedData* sdata = &dataList[ jdx ];
-      int ivstx = index_radius( sdata, radlo );
-      int ivenx = index_radius( sdata, radhi );
-      int ivenn = ivenx + 1;
-      int npts  = ivenn - ivstx;
-      scanfits[ jes ].start_ndx = ivstx;
-      scanfits[ jes ].stop_ndx  = ivenx;
-
-      if ( npts > dimvs )
-      {  // If need be (unlikely), resize the work x,y vectors
-         dimvs  = npts + 10;
-         xvec.resize( dimvs );
-         yvec.resize( dimvs );
-         xx     = xvec.data();
-         yy     = yvec.data();
-      }
-DbgLv(1) << "SDiag: jes" << jes << "ivstx ivenx npts" << ivstx << ivenx << npts;
-DbgLv(1) << "SDiag:  radlo radhi" << radlo << radhi
-   << " rs re" << sdata->radius(ivstx) << sdata->radius(ivenx)
-   << " r0 rn" << sdata->radius(0) << sdata->radius(sdata->x.size()-1);
-
-      int nwarns = 0;             // Initialize for scan analysis
-
-      if ( npts > 50 )
-      {  // If sufficient points, analyze slopes and ratios
-         int nspts  = npts / 5;
-         int knt    = 0;
-         double slope1 = 0.0;
-         double slope2 = 0.0;
-         double icept  = 0.0;
-         double sigma  = 0.0;
-         double corr   = 0.0;
-
-         for ( int jj = ivstx; jj < ivstx + nspts; jj++ )
-         {  // Acculumate work arrays of beginning points
-            xx[ knt ] = scanfits[ jes ].xvs[ jj ];
-            yy[ knt ] = scanfits[ jes ].yvs[ jj ];
-            knt++;
-         }
-
-         // Get the slope at the beginning, then get ystart
-         US_Math2::linefit( &xx, &yy, &slope1, &icept, &sigma, &corr, knt );
-DbgLv(1) << "SDiag:   knt slope1 icept" << knt << slope1 << icept;
-         double xstart = xx[ 0 ];
-         double ystart = slope1 * xstart + icept;
-
-         knt        = 0;
-         nspts      = npts / 10;
-
-         for ( int jj = ivenn - nspts; jj < ivenn; jj++ )
-         {  // Accumulate work arrays of ending points
-            xx[ knt ] = scanfits[ jes ].xvs[ jj ];
-            yy[ knt ] = scanfits[ jes ].yvs[ jj ];
-            knt++;
-         }
-
-         // Get the slope at the end, then get yend
-         US_Math2::linefit( &xx, &yy, &slope2, &icept, &sigma, &corr, knt );
-DbgLv(1) << "SDiag:   knt slope2 icept" << knt << slope2 << icept;
-DbgLv(1) << "SDiag:    y0 y1 ym yn" << yy[0] << yy[1] << yy[knt-2] << yy[knt-1];
-         double xend   = xx[ knt - 1 ];
-         double yend   = slope2 * xend + icept;
-DbgLv(1) << "SDiag:     xend yend" << xend << yend << icept;
-
-         // Get slope ratio and absorbance range
-         slope1        = ( slope1 == 0.0 ) ? 9.999999e-21 : slope1;
-         double ratio  = slope2 / slope1;
-         double rangea = yend - ystart;
-DbgLv(1) << "SDiag:     ratio rangea" << ratio << rangea;
-
-         rs += tr( "Slope at beginning: %1,  Slope at end %2,  "
-                   "Ratio: %3\n\n" ).arg( slope1 ).arg( slope2 ).arg( ratio );
-
-         // Determine and add notes for any warnings
-
-         if ( ratio > 0.0  &&  ratio < 1.5 )
-         {
-            rs += tr( "Warning: The ratio is very small - there is"
-                      " probably not enough\n" );
-            rs += tr( "information in this scan.\n" );
-            rs += tr( "Suggestion: use a higher speed. Also, check"
-                      " for aggregation!\n\n" );
-            nwarns++;
-         }
-
-         if ( slope1 < 0.0 )
-         {
-            rs += tr( "Warning: The start point slope for this scan"
-                      " is negative!\n" );
-            rs += tr( "Possible reasons: excessive noise in the data,"
-                      " or time invariant noise\n" );
-            rs += tr( "from interference data has not been subtracted.\n\n" );
-            nwarns++;
-         }
-
-         if ( slope2 < 0.0 )
-         {
-            rs += tr( "Warning: The end point slope for this scan"
-                      " is negative!\n" );
-            rs += tr( "Possible reasons: excessive noise in the data,"
-                      " or time invariant noise\n" );
-            rs += tr( "from interference data has not been subtracted.\n\n" );
-            nwarns++;
-         }
-
-         if ( rangea < 0.4 )
-         {
-            rs += tr( "Warning: This scan only spans %1 OD of the"
-                      " possible\n" ). arg( rangea );
-            rs += tr( "0.9 - 1.0 OD range the instrument allows.\n\n" );
-            nwarns++;
-         }
-
-         if ( yend < 0.6 )
-         {
-            rs += tr( "Warning: This scan's maximum absorbance is only "
-                      " %1 OD.\n" ).arg( yend );
-            rs += tr( "This is lower than the linear range of the XL-A"
-                      " which generally extends\n" );
-            rs += tr( "up to ~0.9 OD. You may be discarding information."
-                      " Check for Aggregation!\n\n" );
-            nwarns++;
-         }
-      }
-
-      // Add final notes on points and warnings
-
-      rs += tr( "Number of points in this scan: %1" ).arg( npts );
-
-      if ( npts >= 100 )
-         rs += tr( "\n\n" );
-
-      else
-      {
-         if ( npts >= 50 )
-            rs += tr( " (low!)\n\n" );
-         else
-            rs += tr( " (too low! Are the data below the OD cutoff?)\n\n" );
-         nwarns++;
-      }
-
-      if ( nwarns == 1 )
-         rs += tr( "There was 1 warning generated for this scan.\n" );
-
-      else
-         rs += tr( "There were %1 warnings generated for this scan.\n" )
-            .arg( nwarns );
-
-      if ( nwarns > 2 )
-      {
-         rs += tr( "Please check the scan to make sure it is appropriate"
-                   " for inclusion in a global fit!\n\n" );
-      }
-
-      else
-         rs += "\n";
-
-      QTableWidgetItem* item = tw_equiscns->item( jes, 0 );
-
-      if ( nwarns == 0 )
-      {  // Mark scan as fit/non-excluded
-         scanfits[ jes ].scanFit  = true;
-         scanfits[ jes ].autoExcl = false;
-         item->setIcon( green_arrow );
-      }
-
-      else
-      {  // Mark scan as non-fit/excluded
-         scanfits[ jes ].scanFit  = false;
-         scanfits[ jes ].autoExcl = true;
-         scprobs                  = true;
-         item->setIcon( blue_arrow );
-      }
-   }  // End:  scans loop
-
-   if ( scprobs )
-   {  // Pop up dialog warning of potential problems
-      QString wmsg = tr( "One or more scans have been excluded from the\n"
-                         "fit. The Diagnostics report will help you to\n"
-                         "determine which problems occurred. You can manually\n"
-                         "override scan exclusions and include them once\n"
-                         "you identify the reasons for the exclusion." );
-
-      QMessageBox::warning( this, tr( "Scan Problem(s)" ), wmsg );
+      else                              // Mark scan as non-fit/excluded
+         tw_equiscns->item( jes, 0 )->setIcon( blue_arrow );
    }
 
-   // Display scan diagnostics in an editor text dialog
-   US_Editor* ediag = new US_Editor( US_Editor::DEFAULT, true, "*.res", this );
-   ediag->setWindowTitle( tr( "Scan Diagnostics" ) );
-   QFont efont( US_GuiSettings::fontFamily(),
-                US_GuiSettings::fontSize() - 2 );
-   ediag->e->setFont( efont );
-   ediag->e->setText( rs );
-   QFontMetrics fm( efont );
-   int dwid = fm.width( asters ) + fm.width( "WW" );
-   int dhgt = fm.lineSpacing() * 50;
-   dwid     = ( ( dwid / 20 + 1 ) * 20 );
-   dhgt     = ( ( dhgt / 20 + 1 ) * 20 );
-   ediag->resize( dwid, dhgt );
-   ediag->move( pos() + QPoint( 400, 100 ) );
-   ediag->show();
-
-   // Output the text, also, to a reports file
-   QString basedir  = US_Settings::reportDir();
-   QString repdir   = edata->runID;
-   QDir folder( basedir );
-
-   if ( ! folder.exists( repdir ) )
-   {
-      if ( ! folder.mkdir( repdir ) )
-      {
-         QMessageBox::warning( this, tr( "File Error" ),
-            tr( "Could not create the directory:\n" )
-            + basedir + "/" + repdir );
-         return;
-      }
-   }
-
-   repdir = basedir + "/" + repdir + "/";
-   QString filename = repdir + "globeq.diagnostics.rpt";
-   QFile drf( filename );
-
-   if ( ! drf.open( QIODevice::WriteOnly | QIODevice::Text ) )
-   {
-      QMessageBox::warning( this, tr( "File Error" ),
-         tr( "Unable to open the file:\n" ) + filename );
-      return;
-   }
-
-   QTextStream ts( &drf );
-   ts << rs;
-   drf.close();
-
-   pb_conchist->setEnabled( true );
+   pb_conchist->setEnabled( true );     // Enable buttons now useable
    pb_modlCtrl->setEnabled( true );
    pb_initPars->setEnabled( true );
 }
 
 void US_GlobalEquil::check_scan_fit( void )
-{ DbgLv(1) << "CHECK_SCAN_FIT()"; }
+{
+DbgLv(1) << "CHECK_SCAN_FIT()";
+   if ( ereporter == 0 )                // Create reporter (1st time)
+      ereporter  = new US_EqReporter( dataList,
+          triples, scedits, scanfits, runfit, this );
+
+                                        // Generate and display report
+   bool crit = ereporter->check_scan_fit( modelx );
+
+   pb_fitcntrl->setEnabled( !crit );    // Fit Control if no critical errors
+}
+
 void US_GlobalEquil::conc_histogram( void )
 { DbgLv(1) << "CONC_HISTOGRAM()"; }
 
@@ -830,7 +593,28 @@ if(na==4) DbgLv(1) << "   par1-4: " << aud_params[0] << aud_params[1]
 }
 
 void US_GlobalEquil::model_control( void )
-{ DbgLv(1) << "MODEL_CONTROL()"; }
+{
+DbgLv(1) << "MODEL_CONTROL()";
+   if ( model_widget )
+   {
+      emodctrl->raise();
+   }
+
+   else
+   {
+      model_widget = true;
+      sscanx       = tw_equiscns->currentRow();
+      sscann       = sscanx + 1;
+
+      emodctrl = new US_EqModelControl(
+            scanfits, runfit, edata, modelx, models, model_widget, sscann );
+
+      connect( emodctrl, SIGNAL( update_scan( int ) ),
+               this,     SLOT(   new_scan(    int ) ) );
+
+      emodctrl->show();
+   }
+}
 void US_GlobalEquil::fitting_control( void )
 { DbgLv(1) << "FITTING_CONTROL()"; }
 void US_GlobalEquil::load_fit( void )
@@ -839,18 +623,70 @@ void US_GlobalEquil::monte_carlo( void )
 { DbgLv(1) << "MONTE_CARLO()"; }
 void US_GlobalEquil::float_params( void )
 { DbgLv(1) << "FLOAT_PARAMS()"; }
+
+// Initialize parameters and (if need be) open a model control dialog
 void US_GlobalEquil::init_params( void )
-{ DbgLv(1) << "INIT_PARAMS()"; }
+{
+DbgLv(1) << "INIT_PARAMS()";
+
+   // Count fitted scans and save the index to the first such
+   int fitx     = -1;
+   int nfit     = 0;
+   int fit_cell = -1;
+   int fit_chan = -1;
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      if ( scanfits[ ii ].scanFit )
+      {
+         nfit++;
+
+         if ( fitx < 0 )
+            fitx     = ii;
+      }
+   }
+
+   if ( nfit > 0 )
+   {
+      fit_cell = scanfits[ fitx ].cell;
+      fit_chan = scanfits[ fitx ].channel;
+DbgLv(1) << "GE:InPar: nfit fitx fit_cell fit_chan" << nfit << fitx
+   << fit_cell << fit_chan;
+   }
+
+   else
+   {
+      QMessageBox::warning( this, tr( "Scan Fits" ),
+         tr( "There are no scans to fit!\n\n"
+             "Please select one or more scans to be fitted." ) );
+      return;
+   }
+
+   model_control();
+
+   pb_floatPar->setEnabled( true );
+   pb_ckscfit ->setEnabled( true );
+}
 
 // Respond to a change in the selected scan
 void US_GlobalEquil::scan_select( double newscan )
 {
-   int jrow = (int)newscan - 1;
-//DbgLv(1) << "SCAN_SELECT()" << newscan << jrow;
+   sscann   = (int)newscan;
+   sscanx   = sscann - 1;
+DbgLv(1) << "SCAN_SELECT()" << sscann << sscanx;
 
-   tw_equiscns->setCurrentCell( jrow, 0 );     // Select the table row
+   tw_equiscns->setCurrentCell( sscanx, 1 );   // Select the table row
 
    clickedItem( tw_equiscns->currentItem() );  // Draw the appropriate plot
+
+DbgLv(1) << " GE:ScSel: signal_mc model_widget" << signal_mc << model_widget;
+   if ( signal_mc )
+   {
+      if ( model_widget )
+      {
+         emodctrl->new_scan( sscann );
+      }
+   }
 }
 
 void US_GlobalEquil::close_all( void )
@@ -898,6 +734,17 @@ void US_GlobalEquil::clickedItem( QTableWidgetItem* item )
    ct_scselect->setValue( (double)( row + 1 ) );
    connect( ct_scselect, SIGNAL( valueChanged( double ) ),
                          SLOT(   scan_select(  double ) ) );
+
+   sscanx   = row;
+   sscann   = sscanx + 1;
+DbgLv(1) << " GE:ClItem: signal_mc model_widget" << signal_mc << model_widget;
+   if ( signal_mc )
+   {
+      if ( model_widget )
+      {
+         emodctrl->new_scan( sscann );
+      }
+   }
 }
 
 // Find the data (triple and speed step) corresponding to a scan selection
@@ -936,24 +783,26 @@ bool US_GlobalEquil::findData( QString trip, double drpm, int& jdx, int& jrx )
 // Plot equilibrium data as ellipses in radius,absorbance plane
 void US_GlobalEquil::edata_plot()
 {
-   int     jsscn   = tw_equiscns->currentRow();
+   sscanx      = tw_equiscns->currentRow();
 
-   if ( jsscn < 0 )
+   if ( sscanx < 0 )
    {
-      jsscn  = 0;
-      tw_equiscns->setCurrentCell( jsscn, 0 );
-      edata  = &dataList[ 0 ];
-      spdata = &edata->speedData[ 0 ];
+      sscanx  = 0;
+      tw_equiscns->setCurrentCell( sscanx, 1 );
+      edata   = &dataList[ 0 ];
+      spdata  = &edata->speedData[ 0 ];
    }
 
-   int     iscan   = spdata->first_scan;
-   int     kscan   = spdata->scan_count;
-   int     jscan   = tw_equiscns->item( jsscn, 4 )->text().toInt();
+   sscann      = sscanx + 1;
+   int iscan   = spdata->first_scan;
+   int kscan   = spdata->scan_count;
+   int jscan   = tw_equiscns->item( sscanx, 4 )->text().toInt();
 
    if ( jscan < iscan  ||  jscan >= ( iscan + kscan ) )
    {
-      qDebug() << "Scan " << jscan << " not within speed data scan range:"
-         << iscan << " for" << kscan;
+      QMessageBox::warning( this, tr( "Scan Problem" ),
+         tr( "Scan %1 is not within speed data scan range: %2 for %3" )
+         .arg( jscan ).arg( iscan ).arg( kscan ) );
       return;
    }
 
@@ -974,7 +823,7 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr;
       tr( "Run: " ) + runID + tr( "  Edit: " ) + editID + "\n" +
       tr( "Cell " ) + cell + tr( ",  Channel " ) + chan +
       tr( ",  " ) + QString::number( drpm ) + tr( " rpm,  Scan " ) +
-      QString::number( jsscn + 1 ) );
+      QString::number( sscann ) );
    equil_plot->setAxisTitle( QwtPlot::yLeft,
       tr( "Absorbance (" ) + waveln + tr( " nm)" ) );
 
@@ -995,10 +844,10 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr;
    connect( pick, SIGNAL( cMouseDrag(   const QwtDoublePoint& ) ),
                   SLOT(   pMouseMoved( const QwtDoublePoint& ) ) );
 
-   if ( scedits[ jsscn ].edited )
+   if ( scedits[ sscanx ].edited )
    {
-      radl    = scedits[ jsscn ].rad_lo;
-      radr    = scedits[ jsscn ].rad_hi;
+      radl    = scedits[ sscanx ].rad_lo;
+      radr    = scedits[ sscanx ].rad_hi;
    }
 
    else
@@ -1010,7 +859,7 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr;
       sRadHi  = 0.0;
    }
 DbgLv(1) << "EdataPlot: radl radr" << radl << radr
-   << " edited" << scedits[jsscn].edited;
+   << " edited" << scedits[sscanx].edited;
 
    // Accumulate data points
    rvec.fill( 0.0, nrpts );
@@ -1043,11 +892,11 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr
 
    cRadLo = radl;
    cRadHi = radr;
-DbgLv(1) << "EdataPlot:  cRadLo cRadHi" << cRadLo << cRadHi;
-DbgLv(1) << "EdataPlot:  dr0 drn" << edata->radius(0) << edata->radius(nrpts-1);
-DbgLv(1) << "EdataPlot:   ra0 rak" << ra[0] << ra[count-1];
-DbgLv(1) << "EdataPlot:   va0 vak" << va[0] << va[count-1];
-DbgLv(1) << "EdataPlot:    count" << count;
+DbgLv(1) << "EdataPlot: cRadLo cRadHi" << cRadLo << cRadHi;
+DbgLv(1) << "EdataPlot: dr0 drn" << edata->radius(0) << edata->radius(nrpts-1);
+DbgLv(1) << "EdataPlot:  ra0 rak" << ra[0] << ra[count-1];
+DbgLv(1) << "EdataPlot:  va0 vak" << va[0] << va[count-1];
+DbgLv(1) << "EdataPlot:   count" << count;
    vecknt = count;
 
    double rpad = ( rhi - rlo ) * 0.05;  // pad range 5 percent beyond low,high
@@ -1151,14 +1000,11 @@ void US_GlobalEquil::pMouseDown( const QwtDoublePoint& p )
    sRadLo = p.x();
    double RadMid = ( cRadLo + cRadHi ) * 0.5;
    mLowerH = sRadLo < RadMid;
-
-DbgLv(1) << "pMouseDown pos" << p.x() << p.y();
 }
 
 // Respond to mouse button up (after move)
 void US_GlobalEquil::pMouseUp( const QwtDoublePoint& p )
 {
-DbgLv(1) << "pMouseUp pos" << p.x() << p.y();
    // If mouse never moved, ignore release; otherwise reset mouse condition
    if ( ! mMoved )
       return;
@@ -1180,12 +1026,9 @@ DbgLv(1) << "pMouseUp pos" << p.x() << p.y();
    }
 
    // Save the radius range of the edited scan
-   int jsscn = tw_equiscns->currentRow();
-   scedits[ jsscn ].edited  = true;
-   scedits[ jsscn ].rad_lo  = sRadLo;
-   scedits[ jsscn ].rad_hi  = sRadHi;
-DbgLv(1) << "pMouseUp sRadLo sRadHi" << sRadLo << sRadHi
-   << " cRadLo cRadHi" << cRadLo << cRadHi << " mLowerH" << mLowerH;
+   scedits[ sscanx ].edited  = true;
+   scedits[ sscanx ].rad_lo  = sRadLo;
+   scedits[ sscanx ].rad_hi  = sRadHi;
 
    // Turn off any zoom that might have been on
    eplot->btnZoom->setDown   ( false );
@@ -1210,20 +1053,21 @@ void US_GlobalEquil::pMouseMoved( const QwtDoublePoint& p )
       return;
 
    edited_plot();       // Re-draw plot curves showing edited points
-//DbgLv(1) << "pMouseMoved pos" << p.x() << p.y();
 }
 
+// Create the Scan Fits vector of parameters
 void US_GlobalEquil::assign_scanfit()
 {
-   EqScanFit scanfit;
    scanfits.clear();
+
+   EqScanFit   scanfit;
    QStringList channs;
    
    for ( int jes = 0; jes < scedits.size(); jes++ )
    {
       int    jdx   = scedits[ jes ].dsindex;
       int    jrx   = scedits[ jes ].speedx;
-      int    jsx   = scedits[ jes ].sscanx - 1;
+      int    jsx   = scedits[ jes ].scannbr - 1;
       double radlo = scedits[ jes ].rad_lo;
       double radhi = scedits[ jes ].rad_hi;
       edata        = &dataList[ jdx ];
@@ -1232,7 +1076,7 @@ void US_GlobalEquil::assign_scanfit()
       QString chan = trip.section( "/", 1, 1 ).simplified();
 
       if ( ! channs.contains( chan ) )
-         channs << chan;
+         channs << chan;    // build list of unique channels
 
       scanfit.scanFit    = false;
       scanfit.autoExcl   = false;
@@ -1247,9 +1091,9 @@ void US_GlobalEquil::assign_scanfit()
       scanfit.channel    = channs.indexOf( chan ) + 1;
       scanfit.lambda     = trip.section( "/", 2, 2 ).simplified().toInt();
       scanfit.meniscus   = edata->meniscus;
-      scanfit.baseline   = edata->baseline;
+      scanfit.baseline   = 0.0;
       scanfit.pathlen    = 1.2;
-      scanfit.density    = DENS_20W;
+      scanfit.density    = ds_densities[ jdx ];
       scanfit.tempera    = dscan->temperature;
       scanfit.rpm        = (int)edata->speedData[ jrx ].speed;
       scanfit.runID      = edata->runID;
@@ -1257,13 +1101,13 @@ void US_GlobalEquil::assign_scanfit()
 
       scanfit.xvs.resize( scanfit.points );
       scanfit.yvs.resize( scanfit.points );
-      scanfit.amp_vals.clear();
-      scanfit.amp_ndxs.clear();
-      scanfit.amp_rngs.clear();
-      scanfit.amp_fits.clear();
-      scanfit.amp_bnds.clear();
-      scanfit.extincts.clear();
-      scanfit.integral.clear();
+      scanfit.amp_vals.fill(   0.0, 1 );
+      scanfit.amp_ndxs.fill(     0, 1 );
+      scanfit.amp_rngs.fill(   0.0, 1 );
+      scanfit.amp_fits.fill( false, 1 );
+      scanfit.amp_bnds.fill( false, 1 );
+      scanfit.extincts.fill(   0.0, 1 );
+      scanfit.integral.fill(   0.0, 1 );
 
       for ( int jj = 0; jj < scanfit.points; jj++ )
       {
@@ -1275,6 +1119,7 @@ void US_GlobalEquil::assign_scanfit()
    }
 }
 
+// Set up global Run Fit parameters profile
 void US_GlobalEquil::setup_runfit()
 {
    runfit.nbr_comps    = 1;
@@ -1335,14 +1180,16 @@ void US_GlobalEquil::setup_runfit()
          break;
    }
 
+   double dvval  = TYPICAL_VBAR;
+   double dvrng  = dvval * 0.2;
    runfit.mw_vals  .fill(   0.0, runfit.nbr_comps );
    runfit.mw_ndxs  .fill(     0, runfit.nbr_comps );
    runfit.mw_rngs  .fill(   0.0, runfit.nbr_comps );
    runfit.mw_fits  .fill( false, runfit.nbr_comps );
    runfit.mw_bnds  .fill( false, runfit.nbr_comps );
-   runfit.vbar_vals.fill(  0.72, runfit.nbr_comps );
+   runfit.vbar_vals.fill( dvval, runfit.nbr_comps );
    runfit.vbar_ndxs.fill(     0, runfit.nbr_comps );
-   runfit.vbar_rngs.fill( 0.144, runfit.nbr_comps );
+   runfit.vbar_rngs.fill( dvrng, runfit.nbr_comps );
    runfit.vbar_fits.fill( false, runfit.nbr_comps );
    runfit.vbar_bnds.fill( false, runfit.nbr_comps );
    runfit.viri_vals.fill(   0.0, runfit.nbr_comps );
@@ -1374,33 +1221,5 @@ int US_GlobalEquil::index_radius( US_DataIO2::EditedData* edat, double radius )
    }
 
    return r_index;
-}
-
-// Compose a string that centers a title string within a line
-QString US_GlobalEquil::centerInLine( const QString& titl_text, int linelen,
-      bool rightPad, const QChar end_char )
-{
-   int  tlen     = titl_text.length();       // title text length
-   int  plen     = ( linelen - tlen ) / 2;   // pad characters length
-   bool have_end = ( ! end_char.isNull() && end_char != ' ' );  // end char?
-
-   // Pad to the left in order to center the given text
-   QString linestr = QString().fill( ' ', plen ) + titl_text;
-
-   if ( rightPad )
-   {  // If also right-padding, add pad spaces to the right
-      plen     = linelen - tlen - plen;
-      linestr += QString().fill( ' ', plen );
-
-      // If an end character was given, use it at the end of the line
-      if ( have_end )
-         linestr.replace( linestr.length() - 1, 1, end_char );
-   }
-
-   // If an end character was given, use it at the beginning of the line
-   if ( have_end )
-      linestr.replace( 0, 1, end_char );
-
-   return linestr;
 }
 
