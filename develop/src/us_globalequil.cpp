@@ -1788,224 +1788,226 @@ void US_GlobalEquil::update_limit(float new_limit) // each time a new od_limit i
 // function will check if all parameters have been assigned before fitting can commence
 void US_GlobalEquil::scan_check()
 {
-  unsigned int i = 0;
-  while (!scanfit_vector[i].FitScanFlag)
-  {
-    i++;
-  }
-  first_fitted_scan = i;
+   unsigned int i = 0;
+   while (!scanfit_vector[i].FitScanFlag)
+   {
+      i++;
+   }
+   first_fitted_scan = i;
 
 // first write out a project file:
-  QString ProjectFile = USglobal->config_list.result_dir + "/" + projectName + ".eq-project";
-  QFile p(ProjectFile);
-  if (p.open(IO_WriteOnly | IO_Translate))
-  {
-    QTextStream ts(&p);
-    ts << projectName << "\n";
-    p.close();
-  }
-  else
-  {
-    QMessageBox::message(tr("UltraScan Error:"), tr("Trouble writing the report file:\n\n")
-                  + "   " + ProjectFile + "\n\n"
+   QString ProjectFile = USglobal->config_list.result_dir + "/" + projectName + ".eq-project";
+   QFile p(ProjectFile);
+   if (p.open(IO_WriteOnly | IO_Translate))
+   {
+      QTextStream ts(&p);
+      ts << projectName << "\n";
+      p.close();
+   }
+   else
+   {
+      QMessageBox::message(tr("UltraScan Error:"), tr("Trouble writing the report file:\n\n")
+            + "   " + ProjectFile + "\n\n"
                   + tr("Please make sure the disk is not full or write protected"));
-                  return;
-  }
-  bool critical = false;
-  QString filename = USglobal->config_list.result_dir.copy() + "/scan_check.res";
-  QString name1, name2;
-  QFile f(filename);
-  if (f.open(IO_WriteOnly | IO_Translate))
-  {
-    QTextStream ts(&f);
-    ts << tr("In order to assure that the proper parameters are used for the fitting process\n");
-    ts << tr("the following information has been compiled about the components in your model\n");
-    ts << tr("and the scans included in the fit:\n\n");
-    ts << tr("Component Information:\n\n");
-    for (unsigned int i=0; i<runfit.components; i++)
-    {
-      if (!runfit.mw_fit[i])
+      return;
+   }
+   bool critical = false;
+   QString filename = USglobal->config_list.result_dir.copy() + "/scan_check.res";
+   QString name1, name2;
+   QFile f(filename);
+   if (f.open(IO_WriteOnly | IO_Translate))
+   {
+      QTextStream ts(&f);
+      ts << tr("In order to assure that the proper parameters are used for the fitting process\n");
+      ts << tr("the following information has been compiled about the components in your model\n");
+      ts << tr("and the scans included in the fit:\n\n");
+      ts << tr("Component Information:\n\n");
+      for (unsigned int i=0; i<runfit.components; i++)
       {
-        ts << tr("The molecular weight parameter for component ") << (i+1) << tr(" has been fixed.\n");
-      }
-      else
-      {
-        if(runfit.mw[i] == 0.0)
-        {
-          ts << tr("Although the molecular weight parameter for component ") << (i+1) << tr(" has been floated,\n");
-          ts << tr("the value for this parameter is equal to zero - fitting aborted!\n");
-          critical = true;
-        }
-        if(runfit.mw_range[i] == 0.0)
-        {
-          ts << tr("Although the molecular weight parameter for component ") << (i+1) << tr(" has been floated,\n");
-          ts << tr("the range for this parameter is equal to zero - fitting aborted!\n");
-          critical = true;
-        }
-      }
-      if (!runfit.vbar20_fit[i])
-      {
-        ts << tr("The vbar parameter for component ") << (i+1) << tr(" has been fixed.\n");
-      }
-      else
-      {
-        if(runfit.vbar20[i] == 0.0)
-        {
-          ts << tr("Although the vbar parameter for component ") << (i+1) << tr(" has been floated,\n");
-          ts << tr("the value for this parameter is equal to zero - fitting aborted!\n");
-          critical = true;
-        }
-        if(runfit.vbar20_range[i] == 0.0)
-        {
-          ts << tr("Although the vbar parameter for component ") << (i+1) << tr(" has been floated,\n");
-          ts << tr("the range for this parameter is equal to zero - fitting aborted!\n");
-          critical = true;
-        }
-      }
-      if((unsigned long) (1000000 * runfit.vbar20[i] + 0.5) == 720000)
-      {
-        ts << tr("The value for vbar for component ") << (i+1) << tr(" has been left at 0.72,\n");
-        ts << tr("which is the default value - are you sure you want to use this value?\n");
-      }
-    }
-    for (unsigned int i=0; i<runfit.association_constants; i++)
-    {
-      if (!runfit.eq_fit[i])
-      {
-        ts << tr("The equilibrium constant ") << (i+1) << tr(" has been fixed - are you sure you want to do that?.\n");
-      }
-      else
-      {
-        if(runfit.eq[i] == 0.0)
-        {
-          ts << tr("Although the equilibrium constant ") << (i+1) << tr(" has been floated,\n");
-          ts << tr("the value for this parameter is equal to zero - fitting aborted!\n");
-          critical = true;
-        }
-        if(runfit.eq_range[i] == 0.0)
-        {
-          ts << tr("Although the equilibrium constant ") << (i+1) << tr(" has been floated,\n");
-          ts << tr("the range for this parameter is equal to zero - fitting aborted!\n");
-          critical = true;
-        }
-      }
-    }
-    bool same_lambda = true;
-    bool same_extinction = true;
-    unsigned int test_lambda = scanfit_vector[first_fitted_scan].lambda;
-    float test_extinction = scanfit_vector[first_fitted_scan].extinction[0];
-    for (unsigned int i=0; i<scanfit_vector.size(); i++)
-    {
-      if(scanfit_vector[i].FitScanFlag)
-      {
-        if(scanfit_vector[i].lambda != test_lambda)
-        {
-          same_lambda = false;
-        }
-        if(scanfit_vector[i].extinction[0] != test_extinction)
-        {
-          same_extinction = false;
-        }
-      }
-    }
-    if (model >= 4)
-    if (!same_lambda && same_extinction)
-    {
-      ts << tr("\nWarning:\n");
-      ts << tr("Your project contains scans with different wavelengths but identical extinction\n");
-      ts << tr("coefficients!\n");
-    }
-    if (!same_lambda && !same_extinction)
-    {
-      ts << tr("\nWarning:\n");
-      ts << tr("Your project contains scans with different wavelengths, make sure the extinction\n");
-      ts << tr("coefficients match!\n");
-    }
-    for (unsigned int i=0; i<scans_in_list; i++)
-    {
-      int split = lb_scans->text(i).find("rpm") + 3;
-      name1 = lb_scans->text(i);
-      name1.truncate(split);
-      name2 = lb_scans->text(i);
-      name2.remove(0, split+2);
-      ts << "                                                                                                                                                                             \n";
-      ts << "******************************************************************************************\n";
-      ts << tr("Information for Scan ") << name1 << "\n";
-      ts << "(" << name2 << ")\n";
-      ts << "******************************************************************************************\n\n";
-      if (!scanfit_vector[i].FitScanFlag)
-      {
-        ts << tr("This scan has been excluded from the fit.\n");
-      }
-      else
-      {
-        for (unsigned int j=0; j<runfit.components; j++)
-        {
-          if (!scanfit_vector[i].amplitude_fit[j])
-          {
-            ts << tr("The equilibrium constant ") << (j+1) << tr(" has been fixed - are you sure you want to do that?.\n");
-          }
-          else
-          {
-            if(scanfit_vector[i].amplitude[j] == 0.0)
+         if (!runfit.mw_fit[i])
+         {
+            ts << tr("The molecular weight parameter for component ") << (i+1) << tr(" has been fixed.\n");
+         }
+         else
+         {
+            if(runfit.mw[i] == 0.0)
             {
-              ts << tr("Although the amplitude for component ") << (j+1) << tr(" has been floated,\n");
-              ts << tr("the value for this parameter is equal to zero - fitting aborted!\n");
-              critical = true;
+               ts << tr("Although the molecular weight parameter for component ") << (i+1) << tr(" has been floated,\n");
+               ts << tr("the value for this parameter is equal to zero - fitting aborted!\n");
+               critical = true;
             }
-            if(scanfit_vector[i].amplitude_range[j] == 0.0)
+            if(runfit.mw_range[i] == 0.0)
             {
-              ts << tr("Although the amplitude for component ") << (j+1) << tr(" has been floated,\n");
-              ts << tr("the range for this parameter is equal to zero - fitting aborted!\n");
-              critical = true;
+               ts << tr("Although the molecular weight parameter for component ") << (i+1) << tr(" has been floated,\n");
+               ts << tr("the range for this parameter is equal to zero - fitting aborted!\n");
+               critical = true;
             }
-          }
-          if (runfit.association_constants > 0)
-          {
-            if(scanfit_vector[i].extinction[j] == 0.0)
+         }
+         if (!runfit.vbar20_fit[i])
+         {
+            ts << tr("The vbar parameter for component ") << (i+1) << tr(" has been fixed.\n");
+         }
+         else
+         {
+            if(runfit.vbar20[i] == 0.0)
             {
-              ts << tr("The extinction coefficient for component ") << (j+1) << tr(" is equal to zero - are you sure?\n");
-              ts << tr("(This could be valid if this component doesn't absorb at ") << scanfit_vector[i].wavelength << " nm)\n";
+               ts << tr("Although the vbar parameter for component ") << (i+1) << tr(" has been floated,\n");
+               ts << tr("the value for this parameter is equal to zero - fitting aborted!\n");
+               critical = true;
             }
-          }
-        }
-        if (!scanfit_vector[i].baseline_fit)
-        {
-          ts << tr("The baseline for this scan has been fixed - are you sure you want to do that?.\n");
-        }
-        else
-        {
-          if(scanfit_vector[i].baseline_range == 0.0)
-          {
-            ts << tr("Although the baseline for this scan has been floated,\n");
-            ts << tr("the range for this parameter is equal to zero - fitting aborted!\n");
-            critical = true;
-          }
-        }
-        if ((unsigned long) (1000000 * scanfit_vector[i].density + 0.5) == 998234 )
-        {
-          ts << tr("The density setting corresponds to pure water - are you sure you want to use that?.\n");
-        }
-        ts << "\n";
+            if(runfit.vbar20_range[i] == 0.0)
+            {
+               ts << tr("Although the vbar parameter for component ") << (i+1) << tr(" has been floated,\n");
+               ts << tr("the range for this parameter is equal to zero - fitting aborted!\n");
+               critical = true;
+            }
+         }
+         if((unsigned long) (1000000 * runfit.vbar20[i] + 0.5) == 720000)
+         {
+            ts << tr("The value for vbar for component ") << (i+1) << tr(" has been left at 0.72,\n");
+            ts << tr("which is the default value - are you sure you want to use this value?\n");
+         }
       }
-    }
-    if (!critical)
-    {
-      pb_fitcontrol->setEnabled(true);
-    }
-    else
-    {
-      pb_fitcontrol->setEnabled(false);
-    }
-  }
-  f.close();
-  //view_file(filename);
-  TextEdit *e;
-  e = new TextEdit();
-  e->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-  e->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
-  e->load(filename);
-  e->show();
+      for (unsigned int i=0; i<runfit.association_constants; i++)
+      {
+         if (!runfit.eq_fit[i])
+         {
+            ts << tr("The equilibrium constant ") << (i+1) << tr(" has been fixed - are you sure you want to do that?.\n");
+         }
+         else
+         {
+            if(runfit.eq[i] == 0.0)
+            {
+               ts << tr("Although the equilibrium constant ") << (i+1) << tr(" has been floated,\n");
+               ts << tr("the value for this parameter is equal to zero - fitting aborted!\n");
+               critical = true;
+            }
+            if(runfit.eq_range[i] == 0.0)
+            {
+               ts << tr("Although the equilibrium constant ") << (i+1) << tr(" has been floated,\n");
+               ts << tr("the range for this parameter is equal to zero - fitting aborted!\n");
+               critical = true;
+            }
+         }
+      }
+      bool same_lambda = true;
+      bool same_extinction = true;
+      unsigned int test_lambda = scanfit_vector[first_fitted_scan].lambda;
+      float test_extinction = scanfit_vector[first_fitted_scan].extinction[0];
+      for (unsigned int i=0; i<scanfit_vector.size(); i++)
+      {
+         if(scanfit_vector[i].FitScanFlag)
+         {
+            if(scanfit_vector[i].lambda != test_lambda)
+            {
+               same_lambda = false;
+            }
+            if(scanfit_vector[i].extinction[0] != test_extinction)
+            {
+               same_extinction = false;
+            }
+         }
+      }
+      if (model >= 4)
+      {
+         if (!same_lambda && same_extinction)
+         {
+            ts << tr("\nWarning:\n");
+            ts << tr("Your project contains scans with different wavelengths but identical extinction\n");
+            ts << tr("coefficients!\n");
+         }
+         if (!same_lambda && !same_extinction)
+         {
+            ts << tr("\nWarning:\n");
+            ts << tr("Your project contains scans with different wavelengths, make sure the extinction\n");
+            ts << tr("coefficients match!\n");
+         }
+      }
+      for (unsigned int i=0; i<scans_in_list; i++)
+      {
+         int split = lb_scans->text(i).find("rpm") + 3;
+         name1 = lb_scans->text(i);
+         name1.truncate(split);
+         name2 = lb_scans->text(i);
+         name2.remove(0, split+2);
+         ts << "                                                                                                                                                                             \n";
+         ts << "******************************************************************************************\n";
+         ts << tr("Information for Scan ") << name1 << "\n";
+         ts << "(" << name2 << ")\n";
+         ts << "******************************************************************************************\n\n";
+         if (!scanfit_vector[i].FitScanFlag)
+         {
+            ts << tr("This scan has been excluded from the fit.\n");
+         }
+         else
+         {
+            for (unsigned int j=0; j<runfit.components; j++)
+            {
+               if (!scanfit_vector[i].amplitude_fit[j])
+               {
+                  ts << tr("The equilibrium constant ") << (j+1) << tr(" has been fixed - are you sure you want to do that?.\n");
+               }
+               else
+               {
+                  if(scanfit_vector[i].amplitude[j] == 0.0)
+                  {
+                     ts << tr("Although the amplitude for component ") << (j+1) << tr(" has been floated,\n");
+                     ts << tr("the value for this parameter is equal to zero - fitting aborted!\n");
+                     critical = true;
+                  }
+                  if(scanfit_vector[i].amplitude_range[j] == 0.0)
+                  {
+                     ts << tr("Although the amplitude for component ") << (j+1) << tr(" has been floated,\n");
+                     ts << tr("the range for this parameter is equal to zero - fitting aborted!\n");
+                     critical = true;
+                  }
+               }
+               if (runfit.association_constants > 0)
+               {
+                  if(scanfit_vector[i].extinction[j] == 0.0)
+                  {
+                     ts << tr("The extinction coefficient for component ") << (j+1) << tr(" is equal to zero - are you sure?\n");
+                     ts << tr("(This could be valid if this component doesn't absorb at ") << scanfit_vector[i].wavelength << " nm)\n";
+                  }
+               }
+            }
+            if (!scanfit_vector[i].baseline_fit)
+            {
+               ts << tr("The baseline for this scan has been fixed - are you sure you want to do that?.\n");
+            }
+            else
+            {
+               if(scanfit_vector[i].baseline_range == 0.0)
+               {
+                  ts << tr("Although the baseline for this scan has been floated,\n");
+                  ts << tr("the range for this parameter is equal to zero - fitting aborted!\n");
+                  critical = true;
+               }
+            }
+            if ((unsigned long) (1000000 * scanfit_vector[i].density + 0.5) == 998234 )
+            {
+               ts << tr("The density setting corresponds to pure water - are you sure you want to use that?.\n");
+            }
+            ts << "\n";
+         }
+      }
+      if (!critical)
+      {
+         pb_fitcontrol->setEnabled(true);
+      }
+      else
+      {
+         pb_fitcontrol->setEnabled(false);
+      }
+   }
+   f.close();
+//view_file(filename);
+   TextEdit *e;
+   e = new TextEdit();
+   e->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   e->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
+   e->load(filename);
+   e->show();
 }
 
 // resets start and stop limits of data range to original values, truncates data at od_limit
