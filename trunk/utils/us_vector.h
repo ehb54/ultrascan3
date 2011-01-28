@@ -1,0 +1,46 @@
+//! \brief us_vector.h
+#ifndef US_VECTOR_H
+#define US_VECTOR_H
+
+#include <QtCore>
+#include "us_extern.h"
+
+//! \brief A collecion of vector routines for doubles.
+class US_EXTERN US_Vector : public QVector< double >
+{
+   public:
+      //! \brief Create a vector of doubles
+      //! \param The length of the vector
+      //! \param The initial values of the vector  
+      US_Vector      ( int, double = 0.0 );
+
+      //! \brief Add two vectors
+      //! \brief other The vector to be added
+      void   add     ( const US_Vector& );
+
+      //! \brief Add a constant ot every element of a vector
+      //! \brief value The constnat to add to the vector elements
+      void   add     ( double );
+
+      //! \Brief Calculate the dot product of two vectors
+      //! \param other The second vector of the calculation
+      double dot     ( const US_Vector& );
+
+      //! \brief Mutltiple the elements of tow vectors, eleement by element
+      //! \param other The second vector of the calculation
+      void   mult    ( const US_Vector& );
+
+      //! \brief Scale a vecotor by a constant value
+      //! \param value The constant to scal eeach element of the vector
+      void   scale   ( double );
+
+      //! \brief Calculate the Euclidean distance between two vectors
+      //! \param other The second vector of the calculation
+      double distance( const US_Vector& );
+
+   private:
+      QVector< double > v;
+
+};
+#endif
+
