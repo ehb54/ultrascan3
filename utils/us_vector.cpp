@@ -60,3 +60,13 @@ double US_Vector::distance( const US_Vector& other )
    return sqrt( value );
 }
 
+double US_Vector::L2norm( void )
+{
+   double value = 0.0;
+
+   for ( int i = 0; i < v.size(); i++ )
+      value += sq( v[ i ] );
+
+   return sqrt( value );
+}
+

@@ -10,8 +10,8 @@ class US_EXTERN US_Vector : public QVector< double >
 {
    public:
       //! \brief Create a vector of doubles
-      //! \param The length of the vector
-      //! \param The initial values of the vector  
+      //! \param size The length of the vector
+      //! \param value The initial values of the vector  
       US_Vector      ( int, double = 0.0 );
 
       //! \brief Add two vectors
@@ -22,7 +22,7 @@ class US_EXTERN US_Vector : public QVector< double >
       //! \brief value The constnat to add to the vector elements
       void   add     ( double );
 
-      //! \Brief Calculate the dot product of two vectors
+      //! \brief Calculate the dot product of two vectors
       //! \param other The second vector of the calculation
       double dot     ( const US_Vector& );
 
@@ -37,6 +37,9 @@ class US_EXTERN US_Vector : public QVector< double >
       //! \brief Calculate the Euclidean distance between two vectors
       //! \param other The second vector of the calculation
       double distance( const US_Vector& );
+
+      //! \brief Calculate the L2 norm of the two vector
+      double L2norm( void );
 
    private:
       QVector< double > v;
