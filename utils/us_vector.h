@@ -41,6 +41,22 @@ class US_EXTERN US_Vector : public QVector< double >
       //! \brief Calculate the L2 norm of the two vector
       double L2norm( void );
 
+      //! \brief Return the number of elements in the vector
+      int    size( void ){ return v.size(); };
+
+      // Note: Trying to use [] as an lvalue gets really complicated
+      // so it's not implemented here. See Stroustrup, 3rd Edition, 
+      // Section 11.12
+
+      //! \brief Assign a value to a vector element
+      //! \param i The element to change
+      //! \param d The value to assign to the element
+      void   assign( int i, double d ){ v[ i ] = d; };
+
+      //! \brief Return an element usign the [] operator
+      //! \param i The element to return
+      const double operator[]( int i ) const { return v[ i ]; };
+
    private:
       QVector< double > v;
 
