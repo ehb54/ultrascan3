@@ -42,7 +42,7 @@ class US_EXTERN US_Vector : public QVector< double >
       double L2norm( void );
 
       //! \brief Return the number of elements in the vector
-      int    size( void ){ return v.size(); };
+      int    size( void ) const { return v.size(); };
 
       // Note: Trying to use [] as an lvalue gets really complicated
       // so it's not implemented here. See Stroustrup, 3rd Edition, 
