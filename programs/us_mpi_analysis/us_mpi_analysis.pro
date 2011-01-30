@@ -14,15 +14,19 @@ MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 
 SOURCES      += us_mpi_analysis.cpp \
-                2dsa_master.cpp \
-                2dsa_worker.cpp \
-                us_mpi_parse.cpp
+                2dsa_master.cpp     \
+                2dsa_worker.cpp     \
+                ga_master.cpp       \
+                ga_worker.cpp       \
+                us_mpi_parse.cpp    \
+                us_tar.cpp
 
-HEADERS      += us_mpi_analysis.h
+HEADERS      += us_mpi_analysis.h \
+                us_tar.h
 
-INCLUDEPATH  += utils 
-DEPENDPATH   += utils
-LIBS         += -lus_utils -Llib
+INCLUDEPATH  += ../../utils ../../db
+DEPENDPATH   += ../../utils ../../db
+LIBS         += -lus_utils -lus_db -L../../lib
 
 # mpi references
 DEFINES      += OMPI_SKIP_MPICXX 
