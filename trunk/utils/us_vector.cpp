@@ -11,9 +11,9 @@ US_Vector::US_Vector( int size, double value )
 
 void US_Vector::add( const US_Vector& other )
 {
-   Q_ASSERT( other.size() == v.size() );
+   Q_ASSERT( other.QVector< double >::size() == v.size() );
 
-   for ( int i = 0; i < other.size(); i++ )
+   for ( int i = 0; i < v.size(); i++ )
       v[ i ] += other[ i ];
 }
 
@@ -25,7 +25,7 @@ void US_Vector::add( double value )
 
 double US_Vector::dot( const US_Vector& other )
 {
-   Q_ASSERT( other.size() == v.size() );
+   Q_ASSERT( other.QVector< double >::size() == v.size() );
    
    double value = 0.0;
 
@@ -37,7 +37,7 @@ double US_Vector::dot( const US_Vector& other )
 
 void US_Vector::mult( const US_Vector& other )
 {
-   Q_ASSERT( other.size() == v.size() );
+   Q_ASSERT( other.QVector< double >::size() == v.size() );
 
    for ( int i = 0; i < v.size(); i++ )
       v[ i ] *= other[ i ];
@@ -51,7 +51,7 @@ void US_Vector::scale( double value )
 
 double US_Vector::distance( const US_Vector& other )
 {
-   Q_ASSERT( other.size() == v.size() );
+   Q_ASSERT( other.QVector< double >::size() == v.size() );
    double value = 0.0;
 
    for ( int i = 0; i < v.size(); i++ )
