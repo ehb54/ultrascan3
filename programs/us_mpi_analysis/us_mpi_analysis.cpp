@@ -9,11 +9,8 @@ int main( int argc, char* argv[] )
 {
    MPI_Init( &argc, &argv );
    QCoreApplication application( argc, argv );
-   //US_MPI_Analysis* program = new US_MPI_Analysis( argv[ 1 ] );
+
    new US_MPI_Analysis( argv[ 1 ] );
-   
-   //QTimer::singleShot( 10, program, SLOT( start() ) );
-   //return application.exec();
 }
 
 // Constructor
@@ -36,7 +33,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
       int result = tar.extract( tarfile );
 
       if ( result != TAR_OK ) abort( "Could not unpack " + tarfile );
-      
+
       // Create a dedicated output directory and make sure it's empty
       // During testing, it may not always be empty
       QDir output( "." );
@@ -64,14 +61,21 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
 
    data_sets .clear();
    parameters.clear();
+   buckets   .clear();
    analysisDate = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
 
-   // Clear old list of output files if it exists
-   //QFile::remove( "analysis_files.txt" );
-
-   US_Math2::randomize();   // Set system random sequence
-
    parse( xmlfile );
+
+   uint seed = 0;
+   
+   if ( parameters.keys().contains( "seed" ) ) 
+   {
+      seed = parameters[ "seed" ].toUInt();
+      qsrand( seed + my_rank );   // Set system random sequence
+   }
+   else
+      US_Math2::randomize();
+
    send_udp( "Starting" );
 
    // Read data 
@@ -176,8 +180,51 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
       abort( "Meniscus value extends into data" );
    }
 
-   meniscus_run = 0;
-   mc_iteration = 0;
+   regularization          = parameters[ "regularization" ].toDouble();
+   concentration_threshold = parameters[ "conc_threshold" ].toDouble();
+
+   // Check GA buckets
+   if ( analysis_type == "GA" )
+   {
+      if ( buckets.size() < 2 )
+         abort( "Insufficient buckets defined" );
+
+      QList< QRectF > bucket_rects;
+
+      // Put into Qt rectangles (upper left, lower right points)
+      for ( int i = 0; i < buckets.size(); i++ )
+      {
+         bucket_rects << QRectF( 
+               QPointF( buckets[ i ].s_min, buckets[ i ].ff0_max ),
+               QPointF( buckets[ i ].s_max, buckets[ i ].ff0_min ) );
+      }
+
+      for ( int i = 0; i < bucket_rects.size() - 1; i++ )
+      {
+         for ( int j = i + 1; j < bucket_rects.size(); j++ )
+         {
+            if ( bucket_rects[ i ].intersects( bucket_rects[ j ] ) )
+               abort( "Buckets overlap" );
+         }
+      }
+   }
+
+   // Set some defaults
+   if ( ! parameters.contains( "mutate_sigma" ) ) 
+      parameters[ "mutate_sigma" ] = "2.0";
+
+   if ( ! parameters.contains( "p_mutate_s"   ) ) 
+      parameters[ "p_mutate_s"   ] = "20";
+
+   if ( ! parameters.contains( "p_mutate_k"   ) ) 
+      parameters[ "p_mutate_k"   ] = "20";
+
+   if ( ! parameters.contains( "p_mutate_sk"  ) ) 
+      parameters[ "p_mutate_sk"  ] = "20";
+
+   count_calc_residuals = 0;
+   meniscus_run         = 0;
+   mc_iteration         = 0;
    start();
 }
 
@@ -188,6 +235,7 @@ void US_MPI_Analysis::start( void )
    if ( analysis_type == "2DSA" )
    {
       iterations = parameters[ "montecarlo_value" ].toInt();
+
       if ( iterations < 1 ) iterations = 1;
       
       if ( my_rank == 0 ) 
@@ -195,12 +243,14 @@ void US_MPI_Analysis::start( void )
       else
           _2dsa_worker();
    }
-   /*
+
    else if ( analysis_type == "GA" )
    {
-
+      if ( my_rank == 0 ) 
+          ga_master();
+      else
+          ga_worker();
    }
-   */
    
    if ( my_rank == 0 )
    {

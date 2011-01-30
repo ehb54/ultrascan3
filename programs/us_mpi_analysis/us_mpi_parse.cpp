@@ -71,7 +71,7 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
       {
          a      = xml.attributes();
          server = QHostAddress( a.value( "server" ).toString() );
-         port   = a.value( "port" ).toString().toUShort();
+         port   = a.value( "port" ).toString().toInt();
       }
 
       if ( xml.isStartElement()  &&  xml.name() == "request" )
@@ -92,9 +92,23 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
 
             if ( xml.isStartElement() )
             {
-               QXmlStreamAttributes a    = xml.attributes();
-               QString              name = xml.name().toString();
-               parameters[ name ]        = a.value( "value" ).toString();
+               if ( xml.name() == "bucket" )
+               {
+                  QXmlStreamAttributes a    = xml.attributes();
+                  Bucket               b;
+                  b.s_min       = a.value( "s_min"   ).toString().toDouble();
+                  b.s_max       = a.value( "s_max"   ).toString().toDouble();
+                  b.ff0_min     = a.value( "ff0_min" ).toString().toDouble();
+                  b.ff0_max     = a.value( "ff0_max" ).toString().toDouble();
+
+                  buckets << b;
+               }
+               else
+               {
+                  QXmlStreamAttributes a    = xml.attributes();
+                  QString              name = xml.name().toString();
+                  parameters[ name ]        = a.value( "value" ).toString();
+               }
             }
          }
       }

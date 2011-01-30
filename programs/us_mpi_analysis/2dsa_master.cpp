@@ -32,21 +32,21 @@ qDebug() << "Start" << time.toString( "HHmmss.zzz" );
          worker_status[ worker ] = WORKING;
       }
 
-      QString progress = 
-         "Iteration: "    + QString::number( iterations ) +
-         "; Dataset: "    + QString::number( current_dataset ) +
-         "; Meniscus: "   + 
-              QString::number( meniscus_values[ meniscus_run ], 'f', 3 ) +
-         "; MonteCarlo: " + QString::number( mc_iteration );
-      
-      send_udp( progress );
+      // All done with the pass if no jobs are ready or running
+      if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
+      {
+         QString progress = 
+            "Iteration: "    + QString::number( iterations ) +
+            "; Dataset: "    + QString::number( current_dataset ) +
+            "; Meniscus: "   + 
+                 QString::number( meniscus_values[ meniscus_run ], 'f', 3 ) +
+            "; MonteCarlo: " + QString::number( mc_iteration );
+         
+         send_udp( progress );
 
 time        = QTime::currentTime();
 time_string = time.toString( "HHmmss.zzz" );
 
-      // All done with the pass if no jobs are ready or running
-      if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
-      {
          // Iterative refinement
          if ( iterations < max_iterations + 1 )
          {   
@@ -165,8 +165,8 @@ void US_MPI_Analysis::init_solutes( void )
    int grid_repetitions = parameters[ "uniform_grid" ].toInt();
    if ( grid_repetitions < 1 ) grid_repetitions = 1;
 
-   double s_step   = ( s_max   - s_min   ) / s_res;
-   double ff0_step = ( ff0_max - ff0_min ) / ff0_res;
+   double s_step   = ( s_max   - s_min   ) / ( s_res   - 1 );
+   double ff0_step = ( ff0_max - ff0_min ) / ( ff0_res - 1 );
 
    // Allow a 5% overscan
    s_max   += 0.05 * s_step;  // Assumes positive s
@@ -455,7 +455,16 @@ void US_MPI_Analysis::set_gaussians( void )
 void US_MPI_Analysis::write_output( void )
 {
    qSort( simulation_values.solutes );
-   write_2dsa();
+   
+   Simulation sim;
+   double     save_meniscus = meniscus_value;
+   sim.solutes              = calculated_solutes[ max_depth ]; 
+   sim.variance             = simulation_values.variance;
+   meniscus_value           = meniscus_values[ meniscus_run ];
+
+   //write_2dsa();
+   write_model( sim, US_Model::TWODSA );
+   meniscus_value = save_meniscus;
 
    if (  parameters[ "tinoise_option" ].toInt() > 0 )
       write_noise( US_Noise::TI, simulation_values.ti_noise );

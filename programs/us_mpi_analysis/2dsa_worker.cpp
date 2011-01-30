@@ -152,6 +152,7 @@ void US_MPI_Analysis::calc_residuals( int         offset,
                                       int         dataset_count,
                                       Simulation& simulation_values )
 {
+   count_calc_residuals++;
    int ti_noise_size = 0;
    int ri_noise_size = 0;
    int total_points  = 0;
@@ -200,16 +201,6 @@ void US_MPI_Analysis::calc_residuals( int         offset,
       }
    }
 
-static bool showb = true;
-if ( showb  && my_rank == 1 )
-{
-   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
-   for ( int i = 0; i < 20; i++ ) qDebug( "nnls[ %i ] = %f %f", i, data->radius( i ) , nnls_b[ i ] );
-   showb = false;
-}
-
-
-
    count = 0;
    QList< US_DataIO2::RawData > simulations;
 
@@ -219,12 +210,6 @@ if ( showb  && my_rank == 1 )
       {
          DataSet* data = data_sets[ e ];
 
-static bool done = false;
-if ( ! done && my_rank == 1 )
-{
-   for ( int x = 0; x < data->run_data.scanData.size(); x++ )
-      qDebug() << data->run_data.scanData[ x ].seconds;
-};
          // Create simulation parameters from experimental data
          US_SimulationParameters params;
          params.initFromData( NULL, data->run_data );
@@ -240,9 +225,7 @@ if ( ! done && my_rank == 1 )
          params.bottom = calc_bottom( e, rpm );
 
          params.meniscus = meniscus_value;
-
-if ( ! done && my_rank == 1 ) params.debug();
-
+         //params.debug();
 
          double vbar20 = data->vbar20;
          double s20w   = fabs( simulation_values.solutes[ i ].s );
@@ -275,39 +258,6 @@ if ( ! done && my_rank == 1 ) params.debug();
 
          US_Math2::data_correction( temperature, solution );
 
-if ( ! done )
-{
-/*
-               double a = R * K20;
-               double b = AVOGADRO * 18 * M_PI;
-               double c = f_f0;
-               double d = pow( f_f0 * VISC_20W / 100.0, 3.0/2.0);
-               double e1 = 2.0 * ( 1.0 - vbar20 * DENS_20W );
-               double f = s20w * vbar20;
-               double g = a / ( b * d * sqrt( f / e1 ) );
-
-               qDebug( "abcd %.15e %.15e %.15e %.15e %i",
-                     a, b, c, d, my_rank );
-
-               qDebug( "e1fg %.15e %.15e %.15e %i",
-                     e1, f, g, my_rank );
-
-               qDebug( "vbar %.15e %.15e  %i",
-                     vbar20, DENS_20W, my_rank );
-
-   qDebug() << "s20w, stb, D20w, Dtb, k" 
-      << s20w << s20w / solution.s20w_correction
-      << D20w << D20w / solution.D20w_correction
-      << f_f0 << my_rank;
-   qDebug() << "dens, visc, vbar20, vbar, s_corr, Dcorr"
-      << solution.density << solution.viscosity 
-      << solution.vbar20 << solution.vbar
-      << solution.s20w_correction
-      << solution.D20w_correction
-      << my_rank;
-   done = true;
-*/
-}
          US_Model                      model;
          US_Model::SimulationComponent component;
 
@@ -315,7 +265,6 @@ if ( ! done )
          component.D = D20w / solution.D20w_correction;
 
          model.components << component;
-if ( ! done  && s20w == 1.0e-13 && f_f0 == 1.0 ) model.debug();
 
          US_Astfem_RSA astfem_rsa( model, params );
 
@@ -326,20 +275,6 @@ if ( ! done  && s20w == 1.0e-13 && f_f0 == 1.0 ) model.debug();
          // Run the simulation
          astfem_rsa.calculate( sim_data );
 
-if ( ! done )
-{
-   QVector< double > values;
-   for ( int i = 0; i < 20; i++ ) values << sim_data.value( 0, i );
-   qDebug() << "s,k" << s20w << f_f0 << my_rank;
-   qDebug() << "simdata" << values << my_rank;
-   
-   QString times;
-   for ( int i = 0; i < sim_data.scanData.size(); i++ )
-      times += QString::number( sim_data.scanData[ i ].seconds ) + " ";
-   qDebug() << "scan times" << times << my_rank;
-
-   done = true;
-}
          simulations << sim_data;
 
          // Populate the A matrix for the NNLS routine with the model function:
