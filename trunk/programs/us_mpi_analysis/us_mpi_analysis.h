@@ -9,6 +9,7 @@
 #include "us_dataIO2.h"
 #include "us_noise.h"
 #include "us_simparms.h"
+#include "us_vector.h"
 
 #define MPI_COMM_WORLD2  (((MPI_Comm)(void*)&(ompi_mpi_comm_world)))
 #define MPI_BYTE2        (((MPI_Datatype)(void*)&(ompi_mpi_byte)))
@@ -36,6 +37,7 @@ class US_MPI_Analysis : public QObject
 
     int                 current_dataset;      // For global fit
     int                 datasets_to_process;  // For global fit
+    int                 count_calc_residuals; // Simple counter
 
     long int            maxrss;
     static const int    min_experiment_size      = 100;
@@ -73,6 +75,7 @@ class US_MPI_Analysis : public QObject
 
     QMap< QString, QString > parameters;
    
+// Convenience
 #define MESH US_SimulationParameters::MeshType
 #define GRID US_SimulationParameters::GridType
 
@@ -185,7 +188,7 @@ class US_MPI_Analysis : public QObject
     class Simulation
     {
       public:
-         double variance;
+         double            variance;
          QVector< double > variances;
          QVector< double > ti_noise;
          QVector< double > ri_noise;
@@ -195,6 +198,70 @@ class US_MPI_Analysis : public QObject
     Simulation simulation_values;
     Simulation previous_values;
 
+    // GA class variables and classes
+
+    class Bucket
+    {
+      public:
+         double s_min;
+         double s_max;
+         double ff0_min;
+         double ff0_max;
+         double ds;
+         double dk;
+    };
+
+    int                       generation;
+    int                       s_grid;
+    int                       k_grid;
+
+    typedef QVector< Solute > Gene;
+
+    double                    regularization;
+    double                    concentration_threshold;
+    QList< Bucket >           buckets;
+    QList< Gene >             genes;
+    QList< Simulation >       sim_values;
+
+    class Fitness
+    {
+      public:
+       int    index;      // Index into genes and sim_values lists
+       double fitness;
+
+       // Set the operators so we can sort a fitness list
+       bool operator== ( const Fitness& f )
+       {
+          return f.fitness == fitness;
+       }
+       
+       bool operator!= ( const Fitness& f )
+       {
+          return f.fitness != fitness;
+       }
+       
+       // Sort smallest to largest
+       bool operator< ( const Fitness& f ) const
+       {
+          return ( fitness < f.fitness );
+       }
+    };
+
+    QList< Fitness > fitness;
+
+    class MPI_GA_MSG
+    {
+      public:
+       int    generation;  // From worker: -1 = final; From master: 1 = done
+       int    size;        // Number of solutes in the following vector or
+                           // or genes requested for emmigration
+       double fitness;     // Fitness of best result
+    };
+
+    enum { GENERATION, GENE, IMMIGRATE, EMMIGRATE, FINISHED };
+
+    // Methods
+
     void     parse        ( const QString& );
     void     parse_job    ( QXmlStreamReader& );
     void     parse_dataset( QXmlStreamReader&, DataSet* );
@@ -203,10 +270,10 @@ class US_MPI_Analysis : public QObject
     void     abort        ( const QString&, int=-1 );
     long int max_rss      ( void );
 
-    QVector< Solute > create_solutes( double, double, double,
-                                      double, double, double );
-    void              init_solutes  ( void );
-    void              fill_queue    ( void );
+    Gene     create_solutes( double, double, double,
+                             double, double, double );
+    void     init_solutes  ( void );
+    void     fill_queue    ( void );
 
     // Master
     void     _2dsa_master      ( void );
@@ -221,6 +288,7 @@ class US_MPI_Analysis : public QObject
     void     write_output      ( void );
     void     set_gaussians     ( void );
     void     global_fit        ( void );
+    void     write_model       ( const Simulation&, US_Model::AnalysisType );
 
     // Worker
     void     _2dsa_worker      ( void );
@@ -266,6 +334,33 @@ class US_MPI_Analysis : public QObject
                                  QVector< double >&,
                                  const QVector< double >&,
                                  const QVector< double >& );
+
+    // GA Master
+    void ga_master      ( void );
+    void write_ga_output( const Simulation& );
+
+    // GA Worker
+    void   ga_worker    ( void );
+    Gene   new_gene     ( void );
+    //double calc_fitness ( const Simulation& );
+    void   init_fitness ( void );
+    void   mutate_s     ( Solute&, int );
+    void   mutate_k     ( Solute&, int );
+    void   mutate_gene  ( Gene& );
+    void   cross_gene   ( Gene& );
+    int    migrate_genes( void );
+    int    u_random     ( int=100 );
+    int    e_random     ( void );
+    double minimize     ( Gene&, double );
+    double get_fitness  ( const Gene& );
+    double get_fitness_v( const US_Vector& );
+    void   lamm_gsm_df  ( const US_Vector&, US_Vector& );
+    void   align_gene   ( Gene& );
+
+    // Debug
+    void dump_buckets( void );
+    void dump_genes  ( int );
+    void dump_fitness( const QList< Fitness >& );
 };
 #endif
 
