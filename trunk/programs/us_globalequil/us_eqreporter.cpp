@@ -41,9 +41,8 @@ DbgLv(1) << "SCAN_DIAGS()";
              " of each indicated\n" );
    rs += tr( "scan. If the ratios are less than 30, then there is little"
              " information content\n" );
-   rs += tr( "in the scan and chances are that the experiment was improperly"
-             " set up and\n" );
-   rs += tr( "should be repeated.\n\n" );
+   rs += tr( "in the scan and chances are that the experiment was"
+             " improperly set up\nand should be repeated.\n\n" );
    rs += tr( "Additional warnings will be generated if the scan does not"
              " contain enough\n" );
    rs += tr( "data points or if the experimenter did not use the majority"
@@ -51,12 +50,12 @@ DbgLv(1) << "SCAN_DIAGS()";
    rs += tr( "absorbance range available (at least 0.6 OD between 0.0 OD"
              " and 0.9 OD).\n\n" );
    rs += tr( "These warnings are for your information only; they have no"
-             " effect on the rest\n" );
-   rs += tr( "of the program, since there are valid exceptions to these"
-             " warnings when\n" );
-   rs += tr( "including such scans is appropriate. Please refer to the"
-             " global equilibrium\n" );
-   rs += tr( "analysis tutorial for more information.\n\n" );
+             " effect on the\n" );
+   rs += tr( "rest of the program, since there are valid exceptions to"
+             " these warnings\n" );
+   rs += tr( "when including such scans is appropriate. Please refer to"
+             " the global\n" );
+   rs += tr( "equilibrium analysis tutorial for more information.\n\n" );
 
    bool scprobs  = false;
    int  dimvs    = dataList[ 0 ].x.size() * 3 / 2;
@@ -262,10 +261,11 @@ DbgLv(1) << "SDiag:      ratio rangea" << ratio << rangea;
    ediag->e->setFont( efont );
    ediag->e->setText( rs );
    QFontMetrics fm( efont );
-   int dwid = fm.width( asters ) + fm.width( "WW" );
+   int dwid = maxLineWidth( fm, rs ) + fm.width( "WWW" );
+DbgLv(1) << "dwid" << dwid;
    int dhgt = fm.lineSpacing() * 50;
-   dwid     = ( ( dwid / 20 + 1 ) * 20 );
-   dhgt     = ( ( dhgt / 20 + 1 ) * 20 );
+   dwid     = ( ( dwid / 12 + 2 ) * 12 );
+   dhgt     = ( ( dhgt / 12 + 2 ) * 12 );
    ediag->resize( dwid, dhgt );
    ediag->move( wparent->pos() + QPoint( 400, 100 ) );
    ediag->show();
@@ -317,8 +317,8 @@ DbgLv(1) << "  EqRep:CSF: ffitx" << ffitx;
    rs += tr( "In order to assure that the proper parameters are used"
              " for the fitting process,\n" );
    rs += tr( "the following information has been compiled about the"
-             " components in your model\n" );
-   rs += tr( "and the scans included in the fit --\n\n"
+             " components in your\n" );
+   rs += tr( "model and the scans included in the fit --\n\n"
              "Component Information:\n\n" );
 
    for ( int jj = 0; jj < runfit.nbr_comps; jj++ )
@@ -548,10 +548,12 @@ DbgLv(1) << "  EqRep:CSF: test_extinc" << test_extinc;
    ediag->e->setFont( efont );
    ediag->e->setText( rs );
    QFontMetrics fm( efont );
-   int dwid = fm.width( asters ) + fm.width( "WW" );
+   int dwid = maxLineWidth( fm, rs ) + fm.width( "WWW" );
+DbgLv(1) << "  dwid" << dwid << " astw" << fm.width( asters );
    int dhgt = fm.lineSpacing() * 50;
-   dwid     = ( ( dwid / 20 + 1 ) * 20 );
-   dhgt     = ( ( dhgt / 20 + 1 ) * 20 );
+   dwid     = ( ( dwid / 12 + 2 ) * 12 );
+   dhgt     = ( ( dhgt / 12 + 2 ) * 12 );
+DbgLv(1) << "    dwid" << dwid;
    ediag->resize( dwid, dhgt );
    ediag->move( wparent->pos() + QPoint( 450, 150 ) );
    ediag->show();
@@ -649,5 +651,24 @@ QString US_EqReporter::scanInfoHeader( int jes, int jdx )
             + tr( ", Wavelength " ) + s_wave
             + " nm,  " + s_rpm + tr( " rpm" )
             + "\n   [  " + scanfits[ jes ].descript + "  ]\n" + asters );
+}
+
+// Return the maximum line in a report string
+int US_EqReporter::maxLineWidth( QFontMetrics& fm, const QString& repstr )
+{
+   QStringList rlines = repstr.split( "\n" );
+   int mxlen  = 0;
+   int lnlen  = 0;
+
+   for ( int ii = 0; ii < rlines.size(); ii++ )
+   {
+      if ( ( lnlen = fm.width( rlines[ ii ] ) ) > mxlen )
+      {
+         mxlen = lnlen;
+DbgLv(1) << "  mLW: ii lnlen" << ii << lnlen << " line:" << rlines[ii];
+      }
+   }
+
+   return mxlen;
 }
 

@@ -11,6 +11,7 @@
 #include "us_globeq_data.h"
 #include "us_eqmodel_control.h"
 #include "us_eqreporter.h"
+#include "us_eqmath.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -42,11 +43,13 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
 
       US_EqModelControl*       emodctrl;
       US_EqReporter*           ereporter;
+      US_EqMath*               emath;
 
       QList< double >          speed_steps;
       QList< double >          aud_params;
       QList< double >          ds_vbar20s;
-      QList< double >          ds_densities;
+      QList< double >          ds_densits;
+      QList< double >          ds_viscos;
 
       US_Help        showHelp;
       US_Plot*       eplot;

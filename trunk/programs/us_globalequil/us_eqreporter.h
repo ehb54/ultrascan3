@@ -40,6 +40,7 @@ class US_EXTERN US_EqReporter : public QObject
       int     index_radius(   US_DataIO2::EditedData*, double );
       QString centerInLine(   const QString&, int, bool, const QChar );
       QString scanInfoHeader( int, int );
+      int     maxLineWidth  ( QFontMetrics& fm, const QString& );
 };
 #endif
 

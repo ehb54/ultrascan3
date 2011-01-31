@@ -4,6 +4,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_constants.h"
+#include "us_math2.h"
 
 // Main constructor with references to parameters from main GlobalEquil class
 US_EqModelControl::US_EqModelControl(
@@ -146,7 +147,6 @@ US_EqModelControl::US_EqModelControl(
    globalLayout->addLayout( lo_l4lock,  row,   8, 1,  1 );
    globalLayout->addLayout( lo_l4bound, row++, 9, 1,  1 );
 
-   ct_grunpar->setStep( 1 );
    pb_lnasc1->setEnabled( false );
    pb_lnasc2->setEnabled( false );
    pb_lnasc3->setEnabled( false );
@@ -182,6 +182,13 @@ US_EqModelControl::US_EqModelControl(
    l4_grp->setExclusive( true );
    ck_l4bound->setEnabled( false );
 
+   ct_grunpar->setRange( 1, runfit.mw_vals.size(), 1 );
+   ct_grunpar->setStep( 1 );
+   ct_grunpar->setValue( 1 );
+   connect( ct_grunpar, SIGNAL( valueChanged( double ) ),
+            this,  SLOT( global_comp_changed( double ) ) );
+   global_comp_changed( 1.0 );
+qDebug() << "EMC: blobal_comp ulim" << runfit.mw_vals.size();
 
    // Local layout
    lb_lbanner           = us_banner(
@@ -319,9 +326,14 @@ US_EqModelControl::US_EqModelControl(
    am_grp->setExclusive( true );
    ck_ambound->setEnabled( false );
 
-   ct_lrunpar->setStep( 1 );
+   connect( ct_lrunpar, SIGNAL( valueChanged( double ) ),
+            this,   SLOT( local_comp_changed( double ) ) );
    connect( ct_scansel, SIGNAL( valueChanged( double ) ),
             this,       SLOT(   scan_changed( double ) ) );
+   ct_lrunpar->setRange( 1, scanfits[ 0 ].amp_vals.size(), 1 );
+   ct_lrunpar->setStep( 1 );
+   local_comp_changed( 1.0 );
+qDebug() << "EMC: local_comp ulim" << scanfits[0].amp_vals.size();
    ct_scansel->setRange( 1, scanfits.size(), 1 );
    ct_scansel->setStep( 1 );
    send_signal = false;
@@ -350,11 +362,13 @@ US_EqModelControl::US_EqModelControl(
    int scanx = selscan - 1;
    le_cdescr ->setText( scanfits[ scanx ].descript );
    le_runid  ->setText( scanfits[ scanx ].runID );
-   le_tempera->setText( QString::number( scanfits[ scanx ].tempera ) );
-   le_speed  ->setText( QString::number( scanfits[ scanx ].rpm )     );
-   le_wavelen->setText( QString::number( scanfits[ scanx ].lambda  ) );
-   le_pathlen->setText( QString::number( scanfits[ scanx ].pathlen ) );
-   le_blguess->setText( QString::number( scanfits[ scanx ].baseline ) );
+   le_tempera->setText( QString::number( scanfits[ scanx ].tempera )    );
+   le_speed  ->setText( QString::number( scanfits[ scanx ].rpm )        );
+   le_wavelen->setText( QString::number( scanfits[ scanx ].lambda )     );
+   le_pathlen->setText( QString::number( scanfits[ scanx ].pathlen )    );
+   le_blguess->setText( QString::number( scanfits[ scanx ].baseline )   );
+   le_blbound->setText( QString::number( scanfits[ scanx ].baseln_rng ) );
+   le_density->setText( QString::number( scanfits[ scanx ].density )    );
 
    le_densscn->setText( "1" );
    le_eodcscn->setText( "1" );
@@ -390,11 +404,16 @@ qDebug() << "EMC: scan_changed" << value;
    int scanx     = selscan - 1;
    le_cdescr ->setText( scanfits[ scanx ].descript );
    le_runid  ->setText( scanfits[ scanx ].runID );
-   le_tempera->setText( QString::number( scanfits[ scanx ].tempera ) );
-   le_speed  ->setText( QString::number( scanfits[ scanx ].rpm )     );
-   le_wavelen->setText( QString::number( scanfits[ scanx ].lambda  ) );
-   le_pathlen->setText( QString::number( scanfits[ scanx ].pathlen ) );
-   le_blguess->setText( QString::number( scanfits[ scanx ].baseline ) );
+   le_tempera->setText( QString::number( scanfits[ scanx ].tempera )    );
+   le_speed  ->setText( QString::number( scanfits[ scanx ].rpm )        );
+   le_wavelen->setText( QString::number( scanfits[ scanx ].lambda  )    );
+   le_pathlen->setText( QString::number( scanfits[ scanx ].pathlen )    );
+   le_blguess->setText( QString::number( scanfits[ scanx ].baseline )   );
+   le_blbound->setText( QString::number( scanfits[ scanx ].baseln_rng ) );
+   int compx     = (int)ct_lrunpar->value() - 1;
+   le_amguess->setText(
+         QString::number( scanfits[ scanx ].amp_vals[ compx ] ) );
+   le_density->setText( QString::number( scanfits[ scanx ].density ) );
 
    if ( send_signal )
    {
@@ -403,6 +422,58 @@ qDebug() << "EMC: scan_changed" << value;
 
    else
       send_signal = true;
+}
+
+// Private slot for change in global component number
+void US_EqModelControl::global_comp_changed( double value )
+{
+qDebug() << "EMC: global_comp_changed" << value;
+   int compn  = (int)value;
+   int compx  = compn - 1;
+   QString molwlb = lb_molecwt->text();
+   QString vbarpb = pb_vbar20 ->text();
+   QString comp_s = QString::number( compn );
+   int mwnx   = molwlb.lastIndexOf( "(" ) + 1;
+   int lnmwr  = molwlb.mid( mwnx ).lastIndexOf( ")" );
+   int vbnx   = vbarpb.lastIndexOf( "(" ) + 1;
+   int lnvbr  = vbarpb.mid( vbnx ).lastIndexOf( ")" );
+
+   molwlb.replace( mwnx, lnmwr, comp_s );
+   vbarpb.replace( vbnx, lnvbr, comp_s );
+   lb_molecwt->setText( molwlb );
+   pb_vbar20 ->setText( vbarpb );
+
+   le_mwguess->setText( QString::number( runfit.mw_vals[   compx ] ) );
+   le_mwbound->setText( QString::number( runfit.mw_rngs[   compx ] ) );
+   le_vbguess->setText( QString::number( runfit.vbar_vals[ compx ] ) );
+   le_vbbound->setText( QString::number( runfit.vbar_rngs[ compx ] ) );
+}
+
+// Private slot for change in local component number
+void US_EqModelControl::local_comp_changed( double value )
+{
+qDebug() << "EMC: local_comp_changed" << value;
+   int compn  = (int)value;
+   int compx  = compn - 1;
+   int scanx  = selscan - 1;
+
+   QString ampllb = lb_amplitu->text();
+   QString eodcpb = pb_eodcmmo->text();
+   QString comp_s = QString::number( compn );
+   int amnx   = ampllb.lastIndexOf( "(" ) + 1;
+   int lnamr  = ampllb.mid( amnx ).lastIndexOf( ")" );
+   int eonx   = eodcpb.lastIndexOf( "(" ) + 1;
+   int lneor  = eodcpb.mid( eonx ).lastIndexOf( ")" );
+   ampllb.replace( amnx, lnamr, comp_s );
+   eodcpb.replace( eonx, lneor, comp_s );
+   lb_amplitu->setText( ampllb );
+   pb_eodcmmo->setText( eodcpb );
+
+   le_amguess->setText(
+         QString::number( scanfits[ scanx ].amp_vals[ compx ] ) );
+   le_ambound->setText( "0.0" );
+   le_density->setText(
+         QString::number( scanfits[ scanx ].density ) );
 }
 
 // Select Model button:  set up to return data information
