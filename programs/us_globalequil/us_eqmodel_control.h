@@ -108,9 +108,12 @@ class US_EXTERN US_EqModelControl : public US_WidgetsDialog
       bool               send_signal;
              
    private slots:
-      void scan_changed( double );
-      void selected(     void );
-      void help    (     void )
+      void scan_changed(        double );
+      void global_comp_changed( double );
+      void local_comp_changed(  double );
+      void selected( void );
+
+      void help    ( void )
       { showHelp.show_help( "global_equil-modctrl.html" ); };
 };
 #endif

@@ -226,20 +226,20 @@ QString US_ModelSelect::function_equation( QStringList& comps )
    
    switch( smodelx )
    {  // Create unique function string and components (terms) list, ea. type
-      case 0:
+      case 0:     //  0: "1-Component, Ideal"
          msg = msg + "exp[ (ln(A) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ] + B";
          comps << "X" << "Xr" << "Aa" << "M" << "E" << "D" << "R" << "T"
                << "B";
          break;
-      case 1:
+      case 1:     //  1: "2-Component, Ideal, Noninteracting"
          msg = msg + "exp[ ln(A[1]) + M[1] * omega^2 * (1 - vbar[1] * D)"
             + " * (X^2 - Xr^2) / (2 * R * T) ]\n"
             + "  + exp[ (ln(A[2]) + M[2] * omega^2 * (1 - vbar[2] * D) * "
             + "(X^2 - Xr ^2) / (2 * R * T) ] + B";
          comps << "X" << "Xr" << "Aa" << "M" << "D" << "R" << "T" << "B";
          break;
-      case 2:
+      case 2:     //  2: "3-Component, Ideal, Noninteracting"
          msg = msg + "exp[ ln(A[1]) + M[1] * omega^2 * (1 - vbar[1] * D)"
             + " * (X^2 - Xr^2) / (2 * R * T) ]\n"
             + "  + exp[ (ln(A[2]) + M[2] * omega^2 * (1 - vbar[2] * D) * "
@@ -248,12 +248,12 @@ QString US_ModelSelect::function_equation( QStringList& comps )
             + "(X^2 - Xr^2) / (2 * R * T) ] + B";
          comps << "X" << "Xr" << "Aa" << "M" << "D" << "R" << "T" << "B";
          break;
-      case 3:
+      case 3:     //  3: "Fixed Molecular Weight Distribution"
          msg = msg + "A[i] * SUM[ exp[ M[i] * omega^2 * (1 - vbar[i] * D)"
             + " * (X^2 - Xr^2) / (2 * R * T) ] ] + B\n";
          comps << "X" << "Xr" << "Ai" << "Mi" << "D" << "R" << "T" << "B";
          break;
-      case 4:
+      case 4:     //  4: "Monomer-Dimer Equilibrium"
          msg = msg + "exp[ (ln(A) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (2 * (ln(A) + ln(2/(E*L)) + ln(K1,2) + 2 * M * omega^2"
@@ -261,7 +261,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "X" << "Xr" << "Aa" << "E" << "L" << "K1" << "M" << "D"
                << "R" << "T" << "B";
          break;
-      case 5:
+      case 5:     //  5: "Monomer-Trimer Equilibrium"
          msg = msg + "exp[ (ln(A) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (3 * (ln(A) + ln(3/(E*L)^2) + ln(K1,3) + 3 * M *"
@@ -269,7 +269,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "X" << "Xr" << "Aa" << "E" << "L" << "K1" << "M" << "D"
                << "R" << "T" << "B";
          break;
-      case 6:
+      case 6:     //  6: "Monomer-Tetramer Equilibrium"
          msg = msg + "exp[ (ln(A) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (4 * (ln(A) + ln(4/(E*L)^3) + ln(K1,4) + 4 * M *"
@@ -277,7 +277,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "X" << "Xr" << "Aa" << "E" << "L" << "K1" << "M" << "D"
                << "R" << "T" << "B";
          break;
-      case 7:
+      case 7:     //  7: "Monomer-Pentamer Equilibrium"
          msg = msg + "exp[ (ln(A) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (5 * (ln(A) + ln(5/(E*L)^4) + ln(K1,5) + 5 * M *"
@@ -285,7 +285,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "X" << "Xr" << "Aa" << "E" << "L" << "K1" << "M" << "D"
                << "R" << "T" << "B";
          break;
-      case 8:
+      case 8:     //  8: "Monomer-Hexamer Equilibrium"
          msg = msg + "exp[ (ln(A) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (6 * (ln(A) + ln(6/(E*L)^5) + ln(K1,6) + 6 * M *"
@@ -293,7 +293,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "X" << "Xr" << "Aa" << "E" << "L" << "K1" << "M" << "D"
                << "R" << "T" << "B";
          break;
-      case 9:
+      case 9:     //  9: "Monomer-Heptamer Equilibrium"
          msg = msg + "exp[ (ln(A) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (7 * (ln(A) + ln(7/(E*L)^6) + ln(K1,7) + 7 * M *"
@@ -301,7 +301,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "X" << "Xr" << "Aa" << "E" << "L" << "K1" << "M" << "D"
                << "R" << "T" << "B";
          break;
-      case 10:
+      case 10:    // 10: "User-Defined Monomer-Nmer Equilibrium"
          msg = msg + "exp[ (ln(A) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (N * ln(A) + ln(N/(E*L)^(N-1)) + ln(K1,N) + N * M *"
@@ -309,7 +309,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "X" << "Xr" << "Aa" << "E" << "L" << "K1" << "N" << "M"
                << "D" << "R" << "T" << "B";
          break;
-      case 11:
+      case 11:    // 11: "Monomer-Dimer-Trimer Equilibrium"
          msg = msg + "exp[ (ln(A) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (2 * (ln(A) + ln(2/(E*L)) + ln(K1,2) + 2 * M * omega^2"
@@ -319,7 +319,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "X" << "Xr" << "Aa" << "E" << "L" << "K1" << "M" << "D"
                << "R" << "T" << "B";
          break;
-      case 12:
+      case 12:    // 12: "Monomer-Dimer-Tetramer Equilibrium"
          msg = msg + "exp[ (ln(A) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (2 * (ln(A) + ln(2/(E*L)) + ln(K1,2) + 2 * M * omega^2"
@@ -329,7 +329,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "X" << "Xr" << "Aa" << "E" << "L" << "K1" << "M" << "D"
                << "R" << "T" << "B";
          break;
-      case 13:
+      case 13:    // 13: "User-Defined Monomer - N-mer - M-mer Equilibrium"
          msg = msg + "exp[ (ln(A) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (N1 * (ln(A) + ln(N1/(E*L)^(N1 - 1)) + ln(K1,N1) + N1 *"
@@ -339,7 +339,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "X" << "Xr" << "Aa" << "E" << "L" << "N1" << "N2" << "K1"
                << "M" << "D" << "R" << "T" << "B";
          break;
-      case 14:
+      case 14:    // 14: "2-Component Hetero-Association: A + B <=> AB"
          msg = msg + "exp[ (ln(A) + M_A * omega^2 * (1 - vbar_A * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (ln(B) + M_B * omega^2 * (1 - vbar_B * D) *"
@@ -350,7 +350,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "X"  << "Xr" << "Aa" << "Ab" << "E" << "L" << "KC" << "MA"
                << "MB" << "MC" << "D" << "R" << "T" << "B";
          break;
-      case 15:
+      case 15:    // 15: "U-Defined self/Hetero-Assoc.: A + B <=> AB, nA <=> An"
          msg = msg + "exp[ (ln(A) + M_A * omega^2 * (1 - vbar_A * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (ln(B) + M_B * omega^2 * (1 - vbar_B * D) *"
@@ -365,7 +365,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
                << "MA" << "MB" << "MC" << "VA" << "VB" << "VC"
                << "D" << "R" << "T" << "B";
          break;
-      case 16:
+      case 16:    // 16: "U-Defined Monomer-Nmer, some monomer is incompetent"
          msg = msg + "exp[ (ln(A1) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (N * ln(A1) + ln(N/(E * L)^(N - 1) + ln(K1,N) +"
@@ -376,7 +376,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "N"  << "X"  << "Xr" << "Aa" << "E" << "L" << "K1"
                << "M"  << "A1" << "A2" << "D" << "R" << "T" << "B";
          break;
-      case 17:
+      case 17:    // 17: "User-Defined Monomer-Nmer, some Nmer is incompetent"
          msg = msg + "exp[ (ln(A1) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (N * ln(A1) + ln(N/(E * L)^(N - 1) + ln(K1,N) +"
@@ -387,7 +387,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "N"  << "X"  << "Xr" << "Aa" << "E" << "L" << "K1"
                << "M"  << "A1" << "A2" << "D" << "R" << "T" << "B";
          break;
-      case 18:
+      case 18:    // 18: "User-Defined irreversible Monomer-Nmer"
          msg = msg + "exp[ (ln(A1) + M * omega^2 * (1 - vbar * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (N * ln(A1) + ln(N/(E * L)^(N - 1) + ln(K1,N) +"
@@ -400,7 +400,7 @@ QString US_ModelSelect::function_equation( QStringList& comps )
          comps << "N"  << "X"  << "Xr" << "Aa"  << "E" << "L" << "K1"
                << "M"  << "A1" << "A2" << "A3" << "D" << "R" << "T" << "B";
          break;
-      case 19:
+      case 19:    // 19: "User-Defined Monomer-Nmer plus contaminant"
          msg = msg + "exp[ (ln(A1) + M1 * omega^2 * (1 - vbar[1] * D)"
             + " * (X^2 - Xr^2)) / (2 * R * T) ]\n"
             + "  + exp[ (N * ln(A1) + ln(N/(E * L)^(N - 1) + ln(K1,N) +"

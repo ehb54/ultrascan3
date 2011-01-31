@@ -68,6 +68,7 @@ typedef struct EqScanFit_s
    QVector< double >   extincts;      // Extinctions
    QVector< double >   integral;      // Integrals
    double              density;       // Density
+   double              viscosity;     // Viscosity
    double              tempera;       // Temperature
    double              pathlen;       // Path length
    double              meniscus;      // Meniscus

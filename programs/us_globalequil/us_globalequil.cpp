@@ -268,6 +268,7 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
 
    emodctrl     = 0;
    ereporter    = 0;
+   emath        = 0;
    model_widget = false;
    signal_mc    = true;
 }
@@ -286,11 +287,12 @@ void US_GlobalEquil::new_scan( int newscan )
 void US_GlobalEquil::load( void )
 {
    excludedScans.clear();
-   dataList     .clear();
-   rawList      .clear();
-   triples      .clear();
-   ds_vbar20s   .clear();
-   ds_densities .clear();
+   dataList  .clear();
+   rawList   .clear();
+   triples   .clear();
+   ds_vbar20s.clear();
+   ds_densits.clear();
+   ds_viscos .clear();
 
    dataLoaded  = false;
    buffLoaded  = false;
@@ -339,12 +341,13 @@ void US_GlobalEquil::load( void )
       QString s_emsg;
       US_SolutionVals::values( dbP, &dataList[ jd ],
                                s_vbar, s_dens, s_visc, s_comp, s_emsg );
-      ds_vbar20s   << s_vbar.toDouble();
-      ds_densities << s_dens.toDouble();
+      ds_vbar20s << s_vbar.toDouble();
+      ds_densits << s_dens.toDouble();
+      ds_viscos  << s_visc.toDouble();
    }
-DbgLv(1) << "  jd vbar20 density" << 0 << ds_vbar20s[0] << ds_densities[0];
+DbgLv(1) << "  jd vbar20 density" << 0 << ds_vbar20s[0] << ds_densits[0];
 int nn=dataList.size()-1;
-DbgLv(1) << "  jd vbar20 density" << nn << ds_vbar20s[nn] << ds_densities[nn];
+DbgLv(1) << "  jd vbar20 density" << nn << ds_vbar20s[nn] << ds_densits[nn];
 
    // Build the table of available scans
    QStringList headers;
@@ -443,8 +446,8 @@ DbgLv(1) << "  jsscn jd js" << jsscn << jd << js
       }
    }
 
-   assign_scanfit();
    setup_runfit();
+   assign_scanfit();
 
    // Reset the range of the scan counter to scans available
    ct_scselect->setRange( 1.0, (double)jsscn, 1.0 );
@@ -462,7 +465,6 @@ DbgLv(1) << "eData readings size" << edata->scanData[0].readings.size();
    pb_details ->setEnabled( true );
    pb_unload  ->setEnabled( true );
    pb_selModel->setEnabled( true );
-
 }
 
 // Open a dialog to display details of the data selected
@@ -489,8 +491,8 @@ void US_GlobalEquil::unload( void )
    equil_plot->detachItems();
    equil_plot->setTitle( tr( "Experiment Equilibrium Data" ) );
 
-   assign_scanfit();
    setup_runfit();
+   assign_scanfit();
 
    dataLoaded  = false;
    pb_details ->setEnabled( false );
@@ -587,8 +589,8 @@ if(na==2) DbgLv(1) << "   par1-2: " << aud_params[0] << aud_params[1];
 if(na==4) DbgLv(1) << "   par1-4: " << aud_params[0] << aud_params[1]
    << aud_params[2] << aud_params[3];
 
-      if ( modelx == 3 )
-         setup_runfit();
+      setup_runfit();
+      assign_scanfit();
    }
 }
 
@@ -615,6 +617,7 @@ DbgLv(1) << "MODEL_CONTROL()";
       emodctrl->show();
    }
 }
+
 void US_GlobalEquil::fitting_control( void )
 { DbgLv(1) << "FITTING_CONTROL()"; }
 void US_GlobalEquil::load_fit( void )
@@ -628,33 +631,22 @@ void US_GlobalEquil::float_params( void )
 void US_GlobalEquil::init_params( void )
 {
 DbgLv(1) << "INIT_PARAMS()";
+   // Insure we have an object for doing needed calculations
+   if ( emath == 0 )
+      emath  = new US_EqMath( dataList, scedits, scanfits, runfit );
 
    // Count fitted scans and save the index to the first such
-   int fitx     = -1;
-   int nfit     = 0;
-   int fit_cell = -1;
-   int fit_chan = -1;
+   int  fitx      = -1;
+   bool update_mw = true;
 
    for ( int ii = 0; ii < scanfits.size(); ii++ )
-   {
-      if ( scanfits[ ii ].scanFit )
-      {
-         nfit++;
+      if ( scanfits[ ii ].scanFit  &&  fitx < 0 )
+         fitx     = ii;
 
-         if ( fitx < 0 )
-            fitx     = ii;
-      }
-   }
-
-   if ( nfit > 0 )
-   {
-      fit_cell = scanfits[ fitx ].cell;
-      fit_chan = scanfits[ fitx ].channel;
-DbgLv(1) << "GE:InPar: nfit fitx fit_cell fit_chan" << nfit << fitx
-   << fit_cell << fit_chan;
-   }
-
-   else
+DbgLv(1) << "IP: fitx" << fitx;
+DbgLv(1) << "IP:  points xvs0 xvsN" << scanfits[0].points
+   << scanfits[0].xvs[0] << scanfits[0].xvs[scanfits[0].points-1];
+   if ( fitx < 0 )
    {
       QMessageBox::warning( this, tr( "Scan Fits" ),
          tr( "There are no scans to fit!\n\n"
@@ -662,8 +654,57 @@ DbgLv(1) << "GE:InPar: nfit fitx fit_cell fit_chan" << nfit << fitx
       return;
    }
 
+   if ( runfit.mw_vals[ 0 ] <= 0.0 )
+   {  // Calculate the molecular weight value the 1st time
+      runfit.mw_vals[ 0 ] = emath->minimum_residual();
+   }
+
+   else
+   {  // Thereafter, ask if user wants to calculate a new MW
+      QMessageBox msgBox;
+      msgBox.setWindowTitle( tr( "Molecular Weight" ) );
+      msgBox.setText(
+         tr( "Do you want to use the currently defined molecular"
+             " weight for the parameter\n"
+             "initialization or calculate a newly initialized"
+             " molecular weight?" ) );
+      msgBox.setStandardButtons( QMessageBox::Yes | QMessageBox::No 
+                               | QMessageBox::Cancel );
+      msgBox.setButtonText( QMessageBox::Yes,
+            tr( "New Molecular Weight" ) );
+      msgBox.setButtonText( QMessageBox::No,
+            tr( "Current Molecular Weight" ) );
+
+      switch( msgBox.exec() )
+      {
+         case QMessageBox::Yes:
+         case QMessageBox::Default:
+         default:
+            runfit.mw_vals[ 0 ] = emath->minimum_residual();
+            runfit.mw_rngs[ 0 ] = runfit.mw_vals[ 0 ] * 0.2;
+            update_mw = true;
+            break;
+
+         case QMessageBox::No:
+            emath->calc_testParameter( runfit.mw_vals[ 0 ] );
+            runfit.mw_rngs[ 0 ] = runfit.mw_vals[ 0 ] * 0.2;
+            update_mw = false;
+            break;
+         case QMessageBox::Cancel:
+            update_mw = false;
+            break;
+      }
+   }
+DbgLv(1) << "IP: update_mw" << update_mw;
+
+   // Initialize parameters
+DbgLv(1) << "IP: em init_params call";
+   emath->init_params( modelx, update_mw, ds_vbar20s, aud_params );
+
+   // Display the model control dialog
    model_control();
 
+   // Enable buttons that are now appropriate
    pb_floatPar->setEnabled( true );
    pb_ckscfit ->setEnabled( true );
 }
@@ -1062,6 +1103,7 @@ void US_GlobalEquil::assign_scanfit()
 
    EqScanFit   scanfit;
    QStringList channs;
+   int         ncomp = max( 1, runfit.nbr_comps );
    
    for ( int jes = 0; jes < scedits.size(); jes++ )
    {
@@ -1087,27 +1129,32 @@ void US_GlobalEquil::assign_scanfit()
       scanfit.runs       = 0;
       scanfit.start_ndx  = index_radius( edata, radlo );
       scanfit.stop_ndx   = index_radius( edata, radhi );
+      scanfit.density    = ds_densits[ jdx ];
+      scanfit.viscosity  = ds_viscos [ jdx ];
+      scanfit.tempera    = dscan->temperature;
+      scanfit.pathlen    = 1.2;
+      scanfit.meniscus   = edata->meniscus;
+      scanfit.baseline   = radlo;
+      scanfit.baseln_ndx = scanfit.start_ndx;
+      scanfit.baseln_rng = radlo * 0.2;
+      scanfit.baseln_fit = false;
+      scanfit.baseln_bnd = false;
+      scanfit.rpm        = (int)edata->speedData[ jrx ].speed;
       scanfit.cell       = trip.section( "/", 0, 0 ).simplified().toInt();
       scanfit.channel    = channs.indexOf( chan ) + 1;
       scanfit.lambda     = trip.section( "/", 2, 2 ).simplified().toInt();
-      scanfit.meniscus   = edata->meniscus;
-      scanfit.baseline   = 0.0;
-      scanfit.pathlen    = 1.2;
-      scanfit.density    = ds_densities[ jdx ];
-      scanfit.tempera    = dscan->temperature;
-      scanfit.rpm        = (int)edata->speedData[ jrx ].speed;
       scanfit.runID      = edata->runID;
       scanfit.descript   = edata->description;
 
       scanfit.xvs.resize( scanfit.points );
       scanfit.yvs.resize( scanfit.points );
-      scanfit.amp_vals.fill(   0.0, 1 );
-      scanfit.amp_ndxs.fill(     0, 1 );
-      scanfit.amp_rngs.fill(   0.0, 1 );
-      scanfit.amp_fits.fill( false, 1 );
-      scanfit.amp_bnds.fill( false, 1 );
-      scanfit.extincts.fill(   0.0, 1 );
-      scanfit.integral.fill(   0.0, 1 );
+      scanfit.amp_vals.fill(   0.0, ncomp );
+      scanfit.amp_ndxs.fill(     0, ncomp );
+      scanfit.amp_rngs.fill(   0.0, ncomp );
+      scanfit.amp_fits.fill( false, ncomp );
+      scanfit.amp_bnds.fill( false, ncomp );
+      scanfit.extincts.fill(   0.0, ncomp );
+      scanfit.integral.fill(   0.0, ncomp );
 
       for ( int jj = 0; jj < scanfit.points; jj++ )
       {
@@ -1117,6 +1164,8 @@ void US_GlobalEquil::assign_scanfit()
 
       scanfits << scanfit;
    }
+DbgLv(1) << "AsnSF: points xvs0 xvsN" << scanfit.points
+   << scanfit.xvs[0] << scanfit.xvs[scanfit.points-1];
 }
 
 // Set up global Run Fit parameters profile
@@ -1181,6 +1230,10 @@ void US_GlobalEquil::setup_runfit()
    }
 
    double dvval  = TYPICAL_VBAR;
+
+   if ( ds_vbar20s.size() > 0 )
+      dvval      = ds_vbar20s[ 0 ];
+
    double dvrng  = dvval * 0.2;
    runfit.mw_vals  .fill(   0.0, runfit.nbr_comps );
    runfit.mw_ndxs  .fill(     0, runfit.nbr_comps );
