@@ -623,6 +623,10 @@ void US_RotorGui::saveCalibration()
       if ( status == US_DB2::OK )
       {
          reset();
+
+         QMessageBox::information( this,
+            tr( "Attention" ),
+            tr( "Calibration was saved to the DB." ) );
       }
 
    }
@@ -743,7 +747,6 @@ bool US_RotorGui::loadRotors( const int &id )
 
    // Clear out lists, line edits
    currentRotor.reset();
-   currentCalibration.reset();
    lw_rotors      ->clear();
    lw_calibrations->clear();
    le_name        ->setText( "< not selected >" );
@@ -751,6 +754,9 @@ bool US_RotorGui::loadRotors( const int &id )
    le_coefficient1->setText( "< not available >" );
    le_coefficient2->setText( "< not available >" );
    le_omega2t     ->setText( "< not available >" );
+
+   if ( ! savingCalibration )
+      currentCalibration.reset();
 
    if ( disk_controls->db() )
    {
