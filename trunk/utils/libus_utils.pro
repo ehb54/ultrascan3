@@ -42,7 +42,8 @@ HEADERS      = us_analyte.h       \
                us_solution_vals.h \
                us_stiffbase.h     \
                us_util.h          \
-               us_vector.h
+               us_vector.h        \
+               us_rotor.h
 
 SOURCES      = us_analyte.cpp       \
                us_astfem_math.cpp   \
@@ -69,7 +70,8 @@ SOURCES      = us_analyte.cpp       \
                us_solution_vals.cpp \
                us_stiffbase.cpp     \
                us_util.cpp          \
-               us_vector.cpp
+               us_vector.cpp        \
+               us_rotor.cpp
 
 # Only include us_crypto when not on a supercomputer
 

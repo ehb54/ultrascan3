@@ -45,7 +45,9 @@ HEADERS      = \
                us_widgets.h             \
                us_widgets_dialog.h      \
                us_solution_gui.h        \
-               us_project_gui.h
+               us_project_gui.h         \
+               us_abstractrotor_gui.h   \
+               us_rotor_gui.h
 
 SOURCES      = \
                us_analysis_base2.cpp      \
@@ -77,6 +79,8 @@ SOURCES      = \
                us_widgets.cpp             \
                us_widgets_dialog.cpp      \
                us_solution_gui.cpp        \
-               us_project_gui.cpp
+               us_project_gui.cpp         \
+               us_abstractrotor_gui.cpp   \
+               us_rotor_gui.cpp
 
 RESOURCES     = images.qrc

@@ -993,7 +993,8 @@ void US_BufferGui::save_db( void )
         << QString::number( buffer.pH             , 'f', 4 )
         << QString::number( buffer.density        , 'f', 6 )
         << QString::number( buffer.viscosity      , 'f', 5 )
-        << "1";  // Private
+        << "1"  // Private
+        << QString::number( US_Settings::us_inv_ID() ); 
 
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );

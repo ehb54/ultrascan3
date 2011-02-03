@@ -120,9 +120,6 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       QPushButton*  pb_removeAnalyte;
       QPushButton*  pb_accept;
 
-      QRadioButton* rb_db;
-      QRadioButton* rb_disk;
-
       QMap< QListWidgetItem*, int > solutionMap;
       QMap< QListWidgetItem*, int > analyteMap;
 

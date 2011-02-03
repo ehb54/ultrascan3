@@ -83,10 +83,10 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   rotorCalibrationID, description
+      SELECT   rotorCalibrationID, dateUpdated
       FROM     rotorCalibration
       WHERE    rotorID = p_rotorID
-      ORDER BY description;
+      ORDER BY dateUpdated DESC;
  
     END IF;
 
@@ -123,10 +123,12 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   rotorCalibrationGUID, description, report, coeff1, coeff2, 
-               omega2_t, dateUpdated, calibrationExperimentID
-      FROM     rotorCalibration
-      WHERE    rotorCalibrationID = p_calibrationID;
+      SELECT   rotorCalibrationGUID, rotorCalibration.rotorID, rotorGUID,
+               report, coeff1, coeff2, omega2_t, dateUpdated, 
+               calibrationExperimentID 
+      FROM     rotorCalibration, rotor
+      WHERE    rotorCalibrationID = p_calibrationID
+      AND      rotorCalibration.rotorID = rotor.rotorID;
 
     END IF;
 
@@ -144,7 +146,6 @@ CREATE PROCEDURE add_rotor_calibration ( p_personGUID        CHAR(36),
                                          p_password          VARCHAR(80),
                                          p_rotorID           INT,
                                          p_calibrationGUID   CHAR(36),
-                                         p_description       TEXT,
                                          p_report            TEXT,
                                          p_coeff1            FLOAT,
                                          p_coeff2            FLOAT,
@@ -198,7 +199,6 @@ BEGIN
       INSERT INTO rotorCalibration SET
         rotorID                 = p_rotorID,
         rotorCalibrationGUID    = p_calibrationGUID,
-        description             = p_description,
         report                  = p_report,
         coeff1                  = p_coeff1,
         coeff2                  = p_coeff2,
@@ -371,7 +371,7 @@ BEGIN
       SELECT   rotorID, name
       FROM     rotor
       WHERE    labID = p_labID
-      ORDER BY name;
+      ORDER BY UPPER( name );
  
     END IF;
 
@@ -409,7 +409,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   r.rotorGUID, r.name, serialNumber,  
-               a.name, r.abstractRotorID
+               a.name, r.abstractRotorID, a.abstractRotorGUID, r.labID
       FROM     rotor r, abstractRotor a
       WHERE    r.abstractRotorID = a.abstractRotorID
       AND      rotorID = p_rotorID;
@@ -660,7 +660,7 @@ BEGIN
 
       SELECT   abstractRotorID, name
       FROM     abstractRotor
-      ORDER BY name;
+      ORDER BY UPPER( name );
  
     END IF;
 

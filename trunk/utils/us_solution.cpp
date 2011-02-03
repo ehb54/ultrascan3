@@ -313,7 +313,7 @@ void US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
    if ( status != US_DB2::OK )
       qDebug() << "MySQL error: " << db->lastError();
 
-   // Now add one or more analyte associations
+   // Now add zero or more analyte associations
    foreach( AnalyteInfo analyte, analytes )
    {
       q.clear();

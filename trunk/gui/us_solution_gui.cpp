@@ -261,8 +261,7 @@ void US_SolutionGui::reset( void )
 
    // Let's calculate if we're eligible to save this solution
    pb_save         -> setEnabled( false );
-   if ( analytes.size() > 0    &&
-        ! bufferDesc.isEmpty() )
+   if ( ! bufferDesc.isEmpty() ) //we can have a solution with buffer only
    {
       pb_save      -> setEnabled( true );
    }
