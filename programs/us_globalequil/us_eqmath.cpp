@@ -328,7 +328,7 @@ DbgLv(1) << "EM:IP: C2: total" << total;
    }
 }
 
-// Calculate the chi-square for the fixed molecular weight estimate
+// Calculate the chi-squared for the fixed molecular weight estimate
 // for a single component model
 double US_EqMath::calc_testParameter( double mwval )
 {
