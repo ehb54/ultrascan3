@@ -80,8 +80,6 @@ DbgLv(1) << "SCAN_DIAGS()";
       int ivenx = index_radius( sdata, radhi );
       int ivenn = ivenx + 1;
       int npts  = ivenn - ivstx;
-      scanfits[ jes ].start_ndx = ivstx;
-      scanfits[ jes ].stop_ndx  = ivenx;
 
       if ( npts > dimvs )
       {  // If need be (unlikely), resize the work x,y vectors

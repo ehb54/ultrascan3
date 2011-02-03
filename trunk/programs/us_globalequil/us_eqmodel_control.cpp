@@ -187,8 +187,6 @@ US_EqModelControl::US_EqModelControl(
    ct_grunpar->setValue( 1 );
    connect( ct_grunpar, SIGNAL( valueChanged( double ) ),
             this,  SLOT( global_comp_changed( double ) ) );
-   global_comp_changed( 1.0 );
-qDebug() << "EMC: blobal_comp ulim" << runfit.mw_vals.size();
 
    // Local layout
    lb_lbanner           = us_banner(
@@ -244,15 +242,22 @@ qDebug() << "EMC: blobal_comp ulim" << runfit.mw_vals.size();
    QLayout* lo_amfloat  = us_checkbox( "F", ck_amfloat, false );
    QLayout* lo_amlock   = us_checkbox( "L", ck_amlock,  true  );
    QLayout* lo_ambound  = us_checkbox( "B", ck_ambound, true  );
-            pb_eodcmmo  = us_pushbutton( tr( "E (OD/(cm*mol))" ) + " (1):" );
-            le_eodcmmo  = us_lineedit();
-            pb_eodcapp  = us_pushbutton( tr( "Apply to:" ) );
-   QLabel*  lb_eodcscn  = us_label( tr( "Scan(s)" ) );
-            le_eodcscn  = us_lineedit();
+            //pb_extinct  = us_pushbutton( tr( "E (OD/(cm*mol))" ) + " (1):" );
+            pb_extinct  = us_pushbutton( tr( "Extinction" ) + " (1):" );
+            le_extinct  = us_lineedit( "1.0" );
+            pb_extiapp  = us_pushbutton( tr( "Apply to:" ) );
+   QLabel*  lb_extiscn  = us_label( tr( "Scan(s)" ) );
+            le_extiscn  = us_lineedit();
+   QLabel*  lb_sigma    = us_label( tr( "Sigma for this Scan:" ) );
+            le_sigma    = us_lineedit();
    QLayout* lo_inclfit  = us_checkbox( tr( "Include this Scan in the Fit:" ),
          ck_inclfit, false );
    QLabel*  lb_scansel  = us_label( tr( "Scan Selector:" ) );
             ct_scansel  = us_counter( 3, 1, 100, 1 );
+   QString  extintt     = tr( "Extinction coefficient in units of"
+                              " OD / (cm * mol)" );
+   pb_extinct->setToolTip( extintt );
+   le_extinct->setToolTip( extintt );
 
    row     = 0;
    localLayout->addWidget( lb_lbanner, row++, 0, 1, 10 );
@@ -306,11 +311,13 @@ qDebug() << "EMC: blobal_comp ulim" << runfit.mw_vals.size();
    localLayout->addLayout( lo_amfloat, row,   7, 1,  1 );
    localLayout->addLayout( lo_amlock,  row,   8, 1,  1 );
    localLayout->addLayout( lo_ambound, row++, 9, 1,  1 );
-   localLayout->addWidget( pb_eodcmmo, row,   0, 1,  2 );
-   localLayout->addWidget( le_eodcmmo, row,   2, 1,  2 );
-   localLayout->addWidget( pb_eodcapp, row,   4, 1,  2 );
-   localLayout->addWidget( lb_eodcscn, row,   6, 1,  2 );
-   localLayout->addWidget( le_eodcscn, row++, 8, 1,  2 );
+   localLayout->addWidget( pb_extinct, row,   0, 1,  2 );
+   localLayout->addWidget( le_extinct, row,   2, 1,  2 );
+   localLayout->addWidget( pb_extiapp, row,   4, 1,  2 );
+   localLayout->addWidget( lb_extiscn, row,   6, 1,  2 );
+   localLayout->addWidget( le_extiscn, row++, 8, 1,  2 );
+   localLayout->addWidget( lb_sigma,   row,   0, 1,  2 );
+   localLayout->addWidget( le_sigma,   row++, 2, 1,  2 );
    localLayout->addLayout( lo_inclfit, row,   0, 1,  4 );
    localLayout->addWidget( lb_scansel, row,   4, 1,  3 );
    localLayout->addWidget( ct_scansel, row++, 7, 1,  3 );
@@ -332,8 +339,6 @@ qDebug() << "EMC: blobal_comp ulim" << runfit.mw_vals.size();
             this,       SLOT(   scan_changed( double ) ) );
    ct_lrunpar->setRange( 1, scanfits[ 0 ].amp_vals.size(), 1 );
    ct_lrunpar->setStep( 1 );
-   local_comp_changed( 1.0 );
-qDebug() << "EMC: local_comp ulim" << scanfits[0].amp_vals.size();
    ct_scansel->setRange( 1, scanfits.size(), 1 );
    ct_scansel->setStep( 1 );
    send_signal = false;
@@ -369,9 +374,15 @@ qDebug() << "EMC: local_comp ulim" << scanfits[0].amp_vals.size();
    le_blguess->setText( QString::number( scanfits[ scanx ].baseline )   );
    le_blbound->setText( QString::number( scanfits[ scanx ].baseln_rng ) );
    le_density->setText( QString::number( scanfits[ scanx ].density )    );
+   le_extinct->setText( QString::number( scanfits[ scanx ].extincts[ 0 ] ) );
 
    le_densscn->setText( "1" );
-   le_eodcscn->setText( "1" );
+   le_extiscn->setText( "1" );
+
+   global_comp_changed( 1.0 );
+qDebug() << "EMC: global_comp ulim" << runfit.mw_vals.size();
+   local_comp_changed(  1.0 );
+qDebug() << "EMC: local_comp ulim" << scanfits[0].amp_vals.size();
 
    // Resize to fit elements added
    adjustSize();
@@ -388,6 +399,52 @@ qDebug() << "EMC: new_scan" << scannbr;
 
    ct_scansel->setValue( (double)selscan );
    send_signal = true;
+}
+
+// Public slot to reset general components when runfit and scanfits change
+void US_EqModelControl::new_components()
+{
+qDebug() << "EMC: new_components" << modelx;
+   double dscn = ct_scansel->value();
+   double dgco = ct_grunpar->value();
+   double dlco = ct_lrunpar->value();
+
+   // To reset values, we simulate new scan and global,local component numbers
+   send_signal = false;
+   scan_changed       ( dscn );
+   global_comp_changed( dgco );
+   local_comp_changed ( dlco );
+   send_signal = true;
+}
+
+// Public slot to reset floated/locked check boxes
+void US_EqModelControl::set_float( bool floated )
+{
+qDebug() << "EMC: set_float" << floated;
+   if ( floated )
+   {
+      ck_mwfloat->setChecked( floated );
+      ck_vbfloat->setChecked( floated );
+      ck_l1float->setChecked( floated );
+      ck_l2float->setChecked( floated );
+      ck_l3float->setChecked( floated );
+      ck_l4float->setChecked( floated );
+      ck_blfloat->setChecked( floated );
+      ck_amfloat->setChecked( floated );
+   }
+
+   else
+   {
+      ck_mwlock ->setChecked( true );
+      ck_vblock ->setChecked( true );
+      ck_l1lock ->setChecked( true );
+      ck_l2lock ->setChecked( true );
+      ck_l3lock ->setChecked( true );
+      ck_l4lock ->setChecked( true );
+      ck_bllock ->setChecked( true );
+      ck_amlock ->setChecked( true );
+   }
+qDebug() << "EMC:  ck_mwfloat isChecked?" << ck_mwfloat->isChecked();
 }
 
 // Private slot for change in scan number
@@ -411,8 +468,11 @@ qDebug() << "EMC: scan_changed" << value;
    le_blguess->setText( QString::number( scanfits[ scanx ].baseline )   );
    le_blbound->setText( QString::number( scanfits[ scanx ].baseln_rng ) );
    int compx     = (int)ct_lrunpar->value() - 1;
-   le_amguess->setText(
-         QString::number( scanfits[ scanx ].amp_vals[ compx ] ) );
+   double ampv   = scanfits[ scanx ].amp_vals[ compx ];
+   double ampb   = scanfits[ scanx ].amp_rngs[ compx ];
+   ampb          = ( ampb == 0.0 ) ? ( ampv * 0.2 ) : ampb;
+   le_amguess->setText( QString::number( ampv ) );
+   le_ambound->setText( QString::number( ampb ) );
    le_density->setText( QString::number( scanfits[ scanx ].density ) );
 
    if ( send_signal )
@@ -422,6 +482,8 @@ qDebug() << "EMC: scan_changed" << value;
 
    else
       send_signal = true;
+
+   update_sigma();
 }
 
 // Private slot for change in global component number
@@ -447,6 +509,8 @@ qDebug() << "EMC: global_comp_changed" << value;
    le_mwbound->setText( QString::number( runfit.mw_rngs[   compx ] ) );
    le_vbguess->setText( QString::number( runfit.vbar_vals[ compx ] ) );
    le_vbbound->setText( QString::number( runfit.vbar_rngs[ compx ] ) );
+
+   update_sigma();
 }
 
 // Private slot for change in local component number
@@ -458,22 +522,25 @@ qDebug() << "EMC: local_comp_changed" << value;
    int scanx  = selscan - 1;
 
    QString ampllb = lb_amplitu->text();
-   QString eodcpb = pb_eodcmmo->text();
+   QString extipb = pb_extinct->text();
    QString comp_s = QString::number( compn );
    int amnx   = ampllb.lastIndexOf( "(" ) + 1;
    int lnamr  = ampllb.mid( amnx ).lastIndexOf( ")" );
-   int eonx   = eodcpb.lastIndexOf( "(" ) + 1;
-   int lneor  = eodcpb.mid( eonx ).lastIndexOf( ")" );
+   int exnx   = extipb.lastIndexOf( "(" ) + 1;
+   int lnexr  = extipb.mid( exnx ).lastIndexOf( ")" );
    ampllb.replace( amnx, lnamr, comp_s );
-   eodcpb.replace( eonx, lneor, comp_s );
+   extipb.replace( exnx, lnexr, comp_s );
    lb_amplitu->setText( ampllb );
-   pb_eodcmmo->setText( eodcpb );
+   pb_extinct->setText( extipb );
 
-   le_amguess->setText(
-         QString::number( scanfits[ scanx ].amp_vals[ compx ] ) );
-   le_ambound->setText( "0.0" );
-   le_density->setText(
-         QString::number( scanfits[ scanx ].density ) );
+   double ampv   = scanfits[ scanx ].amp_vals[ compx ];
+   double ampb   = scanfits[ scanx ].amp_rngs[ compx ];
+   ampb          = ( ampb == 0.0 ) ? ( ampv * 0.2 ) : ampb;
+   le_amguess->setText( QString::number( ampv ) );
+   le_ambound->setText( QString::number( ampb ) );
+   le_density->setText( QString::number( scanfits[ scanx ].density ) );
+
+   update_sigma();
 }
 
 // Select Model button:  set up to return data information
@@ -482,5 +549,38 @@ void US_EqModelControl::selected()
    accept();
    mWidget  = false;
    close();
+}
+
+// Update the sigma field after changes in molecular weight
+void US_EqModelControl::update_sigma( void )
+{
+qDebug() << "EMC: update_sigma";
+   int    scanx    = selscan - 1;
+   int    compx    = (int)ct_grunpar->value() - 1;
+qDebug() << "EMC: u_s: scanx compx" << scanx << compx;
+   EqScanFit* sfit = &scanfits[ scanx ];
+   double molecwt  = runfit.mw_vals  [ compx ];
+   double vbar20   = runfit.vbar_vals[ compx ];
+qDebug() << "EMC: u_s:  mw vbar20" << molecwt << vbar20;
+   double tempa    = sfit->tempera;
+   double density  = sfit->density;
+   double viscos   = sfit->viscosity;
+   double tempk    = tempa + K0;
+   double vbar     = US_Math2::adjust_vbar20( vbar20, tempa );
+   double omega_s  = sq( sfit->rpm * M_PI / 30.0 );
+qDebug() << "EMC: u_s:  tempk vbar" << tempk << vbar;
+
+   US_Math2::SolutionData solution;
+   solution.vbar20     = vbar20;
+   solution.vbar       = vbar;
+   solution.density    = density;
+   solution.viscosity  = viscos;
+
+   US_Math2::data_correction( tempa, solution );
+qDebug() << "EMC: u_s:  dens dens_tb" << density << solution.density_tb;
+
+   double sigma    = ( 1.0 - vbar * solution.density_tb ) * omega_s * molecwt
+                     / ( 2.0 * R * tempk );
+   le_sigma->setText( QString::number( sigma ) );
 }
 

@@ -256,6 +256,9 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
    statusLayout ->addWidget( le_mxfringe, row,   2, 1, 1 );
    statusLayout ->addWidget( lb_mxfnotes, row++, 3, 1, 3 );
 
+   connect( le_mxfringe, SIGNAL( textChanged(    const QString& ) ),
+                         SLOT( od_limit_changed( const QString& ) ) );
+
    rightLayout->addLayout( eplot );
    rightLayout->addLayout( statusLayout );
    rightLayout->setStretchFactor( eplot,       10 );
@@ -269,18 +272,22 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
    emodctrl     = 0;
    ereporter    = 0;
    emath        = 0;
+   ehisto       = 0;
+
    model_widget = false;
    signal_mc    = true;
+   floated_pars = false;
+   show_msgs    = true;
 }
 
 // Public slot to respond to a new scan selection, signalled externally
 void US_GlobalEquil::new_scan( int newscan )
 {
-   signal_mc = false;
+   signal_mc = false;               // Avoid circular new-scan signals
 
-   scan_select( (double)newscan );
+   scan_select( (double)newscan );  // Act like scan counter was changed here
 
-   signal_mc = true;
+   signal_mc = true;                // Re-enable external signalling
 }
 
 // Load equilibrium data
@@ -446,8 +453,12 @@ DbgLv(1) << "  jsscn jd js" << jsscn << jd << js
       }
    }
 
-   setup_runfit();
-   assign_scanfit();
+   od_limit = 0.9;
+
+   setup_runfit();       // Build the runfit data structure
+   assign_scanfit();     // Build a vector of scanfit data structures
+
+   update_limit( 0.9 );  // Possibly modify data ranges by OD limit
 
    // Reset the range of the scan counter to scans available
    ct_scselect->setRange( 1.0, (double)jsscn, 1.0 );
@@ -460,6 +471,10 @@ DbgLv(1) << "  jsscn jd js" << jsscn << jd << js
                            " then release Ctrl key." ) );
 
    edata       = &dataList[ 0 ];
+
+   if ( edata->dataType != "RA" )
+      le_mxfringe->setText( "0.0" );   // If not absorbance, change OD limit
+
 DbgLv(1) << "eData readings size" << edata->scanData[0].readings.size();
    dataLoaded  = true;
    pb_details ->setEnabled( true );
@@ -543,7 +558,11 @@ DbgLv(1) << "CHECK_SCAN_FIT()";
 }
 
 void US_GlobalEquil::conc_histogram( void )
-{ DbgLv(1) << "CONC_HISTOGRAM()"; }
+{
+DbgLv(1) << "CONC_HISTOGRAM()";
+   ehisto = new US_EqHistogram( od_limit, scanfits, this, 0 );
+   ehisto->show();
+}
 
 // Reset the scan limits
 void US_GlobalEquil::reset_scan_lims( void )
@@ -591,6 +610,12 @@ if(na==4) DbgLv(1) << "   par1-4: " << aud_params[0] << aud_params[1]
 
       setup_runfit();
       assign_scanfit();
+
+DbgLv(1) << "     fix_all  model_widget" << model_widget;
+      fix_all();
+
+      if ( model_widget )
+         emodctrl->set_float( false );
    }
 }
 
@@ -624,8 +649,15 @@ void US_GlobalEquil::load_fit( void )
 { DbgLv(1) << "LOAD_FIT()"; }
 void US_GlobalEquil::monte_carlo( void )
 { DbgLv(1) << "MONTE_CARLO()"; }
+
 void US_GlobalEquil::float_params( void )
-{ DbgLv(1) << "FLOAT_PARAMS()"; }
+{
+DbgLv(1) << "FLOAT_PARAMS()";
+   float_all();
+
+   if ( model_widget )
+      emodctrl->set_float( true );
+}
 
 // Initialize parameters and (if need be) open a model control dialog
 void US_GlobalEquil::init_params( void )
@@ -722,17 +754,23 @@ DbgLv(1) << "SCAN_SELECT()" << sscann << sscanx;
 
 DbgLv(1) << " GE:ScSel: signal_mc model_widget" << signal_mc << model_widget;
    if ( signal_mc )
-   {
+   {  // Signalling of model control is enabled
       if ( model_widget )
-      {
+      {  // If a model control is up, have it reset the scan
          emodctrl->new_scan( sscann );
       }
    }
 }
 
+// Close all opened children, then close main
 void US_GlobalEquil::close_all( void )
 {
 //DbgLv(1) << "CLOSE_ALL()";
+   if ( model_widget )    emodctrl->close();
+   if ( ehisto != 0 )     ehisto  ->close();
+   if ( emath != 0 )      delete emath;
+   if ( ereporter != 0 )  delete ereporter;
+
    close();
 }
 
@@ -769,20 +807,20 @@ void US_GlobalEquil::clickedItem( QTableWidgetItem* item )
    bool    found  = findData( triple, drpm, jdx, jrx );
 //DbgLv(1) << " Clicked:   found" << found << " jdx jsx" << jdx << jsx;
 
-   if ( found )  edata_plot();
+   if ( found )  edata_plot();   // Change the plot to the newly selected scan
 
    ct_scselect->disconnect();
-   ct_scselect->setValue( (double)( row + 1 ) );
+   ct_scselect->setValue( (double)( row + 1 ) );  // Set the scan nbr counter
    connect( ct_scselect, SIGNAL( valueChanged( double ) ),
                          SLOT(   scan_select(  double ) ) );
 
-   sscanx   = row;
-   sscann   = sscanx + 1;
+   sscanx   = row;          // New scan index is index of clicked row
+   sscann   = sscanx + 1;   // Scan number is one more than index
 DbgLv(1) << " GE:ClItem: signal_mc model_widget" << signal_mc << model_widget;
    if ( signal_mc )
-   {
+   {  // Signalling of model control is enabled
       if ( model_widget )
-      {
+      {  // If a model control is up, have it reset the scan
          emodctrl->new_scan( sscann );
       }
    }
@@ -1153,7 +1191,7 @@ void US_GlobalEquil::assign_scanfit()
       scanfit.amp_rngs.fill(   0.0, ncomp );
       scanfit.amp_fits.fill( false, ncomp );
       scanfit.amp_bnds.fill( false, ncomp );
-      scanfit.extincts.fill(   0.0, ncomp );
+      scanfit.extincts.fill(   1.0, ncomp );
       scanfit.integral.fill(   0.0, ncomp );
 
       for ( int jj = 0; jj < scanfit.points; jj++ )
@@ -1161,6 +1199,8 @@ void US_GlobalEquil::assign_scanfit()
          scanfit.xvs[ jj ] = edata->radius( jj );
          scanfit.yvs[ jj ] = edata->value( jsx, jj );
       }
+
+      scanfit.stop_ndx   = index_od_limit( scanfit, od_limit );
 
       scanfits << scanfit;
    }
@@ -1274,5 +1314,91 @@ int US_GlobalEquil::index_radius( US_DataIO2::EditedData* edat, double radius )
    }
 
    return r_index;
+}
+
+// React to change in OD limit
+void US_GlobalEquil::od_limit_changed( const QString& newlim )
+{
+   update_limit( newlim.toDouble() );
+}
+
+// Change stop index based on updated OD limit
+void US_GlobalEquil::update_limit( double odlim )
+{
+   od_limit = odlim;
+
+   if ( scanfits.size() > 0  &&  od_limit != 0.0 )
+   {
+      for ( int ii = 0; ii < scanfits.size(); ii++ )
+      {
+         EqScanFit* sfit = &scanfits[ ii ];
+         int    jdx      = scedits[ ii ].dsindex;
+         double radhi    = scedits[ ii ].rad_hi;
+         sfit->stop_ndx  = index_radius( &dataList[ jdx ], radhi );
+         sfit->stop_ndx  = index_od_limit( scanfits[ ii], odlim );
+      }
+   }
+
+   else
+   {
+      for ( int ii = 0; ii < scanfits.size(); ii++ )
+      {
+         int    jdx      = scedits[ ii ].dsindex;
+         double radhi    = scedits[ ii ].rad_hi;
+         scanfits[ ii ].stop_ndx = index_radius( &dataList[ jdx ], radhi );
+      }
+   }
+}
+
+// Find the index in a scan of the od_limit point
+int US_GlobalEquil::index_od_limit( EqScanFit& scanfit, double odlim )
+{
+   int stopx    = scanfit.stop_ndx;
+
+   for ( int jj = scanfit.start_ndx; jj < scanfit.stop_ndx + 1; jj++ )
+   {
+      if ( scanfit.yvs[ jj ] > odlim )
+      {
+         stopx = max( jj - 1, scanfit.start_ndx );
+         break;
+      }
+   }
+
+   return stopx;
+}
+
+// Set fit parameters to floated state
+void US_GlobalEquil::float_all()
+{
+   for ( int jj = 0; jj < runfit.nbr_comps; jj++ )
+      runfit.mw_fits[ jj ] = true;
+
+   for ( int jj = 0; jj < runfit.nbr_assocs; jj++ )
+      runfit.eq_fits[ jj ] = true;
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      scanfits[ ii ].baseln_fit = true;
+
+      for ( int jj = 0; jj < runfit.nbr_comps; jj++ )
+         scanfits[ ii ].amp_fits[ jj ] = true;
+   }
+}
+// Set fit parameters to fixed (locked) state
+void US_GlobalEquil::fix_all()
+{
+   for ( int jj = 0; jj < runfit.nbr_comps; jj++ )
+      runfit.mw_fits[ jj ] = false;
+
+   for ( int jj = 0; jj < runfit.nbr_assocs; jj++ )
+      runfit.eq_fits[ jj ] = false;
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      scanfits[ ii ].baseln_fit = false;
+
+      for ( int jj = 0; jj < runfit.nbr_comps; jj++ )
+         scanfits[ ii ].amp_fits[ jj ] = false;
+   }
 }
 

@@ -9,6 +9,7 @@ HEADERS       = us_globalequil.h      \
                 us_eqmodel_control.h  \
                 us_eqmath.h           \
                 us_eqreporter.h       \
+                us_eqhistogram.h      \
                 us_long_messagebox.h
 
 SOURCES       = us_globalequil.cpp      \
@@ -17,5 +18,6 @@ SOURCES       = us_globalequil.cpp      \
                 us_eqmodel_control.cpp  \
                 us_eqmath.cpp           \
                 us_eqreporter.cpp       \
+                us_eqhistogram.cpp      \
                 us_long_messagebox.cpp
 

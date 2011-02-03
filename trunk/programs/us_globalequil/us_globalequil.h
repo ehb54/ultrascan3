@@ -6,12 +6,12 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_editor.h"
-#include "us_dataIO2.h"
 #include "us_db2.h"
 #include "us_globeq_data.h"
 #include "us_eqmodel_control.h"
 #include "us_eqreporter.h"
 #include "us_eqmath.h"
+#include "us_eqhistogram.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -44,6 +44,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       US_EqModelControl*       emodctrl;
       US_EqReporter*           ereporter;
       US_EqMath*               emath;
+      US_EqHistogram*          ehisto;
 
       QList< double >          speed_steps;
       QList< double >          aud_params;
@@ -106,6 +107,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       double         sRadMv;
       double         cRadLo;
       double         cRadHi;
+      double         od_limit;
 
       bool           dataLoaded;
       bool           buffLoaded;
@@ -116,6 +118,8 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       bool           mLowerH;
       bool           model_widget;
       bool           signal_mc;
+      bool           floated_pars;
+      bool           show_msgs;
 
    private slots:
       void load              ( void );
@@ -147,8 +151,13 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       void edited_plot       ( void );
       void assign_scanfit    ( void );
       void setup_runfit      ( void );
-      void new_scan( int );
+      void new_scan          ( int );
+      void od_limit_changed  ( const QString& );
+      void update_limit      ( double );
+      void float_all         ( void );
+      void fix_all           ( void );
       int  index_radius      ( US_DataIO2::EditedData*, double );
+      int  index_od_limit    ( EqScanFit&, double );
 
       void help              ( void )
       { showHelp.show_help("global_equil.html"); };

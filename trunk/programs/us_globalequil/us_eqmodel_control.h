@@ -16,6 +16,8 @@ class US_EXTERN US_EqModelControl : public US_WidgetsDialog
             US_DataIO2::EditedData*, int, QStringList, bool&, int& );
 
       void new_scan( int );
+      void new_components( void );
+      void set_float( bool );
 
    signals:
       void update_scan( int );
@@ -59,8 +61,9 @@ class US_EXTERN US_EqModelControl : public US_WidgetsDialog
       QLineEdit*         le_densscn;
       QLineEdit*         le_amguess;
       QLineEdit*         le_ambound;
-      QLineEdit*         le_eodcmmo;
-      QLineEdit*         le_eodcscn;
+      QLineEdit*         le_extinct;
+      QLineEdit*         le_extiscn;
+      QLineEdit*         le_sigma;
 
       QCheckBox*         ck_mwfloat;
       QCheckBox*         ck_mwlock;
@@ -96,8 +99,8 @@ class US_EXTERN US_EqModelControl : public US_WidgetsDialog
       QPushButton*       pb_plenapp;
       QPushButton*       pb_density;
       QPushButton*       pb_densapp;
-      QPushButton*       pb_eodcmmo;
-      QPushButton*       pb_eodcapp;
+      QPushButton*       pb_extinct;
+      QPushButton*       pb_extiapp;
 
       QwtCounter*        ct_grunpar;
       QwtCounter*        ct_lrunpar;
@@ -111,6 +114,7 @@ class US_EXTERN US_EqModelControl : public US_WidgetsDialog
       void scan_changed(        double );
       void global_comp_changed( double );
       void local_comp_changed(  double );
+      void update_sigma      (  void   );
       void selected( void );
 
       void help    ( void )
