@@ -286,7 +286,7 @@ bool US_Register::read()
           "proceeding. Click on 'Register' to obtain a new\n"
           "UltraScan License" );
     
-    license_info( str + "\ncalc:" + temp_license );
+    license_info( str );
     flag = false;
     exit( -1 );
   }
