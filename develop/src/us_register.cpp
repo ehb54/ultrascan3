@@ -286,7 +286,7 @@ bool US_Register::read()
           "proceeding. Click on 'Register' to obtain a new\n"
           "UltraScan License" );
     
-    license_info( str );
+    license_info( str + "\ncalc:" + temp_license );
     flag = false;
     exit( -1 );
   }
@@ -325,7 +325,7 @@ QString US_Register::encode( QString str1, QString str2 )
   QString STR1, STR2, SUM, SUM1, SUM2, code;
   QChar c;
   int sum1 = 0, sum2 = 0, x;
-  double j;
+  float j;
 
   STR1 = str1.upper();
   STR2 = str2.upper();
