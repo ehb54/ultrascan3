@@ -297,16 +297,7 @@ void US_RotorGui::newRotor( void )
    }
    else
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "Adding new rotors on the local disk is not implemented yet." ) );
-      return;
-      /*
-      solution.saveToDisk();
-
-      solution.saveStatus = ( solution.saveStatus == US_Solution::DB_ONLY ) 
-                          ? US_Solution::BOTH : US_Solution::HD_ONLY;
-      */
+      currentRotor.saveDisk();
    }
 
    // now get new rotorID and update the list box.
@@ -330,6 +321,7 @@ void US_RotorGui::selectRotor( QListWidgetItem *item )
    QStringList parts = selected.split( ":" );
 
    int rotorID = parts[ 0 ].toInt();
+   US_Rotor::Status status;
 
    // These calibration info items are now out of scope
    le_coefficient1 ->setText( "< not available >" );
@@ -349,24 +341,24 @@ void US_RotorGui::selectRotor( QListWidgetItem *item )
          return;
       }
    
-      US_Rotor::Status status = currentRotor.readDB( rotorID, &db );
-      if ( status == US_Rotor::ROTOR_OK )
-      {
-         le_name         ->setText( currentRotor.name );
-         le_serialNumber ->setText( currentRotor.serialNumber );
-         rotorStatus = US_Rotor::DB_ONLY;
-      }
+      status = currentRotor.readDB( rotorID, &db );
 
+      // Since there is no save rotor button, save any that is
+      // selected to disk automatically
+      currentRotor.saveDisk();
    }
 
    else
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "Loading lab information from local disk is not implemented yet." ) );
-      return;
-//      currentRotor.readDisk( rotorGUID );
-//      rotorStatus = US_Rotor::HD_ONLY;
+      status = currentRotor.readDisk( rotorID );
+   }
+
+   // Update rotor info on the form, if we can
+   if ( status == US_Rotor::ROTOR_OK )
+   {
+      le_name         ->setText( currentRotor.name );
+      le_serialNumber ->setText( currentRotor.serialNumber );
+      rotorStatus = US_Rotor::DB_ONLY;
    }
 
    if ( savingCalibration )
@@ -466,13 +458,30 @@ bool US_RotorGui::readCalibrationProfiles( int rotorID )
 
    else
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "Loading lab information from local disk is not implemented yet." ) );
-      return( false );
+      // Get information about all the rotor calibrations in this lab
+      QVector< US_Rotor::RotorCalibration > rc;
+
+      if ( US_Rotor::readCalibrationProfilesDisk( rc, rotorID ) == US_Rotor::NOT_FOUND )
+      {
+         QMessageBox::warning( this, tr( "Disk Problem" ),
+            tr( "Could not find rotor calibration profiles \n" ) );
+         return( false );
+      }
+
+      for ( int i = 0; i < rc.size(); i++ )
+      {
+         if ( rc[ i ].rotorID == rotorID )
+            calibrationDescriptions << ( QString::number( rc[ i ].ID ) + ": " + 
+                                         rc[ i ].lastUpdated.toString( "d MMMM yyyy" ) );
+      }
    }
 
+   lw_calibrations->clear();
    lw_calibrations->addItems( calibrationDescriptions );
+
+   // Select the first one in the list by default
+   lw_calibrations->setCurrentRow( 0 );
+   selectCalibration( lw_calibrations->currentItem() );
 
    return( true );
 }
@@ -483,6 +492,7 @@ void US_RotorGui::selectCalibration( QListWidgetItem *item )
    QStringList parts = selected.split( ":" );
 
    int calibrationID = parts[ 0 ].toInt();
+   US_Rotor::Status status;
 
    // Find out the rest of the rotor calibration info
    if ( disk_controls->db() )
@@ -497,24 +507,24 @@ void US_RotorGui::selectCalibration( QListWidgetItem *item )
          return;
       }
    
-      US_Rotor::Status status = currentCalibration.readDB( calibrationID, &db );
-      if ( status == US_Rotor::ROTOR_OK )
-      {
-         le_coefficient1 ->setText( QString::number( currentCalibration.coeff1  ) );
-         le_coefficient2 ->setText( QString::number( currentCalibration.coeff2  ) );
-         le_omega2t      ->setText( QString::number( currentCalibration.omega2t ) );
-      }
+      status = currentCalibration.readDB( calibrationID, &db );
 
+      // Since the save calibration button is not available for general use, save 
+      // any that is selected to disk automatically
+      currentCalibration.saveDisk();
    }
 
    else
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "Loading calibration information from local disk is not implemented yet." ) );
-      return;
-//      currentRotor.readDisk( rotorGUID );
-//      rotorStatus = US_Rotor::HD_ONLY;
+      status = currentCalibration.readDisk( calibrationID );
+   }
+
+   // Now populate what we can on the form
+   if ( status == US_Rotor::ROTOR_OK )
+   {
+      le_coefficient1 ->setText( QString::number( currentCalibration.coeff1  ) );
+      le_coefficient2 ->setText( QString::number( currentCalibration.coeff2  ) );
+      le_omega2t      ->setText( QString::number( currentCalibration.omega2t ) );
    }
 
    if ( ! savingCalibration )
@@ -633,10 +643,13 @@ void US_RotorGui::saveCalibration()
 
    else
    {
-      QMessageBox::warning( this,
+      currentCalibration.saveDisk();
+
+      reset();
+
+      QMessageBox::information( this,
          tr( "Attention" ),
-         tr( "Saving rotor calibration to local disk is not implemented yet." ) );
-      return;
+         tr( "Calibration was saved to the Disk." ) );
    }
 }
 
@@ -679,7 +692,7 @@ void US_RotorGui::cancel( void )
 
 bool US_RotorGui::load( void )
 {
-   QStringList labDescriptions;
+   QVector < US_Rotor::Lab > labList;
 
    if ( disk_controls->db() )
    {
@@ -694,27 +707,31 @@ bool US_RotorGui::load( void )
          return( false );
       }
       
-      QStringList q( "get_lab_names" );
-      db.query( q );
-      
-      cb_lab->clear();
-      while ( db.next() )
+      // Get information about all the labs
+      if ( US_Rotor::readLabsDB( labList, &db ) == US_Rotor::NOT_FOUND )
       {
-         QString ID   = db.value( 0 ).toString();
-         QString Desc = db.value( 1 ).toString();
-         labDescriptions << ( ID + ": " + Desc );
+         QMessageBox::warning( this, tr( "Database Problem" ),
+            tr( "Could not read lab information \n" ) );
+         return( false );
       }
+
    }
 
    else
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "Loading lab information from local disk is not implemented yet." ) );
-      return( false );
+      // Get information about all the labs
+      if ( US_Rotor::readLabsDisk( labList ) == US_Rotor::NOT_FOUND )
+      {
+         QMessageBox::warning( this, tr( "Disk Problem" ),
+            tr( "Could not read lab information \n" ) );
+         return( false );
+      }
+
    }
 
-   cb_lab->addItems( labDescriptions );
+   cb_lab->clear();
+   foreach ( US_Rotor::Lab lab, labList )
+      cb_lab->addItem( QString::number( lab.ID ) + ": " + lab.name );
 
    changeLab( 0 );      // To display labs, rotors
 
@@ -741,7 +758,7 @@ void US_RotorGui::changeLab( int )
    loadRotors( labID );
 }
 
-bool US_RotorGui::loadRotors( const int &id )
+bool US_RotorGui::loadRotors( const int labID )
 {
    QStringList rotorDescriptions;
 
@@ -772,7 +789,7 @@ bool US_RotorGui::loadRotors( const int &id )
       }
    
       QStringList q( "get_rotor_names" );
-      q << QString::number( id );     // find rotors from this lab
+      q << QString::number( labID );     // find rotors from this lab
       db.query( q );
    
       while ( db.next() )
@@ -786,10 +803,21 @@ bool US_RotorGui::loadRotors( const int &id )
 
    else
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "Loading rotors from local disk is not implemented yet." ) );
-      return( false );
+      // Get information about all the rotors in this lab
+      QVector< US_Rotor::Rotor > rotors;
+
+      if ( US_Rotor::readRotorsFromDisk( rotors, labID ) == US_Rotor::NOT_FOUND )
+      {
+         QMessageBox::warning( this, tr( "Disk Problem" ),
+            tr( "Could not read rotor information \n" ) );
+         return( false );
+      }
+
+      for ( int i = 0; i < rotors.size(); i++ )
+      {
+         if ( rotors[ i ].labID == labID )
+            rotorDescriptions << ( QString::number( rotors[ i ].ID ) + ": " + rotors[ i ].name );
+      }
    }
 
    lw_rotors->addItems( rotorDescriptions );

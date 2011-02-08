@@ -20,6 +20,7 @@ class US_EXTERN US_Rotor
       {
          ROTOR_OK,          //!< The last disk/db operation completed successfully
          NOT_FOUND,         //!< The rotor, abstractRotor or RotorCalibration ID/GUID was not found
+         NOT_OPENED,        //!< The rotor, abstractRotor or RotorCalibration file could not be opened
          MISC_ERROR,        //!< An unspecified error occurred
          NOT_SAVED,         //!< The file has not been saved
          EDITING,           //!< Data is being edited; certain operations not permitted
@@ -28,19 +29,48 @@ class US_EXTERN US_Rotor
          BOTH               //!< The file has been saved to both HD and DB
       };
 
+      //! \brief the Lab class describes a location where AUC hardware is used
+      class Lab
+      {
+         public:
+         int       ID;        //!< The database ID of the lab
+         QString   GUID;      //!< The GUID of the lab
+         QString   name;      //!< The name of the lab
+         QString   building;  //!< The building where the lab is located
+         QString   room;      //!< The room where the lab is located
+      
+         //! \brief Generic constructor for the Lab class.
+         Lab();
+
+         /*! \brief    Function to read an entire lab structure
+                       from the DB
+         
+             \param    labID The database labID of the
+                       desired abstract rotor
+             \param    db For database access, an open database connection
+         */
+         Status readDB        ( int, US_DB2* = 0 );
+
+         //! \brief Resets the class variables to default values
+         void      reset( void );
+      
+         //! \brief Displays the contents of the class variables in qDebug() statements
+         void      show  ( void );
+      };
+
       //! \brief the AbstractRotor structure describes a generic 4- or 8-hole rotor
       class AbstractRotor
       {
          public:
-         int       ID;
-         QString   GUID;
-         QString   name;
-         QString   material;
-         int       numHoles;
-         int       maxRPM;
-         double    magnetOffset;
-         double    cellCenter;
-         QString   manufacturer;
+         int       ID;            //!< The database ID of the abstract rotor
+         QString   GUID;          //!< The GUID of the abstract rotor
+         QString   name;          //!< The abstract rotor type (Simulation, AN50, AN60, CFA)
+         QString   material;      //!< What this rotor type is made of (Simulation, Titanium, CarbonFiber)
+         int       numHoles;      //!< The number of holes in this rotor type
+         int       maxRPM;        //!< The maximum RPM
+         double    magnetOffset;  //!< The magnet offset
+         double    cellCenter;    //!< The center of the cell
+         QString   manufacturer;  //!< The manufacturer (Beckman, SpinAnalytical)
       
          //! \brief Generic constructor for the AbstractRotor class.
          AbstractRotor();
@@ -65,13 +95,13 @@ class US_EXTERN US_Rotor
       class Rotor
       {
          public:
-         int       ID;
-         int       abstractRotorID;
-         QString   abstractRotorGUID;
-         int       labID;              //!< The ID of the laboratory which owns this rotor
-         QString   GUID;
-         QString   name;
-         QString   serialNumber;
+         int       ID;                //!< The database ID of this rotor
+         int       abstractRotorID;   //!< The ID of the rotor type
+         QString   abstractRotorGUID; //!< The GUID of the rotor type
+         int       labID;             //!< The ID of the laboratory which owns this rotor
+         QString   GUID;              //!< The GUID of this rotor
+         QString   name;              //!< The local name of the rotor
+         QString   serialNumber;      //!< The serial number of the rotor
    
          //! \brief Generic constructor for the Rotor class.
          Rotor();
@@ -96,11 +126,20 @@ class US_EXTERN US_Rotor
          */
          static int    deleteRotorDB( int, US_DB2* = 0 );
 
+         //! \brief    Method to save the current rotor to disk
+         void          saveDisk( void );
+
+         /*! \brief A function to read information about a rotor from disk
+         
+             \param id A reference to the id that identifies the rotor 
+         */
+         Status        readDisk( const int& );
+
          //! \brief Resets the class variables to default values
-         void      reset( void );
+         void          reset( void );
    
          //! \brief Displays the contents of the class variables in qDebug() statements
-         void      show ( void );
+         void          show ( void );
       };
    
       //! \brief the RotorCalibration class describes a calibration experiment and associated data
@@ -144,6 +183,19 @@ class US_EXTERN US_Rotor
          */
          static int    deleteCalibrationDB( int, US_DB2* = 0 );
 
+         //! \brief    Method to save the current rotor calibration to disk
+         void          saveDisk( void );
+
+         /*! \brief A function to read information about a rotor calibration from disk
+         
+             \param id A reference to the id that identifies the rotor 
+         */
+         Status        readDisk( const int& );
+
+         //! \brief A function to read the report part of the rotor 
+         //!        calibration from disk
+         void          readReport( QXmlStreamReader& );
+
          //! \brief Resets the class variables to their default vaules
          void    reset ( void );
    
@@ -165,6 +217,21 @@ class US_EXTERN US_Rotor
       RotorCalibration  currentCalibration;     //!< Current calibration structure
       int               labID;
 
+      /*! \brief A function to read information about all labs from DB
+
+          \param labList A reference to a vector that contains,
+                         or will contain, the list of available labs
+          \param    db   For database access, an open database connection
+      */
+      static Status readLabsDB( QVector< US_Rotor::Lab >&, US_DB2* db );
+
+      /*! \brief A function to read information about all labs from disk
+
+          \param labList A reference to a vector that contains,
+                         or will contain, the list of available labs
+      */
+      static Status readLabsDisk( QVector< US_Rotor::Lab >& );
+
       /*! \brief A function to read information about all abstract rotors from DB
 
           \param arList A reference to a vector that contains,
@@ -180,31 +247,47 @@ class US_EXTERN US_Rotor
       */
       static Status readAbstractRotorsDisk( QVector< US_Rotor::AbstractRotor >& );
 
-//      void readRotorFromDisk( QString& );
-//      void readCalibrationFromDisk( QString& );
+      /*! \brief    Function to retrieve all the rotors in a particular lab from disk
 
-      //! \brief    Method to save the current rotor/calibration to disk
-//      void saveRotorToDisk        ( void );
-//      void saveCalibrationToDisk  ( void );
+          \param    profiles A reference to where the rotors will be stored
+          \param    labID The ID of the lab where the rotors are located
+      */
+      static Status readRotorsFromDisk( QVector< Rotor >&, int );
 
-      /*! \brief    Function to find the filename of a solution on disk, if it exists.
+      /*! \brief    Function to retrieve all the calibration profiles about a
+                    particular rotor from disk
+
+          \param    profiles A reference to where the rotor calibration profiles 
+                             will be stored
+          \param    rotorID The ID of the rotor 
+      */
+      static Status readCalibrationProfilesDisk( QVector< RotorCalibration >&, int );
+
+      /*! \brief    Function to find the filename of a rotor or calibration
+                    on disk, if it exists.
                     Returns true if successful, false otherwise
-          \param    guid The GUID of the solution to look for on disk
+          \param    fileMask Describes what the filenames look like
+          \param    lookupTag The xml tag to look for
+          \param    lookupID The ID to look for on disk
           \param    filename The function will return the filename here if it is found
       */
-//      bool diskFilename      ( const QString& , QString& );
+      static bool diskFilename( const QString& ,
+                                const QString& ,
+                                const int& , 
+                                QString& );
 
 
    private:
 
         static bool    diskPath          ( QString& );
-        static QString get_filename      ( const QString&, bool& );
+        static QString get_filename      ( const QString& , 
+                                           const QString& ,
+                                           const QString& ,
+                                           const int& ,
+                                           bool& );
         static void    saveAbstractRotorsDisk( QVector< US_Rotor::AbstractRotor >& );
+        static void    saveLabsDisk( QVector< US_Rotor::Lab >& );
 
-//      void readRotorInfo  ( QXmlStreamReader& xml );
-//      void readRotorCalibrationInfo  ( QXmlStreamReader& xml );
-//      QString get_filename   ( const QString&, bool& );
-      
 };
 
 #endif
