@@ -1,6 +1,6 @@
 include( ../../gui.pri )
 
-QT           += xml svg
+QT           += xml svg opengl
 
 TARGET        = us_fematch
 

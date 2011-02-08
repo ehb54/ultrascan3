@@ -117,7 +117,7 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
    private slots:
       
       void source_changed     ( bool db );
-      bool loadRotors         ( const int & );
+      bool loadRotors         ( const int );
       void addRotor           ( void );
       void update_disk_db     ( bool db );
       void selectRotor        ( QListWidgetItem * );
