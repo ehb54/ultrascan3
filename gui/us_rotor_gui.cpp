@@ -87,7 +87,7 @@ void US_RotorGui::setupGui( int select_db_disk )
 
    // List the rotors for selection
    lw_rotors = us_listwidget();
-   lw_rotors-> setSortingEnabled( true );
+   lw_rotors-> setSortingEnabled( false );
    connect( lw_rotors, SIGNAL( itemClicked  ( QListWidgetItem* ) ),
                        SLOT  ( selectRotor  ( QListWidgetItem* ) ) );
    top->addWidget( lw_rotors, row, 0, 3, 2);
@@ -480,8 +480,11 @@ bool US_RotorGui::readCalibrationProfiles( int rotorID )
    lw_calibrations->addItems( calibrationDescriptions );
 
    // Select the first one in the list by default
-   lw_calibrations->setCurrentRow( 0 );
-   selectCalibration( lw_calibrations->currentItem() );
+   if ( lw_calibrations->count() > 0 )
+   {
+      lw_calibrations->setCurrentRow( 0 );
+      selectCalibration( lw_calibrations->currentItem() );
+   }
 
    return( true );
 }
