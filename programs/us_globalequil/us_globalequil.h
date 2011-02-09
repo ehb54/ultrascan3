@@ -9,6 +9,7 @@
 #include "us_db2.h"
 #include "us_globeq_data.h"
 #include "us_eqmodel_control.h"
+#include "us_eqfit_control.h"
 #include "us_eqreporter.h"
 #include "us_eqmath.h"
 #include "us_eqhistogram.h"
@@ -42,6 +43,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       US_Disk_DB_Controls*     dkdb_cntrls;
 
       US_EqModelControl*       emodctrl;
+      US_EqFitControl*         efitctrl;
       US_EqReporter*           ereporter;
       US_EqMath*               emath;
       US_EqHistogram*          ehisto;
@@ -117,6 +119,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       bool           mMoved;
       bool           mLowerH;
       bool           model_widget;
+      bool           fit_widget;
       bool           signal_mc;
       bool           floated_pars;
       bool           show_msgs;
