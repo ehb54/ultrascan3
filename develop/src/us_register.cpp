@@ -115,32 +115,38 @@ bool US_Register::read()
 
 #if defined(INTEL) || defined(WIN32) 
 #define PLATFORM "intel"
-#define TITLE    "Intel"
+#define TITLE    "Intel/AMD 32-bit"
 #endif
 
 #ifdef MAC
 #define PLATFORM "mac"
-#define TITLE    "Macintosh"
+#define TITLE    "Macintosh G3/G4"
 #endif
 
 #ifdef OPTERON
 #define PLATFORM "opteron"
-#define TITLE    "64-bit AMD Opteron"
+#define TITLE    "Intel/AMD 64-bit"
 #endif
 
 #ifdef SGI
 #define PLATFORM "sgi"
 #define TITLE    "Silicon Graphics"
 #endif
-
+	QString selected_platform;
+	if (register_list.platform == "opteron") selected_platform = "Intel/AMD 64-bit";
+	if (register_list.platform == "intel") selected_platform = "Intel/AMD 32-bit";
+	if (register_list.platform == "sparc") selected_platform = "Sun Sparc";
+	if (register_list.platform == "mac") selected_platform = "Macintosh G3/G4 ";
+	if (register_list.platform == "sgi") selected_platform = "Silicon Graphics";
+	if (register_list.platform == "generic") selected_platform = "Generic";
 
     if ( register_list.platform != PLATFORM  &&  
          register_list.platform != "generic" )
     {
       str = 
-        tr( "You are running UltraScan on a" TITLE " platform,\n"
+        tr( "You are running UltraScan on the " TITLE " platform,\n"
             "but your license is issued for the " + 
-            register_list.platform.upper() + " platform\n\n"
+            selected_platform + " platform\n\n"
             "You will have to update your license file before\n"
             "proceeding. Click on 'Register' to obtain an\n"
             "UltraScan License for the " TITLE " platform." );

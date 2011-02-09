@@ -636,6 +636,31 @@ void US_Extinction::plot()
          data_plot->setCurveData(polynomial[i], x_plot[i], poly_plot[i], wavelengthScan_vector[i].lambda.size());
       }
    }
+   if (fitted)
+   {
+		float val;
+		QString fileName = USglobal->config_list.result_dir + "/" + projectName + ".extinction_raw.dat";
+		QFile f(fileName);
+		if(f.open(IO_WriteOnly | IO_Translate))
+		{
+			QTextStream ts(&f);
+			ts << tr("\"Wavelength\"\t\"Extinction\"\n");
+      	for (j=0; j<wavelengthScan_vector[0].lambda.size(); j++)
+      	{
+        		val = 0.0;
+         	for (k=0; k<order; k++)
+         	{
+            	val += exp(fitparameters[wavelengthScan_vector.size() + (3 * k)]
+               	  - (pow((wavelengthScan_vector[0].lambda[j] - fitparameters[wavelengthScan_vector.size() + (3 * k) + 1]), 2)
+                 	  / ( 2 * pow(fitparameters[wavelengthScan_vector.size() + (3 * k) + 2], 2))));
+         	}
+				ts << wavelengthScan_vector[0].lambda[j] << "\t";
+				ts << val << "\n";
+			}
+	   	f.close();
+      }
+   }
+
    data_plot->replot();
    initialize(coeffs);
    if (fitted)   //send the results to the caller
@@ -1048,7 +1073,7 @@ void US_Extinction::mouseMoved(const QMouseEvent &e)
       }
       str.sprintf(" %3.3f", lambda[index]);
       ext_l->lbl_lambda2->setText(str);
-      str.sprintf(" %7.1f OD/(mol*cm)", extinction[index]);
+      str.sprintf(" %7.4e OD/(mol*cm)", extinction[index]);
       ext_l->lbl_extinction2->setText(str);
    }
    else
