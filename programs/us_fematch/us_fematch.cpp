@@ -1704,11 +1704,13 @@ DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
    sdata          = new US_DataIO2::RawData();
 
    // initialize simulation parameters using edited data information
-   simparams.initFromData( NULL, *edata );
-DbgLv(1) << " initFrDat serial type coeffs" << simparams.rotorSerial
-   << simparams.rotorType      << simparams.rotorcoeffs[0]
-   << simparams.rotorcoeffs[1] << simparams.rotorcoeffs[2]
-   << simparams.rotorcoeffs[3] << simparams.rotorcoeffs[4];
+   //simparams.initFromData( NULL, *edata );
+   US_Passwd pw;
+   US_DB2* dbP = dkdb_cntrls->db() ?
+                 new US_DB2( pw.getPasswd() ) : 0;
+   simparams.initFromData( dbP, *edata );
+DbgLv(1) << " initFrDat rotorCalID coeffs" << simparams.rotorCalID
+   << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;
