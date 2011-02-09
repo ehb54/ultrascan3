@@ -306,7 +306,7 @@ DbgLv(1) << "  EqRep:CHECK_SCAN_FIT()";
    int  ffitx    = 0;
    bool critical = false;
 
-   while ( ! scanfits[ ffitx ].scanFit )
+   while ( ffitx < scanfits.size()  &&  ! scanfits[ ffitx ].scanFit )
       ffitx++;
 
 DbgLv(1) << "  EqRep:CSF: ffitx" << ffitx;
@@ -328,7 +328,7 @@ DbgLv(1) << "  EqRep:CSF: ffitx" << ffitx;
          if ( runfit.mw_vals[ jj ] == 0.0 )
          {
             rs += tr( "Although the molecular weight parameter for"
-                      "component %1 has been floated,\n" ).arg( cnum );
+                      " component %1 has been floated,\n" ).arg( cnum );
             rs += tr( "the value for this parameter is equal to zero"
                       " - fitting aborted!\n" );
             critical = true;
@@ -337,7 +337,7 @@ DbgLv(1) << "  EqRep:CSF: ffitx" << ffitx;
          if ( runfit.mw_rngs[ jj ] == 0.0 )
          {
             rs += tr( "Although the molecular weight parameter for"
-                      "component %1 has been floated,\n" ).arg( cnum );
+                      " component %1 has been floated,\n" ).arg( cnum );
             rs += tr( "the range for this parameter is equal to zero"
                       " - fitting aborted!\n" );
             critical = true;
@@ -355,7 +355,7 @@ DbgLv(1) << "  EqRep:CSF: ffitx" << ffitx;
          if ( runfit.vbar_vals[ jj ] == 0.0 )
          {
             rs += tr( "Although the vbar parameter for"
-                      "component %1 has been floated,\n" ).arg( cnum );
+                      " component %1 has been floated,\n" ).arg( cnum );
             rs += tr( "the value for this parameter is equal to zero"
                       " - fitting aborted!\n" );
             critical = true;
@@ -364,7 +364,7 @@ DbgLv(1) << "  EqRep:CSF: ffitx" << ffitx;
          if ( runfit.vbar_rngs[ jj ] == 0.0 )
          {
             rs += tr( "Although the vbar parameter for"
-                      "component %1 has been floated,\n" ).arg( cnum );
+                      " component %1 has been floated,\n" ).arg( cnum );
             rs += tr( "the range for this parameter is equal to zero"
                       " - fitting aborted!\n" );
             critical = true;

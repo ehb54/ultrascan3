@@ -328,6 +328,193 @@ DbgLv(1) << "EM:IP: C2: total" << total;
    }
 }
 
+// Initialize for fit
+void US_EqMath::init_fit( int modx, int methx )
+{
+   modelx   = modx;     // Model type index
+   nlsmeth  = methx;    // NLS method index
+
+   // Find the index to the first fitted scan and count data sets, points
+   ffitx    = -1;
+   ntpts    = 0;
+   ndsets   = 0;
+   nfpars   = 0;
+   nspts    = 0;
+   nslpts   = 0;
+   v_setpts .clear();
+   v_setlpts.clear();
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      if ( ! scanfits[ ii ].scanFit )  continue;
+
+      if ( ffitx < 0 )                 ffitx    = ii;
+
+      nspts    = scanfits[ ii ].stop_ndx - scanfits[ ii ].start_ndx + 1;
+      v_setpts  << nspts;
+      v_setlpts << nspts;
+      ndsets++;
+      ntpts   += nspts;
+   }
+
+   if ( ffitx < 0  ||  ntpts == 0 )    return;
+
+   // Count the number of fitting parameters
+   for ( int ii = 0; ii < runfit.nbr_comps; ii++ )
+   {
+      if ( runfit.mw_fits[ ii ] == true  ||  runfit.vbar_fits[ ii ] == true )
+         nfpars++;
+
+      if ( runfit.viri_fits[ ii ] == true )
+         nfpars++;
+   }
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      if ( ! scanfits[ ii ].scanFit )  continue;
+
+      EqScanFit* scnf = &scanfits[ ii ];
+
+      for ( int jj = 0; jj < runfit.nbr_comps; jj++ )
+         if ( scnf->amp_fits[ jj ] )
+            nfpars++;
+
+      if ( scnf->baseln_fit )
+         nfpars++;
+   }
+
+   for ( int jj = 0; jj < runfit.nbr_assocs; jj++ )
+      if ( runfit.eq_fits[ jj ] )
+         nfpars++;
+
+   // Allocate vectors and matrices
+   v_yraw  .fill( 0.0, ntpts  );
+   v_yguess.fill( 0.0, ntpts  );
+   v_ydelta.fill( 0.0, ntpts  );
+   v_BB    .fill( 0.0, nfpars );
+   v_guess .fill( 0.0, nfpars );
+   v_tguess.fill( 0.0, nfpars );
+
+   m_jacobi.fill(   0, ntpts  );
+   m_info  .fill(   0, nfpars );
+   m_LLtrns.fill(   0, nfpars );
+   m_dcr2  .fill(   0, ndsets );
+   m_dlncr2.fill(   0, ndsets );
+   m_lncr2 .fill(   0, ndsets );
+
+   int njavls = ntpts  * nfpars;
+   int ntpvls = nfpars * nfpars;
+   v_jacobi.fill( 0.0, njavls );
+   v_info  .fill( 0.0, ntpvls );
+   v_LLtrns.fill( 0.0, ntpvls );
+   v_lncr2 .fill( 0.0, ntpts  );
+   v_dlncr2.fill( 0.0, ntpts  );
+   v_dcr2  .fill( 0.0, ntpts  );
+
+   int dsx    = 0;
+   int ptx    = 0;
+   d_lncr2    = v_lncr2 .data();
+   d_dlncr2   = v_dlncr2.data();
+   d_dcr2     = v_dcr2  .data();
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      if ( ! scanfits[ ii ].scanFit )  continue;
+
+      EqScanFit* scnf = &scanfits[ ii ];
+
+      m_dlncr2[ dsx ] = d_dlncr2;
+      m_lncr2 [ dsx ] = d_lncr2;
+      m_dcr2  [ dsx ] = d_dcr2;
+
+      nspts      = v_setpts[ dsx++ ];
+      d_dlncr2  += nspts;
+      d_lncr2   += nspts;
+      d_dcr2    += nspts;
+      int jy     = scnf->start_ndx;
+
+      for ( int jj = 0; jj < nspts; jj++ )
+         v_yraw[ ptx++ ] = scnf->yvs[ jy++ ];
+   }
+
+   // Initialize parameter guess
+   guess_mapForward( );
+
+DbgLv(1) << "EM:FI: ffitx" << ffitx << "modelx" << modelx;
+}
+
+// Fill in guess parameter vector
+//   Parameter order (needs to be maintained so Jacobian columns match):
+//     for each component k:
+//       1. Molecular Weight ( k )
+//       2. Vbar ( k )
+//       3. Virial Coefficient ( k )
+//
+//     for each scan:
+//       for each component:
+//         4. Amplitude
+//       5. Baseline
+//
+//     for each association constant:
+//       6. Association constant
+//
+void US_EqMath::guess_mapForward()
+{
+   int jpx = 0;
+
+   for ( int jj = 0; jj < runfit.nbr_comps; jj++ )
+   {
+      if ( runfit.mw_fits[ jj ] )
+      {
+         v_guess[ jpx ] = runfit.mw_vals[ jj ];
+         runfit.mw_ndxs[ jj ] = jpx++;
+      }
+
+      if ( runfit.vbar_fits[ jj ] )
+      {
+         v_guess[ jpx ] = runfit.vbar_vals[ jj ];
+         runfit.vbar_ndxs[ jj ] = jpx++;
+      }
+
+      if ( runfit.viri_fits[ jj ] )
+      {
+         v_guess[ jpx ] = runfit.viri_vals[ jj ];
+         runfit.viri_ndxs[ jj ] = jpx++;
+      }
+   }
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      if ( ! scanfits[ ii ].scanFit )  continue;
+
+      EqScanFit* scnf = &scanfits[ ii ];
+
+      for ( int jj = 0; jj < runfit.nbr_comps; jj++ )
+      {
+         if ( scnf->amp_fits[ jj ] )
+         {
+            v_guess[ jpx ] = scnf->amp_vals[ jj ];
+            scnf->amp_ndxs[ jj ] = jpx++;
+         }
+
+         if ( scnf->baseln_fit )
+         {
+            v_guess[ jpx ] = scnf->baseline;
+            scnf->baseln_ndx = jpx++;
+         }
+      }
+   }
+
+   for ( int jj = 0; jj < runfit.nbr_assocs; jj++ )
+   {
+      if ( runfit.eq_fits[ jj ] )
+      {
+         v_guess[ jpx ] = runfit.eq_vals[ jj ];
+         runfit.eq_ndxs[ jj ] = jpx++;
+      }
+   }
+}
+
 // Calculate the chi-squared for the fixed molecular weight estimate
 // for a single component model
 double US_EqMath::calc_testParameter( double mwval )
@@ -461,7 +648,7 @@ DbgLv(1) << "ctPar:chi_sq" << chi_sq;
 // Calculate bracket: assume the minimum is between x0=0 and some stepsize
 // x2 away from x0. Then find an x1 in the middle between x0 and x2; and
 // calculate f1(x1).
-double US_EqMath::minimum_residual()
+double US_EqMath::linesearch()
 {
    double residm = 0.0;
    double old_f0 = 0.0;

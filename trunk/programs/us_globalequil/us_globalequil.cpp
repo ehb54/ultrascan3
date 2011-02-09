@@ -270,11 +270,13 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
    mainLayout->setStretchFactor( rightLayout,  5 );
 
    emodctrl     = 0;
+   efitctrl     = 0;
    ereporter    = 0;
    emath        = 0;
    ehisto       = 0;
 
    model_widget = false;
+   fit_widget   = false;
    signal_mc    = true;
    floated_pars = false;
    show_msgs    = true;
@@ -550,9 +552,11 @@ DbgLv(1) << "CHECK_SCAN_FIT()";
    if ( ereporter == 0 )                // Create reporter (1st time)
       ereporter  = new US_EqReporter( dataList,
           triples, scedits, scanfits, runfit, this );
+DbgLv(1) << " CkScFit:  sz - sced scnf" << scedits.size() << scanfits.size();
 
                                         // Generate and display report
    bool crit = ereporter->check_scan_fit( modelx );
+DbgLv(1) << " CkScFit: modelx crit" << modelx << crit;
 
    pb_fitcntrl->setEnabled( !crit );    // Fit Control if no critical errors
 }
@@ -644,7 +648,26 @@ DbgLv(1) << "MODEL_CONTROL()";
 }
 
 void US_GlobalEquil::fitting_control( void )
-{ DbgLv(1) << "FITTING_CONTROL()"; }
+{
+DbgLv(1) << "FITTING_CONTROL()";
+   if ( fit_widget )
+   {
+      efitctrl->raise();
+   }
+
+   else
+   {
+      fit_widget   = true;
+      sscanx       = tw_equiscns->currentRow();
+      sscann       = sscanx + 1;
+
+      efitctrl = new US_EqFitControl(
+            scanfits, runfit, edata, modelx, models, fit_widget, sscann );
+
+      efitctrl->show();
+   }
+}
+
 void US_GlobalEquil::load_fit( void )
 { DbgLv(1) << "LOAD_FIT()"; }
 void US_GlobalEquil::monte_carlo( void )
@@ -688,7 +711,7 @@ DbgLv(1) << "IP:  points xvs0 xvsN" << scanfits[0].points
 
    if ( runfit.mw_vals[ 0 ] <= 0.0 )
    {  // Calculate the molecular weight value the 1st time
-      runfit.mw_vals[ 0 ] = emath->minimum_residual();
+      runfit.mw_vals[ 0 ] = emath->linesearch();
    }
 
    else
@@ -712,7 +735,7 @@ DbgLv(1) << "IP:  points xvs0 xvsN" << scanfits[0].points
          case QMessageBox::Yes:
          case QMessageBox::Default:
          default:
-            runfit.mw_vals[ 0 ] = emath->minimum_residual();
+            runfit.mw_vals[ 0 ] = emath->linesearch();
             runfit.mw_rngs[ 0 ] = runfit.mw_vals[ 0 ] * 0.2;
             update_mw = true;
             break;
@@ -767,7 +790,6 @@ void US_GlobalEquil::close_all( void )
 {
 //DbgLv(1) << "CLOSE_ALL()";
    if ( model_widget )    emodctrl->close();
-   if ( ehisto != 0 )     ehisto  ->close();
    if ( emath != 0 )      delete emath;
    if ( ereporter != 0 )  delete ereporter;
 
