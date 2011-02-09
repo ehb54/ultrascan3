@@ -420,9 +420,8 @@ void US_MPI_Analysis::set_monteCarlo( void )
 //  data in Monte Carlo iterations
 void US_MPI_Analysis::set_gaussians( void )
 {
-
    simulation_values.solutes = calculated_solutes[ max_depth ];
-   meniscus_value            = meniscus_values[ 0 ];
+   meniscus_value            = -1.0;   // Used edited value
 
    calc_residuals( 0, data_sets.size(), simulation_values );
 

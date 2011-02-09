@@ -1,24 +1,25 @@
 #include "us_mpi_analysis.h"
 #include "us_util.h"
-
-//TODO: Send udp progress message when appropriate
+#include "us_math2.h"
 
 void US_MPI_Analysis::ga_master( void )
 {
-   QList  < Gene    > best_genes;   // Size is number of processors
-   QList  < Gene    > emigres;      // Holds genes passed as emmigrants
-   QList  < Fitness > best_fitness; // Size is number of processors
-   QVector< int     > generations( node_count, 0 ); 
+   startTime       = QDateTime::currentDateTime();
+   current_dataset = 0;
 
-   best_genes.reserve  ( node_count);
+   // Tell calc_residuals to use the edited data meniscus value
+   meniscus_value = -1.0; 
+
+   // Initialize best fitness
+   best_genes  .reserve( node_count);
    best_fitness.reserve( node_count);
 
    Fitness empty_fitness;
-   int     workers = node_count - 1;
-   Gene    working_gene( buckets.count(), Solute() );
+   empty_fitness.fitness = LARGE;
 
-   empty_fitness.fitness = 9.9e99;  // A large number
+   Gene working_gene( buckets.count(), Solute() );
 
+   // Initialize arrays
    for ( int i = 0; i < node_count; i++ )
    {
       best_genes << working_gene;
@@ -27,7 +28,87 @@ void US_MPI_Analysis::ga_master( void )
       best_fitness << empty_fitness;
    }
 
-   int max_generation = -1;
+   // Handle global fit if needed
+   if ( data_sets.size() > 1 )
+   {
+      for ( int i = 0; i < data_sets.size(); i++ )
+      {
+         ga_master_loop();
+         qSort( best_fitness );
+         simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
+         
+         for ( int g = 0; g < buckets.size(); g++ )
+            simulation_values.solutes[ g ].s *= 1.0e-13;
+
+         calc_residuals( current_dataset, 1, simulation_values );
+         ga_global_fit();  // Normalize data and update workers
+      }
+   }
+
+   // Handle Monte Carlo iterations.  There will always be at least 1.
+   while ( true )
+   {
+      ga_master_loop();
+
+qDebug() << "Master elapsed time" 
+         << startTime.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
+
+      qSort( best_fitness );
+      simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
+
+      for ( int g = 0; g < buckets.size(); g++ )
+         simulation_values.solutes[ g ].s *= 1.0e-13;
+
+      calc_residuals( 0, data_sets.size(), simulation_values );
+
+      write_model( simulation_values, US_Model::GA );
+
+      if ( ++mc_iteration < mc_iterations )
+      {
+         // Set scaled_data the first time
+         if ( mc_iteration == 1 ) 
+         {
+            scaled_data = solution;
+         }
+
+         set_gaMonteCarlo();
+      }
+      else
+         break;
+   }
+
+   MPI_Job job;
+
+   // Send finish to workers ( in the tag )
+   for ( int worker = 1; worker < node_count; worker++ )
+   {
+      MPI_Send( &job,              // MPI #0
+                sizeof( job ),
+                MPI_BYTE,
+                worker,
+                FINISHED,
+                MPI_COMM_WORLD );
+   }            
+}
+
+void US_MPI_Analysis::ga_master_loop( void )
+{
+   int    max_generation       = -1;
+   bool   early_termination    = false;
+   int    fitness_same_count   = 0;
+   double best_overall_fitness = 1.0e99;
+   int    tag;
+   int    workers              = node_count - 1;
+
+   // Reset best fitness for each worker
+   for ( int i = 0; i < node_count; i++ )
+   {
+      best_fitness[ i ].fitness = LARGE;
+      best_fitness[ i ].index   = i;
+   }
+
+   QList  < Gene    > emigres;      // Holds genes passed as emmigrants
+   QVector< int     > generations( node_count, 0 ); 
 
    while ( workers > 0 )
    {
@@ -35,7 +116,7 @@ void US_MPI_Analysis::ga_master( void )
       MPI_Status status;
       int        worker;
 
-      MPI_Recv( &msg,          // Get a message
+      MPI_Recv( &msg,          // Get a message   MPI #1
                 sizeof( msg ),
                 MPI_BYTE,
                 MPI_ANY_SOURCE,
@@ -62,7 +143,7 @@ void US_MPI_Analysis::ga_master( void )
             }
 
             // Get the best gene for the current generation from the worker
-            MPI_Recv( best_genes[ worker ].data(),
+            MPI_Recv( best_genes[ worker ].data(),     // MPI #2
                       buckets.size() * solute_doubles,
                       MPI_DOUBLE,  
                       worker,
@@ -75,12 +156,36 @@ void US_MPI_Analysis::ga_master( void )
                best_fitness[ worker ].fitness = msg.fitness;
             }
 
+            static const double fitness_threshold = 1.0e-7;
+
+            if ( fabs( msg.fitness - best_overall_fitness ) < fitness_threshold )
+               fitness_same_count++;
+            else
+               fitness_same_count = 0;
+
+            if ( ! early_termination )
+            {
+               if ( fitness_same_count > ( node_count - 1 ) * 5  &&
+                    max_generation     > 10 )
+               {
+                  early_termination = true;
+               }
+            }
+            
+            tag = early_termination ? FINISHED : GENERATION; 
+
+            // Tell the worker to either continue or stop
+            MPI_Send( &msg,            // MPI #3
+                      0,               // Only interested in the tag 
+                      MPI_BYTE,  
+                      worker,
+                      tag,
+                      MPI_COMM_WORLD );
             break;
 
          case FINISHED:
             workers--;
             break;
-
 
          case EMMIGRATE:
          {
@@ -90,7 +195,7 @@ void US_MPI_Analysis::ga_master( void )
                                               solute_doubles;
             QVector< double > emmigrants( doubles_count ) ;
 
-            MPI_Recv( emmigrants.data(),
+            MPI_Recv( emmigrants.data(),  // MPI #4
                       doubles_count,
                       MPI_DOUBLE,
                       worker,
@@ -129,7 +234,7 @@ void US_MPI_Analysis::ga_master( void )
                   immigrants += emigres.takeAt( u_random( emigres.size() ) );
             }
 
-            MPI_Send( immigrants.data(),
+            MPI_Send( immigrants.data(),   // MPI #5
                       doubles_count,
                       MPI_DOUBLE,
                       worker,
@@ -139,81 +244,152 @@ void US_MPI_Analysis::ga_master( void )
          }
       }
    }
-
-   qSort( best_fitness );
-
-   Simulation sim;
-
-   sim.solutes = best_genes[ best_fitness[ 0 ].index ];
-
-   // TODO: Handle multiple data sets here
-   meniscus_value = data_sets[ 0 ]->run_data.meniscus; // Used in calc_residuals
-
-   for ( int g = 0; g < buckets.size(); g++ )
-      sim.solutes[ g ].s *= 1.0e-13;
-
-   calc_residuals( 0, data_sets.size(), sim );
-
-   write_model( sim, US_Model::GA );
 }
 
-// TODO: Combine this function with write_2dsa()
-void US_MPI_Analysis::write_ga_output( const Simulation& sim )
+void US_MPI_Analysis::ga_global_fit( void ) 
 {
-   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
+   // This is almost the same as 2dsa global_fit.
+   double concentration = 0.0;
 
-   // Fill in and write out the model file
-   US_Model model;
-
-   model.monteCarlo  = mc_iteration > 1;
-   model.wavelength  = data->wavelength.toDouble();
-   model.modelGUID   = US_Util::new_guid();
-   model.editGUID    = data->editGUID;
-   model.requestGUID = requestGUID;
-   //model.optics      = ???  How to get this?  Is is needed?
-   model.analysis    = US_Model::GA;
-   model.global      = US_Model::NONE;   // For now.  Will change later.
-
-   model.description = data->runID + ".ga a" + analysisDate +
-                       " e" + data->editID +
-                       db_name + "-" + requestID;
-   // Save as class variable for later reference
-   modelGUID = model.modelGUID;
-
-   for ( int i = 0; i < sim.solutes.size(); i++ )
+   // The first dataset is done automatically.
+   for ( int solute = 0; solute < simulation_values.solutes.size(); solute++ )
    {
-      const Solute* solute = &sim.solutes[ i ];
-
-      US_Model::SimulationComponent component;
-      component.s                    = solute->s;
-      component.f_f0                 = solute->k;
-      component.signal_concentration = solute->c;
-
-      US_Model::calc_coefficients( component );
-      model.components << component;
+      concentration += simulation_values.solutes[ solute ].c;
    }
 
-   QString fn = data->runID + ".ga." + model.modelGUID + ".xml";
-   model.write( fn );
+   // Point to current dataset
+   US_DataIO2::EditedData* data = &data_sets[ current_dataset ]->run_data;
 
-   // Add the file name of the model file to the output list
-   QFile f( "analysis_files.txt" );
-   if ( ! f.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append ) )
+   int scan_count    = data->scanData.size();
+   int radius_points = data->x.size();
+   int index         = 0;
+
+   QVector< double > scaled_data( scan_count * radius_points );
+
+   // Scale the data
+   for ( int s = 0; s < scan_count; s++ )
    {
-      abort( "Could not open 'analysis_files.txt' for writing" );
-      return;
+      for ( int r = 0; r < radius_points; r++ )
+      {
+         scaled_data[ index++ ] = data->value( s, r ) / concentration;
+      }
    }
 
-   QTextStream out( &f );
+   // Send the scaled data to the workers
+   MPI_Job job;
+   job.length         = scaled_data.size();
+   job.dataset_offset = current_dataset;
+   job.dataset_count  = 1;
 
-   QString meniscus = QString::number( meniscus_value, 'e', 4 );
-   QString variance = QString::number( sim.variance,   'e', 4 );
+   // Tell each worker that new data coming
+   // Can't use a broadcast because the worker is expecting a Send
+   for ( int worker = 1; worker < node_count; worker++ )
+   {
+      MPI_Send( &job,                   // MPI #7
+          sizeof( MPI_Job ), 
+          MPI_BYTE,
+          worker,   
+          UPDATE,
+          MPI_COMM_WORLD );
+   }
 
-   out << fn << ";meniscus_value=" << meniscus_value
-             << ";MC_iteration="   << mc_iteration
-             << ";variance="       << sim.variance
-             << "\n";
-   f.close();
+   // Get everybody synced up
+   MPI_Barrier( MPI_COMM_WORLD );
+
+   MPI_Bcast( scaled_data.data(),      // MPI #8
+              scaled_data.size(), 
+              MPI_DOUBLE, 
+              UPDATE, 
+              MPI_COMM_WORLD );
+
+   // Go to the next dataset
+   current_dataset++;
+   
+   // If all datasets have been scaled, do all datasets from now on
+   if ( current_dataset >= data_sets.size() )
+   {
+      datasets_to_process = data_sets.size();
+      current_dataset     = 0;
+   }
+}
+
+void US_MPI_Analysis::set_gaMonteCarlo( void ) 
+{
+   // This is almost the same as 2dsa set_monteCarlo
+   if ( mc_iteration == 1 )
+   {
+      meniscus_values << -1.0;
+      max_depth = 0;  // Make the datasets compatible
+      calculated_solutes.clear();
+      calculated_solutes << best_genes[ best_fitness[ 0 ].index ];
+
+      for ( int i = 0; i < calculated_solutes.size(); i++ )
+         calculated_solutes[ 0 ][ i ].s *= 1.0e-13;
+
+      set_gaussians();
+   }
+
+   int total_points = 0;
+
+   for ( int e = 0; e < data_sets.size(); e++ )
+   {
+      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+
+      int scan_count    = data->scanData.size();
+      int radius_points = data->x.size();
+
+      total_points += scan_count * radius_points;
+   }
+
+   mc_data.resize( total_points );
+   int index = 0;
+
+   // Get a randomized variation of the concentrations
+   // Use a gaussian distribution with the residual as the standard deviation
+   for ( int e = 0; e < data_sets.size(); e++ )
+   {
+      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+
+      int scan_count    = data->scanData.size();
+      int radius_points = data->x.size();
+
+      for ( int s = 0; s < scan_count; s++ )
+      {
+         for ( int r = 0; r < radius_points; r++ )
+         {
+            double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
+            mc_data[ index ] = scaled_data.value( s, r ) + variation;
+            index++;
+         }
+      }
+   }
+
+   // Broadcast Monte Carlo data to all workers
+   MPI_Job job;
+   job.length         = total_points;
+   job.dataset_offset = 0;
+   job.dataset_count  = data_sets.size();
+
+   // Tell each worker that new data coming
+   // Can't use a broadcast because the worker is expecting a Send
+   for ( int worker = 1; worker < node_count; worker++ )
+   {
+      MPI_Send( &job,         // MPI #9
+          sizeof( job ), 
+          MPI_BYTE,
+          worker,   
+          UPDATE,
+          MPI_COMM_WORLD );
+   }
+
+   // Get everybody synced up
+   MPI_Barrier( MPI_COMM_WORLD );
+
+   MPI_Bcast( mc_data.data(),   // MPI #10
+              total_points, 
+              MPI_DOUBLE, 
+              MPI_Job::MASTER, 
+              MPI_COMM_WORLD );
 }
 
 void US_MPI_Analysis::write_model( const Simulation&      sim, 
@@ -274,6 +450,7 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
 
    // Add the file name of the model file to the output list
    QFile f( "analysis_files.txt" );
+
    if ( ! f.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append ) )
    {
       abort( "Could not open 'analysis_files.txt' for writing" );

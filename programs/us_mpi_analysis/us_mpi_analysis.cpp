@@ -222,7 +222,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
    if ( ! parameters.contains( "p_mutate_sk"  ) ) 
       parameters[ "p_mutate_sk"  ] = "20";
 
-   count_calc_residuals = 0;
+   count_calc_residuals = 0;   // Internal instrumentation
    meniscus_run         = 0;
    mc_iteration         = 0;
    start();
@@ -273,7 +273,7 @@ void US_MPI_Analysis::start( void )
    }
 
    MPI_Finalize();
-   exit ( 0 );
+   exit( 0 );
 }
 
 // Send udp
