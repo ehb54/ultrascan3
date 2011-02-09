@@ -338,7 +338,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
    {
-      pb_load_gmon = new QPushButton("Load GMON", this);
+      pb_load_gmon = new QPushButton("Load GNOM", this);
       pb_load_gmon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
       //   pb_load_gmon->setMinimumHeight(minHeight1);
       pb_load_gmon->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));

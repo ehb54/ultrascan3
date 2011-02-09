@@ -6,5 +6,6 @@
 #include "us_sa2dbase.h"
 #include "us_viewmwl.h"
 #include "us_gridcontrol.h"
+#include "us_saxs_util.h"
 
 #endif
