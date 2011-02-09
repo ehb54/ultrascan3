@@ -12,16 +12,6 @@ class US_EXTERN US_Hardware
 {
    public:
 
-   //! General rotor characteristics
-   class RotorInfo
-   {
-      public:
-      int     serial_number;    //!< Rotor's serial number (series starts at zero)
-      QString type;             //!< Name of rotor
-      double  coefficient[ 5 ]; //!< Stretching coefficients for 5th order
-                                //!<  polynomial  (radius vs speed in rpm)
-   };
-
    //! General centerpiece characteristics
    class CenterpieceInfo
    {
@@ -49,6 +39,10 @@ class US_EXTERN US_Hardware
       double  width;
    };
 
+   //! \brief Read centerpiece information into a structure
+   //! \param cp_list Reference of structure to place data 
+   static bool readCenterpieceInfo( QVector< CenterpieceInfo >& );
+
    //! \brief Read rotor information from a local XML file to a QMap
    //! \param rotor_map Reference of QMap into which to place data
    static bool readRotorMap( QMap< QString, QString >& );
@@ -58,21 +52,12 @@ class US_EXTERN US_Hardware
    //! \param rotor_map Reference of QMap into which to place data
    static bool readRotorMap( US_DB2*, QMap< QString, QString >& );
    
-   //! \brief Get type, coefficient values for a specified rotor
-   //! \param serial    Rotor serial for which to get values
+   //! \brief Get coefficient values for a specified rotor
+   //! \param rCalID    Rotor calibration ID for which to get values
    //! \param rotor_map QMap of serial,value mappings
-   //! \param type      Reference into which to return rotor type string
-   //! \param rotcoeffs Array of 5 doubles to fill with rotor coefficients
-   static bool rotorValues ( QString, QMap< QString, QString >,
-                             QString&, double* );
+   //! \param rotcoeffs Array of 2 doubles to fill with rotor coefficients
+   static bool rotorValues ( QString, QMap< QString, QString >, double* );
    
-   //! \brief Read rotor information into a structure
-   //! \param rotor_list Reference of structure data to place data
-   static bool readRotorInfo      ( QVector< RotorInfo >& );
-   
-   //! \brief Read centerpiect information into a structure
-   //! \param cp_list Reference of structure to place data 
-   static bool readCenterpieceInfo( QVector< CenterpieceInfo >& );
 };
 
 #endif

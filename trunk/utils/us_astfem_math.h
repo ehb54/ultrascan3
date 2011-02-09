@@ -241,17 +241,9 @@ class US_EXTERN US_AstfemMath
       //! and rotor coefficients
       //! \param rpm          Rotor revolutions per minute.
       //! \param bottom_chan  Initial bottom for centerpiece channel
-      //! \param rotorcoefs   Array of 5 rotor coefficients
+      //! \param rotorcoefs   Array of 2 rotor coefficients
       //! \returns            The calculated bottom radius value.
       static double calc_bottom   ( double, double, double* );
-
-      //! \brief Calculate bottom radius from rotor/centerpiece information.
-      //! \param rpm       Rotor revolutions per minute.
-      //! \param rotor     Rotor index (default=1).
-      //! \param centerp   Centerpiece index (default=0).
-      //! \param channel   Channel index (default=0).
-      //! \returns         The calculated bottom radius value.
-      static double calc_bottom   ( double, int = 1, int = 0, int = 0 );
 
       //! \brief Initial concentration conditions
       class MfemInitial

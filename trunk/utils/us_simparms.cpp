@@ -23,16 +23,12 @@ US_SimulationParameters::US_SimulationParameters()
    tinoise           = 0.0;      
    rinoise           = 0.0;     
    temperature       = NORMAL_TEMP;
-   rotorSerial       = "UTHSCSA 1001";      
-   rotorType         = "Simulation";      
+   rotorCalID        = "0";      
    band_forming      = false;   
    band_volume       = 0.0015;
    bottom_position   = 7.2;
    rotorcoeffs[ 0 ]  = 0.0;
    rotorcoeffs[ 1 ]  = 0.0;
-   rotorcoeffs[ 2 ]  = 0.0;
-   rotorcoeffs[ 3 ]  = 0.0;
-   rotorcoeffs[ 4 ]  = 0.0;
 }
 
 US_SimulationParameters::SpeedProfile::SpeedProfile()
@@ -60,14 +56,13 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    double rpmnext      = rpm;
    int    jj           = 0;
 
-   rotorSerial         = "UTHSCSA 1002";
-   rotorType           = "AN50";
+   rotorCalID          = "0";
    QString fn          = US_Settings::resultDir() + "/" + editdata.runID + "/"
                          + editdata.runID + "." + editdata.dataType + ".xml";
    QFile file( fn );
 
    if ( file.open( QIODevice::ReadOnly | QIODevice::Text ) )
-   {  // if experiment/run file exists, get rotor serial from it
+   {  // if experiment/run file exists, get rotor calibration ID from it
       QXmlStreamReader xml( &file );
 
       while ( ! xml.atEnd() )
@@ -75,9 +70,9 @@ void US_SimulationParameters::initFromData( US_DB2* db,
          xml.readNext();
 
          if ( xml.isStartElement()  &&  xml.name() == "rotor" )
-         {  // pick up rotor serial from  <rotor ...serial="UTHSCSA 1002"...
+         {  // pick up rotor calibration ID from  <rotor ...calibrationID=...
             QXmlStreamAttributes a = xml.attributes();
-            rotorSerial   = a.value( "serial" ).toString();
+            rotorCalID    = a.value( "calibrationID" ).toString();
          }
       }
 
@@ -124,7 +119,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
 
 #ifndef NO_DB
    // set rotor coefficients, channel bottom position from hardware files
-   setHardware( db, rotorSerial, 0, 0 );
+   setHardware( db, rotorCalID, 0, 0 );
 
    // calculate bottom using RPM, start bottom, and rotor coefficients
    bottom              = US_AstfemMath::calc_bottom( rpm, bottom_position,
@@ -132,15 +127,15 @@ void US_SimulationParameters::initFromData( US_DB2* db,
 #else
    // For NO_DB (back end) the bottom needs to be set after this function
    bottom = bottom_position;
-   db = NULL; // Stop compiler warning
+   db     = NULL; // Stop compiler warning
 #endif
 }
 
 // Set parameters from hardware files, related to rotor and centerpiece
-void US_SimulationParameters::setHardware( US_DB2* db, QString serial,
+void US_SimulationParameters::setHardware( US_DB2* db, QString rCalID,
       int cp, int ch )
 {
-   rotorSerial      = serial;
+   rotorCalID       = rCalID;
    bottom_position  = 7.2;
 
    QVector< US_Hardware::CenterpieceInfo > cp_list;
@@ -152,9 +147,7 @@ void US_SimulationParameters::setHardware( US_DB2* db, QString serial,
 
    if ( US_Hardware::readRotorMap( db, rotor_map ) )
    {
-      US_Hardware::rotorValues( serial, rotor_map, rotorType, rotorcoeffs );
-//qDebug() << "setHardware: serial type coeff0" << serial << rotorType
-//   << rotorcoeffs[0];
+      US_Hardware::rotorValues( rotorCalID, rotor_map, rotorcoeffs );
    }
 
    else
@@ -163,10 +156,10 @@ void US_SimulationParameters::setHardware( US_DB2* db, QString serial,
    return;
 }
 
-// Set parameters from hardware files, related to rotor and centerpiece
-void US_SimulationParameters::setHardware( QString serial, int cp, int ch )
+// Set parameters from hardware files, related to rotor and centerpiece (Local)
+void US_SimulationParameters::setHardware( QString rCalID, int cp, int ch )
 {
-   return setHardware( NULL, serial, cp, ch );
+   return setHardware( NULL, rCalID, cp, ch );
 }
 
 // Load simulation parameters from file
@@ -237,20 +230,14 @@ int US_SimulationParameters::load_simparms( QString fname )
             astr  = a.value( "bandform"    ).toString();
             if ( !astr.isEmpty() )
                band_forming = ( astr == "yes" || astr == "1" );
-            astr  = a.value( "rotorSerial" ).toString();
+            astr  = a.value( "rotorCalID" ).toString();
             if ( !astr.isEmpty() )
-               rotorSerial  = astr;
-            astr  = a.value( "rotorType"   ).toString();
-            if ( !astr.isEmpty() )
-               rotorType    = astr;
+               rotorCalID   = astr;
             astr  = a.value( "rotorcoeffs" ).toString().simplified();
             if ( !astr.isEmpty() )
             {
                rotorcoeffs[ 0 ] = astr.section( " ", 0, 0 ).toDouble();
                rotorcoeffs[ 1 ] = astr.section( " ", 1, 1 ).toDouble();
-               rotorcoeffs[ 2 ] = astr.section( " ", 2, 2 ).toDouble();
-               rotorcoeffs[ 3 ] = astr.section( " ", 3, 3 ).toDouble();
-               rotorcoeffs[ 4 ] = astr.section( " ", 4, 4 ).toDouble();
             }
          }
 
@@ -339,18 +326,13 @@ int US_SimulationParameters::save_simparms( QString fname )
       xml.writeAttribute   ( "rinoise",     QString::number( rinoise ) );
       xml.writeAttribute   ( "temperature", QString::number( temperature ) );
 
-      if ( ! rotorSerial.isEmpty() )
-         xml.writeAttribute   ( "rotorSerial", rotorSerial );
-
-      if ( ! rotorType.isEmpty() )
-         xml.writeAttribute   ( "rotorType",   rotorType   );
+      if ( ! rotorCalID.isEmpty() )
+         xml.writeAttribute   ( "rotorCalID", rotorCalID );
 
       if ( rotorcoeffs[ 0 ] != 0.0 )
       {
-         xml.writeAttribute   ( "rotorcoeffs",
-            QString().sprintf( "%.3e %.3e %.3e %.3e %.3e",
-            rotorcoeffs[ 0 ], rotorcoeffs[ 1 ], rotorcoeffs[ 2 ],
-            rotorcoeffs[ 3 ], rotorcoeffs[ 4 ] ) );
+         xml.writeAttribute   ( "rotorcoeffs", QString().sprintf( "%.3e %.3e",
+            rotorcoeffs[ 0 ], rotorcoeffs[ 1 ] ) );
       }
 
       xml.writeAttribute   ( "bandform",  band_forming ? "1" : "0" );
@@ -434,16 +416,11 @@ void US_SimulationParameters::debug( void )
    qDebug() << "Random noise    :" << rnoise;
    qDebug() << "Time Inv Noise  :" << tinoise;
    qDebug() << "Radial Inv Noise:" << rinoise;
-   qDebug() << "Rotor Serial    :" << rotorSerial;
    qDebug() << "Band Forming    :" << band_forming;
    qDebug() << "Band Volume     :" << band_volume;
    qDebug() << "Bottom Pos      :" << bottom_position;
-   qDebug() << "Rotor Type      :" << rotorType;
-   qDebug() << "Rotor Coef      :" << rotorcoeffs[ 0 ] 
-                                   << rotorcoeffs[ 1 ]
-                                   << rotorcoeffs[ 2 ]
-                                   << rotorcoeffs[ 3 ]
-                                   << rotorcoeffs[ 4 ];
+   qDebug() << "Rotor Calibr.ID :" << rotorCalID;
+   qDebug() << "Rotor Coeffs    :" << rotorcoeffs[ 0 ] << rotorcoeffs[ 1 ];
 
    for ( int i = 0; i < speed_step.size(); i++ )
    {

@@ -556,6 +556,7 @@ DbgLv(2) << "AFRSA:  ncomp st1 st2" << ncomp << stoich1 << stoich2;
    }
 }
 
+// Adjust meniscus and bottom based on rotor coefficients
 void US_Astfem_RSA::adjust_limits( int speed )
 {
    // First correct meniscus to theoretical position at rest:
@@ -575,21 +576,11 @@ void US_Astfem_RSA::adjust_limits( int speed )
    af_params.current_bottom = simparams.bottom + stretch_value;
 }
 
-// calculate stretch for rotor coefficients array and rpm
+// Calculate stretch for rotor coefficients array and rpm
 double US_Astfem_RSA::stretch( double* rotorcoeffs, int rpm )
 {
-   double stretch = 0.0;          // initial stretch value
-   double rpmpow  = 1.0;          // initial rpm power ( rpm^0 )
-   double rpmval  = (double)rpm;  // Revs per Minute as double
-
-   for ( int i = 0; i < 5; i++ )
-   {
-      stretch += rotorcoeffs[ i ] * rpmpow;  // update stretch
-      rpmpow  *= rpmval;                     // next rpm power ( rpm^(i+1) )
-   }
-
-//DbgLv(2) << "AFRSA: stretch rpm" << stretch << rpm;
-   return stretch;
+   return ( rotorcoeffs[ 0 ] * rpm
+          + rotorcoeffs[ 1 ] * sq( rpm ) );
 }
 
 // Setup reaction groups

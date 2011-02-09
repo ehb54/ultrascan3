@@ -181,16 +181,21 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 void US_Astfem_Sim::init_simparams( void )
 {
    US_SimulationParameters::SpeedProfile sp;
-   QString rotor_serial = "UTHSCSA 1001";
+   QString rotor_calibr = "0";
    double  rpm          = 45000.0;
 
    // set up bottom start and rotor coefficients from hardware file
-   simparams.setHardware( NULL, rotor_serial, 0, 0 );
+   simparams.setHardware( NULL, rotor_calibr, 0, 0 );
 
    // calculate bottom from rpm, channel bottom pos., rotor coefficients
    double bottom = US_AstfemMath::calc_bottom( rpm,
          simparams.bottom_position, simparams.rotorcoeffs );
    bottom        = (double)( qRound( bottom * 1000.0 ) ) * 0.001;
+qDebug() << "ASim:InSP: rotor_calibr" << rotor_calibr;
+qDebug() << "ASim:InSP:  rpm" << rpm;
+qDebug() << "ASim:InSP:  bottom_position" << simparams.bottom_position;
+qDebug() << "ASim:InSP:  rotorcoeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
+qDebug() << "ASim:InSP:  bottom" << bottom << simparams.bottom;
 
    simparams.mesh_radius.clear();
    simparams.speed_step .clear();
@@ -216,7 +221,7 @@ void US_Astfem_Sim::init_simparams( void )
    simparams.tinoise           = 0.0;
    simparams.rinoise           = 0.0;
    simparams.band_volume       = 0.015;
-   simparams.rotorSerial       = rotor_serial;
+   simparams.rotorCalID        = rotor_calibr;
    simparams.band_forming      = false;
 }
 
@@ -979,7 +984,7 @@ void US_Astfem_Sim::dump_simparms( void )
    qDebug() << "rnoise " << simparams.rnoise;
    qDebug() << "tinoise " << simparams.tinoise;
    qDebug() << "rinoise " << simparams.rinoise;
-   qDebug() << "rotorSerial " << simparams.rotorSerial;
+   qDebug() << "rotorCalID " << simparams.rotorCalID;
    qDebug() << "band_forming " << simparams.band_forming;
    qDebug() << "band_volume " << simparams.band_volume;
    qDebug() << "band_firstScanIsConcentration "

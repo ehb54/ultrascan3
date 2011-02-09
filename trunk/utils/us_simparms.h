@@ -31,18 +31,18 @@ class US_EXTERN US_SimulationParameters
 
    //! \brief Read hardware files to update bottom and rotor coefficients array
    //! \param db     Pointer to opened database connection or NULL
-   //! \param serial New rotor serial to set and use for coefficients
-   //!               (default = "1")
+   //! \param rCalID New rotor calibration identifier to set and use for
+   //!               coefficients (default = "0")
    //! \param cp     Centerpiece index (default = 0)
    //! \param ch     Index to channel in centerpiece (default = 0) 
-   void setHardware( US_DB2* = NULL, QString = "1", int = 0, int = 0 );
+   void setHardware( US_DB2* = NULL, QString = "0", int = 0, int = 0 );
 
    //! \brief Read hardware files to update bottom and rotor coefficients array
-   //! \param serial New rotor serial to set and use for coefficients
-   //!               (default = "1")
+   //! \param rCalID New rotor calibration identifier to set and use for
+   //!               coefficients (default = "0")
    //! \param cp     Centerpiece index (default = 0)
    //! \param ch     Index to channel in centerpiece (default = 0) 
-   void setHardware( QString = "1", int = 0, int = 0 );
+   void setHardware( QString = "0", int = 0, int = 0 );
 
    //! \brief Load simulation parameters from an xml file
    //! \param fname Full path name of file from which to load simulation
@@ -101,13 +101,12 @@ class US_EXTERN US_SimulationParameters
    double    rnoise;            //!< Random noise
    double    tinoise;           //!< Time invariant noise
    double    rinoise;           //!< Radially invariant noise
-   QString   rotorSerial;       //!< Rotor serial number in database/XML
    bool      band_forming;      //!< True for band-forming centerpieces
    double    band_volume;       //!< Loading volume (of lamella) in a 
                                 //!< Band-forming centerpiece
    double    bottom_position;   //!< Bottom position from centerpiece,channel
-   QString   rotorType;         //!< Rotor type (Simulation|AN50|AN60|...)
-   double    rotorcoeffs[ 5 ];  //!< Rotor coefficients for stretch calculation
+   QString   rotorCalID;        //!< Rotor calibration identifier in DB/XML
+   double    rotorcoeffs[ 2 ];  //!< Rotor coefficients for stretch calculation
 
    //! First band sedimentation scan is initializer for concentration
    bool      band_firstScanIsConcentration; 
