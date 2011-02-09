@@ -1,11 +1,12 @@
 #include "us_mpi_analysis.h"
 #include "us_math2.h"
 
-//TODO: Multiple data sets
-//TODO: Monte Carlo
-
 void US_MPI_Analysis::ga_worker( void )
 {
+   startTime           = QDateTime::currentDateTime();
+   current_dataset     = 0;
+   datasets_to_process = 1;
+
    // Initialize grid values
    QStringList keys = parameters.keys();
 
@@ -23,23 +24,117 @@ void US_MPI_Analysis::ga_worker( void )
       buckets[ b ].dk = ( ff0_max - ff0_min ) / k_grid;
    }
 
+   MPI_GA_MSG msg;
+   MPI_Status status;
+   MPI_Job    job;
+   bool       finished = false;
+
+   while ( ! finished )
+   {
+      ga_worker_loop();
+
+      MPI_Send( &msg,           // This iteration is finished
+                sizeof( msg ),  // to MPI #1
+                MPI_BYTE,
+                MPI_Job::MASTER,
+                FINISHED,
+                MPI_COMM_WORLD );
+
+      MPI_Recv( &job,          // Find out what to do next
+                sizeof( job ), // from MPI #0, MPI #7, MPI #9
+                MPI_BYTE,
+                MPI_ANY_SOURCE,
+                MPI_ANY_TAG,
+                MPI_COMM_WORLD,
+                &status );
+
+      int dataset = job.dataset_offset;
+      int count   = job.dataset_count;
+      int length  = job.length;
+      int index   = 0;
+
+      switch ( status.MPI_TAG )
+      {
+         case FINISHED: 
+            finished = true;
+            break;
+
+         case UPDATE:   
+            // Update data for global fit or Monte Carlo
+            // Global fit comes before MC (if necessary), one dataset at a time
+            // Monte Carlo always comes as a sequence of all datasets
+
+            mc_data.resize( length );
+
+            MPI_Barrier( MPI_COMM_WORLD );
+
+            // This is a receive
+            MPI_Bcast( mc_data.data(),  // from MPI #8, #10
+                       length,
+                       MPI_DOUBLE,
+                       MPI_Job::MASTER,
+                       MPI_COMM_WORLD );
+
+            for ( int e = dataset; e < dataset + count; e++ )
+            {
+               US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+
+               int scan_count    = data->scanData.size();
+               int radius_points = data->x.size();
+
+               for ( int s = 0; s < scan_count; s++ )
+               {
+                  US_DataIO2::Scan* scan = &data->scanData[ s ];
+
+                  for ( int r = 0; r < radius_points; r++ )
+                  {
+                     scan->readings[ r ].value = mc_data[ index++ ];
+                  }
+               }
+            }
+
+            if ( count == data_sets.size() ) // Next iteration will be global
+            {
+               current_dataset     = 0;
+               datasets_to_process = data_sets.size();
+            }
+            else // Next dataset is a part of global fit
+            {
+               current_dataset = dataset;
+               // datasets_to_process will stay at 1
+            }
+
+            break;
+
+         default:
+            abort( "Unknown message at end of GA worker loop" );
+            break;
+
+      } // end switch
+   }  // end while
+}
+
+void US_MPI_Analysis::ga_worker_loop( void )
+{
    // Initialize genes
    genes.clear();
    int population = parameters[ "population" ].toInt();
 
    for ( int i = 0; i < population; i++ ) genes << new_gene();
 
-   // TODO handle multiple data sets here (scale experimental data)
-   meniscus_value = data_sets[ 0 ]->run_data.meniscus;
+   // Let calc_residuals get the meniscus directly from the edited data for
+   // each data set
+   meniscus_value = -1.0;
 
    fitness.reserve( population );
 
    Fitness empty_fitness;
+   empty_fitness.fitness = LARGE;
 
    for ( int i = 0; i < population; i++ )
    {
-      fitness    << empty_fitness;
-      fitness[ i ].index = i;
+      empty_fitness.index = i;
+      fitness << empty_fitness;
    }
 
    int generations = parameters[ "generations" ].toInt();
@@ -57,12 +152,12 @@ void US_MPI_Analysis::ga_worker( void )
 
    for ( generation = 0; generation < generations; generation++ )
    {
-
- qDebug() << "generation" << generation;
-
       // Calculate fitness
       for ( int i = 0; i < population; i++ )
+      {
+         fitness[ i ].index   = i;
          fitness[ i ].fitness = get_fitness( genes[ i ] );
+      }
 
       // Sort fitness
       qSort( fitness );
@@ -70,6 +165,7 @@ void US_MPI_Analysis::ga_worker( void )
       // Refine with gradient search method (gsm)
       fitness[ 0 ].fitness = minimize( genes[ fitness[ 0 ].index ], 
                                        fitness[ 0 ].fitness );
+
       // Ensure gene is on grid
       align_gene( genes[ fitness[ 0 ].index ] );
 
@@ -78,24 +174,35 @@ void US_MPI_Analysis::ga_worker( void )
       msg.size       = genes[ fitness[ 0 ].index ].size();
       msg.fitness    = fitness[ 0 ].fitness;
 
-      MPI_Send( &msg,
+      MPI_Send( &msg,                                // to MPI #1
                 sizeof( msg ),
                 MPI_BYTE,
                 MPI_Job::MASTER,
                 GENERATION,
                 MPI_COMM_WORLD );
 
-      MPI_Send( genes[ fitness[ 0 ].index ].data(), 
+      MPI_Send( genes[ fitness[ 0 ].index ].data(),  // to MPI #2
                 solute_doubles * buckets.size(),
                 MPI_DOUBLE,
                 MPI_Job::MASTER,
                 GENE,
                 MPI_COMM_WORLD );
 
+      // Receive instructions from master (continue or finish)
+      MPI_Status status;
+
+      MPI_Recv( &msg,                                // from MPI #3
+                sizeof( msg ),
+                MPI_BYTE,
+                MPI_ANY_SOURCE,
+                MPI_ANY_TAG,
+                MPI_COMM_WORLD,
+                &status );
+
+      if ( status.MPI_TAG == FINISHED ) break;
+
       // See if we are really done
       if ( generation == generation - 1 ) continue;
-
-      // TODO: Receive instructions from master (continue of finish)
 
       // Mark duplicate genes 
       int f0 = 0;  // An index into the fitness array
@@ -104,7 +211,6 @@ void US_MPI_Analysis::ga_worker( void )
       while ( f1 < population )
       {
          // The value of 1.0e-8 for close fitness is arbitrary. Paramaterize?
-         // Do we need to check actual s and k values too?
          if ( fabs( fitness[ f0 ].fitness - fitness[ f1 ].fitness ) < 1.0e-8 )
          {
             bool match = true;
@@ -114,8 +220,8 @@ void US_MPI_Analysis::ga_worker( void )
                int g0 = fitness[ f0 ].index;
                int g1 = fitness[ f1 ].index;
 
-               if ( genes[ g0 ][ i ].s !=  genes[ g1 ][ i ].s  ||
-                    genes[ g0 ][ i ].k !=  genes[ g1 ][ i ].k ) 
+               if ( fabs( genes[ g0 ][ i ].s -  genes[ g1 ][ i ].s ) > 1.0e-8 ||
+                    fabs( genes[ g0 ][ i ].k -  genes[ g1 ][ i ].k ) > 1.0e-8 )
                {
                   match = false;
                   f0    = f1;
@@ -124,7 +230,7 @@ void US_MPI_Analysis::ga_worker( void )
             }
 
             if ( match )
-               fitness[ f1 ].fitness = 1.0e10;  // Invalidate gene/sim_values 
+               fitness[ f1 ].fitness = LARGE;  // Invalidate gene/sim_values 
          }
          else
             f0 = f1;
@@ -159,15 +265,6 @@ void US_MPI_Analysis::ga_worker( void )
          genes[ g ] = gene;
       }
    }  // End of generation loop
-
-   MPI_Send( &msg,
-             sizeof( msg ),
-             MPI_BYTE,
-             MPI_Job::MASTER,
-             FINISHED,
-             MPI_COMM_WORLD );
-
-qDebug() << "Elapsed time" << start.secsTo( QDateTime::currentDateTime() );
 }
 
 void US_MPI_Analysis::align_gene( Gene& gene )
@@ -183,8 +280,8 @@ void US_MPI_Analysis::align_gene( Gene& gene )
       else
       {
          int gridpoint = (int)round( ds / buckets[ i ].ds );
-         gridpoint = min( s_grid - 1, gridpoint );
-         s = s_min + gridpoint * buckets[ i ].ds;
+         gridpoint     = min( s_grid - 1, gridpoint );
+         s             = s_min + gridpoint * buckets[ i ].ds;
       }
 
       double k     = gene[ i ].k;
@@ -196,8 +293,8 @@ void US_MPI_Analysis::align_gene( Gene& gene )
       else
       {
          int gridpoint = (int)round( dk / buckets[ i ].dk );
-         gridpoint = min( k_grid - 1, gridpoint );
-         k = k_min + gridpoint * buckets[ i ].dk;
+         gridpoint     = min( k_grid - 1, gridpoint );
+         k             = k_min + gridpoint * buckets[ i ].dk;
       }
 
       gene[ i ].s = s;
@@ -213,7 +310,7 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    for ( int s = 0; s < gene.size(); s++ ) 
       sim.solutes[ s ].s *= 1.0e-13;
 
-   calc_residuals( 0, data_sets.size(), sim );
+   calc_residuals( current_dataset, datasets_to_process, sim );
 
    double fitness      = sim.variance;
    int    solute_count = 0;
@@ -271,9 +368,9 @@ void US_MPI_Analysis::mutate_gene( Gene& gene )
    static const double p_mutate_k  = parameters[ "p_mutate_k"  ].toDouble();
    static const double p_mutate_sk = parameters[ "p_mutate_sk" ].toDouble();
 
-   static const double p_sk = 100.0 - p_mutate_sk;  // e.g. 80
-   static const double p_k  = p_sk  - p_mutate_k;   // e.g. 60
-   static const double p_s  = p_k   - p_mutate_s;   // e.g. 40
+   static const double p_sk        = 100.0 - p_mutate_sk;  // e.g. 80.0
+   static const double p_k         = p_sk  - p_mutate_k;   // e.g. 60.0
+   static const double p_s         = p_k   - p_mutate_s;   // e.g. 40.0
 
    for ( int solute = 0; solute < gene.size(); solute++ )
    {
@@ -364,7 +461,7 @@ int US_MPI_Analysis::migrate_genes( void )
    MPI_GA_MSG msg;
    msg.size = migrate_count;
 
-   MPI_Send( &msg,
+   MPI_Send( &msg,               // to MPI #1
              sizeof( msg ),
              MPI_BYTE,
              MPI_Job::MASTER,
@@ -372,7 +469,7 @@ int US_MPI_Analysis::migrate_genes( void )
              MPI_COMM_WORLD );
 
    // MPI send emmigrants
-   MPI_Send( emmigrants.data(),
+   MPI_Send( emmigrants.data(),  // to MPI #4
              buckets.size() * solute_doubles * migrate_count,
              MPI_DOUBLE,
              MPI_Job::MASTER,
@@ -383,7 +480,7 @@ int US_MPI_Analysis::migrate_genes( void )
    QVector< Solute > immigrants( migrate_count * buckets.size() );
    MPI_Status        status;
 
-   MPI_Recv( immigrants.data(),
+   MPI_Recv( immigrants.data(),  // from MPI #5
              migrate_count * buckets.size() * solute_doubles,
              MPI_DOUBLE,
              MPI_Job::MASTER,
@@ -433,7 +530,7 @@ US_MPI_Analysis::Gene US_MPI_Analysis::new_gene( void )
 // inverse hessian minimization 
 double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
 {
-   int vsize = gene.size() * 2;
+   int       vsize = gene.size() * 2;
    US_Vector v( vsize );  // Input values
    US_Vector u( vsize );  // Vector of derivitives
 
@@ -467,11 +564,10 @@ double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
       if ( fitness == 0.0 ) break;
 
       US_Vector v_s1 = v;
-
-      double g_s1 = fitness;
-      double s1   = 0.0;
-      double s2   = 0.5;
-      double s3   = 1.0;
+      double g_s1    = fitness;
+      double s1      = 0.0;
+      double s2      = 0.5;
+      double s3      = 1.0;
 
       US_Vector v_s2 = u;
       v_s2.scale( -s2 );
@@ -503,7 +599,6 @@ double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
 
       while ( s2 - s1 > epsilon  &&  s3 - s2 > epsilon && reps < max_reps )
       {
-qDebug() << "s2-s1, s3-s2, reps" << s2 - s1 << s3 - s2 << reps;
          double s1_s2 = 1.0 / ( s1 - s2 );
          double s1_s3 = 1.0 / ( s1 - s3 );
          double s2_s3 = 1.0 / ( s2 - s3 );

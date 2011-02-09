@@ -224,7 +224,10 @@ void US_MPI_Analysis::calc_residuals( int         offset,
          double rpm    = params.speed_step[ 0 ].rotorspeed;
          params.bottom = calc_bottom( e, rpm );
 
-         params.meniscus = meniscus_value;
+         if ( meniscus_value < 0.0 ) 
+            params.meniscus = data->run_data.meniscus;
+         else
+            params.meniscus = meniscus_value;
          //params.debug();
 
          double vbar20 = data->vbar20;
@@ -466,7 +469,6 @@ void US_MPI_Analysis::calc_residuals( int         offset,
          }
       }
    }
-
 
    double variance = 0.0;
    double rmsds[ dataset_count ];
@@ -531,7 +533,7 @@ void US_MPI_Analysis::calc_residuals( int         offset,
    {
       if ( nnls_x[ i ] > 0.0 )
       {
-         solutes[ i ].c = nnls_x [ i ];
+         solutes[ i ].c = nnls_x[ i ];
          simulation_values.solutes << solutes[ i ];
       }
    }

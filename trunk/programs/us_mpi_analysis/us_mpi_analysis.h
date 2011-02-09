@@ -59,6 +59,7 @@ class US_MPI_Analysis : public QObject
 
     US_DataIO2::RawData residuals;       // Populated in calc_residuals
     US_DataIO2::RawData solution;        // Populated in calc_residuals
+    US_DataIO2::RawData scaled_data;     // Populated after global fit
 
     QHostAddress        server;
     quint16             port;
@@ -74,7 +75,9 @@ class US_MPI_Analysis : public QObject
     QString             analysisDate;
 
     QMap< QString, QString > parameters;
-   
+  
+    QDateTime           startTime;
+
 // Convenience
 #define MESH US_SimulationParameters::MeshType
 #define GRID US_SimulationParameters::GridType
@@ -182,7 +185,8 @@ class US_MPI_Analysis : public QObject
 
     QList< _2dsa_Job > job_queue;
 
-    static const int solute_doubles = sizeof( Solute ) / sizeof( double );
+    static const double LARGE          = 9.9e99;
+    static const int    solute_doubles = sizeof( Solute ) / sizeof( double );
     QList< QVector< Solute > > calculated_solutes;
 
     class Simulation
@@ -221,6 +225,7 @@ class US_MPI_Analysis : public QObject
     double                    concentration_threshold;
     QList< Bucket >           buckets;
     QList< Gene >             genes;
+    QList< Gene >             best_genes;   // Size is number of processors
     QList< Simulation >       sim_values;
 
     class Fitness
@@ -248,6 +253,7 @@ class US_MPI_Analysis : public QObject
     };
 
     QList< Fitness > fitness;
+    QList< Fitness > best_fitness; // Size is number of processors
 
     class MPI_GA_MSG
     {
@@ -258,7 +264,7 @@ class US_MPI_Analysis : public QObject
        double fitness;     // Fitness of best result
     };
 
-    enum { GENERATION, GENE, IMMIGRATE, EMMIGRATE, FINISHED };
+    enum { GENERATION, GENE, IMMIGRATE, EMMIGRATE, UPDATE, FINISHED };
 
     // Methods
 
@@ -336,26 +342,28 @@ class US_MPI_Analysis : public QObject
                                  const QVector< double >& );
 
     // GA Master
-    void ga_master      ( void );
-    void write_ga_output( const Simulation& );
+    void ga_master       ( void );
+    void ga_master_loop  ( void );
+    void ga_global_fit   ( void );
+    void set_gaMonteCarlo( void );
 
     // GA Worker
-    void   ga_worker    ( void );
-    Gene   new_gene     ( void );
-    //double calc_fitness ( const Simulation& );
-    void   init_fitness ( void );
-    void   mutate_s     ( Solute&, int );
-    void   mutate_k     ( Solute&, int );
-    void   mutate_gene  ( Gene& );
-    void   cross_gene   ( Gene& );
-    int    migrate_genes( void );
-    int    u_random     ( int=100 );
-    int    e_random     ( void );
-    double minimize     ( Gene&, double );
-    double get_fitness  ( const Gene& );
-    double get_fitness_v( const US_Vector& );
-    void   lamm_gsm_df  ( const US_Vector&, US_Vector& );
-    void   align_gene   ( Gene& );
+    void   ga_worker     ( void );
+    void   ga_worker_loop( void );
+    Gene   new_gene      ( void );
+    void   init_fitness  ( void );
+    void   mutate_s      ( Solute&, int );
+    void   mutate_k      ( Solute&, int );
+    void   mutate_gene   ( Gene& );
+    void   cross_gene    ( Gene& );
+    int    migrate_genes ( void );
+    int    u_random      ( int = 100 );
+    int    e_random      ( void );
+    double minimize      ( Gene&, double );
+    double get_fitness   ( const Gene& );
+    double get_fitness_v ( const US_Vector& );
+    void   lamm_gsm_df   ( const US_Vector&, US_Vector& );
+    void   align_gene    ( Gene& );
 
     // Debug
     void dump_buckets( void );
