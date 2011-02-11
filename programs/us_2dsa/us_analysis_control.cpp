@@ -242,9 +242,14 @@ DbgLv(1) << "idealThrCout" << nthr;
 
    // initialize simulation parameters from data
    sparms         = new US_SimulationParameters();
+   QString dtype  = edata->dataType;
+   edata->dataType = dtype.section( " ", 0, 0 );
    sparms->initFromData( NULL, *edata );
+DbgLv(1) << " initFrData rCalID coefs" << sparms->rotorCalID
+   << sparms->rotorcoeffs[0] << sparms->rotorcoeffs[1];
 if ( dbg_level > 0 )
  sparms->save_simparms( US_Settings::appBaseDir() + "/etc/sp_2dsa.xml" );
+   edata->dataType = dtype;
 
 DbgLv(1) << "Pre-resize AC size" << size();
    resize( 710, 440 );

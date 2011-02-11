@@ -402,9 +402,8 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
 DbgLv(1) << "FIN_FIN: dens visc vbar" << density << viscosity << vbar;
-DbgLv(1) << "FIN_FIN: rotorcoefs" << simparms->rotorcoeffs[0]
-   << simparms->rotorcoeffs[1] << simparms->rotorcoeffs[2]
-   << simparms->rotorcoeffs[3] << simparms->rotorcoeffs[4];
+DbgLv(1) << "FIN_FIN: rotorcoefs"
+   << simparms->rotorcoeffs[0] << simparms->rotorcoeffs[1];
 DbgLv(1) << "FIN_FIN: bottom bposition" << simparms->bottom
    << simparms->bottom_position;
 DbgLv(1) << "FIN_FIN: rreso menisc temp" << simparms->radial_resolution

@@ -24,9 +24,12 @@ class US_EXTERN US_EqMath : public QObject
       void   init_params        ( int, bool,
                                   QList< double >&, QList< double >& );
       void   init_fit           ( int, int );
-      double calc_testParameter ( double    );
-      double linesearch         ( void      );
+      int    calc_jacobian      ( void     );
+      double calc_testParameter ( double   );
+      double linesearch         ( void     );
       void   genLeastSquaresOrd2( double**, int, double*, double** );
+      void   guess_mapForward     ( void );
+      void   parameter_mapBackward( void );
 
 	private:
       QVector< US_DataIO2::EditedData >&  dataList;
@@ -36,6 +39,7 @@ class US_EXTERN US_EqMath : public QObject
 
       QVector< int >      v_setpts;   // Set points vector
       QVector< int >      v_setlpts;  // Set log points vector
+
       QVector< double >   v_yraw;     // Y raw values vector
       QVector< double >   v_yguess;   // Y guesses vector
       QVector< double >   v_ydelta;   // Y deltas vector
@@ -48,6 +52,7 @@ class US_EXTERN US_EqMath : public QObject
       QVector< double >   v_dcr2;     // dcr2 matrix values vector
       QVector< double >   v_dlncr2;   // dlncr2 matrix values vector
       QVector< double >   v_lncr2;    // lncr2 matrix values vector
+
       QVector< double* >  m_jacobi;   // Jacobian matrix
       QVector< double* >  m_info;     // Information matrix
       QVector< double* >  m_LLtrns;   // LL transpose matrix
@@ -64,7 +69,7 @@ class US_EXTERN US_EqMath : public QObject
       double*             guess;      // Guesses array
       double*             d_jacobi;   // Jacobian data array
       double*             d_info;     // Information data array
-      double*             d_LLtr;     // LL transpose data array
+      double*             d_LLtrns;   // LL transpose data array
       double*             d_dcr2;     // dcr2 data array
       double*             d_dlncr2;   // dlncr2 data array
       double*             d_lncr2;    // lncr2 data array
@@ -87,7 +92,6 @@ class US_EXTERN US_EqMath : public QObject
       int      nslpts;                // Number of set log points
 
    private slots:
-      void    guess_mapForward     ( void );
       bool    Cholesky_DecompOrd2  ( double** );
       bool    Cholesky_SolveSysOrd2( double**, double* );
       bool    isNan( double );
