@@ -68,6 +68,8 @@ class US_EXTERN US_Saxs_Util
       double rmsd(QString tag1, QString tag2);
       bool join(QString outtag, QString tag1, QString tag2, double pt);
 
+      bool guinierplot(QString outtag, QString tag);
+
       bool subbackground(QString outtag, 
                          QString solutiontag, 
                          QString buffertag, 
@@ -170,6 +172,18 @@ class US_EXTERN US_Saxs_Util
                      long max_iterations
                      );
 
+      bool gunier_fit(
+                      QString outtag,
+                      QString intag,
+                      unsigned int startpos,
+                      unsigned int endpos,
+                      double &a,
+                      double &b,
+                      double &siga,
+                      double &sigb,
+                      double &chi2
+                      );
+
       int debug;
       QString errormsg;
 #ifdef WIN32
@@ -261,6 +275,20 @@ class US_EXTERN US_Saxs_Util
       long min_gsm_5_1(our_vector *i, double epsilon, long max_iter);
       long min_fr_pr_cgd(our_vector *i, double epsilon, long max_iter);
       long min_hessian_bfgs(our_vector *ip, double epsilon, long max_iter);
+
+
+      // linear fit code, solves  y = a + bx, returing sigmas & chi2
+      void linear_fit( 
+                      vector < double > x, 
+                      vector < double > y, 
+                      double &a,
+                      double &b,
+                      double &siga,
+                      double &sigb,
+                      double &chi2
+                      );
+
+
 };
 
 #endif

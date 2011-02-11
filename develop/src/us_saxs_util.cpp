@@ -287,6 +287,23 @@ bool US_Saxs_Util::join(QString outtag, QString tag1, QString tag2, double pt)
    return true;
 }
 
+bool US_Saxs_Util::guinierplot(QString outtag, QString tag)
+{
+   errormsg = "";
+   wave[outtag].clear();
+   wave[outtag].filename = QString("guinier_%1").arg(tag);
+   wave[outtag].header = wave[tag].header;
+   
+   for( unsigned int i = 0; i < wave[tag].q.size(); i++ )
+   {
+      wave[outtag].q.push_back(wave[tag].q[i] * wave[tag].q[i]);
+      wave[outtag].r.push_back(wave[tag].r[i] > 0 ? log(wave[tag].r[i]) : 0e0);
+      wave[outtag].s.push_back(wave[tag].s[i]);
+   }
+
+   return true;
+}
+
 bool US_Saxs_Util::subbackground(QString outtag, QString solutiontag, QString buffertag, double alpha)
 {
    errormsg = "";
@@ -2240,3 +2257,57 @@ long US_Saxs_Util::min_hessian_bfgs(our_vector *ip, double epsilon, long max_ite
    free_our_matrix(hessian);
    return(0);
 }
+
+
+
+void linear_fit( 
+                vector < double > x, 
+                vector < double > y, 
+                double &a,
+                double &b,
+                double &siga,
+                double &sigb,
+                double &chi2
+                )
+{
+   unsigned int i;
+   double t;
+   double sxoss;
+   double sx = 0e0;
+   double sy = 0e0;
+   double st2 = 0e0;
+   double ss;
+   double sigdat;
+   unsigned int ndata = x.size();
+   b = 0e0;
+
+   for ( i = 0; i < ndata; i++ )
+   {
+      sx += x[i];
+      sy += y[i];
+   }
+   ss = ndata;
+
+   sxoss = sx / ss;
+
+   for ( i = 0; i < ndata; i++ ) 
+   {
+      t = x[i] - sxoss;
+      st2 += t * t;
+      b += t * y[i];
+   }
+   b /= st2;
+   a = ( sy - sx * b) / ss;
+   siga = sqrt( ( 1e0 + sx * sx / ( ss * st2 ) ) / ss );
+   sigb = sqrt( 1e0 /st2 );
+   chi2 = 0e0;
+
+   for ( i = 0; i < ndata; i++ ) 
+   {
+      chi2 += ( y[i] - a - b * x[i] ) * ( y[i] - a - b * x[i] );
+   }
+   sigdat = sqrt( chi2/ ( ndata - 2 ) );
+   siga *= sigdat;
+   sigb *= sigdat;
+}
+
