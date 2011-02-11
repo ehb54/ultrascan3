@@ -588,9 +588,9 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
 
    if ( jj < 0 )
    {  // for model not really a distribution, fake it
-      jj            = kk;
-      mdesc         = mdesc + ".model.11";
-      kk            = mdesc.length();
+      mdesc      = mdesc + ".model.1A280";
+      jj         = mdesc.lastIndexOf( "." );
+      kk         = mdesc.length();
    }
 
    QString tstr     = mdesc.right( kk - jj - 1 );
@@ -604,10 +604,28 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
    QString meth2    = "_" + meth0;
    jj   = mdesc.indexOf( meth1 );
    kk   = mdesc.indexOf( meth2 );
-   if ( kk > 0  &&  jj < 0 )
+
+   if ( jj < 0  &&  kk < 0 )
+   {
+      if ( mdesc.indexOf( tsys.method.toLower() ) > 0 )
+      {
+         meth0     = tsys.method.toLower() + "_";
+         meth1     = "." + meth0;
+         meth2     = "_" + meth0;
+
+         jj        = mdesc.indexOf( meth1 );
+         kk        = mdesc.indexOf( meth2 );
+      }
+   }
+
+   if ( jj < 0  ||  ( kk > 0 && kk < jj ) )
       mdesc         = mdesc.replace( meth2, meth1 );
+
    mdesc            = mdesc.replace( meth1, "." );
    tsys.run_name    = mdesc.section( ".", 0, -3 );
+   tsys.run_name    = tsys.run_name.isEmpty() ?
+                      mdesc.section( ".", 0, 0 ) :
+                      tsys.run_name;
 
    tsys.distro_type = (int)model.analysis;
    tsys.monte_carlo = model.monteCarlo;

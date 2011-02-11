@@ -1109,20 +1109,35 @@ qDebug() << "  NO Model components";
    int jjd      = mdesc.indexOf( str1 );
    int jju      = mdesc.indexOf( str2 );
 
+   if ( jjd < 0  &&  jju < 0 )
+   {
+      if ( mdesc.indexOf( method.toLower() ) > 0 )
+      {
+         str0      = method.toLower() + "_";
+         str1      = "." + str0;
+         str2      = "_" + str0;
+         jjd       = mdesc.indexOf( str1 );
+         jju       = mdesc.indexOf( str2 );
+      }
+   }
+
    if ( jjd < 0  ||  ( jju > 0 && jju < jjd ) )
       mdesc        = mdesc.replace( str2, str1 );
 
    mdesc        = mdesc.replace( str1, "." );
 
    run_name     = mdesc.section( ".", 0, -3 );
+   run_name     = run_name.isEmpty() ? 
+                  mdesc.section( ".", 0, 0 ) :
+                  run_name;
 
    int jj       = mdesc.lastIndexOf( "." );
    int kk       = mdesc.length();
 
    if ( jj < 0 )
    {  // for model not really a distribution, fake it
-      jj           = kk;
       mdesc        = mdesc + ".model.1A260";
+      jj           = mdesc.lastIndexOf( "." );
       kk           = mdesc.length();
    }
 

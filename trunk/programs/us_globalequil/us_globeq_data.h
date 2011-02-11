@@ -49,7 +49,7 @@ typedef struct EqRunFit_s
 
 typedef struct EqScanFit_s
 {
-   bool                scanFit;       // Scan-fits flag
+   bool                scanFit;       // Scan-fitted flag
    bool                autoExcl;      // Auto-excluded flag
    bool                limsModd;      // Limits-modified flag
    int                 points;        // Number of points
