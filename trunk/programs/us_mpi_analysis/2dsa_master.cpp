@@ -13,14 +13,14 @@ void US_MPI_Analysis::_2dsa_master( void )
    current_dataset     = 0;
    datasets_to_process = 1;  // Process one dataset at a time for now
 
-QTime   time;  // For debug/timing
-QString time_string;
-time                = QTime::currentTime();
-qDebug() << "Start" << time.toString( "HHmmss.zzz" );
+QDateTime time = QDateTime::currentDateTime();  // For debug/timing
 
    while ( true )
    {
       int worker;
+
+qDebug() << "Master queue status" << job_queue.isEmpty() << worker_status.contains( READY )
+         << time.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
 
       // Give the jobs to the workers
       while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
@@ -44,18 +44,9 @@ qDebug() << "Start" << time.toString( "HHmmss.zzz" );
          
          send_udp( progress );
 
-time        = QTime::currentTime();
-time_string = time.toString( "HHmmss.zzz" );
-
          // Iterative refinement
          if ( iterations < max_iterations + 1 )
          {   
-qDebug() << "Iterations/variance/diff" << iterations 
-         << previous_values.variance 
-         << simulation_values.variance 
-         << fabs( previous_values.variance - simulation_values.variance ) 
-         << time_string;
-
             iterate();
          }
          
@@ -66,18 +57,15 @@ qDebug() << "Iterations/variance/diff" << iterations
          // Manage multiple data sets
          if ( data_sets.size() > 1  &&  datasets_to_process == 1 )
          {
-qDebug() << "Data set" <<  current_dataset << simulation_values.variance << time_string;
             global_fit();
          }
 
          if ( ! job_queue.isEmpty() ) continue;
-qDebug() << "Variances" << simulation_values.variances; 
          write_output();
 
          // Fit meniscus 
          if ( meniscus_run + 1 < meniscus_values.size() )
          {
-qDebug() << "Fit meniscus" << meniscus_run << simulation_values.variance << time_string;
             set_meniscus(); 
          }
 
@@ -86,14 +74,11 @@ qDebug() << "Fit meniscus" << meniscus_run << simulation_values.variance << time
          // Monte Carlo
          if ( ++mc_iteration < mc_iterations )
          {
-qDebug() << "MC Iteration" << mc_iteration << simulation_values.variance << time_string;
             set_monteCarlo(); 
          }
          if ( ! job_queue.isEmpty() ) continue;
 
-qDebug() << "shutdown all" << time_string;
          shutdown_all();  // All done
-qDebug() << "Done" << time_string;
          break;           // Break out of main loop.
       }
 
@@ -795,9 +780,14 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
       type_name = "ri";
    }
 
-   noise.description = data->runID + ".2DSA e"  + data->editID + " " + 
-                       type_name   + "_noise a" + analysisDate + " " + 
-                       db_name     + "-"        + requestID;
+   // demo1_veloc.2DSA e 201101171200 ri _noise a201101171400 us3-0000003
+   // demo1_veloc.2DSA_e201101171200_a201101171400_us3-0000003.ri_noise.1A999
+   noise.description = data->runID 
+                       + ".2DSA_e" + data->editID  
+                       + "_a" + analysisDate 
+                       + "_" + db_name + "-" + requestID
+                       + "." + type_name + "_noise" 
+                       + "." + data->cell + data->channel + data->wavelength;
 
    noise.type        = type;
    noise.noiseGUID   = US_Util::new_guid();

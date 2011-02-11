@@ -237,7 +237,7 @@ void US_MPI_Analysis::start( void )
       iterations = parameters[ "montecarlo_value" ].toInt();
 
       if ( iterations < 1 ) iterations = 1;
-      
+
       if ( my_rank == 0 ) 
           _2dsa_master();
       else
