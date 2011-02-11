@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_register.h"
+#include "../include/us_write_config.h"
 #include <qregexp.h>
 
 void process_script(QString, US_Hydrodyn *);
@@ -214,6 +215,23 @@ void process_script(QString script_filename, US_Hydrodyn *h)
             ok = true;
             cout << QString("hydro\t");
             bool result = h->calc_hydro() ? false : true;
+            cout << QString("%1\n").arg(result ? "ok" : "not ok");
+         }
+         if ( rx0.cap(1) == "p(r)" )
+         {
+            ok = true;
+            cout << QString("p(r) not yet implemented\t");
+         }
+         if ( rx0.cap(1) == "threads" )
+         {
+            ok = true;
+            cout << QString("threads\t");
+            US_Config *USglobal = new US_Config();
+            cout << QString("Number of threads was %1, now %2\n").arg(USglobal->config_list.numThreads).arg(rx2.cap(2));
+            USglobal->config_list.numThreads = rx2.cap(2).toInt();
+            US_Write_Config *WConfig;
+            WConfig = new US_Write_Config();
+            bool result = WConfig->write_config(USglobal->config_list);
             cout << QString("%1\n").arg(result ? "ok" : "not ok");
          }
          if ( !ok )
