@@ -3,7 +3,7 @@
 
 void US_MPI_Analysis::ga_worker( void )
 {
-   startTime           = QDateTime::currentDateTime();
+   QDateTime time                = QDateTime::currentDateTime();
    current_dataset     = 0;
    datasets_to_process = 1;
 
@@ -32,6 +32,9 @@ void US_MPI_Analysis::ga_worker( void )
    while ( ! finished )
    {
       ga_worker_loop();
+
+qDebug() << "Worker send finish message" << my_rank 
+         << time.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
 
       MPI_Send( &msg,           // This iteration is finished
                 sizeof( msg ),  // to MPI #1
@@ -158,7 +161,6 @@ void US_MPI_Analysis::ga_worker_loop( void )
          fitness[ i ].index   = i;
          fitness[ i ].fitness = get_fitness( genes[ i ] );
       }
-
       // Sort fitness
       qSort( fitness );
 

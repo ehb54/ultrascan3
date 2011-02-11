@@ -28,6 +28,8 @@ void US_MPI_Analysis::ga_master( void )
       best_fitness << empty_fitness;
    }
 
+   QDateTime time = QDateTime::currentDateTime();
+
    // Handle global fit if needed
    if ( data_sets.size() > 1 )
    {
@@ -36,11 +38,12 @@ void US_MPI_Analysis::ga_master( void )
          ga_master_loop();
          qSort( best_fitness );
          simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
-         
+
          for ( int g = 0; g < buckets.size(); g++ )
             simulation_values.solutes[ g ].s *= 1.0e-13;
 
          calc_residuals( current_dataset, 1, simulation_values );
+
          ga_global_fit();  // Normalize data and update workers
       }
    }
@@ -49,9 +52,6 @@ void US_MPI_Analysis::ga_master( void )
    while ( true )
    {
       ga_master_loop();
-
-qDebug() << "Master elapsed time" 
-         << startTime.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
 
       qSort( best_fitness );
       simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
@@ -283,6 +283,7 @@ void US_MPI_Analysis::ga_global_fit( void )
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
+
    for ( int worker = 1; worker < node_count; worker++ )
    {
       MPI_Send( &job,                   // MPI #7
@@ -299,7 +300,7 @@ void US_MPI_Analysis::ga_global_fit( void )
    MPI_Bcast( scaled_data.data(),      // MPI #8
               scaled_data.size(), 
               MPI_DOUBLE, 
-              UPDATE, 
+              MPI_Job::MASTER, 
               MPI_COMM_WORLD );
 
    // Go to the next dataset
@@ -400,15 +401,15 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
    switch ( type )
    {
       case US_Model::TWODSA:
-         id = "2dsa";
+         id = "2DSA";
          break;
 
       case US_Model::GA:
-         id = "ga";
+         id = "GA";
          break;
 
       default:
-         id = "unk";
+         id = "UNK";
          break;
    }
 
@@ -426,9 +427,13 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
    model.analysis    = type;
    model.global      = US_Model::NONE;   // For now.  Will change later.
 
-   model.description = data->runID + "." + id + "_a" + analysisDate +
-                       " e" + data->editID +
-                       db_name + "-" + requestID;
+   // demo1_veloc.2DSA_e201101171200_a201101171400_us3-0000003.model.1A999
+   model.description = data->runID
+                       + "."  + id + "_e" + data->editID
+                       + "_a" + analysisDate
+                       + "_"  + db_name + "-" + requestID
+                       + ".model." + data->cell + data->channel + data->wavelength;
+
    // Save as class variable for later reference
    modelGUID = model.modelGUID;
 
