@@ -3,7 +3,8 @@ DEFINES += ADOLC
 unix:{
 SUBDIRS   = us_equilmc_t \
             us_gridcontrol_t \
-            us_cmdline_t
+            us_cmdline_t \
+            us_saxs_cmds_t
 TEMPLATE  = subdirs
 }
 
