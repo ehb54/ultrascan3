@@ -68,8 +68,6 @@ class US_EXTERN US_Saxs_Util
       double rmsd(QString tag1, QString tag2);
       bool join(QString outtag, QString tag1, QString tag2, double pt);
 
-      bool guinierplot(QString outtag, QString tag);
-
       bool subbackground(QString outtag, 
                          QString solutiontag, 
                          QString buffertag, 
@@ -172,17 +170,47 @@ class US_EXTERN US_Saxs_Util
                      long max_iterations
                      );
 
-      bool gunier_fit(
-                      QString outtag,
-                      QString intag,
-                      unsigned int startpos,
-                      unsigned int endpos,
-                      double &a,
-                      double &b,
-                      double &siga,
-                      double &sigb,
-                      double &chi2
-                      );
+      bool guinier_plot(QString outtag, QString tag);
+
+      bool guinier_fit( 
+                       QString &log,
+                       QString tag,  // tag needs to be preprocessed with guinierplot
+                       unsigned int startpos,
+                       unsigned int endpos,
+                       double &a,
+                       double &b,
+                       double &siga,
+                       double &sigb,
+                       double &chi2,
+                       double &Rg,
+                       double &Io,
+                       double &smaX,
+                       double &smin,
+                       double &sRgmin,
+                       double &sRgmax
+                       );
+
+
+      bool guinier_fit2( // find best guinier fit
+                       QString &log,
+                       QString tag,             // tag needs to be preprocessed with guinierplot
+                       unsigned int pointsmin,  // the minimum # of points allowed typically 10
+                       unsigned int pointsmax,  // the maximum # of points allowed typically 100
+                       double sRgmaxlimit,      // maximum sRg allowed
+                       double pointweightpower, // the exponent ofnumber of points when computing the best one
+                       //                          i.e. fitness = chi2 / ( number_of_points ** pointweightpower )
+                       double &a,
+                       double &b,
+                       double &siga,
+                       double &sigb,
+                       double &chi2,
+                       double &Rg,
+                       double &Io,
+                       double &smaX,
+                       double &smin,
+                       double &sRgmin,
+                       double &sRgmax
+                       );
 
       int debug;
       QString errormsg;

@@ -268,6 +268,10 @@ int main (int argc, char **argv)
              "\tjoin two files\n"
              "saxs_guinier_plot  \toutfile infile\n"
              "\treplace q with q*q, r with log(r), don't plot in logscale\n"
+             "saxs_guinier_fit   \tlogfile infile startpos endpos minlen maxlen\n"
+             "\tcompute guinier fit\n"
+             "saxs_guinier_fit2  \tlogfile infile pointsmin pointsmax sRgmaxlimit pointweightpower\n"
+             "\tcompute guinier fit\n"
              , argv[0]
              );
       exit(-1);
@@ -2346,7 +2350,7 @@ int main (int argc, char **argv)
 
 
       if ( !usu.read(infile, infile) ||
-           !usu.guinierplot(outfile, infile) ||
+           !usu.guinier_plot(outfile, infile) ||
            !usu.write(outfile, outfile) )
       {
          cout << usu.errormsg << endl;
@@ -2355,6 +2359,188 @@ int main (int argc, char **argv)
 
       exit(0);
    }
+
+   if (cmds[0].lower() == "saxs_guinier_fit") 
+   {
+      if (cmds.size() != 7) 
+      {
+         printf(
+                "usage: %s %s logfile infile startpos endpos minlen maxlen\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(-2001);
+      }
+
+      int p = 1;
+      QString logfile = cmds[p++];
+      QString infile = cmds[p++];
+      unsigned int startpos = cmds[p++].toUInt();
+      unsigned int endpos = cmds[p++].toUInt();
+      unsigned int minlen = cmds[p++].toUInt();
+      unsigned int maxlen = cmds[p++].toUInt();
+
+      US_Saxs_Util usu;
+
+      if ( !usu.read(infile, infile) ||
+           !usu.guinier_plot("guinier", infile) )
+      {
+         cout << usu.errormsg << endl;
+         exit(-2002);
+      }
+
+      QString log = "|| startpos || endpos || s_min || s_max || sRg_min || sRg_max || Rg || Io || a || b || sigma a || sigma b || chi2 ||\n";
+      double a;
+      double b;
+      double siga;
+      double sigb;
+      double chi2;
+      double Rg;
+      double Io;
+      double smin;
+      double smax;
+      double sRgmin;
+      double sRgmax;
+      QString logg;
+
+      for ( unsigned int pos = startpos; pos <= endpos; pos++ )
+      {
+         for ( unsigned int len = minlen; len <= maxlen; len++ )
+         {
+            if ( !usu.guinier_fit(
+                                  log,
+                                  "guinier",
+                                  pos,
+                                  pos + len,
+                                  a,
+                                  b,
+                                  siga,
+                                  sigb,
+                                  chi2,
+                                  Rg,
+                                  Io,
+                                  smin,
+                                  smax,
+                                  sRgmin,
+                                  sRgmax
+                                  ) )
+            {
+               cout << usu.errormsg << endl;
+               exit(-2003);
+            }
+         }
+      }
+      
+      QFile f(logfile);
+      
+      if ( logfile == "-" )
+      {
+         cout << log;
+      } else {
+         if ( f.open(IO_WriteOnly ) )
+         {
+            QTextStream ts(&f);
+            ts << log;
+            f.close();
+         } else {
+            cout << log;
+            cerr << "Could not open logfile " << logfile << " for writing\n";
+         }
+      }
+         
+      exit(0);
+   }
+
+   if (cmds[0].lower() == "saxs_guinier_fit2") 
+   {
+      if (cmds.size() != 7) 
+      {
+         printf(
+                "usage: %s %s logfile infile pointsmin pointsmax sRgmaxlimit pointweightpower\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(-2001);
+      }
+
+      int p = 1;
+      QString logfile = cmds[p++];
+      QString infile = cmds[p++];
+      unsigned int pointsmin = cmds[p++].toUInt();
+      unsigned int pointsmax = cmds[p++].toUInt();
+      double sRgmaxlimit = cmds[p++].toDouble();
+      double pointweightpower = cmds[p++].toDouble();
+      QString tag = infile;
+      tag.replace(QRegExp("\\.(dat|DAT)$"), "");
+      QString outfile = QString("%1g.dat").arg(tag);
+      US_Saxs_Util usu;
+
+      if ( !usu.read(infile, infile) ||
+           !usu.guinier_plot(tag, infile) ||
+           !usu.write(outfile, tag) )
+      {
+         cout << usu.errormsg << endl;
+         exit(-2002);
+      }
+
+      QString log = "|| startpos || endpos || s_min || s_max || sRg_min || sRg_max || Rg || Io || a || b || sigma a || sigma b || chi2 ||\n";
+      double a;
+      double b;
+      double siga;
+      double sigb;
+      double chi2;
+      double Rg;
+      double Io;
+      double smin;
+      double smax;
+      double sRgmin;
+      double sRgmax;
+      QString logg;
+
+      if ( !usu.guinier_fit2(
+                             log,
+                             tag,
+                             pointsmin,
+                             pointsmax,
+                             sRgmaxlimit,
+                             pointweightpower,
+                             a,
+                             b,
+                             siga,
+                             sigb,
+                             chi2,
+                             Rg,
+                             Io,
+                             smin,
+                             smax,
+                             sRgmin,
+                             sRgmax
+                             ) )
+      {
+         cout << usu.errormsg << endl;
+         exit(-2003);
+      }
+      
+      QFile f(logfile);
+      
+      if ( logfile == "-" )
+      {
+         cout << log;
+      } else {
+         if ( f.open(IO_WriteOnly ) )
+         {
+            QTextStream ts(&f);
+            ts << log;
+            f.close();
+         } else {
+            cout << log;
+            cerr << "Could not open logfile " << logfile << " for writing\n";
+         }
+      }
+         
+      exit(0);
+   }
+
 
 
    printf("%s error: %s unknown command\n", argv[0], argv[1]);
