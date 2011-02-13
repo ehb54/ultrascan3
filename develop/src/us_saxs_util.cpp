@@ -2492,3 +2492,582 @@ void US_Saxs_Util::linear_fit(
    sigb *= sigdat;
 }
 
+void US_Saxs_Util::clear_project()
+{
+   wave.clear();
+   p_wiki = "";
+   p_wiki_prefix = "";
+   p_name = "";
+   p_description = "";
+   p_short_description = "";
+   p_comment = "";
+   p_mw = 0e0;
+   p_conc_mult = 0e0;
+   wave_names_vector.clear();
+   wave_names.clear();
+   wave_file_names.clear();
+   wave_types.clear();
+   wave_concs.clear();
+   wave_alphas.clear();
+   wave_exposure_times.clear();
+   wave_buffer_names.clear();
+   wave_empty_names.clear();
+   wave_comments.clear();
+}   
+
+bool US_Saxs_Util::check_project_files()
+{
+   errormsg = "";
+   for (
+        map < QString, QString >::iterator it = wave_file_names.begin();
+        it != wave_file_names.end();
+        it++ 
+         )
+   {
+      QFileInfo fi("wave/" + it->second);
+      if ( !fi.exists() )
+      {
+         errormsg +=
+            QString("%1file %1 does not exist")
+            .arg(errormsg.isEmpty() ? "" : "\n" )
+            .arg(fi.filePath());
+      } else {
+         if ( !fi.isReadable() )
+         {
+            errormsg +=
+               QString("%1file %1 is not readable (check permissions)")
+               .arg(errormsg.isEmpty() ? "" : "\n" )
+               .arg(fi.filePath());
+         }
+         if ( fi.isDir() )
+         {
+            errormsg +=
+               QString("%1file %1 is a directory!")
+               .arg(errormsg.isEmpty() ? "" : "\n" )
+               .arg(fi.filePath());
+         }
+      }
+   }
+   for ( unsigned int i = 0; i < wave_names_vector.size(); i++ )
+   {
+      if ( 
+          wave_concs[wave_names_vector[i]] &&
+          !wave_buffer_names[wave_names_vector[i]].size()
+          )
+      {
+         errormsg +=
+            QString("%1wave %1 has no associated buffers")
+            .arg(errormsg.isEmpty() ? "" : "\n" )
+            .arg(wave_names_vector[i]);
+      }
+   }
+   return errormsg.isEmpty();
+}
+
+bool US_Saxs_Util::read_project()
+{
+   errormsg = "";
+   QFile f("project");
+   if ( !f.exists() )
+   {
+      errormsg = "project file does not exist";
+      return false;
+   }
+
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      errormsg = "project file can not be opened, check permissions";
+      return false;
+   }
+
+   clear_project();
+
+   QString line;
+   QRegExp rx("^(\\S+)\\s+(\\S.*)$");
+   QRegExp rxempty("^(\\s*#|\\s*$)");
+   QRegExp rxtrailingspaces("\\s*$");
+   QRegExp rxvalid(
+                   "^("
+                   "wiki|"
+                   "wikiprefix|"
+                   "name|"
+                   "description|"
+                   "shortdescription|"
+                   "comment|"
+                   "mw|"
+                   "concmultiplier|"
+                   "saxslowq|"
+                   "saxshighq|"
+                   "waxslowq|"
+                   "waxshighq|"
+                   "overlaplowq|"
+                   "overlaphighq|"
+                   "wavename|"
+                   "wavefilename|"
+                   "wavetype|"
+                   "waveconc|"
+                   "waveexposuretime|"
+                   "wavebuffername|"
+                   "waveemptyname"
+                   ")$"
+                   );
+
+   QRegExp rxvalidwavetype("^(saxs|waxs)$");
+
+   unsigned int linepos = 0;
+   QString last_wave_name = "";
+
+   QTextStream ts(&f);
+
+   while ( !ts.atEnd() )
+   {
+      ++linepos;
+      line = ts.readLine().replace(rxtrailingspaces,"");
+
+      if ( line.isEmpty() || line.contains(rxempty) )
+      {
+         continue;
+      }
+
+      if ( rx.search(line) == -1 )
+      {
+         errormsg = QString("error in project file line %1.  At least two tokens not found <%1>\n")
+            .arg(linepos)
+            .arg(line);
+         return false;
+      }
+
+      QString token = rx.cap(1).lower();
+      QString data = rx.cap(2);
+
+      if ( !token.contains(rxvalid) )
+      {
+         errormsg = QString("error in project file line %1.  Unrecognized token <%1>\n")
+            .arg(linepos)
+            .arg(line);
+         return false;
+      }
+
+      if ( token == "wiki" )
+      {
+         p_wiki = data;
+         continue;
+      }
+   
+      if ( token == "wikiprefix" )
+      {
+         p_wiki_prefix = data;
+         continue;
+      }
+
+      if ( token == "name" )
+      {
+         p_name = data;
+         continue;
+      }
+
+      if ( token == "description" )
+      {
+         p_description += data;
+         continue;
+      }
+
+      if ( token == "shortdescription" )
+      {
+         p_short_description = data;
+         continue;
+      }
+
+      if ( last_wave_name.isEmpty() && token == "comment" )
+      {
+         p_comment += data;
+         continue;
+      }
+
+      if ( token == "mw" )
+      {
+         p_mw = data.toDouble();
+         continue;
+      }
+
+      if ( token == "concmultiplier" )
+      {
+         p_conc_mult = data.toDouble();
+         continue;
+      }
+
+      if ( token == "saxslowq" )
+      {
+         p_saxs_lowq = data.toDouble();
+         continue;
+      }
+
+      if ( token == "saxshighq" )
+      {
+         p_saxs_highq = data.toDouble();
+         continue;
+      }
+
+      if ( token == "waxslowq" )
+      {
+         p_waxs_lowq = data.toDouble();
+         continue;
+      }
+
+      if ( token == "waxshighq" )
+      {
+         p_waxs_highq = data.toDouble();
+         continue;
+      }
+
+      if ( token == "overlaplowq" )
+      {
+         p_overlap_lowq = data.toDouble();
+         continue;
+      }
+
+      if ( token == "overlaphighq" )
+      {
+         p_overlap_highq = data.toDouble();
+         continue;
+      }
+
+      if ( token == "wavename" )
+      {
+         if ( wave_names.count(data) )
+         {
+            errormsg = QString("error in project file line %1.  duplicate waveName previously defined <%1>\n")
+               .arg(linepos)
+               .arg(line);
+            return false;
+         }
+         last_wave_name = data;
+         wave_names[data] = true;
+         wave_names_vector.push_back(data);
+         wave_concs[data] = 0e0;
+         wave_comments[data] = "";
+         continue;
+      }
+
+      // all wave based data setup follows
+
+      if ( last_wave_name.isEmpty() )
+      {
+         errormsg = QString("error in project file line %1.  waveName must be defined first <%1>\n")
+            .arg(linepos)
+            .arg(line);
+         return false;
+      }
+
+      if ( token == "wavefilename" )
+      {
+         wave_file_names[last_wave_name] = data;
+         continue;
+      }
+
+      if ( token == "wavetype" )
+      {
+         if ( !data.contains(rxvalidwavetype) )
+         {
+            errormsg = QString("error in project file line %1.  Invalid waveType <%1>\n")
+               .arg(linepos)
+               .arg(line);
+            return false;
+         }
+         wave_types[last_wave_name] = data;
+         continue;
+      }
+
+      if ( token == "waveconc" )
+      {
+         wave_concs[last_wave_name] = data.toDouble();
+         continue;
+      }
+
+      if ( token == "waveexposuretime" )
+      {
+         wave_exposure_times[last_wave_name] = data.toDouble();
+         continue;
+      }
+
+      if ( token == "wavebuffername" )
+      {
+         if ( !wave_names[data] )
+         {
+            errormsg = QString("error in project file line %1.  waveName for buffer not previously defined <%1>\n")
+               .arg(linepos)
+               .arg(line);
+            return false;
+         }
+      
+         wave_buffer_names[last_wave_name].push_back(data);
+         continue;
+      }
+ 
+      if ( token == "waveemptyname" )
+      {
+         if ( !wave_names[data] )
+         {
+            errormsg = QString("error in project file line %1.  waveName for empty not previously defined <%1>\n")
+               .arg(linepos)
+               .arg(line);
+            return false;
+         }
+         wave_buffer_names[last_wave_name].push_back(data);
+         continue;
+      }
+
+      if ( token == "comment" )
+      {
+         wave_comments[last_wave_name] += data;
+         continue;
+      }
+   }
+   f.close();
+
+   cout << "project file ok\n";
+
+   if ( !read_project_waves() )
+   {
+      return false;
+   }
+
+   cout << "waves ok\n";
+
+   if ( !compute_averages() )
+   {
+      return false;
+   }
+
+   compute_alphas();
+
+   cout << "wiki file name:" << wiki_file_name() << endl;
+
+   return true;
+}
+  
+bool US_Saxs_Util::build_wiki()
+{
+   errormsg = "";
+   QFile f(wiki_file_name());
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      errormsg = "error: can not create " + wiki_file_name() + " for writing\n";
+      return false;
+   }
+   QTextStream ts(&f);
+   QString result;
+   if ( !wiki_header(result) )
+   {
+      f.close();
+      return false;
+   }
+   ts << result;
+   f.close();
+   return true;
+}
+
+bool US_Saxs_Util::read_project_waves()
+{
+   errormsg = "";
+   if ( !check_project_files() )
+   {
+      return false;
+   }
+
+   for (
+        map < QString, QString >::iterator it = wave_file_names.begin();
+        it != wave_file_names.end();
+        it++ 
+         )
+   {
+      if ( !read("wave/" + it->second, it->first ) )
+      {
+         return false;
+      }
+   }
+   return true;
+}
+
+bool US_Saxs_Util::compute_averages()
+{
+   errormsg = "";
+   for ( unsigned int i = 0; i < wave_names_vector.size(); i++ )
+   {
+      if ( wave_buffer_names[wave_names_vector[i]].size() )
+      {
+         if ( wave_buffer_names[wave_names_vector[i]].size() > 1 )
+         {
+            cout << "averaging buffer for " << wave_names_vector[i] << endl;
+            if ( !avg(wave_names_vector[i] + "|buffer", wave_buffer_names[wave_names_vector[i]]) )
+            {
+               return false;
+            }
+         } else {
+            cout << "setting buffer for " << wave_names_vector[i] << endl;
+            wave[wave_names_vector[i] + "|buffer"] = wave[wave_buffer_names[wave_names_vector[i]][0]];
+         }
+
+         if ( !write(get_file_name(wave_names_vector[i], "buffer"),wave_names_vector[i] + "|buffer") )
+         {
+            return false;
+         }
+      }
+      if ( wave_empty_names[wave_names_vector[i]].size() )
+      {
+         if ( wave_empty_names[wave_names_vector[i]].size() > 1 )
+         {
+            cout << "averaging empty for " << wave_names_vector[i] << endl;
+            if ( !avg(wave_names_vector[i] + "|empty", wave_empty_names[wave_names_vector[i]]) )
+            {
+               return false;
+            }
+         } else {
+            cout << "setting empty for " << wave_names_vector[i] << endl;
+            wave[wave_names_vector[i] + "|empty"] = wave[wave_empty_names[wave_names_vector[i]][0]];
+         }
+         if ( !write(get_file_name(wave_names_vector[i], "empty"),wave_names_vector[i] + "|empty") )
+         {
+            return false;
+         }
+      }
+   }
+   return true;
+}
+
+void US_Saxs_Util::compute_alphas()
+{
+   errormsg = "";
+   for ( unsigned int i = 0; i < wave_names_vector.size(); i++ )
+   {
+      wave_alphas[wave_names_vector[i]] = 1e0 - wave_concs[wave_names_vector[i]] * p_conc_mult;
+   }
+}
+
+QString US_Saxs_Util::wiki_file_name()
+{
+   return p_wiki_prefix + p_name;
+}
+
+QString US_Saxs_Util::get_file_name(QString base, QString type)
+{
+   return
+      QString("cwave%1%1_%1.dat")
+      .arg(QDir::separator())
+      .arg(base.replace(QRegExp("\\.(dat|DAT)$"),""))
+      .arg(type);
+}
+
+bool US_Saxs_Util::wiki_header(QString &result)
+{
+   errormsg = "";
+   result =
+      QString(
+              "= %1 =\n"
+              " == Overview: %1 ==\n"
+              " * %1\n"
+              " * MW %1 Daltons\n"
+              " * concentration multiplier for standard saxs buffer subtraction: %1\n"
+              " %1\n"
+              " == Sample summary ==\n"
+              "|| name || saxs or waxs || conc mg/ml || alpha || source file || comments ||\n"
+              )
+      .arg(p_short_description)
+      .arg(p_name)
+      .arg(p_description)
+      .arg(p_mw)
+      .arg(p_conc_mult)
+      .arg(p_comment)
+      ;
+
+   for ( unsigned int i = 0; i < wave_names_vector.size(); i++ )
+   {
+      result +=
+         QString(
+                 "|| %1 || %1 || %1 || %1 || %1 || %1 ||\n"
+                 )
+         .arg(wave_names_vector[i])
+         .arg(wave_types[wave_names_vector[i]])
+         .arg(wave_concs[wave_names_vector[i]] ? QString("%1").arg(wave_concs[wave_names_vector[i]]) : "buffer" )
+         .arg(wave_concs[wave_names_vector[i]] ? QString("%1").arg(wave_alphas[wave_names_vector[i]]) : "" )
+         .arg(wave_file_names[wave_names_vector[i]])
+         .arg(wave_comments[wave_names_vector[i]])
+         ;
+   }
+
+   result += 
+      "== SAXS standard buffer subtraction ==\n"
+      ;
+   for ( unsigned int i = 0; i < wave_names_vector.size(); i++ )
+   {
+      if ( 
+          wave_types[wave_names_vector[i]] == "saxs" &&
+          wave_concs[wave_names_vector[i]]
+          )
+      {
+         // first the main sample with concentration
+         result +=
+            QString(
+                    "=== Sample %1 ===\n"
+                    "|| name || saxs or waxs || conc mg/ml || alpha || source file || comments ||\n"
+                    "|| %1 || %1 || %1 || %1 || %1 || %1 ||\n"
+                    )
+            .arg(wave_names_vector[i])
+            .arg(wave_names_vector[i])
+            .arg(wave_types[wave_names_vector[i]])
+            .arg(wave_concs[wave_names_vector[i]] ? QString("%1").arg(wave_concs[wave_names_vector[i]]) : "buffer" )
+            .arg(wave_concs[wave_names_vector[i]] ? QString("%1").arg(wave_alphas[wave_names_vector[i]]) : "" )
+            .arg(wave_file_names[wave_names_vector[i]])
+            .arg(wave_comments[wave_names_vector[i]])
+            ;
+         // then the associated buffers
+         for ( unsigned int j = 0; j < wave_buffer_names[wave_names_vector[i]].size(); j++ )
+         {
+            result += 
+               QString(
+                       "|| %1 || %1 || %1 || %1 || %1 || %1 ||\n"
+                       )
+               .arg(wave_buffer_names[wave_names_vector[i]][j])
+               .arg(wave_types[wave_buffer_names[wave_names_vector[i]][j]])
+               .arg(wave_concs[wave_buffer_names[wave_names_vector[i]][j]]? QString("%1").arg(wave_concs[wave_buffer_names[wave_names_vector[i]][j]]) : "buffer" )
+               .arg(wave_concs[wave_buffer_names[wave_names_vector[i]][j]] ? QString("%1").arg(wave_alphas[wave_buffer_names[wave_names_vector[i]][j]]) : "" )
+               .arg(wave_file_names[wave_buffer_names[wave_names_vector[i]][j]])
+               .arg(wave_comments[wave_buffer_names[wave_names_vector[i]][j]])
+               ;
+         }
+         QString pngfile = QString("%1_sbs_%1.png").arg(p_name).arg(wave_names_vector[i]);
+         result += QString("[[Image(htdocs:pngs%1%1)]]\n").arg(QDir::separator()).arg(pngfile);
+         // compute the wave now
+         QString outfile = get_file_name(wave_names_vector[i],"bsub");
+         if ( 
+             !subbackground(outfile, wave_names_vector[i], wave_names_vector[i] + "|buffer", wave_alphas[wave_names_vector[i]]) ||
+             !write(outfile, outfile) 
+             )
+         {
+            return false;
+         }
+         cout << "trial:\n"
+              << p_saxs_lowq << endl
+              << p_saxs_highq << endl
+              << QString("pngs%1%1").arg(QDir::separator()).arg(pngfile) << endl
+              << QString("wave%1%1").arg(QDir::separator()).arg(wave_file_names[wave_names_vector[i]]) << endl
+              << get_file_name(wave_names_vector[i],"buffer") << endl
+              << get_file_name(wave_names_vector[i],"bsub") << endl;
+
+         QString cmd =
+            QString(
+                    "pnggnuplot.pl -c %1 %1 %1 %1 %1 %1\n"
+                    )
+            .arg(p_saxs_lowq)
+            .arg(p_saxs_highq)
+            .arg(QString("pngs%1%1").arg(QDir::separator()).arg(pngfile))
+            .arg(QString("wave%1%1").arg(QDir::separator()).arg(wave_file_names[wave_names_vector[i]]))
+            .arg(get_file_name(wave_names_vector[i],"buffer"))
+            .arg(get_file_name(wave_names_vector[i],"bsub"))
+            ;
+         cout << cmd;
+         system(cmd.ascii());
+      }
+   }
+   return true;
+}

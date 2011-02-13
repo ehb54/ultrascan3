@@ -214,6 +214,7 @@ class US_EXTERN US_Saxs_Util
 
       int debug;
       QString errormsg;
+
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
@@ -222,7 +223,54 @@ class US_EXTERN US_Saxs_Util
   #pragma warning ( default: 4251 )
 #endif
 
+      // project utilities
+
+      bool read_project();
+      bool build_wiki();
+
    private:
+
+      void clear_project();
+      bool check_project_files();
+      bool read_project_waves();
+      bool compute_averages();
+      void compute_alphas();
+      QString wiki_file_name();
+      bool wiki_header(QString &result);
+      QString get_file_name(QString base, QString type);
+      QString p_wiki;
+      QString p_wiki_prefix;
+      QString p_name;
+      QString p_description;
+      QString p_short_description;
+      QString p_comment;
+      double  p_mw;
+      double  p_conc_mult;
+      double  p_saxs_lowq;
+      double  p_saxs_highq;
+      double  p_waxs_lowq;
+      double  p_waxs_highq;
+      double  p_overlap_lowq;
+      double  p_overlap_highq;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+      vector < QString >                  wave_names_vector;      // simple vector of names
+      map < QString, bool >               wave_names;             // maps (unique) names to exist flag
+      map < QString, QString >            wave_file_names;        // maps names to file_names
+      map < QString, QString >            wave_types;             // maps names to waxs or saxs
+      map < QString, double >             wave_concs;             // maps names to conc
+      map < QString, double >             wave_alphas;            // maps names to compute alpha
+      map < QString, double >             wave_exposure_times;    // maps names to conc
+      map < QString, vector < QString > > wave_buffer_names;      // maps names to assoc buffer names
+      map < QString, vector < QString > > wave_empty_names;       // maps names to assoc empty cell names
+      map < QString, QString >            wave_comments;          // maps names to comments
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
       QString gsm_outtag;
       QString gsm_solutiontag;

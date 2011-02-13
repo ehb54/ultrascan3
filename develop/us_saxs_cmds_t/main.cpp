@@ -14,30 +14,34 @@ int main (int argc, char **argv)
       printf(
              "usage: %s command params\n"
              "Valid commands \tparams:\n"
-             "saxs_avg       \toutfile infile1 infile2 {infile3 etc}"
+             "avg       \toutfile infile1 infile2 {infile3 etc}"
              "\tAverage curves\n"
-             "saxs_sbg       \toutfile solutionfile bufferfile alpha"
+             "sbg       \toutfile solutionfile bufferfile alpha"
              "\tSubtract background wave\n"
-             "saxs_scw       \toutfile solutionfile bufferfile emptycellfile alpha"
+             "scw       \toutfile solutionfile bufferfile emptycellfile alpha"
              "\tSubtract background and cell wave\n"
-             "saxs_wgsbs     \toutfile solutionfile bufferfile waxsfile alpha beta const low high"
+             "wgsbs     \toutfile solutionfile bufferfile waxsfile alpha beta const low high"
              "\tWAXS guided SAXS buffer subtraction\n"
-             "saxs_wgsbsg    \toutfile logfile solutionfile bufferfile waxsfile alphamin alphamax alphainc betamin betamax betainc constmin constmax constinc low high\n"
+             "wgsbsg    \toutfile logfile solutionfile bufferfile waxsfile alphamin alphamax alphainc betamin betamax betainc constmin constmax constinc low high\n"
              "\tWAXS guided SAXS buffer subtraction grid search\n"
-             "saxs_wgsbsgsm  \toutfile logfile solutionfile bufferfile waxsfile gsm_type max_iterations alphainit alphamin alphamax alphainc betainit betamin betamax betainc constinit constmin constmax constinc low high\n"
+             "wgsbsgsm  \toutfile logfile solutionfile bufferfile waxsfile gsm_type max_iterations alphainit alphamin alphamax alphainc betainit betamin betamax betainc constinit constmin constmax constinc low high\n"
              "\tWAXS guided SAXS buffer subtraction gsm search, bounded by *min,*man, starting at *init, deltas *inc\n"
-             "saxs_wgsbsggsm \toutfile logfile solutionfile bufferfile waxsfile gsm_type max_iterations gsmpercent alphamin alphamax alphaincg alphaincgsm betamin betamax betaincg betaincgsm constmin constmax constincg constincgsm low high\n"
+             "wgsbsggsm \toutfile logfile solutionfile bufferfile waxsfile gsm_type max_iterations gsmpercent alphamin alphamax alphaincg alphaincgsm betamin betamax betaincg betaincgsm constmin constmax constincg constincgsm low high\n"
              "\tWAXS guided SAXS buffer subtraction grid then gsm search, bounded by *min,*man, deltas *incg (grid) *incgsm (gsm), gsmpercent is the % range delta for gsm search from min\n"
-             "saxs_wgsbsnggsm \toutfile logfile solutionfile bufferfile waxsfile grids gsm_type max_iterations gsmpercent alphamin alphamax alphaincg alphaincgsm betamin betamax betaincg betaincgsm constmin constmax constincg constincgsm low high\n"
+             "wgsbsnggsm \toutfile logfile solutionfile bufferfile waxsfile grids gsm_type max_iterations gsmpercent alphamin alphamax alphaincg alphaincgsm betamin betamax betaincg betaincgsm constmin constmax constincg constincgsm low high\n"
              "\tWAXS guided SAXS buffer subtraction n grids then gsm search, bounded by *min,*man, deltas *incg (grid) *incgsm (gsm), gsmpercent is the % range delta for subsequent grid searches and then gsm search from min\n"
-             "saxs_join       \toutfile infile1 infile2 q-value\n"
+             "join       \toutfile infile1 infile2 q-value\n"
              "\tjoin two files\n"
-             "saxs_guinier_plot  \toutfile infile\n"
+             "guinier_plot  \toutfile infile\n"
              "\treplace q with q*q, r with log(r), don't plot in logscale\n"
-             "saxs_guinier_fit   \tlogfile infile startpos endpos minlen maxlen\n"
+             "guinier_fit   \tlogfile infile startpos endpos minlen maxlen\n"
              "\tcompute guinier fit\n"
-             "saxs_guinier_fit2  \tlogfile infile pointsmin pointsmax sRgmaxlimit pointweightpower\n"
+             "guinier_fit2  \tlogfile infile pointsmin pointsmax sRgmaxlimit pointweightpower\n"
              "\tcompute guinier fit\n"
+             "project_init  \tprojectname\n"
+             "\tcreates a new blank project directory & template files\n"
+             "project_rebuild\n"
+             "\treads the project file and produces wiki pages & pngs describing the analysis\n"
              , argv[0]
              );
       exit(-1);
@@ -47,7 +51,9 @@ int main (int argc, char **argv)
    {
       cmds.push_back(argv[i]);
    }
-   if (cmds[0].lower() == "saxs_avg") 
+   int errorbase = -1000;
+
+   if (cmds[0].lower() == "avg") 
    {
       if (cmds.size() < 4) 
       {
@@ -56,7 +62,7 @@ int main (int argc, char **argv)
                 , argv[0]
                 , argv[1]
                 );
-         exit(-1001);
+         exit(errorbase);
       }
 
       QString outfile = cmds[1];
@@ -70,7 +76,7 @@ int main (int argc, char **argv)
          if ( !usu.read(cmds[i], cmds[i]) )
          {
             cout << usu.errormsg << endl;
-            exit(-1002);
+            exit(errorbase - 1);
          }
       }
 
@@ -79,13 +85,15 @@ int main (int argc, char **argv)
            !usu.write(outfile, outfile) )
       {
          cout << usu.errormsg << endl;
-         exit(-1003);
+         exit(errorbase - 2);
       }
 
       exit(0);
    }
 
-   if (cmds[0].lower() == "saxs_sbg") 
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "sbg") 
    {
       if (cmds.size() != 5) 
       {
@@ -94,7 +102,7 @@ int main (int argc, char **argv)
                 , argv[0]
                 , argv[1]
                 );
-         exit(-1101);
+         exit(errorbase);
       }
 
       QString outfile = cmds[1];
@@ -111,13 +119,15 @@ int main (int argc, char **argv)
            !usu.write(outfile, "out") )
       {
          cout << usu.errormsg << endl;
-         exit(-1102);
+         exit(errorbase - 1);
       }
 
       exit(0);
    }
 
-   if (cmds[0].lower() == "saxs_scw") 
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "scw") 
    {
       if (cmds.size() != 6) 
       {
@@ -126,7 +136,7 @@ int main (int argc, char **argv)
                 , argv[0]
                 , argv[1]
                 );
-         exit(-1201);
+         exit(errorbase);
       }
 
       QString outfile = cmds[1];
@@ -145,13 +155,15 @@ int main (int argc, char **argv)
            !usu.write(outfile, "out") )
       {
          cout << usu.errormsg << endl;
-         exit(-1202);
+         exit(errorbase - 1);
       }
 
       exit(0);
    }
 
-   if (cmds[0].lower() == "saxs_wgsbs") 
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "wgsbs") 
    {
       if (cmds.size() != 10) 
       {
@@ -160,7 +172,7 @@ int main (int argc, char **argv)
                 , argv[0]
                 , argv[1]
                 );
-         exit(-1301);
+         exit(errorbase);
       }
 
       QString outfile = cmds[1];
@@ -202,13 +214,15 @@ int main (int argc, char **argv)
            !usu.write(outfile, "out") )
       {
          cout << usu.errormsg << endl;
-         exit(-1302);
+         exit(errorbase - 1);
       }
       cout << "nrmsd " << nrmsd << endl;
       exit(0);
    }
 
-   if (cmds[0].lower() == "saxs_wgsbsg") 
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "wgsbsg") 
    {
       if (cmds.size() != 17) 
       {
@@ -217,7 +231,7 @@ int main (int argc, char **argv)
                 , argv[0]
                 , argv[1]
                 );
-         exit(-1401);
+         exit(errorbase);
       }
 
       int p = 1;
@@ -273,7 +287,7 @@ int main (int argc, char **argv)
            !usu.write(outfile, "out") )
       {
          cout << usu.errormsg << endl;
-         exit(-1402);
+         exit(errorbase - 1);
       }
 
       cout << "nrmsd " << nrmsd << endl;
@@ -290,13 +304,15 @@ int main (int argc, char **argv)
             f.close();
          } else {
             cout << "error creating " << logfile << endl;
-            exit(-1403);
+            exit(errorbase - 2);
          }
       }
       exit(0);
    }
 
-   if (cmds[0].lower() == "saxs_wgsbsgsm") 
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "wgsbsgsm") 
    {
       if (cmds.size() != 22) 
       {
@@ -305,7 +321,7 @@ int main (int argc, char **argv)
                 , argv[0]
                 , argv[1]
                 );
-         exit(-1501);
+         exit(errorbase);
       }
 
       int p = 1;
@@ -368,7 +384,7 @@ int main (int argc, char **argv)
                           max_iterations) )
       {
          cout << usu.errormsg << endl;
-         exit(-1502);
+         exit(errorbase - 1);
       }
       outfile.replace(QRegExp("\\.dat$"), "");
       outfile += 
@@ -380,7 +396,7 @@ int main (int argc, char **argv)
       if ( !usu.write(outfile, "out") )
       {
          cout << usu.errormsg << endl;
-         exit(-1503);
+         exit(errorbase - 2);
       }
       cout << "nrmsd " << nrmsd << endl;
       log += 
@@ -404,13 +420,15 @@ int main (int argc, char **argv)
             f.close();
          } else {
             cout << "error creating " << logfile << endl;
-            exit(-1504);
+            exit(errorbase - 3);
          }
       }
       exit(0);
    }
 
-   if (cmds[0].lower() == "saxs_wgsbsggsm") 
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "wgsbsggsm") 
    {
       if (cmds.size() != 23) 
       {
@@ -419,7 +437,7 @@ int main (int argc, char **argv)
                 , argv[0]
                 , argv[1]
                 );
-         exit(-1601);
+         exit(errorbase);
       }
 
       int p = 1;
@@ -481,7 +499,7 @@ int main (int argc, char **argv)
                                                   high) )
       {
          cout << usu.errormsg << endl;
-         exit(-1602);
+         exit(errorbase - 1);
       }
 
       cout << 
@@ -531,7 +549,7 @@ int main (int argc, char **argv)
                           max_iterations) )
       {
          cout << usu.errormsg << endl;
-         exit(-1602);
+         exit(errorbase - 1);
       }
       outfile.replace(QRegExp("\\.dat$"), "");
       outfile += 
@@ -543,7 +561,7 @@ int main (int argc, char **argv)
       if ( !usu.write(outfile, "out") )
       {
          cout << usu.errormsg << endl;
-         exit(-1603);
+         exit(errorbase - 2);
       }
       cout << "nrmsd " << nrmsd << endl;
       cout << log;
@@ -568,14 +586,15 @@ int main (int argc, char **argv)
             f.close();
          } else {
             cout << "error creating " << logfile << endl;
-            exit(-1604);
+            exit(errorbase - 3);
          }
       }
       exit(0);
    }
 
+   errorbase -= 1000;
 
-   if (cmds[0].lower() == "saxs_wgsbsnggsm") 
+   if (cmds[0].lower() == "wgsbsnggsm") 
    {
       if (cmds.size() != 24) 
       {
@@ -584,7 +603,7 @@ int main (int argc, char **argv)
                 , argv[0]
                 , argv[1]
                 );
-         exit(-1701);
+         exit(errorbase);
       }
 
       int p = 1;
@@ -641,7 +660,7 @@ int main (int argc, char **argv)
 
       {
          cout << usu.errormsg << endl;
-         exit(-1702);
+         exit(errorbase - 1);
       }
 
       for ( int g = 0; g < grids; g++ )
@@ -680,7 +699,7 @@ int main (int argc, char **argv)
                                                      high) )
          {
             cout << usu.errormsg << endl;
-            exit(-1703);
+            exit(errorbase - 2);
          }
          cout << 
             QString("minimum from grid %1 nrmsd %2 alpha %3 beta %4 dconst %5\n")
@@ -809,7 +828,7 @@ int main (int argc, char **argv)
                              max_iterations) )
          {
             cout << usu.errormsg << endl;
-            exit(-1704);
+            exit(errorbase - 3);
          }
       }
 
@@ -824,7 +843,7 @@ int main (int argc, char **argv)
       if ( !usu.write(outfile, "out") )
       {
          cout << usu.errormsg << endl;
-         exit(-1705);
+         exit(errorbase - 4);
       }
       cout << "nrmsd " << nrmsd << endl;
       QString logbest = 
@@ -873,13 +892,15 @@ int main (int argc, char **argv)
             f.close();
          } else {
             cout << "error creating " << logfile << endl;
-            exit(-1706);
+            exit(errorbase - 5);
          }
       }
       exit(0);
    }
 
-   if (cmds[0].lower() == "saxs_join") 
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "join") 
    {
       if (cmds.size() != 5) 
       {
@@ -888,7 +909,7 @@ int main (int argc, char **argv)
                 , argv[0]
                 , argv[1]
                 );
-         exit(-1801);
+         exit(errorbase);
       }
 
       int p = 1;
@@ -906,13 +927,15 @@ int main (int argc, char **argv)
            !usu.write(outfile, outfile) )
       {
          cout << usu.errormsg << endl;
-         exit(-1802);
+         exit(errorbase - 1);
       }
 
       exit(0);
    }
 
-   if (cmds[0].lower() == "saxs_guinier_plot") 
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "guinier_plot") 
    {
       if (cmds.size() != 3) 
       {
@@ -921,7 +944,7 @@ int main (int argc, char **argv)
                 , argv[0]
                 , argv[1]
                 );
-         exit(-1901);
+         exit(errorbase);
       }
 
       int p = 1;
@@ -936,13 +959,15 @@ int main (int argc, char **argv)
            !usu.write(outfile, outfile) )
       {
          cout << usu.errormsg << endl;
-         exit(-1902);
+         exit(errorbase - 1);
       }
 
       exit(0);
    }
 
-   if (cmds[0].lower() == "saxs_guinier_fit") 
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "guinier_fit") 
    {
       if (cmds.size() != 7) 
       {
@@ -951,7 +976,7 @@ int main (int argc, char **argv)
                 , argv[0]
                 , argv[1]
                 );
-         exit(-2001);
+         exit(errorbase);
       }
 
       int p = 1;
@@ -968,7 +993,7 @@ int main (int argc, char **argv)
            !usu.guinier_plot("guinier", infile) )
       {
          cout << usu.errormsg << endl;
-         exit(-2002);
+         exit(errorbase - 1);
       }
 
       QString log = "|| startpos || endpos || s_min || s_max || sRg_min || sRg_max || Rg || Io || a || b || sigma a || sigma b || chi2 ||\n";
@@ -1008,7 +1033,7 @@ int main (int argc, char **argv)
                                   ) )
             {
                cout << usu.errormsg << endl;
-               exit(-2003);
+               exit(errorbase - 2);
             }
          }
       }
@@ -1033,7 +1058,9 @@ int main (int argc, char **argv)
       exit(0);
    }
 
-   if (cmds[0].lower() == "saxs_guinier_fit2") 
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "guinier_fit2") 
    {
       if (cmds.size() != 7) 
       {
@@ -1042,7 +1069,7 @@ int main (int argc, char **argv)
                 , argv[0]
                 , argv[1]
                 );
-         exit(-2001);
+         exit(errorbase);
       }
 
       int p = 1;
@@ -1062,7 +1089,7 @@ int main (int argc, char **argv)
            !usu.write(outfile, tag) )
       {
          cout << usu.errormsg << endl;
-         exit(-2002);
+         exit(errorbase - 1);
       }
 
       QString log = "|| startpos || endpos || s_min || s_max || sRg_min || sRg_max || Rg || Io || a || b || sigma a || sigma b || chi2 ||\n";
@@ -1100,7 +1127,7 @@ int main (int argc, char **argv)
                              ) )
       {
          cout << usu.errormsg << endl;
-         exit(-2003);
+         exit(errorbase - 2);
       }
       
       QFile f(logfile);
@@ -1120,6 +1147,246 @@ int main (int argc, char **argv)
          }
       }
          
+      exit(0);
+   }
+
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "project_init") 
+   {
+      if (cmds.size() != 2) 
+      {
+         printf(
+                "usage: %s %s projectname\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(errorbase);
+      }
+      errorbase--;
+
+      int p = 1;
+      QString projectname = cmds[p++];
+
+      QString projectdir = projectname;
+
+      projectname.replace(QRegExp("^.*((\\|/)"),"");
+
+      // make directory
+      if ( 
+          !projectdir.contains(QRegExp("^(\\|/)")) // doesn't start at root
+          )
+      {
+         projectdir = QString("%1%1%1")
+            .arg(QDir::currentDirPath())
+            .arg(QDir::separator())
+            .arg(projectdir);
+      }
+
+      QString pngdir = QString("%1%1pngs")
+         .arg(projectdir)
+         .arg(QDir::separator());
+
+      QString sourcewavedir = QString("%1%1wave")
+         .arg(projectdir)
+         .arg(QDir::separator());
+
+      QString computedwavedir = QString("%1%1cwave")
+         .arg(projectdir)
+         .arg(QDir::separator());
+
+      QString tmpdir = QString("%1%1tmp")
+         .arg(projectdir)
+         .arg(QDir::separator());
+
+      cout << "project name:                     " << projectname << endl;
+      cout << "project directory:                " << projectdir << endl;
+      cout << "project pngs directory:           " << pngdir << endl;
+      cout << "project source waves directory:   " << sourcewavedir << endl;
+      cout << "project computed waves directory: " << computedwavedir << endl;
+      cout << "project temporary directory:      " << tmpdir << endl;
+
+      QDir pd(projectdir);
+      if ( pd.exists() )
+      {
+         cout << "project directory already exists, not created\n";
+      } else {
+         if ( !pd.mkdir(projectdir) )
+         {
+            cerr << "error: could not create directory: " << projectdir << endl;
+            exit(errorbase);
+         }
+      }
+      errorbase--;
+
+      if ( !pd.setCurrent(projectdir) )
+      {
+         cerr << "error: " << projectdir << " could not change to directory\n";
+         exit(errorbase);
+      }
+      errorbase--;
+
+      QDir ppd(pngdir);
+      if ( ppd.exists() )
+      {
+         cout << "project pngs directory already exists, not created\n";
+      } else {
+         if ( !ppd.mkdir(pngdir) )
+         {
+            cerr << "error: could not create directory: " << pngdir << endl;
+            exit(errorbase);
+         }
+      }
+      errorbase--;
+
+      QDir pswd(sourcewavedir);
+      if ( pswd.exists() )
+      {
+         cout << "project source wave directory already exists, not created\n";
+      } else {
+         if ( !pswd.mkdir(sourcewavedir) )
+         {
+            cerr << "error: could not create directory: " << sourcewavedir << endl;
+            exit(errorbase);
+         }
+      }
+      errorbase--;
+
+      QDir pcwd(computedwavedir);
+      if ( pcwd.exists() )
+      {
+         cout << "project computed wave directory already exists, not created\n";
+      } else {
+         if ( !pcwd.mkdir(computedwavedir) )
+         {
+            cerr << "error: could not create directory: " << computedwavedir << endl;
+            exit(errorbase);
+         }
+      }
+      errorbase--;
+
+      QDir ptd(tmpdir);
+      if ( ptd.exists() )
+      {
+         cout << "project computed wave directory already exists, not created\n";
+      } else {
+         if ( !ptd.mkdir(tmpdir) )
+         {
+            cerr << "error: could not create directory: " << tmpdir << endl;
+            exit(errorbase);
+         }
+      }
+      errorbase--;
+
+      if ( !pd.setCurrent(projectdir) )
+      {
+         cerr << "error: " << projectdir << " could not change to directory\n";
+         exit(errorbase);
+      }
+      errorbase--;
+         
+      QFile pf("project");
+      if ( pf.exists() )
+      {
+         cerr << "error: project file already exists, not created\n";
+         exit(errorbase);
+      } 
+      errorbase--;
+
+      if ( !pf.open( IO_WriteOnly ) )
+      {
+         cerr << "error: project file can not be created.\n";
+         exit(errorbase);
+      }
+      errorbase--;
+
+      QTextStream ts( &pf );
+      ts << 
+         QString(
+                 "# notes:\n"
+                 "# mw in daltons\n"
+                 "# conc in mg/ml\n"
+                 "\n"
+                 "# wiki defines the base url for the wiki\n"
+                 "wiki                wiki.bcf.uthscsa.edu/embargo3\n"
+                 "# wikiPrefix will be prepended to every name\n"
+                 "wikiPrefix          \n"
+                 "name                %1\n"
+                 "description         %1\n"
+                 "shortDescription    \n"
+                 "# any number of comment lines ok\n"
+                 "comment             \n"
+                 "mw                  \n"
+                 "concMultiplier\t7.43e-4\n"
+                 "saxsLowQ            .006\n"
+                 "saxsHighQ           .24\n"
+                 "waxsLowQ            .1\n"
+                 "waxsHighQ            2.4\n"
+                 "overlapLowQ         .10\n"
+                 "overlapHighQ        .23\n"
+                 "# waveName starts a new concentration or buffer (i.e. zero concentration) entry\n"
+                 "waveName            \n"
+                 "# comments here will be associated with the wave\n"
+                 "comment             \n"
+                 "waveFileName        \n"
+                 "# waveType is saxs or waxs\n"
+                 "waveType            saxs\n"
+                 "exposureTime        \n"
+                 "waveConc            \n"
+                 "\n"
+                 "waveName            \n"
+                 "waveFileName        \n"
+                 "# waveType is saxs or waxs\n"
+                 "waveType            saxs\n"
+                 "exposureTime        \n"
+                 "waveConc            \n"
+                 "# waveBufferName must match a previously defined wave file name\n"
+                 "# multiple waveBufferNames for a wave ok, they will be averaged\n"
+                 "waveBufferName      \n"
+                 "# waveEmptyName must match a previously defined wave file name\n"
+                 "# multiple waveEmptyNames for a wave ok, they will be averaged\n"
+                 "waveEmptyName       \n"
+                 )
+         .arg(projectname)
+         .arg(projectname);
+
+      pf.close();
+      cout << 
+         QString("project %1 created\n"
+                 "now put wave files in to %1/wave and\n"
+                 "edit %1/project and run \"us_saxs_cmd_t project_rebuild\" in the %1 directory\n"
+                 )
+         .arg(projectdir)
+         .arg(projectname)
+         .arg(projectname)
+         .arg(projectdir);
+
+      exit(0);
+   }
+
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "project_rebuild") 
+   {
+      if (cmds.size() != 1) 
+      {
+         printf(
+                "usage: %s %s\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(errorbase);
+      }
+      errorbase--;
+
+      US_Saxs_Util usu;
+      if ( !usu.read_project() ||
+           !usu.build_wiki() )
+      {
+         cout << usu.errormsg << endl;
+         exit(errorbase);
+      }
+
       exit(0);
    }
 
