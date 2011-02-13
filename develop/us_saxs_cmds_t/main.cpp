@@ -1105,6 +1105,8 @@ int main (int argc, char **argv)
       double sRgmin;
       double sRgmax;
       QString logg;
+      unsigned int beststart;
+      unsigned int bestend;
 
       if ( !usu.guinier_fit2(
                              log,
@@ -1123,7 +1125,9 @@ int main (int argc, char **argv)
                              smin,
                              smax,
                              sRgmin,
-                             sRgmax
+                             sRgmax,
+                             beststart,
+                             bestend
                              ) )
       {
          cout << usu.errormsg << endl;
@@ -1199,12 +1203,17 @@ int main (int argc, char **argv)
          .arg(projectdir)
          .arg(QDir::separator());
 
+      QString logdir = QString("%1%1log")
+         .arg(projectdir)
+         .arg(QDir::separator());
+
       cout << "project name:                     " << projectname << endl;
       cout << "project directory:                " << projectdir << endl;
       cout << "project pngs directory:           " << pngdir << endl;
       cout << "project source waves directory:   " << sourcewavedir << endl;
       cout << "project computed waves directory: " << computedwavedir << endl;
       cout << "project temporary directory:      " << tmpdir << endl;
+      cout << "project log directory:            " << logdir << endl;
 
       QDir pd(projectdir);
       if ( pd.exists() )
@@ -1268,11 +1277,24 @@ int main (int argc, char **argv)
       QDir ptd(tmpdir);
       if ( ptd.exists() )
       {
-         cout << "project computed wave directory already exists, not created\n";
+         cout << "project temporary directory already exists, not created\n";
       } else {
          if ( !ptd.mkdir(tmpdir) )
          {
             cerr << "error: could not create directory: " << tmpdir << endl;
+            exit(errorbase);
+         }
+      }
+      errorbase--;
+
+      QDir pld(logdir);
+      if ( pld.exists() )
+      {
+         cout << "project log directory already exists, not created\n";
+      } else {
+         if ( !pld.mkdir(logdir) )
+         {
+            cerr << "error: could not create directory: " << logdir << endl;
             exit(errorbase);
          }
       }
@@ -1346,6 +1368,10 @@ int main (int argc, char **argv)
                  "# waveEmptyName must match a previously defined wave file name\n"
                  "# multiple waveEmptyNames for a wave ok, they will be averaged\n"
                  "waveEmptyName       \n"
+                 "# manually set waveAlpha, Beta, Const (Beta,Const for waxs guided saxs background subtraction)\n"
+                 "# waveAlpha           \n" 
+                 "# waveBeta            \n" 
+                 "# waveConst           \n" 
                  )
          .arg(projectname)
          .arg(projectname);

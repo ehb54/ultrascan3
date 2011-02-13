@@ -209,7 +209,9 @@ class US_EXTERN US_Saxs_Util
                        double &smaX,
                        double &smin,
                        double &sRgmin,
-                       double &sRgmax
+                       double &sRgmax,
+                       unsigned int &beststart,
+                       unsigned int &bestend
                        );
 
       int debug;
@@ -236,8 +238,10 @@ class US_EXTERN US_Saxs_Util
       bool compute_averages();
       void compute_alphas();
       QString wiki_file_name();
-      bool wiki_header(QString &result);
+      bool wiki(QString &result);  // generate wiki page and associated pngs
       QString get_file_name(QString base, QString type);
+
+      QString p_project;           // contains a copy of last read project file
       QString p_wiki;
       QString p_wiki_prefix;
       QString p_name;
@@ -262,11 +266,22 @@ class US_EXTERN US_Saxs_Util
       map < QString, QString >            wave_file_names;        // maps names to file_names
       map < QString, QString >            wave_types;             // maps names to waxs or saxs
       map < QString, double >             wave_concs;             // maps names to conc
-      map < QString, double >             wave_alphas;            // maps names to compute alpha
+      map < QString, double >             wave_alphas;            // maps names to computed or preset alpha
+      map < QString, double >             wave_betas;             // maps names to preset beta (for waxs)
+      map < QString, double >             wave_consts;            // maps names to preset const (for waxs)
       map < QString, double >             wave_exposure_times;    // maps names to conc
       map < QString, vector < QString > > wave_buffer_names;      // maps names to assoc buffer names
       map < QString, vector < QString > > wave_empty_names;       // maps names to assoc empty cell names
       map < QString, QString >            wave_comments;          // maps names to comments
+
+      // computed:
+      map < QString, double >             wave_Rgs;               // maps names to conc
+      map < QString, double >             wave_Ios;               // maps names to conc
+      map < QString, double >             wave_smins;             // maps names to conc
+      map < QString, double >             wave_smaxs;             // maps names to conc
+      map < QString, double >             wave_sRgmins;           // maps names to conc
+      map < QString, double >             wave_sRgmaxs;           // maps names to conc
+      map < QString, double >             wave_chi2s;             // maps names to conc
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
