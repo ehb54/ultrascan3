@@ -392,7 +392,7 @@ bool US_Saxs_Util::guinier_fit2(
                                 QString tag,             // tag needs to be preprocessed with guinierplot
                                 unsigned int pointsmin,  // the minimum # of points allowed typically 10
                                 unsigned int pointsmax,  // the maximum # of points allowed typically 100
-                                double sRgmaxlimit,      // maximum sRg allowed typically 1.3
+                                double sRgmaxlimit,      // maximum sRg allowed! typically 1.3
                                 double pointweightpower, // the exponent ofnumber of points when computing the best one (3 seems to work well)
                                 //                          i.e. fitness = chi2 / ( number_of_points ** pointweightpower )
                                 double &a,
@@ -3196,7 +3196,7 @@ bool US_Saxs_Util::wiki(QString &result)
 
    QString guinier_summary = 
       "=== SAXS Guinier Summary ===\n"
-      "|| name || saxs or waxs || conc mg/ml || alpha || source file || comments || Rg || Io || Io/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point ||\n"
+      "|| name || saxs or waxs || conc mg/ml || alpha || source file || comments || Rg || Io || Io/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
       ;
 
    for ( unsigned int i = 0; i < saxs_conc_names.size(); i++ )
@@ -3283,7 +3283,7 @@ bool US_Saxs_Util::wiki(QString &result)
       system(cmd.ascii());
 
       QString this_data_line = 
-         QString("|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 ||\n")
+         QString("|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 ||\n")
          .arg(saxs_conc_names[i])
          .arg(wave_types[saxs_conc_names[i]])
          .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_concs[saxs_conc_names[i]]) : "buffer" )
@@ -3299,11 +3299,13 @@ bool US_Saxs_Util::wiki(QString &result)
          .arg(smax)
          .arg(chi2)
          .arg(beststart)
-         .arg(bestend);
+         .arg(bestend)
+         .arg(bestend - beststart + 1)
+         ;
 
       result +=
          QString("=== Sample %1 ===\n"
-                 "|| name || saxs or waxs || conc mg/ml || alpha || source file || comments || Rg || Io || Io/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point ||\n"
+                 "|| name || saxs or waxs || conc mg/ml || alpha || source file || comments || Rg || Io || Io/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
                  "%1"
                  "[[Image(htdocs:%1)]]\n"
                  )
