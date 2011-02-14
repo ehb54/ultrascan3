@@ -109,12 +109,14 @@ class US_EXTERN US_EqModelControl : public US_WidgetsDialog
       US_Help            showHelp;
 
       bool               send_signal;
+      bool               chng_floats;
              
    private slots:
       void scan_changed(        double );
       void global_comp_changed( double );
       void local_comp_changed(  double );
       void update_sigma      (  void   );
+      void update_floats     (  void   );
       void selected( void );
 
       void help    ( void )

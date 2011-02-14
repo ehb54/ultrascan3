@@ -1,6 +1,7 @@
 //! \file us_eqfit_control.cpp
 
 #include "us_eqfit_control.h"
+#include "us_fit_worker.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_constants.h"
@@ -11,6 +12,7 @@ US_EqFitControl::US_EqFitControl(
       QVector< EqScanFit >&   a_scanfits,
       EqRunFit&               a_runfit,
       US_DataIO2::EditedData* a_edata,
+      US_EqMath*              a_emath,
       int                     a_modelx,
       QStringList             a_models,
       bool&                   a_fWidget,
@@ -19,11 +21,13 @@ US_EqFitControl::US_EqFitControl(
    scanfits   ( a_scanfits ),
    runfit     ( a_runfit ),
    edata      ( a_edata ),
+   emath      ( a_emath ),
    modelx     ( a_modelx ),
    models     ( a_models ),
    fWidget    ( a_fWidget ),
    selscan    ( a_selscan )
 {
+qDebug() << "EFC: IN";
    setAttribute  ( Qt::WA_DeleteOnClose );
    setWindowTitle( tr( "Equilibrium Fitting Control Window" ) );
    setPalette    ( US_GuiSettings::frameColor() );
@@ -135,6 +139,12 @@ US_EqFitControl::US_EqFitControl(
             this,       SLOT(   closed()  ) );
    connect( pb_help,    SIGNAL( clicked() ),
             this,       SLOT(   help()    ) );
+   pb_pause  ->setEnabled( false );
+   pb_resume ->setEnabled( false );
+   pb_savefit->setEnabled( false );
+   pb_viewrep->setEnabled( false );
+   pb_resids ->setEnabled( false );
+   pb_ovrlays->setEnabled( false );
 
    // Graph Plotting Controls layout
    QLabel*  lb_gbanner = us_banner(
@@ -261,6 +271,18 @@ US_EqFitControl::US_EqFitControl(
    setMinimumSize( 1000, 600 );
 
    adjustSize();
+
+   // Initialize for fit
+   nlsmeth      = 0;
+   cb_nlsalgo->setCurrentIndex( nlsmeth );
+
+qDebug() << "EFC: call init_fit";
+   emath->init_fit( modelx, nlsmeth, ntpts, ndsets, nfpars );
+qDebug() << "EFC: init_fit return";
+
+   le_nbrpars->setText( QString::number( nfpars ) );
+   le_nbrsets->setText( QString::number( ndsets ) );
+   le_nbrdpts->setText( QString::number( ntpts  ) );
 }
 
 // Close
@@ -275,16 +297,62 @@ void US_EqFitControl::closed()
 void US_EqFitControl::start_fit()
 {
 qDebug() << "START_FIT";
+   if ( pb_strtfit->text().contains( tr( "Abort" ) ) )
+   {
+      fitwork->flag_abort( );
+
+      pb_strtfit->setText( tr( "Fit" ) );
+      pb_pause  ->setEnabled( false  );
+      pb_resume ->setEnabled( false );
+      pb_savefit->setEnabled( false );
+      return;
+   }
+
+   nlsmeth   = cb_nlsalgo->currentIndex();
+
+   emath->init_fit( modelx, nlsmeth, ntpts, ndsets, nfpars );
+
+   mxiters   = le_mxiters->text().toInt();
+   fittoler  = le_fittolr->text().toDouble();
+
+   fitpars.nlsmeth   = nlsmeth;
+   fitpars.modelx    = modelx;
+   fitpars.mxiters   = mxiters;
+   fitpars.mxsteps   = mxiters;
+   fitpars.lam_start = le_lamstrt->text().toInt();
+   fitpars.lam_step  = le_lamsize->text().toInt();
+   fitpars.fittoler  = fittoler;
+   fitpars.lincnstr  = rb_lincnsy->isChecked();
+   fitpars.autocnvg  = rb_autocny->isChecked();
+
+   fitwork   = new US_FitWorker( emath, fitpars, this );
+
+   pb_strtfit->setText( tr( "Abort Fit" ) );
+   pb_pause  ->setEnabled( true  );
+   pb_resume ->setEnabled( false );
+   pb_savefit->setEnabled( false );
+
+   connect( fitwork, SIGNAL( work_progress( int ) ),
+            this,    SLOT(   new_progress ( int ) ) );
+   connect( fitwork, SIGNAL( work_complete()      ),
+            this,    SLOT(   fit_completed()      ) );
+   progress->setMaximum( mxiters );
+   progress->reset();
+
+   fitwork->start();
+
 }
 // Pause the fitting computations
 void US_EqFitControl::pause_fit()
 {
 qDebug() << "PAUSE_FIT";
+   fitwork->flag_paused( true );
 }
 // Resume the fitting computations
 void US_EqFitControl::resume_fit()
 {
 qDebug() << "RESUME_FIT";
+   fitwork->flag_paused( false );
 }
 // Save the computed fit to a file
 void US_EqFitControl::save_fit()
@@ -305,5 +373,16 @@ qDebug() << "PLOT_RESIDUALS";
 void US_EqFitControl::plot_overlays()
 {
 qDebug() << "PLOT_OVERLAYS";
+}
+
+// Update progress bar
+void US_EqFitControl::new_progress( int step )
+{
+   progress->setValue( step );
+}
+
+// React to completion of fit
+void US_EqFitControl::fit_completed()
+{
 }
 

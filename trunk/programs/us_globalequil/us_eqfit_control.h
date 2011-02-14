@@ -3,6 +3,8 @@
 
 #include "us_extern.h"
 #include "us_globeq_data.h"
+#include "us_eqmath.h"
+#include "us_fit_worker.h"
 #include "us_widgets_dialog.h"
 #include "us_dataIO2.h"
 #include "us_plot.h"
@@ -14,7 +16,7 @@ class US_EXTERN US_EqFitControl : public US_WidgetsDialog
 	
 	public:
 		US_EqFitControl( QVector< EqScanFit >&, EqRunFit&,
-            US_DataIO2::EditedData*, int, QStringList, bool&, int& );
+         US_DataIO2::EditedData*, US_EqMath*, int, QStringList, bool&, int& );
 
       void new_scan( int );
       void new_components( void );
@@ -27,6 +29,7 @@ class US_EXTERN US_EqFitControl : public US_WidgetsDialog
       QVector< EqScanFit >&   scanfits;  // Scan Fit vector
       EqRunFit&               runfit;    // Run Fit parameters structure
       US_DataIO2::EditedData* edata;     // Edited Data pointer
+      US_EqMath*              emath;     // Equil-Math object pointer
       int                     modelx;    // Selected model index
       QStringList             models;    // List of model titles
       bool&                   fWidget;   // Fitting Widget created flag
@@ -81,10 +84,20 @@ class US_EXTERN US_EqFitControl : public US_WidgetsDialog
 
       US_Plot*           dplot;
       QwtPlot*           data_plot;
+      US_FitWorker*      fitwork;
+      FitCtrlPar         fitpars;
 
       US_Help            showHelp;
 
       //bool               send_signal;
+
+      int                ntpts;
+      int                ndsets;
+      int                nfpars;
+      int                nlsmeth;
+      int                mxiters;
+
+      double             fittoler;
              
    private slots:
       void start_fit     ( void );
@@ -95,6 +108,8 @@ class US_EXTERN US_EqFitControl : public US_WidgetsDialog
       void plot_residuals( void );
       void plot_overlays ( void );
       void closed        ( void );
+      void new_progress  ( int  );
+      void fit_completed ( void );
 
       void help    ( void )
       { showHelp.show_help( "global_equil-fitctrl.html" ); };

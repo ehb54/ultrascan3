@@ -174,7 +174,7 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
    modlFitLayout->addWidget( pb_modlCtrl, row++, 1, 1, 1 );
    modlFitLayout->addWidget( pb_loadFit,  row,   0, 1, 1 );
    modlFitLayout->addWidget( pb_fitcntrl, row++, 1, 1, 1 );
-   modlFitLayout->addWidget( pb_monCarlo, row,   0, 1, 1 );
+   modlFitLayout->addWidget( pb_monCarlo, row,   1, 1, 1 );
 
    // Parameter Information elements
    QLabel*      lb_parminfo  = us_banner( tr( "Parameter Information:"    ) );
@@ -186,6 +186,7 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
                 ct_scselect  = us_counter( 2, 0, 50, 1 );
 
    pb_floatPar->setEnabled( false );
+   pb_floatPar->setVisible( false );
    pb_initPars->setEnabled( false );
    ct_scselect->setStep(  1.0 );
    ct_scselect->setValue( 0.0 );
@@ -615,8 +616,8 @@ if(na==4) DbgLv(1) << "   par1-4: " << aud_params[0] << aud_params[1]
       setup_runfit();
       assign_scanfit();
 
-DbgLv(1) << "     fix_all  model_widget" << model_widget;
-      fix_all();
+//DbgLv(1) << "     fix_all  model_widget" << model_widget;
+      //fix_all();
 
       if ( model_widget )
          emodctrl->set_float( false );
@@ -661,8 +662,11 @@ DbgLv(1) << "FITTING_CONTROL()";
       sscanx       = tw_equiscns->currentRow();
       sscann       = sscanx + 1;
 
-      efitctrl = new US_EqFitControl(
-            scanfits, runfit, edata, modelx, models, fit_widget, sscann );
+      if ( emath == 0 )
+         emath        = new US_EqMath( dataList, scedits, scanfits, runfit );
+
+      efitctrl     = new US_EqFitControl( scanfits, runfit, edata, emath,
+                                          modelx, models, fit_widget, sscann );
 
       efitctrl->show();
    }
@@ -760,7 +764,7 @@ DbgLv(1) << "IP: em init_params call";
    model_control();
 
    // Enable buttons that are now appropriate
-   pb_floatPar->setEnabled( true );
+   //pb_floatPar->setEnabled( true );
    pb_ckscfit ->setEnabled( true );
 }
 
@@ -1197,8 +1201,8 @@ void US_GlobalEquil::assign_scanfit()
       scanfit.baseline   = radlo;
       scanfit.baseln_ndx = scanfit.start_ndx;
       scanfit.baseln_rng = radlo * 0.2;
-      scanfit.baseln_fit = false;
-      scanfit.baseln_bnd = false;
+      scanfit.baseln_fit = true;
+      scanfit.baseln_bnd = true;
       scanfit.rpm        = (int)edata->speedData[ jrx ].speed;
       scanfit.cell       = trip.section( "/", 0, 0 ).simplified().toInt();
       scanfit.channel    = channs.indexOf( chan ) + 1;
@@ -1208,13 +1212,13 @@ void US_GlobalEquil::assign_scanfit()
 
       scanfit.xvs.resize( scanfit.points );
       scanfit.yvs.resize( scanfit.points );
-      scanfit.amp_vals.fill(   0.0, ncomp );
-      scanfit.amp_ndxs.fill(     0, ncomp );
-      scanfit.amp_rngs.fill(   0.0, ncomp );
-      scanfit.amp_fits.fill( false, ncomp );
-      scanfit.amp_bnds.fill( false, ncomp );
-      scanfit.extincts.fill(   1.0, ncomp );
-      scanfit.integral.fill(   0.0, ncomp );
+      scanfit.amp_vals.fill(  0.0, ncomp );
+      scanfit.amp_ndxs.fill(    0, ncomp );
+      scanfit.amp_rngs.fill(  0.0, ncomp );
+      scanfit.amp_fits.fill( true, ncomp );
+      scanfit.amp_bnds.fill( true, ncomp );
+      scanfit.extincts.fill(  1.0, ncomp );
+      scanfit.integral.fill(  0.0, ncomp );
 
       for ( int jj = 0; jj < scanfit.points; jj++ )
       {
@@ -1300,26 +1304,27 @@ void US_GlobalEquil::setup_runfit()
    runfit.mw_vals  .fill(   0.0, runfit.nbr_comps );
    runfit.mw_ndxs  .fill(     0, runfit.nbr_comps );
    runfit.mw_rngs  .fill(   0.0, runfit.nbr_comps );
-   runfit.mw_fits  .fill( false, runfit.nbr_comps );
-   runfit.mw_bnds  .fill( false, runfit.nbr_comps );
+   runfit.mw_fits  .fill(  true, runfit.nbr_comps );
+   runfit.mw_bnds  .fill(  true, runfit.nbr_comps );
    runfit.vbar_vals.fill( dvval, runfit.nbr_comps );
    runfit.vbar_ndxs.fill(     0, runfit.nbr_comps );
    runfit.vbar_rngs.fill( dvrng, runfit.nbr_comps );
-   runfit.vbar_fits.fill( false, runfit.nbr_comps );
-   runfit.vbar_bnds.fill( false, runfit.nbr_comps );
+   runfit.vbar_fits.fill(  true, runfit.nbr_comps );
+   runfit.vbar_bnds.fill(  true, runfit.nbr_comps );
    runfit.viri_vals.fill(   0.0, runfit.nbr_comps );
    runfit.viri_ndxs.fill(     0, runfit.nbr_comps );
    runfit.viri_rngs.fill(   0.0, runfit.nbr_comps );
-   runfit.viri_fits.fill( false, runfit.nbr_comps );
-   runfit.viri_bnds.fill( false, runfit.nbr_comps );
+   runfit.viri_fits.fill(  true, runfit.nbr_comps );
+   runfit.viri_bnds.fill(  true, runfit.nbr_comps );
 
-   for ( int ii = 0; ii < runfit.nbr_assocs; ii++ )
+   for ( int ii = 0; ii < 4; ii++ )
    {
       runfit.eq_vals[ ii ] = 0.0;
       runfit.eq_ndxs[ ii ] = 0;
       runfit.eq_rngs[ ii ] = 0.0;
       runfit.eq_fits[ ii ] = false;
       runfit.eq_bnds[ ii ] = false;
+      runfit.stoichs[ ii ] = 1.0;
    }
 }
 

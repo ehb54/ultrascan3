@@ -88,5 +88,29 @@ typedef struct EqScanFit_s
    QString             descript;      // Scan description
 } EqScanFit;
 
+typedef struct FitCtrlPar_s
+{
+   int                 nlsmeth;       // NLS method index
+   int                 modelx;        // model type index
+   int                 mxiters;       // Maximum iterations
+   int                 mxsteps;       // Maximum fit steps
+   int                 k_iter;        // Current Iteration count
+   int                 k_step;        // Current fit step count
+   int                 nfuncev;       // Function evaluations
+   int                 ndecomps;      // Decompositions
+   int                 lambda;        // Current Lambda
+   int                 lam_start;     // Lambda start
+   int                 lam_step;      // Lambda step size
+   double              fittoler;      // Fit Tolerance
+   double              variance;      // Iteration variance
+   double              std_dev;       // Iteration standard deviation
+   double              improve;       // Iteration improvement
+   bool                lincnstr;      // Linear constraints flag
+   bool                autocnvg;      // Autoconverge flag
+   bool                scanFit;       // Scan-fitted flag
+   bool                autoExcl;      // Auto-excluded flag
+} FitCtrlPar;
+
+
 #endif
 

@@ -16,22 +16,28 @@
 class US_EXTERN US_EqMath : public QObject
 {
 	Q_OBJECT
-	
-	public:
-		US_EqMath( QVector< US_DataIO2::EditedData >&, 
+
+   public:
+      US_EqMath( QVector< US_DataIO2::EditedData >&, 
             QVector< ScanEdit >&, QVector< EqScanFit >&, EqRunFit& );
 
-      void   init_params        ( int, bool,
-                                  QList< double >&, QList< double >& );
-      void   init_fit           ( int, int );
-      int    calc_jacobian      ( void     );
-      double calc_testParameter ( double   );
-      double linesearch         ( void     );
-      void   genLeastSquaresOrd2( double**, int, double*, double** );
-      void   guess_mapForward     ( void );
-      void   parameter_mapBackward( void );
+      void   init_params          ( int, bool,
+                                    QList< double >&, QList< double >& );
+      void   init_fit             ( int, int, int&, int&, int& );
+      int    calc_jacobian        ( void   );
+      double calc_testParameter   ( double );
+      double linesearch           ( void   );
+      void   calc_B               ( void   );
+      double calc_residuals       ( void   );
+      void   genLeastSquaresOrd2  ( double**, int, double*, double** );
+      void   guess_mapForward     ( QVector< double >& );
+      void   parameter_mapBackward( QVector< double >& );
+      bool   Cholesky_Invert      ( double**, double**, int );
+      void   calc_A_transpose_A   ( double**, double**, int, int );
+      void   calc_A_transpose_A   ( double**, double**, int, int, bool );
+      void   column_array         ( double**, int, int, double* );
 
-	private:
+   private:
       QVector< US_DataIO2::EditedData >&  dataList;
       QVector< ScanEdit >&                scedits;
       QVector< EqScanFit >&               scanfits;
