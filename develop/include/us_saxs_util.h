@@ -142,6 +142,35 @@ class US_EXTERN US_Saxs_Util
                                             double low,
                                             double high
                                             );
+      bool compute_wgsbs(
+                         QString outfile,
+                         QString solutiontag,
+                         QString buffertag,
+                         QString waxstag,
+                         int grids,
+                         int gsm_type,
+                         long max_iterations,
+                         double gsmpercent,
+                         double alphalow,
+                         double alphahigh,
+                         double alphaincg,
+                         double alphaincgsm,
+                         double betalow,
+                         double betahigh,
+                         double betaincg,
+                         double betaincgsm,
+                         double dconstlow,
+                         double dconsthigh,
+                         double dconstincg,
+                         double dconstincgsm,
+                         double low,
+                         double high,
+                         double &nrmsd,
+                         double &alphamin,
+                         double &betamin,
+                         double &dconstmin,
+                         QString &cliperrors
+                         );
 
       bool setup_wgsbs_gsm_f_df(
                                 QString outtag,
@@ -254,8 +283,18 @@ class US_EXTERN US_Saxs_Util
       double  p_saxs_highq;
       double  p_waxs_lowq;
       double  p_waxs_highq;
+      double  p_waxs_zlowq;
+      double  p_waxs_zhighq;
       double  p_overlap_lowq;
       double  p_overlap_highq;
+      double  p_alpha_min;
+      double  p_alpha_max;
+      double  p_join_q;
+      unsigned int  p_max_iterations_grid;
+      unsigned int  p_max_iterations_gsm;
+
+      bool any_waxs;
+      bool any_saxs;
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
@@ -273,8 +312,15 @@ class US_EXTERN US_Saxs_Util
       map < QString, vector < QString > > wave_buffer_names;      // maps names to assoc buffer names
       map < QString, vector < QString > > wave_empty_names;       // maps names to assoc empty cell names
       map < QString, QString >            wave_comments;          // maps names to comments
+      map < QString, double >             wave_alpha_starts;      // maps names to alpha start (for waxs)
+      map < QString, double >             wave_alpha_ends;        // maps names to alpha ends  (for waxs)
+      map < QString, double >             wave_alpha_incs;        // maps names to alpha incs  (for waxs)
 
       // computed:
+      map < QString, QString >            wave_sb;                // maps wave to standard background (and empty cell) subtraction
+      map < QString, QString >            wave_wgsbs;             // maps saxs wave to waxs guided saxs background subtraction
+      map < QString, QString >            wave_join;              // maps saxs wave to waxs guided saxs background subtraction join
+
       map < QString, double >             wave_Rgs;               // maps names to conc
       map < QString, double >             wave_Ios;               // maps names to conc
       map < QString, double >             wave_smins;             // maps names to conc
