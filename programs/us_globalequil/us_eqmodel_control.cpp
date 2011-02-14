@@ -54,15 +54,15 @@ US_EqModelControl::US_EqModelControl(
             le_mwguess  = us_lineedit();
             le_mwbound  = us_lineedit();
    QLabel*  lb_mwunits  = us_label( tr( "Dalton" ) );
-   QLayout* lo_mwfloat  = us_checkbox( "F", ck_mwfloat, false );
-   QLayout* lo_mwlock   = us_checkbox( "L", ck_mwlock,  true  );
+   QLayout* lo_mwfloat  = us_checkbox( "F", ck_mwfloat, true  );
+   QLayout* lo_mwlock   = us_checkbox( "L", ck_mwlock,  false );
    QLayout* lo_mwbound  = us_checkbox( "B", ck_mwbound, true  );
             pb_vbar20   = us_pushbutton( tr( "Vbar, 20" ) + DEGC + " (1):" ); 
             le_vbguess  = us_lineedit();
             le_vbbound  = us_lineedit();
    QLabel*  lb_vbunits  = us_label( tr( "ccm/g" ) );
-   QLayout* lo_vbfloat  = us_checkbox( "F", ck_vbfloat, false );
-   QLayout* lo_vblock   = us_checkbox( "L", ck_vblock,  true  );
+   QLayout* lo_vbfloat  = us_checkbox( "F", ck_vbfloat, true  );
+   QLayout* lo_vblock   = us_checkbox( "L", ck_vblock,  false );
    QLayout* lo_vbbound  = us_checkbox( "B", ck_vbbound, true  );
             pb_lnasc1   = us_pushbutton( tr( "ln(Assoc.Const.1):" ) );
             le_l1guess  = us_lineedit();
@@ -71,6 +71,8 @@ US_EqModelControl::US_EqModelControl(
    QLayout* lo_l1float  = us_checkbox( "F", ck_l1float, false );
    QLayout* lo_l1lock   = us_checkbox( "L", ck_l1lock,  true  );
    QLayout* lo_l1bound  = us_checkbox( "B", ck_l1bound, true  );
+qDebug() << "EMC: 0)eq0 flt" << runfit.eq_fits[0]
+   << " lock checked" << ck_l1lock->isChecked();
             pb_lnasc2   = us_pushbutton( tr( "ln(Assoc.Const.2):" ) );
             le_l2guess  = us_lineedit();
             le_l2bound  = us_lineedit();
@@ -185,8 +187,23 @@ US_EqModelControl::US_EqModelControl(
    ct_grunpar->setRange( 1, runfit.mw_vals.size(), 1 );
    ct_grunpar->setStep( 1 );
    ct_grunpar->setValue( 1 );
+
    connect( ct_grunpar, SIGNAL( valueChanged( double ) ),
             this,  SLOT( global_comp_changed( double ) ) );
+   connect( ck_mwfloat, SIGNAL( toggled( bool ) ),
+            this,       SLOT(   update_floats() ) );
+   connect( ck_vbfloat, SIGNAL( toggled( bool ) ),
+            this,       SLOT(   update_floats() ) );
+   connect( ck_l1float, SIGNAL( toggled( bool ) ),
+            this,       SLOT(   update_floats() ) );
+   connect( ck_l2float, SIGNAL( toggled( bool ) ),
+            this,       SLOT(   update_floats() ) );
+   connect( ck_l3float, SIGNAL( toggled( bool ) ),
+            this,       SLOT(   update_floats() ) );
+   connect( ck_l4float, SIGNAL( toggled( bool ) ),
+            this,       SLOT(   update_floats() ) );
+qDebug() << "EMC: 1)eq0 flt" << runfit.eq_fits[0]
+   << " lock checked" << ck_l1lock->isChecked();
 
    // Local layout
    lb_lbanner           = us_banner(
@@ -210,8 +227,8 @@ US_EqModelControl::US_EqModelControl(
             le_blguess  = us_lineedit();
             le_blbound  = us_lineedit();
    QLabel*  lb_blunits  = us_label( tr( "OD" ) );
-   QLayout* lo_blfloat  = us_checkbox( "F", ck_blfloat, false );
-   QLayout* lo_bllock   = us_checkbox( "L", ck_bllock,  true  );
+   QLayout* lo_blfloat  = us_checkbox( "F", ck_blfloat, true  );
+   QLayout* lo_bllock   = us_checkbox( "L", ck_bllock,  false );
    QLayout* lo_blbound  = us_checkbox( "B", ck_blbound, true  );
             pb_density  = us_pushbutton( tr( "Density, 20" ) + DEGC ); 
             le_density  = us_lineedit();
@@ -239,8 +256,8 @@ US_EqModelControl::US_EqModelControl(
             le_amguess  = us_lineedit();
             le_ambound  = us_lineedit();
    QLabel*  lb_amunits  = us_label( tr( "OD" ) );
-   QLayout* lo_amfloat  = us_checkbox( "F", ck_amfloat, false );
-   QLayout* lo_amlock   = us_checkbox( "L", ck_amlock,  true  );
+   QLayout* lo_amfloat  = us_checkbox( "F", ck_amfloat, true  );
+   QLayout* lo_amlock   = us_checkbox( "L", ck_amlock,  false );
    QLayout* lo_ambound  = us_checkbox( "B", ck_ambound, true  );
             //pb_extinct  = us_pushbutton( tr( "E (OD/(cm*mol))" ) + " (1):" );
             pb_extinct  = us_pushbutton( tr( "Extinction" ) + " (1):" );
@@ -258,6 +275,8 @@ US_EqModelControl::US_EqModelControl(
                               " OD / (cm * mol)" );
    pb_extinct->setToolTip( extintt );
    le_extinct->setToolTip( extintt );
+qDebug() << "EMC: 2)eq0 flt" << runfit.eq_fits[0]
+   << " lock checked" << ck_l1lock->isChecked();
 
    row     = 0;
    localLayout->addWidget( lb_lbanner, row++, 0, 1, 10 );
@@ -337,6 +356,10 @@ US_EqModelControl::US_EqModelControl(
             this,   SLOT( local_comp_changed( double ) ) );
    connect( ct_scansel, SIGNAL( valueChanged( double ) ),
             this,       SLOT(   scan_changed( double ) ) );
+   connect( ck_blfloat, SIGNAL( toggled( bool ) ),
+            this,       SLOT(   update_floats() ) );
+   connect( ck_amfloat, SIGNAL( toggled( bool ) ),
+            this,       SLOT(   update_floats() ) );
    ct_lrunpar->setRange( 1, scanfits[ 0 ].amp_vals.size(), 1 );
    ct_lrunpar->setStep( 1 );
    ct_scansel->setRange( 1, scanfits.size(), 1 );
@@ -375,19 +398,29 @@ US_EqModelControl::US_EqModelControl(
    le_blbound->setText( QString::number( scanfits[ scanx ].baseln_rng ) );
    le_density->setText( QString::number( scanfits[ scanx ].density )    );
    le_extinct->setText( QString::number( scanfits[ scanx ].extincts[ 0 ] ) );
+qDebug() << "EMC: 5)eq0 flt" << runfit.eq_fits[0]
+   << " lock checked" << ck_l1lock->isChecked();
 
    le_densscn->setText( "1" );
    le_extiscn->setText( "1" );
 
    global_comp_changed( 1.0 );
+qDebug() << "EMC: 6)eq0 flt" << runfit.eq_fits[0]
+   << " lock checked" << ck_l1lock->isChecked();
 qDebug() << "EMC: global_comp ulim" << runfit.mw_vals.size();
    local_comp_changed(  1.0 );
+qDebug() << "EMC: 7)eq0 flt" << runfit.eq_fits[0]
+   << " lock checked" << ck_l1lock->isChecked();
 qDebug() << "EMC: local_comp ulim" << scanfits[0].amp_vals.size();
 
    // Resize to fit elements added
    adjustSize();
 
    setMinimumSize( 600, 500 );
+
+   chng_floats = true;
+qDebug() << "EMC: 9)eq0 flt" << runfit.eq_fits[0]
+   << " lock checked" << ck_l1lock->isChecked();
 }
 
 // Public slot to reset scan number
@@ -421,6 +454,8 @@ qDebug() << "EMC: new_components" << modelx;
 void US_EqModelControl::set_float( bool floated )
 {
 qDebug() << "EMC: set_float" << floated;
+   chng_floats = false;
+
    if ( floated )
    {
       ck_mwfloat->setChecked( floated );
@@ -445,6 +480,9 @@ qDebug() << "EMC: set_float" << floated;
       ck_amlock ->setChecked( true );
    }
 qDebug() << "EMC:  ck_mwfloat isChecked?" << ck_mwfloat->isChecked();
+
+   chng_floats = true;
+   update_floats();
 }
 
 // Private slot for change in scan number
@@ -474,6 +512,10 @@ qDebug() << "EMC: scan_changed" << value;
    le_amguess->setText( QString::number( ampv ) );
    le_ambound->setText( QString::number( ampb ) );
    le_density->setText( QString::number( scanfits[ scanx ].density ) );
+   chng_floats   = false;
+   ck_blfloat->setChecked( scanfits[ scanx ].baseln_fit );
+   ck_amfloat->setChecked( scanfits[ scanx ].amp_fits[ compx ] );
+   chng_floats   = true;
 
    if ( send_signal )
    {
@@ -509,6 +551,16 @@ qDebug() << "EMC: global_comp_changed" << value;
    le_mwbound->setText( QString::number( runfit.mw_rngs[   compx ] ) );
    le_vbguess->setText( QString::number( runfit.vbar_vals[ compx ] ) );
    le_vbbound->setText( QString::number( runfit.vbar_rngs[ compx ] ) );
+   chng_floats = false;
+   ck_mwfloat->setChecked( runfit.mw_fits  [ compx ] );
+   ck_vbfloat->setChecked( runfit.vbar_fits[ compx ] );
+qDebug() << "EMC: eq0 fl lk" << ck_l1float->isChecked() << ck_l1lock->isChecked();
+   ck_l1float->setChecked( runfit.eq_fits[ 0 ] );
+   ck_l2float->setChecked( runfit.eq_fits[ 1 ] );
+   ck_l3float->setChecked( runfit.eq_fits[ 2 ] );
+   ck_l4float->setChecked( runfit.eq_fits[ 3 ] );
+qDebug() << "EMC: eq0 fl lk" << ck_l1float->isChecked() << ck_l1lock->isChecked();
+   chng_floats = true;
 
    update_sigma();
 }
@@ -539,6 +591,9 @@ qDebug() << "EMC: local_comp_changed" << value;
    le_amguess->setText( QString::number( ampv ) );
    le_ambound->setText( QString::number( ampb ) );
    le_density->setText( QString::number( scanfits[ scanx ].density ) );
+   chng_floats   = false;
+   ck_amfloat->setChecked( scanfits[ scanx ].amp_fits[ compx ] );
+   chng_floats   = true;
 
    update_sigma();
 }
@@ -582,5 +637,42 @@ qDebug() << "EMC: u_s:  dens dens_tb" << density << solution.density_tb;
    double sigma    = ( 1.0 - vbar * solution.density_tb ) * omega_s * molecwt
                      / ( 2.0 * R * tempk );
    le_sigma->setText( QString::number( sigma ) );
+}
+
+// Update data to reflect changes in float/fixed status
+void US_EqModelControl::update_floats( void )
+{
+qDebug() << "EMC:UpFl: chng_floats" << chng_floats;
+   if ( ! chng_floats )
+      return;
+
+   runfit.eq_fits[ 0 ]    = ck_l1float->isChecked();
+   runfit.eq_fits[ 1 ]    = ck_l2float->isChecked();
+   runfit.eq_fits[ 2 ]    = ck_l3float->isChecked();
+   runfit.eq_fits[ 3 ]    = ck_l4float->isChecked();
+   runfit.mw_fits[ 0 ]    = ck_mwfloat->isChecked();
+   runfit.vbar_fits[ 0 ]  = ck_vbfloat->isChecked();
+
+   for ( int jj = 1; jj < runfit.nbr_comps; jj++ )
+   {
+      runfit.mw_fits  [ jj ] = runfit.mw_fits  [ 0 ];
+      runfit.vbar_fits[ jj ] = runfit.vbar_fits[ 0 ];
+   }
+
+   bool amfltd = ck_amfloat->isChecked();
+   bool blfltd = ck_blfloat->isChecked();
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      if ( ! scanfits[ ii ].scanFit )  continue;
+
+      EqScanFit* scnf = &scanfits[ ii ];
+
+      for ( int jj = 0; jj < runfit.nbr_comps; jj++ )
+         scnf->amp_fits[ jj ] = amfltd;
+
+      scnf->baseln_fit = blfltd;
+   }
+qDebug() << "EMC:UpFl:   amfltd blfltd" << amfltd << blfltd;
 }
 
