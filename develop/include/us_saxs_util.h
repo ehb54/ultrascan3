@@ -269,6 +269,7 @@ class US_EXTERN US_Saxs_Util
       QString wiki_file_name();
       bool wiki(QString &result);  // generate wiki page and associated pngs
       QString get_file_name(QString base, QString type);
+      QString list_waves();
 
       QString p_project;           // contains a copy of last read project file
       QString p_wiki;
@@ -290,8 +291,8 @@ class US_EXTERN US_Saxs_Util
       double  p_alpha_min;
       double  p_alpha_max;
       double  p_join_q;
-      unsigned int  p_max_iterations_grid;
-      unsigned int  p_max_iterations_gsm;
+      unsigned int  p_iterations_grid;
+      unsigned int  p_iterations_gsm;
 
       bool any_waxs;
       bool any_saxs;

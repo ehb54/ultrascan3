@@ -22,6 +22,19 @@ void US_Saxs_Util::clear()
    wave.clear();
 }
 
+QString US_Saxs_Util::list_waves()
+{
+   QString result;
+   for ( map < QString, US_Saxs_Scan >::iterator it = wave.begin();
+         it != wave.end();
+         it++ 
+         )
+   {
+      result += it->first + "\n";
+   }
+   return result;
+}
+
 bool US_Saxs_Util::read(QString filename, QString tag)
 {
    // read filename into wave[tag]
@@ -2517,8 +2530,8 @@ void US_Saxs_Util::clear_project()
    p_alpha_min = 0.98e0;
    p_alpha_max = 1e0;
    p_join_q = .1e0;
-   p_max_iterations_grid = 1; // 10;
-   p_max_iterations_gsm = 50;
+   p_iterations_grid = 10;
+   p_iterations_gsm = 50;
    wave_names_vector.clear();
    wave_names.clear();
    wave_file_names.clear();
@@ -2639,6 +2652,8 @@ bool US_Saxs_Util::read_project()
                    "overlaphighq|"
                    "alphamin|"
                    "alphamax|"
+                   "iterationsgrid|"
+                   "iterationsgsm|"
                    "joinq|"
                    "wavename|"
                    "wavefilename|"
@@ -2798,6 +2813,18 @@ bool US_Saxs_Util::read_project()
       if ( token == "alphamax" )
       {
          p_alpha_max = data.toDouble();
+         continue;
+      }
+
+      if ( token == "iterationsgrid" )
+      {
+         p_iterations_grid = data.toUInt();
+         continue;
+      }
+
+      if ( token == "iterationsgsm" )
+      {
+         p_iterations_gsm = data.toUInt();
          continue;
       }
 
@@ -3786,7 +3813,7 @@ bool US_Saxs_Util::wiki(QString &result)
          if ( hasPresetAlpha )
          {
             result += 
-               QString("\n[[br]]Visually chosen alpha %1:[[br]][[Image(htdocs:pngs%1%1)]]\n")
+               QString("=== Visually chosen alpha %1 ===\n[[Image(htdocs:pngs%1%1)]]\n")
                .arg(wave_alphas[wave_names_vector[i]])
                .arg(QDir::separator()).arg(pngfilea);
             result += QString("[[Image(htdocs:pngs%1%1)]]\n").arg(QDir::separator()).arg(pngfileaz);
@@ -3929,6 +3956,7 @@ bool US_Saxs_Util::wiki(QString &result)
    }
 
    // waxs guided saxs background subtraction
+   cout << "wave list:\n" << list_waves();
    cout << "waxs guided saxs background subtraction\n";
 
    bool any_wgsbs = false;
@@ -3977,14 +4005,19 @@ bool US_Saxs_Util::wiki(QString &result)
                   double dconstmin;
                   QString cliperrors;
 
+                  cout << QString("wgsbs files: %1 %2 %3\n")
+                     .arg(wave_sb[wave_names_vector[i]])
+                     .arg(wave_names_vector[i] + "|buffer")
+                     .arg(wave_sb[wave_names_vector[j]]);
+
                   if ( !compute_wgsbs(
                                       outfile,
-                                      wave_sb[wave_names_vector[i]],
+                                      wave_names_vector[i],
                                       wave_names_vector[i] + "|buffer",
                                       wave_sb[wave_names_vector[j]],
-                                      p_max_iterations_grid,
+                                      p_iterations_grid,
                                       1,
-                                      p_max_iterations_gsm,
+                                      p_iterations_gsm,
                                       50,
                                       p_alpha_min,
                                       p_alpha_max,
@@ -4012,13 +4045,19 @@ bool US_Saxs_Util::wiki(QString &result)
                      return false;
                   }
 
+                  cliperrors = 
+                     QString("Grid iterations %1[[br]]GSM iterations %2%3")
+                     .arg(p_iterations_grid)
+                     .arg(p_iterations_gsm)
+                     .arg(cliperrors.isEmpty() ? "" : QString("\n%1").arg(cliperrors));
+
                   result += 
                      QString(
                              "=== Sample SAXS %1 WAXS %1 ===\n"
-                             "|| name || saxs or waxs || conc mg/ml || alpha || source file || comments || alpha || beta || constant || nrmsd ||\n"
-                             "|| %1 || %1 || %1 || %1 || %1 || %1 || || || || ||\n"
-                             "|| %1 || %1 || %1 || %1 || %1 || %1 || || || || ||\n"
-                             "|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 ||\n"
+                             "|| name || saxs or waxs || conc mg/ml || alpha || source file || comments || alpha || beta || constant || nrmsd || fit comments ||\n"
+                             "|| %1 || %1 || %1 || %1 || %1 || %1 || || || || || ||\n"
+                             "|| %1 || %1 || %1 || %1 || %1 || %1 || || || || || ||\n"
+                             "|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 ||\n"
                              )
                      .arg(wave_names_vector[i])
                      .arg(wave_names_vector[j])
@@ -4047,7 +4086,8 @@ bool US_Saxs_Util::wiki(QString &result)
                      .arg(alphamin)
                      .arg(betamin)
                      .arg(dconstmin)
-                     .arg(nrmsd);
+                     .arg(nrmsd)
+                     .arg(cliperrors);
 
                   QString pngfile = QString("%1_%1_%1_wgsbs.png").arg(p_name).arg(wave_names_vector[i]).arg(wave_names_vector[j]);
                   QString pngfilez = QString("%1_%1_%1_wgsbsz.png").arg(p_name).arg(wave_names_vector[i]).arg(wave_names_vector[j]);
@@ -4060,7 +4100,7 @@ bool US_Saxs_Util::wiki(QString &result)
                              )
                      .arg(QString("pngs%1%1").arg(QDir::separator()).arg(pngfile))
                      .arg(outfile)
-                     .arg(QString("cwave%1%1").arg(QDir::separator()).arg(wave_file_names[wave_names_vector[j]]));
+                     .arg(wave_sb[wave_names_vector[j]]);
 
                   QString cmdz =
                      QString(
@@ -4068,9 +4108,9 @@ bool US_Saxs_Util::wiki(QString &result)
                              )
                      .arg(p_overlap_lowq)
                      .arg(p_overlap_highq)
-                     .arg(QString("pngs%1%1").arg(QDir::separator()).arg(pngfile))
+                     .arg(QString("pngs%1%1").arg(QDir::separator()).arg(pngfilez))
                      .arg(outfile)
-                     .arg(QString("cwave%1%1").arg(QDir::separator()).arg(wave_file_names[wave_names_vector[j]]));
+                     .arg(wave_sb[wave_names_vector[j]]);
 
                   cmd += "\n";
                   cout << cmd;
@@ -4078,11 +4118,223 @@ bool US_Saxs_Util::wiki(QString &result)
                   cmdz += "\n";
                   cout << cmdz;
                   system(cmdz.ascii());
+
+                  // join waves
+                  cout << "joining waves\n";
+
+                  QString joinfile = get_file_name(wave_names_vector[i],QString("%1_wgsbs_join").arg(wave_names_vector[j]));
+                  if ( !join(
+                             joinfile, 
+                             outfile,
+                             wave_sb[wave_names_vector[j]],
+                             p_join_q
+                             ) ||
+                       !write(joinfile, joinfile) )
+                  {
+                     return false;
+                  }
+                  wave_join[wave_names_vector[i]] = joinfile;
                }
             }
          }
       }
-   }   
+   }
 
+   if ( any_wgsbs )
+   {
+      
+      // wgsbs saxs concentration series
+      // potential exposure time series merge (loop around ?)
+      
+      result += "== WAXS guided SAXS buffer subtraction concentration series ==\n";
+      
+      result +=
+         "|| name || saxs or waxs || conc mg/ml || alpha || source file || comments ||\n";
+      
+      QString pngfile = QString("pngs%1%1_saxs_wgsbs_conc_series.png")
+         .arg(QDir::separator())
+         .arg(p_name);
+      
+      QString pngfilez = QString("pngs%1%1_saxs_wgsbs_conc_seriesz.png")
+         .arg(QDir::separator())
+         .arg(p_name);
+      
+      QString cmd = 
+         QString("pnggnuplot.pl -c %1 %1 %1")
+         .arg(p_waxs_lowq)
+         .arg(p_waxs_highq)
+         .arg(pngfile);
+
+      QString cmdz = 
+         QString("pnggnuplot.pl -c %1 %1 %1")
+         .arg(p_saxs_lowq)
+         .arg(p_saxs_highq)
+         .arg(pngfilez);
+      
+      for ( unsigned int i = 0; i < saxs_conc_names.size(); i++ )
+      {
+         if ( 
+             wave_join.count(saxs_conc_names[i]) &&
+             !wave_join[saxs_conc_names[i]].isEmpty()
+             )
+         {
+            QString outfile = wave_join[saxs_conc_names[i]];
+            cmd += " " + outfile;
+            cmdz += " " + outfile;
+            result +=
+               QString(
+                       "|| %1 || %1 || %1 || %1 || %1 || %1 ||\n"
+                       )
+               .arg(saxs_conc_names[i])
+               .arg(wave_types[saxs_conc_names[i]])
+               .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_concs[saxs_conc_names[i]]) : "buffer" )
+               .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_alphas[saxs_conc_names[i]]) : "" )
+               .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
+               .arg(wave_comments[saxs_conc_names[i]])
+               ;
+         }
+      }
+      result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
+      cout << cmd << endl;
+      system(cmd.ascii());
+
+      result += QString("[[Image(htdocs:%1)]]\n").arg(pngfilez);
+      cout << cmdz << endl;
+      system(cmdz.ascii());
+      
+      // wgsbs Rg/Io series
+      
+      result += "== WAXS guided SAXS buffer subtraction Rg/Io computations ==\n";
+      
+      QString wgsbs_guinier_summary = 
+         "=== WGSBS SAXS Guinier Summary ===\n"
+         "|| name || saxs or waxs || conc mg/ml || alpha || source file || comments || Rg || Io || Io/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
+         ;
+      
+      for ( unsigned int i = 0; i < saxs_conc_names.size(); i++ )
+      {
+         if ( 
+             wave_join.count(saxs_conc_names[i]) &&
+             !wave_join[saxs_conc_names[i]].isEmpty()
+             )
+         {
+            QString outfile = wave_join[saxs_conc_names[i]];
+            
+            // compute Rg/Io
+            QString guinier = get_file_name(outfile, "wgsbs_guinier");
+            
+            // these should be parameterized
+            int pointsmin = 10;
+            int pointsmax = 100;
+            double sRgmaxlimit = 1.3e0;
+            double pointweightpower = 3e0;
+            
+            // these are function output values
+            double a;
+            double b;
+            double siga;
+            double sigb;
+            double chi2;
+            double Rg;
+            double Io;
+            double smin;
+            double smax;
+            double sRgmin;
+            double sRgmax;
+            QString log;
+            unsigned int beststart;
+            unsigned int bestend;
+            cout << "computing guinier fit for " << outfile << endl;
+            
+            if ( !guinier_plot(guinier, outfile) ||
+                 !write(guinier, guinier) ||
+                 !guinier_fit2(
+                               log,
+                               guinier, 
+                               pointsmin,
+                               pointsmax,
+                               sRgmaxlimit,
+                               pointweightpower,
+                               a,
+                               b,
+                               siga,
+                               sigb,
+                               chi2,
+                               Rg,
+                               Io,
+                               smax, // don't know why these are flipped
+                               smin,
+                               sRgmin,
+                               sRgmax,
+                               beststart,
+                               bestend
+                               ) 
+                 ) 
+            {
+               return false;
+            }
+            wave_Rgs[saxs_conc_names[i]] = Rg;
+            wave_Ios[saxs_conc_names[i]] = Io;
+            wave_smins[saxs_conc_names[i]] = smin;
+            wave_smaxs[saxs_conc_names[i]] = smax;
+            wave_sRgmins[saxs_conc_names[i]] = sRgmin;
+            wave_sRgmaxs[saxs_conc_names[i]] = sRgmax;
+            wave_chi2s[saxs_conc_names[i]] = chi2;
+            
+            QString pngfile = QString("pngs%1%1_%1_saxs_wgsbs_guinier.png")
+               .arg(QDir::separator())
+               .arg(p_name)
+               .arg(saxs_conc_names[i]);
+            
+            QString cmd = 
+               QString("pnggnuplot.pl -p 1.5 -g -l points -c %1 %1 -m %1 %1 %1 %1 %1 %1\t\n")
+               .arg(wave[guinier].q[beststart] * .2 )
+               .arg(wave[guinier].q[bestend] * 1.2 )
+               .arg(a)
+               .arg(b)
+               .arg(smin)
+               .arg(smax)
+               .arg(pngfile)
+               .arg(guinier);
+            cout << cmd.ascii();
+            system(cmd.ascii());
+            
+            QString this_data_line = 
+               QString("|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 ||\n")
+               .arg(saxs_conc_names[i])
+               .arg(wave_types[saxs_conc_names[i]])
+               .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_concs[saxs_conc_names[i]]) : "buffer" )
+               .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_alphas[saxs_conc_names[i]]) : "" )
+               .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
+               .arg(wave_comments[saxs_conc_names[i]])
+               .arg(Rg)
+               .arg(Io)
+               .arg(Io/wave_concs[saxs_conc_names[i]])
+               .arg(sRgmin)
+               .arg(sRgmax)
+               .arg(smin)
+               .arg(smax)
+               .arg(chi2)
+               .arg(beststart)
+               .arg(bestend)
+               .arg(bestend - beststart + 1)
+               ;
+            
+            result +=
+               QString("=== Sample %1 ===\n"
+                       "|| name || saxs or waxs || conc mg/ml || alpha || source file || comments || Rg || Io || Io/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
+                       "%1"
+                       "[[Image(htdocs:%1)]]\n"
+                       )
+               .arg(saxs_conc_names[i])
+               .arg(this_data_line)
+               .arg(pngfile)
+               ;
+            wgsbs_guinier_summary += this_data_line;
+         }
+      }
+      result += wgsbs_guinier_summary;
+      result += guinier_summary;
+   }
    return true;
 }
