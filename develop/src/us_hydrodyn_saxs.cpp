@@ -3837,10 +3837,12 @@ vector < double > US_Hydrodyn_Saxs::interpolate( vector < double > to_r,
                                                  vector < double > from_pr )
 {
    US_Saxs_Util usu;
+
    vector < double > new_from_r;
    vector < double > new_from_pr;
-   new_from_r.push_back(0);
+   new_from_r.push_back(-1);
    new_from_pr.push_back(0);
+
    for ( unsigned int i = 0; i < from_r.size(); i++ )
    {
       new_from_r.push_back(from_r[i]);
@@ -3853,7 +3855,7 @@ vector < double > US_Hydrodyn_Saxs::interpolate( vector < double > to_r,
    usu.wave["from"].r = new_from_pr;
    usu.wave["from"].s = new_from_pr;
    usu.wave["to"].q = to_r;
-
+   usu.wave["to"].r = to_r;
 
    if ( !usu.interpolate( "out", "to", "from" ) )
    {
