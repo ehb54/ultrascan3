@@ -42,6 +42,10 @@ int main (int argc, char **argv)
              "\tcreates a new blank project directory & template files\n"
              "project_rebuild\n"
              "\treads the project file and produces wiki pages & pngs describing the analysis\n"
+             "project_merge outfile\n"
+             "\treads project files and produces a Rg/Io summary wiki page\n"
+             "project_1d    wikiprefix\n"
+             "\tbuilds wiki page and computes averages for files in 1d directory\n"
              , argv[0]
              );
       exit(-1);
@@ -1115,6 +1119,7 @@ int main (int argc, char **argv)
                              pointsmax,
                              sRgmaxlimit,
                              pointweightpower,
+                             .05,
                              a,
                              b,
                              siga,
@@ -1339,7 +1344,7 @@ int main (int argc, char **argv)
                  "# any number of comment lines ok\n"
                  "comment             \n"
                  "mw                  \n"
-                 "concMultiplier\t7.43e-4\n"
+                 "concMultiplier      7.43e-4\n"
                  "saxsLowQ            .006\n"
                  "saxsHighQ           .24\n"
                  "waxsLowQ            .1\n"
@@ -1348,6 +1353,8 @@ int main (int argc, char **argv)
                  "waxsZHighQ          2.4\n"
                  "overlapLowQ         .10\n"
                  "overlapHighQ        .23\n"
+                 "# guinierMaxQ default is .05\n"
+                 "# guinierMaxQ          .05\n"
                  "# the following paramaters for waxs guided saxs background subtraction default [0.98:1.00]\n"
                  "# alphaMin            .98\n"
                  "# alphaMax            1.00\n"
@@ -1429,6 +1436,94 @@ int main (int argc, char **argv)
 
       exit(0);
    }
+
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "project_merge") 
+   {
+      if (cmds.size() != 2) 
+      {
+         printf(
+                "usage: %s %s outfile\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(errorbase);
+      }
+      errorbase--;
+
+      int p = 1;
+      QString outfile = cmds[p++];
+      double reference_mw_multiplier;
+      QFile f("merge");
+      if ( !f.exists() )
+      {
+         cout << 
+            "You must first create a file called 'merge' which contains the reference MW multiplier\n"
+            "and a list of the directories to include\n";
+         exit(errorbase);
+      }
+      errorbase--;
+         
+      if ( !f.open(IO_ReadOnly) )
+      {
+         cout << 
+            "Could not open file 'merge' for reading.  Check permissions\n";
+         exit(errorbase);
+      }
+      errorbase--;
+
+      QTextStream ts(&f);
+      reference_mw_multiplier = ts.readLine().stripWhiteSpace().toDouble();
+      vector < QString > projects;
+      while ( !ts.atEnd() )
+      {
+         projects.push_back(ts.readLine().stripWhiteSpace());
+      }
+      f.close();
+
+      US_Saxs_Util usu;
+      if ( !usu.merge_projects(
+                               outfile,
+                               reference_mw_multiplier,
+                               projects
+                               ) )
+      {
+         cout << usu.errormsg << endl;
+         exit(errorbase);
+      }
+
+      exit(0);
+   }
+
+   errorbase -= 1000;
+
+   if (cmds[0].lower() == "project_1d") 
+   {
+      if (cmds.size() != 3) 
+      {
+         printf(
+                "usage: %s %s wikiprefix pngsplits\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(errorbase);
+      }
+      errorbase--;
+
+      int p = 1;
+      QString wikitag = cmds[p++];
+      unsigned int pngsplits = cmds[p++].toUInt();
+
+      US_Saxs_Util usu;
+      if ( !usu.project_1d(wikitag,pngsplits) )
+      {
+         cout << usu.errormsg << endl;
+         exit(errorbase - 1);
+      }
+      exit(0);
+   }
+   errorbase -= 1000;
 
    printf("%s error: %s unknown command\n", argv[0], argv[1]);
    exit(-2);
