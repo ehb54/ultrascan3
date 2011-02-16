@@ -6,25 +6,26 @@
     alt="Buffer Window"/></p>
 
     <p> Using this window, you can manage buffer information on your local
-    system or in the current database.  You must be identified as the
-    investigator to delete or update a buffer description in the database.</p>
+    system or in the current database.  Normally, you must be identified as the
+    investigator to view, delete, or update a buffer description in the database.</p>
 
     <p>Dialog Items:</p>
 
     <ul>
       <li><b>Select Investigator</b> This button brings up a window that
       allows selecting the current investigator for limiting buffer
-      descriptions.  The <b>Search</b> item also limits the display
+      descriptions.  Most users will only be able to view their own
+      buffers.  The <b>Search</b> item also limits the display
       of buffer descriptions.</li>
 
-      <li><b>Use Database</b> Check to select read or write of the buffer
-      definition to or from the database.</li>
+      <li><b>Database</b> Check to select read or write of the buffer
+      definitions to or from the database.</li>
       
-      <li><b>Use Local Disk</b> Check to select read or write of the buffer
+      <li><b>Local Disk</b> Check to select read or write of the buffer
       definition to or from the hard disk.</li>
       
       <li><b>Query Descriptions</b> This button initiates a read of buffer
-      definitions and population of the buffer list widget.</li>
+      definitions and populates the buffer list.</li>
       
       <li><b>Save Buffer</b> Saves the current buffer definition to the hard
       disk or database.</li>
@@ -35,17 +36,17 @@
       <li><b>Delete Buffer</b> Deletes the current buffer from the database
       or hard disk.</li>
 
-      <li><b>Density</b> Density value set by buffer choice but also
+      <li><b>Density</b> Density value set by buffer choice.  It is also
       editable here.</li>
 
-      <li><b>Viscosity</b> Viscosity value set by buffer choice but also
+      <li><b>Viscosity</b> Viscosity value set by buffer choice. It is also
       editable here.</li>
 
-      <li><b>pH</b> pH value set by buffer choice but also
+      <li><b>pH</b> pH value set by buffer choice.  It is also
       editable here.</li>
 
-      <li><b>Compressibility</b> Compressibility value set by buffer choice
-      but also editable here.</li>
+      <li><b>Compressibility</b> Compressibility value set by buffer choice.
+      It is also editable here.</li>
 
       <li><b>Optics</b> Type of optics: Absorbance, Interference, or
       Flourescence.</li>
@@ -54,37 +55,40 @@
       <a href="images/us_buffer_spect.png">Manage Spectrum dialog</a>
       to set Wavelength and Extinction pairs.</li>
 
-      <li><b>Buffer Description</b> Description set by buffer choice, but also
-      editable, especially when defining a new buffer.</li>
+      <li><b>Buffer Description</b> Description set by buffer choice. It is
+      editable and especially useful when defining a new buffer.</li>
 
       <li><b>Global Identifier</b> Read-only global identifier of the
       buffer.</li>
 
       <li><b>Please select a Buffer Component</b> Once a component item has
-      been chosen in the lower left list, enter a purely numeric concentration
-      value in indicated units to add the component.</li>
+      been chosen in the lower left list of components, enter a purely numeric
+      concentration value in indicated units to add the component.</li>
 
       <li><b>Synch components with DB</b> Not normally needed, this button
-      effects a download from the database of the components list to a file
+      downloads teh current list of buffer components from the database to a file
       on the local hard disk.</li>
 
       <li><b>Reset</b> Reset all buffer values to default setting.</li>
 
       <li><b>Help</b> Show this documentation.</li>
 
-      <li><b>Close</b> Close the dialog and possibly return buffer selections
-      to the caller.</li>
+      <li><b>Close</b> Close the dialog. If this dialog is invoked from another
+      process, this buttion will be marked <b>Cancel</b>.</li>
 
+      <li><b>Accept</b> This button will appear if the dialog is invoked from
+      another process.  It will close the dialog and provide the current 
+      buffer data to the invoking process.</li>
+      
     </ul>
 
-    <p>To display a buffer description from the database, double-click
-    on the title after getting the descriptions from the database or local
-    disk.</p>
+    <p>To display buffer information, double-click on the title after getting
+    the descriptions from the database or local disk.</p>
 
     <p>To add or change a component to the current buffer, select the component
-    in the lower left box and input the numeric concentration using the units
+    in the lower left list and input the numeric concentration using the units
     indicated. To delete a component, double-click the component in the 
-    lower right box. Density and viscosity are automatically updated when
+    lower right list. Density and viscosity are automatically updated when
     a component is added, updated, or removed.</p>
 
 [% INCLUDE footer.us3 %]
