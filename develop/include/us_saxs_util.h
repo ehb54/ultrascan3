@@ -62,6 +62,7 @@ class US_EXTERN US_Saxs_Util
       bool read(QString filename, QString tag);
       bool write(QString filename, QString tag);
       bool compat(QString tag1, QString tag2);
+      void scale(QString outtag, QString intag, double multiplier);
       bool avg(QString outtag, vector < QString > tags);
       bool crop(QString outtag, QString fromtag, double low, double high);
       bool interpolate(QString outtag, QString totag, QString fromtag);
@@ -228,6 +229,7 @@ class US_EXTERN US_Saxs_Util
                        double sRgmaxlimit,      // maximum sRg allowed
                        double pointweightpower, // the exponent ofnumber of points when computing the best one
                        //                          i.e. fitness = chi2 / ( number_of_points ** pointweightpower )
+                       double maxq,             // the maximum q value allowed
                        double &a,
                        double &b,
                        double &siga,
@@ -257,13 +259,20 @@ class US_EXTERN US_Saxs_Util
       // project utilities
 
       bool read_project();
+      bool merge_projects(QString outfile, 
+                          double reference_mw_multiplier, 
+                          vector < QString > projects);
       bool build_wiki();
+
+      // build averages and wiki page for subdirectory 1d, create pngsplits # of zoom (none if 1 or less)
+      bool project_1d(QString wikitag, unsigned int pngsplits);
 
    private:
 
       void clear_project();
       bool check_project_files();
       bool read_project_waves();
+
       bool compute_averages();
       void compute_alphas();
       QString wiki_file_name();
@@ -291,6 +300,7 @@ class US_EXTERN US_Saxs_Util
       double  p_alpha_min;
       double  p_alpha_max;
       double  p_join_q;
+      double  p_guinier_maxq;
       unsigned int  p_iterations_grid;
       unsigned int  p_iterations_gsm;
 
@@ -320,6 +330,7 @@ class US_EXTERN US_Saxs_Util
       // computed:
       map < QString, QString >            wave_sb;                // maps wave to standard background (and empty cell) subtraction
       map < QString, QString >            wave_wgsbs;             // maps saxs wave to waxs guided saxs background subtraction
+      map < QString, QString >            wave_wgsbs_unscaled;    // maps saxs wave to waxs guided saxs background subtraction
       map < QString, QString >            wave_join;              // maps saxs wave to waxs guided saxs background subtraction join
 
       map < QString, double >             wave_Rgs;               // maps names to conc
@@ -355,7 +366,7 @@ class US_EXTERN US_Saxs_Util
       QString gsm_waxscrop;
       QString gsm_waxscropinterp;
 
-      bool wsgbs_gsm_setup;
+      bool wgsbs_gsm_setup;
 
       double wgsbs_gsm_f(our_vector *v);
       void wgsbs_gsm_df(our_vector *vd, our_vector *v);

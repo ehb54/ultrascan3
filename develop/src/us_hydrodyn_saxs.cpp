@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_options.h"
 #include "../include/us_hydrodyn_saxs_load_csv.h"
+#include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_math.h"
@@ -27,7 +28,7 @@
 #define SAXS_MIN_Q 1e-6
 // #define ONLY_PHYSICAL_F
 // #define I_MULT_2
-#define PR_DEBUG
+// #define PR_DEBUG
 
 US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    bool                           *saxs_widget,
@@ -338,11 +339,11 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
    {
-      pb_load_gmon = new QPushButton("Load GNOM", this);
-      pb_load_gmon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-      //   pb_load_gmon->setMinimumHeight(minHeight1);
-      pb_load_gmon->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-      connect(pb_load_gmon, SIGNAL(clicked()), SLOT(load_gmon()));
+      pb_load_gnom = new QPushButton("Load GNOM", this);
+      pb_load_gnom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+      //   pb_load_gnom->setMinimumHeight(minHeight1);
+      pb_load_gnom->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+      connect(pb_load_gnom, SIGNAL(clicked()), SLOT(load_gnom()));
 
       cb_guinier = new QCheckBox(this);
       cb_guinier->setText(tr(" Guinier"));
@@ -602,7 +603,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_tools->addWidget(cb_create_native_saxs);
    if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
    {
-      hbl_tools->addWidget(pb_load_gmon);
+      hbl_tools->addWidget(pb_load_gnom);
    }
    background->addMultiCellLayout(hbl_tools, j, j, 0, 1);
    j++;
@@ -617,7 +618,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       j++;
    }
 
-   //   background->addWidget(pb_load_gmon, j, 0);
+   //   background->addWidget(pb_load_gnom, j, 0);
    //   background->addWidget(cb_create_native_saxs, j, 1);
    background->addMultiCellWidget(lbl_info_prr, j, j, 0, 1);
    j++;
@@ -1511,6 +1512,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       printf("%e %e\n", r[i], pr[i]);
 #endif
    }
+   plotted_pr_not_normalized.push_back(pr);
    if ( cb_normalize->isChecked() )
    {
       normalize_pr(&pr);
@@ -1519,6 +1521,15 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
    plotted_r.push_back(r);
    plotted_pr.push_back(pr);
+   QString use_name = QFileInfo(model_filename).fileName();
+   QString plot_name = use_name;
+   int extension = 0;
+   while ( dup_plotted_pr_name_check.count(plot_name) )
+   {
+      plot_name = QString("%1-%1").arg(use_name).arg(++extension);
+   }
+   qsl_plotted_pr_names << plot_name;
+   dup_plotted_pr_name_check[plot_name] = true;
    unsigned int p = plotted_r.size() - 1;
 
    plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)r.size());
@@ -1596,16 +1607,7 @@ void US_Hydrodyn_Saxs::load_pr()
                }
             }
          }
-         QStringList qsl_data = qsl.grep(",\"P(r)\",");
-         if ( qsl_data.size() == 0 )
-         {
-            QMessageBox mb(tr("UltraScan Warning"),
-                           tr("The csv file ") + filename + tr(" does not appear to contain any data rows.\n"),
-                           QMessageBox::Critical,
-                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
-            mb.exec();
-            return;
-         }
+
          // get the r values
          QStringList qsl_r = QStringList::split(",",*(qsl_headers.at(0)),true);
          if ( qsl_r.size() < 4 )
@@ -1618,8 +1620,6 @@ void US_Hydrodyn_Saxs::load_pr()
             return;
          }
          r.push_back((*qsl_r.at(2)).toDouble());
-            
-         QString header_tag = qsl_r.last();
 
          for ( QStringList::iterator it = qsl_r.at(3); it != qsl_r.end(); it++ )
          {
@@ -1630,6 +1630,31 @@ void US_Hydrodyn_Saxs::load_pr()
                break;
             }
          }
+
+         // ok, we have a header line
+         // append all currently plotted p(r)s to qsl
+         for ( unsigned int i = 0; i < qsl_plotted_pr_names.size(); i++ )
+         {
+            vector < double > npr = interpolate(r, plotted_r[i], plotted_pr_not_normalized[i]);
+            QString line = QString("\"%1\",\"P(r)\",%1\n")
+               .arg(qsl_plotted_pr_names[i])
+               .arg(vector_double_to_csv(npr));
+            qsl << line;
+         }
+            
+         QStringList qsl_data = qsl.grep(",\"P(r)\",");
+         if ( qsl_data.size() == 0 )
+         {
+            QMessageBox mb(tr("UltraScan Warning"),
+                           tr("The csv file ") + filename + tr(" does not appear to contain any data rows.\n"),
+                           QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+            mb.exec();
+            return;
+         }
+
+         QString header_tag = qsl_r.last();
+
 
 #if defined(DEBUG_PR)
          cout << "r values (" << r.size() << "): ";
@@ -2018,7 +2043,10 @@ void US_Hydrodyn_Saxs::load_pr()
 void US_Hydrodyn_Saxs::clear_plot_pr()
 {
    plotted_pr.clear();
+   plotted_pr_not_normalized.clear();
    plotted_r.clear();
+   qsl_plotted_pr_names.clear();
+   dup_plotted_pr_name_check.clear();
    plot_pr->clear();
    plot_pr->replot();
 }
@@ -3605,11 +3633,23 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    long ppr = plot_pr->insertCurve("p(r) vs r");
    plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
    plotted_r.push_back(r);
+
+   plotted_pr_not_normalized.push_back(pr);
+
    if ( cb_normalize->isChecked() )
    {
       normalize_pr(&pr);
    }
+
    plotted_pr.push_back(pr);
+   QString plot_name = name;
+   int extension = 0;
+   while ( dup_plotted_pr_name_check.count(plot_name) )
+   {
+      plot_name = QString("%1-%1").arg(name).arg(++extension);
+   }
+   qsl_plotted_pr_names << plot_name;
+   dup_plotted_pr_name_check[plot_name] = true;
    unsigned int p = plotted_r.size() - 1;
                   
    plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
@@ -3631,7 +3671,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    // don't forget to make target part of it even if it isn't selected.
 }
 
-void US_Hydrodyn_Saxs::load_gmon()
+void US_Hydrodyn_Saxs::load_gnom()
 {
    plotted = false;
    QString filename = QFileDialog::getOpenFileName(USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs", "*.out", this);
@@ -3791,3 +3831,34 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
    editor->append(name + "\n");
    editor->setColor(save_color);
 }
+
+vector < double > US_Hydrodyn_Saxs::interpolate( vector < double > to_r, 
+                                                 vector < double > from_r, 
+                                                 vector < double > from_pr )
+{
+   US_Saxs_Util usu;
+   vector < double > new_from_r;
+   vector < double > new_from_pr;
+   new_from_r.push_back(0);
+   new_from_pr.push_back(0);
+   for ( unsigned int i = 0; i < from_r.size(); i++ )
+   {
+      new_from_r.push_back(from_r[i]);
+      new_from_pr.push_back(from_pr[i]);
+   }
+   new_from_r.push_back(1e99);
+   new_from_pr.push_back(0);
+   
+   usu.wave["from"].q = new_from_r;
+   usu.wave["from"].r = new_from_pr;
+   usu.wave["from"].s = new_from_pr;
+   usu.wave["to"].q = to_r;
+
+
+   if ( !usu.interpolate( "out", "to", "from" ) )
+   {
+      cout << usu.errormsg;
+   }
+   return usu.wave["out"].r;
+}
+  
