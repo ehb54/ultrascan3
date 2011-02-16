@@ -58,6 +58,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       QLabel      *lbl_nnls_target;
 
       QPushButton *pb_select_all;
+      QPushButton *pb_select_target;
       QPushButton *pb_ok;
       QPushButton *pb_cancel;
       QPushButton *pb_help;
@@ -95,6 +96,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       void set_run_nnls();
 
       void select_all();
+      void select_target();
       void ok();
       void cancel();
       void help();

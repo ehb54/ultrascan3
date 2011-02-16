@@ -124,6 +124,12 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
       cb_run_nnls->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
       connect(cb_run_nnls, SIGNAL(clicked()), this, SLOT(set_run_nnls()));
       
+      pb_select_target = new QPushButton(tr("Select Target"), this);
+      pb_select_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+      pb_select_target->setMinimumHeight(minHeight1);
+      pb_select_target->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+      connect(pb_select_target, SIGNAL(clicked()), SLOT(select_target()));
+
       lbl_nnls_target = new QLabel(*nnls_target, this);
       lbl_nnls_target->setAlignment(AlignCenter|AlignVCenter);
       lbl_nnls_target->setMinimumHeight(minHeight2);
@@ -136,6 +142,7 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    pb_select_all->setMinimumHeight(minHeight1);
    pb_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
+
 
    pb_cancel = new QPushButton(tr("Cancel"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -189,6 +196,7 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    {
       QHBoxLayout *hbl_nnls = new QHBoxLayout;
       hbl_nnls->addWidget(cb_run_nnls);
+      hbl_nnls->addWidget(pb_select_target);
       hbl_nnls->addWidget(lbl_nnls_target);
       background->addLayout(hbl_nnls);
    }
@@ -290,6 +298,12 @@ void US_Hydrodyn_Saxs_Load_Csv::set_save_original_data()
 void US_Hydrodyn_Saxs_Load_Csv::set_run_nnls()
 {
    *run_nnls = cb_run_nnls->isChecked();
+   select_target();
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Load_Csv::select_target()
+{
    if ( *run_nnls )
    {
       if ( qsl_sel_names->size() )
@@ -300,8 +314,7 @@ void US_Hydrodyn_Saxs_Load_Csv::set_run_nnls()
       }
       lbl_nnls_target->setText(tr("Target model: ") + *nnls_target);
    }
-   update_enables();
-}
+}   
 
 void US_Hydrodyn_Saxs_Load_Csv::update_enables()
 {
@@ -315,4 +328,8 @@ void US_Hydrodyn_Saxs_Load_Csv::update_enables()
                                ( cb_create_avg->isChecked() || ( expert_mode && cb_run_nnls->isChecked() ) )
                                && qsl_sel_names->size() > 1);
    cb_save_original_data->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
+   if ( expert_mode )
+   {
+      pb_select_target->setEnabled(cb_run_nnls->isChecked() && qsl_sel_names->size() == 1);
+   }
 }

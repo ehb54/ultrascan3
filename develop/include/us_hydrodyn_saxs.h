@@ -203,6 +203,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                                      vector < double > from_r, 
                                      vector < double > from_pr );
 
+      vector < double > rescale( vector < double > x );
+
       QString vector_double_to_csv( vector < double > vd );
       void calc_nnls_fit();
       void plot_one_pr(vector < double > r, vector < double > pr, QString name);

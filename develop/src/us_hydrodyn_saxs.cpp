@@ -337,7 +337,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    cb_create_native_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_create_native_saxs, SIGNAL(clicked()), SLOT(set_create_native_saxs()));
 
-   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   if ( 1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
    {
       pb_load_gnom = new QPushButton("Load GNOM", this);
       pb_load_gnom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -403,11 +403,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    rb_curve_raw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_curve_raw->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-   rb_curve_saxs_dry = new QRadioButton(tr("SAXS (unc)"), this);
-   rb_curve_saxs_dry->setEnabled(true);
-   rb_curve_saxs_dry->setChecked(our_saxs_options->curve == 1);
-   rb_curve_saxs_dry->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_curve_saxs_dry->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   //   rb_curve_saxs_dry = new QRadioButton(tr("SAXS (unc)"), this);
+   //   rb_curve_saxs_dry->setEnabled(true);
+   //   rb_curve_saxs_dry->setChecked(our_saxs_options->curve == 1);
+   //   rb_curve_saxs_dry->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   //   rb_curve_saxs_dry->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    rb_curve_saxs = new QRadioButton(tr("SAXS"), this);
    rb_curve_saxs->setEnabled(true);
@@ -424,7 +424,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_curve = new QButtonGroup(1, Qt::Horizontal, 0);
    bg_curve->setRadioButtonExclusive(true);
    bg_curve->insert(rb_curve_raw);
-   bg_curve->insert(rb_curve_saxs_dry);
+   //   bg_curve->insert(rb_curve_saxs_dry);
    bg_curve->insert(rb_curve_saxs);
    bg_curve->insert(rb_curve_sans);
    connect(bg_curve, SIGNAL(clicked(int)), SLOT(set_curve(int)));
@@ -601,14 +601,14 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    QHBoxLayout *hbl_tools = new QHBoxLayout;
    hbl_tools->addWidget(cb_create_native_saxs);
-   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   if ( 1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
    {
       hbl_tools->addWidget(pb_load_gnom);
    }
    background->addMultiCellLayout(hbl_tools, j, j, 0, 1);
    j++;
 
-   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   if ( 1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
    {
       QHBoxLayout *hbl_guinier = new QHBoxLayout;
       hbl_guinier->addWidget(cb_guinier);
@@ -627,7 +627,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    j++;
    QBoxLayout *bl = new QHBoxLayout(0);
    bl->addWidget(rb_curve_raw);
-   bl->addWidget(rb_curve_saxs_dry);
+   //   bl->addWidget(rb_curve_saxs_dry);
    bl->addWidget(rb_curve_saxs);
    bl->addWidget(rb_curve_sans);
    bl->addWidget(cb_normalize);
@@ -1082,8 +1082,9 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                }
             }
          }
-         if ( rb_curve_saxs->isChecked() ||
-              rb_curve_saxs_dry->isChecked() )
+         if ( rb_curve_saxs->isChecked() 
+              // || rb_curve_saxs_dry->isChecked() 
+              )
          {
             // for each entry in hybrid_map, compute b
             for (map < QString, hybridization >::iterator it = hybrid_map.begin();
@@ -1134,8 +1135,9 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #endif
                }
 
-               if ( rb_curve_saxs->isChecked() ||
-                    rb_curve_saxs_dry->isChecked() )
+               if ( rb_curve_saxs->isChecked() 
+                    // || rb_curve_saxs_dry->isChecked() 
+                    )
                {
                   QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
                   if ( this_atom->name == "OXT" )
@@ -1700,13 +1702,22 @@ void US_Hydrodyn_Saxs::load_pr()
                                           &save_original_data,
                                           &run_nnls,
                                           &nnls_target,
-                                          ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode
+                                          1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode
                                           );
          hslc->exec();
             
          delete hslc;
          
          this->isVisible() ? this->raise() : this->show();
+
+         // make sure target is selected
+
+         if ( run_nnls &&
+              !qsl_sel_names.grep(nnls_target).size() )
+         {
+            cout << "had to add target back\n";
+            qsl_sel_names << nnls_target;
+         }
 
          // ok, now qsl_sel_names should have the load list
          // loop through qsl_data and match up 
@@ -1732,11 +1743,15 @@ void US_Hydrodyn_Saxs::load_pr()
          // setup for nnls
          if ( run_nnls )
          {
+            editor->append("NNLS target: " + nnls_target + "\n");
             nnls_A.clear();
             nnls_x.clear();
             nnls_B.clear();
             nnls_rmsd = 0e0;
          }
+
+         bool found_nnls_target = false;
+         bool found_nnls_model = false;
 
          // now go through qsl_data and load up any that map_sel_names contains
          plotted = false;
@@ -1780,8 +1795,10 @@ void US_Hydrodyn_Saxs::load_pr()
                {
                   if ( *qsl_tmp.at(0) == nnls_target )
                   {
+                     found_nnls_target = true;
                      nnls_B = pr;
                   } else {
+                     found_nnls_model = true;
                      nnls_A[*qsl_tmp.at(0)] = pr;
                      nnls_x[*qsl_tmp.at(0)] = 0;
                   }
@@ -1976,7 +1993,12 @@ void US_Hydrodyn_Saxs::load_pr()
             if ( run_nnls )
             {
                nnls_r = r;
-               calc_nnls_fit();
+               if ( found_nnls_model && found_nnls_target )
+               {
+                  calc_nnls_fit();
+               } else {
+                  editor->append("NNLS error: could not find target and models in loaded data\n");
+               }
                // then plot the nnls fit & target ?
             }
             if ( plotted )
@@ -3469,7 +3491,7 @@ QString US_Hydrodyn_Saxs::vector_double_to_csv( vector < double > vd )
 void US_Hydrodyn_Saxs::calc_nnls_fit()
 {
    // setup nnls run:
-   editor->append("setting up nnls run\n");
+   // editor->append("setting up nnls run\n");
    // unify dimension of nnls_A vectors
    unsigned int max_pr_len = 0;
 
@@ -3509,8 +3531,8 @@ void US_Hydrodyn_Saxs::calc_nnls_fit()
       }
    }
 
-   editor->append(QString("a size %1\n").arg(nnls_A.size()));
-   editor->append(QString("b size %1\n").arg(max_pr_len));
+   // editor->append(QString("a size %1\n").arg(nnls_A.size()));
+   // editor->append(QString("b size %1\n").arg(max_pr_len));
 
    vector < double > use_A;
 
@@ -3531,7 +3553,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit()
       {
          use_A.push_back(it->second[i]);
 #if defined(DEBUG_NNLS)
-p         cout << "use_A.push_back " << it->second[i] << endl;
+         cout << "use_A.push_back " << it->second[i] << endl;
 #endif
       }
    }
@@ -3548,7 +3570,8 @@ p         cout << "use_A.push_back " << it->second[i] << endl;
    vector < double > nnls_zzp(use_B.size());
    vector < int > nnls_indexp(nnls_A.size());
 
-   editor->append(QString("running nnls %1 %2\n").arg(nnls_A.size()).arg(use_B.size()));
+   //   editor->append(QString("running nnls %1 %2\n").arg(nnls_A.size()).arg(use_B.size()));
+   editor->append("Running NNLS\n");
 #if defined(DEBUG_NNLS)
    cout << "use A size " << use_A.size() << endl;
    int a_size = nnls_A.size();
@@ -3588,14 +3611,33 @@ p         cout << "use_A.push_back " << it->second[i] << endl;
       editor->append("NNLS error!\n");
    }
 
-   editor->append(QString("residual euclidian norm %1\n").arg(nnls_rmsd));
+   editor->append(QString("Residual Euclidian norm of NNLS fit %1\n").arg(nnls_rmsd));
    
+   vector < double > rescaled_x = rescale(use_x);
    // list models & concs
 
+   QColor save_color = editor->color();
    for ( unsigned int i = 0; i < use_x.size(); i++ )
    {
-      editor->append(QString("%1 %2\n").arg(model_names[i]).arg(use_x[i]));
+      if ( rescaled_x[i] == 0 )
+      {
+         editor->setColor("gray");
+      } else {
+         if ( rescaled_x[i] < .1 )
+         {
+            editor->setColor("darkCyan");
+         } else {
+            if ( rescaled_x[i] < .2 )
+            {
+               editor->setColor("blue");
+            } else {
+               editor->setColor("darkBlue");
+            }
+         }
+      }
+      editor->append(QString("%1 %2\n").arg(model_names[i]).arg(rescaled_x[i]));
    }
+   editor->setColor(save_color);
 
    // build model & residuals
    vector < double > model(use_B.size());
@@ -3864,3 +3906,20 @@ vector < double > US_Hydrodyn_Saxs::interpolate( vector < double > to_r,
    return usu.wave["out"].r;
 }
   
+vector < double > US_Hydrodyn_Saxs::rescale( vector < double > x )
+{
+   // rescales x to add up to 1
+   double sum = 0e0;
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      sum += x[i];
+   }
+   if ( sum != 0 )
+   {
+      for ( unsigned int i = 0; i < x.size(); i++ )
+      {
+         x[i] /= sum;
+      }
+   }
+   return x;
+}
