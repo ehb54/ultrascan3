@@ -19,8 +19,8 @@
 # define SLASH "\\"
 #endif
 
-#define SAXS_DEBUG
-#define SAXS_DEBUG2
+// #define SAXS_DEBUG
+// #define SAXS_DEBUG2
 // #define SAXS_DEBUG_F
 // #define SAXS_DEBUG_FV
 // #define BUG_DEBUG
@@ -199,16 +199,16 @@ void US_Hydrodyn_Saxs::refresh(
    {
       our_saxs_options->curve = 0;
       rb_curve_raw->setChecked(true);
-      rb_curve_saxs_dry->setChecked(false);
+      // rb_curve_saxs_dry->setChecked(false);
       rb_curve_saxs->setChecked(false);
       rb_curve_sans->setChecked(false);
       rb_curve_raw->setEnabled(false);
-      rb_curve_saxs_dry->setEnabled(false);
+      // rb_curve_saxs_dry->setEnabled(false);
       rb_curve_saxs->setEnabled(false);
       rb_curve_sans->setEnabled(false);
    } else {
       rb_curve_raw->setEnabled(true);
-      rb_curve_saxs_dry->setEnabled(true);
+      // rb_curve_saxs_dry->setEnabled(true);
       rb_curve_saxs->setEnabled(true);
       rb_curve_sans->setEnabled(true);
    }
