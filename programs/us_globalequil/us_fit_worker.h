@@ -33,28 +33,37 @@ class US_EXTERN US_FitWorker : public QThread
 
    private:
       US_EqMath*  emath;              // EqMath object pointer
-      FitCtrlPar& fcpars;             // Fit Control Parameters reference
+      FitCtrlPar& fitpars;            // Fit Control Parameters reference
 
       int         dbg_level;
       int         mxiters;            // Maximum iterations
       int         k_iter;             // iteration count
       int         nlsmeth;            // NLS method index
       int         modelx;             // model type index
+      int         ntpts;              // number of total x,y data points
+      int         ndsets;             // number of data sets (scans)
+      int         nfpars;             // number of fit parameters per point
 
-      double      tolerance;          // residual tolerance
-      double      residual;           // residual value (sum diffs. squared)
+      double      tolerance;          // fit variance tolerance
+      double      variance;           // variance value (sum diffs. squared)
+      double      old_vari;           // previous iteration variance
+      double      lambda;             // current lambda value
 
       bool        paused;
       bool        abort;
+      bool        aborted;
+      bool        converged;
+      bool        completed;
 
    private slots:
-      void   fit_iterations( void );    // Main work method for fit iterations
-      void   fit_iters_LM  ( void );    // Fit iterations - Generalized L LS
-      void   fit_iters_MGN ( void );    // Fit iterations - Levenverg-Marquardt
-      void   fit_iters_HM  ( void );    // Fit iterations - Hybrid Method
-      void   fit_iters_QN  ( void );    // Fit iterations - Quasi-Newton
-      void   fit_iters_GLLS( void );    // Fit iterations - Generalized L LS
-      void   fit_iters_NNLS( void );    // Fit iterations - NonNegative LS
+      int    fit_iterations( void );    // Main work method for fit iterations
+      int    fit_iter_LM  ( void );     // Fit iterations - Generalized L LS
+      int    fit_iter_MGN ( void );     // Fit iterations - Levenverg-Marquardt
+      int    fit_iter_HM  ( void );     // Fit iterations - Hybrid Method
+      int    fit_iter_QN  ( void );     // Fit iterations - Quasi-Newton
+      int    fit_iter_GLLS( void );     // Fit iterations - Generalized L LS
+      int    fit_iter_NNLS( void );     // Fit iterations - NonNegative LS
+      void   check_paused ( void );
 };
 #endif
 
