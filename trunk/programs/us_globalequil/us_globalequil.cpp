@@ -1314,8 +1314,8 @@ void US_GlobalEquil::setup_runfit()
    runfit.viri_vals.fill(   0.0, runfit.nbr_comps );
    runfit.viri_ndxs.fill(     0, runfit.nbr_comps );
    runfit.viri_rngs.fill(   0.0, runfit.nbr_comps );
-   runfit.viri_fits.fill(  true, runfit.nbr_comps );
-   runfit.viri_bnds.fill(  true, runfit.nbr_comps );
+   runfit.viri_fits.fill( false, runfit.nbr_comps );
+   runfit.viri_bnds.fill( false, runfit.nbr_comps );
 
    for ( int ii = 0; ii < 4; ii++ )
    {

@@ -277,8 +277,11 @@ qDebug() << "EFC: IN";
    cb_nlsalgo->setCurrentIndex( nlsmeth );
 
 qDebug() << "EFC: call init_fit";
-   emath->init_fit( modelx, nlsmeth, ntpts, ndsets, nfpars );
+   emath->init_fit( modelx, nlsmeth, fitpars );
 qDebug() << "EFC: init_fit return";
+   nfpars       = fitpars.nfpars;
+   ndsets       = fitpars.ndsets;
+   ntpts        = fitpars.ntpts;
 
    le_nbrpars->setText( QString::number( nfpars ) );
    le_nbrsets->setText( QString::number( ndsets ) );
@@ -310,10 +313,13 @@ qDebug() << "START_FIT";
 
    nlsmeth   = cb_nlsalgo->currentIndex();
 
-   emath->init_fit( modelx, nlsmeth, ntpts, ndsets, nfpars );
+   emath->init_fit( modelx, nlsmeth, fitpars );
 
    mxiters   = le_mxiters->text().toInt();
    fittoler  = le_fittolr->text().toDouble();
+   ntpts     = fitpars.ntpts;
+   ndsets    = fitpars.ndsets;
+   nfpars    = fitpars.nfpars;
 
    fitpars.nlsmeth   = nlsmeth;
    fitpars.modelx    = modelx;
@@ -347,13 +353,19 @@ void US_EqFitControl::pause_fit()
 {
 qDebug() << "PAUSE_FIT";
    fitwork->flag_paused( true );
+   pb_pause  ->setEnabled( false );
+   pb_resume ->setEnabled( true  );
 }
+
 // Resume the fitting computations
 void US_EqFitControl::resume_fit()
 {
 qDebug() << "RESUME_FIT";
    fitwork->flag_paused( false );
+   pb_pause  ->setEnabled( true  );
+   pb_resume ->setEnabled( false );
 }
+
 // Save the computed fit to a file
 void US_EqFitControl::save_fit()
 {
@@ -378,11 +390,22 @@ qDebug() << "PLOT_OVERLAYS";
 // Update progress bar
 void US_EqFitControl::new_progress( int step )
 {
+qDebug() << "NEW_PROGRESS" << step;
    progress->setValue( step );
+
+   le_clambda->setText( QString::number( fitpars.lambda   ) );
+   le_iternbr->setText( QString::number( fitpars.k_iter   ) );
+   le_varianc->setText( QString::number( fitpars.variance ) );
+   le_stddev ->setText( QString::number( fitpars.std_dev  ) );
+   le_improve->setText( QString::number( fitpars.improve  ) );
+   le_funceva->setText( QString::number( fitpars.nfuncev  ) );
+   le_decompo->setText( QString::number( fitpars.ndecomps ) );
 }
 
 // React to completion of fit
 void US_EqFitControl::fit_completed()
 {
+qDebug() << "FIT_COMPLETED";
+   pb_strtfit->setText( tr( "Fit" ) );
 }
 

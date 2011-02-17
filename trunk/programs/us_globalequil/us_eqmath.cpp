@@ -335,29 +335,28 @@ for ( int ii=0;ii<16;ii++ ) ppp[ii]=0.0;
 double* aa[3]; double* pp[4];
 aa[0]=aaa;aa[1]=aaa+4;aa[2]=aaa+8;
 pp[0]=ppp;pp[1]=ppp+4;pp[2]=ppp+8;pp[3]=ppp+12;
-qDebug() << "AA: " << aaa[0] << aaa[1] << aaa[2] << aaa[3];
-qDebug() << "AA: " << aaa[4] << aaa[5] << aaa[6] << aaa[7];
-qDebug() << "AA: " << aaa[8] << aaa[9] << aaa[10] << aaa[11];
+DbgLv(2) << "AA: " << aaa[0] << aaa[1] << aaa[2] << aaa[3];
+DbgLv(2) << "AA: " << aaa[4] << aaa[5] << aaa[6] << aaa[7];
+DbgLv(2) << "AA: " << aaa[8] << aaa[9] << aaa[10] << aaa[11];
 calc_A_transpose_A( aa, pp, 3, 4, false );
-qDebug() << "==calc_A_transpose_A( aa, pp, 4, 3, false )==";
-qDebug() << " PP: " << ppp[0] << ppp[1] << ppp[2] << ppp[3];
-qDebug() << " PP: " << ppp[4] << ppp[5] << ppp[6] << ppp[7];
-qDebug() << " PP: " << ppp[8] << ppp[9] << ppp[10] << ppp[11];
-qDebug() << " PP: " << ppp[12] << ppp[13] << ppp[14] << ppp[15];
+DbgLv(2) << "==calc_A_transpose_A( aa, pp, 4, 3, false )==";
+DbgLv(2) << " PP: " << ppp[0] << ppp[1] << ppp[2] << ppp[3];
+DbgLv(2) << " PP: " << ppp[4] << ppp[5] << ppp[6] << ppp[7];
+DbgLv(2) << " PP: " << ppp[8] << ppp[9] << ppp[10] << ppp[11];
+DbgLv(2) << " PP: " << ppp[12] << ppp[13] << ppp[14] << ppp[15];
 calc_A_transpose_A( aa, pp, 3, 4, true );
-qDebug() << "==calc_A_transpose_A( aa, pp, 4, 3, true )==";
-qDebug() << " PP: " << ppp[0] << ppp[1] << ppp[2] << ppp[3];
-qDebug() << " PP: " << ppp[4] << ppp[5] << ppp[6] << ppp[7];
-qDebug() << " PP: " << ppp[8] << ppp[9] << ppp[10] << ppp[11];
-qDebug() << " PP: " << ppp[12] << ppp[13] << ppp[14] << ppp[15];
+DbgLv(2) << "==calc_A_transpose_A( aa, pp, 4, 3, true )==";
+DbgLv(2) << " PP: " << ppp[0] << ppp[1] << ppp[2] << ppp[3];
+DbgLv(2) << " PP: " << ppp[4] << ppp[5] << ppp[6] << ppp[7];
+DbgLv(2) << " PP: " << ppp[8] << ppp[9] << ppp[10] << ppp[11];
+DbgLv(2) << " PP: " << ppp[12] << ppp[13] << ppp[14] << ppp[15];
 #endif
 
 
 }
 
 // Initialize for fit
-void US_EqMath::init_fit( int modx, int methx, int& ktpts, int& kdsets,
-      int& kfpars )
+void US_EqMath::init_fit( int modx, int methx, FitCtrlPar& fitpars )
 {
    modelx   = modx;     // Model type index
    nlsmeth  = methx;    // NLS method index
@@ -475,7 +474,7 @@ DbgLv(1) << "EM:IF: scan 4 ntpts ndsets nfpars" << ntpts << ndsets << nfpars;
 DbgLv(1) << "EM:IF: matr fill 1 complete";
 
    // Initialize parameter guess
-   guess_mapForward( v_guess );
+   guess_mapForward( v_guess.data() );
 DbgLv(1) << "EM:IF: g map Forw complete";
 
    // Set up jacobian, info, and LLtranspose matrices
@@ -498,13 +497,43 @@ DbgLv(1) << "EM:IF: jacobi fill complete";
       d_LLtrns      += nfpars;
    }
 DbgLv(1) << "EM:IF: inf/trns fill complete";
+   setpts           = v_setpts .data();
+   setlpts          = v_setlpts.data();
+   y_raw            = v_yraw   .data();
+   y_guess          = v_yguess .data();
+   y_delta          = v_ydelta .data();
+   BB               = v_BB     .data();
+   guess            = v_guess  .data();
+   tguess           = v_tguess .data();
+   jacobian         = m_jacobi .data();
+   info             = m_info   .data();
+   LLtr             = m_LLtrns .data();
+   dcr2             = m_dcr2   .data();
+   dlncr2           = m_dlncr2 .data();
+   lncr2            = m_lncr2  .data();
 
 DbgLv(1) << "EM:FI: ffitx" << ffitx << "modelx" << modelx;
-   // Return counts to caller
-   ktpts    = ntpts;
-   kdsets   = ndsets;
-   kfpars   = nfpars;
-DbgLv(1) << "EM:FI: ktpts kdsets kfpars" << ktpts << kdsets << kfpars;
+   // Return counts and other fit parameters to caller
+   fitpars.nlsmeth  = nlsmeth;
+   fitpars.modelx   = modelx;
+   fitpars.ntpts    = ntpts;
+   fitpars.ndsets   = ndsets;
+   fitpars.nfpars   = nfpars;
+   fitpars.setpts   = setpts;
+   fitpars.setlpts  = setlpts;
+   fitpars.y_raw    = y_raw;
+   fitpars.y_guess  = y_guess;
+   fitpars.y_delta  = y_delta;
+   fitpars.BB       = BB;
+   fitpars.guess    = guess;
+   fitpars.tguess   = tguess;
+   fitpars.jacobian = jacobian;
+   fitpars.info     = info;
+   fitpars.LLtr     = LLtr;
+   fitpars.dcr2     = dcr2;
+   fitpars.dlncr2   = dlncr2;
+   fitpars.lncr2    = lncr2;
+DbgLv(1) << "EM:FI: ktpts kdsets kfpars" << ntpts << ndsets << nfpars;
 }
 
 // Fill in guess parameter vector
@@ -522,7 +551,7 @@ DbgLv(1) << "EM:FI: ktpts kdsets kfpars" << ktpts << kdsets << kfpars;
 //     for each association constant:
 //       6. Association constant
 //
-void US_EqMath::guess_mapForward( QVector< double >& vguess )
+void US_EqMath::guess_mapForward( double* vguess )
 {
    int jpx = 0;
 DbgLv(1) << "EM:gmF: nc" << runfit.nbr_comps;
@@ -584,7 +613,7 @@ DbgLv(1) << "EM:gmF: as_jj jpx" << jj << jpx;
 }
 
 // Map parameters back from guesses
-void US_EqMath::parameter_mapBackward( QVector< double >&vguess )
+void US_EqMath::parameter_mapBackward( double* vguess )
 {
    int jpx = 0;
 
@@ -1681,6 +1710,527 @@ double US_EqMath::calc_residuals()
    return residual;
 }
 
+// Calculate the model from a set of guesses
+int US_EqMath::calc_model( double* guess )
+{
+   int stat = 0;
+
+   parameter_mapBackward( guess );
+
+   int ncomps = runfit.nbr_comps;
+   int jpx    = 0;     // Total points count
+   int jlx    = 0;     // Log count
+   int jdx    = 0;     // Datasets count
+   int mcomp  = max( ncomps, 4 );
+   QVector< double > v_vbar ( mcomp );
+   QVector< double > v_buoy ( mcomp );
+
+   v_setlpts.clear();
+
+   switch( modelx )
+   {
+      case 0:     //  0: "1-Component, Ideal"
+      case 1:     //  1: "2-Component, Ideal, Noninteracting"
+      case 2:     //  2: "3-Component, Ideal, Noninteracting"
+      case 3:     //  3: "Fixed Molecular Weight Distribution"
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            int    jstx     = scnf->start_ndx;
+            double xm_sq    = sq( scnf->xvs[ jstx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+
+            for ( int kk = 0; kk < ncomps; kk++ )
+            {
+               v_vbar[ kk ]  = US_Math2::adjust_vbar20( runfit.vbar_vals[ kk ],
+                                                        tempera );
+               v_buoy[ kk ]  = ( 1.0 - v_vbar[ kk ] * density );
+            }
+
+            jlx  = 0;
+
+            for ( int jj = jstx; jj < jstx + v_setpts[ jdx ]; jj++ )
+            {
+               double xv      = sq( scnf->xvs[ jj ] ) - xm_sq;
+               double cguess  = 0.0;
+
+               for ( int kk = 0; kk < ncomps; kk++ )
+               {
+                  double buoy   = v_buoy[ kk ];
+                  double mwv    = runfit.mw_vals[ kk ];
+                  double ampv   = scnf->amp_vals[ kk ];
+                  double ufunc  = exp( ampv + dconst * mwv * buoy * xv );
+                  cguess       +=  ufunc;
+               }
+
+               y_guess[ jpx ] = cguess + scnf->baseline;
+
+               if ( cguess > 0.0 )
+               {
+                  lncr2[ jdx ][ jlx++ ] = log( cguess );
+               }
+
+               jpx++;
+            }
+
+            v_setlpts << jlx;
+            jdx++;
+         }
+         break;
+      case 4:     //  4: "Monomer-Dimer Equilibrium"
+      case 5:     //  5: "Monomer-Trimer Equilibrium"
+      case 6:     //  6: "Monomer-Tetramer Equilibrium"
+      case 7:     //  7: "Monomer-Pentamer Equilibrium"
+      case 8:     //  8: "Monomer-Hexamer Equilibrium"
+      case 9:     //  9: "Monomer-Heptamer Equilibrium"
+      case 10:    // 10: "User-Defined Monomer-Nmer Equilibrium"
+      {
+         double stoich1      = (double)( modelx - 2 );
+         double stoiexp      = stoich1 - 1.0;
+         runfit.stoichs[ 0 ] = stoich1;
+
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            int    jstx     = scnf->start_ndx;
+            double xm_sq    = sq( scnf->xvs[ jstx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double ODcorrec = log( stoich1 / pow( scnf->extincts[ 0 ]
+                                   * scnf->pathlen , stoiexp ) );
+            v_vbar[ 0 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
+                                                       tempera );
+            double buoy     = ( 1.0 - v_vbar[ 0 ] * density );
+            jlx             = 0;
+
+            for ( int jj = jstx; jj < jstx + v_setpts[ jdx ]; jj++ )
+            {
+               double xv     = sq( scnf->xvs[ jj ] ) - xm_sq;
+               double mwv    = runfit.mw_vals[ 0 ];
+               double ampv   = scnf->amp_vals[ 0 ];
+               double ufunc0 = exp( ampv + dconst * mwv * buoy * xv );
+               double ufunc1 = exp( stoich1 * ampv + runfit.eq_vals[ 0 ] +
+                  ODcorrec + dconst * stoich1 * mwv * buoy * ufunc0 );
+               double cguess = ufunc0 + ufunc1;
+
+               y_guess[ jpx ] = cguess + scnf->baseline;
+
+               if ( cguess > 0.0 )
+               {
+                  lncr2[ jdx ][ jlx++ ] = log( cguess );
+               }
+
+               jpx++;
+            }
+
+            v_setlpts << jlx;
+            jdx++;
+         }
+         break;
+      }
+      case 11:    // 11: "Monomer-Dimer-Trimer Equilibrium"
+      case 12:    // 12: "Monomer-Dimer-Tetramer Equilibrium"
+      case 13:    // 13: "User-Defined Monomer - N-mer - M-mer Equilibrium"
+      {
+         double stoich1      = 2.0;
+         double stoich2      = (double)( modelx - 8 );
+         runfit.stoichs[ 0 ] = stoich1;
+         runfit.stoichs[ 1 ] = stoich2;
+         double stoiexp      = stoich1 - 1.0;
+         double stoiex2      = stoich2 - 1.0;
+
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            int    jstx     = scnf->start_ndx;
+            double xm_sq    = sq( scnf->xvs[ jstx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double ODcorec1 = log( stoich1 / pow( scnf->extincts[ 0 ]
+                                   * scnf->pathlen , stoiexp ) );
+            double ODcorec2 = log( stoich2 / pow( scnf->extincts[ 0 ]
+                                   * scnf->pathlen , stoiex2 ) );
+            v_vbar[ 0 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
+                                                       tempera );
+            double buoy     = ( 1.0 - v_vbar[ 0 ] * density );
+            jlx             = 0;
+
+            for ( int jj = jstx; jj < jstx + v_setpts[ jdx ]; jj++ )
+            {
+               double xv     = sq( scnf->xvs[ jj ] ) - xm_sq;
+               double mwv    = runfit.mw_vals[ 0 ];
+               double ampv   = scnf->amp_vals[ 0 ];
+               double ufunc0 = exp( ampv + dconst * mwv * buoy * xv );
+               double ufunc1 = exp( stoich1 * ampv + runfit.eq_vals[ 0 ] +
+                  ODcorec1 + dconst * stoich1 * mwv * buoy * xv );
+               double ufunc2 = exp( stoich2 * ampv + runfit.eq_vals[ 1 ] +
+                  ODcorec2 + dconst * stoich2 * mwv * buoy * xv );
+               double cguess = ufunc0 + ufunc1 + ufunc2;
+
+               y_guess[ jpx ] = cguess + scnf->baseline;
+
+               if ( cguess > 0.0 )
+               {
+                  lncr2[ jdx ][ jlx++ ] = log( cguess );
+               }
+
+               jpx++;
+            }
+
+            v_setlpts << jlx;
+            jdx++;
+         }
+         break;
+      }
+      case 14:    // 14: "2-Component Hetero-Association: A + B <=> AB"
+      {
+         double mwv0         = runfit.mw_vals[ 0 ];
+         double mwv1         = runfit.mw_vals[ 1 ];
+         double mw_ab        = mwv0 + mwv1;
+
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            int    jstx     = scnf->start_ndx;
+            double xm_sq    = sq( scnf->xvs[ jstx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double extinc0  = scnf->extincts[ 0 ];
+            double extinc1  = scnf->extincts[ 1 ];
+            double ODcorrec = log( ( extinc0 + extinc1 ) /
+                                   ( scnf->pathlen * extinc0 * extinc1 ) );
+            v_vbar[ 0 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
+                                                       tempera );
+            v_vbar[ 1 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 1 ],
+                                                       tempera );
+            v_vbar[ 2 ]     = ( v_vbar[ 0 ] * mwv0 + v_vbar[ 1 ] * mwv1 )
+                              / mw_ab;
+            double buoy0    = ( 1.0 - v_vbar[ 0 ] * density );
+            double buoy1    = ( 1.0 - v_vbar[ 1 ] * density );
+            double buoy2    = ( 1.0 - v_vbar[ 2 ] * density );
+            jlx  = 0;
+
+            for ( int jj = jstx; jj < jstx + v_setpts[ jdx ]; jj++ )
+            {
+               double xv      = sq( scnf->xvs[ jj ] ) - xm_sq;
+               double ampv0   = scnf->amp_vals[ 0 ];
+               double ampv1   = scnf->amp_vals[ 1 ];
+               double constx  = dconst * xv;
+               double ufunc0  = exp( ampv0 + constx * mwv0 * buoy0 );
+               double ufunc1  = exp( ampv1 + constx * mwv1 * buoy1 );
+               double ufunc2  = exp( ampv0 + ampv1 + runfit.eq_vals[ 0 ] +
+                  ODcorrec + constx * mw_ab * buoy2 );
+               double cguess  = ufunc0 + ufunc1 + ufunc2;
+
+               y_guess[ jpx ] = cguess + scnf->baseline;
+
+               if ( cguess > 0.0 )
+               {
+                  lncr2[ jdx ][ jlx++ ] = log( cguess );
+               }
+
+               jpx++;
+            }
+
+            v_setlpts << jlx;
+            jdx++;
+         }
+         break;
+      }
+      case 15:    // 15: "U-Defined self/Hetero-Assoc.: A + B <=> AB, nA <=> An"
+      {
+         double mwv0         = runfit.mw_vals[ 0 ];
+         double mwv1         = runfit.mw_vals[ 1 ];
+         double mw_ab        = mwv0 + mwv1;
+         double stoich1      = runfit.stoichs[ 0 ];
+         double stoiexp      = stoich1 - 1.0;
+
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            int    jstx     = scnf->start_ndx;
+            double xm_sq    = sq( scnf->xvs[ jstx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double extinc0  = scnf->extincts[ 0 ];
+            double extinc1  = scnf->extincts[ 1 ];
+            double ODcorec1 = log( ( extinc0 + extinc0 ) /
+                                   ( scnf->pathlen * extinc0 * extinc1 ) );
+            double ODcorec2 = log( stoich1 /
+                                   pow( scnf->pathlen * extinc0, stoiexp ) );
+            v_vbar[ 0 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
+                                                       tempera );
+            v_vbar[ 1 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 1 ],
+                                                       tempera );
+            v_vbar[ 2 ]     = ( v_vbar[ 0 ] * mwv0 + v_vbar[ 1 ] * mwv1 )
+                              / mw_ab;
+            double buoy0    = ( 1.0 - v_vbar[ 0 ] * density );
+            double buoy1    = ( 1.0 - v_vbar[ 1 ] * density );
+            double buoy2    = ( 1.0 - v_vbar[ 2 ] * density );
+            jlx  = 0;
+
+            for ( int jj = jstx; jj < jstx + v_setpts[ jdx ]; jj++ )
+            {
+               double xv     = sq( scnf->xvs[ jj ] ) - xm_sq;
+               double ampv0  = scnf->amp_vals[ 0 ];
+               double ampv1  = scnf->amp_vals[ 1 ];
+               double constx = dconst * xv;
+               double ufunc0 = exp( ampv0 + constx * mwv0 * buoy0 );
+               double ufunc1 = exp( ampv1 + constx * mwv1 * buoy1 );
+               double ufunc2 = exp( ampv0 + ampv1 + runfit.eq_vals[ 0 ] +
+                  ODcorec1 + constx * mw_ab * buoy2 );
+               double ufunc3 = exp( stoich1 * ampv0 + runfit.eq_vals[ 0 ] +
+                  ODcorec2 + constx * stoich1 * mw_ab * buoy0 );
+               double cguess  = ufunc0 + ufunc1 + ufunc2 + ufunc3;
+
+               y_guess[ jpx ] = cguess + scnf->baseline;
+
+               if ( cguess > 0.0 )
+                  lncr2[ jdx ][ jlx++ ] = log( cguess );
+
+               jpx++;
+            }
+
+            v_setlpts << jlx;
+            jdx++;
+         }
+         break;
+      }
+      case 16:    // 16: "U-Defined Monomer-Nmer, some monomer is incompetent"
+      {
+         double mwv0         = runfit.mw_vals[ 0 ];
+         double mwv1         = runfit.mw_vals[ 1 ];
+         double stoich1      = runfit.stoichs[ 0 ];
+         double stoiexp      = stoich1 - 1.0;
+
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            int    jstx     = scnf->start_ndx;
+            double xm_sq    = sq( scnf->xvs[ jstx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double extinc0  = scnf->extincts[ 0 ];
+            double ODcorec1 = log( stoich1 /
+                                   pow( extinc0 * scnf->pathlen, stoiexp ) );
+            v_vbar[ 0 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
+                                                       tempera );
+            double buoy0    = ( 1.0 - v_vbar[ 0 ] * density );
+            jlx  = 0;
+
+            for ( int jj = jstx; jj < jstx + v_setpts[ jdx ]; jj++ )
+            {
+               double xv      = sq( scnf->xvs[ jj ] ) - xm_sq;
+               double ampv0   = scnf->amp_vals[ 0 ];
+               double ampv1   = scnf->amp_vals[ 1 ];
+               double constx  = dconst * xv;
+               double ufunc0  = exp( ampv0 + constx * mwv0 * buoy0 );
+               double ufunc1  = exp( ampv1 + constx * mwv1 * buoy0 );
+               double ufunc2  = exp( stoich1 * ampv0 + runfit.eq_vals[ 0 ] +
+                  ODcorec1 + constx * stoich1 * mwv0 * buoy0 );
+               double cguess  = ufunc0 + ufunc1 + ufunc2;
+
+               y_guess[ jpx ] = cguess + scnf->baseline;
+
+               if ( cguess > 0.0 )
+                  lncr2[ jdx ][ jlx++ ] = log( cguess );
+
+               jpx++;
+            }
+
+            v_setlpts << jlx;
+            jdx++;
+         }
+         break;
+      }
+      case 17:    // 17: "User-Defined Monomer-Nmer, some Nmer is incompetent"
+      {
+         double mwv0         = runfit.mw_vals[ 0 ];
+         double mwv1         = runfit.mw_vals[ 1 ];
+         double stoich1      = runfit.stoichs[ 0 ];
+         double stoiexp      = stoich1 - 1.0;
+
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            int    jstx     = scnf->start_ndx;
+            double xm_sq    = sq( scnf->xvs[ jstx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double extinc0  = scnf->extincts[ 0 ];
+            double ODcorec1 = log( stoich1 /
+                                   pow( scnf->pathlen * extinc0, stoiexp ) );
+            v_vbar[ 0 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
+                                                       tempera );
+            double buoy0    = ( 1.0 - v_vbar[ 0 ] * density );
+            jlx  = 0;
+
+            for ( int jj = jstx; jj < jstx + v_setpts[ jdx ]; jj++ )
+            {
+               double xv     = sq( scnf->xvs[ jj ] ) - xm_sq;
+               double ampv0  = scnf->amp_vals[ 0 ];
+               double ampv1  = scnf->amp_vals[ 1 ];
+               double constx = dconst * xv;
+               double ufunc0 = exp( ampv0 + constx * mwv0 * buoy0 );
+               double ufunc1 = exp( ampv1 + constx * mwv1 * buoy0 );
+               double ufunc2 = exp( stoich1 * ampv0 + runfit.eq_vals[ 0 ] +
+                  ODcorec1 + constx * stoich1 * mwv0 * buoy0 );
+               double cguess  = ufunc0 + ufunc1 + ufunc2;
+
+               y_guess[ jpx ] = cguess + scnf->baseline;
+
+               if ( cguess > 0.0 )
+                  lncr2[ jdx ][ jlx++ ] = log( cguess );
+
+               jpx++;
+            }
+
+            v_setlpts << jlx;
+            jdx++;
+         }
+         break;
+      }
+      case 18:    // 18: "User-Defined irreversible Monomer-Nmer"
+      {
+         double mwv0         = runfit.mw_vals[ 0 ];
+         double stoich1      = runfit.stoichs[ 0 ];
+         double mwv1         = mwv0 * stoich1;
+
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            int    jstx     = scnf->start_ndx;
+            double xm_sq    = sq( scnf->xvs[ jstx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            v_vbar[ 0 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
+                                                       tempera );
+            double buoy0    = ( 1.0 - v_vbar[ 0 ] * density );
+            double ampv0    = scnf->amp_vals[ 0 ];
+            double ampv1    = scnf->amp_vals[ 1 ];
+            jlx  = 0;
+
+            for ( int jj = jstx; jj < jstx + v_setpts[ jdx ]; jj++ )
+            {
+               double xv     = sq( scnf->xvs[ jj ] ) - xm_sq;
+               double constx = dconst * xv;
+               double ufunc0 = exp( ampv0 + constx * mwv0 * buoy0 );
+               double ufunc1 = exp( ampv1 + constx * mwv1 * buoy0 );
+               double cguess  = ufunc0 + ufunc1;
+
+               y_guess[ jpx ] = cguess + scnf->baseline;
+
+               if ( cguess > 0.0 )
+                  lncr2[ jdx ][ jlx++ ] = log( cguess );
+
+               jpx++;
+            }
+
+            v_setlpts << jlx;
+            jdx++;
+         }
+         break;
+      }
+      case 19:    // 19: "User-Defined Monomer-Nmer plus contaminant"
+      {
+         double mwv0         = runfit.mw_vals[ 0 ];
+         double mwv1         = runfit.mw_vals[ 1 ];
+         double stoich1      = runfit.stoichs[ 0 ];
+         double stoiexp      = stoich1 - 1.0;
+
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            int    jstx     = scnf->start_ndx;
+            double xm_sq    = sq( scnf->xvs[ jstx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double extinc0  = scnf->extincts[ 0 ];
+            double ODcorec1 = log( stoich1 /
+                                   pow( scnf->pathlen * extinc0, stoiexp ) );
+            v_vbar[ 0 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
+                                                       tempera );
+            v_vbar[ 1 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 1 ],
+                                                       tempera );
+            double buoy0    = ( 1.0 - v_vbar[ 0 ] * density );
+            double buoy1    = ( 1.0 - v_vbar[ 1 ] * density );
+            double ampv0    = scnf->amp_vals[ 0 ];
+            double ampv1    = scnf->amp_vals[ 1 ];
+            jlx  = 0;
+
+            for ( int jj = jstx; jj < jstx + v_setpts[ jdx ]; jj++ )
+            {
+               double xv     = sq( scnf->xvs[ jj ] ) - xm_sq;
+               double constx = dconst * xv;
+               double ufunc0 = exp( ampv0 + constx * mwv0 * buoy0 );
+               double ufunc1 = exp( ampv1 + constx * mwv1 * buoy1 );
+               double ufunc2 = exp( stoich1 * ampv0 + runfit.eq_vals[ 0 ] +
+                  ODcorec1 + constx * stoich1 * mwv0 * buoy0 );
+               double cguess  = ufunc0 + ufunc1 + ufunc2;
+
+               y_guess[ jpx ] = cguess + scnf->baseline;
+
+               if ( cguess > 0.0 )
+                  lncr2[ jdx ][ jlx++ ] = log( cguess );
+
+               jpx++;
+            }
+
+            v_setlpts << jlx;
+            jdx++;
+         }
+         break;
+      }
+   }
+   return stat;
+}
+
 // Solve a general least squares (order=2)
 void US_EqMath::genLeastSquaresOrd2( double** MM, int points,
                                      double* y_raw, double** coeff )
@@ -1799,7 +2349,7 @@ bool US_EqMath::Cholesky_Invert( double** AA, double** AI, int nn )
    for ( int jj = 0; jj < nn; jj++ )
    {
       // Set up A-inverse to contain the Identity matrix:
-      workvec.fill( nn, 0.0 );
+      workvec.fill( 0.0, nn );
       workvec[ jj ] = 1.0;
       work          = workvec.data();
 
@@ -1827,13 +2377,16 @@ void US_EqMath::calc_A_transpose_A( double** AA, double** PP,
 
    for ( int ii = 0; ii < columns; ii++ )
    {  // Loop for A' rows, A columns and P columns
-      column_array( AA, rows, ii, ATrow );  // Get transpose row (A column)
-
       double dotp    = 0.0;
 
       // Dot product of the A' row with itself  (output diagonal point)
+      //  Also, save this A' row for use below
       for ( int kk = 0; kk < rows; kk++ )
-         dotp       += sq( ATrow[ kk ] );
+      {
+         double aval = AA[ kk ][ ii ];
+         dotp       += sq( aval );
+         ATrow[ kk ] = aval;
+      }
 
       PP[ ii ][ ii ] = dotp;                // Store product on diagonal
 
@@ -1863,13 +2416,5 @@ void US_EqMath::calc_A_transpose_A( double** AA, double** PP,
          for ( int jj = ii + 1; jj < columns; jj++ )
             PP[ ii ][ jj ] = PP[ jj ][ ii ];
    }
-}
-
-// Fill an array from a column of a matrix
-void US_EqMath::column_array( double** MM, int rows, int columnx, double* cc )
-{
-   // Fill the array with successive row values from the specified column
-   for ( int kk = 0; kk < rows; kk++ )
-      cc[ kk ] = MM[ kk ][ columnx ];
 }
 

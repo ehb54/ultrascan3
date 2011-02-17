@@ -23,19 +23,19 @@ class US_EXTERN US_EqMath : public QObject
 
       void   init_params          ( int, bool,
                                     QList< double >&, QList< double >& );
-      void   init_fit             ( int, int, int&, int&, int& );
+      void   init_fit             ( int, int, FitCtrlPar& );
       int    calc_jacobian        ( void   );
       double calc_testParameter   ( double );
       double linesearch           ( void   );
       void   calc_B               ( void   );
       double calc_residuals       ( void   );
+      int    calc_model           ( double* );
       void   genLeastSquaresOrd2  ( double**, int, double*, double** );
-      void   guess_mapForward     ( QVector< double >& );
-      void   parameter_mapBackward( QVector< double >& );
+      void   guess_mapForward     ( double* );
+      void   parameter_mapBackward( double* );
       bool   Cholesky_Invert      ( double**, double**, int );
       void   calc_A_transpose_A   ( double**, double**, int, int );
       void   calc_A_transpose_A   ( double**, double**, int, int, bool );
-      void   column_array         ( double**, int, int, double* );
 
    private:
       QVector< US_DataIO2::EditedData >&  dataList;
@@ -66,13 +66,6 @@ class US_EXTERN US_EqMath : public QObject
       QVector< double* >  m_dlncr2;   // dlncr2 matrix
       QVector< double* >  m_lncr2;    // lncr2 matrix
 
-      double*             setpts;     // Set points array
-      double*             setlpts;    // Set log points array
-      double*             y_raw;      // Y raw values array
-      double*             y_guess;    // Y guesses array
-      double*             y_delta;    // Y deltas array
-      double*             BB;         // B array
-      double*             guess;      // Guesses array
       double*             d_jacobi;   // Jacobian data array
       double*             d_info;     // Information data array
       double*             d_LLtrns;   // LL transpose data array
@@ -80,6 +73,14 @@ class US_EXTERN US_EqMath : public QObject
       double*             d_dlncr2;   // dlncr2 data array
       double*             d_lncr2;    // lncr2 data array
 
+      int*                setpts;     // Set points array
+      int*                setlpts;    // Set log points array
+      double*             y_raw;      // Y raw values array
+      double*             y_guess;    // Y guesses array
+      double*             y_delta;    // Y deltas array
+      double*             BB;         // B array
+      double*             guess;      // Guesses array
+      double*             tguess;     // Test guesses array
       double**            jacobian;   // Jacobian matrix array
       double**            info;       // Information matrix array
       double**            LLtr;       // LL transpose matrix array
