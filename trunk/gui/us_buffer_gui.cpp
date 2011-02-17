@@ -77,8 +77,25 @@ US_BufferGui::US_BufferGui(
    row += 7;
 
    // Labels
+   QHBoxLayout* desc = new QHBoxLayout;
+
    QLabel* lb_description = us_label( tr( "Buffer Description:" ) );
-   main->addWidget( lb_description, row++, 0 );
+   desc->addWidget( lb_description );
+
+   QGridLayout* shared = us_checkbox( tr( "Shared" ), cb_shared );
+
+   // Set up checkbox colors to match label (as set in us_config)
+   QPalette p = US_GuiSettings::labelColor();
+   p.setColor( QPalette::Base,   p.color( QPalette::WindowText ) );  // Checkbox BG
+   p.setColor( QPalette::Button, p.color( QPalette::Window     ) );  // Checkbox Text BG
+   p.setColor( QPalette::Text,   p.color( QPalette::Window     ) );  // Checkbox FG
+
+   shared->itemAt( 0 )->widget()->setPalette( p );
+   shared->itemAt( 1 )->widget()->setPalette( p );
+
+   desc->addLayout( shared );
+
+   main->addLayout( desc, row++, 0 );
 
    QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
    main->addWidget( lb_guid, row++, 0 );
@@ -227,7 +244,7 @@ US_BufferGui::US_BufferGui(
    }
 
    lb_units = us_label( "" );
-   QPalette p = lb_units->palette();
+   p        = lb_units->palette();
    p.setColor( QPalette::WindowText, Qt::red );
    lb_units->setPalette( p );
    lb_units->setAlignment( Qt::AlignCenter );
@@ -686,6 +703,7 @@ void US_BufferGui::read_from_disk( QListWidgetItem* item )
       qDebug() << "read failed";
 
    buffer.component.clear();
+   cb_shared ->setChecked( false );
 
    for ( int i = 0; i < buffer.componentIDs.size(); i++ )
    {
@@ -729,6 +747,8 @@ void US_BufferGui::read_from_db( const QString& bufferID )
 
    QString personID       = db.value( 6 ).toString();
    buffer.personID        = personID.toInt();
+
+   cb_shared ->setChecked( ! db.value( 7 ).toBool() );  // ! private
    
    lw_buffer->clear();
 
@@ -983,7 +1003,9 @@ void US_BufferGui::save_db( void )
             tr( "UltraScan - Buffer Database" ),
             tr( "Click 'OK' to save the selected\n"
                 "buffer file into the database" ) );
- 
+
+   QString private_buffer = ( cb_shared->isChecked() ) ? "0" : "1";
+
    if ( response == QMessageBox::Ok )
    {
       QStringList q( "new_buffer" );
@@ -993,8 +1015,7 @@ void US_BufferGui::save_db( void )
         << QString::number( buffer.pH             , 'f', 4 )
         << QString::number( buffer.density        , 'f', 6 )
         << QString::number( buffer.viscosity      , 'f', 5 )
-        << "1"  // Private
-        << QString::number( US_Settings::us_inv_ID() ); 
+        << private_buffer;  // Private
 
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
@@ -1099,6 +1120,8 @@ void US_BufferGui::update_db( void )
          return;
       }
          
+      QString private_buffer = ( cb_shared->isChecked() ) ? "0" : "1";
+
       QStringList q( "update_buffer" );
       q << buffer.bufferID
         << buffer.description
@@ -1106,7 +1129,7 @@ void US_BufferGui::update_db( void )
         << QString::number( buffer.pH             , 'f', 4 )
         << QString::number( buffer.density        , 'f', 6 )
         << QString::number( buffer.viscosity      , 'f', 5 )
-        << "1";  // Private
+        << private_buffer;  // Private
 
       db.statusQuery( q );
 
@@ -1328,6 +1351,7 @@ void US_BufferGui::reset( void )
    pb_save           ->setEnabled( false );
    pb_update         ->setEnabled( false );
    pb_del            ->setEnabled( false );
+   cb_shared         ->setChecked( false );
                      
    lb_units          ->setText( "" );
    le_concentration  ->clear();
