@@ -87,6 +87,8 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       QListWidget*  lw_buffer_db;
       QListWidget*  lw_ingredients;
       QListWidget*  lw_buffer;
+
+      QCheckBox*    cb_shared;
                    
       QLineEdit*    le_search;
       QLineEdit*    le_density;
