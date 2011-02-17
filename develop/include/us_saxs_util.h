@@ -327,19 +327,22 @@ class US_EXTERN US_Saxs_Util
       map < QString, double >             wave_alpha_ends;        // maps names to alpha ends  (for waxs)
       map < QString, double >             wave_alpha_incs;        // maps names to alpha incs  (for waxs)
 
+      map < QString, double >             wave_overlap_lowq;      // maps names to wgsbs overlap lowq
+      map < QString, double >             wave_overlap_highq;     // maps names to wgsbs overlap highq
+
       // computed:
       map < QString, QString >            wave_sb;                // maps wave to standard background (and empty cell) subtraction
       map < QString, QString >            wave_wgsbs;             // maps saxs wave to waxs guided saxs background subtraction
       map < QString, QString >            wave_wgsbs_unscaled;    // maps saxs wave to waxs guided saxs background subtraction
       map < QString, QString >            wave_join;              // maps saxs wave to waxs guided saxs background subtraction join
 
-      map < QString, double >             wave_Rgs;               // maps names to conc
-      map < QString, double >             wave_Ios;               // maps names to conc
-      map < QString, double >             wave_smins;             // maps names to conc
-      map < QString, double >             wave_smaxs;             // maps names to conc
-      map < QString, double >             wave_sRgmins;           // maps names to conc
-      map < QString, double >             wave_sRgmaxs;           // maps names to conc
-      map < QString, double >             wave_chi2s;             // maps names to conc
+      map < QString, double >             wave_Rgs;               // maps names to Rg
+      map < QString, double >             wave_Ios;               // maps names to Io
+      map < QString, double >             wave_smins;             // maps names to smins
+      map < QString, double >             wave_smaxs;             // maps names to smaxs
+      map < QString, double >             wave_sRgmins;           // maps names to sRg min
+      map < QString, double >             wave_sRgmaxs;           // maps names to sRgmax
+      map < QString, double >             wave_chi2s;             // maps names to chi^2
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )

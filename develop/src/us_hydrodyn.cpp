@@ -3262,6 +3262,11 @@ int US_Hydrodyn::calc_prr( bool bead_model, bool create_native_saxs )
 
 void US_Hydrodyn::pdb_saxs( bool create_native_saxs )
 {
+   //   cout << QString("ext %1 sans_sans %1 curve %1\n")
+   //      .arg(saxs_sans_ext())
+   //      .arg(saxs_options.saxs_sans)
+   //      .arg(saxs_options.curve);
+
    vector < unsigned int > selected_models;
    for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
    {

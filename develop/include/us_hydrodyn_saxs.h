@@ -182,6 +182,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 #ifdef WIN32
      #pragma warning ( default: 4251 )
 #endif      
+      QString nnls_B_name;
+      QString nnls_header_tag;
+
       void *us_hydrodyn;
 
       unsigned int current_model;
@@ -206,13 +209,16 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < double > rescale( vector < double > x );
 
       QString vector_double_to_csv( vector < double > vd );
-      void calc_nnls_fit();
+      void calc_nnls_fit( QString save_to_csv_name = "" );
       void plot_one_pr(vector < double > r, vector < double > pr, QString name);
       void plot_one_iqq(vector < double > q, vector < double > I, QString name);
       bool plotted;
       bool save_to_csv;
       QString csv_filename;
       double guinier_cutoff;
+
+      int file_curve_type(QString filename);
+      QString curve_type_string(int curve);
 
    public slots:
       void show_plot_saxs_sans();

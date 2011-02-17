@@ -5057,3 +5057,24 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
    }
    return false;
 }
+
+QString US_Hydrodyn::saxs_sans_ext()
+{
+   QString result;
+   switch ( saxs_options.curve )
+   {
+   case 0 : 
+      result = "r";
+      break;
+   case 1 :
+      result = "x";
+      break;
+   case 2 :
+      result = "n";
+      break;
+   default :
+      result = "u";
+      break;
+   }
+   return result;
+}

@@ -145,6 +145,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 #endif
       bool is_dammin_dammif(QString filename);
 
+      QString saxs_sans_ext(); // returns correct extension based upon current saxs/sans mode
+
    private:
       US_Config *USglobal;
 

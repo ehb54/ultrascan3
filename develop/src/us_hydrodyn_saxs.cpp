@@ -411,13 +411,13 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    rb_curve_saxs = new QRadioButton(tr("SAXS"), this);
    rb_curve_saxs->setEnabled(true);
-   rb_curve_saxs->setChecked(our_saxs_options->curve == 2);
+   rb_curve_saxs->setChecked(our_saxs_options->curve == 1);
    rb_curve_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_curve_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    rb_curve_sans = new QRadioButton(tr("SANS"), this);
    rb_curve_sans->setEnabled(true);
-   rb_curve_sans->setChecked(our_saxs_options->curve == 3);
+   rb_curve_sans->setChecked(our_saxs_options->curve == 2);
    rb_curve_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_curve_sans->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
@@ -1569,6 +1569,42 @@ void US_Hydrodyn_Saxs::load_pr()
    unsigned int pop_last = 0;
    if ( f.open(IO_ReadOnly) )
    {
+
+      if ( file_curve_type(f.name()) != -1 &&
+           file_curve_type(f.name()) != our_saxs_options->curve )
+      {
+         switch ( QMessageBox::question(this, 
+                                        tr("UltraScan Notice"),
+                                        QString(tr("Please note:\n\n"
+                                                   "The file appears to be in %1 mode and you"
+                                                   " are currently set in %1 mode.\n"
+                                                   "What would you like to do?\n"))
+                                        .arg(curve_type_string(file_curve_type(f.name())))
+                                        .arg(curve_type_string(our_saxs_options->curve))
+                                        ,
+                                        tr("&Change mode now and load"), 
+                                        tr("&Load anyway without changing the mode"),
+                                        tr("&Stop loading"),
+                                        0, // Stop == button 0
+                                        0 // Escape == button 0
+                                        ) )
+               {
+               case 0 : 
+                  our_saxs_options->curve = file_curve_type(f.name());
+                  rb_curve_raw->setChecked(our_saxs_options->curve == 0);
+                  rb_curve_saxs->setChecked(our_saxs_options->curve == 1);
+                  rb_curve_sans->setChecked(our_saxs_options->curve == 2);
+                  break;
+               case 2 : 
+                  break;
+               case 1 : 
+               default :
+                  f.close();
+                  return;
+                  break;
+               }
+      }
+   
       if ( ext == "csv" )
       {
          // attempt to read a csv file
@@ -1715,7 +1751,7 @@ void US_Hydrodyn_Saxs::load_pr()
          if ( run_nnls &&
               !qsl_sel_names.grep(nnls_target).size() )
          {
-            cout << "had to add target back\n";
+            // cout << "had to add target back\n";
             qsl_sel_names << nnls_target;
          }
 
@@ -1747,6 +1783,7 @@ void US_Hydrodyn_Saxs::load_pr()
             nnls_A.clear();
             nnls_x.clear();
             nnls_B.clear();
+            nnls_B_name = nnls_target;
             nnls_rmsd = 0e0;
          }
 
@@ -1944,9 +1981,10 @@ void US_Hydrodyn_Saxs::load_pr()
             }
             if ( save_to_csv )
             {
+               cout << "save_to_csv\n";
                QString fname = 
                   ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
-                  csv_filename + "_prr.csv";
+                  csv_filename + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
                FILE *of = fopen(fname, "wb");
                if ( of )
                {
@@ -1995,11 +2033,11 @@ void US_Hydrodyn_Saxs::load_pr()
                nnls_r = r;
                if ( found_nnls_model && found_nnls_target )
                {
-                  calc_nnls_fit();
+                  nnls_header_tag = header_tag;
+                  calc_nnls_fit( save_to_csv ? csv_filename : "" );
                } else {
                   editor->append("NNLS error: could not find target and models in loaded data\n");
                }
-               // then plot the nnls fit & target ?
             }
             if ( plotted )
             {
@@ -3472,8 +3510,9 @@ QString US_Hydrodyn_Saxs::sprr_filestring()
 
    result +=
       QString(".sprr_%1")
-      .arg( rb_curve_raw->isChecked() ? "r" :
-            ( rb_curve_saxs->isChecked() ? "x" : "n" ) );
+      .arg( ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() );
+   // rb_curve_raw->isChecked() ? "r" :
+   //            ( rb_curve_saxs->isChecked() ? "x" : "n" ) );
    return result;
 }
 
@@ -3487,8 +3526,7 @@ QString US_Hydrodyn_Saxs::vector_double_to_csv( vector < double > vd )
    return result;
 }
 
-
-void US_Hydrodyn_Saxs::calc_nnls_fit()
+void US_Hydrodyn_Saxs::calc_nnls_fit( QString csv_filename )
 {
    // setup nnls run:
    // editor->append("setting up nnls run\n");
@@ -3659,6 +3697,60 @@ void US_Hydrodyn_Saxs::calc_nnls_fit()
    plot_one_pr(nnls_r, nnls_B, "Target");
 
    // save as csv
+
+   if ( !csv_filename.isEmpty() )
+   {
+      cout << "save_to_csv\n";
+      QString fname = 
+         ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
+         csv_filename + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
+      FILE *of = fopen(fname, "wb");
+      if ( of )
+      {
+         //  header: "name","type",r1,r2,...,rn, header info
+         fprintf(of, "\"Name\",\"Type; r:\",%s,%s\n", 
+                 vector_double_to_csv(nnls_r).ascii(),
+                 QString("NNLS fit residual %1 : %2").arg(nnls_rmsd).arg(nnls_header_tag).ascii());
+         // original models
+         for ( unsigned int i = 0; i < use_x.size(); i++ )
+         {
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    QString("%1 %2").arg(model_names[i]).arg(rescaled_x[i]).ascii(),
+                    "P(r)",
+                    vector_double_to_csv(nnls_A[model_names[i]]).ascii());
+         }
+         // target
+         fprintf(of, "\"%s\",\"%s\",%s\n", 
+                 QString("Target %2").arg(nnls_B_name).ascii(),
+                 "P(r)",
+                 vector_double_to_csv(nnls_B).ascii());
+
+         // best fit model
+         fprintf(of, "\"%s\",\"%s\",%s\n", 
+                 "Model",
+                 "P(r)",
+                 vector_double_to_csv(model).ascii());
+         
+         fprintf(of, "\"%s\",\"%s\",%s\n", 
+                 "Residual",
+                 "P(r)",
+                 vector_double_to_csv(residual).ascii());
+
+         fclose(of);
+         if ( plotted )
+         {
+            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+            editor->append("P(r) plot done\n");
+            plotted = false;
+         }
+         editor->append(tr("Created file: " + fname + "\n"));
+      } else {
+         QColor save_color = editor->color();
+         editor->setColor("red");
+         editor->append(tr("ERROR creating file: " + fname + "\n"));
+         editor->setColor(save_color);
+      }
+   }
 }
 
 void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QString name)
@@ -3923,3 +4015,47 @@ vector < double > US_Hydrodyn_Saxs::rescale( vector < double > x )
    }
    return x;
 }
+
+int US_Hydrodyn_Saxs::file_curve_type(QString filename)
+{
+   QRegExp rx("sprr_(.)");
+   if ( rx.search(filename) == -1 )
+   {
+      return -1;
+   }
+   if ( rx.cap(1) == "r" )
+   {
+      return 0;
+   }
+   if ( rx.cap(1) == "x" )
+   {
+      return 1;
+   }
+   if ( rx.cap(1) == "n" )
+   {
+      return 2;
+   }
+   return -1;
+}
+
+QString US_Hydrodyn_Saxs::curve_type_string(int curve)
+{
+   QString result;
+   switch ( curve )
+   {
+   case 0 : 
+      result = "\"Raw\"";
+      break;
+   case 1 : 
+      result = "\"SAXS\"";
+      break;
+   case 2 : 
+      result = "\"SANS\"";
+      break;
+   default : 
+      result = "unknown";
+      break;
+   }
+   return result;
+}
+

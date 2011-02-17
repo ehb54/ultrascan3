@@ -2143,7 +2143,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
 {
    QString fname = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
-      batch->csv_saxs_name + "_prr.csv";
+      batch->csv_saxs_name + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
    FILE *of = fopen(fname, "wb");
    if ( of )
    {

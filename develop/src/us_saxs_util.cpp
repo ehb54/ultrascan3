@@ -2738,6 +2738,8 @@ bool US_Saxs_Util::read_project()
                    "wavealphastart|"
                    "wavealphaend|"
                    "wavealphainc|"
+                   "waveoverlaplowq|"
+                   "waveoverlaphighq|"
                    "remark)$"
                    );
 
@@ -2929,6 +2931,8 @@ bool US_Saxs_Util::read_project()
          wave_alpha_starts[data] = 0e0;
          wave_alpha_ends[data] = 0e0;
          wave_alpha_incs[data] = 0e0;
+         wave_overlap_lowq[data] = 0e0;
+         wave_overlap_highq[data] = 0e0;
          continue;
       }
 
@@ -3088,6 +3092,46 @@ bool US_Saxs_Util::read_project()
             return false;
          }
          wave_alpha_incs[last_wave_name] = data.toDouble();
+         continue;
+      }
+
+      if ( token == "waveoverlaplowq" )
+      {
+         if ( wave_types[last_wave_name] != "saxs" )
+         {
+            errormsg = QString("error in project file line %1.  waveType must be saxs for waveOverlapLowQ <%1>\n")
+               .arg(linepos)
+               .arg(line);
+            return false;
+         }
+         if ( !wave_concs[last_wave_name] )
+         {
+            errormsg = QString("error in project file line %1.  waveConc must be nonzero for waveOverlapLowQ <%1>\n")
+               .arg(linepos)
+               .arg(line);
+            return false;
+         }
+         wave_overlap_lowq[last_wave_name] = data.toDouble();
+         continue;
+      }
+
+      if ( token == "waveoverlaphighq" )
+      {
+         if ( wave_types[last_wave_name] != "saxs" )
+         {
+            errormsg = QString("error in project file line %1.  waveType must be saxs for waveOverlapHighq <%1>\n")
+               .arg(linepos)
+               .arg(line);
+            return false;
+         }
+         if ( !wave_concs[last_wave_name] )
+         {
+            errormsg = QString("error in project file line %1.  waveConc must be nonzero for waveOverlapHighq <%1>\n")
+               .arg(linepos)
+               .arg(line);
+            return false;
+         }
+         wave_overlap_highq[last_wave_name] = data.toDouble();
          continue;
       }
 
@@ -4449,6 +4493,16 @@ bool US_Saxs_Util::wiki(QString &result)
                      .arg(wave_names_vector[i] + "|buffer")
                      .arg(wave_sb[wave_names_vector[j]]);
 
+                  double use_overlap_lowq = 
+                     wave_overlap_lowq[wave_names_vector[i]] ?
+                     wave_overlap_lowq[wave_names_vector[i]] :
+                     p_overlap_lowq;
+
+                  double use_overlap_highq = 
+                     wave_overlap_highq[wave_names_vector[i]] ?
+                     wave_overlap_highq[wave_names_vector[i]] :
+                     p_overlap_highq;
+
                   if ( !compute_wgsbs(
                                       outfile,
                                       wave_names_vector[i],
@@ -4470,8 +4524,8 @@ bool US_Saxs_Util::wiki(QString &result)
                                       1e-6,
                                       0e0,
                                       0e0,
-                                      p_overlap_lowq,
-                                      p_overlap_highq,
+                                      use_overlap_lowq,
+                                      use_overlap_highq,
                                       nrmsd,
                                       alphamin,
                                       betamin,
@@ -4505,7 +4559,15 @@ bool US_Saxs_Util::wiki(QString &result)
                      QString("Grid iterations %1[[br]]GSM iterations %2%3")
                      .arg(p_iterations_grid)
                      .arg(p_iterations_gsm)
-                     .arg(cliperrors.isEmpty() ? "" : QString("\n%1").arg(cliperrors));
+                     .arg(cliperrors.isEmpty() ? "" : QString("[[br]]%1").arg(cliperrors));
+
+                  if ( use_overlap_lowq != p_overlap_lowq ||
+                       use_overlap_highq != p_overlap_highq )
+                  {
+                     cliperrors += QString("[[br]]overlap fit range %1 %1")
+                        .arg(use_overlap_lowq)
+                        .arg(use_overlap_highq);
+                  }
 
                   result += 
                      QString(
@@ -4534,7 +4596,7 @@ bool US_Saxs_Util::wiki(QString &result)
                      .arg(wave_file_names[wave_sb[wave_names_vector[j]]])
                      .arg(wave_comments[wave_names_vector[j]])
 
-                     .arg(QString("%1").arg(outfile).replace(QRegExp("\\.dat$"),""))
+                     .arg(QString("%1").arg(outfile).replace(QRegExp("\\.dat$"),"").replace(QRegExp("^cwave."),""))
                      .arg("saxs plus waxs")
                      .arg(wave_concs[wave_names_vector[i]] ? QString("%1").arg(wave_concs[wave_names_vector[i]]) : "buffer" )
                      .arg(wave_exposure_times[wave_names_vector[i]] ? QString("%1").arg(wave_exposure_times[wave_names_vector[i]]) : "" )
@@ -4565,8 +4627,8 @@ bool US_Saxs_Util::wiki(QString &result)
                      QString(
                              "pnggnuplot.pl -c %1 %1 %1 %1 %1"
                              )
-                     .arg(p_overlap_lowq)
-                     .arg(p_overlap_highq)
+                     .arg(use_overlap_lowq)
+                     .arg(use_overlap_highq)
                      .arg(QString("pngs%1%1").arg(QDir::separator()).arg(pngfilez))
                      .arg(outfile)
                      .arg(wave_sb[wave_names_vector[j]]);
@@ -4802,7 +4864,7 @@ bool US_Saxs_Util::wiki(QString &result)
       result += "== WAXS guided SAXS buffer subtraction unscaled concentration series ==\n";
       
       result +=
-         "|| name || saxs or waxs || conc (mg/ml) || alpha || source file || comments ||\n";
+         "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments ||\n";
       
       pngfile = QString("pngs%1%1_saxs_wgsbs_unscaled_conc_series.png")
          .arg(QDir::separator())
@@ -5019,6 +5081,9 @@ bool US_Saxs_Util::merge_projects( QString outfile,
                            "(.*)\\|\\|"
                            "$"
                            );
+
+   QRegExp rxheadertowiki("= (.+) =");
+
    for ( unsigned int i = 0; i < projects.size(); i++ )
    {
       result += "\n----\n";
@@ -5099,6 +5164,7 @@ bool US_Saxs_Util::merge_projects( QString outfile,
       QString saxs_guinier;
       bool start_collecting_saxs_guinier = false;
       int start_collecting = -1;
+      bool link_done = false;
       while ( !ts2.atEnd() )
       {
          QString line = ts2.readLine();
@@ -5115,7 +5181,14 @@ bool US_Saxs_Util::merge_projects( QString outfile,
 
          if ( start_collecting < 0 )
          {
-            result += line + "\n";
+            if ( !link_done &&
+                 rxheadertowiki.search(line) != -1 )
+            {
+               link_done = true;
+               result += QString("= [wiki:%1 %2] =\n").arg(QFileInfo(f2a.name()).fileName()).arg(rxheadertowiki.cap(1));
+            } else {
+               result += line + "\n";
+            }
          }  
           
          if ( start_collecting > collect_limit )
