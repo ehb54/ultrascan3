@@ -258,10 +258,13 @@ class US_EXTERN US_Saxs_Util
 
       // project utilities
 
-      bool read_project();
-      bool merge_projects(QString outfile, 
-                          double reference_mw_multiplier, 
-                          vector < QString > projects);
+      bool read_project( QString subdir = "" );
+      bool merge_projects(
+                          QString            outfile, 
+                          double             reference_mw_multiplier, 
+                          vector < QString > projects,
+                          bool               run_gnom = false
+                          );
       bool build_wiki();
 
       // build averages and wiki page for subdirectory 1d, create pngsplits # of zoom (none if 1 or less)
@@ -269,6 +272,14 @@ class US_EXTERN US_Saxs_Util
 
    private:
 
+      bool run_gnom( 
+                    QString             project, 
+                    QString             prefix, 
+                    vector < QString >  files,
+                    vector < double >   use_dmax_start,
+                    vector < double >   use_dmax_end,
+                    vector < double >   use_dmax_inc
+                    );
       void clear_project();
       bool check_project_files();
       bool read_project_waves();
@@ -303,6 +314,9 @@ class US_EXTERN US_Saxs_Util
       double  p_guinier_maxq;
       unsigned int  p_iterations_grid;
       unsigned int  p_iterations_gsm;
+      double  p_dmax_start;
+      double  p_dmax_end;
+      double  p_dmax_inc;
 
       bool any_waxs;
       bool any_saxs;

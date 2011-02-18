@@ -4,7 +4,8 @@
    for wiki:
    ? support multiple waxs samples for wgsbs 
    full parameterization (search for "these should be parameterized")
-   pnggnuplot.pl should be integraded, instead of as an external perl program
+   pnggnuplot.pl should be integrated, instead of as an external perl program
+   mkgnom.pl should be integrated
    ? system calls should be replaced with qprocess
    final cropping of waves
    better fit mechanism for wgsbs (current one is too slow, I'm sure some more efficient method is possible)
@@ -2601,6 +2602,10 @@ void US_Saxs_Util::clear_project()
    p_guinier_maxq = .05e0;
    p_iterations_grid = 10;
    p_iterations_gsm = 50;
+   p_dmax_start = 50;
+   p_dmax_end = 200;
+   p_dmax_inc = 50;
+   p_iterations_gsm = 50;
    wave_names_vector.clear();
    wave_names.clear();
    wave_file_names.clear();
@@ -2679,10 +2684,10 @@ bool US_Saxs_Util::check_project_files()
    return errormsg.isEmpty();
 }
 
-bool US_Saxs_Util::read_project()
+bool US_Saxs_Util::read_project( QString subdir )
 {
    errormsg = "";
-   QFile f("project");
+   QFile f(QString("%1project").arg(subdir.isEmpty() ? "" : subdir + QDir::separator()));
    if ( !f.exists() )
    {
       errormsg = "project file does not exist";
@@ -2740,6 +2745,9 @@ bool US_Saxs_Util::read_project()
                    "wavealphainc|"
                    "waveoverlaplowq|"
                    "waveoverlaphighq|"
+                   "dmaxstart|"
+                   "dmaxend|"
+                   "dmaxinc|"
                    "remark)$"
                    );
 
@@ -2909,6 +2917,24 @@ bool US_Saxs_Util::read_project()
       if ( token == "guiniermaxq" )
       {
          p_guinier_maxq = data.toDouble();
+         continue;
+      }
+
+      if ( token == "gnomdmaxstart" )
+      {
+         p_dmax_start = data.toDouble();
+         continue;
+      }
+
+      if ( token == "gnomdmaxend" )
+      {
+         p_dmax_end = data.toDouble();
+         continue;
+      }
+
+      if ( token == "gnomdmaxinc" )
+      {
+         p_dmax_inc = data.toDouble();
          continue;
       }
 
@@ -3145,6 +3171,16 @@ bool US_Saxs_Util::read_project()
 
    cout << "project file ok\n";
 
+
+   cout << "wiki file name:" << wiki_file_name() << endl;
+
+   return true;
+}
+  
+bool US_Saxs_Util::build_wiki()
+{
+   errormsg = "";
+
    if ( !read_project_waves() )
    {
       return false;
@@ -3158,15 +3194,7 @@ bool US_Saxs_Util::read_project()
    }
 
    compute_alphas();
-
-   cout << "wiki file name:" << wiki_file_name() << endl;
-
-   return true;
-}
-  
-bool US_Saxs_Util::build_wiki()
-{
-   errormsg = "";
+   
    QFile f(wiki_file_name());
    if ( !f.open( IO_WriteOnly ) )
    {
@@ -5044,10 +5072,73 @@ bool US_Saxs_Util::wiki(QString &result)
    return true;
 }
 
-bool US_Saxs_Util::merge_projects( QString outfile, 
-                                   double reference_mw_multiplier, 
-                                   vector < QString > projects )
+bool US_Saxs_Util::merge_projects( 
+                                  QString            outfile, 
+                                  double             reference_mw_multiplier, 
+                                  vector < QString > projects,
+                                  bool               gnom_run 
+                                  )
 {
+   clear_project();
+
+   vector < QString > gnom_files;
+   vector < double > gnom_files_dmax_start;
+   vector < double > gnom_files_dmax_end;
+   vector < double > gnom_files_dmax_inc;
+   map < QString, unsigned int > gnom_file_map;
+   bool use_merge_gnom = false;
+
+   if ( gnom_run )
+   {
+      QFile f("merge_gnom");
+      if ( f.exists() )
+      {
+         use_merge_gnom = true;
+         if ( !f.open(IO_ReadOnly) )
+         {
+            errormsg = "can not open merge_gnom";
+            return false;
+         }
+         QRegExp rxempty("^\\s*$");
+         QRegExp rx1("^\\s*(\\S+)\\s*$");
+         QRegExp rx4("^\\s*(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
+         QRegExp rxskip("^#");
+         QTextStream ts(&f);
+         while ( !ts.atEnd() )
+         {
+            QString line = ts.readLine();
+            if ( rxskip.search(line) != -1 ||
+                 rxempty.search(line) != -1 )
+            {
+               continue;
+            }
+
+            if ( rx4.search(line) == -1 &&
+                 rx1.search(line) == -1 )
+            {
+               errormsg = "merge_gnom lines must contain either one or 4 columns";
+               return false;
+            }
+
+            if ( rx4.search(line) != -1 )
+            {
+               gnom_file_map[rx4.cap(1)] = gnom_files.size();
+               gnom_files.push_back(rx4.cap(1));
+               gnom_files_dmax_start.push_back(rx4.cap(2).toDouble());
+               gnom_files_dmax_end.push_back(rx4.cap(3).toDouble());
+               gnom_files_dmax_inc.push_back(rx4.cap(4).toDouble());
+               continue;
+            }
+
+            gnom_file_map[rx1.cap(1)] = gnom_files.size();
+            gnom_files.push_back(rx1.cap(1));
+            gnom_files_dmax_start.push_back(0e0);
+            gnom_files_dmax_end.push_back(0e0);
+            gnom_files_dmax_inc.push_back(0e0);
+         }
+      }
+   }
+
    QString result = 
       QString(
               "= Multi Sample Guinier Summary =\n"
@@ -5088,6 +5179,10 @@ bool US_Saxs_Util::merge_projects( QString outfile,
    {
       result += "\n----\n";
       QFile f(projects[i] + QDir::separator() + "project");
+      vector < QString > files;
+      vector < double > use_dmax_start;
+      vector < double > use_dmax_end;
+      vector < double > use_dmax_inc;
 
       if ( !f.open(IO_ReadOnly) )
       {
@@ -5165,6 +5260,7 @@ bool US_Saxs_Util::merge_projects( QString outfile,
       bool start_collecting_saxs_guinier = false;
       int start_collecting = -1;
       bool link_done = false;
+
       while ( !ts2.atEnd() )
       {
          QString line = ts2.readLine();
@@ -5207,6 +5303,43 @@ bool US_Saxs_Util::merge_projects( QString outfile,
                      return false;
                   }
                   double estmw = rxcapturefields.cap(10).stripWhiteSpace().toDouble() * reference_mw_multiplier;
+                  if ( gnom_run )
+                  {
+                     bool gnom_this_file = false;
+                     if ( use_merge_gnom )
+                     {
+                        for ( unsigned int g = 0; g < gnom_files.size(); g++ )
+                        {
+                           if ( rxcapturefields.cap(6).contains(QRegExp(gnom_files[g])) )
+                           {
+                              gnom_this_file = true;
+                              files.push_back(rxcapturefields.cap(6).stripWhiteSpace());
+                              use_dmax_start.push_back(gnom_files_dmax_start[g] ? gnom_files_dmax_start[g] : p_dmax_start);
+                              use_dmax_end.push_back(gnom_files_dmax_end[g] ? gnom_files_dmax_end[g] : p_dmax_end);
+                              use_dmax_inc.push_back(gnom_files_dmax_inc[g] ? gnom_files_dmax_inc[g] : p_dmax_inc);
+                              break;
+                           }
+                        }
+                     } else {
+                        gnom_this_file = true;
+                        files.push_back(rxcapturefields.cap(6).stripWhiteSpace());
+                        use_dmax_start.push_back(p_dmax_start);
+                        use_dmax_end.push_back(p_dmax_end);
+                        use_dmax_inc.push_back(p_dmax_inc);
+                        break;
+                     }
+
+                     if ( gnom_this_file )
+                     {
+                        // cout << "cap.6 is " + rxcapturefields.cap(6) + "\n";
+                        line.replace(QString("|| %1 ||").arg(rxcapturefields.cap(6).stripWhiteSpace()),
+                                     QString("|| [wiki:%1%1_gnom_%1 %1] ||")
+                                     .arg(prefix)
+                                     .arg(projects[i])
+                                     .arg(QString("%1").arg(rxcapturefields.cap(6).stripWhiteSpace()).replace(QRegExp("\\.(dat|DAT)$"),""))
+                                     .arg(rxcapturefields.cap(6).stripWhiteSpace()));
+                     }
+                  }
                   
                   result += QString("|| %1 %2 %3 ||\n")
                      .arg(name)
@@ -5217,6 +5350,23 @@ bool US_Saxs_Util::merge_projects( QString outfile,
          }
       }
       f2.close();
+      if ( gnom_run )
+      {
+         // for ( unsigned int g = 0; g < files.size(); g++ )
+         // {
+         // cout << QString("gnom params files dmax etc %1 %1 %1 %1 %1\n")
+         // .arg(files[g])
+         // .arg(use_dmax_start.size())
+         // .arg(use_dmax_start[g])
+         // .arg(use_dmax_end[g])
+         // .arg(use_dmax_inc[g]);
+         // }
+            
+         if (!run_gnom(projects[i],prefix,files, use_dmax_start, use_dmax_end, use_dmax_inc))
+         {
+            return false;
+         }
+      }
    }
 
    QFile f(outfile);
@@ -5231,7 +5381,6 @@ bool US_Saxs_Util::merge_projects( QString outfile,
    f.close();
    return true;
 }
-
 
 bool US_Saxs_Util::project_1d(
                               QString wikitag,
@@ -5372,7 +5521,6 @@ bool US_Saxs_Util::project_1d(
                  )
          .arg(filegroups_base_name[i]);
 
-
       QString pngfile = QString("pngs%1%1_%1.png").arg(QDir::separator()).arg(outfile).arg(wikitag);
 
       QString cmd = "pnggnuplot.pl " + pngfile + " ";
@@ -5461,3 +5609,90 @@ bool US_Saxs_Util::project_1d(
    f.close();
    return true;
 }   
+
+bool US_Saxs_Util::run_gnom( 
+                            QString             project, 
+                            QString             prefix, 
+                            vector < QString >  files,
+                            vector < double >   use_dmax_start,
+                            vector < double >   use_dmax_end,
+                            vector < double >   use_dmax_inc
+                            )
+{
+   errormsg = "";
+
+   // cout << QString("run_gnom files.size() %1\n").arg(files.size());
+
+   // read project for dmax info
+   if ( !read_project(project) )
+   {
+      errormsg = project + " " + errormsg;
+      cout << "read project false\n";
+      return false;
+   }
+
+   // make gnom subdir
+   QString dir = QDir::currentDirPath() + QDir::separator() + project + QDir::separator() + "gnom";
+   QString pdir = dir + QDir::separator() + "pngs";
+
+   QDir qdir(dir);
+   QDir qpdir(pdir);
+
+   cout << "dir:    " << dir << endl;
+   cout << "pngdir: " << pdir << endl;
+
+
+   if ( !qdir.exists() )
+   {
+      cout << "making directory " + dir + "\n";
+      if ( !qdir.mkdir(dir) )
+      {
+         errormsg = "error: could not create directory: " + dir;
+         return false;
+      }
+   }
+
+   if ( !qpdir.exists() )
+   {
+      cout << "making pdirectory " + pdir + "\n";
+      if ( !qpdir.mkdir(pdir) )
+      {
+         errormsg = "error: could not create directory: " + pdir;
+         return false;
+      }
+   }
+
+   for ( unsigned int i = 0; i < files.size(); i++ )
+   {
+      QFile f(project + QDir::separator() + "cwave" + QDir::separator() + files[i]);
+      
+      if ( !f.exists() )
+      {
+         errormsg = "error: file " + f.name() + " does not exist";
+         return false;
+      }
+
+      QString cmd = 
+         QString(
+                 "mkgnom.pl %1 %1%1_gnom_ %1 %1 %1 %1\n"
+                 "mv %1%1%1*.png %1%1\n"
+                 )
+         .arg(dir)
+         .arg(prefix)
+         .arg(project)
+         .arg(f.name())
+         .arg(use_dmax_start[i])
+         .arg(use_dmax_end[i])
+         .arg(use_dmax_inc[i])
+
+         .arg(dir)
+         .arg(QDir::separator())
+         .arg(QString("%1").arg(files[i]).replace(QRegExp("\\.(dat|DAT)$"),""))
+         .arg(pdir)
+         .arg(QDir::separator())
+         ;
+      cout << cmd;
+      system(cmd.ascii());
+   }
+   return true;
+}
