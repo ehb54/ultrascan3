@@ -22,14 +22,14 @@ class US_EXTERN US_FitWorker : public QThread
       US_FitWorker( US_EqMath*, FitCtrlPar&, QObject* parent );
       ~US_FitWorker();
 
-      void redefine_work( void );
-      void run          ( void );
-      void flag_paused  ( bool );
-      void flag_abort   ( void );
+      void redefine_work( void );     // Redefine work parameters
+      void run          ( void );     // Run the thread
+      void flag_paused  ( bool );     // Set pause flag true/false
+      void flag_abort   ( void );     // Set abort flag true
 
    signals:
-      void work_progress( int  );
-      void work_complete( void );
+      void work_progress( int  );     // Signal work progress step
+      void work_complete( void );     // Signal work complete
 
    private:
       US_EqMath*  emath;              // EqMath object pointer
@@ -49,21 +49,27 @@ class US_EXTERN US_FitWorker : public QThread
       double      old_vari;           // previous iteration variance
       double      lambda;             // current lambda value
 
-      bool        paused;
-      bool        abort;
-      bool        aborted;
-      bool        converged;
-      bool        completed;
+      bool        paused;             // Flag pause/resume
+      bool        abort;              // Flag abort
+      bool        aborted;            // Flag fitting aborted
+      bool        converged;          // Flag fitting converged
+      bool        completed;          // Flag fitting completed
 
    private slots:
       int    fit_iterations( void );    // Main work method for fit iterations
-      int    fit_iter_LM  ( void );     // Fit iterations - Generalized L LS
-      int    fit_iter_MGN ( void );     // Fit iterations - Levenverg-Marquardt
-      int    fit_iter_HM  ( void );     // Fit iterations - Hybrid Method
-      int    fit_iter_QN  ( void );     // Fit iterations - Quasi-Newton
-      int    fit_iter_GLLS( void );     // Fit iterations - Generalized L LS
-      int    fit_iter_NNLS( void );     // Fit iterations - NonNegative LS
+      int    fit_iter_LM  ( void );     // Fit iteration - Levenberg-Marquardt
+      int    fit_iter_MGN ( void );     // Fit iteration - Modified Gauss-Newton
+      int    fit_iter_HM  ( void );     // Fit iteration - Hybrid Method
+      int    fit_iter_QN  ( void );     // Fit iteration - Quasi-Newton
+      int    fit_iter_GLLS( void );     // Fit iteration - Generalized L LS
+      int    fit_iter_NNLS( void );     // Fit iteration - NonNegative LS
       void   check_paused ( void );
+
+      double linesearch        ( double*, double  );
+      double calc_testParameter( double*, double  );
+      void   updateQN          ( double*, double* );
+      bool   isNan             ( double );
+
 };
 #endif
 

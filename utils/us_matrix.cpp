@@ -10,12 +10,12 @@ bool US_Matrix::lsfit( double* c, double* x, double* y,
 {
    bool status = true;
 
-   double** A = new double* [ order ];
-   
-   for ( int i = 0; i < order; i++ ) 
-      A[ i ] = new double [ order ]; 
+   QVector< double* > vecA;
+   QVector< double >  datA;
+   QVector< double >  datb( order );
 
-   double* b = new double [ order ];
+   double** A  = construct( vecA, datA, order, order );
+   double*  b  = datb.data();
 
    /* To calculate the matrix, calculate the product M'M, where M is the matrix
       constructed as follows:
@@ -83,12 +83,6 @@ bool US_Matrix::lsfit( double* c, double* x, double* y,
    //print_matrix( A, order, order);
    //print_vector( b, order );
    
-   
-   // Clean up
-   for ( int i = 0; i < order; i++ ) delete A[ i ];
-   
-   delete [] A;
-   delete [] b;
    return status;
 }
 
@@ -178,7 +172,242 @@ QString t;
    return true;
 }
 
+// Solve the system Ax=b using Cholesky decomposition:
+//    A * A(-1) = I ;  A = LL'  ;  L (L' * A(-1) ) = I ;
+//    L * y = I (solve for y) ,  now  L' * A(-1) = y  (solve for A(-1))
+bool US_Matrix::Cholesky_Invert( double** AA, double** AI, int nn )
+{
+   QVector< double > workvec( nn );
+   double* work = workvec.data();
 
+   // Decompose A:
+
+   if ( ! US_Matrix::Cholesky_Decomposition( AA, nn ) )
+      return false;
+
+   for ( int jj = 0; jj < nn; jj++ )
+   {
+      // Set up A-inverse to contain the Identity matrix:
+      workvec.fill( 0.0, nn );
+      workvec[ jj ] = 1.0;
+      work          = workvec.data();
+
+      // Solve for each column j:
+      US_Matrix::Cholesky_SolveSystem( AA, work, nn );
+
+      // Assign the solution to the appropriate column of A-inverse:
+      for ( int ii = 0; ii < nn; ii++ )
+         AI[ ii ][ jj ] = work[ ii ];
+
+   }
+
+   return true;
+}
+
+// Construct and initialize a matrix, using a pair of QVectors.
+// One QVector holds all data values (doubles); the other holds 
+// pointers to columns-sized segments of that data array.
+double** US_Matrix::construct( QVector< double* >& QVm,
+      QVector< double >& QVd, int rows, int columns )
+{
+   QVm.fill(  0, rows );            // Initialize the pointers vector
+   QVd.fill( 0., rows * columns );  // Initialize the data elements vector
+   double*  vd = QVd.data();        // Point to the beginning of data
+
+   for ( int ii = 0; ii < rows; ii++ )
+   {  // Construct the rows of the matrix
+      QVm[ ii ] = vd;               // Store a row pointer
+      vd       += columns;          // Bump the pointer to the next row
+   }
+
+   return QVm.data();               // Return the pointer to the pointers array
+}
+
+// Compute the columns x columns square matrix product of
+//   a matrix-transpose and the matrix.
+// Only the lower triangle of the product is filled,
+//   since that is all that is required in Cholesky decomposition.
+void US_Matrix::tmm( double** AA, double** CC, int rows, int columns )
+{
+   QVector< double > ATvec( rows );
+   double* ATrow = ATvec.data();            // Array for a transpose row
+
+   for ( int ii = 0; ii < columns; ii++ )
+   {  // Loop for A' rows, A columns and P columns
+      double dotp    = 0.0;
+
+      // Dot product of the A' row with itself  (output diagonal point)
+      //  Also, save this A' row for use below
+      for ( int kk = 0; kk < rows; kk++ )
+      { 
+         double aval = AA[ kk ][ ii ];
+         dotp       += sq( aval );
+         ATrow[ kk ] = aval;
+      }
+
+      CC[ ii ][ ii ] = dotp;                // Store product on diagonal
+
+      for ( int jj = 0; jj < ii; jj++ )
+      {  // Loop for P rows (lower triangle)
+         dotp        = 0.0;
+
+         // Accumulate dot product of columns (A' row, A column)
+         for ( int kk = 0; kk < rows; kk++ )
+            dotp    += ( ATrow[ kk ] * AA[ kk ][ jj ] );
+
+         CC[ ii ][ jj ] = dotp;             // Store product for column of row
+      }
+   }
+}
+
+// Compute product of a matrix-transpose and the matrix, with optional full fill
+void US_Matrix::tmm( double** AA, double** CC, int rows, int columns,
+      bool fill )
+{
+   // Calculate A-transpose times A, computing just the lower triangle
+   tmm( AA, CC, rows, columns );
+
+   if ( fill )
+   {  // Duplicate values into the upper triangle
+      for ( int ii = 0; ii < columns - 1; ii++ )
+         for ( int jj = ii + 1; jj < columns; jj++ )
+            CC[ ii ][ jj ] = CC[ jj ][ ii ];
+   }
+}
+
+// Compute the vector product of a matrix and a vector
+void US_Matrix::mvv( double** AA, double* bb, double* cc,
+      int rows, int columns )
+{
+   for ( int ii = 0; ii < rows; ii++ )
+   {
+      double dotp = 0.0;
+
+      for ( int jj = 0; jj < columns; jj++ )
+         dotp += ( AA[ ii ][ jj ] * bb[ jj ] );
+
+      cc[ ii ]  = dotp;
+   }
+}
+
+// Compute the vector product of a matrix-transpose and a vector
+void US_Matrix::tvv( double** AA, double* bb, double* cc,
+      int rows, int columns )
+{
+   for ( int jj = 0; jj < columns; jj++ )
+   {
+      double dotp = 0.0;
+
+      for ( int ii = 0; ii < rows; ii++ )
+         dotp += ( AA[ ii ][ jj ] * bb[ ii ] );
+
+      cc[ jj ]  = dotp;
+   }
+}
+
+// Compute a matrix product of two matrices
+void US_Matrix::mmm( double** AA, double** BB, double** CC,
+      int rows, int size, int columns )
+{
+   for ( int ii = 0; ii < rows; ii++ )
+   {
+      for ( int jj = 0; jj < columns; jj++ )
+      {
+         double dotp = 0.0;
+
+         for ( int kk = 0; kk < size; kk++ )
+            dotp    += ( AA[ ii ][ kk ] * BB[ kk ][ jj ] );
+
+         CC[ ii ][ jj ] = dotp;
+      }
+   }
+}
+
+// Calculate the matrix sum of two matrices of the same dimensions
+void US_Matrix::msum( double** AA, double** BB, double** CC,
+      int rows, int columns )
+{
+   for ( int ii = 0; ii < rows; ii++ )
+      for ( int jj = 0; jj < columns; jj++ )
+         CC[ ii ][ jj ] = AA[ ii ][ jj ] + BB[ ii ][ jj ];
+}
+
+// Calculate the vector sum of two vectors of the same size
+void US_Matrix::vsum( double* aa, double* bb, double* cc, int size )
+{
+   for ( int ii = 0; ii < size; ii++ )
+      cc[ ii ] = aa[ ii ] + bb[ ii ];
+}
+
+// Fill a square matrix to make it an identity matrix
+void US_Matrix::mident( double** CC, int size )
+{
+   for ( int ii = 0; ii < size; ii++ )
+      for ( int jj = 0; jj < size; jj++ )
+         CC[ ii ][ jj ] = ( ii != jj ? 0.0 : 1.0 );
+}
+
+// Copy contents from one matrix to another matrix of the same dimensions
+void US_Matrix::mcopy( double** AA, double** CC, int rows, int columns )
+{
+   for ( int ii = 0; ii < rows; ii++ )
+      for ( int jj = 0; jj < columns; jj++ )
+         CC[ ii ][ jj ] = AA[ ii ][ jj ];
+}
+
+// Copy contents from one vector to another vector of the same size
+void US_Matrix::vcopy( double* aa, double* cc, int size )
+{
+   for ( int ii = 0; ii < size; ii++ )
+      cc[ ii ] = aa[ ii ];
+}
+
+// Add a scalar value to the diagonal of a square matrix
+void US_Matrix::add_diag( double** CC, double ss, int size )
+{
+   for ( int ii = 0; ii < size; ii++ )
+      CC[ ii ][ ii ] += ss;
+}
+
+// Add a scalar value to all the elements of a matrix
+void US_Matrix::add( double** CC, double ss, int rows, int columns )
+{
+   for ( int ii = 0; ii < rows; ii++ )
+      for ( int jj = 0; jj < columns; jj++ )
+         CC[ ii ][ jj ] += ss;
+}
+
+// Scale all the elements of a matrix by a scalar value
+void US_Matrix::scale( double** CC, double ss, int rows, int columns )
+{
+   for ( int ii = 0; ii < rows; ii++ )
+      for ( int jj = 0; jj < columns; jj++ )
+         CC[ ii ][ jj ] *= ss;
+}
+
+// Compute the dot product of two vectors
+double US_Matrix::dotproduct( double* aa, double* bb, int size )
+{
+   double dotp = 0.0;
+
+   for ( int ii = 0; ii < size; ii++ )
+      dotp += ( aa[ ii ] * bb[ ii ] );
+
+   return dotp;
+}
+
+// Compute the dot product of a vector with itself
+double US_Matrix::dotproduct( double* aa, int size )
+{
+   double dotp = 0.0;
+
+   for ( int ii = 0; ii < size; ii++ )
+      dotp += sq( aa[ ii ] );
+
+   return dotp;
+}
+
+// Print a vector
 void US_Matrix::print_vector( double* v, int n )
 {
    QString s;
@@ -188,6 +417,7 @@ void US_Matrix::print_vector( double* v, int n )
    qDebug() << s;
 }
 
+// Print a matrix
 void US_Matrix::print_matrix( double** A, int rows, int columns )
 {
    for ( int i = 0; i < rows; i++ ) print_vector( A[ i ], columns );
@@ -212,7 +442,8 @@ void US_Matrix::LU_Decomposition( double** matrix, int* index, bool parity, int 
    double dum = 0;
 
    // scaling factor for each row is stored here
-   double* scaling = new double[ n ];
+   QVector< double > vscaling( n );
+   double* scaling = vscaling.data();
 
    // a small number != zero
    double tiny = 1.0E-20;
@@ -303,7 +534,6 @@ void US_Matrix::LU_Decomposition( double** matrix, int* index, bool parity, int 
       }
    }
 
-   delete [] scaling;
 }
 
 /*  Do the backsubstitution on matrix a which is the LU decomposition
@@ -353,9 +583,10 @@ void US_Matrix::LU_BackSubstitute( double** A, double*& b, int* index, int n )
 void US_Matrix::LU_SolveSystem( double** A, double*& b, int n )
 {
    bool parity = true;
-   int* index  = new int[ n ];
+   QVector< int > vindex( n );
+   int* index  = vindex.data();
    
    LU_Decomposition ( A, index, parity, n );
    LU_BackSubstitute( A, b, index, n );
-   delete [] index;
 }
+

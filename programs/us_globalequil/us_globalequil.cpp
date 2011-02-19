@@ -716,6 +716,7 @@ DbgLv(1) << "IP:  points xvs0 xvsN" << scanfits[0].points
    if ( runfit.mw_vals[ 0 ] <= 0.0 )
    {  // Calculate the molecular weight value the 1st time
       runfit.mw_vals[ 0 ] = emath->linesearch();
+      runfit.mw_rngs[ 0 ] = runfit.mw_vals[ 0 ] * 0.2;
    }
 
    else

@@ -33,9 +33,6 @@ class US_EXTERN US_EqMath : public QObject
       void   genLeastSquaresOrd2  ( double**, int, double*, double** );
       void   guess_mapForward     ( double* );
       void   parameter_mapBackward( double* );
-      bool   Cholesky_Invert      ( double**, double**, int );
-      void   calc_A_transpose_A   ( double**, double**, int, int );
-      void   calc_A_transpose_A   ( double**, double**, int, int, bool );
 
    private:
       QVector< US_DataIO2::EditedData >&  dataList;

@@ -338,14 +338,14 @@ pp[0]=ppp;pp[1]=ppp+4;pp[2]=ppp+8;pp[3]=ppp+12;
 DbgLv(2) << "AA: " << aaa[0] << aaa[1] << aaa[2] << aaa[3];
 DbgLv(2) << "AA: " << aaa[4] << aaa[5] << aaa[6] << aaa[7];
 DbgLv(2) << "AA: " << aaa[8] << aaa[9] << aaa[10] << aaa[11];
-calc_A_transpose_A( aa, pp, 3, 4, false );
-DbgLv(2) << "==calc_A_transpose_A( aa, pp, 4, 3, false )==";
+US_Matrix::tmm( aa, pp, 3, 4, false );
+DbgLv(2) << "==US_Matrix::tmm( aa, pp, 4, 3, false )==";
 DbgLv(2) << " PP: " << ppp[0] << ppp[1] << ppp[2] << ppp[3];
 DbgLv(2) << " PP: " << ppp[4] << ppp[5] << ppp[6] << ppp[7];
 DbgLv(2) << " PP: " << ppp[8] << ppp[9] << ppp[10] << ppp[11];
 DbgLv(2) << " PP: " << ppp[12] << ppp[13] << ppp[14] << ppp[15];
-calc_A_transpose_A( aa, pp, 3, 4, true );
-DbgLv(2) << "==calc_A_transpose_A( aa, pp, 4, 3, true )==";
+US_Matrix::tmm( aa, pp, 3, 4, true );
+DbgLv(2) << "==US_Matrix::tmm( aa, pp, 4, 3, true )==";
 DbgLv(2) << " PP: " << ppp[0] << ppp[1] << ppp[2] << ppp[3];
 DbgLv(2) << " PP: " << ppp[4] << ppp[5] << ppp[6] << ppp[7];
 DbgLv(2) << " PP: " << ppp[8] << ppp[9] << ppp[10] << ppp[11];
@@ -1662,8 +1662,8 @@ DbgLv(1) << "MinRes:  iter" << iter << " f0 f1 f2" << f0 << f1 << f2;
 
       if ( hh < toler )
       {
-         //residm = x1;  // Shouldn't it be "f" we return?
-         residm = f1;
+         residm = x1;  // Shouldn't it be "f" we return?
+         //residm = f1;
          break;
       }
 
@@ -1677,21 +1677,14 @@ DbgLv(1) << "     update-9 x0 x2 f0 f2" << x0 << x2 << f0 << f2;
    return residm;
 }
 
-// Calculate the B matrix
+// Calculate the B matrix  ( = Jacobian-tranpose * ydelta )
 void US_EqMath::calc_B()
 {
-   for ( int ii = 0; ii < nfpars; ii++ )
-   {
-      double dotp   = 0.0;
-
-      for ( int jj = 0; jj < ntpts; jj++ )
-         dotp         += ( m_jacobi[ jj ][ ii ] * y_delta[ jj ] );
-
-      BB[ ii ]      = dotp;
-   }
+   // Calculate B = J' * d
+   US_Matrix::tvv( jacobian, y_delta, BB, ntpts, nfpars );
 }
 
-// Calculate the delta array and the residual value
+// Calculate the delta array and the variance value
 double US_EqMath::calc_residuals()
 {
    double residual  = 0.0;
@@ -1706,6 +1699,13 @@ double US_EqMath::calc_residuals()
 
    if ( residual > dflt_max )
       residual      = -1.0;
+
+   else
+      residual     /= (double)ntpts;
+
+if(residual<0.0)
+ qDebug() << "CalcResid: resid" << residual << "delta 0,1,m,n"
+  << y_delta[0] << y_delta[1] << y_delta[ntpts-2] << y_delta[ntpts-1];
 
    return residual;
 }
@@ -2329,92 +2329,5 @@ bool US_EqMath::isNan( double value )
       return true;
 
    return false;
-}
-
-// Solve the system Ax=b using Cholesky decomposition:
-//    A * A(-1) = I ;  A = LL'  ;  L (L' * A(-1) ) = I ;
-//    L * y = I (solve for y) ,  now  L' * A(-1) = y  (solve for A(-1))
-//
-// (*NOTE*  This should really be a static function in US_Matrix)
-bool US_EqMath::Cholesky_Invert( double** AA, double** AI, int nn )
-{
-   QVector< double > workvec( nn );
-   double* work = workvec.data();
-
-   // Decompose A:
-
-   if ( ! US_Matrix::Cholesky_Decomposition( AA, nn ) )
-      return false;
-
-   for ( int jj = 0; jj < nn; jj++ )
-   {
-      // Set up A-inverse to contain the Identity matrix:
-      workvec.fill( 0.0, nn );
-      workvec[ jj ] = 1.0;
-      work          = workvec.data();
-
-      // Solve for each column j:
-      US_Matrix::Cholesky_SolveSystem( AA, work, nn );
-
-      // Assign the solution to the appropriate column of A-inverse:
-      for ( int ii = 0; ii < nn; ii++ )
-         AI[ ii ][ jj ] = work[ ii ];
-
-   }
-
-   return true;
-}
-
-// Compute the columns x columns square matrix product of
-//   a matrix-transpose and the matrix.
-// Only the lower triangle of the product is filled,
-//   since that is all that is required in Cholesky decomposition.
-void US_EqMath::calc_A_transpose_A( double** AA, double** PP,
-      int rows, int columns )
-{
-   QVector< double > ATvec( rows );
-   double* ATrow = ATvec.data();            // Array for a transpose row
-
-   for ( int ii = 0; ii < columns; ii++ )
-   {  // Loop for A' rows, A columns and P columns
-      double dotp    = 0.0;
-
-      // Dot product of the A' row with itself  (output diagonal point)
-      //  Also, save this A' row for use below
-      for ( int kk = 0; kk < rows; kk++ )
-      {
-         double aval = AA[ kk ][ ii ];
-         dotp       += sq( aval );
-         ATrow[ kk ] = aval;
-      }
-
-      PP[ ii ][ ii ] = dotp;                // Store product on diagonal
-
-      for ( int jj = 0; jj < ii; jj++ )
-      {  // Loop for P rows (lower triangle)
-         dotp        = 0.0;
-
-         // Accumulate dot product of columns (A' row, A column)
-         for ( int kk = 0; kk < rows; kk++ )
-            dotp    += ( ATrow[ kk ] * AA[ kk ][ jj ] );
-
-         PP[ ii ][ jj ] = dotp;             // Store product for column of row
-      }
-   }
-}
-
-// Compute product of a matrix-transpose and the matrix, with optional full fill
-void US_EqMath::calc_A_transpose_A( double** AA, double** PP,
-      int rows, int columns, bool fill )
-{
-   // Calculate A-transpose times A, computing lower triangle
-   calc_A_transpose_A( AA, PP, rows, columns );
-
-   if ( fill )
-   {  // Duplicate values into upper triangle
-      for ( int ii = 0; ii < columns - 1; ii++ )
-         for ( int jj = ii + 1; jj < columns; jj++ )
-            PP[ ii ][ jj ] = PP[ jj ][ ii ];
-   }
 }
 

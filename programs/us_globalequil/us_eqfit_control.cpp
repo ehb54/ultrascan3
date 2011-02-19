@@ -300,18 +300,26 @@ void US_EqFitControl::closed()
 void US_EqFitControl::start_fit()
 {
 qDebug() << "START_FIT";
+   const char* cmeth[] = { "L-M", "M G-N", "Hybrid", "Q-N", "GLLS", "NNLS" };
+
    if ( pb_strtfit->text().contains( tr( "Abort" ) ) )
    {
       fitwork->flag_abort( );
 
       pb_strtfit->setText( tr( "Fit" ) );
-      pb_pause  ->setEnabled( false  );
+      pb_pause  ->setEnabled( false );
       pb_resume ->setEnabled( false );
       pb_savefit->setEnabled( false );
+      pb_close  ->setEnabled( true  );
+
+      le_inform->setText( tr( "Fitting ABORTED by user request!" ) );
       return;
    }
 
    nlsmeth   = cb_nlsalgo->currentIndex();
+   le_status->setText( tr( "Equilibrium " ) + QString( cmeth[ nlsmeth ] ) +
+         tr( " fitting for " ) + models[ modelx ] + "..." );
+   le_inform->setText( tr( "Fitting iterations have begun" ) );
 
    emath->init_fit( modelx, nlsmeth, fitpars );
 
@@ -337,6 +345,7 @@ qDebug() << "START_FIT";
    pb_pause  ->setEnabled( true  );
    pb_resume ->setEnabled( false );
    pb_savefit->setEnabled( false );
+   pb_close  ->setEnabled( false );
 
    connect( fitwork, SIGNAL( work_progress( int ) ),
             this,    SLOT(   new_progress ( int ) ) );
@@ -355,6 +364,7 @@ qDebug() << "PAUSE_FIT";
    fitwork->flag_paused( true );
    pb_pause  ->setEnabled( false );
    pb_resume ->setEnabled( true  );
+   pb_strtfit->setEnabled( false );
 }
 
 // Resume the fitting computations
@@ -364,6 +374,7 @@ qDebug() << "RESUME_FIT";
    fitwork->flag_paused( false );
    pb_pause  ->setEnabled( true  );
    pb_resume ->setEnabled( false );
+   pb_strtfit->setEnabled( true  );
 }
 
 // Save the computed fit to a file
@@ -400,6 +411,8 @@ qDebug() << "NEW_PROGRESS" << step;
    le_improve->setText( QString::number( fitpars.improve  ) );
    le_funceva->setText( QString::number( fitpars.nfuncev  ) );
    le_decompo->setText( QString::number( fitpars.ndecomps ) );
+   le_inform ->setText(
+      tr( "Iteration %1 has completed." ).arg( fitpars.k_iter ) );
 }
 
 // React to completion of fit
@@ -407,5 +420,20 @@ void US_EqFitControl::fit_completed()
 {
 qDebug() << "FIT_COMPLETED";
    pb_strtfit->setText( tr( "Fit" ) );
+
+   QString iinform;
+
+   if ( fitpars.aborted )
+      iinform = tr( "Fitting ABORTED!" );
+
+   else if ( fitpars.converged )
+      iinform = tr( "Fitting CONVERGED!" );
+
+   else if ( fitpars.completed )
+      iinform = tr( "Fitting iterations COMPLETED!" );
+
+   iinform = iinform + " ( " + fitpars.infomsg + " )";
+   le_inform->setText( iinform );
+   pb_close ->setEnabled( true );
 }
 
