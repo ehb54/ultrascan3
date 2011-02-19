@@ -220,6 +220,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       int file_curve_type(QString filename);
       QString curve_type_string(int curve);
 
+      // save file paths
+      QString path_load_saxs_curve;
+      QString path_load_gnom;
+      QString path_load_prr;
+
    public slots:
       void show_plot_saxs_sans();
       void show_plot_pr();

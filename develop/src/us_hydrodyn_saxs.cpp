@@ -345,6 +345,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       pb_load_gnom->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
       connect(pb_load_gnom, SIGNAL(clicked()), SLOT(load_gnom()));
 
+#if defined(ADD_GUINIER)      
       cb_guinier = new QCheckBox(this);
       cb_guinier->setText(tr(" Guinier"));
       cb_guinier->setEnabled(true);
@@ -369,6 +370,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       cnt_guinier_cutoff->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       cnt_guinier_cutoff->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
       connect(cnt_guinier_cutoff, SIGNAL(valueChanged(double)), SLOT(update_guinier_cutoff(double)));
+#endif
    }
 
    lbl_info_prr = new QLabel(tr("P(r) vs. r  Plotting Functions:"), this);
@@ -608,6 +610,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addMultiCellLayout(hbl_tools, j, j, 0, 1);
    j++;
 
+#if defined(ADD_GUINIER)      
    if ( 1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
    {
       QHBoxLayout *hbl_guinier = new QHBoxLayout;
@@ -617,7 +620,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       background->addMultiCellLayout(hbl_guinier, j, j, 0, 1);
       j++;
    }
-
+#endif
    //   background->addWidget(pb_load_gnom, j, 0);
    //   background->addWidget(cb_create_native_saxs, j, 1);
    background->addMultiCellWidget(lbl_info_prr, j, j, 0, 1);
@@ -1554,12 +1557,18 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
 void US_Hydrodyn_Saxs::load_pr()
 {
-   QString filename = QFileDialog::getOpenFileName(USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs","*", this);
+   QString use_dir = 
+      path_load_prr.isEmpty() ?
+      USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
+      path_load_prr;
+
+   QString filename = QFileDialog::getOpenFileName(use_dir,"*", this);
    if (filename.isEmpty())
    {
       return;
    }
    QFile f(filename);
+   path_load_prr = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
    vector < double > r;
    vector < double > pr;
@@ -3109,12 +3118,17 @@ void US_Hydrodyn_Saxs::print()
 void US_Hydrodyn_Saxs::load_saxs()
 {
    plotted = false;
-   QString filename = QFileDialog::getOpenFileName(USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs", "*", this);
+   QString use_dir = 
+      path_load_saxs_curve.isEmpty() ?
+      USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
+      path_load_saxs_curve;
+   QString filename = QFileDialog::getOpenFileName(use_dir, "*", this);
    if (filename.isEmpty())
    {
       return;
    }
    QFile f(filename);
+   path_load_saxs_curve = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
    vector < double > I;
    vector < double > q;
@@ -3424,6 +3438,7 @@ void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
 void US_Hydrodyn_Saxs::select_saxs_file()
 {
    QString old_filename = saxs_filename;
+      
    saxs_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", "*.saxs_atoms *.SAXS_ATOMS", this);
    if (saxs_filename.isEmpty())
    {
@@ -3808,12 +3823,18 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
 void US_Hydrodyn_Saxs::load_gnom()
 {
    plotted = false;
-   QString filename = QFileDialog::getOpenFileName(USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs", "*.out", this);
+   QString use_dir = 
+      path_load_gnom.isEmpty() ?
+      USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
+      path_load_gnom;
+
+   QString filename = QFileDialog::getOpenFileName(use_dir, "*.out", this);
    if (filename.isEmpty())
    {
       return;
    }
    QFile f(filename);
+   path_load_gnom = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
    if ( f.open(IO_ReadOnly) )
    {
@@ -3909,6 +3930,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
 
    long Iq = plot_saxs->insertCurve("I(q) vs q");
    plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
+#if defined(ADD_GUINIER)      
    if ( cb_guinier->isChecked() )
    {
       for ( unsigned int i = 0; i < q.size(); i++ )
@@ -3925,7 +3947,10 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
       }
       plot_saxs->setAxisTitle(QwtPlot::xBottom, tr("q^2 (1/Angstrom^2)"));
       plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("ln I(q)"));
-   } else {
+   } else 
+#endif
+
+   {
       plot_saxs->setAxisTitle(QwtPlot::xBottom, tr("q (1/Angstrom)"));
       plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("I(q)"));
    }
@@ -3934,6 +3959,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
    plotted_I.push_back(I);
    unsigned int q_points = q.size();
    unsigned int p = plotted_q.size() - 1;
+#if defined(ADD_GUINIER)      
    if ( cb_guinier->isChecked() )
    {
       QwtSymbol sym;
@@ -3945,7 +3971,10 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
       plot_saxs->setCurveStyle(Gp, QwtCurve::NoCurve);
       plot_saxs->setCurveData(Gp, (double *)&(plotted_q[p][0]), (double *)&(plotted_I[p][0]), q_points);
       plot_saxs->setCurveSymbol(Gp, QwtSymbol(sym));
-   } else {
+   } else 
+#endif
+
+   {
       plot_saxs->setCurveData(Iq, (double *)&(plotted_q[p][0]), (double *)&(plotted_I[p][0]), q_points);
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
    }

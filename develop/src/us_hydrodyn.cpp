@@ -1484,17 +1484,29 @@ void US_Hydrodyn::load_pdb()
       }
    }
    cout << somo_pdb_dir << endl;
-   QString filename = QFileDialog::getOpenFileName(somo_pdb_dir,
+   
+   QString use_dir = 
+      path_load_pdb.isEmpty() ?
+      somo_pdb_dir :
+      path_load_pdb;
+
+   QString filename = QFileDialog::getOpenFileName(use_dir,
                                                    "Structures (*.pdb *.PDB)",
                                                    this,
                                                    "Open Structure Files",
                                                    "Please select a PDB file...");
+   if ( !filename.isEmpty() )
+   {
+      path_load_pdb = QFileInfo(filename).dirPath(true);
+   }
+
    if ( QFileInfo(filename).fileName().contains(" ") )
    {
       printError(tr("Filenames containing spaces are not currently supported.\n"
                     "Please rename the file to remove spaces."));
       return;
    }
+
 
    int errors_found = 0;
    if (!filename.isEmpty())
@@ -1774,9 +1786,16 @@ bool US_Hydrodyn::screen_bead_model(QString filename)
    
 void US_Hydrodyn::view_pdb()
 {
-   QString filename = QFileDialog::getOpenFileName(somo_pdb_dir, "*.pdb *.PDB", this);
+   
+   QString use_dir = 
+      path_view_pdb.isEmpty() ?
+      somo_pdb_dir :
+      path_view_pdb;
+   QString filename = QFileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
+   
    if (!filename.isEmpty())
    {
+      path_view_pdb = QFileInfo(filename).dirPath(true);
       view_file(filename);
    }
 }
@@ -1851,7 +1870,12 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
 
 void US_Hydrodyn::load_bead_model()
 {
-   QString filename = QFileDialog::getOpenFileName(somo_dir
+   QString use_dir = 
+      path_load_bead_model.isEmpty() ?
+      somo_dir :
+      path_load_bead_model;
+
+   QString filename = QFileDialog::getOpenFileName(use_dir
 
                                                    ,"Bead models (*.bead_model *.BEAD_MODEL);;"
                                                    "BEAMS (*.beams *.BEAMS);;"
@@ -1863,6 +1887,10 @@ void US_Hydrodyn::load_bead_model()
                                                    , &bead_model_selected_filter
                                                    );
 
+   if ( !filename.isEmpty() )
+   {
+      path_load_bead_model = QFileInfo(filename).dirPath(true);
+   }
 
    if ( QFileInfo(filename).fileName().contains(" ") )
    {
@@ -2738,9 +2766,15 @@ void US_Hydrodyn::set_saveParams()
 
 void US_Hydrodyn::view_asa()
 {
-   QString filename = QFileDialog::getOpenFileName(somo_dir, "*.asa_res *.ASA_RES", this);
+   QString use_dir = 
+      path_view_asa_res.isEmpty() ?
+      somo_dir :
+      path_view_asa_res;
+
+   QString filename = QFileDialog::getOpenFileName(use_dir, "*.asa_res *.ASA_RES", this);
    if (!filename.isEmpty())
    {
+      path_view_asa_res = QFileInfo(filename).dirPath(true);
       view_file(filename);
    }
 }
@@ -2765,15 +2799,26 @@ void US_Hydrodyn::view_bead_model()
          filename = last_read_bead_model;
          break;
       case QMessageBox::No : 
-         filename = QFileDialog::getOpenFileName(somo_dir
-                                                 ,"Bead models (*.bead_model *.BEAD_MODEL);;"
-                                                 "BEAMS (*.beams *.BEAMS);;"
-                                                 "DAMMIN/DAMMIF (*.pdb)"
-                                                 , this
-                                                 , "open file dialog"
-                                                 , "Open"
-                                                 , &bead_model_selected_filter
-                                                 );
+         {
+            QString use_dir = 
+               path_view_bead_model.isEmpty() ?
+               somo_dir :
+               path_view_bead_model;
+            
+            filename = QFileDialog::getOpenFileName(use_dir
+                                                    ,"Bead models (*.bead_model *.BEAD_MODEL);;"
+                                                    "BEAMS (*.beams *.BEAMS);;"
+                                                    "DAMMIN/DAMMIF (*.pdb)"
+                                                    , this
+                                                    , "open file dialog"
+                                                    , "Open"
+                                                    , &bead_model_selected_filter
+                                                    );
+            if ( !filename.isEmpty() )
+            {
+               path_view_bead_model = QFileInfo(filename).dirPath(true);
+            }
+         }
          break;
       case QMessageBox::Cancel :
       default :
@@ -2781,7 +2826,12 @@ void US_Hydrodyn::view_bead_model()
          break;
       }
    } else {
-      filename = QFileDialog::getOpenFileName(somo_dir
+      QString use_dir = 
+         path_view_bead_model.isEmpty() ?
+         somo_dir :
+         path_view_bead_model;
+
+      filename = QFileDialog::getOpenFileName(use_dir
                                               ,"Bead models (*.bead_model *.BEAD_MODEL);;"
                                               "BEAMS (*.beams *.BEAMS);;"
                                               "DAMMIN/DAMMIF (*.pdb)"
@@ -2790,6 +2840,10 @@ void US_Hydrodyn::view_bead_model()
                                               , "Open"
                                               , &bead_model_selected_filter
                                               );
+      if ( !filename.isEmpty() )
+      {
+         path_view_bead_model = QFileInfo(filename).dirPath(true);
+      }
    }
    if (!filename.isEmpty())
    {
@@ -3071,7 +3125,19 @@ void US_Hydrodyn::open_hydro_results()
          filename = somo_dir + SLASH + last_hydro_res;
          break;
       case QMessageBox::No : 
-         filename = QFileDialog::getOpenFileName(somo_dir, "*.hydro_res *.HYDRO_RES", this);
+         {
+            QString use_dir = 
+               path_open_hydro_res.isEmpty() ?
+               somo_dir :
+               path_open_hydro_res;
+            
+            filename = QFileDialog::getOpenFileName(use_dir, "*.hydro_res *.HYDRO_RES", this);
+
+            if ( !filename.isEmpty() )
+            {
+               path_open_hydro_res = QFileInfo(filename).dirPath(true);
+            }
+         }
          break;
       case QMessageBox::Cancel :
       default :
@@ -3079,7 +3145,17 @@ void US_Hydrodyn::open_hydro_results()
          break;
       }
    } else {
-      filename = QFileDialog::getOpenFileName(somo_dir, "*.hydro_res *.HYDRO_RES", this);
+      QString use_dir = 
+         path_open_hydro_res.isEmpty() ?
+         somo_dir :
+         path_open_hydro_res;
+
+      filename = QFileDialog::getOpenFileName(use_dir, "*.hydro_res *.HYDRO_RES", this);
+
+      if ( !filename.isEmpty() )
+      {
+         path_open_hydro_res = QFileInfo(filename).dirPath(true);
+      }
    }
    if (!filename.isEmpty())
    {
