@@ -235,7 +235,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void set_saxs_sans(int);
       void load_saxs_sans();
       void show_plot_saxs();
-      void load_saxs();
+      void load_saxs(QString filename = "");
       void clear_plot_saxs();
       void show_plot_sans();
       void load_sans();

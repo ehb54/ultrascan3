@@ -497,7 +497,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_saxs->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
    plot_saxs->setAxisTitle(QwtPlot::xBottom, tr("q (1/Angstrom)"));
-   plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("I(q)"));
+   plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)"));
    plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_saxs->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot_saxs->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -507,6 +507,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_saxs->setMargin(USglobal->config_list.margin);
    plot_saxs->setTitle("");
+   plot_saxs->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
    plot_saxs->setCanvasBackground(USglobal->global_colors.plot);
 
    plot_pr = new QwtPlot(this);
@@ -3115,18 +3116,22 @@ void US_Hydrodyn_Saxs::print()
    }
 }
 
-void US_Hydrodyn_Saxs::load_saxs()
+void US_Hydrodyn_Saxs::load_saxs(QString filename)
 {
-   plotted = false;
-   QString use_dir = 
-      path_load_saxs_curve.isEmpty() ?
-      USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
-      path_load_saxs_curve;
-   QString filename = QFileDialog::getOpenFileName(use_dir, "*", this);
-   if (filename.isEmpty())
+   if ( filename.isEmpty() )
    {
-      return;
+      QString use_dir = 
+         path_load_saxs_curve.isEmpty() ?
+         USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
+         path_load_saxs_curve;
+      filename = QFileDialog::getOpenFileName(use_dir, "*", this);
+      if (filename.isEmpty())
+      {
+         return;
+      }
    }
+
+   plotted = false;
    QFile f(filename);
    path_load_saxs_curve = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
@@ -3844,10 +3849,17 @@ void US_Hydrodyn_Saxs::load_gnom()
       QRegExp rx2("^\\s*(\\S*)\\s+(\\S*)\\s*$");
       QRegExp rx3("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
       QRegExp rx5("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
+      QRegExp rxinputfile("Input file.s. : (\\S+)\\s*$");
       QString tmp;
+      vector < QString > datafiles;
       while ( !ts.atEnd() )
       {
          tmp = ts.readLine();
+         if ( rxinputfile.search(tmp) != -1 ) 
+         {
+            datafiles.push_back(rxinputfile.cap(1).stripWhiteSpace());
+            continue;
+         }
          if ( iqqh.search(tmp) != -1 )
          {
             vector < double > I;
@@ -3914,6 +3926,30 @@ void US_Hydrodyn_Saxs::load_gnom()
          }
       }
       f.close();
+      if ( datafiles.size() )
+      {
+         for ( unsigned int i = 0; i < datafiles.size(); i++ )
+         {
+            QString datafile = path_load_gnom + QDir::separator() + datafiles[i];
+            if ( QFileInfo(datafile).exists() )
+            {
+               switch( QMessageBox::information( this, 
+                                                 tr("UltraScan"),
+                                                 tr("Found the GNOM associated data file\n") + QFileInfo(datafile).fileName() + "\n" +
+                                                 tr("Do you want to load it?"),
+                                                 "&Ok", 
+                                                 "&Cancel", 0,
+                                                 0,      // Enter == button 0
+                                                 1 ) ) { // Escape == button 2
+               case 0: // load it
+                  load_saxs(datafile);
+               break;
+               case 1: // Cancel clicked or Escape pressed
+                  break;
+               }
+            }
+         }
+      }            
    }
 }
 
@@ -3952,7 +3988,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
 
    {
       plot_saxs->setAxisTitle(QwtPlot::xBottom, tr("q (1/Angstrom)"));
-      plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("I(q)"));
+      plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)"));
    }
 
    plotted_q.push_back(q);
