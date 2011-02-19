@@ -230,6 +230,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString path_load_prr;
 
       bool guinier_analysis( unsigned int i );
+      void crop_iq_data( vector < double > &q,
+                         vector < double > &I );
 
    public slots:
       void show_plot_saxs_sans();

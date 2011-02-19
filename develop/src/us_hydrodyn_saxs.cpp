@@ -3287,6 +3287,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
       f.close();
 
       cout << QFileInfo(filename).fileName() << endl;
+      crop_iq_data(q, I);
       plot_one_iqq(q, I, QFileInfo(filename).fileName());
       if ( plotted )
       {
@@ -4006,6 +4007,7 @@ void US_Hydrodyn_Saxs::load_gnom()
       }
       if ( plot_gnom )
       {
+         crop_iq_data(gnom_q, gnom_Iq);
          plot_one_iqq(gnom_q, gnom_Iq, QFileInfo(filename).fileName());
          if ( plotted )
          {
@@ -4191,9 +4193,9 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
    }
 
    US_Saxs_Util usu;
-   usu.wave["guinier"].q = plotted_q2[i];
-   usu.wave["guinier"].r = plotted_I[i];
-   usu.wave["guinier"].s = plotted_I[i];
+   usu.wave["data"].q = plotted_q[i];
+   usu.wave["data"].r = plotted_I[i];
+   usu.wave["data"].s = plotted_I[i];
    QString log;
 
    // these should be parameterized
@@ -4219,7 +4221,12 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
    unsigned int beststart;
    unsigned int bestend;
 
-   if ( !usu.guinier_fit2(
+   if ( 
+       !usu.guinier_plot(
+                         "guinier",
+                         "data"
+                         )   ||
+       !usu.guinier_fit2(
                           log,
                           "guinier", 
                           pointsmin,
@@ -4272,4 +4279,44 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
    {
       guinier_analysis(i);
    }
+}
+
+void US_Hydrodyn_Saxs::crop_iq_data( vector < double > &q,
+                                     vector < double > &I )
+{
+   vector < double > new_q;
+   vector < double > new_I;
+
+   if ( !q.size() )
+   {
+      return;
+   }
+
+   unsigned int p = 0;
+   if ( q[p] == 0 )
+   {
+      p++;
+   }
+
+   // start copying 1 pt before 1st decrease:
+   
+   for ( p++ ; p < q.size(); p++ )
+   {
+      if ( I[p] < I[p - 1] )
+      {
+         //         p--;
+         break;
+      }
+   }
+
+   for (; p < q.size(); p++ )
+   {
+      if ( I[p] > 0 )
+      {
+         new_q.push_back(q[p]);
+         new_I.push_back(I[p]);
+      }
+   }
+   q = new_q;
+   I = new_I;
 }
