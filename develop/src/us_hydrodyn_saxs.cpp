@@ -337,22 +337,31 @@ void US_Hydrodyn_Saxs::setupGUI()
    cb_create_native_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_create_native_saxs, SIGNAL(clicked()), SLOT(set_create_native_saxs()));
 
-   if ( 1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   pb_load_gnom = new QPushButton("Load GNOM file", this);
+   pb_load_gnom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_load_gnom->setMinimumHeight(minHeight1);
+   pb_load_gnom->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_load_gnom, SIGNAL(clicked()), SLOT(load_gnom()));
+   
+   cb_guinier = new QCheckBox(this);
+   cb_guinier->setText(tr(" Guinier"));
+   cb_guinier->setEnabled(true);
+   cb_guinier->setChecked(false);
+   cb_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_guinier->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_guinier, SIGNAL(clicked()), SLOT(set_guinier()));
+   
+   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
    {
-      pb_load_gnom = new QPushButton("Load GNOM", this);
-      pb_load_gnom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-      //   pb_load_gnom->setMinimumHeight(minHeight1);
-      pb_load_gnom->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-      connect(pb_load_gnom, SIGNAL(clicked()), SLOT(load_gnom()));
-
+      pb_guinier_analysis = new QPushButton("Guinier Analysis", this);
+      pb_guinier_analysis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+      //   pb_guinier_analysis->setMinimumHeight(minHeight1);
+      pb_guinier_analysis->setEnabled(true);
+      pb_guinier_analysis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+      connect(pb_guinier_analysis, SIGNAL(clicked()), SLOT(run_guinier_analysis()));
+   }
+   
 #if defined(ADD_GUINIER)      
-      cb_guinier = new QCheckBox(this);
-      cb_guinier->setText(tr(" Guinier"));
-      cb_guinier->setEnabled(true);
-      cb_guinier->setChecked(false);
-      cb_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-      cb_guinier->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-      
       lbl_guinier_cutoff = new QLabel(tr("Guinier cutoff\n(1/Angstrom^2) : "), this);
       Q_CHECK_PTR(lbl_guinier_cutoff);
       lbl_guinier_cutoff->setAlignment(AlignLeft|AlignVCenter);
@@ -371,7 +380,6 @@ void US_Hydrodyn_Saxs::setupGUI()
       cnt_guinier_cutoff->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
       connect(cnt_guinier_cutoff, SIGNAL(valueChanged(double)), SLOT(update_guinier_cutoff(double)));
 #endif
-   }
 
    lbl_info_prr = new QLabel(tr("P(r) vs. r  Plotting Functions:"), this);
    Q_CHECK_PTR(lbl_info_prr);
@@ -496,7 +504,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
    plot_saxs->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_saxs->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-   plot_saxs->setAxisTitle(QwtPlot::xBottom, tr("q (1/Angstrom)"));
+   plot_saxs->setAxisTitle(QwtPlot::xBottom, cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") :  tr("q (1/Angstrom)"));
    plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)"));
    plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_saxs->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -611,19 +619,20 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addMultiCellLayout(hbl_tools, j, j, 0, 1);
    j++;
 
-#if defined(ADD_GUINIER)      
-   if ( 1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   QHBoxLayout *hbl_guinier = new QHBoxLayout;
+   hbl_guinier->addWidget(cb_guinier);
+ 
+   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
    {
-      QHBoxLayout *hbl_guinier = new QHBoxLayout;
-      hbl_guinier->addWidget(cb_guinier);
-      hbl_guinier->addWidget(lbl_guinier_cutoff);
-      hbl_guinier->addWidget(cnt_guinier_cutoff);
-      background->addMultiCellLayout(hbl_guinier, j, j, 0, 1);
-      j++;
+      hbl_guinier->addWidget(pb_guinier_analysis);
    }
+#if defined(ADD_GUINIER)      
+   hbl_guinier->addWidget(lbl_guinier_cutoff);
+   hbl_guinier->addWidget(cnt_guinier_cutoff);
 #endif
-   //   background->addWidget(pb_load_gnom, j, 0);
-   //   background->addWidget(cb_create_native_saxs, j, 1);
+   background->addMultiCellLayout(hbl_guinier, j, j, 0, 1);
+   j++;
+
    background->addMultiCellWidget(lbl_info_prr, j, j, 0, 1);
    j++;
    background->addWidget(lbl_bin_size, j, 0);
@@ -2959,8 +2968,32 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 #endif
       long Iq = plot_saxs->insertCurve("I(q) vs q");
 
+      QString name = 
+         QString("%1_%1")
+         .arg(QFileInfo(te_filename2->text()).fileName())
+         .arg(current_model + 1);
+      QString plot_name = name;
+      int extension = 0;
+
+      while ( dup_plotted_iq_name_check.count(plot_name) )
+      {
+         plot_name = QString("%1-%1").arg(name).arg(++extension);
+      }
+      qsl_plotted_iq_names << plot_name;
+      dup_plotted_iq_name_check[plot_name] = true;
+
+      plotted_Iq.push_back(Iq);
+
       plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
       plotted_q.push_back(q);
+      {
+         vector < double > q2(q.size());
+         for ( unsigned int i = 0; i < q.size(); i++ )
+         {
+            q2[i] = q[i] * q[i];
+         }
+         plotted_q2.push_back(q2);
+      }
       plotted_I.push_back(I);
       unsigned int p = plotted_q.size() - 1;
 #if defined(SAXS_DEBUG)
@@ -2970,7 +3003,10 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       {
          plotted_I[p][i] = log10(plotted_I[p][i]);
       }
-      plot_saxs->setCurveData(Iq, (double *)&(plotted_q[p][0]), (double *)&(plotted_I[p][0]), q_points);
+      plot_saxs->setCurveData(Iq, 
+                              cb_guinier->isChecked() ?
+                              (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
+                              (double *)&(plotted_I[p][0]), q_points);
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
       plot_saxs->replot();
 
@@ -3272,7 +3308,11 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
 
 void US_Hydrodyn_Saxs::clear_plot_saxs()
 {
+   qsl_plotted_iq_names.clear();
+   dup_plotted_iq_name_check.clear();
+   plotted_Iq.clear();
    plotted_q.clear();
+   plotted_q2.clear();
    plotted_I.clear();
    plot_saxs->clear();
    plot_saxs->replot();
@@ -3299,12 +3339,12 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
       pb_plot_saxs_sans->setText(tr("Compute SANS Curve"));
       pb_load_saxs_sans->setText(tr("Load SANS Curve"));
       pb_clear_plot_saxs->setText(tr("Clear SANS Curve"));
-      plot_saxs->setTitle(tr("Simulated SANS Curve"));
+      plot_saxs->setTitle(tr("SANS Curve"));
    } else {
       pb_plot_saxs_sans->setText(tr("Compute SAXS Curve"));
       pb_load_saxs_sans->setText(tr("Load SAXS Curve"));
       pb_clear_plot_saxs->setText(tr("Clear SAXS Curve"));
-      plot_saxs->setTitle(tr("Simulated SAXS Curve"));
+      plot_saxs->setTitle(tr("SAXS Curve"));
    }
 }
 
@@ -3841,6 +3881,10 @@ void US_Hydrodyn_Saxs::load_gnom()
    QFile f(filename);
    path_load_gnom = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
+   bool plot_gnom = false;
+   vector < double > gnom_Iq;
+   vector < double > gnom_q;
+
    if ( f.open(IO_ReadOnly) )
    {
       QTextStream ts(&f);
@@ -3878,18 +3922,28 @@ void US_Hydrodyn_Saxs::load_gnom()
                   // end of iqq?
                   if ( rx2.search(tmp) == -1 )
                   {
-                     plot_one_iqq(q, I, QFileInfo(filename).fileName());
-                     if ( plotted )
-                     {
-                        editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-                        editor->append("I(q) vs q plot done\n");
-                        plotted = false;
-                     }
+                     plot_gnom = true;
+                     gnom_Iq = I;
+                     gnom_q = q;
+                     // plot_one_iqq(q, I, QFileInfo(filename).fileName());
+                     // if ( plotted )
+                     // {
+                     //   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+                     //   editor->append("I(q) vs q plot done\n");
+                     //   plotted = false;
+                     // }
                      break;
                   } else {
                      // cout << "iqq 2 fielder ignored\n";
                   }
                }
+            }
+            if ( ts.atEnd() &&
+                 q.size() )
+            {
+               plot_gnom = true;
+               gnom_Iq = I;
+               gnom_q = q;
             }
             continue;
          }
@@ -3949,7 +4003,17 @@ void US_Hydrodyn_Saxs::load_gnom()
                }
             }
          }
-      }            
+      }
+      if ( plot_gnom )
+      {
+         plot_one_iqq(gnom_q, gnom_Iq, QFileInfo(filename).fileName());
+         if ( plotted )
+         {
+            editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+            editor->append("I(q) vs q plot done\n");
+            plotted = false;
+         }
+      }
    }
 }
 
@@ -3963,57 +4027,38 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
    {
       I.resize(q.size());
    }
-
+   
+   QString plot_name = name;
+   int extension = 0;
+   while ( dup_plotted_iq_name_check.count(plot_name) )
+   {
+      plot_name = QString("%1-%1").arg(name).arg(++extension);
+   }
+   qsl_plotted_iq_names << plot_name;
+   dup_plotted_iq_name_check[plot_name] = true;
+      
    long Iq = plot_saxs->insertCurve("I(q) vs q");
    plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
-#if defined(ADD_GUINIER)      
-   if ( cb_guinier->isChecked() )
-   {
-      for ( unsigned int i = 0; i < q.size(); i++ )
-      {
-         q[i] *= q[i];
-
-         I[i] = log(I[i]);
-         if ( cb_guinier->isChecked() &&
-              q[i] > guinier_cutoff )
-         {
-            q.resize(i);
-            I.resize(i);
-         }
-      }
-      plot_saxs->setAxisTitle(QwtPlot::xBottom, tr("q^2 (1/Angstrom^2)"));
-      plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("ln I(q)"));
-   } else 
-#endif
-
-   {
-      plot_saxs->setAxisTitle(QwtPlot::xBottom, tr("q (1/Angstrom)"));
-      plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)"));
-   }
 
    plotted_q.push_back(q);
+   plotted_Iq.push_back(Iq);
+   {
+      vector < double > q2(q.size());
+      for ( unsigned int i = 0; i < q.size(); i++ )
+      {
+         q2[i] = q[i] * q[i];
+      }
+      plotted_q2.push_back(q2);
+   }
    plotted_I.push_back(I);
    unsigned int q_points = q.size();
    unsigned int p = plotted_q.size() - 1;
-#if defined(ADD_GUINIER)      
-   if ( cb_guinier->isChecked() )
-   {
-      QwtSymbol sym;
-      sym.setStyle(QwtSymbol::Cross);
-      sym.setSize(12);
-      sym.setPen(QPen(plot_colors[p % plot_colors.size()]));
-      sym.setBrush(white);
-      long Gp = plot_saxs->insertCurve("Guinier points");
-      plot_saxs->setCurveStyle(Gp, QwtCurve::NoCurve);
-      plot_saxs->setCurveData(Gp, (double *)&(plotted_q[p][0]), (double *)&(plotted_I[p][0]), q_points);
-      plot_saxs->setCurveSymbol(Gp, QwtSymbol(sym));
-   } else 
-#endif
 
-   {
-      plot_saxs->setCurveData(Iq, (double *)&(plotted_q[p][0]), (double *)&(plotted_I[p][0]), q_points);
-      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
-   }
+   plot_saxs->setCurveData(Iq, 
+                           cb_guinier->isChecked() ?
+                           (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
+                           (double *)&(plotted_I[p][0]), q_points);
+   plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
 
    // figure out how to plot points for guinier plots
    plot_saxs->replot();
@@ -4124,3 +4169,107 @@ QString US_Hydrodyn_Saxs::curve_type_string(int curve)
    return result;
 }
 
+void US_Hydrodyn_Saxs::set_guinier()
+{
+   for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
+   {
+      plot_saxs->setCurveData(plotted_Iq[i], 
+                              cb_guinier->isChecked() ?
+                              (double *)&(plotted_q2[i][0]) : (double *)&(plotted_q[i][0]), 
+                              (double *)&(plotted_I[i][0]), plotted_q[i].size());
+   }
+   plot_saxs->setAxisTitle(QwtPlot::xBottom, cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") :  tr("q (1/Angstrom)"));
+   plot_saxs->replot();
+}
+
+bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
+{
+   if ( i > plotted_Iq.size() )
+   {
+      editor->append("internal error: invalid plot selected\n");
+      return false;
+   }
+
+   US_Saxs_Util usu;
+   usu.wave["guinier"].q = plotted_q2[i];
+   usu.wave["guinier"].r = plotted_I[i];
+   usu.wave["guinier"].s = plotted_I[i];
+   QString log;
+
+   // these should be parameterized
+   int pointsmin = 10;
+   int pointsmax = 100;
+   double sRgmaxlimit = 1.3e0;
+   double pointweightpower = 3e0;
+   
+   // these are function output values
+   double a;
+   double b;
+   double siga;
+   double sigb;
+   double chi2;
+   double Rg;
+   double Io;
+   double smin;
+   double smax;
+   double sRgmin;
+   double sRgmax;
+   double p_guinier_maxq = .5e0;
+
+   unsigned int beststart;
+   unsigned int bestend;
+
+   if ( !usu.guinier_fit2(
+                          log,
+                          "guinier", 
+                          pointsmin,
+                          pointsmax,
+                          sRgmaxlimit,
+                          pointweightpower,
+                          p_guinier_maxq,
+                          a,
+                          b,
+                          siga,
+                          sigb,
+                          chi2,
+                          Rg,
+                          Io,
+                          smax, // don't know why these are flipped
+                          smin,
+                          sRgmin,
+                          sRgmax,
+                          beststart,
+                          bestend
+                          ) )
+   {
+      editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
+                     .arg(qsl_plotted_iq_names[i]));
+      return false;
+   }
+   
+   cout << log;
+
+   QString report = 
+      QString(
+              "Guinier analysis of %1:\n"
+              "Rg %1 Io %1 qRgmin %1 qRgmax %1 points used %1 chi^2 %1\n"
+              )
+      .arg(qsl_plotted_iq_names[i])
+      .arg(Rg)
+      .arg(Io)
+      .arg(sRgmin)
+      .arg(sRgmax)
+      .arg(bestend - beststart + 1)
+      .arg(chi2);
+
+   editor->append(report);
+   return true;
+}
+                            
+void US_Hydrodyn_Saxs::run_guinier_analysis()
+{
+   for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
+   {
+      guinier_analysis(i);
+   }
+}

@@ -104,6 +104,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_load_pr;
       QPushButton *pb_clear_plot_pr;
       QPushButton *pb_load_gnom;
+      QPushButton *pb_guinier_analysis;
       QPushButton *pb_select_atom_file;
       QPushButton *pb_select_hybrid_file;
       QPushButton *pb_select_saxs_file;
@@ -147,10 +148,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       struct hybridization current_hybrid;
       struct saxs current_saxs;
       saxs_options *our_saxs_options;
+      QStringList  qsl_plotted_iq_names;
       QStringList  qsl_plotted_pr_names;
 #ifdef WIN32
      #pragma warning ( disable: 4251 )
 #endif
+      map < QString, bool >        dup_plotted_iq_name_check;
       map < QString, bool >        dup_plotted_pr_name_check;
       vector < atom >              atom_list;
       vector < hybridization >     hybrid_list;
@@ -160,12 +163,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < vector <PDB_atom> > bead_models;
       vector < unsigned int >      selected_models;
       vector < QColor >            plot_colors;
+      vector < long >              plotted_Iq;  // curve keys
       vector < vector < double > > plotted_q;
+      vector < vector < double > > plotted_q2;  // q^2 for guinier plots
       vector < vector < double > > plotted_I;
       vector < vector < double > > plotted_pr;
       vector < vector < double > > plotted_pr_not_normalized;
       vector < vector < double > > plotted_r;
-
 
       map < QString, saxs >          saxs_map;
       map < QString, hybridization > hybrid_map;
@@ -225,6 +229,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString path_load_gnom;
       QString path_load_prr;
 
+      bool guinier_analysis( unsigned int i );
+
    public slots:
       void show_plot_saxs_sans();
       void show_plot_pr();
@@ -260,9 +266,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void select_saxs_file(const QString &);
       void normalize_pr(vector < double > *);
       void update_saxs_sans();
+      void run_guinier_analysis();
       QString saxs_filestring();
       QString sprr_filestring();
       void set_create_native_saxs();
+      void set_guinier();
       void load_gnom();
 
    protected slots:
