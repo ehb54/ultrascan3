@@ -2,8 +2,14 @@
 #ifndef US_MATRIX_H
 #define US_MATRIX_H
 
-//! \brief A set of general purpose matrix functions.  All functions
-//!        are static.
+#include <QtCore>
+
+/*! A class of general purpose static matrix functions. The elements of all
+ *  matrices and vectors are doubles. The matrix arguments are arrays of
+ *  pointers to arrays of doubles (rows). The vector arguments are arrays
+ *  of doubles.
+ *  \brief A set of general purpose matrix functions. All functions are static.
+ */
 class US_Matrix
 {
 public:
@@ -39,6 +45,18 @@ public:
    */
    static bool Cholesky_SolveSystem( double**, double*, int );
 
+   /*! Cholesky Invert: solve Ax=b using Cholesky decomposition:
+    *   A * A(-1) = I ;  A = LL' ;  L (L' * A(-1) ) = I ;
+    *   L * y = I (solve for y) ,  now L' * A(-1) = y  (solve for A(-1)) .
+    *
+    *  \brief Cholesky Invert to solve Ax=b by Cholesky decomposition.
+    *  \param AA An nn x nn input matrix
+    *  \param AI An nn x nn solved inverted matrix
+    *  \param nn Number of rows and columns in the matrices
+    *  \returns  A flag for whether a solution was found
+    */
+   static bool Cholesky_Invert   ( double**, double**, int );
+
    /*! Solve a set of linear equations. A is a square matrix of coefficients.
        b is the right hand side. b is replaced by solution.
        Target is replaced by its LU decomposition.
@@ -73,6 +91,161 @@ public:
        \param n Dimension of sides.
    */
    static void LU_BackSubstitute( double**, double*&, int*, int );
+
+   /*! Construct and initialize a matrix array of double pointers from
+    *  a QVector of double pointers and a QVector of doubles holding the
+    *  (rows times columns) contiguous matrix elements, initialized to zero.
+    *  \brief Create a matrix array from QVectors
+    *  \param QVm     The QVector from which the matrix array is constructed
+    *  \param QVd     The QVector for holding contiguous data elements
+    *  \param rows    The number of rows for the matrix
+    *  \param columns The number of columns for the matrix
+    *  \returns       The double** matrix array
+    */
+   static double** construct( QVector< double* >&, QVector< double >&,
+         int, int );
+
+   /*! Calculate the (columns x columns) square matrix product of a
+    *  matrix transpose and the matrix. Only the lower triangle is computed.
+    *  \brief Calculates A' * A ,  A-transpose times A.
+    *  \param AA      The A matrix operand.
+    *  \param CC      The C square matrix product of A-tranpose and A.
+    *  \param rows    The number of A rows
+    *  \param columns The number of A columns (and output C size)
+    */
+   static void tmm( double**, double**, int, int );
+
+   /*! Calculate the (columns x columns) square matrix product of a matrix
+    *  transpose and the matrix. The entire matrix may optionally be filled.
+    *  \brief Calculates A' * A:  A-transpose times A.
+    *  \param AA      The A matrix operand.
+    *  \param CC      The C square matrix product of A-tranpose and A.
+    *  \param rows    The number of A rows
+    *  \param columns The number of A columns (and output C size)
+    *  \param fill    A flag for whether to fill in the upper triangle
+    */
+   static void tmm( double**, double**, int, int, bool );
+
+   /*! Calculate the (rows size) product of a (rows x columns) matrix
+    *  and a (columns size) vector.
+    *  \brief Calculates A * b:  a vector product whose size is A's rows
+    *  \param AA      The A matrix operand  (rows x columns)
+    *  \param bb      The b vector operator (columns x 1)
+    *  \param cc      The c vector product  (rows x 1)
+    *  \param rows    The number of rows in the matrix (output vector elements)
+    *  \param columns The number of columns in the matrix (operator vector size)
+    */
+   static void mvv( double**, double*, double*, int, int );
+
+   /*! Calculate the (columns size) product of a (columns x rows)
+    *  matrix-tranpose and a (rows size) vector.
+    *  \brief Calculates A' * b:  a vector product whose size is A's columns
+    *  \param AA      The A matrix whose transpose is the operand
+    *  \param bb      The b vector operator (rows x 1)
+    *  \param cc      The c vector product  (columns x 1)
+    *  \param rows    The number of matrix rows (operator vector size)
+    *  \param columns The number of matrix columns (product vector size)
+    */
+   static void tvv( double**, double*, double*, int, int );
+
+   /*! Calculate the matrix product of two matrices, the rows by columns
+    *  product of a (rows x size) matrix and a (size x columns) matrix.
+    *  \brief Calculates A * B:  a matrix product of A-rows by B-columns
+    *  \param AA      The A matrix operand  (rows x size)
+    *  \param BB      The B matrix operator (size x columns)
+    *  \param CC      The C matrix product  (rows x columns)
+    *  \param rows    The number of rows in A and C
+    *  \param size    The number of columns in A and rows in B
+    *  \param columns The number of columns in B and C
+    */
+   static void mmm( double**, double**, double**, int, int, int );
+
+   /*! Calculate the matrix sum of two matrices of the same dimensions.
+    *  \brief Calculate A + B:  a matrix sum with all matrices rows x columns.
+    *  \param AA      The A matrix operand  (rows x columns)
+    *  \param BB      The B matrix operator (rows x columns)
+    *  \param CC      The C matrix sum      (rows x columns)
+    *  \param rows    The number of rows in all matrices
+    *  \param columns The number of columns in all matrices
+    */
+   static void msum( double**, double**, double**, int, int );
+
+   /*! Calculate the vector sum of two vectors of the same dimensions. The
+    *  destination sum vector may be the same as the operand.
+    *  \brief Calculate a + b:  a vector sum with all vectors the same size.
+    *  \param aa      The "a" vector operand
+    *  \param bb      The "b" vector operator
+    *  \param cc      The "c" vector sum (may be the same as "a")
+    *  \param size    The size of all vectors
+    */
+   static void vsum( double*, double*, double*, int );
+
+   /*! Fill a square matrix so that it is the identity matrix.
+    *  \brief Fills matrix C:  Cij = ( i != j  ? 0.0 : 1.0 )
+    *  \param CC      The matrix product
+    *  \param size    The number of rows and columns in the matrix
+    */
+   static void mident( double**, int );
+
+   /*! Copy the contents of one matrix to another of the same size
+    *  \brief Matrix copy:  C = A
+    *  \param AA      The source A matrix 
+    *  \param CC      The destination C matrix copy
+    *  \param rows    The number of rows in A and C
+    *  \param columns The number of columns in A and C
+    */
+   static void mcopy( double**, double**, int, int );
+
+   /*! Copy the contents of one vector to another of the same size
+    *  \brief Vector copy:  c = a
+    *  \param aa      The source "a" vector 
+    *  \param cc      The destination "c" vector copy
+    *  \param size    The size of the vectors
+    */
+   static void vcopy( double*, double*, int );
+
+   /*! Add a scalar to the diagonal of a square matrix
+    *  \brief Diagonal add:  Cii = Cii + s
+    *  \param CC      The source,destination matrix
+    *  \param ss      The scalar to add to the diagonal
+    *  \param size    The size (rows, columns) of the matrix
+    */
+   static void add_diag( double**, double, int );
+
+   /*! Add a scalar to all elements of a matrix
+    *  \brief Matrix-scalar-add:  Cij += s
+    *  \param CC      The source,destination matrix
+    *  \param ss      The scalar to add to all elements
+    *  \param rows    The number of rows in the matrix
+    *  \param columns The number of columns in the matrix
+    */
+   static void add( double**, double, int, int );
+
+   /*! Scale all matrix elements by a value
+    *  \brief Matrix-scalar-multiply:  Cij *= s
+    *  \param CC      The source,destination matrix
+    *  \param ss      The scalar with which to multiply elements
+    *  \param rows    The number of rows in the matrix
+    *  \param columns The number of columns in the matrix
+    */
+   static void scale( double**, double, int, int );
+
+   /*! Compute the dot product of two vectors
+    *  \brief Vector dot product:  p = sum( a[i] * b[i] )
+    *  \param aa      The operand "a" vector 
+    *  \param bb      The operator "b" vector 
+    *  \param size    The size of the vectors
+    *  \returns       Dot product of vectors
+    */
+   static double dotproduct( double*, double*, int );
+
+   /*! Compute the dot product of a vector with itself
+    *  \brief Vector dot product:  p = sum( a[i] * a[i] )
+    *  \param aa      The operand "a" vector 
+    *  \param size    The size of the vector
+    *  \returns       Dot product of vector with itself
+    */
+   static double dotproduct( double*, int );
 
 private:
    static void print_matrix( double**, int, int );
