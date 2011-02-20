@@ -345,6 +345,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    
    cb_guinier = new QCheckBox(this);
    cb_guinier->setText(tr(" Guinier plot    q^2 range:"));
+   cb_guinier->setMinimumHeight(minHeight1);
    cb_guinier->setEnabled(true);
    cb_guinier->setChecked(false);
    cb_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -353,7 +354,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    le_guinier_lowq2 = new QLineEdit(this, "guinier_lowq2 Line Edit");
    le_guinier_lowq2->setText("");
-   //   le_guinier_lowq2->setMinimumHeight(minHeight1);
+   le_guinier_lowq2->setMinimumHeight(minHeight1);
    le_guinier_lowq2->setAlignment(AlignCenter|AlignVCenter);
    le_guinier_lowq2->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_guinier_lowq2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -361,7 +362,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    le_guinier_highq2 = new QLineEdit(this, "guinier_highq2 Line Edit");
    le_guinier_highq2->setText("");
-   //   le_guinier_highq2->setMinimumHeight(minHeight1);
+   le_guinier_highq2->setMinimumHeight(minHeight1);
    le_guinier_highq2->setAlignment(AlignCenter|AlignVCenter);
    le_guinier_highq2->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_guinier_highq2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -369,6 +370,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    cb_user_range = new QCheckBox(this);
    cb_user_range->setText(tr(" Standard plot    q range:"));
+   cb_user_range->setMinimumHeight(minHeight1);
    cb_user_range->setEnabled(true);
    cb_user_range->setChecked(false);
    cb_user_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -377,7 +379,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    le_user_lowq = new QLineEdit(this, "user_lowq Line Edit");
    le_user_lowq->setText("");
-   //   le_user_lowq->setMinimumHeight(minHeight1);
+   le_user_lowq->setMinimumHeight(minHeight1);
    le_user_lowq->setAlignment(AlignCenter|AlignVCenter);
    le_user_lowq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_user_lowq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -385,7 +387,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    le_user_highq = new QLineEdit(this, "user_highq Line Edit");
    le_user_highq->setText("");
-   //   le_user_highq->setMinimumHeight(minHeight1);
+   le_user_highq->setMinimumHeight(minHeight1);
    le_user_highq->setAlignment(AlignCenter|AlignVCenter);
    le_user_highq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_user_highq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -3350,7 +3352,10 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
 
       cout << QFileInfo(filename).fileName() << endl;
       crop_iq_data(q, I);
-      plot_one_iqq(q, I, QFileInfo(filename).fileName());
+      if ( q.size() )
+      {
+         plot_one_iqq(q, I, QFileInfo(filename).fileName());
+      }
       if ( plotted )
       {
          editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
@@ -4394,87 +4399,103 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
    unsigned int beststart;
    unsigned int bestend;
 
-   if ( 
-       !usu.guinier_plot(
-                         "guinier",
-                         "data"
-                         )   ||
-       !usu.guinier_fit2(
-                          log,
-                          "guinier", 
-                          pointsmin,
-                          pointsmax,
-                          sRgmaxlimit,
-                          pointweightpower,
-                          p_guinier_maxq,
-                          a,
-                          b,
-                          siga,
-                          sigb,
-                          chi2,
-                          Rg,
-                          Io,
-                          smax, // don't know why these are flipped
-                          smin,
-                          sRgmin,
-                          sRgmax,
-                          beststart,
-                          bestend
-                          ) )
-   {
-      editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
-                     .arg(qsl_plotted_iq_names[i]));
-      return false;
-   }
+   bool too_few_points = plotted_q[i].size() <= 25;
 
-   cout << "guinier siga " << siga << endl;
-   cout << "guinier sigb " << sigb << endl;
+   if ( !too_few_points )
+   {
+      if ( 
+          !usu.guinier_plot(
+                            "guinier",
+                            "data"
+                            )   ||
+          !usu.guinier_fit2(
+                            log,
+                            "guinier", 
+                            pointsmin,
+                            pointsmax,
+                            sRgmaxlimit,
+                            pointweightpower,
+                            p_guinier_maxq,
+                            a,
+                            b,
+                            siga,
+                            sigb,
+                            chi2,
+                            Rg,
+                            Io,
+                            smax, // don't know why these are flipped
+                            smin,
+                            sRgmin,
+                            sRgmax,
+                            beststart,
+                            bestend
+                            ) )
+      {
+         editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
+                        .arg(qsl_plotted_iq_names[i]));
+         return false;
+      }
+
+      cout << "guinier siga " << siga << endl;
+      cout << "guinier sigb " << sigb << endl;
    
-   cout << log;
+      cout << log;
+   }
 
    QColor save_color = editor->color();
    editor->setColor(plot_colors[i % plot_colors.size()]);
 
    QString report;
-   if ( isnan(Rg) )
+   if ( too_few_points )
    {
-      plotted_guinier_valid[i] = false;
       report =
          QString(
                  "Guinier analysis of %1:\n"
-                 "**** Could not compute Rg ****\n"
+                 "**** Could not compute Rg, too few data points %1 ****\n"
                  )
-         .arg(qsl_plotted_iq_names[i]);
+         .arg(plotted_q[i].size());
    } else {
-      report = 
-         QString(
-                 "Guinier analysis of %1:\n"
-                 "Rg %1 (%1) (A) Io %1 (%1) qRgmin %1 qRgmax %1 points used %1 chi^2 %1\n"
-                 )
-         .arg(qsl_plotted_iq_names[i])
-         .arg(Rg)
-         .arg(sqrt(3e0 * sigb))
-         .arg(Io)
-         .arg(siga)
-         .arg(sRgmin)
-         .arg(sRgmax)
-         .arg(bestend - beststart + 1)
-         .arg(chi2);
-
-      plotted_guinier_valid[i] = true;
-      plotted_guinier_lowq2[i] = smin * smin;
-      plotted_guinier_highq2[i] = smax * smax;
-      plotted_guinier_a[i] = a;
-      plotted_guinier_b[i] = b;
-      plotted_guinier_plotted[i] = false;
-
-      plotted_guinier_x[i].clear();
-      plotted_guinier_x[i].push_back(plotted_guinier_lowq2[i]);
-      plotted_guinier_x[i].push_back(plotted_guinier_highq2[i]);
-      
-      plotted_guinier_y[i].clear();
-      plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_lowq2[i]));
-      plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_highq2[i]));
+      if ( isnan(Rg) ||
+           b >= 0e0 )
+      {
+         plotted_guinier_valid[i] = false;
+         report =
+            QString(
+                    "Guinier analysis of %1:\n"
+                    "**** Could not compute Rg ****\n"
+                    )
+            .arg(qsl_plotted_iq_names[i]);
+      } else {
+         report = 
+            QString(
+                    "Guinier analysis of %1:\n"
+                    "Rg %1 (%1) (A) Io %1 (%1) qRgmin %1 qRgmax %1 points used %1 chi^2 %1\n"
+                    )
+            .arg(qsl_plotted_iq_names[i])
+            .arg(Rg)
+            .arg( sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb )
+            .arg(Io)
+            .arg(siga)
+            .arg(sRgmin)
+            .arg(sRgmax)
+            .arg(bestend - beststart + 1)
+            .arg(chi2);
+         
+         plotted_guinier_valid[i] = true;
+         plotted_guinier_lowq2[i] = smin * smin;
+         plotted_guinier_highq2[i] = smax * smax;
+         plotted_guinier_a[i] = a;
+         plotted_guinier_b[i] = b;
+         plotted_guinier_plotted[i] = false;
+         
+         plotted_guinier_x[i].clear();
+         plotted_guinier_x[i].push_back(plotted_guinier_lowq2[i]);
+         plotted_guinier_x[i].push_back(plotted_guinier_highq2[i]);
+         
+         plotted_guinier_y[i].clear();
+         plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_lowq2[i]));
+         plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_highq2[i]));
+      }
    }
    editor->append(report);
    editor->setColor(save_color);
@@ -4723,7 +4744,10 @@ void US_Hydrodyn_Saxs::crop_iq_data( vector < double > &q,
          new_I.push_back(I[p]);
       }
    }
-   q = new_q;
-   I = new_I;
+   if ( new_q.size() > 10 )
+   {
+      q = new_q;
+      I = new_I;
+   }
 }
 
