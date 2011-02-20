@@ -345,7 +345,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    
    cb_guinier = new QCheckBox(this);
    cb_guinier->setText(tr(" Guinier plot    q^2 range:"));
-   cb_guinier->setMinimumHeight(minHeight1);
+   // cb_guinier->setMinimumHeight(minHeight1);
    cb_guinier->setEnabled(true);
    cb_guinier->setChecked(false);
    cb_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -354,7 +354,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    le_guinier_lowq2 = new QLineEdit(this, "guinier_lowq2 Line Edit");
    le_guinier_lowq2->setText("");
-   le_guinier_lowq2->setMinimumHeight(minHeight1);
+   // le_guinier_lowq2->setMinimumHeight(minHeight1);
    le_guinier_lowq2->setAlignment(AlignCenter|AlignVCenter);
    le_guinier_lowq2->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_guinier_lowq2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -362,7 +362,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    le_guinier_highq2 = new QLineEdit(this, "guinier_highq2 Line Edit");
    le_guinier_highq2->setText("");
-   le_guinier_highq2->setMinimumHeight(minHeight1);
+   // le_guinier_highq2->setMinimumHeight(minHeight1);
    le_guinier_highq2->setAlignment(AlignCenter|AlignVCenter);
    le_guinier_highq2->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_guinier_highq2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -370,7 +370,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    cb_user_range = new QCheckBox(this);
    cb_user_range->setText(tr(" Standard plot    q range:"));
-   cb_user_range->setMinimumHeight(minHeight1);
+   // cb_user_range->setMinimumHeight(minHeight1);
    cb_user_range->setEnabled(true);
    cb_user_range->setChecked(false);
    cb_user_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -379,7 +379,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    le_user_lowq = new QLineEdit(this, "user_lowq Line Edit");
    le_user_lowq->setText("");
-   le_user_lowq->setMinimumHeight(minHeight1);
+   // le_user_lowq->setMinimumHeight(minHeight1);
    le_user_lowq->setAlignment(AlignCenter|AlignVCenter);
    le_user_lowq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_user_lowq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -387,7 +387,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    le_user_highq = new QLineEdit(this, "user_highq Line Edit");
    le_user_highq->setText("");
-   le_user_highq->setMinimumHeight(minHeight1);
+   // le_user_highq->setMinimumHeight(minHeight1);
    le_user_highq->setAlignment(AlignCenter|AlignVCenter);
    le_user_highq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_user_highq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -4467,19 +4467,21 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
             .arg(qsl_plotted_iq_names[i]);
       } else {
          report = 
-            QString(
-                    "Guinier analysis of %1:\n"
-                    "Rg %1 (%1) (A) Io %1 (%1) qRgmin %1 qRgmax %1 points used %1 chi^2 %1\n"
-                    )
-            .arg(qsl_plotted_iq_names[i])
-            .arg(Rg)
-            .arg( sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb )
-            .arg(Io)
-            .arg(siga)
-            .arg(sRgmin)
-            .arg(sRgmax)
-            .arg(bestend - beststart + 1)
-            .arg(chi2);
+            QString("")
+            .sprintf(
+                    "Guinier analysis of %s:\n"
+                    "Rg %4.3g (%4.3g) (A) Io %.3e (%.3e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.3e\n"
+                    
+                    , qsl_plotted_iq_names[i].ascii()
+                    , Rg
+                    , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb 
+                    , Io
+                    , siga
+                    , sRgmin
+                    , sRgmax
+                    , bestend - beststart + 1
+                    , chi2
+                    );
          
          plotted_guinier_valid[i] = true;
          plotted_guinier_lowq2[i] = smin * smin;
