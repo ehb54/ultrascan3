@@ -148,6 +148,13 @@ struct saxs_options
    int     curve;                // 0 = raw, 1 = saxs, 2 = sans
    bool    hydrate_pdb;          // Hydrate the PDB model? (true/false)
    int     saxs_sans;            // 0 = saxs, 1 = sans
+
+   // saved paths
+
+   QString path_load_saxs_curve;
+   QString path_load_gnom;
+   QString path_load_prr;
+
 };
 
 struct hybridization

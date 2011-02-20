@@ -140,7 +140,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    plot_colors.push_back(Qt::darkGreen);
    plot_colors.push_back(Qt::darkCyan);
    plot_colors.push_back(Qt::darkBlue);
-   plot_colors.push_back(Qt::darkRed);
+   //   plot_colors.push_back(Qt::darkRed);
    plot_colors.push_back(Qt::darkMagenta);
    plot_colors.push_back(Qt::white);
 }
@@ -344,23 +344,60 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_load_gnom, SIGNAL(clicked()), SLOT(load_gnom()));
    
    cb_guinier = new QCheckBox(this);
-   cb_guinier->setText(tr(" Guinier"));
+   cb_guinier->setText(tr(" Guinier       q^2 range:"));
    cb_guinier->setEnabled(true);
    cb_guinier->setChecked(false);
    cb_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_guinier->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_guinier, SIGNAL(clicked()), SLOT(set_guinier()));
+
+   le_guinier_lowq2 = new QLineEdit(this, "guinier_lowq2 Line Edit");
+   le_guinier_lowq2->setText("");
+   //   le_guinier_lowq2->setMinimumHeight(minHeight1);
+   le_guinier_lowq2->setAlignment(AlignCenter|AlignVCenter);
+   le_guinier_lowq2->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_guinier_lowq2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_guinier_lowq2, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_lowq2(const QString &)));
+
+   le_guinier_highq2 = new QLineEdit(this, "guinier_highq2 Line Edit");
+   le_guinier_highq2->setText("");
+   //   le_guinier_highq2->setMinimumHeight(minHeight1);
+   le_guinier_highq2->setAlignment(AlignCenter|AlignVCenter);
+   le_guinier_highq2->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_guinier_highq2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_guinier_highq2, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_highq2(const QString &)));
+
+   cb_user_range = new QCheckBox(this);
+   cb_user_range->setText(tr(" Scale plot      q range:"));
+   cb_user_range->setEnabled(true);
+   cb_user_range->setChecked(false);
+   cb_user_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_user_range->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_user_range, SIGNAL(clicked()), SLOT(set_user_range()));
+
+   le_user_lowq = new QLineEdit(this, "user_lowq Line Edit");
+   le_user_lowq->setText("");
+   //   le_user_lowq->setMinimumHeight(minHeight1);
+   le_user_lowq->setAlignment(AlignCenter|AlignVCenter);
+   le_user_lowq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_user_lowq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_user_lowq, SIGNAL(textChanged(const QString &)), SLOT(update_user_lowq(const QString &)));
+
+   le_user_highq = new QLineEdit(this, "user_highq Line Edit");
+   le_user_highq->setText("");
+   //   le_user_highq->setMinimumHeight(minHeight1);
+   le_user_highq->setAlignment(AlignCenter|AlignVCenter);
+   le_user_highq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_user_highq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_user_highq, SIGNAL(textChanged(const QString &)), SLOT(update_user_highq(const QString &)));
    
-   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
-   {
-      pb_guinier_analysis = new QPushButton("Guinier Analysis", this);
-      pb_guinier_analysis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-      //   pb_guinier_analysis->setMinimumHeight(minHeight1);
-      pb_guinier_analysis->setEnabled(true);
-      pb_guinier_analysis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-      connect(pb_guinier_analysis, SIGNAL(clicked()), SLOT(run_guinier_analysis()));
-   }
-   
+   pb_guinier_analysis = new QPushButton("Auto Guinier Analysis", this);
+   pb_guinier_analysis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   //   pb_guinier_analysis->setMinimumHeight(minHeight1);
+   pb_guinier_analysis->setEnabled(true);
+   pb_guinier_analysis->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_guinier_analysis, SIGNAL(clicked()), SLOT(run_guinier_analysis()));
+
 #if defined(ADD_GUINIER)      
       lbl_guinier_cutoff = new QLabel(tr("Guinier cutoff\n(1/Angstrom^2) : "), this);
       Q_CHECK_PTR(lbl_guinier_cutoff);
@@ -610,27 +647,32 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(pb_clear_plot_saxs, j, 1);
    j++;
 
+   background->addWidget(pb_load_gnom, j, 0);
+   background->addWidget(pb_guinier_analysis, j, 1);
+   j++;
+
    QHBoxLayout *hbl_tools = new QHBoxLayout;
    hbl_tools->addWidget(cb_create_native_saxs);
-   if ( 1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
-   {
-      hbl_tools->addWidget(pb_load_gnom);
-   }
    background->addMultiCellLayout(hbl_tools, j, j, 0, 1);
    j++;
 
+   background->addWidget(cb_guinier, j, 0);
    QHBoxLayout *hbl_guinier = new QHBoxLayout;
-   hbl_guinier->addWidget(cb_guinier);
- 
-   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
-   {
-      hbl_guinier->addWidget(pb_guinier_analysis);
-   }
+   hbl_guinier->addWidget(le_guinier_lowq2);
+   hbl_guinier->addWidget(le_guinier_highq2);
+   background->addLayout(hbl_guinier, j, 1);
+   j++;
+
 #if defined(ADD_GUINIER)      
    hbl_guinier->addWidget(lbl_guinier_cutoff);
    hbl_guinier->addWidget(cnt_guinier_cutoff);
 #endif
-   background->addMultiCellLayout(hbl_guinier, j, j, 0, 1);
+
+   background->addWidget(cb_user_range, j, 0);
+   QHBoxLayout *hbl_user_range = new QHBoxLayout;
+   hbl_user_range->addWidget(le_user_lowq);
+   hbl_user_range->addWidget(le_user_highq);
+   background->addLayout(hbl_user_range, j, 1);
    j++;
 
    background->addMultiCellWidget(lbl_info_prr, j, j, 0, 1);
@@ -962,6 +1004,26 @@ void US_Hydrodyn_Saxs::update_guinier_cutoff(double val)
 {
    guinier_cutoff = val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Saxs::update_guinier_lowq2(const QString &)
+{
+   set_guinier();
+}
+
+void US_Hydrodyn_Saxs::update_guinier_highq2(const QString &)
+{
+   set_guinier();
+}
+
+void US_Hydrodyn_Saxs::update_user_lowq(const QString &)
+{
+   set_guinier();
+}
+
+void US_Hydrodyn_Saxs::update_user_highq(const QString &)
+{
+   set_guinier();
 }
 
 void US_Hydrodyn_Saxs::set_saxs_sans(int val)
@@ -1568,9 +1630,9 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 void US_Hydrodyn_Saxs::load_pr()
 {
    QString use_dir = 
-      path_load_prr.isEmpty() ?
+      our_saxs_options->path_load_prr.isEmpty() ?
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
-      path_load_prr;
+      our_saxs_options->path_load_prr;
 
    QString filename = QFileDialog::getOpenFileName(use_dir,"*", this);
    if (filename.isEmpty())
@@ -1578,7 +1640,7 @@ void US_Hydrodyn_Saxs::load_pr()
       return;
    }
    QFile f(filename);
-   path_load_prr = QFileInfo(filename).dirPath(true);
+   our_saxs_options->path_load_prr = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
    vector < double > r;
    vector < double > pr;
@@ -3157,9 +3219,9 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
    if ( filename.isEmpty() )
    {
       QString use_dir = 
-         path_load_saxs_curve.isEmpty() ?
+         our_saxs_options->path_load_saxs_curve.isEmpty() ?
          USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
-         path_load_saxs_curve;
+         our_saxs_options->path_load_saxs_curve;
       filename = QFileDialog::getOpenFileName(use_dir, "*", this);
       if (filename.isEmpty())
       {
@@ -3169,7 +3231,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
 
    plotted = false;
    QFile f(filename);
-   path_load_saxs_curve = QFileInfo(filename).dirPath(true);
+   our_saxs_options->path_load_saxs_curve = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
    vector < double > I;
    vector < double > q;
@@ -3304,6 +3366,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
       //      plot_saxs->setCurveData(Iq, (double *)&(plotted_q[p][0]), (double *)&(plotted_I[p][0]), q_points);
       //      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
       //      plot_saxs->replot();
+      set_guinier();
    }
 }
 
@@ -3317,6 +3380,15 @@ void US_Hydrodyn_Saxs::clear_plot_saxs()
    plotted_I.clear();
    plot_saxs->clear();
    plot_saxs->replot();
+   plotted_Gp.clear();
+   plotted_guinier_valid.clear();
+   plotted_guinier_plotted.clear();
+   plotted_guinier_lowq2.clear();
+   plotted_guinier_highq2.clear();
+   plotted_guinier_a.clear();
+   plotted_guinier_b.clear();
+   plotted_guinier_x.clear();
+   plotted_guinier_y.clear();
 }
 
 void US_Hydrodyn_Saxs::show_plot_sans()
@@ -3340,12 +3412,12 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
       pb_plot_saxs_sans->setText(tr("Compute SANS Curve"));
       pb_load_saxs_sans->setText(tr("Load SANS Curve"));
       pb_clear_plot_saxs->setText(tr("Clear SANS Curve"));
-      plot_saxs->setTitle(tr("SANS Curve"));
+      plot_saxs->setTitle((cb_guinier->isChecked() ? "Guinier " : "") + tr("SANS Curve"));
    } else {
       pb_plot_saxs_sans->setText(tr("Compute SAXS Curve"));
       pb_load_saxs_sans->setText(tr("Load SAXS Curve"));
       pb_clear_plot_saxs->setText(tr("Clear SAXS Curve"));
-      plot_saxs->setTitle(tr("SAXS Curve"));
+      plot_saxs->setTitle((cb_guinier->isChecked() ? "Guinier " : "") + tr("SAXS Curve"));
    }
 }
 
@@ -3870,9 +3942,9 @@ void US_Hydrodyn_Saxs::load_gnom()
 {
    plotted = false;
    QString use_dir = 
-      path_load_gnom.isEmpty() ?
+      our_saxs_options->path_load_gnom.isEmpty() ?
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
-      path_load_gnom;
+      our_saxs_options->path_load_gnom;
 
    QString filename = QFileDialog::getOpenFileName(use_dir, "*.out", this);
    if (filename.isEmpty())
@@ -3880,7 +3952,7 @@ void US_Hydrodyn_Saxs::load_gnom()
       return;
    }
    QFile f(filename);
-   path_load_gnom = QFileInfo(filename).dirPath(true);
+   our_saxs_options->path_load_gnom = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
    bool plot_gnom = false;
    vector < double > gnom_Iq;
@@ -3985,7 +4057,7 @@ void US_Hydrodyn_Saxs::load_gnom()
       {
          for ( unsigned int i = 0; i < datafiles.size(); i++ )
          {
-            QString datafile = path_load_gnom + QDir::separator() + datafiles[i];
+            QString datafile = our_saxs_options->path_load_gnom + QDir::separator() + datafiles[i];
             if ( QFileInfo(datafile).exists() )
             {
                switch( QMessageBox::information( this, 
@@ -3993,7 +4065,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                                                  tr("Found the GNOM associated data file\n") + QFileInfo(datafile).fileName() + "\n" +
                                                  tr("Do you want to load it?"),
                                                  "&Ok", 
-                                                 "&Cancel", 0,
+                                                 "&No", 0,
                                                  0,      // Enter == button 0
                                                  1 ) ) { // Escape == button 2
                case 0: // load it
@@ -4171,10 +4243,93 @@ QString US_Hydrodyn_Saxs::curve_type_string(int curve)
    return result;
 }
 
+void US_Hydrodyn_Saxs::rescale_plot()
+{
+   double lowq;
+   double highq;
+   double lowI;
+   double highI;
+   plot_domain(lowq, highq);
+   plot_range(lowq, highq, lowI, highI);
+
+   //   cout << "rescale plot "
+   //        << lowq << ":" << highq << "  "
+   //        << lowI << ":" << highI << endl;
+
+   plot_saxs->setAxisScale(QwtPlot::xBottom, lowq, highq);
+   plot_saxs->setAxisScale(QwtPlot::yLeft, lowI, highI);
+   plot_saxs->replot();
+}
+
+void US_Hydrodyn_Saxs::set_user_range()
+{
+   if ( cb_user_range->isChecked() &&
+        cb_guinier->isChecked() )
+   {
+      cb_guinier->setChecked(false);
+      set_guinier();
+   } else {
+      rescale_plot();
+   }
+}
+      
 void US_Hydrodyn_Saxs::set_guinier()
 {
+   if ( rb_sans->isChecked() ) 
+   {
+      plot_saxs->setTitle((cb_guinier->isChecked() ? "Guinier " : "") + tr("SANS Curve"));
+   } else {
+      plot_saxs->setTitle((cb_guinier->isChecked() ? "Guinier " : "") + tr("SAXS Curve"));
+   }
+
+   cb_user_range->setChecked(!cb_guinier->isChecked());
+   rescale_plot();
+
    for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
    {
+
+      if ( cb_guinier->isChecked() )
+      {
+         // replot the guinier bits
+         if ( plotted_guinier_valid.count(i) &&
+              plotted_guinier_valid[i] == true )
+         {
+            plotted_Gp[i] = plot_saxs->insertCurve(QString("Guinier points %1").arg(i));
+            plot_saxs->setCurveStyle(plotted_Gp[i], QwtCurve::Lines);
+            plot_saxs->setCurveData(plotted_Gp[i], (double *)&(plotted_guinier_x[i][0]), (double *)&(plotted_guinier_y[i][0]), 2);
+
+            plot_saxs->setCurvePen(plotted_Gp[i], QPen("dark red", 2, SolidLine));
+            
+            plotted_guinier_plotted[i] = true;
+         }
+
+         // turn regular iqq curves into points
+
+         QwtSymbol sym;
+         sym.setStyle(QwtSymbol::Cross);
+         sym.setSize(12);
+         sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
+         sym.setBrush(white);
+         plot_saxs->setCurveStyle(plotted_Iq[i], QwtCurve::NoCurve);
+         plot_saxs->setCurveSymbol(plotted_Iq[i], QwtSymbol(sym));
+         
+      } else {
+         // remove any Guinier lines
+         if ( plotted_guinier_plotted.count(i) &&
+              plotted_guinier_plotted[i] == true )
+         {
+            plotted_guinier_plotted[i] == false;
+            plot_saxs->removeCurve(plotted_Gp[i]);
+         }
+         
+         // remove the symbols & redraw the line
+         QwtSymbol sym;
+         sym.setStyle(QwtSymbol::None);
+         plot_saxs->setCurveSymbol(plotted_Iq[i], sym);
+         plot_saxs->setCurveStyle(plotted_Iq[i], QwtCurve::Lines);
+         plot_saxs->setCurvePen(plotted_Iq[i], QPen(plot_colors[i % plot_colors.size()], 2, SolidLine));
+      }
+
       plot_saxs->setCurveData(plotted_Iq[i], 
                               cb_guinier->isChecked() ?
                               (double *)&(plotted_q2[i][0]) : (double *)&(plotted_q[i][0]), 
@@ -4182,6 +4337,24 @@ void US_Hydrodyn_Saxs::set_guinier()
    }
    plot_saxs->setAxisTitle(QwtPlot::xBottom, cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") :  tr("q (1/Angstrom)"));
    plot_saxs->replot();
+}
+
+void US_Hydrodyn_Saxs::clear_guinier()
+{
+   // remove any existing Guinier curves
+
+   for ( unsigned int g = 0; g < plotted_Gp.size(); g++ )
+   {
+      plot_saxs->removeCurve(plotted_Gp[g]);
+   }
+   plotted_Gp.clear();
+   plotted_guinier_valid.clear();
+   plotted_guinier_lowq2.clear();
+   plotted_guinier_highq2.clear();
+   plotted_guinier_a.clear();
+   plotted_guinier_b.clear();
+   plotted_guinier_x.clear();
+   plotted_guinier_y.clear();
 }
 
 bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
@@ -4256,29 +4429,257 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
    
    cout << log;
 
-   QString report = 
-      QString(
-              "Guinier analysis of %1:\n"
-              "Rg %1 Io %1 qRgmin %1 qRgmax %1 points used %1 chi^2 %1\n"
-              )
-      .arg(qsl_plotted_iq_names[i])
-      .arg(Rg)
-      .arg(Io)
-      .arg(sRgmin)
-      .arg(sRgmax)
-      .arg(bestend - beststart + 1)
-      .arg(chi2);
+   QColor save_color = editor->color();
+   editor->setColor(plot_colors[i % plot_colors.size()]);
 
+   QString report;
+   if ( isnan(Rg) )
+   {
+      plotted_guinier_valid[i] = false;
+      report =
+         QString(
+                 "Guinier analysis of %1:\n"
+                 "**** Could not compute Rg ****\n"
+                 )
+         .arg(qsl_plotted_iq_names[i]);
+   } else {
+      report = 
+         QString(
+                 "Guinier analysis of %1:\n"
+                 "Rg %1 (A) Io %1 qRgmin %1 qRgmax %1 points used %1 chi^2 %1\n"
+                 )
+         .arg(qsl_plotted_iq_names[i])
+         .arg(Rg)
+         .arg(Io)
+         .arg(sRgmin)
+         .arg(sRgmax)
+         .arg(bestend - beststart + 1)
+         .arg(chi2);
+
+      plotted_guinier_valid[i] = true;
+      plotted_guinier_lowq2[i] = smin * smin;
+      plotted_guinier_highq2[i] = smax * smax;
+      plotted_guinier_a[i] = a;
+      plotted_guinier_b[i] = b;
+      plotted_guinier_plotted[i] = false;
+
+      plotted_guinier_x[i].clear();
+      plotted_guinier_x[i].push_back(plotted_guinier_lowq2[i]);
+      plotted_guinier_x[i].push_back(plotted_guinier_highq2[i]);
+      
+      plotted_guinier_y[i].clear();
+      plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_lowq2[i]));
+      plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_highq2[i]));
+   }
    editor->append(report);
+   editor->setColor(save_color);
+
    return true;
 }
-                            
+
+// sets lowq & highq based upon current, plot settings (could be q^2 if in guinier)
+void US_Hydrodyn_Saxs::plot_domain( 
+                                  double &lowq, 
+                                  double &highq
+                                  )
+{
+   if ( cb_guinier->isChecked() )
+   {
+      // arbitrary defaults
+
+      double lowq2 = 1e-4;
+      double highq2 = 1e-1;
+
+      // first compute available guinier range
+      // this could be calculated once upon adding curves
+
+      bool any_guinier = false;
+
+      for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
+      {
+         if ( plotted_guinier_valid.count(i) &&
+              plotted_guinier_valid[i] == true )
+         {
+            if ( !any_guinier )
+            {
+               lowq2 = plotted_guinier_lowq2[i];
+               highq2 = plotted_guinier_highq2[i];
+               any_guinier = true;
+            } else {
+               if ( lowq2 > plotted_guinier_lowq2[i] )
+               {
+                  lowq2 = plotted_guinier_lowq2[i];
+               }
+               if ( highq2 < plotted_guinier_highq2[i] )
+               {
+                  highq2 = plotted_guinier_highq2[i];
+               }
+            }
+         }
+      }
+      if ( any_guinier )
+      {
+         lowq2 *= .75;
+         highq2 *= 1.2;
+      }
+      
+      // override with user settings
+
+      lowq = 
+         le_guinier_lowq2->text().toDouble() ?
+         le_guinier_lowq2->text().toDouble() :
+         lowq2;
+
+      highq = 
+         le_guinier_highq2->text().toDouble() ?
+         le_guinier_highq2->text().toDouble() :
+         highq2;
+      // cout << "guinier domain " << lowq << ":" << highq << endl;
+      return;
+   }
+
+   // not guinier mode
+
+   // set arbitrary defaults
+   lowq = 1e-2;
+   highq = 5e0;
+   
+   // compute full non-guinier domain
+   // this could be calculated once upon adding curves
+
+   bool any_plots = false;
+   for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
+   {
+      if ( !any_plots )
+      {
+         lowq = plotted_q[i][0];
+         highq = plotted_q[i][plotted_q[i].size() - 1];
+         any_plots = true;
+      } else {
+         if ( lowq > plotted_q[i][0] )
+         {
+            lowq = plotted_q[i][0];
+         }
+         if ( highq < plotted_q[i][plotted_q[i].size() - 1] )
+         {
+            highq = plotted_q[i][plotted_q[i].size() - 1];
+         }
+      }
+   }
+
+   if ( cb_user_range->isChecked() )
+   {
+      lowq = 
+         le_user_lowq->text().toDouble() ?
+         le_user_lowq->text().toDouble() :
+         lowq;
+      highq = 
+         le_user_highq->text().toDouble() ?
+         le_user_highq->text().toDouble() :
+         highq;
+   }
+   //   cout << "non guinier domain " << lowq << ":" << highq << endl;
+}
+
+// sets lowI & highI based upon range
+void US_Hydrodyn_Saxs::plot_range( 
+                                  double lowq, 
+                                  double highq,
+                                  double &lowI, 
+                                  double &highI
+                                  )
+{
+   // arbitrary defaults
+   lowI = 1e-3;
+   highI = 1;
+
+   if ( !plotted_q.size() ) 
+   {
+      return;
+   }
+
+   bool any_plots = false;
+
+   // for each plot, 
+   if ( cb_guinier->isChecked() )
+   {
+      // for each plot
+      for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )      
+      {
+         // scan the q range
+         for ( unsigned int j = 0; j < plotted_q2[i].size(); j++ )
+         {
+            if ( plotted_q2[i][j] >= lowq &&
+                 plotted_q2[i][j] <= highq )
+            {
+               if ( !any_plots )
+               {
+                  lowI = plotted_I[i][j];
+                  highI = plotted_I[i][j];
+                  any_plots = true;
+               } else {
+                  if ( lowI > plotted_I[i][j] )
+                  {
+                     lowI = plotted_I[i][j];
+                  }
+                  if ( highI < plotted_I[i][j] )
+                  {
+                     highI = plotted_I[i][j];
+                  }
+               }
+            }
+         }
+      }
+   } else {
+      // for each plot
+      for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )      
+      {
+         // scan the q range
+         for ( unsigned int j = 0; j < plotted_q[i].size(); j++ )
+         {
+            if ( plotted_q[i][j] >= lowq &&
+                 plotted_q[i][j] <= highq )
+            {
+               if ( !any_plots )
+               {
+                  lowI = plotted_I[i][j];
+                  highI = plotted_I[i][j];
+                  any_plots = true;
+               } else {
+                  if ( lowI > plotted_I[i][j] )
+                  {
+                     lowI = plotted_I[i][j];
+                  }
+                  if ( highI < plotted_I[i][j] )
+                  {
+                     highI = plotted_I[i][j];
+                  }
+               }
+            }
+         }
+      }
+   }
+   if ( any_plots )
+   {
+      lowI *= .6;
+      highI *= 1.7;
+   }
+   // cout << "plot range " << lowI << ":" << highI << endl;
+}
+
 void US_Hydrodyn_Saxs::run_guinier_analysis()
 {
+   editor->append("Guinier analysis:\n");
+   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
+   clear_guinier();
+   
    for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
    {
       guinier_analysis(i);
    }
+   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+   cb_guinier->setChecked(true);
+   set_guinier();
 }
 
 void US_Hydrodyn_Saxs::crop_iq_data( vector < double > &q,
@@ -4320,3 +4721,4 @@ void US_Hydrodyn_Saxs::crop_iq_data( vector < double > &q,
    q = new_q;
    I = new_I;
 }
+

@@ -120,9 +120,16 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QRadioButton *rb_sans;
 
       QCheckBox *cb_normalize;
-      QCheckBox *cb_guinier;
 
       QwtCounter *cnt_guinier_cutoff;
+
+      QCheckBox *cb_guinier;
+      QLineEdit *le_guinier_lowq2;
+      QLineEdit *le_guinier_highq2;
+
+      QCheckBox *cb_user_range;
+      QLineEdit *le_user_lowq;
+      QLineEdit *le_user_highq;
 
       QButtonGroup *bg_curve;
       QRadioButton *rb_curve_raw;
@@ -153,23 +160,34 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 #ifdef WIN32
      #pragma warning ( disable: 4251 )
 #endif
-      map < QString, bool >        dup_plotted_iq_name_check;
-      map < QString, bool >        dup_plotted_pr_name_check;
-      vector < atom >              atom_list;
-      vector < hybridization >     hybrid_list;
-      vector < saxs >              saxs_list;
-      vector < residue >           residue_list;
-      vector < PDB_model >         model_vector;
-      vector < vector <PDB_atom> > bead_models;
-      vector < unsigned int >      selected_models;
-      vector < QColor >            plot_colors;
-      vector < long >              plotted_Iq;  // curve keys
-      vector < vector < double > > plotted_q;
-      vector < vector < double > > plotted_q2;  // q^2 for guinier plots
-      vector < vector < double > > plotted_I;
-      vector < vector < double > > plotted_pr;
-      vector < vector < double > > plotted_pr_not_normalized;
-      vector < vector < double > > plotted_r;
+      map    < QString, bool >                        dup_plotted_iq_name_check;
+      map    < QString, bool >                        dup_plotted_pr_name_check;
+      vector < atom >                                 atom_list;
+      vector < hybridization >                        hybrid_list;
+      vector < saxs >                                 saxs_list;
+      vector < residue >                              residue_list;
+      vector < PDB_model >                            model_vector;
+      vector < vector <PDB_atom> >                    bead_models;
+      vector < unsigned int >                         selected_models;
+      vector < QColor >                               plot_colors;
+      vector < long >                                 plotted_Iq;  // curve keys
+      vector < vector < double > >                    plotted_q;
+      vector < vector < double > >                    plotted_q2;  // q^2 for guinier plots
+      vector < vector < double > >                    plotted_I;
+
+      map    < unsigned int, long >                   plotted_Gp;  // guinier points
+      map    < unsigned int, bool >                   plotted_guinier_valid;
+      map    < unsigned int, bool >                   plotted_guinier_plotted;
+      map    < unsigned int, double >                 plotted_guinier_lowq2;
+      map    < unsigned int, double >                 plotted_guinier_highq2;
+      map    < unsigned int, double >                 plotted_guinier_a;           // y = a + b*x
+      map    < unsigned int, double >                 plotted_guinier_b;
+      map    < unsigned int, vector < double > >      plotted_guinier_x;
+      map    < unsigned int, vector < double > >      plotted_guinier_y;
+
+      vector < vector < double > >                    plotted_pr;
+      vector < vector < double > >                    plotted_pr_not_normalized;
+      vector < vector < double > >                    plotted_r;
 
       map < QString, saxs >          saxs_map;
       map < QString, hybridization > hybrid_map;
@@ -224,14 +242,18 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       int file_curve_type(QString filename);
       QString curve_type_string(int curve);
 
-      // save file paths
-      QString path_load_saxs_curve;
-      QString path_load_gnom;
-      QString path_load_prr;
-
       bool guinier_analysis( unsigned int i );
       void crop_iq_data( vector < double > &q,
                          vector < double > &I );
+
+
+      // sets lowq & highq based upon current, plot settings (could be q^2 if in guinier)
+      void plot_domain(double &lowq, double &highq);  
+
+      // sets lowI & highI based upon range
+      void plot_range(double lowq, double highq, double &lowI, double &highI);
+      
+      void rescale_plot();
 
    public slots:
       void show_plot_saxs_sans();
@@ -239,6 +261,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
    private slots:
 
+      void clear_guinier();
       void setupGUI();
       void set_saxs_sans(int);
       void load_saxs_sans();
@@ -273,6 +296,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString sprr_filestring();
       void set_create_native_saxs();
       void set_guinier();
+      void set_user_range();
+      void update_guinier_lowq2(const QString &);
+      void update_guinier_highq2(const QString &);
+      void update_user_lowq(const QString &);
+      void update_user_highq(const QString &);
       void load_gnom();
 
    protected slots:
@@ -390,6 +418,4 @@ class saxs_pr_thr_t : public QThread
   int work_done_waiters;
 };
 
-
 #endif
-

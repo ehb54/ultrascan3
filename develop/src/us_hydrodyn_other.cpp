@@ -2414,6 +2414,26 @@ int US_Hydrodyn::read_config(QFile& f)
       }
    }
 
+   // saved paths
+   
+   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   path_load_pdb = str;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   path_view_pdb = str;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   path_load_bead_model = str;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   path_view_asa_res = str;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   path_view_bead_model = str;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   path_open_hydro_res = str;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   saxs_options.path_load_saxs_curve = str;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   saxs_options.path_load_gnom = str;
+   if ( ( str = ts.readLine() ) == QString::null ) return -11600;
+   saxs_options.path_load_prr = str;
 
    if ( !ts.atEnd() ) return -20000;
 
@@ -2743,6 +2763,16 @@ void US_Hydrodyn::write_config(const QString& fname)
          ts << save_params.field[i] << endl;
       }
 
+      ts << path_load_pdb << endl;
+      ts << path_view_pdb << endl;
+      ts << path_load_bead_model << endl;
+      ts << path_view_asa_res << endl;
+      ts << path_view_bead_model << endl;
+      ts << path_open_hydro_res << endl;
+      ts << saxs_options.path_load_saxs_curve << endl;
+      ts << saxs_options.path_load_gnom << endl;
+      ts << saxs_options.path_load_prr << endl;
+
       f.close();
    }
 }
@@ -3063,8 +3093,17 @@ void US_Hydrodyn::set_default()
       batch.width = 0;
       batch.file.clear();
 
-      save_params.field.clear();
+      path_load_pdb = "";
+      path_view_pdb = "";
+      path_load_bead_model = "";
+      path_view_asa_res = "";
+      path_view_bead_model = "";
+      path_open_hydro_res = "";
+      saxs_options.path_load_saxs_curve = "";
+      saxs_options.path_load_gnom = "";
+      saxs_options.path_load_prr = "";
 
+      save_params.field.clear();
    }
 
    default_sidechain_overlap = sidechain_overlap;
