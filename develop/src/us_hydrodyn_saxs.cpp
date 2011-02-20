@@ -4469,19 +4469,19 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
          report = 
             QString("")
             .sprintf(
-                    "Guinier analysis of %s:\n"
-                    "Rg %4.3g (%4.3g) (A) Io %.3e (%.3e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.3e\n"
-                    
-                    , qsl_plotted_iq_names[i].ascii()
-                    , Rg
-                    , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb 
-                    , Io
-                    , siga
-                    , sRgmin
-                    , sRgmax
-                    , bestend - beststart + 1
-                    , chi2
-                    );
+                     "Guinier analysis of %s:\n"
+                     "Rg %.1f (%.1f) (A) Io %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
+                     
+                     , qsl_plotted_iq_names[i].ascii()
+                     , Rg
+                     , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb 
+                     , Io
+                     , siga
+                     , sRgmin
+                     , sRgmax
+                     , bestend - beststart + 1
+                     , chi2
+                     );
          
          plotted_guinier_valid[i] = true;
          plotted_guinier_lowq2[i] = smin * smin;
