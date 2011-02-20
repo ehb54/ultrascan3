@@ -344,7 +344,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_load_gnom, SIGNAL(clicked()), SLOT(load_gnom()));
    
    cb_guinier = new QCheckBox(this);
-   cb_guinier->setText(tr(" Guinier       q^2 range:"));
+   cb_guinier->setText(tr(" Guinier plot    q^2 range:"));
    cb_guinier->setEnabled(true);
    cb_guinier->setChecked(false);
    cb_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -368,7 +368,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(le_guinier_highq2, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_highq2(const QString &)));
 
    cb_user_range = new QCheckBox(this);
-   cb_user_range->setText(tr(" Scale plot      q range:"));
+   cb_user_range->setText(tr(" Standard plot    q range:"));
    cb_user_range->setEnabled(true);
    cb_user_range->setChecked(false);
    cb_user_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -4426,6 +4426,9 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
                      .arg(qsl_plotted_iq_names[i]));
       return false;
    }
+
+   cout << "guinier siga " << siga << endl;
+   cout << "guinier sigb " << sigb << endl;
    
    cout << log;
 
@@ -4446,11 +4449,13 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
       report = 
          QString(
                  "Guinier analysis of %1:\n"
-                 "Rg %1 (A) Io %1 qRgmin %1 qRgmax %1 points used %1 chi^2 %1\n"
+                 "Rg %1 (%1) (A) Io %1 (%1) qRgmin %1 qRgmax %1 points used %1 chi^2 %1\n"
                  )
          .arg(qsl_plotted_iq_names[i])
          .arg(Rg)
+         .arg(sqrt(3e0 * sigb))
          .arg(Io)
+         .arg(siga)
          .arg(sRgmin)
          .arg(sRgmax)
          .arg(bestend - beststart + 1)
