@@ -155,6 +155,16 @@ struct saxs_options
    QString path_load_gnom;
    QString path_load_prr;
 
+   // guinier controls
+
+   bool             guinier_csv;
+   QString          guinier_csv_filename;
+
+   double           qRgmax;
+   double           qstart;
+   double           qend;
+   unsigned int     pointsmin;
+   unsigned int     pointsmax;
 };
 
 struct hybridization

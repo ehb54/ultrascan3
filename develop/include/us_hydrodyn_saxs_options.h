@@ -51,6 +51,12 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel *lbl_d2o_conc;
       QLabel *lbl_frac_of_exch_pep;
 
+      QLabel *lbl_guinier;
+      QLabel *lbl_qRgmax;
+      QLabel *lbl_qend;
+      QLabel *lbl_pointsmin;
+      QLabel *lbl_pointsmax;
+
       QLabel *lbl_curve;
       QLabel *lbl_wavelength;
       QLabel *lbl_start_angle;
@@ -68,6 +74,14 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QwtCounter *cnt_d2o_scat_len_dens;
       QwtCounter *cnt_d2o_conc;
       QwtCounter *cnt_frac_of_exch_pep;
+
+      QCheckBox  *cb_guinier_csv;
+      QLineEdit  *le_guinier_csv_filename;
+
+      QwtCounter *cnt_qRgmax;
+      QwtCounter *cnt_qend;
+      QwtCounter *cnt_pointsmin;
+      QwtCounter *cnt_pointsmax;
 
       QwtCounter *cnt_wavelength;
       QwtCounter *cnt_start_angle;
@@ -96,7 +110,14 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void update_h2o_scat_len_dens(double);
       void update_d2o_scat_len_dens(double);
       void update_d2o_conc(double);
-      void update_frac_of_exch_pep(double);;
+      void update_frac_of_exch_pep(double);
+
+      void set_guinier_csv();
+      void update_guinier_csv_filename(const QString &);
+      void update_qRgmax(double);
+      void update_qend(double);
+      void update_pointsmin(double);
+      void update_pointsmax(double);
 
       void update_wavelength(double);      
       void update_start_angle(double);

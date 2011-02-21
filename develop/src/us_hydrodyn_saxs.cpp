@@ -3994,7 +3994,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                if ( rx5.search(tmp) != -1 )
                {
                   q.push_back(rx5.cap(1).toDouble());
-                  I.push_back(rx5.cap(5).toDouble());
+                  I.push_back(rx5.cap(2).toDouble());
                   // cout << "iqq point: " << rx5.cap(1).toDouble() << " " << rx5.cap(5).toDouble() << endl;
                } else {
                   // end of iqq?
@@ -4362,7 +4362,55 @@ void US_Hydrodyn_Saxs::clear_guinier()
    plotted_guinier_y.clear();
 }
 
-bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
+
+void US_Hydrodyn_Saxs::run_guinier_analysis()
+{
+   editor->append("Guinier analysis:\n");
+   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
+   clear_guinier();
+
+   QString csvlog = 
+      "\"Source file\","
+      "\"Notes\","
+      "\"Rg\","
+      "\"Rg sd\","
+      "\"Io\","
+      "\"Io sd\","
+      "\"q min\","
+      "\"q max\","
+      "\"q*Rg min\","
+      "\"q*Rg max\","
+      "\"starting point\","
+      "\"ending point\","
+      "\"points used\","
+      "\"chi^2\","
+      "\n";
+   
+   for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
+   {
+      guinier_analysis(i, csvlog);
+   }
+   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+   cb_guinier->setChecked(true);
+   set_guinier();
+
+   if ( our_saxs_options->guinier_csv )
+   {
+      QFile f(USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" + SLASH + 
+              our_saxs_options->guinier_csv_filename + ".csv");
+
+      if ( !f.open(IO_WriteOnly) )
+      {
+         editor->append(QString(tr("Can not create file %1\n")).arg(f.name()));
+      }
+      QTextStream ts(&f);
+      ts << csvlog;
+      f.close();
+      editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+   }
+}
+
+bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
 {
    if ( i > plotted_Iq.size() )
    {
@@ -4376,11 +4424,11 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
    usu.wave["data"].s = plotted_I[i];
    QString log;
 
-   // these should be parameterized
-   int pointsmin = 10;
-   int pointsmax = 100;
-   double sRgmaxlimit = 1.3e0;
+   int pointsmin = our_saxs_options->pointsmin;
+   int pointsmax = our_saxs_options->pointsmax;
+   double sRgmaxlimit = our_saxs_options->qRgmax;
    double pointweightpower = 3e0;
+   double p_guinier_maxq = our_saxs_options->qend;
    
    // these are function output values
    double a;
@@ -4394,7 +4442,6 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
    double smax;
    double sRgmin;
    double sRgmax;
-   double p_guinier_maxq = .5e0;
 
    unsigned int beststart;
    unsigned int bestend;
@@ -4454,6 +4501,14 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
                  "**** Could not compute Rg, too few data points %1 ****\n"
                  )
          .arg(plotted_q[i].size());
+
+      csvlog += 
+         QString(
+                 "\"%1\","
+                 "\"Too few data points (%1)\"\n"
+                 )
+         .arg(qsl_plotted_iq_names[i])
+         .arg(plotted_q[i].size());
    } else {
       if ( isnan(Rg) ||
            b >= 0e0 )
@@ -4465,6 +4520,14 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
                     "**** Could not compute Rg ****\n"
                     )
             .arg(qsl_plotted_iq_names[i]);
+
+         csvlog += 
+            QString(
+                    "\"%1\","
+                    "\"Could not compute Rg\"\n"
+                    )
+            .arg(qsl_plotted_iq_names[i]);
+
       } else {
          report = 
             QString("")
@@ -4497,11 +4560,44 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i )
          plotted_guinier_y[i].clear();
          plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_lowq2[i]));
          plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_highq2[i]));
+
+         csvlog += 
+            QString(
+                    "\"%1\","
+                    "\"Ok\","
+                    "%1,"
+                    "%1,"
+                    "%1,"
+                    "%1,"
+                    "%1,"
+                    "%1,"
+                    "%1,"
+                    "%1,"
+                    "%1,"
+                    "%1,"
+                    "%1,"
+                    "%1"
+                    "\n"
+                    )
+            .arg(qsl_plotted_iq_names[i])
+            .arg(Rg)
+            .arg( sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb )
+            .arg(Io)
+            .arg(siga)
+            .arg(smin)
+            .arg(smax)
+            .arg(sRgmin)
+            .arg(sRgmax)
+            .arg(beststart)
+            .arg(bestend)
+            .arg(bestend - beststart + 1)
+            .arg(chi2);
       }
    }
    editor->append(report);
    editor->setColor(save_color);
 
+   cout << csvlog;
    return true;
 }
 
@@ -4693,21 +4789,6 @@ void US_Hydrodyn_Saxs::plot_range(
       highI *= 1.7;
    }
    // cout << "plot range " << lowI << ":" << highI << endl;
-}
-
-void US_Hydrodyn_Saxs::run_guinier_analysis()
-{
-   editor->append("Guinier analysis:\n");
-   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("dark gray") );
-   clear_guinier();
-   
-   for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
-   {
-      guinier_analysis(i);
-   }
-   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
-   cb_guinier->setChecked(true);
-   set_guinier();
 }
 
 void US_Hydrodyn_Saxs::crop_iq_data( vector < double > &q,

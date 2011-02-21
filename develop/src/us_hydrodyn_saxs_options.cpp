@@ -175,6 +175,106 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cnt_frac_of_exch_pep->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_frac_of_exch_pep, SIGNAL(valueChanged(double)), SLOT(update_frac_of_exch_pep(double)));
 
+   // -------------- guinier section ------------
+
+   lbl_guinier = new QLabel(tr("Guinier Options:"), this);
+   Q_CHECK_PTR(lbl_guinier);
+   lbl_guinier->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_guinier->setAlignment(AlignCenter|AlignVCenter);
+   lbl_guinier->setMinimumHeight(minHeight1);
+   lbl_guinier->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   cb_guinier_csv = new QCheckBox(this);
+   cb_guinier_csv->setText(tr(" Save Guinier results to csv file: "));
+   cb_guinier_csv->setEnabled(true);
+   cb_guinier_csv->setChecked((*saxs_options).guinier_csv);
+   cb_guinier_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_guinier_csv->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_guinier_csv, SIGNAL(clicked()), this, SLOT(set_guinier_csv()));
+
+   le_guinier_csv_filename = new QLineEdit(this, "guinier_csv_filename Line Edit");
+   le_guinier_csv_filename->setText((*saxs_options).guinier_csv_filename);
+   // le_guinier_csv_filename->setMinimumHeight(minHeight1);
+   le_guinier_csv_filename->setAlignment(AlignCenter|AlignVCenter);
+   le_guinier_csv_filename->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_guinier_csv_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_guinier_csv_filename, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_csv_filename(const QString &)));
+
+   lbl_qRgmax = new QLabel(tr(" Maximum q * Rg : "), this);
+   Q_CHECK_PTR(lbl_qRgmax);
+   lbl_qRgmax->setAlignment(AlignLeft|AlignVCenter);
+   lbl_qRgmax->setMinimumHeight(minHeight1);
+   lbl_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_qRgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_qRgmax = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_qRgmax);
+   cnt_qRgmax->setRange(0.5, 3, 0.001);
+   cnt_qRgmax->setValue((*saxs_options).qRgmax);
+   cnt_qRgmax->setMinimumHeight(minHeight1);
+   cnt_qRgmax->setEnabled(true);
+   cnt_qRgmax->setNumButtons(SAXS_Q_BUTTONS);
+   cnt_qRgmax->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_qRgmax, SIGNAL(valueChanged(double)), SLOT(update_qRgmax(double)));
+
+   lbl_qend = new QLabel(tr(" Maximum q value for Guinier search : "), this);
+   Q_CHECK_PTR(lbl_qend);
+   lbl_qend->setAlignment(AlignLeft|AlignVCenter);
+   lbl_qend->setMinimumHeight(minHeight1);
+   lbl_qend->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_qend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_qend = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_qend);
+   cnt_qend->setRange(0, 1, 0.001);
+   cnt_qend->setValue((*saxs_options).qend);
+   cnt_qend->setMinimumHeight(minHeight1);
+   cnt_qend->setEnabled(true);
+   cnt_qend->setNumButtons(SAXS_Q_BUTTONS);
+   cnt_qend->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_qend->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_qend, SIGNAL(valueChanged(double)), SLOT(update_qend(double)));
+
+   lbl_pointsmin = new QLabel(tr(" Minimum number of points : "), this);
+   Q_CHECK_PTR(lbl_pointsmin);
+   lbl_pointsmin->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pointsmin->setMinimumHeight(minHeight1);
+   lbl_pointsmin->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_pointsmin->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_pointsmin = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_pointsmin);
+   cnt_pointsmin->setRange(4, 50, 1);
+   cnt_pointsmin->setValue((*saxs_options).pointsmin);
+   cnt_pointsmin->setMinimumHeight(minHeight1);
+   cnt_pointsmin->setEnabled(true);
+   cnt_pointsmin->setNumButtons(SAXS_Q_BUTTONS);
+   cnt_pointsmin->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_pointsmin->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_pointsmin, SIGNAL(valueChanged(double)), SLOT(update_pointsmin(double)));
+
+   lbl_pointsmax = new QLabel(tr(" Maximum number of points : "), this);
+   Q_CHECK_PTR(lbl_pointsmax);
+   lbl_pointsmax->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pointsmax->setMinimumHeight(minHeight1);
+   lbl_pointsmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_pointsmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_pointsmax = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_pointsmax);
+   cnt_pointsmax->setRange(10, 100, 1);
+   cnt_pointsmax->setValue((*saxs_options).pointsmax);
+   cnt_pointsmax->setMinimumHeight(minHeight1);
+   cnt_pointsmax->setEnabled(true);
+   cnt_pointsmax->setNumButtons(SAXS_Q_BUTTONS);
+   cnt_pointsmax->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_pointsmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_pointsmax, SIGNAL(valueChanged(double)), SLOT(update_pointsmax(double)));
+
+   // -------------- curve generation section ------------
+
    lbl_curve = new QLabel(tr("Curve Generation Options:"), this);
    Q_CHECK_PTR(lbl_curve);
    lbl_curve->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -363,6 +463,24 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    j++;
    background->addWidget(lbl_frac_of_exch_pep, j, 0);
    background->addWidget(cnt_frac_of_exch_pep, j, 1);
+   j++;
+
+   background->addMultiCellWidget(lbl_guinier, j, j, 0, 1);
+   j++;
+   background->addWidget(cb_guinier_csv, j, 0);
+   background->addWidget(le_guinier_csv_filename, j, 1);
+   j++;
+   background->addWidget(lbl_qRgmax, j, 0);
+   background->addWidget(cnt_qRgmax, j, 1);
+   j++;
+   background->addWidget(lbl_qend, j, 0);
+   background->addWidget(cnt_qend, j, 1);
+   j++;
+   background->addWidget(lbl_pointsmin, j, 0);
+   background->addWidget(cnt_pointsmin, j, 1);
+   j++;
+   background->addWidget(lbl_pointsmax, j, 0);
+   background->addWidget(cnt_pointsmax, j, 1);
    j++;
 
    background->addMultiCellWidget(lbl_curve, j, j, 0, 1);
@@ -591,4 +709,48 @@ void US_Hydrodyn_SaxsOptions::set_hydrate_pdb()
 {
    (*saxs_options).hydrate_pdb = cb_hydrate_pdb->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_guinier_csv()
+{
+   (*saxs_options).guinier_csv = cb_guinier_csv->isChecked();
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_guinier_csv_filename(const QString &str)
+{
+   (*saxs_options).guinier_csv_filename = str;
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_qRgmax(double val)
+{
+   (*saxs_options).qRgmax = val;
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_qend(double val)
+{
+   (*saxs_options).qend = val;
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+void US_Hydrodyn_SaxsOptions::update_pointsmin(double val)
+{
+   (*saxs_options).pointsmin = (unsigned int) val;
+   if ( (*saxs_options).pointsmax < (unsigned int) val )
+   {
+      (*saxs_options).pointsmax = (unsigned int) val;
+      cnt_pointsmax->setValue(val);
+   }
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+void US_Hydrodyn_SaxsOptions::update_pointsmax(double val)
+{
+   (*saxs_options).pointsmax = (unsigned int) val;
+   if ( (*saxs_options).pointsmin > (unsigned int) val )
+   {
+      (*saxs_options).pointsmin = (unsigned int) val;
+      cnt_pointsmin->setValue(val);
+   }
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

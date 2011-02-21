@@ -1896,6 +1896,15 @@ int US_Hydrodyn::read_config(QFile& f)
    if ( ts.readLine() == QString::null ) return -10156;
    saxs_options.saxs_sans = str.toInt();
 
+   // should be saved
+   saxs_options.guinier_csv = false;
+   saxs_options.guinier_csv_filename = "guinier";
+   saxs_options.qRgmax = 1.3e0;
+   saxs_options.qstart = 1e-7;
+   saxs_options.qend = .5e0;
+   saxs_options.pointsmin = 10;
+   saxs_options.pointsmax = 100;
+
    // bd_options
    {
       int i = -12000;
@@ -2965,6 +2974,14 @@ void US_Hydrodyn::set_default()
       saxs_options.hydrate_pdb = false;      // Hydrate the PDB model? (true/false)
       saxs_options.curve = 0;                // 0 = raw, 1 = saxs, 2 = sans
       saxs_options.saxs_sans = 0;            // 0 = saxs, 1 = sans
+
+      saxs_options.guinier_csv = false;
+      saxs_options.guinier_csv_filename = "guinier";
+      saxs_options.qRgmax = 1.3e0;
+      saxs_options.qstart = 1e-7;
+      saxs_options.qend = .5e0;
+      saxs_options.pointsmin = 10;
+      saxs_options.pointsmax = 100;
 
       bd_options.threshold_pb_pb = 5;
       bd_options.threshold_pb_sc = 5;
