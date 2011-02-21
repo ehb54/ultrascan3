@@ -27,9 +27,9 @@ int main (int argc, char **argv)
              "wgsbsgsm  \toutfile logfile solutionfile bufferfile waxsfile gsm_type max_iterations alphainit alphamin alphamax alphainc betainit betamin betamax betainc constinit constmin constmax constinc low high\n"
              "\tWAXS guided SAXS buffer subtraction gsm search, bounded by *min,*man, starting at *init, deltas *inc\n"
              "wgsbsggsm \toutfile logfile solutionfile bufferfile waxsfile gsm_type max_iterations gsmpercent alphamin alphamax alphaincg alphaincgsm betamin betamax betaincg betaincgsm constmin constmax constincg constincgsm low high\n"
-             "\tWAXS guided SAXS buffer subtraction grid then gsm search, bounded by *min,*man, deltas *incg (grid) *incgsm (gsm), gsmpercent is the % range delta for gsm search from min\n"
+             "\tWAXS guided SAXS buffer subtraction grid then gsm search, bounded by *min,*man, deltas *incg (grid) *incgsm (gsm), gsmpercent is the \% range delta for gsm search from min\n"
              "wgsbsnggsm \toutfile logfile solutionfile bufferfile waxsfile grids gsm_type max_iterations gsmpercent alphamin alphamax alphaincg alphaincgsm betamin betamax betaincg betaincgsm constmin constmax constincg constincgsm low high\n"
-             "\tWAXS guided SAXS buffer subtraction n grids then gsm search, bounded by *min,*man, deltas *incg (grid) *incgsm (gsm), gsmpercent is the % range delta for subsequent grid searches and then gsm search from min\n"
+             "\tWAXS guided SAXS buffer subtraction n grids then gsm search, bounded by *min,*man, deltas *incg (grid) *incgsm (gsm), gsmpercent is the \% range delta for subsequent grid searches and then gsm search from min\n"
              "join       \toutfile infile1 infile2 q-value\n"
              "\tjoin two files\n"
              "guinier_plot  \toutfile infile\n"
@@ -42,8 +42,8 @@ int main (int argc, char **argv)
              "\tcreates a new blank project directory & template files\n"
              "project_rebuild\n"
              "\treads the project file and produces wiki pages & pngs describing the analysis\n"
-             "project_merge outfile\n"
-             "\treads project files and produces a Rg/Io summary wiki page\n"
+             "project_merge outfile { gnom }\n"
+             "\treads project files and produces a Rg/Io summary wiki page and optionally produce gnom Dmax series\n"
              "project_1d    wikiprefix\n"
              "\tbuilds wiki page and computes averages for files in 1d directory\n"
              , argv[0]
@@ -356,9 +356,9 @@ int main (int argc, char **argv)
       US_Saxs_Util usu;
       usu.debug = 0;
       double nrmsd;
-      double alphamin;
-      double betamin;
-      double dconstmin;
+      // double alphamin;
+      // double betamin;
+      // double dconstmin;
       QString log;
 
       if ( !usu.read(solutionfile, "sol") ||
@@ -1363,6 +1363,11 @@ int main (int argc, char **argv)
                  "# iterationsGSM       50\n"
                  "# join point (default .1)\n"
                  "# joinQ               .1\n"
+                 "# Dmax range is for gnom runs\n"
+                 "# DmaxStart           \n"
+                 "# DmaxEnd             \n"
+                 "# DmaxInc             \n"
+
                  "# waveName starts a new concentration or buffer (i.e. zero concentration) entry\n"
                  "waveName            \n"
                  "# comments here will be associated with the wave\n"
@@ -1441,10 +1446,11 @@ int main (int argc, char **argv)
 
    if (cmds[0].lower() == "project_merge") 
    {
-      if (cmds.size() != 2) 
+      if ( !( cmds.size() == 2 ||
+              cmds.size() == 3 && cmds[2].lower() == "gnom" ) ) 
       {
          printf(
-                "usage: %s %s outfile\n"
+                "usage: %s %s outfile { gnom }\n"
                 , argv[0]
                 , argv[1]
                 );
@@ -1454,6 +1460,8 @@ int main (int argc, char **argv)
 
       int p = 1;
       QString outfile = cmds[p++];
+      bool gnom_run = ( cmds.size() == 3 && cmds[2].lower() == "gnom" );
+         
       double reference_mw_multiplier;
       QFile f("merge");
       if ( !f.exists() )
@@ -1486,7 +1494,8 @@ int main (int argc, char **argv)
       if ( !usu.merge_projects(
                                outfile,
                                reference_mw_multiplier,
-                               projects
+                               projects,
+                               gnom_run
                                ) )
       {
          cout << usu.errormsg << endl;

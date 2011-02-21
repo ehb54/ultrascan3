@@ -3960,7 +3960,8 @@ void US_Hydrodyn_Saxs::load_gnom()
    our_saxs_options->path_load_gnom = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
    bool plot_gnom = false;
-   vector < double > gnom_Iq;
+   vector < double > gnom_Iq_reg;
+   vector < double > gnom_Iq_exp;
    vector < double > gnom_q;
 
    if ( f.open(IO_ReadOnly) )
@@ -3979,12 +3980,13 @@ void US_Hydrodyn_Saxs::load_gnom()
          tmp = ts.readLine();
          if ( rxinputfile.search(tmp) != -1 ) 
          {
-            datafiles.push_back(rxinputfile.cap(1).stripWhiteSpace());
+            // datafiles.push_back(rxinputfile.cap(1).stripWhiteSpace());
             continue;
          }
          if ( iqqh.search(tmp) != -1 )
          {
-            vector < double > I;
+            vector < double > I_exp;
+            vector < double > I_reg;
             vector < double > q;
             // cout << "start of iqq\n";
             ts.readLine(); // blank line
@@ -3994,14 +3996,16 @@ void US_Hydrodyn_Saxs::load_gnom()
                if ( rx5.search(tmp) != -1 )
                {
                   q.push_back(rx5.cap(1).toDouble());
-                  I.push_back(rx5.cap(2).toDouble());
+                  I_exp.push_back(rx5.cap(2).toDouble());
+                  I_reg.push_back(rx5.cap(5).toDouble());
                   // cout << "iqq point: " << rx5.cap(1).toDouble() << " " << rx5.cap(5).toDouble() << endl;
                } else {
                   // end of iqq?
                   if ( rx2.search(tmp) == -1 )
                   {
                      plot_gnom = true;
-                     gnom_Iq = I;
+                     gnom_Iq_reg = I_reg;
+                     gnom_Iq_exp = I_exp;
                      gnom_q = q;
                      // plot_one_iqq(q, I, QFileInfo(filename).fileName());
                      // if ( plotted )
@@ -4020,7 +4024,8 @@ void US_Hydrodyn_Saxs::load_gnom()
                  q.size() )
             {
                plot_gnom = true;
-               gnom_Iq = I;
+               gnom_Iq_reg = I_reg;
+               gnom_Iq_exp = I_exp;
                gnom_q = q;
             }
             continue;
@@ -4084,8 +4089,12 @@ void US_Hydrodyn_Saxs::load_gnom()
       }
       if ( plot_gnom )
       {
-         crop_iq_data(gnom_q, gnom_Iq);
-         plot_one_iqq(gnom_q, gnom_Iq, QFileInfo(filename).fileName());
+         vector < double > gnom_q_reg = gnom_q;
+
+         crop_iq_data(gnom_q, gnom_Iq_exp);
+         plot_one_iqq(gnom_q, gnom_Iq_exp, QFileInfo(filename).fileName() + " Experimental");
+         crop_iq_data(gnom_q_reg, gnom_Iq_reg);
+         plot_one_iqq(gnom_q_reg, gnom_Iq_reg, QFileInfo(filename).fileName() + " Regularized");
          if ( plotted )
          {
             editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
@@ -4374,8 +4383,8 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
       "\"Notes\","
       "\"Rg\","
       "\"Rg sd\","
-      "\"Io\","
-      "\"Io sd\","
+      "\"I(0)\","
+      "\"I(0) sd\","
       "\"q min\","
       "\"q max\","
       "\"q*Rg min\","
@@ -4533,7 +4542,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             QString("")
             .sprintf(
                      "Guinier analysis of %s:\n"
-                     "Rg %.1f (%.1f) (A) Io %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
+                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
                      
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
