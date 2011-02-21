@@ -988,22 +988,36 @@ int main (int argc, char **argv)
       }
 
       bool errexit = false;
-
       for ( unsigned int i = 0; i < min_radii.size(); i++ )
       {
-         if ( meniscus_values[i] > min_radii[i] ||
-              bottom_values[i] < max_radii[i] ) 
+         if ( min_radii[i] < 5.8 )
          {
-            printf("us_cmdline_t check limits error: experiment %u simulated data doesn't cover experimental data range:\n"
-                   "                                 simulated range %f to %f, experimental range %f to %f\n"
-                   "                                 You will need to re edit the data before submitting this analysis\n"
+            printf("us_cmdline_t check limits error: experiment %u  Please check the meniscus position (%.3f) of this run, it seems to be incorrect.\n"
                    , i
-                   , meniscus_values[i]
-                   , bottom_values[i] 
                    , min_radii[i]
-                   , max_radii[i]
                    );
             errexit = true;
+         }
+      }
+
+      if ( !errexit )
+      {
+         for ( unsigned int i = 0; i < min_radii.size(); i++ )
+         {
+            if ( meniscus_values[i] > min_radii[i] ||
+                 bottom_values[i] < max_radii[i] ) 
+            {
+               printf("us_cmdline_t check limits error: experiment %u simulated data doesn't cover experimental data range:\n"
+                      "                                 simulated range %f to %f, experimental range %f to %f\n"
+                      "                                 You will need to re edit the data before submitting this analysis\n"
+                      , i
+                      , meniscus_values[i]
+                      , bottom_values[i] 
+                      , min_radii[i]
+                      , max_radii[i]
+                      );
+               errexit = true;
+            }
          }
       }
       if ( errexit )
