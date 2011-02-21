@@ -2061,6 +2061,7 @@ void US_Hydrodyn_Saxs::load_pr()
             {
                editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
                editor->append("P(r) plot done\n");
+               plotted = false;
             }
             if ( save_to_csv )
             {
@@ -2126,6 +2127,7 @@ void US_Hydrodyn_Saxs::load_pr()
             {
                editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
                editor->append("P(r) plot done\n");
+               plotted = false;
             }
          }
          
@@ -3360,6 +3362,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
       {
          editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
          editor->append("I(q) vs q plot done\n");
+         plotted = false;
       }
 
       //      long Iq = plot_saxs->insertCurve("I(q) vs q");
@@ -3371,6 +3374,8 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
       //      plot_saxs->setCurveData(Iq, (double *)&(plotted_q[p][0]), (double *)&(plotted_I[p][0]), q_points);
       //      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
       //      plot_saxs->replot();
+      cb_guinier->setChecked(false);
+      cb_user_range->setChecked(false);
       set_guinier();
    }
 }
@@ -4101,6 +4106,9 @@ void US_Hydrodyn_Saxs::load_gnom()
             editor->append("I(q) vs q plot done\n");
             plotted = false;
          }
+         cb_guinier->setChecked(false);
+         cb_user_range->setChecked(false);
+         set_guinier();
       }
    }
 }
@@ -4296,7 +4304,11 @@ void US_Hydrodyn_Saxs::set_guinier()
       plot_saxs->setTitle((cb_guinier->isChecked() ? "Guinier " : "") + tr("SAXS Curve"));
    }
 
-   cb_user_range->setChecked(!cb_guinier->isChecked());
+   if ( cb_guinier->isChecked() )
+   {
+      cb_user_range->setChecked(false);
+   }
+
    rescale_plot();
 
    for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
@@ -4492,10 +4504,10 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          return false;
       }
 
-      cout << "guinier siga " << siga << endl;
-      cout << "guinier sigb " << sigb << endl;
+      // cout << "guinier siga " << siga << endl;
+      // cout << "guinier sigb " << sigb << endl;
    
-      cout << log;
+      // cout << log;
    }
 
    QColor save_color = editor->color();
@@ -4606,7 +4618,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    editor->append(report);
    editor->setColor(save_color);
 
-   cout << csvlog;
+   //   cout << csvlog;
    return true;
 }
 
