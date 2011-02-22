@@ -144,7 +144,7 @@ class US_EXTERN US_Widgets : public QFrame
     QwtPlotPicker* us_picker( QwtPlot* );
 
     //! * returns a good match for a fixed font
-	 QFont fixedFont(void);
+	 static QFont fixedFont(void);
 
     //! \param fontAdjust -  adjustment to default font size\n
     //! \param weight      - QFont::{Light,Normal,DemiBold,Bold,Black}\n

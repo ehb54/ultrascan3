@@ -61,7 +61,7 @@ DbgLv(1) << "EM:IP: jdx" << jdx << "modelx" << modelx << "update_mw" << update_m
    switch( modelx )
    {
       case 0:     //  0: "1-Component, Ideal"
-         runfit.vbar_vals[ 0 ]  = ds_vbar20s[ 0 ];
+         runfit.vbar_vals[ 0 ]  = ds_vbar20s[ jdx ];
          runfit.vbar_rngs[ 0 ]  = runfit.vbar_vals[ 0 ] * 0.2;
          break;
       case 1:     //  1: "2-Component, Ideal, Noninteracting"
@@ -140,10 +140,11 @@ DbgLv(1) << "EM:IP: C2: total" << total;
          }
          break;
       case 3:     //  3: "Fixed Molecular Weight Distribution"
+         runfit.nbr_comps = aud_pars[ 0 ];
          mwll    = aud_pars[ 1 ];
          mwul    = aud_pars[ 2 ];
          uvbar   = aud_pars[ 3 ];
-         uvbar   = uvbar > 0.0 ? uvbar : TYPICAL_VBAR;
+         uvbar   = uvbar > 0.0 ? uvbar : ds_vbar20s[ jdx ];
          dnumc   = (double)runfit.nbr_comps;
          mwinc   = ( mwul - mwll ) / ( dnumc - 1.0 );
          tempa   = log( 1.0e-7 / dnumc );
@@ -160,6 +161,7 @@ DbgLv(1) << "EM:IP: C2: total" << total;
                scanfits[ ii ].baseline       = 0.0;
                scanfits[ ii ].baseln_rng     = 0.05;
                runfit.mw_vals[ jj ]    = mwll + ( (double)jj * mwinc );
+               runfit.mw_rngs[ jj ]    = runfit.mw_vals[ jj ] * 0.2;
                runfit.vbar_vals[ jj ]  = uvbar;
                runfit.vbar_rngs[ jj ]  = uvbar * 0.2;
             }
@@ -199,6 +201,7 @@ DbgLv(1) << "EM:IP: C2: total" << total;
          if ( (int)( 100.0 * runfit.vbar_vals[ 1 ] ) == 72 )
          {
             runfit.vbar_vals[ 1 ]  = runfit.vbar_vals[ 0 ];
+            runfit.vbar_rngs[ 1 ]  = runfit.vbar_vals[ 1 ] * 0.2;
          }
 
          runfit.eq_vals[ 0 ]    = -1.0e4;
@@ -232,6 +235,7 @@ DbgLv(1) << "EM:IP: C2: total" << total;
          if ( (int)( 100.0 * runfit.vbar_vals[ 1 ] ) == 72 )
          {
             runfit.vbar_vals[ 1 ]  = runfit.vbar_vals[ 0 ];
+            runfit.vbar_rngs[ 1 ]  = runfit.vbar_vals[ 1 ] * 0.2;
          }
 
          runfit.eq_vals[ 0 ]    = -1.0e4;
@@ -2331,3 +2335,400 @@ bool US_EqMath::isNan( double value )
    return false;
 }
 
+// Calculate runs counts
+void US_EqMath::calc_runs()
+{
+   // Accumulate runs and +/- counts for scans
+   runfit.nbr_runs = 0;
+   int jptx = 0;
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      EqScanFit* scnf = &scanfits[ ii ];
+
+      if ( ! scnf->scanFit )  continue;
+
+      scnf->nbr_posr = 0;
+      scnf->nbr_negr = 0;
+      scnf->runs     = 0;
+      bool lastpos   = ( y_guess[ jptx ] > scnf->xvs[ scnf->start_ndx ] );
+
+      for ( int jj = scnf->start_ndx; jj < scnf->stop_ndx + 1; jj++ )
+      {
+         bool thispos = ( y_guess[ jptx++ ] > scnf->yvs[ jj ] );
+
+         if ( thispos )
+         {
+            scnf->nbr_posr++;
+            if ( ! lastpos )  scnf->runs++;
+         }
+
+         else
+         {
+            scnf->nbr_negr++;
+            if ( lastpos )    scnf->runs++;
+         }
+
+         lastpos      = thispos;
+      }
+
+      runfit.nbr_runs += scnf->runs;
+   }
+}
+
+// Calculate the integral from meniscus to bottom for each exponential term
+void US_EqMath::calc_integral()
+{
+   int ncomps = runfit.nbr_comps;
+
+   switch( modelx )
+   {
+      case 0:     //  0: "1-Component, Ideal"
+      case 1:     //  1: "2-Component, Ideal, Noninteracting"
+      case 2:     //  2: "3-Component, Ideal, Noninteracting"
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            double bottom   = calc_bottom( scnf->rpm );
+            scnf->bottom    = bottom;
+            double deltr    = ( bottom - scnf->meniscus ) / 5000.0;
+            double xm_sq    = sq( scnf->xvs[ scnf->start_ndx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+
+            for ( int kk = 0; kk < ncomps; kk++ )
+            {
+               double vbar   = US_Math2::adjust_vbar20( runfit.vbar_vals[ kk ],
+                                                        tempera );
+               double buoy   = ( 1.0 - vbar * density );
+               double xval   = scnf->meniscus;
+               double amplv  = scnf->amp_vals[ kk ];
+               double ampl2  = exp( amplv );
+               double mwfac  = runfit.mw_vals[ kk ] * dconst * buoy;
+               double sumi   = 0.0;
+
+               for ( int mm = 0; mm < 4999; mm++ )
+               {
+                  xval        += deltr;
+                  double xvsq  = sq( xval ) - xm_sq;
+                  double ampl1 = ampl2;
+                  ampl2        = exp( amplv + mwfac * xvsq );
+                  sumi        += ( deltr * ( ampl1 + ampl2 ) / 2.0 );
+               }
+
+               scnf->integral[ kk ] = sumi;
+            }
+         }
+         break;
+      case 3:     //  3: "Fixed Molecular Weight Distribution"
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            double bottom   = calc_bottom( scnf->rpm );
+            scnf->bottom    = bottom;
+            double deltr    = ( bottom - scnf->meniscus ) / 5000.0;
+            double xm_sq    = sq( scnf->xvs[ scnf->start_ndx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+
+            for ( int kk = 0; kk < ncomps; kk++ )
+            {
+               double vbar   = US_Math2::adjust_vbar20( runfit.vbar_vals[ kk ],
+                                                        tempera );
+               double buoy   = ( 1.0 - vbar * density );
+               double xval   = scnf->meniscus;
+               double amplv  = scnf->amp_vals[ kk ];
+               double ampl2  = exp( amplv );
+               double mwfac  = runfit.mw_vals[ kk ] * dconst * buoy;
+               double sumi   = 0.0;
+
+               for ( int mm = 0; mm < 4999; mm++ )
+               {
+                  xval        += deltr;
+                  double xvsq  = sq( xval ) - xm_sq;
+                  double ampl1 = ampl2;
+                  ampl2        = exp( amplv + mwfac * xvsq );
+                  sumi        += ( deltr * ( ampl1 + ampl2 ) / 2.0 );
+               }
+
+               scnf->integral[ kk ] = sumi;
+            }
+         }
+         break;
+      case 4:     //  4: "Monomer-Dimer Equilibrium"
+      case 5:     //  5: "Monomer-Trimer Equilibrium"
+      case 6:     //  6: "Monomer-Tetramer Equilibrium"
+      case 7:     //  7: "Monomer-Pentamer Equilibrium"
+      case 8:     //  8: "Monomer-Hexamer Equilibrium"
+      case 9:     //  9: "Monomer-Heptamer Equilibrium"
+      case 10:    // 10: "User-Defined Monomer-Nmer Equilibrium"
+      {
+         double stoich1      = (double)( modelx - 2 );
+         double stoiexp      = stoich1 - 1.0;
+         runfit.stoichs[ 0 ] = stoich1;
+         double eqval0       = runfit.eq_vals[ 0 ];
+
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            double bottom   = calc_bottom( scnf->rpm );
+            scnf->bottom    = bottom;
+            double deltr    = ( bottom - scnf->meniscus ) / 5000.0;
+            double xm_sq    = sq( scnf->xvs[ scnf->start_ndx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double ODcorrec = log( stoich1 / pow( scnf->extincts[ 0 ]
+                                   * scnf->pathlen , stoiexp ) ) + eqval0;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+
+            double vbar   = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
+                                                        tempera );
+            double buoy   = ( 1.0 - vbar * density );
+            double xval   = scnf->meniscus;
+            double amplv  = scnf->amp_vals[ 0 ];
+            double ampl2  = exp( amplv );
+            double mwfac  = runfit.mw_vals[ 0 ] * dconst * buoy;
+            double sumi   = 0.0;
+
+            for ( int mm = 0; mm < 4999; mm++ )
+            {
+               xval        += deltr;
+               double xvsq  = sq( xval ) - xm_sq;
+               double ampl1 = ampl2;
+               ampl2        = exp( amplv + mwfac * xvsq );
+               sumi        += ( deltr * ( ampl1 + ampl2 ) / 2.0 );
+            }
+
+            scnf->integral[ 0 ]  = sumi;
+
+            xval          = scnf->meniscus;
+            sumi          = 0.0;
+            amplv         = scnf->amp_vals[ 0 ] * stoich1;
+            ampl2         = exp( amplv + ODcorrec );
+            mwfac        *= stoich1;
+
+            for ( int mm = 0; mm < 4999; mm++ )
+            {
+               xval        += deltr;
+               double xvsq  = sq( xval ) - xm_sq;
+               double ampl1 = ampl2;
+               ampl2        = exp( amplv + ODcorrec + mwfac * xvsq );
+               sumi        += ( deltr * ( ampl1 + ampl2 ) / 2.0 );
+            }
+
+            scnf->integral[ 1 ]  = sumi;
+         }
+         break;
+      }
+      case 11:    // 11: "Monomer-Dimer-Trimer Equilibrium"
+      case 12:    // 12: "Monomer-Dimer-Tetramer Equilibrium"
+      case 13:    // 13: "User-Defined Monomer - N-mer - M-mer Equilibrium"
+      {
+         double stoich1      = 2.0;
+         double stoich2      = (double)( modelx - 8 );
+         runfit.stoichs[ 0 ] = stoich1;
+         runfit.stoichs[ 1 ] = stoich2;
+         //double stoiexp      = stoich1 - 1.0;
+         //double stoiex2      = stoich2 - 1.0;
+         double stoiexp      = stoich1;
+         double stoiex2      = stoich2;
+         double eqval0       = runfit.eq_vals[ 0 ];
+         double eqval1       = runfit.eq_vals[ 1 ];
+
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            double bottom   = calc_bottom( scnf->rpm );
+            scnf->bottom    = bottom;
+            double deltr    = ( bottom - scnf->meniscus ) / 5000.0;
+            double xm_sq    = sq( scnf->xvs[ scnf->start_ndx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double ODcorre1 = log( stoich1 / pow( scnf->extincts[ 0 ]
+                                   * scnf->pathlen , stoiexp ) ) + eqval0;
+            double ODcorre2 = log( stoich2 / pow( scnf->extincts[ 0 ]
+                                   * scnf->pathlen , stoiex2 ) ) + eqval1;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+
+            double vbar     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
+                                                       tempera );
+            double buoy     = ( 1.0 - vbar * density );
+            double xval     = scnf->meniscus;
+            double amplv    = scnf->amp_vals[ 0 ];
+            double ampl2    = exp( amplv );
+            double mwfac    = runfit.mw_vals[ 0 ] * dconst * buoy;
+            double sumi     = 0.0;
+
+            for ( int mm = 0; mm < 4999; mm++ )
+            {
+               xval        += deltr;
+               double xvsq  = sq( xval ) - xm_sq;
+               double ampl1 = ampl2;
+               ampl2        = exp( amplv + mwfac * xvsq );
+               sumi        += ( deltr * ( ampl1 + ampl2 ) / 2.0 );
+            }
+
+            scnf->integral[ 0 ]  = sumi;
+
+            xval     = scnf->meniscus;
+            amplv    = scnf->amp_vals[ 0 ] * stoich1;
+            ampl2    = exp( amplv + ODcorre1 );
+            mwfac    = runfit.mw_vals[ 0 ] * dconst * buoy * stoich1;
+            sumi     = 0.0;
+
+            for ( int mm = 0; mm < 4999; mm++ )
+            {
+               xval        += deltr;
+               double xvsq  = sq( xval ) - xm_sq;
+               double ampl1 = ampl2;
+               ampl2        = exp( amplv + ODcorre1 + mwfac * xvsq );
+               sumi        += ( deltr * ( ampl1 + ampl2 ) / 2.0 );
+            }
+
+            scnf->integral[ 1 ]  = sumi;
+
+            xval     = scnf->meniscus;
+            amplv    = scnf->amp_vals[ 0 ] * stoich2;
+            ampl2    = exp( amplv + ODcorre2 );
+            mwfac    = runfit.mw_vals[ 0 ] * dconst * buoy * stoich2;
+            sumi     = 0.0;
+
+            for ( int mm = 0; mm < 4999; mm++ )
+            {
+               xval        += deltr;
+               double xvsq  = sq( xval ) - xm_sq;
+               double ampl1 = ampl2;
+               ampl2        = exp( amplv + ODcorre1 + mwfac * xvsq );
+               sumi        += ( deltr * ( ampl1 + ampl2 ) / 2.0 );
+            }
+
+            scnf->integral[ 2 ]  = sumi;
+
+         }
+         break;
+      }
+      case 14:    // 14: "2-Component Hetero-Association: A + B <=> AB"
+      {
+         double mwv0         = runfit.mw_vals[ 0 ];
+         double mwv1         = runfit.mw_vals[ 1 ];
+         double mwv2         = runfit.mw_vals[ 2 ];
+         double mw_ab        = mwv0 + mwv2;
+         double eqval0       = runfit.eq_vals[ 0 ];
+
+         for ( int ii = 0; ii < scanfits.size(); ii++ )
+         {
+            EqScanFit* scnf = &scanfits[ ii ];
+
+            if ( ! scnf->scanFit )  continue;
+
+            double bottom   = calc_bottom( scnf->rpm );
+            scnf->bottom    = bottom;
+            double deltr    = ( bottom - scnf->meniscus ) / 5000.0;
+            double xm_sq    = sq( scnf->xvs[ scnf->start_ndx ] );
+            double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
+            double tempera  = scnf->tempera;
+            double density  = scnf->density;
+            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+
+            double vbar0    = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
+                                                       tempera );
+            double vbar1    = US_Math2::adjust_vbar20( runfit.vbar_vals[ 1 ],
+                                                       tempera );
+            double vbar2    = ( vbar0 * mwv0 + vbar1 * mwv1 ) / mw_ab;
+            double buoy0    = ( 1.0 - vbar0 * density );
+            double buoy1    = ( 1.0 - vbar1 * density );
+            double buoy2    = ( 1.0 - vbar2 * density );
+
+            double xval     = scnf->meniscus;
+            double amplv    = scnf->amp_vals[ 0 ];
+            double ampl2    = exp( amplv );
+            double mwfac    = mwv0 * dconst * buoy0;
+            double sumi     = 0.0;
+
+            for ( int mm = 0; mm < 4999; mm++ )
+            {
+               xval        += deltr;
+               double xvsq  = sq( xval ) - xm_sq;
+               double ampl1 = ampl2;
+               ampl2        = exp( amplv + mwfac * xvsq );
+               sumi        += ( deltr * ( ampl1 + ampl2 ) / 2.0 );
+            }
+
+            scnf->integral[ 0 ]  = sumi;
+
+            xval     = scnf->meniscus;
+            amplv    = scnf->amp_vals[ 1 ];
+            ampl2    = exp( amplv );
+            mwfac    = mwv1 * dconst * buoy1;
+            sumi     = 0.0;
+
+            for ( int mm = 0; mm < 4999; mm++ )
+            {
+               xval        += deltr;
+               double xvsq  = sq( xval ) - xm_sq;
+               double ampl1 = ampl2;
+               ampl2        = exp( amplv + mwfac * xvsq );
+               sumi        += ( deltr * ( ampl1 + ampl2 ) / 2.0 );
+            }
+
+            scnf->integral[ 1 ]  = sumi;
+
+            double extinc0  = scnf->extincts[ 0 ];
+            double extinc1  = scnf->extincts[ 1 ];
+            double extin_ab = extinc0 + extinc1;
+            double ODcorrec = log( extin_ab
+                              / ( extinc0 * extinc1 * scnf->pathlen ) )
+                              + eqval0;
+            xval     = scnf->meniscus;
+            amplv    = scnf->amp_vals[ 0 ] + scnf->amp_vals[ 1 ];
+            ampl2    = exp( amplv + ODcorrec );
+            mwfac    = mw_ab * dconst * buoy2;
+            sumi     = 0.0;
+
+            for ( int mm = 0; mm < 4999; mm++ )
+            {
+               xval        += deltr;
+               double xvsq  = sq( xval ) - xm_sq;
+               double ampl1 = ampl2;
+               ampl2        = exp( amplv + ODcorrec + mwfac * xvsq );
+               sumi        += ( deltr * ( ampl1 + ampl2 ) / 2.0 );
+            }
+
+            scnf->integral[ 2 ]  = sumi;
+
+         }
+         break;
+      }
+      case 15:    // 15: "U-Defined self/Hetero-Assoc.: A + B <=> AB, nA <=> An"
+      case 16:    // 16: "U-Defined Monomer-Nmer, some monomer is incompetent"
+      case 17:    // 17: "User-Defined Monomer-Nmer, some Nmer is incompetent"
+      case 18:    // 18: "User-Defined irreversible Monomer-Nmer"
+      case 19:    // 19: "User-Defined Monomer-Nmer plus contaminant"
+         break;
+   }
+}
+
+// Calculate the bottom for a scan, using rotor information and speed
+double US_EqMath::calc_bottom( double rpm )
+{
+   return ( runfit.bottom_pos + runfit.rcoeffs[ 0 ] * rpm
+                              + runfit.rcoeffs[ 1 ] * sq( rpm ) );
+}

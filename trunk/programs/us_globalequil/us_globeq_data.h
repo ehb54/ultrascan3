@@ -45,6 +45,10 @@ typedef struct EqRunFit_s
    double              runs_percent;  // Runs percent
    double              runs_expect;   // Runs expected
    double              runs_vari;     // Runs variance
+   double              bottom_pos;    // Bottom CP position for calc_bottom
+   double              rcoeffs[ 2 ];  // Rotor coefficients for calc_bottom
+   QString             projname;      // Project name
+   QString             modlname;      // Model description
 } EqRunFit;
 
 typedef struct EqScanFit_s
@@ -72,16 +76,16 @@ typedef struct EqScanFit_s
    double              tempera;       // Temperature
    double              pathlen;       // Path length
    double              meniscus;      // Meniscus
+   double              bottom;        // Bottom
    double              baseline;      // Baseline
    int                 baseln_ndx;    // Baseline index
    double              baseln_rng;    // Baseline range
    bool                baseln_fit;    // Baseline fitted flag
    bool                baseln_bnd;    // Baseline bound flag
-   int                 wavelen;       // Wavelength
    int                 rpm;           // Speed in revolutions per minute
    int                 cell;          // Cell
-   int                 lambda;        // Wavelength
    int                 channel;       // Channel index
+   int                 wavelen;       // Wavelength
    int                 rotor;         // Rotor index
    int                 centerp;       // Centerpiece index
    QString             runID;         // Run identifier string
