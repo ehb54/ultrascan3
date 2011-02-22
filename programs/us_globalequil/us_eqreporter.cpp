@@ -5,18 +5,18 @@
 #include "us_gui_settings.h"
 #include "us_math2.h"
 #include "us_editor.h"
+#include "us_constants.h"
+#include "us_widgets.h"
 
 // Main constructor
 US_EqReporter::US_EqReporter(
       QVector< US_DataIO2::EditedData >& dataList,
-      QStringList&                       triples,
       QVector< ScanEdit >&               scedits,
       QVector< EqScanFit >&              scanfits,
       EqRunFit&                          runfit,
       QWidget*                           wparent )
  : QObject(),
    dataList   ( dataList ),
-   triples    ( triples  ),
    scedits    ( scedits  ),
    scanfits   ( scanfits ),
    runfit     ( runfit   ),
@@ -421,11 +421,11 @@ DbgLv(1) << "  EqRep:CSF: ffitx" << ffitx;
 
    if ( modelx > 3 )
    {
-      bool   same_lambda = true;
+      bool   same_waveln = true;
       bool   same_extinc = true;
-      int    test_lambda = scanfits[ ffitx ].lambda;
+      int    test_waveln = scanfits[ ffitx ].wavelen;
 DbgLv(1) << "  EqRep:CSF: fx extsz" << ffitx << scanfits[ffitx].extincts.size();
-DbgLv(1) << "  EqRep:CSF: test_lambda" << test_lambda;
+DbgLv(1) << "  EqRep:CSF: test_waveln" << test_waveln;
       double test_extinc = scanfits[ ffitx ].extincts[ 0 ];
 DbgLv(1) << "  EqRep:CSF: test_extinc" << test_extinc;
 
@@ -433,20 +433,20 @@ DbgLv(1) << "  EqRep:CSF: test_extinc" << test_extinc;
       {
          if ( scanfits[ jj ].scanFit )
          {
-            if ( scanfits[ jj ].lambda != test_lambda )
-               same_lambda = false;
+            if ( scanfits[ jj ].wavelen != test_waveln )
+               same_waveln = false;
 
             if ( scanfits[ jj ].extincts[ 0 ] != test_extinc )
                same_extinc = false;
          }
       }
 
-      if ( ! same_lambda  &&  same_extinc )
+      if ( ! same_waveln  &&  same_extinc )
          rs += tr( "\nWarning:\n"
                    "Your project contains scans with different wavelengths\n"
                    "but identical extinction coefficients!\n" );
 
-      else if ( ! same_lambda  &&  ! same_extinc )
+      else if ( ! same_waveln  &&  ! same_extinc )
          rs += tr( "\nWarning:\n"
                    "Your project contains scans with different wavelengths;\n"
                    "make sure that the extinction coefficients match!\n" );
@@ -589,6 +589,234 @@ DbgLv(1) << "    dwid" << dwid;
    return critical;
 }
 
+// Create fit report
+QString US_EqReporter::fit_report( FitCtrlPar& fitpars, bool opengui,
+      bool wrreport, QString& filename )
+{
+   QString rs;
+DbgLv(1) << "  EqRep:FIT_REPORT()";
+   QString mtitl  = tr( "Global Equilibrium Fit Analysis" );
+   QString fitd   = tr( " (fitted)" );
+   QString fixd   = tr( " (fixed) " );
+
+   // Compose opening header and notes
+   rs  = asters + centerInLine( mtitl, 80, false, ' ' ) + "\n" + asters + "\n";
+   rs += tr( "Data Report for Project \"%1\"" ).arg( runfit.projname ) + "\n";
+   rs += tr( "Fitted Model:  " ) + runfit.modlname + "\n\n";
+   rs += tr( "Parameters for this model:" ) + "\n\n";
+
+   for ( int ii = 0; ii < runfit.nbr_comps; ii++ )
+   {
+      rs += tr( "For component %1:\n" ).arg( ii + 1 );
+      rs += tr( "  Molecular Weight" );
+      rs += runfit.mw_fits[ ii ] ? fitd : fixd;
+      rs += tr( ":          %1 dalton\n" ).arg( runfit.mw_vals[ ii ] );
+      rs += tr( "  Partial Specific Volume" );
+      rs += runfit.vbar_fits[ ii ] ? fitd : fixd;
+      rs += tr( ":   %1 (at 20" ).arg( runfit.vbar_vals[ ii ] ) + DEGC + ")\n";
+
+      for ( int jj = 0; jj < runfit.nbr_assocs; jj++ )
+      {
+         double eqval = exp( runfit.eq_vals[ jj ] );
+         rs += tr( "  Association (Dissociation) Constant %1: %2" )
+               .arg( jj + 1 ).arg( eqval );
+         rs += runfit.eq_fits[ jj ] ? fitd : fixd + "\n";
+      }
+   }
+
+   rs += tr( "\nGlobal Fitting Statistics:\n\n" );
+   rs += tr( "Variance:                             %1\n" )
+         .arg( fitpars.variance );
+   rs += tr( "Standard Deviation:                   %1\n" )
+         .arg( fitpars.std_dev );
+   rs += tr( "Number of floated Parameters:         %1\n" )
+         .arg( fitpars.nfpars );
+   rs += tr( "Number of Datasets (scans):           %1\n" )
+         .arg( fitpars.ndsets );
+   rs += tr( "Number of total Datapoints:           %1\n" )
+         .arg( fitpars.ntpts );
+
+   double totneg = 0.0;
+   double totpos = 0.0;
+   int    niscns = 0;
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+      if ( scanfits[ ii ].scanFit )  niscns++;
+
+   double ptfac  = (double)niscns / (double)fitpars.ntpts;
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      EqScanFit* scnf = &scanfits[ ii ];
+
+      if ( ! scnf->scanFit )  continue;
+
+      int jdax = scedits[ ii ].dsindex;
+      int jscx = scedits[ ii ].scannbr - 1;
+
+      double deltar    = dataList[ jdax ].scanData[ jscx ].delta_r;
+      double ptdens    = (double)scnf->points * ptfac;
+      double dpscale   = deltar / ptdens;
+      totneg          += ( (double)scnf->nbr_negr * dpscale );
+      totpos          += ( (double)scnf->nbr_posr * dpscale );
+   }
+
+   double totprod      = totneg * totpos;
+   double totsum       = totneg + totpos;
+   double totprod2     = 2.0 * totprod;
+   runfit.runs_percent = ( runfit.nbr_runs * 100.0 ) / totsum;
+   runfit.runs_expect  = (double)( qRound( 1.0 + ( totprod2 / totsum ) ) );
+   runfit.runs_vari    = ( totprod2 * ( totprod2 - totsum ) )
+                        / ( sq( totprod ) * ( totsum - 1.0 ) );
+   //rs += tr( "Average Datapoint concentration: %1\n" ).arg( conc_avg );
+   rs += tr( "Average Datapoint concentration:      Not determined\n" );
+   rs += tr( "Number of Degrees of Freedom:         %1\n" )
+         .arg( fitpars.ntpts - fitpars.nfpars );
+   rs += tr( "Number of Runs  (corrected):          %1\n" )
+         .arg( runfit.nbr_runs );
+   rs += tr( "Expected Number of Runs  (corrected): %1\n" )
+         .arg( runfit.runs_expect );
+   rs += tr( "Run Variance  (corrected):            %1\n" )
+         .arg( runfit.runs_vari );
+
+   rs += tr( "\nAccording to these statistical tests, this model is " );
+
+   if ( runfit.runs_percent <= 30.0 )
+   {
+      if ( runfit.runs_percent < 26.0 )
+         rs += tr( "either inappropriate for\n" );
+
+      else
+         rs += tr( "either a poor candidate for\n" );
+
+      rs += tr( "the experimental data, or the fitting process has not yet"
+                " converged. Please try to reduce\n" );
+      rs += tr( "the variance by additional nonlinear least-squares"
+                " minimization of the data.\n" );
+      rs += tr( "This fit cannot be used for a Monte Carlo Analysis.\n" );
+   }
+
+   else if ( runfit.runs_percent <= 35.0 )
+   {
+      rs += tr( "an acceptable candidate for\nthe experimental data.\n" );
+      rs += tr( "This fit can be used for a Monte Carlo Analysis"
+                " with reservations.\n" );
+   }
+
+   else
+   {
+      rs += tr( "a good candidate for\nthe experimental data.\n" );
+      rs += tr( "This fit is recommended for Monte Carlo Analysis.\n" );
+   }
+
+   rs += tr( "\nDetailed Information for fitted Scans:\n" );
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      EqScanFit* scnf = &scanfits[ ii ];
+
+      // Scan information header
+      rs += scanInfoHeader( ii, scedits[ ii ].dsindex );
+
+      if ( ! scnf->scanFit )
+      {
+         rs += tr( "This scan has been excluded from the Fit.\n" );
+         continue;
+      }
+
+      rs += tr( "Baseline" );
+      rs += scnf->baseln_fit ? fitd : fixd;
+      rs += QString( ":                      %1 OD\n" )
+            .arg( scnf->baseline );
+      rs += tr( "Meniscus:                               %1\n" )
+            .arg( scnf->meniscus );
+      rs += tr( "Bottom:                                 %1\n" )
+            .arg( scnf->bottom );
+      double tempera = scnf->tempera;
+      double density = scnf->density;
+      rs += tr( "Density setting:                        %1 g/ccm\n" )
+            .arg( density );
+      rs += tr( "Temperature setting:                    %1" )
+            .arg( tempera ) + DEGC + "\n";
+
+      for ( int jj = 0; jj < runfit.nbr_comps; jj++ )
+      {
+         int compn = jj + 1;
+         rs += tr( "  Amplitude of component %1" ).arg( compn );
+         rs += scnf->amp_fits[ jj ] ? fitd : fixd;
+         rs += QString( ":        %1 OD\n" ).arg( scnf->amp_vals[ jj ] );
+         rs += tr( "    Integral of component:                    %2\n" )
+               .arg( scnf->integral[ jj ] );
+         rs += tr( "    Extinction Coefficient of component:      %2\n" )
+               .arg( scnf->extincts[ jj ] );
+         double vbar20 = US_Math2::adjust_vbar20( runfit.vbar_vals[ jj ],
+                                                  tempera );
+         double buoy   = ( 1.0 - vbar20 * density );
+         rs += tr( "    Partial Specific Volume of component:     %2 (20W)\n" )
+               .arg( vbar20 );
+         rs += tr( "    Buoyancy (20W) of component:              %2\n" )
+               .arg( buoy );
+      }
+
+      rs += tr( "Pathlength:                             %1 cm\n" )
+            .arg( scnf->pathlen );
+      rs += tr( "\nFitting Statistics for this Scan:\n" );
+      rs += tr( "Number of Runs  (corrected):            %1\n" )
+            .arg( scnf->runs );
+      double runprod = scnf->nbr_posr * scnf->nbr_negr;
+      double runsum  = scnf->nbr_posr + scnf->nbr_negr;
+      double runpro2 = runprod * 2.0;
+      double expectr = 1.0 + runpro2 / runsum;
+      double varirun = ( runpro2 * ( runpro2 - runsum ) )
+                     / ( sq( runsum ) * ( runsum - 1.0 ) );
+      rs += tr( "Expected Number of Runs  (corrected):   %1\n" )
+            .arg( qRound( expectr ) );
+      rs += tr( "Run Variance  (corrected):              %1\n" )
+            .arg( varirun );
+   }  // END:  scans information composition loop
+
+   if ( opengui )
+   {
+      US_Editor* ediag = new US_Editor( US_Editor::DEFAULT, true, "*.res",
+            wparent );
+      ediag->setWindowTitle( mtitl );
+      QFont efont( US_Widgets::fixedFont().family(),
+                   US_GuiSettings::fontSize() - 2 );
+      ediag->e->setFont( efont );
+      ediag->e->setText( rs );
+      QFontMetrics fm( efont );
+      int dwid = maxLineWidth( fm, rs ) + fm.width( "WWW" );
+      int dhgt = fm.lineSpacing() * 50;
+      dwid     = ( ( dwid / 12 + 2 ) * 12 );
+      dhgt     = ( ( dhgt / 12 + 2 ) * 12 );
+      ediag->resize( dwid, dhgt );
+      ediag->move( wparent->pos() + QPoint( 400, 100 ) );
+      ediag->show();
+   }
+
+   if ( wrreport )
+   {
+      filename = US_Settings::reportDir() + "/" + dataList[ 0 ].runID
+         + "/globeq." + runfit.projname + ".fit.rpt";
+      QFile drf( filename );
+
+      if ( ! drf.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         QMessageBox::warning( wparent, tr( "File Error" ),
+            tr( "Unable to open the file:\n" ) + filename );
+      }
+
+      else
+      {
+         QTextStream ts( &drf );
+         ts << rs;
+         drf.close();
+      }
+   }
+
+   return rs;
+}
+
 // Determine the index in the radius vector of a given radius
 int US_EqReporter::index_radius( US_DataIO2::EditedData* edat, double radius )
 {
@@ -635,19 +863,12 @@ QString US_EqReporter::centerInLine( const QString& titl_text, int linelen,
 // Compose a scan information header string
 QString US_EqReporter::scanInfoHeader( int jes, int jdx )
 {
-   QString s_scnn = QString::number( jes + 1 );
-   QString s_trip = triples[ jdx ];
-   QString s_cell = s_trip.section( "/", 0, 0 ).simplified();
-   QString s_chan = s_trip.section( "/", 1, 1 ).simplified();
-   QString s_wave = s_trip.section( "/", 2, 2 ).simplified();
-   QString s_rpm  = QString::number( scanfits[ jes ].rpm );
-
    return ( "\n" + asters
-            + tr( "Information for Scan " ) + s_scnn
-            + tr( ",  Cell " ) + s_cell
-            + tr( ", Channel " ) + s_chan
-            + tr( ", Wavelength " ) + s_wave
-            + " nm,  " + s_rpm + tr( " rpm" )
+            + tr( "Information for Scan " ) + QString::number( jes + 1 )
+            + tr( ",  Cell " ) + dataList[ jdx ].cell
+            + tr( ", Channel " ) + dataList[ jdx ].channel
+            + tr( ", Wavelength " ) + dataList[ jdx ].wavelength
+            + " nm,  " + QString::number( scanfits[ jes ].rpm ) + tr( " rpm" )
             + "\n   [  " + scanfits[ jes ].descript + "  ]\n" + asters );
 }
 

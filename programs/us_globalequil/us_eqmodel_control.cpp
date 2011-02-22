@@ -392,7 +392,7 @@ qDebug() << "EMC: 2)eq0 flt" << runfit.eq_fits[0]
    le_runid  ->setText( scanfits[ scanx ].runID );
    le_tempera->setText( QString::number( scanfits[ scanx ].tempera )    );
    le_speed  ->setText( QString::number( scanfits[ scanx ].rpm )        );
-   le_wavelen->setText( QString::number( scanfits[ scanx ].lambda )     );
+   le_wavelen->setText( QString::number( scanfits[ scanx ].wavelen )    );
    le_pathlen->setText( QString::number( scanfits[ scanx ].pathlen )    );
    le_blguess->setText( QString::number( scanfits[ scanx ].baseline )   );
    le_blbound->setText( QString::number( scanfits[ scanx ].baseln_rng ) );
@@ -501,7 +501,7 @@ qDebug() << "EMC: scan_changed" << value;
    le_runid  ->setText( scanfits[ scanx ].runID );
    le_tempera->setText( QString::number( scanfits[ scanx ].tempera )    );
    le_speed  ->setText( QString::number( scanfits[ scanx ].rpm )        );
-   le_wavelen->setText( QString::number( scanfits[ scanx ].lambda  )    );
+   le_wavelen->setText( QString::number( scanfits[ scanx ].wavelen )    );
    le_pathlen->setText( QString::number( scanfits[ scanx ].pathlen )    );
    le_blguess->setText( QString::number( scanfits[ scanx ].baseline )   );
    le_blbound->setText( QString::number( scanfits[ scanx ].baseln_rng ) );

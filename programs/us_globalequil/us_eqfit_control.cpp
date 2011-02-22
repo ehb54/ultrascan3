@@ -13,6 +13,7 @@ US_EqFitControl::US_EqFitControl(
       EqRunFit&               a_runfit,
       US_DataIO2::EditedData* a_edata,
       US_EqMath*              a_emath,
+      US_EqReporter*          a_ereporter,
       int                     a_modelx,
       QStringList             a_models,
       bool&                   a_fWidget,
@@ -22,6 +23,7 @@ US_EqFitControl::US_EqFitControl(
    runfit     ( a_runfit ),
    edata      ( a_edata ),
    emath      ( a_emath ),
+   ereporter  ( a_ereporter ),
    modelx     ( a_modelx ),
    models     ( a_models ),
    fWidget    ( a_fWidget ),
@@ -386,6 +388,16 @@ qDebug() << "SAVE_FIT";
 void US_EqFitControl::view_report()
 {
 qDebug() << "VIEW_REPORT";
+   bool showgui = true;
+   bool writerf = true;
+   QString filename;
+
+   emath->calc_runs();
+   emath->calc_integral();
+
+   ereporter->fit_report( fitpars, showgui,
+         writerf, filename );
+qDebug() << " V_REP filename" << filename;
 }
 // Plot residuals for scan(s)
 void US_EqFitControl::plot_residuals()
@@ -433,7 +445,11 @@ qDebug() << "FIT_COMPLETED";
       iinform = tr( "Fitting iterations COMPLETED!" );
 
    iinform = iinform + " ( " + fitpars.infomsg + " )";
-   le_inform->setText( iinform );
-   pb_close ->setEnabled( true );
+   le_inform ->setText( iinform );
+   pb_close  ->setEnabled( true );
+   pb_savefit->setEnabled( true );
+   pb_viewrep->setEnabled( true );
+   pb_resids ->setEnabled( true );
+   pb_ovrlays->setEnabled( true );
 }
 

@@ -13,6 +13,7 @@
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "us_solution_vals.h"
+#include "us_simparms.h"
 #include "us_globalequil.h"
 #include "us_model_select.h"
 #include "us_eqreporter.h"
@@ -304,6 +305,8 @@ void US_GlobalEquil::load( void )
    ds_densits.clear();
    ds_viscos .clear();
 
+   modelx      = 0;
+   models << "";
    dataLoaded  = false;
    buffLoaded  = false;
    dataLatest  = ck_edlast->isChecked();
@@ -358,6 +361,13 @@ void US_GlobalEquil::load( void )
 DbgLv(1) << "  jd vbar20 density" << 0 << ds_vbar20s[0] << ds_densits[0];
 int nn=dataList.size()-1;
 DbgLv(1) << "  jd vbar20 density" << nn << ds_vbar20s[nn] << ds_densits[nn];
+
+   // Get Centerpiece bottom and rotor coefficients for calc_bottom
+   US_SimulationParameters simparams;
+   simparams.initFromData( dbP, dataList[ 0 ] );
+   runfit.bottom_pos   = simparams.bottom_position;
+   runfit.rcoeffs[ 0 ] = simparams.rotorcoeffs[ 0 ];
+   runfit.rcoeffs[ 1 ] = simparams.rotorcoeffs[ 1 ];
 
    // Build the table of available scans
    QStringList headers;
@@ -458,9 +468,12 @@ DbgLv(1) << "  jsscn jd js" << jsscn << jd << js
 
    od_limit = 0.9;
 
+DbgLv(1) << " LD: setup_runfit";
    setup_runfit();       // Build the runfit data structure
+DbgLv(1) << " LD: assign_scanfit";
    assign_scanfit();     // Build a vector of scanfit data structures
 
+DbgLv(1) << " LD: update_limit";
    update_limit( 0.9 );  // Possibly modify data ranges by OD limit
 
    // Reset the range of the scan counter to scans available
@@ -510,7 +523,7 @@ void US_GlobalEquil::unload( void )
    equil_plot->setTitle( tr( "Experiment Equilibrium Data" ) );
 
    setup_runfit();
-   assign_scanfit();
+   //assign_scanfit();
 
    dataLoaded  = false;
    pb_details ->setEnabled( false );
@@ -527,8 +540,8 @@ DbgLv(1) << "SCAN_DIAGS()";
       return;
 
    if ( ereporter == 0 )                // Create reporter (1st time)
-      ereporter  = new US_EqReporter( dataList,
-          triples, scedits, scanfits, runfit, this );
+      ereporter  = new US_EqReporter( dataList, scedits, scanfits,
+                                      runfit, this );
 
    ereporter->scan_diagnostics();       // Generate and display report
 
@@ -549,10 +562,11 @@ DbgLv(1) << "SCAN_DIAGS()";
 
 void US_GlobalEquil::check_scan_fit( void )
 {
+   runfit.modlname     = models[ modelx ];
 DbgLv(1) << "CHECK_SCAN_FIT()";
    if ( ereporter == 0 )                // Create reporter (1st time)
-      ereporter  = new US_EqReporter( dataList,
-          triples, scedits, scanfits, runfit, this );
+      ereporter  = new US_EqReporter( dataList, scedits, scanfits,
+                                      runfit, this );
 DbgLv(1) << " CkScFit:  sz - sced scnf" << scedits.size() << scanfits.size();
 
                                         // Generate and display report
@@ -590,7 +604,10 @@ DbgLv(1) << "RESET_SCAN_LIMS()";
 void US_GlobalEquil::load_model( void )
 { DbgLv(1) << "LOAD_MODEL()"; }
 void US_GlobalEquil::new_project_name( const QString& newpname )
-{ DbgLv(1) << "NEW_PROJECT_NAME()" << newpname; }
+{
+DbgLv(1) << "NEW_PROJECT_NAME()" << newpname;
+   runfit.projname     = newpname;
+}
 
 // Select the model
 void US_GlobalEquil::select_model( void )
@@ -621,6 +638,8 @@ if(na==4) DbgLv(1) << "   par1-4: " << aud_params[0] << aud_params[1]
 
       if ( model_widget )
          emodctrl->set_float( false );
+
+      runfit.modlname     = modelname;
    }
 }
 
@@ -665,8 +684,15 @@ DbgLv(1) << "FITTING_CONTROL()";
       if ( emath == 0 )
          emath        = new US_EqMath( dataList, scedits, scanfits, runfit );
 
+      runfit.modlname = models[ modelx ];
+
+      if ( ereporter == 0 )                // Create reporter (1st time)
+         ereporter    = new US_EqReporter( dataList, scedits, scanfits,
+                                           runfit, this );
+
       efitctrl     = new US_EqFitControl( scanfits, runfit, edata, emath,
-                                          modelx, models, fit_widget, sscann );
+                                          ereporter, modelx, models,
+                                          fit_widget, sscann );
 
       efitctrl->show();
    }
@@ -1169,6 +1195,8 @@ void US_GlobalEquil::assign_scanfit()
    EqScanFit   scanfit;
    QStringList channs;
    int         ncomp = max( 1, runfit.nbr_comps );
+   int         mcomp = max( 4, ncomp );
+   int         nintg = mcomp + runfit.nbr_assocs;
    
    for ( int jes = 0; jes < scedits.size(); jes++ )
    {
@@ -1207,19 +1235,19 @@ void US_GlobalEquil::assign_scanfit()
       scanfit.rpm        = (int)edata->speedData[ jrx ].speed;
       scanfit.cell       = trip.section( "/", 0, 0 ).simplified().toInt();
       scanfit.channel    = channs.indexOf( chan ) + 1;
-      scanfit.lambda     = trip.section( "/", 2, 2 ).simplified().toInt();
+      scanfit.wavelen    = trip.section( "/", 2, 2 ).simplified().toInt();
       scanfit.runID      = edata->runID;
       scanfit.descript   = edata->description;
 
       scanfit.xvs.resize( scanfit.points );
       scanfit.yvs.resize( scanfit.points );
-      scanfit.amp_vals.fill(  0.0, ncomp );
-      scanfit.amp_ndxs.fill(    0, ncomp );
-      scanfit.amp_rngs.fill(  0.0, ncomp );
-      scanfit.amp_fits.fill( true, ncomp );
-      scanfit.amp_bnds.fill( true, ncomp );
-      scanfit.extincts.fill(  1.0, ncomp );
-      scanfit.integral.fill(  0.0, ncomp );
+      scanfit.amp_vals.fill(  0.0, mcomp );
+      scanfit.amp_ndxs.fill(    0, mcomp );
+      scanfit.amp_rngs.fill(  0.0, mcomp );
+      scanfit.amp_fits.fill( true, mcomp );
+      scanfit.amp_bnds.fill( true, mcomp );
+      scanfit.extincts.fill(  1.0, nintg );
+      scanfit.integral.fill(  0.0, nintg );
 
       for ( int jj = 0; jj < scanfit.points; jj++ )
       {
@@ -1244,6 +1272,11 @@ void US_GlobalEquil::setup_runfit()
    runfit.runs_percent = 0.0;
    runfit.runs_expect  = 0.0;
    runfit.runs_vari    = 0.0;
+   runfit.projname     = le_prjname->text();
+   modelx              = max( modelx, 0 );
+DbgLv(1) << " sRF: modelx" << modelx;
+   runfit.modlname     = models[ modelx ];
+DbgLv(1) << " sRF: modlname" << runfit.modlname;
 
    switch ( modelx )
    {
@@ -1260,7 +1293,7 @@ void US_GlobalEquil::setup_runfit()
          runfit.nbr_assocs   = 0;
          break;
       case 3:
-         runfit.nbr_comps    = (int)aud_params[ 1 ];
+         runfit.nbr_comps    = (int)aud_params[ 0 ];
          runfit.nbr_assocs   = 1;
          break;
       case 4:
@@ -1295,6 +1328,7 @@ void US_GlobalEquil::setup_runfit()
       default:
          break;
    }
+DbgLv(1) << " sRF: ncomps nassocs" << runfit.nbr_comps << runfit.nbr_assocs;
 
    double dvval  = TYPICAL_VBAR;
 

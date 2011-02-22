@@ -33,6 +33,8 @@ class US_EXTERN US_EqMath : public QObject
       void   genLeastSquaresOrd2  ( double**, int, double*, double** );
       void   guess_mapForward     ( double* );
       void   parameter_mapBackward( double* );
+      void   calc_runs            ( void    );
+      void   calc_integral        ( void    );
 
    private:
       QVector< US_DataIO2::EditedData >&  dataList;
@@ -99,6 +101,7 @@ class US_EXTERN US_EqMath : public QObject
       bool    Cholesky_DecompOrd2  ( double** );
       bool    Cholesky_SolveSysOrd2( double**, double* );
       bool    isNan( double );
+      double  calc_bottom( double );
 };
 #endif
 
