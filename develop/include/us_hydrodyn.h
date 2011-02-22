@@ -147,6 +147,14 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QString saxs_sans_ext(); // returns correct extension based upon current saxs/sans mode
 
+      // save file paths
+      QString path_load_pdb;
+      QString path_view_pdb;
+      QString path_load_bead_model;
+      QString path_view_asa_res;
+      QString path_view_bead_model;
+      QString path_open_hydro_res;
+
    private:
       US_Config *USglobal;
 
@@ -443,6 +451,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       load_state state;
       void update_enables();
 
+      void dna_rna_resolve();  // often DNA is encoded without the D, check each chain and ask about & adding it
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -486,14 +496,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void pdb_saxs( bool create_native_saxs = true );
       void bead_saxs( bool create_native_saxs = true );
-
-      // save file paths
-      QString path_load_pdb;
-      QString path_view_pdb;
-      QString path_load_bead_model;
-      QString path_view_asa_res;
-      QString path_view_bead_model;
-      QString path_open_hydro_res;
 
    private slots:
       void browflex_readFromStdout();

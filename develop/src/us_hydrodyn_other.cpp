@@ -722,12 +722,112 @@ int US_Hydrodyn::read_pdb(const QString &filename)
    lb_model->setEnabled(true);
    lb_model->setSelected(0, true);
    current_model = 0;
+   dna_rna_resolve();
    model_vector_as_loaded = model_vector;
    if ( advanced_config.debug_2 )
    {
       list_model_vector(&model_vector_as_loaded);
    }
    return 0;
+}
+
+void US_Hydrodyn::dna_rna_resolve()
+{
+   // check each chain of each model for DNA type AA's
+
+   QRegExp rx_dna("^T$");
+   QRegExp rx_dna_and_rna("^(A|G|C|T|U)$");
+   QRegExp rx_dna_or_rna("^(A|G|C)$");
+   QRegExp rx_rna("^U$");
+
+   // this can cause spurious chain breaks in the load
+   // work around it with a map
+
+   map < QString, bool > already_asked;
+   map < QString, bool > already_messaged;
+
+   for ( unsigned int i = 0; i < model_vector.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
+      {
+         bool convert_this = false;
+         bool ask_convert = model_vector[i].molecule[j].atom.size() > 0;
+         QString chainID;
+         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
+         {
+            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+            QString thisres = this_atom->resName.stripWhiteSpace();
+            chainID = this_atom->chainID;
+            if ( rx_dna_and_rna.search(thisres) == -1 )
+            {
+               // not either:
+               ask_convert = false;
+               break;
+            }
+            if ( rx_dna.search(thisres) != -1 )
+            {
+               // we definitely have DNA, correct this residue!
+               ask_convert = false;
+               convert_this = true;
+               break;
+            }
+            if ( rx_rna.search(thisres) != -1 )
+            {
+               // we definitely have RNA, the residue is ok
+               ask_convert = false;
+               convert_this = false;
+               break;
+            }
+         }
+         if ( ask_convert && already_asked.count(QString("%1|%2").arg(i).arg(chainID)) )
+         {
+            ask_convert = already_asked[QString("%1|%2").arg(i).arg(chainID)];
+         }
+         if ( already_messaged.count(QString("%1|%2").arg(i).arg(chainID)) )
+         {
+            ask_convert = false;
+            convert_this = true;
+         }
+         if ( ask_convert )
+         {
+            switch( QMessageBox::information( this, 
+                                              tr("UltraScan"),
+                                              tr(QString("Chain %1 Molecule %1 only contains A, G & C residues (so far)\n"
+                                                         "Is it DNA or RNA?")
+                                                 .arg(chainID)
+                                                 .arg(i+1))
+                                              ,
+                                              "&DNA", 
+                                              "&RNA", 
+                                              0,
+                                              0,      // Enter == button 0
+                                              1 ) ) { // Escape == button 2
+            case 0: // DNA: convert
+               convert_this = true;
+               break;
+            case 1: // RNA: leave it alone
+               break;
+            }
+            already_asked[QString("%1|%2").arg(i).arg(chainID)] = convert_this;
+         }
+         if ( convert_this )
+         {
+            if ( !already_messaged.count(QString("%1|%2").arg(i).arg(chainID)) )
+            {
+               already_messaged[QString("%1|%2").arg(i).arg(chainID)] = true;
+               editor->append(tr(QString("Converting Chain %1 Molecule %1 to standard DNA residue names\n")
+                                 .arg(chainID)
+                                 .arg(i+1)
+                                 ));
+            }
+            for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
+            {
+               PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+               this_atom->resName = "D" + this_atom->resName.stripWhiteSpace();
+            }
+         }
+      }
+   }
 }
 
 int US_Hydrodyn::read_bead_model(QString filename)
