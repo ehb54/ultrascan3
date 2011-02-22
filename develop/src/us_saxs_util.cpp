@@ -2602,9 +2602,11 @@ void US_Saxs_Util::clear_project()
    p_guinier_maxq = .05e0;
    p_iterations_grid = 10;
    p_iterations_gsm = 50;
-   p_dmax_start = 50;
-   p_dmax_end = 200;
-   p_dmax_inc = 50;
+   p_rmax_start = 50;
+   p_rmax_end = 200;
+   p_rmax_inc = 50;
+   p_crop_low = 0;
+   p_crop_high = 1e6;
    p_iterations_gsm = 50;
    wave_names_vector.clear();
    wave_names.clear();
@@ -2745,9 +2747,11 @@ bool US_Saxs_Util::read_project( QString subdir )
                    "wavealphainc|"
                    "waveoverlaplowq|"
                    "waveoverlaphighq|"
-                   "dmaxstart|"
-                   "dmaxend|"
-                   "dmaxinc|"
+                   "gnomrmaxstart|"
+                   "gnomrmaxend|"
+                   "gnomrmaxinc|"
+                   "gnomcroplow|"
+                   "gnomcrophigh|"
                    "remark)$"
                    );
 
@@ -2920,21 +2924,33 @@ bool US_Saxs_Util::read_project( QString subdir )
          continue;
       }
 
-      if ( token == "gnomdmaxstart" )
+      if ( token == "gnomrmaxstart" )
       {
-         p_dmax_start = data.toDouble();
+         p_rmax_start = data.toDouble();
          continue;
       }
 
-      if ( token == "gnomdmaxend" )
+      if ( token == "gnomrmaxend" )
       {
-         p_dmax_end = data.toDouble();
+         p_rmax_end = data.toDouble();
          continue;
       }
 
-      if ( token == "gnomdmaxinc" )
+      if ( token == "gnomrmaxinc" )
       {
-         p_dmax_inc = data.toDouble();
+         p_rmax_inc = data.toDouble();
+         continue;
+      }
+
+      if ( token == "gnomcroplow" )
+      {
+         p_crop_low = data.toDouble();
+         continue;
+      }
+
+      if ( token == "gnomcrophigh" )
+      {
+         p_crop_high = data.toDouble();
          continue;
       }
 
@@ -5082,15 +5098,23 @@ bool US_Saxs_Util::merge_projects(
    clear_project();
 
    vector < QString > gnom_files;
-   vector < double > gnom_files_dmax_start;
-   vector < double > gnom_files_dmax_end;
-   vector < double > gnom_files_dmax_inc;
+   vector < double > gnom_files_rmax_start;
+   vector < double > gnom_files_rmax_end;
+   vector < double > gnom_files_rmax_inc;
    map < QString, unsigned int > gnom_file_map;
+
+   vector < QString > gnom_crop_files;
+   vector < double > gnom_crop_low;
+   vector < double > gnom_crop_high;
+   map < QString, unsigned int > gnom_crop_file_map;
+
    bool use_merge_gnom = false;
 
    if ( gnom_run )
    {
       QFile f("merge_gnom");
+      // merge_gnom format
+      // crop
       if ( f.exists() )
       {
          use_merge_gnom = true;
@@ -5100,9 +5124,15 @@ bool US_Saxs_Util::merge_projects(
             return false;
          }
          QRegExp rxempty("^\\s*$");
-         QRegExp rx1("^\\s*(\\S+)\\s*$");
-         QRegExp rx4("^\\s*(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
          QRegExp rxskip("^#");
+
+         QRegExp rxrmax("^\\s*rmax");
+         QRegExp rx1rmax("^\\s*rmax\\s+(\\S+)\\s*$");
+         QRegExp rx4rmax("^\\s*rmax\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
+
+         QRegExp rxcrop("^\\s*crop");
+         QRegExp rx3crop("^\\s*crop\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
+
          QTextStream ts(&f);
          while ( !ts.atEnd() )
          {
@@ -5113,28 +5143,50 @@ bool US_Saxs_Util::merge_projects(
                continue;
             }
 
-            if ( rx4.search(line) == -1 &&
-                 rx1.search(line) == -1 )
+            if ( rxrmax.search(line) != -1 )
             {
-               errormsg = "merge_gnom lines must contain either one or 4 columns";
-               return false;
-            }
-
-            if ( rx4.search(line) != -1 )
-            {
-               gnom_file_map[rx4.cap(1)] = gnom_files.size();
-               gnom_files.push_back(rx4.cap(1));
-               gnom_files_dmax_start.push_back(rx4.cap(2).toDouble());
-               gnom_files_dmax_end.push_back(rx4.cap(3).toDouble());
-               gnom_files_dmax_inc.push_back(rx4.cap(4).toDouble());
+               if ( rx4rmax.search(line) == -1 &&
+                    rx1rmax.search(line) == -1 )
+               {
+                  errormsg = "merge_gnom rmax lines must contain either two or five columns";
+                  return false;
+               }
+               
+               if ( rx4rmax.search(line) != -1 )
+               {
+                  gnom_file_map[rx4rmax.cap(1)] = gnom_files.size();
+                  gnom_files.push_back(rx4rmax.cap(1));
+                  gnom_files_rmax_start.push_back(rx4rmax.cap(2).toDouble());
+                  gnom_files_rmax_end.push_back(rx4rmax.cap(3).toDouble());
+                  gnom_files_rmax_inc.push_back(rx4rmax.cap(4).toDouble());
+                  continue;
+               }
+               
+               gnom_file_map[rx1rmax.cap(1)] = gnom_files.size();
+               gnom_files.push_back(rx1rmax.cap(1));
+               gnom_files_rmax_start.push_back(0e0);
+               gnom_files_rmax_end.push_back(0e0);
+               gnom_files_rmax_inc.push_back(0e0);
                continue;
             }
 
-            gnom_file_map[rx1.cap(1)] = gnom_files.size();
-            gnom_files.push_back(rx1.cap(1));
-            gnom_files_dmax_start.push_back(0e0);
-            gnom_files_dmax_end.push_back(0e0);
-            gnom_files_dmax_inc.push_back(0e0);
+            if ( rxcrop.search(line) != -1 )
+            {
+               if ( rx3crop.search(line) == -1 )
+               {
+                  errormsg = "merge_gnom crop lines must contain four columns";
+                  return false;
+               }
+               
+               gnom_crop_file_map[rx3crop.cap(1)] = gnom_files.size();
+               gnom_crop_files.push_back(rx3crop.cap(1));
+               gnom_crop_low.push_back(rx3crop.cap(2).toDouble());
+               gnom_crop_high.push_back(rx3crop.cap(3).toDouble());
+               continue;
+            }
+            
+            errormsg = "unrecognized merge_gnom line: " + line;
+            return false;
          }
       }
    }
@@ -5180,9 +5232,11 @@ bool US_Saxs_Util::merge_projects(
       result += "\n----\n";
       QFile f(projects[i] + QDir::separator() + "project");
       vector < QString > files;
-      vector < double > use_dmax_start;
-      vector < double > use_dmax_end;
-      vector < double > use_dmax_inc;
+      vector < double > use_rmax_start;
+      vector < double > use_rmax_end;
+      vector < double > use_rmax_inc;
+      vector < double > use_crop_low;
+      vector < double > use_crop_high;
 
       if ( !f.open(IO_ReadOnly) )
       {
@@ -5314,18 +5368,38 @@ bool US_Saxs_Util::merge_projects(
                            {
                               gnom_this_file = true;
                               files.push_back(rxcapturefields.cap(6).stripWhiteSpace());
-                              use_dmax_start.push_back(gnom_files_dmax_start[g] ? gnom_files_dmax_start[g] : p_dmax_start);
-                              use_dmax_end.push_back(gnom_files_dmax_end[g] ? gnom_files_dmax_end[g] : p_dmax_end);
-                              use_dmax_inc.push_back(gnom_files_dmax_inc[g] ? gnom_files_dmax_inc[g] : p_dmax_inc);
+                              use_rmax_start.push_back(gnom_files_rmax_start[g] ? gnom_files_rmax_start[g] : p_rmax_start);
+                              use_rmax_end.push_back(gnom_files_rmax_end[g] ? gnom_files_rmax_end[g] : p_rmax_end);
+                              use_rmax_inc.push_back(gnom_files_rmax_inc[g] ? gnom_files_rmax_inc[g] : p_rmax_inc);
+                              bool found_crop = false;
+                              for ( unsigned int c = 0; c < gnom_crop_files.size(); c++ )
+                              {
+                                 if ( rxcapturefields.cap(6).contains(QRegExp(gnom_crop_files[c])) )
+                                 {
+                                    use_crop_low.push_back(gnom_crop_low[c]);
+                                    use_crop_high.push_back(gnom_crop_high[c]);
+                                    found_crop = true;
+                                    break;
+                                 }
+                              }
+
+                              if ( !found_crop )
+                              {
+                                 use_crop_low.push_back(p_crop_low);
+                                 use_crop_high.push_back(p_crop_high);
+                              }
+                              
                               break;
                            }
                         }
                      } else {
                         gnom_this_file = true;
                         files.push_back(rxcapturefields.cap(6).stripWhiteSpace());
-                        use_dmax_start.push_back(p_dmax_start);
-                        use_dmax_end.push_back(p_dmax_end);
-                        use_dmax_inc.push_back(p_dmax_inc);
+                        use_rmax_start.push_back(p_rmax_start);
+                        use_rmax_end.push_back(p_rmax_end);
+                        use_rmax_inc.push_back(p_rmax_inc);
+                        use_crop_low.push_back(p_crop_low);
+                        use_crop_high.push_back(p_crop_high);
                         break;
                      }
 
@@ -5333,10 +5407,12 @@ bool US_Saxs_Util::merge_projects(
                      {
                         // cout << "cap.6 is " + rxcapturefields.cap(6) + "\n";
                         line.replace(QString("|| %1 ||").arg(rxcapturefields.cap(6).stripWhiteSpace()),
-                                     QString("|| [wiki:%1%1_gnom_%1 %1] ||")
+                                     QString("|| [wiki:%1%1_gnom_%1_c%1-%1 %1] ||")
                                      .arg(prefix)
                                      .arg(projects[i])
                                      .arg(QString("%1").arg(rxcapturefields.cap(6).stripWhiteSpace()).replace(QRegExp("\\.(dat|DAT)$"),""))
+                                     .arg(use_crop_low.back())
+                                     .arg(use_crop_high.back())
                                      .arg(rxcapturefields.cap(6).stripWhiteSpace()));
                      }
                   }
@@ -5354,15 +5430,25 @@ bool US_Saxs_Util::merge_projects(
       {
          // for ( unsigned int g = 0; g < files.size(); g++ )
          // {
-         // cout << QString("gnom params files dmax etc %1 %1 %1 %1 %1\n")
+         // cout << QString("gnom params files rmax etc %1 %1 %1 %1 %1\n")
          // .arg(files[g])
-         // .arg(use_dmax_start.size())
-         // .arg(use_dmax_start[g])
-         // .arg(use_dmax_end[g])
-         // .arg(use_dmax_inc[g]);
+         // .arg(use_rmax_start.size())
+         // .arg(use_rmax_start[g])
+         // .arg(use_rmax_end[g])
+         // .arg(use_rmax_inc[g]);
          // }
             
-         if (!run_gnom(projects[i],prefix,files, use_dmax_start, use_dmax_end, use_dmax_inc))
+         if (!run_gnom(
+                       projects[i],
+                       prefix,
+                       files,
+                       use_rmax_start,
+                       use_rmax_end,
+                       use_rmax_inc,
+                       use_crop_low,
+                       use_crop_high
+                       )
+             )
          {
             return false;
          }
@@ -5614,16 +5700,18 @@ bool US_Saxs_Util::run_gnom(
                             QString             project, 
                             QString             prefix, 
                             vector < QString >  files,
-                            vector < double >   use_dmax_start,
-                            vector < double >   use_dmax_end,
-                            vector < double >   use_dmax_inc
+                            vector < double >   use_rmax_start,
+                            vector < double >   use_rmax_end,
+                            vector < double >   use_rmax_inc,
+                            vector < double >   use_crop_low,
+                            vector < double >   use_crop_high
                             )
 {
    errormsg = "";
 
    // cout << QString("run_gnom files.size() %1\n").arg(files.size());
 
-   // read project for dmax info
+   // read project for rmax info
    if ( !read_project(project) )
    {
       errormsg = project + " " + errormsg;
@@ -5674,16 +5762,18 @@ bool US_Saxs_Util::run_gnom(
 
       QString cmd = 
          QString(
-                 "mkgnom.pl %1 %1%1_gnom_ %1 %1 %1 %1\n"
+                 "mkgnom.pl %1 %1%1_gnom_ %1 %1 %1 %1 %1 %1\n"
                  "mv %1%1%1*.png %1%1\n"
                  )
          .arg(dir)
          .arg(prefix)
          .arg(project)
          .arg(f.name())
-         .arg(use_dmax_start[i])
-         .arg(use_dmax_end[i])
-         .arg(use_dmax_inc[i])
+         .arg(use_rmax_start[i])
+         .arg(use_rmax_end[i])
+         .arg(use_rmax_inc[i])
+         .arg(use_crop_low[i])
+         .arg(use_crop_high[i])
 
          .arg(dir)
          .arg(QDir::separator())

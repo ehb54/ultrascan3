@@ -3335,6 +3335,21 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
       }
       editor->append(QString("Loading SAXS data from %1 %2\n").arg(filename).arg(res));
       editor->append(ts.readLine());
+      double units = 1;
+      switch( QMessageBox::information( this, 
+                                        tr("UltraScan"),
+                                        tr("Is this file in Angstrom or nm units?"),
+                                        "&Angstrom", 
+                                        "&nm", 0,
+                                        0,      // Enter == button 0
+                                        1 ) ) { // Escape == button 2
+      case 0: // load it as is
+         units = 1;
+         break;
+      case 1: // rescale
+         units = 0.1;
+         break;
+      }
       while ( !ts.atEnd() )
       {
          ts >> new_q;
@@ -3348,7 +3363,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
          }
          ts.readLine();
          I.push_back(new_I);
-         q.push_back(new_q);
+         q.push_back(new_q * units);
       }
       f.close();
 
@@ -3971,6 +3986,22 @@ void US_Hydrodyn_Saxs::load_gnom()
 
    if ( f.open(IO_ReadOnly) )
    {
+      double units = 1;
+      switch( QMessageBox::information( this, 
+                                        tr("UltraScan"),
+                                        tr("Is this GNOM file in Angstrom or nm units?"),
+                                        "&Angstrom", 
+                                        "&nm", 0,
+                                        0,      // Enter == button 0
+                                        1 ) ) { // Escape == button 2
+      case 0: // load it as is
+         units = 1;
+         break;
+      case 1: // rescale
+         units = 0.1;
+         break;
+      }
+         
       QTextStream ts(&f);
       QRegExp iqqh("^\\s*S\\s+J EXP\\s+ERROR\\s+J REG\\s+I REG\\s*$");
       QRegExp prrh("^\\s*R\\s+P\\(R\\)\\s+ERROR\\s*$");
@@ -4000,7 +4031,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                tmp = ts.readLine();
                if ( rx5.search(tmp) != -1 )
                {
-                  q.push_back(rx5.cap(1).toDouble());
+                  q.push_back(rx5.cap(1).toDouble() * units );
                   I_exp.push_back(rx5.cap(2).toDouble());
                   I_reg.push_back(rx5.cap(5).toDouble());
                   // cout << "iqq point: " << rx5.cap(1).toDouble() << " " << rx5.cap(5).toDouble() << endl;
@@ -4046,7 +4077,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                tmp = ts.readLine();
                if ( rx3.search(tmp) != -1 )
                {
-                  r.push_back(rx3.cap(1).toDouble());
+                  r.push_back(rx3.cap(1).toDouble() / units);
                   pr.push_back(rx3.cap(2).toDouble());
                   // cout << "prr point: " << rx3.cap(1).toDouble() << " " << rx3.cap(2).toDouble() << endl;
                } else {

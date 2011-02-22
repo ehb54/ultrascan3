@@ -276,10 +276,13 @@ class US_EXTERN US_Saxs_Util
                     QString             project, 
                     QString             prefix, 
                     vector < QString >  files,
-                    vector < double >   use_dmax_start,
-                    vector < double >   use_dmax_end,
-                    vector < double >   use_dmax_inc
+                    vector < double >   use_rmax_start,
+                    vector < double >   use_rmax_end,
+                    vector < double >   use_rmax_inc,
+                    vector < double >   use_crop_low,
+                    vector < double >   use_crop_high
                     );
+
       void clear_project();
       bool check_project_files();
       bool read_project_waves();
@@ -314,9 +317,11 @@ class US_EXTERN US_Saxs_Util
       double  p_guinier_maxq;
       unsigned int  p_iterations_grid;
       unsigned int  p_iterations_gsm;
-      double  p_dmax_start;
-      double  p_dmax_end;
-      double  p_dmax_inc;
+      double  p_rmax_start;
+      double  p_rmax_end;
+      double  p_rmax_inc;
+      double  p_crop_low;
+      double  p_crop_high;
 
       bool any_waxs;
       bool any_saxs;
