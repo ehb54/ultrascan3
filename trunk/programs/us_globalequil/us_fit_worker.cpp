@@ -80,11 +80,15 @@ void US_FitWorker::flag_abort()
    abort       = true;
 }
 
-// Private slot that does the work:  run fit iterations
+// Do the work of the thread:  run fit iterations
 int US_FitWorker::fit_iterations()
 {
-   int    stati   = 0;
-   int    stats   = 0;
+   int  stati     = 0;
+   int  stats     = 0;
+   bool autocnvg  = fitpars.autocnvg;
+
+   // With autoconverge, start method is either Lev.-Marquardt or Quasi-Newton
+   nlsmeth        = autocnvg ? ( ( nlsmeth == 0 ) ? 0 : 3 ) : nlsmeth;
    variance       = tolerance * 2.0;
    k_iter         = 0;
 DbgLv(1) << "FWk: fit_iterations";
@@ -152,12 +156,15 @@ DbgLv(1) << "EOI improve v ov" << fitpars.improve << variance << old_vari;
       }
 
       check_paused();
+
+      // With autoconverge, flip-flop between Lev.-Marquardt and Quasi-Newton
+      nlsmeth  = autocnvg ? ( 3 - nlsmeth ) : nlsmeth;
    }
 
    return stats;
 }
 
-// Private slot to run an iteration:  Levenberg-Marquardt
+// Run an iteration:  Levenberg-Marquardt
 int US_FitWorker::fit_iter_LM()
 {
    int    stati    = 0;
@@ -277,7 +284,7 @@ DbgLv(1) << "CNV improve nv ov" << fitpars.improve << variance << old_vari;
    return stati;
 }
 
-// Private slot to run an iteration:  Modified Gauss-Newton
+// Run an iteration:  Modified Gauss-Newton
 int US_FitWorker::fit_iter_MGN()
 {
    int stati = 0;
@@ -285,7 +292,7 @@ int US_FitWorker::fit_iter_MGN()
    return stati;
 }
 
-// Private slot to run an iteration:  Hybrid Method
+// Run an iteration:  Hybrid Method
 int US_FitWorker::fit_iter_HM()
 {
    int stati = 0;
@@ -293,7 +300,7 @@ int US_FitWorker::fit_iter_HM()
    return stati;
 }
 
-// Private slot to run an iteration:  Quasi-Newton
+// Run an iteration:  Quasi-Newton
 int US_FitWorker::fit_iter_QN()
 {
    int    stati    = 0;
@@ -320,6 +327,9 @@ DbgLv(1) << "FW:QN: calc_jac";
       // Get the (parameters x parameters) info matrix:  J' * J
 DbgLv(1) << "FW:QN: calc_AtA";
       US_Matrix::tmm( fitpars.jacobian, fitpars.info, ntpts, nfpars );
+
+      // Compute the B vector:  Jacobian times yDelta vector
+      emath->calc_B();
 
       // Create a work matrix that is a copy of the info matrix
       US_Matrix::mcopy( fitpars.info, wminf, nfpars, nfpars );
@@ -379,6 +389,9 @@ DbgLv(1) << "FW:QN:  calc_model return";
          check_paused();
 DbgLv(1) << "FW:QN:  calc_jac return";
 
+         // Compute new Y-Delta and determine variance
+         variance  = emath->calc_residuals();
+
          // Compute the B vector:  Jacobian times yDelta vector
          emath->calc_B();
          check_paused();
@@ -392,7 +405,6 @@ DbgLv(1) << "FW:QN:  calc_B return";
          }
 
          // Update Quasi-Newton
-DbgLv(1) << "FW:QN:  updateQN call";
          updateQN( gamma, delta );
 DbgLv(1) << "FW:QN:  updateQN  return";
       }  // END:  alpha > 0.0
@@ -404,7 +416,7 @@ DbgLv(1) << "FW:QN:  updateQN  return";
    return stati;
 }
 
-// Private slot to run an iteration:  Generalized Linear Least Squares
+// Run an iteration:  Generalized Linear Least Squares
 int US_FitWorker::fit_iter_GLLS()
 {
    int stati = 0;
@@ -412,7 +424,7 @@ int US_FitWorker::fit_iter_GLLS()
    return stati;
 }
 
-// Private slot to run an iteration:  NonNegative Least Squares
+// Run an iteration:  NonNegative Least Squares
 int US_FitWorker::fit_iter_NNLS()
 {
    int stati = 0;
@@ -421,11 +433,11 @@ int US_FitWorker::fit_iter_NNLS()
 }
 
 
-// Private slot to block/resume with paused flag set
+// Block/Resume based on paused flag setting
 void US_FitWorker::check_paused()
 {
    while ( paused )
-   {
+   {  // If paused, loop to sleep and re-check
       US_Sleep::msleep( 10 );
       qApp->processEvents();
    }

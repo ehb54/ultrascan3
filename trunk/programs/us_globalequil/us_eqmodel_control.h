@@ -65,29 +65,30 @@ class US_EXTERN US_EqModelControl : public US_WidgetsDialog
       QLineEdit*         le_extiscn;
       QLineEdit*         le_sigma;
 
-      QCheckBox*         ck_mwfloat;
-      QCheckBox*         ck_mwlock;
+      QRadioButton*      rb_mwfloat;
+      QRadioButton*      rb_mwlock;
+      QRadioButton*      rb_vbfloat;
+      QRadioButton*      rb_vblock;
+      QRadioButton*      rb_l1float;
+      QRadioButton*      rb_l1lock;
+      QRadioButton*      rb_l2float;
+      QRadioButton*      rb_l2lock;
+      QRadioButton*      rb_l3float;
+      QRadioButton*      rb_l3lock;
+      QRadioButton*      rb_l4float;
+      QRadioButton*      rb_l4lock;
+      QRadioButton*      rb_blfloat;
+      QRadioButton*      rb_bllock;
+      QRadioButton*      rb_amfloat;
+      QRadioButton*      rb_amlock;
+
       QCheckBox*         ck_mwbound;
-      QCheckBox*         ck_vbfloat;
-      QCheckBox*         ck_vblock;
       QCheckBox*         ck_vbbound;
-      QCheckBox*         ck_l1float;
-      QCheckBox*         ck_l1lock;
       QCheckBox*         ck_l1bound;
-      QCheckBox*         ck_l2float;
-      QCheckBox*         ck_l2lock;
       QCheckBox*         ck_l2bound;
-      QCheckBox*         ck_l3float;
-      QCheckBox*         ck_l3lock;
       QCheckBox*         ck_l3bound;
-      QCheckBox*         ck_l4float;
-      QCheckBox*         ck_l4lock;
       QCheckBox*         ck_l4bound;
-      QCheckBox*         ck_blfloat;
-      QCheckBox*         ck_bllock;
       QCheckBox*         ck_blbound;
-      QCheckBox*         ck_amfloat;
-      QCheckBox*         ck_amlock;
       QCheckBox*         ck_ambound;
       QCheckBox*         ck_inclfit;
 
@@ -117,6 +118,17 @@ class US_EXTERN US_EqModelControl : public US_WidgetsDialog
       void local_comp_changed(  double );
       void update_sigma      (  void   );
       void update_floats     (  void   );
+      void update_gvals      (  void   );
+      void update_lvals      (  void   );
+      void disconnect_global (  void   );
+      void disconnect_local  (  void   );
+      void connect_global    (  void   );
+      void connect_local     (  void   );
+      void pathlen_applyto   (  void   );
+      void density_applyto   (  void   );
+      void extinct_applyto   (  void   );
+      QHBoxLayout* radiobox  ( QGridLayout*, QRadioButton*,
+                               QGridLayout*, QRadioButton* );
       void selected( void );
 
       void help    ( void )

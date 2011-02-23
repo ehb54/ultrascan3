@@ -558,11 +558,11 @@ DbgLv(1) << "EM:FI: ktpts kdsets kfpars" << ntpts << ndsets << nfpars;
 void US_EqMath::guess_mapForward( double* vguess )
 {
    int jpx = 0;
-DbgLv(1) << "EM:gmF: nc" << runfit.nbr_comps;
+DbgLv(1) << "EM:gmF: ncomps" << runfit.nbr_comps;
 
    for ( int jj = 0; jj < runfit.nbr_comps; jj++ )
    {
-DbgLv(1) << "EM:gmF: jj jpx" << jj << jpx;
+//DbgLv(1) << "EM:gmF: jj jpx" << jj << jpx;
       if ( runfit.mw_fits[ jj ] )
       {
          vguess[ jpx ] = runfit.mw_vals[ jj ];
@@ -586,7 +586,7 @@ DbgLv(1) << "EM:gmF: jj jpx" << jj << jpx;
    {
       if ( ! scanfits[ ii ].scanFit )  continue;
 
-DbgLv(1) << "EM:gmF: ii jpx" << ii << jpx;
+//DbgLv(1) << "EM:gmF: ii jpx" << ii << jpx;
       EqScanFit* scnf = &scanfits[ ii ];
 
       for ( int jj = 0; jj < runfit.nbr_comps; jj++ )
@@ -607,13 +607,14 @@ DbgLv(1) << "EM:gmF: ii jpx" << ii << jpx;
 
    for ( int jj = 0; jj < runfit.nbr_assocs; jj++ )
    {
-DbgLv(1) << "EM:gmF: as_jj jpx" << jj << jpx;
+//DbgLv(1) << "EM:gmF: as_jj jpx" << jj << jpx;
       if ( runfit.eq_fits[ jj ] )
       {
          vguess[ jpx ] = runfit.eq_vals[ jj ];
          runfit.eq_ndxs[ jj ] = jpx++;
       }
    }
+DbgLv(1) << "EM:gmF:   jpx" << jpx;
 }
 
 // Map parameters back from guesses

@@ -637,7 +637,7 @@ if(na==4) DbgLv(1) << "   par1-4: " << aud_params[0] << aud_params[1]
       //fix_all();
 
       if ( model_widget )
-         emodctrl->set_float( false );
+         emodctrl->new_components();
 
       runfit.modlname     = modelname;
    }
@@ -649,6 +649,7 @@ DbgLv(1) << "MODEL_CONTROL()";
    if ( model_widget )
    {
       emodctrl->raise();
+      emodctrl->new_components();
    }
 
    else
