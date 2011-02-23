@@ -95,7 +95,7 @@ int US_DataIO2::writeRawData( const QString& file, RawData& data )
 
    // Write description
    char desc[ 240 ];
-   bzero( desc, sizeof desc );
+   memset( desc, '\0', sizeof desc );  // bzero is not defined in WIN32
 
    QByteArray d = data.description.toLatin1();
    strncpy( desc, d.data(), sizeof desc );
@@ -262,14 +262,14 @@ void US_DataIO2::writeScan( QDataStream&    ds, const Scan&       data,
    foreach ( r, data.readings )
    {
       // reading
-      si = (quint16) round( ( r.value - p.min_data1 ) / delta );
+      si = (quint16) qRound( ( r.value - p.min_data1 ) / delta );
       qToLittleEndian( si, ui.u );
       write( ds, ui.c, 2, crc );
 
       // If applicable, write std deviation
       if ( stdDev )
       {
-         si = (quint16) round( ( r.stdDev - p.min_data2 ) / delta2 );
+         si = (quint16) qRound( ( r.stdDev - p.min_data2 ) / delta2 );
          qToLittleEndian( si, ui.u );
          write( ds, ui.c, 2, crc );
       }

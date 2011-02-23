@@ -360,7 +360,9 @@ void US_LammAstfvm::Mesh::Refine( double beta )
 void US_LammAstfvm::Mesh::RefineMesh( double *u0, double *u1, double ErrTol )
 {
    // refinement threshhold: h*|D_3u|^(1/3) > beta
-   double beta  = pow( ErrTol * 6 / ( 2 * sqrt( 3 ) / 72 ), 1. / 3. );
+   //double beta  = pow( ErrTol * 6 / ( 2 * sqrt( 3 ) / 72 ), 1. / 3. );
+   // Simlify the above:
+   double beta = 6.0 * pow( ErrTol / sqrt( 3.0 ), 1.0 / 3.0 );
 
    // coarsening threshhold: h*|D_3u|^(1/3) < alpha
    double alpha = beta / 4;
