@@ -822,6 +822,7 @@ void US_GlobalEquil::close_all( void )
 {
 //DbgLv(1) << "CLOSE_ALL()";
    if ( model_widget )    emodctrl->close();
+   if ( fit_widget )      efitctrl->close();
    if ( emath != 0 )      delete emath;
    if ( ereporter != 0 )  delete ereporter;
 
