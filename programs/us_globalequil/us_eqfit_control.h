@@ -94,11 +94,20 @@ class US_EXTERN US_EqFitControl : public US_WidgetsDialog
 
       //bool               send_signal;
 
-      int                ntpts;
-      int                ndsets;
-      int                nfpars;
-      int                nlsmeth;
-      int                mxiters;
+      int                ntpts;           // Total data points
+      int                ndsets;          // Total data sets (scans)
+      int                nfpars;          // Total fit parameters
+      int                nlsmeth;         // NLS method flag
+      int                mxiters;         // Maximum fit iterations
+      int                mxspts;          // Maximum points in any scan
+      int                ipscnn;          // Start plot scan number
+      int                lpscnn;          // Last plot scan number
+      int                npscns;          // Number of plot scans
+      int                plotgrpf;        // Plot group flag: -1, 0, 5
+      int                plottype;        // Plot type 0-4: resids, ...
+
+      QVector< int >     v_dscnx;         // Vector of scans' data indecies
+      int*               dscnx;           // Array of scans' data indecies
 
       double             fittoler;
              
@@ -110,9 +119,14 @@ class US_EXTERN US_EqFitControl : public US_WidgetsDialog
       void view_report   ( void );
       void plot_residuals( void );
       void plot_overlays ( void );
+      void plot_two      ( void );
+      void plot_three    ( void );
+      void plot_four     ( void );
       void closed        ( void );
       void new_progress  ( int  );
       void fit_completed ( void );
+      void prepare_data  ( void );
+      void new_pscan     ( void );
 
       void help    ( void )
       { showHelp.show_help( "global_equil-fitctrl.html" ); };

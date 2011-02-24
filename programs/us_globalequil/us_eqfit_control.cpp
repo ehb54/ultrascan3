@@ -6,6 +6,7 @@
 #include "us_gui_settings.h"
 #include "us_constants.h"
 #include "us_math2.h"
+#include "qwt_plot_marker.h"
 
 // Main constructor with references to parameters from main GlobalEquil class
 US_EqFitControl::US_EqFitControl(
@@ -162,8 +163,8 @@ qDebug() << "EFC: IN";
    plotgrp->addButton( rb_pltgrp5 );
    plotgrp->addButton( rb_pltsscn );
    QLabel*  lb_plotscn  = us_label( tr( "Scan (start):" ) );
-            ct_plotscn  = us_counter( 3, 0,  1, 20 );
-   QLayout* lo_monfitg = us_checkbox( tr( "Monitor Fit Graphically" ),
+            ct_plotscn  = us_counter( 2, 0,  1, 20 );
+   QLayout* lo_monfitg  = us_checkbox( tr( "Monitor Fit Graphically" ),
          ck_monfitg, true );
    
    row     = 0;
@@ -171,9 +172,14 @@ qDebug() << "EFC: IN";
    gplotLayout->addLayout( lo_pltalld,  row,   0, 1, 2 );
    gplotLayout->addLayout( lo_pltgrp5,  row,   2, 1, 2 );
    gplotLayout->addLayout( lo_pltsscn,  row++, 4, 1, 2 );
-   gplotLayout->addWidget( lb_plotscn,  row,   0, 1, 2 );
-   gplotLayout->addWidget( ct_plotscn,  row++, 2, 1, 4 );
+   gplotLayout->addWidget( lb_plotscn,  row,   0, 1, 3 );
+   gplotLayout->addWidget( ct_plotscn,  row++, 3, 1, 3 );
    gplotLayout->addLayout( lo_monfitg,  row++, 2, 1, 4 );
+
+   connect( ct_plotscn, SIGNAL( valueChanged(double) ), SLOT( new_pscan() ) );
+   connect( rb_pltalld, SIGNAL( toggled( bool ) ),      SLOT( new_pscan() ) );
+   connect( rb_pltsscn, SIGNAL( toggled( bool ) ),      SLOT( new_pscan() ) );
+   plottype = -1;
 
    // NLSQ Fit Tuning controls
    QLabel*  lb_tbanner = us_banner(
@@ -181,7 +187,7 @@ qDebug() << "EFC: IN";
    QLabel*  lb_lincnst  = us_label( tr( "Linear Constraints:" ) );
    QGridLayout*  lo_lincnsn = us_radiobutton( tr( "No"  ), rb_lincnsn, true );
    QGridLayout*  lo_lincnsy = us_radiobutton( tr( "Yes" ), rb_lincnsy, false );
-   QHBoxLayout*  lo_lincbox = new QHBoxLayout( this );
+   QHBoxLayout*  lo_lincbox = new QHBoxLayout;
    QButtonGroup* lcnsgrp    = new QButtonGroup( this );
    lo_lincbox->setSpacing        (  0 );
    lo_lincbox->setContentsMargins( 0, 0, 0, 0 );
@@ -193,7 +199,7 @@ qDebug() << "EFC: IN";
    QLabel*  lb_autocnv  = us_label( tr( "Autoconverge:" ) );
    QGridLayout*  lo_autocnn = us_radiobutton( tr( "No"  ), rb_autocnn, true );
    QGridLayout*  lo_autocny = us_radiobutton( tr( "Yes" ), rb_autocny, false );
-   QHBoxLayout*  lo_autcbox = new QHBoxLayout( this );
+   QHBoxLayout*  lo_autcbox = new QHBoxLayout;
    QButtonGroup* autcgrp    = new QButtonGroup( this );
    lo_autcbox->setSpacing        (  0 );
    lo_autcbox->setContentsMargins( 0, 0, 0, 0 );
@@ -248,6 +254,12 @@ qDebug() << "EFC: IN";
    cb_nlsalgo->addItem( tr( "Quasi-Newton Method" ) );
    cb_nlsalgo->addItem( tr( "Generalized Linear LS" ) );
    cb_nlsalgo->addItem( tr( "NonNegative constrained LS" ) );
+   connect( pb_lnvsr2,  SIGNAL( clicked()    ),
+            this,       SLOT(   plot_two()   ) );
+   connect( pb_mwvsr2,  SIGNAL( clicked()    ),
+            this,       SLOT(   plot_three() ) );
+   connect( pb_mwvscv,  SIGNAL( clicked()    ),
+            this,       SLOT(   plot_four()  ) );
 
    // Status layout
    QLabel*  lb_status   = us_label( tr( "Status:" ) );
@@ -288,7 +300,6 @@ qDebug() << "EFC: IN";
    nlsmeth      = 0;
    cb_nlsalgo->setCurrentIndex( nlsmeth );
 
-qDebug() << "EFC: call init_fit";
    emath->init_fit( modelx, nlsmeth, fitpars );
 qDebug() << "EFC: init_fit return";
    nfpars       = fitpars.nfpars;
@@ -298,6 +309,9 @@ qDebug() << "EFC: init_fit return";
    le_nbrpars->setText( QString::number( nfpars ) );
    le_nbrsets->setText( QString::number( ndsets ) );
    le_nbrdpts->setText( QString::number( ntpts  ) );
+   ct_plotscn->setRange( 1, ndsets, 1 );
+   ct_plotscn->setStep(  1 );
+   ct_plotscn->setValue( 1 );
 }
 
 // Close
@@ -409,15 +423,271 @@ qDebug() << "VIEW_REPORT";
          writerf, filename );
 qDebug() << " V_REP filename" << filename;
 }
+
 // Plot residuals for scan(s)
 void US_EqFitControl::plot_residuals()
 {
 qDebug() << "PLOT_RESIDUALS";
+   plottype = 0;
+
+   // Prepare the data, such as y_delta and indexes
+   prepare_data();
+qDebug() << "PL_R: mxspts" << mxspts << "ipscnn" << ipscnn;
+
+   QVector< double > v_xplot;
+   QVector< double > v_yplot;
+   v_xplot.fill( 0.0, mxspts );
+   v_yplot.fill( 0.0, mxspts );
+   double* xplot  = v_xplot.data();
+   double* yplot  = v_yplot.data();
+   double* ydelta = fitpars.y_delta;
+   double  xpzero[ 2 ];
+   double  ypzero[ 2 ];
+   double  yoffs  = 0.0;
+   double  yoffi  = ( plotgrpf == 5 ) ? 0.03 : 0.0;
+qDebug() << " mxspts ntpts" << mxspts << ntpts;
+qDebug() << "  ydelta0" << ydelta[0] << " ydeltan" << ydelta[ntpts-1];
+
+   data_plot->detachItems();
+   data_plot->setTitle( tr( "Residuals" ) );
+   data_plot->setAxisTitle( QwtPlot::yLeft,
+      tr( "Optical Density Difference" ) );
+   data_plot->setAxisTitle( QwtPlot::xBottom,
+      tr( "Radius^2 - Radius(ref)^2 (cm)" ) );
+   QwtPlotGrid* grid = us_grid( data_plot );
+   grid->enableYMin( true );
+   grid->enableY   ( true );
+   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
+
+   QwtSymbol sym;
+   sym.setStyle( QwtSymbol::Ellipse );
+   sym.setPen  ( QPen  ( Qt::blue   ) );
+   sym.setBrush( QBrush( Qt::yellow ) );
+   sym.setSize ( plotgrpf < 0 ? 8 : 5 );
+
+   QPen lnpen( QBrush( Qt::green ), 1 );
+   QPen zlpen( QBrush( Qt::red   ), 2 );
+   double xmin = 0.0;
+   double xmax = 0.0;
+   double xpad = 0.2;
+   int    sns[ 5 ];
+   int    ksn  = 0;
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      EqScanFit* scnf = &scanfits[ ii ];
+      int scnn      = ii + 1;
+
+//qDebug() << "RPlot: ii scnn" << ii << scnn << " ipsc lpsc" << ipscnn << lpscnn;
+      if ( ! scnf->scanFit  ||  scnn < ipscnn  ||  scnn > lpscnn )
+         continue;
+
+      int    jdsx   = dscnx[ ii ];
+      int    jvxy   = scnf->start_ndx;
+      int    nspts  = scnf->stop_ndx - jvxy + 1;
+      double xmsq   = sq( scnf->xvs[ jvxy ] );
+//qDebug() << "RPlot: ii scnn" << ii << scnn << " jdsx jvsy" << jdsx << jvxy
+//   << " nspts" << nspts;
+
+      for ( int jj = 0; jj < nspts; jj++ )
+      {
+         xplot[ jj ]   = sq( scnf->xvs[ jvxy ] ) - xmsq;
+//qDebug() << "RPlot:  jj jvxy" << jj << jvxy << "xval" << scnf->xvs[jvxy]; 
+         yplot[ jj ]   = ydelta[ jdsx ] + yoffs;
+//qDebug() << "RPlot:   jdsx" << jdsx << "yval" << ydelta[jdsx];
+         jvxy++;
+         jdsx++;
+      }
+//qDebug() << "RPlot:  jdsx jvxy" << jdsx << jvxy;
+
+      xmax   = max( xmax, xplot[ nspts - 1 ] );
+      xmin   = min( xmin, -xpad );
+      QwtPlotCurve* lcurve = us_curve( data_plot,
+            QString( "RLine-%1" ).arg( scnn ) );
+
+      lcurve->setStyle ( QwtPlotCurve::Lines );
+      lcurve->setPen   ( lnpen );
+      lcurve->setData  ( xplot, yplot, nspts );
+
+      QwtPlotCurve* scurve = us_curve( data_plot,
+            QString( "RSymb-%1" ).arg( scnn ) );
+      scurve->setStyle ( QwtPlotCurve::NoCurve );
+      scurve->setSymbol( sym );
+      scurve->setData  ( xplot, yplot, nspts );
+
+      yoffs        += yoffi;
+
+      if ( plotgrpf == 5 )  sns[ ksn++ ] = scnn;
+   }
+
+   xmax  += xpad;
+   data_plot->setAxisScale( QwtPlot::xBottom, xmin, xmax );
+   data_plot->setAxisAutoScale( QwtPlot::yLeft );
+
+   if ( plotgrpf == 5 )
+   {
+      QFont lbfont( US_GuiSettings::fontFamily(), -1, QFont::Bold );
+      double yofmx = yoffs;
+      yoffs        = 0.0;
+      ksn          = 0;
+      xpad        *= 0.5;
+      xpzero[ 0 ]  = xmin;
+      xpzero[ 1 ]  = xmax - xpad;
+      xmax        += xpad * 0.5;
+
+      while ( yoffs < yofmx )
+      {
+         int scnn    = sns[ ksn++ ];
+         QwtPlotCurve* zcurve = us_curve( data_plot,
+               QString( "RZero-%1" ).arg( scnn ) );
+         ypzero[ 0 ] = yoffs;
+         ypzero[ 1 ] = yoffs;
+         zcurve->setStyle ( QwtPlotCurve::Lines );
+         zcurve->setPen   ( zlpen );
+         zcurve->setData  ( xpzero, ypzero, 2 );
+         QwtPlotMarker* marker = new QwtPlotMarker;
+         QwtText        mlabel;
+         mlabel.setText( QString::number( scnn ) );
+         mlabel.setFont( lbfont );
+         mlabel.setColor( Qt::red );
+         mlabel.setBackgroundBrush( QBrush( Qt::white ) );
+         marker->setValue( xmax, yoffs );
+         marker->setLabel( mlabel );
+         marker->setLabelAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+         marker->attach( data_plot );
+
+         yoffs      += yoffi;
+      }
+   }
+
+   else
+   {
+      QwtPlotCurve* zcurve = us_curve( data_plot, QString( "RZero-0" ) );
+      xpzero[ 0 ] = xmin;
+      xpzero[ 1 ] = xmax;
+      ypzero[ 0 ] = 0.0;
+      ypzero[ 1 ] = 0.0;
+      zcurve->setStyle ( QwtPlotCurve::Lines );
+      zcurve->setPen   ( zlpen );
+      zcurve->setData  ( xpzero, ypzero, 2 );
+   }
+
+   data_plot->replot();
 }
+
 // Plot overlays for scan(s)
 void US_EqFitControl::plot_overlays()
 {
 qDebug() << "PLOT_OVERLAYS";
+   plottype = 1;
+
+   // Prepare the data, such as indexes and counts
+   prepare_data();
+qDebug() << "PL_O: mxspts" << mxspts << "ipscnn" << ipscnn;
+
+   QVector< double > v_xplot;
+   v_xplot.fill( 0.0, mxspts );
+   double* xplot  = v_xplot.data();
+   double* yraw   = fitpars.y_raw;
+   double* yguess = fitpars.y_guess;
+   double* ypraw  = yraw;
+   double* ypfit  = yguess;
+qDebug() << " mxspts ntpts" << mxspts << ntpts;
+qDebug() << "  yguess0" << yguess[0] << " yguessn" << yguess[ntpts-1];
+
+   data_plot->detachItems();
+   data_plot->setTitle( ( npscns == 1 ) ?
+       tr( "Overlays for fitted Scan %1" ).arg( ipscnn ) :
+       tr( "Overlays for fitted Scans %1 - %2" ).arg( ipscnn ).arg( lpscnn ) );
+   data_plot->setAxisTitle( QwtPlot::yLeft,
+      tr( "Optical Density Difference" ) );
+   data_plot->setAxisTitle( QwtPlot::xBottom,
+      tr( "Radius^2 - Radius(ref)^2 (cm)" ) );
+   QwtPlotGrid* grid = us_grid( data_plot );
+   grid->enableYMin( true );
+   grid->enableY   ( true );
+   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
+
+   QwtSymbol sym;
+   sym.setStyle( QwtSymbol::Ellipse );
+   sym.setPen  ( QPen  ( Qt::blue   ) );
+   sym.setBrush( QBrush( Qt::yellow ) );
+   sym.setSize ( 4 );
+
+   QPen lnpen( QBrush( Qt::red ), 1 );
+   double xmin = 0.0;
+   double xmax = 0.0;
+   double xpad = 0.05;
+
+   for ( int ii = 0; ii < scanfits.size(); ii++ )
+   {
+      EqScanFit* scnf = &scanfits[ ii ];
+      int scnn      = ii + 1;
+
+//qDebug() << "OPlot: ii scnn" << ii << scnn << " ipsc lpsc" << ipscnn << lpscnn;
+      if ( ! scnf->scanFit  ||  scnn < ipscnn  ||  scnn > lpscnn )
+         continue;
+
+      int    jdsx   = dscnx[ ii ];
+      int    jvxy   = scnf->start_ndx;
+      int    nspts  = scnf->stop_ndx - jvxy + 1;
+      double xmsq   = sq( scnf->xvs[ jvxy ] );
+      ypraw         = yraw   + jdsx;
+      ypfit         = yguess + jdsx;
+//qDebug() << "RPlot: ii scnn" << ii << scnn << " jdsx jvsy" << jdsx << jvxy
+//   << " nspts" << nspts;
+
+      for ( int jj = 0; jj < nspts; jj++,jvxy++ )
+      {
+         xplot[ jj ]   = sq( scnf->xvs[ jvxy ] ) - xmsq;
+//qDebug() << "RPlot:  jj jvxy" << jj << jvxy << "xval" << scnf->xvs[jvxy]; 
+      }
+//qDebug() << "RPlot:  jdsx jvxy" << jdsx << jvxy;
+
+      xmax   = max( xmax, xplot[ nspts - 1 ] );
+      xmin   = min( xmin, -xpad );
+
+      QwtPlotCurve* scurve = us_curve( data_plot,
+            QString( "RSymb-%1" ).arg( scnn ) );
+      scurve->setStyle ( QwtPlotCurve::NoCurve );
+      scurve->setSymbol( sym );
+      scurve->setData  ( xplot, ypraw, nspts );  // Plot raw symbols
+
+      QwtPlotCurve* lcurve = us_curve( data_plot,
+            QString( "RLine-%1" ).arg( scnn ) );
+      lcurve->setStyle ( QwtPlotCurve::Lines );
+      lcurve->setPen   ( lnpen );
+      lcurve->setData  ( xplot, ypfit, nspts );  // Plot fitted line
+   }
+
+   xmax  += xpad;
+   data_plot->setAxisScale( QwtPlot::xBottom, xmin, xmax );
+   data_plot->setAxisAutoScale( QwtPlot::yLeft );
+
+   data_plot->replot();
+}
+
+// Plot Ln(C) vs R^2 for scan(s)
+void US_EqFitControl::plot_two()
+{
+qDebug() << "PLOT_TWO";
+   plottype = 2;
+}
+
+// Plot Ln(C) vs R^2 for scan(s)
+void US_EqFitControl::plot_three()
+{
+qDebug() << "PLOT_THREE";
+   plottype = 3;
+}
+
+// Plot Ln(C) vs R^2 for scan(s)
+void US_EqFitControl::plot_four()
+{
+qDebug() << "PLOT_FOUR";
+   plottype = 4;
 }
 
 // Update progress bar
@@ -435,6 +705,11 @@ qDebug() << "NEW_PROGRESS" << step;
    le_decompo->setText( QString::number( fitpars.ndecomps ) );
    le_inform ->setText(
       tr( "Iteration %1 has completed." ).arg( fitpars.k_iter ) );
+
+   if ( ck_monfitg->isChecked() )
+   {
+      plot_residuals();
+   }
 }
 
 // React to completion of fit
@@ -461,5 +736,123 @@ qDebug() << "FIT_COMPLETED";
    pb_viewrep->setEnabled( true );
    pb_resids ->setEnabled( true );
    pb_ovrlays->setEnabled( true );
+
+   if ( ck_monfitg->isChecked()  &&  ! fitpars.aborted )
+   {
+      plot_residuals();
+   }
+}
+
+// Prepare data for plots:  get y_delta and data indecies,counts
+void US_EqFitControl::prepare_data()
+{
+   double* ydelta = fitpars.y_delta;
+   double* yguess = fitpars.y_guess;
+   double* yraw   = fitpars.y_raw;
+   mxspts     = 0;
+   ipscnn     = (int)ct_plotscn->value();
+   lpscnn     = 0;
+   int kpscns = 0;
+   int jpscnn = 0;
+   int dssx   = 0;
+   int ntscns = scanfits.size();
+   int niscns = 0;
+   int liscnn = 0;
+   v_dscnx.fill( 0, ntscns );
+   dscnx      = v_dscnx.data();
+
+   for ( int ii = 0; ii < ntscns; ii++ )
+   {
+      EqScanFit* scnf = &scanfits[ ii ];
+      int scann   = ii + 1;
+
+      if ( ! scnf->scanFit )  continue;
+
+      niscns++;                           // Bump included-scans count
+      dscnx[ ii ] = dssx;                 // Save scan's start data index
+      liscnn      = scann;                // Last included scan number
+      int nspts   = scnf->stop_ndx - scnf->start_ndx + 1;
+      mxspts      = max( mxspts, nspts ); // Maximum data points in a scan
+
+      if ( scann >= ipscnn )
+         kpscns++;
+
+      if ( kpscns == 1 )
+         ipscnn   = scann;                // Initial plot scan number
+
+      if ( kpscns > 0  &&  kpscns < 6 )
+         lpscnn   = scann;                // Last plot scan number
+
+      if ( kpscns == 6 )
+         jpscnn   = scann;                // Next group-of-5 start scan number
+//qDebug() << "PrD: sn ipsc lpsc jpsc kpsc" << scann << ipscnn << lpscnn
+//   << jpscnn << kpscns;
+
+      for ( int jj = 0; jj < nspts; jj++ )
+      {  // Insure we have freshly calculated deltas for scan data
+         ydelta[ dssx ] = yraw[ dssx ] - yguess[ dssx ];
+         dssx++;                          // Scan's data index
+      }
+   }
+
+   plotgrpf   = 0;
+   npscns     = niscns;
+
+   if ( rb_pltalld->isChecked() )
+   {  // Plot all
+      plotgrpf   = 0;                 // Flag plot-all
+      npscns     = niscns;            // Plot scans is total included scans
+      lpscnn     = liscnn;            // Last plot scan is last included
+      jpscnn     = 1;
+   }
+
+   else if ( rb_pltgrp5->isChecked() )
+   {  // Plot in group of 5
+      plotgrpf   = 5;                 // Flag plot-5
+      npscns     = min( kpscns, 5 );  // Plot scans is at-most 5
+      jpscnn     = max( npscns, ( jpscnn - ipscnn ) );
+   }
+
+   else if ( rb_pltsscn->isChecked() )
+   {  // Plot single scan
+      plotgrpf   = -1;                // Flag plot-1
+      npscns     = 1;                 // Plot scans is one
+      lpscnn     = ipscnn;            // Last plot scan is same as first
+      jpscnn     = 1;
+   }
+
+   ct_plotscn->setRange( 1, liscnn, 1 );
+   ct_plotscn->setStep(  jpscnn );
+   ct_plotscn->disconnect();
+   ct_plotscn->setValue( ipscnn );
+   connect( ct_plotscn, SIGNAL( valueChanged( double ) ), SLOT( new_pscan() ) );
+//qDebug() << "PREP_DATA ipscnn lpscnn liscnn jpscnn" << ipscnn << lpscnn
+//   << liscnn << jpscnn;
+}
+
+// New plot scan number selected
+void US_EqFitControl::new_pscan()
+{
+qDebug() << "NEW_PSCAN plottype" << plottype << ct_plotscn->value();
+   switch ( plottype )
+   {
+      case 0:
+         plot_residuals();
+         break;
+      case 1:
+         plot_overlays();
+         break;
+      case 2:
+         plot_two();
+         break;
+      case 3:
+         plot_three();
+         break;
+      case 4:
+         plot_four();
+         break;
+      default:
+         break;
+   }
 }
 

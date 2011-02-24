@@ -86,6 +86,7 @@ int US_FitWorker::fit_iterations()
    int  stati     = 0;
    int  stats     = 0;
    bool autocnvg  = fitpars.autocnvg;
+   double fltolr  = tolerance * 1e-6;
 
    // With autoconverge, start method is either Lev.-Marquardt or Quasi-Newton
    nlsmeth        = autocnvg ? ( ( nlsmeth == 0 ) ? 0 : 3 ) : nlsmeth;
@@ -158,7 +159,11 @@ DbgLv(1) << "EOI improve v ov" << fitpars.improve << variance << old_vari;
       check_paused();
 
       // With autoconverge, flip-flop between Lev.-Marquardt and Quasi-Newton
-      nlsmeth  = autocnvg ? ( 3 - nlsmeth ) : nlsmeth;
+      nlsmeth  = ( autocnvg  &&
+                   qAbs( fitpars.improve ) < fltolr  &&
+                   ( nlsmeth == 0  ||  nlsmeth == 3 ) ) ?
+                 ( 3 - nlsmeth ) : nlsmeth;
+DbgLv(1) << "EOI  autocnvg" << autocnvg << " nlsmeth ftol" << nlsmeth << fltolr;
    }
 
    return stats;
@@ -170,7 +175,7 @@ int US_FitWorker::fit_iter_LM()
    int    stati    = 0;
    int    lamloop  = 0;
    double old_vari = variance;
-   double dv_toler = tolerance * 0.0001;
+   double dv_toler = tolerance * 1e-12;
 
    // Create the jacobian matrix ( points rows by parameters columns )
    emath->calc_jacobian();
@@ -341,6 +346,8 @@ DbgLv(1) << "FW:QN: ChoInv";
       // Copy LL-transpose to info matrix
       US_Matrix::mcopy( fitpars.LLtr, fitpars.info, nfpars, nfpars );
 DbgLv(1) << "FW:QN: End iter0";
+
+      variance      = emath->calc_residuals();
    }
 
    check_paused();

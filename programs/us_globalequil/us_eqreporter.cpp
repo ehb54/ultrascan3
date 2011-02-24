@@ -664,6 +664,7 @@ DbgLv(1) << "  EqRep:FIT_REPORT()";
    double totprod      = totneg * totpos;
    double totsum       = totneg + totpos;
    double totprod2     = 2.0 * totprod;
+DbgLv(1) << "  EqRep:FITREP: nfruns" << runfit.nbr_runs;
    runfit.runs_percent = ( runfit.nbr_runs * 100.0 ) / totsum;
    runfit.runs_expect  = (double)( qRound( 1.0 + ( totprod2 / totsum ) ) );
    runfit.runs_vari    = ( totprod2 * ( totprod2 - totsum ) )
@@ -672,8 +673,8 @@ DbgLv(1) << "  EqRep:FIT_REPORT()";
    rs += tr( "Average Datapoint concentration:      Not determined\n" );
    rs += tr( "Number of Degrees of Freedom:         %1\n" )
          .arg( fitpars.ntpts - fitpars.nfpars );
-   rs += tr( "Number of Runs  (corrected):          %1\n" )
-         .arg( runfit.nbr_runs );
+   rs += tr( "Number of Runs  (corrected):          %1 (%2 \%)\n" )
+         .arg( runfit.nbr_runs ).arg( runfit.runs_percent );
    rs += tr( "Expected Number of Runs  (corrected): %1\n" )
          .arg( runfit.runs_expect );
    rs += tr( "Run Variance  (corrected):            %1\n" )
