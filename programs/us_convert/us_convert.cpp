@@ -1,7 +1,5 @@
 #include <QApplication>
 
-#include <uuid/uuid.h>
-
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_util.h"
@@ -2144,8 +2142,7 @@ void US_Convert::TripleInfo::clear( void )
 
 void US_Convert::TripleInfo::show( void )
 {
-   char uuidc[ 37 ];
-   uuid_unparse( (unsigned char*)tripleGUID, uuidc );
+   QString uuidc = US_Util::uuid_unparse( (unsigned char*)tripleGUID );
    
    qDebug() << "tripleID     = " << tripleID     << '\n'
             << "tripleDesc   = " << tripleDesc   << '\n'

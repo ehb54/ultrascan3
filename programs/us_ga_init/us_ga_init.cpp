@@ -2,8 +2,6 @@
 
 #include <QApplication>
 
-#include <uuid/uuid.h>
-
 #include "us_ga_init.h"
 #include "us_model_loader.h"
 #include "us_license_t.h"

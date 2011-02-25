@@ -1,7 +1,5 @@
 //! \file us_process_convert.cpp
 
-#include <uuid/uuid.h>
-
 #include "us_gui_settings.h"
 #include "us_math2.h"
 #include "us_util.h"
@@ -319,11 +317,11 @@ void US_ProcessConvert::writeConvertedData(
       }
 
       // Let's see if there is a triple guid already (from a previous save)
-      char uuidc[ 37 ];
-      uuid_unparse( (unsigned char*) rawConvertedData[ i ].rawGUID, uuidc );
+      QString uuidc = 
+         US_Util::uuid_unparse( (unsigned char*) rawConvertedData[ i ].rawGUID );
       QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
-      if ( saveGUIDs && rx.exactMatch( QString( uuidc ) ) )
+      if ( saveGUIDs && rx.exactMatch( uuidc ) ) 
       {
          // Make sure xml file matches
          memcpy( triples [ i ].tripleGUID, (char*) rawConvertedData[ i ].rawGUID, 16 );
@@ -332,8 +330,9 @@ void US_ProcessConvert::writeConvertedData(
       else
       {
          // Calculate and save the guid for this triple
-         uuid_t uuid;
-         uuid_generate( uuid );
+         uchar uuid[ 16 ];
+         QString uuid_string = US_Util::new_guid();
+         US_Util::uuid_parse( uuid_string, uuid );
          memcpy( rawConvertedData[ i ].rawGUID, (char*) uuid, 16 );
          memcpy( triples [ i ].tripleGUID, (char*) uuid, 16 );
       }

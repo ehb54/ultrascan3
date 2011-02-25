@@ -1,8 +1,6 @@
 #ifndef US_EDIT_H
 #define US_EDIT_H
 
-#include <uuid/uuid.h>
-
 #include <QtGui>
 #include <QApplication>
 #include <QDomDocument>

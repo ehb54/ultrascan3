@@ -2,8 +2,6 @@
 
 #include <QApplication>
 
-#include <uuid/uuid.h>
-
 #include "us_manage_data.h"
 #include "us_data_model.h"
 #include "us_data_tree.h"

@@ -16,8 +16,6 @@
 #include "us_util.h"
 #include "us_lamm_astfvm.h"
 
-#include <uuid/uuid.h>
-
 /*! \brief Main program for US_Astfem_Sim.  Loads translators and starts
     the class US_Astfem_Sim.
 */
@@ -363,7 +361,7 @@ void US_Astfem_Sim::start_simulation( void )
    sim_data.type[1]    = 'A';
 
    QString guid = US_Util::new_guid();
-   uuid_parse( guid.toLatin1().data(), (uchar*)sim_data.rawGUID );
+   US_Util::uuid_parse( guid, (uchar*)sim_data.rawGUID );
    
    sim_data.cell        = 1;
    sim_data.channel     = 'S';

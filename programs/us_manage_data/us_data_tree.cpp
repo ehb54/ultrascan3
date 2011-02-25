@@ -1,7 +1,5 @@
 //! \file us_data_tree.cpp
 
-#include <uuid/uuid.h>
-
 #include "us_data_tree.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"

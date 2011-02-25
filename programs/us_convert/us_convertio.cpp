@@ -2,8 +2,6 @@
 
 #include <QDomDocument>
 
-#include <uuid/uuid.h>
-
 #include "us_settings.h"
 #include "us_db2.h"
 #include "us_passwd.h"
@@ -168,8 +166,7 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
       if ( triple.excluded ) continue;
 
       // Convert uuid's to long form
-      char triple_uuidc[ 37 ];
-      uuid_unparse( (unsigned char*) triple.tripleGUID, triple_uuidc );
+      QString triple_uuidc = US_Util::uuid_unparse( (unsigned char*) triple.tripleGUID );
 
       // Verify solutionID
       q.clear();
@@ -188,7 +185,7 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
       }
 
       QStringList q( "new_rawData" );
-      q  << QString( triple_uuidc )
+      q  << triple_uuidc
          << ExpData.label
          << triple.tripleFilename       // needs to be base name only
          << ExpData.comments
@@ -395,7 +392,7 @@ QString US_ConvertIO::readRawDataFromDB( US_ExpInfo::ExperimentInfo& ExpData,
       if ( db.next() )
       {
          QString uuidc         = db.value( 0 ).toString();
-         uuid_parse( uuidc.toAscii(), (unsigned char*) triple.tripleGUID );
+         US_Util::uuid_parse( uuidc, (unsigned char*) triple.tripleGUID );
          //triple.label             = db.value( 1 ).toString();
          triple.tripleFilename      = db.value( 2 ).toString();
          //triple.tripleComments    = db.value( 3 ).toString();
@@ -624,11 +621,10 @@ int US_ConvertIO::writeXmlFile(
          QString     channel    = parts[ 1 ];
          QString     wl         = parts[ 2 ];
 
-         char uuidc[ 37 ];
-         uuid_unparse( (unsigned char*)t.tripleGUID, uuidc );
+         QString uuidc = US_Util::uuid_unparse( (unsigned char*)t.tripleGUID );
          xml.writeStartElement( "dataset" );
          xml.writeAttribute   ( "id", QString::number( t.tripleID ) );
-         xml.writeAttribute   ( "guid", QString( uuidc ) );
+         xml.writeAttribute   ( "guid", uuidc );
          xml.writeAttribute   ( "cell", cell );
          xml.writeAttribute   ( "channel", channel );
          xml.writeAttribute   ( "wavelength", wl );
@@ -804,7 +800,7 @@ void US_ConvertIO::readExperiment(
             {
                triples[ ndx ].tripleID = a.value( "id" ).toString().toInt();
                QString uuidc = a.value( "guid" ).toString();
-               uuid_parse( uuidc.toAscii(), (unsigned char*) triples[ ndx ].tripleGUID );
+               US_Util::uuid_parse( uuidc, (unsigned char*) triples[ ndx ].tripleGUID );
 
                triples[ ndx ].tripleFilename = runID    + "." +
                                                runType  + "." +
@@ -940,11 +936,10 @@ int US_ConvertIO::verifyXml( US_ExpInfo::ExperimentInfo& ExpData,
    {
       if ( triples[ i ].excluded ) continue;
 
-      char uuidc[ 37 ];
-      uuid_unparse( (unsigned char*) triples[ i ].tripleGUID, uuidc );
+      QString uuidc = US_Util::uuid_unparse( (unsigned char*) triples[ i ].tripleGUID );
       q.clear();
       q << QString( "get_rawDataID_from_GUID" )
-        << QString( uuidc );
+        << uuidc;
       db.query( q );
 
       if ( db.lastErrno() != US_DB2::OK )

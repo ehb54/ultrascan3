@@ -2,8 +2,6 @@
 
 #include <QApplication>
 
-#include <uuid/uuid.h>
-
 #include "us_pseudo3d_combine.h"
 #include "us_spectrodata.h"
 #include "us_model.h"
