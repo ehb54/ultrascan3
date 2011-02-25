@@ -1,12 +1,11 @@
 //! \file us_dataIO2.cpp
-#include <uuid/uuid.h>
-
 #include <QDomDocument>
 
 #include "us_dataIO2.h"
 #include "us_crc.h"
 #include "us_math2.h"
 #include "us_matrix.h"
+#include "us_util.h"
 
 bool US_DataIO2::readLegacyFile( const QString&  file, 
                                  BeckmanRawScan& data )
@@ -785,9 +784,8 @@ int US_DataIO2::loadData( const QString&         directory,
    if ( result != OK ) throw result;
 
    // Check for uuid match
-   char uuid[ 37 ];
-   uuid_unparse( (uchar*)d.rawGUID, uuid );
-   if ( QString( uuid ) != ev.dataGUID ) throw NO_GUID_MATCH;
+   QString rawGuid = US_Util::uuid_unparse( (uchar*)d.rawGUID );
+   if ( rawGuid != ev.dataGUID ) throw NO_GUID_MATCH;
 
    // Apply the edits
    EditedData ed;

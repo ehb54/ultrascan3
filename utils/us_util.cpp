@@ -1,8 +1,7 @@
 //! \file us_util.cpp
 #include "us_util.h"
-#include <uuid/uuid.h> 
 
-// get next token in a string, as defined by a separator; update for next pass
+// Get next token in a string, as defined by a separator; update for next pass
 QString US_Util::getToken( QString& s, const QString& separator )
 {
    QString token;
@@ -35,42 +34,35 @@ QString US_Util::getToken( QString& s, const QString& separator )
    return token;
 }
 
-// generate a new GUID value and return it in QString form
+// Generate a new GUID value and return it in QString form
 QString US_Util::new_guid( void )
 {
-   uchar c[ 16 ];           // Binary
-   char  u[ 37 ];           // Char array
-
-   uuid_generate( c );      // generate a new UUID in binary form
-
-   uuid_unparse ( c, u );   // unparse it the standard character form
-
-   return QString( u );     // return a string representation
+   return QUuid::createUuid().toString().mid( 1, 36 );
 }
 
-// calculate the md5hash and size of a named file (full path)
+// Calculate the md5hash and size of a named file (full path)
 QString US_Util::md5sum_file( QString filename )
 {
    QFile f( filename );
 
-   // if unable to open the file, return "hash size" of "0 0"
+   // If unable to open the file, return "hash size" of "0 0"
    if ( ! f.open( QIODevice::ReadOnly ) )
       return "0 0";
 
-   // otherwise, get the full contents of the file into a QByteArray
+   // Otherwise, get the full contents of the file into a QByteArray
    QByteArray data = f.readAll();
    f.close();
 
-   // get the md5 hash, convert to hex, get file size;  then format "hash size"
+   // Get the md5 hash, convert to hex, get file size;  then format "hash size"
    QString hashandsize =
       QString( QCryptographicHash::hash( data, QCryptographicHash::Md5 )
       .toHex() ) + " " + QString::number( QFileInfo( filename ).size() );
 
-   // return the "hash size" string
+   // Return the "hash size" string
    return hashandsize;
 }
 
-// convert DateTime string to unambiguous UTC form ("yyyy-mm-dd HH:MM:SS UTC")
+// Convert DateTime string to unambiguous UTC form ("yyyy-mm-dd HH:MM:SS UTC")
 QString US_Util::toUTCDatetimeText( QString dttext, bool knownUTC )
 {
    QString utctext = dttext;
@@ -80,48 +72,48 @@ QString US_Util::toUTCDatetimeText( QString dttext, bool knownUTC )
    bool    haveUTC = dttext.endsWith( "UTC" );     // have "UTC" on end
 
    if ( knownUTC )
-   {  // if known to be UTC, just insure no single 'T' and " UTC" suffix
+   {  // If known to be UTC, just insure no single 'T' and " UTC" suffix
 
       if ( haveT )
-      {  // if single 'T' between date and time, replace with ' '
+      {  // If single 'T' between date and time, replace with ' '
          utctext.replace( ixT, 1, " " );
       }
 
       if ( !haveUTC )
-      {  // if no " UTC" suffix, append it
+      {  // If no " UTC" suffix, append it
          utctext.append( " UTC" );
       }
    }
 
    else
-   {  // if we don't know that it's UTC, convert when " UTC" is missing
+   {  // If we don't know that it's UTC, convert when " UTC" is missing
 
       if ( !haveUTC )
-      {  // if no " UTC", convert to UTC and append " UTC"
+      {  // If no " UTC", convert to UTC and append " UTC"
          QDateTime dt;
 
          if ( dttext.indexOf( "-" ) == 4 )
-         {  // if already in ISO form, get UTC DateTime from string in ISO form
+         {  // If already in ISO form, get UTC DateTime from string in ISO form
             dt      = QDateTime::fromString( dttext, Qt::ISODate ).toUTC();
          }
 
          else
-         {  // if in unknown form, get UTC DateTime assuming default form
+         {  // If in unknown form, get UTC DateTime assuming default form
             dt      = QDateTime::fromString( dttext ).toUTC();
          }
 
-         // new text version in ISO form
+         // New text version in ISO form
          utctext = dt.toString( Qt::ISODate );
 
-         // re-determine whether we have single 'T'
+         // Re-determine whether we have single 'T'
          haveT   = ( utctext.indexOf( "T" ) > 0 );
 
-         // append the "UTC"
+         // Append the "UTC"
          utctext.append( " UTC" );
       }
 
       if ( haveT )
-      {  // if single 'T' between date and time, replace with ' '
+      {  // If single 'T' between date and time, replace with ' '
          utctext.replace( ixT, 1, " " );
       }
    }
@@ -129,22 +121,60 @@ QString US_Util::toUTCDatetimeText( QString dttext, bool knownUTC )
    return utctext;
 }
 
-// insure DateTime text is in ISO form (ISO, UTC, or unknown on input )
+// Ensure DateTime text is in ISO form (ISO, UTC, or unknown on input )
 QString US_Util::toISODatetimeText( QString dttext )
 {
    QString isotext = dttext;   // default assumes already in ISO form
 
    if ( dttext.contains( " UTC" ) )
-   {  // if UTC form on input, convert by removing " UTC" and adding 'T'
+   {  // If UTC form on input, convert by removing " UTC" and adding 'T'
       isotext.replace( " UTC", "" ).replace( dttext.indexOf( " " ), 1, "T" );
    }
 
    else if ( dttext.indexOf( "-" ) != 4 )
-   {  // if not ISO (unknown), convert by back-and-forth from DateTime
+   {  // If not ISO (unknown), convert by back-and-forth from DateTime
       isotext = QDateTime::fromString( dttext ).toString( Qt::ISODate );
-      // otherwise, we must already have ISO form
+      // Otherwise, we must already have ISO form
    }
 
    return isotext;
+}
+
+// Convert a binary uuid to a QString
+QString US_Util::uuid_unparse( unsigned char* uu )
+{
+   return QString().sprintf(
+         "%02hhx%02hhx%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-"
+         "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
+         uu[  0 ], uu[  1 ], uu[  2 ], uu[  3 ], uu[  4 ], uu[  5 ],
+         uu[  6 ], uu[  7 ], uu[  8 ], uu[  9 ], uu[ 10 ], uu[ 11 ],
+         uu[ 12 ], uu[ 13 ], uu[ 14 ], uu[ 15 ] );
+}
+
+// A helper fiunction to convert a character hex digit to decimal
+unsigned char US_Util::hex2int( unsigned char c )
+{
+   if ( c <= '9' )
+      return c - '0';
+
+   c &= 0x5f;  // Make upper case if necessary
+   return c - 'A' + 10;
+}
+
+// Convert a QString uuid into a 16-byte binary array
+void US_Util::uuid_parse( const QString& in, unsigned char* uu )
+{
+   QByteArray     ba = in.toUtf8();
+   unsigned char* p  = (unsigned char*)ba.data();
+
+   for ( int i = 0; i < 16; i++ )
+   {
+      while ( *p == '-' ) p++;
+
+      char n = hex2int( *p++ ) << 4;
+      n |=  hex2int( *p++ );
+
+      uu[ i ] = n;
+   }
 }
 
