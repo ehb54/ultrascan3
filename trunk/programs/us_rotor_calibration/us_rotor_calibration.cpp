@@ -299,8 +299,7 @@ void US_RotorCalibration::plotAll( void )
    for (int j=0; j<allData[current_triple].scanData.size(); j++) //all scans in each triple
    {
       QString title="";
-      char guid[ 37 ];
-      uuid_unparse( (const uchar*)allData[current_triple].rawGUID, guid );
+      QString guid = US_Util::uuid_unparse( (uchar*)allData[current_triple].rawGUID );
       char type[ 3 ];
       type[ 2 ] = '\0';
       memcpy( type, allData[current_triple].type, 2 );
@@ -486,17 +485,18 @@ void US_RotorCalibration::calculate()
    //
    // Find out how many unique speeds and cells there are in the experiment:
    //
-   for (i=0; i<allData.size(); i++) // all the triples
+   for ( int i = 0; i<allData.size(); i++ ) // all the triples
    {
-      for (j=0; j<allData[i].scanData.size(); j++) //all scans in each triple
+      for ( int j = 0; j < allData[i].scanData.size(); j++ ) //all scans in each triple
       {
-         if (!speeds.contains((int)allData[i].scanData[j].rpm))
+         if ( ! speeds.contains( (int)allData[ i ].scanData[ j ].rpm ) )
          {
-            speeds.push_back(allData[i].scanData[j].rpm);
+            speeds << (int)allData[ i ].scanData[ j ].rpm;
          }
-         if (!cells.contains(allData[i].cell))
+
+         if ( ! cells.contains( allData[ i ].cell ) )
          {
-            cells.push_back(allData[i].cell);
+            cells << allData[ i ].cell;
          }
       }
    }
