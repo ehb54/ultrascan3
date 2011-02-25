@@ -5,8 +5,6 @@
 #include "us_settings.h"
 #include "us_util.h"
 
-#include <uuid/uuid.h>
-
 // constructor - initialize empty
 US_Noise::US_Noise()
 {

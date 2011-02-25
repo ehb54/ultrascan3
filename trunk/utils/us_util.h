@@ -78,5 +78,20 @@ class US_EXTERN US_Util
       //! \param dttext    DateTime text string in UTC, ISO, or other form
       //! \returns         A DateTime string in ISO form ("2010-08-14T21:41:22")
       static QString toISODatetimeText( QString );
+
+      //! \brief Convert a QString uuid to a 16-byte binary character array
+      //!
+      //! \param in Uuid string to be converted
+      //! \param uu A pointer to a 16-byte character array for the 
+      //!           converted data
+      static void uuid_parse( const QString&, unsigned char* );
+
+      //! \brief Convert a binary uuid to a QString
+      //!
+      //! \param uu A pointer to a 16-byte array holding a binary uuid
+      static QString uuid_unparse( unsigned char* );
+
+   private:
+      static unsigned char hex2int( unsigned char c );
 };
 #endif
