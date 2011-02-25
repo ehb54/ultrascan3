@@ -2,8 +2,6 @@
 
 #include <QApplication>
 
-#include <uuid/uuid.h>
-
 #include "us_vhw_enhanced.h"
 #include "us_license_t.h"
 #include "us_license.h"

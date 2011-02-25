@@ -3,8 +3,6 @@
 #include <QApplication>
 #include <QDomDocument>
 
-#include <uuid/uuid.h>
-
 #include "us_edit.h"
 #include "us_license_t.h"
 #include "us_license.h"
@@ -2672,9 +2670,7 @@ void US_Edit::write_triple( void )
    xml.writeAttribute   ( "value", editGUID );
    xml.writeEndElement  ();
 
-   char uuid[ 37 ];
-   uuid_unparse( (unsigned char*)data.rawGUID, uuid );
-   QString rawGUID  = QString( uuid );
+   QString rawGUID  = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
    xml.writeStartElement( "rawDataGUID" );
    xml.writeAttribute   ( "value", rawGUID );
    xml.writeEndElement  ();
@@ -2927,9 +2923,7 @@ void US_Edit::apply_prior( void )
 
       QStringList q( "get_rawDataID_from_GUID" );
       
-      char uuid[ 37 ];
-      uuid_unparse( (uchar*)data.rawGUID, uuid );
-      q << QString( uuid );
+      q << US_Util::uuid_unparse( (uchar*)data.rawGUID );
 
       db.query( q );
 
@@ -3011,8 +3005,7 @@ void US_Edit::apply_prior( void )
       return;
    }
 
-   char uuid[ 37 ];
-   uuid_unparse( (unsigned char*)data.rawGUID, uuid );
+   QString uuid = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
 
    if ( parameters.dataGUID != uuid )
    {
@@ -3173,9 +3166,7 @@ void US_Edit::prior_equil( void )
 
       QStringList q( "get_rawDataID_from_GUID" );
       
-      char uuid[ 37 ];
-      uuid_unparse( (uchar*)data.rawGUID, uuid );
-      q << QString( uuid );
+      q << US_Util::uuid_unparse( (uchar*)data.rawGUID );
 
       db.query( q );
 
@@ -3236,9 +3227,9 @@ void US_Edit::prior_equil( void )
       for ( int ii = 1; ii < allData.size(); ii++ )
       {
          data    = allData[ ii ];
-         uuid_unparse( (uchar*)data.rawGUID, uuid );
          q.clear();
-         q << "get_rawDataID_from_GUID" << QString( uuid );
+         q << "get_rawDataID_from_GUID" 
+           << US_Util::uuid_unparse( (uchar*)data.rawGUID );
          db.query( q );
          db.next();
          rawDataID = db.value( 0 ).toString();
@@ -3323,8 +3314,7 @@ void US_Edit::prior_equil( void )
          continue;
       }
 
-      char uuid[ 37 ];
-      uuid_unparse( (unsigned char*)data.rawGUID, uuid );
+      QString uuid = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
 
       if ( parameters.dataGUID != uuid )
       {

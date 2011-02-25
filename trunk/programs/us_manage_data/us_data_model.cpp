@@ -8,7 +8,6 @@
 #include "us_model.h"
 #include "us_noise.h"
 #include "us_editor.h"
-#include <uuid/uuid.h>
 
 // scan the database and local disk for R/E/M/N data sets
 US_DataModel::US_DataModel( QWidget* parwidg /*=0*/ )
@@ -573,9 +572,8 @@ DbgLv(2) << "BrLoc: ii jj file" << ii << jj << aucfile;
          contents         = US_Util::md5sum_file( aucfile );
 DbgLv(2) << "BrLoc:      contents" << contents;
 
-         char uuid[ 37 ];
-         uuid_unparse( (uchar*)rdata.rawGUID, uuid );
-         QString rawGUID  = QString( uuid );
+         QString uuid      = US_Util::uuid_unparse( (uchar*)rdata.rawGUID );
+         QString rawGUID   = uuid;
 
          cdesc.recordID    = -1;
          cdesc.recType     = 1;
