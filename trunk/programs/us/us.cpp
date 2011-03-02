@@ -161,6 +161,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_CONVERT  , tr( "&Convert Legacy Data"      ), utilities );
   addMenu(  P_FIT      , tr( "&Fit Meniscus"             ), utilities );
   addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator" ), utilities );
+  addMenu(  P_RPTGEN   , tr( "&Report Generator"         ), utilities );
 
 
 

@@ -14,6 +14,7 @@ namespace US_WinData
     P_SECOND,       P_DCDT,   P_VHWE,      // Velocity Menu
                     P_GAINIT, P_FEMA,
     P_CONVERT,      P_FIT,    P_COLORGRAD, // Utilities menu
+                    P_RPTGEN,
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
     P_SASSOC,       P_MODEL1, P_MODEL2,
@@ -110,6 +111,11 @@ namespace US_WinData
     { P_COLORGRAD, 0, 0, "us_colorgradient",
       QObject::tr( "Loading Color Gradient Generator" ),
       QObject::tr( "Color Gradient Generator Program" )
+    },
+
+    { P_RPTGEN,    0, 0, "us_reporter",
+      QObject::tr( "Loading Report Generator" ),
+      QObject::tr( "Report Generator Program" )
     },
 
     { P_ASTFEM, 2, 0, "us_astfem_sim",
