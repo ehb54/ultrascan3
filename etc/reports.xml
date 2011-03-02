@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE US_Reports>
+<US_Reports version="1.0">
+    <application name="2dsa"
+    label="2-Dimensional Spectrum Analysis" />
+    <application name="2dsa-mc"
+    label="2-Dimensional Spectrum Analysis with Monte Carlo" />
+    <application name="2dsa-fm"
+    label="2-Dimensional Spectrum Analysis with Fit Meniscus" />
+    <application name="2dsa-mw"
+    label="2-D Spectrum Analysis with Molec. Weight constraints" />
+    <application name="2dsa-mw-mc"
+    label="2-D Spectrum Analysis with MW constraints - Monte Carlo" />
+    <application name="fem_2dsa"
+    label="Finite Element Match to 2-D Spectrum Analysis" />
+    <application name="dcdt" label="Time Derivative" />
+    <application name="vHW" label="van Holde - Weischet Analysis" />
+    <application name="ga" label="Genetic Algorithm Analysis" />
+    <application name="ga-mc"
+    label="Genetic Algorithm - Monte Carlo Analysis" />
+    <application name="ga-mw"
+    label="Genetic Algorithm with Molecular Weight constraints" />
+    <application name="secmo" label="Second Moment Analysis" />
+    <application name="global" label="Global Analysis" />
+    <extension name="html" label="HTML General Report" mimetype="text/html" />
+    <extension name="rpt" label="Plain-text Report" mimetype="text/plain" />
+    <extension name="svg" label="SVG Plot" mimetype="image/svg+xml" />
+    <extension name="png" label="PNG Plot" mimetype="image/png" />
+    <extension name="dat" label="Text Data Table" mimetype="text/plain" />
+    <report name="report" label="Analysis Report" />
+    <report name="velocity" label="Data Scans Plot" />
+    <report name="residuals" label="Experiment-Simulation Residuals Plot" />
+    <report name="rbitmap" label="Residuals Bit Map" />
+    <report name="rinoise" label="Radially-Invariant Noise Plot" />
+    <report name="tinoise" label="Time-Invariant Noise Plot" />
+    <report name="s-distrib" label="Sedimentation Coefficient Plot" />
+    <report name="mw-distrib" label="Molecular Weight Plot" />
+    <report name="D-distrib" label="Diffusion Coefficient Plot" />
+    <report name="3dplot" label="3-Dimensional Model Plot" />
+    <report name="D_vs_s" label="D-vs-s 2-d Model Plot" />
+    <report name="D_vs_mw" label="D-vs-mw 2-d Model Plot" />
+    <report name="ff0_vs_s" label="f/f0-vs-s 2-d Model Plot" />
+    <report name="ff0_vs_mw" label="f/f0-vs-mw 2-d Model Plot" />
+    <report name="x-to-radius" label="G*(s)-to-radius Plot" />
+    <report name="x-to-S" label="G*(s)-to-s Plot" />
+    <report name="average-S" label="average-G*(s)-to-s Plot" />
+</US_Reports>
