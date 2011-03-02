@@ -21,6 +21,7 @@ class US_EXTERN US_Rotor
          ROTOR_OK,          //!< The last disk/db operation completed successfully
          NOT_FOUND,         //!< The rotor, abstractRotor or RotorCalibration ID/GUID was not found
          NOT_OPENED,        //!< The rotor, abstractRotor or RotorCalibration file could not be opened
+         CONNECT_ERROR,     //!< Could not connect to the DB
          MISC_ERROR,        //!< An unspecified error occurred
          NOT_SAVED,         //!< The file has not been saved
          EDITING,           //!< Data is being edited; certain operations not permitted

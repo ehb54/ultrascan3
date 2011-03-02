@@ -42,6 +42,7 @@ class US_EXTERN US_Convert : public US_Widgets
       enum aucStatus
       {
          NOT_SAVED,                           //!< The file has not been saved
+         EDITING,                             //!< Data is being edited; certain operations not permitted
          HD_ONLY,                             //!< The file has been saved to the HD
          BOTH                                 //!< The file has been saved to both HD and DB
       };

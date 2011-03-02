@@ -1044,6 +1044,9 @@ void US_Convert::updateExpInfo( US_ExpInfo::ExperimentInfo& d )
    // Update local copy
    ExpData = d;
 
+   if ( this->saveStatus == NOT_SAVED )
+      this->saveStatus = EDITING;        // don't delete the data!
+
    enableControls();
 }
 
@@ -1285,9 +1288,6 @@ void US_Convert::exclude_scans( void )
    }
 
    enableScanControls();
-//qDebug() << "excludes.size = " << allExcludes[ currentTriple].excludes.size();
-//for ( int i = 0; i < allExcludes[ currentTriple ].excludes.size(); i++ )
-//qDebug() << "exclude[ " << i << "] = " << allExcludes[ currentTriple ].excludes[i];
 
    replot();
 }
