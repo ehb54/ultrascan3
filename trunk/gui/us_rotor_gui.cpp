@@ -13,7 +13,7 @@ US_RotorGui::US_RotorGui(
      bool  new_calibration,
      bool  signal_wanted,
      int   select_db_disk
-     ) : US_WidgetsDialog(0, 0), currentCalibration( calibration ) 
+     ) : US_WidgetsDialog(0, 0), currentCalibration( calibration )
 {
    this->savingCalibration = new_calibration;
    this->signal            = signal_wanted;
@@ -39,6 +39,42 @@ US_RotorGui::US_RotorGui(
    this->signal            = signal_wanted;
 
    setupGui( select_db_disk );
+
+   reset();
+}
+
+US_RotorGui::US_RotorGui(
+     bool  signal_wanted,
+     int   select_db_disk,
+     const US_Rotor::Rotor& rotorIn,
+     const US_Rotor::RotorCalibration& calibrationIn
+     ) : US_WidgetsDialog(0, 0), currentRotor( rotorIn ), 
+       currentCalibration( calibrationIn ), signal( signal_wanted )
+{
+   this->savingCalibration = false;
+
+   // Let's see if the user passed a rotorID, and 
+   // find out the rest of the rotor info
+   int rotorID       = currentRotor.ID;     // save for later; they get wiped out
+   int calibrationID = currentCalibration.ID;
+   US_Rotor::Status status;
+
+   setupGui( select_db_disk );
+
+   status = readRotor      ( select_db_disk, rotorID );
+   status = readCalibration( select_db_disk, calibrationID );
+
+   // Now select the current rotor
+   QList< QListWidgetItem* > items 
+      = lw_rotors->findItems( QString::number( rotorID ), Qt::MatchStartsWith );
+   if ( items.count() == 1 )                    // should be exactly 1
+      lw_rotors->setCurrentItem( items[ 0 ] );
+
+   // And the current calibration
+   items.clear();
+   items = lw_calibrations->findItems( QString::number( calibrationID ), Qt::MatchStartsWith );
+   if ( items.count() == 1 )
+      lw_calibrations->setCurrentItem( items[ 0 ] );
 
    reset();
 }
@@ -329,29 +365,7 @@ void US_RotorGui::selectRotor( QListWidgetItem *item )
    le_omega2t      ->setText( "< not available >" );
 
    // Find out the rest of the rotor info
-   if ( disk_controls->db() )
-   {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         connect_error( db.lastError() );
-         return;
-      }
-   
-      status = currentRotor.readDB( rotorID, &db );
-
-      // Since there is no save rotor button, save any that is
-      // selected to disk automatically
-      currentRotor.saveDisk();
-   }
-
-   else
-   {
-      status = currentRotor.readDisk( rotorID );
-   }
+   status = readRotor( disk_controls->db(), rotorID );
 
    // Update rotor info on the form, if we can
    if ( status == US_Rotor::ROTOR_OK )
@@ -371,7 +385,43 @@ void US_RotorGui::selectRotor( QListWidgetItem *item )
       // Get the associated calibration profiles
       readCalibrationProfiles( rotorID );
    }
+}
 
+US_Rotor::Status US_RotorGui::readRotor( int disk_db, int rotorID )
+{
+   // Let's see if the user passed a rotorID, and 
+   // find out the rest of the rotor info
+   US_Rotor::Status status;
+   currentRotor.reset();
+
+   if ( rotorID <= 0 )
+      return( US_Rotor::NOT_FOUND );
+
+   if ( disk_db == US_Disk_DB_Controls::DB )
+   {                         
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+   
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         connect_error( db.lastError() );
+         return( US_Rotor::CONNECT_ERROR );
+      }
+   
+      status = currentRotor.readDB( rotorID, &db );
+
+      // Since there is no save rotor button, save any that is
+      // selected to disk automatically
+      currentRotor.saveDisk();
+   }
+
+   else
+   {
+      status = currentRotor.readDisk( rotorID );
+   }
+
+   return status;
 }
 
 void US_RotorGui::deleteRotor( void )
@@ -498,29 +548,7 @@ void US_RotorGui::selectCalibration( QListWidgetItem *item )
    US_Rotor::Status status;
 
    // Find out the rest of the rotor calibration info
-   if ( disk_controls->db() )
-   {
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-   
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         connect_error( db.lastError() );
-         return;
-      }
-   
-      status = currentCalibration.readDB( calibrationID, &db );
-
-      // Since the save calibration button is not available for general use, save 
-      // any that is selected to disk automatically
-      currentCalibration.saveDisk();
-   }
-
-   else
-   {
-      status = currentCalibration.readDisk( calibrationID );
-   }
+   status = readCalibration( disk_controls->db(), calibrationID );
 
    // Now populate what we can on the form
    if ( status == US_Rotor::ROTOR_OK )
@@ -535,6 +563,45 @@ void US_RotorGui::selectCalibration( QListWidgetItem *item )
       pb_deleteCalibration->setEnabled( true );
       pb_viewReport       ->setEnabled( true );
    }
+
+   reset();
+}
+
+US_Rotor::Status US_RotorGui::readCalibration( int disk_db, int calibrationID )
+{
+   // Let's see if the user passed a calibrationID, and 
+   // find out the rest of the calibration info
+   US_Rotor::Status status;
+   currentCalibration.reset();
+
+   if ( calibrationID <= 0 )
+      return( US_Rotor::NOT_FOUND );
+
+   if ( disk_db == US_Disk_DB_Controls::DB )
+   {                         
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+   
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         connect_error( db.lastError() );
+         return( US_Rotor::CONNECT_ERROR );
+      }
+   
+      status = currentCalibration.readDB( calibrationID, &db );
+
+      // Since there is no save rotor calibration button, save any that is
+      // selected to disk automatically
+      currentCalibration.saveDisk();
+   }
+
+   else
+   {
+      status = currentCalibration.readDisk( calibrationID );
+   }
+
+   return status;
 }
 
 void US_RotorGui::viewReport( void )
@@ -677,7 +744,7 @@ void US_RotorGui::accept( void )
 {
    if ( signal )
    {
-      emit RotorCalibrationSelected ( currentCalibration );
+      emit RotorCalibrationSelected ( currentRotor, currentCalibration );
    }
 
    close();
@@ -733,8 +800,15 @@ bool US_RotorGui::load( void )
    }
 
    cb_lab->clear();
+   int index = 0;
    foreach ( US_Rotor::Lab lab, labList )
+   {
       cb_lab->addItem( QString::number( lab.ID ) + ": " + lab.name );
+      if ( lab.ID == currentRotor.labID )
+         index = cb_lab->currentIndex();
+   }
+   if ( cb_lab->count() > 0 )
+      cb_lab->setCurrentIndex( index );
 
    changeLab( 0 );      // To display labs, rotors
 

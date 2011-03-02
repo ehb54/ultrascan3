@@ -10,6 +10,7 @@
 #include "us_expinfo.h"
 #include "us_convertio.h"
 #include "us_project_gui.h"
+#include "us_rotor_gui.h"
 
 US_ExpInfo::US_ExpInfo( 
       ExperimentInfo& dataIn ) :
@@ -99,23 +100,28 @@ US_ExpInfo::US_ExpInfo(
    QLabel* lb_hardware_banner = us_banner( tr( "Hardware: " ) );
    hardware->addWidget( lb_hardware_banner, row++, 0, 1, 2 );
 
-   // sync local hardware info with db
-/*
-   QLabel* lb_sync = us_label( tr( "Update local hardware info:" ) );
-   hardware->addWidget( lb_sync, row, 0 );
-   QPushButton* pb_sync = us_pushbutton( tr( "Sync Hardware" ) );
-   connect( pb_sync, SIGNAL( clicked() ), SLOT( syncHardware() ) );
-   pb_sync->setEnabled( true );
-   hardware->addWidget( pb_sync, row++, 1 );
-*/
+   QPushButton* pb_rotor = us_pushbutton( tr( "Select Lab / Rotor / Calibration" ) );
+   connect( pb_rotor, SIGNAL( clicked() ), SLOT( selectRotor() ) );
+   pb_rotor->setEnabled( true );
+   hardware->addWidget( pb_rotor, row++, 0, 1, 2 );
 
-   // labID
-   QLabel* lb_lab = us_label( tr( "Lab:" ) );
-   hardware->addWidget( lb_lab, row, 0 );
-   cb_lab = new US_SelectBox( this );
-   connect( cb_lab, SIGNAL( activated ( int ) ),      // Only if the user has changed it
-                    SLOT  ( change_lab( int ) ) );
-   hardware->addWidget( cb_lab, row++, 1 );
+   le_rotorDesc = us_lineedit(); 
+   le_rotorDesc->setPalette ( gray );
+   le_rotorDesc->setReadOnly( true );
+   hardware->addWidget( le_rotorDesc, row++, 0, 1, 2 );
+
+   // Rotor speeds
+   QLabel* lb_rotorSpeeds = us_label( tr( "Unique Rotor Speeds:" ) );
+   hardware->addWidget( lb_rotorSpeeds, row++, 0, 1, 2 );
+   lw_rotorSpeeds = us_listwidget();
+   lw_rotorSpeeds ->setMaximumHeight( 50 );
+   lw_rotorSpeeds ->setPalette( gray );
+   hardware->addWidget( lw_rotorSpeeds, row, 0, 2, 2 );
+   row += 2;
+
+   // The rotor speed information won't change
+   foreach ( double rpm, expInfo.rpms )
+      lw_rotorSpeeds -> addItem( QString::number( rpm ) );
 
    // instrumentID
    QLabel* lb_instrument = us_label( tr( "Instrument:" ) );
@@ -130,26 +136,6 @@ US_ExpInfo::US_ExpInfo(
    hardware->addWidget( lb_operator, row, 0 );
    cb_operator = new US_SelectBox( this );
    hardware->addWidget( cb_operator, row++, 1 );
-
-   // Rotor used in experiment
-   QLabel* lb_rotor = us_label( tr( "Rotor:" ) );
-   hardware->addWidget( lb_rotor, row, 0 );
-   cb_rotor = new US_SelectBox( this );
-   hardware->addWidget( cb_rotor, row++, 1 );
-   cb_rotor->setEditable( false );
-
-   // Rotor speeds
-   QLabel* lb_rotorSpeeds = us_label( tr( "Unique Rotor Speeds:" ) );
-   hardware->addWidget( lb_rotorSpeeds, row++, 0, 1, 2 );
-   lw_rotorSpeeds = us_listwidget();
-   lw_rotorSpeeds ->setMaximumHeight( 100 );
-   lw_rotorSpeeds ->setPalette( gray );
-   hardware->addWidget( lw_rotorSpeeds, row, 0, 2, 2 );
-   row += 3;
-
-   // The rotor speed information won't change
-   foreach ( double rpm, expInfo.rpms )
-      lw_rotorSpeeds -> addItem( QString::number( rpm ) );
 
    // Run Temperature
    QLabel* lb_runTemp = us_label( tr( "Average Run Temperature:" ) );
@@ -210,7 +196,7 @@ US_ExpInfo::US_ExpInfo(
 
    te_comment = us_textedit();
    main->addWidget( te_comment, row, 0, 4, 2 );
-   te_comment->setMaximumHeight( 120 );
+   te_comment->setMaximumHeight( 80 );
    te_comment->setReadOnly( false );
    row += 4;
 
@@ -236,18 +222,11 @@ void US_ExpInfo::reset( void )
    le_project      ->clear();
    te_comment      ->clear();
 
-   cb_lab          ->load();
-   cb_instrument   ->load();
-   cb_operator     ->load();
-   cb_rotor        ->load();
-
    pb_accept       ->setEnabled( false );
 
    // Update controls to represent selected experiment
-   cb_lab          ->setLogicalIndex( expInfo.labID        );
    cb_instrument   ->setLogicalIndex( expInfo.instrumentID );
    cb_operator     ->setLogicalIndex( expInfo.operatorID   );
-   cb_rotor        ->setLogicalIndex( expInfo.rotorID      );
 
    le_label        ->setText( expInfo.label                );
    le_project      ->setText( expInfo.projectDesc          );
@@ -307,50 +286,21 @@ bool US_ExpInfo::load( void )
       }
    }
 
-   // Find out what labs we have
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   // Load values that were passed in
+   if ( ! expInfo.rotorName.isEmpty() )
+      le_rotorDesc->setText( expInfo.rotorName + " / " +
+                    expInfo.rotorUpdated.toString( "yyyy-MM-dd" ) );
 
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      connect_error( db.lastError() );
-      return( false );
-   }
+   if ( ! expInfo.label.isEmpty() )
+      le_label->setText( expInfo.label );
 
-   QStringList q( "get_lab_names" );
-   db.query( q );
+   if ( expInfo.projectID > 0 )
+      le_project->setText( expInfo.projectDesc );
 
-   QList<listInfo> options;
-   while ( db.next() )
-   {
-      struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
-      options << option;
-   }
+   if ( ! expInfo.comments.isEmpty() )
+      te_comment->setText( expInfo.comments );
 
-   cb_lab->clear();
-   if ( options.size() > 0 )
-   {
-      cb_lab->addOptions( options );
-
-      // is the lab ID in the list?
-      int index = 0;
-      for ( int i = 0; i < options.size(); i++ )
-      {
-         if ( expInfo.labID == options[ i ].ID.toInt() )
-         {
-            index = i;
-            break;
-         }
-      }
-   
-      // Replace labID with one from the list
-      expInfo.labID = options[ index ].ID.toInt();
-   }
-
-   cb_changed = true; // so boxes will go through the reload code 1st time
+   lab_changed = true; // so boxes will go through all the reload code 1st time
 
    return( true );
 }
@@ -367,13 +317,15 @@ void US_ExpInfo::reload( void )
       return;
    }
 
-   if ( cb_changed )
+   if ( lab_changed )
    {
       setInstrumentList();
-      setRotorList();
       setOperatorList();
 
-      cb_changed = false;
+      cb_instrument   ->load();
+      cb_operator     ->load();
+
+      lab_changed = false;
    }
 }
 
@@ -452,7 +404,7 @@ void US_ExpInfo::assignProject( US_Project& project )
 
 void US_ExpInfo::cancelProject( void )
 {
-  reset();
+   reset();
 }
 
 QComboBox* US_ExpInfo::us_expTypeComboBox( void )
@@ -565,94 +517,6 @@ void US_ExpInfo::setOperatorList( void )
    }
 }
 
-void US_ExpInfo::setRotorList( void )
-{
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      connect_error( db.lastError() );
-      return;
-   }
-
-   // Get a list of rotors in this lab
-   QStringList q( "get_rotor_names" );
-   q << QString::number( expInfo.labID );     // In this lab
-   db.query( q );
-
-   QList<listInfo> options;
-   while ( db.next() )
-   {
-      struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
-      options << option;
-   }
-
-   cb_rotor->clear();
-   if ( options.size() > 0 )
-   {
-      cb_rotor->addOptions( options );
-
-      // is the rotor ID in the list?
-      int index = 0;
-      for ( int i = 0; i < options.size(); i++ )
-      {
-         if ( expInfo.rotorID == options[ i ].ID.toInt() )
-         {
-            index = i;
-            break;
-         }
-      }
-
-      // Replace rotor ID with one from the list
-      expInfo.rotorID = options[ index ].ID.toInt();
-
-      // For now get the first rotor calibration profile for this rotor
-      q.clear();
-      q  << QString( "get_rotor_calibration_profiles" )
-         << QString::number( expInfo.rotorID );
-      db.query( q );
-
-      expInfo.calibrationID = 0;
-      expInfo.rotorCoeff1   = 0.0;
-      expInfo.rotorCoeff2   = 0.0;
-      if ( db.next() )
-      {
-         expInfo.calibrationID = db.value( 0 ).toInt();
-
-         q.clear();
-         q  << QString( "get_rotor_calibration_info" )
-            << QString::number( expInfo.calibrationID );
-         db.query( q );
-         if ( db.next() )
-         {
-            expInfo.rotorCoeff1 = db.value( 3 ).toDouble();
-            expInfo.rotorCoeff2 = db.value( 4 ).toDouble();
-         }
-      }
-   }
-}
-
-// Function to change the current lab
-void US_ExpInfo::change_lab( int )
-{
-   // First time through here the combo box might not be displayed yet
-   expInfo.labID = ( cb_lab->getLogicalID() == -1 )
-                   ? expInfo.labID
-                   : cb_lab->getLogicalID();
- 
-   // Save other elements on the page too
-   expInfo.label         = le_label   ->text(); 
-   expInfo.comments      = te_comment ->toPlainText();
-   expInfo.expType       = cb_expType ->currentText();
-
-   cb_changed = true;
-   reset();
-}
-
 // Function to change the current instrument
 void US_ExpInfo::change_instrument( int )
 {
@@ -666,7 +530,52 @@ void US_ExpInfo::change_instrument( int )
    expInfo.comments      = te_comment ->toPlainText();
    expInfo.expType       = cb_expType ->currentText();
 
-   cb_changed = true;
+   lab_changed = true;
+   reset();
+}
+
+void US_ExpInfo::selectRotor( void )
+{
+   US_Rotor::Rotor rotor;
+   rotor.ID = expInfo.rotorID;
+
+   US_Rotor::RotorCalibration calibration;
+   calibration.ID = expInfo.calibrationID;
+
+   US_RotorGui* rotorInfo = new US_RotorGui( true, US_Disk_DB_Controls::Default,
+                                             rotor, calibration );
+
+   connect( rotorInfo, SIGNAL( RotorCalibrationSelected( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
+                       SLOT  ( assignRotor             ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
+   connect( rotorInfo, SIGNAL( RotorCalibrationCanceled( ) ),
+                       SLOT  ( cancelRotor             ( ) ) );
+   rotorInfo->exec();
+}
+
+void US_ExpInfo::assignRotor( US_Rotor::Rotor& rotor, US_Rotor::RotorCalibration& calibration )
+{
+   expInfo.rotorID       = rotor.ID;
+   expInfo.rotorGUID     = rotor.GUID;
+   expInfo.rotorSerial   = rotor.serialNumber;
+   expInfo.rotorName     = rotor.name;
+   expInfo.labID         = rotor.labID;
+   expInfo.calibrationID = calibration.ID;
+   expInfo.rotorCoeff1   = calibration.coeff1;
+   expInfo.rotorCoeff2   = calibration.coeff2;
+   expInfo.rotorUpdated  = calibration.lastUpdated;
+
+   le_rotorDesc->setText( rotor.name + " / " +
+                 calibration.lastUpdated.toString( "yyyy-MM-dd" ) );
+
+   lab_changed = true;
+   setInstrumentList();
+   setOperatorList();
+
+   reset();
+}
+
+void US_ExpInfo::cancelRotor( void )
+{
    reset();
 }
 
@@ -691,10 +600,8 @@ void US_ExpInfo::accept( void )
 
    // Other experiment information
    expInfo.runID         = le_runID         ->text();
-   expInfo.labID         = cb_lab           ->getLogicalID();
    expInfo.instrumentID  = cb_instrument    ->getLogicalID();
    expInfo.operatorID    = cb_operator      ->getLogicalID();
-   expInfo.rotorID       = cb_rotor         ->getLogicalID();
    expInfo.expType       = cb_expType       ->currentText();
    expInfo.runTemp       = le_runTemp       ->text(); 
    expInfo.label         = le_label         ->text(); 
@@ -740,7 +647,6 @@ void US_ExpInfo::ExperimentInfo::clear( void )
    projectDesc        = QString( "" );
    runID              = QString( "" );
    labID              = 0;
-   labGUID            = QString( "" );
    instrumentID       = 0;
    instrumentSerial   = QString( "" );
    operatorID         = 0;
@@ -751,6 +657,7 @@ void US_ExpInfo::ExperimentInfo::clear( void )
    rotorCoeff2        = 0.0;
    rotorGUID          = QString( "" );
    rotorSerial        = QString( "" );
+   rotorName          = QString( "" );
    expType            = QString( "" );
    opticalSystem      = QByteArray( "  " );
    rpms.clear();
@@ -777,7 +684,6 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
       projectDesc   = rhs.projectDesc;
       runID         = rhs.runID;
       labID         = rhs.labID;
-      labGUID       = rhs.labGUID;
       instrumentID  = rhs.instrumentID;
       instrumentSerial  = rhs.instrumentSerial;
       operatorID    = rhs.operatorID;
@@ -787,6 +693,8 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
       rotorCoeff2   = rhs.rotorCoeff2;
       rotorGUID     = rhs.rotorGUID;
       rotorSerial   = rhs.rotorSerial;
+      rotorName     = rhs.rotorName;
+      rotorUpdated  = rhs.rotorUpdated;
       expType       = rhs.expType;
       opticalSystem = rhs.opticalSystem;
       runTemp       = rhs.runTemp;
@@ -819,17 +727,18 @@ void US_ExpInfo::ExperimentInfo::show( void )
             << "projectDesc  = " << projectDesc << '\n'
             << "runID        = " << runID << '\n'
             << "labID        = " << labID << '\n'
-            << "labGUID      = " << labGUID << '\n'
             << "instrumentID = " << instrumentID << '\n'
             << "instrumentSerial = " << instrumentSerial << '\n'
             << "operatorID   = " << operatorID << '\n'
             << "operatorGUID = " << operatorGUID << '\n'
             << "rotorID      = " << rotorID << '\n'
+            << "rotorGUID    = " << rotorGUID << '\n'
+            << "rotorSerial  = " << rotorSerial << '\n'
+            << "rotorName    = " << rotorName << '\n'
             << "calibrationID = " << calibrationID << '\n'
             << "rotorCoeff1  = " << rotorCoeff1 << '\n'
             << "rotorCoeff2  = " << rotorCoeff2 << '\n'
-            << "rotorGUID    = " << rotorGUID << '\n'
-            << "rotorSerial  = " << rotorSerial << '\n'
+            << "rotorUpdated = " << rotorUpdated.toString( "yyyy-MM-dd" ) << '\n'
             << "expType      = " << expType << '\n'
             << "opticalSystem = " << opticalSystem << '\n'
             << "runTemp      = " << runTemp << '\n'

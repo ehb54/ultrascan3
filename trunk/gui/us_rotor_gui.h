@@ -39,6 +39,23 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
       US_RotorGui( bool = false, 
                    int  = US_Disk_DB_Controls::Default );
 
+      /*! \brief Overloaded constructor for the US_RotorGui class. This one is
+                 used when passing rotor and rotor calibration information
+                 into the class.
+          \param signal_wanted A boolean value indicating whether the caller
+                         wants a signal to be emitted
+          \param select_db_disk Indicates whether the default search is on
+                         the local disk or in the DB
+          \param rotorIn A reference to a structure that contains the currently
+                        selected rotor information
+          \param calibrationIn A reference to a structure that contains the currently
+                        selected calibration information
+      */
+      US_RotorGui( bool = false, 
+                   int  = US_Disk_DB_Controls::Default,
+                   const US_Rotor::Rotor&            = US_Rotor::Rotor(),
+                   const US_Rotor::RotorCalibration& = US_Rotor::RotorCalibration() );
+
       /*! \brief Overloaded constructor for the US_RotorGui class. In this case,
                  it expects to be called from US_RotorCalibration
           \param RotorCalibration The calibration structure passed in from the calibration program
@@ -68,9 +85,10 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
    signals:
       
       /*! \brief    Signal to pass the accepted rotor calibration to the calling program
+          \param    Rotor the rotor structure selected by the user
           \param    RotorCalibration the rotor calibration structure selected by the user
       */
-      void RotorCalibrationSelected ( US_Rotor::RotorCalibration );
+      void RotorCalibrationSelected ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& );
    
       /*! \brief    Signal to pass to the calling program if the operation was canceled
       */
@@ -121,9 +139,11 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
       void addRotor           ( void );
       void update_disk_db     ( bool db );
       void selectRotor        ( QListWidgetItem * );
+      US_Rotor::Status readRotor( int, int );
       void deleteRotor        ( void );
       bool readCalibrationProfiles( int );
       void selectCalibration  ( QListWidgetItem * );
+      US_Rotor::Status readCalibration( int, int );
       void viewReport         ( void );
       void deleteCalibration  ( void );
       void updateName         ( const QString & );

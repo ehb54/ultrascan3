@@ -7,6 +7,7 @@
 #include "us_help.h"
 #include "us_selectbox.h"
 #include "us_project.h"
+#include "us_rotor.h"
 
 /*! \class US_ExpInfo
            This class provides the ability to associate raw data with
@@ -40,26 +41,6 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
             QList< CalibrationInfo > calibrationInfo; //!< All available calibration profiles for this rotor
          };
 
-         struct OperatorInfo
-         {
-            int              operatorID;         //!< The personID of the person who operated the centrifuge
-            QString          operatorGUID;       //!< The GUID of the operator
-         };
-
-         struct InstrumentInfo
-         {
-            int              instrumentID;       //!< The identifier of the ultra-centrifuge
-            QString          instrumentSerial;   //!< The serial number of the instrument
-            QList< RotorInfo > rotorInfo;        //!< All available rotors 
-            QList< OperatorInfo > operatorInfo;  //!< Who can operate the instrument
-         };
-
-         struct LabInfo
-         {
-            int              labID;              //!< The lab in which the experiment was conducted
-            QString          labGUID;            //!< The GUID of the lab
-            QList< InstrumentInfo > instrumentInfo; //!< All the instruments in the lab
-         };
       };
 
       //! \brief  Class that contains information about the hardware and other
@@ -78,7 +59,6 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          QString          projectDesc;        //!< A short description of the project
          QString          runID;              //!< The run ID
          int              labID;              //!< The lab in which the experiment was conducted
-         QString          labGUID;            //!< The GUID of the lab
          int              instrumentID;       //!< The identifier of the ultra-centrifuge
          QString          instrumentSerial;   //!< The serial number of the instrument
          int              operatorID;         //!< The personID of the person who operated the centrifuge
@@ -86,9 +66,11 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          int              rotorID;            //!< The rotor that was used
          QString          rotorGUID;          //!< The GUID of the rotor
          QString          rotorSerial;        //!< The serial number of the rotor
+         QString          rotorName;          //!< The name of the rotor
          int              calibrationID;      //!< The ID of the rotor calibration
          double           rotorCoeff1;        //!< The first rotor stretch calibration coefficient
          double           rotorCoeff2;        //!< The second rotor stretch coefficient
+         QDate            rotorUpdated;       //!< The date of the calibration
          QString          expType;            //!< The type of experiment
          QByteArray       opticalSystem;      //!< The type of optical system used
          QList< double >  rpms;               //!< A list of rotor speeds observed during the experiment
@@ -137,28 +119,28 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
    private:
       HardwareInfo           hwInfo;
       ExperimentInfo&        expInfo;
-      bool                   cb_changed;
+      bool                   lab_changed;
 
       US_Help                showHelp;
 
       QStringList            experimentTypes;
       QComboBox*             cb_expType;
 
-      US_SelectBox*          cb_lab;
       US_SelectBox*          cb_instrument;
       US_SelectBox*          cb_operator;
-      US_SelectBox*          cb_rotor;
                           
       QLineEdit*             le_investigator;
       QLineEdit*             le_runID;
       QLineEdit*             le_project;
       QLineEdit*             le_runTemp;
       QLineEdit*             le_label;
+      QLineEdit*             le_rotorDesc;
       QTextEdit*             te_comment;
                           
       QListWidget*           lw_rotorSpeeds;
 
       QPushButton*           pb_project;
+      QPushButton*           pb_rotor;
       QPushButton*           pb_accept;
 
   private slots:
@@ -175,9 +157,10 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       QComboBox* us_expTypeComboBox         ( void );
       void setInstrumentList ( void );
       void setOperatorList   ( void );
-      void setRotorList      ( void );
-      void change_lab        ( int  );
       void change_instrument ( int  );
+      void selectRotor       ( void );
+      void assignRotor       ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& );
+      void cancelRotor       ( void );
       void accept            ( void );
       void cancel            ( void );
       void connect_error     ( const QString& );
