@@ -1,6 +1,7 @@
 //! \file us_reporter.cpp
 
 #include <QApplication>
+#include <QtSvg>
 
 #include "us_reporter.h"
 #include "us_settings.h"
@@ -33,6 +34,21 @@ US_Reporter::US_Reporter() : US_Widgets()
    // set up the GUI
    setWindowTitle( tr( "Report Chooser/Generator" ) );
    setPalette( US_GuiSettings::frameColor() );
+   dbg_level   = US_Settings::us_debug();
+
+   hsclogo .clear();
+   becklogo.clear();
+   us3logo .clear();
+   QString logopath = US_Settings::appBaseDir() + "/etc/";
+
+   if ( US_Settings::debug_match( "hsclogo" ) )
+      hsclogo  = logopath + "logo_hsc.png";
+
+   if ( US_Settings::debug_match( "becklogo" ) )
+      becklogo = logopath + "beckman_logo.png";
+
+   if ( US_Settings::debug_match( "us3logo" ) )
+      us3logo  = logopath + "ultrascan3.png";
 
    // primary layouts
    QHBoxLayout* mainLayout  = new QHBoxLayout( this );
@@ -50,7 +66,6 @@ US_Reporter::US_Reporter() : US_Widgets()
    dctlLayout->setContentsMargins( 0, 0, 0, 0 );
    tctlLayout->setSpacing        ( 1 );
    tctlLayout->setContentsMargins( 0, 0, 0, 0 );
-   dbg_level     = US_Settings::us_debug();
 
    // fill in the GUI components
    QLabel*      lb_runids  = us_label(      tr( "Runs:" ) );
@@ -142,14 +157,14 @@ US_Reporter::US_Reporter() : US_Widgets()
    show();
 }
 
-// filter events to catch right-mouse-button-click on tree widget
+// Filter events to catch right-mouse-button-click on tree widget
 bool US_Reporter::eventFilter( QObject *obj, QEvent *e )
 {
    if ( obj->objectName() == "tree-widget"  &&
         e->type() == QEvent::ContextMenu )
    {  // catch tree row right-mouse click
       rbtn_click = true;
-qDebug() << "eventFilter   rbtn_click" << rbtn_click;
+DbgLv(1) << "eventFilter   rbtn_click" << rbtn_click;
       return false;
    }
 
@@ -159,10 +174,7 @@ qDebug() << "eventFilter   rbtn_click" << rbtn_click;
    }
 }
 
-void US_Reporter::toggle_edits( void )
-{
-}
-
+// Build up an initial sample tree
 void US_Reporter::sample_tree()
 {
    QTreeWidgetItem* pitems[ 8 ];
@@ -228,9 +240,10 @@ void US_Reporter::sample_tree()
    pitems[ 3 ] = item;
 }
 
+// Bring up a context menu when an item click is right-mouse-button
 void US_Reporter::clickedItem( QTreeWidgetItem* item )
 {
-qDebug() << "clickedItem rbtn_click" << rbtn_click;
+DbgLv(1) << "clickedItem rbtn_click" << rbtn_click;
    if ( rbtn_click )
    {
       row_context( item );
@@ -238,29 +251,31 @@ qDebug() << "clickedItem rbtn_click" << rbtn_click;
    rbtn_click = false;
 }
 
+// Propagate checked states when one item has its state changed
 void US_Reporter::changedItem( QTreeWidgetItem* item, int col )
 {
-//qDebug() << "changedItem";
+//DbgLv(1) << "changedItem";
    if ( col == 0  &&  change_tree )
    {  // If column 0 changed (state), set new state in tree
       int state = (int)item->checkState( 0 );
       int row   = item->type() - (int)QTreeWidgetItem::UserType;
       DataDesc* pdesc = (DataDesc*)&adescs.at( row );
 
-      state_children( pdesc, state );
-      state_parents( pdesc, state );
+      state_children( pdesc, state );  // Children get parent's state
+      state_parents( pdesc, state );   // Parents get unchk/part-chk/chk
 
-      mark_checked();
+      mark_checked();                  // Reflect checked state in the tree
    }
 }
 
+// Build and display a context menu for a right-button-selected row
 void US_Reporter::row_context( QTreeWidgetItem* item )
 {
    int row = item->type() - (int)QTreeWidgetItem::UserType;
-qDebug() << " context menu row" << row + 1;
+DbgLv(1) << " context menu row" << row + 1;
    QMenu*         cmenu = new QMenu();
    QAction* showact = new QAction( tr( "Show Details" ), this );
-   QAction* viewact = new QAction( tr( "View Report" ), this );
+   QAction* viewact = new QAction( tr( "View Item" ), this );
    QAction* dataact = new QAction( tr( "Include Table Data" ), this );
 
    connect( showact, SIGNAL( triggered() ),
@@ -277,6 +292,7 @@ qDebug() << " context menu row" << row + 1;
    cmenu->exec( QCursor::pos() );
 }
 
+// Build a list of runIDs from result directories with AUC files in them
 void US_Reporter::build_runids()
 {
    int nruns = 0;
@@ -288,33 +304,34 @@ void US_Reporter::build_runids()
    rdir      = rdir + "/";
 
    for ( int ii = 0; ii < nrdir; ii++ )
-   {
+   {  // Examine the subdirectories of the results directory
       QString     runid  = rdirs.at( ii );
       QString     subdir = rdir + runid;
+      // Get the list of AUC files in the subdirectory
       QStringList afiles = QDir( subdir )
          .entryList( aucfil, QDir::Files, QDir::Name );
       int naucf = afiles.size();
 
       if ( naucf > 0 )
-      {
+      {  // Add the Run to the list for the Runs combo box
          if ( nruns == 0 )
-            sl_runids << "all";
+            sl_runids << "all";        // Prefix the list with "all"
 
-         sl_runids << runid;
+         sl_runids << runid;           // Add a Run to the list
          nruns++;
       }
    }
 
-   cb_runids->addItems( sl_runids );
+   cb_runids->addItems( sl_runids );   // Populate the Runs combo box
    cb_runids->setCurrentIndex( 0 );
 }
 
 void US_Reporter::new_runid( int row )
 {
-qDebug() << "new runID row" << row;
+DbgLv(1) << "new runID row" << row;
    QString runID = sl_runids.at( row );
-qDebug() << "  new runID runid" << runID;
-qDebug() << "WIDGET SIZE" << size();
+DbgLv(1) << "  new runID runid" << runID;
+DbgLv(1) << "WIDGET SIZE" << size();
 
    // Build mappings of names,labels
    build_map( QString( "application" ), appmap );
@@ -341,18 +358,19 @@ qDebug() << "WIDGET SIZE" << size();
    build_tree();
 }
 
+// Build data description records for a specified Run
 void US_Reporter::build_descs( QString& runID, int& linex )
 {
-qDebug() << "build_descs runID" << runID << " linex" << linex;
+DbgLv(1) << "build_descs runID" << runID << " linex" << linex;
 
    QStringList appnames = appmap.keys();
    QStringList extnames = extmap.keys();
    QStringList rptnames = rptmap.keys();
 
    if ( linex == 0 )
-      adescs.clear();
+      adescs.clear();              // If first line, clear list
 
-   cdesc.linen       = linex + 1;
+   cdesc.linen       = linex + 1;  // Compose the Run item description
    cdesc.level       = 0;
    cdesc.checkState  = 0;
    cdesc.children    = 0;
@@ -366,9 +384,9 @@ qDebug() << "build_descs runID" << runID << " linex" << linex;
    cdesc.lastmodDate = "";
 
    QString path      = cdesc.filepath;
-   adescs << cdesc;
+   adescs << cdesc;                // Update the list and line count
    linex++;
-qDebug() << " BD: line lev label" << cdesc.linen << cdesc.level << cdesc.label;
+DbgLv(1) << " BD: line lev label" << cdesc.linen << cdesc.level << cdesc.label;
 
    QString rdir       = US_Settings::resultDir().replace( "\\", "/" )
       + "/" + runID + "/";
@@ -376,10 +394,10 @@ qDebug() << " BD: line lev label" << cdesc.linen << cdesc.level << cdesc.label;
    QStringList afiles = QDir( rdir )
          .entryList( aucfil, QDir::Files, QDir::Name );
    int naucf = afiles.size();
-qDebug() << " BD:  naucf" << naucf << "aucfil" << aucfil[0];
+DbgLv(1) << " BD:  naucf" << naucf << "aucfil" << aucfil[0];
 
    for ( int ii = 0; ii < naucf; ii++ )
-   {
+   {  // Examine the AUC files in the Run's results subdirectory
       QString fname = afiles.at( ii );
       QString trnam = fname.section( ".", -4, -2 ).replace( ".", "" );
       QString tripl = fname.section( ".", -4, -4 ) + " / "
@@ -389,7 +407,7 @@ qDebug() << " BD:  naucf" << naucf << "aucfil" << aucfil[0];
       QStringList rfiles = QDir( path )
          .entryList( trifil, QDir::Files, QDir::Name );
       int nrptf = rfiles.size();
-qDebug() << " BD:   nrptf" << nrptf << "trifil" << trifil[0];
+DbgLv(1) << " BD:   nrptf" << nrptf << "trifil" << trifil[0];
 
       if ( nrptf == 0 ) continue;
 
@@ -410,10 +428,10 @@ qDebug() << " BD:   nrptf" << nrptf << "trifil" << trifil[0];
 
       adescs << cdesc;
       linex++;
-qDebug() << " BD: line lev label" << cdesc.linen << cdesc.level << cdesc.label;
+DbgLv(1) << " BD: line lev label" << cdesc.linen << cdesc.level << cdesc.label;
 
       for ( int jj = 0; jj < appnames.size(); jj++ )
-      {
+      {  // Examine possible application (analysis) names
          QString appname = appnames.at( jj );
          QString aplabel = appmap[ appname ];
                  appname = appname.section( ":", 1, 1 );
@@ -421,7 +439,7 @@ qDebug() << " BD: line lev label" << cdesc.linen << cdesc.level << cdesc.label;
          QStringList rafilt( appname + "." + trnam + ".*.*" );
          QStringList rafiles = QDir( path )
             .entryList( rafilt, QDir::Files, QDir::Name );
-qDebug() << " BD:   nappf" << rafiles.size() << "rafilt" << rafilt[0];
+DbgLv(1) << " BD:   nappf" << rafiles.size() << "rafilt" << rafilt[0];
 
          if ( rafiles.size() < 1 )  continue;
 
@@ -440,20 +458,21 @@ qDebug() << " BD:   nappf" << rafiles.size() << "rafilt" << rafilt[0];
          linex++;
 
          for ( int kk = 0; kk < extnames.size(); kk++ )
-         {
+         {  // Examine possible extensions
             QString extname = extnames.at( kk );
             QString exlabel = extmap[ extname ];
                     extname = extname.section( ":", 1, 1 );
 
             for ( int mm = 0; mm < rptnames.size(); mm++ )
-            {
+            {  // Examine possible reports
                QString rptname = rptnames.at( mm );
                QString rplabel = rptmap[ rptname ];
                        rptname = rptname.section( ":", 1, 1 );
 
+               // Get a specific report file name
                QString rpfname = appname + "." + trnam + "."
                   + rptname + "."  + extname;
-//qDebug() << " BD:     nrptf" << rafiles.size() << "rpfname" << rpfname;
+//DbgLv(1) << " BD:     nrptf" << rafiles.size() << "rpfname" << rpfname;
 
                if ( rafiles.indexOf( rpfname ) < 0 )  continue;
 
@@ -472,7 +491,7 @@ qDebug() << " BD:   nappf" << rafiles.size() << "rafilt" << rafilt[0];
 
                adescs << cdesc;
                linex++;
-qDebug() << " BD: line lev label" << cdesc.linen << cdesc.level << cdesc.label;
+DbgLv(1) << " BD: line lev label" << cdesc.linen << cdesc.level << cdesc.label;
             }  // END: report names loop
          }  // END:  extension names loop
       }  // END:  application names loop
@@ -484,7 +503,7 @@ void US_Reporter::build_map( QString ttag, QMap< QString, QString >& labmap )
 {
    int     kmap = 0;
    QString path = US_Settings::appBaseDir() + "/etc/reports.xml";
-qDebug() << "build_map:  ttag" << ttag << " path" << path;
+DbgLv(1) << "build_map:  ttag" << ttag << " path" << path;
    QFile   file( path );
 
    if ( file.open( QIODevice::ReadOnly | QIODevice::Text ) )
@@ -502,7 +521,7 @@ qDebug() << "build_map:  ttag" << ttag << " path" << path;
             QString label  = a.value( "label" ).toString();
             QString anum   = QString().sprintf( "%3.3i", kmap++ );
             QString akey   = anum + ":" + name;
-qDebug() << "     b_m: name label" << name << label;
+DbgLv(1) << "     b_m: name label" << name << label;
 
             labmap[ akey ] = label;
          }
@@ -514,9 +533,9 @@ else { qDebug() << "***UNABLE TO OPEN FILE" << path; return; }
 int nmap = labmap.count();
 QString nam0 = labmap.keys().at( 0 );
 QString namn = labmap.keys().at( nmap-1 );
-qDebug() << "build_map:  ttag" << ttag << " nmap" << nmap;
-qDebug() << "  b_m: name0,label0" << nam0 << labmap[ nam0 ];
-qDebug() << "  b_m: namen,labeln" << namn << labmap[ namn ];
+DbgLv(1) << "build_map:  ttag" << ttag << " nmap" << nmap;
+DbgLv(1) << "  b_m: name0,label0" << nam0 << labmap[ nam0 ];
+DbgLv(1) << "  b_m: namen,labeln" << namn << labmap[ namn ];
 }
 
 // Build the tree from newly created descriptions
@@ -564,18 +583,18 @@ void US_Reporter::build_tree()
       tw_recs->collapseAll();
 
    resize( 750, 250 );
-qDebug() << "WIDGET SIZE" << size();
+DbgLv(1) << "WIDGET SIZE" << size();
 
    change_tree = true;
 }
 
-// Count total and check children (descendants) for an item
+// Count total and checked children (descendants) for an item
 void US_Reporter::count_children( DataDesc* idesc, int& nchild, int& nchkd )
 {
    int nitems = adescs.size();
    int jndx   = idesc->linen;
    int plev   = idesc->level;
-qDebug() << "  CnCh: jndx nitems plev" << jndx << nitems << plev;
+DbgLv(1) << "  CnCh: jndx nitems plev" << jndx << nitems << plev;
    nchild     = 0;
    nchkd      = 0;
 
@@ -584,13 +603,13 @@ qDebug() << "  CnCh: jndx nitems plev" << jndx << nitems << plev;
       DataDesc* chdesc = (DataDesc*)&adescs.at( jj );
       int       clev   = chdesc->level;
       
-      if ( clev <= plev )  break;  // Break at sibling or end of siblings
+      if ( clev <= plev )  break;   // Break at sibling or end of siblings
 
-      nchild++;                    // Bump count of descendants
+      nchild++;                     // Bump count of descendants
 
       if ( chdesc->checkState == 2 )
-         nchkd++;                  // Bump count of checked descendants
-qDebug() << "  CnCh: jj clev plev nchild nchkd" << jj << clev << plev
+         nchkd++;                   // Bump count of checked descendants
+DbgLv(1) << "  CnCh: jj clev plev nchild nchkd" << jj << clev << plev
  << nchild << nchkd;
    }
 
@@ -613,17 +632,17 @@ void US_Reporter::state_children( DataDesc* idesc, int& state )
    int jndx   = idesc->linen;
    int plev   = idesc->level;
    idesc->checkState = state;       // Set the item's state
-qDebug() << "  StCh: items jndx plev state" << nitems << jndx << plev << state;
+DbgLv(1) << "  StCh: items jndx plev state" << nitems << jndx << plev << state;
 
-   if ( jndx == nitems )  return;
+   if ( jndx == nitems )  return;   // Nothing more to do for the last item
 
    for ( int jj = jndx; jj < nitems; jj++ )
    {  // Examine items from next one to the end
       DataDesc* chdesc = (DataDesc*)&adescs.at( jj );
       int      clev    = chdesc->level;
-qDebug() << "  StCh:   jj clev state" << jj << clev << state;
+DbgLv(1) << "  StCh:   jj clev state" << jj << clev << state;
       
-      if ( clev <= plev )  break;  // Break at sibling or end of siblings
+      if ( clev <= plev )  break;   // Break at sibling or end of siblings
 
       chdesc->checkState = state;   // Make descendant state same as item
    }
@@ -641,22 +660,22 @@ void US_Reporter::state_parents( DataDesc* idesc, int& state )
    {  // Examine items from next above back to the first item
       DataDesc* pdesc = (DataDesc*)&adescs.at( jj );
       int plev  = pdesc->level;
-qDebug() << "  StPa: jj plev clev state" << jj << plev << clev << state;
+DbgLv(1) << "  StPa: jj plev clev state" << jj << plev << clev << state;
 
       if ( plev >= clev )  continue;  // Ignore children or siblings
 
       count_children( pdesc, nchild, nchkd );   // Reset parent state
-qDebug() << "  StPa:   nchild nchkd" << nchild << nchkd;
+DbgLv(1) << "  StPa:   nchild nchkd" << nchild << nchkd;
    }
 
    if ( nchkd > 0 )
-   {
+   {  // If any items are checked, enable View and Save buttons
       pb_view->setEnabled( true );
       pb_save->setEnabled( true );
    }
 
    else
-   {
+   {  // If no items are checked, disable View and Save buttons
       pb_view->setEnabled( false );
       pb_save->setEnabled( false );
    }
@@ -668,12 +687,12 @@ void US_Reporter::mark_checked()
    QList< QTreeWidgetItem* > items = tw_recs->findItems( QString( "" ),
          Qt::MatchFixedString | Qt::MatchWrap | Qt::MatchRecursive, 0 );
    QTreeWidgetItem* item;
-   change_tree = false;
-//qDebug() << "  MkCk: items size" << items.size();
+   change_tree = false;           // Disable slot for item change
+//DbgLv(1) << "  MkCk: items size" << items.size();
 
    for ( int jj = 0; jj < adescs.size(); jj++ )
-   {
-//qDebug() << "  MkCk:   jj" << jj;
+   {  // Set the tree item state according to the data description setting
+//DbgLv(1) << "  MkCk:   jj" << jj;
       item = items.at( jj );
       item->setCheckState( 0, (Qt::CheckState)adescs.at( jj ).checkState );
    }
@@ -684,15 +703,15 @@ void US_Reporter::mark_checked()
 // View
 void US_Reporter::view()
 {
-   write_report();
+   write_report();                       // Write the report file
 
-   showHelp.show_html_file( pagepath );
+   showHelp.show_html_file( pagepath );  // Display it in a browser
 }
 
 // Save
 void US_Reporter::save()
 {
-   if ( write_report() )
+   if ( write_report() )   // Write the report file; tell user the result
    {
       QMessageBox::information( this, tr( "Composite Report" ),
             tr( "A composite report file has been saved:\n" )
@@ -755,93 +774,115 @@ bool US_Reporter::write_report()
    }
 
    pagedir   = pagepath;
-   pagepath  = pagedir + "/index.html";
+   pagepath  = pagedir + "/report_composite.html";
 
-   QString rptpage = QString( "<html><head>\n" );
+   QString rptpage;
+   int logof = ( hsclogo .isEmpty() ? 0 : 4 )
+             + ( becklogo.isEmpty() ? 0 : 2 )
+             + ( us3logo .isEmpty() ? 0 : 1 );
+   if ( ( logof & 4 ) != 0 )
+      rptpage  += "\n<img src=\"" + hsclogo  + "\"/>";
+   if ( ( logof & 2 ) != 0 )
+      rptpage  += "\n<img src=\"" + becklogo + "\"/>";
+   if ( ( logof & 1 ) != 0 )
+   {
+      if ( logof > 1 )
+         rptpage  += "<br>";
+      rptpage  += "\n<img src=\"" + us3logo  + "\"/>";
+   }
+   rptpage  += QString( "\n<html><head>\n" );
    rptpage  += "  <title>Ultrascan III Composite Report </title>";
    rptpage  += "\n</head>\n<body>";
 
-   if ( nsrpts > 1  &&  nsruns == 1 )
-   {  // Multiple reports from a single Run ID
+   if ( nsrpts > 1 )
+   {  // Multiple reports
       QString tripl  = "";
       QString analys = "";
 
-      rptpage   += "<h2> Reports from Run ";
-      rptpage   += se_runids.at( 0 );
-      rptpage   += ": </h2>\n\n";
+      if ( nsruns == 1 )
+      {  // Single Run
+         rptpage   += "<h2> Reports from Run ";
+         rptpage   += se_runids.at( 0 );
+         rptpage   += ": </h2>\n\n";
+      }
+
+      else
+      {  // Multiple Runs
+         rptpage   += "<h2> Reports from Multiple Runs </h2>";
+      }
 
       for ( int ii = 0; ii < nsrpts; ii++ )
-      {
+      {  // Compose an entry in the composite HTML for each component item
          DataDesc* idesc = (DataDesc*)&adescs.at( se_rptrows.at( ii ) );
 
-         if ( idesc->triple != tripl )
-         {
-            tripl      = idesc->triple;
-            rptpage   += "<h3>Triple:  " + tripl + "</h3>\n";
+         // Display a title for the item
+         rptpage   += "<p><b><i>" + idesc->runid + "</i></b>&nbsp;&nbsp;";
+         rptpage   += "<b><i>" + idesc->triple + "</i></b><br>\n";
+         rptpage   += "<b><i>" + idesc->analysis + "</i></b><br>\n";
+         rptpage   += "&nbsp;&nbsp;<b><i>" + idesc->label + "</i></b></p>\n";
+
+         if ( idesc->type.contains( "Plot" ) )
+         {  // The item is a plot, so "<img.." will be used
+            QString fileimg = idesc->filename;
+
+            if ( idesc->filename.contains( ".svg" ) )
+            {  // For SVG, create a PNG equivalent
+               QSvgRenderer svgrend;
+               QString   pathsvg = idesc->filepath;
+               QString   filesvg = idesc->filename;
+                         fileimg = QString( filesvg ).replace( ".svg", ".png" );
+               QString   pathimg = pagedir + "/" + fileimg;
+               svgrend.load( pathsvg );
+               QSize     imgsize = svgrend.defaultSize();
+               QPixmap   pixmap( imgsize );
+               pixmap.fill( Qt::white );
+               QPainter  pa( &pixmap );
+               svgrend.render( &pa );            // Render the SVG to a pixmap
+DbgLv(1) << " size" << imgsize << " filesvg" << filesvg;
+DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
+               if ( ! pixmap.save( pathimg ) )   // Write the image to a PNG
+               {
+                  QMessageBox::warning( this, tr( "Composite Report *ERROR*" ),
+                        tr( "Unable to create an svg-to-png file:\n" )
+                        + pathimg );
+               }
+
+            }
+
+            rptpage   += " <img src=\"" + fileimg + "\"/>\n";
          }
 
-         if ( idesc->analysis != analys )
-         {
-            analys     = idesc->analysis;
-            rptpage   += "<h3>Analysis:  " + analys + "</h3>\n";
+         else
+         {  // The item is HTML or text, so just copy it into the composite
+            QFile fi( idesc->filepath );
+            if ( fi.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            {
+               QTextStream ts( &fi );
+
+               while ( ! ts.atEnd() )
+                  rptpage += ts.readLine() + "\n";
+
+               rptpage += "\n";
+               fi.close();
+            }
          }
-
-         rptpage   += " <a href=\"";
-         rptpage   += idesc->filename;
-         rptpage   += "\">";
-         rptpage   += idesc->label;
-         rptpage   += "</a><br>\n";
-      }
-   }
-
-   else if ( nsrpts > 1 )
-   {  // Multiple reports from multiple Run IDs
-      QString runID  = "";
-      QString tripl  = "";
-      QString analys = "";
-      rptpage   += "<h2> Reports from Multiple Runs </h2>";
-
-      for ( int ii = 0; ii < nsrpts; ii++ )
-      {
-         DataDesc* idesc = (DataDesc*)&adescs.at( se_rptrows.at( ii ) );
-
-         if ( idesc->runid != runID )
-         {
-            runID      = idesc->runid;
-            rptpage   += "<h2>Run:  " + runID + "</h2>\n";
-         }
-
-         if ( idesc->triple != tripl )
-         {
-            tripl      = idesc->triple;
-            rptpage   += "<h3>Triple:  " + tripl + "</h3>\n";
-         }
-
-         if ( idesc->analysis != analys )
-         {
-            analys     = idesc->analysis;
-            rptpage   += "<h3>Analysis:  " + analys + "</h3>\n";
-         }
-
-         rptpage   += " <a href=\"" + idesc->filename + "\">";
-         rptpage   += idesc->label + "</a><br>\n";
-      }
-   }
+      }  // END:  Reports loop
+   }  // END:  Multiple reports
 
    else
-   {  // A single report
+   {  // A single report:  just copy the file to the composite folder
       pagepath  = pagedir + "/" + cdesc.filename;
       QFile::copy( cdesc.filepath, pagepath );
    }
 
 
    if ( nsrpts > 1 )
-   {
+   {  // Complete composite page, output it to a file, and copy components
       rptpage += "\n  </body>\n</html>";
 
       QFile flo( pagepath );
       if ( flo.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
-      {
+      {  // Output the composite page to a file in the composite folder
          QTextStream tso( &flo );
          tso << rptpage;
          flo.close();
@@ -862,51 +903,41 @@ bool US_Reporter::write_report()
 // Count selected reports:  runIDs, reports, htmls, plots
 bool US_Reporter::count_reports()
 {
-   QStringList se_tripls;
-   nsrpts  = 0;
+   nsrpts  = 0;           // Clear counts and lists
    nsruns  = 0;
-   nstrips = 0;
    nshtmls = 0;
    nsplots = 0;
    se_reports.clear();
    se_rptrows.clear();
    se_runids .clear();
-   se_tripls .clear();
 
    for ( int ii = 0; ii < adescs.size(); ii++ )
-   {
+   {  // Review data description records
       DataDesc* idesc = (DataDesc*)&adescs.at( ii );
 
-qDebug() << "cnt_rpt: ii lev state" << ii << idesc->level << idesc->checkState;
+DbgLv(1) << "cnt_rpt: ii lev state" << ii << idesc->level << idesc->checkState;
       if ( idesc->level != 3   ||
            idesc->checkState != 2 )  continue;  // Only reports checked
 
       if ( nsrpts == 0 )
          cdesc   = *idesc;                      // Save first found
 
-      nsrpts++;
+      nsrpts++;                                 // Update reports count,list
       se_reports << idesc->label;
       se_rptrows << ii;
 
       if ( nsruns == 0  ||  !se_runids.contains( idesc->runid ) )
       {  // Save a list of unique runIDs
          nsruns++;
-         se_runids  << idesc->runid;
-         se_tripls  << idesc->triple;
-      }
-
-      else if ( ! se_tripls.contains( idesc->triple ) )
-      {
-         nstrips++;
-         se_tripls  << idesc->triple;
+         se_runids  << idesc->runid;            // Update runs count,list
       }
 
       if ( idesc->type.contains( "HTML" ) )
-         nshtmls++;
+         nshtmls++;                             // Update HTMLs count
 
       else if ( idesc->type.contains( "Plot" ) )
-         nsplots++;
-qDebug() << "cnt_rpt:  ns rpts,runs,htmls,plots" << nsrpts << nsruns
+         nsplots++;                             // Update PLOTs count
+DbgLv(1) << "cnt_rpt:  ns rpts,runs,htmls,plots" << nsrpts << nsruns
  << nshtmls << nsplots;
    }
 
@@ -924,31 +955,30 @@ void US_Reporter::item_view()
    QString mtext;
 
    if ( cdesc.type.contains( "Plot" ) )
-   {
+   {  // For plots, write an <img ...> line
       mtext = QString( "<head>\n<title>" ) + cdesc.filepath +
               QString( "</title>\n</head>\n<img src=\"" ) + cdesc.filepath +
               QString( "\"/>\n" );
    }
 
    else
-   {
+   {  // For HTML, simple copy the file itself
       QFile fi( cdesc.filepath );
       if ( fi.open( QIODevice::ReadOnly | QIODevice::Text ) )
       {
          QTextStream ts( &fi );
 
          while ( ! ts.atEnd() )
-         {
-            mtext += ts.readLine();
-         }
+            mtext += ts.readLine() + "\n";
 
          mtext += "\n";
          fi.close();
       }
    }
 
+   // Display the report (HTML or PLOT) in an editor dialog
    US_Editor* editd = new US_Editor( US_Editor::LOAD, true, fileexts );
-   editd->setWindowTitle( tr( "Report Tree Item Details" ) );
+   editd->setWindowTitle( tr( "Report Tree Item View" ) );
    editd->move( QCursor::pos() + QPoint( 100, 100 ) );
    editd->resize( 600, 500 );
    editd->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
@@ -997,6 +1027,8 @@ void US_Reporter::load_profile()
 {
    QStringList selects;
    QString rselect;
+
+   // Open a file dialog to get the profile file name
    QString fn = QFileDialog::getOpenFileName( this,
          tr( "Load Report-Select Parameters in:" ),
          US_Settings::appBaseDir() + "/etc",
@@ -1015,7 +1047,7 @@ void US_Reporter::load_profile()
       QXmlStreamAttributes att;
 
       while ( ! xml.atEnd() )
-      {
+      {  // Get all unique analysis+report selections from the XML file
          xml.readNext();
 
          if ( xml.isStartElement()  &&  xml.name() == "selection" )
@@ -1025,10 +1057,10 @@ void US_Reporter::load_profile()
             QString analys = att.value( "analysis" ).toString();
             QString report = att.value( "report"   ).toString();
 
-            rselect = analys + report;
+            rselect = analys + report;   // Concatenated selection
 
             if ( selects.isEmpty()  ||  ! selects.contains( rselect ) )
-               selects << rselect;
+               selects << rselect;       // Add a new one to the list
          }
       }
 
@@ -1036,26 +1068,25 @@ void US_Reporter::load_profile()
    }
 
    for ( int ii = 0; ii < adescs.size(); ii++ )
-   {
+   {  // Propagate selections to report tree
       DataDesc* idesc = (DataDesc*)&adescs.at( ii );
 
-      if ( idesc->level != 3 )  continue;
+      if ( idesc->level != 3 )  continue;                  // Only reports
 
-      rselect = idesc->analysis + idesc->label;
+      rselect   = idesc->analysis + idesc->label;          // Potential select
+      int state = ( selects.contains( rselect ) ) ? 2 : 0; // Selected?
 
-      if ( selects.contains( rselect ) )
-         idesc->checkState  = 2;
+      state_children( idesc, state );                      // Propagate select
+      state_parents( idesc, state );
 
-      else
-         idesc->checkState  = 0;
+      mark_checked();
    }
-
-   mark_checked();
 }
 
 // Save a report-selection profile
 void US_Reporter::save_profile()
 {
+   // Open a file dialog to get a name for the profile save file
    QString fn = QFileDialog::getSaveFileName( this,
          tr( "Save Report-Selection Parameters in:" ),
          US_Settings::appBaseDir() + "/etc",
@@ -1065,6 +1096,7 @@ void US_Reporter::save_profile()
 
    if ( fn.isEmpty() )  return;
 
+   // Allow variations with/without "rs_" and ".xml"
    fn     = fn.replace( "\\", "/" );
    int jj = fn.lastIndexOf( "/" ) + 1;
    QString fdir = fn.left( jj );
@@ -1108,7 +1140,7 @@ void US_Reporter::save_profile()
    bool saved_ok = false;
 
    if ( xfo.open( QIODevice::WriteOnly | QIODevice::Text ) )
-   {
+   {  // Write unique selections to the XML file
       QXmlStreamWriter xml( &xfo );
       xml.setAutoFormatting( true );
       xml.writeStartDocument();
@@ -1117,11 +1149,12 @@ void US_Reporter::save_profile()
       xml.writeAttribute   ( "version","1.0" );
 
       for ( int ii = 0; ii < adescs.size(); ii++ )
-      {
+      {  // Examine all the data records, looking for selections
          DataDesc* idesc = (DataDesc*)&adescs.at( ii );
 
          if ( idesc->level != 3  ||  idesc->checkState != 2 )  continue;
 
+         // Level-3 (reports) that are selected:  output an element
          xml.writeStartElement( "selection" );
          xml.writeAttribute   ( "analysis", idesc->analysis );
          xml.writeAttribute   ( "report",   idesc->label    );
