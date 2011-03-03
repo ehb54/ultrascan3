@@ -125,7 +125,7 @@ CREATE PROCEDURE new_noise ( p_personGUID    CHAR(36),
                              p_modelID       INT(11),
                              p_modelGUID     CHAR(36),
                              p_noiseType     ENUM( 'ri_noise', 'ti_noise' ),
-                             p_noiseVector   TEXT )         -- an xml file
+                             p_xml           TEXT )         -- an xml file
   MODIFIES SQL DATA
 
 BEGIN
@@ -209,7 +209,7 @@ BEGIN
       modelID      = l_modelID,
       modelGUID    = l_modelGUID,
       noiseType    = p_noiseType,
-      noiseVector  = p_noiseVector,
+      xml          = p_xml,
       timeEntered  = NOW();
 
     IF ( duplicate_key = 1 ) THEN
@@ -241,7 +241,7 @@ CREATE PROCEDURE update_noise ( p_personGUID    CHAR(36),
                                 p_modelID       INT(11),
                                 p_modelGUID     CHAR(36),
                                 p_noiseType     ENUM( 'ri_noise', 'ti_noise' ),
-                                p_noiseVector   TEXT )         -- an xml file
+                                p_xml           TEXT )         -- an xml file
   MODIFIES SQL DATA
 
 BEGIN
@@ -325,7 +325,7 @@ BEGIN
       modelID      = l_modelID,
       modelGUID    = l_modelGUID,
       noiseType    = p_noiseType,
-      noiseVector  = p_noiseVector,
+      xml          = p_xml,
       timeEntered  = NOW()
     WHERE noiseID  = p_noiseID;
 
@@ -497,9 +497,9 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   noiseGUID, editedDataID, modelID, modelGUID, noiseType, noiseVector,
+      SELECT   noiseGUID, editedDataID, modelID, modelGUID, noiseType, xml,
                timestamp2UTC( timeEntered ) AS UTC_timeEntered,
-               MD5( noiseVector ) AS checksum, LENGTH( noiseVector ) AS size
+               MD5( xml ) AS checksum, LENGTH( xml ) AS size
       FROM     noise 
       WHERE    noiseID = p_noiseID;
 

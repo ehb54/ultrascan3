@@ -115,11 +115,11 @@ END$$
 
 -- INSERTs a new model with the specified information
 DROP PROCEDURE IF EXISTS new_model$$
-CREATE PROCEDURE new_model ( p_personGUID    CHAR(36),
+CREATE PROCEDURE new_model ( p_personGUID  CHAR(36),
                              p_password    VARCHAR(80),
                              p_modelGUID   CHAR(36),
                              p_description TEXT,
-                             p_contents    TEXT,
+                             p_xml         TEXT,
                              p_editGUID    CHAR(36),
                              p_ownerID     INT )
   MODIFIES SQL DATA
@@ -165,7 +165,7 @@ BEGIN
       editedDataID = l_editID,
       modelGUID    = p_modelGUID,
       description  = p_description,
-      contents     = p_contents,
+      xml          = p_xml,
       lastUpdated  = NOW();
 
     IF ( duplicate_key = 1 ) THEN
@@ -193,11 +193,11 @@ END$$
 
 -- UPDATEs an existing model with the specified information
 DROP PROCEDURE IF EXISTS update_model$$
-CREATE PROCEDURE update_model ( p_personGUID    CHAR(36),
+CREATE PROCEDURE update_model ( p_personGUID  CHAR(36),
                                 p_password    VARCHAR(80),
                                 p_modelID     INT,
                                 p_description TEXT,
-                                p_contents    TEXT,
+                                p_xml         TEXT,
                                 p_editGUID    CHAR(36) )
   MODIFIES SQL DATA
 
@@ -233,7 +233,7 @@ BEGIN
     UPDATE model SET
       editedDataID = l_editID,
       description  = p_description,
-      contents     = p_contents,
+      xml          = p_xml,
       lastUpdated  = NOW()
     WHERE modelID  = p_modelID;
 
@@ -405,9 +405,9 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   modelGUID, description, contents, personID,
+      SELECT   modelGUID, description, xml, personID,
                timestamp2UTC( lastUpdated ) AS UTC_lastUpdated,
-               MD5( contents ) AS checksum, LENGTH( contents ) AS size
+               MD5( xml ) AS checksum, LENGTH( xml ) AS size
       FROM     model m, modelPerson mp
       WHERE    m.modelID = mp.modelID
       AND      m.modelID = p_modelID;
