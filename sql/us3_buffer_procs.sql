@@ -388,7 +388,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   bufferGUID, description, compressibility, pH, viscosity, density, personID
+      SELECT   bufferGUID, description, compressibility, pH, viscosity, density, personID, private
       FROM     buffer b, bufferPerson bp
       WHERE    b.bufferID = bp.bufferID
       AND      b.bufferID = p_bufferID;

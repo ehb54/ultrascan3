@@ -748,9 +748,9 @@ CREATE  TABLE IF NOT EXISTS model (
   MCIteration int(11) NOT NULL DEFAULT 1,
   variance double NOT NULL default 0,
   description VARCHAR(80) NULL DEFAULT NULL,
-  contents TEXT NULL DEFAULT NULL ,
+  xml LONGTEXT NULL DEFAULT NULL ,
   globalType ENUM( 'NORMAL', 'MENISCUS', 'GLOBAL', 'SUPERGLOBAL' ) DEFAULT 'NORMAL',
-  lastUpdated DATETIME NULL ,
+  lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (modelID) ,
   INDEX ndx_model_editedDataID (editedDataID ASC) ,
   CONSTRAINT fk_model_editDataID
@@ -796,8 +796,8 @@ CREATE TABLE IF NOT EXISTS noise (
   modelID int(11) NOT NULL ,
   modelGUID CHAR(36) NULL ,
   noiseType enum('ri_noise', 'ti_noise') default 'ti_noise',
-  noiseVector TEXT ,                    -- an xml file
-  timeEntered DATETIME NULL ,
+  xml LONGTEXT ,
+  timeEntered TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY ( noiseID ) ,
   INDEX ndx_noise_editedDataID (editedDataID ASC) ,
   INDEX ndx_noise_modelID (modelID ASC) ,
@@ -824,6 +824,7 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisRequest (
   HPCAnalysisRequestGUID CHAR(36) NOT NULL,
   investigatorGUID CHAR(36) NOT NULL,     -- maps to person.personGUID
   submitterGUID CHAR(36) NOT NULL,        -- maps to person.personGUID
+  email VARCHAR(128) DEFAULT NULL,        -- could have multiple comma-separated
   experimentID int(11) NULL,
   requestXMLFile text NULL ,
   editXMLFilename varchar(255) NOT NULL default '',
@@ -904,14 +905,16 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisResult (
   endTime datetime default NULL,          -- needed?
   queueStatus enum( 'queued','failed','running','aborted','completed') default 'queued',
   lastMessage text default NULL,          -- from nnls
-  updateTime datetime default NULL,
-  EPRFile TEXT DEFAULT NULL,
+  updateTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  gfacID TEXT DEFAULT NULL,
   jobfile TEXT,
   wallTime int(11) NOT NULL default '0',
   CPUTime double NOT NULL default '0',
   CPUCount int(11) default '0',
   max_rss int(11) default '0',            -- from nnls finished message
   calculatedData TEXT,                          -- an xml file
+  stderr LONGTEXT DEFAULT NULL,
+  stdout LONGTEXT DEFAULT NULL,
   PRIMARY KEY (HPCAnalysisResultID),
   INDEX ndx_HPCAnalysisResult_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
   CONSTRAINT fk_HPCAnalysisResult_HPCAnalysisRequestID
