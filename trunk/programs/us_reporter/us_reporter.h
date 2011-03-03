@@ -9,6 +9,10 @@
 #include "us_help.h"
 #include "us_settings.h"
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
 class US_EXTERN US_Reporter : public US_Widgets
 {
    Q_OBJECT
@@ -78,11 +82,13 @@ class US_EXTERN US_Reporter : public US_Widgets
       QString       investig;
       QString       pagedir;
       QString       pagepath;
+      QString       hsclogo;
+      QString       becklogo;
+      QString       us3logo;
 
 
    private slots:
 
-      void toggle_edits  ( void );
       void sample_tree   ( void );
       void clickedItem   ( QTreeWidgetItem* );
       void changedItem   ( QTreeWidgetItem*, int );

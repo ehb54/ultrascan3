@@ -1,6 +1,6 @@
 include( ../../gui.pri )
 
-QT           += xml
+QT           += xml svg
 
 TARGET        = us_reporter
 
