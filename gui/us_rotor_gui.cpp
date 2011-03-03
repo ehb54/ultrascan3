@@ -32,19 +32,6 @@ US_RotorGui::US_RotorGui(
 
 US_RotorGui::US_RotorGui(
      bool  signal_wanted,
-     int   select_db_disk
-     ) : US_WidgetsDialog(0, 0)
-{
-   this->savingCalibration = false;
-   this->signal            = signal_wanted;
-
-   setupGui( select_db_disk );
-
-   reset();
-}
-
-US_RotorGui::US_RotorGui(
-     bool  signal_wanted,
      int   select_db_disk,
      const US_Rotor::Rotor& rotorIn,
      const US_Rotor::RotorCalibration& calibrationIn
@@ -61,20 +48,24 @@ US_RotorGui::US_RotorGui(
 
    setupGui( select_db_disk );
 
-   status = readRotor      ( select_db_disk, rotorID );
-   status = readCalibration( select_db_disk, calibrationID );
+   if ( rotorID > 0 && calibrationID > 0 )
+   {
+      // Then this information was passed; fill in with our own data
+      status = readRotor      ( select_db_disk, rotorID );
+      status = readCalibration( select_db_disk, calibrationID );
 
-   // Now select the current rotor
-   QList< QListWidgetItem* > items 
-      = lw_rotors->findItems( QString::number( rotorID ), Qt::MatchStartsWith );
-   if ( items.count() == 1 )                    // should be exactly 1
-      lw_rotors->setCurrentItem( items[ 0 ] );
-
-   // And the current calibration
-   items.clear();
-   items = lw_calibrations->findItems( QString::number( calibrationID ), Qt::MatchStartsWith );
-   if ( items.count() == 1 )
-      lw_calibrations->setCurrentItem( items[ 0 ] );
+      // Now select the current rotor
+      QList< QListWidgetItem* > items 
+         = lw_rotors->findItems( QString::number( rotorID ), Qt::MatchStartsWith );
+      if ( items.count() == 1 )                    // should be exactly 1
+         lw_rotors->setCurrentItem( items[ 0 ] );
+   
+      // And the current calibration
+      items.clear();
+      items = lw_calibrations->findItems( QString::number( calibrationID ), Qt::MatchStartsWith );
+      if ( items.count() == 1 )
+         lw_calibrations->setCurrentItem( items[ 0 ] );
+   }
 
    reset();
 }
