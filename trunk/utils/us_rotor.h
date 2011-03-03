@@ -216,7 +216,7 @@ class US_EXTERN US_Rotor
       AbstractRotor     currentAbstractRotor;   //!< Current abstractRotor structure
       Rotor             currentRotor;           //!< Current rotor structure
       RotorCalibration  currentCalibration;     //!< Current calibration structure
-      int               labID;
+      int               labID;                  //!< ID of the current lab
 
       /*! \brief A function to read information about all labs from DB
 
@@ -260,17 +260,17 @@ class US_EXTERN US_Rotor
 
           \param    profiles A reference to where the rotor calibration profiles 
                              will be stored
-          \param    rotorID The ID of the rotor 
+          \param    rotorID  The ID of the rotor 
       */
       static Status readCalibrationProfilesDisk( QVector< RotorCalibration >&, int );
 
       /*! \brief    Function to find the filename of a rotor or calibration
                     on disk, if it exists.
                     Returns true if successful, false otherwise
-          \param    fileMask Describes what the filenames look like
+          \param    fileMask  Describes what the filenames look like
           \param    lookupTag The xml tag to look for
-          \param    lookupID The ID to look for on disk
-          \param    filename The function will return the filename here if it is found
+          \param    lookupID  The ID to look for on disk
+          \param    filename  The function will return the filename here if it is found
       */
       static bool diskFilename( const QString& ,
                                 const QString& ,

@@ -30,15 +30,6 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
          
    public:
 
-      /*! \brief Generic constructor for the US_RotorGui class.
-          \param signal_wanted A boolean value indicating whether the caller
-                         wants a signal to be emitted
-          \param select_db_disk Indicates whether the default search is on
-                         the local disk or in the DB
-      */
-      US_RotorGui( bool = false, 
-                   int  = US_Disk_DB_Controls::Default );
-
       /*! \brief Overloaded constructor for the US_RotorGui class. This one is
                  used when passing rotor and rotor calibration information
                  into the class.
