@@ -12,7 +12,9 @@ namespace US_WinData
     P_CONFIG = 300, P_EDIT,                // Edit Menu
     
     P_SECOND,       P_DCDT,   P_VHWE,      // Velocity Menu
-                    P_GAINIT, P_FEMA,
+                    P_2DSA,   P_GAINIT,
+                    P_FEMA,
+
     P_CONVERT,      P_FIT,    P_COLORGRAD, // Utilities menu
                     P_RPTGEN,
     
@@ -86,6 +88,11 @@ namespace US_WinData
     { P_VHWE,  0, 0, "us_vhw_enhanced",
       QObject::tr( "Loading van Holde - Weischet Analysis" ),
       QObject::tr( "van Holde - Weischet Analysis Program" )
+    },
+    
+    { P_2DSA,  0, 0, "us_2dsa",
+      QObject::tr( "Loading 2-D Spectrum Analysis" ),
+      QObject::tr( "2-D Spectrum Analysis Program" )
     },
     
     { P_GAINIT,  0, 0, "us_ga_init",

@@ -111,6 +111,7 @@ class US_EXTERN US_Reporter : public US_Widgets
       void item_data     ( void );
       void load_profile  ( void );
       void save_profile  ( void );
+      void copy_logos    ( QString );
 
       void help          ( void )
       { showHelp.show_help( "reporter.html" ); };
