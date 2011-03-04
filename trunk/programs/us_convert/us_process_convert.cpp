@@ -317,11 +317,11 @@ void US_ProcessConvert::writeConvertedData(
       }
 
       // Let's see if there is a triple guid already (from a previous save)
+      // Otherwise the rawGUID characters should already be initialized to 0
       QString uuidc = 
          US_Util::uuid_unparse( (unsigned char*) rawConvertedData[ i ].rawGUID );
-      QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
-      if ( saveGUIDs && rx.exactMatch( uuidc ) ) 
+      if ( saveGUIDs && uuidc != "00000000-0000-0000-0000-000000000000" ) 
       {
          // Make sure xml file matches
          memcpy( triples [ i ].tripleGUID, (char*) rawConvertedData[ i ].rawGUID, 16 );
@@ -338,6 +338,7 @@ void US_ProcessConvert::writeConvertedData(
       }
 
       // Same with solutionGUID
+      QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
       if ( ! saveGUIDs || ! rx.exactMatch( triples[ i ].solution.solutionGUID ) )
       {
          triples[ i ].solution.solutionGUID = US_Util::new_guid();
@@ -565,7 +566,7 @@ void US_ProcessConvert::convert(
    if ( ccwLegacyData.isEmpty() ) return ; 
 
    strncpy( newRawData.type, runType.toAscii().constData(), 2 );
-   // GUID is done by us_convert.
+   memset( newRawData.rawGUID, 0, 16 );           // Initialize to 0's
    newRawData.cell        = cell;
    newRawData.channel     = channel;
    newRawData.description = ccwLegacyData[ 0 ].description;
@@ -790,7 +791,7 @@ void US_ProcessConvert::splitRAData(
 
             // Modify the raw data information
             strncpy( newRawData.type, oldRawData[ i ].type, 2 );
-            // rawGUID is done by us_convert ??
+            memset( newRawData.rawGUID, 0, 16 );
             newRawData.cell        = oldRawData[ i ].cell;
             newRawData.channel     = oldRawData[ i ].channel + (j-1) * 2;
             newRawData.description = oldRawData[ i ].description;
