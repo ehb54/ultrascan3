@@ -739,6 +739,7 @@ bool US_Reporter::write_report()
       return false;
    }
 
+   // Create a composite directory
    if ( nsruns == 1 )
       pagedir   = cdesc.runid;
    else
@@ -747,25 +748,13 @@ bool US_Reporter::write_report()
    pagedir   = pagedir + QDateTime::currentDateTime().toString( "-yyMMddhhmm" );
 
    QString rptpath = US_Settings::reportDir();
-   QString cmpfile = "composite";
-   QString cmppath = rptpath + "/" + cmpfile;
-   QDir    rptdir( rptpath );
+   QString cmppath = rptpath + "/composite";
+   pagepath        = cmppath + "/" + pagedir;
+   QDir    dirrpt( rptpath );
 
-   if ( ! rptdir.exists( cmpfile ) )
+   if ( ! dirrpt.exists( pagepath ) )
    {
-      if ( ! rptdir.mkdir( cmpfile ) )
-      {
-         QMessageBox::warning( this, tr( "File Error" ),
-               tr( "Could not create the directory:\n" ) + cmppath );
-         return false;
-      }
-   }
-
-   pagepath  = cmppath + "/" + pagedir;
-   QDir    cmpdir( cmppath );
-   if ( ! cmpdir.exists( pagedir ) )
-   {
-      if ( ! cmpdir.mkdir( pagedir ) )
+      if ( ! dirrpt.mkpath( pagepath ) )
       {
          QMessageBox::warning( this, tr( "File Error" ),
                tr( "Could not create the directory:\n" ) + pagepath );
@@ -777,22 +766,74 @@ bool US_Reporter::write_report()
    pagepath  = pagedir + "/report_composite.html";
 
    QString rptpage;
+
+   // Compose the report header
+   rptpage   = QString( "<?xml version=\"1.0\"?>\n" );
+   rptpage  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
+   rptpage  += "                      \"http://www.w3.org/TR/xhtml1/DTD"
+               "/xhtml1-strict.dtd\">\n";
+   rptpage  += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
+               " xml:lang=\"en\" lang=\"en\">\n";
+   rptpage  += "  <head>\n";
+   rptpage  += "  <title> Ultrascan III Composite Report </title>\n";
+   rptpage  += "  <meta http-equiv=\"Content-Type\" content="
+               "\"text/html; charset=iso-8859-1\"/>\n";
+   rptpage  += "  <style type=\"text/css\" >\n";
+   rptpage  += "    td { padding-right: 1em; }\n";
+   rptpage  += "    @media print\n";
+   rptpage  += "    {\n";
+   rptpage  += "      .page\n";
+   rptpage  += "      {\n";
+   rptpage  += "        page-break-before: always;\n";
+   rptpage  += "      }\n";
+   rptpage  += "    }\n";
+   rptpage  += "    .parahead\n";
+   rptpage  += "    {\n";
+   rptpage  += "      font-weight: bold;\n";
+   rptpage  += "      font-style:  italic;\n";
+   rptpage  += "    }\n";
+   rptpage  += "  </style>\n";
+   rptpage  += "  </head>\n  <body>\n";
+
+   // Possibly prefix the page with logos
+   copy_logos( cmppath );    // Possibly add ./etc with logos
+DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
+
    int logof = ( hsclogo .isEmpty() ? 0 : 4 )
              + ( becklogo.isEmpty() ? 0 : 2 )
              + ( us3logo .isEmpty() ? 0 : 1 );
-   if ( ( logof & 4 ) != 0 )
-      rptpage  += "\n<img src=\"" + hsclogo  + "\"/>";
-   if ( ( logof & 2 ) != 0 )
-      rptpage  += "\n<img src=\"" + becklogo + "\"/>";
-   if ( ( logof & 1 ) != 0 )
+
+   if ( logof != 0 )
    {
-      if ( logof > 1 )
-         rptpage  += "<br>";
-      rptpage  += "\n<img src=\"" + us3logo  + "\"/>";
+      rptpage  += "    <p>\n";
+
+      if ( ( logof & 4 ) != 0 )
+         rptpage  += "      <img src=\"" + hsclogo
+                   + "\" alt=\"HSC logo\"/>\n";
+
+      if ( ( logof & 2 ) != 0 )
+         rptpage  += "      <img src=\"" + becklogo
+                   + "\" alt=\"Beckman logo\"/>";
+
+      if ( ( logof & 1 ) != 0 )
+      {
+         if ( logof > 1 )
+            rptpage  += "<br/>";
+
+         rptpage  += "\n      <img src=\"" + us3logo
+                   + "\" alt=\"Ultrascan III logo\"/>\n";
+      }
+
+      else
+         rptpage  += "\n";
+
+      rptpage  += "    </p>\n";
    }
-   rptpage  += QString( "\n<html><head>\n" );
-   rptpage  += "  <title>Ultrascan III Composite Report </title>";
-   rptpage  += "\n</head>\n<body>";
+
+   // Compose the body of the composite report
+   QString ppageclass = "    <p class=\"page parahead\">\n";
+   QString pheadclass = "    <p class=\"parahead\">\n";
+   int  jplot   = 0;
 
    if ( nsrpts > 1 )
    {  // Multiple reports
@@ -801,27 +842,56 @@ bool US_Reporter::write_report()
 
       if ( nsruns == 1 )
       {  // Single Run
-         rptpage   += "<h2> Reports from Run ";
+         rptpage   += "    <h2> Reports from Run ";
          rptpage   += se_runids.at( 0 );
          rptpage   += ": </h2>\n\n";
       }
 
       else
       {  // Multiple Runs
-         rptpage   += "<h2> Reports from Multiple Runs </h2>";
+         rptpage   += "    <h2> Reports from Multiple Runs </h2>";
       }
 
       for ( int ii = 0; ii < nsrpts; ii++ )
       {  // Compose an entry in the composite HTML for each component item
          DataDesc* idesc = (DataDesc*)&adescs.at( se_rptrows.at( ii ) );
+         bool is_plot = ( idesc->type.contains( "Plot" ) );
+
+         // Possible set for page printing
+         if ( is_plot )
+         {  // Is a plot:  new page if 2nd or after non-plot
+            if ( jplot != 1  &&  ii > 0 )
+            {  // Previous was 2nd plot in div or non-plot
+               rptpage   += ppageclass;
+               jplot      = 1;       // mark as 1st plot on page
+            }
+
+            else
+            {  // Previous was the 1st plot on the page
+               rptpage   += pheadclass;
+               jplot      = 2;       // mark as 2nd plot on page
+            }
+         }
+
+         else if ( ii > 0 )
+         {  // Is not a plot and not the 1st item:  starts a new page
+            rptpage   += ppageclass;
+            jplot      = 0;          // mark as not a plot
+         }
+
+         else
+         {
+            // Is not a plot and is the 1st item:    not a new page
+            rptpage   += pheadclass;
+         }
 
          // Display a title for the item
-         rptpage   += "<p><b><i>" + idesc->runid + "</i></b>&nbsp;&nbsp;";
-         rptpage   += "<b><i>" + idesc->triple + "</i></b><br>\n";
-         rptpage   += "<b><i>" + idesc->analysis + "</i></b><br>\n";
-         rptpage   += "&nbsp;&nbsp;<b><i>" + idesc->label + "</i></b></p>\n";
+         rptpage   += "      " + idesc->runid + " &nbsp;&nbsp;&nbsp;";
+         rptpage   += idesc->triple + "<br/>\n      ";
+         rptpage   += idesc->analysis + "<br/>\n       &nbsp;&nbsp;&nbsp;";
+          rptpage   += idesc->label + "\n    </p>\n";
 
-         if ( idesc->type.contains( "Plot" ) )
+         if ( is_plot )
          {  // The item is a plot, so "<img.." will be used
             QString fileimg = idesc->filename;
 
@@ -840,7 +910,7 @@ bool US_Reporter::write_report()
                svgrend.render( &pa );            // Render the SVG to a pixmap
 DbgLv(1) << " size" << imgsize << " filesvg" << filesvg;
 DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
-               if ( ! pixmap.save( pathimg ) )   // Write the image to a PNG
+               if ( ! pixmap.save( pathimg ) )   // Write the pixmap as a PNG
                {
                   QMessageBox::warning( this, tr( "Composite Report *ERROR*" ),
                         tr( "Unable to create an svg-to-png file:\n" )
@@ -849,7 +919,9 @@ DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
 
             }
 
-            rptpage   += " <img src=\"" + fileimg + "\"/>\n";
+            // Embed the plot in the composite report
+            rptpage   += "    <div><img src=\"" + fileimg 
+                         + "\" alt=\"" + idesc->label + "\"/></div>\n\n";
          }
 
          else
@@ -860,25 +932,36 @@ DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
                QTextStream ts( &fi );
 
                while ( ! ts.atEnd() )
-                  rptpage += ts.readLine() + "\n";
+               {
+                  QString ln = ts.readLine() + "\n";
+
+                  if ( ln.contains( "</body>" ) )
+                  {
+                     if ( ln.contains( "</table>" ) )  // strip body/head
+                        ln = "</table>\n";
+                     else                              // skip body/head
+                        continue;
+                  }
+
+                  if ( ln.contains( "html>"  )  ||     // skip html/head/body
+                       ln.contains( "head>"  )  ||     //  /style
+                       ln.contains( "body>"  )  ||
+                       ln.contains( "<style" ) )    continue;
+
+                  if ( ln.contains( "<br>" ) )         // correct BR format
+                     ln.replace( "<br>", "<br/>" );
+
+                  rptpage += ln;
+               }
 
                rptpage += "\n";
                fi.close();
             }
          }
       }  // END:  Reports loop
-   }  // END:  Multiple reports
 
-   else
-   {  // A single report:  just copy the file to the composite folder
-      pagepath  = pagedir + "/" + cdesc.filename;
-      QFile::copy( cdesc.filepath, pagepath );
-   }
-
-
-   if ( nsrpts > 1 )
-   {  // Complete composite page, output it to a file, and copy components
-      rptpage += "\n  </body>\n</html>";
+      // Complete composite page, output it to a file, and copy components
+      rptpage += "  </body>\n</html>";
 
       QFile flo( pagepath );
       if ( flo.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
@@ -895,6 +978,12 @@ DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
 
          QFile::copy( idesc->filepath, pagedir + "/" + idesc->filename );
       }
+   }  // END:  Multiple reports
+
+   else
+   {  // A single report:  just copy the file to the composite folder
+      pagepath  = pagedir + "/" + cdesc.filename;
+      QFile::copy( cdesc.filepath, pagepath );
    }
 
    return true;
@@ -958,7 +1047,7 @@ void US_Reporter::item_view()
    {  // For plots, write an <img ...> line
       mtext = QString( "<head>\n<title>" ) + cdesc.filepath +
               QString( "</title>\n</head>\n<img src=\"" ) + cdesc.filepath +
-              QString( "\"/>\n" );
+              QString( "\" alt=\"" + cdesc.label + "\" />\n" );
    }
 
    else
@@ -1180,5 +1269,66 @@ void US_Reporter::save_profile()
             tr( "Please note:\n\n"
                 "The Report-Select Profile could not be saved to:\n\n" ) +
             fn );
+}
+
+// Create ./etc if need be and put copies of any logos there
+void US_Reporter::copy_logos( QString cmppath )
+{
+   if ( hsclogo.isEmpty()  &&  becklogo.isEmpty()  &&  us3logo.isEmpty() )
+      return;                           // Don't bother if no logos exist
+
+   if ( hsclogo .startsWith( ".." )  &&
+        becklogo.startsWith( ".." )  &&
+        us3logo .startsWith( ".." ) )
+      return;                           // Don't bother if already converted
+
+   // Rename logo paths using a relative path
+   QString hscorig  = hsclogo;
+   QString beckorig = becklogo;
+   QString us3orig  = us3logo;
+   QString etcpath  = US_Settings::appBaseDir() + "/etc/";
+   QString etcnewp  = cmppath + "/etc/";
+   QString relpath  = "../etc/";
+           hsclogo  = hsclogo .isEmpty() ? hsclogo  :
+                      hsclogo .replace( etcpath, relpath );
+           becklogo = becklogo.isEmpty() ? becklogo :
+                      becklogo.replace( etcpath, relpath );
+           us3logo  = us3logo .isEmpty() ? us3logo  :
+                      us3logo .replace( etcpath, relpath );
+   QString hscnewp  = QString( hscorig  ).replace( etcpath, etcnewp );
+   QString becknewp = QString( beckorig ).replace( etcpath, etcnewp );
+   QString us3newp  = QString( us3orig  ).replace( etcpath, etcnewp );
+DbgLv(1) << "hscOrig" << hscorig;
+DbgLv(1) << "hscLogo" << hsclogo;
+DbgLv(1) << "hscNewp" << hscnewp;
+DbgLv(1) << "etcPath" << etcpath;
+DbgLv(1) << "etcNewp" << etcnewp;
+
+   if ( ( hsclogo .isEmpty() || QFile( hscnewp  ).exists() )  &&
+        ( becklogo.isEmpty() || QFile( becknewp ).exists() )  &&
+        ( us3logo .isEmpty() || QFile( us3newp  ).exists() ) )
+      return;                           // Don't bother if logos already exist
+
+   // Need to copy logos, so start by insuring ./composite/etc exists
+   QDir dircmp( cmppath );
+
+   if ( ! dircmp.mkpath( etcnewp ) )
+   {
+      QMessageBox::warning( this, tr( "Composite Report *ERROR*" ),
+            tr( "Unable to create a composite report directory:\n" )
+            + etcnewp );
+      return;
+   }
+
+   // Copy each existing logo file
+   if ( ! hsclogo .isEmpty()  &&  QFile( hscorig  ).exists() )
+      QFile::copy( hscorig , hscnewp  );
+
+   if ( ! becklogo.isEmpty()  &&  QFile( beckorig ).exists() )
+      QFile::copy( beckorig, becknewp );
+
+   if ( ! us3logo .isEmpty()  &&  QFile( us3orig  ).exists() )
+      QFile::copy( us3orig , us3newp  );
+
 }
 
