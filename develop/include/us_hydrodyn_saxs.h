@@ -289,7 +289,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void select_atom_file(const QString &);
       void select_hybrid_file(const QString &);
       void select_saxs_file(const QString &);
-      void normalize_pr(vector < double > *);
+      void normalize_pr(vector < double >, vector < double > *);
       void update_saxs_sans();
       void run_guinier_analysis();
       QString saxs_filestring();

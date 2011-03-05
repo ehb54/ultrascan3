@@ -972,8 +972,9 @@ void saxs_pr_thr_t::run()
 
 //--------- end thread for saxs p(r) plot -----------
 
-void US_Hydrodyn_Saxs::normalize_pr( vector < double > *pr )
+void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr )
 {
+#if defined(NORMALIZE_OLD_WAY)
    // set distribution to a 1 peak
    double max = 0e0;
    if ( pr->size() )
@@ -994,6 +995,22 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > *pr )
          (*pr)[i] /= max;
       }
    }
+#else
+   // integrate
+   double area = 0e0;
+   for ( unsigned int i = 1; i < pr->size(); i++ )
+   {
+      area += ( (*pr)[i-1] + (*pr)[i] ) / ( 2e0 * ( r[i] - r[i-1] ) );
+   }
+   if ( area > 0e0 )
+   {
+      for ( unsigned int i = 0; i < pr->size(); i++ )
+      {
+         (*pr)[i] /= area;
+      }
+   }
+   cout << "normalize_pr area " << area << "\n" << flush;
+#endif
 }
 
 void US_Hydrodyn_Saxs::update_bin_size(double val)
@@ -1505,22 +1522,25 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                            );
                fprintf(fpr, "%s",
                        ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
+               vector < double > r;
                vector < double > pr;
                vector < double > pr_n;
+               r.resize(hist.size());
                pr.resize(hist.size());
                pr_n.resize(hist.size());
                for ( unsigned int i = 0; i < hist.size(); i++) 
                {
+                  r[i] = i * delta;
                   pr[i] = (double) hist[i];
                   pr_n[i] = (double) hist[i];
                }
-               normalize_pr(&pr_n);
+               normalize_pr(r, &pr_n);
                fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
                for ( unsigned int i = 0; i < hist.size(); i++ )
                {
                   if ( hist[i] ) {
-                     fprintf(fpr, "%.6e\t%.6e\t%.6e\n", i * delta, pr[i], pr_n[i]);
-                     ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(i * delta);
+                     fprintf(fpr, "%.6e\t%.6e\t%.6e\n", r[i], pr[i], pr_n[i]);
+                     ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(r[i]);
                      ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
                      ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
                   }
@@ -1557,20 +1577,23 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      , REVISION
                      , delta
                      );
+         vector < double > r;
          vector < double > pr;
          vector < double > pr_n;
+         r.resize(hist.size());
          pr.resize(hist.size());
          pr_n.resize(hist.size());
          for ( unsigned int i = 0; i < hist.size(); i++) 
          {
+            r[i] = i * delta;
             pr[i] = (double) hist[i];
             pr_n[i] = (double) hist[i];
          }
-         normalize_pr(&pr_n);
+         normalize_pr(r, &pr_n);
          for ( unsigned int i = 0; i < hist.size(); i++ )
          {
             if ( hist[i] ) {
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(i * delta);
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(r[i]);
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
             }
@@ -1594,7 +1617,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    plotted_pr_not_normalized.push_back(pr);
    if ( cb_normalize->isChecked() )
    {
-      normalize_pr(&pr);
+      normalize_pr(r, &pr);
    }
 
    plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
@@ -3930,7 +3953,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
 
    if ( cb_normalize->isChecked() )
    {
-      normalize_pr(&pr);
+      normalize_pr(r, &pr);
    }
 
    plotted_pr.push_back(pr);
@@ -4084,7 +4107,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                   // end of prr?
                   if ( cb_normalize->isChecked() )
                   {
-                     normalize_pr(&pr);
+                     normalize_pr(r, &pr);
                   }
                   plot_one_pr(r, pr, QFileInfo(filename).fileName());
                   if ( plotted )

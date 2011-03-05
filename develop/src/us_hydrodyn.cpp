@@ -1402,6 +1402,7 @@ void US_Hydrodyn::reload_pdb()
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_bead_saxs->setEnabled(false);
+   pb_pdb_saxs->setEnabled(true);
    pb_visualize->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
@@ -1514,6 +1515,34 @@ void US_Hydrodyn::load_pdb()
       if ( is_dammin_dammif(filename) ) 
       {
          screen_bead_model(filename);
+#if defined(START_RASMOL)
+         QStringList argument;
+#if !defined(WIN32)
+         // maybe we should make this a user defined terminal window?
+         argument.append("xterm");
+         argument.append("-e");
+#endif
+#if defined(BIN64)
+         argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
+#else
+         argument.append(USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol");
+#endif
+         argument.append(QFileInfo(filename).fileName());
+         rasmol->setWorkingDirectory(QFileInfo(filename).dirPath());
+         rasmol->setArguments(argument);
+         if ( advanced_config.debug_1 )
+         {
+            editor->append(QString("starting rasmol <%1>\n").arg(argument.join("><")));
+            printf("starting rasmol<%s><s>\n", argument.join("><").ascii());
+            fflush(stdout);
+         }
+         if (advanced_config.auto_view_pdb &&
+             !rasmol->start())
+         {
+            QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+                                                        "Please check to make sure RASMOL is properly installed..."));
+         }
+#endif
          return;
       }
       pdb_file = filename;
@@ -1601,6 +1630,7 @@ void US_Hydrodyn::load_pdb()
    bd_anaflex_enables(true);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_pdb_saxs->setEnabled(true);
    pb_bead_saxs->setEnabled(false);
    pb_visualize->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
