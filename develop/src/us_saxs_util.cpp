@@ -401,9 +401,9 @@ bool US_Saxs_Util::guinier_fit(
    vector < double > x;
    vector < double > y;
    errormsg = "";
-   if ( startpos > endpos - 5 )
+   if ( startpos > endpos - 4 )
    {
-      errormsg = "Guinier fit needs at least 5 points";
+      errormsg = "Guinier fit needs at least 4 points";
       return false;
    }
 
