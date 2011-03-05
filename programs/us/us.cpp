@@ -134,9 +134,6 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   //addMenu( 23, tr( "&Fluorescense Data"   ), type1 );
   //addMenu( 24, tr( "&Edit Cell ID's Data" ), type1 );
 
-  //QMenu* type2 = new QMenu( tr( "&Equlibrium Data" ), file );
-  //addMenu( 31, tr( "&Absorbance Data"     ), type2 );
-
   ///////////////
   QMenu* edit        = new QMenu( tr( "&Edit" ),       this );
   //addMenu( 12, tr( "&Equilibrium Data" )    , edit );
@@ -156,15 +153,19 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_FEMA  , tr( "&FE Model Viewer" ),               velocity );
   
   QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
+  addMenu(  P_EQGLOBFIT, tr( "&Global Fit" ),                 equilibrium );
+  //addMenu(  P_EQTIMEEST, tr( "Estimate Equilibrium &Times",   equilibrium );
+
   QMenu* fit         = new QMenu( tr( "&Global Fit" ),  this );
+  addMenu(  P_GLOBFITEQ, tr( "Global &Equilibrium Fit" ),     fit );
+  //addMenu(  P_GLOBFITEX, tr( "Global E&xtinction Fit" ),      fit );
+  //addMenu(  P_GLOBFITSP, tr( "Global &Spectrum Fit" ),        fit );
   
   QMenu* utilities   = new QMenu( tr( "&Utilities" ),   this );
   addMenu(  P_CONVERT  , tr( "&Convert Legacy Data"      ), utilities );
-  addMenu(  P_FIT      , tr( "&Fit Meniscus"             ), utilities );
+  addMenu(  P_FITMEN   , tr( "&Fit Meniscus"             ), utilities );
   addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator" ), utilities );
   addMenu(  P_RPTGEN   , tr( "&Report Generator"         ), utilities );
-
-
 
   QMenu* simulation  = new QMenu( tr( "S&imulation" ),  this );
   addMenu(  P_ASTFEM, tr( "&Finite Element Simulation (ASTFEM)" ), simulation );

@@ -1,0 +1,107 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Report Generator'
+%]
+
+    <h2> <i>UltraScan</i> Report Generator: </h2>
+
+    <p> This module is launched from the US main window using the
+    Utilities > Report Generator menu item. It enables the user to create and
+    view a composite report generated from selections of individual analysis
+    program reports and plots.</p>
+
+    <p> Upon launch, selection of a Run (or "all" runs) populates a data tree
+    with reports from which to select the components of the composite report.
+    A click on the "View" or the "Save" button generates the report, which can
+    be viewed in a browser and printed. Both the composite report HTML and all
+    the component reports and plots are copied to a new folder so that the
+    page is fully self-contained, can be archived, and can be viewed in the
+    future.</p>
+
+    <h3> Main Window:</h3>
+
+    <img src="images/reporter.png" alt="Report Generator main window"/>
+
+    <h3> Functions:</h3>
+
+    <ul>
+       <li>
+          <b>Runs:</b> Select a run identifier to present reports for that 
+          run or select "all" to show all available reports of all runs.
+       </li>
+
+       <li>
+          <b>(data tree selections)</b> Select reports and plots for the
+          composite by checking the box to the left of an item. A check or
+          uncheck of an item above the final (report/plot) tree level selects
+          or de-selects all lower-level items. A check box with a shaded mark
+          indicates that some (not all) of the item's descendant items have
+          been selected. Click on the "+" or "-" boxes to expand or collapse
+          tree portions.
+       </li>
+
+       <li>
+          <b>View</b> Once selections are as desired, click on this button to
+          generate the composite report and view it in the configured browser.
+          See a
+          <a href="images/reporter-view.png">Sample composite report view.</a>.
+          A print within the browser can be used to generate hardcopy or a PDF
+          version. Component reports and plots will start on page boundaries.
+       </li>
+
+       <li>
+          <b>Save</b> Click this button to generate the report, but without
+          being immediately taken to a view of it. You will receive a
+          <a href="images/reporter-save.png">Notice of report save.</a>.
+       </li>
+
+       <li>
+          <b>Load Profile</b> Make component report selections by means of
+          a previously saved selection profile. Click this button to
+          initiate a
+          <a href="images/reporter-loadprof.png">Profile Load Dialog</a>.
+       </li>
+
+       <li>
+          <b>Save Profile</b> Save component report selections for later
+          use by clicking this button to initiate a
+          <a href="images/reporter-saveprof.png">Profile Save Dialog</a>.
+          Note that you need only specify the base name for the saved file.
+          An "rs_" prefix and ".xml" extension will be automatically added.
+       </li>
+
+       <li>
+          <b>Help</b> Display this and other documentation.
+       </li>
+
+       <li>
+          <b>Close</b> Close all windows and exit.
+       </li>
+
+    </ul>
+
+    <h3> Item Row Context Menu Options:</h3>
+
+    <p> Right-mouse-button clicking on a data tree row displays a context
+    menu that applies to the row item.</p>
+
+    <img src="images/reporter-cmenu.png" alt="Report Generator context menu"/>
+
+    <ul>
+       <li>
+          <b>Show Details</b> Release on this menu item to see an
+          <a href="images/reporter-details.png">Item Details Window</a>.
+       </li>
+       <li>
+          <b>View Item</b> Release on this menu item to view an
+          <a href="images/reporter-viewitem.png">Item View Window</a>. This is a
+          way to preview individual items that are potential candidates for
+          the composite report.
+       </li>
+       <li>
+          <b>Include Table Data</b> Release on this menu to initiate a dialog
+          for choosing supporting spreadsheet and other text data to include
+          in the report folder.
+       </li>
+    </ul>
+
+[% INCLUDE footer.us3 %]

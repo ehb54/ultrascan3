@@ -40,7 +40,6 @@ class US_EXTERN US_Reporter : public US_Widgets
    private:
 
       QTreeWidget*        tw_recs;    // tree widget
-      QTreeWidgetItem*    tw_item;    // current tree widget item
 
       DataDesc            cdesc;      // current record description
       QVector< DataDesc > adescs;     // all descriptions
