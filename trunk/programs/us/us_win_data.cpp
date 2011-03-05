@@ -15,7 +15,11 @@ namespace US_WinData
                     P_2DSA,   P_GAINIT,
                     P_FEMA,
 
-    P_CONVERT,      P_FIT,    P_COLORGRAD, // Utilities menu
+    P_EQGLOBFIT,                           // Equilibrium Menu
+
+    P_GLOBFITEQ,                           // Global Fit Menu
+
+    P_CONVERT,      P_FITMEN, P_COLORGRAD, // Utilities menu
                     P_RPTGEN,
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
@@ -105,12 +109,22 @@ namespace US_WinData
       QObject::tr( "Finite Element Match Program" )
     },
     
+    { P_EQGLOBFIT, 0, 0, "us_globalequil",
+      QObject::tr( "Loading Global Equilibrium Fit" ),
+      QObject::tr( "Global Equilibrium Fit Program" )
+    },
+    
+    { P_GLOBFITEQ, 0, 0, "us_globalequil",
+      QObject::tr( "Loading Global Equilibrium Fit" ),
+      QObject::tr( "Global Equilibrium Fit Program" )
+    },
+    
     { P_CONVERT,  1, 0, "us_convert",
       QObject::tr( "Loading Legacy Data Conversion" ),
       QObject::tr( "Legacy Data Conversion Program" )
     },
     
-    { P_FIT,  0, 0, "us_fit_meniscus",
+    { P_FITMEN,   0, 0, "us_fit_meniscus",
       QObject::tr( "Loading Fit Meniscus" ),
       QObject::tr( "Fit Meniscus Program" )
     },

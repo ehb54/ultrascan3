@@ -274,8 +274,8 @@ void US_Reporter::row_context( QTreeWidgetItem* item )
    int row = item->type() - (int)QTreeWidgetItem::UserType;
 DbgLv(1) << " context menu row" << row + 1;
    QMenu*         cmenu = new QMenu();
-   QAction* showact = new QAction( tr( "Show Details" ), this );
-   QAction* viewact = new QAction( tr( "View Item" ), this );
+   QAction* showact = new QAction( tr( "Show Details" ),       this );
+   QAction* viewact = new QAction( tr( "View Item" ),          this );
    QAction* dataact = new QAction( tr( "Include Table Data" ), this );
 
    connect( showact, SIGNAL( triggered() ),
@@ -289,6 +289,11 @@ DbgLv(1) << " context menu row" << row + 1;
    cmenu->addAction( viewact );
    cmenu->addAction( dataact );
 
+   if ( adescs.at( row ).level < 3 )
+      viewact->setEnabled( false );
+
+   dataact->setEnabled( false );
+
    cmenu->exec( QCursor::pos() );
 }
 
@@ -300,10 +305,9 @@ void US_Reporter::build_runids()
    QStringList rdirs  = QDir( rdir )
       .entryList( QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
    QStringList aucfil( "*.auc" );
-   int nrdir = rdirs.size();
    rdir      = rdir + "/";
 
-   for ( int ii = 0; ii < nrdir; ii++ )
+   for ( int ii = 0; ii < rdirs.size(); ii++ )
    {  // Examine the subdirectories of the results directory
       QString     runid  = rdirs.at( ii );
       QString     subdir = rdir + runid;
@@ -328,10 +332,8 @@ void US_Reporter::build_runids()
 
 void US_Reporter::new_runid( int row )
 {
-DbgLv(1) << "new runID row" << row;
    QString runID = sl_runids.at( row );
-DbgLv(1) << "  new runID runid" << runID;
-DbgLv(1) << "WIDGET SIZE" << size();
+DbgLv(1) << "  new runID row runid" << row << runID;
 
    // Build mappings of names,labels
    build_map( QString( "application" ), appmap );
@@ -443,7 +445,7 @@ DbgLv(1) << " BD:   nappf" << rafiles.size() << "rafilt" << rafilt[0];
 
          if ( rafiles.size() < 1 )  continue;
 
-         // There are reports for this application, add level-2 item
+         // There are reports for this application, so add a level-2 item
          cdesc.linen       = linex + 1;
          cdesc.level       = 2;
          cdesc.label       = aplabel;
@@ -476,7 +478,7 @@ DbgLv(1) << " BD:   nappf" << rafiles.size() << "rafilt" << rafilt[0];
 
                if ( rafiles.indexOf( rpfname ) < 0 )  continue;
 
-               // There are reports of this type, add level-3 item
+               // There are reports of this type, so add a level-3 item
                cdesc.linen       = linex + 1;
                cdesc.level       = 3;
                cdesc.label       = rplabel;
@@ -546,6 +548,7 @@ void US_Reporter::build_tree()
    int wiubase = (int)QTreeWidgetItem::UserType;
    int wiutype = wiubase + 0;
    int nitems  = adescs.size();
+   int nl2its  = 0;
    QStringList cvals;
    QString indent( "          " );
 
@@ -553,7 +556,7 @@ void US_Reporter::build_tree()
    tw_recs->clear();
 
    for ( int ii = 0; ii < nitems; ii++ )
-   {
+   {  // Loop to add items to the data tree
       cdesc     = adescs.at( ii );
       int lev   = cdesc.level;
       cvals.clear();
@@ -561,12 +564,14 @@ void US_Reporter::build_tree()
       wiutype   = wiubase + ii;
 
       if ( lev > 0 )
-      {  // For all beyond first, tree item is attached to a parent item
+      {  // For all beyond the first, a tree item is attached to a parent item
          item = new QTreeWidgetItem( pitems[ lev - 1 ], cvals, wiutype );
+
+         if ( lev == 2 )  nl2its++;
       }
 
       else
-      {  // First item is attached to the base tree root
+      {  // The first item is attached to the base tree root
          item = new QTreeWidgetItem( tw_recs, cvals, wiutype );
       }
 
@@ -574,15 +579,28 @@ void US_Reporter::build_tree()
       pitems[ lev ] = item;
    }
 
-   tw_recs->expandAll();
+   tw_recs->expandAll();                   // Expand all to resize by contents
    tw_recs->resizeColumnToContents( 0 );
    tw_recs->resizeColumnToContents( 1 );
    tw_recs->resizeColumnToContents( 2 );
 
    if ( nitems > 15 )
-      tw_recs->collapseAll();
+   {  // If there are many items, collapse some or all of them
+      if ( nl2its > 10 )
+         tw_recs->collapseAll();           // Collapse all if many analyses
 
-   resize( 750, 250 );
+      else
+      {  // If not so many, collapse only analysis subtrees
+         QList< QTreeWidgetItem* > items = tw_recs->findItems( QString( "" ),
+            Qt::MatchFixedString | Qt::MatchWrap | Qt::MatchRecursive, 0 );
+
+         for ( int ii = 0; ii < nitems; ii++ )
+            if ( adescs.at( ii ).level == 2 )
+               tw_recs->collapseItem( items.at( ii ) );
+      }
+   }
+
+   resize( 860, 240 );
 DbgLv(1) << "WIDGET SIZE" << size();
 
    change_tree = true;
@@ -861,7 +879,7 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
          if ( is_plot )
          {  // Is a plot:  new page if 2nd or after non-plot
             if ( jplot != 1  &&  ii > 0 )
-            {  // Previous was 2nd plot in div or non-plot
+            {  // Previous was 2nd plot on the page or was a non-plot
                rptpage   += ppageclass;
                jplot      = 1;       // mark as 1st plot on page
             }
@@ -889,7 +907,7 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
          rptpage   += "      " + idesc->runid + " &nbsp;&nbsp;&nbsp;";
          rptpage   += idesc->triple + "<br/>\n      ";
          rptpage   += idesc->analysis + "<br/>\n       &nbsp;&nbsp;&nbsp;";
-          rptpage   += idesc->label + "\n    </p>\n";
+         rptpage   += idesc->label + "\n    </p>\n";
 
          if ( is_plot )
          {  // The item is a plot, so "<img.." will be used
