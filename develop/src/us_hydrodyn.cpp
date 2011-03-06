@@ -1950,6 +1950,40 @@ void US_Hydrodyn::load_bead_model()
 
       bead_model_file = filename;
       le_bead_model_file->setText( QDir::convertSeparators( filename ) );
+
+      if ( is_dammin_dammif(filename) &&
+           advanced_config.auto_view_pdb ) 
+      {
+#if defined(START_RASMOL)
+         QStringList argument;
+#if !defined(WIN32)
+         // maybe we should make this a user defined terminal window?
+         argument.append("xterm");
+         argument.append("-e");
+#endif
+#if defined(BIN64)
+         argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
+#else
+         argument.append(USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol");
+#endif
+         argument.append(QFileInfo(filename).fileName());
+         rasmol->setWorkingDirectory(QFileInfo(filename).dirPath());
+         rasmol->setArguments(argument);
+         if ( advanced_config.debug_1 )
+         {
+            editor->append(QString("starting rasmol <%1>\n").arg(argument.join("><")));
+            printf("starting rasmol<%s><s>\n", argument.join("><").ascii());
+            fflush(stdout);
+         }
+         if (advanced_config.auto_view_pdb &&
+             !rasmol->start())
+         {
+            QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+                                                        "Please check to make sure RASMOL is properly installed..."));
+         }
+#endif
+      }
+
       if (!read_bead_model(filename))
       {
          state = BEAD_MODEL_LOADED;

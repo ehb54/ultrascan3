@@ -997,6 +997,33 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
    }
 #else
    // integrate
+   // assuming regular grid:
+   double area = 0e0;
+   if ( pr->size() > 1 )
+   {
+      double gridspacing = r[1] - r[0];
+      for ( unsigned int i = 0; i < pr->size(); i++ )
+      {
+         area += (*pr)[i] * gridspacing;
+      }
+      if ( area > 0e0 )
+      {
+         for ( unsigned int i = 0; i < pr->size(); i++ )
+         {
+            (*pr)[i] /= area;
+         }
+      }
+      cout << "normalize_pr area " << area << "\n" << flush;
+      {
+         double area = 0e0;
+         for ( unsigned int i = 0; i < pr->size(); i++ )
+         {
+            area += (*pr)[i] * gridspacing;
+         }
+         cout << "after normalize_pr area " << area << "\n" << flush;
+      }
+   }
+   /* riemann sum?
    double area = 0e0;
    for ( unsigned int i = 1; i < pr->size(); i++ )
    {
@@ -1006,10 +1033,19 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
    {
       for ( unsigned int i = 0; i < pr->size(); i++ )
       {
-         (*pr)[i] /= area;
+         (*pr)[i] *= pr->size() / area ;
       }
    }
    cout << "normalize_pr area " << area << "\n" << flush;
+   {
+      double area = 0e0;
+      for ( unsigned int i = 1; i < pr->size(); i++ )
+      {
+         area += ( (*pr)[i-1] + (*pr)[i] ) / ( 2e0 * ( r[i] - r[i-1] ) );
+      }
+      cout << "after normalize_pr area " << area << "\n" << flush;
+   }
+   */
 #endif
 }
 
