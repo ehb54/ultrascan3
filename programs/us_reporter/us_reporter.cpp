@@ -138,7 +138,7 @@ US_Reporter::US_Reporter() : US_Widgets()
    tw_recs->setAutoFillBackground( true );
    tw_recs->installEventFilter   ( this );
 
-   sample_tree();
+   //sample_tree();
 
    connect( tw_recs, SIGNAL( itemClicked( QTreeWidgetItem*, int ) ),
             this,    SLOT(   clickedItem( QTreeWidgetItem*      ) ) );
@@ -265,6 +265,12 @@ void US_Reporter::changedItem( QTreeWidgetItem* item, int col )
       state_parents( pdesc, state );   // Parents get unchk/part-chk/chk
 
       mark_checked();                  // Reflect checked state in the tree
+
+      if ( row == 0  &&  state == 2 )
+      {
+         pb_view->setEnabled( true );
+         pb_save->setEnabled( true );
+      }
    }
 }
 
