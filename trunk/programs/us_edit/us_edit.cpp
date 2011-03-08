@@ -46,6 +46,7 @@ US_Edit::US_Edit() : US_Widgets()
    men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
    total_speeds = 0;
    total_edits  = 0;
+   v_line       = NULL;
 
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -381,6 +382,7 @@ void US_Edit::reset( void )
 
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    data_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );
+   v_line = NULL;
    pick     ->disconnect();
 
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
@@ -481,6 +483,7 @@ void US_Edit::reset_triple( void )
    changed_points.clear();
    trip_rpms     .clear();
 
+   cb_triple    ->disconnect();
    cb_rpms      ->disconnect();
    cb_rpms      ->clear();
    connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
@@ -1051,6 +1054,7 @@ void US_Edit::plot_current( int index )
    ct_to  ->setMinValue( 0.0 );
    ct_to  ->setMaxValue(  data.scanData.size() );
 
+   pick     ->disconnect();
    connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                   SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
 }
@@ -1152,9 +1156,12 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             }
 
             // Remove the left line
-            v_line->detach();
-            delete v_line;
-            v_line = NULL;
+            if ( v_line != NULL )
+            {
+               v_line->detach();
+               delete v_line;
+               v_line = NULL;
+            }
          }
 
          // Display the value
@@ -1241,6 +1248,12 @@ void US_Edit::mouse( const QwtDoublePoint& p )
       case RANGE:
          if ( range_left == 0.0 )
          {
+            if ( v_line != NULL )
+            {
+               v_line->detach();
+               delete v_line;
+               v_line = NULL;
+            }
             range_left = p.x();
             draw_vline( range_left );
             break;
@@ -1685,11 +1698,14 @@ void US_Edit::set_baseline( void )
 void US_Edit::plot_all( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); 
+   v_line = NULL;
 
    int size = data.scanData[ 0 ].readings.size();
 
-   double* r = new double[ size ];
-   double* v = new double[ size ];
+   QVector< double > rvec( size );
+   QVector< double > vvec( size );
+   double* r   = rvec.data();
+   double* v   = vvec.data();
 
    double maxR = -1.0e99;
    double minR =  1.0e99;
@@ -1731,15 +1747,13 @@ void US_Edit::plot_all( void )
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
-
-   delete [] r;
-   delete [] v;
 }
 
 // Plot curves within the picked range
 void US_Edit::plot_range( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   v_line = NULL;
 
    int rsize   = data.scanData[ 0 ].readings.size();
    QVector< double > rvec( rsize );
@@ -1851,6 +1865,7 @@ void US_Edit::plot_range( void )
 void US_Edit::plot_last( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   v_line = NULL;
    //grid = us_grid( data_plot ); 
 
    double maxR = -1.0e99;
@@ -1866,8 +1881,10 @@ void US_Edit::plot_last( void )
    
    int     count  = 0;
    uint    size   = s->readings.size();
-   double* r      = new double[ size ];
-   double* v      = new double[ size ];
+   QVector< double > rvec( size );
+   QVector< double > vvec( size );
+   double* r      = rvec.data();
+   double* v      = vvec.data();
    
    for ( int j = indexLeft; j <= indexRight; j++ )
    {
@@ -1898,9 +1915,6 @@ void US_Edit::plot_last( void )
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
-
-   delete [] r;
-   delete [] v;
 }
 
 // Plot a single scan curve
@@ -1915,6 +1929,7 @@ void US_Edit::plot_scan( void )
    double* v    = vvec.data();
 
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   v_line = NULL;
 
    double maxR  = -1.0e99;
    double minR  =  1.0e99;
@@ -2184,8 +2199,10 @@ void US_Edit::update_scan( QList< QPointF > changes )
 
    // Set data for the curve
    int     points = s->readings.size();
-   double* r      = new double[ points ];
-   double* v      = new double[ points ];
+   QVector< double > rvec( points );
+   QVector< double > vvec( points );
+   double* r      = rvec.data();
+   double* v      = vvec.data();
 
    int left;
    int right;
@@ -2237,8 +2254,6 @@ void US_Edit::update_scan( QList< QPointF > changes )
    else
       qDebug() << "Can't find curve!";
 
-   delete [] r;
-   delete [] v;
 }
 
 // Handle include profile
@@ -2519,7 +2534,7 @@ void US_Edit::new_triple( int index )
       plot_current( index );
    }
 
-   step = MENISCUS;
+   set_meniscus();
 }
 
 // Select a new speed within a triple
@@ -2527,7 +2542,7 @@ void US_Edit::new_rpmval( int index )
 {
    QString srpm = cb_rpms->itemText( index );
 
-   step = MENISCUS;
+   set_meniscus();
 
    le_edtrsp->setText( cb_triple->currentText() + " : " + srpm );
 
