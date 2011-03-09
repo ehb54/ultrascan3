@@ -1477,7 +1477,12 @@ void US_Convert::PseudoCalcAvg( void )
          j++;
       }
 
-      Pseudo_averages << sum / count;
+      if ( count > 0 )
+         Pseudo_averages << sum / count;
+
+      else
+         Pseudo_averages << 1.0;    // See the log10 function, later
+
    }
    
    // Now average around excluded values
@@ -1520,6 +1525,9 @@ void US_Convert::PseudoCalcAvg( void )
          {
             US_DataIO2::Reading* r = &s->readings[ k ];
 
+            // Protect against possible inf's and nan's, if a reading 
+            // evaluates to 0 or wherever log function is undefined or -inf
+            if ( r->value < 1.0 ) r->value = 1.0;
             r->value = log10(Pseudo_averages[ j ] / r->value );
          }
       }
@@ -2014,7 +2022,7 @@ void US_Convert::plot_all( void )
          v[ j ] = s->readings  [ j ].value;
 
 //qDebug() << "(r, v) = ( " << r[j] << ", " << v[j] << ")";
-         if ( v[ j ] > 1.0e99 )
+         if ( v[ j ] > 1.0e99 || isnan( v[ j ] ) )
          {
             // For some reason v[j] is going off the scale
             // Don't know why, but filter out for now

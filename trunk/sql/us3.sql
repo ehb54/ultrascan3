@@ -204,6 +204,7 @@ CREATE  TABLE IF NOT EXISTS experiment (
   INDEX ndx_experiment_instrumentID (instrumentID ASC) ,
   INDEX ndx_experiment_labID (labID ASC) ,
   INDEX ndx_experiment_rotorID (rotorID ASC) ,
+  INDEX ndx_experiment_calibrationID (rotorCalibrationID ASC) ,
   CONSTRAINT fk_experiment_projectID
     FOREIGN KEY (projectID )
     REFERENCES project (projectID )
@@ -227,6 +228,11 @@ CREATE  TABLE IF NOT EXISTS experiment (
   CONSTRAINT fk_experiment_rotorID
     FOREIGN KEY (rotorID )
     REFERENCES rotor (rotorID )
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_experiment_calibrationID
+    FOREIGN KEY (rotorCalibrationID )
+    REFERENCES rotorCalibration (rotorCalibrationID )
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
@@ -515,7 +521,6 @@ CREATE  TABLE IF NOT EXISTS editedData (
     REFERENCES rawData (rawDataID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE)
-AUTO_INCREMENT = 10,
 ENGINE = InnoDB;
 
 
