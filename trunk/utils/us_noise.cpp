@@ -133,8 +133,12 @@ int US_Noise::write( US_DB2* db )
 {
       // Create the noise xml file in a string
       QTemporaryFile temporary;
-      write_temp( temporary );
       temporary.open();
+      QXmlStreamWriter xml( &temporary );
+      write_temp( xml );
+      temporary.close();
+
+      temporary.open();  // Start at beginning
       QByteArray     temp_contents = temporary.readAll();
       QByteArray     contents;
       QStringList    q;
@@ -190,20 +194,14 @@ int US_Noise::write( US_DB2* db )
 // write noise to local disk
 int US_Noise::write( const QString& filename )
 {
-   QTemporaryFile temporary;
-   write_temp( temporary );
-
-   temporary.open();   // Open for reading
-
    QFile file( filename );
 
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
       return US_DB2::ERROR;
    
-   file.write( temporary.readAll() );
+   QXmlStreamWriter xml( &file );
+   write_temp( xml );
    file.close();
-   temporary.close();
-
    return US_DB2::OK;
 }
 
@@ -369,15 +367,15 @@ int US_Noise::load_db( const QString& guid, US_DB2* db )
 }
 
 // write noise to temporary file
-void US_Noise::write_temp( QTemporaryFile& file )
+void US_Noise::write_temp( QXmlStreamWriter& xml )
 {
    QString typen( "ti" );
 
    if ( type == RI )
       typen = QString( "ri" );
 
-   file.open();// QIODevice::WriteOnly | QIODevice::Text );
-   QXmlStreamWriter xml( &file );
+   //file.open();// QIODevice::WriteOnly | QIODevice::Text );
+   //QXmlStreamWriter xml( &file );
    xml.setAutoFormatting( true );
 
    xml.writeStartDocument();
@@ -410,7 +408,7 @@ void US_Noise::write_temp( QTemporaryFile& file )
    xml.writeEndElement(); // noise
    xml.writeEndElement(); // NoiseData
    xml.writeEndDocument();
-   file.close();
+   //file.close();
 }
 
 // output debug prints

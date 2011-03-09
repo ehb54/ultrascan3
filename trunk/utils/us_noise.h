@@ -129,7 +129,7 @@ class US_EXTERN US_Noise
       int  load_disk       ( const QString& );
       int  load_db         ( const QString&, US_DB2* );
                            
-      void write_temp      ( QTemporaryFile& );
+      void write_temp      ( QXmlStreamWriter& );
 
       void debug( void );
 };
