@@ -49,6 +49,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       bool          signal;
       bool          bufferCurrent;
       bool          manualUpdate;
+      bool          view_shared;
       int           personID;
                    
       //!< The currently active buffer Data. 

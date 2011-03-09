@@ -19,6 +19,7 @@ US_BufferGui::US_BufferGui(
    personID      = US_Settings::us_inv_ID();
    bufferCurrent = false;
    manualUpdate  = false;
+   view_shared   = true;
 
    US_BufferComponent::getAllFromHD( component_list );
 
@@ -451,10 +452,12 @@ void US_BufferGui::sel_investigator( void )
 void US_BufferGui::assign_investigator( int invID, 
       const QString& lname, const QString& fname)
 {
-   personID        = invID;
-   buffer.personID = invID;
+   personID    = invID;
+   view_shared = false;
    le_investigator->setText( QString::number( invID ) + ": " +
          lname + ", " + fname );
+
+   if ( disk_controls->db() ) read_db();
 }
 
 // Get the path to the buffers.  Create it if necessary.
@@ -537,6 +540,8 @@ void US_BufferGui::read_buffer( void )
       }
    }
 
+   lw_buffer_db->clear();
+   
    if ( descriptions.size() == 0 )
       lw_buffer_db->addItem( "No buffer files found." );
    else
@@ -572,10 +577,9 @@ void US_BufferGui::read_db( void )
    le_search->setText( "" );
    le_search->setReadOnly( true );
 
-   if ( buffer.personID < 1 ) buffer.personID = US_Settings::us_inv_ID();
-
+   QString person = view_shared ? "0" : QString::number( personID );
    QStringList q( "get_buffer_desc" );
-   q << QString::number( buffer.personID );
+   q << person;
 
    db.query( q );
 
@@ -586,19 +590,25 @@ void US_BufferGui::read_db( void )
       GUIDs        << "";
    }
 
-   if ( descriptions.size() < 1  &&  buffer.personID != -1 )
+   lw_buffer_db->clear();
+   
+   if ( descriptions.size() == 0 )
+      lw_buffer_db->addItem( "No buffer files found." );
+
+   /*if ( descriptions.size() < 1 )
       QMessageBox::information( this,
             tr( "No data" ),
-            tr( "No buffer file found for the selected investigator,\n"
+            tr( "No buffers found for the selected investigator,\n"
                 "You can click on \"Reset\", then query the DB to \n"
-                "find buffers from all Investigators." ) );
+                "find shared buffers from all Investigators." ) );
    
    else if ( descriptions.size() < 1 )
       QMessageBox::information( this,
             tr( "No data" ),
             tr( "There are no buffer entries." ) );
+   */
    else
-   {
+   { 
       le_search->setReadOnly( false );
       le_search->setPalette ( normal );
       search();
@@ -730,62 +740,8 @@ void US_BufferGui::read_from_db( const QString& bufferID )
       connect_error( db.lastError() );
       return;
    }
-   
-   QStringList q( "get_buffer_info" );
-   q << bufferID;   // bufferID from list widget entry
-      
-   db.query( q );
-   db.next(); 
-   
-   buffer.bufferID        = bufferID;
-   buffer.GUID            = db.value( 0 ).toString();
-   buffer.description     = db.value( 1 ).toString();
-   buffer.compressibility = db.value( 2 ).toString().toDouble();
-   buffer.pH              = db.value( 3 ).toString().toDouble();
-   buffer.viscosity       = db.value( 4 ).toString().toDouble();
-   buffer.density         = db.value( 5 ).toString().toDouble();
-
-   QString personID       = db.value( 6 ).toString();
-   buffer.personID        = personID.toInt();
-
-   cb_shared ->setChecked( ! db.value( 7 ).toBool() );  // ! private
-   
-   lw_buffer->clear();
-
-   buffer.component    .clear();
-   buffer.componentIDs .clear();
-   buffer.concentration.clear();
-   q                   .clear();
-
-   q << "get_buffer_components" <<  bufferID;
-
-   db.query( q );
-
-   while ( db.next() )
-   {
-      QString index = db.value( 0 ).toString();
-      buffer.componentIDs  << index;
-      buffer.concentration << db.value( 4 ).toString().toDouble();
-      buffer.component     << component_list[ index ];
-   }
-
-   // Get the investigator's name and display it
-   q.clear();
-   q << "get_person_info" << personID;
-
-   db.query( q );
-   db.next(); 
-
-   QString fname = db.value( 0 ).toString();
-   QString lname = db.value( 1 ).toString();
-   buffer.person =  lname + ", " + fname;
-
-   le_investigator->setText( personID + ": " + buffer.person );
-
-   // Get spectrum data
-   buffer.getSpectrum( db, "Refraction" );
-   buffer.getSpectrum( db, "Extinction" );
-   buffer.getSpectrum( db, "Fluorescence" );
+  
+   buffer.readFromDB( db, bufferID );
 }
 
 void US_BufferGui::update_lw_buf( const QString& componentID, double conc )
@@ -989,9 +945,7 @@ void US_BufferGui::save_disk( void )
 
 void US_BufferGui::save_db( void )
 {
-   if ( personID > 0 ) buffer.personID = personID;
-
-   if ( buffer.personID < 0 )
+   if ( personID < 0 )
    {
       QMessageBox::information( this,
             tr( "Attention" ), 
@@ -999,70 +953,35 @@ void US_BufferGui::save_db( void )
       return;
    }
 
-   int response = QMessageBox::question( this, 
-            tr( "UltraScan - Buffer Database" ),
-            tr( "Click 'OK' to save the selected\n"
-                "buffer file into the database" ) );
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+         
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
 
    QString private_buffer = ( cb_shared->isChecked() ) ? "0" : "1";
+   buffer.saveToDB( db, private_buffer );
 
-   if ( response == QMessageBox::Ok )
+   if ( db.lastErrno() != US_DB2::OK )
    {
-      QStringList q( "new_buffer" );
-      q << buffer.GUID
-        << buffer.description
-        << QString::number( buffer.compressibility, 'e', 4 )
-        << QString::number( buffer.pH             , 'f', 4 )
-        << QString::number( buffer.density        , 'f', 6 )
-        << QString::number( buffer.viscosity      , 'f', 5 )
-        << private_buffer;  // Private
+      QString msg = ( db.lastErrno() == US_DB2::INSERTDUP )
+                    ? "The buffer already exists.\n"
+                      "Use 'Update' to save changes."
+                    : db.lastError();
 
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
-            
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         connect_error( db.lastError() );
-         return;
-      }
+      QMessageBox::information( this,
+            tr( "Attention" ), 
+            tr( "Error updating buffer in the database:\n" )
+            + msg );
 
-      db.statusQuery( q );
-
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         QString msg = ( db.lastErrno() == US_DB2::INSERTDUP )
-                       ? "The buffer already exists.\n"
-                         "Use 'Update' to save changes."
-                       : db.lastError();
-
-         QMessageBox::information( this,
-               tr( "Attention" ), 
-               tr( "Error updating buffer in the database:\n" )
-               + msg );
-
-         return;
-      }
-
-      int bufferID = db.lastInsertID();
-
-      for ( int i = 0; i < buffer.component.size(); i++ )
-      {
-         q.clear();
-         q << "add_buffer_component" 
-           << QString::number( bufferID ) 
-           << buffer.component[ i ].componentID
-           << QString::number( buffer.concentration[ i ], 'f', 5 );
-
-         db.statusQuery( q );
-      }
-
-      buffer.putSpectrum( db, "Extinction" );
-      buffer.putSpectrum( db, "Refraction" );
-      buffer.putSpectrum( db, "Fluorescence" );
-
-      reset();
-      read_db();
+      return;
    }
+
+   reset();
+   read_db();
 }
 
 void US_BufferGui::update( void )
@@ -1087,7 +1006,8 @@ void US_BufferGui::update_db( void )
       return;
    }
    
-   if ( buffer.personID <= 0 )
+   //if ( buffer.personID <= 0 )
+   if ( personID <= 0 )
    {
       QMessageBox::information( this,
             tr( "Attention" ), 
@@ -1122,17 +1042,6 @@ void US_BufferGui::update_db( void )
          
       QString private_buffer = ( cb_shared->isChecked() ) ? "0" : "1";
 
-      QStringList q( "update_buffer" );
-      q << buffer.bufferID
-        << buffer.description
-        << QString::number( buffer.compressibility, 'e', 4 )
-        << QString::number( buffer.pH             , 'f', 4 )
-        << QString::number( buffer.density        , 'f', 6 )
-        << QString::number( buffer.viscosity      , 'f', 5 )
-        << private_buffer;  // Private
-
-      db.statusQuery( q );
-
       if ( db.lastErrno() != US_DB2::OK )
       {
          QString msg = ( db.lastErrno() == US_DB2::INSERTDUP )
@@ -1146,35 +1055,6 @@ void US_BufferGui::update_db( void )
                + msg );
          return;
       }
-
-      q.clear();
-      q << "delete_buffer_components" << buffer.bufferID;
-      db.statusQuery( q );
-
-      for ( int i = 0; i < buffer.component.size(); i++ )
-      {
-         q.clear();
-         q << "add_buffer_component" 
-           << buffer.bufferID
-           << buffer.component[ i ].componentID
-           << QString::number( buffer.concentration[ i ], 'f', 5 );
-
-         db.statusQuery( q );
-      }
-
-      // Update spectrum by deletion and re-insertion
-      q.clear();
-      q << "delete_spectrum" << buffer.bufferID << "Buffer" << "Extinction";
-      db.statusQuery( q );
-      buffer.putSpectrum( db, "Extinction" );
-      
-      q[ 3 ] = "Refraction";
-      db.statusQuery( q );
-      buffer.putSpectrum( db, "Refraction" );
-      
-      q[ 3 ] = "Fluorescence";
-      db.statusQuery( q );
-      buffer.putSpectrum( db, "Fluorescence" );
 
       QMessageBox::information( this, 
            tr( "Success" ),
@@ -1330,6 +1210,7 @@ void US_BufferGui::reset( void )
 {
    buffer = US_Buffer();
 
+   view_shared = true;
    le_search         ->clear();;
    le_search         ->setReadOnly( false );
 
@@ -1365,9 +1246,6 @@ void US_BufferGui::reset( void )
    {
       le_investigator   ->setText( "Not Selected" );
    }
-
-   // Allow query of all buffers
-   buffer.personID = -1;
 }
 
 /*!  Recalculate the density of the buffer based on the information in the
