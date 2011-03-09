@@ -250,10 +250,10 @@ class US_EXTERN US_Rotor
 
       /*! \brief    Function to retrieve all the rotors in a particular lab from disk
 
-          \param    profiles A reference to where the rotors will be stored
+          \param    rotors A reference to where the rotors will be stored
           \param    labID The ID of the lab where the rotors are located
       */
-      static Status readRotorsFromDisk( QVector< Rotor >&, int );
+      static Status readRotorsFromDisk( QVector< US_Rotor::Rotor >&, int );
 
       /*! \brief    Function to retrieve all the calibration profiles about a
                     particular rotor from disk
@@ -262,7 +262,7 @@ class US_EXTERN US_Rotor
                              will be stored
           \param    rotorID  The ID of the rotor 
       */
-      static Status readCalibrationProfilesDisk( QVector< RotorCalibration >&, int );
+      static Status readCalibrationProfilesDisk( QVector< US_Rotor::RotorCalibration >&, int );
 
       /*! \brief    Function to find the filename of a rotor or calibration
                     on disk, if it exists.
