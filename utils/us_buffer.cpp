@@ -207,10 +207,9 @@ void US_BufferComponent::putAllToHD(
    file.close();
 }
 
-//-------------
+//-------------  US_Buffer
 US_Buffer::US_Buffer()
 {
-   personID        = -1;
    compressibility = 0.0;
    pH              = WATER_PH;
    density         = DENS_20W;
@@ -248,7 +247,7 @@ void US_Buffer::getSpectrum( US_DB2& db, const QString& type )
    }
 }
 
-void US_Buffer::putSpectrum( US_DB2& db, const QString& type ) 
+void US_Buffer::putSpectrum( US_DB2& db, const QString& type ) const
 {
    QStringList q;
    q << "new_spectrum" << bufferID << "Buffer" << type << "" << "";
@@ -312,7 +311,6 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
    xml.writeAttribute   ( "version", "1.0" );
    
    xml.writeStartElement( "buffer" );
-   xml.writeAttribute( "person_id"  , QString::number( personID ) );
    xml.writeAttribute( "id"         , bufferID );
    xml.writeAttribute( "guid"       , GUID     );
    xml.writeAttribute( "description", description );
@@ -373,6 +371,92 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
    return true;
 }
 
+bool US_Buffer::readFromDB( US_DB2& db, const QString& bufID )
+{
+   QStringList q( "get_buffer_info" );
+   q << bufID;   // bufferID from list widget entry
+
+   db.query( q );
+   if ( db.lastErrno() != 0 ) return false;
+
+   db.next();
+
+   bufferID        = bufID;
+   GUID            = db.value( 0 ).toString();
+   description     = db.value( 1 ).toString();
+   compressibility = db.value( 2 ).toString().toDouble();
+   pH              = db.value( 3 ).toString().toDouble();
+   viscosity       = db.value( 4 ).toString().toDouble();
+   density         = db.value( 5 ).toString().toDouble();
+
+   component    .clear();
+   componentIDs .clear();
+   concentration.clear();
+   q                   .clear();
+
+   q << "get_buffer_components" <<  bufferID;
+
+   db.query( q );
+   if ( db.lastErrno() != 0 ) return false;
+
+   while ( db.next() )
+   {
+      QString index = db.value( 0 ).toString();
+      componentIDs  << index;
+      concentration << db.value( 4 ).toString().toDouble();
+
+      US_BufferComponent bc;
+      bc.componentID = index;
+      bc.getInfoFromDB( db );
+      component << bc;
+   }
+
+   // Get spectrum data
+   getSpectrum( db, "Refraction" );
+   getSpectrum( db, "Extinction" );
+   getSpectrum( db, "Fluorescence" );
+
+   return true;
+}
+
+int US_Buffer::saveToDB( US_DB2& db, const QString private_buffer ) const
+{
+   QStringList q( "new_buffer" );
+   q << GUID
+     << description
+     << QString::number( compressibility, 'e', 4 )
+     << QString::number( pH             , 'f', 4 )
+     << QString::number( density        , 'f', 6 )
+     << QString::number( viscosity      , 'f', 5 )
+     << private_buffer  // Private
+     << QString::number( US_Settings::us_inv_ID() );
+
+   db.statusQuery( q );
+
+   if ( db.lastErrno() != US_DB2::OK ) return -1;
+
+   int bufferID = db.lastInsertID();
+
+   for ( int i = 0; i < component.size(); i++ )
+   {
+      q.clear();
+      q << "add_buffer_component"
+        << QString::number( bufferID )
+        << component[ i ].componentID
+        << QString::number( concentration[ i ], 'f', 5 );
+
+      db.statusQuery( q );
+
+      if ( db.lastErrno() != US_DB2::OK ) return -2;
+   }
+
+   putSpectrum( db, "Extinction" );
+   putSpectrum( db, "Refraction" );
+   putSpectrum( db, "Fluorescence" );
+
+   return bufferID;
+}
+
 bool US_Buffer::readFromDisk( const QString& filename ) 
 {
    QFile file( filename );
@@ -404,7 +488,6 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
 {
    QXmlStreamAttributes a = xml.attributes();
 
-   personID        = a.value( "person_id"   ).toString().toInt();
    bufferID        = a.value( "id"          ).toString();
    GUID            = a.value( "guid"        ).toString();
    description     = a.value( "description" ).toString();
@@ -467,7 +550,6 @@ void US_Buffer::readSpectrum( QXmlStreamReader& xml )
 
 void US_Buffer::dumpBuffer( void ) const
 {
-   qDebug() << "buffer:\npersonID       " << personID;
    qDebug() << "person         " << person;
    qDebug() << "bufferID       " << bufferID;
    qDebug() << "GUID           " << GUID;

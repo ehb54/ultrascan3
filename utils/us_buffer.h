@@ -31,11 +31,11 @@ class US_EXTERN US_BufferComponent
       //! \param componentList A reference to where the data is found.
       static void putAllToHD ( const QMap< QString, US_BufferComponent >& );
 
-   private:
       //! Get the info for an individual component from the DB.
       //! \param db A \ref US_DB2 structure to an opened connection to the DB.
       void getInfoFromDB( US_DB2& );
 
+   private:
       static void component( QXmlStreamReader&, QMap< QString, US_BufferComponent >& );
 };
 
@@ -44,7 +44,7 @@ class US_EXTERN US_BufferComponent
 class US_EXTERN US_Buffer 
 {
    public:
-      int     personID;    //!< Investigator's ID of for this  buffer.
+      //int     personID;    //!< Investigator's ID of for this  buffer.
       QString person;      //!< Convenience value of investigator's name.
       QString bufferID;    //!< The buffer's DB ID, or -1 if from harddrive.
       QString GUID;        //!< The buffer's Global Identifier
@@ -71,26 +71,39 @@ class US_EXTERN US_Buffer
       US_Buffer();
 
       //! \brief Write the buffer to a disk file
-      //! \param filename  The full path, includingfilename.
+      //! \param filename  The full path, including filename.
       //! \return A boolean success or failure
       bool writeToDisk( const QString& ) const;
 
       //! \brief Read a buffer from a disk file
-      //! \param filename  The full path, includingfilename.
+      //! \param filename  The full path, including filename.
       //! \return A boolean success or failure
       bool readFromDisk( const QString& );
 
+      //! \brief Write a new buffer to the DB.  
+      //! \param db An open database connection
+      //! \param private_buffer An indication to mark the buffer 
+      //!        public "0" or private "1";
+      //! \return The bufferID of the new buffer
+      int saveToDB( US_DB2&, const QString = "1" ) const;
+
+      //! \brief Read a buffer from the DB
+      //! \param db  An open database connection
+      //! \param bufID  ID number in string format of the buffer to be read.
+      //! \return A boolean success or failure
+      bool readFromDB( US_DB2&, const QString& );
+
       //! \brief Get spectrum data from the DB for a type
-      //! \param db The open database connection
+      //! \param db An open database connection
       //! \param type The type of data to retrieve.  One of:  "Extinction", 
       //!             "Refraction", or "Fluorescence"
       void getSpectrum( US_DB2&, const QString& );
 
       //! \brief Put spectrum data to the DB for a type
-      //! \param db The open database connection
+      //! \param db An open database connection
       //! \param type The type of data to put to the DB.  One of:  "Extinction",
       //!             "Refraction", or "Fluorescence"
-      void putSpectrum( US_DB2&, const QString& );
+      void putSpectrum( US_DB2&, const QString& ) const;
 
       //! \brief A debug function to write buffer contents to stderr
       void dumpBuffer( void ) const;
