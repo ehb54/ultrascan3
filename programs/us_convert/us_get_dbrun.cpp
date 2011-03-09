@@ -130,9 +130,9 @@ bool US_GetDBRun::loadData( void )
 
       RunInfo r;
       r.ID     = expID.toInt();
-      r.date   = db.value( 12 ).toString();
+      r.date   = db.value( 13 ).toString();
       r.runID  = db.value(  2 ).toString();
-      r.label  = db.value(  9 ).toString();
+      r.label  = db.value( 10 ).toString();
 
       runInfo << r;
    }
