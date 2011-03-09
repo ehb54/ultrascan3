@@ -662,12 +662,17 @@ int US_Model::write( US_DB2* db )
 {
       // Create the model xml file in a string
       QTemporaryFile temporary;
-      write_temp( temporary );
+      
       temporary.open();
-      QByteArray temp_contents = temporary.readAll();
-      QByteArray contents;
+      QXmlStreamWriter xml( &temporary );
 
-      //contents.replace( QByteArray( "\"" ), QByteArray( "\\\"" ) );
+      write_temp( xml );
+      temporary.close();  
+
+      temporary.open();  // Start at beginning
+      QByteArray temp_contents = temporary.readAll();
+
+      QByteArray contents;
 
       db->mysqlEscapeString( contents, temp_contents, temp_contents.size() );
 
@@ -685,7 +690,8 @@ int US_Model::write( US_DB2* db )
      
       if ( db->lastErrno() != US_DB2::OK )
       {
-         q << "new_model" << modelGUID << description << contents << editGUID;
+         q << "new_model" << modelGUID << description << contents << editGUID
+           << QString::number( US_Settings::us_inv_ID() );
          message = QObject::tr( "created" );
       }
       else
@@ -701,30 +707,23 @@ int US_Model::write( US_DB2* db )
 
 int US_Model::write( const QString& filename )
 {
-   QTemporaryFile temporary;
-   write_temp( temporary );
-
-   temporary.open();   // Open for reading
-
    QFile file( filename );
 
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
       return US_DB2::ERROR;
-   
-   file.write( temporary.readAll() );
+
+   QXmlStreamWriter xml( &file );
+   write_temp( xml );
    file.close();
-   temporary.close();
 
    return US_DB2::OK;
 }
 
-void US_Model::write_temp( QTemporaryFile& file )
+void US_Model::write_temp( QXmlStreamWriter& xml )
 {
    if ( modelGUID.size() != 36 )
       modelGUID = US_Util::new_guid();
 
-   file.open();        // QIODevice::WriteOnly | QIODevice::Text );
-   QXmlStreamWriter xml( &file );
    xml.setAutoFormatting( true );
 
    xml.writeStartDocument();
@@ -814,7 +813,6 @@ void US_Model::write_temp( QTemporaryFile& file )
    xml.writeEndElement(); // model
    xml.writeEndElement(); // ModelData
    xml.writeEndDocument();
-   file.close();
 }
 
 void US_Model::debug( void )
