@@ -49,7 +49,7 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
 
       /*! \brief Overloaded constructor for the US_RotorGui class. In this case,
                  it expects to be called from US_RotorCalibration
-          \param RotorCalibration The calibration structure passed in from the calibration program
+          \param calibration The calibration structure passed in from the calibration program
           \param new_calibration  A boolean value indicating whether the caller is
                                   US_RotorCalibration with new calibration data or not
           \param signal_wanted A boolean value indicating whether the caller
@@ -61,10 +61,6 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
                    bool = false,
                    bool = false, 
                    int  = US_Disk_DB_Controls::Default );
-
-      //! A destructor.
-      ~US_RotorGui();
-
 
       US_Rotor::Status            rotorStatus;            //!< Most recent rotor status
       US_Rotor::Status            calibrationStatus;      //!< Most recent calibration status
@@ -79,7 +75,8 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
           \param    Rotor the rotor structure selected by the user
           \param    RotorCalibration the rotor calibration structure selected by the user
       */
-      void RotorCalibrationSelected ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& );
+      void RotorCalibrationSelected ( US_Rotor::Rotor& Rotor, 
+                                      US_Rotor::RotorCalibration& RotorCalibration );
    
       /*! \brief    Signal to pass to the calling program if the operation was canceled
       */

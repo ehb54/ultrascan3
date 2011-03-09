@@ -70,10 +70,6 @@ US_RotorGui::US_RotorGui(
    reset();
 }
 
-US_RotorGui::~US_RotorGui()
-{
-}
-
 void US_RotorGui::setupGui( int select_db_disk )
 {
    setWindowTitle( tr( "Rotor Management" ) );

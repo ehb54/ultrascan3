@@ -32,7 +32,7 @@ class US_EXTERN US_AbstractRotorGui : public US_WidgetsDialog
                          wants a signal to be emitted
           \param select_db_disk Indicates whether the default search is on
                          the local disk or in the DB
-          \param rotor The Rotor structure that will be added to the database
+          \param dataIn The Rotor structure that will be added to the database
       */
       US_AbstractRotorGui( bool = false,
                            int  = US_Disk_DB_Controls::Default,
@@ -63,9 +63,6 @@ class US_EXTERN US_AbstractRotorGui : public US_WidgetsDialog
 
       US_Help                      showHelp;
       
-      //! A destructor.
-      ~US_AbstractRotorGui();
-
    signals:
 
       //! A signal to indicate that the current disk/db selection has changed.
