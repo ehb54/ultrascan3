@@ -21,10 +21,6 @@ US_AbstractRotorGui::US_AbstractRotorGui(
    setupGui( select_db_disk );
 }
 
-US_AbstractRotorGui::~US_AbstractRotorGui()
-{
-}
-
 void US_AbstractRotorGui::setupGui( int select_db_disk )
 {
    setWindowTitle( tr( "Rotor Type Selection" ) );
