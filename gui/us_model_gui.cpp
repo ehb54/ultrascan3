@@ -9,7 +9,6 @@
 #include "us_util.h"
 #include "us_passwd.h"
 #include "us_associations_gui.h"
-#include <uuid/uuid.h>
 
 US_ModelGui::US_ModelGui( US_Model& current_model )
    : US_WidgetsDialog( 0, 0 ), model( current_model )
@@ -125,7 +124,7 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
 
    pb_save  ->setEnabled( false );
    pb_delete->setEnabled( false );
-
+
    // Pushbuttons
    QBoxLayout* buttonbox = new QHBoxLayout;
 
@@ -165,21 +164,16 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    }
 
    check_db();
-   adjustSize();
+   adjustSize();  // QWidget function
 }
-
+
 void US_ModelGui::new_model( void )
 {
    if ( ! ignore_changes() ) return;
 
    US_Model m;  // Create a new model
-   m.description    = le_description->text().trimmed();
 
-   if ( m.description.isEmpty() )
-   {
-      m.description    = "New Model";
-      le_description->setText( m.description );
-   }
+   le_description->setText( m.description );
 
    ModelDesc desc;
    desc.description = m.description;
@@ -210,7 +204,7 @@ void US_ModelGui::new_model( void )
 
    le_guid->clear();
 }
-
+
 void US_ModelGui::show_model_desc( void )
 {
    lw_models->clear();
@@ -218,8 +212,8 @@ void US_ModelGui::show_model_desc( void )
    for ( int i = 0; i < model_descriptions.size(); i++ )
    {
       QString desc = model_descriptions[ i ].description;
-      // Add a type value to the that is the position of the item
-      // in the model_description list plus the Qt set minimum value
+      // Add a type value to the lw_item that is the position of the item
+      // in the model_description list plus the Qt minimum value
       // for custom types.
       new QListWidgetItem( desc, lw_models, i + QListWidgetItem::UserType );
    }
@@ -275,7 +269,7 @@ void US_ModelGui::edit_description( void )
       }
    }
 }
-
+
 void US_ModelGui::select_model( QListWidgetItem* item )
 {
    if ( ! ignore_changes() ) 
@@ -338,7 +332,7 @@ void US_ModelGui::select_model( QListWidgetItem* item )
    working_model = model;
 
    recent_row    = index;
-
+
    // Populate 
    le_description    ->setText( model.description );
    le_wavelength     ->setText( QString::number( model.wavelength, 'f', 1 ) );
@@ -397,7 +391,7 @@ bool US_ModelGui::status_query( const QStringList& q )
 
    return database_ok( db );
 }
-
+
 void US_ModelGui::check_db( void )
 {
    QStringList DB = US_Settings::defaultDB();
@@ -448,7 +442,7 @@ void US_ModelGui::get_person( void )
 
    le_investigator->setText( inv_text );
 }
-
+
 void US_ModelGui::manage_components( void )
 {
    int index = lw_models->currentRow();
@@ -513,10 +507,9 @@ void US_ModelGui::update_assoc( void )
    model       = working_model;
    model_saved = false;
 }
-
+
 void US_ModelGui::accept_model( void )
 {
-qDebug() << "MG:accept:  saved? desc" << model_saved << model.description;
    if ( ! ignore_changes() )
       return;
 
@@ -578,12 +571,12 @@ QString US_ModelGui::get_filename( const QString& path, const QString& guid )
 
    return path + "/M" + QString().sprintf( "%07i", number + 1 ) + ".xml";
 }
-
+
 void US_ModelGui::save_model( void )
 {
    if ( ! verify_model() ) return;
 
-   model.wavelength      = le_wavelength->text().toDouble();
+   model.wavelength = le_wavelength->text().toDouble();
 
    if ( ! disk_controls->db() )
    {
@@ -644,7 +637,7 @@ void US_ModelGui::save_model( void )
    }
    model_saved = true;
 }
-
+
 bool US_ModelGui::verify_model( void )
 {
    if ( model.components.size() == 0 )
@@ -669,6 +662,25 @@ bool US_ModelGui::verify_model( void )
    return true;
 }
 
+int US_ModelGui::modelIndex( QString mdesc, QList< ModelDesc > mds )
+{
+   for ( int i = 0; i < mds.size(); i++ )
+   {
+      if ( mdesc == mds[ i ].description )
+         return i;
+   }
+
+   return -1;
+}
+
+void US_ModelGui::source_changed( bool db )
+{
+   ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
+   list_models();
+   qApp->processEvents();
+}
+
+
 void US_ModelGui::list_models( void )
 {
    if ( ! ignore_changes() ) return;
@@ -719,6 +731,7 @@ void US_ModelGui::list_models( void )
          m_file.close();
       }
    }
+
    else  // DB Access
    {
       if ( investigator < 0 )
@@ -768,35 +781,20 @@ void US_ModelGui::list_models( void )
       lw_models->addItem( "No models found." );
 
    else
-   {  // resize to show reasonable portion of list
-      nlines     = nlines > 13 ? 13 : nlines;        // show at most 13 lines,
-      nlines     = nlines <  5 ?  5 : nlines;        //   and no less than 5
-      QFontMetrics fm = lw_models->fontMetrics();    // list font metrics
-      int height = nlines * fm.lineSpacing();        // list height needed
-      int width  = fm.maxWidth() * 20;               // list width needed
-      height     = height > olhgt ? height : olhgt;  // max of old,new height
-      width      = width  > olwid ? width  : olwid;  // max of old,new width
-      height     = this->height() + height - olhgt;  // bump by difference in
-      width      = this->width()  + width  - olwid;  //   old,new list size for
-      resize( width, height );                       //   new total dialog size
+   {  // Resize to show reasonable portion of list
+      nlines     = min( nlines, 13 );               // show at most 13 lines,
+      nlines     = min( nlines, 5 );                //   and no less than 5
+
+      QFontMetrics fm = lw_models->fontMetrics(); 
+      int height = nlines * fm.lineSpacing();       // list height needed
+      int width  = fm.maxWidth() * 20;              // list width needed
+      
+      height     = max( height, olhgt );            // max of old,new height
+      width      = max( width,  olwid );            // max of old,new width
+      
+      height     = this->height() + height - olhgt; // bump by difference in
+      width      = this->width()  + width  - olwid; //   old,new list size
+      
+      resize( width, height );                      //   new total dialog size
    }
 }
-
-int US_ModelGui::modelIndex( QString mdesc, QList< ModelDesc > mds )
-{
-   for ( int i = 0; i < mds.size(); i++ )
-   {
-      if ( mdesc == mds[ i ].description )
-         return i;
-   }
-
-   return -1;
-}
-
-void US_ModelGui::source_changed( bool db )
-{
-   ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
-   list_models();
-   qApp->processEvents();
-}
-
