@@ -27,7 +27,7 @@ BEGIN
 
   SELECT COUNT(*)
   INTO   count_analytes
-  FROM   analytes
+  FROM   analyte
   WHERE  analyteID = p_analyteID;
 
   SELECT COUNT(*)
