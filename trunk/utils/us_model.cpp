@@ -116,32 +116,19 @@ bool US_Model::operator== ( const US_Model& m ) const
    return true;
 }
 
-int US_Model::load( bool db_access, const QString& guid, US_DB2* db )
-{
-   if ( db_access ) return load_db  ( guid, db );
-   else             return load_disk( guid );
-}
-
-int US_Model::write( bool db_access, const QString& filename, US_DB2* db )
-{
-   if ( db_access ) return write( db );
-   else             return write( filename );
-}
-
-// update any missing coefficient values in the components of the model
+// Update any missing coefficient values in the components of the model
 bool US_Model::update_coefficients()
 {
    bool ok = true;
-
+   
+   // Calculate missing coefficients for each component; note overall success
    for ( int ii = 0; ii < components.size(); ii++ )
-   {  // calculate missing coefficients for each component; note overall success
       ok = ok && calc_coefficients( components[ ii ] );
-   }
 
    return ok;
 }
 
-// calculate any missing coefficient values in a model component
+// Calculate any missing coefficient values in a model component
 bool US_Model::calc_coefficients( SimulationComponent& component )
 {
    bool   ok = true;
@@ -164,7 +151,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    double buoyancyb;
    US_Math2::SolutionData d; // data correction object
 
-   // insure that we have a vbar we can use
+   // Ensure that we have a vbar we can use
    vbar           = component.vbar20;
 
    if ( vbar <= 0.0 )
@@ -193,16 +180,13 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    d.viscosity    = VISC_20W;
 
    US_Math2::data_correction( NORMAL_TEMP, d );
-//qDebug() << "CC: b_b b_w dn dn_t vi vi_t corr"
-//   << d.buoyancyb << d.buoyancyw << d.density << d.density_tb
-//   << d.viscosity << d.viscosity_tb << d.correction;
 
-   // start with already calculated s if possible
+   // Start with already calculated s if possible
    if ( s != 0.0 )
    {
       s20w           = qAbs( s );
 
-      // first check s and D
+      // First check s and D
                                                  ///////////////
       if ( D != 0.0 )                            // s and D
       {                                          ///////////////
@@ -217,7 +201,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
          f_f0           = ( ffdif < 1.e-5 ) ? ff0sv : f_f0;
       }
 
-      // next check s and k (f_f0)
+      // Next check s and k (f_f0)
                                                  ///////////////
       else if ( f_f0 != 0.0 )                    // s and f_f0
       {                                          ///////////////
@@ -228,7 +212,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
          mw             = s * R * t / ( D * buoyancyb );
       }
 
-      // then check any other s + combinations
+      // Then check any other s + combinations
                                                  ///////////////
       else if ( mw != 0.0 )                      // s and mw
       {                                          ///////////////
@@ -319,7 +303,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    double df      = qAbs( f - fv ) / fv;
 
    if ( df > 0.1 )
-   {  // significant change in f:  replace and use old as concentration
+   {  // Significant change in f:  replace and use old as concentration
 
       if ( c == 0.0 )
          component.signal_concentration = f;
@@ -336,7 +320,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    return ok;
 }
 
-// test the existence of the models directory path and create it if need be
+// Test the existence of the models directory path and create it if need be
 bool US_Model::model_path( QString& path )
 {
    QDir dir;
@@ -353,7 +337,7 @@ bool US_Model::model_path( QString& path )
    return true;
 }
 
-// short text string describing the model type
+// Short text string describing the model type
 QString US_Model::typeText( void )
 {
    struct typemap
@@ -407,7 +391,13 @@ QString US_Model::typeText( void )
    return tdesc;                            // return type description text
 }
 
-// load model from local disk
+int US_Model::load( bool db_access, const QString& guid, US_DB2* db )
+{
+   if ( db_access ) return load_db  ( guid, db );
+   else             return load_disk( guid );
+}
+
+// Load model from local disk
 int US_Model::load_disk( const QString& guid )
 {
    int error = US_DB2::ERROR;  // Error by default
@@ -416,7 +406,7 @@ int US_Model::load_disk( const QString& guid )
 
    if ( ! model_path( path ) )
    {
-      //message = QObject::tr ( "Could not create analyte directory" );
+      message = QObject::tr ( "Could not create analyte directory" );
       return error;
    }
 
@@ -457,27 +447,32 @@ int US_Model::load_disk( const QString& guid )
       if ( found ) return load( filename );
    }
 
-   qDebug() << "Could not find model guid";
-   //message =  QObject::tr ( "Could not find analyte guid" );
+   message =  QObject::tr ( "Could not find analyte guid" );
    return error;
 }
 
 int US_Model::load( const QString& filename )
 {
-   QString coSedStr;
-   QString comprStr;
    QFile file( filename );
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
-   {
-      qDebug() << "Cannot open file for reading: " << filename;
-      return false;
-   }
+      return US_DB2::ERROR;
+
+   QXmlStreamReader xml( &file );
+   
+   int result = load_stream( xml );
+   file.close();
+   return result;
+}
+
+int US_Model::load_stream( QXmlStreamReader& xml )
+{
+   QString coSedStr;
+   QString comprStr;
 
    components  .clear();
    associations.clear();
 
-   QXmlStreamReader     xml( &file );
    QXmlStreamAttributes a;
    bool                 read_next = true;
 
@@ -568,13 +563,10 @@ int US_Model::load( const QString& filename )
       }
    }
 
-   if ( US_Settings::us_debug() > 2 )
-      debug();
+   if ( US_Settings::us_debug() > 2 ) debug();
 
    return US_DB2::OK;
 }
-
-
 
 void US_Model::mfem_scans( QXmlStreamReader& xml, SimulationComponent& sc )
 {
@@ -648,33 +640,26 @@ int US_Model::load( const QString& id, US_DB2* db )
    db->next();
    QByteArray contents = db->value( 2 ).toString().toAscii();
 
-   // Write the model file to a temporary file
-   QTemporaryFile temporary;
-   temporary.open();
-   temporary.write( contents );
-   temporary.close();
+   // Write the model file to an array in memory
+   QXmlStreamReader xml( contents );
+   return load_stream( xml );
+}
 
-   QString file = temporary.fileName();
-   return load( file );
+int US_Model::write( bool db_access, const QString& filename, US_DB2* db )
+{
+   if ( db_access ) return write( db );
+   else             return write( filename );
 }
 
 int US_Model::write( US_DB2* db )
 {
       // Create the model xml file in a string
-      QTemporaryFile temporary;
-      
-      temporary.open();
-      QXmlStreamWriter xml( &temporary );
-
-      write_temp( xml );
-      temporary.close();  
-
-      temporary.open();  // Start at beginning
-      QByteArray temp_contents = temporary.readAll();
-
+      QByteArray temporary;
       QByteArray contents;
-
-      db->mysqlEscapeString( contents, temp_contents, temp_contents.size() );
+      
+      QXmlStreamWriter xml( &temporary );
+      write_stream( xml );
+      db->mysqlEscapeString( contents, temporary, temporary.size() );
 
       QStringList q;
 
@@ -713,13 +698,13 @@ int US_Model::write( const QString& filename )
       return US_DB2::ERROR;
 
    QXmlStreamWriter xml( &file );
-   write_temp( xml );
+   write_stream( xml );
    file.close();
 
    return US_DB2::OK;
 }
 
-void US_Model::write_temp( QXmlStreamWriter& xml )
+void US_Model::write_stream( QXmlStreamWriter& xml )
 {
    if ( modelGUID.size() != 36 )
       modelGUID = US_Util::new_guid();

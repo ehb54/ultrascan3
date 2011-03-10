@@ -194,7 +194,8 @@ class US_EXTERN US_Model
       void mfem_scans      ( QXmlStreamReader&, SimulationComponent& );
       void get_associations( QXmlStreamReader&, Association& );
                            
-      void write_temp      ( QXmlStreamWriter& );
+      int  load_stream     ( QXmlStreamReader& );
+      void write_stream    ( QXmlStreamWriter& );
 
 };
 #endif
