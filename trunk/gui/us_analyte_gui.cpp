@@ -524,14 +524,31 @@ void US_AnalyteGui::value_changed( const QString& )
 
 void US_AnalyteGui::change_description( void )
 {
-   int row = lw_analytes->currentRow();
+   analyte.description = le_description->text();
+
+   int row = -1;
+
+   for ( int ii = 0; ii < descriptions.size(); ii++ )
+   {
+      if ( analyte.description == descriptions.at( ii ) )
+      {
+         row = ii;
+         break;
+      }
+   }
+
+   pb_save->setEnabled( row < 0  );
+
+   if ( row < 0 )
+   {  // no match to description:  clear GUID, de-select any list item
+      le_guid->clear();
+      lw_analytes->setCurrentRow( -1 );
+   }
+
    if ( row < 0 ) return;
 
-   int index = info[ row ].index;
-
-   descriptions[ index ] = le_description->text();
-   analyte.description   = le_description->text();
-   search( le_search->text() );
+   le_search->clear();
+   search( "" );
 
    lw_analytes->setCurrentRow( row );
 }
@@ -1227,8 +1244,6 @@ void US_AnalyteGui::connect_error( const QString& error )
 
 void US_AnalyteGui::list( void )
 {
-   reset();
-
    if ( disk_controls->db() )
       list_from_db();
    else
@@ -1514,7 +1529,7 @@ void US_AnalyteGui::select_from_db( void )
    db.next();
 
    QString guid = db.value( 0 ).toString();
-   
+
    int result = analyte.load( true, guid, &db );
 
    if ( result != US_DB2::OK )
@@ -1564,6 +1579,8 @@ void US_AnalyteGui::save( void )
       QMessageBox::warning( this,
             tr( "Save Error" ),
             tr( "The analyte could not be saved.\n\n" ) + analyte.message );
+
+   list();
 }
 
 void US_AnalyteGui::delete_analyte( void )
