@@ -55,15 +55,9 @@ int US_Noise::load( const QString& id, US_DB2* db )
    db->next();
    QByteArray contents = db->value( 5 ).toString().toAscii();
 
-   // Write the model file to a temporary file
-   QTemporaryFile temporary;
-   temporary.open();
-   temporary.write( contents );
-   temporary.close();
-//qDebug() << "NOI: ldIdDb: length contents" << QString(contents).length();
+   QXmlStreamReader     xml( contents );
 
-   QString file = temporary.fileName();
-   return load( file );
+   return load_temp( xml );
 }
 
 // load noise from local disk
@@ -78,6 +72,13 @@ int US_Noise::load( const QString& filename )
    }
 
    QXmlStreamReader     xml( &file );
+
+   return load_temp( xml );
+}
+
+// load noise from a temporary stream
+int US_Noise::load_temp( QXmlStreamReader& xml )
+{
    QXmlStreamAttributes a;
    bool                 read_next = true;
    QString              typen     = "ti";
@@ -114,7 +115,7 @@ int US_Noise::load( const QString& filename )
    }
 
    count       = values.size();
-//qDebug() << "NOI: ldFile: count" << count;
+//qDebug() << "NOI: ldTemp: count" << count;
    if ( US_Settings::us_debug() > 2 )
       debug();
 
@@ -132,14 +133,10 @@ int US_Noise::write( bool db_access, const QString& filename, US_DB2* db )
 int US_Noise::write( US_DB2* db )
 {
       // Create the noise xml file in a string
-      QTemporaryFile temporary;
-      temporary.open();
-      QXmlStreamWriter xml( &temporary );
+      QByteArray       temp_contents;
+      QXmlStreamWriter xml( &temp_contents );
       write_temp( xml );
-      temporary.close();
 
-      temporary.open();  // Start at beginning
-      QByteArray     temp_contents = temporary.readAll();
       QByteArray     contents;
       QStringList    q;
 
@@ -198,10 +195,11 @@ int US_Noise::write( const QString& filename )
 
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
       return US_DB2::ERROR;
-   
+
    QXmlStreamWriter xml( &file );
    write_temp( xml );
    file.close();
+
    return US_DB2::OK;
 }
 
@@ -366,7 +364,7 @@ int US_Noise::load_db( const QString& guid, US_DB2* db )
    return load( id, db );
 }
 
-// write noise to temporary file
+// write noise to a temporary stream
 void US_Noise::write_temp( QXmlStreamWriter& xml )
 {
    QString typen( "ti" );
@@ -408,7 +406,7 @@ void US_Noise::write_temp( QXmlStreamWriter& xml )
    xml.writeEndElement(); // noise
    xml.writeEndElement(); // NoiseData
    xml.writeEndDocument();
-   //file.close();
+//qDebug() << " wr_temp count" << values.size();
 }
 
 // output debug prints
