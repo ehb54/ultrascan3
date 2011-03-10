@@ -66,7 +66,8 @@ US_BufferGui::US_BufferGui(
    main->addLayout( search, row++, 0 );
 
    // Buffer descriptions from DB
-   QLabel* lb_banner1 = us_banner( tr( "Doubleclick on buffer data to select" ), -2 );
+   QLabel* lb_banner1 = us_banner( 
+         tr( "Doubleclick on buffer data to select" ), -2 );
    lb_banner1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_banner1, row++, 0 );
 
@@ -87,9 +88,9 @@ US_BufferGui::US_BufferGui(
 
    // Set up checkbox colors to match label (as set in us_config)
    QPalette p = US_GuiSettings::labelColor();
-   p.setColor( QPalette::Base,   p.color( QPalette::WindowText ) );  // Checkbox BG
-   p.setColor( QPalette::Button, p.color( QPalette::Window     ) );  // Checkbox Text BG
-   p.setColor( QPalette::Text,   p.color( QPalette::Window     ) );  // Checkbox FG
+   p.setColor( QPalette::Base,   p.color( QPalette::WindowText ) );  // CB BG
+   p.setColor( QPalette::Button, p.color( QPalette::Window     ) );  // Text BG
+   p.setColor( QPalette::Text,   p.color( QPalette::Window     ) );  // CB FG
 
    shared->itemAt( 0 )->widget()->setPalette( p );
    shared->itemAt( 1 )->widget()->setPalette( p );
@@ -229,8 +230,8 @@ US_BufferGui::US_BufferGui(
 
    le_description = us_lineedit();
    main->addWidget( le_description, row++, 1, 1, 2 );
-   connect( le_description, SIGNAL( returnPressed() ),
-                            SLOT( new_description() ) );
+   connect( le_description, SIGNAL( editingFinished() ),
+                            SLOT  ( new_description() ) );
    le_description->setEnabled( false );
 
    le_guid = us_lineedit();
@@ -252,8 +253,8 @@ US_BufferGui::US_BufferGui(
    main->addWidget( lb_units, row++, 1, 1, 2 );
 
    le_concentration = us_lineedit();
-   connect( le_concentration, SIGNAL( returnPressed() ), 
-                              SLOT  ( add_component() ) );
+   connect( le_concentration, SIGNAL( editingFinished() ), 
+                              SLOT  ( add_component  () ) );
    main->addWidget( le_concentration, row++, 1, 1, 2 );
 
    // Current buffer
@@ -505,8 +506,9 @@ void US_BufferGui::read_buffer( void )
    le_search->setPalette( gray );
    le_search->setReadOnly( true );
 
-   pb_save  ->setEnabled( false );
-   pb_update->setEnabled( false );
+   bool desc_set = le_description->text().size() > 0;
+   pb_save  ->setEnabled( desc_set );
+   pb_update->setEnabled( desc_set );
    pb_del   ->setEnabled( false );
 
    QDir f( path );
@@ -570,8 +572,9 @@ void US_BufferGui::read_db( void )
    le_search->setPalette( gray );
    le_search->setReadOnly( true );
 
-   pb_save  ->setEnabled( false );
-   pb_update->setEnabled( false );
+   bool desc_set = le_description->text().size() > 0;
+   pb_save  ->setEnabled( desc_set );
+   pb_update->setEnabled( desc_set );
    pb_del   ->setEnabled( false );
 
    le_search->setText( "" );
@@ -593,20 +596,9 @@ void US_BufferGui::read_db( void )
    lw_buffer_db->clear();
    
    if ( descriptions.size() == 0 )
+   {
       lw_buffer_db->addItem( "No buffer files found." );
-
-   /*if ( descriptions.size() < 1 )
-      QMessageBox::information( this,
-            tr( "No data" ),
-            tr( "No buffers found for the selected investigator,\n"
-                "You can click on \"Reset\", then query the DB to \n"
-                "find shared buffers from all Investigators." ) );
-   
-   else if ( descriptions.size() < 1 )
-      QMessageBox::information( this,
-            tr( "No data" ),
-            tr( "There are no buffer entries." ) );
-   */
+   }
    else
    { 
       le_search->setReadOnly( false );
@@ -980,7 +972,7 @@ void US_BufferGui::save_db( void )
       return;
    }
 
-   reset();
+   //reset();
    read_db();
 }
 
@@ -1343,21 +1335,21 @@ void US_BufferGui::new_description()
 
       if ( buffer.GUID.isEmpty()  &&  disk_controls->db() )
       {  // if no GUID yet and from DB, read GUID
-         QString bufferID = bufferIDs[ row ];
+         QString   bufferID = bufferIDs[ row ];
          US_Passwd pw;
          US_DB2    db( pw.getPasswd() );
-   
+
          if ( db.lastErrno() != US_DB2::OK )
             connect_error( db.lastError() );
-   
+
          QStringList q( "get_buffer_info" );
          q << bufferID;
-      
+
          db.query( q );
          db.next(); 
-   
-         buffer.bufferID        = bufferID;
-         buffer.GUID            = db.value( 0 ).toString();
+
+         buffer.bufferID = bufferID;
+         buffer.GUID     = db.value( 0 ).toString();
       }
 
       int response = QMessageBox::question( this,
@@ -1368,7 +1360,7 @@ void US_BufferGui::new_description()
              "Click \"Yes\" to update the existing buffer.\n" ),
          QMessageBox::Yes, QMessageBox::No );
 
-      row           = -1;
+      row = -1;
 
       if ( response == QMessageBox::No )
       {  // new description (even if duplicate)
@@ -1383,8 +1375,7 @@ void US_BufferGui::new_description()
          {
             if ( buffer.description == lw_buffer_db->item( ii )->text() )
             {
-               row   = ii;
-   
+               row = ii;
                break;
             }
          }
