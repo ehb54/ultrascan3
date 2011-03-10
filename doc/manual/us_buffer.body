@@ -15,7 +15,7 @@
       <li><b>Select Investigator</b> This button brings up a window that
       allows selecting the current investigator for limiting buffer
       descriptions.  Most users will only be able to view their own
-      buffers.  The <b>Search</b> item also limits the display
+      ior shared buffers.  The <b>Search</b> item also limits the display
       of buffer descriptions.</li>
 
       <li><b>Database</b> Check to select read or write of the buffer
@@ -48,18 +48,19 @@
       <li><b>Compressibility</b> Compressibility value set by buffer choice.
       It is also editable here.</li>
 
-      <li><b>Optics</b> Type of optics: Absorbance, Interference, or
-      Flourescence.</li>
+      <li><b>Optics</b> Type of optics for spectrum management: Absorbance,
+      Interference, or Flourescence.</li>
 
       <li><b>Manage Spectrum</b> This button brings up a
       <a href="images/us_buffer_spect.png">Manage Spectrum dialog</a>
-      to set Wavelength and Extinction pairs.</li>
+      to set Wavelength and Extinction pairs for the selected optics type.</li>
 
       <li><b>Buffer Description</b> Description set by buffer choice. It is
-      editable and especially useful when defining a new buffer.</li>
+      editable and especially useful when defining a new buffer.  Select the 
+      shared checkbox to make the buffer globally visible.</li>
 
       <li><b>Global Identifier</b> Read-only global identifier of the
-      buffer.</li>
+      buffer.  This is automatically generated when saving a new buffer.</li>
 
       <li><b>Please select a Buffer Component</b> Once a component item has
       been chosen in the lower left list of components, enter a purely numeric

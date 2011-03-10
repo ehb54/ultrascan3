@@ -48,10 +48,10 @@ void US_BufferComponent::getInfoFromDB( US_DB2& db )
    db.query( q );
    db.next();
 
-   unit = db.value( 0 ).toString();
-   name = db.value( 1 ).toString();
-   QString viscosity       = db.value( 2 ).toString();
-   QString density         = db.value( 3 ).toString();
+   unit              = db.value( 0 ).toString();
+   name              = db.value( 1 ).toString();
+   QString viscosity = db.value( 2 ).toString();
+   QString density   = db.value( 3 ).toString();
 
    QStringList sl = viscosity.split( " " );
 
@@ -401,26 +401,28 @@ bool US_Buffer::readFromDB( US_DB2& db, const QString& bufID )
 
    while ( db.next() )
    {
-      QString index = db.value( 0 ).toString();
-      componentIDs  << index;
+      componentIDs  << db.value( 0 ).toString();
       concentration << db.value( 4 ).toString().toDouble();
+   }
 
+   for ( int i = 0; i < componentIDs.size(); i++ )
+   {
       US_BufferComponent bc;
-      bc.componentID = index;
+      bc.componentID = componentIDs[ i ];
       bc.getInfoFromDB( db );
-      component << bc;
+       component << bc;
    }
 
    // Get spectrum data
    getSpectrum( db, "Refraction" );
    getSpectrum( db, "Extinction" );
    getSpectrum( db, "Fluorescence" );
-
    return true;
 }
 
 int US_Buffer::saveToDB( US_DB2& db, const QString private_buffer ) const
 {
+dumpBuffer();;
    QStringList q( "new_buffer" );
    q << GUID
      << description
@@ -444,7 +446,6 @@ int US_Buffer::saveToDB( US_DB2& db, const QString private_buffer ) const
         << QString::number( bufferID )
         << component[ i ].componentID
         << QString::number( concentration[ i ], 'f', 5 );
-
       db.statusQuery( q );
 
       if ( db.lastErrno() != US_DB2::OK ) return -2;
