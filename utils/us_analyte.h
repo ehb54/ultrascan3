@@ -21,7 +21,6 @@ class US_EXTERN US_Analyte
       //! The types of analytes used in UltraScan III
       enum analyte_t { PROTEIN, DNA, RNA, CARBOHYDRATE };
 
-      int                    invID;        //!< The analyte's investigator
       double                 vbar20;       //!< vbar at 20C
       double                 mw;           //!< Molecular weight
       QString                description;  //!< Description of the analyte
@@ -76,6 +75,9 @@ class US_EXTERN US_Analyte
       //! \returns    - Success if the path is found or created and failure
       //!               if the path cannot be created
       static bool       analyte_path( QString& );
+
+      //! Dump the analyte values to stderr for debugging.
+      void   dump        ( void );
 
    private:
       int    load_db     ( const QString&, US_DB2* );
