@@ -1,5 +1,6 @@
 #include "qwt3d_surfaceplot.h"
 #include "qwt3d_function.h"
+#include <stdio.h>
 
 using namespace Qwt3D;
 using namespace std;
