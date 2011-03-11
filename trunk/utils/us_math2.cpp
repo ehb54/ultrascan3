@@ -147,6 +147,8 @@ void US_Math2::calc_vbar( Peptide& pep, const QString& sequence,
    pep.mw       = 0.0;
    pep.weight   = 0.0;
    pep.e280     = 0.0;
+   pep.vbar20   = 0.0;
+   pep.vbar     = 0.0;
 
    pep.a   = sequence.count( "a", Qt::CaseInsensitive );
    pep.b   = sequence.count( "b", Qt::CaseInsensitive );
@@ -177,7 +179,7 @@ void US_Math2::calc_vbar( Peptide& pep, const QString& sequence,
    pep.z   = sequence.count( "z", Qt::CaseInsensitive );
    pep.dab = sequence.count( "+" );
    pep.dpr = sequence.count( "@" );
-   
+
    pep.residues = pep.a + pep.b + pep.c + pep.d + pep.e + pep.f +
                   pep.g + pep.h + pep.i + pep.j + pep.k + pep.l +
                   pep.m + pep.n + pep.o + pep.p + pep.q + pep.r +
@@ -304,11 +306,14 @@ void US_Math2::calc_vbar( Peptide& pep, const QString& sequence,
    // a temperature of 25C.  Adjust the values to 20C from the current 
    // temperature.
    
-   pep.vbar20 = ( pep.weight / pep.mw ) - 0.002125;
-   pep.vbar   = ( ( pep.weight / pep.mw ) + 4.25e-4 * ( temperature - 25 ) );
+   if ( pep.mw > 0.0 )
+   {
+      pep.vbar20 = ( pep.weight / pep.mw ) - 0.002125;
+      pep.vbar   = ( ( pep.weight / pep.mw ) + 4.25e-4 * ( temperature - 25 ) );
 
-   // Add one water molecule for the end of the chain
-   pep.mw +=  WATER_MW;
+      // Add one water molecule for the end of the chain
+      pep.mw +=  WATER_MW;
+   }
 }
 
 void US_Math2::data_correction( double t, SolutionData& d )

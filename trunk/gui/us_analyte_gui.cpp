@@ -209,8 +209,8 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    protein_info->addWidget( lb_protein_vbar20, prow, 2 );
 
    le_protein_vbar20 = us_lineedit( "" );
-   le_protein_vbar20->setReadOnly( true );
-   le_protein_vbar20->setPalette ( gray );
+   connect( le_protein_vbar20, SIGNAL( textChanged  ( const QString& ) ),
+                               SLOT  ( value_changed( const QString& ) ) );
    protein_info->addWidget( le_protein_vbar20, prow++, 3 );
 
    QLabel* lb_protein_temp = us_label( 
@@ -234,11 +234,12 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
 
    QLabel* lb_protein_vbar = us_label( 
          tr( "VBar <small>(cm<sup>3</sup>/g at T " ) + DEGC + ")</small>:" );
+
    protein_info->addWidget( lb_protein_vbar, prow, 2 );
 
    le_protein_vbar = us_lineedit( "" );
-   connect( le_protein_vbar, SIGNAL( textChanged ( const QString& ) ),
-                             SLOT  ( value_changed( const QString& ) ) );
+   le_protein_vbar->setReadOnly( true );
+   le_protein_vbar->setPalette ( gray );
    protein_info->addWidget( le_protein_vbar, prow++, 3 );
 
    QLabel* lb_protein_residues = us_label( tr( "Residue count:" ) );
@@ -518,8 +519,9 @@ void US_AnalyteGui::check_db( void )
 
 void US_AnalyteGui::value_changed( const QString& )
 {
-   // Leave empty for now.  This only is activated by changes to vbar
-   // (either protein or dna/rna) but vbar20 is the only thing saved.
+   // This only is activated by changes to vbar20
+   // (either protein or dna/rna) but vbar is not saved.
+   temp_changed( le_protein_temp->text() );
 }
 
 void US_AnalyteGui::change_description( void )
@@ -752,13 +754,9 @@ void US_AnalyteGui::reset( void )
 void US_AnalyteGui::temp_changed( const QString& text )
 {
    double temperature = text.toDouble();
-
-   if ( ! analyte.sequence.isEmpty() )
-   {
-      US_Math2::Peptide p;
-      US_Math2::calc_vbar( p, analyte.sequence, temperature );
-      le_protein_vbar->setText( QString::number( p.vbar, 'f', 4 ) );
-   }
+   double vbar20      = le_protein_vbar20->text().toDouble();
+   double vbar        = vbar20 + 4.25e-4 * ( temperature - 20.0 );
+   le_protein_vbar->setText( QString::number( vbar, 'f', 4 ) );
 }
 
 void US_AnalyteGui::parse_dna( void )
