@@ -13,20 +13,23 @@ namespace US_WinData
     
     P_SECOND,       P_DCDT,   P_VHWE,      // Velocity Menu
                     P_2DSA,   P_GAINIT,
-                    P_FEMA,
+                    P_FEMA,   P_PSEUDO3D,
 
     P_EQGLOBFIT,                           // Equilibrium Menu
 
     P_GLOBFITEQ,                           // Global Fit Menu
 
-    P_CONVERT,      P_FITMEN, P_COLORGRAD, // Utilities menu
-                    P_RPTGEN,
+    P_CONVERT,      P_FITMEN,              // Utilities menu
+    P_COLORGRAD,    P_RPTGEN,  
+    P_ROTORCAL,     P_LICENSE,
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
-    P_SASSOC,       P_MODEL1, P_MODEL2,
+    P_SASSOC,       P_MODEL1, 
+    P_MODEL2,
 
-    P_INVESTIGATOR, P_BUFFER, P_VBAR,      // Database Menu
-    P_MANAGEDATA,
+    P_INVESTIGATOR, P_BUFFER,      P_VBAR, // Database Menu
+    P_MODEL       , P_MANAGEDATA,  P_MANAGESOLN, 
+    P_MANAGEPROJ,   P_MANAGEROTOR,
 
     P_END 
   };
@@ -109,6 +112,11 @@ namespace US_WinData
       QObject::tr( "Finite Element Match Program" )
     },
     
+    { P_PSEUDO3D, 0, 0, "us_pseudo3d_combine",
+      QObject::tr( "Loading Pseudo 3D Combine" ),
+      QObject::tr( "Pseudo 3D Combine Program" )
+    },
+    
     { P_EQGLOBFIT, 0, 0, "us_globalequil",
       QObject::tr( "Loading Global Equilibrium Fit" ),
       QObject::tr( "Global Equilibrium Fit Program" )
@@ -137,6 +145,16 @@ namespace US_WinData
     { P_RPTGEN,    0, 0, "us_reporter",
       QObject::tr( "Loading Report Generator" ),
       QObject::tr( "Report Generator Program" )
+    },
+
+    { P_ROTORCAL,  0, 0, "us_rotor_calibration",
+      QObject::tr( "Loading Rotor Calibration" ),
+      QObject::tr( "Rotor Calibration Program" )
+    },
+
+    { P_LICENSE,   0, 0, "us_license",
+      QObject::tr( "Loading License Manager" ),
+      QObject::tr( "License Manager Program" )
     },
 
     { P_ASTFEM, 2, 0, "us_astfem_sim",
@@ -175,13 +193,33 @@ namespace US_WinData
     },
     
     { P_VBAR,  0, 0, "us_analyte_gui",
-      QObject::tr( "Loading Analyte Sequences" ),
-      QObject::tr( "Editing Analyte Sequences Program" )
+      QObject::tr( "Loading Analyte Management" ),
+      QObject::tr( "Analyte Management Program" )
+    },
+
+    { P_MODEL,  0, 0, "us_model_gui",
+      QObject::tr( "Loading Model Management" ),
+      QObject::tr( "Model Management Program" )
     },
 
     { P_MANAGEDATA,  0, 0, "us_manage_data",
       QObject::tr( "Loading Data Management" ),
       QObject::tr( "Managing Data Program" )
+    },
+
+    { P_MANAGESOLN,  0, 0, "us_solution",
+      QObject::tr( "Loading Solution Management" ),
+      QObject::tr( "Managing Solution Management Program" )
+    },
+
+    { P_MANAGEPROJ,  0, 0, "us_project",
+      QObject::tr( "Loading Project Management" ),
+      QObject::tr( "Managing Project Management Program" )
+    },
+
+    { P_MANAGEROTOR,  0, 0, "us_rotor",
+      QObject::tr( "Loading Rotor Management" ),
+      QObject::tr( "Managing Rotor Management Program" )
     },
 
     { P_END, 0, 0, "", "", "" }
