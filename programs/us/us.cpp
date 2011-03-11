@@ -145,12 +145,13 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   
   /////////////
   QMenu* velocity    = new QMenu( tr( "&Velocity" ),    this );
-  addMenu(  P_VHWE  , tr( "&Enhanced van Holde - Weischet" ), velocity );
-  addMenu(  P_2DSA  , tr( "&2-D Spectrum Analysis" ),         velocity );
-  addMenu(  P_GAINIT, tr( "&Initialize Genetic Algorithm" ),  velocity );
-  addMenu(  P_SECOND, tr( "&Second Moment" ),                 velocity );
-  addMenu(  P_DCDT  , tr( "&Time Derivative" ),               velocity );
-  addMenu(  P_FEMA  , tr( "&FE Model Viewer" ),               velocity );
+  addMenu(  P_VHWE    , tr( "&Enhanced van Holde - Weischet" ),   velocity );
+  addMenu(  P_2DSA    , tr( "&2-D Spectrum Analysis" ),           velocity );
+  addMenu(  P_GAINIT  , tr( "&Initialize Genetic Algorithm" ),    velocity );
+  addMenu(  P_SECOND  , tr( "&Second Moment" ),                   velocity );
+  addMenu(  P_DCDT    , tr( "&Time Derivative" ),                 velocity );
+  addMenu(  P_FEMA    , tr( "&FE Model Viewer" ),                 velocity );
+  addMenu(  P_PSEUDO3D, tr( "&Combine Pseudo-3D Distributions" ), velocity );
   
   QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
   addMenu(  P_EQGLOBFIT, tr( "&Global Fit" ),                 equilibrium );
@@ -166,6 +167,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_FITMEN   , tr( "&Fit Meniscus"             ), utilities );
   addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator" ), utilities );
   addMenu(  P_RPTGEN   , tr( "&Report Generator"         ), utilities );
+  addMenu(  P_ROTORCAL , tr( "R&otor Calibration"        ), utilities );
+  addMenu(  P_LICENSE  , tr( "&License Manager"          ), utilities );
 
   QMenu* simulation  = new QMenu( tr( "S&imulation" ),  this );
   addMenu(  P_ASTFEM, tr( "&Finite Element Simulation (ASTFEM)" ), simulation );
@@ -178,10 +181,14 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
                                                                    simulation );
 
   QMenu* database    = new QMenu( tr( "&Database" ),    this );
-  addMenu(  P_INVESTIGATOR, tr( "Manage &Investigator Data" ), database );
-  addMenu(  P_BUFFER      , tr( "Manage &Buffer Data"       ), database );
-  addMenu(  P_VBAR        , tr( "Manage &Analytes"          ), database );
-  addMenu(  P_MANAGEDATA  , tr( "Manage &Data"              ), database );
+  addMenu(  P_INVESTIGATOR , tr( "Manage &Investigator Data" ), database );
+  addMenu(  P_BUFFER       , tr( "Manage &Buffer Data"       ), database );
+  addMenu(  P_VBAR         , tr( "Manage &Analytes"          ), database );
+  addMenu(  P_MODEL        , tr( "Manage &Models"            ), database );
+  addMenu(  P_MANAGEDATA   , tr( "Manage &Data"              ), database );
+  addMenu(  P_MANAGESOLN   , tr( "Manage &Solutions"         ), database );
+  addMenu(  P_MANAGEPROJ   , tr( "Manage &Projects"          ), database );
+  addMenu(  P_MANAGEROTOR  , tr( "Manage &Rotors"            ), database );
 
   ///////////////
   QMenu* help        = new QMenu( tr( "&Help" ),        this );
