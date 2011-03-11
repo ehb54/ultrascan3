@@ -7,7 +7,7 @@
 US_Analyte::US_Analyte()
 {
    vbar20         = TYPICAL_VBAR;
-   mw             = 50000.0;
+   mw             = 0.0;
    description    = "New Analyte";
    analyteGUID    .clear();
    sequence       .clear();
