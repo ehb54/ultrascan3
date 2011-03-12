@@ -339,10 +339,14 @@ void US_ProcessConvert::writeConvertedData(
 
       // Same with solutionGUID
       QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-      if ( ! saveGUIDs || ! rx.exactMatch( triples[ i ].solution.solutionGUID ) )
+//qDebug() << "Save status = " << QString::number( triples[ i ].solution.saveStatus ) ;
+//qDebug() << "Match = " << rx.exactMatch( triples[ i ].solution.solutionGUID );
+      if ( ( triples[ i ].solution.saveStatus == US_Solution::NOT_SAVED  ) || 
+           ( ! rx.exactMatch( triples[ i ].solution.solutionGUID )       ) )
       {
          triples[ i ].solution.solutionGUID = US_Util::new_guid();
          triples[ i ].solution.solutionDesc = "New Solution";
+//qDebug() << "Solution GUID/description changed";
       }
 
       // Save the filename of this triple

@@ -147,7 +147,7 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       void saveTemperature    ( const QString& );
       void saveNotes          ( void );
       void newSolution        ( void );
-      void save               ( void );
+      void save               ( bool = true );
       void delete_solution    ( void );
       void source_changed     ( bool );
       void update_disk_db     ( bool );
