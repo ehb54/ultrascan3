@@ -87,7 +87,7 @@ class US_EXTERN US_Solution
           \param    channelID The ID of the channel
           \param    db For database access, an open database connection
       */
-      void saveToDB          ( int = 1, int = 1, US_DB2* = 0 );
+      int saveToDB           ( int = 1, int = 1, US_DB2* = 0 );
 
       //! \brief    Function to delete the current solution from disk, if it exists
       void deleteFromDisk    ( void );
@@ -113,8 +113,12 @@ class US_EXTERN US_Solution
       */
       bool diskPath          ( QString& );
 
+      //! \brief An overloaded assignment operator
+      US_Solution&           operator=( const US_Solution& );
+
       //! \brief Displays the contents of the class variables in qDebug() statements
       void show              ( void );
+
 
    private:
 

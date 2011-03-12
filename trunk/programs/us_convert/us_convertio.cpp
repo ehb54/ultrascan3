@@ -174,14 +174,44 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
          << triple.solution.solutionGUID;
       db.query( q );
 
-      if ( db.lastErrno() == US_DB2::OK && db.next() )
+      status = db.lastErrno();
+      triple.solution.solutionID = 0;
+      if ( status == US_DB2::OK )
+      {
+         db.next();
          triple.solution.solutionID = db.value( 0 ).toInt();
+      }
+
+      else if ( status == US_DB2::NOROWS )
+      {
+         // Solution is not in db, so try to add it
+         int diskStatus = triple.solution.saveToDB( ExpData.expID, 
+                                                    1,               // figure out channelID later ??
+                                                    &db );
+//qDebug() << "triple.solution.saveToDB db status = " << QString::number( diskStatus );
+         if ( diskStatus == US_DB2::NO_BUFFER )
+            error += "Error processing buffer " + triple.solution.bufferGUID + '\n' +
+                     "Buffer was not found in the database";
+
+         else if ( diskStatus == US_DB2::NO_ANALYTE )
+            error += "Error processing analyte \n" 
+                     "An analyte was not found in the database";
+
+         else if ( diskStatus == US_DB2::NO_SOLUTION )
+            error += "Error processing solution " + triple.solution.solutionGUID + '\n' +
+                     "Solution was not found in the database";
+
+         else if ( diskStatus != US_DB2::OK )
+            error += "Error saving solution to DB " + '\n' +
+                     db.lastError();
+
+      }
 
       if ( triple.solution.solutionID == 0 )
       {
-         // This means that the solutionGUID doesn't exist in the db yet
-         error += "Error processing solution: GUID " + triple.solution.solutionGUID + '\n' +
-                  "doesn't exist in the database.";
+         // This means that we weren't successful in adding the solution to db
+         error += "Error processing solution " + triple.solution.solutionGUID + '\n' +
+                  "Solution was not found in the database";
       }
 
       QStringList q( "new_rawData" );

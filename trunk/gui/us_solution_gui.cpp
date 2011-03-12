@@ -315,9 +315,11 @@ void US_SolutionGui::reset( void )
       le_investigator->setText( "Not Selected" );
 }
 
-// Function to accept the current set of solutions and return
+// Function to accept the current solution and return
 void US_SolutionGui::accept( void )
 {
+   save( false );              // make sure the current selections have been saved
+
    if ( signal )
    {
       if ( le_solutionDesc->text().isEmpty() )
@@ -521,14 +523,10 @@ void US_SolutionGui::selectSolution( QListWidgetItem* item )
       }
 
       solution.readFromDB  ( solutionID, &db );
-      solution.saveStatus = US_Solution::DB_ONLY;
    }
 
    else
-   {
       solution.readFromDisk( solutionGUID );
-      solution.saveStatus = US_Solution::HD_ONLY;
-   }
 
    reset();
 }
@@ -596,7 +594,6 @@ void US_SolutionGui::assignAnalyte( US_Analyte data )
    QListWidgetItem* item = new QListWidgetItem( currentAnalyte.analyteDesc, lw_analytes );
    analyteMap[ item ] = solution.analytes.size() - 1;      // The one we just added
 
-   solution.saveStatus = US_Solution::NOT_SAVED;
    reset();
 }
 
@@ -630,7 +627,6 @@ void US_SolutionGui::removeAnalyte( void )
 
    calcCommonVbar20();
 
-   solution.saveStatus = US_Solution::NOT_SAVED;
    reset();
 }
 
@@ -699,7 +695,6 @@ void US_SolutionGui::assignBuffer( US_Buffer buffer )
 
    }
 
-   solution.saveStatus = US_Solution::NOT_SAVED;
    reset();
 }
 
@@ -713,7 +708,6 @@ void US_SolutionGui::saveAmount( double amount )
 
    int ndx = analyteMap[ item ];
    solution.analytes[ ndx ].amount = amount;
-   solution.saveStatus = US_Solution::NOT_SAVED;
 
    calcCommonVbar20();
 
@@ -725,21 +719,18 @@ void US_SolutionGui::saveAmount( double amount )
 void US_SolutionGui::saveDescription( const QString& )
 {
    solution.solutionDesc = le_solutionDesc ->text();
-   solution.saveStatus   = US_Solution::NOT_SAVED;
 }
 
 // Function to update the common vbar associated with the current solution
 void US_SolutionGui::saveCommonVbar20( const QString& )
 {
    solution.commonVbar20 = le_commonVbar20 ->text().toDouble();
-   solution.saveStatus  = US_Solution::NOT_SAVED;
 }
 
 // Function to update the storage temperature associated with the current solution
 void US_SolutionGui::saveTemperature( const QString& )
 {
    solution.storageTemp = le_storageTemp ->text().toDouble();
-   solution.saveStatus  = US_Solution::NOT_SAVED;
 }
 
 // Function to update the notes associated with the current solution
@@ -749,7 +740,6 @@ void US_SolutionGui::saveNotes( void )
    if ( solution.notes != te_notes->toPlainText() )
    {
       solution.notes        = te_notes        ->toPlainText();
-      solution.saveStatus   = US_Solution::NOT_SAVED;
    }
 }
 
@@ -772,7 +762,7 @@ void US_SolutionGui::newSolution( void )
 }
 
 // Function to save solution information to disk or db
-void US_SolutionGui::save( void )
+void US_SolutionGui::save( bool display_status )
 {
    if ( le_solutionDesc->text().isEmpty() )
    {
@@ -799,22 +789,17 @@ void US_SolutionGui::save( void )
       }
 
       solution.saveToDB( experimentID, channelID, &db );
-
-      solution.saveStatus = ( solution.saveStatus == US_Solution::HD_ONLY ) 
-                          ? US_Solution::BOTH : US_Solution::DB_ONLY;
    }
 
    else
-   {
       solution.saveToDisk();
 
-      solution.saveStatus = ( solution.saveStatus == US_Solution::DB_ONLY ) 
-                          ? US_Solution::BOTH : US_Solution::HD_ONLY;
+   if ( display_status )
+   {
+      QMessageBox::information( this,
+            tr( "Save results" ),
+            tr( "Solution saved" ) );
    }
-
-   QMessageBox::information( this,
-         tr( "Save results" ),
-         tr( "Solution saved" ) );
 }
 
 // Function to delete a solution from disk, db, or in the current form
@@ -841,7 +826,6 @@ void US_SolutionGui::delete_solution( void )
    solution.clear();
    analyteMap.clear();
    load();
-   solution.saveStatus = US_Solution::NOT_SAVED;
    reset();
 
    QMessageBox::information( this,

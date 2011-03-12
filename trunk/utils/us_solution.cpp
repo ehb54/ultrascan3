@@ -6,6 +6,8 @@
 #include "us_db2.h"
 #include "us_util.h"
 #include "us_solution.h"
+#include "us_buffer.h"
+#include "us_analyte.h"
 
 // The constructor clears out the data structure
 US_Solution::US_Solution()
@@ -66,6 +68,7 @@ void US_Solution::readFromDisk( QString& guid )
       return;
    }
 
+   saveStatus = HD_ONLY;
 }
 
 void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
@@ -124,6 +127,8 @@ void US_Solution::readFromDB  ( int solutionID, US_DB2* db )
    q  << QString::number( solutionID );
    db->query( q );
 
+   clear();
+
    if ( db->next() )
    {
       this->solutionID = solutionID;
@@ -162,6 +167,8 @@ void US_Solution::readFromDB  ( int solutionID, US_DB2* db )
          analytes << analyte;
       }
    }
+
+   saveStatus = DB_ONLY;
 }
 
 // Function to save solution information to disk
@@ -234,27 +241,75 @@ void US_Solution::saveToDisk( void )
    xml.writeEndDocument ();
 
    file.close();
+
+   saveStatus = ( saveStatus == DB_ONLY ) ? BOTH : HD_ONLY;
 }
 
 // Function to save solution information to db
-void US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
+int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
 {
-   // First make sure we have a GUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   // Let's see if the buffer is in the db already
+   QStringList q( "get_bufferID" );
+   q  << bufferGUID;
+   db->query( q );
 
+   int status = db->lastErrno();
+   if ( status == US_DB2::NOROWS )
+   {
+      return US_DB2::NO_BUFFER;               // Change so we have some idea of what happened
+/*
+      // Then we need to add it
+      US_Buffer* diskBuffer = new US_Buffer;
+      int diskStatus = diskBuffer->readFromDisk( false, bufferGUID ); // load it from disk
+      if ( diskStatus == US_DB2::OK )
+         diskBuffer->write( true, "", db );           // and write to db
+      delete diskBuffer;
+*/
+   }
+
+   else if ( status != US_DB2::OK )
+      return status;
+
+   // Now let's see if the analytes are in the db already
+   foreach( AnalyteInfo analyte, analytes )
+   {
+      q.clear();
+      q  << "get_analyteID"
+         << analyte.analyteGUID;
+      db->query( q );
+
+      status = db->lastErrno();
+      if ( status == US_DB2::NOROWS )
+      {
+         // Then we need to add it
+         US_Analyte* diskAnalyte = new US_Analyte;
+         int diskStatus = diskAnalyte->load( false, analyte.analyteGUID ); // load it from disk
+         if ( diskStatus == US_DB2::OK )
+            diskAnalyte->write( true, "", db );                            // and write to db
+         delete diskAnalyte;
+      }
+
+      else if ( status != US_DB2::OK )
+         return status;
+   }
+
+   // Make sure we have a solutionGUID
+   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
    if ( ! rx.exactMatch( solutionGUID ) )
       solutionGUID = US_Util::new_guid();
 
-   // Check for GUID in database
-   QStringList q( "get_solutionID_from_GUID" );
-   q << solutionGUID;
+   // Check for solutionGUID in database
+   solutionID = 0;
+   q.clear();
+   q  << "get_solutionID_from_GUID"
+      << solutionGUID;
    db->query( q );
 
-   solutionID = 0;
-   int status = db->lastErrno();
-   if ( status == US_DB2::OK && db->next() )
+   status = db->lastErrno();
+   if ( status == US_DB2::OK )
    {
       // Edit existing solution entry
+      db->next();
       solutionID = db->value( 0 ).toInt();
       q.clear();
       q  << "update_solution"
@@ -265,7 +320,7 @@ void US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
          << QString::number( storageTemp )
          << notes;
 
-      status = db->statusQuery( q );
+      db->statusQuery( q );
    }
 
    else if ( status == US_DB2::NOROWS )
@@ -282,17 +337,21 @@ void US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
          << QString::number( channelID )
          << QString::number( US_Settings::us_inv_ID() );
 
-      status = db->statusQuery( q );
+      db->statusQuery( q );
       solutionID = db->lastInsertID();
    }
 
    else   // unspecified error
    {
       qDebug() << "MySQL error: " << db->lastError();
-      return;
+      return status;
    }
 
-   // Associate the existing buffer with this solution
+   if ( solutionID == 0 )        // double check
+      return US_DB2::NO_SOLUTION;
+
+   // new_solutionBuffer will Remove existing buffer associations,
+   //   and associate the solution with this buffer
    q.clear();
    q  << "new_solutionBuffer"
       << QString::number( solutionID )
@@ -301,8 +360,11 @@ void US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
 
    status = db->statusQuery( q );
    if ( status != US_DB2::OK )
+   {
       qDebug() << "MySQL error associating buffer with solution in database: " 
                << db->lastError();
+      return status;
+   }
 
    // Remove analyte associations; we'll create new ones
    q.clear();
@@ -325,9 +387,20 @@ void US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
    
       status = db->statusQuery( q );
       if ( status != US_DB2::OK )
-         qDebug() << "MySQL error associating analyte with solution in database: " 
+      {
+         qDebug() << "MySQL error associating analyte "
+                  << analyte.analyteGUID
+                  << " with solution "
+                  << solutionGUID
+                  << " in database: " 
                   << db->lastError();
+         return status;
+      }
    }
+
+   saveStatus = ( saveStatus == HD_ONLY ) ? BOTH : DB_ONLY;
+
+   return US_DB2::OK;
 }
 
 // Function to delete a solution from disk
@@ -347,6 +420,7 @@ void US_Solution::deleteFromDisk( void )
    if ( file.exists() )
       file.remove();
 
+   saveStatus = ( saveStatus == BOTH ) ? DB_ONLY : NOT_SAVED;
 }
 
 // Function to delete a solution from db
@@ -379,7 +453,7 @@ void US_Solution::deleteFromDB( US_DB2* db )
 
    }
 
-   clear();
+   saveStatus = ( saveStatus == BOTH ) ? HD_ONLY : NOT_SAVED;
 }
 
 // Function to find the file name of a solution on disk, if it exists
@@ -521,6 +595,31 @@ bool US_Solution::AnalyteInfo::operator== ( const AnalyteInfo& ai ) const
    return true;
 }
 
+US_Solution::US_Solution& US_Solution::operator=( const US_Solution& rhs )
+{
+   clear();
+
+   if ( this != &rhs )            // guard against self assignment
+   {
+      solutionID    = rhs.solutionID;
+      solutionGUID  = rhs.solutionGUID;
+      solutionDesc  = rhs.solutionDesc;
+      bufferID      = rhs.bufferID;
+      bufferGUID    = rhs.bufferGUID;
+      bufferDesc    = rhs.bufferDesc;
+      commonVbar20  = rhs.commonVbar20;
+      storageTemp   = rhs.storageTemp;
+      notes         = rhs.notes;
+      saveStatus    = rhs.saveStatus;
+
+      for ( int i = 0; i < rhs.analytes.size(); i++ )
+         analytes << rhs.analytes[ i ];
+
+   }
+
+   return *this;
+}
+
 void US_Solution::clear( void )
 {
    solutionID   = 0;
@@ -550,6 +649,7 @@ void US_Solution::show( void )
             << "saveStatus   = " << saveStatus   << '\n';
 
    qDebug() << "Analytes...";
+   qDebug() << "Analytes size = " << QString::number( analytes.size() );
    foreach( AnalyteInfo analyte, analytes )
    {
       qDebug() << "analyteID   = " << analyte.analyteID   << '\n'
