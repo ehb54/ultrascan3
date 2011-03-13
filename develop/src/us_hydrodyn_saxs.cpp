@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_options.h"
 #include "../include/us_hydrodyn_saxs_load_csv.h"
+#include "../include/us_hydrodyn_saxs_mw.h"
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
@@ -85,6 +86,9 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    this->source = source;
    this->create_native_saxs = create_native_saxs;
    this->us_hydrodyn = us_hydrodyn;
+   this->remember_mw = &(((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw);
+   this->match_remember_mw = &(((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw);
+
    USglobal=new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("SAXS/SANS Plotting Functions"));
@@ -972,7 +976,7 @@ void saxs_pr_thr_t::run()
 
 //--------- end thread for saxs p(r) plot -----------
 
-void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr )
+void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr , double mw )
 {
 #if defined(NORMALIZE_OLD_WAY)
    // set distribution to a 1 peak
@@ -1008,6 +1012,7 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
       }
       if ( area > 0e0 )
       {
+         area /= mw;
          for ( unsigned int i = 0; i < pr->size(); i++ )
          {
             (*pr)[i] /= area;
@@ -1570,7 +1575,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   pr[i] = (double) hist[i];
                   pr_n[i] = (double) hist[i];
                }
-               normalize_pr(r, &pr_n);
+               normalize_pr(r, &pr_n, get_mw(te_filename2->text()));
                fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
                for ( unsigned int i = 0; i < hist.size(); i++ )
                {
@@ -1625,7 +1630,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             pr[i] = (double) hist[i];
             pr_n[i] = (double) hist[i];
          }
-         normalize_pr(r, &pr_n);
+         normalize_pr(r, &pr_n, get_mw(te_filename2->text()));
          for ( unsigned int i = 0; i < hist.size(); i++ )
          {
             if ( hist[i] ) {
@@ -1653,7 +1658,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    plotted_pr_not_normalized.push_back(pr);
    if ( cb_normalize->isChecked() )
    {
-      normalize_pr(r, &pr);
+      normalize_pr(r, &pr, get_mw(te_filename2->text()));
    }
 
    plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
@@ -2035,7 +2040,7 @@ void US_Hydrodyn_Saxs::load_pr()
             }
             vector < double > pr_avg = pr;
 
-            plot_one_pr(this_r, pr, "Average");
+            plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " Average");
 
             vector < double > pr_std_dev;
             vector < double > pr_avg_minus_std_dev;
@@ -2095,7 +2100,7 @@ void US_Hydrodyn_Saxs::load_pr()
                }
                pr_avg_minus_std_dev = pr;
 
-               plot_one_pr(this_r, pr, "Average minus 1 std dev");
+               plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " Average minus 1 std dev");
                
                pr = sum_pr;
                for ( unsigned int i = 0; i < sum_pr.size(); i++ )
@@ -2114,7 +2119,7 @@ void US_Hydrodyn_Saxs::load_pr()
                }
                pr_avg_plus_std_dev = pr;
 
-               plot_one_pr(this_r, pr, "Average plus 1 std dev");
+               plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " Average plus 1 std dev");
             }
             if ( plotted )
             {
@@ -2239,8 +2244,7 @@ void US_Hydrodyn_Saxs::load_pr()
          pr.pop_back();
          pop_last--;
       }
-
-      plot_one_pr(r, pr, "P(r): " + QFileInfo(filename).fileName());
+      plot_one_pr(r, pr,  QFileInfo(filename).fileName() + " P(r)");
    }
 }
 
@@ -3909,9 +3913,9 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString csv_filename )
    }
 
    // plot 
-   plot_one_pr(nnls_r, model, "Model");
-   plot_one_pr(nnls_r, residual, "Residual");
-   plot_one_pr(nnls_r, nnls_B, "Target");
+   plot_one_pr(nnls_r, model, csv_filename + " Model");
+   plot_one_pr(nnls_r, residual, csv_filename + " Residual");
+   plot_one_pr(nnls_r, nnls_B, csv_filename + " Target");
 
    // save as csv
 
@@ -3989,7 +3993,8 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
 
    if ( cb_normalize->isChecked() )
    {
-      normalize_pr(r, &pr);
+      get_mw(name);
+      normalize_pr(r, &pr, get_mw(name));
    }
 
    plotted_pr.push_back(pr);
@@ -4141,9 +4146,10 @@ void US_Hydrodyn_Saxs::load_gnom()
                   // cout << "prr point: " << rx3.cap(1).toDouble() << " " << rx3.cap(2).toDouble() << endl;
                } else {
                   // end of prr?
+                  get_mw(filename);
                   if ( cb_normalize->isChecked() )
                   {
-                     normalize_pr(r, &pr);
+                     normalize_pr(r, &pr, get_mw(filename));
                   }
                   plot_one_pr(r, pr, QFileInfo(filename).fileName());
                   if ( plotted )
@@ -4945,3 +4951,69 @@ void US_Hydrodyn_Saxs::crop_iq_data( vector < double > &q,
    }
 }
 
+double US_Hydrodyn_Saxs::get_mw( QString filename )
+{
+   // enter MW and PSV
+   filename = QFileInfo(filename).fileName();
+   float mw = 0.0;
+   bool remember = true;
+   bool use_partial = false;
+   QString partial = filename;
+   QString msg = QString(tr(" Enter values for total molecular weight: "));
+   
+   bool found = false;
+   if ( (*remember_mw).count(filename) )
+   {
+      mw = (*remember_mw)[filename];
+      found = true;
+   } else {
+      if ( !(*match_remember_mw).empty() )
+      {
+         puts("dammix_match_remember not empty");
+         for (map < QString, float >::iterator it = (*match_remember_mw).begin();
+              it != (*match_remember_mw).end();
+              it++)
+         {
+            printf("iterator first %s\n", it->first.ascii());
+            printf("iterator second %f\n", it->second);
+            
+            if ( filename.contains(it->first) )
+            {
+               mw = (*match_remember_mw)[it->first];
+               found = true;
+               break;
+            }
+         }
+      }
+   }
+   
+   if ( found ) 
+   {
+      editor->append(QString("Recalled: mw %1\n").arg(mw));
+   } else {
+      US_Hydrodyn_Saxs_Mw *smw = new US_Hydrodyn_Saxs_Mw(
+                                                         msg,
+                                                         &mw,
+                                                         &remember,
+                                                         &use_partial,
+                                                         &partial,
+                                                         this
+                                                         );
+      do {
+         smw->exec();
+      } while ( mw <= 0.0 );
+      
+      delete smw;
+      this->isVisible() ? this->raise() : this->show();
+      
+      if ( remember ) 
+      {
+         (*remember_mw)[filename] = mw;
+      }
+      if ( use_partial ) 
+      {
+         (*match_remember_mw)[partial] = mw;
+      }
+   }
+   return mw;
+}

@@ -140,6 +140,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       vector < double > last_saxs_prr;
       vector < double > last_saxs_prr_norm;
 
+      map < QString, float > dammix_remember_mw;
+      map < QString, float > dammix_match_remember_mw;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -439,10 +442,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString last_spt_text;
 
       map < QString, float > dammix_remember_psv;
-      map < QString, float > dammix_remember_mw;
 
       map < QString, float > dammix_match_remember_psv;
-      map < QString, float > dammix_match_remember_mw;
       map < QString, bool >  dammix_match_remember_write_bead_model;
 
       map < QString, QChar > residue_short_names;
