@@ -23,6 +23,14 @@ echo "Using " $QTDIR " for the QT Library..."
 echo "Using " $QWTDIR " for the QWT Library..."
 echo "Using " $QWT3DDIR " for the QWT3D Plotting Library..."
 
+echo "OK? (y/n):"
+
+read r
+
+if [ "$r" == "N" -o "$r" == "n" ]; then 
+	exit -1
+fi
+
 # uncomment one of the following:
 
 HARDWARE=ix86
@@ -76,8 +84,11 @@ if [ ! -d develop ]; then
 fi
 
 echo "Creating UltraScan backup archive..."
+echo "Removing /tmp/ultrascan*..."
 rm -rf $TMP/ultrascan*
+echo executing: mkdir $TMP/ultrascan-$VERSION
 mkdir $TMP/ultrascan-$VERSION
+echo copying everything $TMP/ultrascan-$VERSION/
 cp -Rpf * $TMP/ultrascan-$VERSION/.
 
 echo "removing CVS stuff..."
@@ -158,7 +169,10 @@ strip *
 rm *.bak
 rm *test
 cd $TMP/ultrascan-$VERSION/$LIB
+
+echo "Copying data from $QWTDIR/$LIB/* ..."
 cp -Rpf $QWTDIR/$LIB/* .
+echo "Copying data from $QWT3DDIR/$LIB/* ..."
 cp -Rpf $QWT3DDIR/$LIB/* .
 strip *
 cd $TMP
