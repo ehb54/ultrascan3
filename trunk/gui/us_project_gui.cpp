@@ -576,13 +576,18 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    int row = 0;
 
    // First row
-   QPushButton* pb_investigator = usWidget->us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
-   general->addWidget( pb_investigator, row, 0 );
-
-   if ( US_Settings::us_inv_level() < 1 )
-      pb_investigator->setEnabled( false );
-
+   if ( US_Settings::us_inv_level() > 2 )
+   {
+      QPushButton* pb_investigator = usWidget->us_pushbutton( tr( "Select Investigator" ) );
+      connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+      general->addWidget( pb_investigator, row, 0 );
+   }
+   else
+   {
+      QLabel* lb_investigator = usWidget->us_label( tr( "Investigator:" ) );
+      general->addWidget( lb_investigator, row, 0 );
+   }
+      
    le_investigator = usWidget->us_lineedit( tr( "Not Selected" ) );
    le_investigator->setReadOnly( true );
    general->addWidget( le_investigator, row++, 1, 1, 2 );
@@ -652,6 +657,8 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
       lb_guid->setVisible( false );
       le_guid->setVisible( false );
    }
+
+   reset();       // This is the GeneralTab reset();
 }
 
 // Function to refresh the display with values from the project structure,
