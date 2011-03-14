@@ -46,12 +46,17 @@ US_SolutionGui::US_SolutionGui(
    main->addWidget( lb_DB, row++, 0, 1, 3 );
 
    // First column
-   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
-   main->addWidget( pb_investigator, row++, 0 );
-
-   if ( US_Settings::us_inv_level() < 1 )
-      pb_investigator->setEnabled( false );
+   if ( US_Settings::us_inv_level() > 2 )
+   {
+      QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+      connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+      main->addWidget( pb_investigator, row++, 0 );
+   }
+   else
+   {
+      QLabel* lb_investigator = us_label( tr( "Investigator:" ) );
+      main->addWidget( lb_investigator, row++, 0 );
+   }
 
    // Available solutions
    QLabel* lb_banner2 = us_banner( tr( "Click on solution to select" ), -2  );

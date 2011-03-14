@@ -54,13 +54,18 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( lb_DB, row++, 0, 1, 3 );
 
    // Investigator
-   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
-   settings->addWidget( pb_investigator, row, 0 );
-
-   if ( US_Settings::us_inv_level() < 1 )
-      pb_investigator->setEnabled( false );
-
+   if ( US_Settings::us_inv_level() > 2 )
+   {
+      QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+      connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+      settings->addWidget( pb_investigator, row, 0 );
+   }
+   else
+   {
+      QLabel* lb_investigator = us_label( tr( "Investigator:" ) );
+      settings->addWidget( lb_investigator, row, 0 );
+   }
+      
    le_investigator = us_lineedit( tr( "Not Selected" ) );
    le_investigator->setReadOnly( true );
    settings->addWidget( le_investigator, row++, 1, 1, 2 );
