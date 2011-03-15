@@ -38,18 +38,27 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
 
 	public:
   		US_RotorCalibration();
-	  	~US_RotorCalibration();
 
 	private:
 
-      double             left, right, top, bottom, coef[3];
+      double             left;
+      double             right;
+      double             top;
+      double             bottom;
+      double             coef[ 3 ];
       double*            x;
       double*            y;
       double*            sd1;
       double*            sd2;
-      int                maxcell, current_triple, current_cell;
-      bool               top_of_cell, newlimit;
-      QString            rotor, fileText, current_channel;
+      int                maxcell;
+      int                current_triple;
+      int                current_cell;
+      bool               top_of_cell;
+      bool               newlimit;
+
+      QString            rotor;
+      QString            fileText;
+      QString            current_channel;
       
       US_Help            showHelp;
 
@@ -99,22 +108,22 @@ class US_EXTERN US_RotorCalibration : public US_Widgets
       QVector< Limit >               limit;
 
    private slots:
-      void       reset(void);
-      void       load(void);
-      void       plotAll(void);
-      void       currentRect(QwtDoubleRect);
-      void       findTriple(void);
-      void       next(void);
-      void       calculate(void);
-      double     findAverage(QwtDoubleRect, US_DataIO2::RawData, int);
-      void       save(void);
-      void       view(void);
-      void       update_used();
-      void       update_cell(double);
-      void       update_channel(double);
-      void       update_position();
-      void       update_plot();
-      void       help (void)
+      void       reset          ( void );
+      void       load           ( void );
+      void       plotAll        ( void );
+      void       currentRect    ( QwtDoubleRect );
+      void       findTriple     ( void );
+      void       next           ( void );
+      void       calculate      ( void );
+      double     findAverage    ( QwtDoubleRect, US_DataIO2::RawData, int );
+      void       save           ( void );
+      void       view           ( void );
+      void       update_used    ( void );
+      void       update_cell    ( double );
+      void       update_channel ( double );
+      void       update_position( void );
+      void       update_plot    ( void );
+      void       help           ( void )
          { showHelp.show_help( "manual/rotor_calibration.html" ); };
 
 };

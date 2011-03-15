@@ -34,7 +34,7 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
 {
    unsigned int row = 0;
 
-   rotor = "Default Rotor";
+   rotor    = "Default Rotor";
    newlimit = false;
 
    setWindowTitle( tr( "Edit Rotor Calibration" ) );
@@ -45,8 +45,8 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
    
-   QLabel *lbl_instructions = us_label( tr("Instructions:"), -1 );
-   top->addWidget( lbl_instructions, row, 0, 1, 1 );
+   QLabel* lb_instructions = us_label( tr("Instructions:"), -1 );
+   top->addWidget( lb_instructions, row, 0, 1, 1 );
 
    le_instructions = us_lineedit( "", -1 );
    le_instructions->setReadOnly( true );
@@ -57,16 +57,21 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    top->addWidget( pb_load, row++, 0 );
    
-   QLabel *lbl_cell = us_label( tr("Current Cell:"), -1 );
-   top->addWidget( lbl_cell, row++, 0 );
+   QLabel* lb_cell = us_label( tr("Current Cell:"), -1 );
+   int     height  = lb_instructions->size().height();
+   lb_cell->setMaximumHeight( height );
+   top->setColumnStretch( row, 0 );
+
+   top->addWidget( lb_cell, row++, 0 );
    
    ct_cell = new QwtCounter(this); // Update range upon load
    //ct_cell = us_counter ( 2, 0, 0 );
    ct_cell->setStep( 1 );
    top->addWidget( ct_cell, row++, 0 );
    
-   QLabel *lbl_channel = us_label( tr("Current Channel:"), -1 );
-   top->addWidget( lbl_channel, row++, 0 );
+   QLabel* lb_channel = us_label( tr("Current Channel:"), -1 );
+   lb_channel->setMaximumHeight( height );
+   top->addWidget( lb_channel, row++, 0 );
    
    ct_channel = new QwtCounter (this); // Update range upon load
    //ct_channel = us_counter ( 2, 0, 0 ); // Update range upon load
@@ -95,8 +100,10 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    connect( pb_calculate, SIGNAL( clicked() ), SLOT( calculate() ) );
    top->addWidget( pb_calculate, row++, 0 );
    
-   QLabel* lbl_spacer = us_banner( tr( "" ) );
-   top->addWidget( lbl_spacer, row++, 0 );
+   //QLabel* lb_spacer = us_banner( tr( "" ) );
+   //lb_spacer->setMaximumHeight( height );
+   //top->addWidget( lb_spacer, row++, 0 );
+   top->addItem( new QSpacerItem( 0, 0 ), row++, 0 );
    
    pb_save = us_pushbutton( tr( "Save Rotor Calibration" ) );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
@@ -119,37 +126,32 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
    connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
-   top->addWidget( pb_close, row, 0 );
-   
+   top->addWidget( pb_close, row++, 0 );
+
    // Plot layout on right side of window
    plot = new US_Plot( data_plot,
          tr( "Intensity Data\n(Channel A in red, Channel B in green)" ),
          tr( "Radius (in cm)" ), tr( "Intensity" ) );
+
    data_plot->setMinimumSize( 700, 400 );
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
+   
    connect ( plot, SIGNAL ( zoomedCorners( QwtDoubleRect) ),
              this, SLOT   ( currentRect  ( QwtDoubleRect) ) );
-   top->addLayout( plot, 1, 1, row, 1 );
+   
+   top->addLayout( plot, 1, 1, row - 1, 1 );
+
+   top->setColumnStretch( 0, 0 );
+   top->setColumnStretch( 1, 1 );
 
    pick = new US_PlotPicker( data_plot );
+
    // Set rubber band to display for Control+Left Mouse Button
    pick->setRubberBand  ( QwtPicker::VLineRubberBand );
    pick->setMousePattern( QwtEventPattern::MouseSelect1, Qt::LeftButton, Qt::ControlModifier );
-
-   for (unsigned int i=0; i<row-1; i++)
-   {
-      top->setRowStretch(i, 0);
-   }
-   top->setRowStretch( row-2, 1 );
-   top->setColumnStretch( 0, 0 );
-   top->setColumnStretch( 1, 1 );
-}
-
-US_RotorCalibration::~US_RotorCalibration()
-{
 }
 
 void US_RotorCalibration::reset()
