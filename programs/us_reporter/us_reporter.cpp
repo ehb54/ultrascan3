@@ -2,6 +2,8 @@
 
 #include <QApplication>
 #include <QtSvg>
+#include <QWebView>
+#include <QWebSettings>
 
 #include "us_reporter.h"
 #include "us_settings.h"
@@ -13,6 +15,7 @@
 #include "us_investigator.h"
 #include "us_editor.h"
 #include "us_util.h"
+#include "us_sleep.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -35,6 +38,7 @@ US_Reporter::US_Reporter() : US_Widgets()
    setWindowTitle( tr( "Report Chooser/Generator" ) );
    setPalette( US_GuiSettings::frameColor() );
    dbg_level   = US_Settings::us_debug();
+   websetting  = NULL;
 
    hsclogo .clear();
    becklogo.clear();
@@ -138,8 +142,6 @@ US_Reporter::US_Reporter() : US_Widgets()
    tw_recs->setAutoFillBackground( true );
    tw_recs->installEventFilter   ( this );
 
-   //sample_tree();
-
    connect( tw_recs, SIGNAL( itemClicked( QTreeWidgetItem*, int ) ),
             this,    SLOT(   clickedItem( QTreeWidgetItem*      ) ) );
    connect( tw_recs, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
@@ -147,6 +149,7 @@ US_Reporter::US_Reporter() : US_Widgets()
 
    // put layouts together for overall layout
    leftLayout->addLayout( dctlLayout );
+   leftLayout->addStretch();
    rghtLayout->addLayout( tctlLayout );
 
    mainLayout->addLayout( leftLayout );
@@ -155,6 +158,7 @@ US_Reporter::US_Reporter() : US_Widgets()
    mainLayout->setStretchFactor( rghtLayout, 8 );
 
    show();
+   changed = false;
 }
 
 // Filter events to catch right-mouse-button-click on tree widget
@@ -172,72 +176,6 @@ DbgLv(1) << "eventFilter   rbtn_click" << rbtn_click;
    {  // pass all others for normal handling
       return US_Widgets::eventFilter( obj, e );
    }
-}
-
-// Build up an initial sample tree
-void US_Reporter::sample_tree()
-{
-   QTreeWidgetItem* pitems[ 8 ];
-   QTreeWidgetItem* item;
-   int wiubase = (int)QTreeWidgetItem::UserType;
-   QStringList cvals;
-
-   int wiutype = wiubase + 0;
-   cvals.clear();
-   cvals << "" << "demo1_veloc" << "Run";
-
-   item = new QTreeWidgetItem( tw_recs, cvals, wiutype );
-   pitems[ 0 ] = item;
-   item->setCheckState( 0, Qt::PartiallyChecked );
-
-   wiutype = wiubase + 1;
-   cvals.clear();
-   cvals << "" << "  Cell 2/Channel A/280 nm" << "Data(triple)";
-   item = new QTreeWidgetItem( pitems[ 0 ], cvals, wiutype );
-   item->setCheckState( 0, Qt::PartiallyChecked );
-   pitems[ 1 ] = item;
-
-   wiutype = wiubase + 2;
-   cvals.clear();
-   cvals << "" << "    Time Derivative" << "Analysis";
-   item = new QTreeWidgetItem( pitems[ 1 ], cvals, wiutype );
-   item->setCheckState( 0, Qt::PartiallyChecked );
-   pitems[ 2 ] = item;
-
-   wiutype = wiubase + 3;
-   cvals.clear();
-   cvals << "" << "      Analysis Report" << "HTML General Report";
-   item = new QTreeWidgetItem( pitems[ 2 ], cvals, wiutype );
-   item->setCheckState( 0, Qt::PartiallyChecked );
-   pitems[ 3 ] = item;
-
-   wiutype = wiubase + 4;
-   cvals.clear();
-   cvals << "" << "      Data Scans Plot" << "SVG Plot";
-   item = new QTreeWidgetItem( pitems[ 2 ], cvals, wiutype );
-   item->setCheckState( 0, Qt::PartiallyChecked );
-   pitems[ 3 ] = item;
-
-   wiutype = wiubase + 5;
-   cvals.clear();
-   cvals << "" << "      Data x-to-radius plot" << "SVG Plot";
-   item = new QTreeWidgetItem( pitems[ 2 ], cvals, wiutype );
-   item->setCheckState( 0, Qt::Unchecked );
-   pitems[ 3 ] = item;
-
-   wiutype = wiubase + 6;
-   cvals.clear();
-   cvals << "" << "    2-dimensional Spectrum Analysis" << "Analysis";
-   item = new QTreeWidgetItem( pitems[ 1 ], cvals, wiutype );
-   item->setCheckState( 0, Qt::Checked );
-   pitems[ 2 ] = item;
-
-   wiutype = wiubase + 7;
-   cvals.clear();
-   cvals << "" << "      Analysis Report" << "HTML General Report";
-   item = new QTreeWidgetItem( pitems[ 2 ], cvals, wiutype );
-   item->setCheckState( 0, Qt::PartiallyChecked );
-   pitems[ 3 ] = item;
 }
 
 // Bring up a context menu when an item click is right-mouse-button
@@ -271,6 +209,8 @@ void US_Reporter::changedItem( QTreeWidgetItem* item, int col )
          pb_view->setEnabled( true );
          pb_save->setEnabled( true );
       }
+
+      changed = true;
    }
 }
 
@@ -364,6 +304,7 @@ DbgLv(1) << "  new runID row runid" << row << runID;
 
    // Rebuild the tree widget
    build_tree();
+   changed = true;
 }
 
 // Build data description records for a specified Run
@@ -537,7 +478,14 @@ DbgLv(1) << "     b_m: name label" << name << label;
 
       file.close();
    }
-else { qDebug() << "***UNABLE TO OPEN FILE" << path; return; }
+
+   else
+   {
+      QMessageBox::warning( this,
+            tr( "UltraScan Error" ),
+            tr( "Unable to open the file:\n\n" ) + path );
+      return;
+   }
 int nmap = labmap.count();
 QString nam0 = labmap.keys().at( 0 );
 QString namn = labmap.keys().at( nmap-1 );
@@ -727,9 +675,17 @@ void US_Reporter::mark_checked()
 // View
 void US_Reporter::view()
 {
-   write_report();                       // Write the report file
+   if ( write_report() )                 // Write the report file
+   {  // Open the PDF file for viewing with system's "open-with" app
+      QDesktopServices::openUrl( ppdfpath );
+   }
 
-   showHelp.show_html_file( pagepath );  // Display it in a browser
+   else
+   {  // Report error in creating PDF
+      QMessageBox::warning( this, tr( "Composite Report *ERROR*" ),
+            tr( "Unable to create a composite report file:\n" )
+            + ppdfpath );
+   }
 }
 
 // Save
@@ -737,22 +693,37 @@ void US_Reporter::save()
 {
    if ( write_report() )   // Write the report file; tell user the result
    {
+      QString pagesdir = pagedir;
+      QString compdir  = pagedir;
+      QString indent   = QString( "     " );
+      int jj           = pagedir.lastIndexOf( "/" );
+      pagesdir         = pagesdir.mid( jj + 1 );
+      compdir          = compdir .left( jj );
       QMessageBox::information( this, tr( "Composite Report" ),
-            tr( "A composite report file has been saved:\n" )
-            + pagepath );
+            tr( "In the composite reports folder:\n" )
+            + indent + compdir + " ,\n"    
+            + tr( "a composite report file has been saved:\n" )
+            + indent + "report_composite.pdf ;\n"
+            + tr( "with supporting HTML and components in subdirectory:\n" )
+            + indent + pagesdir );
    }
 
    else
    {
       QMessageBox::warning( this, tr( "Composite Report *ERROR*" ),
             tr( "Unable to create a composite report file:\n" )
-            + pagepath );
+            + ppdfpath );
    }
 }
 
-// Write composite report page
+// Write composite report page:  generate HTML, then PDF
 bool US_Reporter::write_report()
 {
+   if ( !changed )
+      return true;
+
+   load_ok    = false;
+
    // Count checked items:  reports, runs, triples, htmls, plots
    count_reports( );
 
@@ -804,6 +775,7 @@ bool US_Reporter::write_report()
                "\"text/html; charset=iso-8859-1\"/>\n";
    rptpage  += "  <style type=\"text/css\" >\n";
    rptpage  += "    td { padding-right: 1em; }\n";
+   rptpage  += "    body { background-color: white; }\n";
    rptpage  += "    @media print\n";
    rptpage  += "    {\n";
    rptpage  += "      .page\n";
@@ -859,158 +831,246 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
    QString pheadclass = "    <p class=\"parahead\">\n";
    int  jplot   = 0;
 
-   if ( nsrpts > 1 )
-   {  // Multiple reports
-      QString tripl  = "";
-      QString analys = "";
+   QString tripl  = "";
+   QString analys = "";
 
-      if ( nsruns == 1 )
-      {  // Single Run
-         rptpage   += "    <h2> Reports from Run ";
-         rptpage   += se_runids.at( 0 );
-         rptpage   += ": </h2>\n\n";
+   if ( nsruns == 1 )
+   {  // Single Run
+      rptpage   += "    <h2> Reports from Run ";
+      rptpage   += se_runids.at( 0 );
+      rptpage   += ": </h2>\n\n";
+   }
+
+   else
+   {  // Multiple Runs
+      rptpage   += "    <h2> Reports from Multiple Runs </h2>";
+   }
+
+   for ( int ii = 0; ii < nsrpts; ii++ )
+   {  // Compose an entry in the composite HTML for each component item
+      DataDesc* idesc = (DataDesc*)&adescs.at( se_rptrows.at( ii ) );
+      bool is_plot = ( idesc->type.contains( "Plot" ) );
+
+      // Possible set for page printing
+      if ( is_plot )
+      {  // Is a plot:  new page if 2nd or after non-plot
+         if ( jplot != 1  &&  ii > 0 )
+         {  // Previous was 2nd plot on the page or was a non-plot
+            rptpage   += ppageclass;
+            jplot      = 1;       // mark as 1st plot on page
+         }
+
+         else
+         {  // Previous was the 1st plot on the page
+            rptpage   += pheadclass;
+            jplot      = 2;       // mark as 2nd plot on page
+         }
+      }
+
+      else if ( ii > 0 )
+      {  // Is not a plot and not the 1st item:  starts a new page
+         rptpage   += ppageclass;
+         jplot      = 0;          // mark as not a plot
       }
 
       else
-      {  // Multiple Runs
-         rptpage   += "    <h2> Reports from Multiple Runs </h2>";
+      {
+         // Is not a plot and is the 1st item:    not a new page
+         rptpage   += pheadclass;
       }
 
-      for ( int ii = 0; ii < nsrpts; ii++ )
-      {  // Compose an entry in the composite HTML for each component item
-         DataDesc* idesc = (DataDesc*)&adescs.at( se_rptrows.at( ii ) );
-         bool is_plot = ( idesc->type.contains( "Plot" ) );
+      // Display a title for the item
+      rptpage   += "      " + idesc->runid + " &nbsp;&nbsp;&nbsp;";
+      rptpage   += idesc->triple + "<br/>\n      ";
+      rptpage   += idesc->analysis + "<br/>\n       &nbsp;&nbsp;&nbsp;";
+      rptpage   += idesc->label + "\n    </p>\n";
 
-         // Possible set for page printing
-         if ( is_plot )
-         {  // Is a plot:  new page if 2nd or after non-plot
-            if ( jplot != 1  &&  ii > 0 )
-            {  // Previous was 2nd plot on the page or was a non-plot
-               rptpage   += ppageclass;
-               jplot      = 1;       // mark as 1st plot on page
-            }
+      if ( is_plot )
+      {  // The item is a plot, so "<img.." will be used
+         QString fileimg = idesc->filename;
 
-            else
-            {  // Previous was the 1st plot on the page
-               rptpage   += pheadclass;
-               jplot      = 2;       // mark as 2nd plot on page
-            }
-         }
-
-         else if ( ii > 0 )
-         {  // Is not a plot and not the 1st item:  starts a new page
-            rptpage   += ppageclass;
-            jplot      = 0;          // mark as not a plot
-         }
-
-         else
-         {
-            // Is not a plot and is the 1st item:    not a new page
-            rptpage   += pheadclass;
-         }
-
-         // Display a title for the item
-         rptpage   += "      " + idesc->runid + " &nbsp;&nbsp;&nbsp;";
-         rptpage   += idesc->triple + "<br/>\n      ";
-         rptpage   += idesc->analysis + "<br/>\n       &nbsp;&nbsp;&nbsp;";
-         rptpage   += idesc->label + "\n    </p>\n";
-
-         if ( is_plot )
-         {  // The item is a plot, so "<img.." will be used
-            QString fileimg = idesc->filename;
-
-            if ( idesc->filename.contains( ".svg" ) )
-            {  // For SVG, create a PNG equivalent
-               QSvgRenderer svgrend;
-               QString   pathsvg = idesc->filepath;
-               QString   filesvg = idesc->filename;
-                         fileimg = QString( filesvg ).replace( ".svg", ".png" );
-               QString   pathimg = pagedir + "/" + fileimg;
-               svgrend.load( pathsvg );
-               QSize     imgsize = svgrend.defaultSize();
-               QPixmap   pixmap( imgsize );
-               pixmap.fill( Qt::white );
-               QPainter  pa( &pixmap );
-               svgrend.render( &pa );            // Render the SVG to a pixmap
+         if ( idesc->filename.contains( ".svg" ) )
+         {  // For SVG, create a PNG equivalent
+            QSvgRenderer svgrend;
+            QString   pathsvg = idesc->filepath;
+            QString   filesvg = idesc->filename;
+                      fileimg = QString( filesvg ).replace( ".svg", ".png" );
+            QString   pathimg = pagedir + "/" + fileimg;
+            svgrend.load( pathsvg );
+            QSize     imgsize = svgrend.defaultSize();
+            QPixmap   pixmap( imgsize );
+            pixmap.fill( Qt::white );
+            QPainter  pa( &pixmap );
+            svgrend.render( &pa );            // Render the SVG to a pixmap
 DbgLv(1) << " size" << imgsize << " filesvg" << filesvg;
 DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
-               if ( ! pixmap.save( pathimg ) )   // Write the pixmap as a PNG
-               {
-                  QMessageBox::warning( this, tr( "Composite Report *ERROR*" ),
-                        tr( "Unable to create an svg-to-png file:\n" )
-                        + pathimg );
-               }
-
-            }
-
-            // Embed the plot in the composite report
-            rptpage   += "    <div><img src=\"" + fileimg 
-                         + "\" alt=\"" + idesc->label + "\"/></div>\n\n";
-         }
-
-         else
-         {  // The item is HTML or text, so just copy it into the composite
-            QFile fi( idesc->filepath );
-            if ( fi.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            if ( ! pixmap.save( pathimg ) )   // Write the pixmap as a PNG
             {
-               QTextStream ts( &fi );
+               QMessageBox::warning( this, tr( "Composite Report *ERROR*" ),
+                     tr( "Unable to create an svg-to-png file:\n" )
+                     + pathimg );
+            }
 
-               while ( ! ts.atEnd() )
-               {
-                  QString ln = ts.readLine() + "\n";
+         }
 
-                  if ( ln.contains( "</body>" ) )
-                  {
-                     if ( ln.contains( "</table>" ) )  // strip body/head
-                        ln = "</table>\n";
-                     else                              // skip body/head
-                        continue;
-                  }
+         // Embed the plot in the composite report
+         rptpage   += "    <div><img src=\"" + fileimg 
+                         + "\" alt=\"" + idesc->label + "\"/></div>\n\n";
+      }
 
-                  if ( ln.contains( "html>"  )  ||     // skip html/head/body
-                       ln.contains( "head>"  )  ||     //  /style
-                       ln.contains( "body>"  )  ||
-                       ln.contains( "<style" ) )    continue;
+      else
+      {  // The item is HTML or text, so just copy it into the composite
+         QFile fi( idesc->filepath );
+         if ( fi.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         {
+            QTextStream ts( &fi );
+            int stage = 0;
 
-                  if ( ln.contains( "<br>" ) )         // correct BR format
-                     ln.replace( "<br>", "<br/>" );
+            while ( ! ts.atEnd() )
+            {
+               QString ln = ts.readLine() + "\n";
 
-                  rptpage += ln;
+               if ( stage == 0 )
+               {  // skip early part of component HTML until body
+                  if ( ln.contains( "<body>" ) )
+                     stage = 1;  // mark that we are now in body
+                  continue;
                }
 
-               rptpage += "\n";
-               fi.close();
+               else if ( stage == 2 )
+                  // skip part of component HTML beyond body end
+                  continue;
+
+               else if ( ln.contains( "</body>" ) )
+               {  // mark end of body
+                  stage = 2;
+                  if ( ln.contains( "</table>" ) )
+                     ln = "</table>\n";
+                  else
+                     continue;
+               }
+
+               if ( ln.contains( "<br>" ) )         // correct BR format
+                  ln.replace( "<br>", "<br/>" );
+
+               rptpage += ln;
             }
+
+            rptpage += "\n";
+            fi.close();
          }
-      }  // END:  Reports loop
-
-      // Complete composite page, output it to a file, and copy components
-      rptpage += "  </body>\n</html>";
-
-      QFile flo( pagepath );
-      if ( flo.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
-      {  // Output the composite page to a file in the composite folder
-         QTextStream tso( &flo );
-         tso << rptpage;
-         flo.close();
       }
+   }  // END:  Reports loop
 
-      // Copy all report files to the current report subdir
-      for ( int ii = 0; ii < nsrpts; ii++ )
-      {
-         DataDesc* idesc = (DataDesc*)&adescs.at( se_rptrows.at( ii ) );
+   // Complete composite page, output it to a file, and copy components
+   rptpage += "  </body>\n</html>";
 
-         QFile::copy( idesc->filepath, pagedir + "/" + idesc->filename );
-      }
-   }  // END:  Multiple reports
-
-   else
-   {  // A single report:  just copy the file to the composite folder
-      pagepath  = pagedir + "/" + cdesc.filename;
-      QFile::copy( cdesc.filepath, pagepath );
+   QFile flo( pagepath );
+   if ( flo.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
+   {  // Output the composite page to a file in the composite folder
+      QTextStream tso( &flo );
+      tso << rptpage;
+      flo.close();
    }
 
-   return true;
+   // Copy all report files to the current report subdir
+   for ( int ii = 0; ii < nsrpts; ii++ )
+   {
+      DataDesc* idesc = (DataDesc*)&adescs.at( se_rptrows.at( ii ) );
+
+      QFile::copy( idesc->filepath, pagedir + "/" + idesc->filename );
+   }
+
+   write_pdf();                 // Create the PDF version of the web view
+
+   changed = false;
+
+   return load_ok;
+}
+
+// Create a PDF from the main HTML
+void US_Reporter::write_pdf()
+{
+   ppdfpath = QString( pagepath ).replace( ".html", ".pdf" );
+   QPrinter printer( QPrinter::HighResolution );
+   printer.setOutputFileName( ppdfpath );
+   printer.setCreator( "UltraScan" );
+   printer.setDocName( QString( "report_composite.html" ) );
+   printer.setOrientation( QPrinter::Portrait );
+
+   QString       rpttext;
+   QFile         fili( pagepath );
+   if ( fili.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QTextStream   ts( &fili );
+      rpttext = ts.readAll();
+      fili.close();
+   }
+   prevwidg = new QWebView( this );
+
+   if ( websetting == NULL )
+   {
+      websetting = prevwidg->settings();
+   }
+   websetting->setFontFamily( QWebSettings::StandardFont,
+                              "serif" );
+   websetting->setFontSize(   QWebSettings::DefaultFontSize,
+                              US_GuiSettings::fontSize() + 2 );
+
+   ld_wait  = true;
+   QUrl pageurl( pagepath );
+   connect( prevwidg, SIGNAL( loadFinished( bool ) ),
+            this,     SLOT(   page_loaded(  bool ) ) );
+   prevwidg->load( pageurl );
+
+   while ( ld_wait )
+   {
+DbgLv(1) << " ++ Load Wait ++";
+      US_Sleep::msleep( 500 );
+      qApp->processEvents();
+   }
+}
+
+// Handle loading complete in web view:  create the PDF
+void US_Reporter::page_loaded( bool ok )
+{
+   load_ok   = ok;
+DbgLv(1) << "PG_LD: loaded OK" << ok;
+
+   if ( ok )
+   {  // HTML loaded:  "print" to a PDF file
+      QPrinter printer( QPrinter::HighResolution );
+      printer.setOutputFileName( ppdfpath );
+      printer.setCreator( "UltraScan" );
+      printer.setDocName( QString( "report_composite.html" ) );
+      printer.setOrientation( QPrinter::Portrait );
+      prevwidg->print( &printer );
+
+      QString ppdffold = ppdfpath;
+      ppdfpath         = ppdfpath.left( ppdfpath.lastIndexOf( "/" ) );
+      ppdfpath         = ppdfpath.left( ppdfpath.lastIndexOf( "/" ) );
+      ppdfpath         = ppdfpath + "/report_composite.pdf";
+      QFile pdff( ppdfpath );
+
+      // Overwrite the PDF in the composite folder with the one
+      //  in the subdirectory where the HTML and components exist
+
+      if ( pdff.exists() )
+         pdff.remove();
+
+      if ( ! QFile::copy( ppdffold , ppdfpath  ) )
+      {
+         QMessageBox::information( this,
+               tr( "UltraScan Error" ),
+               tr( "Unable to (over-)write the file:\n\n" ) +
+               ppdfpath );
+      }
+DbgLv(1) << "PG_LD: ppdffold" << ppdffold;
+DbgLv(1) << "PG_LD: ppdfpath" << ppdfpath;
+DbgLv(1) << "PG_LD: pagepath" << pagepath;
+   }
+
+   ld_wait  = false;
 }
 
 // Count selected reports:  runIDs, reports, htmls, plots

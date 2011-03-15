@@ -1,6 +1,6 @@
 include( ../../gui.pri )
 
-QT           += xml svg
+QT           += xml svg webkit
 
 TARGET        = us_reporter
 
