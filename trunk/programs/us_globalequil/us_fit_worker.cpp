@@ -333,7 +333,7 @@ DbgLv(1) << "FW:QN: calc_jac";
 DbgLv(1) << "FW:QN: calc_AtA";
       US_Matrix::tmm( fitpars.jacobian, fitpars.info, ntpts, nfpars );
 
-      // Compute the B vector:  Jacobian times yDelta vector
+      // Compute the B vector:  Jacobian-transpose times yDelta vector:  J' * d
       emath->calc_B();
 
       // Create a work matrix that is a copy of the info matrix
@@ -399,7 +399,7 @@ DbgLv(1) << "FW:QN:  calc_jac return";
          // Compute new Y-Delta and determine variance
          variance  = emath->calc_residuals();
 
-         // Compute the B vector:  Jacobian times yDelta vector
+         // Compute the B vector:  Jacobian-transpose times yDelta vector
          emath->calc_B();
          check_paused();
 DbgLv(1) << "FW:QN:  calc_B return";
@@ -640,28 +640,31 @@ void US_FitWorker::updateQN( double* gamma, double* delta )
    QVector< double  > vhgamma( nfpars );
    QVector< double  > vvv    ( nfpars );
    QVector< double* > mvvtrns( nfpars );
-   QVector< double* > mhgamtr( nfpars );
-   QVector< double* > mddtrns( nfpars );
+   QVector< double* > mhgtrns( nfpars );
+   QVector< double* > mdatrns( nfpars );
    QVector< double  > dvvtrns( nfpars * nfpars );
-   QVector< double  > dhgamtr( nfpars * nfpars );
-   QVector< double  > dddtrns( nfpars * nfpars );
+   QVector< double  > dhgtrns( nfpars * nfpars );
+   QVector< double  > ddatrns( nfpars * nfpars );
    double*  hgamma = vhgamma.data();
    double*  vv     = vvv    .data();
 
    // Construct the work matrices,  all parameters x parameters
    double** vvtrns = US_Matrix::construct( mvvtrns, dvvtrns, nfpars, nfpars );
-   double** hgamtr = US_Matrix::construct( mhgamtr, dhgamtr, nfpars, nfpars );
-   double** ddtrns = US_Matrix::construct( mddtrns, dddtrns, nfpars, nfpars );
+   double** hgtrns = US_Matrix::construct( mhgtrns, dhgtrns, nfpars, nfpars );
+   double** datrns = US_Matrix::construct( mdatrns, ddatrns, nfpars, nfpars );
 
    // Compute the h-gamma array:  info-matrix times gamma
    US_Matrix::mvv( fitpars.info, gamma, hgamma, nfpars, nfpars );
 
+   // Compute scalars:  lambda = gamma dot hgamma;  deltgam = delta dot gamma
    double lambda   = US_Matrix::dotproduct( gamma, hgamma, nfpars );
    double deltgam  = US_Matrix::dotproduct( delta, gamma,  nfpars );
 
+   // Compute vv array:  scaled delta minus scaled hgamma
    for ( int ii = 0; ii < nfpars; ii++ )
       vv[ ii ]      = ( delta[ ii ] / deltgam ) - ( hgamma[ ii ] / lambda );
 
+   // Compute the 3 transpose matrices, each Mij = Vi1 * V1j
    for ( int ii = 0; ii < nfpars; ii++ )
    {
       double rowvv = vv    [ ii ];
@@ -671,16 +674,17 @@ void US_FitWorker::updateQN( double* gamma, double* delta )
       for ( int jj = 0; jj < nfpars; jj++ )
       {
          vvtrns[ ii ][ jj ] = vv    [ jj ] * rowvv;
-         ddtrns[ ii ][ jj ] = delta [ jj ] * rowda;
-         hgamtr[ ii ][ jj ] = hgamma[ jj ] * rowhg;
+         datrns[ ii ][ jj ] = delta [ jj ] * rowda;
+         hgtrns[ ii ][ jj ] = hgamma[ jj ] * rowhg;
       }
    }
 
+   // Update the info matrix by add/subtract of 3 scaled transpose matrices
    for ( int ii = 0; ii < nfpars; ii++ )
       for ( int jj = 0; jj < nfpars; jj++ )
          fitpars.info[ ii ][ jj ] = fitpars.info[ ii ][ jj ]
-                                     - ( hgamtr [ ii ][ jj ] / lambda  )
-                                     + ( ddtrns [ ii ][ jj ] / deltgam )
+                                     - ( hgtrns [ ii ][ jj ] / lambda  )
+                                     + ( datrns [ ii ][ jj ] / deltgam )
                                      + ( vvtrns [ ii ][ jj ] * lambda  );
 }
 

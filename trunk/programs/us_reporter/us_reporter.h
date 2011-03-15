@@ -2,6 +2,8 @@
 #define US_REPORTER_H
 
 #include <QtGui>
+#include <QWebView>
+#include <QWebSettings>
 
 #include "us_extern.h"
 #include "us_widgets.h"
@@ -58,6 +60,9 @@ class US_EXTERN US_Reporter : public US_Widgets
 
       US_DB2*       db;
 
+      QWebView*     prevwidg;
+      QWebSettings* websetting;
+
       QComboBox*    cb_runids;
 
       QPushButton*  pb_view;
@@ -76,11 +81,15 @@ class US_EXTERN US_Reporter : public US_Widgets
 
       bool          rbtn_click;
       bool          change_tree;
+      bool          changed;
+      bool          load_ok;
+      bool          ld_wait;
 
       QString       run_name;
       QString       investig;
       QString       pagedir;
       QString       pagepath;
+      QString       ppdfpath;
       QString       hsclogo;
       QString       becklogo;
       QString       us3logo;
@@ -88,7 +97,6 @@ class US_EXTERN US_Reporter : public US_Widgets
 
    private slots:
 
-      void sample_tree   ( void );
       void clickedItem   ( QTreeWidgetItem* );
       void changedItem   ( QTreeWidgetItem*, int );
       void row_context   ( QTreeWidgetItem* );
@@ -111,6 +119,8 @@ class US_EXTERN US_Reporter : public US_Widgets
       void load_profile  ( void );
       void save_profile  ( void );
       void copy_logos    ( QString );
+      void write_pdf     ( void );
+      void page_loaded   ( bool );
 
       void help          ( void )
       { showHelp.show_help( "reporter.html" ); };
