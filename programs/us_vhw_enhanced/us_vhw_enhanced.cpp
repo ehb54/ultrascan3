@@ -1,6 +1,7 @@
 //! \file us_vhw_enhanced.cpp
 
 #include <QApplication>
+#include <QtSvg>
 
 #include "us_vhw_enhanced.h"
 #include "us_license_t.h"
@@ -206,8 +207,10 @@ qDebug() << "  scanCount  divsCount" << scanCount << divsCount;
 
    int     nrelp = 0;
    int     nunrp = 0;
-   double* ptx   = new double[ scanCount ];
-   double* pty   = new double[ totalCount ];
+   QVector< double > pxvec( scanCount  );
+   QVector< double > pyvec( totalCount );
+   double* ptx   = pxvec.data();
+   double* pty   = pyvec.data();
 
    QList< double > plats;
    QList< int >    isrel;
@@ -534,8 +537,10 @@ qDebug() << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
          tr( "Corrected Sed. Coeff. (1e-13 s)" ) );
 
    int nxy    = ( scanCount > divsCount ) ? scanCount : divsCount;
-   double* x  = new double[ nxy ];
-   double* y  = new double[ nxy ];
+   QVector< double > xvec( nxy );
+   QVector< double > yvec( nxy );
+   double* x  = xvec.data();
+   double* y  = yvec.data();
    
    QwtPlotCurve* curve;
    QwtSymbol     sym;
@@ -681,59 +686,186 @@ qDebug() << " DP: xrN yrN " << x[count-1] << y[count-1] << count;
    {
       aseds.append( pty[ ii ] );
    }
+}
 
-   delete [] x;                             // clean up
-   delete [] y;
-   delete [] ptx;
-   delete [] pty;
+// Write the main report HTML to a stream
+void US_vHW_Enhanced::write_report( QTextStream& ts )
+{
+   d          = &dataList[ lw_triples->currentRow() ];
+   ts << html_header( "US_vHW_Enhanced",
+         tr( "van Holde - Weischet Analysis" ), d );
+   ts << run_details();
+   ts << hydrodynamics();
+   ts << analysis( "" );
+
+   ts << "\n" + indent( 4 ) + tr( "<h3>Selected Groups:</h3>\n" )
+         + indent( 4 ) + "<table>\n";
+   int ngrp = groupdat.size();
+
+   if ( ngrp == 0 )
+      ts << table_row( tr( "Groups Selected:" ), tr( "NONE" ) );
+
+   else
+   {
+      ts << table_row( tr( "Group:" ), tr( "Average S:" ),
+                       tr( "Relative Amount:" ) );
+
+      for ( int jj = 0; jj < ngrp; jj++ )
+      {
+         ts << table_row(
+               QString().sprintf( "%3d:", jj + 1 ),
+               QString().sprintf( "%6.2f", groupdat.at( jj ).sed ),
+               QString().sprintf( "(%5.2f %%)", groupdat.at( jj ).percent ) );
+      }
+   }
+
+   ts << indent( 4 ) + "</table>\n\n";
+
+   ts << indent( 4 ) + "<br/><table>\n";
+   ts << table_row( tr( "Average S:" ),
+                    QString::number( Swavg * 1.0e13 ) );
+   ts << table_row( tr( "Initial concentration from plateau fit:" ),
+                     QString::number( C0 ) +  tr( " OD/fringes" ) );
+   ts << indent( 4 ) + "</table>\n";
+
+   double  sl;
+   double  ci;
+   double  sig;
+   double  cor;
+   QVector< double > xvec( scanCount );
+   QVector< double > yvec( scanCount );
+   double* x  = xvec.data();
+   double* y  = yvec.data();
+   QString tscn;
+   QString tpla;
+
+   ts << scan_info();
+
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {  // accumulate time,plateau pairs for line fit
+      s            = &d->scanData[ ii ];
+      x[ ii ]      = s->seconds;
+      y[ ii ]      = s->plateau;
+   }
+
+   US_Math2::linefit( &x, &y, &sl, &ci, &sig, &cor, scanCount );
+
+   ts << "\n" + indent( 4 ) + "<br/><table>\n";
+   ts << table_row( tr( "Initial Concentration:   " ),
+                    QString::number( ci ) + " OD" );
+   ts << table_row( tr( "Correlation Coefficient: " ),
+                    QString::number( cor ) );
+   ts << table_row( tr( "Standard Deviation:      " ),
+                    QString::number( sig ) );
+   ts << table_row( tr( "Initial Concentration from exponential fit: " ),
+                    QString::number( C0 ) + " OD" );
+   ts << indent( 4 ) + "</table>\n";
+
+   ts << "  </body>\n</html>\n";
+}
+
+// Write SVG plot file
+void US_vHW_Enhanced::write_plot( const QString fname, const QwtPlot* plot )
+{
+   QSvgGenerator generator;
+   generator.setSize( plot->size() );
+   generator.setFileName( fname );
+   plot->print( generator );
 }
 
 // save the enhanced data
 void US_vHW_Enhanced::save_data( void )
 { 
-qDebug() << "save_data";
+   row           = lw_triples->currentRow();
+   d             = &dataList[ row ];
+   QString tripl = QString( triples.at( row ) ).replace( " / ", "" );
+   QString basernam  = US_Settings::resultDir() + "/" + d->runID
+      + "/vHW." + tripl + ".";
+   QStringList files;
 
+   // Write results files
    write_vhw();
    write_dis();
-   write_res();
+   files << basernam + "extrap.dat";
+   files << basernam + "distrib.dat";
 
+   if ( groupdat.size() > 0 )
+   {
+      write_model();
+      files << basernam + "fef_model.rpt";
+   }
+
+   // Set up to write reports files
+   QString basename  = US_Settings::reportDir() + "/" + d->runID
+      + "/vHW." + tripl + ".";
+   QString htmlFile  = basename + "report.html";
+   QString plot1File = basename + "velocity.svg";
+   QString plot2File = basename + "extrap.svg";
+   QString plot3File = basename + "s-c-distrib.svg";
+   QString plot4File = basename + "s-c-histo.svg";
+
+   // Write the main report file
+   QFile rpt_f( htmlFile );
+
+   if ( !rpt_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      return;
+
+   QTextStream ts( &rpt_f );
+   write_report( ts );
+   rpt_f.close();
+
+   // Write the velocity and extrapolation plots
+   write_plot( plot1File, data_plot2 );
+   write_plot( plot2File, data_plot1 );
+
+   // Save distribution and histogram plots
+   QList< double > bfracs;
+   double  bfrac    = 100.0 * positPct;
+   double  bterm    = 100.0 * boundPct / (double)divsCount;
+   bfracs.clear();
+
+   for ( int jj = 0; jj < divsCount; jj++ )
+   {
+      bfrac    += bterm;
+      bfracs.append( bfrac );
+   }
+
+   US_DistribPlot* dialog = new US_DistribPlot( bfracs, dseds );
+   dialog->save_plots( plot3File, plot4File );
+   delete dialog;
+
+   files << " ";
+   files << htmlFile;
+   files << plot1File;
+   files << plot2File;
+   files << plot3File;
+   files << plot4File;
+
+   // Report files created to the user
+   QString wmsg = tr( "Wrote:\n\n" );
+
+   for ( int ii = 0; ii < files.size(); ii++ )
+      wmsg += "  " + files.at( ii ) + "\n";
+
+   QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
 }
 
 // generate result report, pop up dialog and display the report
 void US_vHW_Enhanced::view_report( void )
 {
-qDebug() << "view_report";
-   QString           mtext;
+   // Generate the main report html text
+   QString rtext;
+   QTextStream ts( &rtext );
+   write_report( ts );
 
-   // generate the report file
-   write_res();
-
-   // open it
-   QString filename = US_Settings::resultDir() + "/" + d->runID
-      + ".vhw_res." + d->cell + d->wavelength;
-   QFile res_f( filename );
-
-   if ( res_f.open( QIODevice::ReadOnly | QIODevice::Text ) )
-   { // build up text with the report contents
-      QTextStream ts( &res_f );
-      while ( !ts.atEnd() )
-         mtext.append( ts.readLine() + "\n" );
-      res_f.close();
-   }
-
-   else
-   {
-      mtext.append( "*ERROR* Unable to open file " + filename );
-   }
-
-   // display the report dialog
-
+   // Create the report dialog and display the text
    US_Editor* edit = new US_Editor( US_Editor::LOAD, true );
    edit->setWindowTitle( "Results:  van Holde - Weischet Analysis" );
    edit->move( this->pos() + QPoint( 100, 100 ) );
-   edit->resize( 600, 500 );
-   edit->e->setFont( US_Widgets::fixedFont() );
-   edit->e->setText( mtext );
+   edit->resize( 700, 600 );
+   edit->e->setFont( QFont( US_GuiSettings::fontFamily(),
+                            US_GuiSettings::fontSize() ) );
+   edit->e->setText( rtext );
    edit->show();
 }
 
@@ -865,8 +997,10 @@ double US_vHW_Enhanced::zone_plateau( )
    int     j9     = 0;
    int     jj     = 0;
    int     l0     = nzp;
-   double* x      = new double[ valueCount ];
-   double* y      = new double[ valueCount ];
+   QVector< double > xvec( valueCount );
+   QVector< double > yvec( valueCount );
+   double* x  = xvec.data();
+   double* y  = yvec.data();
 
    // get the first potential zone and get its slope
 
@@ -980,9 +1114,6 @@ double US_vHW_Enhanced::zone_plateau( )
       }
    }
 
-   delete [] x;                             // clean up
-   delete [] y;
-
    return plato;
 }
 
@@ -1059,12 +1190,18 @@ double US_vHW_Enhanced::sed_coeff( double cconc, double oterm )
 // calculate division sedimentation coefficient values (fitted line intercepts)
 void US_vHW_Enhanced::div_seds( )
 {
-   double* xx       = new double[ scanCount ];
-   double* yy       = new double[ scanCount ];
-   double* pp       = new double[ scanCount ];
-   double* xr       = new double[ scanCount ];
-   double* yr       = new double[ scanCount ];
-   int*    ll       = new int   [ scanCount ];
+   QVector< double > xxv( scanCount );
+   QVector< double > yyv( scanCount );
+   QVector< double > ppv( scanCount );
+   QVector< double > xrv( scanCount );
+   QVector< double > yrv( scanCount );
+   QVector< int    > llv( scanCount );
+   double* xx       = xxv.data();
+   double* yy       = yyv.data();
+   double* pp       = ppv.data();
+   double* xr       = xrv.data();
+   double* yr       = yrv.data();
+   int*    ll       = llv.data();
    int     nscnu    = 0;  // number used (non-excluded) scans
    int     kscnu    = 0;  // count of scans of div not affected by diffusion
    double  bdifsqr  = sqrt( bdiffc );  // sqrt( diff ) used below
@@ -1258,13 +1395,6 @@ qDebug() << " D_S: xrN yrN " << xr[nscnu-1] << yr[nscnu-1] << nscnu;
       bdcons.append( yr[ kk ] );
    }
 
-   delete [] xx;                             // clean up
-   delete [] yy;
-   delete [] pp;
-   delete [] ll;
-   delete [] xr;
-   delete [] yr;
-
    return;
 }
 
@@ -1434,152 +1564,12 @@ void US_vHW_Enhanced::add_group_info( )
    groupdat.append( grdat );
 }
 
-// write a file of vHW results
-void US_vHW_Enhanced::write_res()
-{
-   QString filename = US_Settings::resultDir() + "/" + d->runID
-      + ".vhw_res." + d->cell + d->wavelength;
-   QFile res_f( filename );
-
-   if ( !res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
-   {
-      return;
-   }
-qDebug() << "WR: filename " << filename;
-
-   s            = &d->scanData[ 0 ];
-   valueCount   = s->readings.size();
-   QString t20d = QString( "20" ) + QChar( 176 ) + "C";
-
-   US_Math2::SolutionData sd;
-   sd.vbar      = vbar;
-   sd.vbar20    = vbar;
-   sd.density   = density;
-   sd.viscosity = viscosity;
-   QString tavt = le_temp->text();
-   double  davt = tavt.section( " ", 0, 0 ).toDouble();
-
-   US_Math2::data_correction( davt, sd );
-
-   QTextStream ts( &res_f );
-
-   ts <<     "*****************************************************\n";
-   ts << tr( "*    Enhanced van Holde - Weischet Analysis         *\n" );
-   ts <<     "*****************************************************\n\n\n";
-   ts << tr( "Data Report for Run \"" ) << d->runID
-      << tr( "\",\n Cell " ) << d->cell << ", Channel " << d->channel
-      << tr( ", Wavelength " ) << d->wavelength
-      << tr( ", Edited Dataset " ) << editID << "\n\n";
-
-   ts << tr( "Detailed Run Information:\n\n" );
-   ts << tr( "Cell Description:       " ) << d->description << "\n";
-   ts << tr( "Rotor Speed:            " ) << d->scanData[ 0 ].rpm << " rpm\n";
-   ts << tr( "Average Temperature:    " ) << tavt << "\n";
-   ts << tr( "Temperature Variation:  Within Tolerance\n" );
-   ts << tr( "Time Correction:        " )
-      << text_time( time_correction, 1 ) << "\n";
-   ts << tr( "Run Duration:           " )
-      << text_time( d->scanData[ scanCount - 1 ].seconds, 2 ) << "\n";
-   ts << tr( "Wavelength:             " ) << d->wavelength << " nm\n";
-   ts << tr( "Baseline Absorbance:    " ) << baseline << " OD\n";
-   ts << tr( "Meniscus Position:      " ) << d->meniscus << " cm\n";
-   ts << tr( "Edited Data starts at:  " )
-      << readings_radius( d, 0 ) << " cm\n";
-   ts << tr( "Edited Data stops at:   " )
-      << readings_radius( d, valueCount - 1 ) << " cm\n\n\n";
-
-   ts << tr( "Hydrodynamic Settings:\n\n" );
-   ts << tr( "Viscosity correction:   " ) << sd.viscosity << "\n";
-   ts << tr( "Viscosity (absolute):   " ) << sd.viscosity_tb << "\n";
-   ts << tr( "Density correction:     " ) << sd.density << " g/ccm\n";
-   ts << tr( "Density (absolute):     " ) << sd.density_tb << " g/ccm\n";
-   ts << tr( "Vbar:                   " ) << sd.vbar << " ccm/g\n";
-   ts << tr( "Vbar corrected for " ) << t20d << ":"
-      << sd.vbar20 << " ccm/g\n";
-   ts << tr( "Buoyancy (Water, " ) << t20d << "): " << sd.buoyancyw << "\n";
-   ts << tr( "Buoyancy (absolute):    " ) << sd.buoyancyb << "\n";
-   ts << tr( "Correction Factor:      " ) << correc*1.0e-13 << "\n\n\n";
-
-   ts << tr( "Data Analysis Settings:\n\n" );
-   ts << tr( "Divisions:              " ) << divsCount << "\n";
-   ts << tr( "Smoothing Frame:        " )
-      << QString::number( (int)ct_smoothing->value() ) << "\n";
-   ts << tr( "Analyzed Boundary:      " )
-      << QString::number( (int)ct_boundaryPercent->value() ) << " %\n";
-   ts << tr( "Boundary Position:      " )
-      << QString::number( (int)ct_boundaryPos->value() ) << " %\n";
-
-   ts << tr( "Selected Groups:\n\n" );
-   int ngrp = groupdat.size();
-
-   if ( ngrp == 0 )
-   {
-      ts << tr( "No groups were selected...\n\n\n" );
-   }
-
-   else
-   {
-      QString gline;
-      ts << tr( "Group: Average S: Relative Amount:\n\n" );
-
-      for ( int jj = 0; jj < ngrp; jj++ )
-      {
-         gline.sprintf( "%3d:    %6.2fs      (%5.2f",
-            jj + 1, groupdat.at( jj ).sed, groupdat.at( jj ).percent );
-         gline.append( " %)\n" );
-         ts << gline;
-      }
-      ts << "\n\n";
-
-      write_model();
-   }
-
-   ts << tr( "Average S:              " ) << Swavg*1.0e13 << "\n";
-   ts << tr( "Initial concentration from plateau fit: " )
-      << C0 << " OD/fringes\n\n\n";
-
-   double  sl;
-   double  ci;
-   double  sig;
-   double  cor;
-   double* x  = new double[ scanCount ];
-   double* y  = new double[ scanCount ];
-   QString tscn;
-   QString tpla;
-
-   ts << tr( "Scan Information:\n\n" );
-   ts << tr( "Scan:     Corrected Time:  Plateau Concentration:\n\n" );
-
-   for ( int ii = 0; ii < scanCount; ii++ )
-   {  // accumulate time,plateau pairs for line fit
-      s            = &d->scanData[ ii ];
-      tscn.sprintf( "%3d:", ii + 1 );
-      tpla.sprintf( "%9.6f OD:", s->plateau );
-      ts << tscn << "     " << text_time( s->seconds - time_correction )
-         << "      " << tpla << "\n";
-      x[ ii ]      = s->seconds;
-      y[ ii ]      = s->plateau;
-   }
-
-   US_Math2::linefit( &x, &y, &sl, &ci, &sig, &cor, scanCount );
-
-   ts << "\n";
-   ts << tr( "Initial Concentration:   " ) << ci << " OD\n";
-   ts << tr( "Correlation Coefficient: " ) << cor << "\n";
-   ts << tr( "Standard Deviation:      " ) << sig << "\n\n\n";
-   ts << tr( "Initial Concentration from exponential fit: " ) << C0 << " OD\n";
-
-   delete [] x;                             // clean up
-   delete [] y;
-
-   res_f.close();
-}
-
 // write a file of vHW extrapolation data
 void US_vHW_Enhanced::write_vhw()
 {
-   QString filename = US_Settings::resultDir() + "/" + d->runID
-      + ".vhw_ext." + d->cell + d->wavelength;
+   QString filename = US_Settings::resultDir() + "/" + d->runID + "/vHW."
+      + QString( triples.at( row ) ).replace( " / ", "" )
+      + ".extrap.dat";
 
    QFile   res_f( filename );
    double  sedc;
@@ -1624,8 +1614,9 @@ qDebug() << "WV: filename " << filename;
 // write a file of vHW division distribution values
 void US_vHW_Enhanced::write_dis()
 {
-   QString filename = US_Settings::resultDir() + "/" + d->runID
-      + ".vhw_dis." + d->cell + d->wavelength;
+   QString filename = US_Settings::resultDir() + "/" + d->runID + "/vHW."
+      + QString( triples.at( row ) ).replace( " / ", "" )
+      + ".distrib.dat";
    QFile   res_f( filename );
    double  pterm    = 100.0 * positPct;
    double  bterm    = 100.0 * boundPct / (double)divsCount;
@@ -1659,8 +1650,9 @@ qDebug() << "WD: filename " << filename;
 // write a file of vHW detailed division group model data
 void US_vHW_Enhanced::write_model()
 {
-   QString filename = US_Settings::resultDir() + "/" + d->runID
-      + "." + d->cell + d->wavelength + ".fef_model";
+   QString filename = US_Settings::resultDir() + "/" + d->runID + "/vHW."
+      + QString( triples.at( row ) ).replace( " / ", "" )
+      + ".fef_model.rpt";
    QFile   res_f( filename );
    int     groups   = groupdat.size();
 

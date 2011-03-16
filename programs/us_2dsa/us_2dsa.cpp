@@ -1,6 +1,7 @@
 //! \file us_2dsa.cpp
 
 #include <QApplication>
+#include <QtSvg>
 
 #include "us_2dsa.h"
 #include "us_resids_bitmap.h"
@@ -359,38 +360,23 @@ void US_2dsa::data_plot( void )
 // view data report
 void US_2dsa::view( void )
 {
-   // Create US_Editor
+   // Create the report text
+   QString rtext;
+   QTextStream ts( &rtext );
+   write_report( ts );
+
+   // Create US_Editor and display report
    if ( te_results == NULL )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
-      te_results->resize( 560, 400 );
+      te_results->resize( 700, 600 );
       QPoint p = g.global_position();
       te_results->move( p.x() + 30, p.y() + 30 );
       te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
                                      US_GuiSettings::fontSize() ) );
    }
 
-   int                     index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* d      = &dataList[ index ];
-
-   // Add results to window
-   QString s = 
-      "<html><head>\n"
-      "<style>td { padding-right: 1em;}</style>\n"
-      "</head><body>\n" +
-      tr( "<h1>2-Dimensional Spectrum Analysis</h1>\n" )   +
-      tr( "<h2>Data Report for Run \"" ) + d->runID +
-      tr( "\", Cell " ) + d->cell +
-      tr(  ", Wavelength " ) + d->wavelength + "</h2>\n";
-   
-   s += run_details();
-   s += hydrodynamics();
-   s += scan_info();
-   s += distrib_info();
-   s += iteration_info();
-   s += "</body></html>\n";
-
-   te_results->e->setHtml( s );
+   te_results->e->setHtml( rtext );
    te_results->show();
 }
 
@@ -544,16 +530,23 @@ void US_2dsa::save( void )
                     + ( fitMeni ? "2dsa-fm" : ( montCar ? "2dsa-mc" : "2dsa" ) )
                     + dext + ".";
    QString htmlFile  = filebase + "report.html";
-   QString plot1File = filebase + "residuals.png";
-   QString plot2File = filebase + "velocity.png";
+   QString plot1File = filebase + "velocity.svg";
+   QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
 
    // Write HTML report file
-   write_report( htmlFile );
+   QFile rep_f( htmlFile );
+
+   if ( ! rep_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      return;
+
+   QTextStream ts( &rep_f );
+   write_report( ts );
+   rep_f.close();
 
    // Write plots
-   write_png( plot1File, data_plot1 );
-   write_png( plot2File, data_plot2 );
+   write_svg( plot1File, data_plot2 );
+   write_png( plot2File, data_plot1 );
    write_png( plot3File, NULL       );
    
    // use a dialog to tell the user what we've output
@@ -688,7 +681,9 @@ QString US_2dsa::distrib_info()
    if ( ncomp == 0 )
       return "";
 
-   QString mstr = tr( "<h3>Data Analysis Settings:</h3>\n" ) + "<table>\n";
+   QString mstr = "\n" + indent( 4 )
+      + tr( "<h3>Data Analysis Settings:</h3>\n" )
+      + indent( 4 ) + "<table>\n";
 
    mstr += table_row( tr( "Number of Components:" ),
                       QString::number( ncomp ) );
@@ -710,24 +705,25 @@ QString US_2dsa::distrib_info()
    }
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
-                      QString().sprintf( "%6.4e\n", ( sum_s  / sum_c ) ) );
+                      QString().sprintf( "%6.4e", ( sum_s  / sum_c ) ) );
    mstr += table_row( tr( "Weight Average D20,W:" ),
-                      QString().sprintf( "%6.4e\n", ( sum_D  / sum_c ) ) );
+                      QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
    mstr += table_row( tr( "W.A. Molecular Weight:" ),
-                      QString().sprintf( "%6.4e\n", ( sum_mw / sum_c ) ) );
+                      QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
-                      QString().sprintf( "%6.4e\n", sum_c ) );
-   mstr += "</table>\n\n";
+                      QString().sprintf( "%6.4e", sum_c ) );
+   mstr += indent( 4 ) + "</table>\n\n";
 
-   mstr += tr( "<h3>Distribution Information:</h3>\n" ) + "<table>\n";
-   mstr += table5_row( tr( "Molecular Wt." ), tr( "S 20,W" ), tr( "D 20,W" ),
-                       tr( "f / f0" ), tr( "Concentration" ) );
+   mstr += indent( 4 ) + tr( "<h3>Distribution Information:</h3>\n" )
+      + indent( 4 ) + "<table>\n";
+   mstr += table_row( tr( "Molecular Wt." ), tr( "S 20,W" ), tr( "D 20,W" ),
+                      tr( "f / f0" ), tr( "Concentration" ) );
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {
       double conc = model.components[ ii ].signal_concentration;
       double perc = 100.0 * conc / sum_c;
-      mstr       += table5_row(
+      mstr       += table_row(
             QString().sprintf( "%10.4e", model.components[ ii ].mw   ),
             QString().sprintf( "%10.4e", model.components[ ii ].s    ),
             QString().sprintf( "%10.4e", model.components[ ii ].D    ),
@@ -735,7 +731,7 @@ QString US_2dsa::distrib_info()
             QString().sprintf( "%10.4e (%5.2f %%)", conc, perc       ) );
    }
 
-   mstr += "</table>";
+   mstr += indent( 4 ) + "</table>\n";
    
    return mstr;
 }
@@ -753,7 +749,9 @@ QString US_2dsa::iteration_info()
    bool    montCar  = model.monteCarlo;
    QString anType   = montCar ? "Monte Carlo" : "Fit Meniscus";
 
-   QString mstr   = tr( "<h3>Multiple Model Settings:</h3>\n" ) + "<table>\n";
+   QString mstr   = "\n" + indent( 4 )
+      + tr( "<h3>Multiple Model Settings:</h3>\n" )
+      + indent( 4 ) + "<table>\n";
 
    mstr += table_row( tr( "Number of Model Iterations:" ),
                       QString::number( nmodels ) );
@@ -779,9 +777,10 @@ QString US_2dsa::iteration_info()
                          QString::number( emenis ) );
    }
 
-   mstr += "</table>\n\n";
+   mstr += indent( 4 ) + "</table>\n\n";
 
-   mstr += tr( "<h3>Fit / Iteration Information:</h3>\n" ) + "<table>\n";
+   mstr += indent( 4 ) + tr( "<h3>Fit / Iteration Information:</h3>\n" )
+      + indent( 4 ) + "<table>\n";
 
    if ( montCar )
       mstr += table_row( tr( "Iteration" ),
@@ -815,53 +814,29 @@ QString US_2dsa::iteration_info()
       }
    }
 
-   mstr += "</table>";
+   mstr += indent( 4 ) + "</table>\n";
    
    return mstr;
 }
 
-// Table HTML table row string for 5 columns
-QString US_2dsa::table5_row( const QString& s1, const QString& s2,
-                             const QString& s3, const QString& s4,
-                             const QString& s5 )
-{
-   return "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
-       + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n";
-}
-
 // Write HTML report file
-void US_2dsa::write_report( QString htmlFile )
+void US_2dsa::write_report( QTextStream& ts )
 {
-   // output the report to the specified file
-   QFile rep_f( htmlFile );
-
-   if ( ! rep_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
-      return;
-
-   QTextStream ts( &rep_f );
-
-   ts << "<html><head>\n";
-   ts << "<style>td { padding-right: 1em;}</style>\n";
-   ts << "</head><body>\n";
-   ts << tr( "<h1>2-Dimensional Spectrum Analysis</h1>\n" );
-   ts << tr( "<h2>Data Report for Run \"" ) + edata->runID +
-         tr( "\", Cell " ) + edata->cell +
-         tr(  ", Wavelength " ) + edata->wavelength + "</h2>\n";
-   
+   ts << html_header( QString( "US_2dsa" ),
+                      tr( "2-Dimensional Spectrum Analysis" ),
+                      edata );
    ts << run_details();
    ts << hydrodynamics();
    ts << scan_info();
    ts << distrib_info();
    ts << iteration_info();
-   ts << "</body></html>\n";
-
-   rep_f.close();
+   ts << indent( 2 ) + "</body>\n</html>\n";
 }
 
 // Write PNG plot file
-void US_2dsa::write_png( QString plotFile, QWidget* pwidget )
+void US_2dsa::write_png( const QString plotFile, const QWidget* pwidget )
 {
-   QWidget*         plwidg  = pwidget;
+   QWidget*         plwidg  = (QWidget*)pwidget;
    QPixmap          pixmap;
    US_ResidsBitmap* resbmap = NULL;
 
@@ -903,6 +878,15 @@ void US_2dsa::write_png( QString plotFile, QWidget* pwidget )
 
    if ( pwidget == NULL )
       resbmap->close();
+}
+
+// Write SVG plot file
+void US_2dsa::write_svg( const QString plotFile, const QwtPlot* plot )
+{
+   QSvgGenerator generator;
+   generator.setSize( plot->size() );
+   generator.setFileName( plotFile );
+   plot->print( generator );
 }
 
 // Handle selecting a new triple

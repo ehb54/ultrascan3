@@ -93,6 +93,7 @@ class US_EXTERN US_Reporter : public US_Widgets
       QString       hsclogo;
       QString       becklogo;
       QString       us3logo;
+      QString       archdir;
 
 
    private slots:
