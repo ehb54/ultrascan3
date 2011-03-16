@@ -21,9 +21,9 @@ class US_EXTERN US_EquilTime : public US_Widgets
 		US_EquilTime();
 
 	private:
-      struct US_Model                     model;
-      struct US_SimulationParameters      simparams;
-      QVector< US_AstfemMath::MfemData > astfem_data;
+      US_Model                     model;
+      US_SimulationParameters      simparams;
+      US_DataIO2::RawData          astfem_data;
 
       enum    { PROLATE, OBLATE, ROD, SPHERE };
       enum    { INNER, OUTER, CENTER, CUSTOM };
@@ -38,10 +38,10 @@ class US_EXTERN US_EquilTime : public US_Widgets
       double  sigma_start;
       double  sigma_stop;
       int     speed_count;
+      int     radius_points;
 
-      double* sim_radius;
-      double* concentration;
-      uint    radius_points;
+      QVector< double > sim_radius;
+      QVector< double > concentration;
 
       double  current_time;
       double  step_time;
@@ -90,8 +90,9 @@ class US_EXTERN US_EquilTime : public US_Widgets
       void new_model         ( void );
       void change_model      ( void );
       void load_model        ( void );
+      void set_model         ( US_Model );
 
-      void check_equil       ( QVector< double >&, double* );
+      void check_equil       ( QVector< double >*, double* );
 
       void set_time          ( double time )
       { step_time = time; };
