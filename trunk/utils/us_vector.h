@@ -55,7 +55,7 @@ class US_EXTERN US_Vector : public QVector< double >
 
       //! \brief Return an element usign the [] operator
       //! \param i The element to return
-      const double operator[]( int i ) const { return v[ i ]; };
+      double operator[]( int i ) const { return v[ i ]; };
 
    private:
       QVector< double > v;
