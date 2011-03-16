@@ -978,20 +978,6 @@ void US_AnalysisBase2::new_triple( int index )
    update( index );
 }
 
-QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2 ) const
-{
-   QString s = "<tr><td>" + s1 + "</td><td>" + s2 + "</td></tr>\n";
-   return s;
-}
-
-QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2, 
-                                     const QString& s3 ) const
-{
-   QString s = "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3 
-             + "</td></tr>\n";
-   return s;
-}
-
 double US_AnalysisBase2::calc_baseline( void ) const
 {
    int    row   = lw_triples->currentRow();
@@ -1008,16 +994,76 @@ double US_AnalysisBase2::calc_baseline( void ) const
    return sum / 11.0;
 }
 
+// String to accomplish line identation
+QString US_AnalysisBase2::indent( const int spaces ) const
+{
+   return QString( "            " ).left( spaces );
+}
+
+// Table row HTML with 2 columns
+QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td></tr>\n" );
+}
+
+// Table row HTML with 3 columns
+QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2, 
+                                     const QString& s3 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
+            + s3 + "</td></tr>\n" );
+}
+
+// Table row HTML with 5 columns
+QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2, 
+                                     const QString& s3, const QString& s4, 
+                                     const QString& s5 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
+            + s3 + "</td><td>\n" + s4 + "</td><td>\n" + s5 + "</td></tr>\n" );
+}
+
+// Compose HTML header string
+QString US_AnalysisBase2::html_header( const QString& title,
+      const QString& head1, US_DataIO2::EditedData* edata ) const
+{
+   QString ss = QString( "<?xml version=\"1.0\"?>\n" );
+   ss  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
+   ss  += "                      \"http://www.w3.org/TR/xhtml1/DTD"
+          "/xhtml1-strict.dtd\">\n";
+   ss  += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
+          " xml:lang=\"en\" lang=\"en\">\n";
+   ss  += "  <head>\n";
+   ss  += "    <title> " + title + " </title>\n";
+   ss  += "    <meta http-equiv=\"Content-Type\" content="
+          "\"text/html; charset=iso-8859-1\"/>\n";
+   ss  += "    <style type=\"text/css\" >\n";
+   ss  += "      td { padding-right: 1em; }\n";
+   ss  += "      body { background-color: white; }\n";
+   ss  += "    </style>\n";
+   ss  += "  </head>\n  <body>\n";
+   ss  += "    <h1>" + head1 + "</h1>\n";
+   ss  += indent( 4 ) + tr( "<h2>Data Report for Run \"" ) + edata->runID;
+   ss  += "\",<br/>\n" + indent( 4 ) + "&nbsp;" + tr( " Cell " ) + edata->cell;
+   ss  += tr( ", Channel " ) + edata->channel;
+   ss  += tr( ", Wavelength " ) + edata->wavelength;
+   ss  += ",<br/>\n" + indent( 4 ) + "&nbsp;" + tr( " Edited Dataset " );
+   ss  += edata->editID + "</h2>\n";
+ 
+   return ss;
+}
+
 QString US_AnalysisBase2::run_details( void ) const
 {
    int                           index  = lw_triples->currentRow();
    const US_DataIO2::EditedData* d      = &dataList[ index ];
 
-   QString s =  
-        tr( "<h3>Detailed Run Information:</h3>\n" ) + "<table>\n" +
-        table_row( tr( "Cell Description:" ), d->description )     +
-        table_row( tr( "Data Directory:"   ), directory )          +
-        table_row( tr( "Rotor Speed:"      ),  
+   QString s = "\n" + indent( 4 )
+        + tr( "<h3>Detailed Run Information:</h3>\n" )
+        + indent( 4 ) + "<table>\n"
+        + table_row( tr( "Cell Description:" ), d->description )
+        + table_row( tr( "Data Directory:"   ), directory )
+        + table_row( tr( "Rotor Speed:"      ),  
             QString::number( (int)d->scanData[ 0 ].rpm ) + " rpm" );
 
    // Temperature data
@@ -1084,7 +1130,8 @@ QString US_AnalysisBase2::run_details( void ) const
    s += table_row( tr( "Edited Data starts at: " ), 
                    QString::number( left,  'f', 3 ) + " cm" ) +
         table_row( tr( "Edited Data stops at:  " ), 
-                   QString::number( right, 'f', 3 ) + " cm" ) + "</table>\n";
+                   QString::number( right, 'f', 3 ) + " cm" );
+   s += indent( 4 ) + "</table>\n";
    return s;
 }
 
@@ -1099,8 +1146,8 @@ QString US_AnalysisBase2::hydrodynamics( void ) const
    solution.vbar20    = solution.vbar;
    US_Math2::data_correction( avgTemp, solution );
 
-   QString s = tr( "<h3>Hydrodynamic Settings:</h3>\n" ) + 
-               "<table>\n";
+   QString s = "\n" + indent( 4 ) + tr( "<h3>Hydrodynamic Settings:</h3>\n" )
+               + indent( 4 ) + "<table>\n";
   
    s += table_row( tr( "Viscosity corrected:" ), 
                    QString::number( solution.viscosity, 'f', 5 ) ) +
@@ -1122,26 +1169,27 @@ QString US_AnalysisBase2::hydrodynamics( void ) const
                    QString::number( solution.s20w_correction, 'f', 6 ) ) + 
         table_row( tr( "Correction Factor (D):" ),
                    QString::number( solution.D20w_correction, 'f', 6 ) ) + 
-        "</table>\n";
+        indent( 4 ) + "</table>\n";
 
    return s;
 }
 
 QString US_AnalysisBase2::analysis( const QString& extra ) const
 {
-   QString s = tr( "<h3>Data Analysis Settings:</h3>\n" ) +
-               "<table>\n";
+   QString s = "\n" + indent( 4 ) + tr( "<h3>Data Analysis Settings:</h3>\n" )
+               + indent( 4 ) + "<table>\n";
 
    s += table_row( tr( "Smoothing Frame:" ),
-                   QString::number( (int)ct_smoothing->value() ) ) + 
-        table_row( tr( "Analyzed Boundary:" ),
-                   QString::number( (int)ct_boundaryPercent->value() ) + " %" )+
-        table_row( tr( "Boundary Position:" ),
-                   QString::number( (int)ct_boundaryPos->value() ) + " %" ) +
-        table_row( tr( "Early Scans skipped:" ),
+                   QString::number( (int)ct_smoothing->value() ) );
+   s += table_row( tr( "Analyzed Boundary:" ),
+                   QString::number( (int)ct_boundaryPercent->value() ) + " %" );
+   s += table_row( tr( "Boundary Position:" ),
+                   QString::number( (int)ct_boundaryPos->value() ) + " %" );
+   s += table_row( tr( "Early Scans skipped:" ),
                    le_skipped->text() + " scans" );
+   s += extra;
    
-   s += extra + "</table>";
+   s += indent( 4 ) + "</table>\n";
 
    return s;
 }
@@ -1151,8 +1199,8 @@ QString US_AnalysisBase2::scan_info( void ) const
    int                           index  = lw_triples->currentRow();
    const US_DataIO2::EditedData* d      = &dataList[ index ];
 
-   QString s = tr( "<h3>Scan Information:</h3>\n" ) +
-               "<table>\n"; 
+   QString s = "\n" + indent( 4 ) + tr( "<h3>Scan Information:</h3>\n" )
+               + indent( 4 ) + "<table>\n"; 
          
    s += table_row( tr( "Scan" ), tr( "Corrected Time" ), 
                    tr( "Plateau Concentration" ) );
@@ -1173,7 +1221,7 @@ QString US_AnalysisBase2::scan_info( void ) const
       s += table_row( s1, s2, s3 );
    }
 
-   s += "</table>";
+   s += indent( 4 ) + "</table>\n";
    
    return s;
 }

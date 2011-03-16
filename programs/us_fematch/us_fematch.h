@@ -165,8 +165,8 @@ class US_EXTERN US_FeMatch : public US_Widgets
 
       void    load_noise(       void );
       double  interp_sval( double, double*, double*,  int );
-      void    write_rep(      QString& );
-      QString wave_index(     int  );
+      void    write_report(   QTextStream& );
+      QString indent    (     int  )  const;
       QString text_model(     US_Model, int );
       double  calc_baseline(  int  )  const;
       void    calc_residuals( void );
@@ -181,6 +181,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QString table_row( const QString&, const QString&,
                          const QString&, const QString&,
                          const QString& )                 const;
+      QString html_header   ( QString, QString, US_DataIO2::EditedData* );
       QString data_details  ( void )                      const;
       QString hydrodynamics ( void )                      const;
       QString scan_info     ( void )                      const;

@@ -46,6 +46,7 @@ class US_Dcdt : public US_AnalysisBase2
       void    sMaxChanged   ( double );
       void    exclude       ( void );
       void    reset_excludes( void );
+      void    write_report  ( QTextStream& );
 
       void    help          ( void )
       { showHelp.show_help( "manual/us_dcdt.html" ); };

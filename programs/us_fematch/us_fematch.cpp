@@ -724,14 +724,24 @@ DbgLv(1) << "Sim plot scan count" << ii << count
 void US_FeMatch::save_data( void )
 { 
    QStringList files;
-   QString htmlFile;
+   int drow = lw_triples->currentRow();
+   mkdir( US_Settings::reportDir(), edata->runID );
+   QString tripnode = QString( triples.at( drow ) ).replace( " / ", "" );
+   QString basename = US_Settings::reportDir() + "/" + edata->runID + "/fem_"
+      + text_model( model, 0 ) + "." + tripnode;
+   QString htmlFile = basename + ".report.html";
+   QFile rep_f( htmlFile );
+   if ( ! rep_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      return;
+
+   QTextStream ts( &rep_f );
 
    // save the report to a file
-   write_rep( htmlFile );
+   write_report( ts );
+
+   rep_f.close();
    files << htmlFile;
 
-   int     jj        = htmlFile.lastIndexOf( "report." );
-   QString basename  = htmlFile.left( jj ).replace( "\\", "/" );
    const QString svgext( ".svg" );
    const QString pngext( ".png" );
    QString img01File = basename + "velocity"   + svgext;
@@ -914,37 +924,14 @@ void US_FeMatch::get_vbar( void )
 
 void US_FeMatch::view_report( )
 {
-   QString filename;
    QString mtext;
-   int     drow   = lw_triples->currentRow();
-   edata          = &dataList[ drow ];
+   QTextStream ts( &mtext );
 
    // generate the report file
-   write_rep( filename );
-
-   // open it
-   QFile   rep_f( filename );
-   QString fileexts = tr( "Report files (*_rep*);;" )
-      + tr( "RunID files (" ) + edata->runID + "*);;"
-      + tr( "All files (*)" );
-
-   if ( rep_f.open( QIODevice::ReadOnly | QIODevice::Text ) )
-   {
-      QTextStream ts( &rep_f );
-
-      while ( !ts.atEnd() )
-         mtext.append( ts.readLine() + "\n" );
-
-      rep_f.close();
-   }
-
-   else
-   {
-      mtext.append( "*ERROR* Unable to open file " + filename );
-   }
+   write_report( ts );
 
    // display the report dialog
-   US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true, fileexts, this );
+   US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true, "", this );
    editd->setWindowTitle( tr( "Report:  FE Match Model Simulation" ) );
    editd->move( this->pos() + QPoint( 100, 100 ) );
    editd->resize( 600, 700 );
@@ -1920,61 +1907,15 @@ double US_FeMatch::interp_sval( double xv, double* sx, double* sy, int ssize )
    return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
 }
 
-// write the report HTML text file
-void US_FeMatch::write_rep( QString& htmlFile )
+// write the report HTML text stream
+void US_FeMatch::write_report( QTextStream& ts )
 {
-   int drow = lw_triples->currentRow();
-   mkdir( US_Settings::reportDir(), edata->runID );
-
-   htmlFile = US_Settings::reportDir() + "/" + edata->runID + "/fem_"
-      + text_model( model, 0 ) + "." + edata->cell + wave_index( drow )
-      + ".report.html";
-   QFile rep_f( htmlFile );
-   if ( ! rep_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
-      return;
-
-   QTextStream ts( &rep_f );
-
-   ts << "<html><head>\n";
-   ts << "<style>td { padding-right: 1em;}</style>\n";
-   ts << "</head><body>\n";
-   ts << "<h1>" + text_model( model, 9 ) + "</h1>\n";
-   ts << tr( "<h2>Data Report for Run \"" ) << edata->runID;
-   ts << "\",<br>\n&nbsp;" << tr( " Cell " ) << edata->cell;
-   ts << tr( ", Channel " ) << edata->channel;
-   ts << tr( ", Wavelength " ) << edata->wavelength;
-   ts << ",<br>\n&nbsp;" << tr( " Edited Dataset " );
-   ts << edata->editID << "</h2>\n";
-
+   ts << html_header( "US_Fematch", text_model( model, 2 ), edata );
    ts << data_details();
    ts << hydrodynamics();
    ts << scan_info();
    ts << distrib_info();
-   ts << "</body></html>\n";
-
-   rep_f.close();
-}
-
-// format a wavelength index number string
-QString US_FeMatch::wave_index( int drow )
-{
-   QString cwaveln = dataList[ drow ].wavelength;
-   QStringList wavelns;
-
-   wavelns << dataList[ 0 ].wavelength;  // start list of wavelengths
-
-   for ( int jj = 1; jj < dataList.size(); jj++ )
-   {  // add to list of unique wavelength strings
-      QString dwaveln = dataList[ jj ].wavelength;
-
-      if ( !wavelns.contains( dwaveln ) )
-         wavelns << dwaveln;
-   }
-
-   wavelns.sort();                       // sort wavelengths
-
-   // return string representation of index of current wavelength
-   return QString::number( wavelns.indexOf( cwaveln ) + 1 );
+   ts << "  </body>\n</html>\n";
 }
 
 // calculate average baseline absorbance
@@ -2285,27 +2226,63 @@ void US_FeMatch::vbar_text( )
    }
 }
 
+// String to accomplish line indentation
+QString US_FeMatch::indent( const int spaces ) const
+{
+   return ( QString( "            " ).left( spaces ) );
+}
+
+// Table row HTML with 2 columns
 QString US_FeMatch::table_row( const QString& s1, const QString& s2 ) const
 {
-   QString s = "<tr><td>" + s1 + "</td><td>" + s2 + "</td></tr>\n";
-   return s;
+   return( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2
+           + "</td></tr>\n" );
 }
 
+// Table row HTML with 3 columns
 QString US_FeMatch::table_row( const QString& s1, const QString& s2, 
-                                     const QString& s3 ) const
+                               const QString& s3 ) const
 {
-   QString s = "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3 
-             + "</td></tr>\n";
-   return s;
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3 
+            + "</td></tr>\n" );
 }
 
-// Table HTML table row string for 5 columns
+// Table row HTML with 5 columns
 QString US_FeMatch::table_row( const QString& s1, const QString& s2,
                                const QString& s3, const QString& s4,
                                const QString& s5 ) const
 {
-   return "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
-       + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n";
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
+            + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n" );
+}
+
+QString US_FeMatch::html_header( QString title, QString head1,
+      US_DataIO2::EditedData* edata )
+{
+   QString s = QString( "<?xml version=\"1.0\"?>\n" );
+   s  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
+   s  += "                      \"http://www.w3.org/TR/xhtml1/DTD"
+         "/xhtml1-strict.dtd\">\n";
+   s  += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
+         " xml:lang=\"en\" lang=\"en\">\n";
+   s  += "  <head>\n";
+   s  += "    <title> " + title + " </title>\n";
+   s  += "    <meta http-equiv=\"Content-Type\" content="
+         "\"text/html; charset=iso-8859-1\"/>\n";
+   s  += "    <style type=\"text/css\" >\n";
+   s  += "      td { padding-right: 1em; }\n";
+   s  += "      body { background-color: white; }\n";
+   s  += "    </style>\n";
+   s  += "  </head>\n  <body>\n";
+   s  += "    <h1>" + head1 + "</h1>\n";
+   s  += indent( 4 ) + tr( "<h2>Data Report for Run \"" ) + edata->runID;
+   s  += "\",<br/>\n" + indent( 4 ) + "&nbsp;" + tr( " Cell " ) + edata->cell;
+   s  += tr( ", Channel " ) + edata->channel;
+   s  += tr( ", Wavelength " ) + edata->wavelength;
+   s  += ",<br/>\n" + indent( 4 ) + "&nbsp;" + tr( " Edited Dataset " );
+   s  += edata->editID + "</h2>\n";
+
+   return s;
 }
 
 QString US_FeMatch::data_details( void ) const
@@ -2314,11 +2291,12 @@ QString US_FeMatch::data_details( void ) const
    const US_DataIO2::EditedData* d      = &dataList[ drow ];
    double baseline = calc_baseline( drow );
 
-   QString s =  
-        tr( "<h3>Detailed Run Information:</h3>\n" ) + "<table>\n" +
-        table_row( tr( "Cell Description:" ), d->description )     +
-        table_row( tr( "Data Directory:"   ), workingDir )         +
-        table_row( tr( "Rotor Speed:"      ),  
+   QString s =
+      "\n" + indent( 4 ) + tr( "<h3>Detailed Run Information:</h3>\n" )
+      + indent( 4 ) + "<table>\n"
+      + table_row( tr( "Cell Description:" ), d->description )
+      + table_row( tr( "Data Directory:"   ), workingDir )
+      + table_row( tr( "Rotor Speed:"      ),  
             QString::number( (int)d->scanData[ 0 ].rpm ) + " rpm" );
 
    // Temperature data
@@ -2385,7 +2363,8 @@ QString US_FeMatch::data_details( void ) const
    s += table_row( tr( "Edited Data starts at: " ), 
                    QString::number( left,  'f', 3 ) + " cm" ) +
         table_row( tr( "Edited Data stops at:  " ), 
-                   QString::number( right, 'f', 3 ) + " cm" ) + "</table>\n";
+                   QString::number( right, 'f', 3 ) + " cm" );
+   s += indent( 4 ) + "</table>\n";
    return s;
 }
 
@@ -2400,8 +2379,8 @@ QString US_FeMatch::hydrodynamics( void ) const
    solution.vbar20    = solution.vbar;
    US_Math2::data_correction( avgTemp, solution );
 
-   QString s = tr( "<h3>Hydrodynamic Settings:</h3>\n" ) + 
-               "<table>\n";
+   QString s = "\n" + indent( 4 ) + tr( "<h3>Hydrodynamic Settings:</h3>\n" )
+               + indent( 4 ) + "<table>\n";
   
    s += table_row( tr( "Viscosity corrected:" ), 
                    QString::number( solution.viscosity, 'f', 5 ) ) +
@@ -2423,7 +2402,7 @@ QString US_FeMatch::hydrodynamics( void ) const
                    QString::number( solution.s20w_correction, 'f', 6 ) ) + 
         table_row( tr( "Correction Factor (D):" ),
                    QString::number( solution.D20w_correction, 'f', 6 ) ) + 
-        "</table>\n";
+        indent( 4 ) + "</table>\n";
 
    return s;
 }
@@ -2434,8 +2413,8 @@ QString US_FeMatch::scan_info( void ) const
    const US_DataIO2::EditedData* d      = &dataList[ drow ];
    double time_correction  = US_Math2::time_correction( dataList );
 
-   QString s = tr( "<h3>Scan Information:</h3>\n" ) +
-               "<table>\n"; 
+   QString s = "\n" + indent( 4 ) + tr( "<h3>Scan Information:</h3>\n" )
+               + indent( 4 ) + "<table>\n"; 
          
    s += table_row( tr( "Scan" ), tr( "Corrected Time" ), 
                    tr( "Plateau Concentration" ) );
@@ -2456,7 +2435,7 @@ QString US_FeMatch::scan_info( void ) const
       s += table_row( s1, s2, s3 );
    }
 
-   s += "</table>";
+   s += indent( 4 ) + "</table>\n";
    
    return s;
 }
@@ -2469,7 +2448,9 @@ QString US_FeMatch::distrib_info() const
    if ( ncomp == 0 )
       return "";
 
-   QString mstr = tr( "<h3>Data Analysis Settings:</h3>\n" ) + "<table>\n";
+   QString mstr = "\n" + indent( 4 )
+                  + tr( "<h3>Data Analysis Settings:</h3>\n" )
+                  + indent( 4 ) + "<table>\n";
 
    mstr += table_row( tr( "Number of Components:" ),
                       QString::number( ncomp ) );
@@ -2491,16 +2472,17 @@ QString US_FeMatch::distrib_info() const
    }
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
-                      QString().sprintf( "%6.4e\n", ( sum_s  / sum_c ) ) );
+                      QString().sprintf( "%6.4e", ( sum_s  / sum_c ) ) );
    mstr += table_row( tr( "Weight Average D20,W:" ),
-                      QString().sprintf( "%6.4e\n", ( sum_D  / sum_c ) ) );
+                      QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
    mstr += table_row( tr( "W.A. Molecular Weight:" ),
-                      QString().sprintf( "%6.4e\n", ( sum_mw / sum_c ) ) );
+                      QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
-                      QString().sprintf( "%6.4e\n", sum_c ) );
-   mstr += "</table>\n\n";
+                      QString().sprintf( "%6.4e", sum_c ) );
+   mstr += indent( 4 ) + "</table>\n";
 
-   mstr += tr( "<h3>Distribution Information:</h3>\n" ) + "<table>\n";
+   mstr += "\n" + indent( 4 ) + tr( "<h3>Distribution Information:</h3>\n" );
+   mstr += indent( 4 ) + "<table>\n";
    mstr += table_row( tr( "Molecular Wt." ), tr( "S 20,W" ), tr( "D 20,W" ),
                       tr( "f / f0" ), tr( "Concentration" ) );
 
@@ -2516,7 +2498,7 @@ QString US_FeMatch::distrib_info() const
             QString().sprintf( "%10.4e (%5.2f %%)", conc, perc       ) );
    }
 
-   mstr += "</table>";
+   mstr += indent( 4 ) + "</table>\n";
 
    return mstr;
 }

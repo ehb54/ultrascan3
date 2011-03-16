@@ -426,38 +426,43 @@ next: avgDcdt[ j ] /= ( count - 1 );
    delete [] y;
 }
 
+// Write report html to stream
+void US_Dcdt::write_report( QTextStream& ts )
+{
+   int                     index  = lw_triples->currentRow();
+   US_DataIO2::EditedData* edata  = &dataList[ index ];
+
+   QString title = "US_dCdt";
+   QString head1 = tr( "Time - Derivative (dC/dt) Analysis" );
+
+   ts << html_header( title, head1, edata );
+   ts << run_details();
+   ts << hydrodynamics();
+   ts << analysis( "" );
+   ts << scan_info();
+   ts << indent( 2 ) + "</body>\n</html>\n";
+}
+
 void US_Dcdt::view( void )
 {
-   int                    index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* d      = &dataList[ index ];
+   // Create report string
+   QString mtext;
+   QTextStream ts( &mtext );
 
-   // Create US_Editor
+   write_report( ts );
+
+   // Create US_Editor and display report
    if ( te_results == NULL )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
-      te_results->resize( 500, 400 );
+      te_results->resize( 600, 700 );
       QPoint p = g.global_position();
       te_results->move( p.x() + 30, p.y() + 30 );
       te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
                                      US_GuiSettings::fontSize() ) );
    }
 
-   // Add results to window
-   QString s = "<html><head>\n"
-               "<style>td { padding-right: 1em;}</style>\n"
-               "</head><body>\n";
-
-   s +=  tr( "<h1>Time - Derivative (dC/dt) Analysis</h1>\n" )   +
-         tr( "<h2>Data Report for Run \"" ) + d->runID + tr( "\", Cell " ) + d->cell +
-         tr(  ", Wavelength " ) + d->wavelength + "</h2>\n";
-
-   s += run_details();
-   s += hydrodynamics();
-   s += analysis( "" );
-   s += scan_info();
-   s += "</body></html>\n";
-
-   te_results->e->setHtml( s );
+   te_results->e->setHtml( mtext );
    te_results->show();
 }
 
@@ -470,41 +475,66 @@ void US_Dcdt::save( void )
    if ( ! mkdir( dir, d->runID ) ) return;
 
    // Note: d->runID is both directory and first segment of file name
-   QString filebase = dir + "/" + d->runID + "/" + d->runID + "." + d->cell + 
-       + "." + d->channel + "." + d->wavelength;
+   QString filebase = dir + "/" + d->runID + "/dcdt."
+      + QString( triples.at( index ) ).replace( " / ", "" ) + ".";
    
-   QString plot1File = ".dcdt_analysis.svg";
-   QString plot2File = ".dcdt_analysis_avg.svg";
-   QString plot3File = ".dcdt_velocity.svg";
-   QString textFile  = ".dcdt_avg_g_s.txt";
-   QString htmlFile  = ".dcdt_report.html";
+   QString htmlFile  = filebase + "report.html";
+   QString plot1File = filebase + "velocity.svg";
+   QString plot2File = filebase + "x-to-radius.svg";
+   QString plot3File = filebase + "x-to-S.svg";
+   QString plot4File = filebase + "average-S.svg";
+   QString textFile  = filebase + "average-S.dat";
 
-   // Write plots
+   // Write main report file
+   // Write report
+   QFile f_rep( htmlFile );
+
+   if ( ! f_rep.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
+   {
+      QMessageBox::warning( this,
+            tr( "IO Error" ),
+            tr( "Could not open\n" ) + htmlFile + "\n" +
+                tr( "\nfor writing" ) );
+      return;
+   }
+
+   QTextStream ts( &f_rep );
+   write_report( ts );
+   f_rep.close();
+
    // Save current plot type
    int saveGraph = graphType;
-   // Set current plot type to Scans
+
+   // Write plots, starting with velocity scans
+   data_plot();
+   write_plot( plot1File, data_plot2 );
+
+   // Set current plot type to radius
    graphType = 0;
    data_plot();
-   write_plot( filebase + plot1File, data_plot1 );
+   write_plot( plot2File, data_plot1 );
 
-   // Set current plot type to svalues
+   // Set current plot type to Svalues
+   graphType = 1;
+   data_plot();
+   write_plot( plot3File, data_plot1 );
+
+   // Set current plot type to average-S
    graphType = 2;
    data_plot();
-   write_plot( filebase + plot2File, data_plot1 );
+   write_plot( plot4File, data_plot1 );
       
    // Restore plot type
    graphType = saveGraph;
-   data_plot();
-   write_plot( filebase + plot3File, data_plot2 );
 
    // Write dcdt analysis average data
-   QFile dcdt_data( filebase + textFile );
+   QFile dcdt_data( textFile );
    
    if ( ! dcdt_data.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
    {
       QMessageBox::warning( this,
             tr( "IO Error" ),
-            tr( "Could not open\n" ) + filebase + textFile + "\n" +
+            tr( "Could not open\n" ) + textFile + "\n" +
                 tr( "\nfor writing" ) );
       return;
    }
@@ -516,75 +546,18 @@ void US_Dcdt::save( void )
 
    dcdt_data.close();
 
-   // Write report
-   QFile report( filebase + htmlFile );
-
-   if ( ! report.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
-   {
-      QMessageBox::warning( this,
-            tr( "IO Error" ),
-            tr( "Could not open\n" ) + htmlFile + "\n" +
-                tr( "\nfor writing" ) );
-      return;
-   }
-
-   // Remove directory from string
-   filebase = d->runID + "." + d->cell + "." + d->channel + "." + d->wavelength;
-
-   QTextStream report_ts( &report );
-
-   report_ts << 
-         "<html><head>\n"
-         "<style>td { padding-right: 1em;}</style>\n"
-         "</head><body>\n";
-
-   report_ts << run_details();
-   report_ts << hydrodynamics();
-   report_ts << analysis( "" );
-   report_ts << scan_info();
-   
-   report_ts << 
-         tr( "<h1>Time - Derivative (dC/dt) Analysis</h1>\n" )   +
-         tr( "<h2>Data Report for Run \"" ) + d->runID + tr( "\", Cell " ) + 
-         d->cell + tr(  ", Wavelength " ) + d->wavelength + "</h2>\n";
-
-   report_ts << 
-         "<h3><a href='" + filebase + textFile + "'>" 
-         "ASCII File of Time Derivative Plot Data (Average g(S))</a></h3>\n";
-
-   report_ts <<
-         "<div><h3>Time Derivative Analysis Plot</h3>\n"
-         "<object data='" + filebase + plot1File + "' type='image/svg+xml' "
-         "width='"  + QString::number( data_plot1->size().width()  * 1.4 ) + "' "
-         "height='" + QString::number( data_plot1->size().height() * 1.4 ) + 
-         "'></object></div>\n";
-   
-   report_ts <<      
-         "<div><h3>Time Derivative Analysis Plot (Average g(S))</h3>\n"
-         "<object data='" + filebase + plot2File + "' type='image/svg+xml' "
-         "width='"  + QString::number( data_plot1->size().width()  * 1.4 ) + "' "
-         "height='" + QString::number( data_plot1->size().height() * 1.4 ) + 
-         "'></object></div>\n";
-
-   report_ts <<      
-         "<div><h3>Velocity Plot</h3>\n"
-         "<object data='" + filebase + plot3File + "' type='image/svg+xml' "
-         "width='"  + QString::number( data_plot2->size().width()  * 1.4 ) + "' "
-         "height='" + QString::number( data_plot2->size().height() * 1.4 ) + 
-         "'></object></div>\n"
-
-         "</body></html>\n";
-
-   report.close();
-
    // Tell user
+   htmlFile  = htmlFile .mid( htmlFile .lastIndexOf( "/" ) + 1 );
+   plot1File = plot1File.mid( plot1File.lastIndexOf( "/" ) + 1 );
+   plot2File = plot2File.mid( plot2File.lastIndexOf( "/" ) + 1 );
+   plot3File = plot3File.mid( plot3File.lastIndexOf( "/" ) + 1 );
+   plot4File = plot4File.mid( plot4File.lastIndexOf( "/" ) + 1 );
+   textFile  = textFile .mid( textFile .lastIndexOf( "/" ) + 1 );
+
    QMessageBox::warning( this,
          tr( "Success" ),
-         tr( "Wrote:\n" ) 
-         + filebase + htmlFile  + "\n" 
-         + filebase + plot1File + "\n" 
-         + filebase + plot2File + "\n" 
-         + filebase + plot3File + "\n" 
-         + filebase + textFile );
+         tr( "Wrote:\n  " )   + htmlFile  + "\n  " + plot1File + "\n  " 
+         + plot2File + "\n  " + plot3File + "\n  " + plot4File + "\n  "
+         + textFile );
 }
 
