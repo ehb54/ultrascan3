@@ -64,6 +64,7 @@ void US_Project::readFromDisk( QString& guid )
       return;
    }
 
+   saveStatus = HD_ONLY;
 }
 
 void US_Project::readProjectInfo( QXmlStreamReader& xml )
@@ -157,6 +158,8 @@ void US_Project::readFromDB  ( int projectID, US_DB2* db )
       status           = db->value( 11 ).toString();
 
    }
+
+   saveStatus = DB_ONLY;
 }
 
 // Function to save project information to disk
@@ -214,27 +217,29 @@ void US_Project::saveToDisk( void )
    xml.writeEndDocument ();
 
    file.close();
+
+   saveStatus = ( saveStatus == DB_ONLY ) ? BOTH : HD_ONLY;
 }
 
 // Function to save project information to db
-void US_Project::saveToDB( US_DB2* db )
+int US_Project::saveToDB( US_DB2* db )
 {
    // First make sure we have a GUID
    QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-
    if ( ! rx.exactMatch( projectGUID ) )
       projectGUID = US_Util::new_guid();
 
    // Check for GUID in database
+   projectID = 0;
    QStringList q( "get_projectID_from_GUID" );
    q << projectGUID;
    db->query( q );
 
-   projectID = 0;
    int db_status = db->lastErrno();
-   if ( db_status == US_DB2::OK && db->next() )
+   if ( db_status == US_DB2::OK )
    {
       // Edit existing project entry
+      db->next();
       projectID = db->value( 0 ).toInt();
       q.clear();
       q  << "update_project"
@@ -251,7 +256,7 @@ void US_Project::saveToDB( US_DB2* db )
          << projectDesc
          << status;
 
-      db_status = db->statusQuery( q );
+      db->statusQuery( q );
    }
 
    else if ( db_status == US_DB2::NOROWS )
@@ -273,16 +278,22 @@ void US_Project::saveToDB( US_DB2* db )
          << QString::number( US_Settings::us_inv_ID() );
 
 
-      db_status = db->statusQuery( q );
+      db->statusQuery( q );
       projectID = db->lastInsertID();
    }
 
    else   // unspecified error
    {
       qDebug() << "MySQL error: " << db->lastError();
-      return;
+      return db_status;
    }
 
+   if ( projectID == 0 )        // double check
+      return US_DB2::NO_PROJECT;
+
+   saveStatus = ( saveStatus == HD_ONLY ) ? BOTH : DB_ONLY;
+
+   return US_DB2::OK;
 }
 
 // Function to delete a project from disk
@@ -302,6 +313,7 @@ void US_Project::deleteFromDisk( void )
    if ( file.exists() )
       file.remove();
 
+   saveStatus = ( saveStatus == BOTH ) ? DB_ONLY : NOT_SAVED;
 }
 
 // Function to delete a project from db
@@ -335,6 +347,8 @@ void US_Project::deleteFromDB( US_DB2* db )
    }
 
    clear();
+
+   saveStatus = ( saveStatus == BOTH ) ? HD_ONLY : NOT_SAVED;
 }
 
 // Function to find the file name of a project on disk, if it exists
@@ -475,6 +489,30 @@ void US_Project::clear( void )
    status      = QString( "submitted" );
 
    saveStatus   = NOT_SAVED;
+}
+
+US_Project::US_Project& US_Project::operator=( const US_Project& rhs )
+{
+   if ( this != &rhs )            // guard against self assignment
+   {
+      clear();
+
+      projectID        = rhs.projectID;
+      projectGUID      = rhs.projectGUID;
+      goals            = rhs.goals;
+      molecules        = rhs.molecules;
+      purity           = rhs.purity;
+      expense          = rhs.expense;
+      bufferComponents = rhs.bufferComponents;
+      saltInformation  = rhs.saltInformation;
+      AUC_questions    = rhs.AUC_questions;
+      notes            = rhs.notes;
+      projectDesc      = rhs.projectDesc;
+      status           = rhs.status;
+      saveStatus       = rhs.saveStatus;
+   }
+
+   return *this;
 }
 
 void US_Project::show( void )

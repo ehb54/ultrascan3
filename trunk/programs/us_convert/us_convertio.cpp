@@ -14,121 +14,7 @@ US_ConvertIO::US_ConvertIO( void )
 {
 }
 
-// Function to see if the current runID already exists in the database
-int US_ConvertIO::checkRunID( QString runID )
-{
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-   
-   if ( db.lastErrno() != US_DB2::OK )
-      return -1;
-
-   // Let's see if we can find the run ID
-   QStringList q( "get_experiment_info_by_runID" );
-   q << runID
-     << QString::number( US_Settings::us_inv_ID() );
-   db.query( q );
-   if ( db.lastErrno() == US_DB2::NOROWS )
-      return 0;
-   
-   // Ok, let's return the experiment ID
-   db.next();
-   int expID = db.value( 1 ).toString().toInt();
-   return ( expID );
-}
-
-QString US_ConvertIO::newDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, 
-                                       QList< US_Convert::TripleInfo >& triples,
-                                       QString dir )
-{
-   US_Passwd pw;
-   US_DB2    db( pw.getPasswd() );
-
-   // Connect to the database
-   if ( db.lastErrno() != US_DB2::OK )
-      return( db.lastError() );
-
-   QStringList q( "new_experiment" );
-   q  << ExpData.expGUID
-      << QString::number( ExpData.projectID )
-      << ExpData.runID
-      << QString::number( ExpData.labID )
-      << QString::number( ExpData.instrumentID )
-      << QString::number( ExpData.operatorID )
-      << QString::number( ExpData.rotorID )
-      << QString::number( ExpData.calibrationID )
-      << ExpData.expType
-      << ExpData.runTemp
-      << ExpData.label
-      << ExpData.comments
-      << ExpData.centrifugeProtocol
-      << QString::number( US_Settings::us_inv_ID() );
-
-   int status = db.statusQuery( q );
-   if ( status != US_DB2::OK )
-      return( db.lastError() );
-
-   // Let's get some info after db update
-   q.clear();
-   ExpData.expID = db.lastInsertID();
-   q << "get_experiment_info"
-     << QString::number( ExpData.expID );
-   db.query( q );
-   db.next();
-
-   ExpData.date = db.value( 12 ).toString();
-
-   // Now write the auc data
-   return( writeRawDataToDB( ExpData, triples, dir ) );
-}
-
-QString US_ConvertIO::updateDBExperiment( US_ExpInfo::ExperimentInfo& ExpData, 
-                                          QList< US_Convert::TripleInfo >& triples,
-                                          QString dir )
-{
-   // Update database
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-      return( db.lastError() );
-
-   QStringList q( "update_experiment" );
-   q  << QString::number( ExpData.expID )
-      << QString( ExpData.expGUID )
-      << QString::number( ExpData.projectID )
-      << ExpData.runID
-      << QString::number( ExpData.labID )
-      << QString::number( ExpData.instrumentID )
-      << QString::number( ExpData.operatorID )
-      << QString::number( ExpData.rotorID )
-      << QString::number( ExpData.calibrationID )
-      << ExpData.expType
-      << ExpData.runTemp
-      << ExpData.label
-      << ExpData.comments
-      << ExpData.centrifugeProtocol;
-
-   int status = db.statusQuery( q );
-   if ( status != US_DB2::OK )
-      return( db.lastError() );
-
-   // Let's get some info after db update
-   q.clear();
-   q << "get_experiment_info"
-     << QString::number( ExpData.expID );
-   db.query( q );
-   db.next();
-
-   ExpData.date = db.value( 12 ).toString();
-
-   // Now write the auc data
-   return( writeRawDataToDB( ExpData, triples, dir ) );
-}
-
-QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData, 
+QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData, 
                                         QList< US_Convert::TripleInfo >& triples,
                                         QString dir )
 {
@@ -139,6 +25,8 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
 
    if ( db.lastErrno() != US_DB2::OK )
       return( db.lastError() );
+
+   QString error = QString( "" );
 
    // Delete all existing solutions and rawData, because we're starting over 
    QStringList q( "delete_rawData" );
@@ -159,7 +47,6 @@ QString US_ConvertIO::writeRawDataToDB( US_ExpInfo::ExperimentInfo& ExpData,
    // We assume there are files, because calling program checked
 
    // Read all data
-   QString error = QString( "" );
    for ( int i = 0; i < triples.size(); i++ )
    {
       US_Convert::TripleInfo triple = triples[ i ];
@@ -288,7 +175,7 @@ QString US_ConvertIO::readDBExperiment( QString runID,
    if ( db.lastErrno() != US_DB2::OK )
       return( db.lastError() );
 
-   US_ExpInfo::ExperimentInfo ExpData;       // A local copy
+   US_Experiment ExpData;       // A local copy
    QList< US_Convert::TripleInfo > triples;  // a local copy
    QStringList q( "get_experiment_info_by_runID" );
    q << runID
@@ -298,7 +185,7 @@ QString US_ConvertIO::readDBExperiment( QString runID,
    if ( db.next() )
    {
       ExpData.runID              = runID;
-      ExpData.projectID          = db.value( 0 ).toInt();
+      ExpData.project.projectID          = db.value( 0 ).toInt();
       ExpData.expID              = db.value( 1 ).toInt();
       ExpData.expGUID            = db.value( 2 ).toString();
       ExpData.labID              = db.value( 3 ).toInt();
@@ -321,9 +208,9 @@ QString US_ConvertIO::readDBExperiment( QString runID,
    else
       return( db.lastError() );
 
-   QString status = readExperimentInfoDB( ExpData );
-   if ( status != QString( "" ) )
-      return status;
+   int infoStatus = ExpData.readSecondaryInfoDB( &db );
+   if ( infoStatus != US_DB2::OK )
+      return ( "DB Error: " + QString::number( infoStatus ) );
 
    // Clear out the directory, in case the user has messed with it locally
    QDir d( dir );
@@ -332,7 +219,7 @@ QString US_ConvertIO::readDBExperiment( QString runID,
       d.remove( file );
    
    // Now read the auc data
-   status = readRawDataFromDB( ExpData, triples, dir );
+   QString status = readRawDataFromDB( ExpData, triples, dir );
    if ( status != QString( "" ) )
       return status;
 
@@ -357,7 +244,7 @@ QString US_ConvertIO::readDBExperiment( QString runID,
 }
 
 // Function to read the auc files to disk
-QString US_ConvertIO::readRawDataFromDB( US_ExpInfo::ExperimentInfo& ExpData, 
+QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData, 
                                          QList< US_Convert::TripleInfo >& triples,
                                          QString& dir )
 {
@@ -483,97 +370,8 @@ QString US_ConvertIO::readRawDataFromDB( US_ExpInfo::ExperimentInfo& ExpData,
    return( QString( "" ) );
 }
 
-// Function to read the ExperimentInfo structure from DB
-QString US_ConvertIO::readExperimentInfoDB( US_ExpInfo::ExperimentInfo& expInfo )
-{
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-      return( db.lastError() );
-
-   // Investigator info
-   expInfo.invID = US_Settings::us_inv_ID();
-   expInfo.name  = US_Settings::us_inv_name();
-   QStringList q( "get_person_info" );
-   q << QString::number( expInfo.invID );
-   db.query( q );
-   if ( db.next() )
-   {
-      expInfo.invGUID   = db.value( 9 ).toString();
-   }
-
-   // Project info
-   expInfo.projectGUID = QString( "" );
-   expInfo.projectDesc = QString( "" );
-   q.clear();
-   q << "get_project_info" 
-     << QString::number( expInfo.projectID );
-   db.query( q );
-   if ( db.next() )
-   {
-      expInfo.projectGUID   = db.value( 1  ).toString();
-      expInfo.projectDesc   = db.value( 10 ).toString();
-   }
-
-   // Hardware info
-   expInfo.operatorGUID = QString( "" );
-   q.clear();
-   q  << QString( "get_person_info" )
-      << QString::number( expInfo.operatorID );
-   db.query( q );
-   if ( db.next() )
-      expInfo.operatorGUID   = db.value( 9 ).toString();
-
-   expInfo.instrumentSerial = QString( "" );
-   q.clear();
-   q << QString( "get_instrument_info" )
-     << QString::number( expInfo.instrumentID );
-   db.query( q );
-   if ( db.next() )
-      expInfo.instrumentSerial = db.value( 1 ).toString();
-
-   expInfo.rotorGUID = QString( "" );
-   q.clear();
-   q << QString( "get_rotor_info" )
-     << QString::number( expInfo.rotorID );
-   db.query( q );
-   if ( db.next() )
-   {
-      expInfo.rotorGUID   = db.value( 0 ).toString();
-      expInfo.rotorName   = db.value( 1 ).toString();
-      expInfo.rotorSerial = db.value( 2 ).toString();
-   }
-
-   if ( expInfo.calibrationID == 0 )     // In this case, get the first one
-   {
-      q.clear();
-      q << QString( "get_rotor_calibration_profiles" )
-        << QString::number( expInfo.rotorID );
-      db.query( q );
-      if ( db.next() )
-         expInfo.calibrationID = db.value( 0 ).toInt();
-   }
-
-   // Now get more calibration info
-   q.clear();
-   q << QString( "get_rotor_calibration_info" )
-     << QString::number( expInfo.calibrationID );
-   db.query( q );
-   if ( db.next() )
-   {
-      expInfo.rotorCoeff1  = db.value( 4 ).toString().toFloat();
-      expInfo.rotorCoeff2  = db.value( 5 ).toString().toFloat();
-      QStringList dateParts = db.value( 7 ).toString().split( " " );
-      expInfo.rotorUpdated = QDate::fromString( dateParts[ 0 ], "yyyy-MM-dd" );
-   }
-
-   return( QString( "" ) );
-}
-
 int US_ConvertIO::writeXmlFile(
-    US_ExpInfo::ExperimentInfo& ExpData,
+    US_Experiment& ExpData,
     QList< US_Convert::TripleInfo >& triples,
     QString runType,
     QString runID,
@@ -618,9 +416,9 @@ int US_ConvertIO::writeXmlFile(
       xml.writeEndElement  ();
       
       xml.writeStartElement( "project" );
-      xml.writeAttribute   ( "id",   QString::number( ExpData.projectID ) );
-      xml.writeAttribute   ( "guid", ExpData.projectGUID );
-      xml.writeAttribute   ( "desc", ExpData.projectDesc );
+      xml.writeAttribute   ( "id",   QString::number( ExpData.project.projectID ) );
+      xml.writeAttribute   ( "guid", ExpData.project.projectGUID );
+      xml.writeAttribute   ( "desc", ExpData.project.projectDesc );
       xml.writeEndElement  ();
       
       xml.writeStartElement( "lab" );
@@ -708,7 +506,7 @@ int US_ConvertIO::writeXmlFile(
 }
 
 int US_ConvertIO::readXmlFile( 
-    US_ExpInfo::ExperimentInfo& ExpData,
+    US_Experiment& ExpData,
     QList< US_Convert::TripleInfo >& triples,
     QString runType,
     QString runID,
@@ -752,7 +550,7 @@ int US_ConvertIO::readXmlFile(
 
 void US_ConvertIO::readExperiment( 
      QXmlStreamReader& xml, 
-     US_ExpInfo::ExperimentInfo& ExpData,
+     US_Experiment& ExpData,
      QList< US_Convert::TripleInfo >& triples,
      QString runType,
      QString runID )
@@ -781,9 +579,9 @@ void US_ConvertIO::readExperiment(
          else if ( xml.name() == "project" )
          {
             QXmlStreamAttributes a = xml.attributes();
-            ExpData.projectID      = a.value( "id"   ).toString().toInt();
-            ExpData.projectGUID    = a.value( "guid" ).toString();
-            ExpData.projectDesc    = a.value( "desc" ).toString();
+            ExpData.project.projectID      = a.value( "id"   ).toString().toInt();
+            ExpData.project.projectGUID    = a.value( "guid" ).toString();
+            ExpData.project.projectDesc    = a.value( "desc" ).toString();
          }
    
          else if ( xml.name() == "lab" )
@@ -935,7 +733,7 @@ void US_ConvertIO::readDataset( QXmlStreamReader& xml, US_Convert::TripleInfo& t
    }
 }
 
-int US_ConvertIO::verifyXml( US_ExpInfo::ExperimentInfo& ExpData,
+int US_ConvertIO::verifyXml( US_Experiment& ExpData,
                              QList< US_Convert::TripleInfo >& triples )
 {
    US_Passwd pw;

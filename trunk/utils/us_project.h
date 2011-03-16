@@ -68,7 +68,7 @@ class US_EXTERN US_Project
 
           \param    db For database access, an open database connection
       */
-      void saveToDB          ( US_DB2* = 0 );
+      int saveToDB           ( US_DB2* = 0 );
 
       //! \brief    Function to delete the current project from disk, if it exists
       void deleteFromDisk    ( void );
@@ -93,6 +93,9 @@ class US_EXTERN US_Project
           \param    path The function will return the path here if it is found
       */
       bool diskPath          ( QString& );
+
+      //! \brief An overloaded assignment operator
+      US_Project&            operator=( const US_Project& );
 
       //! \brief Displays the contents of the class variables in qDebug() statements
       void show              ( void );

@@ -424,14 +424,10 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
       }
 
       project.readFromDB  ( projectID, &db );
-      project.saveStatus = US_Project::DB_ONLY;
    }
 
    else
-   {
       project.readFromDisk( projectGUID );
-      project.saveStatus = US_Project::HD_ONLY;
-   }
 
    reset();
 }
@@ -440,7 +436,6 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
 void US_ProjectGui::saveDescription( const QString& )
 {
    project.projectDesc = generalTab->le_projectDesc->text();
-   project.saveStatus  = US_Project::NOT_SAVED;
 
    // Find the description in the lw
    if ( generalTab->lw_projects->currentItem() > 0 ) // Make sure an item is selected first
@@ -478,17 +473,11 @@ void US_ProjectGui::saveProject( void )
       }
 
       project.saveToDB( &db );
-
-      project.saveStatus = ( project.saveStatus == US_Project::HD_ONLY ) 
-                          ? US_Project::BOTH : US_Project::DB_ONLY;
    }
 
    else
    {
       project.saveToDisk();
-
-      project.saveStatus = ( project.saveStatus == US_Project::DB_ONLY ) 
-                           ? US_Project::BOTH : US_Project::HD_ONLY;
    }
 
    QMessageBox::information( this,
@@ -519,7 +508,6 @@ void US_ProjectGui::deleteProject( void )
 
    project.clear();
    load();
-   project.saveStatus = US_Project::NOT_SAVED;
    reset();
 
    QMessageBox::information( this,

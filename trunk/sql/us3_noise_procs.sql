@@ -24,6 +24,7 @@ BEGIN
 
   CALL config();
   SET status   = @ERROR;
+  SET @US3_LAST_ERROR = 'MySQL: error verifying noise permission';
 
   SELECT COUNT(*)
   INTO   count_noise
@@ -41,11 +42,19 @@ BEGIN
     SET @US3_LAST_ERRNO = @NO_NOISE;
     SET @US3_LAST_ERROR = 'MySQL: the specified noise file does not exist';
 
+    SET status = @NO_NOISE;
+
   ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    SET @US3_LAST_ERRNO = @OK;
+    SET @US3_LAST_ERROR = '';
+
     SET status = @OK;
 
   ELSEIF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
            ( count_permissions > 0                         ) ) THEN
+    SET @US3_LAST_ERRNO = @OK;
+    SET @US3_LAST_ERROR = '';
+
     SET status = @OK;
 
   ELSE

@@ -259,7 +259,7 @@ void US_ProcessConvert::convertLegacyData(
 void US_ProcessConvert::writeConvertedData(
      int& status,
      QVector< US_DataIO2::RawData >& rawConvertedData,
-     US_ExpInfo::ExperimentInfo& ExpData,
+     US_Experiment& ExpData,
      QList< US_Convert::TripleInfo >& triples,
      QVector< US_Convert::Excludes >& allExcludes,
      QString runType,
@@ -413,7 +413,7 @@ void US_ProcessConvert::writeConvertedData(
 void US_ProcessConvert::reloadUS3Data(
      QString dir,
      QVector< US_DataIO2::RawData >& rawConvertedData,
-     US_ExpInfo::ExperimentInfo& ExpData,
+     US_Experiment& ExpData,
      QList< US_Convert::TripleInfo >& triples,
      QString& runType ,
      QString runID

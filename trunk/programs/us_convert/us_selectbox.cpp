@@ -1,4 +1,4 @@
-//! \file us_expinfo.cpp
+//! \file us_selectbox.cpp
 
 #include "us_gui_settings.h"
 #include "us_selectbox.h"
