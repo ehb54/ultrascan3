@@ -1,4 +1,4 @@
-//! \file us_expinfo.cpp
+//! \file us_experiment_gui.cpp
 
 #include <QtGui>
 
@@ -7,13 +7,13 @@
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "us_investigator.h"
-#include "us_expinfo.h"
+#include "us_experiment_gui.h"
 #include "us_convertio.h"
 #include "us_project_gui.h"
 #include "us_rotor_gui.h"
 
-US_ExpInfo::US_ExpInfo( 
-      ExperimentInfo& dataIn ) :
+US_ExperimentGui::US_ExperimentGui( 
+      US_Experiment& dataIn ) :
    US_WidgetsDialog( 0, 0 ), expInfo( dataIn )
 {
    setPalette( US_GuiSettings::frameColor() );
@@ -175,14 +175,20 @@ US_ExpInfo::US_ExpInfo(
    QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
    main->addWidget( lb_DB, row++, 0, 1, 2 );
 
-   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( selectInvestigator() ) );
-   main->addWidget( pb_investigator, row, 0 );
-
-   if ( US_Settings::us_inv_level() < 1 )
-      pb_investigator->setEnabled( false );
-
-   le_investigator = us_lineedit( "", 1 );
+   // Investigator
+   if ( US_Settings::us_inv_level() > 2 )
+   {
+      QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+      connect( pb_investigator, SIGNAL( clicked() ), SLOT( selectInvestigator() ) );
+      main->addWidget( pb_investigator, row, 0 );
+   }
+   else
+   {
+      QLabel* lb_investigator = us_label( tr( "Investigator:" ) );
+      main->addWidget( lb_investigator, row, 0 );
+   }
+      
+   le_investigator = us_lineedit( tr( "Not Selected" ) );
    le_investigator->setReadOnly( true );
    main->addWidget( le_investigator, row++, 1 );
 
@@ -212,7 +218,7 @@ US_ExpInfo::US_ExpInfo(
    reset();
 }
 
-void US_ExpInfo::reset( void )
+void US_ExperimentGui::reset( void )
 {
    reload();
 
@@ -229,7 +235,7 @@ void US_ExpInfo::reset( void )
    cb_operator     ->setLogicalIndex( expInfo.operatorID   );
 
    le_label        ->setText( expInfo.label                );
-   le_project      ->setText( expInfo.projectDesc          );
+   le_project      ->setText( expInfo.project.projectDesc          );
    te_comment      ->setText( expInfo.comments             );
          
    // Experiment types combo
@@ -251,18 +257,26 @@ void US_ExpInfo::reset( void )
       le_investigator->setText( QString::number( expInfo.invID ) + ": " 
          + US_Settings::us_inv_name() );
 
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+      
+      int runIDStatus = US_DB2::NO_EXPERIMENT;
+      if ( db.lastErrno() == US_DB2::OK )
+         runIDStatus = expInfo.checkRunID( &db );
+
       if ( expInfo.expID > 0 )
          pb_accept       ->setEnabled( true );
  
-      else if ( US_ConvertIO::checkRunID( expInfo.runID ) == 0 )
+      else if ( runIDStatus != US_DB2::OK )
       {
          // Then an investigator has been chosen, and 
          //  the current runID doesn't exist in the db
          pb_accept       ->setEnabled( true );
       }
 
-      // However, project needs to be selected
-      if ( expInfo.projectID == 0 )
+      // However, project needs to be selected, either from db or disk
+      if ( expInfo.project.projectID == 0 && expInfo.project.projectGUID.isEmpty() ) 
          pb_accept       ->setEnabled( false );
    }
 
@@ -273,7 +287,7 @@ void US_ExpInfo::reset( void )
 
 // function to load what we can initially
 // returns true if successful
-bool US_ExpInfo::load( void )
+bool US_ExperimentGui::load( void )
 {
    if ( expInfo.invID == 0 )
    {
@@ -294,8 +308,8 @@ bool US_ExpInfo::load( void )
    if ( ! expInfo.label.isEmpty() )
       le_label->setText( expInfo.label );
 
-   if ( expInfo.projectID > 0 )
-      le_project->setText( expInfo.projectDesc );
+   if ( expInfo.project.projectID > 0 )
+      le_project->setText( expInfo.project.projectDesc );
 
    if ( ! expInfo.comments.isEmpty() )
       te_comment->setText( expInfo.comments );
@@ -305,7 +319,7 @@ bool US_ExpInfo::load( void )
    return( true );
 }
 
-void US_ExpInfo::reload( void )
+void US_ExperimentGui::reload( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
@@ -329,11 +343,11 @@ void US_ExpInfo::reload( void )
    }
 }
 
-void US_ExpInfo::syncHardware( void )
+void US_ExperimentGui::syncHardware( void )
 {
 }
 
-void US_ExpInfo::selectInvestigator( void )
+void US_ExperimentGui::selectInvestigator( void )
 {
    US_Investigator* inv_dialog = new US_Investigator( true, expInfo.invID );
 
@@ -344,7 +358,7 @@ void US_ExpInfo::selectInvestigator( void )
    inv_dialog->exec();
 }
 
-void US_ExpInfo::assignInvestigator( int invID,
+void US_ExperimentGui::assignInvestigator( int invID,
       const QString& lname, const QString& fname )
 {
    expInfo.invID = invID;
@@ -352,7 +366,7 @@ void US_ExpInfo::assignInvestigator( int invID,
          lname + ", " + fname );
 }
 
-void US_ExpInfo::getInvestigatorInfo( void )
+void US_ExperimentGui::getInvestigatorInfo( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
@@ -377,11 +391,9 @@ void US_ExpInfo::getInvestigatorInfo( void )
    
 }
 
-void US_ExpInfo::selectProject( void )
+void US_ExperimentGui::selectProject( void )
 {
-   US_Project project;
-   project.projectID   = expInfo.projectID;
-   project.projectDesc = expInfo.projectDesc;
+   US_Project project  = expInfo.project;
 
    US_ProjectGui* projInfo = new US_ProjectGui( true, US_Disk_DB_Controls::DB, project );
    connect( projInfo, 
@@ -393,21 +405,19 @@ void US_ExpInfo::selectProject( void )
    projInfo->exec();
 }
 
-void US_ExpInfo::assignProject( US_Project& project )
+void US_ExperimentGui::assignProject( US_Project& project )
 {
-   expInfo.projectID   = project.projectID;
-   expInfo.projectDesc = project.projectDesc;
-   expInfo.projectGUID = project.projectGUID;
+   expInfo.project  = project;
 
    reset();
 }
 
-void US_ExpInfo::cancelProject( void )
+void US_ExperimentGui::cancelProject( void )
 {
    reset();
 }
 
-QComboBox* US_ExpInfo::us_expTypeComboBox( void )
+QComboBox* US_ExperimentGui::us_expTypeComboBox( void )
 {
    QComboBox* cb = us_comboBox();
 
@@ -423,7 +433,7 @@ QComboBox* US_ExpInfo::us_expTypeComboBox( void )
    return cb;
 }
 
-void US_ExpInfo::setInstrumentList( void )
+void US_ExperimentGui::setInstrumentList( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
@@ -471,7 +481,7 @@ void US_ExpInfo::setInstrumentList( void )
 
 }
 
-void US_ExpInfo::setOperatorList( void )
+void US_ExperimentGui::setOperatorList( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
@@ -518,7 +528,7 @@ void US_ExpInfo::setOperatorList( void )
 }
 
 // Function to change the current instrument
-void US_ExpInfo::change_instrument( int )
+void US_ExperimentGui::change_instrument( int )
 {
    // First time through here the combo box might not be displayed yet
    expInfo.instrumentID = ( cb_instrument->getLogicalID() == -1 )
@@ -534,7 +544,7 @@ void US_ExpInfo::change_instrument( int )
    reset();
 }
 
-void US_ExpInfo::selectRotor( void )
+void US_ExperimentGui::selectRotor( void )
 {
    US_Rotor::Rotor rotor;
    rotor.ID = expInfo.rotorID;
@@ -552,7 +562,7 @@ void US_ExpInfo::selectRotor( void )
    rotorInfo->exec();
 }
 
-void US_ExpInfo::assignRotor( US_Rotor::Rotor& rotor, US_Rotor::RotorCalibration& calibration )
+void US_ExperimentGui::assignRotor( US_Rotor::Rotor& rotor, US_Rotor::RotorCalibration& calibration )
 {
    expInfo.rotorID       = rotor.ID;
    expInfo.rotorGUID     = rotor.GUID;
@@ -574,12 +584,12 @@ void US_ExpInfo::assignRotor( US_Rotor::Rotor& rotor, US_Rotor::RotorCalibration
    reset();
 }
 
-void US_ExpInfo::cancelRotor( void )
+void US_ExperimentGui::cancelRotor( void )
 {
    reset();
 }
 
-void US_ExpInfo::accept( void )
+void US_ExperimentGui::accept( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
@@ -591,6 +601,9 @@ void US_ExpInfo::accept( void )
       return;
    }
 
+   // We can sync with the DB
+   expInfo.syncOK = true;
+
    // Overwrite data directly from the form
 
    // First get the invID
@@ -598,7 +611,7 @@ void US_ExpInfo::accept( void )
    expInfo.name    = US_Settings::us_inv_name();
    getInvestigatorInfo();
 
-   // Other experiment information
+   // Other info on the form
    expInfo.runID         = le_runID         ->text();
    expInfo.instrumentID  = cb_instrument    ->getLogicalID();
    expInfo.operatorID    = cb_operator      ->getLogicalID();
@@ -607,15 +620,25 @@ void US_ExpInfo::accept( void )
    expInfo.label         = le_label         ->text(); 
    expInfo.comments      = te_comment       ->toPlainText();
 
-   // Experiment information
-   QString status = US_ConvertIO::readExperimentInfoDB( expInfo );
-   expInfo.syncOK = ( status.isEmpty() );
+   // Update items from the DB after getting values from the form
+   QStringList q( "get_instrument_info" );
+   q  << QString::number( expInfo.instrumentID );
+   db.query( q );
+   db.next();
+   expInfo.instrumentSerial = db.value( 1 ).toString();
+
+   q.clear();
+   q  << "get_person_info"
+      << QString::number( expInfo.operatorID );
+   db.query( q );
+   db.next();
+   expInfo.operatorGUID = db.value( 9 ).toString();
 
    emit updateExpInfoSelection( expInfo );
    close();
 }
 
-void US_ExpInfo::cancel( void )
+void US_ExperimentGui::cancel( void )
 {
    expInfo.clear();
 
@@ -623,135 +646,8 @@ void US_ExpInfo::cancel( void )
    close();
 }
 
-void US_ExpInfo::connect_error( const QString& error )
+void US_ExperimentGui::connect_error( const QString& error )
 {
    QMessageBox::warning( this, tr( "Connection Problem" ),
          tr( "Could not connect to databasee \n" ) + error );
-}
-
-US_ExpInfo::ExperimentInfo::ExperimentInfo()
-{
-   ExperimentInfo::clear();
-}
-
-// Zero out all data structures
-void US_ExpInfo::ExperimentInfo::clear( void )
-{
-   invID              = US_Settings::us_inv_ID();
-   invGUID            = QString( "" );
-   name               = US_Settings::us_inv_name();
-   expID              = 0;
-   expGUID            = QString( "" );
-   projectID          = 0;
-   projectGUID        = QString( "" );
-   projectDesc        = QString( "" );
-   runID              = QString( "" );
-   labID              = 0;
-   instrumentID       = 0;
-   instrumentSerial   = QString( "" );
-   operatorID         = 0;
-   operatorGUID       = QString( "" );
-   rotorID            = 0;
-   calibrationID      = 0;
-   rotorCoeff1        = 0.0;
-   rotorCoeff2        = 0.0;
-   rotorGUID          = QString( "" );
-   rotorSerial        = QString( "" );
-   rotorName          = QString( "" );
-   expType            = QString( "" );
-   opticalSystem      = QByteArray( "  " );
-   rpms.clear();
-   runTemp            = QString( "" );
-   label              = QString( "" );
-   comments           = QString( "" );
-   centrifugeProtocol = QString( "" );
-   date               = QString( "" );
-   syncOK             = false;
-
-}
-
-US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const ExperimentInfo& rhs )
-{
-   if ( this != &rhs )            // Guard against self assignment
-   {
-      invID         = rhs.invID;
-      invGUID       = rhs.invGUID;
-      name          = rhs.name;
-      expID         = rhs.expID;
-      expGUID       = rhs.expGUID;
-      projectID     = rhs.projectID;
-      projectGUID   = rhs.projectGUID;
-      projectDesc   = rhs.projectDesc;
-      runID         = rhs.runID;
-      labID         = rhs.labID;
-      instrumentID  = rhs.instrumentID;
-      instrumentSerial  = rhs.instrumentSerial;
-      operatorID    = rhs.operatorID;
-      rotorID       = rhs.rotorID;
-      calibrationID = rhs.calibrationID;
-      rotorCoeff1   = rhs.rotorCoeff1;
-      rotorCoeff2   = rhs.rotorCoeff2;
-      rotorGUID     = rhs.rotorGUID;
-      rotorSerial   = rhs.rotorSerial;
-      rotorName     = rhs.rotorName;
-      rotorUpdated  = rhs.rotorUpdated;
-      expType       = rhs.expType;
-      opticalSystem = rhs.opticalSystem;
-      runTemp       = rhs.runTemp;
-      label         = rhs.label;
-      comments      = rhs.comments;
-      centrifugeProtocol = rhs.centrifugeProtocol;
-      date          = rhs.date;
-      syncOK        = rhs.syncOK;
-
-      rpms.clear();
-      for ( int i = 0; i < rhs.rpms.size(); i++ )
-         rpms << rhs.rpms[ i ];
-
-   }
-
-   return *this;
-}
-
-void US_ExpInfo::ExperimentInfo::show( void )
-{
-   QString syncOK_text = ( syncOK ) ? "true" : "false";
-
-   qDebug() << "invID        = " << invID << '\n'
-            << "invGUID      = " << invGUID << '\n'
-            << "name         = " << name << '\n'
-            << "expID        = " << expID << '\n'
-            << "expGUID      = " << expGUID << '\n'
-            << "projectID    = " << projectID << '\n'
-            << "projectGUID  = " << projectGUID << '\n'
-            << "projectDesc  = " << projectDesc << '\n'
-            << "runID        = " << runID << '\n'
-            << "labID        = " << labID << '\n'
-            << "instrumentID = " << instrumentID << '\n'
-            << "instrumentSerial = " << instrumentSerial << '\n'
-            << "operatorID   = " << operatorID << '\n'
-            << "operatorGUID = " << operatorGUID << '\n'
-            << "rotorID      = " << rotorID << '\n'
-            << "rotorGUID    = " << rotorGUID << '\n'
-            << "rotorSerial  = " << rotorSerial << '\n'
-            << "rotorName    = " << rotorName << '\n'
-            << "calibrationID = " << calibrationID << '\n'
-            << "rotorCoeff1  = " << rotorCoeff1 << '\n'
-            << "rotorCoeff2  = " << rotorCoeff2 << '\n'
-            << "rotorUpdated = " << rotorUpdated.toString( "yyyy-MM-dd" ) << '\n'
-            << "expType      = " << expType << '\n'
-            << "opticalSystem = " << opticalSystem << '\n'
-            << "runTemp      = " << runTemp << '\n'
-            << "label        = " << label << '\n'
-            << "comments     = " << comments << '\n'
-            << "centrifugeProtocol = " << centrifugeProtocol << '\n'
-            << "date         = " << date << '\n'
-            << "syncOK       = " << syncOK_text << '\n';
-
-   for ( int i = 0; i < rpms.size(); i++ )
-   {
-      qDebug() << "i = " << i ;
-      qDebug() << "rpm = " << rpms[ i ];
-   }
-
 }

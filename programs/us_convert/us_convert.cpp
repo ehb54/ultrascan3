@@ -17,6 +17,7 @@
 #include "us_intensity.h"
 #include "us_get_dbrun.h"
 #include "us_investigator.h"
+#include "us_experiment_gui.h"
 
 int main( int argc, char* argv[] )
 {
@@ -703,6 +704,17 @@ void US_Convert::enableSyncDB( void )
       return;
    }
 
+   // Verify connectivity
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      pb_saveUS3 ->setEnabled( false );
+      return;
+   }
+
    // Have we filled out all the c/c/w info?
    // Check GUIDs, because solutionID's may not be present yet.
    QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
@@ -727,16 +739,10 @@ void US_Convert::enableSyncDB( void )
 
    // Information is there, but we need to see if the runID exists in the 
    // DB. If we didn't load it from there, then we shouldn't be able to sync
-   int recStatus = US_ConvertIO::checkRunID( ExpData.runID );
-   if ( recStatus == -1 )
-   {
-      // We can't sync to the DB if we can't connect to it
-      pb_saveUS3 ->setEnabled( false );
-      return;
-   }
+   int recStatus = ExpData.checkRunID( &db );
 
    // if a record is found but saveStatus == BOTH, then we are editing that record
-   else if ( ( recStatus > 0 ) && ( saveStatus != BOTH ) ) 
+   if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) 
    {
       pb_saveUS3 ->setEnabled( false );
       return;
@@ -750,7 +756,7 @@ void US_Convert::enableSyncDB( void )
 void US_Convert::runIDChanged( void )
 {
    // See if we need to update the runID
-   QRegExp rx( "^[A-Za-z0-9_-]{1,20}$" );
+   QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
    QString new_runID = le_runID2->text();
       
    if ( rx.indexIn( new_runID ) >= 0 )
@@ -963,10 +969,12 @@ void US_Convert::getExpInfo( void )
 {
    ExpData.runID = le_runID -> text();
 
-   // Check if the run ID already exists in the DB
-   int recStatus = US_ConvertIO::checkRunID( ExpData.runID );
+   // Verify connectivity
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
 
-   if ( recStatus == -1 )
+   if ( db.lastErrno() != US_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -974,8 +982,11 @@ void US_Convert::getExpInfo( void )
       return;
    }
 
+   // Check if the run ID already exists in the DB
+   int recStatus = ExpData.checkRunID( &db );
+
    // if saveStatus == BOTH, then we are editing the record from the database
-   else if ( ( recStatus > 0 ) && ( saveStatus != BOTH ) ) 
+   if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) 
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -1032,10 +1043,10 @@ void US_Convert::getExpInfo( void )
       }
    }
 
-   US_ExpInfo* expInfo = new US_ExpInfo( ExpData );
+   US_ExperimentGui* expInfo = new US_ExperimentGui( ExpData );
 
-   connect( expInfo, SIGNAL( updateExpInfoSelection( US_ExpInfo::ExperimentInfo& ) ),
-            this   , SLOT  ( updateExpInfo         ( US_ExpInfo::ExperimentInfo& ) ) );
+   connect( expInfo, SIGNAL( updateExpInfoSelection( US_Experiment& ) ),
+            this   , SLOT  ( updateExpInfo         ( US_Experiment& ) ) );
 
    connect( expInfo, SIGNAL( cancelExpInfoSelection() ),
             this   , SLOT  ( cancelExpInfo         () ) );
@@ -1044,11 +1055,13 @@ void US_Convert::getExpInfo( void )
 }
 
 // Updating after user has selected info from experiment dialog
-void US_Convert::updateExpInfo( US_ExpInfo::ExperimentInfo& d )
+void US_Convert::updateExpInfo( US_Experiment& d )
 {
    // Update local copy
    ExpData = d;
 
+// qDebug() << "In updateExpInfo";
+// ExpData.show();
    if ( this->saveStatus == NOT_SAVED )
       this->saveStatus = EDITING;        // don't delete the data!
 
@@ -1722,6 +1735,20 @@ int US_Convert::saveUS3Disk( void )
 
 void US_Convert::saveUS3DB( void )
 {
+   // Verify connectivity
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+             tr( "Error" ),
+             tr( "Database connectivity error" ) );
+
+      return;
+   }
+
    int status = saveUS3Disk();
    if ( status != OK )
       return;
@@ -1756,23 +1783,17 @@ void US_Convert::saveUS3DB( void )
       return;
    }
 
-   // Save it to the db and return
-   int expID = US_ConvertIO::checkRunID( ExpData.runID );
-   if ( expID == -1 )
-      error =  "Error making DB connection";
-
-   else if ( expID == 0 )
+   if ( saveStatus == BOTH )
    {
-      // No database records with this runID found
-      error = US_ConvertIO::newDBExperiment( ExpData, triples, dir );
+      // If saveStatus == BOTH already, then it came from the db to begin with, so it's
+      // ok to update it
+      status = ExpData.saveToDB( true, &db );
    }
 
-   // If saveStatus == BOTH already, then it came from the db to begin with, so it's
-   // ok to update it
-   else if ( saveStatus == BOTH )
+   else if ( ExpData.checkRunID( &db ) != US_DB2::OK )
    {
-      ExpData.expID = expID;
-      error = US_ConvertIO::updateDBExperiment( ExpData, triples, dir );
+      // No database records with this runID found
+      status = ExpData.saveToDB( false, &db );
    }
 
    else
@@ -1785,9 +1806,47 @@ void US_Convert::saveUS3DB( void )
       return;
    }
 
-   if ( error != QString( "" ) )
+   if ( status == US_DB2::NO_PROJECT )
    {
-      db_error( error );
+      QMessageBox::warning( this,
+            tr( "Project missing" ),
+            tr( "The project associated with this experiment could not be "
+                "updated or added to the database.\n" ) );
+      return;
+   }
+
+   else if ( status == US_DB2::NO_EXPERIMENT )
+   {
+      QMessageBox::warning( this,
+            tr( "Experiment missing" ),
+            tr( "The experiment could not be "
+                "updated or added to the database.\n" ) );
+      return;
+   }
+
+   else if ( status == US_DB2::DUPFIELD )
+   {
+      QMessageBox::warning( this,
+            tr( "Duplicate runID" ),
+            tr( "The runID already exists in the database.\n" ) );
+      return;
+   }
+
+   else if ( status != US_DB2::OK )
+   {
+      QMessageBox::warning( this,
+            tr( "Problem saving experiment" ),
+            tr( "Unspecified database error: " ) + db.lastError() );
+      return;
+   }
+
+   QString writeStatus = US_ConvertIO::writeRawDataToDB( ExpData, triples, dir );
+
+   if ( ! writeStatus.isEmpty() )
+   {
+      QMessageBox::warning( this,
+            tr( "Problem saving experiment" ),
+            tr( "Unspecified database error: " ) + writeStatus );
       return;
    }
 

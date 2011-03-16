@@ -24,6 +24,7 @@ BEGIN
 
   CALL config();
   SET status   = @ERROR;
+  SET @US3_LAST_ERROR = 'MySQL: error verifying experiment permission';
 
   SELECT COUNT(*)
   INTO   count_experiments
@@ -40,11 +41,19 @@ BEGIN
     SET @US3_LAST_ERRNO = @NO_EXPERIMENT;
     SET @US3_LAST_ERROR = 'MySQL: the specified experiment does not exist';
 
+    SET status = @NO_EXPERIMENT;
+
   ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    SET @US3_LAST_ERRNO = @OK;
+    SET @US3_LAST_ERROR = '';
+
     SET status = @OK;
 
   ELSEIF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
            ( count_permissions > 0                         ) ) THEN
+    SET @US3_LAST_ERRNO = @OK;
+    SET @US3_LAST_ERROR = '';
+
     SET status = @OK;
 
   ELSE
@@ -77,7 +86,7 @@ BEGIN
 
   CALL config();
   SET @US3_LAST_ERRNO = @ERROR;
-  SET @US3_LAST_ERROR = '';
+  SET @US3_LAST_ERROR = 'MySQL: error verifying operator permission';
 
   -- Check permits for this instrument and this operator
   SELECT COUNT(*)

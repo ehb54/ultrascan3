@@ -9,7 +9,7 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO2.h"
-#include "us_expinfo.h"
+#include "us_experiment.h"
 #include "us_solution.h"
 #include "us_selectbox.h"
 //#include "us_solution_gui.h"
@@ -158,7 +158,7 @@ class US_EXTERN US_Convert : public US_Widgets
       double        scanTolerance;                    // remember the scan tolerance value
 
       bool show_plot_progress;
-      US_ExpInfo::ExperimentInfo      ExpData; 
+      US_Experiment      ExpData; 
       QList< TripleInfo >             triples;
       int                             currentTriple;
 
@@ -208,7 +208,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void loadUS3Disk     ( void );
       void loadUS3Disk     ( QString );
       void loadUS3DB       ( void );
-      void updateExpInfo   ( US_ExpInfo::ExperimentInfo& );
+      void updateExpInfo   ( US_Experiment& );
       void cancelExpInfo   ( void );
       void getSolutionInfo ( void );
       void updateSolutionInfo( US_Solution& );

@@ -597,10 +597,10 @@ bool US_Solution::AnalyteInfo::operator== ( const AnalyteInfo& ai ) const
 
 US_Solution::US_Solution& US_Solution::operator=( const US_Solution& rhs )
 {
-   clear();
-
    if ( this != &rhs )            // guard against self assignment
    {
+      clear();
+
       solutionID    = rhs.solutionID;
       solutionGUID  = rhs.solutionGUID;
       solutionDesc  = rhs.solutionDesc;

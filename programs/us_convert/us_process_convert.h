@@ -9,7 +9,7 @@
 #include "us_dataIO2.h"
 #include "us_help.h"
 #include "us_convert.h"
-#include "us_expinfo.h"
+#include "us_experiment.h"
 
 /*! \class US_ConvertProgressBar
            This class creates and displays a progress bar to inform
@@ -162,7 +162,7 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
       void          writeConvertedData(
                     int& status,
                     QVector< US_DataIO2::RawData >& ,
-                    US_ExpInfo::ExperimentInfo& ,
+                    US_Experiment& ,
                     QList< US_Convert::TripleInfo >& ,
                     QVector< US_Convert::Excludes >& ,
                     QString ,
@@ -190,7 +190,7 @@ class US_EXTERN US_ProcessConvert : public US_ConvertProgressBar
       void          reloadUS3Data(
                     QString ,
                     QVector< US_DataIO2::RawData        >& ,
-                    US_ExpInfo::ExperimentInfo&,
+                    US_Experiment&,
                     QList< US_Convert::TripleInfo >& ,
                     QString&,
                     QString );
