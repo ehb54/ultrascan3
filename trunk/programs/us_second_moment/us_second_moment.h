@@ -18,12 +18,13 @@ class US_SecondMoment : public US_AnalysisBase2
       double*              smSeconds;
       US_Editor*           te_results;
 
-      void data_plot( void );
+      void data_plot   ( void );
 
    private slots:
-      void view     ( void );
-      void save     ( void );
-      void help     ( void )
+      void write_report( QTextStream& );
+      void view        ( void );
+      void save        ( void );
+      void help        ( void )
       { showHelp.show_help( "manual/us_second_moment.html" ); };
 };
 #endif

@@ -204,42 +204,44 @@ void US_SecondMoment::data_plot( void )
    delete [] y;
 }
 
+void US_SecondMoment::write_report( QTextStream& ts )
+{
+   int                     index  = lw_triples->currentRow();
+   US_DataIO2::EditedData* edata  = &dataList[ index ];
+
+   QString sm_results = 
+        table_row( tr( "Average Second Moment S: " ),
+                   QString::number( average_2nd, 'f', 5 ) + " s * 10e-13" );
+
+   ts << html_header( QString( "US_Second_Moment" ),
+                      QString( "Second Moment Analysis" ),
+                      edata );
+   ts << run_details();
+   ts << hydrodynamics();
+   ts << analysis( sm_results );
+   ts << scan_info();
+   ts << indent( 2 ) + "</body>\n</html>\n";
+}
+
 void US_SecondMoment::view( void )
 {
-   // Create US_Editor
+   // Write main report as string
+   QString rtext;
+   QTextStream ts( &rtext );
+   write_report( ts );
+
+   // Create US_Editor and display report
    if ( te_results == NULL )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
-      te_results->resize( 500, 400 );
+      te_results->resize( 600, 700 );
       QPoint p = g.global_position();
       te_results->move( p.x() + 30, p.y() + 30 );
       te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
                                      US_GuiSettings::fontSize() ) );
    }
 
-   int                     index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* d      = &dataList[ index ];
-
-   QString sm_results = 
-        table_row( tr( "Average Second Moment S: " ),
-                   QString::number( average_2nd, 'f', 5 ) + " s * 10e-13" );
-
-   // Add results to window
-   QString s = 
-      "<html><head>\n"
-      "<style>td { padding-right: 1em;}</style>\n"
-      "</head><body>\n" +
-      tr( "<h1>Second Moment Analysis</h1>\n" )   +
-      tr( "<h2>Data Report for Run \"" ) + d->runID + tr( "\", Cell " ) + d->cell +
-      tr(  ", Wavelength " ) + d->wavelength + "</h2>\n";
-   
-   s += run_details();
-   s += hydrodynamics();
-   s += analysis( sm_results );
-   s += scan_info();
-   s += "</body></html>\n";
-
-   te_results->e->setHtml( s );
+   te_results->e->setHtml( rtext );
    te_results->show();
 }
 
@@ -252,14 +254,29 @@ void US_SecondMoment::save( void )
    if ( ! mkdir( dir, d->runID ) ) return;
 
    // Note: d->runID is both directory and first segment of file name
-   QString filebase = dir + "/" + d->runID + "/" + d->runID + "." + d->cell + 
-       + "." + d->channel + "." + d->wavelength;
+   QString filebase = dir + "/" + d->runID + "/secmo."
+      + QString( triples.at( index ) ).replace( " / ", "" ) + ".";
    
-   QString plot1File = filebase + ".sm_plot1.svg";
-   QString plot2File = filebase + ".sm_plot2.svg";
-   QString textFile  = filebase + ".sm_data.txt";
-   QString htmlFile  = filebase + ".sm_report.html";
+   QString plot1File = filebase + "2ndmoment.svg";
+   QString plot2File = filebase + "velocity.svg";
+   QString textFile  = filebase + "2ndmoment.dat";
+   QString htmlFile  = filebase + "report.html";
 
+   // Write main report
+   QFile reportf( htmlFile );
+
+   if ( ! reportf.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
+   {
+      QMessageBox::warning( this,
+            tr( "IO Error" ),
+            tr( "Could not open\n" ) + htmlFile + "\n" +
+                tr( "\nfor writing" ) );
+      return;
+   }
+
+   QTextStream ts( &reportf );
+   write_report( ts );
+   reportf.close();
 
    // Write plots
    write_plot( plot1File, data_plot1 );
@@ -298,66 +315,18 @@ void US_SecondMoment::save( void )
 
    sm_data.close();
 
-   // Write report
-   QFile report( htmlFile );
-
-   if ( ! report.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
-   {
-      QMessageBox::warning( this,
-            tr( "IO Error" ),
-            tr( "Could not open\n" ) + htmlFile + "\n" +
-                tr( "\nfor writing" ) );
-      return;
-   }
-
-   QTextStream report_ts( &report );
-
-   report_ts << "<html><head>\n"
-         "<style>td { padding-right: 1em;}</style>\n"
-         "</head><body>\n";
-
-   report_ts << tr( "<h1>Second Moment Analysis</h1>\n" ) 
-             << tr( "<h2>Data Report for Run \"" ) + d->runID 
-                    + tr( "\", Cell " ) + d->cell 
-                    + tr(  ", Wavelength " ) + d->wavelength + "</h2>\n";
-
-   QString sm_results = 
-        table_row( tr( "Average Second Moment S: " ),
-                   QString::number( average_2nd, 'f', 5 ) + " s * 10e-13" );
-
-   report_ts << run_details()
-             << hydrodynamics()
-             << analysis( sm_results )
-             << scan_info();
-
-   // Remove directory from string
-   filebase = d->runID + "." + d->cell + "." + d->channel + "." + d->wavelength;
-
-   report_ts << "<h3><a href='" + filebase + ".sm_data.txt'>" 
-                 "Text File of Second Moment Plot Data</a></h3>\n"
-
-         "<div><h3>Second Moment Plot</h3>\n"
-         "<object data='" + filebase + ".sm_plot1.svg' type='image/svg+xml' "
-         "width='"  + QString::number( data_plot1->size().width()  * 1.4 ) + "' "
-         "height='" + QString::number( data_plot1->size().height() * 1.4 ) + 
-         "'></object></div>\n"
-         
-         "<div><h3>Velocity Plot</h3>\n"
-         "<object data='" + filebase + ".sm_plot2.svg' type='image/svg+xml' "
-         "width='"  + QString::number( data_plot2->size().width()  * 1.4 ) + "' "
-         "height='" + QString::number( data_plot2->size().height() * 1.4 ) + 
-         "'></object></div>\n"
-
-         "</body></html>\n";
-
-   report.close();
-
    // Tell user
+   htmlFile  = htmlFile .mid( htmlFile .lastIndexOf( "/" ) + 1 );
+   plot1File = plot1File.mid( plot1File.lastIndexOf( "/" ) + 1 );
+   plot2File = plot2File.mid( plot2File.lastIndexOf( "/" ) + 1 );
+   textFile  = textFile .mid( textFile .lastIndexOf( "/" ) + 1 );
+
    QMessageBox::warning( this,
          tr( "Success" ),
-         tr( "Wrote:\n" ) 
-         + htmlFile  + "\n" 
-         + plot1File + "\n" 
-         + plot2File + "\n" 
-         + textFile  + "\n" );
+         tr( "Wrote:\n  " )
+         + htmlFile  + "\n  "
+         + plot1File + "\n  " 
+         + plot2File + "\n  "
+         + textFile );
 }
+

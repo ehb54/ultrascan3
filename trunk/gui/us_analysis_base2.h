@@ -135,6 +135,13 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       //! Load data from a directory on disk.
       virtual void load         ( void );
 
+      //! Return pad string for indentation
+      QString      indent       ( int )                            const;
+
+      //! Return html header string
+      QString      html_header  ( const QString&, const QString&,
+                                  US_DataIO2::EditedData* )        const;
+
       //! Return run details in an html formatted string.
       QString      run_details  ( void )                           const;
 
@@ -152,6 +159,11 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
 
       //! Returns an html string of a three column table row.
       QString      table_row    ( const QString&, const QString&, 
+                                  const QString& )                 const;
+      
+      //! Returns an html string of a five column table row.
+      QString      table_row    ( const QString&, const QString&, 
+                                  const QString&, const QString&, 
                                   const QString& )                 const;
       
       //! Calculate the 11 point average of the last point in the current
