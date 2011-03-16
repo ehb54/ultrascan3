@@ -728,8 +728,8 @@ void US_FeMatch::save_data( void )
    mkdir( US_Settings::reportDir(), edata->runID );
    QString tripnode = QString( triples.at( drow ) ).replace( " / ", "" );
    QString basename = US_Settings::reportDir() + "/" + edata->runID + "/fem_"
-      + text_model( model, 0 ) + "." + tripnode;
-   QString htmlFile = basename + ".report.html";
+      + text_model( model, 0 ) + "." + tripnode + ".";
+   QString htmlFile = basename + "report.html";
    QFile rep_f( htmlFile );
    if ( ! rep_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
       return;

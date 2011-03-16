@@ -1,5 +1,7 @@
 //! \file us_distrib_plot.cpp
 
+#include <QtSvg>
+
 #include "us_distrib_plot.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -99,6 +101,42 @@ US_DistribPlot::US_DistribPlot( const QList< double >& divfracs,
    connect( ct_smoothing,   SIGNAL( valueChanged(  double ) ),
             this,           SLOT  ( change_smooth( double ) ) );
 
+}
+
+// Generate distribution,histogram plots and save the SVG files
+void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
+{
+   QSvgGenerator generator;
+   QSvgGenerator generator2;
+
+   // Set up, generate distribution plot and save it to a file
+   QwtPlotGrid* grid = us_grid( data_plot );
+   grid->enableXMin( true );
+   grid->enableYMin( true );
+   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+   plotType = DISTR;
+
+   plot_distrib();
+
+   generator.setSize( data_plot->size() );
+   generator.setFileName( plot1File );
+   data_plot->print( generator );
+
+   // Set up, generate combined histogram plot and save it to a file
+   data_plot->detachItems();
+   grid = us_grid( data_plot );
+   grid->enableXMin( true );
+   grid->enableYMin( true );
+   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+   plotType = COMBO;
+
+   plot_combined();
+
+   generator2.setSize( data_plot->size() );
+   generator2.setFileName( plot2File );
+   data_plot->print( generator2 );
 }
 
 // clear plot and execute appropriate new plot

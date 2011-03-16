@@ -88,11 +88,10 @@ class US_2dsa : public US_AnalysisBase2
       void open_fitcntl( void );
       QString distrib_info(   void );
       QString iteration_info( void );
-      QString table5_row( const QString&, const QString&, const QString&,
-                          const QString&, const QString& );
       void data_plot( void );
-      void write_report( QString );
-      void write_png(    QString, QWidget* );
+      void write_report( QTextStream& );
+      void write_svg(    const QString, const QwtPlot* );
+      void write_png(    const QString, const QWidget* );
       void new_triple(   int );
       void load     ( void );
       void view     ( void );

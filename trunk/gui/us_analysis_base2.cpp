@@ -1020,7 +1020,7 @@ QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2,
                                      const QString& s5 ) const
 {
    return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
-            + s3 + "</td><td>\n" + s4 + "</td><td>\n" + s5 + "</td></tr>\n" );
+            + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n" );
 }
 
 // Compose HTML header string

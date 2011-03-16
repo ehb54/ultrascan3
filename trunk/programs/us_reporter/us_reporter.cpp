@@ -39,6 +39,7 @@ US_Reporter::US_Reporter() : US_Widgets()
    setPalette( US_GuiSettings::frameColor() );
    dbg_level   = US_Settings::us_debug();
    websetting  = NULL;
+   archdir     = US_Settings::archiveDir() + "/";
 
    hsclogo .clear();
    becklogo.clear();
@@ -220,25 +221,25 @@ void US_Reporter::row_context( QTreeWidgetItem* item )
    int row = item->type() - (int)QTreeWidgetItem::UserType;
 DbgLv(1) << " context menu row" << row + 1;
    QMenu*         cmenu = new QMenu();
-   QAction* showact = new QAction( tr( "Show Details" ),       this );
-   QAction* viewact = new QAction( tr( "View Item" ),          this );
-   QAction* dataact = new QAction( tr( "Include Table Data" ), this );
+   QAction* showact = new QAction( tr( "Show Details" ), this );
+   QAction* viewact = new QAction( tr( "View Item" ),    this );
+   QAction* saveact = new QAction( tr( "Save As" ),      this );
 
    connect( showact, SIGNAL( triggered() ),
             this,    SLOT( item_show()   ) );
    connect( viewact, SIGNAL( triggered() ),
             this,    SLOT( item_view()   ) );
-   connect( dataact, SIGNAL( triggered() ),
+   connect( saveact, SIGNAL( triggered() ),
             this,    SLOT( item_data()   ) );
 
    cmenu->addAction( showact );
    cmenu->addAction( viewact );
-   cmenu->addAction( dataact );
+   cmenu->addAction( saveact );
 
    if ( adescs.at( row ).level < 3 )
       viewact->setEnabled( false );
 
-   dataact->setEnabled( false );
+   //dataact->setEnabled( false );
 
    cmenu->exec( QCursor::pos() );
 }
@@ -719,6 +720,8 @@ void US_Reporter::save()
 // Write composite report page:  generate HTML, then PDF
 bool US_Reporter::write_report()
 {
+   const int mxpageht = 1100;
+
    if ( !changed )
       return true;
 
@@ -846,14 +849,31 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
       rptpage   += "    <h2> Reports from Multiple Runs </h2>";
    }
 
+   int phght = 0;
+   int chght = 0;
+
    for ( int ii = 0; ii < nsrpts; ii++ )
    {  // Compose an entry in the composite HTML for each component item
       DataDesc* idesc = (DataDesc*)&adescs.at( se_rptrows.at( ii ) );
       bool is_plot = ( idesc->type.contains( "Plot" ) );
+      phght = chght;
 
       // Possible set for page printing
       if ( is_plot )
       {  // Is a plot:  new page if 2nd or after non-plot
+         if ( idesc->filepath.contains( ".svg" ) )
+         {
+            QSvgRenderer svgrend;
+            svgrend.load( idesc->filepath );
+            chght = svgrend.defaultSize().height();
+         }
+
+         else
+         {
+            chght = QPixmap( idesc->filepath ).height();
+         }
+DbgLv(1) << "  plot.height" << chght << idesc->filename;
+
          if ( jplot != 1  &&  ii > 0 )
          {  // Previous was 2nd plot on the page or was a non-plot
             rptpage   += ppageclass;
@@ -862,8 +882,18 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
 
          else
          {  // Previous was the 1st plot on the page
-            rptpage   += pheadclass;
-            jplot      = 2;       // mark as 2nd plot on page
+            if ( ( chght + phght ) < mxpageht )
+            {  // If 2 plots will fit on a page, mark this plot as second
+               rptpage   += pheadclass;
+               jplot      = 2;       // mark as 2nd plot on page
+            }
+
+            else
+            {  // If second plot on page will exceed space, force a new page
+DbgLv(1) << "++comb.height" << (chght+phght) << "NEW PAGE" << idesc->filename;
+               rptpage   += ppageclass;
+               jplot      = 1;       // mark as 1st plot on page
+            }
          }
       }
 
@@ -889,7 +919,7 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
       {  // The item is a plot, so "<img.." will be used
          QString fileimg = idesc->filename;
 
-         if ( idesc->filename.contains( ".svg" ) )
+         if ( fileimg.contains( ".svg" ) )
          {  // For SVG, create a PNG equivalent
             QSvgRenderer svgrend;
             QString   pathsvg = idesc->filepath;
@@ -911,6 +941,13 @@ DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
                      + pathimg );
             }
 
+            chght    = imgsize.height();
+
+         }
+
+         else if ( fileimg.contains( ".png" ) )
+         {  // For PNG, determine the height of the plot
+            chght    = QPixmap( fileimg ).height();
          }
 
          // Embed the plot in the composite report
@@ -1192,7 +1229,26 @@ void US_Reporter::item_show()
 
 // Open a dialog to export data file(s)
 void US_Reporter::item_data()
-{
+{ 
+   int row = tw_recs->currentItem()->type() - (int)QTreeWidgetItem::UserType;
+   cdesc   = adescs.at( row );
+   int isx = cdesc.filepath.lastIndexOf( "/" ) + 1;
+   QString filename = cdesc.filepath.mid( isx );
+   QString fileext  = filename.mid( filename.lastIndexOf( "." ) + 1 );
+   QString fileanp  = filename.left( filename.indexOf( "." ) );
+   QString fileexts = fileext + tr( " files (*." ) + fileext + ");;"
+                    + fileanp + tr( " files (" ) + fileanp + "*);;"
+                              + tr( "All files (*)" );
+   QString ofilname = archdir + filename;
+
+   QString fn = QFileDialog::getSaveFileName( this,
+         tr( "Save Report File As ..." ), ofilname, fileexts );
+
+   if ( fn.isEmpty() )  return;
+ 
+   QFile::copy( cdesc.filepath, fn );
+
+   archdir          = fn.left( fn.lastIndexOf( "/" ) + 1 );
 }
 
 // Load a report-selection profile

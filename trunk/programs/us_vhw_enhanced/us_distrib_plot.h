@@ -21,6 +21,10 @@ class US_EXTERN US_DistribPlot : public US_WidgetsDialog
       //! \param divsedcs A reference to a list of division intercept sedcoeffs
       US_DistribPlot( const QList< double >&, const QList< double >& );
 
+      //! \param plot1File The name of the distribution plot file
+      //! \param plot2File The name of the histogram plot file
+      void save_plots( QString&, QString& );
+
    private:
       QList< double >  bfracs;    // boundary fractions for divisions
       QList< double >  dsedcs;    // sed.coeff. intercepts for divisions
