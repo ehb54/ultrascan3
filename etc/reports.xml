@@ -22,6 +22,7 @@
     label="Genetic Algorithm with Molecular Weight constraints" />
     <application name="secmo" label="Second Moment Analysis" />
     <application name="global" label="Global Analysis" />
+    <application name="globeq" label="Global Equilibrium Fit" />
     <extension name="html" label="HTML General Report" mimetype="text/html" />
     <extension name="rpt" label="Plain-text Report" mimetype="text/plain" />
     <extension name="svg" label="SVG Plot" mimetype="image/svg+xml" />
@@ -48,4 +49,8 @@
     <report name="s-c-distrib" label="Sedimentation Coeff. Distribution" />
     <report name="s-c-histo" label="Sedimentation Coeff. Histogram" />
     <report name="2ndmoment" label="Second Moment" />
+    <report name="diagnostics" label="Scan Diagnostics" />
+    <report name="scan_check" label="Scan Fit Check" />
+    <report name="fit" label="Equilibrium Fit Analysis" />
+    <report name="equilfit" label="Equilibrium Fit Analysis" />
 </US_Reports>

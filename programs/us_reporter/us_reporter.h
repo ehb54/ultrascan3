@@ -116,12 +116,13 @@ class US_EXTERN US_Reporter : public US_Widgets
       bool count_reports ( void );
       void item_view     ( void );
       void item_show     ( void );
-      void item_data     ( void );
+      void item_save     ( void );
       void load_profile  ( void );
       void save_profile  ( void );
       void copy_logos    ( QString );
       void write_pdf     ( void );
       void page_loaded   ( bool );
+      QString pad_line   ( const QString );
 
       void help          ( void )
       { showHelp.show_help( "reporter.html" ); };
