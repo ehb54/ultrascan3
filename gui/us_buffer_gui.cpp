@@ -798,7 +798,7 @@ void US_BufferGui::delete_disk( void )
    if ( ! buffer_path( path ) ) return;
 
    bool    newFile;
-   QString filename = get_filename( path, le_guid->text(), newFile );
+   QString filename = US_Buffer::get_filename( path, le_guid->text(), newFile );
 
    if ( ! newFile )
    {
@@ -844,55 +844,6 @@ void US_BufferGui::delete_db( void )
    }
 }
 
-QString US_BufferGui::get_filename( 
-      const QString& path, const QString& guid, bool& newFile )
-{
-   QDir        f( path );
-   QStringList filter( "B???????.xml" );
-   QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
-   QString     filename;
-   newFile = true;
-
-   for ( int i = 0; i < f_names.size(); i++ )
-   {
-      QFile b_file( path + "/" + f_names[ i ] );
-
-      if ( ! b_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
-
-      QXmlStreamReader xml( &b_file );
-
-      while ( ! xml.atEnd() )
-      {
-         xml.readNext();
-
-         if ( xml.isStartElement() )
-         {
-            if ( xml.name() == "buffer" )
-            {
-               QXmlStreamAttributes a = xml.attributes();
-
-               if ( a.value( "guid" ).toString() == guid )
-               {
-                  newFile  = false;
-                  filename = path + "/" + f_names[ i ];
-               }
-
-               break;
-            }
-         }
-      }
-
-      b_file.close();
-      if ( ! newFile ) return filename;
-   }
-
-   // If we get here, generate a new filename
-   int number = ( f_names.size() > 0 ) ? f_names.last().mid( 1, 7 ).toInt() : 0;
-
-   return path + "/B" + QString().sprintf( "%07i", number + 1 ) + ".xml";
-}
-
-
 void US_BufferGui::save( void )
 {
    if ( le_description->text().isEmpty() )
@@ -923,7 +874,7 @@ void US_BufferGui::save_disk( void )
    if ( ! buffer_path( path ) ) return;
 
    bool    newFile;
-   QString filename = get_filename( path, le_guid->text(), newFile );
+   QString filename = US_Buffer::get_filename( path, le_guid->text(), newFile );
    buffer.writeToDisk( filename );
 
    QString s = ( newFile ) ? tr( "saved" ) : tr( "updated" );

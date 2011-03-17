@@ -1719,7 +1719,7 @@ DbgLv(1) << "  meshtype" << mtyp;
    if ( gtyp.contains( "Constant" ) )
       simparams.gridType = US_SimulationParameters::FIXED;
 
-   simparams.band_firstScanIsConcentration   = false;
+   simparams.firstScanIsConcentration = false;
 DbgLv(1) << "  duration_hours  " << simparams.speed_step[0].duration_hours;
 DbgLv(1) << "  duration_minutes" << simparams.speed_step[0].duration_minutes;
 DbgLv(1) << "  delay_hours  " << simparams.speed_step[0].delay_hours;

@@ -116,7 +116,6 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       void    update_buffer   ( void );
       void    connect_error   ( const QString& );
       bool    buffer_path     ( QString& );
-      QString get_filename    ( const QString&, const QString&, bool& );
       void    update_lw_buf   ( const QString&, double );
       void    read_from_disk  ( QListWidgetItem* );
       void    read_from_db    ( QListWidgetItem* );
