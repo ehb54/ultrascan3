@@ -54,23 +54,6 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    QGridLayout* buttons1 = new QGridLayout;
    int b_row = 0;
 
-   QPushButton* pb_loadExperiment = us_pushbutton( tr( "Load Experiment") );
-   connect ( pb_loadExperiment, SIGNAL( clicked        () ), 
-                                SLOT  ( load_experiment() ) );
-   buttons1->addWidget( pb_loadExperiment, b_row, 0 );
-
-   pb_saveExp = us_pushbutton( tr( "Save Experiment"), false );
-   buttons1->addWidget( pb_saveExp, b_row++, 1 );
-
-   /*
-   QPushButton* pb_new = us_pushbutton( tr( "New Model") );
-   connect( pb_new, SIGNAL( clicked() ), SLOT( new_model() ) );
-   buttons1->addWidget( pb_new, b_row, 0 );
-
-   QPushButton* pb_loadModel = us_pushbutton( tr( "Load Model") );
-   connect( pb_loadModel, SIGNAL( clicked() ), SLOT( load_model() ) );
-   buttons1->addWidget( pb_loadModel, b_row++, 1 );
-   */
    pb_changeModel = us_pushbutton( tr( "Set / Change / Review Model") );
    connect ( pb_changeModel, SIGNAL( clicked() ) , SLOT( change_model() ) );
    buttons1->addWidget( pb_changeModel, b_row++, 0, 1, 2 );
@@ -149,7 +132,6 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    left->addWidget( cnt_bottom, row++, 1 );
 
    // Rotorspeed Info
-
    QLabel* lb_rotor = us_banner( tr( "Rotorspeed Settings" ) ); 
    left->addWidget( lb_rotor, row++, 0, 1, 2 );
    
@@ -209,7 +191,6 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    left->addWidget( cnt_highspeed, row++, 1 );
    connect( cnt_highspeed, SIGNAL( valueChanged ( double ) ),
                            SLOT  ( new_highspeed( double ) ) );
-
    // Speed steps
    QLabel* lb_speedsteps = us_label( tr( "Speed Steps:"        ) );
    left->addWidget( lb_speedsteps, row, 0 );
@@ -219,7 +200,6 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    left->addWidget( cnt_speedsteps, row++, 1 );
    connect( cnt_speedsteps, SIGNAL( valueChanged ( double ) ),
                             SLOT  ( new_speedstep( double ) ) );
-
    // Speed list
    QLabel* lb_speedlist  = us_label( tr( "Current Speed List:" ) );
    left->addWidget( lb_speedlist, row, 0 );
@@ -252,11 +232,6 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    cnt_timeIncrement->setStep( 1.0 );
    left->addWidget( cnt_timeIncrement, row++, 1 );
 
-   QGridLayout* monitor = 
-      us_checkbox( tr( "Monitor Simulation Progress" ), cb_monitor, true );
-
-   left->addLayout( monitor, row++, 0, 1, 2 );
-
    QGridLayout* buttons2 = new QGridLayout;
    b_row = 0;
 
@@ -278,9 +253,7 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    main->addLayout( left ); 
 
    // Right Column
-
    // Simulation plot
-
    QBoxLayout* right = new QVBoxLayout;
    
    QBoxLayout* plot = new US_Plot( equilibrium_plot, 
@@ -308,7 +281,7 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    model.components.clear();
    update_speeds( speed_type );
 }
-
+
 void US_EquilTime::new_lowspeed( double speed )
 {
    if ( speed > cnt_highspeed->value() )
@@ -376,7 +349,7 @@ void US_EquilTime::new_highspeed( double speed )
 
    update_speeds( speed_type );
 }
-
+
 void US_EquilTime::new_speedstep( double count )
 {
    speed_count = (int) count ;
@@ -385,28 +358,38 @@ void US_EquilTime::new_speedstep( double count )
 
 void US_EquilTime::new_channel( int channel )
 {
-
    cnt_top   ->setEnabled( false );
    cnt_bottom->setEnabled( false );
    
+   const double inner_top     = 5.788;
+   const double inner_bottom  = 6.111;
+   const double center_top    = 6.290;
+   const double center_bottom = 6.613;
+   const double outer_top     = 6.781;
+   const double outer_bottom  = 7.104;
+
+
    switch ( channel )
    {
       case INNER:
-         cnt_top   ->setValue( 5.9 );
-         cnt_bottom->setValue( 6.2 );
-         equilibrium_plot->setAxisScale( QwtPlot::xBottom, 5.9, 6.2 );
+         cnt_top   ->setValue( inner_top );
+         cnt_bottom->setValue( inner_bottom );
+         equilibrium_plot->setAxisScale( QwtPlot::xBottom, 
+                                         inner_top, inner_bottom );
          break;
 
       case OUTER:
-         cnt_top   ->setValue( 6.9 );
-         cnt_bottom->setValue( 7.2 );
-         equilibrium_plot->setAxisScale( QwtPlot::xBottom, 6.9, 7.2 );
+         cnt_top   ->setValue( outer_top );
+         cnt_bottom->setValue( outer_bottom );
+         equilibrium_plot->setAxisScale( QwtPlot::xBottom, 
+                                         outer_top, outer_bottom );
          break;
 
       case CENTER:
-         cnt_top   ->setValue( 6.4 );
-         cnt_bottom->setValue( 7.2 );
-         equilibrium_plot->setAxisScale( QwtPlot::xBottom, 6.4, 7.2 );
+         cnt_top   ->setValue( center_top );
+         cnt_bottom->setValue( center_bottom );
+         equilibrium_plot->setAxisScale( QwtPlot::xBottom, 
+                                         outer_top, center_bottom );
          break;
 
       case CUSTOM:
@@ -455,7 +438,7 @@ double US_EquilTime::sigmaFromRpm( double rpm )
 
    return sigma;
 }
-
+
 void US_EquilTime::update_speeds( int type )
 {
    speed_steps.clear();
@@ -520,7 +503,6 @@ void US_EquilTime::update_speeds( int type )
                QString::number( sigma_start, 'f', 3 ) );
       }
    }
-
    else
    {
       if ( model.components.size() > 0 &&  type != speed_type )
@@ -573,50 +555,6 @@ void US_EquilTime::update_speeds( int type )
 
    speed_type = type;
 }
-
-void US_EquilTime::load_experiment( void )
-{
-/*
-   QString fn = QFileDialog::getOpenFileName( this,
-                  tr( "Select Experiment File" ),
-                  US_Settings::resultDir(), "*.us_system" );
-
-   if ( ! fn.isEmpty() )
-   {
-      //FIXME
-      int error_code = 0;
-      //US_FemGlobal::read_experiment( model, simparams, fn );
-
-      if ( error_code < 0 )
-      {
-         QMessageBox::information( this,
-            tr( "Simulation Module" ),
-            tr( "Unable to load System: ") + fn + tr( "\n\nError code: " ) +
-                QString::number( error_code ) );
-         return;
-      }
-      else
-      {
-         pb_changeModel->setEnabled( true );
-         pb_saveExp    ->setEnabled( true );
-         
-         QMessageBox::information( this,
-            tr( "Simulation Module" ),
-            tr( "Successfully loaded Model:\n\n" ) + model.description );
-      }
-   }
-
-   // Initialize.  Can be updated in model editor
-   //model.density = DENS_20W;
-   update_speeds( speed_type );
-*/
-}
-
-void US_EquilTime::new_model( void )
-{
-//   model = US_Model();
-//   change_model();
-}
 
 void US_EquilTime::change_model( void )
 {
@@ -630,120 +568,54 @@ void US_EquilTime::set_model( US_Model m )
 {
    model = m;
 
-   pb_saveExp    ->setEnabled( true );
-   pb_estimate   ->setEnabled( true );
-   pb_changeModel->setEnabled( true ); 
    pb_estimate   ->setEnabled( true );
    update_speeds( speed_type );
-}
-
-
-void US_EquilTime::load_model( void )
-{
-/*  QString fn = QFileDialog::getOpenFileName( this, 
-         tr( "Select the model to load" ),
-         US_Settings::resultDir(), "*.model.?? *.model-?.?? *model-??.??" );
-
-   if ( fn.isEmpty() ) return;
-
-   int error_code = US_FemGlobal::read_modelSystem( model, fn );
-
-   if ( error_code < 0 )
-   {
-      QMessageBox::information( this,
-            tr( "Simulation Module" ),
-            tr( "Unable to load model: ") + fn + tr( "\n\nError code: " ) +
-            QString::number( error_code ) );
-      return;
-   }
-   else
-   {
-      pb_saveExp    ->setEnabled( true );
-      pb_changeModel->setEnabled( true );
-      pb_estimate   ->setEnabled( true );
-
-      QMessageBox::information( this,
-            tr( "Simulation Module" ),
-            tr( "Successfully loaded model:\n\n" ) + model.description );
-   }
-
-   // Initialize.  Can be updated in model editor
-   //model.density = DENS_20W;
-   update_speeds( speed_type );
-*/
 }
 
 void US_EquilTime::init_simparams( void )
 {
    simparams.speed_step.clear();
 
-   simparams.speed_step << US_SimulationParameters::SpeedProfile();
+   US_SimulationParameters::SpeedProfile sp;
 
    // These are the only changes from the constructor
-   simparams.speed_step[ 0 ].duration_hours    = 100;
-   simparams.speed_step[ 0 ].rotorspeed        = 100;  // Updated before use
-   simparams.speed_step[ 0 ].scans             = 2;
-   simparams.speed_step[ 0 ].acceleration_flag = false;
+   sp.duration_hours    = 100;
+   sp.rotorspeed        = 100;  // Updated before use
+   sp.scans             = 2;
+   sp.acceleration_flag = false;
+
+   simparams.speed_step << sp;
 }
-
+
 void US_EquilTime::init_astfem_data( void )
 {
-   int ss_size = simparams.speed_step.size();
+   astfem_data.scanData.clear();
+   astfem_data.x       .clear();
 
-   for ( int i = 0; i < ss_size; i++ )
+   // Assign radius data
+   double r = simparams.meniscus;
+
+   while  ( r <= simparams.bottom )
    {
-      US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ i ];
-
-      astfem_data.scanData.clear();
-      astfem_data.x       .clear();
-
-      astfem_data.cell    = 1;
-      astfem_data.channel = 1;
-
-      US_DataIO2::Scan scan;
-
-      // Assign radius for the i'th dataset:
-      double r = simparams.meniscus;
-
-      while  ( r <= simparams.bottom )
-      {
-         astfem_data.x << US_DataIO2::XValue( r );
-         r += simparams.radial_resolution;
-      }
-
-      int radius_points = astfem_data.x.size();
-
-      astfem_data.description  = "Simulated data set " +
-         QString::number( i + 1 ) + " (of " +
-         QString::number( ss_size ) + ") for speed " +
-         QString::number( sp->rotorspeed );
-
-      for ( int j = 0; j < sp->scans; j++ )
-      {
-         // Contant temperature for now.  A temperature counter could be added
-         // the this program.
-        
-         scan.temperature = 20.0;
-         scan.rpm         = sp->rotorspeed;
-         scan.wavelength  = 999; 
-
-         scan.readings.fill( 0.0, radius_points );
-
-         astfem_data.scanData << scan;
-      }
+      astfem_data.x << US_DataIO2::XValue( r );
+      r += simparams.radial_resolution;
    }
+
+   int radius_points = astfem_data.x.size();
+
+   // Contant temperature for now.  A temperature counter could be added
+   // the this program.
+     
+   US_DataIO2::Scan scan;
+   scan.temperature = 20.0;
+   scan.wavelength  = 999; 
+   scan.readings.fill( 0.0, radius_points );
+
+   astfem_data.scanData << scan;
 }
-
+
 void US_EquilTime::simulate( void )
 {
-   for ( int k = 0 ; k < model.components.size(); k++ )
-   {
-      US_Model::MfemInitial* c0 = &model.components[ k ].c0;
-      
-      c0->radius       .clear();
-      c0->concentration.clear();
-   }
-
    simparams.meniscus = cnt_top   ->value();
    simparams.bottom   = cnt_bottom->value();
 
@@ -765,6 +637,7 @@ void US_EquilTime::simulate( void )
 
    for ( int i = 0; i < speed_steps.count(); i++ )
    {
+      simparams.firstScanIsConcentration = ( i == 0 ) ? false : true;
       astfem_rsa->setStopFlag( false );
 
       // Set up simparams for this step
@@ -795,20 +668,8 @@ void US_EquilTime::simulate( void )
       current_time += step_time;
 
       // Copy last scan data to initial concentration
-
-      for ( int k = 0 ; k < model.components.size(); k++ )
-      {
-         US_Model::MfemInitial* c0 = &model.components[ k ].c0;
-         
-         c0->radius       .clear();
-         c0->concentration.clear();
-
-         for ( int j = 0; j < simparams.simpoints; j++ )
-         {
-            c0->radius        << sim_radius   [ j ];
-            c0->concentration << concentration[ j ];
-         }
-      }
+      for ( int i = 0; i < radius_points; i++ )
+         astfem_data.scanData[ 0 ].readings[ i ] = concentration[ i ];
 
       concentration.clear();  // Force allocation of new plot data
       
@@ -833,7 +694,7 @@ void US_EquilTime::simulate( void )
              "______________________________________________________"
              "_____________________\n" );
 }
-
+
 void US_EquilTime::check_equil( QVector< double >* x, double* c )
 {
    // If we are not at the time increment, return
@@ -855,33 +716,22 @@ void US_EquilTime::check_equil( QVector< double >* x, double* c )
    }
 
    // Determine the scan concentration differences
-   double diffs;
+   double diffs = 0.0;
 
    for ( int i = 0; i < radius_points; i++ ) 
-      diffs += fabs( concentration[ i ] - c[ i ] );
+      diffs += sq( concentration[ i ] - c[ i ] );
 
    // If within tolerance stop the simulation, otherwise copy the concentrations
-   if ( diffs < cnt_tolerance->value() )
+   if ( sqrt( diffs / radius_points ) < cnt_tolerance->value() )
    {
       astfem_rsa->setStopFlag( true );
 
-      if ( ! cb_monitor->isChecked() )
-      {
-         current_curve->setData( sim_radius.data(), concentration.data(), 
-                                 radius_points );
-         equilibrium_plot->replot();
-      }
-   }
-   else
-      for ( int i = 0; i < radius_points; i++ ) concentration[ i ] = c[ i ];
-
-   // If requested, draw progress curve
-   if ( cb_monitor->isChecked() )
-   {
       current_curve->setData( sim_radius.data(), concentration.data(), 
                               radius_points );
       equilibrium_plot->replot();
    }
+   else
+      for ( int i = 0; i < radius_points; i++ ) concentration[ i ] = c[ i ];
 
    next_scan_time += cnt_timeIncrement->value() * 60.0;
 }

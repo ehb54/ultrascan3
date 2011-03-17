@@ -24,9 +24,9 @@ SOURCES      += us_mpi_analysis.cpp \
 HEADERS      += us_mpi_analysis.h \
                 us_tar.h
 
-INCLUDEPATH  += ../../utils ../../db
-DEPENDPATH   += ../../utils ../../db
-LIBS         += -lus_utils -lus_db -L../../lib
+INCLUDEPATH  += ../../utils 
+DEPENDPATH   += ../../utils
+LIBS         += -lus_utils -L../../lib
 
 # mpi references
 DEFINES      += OMPI_SKIP_MPICXX 

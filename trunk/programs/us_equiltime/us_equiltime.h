@@ -65,12 +65,9 @@ class US_EXTERN US_EquilTime : public US_Widgets
       QwtCounter*   cnt_tolerance;
       QwtCounter*   cnt_timeIncrement;
 
-      QCheckBox*    cb_monitor;
       QTextEdit*    te_speedlist;
-
       US_Editor*    te_info;
 
-      QPushButton*  pb_saveExp;
       QPushButton*  pb_changeModel;
       QPushButton*  pb_estimate;
 
@@ -86,10 +83,7 @@ class US_EXTERN US_EquilTime : public US_Widgets
       void new_highspeed     ( double );
       void new_speedstep     ( double );
       void simulate          ( void );
-      void load_experiment   ( void );
-      void new_model         ( void );
       void change_model      ( void );
-      void load_model        ( void );
       void set_model         ( US_Model );
 
       void check_equil       ( QVector< double >*, double* );

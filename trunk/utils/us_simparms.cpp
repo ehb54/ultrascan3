@@ -29,6 +29,8 @@ US_SimulationParameters::US_SimulationParameters()
    bottom_position   = 7.2;
    rotorcoeffs[ 0 ]  = 0.0;
    rotorcoeffs[ 1 ]  = 0.0;
+
+   firstScanIsConcentration = false;
 }
 
 US_SimulationParameters::SpeedProfile::SpeedProfile()
