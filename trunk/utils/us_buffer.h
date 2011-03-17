@@ -75,6 +75,16 @@ class US_EXTERN US_Buffer
       //! \return A boolean success or failure
       bool writeToDisk( const QString& ) const;
 
+      //! \brief Find a buffer file on the disk
+      //! \param path  The full path of the directory to search
+      //! \param guid  The GUID of the desired buffer 
+      //! \param newFile A reference to a boolean variable.  Sets
+      //!                false if the buffer exists, true otherwise.
+      //! \return The file name of the buffer.  If newFile is true
+      //!         the name is the next in the B???????.xml numeric sequence.
+      static QString get_filename( const QString& path, const QString& guid, 
+                                   bool& newFile );
+
       //! \brief Read a buffer from a disk file
       //! \param filename  The full path, including filename.
       //! \return A boolean success or failure
