@@ -230,16 +230,17 @@ DbgLv(1) << " context menu row" << row + 1;
    connect( viewact, SIGNAL( triggered() ),
             this,    SLOT( item_view()   ) );
    connect( saveact, SIGNAL( triggered() ),
-            this,    SLOT( item_data()   ) );
+            this,    SLOT( item_save()   ) );
 
    cmenu->addAction( showact );
    cmenu->addAction( viewact );
    cmenu->addAction( saveact );
 
    if ( adescs.at( row ).level < 3 )
+   {
       viewact->setEnabled( false );
-
-   //dataact->setEnabled( false );
+      saveact->setEnabled( false );
+   }
 
    cmenu->exec( QCursor::pos() );
 }
@@ -791,6 +792,10 @@ bool US_Reporter::write_report()
    rptpage  += "      font-weight: bold;\n";
    rptpage  += "      font-style:  italic;\n";
    rptpage  += "    }\n";
+   rptpage  += "    .datatext\n";
+   rptpage  += "    {\n";
+   rptpage  += "      font-family: monospace;\n";
+   rptpage  += "    }\n";
    rptpage  += "  </style>\n";
    rptpage  += "  </head>\n  <body>\n";
 
@@ -832,6 +837,7 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
    // Compose the body of the composite report
    QString ppageclass = "    <p class=\"page parahead\">\n";
    QString pheadclass = "    <p class=\"parahead\">\n";
+   QString dtextclass = "\n    <p class=\"datatext\">\n";
    int  jplot   = 0;
 
    QString tripl  = "";
@@ -856,6 +862,7 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
    {  // Compose an entry in the composite HTML for each component item
       DataDesc* idesc = (DataDesc*)&adescs.at( se_rptrows.at( ii ) );
       bool is_plot = ( idesc->type.contains( "Plot" ) );
+      bool is_data = ( idesc->type.contains( "text", Qt::CaseInsensitive ) );
       phght = chght;
 
       // Possible set for page printing
@@ -955,8 +962,26 @@ DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
                          + "\" alt=\"" + idesc->label + "\"/></div>\n\n";
       }
 
+      else if ( is_data )
+      {  // The item is Data text, so copy it with line breaks added
+         QFile fi( idesc->filepath );
+         if ( fi.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         {
+            rptpage   += dtextclass;
+            QTextStream ts( &fi );
+
+            while ( ! ts.atEnd() )
+            {
+               rptpage += pad_line( ts.readLine() );
+            }
+
+            rptpage += "    </p>\n\n";
+            fi.close();
+         }
+      }
+
       else
-      {  // The item is HTML or text, so just copy it into the composite
+      {  // The item is HTML, so copy it with header,footer removed
          QFile fi( idesc->filepath );
          if ( fi.open( QIODevice::ReadOnly | QIODevice::Text ) )
          {
@@ -1227,25 +1252,29 @@ void US_Reporter::item_show()
    editd->show();
 }
 
-// Open a dialog to export data file(s)
-void US_Reporter::item_data()
+// Open a dialog to save an item data file
+void US_Reporter::item_save()
 { 
    int row = tw_recs->currentItem()->type() - (int)QTreeWidgetItem::UserType;
    cdesc   = adescs.at( row );
    int isx = cdesc.filepath.lastIndexOf( "/" ) + 1;
+   // Determine base file name, extension, analysis prefix
    QString filename = cdesc.filepath.mid( isx );
    QString fileext  = filename.mid( filename.lastIndexOf( "." ) + 1 );
    QString fileanp  = filename.left( filename.indexOf( "." ) );
+   // Determine file types string and default output file path
    QString fileexts = fileext + tr( " files (*." ) + fileext + ");;"
                     + fileanp + tr( " files (" ) + fileanp + "*);;"
                               + tr( "All files (*)" );
    QString ofilname = archdir + filename;
 
+   // Open a dialog and get the Save-As file path name
    QString fn = QFileDialog::getSaveFileName( this,
          tr( "Save Report File As ..." ), ofilname, fileexts );
 
    if ( fn.isEmpty() )  return;
  
+   // Copy the file to its specified archive location; save archive directory
    QFile::copy( cdesc.filepath, fn );
 
    archdir          = fn.left( fn.lastIndexOf( "/" ) + 1 );
@@ -1469,6 +1498,53 @@ DbgLv(1) << "etcNewp" << etcnewp;
 
    if ( ! us3logo .isEmpty()  &&  QFile( us3orig  ).exists() )
       QFile::copy( us3orig , us3newp  );
+
+}
+
+// Pad text line with non-blank spaces to simulate spaces and tabs
+QString US_Reporter::pad_line( const QString linein )
+{
+   QString lineout;
+   const QChar cbln( ' ' );
+   const QChar ctab( '\t' );
+   const QString s_nbsp( "&nbsp;" );
+   QChar lchar;
+   //int   kk = 0;
+   int   kk = 3;
+
+   for ( int ii = 0; ii < linein.size(); ii++ )
+   {
+      QChar lchar = linein.at( ii );
+
+      if ( lchar == cbln )           // Replace blank with NBSP
+      {
+         lineout.append( s_nbsp );
+         kk++;
+      }
+
+      else if ( lchar == ctab )      // Replace tab with 2-5 NBSPs
+      {
+         //int nspc = 5 - ( ( kk + 1 ) & 3 );
+         int nspc = 4 - ( kk & 3 );
+         //int nspc = 4 - ( ( kk - 1 ) & 3 );
+         kk      += nspc;
+         lineout.append( cbln   );
+         lineout.append( s_nbsp );
+
+         for ( int jj = 0; jj < nspc; jj++ )
+            lineout.append( s_nbsp );
+      }
+
+      else                           // Copy all other characters
+      {
+         lineout.append( lchar );
+         kk++;
+      }
+   }
+
+   lineout += "<br/>\n";
+
+   return lineout;
 
 }
 
