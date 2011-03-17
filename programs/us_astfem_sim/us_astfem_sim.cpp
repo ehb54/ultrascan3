@@ -441,7 +441,7 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
    stopFlag = false;
    
    simparams.mesh_radius.clear();
-   simparams.band_firstScanIsConcentration = false;
+   simparams.firstScanIsConcentration = false;
 
    // Run the simulation
 
@@ -985,8 +985,8 @@ void US_Astfem_Sim::dump_simparms( void )
    qDebug() << "rotorCalID " << simparams.rotorCalID;
    qDebug() << "band_forming " << simparams.band_forming;
    qDebug() << "band_volume " << simparams.band_volume;
-   qDebug() << "band_firstScanIsConcentration "
-      << simparams.band_firstScanIsConcentration;
+   qDebug() << "firstScanIsConcentration "
+      << simparams.firstScanIsConcentration;
 }
 
 void US_Astfem_Sim::dump_ss( US_SimulationParameters::SpeedProfile& sp )

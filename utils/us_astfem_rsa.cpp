@@ -119,7 +119,7 @@ DbgLv(2) << "RSA:  k j current_assoc" << k << j << current_assoc;
       // earliest possible scan in the experiment. Also, time invariant noise
       // should be subtracted first.
       
-      if ( simparams.band_firstScanIsConcentration )
+      if ( simparams.firstScanIsConcentration )
       {
          US_AstfemMath::MfemInitial scan1;
          scan1.radius.clear();

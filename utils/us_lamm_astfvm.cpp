@@ -459,9 +459,9 @@ US_LammAstfvm::SaltData::SaltData( US_Model                amodel,
    simparms.meshType     = US_SimulationParameters::ASTFEM;
    simparms.gridType     = US_SimulationParameters::MOVING;
 
-   simparms.radial_resolution             =
+   simparms.radial_resolution =
       ( sa_data.radius( Nx - 1 ) - sa_data.radius( 0 ) ) / (double)( Nx - 1 );
-   simparms.band_firstScanIsConcentration = false;
+   simparms.firstScanIsConcentration = false;
 
 
    US_Astfem_RSA* astfem = new US_Astfem_RSA( model, simparms );

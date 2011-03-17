@@ -108,8 +108,8 @@ class US_EXTERN US_SimulationParameters
    QString   rotorCalID;        //!< Rotor calibration identifier in DB/XML
    double    rotorcoeffs[ 2 ];  //!< Rotor coefficients for stretch calculation
 
-   //! First band sedimentation scan is initializer for concentration
-   bool      band_firstScanIsConcentration; 
+   //! First sedimentation scan is initializer for concentration
+   bool      firstScanIsConcentration; 
 
    //! Each distinct RPM value in a series of speeds 
    class SpeedProfile
