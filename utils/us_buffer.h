@@ -81,7 +81,8 @@ class US_EXTERN US_Buffer
       //! \param newFile A reference to a boolean variable.  Sets
       //!                false if the buffer exists, true otherwise.
       //! \return The file name of the buffer.  If newFile is true
-      //!         the name is the next in the B???????.xml numeric sequence.
+      //!         the name is the next in the B???????.xml numeric sequence
+      //!         but does not yet exist.
       static QString get_filename( const QString& path, const QString& guid, 
                                    bool& newFile );
 
