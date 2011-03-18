@@ -234,6 +234,6 @@ class US_EXTERN US_Convert : public US_Widgets
       void resetAll        ( void );
       void source_changed  ( bool );
       void help            ( void )
-        { showHelp.show_help( "manual/us_convert.html" ); };
+        { showHelp.show_help( "convert.html" ); };
 };
 #endif

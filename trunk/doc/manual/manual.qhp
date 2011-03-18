@@ -33,7 +33,9 @@
             <keyword id="b1" name="buffer"        ref="us_buffer.html"/>
             <keyword id="c1" name="components"    ref="components.html"/>
             <keyword id="c2" name="configuration" ref="config.html"/>
+            <keyword id="c3" name="convert-data"  ref="convert.html"/>
             <keyword id="d1" name="data-loader"   ref="data_loader.html"/>
+            <keyword id="e1" name="experiment"    ref="convert-experiment.html"/>
             <keyword id="f1" name="fe-model"      ref="fe_match.html"/>
             <keyword id="g1" name="ga-initialize" ref="ga_initialize.html"/>
             <keyword id="g2" name="gradient"      ref="colorgradient.html"/>
@@ -50,6 +52,7 @@
             <keyword id="p3" name="pseudo3d-combine" ref="pseudo3d_combine.html"/>
             <keyword id="r1" name="register"      ref="register.html"/>
             <keyword id="r2" name="reporter"      ref="reporter.html"/>
+            <keyword id="r3" name="rotor"         ref="rotor.html"/>
             <keyword id="s1" name="save-colormap" ref="save_colormap.html"/>
             <keyword id="s2" name="solution"      ref="us_solution.html"/>
             <keyword id="v1" name="vhw-distrib-plot" ref="vhw_distrib_plot.html"/>
@@ -66,6 +69,15 @@
             <file>config2.html</file>
             <file>images/config2.png</file>
             
+            <file>convert.html</file>
+            <file>convert-experiment.html</file>
+            <file>images/convert.png</file>
+            <file>images/convert-RIdata.png</file>
+            <file>images/convert-subset.png</file>
+            <file>images/convert-tolerance.png</file>
+            <file>images/convert-exclude.png</file>
+            <file>images/convert-experiment.png</file>
+
             <file>uscol.html</file>
             <file>images/color-1.png</file>
             <file>uscolor2.html</file>
@@ -157,6 +169,11 @@
 
             <file>register.html</file>
             <file>images/register.png</file>
+
+            <file>rotor.html</file>
+            <file>images/rotor.png</file>
+            <file>images/rotor-add.png</file>
+            <file>images/rotor-save-calibration.png</file>
 
             <file>manage_data.html</file>
             <file>manage_data_thelp.html</file>

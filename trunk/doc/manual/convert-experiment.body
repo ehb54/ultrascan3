@@ -1,0 +1,26 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Experiment Window'
+%]
+    <h2> Managing Experiment Information </h2>
+
+    <p class='center'><img src="images/convert-experiment.png" 
+    alt="US_Experiment Window"/></p>
+
+    <p>Using this window, you can manage experiment ( run ) information.</p>
+
+    <p>The first step is to click on the &quot;Select Lab / Rotor /
+    Calibration&quot; button and select the rotor calibration that was
+    used in the experiment. The system knows which rotors and instruments
+    are in which labs, so once the lab and rotor have been selected, 
+    the selection boxes labeled Instrument and Operator will be populated.
+    The rotor selection dialog is described in more detail 
+    <a href='rotor.html'>Here</a>.
+    </p>
+
+    <p>The second step is to click on the &quot;Select Project&quot; button
+    and select the project this experiment is associated with. The
+    project selection dialog is described in more detail
+    <a href='us_project.html'>Here</a>.
+    </p>
+
+[% INCLUDE footer.us3 %]
