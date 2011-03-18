@@ -195,7 +195,24 @@ void US_Plot::svg( void )
 
       plot->print( generator );
    }
-   
+   else
+      return;
+
+   // Modify the generated svg file to change font-size="12.3" to
+   // font-size="12.3pt"
+
+   QFile f( fileName );
+
+   f.open( QIODevice::ReadOnly | QIODevice::Text );
+   QString s = QString( f.readAll() );
+   f.close();
+
+   s.replace( QRegExp( "font-size=\"(\\d+\\.*\\d*)\"" ), "font-size=\"\\1pt\"" );
+
+   f.open( QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text );
+
+   f.write( s.toLatin1(), s.size() );
+   f.close();
 }
 
 void US_Plot::print( void )
