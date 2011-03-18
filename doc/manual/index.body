@@ -9,6 +9,8 @@
   <li> <a href="license.html"><b><i>UltraScan</i></b>License Key Registration</a> </li>
   <li> <a href="menu.html"><b><i>UltraScan</i></b> Menu System</a> </li>
   <li> <a href="config.html"><b><i>UltraScan</i></b> Configuration</a> (only currently valid link)</li>
+  <li> <a href="convert.html">Converting Raw Data into <b><i>UltraScan</i></b> files</a></li>
+  <li> <a href="rotor.html">Managing <b><i>UltraScan</i></b> rotors and rotor calibrations</a></li>
   <li> <a href="#edit">Editing Sedimentation Data</a> </li>
   <li> <a href="#veloc">Velocity Data Analysis</a> </li>
   <li> <a href="#equil">Equilibrium Data Analysis</a> </li>

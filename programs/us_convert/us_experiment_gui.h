@@ -99,6 +99,6 @@ class US_EXTERN US_ExperimentGui : public US_WidgetsDialog
       void cancel            ( void );
       void connect_error     ( const QString& );
       void help              ( void )
-        { showHelp.show_help( "manual/us_convert.html" ); };
+        { showHelp.show_help( "manual/convert-experiment.html" ); };
 };
 #endif
