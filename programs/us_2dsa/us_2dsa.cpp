@@ -223,13 +223,19 @@ void US_2dsa::load( void )
    pb_view->setEnabled( false );   // disable view,save buttons for now
    pb_save->setEnabled( false );
 
-   int ndset  = dataList.size();   // initialize noise-load flags
-   noiflags.fill( -1, ndset );
-
    def_local  = ! disk_controls->db();
    edata      = &dataList[ 0 ];    // point to first loaded data
 
-   new_triple( 0 );                // choose 1st triple initially
+   // Move any loaded noise vectors to the "in" versions
+   ri_noise_in.values = ri_noise.values;
+   ti_noise_in.values = ti_noise.values;
+   ri_noise.values.clear();
+   ti_noise.values.clear();
+   ri_noise_in.count  = ri_noise_in.values.size();
+   ti_noise_in.count  = ti_noise_in.values.size();
+   ti_noise   .count  = 0;
+   ri_noise   .count  = 0;
+DbgLv(1) << "ri,ti noise in" << ri_noise_in.count << ti_noise_in.count;
 }
 
 // plot the data
@@ -887,62 +893,5 @@ void US_2dsa::write_svg( const QString plotFile, const QwtPlot* plot )
    generator.setSize( plot->size() );
    generator.setFileName( plotFile );
    plot->print( generator );
-}
-
-// Handle selecting a new triple
-void US_2dsa::new_triple( int drow )
-{
-   US_AnalysisBase2::new_triple( drow );
-
-   edata      = &dataList[ drow ];
-   US_LoadableNoise lnoise;
-   QStringList mieGUIDs;
-   QStringList nieGUIDs;
-
-   if ( noiflags[ drow ] >= 0 )
-      return;                 // done if this triple's noise already selected
-
-   noiflags[ drow ] = 0;      // initially flag no noise to subtract
-
-   // get count of edit-related noise and any GUID lists
-   int nenois = lnoise.count_noise( def_local, edata, NULL,
-                                    mieGUIDs, nieGUIDs );
-   if ( nenois == 0 )
-      return;                 // skip selection if no noise available
-
-   // Use noise loader dialog so user can select input noise(s) to subtract
-   US_Passwd   pw;
-   US_DB2*     dbp      = def_local ? NULL : new US_DB2( pw.getPasswd() );
-   US_NoiseLoader nloader( dbp, mieGUIDs, nieGUIDs, ti_noise_in, ri_noise_in );
-   nloader.exec();
-
-   int nrinoi  = ri_noise_in.count;
-   int ntinoi  = ti_noise_in.count;
-   int nscans  = edata->scanData.size();
-   int npoints = edata->x.size();
-
-   if ( nrinoi > 0  ||  ntinoi > 0 )
-   {  // some noise was input:  subtract it from the experiment
-      noiflags[ drow ] = min( nrinoi, 1 ) + 2 * min( ntinoi, 1 );
-
-      for ( int ii = 0; ii < nscans; ii++ )
-      {
-         int    iin   = min( ii, ( nrinoi - 1 ) );
-         double rinoi = ( nrinoi > 0 ) ? ri_noise_in.values[ iin ] : 0.0;
-         US_DataIO2::Scan* escan = &edata->scanData[ ii ];
-
-         for ( int jj = 0; jj < npoints; jj++ )
-         {
-            int    jjn   = min( jj, ( ntinoi - 1 ) );
-            double tinoi = ( ntinoi > 0 ) ? ti_noise_in.values[ jjn ] : 0.0;
-
-            double cnew  = edata->value( ii, jj ) - rinoi - tinoi;
-
-            escan->readings[ jj ] = US_DataIO2::Reading( cnew );
-         }
-      }
-
-      data_plot();             // re-plot experiment with noise subtracted
-   }
 }
 

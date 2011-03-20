@@ -13,6 +13,7 @@
 #include "us_db2.h"
 #include "us_analyte.h"
 #include "us_buffer.h"
+#include "us_noise.h"
 
 #include "qwt_counter.h"
 
@@ -57,6 +58,11 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       QString      investig;        //!< Investigator string
 
       US_Buffer    buff;            //!< Currently loaded buffer
+
+      US_Noise     ri_noise;
+      US_Noise     ti_noise;
+
+      QVector< int > noiflags;
 
       //! A class to display help in the US Help viewer
       US_Help      showHelp;
@@ -201,5 +207,6 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       bool verify_vbar   ( void );
       void vbar_text     ( void );
       void set_progress  ( const QString& );
+      void load_noise    ( int  );
 };
 #endif

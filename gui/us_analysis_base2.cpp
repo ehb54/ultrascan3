@@ -9,6 +9,8 @@
 #include "us_analyte_gui.h"
 #include "us_buffer_gui.h"
 #include "us_data_loader.h"
+#include "us_noise_loader.h"
+#include "us_loadable_noise.h"
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "us_solution_vals.h"
@@ -300,10 +302,11 @@ void US_AnalysisBase2::load( void )
       savedValues << v;
    }
 
-   lw_triples->setCurrentRow( 0 );
+   noiflags.fill( -1, dataList.size() );
+
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ), 
                         SLOT  ( new_triple       ( int ) ) );
-   update( 0 );
+   lw_triples->setCurrentRow( 0 );
 
    // Enable other buttons
    pb_details->setEnabled( true );
@@ -975,6 +978,10 @@ void US_AnalysisBase2::new_triple( int index )
          savedValues[ i ][ j ] = s->readings[ j ].value;
    }
 
+   // Test for noise data to substract from the experiment; apply if any
+   load_noise( index );
+
+   // Update GUI elements and plot for selected triple
    update( index );
 }
 
@@ -1377,6 +1384,106 @@ void US_AnalysisBase2::set_progress( const QString& message )
    qApp->processEvents();
 }
 
+// Load noise record(s) if there are any and user so chooses, then apply
+void US_AnalysisBase2::load_noise( int index )
+{
+   US_DataIO2::EditedData* edata = &dataList[ index ];
+   QStringList mieGUIDs;  // list of GUIDs of models-in-edit
+   QStringList nieGUIDs;  // list of GUIDS:type:index of noises-in-edit
 
+   US_LoadableNoise lnoise;
+   bool loadDB = disk_controls->db();
+   bool local  = ! loadDB;
+   int  nenois = lnoise.count_noise( local, edata, NULL, mieGUIDs, nieGUIDs );
 
+for (int jj=0;jj<nenois;jj++)
+ qDebug() << " jj nieG" << jj << nieGUIDs.at(jj);
+
+   if ( nenois > 0 )
+   {  // There is/are noise(s):  ask user if she wants to load
+      US_Passwd pw;
+      US_DB2* dbP  = local ? NULL : new US_DB2( pw.getPasswd() );
+
+      if ( nenois > 1 )
+      {  // more than 1:  get choice from noise loader dialog
+         US_NoiseLoader* nldiag = new US_NoiseLoader( dbP,
+            mieGUIDs, nieGUIDs, ti_noise, ri_noise );
+         nldiag->move( this->pos() + QPoint( 200, 200 ) );
+         nldiag->exec();
+         qApp->processEvents();
+
+         delete nldiag;
+      }
+
+      else
+      {  // only 1:  just load it
+         QString noiID = nieGUIDs.at( 0 );
+         QString typen = noiID.section( ":", 1, 1 );
+         noiID         = noiID.section( ":", 0, 0 );
+
+         if ( typen == "ti" )
+            ti_noise.load( loadDB, noiID, dbP );
+
+         else
+            ri_noise.load( loadDB, noiID, dbP );
+      }
+
+      // noise loaded:  insure that counts jive with data
+      int ntinois = ti_noise.values.size();
+      int nrinois = ri_noise.values.size();
+      int nscans  = edata->scanData.size();
+      int npoints = edata->x.size();
+      int npadded = 0;
+
+      if ( ntinois > 0  &&  ntinois < npoints )
+      {  // pad out ti noise values to radius count
+         int jj      = ntinois;
+         while ( jj++ < npoints )
+            ti_noise.values << 0.0;
+         ti_noise.count = ti_noise.values.size();
+         npadded++;
+      }
+
+      if ( nrinois > 0  &&  nrinois < nscans )
+      {  // pad out ri noise values to scan count
+         int jj      = nrinois;
+         while ( jj++ < nscans )
+            ri_noise.values << 0.0;
+         ri_noise.count = ri_noise.values.size();
+         npadded++;
+      }
+
+      if ( npadded  > 0 )
+      {  // let user know that padding occurred
+         QString pmsg;
+
+         if ( npadded == 1 )
+            pmsg = tr( "The noise file was padded out with zeroes\n"
+                       "in order to match the data range." );
+         else
+            pmsg = tr( "The noise files were padded out with zeroes\n"
+                       "in order to match the data ranges." );
+
+         QMessageBox::information( this, tr( "Noise Padded Out" ), pmsg );
+      }
+
+      // Subtract noise from the experiment
+
+      for ( int ii = 0; ii < nscans; ii++ )
+      {
+         int    iin    = min( ii, ( nrinois - 1 ) );
+         double rinoi  = ( nrinois > 0 ) ? ri_noise.values[ iin ] : 0.0;
+         US_DataIO2::Scan* escan = &edata->scanData[ ii ];
+
+         for ( int jj = 0; jj < npoints; jj++ )
+         {
+            int    jjn    = min( jj, ( ntinois - 1 ) );
+            double tinoi  = ( ntinois > 0 ) ? ti_noise.values[ jjn ] : 0.0;
+
+            escan->readings[ jj ] =
+               US_DataIO2::Reading( edata->value( ii, jj ) - rinoi - tinoi );
+         }
+      }
+   }
+}
 
