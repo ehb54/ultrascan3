@@ -1509,7 +1509,6 @@ QString US_Reporter::pad_line( const QString linein )
    const QChar ctab( '\t' );
    const QString s_nbsp( "&nbsp;" );
    QChar lchar;
-   //int   kk = 0;
    int   kk = 3;
 
    for ( int ii = 0; ii < linein.size(); ii++ )
@@ -1524,9 +1523,7 @@ QString US_Reporter::pad_line( const QString linein )
 
       else if ( lchar == ctab )      // Replace tab with 2-5 NBSPs
       {
-         //int nspc = 5 - ( ( kk + 1 ) & 3 );
          int nspc = 4 - ( kk & 3 );
-         //int nspc = 4 - ( ( kk - 1 ) & 3 );
          kk      += nspc;
          lineout.append( cbln   );
          lineout.append( s_nbsp );
