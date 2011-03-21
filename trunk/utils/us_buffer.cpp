@@ -35,23 +35,23 @@ void US_BufferComponent::getAllFromDB( const QString& masterPW,
       US_BufferComponent c;
       c.componentID = db.value( 0 ).toString();
       c.name        = db.value( 1 ).toString();
-      c.getInfoFromDB( db2 );
+      c.getInfoFromDB( &db2 );
       componentList[ c.componentID ] = c;
    }
 }
 
-void US_BufferComponent::getInfoFromDB( US_DB2& db ) 
+void US_BufferComponent::getInfoFromDB( US_DB2* db ) 
 {
    QStringList q( "get_buffer_component_info" );
    q << componentID;
 
-   db.query( q );
-   db.next();
+   db->query( q );
+   db->next();
 
-   unit              = db.value( 0 ).toString();
-   name              = db.value( 1 ).toString();
-   QString viscosity = db.value( 2 ).toString();
-   QString density   = db.value( 3 ).toString();
+   unit              = db->value( 0 ).toString();
+   name              = db->value( 1 ).toString();
+   QString viscosity = db->value( 2 ).toString();
+   QString density   = db->value( 3 ).toString();
 
    QStringList sl = viscosity.split( " " );
 
@@ -226,17 +226,17 @@ US_Buffer::US_Buffer()
    concentration.clear();
 }
 
-void US_Buffer::getSpectrum( US_DB2& db, const QString& type ) 
+void US_Buffer::getSpectrum( US_DB2* db, const QString& type ) 
 {
    QStringList q;
    q << "get_spectrum" << bufferID << "Buffer" << type;
 
-   db.query( q );
+   db->query( q );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      double lambda = db.value( 0 ).toDouble();
-      double value  = db.value( 1 ).toDouble();
+      double lambda = db->value( 0 ).toDouble();
+      double value  = db->value( 1 ).toDouble();
 
       if ( type == "Extinction" )
          extinction[ lambda ] = value;
@@ -247,7 +247,7 @@ void US_Buffer::getSpectrum( US_DB2& db, const QString& type )
    }
 }
 
-void US_Buffer::putSpectrum( US_DB2& db, const QString& type ) const
+void US_Buffer::putSpectrum( US_DB2* db, const QString& type ) const
 {
    QStringList q;
    q << "new_spectrum" << bufferID << "Buffer" << type << "" << "";
@@ -261,7 +261,7 @@ void US_Buffer::putSpectrum( US_DB2& db, const QString& type ) const
          double wavelength = keys[ i ];
          q[ 4 ] = QString::number( wavelength, 'f', 1 );
          q[ 5 ] = QString::number( extinction[ wavelength ], 'e', 4 );
-         db.statusQuery( q );
+         db->statusQuery( q );
       }
    }
 
@@ -274,7 +274,7 @@ void US_Buffer::putSpectrum( US_DB2& db, const QString& type ) const
          double wavelength = keys[ i ];
          q[ 4 ] = QString::number( wavelength, 'f', 1 );
          q[ 5 ] = QString::number( refraction[ wavelength ], 'e', 4 );
-         db.statusQuery( q );
+         db->statusQuery( q );
       }
    }
 
@@ -287,7 +287,7 @@ void US_Buffer::putSpectrum( US_DB2& db, const QString& type ) const
          double wavelength = keys[ i ];
          q[ 4 ] = QString::number( wavelength, 'f', 1 );
          q[ 5 ] = QString::number( fluorescence[ wavelength ], 'e', 4 );
-         db.statusQuery( q );
+         db->statusQuery( q );
       }
    }
 }
@@ -371,23 +371,23 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
    return true;
 }
 
-bool US_Buffer::readFromDB( US_DB2& db, const QString& bufID )
+bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
 {
    QStringList q( "get_buffer_info" );
    q << bufID;   // bufferID from list widget entry
 
-   db.query( q );
-   if ( db.lastErrno() != 0 ) return false;
+   db->query( q );
+   if ( db->lastErrno() != 0 ) return false;
 
-   db.next();
+   db->next();
 
    bufferID        = bufID;
-   GUID            = db.value( 0 ).toString();
-   description     = db.value( 1 ).toString();
-   compressibility = db.value( 2 ).toString().toDouble();
-   pH              = db.value( 3 ).toString().toDouble();
-   viscosity       = db.value( 4 ).toString().toDouble();
-   density         = db.value( 5 ).toString().toDouble();
+   GUID            = db->value( 0 ).toString();
+   description     = db->value( 1 ).toString();
+   compressibility = db->value( 2 ).toString().toDouble();
+   pH              = db->value( 3 ).toString().toDouble();
+   viscosity       = db->value( 4 ).toString().toDouble();
+   density         = db->value( 5 ).toString().toDouble();
 
    component    .clear();
    componentIDs .clear();
@@ -396,13 +396,13 @@ bool US_Buffer::readFromDB( US_DB2& db, const QString& bufID )
 
    q << "get_buffer_components" <<  bufferID;
 
-   db.query( q );
-   if ( db.lastErrno() != 0 ) return false;
+   db->query( q );
+   if ( db->lastErrno() != 0 ) return false;
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      componentIDs  << db.value( 0 ).toString();
-      concentration << db.value( 4 ).toString().toDouble();
+      componentIDs  << db->value( 0 ).toString();
+      concentration << db->value( 4 ).toString().toDouble();
    }
 
    for ( int i = 0; i < componentIDs.size(); i++ )
@@ -420,7 +420,7 @@ bool US_Buffer::readFromDB( US_DB2& db, const QString& bufID )
    return true;
 }
 
-int US_Buffer::saveToDB( US_DB2& db, const QString private_buffer ) const
+int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
 {
 dumpBuffer();;
    QStringList q( "new_buffer" );
@@ -433,11 +433,11 @@ dumpBuffer();;
      << private_buffer  // Private
      << QString::number( US_Settings::us_inv_ID() );
 
-   db.statusQuery( q );
+   db->statusQuery( q );
 
-   if ( db.lastErrno() != US_DB2::OK ) return -1;
+   if ( db->lastErrno() != US_DB2::OK ) return -1;
 
-   int bufferID = db.lastInsertID();
+   int bufferID = db->lastInsertID();
 
    for ( int i = 0; i < component.size(); i++ )
    {
@@ -446,9 +446,9 @@ dumpBuffer();;
         << QString::number( bufferID )
         << component[ i ].componentID
         << QString::number( concentration[ i ], 'f', 5 );
-      db.statusQuery( q );
+      db->statusQuery( q );
 
-      if ( db.lastErrno() != US_DB2::OK ) return -2;
+      if ( db->lastErrno() != US_DB2::OK ) return -2;
    }
 
    putSpectrum( db, "Extinction" );
