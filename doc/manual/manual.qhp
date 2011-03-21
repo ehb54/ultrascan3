@@ -53,6 +53,8 @@
             <keyword id="r1" name="register"      ref="register.html"/>
             <keyword id="r2" name="reporter"      ref="reporter.html"/>
             <keyword id="r3" name="rotor"         ref="rotor.html"/>
+            <keyword id="e1" name="us_edit"       ref="us_edit.html"/>
+            <keyword id="e2" name="us_equiltime"  ref="us_equiltime.html"/>
             <keyword id="s1" name="save-colormap" ref="save_colormap.html"/>
             <keyword id="s2" name="solution"      ref="us_solution.html"/>
             <keyword id="v1" name="vhw-distrib-plot" ref="vhw_distrib_plot.html"/>
@@ -90,7 +92,10 @@
             
             <file>database_config.html</file>
             <file>images/database.png</file>
-            
+           
+            <file>us_edit.html</file>
+            <file>images/us_edit.png</file>
+
             <file>advanced_config.html</file>
             <file>images/advanced_config.png</file>
             
@@ -238,6 +243,10 @@
             <file>images/reporter-cmenu.png</file>
             <file>images/reporter-details.png</file>
             <file>images/reporter-viewitem.png</file>
+
+            <file>us_equiltime.html</file>
+            <file>images/us_equiltime.png</file>
+
         </files>
     </filterSection>
 </QtHelpProject> 
