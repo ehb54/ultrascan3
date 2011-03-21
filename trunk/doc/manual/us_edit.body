@@ -1,0 +1,7 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Data Editor'
+%]
+    <p> <img src="images/us_edit.png" alt="Data Editor Window"/> </p>
+ 
+
+[% INCLUDE footer.us3 %]

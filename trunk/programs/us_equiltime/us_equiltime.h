@@ -92,6 +92,6 @@ class US_EXTERN US_EquilTime : public US_Widgets
       { step_time = time; };
 
       void help              ( void )
-      { showHelp.show_help("manual/calc_equiltime.html"); };
+      { showHelp.show_help("manual/us_equiltime.html"); };
 };
 #endif
