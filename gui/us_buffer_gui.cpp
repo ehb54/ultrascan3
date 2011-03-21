@@ -733,7 +733,7 @@ void US_BufferGui::read_from_db( const QString& bufferID )
       return;
    }
   
-   buffer.readFromDB( db, bufferID );
+   buffer.readFromDB( &db, bufferID );
 }
 
 void US_BufferGui::update_lw_buf( const QString& componentID, double conc )
@@ -906,7 +906,7 @@ void US_BufferGui::save_db( void )
    }
 
    QString private_buffer = ( cb_shared->isChecked() ) ? "0" : "1";
-   buffer.saveToDB( db, private_buffer );
+   buffer.saveToDB( &db, private_buffer );
 
    if ( db.lastErrno() != US_DB2::OK )
    {

@@ -256,15 +256,46 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
    int status = db->lastErrno();
    if ( status == US_DB2::NOROWS )
    {
-      return US_DB2::NO_BUFFER;               // Change so we have some idea of what happened
-/*
-      // Then we need to add it
+      // Find the buffer directory on disk
+      QDir dir;
+      QString path = US_Settings::dataDir() + "/buffers";
+
+      if ( ! dir.exists( path ) )
+         return US_DB2::NO_BUFFER;            // So we have some idea of what happened
+
+      // Try to find the buffer file
+      bool    newFile;
+      QString filename = US_Buffer::get_filename( path, bufferGUID, newFile );
+
+      if ( newFile ) 
+         return US_DB2::NO_BUFFER;
+
+      // Then we can add it
       US_Buffer* diskBuffer = new US_Buffer;
-      int diskStatus = diskBuffer->readFromDisk( false, bufferGUID ); // load it from disk
-      if ( diskStatus == US_DB2::OK )
-         diskBuffer->write( true, "", db );           // and write to db
+      bool diskStatus = diskBuffer->readFromDisk( filename );   // load it from disk
+
+      // Now create the component list
+      QMap< QString, US_BufferComponent > component_list;
+      US_BufferComponent::getAllFromHD( component_list );
+      diskBuffer->component.clear();
+   
+      for ( int i = 0; i < diskBuffer->componentIDs.size(); i++ )
+      {
+         QString index = diskBuffer->componentIDs[ i ];
+         diskBuffer->component << component_list[ index ];
+      }
+
+      if ( diskStatus )
+         diskBuffer->saveToDB( db, QString::number( 1 ) );      // and write to db; 1 = private
       delete diskBuffer;
-*/
+
+      // Double check
+      QStringList q( "get_bufferID" );
+      q  << bufferGUID;
+      db->query( q );
+      int checkStatus = db->lastErrno();
+      if ( checkStatus != US_DB2::OK )
+         return US_DB2::NO_BUFFER;
    }
 
    else if ( status != US_DB2::OK )

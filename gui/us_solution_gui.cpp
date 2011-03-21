@@ -793,7 +793,36 @@ void US_SolutionGui::save( bool display_status )
          return;
       }
 
-      solution.saveToDB( experimentID, channelID, &db );
+      int status = solution.saveToDB( experimentID, channelID, &db );
+
+      if ( status != US_DB2::OK && ! display_status )  // then we return but no status msg
+         return;
+
+      else if ( status == US_DB2::NO_BUFFER )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ),
+               tr( "There was a problem saving the buffer to the database.\n" ) );
+         return;
+      }
+
+      else if ( status == US_DB2::NOROWS )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ) ,
+               tr( "A solution component is missing from the database, "
+                   "and the attempt to save it failed.\n") );
+         return;
+      }
+
+      else if ( status != US_DB2::OK )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ) ,
+               db.lastError() );
+         return;
+      }
+    
    }
 
    else
