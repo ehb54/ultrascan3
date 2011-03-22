@@ -127,6 +127,7 @@ void US_vHW_Enhanced::load( void )
    pb_dstrpl->setEnabled( true );
 
    dataLoaded = true;
+   haveZone   = false;
 
    update( 0 );
 }
