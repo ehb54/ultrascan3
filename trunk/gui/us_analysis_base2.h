@@ -59,10 +59,10 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
 
       US_Buffer    buff;            //!< Currently loaded buffer
 
-      US_Noise     ri_noise;
-      US_Noise     ti_noise;
+      US_Noise     ri_noise;        //!< Loaded,applied radially-invariant noise
+      US_Noise     ti_noise;        //!< Loaded,applied time-invariant noise
 
-      QVector< int > noiflags;
+      QVector< int > noiflags;      //!< Noise-applied flags, for all triples
 
       //! A class to display help in the US Help viewer
       US_Help      showHelp;

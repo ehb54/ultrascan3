@@ -967,15 +967,23 @@ void US_AnalysisBase2::reset( void )
 
 void US_AnalysisBase2::new_triple( int index )
 {
+qDebug() << "NewTr: index" << index;
    // Save the data for the new triple
    US_DataIO2::EditedData* d = &dataList[ index ];
-   
+ 
+   savedValues.clear();
+
    for ( int i = 0; i < d->scanData.size(); i++ )
    {
       US_DataIO2::Scan* s = &d->scanData[ i ];
+      int points = s->readings.size();
 
-      for ( int j = 0; j < s->readings.size(); j++ )
-         savedValues[ i ][ j ] = s->readings[ j ].value;
+      QVector< double > v;
+      v.resize( points );
+
+      for ( int j = 0; j < points; j++ ) v[ j ] = s->readings[ j ].value;
+
+      savedValues << v;
    }
 
    // Test for noise data to substract from the experiment; apply if any
@@ -983,6 +991,7 @@ void US_AnalysisBase2::new_triple( int index )
 
    // Update GUI elements and plot for selected triple
    update( index );
+qDebug() << "NewTr: d00 s00" << d->value(0,0) << savedValues[0][0];
 }
 
 double US_AnalysisBase2::calc_baseline( void ) const
@@ -1388,8 +1397,14 @@ void US_AnalysisBase2::set_progress( const QString& message )
 void US_AnalysisBase2::load_noise( int index )
 {
    US_DataIO2::EditedData* edata = &dataList[ index ];
-   QStringList mieGUIDs;  // list of GUIDs of models-in-edit
-   QStringList nieGUIDs;  // list of GUIDS:type:index of noises-in-edit
+
+   if ( noiflags[ index ] >= 0 )
+      return;             // Do nothing if noise already applied, this triple
+
+   noiflags[ index ] = 0; // Initially flag no noise to subtract
+
+   QStringList mieGUIDs;  // List of GUIDs of models-in-edit
+   QStringList nieGUIDs;  // List of GUIDS:type:index of noises-in-edit
 
    US_LoadableNoise lnoise;
    bool loadDB = disk_controls->db();
@@ -1484,6 +1499,10 @@ for (int jj=0;jj<nenois;jj++)
                US_DataIO2::Reading( edata->value( ii, jj ) - rinoi - tinoi );
          }
       }
+
+      // Keep track of noise applied to this triple
+      noiflags[ index ] = min( nrinois, 1 ) + 2 * min( ntinois, 1 );
+
    }
 }
 
