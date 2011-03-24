@@ -141,6 +141,7 @@ END$$
 
 -- adds a new rotor calibration profile
 -- the experimentID is the ID of the calibration experiment
+-- experimentID = -1 is a special value that doesn't exist
 DROP PROCEDURE IF EXISTS add_rotor_calibration$$
 CREATE PROCEDURE add_rotor_calibration ( p_personGUID        CHAR(36),
                                          p_password          VARCHAR(80),
@@ -180,6 +181,11 @@ BEGIN
   INTO       count_experiments
   FROM       experiment
   WHERE      experimentID = p_experimentID;
+
+  -- Special value -1
+  IF ( p_experimentID = -1 ) THEN
+    SET count_experiments = 1;
+  END IF;
 
   IF ( ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN         ) = @OK ) &&
        ( check_GUID      ( p_personGUID, p_password, p_calibrationGUID  ) = @OK ) ) THEN

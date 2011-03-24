@@ -301,6 +301,13 @@ void US_RotorGui::newRotor( void )
    le_name            ->setText( currentRotor.name );
    le_serialNumber    ->setText( currentRotor.serialNumber );
 
+   // Create a dummy configuration to associate before the real one
+   // is available
+   currentCalibration.reset();
+   currentCalibration.GUID = US_Util::new_guid();
+   currentCalibration.report = "This is a dummy calibration --- please replace.";
+   currentCalibration.calibrationExperimentID = -1;      // special value
+
    if ( disk_controls->db() )
    {
       US_Passwd pw;
@@ -317,10 +324,18 @@ void US_RotorGui::newRotor( void )
       if ( status != US_DB2::OK )
          db_error( db.lastError() );
 
+      else
+      {
+         int rotorID = db.lastInsertID();
+         currentCalibration.rotorID = rotorID;
+         currentCalibration.saveDB( rotorID, &db );
+      }
+
    }
    else
    {
       currentRotor.saveDisk();
+      currentCalibration.saveDisk();
    }
 
    // now get new rotorID and update the list box.

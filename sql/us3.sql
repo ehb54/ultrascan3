@@ -167,12 +167,12 @@ CREATE  TABLE IF NOT EXISTS rotorCalibration (
     FOREIGN KEY (rotorID )
     REFERENCES rotor (rotorID )
     ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT fk_rotorCalibration_experimentID
-    FOREIGN KEY (calibrationExperimentID )
-    REFERENCES experiment (experimentID )
-    ON DELETE SET NULL
-    ON UPDATE NO ACTION)
+    ON UPDATE CASCADE )
+--  CONSTRAINT fk_rotorCalibration_experimentID
+--    FOREIGN KEY (calibrationExperimentID )
+--    REFERENCES experiment (experimentID ) )
+--    ON DELETE SET NULL
+--    ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
@@ -335,12 +335,12 @@ CREATE  TABLE IF NOT EXISTS channel (
   comments TEXT NULL DEFAULT NULL ,
   dateUpdated TIMESTAMP NULL DEFAULT NULL ,
   PRIMARY KEY (channelID) ,
-  INDEX ndx_channel_abstractChannelID (abstractChannelID ASC) ,
-  CONSTRAINT fk_channel_abstractChannelID
-    FOREIGN KEY (abstractChannelID )
-    REFERENCES abstractChannel (abstractChannelID )
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
+  INDEX ndx_channel_abstractChannelID (abstractChannelID ASC) )
+--  CONSTRAINT fk_channel_abstractChannelID
+--    FOREIGN KEY (abstractChannelID )
+--    REFERENCES abstractChannel (abstractChannelID )
+--    ON DELETE SET NULL
+--    ON UPDATE NULL)
 ENGINE = InnoDB;
 
 
