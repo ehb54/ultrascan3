@@ -533,6 +533,8 @@ bool US_Database::test_connect( void )
       QMessageBox::information( this,
         tr( "Database Connectiom" ),
         tr( "The connection was successful." ) );
+
+      pb_save->setEnabled( true );
    }
    else
       QMessageBox::warning( this,
