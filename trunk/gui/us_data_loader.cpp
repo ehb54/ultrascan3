@@ -229,6 +229,17 @@ bool US_DataLoader::load_edit( void )
    { 
       US_Passwd   pw;
       US_DB2      db( pw.getPasswd() );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::information( this,
+            tr( "DB Connection Problem" ),
+            tr( "There was an error connecting to the database:\n" )
+            + db.lastError() );
+
+         return false;
+      }
+
       QStringList query;
 
       for ( int ii = 0; ii < indexes.size(); ii++ )
@@ -486,6 +497,16 @@ void US_DataLoader::scan_dbase_edit()
 {
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+         tr( "DB Connection Problem" ),
+         tr( "There was an error connecting to the database:\n" )
+         + db.lastError() );
+      return;
+   }
+
    QStringList query;
    QStringList edtIDs;
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
