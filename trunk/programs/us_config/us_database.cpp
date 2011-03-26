@@ -28,12 +28,16 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
      close();
   }
 
+  QBoxLayout* topbox = new QVBoxLayout( this );
+  topbox->setSpacing( 2 );
+
   // Set up the database list window
   QLabel* banner = us_banner( tr( "Database List" ) );
-
-  QBoxLayout* topbox = new QVBoxLayout( this );
   topbox->addWidget( banner );
-  topbox->setSpacing( 2 );
+
+  QLabel* banner2 = us_banner( 
+        tr( "(Doubleclick for details and set the default)" ), -1 );
+  topbox->addWidget( banner2 );
 
   lw_entries = new QListWidget();
   lw_entries->setSortingEnabled( true );
