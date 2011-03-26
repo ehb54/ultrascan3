@@ -253,6 +253,13 @@ QString US_LoadDB::investigator_name( const QString& id )
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
 
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Connection Problem" ),
+           tr( "Could not connect to databasee \n" ) + db.lastError() );
+         return QString();
+      }
+
       QStringList q( "get_person_info" );
       q << id;
       db.query( q );

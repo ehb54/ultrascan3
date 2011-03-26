@@ -809,6 +809,13 @@ void US_Edit::load( void )
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
 
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Connection Problem" ),
+           tr( "Could not connect to database \n" ) + db.lastError() );
+         return;
+      }
+
       QStringList query;
       query << "get_experiment_info_by_runID" << runID;
       db.query( query );

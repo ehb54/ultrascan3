@@ -453,6 +453,15 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
       {
          US_Passwd pw;
          US_DB2    db( pw.getPasswd() );
+
+         if ( db.lastErrno() != US_DB2::OK )
+         {
+            QMessageBox::information( this,
+               tr( "Database Error" ),
+               tr( "The following error was returned:\n" ) + db.lastError() );
+            return; 
+         }
+
          result = analyte.load( true, guid, &db );
       }
       else
@@ -1556,6 +1565,15 @@ void US_AnalyteGui::save( void )
    {
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
+      
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::information( this,
+            tr( "Database Error" ),
+            tr( "The following error was returned:\n" ) + db.lastError() );
+         return; 
+      }
+
       result = analyte.write( true, "", &db );
    }
    else

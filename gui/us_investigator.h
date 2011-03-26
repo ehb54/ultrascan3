@@ -44,13 +44,6 @@ class US_EXTERN US_Investigator : public US_WidgetsDialog
          QString organization; //!< Investigator's organization
       };
 
-      //! \brief A static program to return a person's name
-      //! \param ID The index in the database for this person
-      //! \param lname The last name of the investigator
-      //! \param fname The first name of the investigator
-      //! \return The success of the lookup
-      static bool get_person_info( int, QString&, QString& ); 
-
    signals:
       //! \brief A signal that returns data to the invoking program
       //! \param investigatorID The index in the database for this person

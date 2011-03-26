@@ -516,24 +516,3 @@ bool US_Investigator::changed( void )
    
    return false;
 }
-
-bool US_Investigator::get_person_info( int ID, QString& lname, QString& fname )
-{
-   US_Passwd   pw;
-   QString     masterPW  = pw.getPasswd();
-   US_DB2      db( masterPW );  // New constructor
-
-   QStringList query;
-   query << "get_person_info" << QString::number( ID ); 
-
-   db.query( query );
-
-   if ( db.next() )
-   {
-      fname = db.value( 0 ).toString();
-      lname = db.value( 1 ).toString();
-      return true;
-   }
-
-   return false;
-}
