@@ -140,6 +140,10 @@ void US_Advanced::save()
    US_Settings::set_us_debug(       sb_debug   ->value() );
    US_Settings::set_advanced_level( sb_advanced->value() );
    US_Settings::set_threads(        sb_threads ->value() );
+
+   QMessageBox::information( this,
+         tr( "Settings Saved" ),
+         tr( "The settings have been saved." ) );
 }
 
 void US_Advanced::help( void )
