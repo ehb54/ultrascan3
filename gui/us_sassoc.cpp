@@ -359,7 +359,7 @@ void US_Sassoc::save( void )
    
    if ( f.exists() )
    {
-      if ( ! QMessageBox::warning( this, 
+      if ( QMessageBox::warning( this, 
                tr( "Warning" ), 
                tr( "Attention:\nThis file exists already!\n\n" )
                + filename +
