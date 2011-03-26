@@ -6,6 +6,9 @@
 /// The version of UltraScan
 #define US_Version QString("Pre-Alpha")
 
+// The directory/key for UltraScan settings
+#define US3 QString( "UltraScan3" )
+
 // Define the platform
 #ifdef SPARC
   #define PLATFORM "sparc"
