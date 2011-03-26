@@ -787,7 +787,7 @@ void US_AnalyteGui::manage_sequence( void )
 
 void US_AnalyteGui::update_sequence( QString seq )
 {
-   seq = seq.toLower().remove( QRegExp( "\\s" ) );
+   seq = seq.toLower().remove( QRegExp( "[\\s0-9]" ) );
    QString check = seq;
 
    if ( seq == analyte.sequence ) return;
@@ -795,12 +795,15 @@ void US_AnalyteGui::update_sequence( QString seq )
    switch ( analyte.type )
    {
       case US_Analyte::PROTEIN:
-         seq.remove( QRegExp( "[^a-z\\+\\-\\?\\@]" ) );
+         seq.remove( QRegExp( "[^a-z\\+\\?\\@]" ) );
          break;
 
       case US_Analyte::DNA:
+         seq.remove( QRegExp( "[^acgt]" ) );
+         break;
+
       case US_Analyte::RNA:
-         seq.remove( QRegExp( "[^acgtu]" ) );
+         seq.remove( QRegExp( "[^acgu]" ) );
          break;
 
       case US_Analyte::CARBOHYDRATE:
@@ -809,14 +812,42 @@ void US_AnalyteGui::update_sequence( QString seq )
 
    if ( check != seq )
    {
-      QMessageBox::information( this,
+      int response = QMessageBox::question( this,
          tr( "Attention" ), 
          tr( "There are invalid characters in the sequence!\n"
-             "Please fix this error and try again..." ) );
-      return;
+             "Invalid characters will be removed\n"
+             "Do you want to continue?" ), 
+         QMessageBox::Yes, QMessageBox::No );
+
+      if ( response == QMessageBox::No ) return;
    }
 
-   analyte.sequence = seq;
+   // Reformat the sequence
+   const int  gsize = 6;
+   const int  lsize = 5;
+
+   // Groups of gsize nucleotides
+   int     segments = ( seq.size() + gsize - 1 ) / gsize;
+   int     p        = 0;
+   QString s;
+
+   for ( int i = 0; i < segments; i++ )
+   {
+      QString t;
+
+      if ( i % lsize == 0 )
+         s += t.sprintf( "%04i ", i * gsize );
+     
+      s += seq.mid( p, gsize );
+      p += gsize;
+      
+      if ( i % lsize == lsize - 1 )
+         s.append( "\n" );
+      else
+         s.append( " " );
+   }
+
+   analyte.sequence = s;
 
    switch ( analyte.type )
    {
