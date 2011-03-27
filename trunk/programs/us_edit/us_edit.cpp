@@ -129,7 +129,7 @@ US_Edit::US_Edit() : US_Widgets()
    lb_gaps = us_label( tr( "Threshold for Scan Gaps" ), -1 );
    specs->addWidget( lb_gaps, s_row, 0, 1, 2 );
 
-   ct_gaps = us_counter ( 1, 10.0, 100.0 ); 
+   ct_gaps = us_counter ( 1, 50.0, 100.0 ); 
    ct_gaps->setStep ( 10.0 );
    specs->addWidget( ct_gaps, s_row++, 2, 1, 2 );
 
@@ -366,7 +366,8 @@ void US_Edit::reset( void )
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
-   ct_gaps->setValue( 0.4 );
+   lb_gaps->setText( tr( "Threshold for Scan Gaps" ) );
+   ct_gaps->setValue( 50.0 );
 
    ct_from->disconnect();
    ct_from->setMinValue( 0 );
@@ -466,7 +467,10 @@ void US_Edit::reset_triple( void )
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
-   ct_gaps->setValue( 0.4 );
+   if ( dataType == "IP" )
+      ct_gaps->setValue( 0.4 );
+   else
+      ct_gaps->setValue( 50.0 );
 
    ct_from->disconnect();
    ct_from->setMinValue( 0 );
@@ -775,7 +779,7 @@ void US_Edit::load( void )
       
       ct_gaps->disconnect   ();
       ct_gaps->setRange     ( 10.0, 100.0, 10.0 );
-      ct_gaps->setValue     ( 10.0 );
+      ct_gaps->setValue     ( 50.0 );
       ct_gaps->setNumButtons( 1 );
    }
 
