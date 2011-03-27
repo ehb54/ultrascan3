@@ -10,6 +10,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
 {
    original = includes;
    finished = false;
+   current.clear();
 
    setWindowTitle( tr( "Scan Exclusion Profile Editor" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -19,7 +20,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    main->setContentsMargins( 2, 2, 2, 2 );
 
    int row       = 0;
-   int scanCount = includes.size();
+   int scanCount = original.size();
 
    // Row
    QLabel* lb_banner = us_banner( tr( "Create a Scan Exclusion Profile" ) );
@@ -29,8 +30,11 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    QLabel* lb_start = us_label( tr( "Start Exclusion at Scan:" ) );
    main->addWidget( lb_start, row, 0 );
 
-   ct_start = us_counter( 2, 0.0, scanCount, 0.0 );
+   ct_start = us_counter( 3, 1.0, scanCount, 1.0 );
    ct_start->setStep( 1.0 );
+   QFontMetrics fm( ct_start->font() );
+   ct_start->setMinimumWidth( fm.maxWidth() * 10 );
+
    connect( ct_start, SIGNAL( valueChanged ( double ) ),
                       SLOT  ( update_start ( double ) ) );
    main->addWidget( ct_start, row++, 1 );
@@ -39,7 +43,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    QLabel* lb_stop = us_label( tr( "Stop Exclusion at Scan:" ) );
    main->addWidget( lb_stop, row, 0 );
 
-   ct_stop = us_counter( 2, 0.0, scanCount, 0.0 );
+   ct_stop = us_counter( 3, 1.0, scanCount, scanCount );
    ct_stop->setStep( 1.0 );
    connect( ct_stop, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( update_stop  ( double ) ) );
@@ -86,6 +90,10 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( terminate() ) );
    buttons->addWidget( pb_cancel );
 
+   QPushButton* pb_apply = us_pushbutton( tr( "Apply" ) );
+   connect( pb_apply, SIGNAL( clicked() ), SLOT( apply() ) );
+   buttons->addWidget( pb_apply );
+
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( done() ) );
    buttons->addWidget( pb_accept );
@@ -105,7 +113,7 @@ void US_ExcludeProfile::update_start( double v )
    update();
 }
 
-void US_ExcludeProfile::update_stop( double v)
+void US_ExcludeProfile::update_stop( double v )
 {
    if ( ct_start->value() > v )
    {
@@ -117,20 +125,25 @@ void US_ExcludeProfile::update_stop( double v)
    update();
 }
 
+void US_ExcludeProfile::apply( void )
+{
+   current = excludes;
+   ct_start->setValue( 1.0 );
+   ct_stop ->setValue( original.size() );
+   ct_nth  ->setValue( 1.0 );
+}
+
 void US_ExcludeProfile::update( double /* unused */ )
 {
-   int start = (int)ct_start->value();
-   int stop  = (int)ct_stop ->value();
+   int start = (int)ct_start->value() - 1;  // Excludes are 0 based
+   int stop  = (int)ct_stop ->value() - 1;
    int nth   = (int)ct_nth  ->value();
 
-   QList< int > excludes;
+   excludes = current;
 
    // Handle nth
-   if ( start > 0 )
-   {
-     for ( int i = start; i <= stop; i++ )
-        if ( i % nth == 0 ) excludes << ( i - 1 );
-   }
+   for ( int i = start + 1; i <= stop; i++ )
+      if ( ( i - start ) % nth != 0  &&  ! excludes.contains( i ) ) excludes << i;
 
    int remaining = original.size() - excludes.size();
    int excluded  = excludes.size();
@@ -161,8 +174,13 @@ void US_ExcludeProfile::update( double /* unused */ )
 
 void US_ExcludeProfile::reset( void )
 {
-   ct_stop->setValue( 0.0 );
-   ct_nth ->setValue( 1.0 );
+   int scanCount = original.size();
+   excludes.clear();
+   current.clear();
+
+   ct_start->setValue( 1.0 );
+   ct_stop ->setValue( scanCount );
+   ct_nth  ->setValue( 1.0 );
    QList< int > excludes;
    emit update_exclude_profile( excludes );
 }
