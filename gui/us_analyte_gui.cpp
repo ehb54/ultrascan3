@@ -498,17 +498,7 @@ void US_AnalyteGui::new_analyte( void )
    if ( ! rb_protein->isChecked() ) analyte.vbar20 = 0.55;  // Empirical value
 
    saved_analyte = a;
-
-   files        << "";
-   filenames    << "";
-   descriptions << analyte.description;
-   GUIDs        << "";
-
    populate();
-
-   le_search->setText( "" );
-   search();
-   lw_analytes->setCurrentRow( lw_analytes->count() - 1 );
 }
 
 void US_AnalyteGui::check_db( void )
@@ -1087,7 +1077,7 @@ QString US_AnalyteGui::get_filename( const QString& path, const QString& guid )
             {
                QXmlStreamAttributes a = xml.attributes();
 
-               if ( a.value( "guid" ).toString() == guid )
+               if ( a.value( "analyteGUID" ).toString() == guid )
                   return path + "/" + f_names[ i ];
             }
          }
