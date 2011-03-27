@@ -48,6 +48,8 @@ class US_EXTERN US_RunDetails2 : public US_WidgetsDialog
          const { return seconds < other.seconds; };
       };
 
+      bool         temp_warn;
+
       enum pType { COMBINED, TEMPERATURE, RPM, INTERVAL };
       pType        plotType;
 

@@ -21,7 +21,8 @@ US_RunDetails2::US_RunDetails2( const QVector< US_DataIO2::RawData >& data,
    main->setSpacing        ( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
 
-   plotType = TEMPERATURE;
+   plotType  = TEMPERATURE;
+   temp_warn = true;
    int row  = 0;
 
    // Plot Rows
@@ -352,7 +353,11 @@ void US_RunDetails2::check_temp( double min, double max )
       lb_red  ->setPalette( QPalette( Qt::red ) ); 
       lb_green->setPalette( QPalette( QColor( 0, 0x44, 0 ) ) ); // Dark Green
 
-      QMessageBox::warning( this, 
+      if ( temp_warn )
+      {
+         temp_warn = false;
+
+         QMessageBox::warning( this, 
             tr( "Temperature Problem" ),
             tr( "The temperature in this run varied over the course\n"
                 "of the run to a larger extent than allowed by the\n"
@@ -360,6 +365,7 @@ void US_RunDetails2::check_temp( double min, double max )
                 + QString::number( US_Settings::tempTolerance(), 'f', 1 )
                 + " " + DEGC + tr( ". The accuracy of experimental\n"
                 "results may be affected significantly." ) );
+      }
    }
 }
 
