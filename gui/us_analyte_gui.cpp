@@ -23,7 +23,9 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    setPalette( US_GuiSettings::frameColor() );
    setAttribute( Qt::WA_DeleteOnClose );
 
-   personID = US_Settings::us_inv_ID();
+   personID      = US_Settings::us_inv_ID();
+   analyte       = US_Analyte();
+   saved_analyte = analyte;
 
    QPalette normal = US_GuiSettings::editColor();
 
@@ -493,6 +495,8 @@ void US_AnalyteGui::new_analyte( void )
    if ( rb_dna ->isChecked() ) analyte.type = US_Analyte::DNA;
    if ( rb_carb->isChecked() ) analyte.type = US_Analyte::CARBOHYDRATE;
 
+   if ( ! rb_protein->isChecked() ) analyte.vbar20 = 0.55;  // Empirical value
+
    saved_analyte = a;
 
    files        << "";
@@ -734,7 +738,9 @@ void US_AnalyteGui::reset( void )
    le_protein_mw      ->clear();
    le_protein_vbar20  ->clear();
    le_protein_vbar    ->clear();
-   le_protein_temp    ->setText( "20.0" );
+   
+   if ( ! signal_wanted ) le_protein_temp->setText( "20.0" );
+
    le_protein_residues->clear();
 
    ct_sodium          ->setValue( 0.0 );
@@ -869,7 +875,6 @@ void US_AnalyteGui::update_sequence( QString seq )
 
       case US_Analyte::DNA:
       case US_Analyte::RNA:
-         parse_dna();
          update_nucleotide();
          break;
 
@@ -910,6 +915,8 @@ void US_AnalyteGui::update_nucleotide( double /* value */ )
 void US_AnalyteGui::update_nucleotide( void )
 {
    if ( inReset ) return;
+
+   parse_dna();
 
    bool isDNA             = rb_dna       ->isChecked();
    analyte.doubleStranded = cb_stranded  ->isChecked();
@@ -1018,6 +1025,8 @@ void US_AnalyteGui::update_nucleotide( void )
       if ( analyte.doubleStranded )  MW -= 77.96; 
    }
 
+   if ( analyte.sequence.isEmpty() ) MW = 0;
+
    QString s;
 
    if ( analyte.doubleStranded )
@@ -1095,28 +1104,66 @@ QString US_AnalyteGui::get_filename( const QString& path, const QString& guid )
 void US_AnalyteGui::more_info( void )
 {
    US_Math2::Peptide p;
-   double temperature =  le_protein_temp->text().toDouble();
-   US_Math2::calc_vbar( p, analyte.sequence, temperature );
+   double            temperature;
+
+   if ( analyte.type == US_Analyte::PROTEIN )
+   {
+      temperature = le_protein_temp->text().toDouble();
+      US_Math2::calc_vbar( p, analyte.sequence, temperature );
+   }
+   else
+      temperature = 20.0;
+
 
    QString s;
    QString s1 =
              "***************************************************\n"     +
          tr( "*            Analyte Analysis Results             *\n" )   +
              "***************************************************\n\n\n" +
-         tr( "Report for:           " ) + analyte.description + "\n\n" +
+         tr( "Report for:           " ) + analyte.description + "\n\n" ;
 
-         tr( "Number of Residues:   " ) + s.sprintf( "%i", p.residues ) + " AA\n";
-   s1 += tr( "Molecular Weight:     " ) + s.sprintf( "%i", (int)p.mw )  +
-         tr( " Dalton\n" ) +
+   
+   if ( analyte.type == US_Analyte::PROTEIN )
+   {
+      s1 += tr( "Number of Residues:   " ) + s.sprintf( "%i", p.residues ) + " AA\n";
+      s1 += tr( "Molecular Weight:     " ) + s.sprintf( "%i", (int)p.mw )  +
+            tr( " Dalton\n" ) +
          
-         tr( "V-bar at 20 " ) + DEGC + ":    " + 
-              QString::number( p.vbar20, 'f', 6 )   + tr( " cm^3/g\n" ) +
-         
-         tr( "V-bar at " ) + QString::number( temperature, 'f', 2 ) + " " + 
-             DEGC + ": " + QString::number( p.vbar, 'f', 6 ) + 
-             tr( " cm^3/g\n\n" ) +
+            tr( "V-bar at 20.0 " ) + DEGC + ":     " + 
+                 QString::number( p.vbar20, 'f', 4 )   + tr( " cm^3/g\n" );
 
-         tr( "Extinction coefficients for the denatured analyte:\n" 
+      // Write overridden value if applicable
+      bool   override = false;
+      double vbar20   = le_protein_vbar20->text().toDouble();
+
+      if ( fabs( vbar20 - p.vbar20 ) > 1e-4 ) override = true;
+
+      if ( override )
+         s1 += tr( "V-bar at 20.0 " ) + DEGC + ":     " +
+               QString::number( vbar20, 'f', 4 )     + 
+               tr( " cm^3/g (override)\n" );
+
+      if ( temperature != 20.0 )
+      {
+         s1+=     tr( "V-bar at " ) + QString::number( temperature, 'f', 1 ) + " " + 
+                      DEGC + ":     " + QString::number( p.vbar, 'f', 4 ) + 
+                      tr( " cm^3/g\n" );
+
+         if ( override )
+            s1+=  tr( "V-bar at " ) + QString::number( temperature, 'f', 1 ) + " " + 
+                      DEGC + ":     " + le_protein_vbar->text() + 
+                      tr( " cm^3/g (override)\n" );
+      }
+   }
+   else
+   {
+      s1 += tr( "Molecular Weight:    " ) + le_nucle_mw->text() + "\n" +
+          
+            tr( "V-bar:                " ) + le_nucle_vbar->text() + tr( " cm^3/g\n" );
+         
+   }
+
+   s1 += tr( "\nExtinction coefficients for the denatured analyte:\n" 
              "  Wavelength (nm)   OD/(mol cm)\n" );
 
    QList< double > keys = analyte.extinction.keys();
@@ -1159,47 +1206,62 @@ void US_AnalyteGui::more_info( void )
    }
 
    s1 += tr( "\nComposition: \n\n" );
-   s1 += tr( "Alanine:        " )  + s.sprintf( "%3i", p.a ) + "  ";
-   s1 += tr( "Arginine:       " )  + s.sprintf( "%3i", p.r ) + "\n";
-         
-   s1 += tr( "Asparagine:     " )  + s.sprintf( "%3i", p.n ) + "  ";
-   s1 += tr( "Aspartate:      " )  + s.sprintf( "%3i", p.d ) + "\n";
-         
-   s1 += tr( "Asparagine or \n" )  +
-         tr( "Aspartate:      " )  + s.sprintf( "%3i",p.b ) + "\n";
-         
-   s1 += tr( "Cysteine:       " )  + s.sprintf( "%3i",p.c ) + "  ";
-   s1 += tr( "Glutamate:      " )  + s.sprintf( "%3i", p.e ) + "\n";
-         
-   s1 += tr( "Glutamine:      " )  + s.sprintf( "%3i", p.q ) + "  ";
-   s1 += tr( "Glycine:        " )  + s.sprintf( "%3i", p.g ) + "\n";
-        
-   s1 += tr( "Glutamine or  \n" )  +  
-         tr( "Glutamate:      " )  + s.sprintf( "%3i", p.z ) + "\n";
-         
-   s1 += tr( "Histidine:      " )  + s.sprintf( "%3i", p.h ) + "  ";
-   s1 += tr( "Isoleucine:     " )  + s.sprintf( "%3i", p.i ) + "\n";
-         
-   s1 += tr( "Leucine:        " )  + s.sprintf( "%3i", p.l ) + "  ";
-   s1 += tr( "Lysine:         " )  + s.sprintf( "%3i", p.k ) + "\n";
-         
-   s1 += tr( "Methionine:     " )  + s.sprintf( "%3i", p.m ) + "  ";
-   s1 += tr( "Phenylalanine:  " )  + s.sprintf( "%3i", p.f ) + "\n";
-         
-   s1 += tr( "Proline:        " )  + s.sprintf( "%3i", p.p ) + "  ";
-   s1 += tr( "Serine:         " )  + s.sprintf( "%3i", p.s ) + "\n";
-         
-   s1 += tr( "Threonine:      " )  + s.sprintf( "%3i", p.t ) + "  ";
-   s1 += tr( "Tryptophan:     " )  + s.sprintf( "%3i", p.w ) + "\n";
-         
-   s1 += tr( "Tyrosine:       " )  + s.sprintf( "%3i", p.y ) + "  ";
-   s1 += tr( "Valine:         " )  + s.sprintf( "%3i", p.v ) + "\n";
-         
-   s1 += tr( "Unknown:        " )  + s.sprintf( "%3i", p.x ) + "  ";
-   s1 += tr( "Hao:            " )  + s.sprintf( "%3i", p.j ) + "\n";
-         
-   s1 += tr( "Delta-linked Ornithine:" ) + QString::number( p.o ) + "\n";
-        
+
+   if ( analyte.type == US_Analyte::PROTEIN )
+   {
+
+      s1 += tr( "Alanine:        " )  + s.sprintf( "%3i", p.a ) + "  ";
+      s1 += tr( "Arginine:       " )  + s.sprintf( "%3i", p.r ) + "\n";
+            
+      s1 += tr( "Asparagine:     " )  + s.sprintf( "%3i", p.n ) + "  ";
+      s1 += tr( "Aspartate:      " )  + s.sprintf( "%3i", p.d ) + "\n";
+            
+      s1 += tr( "Asparagine or \n" )  +
+            tr( "Aspartate:      " )  + s.sprintf( "%3i", p.b ) + "\n";
+            
+      s1 += tr( "Cysteine:       " )  + s.sprintf( "%3i", p.c ) + "  ";
+      s1 += tr( "Glutamate:      " )  + s.sprintf( "%3i", p.e ) + "\n";
+            
+      s1 += tr( "Glutamine:      " )  + s.sprintf( "%3i", p.q ) + "  ";
+      s1 += tr( "Glycine:        " )  + s.sprintf( "%3i", p.g ) + "\n";
+           
+      s1 += tr( "Glutamine or  \n" )  +  
+            tr( "Glutamate:      " )  + s.sprintf( "%3i", p.z ) + "\n";
+            
+      s1 += tr( "Histidine:      " )  + s.sprintf( "%3i", p.h ) + "  ";
+      s1 += tr( "Isoleucine:     " )  + s.sprintf( "%3i", p.i ) + "\n";
+            
+      s1 += tr( "Leucine:        " )  + s.sprintf( "%3i", p.l ) + "  ";
+      s1 += tr( "Lysine:         " )  + s.sprintf( "%3i", p.k ) + "\n";
+            
+      s1 += tr( "Methionine:     " )  + s.sprintf( "%3i", p.m ) + "  ";
+      s1 += tr( "Phenylalanine:  " )  + s.sprintf( "%3i", p.f ) + "\n";
+            
+      s1 += tr( "Proline:        " )  + s.sprintf( "%3i", p.p ) + "  ";
+      s1 += tr( "Serine:         " )  + s.sprintf( "%3i", p.s ) + "\n";
+            
+      s1 += tr( "Threonine:      " )  + s.sprintf( "%3i", p.t ) + "  ";
+      s1 += tr( "Tryptophan:     " )  + s.sprintf( "%3i", p.w ) + "\n";
+            
+      s1 += tr( "Tyrosine:       " )  + s.sprintf( "%3i", p.y ) + "  ";
+      s1 += tr( "Valine:         " )  + s.sprintf( "%3i", p.v ) + "\n";
+            
+      s1 += tr( "Unknown:        " )  + s.sprintf( "%3i", p.x ) + "  ";
+      s1 += tr( "Hao:            " )  + s.sprintf( "%3i", p.j ) + "\n";
+            
+      s1 += tr( "Delta-linked Ornithine:" ) + QString::number( p.o ) + "\n";
+   }
+   else
+   {
+      s1 += tr( "Adenine:        " )  + s.sprintf( "%3i", p.a ) + "  ";
+      s1 += tr( "Cytosine:       " )  + s.sprintf( "%3i", p.c ) + "\n";
+            
+      s1 += tr( "Guanine:        " )  + s.sprintf( "%3i", p.g ) + "  ";
+      s1 += tr( "Thymine:        " )  + s.sprintf( "%3i", p.t ) + "\n";
+            
+      s1 += tr( "Uracil:         " )  + s.sprintf( "%3i", p.u ) + "\n";
+   }
+
    US_EditorGui* dialog = new US_EditorGui();
    dialog->editor->e->setFont( QFont( "monospace", US_GuiSettings::fontSize()));
    dialog->editor->e->setText( s1 );
