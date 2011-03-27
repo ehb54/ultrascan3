@@ -30,6 +30,8 @@ class US_EXTERN US_ExcludeProfile : public US_WidgetsDialog
 
       bool         finished;
       QList< int > original;
+      QList< int > excludes;
+      QList< int > current;
       
       US_Help      showHelp;
 
@@ -38,6 +40,7 @@ class US_EXTERN US_ExcludeProfile : public US_WidgetsDialog
       void update_start( double );
       void update_stop ( double );
       void terminate   ( void );
+      void apply       ( void );
       void done        ( void );
       void reset       ( void );
       void help        ( void )
