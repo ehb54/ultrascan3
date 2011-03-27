@@ -222,8 +222,11 @@ void US_LoadDB::limit_data( const QString& search )
    for ( int i = 0; i < tree->topLevelItemCount(); i++ )
    {
       QTreeWidgetItem* item = tree->topLevelItem( i );
-      bool found = ( search.isEmpty() ) ? true 
-                                        : item->text( 0 ).contains( search );
+
+      bool found = ( search.isEmpty() ) 
+         ? true 
+         : item->text( 0 ).contains( search, Qt::CaseInsensitive );
+
       item->setHidden( ! found );
    }
 }
