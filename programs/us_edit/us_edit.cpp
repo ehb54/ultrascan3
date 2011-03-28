@@ -1708,6 +1708,9 @@ void US_Edit::set_baseline( void )
 // Plot all curves
 void US_Edit::plot_all( void )
 {
+   if ( plot->btnZoom->isChecked() )
+      plot->btnZoom->setChecked( false );
+
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); 
    v_line = NULL;
 
@@ -1763,6 +1766,9 @@ void US_Edit::plot_all( void )
 // Plot curves within the picked range
 void US_Edit::plot_range( void )
 {
+   if ( plot->btnZoom->isChecked() )
+      plot->btnZoom->setChecked( false );
+
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    v_line = NULL;
 
@@ -1875,6 +1881,9 @@ void US_Edit::plot_range( void )
 // Plot the last picked curve
 void US_Edit::plot_last( void )
 {
+   if ( plot->btnZoom->isChecked() )
+      plot->btnZoom->setChecked( false );
+
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    v_line = NULL;
    //grid = us_grid( data_plot ); 
