@@ -1,7 +1,119 @@
 [% INCLUDE header.us3
    title = 'UltraScan III Data Editor'
 %]
-    <p> <img src="images/us_edit.png" alt="Data Editor Window"/> </p>
- 
+<p> <img src="images/us_edit.png" alt="Data Editor Window"/> </p>
+
+<p>All experimental data aquired on the XL-A require substantial
+editing and preliminary diagnostics before the data can be successfully
+analyzed with various analysis methods. UltraScan assists you in this process
+by handling most essential diagnostics and editing steps automatically, but
+permits you to intervene where necessary.</p>
+
+<p>Note:  When editing, the plot may be zoomed by selecting the Zoom button on
+the graph and dragging the mouse over the area desired.  This operation may be
+repeated as needed.  Each right mouse click will un-zoom one level.  Clicking
+on the Zoom button again at any zoom level will restore the un-zoomed
+graph.</p>
+
+<p>When zoomed, the graph may be panned by pressing the center mouse button
+(usually the scroll wheel) and dragging.</p>
+
+<p>Edit data by following these steps:</p>
+
+<ol> 
+
+  <li><strong>Step 1</strong>: Load data from the database or a local data
+  <emphasis>directory</emphasis> that contains the UltraScan 3 data files
+  previosuly converted from the Beckman raw data.  If looking at the file
+  system, these files have an ".auc" filename extension.</li>
+
+  <li><strong>Step 2</strong>: Select the Cell / Channel / Wavelengh
+  combination to edit.</li>
+
+  <li><strong>Step 3</strong>: Specify the meniscus of the data by holding
+  down the <emphasis>Control</emphasis> key and using the left mouse button.
+  The meniscus value may be manually adjusted with the keyboard.</li>
+
+  <li><strong>Step 4</strong>: If the data being edited is interference data,
+  specify the left and right edges of the air gap area of the data.</li>
+
+  <li><strong>Step 5</strong>: Specify the left and right edges of the 
+  data to be analyzed.</li>
+
+  <li><strong>Step 6</strong>: Specify the location of data plateau.</li>
+
+  <li><strong>Step 7</strong>: Specify the location of data baseline.</li>
+
+  <li><strong>Step 8</strong>: Make any other optional adjustments to the data
+  that are necesary and save the edit profile.  When saving, a pop-up message
+  is presented asking for an edit ID.  The default for this ID is the current date
+  and time in the form of YYMMddhhmm (Year / Month / Day / Hour / Minute).
+
+</ol>
+
+<p>The above process may be reset to any point by pressing the appropriate
+button at the associated specification entry.</p>
+
+<p>Repeat the above process for each Cell / Channel / Wavelengh combination in
+the data set.  </p>
+
+
+<p>Optional Controls</p>
+
+<ul>
+
+   <li>Threshold for Scan Gaps.  This spin button controls the check for
+   consecutive interpolated data.  If more than the specified number of
+   consecutive points on a scan have been interpolated, a warning is
+   displayed when the data is loaded.</li>
+
+   <li>Run Details.  This button brings up a child window that describes
+   additional information associated with the data.  The data description
+   may be updated in this window.</li>
+
+   <li>Scan Controls.  These controls allow setting the focus for excluding
+   scans or changing individual data points.   
+     <ul>
+
+       <li>The <emphasis>Edit Single Scan</emphais> button displays a window
+       where individual points may be changed by a Control-Left_Click-Drag
+       operation.</li>
+   
+       <li>  The <emphasis>Exclusion Profile</emphais> button displays a
+       window where additional options for scan exclusion are available.</li>
+   
+       <li>  The <emphasis>Include All</emphais> button undoes any prior 
+       exclusion operations.</li>
+   
+     </ul>
+   </li>
+
+   <li>Determine RI Noise. This button analyzes all scans to determine any
+   radial invariant noise.  It brings up a window that shows polynomial
+   coefficients for a best fit of noise data.</li>
+   
+   <li>Subtract Noise.  This button removes the calculated noise from the
+   current data set.</li>
+   
+   <li>Invert Sign.  This button inverts the measured data.</li>
+   
+   <li>Remove Spikes.  This button determines if data readings are beyond 
+   acceptable limits and adjusts outlying data points to an interpolated value.</li>
+   
+   <li>Undo Noise and Spikes.  The button removes any corrections made to the 
+   data by noise or spike calculations.</li>
+   
+   <li>Mark Data as Floating.  This button sets a flag to mark the data as 
+   floating.</li>
+   
+   <li>Apply Prior Edits.  This button requests the user to specify a saved
+   set of edit operations and applies them to the current data.</li>
+   
+   <li>Reset.  This button removes all data and sets the program to a known
+   starting point.</li>
+
+
+</ul>
+
 
 [% INCLUDE footer.us3 %]
