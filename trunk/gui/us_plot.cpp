@@ -190,9 +190,20 @@ void US_Plot::svg( void )
    {
       if ( fileName.right( 4 ) != ".svg" ) fileName += ".svg";
       QSvgGenerator generator;
-      generator.setFileName( fileName );
-      generator.setSize( plot->size() );
 
+      // Set resolution to screen resolution
+      double in  = (double)qApp->desktop()->widthMM() / 25.4;
+      double px  = (double)qApp->desktop()->width();
+      int    res = qRound( px / in );
+
+      generator.setResolution( res );
+      generator.setFileName( fileName );
+      
+      int pw = plot->width()  + res;
+      int ph = plot->height() + res; 
+      generator.setViewBox( QRect( QPoint( 0, 0 ), QPoint( pw, ph ) ) );
+
+      generator.setSize( plot->size() );
       plot->print( generator );
    }
 }
