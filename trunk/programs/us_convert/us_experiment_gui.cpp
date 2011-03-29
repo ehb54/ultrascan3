@@ -45,6 +45,8 @@ US_ExperimentGui::US_ExperimentGui(
    QLabel* lb_label = us_label( tr( "Label:" ) );
    experiment->addWidget( lb_label, row++, 0, 1, 2 );
    le_label = us_lineedit();
+   connect( le_label, SIGNAL( textEdited ( const QString&   ) ),
+                      SLOT  ( saveLabel  ( const QString&   ) ) );
    experiment->addWidget( le_label, row++, 0, 1, 2 );
 
    // Project
@@ -278,6 +280,11 @@ void US_ExperimentGui::reset( void )
       // However, project needs to be selected, either from db or disk
       if ( expInfo.project.projectID == 0 && expInfo.project.projectGUID.isEmpty() ) 
          pb_accept       ->setEnabled( false );
+
+      // Also checking the label
+      expInfo.label = expInfo.label.trimmed();
+      if ( expInfo.label.isEmpty() )
+         pb_accept       ->setEnabled( false );
    }
 
    else
@@ -420,6 +427,15 @@ void US_ExperimentGui::assignProject( US_Project& project )
 void US_ExperimentGui::cancelProject( void )
 {
    reset();
+}
+
+// Function to update the labe associated with the current experiment
+void US_ExperimentGui::saveLabel( const QString& )
+{
+   expInfo.label = le_label->text();
+   expInfo.label = expInfo.label.trimmed();
+
+   reset();         // To get the pb_accept enable code
 }
 
 QComboBox* US_ExperimentGui::us_expTypeComboBox( void )
