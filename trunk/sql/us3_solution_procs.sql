@@ -811,7 +811,8 @@ BEGIN
     
     SELECT @OK AS status;
 
-    SELECT   analyte.analyteID, analyteGUID, description, amount, molecularWeight, vbar
+    SELECT   analyte.analyteID, analyteGUID, description, amount, 
+             molecularWeight, vbar, analyte.type
     FROM     solutionAnalyte, analyte
     WHERE    solutionAnalyte.solutionID = p_solutionID
     AND      solutionAnalyte.analyteID   = analyte.analyteID
