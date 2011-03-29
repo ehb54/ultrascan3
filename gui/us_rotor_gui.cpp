@@ -608,14 +608,14 @@ US_Rotor::Status US_RotorGui::readCalibration( int disk_db, int calibrationID )
 
 void US_RotorGui::viewReport( void )
 {
-   US_Editor *edit = new US_Editor ( US_Editor::LOAD, true );
+   US_EditorGui* edit = new US_EditorGui();
    edit->setWindowTitle( tr("Rotor Calibration Report") );
    edit->move( this->pos() + QPoint( 100, 100 ) );
-   edit->resize( 600, 500 );
-   edit->e->setFont( QFont( US_GuiSettings::fontFamily(),
-                            US_GuiSettings::fontSize() ) );
-   edit->e->setText( currentCalibration.report );
-   edit->show();
+   edit->resize( 500, 400 );
+   edit->editor->e->setFont( QFont( US_GuiSettings::fontFamily(),
+                                    US_GuiSettings::fontSize() ) );
+   edit->editor->e->setText( currentCalibration.report );
+   edit->exec();
 }
 
 void US_RotorGui::deleteCalibration( void )
