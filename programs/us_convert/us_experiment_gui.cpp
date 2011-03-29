@@ -393,6 +393,11 @@ void US_ExperimentGui::getInvestigatorInfo( void )
 
 void US_ExperimentGui::selectProject( void )
 {
+   // Save other elements on the page first
+   expInfo.label         = le_label   ->text(); 
+   expInfo.comments      = te_comment ->toPlainText();
+   expInfo.expType       = cb_expType ->currentText();
+
    US_Project project  = expInfo.project;
 
    US_ProjectGui* projInfo = new US_ProjectGui( true, US_Disk_DB_Controls::DB, project );
@@ -546,6 +551,11 @@ void US_ExperimentGui::change_instrument( int )
 
 void US_ExperimentGui::selectRotor( void )
 {
+   // Save other elements on the page first
+   expInfo.label         = le_label   ->text(); 
+   expInfo.comments      = te_comment ->toPlainText();
+   expInfo.expType       = cb_expType ->currentText();
+
    US_Rotor::Rotor rotor;
    rotor.ID = expInfo.rotorID;
 
