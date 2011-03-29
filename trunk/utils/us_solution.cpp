@@ -113,7 +113,9 @@ void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
             analyte.amount          = a.value( "amount" ).toString().toDouble();
             analyte.mw              = a.value( "mw" ).toString().toDouble();
             analyte.vbar20          = a.value( "vbar20" ).toString().toDouble();
-            analyte.type            = a.value( "type" ).toString().toInt();
+            QString typetext        = a.value( "type" ).toString();
+            analyte.type            = (US_Analyte::analyte_t)
+                                      analyte_type( typetext );
 
             analytes << analyte;
          }
@@ -165,7 +167,8 @@ void US_Solution::readFromDB  ( int solutionID, US_DB2* db )
          analyte.amount      = db->value( 3 ).toDouble();
          analyte.mw          = db->value( 4 ).toDouble();
          analyte.vbar20      = db->value( 5 ).toDouble();
-         analyte.type        = db->value( 6 ).toInt();
+         QString typetext    = db->value( 6 ).toString();
+         analyte.type        = (US_Analyte::analyte_t)analyte_type( typetext );
 
          analytes << analyte;
       }
@@ -237,7 +240,7 @@ void US_Solution::saveToDisk( void )
          xml.writeAttribute   ( "amount", QString::number( analyte.amount  ) );
          xml.writeAttribute   ( "mw", QString::number( analyte.mw  ) );
          xml.writeAttribute   ( "vbar20", QString::number( analyte.vbar20  ) );
-         xml.writeAttribute   ( "type",   QString::number( analyte.type ) );
+         xml.writeAttribute   ( "type", analyte_typetext( (int)analyte.type ) );
          xml.writeEndElement  ();
       }
 
@@ -688,12 +691,47 @@ void US_Solution::show( void )
    qDebug() << "Analytes size = " << QString::number( analytes.size() );
    foreach( AnalyteInfo analyte, analytes )
    {
+      QString typetext = analyte_typetext( (int)analyte.type );
+
       qDebug() << "analyteID   = " << analyte.analyteID   << '\n'
                << "analyteGUID = " << analyte.analyteGUID << '\n'
                << "analyteDesc = " << analyte.analyteDesc << '\n'
                << "vbar20      = " << analyte.vbar20      << '\n'
-               << "type        = " << analyte.type        << '\n'
+               << "type        = " << typetext            << '\n'
                << "mw          = " << analyte.mw          << '\n'
                << "amount      = " << analyte.amount      << '\n';
    }
 }
+
+int US_Solution::analyte_type( QString antype )
+{
+   US_Analyte::analyte_t type = US_Analyte::PROTEIN;
+
+   if ( antype == "Protein" )
+      type = US_Analyte::PROTEIN;
+   else if ( antype == "DNA" )
+      type = US_Analyte::DNA;
+   else if ( antype == "RNA" )
+      type = US_Analyte::RNA;
+   else if ( antype == "Other" )
+      type = US_Analyte::CARBOHYDRATE;
+   
+   return (int)type;
+}
+
+QString US_Solution::analyte_typetext( int type )
+{
+   QString antype = "Protein";
+
+   if ( type == (int)US_Analyte::PROTEIN )
+      antype = "Protein";
+   else if ( type == (int)US_Analyte::DNA )
+      antype = "DNA";
+   else if ( type == (int)US_Analyte::RNA )
+      antype = "RNA";
+   else if ( type == (int)US_Analyte::CARBOHYDRATE )
+      antype = "Other";
+
+   return antype;
+}
+
