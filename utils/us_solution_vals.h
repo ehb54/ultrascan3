@@ -30,6 +30,7 @@ class US_EXTERN US_SolutionVals
       //! \brief Fetch solution/buffer values for a data set
       //! \param  dbP       Database connection pointer or NULL for local
       //! \param  edata     Pointer to edited data set
+      //! \param  soluID    Reference for returned solution ID string
       //! \param  cvbar20   Reference for returned common vbar-20 value string
       //! \param  density   Reference for returned density value string
       //! \param  viscosity Reference for returned viscosity value string
@@ -37,28 +38,30 @@ class US_EXTERN US_SolutionVals
       //! \param  errmsg    Reference for returned error message string
       //! \return           Flag for successful fetch of all values
       static bool values( US_DB2* dbP, US_DataIO2::EditedData*,
-            QString&, QString&, QString&, QString&, QString& );
+            QString&, QString&, QString&, QString&, QString&, QString& );
 
       //! \brief Get identification values for a data set from database
       //! \param  dbP       Pointer to opened database connection
       //! \param  edata     Pointer to edited data set
       //! \param  cvbar20   Reference for returned common vbar-20 value string
+      //! \param  soluID    Reference for returned solution ID string
       //! \param  bufId     Reference for returned buffer db ID value string
       //! \param  bufGuid   Reference for returned buffer GUID value string
       //! \param  bufDesc   Reference for returned buffer description string
       //! \param  errmsg    Reference for returned error message string
       static bool solinfo_db( US_DB2* dbP, US_DataIO2::EditedData*,
-            QString&, QString&, QString&, QString&, QString& );
+            QString&, QString&, QString&, QString&, QString&, QString& );
                                    
       //! \brief Get identification values for a data set from local disk
       //! \param  edata     Pointer to edited data set
       //! \param  cvbar20   Reference for returned common vbar-20 value string
+      //! \param  soluID    Reference for returned solution ID string
       //! \param  bufId     Reference for returned buffer db ID value string
       //! \param  bufGuid   Reference for returned buffer GUID value string
       //! \param  bufDesc   Reference for returned buffer description string
       //! \param  errmsg    Reference for returned error message string
       static bool solinfo_disk( US_DataIO2::EditedData*, QString&,
-            QString&, QString&, QString&, QString& );
+            QString&, QString&, QString&, QString&, QString& );
                                    
       //! \brief Get buffer values for a data set from database
       //! \param  dbP       Pointer to opened database connection

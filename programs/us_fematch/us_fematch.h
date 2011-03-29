@@ -116,6 +116,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       US_Model                    model_loaded;
       US_Noise                    ri_noise;
       US_Noise                    ti_noise;
+      US_Solution                 solution_rec;
 
       QPointer< US_ResidsBitmap > rbmapd;
       QPointer< US_PlotControl >  eplotcd;

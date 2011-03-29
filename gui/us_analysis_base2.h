@@ -46,7 +46,7 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
 
       //! The solution data corresponding to the current triple
       US_Math2::SolutionData            solution;
-      
+ 
       bool         dataLoaded;      //!< A flag to indicate data is loaded
       bool         def_local;       //!< Flag if default source is local
       bool         buffLoaded;      //!< Flag to indicate buffer is loaded
@@ -58,6 +58,8 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       QString      investig;        //!< Investigator string
 
       US_Buffer    buff;            //!< Currently loaded buffer
+
+      US_Solution  solution_rec;    //!< Current data's solution
 
       US_Noise     ri_noise;        //!< Loaded,applied radially-invariant noise
       US_Noise     ti_noise;        //!< Loaded,applied time-invariant noise

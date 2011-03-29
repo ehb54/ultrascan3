@@ -304,6 +304,7 @@ void US_GlobalEquil::load( void )
    ds_vbar20s.clear();
    ds_densits.clear();
    ds_viscos .clear();
+   ds_solIDs .clear();
 
    modelx      = 0;
    models << "";
@@ -352,11 +353,13 @@ void US_GlobalEquil::load( void )
       QString s_visc;
       QString s_comp;
       QString s_emsg;
-      US_SolutionVals::values( dbP, &dataList[ jd ],
+      QString solID;
+      US_SolutionVals::values( dbP, &dataList[ jd ], solID,
                                s_vbar, s_dens, s_visc, s_comp, s_emsg );
       ds_vbar20s << s_vbar.toDouble();
       ds_densits << s_dens.toDouble();
       ds_viscos  << s_visc.toDouble();
+      ds_solIDs  << solID;
    }
 DbgLv(1) << "  jd vbar20 density" << 0 << ds_vbar20s[0] << ds_densits[0];
 int nn=dataList.size()-1;

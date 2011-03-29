@@ -1109,3 +1109,28 @@ void US_Math2::gaussian_smoothing( QVector< double >& array, int smooth )
    }
 }
 
+// Calculate the weighted average of temperature-corrected vbars
+double US_Math2::calcCommonVbar( US_Solution& solution, double& temperature )
+{
+   double cvbar = TYPICAL_VBAR;
+   double vbsum = 0.0;
+   double wtsum = 0.0;
+
+   for ( int ii = 0; ii < solution.analytes.size(); ii++ )
+   {
+      double vb20 = solution.analytes[ ii ].vbar20;
+      // Use adjusted vbar if PROTEIN
+      double vbar = solution.analytes[ ii ].type == 0 ?
+                    US_Math2::adjust_vbar20( vb20, temperature ) :
+                    vb20;
+      double wt   = solution.analytes[ ii ].mw * solution.analytes[ ii ].amount;
+      vbsum      += ( vbar * wt );
+      wtsum      += wt;
+   }
+
+   if ( wtsum != 0.0 )
+      cvbar     = vbsum / wtsum;    // Common vbar is the weighted average
+
+   return cvbar;
+}
+

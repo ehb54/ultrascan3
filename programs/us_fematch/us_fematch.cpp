@@ -474,6 +474,7 @@ void US_FeMatch::update( int drow )
    ct_to  ->setStep( 1.0 );
 
    // set up buffer values implied from experimental data
+   QString solID;
    QString bufid;
    QString bguid;
    QString bdesc;
@@ -488,7 +489,7 @@ void US_FeMatch::update( int drow )
    US_Passwd pw;
    US_DB2* dbP = dkdb_cntrls->db() ?
                  new US_DB2( pw.getPasswd() ) : 0;
-   bufvl = US_SolutionVals::values( dbP, edata, svbar, bdens,
+   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
                                     bvisc, bcomp, errmsg );
 
    if ( bufvl )
@@ -502,6 +503,22 @@ void US_FeMatch::update( int drow )
       density     = bdens.toDouble();
       viscosity   = bvisc.toDouble();
       compress    = bcomp.toDouble();
+
+      if ( solID.isEmpty() )
+      {
+         QMessageBox::warning( this, tr( "Solution/Buffer Fetch" ),
+            tr( "Empty solution ID value!" ) );
+      }
+
+      else if ( solID.length() < 36  &&  dbP != NULL )
+      {
+         solution_rec.readFromDB( solID.toInt(), dbP );
+      }
+
+      else
+      {
+         solution_rec.readFromDisk( solID );
+      }
    }
 
    else
@@ -559,7 +576,7 @@ void US_FeMatch::data_plot( void )
    // Calculate basic parameters for other functions
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
-   solution.vbar      = le_vbar     ->text().toDouble();
+   solution.vbar20    = le_vbar     ->text().toDouble();
 
    dscan           = &edata->scanData.last();
    int    point    = US_DataIO2::index( *dscan, dataList[ drow ].x,
@@ -572,7 +589,7 @@ void US_FeMatch::data_plot( void )
 
    baseline       /= 11.0;
    double avgTemp  = edata->average_temperature();
-   solution.vbar20 = US_Math2::adjust_vbar( solution.vbar, avgTemp );
+   solution.vbar   = US_Math2::calcCommonVbar( solution_rec, avgTemp );
    US_Math2::data_correction( avgTemp, solution );
 
    // Draw curves
@@ -1490,8 +1507,8 @@ void US_FeMatch::adjust_model()
 
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
-   solution.vbar      = le_vbar     ->text().toDouble();
-   solution.vbar20    = US_Math2::adjust_vbar( solution.vbar, avgTemp );
+   solution.vbar20    = le_vbar     ->text().toDouble();
+   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
 
    US_Math2::data_correction( avgTemp, solution );
 
@@ -2372,11 +2389,12 @@ QString US_FeMatch::hydrodynamics( void ) const
 {
    // set up hydrodynamics values
    US_Math2::SolutionData solution = this->solution;
-   solution.vbar      = le_vbar     ->text().toDouble();
+   solution.vbar20    = le_vbar     ->text().toDouble();
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
    double avgTemp     = le_temp     ->text().section( " ", 0, 0 ).toDouble();
-   solution.vbar20    = solution.vbar;
+   solution.vbar      = US_Math2::calcCommonVbar( (US_Solution&)solution_rec,
+                                                  avgTemp );
    US_Math2::data_correction( avgTemp, solution );
 
    QString s = "\n" + indent( 4 ) + tr( "<h3>Hydrodynamic Settings:</h3>\n" )

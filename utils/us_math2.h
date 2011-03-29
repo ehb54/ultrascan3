@@ -5,6 +5,7 @@
 #include <QtCore>
 #include "us_extern.h"
 #include "us_dataIO2.h"
+#include "us_solution.h"
 
 #define sq(x) ((x) * (x))
 #ifndef max
@@ -113,23 +114,23 @@ class US_EXTERN US_Math2
       static void calc_vbar( Peptide&, const QString&, double );
 
       //! Adjust the vbar for temperature.  The values used in the 
-      //! unadjusted calculations are based on 25 degrees C.  We 
+      //! unadjusted calculations are based on 20 degrees C.  We 
       //! use an observed linear adjustment of 0.000425 per degreee.
       
       //! \param vbar The unadjusted vbar value
       //! \param degC The temperature used for the adjustment
       static double adjust_vbar20( double vbar, double degC )
-      { return vbar + 0.002125 + 4.25e-4 * ( degC - 25.0 ); }
+      { return vbar + 4.25e-4 * ( degC - 20.0 ); }
 
       //! The inverse of adjust_vbar20.  Returns vbar20.
       
       //! \param vbar The vbar value at the specified temperature
       //! \param degC The temperature of the sample associated with vbar
       static double adjust_vbar( double vbar, double degC )
-      { return vbar - 0.002125 - 4.25e-4 * ( degC - 25.0 ); }
+      { return vbar + 4.25e-4 * ( 20.0 - degC ); }
 
       //! \brief Correct buffer data for temperature
-      //! \param t  Temperture of solution
+      //! \param t  Temperature of solution
       //! \param d  Data to be corrected
 
       static void data_correction( double, SolutionData& );
@@ -216,6 +217,12 @@ class US_EXTERN US_Math2
       */
 
       static void gaussian_smoothing( QVector< double >&, int );
+
+      //! \brief Calculate common vbar of a solution
+      //! \param solution    Solution for which to calculate common vbar
+      //! \param temperature Average temperature of associated experiment
+      //! \return The common temperature-corrected vbar
+      static double calcCommonVbar( US_Solution&, double& );
 
       private:
 

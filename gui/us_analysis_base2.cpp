@@ -336,7 +336,7 @@ void US_AnalysisBase2::load( void )
    US_DB2*   dbP  = ( dbdisk == US_Disk_DB_Controls::DB ) ?
                     new US_DB2( pw.getPasswd() ) : 0;
 
-   bool    bufin  = US_SolutionVals::values( dbP, &dataList[ 0 ], svbar,
+   bool    bufin  = US_SolutionVals::values( dbP, &dataList[ 0 ], solID, svbar,
                                              bdens, bvisc, bcomp, errmsg );
 
    if ( bufin )
@@ -349,6 +349,25 @@ void US_AnalysisBase2::load( void )
       viscosity   = bvisc.toDouble();
       vbar        = svbar.toDouble();
       buffLoaded  = true;
+qDebug() << "SolID" << solID;
+
+      if ( solID.isEmpty() )
+      {
+         QMessageBox::warning( this, tr( "Solution/Buffer Values Fetch" ),
+            tr( "Empty solution ID value!" ) );
+      }
+
+      else if ( solID.length() < 36  &&  dbP != NULL )
+      {  // Have DB solution ID
+         solution_rec.readFromDB( solID.toInt(), dbP );
+qDebug() << "Sol-from-DB: #analytes" << solution_rec.analytes.size();
+      }
+
+      else
+      {  // Have Local solution GUID
+         solution_rec.readFromDisk( solID );
+qDebug() << "Sol-from-Local: #analytes" << solution_rec.analytes.size();
+      }
    }
 
    else
@@ -411,8 +430,13 @@ void US_AnalysisBase2::get_vbar( void )
 {
    int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                         : US_Disk_DB_Controls::Disk;
+   double avgTemp = le_temp->text().section( " ", 0, 0 ).toDouble();
+   avgTemp        = ( avgTemp > 0.0 ) ? avgTemp : NORMAL_TEMP;
+qDebug() << "Average Temp" << avgTemp;
+qDebug() << "Average Temp" << le_temp->text();
 
-   US_AnalyteGui* dialog = new US_AnalyteGui( true, QString(), dbdisk );
+   US_AnalyteGui* dialog = new US_AnalyteGui( true, QString(), dbdisk,
+                                              avgTemp );
 
    connect( dialog, SIGNAL( valueChanged( US_Analyte ) ),
                     SLOT  ( update_vbar ( US_Analyte ) ) );
@@ -515,9 +539,9 @@ void US_AnalysisBase2::data_plot( void )
 
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
-   solution.vbar      = le_vbar     ->text().toDouble();
+   solution.vbar20    = le_vbar     ->text().toDouble();
    double avgTemp     = d->average_temperature();
-   solution.vbar20    = solution.vbar;
+   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
 
    US_Math2::data_correction( avgTemp, solution );
 
@@ -1155,11 +1179,12 @@ QString US_AnalysisBase2::hydrodynamics( void ) const
 {
    // Set up hydrodynamics values
    US_Math2::SolutionData solution = this->solution;
-   solution.vbar      = le_vbar     ->text().toDouble();
+   solution.vbar20    = le_vbar     ->text().toDouble();
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
    double avgTemp     = le_temp     ->text().section( " ", 0, 0 ).toDouble();
-   solution.vbar20    = solution.vbar;
+   solution.vbar      = US_Math2::calcCommonVbar( (US_Solution&)solution_rec,
+                                                  avgTemp );
    US_Math2::data_correction( avgTemp, solution );
 
    QString s = "\n" + indent( 4 ) + tr( "<h3>Hydrodynamic Settings:</h3>\n" )
@@ -1245,8 +1270,18 @@ QString US_AnalysisBase2::scan_info( void ) const
 void US_AnalysisBase2::write_plot( const QString& fname, const QwtPlot* plot )
 {
     QSvgGenerator generator;
-    generator.setSize( plot->size() );
+    // Set resolution to screen resolution
+    double px  = (double)qApp->desktop()->width();
+    double in  = (double)qApp->desktop()->widthMM() / 25.4;
+    int    res = qRound( px / in );
+    int    pw  = plot->width()  + res;
+    int    ph  = plot->height() + res;
+qDebug() << "write_plot res" << res;
+
+    generator.setResolution( res );
     generator.setFileName( fname );
+    generator.setSize( plot->size() );
+    generator.setViewBox( QRect( QPoint( 0, 0 ), QPoint( pw, ph ) ) );
     plot->print( generator );
 }
 
