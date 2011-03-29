@@ -14,6 +14,7 @@
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "us_solution_vals.h"
+#include "us_solution_gui.h"
 
 US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 {
@@ -141,34 +142,44 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 
    // Parameters
 
-   QPushButton* pb_density   = us_pushbutton( tr( "Density"   ) );
-   connect( pb_density,   SIGNAL( clicked() ), SLOT( get_buffer() ) );
-   
-   QPushButton* pb_viscosity = us_pushbutton( tr( "Viscosity" ) );
-   connect( pb_viscosity, SIGNAL( clicked() ), SLOT( get_buffer() ) );
-   
-   QPushButton* pb_vbar      = us_pushbutton( tr( "Vbar"   ) );
-   connect( pb_vbar,      SIGNAL( clicked() ), SLOT( get_vbar()   ) );
-   
-   QLabel* lb_skipped   = us_label     ( tr( "Skipped:"  ) );
+   QPushButton* pb_solution = us_pushbutton( tr( "Solution" ) );
+   connect( pb_solution, SIGNAL( clicked() ), SLOT( get_solution() ) );
+
+   QLabel* lb_density   = us_label( tr( "Density (20" ) + DEGC + ")" );
+   QLabel* lb_viscosity = us_label( tr( "Viscosity (20" ) + DEGC + ")" );
+   QLabel* lb_vbar      = us_label( tr( "Vbar (20" ) + DEGC + ")" );
+   QLabel* lb_skipped   = us_label( tr( "Skipped:"       ) );
 
    density      = DENS_20W;
    viscosity    = VISC_20W;
    vbar         = TYPICAL_VBAR;
 
+   le_solution  = us_lineedit( tr( "(Experiment's solution)" ) );
    le_density   = us_lineedit( QString::number( density,   'f', 6 ) );
    le_viscosity = us_lineedit( QString::number( viscosity, 'f', 5 ) );
    le_vbar      = us_lineedit( QString::number( vbar,      'f', 5 ) );
    le_skipped   = us_lineedit( "0" );
-   le_skipped->setReadOnly( true );
-   le_skipped->setPalette ( gray );
+
+   le_solution ->setReadOnly( true );
+   le_density  ->setReadOnly( true );
+   le_viscosity->setReadOnly( true );
+   le_vbar     ->setReadOnly( true );
+   le_skipped  ->setReadOnly( true );
+
+   le_solution ->setPalette ( gray );
+   le_density  ->setPalette ( gray );
+   le_viscosity->setPalette ( gray );
+   le_vbar     ->setPalette ( gray );
+   le_skipped  ->setPalette ( gray );
 
    row = 0;
-   parameterLayout->addWidget( pb_density  , row,   0 );
+   parameterLayout->addWidget( pb_solution , row,   0 );
+   parameterLayout->addWidget( le_solution , row++, 1, 1, 3 );
+   parameterLayout->addWidget( lb_density  , row,   0 );
    parameterLayout->addWidget( le_density  , row,   1 );
-   parameterLayout->addWidget( pb_viscosity, row,   2 );
+   parameterLayout->addWidget( lb_viscosity, row,   2 );
    parameterLayout->addWidget( le_viscosity, row++, 3 );
-   parameterLayout->addWidget( pb_vbar     , row,   0 );
+   parameterLayout->addWidget( lb_vbar     , row,   0 );
    parameterLayout->addWidget( le_vbar     , row,   1 );
    parameterLayout->addWidget( lb_skipped  , row,   2 );
    parameterLayout->addWidget( le_skipped  , row++, 3 );
@@ -233,13 +244,6 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    buffLoaded = false;
 
    dfilter    = "";
-
-   connect( le_density,   SIGNAL( returnPressed() ),
-            this,         SLOT(   buffer_text()     ) );
-   connect( le_viscosity, SIGNAL( returnPressed() ),
-            this,         SLOT(   buffer_text()     ) );
-   connect( le_vbar,      SIGNAL( returnPressed() ),
-            this,         SLOT(   vbar_text()       ) );
 }
 
 void US_AnalysisBase2::update_disk_db( bool db )
@@ -256,7 +260,7 @@ void US_AnalysisBase2::load( void )
    excludedScans.clear();
    triples      .clear();
 
-   reset();
+   //reset();
 
    bool edlast = ck_edlast->isChecked();
    int  dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
@@ -304,6 +308,7 @@ void US_AnalysisBase2::load( void )
 
    noiflags.fill( -1, dataList.size() );
 
+   lw_triples->disconnect();
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ), 
                         SLOT  ( new_triple       ( int ) ) );
    lw_triples->setCurrentRow( 0 );
@@ -320,61 +325,7 @@ void US_AnalysisBase2::load( void )
    connect( ct_from, SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_from( double ) ) );
 
-   // Set up solution/buffer values implied from experimental data
-   QString solID;
-   QString bufID;
-   QString bguid;
-   QString bdesc;
-   QString bdens  = le_density  ->text();
-   QString bvisc  = le_viscosity->text();
-   QString svbar  = le_vbar     ->text();
-   QString bcomp  = "";
-   QString errmsg = "";
-   dbdisk         = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
-                                            : US_Disk_DB_Controls::Disk;
-   US_Passwd pw;
-   US_DB2*   dbP  = ( dbdisk == US_Disk_DB_Controls::DB ) ?
-                    new US_DB2( pw.getPasswd() ) : 0;
-
-   bool    bufin  = US_SolutionVals::values( dbP, &dataList[ 0 ], solID, svbar,
-                                             bdens, bvisc, bcomp, errmsg );
-
-   if ( bufin )
-   {
-      buffLoaded  = false;
-      le_density  ->setText( bdens );
-      le_viscosity->setText( bvisc );
-      le_vbar     ->setText( svbar );
-      density     = bdens.toDouble();
-      viscosity   = bvisc.toDouble();
-      vbar        = svbar.toDouble();
-      buffLoaded  = true;
-qDebug() << "SolID" << solID;
-
-      if ( solID.isEmpty() )
-      {
-         QMessageBox::warning( this, tr( "Solution/Buffer Values Fetch" ),
-            tr( "Empty solution ID value!" ) );
-      }
-
-      else if ( solID.length() < 36  &&  dbP != NULL )
-      {  // Have DB solution ID
-         solution_rec.readFromDB( solID.toInt(), dbP );
-qDebug() << "Sol-from-DB: #analytes" << solution_rec.analytes.size();
-      }
-
-      else
-      {  // Have Local solution GUID
-         solution_rec.readFromDisk( solID );
-qDebug() << "Sol-from-Local: #analytes" << solution_rec.analytes.size();
-      }
-   }
-
-   else
-   {
-      QMessageBox::warning( this, tr( "Solution/Buffer Values Fetch" ),
-         errmsg );
-   }
+   update( 0 );
 
    dataLoaded = true;
    qApp->processEvents();
@@ -413,10 +364,66 @@ void US_AnalysisBase2::update( int selection )
    ct_to  ->setMaxValue( scanCount - excludedScans.size() );
    ct_to  ->setStep( 1.0 );
 
+   // Set up solution/buffer values implied from experimental data
+   QString solID;
+   QString bufID;
+   QString bguid;
+   QString bdesc;
+   QString bdens  = le_density  ->text();
+   QString bvisc  = le_viscosity->text();
+   QString svbar  = le_vbar     ->text();
+   QString bcomp  = "";
+   QString errmsg = "";
+   US_Passwd pw;
+   US_DB2*   dbP  = ( disk_controls->db() ) ?
+                    new US_DB2( pw.getPasswd() ) : 0;
+
+   bool    bufin  = US_SolutionVals::values( dbP, d, solID, svbar,
+                                             bdens, bvisc, bcomp, errmsg );
+
+   if ( bufin )
+   {
+      buffLoaded  = false;
+      le_density  ->setText( bdens );
+      le_viscosity->setText( bvisc );
+      le_vbar     ->setText( svbar );
+      density     = bdens.toDouble();
+      viscosity   = bvisc.toDouble();
+      vbar        = svbar.toDouble();
+      buffLoaded  = true;
+qDebug() << "SolID" << solID;
+
+      if ( solID.isEmpty() )
+      {
+         QMessageBox::warning( this, tr( "Solution/Buffer Values Fetch" ),
+            tr( "Empty solution ID value!" ) );
+      }
+
+      else if ( solID.length() < 36  &&  dbP != NULL )
+      {  // Have DB solution ID
+         solution_rec.readFromDB( solID.toInt(), dbP );
+qDebug() << "Sol-from-DB: #analytes" << solution_rec.analytes.size();
+      }
+
+      else
+      {  // Have Local solution GUID
+         solution_rec.readFromDisk( solID );
+qDebug() << "Sol-from-Local: #analytes" << solution_rec.analytes.size();
+      }
+
+      le_solution ->setText( solution_rec.solutionDesc );
+   }
+
+   else
+   {
+      QMessageBox::warning( this, tr( "Solution/Buffer Values Fetch" ),
+         errmsg );
+   }
+
    data_plot();
 }
 
-
+// Report data set details
 void US_AnalysisBase2::details( void )
 {
    US_RunDetails2* dialog
@@ -424,82 +431,6 @@ void US_AnalysisBase2::details( void )
    dialog->exec();
    qApp->processEvents();
    delete dialog;
-}
-
-void US_AnalysisBase2::get_vbar( void )
-{
-   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
-                                        : US_Disk_DB_Controls::Disk;
-   double avgTemp = le_temp->text().section( " ", 0, 0 ).toDouble();
-   avgTemp        = ( avgTemp > 0.0 ) ? avgTemp : NORMAL_TEMP;
-qDebug() << "Average Temp" << avgTemp;
-qDebug() << "Average Temp" << le_temp->text();
-
-   US_AnalyteGui* dialog = new US_AnalyteGui( true, QString(), dbdisk,
-                                              avgTemp );
-
-   connect( dialog, SIGNAL( valueChanged( US_Analyte ) ),
-                    SLOT  ( update_vbar ( US_Analyte ) ) );
-
-   connect( dialog, SIGNAL( use_db( bool ) ), SLOT( update_disk_db( bool ) ) );
-   dialog->exec();
-   qApp->processEvents();
-}
-
-void US_AnalysisBase2::update_vbar( US_Analyte analyte )
-{
-   bool changed = true;
-
-   if ( buffLoaded )
-      changed = verify_vbar();
-
-   if ( changed )
-   {
-      vbar = analyte.vbar20;
-
-      buffLoaded = false;
-      le_vbar->setText( QString::number( vbar, 'f', 5 ) );
-      qApp->processEvents();
-
-      if ( dataLoaded ) data_plot();
-   }
-}
-
-void US_AnalysisBase2::get_buffer( void )
-{
-   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
-                                        : US_Disk_DB_Controls::Disk;
-
-   US_BufferGui* dialog = new US_BufferGui( true, buff, dbdisk );
-
-   connect( dialog, SIGNAL( valueChanged ( double, double ) ),
-                    SLOT  ( update_buffer( double, double ) ) );
-
-   connect( dialog, SIGNAL( use_db( bool ) ), SLOT( update_disk_db( bool ) ) );
-   dialog->exec();
-   qApp->processEvents();
-}
-
-void US_AnalysisBase2::update_buffer( double new_density, double new_viscosity )
-{
-   bool changed = true;
-
-   if ( buffLoaded )
-      changed = verify_buffer();
-
-   if ( changed )
-   {
-      density    = new_density;
-      viscosity  = new_viscosity;
-
-      buffLoaded = false;
-      le_density  ->setText( QString::number( density,   'f', 6 ) );
-      le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
-      qApp->processEvents();
-
-      if ( dataLoaded )
-         data_plot();
-   }
 }
 
 void US_AnalysisBase2::data_plot( void )
@@ -1300,127 +1231,6 @@ bool US_AnalysisBase2::mkdir( const QString& baseDir, const QString& subdir )
    return false;
 }
 
-// Use dialogs to alert user to change in experiment buffer
-bool US_AnalysisBase2::verify_buffer( void )
-{
-   bool changed = true;
-
-   if ( buffLoaded )
-   {  // Only need verify buffer change while experiment values are loaded
-      if ( QMessageBox::No == QMessageBox::warning( this,
-               tr( "Warning" ),
-               tr( "Attention:\n"
-                   "You are attempting to override buffer parameters\n"
-                   "that have been set from the experimental data!\n\n"
-                   "Do you really want to override them?" ),
-               QMessageBox::Yes, QMessageBox::No ) )
-      {  // "No":  retain loaded values, mark unchanged
-         QMessageBox::information( this,
-            tr( "Buffer Retained" ),
-            tr( "Buffer parameters from the experiment will be retained" ) );
-         changed = false;
-      }
-
-      else
-      {  // "Yes":  change values,  mark experiment values no longer used
-         QMessageBox::information( this,
-            tr( "Buffer Overridden" ),
-            tr( "Buffer parameters from the experiment will be overridden" ) );
-         buffLoaded = false;
-      }
-   }
-
-   qApp->processEvents();
-   return changed;
-}
-
-// Slot to respond to text box change to buffer parameter
-void US_AnalysisBase2::buffer_text( void )
-{
-   if ( buffLoaded )
-   {  // Only need verify desire to change while experiment values are loaded
-      bool changed = verify_buffer();
-      buffLoaded   = false;
-      le_skipped->setFocus( Qt::OtherFocusReason );
-
-      if ( changed )
-      {  // "Yes" to change: use values as entered and leave loaded flag off
-         density      = le_density  ->text().toDouble();
-         viscosity    = le_viscosity->text().toDouble();
-      }
-
-      else
-      {  // "No" to change:  restore text and insure loaded flag turned on
-         buffLoaded   = false;
-         le_density  ->setText( QString::number( density,   'f', 6 ) );
-         le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
-         qApp->processEvents();
-         buffLoaded   = true;
-      }
-   }
-
-   if ( dataLoaded )
-      data_plot();
-}
-
-// Use dialogs to alert user to change in experiment solution common vbar
-bool US_AnalysisBase2::verify_vbar( void )
-{
-   bool changed = true;
-
-   if ( buffLoaded )
-   {  // Only need verify vbar change while experiment values are loaded
-      if ( QMessageBox::No == QMessageBox::warning( this,
-               tr( "Warning" ),
-               tr( "Attention:\n"
-                   "You are attempting to override the vbar parameter\n"
-                   "that has been set from the experimental data!\n\n"
-                   "Do you really want to override it?" ),
-               QMessageBox::Yes, QMessageBox::No ) )
-      {  // "No":  retain loaded values, mark unchanged
-         QMessageBox::information( this,
-            tr( "Vbar Retained" ),
-            tr( "Vbar parameter from the experiment will be retained" ) );
-         changed    = false;
-      }
-
-      else
-      {  // "Yes":  change values,  mark experiment values no longer used
-         QMessageBox::information( this,
-            tr( "Vbar Overridden" ),
-            tr( "Vbar parameter from the experiment will be overridden" ) );
-         buffLoaded = false;
-      }
-   }
-
-   qApp->processEvents();
-   return changed;
-}
-
-// Slot to respond to text box change to vbar parameter
-void US_AnalysisBase2::vbar_text( void )
-{
-   if ( buffLoaded )
-   {  // Only need verify desire to change while experiment values are loaded
-      bool changed = verify_vbar();
-      buffLoaded   = false;
-
-      if ( changed )
-      {  // "Yes" to change: use value as entered and leave loaded flag off
-         vbar = le_vbar->text().toDouble();
-      }
-
-      else
-      {  // "No" to change:  restore text and insure loaded flag still on
-         le_vbar->setText( QString::number( vbar, 'f', 4 ) );
-         qApp->processEvents();
-         buffLoaded = true;
-      }
-   }
-
-   if ( dataLoaded ) data_plot();
-}
-
 // Slot to give load-data progress feedback
 void US_AnalysisBase2::set_progress( const QString& message )
 {
@@ -1539,5 +1349,75 @@ for (int jj=0;jj<nenois;jj++)
       noiflags[ index ] = min( nrinois, 1 ) + 2 * min( ntinois, 1 );
 
    }
+}
+
+// Get solution parameters via US_SolutionGui
+void US_AnalysisBase2::get_solution()
+{
+   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
+   int expID  = 0;
+   QString runID = dataList[ lw_triples->currentRow() ].runID;
+
+   if ( disk_controls->db() )
+   {
+      US_Passwd pw;
+      US_DB2*   dbP  = new US_DB2( pw.getPasswd() );
+      QStringList query( "get_experiment_info_by_runID" );
+      query << runID << QString::number( US_Settings::us_inv_ID() );
+      dbP->query( query );
+      if ( dbP->lastErrno() != US_DB2::NOROWS )
+      {
+         dbP->next();
+         expID = dbP->value( 1 ).toString().toInt();
+      }
+   }
+
+   US_SolutionGui* soluInfo = new US_SolutionGui( expID, 1, true,
+                                                  dbdisk, solution_rec );
+
+   connect( soluInfo, SIGNAL( updateSolutionGuiSelection( US_Solution& ) ),
+            this,     SLOT(   updateSolution(             US_Solution& ) ) );
+
+   soluInfo->exec();
+}
+
+// Update solution parameters after user has made selections
+void US_AnalysisBase2::updateSolution( US_Solution& solution_sel )
+{
+   solution_rec    = solution_sel;
+
+   int bufID       = solution_rec.bufferID;
+   QString sbufID  = QString::number( bufID );
+   QString bufDesc = solution_rec.bufferDesc;
+   QString bdens   = le_density  ->text();
+   QString bvisc   = le_viscosity->text();
+   QString svbar   = le_vbar     ->text();
+   QString bcmpr   = "";
+   QString errmsg  = "";
+   QString bufGUID = solution_rec.bufferGUID;
+   
+   if ( disk_controls->db() )
+   {
+      US_Passwd pw;
+      US_DB2*   dbP  = ( disk_controls->db() ) ?
+                       new US_DB2( pw.getPasswd() ) : 0;
+      US_SolutionVals::bufvals_db( dbP, sbufID, bufGUID, bufDesc,
+            bdens, bvisc, bcmpr, errmsg );
+   }
+
+   else
+   {
+      US_SolutionVals::bufvals_disk( sbufID, bufGUID, bufDesc,
+            bdens, bvisc, bcmpr, errmsg );
+   }
+
+   vbar         = solution_rec.commonVbar20;
+   svbar        = QString::number( vbar );
+
+   le_density  ->setText( bdens );
+   le_viscosity->setText( bvisc );
+   le_vbar     ->setText( svbar );
+   le_solution ->setText( solution_rec.solutionDesc );
 }
 

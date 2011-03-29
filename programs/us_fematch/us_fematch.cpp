@@ -11,8 +11,8 @@
 #include "us_gui_settings.h"
 #include "us_matrix.h"
 #include "us_constants.h"
-#include "us_analyte_gui.h"
 #include "us_solution_vals.h"
+#include "us_solution_gui.h"
 #include "us_passwd.h"
 #include "us_data_loader.h"
 #include "us_util.h"
@@ -161,50 +161,37 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    density      = DENS_20W;
    viscosity    = VISC_20W;
    compress     = 0.0;
-   pb_density   = us_pushbutton( tr( "Density"   ) );
+   QPushButton* pb_solution = us_pushbutton( tr( "Solution" ) );
+   QLabel* lb_density   = us_label( tr( "Density" ) );
+   QLabel* lb_viscosity = us_label( tr( "Viscosity" ) );
+   QLabel* lb_vbar      = us_label( tr( "Vbar" ) );
+   QLabel* lb_compress  = us_label( tr( "Compressibility" ) );
+   le_solution  = us_lineedit( tr( "(Experiment's solution)" ) );
    le_density   = us_lineedit( QString::number( density,   'f', 6 ) );
-   pb_viscosity = us_pushbutton( tr( "Viscosity" ) );
    le_viscosity = us_lineedit( QString::number( viscosity, 'f', 5 ) );
-   pb_vbar      = us_pushbutton( tr( "Vbar"   ) );
    le_vbar      = us_lineedit( "0.7200" );
-   pb_compress  = us_pushbutton( tr( "Compressibility" ) );
    le_compress  = us_lineedit( "0.0"     );
    lb_rmsd      = us_label     ( tr( "RMSD:"  ) );
    le_rmsd      = us_lineedit( "0.0" );
    le_variance  = us_lineedit( "0.0" );
-   QFontMetrics fme( pb_compress->font() );
-   int pwid = fme.width( pb_compress->text() + 6 );
+   QFontMetrics fme( lb_compress->font() );
+   int pwid = fme.width( lb_compress->text() + 6 );
    int lwid = pwid * 3 / 4;
-   pb_vbar    ->setMinimumWidth( pwid );
+   lb_vbar    ->setMinimumWidth( pwid );
    le_vbar    ->setMinimumWidth( lwid );
-   pb_compress->setMinimumWidth( pwid );
+   lb_compress->setMinimumWidth( pwid );
    le_compress->setMinimumWidth( lwid );
    le_rmsd    ->setReadOnly( true );
    le_variance->setReadOnly( true );
    le_rmsd    ->setPalette(  gray );
    le_variance->setPalette(  gray );
 
-   connect( le_density,   SIGNAL( returnPressed() ),
-            this,         SLOT(   buffer_text()   ) );
-   connect( le_viscosity, SIGNAL( returnPressed() ),
-            this,         SLOT(   buffer_text()   ) );
-   connect( le_compress,  SIGNAL( returnPressed() ),
-            this,         SLOT(   buffer_text()   ) );
-   connect( le_vbar,      SIGNAL( returnPressed() ),
-            this,         SLOT(   vbar_text()     ) );
-
    QLabel* lb_experiment   = us_banner( tr( "Experimental Parameters (at 20" ) 
       + DEGC + "):" );
    QLabel* lb_variance     = us_label ( tr( "Variance:" ) );
 
-   connect( pb_density,   SIGNAL( clicked() ),
-            this,         SLOT( get_buffer() ) );
-   connect( pb_viscosity, SIGNAL( clicked() ),
-            this,         SLOT( get_buffer() ) );
-   connect( pb_vbar,      SIGNAL( clicked() ),
-            this,         SLOT( get_vbar() ) );
-   connect( pb_compress,  SIGNAL( clicked() ),
-            this,         SLOT( get_buffer() ) );
+   connect( pb_solution,  SIGNAL( clicked()      ),
+            this,         SLOT(   get_solution() ) );
 
    pb_advanced = us_pushbutton( tr( "Advanced Analysis Controls" ) );
    pb_plot3d   = us_pushbutton( tr( "3D Plot"       ) );
@@ -228,13 +215,15 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 
    row      = 0;
    parameterLayout->addWidget( lb_experiment   , row++, 0, 1, 4 );
-   parameterLayout->addWidget( pb_density      , row,   0, 1, 1 );
+   parameterLayout->addWidget( pb_solution     , row,   0, 1, 1 );
+   parameterLayout->addWidget( le_solution     , row++, 1, 1, 3 );
+   parameterLayout->addWidget( lb_density      , row,   0, 1, 1 );
    parameterLayout->addWidget( le_density      , row,   1, 1, 1 );
-   parameterLayout->addWidget( pb_viscosity    , row,   2, 1, 1 );
+   parameterLayout->addWidget( lb_viscosity    , row,   2, 1, 1 );
    parameterLayout->addWidget( le_viscosity    , row++, 3, 1, 1 );
-   parameterLayout->addWidget( pb_vbar         , row,   0, 1, 1 );
+   parameterLayout->addWidget( lb_vbar         , row,   0, 1, 1 );
    parameterLayout->addWidget( le_vbar         , row,   1, 1, 1 );
-   parameterLayout->addWidget( pb_compress     , row,   2, 1, 1 );
+   parameterLayout->addWidget( lb_compress     , row,   2, 1, 1 );
    parameterLayout->addWidget( le_compress     , row++, 3, 1, 1 );
    parameterLayout->addWidget( lb_variance     , row,   0, 1, 1 );
    parameterLayout->addWidget( le_variance     , row,   1, 1, 1 );
@@ -473,7 +462,7 @@ void US_FeMatch::update( int drow )
    ct_from->setStep( 1.0 );
    ct_to  ->setStep( 1.0 );
 
-   // set up buffer values implied from experimental data
+   // Set up solution values implied from experimental data
    QString solID;
    QString bufid;
    QString bguid;
@@ -495,6 +484,7 @@ void US_FeMatch::update( int drow )
    if ( bufvl )
    {
       buffLoaded  = false;
+      bcomp       = QString::number( bcomp.toDouble() );
       le_density  ->setText( bdens );
       le_viscosity->setText( bvisc );
       le_compress ->setText( bcomp );
@@ -519,6 +509,8 @@ void US_FeMatch::update( int drow )
       {
          solution_rec.readFromDisk( solID );
       }
+   
+      le_solution ->setText( solution_rec.solutionDesc );
    }
 
    else
@@ -867,78 +859,6 @@ void US_FeMatch::save_data( void )
    QMessageBox::information( this, tr( "Successfully Written" ), umsg );
 }
 
-// update density
-void US_FeMatch::update_density(  double new_dens )
-{
-   density    = new_dens;
-}
-
-// update viscosity
-void US_FeMatch::update_viscosity( double new_visc )
-{
-   viscosity  = new_visc;
-}
-
-// open dialog and get buffer information
-void US_FeMatch::get_buffer( void )
-{
-   US_Buffer buff;
-      
-   int local  = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
-                                  : US_Disk_DB_Controls::Disk;
-
-   US_BufferGui* bdiag = new US_BufferGui( true, buff, local );
-   connect( bdiag, SIGNAL( valueChanged(  US_Buffer ) ),
-            this,  SLOT  ( update_buffer( US_Buffer ) ) );
-
-   connect( bdiag, SIGNAL( use_db( bool ) ), SLOT( update_disk_db( bool ) ) );
-
-   bdiag->exec();
-   qApp->processEvents();
-}
-
-// slot to update parameters after buffer dialog
-void US_FeMatch::update_buffer( US_Buffer buffer )
-{
-   bool changed = true;
-
-   // if we still have experiment buffer, allow user to abort changes
-   if ( buffLoaded )
-      changed = verify_buffer();
-
-   // if experiment buffer is to be overridden, proceed with it
-   if ( changed )
-   {
-      density    = buffer.density;
-      viscosity  = buffer.viscosity;
-      compress   = buffer.compressibility;
-
-      buffLoaded = false;
-      le_density  ->setText( QString::number( density,   'f', 6 ) );
-      le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
-      le_compress ->setText( QString::number( compress,  'e', 3 ) );
-      qApp->processEvents();
-   }
-}
-
-// open dialog and get vbar information
-void US_FeMatch::get_vbar( void )
-{
-   QString aguid = "";
-   int     local = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
-                                     : US_Disk_DB_Controls::Disk;
-
-   US_AnalyteGui* vdiag = new US_AnalyteGui( true, aguid, local );
-
-   connect( vdiag, SIGNAL( valueChanged( US_Analyte ) ),
-             this, SLOT  ( update_vbar ( US_Analyte ) ) );
-
-   connect( vdiag, SIGNAL( use_db( bool ) ), SLOT( update_disk_db( bool ) ) );
-
-   vdiag->exec();
-   qApp->processEvents();
-}
-
 void US_FeMatch::view_report( )
 {
    QString mtext;
@@ -956,23 +876,6 @@ void US_FeMatch::view_report( )
                              US_GuiSettings::fontSize() ) );
    editd->e->setHtml( mtext );
    editd->show();
-}
-
-// update vbar
-void US_FeMatch::update_vbar( US_Analyte analyte )
-{
-   bool changed = true;
-
-   if ( buffLoaded )
-      changed   = verify_vbar();
-
-   if ( changed )
-   {
-      vbar       = analyte.vbar20;
-      buffLoaded = false;
-      le_vbar->setText( QString::number( vbar, 'f', 5 ) );
-      qApp->processEvents();
-   }
 }
 
 void US_FeMatch::exclude_from( double from )
@@ -2127,122 +2030,6 @@ void US_FeMatch::close_all()
    close();
 }
 
-// use dialogs to alert user to change in experiment buffer
-bool US_FeMatch::verify_buffer( )
-{
-   bool changed = true;
-
-   if ( buffLoaded )
-   {  // only need verify buffer change while experiment values are loaded
-      if ( QMessageBox::No == QMessageBox::warning( this,
-               tr( "Warning" ),
-               tr( "Attention:\n"
-                   "You are attempting to override buffer parameters\n"
-                   "that have been set from the experimental data!\n\n"
-                   "Do you really want to override them?" ),
-               QMessageBox::Yes, QMessageBox::No ) )
-      {  // "No":  retain loaded values, mark unchanged
-         QMessageBox::information( this,
-            tr( "Buffer Retained" ),
-            tr( "Buffer parameters from the experiment will be retained" ) );
-         changed    = false;
-      }
-
-      else
-      {  // "Yes":  change values,  mark experiment values no longer used
-         QMessageBox::information( this,
-            tr( "Buffer Overridden" ),
-            tr( "Buffer parameters from the experiment will be overridden" ) );
-         buffLoaded = false;
-      }
-   }
-
-   return changed;
-}
-
-// slot to respond to text box change to buffer parameter
-void US_FeMatch::buffer_text( )
-{
-   if ( buffLoaded )
-   {  // only need verify desire to change while experiment values are loaded
-      bool changed = verify_buffer();
-
-      if ( changed )
-      {  // "Yes" to change: pick up values as entered and turn off loaded flag
-         buffLoaded   = false;
-         density      = le_density  ->text().toDouble();
-         viscosity    = le_viscosity->text().toDouble();
-         compress     = le_compress ->text().toDouble();
-      }
-
-      else
-      {  // "No" to change:  restore text and insure loaded flag still on
-         buffLoaded   = false;
-         le_density  ->setText( QString::number( density,   'f', 6 ) );
-         le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
-         le_compress ->setText( QString::number( compress,  'e', 3 ) );
-         qApp->processEvents();
-         buffLoaded   = true;
-      }
-   }
-}
-
-// use dialogs to alert user to change in experiment solution common vbar
-bool US_FeMatch::verify_vbar( )
-{
-   bool changed = true;
-
-   if ( buffLoaded )
-   {  // only need verify vbar change while experiment values are loaded
-      if ( QMessageBox::No == QMessageBox::warning( this,
-               tr( "Warning" ),
-               tr( "Attention:\n"
-                   "You are attempting to override the vbar parameter\n"
-                   "that has been set from the experimental data!\n\n"
-                   "Do you really want to override it?" ),
-               QMessageBox::Yes, QMessageBox::No ) )
-      {  // "No":  retain loaded value, mark unchanged
-         QMessageBox::information( this,
-            tr( "Vbar Retained" ),
-            tr( "Vbar parameter from the experiment will be retained" ) );
-         changed    = false;
-      }
-
-      else
-      {  // "Yes":  change value,  mark experiment values no longer used
-         QMessageBox::information( this,
-            tr( "Vbar Overridden" ),
-            tr( "Vbar parameter from the experiment will be overridden" ) );
-         buffLoaded = false;
-      }
-   }
-
-   qApp->processEvents();
-   return changed;
-}
-
-// slot to respond to text box change to vbar parameter
-void US_FeMatch::vbar_text( )
-{
-   if ( buffLoaded )
-   {  // only need verify desire to change while experiment values are loaded
-      bool changed = verify_vbar();
-      buffLoaded   = false;
-
-      if ( changed )
-      {  // "Yes" to change: pick up values as entered and turn off loaded flag
-         vbar         = le_vbar->text().toDouble();
-      }
-
-      else
-      {  // "No" to change:  restore text and insure loaded flag still on
-         le_vbar->setText( QString::number( vbar, 'f', 5 ) );
-         qApp->processEvents();
-         buffLoaded   = true;
-      }
-   }
-}
-
 // String to accomplish line indentation
 QString US_FeMatch::indent( const int spaces ) const
 {
@@ -2619,5 +2406,75 @@ void US_FeMatch::set_progress( const QString& message )
 void US_FeMatch::update_disk_db( bool isDB )
 {
    isDB ?  dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
+}
+
+// Get solution parameters via US_SolutionGui
+void US_FeMatch::get_solution()
+{
+   int dbdisk = ( dkdb_cntrls->db() ) ? US_Disk_DB_Controls::DB
+                                      : US_Disk_DB_Controls::Disk;
+   int expID  = 0;
+   QString runID = dataList[ lw_triples->currentRow() ].runID;
+
+   if ( dkdb_cntrls->db() )
+   {
+      US_Passwd pw;
+      US_DB2*   dbP  = new US_DB2( pw.getPasswd() );
+      QStringList query( "get_experiment_info_by_runID" );
+      query << runID << QString::number( US_Settings::us_inv_ID() );
+      dbP->query( query );
+      if ( dbP->lastErrno() != US_DB2::NOROWS )
+      {
+         dbP->next();
+         expID = dbP->value( 1 ).toString().toInt();
+      }
+   }
+
+   US_SolutionGui* soluInfo = new US_SolutionGui( expID, 1, true,
+                                                  dbdisk, solution_rec );
+
+   connect( soluInfo, SIGNAL( updateSolutionGuiSelection( US_Solution& ) ),
+            this,     SLOT(   updateSolution(             US_Solution& ) ) );
+
+   soluInfo->exec();
+}
+
+// Update solution parameters after user has made selections
+void US_FeMatch::updateSolution( US_Solution& solution_sel )
+{
+   solution_rec    = solution_sel;
+
+   int bufID       = solution_rec.bufferID;
+   QString sbufID  = QString::number( bufID );
+   QString bufDesc = solution_rec.bufferDesc;
+   QString bdens   = le_density  ->text();
+   QString bvisc   = le_viscosity->text();
+   QString svbar   = le_vbar     ->text();
+   QString bcmpr   = "";
+   QString errmsg  = "";
+   QString bufGUID = solution_rec.bufferGUID;
+   
+   if ( dkdb_cntrls->db() )
+   {
+      US_Passwd pw;
+      US_DB2*   dbP  = ( dkdb_cntrls->db() ) ?
+                       new US_DB2( pw.getPasswd() ) : 0;
+      US_SolutionVals::bufvals_db( dbP, sbufID, bufGUID, bufDesc,
+            bdens, bvisc, bcmpr, errmsg );
+   }
+
+   else
+   {
+      US_SolutionVals::bufvals_disk( sbufID, bufGUID, bufDesc,
+            bdens, bvisc, bcmpr, errmsg );
+   }
+
+   vbar         = solution_rec.commonVbar20;
+   svbar        = QString::number( vbar );
+
+   le_density  ->setText( bdens );
+   le_viscosity->setText( bvisc );
+   le_vbar     ->setText( svbar );
+   le_solution ->setText( solution_rec.solutionDesc );
 }
 
