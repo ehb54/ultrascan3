@@ -8,6 +8,7 @@
 #include "us_solution.h"
 #include "us_buffer.h"
 #include "us_analyte.h"
+#include "us_math2.h"
 
 // The constructor clears out the data structure
 US_Solution::US_Solution()
@@ -112,6 +113,7 @@ void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
             analyte.amount          = a.value( "amount" ).toString().toDouble();
             analyte.mw              = a.value( "mw" ).toString().toDouble();
             analyte.vbar20          = a.value( "vbar20" ).toString().toDouble();
+            analyte.type            = a.value( "type" ).toString().toInt();
 
             analytes << analyte;
          }
@@ -163,6 +165,7 @@ void US_Solution::readFromDB  ( int solutionID, US_DB2* db )
          analyte.amount      = db->value( 3 ).toDouble();
          analyte.mw          = db->value( 4 ).toDouble();
          analyte.vbar20      = db->value( 5 ).toDouble();
+         analyte.type        = db->value( 6 ).toInt();
 
          analytes << analyte;
       }
@@ -234,6 +237,7 @@ void US_Solution::saveToDisk( void )
          xml.writeAttribute   ( "amount", QString::number( analyte.amount  ) );
          xml.writeAttribute   ( "mw", QString::number( analyte.mw  ) );
          xml.writeAttribute   ( "vbar20", QString::number( analyte.vbar20  ) );
+         xml.writeAttribute   ( "type",   QString::number( analyte.type ) );
          xml.writeEndElement  ();
       }
 
@@ -617,6 +621,7 @@ US_Solution::AnalyteInfo::AnalyteInfo()
   vbar20        = 0.0;
   mw            = 0.0;
   amount        = 1;
+  type          = US_Analyte::PROTEIN;
 }
 
 bool US_Solution::AnalyteInfo::operator== ( const AnalyteInfo& ai ) const
@@ -687,6 +692,7 @@ void US_Solution::show( void )
                << "analyteGUID = " << analyte.analyteGUID << '\n'
                << "analyteDesc = " << analyte.analyteDesc << '\n'
                << "vbar20      = " << analyte.vbar20      << '\n'
+               << "type        = " << analyte.type        << '\n'
                << "mw          = " << analyte.mw          << '\n'
                << "amount      = " << analyte.amount      << '\n';
    }

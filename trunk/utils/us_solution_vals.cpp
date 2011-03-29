@@ -4,7 +4,7 @@
 
 // Get Solution/Buffer values for a data set
 bool US_SolutionVals::values( US_DB2* dbP, US_DataIO2::EditedData* edata,
-      QString& cvbar20, QString& density, QString& viscosity,
+      QString& soluID, QString& cvbar20, QString& density, QString& viscosity,
       QString& compress, QString& errmsg )
 {
    bool    got_ok = false;
@@ -19,9 +19,11 @@ bool US_SolutionVals::values( US_DB2* dbP, US_DataIO2::EditedData* edata,
 
    if ( dbP != 0 )
    {
-      got_ok = solinfo_db( dbP, edata, cvbar20, bufID, bguid, bdesc, errmsg );
+      got_ok = solinfo_db( dbP, edata, cvbar20, soluID, bufID, bguid, bdesc,
+                           errmsg );
       got_ok = got_ok ? got_ok :
-               solinfo_disk( edata, cvbar20, bufID, bguid, bdesc, errmsg );
+               solinfo_disk( edata, cvbar20, soluID, bufID, bguid, bdesc,
+                             errmsg );
       got_ok = bufvals_db( dbP, bufID, bguid, bdesc, density, viscosity,
                            compress, errmsg );
       got_ok = got_ok ? got_ok :
@@ -31,7 +33,8 @@ bool US_SolutionVals::values( US_DB2* dbP, US_DataIO2::EditedData* edata,
 
    else
    {
-      got_ok = solinfo_disk( edata, cvbar20, bufID, bguid, bdesc, errmsg );
+      got_ok = solinfo_disk( edata, cvbar20, soluID, bufID, bguid, bdesc,
+                             errmsg );
       got_ok = bufvals_disk( bufID, bguid, bdesc, density, viscosity,
                              compress, errmsg );
    }
@@ -41,7 +44,7 @@ bool US_SolutionVals::values( US_DB2* dbP, US_DataIO2::EditedData* edata,
 
 // Get solution/buffer info from DB: ID, GUID, description
 bool US_SolutionVals::solinfo_db( US_DB2* dbP, US_DataIO2::EditedData* edata,
-      QString& cvbar20, QString& bufId, QString& bufGuid,
+      QString& cvbar20, QString& soluID, QString& bufId, QString& bufGuid,
       QString& bufDesc, QString& errmsg )
 {
    bool bufinfo = false;
@@ -63,7 +66,7 @@ bool US_SolutionVals::solinfo_db( US_DB2* dbP, US_DataIO2::EditedData* edata,
    dbP->next();
    QString rawID    = dbP->value( 0 ).toString();
    QString expID    = dbP->value( 1 ).toString();
-   QString soluID   = dbP->value( 2 ).toString();
+   soluID           = dbP->value( 2 ).toString();
 
    query.clear();
    query << "get_solutionBuffer" << soluID;
@@ -122,8 +125,9 @@ bool US_SolutionVals::solinfo_db( US_DB2* dbP, US_DataIO2::EditedData* edata,
 }
 
 // Get solution/buffer info from local disk: ID, GUID, description
-bool US_SolutionVals::solinfo_disk( US_DataIO2::EditedData* edata, QString& cvbar20,
-      QString& bufId, QString& bufGuid, QString& bufDesc, QString& errmsg )
+bool US_SolutionVals::solinfo_disk( US_DataIO2::EditedData* edata,
+      QString& cvbar20, QString& soluID, QString& bufId, QString& bufGuid,
+      QString& bufDesc, QString& errmsg )
 {
    bool    bufinfo  = false;
    QString soluGUID = "";
@@ -168,6 +172,7 @@ bool US_SolutionVals::solinfo_disk( US_DataIO2::EditedData* edata, QString& cvba
          else if ( xml.name() == "solution" )
          {
             soluGUID = ats.value( "guid" ).toString();
+            soluID   = soluGUID;
          }
       }
    }

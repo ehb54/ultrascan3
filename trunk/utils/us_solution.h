@@ -26,6 +26,7 @@ class US_EXTERN US_Solution
          double        vbar20;             //!< The vbar of this analyte at 20C
          double        mw;                 //!< The molecular weight
          double        amount;             //!< The amount of this component in the solution
+         int           type;               //!< The type flag for the analyte (0->PROTEIN)
 
          //! \brief    Generic constructor for the AnalyteInfo class
          AnalyteInfo();

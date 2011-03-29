@@ -53,6 +53,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       QList< double >          ds_vbar20s;
       QList< double >          ds_densits;
       QList< double >          ds_viscos;
+      QStringList              ds_solIDs;
 
       US_Help        showHelp;
       US_Plot*       eplot;
