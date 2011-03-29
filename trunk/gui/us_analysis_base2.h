@@ -107,6 +107,7 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       QTextEdit*   te_desc;         //!< Text edit box for discription
       QListWidget* lw_triples;      //!< List widget containing triples
 
+      QLineEdit*   le_solution;     //!< Display the solution description
       QLineEdit*   le_density;      //!< Display/change the density used
       QLineEdit*   le_viscosity;    //!< Display/change the viscosity
       QLineEdit*   le_vbar;         //!< Display/change the specific volume
@@ -194,21 +195,15 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
 
    private slots:
       void details       ( void   );
-      void get_vbar      ( void   );
-      void update_vbar   ( US_Analyte );
-      void get_buffer    ( void   );
-      void update_buffer ( double, double );
       void boundary_pct  ( double );
       void boundary_pos  ( double );
       void exclude_from  ( double );
       void exclude_to    ( double );
       void smoothing     ( double );
       void update_disk_db( bool );
-      bool verify_buffer ( void );
-      void buffer_text   ( void );
-      bool verify_vbar   ( void );
-      void vbar_text     ( void );
       void set_progress  ( const QString& );
       void load_noise    ( int  );
+      void get_solution  ( void );
+      void updateSolution( US_Solution& );
 };
 #endif

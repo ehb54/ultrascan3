@@ -17,7 +17,7 @@
 #include "us_run_details2.h"
 #include "us_buffer_gui.h"
 #include "us_analyte.h"
-#include "us_analysis_base2.h"
+#include "us_solution.h"
 #include "qwt_plot_marker.h"
 
 #ifndef DbgLv
@@ -46,6 +46,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
 
       QLineEdit*    le_id;
       QLineEdit*    le_temp;
+      QLineEdit*    le_solution;
       QLineEdit*    le_density;
       QLineEdit*    le_viscosity;
       QLineEdit*    le_vbar;
@@ -77,10 +78,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QPushButton*  pb_reset;
       QPushButton*  pb_help;
       QPushButton*  pb_close;
-      QPushButton*  pb_density;
-      QPushButton*  pb_viscosity;
-      QPushButton*  pb_vbar;
-      QPushButton*  pb_compress;
       QPushButton*  pb_rmsd;
       QPushButton*  pb_exclude;
       QPushButton*  pb_loadmodel;
@@ -140,10 +137,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void plot3d(    void );
       void plotres(   void );
       void update(    int  );
-      void update_density(   double );
-      void update_viscosity( double );
-      void get_buffer(       void );
-      void get_vbar  (       void );
       void load_model(       void );
       void distrib_type(     void );
       void simulate_model(   void );
@@ -151,8 +144,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void exclude   (       void );
       void adjust_model(     void );
       void adjust_mc_model(  void );
-      void update_buffer(    US_Buffer  );
-      void update_vbar(      US_Analyte );
       void exclude_from(     double );
       void exclude_to  (     double );
       void comp_number (     double );
@@ -172,10 +163,6 @@ class US_EXTERN US_FeMatch : public US_Widgets
       double  calc_baseline(  int  )  const;
       void    calc_residuals( void );
       void    close_all(      void );
-      bool    verify_buffer( void );
-      void    buffer_text(   void );
-      bool    verify_vbar(   void );
-      void    vbar_text(     void );
       QString table_row( const QString&, const QString& ) const;
       QString table_row( const QString&, const QString&,
                          const QString& )                 const;
@@ -192,6 +179,8 @@ class US_EXTERN US_FeMatch : public US_Widgets
       void    write_plot( const QString&, const QwtPlot* );
       bool    mkdir(      const QString&, const QString& );
       void    new_triple( int );
+      void    get_solution  ( void );
+      void    updateSolution( US_Solution& );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };
