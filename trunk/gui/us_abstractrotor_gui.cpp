@@ -62,7 +62,8 @@ void US_AbstractRotorGui::setupGui( int select_db_disk )
    
    te_details = us_textedit();
    te_details->setText(tr("Rotor Type Details:"));
-   te_details->setMinimumSize(280, 250);
+   te_details->setMinimumSize(400, 250);
+   te_details->setFont(  QFont( "monospace", US_GuiSettings::fontSize() ) );
    top->addWidget(te_details, row++, 0, 1, 2);
 
    showDetails(cb_rotors->currentIndex());
