@@ -1,5 +1,5 @@
 #ifndef US_TABLE_H
-#define US_ANALYTE_H
+#define US_TABLE_H
 
 #include <QtGui>
 
