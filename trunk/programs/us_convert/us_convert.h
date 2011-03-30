@@ -179,6 +179,8 @@ class US_EXTERN US_Convert : public US_Widgets
       bool convert         ( void );
       void initTriples     ( void );
       bool centerpieceInfo ( void );
+      bool centerpieceInfoDB( void );
+      bool centerpieceInfoDisk( void );
       void plot_current    ( void );
       void plot_titles     ( void );
       void plot_all        ( void );

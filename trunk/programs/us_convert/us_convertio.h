@@ -77,6 +77,19 @@ class US_EXTERN US_ConvertIO
                  QList< US_Convert::TripleInfo >& ,
                  QString );
 
+      /*! \brief    Checks some info that was read from disk with values from DB
+
+          \param ExpData A reference to a structure provided by the calling function
+                         that contains the hardware and other database
+                         connection information provided by the xml file.
+          \param triples A reference to a structure provided by the calling
+                        function that contains all the different
+                        cell/channel/wavelength defined by the xml file.
+      */
+      static int checkDiskData( 
+                 US_Experiment&,
+                 QList< US_Convert::TripleInfo >& );
+
    private:
       static void readExperiment( 
                  QXmlStreamReader& , 
@@ -88,10 +101,6 @@ class US_EXTERN US_ConvertIO
       static void readDataset( 
                  QXmlStreamReader& , 
                  US_Convert::TripleInfo& );
-
-      static int verifyXml( 
-                 US_Experiment&,
-                 QList< US_Convert::TripleInfo >& );
 
       static QString readRawDataFromDB( 
                  US_Experiment& , 

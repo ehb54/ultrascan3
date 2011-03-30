@@ -643,7 +643,8 @@ void US_Convert::enableControls( void )
 
       enableRunIDControl( saveStatus == NOT_SAVED );
          
-      enableSyncDB();
+      if ( disk_controls->db() )
+         enableSyncDB();
    }
 }
 
@@ -916,7 +917,8 @@ void US_Convert::loadUS3Disk( QString dir )
    saveStatus = ( ExpData.expID == 0 ) ? HD_ONLY : BOTH;
    //pb_editRuninfo  ->setEnabled ( saveStatus == HD_ONLY );
 
-   enableSyncDB();
+   if ( disk_controls->db() )
+      enableSyncDB();
 }
 
 // Function to load an experiment from the DB
@@ -1749,7 +1751,18 @@ void US_Convert::saveUS3DB( void )
       return;
    }
 
-   int status = saveUS3Disk();
+   // First check some of the data with the DB
+   int status = US_ConvertIO::checkDiskData( ExpData, triples );
+   if ( status == BADGUID )     // The most common problem
+   {
+      QMessageBox::information( this,
+             tr( "Error" ),
+             tr( "GUID from a support file on disk was not found in the DB" ) );
+      return;
+   }
+
+   // Save updated files and prepare to transfer to DB
+   status = saveUS3Disk();
    if ( status != OK )
       return;
 
@@ -1934,6 +1947,16 @@ bool US_Convert::convert( void )
 
 bool US_Convert::centerpieceInfo( void )
 {
+   if ( disk_controls->db() )
+      return centerpieceInfoDB();
+
+   else
+      return centerpieceInfoDisk();
+}
+
+// Function to get abstractCenterpiece names from DB
+bool US_Convert::centerpieceInfoDB( void )
+{
    // Verify connectivity
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
@@ -1965,6 +1988,54 @@ bool US_Convert::centerpieceInfo( void )
       cb_centerpiece->addOptions( options );
 
    return true;
+}
+
+// Function to get abstractCenterpiece names from disk
+// Right now use function that gets info from flat file,
+// but later change to xml
+bool US_Convert::centerpieceInfoDisk( void )
+{
+   // First figure out the xml file name, and try to open it
+   QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+   QFile f( home + "/etc/abstractCenterpieces.xml");
+
+   if ( ! f.open( QIODevice::ReadOnly ) ) return false;
+
+   QList<listInfo> options;
+   QXmlStreamReader xml( &f );
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isStartElement() )
+      {
+         if ( xml.name() == "abstractCenterpiece" )
+         {
+            struct listInfo option;
+            QXmlStreamAttributes a = xml.attributes();
+            option.ID   = a.value("id").toString();
+            option.text = a.value("name").toString();
+            options << option;
+         }
+      }
+   }
+
+   bool error = xml.hasError();
+   f.close();
+
+   if ( error ) return false;
+
+   cb_centerpiece->clear();
+   if ( options.size() > 0 )
+   {
+      // Let's sort them so they come up like the DB
+      for ( int i = 0; i < options.size() - 1; i++ )
+         for ( int j = i + 1; j < options.size(); j++ )
+            if ( options[ i ].text > options[ j ].text )
+               options.swap( i, j );
+
+      cb_centerpiece->addOptions( options );
+   }
 }
 
 void US_Convert::plot_current( void )

@@ -545,7 +545,7 @@ int US_ConvertIO::readXmlFile(
 
    if ( error ) return US_Convert::BADXML;
 
-   return( verifyXml( ExpData, triples ) );
+   return US_Convert::OK;
 }
 
 void US_ConvertIO::readExperiment( 
@@ -733,8 +733,8 @@ void US_ConvertIO::readDataset( QXmlStreamReader& xml, US_Convert::TripleInfo& t
    }
 }
 
-int US_ConvertIO::verifyXml( US_Experiment& ExpData,
-                             QList< US_Convert::TripleInfo >& triples )
+int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
+                                 QList< US_Convert::TripleInfo >& triples )
 {
    US_Passwd pw;
    US_DB2 db( pw.getPasswd() );
