@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE US_AbstractCenterpiece>
+<abstractCenterpieces version="1.0">
+   <abstractCenterpiece id="1" guid="" name="Simulation 1-channel standard">
+      <materialName value="Simulation" />
+      <channels value="1" />
+      <bottom value="" />
+      <shape value="" />
+   </abstractCenterpiece>
+   <abstractCenterpiece id="2" guid="" name="Epon 2-channel standard">
+      <materialName value="Epon" />
+      <channels value="1" />
+      <bottom value="" />
+      <shape value="" />
+   </abstractCenterpiece>
+   <abstractCenterpiece id="3" guid="" name="Aluminum 2-channel standard">
+      <materialName value="Aluminum" />
+      <channels value="1" />
+      <bottom value="" />
+      <shape value="" />
+   </abstractCenterpiece>
+   <abstractCenterpiece id="4" guid="" name="Epon 6-channel rectangular">
+      <materialName value="Epon" />
+      <channels value="3" />
+      <bottom value="" />
+      <shape value="" />
+   </abstractCenterpiece>
+   <abstractCenterpiece id="5" guid="" name="Titanium 2-channel standard">
+      <materialName value="Titanium" />
+      <channels value="1" />
+      <bottom value="" />
+      <shape value="" />
+   </abstractCenterpiece>
+   <abstractCenterpiece id="6" guid="" name="Titanium 6-channel rectangular">
+      <materialName value="Titanium" />
+      <channels value="3" />
+      <bottom value="" />
+      <shape value="" />
+   </abstractCenterpiece>
+   <abstractCenterpiece id="7" guid="" name="Epon 2-channel band forming">
+      <materialName value="Epon" />
+      <channels value="1" />
+      <bottom value="" />
+      <shape value="" />
+   </abstractCenterpiece>
+</abstractCenterpieces>
