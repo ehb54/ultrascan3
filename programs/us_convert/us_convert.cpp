@@ -1756,9 +1756,9 @@ void US_Convert::saveUS3DB( void )
    if ( status == BADGUID )     // The most common problem
    {
       QMessageBox::information( this,
-             tr( "Error" ),
-             tr( "GUID from a support file on disk was not found in the DB" ) );
-      return;
+            tr( "Error" ),
+            tr( "One or more GUID's were not found in the database.\n" ) +
+            tr( "Most likely the run has not been saved to the DB.\n") );
    }
 
    // Save updated files and prepare to transfer to DB

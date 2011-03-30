@@ -510,14 +510,6 @@ void US_ProcessConvert::reloadUS3Data(
             tr( "Improper XML in read file: " ) + dir + readFile );
    }
 
-   else if ( status == US_Convert::BADGUID )
-   {
-      QMessageBox::information( this,
-            tr( "Error" ),
-            tr( "One or more GUID's were not found in the database.\n" ) +
-            tr( "Most likely the run has not been saved to the DB.\n") );
-   }
-
    else if ( status != US_Convert::OK )
    {
       QMessageBox::information( this,
