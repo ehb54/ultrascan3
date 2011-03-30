@@ -819,8 +819,8 @@ void US_AnalyteGui::update_sequence( QString seq )
    }
 
    // Reformat the sequence
-   const int  gsize = 6;
-   const int  lsize = 5;
+   const int  gsize = 10;
+   const int  lsize = 6;
 
    // Groups of gsize nucleotides
    int     segments = ( seq.size() + gsize - 1 ) / gsize;
@@ -832,7 +832,7 @@ void US_AnalyteGui::update_sequence( QString seq )
       QString t;
 
       if ( i % lsize == 0 )
-         s += t.sprintf( "%04i ", i * gsize );
+         s += t.sprintf( "%04i ", i * gsize + 1 );
      
       s += seq.mid( p, gsize );
       p += gsize;
