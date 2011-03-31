@@ -222,6 +222,7 @@ void US_Dcdt::data_plot( void )
    // Calculate dcdt and sValues
    int previous = skipped;
    int count    = 0;
+   double s_max = 0.0;
 
    for ( int i = skipped + 1; i < scanCount; i++ )
    {
@@ -272,6 +273,7 @@ void US_Dcdt::data_plot( void )
          sValues[ count ][ size ] = 
             solution.s20w_correction * 1.0e13 * log( radius / meniscus ) /
             ( sq( omega ) * ( prevScan->seconds + dt / 2.0 ) );
+         s_max          = max( s_max, sValues[ count ][ size ] );
 
          size++;
       }
@@ -281,9 +283,6 @@ void US_Dcdt::data_plot( void )
       count++;
       previous = i;
    }
-
-   int    last  = arraySizes[ 0 ] - 1;
-   double s_max = sValues[ 0 ][ last ];
 
    ct_sValue->setMaxValue( ceil( s_max ) );
 

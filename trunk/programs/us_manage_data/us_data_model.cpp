@@ -744,8 +744,8 @@ void US_DataModel::merge_dblocal( )
 
    DataDesc  descd = ddescs.at( 0 );
    DataDesc  descl = ldescs.at( 0 );
-//DbgLv(2) << "MERGE: nd nl dlab llab"
-// << nddes << nldes << descd.label << descl.label;
+DbgLv(2) << "MERGE: nd nl dlab llab"
+ << nddes << nldes << descd.label << descl.label;
 
    lb_status->setText( tr( "Merging Data ..." ) );
    progress->setMaximum( nstep );
@@ -900,6 +900,7 @@ void US_DataModel::sort_descs( QVector< DataDesc >& descs )
    QStringList         sortn;
    int                 nrecs = descs.size();  // number of descr. records
 
+DbgLv(1) << "sort_desc: nrecs" << nrecs;
    if ( nrecs == 0 )
       return;
 
@@ -1282,6 +1283,8 @@ DbgLv(1) << "sort/dumy: count REMN" << countR << countE << countM << countN;
       DbgLv(1) << "sort_desc: nout REMN"
          << noutR << noutE << noutM << noutN;
    }
+DbgLv(1) << "sort_desc: nout REMN"
+         << noutR << noutE << noutM << noutN;
 }
 
 // review sorted string lists for duplicate GUIDs

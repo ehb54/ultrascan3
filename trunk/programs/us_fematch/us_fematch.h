@@ -69,6 +69,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
 
       QPushButton*  pb_load;
       QPushButton*  pb_details;
+      QPushButton*  pb_solution;
       QPushButton*  pb_view;
       QPushButton*  pb_save;
       QPushButton*  pb_distrib;

@@ -94,6 +94,7 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
 
       QPushButton* pb_load;         //!< Pushbutton to load data
       QPushButton* pb_details;      //!< Pushbuttion to view run details
+      QPushButton* pb_solution;     //!< Pushbuttion to get solution parameters
       QPushButton* pb_view;         //!< Pushbuttion to view run a data report
       QPushButton* pb_save;         //!< Pushbutton to save the analysis results
       QPushButton* pb_reset;        //!< Pushbutton to reset the screen
