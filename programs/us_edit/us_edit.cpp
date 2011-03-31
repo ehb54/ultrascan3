@@ -121,8 +121,6 @@ US_Edit::US_Edit() : US_Widgets()
 
    lb_rpms   = us_label( tr( "Speed Step (RPM) of triple" ), -1 );
    cb_rpms   = us_comboBox();
-   connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
-                       SLOT  ( new_rpmval         ( int ) ) );
    specs->addWidget( lb_rpms,   s_row,   0, 1, 2 );
    specs->addWidget( cb_rpms,   s_row++, 2, 1, 2 );
    lb_rpms->setVisible( false );
@@ -442,8 +440,6 @@ void US_Edit::reset( void )
    triples       .clear();
    cb_rpms      ->disconnect();
    cb_rpms      ->clear();
-   connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
-                       SLOT  ( new_rpmval         ( int ) ) );
 
    set_pbColors( NULL );
 }
@@ -493,8 +489,6 @@ void US_Edit::reset_triple( void )
    cb_triple    ->disconnect();
    cb_rpms      ->disconnect();
    cb_rpms      ->clear();
-   connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
-                       SLOT  ( new_rpmval         ( int ) ) );
 }
 
 // Display run details
@@ -931,6 +925,9 @@ void US_Edit::load( void )
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
       plot_scan();
+
+      connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
+                          SLOT  ( new_rpmval         ( int ) ) );
    }
 
    else
@@ -2955,7 +2952,7 @@ void US_Edit::apply_prior( void )
       if ( db.lastErrno() != US_DB2::OK )
       {
          QMessageBox::warning( this, tr( "Connection Problem" ),
-           tr( "Could not connect to databasee \n" ) + db.lastError() );
+           tr( "Could not connect to database: \n" ) + db.lastError() );
          return;
       }
 
@@ -3407,22 +3404,6 @@ void US_Edit::prior_equil( void )
       pb_dataRange->setIcon( check );
       pb_dataRange->setEnabled( true );
    
-      le_plateau->setText( s.sprintf( "%.3f", plateau ) );
-      pb_plateau->setIcon( check );
-      pb_plateau->setEnabled( true );
-
-      US_DataIO2::Scan scan  = data.scanData.last();
-      int              pt    = US_DataIO2::index( scan, data.x, baseline );
-      double           sum   = 0.0;
-
-      // Average the value for +/- 5 points
-      for ( int j = pt - 5; j <= pt + 5; j++ )
-         sum += scan.readings[ j ].value;
-
-      le_baseline->setText( s.sprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
-      pb_baseline->setIcon( check );
-      pb_baseline->setEnabled( true );
-
       // Invert
       invert = parameters.invert;
    
@@ -3521,7 +3502,9 @@ void US_Edit::review_edits( void )
    le_dataRange->setText( "" );
    pb_plateau  ->setIcon( QIcon() );
    pb_dataRange->setIcon( QIcon() );
+   pb_meniscus ->setIcon( QIcon() );
 
+   step    = FINISHED;
    next_triple();
 }
 
@@ -3541,6 +3524,7 @@ void US_Edit::next_triple( void )
    {
       QString trsp = cb_triple->currentText() + " : " + trip_rpms[ 0 ];
       le_edtrsp->setText( trsp );
+      cb_rpms  ->setCurrentIndex( 0 );
    }
 
    plot_range();
