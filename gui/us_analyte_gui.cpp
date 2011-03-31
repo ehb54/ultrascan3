@@ -1239,22 +1239,37 @@ void US_AnalyteGui::more_info( void )
       s1 += tr( "Unknown:        " )  + s.sprintf( "%3i", p.x ) + "  ";
       s1 += tr( "Hao:            " )  + s.sprintf( "%3i", p.j ) + "\n";
             
-      s1 += tr( "Delta-linked Ornithine:" ) + QString::number( p.o ) + "\n";
+      s1 += tr( "Delta-linked Ornithine: " ) + QString::number( p.o ) + "\n";
    }
    else
    {
-      s1 += tr( "Adenine:        " )  + s.sprintf( "%3i", p.a ) + "  ";
-      s1 += tr( "Cytosine:       " )  + s.sprintf( "%3i", p.c ) + "\n";
+      int a = analyte.sequence.count( "a" );
+      int c = analyte.sequence.count( "c" );
+      int g = analyte.sequence.count( "g" );
+      int t = analyte.sequence.count( "t" );
+      int u = analyte.sequence.count( "u" );
+
+      s1 += tr( "Adenine:        " )  + s.sprintf( "%3i", a ) + "  ";
+      s1 += tr( "Cytosine:       " )  + s.sprintf( "%3i", c ) + "\n";
             
-      s1 += tr( "Guanine:        " )  + s.sprintf( "%3i", p.g ) + "  ";
-      s1 += tr( "Thymine:        " )  + s.sprintf( "%3i", p.t ) + "\n";
-            
-      s1 += tr( "Uracil:         " )  + s.sprintf( "%3i", p.u ) + "\n";
+      s1 += tr( "Guanine:        " )  + s.sprintf( "%3i", g ) + "  ";
+
+      if ( analyte.type == US_Analyte::DNA )
+         s1 += tr( "Thymine:        " )  + s.sprintf( "%3i", t ) + "\n";
+      
+      else if  ( analyte.type == US_Analyte::RNA )   
+         s1 += tr( "Uracil:         " )  + s.sprintf( "%3i", u ) + "\n";
    }
 
    US_EditorGui* dialog = new US_EditorGui();
-   dialog->editor->e->setFont( QFont( "monospace", US_GuiSettings::fontSize()));
+   QFont font = QFont( "monospace", US_GuiSettings::fontSize() );
+   dialog->editor->e->setFont( font );
    dialog->editor->e->setText( s1 );
+
+   QFontMetrics fm( font );
+
+   dialog->resize( fm.width( 'W' ) * 80, fm.height() * 20 );
+
    dialog->exec();
 }
 
@@ -1753,6 +1768,13 @@ US_SequenceEditor::US_SequenceEditor( const QString& sequence )
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
    main->addWidget( pb_accept, 5, 1 );
+
+   QFont font = QFont( "monospace", US_GuiSettings::fontSize() );
+   edit->e->setFont( font );
+
+   QFontMetrics fm( font );
+   resize( fm.width( 'W' ) * 80, fm.height() * 20 );
+
 }
 
 void US_SequenceEditor::accept( void ) 
