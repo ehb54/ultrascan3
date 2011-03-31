@@ -103,13 +103,15 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
 // load data
 void US_vHW_Enhanced::load( void )
 {
+   US_AnalysisBase2::load();
+
+   if ( ! dataLoaded )
+      return;
 
    connect( pb_save,    SIGNAL( clicked() ),
             this,       SLOT(   save_data() ) );
    connect( pb_view,    SIGNAL( clicked() ),
             this,       SLOT(   view_report() ) );
-
-   US_AnalysisBase2::load();
 
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
@@ -126,7 +128,6 @@ void US_vHW_Enhanced::load( void )
    pb_selegr->setEnabled( true );
    pb_dstrpl->setEnabled( true );
 
-   dataLoaded = true;
    haveZone   = false;
 
    update( 0 );

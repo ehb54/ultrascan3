@@ -161,7 +161,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    density      = DENS_20W;
    viscosity    = VISC_20W;
    compress     = 0.0;
-   QPushButton* pb_solution = us_pushbutton( tr( "Solution" ) );
+   pb_solution  = us_pushbutton( tr( "Solution" ) );
    QLabel* lb_density   = us_label( tr( "Density" ) );
    QLabel* lb_viscosity = us_label( tr( "Viscosity" ) );
    QLabel* lb_vbar      = us_label( tr( "Vbar" ) );
@@ -177,6 +177,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    QFontMetrics fme( lb_compress->font() );
    int pwid = fme.width( lb_compress->text() + 6 );
    int lwid = pwid * 3 / 4;
+   pb_solution->setEnabled( false );
    lb_vbar    ->setMinimumWidth( pwid );
    le_vbar    ->setMinimumWidth( lwid );
    lb_compress->setMinimumWidth( pwid );
@@ -414,6 +415,7 @@ void US_FeMatch::load( void )
 
    update( 0 );
 
+   pb_solution ->setEnabled( true );
    pb_details  ->setEnabled( true );
    pb_loadmodel->setEnabled( true );
    pb_exclude  ->setEnabled( true );
@@ -2411,6 +2413,9 @@ void US_FeMatch::update_disk_db( bool isDB )
 // Get solution parameters via US_SolutionGui
 void US_FeMatch::get_solution()
 {
+   if ( ! dataLoaded )
+      return;
+
    int dbdisk = ( dkdb_cntrls->db() ) ? US_Disk_DB_Controls::DB
                                       : US_Disk_DB_Controls::Disk;
    int expID  = 0;

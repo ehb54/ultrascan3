@@ -450,7 +450,7 @@ QString US_DataProcess::get_noise_filename( QString guid )
       fn         = path + "/" + fn;             // full path file name
 
       if ( kf != ii  &&  newnum > nnames )
-         newnum     = kf;                       // 1st opened number slot
+         newnum     = ii + 1;                   // 1st opened number slot
 
       QFile m_file( fn );
 

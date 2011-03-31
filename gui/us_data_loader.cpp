@@ -223,6 +223,14 @@ bool US_DataLoader::load_edit( void )
 
             return false;
          }
+         catch ( int err )
+         {
+            QMessageBox::warning( this,
+                  tr( "Data Error" ),
+                  US_DataIO2::errorString( err ) );
+
+            return false;
+         }
       }
    }
    else // Load data from database

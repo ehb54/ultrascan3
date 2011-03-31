@@ -142,7 +142,7 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 
    // Parameters
 
-   QPushButton* pb_solution = us_pushbutton( tr( "Solution" ) );
+   pb_solution  = us_pushbutton( tr( "Solution" ) );
    connect( pb_solution, SIGNAL( clicked() ), SLOT( get_solution() ) );
 
    QLabel* lb_density   = us_label( tr( "Density (20" ) + DEGC + ")" );
@@ -160,6 +160,7 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    le_vbar      = us_lineedit( QString::number( vbar,      'f', 5 ) );
    le_skipped   = us_lineedit( "0" );
 
+   pb_solution ->setEnabled ( false );
    le_solution ->setReadOnly( true );
    le_density  ->setReadOnly( true );
    le_viscosity->setReadOnly( true );
@@ -259,8 +260,13 @@ void US_AnalysisBase2::load( void )
    rawList      .clear();
    excludedScans.clear();
    triples      .clear();
+   savedValues  .clear();
 
-   //reset();
+   lw_triples->disconnect();
+   lw_triples->clear();
+   ct_from   ->disconnect();
+   ct_from   ->setValue( 0 );
+
 
    bool edlast = ck_edlast->isChecked();
    int  dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
@@ -276,6 +282,7 @@ void US_AnalysisBase2::load( void )
 
    if ( dialog->exec() != QDialog::Accepted ) return;
 
+qDebug() << "AB:description" << description;
    if ( disk_controls->db() )
       directory = tr( "(database)" );
 
@@ -285,14 +292,11 @@ void US_AnalysisBase2::load( void )
       directory = directory.left( directory.lastIndexOf( "/" ) );
    }
 
-   lw_triples->disconnect();
-   lw_triples->clear();
-
+qDebug() << "AB:triples.size" << triples.size();
    for ( int ii=0; ii < triples.size(); ii++ )
       lw_triples->addItem( triples.at( ii ) );
 
-   savedValues.clear();
-
+qDebug() << "AB:scanData.size" << dataList[0].scanData.size();
    for ( int i = 0; i < dataList[ 0 ].scanData.size(); i++ )
    {
       US_DataIO2::Scan* s = &dataList[ 0 ].scanData[ i ];
@@ -308,19 +312,16 @@ void US_AnalysisBase2::load( void )
 
    noiflags.fill( -1, dataList.size() );
 
-   lw_triples->disconnect();
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ), 
                         SLOT  ( new_triple       ( int ) ) );
    lw_triples->setCurrentRow( 0 );
 
    // Enable other buttons
-   pb_details->setEnabled( true );
-   pb_view   ->setEnabled( true );
-   pb_save   ->setEnabled( true );
-   pb_exclude->setEnabled( true );
-
-   ct_from->disconnect();
-   ct_from->setValue( 0 );
+   pb_solution->setEnabled( true );
+   pb_details ->setEnabled( true );
+   pb_view    ->setEnabled( true );
+   pb_save    ->setEnabled( true );
+   pb_exclude ->setEnabled( true );
 
    connect( ct_from, SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_from( double ) ) );
@@ -1354,6 +1355,9 @@ for (int jj=0;jj<nenois;jj++)
 // Get solution parameters via US_SolutionGui
 void US_AnalysisBase2::get_solution()
 {
+   if ( ! dataLoaded )
+      return;
+
    int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                         : US_Disk_DB_Controls::Disk;
    int expID  = 0;
