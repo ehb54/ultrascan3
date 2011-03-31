@@ -34,8 +34,11 @@ int main( int argc, char* argv[] )
    // License is OK.  Start up.
    
    US_ManageData w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
+   //w.show();                   //!< \memberof QWidget
+   if ( w.db != NULL )
+      return application.exec();  //!< \memberof QApplication
+   else
+      return -1;
 }
 
 // US_ManageData class constructor
@@ -219,21 +222,26 @@ DbgLv(1) << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
       QMessageBox::information( this,
          tr( "DB Connection Problem" ),
          tr( "There was an error connecting to the database:\n" )
-         + db->lastError() );
-      close();
+         + db->lastError() 
+         + tr( "Cannot continue.  Closing" ) );
+      db = NULL;
+      return;
    }
 
    personID      = 0;
 DbgLv(2) << "db passwd complete";
 
    // if possible get db investigator from user name
-   investig      = QString::number( US_Settings::us_inv_ID() )
+
+   int id = US_Settings::us_inv_ID();
+   QString number = ( id > 0 ) ? QString::number( id )  + ": " : "";
+
+   le_invtor->setText( number + US_Settings::us_inv_name() );
+
+   investig = QString::number( US_Settings::us_inv_ID() )
       + ": " + US_Settings::us_inv_name();
-   le_invtor->setText( investig );
 
    find_investigator(  investig );
-
-   le_invtor->setText( investig );
 
    connect( pb_invtor,  SIGNAL( clicked()           ),
             this,       SLOT( sel_investigator()    ) );
@@ -511,11 +519,12 @@ void US_ManageData::sel_investigator()
 
 // assign an investigator string in proper id:lastname,firstname form
 void US_ManageData::assign_investigator( int invID,
-      const QString& lname, const QString& fname )
+      const QString& /*lname*/, const QString& /*fname*/ )
 {
    personID   = invID;
-   investig   = QString::number( invID ) + ": " + lname + ", " + fname;
-   le_invtor->setText( investig );
+
+   QString number = ( invID > 0 ) ? QString::number( invID ) + ": " : "";
+   le_invtor->setText( number + US_Settings::us_inv_name() );
 }
 
 // handle a right-mouse click of a row cell

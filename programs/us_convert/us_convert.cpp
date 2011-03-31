@@ -381,12 +381,11 @@ void US_Convert::reset( void )
    // Display investigator
    ExpData.invID = US_Settings::us_inv_ID();
 
-   if ( ExpData.invID > 0 )
-      le_investigator->setText( QString::number( ExpData.invID ) + ": " 
-         + US_Settings::us_inv_name() );
+   QString number = ( ExpData.invID > 0 )
+      ?  QString::number( ExpData.invID ) + ": "
+      : "";
 
-   else
-      le_investigator->setText( "Not Selected" );
+   le_investigator->setText( number + US_Settings::us_inv_name() );
 }
 
 void US_Convert::resetAll( void )
@@ -2036,6 +2035,8 @@ bool US_Convert::centerpieceInfoDisk( void )
 
       cb_centerpiece->addOptions( options );
    }
+
+   return true;
 }
 
 void US_Convert::plot_current( void )

@@ -656,10 +656,12 @@ void US_ProjectGuiGeneral::reset( void )
    // Display investigator
    if ( *investigatorID == 0 )
       *investigatorID = US_Settings::us_inv_ID();
-   if ( *investigatorID > 0 )
-      le_investigator->setText( QString::number( *investigatorID ) + ": " + US_Settings::us_inv_name() );
-   else
-      le_investigator->setText( "Not Selected" );
+   
+   QString number = ( *investigatorID > 0 )
+      ? QString::number( *investigatorID ) + ": " 
+      : "";
+
+   le_investigator->setText( number + US_Settings::us_inv_name() );
 }
 
 // Function to select the current investigator
@@ -676,11 +678,15 @@ void US_ProjectGuiGeneral::sel_investigator( void )
 
 // Function to assign the selected investigator as current
 void US_ProjectGuiGeneral::assign_investigator( int invID,
-      const QString& lname, const QString& fname)
+      const QString& /*lname*/, const QString& /*fname*/ )
 {
    *investigatorID = invID;
-   le_investigator->setText( QString::number( invID ) + ": " +
-         lname + ", " + fname );
+
+   QString number = ( *investigatorID > 0 )
+      ? QString::number( *investigatorID ) + ": " 
+      : "";
+
+   le_investigator->setText( number + US_Settings::us_inv_name() );
 }
 
 void US_ProjectGuiGeneral::setGUID( QString newGUID )

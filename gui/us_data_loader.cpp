@@ -50,8 +50,9 @@ US_DataLoader::US_DataLoader(
    // Investigator
    // Only enable the investigator button for privileged users
    pb_invest = us_pushbutton( tr( "Select Investigator" ) );
-   pb_invest->setEnabled( ( US_Settings::us_inv_level() > 0 )  &&
-                          disk_controls->db() );
+
+   int inv = US_Settings::us_inv_level();
+   pb_invest->setEnabled( ( inv > 0 )  && disk_controls->db() );
    connect( pb_invest, SIGNAL( clicked() ), SLOT( get_person() ) );
    top->addWidget( pb_invest, row, 0 );
 
@@ -59,10 +60,9 @@ US_DataLoader::US_DataLoader(
    QPalette gray = US_GuiSettings::editColor();
    gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
 
-   QString name = QString::number( US_Settings::us_inv_ID() ) + ": "
-                  + US_Settings::us_inv_name();
+   QString name = ( inv > 0 ) ? QString::number( inv ) + ": " : "";
 
-   le_invest = us_lineedit( name );
+   le_invest = us_lineedit( name + US_Settings::us_inv_name() );
    le_invest->setPalette ( gray );
    le_invest->setReadOnly( true );
    top->addWidget( le_invest, row++, 1 );
@@ -326,10 +326,11 @@ void US_DataLoader::get_person()
 }
 
 // Slot to handle accept in investigator dialog
-void US_DataLoader::update_person( int ID, const QString& lname,
-      const QString& fname )
+void US_DataLoader::update_person( int ID, 
+      const QString& /*lname*/, const QString& /*fname*/ )
 {
-   le_invest->setText( QString::number( ID ) + ": " + lname + ", " + fname );
+   QString number = ( ID > 0 ) ? QString::number( ID ) + ": " : "";
+   le_invest->setText( number + US_Settings::us_inv_name() );
    list_data();
 }
 

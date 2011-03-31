@@ -287,7 +287,7 @@ void US_ExperimentGui::reset( void )
    }
 
    else
-      le_investigator->setText( "Not Selected" );
+      le_investigator->setText( US_Settings::us_inv_name() );
 
 }
 
@@ -365,11 +365,12 @@ void US_ExperimentGui::selectInvestigator( void )
 }
 
 void US_ExperimentGui::assignInvestigator( int invID,
-      const QString& lname, const QString& fname )
+      const QString& /*lname*/, const QString& /*fname*/ )
 {
    expInfo.invID = invID;
-   le_investigator->setText( QString::number( invID ) + ": " +
-         lname + ", " + fname );
+
+   QString number = ( invID > 0 ) ? QString::number( invID ) + ": " : "";
+   le_investigator->setText( number + US_Settings::us_inv_name());
 }
 
 void US_ExperimentGui::getInvestigatorInfo( void )

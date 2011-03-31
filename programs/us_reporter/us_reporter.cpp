@@ -12,7 +12,6 @@
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_passwd.h"
-#include "us_investigator.h"
 #include "us_editor.h"
 #include "us_util.h"
 #include "us_sleep.h"
