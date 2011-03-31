@@ -487,8 +487,7 @@ void US_AnalyteGui::new_analyte( void )
 {
    if ( ! discard_changes() ) return;
 
-   US_Analyte a;
-   analyte = a;  // Set to default
+   analyte = US_Analyte();  // Set to default
    
    // Protein is default
    if ( rb_rna ->isChecked() ) analyte.type = US_Analyte::RNA;
@@ -497,8 +496,10 @@ void US_AnalyteGui::new_analyte( void )
 
    if ( ! rb_protein->isChecked() ) analyte.vbar20 = 0.55;  // Empirical value
 
-   saved_analyte = a;
+   saved_analyte = analyte;
    populate();
+   if ( analyte.type == US_Analyte::RNA ||
+        analyte.type == US_Analyte::DNA ) update_nucleotide();
 }
 
 void US_AnalyteGui::check_db( void )
