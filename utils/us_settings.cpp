@@ -207,13 +207,13 @@ void US_Settings::set_beckmanBug( bool setBug )
 int US_Settings::default_data_location( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "dataLocation", 1 ).toInt(); 
+  return settings.value( "dataLocation", 2 ).toInt(); 
 }
 
 void US_Settings::set_default_data_location( int location )
 {
   QSettings settings( US3, "UltraScan" );
-  if ( location == 1 )
+  if ( location == 2 )
     settings.remove( "dataLocation" );
   else
     settings.setValue( "dataLocation", location );
@@ -273,7 +273,7 @@ void US_Settings::set_debug_text( QStringList debuglist )
 QString US_Settings::us_inv_name( void )
 {
    QSettings settings( US3, "UltraScan" );
-   return settings.value( "us_investigator_name", "" ).toString();
+   return settings.value( "us_investigator_name", "Not Available" ).toString();
 }
 
 void US_Settings::set_us_inv_name( const QString& name )
