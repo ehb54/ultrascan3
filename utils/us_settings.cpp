@@ -19,14 +19,15 @@ void US_Settings::set_browser( const QString& browser )
 QString US_Settings::usHomeDir( void )
 {
   QSettings settings( US3, "UltraScan" );
-  QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+  //QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+  QString home = appBaseDir();
   return settings.value( "usHomeDir",  home ).toString();
 }
 
 void US_Settings::set_usHomeDir( const QString& dir )
 {
   QSettings settings( US3, "UltraScan" );
-  if ( dir == qApp->applicationDirPath () )
+  if ( dir == appBaseDir() )
     settings.remove( "usHomeDir" );
   else
     settings.setValue( "usHomeDir", dir );
@@ -132,7 +133,7 @@ void US_Settings::set_tmpDir( const QString& dir )
 QString US_Settings::appBaseDir( void )
 {
    QString base = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
-#ifdef Q_WS_MAC
+
    if ( base.contains( ".app/Contents" ) )
    {
       int ii  = base.lastIndexOf( "/bin/" );
@@ -140,7 +141,7 @@ QString US_Settings::appBaseDir( void )
       if ( ii > 0 )
          base    = base.left( ii );
    }
-#endif
+
    return base;
 }
 

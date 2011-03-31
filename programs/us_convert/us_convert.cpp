@@ -1995,7 +1995,8 @@ bool US_Convert::centerpieceInfoDB( void )
 bool US_Convert::centerpieceInfoDisk( void )
 {
    // First figure out the xml file name, and try to open it
-   QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+   //QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+   QString home = US_Settings::appBaseDir();
    QFile f( home + "/etc/abstractCenterpieces.xml");
 
    if ( ! f.open( QIODevice::ReadOnly ) ) return false;
