@@ -29,8 +29,12 @@ US_LoadDB::US_LoadDB( QString& wd ) : US_WidgetsDialog( 0, 0 ), workingDir( wd )
    connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
    investigator->addWidget( pb_investigator );
  
-   le_investigator = us_lineedit( QString::number( personID ) + ": "
-         + US_Settings::us_inv_name(), 1 );
+   int id = US_Settings::us_inv_ID();
+   QString number = ( id > 0 )
+      ? QString::number( personID ) + ": "
+      : "";
+
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1 );
    le_investigator->setReadOnly( true );
    le_investigator->setPalette ( gray );
    investigator->addWidget( le_investigator );
@@ -137,11 +141,12 @@ void US_LoadDB::sel_investigator( void )
 }
 
 void US_LoadDB::assign_investigator( int invID,
-      const QString& lname, const QString& fname)
+      const QString& /*lname*/, const QString& /*fname*/ )
 {
    personID = invID;
-   le_investigator->setText( "InvID (" + QString::number( invID ) + "): " +
-         lname + ", " + fname );
+
+   QString number = ( invID > 0 ) ? QString::number( invID ) + "): " : "";
+   le_investigator->setText( number + US_Settings::us_inv_name() );
 
    populate_tree();
 }

@@ -66,8 +66,10 @@ void US_ModelLoader::build_dialog( void )
    pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, SIGNAL( clicked()       ),
             this,            SLOT(   get_person()    ) );
-   le_investigator = us_lineedit( QString::number( US_Settings::us_inv_ID() )
-                                + ": " + US_Settings::us_inv_name() );
+
+   int inv = US_Settings::us_inv_ID();
+   QString number = ( inv > 0 ) ? QString::number( inv ) + ": " : "";
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
    le_investigator->setPalette(  gray );
    le_investigator->setReadOnly( true );
 
@@ -242,11 +244,11 @@ void US_ModelLoader::get_person()
 }
 
 // Slot to handle accept in investigator dialog
-void US_ModelLoader::update_person( int ID, const QString& lname,
-      const QString& fname)
+void US_ModelLoader::update_person( int ID, 
+      const QString& /*lname*/, const QString& /*fname*/)
 {
-   le_investigator->setText(
-      QString::number( ID ) + ": " + lname + ", " + fname );
+   QString number = ( ID > 0 ) ? QString::number( ID ) + ": " : "";
+   le_investigator->setText( number + US_Settings::us_inv_name() );
 
    list_models();
 }

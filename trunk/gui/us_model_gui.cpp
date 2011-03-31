@@ -394,22 +394,25 @@ bool US_ModelGui::status_query( const QStringList& q )
 
 void US_ModelGui::check_db( void )
 {
-   QStringList DB = US_Settings::defaultDB();
-
-   if ( DB.size() < 5 )
+   if ( disk_controls->db() )
    {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "There is no default database set." ) );
-   }
-   else
-   {
-      investigator = US_Settings::us_inv_ID();
+      QStringList DB = US_Settings::defaultDB();
 
-      if ( investigator > 0 )
-         le_investigator->setText( QString::number( investigator ) + ": "
-               + US_Settings::us_inv_name() );
+      if ( DB.size() < 5 )
+      {
+         QMessageBox::warning( this,
+            tr( "Attention" ),
+            tr( "There is no default database set." ) );
+      }
    }
+
+   investigator = US_Settings::us_inv_ID();
+
+   QString number = ( investigator > 0 ) 
+      ? QString::number( investigator ) + ": "
+      : "";
+         
+   le_investigator->setText( number + US_Settings::us_inv_name() );
 }
 
 void US_ModelGui::connect_error( const QString& error )
@@ -437,10 +440,11 @@ void US_ModelGui::get_person( void )
    
    investigator = US_Settings::us_inv_ID();
 
-   QString inv_text = QString::number( investigator ) + ": "
-                      +  US_Settings::us_inv_name();
+   QString number = ( investigator >  0 ) 
+      ? QString::number( investigator ) + ": "
+      : "";
 
-   le_investigator->setText( inv_text );
+   le_investigator->setText( number + US_Settings::us_inv_name() );
 }
 
 void US_ModelGui::manage_components( void )

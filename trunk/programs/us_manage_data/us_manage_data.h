@@ -44,6 +44,8 @@ class US_EXTERN US_ManageData : public US_Widgets
          QString   lastmodDate;       // last modification date/time
       };
 
+      US_DB2*       db;
+
    private:
 
       QTreeWidget*        tw_recs;    // tree widget
@@ -62,8 +64,6 @@ class US_EXTERN US_ManageData : public US_Widgets
       QProgressBar* progress;
 
       US_Help       showHelp;
-
-      US_DB2*       db;
 
       US_Buffer     buffer;
       US_Analyte    analyte;

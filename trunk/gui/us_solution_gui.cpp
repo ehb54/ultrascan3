@@ -312,12 +312,13 @@ void US_SolutionGui::reset( void )
       pb_accept->setEnabled( false );
 
    // Display investigator
-   if ( investigatorID == 0 )
-      investigatorID = US_Settings::us_inv_ID();
-   if ( investigatorID > 0 )
-      le_investigator->setText( QString::number( investigatorID ) + ": " + US_Settings::us_inv_name() );
-   else
-      le_investigator->setText( "Not Selected" );
+   investigatorID = US_Settings::us_inv_ID();
+
+   QString number = ( investigatorID > 0 ) 
+      ? QString::number( investigatorID ) + ": " 
+      : "";
+
+   le_investigator->setText( number +  US_Settings::us_inv_name() );
 }
 
 // Function to accept the current solution and return
@@ -368,11 +369,15 @@ void US_SolutionGui::sel_investigator( void )
 
 // Function to assign the selected investigator as current
 void US_SolutionGui::assign_investigator( int invID,
-      const QString& lname, const QString& fname)
+      const QString& /*lname*/, const QString& /*fname*/ )
 {
    investigatorID = invID;
-   le_investigator->setText( QString::number( invID ) + ": " +
-         lname + ", " + fname );
+
+   QString number = ( investigatorID > 0 ) 
+      ? QString::number( investigatorID ) + ": " 
+      : "";
+
+   le_investigator->setText( number +  US_Settings::us_inv_name() );
 }
 
 // Function to load solutions into solutions list widget
