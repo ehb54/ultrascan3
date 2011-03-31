@@ -45,8 +45,8 @@ US_ExperimentGui::US_ExperimentGui(
    QLabel* lb_label = us_label( tr( "Label:" ) );
    experiment->addWidget( lb_label, row++, 0, 1, 2 );
    le_label = us_lineedit();
-   connect( le_label, SIGNAL( textEdited ( const QString&   ) ),
-                      SLOT  ( saveLabel  ( const QString&   ) ) );
+   connect( le_label, SIGNAL( editingFinished () ),
+                      SLOT  ( saveLabel       () ) );
    experiment->addWidget( le_label, row++, 0, 1, 2 );
 
    // Project
@@ -282,7 +282,6 @@ void US_ExperimentGui::reset( void )
          pb_accept       ->setEnabled( false );
 
       // Also checking the label
-      expInfo.label = expInfo.label.trimmed();
       if ( expInfo.label.isEmpty() )
          pb_accept       ->setEnabled( false );
    }
@@ -430,10 +429,14 @@ void US_ExperimentGui::cancelProject( void )
 }
 
 // Function to update the labe associated with the current experiment
-void US_ExperimentGui::saveLabel( const QString& )
+void US_ExperimentGui::saveLabel( void )
 {
    expInfo.label = le_label->text();
    expInfo.label = expInfo.label.trimmed();
+
+   // Save other elements on the page before reset
+   expInfo.comments      = te_comment ->toPlainText();
+   expInfo.expType       = cb_expType ->currentText();
 
    reset();         // To get the pb_accept enable code
 }

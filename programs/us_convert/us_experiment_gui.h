@@ -88,7 +88,7 @@ class US_EXTERN US_ExperimentGui : public US_WidgetsDialog
       void selectProject     ( void );
       void assignProject     ( US_Project& );
       void cancelProject     ( void );
-      void saveLabel         ( const QString& );
+      void saveLabel         ( void );
       QComboBox* us_expTypeComboBox         ( void );
       void setInstrumentList ( void );
       void setOperatorList   ( void );
