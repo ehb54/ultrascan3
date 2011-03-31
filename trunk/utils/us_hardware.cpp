@@ -5,7 +5,8 @@
 // Read in and build a vector of centerpiece information
 bool US_Hardware::readCenterpieceInfo( QVector< CenterpieceInfo >& cp_list )
 {
-   QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+   //QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+   QString home = US_Settings::appBaseDir();
 
    QFile cp_file( home + "/etc/centerpiece.dat");
 

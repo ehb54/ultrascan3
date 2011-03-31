@@ -72,7 +72,8 @@ void US_BufferComponent::getAllFromHD(
 {
    componentList.clear();
 
-   QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+   //QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+   QString home = US_Settings::appBaseDir();
    QFile   file( home + "/etc/bufferComponents.xml" );
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
@@ -148,7 +149,8 @@ void US_BufferComponent::component(
 void US_BufferComponent::putAllToHD( 
         const QMap< QString, US_BufferComponent >& componentList ) 
 {
-   QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+   //QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+   QString home = US_Settings::appBaseDir();
    QFile   file( home + "/etc/bufferComponents.xml" );
    
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
