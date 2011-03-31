@@ -88,7 +88,10 @@ US_Edit::US_Edit() : US_Widgets()
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
 
-   QString number  = QString::number( US_Settings::us_inv_ID() ) + ": ";
+   int id = US_Settings::us_inv_ID();
+   QString number  = ( id > 0 ) ? 
+      QString::number( US_Settings::us_inv_ID() ) + ": " 
+      : "";
    le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1 );
    le_investigator->setReadOnly( true );
    le_investigator->setPalette( gray );

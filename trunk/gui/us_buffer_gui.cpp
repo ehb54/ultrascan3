@@ -153,7 +153,11 @@ US_BufferGui::US_BufferGui(
    row = 1;
 
    // Investigator
-   QString number  = QString::number( US_Settings::us_inv_ID() ) + ": ";
+   
+   QString number  = ( personID > 0 )
+      ? QString::number( US_Settings::us_inv_ID() ) + ": "
+      : "";
+
    le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
    le_investigator->setReadOnly( true );
    le_investigator->setPalette( gray );
@@ -451,12 +455,16 @@ void US_BufferGui::sel_investigator( void )
 }
 
 void US_BufferGui::assign_investigator( int invID, 
-      const QString& lname, const QString& fname)
+      const QString& /* unused */, const QString& /* unused */ )
 {
    personID    = invID;
    view_shared = false;
-   le_investigator->setText( QString::number( invID ) + ": " +
-         lname + ", " + fname );
+
+   QString number = ( personID > 0 ) 
+      ? QString::number( invID ) + ": "
+      : "";
+
+   le_investigator->setText( number + US_Settings::us_inv_name() );
 
    if ( disk_controls->db() ) read_db();
 }
@@ -1180,15 +1188,9 @@ void US_BufferGui::reset( void )
    lb_units          ->setText( "" );
    le_concentration  ->clear();
 
-   if ( personID > 0 )
-   {
-      QString number  = QString::number( US_Settings::us_inv_ID() ) + ": ";
-      le_investigator->setText( number + US_Settings::us_inv_name() );
-   }
-   else
-   {
-      le_investigator   ->setText( "Not Selected" );
-   }
+   int id = US_Settings::us_inv_ID();
+   QString number = ( id > 0 ) ? QString::number( id ) + ": " : "";
+   le_investigator->setText( number + US_Settings::us_inv_name() );
 }
 
 /*!  Recalculate the density of the buffer based on the information in the
