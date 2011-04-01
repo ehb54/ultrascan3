@@ -1391,6 +1391,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             {
                all_edits = true;
                pb_write->setEnabled( true );
+               changes_made = all_edits;
             }
          }
 
@@ -1445,6 +1446,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
          }
 
          pb_write      ->setEnabled( true );
+         changes_made = true;
          pb_baseline   ->setIcon   ( check );
          next_step();
          break;
@@ -1552,6 +1554,7 @@ void US_Edit::set_meniscus( void )
    pb_write    ->setEnabled( all_edits );
    pb_write    ->setIcon( QIcon() );
 
+   changes_made = all_edits;
    spikes = false;
    pb_spikes   ->setEnabled( false );
    pb_spikes   ->setIcon( QIcon() );
@@ -1595,6 +1598,7 @@ void US_Edit::set_airGap( void )
    pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    pb_write    ->setIcon( QIcon() );;
+   changes_made = all_edits;
 
    spikes = false;
    pb_spikes   ->setEnabled( false );
@@ -1626,6 +1630,7 @@ void US_Edit::set_dataRange( void )
    pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    pb_write    ->setIcon( QIcon() );;
+   changes_made = all_edits;
 
    spikes = false;
    pb_spikes   ->setEnabled( false );
@@ -1652,6 +1657,7 @@ void US_Edit::set_plateau( void )
    pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    pb_write    ->setIcon( QIcon() );;
+   changes_made = all_edits;
 
    undo();
    plot_range();
@@ -1700,6 +1706,7 @@ void US_Edit::set_baseline( void )
    pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    pb_write    ->setIcon( QIcon() );;
+   changes_made = all_edits;
    
    // Only display last curve
    plot_last();
@@ -2520,6 +2527,7 @@ void US_Edit::new_triple( int index )
    pb_invert   ->setEnabled( true );
    pb_undo     ->setEnabled( true );
    pb_write    ->setEnabled( all_edits );
+   changes_made = all_edits;
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_from   ( double ) ) );
@@ -3488,6 +3496,7 @@ void US_Edit::prior_equil( void )
 
    all_edits = all_edits_done();
    pb_write   ->setEnabled( all_edits );
+   changes_made = all_edits;
 
    review_edits();
 }
