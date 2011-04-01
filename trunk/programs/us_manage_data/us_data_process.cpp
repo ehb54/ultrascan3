@@ -260,7 +260,7 @@ int US_DataProcess::record_remove_db( int irow )
    if      ( cdesc.recType == 1 )
    {  // remove a Raw record
       query.clear();
-      query << "delete_rawData" << dataID;
+      query << "delete_rawData" << QString::number( cdesc.parentID );
 
       if ( ( stat = db->statusQuery( query ) ) != 0 )
       {
