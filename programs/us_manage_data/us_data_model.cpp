@@ -742,8 +742,8 @@ void US_DataModel::merge_dblocal( )
    int jlr   = 0;
    int kar   = 1;
 
-   DataDesc  descd = ddescs.at( 0 );
-   DataDesc  descl = ldescs.at( 0 );
+   DataDesc  descd = ( nddes > 0 ) ? ddescs.at( 0 ) : DataDesc();
+   DataDesc  descl = ( nldes > 0 ) ? ldescs.at( 0 ) : DataDesc();
 DbgLv(2) << "MERGE: nd nl dlab llab"
  << nddes << nldes << descd.label << descl.label;
 
@@ -1283,8 +1283,6 @@ DbgLv(1) << "sort/dumy: count REMN" << countR << countE << countM << countN;
       DbgLv(1) << "sort_desc: nout REMN"
          << noutR << noutE << noutM << noutN;
    }
-DbgLv(1) << "sort_desc: nout REMN"
-         << noutR << noutE << noutM << noutN;
 }
 
 // review sorted string lists for duplicate GUIDs
