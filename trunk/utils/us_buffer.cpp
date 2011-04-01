@@ -424,7 +424,6 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
 
 int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
 {
-dumpBuffer();;
    QStringList q( "new_buffer" );
    q << GUID
      << description
@@ -456,6 +455,12 @@ dumpBuffer();;
    putSpectrum( db, "Extinction" );
    putSpectrum( db, "Refraction" );
    putSpectrum( db, "Fluorescence" );
+
+   // Also write to to disk
+   bool    newFile;
+   QString path     = US_Settings::dataDir() + "/buffers";
+   QString filename = get_filename( path, GUID, newFile );
+   writeToDisk( filename );
 
    return bufferID;
 }

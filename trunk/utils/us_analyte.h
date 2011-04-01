@@ -74,7 +74,13 @@ class US_EXTERN US_Analyte
       //!               drive is written
       //! \returns    - Success if the path is found or created and failure
       //!               if the path cannot be created
-      static bool       analyte_path( QString& );
+      static bool analyte_path( QString& );
+
+      //! \brief Find an analyte file on the disk
+      //! \param path  The full path of the directory to search
+      //! \param guid  The GUID of the desired analyte
+      //! \return The file name of the analyte. 
+      static QString get_filename( const QString&, const QString& );
 
       //! Dump the analyte values to stderr for debugging.
       void   dump        ( void );

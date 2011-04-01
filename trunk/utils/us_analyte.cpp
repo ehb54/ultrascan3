@@ -725,8 +725,52 @@ int US_Analyte::write_db( US_DB2* db )
       write_nucleotide( db );
 
    set_spectrum( db );
-   
+
+   // Write to disk too
+   QString path;
+   analyte_path( path );
+   QString filename = get_filename( path, analyteGUID );
+   write_disk( filename );
+
    return US_DB2::OK;
+}
+
+QString US_Analyte::get_filename( const QString& path, const QString& guid )
+{
+   QDir f( path );
+   QStringList filter( "A???????.xml" );
+   QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
+
+   for ( int i = 0; i < f_names.size(); i++ )
+   {
+      QFile a_file( path + "/" + f_names[ i ] );
+
+      if ( ! a_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
+
+      QXmlStreamReader xml( &a_file );
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement() )
+         {
+            if ( xml.name() == "analyte" )
+            {
+               QXmlStreamAttributes a = xml.attributes();
+
+               if ( a.value( "analyteGUID" ).toString() == guid )
+                  return path + "/" + f_names[ i ];
+            }
+         }
+      }
+
+      a_file.close();
+   }
+
+   int number = ( f_names.size() > 0 ) ? f_names.last().mid( 1, 7 ).toInt() : 0;
+
+   return path + "/A" + QString().sprintf( "%07i", number + 1 ) + ".xml";
 }
 
 void US_Analyte::write_nucleotide( US_DB2* db )
