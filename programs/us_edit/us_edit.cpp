@@ -130,8 +130,9 @@ US_Edit::US_Edit() : US_Widgets()
    lb_gaps = us_label( tr( "Threshold for Scan Gaps" ), -1 );
    specs->addWidget( lb_gaps, s_row, 0, 1, 2 );
 
-   ct_gaps = us_counter ( 1, 50.0, 100.0 ); 
+   ct_gaps = us_counter ( 1, 10.0, 100.0 );
    ct_gaps->setStep ( 10.0 );
+   ct_gaps->setValue( 50.0 );
    specs->addWidget( ct_gaps, s_row++, 2, 1, 2 );
 
    // Row 5
