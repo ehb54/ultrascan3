@@ -113,6 +113,12 @@ class US_EXTERN US_Model
       //!               if the path cannot be created
       static bool       model_path( QString& );
 
+      //! \brief Find a model file on the disk
+      //! \param path  The full path of the directory to search
+      //! \param guid  The GUID of the desired model
+      //! \return The file name of the model. 
+      static QString get_filename( const QString&, const QString& );
+
       //! Model type text
       //! \returns    - A short text string describing the type of model
       QString typeText( void );

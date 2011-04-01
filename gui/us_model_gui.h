@@ -74,7 +74,6 @@ class US_ModelGui : public US_WidgetsDialog
       bool    ignore_changes ( void );
       void    show_model_desc( void );
       void    connect_error  ( const QString& );
-      QString get_filename   ( const QString&, const QString& );
 
    private slots:
       void manage_components ( void );
