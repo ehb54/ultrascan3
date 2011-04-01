@@ -282,7 +282,6 @@ void US_AnalysisBase2::load( void )
 
    if ( dialog->exec() != QDialog::Accepted ) return;
 
-qDebug() << "AB:description" << description;
    if ( disk_controls->db() )
       directory = tr( "(database)" );
 
@@ -292,11 +291,9 @@ qDebug() << "AB:description" << description;
       directory = directory.left( directory.lastIndexOf( "/" ) );
    }
 
-qDebug() << "AB:triples.size" << triples.size();
    for ( int ii=0; ii < triples.size(); ii++ )
       lw_triples->addItem( triples.at( ii ) );
 
-qDebug() << "AB:scanData.size" << dataList[0].scanData.size();
    for ( int i = 0; i < dataList[ 0 ].scanData.size(); i++ )
    {
       US_DataIO2::Scan* s = &dataList[ 0 ].scanData[ i ];
@@ -325,8 +322,6 @@ qDebug() << "AB:scanData.size" << dataList[0].scanData.size();
 
    connect( ct_from, SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_from( double ) ) );
-
-   update( 0 );
 
    dataLoaded = true;
    qApp->processEvents();
@@ -392,7 +387,6 @@ void US_AnalysisBase2::update( int selection )
       viscosity   = bvisc.toDouble();
       vbar        = svbar.toDouble();
       buffLoaded  = true;
-qDebug() << "SolID" << solID;
 
       if ( solID.isEmpty() )
       {
@@ -403,13 +397,11 @@ qDebug() << "SolID" << solID;
       else if ( solID.length() < 36  &&  dbP != NULL )
       {  // Have DB solution ID
          solution_rec.readFromDB( solID.toInt(), dbP );
-qDebug() << "Sol-from-DB: #analytes" << solution_rec.analytes.size();
       }
 
       else
       {  // Have Local solution GUID
          solution_rec.readFromDisk( solID );
-qDebug() << "Sol-from-Local: #analytes" << solution_rec.analytes.size();
       }
 
       le_solution ->setText( solution_rec.solutionDesc );
@@ -419,6 +411,8 @@ qDebug() << "Sol-from-Local: #analytes" << solution_rec.analytes.size();
    {
       QMessageBox::warning( this, tr( "Solution/Buffer Values Fetch" ),
          errmsg );
+      solution_rec.commonVbar20 = vbar;
+      le_solution ->setText( tr( "( ***Undefined*** )" ) );
    }
 
    data_plot();
@@ -923,7 +917,6 @@ void US_AnalysisBase2::reset( void )
 
 void US_AnalysisBase2::new_triple( int index )
 {
-qDebug() << "NewTr: index" << index;
    // Save the data for the new triple
    US_DataIO2::EditedData* d = &dataList[ index ];
  
@@ -947,7 +940,6 @@ qDebug() << "NewTr: index" << index;
 
    // Update GUI elements and plot for selected triple
    update( index );
-qDebug() << "NewTr: d00 s00" << d->value(0,0) << savedValues[0][0];
 }
 
 double US_AnalysisBase2::calc_baseline( void ) const
@@ -1208,7 +1200,6 @@ void US_AnalysisBase2::write_plot( const QString& fname, const QwtPlot* plot )
     int    res = qRound( px / in );
     int    pw  = plot->width()  + res;
     int    ph  = plot->height() + res;
-qDebug() << "write_plot res" << res;
 
     generator.setResolution( res );
     generator.setFileName( fname );
@@ -1416,6 +1407,8 @@ void US_AnalysisBase2::updateSolution( US_Solution& solution_sel )
             bdens, bvisc, bcmpr, errmsg );
    }
 
+   density      = bdens.toDouble();
+   viscosity    = bvisc.toDouble();
    vbar         = solution_rec.commonVbar20;
    svbar        = QString::number( vbar );
 
