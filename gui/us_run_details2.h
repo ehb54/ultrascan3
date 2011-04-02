@@ -71,7 +71,7 @@ class US_EXTERN US_RunDetails2 : public US_WidgetsDialog
       void         show_all_data( void );
       void         draw_plot    ( const double*, const double*,
                                   const double*, const double*, int );
-      void         check_temp   ( double, double );
+      void         check_temp   ( double );
 
    private slots:
       void update           ( int  );

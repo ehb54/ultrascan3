@@ -147,11 +147,24 @@ class US_DataIO2
          double value  ( int i, int j )
             { return scanData[ i ].readings[ j ].value; }
                                        //!< Convenience function returning a reading
-         double average_temperature()  
+         double average_temperature() const
             { double sum = 0.0;
               for ( int i = 0; i < scanData.size(); i++ )
                  sum += scanData[ i ].temperature;
               return sum / (double)scanData.size(); } //!< Average temperature of scans
+
+         double temperature_spread() const
+            { double min = 99.0;
+              double max = 0.0;
+              for ( int i = 0; i < scanData.size(); i++ )
+              {
+                 double temp = scanData[ i ].temperature;
+                 min = ( temp < min ) ? temp : min;
+                 max = ( temp > max ) ? temp : max;
+              }
+                
+              return fabs( max - min );  //!< Temperature spread within scan
+            }
       };
 
       //! Additional data for each triplet, if equilibrium data
@@ -253,11 +266,24 @@ class US_DataIO2
          double value  ( int i, int j ) 
             { return scanData[ i ].readings[ j ].value; } 
                                       //!< A convenience function returning a reading value
-         double average_temperature()  
+         double average_temperature() const
             { double sum = 0.0;
               for ( int i = 0; i < scanData.size(); i++ )
                  sum += scanData[ i ].temperature;
               return sum / (double)scanData.size(); } //!< Average temperature of scans
+
+         double temperature_spread() const
+            { double min = 99.0;
+              double max = 0.0;
+              for ( int i = 0; i < scanData.size(); i++ )
+              {
+                 double temp = scanData[ i ].temperature;
+                 min = ( temp < min ) ? temp : min;
+                 max = ( temp > max ) ? temp : max;
+              }
+                
+              return fabs( max - min );  //!< Temperature spread within scan
+            }
       };
 
       //! The CCW data after edits are applied
@@ -284,7 +310,7 @@ class US_DataIO2
       enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, BADXML, 
                      NODATA, NO_GUID_MATCH, BAD_VERSION };
 
-      /*! Read a set of legacy data in raw Beckman data set format
+      /*! Read a set of legacy data in raw teckman data set format
           \param file  The filename to be read
           \param data  A reference to the data structure location for the read data
       */
