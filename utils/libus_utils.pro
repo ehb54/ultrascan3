@@ -24,6 +24,7 @@ HEADERS      = us_analyte.h       \
                us_constants.h     \
                us_crc.h           \
                us_dataIO2.h       \
+               us_datafiles.h     \
                us_db2.h           \
                us_global.h        \
                us_hardware.h      \
@@ -52,6 +53,7 @@ SOURCES      = us_analyte.cpp       \
                us_constants.cpp     \
                us_crc.cpp           \
                us_dataIO2.cpp       \
+               us_datafiles.cpp     \
                us_db2.cpp           \
                us_global.cpp        \
                us_hardware.cpp      \
