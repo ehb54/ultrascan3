@@ -10,6 +10,7 @@
 #include "us_dataIO2.h"
 #include "us_util.h"
 #include "us_editor.h"
+#include "us_constants.h"
 
 // Main constructor with flags for edit, latest-edit and local-data
 
@@ -289,6 +290,27 @@ bool US_DataLoader::load_edit( void )
          QFile( afn ).remove();
          QFile( efn ).remove();
       }
+   }
+
+   double                 dt = 0.0;
+   US_DataIO2::EditedData ed;
+
+   foreach( ed, editedData )
+   {
+      double delta = ed.temperature_spread();
+      dt = ( dt < delta ) ? delta : dt;
+   }
+
+   if ( dt > US_Settings::tempTolerance() )
+   {
+      QMessageBox::warning( this,
+            tr( "Temperature Problem" ),
+            tr( "The temperature in this run varied over the course\n"
+                "of the run to a larger extent than allowed by the\n"
+                "current threshold (" )
+                + QString::number( US_Settings::tempTolerance(), 'f', 1 )
+                + " " + DEGC + tr( ". The accuracy of experimental\n"
+                "results may be affected significantly." ) );
    }
 
    return true;

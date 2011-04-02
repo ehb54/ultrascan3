@@ -287,19 +287,15 @@ void US_RunDetails2::show_all_data( void )
    le_rotorSpeed->setText( QString::number( (int)rpm * 100 ) + " RPM" );
 
    // Determine temperature variation
-   double maxTemp = -1.0e99;
-   double minTemp =  1.0e99;
+   double dt = 0.0;
 
    foreach( triple, dataList )
    {
-      foreach( scan, triple.scanData )
-      {
-         maxTemp = max( maxTemp, scan.temperature );
-         minTemp = min( minTemp, scan.temperature );
-      }
+      double temp_spread = triple.temperature_spread();
+      dt = ( temp_spread > dt ) ? temp_spread : dt;
    }
 
-   check_temp( minTemp, maxTemp );
+   check_temp( dt );
 
    // Plot the data
    // First, put all data in a list and sort by time
@@ -315,10 +311,10 @@ void US_RunDetails2::show_all_data( void )
 
    qSort( values );
          
-   double* x = new double[ scanCount ];
-   double* t = new double[ scanCount ];
-   double* r = new double[ scanCount ];
-   double* m = new double[ scanCount ];
+   QVector< double > x( scanCount );
+   QVector< double > t( scanCount );
+   QVector< double > r( scanCount );
+   QVector< double > m( scanCount );
 
    for ( int i = 0; i < scanCount; i++ )
    {
@@ -333,17 +329,12 @@ void US_RunDetails2::show_all_data( void )
       prior_seconds = values[ i ].seconds;
    }
 
-   draw_plot( x, t, r, m, scanCount );
-
-   delete [] x;
-   delete [] t;
-   delete [] r;
-   delete [] m;
+   draw_plot( x.constData(), t.constData(), r.constData(), m.constData(), scanCount );
 }
 
-void US_RunDetails2::check_temp( double min, double max )
+void US_RunDetails2::check_temp( double dt )
 {
-   if ( max - min <= US_Settings::tempTolerance() )
+   if ( dt <= US_Settings::tempTolerance() )
    {
       lb_red  ->setPalette( QPalette( QColor( 0x55, 0, 0 ) ) ); // Dark Red
       lb_green->setPalette( QPalette( Qt::green ) );
@@ -352,20 +343,6 @@ void US_RunDetails2::check_temp( double min, double max )
    {
       lb_red  ->setPalette( QPalette( Qt::red ) ); 
       lb_green->setPalette( QPalette( QColor( 0, 0x44, 0 ) ) ); // Dark Green
-
-      if ( temp_warn )
-      {
-         temp_warn = false;
-
-         QMessageBox::warning( this, 
-            tr( "Temperature Problem" ),
-            tr( "The temperature in this run varied over the course\n"
-                "of the run to a larger extent than allowed by the\n"
-                "current threshold (" )  
-                + QString::number( US_Settings::tempTolerance(), 'f', 1 )
-                + " " + DEGC + tr( ". The accuracy of experimental\n"
-                "results may be affected significantly." ) );
-      }
    }
 }
 
@@ -479,7 +456,7 @@ void US_RunDetails2::update( int index )
    }
 
    const US_DataIO2::RawData* data      = &dataList[ index ];
-   int                       scanCount = data->scanData.size();
+   int                        scanCount = data->scanData.size();
 
    le_desc->setText( data->description );
 
@@ -504,10 +481,10 @@ void US_RunDetails2::update( int index )
    double maxTemp = -1.0e99;
    double minTemp =  1.0e99;
 
-   double* x = new double[ scanCount ];
-   double* t = new double[ scanCount ];
-   double* r = new double[ scanCount ];
-   double* m = new double[ scanCount ];
+   QVector< double > x( scanCount );
+   QVector< double > t( scanCount );
+   QVector< double > r( scanCount );
+   QVector< double > m( scanCount );
 
    for ( int i = 0; i < scanCount; i++ )
    {
@@ -527,13 +504,12 @@ void US_RunDetails2::update( int index )
       prior_seconds = s->seconds;
    }
 
-   check_temp( minTemp, maxTemp );
-   draw_plot( x, t, r, m, scanCount );
+   // Determine temperature variation
+   double dt = data->temperature_spread();;
 
-   delete [] x;
-   delete [] t;
-   delete [] r;
-   delete [] m;
+   check_temp( dt );
+
+   draw_plot( x.constData(), t.constData(), r.constData(), m.constData(), scanCount );
 }
 
 void US_RunDetails2::show_rpm_details( int /* index */ )

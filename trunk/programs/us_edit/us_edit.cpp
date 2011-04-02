@@ -20,6 +20,7 @@
 #include "us_db2.h"
 #include "us_get_edit.h"
 #include "us_load_db.h"
+#include "us_constants.h"
 
 //! \brief Main program for US_Edit. Loads translators and starts
 //         the class US_FitMeniscus.
@@ -975,6 +976,28 @@ void US_Edit::load( void )
 
    step = MENISCUS;
    set_pbColors( pb_meniscus );
+
+   // Tempeerature check
+   double              dt = 0.0;
+   US_DataIO2::RawData triple;
+
+   foreach( triple, allData )
+   {
+       double temp_spread = triple.temperature_spread();
+       dt = ( temp_spread > dt ) ? temp_spread : dt;
+   }
+
+   if ( dt > US_Settings::tempTolerance() )
+   {
+      QMessageBox::warning( this,
+            tr( "Temperature Problem" ),
+            tr( "The temperature in this run varied over the course\n"
+                "of the run to a larger extent than allowed by the\n"
+                "current threshold (" )
+                + QString::number( US_Settings::tempTolerance(), 'f', 1 )
+                + " " + DEGC + tr( ". The accuracy of experimental\n"
+                "results may be affected significantly." ) );
+   }
 }
 
 // Set pushbutton colors
