@@ -56,6 +56,8 @@ class US_EXTERN US_RunDetails2 : public US_WidgetsDialog
       QListWidget* lw_triples;
       QListWidget* lw_rpm;
 
+      QTimer*      timer;
+
       QLabel*      lb_red;
       QLabel*      lb_green;
 
@@ -75,6 +77,7 @@ class US_EXTERN US_RunDetails2 : public US_WidgetsDialog
 
    private slots:
       void update           ( int  );
+      void update_timer     ( void );
       void show_rpm_details ( int  );
       void plot_temp        ( void );
       void plot_rpm         ( void );

@@ -167,6 +167,9 @@ US_RunDetails2::US_RunDetails2( const QVector< US_DataIO2::RawData >& data,
 
    main->addLayout( buttons, row++, 2, 1, 4 );
 
+   timer = new QTimer();
+   connect( timer, SIGNAL( timeout() ), SLOT( update_timer() ) );
+
    setup();
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
                         SLOT  ( update           ( int ) ) );
@@ -178,7 +181,7 @@ US_RunDetails2::US_RunDetails2( const QVector< US_DataIO2::RawData >& data,
 void US_RunDetails2::setup( void )
 {
    // Set length of run
-   double             last = 0.0;
+   double              last = 0.0;
    US_DataIO2::RawData data;
 
    foreach( data, dataList )
@@ -262,9 +265,9 @@ void US_RunDetails2::show_all_data( void )
 
    US_DataIO2::RawData triple;
    US_DataIO2::Scan    scan;
-   double             temp      = 0.0;
-   double             rpm       = 0.0;
-   int                scanCount = 0;
+   double              temp      = 0.0;
+   double              rpm       = 0.0;
+   int                 scanCount = 0;
 
    // Note that these are not weighted averages 
    foreach( triple, dataList )
@@ -343,7 +346,23 @@ void US_RunDetails2::check_temp( double dt )
    {
       lb_red  ->setPalette( QPalette( Qt::red ) ); 
       lb_green->setPalette( QPalette( QColor( 0, 0x44, 0 ) ) ); // Dark Green
+
+      if ( ! timer->isActive() ) timer->start( 1000 );
    }
+}
+
+void US_RunDetails2::update_timer( void )
+{
+   static bool           bright = true;
+   static const QPalette red( Qt::red );
+   static const QPalette darkRed( QColor( 0x55, 0, 0 ) );
+   
+   if ( bright )
+      lb_red->setPalette( darkRed );
+   else
+      lb_red->setPalette( red );
+
+   bright = ! bright;
 }
 
 void US_RunDetails2::draw_plot( const double* x, const double* t, 
