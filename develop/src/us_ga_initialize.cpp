@@ -2561,10 +2561,11 @@ void US_GA_Initialize::save()
    QFile f;
    unsigned int i, j;
    float sum;
-   vector <double> val, conc;
+   vector <double> val, conc, conc2;
    struct MonteCarloStats stats;
    line.clear();
    conc.clear();
+   conc2.clear();
 
    for (i=0; i<GA_Solute.size(); i++)
    {
@@ -2629,40 +2630,57 @@ void US_GA_Initialize::save()
          ts << "\nSolute " << i + 1 << ":\n";
          if (MC_solute[i].size() < 3) // we want at least 3 points to calculate a statistical distribution
          {
+            double temp_conc = 0.0;
             ts << "\nThis solute bin does not have sufficient points to\ncalculate meaningful statistics.\n";
-            ts << "\nAverage Molecular Weight: ";
+            ts << "\nWeight-average Molecular Weight: ";
             sum = 0.0;
             for (j=0; j<MC_solute[i].size(); j++)
             {
-               sum += MC_solute[i][j].mw;
+               sum += MC_solute[i][j].mw * MC_solute[i][j].concentration;
+               temp_conc += MC_solute[i][j].concentration;
             }
-            ts << sum/MC_solute[i].size() << endl;
+            ts << sum/temp_conc << endl;
             ts << "\nAverage Concentration: ";
             sum = 0.0;
             for (j=0; j<MC_solute[i].size(); j++)
             {
-               sum += MC_solute[i][j].concentration * monte_carlo_iterations; // should be replaced by the number of Monte Carlo iterations
+               sum += MC_solute[i][j].concentration;
             }
             ts << sum/MC_solute[i].size() << endl;
-            ts << "\nAverage Frictional Ratio: ";
+            ts << "\nWeight-average Sedimentation Coefficient: ";
             sum = 0.0;
             for (j=0; j<MC_solute[i].size(); j++)
             {
-               sum += MC_solute[i][j].f_f0;
+               sum += MC_solute[i][j].s * MC_solute[i][j].concentration;
             }
-            ts << sum/MC_solute[i].size() << "\n\n";
+            ts << sum/temp_conc << "\n\n";
+            ts << "\nWeight-average Diffusion Coefficient: ";
+            sum = 0.0;
+            for (j=0; j<MC_solute[i].size(); j++)
+            {
+               sum += MC_solute[i][j].D * MC_solute[i][j].concentration;
+            }
+            ts << sum/temp_conc << "\n\n";
+            ts << "\nWeight-average frictional ratio: ";
+            sum = 0.0;
+            for (j=0; j<MC_solute[i].size(); j++)
+            {
+               sum += MC_solute[i][j].f_f0 * MC_solute[i][j].concentration;
+            }
+            ts << sum/temp_conc << "\n\n";
          }
          else
          {
             val.clear();
+            conc2.clear();
             for (j=0; j<MC_solute[i].size(); j++)
             {
-               val.push_back(MC_solute[i][j].mw);
+               val.push_back(MC_solute[i][j].mw * MC_solute[i][j].concentration);
+               conc2.push_back(MC_solute[i][j].concentration);
             }
-            calc_stats(&stats, val, "Molecular Weight");
-            ts << s1.sprintf(tr("Molecular weight:\t %6.4e (%6.4e, %6.4e)\n"), stats.mode_center, stats.conf95low, stats.conf95high);   // the standard error of the distribution
+            calc_stats(&stats, val, conc2, "Molecular Weight");
+            ts << s1.sprintf(tr("Molecular weight:\t %6.4e (%6.4e, %6.4e)\n"), stats.mean, stats.conf95low, stats.conf95high);   // the standard error of the distribution
             val.clear();
-            //            cout << "Monte carlo iterations: " << monte_carlo_iterations << endl;
             float total=0.0;
             for (j=0; j<MC_solute[i].size(); j++)
             {
@@ -2671,31 +2689,31 @@ void US_GA_Initialize::save()
                total += MC_solute[i][j].concentration;
             }
             calc_stats(&stats, val, "Concentration");
-            ts << s1.sprintf(tr("Concentration:\t\t %6.4e (%6.4e, %6.4e)\n"), stats.mode_center, stats.conf95low, stats.conf95high);   // the standard error of the distribution
+            ts << s1.sprintf(tr("Concentration:\t\t %6.4e (%6.4e, %6.4e)\n"), stats.mean, stats.conf95low, stats.conf95high);   // the standard error of the distribution
             ts << s1.sprintf(tr("Total Concentration:\t\t %6.4e\n"), total);   // the total concentration of the solute
             conc.push_back(total); // add each solute's concentration to a vector to keep track of all of them for summaries
             conc_sum += total; // keep track of the total concentration
             val.clear();
             for (j=0; j<MC_solute[i].size(); j++)
             {
-               val.push_back(MC_solute[i][j].s);
+               val.push_back(MC_solute[i][j].s * MC_solute[i][j].concentration);
             }
-            calc_stats(&stats, val, "Sedimentation Coefficient");
-            ts << s1.sprintf(tr("Sedimentation Coeff.:\t %6.4e (%6.4e, %6.4e)\n"), stats.mode_center, stats.conf95low, stats.conf95high);   // the standard error of the distribution
+            calc_stats(&stats, val, conc2, "Sedimentation Coefficient");
+            ts << s1.sprintf(tr("Sedimentation Coeff.:\t %6.4e (%6.4e, %6.4e)\n"), stats.mean, stats.conf95low, stats.conf95high);   // the standard error of the distribution
             val.clear();
             for (j=0; j<MC_solute[i].size(); j++)
             {
-               val.push_back(MC_solute[i][j].D);
+               val.push_back(MC_solute[i][j].D * MC_solute[i][j].concentration);
             }
-            calc_stats(&stats, val, "Diffusion Coefficient");
-            ts << s1.sprintf(tr("Diffusion Coeff.:\t %6.4e (%6.4e, %6.4e)\n"), stats.mode_center, stats.conf95low, stats.conf95high);   // the standard error of the distribution
+            calc_stats(&stats, val, conc2, "Diffusion Coefficient");
+            ts << s1.sprintf(tr("Diffusion Coeff.:\t %6.4e (%6.4e, %6.4e)\n"), stats.mean, stats.conf95low, stats.conf95high);   // the standard error of the distribution
             val.clear();
             for (j=0; j<MC_solute[i].size(); j++)
             {
-               val.push_back(MC_solute[i][j].f_f0);
+               val.push_back(MC_solute[i][j].f_f0 * MC_solute[i][j].concentration);
             }
-            calc_stats(&stats, val, "Frictional Ratio, f/f0");
-            ts << s1.sprintf(tr("Frictional Ratio, f/f0:\t %6.4e (%6.4e, %6.4e)\n"), stats.mode_center, stats.conf95low, stats.conf95high);   // the standard error of the distribution
+            calc_stats(&stats, val, conc2, "Frictional Ratio, f/f0");
+            ts << s1.sprintf(tr("Frictional Ratio, f/f0:\t %6.4e (%6.4e, %6.4e)\n"), stats.mean, stats.conf95low, stats.conf95high);   // the standard error of the distribution
          }
       }
       ts << "\n\nRelative Concentrations:\n\n";
@@ -2708,76 +2726,167 @@ void US_GA_Initialize::save()
       for (i=0; i<GA_Solute.size(); i++)
       {
          ts << "\n***************************************************************************\nSolute " << i + 1 << ":";
-         if (MC_solute[i].size() < 3) // we want at least 3 points to calculate a statistical distribution
-         {
-            QMessageBox::warning(this, tr("UltraScan Warning"),
-                                 tr("Please note:\n\nBin #") + str.sprintf("%d", i+1) +
-                                 tr(" does not have sufficient points to calculate a meaningful distribution\n\nSkipping..."),
-                                 QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-            ts << "\nThis solute bin does not have sufficient points to\ncalculate a meaningful distribution\n";
-            ts << "\nMolecular Weight:\n";
-            for (j=0; j<MC_solute[i].size(); j++)
-            {
-               ts << MC_solute[i][j].mw << endl;
-            }
-            ts << "\nConcentration:\n";
-            for (j=0; j<MC_solute[i].size(); j++)
-            {
-               ts << MC_solute[i][j].concentration * monte_carlo_iterations << endl;
-            }
-            ts << "\nSedimentation Coefficient:\n";
-            for (j=0; j<MC_solute[i].size(); j++)
-            {
-               ts << MC_solute[i][j].s << endl;
-            }
-            ts << "\nDiffusion Coefficient:\n";
-            for (j=0; j<MC_solute[i].size(); j++)
-            {
-               ts << MC_solute[i][j].D << endl;
-            }
-            ts << "\nFrictional Ratio:\n";
-            for (j=0; j<MC_solute[i].size(); j++)
-            {
-               ts << MC_solute[i][j].f_f0 << endl;
-            }
-         }
-         else
+         if (MC_solute[i].size() > 3) // we want at least 3 points to calculate a statistical distribution
          {
             val.clear();
+            conc2.clear();
             for (j=0; j<MC_solute[i].size(); j++)
             {
-               val.push_back(MC_solute[i][j].mw);
+               val.push_back(MC_solute[i][j].mw * MC_solute[i][j].concentration * monte_carlo_iterations);
+               conc2.push_back(MC_solute[i][j].concentration * monte_carlo_iterations);
             }
-            ts << calc_stats(&stats, val, "Molecular Weight");
+            ts << calc_stats(&stats, val, conc2, "Molecular Weight");
             val.clear();
+            conc2.clear();
             for (j=0; j<MC_solute[i].size(); j++)
             {
                // multiply with the total number of MC iterations to scale back to normal concentration
                val.push_back(MC_solute[i][j].concentration * monte_carlo_iterations);
+               conc2.push_back(1.0);
             }
-            ts << calc_stats(&stats, val, "Concentration");
+            ts << calc_stats(&stats, val, conc2, "Concentration");
+            val.clear();
+            conc2.clear();
+            for (j=0; j<MC_solute[i].size(); j++)
+            {
+               val.push_back(MC_solute[i][j].s * MC_solute[i][j].concentration * monte_carlo_iterations);
+               conc2.push_back(MC_solute[i][j].concentration * monte_carlo_iterations);
+            }
+            ts << calc_stats(&stats, val, conc2, "Sedimentation Coefficient");
             val.clear();
             for (j=0; j<MC_solute[i].size(); j++)
             {
-               val.push_back(MC_solute[i][j].s);
+               val.push_back(MC_solute[i][j].D * MC_solute[i][j].concentration * monte_carlo_iterations);
             }
-            ts << calc_stats(&stats, val, "Sedimentation Coefficient");
+            ts << calc_stats(&stats, val, conc2, "Diffusion Coefficient");
             val.clear();
             for (j=0; j<MC_solute[i].size(); j++)
             {
-               val.push_back(MC_solute[i][j].D);
+               val.push_back(MC_solute[i][j].f_f0 * MC_solute[i][j].concentration * monte_carlo_iterations);
             }
-            ts << calc_stats(&stats, val, "Diffusion Coefficient");
-            val.clear();
-            for (j=0; j<MC_solute[i].size(); j++)
-            {
-               val.push_back(MC_solute[i][j].f_f0);
-            }
-            ts << calc_stats(&stats, val, "Frictional Ratio, f/f0");
+            ts << calc_stats(&stats, val, conc2, "Frictional Ratio, f/f0");
          }
       }
       f.close();
    }
+}
+
+QString US_GA_Initialize::calc_stats(struct MonteCarloStats *stats, vector <double> val, vector <double> conc2, QString str)
+{
+   QString output, s1, s2;
+   unsigned int i, j, points, bins=50;
+   double *xplot, *yplot;
+   double intercept, slope, sigma, corr;
+   (*stats).low  =  (float)  9.9e30;
+   (*stats).high =  (float) -9.9e30;
+   (*stats).points = val.size();
+   xplot = new double [(*stats).points];
+   yplot = new double [(*stats).points];
+   double sum = 0.0, m2 = 0.0, m3 = 0.0, m4 = 0.0, total=0.0;
+   for (i=0; i<(*stats).points; i++)
+   {
+      (*stats).area += val[i] * conc2[i];
+      sum += val[i];
+      total += conc2[i];
+      (*stats).high = max((double)(*stats).high, val[i]/conc2[i]);
+      (*stats).low = min((double)(*stats).low, val[i]/conc2[i]);
+      xplot[i] = (double) i;
+      yplot[i] = val[i]/conc2[i];
+   }
+   //   cout << "low: " << (*stats).low << ", high: " << (*stats).high << endl;
+   (*stats).mean = sum/total;
+   for (i=0; i<(*stats).points; i++)
+   {
+      m2 += pow((double) (val[i]/conc2[i] - (*stats).mean), (double) 2.0);
+      m3 += pow((double) (val[i]/conc2[i] - (*stats).mean), (double) 3.0);
+      m4 += pow((double) (val[i]/conc2[i] - (*stats).mean), (double) 4.0);
+   }
+//   m2 /= (*stats).points;
+//   m3 /= (*stats).points;
+//   m4 /= (*stats).points;
+   m2 /= total;
+   m3 /= total;
+   m4 /= total;
+   (*stats).skew =  m3 / pow((double) m2, (double) (3.0/2.0));
+   (*stats).kurtosis =  m4 / pow((double) m2, (double) 2.0) - 3.0;
+   (*stats).median = (*stats).high - ((*stats).high - (*stats).low) / 2.0;
+   linefit(&xplot, &yplot, &slope, &intercept, &sigma, &corr, (*stats).points);
+   (*stats).correlation = (float) corr;
+   (*stats).std_deviation = pow((double) m2, (double) 0.5);
+   (*stats).std_error = (*stats).std_deviation / pow((double) (*stats).points, (double) 0.5);
+   (*stats).variance = m2;
+   (*stats).area = 0.0;
+   (*stats).parameter_name = str;
+   delete [] xplot;
+   delete [] yplot;
+   xplot = new double [bins];
+   yplot = new double [bins];
+   float binsize = ((*stats).high - (*stats).low)/bins;
+   //cout << "binsize: " << binsize << endl;
+   yplot[0] = 0.0;
+   for (i=0; i<bins; i++)
+   {
+      points = 0;
+      xplot[i] = (double) ((*stats).low + (binsize * i));
+      yplot[i] = 0.0;
+      for (j = 0; j<val.size(); j++)
+      {
+         //cout << "val[" << j << "]: " << val[j] << ", xplot1: " << xplot[i] << ", xplot2: " << xplot[i] +binsize << endl;
+         if (val[j] >= xplot[i] && val[j] < (xplot[i] + binsize))
+         {
+            yplot[i] += conc2[i];
+         }
+      }
+      //cout << "yplot[" << i << "]: " << yplot[i] << endl;
+      (*stats).area += yplot[i] * conc2[i] * binsize;
+   }
+   double test = -1.0;
+   int this_bin=0;
+   for (i=0; i<bins; i++)
+   {
+      //      cout << "i: " << i << ", yplot: " << yplot[i] << ", test: " << test << endl;
+      if (test < yplot[i])
+      {
+         test = yplot[i];
+         this_bin = i;
+      }
+   }
+   (*stats).mode1 = xplot[this_bin];
+   (*stats).mode2 = xplot[this_bin] + binsize;
+   (*stats).mode_center = ((*stats).mode1 + (*stats).mode2)/2;
+   //cout << "This bin: " << this_bin << ", mode1: " << (*stats).mode1 << ", mode2: " << (*stats).mode1
+   //<< ", mode center: " << (*stats).mode_center << endl;
+   (*stats).conf99low = (*stats).mean - 2.576 * (*stats).std_deviation;
+   (*stats).conf99high = (*stats).mean + 2.576 * (*stats).std_deviation;
+   (*stats).conf95low = (*stats).mean - 1.96 * (*stats).std_deviation;
+   (*stats).conf95high = (*stats).mean + 1.96 * (*stats).std_deviation;
+   output  = tr("\n\nResults for the " + str + ":\n\n");
+   output += tr("Maximum Value:             ") + s2.sprintf("%6.4e\n", (*stats).high);
+   output += tr("Minimum Value:             ") + s2.sprintf("%6.4e\n", (*stats).low);
+   output += tr("Mean Value:                ") + s2.sprintf("%6.4e\n", (*stats).mean);
+   output += tr("Median Value:              ") + s2.sprintf("%6.4e\n", (*stats).median);
+   output += tr("Skew Value:                ") + s2.sprintf("%6.4e\n", (*stats).skew);
+   output += tr("Kurtosis Value:            ") + s2.sprintf("%6.4e\n", (*stats).kurtosis);
+   output += tr("Lower Mode Limit:          ") + s2.sprintf("%6.4e\n", (*stats).mode1);
+   output += tr("Upper Mode Limit:          ") + s2.sprintf("%6.4e\n", (*stats).mode2);
+   output += tr("Mode Center:               ") + s2.sprintf("%6.4e\n", (*stats).mode_center);
+   output += tr("95% Confidence Limits:     +") + s2.sprintf("%6.4e, -%6.4e\n",
+                                                             ((*stats).conf95high - (*stats).mode_center), ((*stats).mode_center - (*stats).conf95low));
+   output += tr("99% Confidence Limits:     +") + s2.sprintf("%6.4e, -%6.4e\n",
+                                                             ((*stats).conf99high - (*stats).mode_center), ((*stats).mode_center - (*stats).conf99low));
+   output += tr("Standard Deviation:        ") + s2.sprintf("%6.4e\n", (*stats).std_deviation);
+   output += tr("Standard Error:            ") + s2.sprintf("%6.4e\n", (*stats).std_error);
+   output += tr("Variance:                  ") + s2.sprintf("%6.4e\n", (*stats).variance);
+   output += tr("Correlation Coefficient:   ") + s2.sprintf("%6.4e\n", (*stats).correlation);
+   output += tr("Number of Bins:            ") + s2.sprintf("%6.4e\n", (float) bins);
+   output += tr("Distribution Area:         ") + s2.sprintf("%6.4e\n", (*stats).area);
+   s1.sprintf(tr(" %e (low),  %e (high)\n"), (*stats).conf95low, (*stats).conf95high);   // the standard error of the distribution
+   output += tr("95 % Confidence Interval: ") + s1;
+   s1.sprintf(tr(" %e (low),  %e (high)\n"), (*stats).conf99low, (*stats).conf99high);   // the standard error of the distribution
+   output += tr("99 % Confidence Interval: ") + s1;
+   delete [] xplot;
+   delete [] yplot;
+   return output;
 }
 
 QString US_GA_Initialize::calc_stats(struct MonteCarloStats *stats, vector <double> val, QString str)
@@ -2893,6 +3002,7 @@ QString US_GA_Initialize::calc_stats(struct MonteCarloStats *stats, vector <doub
    delete [] yplot;
    return output;
 }
+
 
 void US_GA_Initialize::print()
 {

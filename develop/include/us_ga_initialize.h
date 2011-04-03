@@ -97,7 +97,7 @@ class US_EXTERN US_GA_Initialize : public QFrame
 #pragma warning ( disable: 4251 )
 #endif
 
-    vector <bucket> GA_Solute;
+      vector <bucket> GA_Solute;
       vector <QColor> gradient;
       vector <struct line> limits;
       vector <struct SimulationComponent> component;
@@ -181,7 +181,8 @@ class US_EXTERN US_GA_Initialize : public QFrame
 
    public slots:
       
-      QString calc_stats(struct MonteCarloStats *, const vector <double>, QString);
+      QString calc_stats(struct MonteCarloStats *, const vector <double>, const vector <double>, QString); // use for concentration weighted variables
+      QString calc_stats(struct MonteCarloStats *, const vector <double>, QString); // use for equally weighted variables
    
    private slots:
    
