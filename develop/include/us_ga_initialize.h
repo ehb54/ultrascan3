@@ -120,6 +120,7 @@ class US_EXTERN US_GA_Initialize : public QFrame
       unsigned int initial_solutes, monte_carlo_iterations;
       struct vertex p1, p2;
       bool zoom, autolimit;
+		double totalConcentration;
       
    private:
    
