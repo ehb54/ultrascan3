@@ -148,6 +148,8 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( lb_description, row++, 0, 1, 2 );
 
    le_description = us_lineedit( "", 1 );
+   connect( le_description, SIGNAL( editingFinished   () ),
+                            SLOT  ( changeDescription () ) );
    settings->addWidget( le_description, row++, 0, 1, 2 );
 
    // Cell / Channel / Wavelength
@@ -1156,6 +1158,12 @@ void US_Convert::runDetails( void )
    dialog->exec();
    qApp->processEvents();
    delete dialog;
+}
+
+void US_Convert::changeDescription( void )
+{
+   allData[ currentTriple ].description = le_description->text();
+   allData[ currentTriple ].description = allData[ currentTriple ].description.trimmed();
 }
 
 void US_Convert::changeTriple( QListWidgetItem* )

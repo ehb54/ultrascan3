@@ -217,6 +217,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void cancelSolutionInfo( void );
       void tripleApplyAll    ( void );
       void runDetails      ( void );
+      void changeDescription( void );
       void changeTriple    ( QListWidgetItem* );
       void getCenterpieceIndex( int );
       void focus_from      ( double );
