@@ -864,6 +864,13 @@ void US_SolutionGui::save( bool display_status )
             tr( "Save results" ),
             tr( "Solution saved" ) );
    }
+
+   // Refresh solution list
+   solutionMap.clear();
+   lw_solutions->clear();
+
+   load();
+   reset();
 }
 
 // Function to delete a solution from disk, db, or in the current form
