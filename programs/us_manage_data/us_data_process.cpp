@@ -5,6 +5,7 @@
 #include "us_sync_exper.h"
 #include "us_util.h"
 #include "us_settings.h"
+#include "us_datafiles.h"
 
 // class to process operatations on data:  upload/download/remove
 US_DataProcess::US_DataProcess( US_DataModel* dmodel, QWidget* parent /*=0*/ )
@@ -165,6 +166,20 @@ int US_DataProcess::record_download( int irow )
                       US_Settings::resultDir() + "/" + runID + "/" + filename :
                       filepath;
 
+   QDir dirp;
+   QString filedir  = filepath.section( "/", 0, -2 );
+
+   if ( ! dirp.exists( filedir ) )
+   {
+      if ( ! dirp.mkpath( filedir ) )
+      {
+         stat    = 3091;
+         errMsg  = tr( "Unable to create download directory\n" )
+                   + filedir;
+         return stat;
+      }
+   }
+
    if      ( cdesc.recType == 1 )
    {  // download a Raw record
       
@@ -259,8 +274,15 @@ int US_DataProcess::record_remove_db( int irow )
 
    if      ( cdesc.recType == 1 )
    {  // remove a Raw record
+query.clear();
+query << "get_rawDataID_from_GUID" << cdesc.dataGUID;
+db->query( query );
+db->next();
+DbgLv(1) << "REC_RMV: rawGUID rawID expID" << cdesc.dataGUID
+ << db->value( 0 ).toString() << db->value( 1 ).toString();
       query.clear();
       query << "delete_rawData" << QString::number( cdesc.parentID );
+DbgLv(1) << "REC_RMV: exp ID" << cdesc.parentID;
 
       if ( ( stat = db->statusQuery( query ) ) != 0 )
       {
@@ -358,137 +380,25 @@ int US_DataProcess::record_remove_local( int irow )
 
 QString US_DataProcess::get_model_filename( QString guid )
 {
-   QString fname = "";
    QString path;
 
    if ( ! US_Model::model_path( path ) )
-      return fname;
+      return "";
 
-   QDir f( path );
-   QStringList filter( "M???????.xml" );
-   QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
-   f_names.sort();
-
-   int         nnames  = f_names.size();
-   int         newnum  = nnames + 1;
-   bool        found   = false;
-
-   for ( int ii = 0; ii < nnames; ii++ )
-   {
-      QString fn = f_names[ ii ];
-      int     kf = fn.mid( 1, 7 ).toInt() - 1;  // expected index in file name
-      fn         = path + "/" + fn;             // full path file name
-
-      if ( kf != ii  &&  newnum > nnames )
-         newnum     = kf;                       // 1st opened number slot
-
-      QFile m_file( fn );
-
-      if ( ! m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
-            continue;
-
-      QXmlStreamReader xml( &m_file );
-
-      while ( !xml.atEnd() )
-      {
-         xml.readNext();
-
-         if ( xml.isStartElement()  &&  xml.name() == "model" )
-         {
-            QXmlStreamAttributes a = xml.attributes();
-
-            if ( a.value( "modelGUID" ).toString() == guid )
-            {
-               fname    = fn;                   // name of file with match
-               found    = true;                 // match to guid found
-               break;
-            }
-         }
-
-      }
-
-      m_file.close();
-
-      if ( found )
-         break;
-   }
-
- 
-   // if no guid match found, create new file name with a numeric part from
-   //   the first gap in the file list sequence or from count plus one
-   if ( ! found )
-      fname     = path + "/M" + QString().sprintf( "%07i", newnum ) + ".xml";
-
-   return fname;
+   return US_DataFiles::get_filename( path, guid, "M", "model", "modelGUID" );
 }
 
 QString US_DataProcess::get_noise_filename( QString guid )
 {
-   QString fname = "";
    QString path  = US_Settings::dataDir() + "/noises";
    QDir    dir;
 
    if ( ! dir.exists( path ) )
    {
       if ( ! dir.mkpath( path ) )
-         return fname;
+         return "";
    }
 
-   QDir f( path );
-   QStringList filter( "N???????.xml" );
-   QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
-   f_names.sort();
-
-   int         nnames  = f_names.size();
-   int         newnum  = nnames + 1;
-   bool        found   = false;
-
-   for ( int ii = 0; ii < nnames; ii++ )
-   {
-      QString fn = f_names[ ii ];
-      int     kf = fn.mid( 1, 7 ).toInt() - 1;  // expected index in file name
-      fn         = path + "/" + fn;             // full path file name
-
-      if ( kf != ii  &&  newnum > nnames )
-         newnum     = ii + 1;                   // 1st opened number slot
-
-      QFile m_file( fn );
-
-      if ( ! m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
-            continue;
-
-      QXmlStreamReader xml( &m_file );
-
-      while ( !xml.atEnd() )
-      {
-         xml.readNext();
-
-         if ( xml.isStartElement()  &&  xml.name() == "noise" )
-         {
-            QXmlStreamAttributes a = xml.attributes();
-
-            if ( a.value( "noiseGUID" ).toString() == guid )
-            {
-               fname    = fn;                   // name of file with match
-               found    = true;                 // match to guid found
-               break;
-            }
-         }
-
-      }
-
-      m_file.close();
-
-      if ( found )
-         break;
-   }
-
- 
-   // if no guid match found, create new file name with a numeric part from
-   //   the first gap in the file list sequence or from count plus one
-   if ( ! found )
-      fname     = path + "/N" + QString().sprintf( "%07i", newnum ) + ".xml";
-
-   return fname;
+   return US_DataFiles::get_filename( path, guid, "N", "noise", "noiseGUID" );
 }
 
