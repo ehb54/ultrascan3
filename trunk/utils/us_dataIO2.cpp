@@ -773,14 +773,14 @@ int US_DataIO2::loadData( const QString&         directory,
    
    // Get the raw data
    RawData d;
-   int result = readRawData( directory + "/" + rawDataFile, d );
+   ioError result = (ioError)readRawData( directory + "/" + rawDataFile, d );
    if ( result != OK ) throw result;
    raw << d;
    qApp->processEvents();
 
    // Get the edit data
    EditValues ev;
-   result = readEdits( directory + "/" + editFilename, ev );
+   result = (ioError)readEdits( directory + "/" + editFilename, ev );
    if ( result != OK ) throw result;
 
    // Check for uuid match
@@ -813,9 +813,9 @@ int US_DataIO2::loadData( const QString&         directory,
    // Invert values before updating edited points
    if ( ev.invert < 0 )
    {
-      for ( int i = 0; i < ed.scanData.size(); i++ )
+      for ( int i = 0; i < d.scanData.size(); i++ )
       {
-         Scan* s = &ed.scanData[ i ];
+         Scan* s = &d.scanData[ i ];
          for ( int j = 0; i < s->readings.size(); i++ )
          {
             s->readings[ j ].value *= ev.invert;
@@ -1049,9 +1049,29 @@ void US_DataIO2::copyRange ( double left, double right, const Scan& orig, Scan& 
    dest.wavelength  = orig.wavelength;
    dest.delta_r     = orig.delta_r;
 
-   for ( int i = index( orig, origx, left ); i <= index( orig, origx, right ); i++ )
+   int index_L      = index( orig, origx, left );
+   int index_R      = index( orig, origx, right );
+
+   dest.interpolated.resize( ( index_L - index_R ) / 8 + 1 );
+   
+   int current_bit = 0;
+
+   for ( int i = index_L; i <= index_R; i++ )
    {
+      // Copy the concentration readings
       dest.readings << orig.readings[ i ];
+      
+      // Set the interpolated bits as needed
+      unsigned char old_bit = 1 << ( 7 - i % 8 );
+
+      if ( ( orig.interpolated[ i / 8 ] & old_bit ) != 0 )
+      {
+         unsigned char new_bit = 1 << ( 7 - current_bit % 8 );
+         unsigned char byte    = dest.interpolated[ current_bit / 8 ];
+         dest.interpolated[ current_bit / 8 ] = byte | new_bit;
+      }
+
+      current_bit++;
    }
 }
 
