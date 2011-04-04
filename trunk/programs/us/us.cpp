@@ -300,7 +300,7 @@ void US_Win::launch( int index )
     {
     QMessageBox::warning( this,
       tr( "Error" ),
-      pname + tr( " has reached it's maximum run count." ) );
+      pname + tr( " is already running." ) );
     }
   
     return;
