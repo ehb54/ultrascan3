@@ -396,6 +396,22 @@ class US_DataIO2
 
       static void    calc_integral ( RawData&, const EditValues& );
   
+      /*! Check a scan point to see if it is a spike relative to the 
+          non-interpolated points around it
+          \param s     The scan to check
+          \param xref  The vector of radius values associated with
+                       the scan
+          \param point The inde of the point to check
+          \param start The beginning of the valid scan range
+          \param end   The end of the valid scan range
+          \param value The value of the interpolated point if
+                       a spike is detected
+          \return      A flag indication if the point is a spike
+      */
+      
+      static bool    spike_check  ( const Scan&, const QVector< XValue >&, 
+                                    int, int, int, double* );
+
    private:
 
       //!  \private A private convenience class
@@ -425,8 +441,6 @@ class US_DataIO2
                                  const QVector< XValue >& );
       static void copyxRange   ( double, double, const Scan&, 
                                  const QVector< XValue >&, QVector< XValue >& );
-      static bool spike_check  ( const Scan&, const QVector< XValue >&, 
-                                 int, int, int, double* );
       static QList< double > calc_residuals( int, const QVector< Scan >& );
 };
 #endif

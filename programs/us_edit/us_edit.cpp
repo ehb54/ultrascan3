@@ -2331,141 +2331,6 @@ void US_Edit::invert_values( void )
    replot();
 }
 
-// Check the Spike setting
-bool US_Edit::spike_check( const US_DataIO2::Scan& s, 
-      int point, int start, int end, double* value )
-{
-   static double r[ 20 ];  // Spare room -- normally 10
-   static double v[ 20 ];
-
-   double* x = &r[ 0 ];
-   double* y = &v[ 0 ];
-
-   double  slope;
-   double  intercept;
-   double  correlation;
-   double  sigma = 0.0;
-   int     count = 0;
-
-   const double threshold = 10.0;
-/*
-   for ( int k = start; k <= end; k++ ) // For each point in the range
-   {
-      if ( k != point ) // Exclude the probed point from fit
-      {
-         r[ count ] = data.x[ k ].radius;
-         v[ count ] = s.readings[ k ].value; 
-         count++;
-      }
-   }
-*/    
-
-   unsigned char c;
-   unsigned char interpolated;
-
-   if ( point < ( start + end ) / 2 )
-   {
-      int index = point - 1;
-
-      // Search left for five points if we can
-      while ( count < 5 )
-      {
-         if ( index < start ) break;
-         
-         c            = s.interpolated[ index / 8 ];
-         interpolated = c & ( 1 << ( 7 - index % 8 ) );
-
-         if ( ! interpolated ) 
-         {
-            r[ count ] = data.x    [ index ].radius;
-            v[ count ] = s.readings[ index ].value; 
-            count++;
-         }
-
-         index--;
-      }
-
-      // Now search right
-      index = point + 1;
-
-      while ( count < 10 )
-      {
-         if ( index >= end ) break;
-
-         c            = s.interpolated[ index / 8 ];
-         interpolated = c & ( 1 << ( 7 - index % 8 ) );
-
-         if ( ! interpolated ) 
-         {
-            r[ count ] = data.x    [ index ].radius;
-            v[ count ] = s.readings[ index ].value; 
-            count++;
-         }
-
-         index++;
-      }
-   }
-   else
-   {
-      int index = point + 1;
-      
-      // Search right first
-      while ( count < 5 )
-      {
-         if ( index >= end ) break;
-
-         c            = s.interpolated[ index / 8 ];
-         interpolated = c & ( 1 << ( 7 - index % 8 ) );
-
-         if ( ! interpolated ) 
-         {
-            r[ count ] = data.x    [ index ].radius;
-            v[ count ] = s.readings[ index ].value; 
-            count++;
-         }
-
-         index++;
-      }
-
-      // Now search left
-      index = point - 1;
-
-      while ( count < 10 )
-      {
-         if ( index < start ) break;
-
-         c            = s.interpolated[ index / 8 ];
-         interpolated = c & ( 1 << ( 7 - index % 8 ) );
-
-         if ( ! interpolated ) 
-         {
-            r[ count ] = data.x    [ index ].radius;
-            v[ count ] = s.readings[ index ].value;
-            count++;
-         }
-
-         index--;
-      }
-   }
-
-   US_Math2::linefit( &x, &y, &slope, &intercept, &sigma, &correlation, count );
-
-   // If there is too much difference, it is a spike
-   double val    =  s.readings[ point ].value;
-   double radius =  data.x[ point ].radius;
-   double proj   = slope * radius + intercept;
-
-   if ( fabs( proj - val ) > threshold * sigma )
-   {
-      // Interpolate
-      *value = proj;
-      changes_made = true;
-      return true;
-   }
-
-   return false;  // Not a spike
-}
-
 // Remove spikes
 void US_Edit::remove_spikes( void )
 {
@@ -2478,31 +2343,23 @@ void US_Edit::remove_spikes( void )
 
       int start  = US_DataIO2::index( *s, data.x, range_left  );
       int end    = US_DataIO2::index( *s, data.x, range_right );
-      
-      // Note that a changed point can affect succeeding points
-
-/* 
- * Try backing up over interpolated points
- *
- */
 
       for ( int j = start; j < end; j++ )
       {
-         if ( spike_check( *s, j, start, end, &smoothed_value ) )
+         if ( US_DataIO2::spike_check( *s, data.x, j, start, end, 
+                                       &smoothed_value ) )
          {
             s->readings[ j ].value = smoothed_value;
 
-            // If previous consecututive points ar interpolated, then 
+            // If previous consecututive points are interpolated, then 
             // redo them
             int           index = j - 1;
             unsigned char c     = s->interpolated[ index / 8 ];
 
             while ( c & ( 1 << ( 7 - index % 8 ) ) )
             {
-
-//qDebug() << "rechecking point" << index;
-
-               if ( spike_check( *s, index, start, end, &smoothed_value ) )
+               if ( US_DataIO2::spike_check( *s, data.x, index, start, end, 
+                                             &smoothed_value ) )
                   s->readings[ index ].value = smoothed_value;
 
                index--;
@@ -2510,32 +2367,6 @@ void US_Edit::remove_spikes( void )
             }
          }
       }
-/*
-
-      for ( int j = start; j < start + 5; j++ ) // Beginning 5 points
-      {
-         if ( spike_check( *s, j, start, start + 10, &smoothed_value ) )
-         {
-            s->readings[ j ].value = smoothed_value;
-         }
-      }
-
-      for ( int j = start + 5; j < end - 4; j++ ) // Middle points
-      {
-         if ( spike_check( *s, j, j - 5, j + 5, &smoothed_value ) )
-         {
-            s->readings[ j ].value = smoothed_value;
-         }
-      }
-
-      for ( int j = end - 4; j <= end; j++ ) // Last 5 points
-      {
-         if ( spike_check( *s, j, end - 10, end, &smoothed_value ) )
-         {
-            s->readings[ j ].value = smoothed_value;
-         }
-      }
-*/
    }
 
    pb_spikes->setIcon   ( check );
