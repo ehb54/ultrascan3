@@ -142,6 +142,7 @@ void US_DataModel::scan_dbase( )
    QStringList modIDs;
    QStringList noiIDs;
    QStringList query;
+   QMap< QString, int > edtMap;
    QString     dmyGUID  = "00000000-0000-0000-0000-000000000000";
    QString     recID;
    QString     rawGUID;
@@ -326,6 +327,7 @@ DbgLv(2) << "BrDb:      label filename comment" << label << filename << comment;
       cdesc.recState    = REC_DB;
       cdesc.dataGUID    = rawGUID.simplified();
       cdesc.parentGUID  = expGUID.simplified();
+      cdesc.parentID    = experID.toInt();
       cdesc.filename    = filename;
       cdesc.contents    = contents;
       cdesc.label       = label;
@@ -382,6 +384,7 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
       cdesc.recState    = REC_DB;
       cdesc.dataGUID    = editGUID.simplified();
       cdesc.parentGUID  = rawGUID.simplified();
+      cdesc.parentID    = rawID.toInt();
       cdesc.filename    = filename;
       cdesc.contents    = contents;
       cdesc.description = ( comment.isEmpty() ) ?
@@ -398,6 +401,8 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
 
       ddescs << cdesc;
       progress->setValue( ( istep += 5 ) );
+
+      edtMap[ cdesc.dataGUID ] = cdesc.recordID;    // save edit ID for GUID
    }
 
    for ( int ii = 0; ii < nmods; ii++ )
@@ -427,8 +432,7 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
       QString editGUID  = ( jj < 1 ) ? "" :
                           contents.mid( jj ).section( QChar( '"' ), 1, 1 );
       contents          = cksum + " " + recsize;
-//DbgLv(2) << "BrDb:       mod ii id mGID dsc"
-//   << ii << irecID << modelGUID << descript;
+              editGUID  = editGUID.simplified();
 
 //DbgLv(2) << "BrDb:         det: cont" << contents;
 
@@ -437,7 +441,8 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
       cdesc.subType     = subType;
       cdesc.recState    = REC_DB;
       cdesc.dataGUID    = modelGUID.simplified();
-      cdesc.parentGUID  = editGUID.simplified();
+      cdesc.parentGUID  = editGUID;
+      cdesc.parentID    = edtMap[ editGUID ];
       cdesc.filename    = "";
       cdesc.contents    = contents;
       cdesc.label       = label;
@@ -493,6 +498,7 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
       cdesc.recState    = REC_DB;
       cdesc.dataGUID    = noiseGUID.simplified();
       cdesc.parentGUID  = modelGUID.simplified();
+      cdesc.parentID    = modelID.toInt();
       cdesc.filename    = "";
       cdesc.contents    = contents;
       cdesc.label       = label;
@@ -581,6 +587,7 @@ DbgLv(2) << "BrLoc:      contents" << contents;
          cdesc.recState    = REC_LO;
          cdesc.dataGUID    = rawGUID.simplified();
          cdesc.parentGUID  = expGUID.simplified();
+         cdesc.parentID    = -1;
          cdesc.filename    = aucfile;
          cdesc.contents    = contents;
          cdesc.label       = runid + "." + tripl;
@@ -625,6 +632,7 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
             cdesc.recState    = REC_LO;
             cdesc.dataGUID    = edval.editGUID.simplified();
             cdesc.parentGUID  = edval.dataGUID.simplified();
+            cdesc.parentID    = -1;
             cdesc.filename    = edtfile;
             cdesc.contents    = contents;
             cdesc.label       = runid + "." + editid;
@@ -664,6 +672,7 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
       cdesc.recState    = REC_LO;
       cdesc.dataGUID    = model.modelGUID.simplified();
       cdesc.parentGUID  = model.editGUID.simplified();
+      cdesc.parentID    = -1;
       cdesc.filename    = modfil;
       cdesc.contents    = contents;
       cdesc.description = model.description;
@@ -703,6 +712,7 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
       cdesc.recState    = REC_LO;
       cdesc.dataGUID    = noise.noiseGUID.simplified();
       cdesc.parentGUID  = noise.modelGUID.simplified();
+      cdesc.parentID    = -1;
       cdesc.filename    = noifil;
       cdesc.contents    = contents;
       cdesc.description = noise.description;
@@ -1008,6 +1018,7 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
       cdesc.recState    = NOSTAT;
       cdesc.dataGUID    = dpGUID;
       cdesc.parentGUID  = dmyGUID;
+      cdesc.parentID    = -1;
       cdesc.filename    = "";
       cdesc.contents    = "";
       cdesc.label       = cdesc.label.section( ".", 0, 0 );
@@ -1079,6 +1090,7 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
       cdesc.recState    = NOSTAT;
       cdesc.dataGUID    = dpGUID;
       cdesc.parentGUID  = dmyGUID;
+      cdesc.parentID    = -1;
       cdesc.filename    = "";
       cdesc.contents    = "";
       cdesc.label       = cdesc.label.section( ".", 0, 0 );
@@ -1150,6 +1162,7 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
       cdesc.recState    = NOSTAT;
       cdesc.dataGUID    = dpGUID;
       cdesc.parentGUID  = dmyGUID;
+      cdesc.parentID    = -1;
       cdesc.filename    = "";
       cdesc.contents    = "";
       cdesc.label       = cdesc.label.section( ".", 0, 0 );

@@ -611,6 +611,7 @@ DbgLv(2) << "DT: i_details row" << irow;
       tr( "  DB record ID   : %1\n" ).arg( cdesc.recordID ) +
       tr( "  Global ID      : " ) + cdesc.dataGUID + "\n" +
       tr( "  Parent GUID    : " ) + cdesc.parentGUID + "\n" +
+      tr( "  DB parent ID   : %1\n" ).arg( cdesc.parentID ) +
       tr( "  File Directory : " )
          + cdesc.filename.section( "/",  0, -2 ) + "\n" +
       tr( "  File Name      : " )
