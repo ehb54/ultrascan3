@@ -246,10 +246,10 @@ US_SolutionGui::US_SolutionGui(
 //  and to enable/disable features
 void US_SolutionGui::reset( void )
 {
-   QList< US_Solution::AnalyteInfo >&   analytes   = solution.analytes;
-   QString                              bufferDesc = solution.bufferDesc;
+   QList< US_Solution::AnalyteInfo >&   ai         = solution.analyteInfo;
+   QString                              bufferDesc = solution.buffer.description;
 
-   le_bufferInfo   -> setText( solution.bufferDesc   );
+   le_bufferInfo   -> setText( solution.buffer.description );
    le_solutionDesc -> setText( solution.solutionDesc );
    le_commonVbar20 -> setText( QString::number( solution.commonVbar20 ) );
    le_storageTemp  -> setText( QString::number( solution.storageTemp  ) );
@@ -281,10 +281,10 @@ void US_SolutionGui::reset( void )
    // Display analytes that have been selected
    lw_analytes->clear();
    analyteMap.clear();
-   for ( int i = 0; i < analytes.size(); i++ )
+   for ( int i = 0; i < ai.size(); i++ )
    {
       // Create a map to account for sorting of the list
-      QListWidgetItem* item = new QListWidgetItem( analytes[ i ].analyteDesc, lw_analytes );
+      QListWidgetItem* item = new QListWidgetItem( ai[ i ].analyte.description, lw_analytes );
       analyteMap[ item ] = i;
 
       lw_analytes->addItem( item );
@@ -520,6 +520,8 @@ void US_SolutionGui::selectSolution( QListWidgetItem* item )
 
    solution.clear();
 
+   int status = US_DB2::OK;
+
    if ( disk_controls->db() )
    {
       US_Passwd pw;
@@ -532,11 +534,36 @@ void US_SolutionGui::selectSolution( QListWidgetItem* item )
          return;
       }
 
-      solution.readFromDB  ( solutionID, &db );
+      status = solution.readFromDB  ( solutionID, &db );
    }
 
    else
-      solution.readFromDisk( solutionGUID );
+      status = solution.readFromDisk( solutionGUID );
+
+   // Error reporting
+   if ( status == US_DB2::NO_BUFFER )
+   {
+      QMessageBox::information( this,
+            tr( "Attention" ),
+            tr( "The buffer this solution refers to was not found.\n"
+                "Please restore and try again.\n" ) );
+   }
+
+   else if ( status == US_DB2::NO_ANALYTE )
+   {
+      QMessageBox::information( this,
+            tr( "Attention" ),
+            tr( "One of the analytes this solution refers to was not found.\n"
+                "Please restore and try again.\n" ) );
+   }
+
+   else if ( status != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+            tr( "Attention" ),
+            tr( "Unspecified error reading data.\n"
+                "Please restore and try again.\n" ) );
+   }
 
    reset();
 }
@@ -563,14 +590,11 @@ void US_SolutionGui::addAnalyte( void )
 // Get information about selected analyte
 void US_SolutionGui::assignAnalyte( US_Analyte data )
 {
-   US_Solution::AnalyteInfo currentAnalyte;
-   currentAnalyte.analyteGUID = data.analyteGUID;
-   currentAnalyte.analyteDesc = data.description;
-   currentAnalyte.analyteID   = data.analyteID.toInt();   // May not be accurate
-   currentAnalyte.vbar20      = data.vbar20;
-   currentAnalyte.mw          = data.mw;
+   US_Solution::AnalyteInfo newInfo;
+   newInfo.analyte = data;
+   newInfo.amount  = 1;
 
-   // Now get analyteID from db if we can
+   // Now double-check analyteID from db if we can
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
    US_DB2 db( masterPW );
@@ -578,15 +602,15 @@ void US_SolutionGui::assignAnalyte( US_Analyte data )
    if ( db.lastErrno() == US_DB2::OK )
    {
       QStringList q( "get_analyteID" );
-      q << currentAnalyte.analyteGUID;
+      q << newInfo.analyte.analyteGUID;
       db.query( q );
    
       if ( db.next() )
-         currentAnalyte.analyteID = db.value( 0 ).toInt();
+         newInfo.analyte.analyteID = db.value( 0 ).toString();
    }
 
    // Make sure item has not been added already
-   if ( solution.analytes.contains( currentAnalyte ) )
+   if ( solution.analyteInfo.contains( newInfo ) )
    {
       QMessageBox::information( this,
             tr( "Attention" ),
@@ -596,13 +620,13 @@ void US_SolutionGui::assignAnalyte( US_Analyte data )
       return;
    }
 
-   solution.analytes << currentAnalyte;
+   solution.analyteInfo << newInfo;
 
    calcCommonVbar20();
 
    // We're maintaining a map to account for automatic sorting of the list
-   QListWidgetItem* item = new QListWidgetItem( currentAnalyte.analyteDesc, lw_analytes );
-   analyteMap[ item ] = solution.analytes.size() - 1;      // The one we just added
+   QListWidgetItem* item = new QListWidgetItem( newInfo.analyte.description, lw_analytes );
+   analyteMap[ item ] = solution.analyteInfo.size() - 1;      // The one we just added
 
    reset();
 }
@@ -612,7 +636,7 @@ void US_SolutionGui::selectAnalyte( QListWidgetItem* item )
 {
    // Get the right index in the sorted list, and load the amount
    int ndx = analyteMap[ item ];
-   ct_amount ->setValue( solution.analytes[ ndx ].amount );
+   ct_amount ->setValue( solution.analyteInfo[ ndx ].amount );
 
    // Now turn the label red to catch attention
    QPalette p = lb_amount->palette();
@@ -632,7 +656,7 @@ void US_SolutionGui::removeAnalyte( void )
    QListWidgetItem* item = lw_analytes->currentItem();
    int ndx = analyteMap[ item ];
 
-   solution.analytes.removeAt( ndx );
+   solution.analyteInfo.removeAt( ndx );
    lw_analytes ->removeItemWidget( item );
 
    calcCommonVbar20();
@@ -645,17 +669,17 @@ void US_SolutionGui::calcCommonVbar20( void )
 {
    solution.commonVbar20 = 0.0;
 
-   if ( solution.analytes.size() == 1 )
-      solution.commonVbar20 = solution.analytes[ 0 ].vbar20;
+   if ( solution.analyteInfo.size() == 1 )
+      solution.commonVbar20 = solution.analyteInfo[ 0 ].analyte.vbar20;
 
    else     // multiple analytes
    {
       double numerator   = 0.0;
       double denominator = 0.0;
-      foreach ( US_Solution::AnalyteInfo analyte, solution.analytes )
+      foreach ( US_Solution::AnalyteInfo ai, solution.analyteInfo )
       {
-         numerator   += analyte.vbar20 * analyte.mw * analyte.amount;
-         denominator += analyte.mw * analyte.amount;
+         numerator   += ai.analyte.vbar20 * ai.analyte.mw * ai.amount;
+         denominator += ai.analyte.mw * ai.amount;
       }
 
       solution.commonVbar20 = ( denominator == 0 ) ? 0.0 : ( numerator / denominator );
@@ -683,12 +707,8 @@ void US_SolutionGui::selectBuffer( void )
 }
 
 // Get information about selected buffer
-void US_SolutionGui::assignBuffer( US_Buffer buffer )
+void US_SolutionGui::assignBuffer( US_Buffer newBuffer )
 {
-   solution.bufferID = buffer.bufferID.toInt();
-   solution.bufferGUID = buffer.GUID;
-   solution.bufferDesc = buffer.description;
-
    // Now get the corresponding bufferID, if we can
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
@@ -697,13 +717,18 @@ void US_SolutionGui::assignBuffer( US_Buffer buffer )
    if ( db.lastErrno() == US_DB2::OK )
    {
       QStringList q( "get_bufferID" );
-      q << solution.bufferGUID;
+      q << newBuffer.GUID;
       db.query( q );
    
       if ( db.next() )
-         solution.bufferID = db.value( 0 ).toInt();
+         newBuffer.bufferID = db.value( 0 ).toString();
+
+      else
+         newBuffer.bufferID = QString( "-1" );
 
    }
+
+   solution.buffer = newBuffer;
 
    reset();
 }
@@ -717,7 +742,7 @@ void US_SolutionGui::saveAmount( double amount )
    // if item not selected return
 
    int ndx = analyteMap[ item ];
-   solution.analytes[ ndx ].amount = amount;
+   solution.analyteInfo[ ndx ].amount = amount;
 
    calcCommonVbar20();
 
