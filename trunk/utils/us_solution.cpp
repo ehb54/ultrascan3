@@ -17,7 +17,7 @@ US_Solution::US_Solution()
 }
 
 // Function to load a solution from the disk
-void US_Solution::readFromDisk( QString& guid )
+int US_Solution::readFromDisk( QString& guid )
 {
    QString filename;
    bool found = diskFilename( guid, filename );
@@ -26,7 +26,7 @@ void US_Solution::readFromDisk( QString& guid )
    {
       qDebug() << "Error: file not found for guid "
                << guid;
-      return;
+      return US_DB2::NO_SOLUTION;
    }
    
    QFile file( filename );
@@ -34,7 +34,7 @@ void US_Solution::readFromDisk( QString& guid )
    {
       qDebug() << "Error: can't open file for reading"
                << filename;
-      return;
+      return US_DB2::NO_SOLUTION;
    }
 
    QXmlStreamReader xml( &file );
@@ -66,10 +66,35 @@ void US_Solution::readFromDisk( QString& guid )
    {
       qDebug() << "Error: xml error: \n"
                << xml.errorString();
-      return;
+      return US_DB2::ERROR;
+   }
+
+   // Load actual buffer and analyte files if we can find them
+   US_Buffer newBuffer;
+   int status = readBufferDiskGUID( newBuffer, buffer.GUID );
+
+   if ( status != US_DB2::OK )      // Probably US_DB2::NO_BUFFER
+      return status;
+
+   // Then we found the actual buffer.xml file
+   buffer = newBuffer;
+
+   for ( int i = 0; i < analyteInfo.size(); i++ )
+   {
+      AnalyteInfo newInfo;
+      status = newInfo.analyte.load( false, analyteInfo[ i ].analyte.analyteGUID );
+
+      if ( status != US_DB2::OK )  // Probably US_DB2::NO_ANALYTE
+         return status;       
+
+      // Found the analyte.xml file
+      newInfo.amount = analyteInfo[ i ].amount;
+      analyteInfo[ i ] = newInfo;
    }
 
    saveStatus = HD_ONLY;
+
+   return US_DB2::OK;
 }
 
 void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
@@ -97,34 +122,35 @@ void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
          else if ( xml.name() == "buffer" )
          {
             QXmlStreamAttributes a = xml.attributes();
-            bufferID        = a.value( "id" )  .toString().toInt();
-            bufferGUID      = a.value( "guid" ).toString();
-            bufferDesc      = a.value( "desc" ).toString();
+            buffer.bufferID    = a.value( "id" )  .toString();
+            buffer.GUID        = a.value( "guid" ).toString();
+            buffer.description = a.value( "desc" ).toString();
          }
    
          else if ( xml.name() == "analyte" )
          {
-            AnalyteInfo analyte;
+            AnalyteInfo ai;
 
-            QXmlStreamAttributes a = xml.attributes();
-            analyte.analyteID       = a.value( "id" ).toString().toInt();
-            analyte.analyteGUID     = a.value( "guid" ).toString();
-            analyte.analyteDesc     = a.value( "desc" ).toString();
-            analyte.amount          = a.value( "amount" ).toString().toDouble();
-            analyte.mw              = a.value( "mw" ).toString().toDouble();
-            analyte.vbar20          = a.value( "vbar20" ).toString().toDouble();
-            QString typetext        = a.value( "type" ).toString();
-            analyte.type            = (US_Analyte::analyte_t)
-                                      analyte_type( typetext );
+            QXmlStreamAttributes a     = xml.attributes();
+            ai.analyte.analyteID       = a.value( "id" ).toString();
+            ai.analyte.analyteGUID     = a.value( "guid" ).toString();
+            ai.analyte.description     = a.value( "desc" ).toString();
+            ai.amount                  = a.value( "amount" ).toString().toDouble();
+            ai.analyte.mw              = a.value( "mw" ).toString().toDouble();
+            ai.analyte.vbar20          = a.value( "vbar20" ).toString().toDouble();
+            QString typetext           = a.value( "type" ).toString();
+            ai.analyte.type            = (US_Analyte::analyte_t)
+                                         analyte_type( typetext );
 
-            analytes << analyte;
+            analyteInfo << ai;
+      
          }
       }
    }
 }
 
 // Function to load a solution from the db
-void US_Solution::readFromDB  ( int solutionID, US_DB2* db )
+int US_Solution::readFromDB  ( int solutionID, US_DB2* db )
 {
    // Try to get solution info
    QStringList q( "get_solution" );
@@ -148,33 +174,45 @@ void US_Solution::readFromDB  ( int solutionID, US_DB2* db )
       db->query( q );
       if ( db->next() )
       {
-         bufferID   = db->value( 0 ).toInt();
-         bufferGUID = db->value( 1 ).toString();
-         bufferDesc = db->value( 2 ).toString();
+         buffer.bufferID    = db->value( 0 ).toString();
+         buffer.GUID        = db->value( 1 ).toString();
+         buffer.description = db->value( 2 ).toString();
       }
+      
+      if ( ! buffer.readFromDB( db, buffer.bufferID ) )
+         return US_DB2::NO_BUFFER;
 
+      // We need to get a list of analyteGUID's and amounts first
       q.clear();
       q  << "get_solutionAnalyte"
          << QString::number( solutionID );
       db->query( q );
+
+      QList< QString > GUIDs;
+      QList< double  > amounts;
       while ( db->next() )
       {
-         AnalyteInfo analyte;
+         GUIDs   << db->value( 1 ).toString();
+         amounts << db->value( 3 ).toDouble();
+      }
 
-         analyte.analyteID   = db->value( 0 ).toInt();
-         analyte.analyteGUID = db->value( 1 ).toString();
-         analyte.analyteDesc = db->value( 2 ).toString();
-         analyte.amount      = db->value( 3 ).toDouble();
-         analyte.mw          = db->value( 4 ).toDouble();
-         analyte.vbar20      = db->value( 5 ).toDouble();
-         QString typetext    = db->value( 6 ).toString();
-         analyte.type        = (US_Analyte::analyte_t)analyte_type( typetext );
+      // Now get the rest of the analyte info
+      for ( int i = 0; i < GUIDs.size(); i++ )
+      {
+         AnalyteInfo newInfo;
 
-         analytes << analyte;
+         int status = newInfo.analyte.load( true, GUIDs[ i ], db );
+         if ( status != US_DB2::OK )
+            return US_DB2::NO_ANALYTE;
+
+         newInfo.amount = amounts[ i ];
+         analyteInfo << newInfo;
       }
    }
 
    saveStatus = DB_ONLY;
+
+   return US_DB2::OK;
 }
 
 // Function to save solution information to disk
@@ -223,24 +261,24 @@ void US_Solution::saveToDisk( void )
    xml.writeTextElement ( "notes", notes );
 
       xml.writeStartElement( "buffer" );
-      xml.writeAttribute   ( "id",   QString::number( bufferID ) );
-      xml.writeAttribute   ( "guid", bufferGUID );
-      xml.writeAttribute   ( "desc", bufferDesc );
+      xml.writeAttribute   ( "id",   buffer.bufferID    );
+      xml.writeAttribute   ( "guid", buffer.GUID        );
+      xml.writeAttribute   ( "desc", buffer.description );
       xml.writeEndElement  ();
    
       // Loop through all the analytes
-      for ( int i = 0; i < analytes.size(); i++ )
+      for ( int i = 0; i < analyteInfo.size(); i++ )
       {
-         AnalyteInfo analyte = analytes[ i ];
+         AnalyteInfo ai = analyteInfo[ i ];
 
          xml.writeStartElement( "analyte" );
-         xml.writeAttribute   ( "id",   QString::number( analyte.analyteID ) );
-         xml.writeAttribute   ( "guid", analyte.analyteGUID );
-         xml.writeAttribute   ( "desc", analyte.analyteDesc );
-         xml.writeAttribute   ( "amount", QString::number( analyte.amount  ) );
-         xml.writeAttribute   ( "mw", QString::number( analyte.mw  ) );
-         xml.writeAttribute   ( "vbar20", QString::number( analyte.vbar20  ) );
-         xml.writeAttribute   ( "type", analyte_typetext( (int)analyte.type ) );
+         xml.writeAttribute   ( "id",   ai.analyte.analyteID   );
+         xml.writeAttribute   ( "guid", ai.analyte.analyteGUID );
+         xml.writeAttribute   ( "desc", ai.analyte.description );
+         xml.writeAttribute   ( "amount", QString::number( ai.amount  ) );
+         xml.writeAttribute   ( "mw", QString::number( ai.analyte.mw  ) );
+         xml.writeAttribute   ( "vbar20", QString::number( ai.analyte.vbar20  ) );
+         xml.writeAttribute   ( "type", analyte_typetext( (int)ai.analyte.type ) );
          xml.writeEndElement  ();
       }
 
@@ -249,83 +287,42 @@ void US_Solution::saveToDisk( void )
 
    file.close();
 
+   // Save the buffer and analytes to disk
+   saveBufferDisk();
+   saveAnalytesDisk();
+
    saveStatus = ( saveStatus == DB_ONLY ) ? BOTH : HD_ONLY;
 }
 
 // Function to save solution information to db
 int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
 {
+   // Save to disk too
+   saveToDisk();
+
    // Let's see if the buffer is in the db already
    QStringList q( "get_bufferID" );
-   q  << bufferGUID;
+   q  << buffer.GUID;
    db->query( q );
 
    int status = db->lastErrno();
    if ( status == US_DB2::NOROWS )
-   {
-      // Find the buffer directory on disk
-      QDir dir;
-      QString path = US_Settings::dataDir() + "/buffers";
-
-      if ( ! dir.exists( path ) )
-         return US_DB2::NO_BUFFER;            // So we have some idea of what happened
-
-      // Try to find the buffer file
-      bool    newFile;
-      QString filename = US_Buffer::get_filename( path, bufferGUID, newFile );
-
-      if ( newFile ) 
-         return US_DB2::NO_BUFFER;
-
-      // Then we can add it
-      US_Buffer* diskBuffer = new US_Buffer;
-      bool diskStatus = diskBuffer->readFromDisk( filename );   // load it from disk
-
-      // Now create the component list
-      QMap< QString, US_BufferComponent > component_list;
-      US_BufferComponent::getAllFromHD( component_list );
-      diskBuffer->component.clear();
-   
-      for ( int i = 0; i < diskBuffer->componentIDs.size(); i++ )
-      {
-         QString index = diskBuffer->componentIDs[ i ];
-         diskBuffer->component << component_list[ index ];
-      }
-
-      if ( diskStatus )
-         diskBuffer->saveToDB( db, QString::number( 1 ) );      // and write to db; 1 = private
-      delete diskBuffer;
-
-      // Double check
-      QStringList q( "get_bufferID" );
-      q  << bufferGUID;
-      db->query( q );
-      int checkStatus = db->lastErrno();
-      if ( checkStatus != US_DB2::OK )
-         return US_DB2::NO_BUFFER;
-   }
+      buffer.saveToDB( db, QString::number( 1 ) );      // 1 = private
 
    else if ( status != US_DB2::OK )
       return status;
 
    // Now let's see if the analytes are in the db already
-   foreach( AnalyteInfo analyte, analytes )
+   foreach( AnalyteInfo newInfo, analyteInfo )
    {
       q.clear();
       q  << "get_analyteID"
-         << analyte.analyteGUID;
+         << newInfo.analyte.analyteGUID;
       db->query( q );
 
       status = db->lastErrno();
       if ( status == US_DB2::NOROWS )
-      {
-         // Then we need to add it
-         US_Analyte* diskAnalyte = new US_Analyte;
-         int diskStatus = diskAnalyte->load( false, analyte.analyteGUID ); // load it from disk
-         if ( diskStatus == US_DB2::OK )
-            diskAnalyte->write( true, "", db );                            // and write to db
-         delete diskAnalyte;
-      }
+         newInfo.analyte.write( true, "", db );
 
       else if ( status != US_DB2::OK )
          return status;
@@ -394,7 +391,7 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
    q  << "new_solutionBuffer"
       << QString::number( solutionID )
       << QString( "" )           // skip bufferID and use GUID instead
-      << bufferGUID;
+      << buffer.GUID;
 
    status = db->statusQuery( q );
    if ( status != US_DB2::OK )
@@ -414,20 +411,22 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
       qDebug() << "MySQL error: " << db->lastError();
 
    // Now add zero or more analyte associations
-   foreach( AnalyteInfo analyte, analytes )
+   for ( int i = 0; i < analyteInfo.size(); i++ )
    {
+      AnalyteInfo newInfo = analyteInfo[ i ];
+
       q.clear();
       q  << "new_solutionAnalyte"
          << QString::number( solutionID )
          << QString( "" )          // skip analyteID and use GUID instead
-         << analyte.analyteGUID
-         << QString::number( analyte.amount );
+         << newInfo.analyte.analyteGUID
+         << QString::number( newInfo.amount );
    
       status = db->statusQuery( q );
       if ( status != US_DB2::OK )
       {
          qDebug() << "MySQL error associating analyte "
-                  << analyte.analyteGUID
+                  << newInfo.analyte.analyteGUID
                   << " with solution "
                   << solutionGUID
                   << " in database: " 
@@ -436,9 +435,73 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
       }
    }
 
-   saveStatus = ( saveStatus == HD_ONLY ) ? BOTH : DB_ONLY;
+   saveStatus = BOTH;
 
    return US_DB2::OK;
+}
+
+int US_Solution::readBufferDiskGUID( US_Buffer& buffer, QString& GUID )
+{
+   // Find the buffer directory on disk
+   QDir dir;
+   QString path = US_Settings::dataDir() + "/buffers";
+
+   if ( ! dir.exists( path ) )
+      return US_DB2::NO_BUFFER;            // So we have some idea of what happened
+
+   // Try to find the buffer file
+   bool    newFile;
+   QString filename = US_Buffer::get_filename( path, GUID, newFile );
+
+   if ( newFile ) 
+      return US_DB2::NO_BUFFER;
+
+   // Then we can add it
+   bool diskStatus = buffer.readFromDisk( filename );   // load it from disk
+
+   return ( diskStatus ) ? US_DB2::OK : US_DB2::NO_BUFFER;
+}
+
+void US_Solution::saveBufferDisk( void )
+{
+   // Find the buffer directory on disk
+   QDir dir;
+   QString path = US_Settings::dataDir() + "/buffers";
+
+   if ( ! dir.exists( path ) )
+      return;
+
+   // Find the buffer file, or create a new one
+   bool    newFile;
+   QString filename = US_Buffer::get_filename( path, buffer.GUID, newFile );
+
+   if ( newFile )
+   {
+      bool diskStatus = buffer.writeToDisk( filename );
+      
+      if ( diskStatus == false )
+        qDebug() << "Buffer write to disk error";
+   }
+}
+
+void US_Solution::saveAnalytesDisk( void )
+{
+   // Find the analyte directory on disk
+   QString path;
+   if ( ! US_Analyte::analyte_path( path ) ) return;
+
+   foreach ( AnalyteInfo ai, analyteInfo )
+   {
+      // Find the analyte file, or create a new one
+      QString filename = US_Analyte::get_filename( path, ai.analyte.analyteGUID );
+      int status = ai.analyte.write( false, filename );
+      
+      if ( status != US_DB2::OK )
+      {
+         qDebug() << "Analyte " << ai.analyte.analyteGUID
+                  << " write to disk error " << status;
+      }
+   }
 }
 
 // Function to delete a solution from disk
@@ -618,23 +681,18 @@ QString US_Solution::get_filename(
 
 US_Solution::AnalyteInfo::AnalyteInfo()
 {
-  analyteID     = 0;
-  analyteGUID   = QString( "" );
-  analyteDesc   = QString( "" );
-  vbar20        = 0.0;
-  mw            = 0.0;
-  amount        = 1;
-  type          = US_Analyte::PROTEIN;
+   amount     = 1;
 }
 
-bool US_Solution::AnalyteInfo::operator== ( const AnalyteInfo& ai ) const
+bool US_Solution::AnalyteInfo::operator==( const AnalyteInfo& rhs ) const
 {
-   if ( analyteGUID != ai.analyteGUID ) return false;
+   if (! ( analyte == rhs.analyte ) ) return false;
+   if ( amount  != rhs.amount       ) return false;
 
    return true;
 }
 
-US_Solution::US_Solution& US_Solution::operator=( const US_Solution& rhs )
+US_Solution& US_Solution::operator=( const US_Solution& rhs )
 {
    if ( this != &rhs )            // guard against self assignment
    {
@@ -643,17 +701,14 @@ US_Solution::US_Solution& US_Solution::operator=( const US_Solution& rhs )
       solutionID    = rhs.solutionID;
       solutionGUID  = rhs.solutionGUID;
       solutionDesc  = rhs.solutionDesc;
-      bufferID      = rhs.bufferID;
-      bufferGUID    = rhs.bufferGUID;
-      bufferDesc    = rhs.bufferDesc;
+      buffer        = rhs.buffer;
       commonVbar20  = rhs.commonVbar20;
       storageTemp   = rhs.storageTemp;
       notes         = rhs.notes;
       saveStatus    = rhs.saveStatus;
 
-      for ( int i = 0; i < rhs.analytes.size(); i++ )
-         analytes << rhs.analytes[ i ];
-
+      for ( int i = 0; i < rhs.analyteInfo.size(); i++ )
+         analyteInfo      << rhs.analyteInfo[ i ];
    }
 
    return *this;
@@ -664,14 +719,14 @@ void US_Solution::clear( void )
    solutionID   = 0;
    solutionGUID = QString( "" );
    solutionDesc = QString( "" );
-   bufferID     = 0;
-   bufferGUID   = QString( "" );
-   bufferDesc   = QString( "" );
+   buffer.bufferID = QString( "-1" );
+   buffer.GUID     = QString( ""  );
+   buffer.description = QString( "" );
    commonVbar20 = 0.0;
    storageTemp  = 20.0;
    notes        = QString( "" );
    saveStatus   = NOT_SAVED;
-   analytes.clear();
+   analyteInfo.clear();
 }
 
 void US_Solution::show( void )
@@ -679,27 +734,29 @@ void US_Solution::show( void )
    qDebug() << "solutionID   = " << solutionID   << '\n'
             << "solutionGUID = " << solutionGUID << '\n'
             << "solutionDesc = " << solutionDesc << '\n'
-            << "bufferID     = " << bufferID     << '\n'
-            << "bufferGUID   = " << bufferGUID   << '\n'
-            << "bufferDesc   = " << bufferDesc   << '\n'
+            << "bufferID     = " << buffer.bufferID << '\n'
+            << "buffer GUID  = " << buffer.GUID     << '\n'
+            << "buffer Desc  = " << buffer.description << '\n'
             << "commonVbar20 = " << commonVbar20 << '\n'
             << "storageTemp  = " << storageTemp  << '\n'
             << "notes        = " << notes        << '\n'
             << "saveStatus   = " << saveStatus   << '\n';
 
    qDebug() << "Analytes...";
-   qDebug() << "Analytes size = " << QString::number( analytes.size() );
-   foreach( AnalyteInfo analyte, analytes )
+   qDebug() << "Analytes size = " << QString::number( analyteInfo.size() );
+   for ( int i = 0; i < analyteInfo.size(); i++ )
    {
-      QString typetext = analyte_typetext( (int)analyte.type );
+      AnalyteInfo ai = analyteInfo[ i ];
 
-      qDebug() << "analyteID   = " << analyte.analyteID   << '\n'
-               << "analyteGUID = " << analyte.analyteGUID << '\n'
-               << "analyteDesc = " << analyte.analyteDesc << '\n'
-               << "vbar20      = " << analyte.vbar20      << '\n'
-               << "type        = " << typetext            << '\n'
-               << "mw          = " << analyte.mw          << '\n'
-               << "amount      = " << analyte.amount      << '\n';
+      QString typetext = analyte_typetext( (int)ai.analyte.type );
+
+      qDebug() << "analyteID   = " << ai.analyte.analyteID   << '\n'
+               << "analyteGUID = " << ai.analyte.analyteGUID << '\n'
+               << "description = " << ai.analyte.description << '\n'
+               << "vbar20      = " << ai.analyte.vbar20      << '\n'
+               << "type        = " << typetext               << '\n'
+               << "mw          = " << ai.analyte.mw          << '\n'
+               << "amount      = " << ai.amount              << '\n';
    }
 }
 

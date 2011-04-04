@@ -1382,15 +1382,15 @@ void US_AnalysisBase2::updateSolution( US_Solution& solution_sel )
 {
    solution_rec    = solution_sel;
 
-   int bufID       = solution_rec.bufferID;
+   int bufID       = solution_rec.buffer.bufferID.toInt();
    QString sbufID  = QString::number( bufID );
-   QString bufDesc = solution_rec.bufferDesc;
+   QString bufDesc = solution_rec.buffer.description;
    QString bdens   = le_density  ->text();
    QString bvisc   = le_viscosity->text();
    QString svbar   = le_vbar     ->text();
    QString bcmpr   = "";
    QString errmsg  = "";
-   QString bufGUID = solution_rec.bufferGUID;
+   QString bufGUID = solution_rec.buffer.GUID;
    
    if ( disk_controls->db() )
    {

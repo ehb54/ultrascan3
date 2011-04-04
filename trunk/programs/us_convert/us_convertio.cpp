@@ -77,7 +77,7 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
                                                     &db );
 //qDebug() << "triple.solution.saveToDB db status = " << QString::number( diskStatus );
          if ( diskStatus == US_DB2::NO_BUFFER )
-            error += "Error processing buffer " + triple.solution.bufferGUID + '\n' +
+            error += "Error processing buffer " + triple.solution.buffer.GUID + '\n' +
                      "Buffer was not found in the database";
 
          else if ( diskStatus == US_DB2::NO_ANALYTE )

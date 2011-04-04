@@ -4,6 +4,7 @@
 
 #include "us_extern.h"
 #include "us_db2.h"
+#include "us_buffer.h"
 #include "us_analyte.h"
 
 /*! \class US_Solution
@@ -16,24 +17,19 @@ class US_EXTERN US_Solution
 {
    public:
 
-      //! \brief  Class that contains information about the
-      //!         individual analytes
+      //! Class that contains information about the individual analytes
       class AnalyteInfo
       {
          public:
-         int           analyteID;          //!< The ID of the analyte that was associated
-         QString       analyteGUID;        //!< The GUID of the analyte
-         QString       analyteDesc;        //!< The corresponding analyte description
-         double        vbar20;             //!< The vbar of this analyte at 20C
-         double        mw;                 //!< The molecular weight
-         double        amount;             //!< The amount of this component in the solution
-         US_Analyte::analyte_t type;       //!< The type flag for the analyte (0->PROTEIN)
+         US_Analyte    analyte;           //!< The analyte information
+         double        amount;            //!< The amount of the analyte in the solution
 
-         //! \brief    Generic constructor for the AnalyteInfo class
+         //! Constructor for the AnalyteInfo class
          AnalyteInfo();
 
-         //! \brief    Generic operator== to test for equality
-         bool          operator== ( const AnalyteInfo & ) const;
+         //! Test for equality
+         bool          operator==( const AnalyteInfo& ) const;
+
       };
 
       //! \brief   Some status codes to keep track of where solution data has been saved to
@@ -49,10 +45,8 @@ class US_EXTERN US_Solution
       int              solutionID;         //!< The ID of the solution for this triple
       QString          solutionGUID;       //!< The GUID of the solution for this triple
       QString          solutionDesc;       //!< A description of the solution 
-      int              bufferID;           //!< The ID of the buffer that was associated
-      QString          bufferGUID;         //!< The GUID of the buffer
-      QString          bufferDesc;         //!< The corresponding buffer description
-      QList< AnalyteInfo > analytes;       //!< A list of the analyte information
+      US_Buffer        buffer;             //!< The associated buffer information
+      QList< AnalyteInfo > analyteInfo;    //!< A list of the analyte information
       double           commonVbar20;       //!< The weighted average vbar of all analytes present ( 20 degrees C)
       double           storageTemp;        //!< The temperature that the solution was stored
       QString          notes;              //!< Notes on the channel solution
@@ -67,15 +61,17 @@ class US_EXTERN US_Solution
       /*! \brief    Function to read an entire solution structure from the disk
 
           \param    guid The GUID of the solution to look for
+          \return   One of the US_DB2 error codes
       */
-      void readFromDisk( QString& );
+      int readFromDisk( QString& );
 
       /*! \brief    Function to read an entire solution structure from the DB
 
           \param    solutionID The database solutionID of the desired solution
           \param    db For database access, an open database connection
+          \return   One of the US_DB2 error codes
       */
-      void readFromDB  ( int, US_DB2* = 0 );
+      int readFromDB  ( int, US_DB2* = 0 );
 
       //! \brief    Quick method to zero out the solution attributes
       void clear             ( void );
@@ -125,6 +121,9 @@ class US_EXTERN US_Solution
    private:
 
       void readSolutionInfo  ( QXmlStreamReader& xml );
+      int readBufferDiskGUID ( US_Buffer& , QString& );
+      void saveBufferDisk    ( void );
+      void saveAnalytesDisk  ( void );
       QString get_filename   ( const QString&, bool& );
       int analyte_type       ( QString );
       QString analyte_typetext( int );

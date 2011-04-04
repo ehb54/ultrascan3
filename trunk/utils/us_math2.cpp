@@ -1116,14 +1116,14 @@ double US_Math2::calcCommonVbar( US_Solution& solution, double& temperature )
    double vbsum = 0.0;
    double wtsum = 0.0;
 
-   for ( int ii = 0; ii < solution.analytes.size(); ii++ )
+   for ( int ii = 0; ii < solution.analyteInfo.size(); ii++ )
    {
-      double vb20 = solution.analytes[ ii ].vbar20;
+      double vb20 = solution.analyteInfo[ ii ].analyte.vbar20;
       // Use adjusted vbar if PROTEIN
-      double vbar = solution.analytes[ ii ].type == 0 ?
+      double vbar = solution.analyteInfo[ ii ].analyte.type == 0 ?
                     US_Math2::adjust_vbar20( vb20, temperature ) :
                     vb20;
-      double wt   = solution.analytes[ ii ].mw * solution.analytes[ ii ].amount;
+      double wt   = solution.analyteInfo[ ii ].analyte.mw * solution.analyteInfo[ ii ].amount;
       vbsum      += ( vbar * wt );
       wtsum      += wt;
    }
