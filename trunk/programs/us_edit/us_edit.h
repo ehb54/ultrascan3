@@ -43,7 +43,7 @@ class US_EXTERN US_Edit : public US_Widgets
       bool               expIsOther;
       bool               all_edits;
       bool               men_1click;
-bool debug;
+
       int                noise_order;
       int                triple_index;
       int                total_speeds;
@@ -148,7 +148,6 @@ bool debug;
       
       void reset_excludes    ( void );
       void set_colors        ( const QList< int >& );
-      bool spike_check       ( const US_DataIO2::Scan&, int, int, int, double* );
                           
 	private slots:         
       void load              ( void );

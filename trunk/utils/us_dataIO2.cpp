@@ -868,25 +868,30 @@ int US_DataIO2::loadData( const QString&         directory,
       // For each scan
       for ( int i = 0; i < ed.scanData.size(); i++ )
       {
-         Scan* s   = &ed.scanData [ i ];
-         int   end = s->readings.size() - 1;      // index of the last one
+         Scan* s      = &ed.scanData [ i ];
+         int   start  = 0;
+         int   end    = s->readings.size() - 1;      // index of the last one
 
-         for ( int j = 0; j < 5; j++ ) // Beginning 5 points
+         for ( int j = start; j < end; j++ )
          {
-            if ( spike_check( *s, ed.x, j, 0, 10, &smoothed_value ) )
+            if ( spike_check( *s, ed.x, j, start, end, &smoothed_value ) )
+            {
                s->readings[ j ].value = smoothed_value;
-         }
 
-         for ( int j = 5; j < end - 4; j++ ) // Middle points
-         {
-            if ( spike_check( *s, ed.x, j, j - 5, j + 5, &smoothed_value ) )
-               s->readings[ j ].value = smoothed_value;
-         }
+               // If previous consecututive points are interpolated, then
+               // redo them
+               int           index = j - 1;
+               unsigned char cc    = s->interpolated[ index / 8 ];
 
-         for ( int j = end - 4; j <= end; j++ ) // Last 5 points
-         {
-            if ( spike_check( *s, ed.x, j, end - 10, end, &smoothed_value ) )
-               s->readings[ j ].value = smoothed_value;
+               while ( cc & ( 1 << ( 7 - index % 8 ) ) )
+               {
+                  if ( spike_check( *s, ed.x, index, start, end, &smoothed_value ) )
+                     s->readings[ index ].value = smoothed_value;
+
+                  index--;
+                  cc = s->interpolated[ index / 8 ];
+               }
+            }
          }
       }
    }
@@ -1059,43 +1064,125 @@ void US_DataIO2::copyxRange ( double left, double right, const Scan& orig,
    }
 }
 
-// xval is a parallel vector of radii or wavelength values 
-bool US_DataIO2::spike_check( const Scan& s, const QVector< XValue >& xval, 
+bool US_DataIO2::spike_check( const US_DataIO2::Scan&  s, 
+                              const QVector< XValue >& xval,
                               int point, int start, int end, double* value )
 {
    static double r[ 20 ];  // Spare room -- normally 10
    static double v[ 20 ];
 
-   double* x = &r[ 0 ];
-   double* y = &v[ 0 ];
+   double*       x = &r[ 0 ];
+   double*       y = &v[ 0 ];
 
-   double  slope;
-   double  intercept;
-   double  sigma = 0.0;
-   double  correlation;
-   int     count = 0;
+   double        slope;
+   double        intercept;
+   double        correlation;
+   double        sigma = 0.0;
+   int           count = 0;
+   int           index;
 
-   const double threshold = 10.0;
-   for ( int k = start; k <= end; k++ ) // For each point in the range
+   const double  threshold = 10.0;
+   unsigned char cc;
+   unsigned char interpolated;
+
+   // Only use non-interpolated points for the line fit
+   // Decide to searich left or right first.
+   if ( point < ( start + end ) / 2 )
    {
-      if ( k != point ) // Exclude the probed point from fit
+      index = point - 1;
+
+      // Search left for five points if we can
+      while ( count < 5 )
       {
-         r[ count ] = xval[ k ].radius;
-         v[ count ] = s.readings[ k ].value;
-         count++;
+         if ( index < start ) break;
+
+         cc           = s.interpolated[ index / 8 ];
+         interpolated = cc & ( 1 << ( 7 - index % 8 ) );
+
+         if ( ! interpolated )
+         {
+            r[ count ] = xval      [ index ].radius;
+            v[ count ] = s.readings[ index ].value;
+            count++;
+         }
+
+         index--;
+      }
+
+      // Now search right
+      index = point + 1;
+
+      while ( count < 10 )
+      {
+         if ( index >= end ) break;
+
+         cc           = s.interpolated[ index / 8 ];
+         interpolated = cc & ( 1 << ( 7 - index % 8 ) );
+
+         if ( ! interpolated )
+         {
+            r[ count ] = xval       [ index ].radius;
+            v[ count ] = s.readings[ index ].value;
+            count++;
+         }
+
+         index++;
+      }
+   }
+   else
+   {
+      index = point + 1;
+
+      // Search right first
+      while ( count < 5 )
+      {
+         if ( index >= end ) break;
+
+         cc           = s.interpolated[ index / 8 ];
+         interpolated = cc & ( 1 << ( 7 - index % 8 ) );
+
+         if ( ! interpolated )
+         {
+            r[ count ] = xval      [ index ].radius;
+            v[ count ] = s.readings[ index ].value;
+            count++;
+         }
+
+         index++;
+      }
+
+      // Now search left
+      index = point - 1;
+
+      while ( count < 10 )
+      {
+         if ( index < start ) break;
+
+         cc           = s.interpolated[ index / 8 ];
+         interpolated = cc & ( 1 << ( 7 - index % 8 ) );
+
+         if ( ! interpolated )
+         {
+            r[ count ] = xval      [ index ].radius;
+            v[ count ] = s.readings[ index ].value;
+            count++;
+         }
+
+         index--;
       }
    }
 
    US_Math2::linefit( &x, &y, &slope, &intercept, &sigma, &correlation, count );
 
-   // If there is more than a threshold-fold difference, it is a spike
-   double val    =  s.readings[ point ].value;
-   double radius =  xval[ point ].radius;
+   // If there is too much difference, it is a spike
+   double current   = s.readings[ point ].value;
+   double radius    = xval[ point ].radius;
+   double projected = slope * radius + intercept;
 
-   if ( fabs( slope * radius + intercept - val ) > threshold * sigma )
+   if ( fabs( projected - current ) > threshold * sigma )
    {
       // Interpolate
-      *value = slope * radius + intercept;
+      *value = projected;
       return true;
    }
 
