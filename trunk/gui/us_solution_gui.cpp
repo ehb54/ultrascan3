@@ -17,9 +17,10 @@ US_SolutionGui::US_SolutionGui(
       int   chID,
       bool  signal_wanted,
       int   select_db_disk,
-      const US_Solution& dataIn 
+      const US_Solution& dataIn,
+      bool  auto_save
       ) : US_WidgetsDialog( 0, 0 ), experimentID( expID ), channelID( chID ),
-        signal( signal_wanted ), solution( dataIn )
+        signal( signal_wanted ), solution( dataIn ), autosave( auto_save )
 {
    investigatorID = US_Settings::us_inv_ID();
 
@@ -227,6 +228,8 @@ US_SolutionGui::US_SolutionGui(
    // Load the solution descriptions
    load();
 
+   changed = false;
+
    // Select the current one if we know what it is
    if ( solution.solutionID > 0 )
    {
@@ -324,7 +327,26 @@ void US_SolutionGui::reset( void )
 // Function to accept the current solution and return
 void US_SolutionGui::accept( void )
 {
-   save( false );              // make sure the current selections have been saved
+   if ( changed )
+   {
+      bool save_it = autosave;
+
+      if ( ! autosave )
+      {
+         int response = QMessageBox::question( this,
+            tr( "Save Changed Solution?" ),
+            tr( "Changes were made to the solution and you did not save them.\n"
+                "Do you wish to save the solution now?" ),
+            QMessageBox::Yes, QMessageBox::No );
+
+         save_it = ( response == QMessageBox::Yes );
+      }
+
+      if ( save_it )
+      {
+         save( false );     // make sure the current selections have been saved
+      }
+   }
 
    if ( signal )
    {
@@ -566,6 +588,7 @@ void US_SolutionGui::selectSolution( QListWidgetItem* item )
    }
 
    reset();
+   changed = false;
 }
 
 // Function to add analyte to solution
@@ -584,6 +607,7 @@ void US_SolutionGui::addAnalyte( void )
 
    analyte_dialog->exec();
    qApp->processEvents();
+   changed = true;
 
 }
 
@@ -629,6 +653,7 @@ void US_SolutionGui::assignAnalyte( US_Analyte data )
    analyteMap[ item ] = solution.analyteInfo.size() - 1;      // The one we just added
 
    reset();
+   changed = true;
 }
 
 // Function to handle when solution listwidget item is selected
@@ -647,6 +672,7 @@ void US_SolutionGui::selectAnalyte( QListWidgetItem* item )
    ct_amount        ->setEnabled( true );
    connect( ct_amount, SIGNAL( valueChanged ( double ) ),      // if the user has changed it
                        SLOT  ( saveAmount   ( double ) ) );
+   changed = true;
 }
 
 // Function to add analyte to solution
@@ -662,6 +688,7 @@ void US_SolutionGui::removeAnalyte( void )
    calcCommonVbar20();
 
    reset();
+   changed = true;
 }
 
 // Function to calculate the default commonVbar20 value
@@ -685,6 +712,7 @@ void US_SolutionGui::calcCommonVbar20( void )
       solution.commonVbar20 = ( denominator == 0 ) ? 0.0 : ( numerator / denominator );
 
    }
+   changed = true;
 
 }
 
@@ -704,6 +732,7 @@ void US_SolutionGui::selectBuffer( void )
 
    buffer_dialog->exec();
    qApp->processEvents();
+   changed = true;
 }
 
 // Get information about selected buffer
@@ -731,6 +760,7 @@ void US_SolutionGui::assignBuffer( US_Buffer newBuffer )
    solution.buffer = newBuffer;
 
    reset();
+   changed = true;
 }
 
 // Function to update the amount that is associated with an individual analyte
@@ -748,24 +778,28 @@ void US_SolutionGui::saveAmount( double amount )
 
    // Update commonVbar20 value in GUI
    le_commonVbar20 -> setText( QString::number( solution.commonVbar20 ) );
+   changed = true;
 }
 
 // Function to update the description associated with the current solution
 void US_SolutionGui::saveDescription( const QString& )
 {
    solution.solutionDesc = le_solutionDesc ->text();
+   changed = true;
 }
 
 // Function to update the common vbar associated with the current solution
 void US_SolutionGui::saveCommonVbar20( const QString& )
 {
    solution.commonVbar20 = le_commonVbar20 ->text().toDouble();
+   changed = true;
 }
 
 // Function to update the storage temperature associated with the current solution
 void US_SolutionGui::saveTemperature( const QString& )
 {
    solution.storageTemp = le_storageTemp ->text().toDouble();
+   changed = true;
 }
 
 // Function to update the notes associated with the current solution
@@ -776,6 +810,7 @@ void US_SolutionGui::saveNotes( void )
    {
       solution.notes        = te_notes        ->toPlainText();
    }
+   changed = true;
 }
 
 // Function to create a new solution
@@ -794,6 +829,7 @@ void US_SolutionGui::newSolution( void )
 
    lw_solutions->clear();
    reset();
+   changed = true;
 }
 
 // Function to save solution information to disk or db
@@ -871,6 +907,8 @@ void US_SolutionGui::save( bool display_status )
 
    load();
    reset();
+
+   changed = false;
 }
 
 // Function to delete a solution from disk, db, or in the current form
@@ -902,6 +940,7 @@ void US_SolutionGui::delete_solution( void )
    QMessageBox::information( this,
          tr( "Delete results" ),
          tr( "Solution Deleted" ) );
+   changed = true;
 }
 
 void US_SolutionGui::source_changed( bool db )

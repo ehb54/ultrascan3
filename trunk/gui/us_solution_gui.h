@@ -36,12 +36,15 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
                          the local disk or in the DB
           \param dataIn  A reference to a structure that contains
                          the currently selected c/c/w dataset.
+          \param auto-save A boolean value indicating whether the caller
+                         wants an automatic save at Accept.
       */
       US_SolutionGui( int  = 1,
                       int  = 1,
                       bool = false,
                       int  = US_Disk_DB_Controls::Default,
-                      const US_Solution& = US_Solution() );
+                      const US_Solution& = US_Solution(),
+                      bool = true );
 
       //! A null destructor. 
       ~US_SolutionGui() {};
@@ -86,6 +89,8 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       int                         channelID;
       bool                        signal;
       US_Solution                 solution;
+      bool                        autosave;
+      bool                        changed;
 
       QStringList   IDs;
       QStringList   descriptions;
