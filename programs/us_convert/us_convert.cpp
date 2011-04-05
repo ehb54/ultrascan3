@@ -18,6 +18,7 @@
 #include "us_get_dbrun.h"
 #include "us_investigator.h"
 #include "us_experiment_gui.h"
+#include "us_constants.h"
 
 int main( int argc, char* argv[] )
 {
@@ -520,6 +521,8 @@ void US_Convert::import( QString dir )
 
    setTripleInfo();
 
+   checkTemperature();          // Check to see if temperature varied too much
+
    // Initialize exclude list
    init_excludes();
    
@@ -833,6 +836,7 @@ void US_Convert::loadUS3( QString dir )
    else
       loadUS3Disk( dir );
 
+   checkTemperature();          // Check to see if temperature varied too much
 }
 
 void US_Convert::loadUS3Disk( void )
@@ -1079,8 +1083,6 @@ void US_Convert::updateExpInfo( US_Experiment& d )
    // Update local copy
    ExpData = d;
 
-// qDebug() << "In updateExpInfo";
-// ExpData.show();
    if ( this->saveStatus == NOT_SAVED )
       this->saveStatus = EDITING;        // don't delete the data!
 
@@ -1225,6 +1227,30 @@ void US_Convert::setTripleInfo( void )
 
    QListWidgetItem* item = lw_triple->item( 0 );   // select the item at row 0
    lw_triple->setItemSelected( item, true );
+}
+
+void US_Convert::checkTemperature( void )
+{
+   // Temperature check 
+   double dt = 0.0; 
+  
+   foreach( US_DataIO2::RawData triple, allData ) 
+   { 
+       double temp_spread = triple.temperature_spread(); 
+       dt = ( temp_spread > dt ) ? temp_spread : dt; 
+   } 
+  
+   if ( dt > US_Settings::tempTolerance() ) 
+   { 
+      QMessageBox::warning( this, 
+            tr( "Temperature Problem" ), 
+            tr( "The temperature in this run varied over the course\n" 
+                "of the run to a larger extent than allowed by the\n" 
+                "current threshold (" ) 
+                + QString::number( US_Settings::tempTolerance(), 'f', 1 ) 
+                + " " + DEGC + tr( "). The accuracy of experimental\n" 
+                "results may be affected significantly." ) ); 
+   } 
 }
 
 void US_Convert::getCenterpieceIndex( int )

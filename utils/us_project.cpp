@@ -491,30 +491,6 @@ void US_Project::clear( void )
    saveStatus   = NOT_SAVED;
 }
 
-US_Project::US_Project& US_Project::operator=( const US_Project& rhs )
-{
-   if ( this != &rhs )            // guard against self assignment
-   {
-      clear();
-
-      projectID        = rhs.projectID;
-      projectGUID      = rhs.projectGUID;
-      goals            = rhs.goals;
-      molecules        = rhs.molecules;
-      purity           = rhs.purity;
-      expense          = rhs.expense;
-      bufferComponents = rhs.bufferComponents;
-      saltInformation  = rhs.saltInformation;
-      AUC_questions    = rhs.AUC_questions;
-      notes            = rhs.notes;
-      projectDesc      = rhs.projectDesc;
-      status           = rhs.status;
-      saveStatus       = rhs.saveStatus;
-   }
-
-   return *this;
-}
-
 void US_Project::show( void )
 {
    qDebug() << "projectID        = " << projectID        << '\n'

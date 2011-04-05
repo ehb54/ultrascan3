@@ -168,6 +168,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void enableSyncDB    ( void );
       void getExpInfo      ( void );
       void setTripleInfo   ( void );
+      void checkTemperature( void );
       int  findTripleIndex ( void );
       void focus           ( int, int );
       void init_excludes   ( void );

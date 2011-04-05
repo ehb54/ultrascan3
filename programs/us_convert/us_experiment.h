@@ -96,7 +96,6 @@ class US_EXTERN US_Experiment
       */
       int readSecondaryInfoDB( US_DB2* = 0 );
 
-      US_Experiment&   operator=( const US_Experiment& ); //!< An overloaded assignment operator
       void clear( void );                  //!< Function to reset all class variables to defaults
       void show ( void );                  // Temporary function to display current exp info
 
