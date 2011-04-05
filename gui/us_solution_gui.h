@@ -36,7 +36,7 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
                          the local disk or in the DB
           \param dataIn  A reference to a structure that contains
                          the currently selected c/c/w dataset.
-          \param auto-save A boolean value indicating whether the caller
+          \param auto_save A boolean value indicating whether the caller
                          wants an automatic save at Accept.
       */
       US_SolutionGui( int  = 1,

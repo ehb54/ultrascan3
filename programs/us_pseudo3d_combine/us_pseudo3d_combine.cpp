@@ -308,7 +308,7 @@ void US_Pseudo3D_Combine::reset( void )
 
    plt_fmin   = 1.0;
    plt_fmax   = 4.0;
-   ct_plt_fmin->setRange( 0, 50, 0.01 );
+   ct_plt_fmin->setRange( 1, 50, 0.01 );
    ct_plt_fmin->setValue( plt_fmin );
    ct_plt_fmin->setEnabled( false );
    ct_plt_fmax->setRange( 1, 50, 0.01 );
@@ -827,7 +827,7 @@ void US_Pseudo3D_Combine::set_limits()
       smin       -= ( ( smax - smin ) / 20.0 );
       fmax       += ( ( fmax - fmin ) / 20.0 );
       fmin       -= ( ( fmax - fmin ) / 20.0 );
-      fmin        = ( fmin < 0.0 ) ? 0.0 : fmin;
+      fmin        = ( fmin < 1.0 ) ? 1.0 : fmin;
 
       if ( ( fmax - fmin ) < 1.0e-3 )
          fmax       += ( fmax / 10.0 );
