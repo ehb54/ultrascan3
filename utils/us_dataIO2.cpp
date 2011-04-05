@@ -1052,7 +1052,7 @@ void US_DataIO2::copyRange ( double left, double right, const Scan& orig, Scan& 
    int index_L      = index( orig, origx, left );
    int index_R      = index( orig, origx, right );
 
-   dest.interpolated.resize( ( index_L - index_R ) / 8 + 1 );
+   dest.interpolated.resize( ( index_R - index_L ) / 8 + 1 );
    
    int current_bit = 0;
 
