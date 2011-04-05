@@ -3,10 +3,10 @@
 #ifndef US_DEFINES_H
 #define US_DEFINES_H
 
-/// The version of UltraScan
+//! The version of UltraScan
 #define US_Version QString("Pre-Alpha")
 
-// The directory/key for UltraScan settings
+//! The directory/key for US_Settings storage
 #define US3 QString( "UltraScan3" )
 
 // Define the platform

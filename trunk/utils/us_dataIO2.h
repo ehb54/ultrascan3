@@ -399,7 +399,7 @@ class US_DataIO2
       /*! Check a scan point to see if it is a spike relative to the 
           non-interpolated points around it
           \param s     The scan to check
-          \param xref  The vector of radius values associated with
+          \param xval  The vector of radius values associated with
                        the scan
           \param point The inde of the point to check
           \param start The beginning of the valid scan range
