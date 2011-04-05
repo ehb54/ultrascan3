@@ -605,7 +605,7 @@ void US_Convert::enableControls( void )
       if ( runType == "RI" )
          pb_reference->setEnabled( true );
    
-      else if ( runType == "RA" && subsets.size() < 1 )
+      if ( subsets.size() < 1 )
       {
          // Allow user to define subsets, if he hasn't already
          pb_define   ->setEnabled( true );
