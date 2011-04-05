@@ -452,6 +452,11 @@ void US_Convert::source_changed( bool )
    enableControls();
 }
 
+void US_Convert::update_disk_db( bool db )
+{
+   ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
+}
+
 // User changed the dataset separation tolerance
 void US_Convert::toleranceValueChanged( double )
 {
@@ -972,30 +977,33 @@ void US_Convert::getExpInfo( void )
 {
    ExpData.runID = le_runID -> text();
 
-   // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( disk_controls->db() )
    {
-      QMessageBox::information( this,
-             tr( "Error" ),
-             tr( "Error making the DB connection.\n" ) );
-      return;
-   }
-
-   // Check if the run ID already exists in the DB
-   int recStatus = ExpData.checkRunID( &db );
-
-   // if saveStatus == BOTH, then we are editing the record from the database
-   if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) 
-   {
-      QMessageBox::information( this,
-             tr( "Error" ),
-             tr( "The current runID already exists in the database. To edit that "
-                 "information, load it from the database to start with.\n" ) );
-      return;
+      // Then we're working in DB, so verify connectivity
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+     
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::information( this,
+                tr( "Error" ),
+                tr( "Error making the DB connection.\n" ) );
+         return;
+      }
+     
+      // Check if the run ID already exists in the DB
+      int recStatus = ExpData.checkRunID( &db );
+     
+      // if saveStatus == BOTH, then we are editing the record from the database
+      if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) 
+      {
+         QMessageBox::information( this,
+                tr( "Error" ),
+                tr( "The current runID already exists in the database. To edit that "
+                    "information, load it from the database to start with.\n" ) );
+         return;
+      }
    }
 
    // OK, proceed
@@ -1046,13 +1054,21 @@ void US_Convert::getExpInfo( void )
       }
    }
 
-   US_ExperimentGui* expInfo = new US_ExperimentGui( ExpData );
+   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
+
+   US_ExperimentGui* expInfo = new US_ExperimentGui( true,    // signal_wanted
+                                                     ExpData,
+                                                     dbdisk );
 
    connect( expInfo, SIGNAL( updateExpInfoSelection( US_Experiment& ) ),
             this   , SLOT  ( updateExpInfo         ( US_Experiment& ) ) );
 
    connect( expInfo, SIGNAL( cancelExpInfoSelection() ),
             this   , SLOT  ( cancelExpInfo         () ) );
+
+   connect( expInfo, SIGNAL( use_db        ( bool ) ),
+                     SLOT  ( update_disk_db( bool ) ) );
 
    expInfo->exec();
 }
@@ -1098,6 +1114,9 @@ void US_Convert::getSolutionInfo( void )
 
    connect( solutionInfo, SIGNAL( cancelSolutionGuiSelection() ),
             this,         SLOT  ( cancelSolutionInfo        () ) );
+
+   connect( solutionInfo, SIGNAL( use_db        ( bool ) ),
+                          SLOT  ( update_disk_db( bool ) ) );
 
    solutionInfo->exec();
 }

@@ -968,6 +968,9 @@ void US_SolutionGui::source_changed( bool db )
 void US_SolutionGui::update_disk_db( bool db )
 {
    ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
+
+   // Pass it on
+   emit use_db( db );
 }
 
 // Function to display an error returned from the database

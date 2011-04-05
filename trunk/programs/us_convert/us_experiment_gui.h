@@ -2,8 +2,9 @@
 #ifndef US_EXPERIMENT_GUI_H
 #define US_EXPERIMENT_GUI_H
 
-#include "us_extern.h"
 #include "us_widgets_dialog.h"
+#include "us_widgets.h"
+#include "us_extern.h"
 #include "us_help.h"
 #include "us_experiment.h"
 #include "us_selectbox.h"
@@ -25,10 +26,16 @@ class US_EXTERN US_ExperimentGui : public US_WidgetsDialog
       /*! \brief Generic constructor for the US_ExperimentGui class. To 
                  instantiate the class a calling function must
                  provide a structure to contain all the data.
+          \param signal_wanted A boolean value indicating whether the caller
+                         wants a signal to be emitted
           \param dataIn  A reference to a structure that contains
                          previously selected experiment data, if any.
+          \param select_db_disk Indicates whether the default search is on
+                         the local disk or in the DB
       */
-      US_ExperimentGui( US_Experiment& );
+      US_ExperimentGui( bool = false,
+                        const US_Experiment& = US_Experiment(),
+                        int  = US_Disk_DB_Controls::Default );
 
       //! A null destructor. 
       ~US_ExperimentGui() {};
@@ -51,9 +58,16 @@ class US_EXTERN US_ExperimentGui : public US_WidgetsDialog
       */
       void cancelExpInfoSelection( void );
 
+      //! A signal to indicate that the current disk/db selection has changed.
+      //! /param DB True if DB is the new selection
+      void use_db( bool DB );
+
    private:
-      US_Experiment&         expInfo;
+      US_Experiment          expInfo;
       bool                   lab_changed;
+      bool                   signal;
+
+      US_Disk_DB_Controls*   disk_controls; //!< Radiobuttons for disk/db choice
 
       US_Help                showHelp;
 
@@ -85,6 +99,8 @@ class US_EXTERN US_ExperimentGui : public US_WidgetsDialog
       void selectInvestigator( void );
       void assignInvestigator( int, const QString&, const QString& );
       void getInvestigatorInfo( void );
+      void source_changed     ( bool );
+      void update_disk_db     ( bool );
       void selectProject     ( void );
       void assignProject     ( US_Project& );
       void cancelProject     ( void );
