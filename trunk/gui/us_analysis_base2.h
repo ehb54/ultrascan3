@@ -65,6 +65,7 @@ class US_EXTERN US_AnalysisBase2 : public US_Widgets
       US_Noise     ti_noise;        //!< Loaded,applied time-invariant noise
 
       QVector< int > noiflags;      //!< Noise-applied flags, for all triples
+      QVector< QList< int > > allExcls; //!< Excluded scans, for all triples
 
       //! A class to display help in the US Help viewer
       US_Help      showHelp;

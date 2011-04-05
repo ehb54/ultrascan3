@@ -308,6 +308,7 @@ void US_AnalysisBase2::load( void )
    }
 
    noiflags.fill( -1, dataList.size() );
+   allExcls.fill( excludedScans, dataList.size() );
 
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ), 
                         SLOT  ( new_triple       ( int ) ) );
@@ -339,6 +340,8 @@ void US_AnalysisBase2::update( int selection )
    le_temp->setText( QString::number( avTemp, 'f', 1 ) + " " + DEGC );
 
    te_desc->setText( d->description );
+
+   excludedScans = allExcls[ selection ];
 
    ct_smoothing      ->disconnect();
    ct_boundaryPercent->disconnect();
@@ -639,6 +642,8 @@ void US_AnalysisBase2::exclude( void )
 
    ct_from->setMaxValue( totalScans - excludedScans.size() );
    ct_to  ->setMaxValue( totalScans - excludedScans.size() );
+
+   allExcls[ index ] = excludedScans;
 }
 
 void US_AnalysisBase2::reset_excludes( void )
@@ -659,6 +664,7 @@ void US_AnalysisBase2::reset_excludes( void )
       data_plot();
 
    pb_reset_exclude->setEnabled( false );
+   allExcls[ index ] = excludedScans;
 }
 
 void US_AnalysisBase2::smoothing( double smoothCount )
