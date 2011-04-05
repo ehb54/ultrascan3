@@ -137,52 +137,52 @@ namespace US_WinData
       QObject::tr( "Fit Meniscus Program" )
     },
    
-    { P_COLORGRAD, 0, 0, "us_colorgradient",
+    { P_COLORGRAD, 1, 0, "us_colorgradient",
       QObject::tr( "Loading Color Gradient Generator" ),
       QObject::tr( "Color Gradient Generator Program" )
     },
 
-    { P_RPTGEN,    0, 0, "us_reporter",
+    { P_RPTGEN,    1, 0, "us_reporter",
       QObject::tr( "Loading Report Generator" ),
       QObject::tr( "Report Generator Program" )
     },
 
-    { P_ROTORCAL,  0, 0, "us_rotor_calibration",
+    { P_ROTORCAL,  1, 0, "us_rotor_calibration",
       QObject::tr( "Loading Rotor Calibration" ),
       QObject::tr( "Rotor Calibration Program" )
     },
 
-    { P_LICENSE,   0, 0, "us_license",
+    { P_LICENSE,   1, 0, "us_license",
       QObject::tr( "Loading License Manager" ),
       QObject::tr( "License Manager Program" )
     },
 
-    { P_ASTFEM, 2, 0, "us_astfem_sim",
+    { P_ASTFEM, 0, 0, "us_astfem_sim",
        QObject::tr( "Loading Finite Element Sedimentation Simulator (ASTFEM)" ),
        QObject::tr( "Finite Element Simulation Program (ASTFEM)" )
     },
 
-    { P_EQUILTIMESIM, 2, 0, "us_equiltime",
+    { P_EQUILTIMESIM, 0, 0, "us_equiltime",
       QObject::tr( "Loading Equilibrium Time Estimation Simulator" ),
       QObject::tr( "Equilibrium Time Estimation Program" )
     },
 
-    { P_SASSOC, 2, 0, "us_sassoc",
+    { P_SASSOC, 0, 0, "us_sassoc",
       QObject::tr( "Starting Self-Association Simulator )" ),
       QObject::tr( "Self-Association Simulation Program" )
     },
 
-    { P_MODEL1, 2, 0, "us_predict1",
+    { P_MODEL1, 0, 0, "us_predict1",
       QObject::tr( "Loading Molecular Modeling Simulator" ),
       QObject::tr( "Molecular Modeling Simulation Program (1)" ) 
     },
 
-    { P_MODEL2, 2, 0, "us_predict2",
+    { P_MODEL2, 0, 0, "us_predict2",
       QObject::tr( "Loading Molecular Modeling Simulator" ),
       QObject::tr( "Molecular Modeling Simulation Program (2)" ) 
     },
 
-    { P_INVESTIGATOR,  0, 0, "us_investigator",
+    { P_INVESTIGATOR,  1, 0, "us_investigator",
       QObject::tr( "Loading Managing Investigator Data" ),
       QObject::tr( "Managing Investigator Data Program" )
     },
@@ -202,7 +202,7 @@ namespace US_WinData
       QObject::tr( "Model Management Program" )
     },
 
-    { P_MANAGEDATA,  0, 0, "us_manage_data",
+    { P_MANAGEDATA,  1, 0, "us_manage_data",
       QObject::tr( "Loading Data Management" ),
       QObject::tr( "Managing Data Program" )
     },
@@ -212,12 +212,12 @@ namespace US_WinData
       QObject::tr( "Managing Solution Management Program" )
     },
 
-    { P_MANAGEPROJ,  0, 0, "us_project",
+    { P_MANAGEPROJ,  1, 0, "us_project",
       QObject::tr( "Loading Project Management" ),
       QObject::tr( "Managing Project Management Program" )
     },
 
-    { P_MANAGEROTOR,  0, 0, "us_rotor",
+    { P_MANAGEROTOR,  1, 0, "us_rotor",
       QObject::tr( "Loading Rotor Management" ),
       QObject::tr( "Managing Rotor Management Program" )
     },
