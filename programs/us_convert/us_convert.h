@@ -236,6 +236,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void saveUS3DB       ( void );
       void resetAll        ( void );
       void source_changed  ( bool );
+      void update_disk_db  ( bool );
       void help            ( void )
         { showHelp.show_help( "convert.html" ); };
 };

@@ -2,20 +2,24 @@
 
 #include <QtGui>
 
+#include "us_experiment_gui.h"
+#include "us_passwd.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_db2.h"
-#include "us_passwd.h"
 #include "us_investigator.h"
-#include "us_experiment_gui.h"
-#include "us_convertio.h"
 #include "us_project_gui.h"
 #include "us_rotor_gui.h"
+#include "us_convertio.h"
 
 US_ExperimentGui::US_ExperimentGui( 
-      US_Experiment& dataIn ) :
+      bool  signal_wanted,
+      const US_Experiment& dataIn,
+      int   select_db_disk ) :
    US_WidgetsDialog( 0, 0 ), expInfo( dataIn )
 {
+   signal = signal_wanted;
+
    setPalette( US_GuiSettings::frameColor() );
    setWindowTitle( tr( "Experiment Information" ) );
    setAttribute( Qt::WA_DeleteOnClose );
@@ -193,6 +197,11 @@ US_ExperimentGui::US_ExperimentGui(
    le_investigator = us_lineedit( tr( "Not Selected" ) );
    le_investigator->setReadOnly( true );
    main->addWidget( le_investigator, row++, 1 );
+
+   disk_controls = new US_Disk_DB_Controls( select_db_disk );
+   connect( disk_controls, SIGNAL( changed       ( bool ) ),
+                           SLOT  ( source_changed( bool ) ) );
+   main->addLayout( disk_controls, row++, 0, 1, 2 );
 
    main->addLayout( experiment, row, 0 );
    main->addLayout( hardware,   row, 1 );
@@ -398,6 +407,32 @@ void US_ExperimentGui::getInvestigatorInfo( void )
    
 }
 
+void US_ExperimentGui::source_changed( bool db )
+{
+   QStringList DB = US_Settings::defaultDB();
+
+   if ( db && ( DB.size() < 5 ) )
+   {
+      QMessageBox::warning( this,
+         tr( "Attention" ),
+         tr( "There is no default database set." ) );
+   }
+
+   emit use_db( db );
+   qApp->processEvents();
+
+   //load();
+   reset();
+}
+
+void US_ExperimentGui::update_disk_db( bool db )
+{
+   ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
+
+   // Pass it on to US_Convert dialog
+   emit use_db( db );
+}
+
 void US_ExperimentGui::selectProject( void )
 {
    // Save other elements on the page first
@@ -405,15 +440,24 @@ void US_ExperimentGui::selectProject( void )
    expInfo.comments      = te_comment ->toPlainText();
    expInfo.expType       = cb_expType ->currentText();
 
+   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
+
    US_Project project  = expInfo.project;
 
-   US_ProjectGui* projInfo = new US_ProjectGui( true, US_Disk_DB_Controls::DB, project );
+   US_ProjectGui* projInfo = new US_ProjectGui( true, dbdisk, project );
+
    connect( projInfo, 
       SIGNAL( updateProjectGuiSelection( US_Project& ) ),
       SLOT  ( assignProject            ( US_Project& ) ) );
+
    connect( projInfo, 
       SIGNAL( cancelProjectGuiSelection( ) ),
       SLOT  ( cancelProject            ( ) ) );
+
+   connect( projInfo, SIGNAL( use_db        ( bool ) ),
+                      SLOT  ( update_disk_db( bool ) ) );
+
    projInfo->exec();
 }
 
@@ -582,13 +626,22 @@ void US_ExperimentGui::selectRotor( void )
    US_Rotor::RotorCalibration calibration;
    calibration.ID = expInfo.calibrationID;
 
-   US_RotorGui* rotorInfo = new US_RotorGui( true, US_Disk_DB_Controls::Default,
+   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
+
+   US_RotorGui* rotorInfo = new US_RotorGui( true,    // signal_wanted
+                                             dbdisk,
                                              rotor, calibration );
 
    connect( rotorInfo, SIGNAL( RotorCalibrationSelected( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
                        SLOT  ( assignRotor             ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
+
    connect( rotorInfo, SIGNAL( RotorCalibrationCanceled( ) ),
                        SLOT  ( cancelRotor             ( ) ) );
+
+   connect( rotorInfo, SIGNAL( use_db        ( bool ) ),
+                       SLOT  ( update_disk_db( bool ) ) );
+
    rotorInfo->exec();
 }
 
