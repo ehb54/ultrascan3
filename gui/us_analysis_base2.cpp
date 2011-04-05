@@ -1374,8 +1374,8 @@ void US_AnalysisBase2::get_solution()
       }
    }
 
-   US_SolutionGui* soluInfo = new US_SolutionGui( expID, 1, true,
-                                                  dbdisk, solution_rec );
+   US_SolutionGui* soluInfo = new US_SolutionGui( expID, 1, true, dbdisk,
+                                                  solution_rec, false );
 
    connect( soluInfo, SIGNAL( updateSolutionGuiSelection( US_Solution& ) ),
             this,     SLOT(   updateSolution(             US_Solution& ) ) );
