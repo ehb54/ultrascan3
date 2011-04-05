@@ -192,6 +192,7 @@ class US_EXTERN US_FeMatch : public US_Widgets
       QVector< US_DataIO2::EditedData > dataList;
       QVector< US_DataIO2::RawData    > rawList;
       QVector< QVector< double >      > resids;
+      QVector< QList< int > >           allExcls;
       
       US_Math2::SolutionData            solution;
 

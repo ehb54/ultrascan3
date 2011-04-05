@@ -397,6 +397,8 @@ void US_FeMatch::load( void )
    for ( int ii = 0; ii < ntriples; ii++ )
       lw_triples->addItem( triples.at( ii ) );
 
+   allExcls.fill( excludedScans, ntriples );
+
    edata     = &dataList[ 0 ];
    scanCount = edata->scanData.size();
    double avgTemp = edata->average_temperature();
@@ -458,6 +460,8 @@ void US_FeMatch::update( int drow )
    le_temp->setText( QString::number( avgTemp, 'f', 1 )
          + " " + DEGC );
    te_desc->setText( edata->description );
+
+   excludedScans  = allExcls[ drow ];
 
    ct_from->setMaxValue( scanCount - excludedScans.size() );
    ct_to  ->setMaxValue( scanCount - excludedScans.size() );
@@ -917,7 +921,8 @@ void US_FeMatch::exclude( void )
    double from          = ct_from->value();
    double to            = ct_to  ->value();
    int    displayedScan = 1;
-          edata         = &dataList[ lw_triples->currentRow() ];
+   int    drow          = lw_triples->currentRow();
+          edata         = &dataList[ drow ];
    int    totalScans    = edata->scanData.size();
 
    for ( int ii = 0; ii < totalScans; ii++ )
@@ -935,6 +940,8 @@ void US_FeMatch::exclude( void )
 
    ct_from->setMaxValue( totalScans - excludedScans.size() );
    ct_to  ->setMaxValue( totalScans - excludedScans.size() );
+
+   allExcls[ drow ]     = excludedScans;
 }
 
 void US_FeMatch::set_ra_visible( bool /*visible*/ )
@@ -1344,6 +1351,7 @@ void US_FeMatch::reset( )
       return;
 
    excludedScans.clear();
+   allExcls[ lw_triples->currentRow() ] = excludedScans;
 
    ct_from->disconnect();
    ct_to  ->disconnect();
@@ -2396,7 +2404,6 @@ void US_FeMatch::new_triple( int trow )
 {
    update( trow );
 
-   reset();
    data_plot();
 }
 
