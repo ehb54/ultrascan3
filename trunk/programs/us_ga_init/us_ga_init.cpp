@@ -415,7 +415,7 @@ void US_GA_Initialize::reset( void )
 
    plfmin     = 1.0;
    plfmax     = 4.0;
-   ct_plfmin->setRange( 0, 50, 0.01 );
+   ct_plfmin->setRange( 1, 50, 0.01 );
    ct_plfmin->setValue( plfmin );
    ct_plfmin->setEnabled( false );
    ct_plfmax->setRange( 1, 50, 0.01 );
@@ -1340,7 +1340,7 @@ void US_GA_Initialize::set_limits()
       smin       -= ( ( smax - smin ) / 20.0 );
       fmax       += ( ( fmax - fmin ) / 20.0 );
       fmin       -= ( ( fmax - fmin ) / 20.0 );
-      fmin        = ( fmin < 0.0 ) ? 0.0 : fmin;
+      fmin        = ( fmin < 1.0 ) ? 1.0 : fmin;
 
       if ( ( fmax - fmin ) < 1.0e-3 )
          fmax       += ( fmax / 10.0 );
