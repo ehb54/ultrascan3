@@ -240,50 +240,6 @@ void US_Experiment::clear( void )
    rpms.clear();
 }
 
-US_Experiment& US_Experiment::operator=( const US_Experiment& rhs )
-{
-
-   if ( this != &rhs )            // Guard against self assignment
-   {
-      clear();
-
-      invID         = rhs.invID;
-      invGUID       = rhs.invGUID;
-      name          = rhs.name;
-      expID         = rhs.expID;
-      expGUID       = rhs.expGUID;
-      project.clear();
-      runID         = rhs.runID;
-      labID         = rhs.labID;
-      instrumentID  = rhs.instrumentID;
-      instrumentSerial  = rhs.instrumentSerial;
-      operatorID    = rhs.operatorID;
-      rotorID       = rhs.rotorID;
-      calibrationID = rhs.calibrationID;
-      rotorCoeff1   = rhs.rotorCoeff1;
-      rotorCoeff2   = rhs.rotorCoeff2;
-      rotorGUID     = rhs.rotorGUID;
-      rotorSerial   = rhs.rotorSerial;
-      rotorName     = rhs.rotorName;
-      rotorUpdated  = rhs.rotorUpdated;
-      expType       = rhs.expType;
-      opticalSystem = rhs.opticalSystem;
-      runTemp       = rhs.runTemp;
-      label         = rhs.label;
-      comments      = rhs.comments;
-      centrifugeProtocol = rhs.centrifugeProtocol;
-      date          = rhs.date;
-      syncOK        = rhs.syncOK;
-
-      rpms.clear();
-      for ( int i = 0; i < rhs.rpms.size(); i++ )
-         rpms << rhs.rpms[ i ];
-
-   }
-
-   return *this;
-}
-
 void US_Experiment::show( void )
 {
    QString syncOK_text = ( syncOK ) ? "true" : "false";

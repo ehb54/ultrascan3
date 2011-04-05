@@ -94,9 +94,6 @@ class US_EXTERN US_Project
       */
       bool diskPath          ( QString& );
 
-      //! \brief An overloaded assignment operator
-      US_Project&            operator=( const US_Project& );
-
       //! \brief Displays the contents of the class variables in qDebug() statements
       void show              ( void );
 
