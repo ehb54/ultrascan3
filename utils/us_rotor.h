@@ -286,7 +286,6 @@ class US_EXTERN US_Rotor
                                            const QString& ,
                                            const int& ,
                                            bool& );
-        static void    saveAbstractRotorsDisk( QVector< US_Rotor::AbstractRotor >& );
         static void    saveLabsDisk( QVector< US_Rotor::Lab >& );
 
 };
