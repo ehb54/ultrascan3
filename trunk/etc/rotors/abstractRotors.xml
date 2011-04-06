@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE US_AbstractRotor>
+<AbstractRotorData version="1.0">
+  <abstractRotor id="1" guid="a06a2795-99bd-67b4-ad90-401eb5f560fd" 
+    name="AN50" materialName="Titanium" numHoles="8" maxRPM="50000" 
+    magnetOffset="0" cellCenter="6.5" manufacturer="Beckman"/>
+  <abstractRotor id="2" guid="fda22413-8d1a-4ef4-a9fc-620d0c00d434" 
+    name="AN60" materialName="Titanium" numHoles="4" maxRPM="60000" 
+    magnetOffset="0" cellCenter="6.5" manufacturer="Beckman"/>
+  <abstractRotor id="3" guid="4f9326de-0f40-5474-f957-1eaea5b1478c" 
+    name="Simulation" materialName="Simulation" numHoles="8" maxRPM="100000" 
+    magnetOffset="0" cellCenter="6.5" manufacturer="Simulation"/>
+  <abstractRotor id="4" guid="68ea4167-f76a-1214-154b-54876bbed32b" 
+    name="CFA" materialName="CarbonFiber" numHoles="8" maxRPM="60000" 
+    magnetOffset="0" cellCenter="6.5" manufacturer="SpinAnalytical"/>
+</AbstractRotorData>

@@ -66,8 +66,6 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
       US_Rotor::Status            calibrationStatus;      //!< Most recent calibration status
       US_Rotor::Rotor             currentRotor;           //!< Current rotor structure
       US_Rotor::RotorCalibration  currentCalibration;     //!< Current calibration structure
-      US_Help                     showHelp;
-      int                         labID;
 
    signals:
       
@@ -87,6 +85,8 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
       void use_db( bool DB );
 
    private:
+      int                labID;
+      US_Help            showHelp;
 
       QPushButton*       pb_help;
       QPushButton*       pb_reset;
@@ -116,31 +116,29 @@ class US_EXTERN US_RotorGui : public US_WidgetsDialog
 
       void setupGui      ( int );
 
-//      void readRotorInfo  ( QXmlStreamReader& xml );
-//      void readRotorCalibrationInfo  ( QXmlStreamReader& xml );
-//      QString get_filename   ( const QString&, bool& );
-      
    private slots:
-      
+      US_Rotor::Status readCalibration( int, int );
+      US_Rotor::Status readRotor      ( int, int );
+
       void source_changed     ( bool db );
       bool loadRotors         ( const int );
       void addRotor           ( void );
       void update_disk_db     ( bool db );
       void selectRotor        ( QListWidgetItem * );
-      US_Rotor::Status readRotor( int, int );
       void deleteRotor        ( void );
       bool readCalibrationProfiles( int );
       void selectCalibration  ( QListWidgetItem * );
-      US_Rotor::Status readCalibration( int, int );
       void viewReport         ( void );
       void deleteCalibration  ( void );
       void updateName         ( const QString & );
       void updateSerialNumber ( const QString & );
       void saveCalibration    ( void );
+
       void help (void)
       {
          showHelp.show_help( "manual/rotor.html" );
       };
+      
       void reset              ( void );
       void accept             ( void );
       void cancel             ( void );

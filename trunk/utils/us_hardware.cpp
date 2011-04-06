@@ -195,38 +195,6 @@ bool US_Hardware::readRotorMap( US_DB2* db,
          ok                   = true;     // Mark that at least one pair found
       }
    }
-#if 0
-//*DEBUG*
-QStringList cpieces;
-query << "get_abstractCenterpiece_names";
-db->query( query );
-if ( db->lastErrno() != US_DB2::OK )
- { qDebug() << "*NOTE* Unable to get centerpiece names"; return true; }
-while ( db->next() )
- cpieces << db->value(0).toString();
-qDebug() << "HW:rdRMap: cpieces size" << cpieces.size();
-for ( int ii=0;ii<cpieces.size();ii++ )
-{
- QString cpID=cpieces[ii];
- query.clear();
- query << "get_abstractCenterpiece_info" << cpID;
- db->query(query);
- if( db->next() )
- {
-   qDebug() << " cpID" << cpID
-    << "guid"     << db->value(0).toString()
-    << "name"     << db->value(1).toString()
-    << "channels" << db->value(2).toString()
-    << "bottom"   << db->value(3).toString();
-   qDebug()
-    << "   shape"   << db->value(4).toString()
-    << "maxRPM"     << db->value(5).toString()
-    << "pathLength" << db->value(6).toString()
-    << "angle"      << db->value(7).toString()
-    << "width"      << db->value(8).toString();
- }
-}
-#endif
 
    return ok;
 }
@@ -246,4 +214,69 @@ bool US_Hardware::rotorValues( QString rCalID,
 
    return ok;
 }
+
+US_AbstractCenterpiece::US_AbstractCenterpiece()
+{
+   serial_number = 0;
+   guid          = "";
+   description   = "";
+   material      = "";
+   columns       = 1;
+   shape         = "standard";
+   angle         = 2.5;
+   width         = 0.0;
+   path_length.clear();
+   bottom_position.clear();
+}
+
+bool US_AbstractCenterpiece::read_centerpieces( 
+      QList< US_AbstractCenterpiece >& centerpieces )
+{
+   QString home = US_Settings::appBaseDir();
+   QFile   cp_file( home + "/etc/abstractCenterpieces.xml" );
+
+   if ( ! cp_file.open( QIODevice::ReadOnly | QIODevice::Text ) ) return false;
+
+   centerpieces.clear();
+   US_AbstractCenterpiece cp;
+
+   QXmlStreamReader xml( &cp_file );
+
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isStartElement() )
+      {
+         if ( xml.name() == "abstractCenterpiece" )
+         {
+            if ( cp.serial_number > 0 ) centerpieces << cp;
+            cp = US_AbstractCenterpiece();
+                 
+            QXmlStreamAttributes a = xml.attributes();
+            cp.serial_number = a.value( "id"           ).toString().toInt();
+            cp.guid          = a.value( "guid"         ).toString();
+            cp.description   = a.value( "description"  ).toString();
+            cp.material      = a.value( "materialName" ).toString();
+            cp.columns       = a.value( "columns"      ).toString().toInt();
+            cp.shape         = a.value( "shape"        ).toString();
+            cp.angle         = a.value( "angle"        ).toString().toDouble();
+            cp.width         = a.value( "width"        ).toString().toDouble();
+         }
+
+         if ( xml.name() == "row" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            cp.path_length     << a.value( "pathlen" ).toString().toDouble();
+            cp.bottom_position << a.value( "bottom"  ).toString().toDouble();
+         }
+      }
+   }
+
+   centerpieces << cp;  // Add last centerpiece
+
+   cp_file.close();
+   return true;
+}
+
 

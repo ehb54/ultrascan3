@@ -10,10 +10,10 @@
 
 US_RotorGui::US_RotorGui(
      US_Rotor::RotorCalibration& calibration,
-     bool  new_calibration,
-     bool  signal_wanted,
-     int   select_db_disk
-     ) : US_WidgetsDialog(0, 0), currentCalibration( calibration )
+     bool                        new_calibration,
+     bool                        signal_wanted,
+     int                         select_db_disk
+     ) : US_WidgetsDialog( 0, 0 ), currentCalibration( calibration )
 {
    this->savingCalibration = new_calibration;
    this->signal            = signal_wanted;
@@ -26,17 +26,20 @@ US_RotorGui::US_RotorGui(
    {
       QMessageBox::information( this,
          tr( "Attention" ),
-         tr( "Please select the appropriate rotor and click Save Calibration Data, or Close" ) );
+         tr( "Please select the appropriate rotor "
+             "and click Save Calibration Data, or Close" ) );
    }
 }
 
 US_RotorGui::US_RotorGui(
-     bool  signal_wanted,
-     int   select_db_disk,
-     const US_Rotor::Rotor& rotorIn,
-     const US_Rotor::RotorCalibration& calibrationIn
-     ) : US_WidgetsDialog(0, 0), currentRotor( rotorIn ), 
-       currentCalibration( calibrationIn ), signal( signal_wanted )
+     bool                              signal_wanted,
+     int                               select_db_disk,
+     const US_Rotor::Rotor&            rotorIn,
+     const US_Rotor::RotorCalibration& calibrationIn) 
+: US_WidgetsDialog( 0, 0 ), 
+  currentRotor( rotorIn ), 
+  currentCalibration( calibrationIn ), 
+  signal( signal_wanted )
 {
    this->savingCalibration = false;
 
@@ -785,7 +788,8 @@ bool US_RotorGui::load( void )
       {
          QMessageBox::warning( this, tr( "Database Problem" ),
             tr( "Could not read lab information \n" ) );
-         return( false );
+
+         return false;
       }
 
    }
@@ -797,7 +801,8 @@ bool US_RotorGui::load( void )
       {
          QMessageBox::warning( this, tr( "Disk Problem" ),
             tr( "Could not read lab information \n" ) );
-         return( false );
+         
+         return false;
       }
 
    }
@@ -817,7 +822,7 @@ bool US_RotorGui::load( void )
 
    reset();             // Redo buttons after all data is loaded
 
-   return( true );
+   return true;
 }
 
 // Function to change the current lab

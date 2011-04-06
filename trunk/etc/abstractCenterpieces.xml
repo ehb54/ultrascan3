@@ -1,46 +1,128 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE US_AbstractCenterpiece>
 <abstractCenterpieces version="1.0">
-   <abstractCenterpiece id="1" guid="" name="Simulation 1-channel standard">
-      <materialName value="Simulation" />
-      <channels value="1" />
-      <bottom value="" />
-      <shape value="" />
-   </abstractCenterpiece>
-   <abstractCenterpiece id="2" guid="" name="Epon 2-channel standard">
-      <materialName value="Epon" />
-      <channels value="1" />
-      <bottom value="" />
-      <shape value="" />
-   </abstractCenterpiece>
-   <abstractCenterpiece id="3" guid="" name="Aluminum 2-channel standard">
-      <materialName value="Aluminum" />
-      <channels value="1" />
-      <bottom value="" />
-      <shape value="" />
-   </abstractCenterpiece>
-   <abstractCenterpiece id="4" guid="" name="Epon 6-channel rectangular">
-      <materialName value="Epon" />
-      <channels value="3" />
-      <bottom value="" />
-      <shape value="" />
-   </abstractCenterpiece>
-   <abstractCenterpiece id="5" guid="" name="Titanium 2-channel standard">
-      <materialName value="Titanium" />
-      <channels value="1" />
-      <bottom value="" />
-      <shape value="" />
-   </abstractCenterpiece>
-   <abstractCenterpiece id="6" guid="" name="Titanium 6-channel rectangular">
-      <materialName value="Titanium" />
-      <channels value="3" />
-      <bottom value="" />
-      <shape value="" />
-   </abstractCenterpiece>
-   <abstractCenterpiece id="7" guid="" name="Epon 2-channel band forming">
-      <materialName value="Epon" />
-      <channels value="1" />
-      <bottom value="" />
-      <shape value="" />
-   </abstractCenterpiece>
+   <abstractCenterpiece
+     id="1"
+     guid="08cbd35f-151c-4814-8457-6ef8dd523a23"
+     description="Simulation 1-channel standard"
+     materialName="Simulated"
+     columns="1"
+     shape="standard"
+     angle="2.5"
+     width="0" >
+      <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece> 
+
+   <abstractCenterpiece
+     id="2"
+     guid="340540ba-a225-4214-9136-2b4003af772e"
+     description="Epon 2-channel standard"
+     materialName="Epon"
+     columns="2"
+     shape="standard"
+     angle="2.5"
+     width="0" >
+      <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece> 
+
+   <abstractCenterpiece
+     id="3"
+     guid="e1dfbc5b-ceeb-4275-a280-0e3a5ab0c490"
+     description="Aluminum 2-channel standard"
+     materialName="Aluminum"
+     columns="2"
+     shape="standard"
+     angle="2.5"
+     width="0" >
+      <row pathlen="1.2" bottom="7.15" />
+   </abstractCenterpiece> 
+
+   <abstractCenterpiece
+     id="4"
+     guid="25d18488-1afa-4b9b-8a6d-b59802f0a74a"
+     description="Epon 6-channel rectangular"
+     materialName="Epon"
+     columns="2"
+     shape="rectangular"
+     angle="0"
+     width="0.323" >
+      <row pathlen="0.3" bottom="6.111" />
+      <row pathlen="0.3" bottom="6.613" />
+      <row pathlen="0.3" bottom="7.104" />
+   </abstractCenterpiece> 
+
+   <abstractCenterpiece
+     id="5"
+     guid="d8eec2e8-cc11-46fd-b96e-8fe82059317d"
+     description="Titanium 2-channel standard"
+     materialName="Titanium"
+     columns="2"
+     shape="standard"
+     angle="2.5"
+     width="0" >
+      <row pathlen="1.2" bottom="7.111" />
+   </abstractCenterpiece> 
+
+   <abstractCenterpiece
+     id="6"
+     guid="70641c51-ac63-4862-baf4-1f418489ed06"
+     description="Titanium 6-channel rectangular"
+     materialName="Titanium"
+     columns="2"
+     shape="rectangular"
+     angle="0"
+     width="0.320" >
+      <row pathlen="0.3" bottom="6.111" />
+      <row pathlen="0.3" bottom="6.613" />
+      <row pathlen="0.3" bottom="7.104" />
+   </abstractCenterpiece> 
+
+   <abstractCenterpiece
+     id="7"
+     guid="4a6410c5-099f-44d8-baa2-0e2d4c099ced"
+     description="Epon 2-channel band forming"
+     materialName="Epon"
+     columns="2"
+     shape="standard"
+     angle="2.5"
+     width="0" >
+      <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece> 
+
+   <abstractCenterpiece
+     id="8"
+     guid="30a5f2f8-b31a-42b8-a8a8-df077bf1b432"
+     description="Epon-Helmut 2-channel band forming"
+     materialName="Epon-Helmut"
+     columns="2"
+     shape="band forming"
+     angle="2.5"
+     width="0" >
+      <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece> 
+
+   <abstractCenterpiece
+     id="9"
+     guid="2e4414c9-babf-4505-8556-4bd492b9fb27"
+     description="SVEL60 2-channel standard"
+     materialName="SVEL60"
+     columns="2"
+     shape="standard"
+     angle="2.0"
+     width="0" >
+      <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece> 
+
+   <abstractCenterpiece
+     id="10"
+     guid="d8e93427-eb88-42d1-b459-ab6787e571c6"
+     description="SVEL60 2-channel meniscus matching"
+     materialName="SVEL60"
+     columns="2"
+     shape="meniscus matching"
+     angle="2.0"
+     width="0" >
+      <row pathlen="1.2" bottom="7.2" />
+   </abstractCenterpiece> 
+
 </abstractCenterpieces>
