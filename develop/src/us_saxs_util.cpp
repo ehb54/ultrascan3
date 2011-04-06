@@ -12,6 +12,11 @@
    ? setup dammin/gasbor scripts, add results to wiki 
 */   
 
+#if defined(WIN32)
+#   define isnan _isnan
+#   undef SHOW_TIMING
+#endif
+
 void US_Saxs_Scan::clear()
 {
    filename = "";
@@ -1350,7 +1355,9 @@ void US_Saxs_Util::our_vector_test() {
 
 long US_Saxs_Util::min_gsm_5_1(our_vector *i, double epsilon, long max_iter) {
    /* try to find a local minimum via a gradient search method */
+#if defined(SHOW_TIMING)
    struct timeval tv1, tv2;
+#endif
    our_vector *u, *zero;
    //  double t;
    double s1, s2, s3;
@@ -1427,7 +1434,9 @@ long US_Saxs_Util::min_gsm_5_1(our_vector *i, double epsilon, long max_iter) {
       /* cut down interval until we have a decrease */
       printf("%d: decrease\n", this_rank); 
       fflush(stdout);
+#if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
+#endif
 
       while(g_s2 > g_s1 && s2 - s1 > epsilon) {
          s3 = s2;
@@ -1461,12 +1470,16 @@ long US_Saxs_Util::min_gsm_5_1(our_vector *i, double epsilon, long max_iter) {
 
     
       reps = 0;
+#if defined(SHOW_TIMING)
       gettimeofday(&tv2, NULL);
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+#endif
       printf("%d: start line search\n", this_rank); 
       fflush(stdout);
+#if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
+#endif
       while(s2 - s1 > epsilon && s3 - s2 > epsilon && reps++ < MAX_REPS) {
       
 #if defined(DEBUG_GSM)
@@ -1640,9 +1653,11 @@ long US_Saxs_Util::min_gsm_5_1(our_vector *i, double epsilon, long max_iter) {
          default : break;
          }
       }
+#if defined(SHOW_TIMING)
       gettimeofday(&tv2, NULL);
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+#endif
       printf("%d: df start\n", this_rank); 
       fflush(stdout);
       wgsbs_gsm_df(u, i);
@@ -1691,7 +1706,10 @@ long US_Saxs_Util::min_gsm_5_1(our_vector *i, double epsilon, long max_iter) {
 
 long US_Saxs_Util::min_fr_pr_cgd(our_vector *i, double epsilon, long max_iter) {
    /* polak-ribiere version of fletcher-reeves conjugate gradient  */
+
+#if defined(SHOW_TIMING)
    struct timeval tv1, tv2;
+#endif
    our_vector *u, *zero;
    //  double t;
    double s1, s2, s3;
@@ -1775,8 +1793,9 @@ long US_Saxs_Util::min_fr_pr_cgd(our_vector *i, double epsilon, long max_iter) {
       printf("%d: decrease\n", this_rank); 
       fflush(stdout);
 
+#if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
-
+#endif
 #if defined(DEBUG_GSM)
       printf("s values\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
@@ -1815,12 +1834,16 @@ long US_Saxs_Util::min_fr_pr_cgd(our_vector *i, double epsilon, long max_iter) {
 
       reps = 0;
 
+#if defined(SHOW_TIMING)
       gettimeofday(&tv2, NULL);
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+#endif
       printf("%d: start line search\n", this_rank); 
       fflush(stdout);
+#if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
+#endif
     
       while(s2 - s1 > epsilon && s3 - s2 > epsilon && reps++ < MAX_REPS) {
       
@@ -2002,15 +2025,19 @@ long US_Saxs_Util::min_fr_pr_cgd(our_vector *i, double epsilon, long max_iter) {
          }
       }
 
+#if defined(SHOW_TIMING)
       gettimeofday(&tv2, NULL);
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+#endif
       printf("%d: df start\n", this_rank); 
       fflush(stdout);
       wgsbs_gsm_df(u, i);
       puts("conj dir start");
       fflush(stdout);
+#if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
+#endif
     
       ggd = dot_our_vector(v_g, v_g);
       /*    printf("ggd = %.12g\n", ggd);*/
@@ -2033,9 +2060,11 @@ long US_Saxs_Util::min_fr_pr_cgd(our_vector *i, double epsilon, long max_iter) {
       copy_our_vector(v_g, u);
       add_our_vector_vv(v_h, u);
       copy_our_vector(u, v_h);
+#if defined(SHOW_TIMING)
       gettimeofday(&tv2, NULL);
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+#endif
       fflush(stdout);
 
       if(!(global_iter % 5)) {
@@ -2085,8 +2114,9 @@ long US_Saxs_Util::min_fr_pr_cgd(our_vector *i, double epsilon, long max_iter) {
 long US_Saxs_Util::min_hessian_bfgs(our_vector *ip, double epsilon, long max_iter) 
 {
   
+#if defined(SHOW_TIMING)
    struct timeval tv1, tv2;
-
+#endif
    our_matrix *hessian;
 
    our_vector *u, *zero;
@@ -2185,8 +2215,9 @@ long US_Saxs_Util::min_hessian_bfgs(our_vector *ip, double epsilon, long max_ite
       /* cut down interval until we have a decrease */
       printf("%d: decrease\n", this_rank); 
       fflush(stdout);
+#if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
-
+#endif
       while(g_s2 > g_s1 && s2 - s1 > epsilon) {
          s3 = s2;
          s2 *= 5e-1;
@@ -2226,12 +2257,16 @@ long US_Saxs_Util::min_hessian_bfgs(our_vector *ip, double epsilon, long max_ite
     
       reps = 0;
 
+#if defined(SHOW_TIMING)
       gettimeofday(&tv2, NULL);
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+#endif
       printf("%d: start line search\n", this_rank); 
       fflush(stdout);
+#if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
+#endif
 
       while(s2 - s1 > epsilon && s3 - s2 > epsilon && reps++ < MAX_REPS) {
       
@@ -2417,14 +2452,18 @@ long US_Saxs_Util::min_hessian_bfgs(our_vector *ip, double epsilon, long max_ite
 
       /*    printf("v_dx:"); print_our_vector(v_dx); */
 
+#if defined(SHOW_TIMING)
       gettimeofday(&tv2, NULL);
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+#endif
       printf("%d: df start\n", this_rank); 
       fflush(stdout);
       wgsbs_gsm_df(v_g, v_p);                 /* new gradient in v_g (old in u) */
       printf("%d: hessian start\n", this_rank);
+#if defined(SHOW_TIMING)
       gettimeofday(&tv1, NULL);
+#endif
 
       sub_our_vector_vvv(v_dx, v_p, ip); /* calc dx */
       copy_our_vector(ip, v_p);
@@ -2462,11 +2501,12 @@ long US_Saxs_Util::min_hessian_bfgs(our_vector *ip, double epsilon, long max_ite
          }
       }
       mult_our_matrix_vmv(u, hessian, v_g);
+#if defined(SHOW_TIMING)
       gettimeofday(&tv2, NULL);
       if(show_times)
          printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
       fflush(stdout);
-
+#endif
       /*    mult_our_vector_vs(u, -1e0); */
       /*
         print_our_vector(u);

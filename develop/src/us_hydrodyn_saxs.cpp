@@ -14,10 +14,11 @@
 
 #define SLASH "/"
 #if defined(WIN32)
-# include <dos.h>
-# include <stdlib.h>
-# undef SLASH
-# define SLASH "\\"
+#  include <dos.h>
+#  include <stdlib.h>
+#  undef SLASH
+#  define SLASH "\\"
+#  define isnan _isnan
 #endif
 
 // #define SAXS_DEBUG
