@@ -38,6 +38,13 @@ class US_EXTERN US_AbstractRotorGui : public US_WidgetsDialog
                            int  = US_Disk_DB_Controls::Default,
                            US_Rotor::Rotor* = new US_Rotor::Rotor() );
 
+   signals:
+
+      //! A signal to indicate that the current disk/db selection has changed.
+      //! /param DB True if DB is the new selection
+      void use_db( bool DB );
+
+   private:
       US_Rotor::Rotor*             currentRotor;
       bool                         signal;
       
@@ -63,12 +70,6 @@ class US_EXTERN US_AbstractRotorGui : public US_WidgetsDialog
 
       US_Help                      showHelp;
       
-   signals:
-
-      //! A signal to indicate that the current disk/db selection has changed.
-      //! /param DB True if DB is the new selection
-      void use_db( bool DB );
-
    private slots:
 
       void setupGui           ( int );
