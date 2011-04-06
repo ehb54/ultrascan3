@@ -44,8 +44,11 @@ US_Rotor::Status US_Rotor::readLabsDB(
 // Function to save abstract rotor information to disk
 void US_Rotor::saveLabsDisk( QVector< US_Rotor::Lab >& labList )
 {
-   QString home     = US_Settings::appBaseDir();
-   QString filename = home + "/etc/labs.xml";
+   // Currently labs.xml is in with the rotors 
+   QString path; 
+   if ( ! diskPath( path ) ) return; 
+   
+   QString filename = path + "/labs.xml"; 
    
    QFile file( filename );
    if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
@@ -88,18 +91,30 @@ void US_Rotor::saveLabsDisk( QVector< US_Rotor::Lab >& labList )
 // Function to read all the lab info from disk
 US_Rotor::Status US_Rotor::readLabsDisk( QVector< US_Rotor::Lab >& labList )
 {
-   QString home     = US_Settings::appBaseDir();
-   QString filename = home + "/etc/labs.xml";
-   QFile   file( filename );
+   // Currently labs.xml is in with the rotors 
+   // Make sure the rotors directory is there and has something in it
+   QString path; 
+   if ( ! diskPath( path ) ) return US_Rotor::NOT_FOUND; 
+   
+   QString labFilename = US_Settings::dataDir() + "/rotors/labs.xml";
+   QFile file( labFilename );
+
+   if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      // copy from etc
+      QString home            = US_Settings::appBaseDir();
+      QString defaultFilename = home + "/etc/labs.xml";
+      QFile::copy( defaultFilename, labFilename );
+
+      if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
+      {
+         qDebug() << "Error: Could not read lab file\n"
+                  << labFilename;
+         return US_Rotor::NOT_FOUND;
+      }
+   }
 
    labList.clear();
-
-   if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
-   {
-      qDebug() << "Error: Could not read lab file\n"
-               << filename;
-      return US_Rotor::NOT_FOUND;
-   }
 
    QXmlStreamReader xml( &file );
 
@@ -161,67 +176,14 @@ US_Rotor::Status US_Rotor::readAbstractRotorsDB(
       arList.push_back( ar );
    }
 
-   // Since we're not really editing abstract rotors, let's just copy
-   // the information to disk directly
-   saveAbstractRotorsDisk( arList );
-
    return ROTOR_OK;
-}
-
-// Function to save abstract rotor information to disk
-void US_Rotor::saveAbstractRotorsDisk( QVector< US_Rotor::AbstractRotor >& arList )
-{
-   // Get a path and file name for abstract rotors
-   QString path;
-   if ( ! diskPath( path ) ) return;
-
-   QString filename = path + "/abstractRotors.xml";
-   QFile file( filename );
-   if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
-   {
-      qDebug() << "Error: can't open file for writing"
-               << filename;
-      return;
-   }
-
-   // Generate xml
-   QXmlStreamWriter xml;
-   xml.setDevice( &file );
-   xml.setAutoFormatting( true );
-
-   xml.writeStartDocument();
-   xml.writeDTD("<!DOCTYPE US_AbstractRotor>");
-   xml.writeStartElement("AbstractRotorData");
-   xml.writeAttribute("version", "1.0");
-
-   // Loop through all the abstract rotors
-   for ( int i = 0; i < arList.size(); i++ )
-   {
-      US_Rotor::AbstractRotor ar = arList[ i ];
-
-      xml.writeStartElement( "abstractRotor" );
-      xml.writeAttribute   ( "id",           QString::number( ar.ID              ) );
-      xml.writeAttribute   ( "guid",                          ar.GUID              );
-      xml.writeAttribute   ( "name",                          ar.name              );
-      xml.writeAttribute   ( "materialName",                  ar.material          );
-      xml.writeAttribute   ( "numHoles",     QString::number( ar.numHoles        ) );
-      xml.writeAttribute   ( "maxRPM",       QString::number( ar.maxRPM          ) );
-      xml.writeAttribute   ( "magnetOffset", QString::number( ar.magnetOffset    ) );
-      xml.writeAttribute   ( "cellCenter",   QString::number( ar.cellCenter      ) );
-      xml.writeAttribute   ( "manufacturer",                  ar.manufacturer      );
-      xml.writeEndElement  ();
-   }
-
-   xml.writeEndElement  ();        // abstractRotorData
-   xml.writeEndDocument ();
-
-   file.close();
 }
 
 // Function to read all the abstract rotor info from disk
 US_Rotor::Status US_Rotor::readAbstractRotorsDisk( QVector< US_Rotor::AbstractRotor >& arList )
 {
-   QString filename = US_Settings::dataDir() + "/rotors/abstractRotors.xml";
+   QString home     = US_Settings::appBaseDir();
+   QString filename = home + "/etc/rotors/abstractRotors.xml";
    QFile   file( filename );
 
    arList.clear();
@@ -475,7 +437,7 @@ bool US_Rotor::diskFilename( const QString& fileMask,
 bool US_Rotor::diskPath( QString& path )
 {
    QDir dir;
-   path = US_Settings::appBaseDir() + "/etc/rotors";
+   path = US_Settings::dataDir() + "/rotors"; 
 
    if ( ! dir.exists( path ) )
    {
@@ -485,6 +447,15 @@ bool US_Rotor::diskPath( QString& path )
                   << path;
          return false;
       }
+
+      // Copy default rotors and rotor calibrations here
+      QString home       = US_Settings::appBaseDir();
+      QString defaultDir = home + "/etc/rotors";
+      QDir    etcDir  ( defaultDir );
+      QStringList files = etcDir.entryList( QDir::NoDotAndDotDot | QDir::Files );
+
+      foreach( QString file, files )
+         QFile::copy( defaultDir + "/" + file, path + "/" + file );
    }
 
    return true;
