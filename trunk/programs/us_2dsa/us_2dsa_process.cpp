@@ -374,6 +374,7 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
    solution.vbar      = vbar;
    US_Math2::data_correction( avgtemp, solution );
    double sfactor     = 1.0 / solution.s20w_correction;
+   double dfactor     = 1.0 / solution.D20w_correction;
 DbgLv(1) << "FIN_FIN: dens visc vbar" << density << viscosity << vbar
  << " s20w_corr" << solution.s20w_correction;
    model.components.resize( nsolutes );
@@ -381,8 +382,9 @@ DbgLv(1) << "FIN_FIN: dens visc vbar" << density << viscosity << vbar
    // build the final model
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
+      // Get standard-space solute values (20,W)
       US_Model::SimulationComponent mcomp;
-      mcomp.s     = qAbs( c_solutes[ maxdepth ][ cc ].s ) * sfactor;
+      mcomp.s     = qAbs( c_solutes[ maxdepth ][ cc ].s );
       mcomp.D     = 0.0;
       mcomp.mw    = 0.0;
       mcomp.f     = 0.0;
@@ -390,7 +392,12 @@ DbgLv(1) << "FIN_FIN: dens visc vbar" << density << viscosity << vbar
       mcomp.signal_concentration
                   = c_solutes[ maxdepth ][ cc ].c;
 
+      // Complete other coefficients in standard-space
       model.calc_coefficients( mcomp );
+
+      // Convert to experiment-space for simulation below
+      mcomp.s    *= sfactor;
+      mcomp.D    *= dfactor;
 
       model.components[ cc ]  = mcomp;
    }
@@ -531,6 +538,8 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
       model.components[ cc ].s *= solution.s20w_correction;
       model.components[ cc ].D *= solution.D20w_correction;
    }
+
+   model.update_coefficients( );        // Insure all coefficients consistent
 
    // done with iterations:   check for meniscus or MC iteration
 

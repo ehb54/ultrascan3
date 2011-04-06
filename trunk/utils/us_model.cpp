@@ -186,9 +186,20 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    {
       s20w           = qAbs( s );
 
-      // First check s and D
+      // First check s and k (f_f0)
                                                  ///////////////
-      if ( D != 0.0 )                            // s and D
+      if ( f_f0 != 0.0 )                         // s and f_f0
+      {                                          ///////////////
+         double numer   = 0.02 * s * f_f0 * vbar * VISC_20W;
+         f0             = 0.09 * VISC_20W * M_PI * sqrt( numer / buoyancyb );
+         fv             = f_f0 * f0;
+         D              = R * t / ( AVOGADRO * fv );
+         mw             = s * R * t / ( D * buoyancyb );
+      }
+
+      // Next check s and D
+                                                 ///////////////
+      else if ( D != 0.0 )                       // s and D
       {                                          ///////////////
          mw             = s * R * t / ( D * buoyancyb );
          volume         = vbar * mw / AVOGADRO;
@@ -199,17 +210,6 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
          f_f0           = fv / f0;
          double ffdif   = qAbs( ff0sv - f_f0 );
          f_f0           = ( ffdif < 1.e-5 ) ? ff0sv : f_f0;
-      }
-
-      // Next check s and k (f_f0)
-                                                 ///////////////
-      else if ( f_f0 != 0.0 )                    // s and f_f0
-      {                                          ///////////////
-         double numer   = 0.02 * s * f_f0 * vbar * VISC_20W;
-         f0             = 0.09 * VISC_20W * M_PI * sqrt( numer / buoyancyb );
-         fv             = f_f0 * f0;
-         D              = R * t / ( AVOGADRO * fv );
-         mw             = s * R * t / ( D * buoyancyb );
       }
 
       // Then check any other s + combinations
