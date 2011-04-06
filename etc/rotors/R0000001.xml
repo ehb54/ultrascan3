@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE US_Rotor>
 <RotorData version="1.0">
-    <Rotor id="1" guid="32673123-095b-7b64-49dd-e58cb14d4fed" abstractRotorID="3" 
-    abstractRotorGUID="4f9326de-0f40-5474-f957-1eaea5b1478c" labID="1" 
-    name="Default 1001 (Simulation)" serialNumber="DEFAULT 1001"/>
+    <Rotor id="1" guid="851389f4-2155-7da4-05ae-ce4e51683a3c" abstractRotorID="1" 
+    abstractRotorGUID="a06a2795-99bd-67b4-ad90-401eb5f560fd" labID="1" 
+    name="Default 1001 (AN50)" serialNumber="DEFAULT 1001"/>
 </RotorData>

@@ -10,6 +10,8 @@
 
 DELETE FROM abstractRotor;
 DELETE FROM abstractCenterpiece;
+DELETE FROM rotor;
+DELETE FROM rotorCalibration;
 
 INSERT INTO abstractRotor SET
   abstractRotorID   = 1,
@@ -46,7 +48,7 @@ INSERT INTO abstractRotor SET
 
 INSERT INTO abstractRotor SET
   abstractRotorID   = 4,
-  abstractRotorGUID = '',
+  abstractRotorGUID = '68ea4167-f76a-1214-154b-54876bbed32b',
   name              = 'CFA',
   materialName      = 'CarbonFiber',
   numHoles          = 8,
@@ -187,4 +189,84 @@ INSERT INTO abstractCenterpiece SET
   materialRefURI    = '',
   centerpieceRefURI = '',
   dataUpdated       = NOW();
+
+-- Default rotors
+
+INSERT INTO rotor SET
+  rotorID         = 1,
+  abstractRotorID = 1,
+  labID           = 1,
+  rotorGUID       = '851389f4-2155-7da4-05ae-ce4e51683a3c',
+  name            = 'Default 1001 (AN50)',
+  serialNumber    = 'DEFAULT 1001';
+
+INSERT INTO rotor SET
+  rotorID         = 2,
+  abstractRotorID = 2,
+  labID           = 1,
+  rotorGUID       = 'bb014301-6b8b-f0f4-81b5-8ae36dac9ed5',
+  name            = 'Default 1002 (AN60)',
+  serialNumber    = 'DEFAULT 1002';
+
+INSERT INTO rotor SET
+  rotorID         = 3,
+  abstractRotorID = 3,
+  labID           = 1,
+  rotorGUID       = '32673123-095b-7b64-49dd-e58cb14d4fed',
+  name            = 'Default 1003 (Simulation)',
+  serialNumber    = 'DEFAULT 1003';
+
+INSERT INTO rotor SET
+  rotorID         = 4,
+  abstractRotorID = 4,
+  labID           = 1,
+  rotorGUID       = '4791c966-2fcd-4a1b-b049-ceab5ad11d3e',
+  name            = 'Default 1004 (CFA)',
+  serialNumber    = 'DEFAULT 1004';
+
+-- Default rotor configurations
+
+INSERT INTO rotorCalibration SET
+  rotorCalibrationID   = 1,
+  rotorID              = 1,
+  rotorCalibrationGUID = 'f28482f7-9b43-49a3-a8b8-528484e795c2',
+  report               = 'This is a dummy calibration --- please replace.',
+  coeff1               = 0.0,
+  coeff2               = 0.0,
+  omega2_t             = 0,
+  dateUpdated          = NOW(),
+  calibrationExperimentID = -1;
+
+INSERT INTO rotorCalibration SET
+  rotorCalibrationID   = 2,
+  rotorID              = 2,
+  rotorCalibrationGUID = 'ca6d718b-db7a-4744-894d-ad73f8ee3569',
+  report               = 'This is a dummy calibration --- please replace.',
+  coeff1               = 0.0,
+  coeff2               = 0.0,
+  omega2_t             = 0,
+  dateUpdated          = NOW(),
+  calibrationExperimentID = -1;
+
+INSERT INTO rotorCalibration SET
+  rotorCalibrationID   = 3,
+  rotorID              = 3,
+  rotorCalibrationGUID = 'ba39dd96-f188-cd24-31b1-40d63ad83fa0',
+  report               = 'This is a dummy calibration --- please replace.',
+  coeff1               = 0.0,
+  coeff2               = 0.0,
+  omega2_t             = 0,
+  dateUpdated          = NOW(),
+  calibrationExperimentID = -1;
+
+INSERT INTO rotorCalibration SET
+  rotorCalibrationID   = 4,
+  rotorID              = 4,
+  rotorCalibrationGUID = 'a167e7f5-e554-1334-c1a6-af53531492ea',
+  report               = 'This is a dummy calibration --- please replace.',
+  coeff1               = 0.0,
+  coeff2               = 0.0,
+  omega2_t             = 0,
+  dateUpdated          = NOW(),
+  calibrationExperimentID = -1;
 
