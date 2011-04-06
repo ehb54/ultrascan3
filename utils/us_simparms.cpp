@@ -140,12 +140,12 @@ void US_SimulationParameters::setHardware( US_DB2* db, QString rCalID,
    rotorCalID       = rCalID;
    bottom_position  = 7.2;
 
-   QVector< US_Hardware::CenterpieceInfo > cp_list;
-   QMap   < QString, QString             > rotor_map;
+   QList< US_AbstractCenterpiece > cp_list;
+   QMap < QString, QString       > rotor_map;
    rotor_map.clear();
 
-   if ( US_Hardware::readCenterpieceInfo( cp_list ) )
-      bottom_position     = cp_list[ cp ].bottom_position[ ch ];
+   if ( US_AbstractCenterpiece::read_centerpieces( cp_list ) )
+      bottom_position = cp_list[ cp ].bottom_position[ ch ];
 
    if ( US_Hardware::readRotorMap( db, rotor_map ) )
    {
