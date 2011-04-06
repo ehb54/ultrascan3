@@ -244,10 +244,69 @@ w		# solvent acronym
 0		# batch missing residue handling
 1		# batch run somo
 0		# batch run grid
-1		# batch run hydro
+0		# batch run hydro
 0		# batch avg hydro
 results		# batch avg hydro name
-0		# batch window last height
-0		# batch window last width
-0		# batch number of files to follow
-0		# save params number of fields to follow
+690		# batch window last height
+964		# batch window last width
+1		# batch number of files to follow
+/hda4/fibrinogen/runs/done/run49/short1b.pdb
+49		# save params number of fields to follow
+results.name
+results.total_beads
+results.used_beads
+results.mass
+results.vbar
+results.s20w
+results.D20w
+results.rs
+results.ff0
+results.rg
+results.tau
+results.viscosity
+tot_surf_area
+tot_volume_of
+num_of_unused
+use_beads_vol
+use_beads_surf
+use_bead_mass
+con_factor
+tra_fric_coef
+rot_fric_coef
+rot_diff_coef
+rot_fric_coef_x
+rot_diff_coef_x
+rot_stokes_rad_x
+cen_of_res_x
+cen_of_mass_x
+cen_of_diff_x
+cen_of_visc_x
+unc_int_visc
+unc_einst_rad
+cor_int_visc
+cor_einst_rad
+rel_times_tau_1
+rel_times_tau_2
+rel_times_tau_3
+rel_times_tau_4
+rel_times_tau_5
+rel_times_tau_m
+rel_times_tau_h
+max_ext_x
+axi_ratios_xz
+hydro.solvent_name
+hydro.solvent_acronym
+hydro.temperature
+hydro.solvent_viscosity
+hydro.solvent_density
+results.asa_rg_pos
+results.asa_rg_neg
+
+
+
+
+
+
+
+
+
