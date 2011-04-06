@@ -411,6 +411,8 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
 
    project.clear();
 
+   int status = US_DB2::OK;
+
    if ( generalTab->disk_controls->db() )
    {
       US_Passwd pw;
@@ -423,11 +425,42 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
          return;
       }
 
-      project.readFromDB  ( projectID, &db );
+      status = project.readFromDB  ( projectID, &db );
+
+      // Error reporting 
+      if ( status == US_DB2::NO_PROJECT ) 
+      { 
+         QMessageBox::information( this, 
+               tr( "Attention" ), 
+               tr( "The project was not found.\n" 
+                   "Please restore and try again.\n" ) ); 
+      } 
+      
+      else if ( status != US_DB2::OK ) 
+         db_error( db.lastError() );
    }
 
    else
-      project.readFromDisk( projectGUID );
+   {
+      status = project.readFromDisk( projectGUID );
+
+      // Error reporting 
+      if ( status == US_DB2::NO_PROJECT ) 
+      { 
+         QMessageBox::information( this, 
+               tr( "Attention" ), 
+               tr( "The project was not found.\n" 
+                   "Please restore and try again.\n" ) ); 
+      } 
+      
+      else if ( status != US_DB2::OK ) 
+      { 
+         QMessageBox::information( this, 
+               tr( "Disk Read Problem" ), 
+               tr( "Could not read data from the disk.\n" 
+                   "Disk status: " ) + QString::number( status ) ); 
+      }
+   }
 
    reset();
 }
@@ -472,17 +505,46 @@ void US_ProjectGui::saveProject( void )
          return;
       }
 
-      project.saveToDB( &db );
+      int status = project.saveToDB( &db );
+
+      if ( status == US_DB2::NO_PROJECT )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ),
+               tr( "There was a problem saving the project to the database.\n" ) );
+         return;
+      }
+
+      else if ( status != US_DB2::OK )
+      {
+         db_error( db.lastError() );
+         return;
+      }
+
    }
 
    else
-   {
       project.saveToDisk();
-   }
 
    QMessageBox::information( this,
          tr( "Save results" ),
          tr( "Project saved" ) );
+
+   // Refresh project list
+   load();
+   reset();
+
+   // Select the current item in the list
+   QList< QListWidgetItem* > items 
+     = generalTab->lw_projects->findItems( project.projectDesc, Qt::MatchExactly );
+
+   // should be exactly 1, but let's make sure
+   if ( items.size() == 1 )
+   {
+      selectProject( items[ 0 ] );
+      generalTab->lw_projects->setCurrentItem( items[ 0 ] );
+   }
+
 }
 
 // Function to delete a project from disk, db, or in the current form

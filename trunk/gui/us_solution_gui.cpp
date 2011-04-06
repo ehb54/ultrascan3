@@ -557,34 +557,57 @@ void US_SolutionGui::selectSolution( QListWidgetItem* item )
       }
 
       status = solution.readFromDB  ( solutionID, &db );
+
+      // Error reporting
+      if ( status == US_DB2::NO_BUFFER )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ),
+               tr( "The buffer this solution refers to was not found.\n"
+                   "Please restore and try again.\n" ) );
+      }
+      
+      else if ( status == US_DB2::NO_ANALYTE )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ),
+               tr( "One of the analytes this solution refers to was not found.\n"
+                   "Please restore and try again.\n" ) );
+      }
+      
+      else if ( status != US_DB2::OK )
+         db_error( db.lastError() );
+      
    }
 
    else
+   {
       status = solution.readFromDisk( solutionGUID );
 
-   // Error reporting
-   if ( status == US_DB2::NO_BUFFER )
-   {
-      QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "The buffer this solution refers to was not found.\n"
-                "Please restore and try again.\n" ) );
-   }
-
-   else if ( status == US_DB2::NO_ANALYTE )
-   {
-      QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "One of the analytes this solution refers to was not found.\n"
-                "Please restore and try again.\n" ) );
-   }
-
-   else if ( status != US_DB2::OK )
-   {
-      QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "Unspecified error reading data.\n"
-                "Please restore and try again.\n" ) );
+      // Error reporting
+      if ( status == US_DB2::NO_BUFFER )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ),
+               tr( "The buffer this solution refers to was not found.\n"
+                   "Please restore and try again.\n" ) );
+      }
+      
+      else if ( status == US_DB2::NO_ANALYTE )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ),
+               tr( "One of the analytes this solution refers to was not found.\n"
+                   "Please restore and try again.\n" ) );
+      }
+      
+      else if ( status != US_DB2::OK )
+      {
+         QMessageBox::information( this, 
+               tr( "Disk Read Problem" ), 
+               tr( "Could not read data from the disk.\n" 
+                   "Disk status: " ) + QString::number( status ) ); 
+      }
    }
 
    reset();
@@ -907,6 +930,17 @@ void US_SolutionGui::save( bool display_status )
 
    load();
    reset();
+
+   // Select the solution
+   QList< QListWidgetItem* > items 
+     = lw_solutions->findItems( solution.solutionDesc, Qt::MatchExactly );
+
+   // should be exactly 1, but let's make sure
+   if ( items.size() == 1 )
+   {
+      selectSolution( items[ 0 ] );
+      lw_solutions->setCurrentItem( items[ 0 ] );
+   }
 
    changed = false;
 }
