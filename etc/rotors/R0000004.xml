@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE US_Rotor>
+<RotorData version="1.0">
+    <Rotor id="4" guid="4791c966-2fcd-4a1b-b049-ceab5ad11d3e" abstractRotorID="4" 
+    abstractRotorGUID="68ea4167-f76a-1214-154b-54876bbed32b" labID="1" 
+    name="Default 1004 (CFA)" serialNumber="DEFAULT 1004"/>
+</RotorData>

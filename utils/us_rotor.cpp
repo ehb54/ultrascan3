@@ -10,10 +10,6 @@ US_Rotor::US_Rotor()
 {
 }
 
-US_Rotor::~US_Rotor()
-{
-}
-
 // A function to read information about all labs
 US_Rotor::Status US_Rotor::readLabsDB( 
     QVector< US_Rotor::Lab >& labList, US_DB2* db )
@@ -48,11 +44,9 @@ US_Rotor::Status US_Rotor::readLabsDB(
 // Function to save abstract rotor information to disk
 void US_Rotor::saveLabsDisk( QVector< US_Rotor::Lab >& labList )
 {
-   // Get a path and file name for labs
-   QString path;
-   if ( ! diskPath( path ) ) return;
-
-   QString filename = path + "/labs.xml";
+   QString home     = US_Settings::appBaseDir();
+   QString filename = home + "/etc/labs.xml";
+   
    QFile file( filename );
    if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
    {
@@ -94,7 +88,8 @@ void US_Rotor::saveLabsDisk( QVector< US_Rotor::Lab >& labList )
 // Function to read all the lab info from disk
 US_Rotor::Status US_Rotor::readLabsDisk( QVector< US_Rotor::Lab >& labList )
 {
-   QString filename = US_Settings::dataDir() + "/rotors/labs.xml";
+   QString home     = US_Settings::appBaseDir();
+   QString filename = home + "/etc/labs.xml";
    QFile   file( filename );
 
    labList.clear();
@@ -480,7 +475,7 @@ bool US_Rotor::diskFilename( const QString& fileMask,
 bool US_Rotor::diskPath( QString& path )
 {
    QDir dir;
-   path = US_Settings::dataDir() + "/rotors";
+   path = US_Settings::appBaseDir() + "/etc/rotors";
 
    if ( ! dir.exists( path ) )
    {

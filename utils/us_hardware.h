@@ -60,4 +60,33 @@ class US_EXTERN US_Hardware
    
 };
 
+//! \brief Centerpiece data
+class US_EXTERN US_AbstractCenterpiece
+{
+   public:
+
+      US_AbstractCenterpiece();
+
+      int     serial_number;        //!< internal identifier
+      QString guid;                 //!< global identifier
+      QString description;          //!< textual description
+      QString material;             //!< epon, aluminum, titanium
+      int     columns;              //!< number of columns of channels
+      QString shape;                //!< shape of the channel
+      
+      //! Angle of sector, if sector shaped, default: 2.5 degrees
+      double  angle;    
+      
+      //! Width of channel if rectangular, 0 otherwise.
+      double  width;
+
+      //! Bottom position of each row 
+      QList< double > path_length;  //!< path lengths of channels in a column
+      QList< double > bottom_position; //!< bottom of each row of channels
+
+      //!  Read centerpieces from local disk
+      //!  \param centerpieces A list of centerpiece data
+      //!  \return A boolean indicating success 
+      static bool read_centerpieces( QList< US_AbstractCenterpiece >& );
+};
 #endif

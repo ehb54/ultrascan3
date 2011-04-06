@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE US_Rotor>
+<RotorData version="1.0">
+    <Rotor id="3" guid="bb014301-6b8b-f0f4-81b5-8ae36dac9ed5" abstractRotorID="2" 
+    abstractRotorGUID="fda22413-8d1a-4ef4-a9fc-620d0c00d434" labID="1" 
+    name="Default 1003 (AN60)" serialNumber="DEFAULT 1003"/>
+</RotorData>
