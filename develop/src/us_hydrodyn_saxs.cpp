@@ -16,6 +16,7 @@
 #if defined(WIN32)
 #  include <dos.h>
 #  include <stdlib.h>
+#  include <float.h>
 #  undef SLASH
 #  define SLASH "\\"
 #  define isnan _isnan
@@ -4441,7 +4442,7 @@ void US_Hydrodyn_Saxs::set_guinier()
          if ( plotted_guinier_plotted.count(i) &&
               plotted_guinier_plotted[i] == true )
          {
-            plotted_guinier_plotted[i] == false;
+            plotted_guinier_plotted[i] = false;
             plot_saxs->removeCurve(plotted_Gp[i]);
          }
          

@@ -13,6 +13,9 @@
 */   
 
 #if defined(WIN32)
+#   include <dos.h>
+#   include <stdlib.h>
+#   include <float.h>
 #   define isnan _isnan
 #   undef SHOW_TIMING
 #endif
