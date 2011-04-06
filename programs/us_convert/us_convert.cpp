@@ -1165,17 +1165,20 @@ void US_Convert::tripleApplyAll( void )
 
 void US_Convert::runDetails( void )
 {
-   // Create a triples structure for US_RunDetails2
+   // Create data structures for US_RunDetails2
    QStringList tripleDescriptions;
+   QVector< US_DataIO2::RawData >  currentData;
    for (int i = 0; i < triples.size(); i++ )
    {
       if ( triples[ i ].excluded ) continue;
 
+      // Only pass non-excluded triples
+      currentData << allData[ i ];
       tripleDescriptions << triples[ i ].tripleDesc;
    }
 
    US_RunDetails2* dialog
-      = new US_RunDetails2( allData, runID, currentDir, tripleDescriptions );
+      = new US_RunDetails2( currentData, runID, currentDir, tripleDescriptions );
    dialog->exec();
    qApp->processEvents();
    delete dialog;
