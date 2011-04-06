@@ -14,7 +14,7 @@ US_Project::US_Project()
 }
 
 // Function to load a project from the disk
-void US_Project::readFromDisk( QString& guid )
+int US_Project::readFromDisk( QString& guid )
 {
    QString filename;
    bool found = diskFilename( guid, filename );
@@ -23,7 +23,7 @@ void US_Project::readFromDisk( QString& guid )
    {
       qDebug() << "Error: file not found for guid "
                << guid;
-      return;
+      return US_DB2::NO_PROJECT;
    }
    
    QFile file( filename );
@@ -31,7 +31,7 @@ void US_Project::readFromDisk( QString& guid )
    {
       qDebug() << "Error: can't open file for reading"
                << filename;
-      return;
+      return US_DB2::NO_PROJECT;
    }
 
    QXmlStreamReader xml( &file );
@@ -61,10 +61,12 @@ void US_Project::readFromDisk( QString& guid )
    {
       qDebug() << "Error: xml error: \n"
                << xml.errorString();
-      return;
+      return US_DB2::ERROR;
    }
 
    saveStatus = HD_ONLY;
+
+   return US_DB2::OK;
 }
 
 void US_Project::readProjectInfo( QXmlStreamReader& xml )
@@ -135,7 +137,7 @@ void US_Project::readProjectInfo( QXmlStreamReader& xml )
 }
 
 // Function to load a project from the db
-void US_Project::readFromDB  ( int projectID, US_DB2* db )
+int US_Project::readFromDB  ( int projectID, US_DB2* db )
 {
    // Try to get project info
    QStringList q( "get_project_info" );
@@ -159,7 +161,12 @@ void US_Project::readFromDB  ( int projectID, US_DB2* db )
 
    }
 
+   else
+      return US_DB2::NO_PROJECT;
+
    saveStatus = DB_ONLY;
+
+   return US_DB2::OK;
 }
 
 // Function to save project information to disk
@@ -224,10 +231,8 @@ void US_Project::saveToDisk( void )
 // Function to save project information to db
 int US_Project::saveToDB( US_DB2* db )
 {
-   // First make sure we have a GUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-   if ( ! rx.exactMatch( projectGUID ) )
-      projectGUID = US_Util::new_guid();
+   // Save it to disk too
+   saveToDisk();
 
    // Check for GUID in database
    projectID = 0;
@@ -291,7 +296,7 @@ int US_Project::saveToDB( US_DB2* db )
    if ( projectID == 0 )        // double check
       return US_DB2::NO_PROJECT;
 
-   saveStatus = ( saveStatus == HD_ONLY ) ? BOTH : DB_ONLY;
+   saveStatus = BOTH;
 
    return US_DB2::OK;
 }

@@ -48,15 +48,17 @@ class US_EXTERN US_Project
       /*! \brief    Function to read an entire project structure from the disk
 
           \param    guid The GUID of the project to look for
+          \return   One of the US_DB2 error codes
       */
-      void readFromDisk( QString& );
+      int readFromDisk( QString& );
 
       /*! \brief    Function to read an entire project structure from the DB
 
           \param    projectID The database projectID of the desired project
           \param    db For database access, an open database connection
+          \return   One of the US_DB2 error codes
       */
-      void readFromDB  ( int, US_DB2* = 0 );
+      int readFromDB  ( int, US_DB2* = 0 );
 
       //! \brief    Quick method to zero out the project attributes
       void clear             ( void );
