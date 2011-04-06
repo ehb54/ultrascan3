@@ -54,14 +54,15 @@ bool US_Hardware::readCenterpieceInfo( QVector< CenterpieceInfo >& cp_list )
 bool US_Hardware::readRotorMap( QMap< QString, QString >& rotor_map )
 {
    bool    ok    = false;
-   QString path  = US_Settings::dataDir() + "/rotors";
+   QString home  = US_Settings::appBaseDir();
+   QString path  = home + "/etc/rotors";
 
    rotor_map.clear();
    rotor_map[ "0" ] = "0 0";   // Create a simulation entry (no stretch)
 
    QDir    dir( path );
 
-   if ( !dir.exists() )
+   if ( ! dir.exists() )
       return ok;
 
    QStringList filter( "C*.xml" );
