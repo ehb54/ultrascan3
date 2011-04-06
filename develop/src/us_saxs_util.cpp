@@ -12,6 +12,8 @@
    ? setup dammin/gasbor scripts, add results to wiki 
 */   
 
+#include <list>
+
 #if defined(WIN32)
 #   include <dos.h>
 #   include <stdlib.h>
