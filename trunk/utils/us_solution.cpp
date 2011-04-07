@@ -740,7 +740,7 @@ void US_Solution::show( void )
             << "buffer GUID  = " << buffer.GUID     << '\n'
             << "buffer Desc  = " << buffer.description << '\n'
             << "buffer density = " << buffer.density << '\n'
-            << "buffer viscosity = " << buffer.viscoisty << '\n'
+            << "buffer viscosity = " << buffer.viscosity << '\n'
             << "commonVbar20 = " << commonVbar20 << '\n'
             << "storageTemp  = " << storageTemp  << '\n'
             << "notes        = " << notes        << '\n'
