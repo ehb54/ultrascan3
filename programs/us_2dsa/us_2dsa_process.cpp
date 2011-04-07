@@ -364,6 +364,7 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
    double density   = dvv.section( " ", 1, 1 ).toDouble();
    double viscosity = dvv.section( " ", 2, 2 ).toDouble();
    double vbar      = dvv.section( " ", 3, 3 ).toDouble();
+   double vbar_tb   = dvv.section( " ", 4, 4 ).toDouble();
    double avgtemp   = edata->average_temperature();
 
    // computed s,D correction factors
@@ -371,12 +372,13 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
    solution.density   = density;
    solution.viscosity = viscosity;
    solution.vbar20    = vbar;
-   solution.vbar      = vbar;
+   solution.vbar      = vbar_tb;
    US_Math2::data_correction( avgtemp, solution );
    double sfactor     = 1.0 / solution.s20w_correction;
    double dfactor     = 1.0 / solution.D20w_correction;
-DbgLv(1) << "FIN_FIN: dens visc vbar" << density << viscosity << vbar
- << " s20w_corr" << solution.s20w_correction;
+DbgLv(1) << "FIN_FIN: dens visc vbar vbar_tb"
+ << density << viscosity << vbar << vbar_tb
+ << " s20w,D20w_corr" << solution.s20w_correction << solution.D20w_correction;
    model.components.resize( nsolutes );
 
    // build the final model
@@ -394,10 +396,12 @@ DbgLv(1) << "FIN_FIN: dens visc vbar" << density << viscosity << vbar
 
       // Complete other coefficients in standard-space
       model.calc_coefficients( mcomp );
+DbgLv(1) << " Bcc comp D" << mcomp.D;
 
       // Convert to experiment-space for simulation below
       mcomp.s    *= sfactor;
       mcomp.D    *= dfactor;
+DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
       model.components[ cc ]  = mcomp;
    }
@@ -535,8 +539,10 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
    // Convert model components s,D back to 20,w form for output
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
+DbgLv(1) << "cc comp D" << model.components[ cc ].D;
       model.components[ cc ].s *= solution.s20w_correction;
       model.components[ cc ].D *= solution.D20w_correction;
+DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
    }
 
    model.update_coefficients( );        // Insure all coefficients consistent

@@ -71,10 +71,12 @@ void US_SimulationParameters::initFromData( US_DB2* db,
       {
          xml.readNext();
 
-         if ( xml.isStartElement()  &&  xml.name() == "rotor" )
-         {  // pick up rotor calibration ID from  <rotor ...calibrationID=...
+         if ( xml.isStartElement()  &&  xml.name() == "calibration" )
+         {  // pick up rotor calibration ID from  <calibration ... id=...
             QXmlStreamAttributes a = xml.attributes();
-            rotorCalID    = a.value( "calibrationID" ).toString();
+            rotorCalID       = a.value( "id"     ).toString();
+            rotorcoeffs[ 0 ] = a.value( "coeff1" ).toString().toDouble();
+            rotorcoeffs[ 1 ] = a.value( "coeff2" ).toString().toDouble();
          }
       }
 
