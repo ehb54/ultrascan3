@@ -143,19 +143,19 @@ US_Edit::US_Edit() : US_Widgets()
    // Scans
    QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   specs->addWidget( lb_from, s_row, 0 );
+   specs->addWidget( lb_from, s_row, 0, 1, 2 );
 
-   ct_from = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   ct_from = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_from->setStep( 1 );
-   specs->addWidget( ct_from, s_row, 1 );
+   specs->addWidget( ct_from, s_row++, 2, 1, 2 );
 
    QLabel* lb_to = us_label( tr( "to:" ), -1 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   specs->addWidget( lb_to, s_row, 2 );
+   specs->addWidget( lb_to, s_row, 0, 1, 2 );
 
-   ct_to = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_to->setStep( 1 );
-   specs->addWidget( ct_to, s_row++, 3 );
+   specs->addWidget( ct_to, s_row++, 2, 1, 2 );
    
    // Exclude and Include pushbuttons
    // Row 7
