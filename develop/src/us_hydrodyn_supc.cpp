@@ -45,7 +45,7 @@
   static vector < supc_thr_t* > supc_thr_threads;
 #endif
 
-#define SHOW_TIMING
+// #define SHOW_TIMING
 #if defined(SHOW_TIMING)
 # include <sys/time.h>
   static struct timeval s3tv0;
