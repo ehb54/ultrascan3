@@ -658,11 +658,16 @@ void US_2dsa::open_3dplot()
 // Open fit analysis control window
 void US_2dsa::open_fitcntl()
 {
-   int drow = lw_triples->currentRow();
-   edata    = ( drow >= 0 ) ? &dataList[ drow ] : 0;
+   int    drow     = lw_triples->currentRow();
+   if ( drow < 0 )   return;
+   edata           = &dataList[ drow ];
+   double avTemp   = edata->average_temperature();
+   double vbar20   = vbar;
+   double vbartb   = US_Math2::calcCommonVbar( solution_rec, avTemp );
    edata->dataType = edata->dataType.section( " ", 0, 0 )
-      + QString().sprintf( " %.6f %.5f %5f", density, viscosity, vbar );
-DbgLv(1) << "  OFitCntl: dens visc vbar" << edata->dataType;
+      + QString().sprintf( " %.6f %.5f %5f %5f",
+            density, viscosity, vbar20, vbartb );
+DbgLv(1) << "  OFitCntl: dens visc vbar20 vbartb" << edata->dataType;
 
    if ( analcd != 0 )
    {
@@ -675,7 +680,7 @@ DbgLv(1) << "  OFitCntl: dens visc vbar" << edata->dataType;
    analcd  = new US_AnalysisControl( edata, this );
    analcd->move( acd_pos );
    analcd->show();
-DbgLv(1) << "  AFitCntl: dens visc vbar" << edata->dataType;
+DbgLv(1) << "  AFitCntl: dens visc vbar20 vbartb" << edata->dataType;
    qApp->processEvents();
 }
 
