@@ -157,9 +157,25 @@ US_SolutionGui::US_SolutionGui(
    main->addWidget( lb_commonVbar20, row, 1 );
 
    le_commonVbar20 = us_lineedit( "", 1 );
-   connect( le_commonVbar20, SIGNAL( textEdited       ( const QString&   ) ),
-                             SLOT  ( saveCommonVbar20 ( const QString&   ) ) );
+   le_commonVbar20->setPalette ( gray );
+   le_commonVbar20->setReadOnly( true );
    main->addWidget( le_commonVbar20, row++, 2 );
+
+   QLabel* lb_density = us_label( tr( "Buffer density:" ) );
+   main->addWidget( lb_density, row, 1 );
+
+   le_density = us_lineedit( "", 1 );
+   le_density->setPalette ( gray );
+   le_density->setReadOnly( true );
+   main->addWidget( le_density, row++, 2 );
+
+   QLabel* lb_viscosity = us_label( tr( "Buffer viscosity:" ) );
+   main->addWidget( lb_viscosity, row, 1 );
+
+   le_viscosity = us_lineedit( "", 1 );
+   le_viscosity->setPalette ( gray );
+   le_viscosity->setReadOnly( true );
+   main->addWidget( le_viscosity, row++, 2 );
 
    QLabel* lb_storageTemp = us_label( tr( "Storage Temperature:" ) );
    main->addWidget( lb_storageTemp, row, 1 );
@@ -178,7 +194,7 @@ US_SolutionGui::US_SolutionGui(
    main->addWidget( te_notes, row, 1, 5, 2 );
    te_notes->setMinimumHeight( 200 );
    te_notes->setReadOnly( false );
-   row += 5;
+   row += 3;
 
    QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
    main->addWidget( lb_guid, row++, 1, 1, 2 );
@@ -255,6 +271,8 @@ void US_SolutionGui::reset( void )
    le_bufferInfo   -> setText( solution.buffer.description );
    le_solutionDesc -> setText( solution.solutionDesc );
    le_commonVbar20 -> setText( QString::number( solution.commonVbar20 ) );
+   le_density      -> setText( QString::number( solution.buffer.density ) );
+   le_viscosity    -> setText( QString::number( solution.buffer.viscosity ) );
    le_storageTemp  -> setText( QString::number( solution.storageTemp  ) );
    te_notes        -> setText( solution.notes        );
    le_guid         -> setText( solution.solutionGUID );
@@ -808,13 +826,6 @@ void US_SolutionGui::saveAmount( double amount )
 void US_SolutionGui::saveDescription( const QString& )
 {
    solution.solutionDesc = le_solutionDesc ->text();
-   changed = true;
-}
-
-// Function to update the common vbar associated with the current solution
-void US_SolutionGui::saveCommonVbar20( const QString& )
-{
-   solution.commonVbar20 = le_commonVbar20 ->text().toDouble();
    changed = true;
 }
 

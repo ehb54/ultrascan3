@@ -105,6 +105,8 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       QLineEdit*    le_bufferInfo;
       QLineEdit*    le_solutionDesc;
       QLineEdit*    le_commonVbar20;
+      QLineEdit*    le_density;
+      QLineEdit*    le_viscosity;
       QLineEdit*    le_storageTemp;
       QLineEdit*    le_guid;
       QwtCounter*   ct_amount;
@@ -148,7 +150,6 @@ class US_EXTERN US_SolutionGui : public US_WidgetsDialog
       void assignBuffer       ( US_Buffer );
       void saveAmount         ( double );
       void saveDescription    ( const QString& );
-      void saveCommonVbar20   ( const QString& );
       void saveTemperature    ( const QString& );
       void saveNotes          ( void );
       void newSolution        ( void );

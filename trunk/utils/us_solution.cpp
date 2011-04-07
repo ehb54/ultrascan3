@@ -719,9 +719,11 @@ void US_Solution::clear( void )
    solutionID   = 0;
    solutionGUID = QString( "" );
    solutionDesc = QString( "" );
-   buffer.bufferID = QString( "-1" );
-   buffer.GUID     = QString( ""  );
+   buffer.bufferID    = QString( "-1" );
+   buffer.GUID        = QString( ""  );
    buffer.description = QString( "" );
+   buffer.density     = 0.0;
+   buffer.viscosity   = 0.0;
    commonVbar20 = 0.0;
    storageTemp  = 20.0;
    notes        = QString( "" );
@@ -737,6 +739,8 @@ void US_Solution::show( void )
             << "bufferID     = " << buffer.bufferID << '\n'
             << "buffer GUID  = " << buffer.GUID     << '\n'
             << "buffer Desc  = " << buffer.description << '\n'
+            << "buffer density = " << buffer.density << '\n'
+            << "buffer viscosity = " << buffer.viscoisty << '\n'
             << "commonVbar20 = " << commonVbar20 << '\n'
             << "storageTemp  = " << storageTemp  << '\n'
             << "notes        = " << notes        << '\n'
