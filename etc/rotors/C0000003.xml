@@ -3,7 +3,8 @@
 <RotorCalibrationData version="1.0">
     <Calibration id="3" guid="ba39dd96-f188-cd24-31b1-40d63ad83fa0" 
             rotorID="3" rotorGUID="32673123-095b-7b64-49dd-e58cb14d4fed" 
-            calExpID="-1" calExpGUID="" coeff1="0" coeff2="0" lastUpdated="2011-04-06" omega2t="0">
-        <report>This is a dummy calibration --- please replace.</report>
+            calExpID="-1" calExpGUID="" coeff1="0.0" coeff2="0.0" 
+            lastUpdated="2011-04-06" omega2t="0">
+        <report>This is the default calibration for this rotor type</report>
     </Calibration>
 </RotorCalibrationData>

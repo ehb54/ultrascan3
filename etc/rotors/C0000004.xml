@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE US_RotorCalibration>
-<RotorCalibrationData version="1.0">
-    <Calibration id="4" guid="a167e7f5-e554-1334-c1a6-af53531492ea" 
-            rotorID="4" rotorGUID="4791c966-2fcd-4a1b-b049-ceab5ad11d3e" 
-            calExpID="-1" calExpGUID="" coeff1="0" coeff2="0" lastUpdated="2011-04-06" omega2t="0">
-        <report>This is a dummy calibration --- please replace.</report>
-    </Calibration>
-</RotorCalibrationData>
