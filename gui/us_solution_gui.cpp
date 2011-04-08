@@ -828,6 +828,13 @@ void US_SolutionGui::saveDescription( const QString& )
 {
    solution.solutionDesc = le_solutionDesc ->text();
    changed = true;
+   QListWidgetItem* item = new QListWidgetItem( solution.solutionDesc );
+
+   if ( ! solutionMap.contains( item ) )
+   {
+      solution.solutionGUID.clear();
+      reset();
+   }
 }
 
 // Function to update the storage temperature associated with the current solution
