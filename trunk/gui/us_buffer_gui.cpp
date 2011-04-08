@@ -793,8 +793,8 @@ void US_BufferGui::delete_buffer( void )
    
    if ( response != QMessageBox::Ok ) return;
    
-   if ( ! disk_controls->db() ) delete_disk();
-   else                         delete_db(); 
+   if ( disk_controls->db() ) delete_db();
+   delete_disk();
 
    reset();
    query();
@@ -915,15 +915,14 @@ void US_BufferGui::save_db( void )
    }
 
    QString private_buffer = ( cb_shared->isChecked() ) ? "0" : "1";
-   buffer.saveToDB( &db, private_buffer );
+   int idBuf = buffer.saveToDB( &db, private_buffer );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( idBuf < 0 )
    {
-      QString msg = ( db.lastErrno() == US_DB2::INSERTDUP )
-                    ? "The buffer already exists.\n"
-                      "Use 'Update' to save changes."
-                    : db.lastError();
+      QString msg = tr( "( Return Code = %1 ) " ).arg( idBuf )
+                    + db.lastError();
 
+qDebug() << "savDB error" << db.lastErrno() << db.lastError() << idBuf;
       QMessageBox::information( this,
             tr( "Attention" ), 
             tr( "Error updating buffer in the database:\n" )
@@ -993,14 +992,13 @@ void US_BufferGui::update_db( void )
       }
          
       QString private_buffer = ( cb_shared->isChecked() ) ? "0" : "1";
-      buffer.saveToDB( &db, private_buffer );
+      int idBuf = buffer.saveToDB( &db, private_buffer );
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( idBuf < 0 )
       {
-         QString msg = ( db.lastErrno() == US_DB2::INSERTDUP )
-                       ? "The buffer already exists.\n"
-                         "Use 'Update' to save changes."
-                       : db.lastError();
+         QString msg = tr( "( Return Code = %1 ) " ).arg( idBuf )
+                       + db.lastError();
+qDebug() << "updDB error" << db.lastErrno() << db.lastError() << idBuf;
 
          QMessageBox::information( this,
                tr( "Attention" ), 
