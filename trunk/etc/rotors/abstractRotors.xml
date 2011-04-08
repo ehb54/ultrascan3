@@ -10,7 +10,9 @@
   <abstractRotor id="3" guid="4f9326de-0f40-5474-f957-1eaea5b1478c" 
     name="Simulation" materialName="Simulation" numHoles="8" maxRPM="100000" 
     magnetOffset="0" cellCenter="6.5" manufacturer="Simulation"/>
+<!--
   <abstractRotor id="4" guid="68ea4167-f76a-1214-154b-54876bbed32b" 
     name="CFA" materialName="CarbonFiber" numHoles="8" maxRPM="60000" 
     magnetOffset="0" cellCenter="6.5" manufacturer="SpinAnalytical"/>
+-->
 </AbstractRotorData>
