@@ -158,6 +158,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString path_view_bead_model;
       QString path_open_hydro_res;
 
+      QString pdb_file;
+
    private:
       US_Config *USglobal;
 
@@ -192,7 +194,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool alt_method; // true = new bead method, false = original bead method
       unsigned int current_model;
       QString bead_model_file;
-      QString pdb_file;
       struct residue current_residue;
       struct asa_options asa;
       struct asa_options default_asa;

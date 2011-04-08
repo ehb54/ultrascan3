@@ -50,6 +50,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    const char                     *name
                                    ) : QFrame(p, name)
 {
+   rasmol = NULL;
    this->saxs_widget = saxs_widget;
    *saxs_widget = true;
    this->our_saxs_options = our_saxs_options;
@@ -491,6 +492,36 @@ void US_Hydrodyn_Saxs::setupGUI()
    cb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_normalize->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
+   cb_pr_contrib = new QCheckBox(this);
+   cb_pr_contrib->setText(tr(" Residue contrib.  range (Angstrom):"));
+   cb_pr_contrib->setEnabled(true);
+   cb_pr_contrib->setChecked(false);
+   cb_pr_contrib->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_pr_contrib->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_pr_contrib, SIGNAL(clicked()), SLOT(set_pr_contrib()));
+
+   le_pr_contrib_low = new QLineEdit(this, "pr_contrib_low Line Edit");
+   le_pr_contrib_low->setText("");
+   le_pr_contrib_low->setAlignment(AlignCenter|AlignVCenter);
+   le_pr_contrib_low->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_pr_contrib_low->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_pr_contrib_low, SIGNAL(textChanged(const QString &)), SLOT(update_pr_contrib_low(const QString &)));
+
+   le_pr_contrib_high = new QLineEdit(this, "pr_contrib_high Line Edit");
+   le_pr_contrib_high->setText("");
+   le_pr_contrib_high->setAlignment(AlignCenter|AlignVCenter);
+   le_pr_contrib_high->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_pr_contrib_high->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_pr_contrib_high, SIGNAL(textChanged(const QString &)), SLOT(update_pr_contrib_high(const QString &)));
+
+   pb_pr_contrib = new QPushButton(tr("Plot"), this);
+   Q_CHECK_PTR(pb_pr_contrib);
+   pb_pr_contrib->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pr_contrib->setMinimumHeight(minHeight1);
+   pb_pr_contrib->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_pr_contrib->setEnabled(false);
+   connect(pb_pr_contrib, SIGNAL(clicked()), SLOT(show_pr_contrib()));
+
    pb_plot_pr = new QPushButton(tr("Compute P(r) distribution"), this);
    Q_CHECK_PTR(pb_plot_pr);
    pb_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -696,6 +727,16 @@ void US_Hydrodyn_Saxs::setupGUI()
    bl->addWidget(cb_normalize);
    background->addMultiCellLayout(bl, j, j, 0, 1);
    j++;
+   
+   QBoxLayout *hbl_contrib = new QHBoxLayout(0);
+   hbl_contrib->addWidget(cb_pr_contrib);
+   hbl_contrib->addWidget(le_pr_contrib_low);
+   hbl_contrib->addWidget(le_pr_contrib_high);
+   hbl_contrib->addWidget(pb_pr_contrib);
+
+   background->addMultiCellLayout(hbl_contrib,j,j,0,1);
+   j++;
+
    background->addWidget(pb_plot_pr, j, 0);
    background->addWidget(progress_pr, j, 1);
    j++;
@@ -1088,6 +1129,149 @@ void US_Hydrodyn_Saxs::update_user_highq(const QString &)
    set_guinier();
 }
 
+void US_Hydrodyn_Saxs::update_pr_contrib_low(const QString &str)
+{
+   pr_contrib_low = str.toDouble();
+}
+
+void US_Hydrodyn_Saxs::update_pr_contrib_high(const QString &str)
+{
+   pr_contrib_high = str.toDouble();
+}
+
+void US_Hydrodyn_Saxs::show_pr_contrib()
+{
+   // here we want to rasmol the structure with the contrib range colored
+   if ( !contrib_pdb_atom.size() ||
+        !contrib_array.size() ) 
+   {
+      editor->append("Plot contributions: Nothing to plot\n");
+      return;
+   }
+
+   if ( pr_contrib_low >= pr_contrib_high ) 
+   {
+      editor->append("Plot contributions: Range error\n");
+      return;
+   }
+   progress_pr->reset();
+   progress_pr->setTotalSteps(3);
+   progress_pr->setProgress(0);
+   // sum up all the atoms that contrib:
+   cout << "trying to sum up\n";
+   map < QString, double > contrib_sums;
+   QRegExp rx2("^(\\d+):(\\d+)$");
+
+   // compute prpos limits:
+   int poslow = (unsigned int)floor(pr_contrib_low / contrib_delta);
+   int poshi = (unsigned int)ceil(pr_contrib_high / contrib_delta);
+   if ( poslow < 0 )
+   {
+      poslow = 0;
+   }
+   if ( (unsigned int) poshi >= contrib_array[0].size() )
+   {
+      poshi = contrib_array[0].size() - 1;
+   }
+
+   for ( unsigned int i = 0; i < contrib_array.size(); i++ )
+   {
+      for ( int j = poslow; j <= poshi ; j++ )
+      {
+         if ( contrib_array[i][j] > 0.0 )
+         {
+            QString id =
+               QString("%1%1%1")
+               .arg(contrib_pdb_atom[i]->resSeq)
+               .arg(contrib_pdb_atom[i]->chainID != "" ? ":" : "")
+               .arg(contrib_pdb_atom[i]->chainID);
+            contrib_sums[id] += contrib_array[i][j];
+         }
+      }
+   }
+   progress_pr->setProgress(1);
+
+   // if all went ok, we should now have a weighted list in contrib_sums
+   // normalize to max 1 (this will later set the color)
+   double max = 0e0;
+   for ( map < QString, double >::iterator it = contrib_sums.begin();
+         it != contrib_sums.end();
+         it++ )
+   {
+      if ( contrib_sums[it->first] > max )
+      {
+         max = contrib_sums[it->first];
+      }
+   }
+   progress_pr->setProgress(2);
+   // divide all by max to put in range of [0,1]
+   for ( map < QString, double >::iterator it = contrib_sums.begin();
+         it != contrib_sums.end();
+         it++ )
+   {
+      contrib_sums[it->first] /= max;
+   }
+   progress_pr->setProgress(3);
+
+   // setup plot:
+#define CONTRIB_GRADIENT_SIZE 3
+
+   QString gradient[] = 
+      {
+         "blue",
+         //         "greenblue",
+         "cyan",
+         "yellow"
+      };
+
+   QString out = QString("load %1\nselect all\ncolor gray\n").arg(contrib_file);
+   for ( map < QString, double >::iterator it = contrib_sums.begin();
+         it != contrib_sums.end();
+         it++ )
+   {
+      out += 
+         QString("select %1\ncolour %1\n")
+         .arg(it->first)
+         //         .arg((int)(128 + contrib_sums[it->first] * 127));
+         .arg(gradient[(int)(contrib_sums[it->first] * (CONTRIB_GRADIENT_SIZE - 1))]);
+   }
+   //   cout << "\n" << out << endl;
+   // put "out" into spt file:
+   out += "select all\n";
+   QString fname = 
+      ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp" + SLASH + QFileInfo(contrib_file).baseName() + ".spt";
+   QFile f(fname);
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      editor->append("Error creating file " + fname + "\n");
+      return;
+   }
+   QTextStream t( &f );
+   t << out;
+   f.close();
+   QStringList argument;
+#if !defined(WIN32)
+   argument.append("xterm");
+   argument.append("-e");
+#endif
+#if defined(BIN64)
+   argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
+#else
+   argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
+#endif
+   argument.append("-script");
+   argument.append(fname);
+   rasmol = new QProcess(this);
+   rasmol->setWorkingDirectory(((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp");
+   rasmol->setArguments(argument);
+   if (!rasmol->start())
+   {
+      QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+                                                  "Please check to make sure RASMOL is properly installed..."));
+      return;
+   }
+}
+
 void US_Hydrodyn_Saxs::set_saxs_sans(int val)
 {
    if ( our_saxs_options->saxs_sans != val )
@@ -1117,8 +1301,13 @@ void US_Hydrodyn_Saxs::set_create_native_saxs()
    create_native_saxs = cb_create_native_saxs->isChecked();
 }
 
+void US_Hydrodyn_Saxs::set_pr_contrib()
+{
+}
+
 void US_Hydrodyn_Saxs::show_plot_pr()
 {
+   pb_pr_contrib->setEnabled(false);
    stopFlag = false;
    pb_stop->setEnabled(true);
    pb_plot_pr->setEnabled(false);
@@ -1166,6 +1355,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       float b_bar_inv2 = 0.0;
       int b_count = 0;
 
+      contrib_pdb_atom.clear();
+
       if ( source )
       {
          // bead models
@@ -1176,6 +1367,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             new_atom.pos[1] = this_atom->bead_coordinate.axis[1];
             new_atom.pos[2] = this_atom->bead_coordinate.axis[2];
             atoms.push_back(new_atom);
+            contrib_pdb_atom.push_back(this_atom);
          }
       }
       else 
@@ -1319,6 +1511,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   // #endif
                }
                atoms.push_back(new_atom);
+               contrib_pdb_atom.push_back(this_atom);
             }
          }
          if ( !rb_curve_raw->isChecked() )
@@ -1352,6 +1545,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      .arg(atoms.size())
                      .arg(delta));
       qApp->processEvents();
+
+      // we want to keep a tally of each atom's contribution to each position
+      // contrib.clear();
+      contrib_array.clear();
+      contrib_delta = delta;
+      // contrib_file = te_filename2->text();
+      contrib_file = ((US_Hydrodyn *)us_hydrodyn)->pdb_file;
+      cout << "contrib_file " << contrib_file << endl;
 
       // restore threading later
       if ( 0 && USglobal->config_list.numThreads > 1 )
@@ -1450,51 +1651,138 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       } // end threaded
       else
       {
+#if defined(BUG_DEBUG)
+         cout << "non-threaded run\n";
+#endif
          // non-threaded
          float rik; 
          unsigned int pos;
          progress_pr->setTotalSteps((int)(atoms.size()));
-         for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
+         if ( cb_pr_contrib->isChecked() &&
+              !source &&
+              contrib_file.contains(QRegExp("(PDB|pdb)$")) )
          {
-            progress_pr->setProgress(i+1);
-            qApp->processEvents();
-            if ( stopFlag ) 
+            // contrib version
+            contrib_array.resize(atoms.size());
+            for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
             {
-               editor->append(tr("Terminated by user request.\n"));
-               progress_pr->reset();
-               lbl_core_progress->setText("");
-               // pb_plot_saxs_sans->setEnabled(source ? false : true);
-               pb_plot_saxs_sans->setEnabled(false);
-               pb_plot_pr->setEnabled(true);
-               return;
-            }
-            for ( unsigned int j = i + 1; j < atoms.size(); j++ )
-            {
-               rik = 
-                  sqrt(
-                       (atoms[i].pos[0] - atoms[j].pos[0]) *
-                       (atoms[i].pos[0] - atoms[j].pos[0]) +
-                       (atoms[i].pos[1] - atoms[j].pos[1]) *
-                       (atoms[i].pos[1] - atoms[j].pos[1]) +
-                       (atoms[i].pos[2] - atoms[j].pos[2]) *
-                       (atoms[i].pos[2] - atoms[j].pos[2])
-                       );
-               pos = (unsigned int)floor(rik / delta);
-               if ( hist.size() <= pos )
+               progress_pr->setProgress(i+1);
+               qApp->processEvents();
+               if ( stopFlag ) 
                {
-                  hist.resize(pos + 128);
+                  editor->append(tr("Terminated by user request.\n"));
+                  progress_pr->reset();
+                  lbl_core_progress->setText("");
+                  // pb_plot_saxs_sans->setEnabled(source ? false : true);
+                  pb_plot_saxs_sans->setEnabled(false);
+                  pb_plot_pr->setEnabled(true);
+                  return;
                }
-               if ( rb_curve_raw->isChecked() )
+               for ( unsigned int j = i + 1; j < atoms.size(); j++ )
                {
-                  hist[pos]++;
-               } else {
-                  // good for both saxs & sans
-                  hist[pos] += atoms[i].b * atoms[j].b * b_bar_inv2;
+                  rik = 
+                     sqrt(
+                          (atoms[i].pos[0] - atoms[j].pos[0]) *
+                          (atoms[i].pos[0] - atoms[j].pos[0]) +
+                          (atoms[i].pos[1] - atoms[j].pos[1]) *
+                          (atoms[i].pos[1] - atoms[j].pos[1]) +
+                          (atoms[i].pos[2] - atoms[j].pos[2]) *
+                          (atoms[i].pos[2] - atoms[j].pos[2])
+                          );
+                  pos = (unsigned int)floor(rik / delta);
+                  if ( hist.size() <= pos )
+                  {
+                     hist.resize(pos + 1024);
+                     // if ( cb_guinier->isChecked() )
+                     // {
+                     for ( unsigned int k = 0; k < atoms.size(); k++ )
+                     {
+                        contrib_array[k].resize(pos + 1024);
+                     }
+                     // }
+                  }
+                  if ( rb_curve_raw->isChecked() )
+                  {
+                     hist[pos]++;
+                     // if ( cb_guinier->isChecked() )
+                     // {
+                     contrib_array[i][pos]++;
+                     contrib_array[j][pos]++;
+                     // } else {
+                     //   contrib[QString("%1:%2").arg(i).arg(pos)]++;
+                     //  contrib[QString("%1:%2").arg(j).arg(pos)]++;
+                     // }
+                  } else {
+                     // good for both saxs & sans
+                     double this_pr = atoms[i].b * atoms[j].b * b_bar_inv2;
+                     hist[pos] += this_pr;
+                     // if ( cb_guinier->isChecked() )
+                     // {
+                     contrib_array[i][pos] += this_pr;
+                     contrib_array[j][pos] += this_pr;
+                     // } else {
+                     //   contrib[QString("%1:%2").arg(i).arg(pos)] += this_pr;
+                     //  contrib[QString("%1:%2").arg(j).arg(pos)] += this_pr;
+                     // }
+                  }
+               }
+            }
+            pb_pr_contrib->setEnabled(true);
+         } else {
+            // non contrib version:
+            for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
+            {
+               progress_pr->setProgress(i+1);
+               qApp->processEvents();
+               if ( stopFlag ) 
+               {
+                  editor->append(tr("Terminated by user request.\n"));
+                  progress_pr->reset();
+                  lbl_core_progress->setText("");
+                  // pb_plot_saxs_sans->setEnabled(source ? false : true);
+                  pb_plot_saxs_sans->setEnabled(false);
+                  pb_plot_pr->setEnabled(true);
+                  return;
+               }
+               for ( unsigned int j = i + 1; j < atoms.size(); j++ )
+               {
+                  rik = 
+                     sqrt(
+                          (atoms[i].pos[0] - atoms[j].pos[0]) *
+                          (atoms[i].pos[0] - atoms[j].pos[0]) +
+                          (atoms[i].pos[1] - atoms[j].pos[1]) *
+                          (atoms[i].pos[1] - atoms[j].pos[1]) +
+                          (atoms[i].pos[2] - atoms[j].pos[2]) *
+                          (atoms[i].pos[2] - atoms[j].pos[2])
+                          );
+                  pos = (unsigned int)floor(rik / delta);
+                  if ( hist.size() <= pos )
+                  {
+                     hist.resize(pos + 128);
+                  }
+                  if ( rb_curve_raw->isChecked() )
+                  {
+                     hist[pos]++;
+                  } else {
+                     // good for both saxs & sans
+                     hist[pos] += atoms[i].b * atoms[j].b * b_bar_inv2;
+                  }
                }
             }
          }
       } // end non-threaded
          
+#if defined(BUG_DEBUG)
+      cout << "contrib info:\n";
+      for ( map < QString, float >::iterator it = contrib.begin();
+            it != contrib.end();
+            it++ )
+      {
+         cout << "." << flush;
+      }
+      cout << endl;
+#endif
+
 #if defined(BUG_DEBUG)
       qApp->processEvents();
       cout << " sleep 1 bb" << endl;
@@ -1509,6 +1797,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       {
          hist.pop_back();
       }
+      if ( contrib_array.size() ) 
+      {
+         for ( unsigned int k = 0; k < contrib_array.size(); k++ )
+         {
+            contrib_array[k].resize(hist.size());
+         }
+      }
+
 #if defined(PR_DEBUG)
       cout << "hist.size() after " << hist.size() << endl;
 #endif

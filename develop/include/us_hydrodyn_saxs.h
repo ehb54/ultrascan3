@@ -137,6 +137,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QRadioButton *rb_curve_saxs;
       QRadioButton *rb_curve_sans;
 
+      QCheckBox   *cb_pr_contrib;
+      QLineEdit   *le_pr_contrib_low;
+      QLineEdit   *le_pr_contrib_high;
+      QPushButton *pb_pr_contrib;
+
       QCheckBox *cb_create_native_saxs;
 
       QFont ft;
@@ -224,8 +229,22 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
    private:
 
+      QProcess *rasmol;
+
+#ifdef WIN32
+     #pragma warning ( disable: 4251 )
+#endif
       map < QString, float > *remember_mw;
       map < QString, float > *match_remember_mw;
+      // map < QString, float > contrib;
+      vector < vector < float > > contrib_array;
+      vector < PDB_atom * >  contrib_pdb_atom;
+#ifdef WIN32
+     #pragma warning ( default: 4251 )
+#endif      
+
+      float contrib_delta;
+      QString contrib_file;
 
       double get_mw(QString filename);
 
@@ -260,6 +279,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       
       void rescale_plot();
 
+      double pr_contrib_low;
+      double pr_contrib_high;
+
    public slots:
       void show_plot_saxs_sans();
       void show_plot_pr();
@@ -277,6 +299,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void load_sans();
       void update_bin_size(double);
       void update_guinier_cutoff(double);
+      void show_pr_contrib();
+      void update_pr_contrib_low(const QString &);
+      void update_pr_contrib_high(const QString &);
       void set_curve(int);
       void load_pr();
       void clear_plot_pr();
@@ -301,6 +326,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString sprr_filestring();
       void set_create_native_saxs();
       void set_guinier();
+      void set_pr_contrib();
       void set_user_range();
       void update_guinier_lowq2(const QString &);
       void update_guinier_highq2(const QString &);
