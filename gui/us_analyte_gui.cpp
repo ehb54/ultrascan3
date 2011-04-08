@@ -1625,6 +1625,8 @@ void US_AnalyteGui::save( void )
    analyte.mw     = le_protein_mw    ->text().toDouble();
    analyte.vbar20 = le_protein_vbar20->text().toDouble();
 
+   verify_vbar();
+
    int result;
 
    if ( disk_controls->db() )
@@ -1711,6 +1713,49 @@ void US_AnalyteGui::delete_from_db( void )
       tr( "Analyte Deleted" ),
       tr( "The analyte has been deleted from the database." ) );
 }
+
+void US_AnalyteGui::verify_vbar()
+{
+   double vbar20   = le_protein_vbar20->text().toDouble();
+   double avbar    = vbar20;
+
+   if ( analyte.type == US_Analyte::PROTEIN )
+   {
+      US_Math2::Peptide p;
+      double temperature = le_protein_temp->text().toDouble();
+      US_Math2::calc_vbar( p, analyte.sequence, temperature );
+
+      le_protein_mw      ->setText( QString::number( (int) p.mw ) );
+      double pvbar    = p.vbar20;
+
+      if ( qAbs( avbar - pvbar ) > 1e-4 )
+      {
+         QString msg  = tr(
+               "There is a significant difference between the vbar20<br/>"
+               "value that you specified and the one calculated from<br/>"
+               "from the protein sequence.<br/>"
+               "Do you wish to accept the specified value?<ul>"
+               "<li><b>Yes</b> to use %1 (the specified);</li>"
+               "<li><b>No </b> to use %2 (the calculated).</li></ul>" )
+                            .arg( avbar ).arg( pvbar );
+
+         QMessageBox msgBox( this );
+         msgBox.setWindowTitle( tr( "Analyte Vbar Difference" ) );
+         msgBox.setTextFormat ( Qt::RichText );
+         msgBox.setText       ( msg );
+         msgBox.addButton     ( QMessageBox::No  );
+         msgBox.addButton     ( QMessageBox::Yes );
+         msgBox.setDefaultButton( QMessageBox::Yes );
+
+         if ( msgBox.exec() == QMessageBox::No )
+            vbar20       = pvbar;
+
+         analyte.vbar20  = vbar20;
+         le_protein_vbar20->setText( QString::number( vbar20 ) );
+      }
+   }
+}
+
 
 /*  Class US_SequenceEditor */
 US_SequenceEditor::US_SequenceEditor( const QString& sequence ) 

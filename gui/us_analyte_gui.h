@@ -183,6 +183,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       void spectrum           ( void );
       void more_info          ( void );
       void temp_changed       ( const QString& );
+      void verify_vbar        ( void );
 
       void update_stranded    ( bool );
       void update_mw_only     ( bool );
