@@ -19,7 +19,7 @@ US_BufferGui::US_BufferGui(
    personID      = US_Settings::us_inv_ID();
    bufferCurrent = false;
    manualUpdate  = false;
-   view_shared   = true;
+   view_shared   = false;
 
    US_BufferComponent::getAllFromHD( component_list );
 
@@ -588,6 +588,7 @@ void US_BufferGui::read_db( void )
    le_search->setText( "" );
    le_search->setReadOnly( true );
 
+   view_shared    = cb_shared->isChecked();
    QString person = view_shared ? "0" : QString::number( personID );
    QStringList q( "get_buffer_desc" );
    q << person;
@@ -1162,7 +1163,7 @@ void US_BufferGui::reset( void )
 {
    buffer = US_Buffer();
 
-   view_shared = true;
+   view_shared = false;
    le_search         ->clear();;
    le_search         ->setReadOnly( false );
 

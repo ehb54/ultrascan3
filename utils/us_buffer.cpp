@@ -17,25 +17,20 @@ void US_BufferComponent::getAllFromDB( const QString& masterPW,
       return;
    }
 
-   US_DB2 db2( masterPW );
-   
-   if ( db2.lastErrno() != US_DB2::OK )
-   {
-      qDebug() << "Database Error" 
-               << "US_BufferComponent ::connectDB: Could not open DB\n"
-               << db2.lastError();
-      return;
-   }
-
    QStringList q( "get_buffer_component_desc" );
    db.query( q );
+   QStringList cids;
 
    while ( db.next() )
    {
+      cids << db.value( 0 ).toString();
+   }
+
+   for ( int ii = 0; ii < cids.size(); ii++ )
+   {
       US_BufferComponent c;
-      c.componentID = db.value( 0 ).toString();
-      c.name        = db.value( 1 ).toString();
-      c.getInfoFromDB( &db2 );
+      c.componentID = cids.at( ii );
+      c.getInfoFromDB( &db );
       componentList[ c.componentID ] = c;
    }
 }

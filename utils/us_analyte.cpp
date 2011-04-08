@@ -248,18 +248,17 @@ int US_Analyte::read_analyte( const QString& filename )
             // Set description and guid
             description = a.value( "description" ).toString();
             analyteGUID = a.value( "analyteGUID" ).toString();
+            vbar20      = a.value( "vbar20" ).toString().toDouble();
 
             // Set type
             if ( type_string == "PROTEIN" )
             {
-              vbar20 = a.value( "vbar20" ).toString().toDouble();
-              type = PROTEIN;
+               type   = PROTEIN;
             }
 
             else if (  type_string == "DNA"  ||  type_string == "RNA" )
             {
-              type = ( type_string == "DNA" ) ? DNA : RNA;
-              vbar20    = a.value( "vbar20"    ).toString().toDouble();
+               type   = ( type_string == "DNA" ) ? DNA : RNA;
             }
 
             else
@@ -494,11 +493,15 @@ int US_Analyte::write_disk( const QString& filename )
    {
       case US_Analyte::PROTEIN:
       {
-         US_Math2::Peptide p;
-         US_Math2::calc_vbar( p, sequence, NORMAL_TEMP );
+         if ( vbar20 < 1e-2 )
+         {
+            US_Math2::Peptide p;
+            US_Math2::calc_vbar( p, sequence, NORMAL_TEMP );
+            vbar20  = p.vbar20;
+         }
 
          xml.writeAttribute( "type",  "PROTEIN" );
-         xml.writeAttribute( "vbar20", QString::number( p.vbar20 ) );
+         xml.writeAttribute( "vbar20", QString::number( vbar20 ) );
       }
          break;
 
