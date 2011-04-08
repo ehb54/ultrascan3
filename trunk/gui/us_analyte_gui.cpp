@@ -471,6 +471,7 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
 
       if ( result == US_DB2::OK )
          populate();
+      le_protein_vbar20->setText( QString::number( analyte.vbar20, 'f', 4 ) );
    }
 
    list();
@@ -567,7 +568,6 @@ void US_AnalyteGui::populate( void )
    if ( analyte.type == US_Analyte::PROTEIN )
    {
       rb_protein->setChecked( true );
-      le_protein_vbar20->setText( QString::number( analyte.vbar20, 'f', 4 ) );
 
       US_Math2::Peptide p;
       double temperature = le_protein_temp->text().toDouble();
@@ -685,6 +685,8 @@ void US_AnalyteGui::close( void )
 
       emit valueChanged( analyte );
    }
+   analyte.mw     = le_protein_mw    ->text().toDouble();
+   analyte.vbar20 = le_protein_vbar20->text().toDouble();
 
    accept();
 }
@@ -1542,6 +1544,7 @@ void US_AnalyteGui::select_analyte( QListWidgetItem* /* item */ )
    }
 
    populate();
+   le_protein_vbar20->setText( QString::number( analyte.vbar20, 'f', 4 ) );
    saved_analyte = analyte;
 
    pb_delete->setEnabled( true );
@@ -1619,6 +1622,8 @@ void US_AnalyteGui::save( void )
    if ( ! data_ok() ) return;
 
    le_guid->setText( analyte.analyteGUID );
+   analyte.mw     = le_protein_mw    ->text().toDouble();
+   analyte.vbar20 = le_protein_vbar20->text().toDouble();
 
    int result;
 

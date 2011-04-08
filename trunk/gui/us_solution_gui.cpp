@@ -763,7 +763,8 @@ void US_SolutionGui::selectBuffer( void )
    int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                         : US_Disk_DB_Controls::Disk;
 
-   US_BufferGui* buffer_dialog = new US_BufferGui( true, US_Buffer(), dbdisk );
+   US_BufferGui* buffer_dialog = new US_BufferGui( true,
+                                                   solution.buffer, dbdisk );
 
    connect( buffer_dialog, SIGNAL( valueChanged ( US_Buffer ) ),
             this,          SLOT  ( assignBuffer ( US_Buffer ) ) );
