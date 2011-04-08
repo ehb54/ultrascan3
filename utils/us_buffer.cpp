@@ -3,6 +3,7 @@
 #include "us_settings.h"
 #include "us_constants.h"
 #include "us_db2.h"
+#include "us_datafiles.h"
 
 void US_BufferComponent::getAllFromDB( const QString& masterPW, 
          QMap< QString, US_BufferComponent >& componentList )
@@ -424,19 +425,24 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
 
 int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
 {
-   QStringList q( "get_bufferID" );
-   q << GUID;
+   int idBuffer = 0;
+   QStringList q;
+   q << "get_bufferID"
+     << GUID;
    db->query( q );
-   if ( db->lastErrno() != US_DB2::OK )
+
+   int ncomp    = component.size();
+   int status   = db->lastErrno();
+//qDebug() << "get_bufferID-stat" << status;
+
+   if ( status != US_DB2::OK  &&  status != US_DB2::NOROWS )
    {
-      qDebug() << "get_bufferID error=" << db->lastErrno();
+      qDebug() << "get_bufferID error=" << status;
       return -9;
    }
-   db->next();            // Determine if the buffer record already exists
-   int bufferID    = 0;
 
-   if ( db->lastErrno() != US_DB2::OK )
-   {  // There is no such buffer, so create a new one
+   else if ( status == US_DB2::NOROWS )
+   {  // There is no buffer with the given GUID, so create a new one
       q.clear();
       q << "new_buffer"
         << GUID
@@ -449,6 +455,7 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
         << QString::number( US_Settings::us_inv_ID() );
 
       db->statusQuery( q );
+//qDebug() << "new_buffer-stat" << db->lastErrno();
 
       if ( db->lastErrno() != US_DB2::OK )
       {
@@ -456,13 +463,16 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
          return -1;
       }
 
-      bufferID    = db->lastInsertID();
+      idBuffer    = db->lastInsertID();
+//qDebug() << "new_buffer-idBuffer" << idBuffer;
    }
 
    else
    {  // The buffer exists, so update it
+      db->next();            // Get the ID of the existing buffer record
       QString bufID  = db->value( 0 ).toString();
-      bufferID    = bufID.toInt();
+      idBuffer       = bufID.toInt();
+//qDebug() << "old_buffer-idBuffer" << idBuffer;
       q.clear();
       q << "update_buffer"
         << bufID
@@ -475,6 +485,7 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
 
       db->statusQuery( q );
 
+//qDebug() << "update_stat" << db->lastErrno();
       if ( db->lastErrno() != US_DB2::OK )
       {
          qDebug() << "update_buffer error=" << db->lastErrno();
@@ -485,21 +496,24 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
       q.clear();
       q << "delete_buffer_components" << bufID;
       db->statusQuery( q );
-      if ( db->lastErrno() != US_DB2::OK )
+      status    = db->lastErrno();
+//qDebug() << "delete_buffer_components status=" << status << US_DB2::NOROWS;
+      if ( status != US_DB2::OK   &&  status != US_DB2::NOROWS )
       {
          qDebug() << "delete_buffer_components error=" << db->lastErrno();
          return -3;
       }
    }
 
-   for ( int i = 0; i < component.size(); i++ )
+   for ( int i = 0; i < ncomp; i++ )
    {
       q.clear();
       q << "add_buffer_component"
-        << QString::number( bufferID )
+        << QString::number( idBuffer )
         << component[ i ].componentID
         << QString::number( concentration[ i ], 'f', 5 );
       db->statusQuery( q );
+//qDebug() << "add_buffer_components-status=" << db->lastErrno();
 
       if ( db->lastErrno() != US_DB2::OK )
       {
@@ -518,8 +532,9 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
    QString filename = get_filename( path, GUID, newFile );
    writeToDisk( filename );
 
-   return bufferID;
+   return idBuffer;
 }
+
 
 bool US_Buffer::readFromDisk( const QString& filename ) 
 {
@@ -551,49 +566,8 @@ bool US_Buffer::readFromDisk( const QString& filename )
 QString US_Buffer::get_filename(
       const QString& path, const QString& guid, bool& newFile )
 {
-   QDir        f( path );
-   QStringList filter( "B???????.xml" );
-   QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
-   QString     filename;
-   newFile = true;
-
-   for ( int i = 0; i < f_names.size(); i++ )
-   {
-      QFile b_file( path + "/" + f_names[ i ] );
-
-      if ( ! b_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
-
-      QXmlStreamReader xml( &b_file );
-
-      while ( ! xml.atEnd() )
-      {
-         xml.readNext();
-
-         if ( xml.isStartElement() )
-         {
-            if ( xml.name() == "buffer" )
-            {
-               QXmlStreamAttributes a = xml.attributes();
-
-               if ( a.value( "guid" ).toString() == guid )
-               {
-                  newFile  = false;
-                  filename = path + "/" + f_names[ i ];
-               }
-
-               break;
-            }
-         }
-      }
-
-      b_file.close();
-      if ( ! newFile ) return filename;
-   }
-
-   // If we get here, generate a new filename
-   int number = ( f_names.size() > 0 ) ? f_names.last().mid( 1, 7 ).toInt() : 0;
-
-   return path + "/B" + QString().sprintf( "%07i", number + 1 ) + ".xml";
+   return
+      US_DataFiles::get_filename( path, guid, "B", "buffer", "guid", newFile );
 }
 
 void US_Buffer::readBuffer( QXmlStreamReader& xml )
