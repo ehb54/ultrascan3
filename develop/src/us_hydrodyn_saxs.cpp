@@ -1221,7 +1221,8 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
          "blue",
          //         "greenblue",
          "cyan",
-         "yellow"
+         "yellow",
+         "yellow",
       };
 
    QString out = QString("load %1\nselect all\ncolor gray\n").arg(contrib_file);
@@ -1233,7 +1234,7 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
          QString("select %1\ncolour %1\n")
          .arg(it->first)
          //         .arg((int)(128 + contrib_sums[it->first] * 127));
-         .arg(gradient[(int)(contrib_sums[it->first] * (CONTRIB_GRADIENT_SIZE - 1))]);
+         .arg(gradient[(int)(contrib_sums[it->first] * CONTRIB_GRADIENT_SIZE)]);
    }
    //   cout << "\n" << out << endl;
    // put "out" into spt file:
