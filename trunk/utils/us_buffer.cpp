@@ -399,7 +399,12 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
    q << "get_buffer_components" <<  bufferID;
 
    db->query( q );
-   if ( db->lastErrno() != 0 ) return false;
+   int status = db->lastErrno();
+   if ( status != US_DB2::OK  &&  status != US_DB2::NOROWS )
+   {
+      qDebug() << "get_buffer_components error=" << status;
+      return false;
+   }
 
    while ( db->next() )
    {
@@ -424,21 +429,73 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
 
 int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
 {
-   QStringList q( "new_buffer" );
-   q << GUID
-     << description
-     << QString::number( compressibility, 'e', 4 )
-     << QString::number( pH             , 'f', 4 )
-     << QString::number( density        , 'f', 6 )
-     << QString::number( viscosity      , 'f', 5 )
-     << private_buffer  // Private
-     << QString::number( US_Settings::us_inv_ID() );
+   QStringList q( "get_bufferID" );
+   q << GUID;
+   db->query( q );
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      qDebug() << "get_bufferID error=" << db->lastErrno();
+      return -9;
+   }
+   db->next();            // Determine if the buffer record already exists
+   int bufferID    = 0;
 
-   db->statusQuery( q );
+   if ( db->lastErrno() != US_DB2::OK )
+   {  // There is no such buffer, so create a new one
+      q.clear();
+      q << "new_buffer"
+        << GUID
+        << description
+        << QString::number( compressibility, 'e', 4 )
+        << QString::number( pH             , 'f', 4 )
+        << QString::number( density        , 'f', 6 )
+        << QString::number( viscosity      , 'f', 5 )
+        << private_buffer  // Private
+        << QString::number( US_Settings::us_inv_ID() );
 
-   if ( db->lastErrno() != US_DB2::OK ) return -1;
+      db->statusQuery( q );
 
-   int bufferID = db->lastInsertID();
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         qDebug() << "new_buffer error=" << db->lastErrno();
+         return -1;
+      }
+
+      bufferID    = db->lastInsertID();
+   }
+
+   else
+   {  // The buffer exists, so update it
+      QString bufID  = db->value( 0 ).toString();
+      bufferID    = bufID.toInt();
+      q.clear();
+      q << "update_buffer"
+        << bufID
+        << description
+        << QString::number( compressibility, 'e', 4 )
+        << QString::number( pH             , 'f', 4 )
+        << QString::number( density        , 'f', 6 )
+        << QString::number( viscosity      , 'f', 5 )
+        << private_buffer; // Private
+
+      db->statusQuery( q );
+
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         qDebug() << "update_buffer error=" << db->lastErrno();
+         return -2;
+      }
+
+      // Delete any components, so any given are a new list
+      q.clear();
+      q << "delete_buffer_components" << bufID;
+      db->statusQuery( q );
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         qDebug() << "delete_buffer_components error=" << db->lastErrno();
+         return -3;
+      }
+   }
 
    for ( int i = 0; i < component.size(); i++ )
    {
@@ -449,7 +506,11 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
         << QString::number( concentration[ i ], 'f', 5 );
       db->statusQuery( q );
 
-      if ( db->lastErrno() != US_DB2::OK ) return -2;
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         qDebug() << "add_buffer_component i,error=" << i << db->lastErrno();
+         return -4;
+      }
    }
 
    putSpectrum( db, "Extinction" );
