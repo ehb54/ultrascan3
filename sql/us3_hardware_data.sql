@@ -12,6 +12,7 @@ DELETE FROM abstractRotor;
 DELETE FROM abstractCenterpiece;
 DELETE FROM rotor;
 DELETE FROM rotorCalibration;
+DELETE FROM lab;
 
 INSERT INTO abstractRotor SET
   abstractRotorID   = 1,
@@ -61,9 +62,9 @@ INSERT INTO abstractRotor SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 1,
   loadMethod        = 'top',
-  abstractCenterpieceGUID = NULL,
+  abstractCenterpieceGUID = '08cbd35f-151c-4814-8457-6ef8dd523a23',
   name              = 'Simulation 1-channel standard',
-  materialName      = 'Simulation',
+  materialName      = 'Simulated',
   channels          = 1,          -- x2 for actual number
   bottom            = '7.2',
   shape             = 'standard',
@@ -80,7 +81,7 @@ INSERT INTO abstractCenterpiece SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 2,
   loadMethod        = 'top',
-  abstractCenterpieceGUID = NULL,
+  abstractCenterpieceGUID = '340540ba-a225-4214-9136-2b4003af772e',
   name              = 'Epon 2-channel standard',
   materialName      = 'Epon',
   channels          = 1,          -- x2 for actual number
@@ -99,7 +100,7 @@ INSERT INTO abstractCenterpiece SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 3,
   loadMethod        = 'top',
-  abstractCenterpieceGUID = NULL,
+  abstractCenterpieceGUID = 'e1dfbc5b-ceeb-4275-a280-0e3a5ab0c490',
   name              = 'Aluminum 2-channel standard',
   materialName      = 'Aluminum',
   channels          = 1,          -- x2 for actual number
@@ -118,14 +119,14 @@ INSERT INTO abstractCenterpiece SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 4,
   loadMethod        = 'top',
-  abstractCenterpieceGUID = NULL,
+  abstractCenterpieceGUID = '25d18488-1afa-4b9b-8a6d-b59802f0a74a',
   name              = 'Epon 6-channel rectangular',
   materialName      = 'Epon',
   channels          = 3,          -- x2 for actual number
   bottom            = '6.111:6.613:7.104',
   shape             = 'rectangular',
   maxRPM            = 48000,
-  pathLength        = 1.2,
+  pathLength        = 0.3,
   angle             = NULL,
   width             = 0.323,
   canHoldSample     = 1,
@@ -137,7 +138,7 @@ INSERT INTO abstractCenterpiece SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 5,
   loadMethod        = 'top',
-  abstractCenterpieceGUID = NULL,
+  abstractCenterpieceGUID = 'd8eec2e8-cc11-46fd-b96e-8fe82059317d',
   name              = 'Titanium 2-channel standard',
   materialName      = 'Titanium',
   channels          = 1,          -- x2 for actual number
@@ -156,11 +157,11 @@ INSERT INTO abstractCenterpiece SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 6,
   loadMethod        = 'top',
-  abstractCenterpieceGUID = NULL,
+  abstractCenterpieceGUID = '70641c51-ac63-4862-baf4-1f418489ed06',
   name              = 'Titanium 6-channel rectangular',
   materialName      = 'Titanium',
   channels          = 3,          -- x2 for actual number
-  bottom            = '6.170:6.690:7.210',
+  bottom            = '6.170:6.690:7.210', -- change to 6.111:6.613:7.104 ?
   shape             = 'rectangular',
   maxRPM            = 60000,
   pathLength        = 1.2,
@@ -175,7 +176,7 @@ INSERT INTO abstractCenterpiece SET
 INSERT INTO abstractCenterpiece SET
   abstractCenterpieceID = 7,
   loadMethod        = 'top',
-  abstractCenterpieceGUID = NULL,
+  abstractCenterpieceGUID = '4a6410c5-099f-44d8-baa2-0e2d4c099ced',
   name              = 'Epon 2-channel band forming',
   materialName      = 'Epon',
   channels          = 1,          -- x2 for actual number
@@ -184,6 +185,63 @@ INSERT INTO abstractCenterpiece SET
   maxRPM            = 42000,
   pathLength        = 1.2,
   angle             = 2.5,
+  width             = NULL,
+  canHoldSample     = 1,
+  materialRefURI    = '',
+  centerpieceRefURI = '',
+  dataUpdated       = NOW();
+
+-- either angle or width will be null, depending on shape
+INSERT INTO abstractCenterpiece SET
+  abstractCenterpieceID = 8,
+  loadMethod        = 'top',
+  abstractCenterpieceGUID = '30a5f2f8-b31a-42b8-a8a8-df077bf1b432',
+  name              = 'Epon-Helmut 2-channel band forming',
+  materialName      = 'Epon-Helmut',
+  channels          = 1,          -- x2 for actual number
+  bottom            = '7.2',
+  shape             = 'band forming',
+  maxRPM            = 60000,
+  pathLength        = 1.2,
+  angle             = 2.5,
+  width             = NULL,
+  canHoldSample     = 1,
+  materialRefURI    = '',
+  centerpieceRefURI = '',
+  dataUpdated       = NOW();
+
+-- either angle or width will be null, depending on shape
+INSERT INTO abstractCenterpiece SET
+  abstractCenterpieceID = 9,
+  loadMethod        = 'top',
+  abstractCenterpieceGUID = '2e4414c9-babf-4505-8556-4bd492b9fb27',
+  name              = 'SVEL60 2-channel standard',
+  materialName      = 'SVEL60',
+  channels          = 1,          -- x2 for actual number
+  bottom            = '7.2',
+  shape             = 'standard',
+  maxRPM            = 60000,
+  pathLength        = 1.2,
+  angle             = 2.0,
+  width             = NULL,
+  canHoldSample     = 1,
+  materialRefURI    = '',
+  centerpieceRefURI = '',
+  dataUpdated       = NOW();
+
+-- either angle or width will be null, depending on shape
+INSERT INTO abstractCenterpiece SET
+  abstractCenterpieceID = 10,
+  loadMethod        = 'top',
+  abstractCenterpieceGUID = 'd8e93427-eb88-42d1-b459-ab6787e571c6',
+  name              = 'SVEL60 2-channel meniscus matching',
+  materialName      = 'SVEL60',
+  channels          = 1,          -- x2 for actual number
+  bottom            = '7.2',
+  shape             = 'meniscus matching',
+  maxRPM            = 60000,
+  pathLength        = 1.2,
+  angle             = 2.0,
   width             = NULL,
   canHoldSample     = 1,
   materialRefURI    = '',
@@ -269,4 +327,20 @@ INSERT INTO rotorCalibration SET
   omega2_t             = 0,
   dateUpdated          = NOW(),
   calibrationExperimentID = -1;
+
+INSERT INTO lab SET
+  labID         = 1,
+  labGUID       = 'c61cedd3-dd0f-3db4-1118-ee4db019bcfd',
+  name          = 'UTHSCSA Lab #1',
+  building      = 'HSC-MED',
+  room          = '425D',
+  dateUpdated   = NOW();
+
+INSERT INTO lab SET
+  labID         = 2,
+  labGUID       = '7532024e-afb4-ee84-d160-3b9625a10b43',
+  name          = 'UTHSCSA Lab #2',
+  building      = 'HSC-MED',
+  room          = '420D',
+  dateUpdated   = NOW();
 
