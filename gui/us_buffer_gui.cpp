@@ -992,6 +992,7 @@ void US_BufferGui::update_db( void )
       }
          
       QString private_buffer = ( cb_shared->isChecked() ) ? "0" : "1";
+      buffer.saveToDB( &db, private_buffer );
 
       if ( db.lastErrno() != US_DB2::OK )
       {
