@@ -545,8 +545,6 @@ DbgLv(1) << "cc comp D" << model.components[ cc ].D;
 DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
    }
 
-   model.update_coefficients( );        // Insure all coefficients consistent
-
    // done with iterations:   check for meniscus or MC iteration
 
    if ( mmtype > 0  &&  ++mm_iter < mmiters )
