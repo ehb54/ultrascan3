@@ -132,9 +132,11 @@ DebugTime("BEG:calcres");
    solution.vbar20    = vbar;
    solution.vbar      = vbar;
    US_Math2::data_correction( avgtemp, solution );
-if (taskx==0) DbgLv(1) << "   CR: dens visc vbar temp corr" << density
- << viscosity << vbar << avgtemp << solution.s20w_correction;
+if (taskx==0) DbgLv(1) << "   CR: dens visc vbar temp scorr dcorr"
+ << density << viscosity << vbar << avgtemp << solution.s20w_correction
+ << solution.D20w_correction;
    double sfactor = 1.0 / solution.s20w_correction;
+   double dfactor = 1.0 / solution.D20w_correction;
 
    // simulate data using models with single s,f/f0 component
    int    increp  = nsolutes / 10;                 // progress report increment
@@ -146,10 +148,12 @@ if (taskx==0) DbgLv(1) << "   CR: dens visc vbar temp corr" << density
    {
       if ( abort ) return;
       // set model with s,k point; update other coefficients
-      model.components[ 0 ]      = zcomponent;
-      model.components[ 0 ].s    = qAbs( solute_i[ cc ].s ) * sfactor;
+      model.components[ 0 ]      = zcomponent;     // Standard space coeffs
+      model.components[ 0 ].s    = qAbs( solute_i[ cc ].s );
       model.components[ 0 ].f_f0 = solute_i[ cc ].k;
-      model.update_coefficients();
+      model.update_coefficients();                 // Fill in any missing
+      model.components[ 0 ].s   *= sfactor;        // Convert to experimental
+      model.components[ 0 ].D   *= dfactor;
 
       // initialize simulation data with experiment grid
       US_AstfemMath::initSimData( sdata, *edata, 0.0 );
