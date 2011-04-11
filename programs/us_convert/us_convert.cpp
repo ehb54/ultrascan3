@@ -1,2326 +1,864 @@
-#include <QApplication>
+//! \file us_convert.cpp
 
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_util.h"
-#include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_run_details2.h"
-#include "us_plot.h"
 #include "us_math2.h"
+#include "us_util.h"
 #include "us_convert.h"
-#include "us_solution_gui.h"
-#include "us_db2.h"
-#include "us_passwd.h"
-#include "us_process_convert.h"
 #include "us_convertio.h"
-#include "us_intensity.h"
-#include "us_get_dbrun.h"
-#include "us_investigator.h"
-#include "us_experiment_gui.h"
-#include "us_constants.h"
 
-int main( int argc, char* argv[] )
+// Generic constructor
+US_Convert::US_Convert( void )
 {
-   QApplication application( argc, argv );
-
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-   
-   US_Convert w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
 }
 
-US_Convert::US_Convert() : US_Widgets()
+void US_Convert::readLegacyData( 
+     QString                              dir,
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     QString&                             runType ) 
 {
-   ExpData.invID = US_Settings::us_inv_ID();
-
-   setWindowTitle( tr( "Convert Legacy Raw Data" ) );
-   setPalette( US_GuiSettings::frameColor() );
-
-   // Very light gray, for read-only line edits
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-
-   QGridLayout* settings = new QGridLayout;
-
-   int row = 0;
-
-   // First row
-   QStringList DB = US_Settings::defaultDB();
-   if ( DB.isEmpty() ) DB << "Undefined";
-   QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
-   lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
-   settings->addWidget( lb_DB, row++, 0, 1, 3 );
-
-   // Investigator
-   if ( US_Settings::us_inv_level() > 2 )
-   {
-      QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-      connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
-      settings->addWidget( pb_investigator, row, 0 );
-   }
-   else
-   {
-      QLabel* lb_investigator = us_label( tr( "Investigator:" ) );
-      settings->addWidget( lb_investigator, row, 0 );
-   }
-      
-   le_investigator = us_lineedit( tr( "Not Selected" ) );
-   le_investigator->setReadOnly( true );
-   settings->addWidget( le_investigator, row++, 1, 1, 2 );
-
-   // Radio buttons
-   disk_controls = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
-   connect( disk_controls, SIGNAL( changed       ( bool ) ),
-                           SLOT  ( source_changed( bool ) ) );
-   settings->addLayout( disk_controls, row++, 0, 1, 2 );
-
-   // Display Run ID
-   QLabel* lb_runID = us_label( tr( "Run ID:" ) );
-   // Add this later, after tabs:settings->addWidget( lb_runID, row, 0 );
-   lb_runID->setVisible( false ); // for now
-
-   le_runID = us_lineedit( "", 1 );
-   le_runID ->setMinimumWidth( 225 );
-   // Add this later, after tabs: settings->addWidget( le_runID, row++, 1 );
-   le_runID ->setPalette ( gray );                // This one is read-only
-   le_runID ->setReadOnly( true );
-   le_runID ->setVisible ( false );  // for now
-
-   // Load the run
-   QLabel* lb_run = us_banner( tr( "Load the Run" ) );
-   settings->addWidget( lb_run, row++, 0, 1, 2 );
-
-   // Pushbuttons to load and reload data
-   pb_import = us_pushbutton( tr( "Import Legacy Run from HD" ) );
-   connect( pb_import, SIGNAL( clicked() ), SLOT( import() ) );
-   settings->addWidget( pb_import, row, 0 );
-
-   // External program to enter experiment information
-   pb_editRuninfo = us_pushbutton( tr( "Edit Run Information" ) );
-   connect( pb_editRuninfo, SIGNAL( clicked() ), SLOT( editRuninfo() ) );
-   settings->addWidget( pb_editRuninfo, row++, 1 );
-   pb_editRuninfo->setEnabled( false );
-
-   // load US3 data ( that perhaps has been done offline )
-   pb_loadUS3 = us_pushbutton( tr( "Load US3 Run" ), true );
-   connect( pb_loadUS3, SIGNAL( clicked() ), SLOT( loadUS3() ) );
-   settings->addWidget( pb_loadUS3, row, 0 );
-
-   // Run details
-   pb_details = us_pushbutton( tr( "Run Details" ), false );
-   connect( pb_details, SIGNAL( clicked() ), SLOT( runDetails() ) );
-   settings->addWidget( pb_details, row++, 1 );
-
-   // Set the wavelength tolerance for c/c/w determination
-   QLabel* lb_tolerance = us_label( tr( "Dataset Separation Tolerance:" ) );
-   settings->addWidget( lb_tolerance, row, 0 );
-
-   ct_tolerance = us_counter ( 2, 0.0, 100.0, 5.0 ); // #buttons, low, high, start_value
-   ct_tolerance->setStep( 1 );
-   ct_tolerance->setMinimumWidth( 160 );
-   settings->addWidget( ct_tolerance, row++, 1 );
-   // connect whenever the user has changed it
-   connect( ct_tolerance, SIGNAL( valueChanged         ( double ) ),
-                          SLOT  ( toleranceValueChanged( double ) ) );
-
-   // Change Run ID
-   QLabel* lb_runID2 = us_label( tr( "Run ID:" ) );
-   settings->addWidget( lb_runID2, row, 0 );
-
-   le_runID2 = us_lineedit( "", 1 );
-   le_runID2 ->setMinimumWidth( 225 );
-   settings->addWidget( le_runID2, row++, 1 );
-
-   // Directory
-   QLabel* lb_dir = us_label( tr( "Directory:" ) );
-   settings->addWidget( lb_dir, row++, 0, 1, 2 );
-
-   le_dir = us_lineedit( "", 1 );
-   settings->addWidget( le_dir, row++, 0, 1, 2 );
-   le_dir ->setPalette ( gray );
-   le_dir ->setReadOnly( true );
-
-   // Description
-   lb_description = us_label( tr( "Description:" ), -1 );
-   settings->addWidget( lb_description, row++, 0, 1, 2 );
-
-   le_description = us_lineedit( "", 1 );
-   connect( le_description, SIGNAL( editingFinished   () ),
-                            SLOT  ( changeDescription () ) );
-   settings->addWidget( le_description, row++, 0, 1, 2 );
-
-   // Cell / Channel / Wavelength
-   QGridLayout* ccw = new QGridLayout();
-
-   lb_triple = us_banner( tr( "Cell / Channel / Wavelength" ), -1 );
-   ccw->addWidget( lb_triple, row++, 0, 1, 3 );
-
-   lw_triple = us_listwidget();
-   lw_triple->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
-   lw_triple->setMaximumWidth ( 120 );
-   connect( lw_triple, SIGNAL( itemClicked ( QListWidgetItem* ) ),
-                       SLOT  ( changeTriple( QListWidgetItem* ) ) );
-   ccw->addWidget( lw_triple, row, 0, 6, 1 );
-
-   QLabel* lb_ccwinfo = us_label( tr( "Enter Associated c/c/w Info:" ) );
-   ccw->addWidget( lb_ccwinfo, row++, 1, 1, 2 );
-
-   // Set up centerpiece drop-down
-   cb_centerpiece = new US_SelectBox( this );
-   centerpieceInfo();
-   cb_centerpiece -> load();
-   connect( cb_centerpiece, SIGNAL( currentIndexChanged( int ) ), 
-                            SLOT  ( getCenterpieceIndex( int ) ) );
-   ccw->addWidget( cb_centerpiece, row++, 1, 1, 2 );
-
-   // External program to enter solution information
-   pb_solution = us_pushbutton( tr( "Manage Solutions" ), false );
-   connect( pb_solution, SIGNAL( clicked() ), SLOT( getSolutionInfo() ) );
-   ccw->addWidget( pb_solution, row, 1 );
-
-   pb_applyAll = us_pushbutton( tr( "Apply to All" ), false );
-   connect( pb_applyAll, SIGNAL( clicked() ), SLOT( tripleApplyAll() ) );
-   ccw->addWidget( pb_applyAll, row++, 2 );
-
-   // Defining data subsets
-   pb_define = us_pushbutton( tr( "Define Subsets" ), false );
-   connect( pb_define, SIGNAL( clicked() ), SLOT( define_subsets() ) );
-   ccw->addWidget( pb_define, row, 1 );
-
-   pb_process = us_pushbutton( tr( "Process Subsets" ) , false );
-   connect( pb_process, SIGNAL( clicked() ), SLOT( process_subsets() ) );
-   ccw->addWidget( pb_process, row++, 2 );
-
-   // Choosing reference channel
-   pb_reference = us_pushbutton( tr( "Define Reference Scans" ), false );
-   connect( pb_reference, SIGNAL( clicked() ), SLOT( define_reference() ) );
-   ccw->addWidget( pb_reference, row, 1 );
-
-   pb_cancelref = us_pushbutton( tr( "Undo Reference Scans" ), false );
-   connect( pb_cancelref, SIGNAL( clicked() ), SLOT( cancel_reference() ) );
-   ccw->addWidget( pb_cancelref, row++, 2 );
-
-   // Define intensity profile
-   pb_intensity = us_pushbutton( tr( "Show Intensity Profile" ) , false );
-   connect( pb_intensity, SIGNAL( clicked() ), SLOT( show_intensity() ) );
-   ccw->addWidget( pb_intensity, row, 1 );
-
-   // drop scan
-   pb_dropScan = us_pushbutton( tr( "Drop Current c/c/w" ), false );
-   connect( pb_dropScan, SIGNAL( clicked() ), SLOT( drop_reference() ) );
-   ccw->addWidget( pb_dropScan, row++, 2 );
-
-   QLabel* lb_solution = us_label( tr( "Solution:" ) );
-   ccw->addWidget( lb_solution, row, 0 );
-
-   le_solutionDesc = us_lineedit( "", 1 );
-   le_solutionDesc ->setPalette ( gray );
-   le_solutionDesc ->setReadOnly( true );
-   ccw->addWidget( le_solutionDesc, row++, 1, 1, 2 );
-
-   settings->addLayout( ccw, row++, 0, 1, 2 );
-
-   // Scan Controls
-   QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
-   settings->addWidget( lb_scan, row++, 0, 1, 2 );
-
-   // Scan focus from
-   QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
-   lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   settings->addWidget( lb_from, row, 0 );
-
-   ct_from = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   ct_from->setStep( 1 );
-   settings->addWidget( ct_from, row++, 1 );
-
-   // Scan focus to
-   QLabel* lb_to = us_label( tr( "Scan Focus to:" ), -1 );
-   lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   settings->addWidget( lb_to, row, 0 );
-
-   ct_to = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   ct_to->setStep( 1 );
-   settings->addWidget( ct_to, row++, 1 );
-
-   // Exclude and Include pushbuttons
-   pb_exclude = us_pushbutton( tr( "Exclude Scan(s)" ), false );
-   connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude_scans() ) );
-   settings->addWidget( pb_exclude, row, 0 );
-
-   pb_include = us_pushbutton( tr( "Include All" ), false );
-   connect( pb_include, SIGNAL( clicked() ), SLOT( include() ) );
-   settings->addWidget( pb_include, row++, 1 );
-   pb_include ->setEnabled( false );
-
-   // Standard pushbuttons
-   QBoxLayout* buttons = new QHBoxLayout;
-
-   QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( resetAll() ) );
-   buttons->addWidget( pb_reset );
-
-   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
-   buttons->addWidget( pb_help );
-
-   pb_saveUS3 = us_pushbutton( tr( "Save" ) );
-   connect( pb_saveUS3, SIGNAL( clicked() ), SLOT( saveUS3() ) );
-   buttons->addWidget( pb_saveUS3 );
-
-   QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
-   buttons->addWidget( pb_close );
-
-   // Plot layout for the right side of window
-   QBoxLayout* plot = new US_Plot( data_plot,
-                                   tr( "Absorbance Data" ),
-                                   tr( "Radius (in cm)" ), 
-                                   tr( "Absorbance" ) );
-
-   data_plot->setMinimumSize( 600, 400 );
-
-   data_plot->enableAxis( QwtPlot::xBottom, true );
-   data_plot->enableAxis( QwtPlot::yLeft  , true );
-
-   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
-   data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
-
-   picker = new US_PlotPicker( data_plot );
-   picker ->setRubberBand( QwtPicker::VLineRubberBand );
-
-   // Now let's assemble the page
-   
-   QVBoxLayout* left     = new QVBoxLayout;
-
-   left->addLayout( settings );
-   left->addLayout( buttons );
-   
-   QHBoxLayout* main = new QHBoxLayout( this );
-   main->setSpacing         ( 2 );
-   main->setContentsMargins ( 2, 2, 2, 2 );
-
-   main->addLayout( left );
-   main->addLayout( plot );
-
-   main->setStretch( 0, 2 );
-   main->setStretch( 1, 4 );
-
-   reset();
-}
-
-void US_Convert::reset( void )
-{
-   lw_triple       ->clear();
-
-   le_dir          ->setText( "" );
-
-   le_description  ->setText( "" );
-   le_runID        ->setText( "" );
-   le_runID2       ->setText( "" );
-   le_solutionDesc ->setText( "" );
-
-//   cb_centerpiece  ->load();
-
-   pb_import     ->setEnabled( true  );
-   pb_loadUS3    ->setEnabled( true  );
-   pb_exclude    ->setEnabled( false );
-   pb_include    ->setEnabled( false );
-   pb_details    ->setEnabled( false );
-   pb_intensity  ->setEnabled( false );
-   pb_cancelref  ->setEnabled( false );
-   pb_dropScan   ->setEnabled( false );
-   pb_solution   ->setEnabled( false );
-   pb_editRuninfo ->setEnabled( false );
-   pb_applyAll   ->setEnabled( false );
-   pb_saveUS3    ->setEnabled( false );
-
-//   pb_reimport     ->setEnabled( true  );
-   ct_tolerance  ->setEnabled( true  );
-
-   cb_centerpiece->setEnabled( false );
-
-   ct_from       ->disconnect();
-   ct_from       ->setMinValue( 0 );
-   ct_from       ->setMaxValue( 0 );
-   ct_from       ->setValue   ( 0 );
-
-   ct_to         ->disconnect();
-   ct_to         ->setMinValue( 0 );
-   ct_to         ->setMaxValue( 0 );
-   ct_to         ->setValue   ( 0 );
-
-   // Clear any data structures
-   legacyData.clear();
-   allExcludes.clear();
-   triples.clear();
-   allData.clear();
-   Pseudo_averaged    = false;
-   show_plot_progress = true;
-   ExpData.rpms.clear();
-
-   data_plot     ->detachItems();
-   picker        ->disconnect();
-   data_plot     ->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
-   data_plot     ->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
-   grid          = us_grid( data_plot );
-   data_plot     ->replot();
-
-   pb_define     ->setEnabled( false );
-   pb_process    ->setEnabled( false );
-   step          = NONE;
-
-   enableRunIDControl( true );
-
-   toleranceChanged = false;
-   saveStatus       = NOT_SAVED;
-   isPseudo         = false;
-
-   pb_reference   ->setEnabled( false );
-
-   // Display investigator
-   ExpData.invID = US_Settings::us_inv_ID();
-
-   QString number = ( ExpData.invID > 0 )
-      ?  QString::number( ExpData.invID ) + ": "
-      : "";
-
-   le_investigator->setText( number + US_Settings::us_inv_name() );
-}
-
-void US_Convert::resetAll( void )
-{
-   int status = QMessageBox::information( this,
-            tr( "Warning" ),
-            tr( "This will erase all data currently on the screen, and reset "    ) +
-            tr( "the program to its starting condition. No hard-drive data  "     ) +
-            tr( "or database information will be affected. Proceed? "             ),
-            tr( "&OK" ), tr( "&Cancel" ),
-            0, 0, 1 );
-   if ( status != 0 ) return;
-
-   reset();
-
-   ExpData.clear();
-   subsets.clear();
-   reference_start = 0;
-   reference_end   = 0;
-
-   ct_tolerance    ->setMinValue(   0.0 );
-   ct_tolerance    ->setMaxValue( 100.0 );
-   ct_tolerance    ->setValue   (   5.0 );
-   ct_tolerance    ->setStep( 1 );
-   scanTolerance   = 5.0;
-}
-
-// Function to select the current investigator
-void US_Convert::sel_investigator( void )
-{
-   US_Investigator* inv_dialog = new US_Investigator( true, ExpData.invID );
-
-   connect( inv_dialog,
-      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
-      SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
-
-   inv_dialog->exec();
-}
-
-// Function to assign the selected investigator as current
-void US_Convert::assign_investigator( int invID,
-      const QString& lname, const QString& fname)
-{
-   ExpData.invID = invID;
-   le_investigator->setText( QString::number( invID ) + ": " +
-         lname + ", " + fname );
-}
-
-// Function to change the data source (disk/db)
-void US_Convert::source_changed( bool )
-{
-   QStringList DB = US_Settings::defaultDB();
-
-   if ( DB.size() < 5 )
-   {
-      QMessageBox::warning( this,
-         tr( "Attention" ),
-         tr( "There is no default database set." ) );
-   }
-
-   // Reinvestigate whether to enable the buttons
-   enableControls();
-}
-
-void US_Convert::update_disk_db( bool db )
-{
-   ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
-}
-
-// User changed the dataset separation tolerance
-void US_Convert::toleranceValueChanged( double )
-{
-   toleranceChanged = true;
-   scanTolerance    = ct_tolerance->value();
-   reimport();
-}
-
-// User pressed the import data button
-void US_Convert::import( QString dir )
-{
-   bool success = false;
-
-   if ( dir.isEmpty() )
-      success = read();                // Read the legacy data
-
-   else
-      success = read( dir );
-
-   if ( ! success ) return;
-
-/*
-   // Display the data that was read
-   for ( int i = 0; i < legacyData.size(); i++ )
-   {
-      US_DataIO2::BeckmanRawScan d = legacyData[ i ];
-
-      qDebug() << d.description;
-      qDebug() << d.type         << " "
-               << d.cell         << " "
-               << d.temperature  << " "
-               << d.rpm          << " "
-               << d.seconds      << " "
-               << d.omega2t      << " "
-               << d.t.wavelength << " "
-               << d.count;
-
-      for ( int j = 0; j < d.readings.size(); j++ )
-      {
-         if ( i != 2 ) continue; // only the 2nd set for now
-
-         US_DataIO2::RawReading r = d.readings[ j ];
-
-         QString line = QString::number(r.d.radius, 'f', 4 )    + " "
-                      + QString::number(r.value, 'E', 5 )       + " "
-                      + QString::number(r.stdDev, 'E', 5 );
-         qDebug() << line;
-      }
-   }
-
-*/
-
-   // Define default tolerances before converting
-   scanTolerance = ( runType == "WA" ) ? 0.1 : 5.0;
-   ct_tolerance->setValue( scanTolerance );
-
-   // Figure out all the triple combinations and convert data
-   success = convert();
-
-   if ( ! success ) return;
-
-   setTripleInfo();
-
-   checkTemperature();          // Check to see if temperature varied too much
-
-   // Initialize exclude list
-   init_excludes();
-   
-   plot_current();
-
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
-
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
-
-   saveStatus = NOT_SAVED;
-
-   // Ok to enable some buttons now
-   enableControls();
-}
-
-// User pressed the reimport data button
-// Legacy data is already supposed to be present
-void US_Convert::reimport( void )
-{
-   if ( toleranceChanged )
-   {
-      // If the tolerance has changed, we need to reconvert the data
-      toleranceChanged = false;
-      bool success = false;
-
-      triples.clear();
-
-      le_solutionDesc ->setText( "" );
-   
-      // Figure out all the triple combinations and convert data
-      success = convert();
-   
-      if ( ! success ) return;
-   
-      setTripleInfo();
-   }
-
-   // Initialize exclude list
-   init_excludes();
-   
-   // In this case the runType is not changing
-   oldRunType = runType;
-   
-   pb_include->setEnabled( false );
-   pb_exclude->setEnabled( false );
-   plot_current();
-
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
-
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
-
-   // Ok to enable some buttons now
-   enableControls();
-
-}
-
-// Enable the common dialog controls when there is data
-void US_Convert::enableControls( void )
-{
-   if ( allData.size() == 0 )
-      reset();
-
-   else
-   {
-      // Ok to enable some buttons now
-      if ( ! disk_controls->db() )
-        pb_saveUS3   ->setEnabled( true );
-      pb_details     ->setEnabled( true );
-      pb_solution    ->setEnabled( true );
-      cb_centerpiece ->setEnabled( true );
-      pb_editRuninfo ->setEnabled( true );
-
-      // Ok to drop scan if not the only one
-      int currentScanCount = 0;
-      for ( int i = 0; i < triples.size(); i++ )
-         if ( ! triples[ i ].excluded ) currentScanCount++;
-      pb_dropScan    ->setEnabled( currentScanCount > 1 );
-
-      if ( runType == "RI" )
-         pb_reference->setEnabled( true );
-   
-      if ( subsets.size() < 1 )
-      {
-         // Allow user to define subsets, if he hasn't already
-         pb_define   ->setEnabled( true );
-      } 
-
-      // Disable load buttons if there is data
-      pb_import        ->setEnabled( false );
-      pb_loadUS3       ->setEnabled( false );
-      
-      // Most triples are ccw
-      lb_triple   ->setText( tr( "Cell / Channel / Wavelength" ) );
-      ct_tolerance->setMinimumWidth( 160 );
-      ct_tolerance->setNumButtons  ( 2 );
-      ct_tolerance->setRange       ( 0.0, 100.0 );
-      ct_tolerance->setStep        ( 1.0 );
-      ct_tolerance->setValue       ( scanTolerance );
-
-      // Default tolerances are different for wavelength data
-      if ( runType == "WA" )
-      {
-         // First of all, wavelength triples are ccr.
-         lb_triple   ->setText( tr( "Cell / Channel / Radius" ) );
-         ct_tolerance->setMinimumWidth( 160 );
-         ct_tolerance->setNumButtons  ( 3 );
-         ct_tolerance->setRange       ( 0.0, 10.0 );
-         ct_tolerance->setStep        ( 0.001 );
-         ct_tolerance->setValue       ( scanTolerance );
-      }
-
-      // Let's calculate if we're eligible to copy this triple info to all
-      // or to save it
-      // We have to check against GUID's, because solutions won't have
-      // solutionID's yet if they are created as needed offline
-      QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-
-      pb_applyAll     -> setEnabled( false );
-      if ( triples.size() > 1 && rx.exactMatch( triples[ currentTriple ].solution.solutionGUID ) )
-      {   
-         pb_applyAll  -> setEnabled( true );
-      }
-
-      enableRunIDControl( saveStatus == NOT_SAVED );
-         
-      if ( disk_controls->db() )
-         enableSyncDB();
-   }
-}
-
-// Enable or disable the runID control
-void US_Convert::enableRunIDControl( bool setEnable )
-{
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-
-   if ( setEnable )
-   {
-      le_runID2->setPalette ( US_GuiSettings::normalColor() );
-      le_runID2->setReadOnly( false );
-      connect( le_runID2, SIGNAL( editingFinished() ),
-                          SLOT  ( runIDChanged   () ) );
-   }
-
-   else
-   {
-      le_runID2->disconnect();
-      le_runID2->setPalette ( gray );
-      le_runID2->setReadOnly( true );
-   }
-         
-}
-
-// Reset the boundaries on the scan controls
-void US_Convert::enableScanControls( void )
-{
-   ct_from->disconnect();
-   ct_from->setMinValue( 0.0 );
-   ct_from->setMaxValue(  allData[ currentTriple ].scanData.size() );
-   ct_from->setValue   ( 0 );
-
-   ct_to  ->disconnect();
-   ct_to  ->setMinValue( 0.0 );
-   ct_to  ->setMaxValue(  allData[ currentTriple ].scanData.size() );
-   ct_to  ->setValue   ( 0 );
-
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
-
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
-
-}
-
-// Enable the "sync with DB" button, if appropriate
-void US_Convert::enableSyncDB( void )
-{
-   if ( ! disk_controls->db() ) return;  // already handled
-
-   // Have we made connection with the db?
-   if ( ! ExpData.syncOK ||
-        triples.size() == 0 )
-   {
-      pb_saveUS3 ->setEnabled( false );
-      return;
-   }
-
-   // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      pb_saveUS3 ->setEnabled( false );
-      return;
-   }
-
-   // Have we filled out all the c/c/w info?
-   // Check GUIDs, because solutionID's may not be present yet.
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-   for ( int i = 0; i < triples.size(); i++ )
-   {
-      TripleInfo triple = triples[ i ];
-      if ( triple.excluded ) continue;
-
-      if ( ! rx.exactMatch( triple.solution.solutionGUID ) )
-      {
-         pb_saveUS3 ->setEnabled( false );
-         return;
-      }
-   }
-
-   // We have to have saved it to the HD before, to have auc files
-/*   if ( saveStatus == NOT_SAVED )
-   {
-      return;
-   }
-*/
-
-   // Information is there, but we need to see if the runID exists in the 
-   // DB. If we didn't load it from there, then we shouldn't be able to sync
-   int recStatus = ExpData.checkRunID( &db );
-
-   // if a record is found but saveStatus == BOTH, then we are editing that record
-   if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) 
-   {
-      pb_saveUS3 ->setEnabled( false );
-      return;
-   }
-
-   // If we made it here, user can sync with DB
-   pb_saveUS3 ->setEnabled( true );
-}
-
-// Process when the user changes the runID
-void US_Convert::runIDChanged( void )
-{
-   // See if we need to update the runID
-   QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
-   QString new_runID = le_runID2->text();
-      
-   if ( rx.indexIn( new_runID ) >= 0 )
-   {
-      runID = new_runID;
-      plot_titles();
-   }
-
-   // If the runID has changed, a number of other things need to change too,
-   // for instance GUID's.
-   ExpData.clear();
-   foreach( TripleInfo triple, triples )
-      triple.clear();
-   le_runID2->setText( runID );
-   le_runID ->setText( runID );
-   ExpData.runID = runID;
-
-   saveStatus = NOT_SAVED;
-
-   // Set the directory too
-   QDir resultDir( US_Settings::resultDir() );
-   currentDir = resultDir.absolutePath() + "/" + runID + "/";
-   le_dir ->setText( currentDir );
-}
-
-// Function to generate a new guid for experiment, and associate with DB
-void US_Convert::editRuninfo( void )
-{
-   // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      QMessageBox::information( this,
-             tr( "Error" ),
-             tr( "This is the dialog where you associate the run information " ) +
-             tr( "with the database. Please verify your "     ) +
-             tr( "connection parameters before proceeding. You can still " ) +
-             tr( "create your auc file and do this later.\n" ) );
-      return;
-   }
-
-   if ( saveStatus == NOT_SAVED )
-   {
-      // First time for this data, so clear ExpData out
-      ExpData.clear();
-   
-      // Create a new GUID for the experiment as a whole
-      ExpData.expGUID = US_Util::new_guid();
-
-   }
-
-   getExpInfo( );
-}
-
-// Function to load US3 data
-void US_Convert::loadUS3( QString dir )
-{
-   if ( disk_controls->db() )
-      loadUS3DB();
-
-   else if ( dir.isEmpty() )
-      loadUS3Disk();
-
-   else
-      loadUS3Disk( dir );
-
-   checkTemperature();          // Check to see if temperature varied too much
-}
-
-void US_Convert::loadUS3Disk( void )
-{
-   // Ask for data directory
-   QString dir = QFileDialog::getExistingDirectory( this, 
-         tr("US3 Raw Data Directory"),
-         US_Settings::resultDir(),
-         QFileDialog::DontResolveSymlinks );
-   
    if ( dir.isEmpty() ) return; 
-   
-   dir.replace( "\\", "/" );  // WIN32 issue
-   if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
-   loadUS3Disk( dir );
-}
-
-void US_Convert::loadUS3Disk( QString dir )
-{
-   resetAll();
-
-   // Set the runID and directory
-   QStringList components =  dir.split( "/", QString::SkipEmptyParts );  
-   runID    = components.last();
-   le_runID ->setText( runID );
-   le_runID2->setText( runID );
-   le_dir   ->setText( dir );
-   currentDir  = QString( dir );
-
-   // Reload the data
-   US_ProcessConvert* dialog 
-      = new US_ProcessConvert( this );
-      dialog->reloadUS3Data( dir, allData, ExpData, triples, runType, runID );
-   delete dialog;
-
-   if ( allData.size() == 0 ) return;
-
-   // Update triple information on screen
-   setTripleInfo();
-
-   le_solutionDesc  -> setText( triples[ currentTriple ].solution.solutionDesc  );
-
-   // Restore description
-   le_description->setText( allData[ 0 ].description );
-   saveDescription = QString( allData[ 0 ].description );
-
-   // Reset maximum scan control values
-   enableScanControls();
-
-   // The centerpiece combo box
-   cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
-
-   // Redo plot
-   init_excludes();
-   plot_current();
-
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
-
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
-
-   // Ok to enable some buttons now
-   enableControls();
-   if ( ! disk_controls->db() ) 
-      pb_saveUS3  ->setEnabled( true );
-
-   pb_details     ->setEnabled( true );
-   pb_solution    ->setEnabled( true );
-   cb_centerpiece ->setEnabled( true );
-   pb_editRuninfo ->setEnabled( true );
-
-   // some things one can't do from here
-   ct_tolerance   ->setEnabled( false );
-
-   enableRunIDControl( false );
-
-   if ( runType == "RI" )
-      pb_reference->setEnabled( true );
-
-   else if ( runType == "RA" && subsets.size() < 1 )
-   {
-      // Allow user to define subsets, if he hasn't already
-      pb_define   ->setEnabled( true );
-   } 
-
-   saveStatus = ( ExpData.expID == 0 ) ? HD_ONLY : BOTH;
-   //pb_editRuninfo  ->setEnabled ( saveStatus == HD_ONLY );
-
-   if ( disk_controls->db() )
-      enableSyncDB();
-}
-
-// Function to load an experiment from the DB
-void US_Convert:: loadUS3DB( void )
-{
-   // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      QMessageBox::information( this,
-             tr( "Error" ),
-             tr( "Error making the DB connection.\n" ) );
-      return;
-   }
-
-   // Present a dialog to ask user which experiment to load
-   QString runID;
-   US_GetDBRun dialog( runID );
-   if ( dialog.exec() == QDialog::Rejected )
-      return;
-
-   if ( runID == QString( "" ) )
-      return;
-
-   // Now that we have the runID, let's copy the DB info to HD
-   QDir        readDir( US_Settings::resultDir() );
-   QString     dirname = readDir.absolutePath() + "/" + runID + "/";
-   QString status = US_ConvertIO::readDBExperiment( runID, dirname );
-   if ( status  != QString( "" ) )
-   {
-      QMessageBox::information( this,
-             tr( "Error" ),
-             status + "\n" );
-      return;
-   }
-
-   // and load it
-   loadUS3Disk( dirname );
-
-   saveStatus = BOTH;         // override from loadUS3Disk()
-   ExpData.syncOK = true;     // since we just read it from there
-
-   enableControls();
-}
-
-void US_Convert::getExpInfo( void )
-{
-   ExpData.runID = le_runID -> text();
-
-   if ( disk_controls->db() )
-   {
-      // Then we're working in DB, so verify connectivity
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-     
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         QMessageBox::information( this,
-                tr( "Error" ),
-                tr( "Error making the DB connection.\n" ) );
-         return;
-      }
-     
-      // Check if the run ID already exists in the DB
-      int recStatus = ExpData.checkRunID( &db );
-     
-      // if saveStatus == BOTH, then we are editing the record from the database
-      if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) 
-      {
-         QMessageBox::information( this,
-                tr( "Error" ),
-                tr( "The current runID already exists in the database. To edit that "
-                    "information, load it from the database to start with.\n" ) );
-         return;
-      }
-   }
-
-   // OK, proceed
-
-   // Calculate average temperature
-   double sum = 0.0;
-   double count = 0.0;
-   for ( int i = 0; i < allData.size(); i++ )
-   {
-      US_DataIO2::RawData raw = allData[ i ];
-      for ( int j = 0; j < raw.scanData.size(); j++ )
-         sum += raw.scanData[ j ].temperature;
-
-      count += raw.scanData.size();
-   }
-
-   // Load information we're passing
-   ExpData.runTemp       = QString::number( sum / count );
-   char* optSysPtr       = ExpData.opticalSystem.data();
-   strncpy( optSysPtr, allData[ 0 ].type, 2 );
-   optSysPtr[ 2 ] = '\0';
-
-   // A list of unique rpms
-   ExpData.rpms.clear();
-   for ( int i = 0; i < allData.size(); i++ )
-   {
-      US_DataIO2::RawData raw = allData[ i ];
-      for ( int j = 0; j < raw.scanData.size(); j++ )
-      {
-         if ( ! ExpData.rpms.contains( raw.scanData[ j ].rpm ) )
-            ExpData.rpms << raw.scanData[ j ].rpm;
-      }
-   }
-
-   // Now sort the rpm list.  Use a modified bubble sort;
-   // the list might already be almost ordered
-   bool done = false;
-   while ( !done )
-   {
-      done = true;
-      for ( int i = 0; i < ExpData.rpms.size() - 1; i++ )
-      {
-         if ( ExpData.rpms[ i ] > ExpData.rpms[ i + 1 ] )
-         {
-            ExpData.rpms.swap( i, i + 1 );
-            done = false;
-         }
-      }
-   }
-
-   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
-                                        : US_Disk_DB_Controls::Disk;
-
-   US_ExperimentGui* expInfo = new US_ExperimentGui( true,    // signal_wanted
-                                                     ExpData,
-                                                     dbdisk );
-
-   connect( expInfo, SIGNAL( updateExpInfoSelection( US_Experiment& ) ),
-            this   , SLOT  ( updateExpInfo         ( US_Experiment& ) ) );
-
-   connect( expInfo, SIGNAL( cancelExpInfoSelection() ),
-            this   , SLOT  ( cancelExpInfo         () ) );
-
-   connect( expInfo, SIGNAL( use_db        ( bool ) ),
-                     SLOT  ( update_disk_db( bool ) ) );
-
-   expInfo->exec();
-}
-
-// Updating after user has selected info from experiment dialog
-void US_Convert::updateExpInfo( US_Experiment& d )
-{
-   // Update local copy
-   ExpData = d;
-
-   if ( this->saveStatus == NOT_SAVED )
-      this->saveStatus = EDITING;        // don't delete the data!
-
-   enableControls();
-}
-
-void US_Convert::cancelExpInfo( void )
-{
-   ExpData.clear();
-   this->saveStatus = NOT_SAVED;
-   enableControls();
-}
-
-void US_Convert::getSolutionInfo( void )
-{
-   ExpData.runID = le_runID -> text();
-
-   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
-                                        : US_Disk_DB_Controls::Disk;
-
-   US_Solution solution = triples[ currentTriple ].solution;
-
-   US_SolutionGui* solutionInfo = new US_SolutionGui( ExpData.expID,
-                                                      1,      // channelID (figure out later ?? )
-                                                      true,   // signal wanted
-                                                      dbdisk, // data source
-                                                      solution );
-
-   connect( solutionInfo, SIGNAL( updateSolutionGuiSelection( US_Solution& ) ),
-            this,         SLOT  ( updateSolutionInfo        ( US_Solution& ) ) );
-
-   connect( solutionInfo, SIGNAL( cancelSolutionGuiSelection() ),
-            this,         SLOT  ( cancelSolutionInfo        () ) );
-
-   connect( solutionInfo, SIGNAL( use_db        ( bool ) ),
-                          SLOT  ( update_disk_db( bool ) ) );
-
-   solutionInfo->exec();
-}
-
-// Updating after user has selected info from experiment dialog
-void US_Convert::updateSolutionInfo( US_Solution& s )
-{
-   // Update local copy
-   triples[ currentTriple ].solution = s;
-
-   le_solutionDesc  ->setText( triples[ currentTriple ].solution.solutionDesc  );
-
-   plot_current();
-
-   enableControls();
-}
-
-void US_Convert::cancelSolutionInfo( void )
-{
-   enableControls();
-}
-
-// Function to copy the current triple's data to all triples
-void US_Convert::tripleApplyAll( void )
-{
-   TripleInfo triple = triples[ currentTriple ];
-
-   // Copy selected fields only
-   for ( int i = 0; i < triples.size(); i++ )
-   {
-      if ( triples[ i ].excluded ) continue;
-
-      triples[ i ].centerpiece  = triple.centerpiece;
-      triples[ i ].solution     = triple.solution;
-   }
-
-   QMessageBox::information( this, tr( "C/c/w Apply to All" ),
-         tr( "The current c/c/w information has been copied to all\n" ) );
-
-   plot_current();
-
-   enableControls();
-}
-
-void US_Convert::runDetails( void )
-{
-   // Create data structures for US_RunDetails2
-   QStringList tripleDescriptions;
-   QVector< US_DataIO2::RawData >  currentData;
-   for (int i = 0; i < triples.size(); i++ )
-   {
-      if ( triples[ i ].excluded ) continue;
-
-      // Only pass non-excluded triples
-      currentData << allData[ i ];
-      tripleDescriptions << triples[ i ].tripleDesc;
-   }
-
-   US_RunDetails2* dialog
-      = new US_RunDetails2( currentData, runID, currentDir, tripleDescriptions );
-   dialog->exec();
-   qApp->processEvents();
-   delete dialog;
-}
-
-void US_Convert::changeDescription( void )
-{
-   allData[ currentTriple ].description = le_description->text();
-   allData[ currentTriple ].description = allData[ currentTriple ].description.trimmed();
-}
-
-void US_Convert::changeTriple( QListWidgetItem* )
-{
-   // Match the description to find the correct triple in memory
-   QString triple = lw_triple->currentItem()->text();
-   currentTriple = 0;
-   for ( int i = 0; i < triples.size(); i++ )
-   {
-      if ( triple == triples[ i ].tripleDesc )
-         currentTriple = i;
-   }
-   
-   le_dir          -> setText( currentDir );
-   le_description  -> setText( allData[ currentTriple ].description );
-   le_solutionDesc -> setText( triples[ currentTriple ].solution.solutionDesc  );
-   
-   // Reset maximum scan control values
-   enableScanControls();
-   
-   // The centerpiece combo box
-   cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
-   
-   // Redo plot
-   plot_current();
-}
-
-void US_Convert::setTripleInfo( void )
-{
-   // Load them into the list box
-   lw_triple->clear();
-   currentTriple = -1;          // indicates that it hasn't been selected yet
-   for (int i = 0; i < triples.size(); i++ )
-   {
-      if ( triples[ i ].excluded ) continue;
-
-      lw_triple->addItem( triples[ i ].tripleDesc );
-      if ( currentTriple == -1 ) currentTriple = i;
-   }
-
-   QListWidgetItem* item = lw_triple->item( 0 );   // select the item at row 0
-   lw_triple->setItemSelected( item, true );
-}
-
-void US_Convert::checkTemperature( void )
-{
-   // Temperature check 
-   double dt = 0.0; 
-  
-   foreach( US_DataIO2::RawData triple, allData ) 
-   { 
-       double temp_spread = triple.temperature_spread(); 
-       dt = ( temp_spread > dt ) ? temp_spread : dt; 
-   } 
-  
-   if ( dt > US_Settings::tempTolerance() ) 
-   { 
-      QMessageBox::warning( this, 
-            tr( "Temperature Problem" ), 
-            tr( "The temperature in this run varied over the course\n" 
-                "of the run to a larger extent than allowed by the\n" 
-                "current threshold (" ) 
-                + QString::number( US_Settings::tempTolerance(), 'f', 1 ) 
-                + " " + DEGC + tr( "). The accuracy of experimental\n" 
-                "results may be affected significantly." ) ); 
-   } 
-}
-
-void US_Convert::getCenterpieceIndex( int )
-{
-   triples[ currentTriple ].centerpiece = cb_centerpiece->getLogicalID();
-}
-
-void US_Convert::focus_from( double scan )
-{
-   int from = (int)scan;
-   int to   = (int)ct_to->value();
-
-   if ( from > to )
-   {
-      ct_to->disconnect();
-      ct_to->setValue( scan );
-      to = from;
-      
-      connect( ct_to, SIGNAL( valueChanged ( double ) ),
-                      SLOT  ( focus_to     ( double ) ) );
-   }
-
-   focus( from, to );
-}
-
-void US_Convert::focus_to( double scan )
-{
-   int to   = (int)scan;
-   int from = (int)ct_from->value();
-
-   if ( from > to )
-   {
-      ct_from->disconnect();
-      ct_from->setValue( scan );
-      from = to;
-      
-      connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                        SLOT  ( focus_from   ( double ) ) );
-   }
-
-   focus( from, to );
-}
-
-void US_Convert::focus( int from, int to )
-{
-   if ( from == 0 && to == 0 )
-   {
-      pb_exclude->setEnabled( false );
-      pb_include->setEnabled( false );
-   }
-   else
-   {
-      pb_exclude->setEnabled( true );
-      pb_include->setEnabled( true );
-   }
-
-   QList< int > focus;  // We don't care if -1 is in the list
-   for ( int i = from - 1; i <= to - 1; i++ ) focus << i;  
-
-   set_colors( focus );
-
-}
-
-// Function to initialize the excluded scan count
-void US_Convert::init_excludes( void )
-{
-   allExcludes.clear();
-   Excludes x;
-   for ( int i = 0; i < allData.size(); i++ )
-      allExcludes << x;
-}
-
-// Function to exclude user-selected scans
-void US_Convert::exclude_scans( void )
-{
-   Excludes excludes = allExcludes[ currentTriple ];
-
-   // Scans actually start at index 0
-   int scanStart = (int)ct_from->value() - 1;
-   int scanEnd   = (int)ct_to  ->value() - 1;
-
-   // Sometimes the user leaves this at 0
-   scanStart = ( scanStart < 0 ) ? 0 : scanStart;
-   int scanCount = scanEnd - scanStart + 1;
-
-   // Find the first scan to exclude, but account for the already excluded
-   int scanNdx = 0;
-   while ( scanNdx < scanStart )
-   {
-      if ( excludes.contains( scanNdx ) )
-         scanStart++;
-
-      scanNdx++;
-   }
-
-   // Now we have the starting point, so exclude some scans
-   int excluded = 0;
-   while ( excluded < scanCount )
-   {
-      if ( ! excludes.contains( scanNdx ) )
-      {
-         excluded++;
-         allExcludes[ currentTriple ] << scanNdx;
-      }
-
-      scanNdx++;
-   }
-
-   enableScanControls();
-
-   replot();
-}
-
-void US_Convert::include( void )
-{
-   init_excludes();
-   enableScanControls();
-
-   pb_include->setEnabled( false );
-   pb_exclude->setEnabled( false );
-
-   replot();
-}
-
-// User pressed the define subsets button while processing equil-abs data
-void US_Convert::define_subsets( void )
-{
-   subsets.clear();
-
-   pb_define  ->setEnabled( false );
-   pb_process ->setEnabled( true );
-
-   connect( picker, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                    SLOT  ( cClick  ( const QwtDoublePoint& ) ) );
-
-   step = SPLIT;
-}
-
-void US_Convert::process_subsets( void )
-{
-   if ( subsets.size() < 1 )
-   {
-      // Not enough clicks to work with
-      subsets.clear();
-      pb_process ->setEnabled( true );
-      return;
-   }
-
-   // Add the top and bottom boundaries
-   subsets << 5.7
-           << 7.3;
-
-   // Let's make sure the points are in sorted order
-   for ( int i = 0; i < subsets.size() - 1; i++ )
-      for ( int j = i + 1; j < subsets.size(); j++ )
-         if ( subsets[ i ] > subsets[ j ] )
-         {
-            double temp  = subsets[ i ];
-            subsets[ i ] = subsets[ j ];
-            subsets[ j ] = temp;
-         }
-
-   pb_process ->setEnabled( false );
-   picker   ->disconnect();
-
-   // Now let's split the triple
-   US_ProcessConvert* dialog 
-      = new US_ProcessConvert( this );
-      dialog->splitRAData( allData, triples, currentTriple, subsets );
-
-   delete dialog;
-
-   // We don't need this any more
-   subsets.clear();
-
-   // Reinitialize some things
-   setTripleInfo();
-   init_excludes();
-   enableControls();
-   
-   plot_current();
-}
-
-// User pressed the Define reference button while analyzing intensity data
-void US_Convert::define_reference( void )
-{
-   connect( picker, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                    SLOT  ( cClick  ( const QwtDoublePoint& ) ) );
-
-   reference_start = 0.0;
-   reference_end   = 0.0;
-   pb_reference ->setEnabled( false );
-
-   step = REFERENCE;
-}
-
-// Select starting point of reference scan in intensity data
-void US_Convert::start_reference( const QwtDoublePoint& p )
-{
-   reference_start   = p.x();
-
-   draw_vline( reference_start );
-   data_plot->replot();
-}
-
-// Select end point of reference scan in intensity data
-void US_Convert::process_reference( const QwtDoublePoint& p )
-{
-   // Just in case we get a second click message right away
-   if ( fabs( p.x() - reference_start ) < 0.005 ) return;
-
-   reference_end = p.x();
-   draw_vline( reference_end );
-   data_plot->replot();
-
-   pb_reference  ->setEnabled( false );
-   picker        ->disconnect();
-
-   // Double check if min < max
-   if ( reference_start > reference_end )
-   {
-      double temp     = reference_start;
-      reference_start = reference_end;
-      reference_end   = temp;
-   }
-
-   // Calculate the averages for all triples
-   PseudoCalcAvg();
-
-   // Now that we have the averages, let's replot
-   Pseudo_reference_triple = currentTriple;
-
-   // Default to displaying the first non-reference triple
-   for ( int i = 0; i < allData.size(); i++ )
-   {
-      if ( i != Pseudo_reference_triple )
-      {
-         currentTriple = i;
-         break;
-      }
-   }
-
-   lw_triple->setCurrentRow( currentTriple );
-   plot_current();
-}
-
-// Process a control-click on the plot window
-void US_Convert::cClick( const QwtDoublePoint& p )
-{
-   switch ( step )
-   {
-      case SPLIT :
-         // process equil-abs data
-         draw_vline( p.x() );
-         subsets << p.x();
-
-         break;
-
-      case REFERENCE :
-         // process reference scan
-         if ( reference_start == 0.0 )
-            start_reference( p );
-
-         else
-            process_reference( p );
-     
-      default :
-         break;
-
-   }
-}
-
-void US_Convert::PseudoCalcAvg( void )
-{
-   if ( Pseudo_averaged ) return;             // Average calculation has already been done
-
-   US_DataIO2::RawData referenceData = allData[ currentTriple ];
-   int ref_size = referenceData.scanData[ 0 ].readings.size();
-
-   for ( int i = 0; i < referenceData.scanData.size(); i++ )
-   {
-      US_DataIO2::Scan s = referenceData.scanData[ i ];
-
-      int j      = 0;
-      int count  = 0;
-      double sum = 0.0;
-      //while ( referenceData.x[ j ].radius < reference_start && j < ref_size )
-      while ( referenceData.radius( j ) < reference_start && j < ref_size )
-         j++;
-
-      //while ( referenceData.x[ j ].radius < reference_end && j < ref_size )
-      while ( referenceData.radius( j ) < reference_end && j < ref_size )
-      {
-         sum += s.readings[ j ].value;
-         count++;
-         j++;
-      }
-
-      if ( count > 0 )
-         Pseudo_averages << sum / count;
-
-      else
-         Pseudo_averages << 1.0;    // See the log10 function, later
-
-   }
-   
-   // Now average around excluded values
-   int lastGood  = 0;
-   int countBad  = 0;
-   for ( int i = 0; i < Pseudo_averages.size(); i++ )
-   {
-      // In case there are adjacent excluded scans...
-      if ( allExcludes[ currentTriple ].contains( i ) )
-         countBad++;
-
-      // Calculate average of before and after for intervening values
-      else if ( countBad > 0 )
-      {
-         double newAvg = ( Pseudo_averages[ lastGood ] + Pseudo_averages[ i ] ) / 2.0;
-         for ( int k = lastGood + 1; k < i; k++ )
-            Pseudo_averages[ k ] = newAvg;
-
-         countBad = 0;
-      }
-
-      // Normal situation -- value is not excluded
-      else
-         lastGood = i;
-
-   }
-
-   // Now calculate the pseudo-absorbance
-   RIData = allData;
-
-   for ( int i = 0; i < allData.size(); i++ )
-   {
-      US_DataIO2::RawData* currentData = &allData[ i ];
-
-      for ( int j = 0; j < currentData->scanData.size(); j++ )
-      {
-         US_DataIO2::Scan* s = &currentData->scanData[ j ];
-
-         for ( int k = 0; k < s->readings.size(); k++ )
-         {
-            US_DataIO2::Reading* r = &s->readings[ k ];
-
-            // Protect against possible inf's and nan's, if a reading 
-            // evaluates to 0 or wherever log function is undefined or -inf
-            if ( r->value < 1.0 ) r->value = 1.0;
-            r->value = log10(Pseudo_averages[ j ] / r->value );
-         }
-      }
-
-      // Let's mark pseudo-absorbance as different from RI data,
-      //  since it needs some different processing in some places
-      isPseudo = true;
-   }
-
-   // Enable intensity plot
-   pb_intensity->setEnabled( true );
-
-   Pseudo_averaged = true;
-   pb_cancelref ->setEnabled( true );
-}
-
-// Bring up a graph window showing the intensity profile
-void US_Convert::show_intensity( void )
-{
-   US_Intensity* dialog
-      = new US_Intensity( ( const QVector< double > ) Pseudo_averages );
-   dialog->exec();
-   qApp->processEvents();
-   delete dialog;
-}
-
-void US_Convert::cancel_reference( void )
-{
-   Pseudo_averaged = false;
-   allData     = RIData;
-   RIData.clear();
-
-   Pseudo_averages.clear();
-   reference_start = 0.0;
-   reference_end   = 0.0;
-
-   for ( int i = 0; i < triples.size(); i++ )
-      triples[ i ].excluded = false;
-
-   setTripleInfo();
-
-   pb_reference  ->setEnabled( true );
-   pb_cancelref  ->setEnabled( false );
-   pb_intensity  ->setEnabled( false );
-   currentTriple = 0;
-   lw_triple->setCurrentRow( currentTriple );
-
-   plot_current();
-}
-
-void US_Convert::drop_reference( void )
-{
-   triples[ currentTriple ].excluded = true;
-   setTripleInfo();           // Resets currentTriple
-
-   le_dir          -> setText( currentDir );
-   le_description  -> setText( saveDescription );
-   le_solutionDesc -> setText( triples[ currentTriple ].solution.solutionDesc  );
-
-   enableControls();
-
-   // Reset maximum scan control values
-   enableScanControls();
-
-   // The centerpiece combo box
-   cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
-
-   // Redo plot
-   plot_current();
-}
-
-// Function to save US3 data
-void US_Convert::saveUS3( void )
-{
-   if ( disk_controls->db() )
-      saveUS3DB();
-
-   else
-      saveUS3Disk();
-
-}
-
-int US_Convert::saveUS3Disk( void )
-{
-   if ( allData[ 0 ].scanData.empty() ) return NODATA; 
-
-   QDir        writeDir( US_Settings::resultDir() );
-   QString     dirname = writeDir.absolutePath() + "/" + runID + "/";
-
-   if ( saveStatus == NOT_SAVED  && 
-        writeDir.exists( runID ) )
-   {
-        QMessageBox::information( this,
-              tr( "Error" ),
-              tr( "The write directory,  " ) + dirname + 
-              tr( " already exists. Please change run ID to a unique value." ) );
-        return DUP_RUNID;
-   }
-
-   if ( ! writeDir.exists( runID ) )
-   {
-      if ( ! writeDir.mkdir( runID ) )
-      {
-         QMessageBox::information( this,
-               tr( "Error" ),
-               tr( "Cannot write to " ) + writeDir.absolutePath() );
-         return CANTOPEN;
-      }
-   }
-
-   int status;
-
-   // Check to see if we have all the data to write
-   if ( ! ExpData.syncOK )
-   {
-      status = QMessageBox::information( this,
-               tr( "Warning" ),
-               tr( "The run has not yet been associated with the database. "    ) +
-               tr( "Click 'OK' to proceed anyway, or click 'Cancel' "           ) +
-               tr( "and then click on the 'Edit Run Information'"              ) +
-               tr( "button to enter this information first.\n\n "               ),
-               tr( "&OK" ), tr( "&Cancel" ),
-               0, 0, 1 );
-      if ( status != 0 ) return NOT_WRITTEN;
-   }
-
-   // Write the data
-   bool saveGUIDs = saveStatus != NOT_SAVED ;
-   US_ProcessConvert* dialog 
-      = new US_ProcessConvert( this );
-      dialog->writeConvertedData( status, allData, ExpData, triples, 
-                                  allExcludes, runType, runID, dirname, saveGUIDs );
-   delete dialog;
-
-   // How many files should have been written?
-   int fileCount = 0;
-   for ( int i = 0; i < triples.size(); i++ )
-      if ( ! triples[ i ].excluded ) fileCount++;
-
-   // Now try to communicate status
-   if ( status == NOXML )
-   {
-      // Main xml data is missing
-      QMessageBox::information( this,
-            tr( "Warning" ),
-            tr( "The run information file was not written. " ) +
-            tr( "Please click on the " ) +
-            tr( "'Associate Run with DB' button \n\n " )    +
-            QString::number( fileCount ) + " "                + 
-            runID + tr( " files written." ) );
-      return( status );
-   }
-
-   else if ( status == PARTIAL_XML )
-   {
-      // xml data is missing for one or more triples
-      QMessageBox::information( this,
-            tr( "Warning" ),
-            tr( "Solution information is incomplete. Please click on the " ) +
-            tr( "'Manage Solutions' button for each "  ) +
-            tr( "cell, channel, and wavelength combination \n\n " ) +
-            QString::number( fileCount ) + " "                + 
-            runID + tr( " files written." ) );
-      return( status );
-   }
-
-   else if ( status != OK )
-   {
-      // Error from writeData.
-      // Try to delete the file and tell the user
-      return( status );
-   }
-
-   // Status is OK
-   QMessageBox::information( this,
-         tr( "Success" ),
-         QString::number( fileCount ) + " " + 
-         runID + tr( " files written." ) );
-  
-   if ( saveStatus == NOT_SAVED )
-      saveStatus = HD_ONLY;
-
-   enableRunIDControl( false );
-
-   return( OK );
-}
-
-void US_Convert::saveUS3DB( void )
-{
-   // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      QMessageBox::information( this,
-             tr( "Error" ),
-             tr( "Database connectivity error" ) );
-
-      return;
-   }
-
-   // First check some of the data with the DB
-   int status = US_ConvertIO::checkDiskData( ExpData, triples );
-   if ( status == BADGUID )     // The most common problem
-   {
-      QMessageBox::information( this,
-            tr( "Error" ),
-            tr( "One or more GUID's were not found in the database.\n" ) +
-            tr( "Most likely the run has not been saved to the DB.\n") );
-   }
-
-   // Save updated files and prepare to transfer to DB
-   status = saveUS3Disk();
-   if ( status != OK )
-      return;
-
-   QString error = QString( "" );
-
-   // Get the directory where the auc files are
-   QDir        resultDir( US_Settings::resultDir() );
-   QString     dir = resultDir.absolutePath() + "/" + ExpData.runID + "/";
-
-   if ( ! resultDir.exists( ExpData.runID ) )
-   {
-      QMessageBox::information( this,
-            tr( "Error" ),
-            tr( "Cannot read from " ) + dir ); // aucDir.absolutePath() );
-      return;
-   }
-
-   QStringList nameFilters = QStringList( "*.auc" );
-
-   QDir readDir( dir );
-
-   QStringList files =  readDir.entryList( nameFilters, 
-         QDir::Files | QDir::Readable, QDir::Name );
-
-   if ( files.size() == 0 )
-   {
-      QMessageBox::warning( this,
-            tr( "No Files Found" ),
-            tr( "There were no files of the form *.auc\n"  
-                "found in the specified directory." ) );
-      return;
-   }
-
-   if ( saveStatus == BOTH )
-   {
-      // If saveStatus == BOTH already, then it came from the db to begin with, so it's
-      // ok to update it
-      status = ExpData.saveToDB( true, &db );
-   }
-
-   else if ( ExpData.checkRunID( &db ) != US_DB2::OK )
-   {
-      // No database records with this runID found
-      status = ExpData.saveToDB( false, &db );
-   }
-
-   else
-   {
-      // User is trying to overwrite a runID that is already in the DB
-      QMessageBox::warning( this,
-            tr( "Duplicate runID" ),
-            tr( "This runID already exists in the database. To edit that "  
-                "run information, load it from there to begin with.\n" ) );
-      return;
-   }
-
-   if ( status == US_DB2::NO_PROJECT )
-   {
-      QMessageBox::warning( this,
-            tr( "Project missing" ),
-            tr( "The project associated with this experiment could not be "
-                "updated or added to the database.\n" ) );
-      return;
-   }
-
-   else if ( status == US_DB2::NO_EXPERIMENT )
-   {
-      QMessageBox::warning( this,
-            tr( "Experiment missing" ),
-            tr( "The experiment could not be "
-                "updated or added to the database.\n" ) );
-      return;
-   }
-
-   else if ( status == US_DB2::DUPFIELD )
-   {
-      QMessageBox::warning( this,
-            tr( "Duplicate runID" ),
-            tr( "The runID already exists in the database.\n" ) );
-      return;
-   }
-
-   else if ( status != US_DB2::OK )
-   {
-      QMessageBox::warning( this,
-            tr( "Problem saving experiment" ),
-            tr( "Unspecified database error: " ) + db.lastError() );
-      return;
-   }
-
-   QString writeStatus = US_ConvertIO::writeRawDataToDB( ExpData, triples, dir );
-
-   if ( ! writeStatus.isEmpty() )
-   {
-      QMessageBox::warning( this,
-            tr( "Problem saving experiment" ),
-            tr( "Unspecified database error: " ) + writeStatus );
-      return;
-   }
-
-   QMessageBox::information( this, tr( "Record saved" ),
-         tr( "The run information has been saved to the DB successfully \n" ) );
-
-   saveStatus = BOTH;
-   enableRunIDControl( false );
-
-}
-
-bool US_Convert::read( void )
-{
-   // Ask for data directory
-   QString dir = QFileDialog::getExistingDirectory( this, 
-         tr( "Raw Data Directory" ),
-         US_Settings::dataDir(),
-         QFileDialog::DontResolveSymlinks );
-
-   if ( dir.isEmpty() ) return( false ); 
-
-   dir.replace( "\\", "/" );  // WIN32 issue
-
-   return( read( dir ) );
-}
-
-bool US_Convert::read( QString dir )
-{
-   // Get legacy file names
+   // Get legacy file names and set channels
    QDir d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
    d.makeAbsolute();
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
-   // Set the runID and directory
-   QStringList components = dir.split( "/", QString::SkipEmptyParts );
-   runID    = components.last();
-   le_runID ->setText( runID );
-   le_runID2->setText( runID );
-   le_dir   ->setText( dir );
-   currentDir  = QString( dir );
+   QStringList files = d.entryList( QDir::Files );
 
-   oldRunType = runType;            // let's see if the runType changes
+   // Maybe dir had only directories ( i.e., not empty )
+   if ( files.size() < 1 ) return;
 
-   // Read the data
-   US_ProcessConvert* dialog 
-      = new US_ProcessConvert( this );
-      dialog->readLegacyData( dir, legacyData, runType );
-   delete dialog;
+   runType = files[ 0 ].right( 3 ).left( 2 ).toUpper(); // 1st 2 chars of extention
+   QStringList fileList;
+   QStringList channels;
+   QString f;
 
-   if ( legacyData.size() == 0 ) return( false );
+   foreach ( f, files )
+   {
+      // Look for a proper filename match:
+      // Optional channel + 4 to 6 digits + dot + file type + cell number
 
-   // if runType has changed, let's clear out xml data too
-   if ( oldRunType != runType ) ExpData.clear();
+      QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
+      
+      if ( rx.indexIn( f.toUpper() ) >= 0 )
+      {
+         fileList << f;
+ 
+         // Parse the filtered file list to determine cells and channels
+         QChar c = f.at( 0 ).toUpper();
+         if ( c.isLetter() && ! channels.contains( c ) )
+            channels << c;
+      }
+   }
 
-   return( true );
+   if ( channels.isEmpty() ) channels << "A";
+
+   // Now read the data.
+   for ( int i = 0; i < fileList.size(); i++ )
+   {
+      US_DataIO2::BeckmanRawScan data;
+      US_DataIO2::readLegacyFile( dir + fileList[ i ], data );
+
+      // Add channel
+      QChar c = fileList[ i ].at( 0 );  // Get 1st character
+
+      data.channel = ( c.isDigit() ) ? 'A' : c.toAscii();
+
+      if ( runType == "RI" )                // Split out the two readings in RI data
+      {
+         US_DataIO2::BeckmanRawScan data2 = data;  // Alter to store second dataset
+         for ( int j = 0; j < data.readings.size(); j++ )
+         {
+            data2.readings[ j ].value  = data2.readings[ j ].stdDev;   // Reading 2 in here for RI
+            data.readings [ j ].stdDev = 0.0;
+            data2.readings[ j ].stdDev = 0.0;
+         }
+
+         data2.channel = 'B';
+
+         rawLegacyData << data;
+         rawLegacyData << data2;
+      }
+
+      else
+      {
+         rawLegacyData << data;
+      }
+   }
 }
 
-bool US_Convert::convert( void )
+void US_Convert::convertLegacyData( 
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     QVector< US_DataIO2::RawData  >&     rawConvertedData,
+     QList< TripleInfo >&     triples,
+     QString                              runType,
+     double                               tolerance 
+     ) 
 {
-   double tolerance = (double)ct_tolerance->value() + 0.05;    // to stay between wl numbers
+   setTriples( rawLegacyData, triples, runType, tolerance );
 
-   // Convert the data
-   US_ProcessConvert* dialog 
-      = new US_ProcessConvert( this );
-      dialog->convertLegacyData( legacyData, allData, triples, 
-                                 runType, tolerance );
-   delete dialog;
+   US_DataIO2::RawData newRawData;     // filtered legacy data in new raw format
 
-   if ( allData.size() == 0 ) return( false );
+   rawConvertedData.clear();
 
-   le_description->setText( allData[ 0 ].description );
-   saveDescription = QString( allData[ 0 ].description ); 
+   if ( triples.size() == 1 )
+   {
+      convert( rawLegacyData, newRawData, triples[ 0 ].tripleDesc, runType, tolerance );
 
-   // Now let's show the user the first one
-   currentTriple = -1;
+      rawConvertedData << newRawData;
+   }
+
+   else
+   {
+      // Now convert the data.
+      for ( int i = 0; i < triples.size(); i++ )
+      {
+         // Convert data for this cell / channel / wavelength
+         convert( rawLegacyData, newRawData, triples[ i ].tripleDesc, runType, tolerance );
+
+         // and save it
+         rawConvertedData << newRawData;
+      }
+   }
+}
+
+void US_Convert::writeConvertedData(
+     int& status,
+     QVector< US_DataIO2::RawData >& rawConvertedData,
+     US_Experiment& ExpData,
+     QList< TripleInfo >& triples,
+     QVector< Excludes >& allExcludes,
+     QString runType,
+     QString runID,
+     QString dirname,
+     bool saveGUIDs
+     )
+{
+   if ( rawConvertedData[ 0 ].scanData.empty() ) 
+   {
+      status = NODATA;
+      return;
+   }
+
+   // Write the data
+
+   // Make sure directory is empty
+   QDir d( dirname );
+   d.remove( "*" );
+
    for ( int i = 0; i < triples.size(); i++ )
    {
       if ( triples[ i ].excluded ) continue;
 
-      if ( currentTriple == -1 ) currentTriple = i;
-   }
+      QString     triple     = triples[ i ].tripleDesc;
+      QStringList parts      = triple.split(" / ");
 
-   return( true );
-}
+      QString     cell       = parts[ 0 ];
+      QString     channel    = parts[ 1 ];
+      QString     filename;
 
-bool US_Convert::centerpieceInfo( void )
-{
-   if ( disk_controls->db() )
-      return centerpieceInfoDB();
-
-   else
-      return centerpieceInfoDisk();
-}
-
-// Function to get abstractCenterpiece names from DB
-bool US_Convert::centerpieceInfoDB( void )
-{
-   // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      QMessageBox::information( this,
-             tr( "Error" ),
-             tr( "Database connectivity error" ) );
-
-      return( false );
-   }
-
-   QStringList q( "get_abstractCenterpiece_names" );
-   db.query( q );
-
-   QList<listInfo> options;
-   while ( db.next() )
-   {
-      struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
-      options << option;
-   }
-
-   cb_centerpiece->clear();
-   if ( options.size() > 0 )
-      cb_centerpiece->addOptions( options );
-
-   return true;
-}
-
-// Function to get abstractCenterpiece names from disk
-// Right now use function that gets info from flat file,
-// but later change to xml
-bool US_Convert::centerpieceInfoDisk( void )
-{
-   // First figure out the xml file name, and try to open it
-   //QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
-   QString home = US_Settings::appBaseDir();
-   QFile f( home + "/etc/abstractCenterpieces.xml");
-
-   if ( ! f.open( QIODevice::ReadOnly ) ) return false;
-
-   QList<listInfo> options;
-   QXmlStreamReader xml( &f );
-   while ( ! xml.atEnd() )
-   {
-      xml.readNext();
-
-      if ( xml.isStartElement() )
+      if ( runType == "WA" )
       {
-         if ( xml.name() == "abstractCenterpiece" )
-         {
-            struct listInfo option;
-            QXmlStreamAttributes a = xml.attributes();
-            option.ID   = a.value("id").toString();
-            option.text = a.value("name").toString();
-            options << option;
-         }
-      }
-   }
-
-   bool error = xml.hasError();
-   f.close();
-
-   if ( error ) return false;
-
-   cb_centerpiece->clear();
-   if ( options.size() > 0 )
-   {
-      // Let's sort them so they come up like the DB
-      for ( int i = 0; i < options.size() - 1; i++ )
-         for ( int j = i + 1; j < options.size(); j++ )
-            if ( options[ i ].text > options[ j ].text )
-               options.swap( i, j );
-
-      cb_centerpiece->addOptions( options );
-   }
-
-   return true;
-}
-
-void US_Convert::plot_current( void )
-{
-   US_DataIO2::RawData currentData = allData[ currentTriple ];
-
-   if ( currentData.scanData.empty() ) return;
-
-   plot_titles();
-
-   // Plot current data for cell / channel / wavelength triple
-   plot_all();
-   
-   // Set the Scan spin boxes
-   enableScanControls();
-}
-
-void US_Convert::plot_titles( void )
-{
-   US_DataIO2::RawData currentData = allData[ currentTriple ];
-
-   QString triple         = triples[ currentTriple ].tripleDesc;
-   QStringList parts      = triple.split(" / ");
-
-   QString     cell       = parts[ 0 ];
-   QString     channel    = parts[ 1 ];
-   QString     wl         = parts[ 2 ];
-
-   // Plot Title and legends
-   QString title;
-   QString xLegend = "Radius (in cm)";
-   QString yLegend = "Absorbance";
-
-   if ( strncmp( currentData.type, "RA", 2 ) == 0 )
-   {
-      title = "Radial Absorbance Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Wavelength: " + wl;
-   }
-
-   else if ( ( strncmp( currentData.type, "RI", 2 ) == 0 ) && isPseudo )
-   {
-      title = "Pseudo Absorbance Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Wavelength: " + wl;
-   }
-
-   else if ( strncmp( currentData.type, "RI", 2 ) == 0 )
-   {
-      title = "Radial Intensity Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Wavelength: " + wl;
-      yLegend = "Radial Intensity";
-   }
-
-   else if ( strncmp( currentData.type, "IP", 2 ) == 0 )
-   {
-      title = "Interference Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Wavelength: " + wl;
-      yLegend = "Fringes";
-   }
-
-   else if ( strncmp( currentData.type, "FI", 2 ) == 0 )
-   {
-      title = "Fluorescence Intensity Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Wavelength: " + wl;
-      yLegend = "Fluorescence Intensity";
-   }
-      
-   else if ( strncmp( currentData.type, "WA", 2 ) == 0 )
-   {
-      title = "Wavelength Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Radius: " + wl;
-      xLegend = "Wavelength";
-      yLegend = "Value";
-   }
-
-   else if ( strncmp( currentData.type, "WI", 2 ) == 0 )
-   {
-      title = "Wavelength Intensity Data\nRun ID: " + runID + "\n"  +
-              "Cell: " + cell + " Radius: " + wl;
-      xLegend = "Wavelength";
-      yLegend = "Value";
-   }
-
-   else
-      title = "File type not recognized";
-   
-   data_plot->setTitle( title );
-   data_plot->setAxisTitle( QwtPlot::yLeft, yLegend );
-   data_plot->setAxisTitle( QwtPlot::xBottom, xLegend );
-
-}
-
-void US_Convert::plot_all( void )
-{
-   US_DataIO2::RawData currentData = allData[ currentTriple ];
-
-   data_plot->detachItems();
-   grid = us_grid( data_plot );
-
-   int size = currentData.scanData[ 0 ].readings.size();
-
-   double* r = new double[ size ];
-   double* v = new double[ size ];
-
-   double maxR = -1.0e99;
-   double minR =  1.0e99;
-   double maxV = -1.0e99;
-   double minV =  1.0e99;
-
-   for ( int i = 0; i < currentData.scanData.size(); i++ )
-   {
-      Excludes currentExcludes = allExcludes[ currentTriple ];
-      if ( currentExcludes.contains( i ) ) continue;
-      US_DataIO2::Scan* s = &currentData.scanData[ i ];
-
-//qDebug() << "readings.size = " << size;
-      for ( int j = 0; j < size; j++ )
-      {
-         r[ j ] = currentData.radius( j );
-         v[ j ] = s->readings  [ j ].value;
-
-//qDebug() << "(r, v) = ( " << r[j] << ", " << v[j] << ")";
-         if ( v[ j ] > 1.0e99 || isnan( v[ j ] ) )
-         {
-            // For some reason v[j] is going off the scale
-            // Don't know why, but filter out for now
-            qDebug() << "(r, v) = ( " << r[j] << ", " << v[j] << ")"
-                     << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
-                     << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
-            continue;
-         }
-
-         maxR = max( maxR, r[ j ] );
-         minR = min( minR, r[ j ] );
-         maxV = max( maxV, v[ j ] );
-         minV = min( minV, v[ j ] );
+          double r       = parts[ 2 ].toDouble() * 1000.0;
+          QString radius = QString::number( (int) round( r ) );
+          filename       = runID      + "." 
+                         + runType    + "." 
+                         + cell       + "." 
+                         + channel    + "." 
+                         + radius     + ".auc";
       }
 
-      QString title = tr( "Raw Data at " )
-         + QString::number( s->seconds ) + tr( " seconds" );
-
-      QwtPlotCurve* c = us_curve( data_plot, title );
-      c->setData( r, v, size );
-
-   }
-
-   // Reset the scan curves within the new limits
-   double padR = ( maxR - minR ) / 30.0;
-   double padV = ( maxV - minV ) / 30.0;
-   
-   data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
-   data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
-   
-   show_plot_progress = false;
-   data_plot->replot();
- 
-   delete [] r;
-   delete [] v;
-}
-
-void US_Convert::replot( void )
-{
-  plot_all();
-}
-
-void US_Convert::set_colors( const QList< int >& focus )
-{
-   // Get pointers to curves
-   QwtPlotItemList        list = data_plot->itemList();
-   QList< QwtPlotCurve* > curves;
-  
-   for ( int i = 0; i < list.size(); i++ )
-   {
-      if ( list[ i ]->title().text().contains( "Raw" ) )
-         curves << dynamic_cast< QwtPlotCurve* >( list[ i ] );
-   }
-  
-   QPen   p   = curves[ 0 ]->pen();
-   QBrush b   = curves[ 0 ]->brush();
-   QColor std = US_GuiSettings::plotCurve();
-   
-   // Mark these scans in red
-   for ( int i = 0; i < curves.size(); i++ )
-   {
-      if ( focus.contains( i ) )
-      {
-         p.setColor( Qt::red );
-      }
       else
       {
-         p.setColor( std );
-         b.setColor( std );
+          QString wavelength = parts[ 2 ];
+          filename           = runID      + "." 
+                             + runType    + "." 
+                             + cell       + "." 
+                             + channel    + "." 
+                             + wavelength + ".auc";
       }
 
-      curves[ i ]->setPen  ( p );
-      curves[ i ]->setBrush( b );
+      // Let's see if there is a triple guid already (from a previous save)
+      // Otherwise the rawGUID characters should already be initialized to 0
+      QString uuidc = 
+         US_Util::uuid_unparse( (unsigned char*) rawConvertedData[ i ].rawGUID );
+
+      if ( saveGUIDs && uuidc != "00000000-0000-0000-0000-000000000000" ) 
+      {
+         // Make sure xml file matches
+         memcpy( triples [ i ].tripleGUID, (char*) rawConvertedData[ i ].rawGUID, 16 );
+      }
+
+      else
+      {
+         // Calculate and save the guid for this triple
+         uchar uuid[ 16 ];
+         QString uuid_string = US_Util::new_guid();
+         US_Util::uuid_parse( uuid_string, uuid );
+         memcpy( rawConvertedData[ i ].rawGUID, (char*) uuid, 16 );
+         memcpy( triples [ i ].tripleGUID, (char*) uuid, 16 );
+      }
+
+      // Same with solutionGUID
+      QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+      if ( ( triples[ i ].solution.saveStatus == US_Solution::NOT_SAVED  ) || 
+           ( ! rx.exactMatch( triples[ i ].solution.solutionGUID )       ) )
+      {
+         triples[ i ].solution.solutionGUID = US_Util::new_guid();
+         triples[ i ].solution.solutionDesc = "New Solution";
+      }
+
+      // Save the filename of this triple
+      triples[ i ].tripleFilename = filename;
+
+      // Create a copy of the current dataset so we can alter it
+      US_DataIO2::RawData  currentData     = rawConvertedData[ i ];
+      Excludes currentExcludes = allExcludes     [ i ];
+
+      // Now recopy scans, except for excluded ones
+      currentData.scanData.clear();
+      QVector< US_DataIO2::Scan > sourceScans = rawConvertedData[ i ].scanData;
+      for ( int j = 0; j < sourceScans.size(); j++ )
+      {
+         if ( ! currentExcludes.contains( j ) )
+            currentData.scanData << sourceScans[ j ];  // copy this scan
+      }
+
+      // Now write altered dataset
+      status = US_DataIO2::writeRawData( dirname + filename, currentData );
+
+      if ( status !=  US_DataIO2::OK ) break;
    }
 
-   data_plot->replot();
+   if ( status != OK )
+   {
+      // Try to delete the files and tell the user
+      return;
+   }
+
+   // Now try to write the xml file
+   status = US_ConvertIO::writeXmlFile( 
+            ExpData, triples, runType, runID, dirname );
+
 }
 
-void US_Convert::draw_vline( double radius )
+int  US_Convert::reloadUS3Data(
+     QString dir,
+     QVector< US_DataIO2::RawData >& rawConvertedData,
+     US_Experiment& ExpData,
+     QList< TripleInfo >& triples,
+     QString& runType ,
+     QString runID
+     )
 {
-   double r[ 2 ];
+   rawConvertedData.clear();
 
-   r[ 0 ] = radius;
-   r[ 1 ] = radius;
-   QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
+   QStringList nameFilters = QStringList( "*.auc" );
 
-   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
+   QDir d( dir );
 
-   double v[ 2 ];
-   v [ 0 ] = y_axis->upperBound() - padding;
-   v [ 1 ] = y_axis->lowerBound() + padding;
+   QStringList files =  d.entryList( nameFilters, 
+         QDir::Files | QDir::Readable, QDir::Name );
 
-   QwtPlotCurve* v_line = us_curve( data_plot, "V-Line" );
-   v_line->setData( r, v, 2 );
+   if ( files.size() == 0 )
+      return NODATA;
 
-   QPen pen = QPen( QBrush( Qt::white ), 2.0 );
-   v_line->setPen( pen );
+   // Get runType
+   QStringList part = files[ 0 ].split( "." );
+   runType = part[ 1 ];
 
-   data_plot->replot();
+   // Set up cell / channel / wavelength combinations
+   triples.clear();
+   ExpData.clear();
+   for ( int i = 0; i < files.size(); i++ )
+   {
+      part.clear();
+      part = files[ i ].split( "." );
+
+      TripleInfo t;
+      t.tripleDesc = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
+      t.excluded   = false;
+      triples << t;
+   }
+
+   // Read all data
+   QString file;
+   foreach ( file, files )
+   {
+      QString filename = dir + file;
+      US_DataIO2::RawData data;
+      
+      int result = US_DataIO2::readRawData( filename, data );
+      if ( result != US_DataIO2::OK )
+         return NOAUC;
+
+      rawConvertedData << data;
+      data.scanData.clear();
+   }
+
+   // Now try to read the xml file
+   int status = US_ConvertIO::readXmlFile( 
+                ExpData, triples, runType, runID, dir );
+
+   return status;
 }
 
-void US_Convert::db_error( const QString& error )
+void US_Convert::convert( 
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     US_DataIO2::RawData&                 newRawData,
+     QString                              triple,
+     QString                              runType,
+     double                               tolerance )
 {
-   QMessageBox::warning( this, tr( "Database Problem" ),
-         tr( "Database returned the following error: \n" ) + error );
+   // Convert the data into the UltraScan3 data structure
+   QStringList parts      = triple.split(" / ");
+
+   int         cell       = parts[ 0 ].toInt();
+   char        channel    = parts[ 1 ].toAscii()[ 0 ];
+   double      wavelength = parts[ 2 ].toDouble();
+
+   QList< US_DataIO2::BeckmanRawScan > ccwLegacyData;
+
+   // Get a list of the data that matches the cell / channel / wl
+   ccwLegacyData.clear();
+   newRawData.scanData.clear();
+
+   for ( int i = 0; i < rawLegacyData.size(); i++ )
+   {
+      US_DataIO2::BeckmanRawScan data = rawLegacyData[ i ];
+
+      if ( data.cell == cell       &&
+           data.channel == channel &&
+           fabs ( data.t.wavelength - wavelength ) < tolerance )
+         ccwLegacyData << data;
+   }
+
+   // Sort the list according to time.  Use a simple bubble sort
+   for ( int i = 0; i < ccwLegacyData.size(); i++ )
+   {
+      for ( int j = i + 1; j < ccwLegacyData.size(); j++ )
+      {
+         if ( ccwLegacyData[ j ].seconds < ccwLegacyData[ i ].seconds ) 
+            ccwLegacyData.swap( i, j );
+      }
+   }
+
+   if ( ccwLegacyData.isEmpty() ) return ; 
+
+   strncpy( newRawData.type, runType.toAscii().constData(), 2 );
+   memset( newRawData.rawGUID, 0, 16 );           // Initialize to 0's
+   newRawData.cell        = cell;
+   newRawData.channel     = channel;
+   newRawData.description = ccwLegacyData[ 0 ].description;
+   
+   // Get the min and max radius
+   double min_radius = 1.0e99;
+   double max_radius = 0.0;
+   double max_size   = 0.0;
+
+   // Calculate mins and maxes for proper scaling
+   for ( int i = 0; i < rawLegacyData.size(); i++ )
+   {
+      double first = rawLegacyData[ i ].readings[ 0 ].d.radius;
+      uint   size  = rawLegacyData[ i ].readings.size();
+      double last  = rawLegacyData[ i ].readings[ size - 1 ].d.radius; 
+
+      min_radius = min( min_radius, first );
+      max_radius = max( max_radius, last  );
+      max_size   = max( max_size,   size  );
+   }
+
+   // Set the distance between readings
+   double delta_r;
+   if ( runType == "IP" )
+   {
+      // Get the actual delta out of the header lines
+      QStringList descriptionParts = rawLegacyData[ 0 ].description.split( " ", QString::SkipEmptyParts );
+      QString proto = descriptionParts[ 1 ].toAscii();
+      proto.remove( "," );
+   
+      // Some IP data doesn't have this
+      if ( proto.toDouble() == 0.0 )
+         delta_r = ( max_radius - min_radius ) / ( max_size - 1 );
+
+      else
+         delta_r = proto.toDouble();
+
+   }
+
+   else
+      delta_r = 0.001;
+
+   // Calculate the radius vector
+   int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
+   double radius = min_radius;
+   for ( int j = 0; j < radius_count; j++ )
+   {
+      newRawData.x << US_DataIO2::XValue( radius );
+      radius += delta_r;
+   }
+      
+   // Convert the scans
+   for ( int i = 0; i < ccwLegacyData.size(); i++ )
+   {
+      // Start loading the data
+      US_DataIO2::Scan s;
+      s.temperature = ccwLegacyData[ i ].temperature;
+      s.rpm         = ccwLegacyData[ i ].rpm;
+      s.seconds     = ccwLegacyData[ i ].seconds;
+      s.omega2t     = ccwLegacyData[ i ].omega2t;
+      s.wavelength  = ccwLegacyData[ i ].t.wavelength;
+      s.delta_r     = delta_r;
+
+      // Readings here and interpolated array
+      int bitmap_size = ( radius_count + 7 ) / 8;
+      uchar* interpolated = new uchar[ bitmap_size ];
+      bzero( interpolated, bitmap_size );
+
+      /*
+      There are two indexes needed here.  The new radius as iterated
+      from min_radius to max_radius and the pointer to the current 
+      scan readings is j.  
+
+      The old scan reading is ccwLegacyData[ i ]->readings[ j ]
+
+      If the current new radius is within 0.0003 of the i
+      ccwLegacyData[ i ]->readings[ j ].d.radius
+         copy ccwLegacyData[ i ]->readings[ j ].value into the new reading
+         copy ccwLegacyData[ i ]->readings[ j ].stdDev into the new reading
+         increment j
+
+      If the current new radius is less than i
+      ccwLegacyData[ i ]->readings[ 0 ].d.radius,
+      then 
+         copy ccwLegacyData[ i ]->readings[ 0 ].value into the new reading
+         set the std dev to 0.0.
+         set the interpolated flag
+      
+      If the current new radius is greater than 
+      ccwLegacyData[ i ]->readings[ last() ].d.radius
+         copy ccwLegacyData[ i ]->readings[ last ].value into the new reading
+         set the std dev to 0.0.
+         set the interpolated flag
+
+      else
+         interplate between ccwLegacyData[ i ]->readings[ j ] and 
+                            ccwLegacyData[ i ]->readings[ j -1 ]
+         set the std dev to 0.0.
+         set the interpolated flag
+
+      Append the new reading and continue.
+      */
+
+      radius = min_radius;
+      double r0     = ccwLegacyData[ i ].readings[ 0 ].d.radius;
+      int    rCount = ccwLegacyData[ i ].readings.size();       
+      double rLast  = ccwLegacyData[ i ].readings[ rCount - 1 ].d.radius;
+      
+      int    k      = 0;
+
+      for ( int j = 0; j < radius_count; j++ )
+      {
+         US_DataIO2::Reading r;
+         double             dr = 0.0;
+
+         if ( k < rCount )
+            dr = radius - ccwLegacyData[ i ].readings[ k ].d.radius;
+
+         if ( runType == "IP" )
+         {
+            if ( dr > -3.0e-4 && k < rCount ) // No interpolation here
+            {
+               r.value  = ccwLegacyData[ i ].readings[ k ].value;
+               k++;
+            }
+
+            else if ( radius < r0 ) // Before the first
+            {
+               r.value = ccwLegacyData[ i ].readings[ 0 ].value;
+               setInterpolated( interpolated, j );
+            }
+
+            else if ( radius > rLast || k >= rCount ) // After the last
+            {
+               r.value = ccwLegacyData[ i ].readings[ rCount - 1 ].value;
+               setInterpolated( interpolated, j );
+            }
+
+            r.stdDev = 0.0;
+         }
+
+         else if ( dr > -3.0e-4   &&  k < rCount ) // A value
+         {
+            r.value  = ccwLegacyData[ i ].readings[ k ].value;
+            r.stdDev = ccwLegacyData[ i ].readings[ k ].stdDev;
+            k++;
+         }
+         else if ( radius < r0 ) // Before the first
+         {
+            r.value  = ccwLegacyData[ i ].readings[ 0 ].value;
+            r.stdDev = 0.0;
+            setInterpolated( interpolated, j );
+         }
+         else if ( radius > rLast  ||  k >= rCount ) // After the last
+         {
+            r.value  = ccwLegacyData[ i ].readings[ rCount - 1 ].value;
+            r.stdDev = 0.0;
+            setInterpolated( interpolated, j );
+         }
+         else  // Interpolate the value
+         {
+            double dv = ccwLegacyData[ i ].readings[ k     ].value - 
+                        ccwLegacyData[ i ].readings[ k - 1 ].value;
+            
+            double dR = ccwLegacyData[ i ].readings[ k     ].d.radius -
+                        ccwLegacyData[ i ].readings[ k - 1 ].d.radius;
+
+            dr = radius - ccwLegacyData[ i ].readings[ k - 1 ].d.radius;
+
+            r.value  = ccwLegacyData[ i ].readings[ k - 1 ].value + dr * dv / dR;
+            r.stdDev = 0.0;
+
+            setInterpolated( interpolated, j );
+         }
+
+         s.readings <<  r;
+         radius += delta_r;
+      }
+      s.interpolated = QByteArray( (char*)interpolated, bitmap_size );
+      delete [] interpolated;
+
+      newRawData.scanData <<  s ;
+   }
+}
+
+// Subdivides existing RA triple into subsets
+void US_Convert::splitRAData( 
+     QVector< US_DataIO2::RawData >&  rawConvertedData,
+     QList< TripleInfo >& triples,
+     int                              currentTriple,
+     QList< double >&                 subsets )
+{
+   // Create a place to store the old data temporarily
+   QVector< US_DataIO2::RawData >* oldData = new QVector< US_DataIO2::RawData >;
+   *oldData = rawConvertedData;
+   rawConvertedData.clear();
+
+   // A pointer to the individual old RawData records
+   US_DataIO2::RawData* oldRawData = oldData->data();
+
+   QList< TripleInfo > oldTriples = triples;
+   triples.clear();
+
+   for ( int i = 0; i < oldData->size(); i++ )
+   {
+      if ( i != currentTriple )
+      {
+         // Copy this triple over as is
+         rawConvertedData << oldRawData[ i ];
+         triples << oldTriples[ i ];
+      }
+
+      else
+      {
+         for ( int j = 1; j < subsets.size(); j++ )  // 4 limits define 3 regions
+         {
+            US_DataIO2::RawData newRawData;
+
+            // Modify the raw data information
+            strncpy( newRawData.type, oldRawData[ i ].type, 2 );
+            memset( newRawData.rawGUID, 0, 16 );
+            newRawData.cell        = oldRawData[ i ].cell;
+            newRawData.channel     = oldRawData[ i ].channel + (j-1) * 2;
+            newRawData.description = oldRawData[ i ].description;
+
+            // Copy the radius subset just once
+            for ( int k = 0; k < oldRawData[ i ].x.size(); k++ )
+               if ( ( oldRawData[ i ].radius( k ) >= subsets[ j - 1 ] ) &&
+                    ( oldRawData[ i ].radius( k ) <= subsets[ j ]     ) )
+                  newRawData.x << oldRawData[ i ].radius( k );
+
+            // Now copy the parent scan information
+            newRawData.scanData.clear();
+            for ( int k = 0; k < oldRawData[ i ].scanData.size(); k++ )
+               newRawData.scanData << newScanSubset( oldRawData[ i ].scanData[ k ] ,
+                                                     oldRawData[ i ].x ,
+                                                     subsets[ j - 1 ] ,
+                                                     subsets[ j ] );
+
+            // Add to the new data set
+            rawConvertedData << newRawData;
+
+            // Modify the triple information
+            TripleInfo t = oldTriples[ i ];
+            QStringList parts        = t.tripleDesc.split(" / ");
+            QString     wavelength   = parts[ 2 ];
+
+            t.tripleDesc = QString::number( newRawData.cell    ) + " / " +
+                           QString        ( newRawData.channel ) + " / " +
+                           wavelength;
+            triples << t;
+         }
+
+      }
+   }
+
+   // Finished with the old data now
+   oldData->clear();
+   delete oldData;
+
+   // Renumber the triple ID's
+   for ( int i = 0; i < triples.size(); i++ )
+      triples[ i ].tripleID = i;
+}
+
+// Returns a new scan, but only with readings in a specified range
+US_DataIO2::Scan US_Convert::newScanSubset(
+     US_DataIO2::Scan& oldScan,
+     QVector< US_DataIO2::XValue >& x, 
+     double r_start,
+     double r_end )
+{
+   US_DataIO2::Scan s;
+
+   s.temperature = oldScan.temperature;
+   s.rpm         = oldScan.rpm;
+   s.seconds     = oldScan.seconds;
+   s.omega2t     = oldScan.omega2t;
+   s.wavelength  = oldScan.wavelength;
+   s.plateau     = oldScan.plateau;
+   s.delta_r     = oldScan.delta_r;
+
+   // Now copy the readings that are in this subset
+   s.readings.clear();
+   int first_reading = 0;
+   for ( int i = 0; i < oldScan.readings.size(); i++ )
+   {
+      if ( ( x[ i ].radius >= r_start ) &&
+           ( x[ i ].radius <= r_end   ) )
+      {
+         s.readings << oldScan.readings[ i ];  // copy this dataset point
+         if ( first_reading == 0 ) first_reading = i;
+      }
+   }
+
+   // Now copy the interpolation bitflags for this subset
+   // They might not be on the same byte boundary as the originals
+   int bitmap_size = ( s.readings.size() + 7 ) / 8;
+   uchar* interpolated = new uchar[ bitmap_size ];
+   bzero( interpolated, bitmap_size );
+
+   for ( int i = first_reading; i < first_reading + s.readings.size(); i++ )
+   {
+      int byte = i / 8;
+      int bit  = i % 8;
+      int mask = 1 << ( 7 - bit );
+
+      if ( ( oldScan.interpolated[ byte ] & mask ) != 0x00 )
+         setInterpolated( interpolated, i - first_reading );
+   }
+      
+   s.interpolated = QByteArray( (char*)interpolated, bitmap_size );
+   delete [] interpolated;
+
+   return s;
+}
+
+void US_Convert::setTriples( 
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     QList< TripleInfo >&     triples,
+     QString                              runType,
+     double                               tolerance )
+{
+   // Wavelength data is handled differently here
+   if ( runType == "WA" )
+      setCcrTriples( rawLegacyData, triples, tolerance );
+   else
+      setCcwTriples( rawLegacyData, triples, tolerance );
+
+}
+
+void US_Convert::setCcwTriples( 
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     QList< TripleInfo >&     triples,
+     double                               tolerance )
+{
+   // Most triples are ccw
+   triples.clear();
+
+   // Get wavelengths
+   QStringList wavelengths;
+
+   for ( int i = 0; i < rawLegacyData.size(); i++ )
+   {
+      QString wl = QString::number( rawLegacyData[ i ].t.wavelength, 'f', 1 );
+      wavelengths << wl;
+   }
+
+   // Merge wavelengths
+   wavelengths.sort();
+
+   QList< QList< double > > modes;
+   QList< double >          mode;
+   
+   for ( int i = 0; i < wavelengths.size(); i++ )
+   {
+      double wl = wavelengths[ i ].toDouble();
+
+      if ( ! mode.empty()  &&  fabs( mode.last() - wl ) > tolerance )
+      {
+         modes << mode;
+         mode.clear();
+      }
+
+      mode << wl;   
+   }
+
+   if ( mode.size() > 0 ) modes << mode;
+
+   // Now we have a list of modes.  
+   // Average each list and round to the closest integer.
+   QList< double > wl_average;
+
+   for ( int i = 0; i < modes.size(); i++ )
+   {
+      double sum = 0.0;
+
+      for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ]; 
+
+      wl_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
+   }
+
+   // Now that we have a more reliable list of wavelengths, let's
+   // find out the possible cell, channel, and wavelength combinations
+   for ( int i = 0; i < rawLegacyData.size(); i++ )
+   {
+      QString cell       = QString::number( rawLegacyData[ i ].cell );
+      QString channel    = QString( rawLegacyData[ i ].channel );
+      double wl          = rawLegacyData[ i ].t.wavelength;
+      QString wavelength = "0";
+
+      // find the average wavelength
+      for ( int j = 0; j < wl_average.size(); j++ )
+      {
+         if ( fabs( wl_average[ j ] - wl ) < tolerance )
+         {
+            wavelength = QString::number( (int) round( wl_average[ j ] ) );
+            break;
+         }
+      }
+
+      QString t = cell + " / " + channel + " / " + wavelength;
+      bool found = false;
+      for ( int j = 0; j < triples.size(); j++ )
+      {
+         if ( triples[ j ].tripleDesc == t )
+            found = true;
+      }
+      if ( ! found )
+      {
+         TripleInfo triple;
+         triple.tripleDesc = t;
+         triple.tripleID   = triples.size();    // The next number
+         triples << triple;
+      }
+   }
+}
+
+void US_Convert::setCcrTriples( 
+     QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+     QList< TripleInfo >&     triples,
+     double                               tolerance )
+{
+   // First of all, wavelength triples are ccr.
+   triples.clear();
+
+   // Now get the radius values
+   QStringList radii;
+
+   for ( int i = 0; i < rawLegacyData.size(); i++ )
+   {
+      QString r = QString::number( rawLegacyData[ i ].t.radius, 'f', 1 );
+      radii << r;
+   }
+
+   // Merge radii
+
+   radii.sort();
+
+   QList< QList< double > > modes;
+   QList< double >          mode;
+   
+   for ( int i = 0; i < radii.size(); i++ )
+   {
+      double r = radii[ i ].toDouble();
+
+      if ( ! mode.empty()  &&  fabs( mode.last() - r ) > tolerance )
+      {
+         modes << mode;
+         mode.clear();
+      }
+
+      mode << r;   
+   }
+
+   if ( mode.size() > 0 ) modes << mode;
+
+   // Now we have a list of modes.  
+   // Average each list and round to the closest integer.
+   QList< double > r_average;
+
+   for ( int i = 0; i < modes.size(); i++ )
+   {
+      double sum = 0.0;
+
+      for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ]; 
+
+      r_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
+   }
+
+   // Now that we have a more reliable list of radii, let's
+   // find out the possible cell, channel, and radius combinations
+   for ( int i = 0; i < rawLegacyData.size(); i++ )
+   {
+      QString cell       = QString::number( rawLegacyData[ i ].cell );
+      QString channel    = QString( rawLegacyData[ i ].channel );
+      double r           = rawLegacyData[ i ].t.radius;
+      QString radius     = "0";
+
+      // find the average radius
+      for ( int j = 0; j < r_average.size(); j++ )
+      {
+         if ( fabs( r_average[ j ] - r ) < tolerance )
+         {
+            radius = QString::number( r_average[ j ] );
+            break;
+         }
+      }
+
+      QString t = cell + " / " + channel + " / " + radius;
+      bool found = false;
+      for ( int j = 0; j < triples.size(); j++ )
+      {
+         if ( triples[ j ].tripleDesc == t )
+            found = true;
+      }
+      if ( ! found )
+      {
+         TripleInfo triple;
+         triple.tripleID   = triples.size();    // The next number
+         triple.tripleDesc = t;
+         triples << triple;
+      }
+   }
+}
+
+void US_Convert::setInterpolated ( unsigned char* bitmap, int location )
+{
+   int byte = location / 8;
+   int bit  = location % 8;
+
+   bitmap[ byte ] |= 1 << ( 7 - bit );
 }
 
 // Initializations

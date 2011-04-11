@@ -4,8 +4,8 @@ QT           += xml
 
 TARGET        = us_convert
 
-HEADERS       = us_convert.h           \
-                us_process_convert.h   \
+HEADERS       = us_convert_gui.h       \
+                us_convert.h           \
                 us_convertio.h         \
                 us_experiment.h        \
                 us_experiment_gui.h    \
@@ -13,8 +13,8 @@ HEADERS       = us_convert.h           \
                 us_intensity.h         \
                 us_get_dbrun.h
 
-SOURCES       = us_convert.cpp         \
-                us_process_convert.cpp \
+SOURCES       = us_convert_gui.cpp     \
+                us_convert.cpp         \
                 us_convertio.cpp       \
                 us_experiment.cpp      \
                 us_experiment_gui.cpp  \

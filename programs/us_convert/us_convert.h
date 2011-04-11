@@ -1,36 +1,34 @@
-//! \file us_convert.h
-#ifndef US_CONVERT_H
-#define US_CONVERT_H
+//! \file us_process_convert.h
+#ifndef US_PROCESS_CONVERT_H
+#define US_PROCESS_CONVERT_H
 
 #include <QtGui>
 
 #include "us_extern.h"
-#include "us_widgets.h"
-#include "us_help.h"
-#include "us_plot.h"
+#include "us_widgets_dialog.h"
 #include "us_dataIO2.h"
+#include "us_help.h"
 #include "us_experiment.h"
 #include "us_solution.h"
-#include "us_selectbox.h"
-//#include "us_solution_gui.h"
 
-class US_EXTERN US_Convert : public US_Widgets
+/*! \class US_Convert
+           This class provides the ability to convert raw data in the
+           Beckman format to the file format used by US3. 
+*/
+class US_EXTERN US_Convert // : public US_WidgetsDialog 
 {
-  Q_OBJECT
+//  Q_OBJECT
 
-  public:
-
-      //! \brief  Generic constructor for the US_Convert() program.
-      US_Convert();
-
+   public:
       //! \brief   Some status codes returned by the us_convert program
       enum ioError
       { 
          OK,                                  //!< Ok, no error
          CANTOPEN,                            //!< The file cannot be opened
          DUP_RUNID,                           //!< The given run ID already exists
-         NODATA,                              //!< There is no data to write
+         NODATA,                              //!< There is no data to read or write
          NODB,                                //!< Connection to database cannot be made
+         NOAUC,                               //!< AUC File cannot be opened
          NOXML,                               //!< XML data has not been entered
          BADXML,                              //!< XML not formed correctly
          BADGUID,                             //!< GUID read in the XML was not found in the database
@@ -38,13 +36,21 @@ class US_EXTERN US_Convert : public US_Widgets
          NOT_WRITTEN                          //!< data was not written
       };
 
-      //! \brief   Some status codes to keep track of where data has been saved to
-      enum aucStatus
+      //! \brief Class to contain a list of scans to exclude from a data set
+      //!        for a single c/c/w combination
+      class Excludes
       {
-         NOT_SAVED,                           //!< The file has not been saved
-         EDITING,                             //!< Data is being edited; certain operations not permitted
-         HD_ONLY,                             //!< The file has been saved to the HD
-         BOTH                                 //!< The file has been saved to both HD and DB
+         public:
+         QList< int >  excludes;              //!< list of scan indexes to exclude 
+         bool contains ( int x )              //!< function to determine if x is contained in the list
+           { return excludes.contains( x ); }
+         bool empty    ()                     //!< function to determine if the list is empty
+           { return excludes.empty(); }
+         void push_back( int x )              //!< function to add x to the end of the list
+           { excludes.push_back( x ); }
+         Excludes& operator<<( const int x )  //!< function to insert x at the end of the list
+            { this->push_back( x ); return *this; }
+
       };
 
       //! \brief  Class that contains information about relevant 
@@ -65,180 +71,166 @@ class US_EXTERN US_Convert : public US_Widgets
          void             show( void );       // temporary
       };
 
-      //! \brief Class to contain a list of scans to exclude from a data set
-      //!        for a single c/c/w combination
-      class Excludes
-      {
-         public:
-         QList< int >  excludes;              //!< list of scan indexes to exclude 
-         bool contains ( int x )              //!< function to determine if x is contained in the list
-           { return excludes.contains( x ); }
-         bool empty    ()                     //!< function to determine if the list is empty
-           { return excludes.empty(); }
-         void push_back( int x )              //!< function to add x to the end of the list
-           { excludes.push_back( x ); }
-         Excludes& operator<<( const int x )  //!< function to insert x at the end of the list
-            { this->push_back( x ); return *this; }
+      /*! \brief Generic constructor for the US_Convert class. This
+                 constructor establishes the dialog and its relationship to
+                 the parent dialog.
 
-      };
-
-      US_Disk_DB_Controls* disk_controls;     //!< Radiobuttons for disk/db choice
-
-      QList< double > subsets;                //!< A list of subset boundaries
-
-  signals:
-
-  public slots:
-
-  private:
-
-      enum { SPLIT, REFERENCE, NONE } step;
-
-      aucStatus      saveStatus;
-      US_Help        showHelp;
-      US_PlotPicker* picker;
-
-      QString       runType;
-      QString       oldRunType;
-
-      QLabel*       lb_description;
-
-      QLineEdit*    le_investigator;
-      QString       runID;
-      QLineEdit*    le_runID;
-      QLineEdit*    le_runID2;
-      QLineEdit*    le_dir;
-      QLineEdit*    le_description;
-      QLineEdit*    le_solutionDesc;
-
-      QLabel*       lb_triple;
-      QListWidget*  lw_triple;                        // cell, channel, wavelength
-
-      QwtCounter*   ct_from;
-      QwtCounter*   ct_to;
-
-      QwtCounter*   ct_tolerance;
-
-      QPushButton*  pb_editRuninfo;
-      QPushButton*  pb_import;
-      QPushButton*  pb_loadUS3;
-      QPushButton*  pb_details;
-      QPushButton*  pb_applyAll;
-      QPushButton*  pb_solution;
-      QPushButton*  pb_exclude;
-      QPushButton*  pb_include;
-      QPushButton*  pb_define;
-      QPushButton*  pb_process;
-      QPushButton*  pb_reference;
-      QPushButton*  pb_intensity;
-      QPushButton*  pb_cancelref;
-      QPushButton*  pb_dropScan;
-      QPushButton*  pb_saveUS3;
-
-      US_SelectBox*  cb_centerpiece;
-
-      QList< US_DataIO2::BeckmanRawScan > legacyData; // legacy data from file
-      QVector< US_DataIO2::RawData >      allData;    // all the data, separated by c/c/w
-      QVector< US_DataIO2::RawData >      RIData;     // to save RI data, after converting to Pseudo
-      QString       currentDir;
-      QString       saveDescription;
-
-      QVector< Excludes > allExcludes;                // excludes for all triples
-
-      QwtPlot*      data_plot;
-      QwtPlotGrid*  grid;
-
-      double        reference_start;                  // boundary of reference scans
-      double        reference_end;
-      bool          Pseudo_averaged;                      // true if RI averages have been done
-      int           Pseudo_reference_triple;              // number of the triple that is the reference
-      QVector< double > Pseudo_averages;
-      bool          isPseudo;                         // Is this RI data pseudo-absorbance?
-      bool          toleranceChanged;                 // keep track of whether the tolerance has changed
-      double        scanTolerance;                    // remember the scan tolerance value
-
-      bool show_plot_progress;
-      US_Experiment      ExpData; 
-      QList< TripleInfo >             triples;
-      int                             currentTriple;
-
-      void reset           ( void );
-      void enableRunIDControl( bool );
-      void enableScanControls( void );
-      void enableSyncDB    ( void );
-      void getExpInfo      ( void );
-      void setTripleInfo   ( void );
-      void checkTemperature( void );
-      int  findTripleIndex ( void );
-      void focus           ( int, int );
-      void init_excludes   ( void );
-      void start_reference   ( const QwtDoublePoint& );
-      void process_reference ( const QwtDoublePoint& );
-      void PseudoCalcAvg     ( void );
-      bool read            ( void );
-      bool read            ( QString dir );
-      bool convert         ( void );
-      void initTriples     ( void );
-      bool centerpieceInfo ( void );
-      bool centerpieceInfoDB( void );
-      bool centerpieceInfoDisk( void );
-      void plot_current    ( void );
-      void plot_titles     ( void );
-      void plot_all        ( void );
-      void replot          ( void );
-      void set_colors      ( const QList< int >& );
-      void draw_vline      ( double );
-      void db_error        ( const QString& );
-
-  private slots:
-      //! \brief Select the current investigator
-      void sel_investigator( void );
-
-      /*! \brief Assign the selected investigator as current
-          \param invID  The ID of the selected investigator
-          \param lname  The last name of the investigator
-          \param fname  The first name of the investigator
+          \param parent Establishes the US_Convert dialog as a child
+                        of the specified parent.
       */
-      void assign_investigator( int, const QString&, const QString& );
+      US_Convert( void );
 
-      void import          ( QString dir = "" );
-      void reimport        ( void );
-      void enableControls  ( void );
-      void runIDChanged    ( void );
-      void toleranceValueChanged( double );           // signal to notify of change
-      void editRuninfo     ( void );
-      void loadUS3         ( QString dir = "" );
-      void loadUS3Disk     ( void );
-      void loadUS3Disk     ( QString );
-      void loadUS3DB       ( void );
-      void updateExpInfo   ( US_Experiment& );
-      void cancelExpInfo   ( void );
-      void getSolutionInfo ( void );
-      void updateSolutionInfo( US_Solution& );
-      void cancelSolutionInfo( void );
-      void tripleApplyAll    ( void );
-      void runDetails      ( void );
-      void changeDescription( void );
-      void changeTriple    ( QListWidgetItem* );
-      void getCenterpieceIndex( int );
-      void focus_from      ( double );
-      void focus_to        ( double );
-      void exclude_scans   ( void );
-      void include         ( void );
-      void define_subsets  ( void );
-      void cClick          ( const QwtDoublePoint& );
-      void process_subsets ( void );
-      void define_reference  ( void );
-      void show_intensity  ( void );
-      void cancel_reference( void );
-      void drop_reference  ( void );
-      void saveUS3         ( void );
-      int  saveUS3Disk     ( void );
-      void saveUS3DB       ( void );
-      void resetAll        ( void );
-      void source_changed  ( bool );
-      void update_disk_db  ( bool );
-      void help            ( void )
-        { showHelp.show_help( "convert.html" ); };
+      /*! \brief Reads the legacy raw data from disk into the program. 
+
+          \param dir    The directory in which the program will look for the
+                        raw data files.
+          \param rawLegacyData A reference to a structure provided by the calling
+                        function that will be used to store the imported raw data.
+          \param runType A reference to a variable that will contain the type
+                        of data that is being read ( "RA", "IP", "RI", "FI", "WA", or "WI").
+                        This determination already affects how some data is
+                        handled when read.
+      */
+      static void   readLegacyData( 
+                    QString ,
+                    QList< US_DataIO2::BeckmanRawScan >& ,
+                    QString& );
+
+      /*! \brief Converts legacy raw data into US3 data. 
+                 This function will convert existing datapoints and cell/
+                 channel/wavelength combinations in the data.
+
+          \param rawLegacyData A reference to a structure provided by the calling
+                        function that already contains the imported raw data.
+          \param rawConvertedData A reference to a structure provided by the calling
+                        function that will be used to store the US3 raw converted data.
+          \param triples A reference to a structure provided by the calling
+                        function that will be used to store all the different
+                        cell/channel/wavelength combinations found in the data. 
+          \param runType A reference to a variable that already contains the type
+                        of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
+                        This information will affect how the data is
+                        converted.
+          \param tolerance How far apart the wavelength readings can be and still
+                        be considered part of the same cell/channel/wavelength.
+          \param ss_limits In the case of RA data only, sometimes the data needs
+                        to be split into multiple datasets. In this case, ss_limits
+                        should already contain a list of radius values that define
+                        where one dataset ends and the next one begins.
+      */
+      static void   convertLegacyData(
+                    QList  < US_DataIO2::BeckmanRawScan >& ,
+                    QVector< US_DataIO2::RawData        >& ,
+                    QList< TripleInfo >& ,
+                    QString ,
+                    double );
+
+      /*! \brief Writes the converted US3 data to disk. 
+
+          \param status  A reference to an integer that will contain the status of the
+                         operation when it is completed.
+          \param rawConvertedData A reference to a structure provided by the calling
+                        function that already contains the US3 raw converted data.
+          \param ExpData A reference to a structure provided by the calling function
+                         that already contains the hardware and other database
+                         connection information relevant to this experiment.
+          \param triples A reference to a structure provided by the calling
+                        function that already contains all the different
+                        cell/channel/wavelength combinations in the data. 
+          \param allExcludes A reference to a QVector of excluded scans for
+                        each c/c/w combination
+          \param runType A reference to a variable that already contains the type
+                        of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
+                        This information will affect how the data is
+                        written.
+          \param runID  The run ID of the experiment.
+          \param dirname The directory in which the files are to be written.
+          \param saveGUIDs Boolean value that indicates whether data has been saved
+                        to disk before and doesn't require new GUIDs
+      */
+      static void   writeConvertedData(
+                    int& status,
+                    QVector< US_DataIO2::RawData >& ,
+                    US_Experiment& ,
+                    QList< TripleInfo >& ,
+                    QVector< Excludes >& ,
+                    QString ,
+                    QString ,
+                    QString,
+                    bool );
+
+      /*! \brief Reloads converted US3 data back into the program to sync
+                 up with the database. 
+
+          \param dir    The directory that contains the auc files
+          \param rawConvertedData A reference to a structure provided by the calling
+                        function that will be used to store the US3 raw converted data.
+          \param ExpData A reference to a structure provided by the calling function
+                         that will contain the hardware and other database
+                         connection information relevant to this experiment.
+          \param triples A reference to a structure provided by the calling
+                        function that will be used to store all the different
+                        cell/channel/wavelength combinations found in the data. 
+          \param runType A reference to a variable that already contains the type
+                        of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
+                        This information will affect how the data is
+                        converted.
+          \returns      An ioError status code
+      */
+      static int    reloadUS3Data(
+                    QString ,
+                    QVector< US_DataIO2::RawData        >& ,
+                    US_Experiment&,
+                    QList< TripleInfo >& ,
+                    QString&,
+                    QString );
+
+      /*! \brief Splits existing raw converted data into multiple datasets. 
+                 Also rearranges triples in the data accordingly.
+
+          \param rawConvertedData A reference to a structure that contains
+                        the US3 raw converted data.
+          \param triples A reference to a structure that contains the different
+                        cell/channel/wavelength combinations in the data. 
+          \param currentTriple The triple that will be split.
+          \param subsets A list of radius limits that define where a dataset 
+                         begins and ends.
+      */
+      static void splitRAData ( QVector< US_DataIO2::RawData >& ,
+                                QList< TripleInfo >& ,
+                                int ,
+                                QList< double >& );
+
+   private:
+      US_Help            showHelp;
+
+      static void convert( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+                           US_DataIO2::RawData&          newRawData,
+                           QString                       triple, 
+                           QString                       runType,
+                           double                        tolerance );
+
+      static void setTriples ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+                           QList< TripleInfo >& triples,
+                           QString                              runType,
+                           double                               tolerance );
+      
+      static void setCcwTriples ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+                           QList< TripleInfo >& triples,
+                           double                               tolerance );
+      
+      static void setCcrTriples ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+                           QList< TripleInfo >& triples,
+                           double                               tolerance );
+      
+      static void setInterpolated ( unsigned char*, int );
+      
+      static US_DataIO2::Scan newScanSubset(
+                           US_DataIO2::Scan& oldScan,
+                           QVector< US_DataIO2::XValue >& radii, 
+                           double r_start,
+                           double r_end );
+
+   private slots:
 };
 #endif
