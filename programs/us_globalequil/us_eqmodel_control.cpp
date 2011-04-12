@@ -58,7 +58,7 @@ US_EqModelControl::US_EqModelControl(
    QGridLayout* lo_mwlock  = us_radiobutton( "L", rb_mwlock,  false );
    QHBoxLayout* lo_mwflbox = radiobox( lo_mwfloat, rb_mwfloat,
                                        lo_mwlock,  rb_mwlock );
-   QLayout*     lo_mwbound = us_checkbox( "B", ck_mwbound, true  );
+   QLayout*     lo_mwbound = us_checkbox( "B", ck_mwbound, false );
                 pb_vbar20  = us_pushbutton( tr( "Vbar, 20" ) + DEGC + " (1):" );
                 le_vbguess = us_lineedit();
                 le_vbbound = us_lineedit();
@@ -67,7 +67,7 @@ US_EqModelControl::US_EqModelControl(
    QGridLayout* lo_vblock  = us_radiobutton( "L", rb_vblock,  false );
    QHBoxLayout* lo_vbflbox = radiobox( lo_vbfloat, rb_vbfloat,
                                        lo_vblock,  rb_vblock );
-   QLayout*     lo_vbbound = us_checkbox( "B", ck_vbbound, true  );
+   QLayout*     lo_vbbound = us_checkbox( "B", ck_vbbound, false );
                 pb_lnasc1  = us_pushbutton( tr( "ln(Assoc.Const.1):" ) );
                 le_l1guess = us_lineedit();
                 le_l1bound = us_lineedit();
@@ -76,7 +76,7 @@ US_EqModelControl::US_EqModelControl(
    QGridLayout* lo_l1lock  = us_radiobutton( "L", rb_l1lock,  false );
    QHBoxLayout* lo_l1flbox = radiobox( lo_l1float, rb_l1float,
                                        lo_l1lock,  rb_l1lock );
-   QLayout*     lo_l1bound = us_checkbox( "B", ck_l1bound, true  );
+   QLayout*     lo_l1bound = us_checkbox( "B", ck_l1bound, false );
                 pb_lnasc2  = us_pushbutton( tr( "ln(Assoc.Const.2):" ) );
                 le_l2guess = us_lineedit();
                 le_l2bound = us_lineedit();
@@ -85,7 +85,7 @@ US_EqModelControl::US_EqModelControl(
    QGridLayout* lo_l2lock  = us_radiobutton( "L", rb_l2lock,  false );
    QHBoxLayout* lo_l2flbox = radiobox( lo_l2float, rb_l2float,
                                        lo_l2lock,  rb_l2lock );
-   QLayout*     lo_l2bound = us_checkbox( "B", ck_l2bound, true  );
+   QLayout*     lo_l2bound = us_checkbox( "B", ck_l2bound, false );
                 pb_lnasc3  = us_pushbutton( tr( "ln(Assoc.Const.3):" ) );
                 le_l3guess = us_lineedit();
                 le_l3bound = us_lineedit();
@@ -94,7 +94,7 @@ US_EqModelControl::US_EqModelControl(
    QGridLayout* lo_l3lock  = us_radiobutton( "L", rb_l3lock,  false );
    QHBoxLayout* lo_l3flbox = radiobox( lo_l3float, rb_l3float,
                                        lo_l3lock,  rb_l3lock );
-   QLayout*     lo_l3bound = us_checkbox( "B", ck_l3bound, true  );
+   QLayout*     lo_l3bound = us_checkbox( "B", ck_l3bound, false );
                 pb_lnasc4  = us_pushbutton( tr( "ln(Assoc.Const.4):" ) );
                 le_l4guess = us_lineedit();
                 le_l4bound = us_lineedit();
@@ -103,7 +103,7 @@ US_EqModelControl::US_EqModelControl(
    QGridLayout* lo_l4lock  = us_radiobutton( "L", rb_l4lock,  false );
    QHBoxLayout* lo_l4flbox = radiobox( lo_l4float, rb_l4float,
                                        lo_l4lock,  rb_l4lock );
-   QLayout*     lo_l4bound = us_checkbox( "B", ck_l4bound, true  );
+   QLayout*     lo_l4bound = us_checkbox( "B", ck_l4bound, false );
 
    int row = 0;
    globalLayout->addWidget( lb_gbanner, row++, 0, 1, 10 );
@@ -163,6 +163,20 @@ US_EqModelControl::US_EqModelControl(
    ck_l2bound->setEnabled( false );
    ck_l3bound->setEnabled( false );
    ck_l4bound->setEnabled( false );
+   le_mwbound->setEnabled( false );
+   le_vbbound->setEnabled( false );
+   le_l1bound->setEnabled( false );
+   le_l2bound->setEnabled( false );
+   le_l3bound->setEnabled( false );
+   le_l4bound->setEnabled( false );
+   QPalette gray = US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   le_mwbound->setPalette( gray );
+   le_vbbound->setPalette( gray );
+   le_l1bound->setPalette( gray );
+   le_l2bound->setPalette( gray );
+   le_l3bound->setPalette( gray );
+   le_l4bound->setPalette( gray );
 
    ct_grunpar->setRange( 1, runfit.nbr_comps, 1 );
    ct_grunpar->setStep( 1 );
@@ -209,7 +223,7 @@ US_EqModelControl::US_EqModelControl(
    QGridLayout* lo_bllock  = us_radiobutton( "L", rb_bllock,  false );
    QHBoxLayout* lo_blflbox = radiobox( lo_blfloat, rb_blfloat,
                                        lo_bllock,  rb_bllock );
-   QLayout*     lo_blbound = us_checkbox( "B", ck_blbound, true  );
+   QLayout*     lo_blbound = us_checkbox( "B", ck_blbound, false );
                 pb_density = us_pushbutton( tr( "Density, 20" ) + DEGC ); 
                 le_density = us_lineedit();
                 pb_densapp = us_pushbutton( tr( "Apply to:" ) );
@@ -240,7 +254,7 @@ US_EqModelControl::US_EqModelControl(
    QGridLayout* lo_amlock  = us_radiobutton( "L", rb_amlock,  false );
    QHBoxLayout* lo_amflbox = radiobox( lo_amfloat, rb_amfloat,
                                        lo_amlock,  rb_amlock );
-   QLayout*     lo_ambound = us_checkbox( "B", ck_ambound, true  );
+   QLayout*     lo_ambound = us_checkbox( "B", ck_ambound, false );
                 pb_extinct = us_pushbutton( tr( "Extinction" ) + " (1):" );
                 le_extinct = us_lineedit( "1.0" );
                 pb_extiapp = us_pushbutton( tr( "Apply to:" ) );
@@ -320,6 +334,10 @@ US_EqModelControl::US_EqModelControl(
 
    ck_blbound->setEnabled( false );
    ck_ambound->setEnabled( false );
+   le_blbound->setEnabled( false );
+   le_ambound->setEnabled( false );
+   le_blbound->setPalette( gray );
+   le_ambound->setPalette( gray );
 
    connect( ct_lrunpar, SIGNAL( valueChanged( double ) ),
             this,   SLOT( local_comp_changed( double ) ) );

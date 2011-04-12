@@ -147,6 +147,7 @@ class US_EXTERN US_GlobalEquil : public US_Widgets
       void scan_select       ( double );
       void update_disk_db    ( bool );
       void clickedItem       ( QTableWidgetItem* );
+      void doubleClickedItem ( QTableWidgetItem* );
       bool findData( QString, double, int&, int& );
       void pMouseDown        ( const QwtDoublePoint& );
       void pMouseUp          ( const QwtDoublePoint& );
