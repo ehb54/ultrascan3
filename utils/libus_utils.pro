@@ -27,6 +27,7 @@ HEADERS      = us_analyte.h       \
                us_datafiles.h     \
                us_db2.h           \
                us_global.h        \
+               us_gzip.h          \
                us_hardware.h      \
                us_hydrosim.h      \
                us_http_post.h     \
@@ -56,6 +57,7 @@ SOURCES      = us_analyte.cpp       \
                us_datafiles.cpp     \
                us_db2.cpp           \
                us_global.cpp        \
+               us_gzip.cpp          \
                us_hardware.cpp      \
                us_http_post.cpp     \
                us_hydrosim.cpp      \
