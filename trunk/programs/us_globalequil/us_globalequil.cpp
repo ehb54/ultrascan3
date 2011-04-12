@@ -484,6 +484,8 @@ DbgLv(1) << " LD: update_limit";
 
    connect( tw_equiscns, SIGNAL( itemClicked( QTableWidgetItem* ) ),
             this,        SLOT(   clickedItem( QTableWidgetItem* ) ) );
+   connect( tw_equiscns, SIGNAL( itemDoubleClicked( QTableWidgetItem* ) ),
+            this,        SLOT(   doubleClickedItem( QTableWidgetItem* ) ) );
 
    te_status->setText( tr( "To edit (exclude points):  Ctrl-click-hold,"
                            " move, and release mouse button in the plot area;"
@@ -884,6 +886,26 @@ DbgLv(1) << " GE:ClItem: signal_mc model_widget" << signal_mc << model_widget;
    }
 }
 
+// Respond to a table row being double-clicked
+void US_GlobalEquil::doubleClickedItem( QTableWidgetItem* item )
+{
+   int row    = item->row();
+   bool fit   = ! scanfits[ row ].scanFit;  // reverse fit setting
+   bool excl  = scanfits[ row ].autoExcl;
+   scanfits[ row ].scanFit = fit;
+
+DbgLv(1) << "TableItemDoubleClicked row col" << row << item->column();
+   if ( ! fit  )                     // Mark scan as non-fit
+      tw_equiscns->item( row, 0 )->setIcon( blue_arrow );
+
+   else if ( ! excl )                // Mark scan as fit/non-excluded
+      tw_equiscns->item( row, 0 )->setIcon( green_arrow );
+
+   else                              // Mark scan as fit/excluded
+      tw_equiscns->item( row, 0 )->setIcon( red_arrow );
+}
+
+
 // Find the data (triple and speed step) corresponding to a scan selection
 bool US_GlobalEquil::findData( QString trip, double drpm, int& jdx, int& jrx )
 {
@@ -1246,13 +1268,13 @@ void US_GlobalEquil::assign_scanfit()
 
       scanfit.xvs.resize( scanfit.points );
       scanfit.yvs.resize( scanfit.points );
-      scanfit.amp_vals.fill(  0.0, mcomp );
-      scanfit.amp_ndxs.fill(    0, mcomp );
-      scanfit.amp_rngs.fill(  0.0, mcomp );
-      scanfit.amp_fits.fill( true, mcomp );
-      scanfit.amp_bnds.fill( true, mcomp );
-      scanfit.extincts.fill(  1.0, nintg );
-      scanfit.integral.fill(  0.0, nintg );
+      scanfit.amp_vals.fill(   0.0, mcomp );
+      scanfit.amp_ndxs.fill(     0, mcomp );
+      scanfit.amp_rngs.fill(   0.0, mcomp );
+      scanfit.amp_fits.fill(  true, mcomp );
+      scanfit.amp_bnds.fill( false, mcomp );
+      scanfit.extincts.fill(   1.0, nintg );
+      scanfit.integral.fill(   0.0, nintg );
 
       for ( int jj = 0; jj < scanfit.points; jj++ )
       {
@@ -1345,12 +1367,12 @@ DbgLv(1) << " sRF: ncomps nassocs" << runfit.nbr_comps << runfit.nbr_assocs;
    runfit.mw_ndxs  .fill(     0, runfit.nbr_comps );
    runfit.mw_rngs  .fill(   0.0, runfit.nbr_comps );
    runfit.mw_fits  .fill(  true, runfit.nbr_comps );
-   runfit.mw_bnds  .fill(  true, runfit.nbr_comps );
+   runfit.mw_bnds  .fill( false, runfit.nbr_comps );
    runfit.vbar_vals.fill( dvval, runfit.nbr_comps );
    runfit.vbar_ndxs.fill(     0, runfit.nbr_comps );
    runfit.vbar_rngs.fill( dvrng, runfit.nbr_comps );
    runfit.vbar_fits.fill(  true, runfit.nbr_comps );
-   runfit.vbar_bnds.fill(  true, runfit.nbr_comps );
+   runfit.vbar_bnds.fill( false, runfit.nbr_comps );
    runfit.viri_vals.fill(   0.0, runfit.nbr_comps );
    runfit.viri_ndxs.fill(     0, runfit.nbr_comps );
    runfit.viri_rngs.fill(   0.0, runfit.nbr_comps );
