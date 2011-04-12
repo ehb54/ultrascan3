@@ -386,6 +386,9 @@ bool US_SolutionVals::bufvals_disk( QString& bufId, QString& bufGuid,
             QString bid   = ats.value( "id"          ).toString();
             QString bguid = ats.value( "guid"        ).toString();
             QString bdesc = ats.value( "description" ).toString();
+            bid           = bid  .isEmpty() ? "EMPTY" : bid;
+            bguid         = bguid.isEmpty() ? "EMPTY" : bguid;
+            bdesc         = bdesc.isEmpty() ? "EMPTY" : bdesc;
 
             if ( bguid == bufGuid  ||  bid == bufId )
             {
@@ -426,8 +429,10 @@ bool US_SolutionVals::bufvals_disk( QString& bufId, QString& bufGuid,
    {
       errmsg +=
          QObject::tr( "  Unable to find buffer values locally\n"
-                      "   from buffer ID's (Id,Guid,Desc)\n" )
-         + "     " + bufId + "," + bufGuid + "," + bufDesc + "\n";
+                      "   from buffer ID's (Id,Guid,Desc)\n     " )
+         + ( bufId  .isEmpty() ? QObject::tr( "(EMPTY)" ) : bufId   ) + ","
+         + ( bufGuid.isEmpty() ? QObject::tr( "(EMPTY)" ) : bufGuid ) + ","
+         + ( bufDesc.isEmpty() ? QObject::tr( "(EMPTY)" ) : bufDesc ) + "\n";
    }
 
    return bufvals;
