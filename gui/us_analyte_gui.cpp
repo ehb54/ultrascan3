@@ -664,31 +664,37 @@ void US_AnalyteGui::set_analyte_type( int type )
 
 void US_AnalyteGui::close( void )
 {
-   // Emit signal if requested
-   if ( signal_wanted ) 
+   bool changed = ! ( analyte == saved_analyte );
+   if ( analyte.analyteGUID.size() != 36  ||  changed )
    {
-      if ( ! data_ok() ) return;
-      
-      bool changed = ! ( analyte == saved_analyte );
-      if ( analyte.analyteGUID.size() != 36  ||  changed )
-      {
-         int response = QMessageBox::question( this,
-               tr( "Analyte Changed" ),
-               tr( "Are you sure?\n\n" 
-                   "The displayed analyte has changed.\n"
-                   "You will not be able to easily reproduce this analyte.\n\n"
-                   "Do you really want to continue without saving?" ), 
-               QMessageBox::Yes | QMessageBox::No );
+      int response = QMessageBox::question( this,
+            tr( "Analyte Changed" ),
+            tr( "Are you sure?\n\n" 
+                "The displayed analyte has changed.\n"
+                "You will not be able to easily reproduce this analyte.\n\n"
+                "Do you really want to continue without saving?" ), 
+            QMessageBox::Yes | QMessageBox::No );
 
-         if ( response == QMessageBox::No ) return;
-      }
-
-      emit valueChanged( analyte );
+      if ( response == QMessageBox::No ) return;
    }
+
    analyte.mw     = le_protein_mw    ->text().toDouble();
    analyte.vbar20 = le_protein_vbar20->text().toDouble();
 
-   accept();
+   // If a signal is not wanted, just close
+   if ( ! signal_wanted ) 
+   {
+      accept();
+      return;
+   }
+
+   if ( data_ok() )
+   {
+      emit valueChanged( analyte );
+      accept();
+   }
+
+   // Just return if data is not OK
 }
 
 void US_AnalyteGui::reset( void )
@@ -1454,23 +1460,39 @@ bool US_AnalyteGui::data_ok( void )
    // Check to see if a sequence is entered
    if ( analyte.sequence.isEmpty() )
    {
-      QMessageBox::information( this,
-         tr( "Attention" ), 
-         tr( "A sequence must be defined before saving." ) );
-      return false;
+      QMessageBox question( QMessageBox::Question,
+            tr( "Attention" ),
+            tr( "There is no sequence defined.\n\n" 
+                "Continue?" ), 
+            QMessageBox::No,
+            this );
+
+      question.addButton( tr( "Continue" ), QMessageBox::YesRole );
+
+      if ( question.exec() == QMessageBox::No )
+         return false;
    }
    
    analyte.description = le_description->text().remove( '|' );
 
    if ( analyte.description.isEmpty() )
    {
-      QMessageBox::information( this,
-         tr( "Attention" ), 
-         tr( "A description must be entered before saving." ) );
-      return false;
+      QMessageBox question( QMessageBox::Question,
+            tr( "Attention" ),
+            tr( "There is no description for this analyte.\n\n" 
+                "Continue?" ), 
+            QMessageBox::No,
+            this );
+
+      question.addButton( tr( "Continue" ), QMessageBox::YesRole );
+
+      if ( question.exec() == QMessageBox::No )
+         return false;
+
    }
 
    double vbar = le_protein_vbar->text().toDouble();
+
    if ( analyte.type == US_Analyte::PROTEIN  &&  ( vbar < 0.0  || vbar > 2.0 ) )
    {
       QMessageBox::information( this,
