@@ -10,9 +10,8 @@
 #include "us_buffer_gui.h"
 #include "qwt_plot_marker.h"
 
-#define PZ_THRLO  0.001  // plateau zone slope threshold (low)
-#define PZ_THRHI  0.200  // plateau zone slope threshold (high)
-#define PZ_POINTS 21     // plateau zone line fit number points
+#define PZ_THRESH 0.200  // plateau zone slope threshold
+#define PZ_POINTS 51     // plateau zone line fit number points
 #define PZ_HZLO   5      // plateau zone horizontal extent minimum points
 
 #ifndef DbgLv

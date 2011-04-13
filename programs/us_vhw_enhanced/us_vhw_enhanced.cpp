@@ -1032,10 +1032,10 @@ double US_vHW_Enhanced::zone_plateau( )
    double  plato  = -1.0;
    valueCount     = s->readings.size();
    int     j2     = first_gteq( s->plateau, s->readings, valueCount, 0 );
-//DbgLv(1) << "      j2=" << j2 << " s->plateau" << s->plateau;
+DbgLv(2) << "      j2=" << j2 << " s->plateau" << s->plateau;
    int     nzp    = PZ_POINTS;
-   int     j3     = min( ( j2 + nzp / 2 ), valueCount );
-   int     j1     = max( ( j3 - nzp ), 0 );
+   int     j3     = min( ( j2 + nzp / 2 ), ( valueCount - 1 ) );
+   int     j1     = max( ( j3 - nzp + 1 ), 0 );
    int     f1     = j1;
    int     lastj  = valueCount - f1;
    int     kk     = 0;
@@ -1052,52 +1052,57 @@ double US_vHW_Enhanced::zone_plateau( )
       yy[ kk++ ]    = s->readings[ jj ].value;
    }
 
-   j1             = 0;
-   j2            -= f1;
+   j1             = 0;           // Convert indexes of readings
+   j2            -= f1;          //  into relative indexes in xx,yy arrays
    j3            -= f1;
    nzp            = min( nzp, kk );
-//DbgLv(1) << "  f1 j2 j3 nzp" << f1 << j2 << j3 << nzp;
+DbgLv(2) << "  f1 j2 j3 nzp" << f1 << j2 << j3 << nzp;
    double  sumx;
    double  sumy;
    double  sumxy;
    double  sumxs;
 
+   // Make the initial slope calculation
    double  slope = calc_slope( xx, yy, nzp, sumx, sumy, sumxy, sumxs );
-//DbgLv(1) << "         slope0 " << slope;
-
-   // get slopes for sliding zone and detect where flat
-
+DbgLv(2) << "      slope0 " << slope;
    double  x0    = xx[ 0 ];
    double  y0    = yy[ 0 ];
    double  x1;
    double  y1;
+   double  slmin = qAbs( slope );
+   double  plmin = yy[ j2 ];
 
    while ( j3 < lastj )
-   {  // loop until zone end is at readings end or zone is flat
+   {  // Loop until zone end to find the minimum absolute slope
+      slope    = qAbs( slope );  // Absolute value of slope
 
-      if ( qAbs( slope ) < PZ_THRHI )
-         break;                     // zone is flat
+      if ( slope < slmin )
+      {                          // New minimum slope: save slope,plateau
+         slmin    = slope;
+         plmin    = yy[ j2 ];
+      }
 
-      x1       = xx[ j3 ];
-      y1       = yy[ j3 ];
-
-      slope    = update_slope( nzp, x0, y0, x1, y1, sumx, sumy, sumxy, sumxs );
-
-      j1++;
+      x0       = xx[ j1 ];       // Values to remove for slope recalculation
+      y0       = yy[ j1 ];
+      j1++;                      // Bump indexes for next iteration
       j2++;
       j3++;
+      if ( j3 >= lastj )  break;
+      x1       = xx[ j3 ];       // Values to add for slope recalculation
+      y1       = yy[ j3 ];
 
-      x0       = xx[ j1 ];          // values to remove from next iteration
-      y0       = yy[ j1 ];
+      // Recalculate the slope for the next iteration by removing
+      // the current start point and adding a new end point
+      slope    = update_slope( nzp, x0, y0, x1, y1, sumx, sumy, sumxy, sumxs );
    }
 
-   if ( qAbs( slope ) < PZ_THRHI )
-      plato       = yy[ j2 ];       // last zone was flat:  mid-Y is plateau
+   if ( slmin < PZ_THRESH )
+      plato       = plmin;       // Flatest was flat enough:  mid-Y is plateau
 
    else
-      plato       = -1.0;           // no flat zone found:  mark as unreliable
+      plato       = -1.0;        // No flat zone found:  mark as unreliable
 
-//DbgLv(1) << "         slope " << slope << "plato" << plato;
+DbgLv(2) << "        slope " << slmin << "plato" << plato;
    return plato;
 }
 
