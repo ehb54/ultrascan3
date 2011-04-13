@@ -8,7 +8,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
-//! \brief Main program for us_convert. Loads translators and starts
+//! \brief Main program. Loads translators and starts
 //         the class US_Convert.
 
 int main( int argc, char* argv[] )
@@ -126,8 +126,8 @@ void US_SecondMoment::data_plot( void )
          ( sq( omega ) * ( d->scanData[ i ].seconds - time_correction ) );
    }
 
-   double* x = new double[ scanCount ];
-   double* y = new double[ scanCount ];
+   QVector< double > x( scanCount );
+   QVector< double > y( scanCount );
    
    // Sedimentation coefficients from all scans that have not cleared the
    // meniscus form a separate plot that will be plotted in red, and will not
@@ -157,7 +157,7 @@ void US_SecondMoment::data_plot( void )
    
    curve->setStyle ( QwtPlotCurve::NoCurve );
    curve->setSymbol( sym );
-   curve->setData  ( x, y, count );
+   curve->setData  ( x.data(), y.data(), count );
 
    // Curve 2
    count          = 0;
@@ -180,10 +180,9 @@ void US_SecondMoment::data_plot( void )
    
    curve = us_curve( data_plot1, tr( "Cleared Sedimentation Coefficients" ) );
    curve->setSymbol( sym );
-   curve->setData( x, y, count );
+   curve->setData( x.data(), y.data(), count );
    
    // Curve 3
-
    x[ 0 ] = 0.0;
    x[ 1 ] = (double)( scanCount - excludedScans.size() );
    y[ 0 ] = average_2nd;
@@ -193,15 +192,48 @@ void US_SecondMoment::data_plot( void )
    {
       curve = us_curve( data_plot1, tr( "Average" ) );
       curve->setPen( QPen( Qt::green ) );
-      curve->setData( x, y, 2 );
+      curve->setData( x.data(), y.data(), 2 );
    }
 
    data_plot1->setAxisScale   ( QwtPlot::xBottom, 0.0, x[ 1 ] + 0.25, 1.0 );
    data_plot1->setAxisMaxMinor( QwtPlot::xBottom, 0 );
-   data_plot1->replot();
 
-   delete [] x;
-   delete [] y;
+   // Mark excluded
+   int from = (int)ct_from->value();
+   int to   = (int)ct_to  ->value();
+   
+   if ( to > 0 )
+   {
+      int index = 0;
+
+      for ( int i = 0; i < scanCount; i++ )
+      {
+         if ( excludedScans.contains( i ) ) continue;
+
+         index++;
+         if ( index < from                ) continue;
+         if ( index >  to                 ) break;
+
+         x[ 0 ] = index;
+         x[ 1 ] = x[ 0 ];
+         y[ 0 ] = smSeconds[ i ] + 0.5;
+         y[ 1 ] = smSeconds[ i ] - 0.5;;
+
+         curve = us_curve( data_plot1, 
+               tr( "Scan %1 Exclude Marker" ).arg( index + 1 ) );
+
+         curve->setPen( QPen( QBrush( Qt::red ), 1.0 ) );
+         curve->setData( x.data(), y.data(), 2 );
+      }
+   }
+
+   data_plot1->replot();
+}
+
+void US_SecondMoment::exclude( void )
+{
+   US_AnalysisBase2::exclude();
+   pb_reset_exclude->setEnabled( true );
 }
 
 void US_SecondMoment::write_report( QTextStream& ts )

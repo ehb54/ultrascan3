@@ -13,18 +13,19 @@ class US_SecondMoment : public US_AnalysisBase2
       US_SecondMoment();
 
    private:
-      double               average_2nd;
-      double*              smPoints;
-      double*              smSeconds;
-      US_Editor*           te_results;
+      double     average_2nd;
+      double*    smPoints;
+      double*    smSeconds;
+      US_Editor* te_results;
 
-      void data_plot   ( void );
+      void data_plot ( void );
 
    private slots:
-      void write_report( QTextStream& );
-      void view        ( void );
-      void save        ( void );
-      void help        ( void )
+      void write_report   ( QTextStream& );
+      void exclude        ( void );
+      void view           ( void );
+      void save           ( void );
+      void help           ( void )
       { showHelp.show_help( "manual/us_second_moment.html" ); };
 };
 #endif
