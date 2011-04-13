@@ -867,6 +867,7 @@ void US_AnalysisBase2::reset( void )
 
    excludedScans.clear();
 
+   int index    = lw_triples->currentRow();
    density      = DENS_20W;
    viscosity    = VISC_20W;
    vbar         = TYPICAL_VBAR;
@@ -879,7 +880,6 @@ void US_AnalysisBase2::reset( void )
    // Restore saved data
    if ( dataList.size() > 0 )
    {
-      int                     index  = lw_triples->currentRow();
       US_DataIO2::EditedData* d      = &dataList[ index ];
    
       for ( int i = 0; i < d->scanData.size(); i++ )
@@ -917,8 +917,10 @@ void US_AnalysisBase2::reset( void )
    
    connect( ct_smoothing,       SIGNAL( valueChanged( double ) ),
                                 SLOT  ( smoothing   ( double ) ) );
-   data_plot();
-   
+
+   allExcls[ index ] = excludedScans;
+
+   update( index );
 }
 
 void US_AnalysisBase2::new_triple( int index )
