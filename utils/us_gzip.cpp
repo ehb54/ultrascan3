@@ -205,13 +205,13 @@ US_Gzip::US_Gzip()
 
 int US_Gzip::gzip( const QString& filename )
 {
-   bytes_out = 0;
+  bytes_out = 0;
   return treat_file( filename, FALSE );
 }
 
 int US_Gzip::gunzip( const QString& filename )
 {
-   bytes_out = 0;
+  bytes_out = 0;
   return treat_file( filename, TRUE );
 }
 

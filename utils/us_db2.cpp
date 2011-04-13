@@ -2,6 +2,8 @@
 #include "us_db2.h"
 #include "us_settings.h"
 #include "us_crypto.h"
+#include "us_gzip.h"
+#include "us_util.h"
 
 US_DB2::US_DB2()
 {
@@ -663,6 +665,65 @@ unsigned long US_DB2::mysqlEscapeString( QByteArray& to, QByteArray& from, unsig
    // Size string appropriately and return new length
    to.resize( to_length + 1 );
    return to_length + 1;
+}
+#endif
+
+#ifdef NO_DB
+int US_DB2::writeAucToDB( const QString&, int ) { return 0; }
+#else
+int US_DB2::writeAucToDB( const QString& filename, int tableID ) 
+{
+   // First copy the file to a temporary file and compress it
+   QString tfile = QDir::tempPath() + "/" + US_Util::new_guid();
+
+   QFile::copy( filename, tfile );
+   
+   US_Gzip gz;
+   int     retCode = gz.gzip( tfile );
+   
+   if ( retCode == 0 )
+   {  
+      tfile  += ".gz";  // gzip renames the file
+      retCode = writeBlobToDB( tfile, "upload_aucData", tableID );
+   }
+
+   QFile::remove( tfile );
+   return retCode;
+}
+#endif
+
+#ifdef NO_DB
+int US_DB2::readAucFromDB( const QString&, int ) { return 0; }
+#else
+int US_DB2::readAucFromDB( const QString& filename, int tableID ) 
+{
+   QString tfile = QDir::tempPath() + "/" + US_Util::new_guid() + ".gz";
+
+   int retCode = readBlobFromDB( tfile, "download_aucData", tableID );
+
+   if ( retCode == OK )
+   {
+      // Check to see if it is a gzipped file
+      char  buf[ 2 ];
+      QFile t( tfile );
+      t.open( QIODevice::ReadOnly );
+      t.peek( buf, 2 );
+      t.close();
+
+      // Look for gzip magic number
+      if ( buf[ 0 ] == '\037'  &&  buf[ 1 ] == '\213' )
+      {
+         US_Gzip gz;
+         retCode = gz.gunzip( tfile );
+         tfile.remove( QRegExp( ".gz$" ) );  // gunzip renames the file
+      }
+
+      QFile::remove( filename );  // copy will not overwrite a file
+      QFile::copy( tfile, filename );
+   }
+
+   QFile::remove( tfile );
+   return retCode;
 }
 #endif
 
