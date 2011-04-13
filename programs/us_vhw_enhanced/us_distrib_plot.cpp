@@ -29,6 +29,7 @@ US_DistribPlot::US_DistribPlot( const QList< double >& divfracs,
    divsCount = bfracs.size();
    nSensit   = 50;
    nSmooth   = 30;
+   dbg_level = US_Settings::us_debug();
 
    int row   = 0;
 
@@ -273,18 +274,27 @@ void US_DistribPlot::plot_distrib( void )
    data_plot->setAxisTitle( QwtPlot::xBottom,
       tr( "Sedimentation Coefficient" ) );
    data_plot->setAxisScale( QwtPlot::yLeft,   0.0, 100.0, 20.0 );
-   data_plot->setAxisScale( QwtPlot::xBottom, 0.0,   6.9,  1.0 );
  
    // create the x,y arrays of sedcoeffs,boundfracs
 
-   double* xx = new double[ divsCount ];
-   double* yy = new double[ divsCount ];
+   QVector< double > xv( divsCount );
+   QVector< double > yv( divsCount );
+   double* xx = xv.data();
+   double* yy = yv.data();
+   double maxx = 0.0;
+   double minx = 100.0;
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {
       xx[ jj ] = dsedcs.at( jj );
       yy[ jj ] = bfracs.at( jj );
+      maxx     = max( maxx, xx[ jj ] );
+      minx     = min( minx, xx[ jj ] );
    }
+
+   maxx     = (double)( (int)( maxx / 2.0 ) + 1 ) * 2.0;
+   maxx     = ( ( maxx - minx ) < 2.0 ) ? ( maxx + 1.0 ) : maxx;
+   data_plot->setAxisScale( QwtPlot::xBottom, 0.0,  maxx,  1.0 );
 
    // first draw the yellow line through points
    dcurve  = us_curve( data_plot, tr( "Distrib Line" ) );
@@ -303,9 +313,6 @@ void US_DistribPlot::plot_distrib( void )
    dcurve->setData  ( xx, yy, divsCount );
 
    data_plot->replot();
-
-   delete [] xx;
-   delete [] yy;
 }
 
 // plot histogram
@@ -313,6 +320,7 @@ void US_DistribPlot::plot_histogram( void )
 {
    double* xx;
    double* yy;
+   double  maxx;
    double  maxy;
    int     npoints;
 
@@ -326,19 +334,22 @@ void US_DistribPlot::plot_histogram( void )
  
    // Calculate histogram data
    npoints  = histo_data( &xx, &yy );
+   maxx     = xx[ 0 ];
    maxy     = yy[ 0 ];
 
    for ( int jj = 1; jj < npoints; jj++ )
    {
+      maxx     = max( maxx, xx[ jj ] );
       maxy     = max( maxy, yy[ jj ] );
    }
 
+   maxx     = (double)( (int)( maxx / 2.0 ) + 1 ) * 2.0;
    maxy     = (double)( (int)( maxy / 2.0 ) + 1 ) * 2.0;
    data_plot->setAxisScale( QwtPlot::yLeft,   0.0,  maxy,  5.0 );
-   data_plot->setAxisScale( QwtPlot::xBottom, 0.0,   8.0,  1.0 );
+   data_plot->setAxisScale( QwtPlot::xBottom, 0.0,  maxx,  1.0 );
 
-//qDebug() << "HISTO_DAT:" << npoints;
-//for(int jj=0;jj<npoints;jj++) qDebug() << jj << xx[jj] << yy[jj];
+DbgLv(2) << "HISTO_DAT:" << npoints;
+for(int jj=0;jj<npoints;jj++) DbgLv(2) << jj << xx[jj] << yy[jj];
 
    // Draw curve of histogram sticks
    hcurve  = us_curve( data_plot, tr( "Histogram Bar" ) );
@@ -359,6 +370,7 @@ void US_DistribPlot::plot_envelope( void )
 {
    double* xx;
    double* yy;
+   double  maxx;
    double  maxy;
    int     npoints;
 
@@ -373,16 +385,19 @@ void US_DistribPlot::plot_envelope( void )
 
       // calculate histogram data in order to use its maximum Y
       npoints  = histo_data( &xx, &yy );
+      maxx     = xx[ 0 ];
       maxy     = yy[ 0 ];
 
       for ( int jj = 1; jj < npoints; jj++ )
       {
+         maxx     = max( maxx, xx[ jj ] );
          maxy     = max( maxy, yy[ jj ] );
       }
 
+      maxx     = (double)( (int)( maxx / 2.0 ) + 1 ) * 2.0;
       maxy     = (double)( (int)( maxy / 2.0 ) + 1 ) * 2.0;
       data_plot->setAxisScale( QwtPlot::yLeft,   0.0,  maxy,  5.0 );
-      data_plot->setAxisScale( QwtPlot::xBottom, 0.0,   8.0,  1.0 );
+      data_plot->setAxisScale( QwtPlot::xBottom, 0.0,  maxx,  1.0 );
 
       delete [] xx;       // free up work arrays for re-use below
       delete [] yy;
@@ -553,7 +568,7 @@ int US_DistribPlot::envel_data( double** xxP, double** yyP )
 
    env_sum     *= xval[ 1 ];            // sum times X increment
    scale        = his_sum / env_sum;    // normalizing scale factor
-//qDebug() << "ED: hsum esum scale " << his_sum << env_sum << scale;
+DbgLv(2) << "ED: hsum esum scale " << his_sum << env_sum << scale;
 
    for ( int kk = 0; kk < array; kk++ )
    {  // normalize Y values

@@ -12,8 +12,12 @@
 
 #define PZ_THRLO  0.001  // plateau zone slope threshold (low)
 #define PZ_THRHI  0.200  // plateau zone slope threshold (high)
-#define PZ_POINTS 51     // plateau zone line fit number points
+#define PZ_POINTS 21     // plateau zone line fit number points
 #define PZ_HZLO   5      // plateau zone horizontal extent minimum points
+
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
+#endif
 
 typedef struct groupinfo_s
 {
@@ -83,6 +87,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase2
       int           divsCount;
       int           scanCount;
       int           valueCount;
+      int           dbg_level;
 
       bool          haveZone;
       bool          groupSel;
@@ -105,6 +110,8 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase2
       QList< double >          bdcons;     // back-diffusion concentrations
       QList< double >          groupxy;    // group select pick coordinates
       QList< GrpInfo >         groupdat;   // selected group info structures
+
+      QVector< double >        scplats;    // scan plateaus for current triple
 
       US_DataIO2::EditedData*  d;
       US_DataIO2::Scan*        s;
@@ -145,6 +152,8 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase2
       QString text_time( double );
       QStringList last_edit_files( QStringList );
       double readings_radius( US_DataIO2::EditedData *, int );
+      void new_triple  ( int );
+      void update      ( int );
 
       void help     ( void )
       { showHelp.show_help( "vhw_enhanced.html" ); };

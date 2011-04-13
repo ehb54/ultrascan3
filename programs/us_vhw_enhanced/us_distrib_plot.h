@@ -10,6 +10,10 @@
 #include "us_plot.h"
 #include "us_help.h"
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
+#endif
+
 //! \brief A class to provide a window with the details of a run
 
 class US_EXTERN US_DistribPlot : public US_WidgetsDialog
@@ -56,6 +60,7 @@ class US_EXTERN US_DistribPlot : public US_WidgetsDialog
       int           divsCount;
       int           nSensit;
       int           nSmooth;
+      int           dbg_level;
 
    private slots:
       void type_plot     ( void );
@@ -74,3 +79,4 @@ class US_EXTERN US_DistribPlot : public US_WidgetsDialog
       { showHelp.show_help( "vhw_distrib_plot.html" ); };
 };
 #endif
+
