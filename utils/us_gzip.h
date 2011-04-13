@@ -27,26 +27,6 @@ typedef unsigned short ush;
 typedef unsigned long  ulg;
 
 
-/*! Huffman code lookup table entry--this entry is four bytes for machines
-   that have 16-bit pointers (e.g. PC's in the small or medium model).
-   Valid extra bits are 0..13.  e == 15 is EOB (end of block), e == 16
-   means that v is a literal, 16 < e < 32 means that v is a pointer to
-   the next table, which codes e - 16 bits, and lastly e == 99 indicates
-   an unused code.  If a code with e == 99 is looked up, this implies an
-   error in the data. */
-
-struct huft 
-{
-   uch e;                /*!< number of extra bits or operation */
-   uch b;                /*!< number of bits in this code or subcode */
-   union 
-   {
-      ush          n;     /*!< literal, length base, or distance base */
-      struct huft* t;     /*!< pointer to next level of table */
-   } v;                   /*!< a simple name for the union */
-};
-
-
 /*!  A class to provide gzip compression and decompression.  It is limited
  *   to level 9 compression.  This is a port of the GPLed verion of gzip
  *   for Qt4. */
@@ -71,6 +51,15 @@ class US_EXTERN US_Gzip
      * \param error  The error code that was returned gzip or gunzip
      * \return A string that corresponds to the error code */ 
     QString explain( const int ); 
+
+    //! For definition of different compression levels
+    typedef struct config
+    {
+      ush good_length; /*!< reduce lazy search above this match length */
+      ush max_lazy;    /*!< do not perform lazy search above this match length */
+      ush nice_length; /*!< quit search above this match length */
+      ush max_chain;   /*!< maximum length of a single chain */
+    } config;
 
   private:
     off_t    bytes_in;      /* number of input bytes */
@@ -97,6 +86,25 @@ class US_EXTERN US_Gzip
 #define WSIZE       0x8000  /* window size--must be a power of two, and */
                             /*  at least 32K for zip's deflate method */
 
+    /*! Huffman code lookup table entry--this entry is four bytes for machines
+       that have 16-bit pointers (e.g. PC's in the small or medium model).
+       Valid extra bits are 0..13.  e == 15 is EOB (end of block), e == 16
+       means that v is a literal, 16 < e < 32 means that v is a pointer to
+       the next table, which codes e - 16 bits, and lastly e == 99 indicates
+       an unused code.  If a code with e == 99 is looked up, this implies an
+       error in the data. */
+   
+    struct huft 
+    {
+       uch e;                /*!< number of extra bits or operation */
+       uch b;                /*!< number of bits in this code or subcode */
+       union 
+       {
+          ush          n;     /*!< literal, length base, or distance base */
+          struct huft* t;     /*!< pointer to next level of table */
+       } v;                   /*!< a simple name for the union */
+    };
+
     uch inbuf [ INBUFSIZ  + INBUF_EXTRA  ];
     uch outbuf[ OUTBUFSIZ + OUTBUF_EXTRA ];
     uch window[ 2L * WSIZE               ];
@@ -120,7 +128,7 @@ class US_EXTERN US_Gzip
     char*   base_name      ( char* );
     void    flush_outbuf   ( void );
 
-// deflate variables and defines
+    // deflate variables and defines
 
     typedef ush      Pos;
     typedef unsigned IPos;

@@ -147,16 +147,7 @@ namespace gzip_data
       0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff, 0xffff
     };
 
-    //! Configuration of different compression levels
-    typedef struct config 
-    {
-      ush good_length; /*!< reduce lazy search above this match length */
-      ush max_lazy;    /*!< do not perform lazy search above this match length */
-      ush nice_length; /*!< quit search above this match length */
-      ush max_chain;   /*!< maximum length of a single chain */
-    } config;
-
-    config configuration_table[] = 
+    US_Gzip::config configuration_table[] = 
     {
       /*      good lazy nice chain */
       /* 0 */ {0,    0,  0,    0},  /* store only */
