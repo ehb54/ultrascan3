@@ -849,8 +849,6 @@ void US_ConvertGui::loadUS3Disk( QString dir )
 {
    resetAll();
 
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-
    // Set the runID and directory
    QStringList components =  dir.split( "/", QString::SkipEmptyParts );  
    runID    = components.last();
@@ -860,7 +858,9 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    currentDir  = QString( dir );
 
    // Reload the AUC data
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    int status = US_Convert::readUS3Disk( dir, allData, triples, runType );
+   QApplication::restoreOverrideCursor();
 
    if ( status == US_Convert::NODATA )
    {
@@ -928,9 +928,9 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
 
    // Redo plot
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    init_excludes();
    plot_current();
-
    QApplication::restoreOverrideCursor();
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
@@ -1001,12 +1001,14 @@ void US_ConvertGui:: loadUS3DB( void )
    // Restore area beneath dialog
    qApp->processEvents();
 
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-
    // Now that we have the runID, let's copy the DB info to HD
    QDir        readDir( US_Settings::resultDir() );
    QString     dirname = readDir.absolutePath() + "/" + runID + "/";
+
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    QString status = US_ConvertIO::readDBExperiment( runID, dirname, &db );
+   QApplication::restoreOverrideCursor();
+
    if ( status  != QString( "" ) )
    {
       QMessageBox::information( this,
@@ -1014,8 +1016,6 @@ void US_ConvertGui:: loadUS3DB( void )
              status + "\n" );
       return;
    }
-
-   QApplication::restoreOverrideCursor();
 
    // and load it
    loadUS3Disk( dirname );
@@ -1732,15 +1732,11 @@ void US_ConvertGui::drop_reference( void )
 // Function to save US3 data
 void US_ConvertGui::saveUS3( void )
 {
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-
    if ( disk_controls->db() )
       saveUS3DB();
 
    else
       saveUS3Disk();
-
-   QApplication::restoreOverrideCursor();
 }
 
 int US_ConvertGui::saveUS3Disk( void )
@@ -1789,8 +1785,10 @@ int US_ConvertGui::saveUS3Disk( void )
 
    // Write the data
    bool saveGUIDs = saveStatus != NOT_SAVED ;
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    status = US_Convert::saveToDisk( allData, triples, 
                                     allExcludes, runType, runID, dirname, saveGUIDs );
+   QApplication::restoreOverrideCursor();
 
    // Now try to write the xml file
    status = ExpData.saveToDisk( triples, runType, runID, dirname );
@@ -1942,7 +1940,9 @@ void US_ConvertGui::saveUS3DB( void )
    else if ( ExpData.checkRunID( &db ) != US_DB2::OK )
    {
       // No database records with this runID found
+      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
       status = ExpData.saveToDB( false, &db );
+      QApplication::restoreOverrideCursor();
    }
 
    else
@@ -1989,7 +1989,9 @@ void US_ConvertGui::saveUS3DB( void )
       return;
    }
 
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    QString writeStatus = US_ConvertIO::writeRawDataToDB( ExpData, triples, dir, &db );
+   QApplication::restoreOverrideCursor();
 
    if ( ! writeStatus.isEmpty() )
    {
@@ -2027,8 +2029,6 @@ bool US_ConvertGui::read( void )
 
 bool US_ConvertGui::read( QString dir )
 {
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-
    // Get legacy file names
    QDir d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
    d.makeAbsolute();
@@ -2045,8 +2045,8 @@ bool US_ConvertGui::read( QString dir )
    oldRunType = runType;            // let's see if the runType changes
 
    // Read the data
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    US_Convert::readLegacyData( dir, legacyData, runType );
-
    QApplication::restoreOverrideCursor();
 
    if ( legacyData.size() == 0 ) return( false );
@@ -2061,11 +2061,11 @@ bool US_ConvertGui::convert( void )
 {
    double tolerance = (double)ct_tolerance->value() + 0.05;    // to stay between wl numbers
 
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-
    // Convert the data
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    US_Convert::convertLegacyData( legacyData, allData, triples, 
                                   runType, tolerance );
+   QApplication::restoreOverrideCursor();
 
    if ( allData.size() == 0 ) return( false );
 
@@ -2080,8 +2080,6 @@ bool US_ConvertGui::convert( void )
 
       if ( currentTriple == -1 ) currentTriple = i;
    }
-
-   QApplication::restoreOverrideCursor();
 
    return( true );
 }
