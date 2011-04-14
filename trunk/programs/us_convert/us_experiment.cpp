@@ -6,6 +6,7 @@
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "us_investigator.h"
+#include "us_util.h"
 #include "us_experiment.h"
 
 US_Experiment::US_Experiment( void )
@@ -123,32 +124,50 @@ int US_Experiment::saveToDB( bool update, US_DB2* db )
    return US_DB2::OK;
 }
 
-// Function to read the ExperimentInfo structure from DB
-int US_Experiment::readSecondaryInfoDB( US_DB2* db )
+// Function to read an experiment from DB
+int US_Experiment::readFromDB( QString runID, 
+                               US_DB2* db )
 {
-   // Investigator info
-   invID = US_Settings::us_inv_ID();
-   name  = US_Settings::us_inv_name();
-   QStringList q( "get_person_info" );
-   q << QString::number( invID );
+   QStringList q( "get_experiment_info_by_runID" );
+   q << runID
+     << QString::number( US_Settings::us_inv_ID() );
    db->query( q );
+ 
    if ( db->next() )
    {
-      invGUID   = db->value( 9 ).toString();
+      this->runID        = runID;
+      project.projectID  = db->value( 0 ).toInt();
+      expID              = db->value( 1 ).toInt();
+      expGUID            = db->value( 2 ).toString();
+      labID              = db->value( 3 ).toInt();
+      instrumentID       = db->value( 4 ).toInt();
+      operatorID         = db->value( 5 ).toInt();
+      rotorID            = db->value( 6 ).toInt();
+      calibrationID      = db->value( 7 ).toInt();
+      expType            = db->value( 8 ).toString();
+      runTemp            = db->value( 9 ).toString();
+      label              = db->value( 10 ).toString();
+      comments           = db->value( 11 ).toString();
+      centrifugeProtocol = db->value( 12 ).toString();
+      date               = db->value( 13 ).toString();
+      invID              = db->value( 14 ).toInt();
    }
 
-   // Project info
-   project.projectGUID = QString( "" );
-   project.projectDesc = QString( "" );
+   else if ( db->lastErrno() == US_DB2::NOROWS )
+      return US_DB2::NO_EXPERIMENT;
+
+   else
+      return( db->lastErrno() );
+
+   // Get the rest of the info we need
    q.clear();
-   q << "get_project_info" 
-     << QString::number( project.projectID );
+   q  << QString( "get_person_info" )
+      << QString::number( invID );
    db->query( q );
    if ( db->next() )
-   {
-      project.projectGUID   = db->value( 1  ).toString();
-      project.projectDesc   = db->value( 10 ).toString();
-   }
+      invGUID = db->value( 9 ).toString();
+
+   project.readFromDB( project.projectID, db );
 
    // Hardware info
    operatorGUID = QString( "" );
@@ -203,6 +222,368 @@ int US_Experiment::readSecondaryInfoDB( US_DB2* db )
    }
 
    return US_DB2::OK;
+}
+
+int US_Experiment::saveToDisk(
+    QList< US_Convert::TripleInfo >& triples,
+    QString runType,
+    QString runID,
+    QString dirname )
+{ 
+   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+
+
+   if ( this->expGUID.isEmpty() || ! rx.exactMatch( this->expGUID ) )
+      this->expGUID = US_Util::new_guid();
+
+   if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
+   QString writeFile = runID      + "." 
+                     + runType    + ".xml";
+   QFile file( dirname + writeFile );
+   if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
+      return( US_Convert::CANTOPEN );
+
+   QXmlStreamWriter xml;
+   xml.setDevice( &file );
+   xml.setAutoFormatting( true );
+
+   xml.writeStartDocument();
+   xml.writeDTD("<!DOCTYPE US_Scandata>");
+   xml.writeStartElement("US_Scandata");
+   xml.writeAttribute("version", "1.0");
+
+   // elements
+   xml.writeStartElement( "experiment" );
+   xml.writeAttribute   ( "id",   QString::number( this->expID ) );
+   xml.writeAttribute   ( "guid", this->expGUID );
+   xml.writeAttribute   ( "type", this->expType );
+   xml.writeAttribute   ( "runID", this->runID );
+
+      xml.writeStartElement( "investigator" );
+      xml.writeAttribute   ( "id", QString::number( this->invID ) );
+      xml.writeAttribute   ( "guid", this->invGUID );
+      xml.writeEndElement  ();
+      
+      xml.writeStartElement( "name" );
+      xml.writeAttribute   ( "value", this->name );
+      xml.writeEndElement  ();
+      
+      xml.writeStartElement( "project" );
+      xml.writeAttribute   ( "id",   QString::number( this->project.projectID ) );
+      xml.writeAttribute   ( "guid", this->project.projectGUID );
+      xml.writeAttribute   ( "desc", this->project.projectDesc );
+      xml.writeEndElement  ();
+      
+      xml.writeStartElement( "lab" );
+      xml.writeAttribute   ( "id",   QString::number( this->labID   ) );
+      xml.writeEndElement  ();
+      
+      xml.writeStartElement( "instrument" );
+      xml.writeAttribute   ( "id",     QString::number( this->instrumentID ) );
+      xml.writeAttribute   ( "serial", this->instrumentSerial );
+      xml.writeEndElement  ();
+      
+      xml.writeStartElement( "operator" );
+      xml.writeAttribute   ( "id", QString::number( this->operatorID ) );
+      xml.writeAttribute   ( "guid", this->operatorGUID );
+      xml.writeEndElement  ();
+
+      xml.writeStartElement( "rotor" );
+      xml.writeAttribute   ( "id",     QString::number( this->rotorID   ) );
+      xml.writeAttribute   ( "guid",   this->rotorGUID );
+      xml.writeAttribute   ( "serial", this->rotorSerial );
+      xml.writeAttribute   ( "name", this->rotorName );
+      xml.writeEndElement  ();
+
+      xml.writeStartElement( "calibration" );
+      xml.writeAttribute   ( "id",     QString::number( this->calibrationID   ) );
+      xml.writeAttribute   ( "coeff1", QString::number( this->rotorCoeff1     ) );
+      xml.writeAttribute   ( "coeff2", QString::number( this->rotorCoeff2     ) );
+      xml.writeAttribute   ( "date",   this->rotorUpdated.toString( "yyyy-MM-dd" ) );
+      xml.writeEndElement  ();
+
+      // loop through the following for c/c/w combinations
+      for ( int i = 0; i < triples.size(); i++ )
+      {
+         US_Convert::TripleInfo t = triples[ i ];
+         if ( t.excluded ) continue;
+
+         QString triple         = t.tripleDesc;
+         QStringList parts      = triple.split(" / ");
+
+         QString     cell       = parts[ 0 ];
+         QString     channel    = parts[ 1 ];
+         QString     wl         = parts[ 2 ];
+
+         QString uuidc = US_Util::uuid_unparse( (unsigned char*)t.tripleGUID );
+         xml.writeStartElement( "dataset" );
+         xml.writeAttribute   ( "id", QString::number( t.tripleID ) );
+         xml.writeAttribute   ( "guid", uuidc );
+         xml.writeAttribute   ( "cell", cell );
+         xml.writeAttribute   ( "channel", channel );
+         xml.writeAttribute   ( "wavelength", wl );
+
+            xml.writeStartElement( "centerpiece" );
+            xml.writeAttribute   ( "id", QString::number( t.centerpiece ) );
+            xml.writeEndElement  ();
+
+            xml.writeStartElement( "solution" );
+            xml.writeAttribute   ( "id",   QString::number( t.solution.solutionID ) );
+            xml.writeAttribute   ( "guid", t.solution.solutionGUID );
+            xml.writeAttribute   ( "desc", t.solution.solutionDesc );
+            xml.writeEndElement  ();
+
+         xml.writeEndElement   ();
+      }
+
+   xml.writeStartElement( "opticalSystem" );
+   xml.writeAttribute   ( "value", this->opticalSystem );
+   xml.writeEndElement  ();
+
+   xml.writeStartElement( "date" );
+   xml.writeAttribute   ( "value", this->date );
+   xml.writeEndElement  ();
+
+   xml.writeStartElement( "runTemp" );
+   xml.writeAttribute   ( "value", this->runTemp );
+   xml.writeEndElement  ();
+
+   xml.writeTextElement ( "label", this->label );
+   xml.writeTextElement ( "comments", this->comments );
+   xml.writeTextElement ( "centrifugeProtocol", this->centrifugeProtocol );
+
+   xml.writeEndElement(); // US_Scandata
+   xml.writeEndDocument();
+
+   return( US_Convert::OK );
+}
+
+int US_Experiment::readFromDisk( 
+    QList< US_Convert::TripleInfo >& triples,
+    QString runType,
+    QString runID,
+    QString dirname )
+{
+   // First figure out the xml file name, and try to open it
+   QString filename = runID      + "." 
+                    + runType    + ".xml";
+
+   QFile f( dirname + filename );
+   if ( ! f.open( QIODevice::ReadOnly ) ) return US_Convert::CANTOPEN;
+   QTextStream ds( &f );
+
+   QXmlStreamReader xml( &f );
+
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isStartElement() )
+      {
+         if ( xml.name() == "experiment" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            this->expID          = a.value("id").toString().toInt();
+            this->expGUID        = a.value( "guid" ).toString();
+            this->expType        = a.value( "type" ).toString();
+            this->runID          = a.value( "runID" ).toString();
+            readExperiment ( xml, triples, runType, runID );
+         }
+      }
+   }
+
+   bool error = xml.hasError();
+   f.close();
+
+   if ( error ) return US_Convert::BADXML;
+
+   return US_Convert::OK;
+}
+
+void US_Experiment::readExperiment( 
+     QXmlStreamReader& xml, 
+     QList< US_Convert::TripleInfo >& triples,
+     QString runType,
+     QString runID )
+{
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isEndElement()  &&  xml.name() == "experiment" ) return;
+
+      if ( xml.isStartElement() )
+      {
+         if ( xml.name() == "investigator" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            this->invID          = a.value( "id" ).toString().toInt();
+            this->invGUID        = a.value( "guid" ).toString();
+         }
+ 
+         else if ( xml.name() == "name" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            this->name           = a.value( "value" ).toString();
+         }
+
+         else if ( xml.name() == "project" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            this->project.projectID      = a.value( "id"   ).toString().toInt();
+            this->project.projectGUID    = a.value( "guid" ).toString();
+            this->project.projectDesc    = a.value( "desc" ).toString();
+            this->project.readFromDisk( this->project.projectGUID );
+         }
+   
+         else if ( xml.name() == "lab" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            this->labID    = a.value( "id" )  .toString().toInt();
+         }
+   
+         else if ( xml.name() == "instrument" )
+         {
+            QXmlStreamAttributes a    = xml.attributes();
+            this->instrumentID      = a.value( "id" )    .toString().toInt();
+            this->instrumentSerial  = a.value( "serial" ).toString();
+         }
+   
+         else if ( xml.name() == "operator" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            this->operatorID     = a.value( "id" ).toString().toInt();
+            this->operatorGUID   = a.value( "guid" ).toString();
+         }
+   
+         else if ( xml.name() == "rotor" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            this->rotorID        = a.value( "id"     ).toString().toInt();
+            this->rotorGUID      = a.value( "guid"   ).toString();
+            this->rotorSerial    = a.value( "serial" ).toString();
+            this->rotorName      = a.value( "name" ).toString();
+            this->calibrationID  = a.value( "calibrationID" ).toString().toInt();
+         }
+   
+         else if ( xml.name() == "calibration" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            this->calibrationID      = a.value( "id"     ).toString().toInt();
+            this->rotorCoeff1        = a.value( "coeff1" ).toString().toFloat();
+            this->rotorCoeff2        = a.value( "coeff2" ).toString().toFloat();
+            this->rotorUpdated       = QDate::fromString( a.value( "date" ).toString(), "yyyy-MM-dd" );
+         }
+
+         else if ( xml.name() == "dataset" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            QString cell           = a.value( "cell" ).toString();
+            QString channel        = a.value( "channel" ).toString();
+            QString wl             = a.value( "wavelength" ).toString();
+   
+            // Find the index of this triple
+            QString triple         = cell + " / " + channel + " / " + wl;
+            bool found             = false;
+            int ndx                = 0;
+            for ( int i = 0; i < triples.size(); i++ )
+            {
+               if ( triples[ i ].excluded ) continue;
+
+               if ( triple == triples[ i ].tripleDesc )
+               {
+                  found = true;
+                  ndx   = i;
+                  break;
+               }
+            }
+
+            if ( found )
+            {
+               triples[ ndx ].tripleID = a.value( "id" ).toString().toInt();
+               QString uuidc = a.value( "guid" ).toString();
+               US_Util::uuid_parse( uuidc, (unsigned char*) triples[ ndx ].tripleGUID );
+
+               triples[ ndx ].tripleFilename = runID    + "." +
+                                               runType  + "." +
+                                               cell     + "." +
+                                               channel  + "." +
+                                               wl       + ".auc";
+
+               triples[ ndx ].excluded       = false;
+
+               readDataset( xml, triples[ ndx ] );
+            }
+         }
+
+         else if ( xml.name() == "opticalSystem" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            this->opticalSystem  = a.value( "value" ).toString().toAscii();
+         }
+
+         else if ( xml.name() == "date" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            this->date           = a.value( "value" ).toString();
+         }
+
+         else if ( xml.name() == "runTemp" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            this->runTemp        = a.value( "value" ).toString();
+         }
+
+         else if ( xml.name() == "label" )
+         {
+            xml.readNext();
+            this->label = xml.text().toString();
+         }
+
+         else if ( xml.name() == "comments" )
+         {
+            xml.readNext();
+            this->comments = xml.text().toString();
+         }
+
+         else if ( xml.name() == "centrifugeProtocol" )
+         {
+            xml.readNext();
+            this->centrifugeProtocol = xml.text().toString();
+         }
+
+      }
+
+   }
+}
+
+void US_Experiment::readDataset( QXmlStreamReader& xml, US_Convert::TripleInfo& triple )
+{
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isEndElement()  &&  xml.name() == "dataset" ) return;
+
+      if ( xml.isStartElement() )
+      {
+         if ( xml.name() == "centerpiece" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            triple.centerpiece     = a.value( "id" ).toString().toInt();
+         }
+ 
+         else if ( xml.name() == "solution" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            triple.solution.solutionID   = a.value( "id"   ).toString().toInt();
+            triple.solution.solutionGUID = a.value( "guid" ).toString();
+            triple.solution.solutionDesc = a.value( "desc" ).toString();
+            triple.solution.readFromDisk( triple.solution.solutionGUID );
+         }
+
+      }
+   }
 }
 
 // Zero out all data structures

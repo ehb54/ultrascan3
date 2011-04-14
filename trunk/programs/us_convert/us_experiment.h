@@ -3,9 +3,7 @@
 #define US_EXPERIMENT_H
 
 #include "us_extern.h"
-#include "us_widgets_dialog.h"
-#include "us_help.h"
-#include "us_selectbox.h"
+#include "us_convert.h"
 #include "us_project.h"
 #include "us_rotor.h"
 
@@ -85,21 +83,66 @@ class US_EXTERN US_Experiment
       */
       int saveToDB           ( bool = false, US_DB2* = 0 );
 
-      /*! \brief    Reads secondary experiment info from the database. Call 
-                    this function when you already have IDs stored and
-                    want to fill out with GUIDs, serial numbers and the like.
-                    For instance, after loading the xml file to fill in the gaps,
-                    or to load experiment info after reading
-                    auc files.
+      /*! \brief    Reads experiment information from the db
 
+          \param runID  The run ID of the experiment.
           \param    db For database access, an open database connection
+          \returns  One of the US_DB2 error codes
       */
-      int readSecondaryInfoDB( US_DB2* = 0 );
+      int readFromDB( QString , 
+                      US_DB2* = 0 );
+
+      /*! \brief    Writes an xml file
+
+          \param triples A reference to a structure provided by the calling
+                        function that already contains all the different
+                        cell/channel/wavelength combinations in the data. 
+          \param runType A reference to a variable that already contains the type
+                        of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
+                        This information will affect how the data is
+                        written.
+          \param runID  The run ID of the experiment.
+          \param dirname The directory in which the files are to be written.
+      */
+      int saveToDisk( 
+                 QList< US_Convert::TripleInfo >& ,
+                 QString ,
+                 QString ,
+                 QString );
+
+      /*! \brief    Reads an xml file
+
+          \param triples A reference to a structure provided by the calling
+                        function that will contain all the different
+                        cell/channel/wavelength defined by the xml file.
+          \param runType A reference to a variable that will contain the type
+                        of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
+                        This information will affect how the data is
+                        stored.
+          \param runID  The run ID of the experiment.
+          \param dirname The directory from which the files are read.
+      */
+      int readFromDisk( 
+                 QList< US_Convert::TripleInfo >& ,
+                 QString ,
+                 QString ,
+                 QString );
 
       void clear( void );                  //!< Function to reset all class variables to defaults
       void show ( void );                  // Temporary function to display current exp info
 
       RotorInfo         hwInfo;
+
+   private:
+      void readExperiment( 
+                 QXmlStreamReader& , 
+                 QList< US_Convert::TripleInfo >& ,
+                 QString ,
+                 QString );
+
+      void readDataset( 
+                 QXmlStreamReader& , 
+                 US_Convert::TripleInfo& );
 
 };
 #endif

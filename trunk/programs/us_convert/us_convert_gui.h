@@ -1,6 +1,6 @@
-//! \file us_convert.h
-#ifndef US_CONVERT_H
-#define US_CONVERT_H
+//! \file us_convert_gui.h
+#ifndef US_CONVERT_GUI_H
+#define US_CONVERT_GUI_H
 
 #include <QtGui>
 
@@ -9,8 +9,8 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_convert.h"
-#include "us_dataIO2.h"
 #include "us_experiment.h"
+#include "us_dataIO2.h"
 #include "us_solution.h"
 #include "us_selectbox.h"
 

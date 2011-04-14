@@ -79,10 +79,31 @@ void US_Rotor::saveLabsDisk( QVector< US_Rotor::Lab >& labList )
       xml.writeAttribute   ( "name",                          lab.name              );
       xml.writeAttribute   ( "building",                      lab.building          );
       xml.writeAttribute   ( "room",                          lab.room              );
-      xml.writeEndElement  ();
+
+      foreach ( US_Rotor::Instrument instrument, lab.instruments )
+      {
+         xml.writeStartElement( "instrument" );
+         xml.writeAttribute   ( "id",        QString::number( instrument.ID )   );
+         xml.writeAttribute   ( "name",                       instrument.name   );
+         xml.writeAttribute   ( "serial",                     instrument.serial );
+
+         foreach( US_Rotor::Operator oper, instrument.operators )
+         {
+            xml.writeStartElement( "operator" );
+            xml.writeAttribute   ( "id",     QString::number( oper.ID )  );
+            xml.writeAttribute   ( "guid",                    oper.GUID  );
+            xml.writeAttribute   ( "lname",                   oper.lname );
+            xml.writeAttribute   ( "fname",                   oper.fname );
+            xml.writeEndElement  ();    // Operator
+         }
+
+         xml.writeEndElement  ();       // Instrument
+      }
+
+      xml.writeEndElement  ();          // Lab
    }
 
-   xml.writeEndElement  ();        // LabData
+   xml.writeEndElement  ();             // LabData
    xml.writeEndDocument ();
 
    file.close();
@@ -134,6 +155,7 @@ US_Rotor::Status US_Rotor::readLabsDisk( QVector< US_Rotor::Lab >& labList )
             lab.name         = a.value( "name"         ).toString();
             lab.building     = a.value( "building"     ).toString();
             lab.room         = a.value( "room"         ).toString();
+            readInstrumentInfo( xml, lab );
 
             labList.push_back( lab );
          }
@@ -150,6 +172,58 @@ US_Rotor::Status US_Rotor::readLabsDisk( QVector< US_Rotor::Lab >& labList )
    }
 
    return US_Rotor::ROTOR_OK;
+}
+
+void US_Rotor::readInstrumentInfo( QXmlStreamReader& xml, US_Rotor::Lab& lab )
+{
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isEndElement()  &&  xml.name() == "lab" ) return;
+
+      if ( xml.isStartElement() )
+      {
+         if ( xml.name() == "instrument" )
+         {
+            US_Rotor::Instrument instrument;
+
+            QXmlStreamAttributes a = xml.attributes();
+            instrument.ID      = a.value( "id"     ).toString().toInt();
+            instrument.name    = a.value( "name"   ).toString();
+            instrument.serial  = a.value( "serial" ).toString();
+
+            readOperatorInfo( xml, instrument );
+            lab.instruments << instrument;
+         }
+      }
+   }
+}
+
+void US_Rotor::readOperatorInfo( QXmlStreamReader& xml, US_Rotor::Instrument& instrument )
+{
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isEndElement()  &&  xml.name() == "instrument" ) return;
+
+      if ( xml.isStartElement() )
+      {
+         if ( xml.name() == "operator" )
+         {
+            US_Rotor::Operator oper;
+
+            QXmlStreamAttributes a = xml.attributes();
+            oper.ID      = a.value( "id"    ).toString().toInt();
+            oper.GUID    = a.value( "guid"  ).toString();
+            oper.lname   = a.value( "lname" ).toString();
+            oper.fname   = a.value( "fname" ).toString();
+
+            instrument.operators << oper;
+         }
+      }
+   }
 }
 
 // A function to read information about all abstract rotors from DB
@@ -538,7 +612,70 @@ US_Rotor::Status US_Rotor::Lab::readDB( int labID, US_DB2* db )
    name              = db->value( 1 ).toString();
    building          = db->value( 2 ).toString();
    room              = db->value( 3 ).toString();
-   
+  
+   // Now try to get instrument info for this lab
+   instruments.clear();
+   q.clear();
+   q  << QString( "get_instrument_names" )
+      << QString::number( labID );
+   db->query( q );
+   readStatus = db->lastErrno();
+
+   if ( readStatus == US_DB2::OK )      // If not, no instruments defined
+   {
+      QList< int > instrumentIDs;
+
+      // Grab all the IDs so we can reuse the db connection
+      while ( db->next() )
+      {
+         int ID = db->value( 0 ).toString().toInt();
+         instrumentIDs << ID;
+      }
+
+      // Instrument information
+      foreach ( int ID, instrumentIDs )
+      {
+         US_Rotor::Instrument instrument;
+
+         q.clear();
+         q  << QString( "get_instrument_info" )
+            << QString::number( ID );
+         db->query( q );
+         db->next();
+
+         instrument.ID     = ID;
+         instrument.name   = db->value( 0 ).toString();
+         instrument.serial = db->value( 1 ).toString();
+         instrument.operators.clear();
+
+         this->instruments << instrument;
+      }
+
+      // Operator information
+      for ( int i = 0; i < instruments.size(); i++ )
+      {
+         q.clear();
+         q  << QString( "get_operator_names" )
+            << QString::number( instruments[ i ].ID );
+         db->query( q );
+
+         if ( db->lastErrno() == US_DB2::OK )
+         {
+            while ( db->next() )
+            {
+               US_Rotor::Operator oper;
+
+               oper.ID    = db->value( 0 ).toString().toInt();
+               oper.GUID  = db->value( 1 ).toString();
+               oper.lname = db->value( 2 ).toString();
+               oper.fname = db->value( 3 ).toString();
+
+               this->instruments[ i ].operators << oper;
+            }
+         }
+      }
+   }
+ 
    return ROTOR_OK;
 }
 
@@ -549,6 +686,7 @@ void US_Rotor::Lab::reset( void )
    name         = "";
    building     = "";
    room         = "";
+   instruments.clear();
 }
 
 void US_Rotor::Lab::show( void )
@@ -558,6 +696,23 @@ void US_Rotor::Lab::show( void )
    qDebug() << "name =         " <<  name         ;
    qDebug() << "building =     " <<  building     ;
    qDebug() << "room =         " <<  room         ;
+
+   qDebug() << "Instruments...";
+   foreach ( US_Rotor::Instrument instrument, instruments )
+   {
+      qDebug() << "  instrument ID =     " << instrument.ID     ;
+      qDebug() << "  instrument name =   " << instrument.name   ;
+      qDebug() << "  instrument serial = " << instrument.serial ;
+
+      qDebug() << "  Operators...";
+      foreach( US_Rotor::Operator oper, instrument.operators )
+      {
+         qDebug() << "    operator ID =    " << oper.ID   ;
+         qDebug() << "    operator GUID =  " << oper.GUID ;
+         qDebug() << "    operator lname = " << oper.lname ;
+         qDebug() << "    operator fname = " << oper.fname ;
+      }
+   }
 }
 
 US_Rotor::AbstractRotor::AbstractRotor()
