@@ -122,25 +122,21 @@ void US_Convert::convertLegacyData(
    }
 }
 
-void US_Convert::writeConvertedData(
-     int& status,
-     QVector< US_DataIO2::RawData >& rawConvertedData,
-     US_Experiment& ExpData,
-     QList< TripleInfo >& triples,
-     QVector< Excludes >& allExcludes,
-     QString runType,
-     QString runID,
-     QString dirname,
-     bool saveGUIDs
-     )
+int US_Convert::saveToDisk(
+    QVector< US_DataIO2::RawData >& rawConvertedData,
+    QList< TripleInfo >& triples,
+    QVector< Excludes >& allExcludes,
+    QString runType,
+    QString runID,
+    QString dirname,
+    bool saveGUIDs
+    )
 {
    if ( rawConvertedData[ 0 ].scanData.empty() ) 
-   {
-      status = NODATA;
-      return;
-   }
+      return NODATA;
 
    // Write the data
+   int status;
 
    // Make sure directory is empty
    QDir d( dirname );
@@ -230,25 +226,20 @@ void US_Convert::writeConvertedData(
       if ( status !=  US_DataIO2::OK ) break;
    }
 
-   if ( status != OK )
+   if ( status != US_DataIO2::OK )
    {
       // Try to delete the files and tell the user
-      return;
+      return NOT_WRITTEN;
    }
 
-   // Now try to write the xml file
-   status = US_ConvertIO::writeXmlFile( 
-            ExpData, triples, runType, runID, dirname );
-
+   return OK;
 }
 
-int  US_Convert::reloadUS3Data(
+int  US_Convert::readUS3Disk(
      QString dir,
      QVector< US_DataIO2::RawData >& rawConvertedData,
-     US_Experiment& ExpData,
      QList< TripleInfo >& triples,
-     QString& runType ,
-     QString runID
+     QString& runType 
      )
 {
    rawConvertedData.clear();
@@ -269,7 +260,6 @@ int  US_Convert::reloadUS3Data(
 
    // Set up cell / channel / wavelength combinations
    triples.clear();
-   ExpData.clear();
    for ( int i = 0; i < files.size(); i++ )
    {
       part.clear();
@@ -296,11 +286,7 @@ int  US_Convert::reloadUS3Data(
       data.scanData.clear();
    }
 
-   // Now try to read the xml file
-   int status = US_ConvertIO::readXmlFile( 
-                ExpData, triples, runType, runID, dir );
-
-   return status;
+   return OK;
 }
 
 void US_Convert::convert( 

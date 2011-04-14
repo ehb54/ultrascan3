@@ -8,16 +8,15 @@
 #include "us_run_details2.h"
 #include "us_plot.h"
 #include "us_math2.h"
-#include "us_convert.h"
 #include "us_convert_gui.h"
+#include "us_convertio.h"
+#include "us_experiment_gui.h"
 #include "us_solution_gui.h"
 #include "us_db2.h"
 #include "us_passwd.h"
-#include "us_convertio.h"
 #include "us_intensity.h"
 #include "us_get_dbrun.h"
 #include "us_investigator.h"
-#include "us_experiment_gui.h"
 #include "us_constants.h"
 
 int main( int argc, char* argv[] )
@@ -799,22 +798,6 @@ void US_ConvertGui::runIDChanged( void )
 // Function to generate a new guid for experiment, and associate with DB
 void US_ConvertGui::editRuninfo( void )
 {
-   // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      QMessageBox::information( this,
-             tr( "Error" ),
-             tr( "This is the dialog where you associate the run information " ) +
-             tr( "with the database. Please verify your "     ) +
-             tr( "connection parameters before proceeding. You can still " ) +
-             tr( "create your auc file and do this later.\n" ) );
-      return;
-   }
-
    if ( saveStatus == NOT_SAVED )
    {
       // First time for this data, so clear ExpData out
@@ -876,8 +859,8 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    le_dir   ->setText( dir );
    currentDir  = QString( dir );
 
-   // Reload the data
-   int status = US_Convert::reloadUS3Data( dir, allData, ExpData, triples, runType, runID );
+   // Reload the AUC data
+   int status = US_Convert::readUS3Disk( dir, allData, triples, runType );
 
    if ( status == US_Convert::NODATA )
    {
@@ -895,6 +878,10 @@ void US_ConvertGui::loadUS3Disk( QString dir )
          tr( "Could not read data file.\n" ) );
       return;
    }
+
+   // Now try to read the xml file
+   ExpData.clear();
+   status = ExpData.readFromDisk( triples, runType, runID, dir );
 
    if ( status == US_Convert::CANTOPEN )
    {
@@ -979,6 +966,9 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    saveStatus = ( ExpData.expID == 0 ) ? HD_ONLY : BOTH;
    //pb_editRuninfo  ->setEnabled ( saveStatus == HD_ONLY );
 
+   // Read it in ok, so ok to sync with DB
+   ExpData.syncOK = true;
+
    if ( disk_controls->db() )
       enableSyncDB();
 }
@@ -1016,7 +1006,7 @@ void US_ConvertGui:: loadUS3DB( void )
    // Now that we have the runID, let's copy the DB info to HD
    QDir        readDir( US_Settings::resultDir() );
    QString     dirname = readDir.absolutePath() + "/" + runID + "/";
-   QString status = US_ConvertIO::readDBExperiment( runID, dirname );
+   QString status = US_ConvertIO::readDBExperiment( runID, dirname, &db );
    if ( status  != QString( "" ) )
    {
       QMessageBox::information( this,
@@ -1799,8 +1789,11 @@ int US_ConvertGui::saveUS3Disk( void )
 
    // Write the data
    bool saveGUIDs = saveStatus != NOT_SAVED ;
-   US_Convert::writeConvertedData( status, allData, ExpData, triples, 
-                                   allExcludes, runType, runID, dirname, saveGUIDs );
+   status = US_Convert::saveToDisk( allData, triples, 
+                                    allExcludes, runType, runID, dirname, saveGUIDs );
+
+   // Now try to write the xml file
+   status = ExpData.saveToDisk( triples, runType, runID, dirname );
 
    // How many files should have been written?
    int fileCount = 0;
@@ -1860,6 +1853,9 @@ int US_ConvertGui::saveUS3Disk( void )
    if ( saveStatus == NOT_SAVED )
       saveStatus = HD_ONLY;
 
+   // If we are here, it's ok to sync with DB
+   ExpData.syncOK = true;
+
    enableRunIDControl( false );
 
    return( US_Convert::OK );
@@ -1882,7 +1878,17 @@ void US_ConvertGui::saveUS3DB( void )
    }
 
    // First check some of the data with the DB
-   int status = US_ConvertIO::checkDiskData( ExpData, triples );
+   int status = US_ConvertIO::checkDiskData( ExpData, triples, &db );
+
+   if ( status == US_Convert::NOPERSON )    // Investigator or operator doesn't exist
+   {
+      QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "This investigator or instrument operator was not found \n" ) +
+            tr( "in the database.\n") );
+      return;
+   }
+
    if ( status == US_Convert::BADGUID )     // The most common problem
    {
       QMessageBox::information( this,
@@ -1983,7 +1989,7 @@ void US_ConvertGui::saveUS3DB( void )
       return;
    }
 
-   QString writeStatus = US_ConvertIO::writeRawDataToDB( ExpData, triples, dir );
+   QString writeStatus = US_ConvertIO::writeRawDataToDB( ExpData, triples, dir, &db );
 
    if ( ! writeStatus.isEmpty() )
    {

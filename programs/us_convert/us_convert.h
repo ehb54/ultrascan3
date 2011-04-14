@@ -1,24 +1,17 @@
-//! \file us_process_convert.h
-#ifndef US_PROCESS_CONVERT_H
-#define US_PROCESS_CONVERT_H
-
-#include <QtGui>
+//! \file us_convert.h
+#ifndef US_CONVERT_H
+#define US_CONVERT_H
 
 #include "us_extern.h"
-#include "us_widgets_dialog.h"
 #include "us_dataIO2.h"
-#include "us_help.h"
-#include "us_experiment.h"
 #include "us_solution.h"
 
 /*! \class US_Convert
            This class provides the ability to convert raw data in the
            Beckman format to the file format used by US3. 
 */
-class US_EXTERN US_Convert // : public US_WidgetsDialog 
+class US_EXTERN US_Convert
 {
-//  Q_OBJECT
-
    public:
       //! \brief   Some status codes returned by the us_convert program
       enum ioError
@@ -26,6 +19,7 @@ class US_EXTERN US_Convert // : public US_WidgetsDialog
          OK,                                  //!< Ok, no error
          CANTOPEN,                            //!< The file cannot be opened
          DUP_RUNID,                           //!< The given run ID already exists
+         NOPERSON,                            //!< The person specified doesn't exist
          NODATA,                              //!< There is no data to read or write
          NODB,                                //!< Connection to database cannot be made
          NOAUC,                               //!< AUC File cannot be opened
@@ -127,13 +121,8 @@ class US_EXTERN US_Convert // : public US_WidgetsDialog
 
       /*! \brief Writes the converted US3 data to disk. 
 
-          \param status  A reference to an integer that will contain the status of the
-                         operation when it is completed.
           \param rawConvertedData A reference to a structure provided by the calling
                         function that already contains the US3 raw converted data.
-          \param ExpData A reference to a structure provided by the calling function
-                         that already contains the hardware and other database
-                         connection information relevant to this experiment.
           \param triples A reference to a structure provided by the calling
                         function that already contains all the different
                         cell/channel/wavelength combinations in the data. 
@@ -147,11 +136,10 @@ class US_EXTERN US_Convert // : public US_WidgetsDialog
           \param dirname The directory in which the files are to be written.
           \param saveGUIDs Boolean value that indicates whether data has been saved
                         to disk before and doesn't require new GUIDs
+          \returns      One of the ioError status codes, above
       */
-      static void   writeConvertedData(
-                    int& status,
+      static int    saveToDisk(
                     QVector< US_DataIO2::RawData >& ,
-                    US_Experiment& ,
                     QList< TripleInfo >& ,
                     QVector< Excludes >& ,
                     QString ,
@@ -165,9 +153,6 @@ class US_EXTERN US_Convert // : public US_WidgetsDialog
           \param dir    The directory that contains the auc files
           \param rawConvertedData A reference to a structure provided by the calling
                         function that will be used to store the US3 raw converted data.
-          \param ExpData A reference to a structure provided by the calling function
-                         that will contain the hardware and other database
-                         connection information relevant to this experiment.
           \param triples A reference to a structure provided by the calling
                         function that will be used to store all the different
                         cell/channel/wavelength combinations found in the data. 
@@ -177,13 +162,11 @@ class US_EXTERN US_Convert // : public US_WidgetsDialog
                         converted.
           \returns      An ioError status code
       */
-      static int    reloadUS3Data(
+      static int    readUS3Disk(
                     QString ,
                     QVector< US_DataIO2::RawData        >& ,
-                    US_Experiment&,
                     QList< TripleInfo >& ,
-                    QString&,
-                    QString );
+                    QString& );
 
       /*! \brief Splits existing raw converted data into multiple datasets. 
                  Also rearranges triples in the data accordingly.
@@ -202,8 +185,6 @@ class US_EXTERN US_Convert // : public US_WidgetsDialog
                                 QList< double >& );
 
    private:
-      US_Help            showHelp;
-
       static void convert( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
                            US_DataIO2::RawData&          newRawData,
                            QString                       triple, 
@@ -230,7 +211,5 @@ class US_EXTERN US_Convert // : public US_WidgetsDialog
                            QVector< US_DataIO2::XValue >& radii, 
                            double r_start,
                            double r_end );
-
-   private slots:
 };
 #endif

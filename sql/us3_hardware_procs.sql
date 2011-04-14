@@ -1132,10 +1132,10 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   m.personID, p.lname, p.fname
+      SELECT   m.personID, p.personGUID, p.lname, p.fname
       FROM     permits m, people p
-      WHERE    m.personID = p.personID
-      AND      m.instrumentID = p_instrumentID 
+      WHERE    m.instrumentID = p_instrumentID 
+      AND      m.personID = p.personID
       ORDER BY p.lname, p.fname;
  
     END IF;

@@ -6,6 +6,7 @@
 #include "us_widgets.h"
 #include "us_extern.h"
 #include "us_help.h"
+#include "us_convert.h"
 #include "us_experiment.h"
 #include "us_selectbox.h"
 #include "us_project.h"
@@ -64,6 +65,9 @@ class US_EXTERN US_ExperimentGui : public US_WidgetsDialog
 
    private:
       US_Experiment          expInfo;
+      QVector< US_Rotor::Lab > labList;
+      int                    currentLab;
+      int                    currentInstrument;
       bool                   lab_changed;
       bool                   signal;
 

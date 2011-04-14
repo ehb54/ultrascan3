@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE US_Lab>
 <LabData version="1.0">
-    <lab id="1" guid="c61cedd3-dd0f-3db4-1118-ee4db019bcfd" name="UTHSCSA Lab #1" building="HSC-MED" room="425D"/>
+    <lab id="1" guid="c61cedd3-dd0f-3db4-1118-ee4db019bcfd" name="UTHSCSA Lab #1" building="HSC-MED" room="425D">
+        <instrument id="1" name="XLA #1" serial="1234">
+            <operator id="1" guid="" lname="Last" fname="First"/>
+        </instrument>
+    </lab>
     <lab id="2" guid="7532024e-afb4-ee84-d160-3b9625a10b43" name="UTHSCSA Lab #2" building="HSC-MED" room="420D"/>
 </LabData>

@@ -268,21 +268,30 @@ void US_ExperimentGui::reset( void )
       le_investigator->setText( QString::number( expInfo.invID ) + ": " 
          + US_Settings::us_inv_name() );
 
-      US_Passwd pw;
-      QString masterPW = pw.getPasswd();
-      US_DB2 db( masterPW );
-      
-      int runIDStatus = US_DB2::NO_EXPERIMENT;
-      if ( db.lastErrno() == US_DB2::OK )
-         runIDStatus = expInfo.checkRunID( &db );
-
-      if ( expInfo.expID > 0 )
-         pb_accept       ->setEnabled( true );
- 
-      else if ( runIDStatus != US_DB2::OK )
+      if ( disk_controls->db() )
       {
-         // Then an investigator has been chosen, and 
-         //  the current runID doesn't exist in the db
+         US_Passwd pw;
+         QString masterPW = pw.getPasswd();
+         US_DB2 db( masterPW );
+         
+         int runIDStatus = US_DB2::NO_EXPERIMENT;
+         if ( db.lastErrno() == US_DB2::OK )
+            runIDStatus = expInfo.checkRunID( &db );
+        
+         if ( expInfo.expID > 0 )
+            pb_accept       ->setEnabled( true );
+        
+         else if ( runIDStatus != US_DB2::OK )
+         {
+            // Then an investigator has been chosen, and 
+            //  the current runID doesn't exist in the db
+            pb_accept       ->setEnabled( true );
+         }
+      }
+
+      else
+      {
+         // We can always accept in disk mode
          pb_accept       ->setEnabled( true );
       }
 
@@ -290,7 +299,7 @@ void US_ExperimentGui::reset( void )
       if ( expInfo.project.projectID == 0 && expInfo.project.projectGUID.isEmpty() ) 
          pb_accept       ->setEnabled( false );
 
-      // Also checking the label
+      // The label can't be empty either
       if ( expInfo.label.isEmpty() )
          pb_accept       ->setEnabled( false );
    }
@@ -329,6 +338,19 @@ bool US_ExperimentGui::load( void )
    if ( ! expInfo.comments.isEmpty() )
       te_comment->setText( expInfo.comments );
 
+   if ( disk_controls->db() )
+   {
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+   
+      if ( db.lastErrno() == US_DB2::OK )
+         US_Rotor::readLabsDB( labList, &db );
+   }
+
+   else
+      US_Rotor::readLabsDisk( labList );
+
    lab_changed = true; // so boxes will go through all the reload code 1st time
 
    return( true );
@@ -336,26 +358,36 @@ bool US_ExperimentGui::load( void )
 
 void US_ExperimentGui::reload( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( lab_changed && labList.size() > 0 )
    {
-      connect_error( db.lastError() );
-      return;
-   }
+      // Find labList info for this lab
+      currentLab = 0;
+      bool found = false;
+      for ( int i = 0; i < labList.size(); i++ )
+      {
+          if ( labList[ i ].ID == expInfo.labID )
+          {
+             found = true;
+             currentLab = i;
+             break;
+          }
+      }
+   
+      if ( ! found )
+      {
+         // replace with the first one on the list
+         expInfo.labID = labList[ 0 ].ID;
+         currentLab = 0;
+      }
 
-   if ( lab_changed )
-   {
       setInstrumentList();
       setOperatorList();
 
       cb_instrument   ->load();
       cb_operator     ->load();
-
-      lab_changed = false;
    }
+
+   lab_changed = false;
 }
 
 void US_ExperimentGui::syncHardware( void )
@@ -384,27 +416,25 @@ void US_ExperimentGui::assignInvestigator( int invID,
 
 void US_ExperimentGui::getInvestigatorInfo( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      connect_error( db.lastError() );
-      return;
-   }
-
    expInfo.invID = US_Settings::us_inv_ID();     // just to be sure
    expInfo.name  = US_Settings::us_inv_name();
-   QStringList q( "get_person_info" );
-   q << QString::number( expInfo.invID );
-   db.query( q );
 
-   if ( db.next() )
+   if ( disk_controls->db() )
    {
-      expInfo.invGUID   = db.value( 9 ).toString();
-   }
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
    
+      if ( db.lastErrno() == US_DB2::OK )
+      {
+         QStringList q( "get_person_info" );
+         q << QString::number( expInfo.invID );
+         db.query( q );
+         
+         if ( db.next() )
+            expInfo.invGUID   = db.value( 9 ).toString();
+      }
+   }
 }
 
 void US_ExperimentGui::source_changed( bool db )
@@ -504,26 +534,14 @@ QComboBox* US_ExperimentGui::us_expTypeComboBox( void )
 
 void US_ExperimentGui::setInstrumentList( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   QList< listInfo > options;
+   QList< US_Rotor::Instrument > instruments = labList[ currentLab ].instruments;
 
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      connect_error( db.lastError() );
-      return;
-   }
-
-   QStringList q( "get_instrument_names" );
-   q << QString::number( expInfo.labID );     // In this lab
-   db.query( q );
-
-   QList<listInfo> options;
-   while ( db.next() )
+   foreach ( US_Rotor::Instrument instrument, instruments )
    {
       struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
+      option.ID      = QString::number( instrument.ID );
+      option.text    = instrument.name;
       options << option;
    }
 
@@ -533,45 +551,33 @@ void US_ExperimentGui::setInstrumentList( void )
       cb_instrument->addOptions( options );
 
       // is the instrument ID in the list?
-      int index = 0;
+      currentInstrument = 0;
       for ( int i = 0; i < options.size(); i++ )
       {
          if ( expInfo.instrumentID == options[ i ].ID.toInt() )
          {
-            index = i;
+            currentInstrument = i;
             break;
          }
       }
 
       // Replace instrument ID with one from the list
-      expInfo.instrumentID = options[ index ].ID.toInt();
-         
+      expInfo.instrumentID = instruments[ currentInstrument ].ID;
+      expInfo.instrumentSerial = instruments[ currentInstrument ].serial;
    }
-
 }
 
 void US_ExperimentGui::setOperatorList( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   QList< listInfo > options;
+   QList< US_Rotor::Instrument > instruments = labList[ currentLab ].instruments;
+   QList< US_Rotor::Operator > operators = instruments[ currentInstrument ].operators;
 
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      connect_error( db.lastError() );
-      return;
-   }
-
-   QStringList q( "get_operator_names" );
-   q << QString::number( expInfo.instrumentID );  // who can use this instrument
-   db.query( q );
-
-   QList<listInfo> options;
-   while ( db.next() )
+   foreach ( US_Rotor::Operator oper, operators )
    {
       struct listInfo option;
-      option.ID      = db.value( 0 ).toString();
-      option.text    = db.value( 1 ).toString();
+      option.ID      = QString::number( oper.ID );
+      option.text    = oper.lname + ", " + oper.fname;
       options << option;
    }
 
@@ -581,18 +587,19 @@ void US_ExperimentGui::setOperatorList( void )
       cb_operator->addOptions( options );
 
       // is the operator ID in the list?
-      int index = 0;
+      int currentOperator = 0;
       for ( int i = 0; i < options.size(); i++ )
       {
          if ( expInfo.operatorID == options[ i ].ID.toInt() )
          {
-            index = i;
+            currentOperator = i;
             break;
          }
       }
 
       // Replace operator ID with one from the list
-      expInfo.operatorID = options[ index ].ID.toInt();
+      expInfo.operatorID   = operators[ currentOperator ].ID;
+      expInfo.operatorGUID = operators[ currentOperator ].GUID;
    }
 }
 
@@ -674,16 +681,6 @@ void US_ExperimentGui::cancelRotor( void )
 
 void US_ExperimentGui::accept( void )
 {
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      connect_error( db.lastError() );
-      return;
-   }
-
    // We can sync with the DB
    expInfo.syncOK = true;
 
@@ -703,19 +700,29 @@ void US_ExperimentGui::accept( void )
    expInfo.label         = le_label         ->text(); 
    expInfo.comments      = te_comment       ->toPlainText();
 
-   // Update items from the DB after getting values from the form
-   QStringList q( "get_instrument_info" );
-   q  << QString::number( expInfo.instrumentID );
-   db.query( q );
-   db.next();
-   expInfo.instrumentSerial = db.value( 1 ).toString();
-
-   q.clear();
-   q  << "get_person_info"
-      << QString::number( expInfo.operatorID );
-   db.query( q );
-   db.next();
-   expInfo.operatorGUID = db.value( 9 ).toString();
+   // Update items from the DB after getting values from the form, if we can
+   if ( disk_controls->db() )
+   {
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+      
+      if ( db.lastErrno() == US_DB2::OK )
+      {
+         QStringList q( "get_instrument_info" );
+         q  << QString::number( expInfo.instrumentID );
+         db.query( q );
+         db.next();
+         expInfo.instrumentSerial = db.value( 1 ).toString();
+         
+         q.clear();
+         q  << "get_person_info"
+            << QString::number( expInfo.operatorID );
+         db.query( q );
+         db.next();
+         expInfo.operatorGUID = db.value( 9 ).toString();
+      }
+   }
 
    emit updateExpInfoSelection( expInfo );
    close();
@@ -723,7 +730,7 @@ void US_ExperimentGui::accept( void )
 
 void US_ExperimentGui::cancel( void )
 {
-   expInfo.clear();
+//   expInfo.clear();
 
    emit cancelExpInfoSelection();
    close();

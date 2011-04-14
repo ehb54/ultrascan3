@@ -30,6 +30,26 @@ class US_EXTERN US_Rotor
          BOTH               //!< The file has been saved to both HD and DB
       };
 
+      //! \brief the Operator class defines who can operate an AUC instrument
+      class Operator
+      {
+         public:
+         int       ID;        //!< The database ID of the operator in the person table
+         QString   GUID;      //!< The GUID of the operator
+         QString   lname;     //!< The last name of the operator
+         QString   fname;     //!< The first name of the operator
+      };
+
+      //! \brief the Instrument class describes an AUC instrument
+      class Instrument
+      {
+         public:
+         int       ID;        //!< The database ID of the instrument
+         QString   name;      //!< The name of the instrument
+         QString   serial;    //!< The serial number of the instrument
+         QList< Operator > operators;  //!< A list of people authorized to use the instrument
+      };
+
       //! \brief the Lab class describes a location where AUC hardware is used
       class Lab
       {
@@ -39,6 +59,7 @@ class US_EXTERN US_Rotor
          QString   name;      //!< The name of the lab
          QString   building;  //!< The building where the lab is located
          QString   room;      //!< The room where the lab is located
+         QList< Instrument > instruments;   //!< A list of instruments in the lab
       
          //! \brief Generic constructor for the Lab class.
          Lab();
@@ -280,13 +301,15 @@ class US_EXTERN US_Rotor
 
    private:
 
-        static bool    diskPath          ( QString& );
-        static QString get_filename      ( const QString& , 
-                                           const QString& ,
-                                           const QString& ,
-                                           const int& ,
-                                           bool& );
-        static void    saveLabsDisk( QVector< US_Rotor::Lab >& );
+        static bool    diskPath           ( QString& );
+        static QString get_filename       ( const QString& , 
+                                            const QString& ,
+                                            const QString& ,
+                                            const int& ,
+                                            bool& );
+        static void    saveLabsDisk       ( QVector< US_Rotor::Lab >& );
+        static void    readInstrumentInfo ( QXmlStreamReader& , US_Rotor::Lab& );
+        static void    readOperatorInfo   ( QXmlStreamReader& , US_Rotor::Instrument& );
 
 };
 
