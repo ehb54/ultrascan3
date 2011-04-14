@@ -1140,8 +1140,8 @@ void US_ConvertGui::updateExpInfo( US_Experiment& d )
 
 void US_ConvertGui::cancelExpInfo( void )
 {
-   ExpData.clear();
-   this->saveStatus = NOT_SAVED;
+   // Don't clear out the data, just don't save anything new
+
    enableControls();
 }
 
