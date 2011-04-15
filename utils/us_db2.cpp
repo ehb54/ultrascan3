@@ -673,21 +673,21 @@ int US_DB2::writeAucToDB( const QString&, int ) { return 0; }
 #else
 int US_DB2::writeAucToDB( const QString& filename, int tableID ) 
 {
-   // First copy the file to a temporary file and compress it
-   QString tfile = QDir::tempPath() + "/" + US_Util::new_guid();
-
-   QFile::copy( filename, tfile );
-   
+   // First compress th file
    US_Gzip gz;
-   int     retCode = gz.gzip( tfile );
+   int     retCode = gz.gzip( filename );
    
+   QString fn = filename;
+
    if ( retCode == 0 )
    {  
-      tfile  += ".gz";  // gzip renames the file
-      retCode = writeBlobToDB( tfile, "upload_aucData", tableID );
+      fn  += ".gz";  // gzip renames the file
+      retCode = writeBlobToDB( fn, "upload_aucData", tableID );
+
+      // Now uncompress the file
+      gz.gzip( fn );
    }
 
-   QFile::remove( tfile );
    return retCode;
 }
 #endif
@@ -697,15 +697,15 @@ int US_DB2::readAucFromDB( const QString&, int ) { return 0; }
 #else
 int US_DB2::readAucFromDB( const QString& filename, int tableID ) 
 {
-   QString tfile = QDir::tempPath() + "/" + US_Util::new_guid() + ".gz";
+   QString fn = filename + ".gz";
 
-   int retCode = readBlobFromDB( tfile, "download_aucData", tableID );
+   int retCode = readBlobFromDB( fn, "download_aucData", tableID );
 
    if ( retCode == OK )
    {
       // Check to see if it is a gzipped file
       char  buf[ 2 ];
-      QFile t( tfile );
+      QFile t( fn );
       t.open( QIODevice::ReadOnly );
       t.peek( buf, 2 );
       t.close();
@@ -714,15 +714,14 @@ int US_DB2::readAucFromDB( const QString& filename, int tableID )
       if ( buf[ 0 ] == '\037'  &&  buf[ 1 ] == '\213' )
       {
          US_Gzip gz;
-         retCode = gz.gunzip( tfile );
-         tfile.remove( QRegExp( ".gz$" ) );  // gunzip renames the file
+         retCode = gz.gunzip( fn );
       }
-
-      QFile::remove( filename );  // copy will not overwrite a file
-      QFile::copy( tfile, filename );
+      else // not a gz file, jsut rename it
+      {
+         QFile::rename( fn, filename ); 
+      }
    }
 
-   QFile::remove( tfile );
    return retCode;
 }
 #endif
