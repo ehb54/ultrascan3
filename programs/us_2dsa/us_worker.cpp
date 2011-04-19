@@ -113,7 +113,8 @@ DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
    QString dvv      = edata->dataType;
    double density   = dvv.section( " ", 1, 1 ).toDouble();
    double viscosity = dvv.section( " ", 2, 2 ).toDouble();
-   double vbar      = dvv.section( " ", 3, 3 ).toDouble();
+   double vbar20    = dvv.section( " ", 3, 3 ).toDouble();
+   double vbar      = dvv.section( " ", 4, 4 ).toDouble();
    double avgtemp   = edata->average_temperature();
 
 DebugTime("BEG:calcres");
@@ -129,12 +130,12 @@ DebugTime("BEG:calcres");
    US_Math2::SolutionData solution;
    solution.density   = density;
    solution.viscosity = viscosity;
-   solution.vbar20    = vbar;
+   solution.vbar20    = vbar20;
    solution.vbar      = vbar;
    US_Math2::data_correction( avgtemp, solution );
-if (taskx==0) DbgLv(1) << "   CR: dens visc vbar temp scorr dcorr"
- << density << viscosity << vbar << avgtemp << solution.s20w_correction
- << solution.D20w_correction;
+if (taskx==0) DbgLv(1) << "   CR: dens visc vbar20 vbar temp scorr dcorr"
+ << density << viscosity << vbar20 << vbar << avgtemp
+ << solution.s20w_correction << solution.D20w_correction;
    double sfactor = 1.0 / solution.s20w_correction;
    double dfactor = 1.0 / solution.D20w_correction;
 

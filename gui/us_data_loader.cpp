@@ -195,6 +195,8 @@ bool US_DataLoader::load_edit( void )
       }
    }
 
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
    if ( ! disk_controls->db() ) // Load files from local disk
    { 
       for ( int ii = 0; ii < indexes.size(); ii++ )
@@ -218,6 +220,7 @@ bool US_DataLoader::load_edit( void )
          }
          catch ( US_DataIO2::ioError error )
          {
+            QApplication::restoreOverrideCursor();
             QMessageBox::warning( this,
                   tr( "Data Error" ),
                   US_DataIO2::errorString( error ) );
@@ -226,6 +229,7 @@ bool US_DataLoader::load_edit( void )
          }
          catch ( int err )
          {
+            QApplication::restoreOverrideCursor();
             QMessageBox::warning( this,
                   tr( "Data Error" ),
                   US_DataIO2::errorString( err ) );
@@ -241,6 +245,7 @@ bool US_DataLoader::load_edit( void )
 
       if ( db.lastErrno() != US_DB2::OK )
       {
+         QApplication::restoreOverrideCursor();
          QMessageBox::information( this,
             tr( "DB Connection Problem" ),
             tr( "There was an error connecting to the database:\n" )
@@ -291,6 +296,8 @@ bool US_DataLoader::load_edit( void )
          QFile( efn ).remove();
       }
    }
+
+   QApplication::restoreOverrideCursor();
 
    double                 dt = 0.0;
    US_DataIO2::EditedData ed;
