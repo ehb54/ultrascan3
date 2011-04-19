@@ -1120,7 +1120,7 @@ double US_Math2::calcCommonVbar( US_Solution& solution, double& temperature )
    {
       double vb20 = solution.analyteInfo[ ii ].analyte.vbar20;
       // Use adjusted vbar if PROTEIN
-      double vbar = solution.analyteInfo[ ii ].analyte.type == 0 ?
+      double vbar = solution.analyteInfo[ ii ].analyte.type == US_Analyte::PROTEIN ?
                     US_Math2::adjust_vbar20( vb20, temperature ) :
                     vb20;
       double wt   = solution.analyteInfo[ ii ].analyte.mw * solution.analyteInfo[ ii ].amount;

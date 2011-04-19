@@ -341,6 +341,15 @@ void US_GlobalEquil::load( void )
 
    qApp->processEvents();
 
+   if ( dataList[ 0 ].expType != "Equilibrium" )
+   {
+      QMessageBox::critical( this, tr( "Non-Equilibrium Data" ),
+         tr( "The selected data is not of type \"Equilibrium\"!\n"
+             "Please select Equilibrium data." ) );
+      unload();
+      return;
+   }
+
    // Count the total scans available in the data sets and get vbars,densities
    ntscns     = 0;
 
@@ -528,7 +537,6 @@ void US_GlobalEquil::unload( void )
    equil_plot->setTitle( tr( "Experiment Equilibrium Data" ) );
 
    setup_runfit();
-   //assign_scanfit();
 
    dataLoaded  = false;
    pb_details ->setEnabled( false );
