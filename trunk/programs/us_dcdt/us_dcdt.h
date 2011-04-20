@@ -16,7 +16,7 @@ class US_Dcdt : public US_AnalysisBase2
       int           graphType;
       int*          arraySizes;
       int*          arrayStart;
-      int           pscanCount;
+      int           previousScanCount;
                     
       static const int arrayLength = 400;
                     
@@ -29,7 +29,7 @@ class US_Dcdt : public US_AnalysisBase2
       double        sMax;
 
       QIcon         check;
-      QPushButton*  pb_baseline;
+      //QPushButton*  pb_baseline;
       QRadioButton* rb_radius;
       
       QwtCounter*   ct_sValue;
@@ -42,7 +42,7 @@ class US_Dcdt : public US_AnalysisBase2
       void    save          ( void );
       void    set_graph     ( int  );
       void    reset         ( void );
-      void    subtract_bl   ( void );
+      //void    subtract_bl   ( void );
       void    sMaxChanged   ( double );
       void    exclude       ( void );
       void    reset_excludes( void );
