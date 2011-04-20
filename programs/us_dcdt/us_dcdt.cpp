@@ -30,16 +30,7 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    setWindowTitle( tr( "Time Derivative - dC/dt Analysis" ) );
 
    te_results = NULL;
-   dcdt       = NULL;
-   sValues    = NULL;
-   avgS       = NULL;
-   avgDcdt    = NULL;
-   arraySizes = NULL;
-   arrayStart = NULL;
-
    sMax       = 1000.0;
-
-   check      = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
 
    QLabel*       lb_aux    = us_banner( tr( "dC/dt Auxiliary Controls" ) );
    QLabel*       lb_sValue = us_label( tr( "S-value Cutoff:" ) );
@@ -71,10 +62,6 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    rb_layout0->addLayout( rb_layout2 );
    rb_layout0->addLayout( rb_layout3 );
 
-   //pb_baseline = us_pushbutton( tr( "Subtract Baseline" ) );
-   //pb_baseline->setIcon( QIcon() );
-   //connect( pb_baseline, SIGNAL( clicked() ), SLOT( subtract_bl() ) );
-
    int row = 7;
 
    controlsLayout->addWidget( lb_aux,     row++, 0, 1, 4 );
@@ -84,7 +71,6 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    
    controlsLayout->addWidget( lb_graph,   row++, 0, 1, 4 );
    controlsLayout->addLayout( rb_layout0, row++, 0, 1, 4 );
-   //controlsLayout->addWidget( pb_baseline, row++, 0, 1, 4 );
 
    connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
@@ -93,19 +79,6 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    qApp->processEvents();
 }
 
-/*
-void US_Dcdt::subtract_bl( void )
-{
-   if ( ! dataLoaded ) return;
-
-   if ( pb_baseline->icon().isNull() )
-      pb_baseline->setIcon( check );
-   else
-      pb_baseline->setIcon( QIcon() );
-
-   data_plot();
-}
-*/
 void US_Dcdt::exclude( void )
 {
    if ( ! dataLoaded ) return;
@@ -131,7 +104,6 @@ void US_Dcdt::reset( void )
    ct_sValue->disconnect();
    ct_sValue->setValue( sMax );
    rb_radius->click();
-   //pb_baseline->setIcon( QIcon() );
    connect( ct_sValue, SIGNAL( valueChanged ( double ) ), 
                        SLOT  ( sMaxChanged  ( double ) ) );
    qApp->processEvents();
@@ -159,7 +131,6 @@ void US_Dcdt::data_plot( void )
 
    int     scanCount   = d->scanData.size();
    int     skipped     = 0;
-   //double  boundaryPct = ct_boundaryPercent->value() / 100.0;
    double  positionPct = ct_boundaryPos    ->value() / 100.0;
    double  baseline    = calc_baseline();
 
@@ -185,46 +156,29 @@ void US_Dcdt::data_plot( void )
       return;
    }
 
-   // Delete old arrays if they exist to handle the case of changed triple
-   if ( dcdt != NULL )
-   {
-      for ( int i = 0; i < previousScanCount; i++ ) // use previous scanCount in case a new triple is active now
-      {
-         delete [] dcdt   [ i ];
-         delete [] sValues[ i ];
-      }
-
-      delete [] dcdt;
-      delete [] sValues;
-      delete [] avgDcdt;
-      delete [] avgS;
-      delete [] arraySizes;
-      delete [] arrayStart;
-   }
-   
    int points = d->scanData[ 0 ].readings.size();
 
    // Create the new arrays
-   dcdt       = new double* [ scanCount ]; // holds all the dcdt scans
-   sValues    = new double* [ scanCount ]; // holds s-value transformations from the dcdt scans
-   avgDcdt    = new double  [ points ];    // holds the average of all dcdt scans
-   avgS       = new double  [ points ];    // holds the transformation to s of avgDcdt
-   arraySizes = new int     [ scanCount ]; //
-   arrayStart = new int     [ scanCount ]; //
-   previousScanCount = scanCount;          // total # of scans before skipping and exclusion 
+   dcdt   .clear();
+   sValues.clear();
+   avgDcdt.resize( points );
+   avgS   .resize( points );
+
+   previousScanCount = scanCount;
 
    for ( int i = 0; i < scanCount; i++ )
    {
-      dcdt      [ i ] = new double [ points ];
-      sValues   [ i ] = new double [ points ];
-      arraySizes[ i ] = 0;
-      arrayStart[ i ] = 0;
+      dcdt    << QVector< double >( points );
+      sValues << QVector< double >( points ); 
    }
 
+   arraySizes.fill( 0, scanCount );
+   arrayStart.fill( 0, scanCount );
+
    // Calculate dcdt and sValues
-   int previous = skipped;
-   int count    = 0;
-   double s_max = 0.0;
+   int    previous = skipped;
+   int    count    = 0;
+   double s_max    = 0.0;
 
    for ( int i = skipped + 1; i < scanCount; i++ )
    {
@@ -233,16 +187,10 @@ void US_Dcdt::data_plot( void )
       US_DataIO2::Scan* thisScan = &d->scanData[ i ];
       US_DataIO2::Scan* prevScan = &d->scanData[ previous ];
 
-	  	// these limits are for thisScan only:
+      // These limits are for thisScan only:
       double range       = thisScan->plateau - baseline;
       double lower_limit = baseline + range * positionPct;
-      //double upper_limit = lower_limit + range * boundaryPct;
-            
       double dt          = thisScan->seconds - prevScan->seconds;
-     
-      //double adjust      = ( pb_baseline->icon().isNull() ) ? 0.0 : baseline; 
-      //double plateau     = thisScan->plateau - adjust;
-      //double prevPlateau = prevScan->plateau - adjust;
       double plateau     = thisScan->plateau;
       double prevPlateau = prevScan->plateau;
 
@@ -254,13 +202,10 @@ void US_Dcdt::data_plot( void )
 
       for ( int j = 0; j < points; j++ )
       {
-         //double currentV  = thisScan->readings[ j ].value - adjust;
-         //double previousV = prevScan->readings[ j ].value - adjust;
          double currentV  = thisScan->readings[ j ].value;
          double previousV = prevScan->readings[ j ].value;
 
          if ( currentV < lower_limit ) continue;
-         //if ( currentV > upper_limit ) break;
 
          if ( ! started )
          {
@@ -268,20 +213,15 @@ void US_Dcdt::data_plot( void )
             arrayStart[ count ] = j;
          }
 
-         //double dC = currentV / plateau - previousV / prevPlateau;
-         double dC = previousV / prevPlateau - currentV / plateau;
-
-         // We are really plotting g*(s) so -dC/dt is saved for the plots
-         //dcdt[ count ][ size ] = -dC / dt;
+         double dC             = previousV / prevPlateau - currentV / plateau;
          dcdt[ count ][ size ] = dC / dt;
-      
-         //double radius = d->x[ j ].radius;
-         double radius = d->radius( j );
+         double radius         = d->radius( j );
 
          sValues[ count ][ size ] = 
             solution.s20w_correction * 1.0e13 * log( radius / meniscus ) /
             ( sq( omega ) * ( prevScan->seconds + dt / 2.0 ) );
-         s_max          = max( s_max, sValues[ count ][ size ] );
+
+         s_max = max( s_max, sValues[ count ][ size ] );
 
          size++;
       }
@@ -320,7 +260,7 @@ void US_Dcdt::data_plot( void )
    }
 
    // Figure the total points to plot
-   double increment   = ( s_max - s_min ) / arrayLength;
+   double increment = ( s_max - s_min ) / arrayLength;
 
    // Assign new equally spaced s-values for the x-axis
    for ( int i = 0; i < arrayLength; i++ ) 
@@ -368,11 +308,10 @@ next: avgDcdt[ j ] /= ( count - 1 );
 
    data_plot1->setAxisTitle( QwtPlot::yLeft  , tr( "g<sup>*</sup>(s)" ) );
 
-   double*       x = new double[ points ];
-   double*       y = new double[ points ];
-   QwtPlotCurve* curve;
-   QwtText       title = QwtText( tr( "<b>Sedimentation Coefficient x "
-                                      "10<sup>13</sup> sec</b>" ) );
+   QVector< double > x( points );
+   QwtPlotCurve*     curve;
+   QwtText           title = QwtText( tr( "<b>Sedimentation Coefficient x "
+                                          "10<sup>13</sup> sec</b>" ) );
          
    data_plot1->setAxisTitle( QwtPlot::xBottom, title );
          
@@ -381,7 +320,6 @@ next: avgDcdt[ j ] /= ( count - 1 );
    {
       case 0:  // Radius Plot
          data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
-
 
          for ( int i = 0; i < count; i++ )
          {
@@ -394,11 +332,10 @@ next: avgDcdt[ j ] /= ( count - 1 );
             curve = us_curve( data_plot1, 
                   tr( "Scan " ) + QString::number( i + skipped + 1 ) );
 
-            curve->setData( x, dcdt[ i ], arraySizes[ i ] );
+            curve->setData( x.data(), dcdt[ i ].data(), arraySizes[ i ] );
          }
 
          data_plot1->setAxisAutoScale( QwtPlot::xBottom );
-
          break;
 
       case 1:  // S-value plot
@@ -407,11 +344,10 @@ next: avgDcdt[ j ] /= ( count - 1 );
             curve = us_curve( data_plot1, 
                   tr( "Scan " ) + QString::number( i + skipped + 1 ) );
 
-            curve->setData( sValues[ i ], dcdt[ i ], arraySizes[ i ] );
+            curve->setData( sValues[ i ].data(), dcdt[ i ].data(), arraySizes[ i ] );
          }
          
          data_plot1->setAxisScale( QwtPlot::xBottom, 0.0, ct_sValue->value() );
-
          break;
 
       case 2:  // Average dC/dt or g*(s) plot
@@ -419,18 +355,14 @@ next: avgDcdt[ j ] /= ( count - 1 );
                                    tr( "Average g<sup>*</sup>(s)" ) );
 
          curve = us_curve( data_plot1, tr( "Average g*(s)" ) );
-         curve->setData( avgS, avgDcdt, arrayLength );
+         curve->setData( avgS.data(), avgDcdt.data(), arrayLength );
 
          data_plot1->setAxisScale( QwtPlot::xBottom, 0.0, ct_sValue->value() );
          break;
    }
 
    qApp->processEvents();
-
    data_plot1->replot();
-
-   delete [] x;
-   delete [] y;
 }
 
 // Write report html to stream
@@ -475,9 +407,9 @@ void US_Dcdt::view( void )
 
 void US_Dcdt::save( void )
 {
-   int                    index  = lw_triples->currentRow();
+   int                     index  = lw_triples->currentRow();
    US_DataIO2::EditedData* d      = &dataList[ index ];
-   QString                dir    = US_Settings::reportDir();
+   QString                 dir    = US_Settings::reportDir();
 
    if ( ! mkdir( dir, d->runID ) ) return;
 

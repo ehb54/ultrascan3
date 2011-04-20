@@ -13,26 +13,25 @@ class US_Dcdt : public US_AnalysisBase2
       US_Dcdt();
 
    private:
-      int           graphType;
-      int*          arraySizes;
-      int*          arrayStart;
-      int           previousScanCount;
-                    
-      static const int arrayLength = 400;
-                    
-      US_Editor*    te_results;
-                    
-      double**      dcdt;
-      double**      sValues;
-      double*       avgDcdt;
-      double*       avgS;
-      double        sMax;
+      int               graphType;
+      int               previousScanCount; // total # of scans before skipping and exclusion
+      double            sMax;
 
-      QIcon         check;
-      //QPushButton*  pb_baseline;
-      QRadioButton* rb_radius;
-      
-      QwtCounter*   ct_sValue;
+      QVector< int >    arraySizes; 
+      QVector< int >    arrayStart;
+      QVector< double > avgDcdt;         // holds the average of all dcdt scans
+      QVector< double > avgS;            // holds the transformation to s of avgDcdt
+
+      static const int  arrayLength = 400;
+
+      US_Editor*        te_results;
+
+      QRadioButton*     rb_radius;
+
+      QwtCounter*       ct_sValue;
+
+      QList< QVector< double > > dcdt;    // holds all the dcdt scans
+      QList< QVector< double > > sValues; // holds s-value transformations from the dcdt scans
 
       void    data_plot  ( void );
       QString results    ( void );     
@@ -42,7 +41,6 @@ class US_Dcdt : public US_AnalysisBase2
       void    save          ( void );
       void    set_graph     ( int  );
       void    reset         ( void );
-      //void    subtract_bl   ( void );
       void    sMaxChanged   ( double );
       void    exclude       ( void );
       void    reset_excludes( void );
