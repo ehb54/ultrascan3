@@ -231,15 +231,12 @@ DbgLv(1) << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
    personID      = 0;
 DbgLv(2) << "db passwd complete";
 
-   // if possible get db investigator from user name
-
-   int id = US_Settings::us_inv_ID();
-   QString number = ( id > 0 ) ? QString::number( id )  + ": " : "";
-
-   le_invtor->setText( number + US_Settings::us_inv_name() );
+   // Set default db investigator
 
    investig = QString::number( US_Settings::us_inv_ID() )
       + ": " + US_Settings::us_inv_name();
+
+   le_invtor->setText( investig );
 
    find_investigator(  investig );
 
@@ -308,6 +305,8 @@ void US_ManageData::chg_investigator()
    find_investigator( investig );    // find an actual one that matches
 
    le_invtor->setText( investig );   // display the full investigator string
+
+   da_model->setDatabase( db, investig );
 }
 
 // query database for match to (partial) investigator name
@@ -523,8 +522,10 @@ void US_ManageData::assign_investigator( int invID,
 {
    personID   = invID;
 
-   QString number = ( invID > 0 ) ? QString::number( invID ) + ": " : "";
-   le_invtor->setText( number + US_Settings::us_inv_name() );
+   investig   = QString::number( US_Settings::us_inv_ID() )
+      + ": " + US_Settings::us_inv_name();
+   le_invtor->setText( investig );
+   da_model->setDatabase( db, investig );
 }
 
 // handle a right-mouse click of a row cell
