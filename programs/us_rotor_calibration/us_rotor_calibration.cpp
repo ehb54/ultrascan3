@@ -176,10 +176,12 @@ void US_RotorCalibration::reset()
 
    QPalette p     = US_GuiSettings::pushbColor();
 
-   ct_cell        ->setRange(0, 0, 1);
-   ct_channel     ->setRange(0, 0, 1);
-   disconnect(ct_cell);
-   disconnect(ct_channel);
+//   disconnect(ct_cell);
+//   disconnect(ct_channel);
+//   ct_cell        ->setRange(0, 0, 1);
+//   ct_channel     ->setRange(0, 0, 1);
+//   connect (ct_channel, SIGNAL(valueChanged (double)), this, SLOT(update_channel(double)));
+//   connect (ct_cell,    SIGNAL(valueChanged (double)), this, SLOT(update_cell(double)));
 
    rotor          = "Default Rotor";
    le_instructions->setText("Please load a calibration data set...");
@@ -647,6 +649,7 @@ void US_RotorCalibration::calculate()
          }
       }
       stretch_factors.push_back(sum1/k); // save the average of all values for this speed.
+      //qDebug() << "Speed:" << speeds[i] << "reading:" << sum1/k;
       sum2 = 0.0;
       for (j=0; j<k; j++)
       {
@@ -663,11 +666,29 @@ void US_RotorCalibration::calculate()
    {
       x[i] = speeds[i];
       y[i] = stretch_factors[i];
-      sd1[i] = stretch_factors[i] + std_dev[i];
-      sd2[i] = stretch_factors[i] - std_dev[i];
    }
+   
+   if ( ! US_Matrix::lsfit( coef, x, y, stretch_factors.size(), 3 ) )
+   {
+      QMessageBox::warning( this,
+            tr( "Data Problem" ),
+            tr( "The data is inadequate for this fit order" ) );
+   }
+
+   // since the calculations were done with the lowest speed (which isn't zero) as a reference,
+   // the intercept at rpm=zero should now be negative, which reflects the stretching difference
+   // between zero rpm and the lowest speed used here as a reference. To correct for this error,
+   // the zeroth-order term needs to be added as an offset to all stretch values and the readings
+   // need to be refit, to hopefully give a vanishing zeroth order term.
+   
+   for (i=0; i<stretch_factors.size(); i++)
+   {
+      y[i] = stretch_factors[i] - coef[0];
+      sd1[i] = y[i] + std_dev[i];
+      sd2[i] = y[i] - std_dev[i];
+   }
+   
    plot->btnZoom->setChecked( false );
-//   data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    data_plot->clear();
    data_plot->replot();
    QwtPlotCurve *c1, *c2, *c3, *c4;
@@ -697,25 +718,7 @@ void US_RotorCalibration::calculate()
    c3->setData( x, sd2, stretch_factors.size() );
    c3->setSymbol(sym2);
    c3->setStyle(QwtPlotCurve::NoCurve);
-   if ( ! US_Matrix::lsfit( coef, x, y, stretch_factors.size(), 3 ) )
-   {
-      QMessageBox::warning( this,
-            tr( "Data Problem" ),
-            tr( "The data is inadequate for this fit order" ) );
-   }
-
-   // since the calculations were done with the lowest speed (which isn't zero) as a reference,
-   // the intercept at rpm=zero should now be negative, which reflects the stretching difference
-   // between zero rpm and the lowest speed used here as a reference. To correct for this error,
-   // the zeroth-order term needs to be added as an offset to all stretch values and the readings
-   // need to be refit, to hopefully give a vanishing zeroth order term.
    
-   for (i=0; i<stretch_factors.size(); i++)
-   {
-      y[i] = stretch_factors[i] - coef[0];
-      sd1[i] = stretch_factors[i] + std_dev[i];
-      sd2[i] = stretch_factors[i] - std_dev[i];
-   }
    //qDebug() << "Zeroth order term before refitting:" << coef[0];
    if ( ! US_Matrix::lsfit( coef, x, y, stretch_factors.size(), 3 ) )
    {
@@ -757,6 +760,7 @@ void US_RotorCalibration::calculate()
 
    QDateTime now = QDateTime::currentDateTime();
    fileText = "CALIBRATION REPORT FOR ROTOR: " + rotor + "\nPERFORMED ON: " + now.toString();
+   fileText += "\n\nCalibration is based on data from run: " + runID;
    fileText += "\n\nThe following equation was fitted to the measured stretch values for this rotor:\n\n";
    fileText += "Stretch = " + QString("%1").arg(coef[0], 0, 'e', 5 ) + " + "
                             + QString("%1").arg(coef[1], 0, 'e', 5 ) + " rpm + "
@@ -769,12 +773,15 @@ void US_RotorCalibration::calculate()
    for (i=0; i<stretch_factors.size(); i++)
    {
       fileText += QString("%1").arg(speeds[i+1], 5, 10)             + "   "
-                + QString("%1").arg(stretch_factors[i], 0, 'e', 5 ) + "   "
+                //+ QString("%1").arg(stretch_factors[i], 0, 'e', 5 ) + "   "
+                + QString("%1").arg(y[i], 0, 'e', 5 ) + "   "
                 + QString("%1").arg(std_dev[i], 0, 'e', 5 )         + "\n";
    }
    fileText += "\nBased on these stretching factors, the bottom of each cell and channel at ";
    fileText += "rest is estimated to be as follows:\n\n";
    fileText += "Cell: Channel:     Top:       Bottom:     Length:       Center:\n\n";
+   double top_avg, bottom_avg, length_avg, center_avg;
+   int top_count=0, bottom_count=0, length_count=0, center_count=0;
    for (j = 0; j < cells.size(); j++)
    {
       for (k = 0; k < 2; k++)
@@ -807,6 +814,11 @@ void US_RotorCalibration::calculate()
          if (m > 0)
          {
             fileText += QString("%1").arg(sum1/m, 0, 'e', 5 ) + " ";
+            if (cells.size() == 4 && j !=3 || cells.size() == 8 && j != 7)
+            {
+               top_avg += sum1/m;
+               top_count ++;
+            }
          }
          else
          {
@@ -815,6 +827,11 @@ void US_RotorCalibration::calculate()
          if (n > 0)
          {
             fileText += QString("%1").arg(sum2/n, 0, 'e', 5 ) + " ";
+            if (cells.size() == 4 && j !=3 || cells.size() == 8 && j != 7)
+            {
+               bottom_avg += sum2/n;
+               bottom_count ++;
+            }
          }
          else
          {
@@ -824,6 +841,13 @@ void US_RotorCalibration::calculate()
          {
             fileText += QString("%1").arg((sum2/n) - (sum1/m), 0, 'e', 5 ) + " "
                       + QString("%1").arg((sum1/m) + ((sum2/n) - (sum1/m))/2.0, 0, 'e', 5 ) + "\n";
+            if (cells.size() == 4 && j !=3 || cells.size() == 8 && j != 7)
+            {
+               length_avg += (sum2/n) - (sum1/m);
+               length_count ++;
+               center_avg += (sum1/m) + ((sum2/n) - (sum1/m))/2.0;
+               center_count ++;
+            }
          }
          else
          {
@@ -831,7 +855,12 @@ void US_RotorCalibration::calculate()
          }
       }
    }
-   // qDebug() << fileText;
+   fileText += "_______________________________________________________________\n";
+   fileText += "Avgs. for CPs:  ";
+   fileText += QString("%1").arg(top_avg/top_count, 0, 'e', 5 ) + " ";
+   fileText += QString("%1").arg(bottom_avg/bottom_count, 0, 'e', 5 ) + " ";
+   fileText += QString("%1").arg(length_avg/length_count, 0, 'e', 5 ) + " ";
+   fileText += QString("%1").arg(center_avg/center_count, 0, 'e', 5 ) + "\n\n";
 }
 
 
