@@ -10,7 +10,7 @@
 //! generally used for updating spectrum values in \ref US_Buffer and
 //! \ref US_Analyte.  
 
-class US_EXTERN US_Table : public US_WidgetsDialog
+class US_GUI_EXTERN US_Table : public US_WidgetsDialog
 {
 	Q_OBJECT
 

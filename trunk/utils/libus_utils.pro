@@ -10,7 +10,11 @@ macx {
       LIBS  += -L../lib -lus_gui
 }
 
-win32:TARGET = libus_utils
+win32 {
+      TARGET   = libus_utils
+      DEFINES += US_MAKE_UTIL_DLL
+}
+
 TRANSLATIONS = $${TARGET}_DE_de.ts
 
 

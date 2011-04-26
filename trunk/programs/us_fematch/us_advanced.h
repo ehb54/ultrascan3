@@ -13,7 +13,7 @@
 
 //! \brief A class to provide a window for advanced analysis controls
 
-class US_EXTERN US_Advanced : public US_WidgetsDialog
+class US_Advanced : public US_WidgetsDialog
 {
    Q_OBJECT
 

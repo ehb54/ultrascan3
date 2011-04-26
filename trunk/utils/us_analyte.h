@@ -8,7 +8,7 @@
 #include "us_db2.h"
 
 //! A base  class to hold analytes
-class US_EXTERN US_Analyte
+class US_UTIL_EXTERN US_Analyte
 {
    public:
       //! An analyte constructor with default values.

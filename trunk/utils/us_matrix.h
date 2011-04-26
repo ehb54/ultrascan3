@@ -3,6 +3,7 @@
 #define US_MATRIX_H
 
 #include <QtCore>
+#include "us_extern.h"
 
 /*! A class of general purpose static matrix functions. The elements of all
  *  matrices and vectors are doubles. The matrix arguments are arrays of
@@ -10,7 +11,7 @@
  *  of doubles.
  *  \brief A set of general purpose matrix functions. All functions are static.
  */
-class US_Matrix
+class US_UTIL_EXTERN US_Matrix
 {
 public:
 

@@ -7,7 +7,7 @@
 #include "us_extern.h"
 
 //! \brief Fetch and set values via QSettings.  All functions are static.
-class US_EXTERN US_Settings
+class US_UTIL_EXTERN US_Settings
 {
   public:
     //! \brief Null constructor

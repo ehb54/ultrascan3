@@ -17,7 +17,7 @@
 #include "us_dataIO2.h"
 #include "us_settings.h"
 
-class US_EXTERN US_ManageData : public US_Widgets
+class US_ManageData : public US_Widgets
 {
    Q_OBJECT
 

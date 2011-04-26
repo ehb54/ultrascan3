@@ -9,7 +9,7 @@
 
 //! A class to hold parameters of a run for simulation purposes.
 
-class US_EXTERN US_SimulationParameters
+class US_UTIL_EXTERN US_SimulationParameters
 {
    public:
   
@@ -112,7 +112,7 @@ class US_EXTERN US_SimulationParameters
    bool      firstScanIsConcentration; 
 
    //! Each distinct RPM value in a series of speeds 
-   class SpeedProfile
+   class US_UTIL_EXTERN  SpeedProfile
    {
       public:
 

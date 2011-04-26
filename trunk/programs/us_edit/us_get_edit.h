@@ -6,7 +6,7 @@
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 
-class US_EXTERN US_GetEdit : public US_WidgetsDialog
+class US_GetEdit : public US_WidgetsDialog
 {
    Q_OBJECT
 

@@ -13,7 +13,7 @@
            instrument, and rotor on which the experiment was run. 
 */
            
-class US_EXTERN US_Experiment
+class US_Experiment
 {
    public:
 

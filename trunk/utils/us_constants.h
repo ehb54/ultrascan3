@@ -181,7 +181,7 @@ namespace US_ConstantModels
 }
 
 //! \brief Fetch preset values.  All functions are static.
-class US_EXTERN US_Constants
+class US_UTIL_EXTERN US_Constants
 {
   public:
      

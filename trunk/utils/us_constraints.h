@@ -7,7 +7,7 @@
 //! A class to describe constraints on a model system.  
 //! Note:  This class is not currently used and may go away.
 
-class US_EXTERN US_Constraints
+class US_UTIL_EXTERN US_Constraints
 {
    public:
 

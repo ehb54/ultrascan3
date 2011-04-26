@@ -20,6 +20,7 @@ unix {
   else {
     DEPENDPATH   += ../gui ../utils $$QWTPATH/include
     INCLUDEPATH  += ../gui ../utils $$QWTPATH/include $$QCAPATH/include/QtCrypto
+    INCLUDEPATH  += $$MYSQLPATH
   }
   DEFINES      += INTEL LINUX
   LIBS         += -luuid
@@ -29,6 +30,7 @@ unix {
 win32 {
   DEPENDPATH             += ../gui ../utils
   INCLUDEPATH            += ../gui ../utils $$QWTPATH/src $$QCAPATH/include/QtCrypto
+  INCLUDEPATH            += $$MYSQLPATH
   LIBS                   += $$QCALIB $$QWTLIB
   QMAKE_LFLAGS           += /IMPLIB:../lib/$${TARGET}.lib /MACHINE:X86 /INCREMENTAL:NO 
   QMAKE_CXXFLAGS_DEBUG   += /wd4996

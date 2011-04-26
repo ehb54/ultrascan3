@@ -8,13 +8,14 @@
 #include "us_widgets.h"
 #include "us_model.h"
 #include "us_help.h"
+#include "us_extern.h"
 
 //! \brief A window to edit a model's associations
 
-class US_AssociationsGui : public US_WidgetsDialog
+class US_GUI_EXTERN US_AssociationsGui : public US_WidgetsDialog
 {
    Q_OBJECT
-
+ 
    public:
       //! \param current_model - Location of model structure for editing
       US_AssociationsGui( US_Model& );
@@ -51,7 +52,7 @@ class US_AssociationsGui : public US_WidgetsDialog
 //! \brief An overloaded QPushButton to allow an index to be set and a 
 //! signal to be emitted with the index.  Allows the connected handler to 
 //! tell which buttone was pushed.
-class US_PushButton : public QPushButton
+class US_GUI_EXTERN US_PushButton : public QPushButton
 {
   Q_OBJECT
 

@@ -7,7 +7,7 @@
 #include "us_dataIO2.h"
 #include "us_help.h"
 
-class US_EXTERN US_EqModelControl : public US_WidgetsDialog
+class US_EqModelControl : public US_WidgetsDialog
 {
 	Q_OBJECT
 	

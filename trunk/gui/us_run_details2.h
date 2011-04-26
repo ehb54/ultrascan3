@@ -11,9 +11,9 @@
 
 //! \brief A class to provide a window with the details of a run
 
-class US_EXTERN US_RunDetails2 : public US_WidgetsDialog
+class US_GUI_EXTERN US_RunDetails2 : public US_WidgetsDialog
 {
-   Q_OBJECT
+   //Q_OBJECT
 
    public:
       //! \param data    A reference to a list of raw data structures
@@ -34,7 +34,7 @@ class US_EXTERN US_RunDetails2 : public US_WidgetsDialog
       // key = rpm, value = triple + scan#
       QMultiMap< int, QString >          map; 
 
-      class graphValue
+      class US_GUI_EXTERN graphValue
       {
          public:
          double seconds;

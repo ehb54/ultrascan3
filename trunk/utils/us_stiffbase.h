@@ -8,7 +8,7 @@
 #define uint unsigned int
 
 //! \brief Stiff Base object
-class US_EXTERN US_StiffBase
+class US_UTIL_EXTERN US_StiffBase
 {
    public:
       //! \brief Allocates memory structures for the integration

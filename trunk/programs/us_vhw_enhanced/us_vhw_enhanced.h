@@ -30,7 +30,7 @@ typedef struct groupinfo_s
    QList< int >  idivs;       // list of divisions (0 to n-1) included
 } GrpInfo;
 
-class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase2
+class US_vHW_Enhanced : public US_AnalysisBase2
 {
    Q_OBJECT
 

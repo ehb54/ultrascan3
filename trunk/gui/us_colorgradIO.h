@@ -4,9 +4,11 @@
 #include <QtGui>
 #include <QtXml>
 
+#include "us_extern.h"
+
 //! \brief Get colors list from color steps XML file. All functions are static.
 
-class US_ColorGradIO
+class US_GUI_EXTERN US_ColorGradIO
 {
    public:
 

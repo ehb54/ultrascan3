@@ -1,4 +1,5 @@
 //! \file us_2dsa_process.cpp
+
 #include "us_2dsa_process.h"
 #include "us_util.h"
 #include "us_settings.h"
@@ -8,7 +9,9 @@
 #include "us_math2.h"
 #include "us_constants.h"
 
+#ifndef WIN32
 #include <sys/user.h>
+#endif
 
 // Class to process 2DSA simulations
 US_2dsaProcess::US_2dsaProcess( US_DataIO2::EditedData* da_exper,
@@ -41,6 +44,7 @@ US_2dsaProcess::US_2dsaProcess( US_DataIO2::EditedData* da_exper,
 long int US_2dsaProcess::max_rss( void )
 {
    // Read /prod/$pid/stat
+#ifndef WIN32
    QFile f( "/proc/" + QString::number( getpid() ) + "/stat" );
    f.open( QIODevice::ReadOnly );
    QByteArray ba = f.read( 512 );
@@ -49,7 +53,9 @@ long int US_2dsaProcess::max_rss( void )
    const static int kk = PAGE_SIZE / 1024;
 
    maxrss = max( maxrss, QString( ba ).section( " ", 23, 23 ).toLong() * kk );
-
+#else
+	maxrss = 0;
+#endif
    return maxrss;
 }
 

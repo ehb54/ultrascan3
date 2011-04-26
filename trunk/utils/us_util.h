@@ -11,7 +11,7 @@
 //! This class provides a number of general utility functions.
 //! All methods are static.
 //!
-class US_EXTERN US_Util
+class US_UTIL_EXTERN US_Util
 {
    public:
       //! \brief Returns the next string component where the components

@@ -5,13 +5,13 @@
 #include <QtGui>
 
 #include "us_extern.h"
-#include "us_db2.h"
+#include "us_rotor.h"
 #include "us_widgets.h"
 #include "us_widgets_dialog.h"
 #include "us_help.h"
 #include "us_editor.h"
 #include "us_investigator.h"
-#include "us_rotor.h"
+
 
 /*! \class US_AbstractRotorGui
    This class provides an interface to the Rotor tables of USLIMS and
@@ -19,7 +19,7 @@
    This class is also used to pick rotors from the database for various
    Applications that need rotors.
 */
-class US_EXTERN US_AbstractRotorGui : public US_WidgetsDialog
+class US_GUI_EXTERN US_AbstractRotorGui : public US_WidgetsDialog
 {
 
    Q_OBJECT

@@ -5,10 +5,10 @@
 #include <QtGui>
 
 #include "us_extern.h"
-#include "us_widgets_dialog.h"
+#include "us_model.h"
 #include "us_dataIO2.h"
 #include "us_plot.h"
-#include "us_model.h"
+#include "us_widgets_dialog.h"
 #include "us_help.h"
 #include "qwt3d_surfaceplot.h"
 #include "qwt3d_function.h"
@@ -20,9 +20,9 @@
 
 //! \brief A class to provide a window for a qwtplot3d surface plot
 
-class US_EXTERN US_Plot3D : public QMainWindow
+class US_GUI_EXTERN US_Plot3D : public QMainWindow
 {
-   Q_OBJECT
+   //Q_OBJECT
 
    public:
       //! \param p  A pointer to the parent widget of this one

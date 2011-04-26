@@ -8,7 +8,7 @@
 
 //! \brief A group of static mathematical functions to support finite element 
 //!        calculations
-class US_EXTERN US_AstfemMath
+class US_UTIL_EXTERN US_AstfemMath
 { 
    public:
 

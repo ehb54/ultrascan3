@@ -10,7 +10,7 @@
            This class provides the ability to convert raw data in the
            Beckman format to the file format used by US3. 
 */
-class US_EXTERN US_Convert
+class US_Convert
 {
    public:
       //! \brief   Some status codes returned by the us_convert program

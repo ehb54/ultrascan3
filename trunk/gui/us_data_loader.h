@@ -7,12 +7,12 @@
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_widgets.h"
+#include "us_help.h"
 #include "us_dataIO2.h"
 #include "us_db2.h"
-#include "us_help.h"
 
 //! \brief A dialog class to select and load data (edited or raw)
-class US_EXTERN US_DataLoader : public US_WidgetsDialog
+class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
 {
    Q_OBJECT
 

@@ -18,7 +18,7 @@
 //! axial ratio.  Allows specification of parameters and calulate
 //! resulting molecular characteristics.
 
-class US_EXTERN US_Predict1 : public US_WidgetsDialog
+class US_GUI_EXTERN US_Predict1 : public US_WidgetsDialog
 {
    Q_OBJECT
 

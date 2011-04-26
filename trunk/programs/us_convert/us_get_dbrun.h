@@ -13,7 +13,7 @@
            button, the highlighted runID is passed back to
            the calling program.
 */
-class US_EXTERN US_GetDBRun : public US_WidgetsDialog
+class US_GetDBRun : public US_WidgetsDialog
 {
    Q_OBJECT
 

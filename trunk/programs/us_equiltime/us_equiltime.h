@@ -13,7 +13,7 @@
 
 #include "qwt_counter.h"
 
-class US_EXTERN US_EquilTime : public US_Widgets
+class US_EquilTime : public US_Widgets
 {
 	Q_OBJECT
 	

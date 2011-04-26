@@ -11,7 +11,7 @@
 #include "us_plot.h"
 #include "us_help.h"
 
-class US_EXTERN US_EqFitControl : public US_WidgetsDialog
+class US_EqFitControl : public US_WidgetsDialog
 {
 	Q_OBJECT
 	

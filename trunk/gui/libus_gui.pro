@@ -3,8 +3,9 @@ include ( ../library.pri )
 unix:   TARGET = us_gui
 
 win32 {
-        TARGET = libus_gui
-        LIBS  += ../lib/libus_utils.lib 
+        DEFINES += QWT_DLL US_MAKE_GUI_DLL
+        TARGET   = libus_gui
+        LIBS    += ../lib/libus_utils.lib 
 }
 
 macx {

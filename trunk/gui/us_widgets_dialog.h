@@ -20,13 +20,12 @@
     palette and font acording to the user's settings (or the UltraScan default).
     Depending on the widget, other parameters may be set.
 */
-class US_EXTERN US_WidgetsDialog : public QDialog
+class US_GUI_EXTERN US_WidgetsDialog : public QDialog
 {
   public: 
     //! \param w - Parent widget, normally not specified
     //! \param f - Window flags, normally not specified
     US_WidgetsDialog( QWidget*, Qt::WindowFlags );
-    ~US_WidgetsDialog() {};
     
     //! Connect to global memory and make the values accessible.
     US_Global g;

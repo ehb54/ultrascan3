@@ -32,7 +32,7 @@ struct Limit
    QString        channel;
 };
 
-class US_EXTERN US_RotorCalibration : public US_Widgets
+class US_RotorCalibration : public US_Widgets
 {
 	Q_OBJECT
 

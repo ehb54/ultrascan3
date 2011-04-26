@@ -8,8 +8,6 @@
 #include "us_table.h"
 #include "us_util.h"
 
-#include <uuid/uuid.h>
-
 US_AnalyteGui::US_AnalyteGui( bool            signal, 
                               const QString&  GUID,
                               int             access,

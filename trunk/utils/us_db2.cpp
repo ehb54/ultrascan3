@@ -34,12 +34,12 @@ US_DB2::US_DB2( const QString& masterPW )
    QString err;
    if ( ! connect( masterPW, err ) )
    {
-      errno = NOT_CONNECTED;
+      db_errno = NOT_CONNECTED;
       error = "US_DB2 error: could not connect\n" + err;
       return;
    }
 
-   errno     = OK;
+   db_errno  = OK;
    error     = "";
    connected = true;
 }
@@ -141,7 +141,7 @@ bool US_DB2::test_secure_connection(
    
    this->query( q );
 
-   if ( errno != OK )
+   if ( db_errno != OK )
    {
       err = error;
       return false;
@@ -163,7 +163,7 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
    QStringList defaultDB = US_Settings::defaultDB();
    if ( defaultDB.size() < 6 )
    {
-       errno = NOT_CONNECTED;
+       db_errno = NOT_CONNECTED;
        error = "US_DB2 error: DB not configured";
        return false;
    }
@@ -203,12 +203,12 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
       error = e.what();
    }
 
-   errno = OK;
+   db_errno = OK;
    error = "";
    
    if ( ! connected )
    {
-      errno = NOT_CONNECTED;
+      db_errno = NOT_CONNECTED;
       error = QString( "Connect open error: " ) + mysql_error( db );
    }
 
@@ -224,7 +224,7 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
    
    this->query( q );
 
-   if ( errno != OK )
+   if ( db_errno != OK )
    {
       err = error;
       return false;
@@ -296,11 +296,11 @@ bool US_DB2::connect(
       error = e.what();
    }
 
-   errno = OK;
+   db_errno = OK;
    error = "";
    if ( ! connected )
    {
-      errno = NOT_CONNECTED;
+      db_errno = NOT_CONNECTED;
       error = QString( "Connect open error: " ) + mysql_error( db );
    }
 
@@ -338,18 +338,18 @@ int US_DB2::statusQuery( const QString& ){ return 0; }
 #else
 int US_DB2::statusQuery( const QString& sqlQuery )
 {
-   errno = ERROR;
+   db_errno = ERROR;
 
    this->rawQuery( sqlQuery );
    if ( result )
    {
       row       = mysql_fetch_row( result );
-      errno     = atoi( row[ 0 ] );
+      db_errno     = atoi( row[ 0 ] );
       mysql_free_result( result );
       result = NULL;
    }
 
-   if ( errno != 0 )
+   if ( db_errno != 0 )
    {
       this->rawQuery( "SELECT last_error()" );
       if ( result )
@@ -361,7 +361,7 @@ int US_DB2::statusQuery( const QString& sqlQuery )
       }
    }
 
-   return errno;
+   return db_errno;
 }
 #endif
 
@@ -380,7 +380,7 @@ void US_DB2::query( const QString& sqlQuery )
    {
       // This is a 2-set result: status, then data
       row    = mysql_fetch_row( result );
-      errno  = atoi( row[ 0 ] );        // status
+      db_errno  = atoi( row[ 0 ] );        // status
       mysql_free_result( result );
       result = NULL;
 
@@ -398,7 +398,7 @@ void US_DB2::query( const QString& sqlQuery )
       }
    }
 
-   if ( errno != 0 )
+   if ( db_errno != 0 )
    {
       this->rawQuery( "SELECT last_error()" );
 

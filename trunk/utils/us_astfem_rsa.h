@@ -14,7 +14,7 @@
 #endif
 
 //! \brief The module that calculates simulation data
-class US_EXTERN US_Astfem_RSA : public QObject
+class US_UTIL_EXTERN US_Astfem_RSA : public QObject
 {
    Q_OBJECT
 

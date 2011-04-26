@@ -16,7 +16,7 @@
 #endif
 
 //! \brief Module to calculate simulation data by AST Finite Volume Method
-class US_EXTERN US_LammAstfvm : public QObject
+class US_UTIL_EXTERN US_LammAstfvm : public QObject
 {
    Q_OBJECT
 

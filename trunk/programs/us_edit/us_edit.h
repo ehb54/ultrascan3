@@ -11,7 +11,7 @@
 #include "us_plot.h"
 #include "us_dataIO2.h"
 
-class US_EXTERN US_Edit : public US_Widgets
+class US_Edit : public US_Widgets
 {
 	Q_OBJECT
 

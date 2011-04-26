@@ -31,7 +31,7 @@ typedef unsigned long  ulg;
  *   to level 9 compression.  This is a port of the GPLed verion of gzip
  *   for Qt4. */
 
-class US_EXTERN US_Gzip
+class US_UTIL_EXTERN US_Gzip
 {
   public:
     US_Gzip();

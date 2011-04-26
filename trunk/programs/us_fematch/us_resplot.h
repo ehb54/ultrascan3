@@ -15,7 +15,7 @@
 
 //! \brief A class to provide a window with experimental/residuals plots
 
-class US_EXTERN US_ResidPlot : public US_WidgetsDialog
+class US_ResidPlot : public US_WidgetsDialog
 {
    Q_OBJECT
 

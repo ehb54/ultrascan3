@@ -8,7 +8,7 @@
 #include "us_widgets_dialog.h"
 #include "us_help.h"
 
-class US_EXTERN US_ExcludeProfile : public US_WidgetsDialog
+class US_ExcludeProfile : public US_WidgetsDialog
 {
    Q_OBJECT
 

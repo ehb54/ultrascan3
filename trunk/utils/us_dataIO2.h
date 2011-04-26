@@ -3,6 +3,7 @@
 #define US_DATAIO2_H
 
 #include <QtCore>
+#include "us_extern.h"
 
 //! \brief Data structures and methods to read/write experimental data
 //!
@@ -27,7 +28,7 @@
 
     data->scanWavelength( readingIndex )
 */
-class US_DataIO2
+class US_UTIL_EXTERN US_DataIO2
 {
    public:
 

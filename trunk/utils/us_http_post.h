@@ -9,7 +9,7 @@
 
 //! \brief A text only class to manage HTTP requests
 
-class US_EXTERN US_HttpPost : public QObject
+class US_UTIL_EXTERN US_HttpPost : public QObject
 {
   Q_OBJECT
 

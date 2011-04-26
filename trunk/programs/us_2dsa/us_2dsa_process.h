@@ -26,7 +26,7 @@
     grid across an s and k range. It divides the refinements
     in the grid across a specified number of worker threads.
 */
-class US_EXTERN US_2dsaProcess : public QObject
+class US_2dsaProcess : public QObject
 {
    Q_OBJECT
 
@@ -95,14 +95,15 @@ class US_EXTERN US_2dsaProcess : public QObject
             QVector< Solute > solutes;
       };
 
+private:
+
       signals:
       void progress_update(  int  );
       void process_complete( int  );
       void stage_complete(   int,     int  );
       void message_update(   QString, bool );
 
-      private:
-
+private:
       long int maxrss;
 
       long int max_rss( void );
