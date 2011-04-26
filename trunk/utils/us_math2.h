@@ -224,6 +224,13 @@ class US_EXTERN US_Math2
       //! \return The common temperature-corrected vbar
       static double calcCommonVbar( US_Solution&, double& );
 
+      //! \brief An approximation of the Complimentary Gauss
+      //! Error Fiunction, erfc().  Use for WIN32 only as Linux already 
+      //! has it implemented in <math.h>
+      //! \param x  The input value
+      //! \return Approximation of erfc(x)
+      static double erfc( double );
+
       private:
 
       static void _nnls_g1 ( double a, double b, double*, double*, double* );
