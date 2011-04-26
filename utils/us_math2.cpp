@@ -494,6 +494,38 @@ uint US_Math2::randomize( uint seed )
    return seed;
 }
 
+double US_Math2::erfc( double x )
+{
+   // error function erfc(x) with fractional error everywhere less
+   // than 1.2 × 10 7.
+
+   double z = fabs( x );
+   double t = 1.0 / ( 1.0 + 0.5 * z );
+
+   double ans = t * exp( -z *
+                     z -1.26551223 + t *
+                         ( 1.00002368  + t *
+                           ( 0.37409196  + t *
+                             ( 0.09678418  + t *
+                               ( -0.18628806 + t *
+                                 ( 0.27886807  + t *
+                                   ( -1.13520398 + t *
+                                     ( 1.48851587  + t *
+                                       ( -0.82215223 + t * 0.17087277
+                                       )
+                                     )
+                                   )
+                                 )
+                               )
+                             )
+                           )
+                         )
+                       );
+
+   return x >= 0.0 ? ans : 2.0 - ans;
+}
+
+
 int US_Math2::nnls( double* a, int a_dim1, int m, int n,
                     double* b,
                     double* x,
