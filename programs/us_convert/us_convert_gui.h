@@ -14,7 +14,7 @@
 #include "us_solution.h"
 #include "us_selectbox.h"
 
-class US_EXTERN US_ConvertGui : public US_Widgets
+class US_ConvertGui : public US_Widgets
 {
   Q_OBJECT
 

@@ -19,7 +19,7 @@
   database that match edited data and, possible, a loaded model
 */
 
-class US_EXTERN US_LoadableNoise : public QObject
+class US_GUI_EXTERN US_LoadableNoise : public QObject
 {
   Q_OBJECT
 

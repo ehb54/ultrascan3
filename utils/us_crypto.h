@@ -13,7 +13,7 @@
     global memory vi \ref US_Global.  If the master password is not 
     yet in global memory, US_Global prompts the user for it.
 */
-class US_EXTERN US_Crypto
+class US_UTIL_EXTERN US_Crypto
 {
   public:
     //! A null constructor.

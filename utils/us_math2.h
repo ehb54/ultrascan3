@@ -22,7 +22,7 @@
 #endif
 
 //! \brief A collecion of methematical routines.  All functions are static.
-class US_EXTERN US_Math2
+class US_UTIL_EXTERN US_Math2
 {
    public:
       //! A structure used for calculating a peptide sequence

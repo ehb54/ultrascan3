@@ -11,10 +11,11 @@
 #include "us_analyte_gui.h"
 #include "us_buffer.h"
 #include "us_model_gui.h"
+#include "us_extern.h"
 
 //! \brief A class to manage analytes in a model
 
-class US_Properties : public US_WidgetsDialog
+class US_GUI_EXTERN US_Properties : public US_WidgetsDialog
 {
 	Q_OBJECT
 

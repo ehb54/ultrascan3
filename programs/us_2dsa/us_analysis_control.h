@@ -12,7 +12,7 @@
 
 //! \brief A class to provide a window with 2DSA analysis controls
 
-class US_EXTERN US_AnalysisControl : public US_WidgetsDialog
+class US_AnalysisControl : public US_WidgetsDialog
 {
    Q_OBJECT
 

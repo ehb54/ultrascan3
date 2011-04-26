@@ -14,7 +14,7 @@
 
 /*! \brief A dialog class to select a model and load its distribution data
 */
-class US_EXTERN US_ModelLoader : public US_WidgetsDialog
+class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
 {
    Q_OBJECT
 

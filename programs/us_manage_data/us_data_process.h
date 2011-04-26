@@ -9,7 +9,7 @@
 #include "us_dataIO2.h"
 #include "us_db2.h"
 
-class US_EXTERN US_DataProcess : public QObject
+class US_DataProcess : public QObject
 {
    Q_OBJECT
 

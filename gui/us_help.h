@@ -13,7 +13,7 @@
   Qt Assistant for local help files.
 */
 
-class US_EXTERN US_Help : public QObject
+class US_GUI_EXTERN US_Help : public QObject
 {
   Q_OBJECT
 

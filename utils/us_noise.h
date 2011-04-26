@@ -14,7 +14,7 @@
     values. It provides an interface to read and write values in the database
     or in local disk files.
 */
-class US_EXTERN US_Noise
+class US_UTIL_EXTERN US_Noise
 {
    public:
       //! \brief Create a noise vector object.

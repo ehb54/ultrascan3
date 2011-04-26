@@ -8,7 +8,7 @@
 #include "us_db2.h"
 
 //! \brief A set of static functions to handle hardware data
-class US_EXTERN US_Hardware
+class US_UTIL_EXTERN US_Hardware
 {
    public:
 
@@ -61,7 +61,7 @@ class US_EXTERN US_Hardware
 };
 
 //! \brief Centerpiece data
-class US_EXTERN US_AbstractCenterpiece
+class US_UTIL_EXTERN US_AbstractCenterpiece
 {
    public:
 

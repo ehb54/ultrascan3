@@ -168,7 +168,7 @@ void US_AssociationsGui::set_component( int index, int row, int col )
    w              = L->itemAt( 0 )->widget();
    QwtCounter*  c = dynamic_cast< QwtCounter* >( w );
 
-   c->setValue( fabs( as->stoichs[ index ] ) ); 
+   c->setValue( fabs( (double)as->stoichs[ index ] ) ); 
 }
 
 void US_AssociationsGui::changed( int row, int col )

@@ -23,7 +23,7 @@
 
 bool distro_lessthan( const Solute&, const Solute& );
 
-class US_EXTERN US_GA_Initialize : public US_Widgets
+class US_GA_Initialize : public US_Widgets
 {
    Q_OBJECT
 

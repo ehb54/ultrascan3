@@ -10,7 +10,7 @@
 #include "us_dataIO2.h"
 #include "us_plot.h"
 
-class US_EXTERN US_EditScan : public US_WidgetsDialog
+class US_EditScan : public US_WidgetsDialog
 {
    Q_OBJECT
 

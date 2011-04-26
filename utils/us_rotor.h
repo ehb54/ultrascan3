@@ -10,7 +10,7 @@
    the user to read and write them from db or disk.
 */
 
-class US_EXTERN US_Rotor
+class US_UTIL_EXTERN US_Rotor
 {
 
    public:
@@ -51,7 +51,7 @@ class US_EXTERN US_Rotor
       };
 
       //! \brief the Lab class describes a location where AUC hardware is used
-      class Lab
+      class US_UTIL_EXTERN Lab
       {
          public:
          int       ID;        //!< The database ID of the lab
@@ -81,7 +81,7 @@ class US_EXTERN US_Rotor
       };
 
       //! \brief the AbstractRotor structure describes a generic 4- or 8-hole rotor
-      class AbstractRotor
+      class US_UTIL_EXTERN AbstractRotor
       {
          public:
          int       ID;            //!< The database ID of the abstract rotor
@@ -114,7 +114,7 @@ class US_EXTERN US_Rotor
       };
 
       //! \brief the rotor structure describes a derived 4- or 8-hole rotor
-      class Rotor
+      class US_UTIL_EXTERN Rotor
       {
          public:
          int       ID;                //!< The database ID of this rotor
@@ -165,7 +165,7 @@ class US_EXTERN US_Rotor
       };
    
       //! \brief the RotorCalibration class describes a calibration experiment and associated data
-      class RotorCalibration
+      class US_UTIL_EXTERN RotorCalibration
       {
          public:
          int     ID;           //!< The ID of this calibration

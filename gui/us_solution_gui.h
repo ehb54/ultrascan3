@@ -16,7 +16,7 @@
            cell / channel / wavelength combination in the experiment.
 */
            
-class US_EXTERN US_SolutionGui : public US_WidgetsDialog
+class US_GUI_EXTERN US_SolutionGui : public US_WidgetsDialog
 {
    Q_OBJECT
 

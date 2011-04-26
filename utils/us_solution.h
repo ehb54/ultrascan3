@@ -13,12 +13,12 @@
            cell / channel / wavelength combination in the experiment.
 */
            
-class US_EXTERN US_Solution
+class US_UTIL_EXTERN US_Solution
 {
    public:
 
       //! Class that contains information about the individual analytes
-      class AnalyteInfo
+      class US_UTIL_EXTERN AnalyteInfo
       {
          public:
          US_Analyte    analyte;           //!< The analyte information

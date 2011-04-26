@@ -38,7 +38,7 @@ class MyButton : public QPushButton
            specified. Output is an XML file that specifies color step
            parameters, from which a full color gradient can be derived.
 */
-class US_EXTERN US_ColorGradient : public US_Widgets
+class US_ColorGradient : public US_Widgets
 {
    Q_OBJECT
 

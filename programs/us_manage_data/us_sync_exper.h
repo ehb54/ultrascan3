@@ -14,7 +14,7 @@
            This class provides the ability to synchronize an
            experiment record on local disk and in the database.
 */
-class US_EXTERN US_SyncExperiment : public QObject
+class US_SyncExperiment : public QObject
 {
    Q_OBJECT
 

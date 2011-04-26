@@ -11,7 +11,7 @@
 
 
 //! A class describing the characteristics of a molecule
-class US_EXTERN US_Hydrosim
+class US_UTIL_EXTERN US_Hydrosim
 {
    public:
       US_Hydrosim();

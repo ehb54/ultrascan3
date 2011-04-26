@@ -6,7 +6,7 @@
 
 // The supercomputer does not use the DB
 #ifndef NO_DB
-   #include <mysql/mysql.h>
+   #include "mysql.h"
 #endif
 
 #include "us_extern.h"
@@ -15,7 +15,7 @@
            for database access in the US3 system. 
 */
 
-class US_EXTERN US_DB2
+class US_UTIL_EXTERN US_DB2
 {
   public:
 
@@ -39,6 +39,7 @@ class US_EXTERN US_DB2
     ~US_DB2();
 
     //! Some status codes returned by the US3 database
+#undef ERROR
     enum dbStatus
     {
       OK             = 0,       //!< Query ok; no error
@@ -314,7 +315,7 @@ class US_EXTERN US_DB2
         status code itself to determine what went wrong, or you can call lastError()
         for a text string describing the error. 
     */
-    int           lastErrno   ( void ) { return errno;  };
+    int           lastErrno   ( void ) { return db_errno;  };
 
     /*! \brief Returns the ID of the row resulting from the most recent INSERT or
         UPDATE statement. 
@@ -356,7 +357,7 @@ class US_EXTERN US_DB2
 
     QString    certFile;
     QString    error;
-    int        errno;
+    int        db_errno;
 
     QString    buildQuery( const QStringList& );
 };

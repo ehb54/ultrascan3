@@ -8,16 +8,15 @@
 #include "us_widgets.h"
 #include "us_extern.h"
 #include "us_help.h"
-#include "us_math2.h"
 #include "us_editor.h"
+#include "us_math2.h"
 #include "us_db2.h"
 #include "us_constants.h"
 #include "us_analyte.h"
-
 #include <qwt_counter.h>
 
 //! A class to bring up a dialog that edits an analyte sequence
-class US_SequenceEditor : public US_WidgetsDialog
+class US_GUI_EXTERN US_SequenceEditor : public US_WidgetsDialog
 {
    Q_OBJECT
    public:
@@ -39,7 +38,7 @@ class US_SequenceEditor : public US_WidgetsDialog
 };
 
 //! A class that manages analyte composition and characteristics
-class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
+class US_GUI_EXTERN US_AnalyteGui : public US_WidgetsDialog
 {
    Q_OBJECT
 
@@ -81,7 +80,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       US_Analyte    analyte;
       US_Analyte    saved_analyte;
 
-      class AnalyteInfo
+      class US_GUI_EXTERN AnalyteInfo
       {
          public:
          QString description;

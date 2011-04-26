@@ -10,7 +10,7 @@
     a file extension for the open file dialog may be specified.
     \brief Class for text edit/display.
 */
-class US_EXTERN US_Editor : public QMainWindow
+class US_GUI_EXTERN US_Editor : public QMainWindow
 {
    Q_OBJECT
 

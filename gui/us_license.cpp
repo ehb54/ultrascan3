@@ -5,13 +5,6 @@
 #include "us_gui_settings.h"
 #include "us_help.h"
 #include "us_defines.h"
-
-#ifdef WIN32
-  #pragma message( "Redefining US_EXTERN" )
-  #undef  US_EXTERN
-  #define US_EXTERN __declspec(dllimport)
-#endif
-
 #include "us_http_post.h"
 
 US_License::US_License( QWidget* parent, Qt::WindowFlags flags ) 

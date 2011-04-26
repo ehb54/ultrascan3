@@ -8,7 +8,7 @@
 
 //! The internal structure of a buffer component
 
-class US_EXTERN US_BufferComponent
+class US_UTIL_EXTERN US_BufferComponent
 {
    public:
       QString componentID;       //!< The BufferComponentID field in the DB.
@@ -41,7 +41,7 @@ class US_EXTERN US_BufferComponent
 
 //! The internal structure of a buffer.
 
-class US_EXTERN US_Buffer 
+class US_UTIL_EXTERN US_Buffer 
 {
    public:
       //int     personID;    //!< Investigator's ID of for this  buffer.

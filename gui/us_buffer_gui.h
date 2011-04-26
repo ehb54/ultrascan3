@@ -11,7 +11,7 @@
 #include "us_help.h"
 
 //! An application to manage buffer data.
-class US_EXTERN US_BufferGui : public US_WidgetsDialog
+class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog
 {
    Q_OBJECT
 

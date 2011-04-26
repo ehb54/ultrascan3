@@ -14,7 +14,7 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-class US_EXTERN US_FitWorker : public QThread
+class US_FitWorker : public QThread
 {
 	Q_OBJECT
 

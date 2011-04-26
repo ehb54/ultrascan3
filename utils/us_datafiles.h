@@ -12,7 +12,7 @@
 //! for the data is found, that file's name is used. Otherwise, a new file
 //! path is returned, based on a file name with the next available numeric
 //! part.
-class US_EXTERN US_DataFiles
+class US_UTIL_EXTERN US_DataFiles
 {
   public:
      

@@ -7,7 +7,7 @@
 #include "us_widgets_dialog.h"
 #include "us_dataIO2.h"
 
-class US_EXTERN US_LoadDB : public US_WidgetsDialog
+class US_LoadDB : public US_WidgetsDialog
 {
    Q_OBJECT
 

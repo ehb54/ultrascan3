@@ -15,7 +15,7 @@
            data to the disk and the database.
            All methods are static.
 */
-class US_EXTERN US_ConvertIO 
+class US_ConvertIO 
 {
    public:
       // \brief Generic constructor for the US_ConvertIO class.

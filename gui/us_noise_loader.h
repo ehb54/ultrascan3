@@ -5,6 +5,7 @@
 #include <QtGui>
 
 #include "us_extern.h"
+
 #include "us_widgets_dialog.h"
 #include "us_db2.h"
 #include "us_noise.h"
@@ -13,7 +14,7 @@
 
 //! \brief A class for selecting and loading noise records from a tree view
 
-class US_EXTERN US_NoiseLoader : public US_WidgetsDialog
+class US_GUI_EXTERN US_NoiseLoader : public US_WidgetsDialog
 {
    Q_OBJECT
 

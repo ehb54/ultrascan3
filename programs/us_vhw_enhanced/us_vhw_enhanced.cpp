@@ -1391,6 +1391,10 @@ DbgLv(1) << " D_S: xrN yrN " << xr[nscnu-1] << yr[nscnu-1] << nscnu;
 //  calculation including the inverse complementary error function (erfc).
 double US_vHW_Enhanced::find_root( double goal )
 {
+#ifdef WIN32
+#define erfc(x) US_Math2::erfc(x)
+#endif
+
 #define _FR_MXKNT 100
    double  tolerance = 1.0e-7;
    double  x1        = 0.0;
@@ -1426,7 +1430,7 @@ DbgLv(1) << "      find_root: goal test" << goal << test << " xv" << xv;
 
       // then update the test y-value
       xsqr   = xv * xv;
-      test   = ( 1.0 + 2.0 * xsqr ) * erfc( xv )
+      test   = ( 1.0 + 2.0 * xsqr ) * erfc( xv ) 
          - ( 2.0 * xv * exp( -xsqr ) ) * rsqr_pi;
 //DbgLv(1) << "      find_root:  goal test" << goal << test << " x" << xv;
 

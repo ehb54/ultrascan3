@@ -9,7 +9,7 @@
 #include "us_editor.h"
 #include "us_plot.h"
 
-class US_EXTERN US_FitMeniscus : public US_Widgets
+class US_FitMeniscus : public US_Widgets
 {
    Q_OBJECT
 

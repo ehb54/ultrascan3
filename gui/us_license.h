@@ -28,7 +28,7 @@
 #define mediumColumn 110 //!< Width of a medium column
 #define codeWidth     60 //!< Width of license code line edit widgets
 
-class US_EXTERN US_License : public US_Widgets
+class US_GUI_EXTERN US_License : public US_Widgets
 {
   Q_OBJECT
   

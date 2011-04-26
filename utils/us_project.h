@@ -10,7 +10,7 @@
            new project, and to select the project.
            */
            
-class US_EXTERN US_Project
+class US_UTIL_EXTERN US_Project
 {
    public:
 

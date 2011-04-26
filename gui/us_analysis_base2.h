@@ -21,7 +21,7 @@
 //!        this class and override layouts and functions as required for the
 //!        specific analysis to be done.
 
-class US_EXTERN US_AnalysisBase2 : public US_Widgets
+class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
 {
    Q_OBJECT
 

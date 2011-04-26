@@ -24,6 +24,7 @@ unix {
 
   DEPENDPATH   += ../../gui ../../utils $$QWTPATH/include ..
   INCLUDEPATH  += ../../gui ../../utils $$QWTPATH/include ..
+  INCLUDEPATH  += $$MYSQLPATH $$QWT3D/include
 }
 
 win32 {
@@ -38,6 +39,7 @@ win32 {
 
   DEPENDPATH   += ../../gui ../../utils $$QWTPATH/src ..
   INCLUDEPATH  += ../../gui ../../utils $$QWTPATH/src ..
+  INCLUDEPATH  += $$MYSQLPATH/include $$QWT3D/include
 }
 
 macx {

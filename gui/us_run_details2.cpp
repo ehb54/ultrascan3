@@ -8,6 +8,8 @@
 
 #include <qwt_legend.h>
 
+#define round(x) floor( (x) + 0.5 )
+
 US_RunDetails2::US_RunDetails2( const QVector< US_DataIO2::RawData >& data, 
                                 const QString&                        runID, 
                                 const QString&                        dataDir, 

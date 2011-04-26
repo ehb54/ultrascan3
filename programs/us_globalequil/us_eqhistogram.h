@@ -8,7 +8,7 @@
 
 //! \brief Simple Dialog to display a histogram plot
 
-class US_EXTERN US_EqHistogram : public US_WidgetsDialog
+class US_EqHistogram : public US_WidgetsDialog
 {
 	Q_OBJECT
 	

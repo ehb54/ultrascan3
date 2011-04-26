@@ -38,8 +38,8 @@ class US_PlotAxisConfig;
 class US_PlotGridConfig;
 class US_PlotCurveConfig;
 
-//class US_EXTERN US_Plot : public QwtPlot
-class US_EXTERN US_Plot : public QVBoxLayout
+//class US_GUI_EXTERN US_Plot : public QwtPlot
+class US_GUI_EXTERN US_Plot : public QVBoxLayout
 {
    Q_OBJECT
 
@@ -313,7 +313,7 @@ class US_PlotGridConfig : public US_WidgetsDialog
 /*! \brief Customize plot picker characteristics and mouse events
     \param plot The plot to attach to
 */
-class US_PlotPicker : public QwtPlotPicker
+class US_GUI_EXTERN US_PlotPicker : public QwtPlotPicker
 {
    Q_OBJECT
 

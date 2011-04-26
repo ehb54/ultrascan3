@@ -13,7 +13,7 @@
 //! is loaded. There is also a public adjustSize() method which can be used
 //! if the font is changed.
 
-class US_EXTERN US_LongMessageBox : public US_WidgetsDialog
+class US_LongMessageBox : public US_WidgetsDialog
 {
 	Q_OBJECT
 	

@@ -9,7 +9,7 @@
 #include "us_dataIO2.h"
 #include "us_plot.h"
 
-class US_EXTERN US_RiNoise : public US_WidgetsDialog
+class US_RiNoise : public US_WidgetsDialog
 {
    Q_OBJECT
 

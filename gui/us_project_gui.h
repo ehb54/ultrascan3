@@ -12,7 +12,7 @@
            This class forms the content of the general tab in the US_Project GUI.
            Most management of the information itself takes place here.
 */
-class US_EXTERN US_ProjectGuiGeneral : public QWidget
+class US_GUI_EXTERN US_ProjectGuiGeneral : public QWidget
 {
    Q_OBJECT
 
@@ -94,7 +94,7 @@ private:
            parameters.
 */
            
-class US_EXTERN US_ProjectGui : public US_WidgetsDialog
+class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
 {
    Q_OBJECT
 

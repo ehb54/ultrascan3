@@ -6,7 +6,7 @@
 #include "us_db2.h"
 
 //! A class to define a model and provide Disk/DB IO for models.
-class US_EXTERN US_Model
+class US_UTIL_EXTERN US_Model
 {
    public:
       US_Model();
@@ -137,7 +137,7 @@ class US_EXTERN US_Model
 
       //! Each analyte in the model is a component.  A sedimenting solute
       //! can also be a component.
-      class SimulationComponent
+      class US_UTIL_EXTERN SimulationComponent
       {
          public:
          SimulationComponent();
@@ -173,7 +173,7 @@ class US_EXTERN US_Model
       };
 
       //! The chemical constants associated with a reaction.
-      class Association
+      class US_UTIL_EXTERN Association
       {
          public:
          Association();

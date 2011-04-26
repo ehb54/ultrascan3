@@ -15,7 +15,7 @@
     interface to read and write data in the shared memory area.
 */
 
-class US_EXTERN US_Global
+class US_UTIL_EXTERN US_Global
 {
   public:
 

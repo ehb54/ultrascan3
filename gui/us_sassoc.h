@@ -19,7 +19,7 @@
 //! This program allows you to simulate the relative amounts of monomer, dimer 
 //! and tetramer species present in a self-association equilibrium.
 
-class US_EXTERN US_Sassoc : public US_Widgets
+class US_GUI_EXTERN US_Sassoc : public US_Widgets
 {
    Q_OBJECT
    
@@ -132,7 +132,7 @@ class US_SassocLegend : public QFrame
       void setup_GUI();
 };
 
-class US_EXTERN US_Sassoc : public QFrame
+class US_GUI_EXTERN US_Sassoc : public QFrame
 {
    Q_OBJECT
    

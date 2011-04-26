@@ -18,7 +18,7 @@
            instrument, and rotor on which the experiment was run. 
 */
            
-class US_EXTERN US_ExperimentGui : public US_WidgetsDialog
+class US_ExperimentGui : public US_WidgetsDialog
 {
    Q_OBJECT
 

@@ -24,7 +24,7 @@
 //! are searched for ID values found in the experiment file of the runID
 //! subdirectory of the "results" directory.
 
-class US_EXTERN US_SolutionVals
+class US_UTIL_EXTERN US_SolutionVals
 {
    public:
       //! \brief Fetch solution/buffer values for a data set

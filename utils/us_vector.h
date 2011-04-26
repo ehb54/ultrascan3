@@ -6,7 +6,7 @@
 #include "us_extern.h"
 
 //! \brief A collecion of vector routines for doubles.
-class US_EXTERN US_Vector : public QVector< double >
+class US_UTIL_EXTERN US_Vector : public QVector< double >
 {
    public:
       //! \brief Create a vector of doubles

@@ -16,7 +16,7 @@
     investigator information to database table 'people'.    
 */
 
-class US_EXTERN US_Investigator : public US_WidgetsDialog
+class US_GUI_EXTERN US_Investigator : public US_WidgetsDialog
 {
    Q_OBJECT
 

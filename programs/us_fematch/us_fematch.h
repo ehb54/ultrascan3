@@ -24,7 +24,7 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-class US_EXTERN US_FeMatch : public US_Widgets
+class US_FeMatch : public US_Widgets
 {
    Q_OBJECT
 

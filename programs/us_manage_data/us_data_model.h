@@ -17,7 +17,7 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
 #endif
 
-class US_EXTERN US_DataModel : public QObject
+class US_DataModel : public QObject
 {
    Q_OBJECT
 

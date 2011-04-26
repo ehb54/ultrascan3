@@ -14,7 +14,7 @@
 #include "us_help.h"
 #include "us_dataIO2.h"
 
-class US_EXTERN US_DataTree : public QObject
+class US_DataTree : public QObject
 {
    Q_OBJECT
 

@@ -8,7 +8,7 @@
 #include "us_help.h"
 #include "us_math2.h"
 
-class US_EXTERN US_Predict2 : public US_Widgets
+class US_Predict2 : public US_Widgets
 {
 	Q_OBJECT
 

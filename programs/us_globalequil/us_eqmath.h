@@ -13,7 +13,7 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-class US_EXTERN US_EqMath : public QObject
+class US_EqMath : public QObject
 {
 	Q_OBJECT
 

@@ -10,10 +10,11 @@
 #include "us_predict1.h"
 #include "us_analyte_gui.h"
 #include "us_buffer.h"
+#include "us_extern.h"
 
 //! \brief A window to edit a model for simulation
 
-class US_ModelGui : public US_WidgetsDialog
+class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
 {
    Q_OBJECT
 
@@ -42,7 +43,7 @@ class US_ModelGui : public US_WidgetsDialog
       US_Buffer buffer;
       US_Help   showhelp;
                     
-      class ModelDesc
+      class US_GUI_EXTERN ModelDesc
       {
          public:
          QString description;

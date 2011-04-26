@@ -1184,7 +1184,7 @@ void US_Plot3D::data_points_on( bool isOn )
 {
    if ( isOn )
    {
-      dataWidget->setPlotStyle( POINTS );
+      dataWidget->setPlotStyle( Qwt3D::POINTS );
       dataWidget->updateData();
       dataWidget->updateGL();
    }

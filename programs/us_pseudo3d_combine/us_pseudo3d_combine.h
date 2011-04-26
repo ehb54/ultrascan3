@@ -37,7 +37,7 @@ typedef struct distro_sys
 
 bool distro_lessthan( const Solute&, const Solute& );
 
-class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
+class US_Pseudo3D_Combine : public US_Widgets
 {
    Q_OBJECT
 

@@ -73,7 +73,7 @@ using namespace crc;
 #include "us_extern.h"
 
 //! \brief Class to provide a method for CRC-32 calculations.
-class US_EXTERN US_Crc
+class US_UTIL_EXTERN US_Crc
 {
    public:
 
