@@ -140,7 +140,11 @@ int US_Convert::saveToDisk(
 
    // Make sure directory is empty
    QDir d( dirname );
-   d.remove( "*" );
+   QStringList rmvfilt( "*" );
+   QStringList rmvfiles = d.entryList( rmvfilt, QDir::Files, QDir::Name );
+   for ( int ii = 0; ii < rmvfiles.size(); ii++ )
+      if ( ! d.remove( rmvfiles[ ii ] ) )
+         qDebug() << "Unable to remove file" << rmvfiles[ ii ];
 
    for ( int i = 0; i < triples.size(); i++ )
    {
