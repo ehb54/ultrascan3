@@ -13,6 +13,7 @@
 #include "us_gui_settings.h"
 #include "us_run_details2.h"
 #include "us_passwd.h"
+#include "us_get_dbexp.h"
 
 //! \brief Main program for US_RotorCalibration. Loads translators and starts
 //         the class US_FitMeniscus.
@@ -52,6 +53,12 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    le_instructions->setReadOnly( true );
    le_instructions->setText( tr("Please load a calibration data set..."));
    top->addWidget( le_instructions, row++, 1 );
+
+   // Radio buttons
+   disk_controls = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
+   connect( disk_controls, SIGNAL( changed       ( bool ) ),
+                           SLOT  ( source_changed( bool ) ) );
+   top->addLayout( disk_controls, row++, 0 );
 
    pb_load = us_pushbutton( tr( "Load Calibration Data" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
@@ -187,16 +194,58 @@ void US_RotorCalibration::reset()
    le_instructions->setText("Please load a calibration data set...");
 }
 
+// Process situation where the disk/db selection has changed
+void US_RotorCalibration::source_changed( bool db )
+{
+   QStringList DB = US_Settings::defaultDB();
+
+   if ( db && ( DB.size() < 5 ) )
+   {
+      QMessageBox::warning( this,
+         tr( "Attention" ),
+         tr( "There is no default database set." ) );
+   }
+
+   load();
+   reset();
+}
+
+// Changes the default data location
+void US_RotorCalibration::update_disk_db( bool db )
+{
+   ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
+}
+
+// Function to load calibration data
+void US_RotorCalibration::load( void )
+{
+   if ( disk_controls->db() )
+      loadDB();
+
+   else
+      loadDisk();
+
+}
+
 // load the experimental calibration dataset and store all data in allData,
 // an array of all scans, cells, channels and wavelengths.
-void US_RotorCalibration::load( void )
+void US_RotorCalibration::loadDisk( void )
 {  
-// Ask for data directory
-   workingDir = QFileDialog::getExistingDirectory( this, tr("Raw Data Directory"), 
-                    US_Settings::resultDir(), QFileDialog::DontResolveSymlinks );
+   // Ask for data directory
+   workingDir = QFileDialog::getExistingDirectory( this, 
+         tr("US3 Raw Data Directory"), 
+         US_Settings::resultDir(), 
+         QFileDialog::DontResolveSymlinks );
+
+   // Restore area beneath dialog
+   qApp->processEvents();
+
    if ( workingDir.isEmpty() ) return;
-   reset();
+
    workingDir.replace( "\\", "/" );  // WIN32 issue
+   if ( workingDir.right( 1 ) != "/" ) workingDir += "/"; // Ensure trailing /
+
+   reset();
 
    QStringList components =  workingDir.split( "/", QString::SkipEmptyParts );  
    
@@ -272,6 +321,125 @@ void US_RotorCalibration::load( void )
       le_instructions->setText( tr("Attention - ") + runID + tr(" is not intensity data!"));
       return;
    }
+   Limit tmp_limit;
+   limit.clear();
+   for (int i=0; i<allData.size(); i++) // all the triples
+   {
+      tmp_limit.used[0] = false;
+      tmp_limit.used[1] = false;
+      limit.push_back(tmp_limit);
+   }
+
+   current_triple = -1;
+   top_of_cell = false;
+   pb_reset->setEnabled ( true );
+   pb_accept->setEnabled( true );
+   next();
+}
+
+void US_RotorCalibration::loadDB( void )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+             tr( "Error" ),
+             tr( "Database connectivity error" ) );
+   
+      return;
+   }
+
+   // Present a dialog to ask user which experiment to load
+   QString expID;
+   US_GetDBExp dialog( expID );
+   if ( dialog.exec() == QDialog::Rejected )
+      return;
+
+   if ( expID == QString( "" ) )
+      return;
+
+   // Restore area beneath dialog
+   qApp->processEvents();
+
+   // Get the rawDataID's that correspond to this experiment
+   QStringList q( "get_rawDataIDs" );
+   q  << expID;
+   db.query( q );
+
+   QStringList rawDataIDs;
+   QStringList filenames;
+
+   while ( db.next() )
+   {
+      rawDataIDs << db.value( 0 ).toString();
+      filenames  << db.value( 2 ).toString();
+   }
+
+   if ( rawDataIDs.size() < 1 )
+   {
+      QMessageBox::information( this,
+             tr( "Error" ),
+             tr( "There were no auc files found in the database." ) );
+      return;
+   }
+
+   // Set the runID
+   QStringList parts =  filenames[ 0 ].split( "." );  
+   runID = parts[ 0 ];
+
+   // Look for cell / channel / wavelength combinations
+   maxcell=0;
+   for ( int i = 0; i < filenames.size(); i++ )
+   {
+      QStringList part = filenames[ i ].split( "." );
+
+      QString t = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
+      if (maxcell < part[2].toInt())
+      {
+         maxcell = part[2].toInt();
+      }
+      if ( ! triples.contains( t ) ) triples << t;
+   }
+   ct_cell->setRange(1, maxcell, 1);
+   ct_channel->setRange(1, 2, 1);
+
+   // Load the data
+   QString  tempdir  = US_Settings::tmpDir() + "/";
+   for ( int i = 0; i < rawDataIDs.size(); i++ )
+   {
+      QString filename = tempdir + filenames[ i ];
+      db.readBlobFromDB( filename, QString( "download_aucData" ), rawDataIDs[ i ].toInt() );
+
+      int result = US_DataIO2::readRawData( filename, data );
+      if ( result != US_DataIO2::OK )
+      {
+         QMessageBox::warning( this,
+            tr( "Error" ),
+            tr( "Could not read data file.\n" ) 
+            + US_DataIO2::errorString( result ) + "\n" + filename );
+         return;
+      }
+
+      dataType = QString( QChar( data.type[ 0 ] ) ) 
+               + QString( QChar( data.type[ 1 ] ) );
+      
+      if ( dataType != "RI" )
+      {
+         QMessageBox::information( this,
+                tr( "Error" ),
+                runID + tr( " is not intensity data!" ) );
+         return;
+      }
+
+      allData << data;
+      data.scanData.clear();
+
+      QFile( filename ).remove();
+   }
+
    Limit tmp_limit;
    limit.clear();
    for (int i=0; i<allData.size(); i++) // all the triples
