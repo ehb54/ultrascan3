@@ -20,15 +20,42 @@ US_RotorGui::US_RotorGui(
 
    setupGui( select_db_disk );
 
-   reset();
-
    if ( savingCalibration )
    {
       QMessageBox::information( this,
          tr( "Attention" ),
-         tr( "Please select the appropriate rotor "
+         tr( "Please enter the calibration name "
              "and click Save Calibration Data, or Close" ) );
+
+      // The rotor calibration data was passed, so let's fill in the rotor data
+      int rotorID = currentCalibration.rotorID;
+      readRotor( select_db_disk, rotorID );
+
+      // Now select the current rotor
+      QList< QListWidgetItem* > items 
+         = lw_rotors->findItems( QString::number( rotorID ), Qt::MatchStartsWith );
+      if ( items.count() == 1 )                    // should be exactly 1
+         lw_rotors->setCurrentItem( items[ 0 ] );
+   
+      // Update other rotor information
+      le_name        ->setText( currentRotor.name );
+      le_serialNumber->setText( currentRotor.serialNumber );
+
+      lw_calibrations     ->clear();
+      lw_calibrations     ->addItem( currentCalibration.lastUpdated.toString( "d MMMM yyyy" ) );
+      lw_calibrations     ->setCurrentRow( 0 );
+
+      le_calibrationLabel->setText( "" );
+      le_coefficient1    ->setText( QString::number( currentCalibration.coeff1  ) );
+      le_coefficient2    ->setText( QString::number( currentCalibration.coeff2  ) );
+      le_omega2t         ->setText( QString::number( currentCalibration.omega2t ) );
+
+      // Also enable line edits for saving calibrations
+      le_calibrationLabel ->setReadOnly( false );
+      le_calibrationLabel ->setPalette( US_GuiSettings::editColor() );
    }
+
+   reset();
 }
 
 US_RotorGui::US_RotorGui(
@@ -68,6 +95,7 @@ US_RotorGui::US_RotorGui(
       items = lw_calibrations->findItems( QString::number( calibrationID ), Qt::MatchStartsWith );
       if ( items.count() == 1 )
          lw_calibrations->setCurrentItem( items[ 0 ] );
+
    }
 
    reset();
@@ -81,6 +109,10 @@ void US_RotorGui::setupGui( int select_db_disk )
    QGridLayout* top = new QGridLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
+
+   // Very light gray, for read-only line edits
+   QPalette gray = US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
 
    int row = 0;
    QStringList DB = US_Settings::defaultDB();
@@ -127,6 +159,8 @@ void US_RotorGui::setupGui( int select_db_disk )
 
    le_name = us_lineedit( "", -1 );
    le_name->setText( tr("< not selected >"));
+   le_name->setPalette ( gray );
+   le_name->setReadOnly( true );
    connect( le_name, SIGNAL( textEdited  ( const QString & ) ),
                      SLOT  ( updateName  ( const QString & ) ) );
    top->addWidget( le_name, row++, 3);
@@ -136,6 +170,8 @@ void US_RotorGui::setupGui( int select_db_disk )
 
    le_serialNumber = us_lineedit( "", -1 );
    le_serialNumber->setText( tr("< not selected >"));
+   le_serialNumber->setPalette ( gray );
+   le_serialNumber->setReadOnly( true );
    connect( le_serialNumber, SIGNAL( textEdited         ( const QString & ) ),
                              SLOT  ( updateSerialNumber ( const QString & ) ) );
    top->addWidget( le_serialNumber, row++, 3);
@@ -150,9 +186,9 @@ void US_RotorGui::setupGui( int select_db_disk )
 
    lw_calibrations = us_listwidget();
    lw_calibrations-> setSortingEnabled( false ); // comes out of mysql sorted
-   connect( lw_calibrations, SIGNAL( itemClicked  ( QListWidgetItem* ) ),
-                         SLOT  ( selectCalibration( QListWidgetItem* ) ) );
-   top->addWidget( lw_calibrations, row, 0, 5, 2);
+   connect( lw_calibrations, SIGNAL( itemClicked      ( QListWidgetItem* ) ),
+                             SLOT  ( selectCalibration( QListWidgetItem* ) ) );
+   top->addWidget( lw_calibrations, row, 0, 6, 2);
 
    pb_deleteCalibration = us_pushbutton( tr( "Delete Selected Calibration" ) );
    connect( pb_deleteCalibration, SIGNAL( clicked() ), this, SLOT( deleteCalibration() ) );
@@ -162,12 +198,24 @@ void US_RotorGui::setupGui( int select_db_disk )
    connect( pb_viewReport, SIGNAL( clicked() ), this, SLOT( viewReport() ) );
    top->addWidget( pb_viewReport, row++, 2, 1, 2);
 
+   QLabel* lbl_calibName = us_label( tr( " Calibration Name:"), -1 );
+   top->addWidget( lbl_calibName, row, 2 );
+
+   le_calibrationLabel = us_lineedit( "", -1 );
+   le_calibrationLabel->setText( tr("< not available >"));
+   le_calibrationLabel->setPalette ( gray );
+   le_calibrationLabel->setReadOnly( true );
+   connect( le_calibrationLabel, SIGNAL( textEdited  ( const QString&   ) ),
+                                 SLOT  ( updateLabel ( const QString&   ) ) );
+   top->addWidget( le_calibrationLabel, row++, 3);
+
    QLabel *lbl_coefficients = us_label( tr(" Rotor Stretch Coefficient 1:"), -1 );
    top->addWidget( lbl_coefficients, row, 2 );
 
    le_coefficient1 = us_lineedit( "", -1 );
    le_coefficient1->setText( tr("< not available >"));
-   le_coefficient1->setReadOnly(true);
+   le_coefficient1->setPalette ( gray );
+   le_coefficient1->setReadOnly( true );
    top->addWidget( le_coefficient1, row++, 3);
 
    QLabel *lbl_date = us_label( tr(" Rotor Stretch Coefficient 2:"), -1 );
@@ -175,7 +223,8 @@ void US_RotorGui::setupGui( int select_db_disk )
 
    le_coefficient2 = us_lineedit( "", -1 );
    le_coefficient2->setText( tr("< not available >"));
-   le_coefficient2->setReadOnly(true);
+   le_coefficient2->setPalette ( gray );
+   le_coefficient2->setReadOnly( true );
    top->addWidget( le_coefficient2, row++, 3);
 
    QLabel *lbl_force = us_label( tr(" Rotor omega2t:"), -1 );
@@ -183,7 +232,8 @@ void US_RotorGui::setupGui( int select_db_disk )
 
    le_omega2t = us_lineedit( "", -1 );
    le_omega2t->setText( tr("< not available >"));
-   le_omega2t->setReadOnly(true);
+   le_omega2t->setPalette ( gray );
+   le_omega2t->setReadOnly( true );
    top->addWidget( le_omega2t, row++, 3);
 
    // some pushbuttons
@@ -214,7 +264,6 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addLayout( buttons, row, 0, 1, 4 );
 
    load();      // Loads labs, rotors
-   
 }
 
 void US_RotorGui::reset( void )
@@ -259,9 +308,6 @@ void US_RotorGui::reset( void )
       pb_deleteRotor      ->setEnabled( false );
       pb_deleteCalibration->setEnabled( false );
       pb_viewReport       ->setEnabled( false );
-      
-      lw_calibrations     ->clear();
-      lw_calibrations     ->addItem( currentCalibration.lastUpdated.toString( "d MMMM yyyy" ) );
    }
 }
 
@@ -308,7 +354,8 @@ void US_RotorGui::newRotor( void )
    // Create a dummy configuration to associate before the real one
    // is available
    currentCalibration.reset();
-   currentCalibration.GUID = US_Util::new_guid();
+   currentCalibration.GUID   = US_Util::new_guid();
+   currentCalibration.label  = "Dummy Calibration";
    currentCalibration.report = "This is a dummy calibration --- please replace.";
    currentCalibration.calibrationExperimentID = -1;      // special value
 
@@ -376,8 +423,9 @@ void US_RotorGui::selectRotor( QListWidgetItem *item )
    // Update rotor info on the form, if we can
    if ( status == US_Rotor::ROTOR_OK )
    {
-      le_name         ->setText( currentRotor.name );
-      le_serialNumber ->setText( currentRotor.serialNumber );
+      le_name            ->setText( currentRotor.name );
+      le_serialNumber    ->setText( currentRotor.serialNumber );
+      le_calibrationLabel->setText( currentCalibration.label );
       rotorStatus = US_Rotor::DB_ONLY;
    }
 
@@ -559,9 +607,10 @@ void US_RotorGui::selectCalibration( QListWidgetItem *item )
    // Now populate what we can on the form
    if ( status == US_Rotor::ROTOR_OK )
    {
-      le_coefficient1 ->setText( QString::number( currentCalibration.coeff1  ) );
-      le_coefficient2 ->setText( QString::number( currentCalibration.coeff2  ) );
-      le_omega2t      ->setText( QString::number( currentCalibration.omega2t ) );
+      le_calibrationLabel->setText( currentCalibration.label );
+      le_coefficient1    ->setText( QString::number( currentCalibration.coeff1  ) );
+      le_coefficient2    ->setText( QString::number( currentCalibration.coeff2  ) );
+      le_omega2t         ->setText( QString::number( currentCalibration.omega2t ) );
    }
 
    if ( ! savingCalibration )
@@ -678,21 +727,18 @@ void US_RotorGui::updateSerialNumber( const QString &number)
    currentRotor.serialNumber = number;
 }
 
+void US_RotorGui::updateLabel( const QString &label)
+{
+   currentCalibration.label = label;
+}
+
 void US_RotorGui::saveCalibration()
 {
+   // Should already have everything we need except for the label
+   int rotorID = currentCalibration.rotorID;
+   currentCalibration.label  = le_calibrationLabel->text();
 
-   if ( lw_rotors->currentIndex().row() == -1 )
-   {
-      // then a rotor hasn't been selected
-      return;
-   }
-
-   QString selected = lw_rotors->currentItem()->text();
-   QStringList parts = selected.split( ":" );
-
-   int rotorID = parts[ 0 ].toInt();
-
-   // Find out the rest of the rotor info
+   // Save the calibration info
    if ( disk_controls->db() )
    {
       US_Passwd pw;
@@ -739,6 +785,8 @@ void US_RotorGui::source_changed( bool db )
          tr( "Attention" ),
          tr( "There is no default database set." ) );
    }
+
+   load();
 
    emit use_db( db );
    qApp->processEvents();
@@ -837,8 +885,9 @@ void US_RotorGui::changeLab( int )
    QStringList parts = itemText.split( ":" );
    labID             = parts[ 0 ].toInt();
 
-   le_name         ->setText( "" );
-   le_serialNumber ->setText( "" );
+   le_name            ->setText( "" );
+   le_serialNumber    ->setText( "" );
+   le_calibrationLabel->setText( "" );
 
    loadRotors( labID );
 }
@@ -849,13 +898,14 @@ bool US_RotorGui::loadRotors( const int labID )
 
    // Clear out lists, line edits
    currentRotor.reset();
-   lw_rotors      ->clear();
-   lw_calibrations->clear();
-   le_name        ->setText( "< not selected >" );
-   le_serialNumber->setText( "< not selected >" );
-   le_coefficient1->setText( "< not available >" );
-   le_coefficient2->setText( "< not available >" );
-   le_omega2t     ->setText( "< not available >" );
+   lw_rotors          ->clear();
+   lw_calibrations    ->clear();
+   le_name            ->setText( "< not selected >" );
+   le_serialNumber    ->setText( "< not selected >" );
+   le_calibrationLabel->setText( "< not selected >" );
+   le_coefficient1    ->setText( "< not available >" );
+   le_coefficient2    ->setText( "< not available >" );
+   le_omega2t         ->setText( "< not available >" );
 
    if ( ! savingCalibration )
       currentCalibration.reset();

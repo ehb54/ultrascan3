@@ -407,24 +407,36 @@ CREATE PROCEDURE delete_analyte ( p_personGUID CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE count_analytes INT;
+
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
   IF ( verify_analyte_permission( p_personGUID, p_password, p_analyteID ) = @OK ) THEN
 
-    DELETE FROM solutionAnalyte
+    -- Find out if this analyte is used in any solution first
+    SELECT COUNT(*) INTO count_analytes
+    FROM solutionAnalyte
     WHERE analyteID = p_analyteID;
 
-    DELETE FROM analytePerson
-    WHERE analyteID = p_analyteID;
+    IF ( count_analytes = 0 ) THEN
+    
+      DELETE FROM analytePerson
+      WHERE analyteID = p_analyteID;
+      
+      DELETE FROM spectrum
+      WHERE componentID = p_analyteID
+      AND   componentType = 'Analyte';
+      
+      DELETE FROM analyte
+      WHERE analyteID = p_analyteID;
 
-    DELETE FROM spectrum
-    WHERE componentID = p_analyteID
-    AND   componentType = 'Analyte';
+    ELSE
+      SET @US3_LAST_ERRNO = @ANALYTE_IN_USE;
+      SET @US3_last_ERROR = 'The analyte is in use in a solution';
 
-    DELETE FROM analyte
-    WHERE analyteID = p_analyteID;
+    END IF;
 
   END IF;
 

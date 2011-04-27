@@ -177,6 +177,7 @@ class US_UTIL_EXTERN US_Rotor
          double  coeff1;       //!< The first order coefficient for the second order polynomial
          double  coeff2;       //!< The second order coefficient for the second order polynomial
                                //!< the zeroth order coefficient is always zero (no stretch at 0 RPM)
+         QString label;        //!< An identifying label for the calibration profile
          QString report;       //!< a calibration report 
          QDate   lastUpdated;  //!< the date on which the rotor was calibrated
          double  omega2t;      //!< the cumulative force exerted on the rotor

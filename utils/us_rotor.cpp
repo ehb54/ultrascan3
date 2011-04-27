@@ -424,6 +424,7 @@ US_Rotor::Status US_Rotor::readCalibrationProfilesDisk(
                rc.calibrationExperimentGUID = a.value( "calExpGUID" ).toString();
                rc.coeff1            = a.value( "coeff1"             ).toString().toFloat();
                rc.coeff2            = a.value( "coeff2"             ).toString().toFloat();
+               rc.label             = a.value( "label"              ).toString();
                rc.report            = QString( "" );
                rc.lastUpdated       = QDate::fromString( a.value( "lastUpdated" ).toString(), "yyyy-MM-dd" );
                rc.omega2t           = a.value( "omega2t"            ).toString().toFloat();
@@ -984,7 +985,8 @@ int US_Rotor::RotorCalibration::saveDB( int rotorID, US_DB2* db )
       << QString::number( coeff1 )
       << QString::number( coeff2 )
       << QString::number( omega2t )
-      << QString::number( calibrationExperimentID );
+      << QString::number( calibrationExperimentID )
+      << label;
    
    int status = db->statusQuery( q );
    
@@ -1018,6 +1020,7 @@ US_Rotor::Status US_Rotor::RotorCalibration::readDB( int calibrationID, US_DB2* 
    //this->calibrationExperimentGUID = not implemented in stored routines db->value(  ).toString();
    this->coeff1      = db->value( 4 ).toString().toFloat();
    this->coeff2      = db->value( 5 ).toString().toFloat();
+   this->label       = db->value( 9 ).toString();
    this->report      = db->value( 3 ).toString();
 
    QStringList dateParts = db->value( 7 ).toString().split( " " );
@@ -1091,6 +1094,7 @@ void US_Rotor::RotorCalibration::saveDisk( void )
    xml.writeAttribute   ( "coeff2",            QString::number( coeff2            ) );
    xml.writeAttribute   ( "lastUpdated",                        lastUpdated.toString( "yyyy-MM-dd" ) );
    xml.writeAttribute   ( "omega2t",           QString::number( omega2t           ) );
+   xml.writeAttribute   ( "label",                              label               );
    xml.writeTextElement ( "report",                             report              );
    xml.writeEndElement  ();
 
@@ -1146,6 +1150,7 @@ US_Rotor::Status US_Rotor::RotorCalibration::readDisk( const int& id )
             coeff2            = a.value( "coeff2"             ).toString().toFloat();
             lastUpdated       = QDate::fromString( a.value( "lastUpdated" ).toString(), "yyyy-MM-dd" );
             omega2t           = a.value( "omega2t"            ).toString().toFloat();
+            label             = a.value( "label"              ).toString();
 
             readReport( xml );
          }
@@ -1190,6 +1195,7 @@ void US_Rotor::RotorCalibration::reset( void )
    calibrationExperimentGUID = "";
    coeff1                    = 0.0;
    coeff2                    = 0.0;
+   label                     = "";
    report                    = "";
    lastUpdated               = QDate::currentDate();
    omega2t                   = 0.0;
@@ -1206,6 +1212,7 @@ void US_Rotor::RotorCalibration::show( void )
    qDebug() << "coeff2 = "                      << coeff2;
    qDebug() << "last updated = "                << lastUpdated.toString( "yyyy-MM-dd" );
    qDebug() << "omega2t = "                     << QString::number( omega2t );
+   qDebug() << "label = "                       << label;
    qDebug() << "report";
    qDebug() << report;
 }

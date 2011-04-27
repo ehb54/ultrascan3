@@ -107,6 +107,8 @@ class US_GUI_EXTERN US_RotorGui : public US_WidgetsDialog
       QListWidget*       lw_rotors;
       QListWidget*       lw_calibrations;
 
+      QLineEdit*         le_calibrationLabel;
+
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
       QComboBox*         cb_lab;
@@ -132,6 +134,7 @@ class US_GUI_EXTERN US_RotorGui : public US_WidgetsDialog
       void deleteCalibration  ( void );
       void updateName         ( const QString & );
       void updateSerialNumber ( const QString & );
+      void updateLabel        ( const QString & );
       void saveCalibration    ( void );
 
       void help (void)

@@ -125,7 +125,7 @@ BEGIN
 
       SELECT   rotorCalibrationGUID, rotorCalibration.rotorID, rotorGUID,
                report, coeff1, coeff2, omega2_t, dateUpdated, 
-               calibrationExperimentID 
+               calibrationExperimentID, label 
       FROM     rotorCalibration, rotor
       WHERE    rotorCalibrationID = p_calibrationID
       AND      rotorCalibration.rotorID = rotor.rotorID;
@@ -151,7 +151,8 @@ CREATE PROCEDURE add_rotor_calibration ( p_personGUID        CHAR(36),
                                          p_coeff1            FLOAT,
                                          p_coeff2            FLOAT,
                                          p_omega2_t          FLOAT,
-                                         p_experimentID      INT )
+                                         p_experimentID      INT,
+                                         p_label             VARCHAR(80) )
   MODIFIES SQL DATA
 
 BEGIN
@@ -205,6 +206,7 @@ BEGIN
       INSERT INTO rotorCalibration SET
         rotorID                 = p_rotorID,
         rotorCalibrationGUID    = p_calibrationGUID,
+        label                   = p_label,
         report                  = p_report,
         coeff1                  = p_coeff1,
         coeff2                  = p_coeff2,
@@ -626,6 +628,10 @@ BEGIN
     ELSE
       -- We are verified as an admin, and no experiments with this
       -- rotorID exist
+      -- delete calibration first or rotorID will change to NULL
+      DELETE FROM rotorCalibration 
+      WHERE       rotorID   = p_rotorID;
+
       DELETE FROM rotor
       WHERE       rotorID   = p_rotorID;
         

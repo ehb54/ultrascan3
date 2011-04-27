@@ -419,27 +419,39 @@ CREATE PROCEDURE delete_buffer ( p_personGUID CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE count_buffers INT;
+
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
   IF ( verify_buffer_permission( p_personGUID, p_password, p_bufferID ) = @OK ) THEN
 
-    DELETE FROM bufferLink
+    -- Find out if this buffer is used in any solution first
+    SELECT COUNT(*) INTO count_buffers
+    FROM solutionBuffer
     WHERE bufferID = p_bufferID;
 
-    DELETE FROM solutionBuffer
-    WHERE bufferID = p_bufferID;
+    IF ( count_buffers = 0 ) THEN
+    
+      DELETE FROM bufferLink
+      WHERE bufferID = p_bufferID;
 
-    DELETE FROM bufferPerson
-    WHERE bufferID = p_bufferID;
+      DELETE FROM bufferPerson
+      WHERE bufferID = p_bufferID;
 
-    DELETE FROM spectrum 
-    WHERE componentID = p_bufferID
-    AND   componentType = 'Buffer';
+      DELETE FROM spectrum 
+      WHERE componentID = p_bufferID
+      AND   componentType = 'Buffer';
 
-    DELETE FROM buffer
-    WHERE bufferID = p_bufferID;
+      DELETE FROM buffer
+      WHERE bufferID = p_bufferID;
+
+    ELSE
+      SET @US3_LAST_ERRNO = @BUFFER_IN_USE;
+      SET @US3_LAST_ERROR = 'The buffer is in use in a solution';
+
+    END IF;
 
   END IF;
 

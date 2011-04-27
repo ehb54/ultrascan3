@@ -154,6 +154,7 @@ CREATE  TABLE IF NOT EXISTS rotorCalibration (
   rotorCalibrationID int(11) NOT NULL AUTO_INCREMENT ,
   rotorID int(11) NULL ,
   rotorCalibrationGUID CHAR(36) NOT NULL UNIQUE,
+  label VARCHAR(80) NOT NULL DEFAULT '',
   report TEXT NULL ,
   coeff1 FLOAT default 0.0,
   coeff2 FLOAT default 0.0,
