@@ -1,5 +1,4 @@
 //! \file us_2dsa_process.cpp
-
 #include "us_2dsa_process.h"
 #include "us_util.h"
 #include "us_settings.h"
@@ -9,7 +8,15 @@
 #include "us_math2.h"
 #include "us_constants.h"
 
-#ifndef WIN32
+#ifdef Q_WS_MAC
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <mach/vm_statistics.h>
+#include <mach/mach_types.h>
+#include <mach/mach_init.h>
+#include <mach/mach_host.h>
+#endif
+#ifndef Q_WS_WIN
 #include <sys/user.h>
 #endif
 
@@ -43,8 +50,8 @@ US_2dsaProcess::US_2dsaProcess( US_DataIO2::EditedData* da_exper,
 // Get maximum used memory
 long int US_2dsaProcess::max_rss( void )
 {
-   // Read /prod/$pid/stat
-#ifndef WIN32
+#ifdef Q_WS_X11         // Unix: based on /proc/$PID/stat
+   // Read /proc/$pid/stat
    QFile f( "/proc/" + QString::number( getpid() ) + "/stat" );
    f.open( QIODevice::ReadOnly );
    QByteArray ba = f.read( 512 );
@@ -53,9 +60,49 @@ long int US_2dsaProcess::max_rss( void )
    const static int kk = PAGE_SIZE / 1024;
 
    maxrss = max( maxrss, QString( ba ).section( " ", 23, 23 ).toLong() * kk );
-#else
-	maxrss = 0;
 #endif
+
+#ifdef Q_WS_MAC         // Mac : use task_info call
+   vm_size_t page_size;
+   mach_port_t mach_port;
+   mach_msg_type_number_t count;
+   vm_statistics_data_t vm_stats;
+
+   mach_port   = mach_host_self();
+   count       = sizeof( vm_stats ) / sizeof( natural_t );
+
+   if ( host_page_size( mach_port, &page_size ) == KERN_SUCCESS  &&
+        host_statistics( mach_port, HOST_VM_INFO,
+                         (host_info_t)&vm_stats, &count ) == KERN_SUCCESS )
+   {
+      long int usedmem = ( (int64_t)vm_stats.active_count +
+                           (int64_t)vm_stats.inactive_count +
+                           (int64_t)vm_stats.wire_count )
+                         * (int64_t)page_size;
+      maxrss = max( maxrss, usedmem );
+   }
+#endif
+
+#ifdef Q_WS_WIN         // Windows: direct use of GetProcessMemoryInfo
+   HANDLE hProcess;
+   DWORD processID;
+   PROCESS_MEMORY_COUNTERS pmc;
+   pmc.dwLength = sizeof( pmc );
+   processID    = _getpid();
+
+   hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                           FALSE, processID );
+   if ( hProcess == NULL )
+      return maxrss;
+
+   if ( GetProcessMemoryInfo( hProcess, &pmc, sizeof( pmc ) ) )
+   {
+      maxrss  = max( maxrss, pmc.PeakWorkingSetSize );
+   }
+
+   CloseHandle( hProcess );
+#endif
+
    return maxrss;
 }
 
