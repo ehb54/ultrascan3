@@ -19,6 +19,11 @@
 #include "us_investigator.h"
 #include "us_constants.h"
 
+#ifdef WIN32
+  #include <float.h>
+  #define isnan _isnan
+#endif
+
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
