@@ -420,7 +420,8 @@ void US_RotorCalibration::next()
    }
    top_of_cell = !top_of_cell;
    pb_accept->setEnabled( true );
-   le_instructions->setText("Please zoom the left vertical region and click \"Accept\" when done zooming...");
+   le_instructions->setText( tr( "Please zoom the left vertical region and click "
+            "\"Accept\" when done zooming..." ) );
    update_plot();
 }
 
@@ -437,23 +438,22 @@ void US_RotorCalibration::next()
 // values to assure that the zeroth-order coefficient is close to zero. 
 void US_RotorCalibration::calculate()
 {
-   int i, j, k, l, m, n;
-   double sum1, sum2;
-   QString str="";
+
+   QString str = "";
    avg.clear();
    Average tmp_avg;
-   //
+
    // For each cell, channel, speed use the appropriate limits to average
    // the points within the limits, producing two points for each scan, one
    // for the top of the channel and one for the bottom of the channel. These
    // points are stored in the avg structure together with the identifying
    // cell, channel and speed information
-   //
-   for (i=0; i<allData.size(); i++) // all the triples
+
+   for ( int i = 0; i < allData.size(); i++ ) // all the triples
    {
-      for (j=0; j<allData[i].scanData.size(); j++) //all scans in each triple
+      for ( int j = 0; j < allData[ i ].scanData.size(); j++ ) //all scans in each triple
       {
-         if((QString) allData[i].channel == "A")
+         if ( ( QString)allData[ i ].channel == "A" )
          {
             tmp_avg.channel = 0;
          }
@@ -461,37 +461,42 @@ void US_RotorCalibration::calculate()
          {
             tmp_avg.channel = 1;
          }
-         tmp_avg.cell = allData[i].cell;
-         tmp_avg.rpm = (int) allData[i].scanData[j].rpm;
-         if (limit[i].used[0])
+         
+         tmp_avg.cell = allData[ i ].cell;
+         tmp_avg.rpm = (int) allData[ i ].scanData[ j ].rpm;
+
+         if ( limit[ i ].used[ 0 ] )
          {
-            tmp_avg.top = findAverage( limit[i].rect[0], allData[i], j );
+            tmp_avg.top = findAverage( limit[i].rect[ 0 ], allData[i], j );
          }
          else
          {
             tmp_avg.top = 0.0;
          }
-         if (limit[i].used[1])
+         
+         if ( limit[ i ].used[ 1 ] )
          {
-            tmp_avg.bottom = findAverage( limit[i].rect[1], allData[i], j );
+            tmp_avg.bottom = findAverage( limit[ i ].rect[ 1 ], allData[ i ], j );
          }
          else
          {
             tmp_avg.bottom = 0.0;
          }
+
          avg.push_back(tmp_avg);
       }
    }
-   QVector <int> speeds;
+
+   QVector< int > speeds;
    speeds.clear();
-   QVector <int> cells;
+   QVector< int > cells;
    cells.clear();
-   //
+
    // Find out how many unique speeds and cells there are in the experiment:
-   //
-   for ( int i = 0; i<allData.size(); i++ ) // all the triples
+
+   for ( int i = 0; i < allData.size(); i++ ) // all the triples
    {
-      for ( int j = 0; j < allData[i].scanData.size(); j++ ) //all scans in each triple
+      for ( int j = 0; j < allData[ i ].scanData.size(); j++ ) //all scans in each triple
       {
          if ( ! speeds.contains( (int)allData[ i ].scanData[ j ].rpm ) )
          {
@@ -504,171 +509,194 @@ void US_RotorCalibration::calculate()
          }
       }
    }
-   qSort(speeds); // sort the speeds with the slowest being the first element
-   QVector <Average> avg2;
+
+   qSort( speeds ); // sort the speeds with the slowest being the first element
+   QVector< Average > avg2;
    avg2.clear();
-   //
+
    // in order to average out the top and bottom values for multiple scans
    // performed at the same speed, channel and cell we first find out how
    // many points there are in each set, and save the results in tmp_avg.
    // If there are no points for a corresponding cell, channel, top/bottom
    // and speed, set the average for those to zero. Next, average by all
    // points available and save the results in avg2.
-   //
-   for (i=0; i<speeds.size(); i++)
+
+   for ( int i = 0; i < speeds.size(); i++ )
    {
-      for (j=0; j<cells.size(); j++)
+      for ( int j = 0; j < cells.size(); j++ )
       {
-         for (k=0; k<2; k++)
+         for ( int k = 0; k < 2; k++ )
          {
-            tmp_avg.top = 0;
-            tmp_avg.bottom = 0;
-            tmp_avg.top_count = 0;
+            tmp_avg.top          = 0;
+            tmp_avg.bottom       = 0;
+            tmp_avg.top_count    = 0;
             tmp_avg.bottom_count = 0;
-            tmp_avg.cell = j;
-            tmp_avg.channel = k;
-            tmp_avg.rpm = speeds[i];
-            for (l=0; l<avg.size(); l++)
+            tmp_avg.cell         = j;
+            tmp_avg.channel      = k;
+            tmp_avg.rpm          = speeds[ i ];
+
+            for ( int L = 0; L < avg.size(); L++ )
             {
-               if (avg[l].rpm == speeds[i] && avg[l].cell == cells[j] && avg[l].channel == k)
+               if ( avg[ L ].rpm     == speeds[ i ] && 
+                    avg[ L ].cell    == cells[ j ] && 
+                    avg[ L ].channel == k )
                {
-                  if (avg[l].top != 0)
+                  if ( avg[ L ].top != 0 )
                   {
-                     tmp_avg.top += avg[l].top;
-                     tmp_avg.top_count ++;
+                     tmp_avg.top += avg[ L ].top;
+                     tmp_avg.top_count++;
                   }
-                  if (avg[l].bottom != 0)
+                  if ( avg[ L ].bottom != 0 )
                   {
-                     tmp_avg.bottom += avg[l].bottom;
-                     tmp_avg.bottom_count ++;
+                     tmp_avg.bottom += avg[ L ].bottom;
+                     tmp_avg.bottom_count++;
                   }
                }
             }
-            if (tmp_avg.top_count == 0)
+
+            if ( tmp_avg.top_count == 0 )
             {
                tmp_avg.top = 0;
             }
             else
             {
-               tmp_avg.top = tmp_avg.top/tmp_avg.top_count;
+               tmp_avg.top = tmp_avg.top / tmp_avg.top_count;
             }
-            if (tmp_avg.bottom_count == 0)
+
+            if ( tmp_avg.bottom_count == 0 )
             {
                tmp_avg.bottom = 0;
             }
             else
             {
-               tmp_avg.bottom = tmp_avg.bottom/tmp_avg.bottom_count;
+               tmp_avg.bottom = tmp_avg.bottom / tmp_avg.bottom_count;
             }
-            avg2.push_back(tmp_avg);
+
+            avg2.push_back( tmp_avg );
          }
       }
    }
-   //
-   // for (i=0; i<avg2.size(); i++)
-   // {
-   //    qDebug() << i+1 << "- Cell:" << avg2[i].cell << "channel:" << avg2[i].channel <<
-   //          "speed:" << avg2[i].rpm << "top:" << avg2[i].top << "bottom:" << avg2[i].bottom;
-   // }
-   // collect all averages for each cell, channel and speed in a 2-dimensional array
-   // where each row is another cell, channel or top and bottom position (reading[i]), 
-   // and each column is another speed  (reading[i][j]). On the second dimension the entries are ordered
-   // with increasing speed. Each 'reading' now contains the combined average of a respective
-   // cell, channel, top and bottom position, ordered by speed in the second dimension of 'reading'.
-   //
-   QVector <double> entry_top, entry_bottom;
-   for (i=0; i<reading.size(); i++)
+ 
+   // Collect all averages for each cell, channel and speed in a 2-dimensional
+   // array where each row is another cell, channel or top and bottom position
+   // (reading[i]), and each column is another speed  (reading[i][j]). On the
+   // second dimension the entries are ordered with increasing speed. Each
+   // 'reading' now contains the combined average of a respective cell,
+   // channel, top and bottom position, ordered by speed in the second
+   // dimension of 'reading'.
+
+   QVector< double > entry_top;
+   QVector< double > entry_bottom;
+   
+   for ( int i = 0; i < reading.size(); i++ )
    {
-      reading[i].clear();
+      reading[ i ].clear();
    }
+
    reading.clear();
-   for (i=0; i<maxcell; i++) //cells
+   
+   for ( int i = 0; i < maxcell; i++ ) //cells
    {
-      for (j=0; j<2; j++) //channels
+      for ( int j = 0; j < 2; j++ ) //channels
       {
          entry_top.clear();
          entry_bottom.clear();
-         for (k=0; k<speeds.size(); k++)
+
+         for ( int k = 0; k < speeds.size(); k++ )
          {
-            for (l=0; l<avg2.size(); l++)
+            for ( int L = 0; L < avg2.size(); L++ )
             {
-               if (avg2[l].rpm == speeds[k] && avg2[l].cell == i && avg2[l].channel == j)
+               if ( avg2[ L ].rpm     == speeds[ k ] && 
+                    avg2[ L ].cell    == i           && 
+                    avg2[ L ].channel == j )
                {
-                  entry_top.push_back(avg2[l].top);
-                  entry_bottom.push_back(avg2[l].bottom);
+                  entry_top    << avg2[ L ].top;
+                  entry_bottom << avg2[ L ].bottom;
                }
             }
          }
-         reading.push_back(entry_top);
-         reading.push_back(entry_bottom);
+
+         reading <<  entry_top;
+         reading <<  entry_bottom;
       }
    }
    
-   for (i=0; i<reading.size(); i++)
+   for ( int i = 0; i < reading.size(); i++ )
    {
-      str="";
-      QTextStream ts(&str);
-      for (j=0; j<reading[i].size(); j++)
+      str = "";
+      QTextStream ts( &str );
+      
+      for ( int j = 0; j < reading[ i ].size(); j++ )
       {
-         if ((int) reading[i][j] != 0)
-         ts << reading[i][j] << "\t";
+         if ( (int) reading[ i ][ j ] != 0 )
+         ts << reading[ i ][ j ] << "\t";
       }
-      //qDebug() << str;
    }
-   //For each speed, generate the differences by subtracting the position of the lowest speed.
-   for (i=0; i<reading.size(); i++)
+
+   // For each speed, generate the differences by subtracting the position of
+   // the lowest speed.
+   
+   for ( int i = 0; i < reading.size(); i++ )
    {
-      str="";
-      QTextStream ts(&str);
-      for (j=1; j<reading[i].size(); j++)
+      str = "";
+      QTextStream ts( &str );
+
+      for ( int j = 1; j < reading[ i ].size(); j++ )
       {
-         if ((int) reading[i][j] != 0)
-         ts << reading[i][j] - reading[i][0]<< "\t";
+         if ( (int)reading[ i ][ j ] != 0 )
+         ts << reading[ i ][ j ] - reading[ i ][ 0 ]<< "\t";
       }
-      //qDebug() << str;
    }
-   //
-   // calculate the averages and standard deviations for all entries for a given speed:
-   //
+
+
+   // Calculate the averages and standard deviations for all entries for a
+   // given speed:
+
    stretch_factors.clear();
    std_dev.clear();
-   //qDebug() << "Speedsize: " << speeds.size();
-   for (i=1; i<speeds.size(); i++)
+
+   for ( int i = 1; i < speeds.size(); i++ )
    {
       entry_top.clear();
-      sum1 = 0.0;
-      k=0;
-      for (j=0; j<reading.size(); j++)
+      double sum1 = 0.0;
+      int    k    = 0;
+
+      for ( int j = 0; j < reading.size(); j++ )
       {
-         if(i < reading[j].size() && (int) reading[j][i] != 0)
+         if ( i < reading[ j ].size() && (int)reading[ j ][ i ] != 0 )
          {
-            entry_top.push_back(reading[j][i] - reading[j][0]);
-            sum1 += reading[j][i] - reading[j][0];
+            entry_top << reading[ j ][ i ] - reading[ j ][ 0 ];
+            sum1 += reading[ j ][ i ] - reading[ j ][ 0 ];
             k++;
-            //qDebug() << "Speed:" << speeds[i] << "k:" << k << "reading:" << reading[j][i] - reading[j][0];
          }
       }
-      stretch_factors.push_back(sum1/k); // save the average of all values for this speed.
-      //qDebug() << "Speed:" << speeds[i] << "reading:" << sum1/k;
-      sum2 = 0.0;
-      for (j=0; j<k; j++)
+
+      stretch_factors << sum1  /k; // save the average of all values for this speed.
+
+      double sum2 = 0.0;
+
+      for ( int j = 0; j < k; j++ )
       {
-         sum2 += pow(entry_top[j] - sum1/k, 2.0);
+         sum2 += sq( entry_top[ j ] - sum1 / k );
       }
-      std_dev.push_back(pow(sum2/k, 0.5));
+      
+      std_dev << sqrt( sum2 / k );
    }
    
-   x = new double [stretch_factors.size()];
-   y = new double [stretch_factors.size()];
-   sd1 = new double [stretch_factors.size()];
-   sd2 = new double [stretch_factors.size()];
-   for (i=0; i<stretch_factors.size(); i++)
+   int size = stretch_factors.size();
+
+   x  .resize( size );
+   y  .resize( size );
+   sd1.resize( size );
+   sd2.resize( size );
+   
+   for ( int i = 0; i < size; i++ )
    {
-      x[i] = speeds[i];
-      y[i] = stretch_factors[i];
+      x[ i ] = speeds[ i ];
+      y[ i ] = stretch_factors[ i ];
    }
    
-   if ( ! US_Matrix::lsfit( coef, x, y, stretch_factors.size(), 3 ) )
+   if ( ! US_Matrix::lsfit( coef, x.data(), y.data(), size, 3 ) )
    {
       QMessageBox::warning( this,
             tr( "Data Problem" ),
@@ -681,172 +709,197 @@ void US_RotorCalibration::calculate()
    // the zeroth-order term needs to be added as an offset to all stretch values and the readings
    // need to be refit, to hopefully give a vanishing zeroth order term.
    
-   for (i=0; i<stretch_factors.size(); i++)
+   for ( int i = 0; i < size; i++ )
    {
-      y[i] = stretch_factors[i] - coef[0];
-      sd1[i] = y[i] + std_dev[i];
-      sd2[i] = y[i] - std_dev[i];
+      y  [ i ] = stretch_factors[ i ] - coef[ 0 ];
+      sd1[ i ] = y[ i ] + std_dev[ i ];
+      sd2[ i ] = y[ i ] - std_dev[ i ];
    }
    
    plot->btnZoom->setChecked( false );
    data_plot->clear();
    data_plot->replot();
-   QwtPlotCurve *c1, *c2, *c3, *c4;
-   QwtSymbol sym1, sym2;
+   QwtPlotCurve* c1;
+   QwtPlotCurve* c2;
+   QwtPlotCurve* c3;
+   QwtPlotCurve* c4;
+
+   QwtSymbol sym1;
+   QwtSymbol sym2;
    
-   sym1.setStyle(QwtSymbol::Ellipse);
-   sym1.setBrush(QColor(Qt::cyan));
-   sym1.setPen(QColor(Qt::white));
-   sym1.setSize(10);
+   sym1.setStyle( QwtSymbol::Ellipse );
+   sym1.setBrush( QColor( Qt::cyan ) );
+   sym1.setPen  ( QColor( Qt::white ) );
+   sym1.setSize( 10 );
    
-   sym2.setStyle(QwtSymbol::Cross);
-   sym2.setBrush(QColor(Qt::white));
-   sym2.setPen(QColor(Qt::white));
-   sym2.setSize(10);
+   sym2.setStyle( QwtSymbol::Cross );
+   sym2.setBrush( QColor( Qt::white ) );
+   sym2.setPen  ( QColor( Qt::white ) );
+   sym2.setSize( 10 );
    
    c1 = us_curve( data_plot, "Rotor Stretch" );
-   c1->setData( x, y, stretch_factors.size() );
-   c1->setSymbol(sym1);
-   c1->setStyle(QwtPlotCurve::NoCurve);
+   c1->setData  ( x.data(), y.data(), size );
+   c1->setSymbol( sym1 );
+   c1->setStyle ( QwtPlotCurve::NoCurve );
    
    c2 = us_curve( data_plot, "+std Dev" );
-   c2->setData( x, sd1, stretch_factors.size() );
-   c2->setSymbol(sym2);
-   c2->setStyle(QwtPlotCurve::NoCurve);
+   c2->setData  ( x.data(), sd1.data(), size );
+   c2->setSymbol( sym2 );
+   c2->setStyle ( QwtPlotCurve::NoCurve );
 
    c3 = us_curve( data_plot, "+std Dev" );
-   c3->setData( x, sd2, stretch_factors.size() );
-   c3->setSymbol(sym2);
-   c3->setStyle(QwtPlotCurve::NoCurve);
+   c3->setData  ( x.data(), sd2.data(), size );
+   c3->setSymbol( sym2 );
+   c3->setStyle ( QwtPlotCurve::NoCurve );
    
-   //qDebug() << "Zeroth order term before refitting:" << coef[0];
-   if ( ! US_Matrix::lsfit( coef, x, y, stretch_factors.size(), 3 ) )
+   if ( ! US_Matrix::lsfit( coef, x.data(), y.data(), size, 3 ) )
    {
       QMessageBox::warning( this,
             tr( "Data Problem" ),
             tr( "The data is inadequate for this fit order" ) );
    }
-   //qDebug() << "Zeroth order term after refitting:" << coef[0];
 
-   double *xfit = new double [501];
-   double *yfit = new double [501];
+   QVector< double > xfit( 501 );
+   QVector< double > yfit( 501 );
    
-   for (i=0; i<501; i ++)
+   for ( int i = 0; i < 501; i++ )
    {
-      xfit[i] = (double) i*60000/500;
-      yfit[i] = coef[0] + coef[1]*xfit[i] + coef[2]*xfit[i]*xfit[i];
+      xfit[ i ] = (double) i * 60000.0 / 500.0;
+      yfit[ i ] = coef[ 0 ] + coef[ 1 ] * xfit[ i ] + coef[ 2 ] *  sq( xfit[ i ] );
    }
       
    c4 = us_curve( data_plot, "fit" );
-   c4->setData( xfit, yfit, 501 );
-   c4->setStyle(QwtPlotCurve::Lines);
-   c4->setPen(QColor(Qt::yellow));
+   c4->setData  ( xfit.data(), yfit.data(), 501 );
+   c4->setStyle ( QwtPlotCurve::Lines );
+   c4->setPen   ( QColor( Qt::yellow ) );
 
-   data_plot->setTitle(tr("Rotor Stretch\n(Error bars = 1 standard deviation)"));
-   data_plot->setAxisTitle( QwtPlot::xBottom, tr("Revolutions per minute") );
-   data_plot->setAxisTitle( QwtPlot::yLeft, tr("Stretch (in cm)") );
+   data_plot->setTitle(tr( "Rotor Stretch\n"
+               "(Error bars = 1 standard deviation)" ) );
+
+   data_plot->setAxisTitle( QwtPlot::xBottom, tr( "Revolutions per minute" ) );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   tr( "Stretch (in cm)" ) );
    data_plot->setAxisAutoScale( QwtPlot::xBottom );
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
    data_plot->replot();
 
-   delete x;
-   delete y;
-   delete xfit;
-   delete yfit;
-   delete sd1;
-   delete sd2;
    pb_save->setEnabled( true );
    pb_view->setEnabled( true );
 
    QDateTime now = QDateTime::currentDateTime();
    fileText = "CALIBRATION REPORT FOR ROTOR: " + rotor + "\nPERFORMED ON: " + now.toString();
    fileText += "\n\nCalibration is based on data from run: " + runID;
-   fileText += "\n\nThe following equation was fitted to the measured stretch values for this rotor:\n\n";
+   fileText += "\n\nThe following equation was fitted to the measured "
+               "stretch values for this rotor:\n\n";
+   
    fileText += "Stretch = " + QString("%1").arg(coef[0], 0, 'e', 5 ) + " + "
                             + QString("%1").arg(coef[1], 0, 'e', 5 ) + " rpm + "
                             + QString("%1").arg(coef[2], 0, 'e', 5 ) + " rpm^2\n\n";
+   
    fileText += "Below is a listing of the stretching values as a function of speed:\n\n";
    fileText += "Speed: Stretch (cm): Standard Dev.:\n";
-   fileText += QString("%1").arg( 0, 5, 10) + "   "
-             + QString("%1").arg(0.0, 0, 'e', 5 ) + "   "
-             + QString("%1").arg(0.0, 0, 'e', 5 ) + "\n";
-   for (i=0; i<stretch_factors.size(); i++)
+   
+   fileText += QString( "%1" ).arg( 0, 5, 10 ) + "   "
+             + QString( "%1" ).arg( 0.0, 0, 'e', 5 ) + "   "
+             + QString( "%1" ).arg( 0.0, 0, 'e', 5 ) + "\n";
+   
+   for ( int i = 0; i < size; i++ )
    {
-      fileText += QString("%1").arg(speeds[i+1], 5, 10)             + "   "
-                //+ QString("%1").arg(stretch_factors[i], 0, 'e', 5 ) + "   "
-                + QString("%1").arg(y[i], 0, 'e', 5 ) + "   "
-                + QString("%1").arg(std_dev[i], 0, 'e', 5 )         + "\n";
+      fileText += QString( "%1" ).arg( speeds[ i + 1 ], 5, 10)             + "   "
+                + QString( "%1").arg( y[ i ], 0, 'e', 5 ) + "   "
+                + QString( "%1").arg( std_dev[ i ], 0, 'e', 5 )         + "\n";
    }
    fileText += "\nBased on these stretching factors, the bottom of each cell and channel at ";
    fileText += "rest is estimated to be as follows:\n\n";
    fileText += "Cell: Channel:     Top:       Bottom:     Length:       Center:\n\n";
-   double top_avg, bottom_avg, length_avg, center_avg;
-   int top_count=0, bottom_count=0, length_count=0, center_count=0;
-   for (j = 0; j < cells.size(); j++)
+   
+   double top_avg      = 0.0;
+   double bottom_avg   = 0.0;
+   double length_avg   = 0.0;
+   double center_avg   = 0.0;
+   int    top_count    = 0;
+   int    bottom_count = 0;
+   int    length_count = 0;
+   int    center_count = 0;
+   
+   for ( int j = 0; j < cells.size(); j++ )
    {
-      for (k = 0; k < 2; k++)
+      for ( int k = 0; k < 2; k++ )
       {
-         sum1 = 0;
-         sum2 = 0;
-         m = 0;
-         n = 0;
-         for (i = 0; i < speeds.size(); i++)
+         double sum1 = 0.0;
+         double sum2 = 0.0;
+         int     m   = 0;
+         int     n   = 0;
+
+         for ( int i = 0; i < speeds.size(); i++ )
          {
-            for (l = 0; l < avg2.size(); l++)
+            for ( int L = 0; L < avg2.size(); L++ )
             {
-               if (avg2[l].rpm == speeds[i] && avg2[l].cell == j && avg2[l].channel == k)
+               if ( avg2[ L ].rpm     == speeds[ i ] && 
+                    avg2[ L ].cell    == j           && 
+                    avg2[ L ].channel == k )
                {
-                  if ((int) avg2[l].top != 0)
+                  if ( (int) avg2[ L ].top != 0 )
                   {
-                     sum1 += avg2[l].top - (coef[1] * speeds[i] + coef[2] * speeds[i] * speeds[i]);
+                     sum1 += avg2[ L ].top - ( coef[ 1 ] * speeds[ i ] + 
+                                               coef[ 2 ] * sq( speeds[ i ] ) );
                      m++;
                   }
-                  if ((int) avg2[l].bottom != 0)
+
+                  if ( (int)avg2[ L ].bottom != 0 )
                   {
-                     sum2 += avg2[l].bottom - (coef[1] * speeds[i] + coef[2] * speeds[i] * speeds[i]);
+                     sum2 += avg2[ L ].bottom - ( coef[ 1 ] * speeds[ i ] + 
+                                                  coef[ 2 ] * sq( speeds[ i ] ) );
                      n++;
                   }
                }
             }
          }
-         fileText += QString("%1").arg(j+1, 2, 10) + "      "
-                   + QString("%1").arg(k+1, 2, 10) + "      ";
-         if (m > 0)
+
+         fileText += QString( "%1" ).arg( j + 1, 2, 10 ) + "      "
+                   + QString( "%1" ).arg( k + 1, 2, 10 ) + "      ";
+         
+         if ( m > 0 )
          {
-            fileText += QString("%1").arg(sum1/m, 0, 'e', 5 ) + " ";
-            if (cells.size() == 4 && j !=3 || cells.size() == 8 && j != 7)
+            fileText += QString( "%1" ).arg( sum1 / m, 0, 'e', 5 ) + " ";
+            
+            if ( cells.size() == 4 && j !=3 || cells.size() == 8 && j != 7 )
             {
-               top_avg += sum1/m;
-               top_count ++;
+               top_avg += sum1 / m;
+               top_count++;
             }
          }
          else
          {
             fileText += "    N/D     ";
          }
-         if (n > 0)
+
+         if ( n > 0 )
          {
             fileText += QString("%1").arg(sum2/n, 0, 'e', 5 ) + " ";
-            if (cells.size() == 4 && j !=3 || cells.size() == 8 && j != 7)
+            
+            if ( cells.size() == 4 && j !=3 || cells.size() == 8 && j != 7 )
             {
-               bottom_avg += sum2/n;
-               bottom_count ++;
+               bottom_avg += sum2 / n;
+               bottom_count++;
             }
          }
          else
          {
             fileText += "    N/D     ";
          }
-         if (n > 0 && m > 0)
+
+         if ( n > 0 && m > 0 )
          {
-            fileText += QString("%1").arg((sum2/n) - (sum1/m), 0, 'e', 5 ) + " "
-                      + QString("%1").arg((sum1/m) + ((sum2/n) - (sum1/m))/2.0, 0, 'e', 5 ) + "\n";
-            if (cells.size() == 4 && j !=3 || cells.size() == 8 && j != 7)
+            fileText += QString( "%1" ).arg( (sum2 / n) - ( sum1 / m ), 0, 'e', 5 ) + " " +
+                        QString( "%1" ).arg( (sum1 / m) + 
+                              ( ( sum2 / n) - ( sum1 / m ) ) / 2.0, 0, 'e', 5 ) + "\n";
+            
+            if ( cells.size() == 4 && j != 3 || cells.size() == 8 && j != 7 )
             {
-               length_avg += (sum2/n) - (sum1/m);
-               length_count ++;
-               center_avg += (sum1/m) + ((sum2/n) - (sum1/m))/2.0;
-               center_count ++;
+               length_avg += ( sum2 / n ) - ( sum1 / m );
+               length_count++;
+               center_avg += ( sum1 / m) + ( ( sum2 / n ) - ( sum1 / m ) ) / 2.0;
+               center_count++;
             }
          }
          else
@@ -855,12 +908,13 @@ void US_RotorCalibration::calculate()
          }
       }
    }
+
    fileText += "_______________________________________________________________\n";
    fileText += "Avgs. for CPs:  ";
-   fileText += QString("%1").arg(top_avg/top_count, 0, 'e', 5 ) + " ";
-   fileText += QString("%1").arg(bottom_avg/bottom_count, 0, 'e', 5 ) + " ";
-   fileText += QString("%1").arg(length_avg/length_count, 0, 'e', 5 ) + " ";
-   fileText += QString("%1").arg(center_avg/center_count, 0, 'e', 5 ) + "\n\n";
+   fileText += QString( "%1" ).arg( top_avg    / top_count,    0, 'e', 5 ) + " ";
+   fileText += QString( "%1" ).arg( bottom_avg / bottom_count, 0, 'e', 5 ) + " ";
+   fileText += QString( "%1" ).arg( length_avg / length_count, 0, 'e', 5 ) + " ";
+   fileText += QString( "%1" ).arg( center_avg / center_count, 0, 'e', 5 ) + "\n\n";
 }
 
 

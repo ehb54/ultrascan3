@@ -17,8 +17,13 @@
 
 struct Average
 {
-   double top, bottom;
-   int cell, rpm, channel, top_count, bottom_count;
+   double top;
+   double bottom;
+   int    cell;
+   int    rpm;
+   int    channel;
+   int    top_count;
+   int    bottom_count;
 };
 
 struct Limit
@@ -26,8 +31,8 @@ struct Limit
    // this structure contains 2 limits:
    //    [0] = top of channel
    //    [1] = bottom of channel
-   QwtDoubleRect  rect[2];
-   bool           used[2];
+   QwtDoubleRect  rect[ 2 ];
+   bool           used[ 2 ];
    int            cell;
    QString        channel;
 };
@@ -46,10 +51,10 @@ class US_RotorCalibration : public US_Widgets
       double             top;
       double             bottom;
       double             coef[ 3 ];
-      double*            x;
-      double*            y;
-      double*            sd1;
-      double*            sd2;
+      QVector< double >  x;
+      QVector< double >  y;
+      QVector< double >  sd1;
+      QVector< double >  sd2;
       int                maxcell;
       int                current_triple;
       int                current_cell;
