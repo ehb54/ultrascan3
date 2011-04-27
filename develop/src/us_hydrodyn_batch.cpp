@@ -62,6 +62,8 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    batch->csv_saxs = false;
    batch->csv_saxs_name = "results";
    batch->create_native_saxs = true;
+   batch->compute_prr_avg = false;
+   batch->compute_prr_std_dev = false;
    if ( !batch->somo && !batch->grid && !batch->iqq && !batch->iqq )
    {
       batch->somo = true;
@@ -349,11 +351,25 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(le_csv_saxs_name, SIGNAL(textChanged(const QString &)), SLOT(update_csv_saxs_name(const QString &)));
 
    cb_create_native_saxs = new QCheckBox(this);
-   cb_create_native_saxs->setText(tr(" Create Single Saxs Results Files"));
+   cb_create_native_saxs->setText(tr(" Create Individual Saxs Results Files"));
    cb_create_native_saxs->setChecked(batch->create_native_saxs);
    cb_create_native_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_create_native_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_create_native_saxs, SIGNAL(clicked()), this, SLOT(set_create_native_saxs()));
+
+   cb_compute_prr_avg = new QCheckBox(this);
+   cb_compute_prr_avg->setText(tr(" Compute P(r) average curves"));
+   cb_compute_prr_avg->setChecked(batch->compute_prr_avg);
+   cb_compute_prr_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_prr_avg->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_prr_avg, SIGNAL(clicked()), this, SLOT(set_compute_prr_avg()));
+
+   cb_compute_prr_std_dev = new QCheckBox(this);
+   cb_compute_prr_std_dev->setText(tr(" Compute P(r) std deviation curves"));
+   cb_compute_prr_std_dev->setChecked(batch->compute_prr_std_dev);
+   cb_compute_prr_std_dev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_prr_std_dev->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_prr_std_dev, SIGNAL(clicked()), this, SLOT(set_compute_prr_std_dev()));
 
    cb_hydro = new QCheckBox(this);
    cb_hydro->setText(tr(" Calculate Hydrodynamics "));
@@ -490,6 +506,10 @@ void US_Hydrodyn_Batch::setupGUI()
    hbl_csv_saxs->addWidget(le_csv_saxs_name);
    hbl_csv_saxs->addWidget(cb_create_native_saxs);
 
+   QHBoxLayout *hbl_prr_avg_std_dev = new QHBoxLayout;
+   hbl_prr_avg_std_dev->addWidget(cb_compute_prr_avg);
+   hbl_prr_avg_std_dev->addWidget(cb_compute_prr_std_dev);
+
    QHBoxLayout *hbl_save = new QHBoxLayout;
    hbl_save->addWidget(pb_select_save_params);
    hbl_save->addWidget(cb_saveParams);
@@ -519,6 +539,7 @@ void US_Hydrodyn_Batch::setupGUI()
    leftside->addLayout(hbl_somo_grid);
    leftside->addLayout(hbl_iqq_prr);
    leftside->addLayout(hbl_csv_saxs);
+   leftside->addLayout(hbl_prr_avg_std_dev);
    leftside->addWidget(cb_hydro);
    leftside->addLayout(hbl_hydro);
    leftside->addLayout(hbl_save);
@@ -892,6 +913,8 @@ void US_Hydrodyn_Batch::update_enables()
    cb_csv_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr));
    le_csv_saxs_name->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
    cb_create_native_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
+   cb_compute_prr_avg->setEnabled(lb_files->numRows() && batch->prr && batch->csv_saxs);
+   cb_compute_prr_std_dev->setEnabled(lb_files->numRows() && batch->prr && batch->csv_saxs && batch->compute_prr_avg);
    pb_start->setEnabled(count_selected);
    pb_remove_files->setEnabled(count_selected);
    pb_screen->setEnabled(count_selected);
@@ -1111,6 +1134,18 @@ void US_Hydrodyn_Batch::set_create_native_saxs()
 void US_Hydrodyn_Batch::update_csv_saxs_name(const QString &str)
 {
    batch->csv_saxs_name = str;
+}
+
+void US_Hydrodyn_Batch::set_compute_prr_avg()
+{
+   batch->compute_prr_avg = cb_compute_prr_avg->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_compute_prr_std_dev()
+{
+   batch->compute_prr_std_dev = cb_compute_prr_std_dev->isChecked();
+   update_enables();
 }
 
 void US_Hydrodyn_Batch::set_hydro()
@@ -2099,6 +2134,11 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq()
    QString fname = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
       batch->csv_saxs_name + "_iqq.csv";
+   if ( QFile::exists(fname) )
+      // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
+   {
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+   }         
    FILE *of = fopen(fname, "wb");
    if ( of )
    {
@@ -2144,9 +2184,100 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
    QString fname = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
       batch->csv_saxs_name + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
+   if ( QFile::exists(fname) ) 
+      // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
+   {
+      fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+   }         
    FILE *of = fopen(fname, "wb");
    if ( of )
    {
+      // setup for average & stdev
+      vector < double > sum_pr(saxs_r.size());
+      vector < double > sum_pr2(saxs_r.size());
+      vector < double > pr_avg;
+      vector < double > pr_std_dev;
+      vector < double > pr_avg_minus_std_dev;
+      vector < double > pr_avg_plus_std_dev;
+      unsigned int sum_count = 0;
+      for ( unsigned int i = 0; i < saxs_r.size(); i++ )
+      {
+         sum_pr[i] = sum_pr2[i] = 0e0;
+      }
+      if ( batch->compute_prr_avg )
+      {
+         for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
+         {
+            // cout << "model: " << i << " " << vector_double_to_csv(saxs_prr[i]) << endl;
+            for ( unsigned int j = 0; j < saxs_prr[i].size(); j++ )
+            {
+               sum_pr[j] += saxs_prr[i][j];
+               sum_pr2[j] += saxs_prr[i][j] * saxs_prr[i][j];
+            }
+         }
+         sum_count = csv_source_name_prr.size();
+         pr_avg = sum_pr;
+         // cout << "sum: " << vector_double_to_csv(pr_avg) << endl;
+         // cout << "sum2: " << vector_double_to_csv(sum_pr2) << endl;
+         // cout << "sum count " << sum_count << endl;
+         if ( sum_count )
+         {
+            for ( unsigned int i = 0; i < pr_avg.size(); i++ )
+            {
+               pr_avg[i] /= (double)sum_count;
+            }
+
+            // cout << "pr_avg: " << vector_double_to_csv(pr_avg) << endl;
+
+            if ( batch->compute_prr_std_dev && sum_count > 2 )
+            {
+               pr_std_dev.resize(sum_pr.size());
+               for ( unsigned int i = 0; i < sum_pr.size(); i++ )
+               {
+                  pr_std_dev[i] = sqrt(
+                                       ( 1e0 / ((double)sum_count - 1e0) ) *
+                                       ( sum_pr2[i] - ((sum_pr[i] * sum_pr[i]) / (double)sum_count) ) );
+               }
+
+               vector < double > pr;
+               pr = sum_pr;
+               for ( unsigned int i = 0; i < sum_pr.size(); i++ )
+               {
+                  pr[i] /= (double)sum_count;
+                  pr[i] -= pr_std_dev[i];
+               }
+               vector < double > this_r = saxs_r;
+               if ( saxs_r.size() > pr.size() )
+               {
+                  this_r.resize(pr.size());
+               }
+               if ( pr.size() > saxs_r.size() )
+               {
+                  pr.resize(saxs_r.size());
+               }
+               pr_avg_minus_std_dev = pr;
+
+               
+               pr = sum_pr;
+               for ( unsigned int i = 0; i < sum_pr.size(); i++ )
+               {
+                  pr[i] /= (double)sum_count;
+                  pr[i] += pr_std_dev[i];
+               }
+               this_r = saxs_r;
+               if ( saxs_r.size() > pr.size() )
+               {
+                  this_r.resize(pr.size());
+               }
+               if ( pr.size() > saxs_r.size() )
+               {
+                  pr.resize(saxs_r.size());
+               }
+               pr_avg_plus_std_dev = pr;
+            }
+         }
+      }                                 
+
       //  header: "name","type",r1,r2,...,rn, header info
       fprintf(of, "\"Name\",\"Type; r:\",%s,\"%s\"\n", 
               vector_double_to_csv(saxs_r).ascii(),
@@ -2166,6 +2297,28 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
                  csv_source_name_prr[i].ascii(),
                  "P(r) normed",
                  vector_double_to_csv(saxs_prr_norm[i]).ascii());
+      }
+      if ( batch->compute_prr_avg && sum_count > 1 )
+      {
+         fprintf(of, "\n\"%s\",\"%s\",%s\n", 
+                 "Average",
+                 "P(r)",
+                 vector_double_to_csv(pr_avg).ascii());
+         if ( batch->compute_prr_std_dev && sum_count > 2 )
+         {
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    "Standard deviation",
+                    "P(r)",
+                    vector_double_to_csv(pr_std_dev).ascii());
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    "Average minus 1 standard deviation",
+                    "P(r)",
+                    vector_double_to_csv(pr_avg_minus_std_dev).ascii());
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    "Average plus 1 standard deviation",
+                    "P(r)",
+                    vector_double_to_csv(pr_avg_plus_std_dev).ascii());
+         }
       }
       fclose(of);
       editor->append(tr("Created file: " + fname + "\n"));

@@ -514,7 +514,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    le_pr_contrib_high->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_pr_contrib_high, SIGNAL(textChanged(const QString &)), SLOT(update_pr_contrib_high(const QString &)));
 
-   pb_pr_contrib = new QPushButton(tr("Plot"), this);
+   pb_pr_contrib = new QPushButton(tr("Display"), this);
    Q_CHECK_PTR(pb_pr_contrib);
    pb_pr_contrib->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_pr_contrib->setMinimumHeight(minHeight1);
@@ -1821,6 +1821,11 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          if ( QFile::exists(fpr_name) &&
               !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
          {
+
+            fpr_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fpr_name);
+            ok_to_write = true;
+#if defined(OLD_WAY)
+
             switch( QMessageBox::information( this, 
                                               tr("Overwrite file:") + "SAXS P(r) vs. r" + tr("output file"),
                                               tr("The P(r) curve file \"") + 
@@ -1836,6 +1841,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                ok_to_write = false;
                break;
             }
+#endif
          }
 
          if ( ok_to_write )
@@ -2432,6 +2438,11 @@ void US_Hydrodyn_Saxs::load_pr()
                QString fname = 
                   ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
                   csv_filename + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
+               if ( QFile::exists(fname) )
+                  // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
+               {
+                  fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+               }         
                FILE *of = fopen(fname, "wb");
                if ( of )
                {
@@ -3451,6 +3462,10 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          if ( QFile::exists(fsaxs_name) &&
               !((US_Hydrodyn *)us_hydrodyn)->overwrite )
          {
+            fsaxs_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fsaxs_name);
+            ok_to_write = true;
+            
+#if defined(OLD_WAY)
             switch( QMessageBox::information( this, 
                                               tr("Overwrite file:") + "SAXS I(q) vs. q" + tr("output file"),
                                               tr("The file named \"") + 
@@ -3466,6 +3481,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                ok_to_write = false;
                break;
             }
+#endif
          }
          
          if ( ok_to_write )
@@ -4224,6 +4240,12 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString csv_filename )
       QString fname = 
          ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
          csv_filename + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
+
+      if ( QFile::exists(fname) )
+         // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
+      {
+         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+      }         
       FILE *of = fopen(fname, "wb");
       if ( of )
       {
