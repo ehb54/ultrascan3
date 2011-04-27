@@ -44,6 +44,8 @@ class US_RotorCalibration : public US_Widgets
 	public:
   		US_RotorCalibration();
 
+      US_Disk_DB_Controls* disk_controls;     //!< Radiobuttons for disk/db choice
+
 	private:
 
       double             left;
@@ -114,7 +116,11 @@ class US_RotorCalibration : public US_Widgets
 
    private slots:
       void       reset          ( void );
+      void       source_changed ( bool );
+      void       update_disk_db ( bool );
       void       load           ( void );
+      void       loadDB         ( void );
+      void       loadDisk       ( void );
       void       plotAll        ( void );
       void       currentRect    ( QwtDoubleRect );
       void       findTriple     ( void );
