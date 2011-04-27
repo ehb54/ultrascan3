@@ -6,6 +6,10 @@
 #include "us_convert.h"
 #include "us_convertio.h"
 
+#ifdef WIN32
+  #define round(x) floor( (x) + 0.5 )
+#endif
+
 // Generic constructor
 US_Convert::US_Convert( void )
 {
@@ -403,7 +407,8 @@ void US_Convert::convert(
       // Readings here and interpolated array
       int bitmap_size = ( radius_count + 7 ) / 8;
       uchar* interpolated = new uchar[ bitmap_size ];
-      bzero( interpolated, bitmap_size );
+      //bzero( interpolated, bitmap_size );
+      memset( interpolated, bitmap_size, sizeof( uchar) );
 
       /*
       There are two indexes needed here.  The new radius as iterated
@@ -636,7 +641,8 @@ US_DataIO2::Scan US_Convert::newScanSubset(
    // They might not be on the same byte boundary as the originals
    int bitmap_size = ( s.readings.size() + 7 ) / 8;
    uchar* interpolated = new uchar[ bitmap_size ];
-   bzero( interpolated, bitmap_size );
+   //bzero( interpolated, bitmap_size );
+   memset( interpolated, bitmap_size, sizeof( uchar) );
 
    for ( int i = first_reading; i < first_reading + s.readings.size(); i++ )
    {
