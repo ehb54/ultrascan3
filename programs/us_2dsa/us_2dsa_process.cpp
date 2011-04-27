@@ -83,7 +83,8 @@ long int US_2dsaProcess::max_rss( void )
    }
 #endif
 
-#ifdef Q_WS_WIN         // Windows: direct use of GetProcessMemoryInfo
+//#ifdef Q_WS_WIN         // Windows: direct use of GetProcessMemoryInfo
+#ifdef NEVER
    HANDLE hProcess;
    DWORD processID;
    PROCESS_MEMORY_COUNTERS pmc;
