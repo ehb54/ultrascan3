@@ -535,28 +535,40 @@ CREATE PROCEDURE delete_solution ( p_personGUID   CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE count_solutions INT;
+
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
   IF ( verify_solution_permission( p_personGUID, p_password, p_solutionID ) = @OK ) THEN
 
-    -- Make sure records match if they have related tables or not
-    -- Have to do it in a couple of stages because of the constraints
-    DELETE FROM solutionBuffer
-    WHERE       solutionID   = p_solutionID;
+    -- Find out if this solution is used in any experiment first
+    SELECT COUNT(*) INTO count_solutions
+    FROM experimentSolutionChannel
+    WHERE solutionID = p_solutionID;
 
-    DELETE FROM solutionAnalyte
-    WHERE       solutionID   = p_solutionID;
+    IF ( count_solutions = 0 ) THEN
     
-    DELETE FROM solutionPerson
-    WHERE       solutionID   = p_solutionID;
-    
-    DELETE FROM experimentSolutionChannel
-    WHERE       solutionID   = p_solutionID;
+      -- Make sure records match if they have related tables or not
+      -- Have to do it in a couple of stages because of the constraints
+      DELETE FROM solutionBuffer
+      WHERE       solutionID   = p_solutionID;
+      
+      DELETE FROM solutionAnalyte
+      WHERE       solutionID   = p_solutionID;
+      
+      DELETE FROM solutionPerson
+      WHERE       solutionID   = p_solutionID;
+      
+      DELETE FROM solution
+      WHERE       solutionID   = p_solutionID;
 
-    DELETE FROM solution
-    WHERE       solutionID   = p_solutionID;
+    ELSE
+      SET @US3_LAST_ERRNO = @SOLUTION_IN_USE;
+      SET @US3_last_ERROR = 'The solution is in use in an experiment';
+
+    END IF;
     
   END IF;
 

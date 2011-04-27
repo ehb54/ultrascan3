@@ -293,9 +293,13 @@ CREATE PROCEDURE new_rawData ( p_personGUID   CHAR(36),
 BEGIN
 
   DECLARE null_field    TINYINT DEFAULT 0;
+  DECLARE duplicate_key TINYINT DEFAULT 0;
 
   DECLARE CONTINUE HANDLER FOR 1048
     SET null_field = 1;
+
+  DECLARE CONTINUE HANDLER FOR 1062
+    SET duplicate_key = 1;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -319,6 +323,12 @@ BEGIN
       SET @US3_LAST_ERRNO = @INSERTNULL;
       SET @US3_LAST_ERROR = "MySQL: Attempt to insert NULL value in the rawData table";
 
+    ELSEIF ( duplicate_key = 1 ) THEN
+      SET @US3_LAST_ERRNO = @DUPFIELD;
+      SET @US3_LAST_ERROR = CONCAT( "MySQL: The GUID ",
+                                    p_rawDataGUID,
+                                    " already exists in the rawData table" );
+      
     ELSE
       SET @LAST_INSERT_ID  = LAST_INSERT_ID();
 

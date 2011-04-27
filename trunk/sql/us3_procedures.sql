@@ -54,6 +54,9 @@ BEGIN
   SET @ROTOR_IN_USE   = 513;    -- the rotor is in use
   SET @NO_NOISE       = 514;
   SET @NO_PROJECT     = 515;
+  SET @BUFFER_IN_USE  = 516;
+  SET @ANALYTE_IN_USE = 517;
+  SET @SOLUTION_IN_USE = 518;
 
   -- Some user levels
   SET @US3_USER       = 0;
