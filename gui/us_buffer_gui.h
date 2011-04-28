@@ -127,6 +127,7 @@ class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog
       void    update_db       ( void );
       bool    up_to_date      ( void );
       void    init_buffer     ( void );
+      bool    buffer_in_use   ( QString& );
       
     private slots:
       void synch_components   ( void );

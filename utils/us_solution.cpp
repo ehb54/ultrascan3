@@ -505,28 +505,34 @@ void US_Solution::saveAnalytesDisk( void )
 }
 
 // Function to delete a solution from disk
-void US_Solution::deleteFromDisk( void )
+int US_Solution::deleteFromDisk( void )
 {
+   int status = US_DB2::OK;
    QString filename;
    bool found = diskFilename( solutionGUID, filename );
 
    if ( ! found )
    {
       // No file to delete
-      return;
+      return US_DB2::NO_SOLUTION;
    }
    
+   if ( solutionInUse( solutionGUID ) )
+      return US_DB2::SOLUT_IN_USE;
+
    // Delete it
    QFile file( filename );
    if ( file.exists() )
       file.remove();
 
    saveStatus = ( saveStatus == BOTH ) ? DB_ONLY : NOT_SAVED;
+   return status;
 }
 
 // Function to delete a solution from db
-void US_Solution::deleteFromDB( US_DB2* db )
+int US_Solution::deleteFromDB( US_DB2* db )
 {
+   int status = US_DB2::OK;
    QStringList q;
    if ( solutionID == 0 )
    {
@@ -547,14 +553,20 @@ void US_Solution::deleteFromDB( US_DB2* db )
       q.clear();
       q << "delete_solution"
         << QString::number( solutionID );
-   
-      int status = db->statusQuery( q );
+
+      status = db->statusQuery( q );
+qDebug() << "SOLUT:delFrDB id guid status" << solutionID << solutionGUID << status;
+
+      if ( status == US_DB2::SOLUT_IN_USE )
+         return status;
+
       if ( status != US_DB2::OK )
          qDebug() << "MySQL error: " << db->lastError();
 
    }
 
    saveStatus = ( saveStatus == BOTH ) ? HD_ONLY : NOT_SAVED;
+   return status;
 }
 
 // Function to find the file name of a solution on disk, if it exists
@@ -794,5 +806,61 @@ QString US_Solution::analyte_typetext( int type )
       antype = "Other";
 
    return antype;
+}
+
+// Function to determine if a solution is used by any experiment
+bool US_Solution::solutionInUse( QString& solutionGUID )
+{
+   bool in_use = false;
+
+   QString     resdir  = US_Settings::resultDir();
+   QStringList expdirs = QDir( resdir )
+      .entryList( QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
+   resdir = resdir + "/";
+
+   for ( int ii = 0; ii < expdirs.size();  ii++ )
+   {
+      QString     subdir  = resdir + expdirs.at( ii );
+      QStringList expfilt;
+      expfilt << expdirs.at( ii ) + ".*.xml";
+      QStringList expfiles = QDir( subdir )
+         .entryList( QDir::Files, QDir::Name );
+      subdir = subdir + "/";
+
+      for ( int jj = 0; jj < expfiles.size(); jj++ )
+      {
+         QString fname      = subdir + expfiles.at( jj );
+         QFile xfile( fname  );
+         if ( !  xfile.open( QIODevice::ReadOnly ) )
+            continue;
+
+         QXmlStreamReader xml( &xfile );
+
+         while ( ! xml.atEnd() )
+         {
+            xml.readNext();
+
+            if ( xml.isStartElement()  &&  xml.name() == "solution" )
+            {
+               QXmlStreamAttributes atts = xml.attributes();
+               QString guid = atts.value( "guid" ).toString();
+
+               if ( guid == solutionGUID )
+               {
+                  in_use = true;
+                  break;
+               }
+            }
+         }
+
+         xfile.close();
+
+         if ( in_use ) break;
+      }
+
+      if ( in_use ) break;
+   }
+
+   return in_use;
 }
 

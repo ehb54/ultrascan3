@@ -793,8 +793,10 @@ void US_BufferGui::delete_buffer( void )
    
    if ( response != QMessageBox::Ok ) return;
    
-   if ( disk_controls->db() ) delete_db();
-   delete_disk();
+   if ( disk_controls->db() )
+      delete_db();
+   else
+      delete_disk();
 
    reset();
    query();
@@ -803,11 +805,21 @@ void US_BufferGui::delete_buffer( void )
 
 void US_BufferGui::delete_disk( void )
 {
+   QString bufGUID = le_guid->text();
    QString path;
    if ( ! buffer_path( path ) ) return;
 
    bool    newFile;
-   QString filename = US_Buffer::get_filename( path, le_guid->text(), newFile );
+   QString filename = US_Buffer::get_filename( path, bufGUID, newFile );
+
+   if ( buffer_in_use( bufGUID ) )
+   {
+      QMessageBox::warning( this,
+         tr( "Buffer Not Deleted" ),
+         tr( "The buffer could not be deleted,\n"
+             "since it is in use in one or more solutions." ) );
+      return;
+   }
 
    if ( ! newFile )
    {
@@ -843,6 +855,15 @@ void US_BufferGui::delete_db( void )
       q[ 0 ] = "delete_buffer";
       q[ 1 ] = bufferID;
       status = db.statusQuery( q );
+   }
+
+   if ( status == US_DB2::BUFFR_IN_USE )
+   {
+      QMessageBox::warning( this,
+         tr( "Buffer Not Deleted" ),
+         tr( "The buffer could not be deleted,\n"
+             "since it is in use in one or more solutions." ) );
+      return;
    }
 
    if ( status != US_DB2::OK )
@@ -1345,5 +1366,51 @@ void US_BufferGui::source_changed( bool db )
    emit use_db( db );
    query();
    qApp->processEvents();
+}
+
+// Determine by GUID whether a buffer is in use in any solution on disk
+bool US_BufferGui::buffer_in_use( QString& bufferGUID )
+{
+   bool in_use = false;
+   QString soldir = US_Settings::dataDir() + "/solutions/";
+   QStringList sfilt( "S*.xml" );
+   QStringList snames = QDir( soldir )
+      .entryList( sfilt, QDir::Files, QDir::Name );
+qDebug() << "BinUse: bGUID" << bufferGUID;
+
+   for ( int ii = 0;  ii < snames.size(); ii++ )
+   {
+      QString sfname = soldir + snames.at( ii );
+qDebug() << "BinUse: ii sfname" << ii << sfname;
+      QFile sfile( sfname );
+
+      if ( ! sfile.open( QIODevice::ReadOnly | QIODevice::Text ) ) continue;
+
+      QXmlStreamReader xml( &sfile );
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "buffer" )
+         {
+            QXmlStreamAttributes atts = xml.attributes();
+qDebug() << "BinUse:  buffer guid" << atts.value("guid").toString();
+
+            if ( atts.value( "guid" ).toString() == bufferGUID )
+            {
+               in_use = true;
+               break;
+            }
+         }
+      }
+
+      sfile.close();
+
+      if ( in_use )  break;
+   }
+
+qDebug() << "BinUse: IN_USE" << in_use;
+   return in_use;
 }
 

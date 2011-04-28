@@ -967,6 +967,8 @@ void US_SolutionGui::save( bool display_status )
 // Function to delete a solution from disk, db, or in the current form
 void US_SolutionGui::delete_solution( void )
 {
+   int status = US_DB2::OK;
+
    if ( disk_controls->db() )
    {
       US_Passwd pw;
@@ -979,11 +981,20 @@ void US_SolutionGui::delete_solution( void )
          return;
       }
 
-      solution.deleteFromDB( &db );
+      status = solution.deleteFromDB( &db );
    }
 
    else
-      solution.deleteFromDisk();
+      status = solution.deleteFromDisk();
+
+   if ( status == US_DB2::SOLUT_IN_USE )
+   {
+      QMessageBox::warning( this,
+         tr( "Delete aborted" ),
+         tr( "Solution NOT Deleted, since it is in use\n"
+             "by one or more experiments" ) );
+      return;
+   }
 
    solution.clear();
    analyteMap.clear();
