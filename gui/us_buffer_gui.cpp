@@ -1376,12 +1376,10 @@ bool US_BufferGui::buffer_in_use( QString& bufferGUID )
    QStringList sfilt( "S*.xml" );
    QStringList snames = QDir( soldir )
       .entryList( sfilt, QDir::Files, QDir::Name );
-qDebug() << "BinUse: bGUID" << bufferGUID;
 
    for ( int ii = 0;  ii < snames.size(); ii++ )
    {
       QString sfname = soldir + snames.at( ii );
-qDebug() << "BinUse: ii sfname" << ii << sfname;
       QFile sfile( sfname );
 
       if ( ! sfile.open( QIODevice::ReadOnly | QIODevice::Text ) ) continue;
@@ -1395,7 +1393,6 @@ qDebug() << "BinUse: ii sfname" << ii << sfname;
          if ( xml.isStartElement()  &&  xml.name() == "buffer" )
          {
             QXmlStreamAttributes atts = xml.attributes();
-qDebug() << "BinUse:  buffer guid" << atts.value("guid").toString();
 
             if ( atts.value( "guid" ).toString() == bufferGUID )
             {
@@ -1410,7 +1407,6 @@ qDebug() << "BinUse:  buffer guid" << atts.value("guid").toString();
       if ( in_use )  break;
    }
 
-qDebug() << "BinUse: IN_USE" << in_use;
    return in_use;
 }
 

@@ -99,6 +99,8 @@ int US_Solution::readFromDisk( QString& guid )
 
 void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
 {
+   buffer.GUID = "";
+
    while ( ! xml.atEnd() )
    {
       xml.readNext();
@@ -297,20 +299,26 @@ void US_Solution::saveToDisk( void )
 // Function to save solution information to db
 int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
 {
+   QStringList q;
+   int status;
+
    // Save to disk too
    saveToDisk();
 
-   // Let's see if the buffer is in the db already
-   QStringList q( "get_bufferID" );
-   q  << buffer.GUID;
-   db->query( q );
+   if ( ! buffer.GUID.isEmpty() )
+   {
+      // Let's see if the buffer is in the db already
+      q  <<  "get_bufferID";
+      q  << buffer.GUID;
+      db->query( q );
 
-   int status = db->lastErrno();
-   if ( status == US_DB2::NOROWS )
-      buffer.saveToDB( db, QString::number( 1 ) );      // 1 = private
+      status = db->lastErrno();
+      if ( status == US_DB2::NOROWS )
+         buffer.saveToDB( db, QString::number( 1 ) );      // 1 = private
 
-   else if ( status != US_DB2::OK )
-      return status;
+      else if ( status != US_DB2::OK )
+         return status;
+   }
 
    // Now let's see if the analytes are in the db already
    foreach( AnalyteInfo newInfo, analyteInfo )
@@ -385,20 +393,23 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
    if ( solutionID == 0 )        // double check
       return US_DB2::NO_SOLUTION;
 
-   // new_solutionBuffer will Remove existing buffer associations,
-   //   and associate the solution with this buffer
-   q.clear();
-   q  << "new_solutionBuffer"
-      << QString::number( solutionID )
-      << QString( "" )           // skip bufferID and use GUID instead
-      << buffer.GUID;
-
-   status = db->statusQuery( q );
-   if ( status != US_DB2::OK )
+   if ( ! buffer.GUID.isEmpty() )
    {
-      qDebug() << "MySQL error associating buffer with solution in database: " 
-               << db->lastError();
-      return status;
+      // new_solutionBuffer will Remove existing buffer associations,
+      //   and associate the solution with this buffer
+      q.clear();
+      q  << "new_solutionBuffer"
+         << QString::number( solutionID )
+         << QString( "" )           // skip bufferID and use GUID instead
+         << buffer.GUID;
+
+      status = db->statusQuery( q );
+      if ( status != US_DB2::OK )
+      {
+         qDebug() << "MySQL error associating buffer with solution in database:"
+                  << db->lastError();
+         return status;
+      }
    }
 
    // Remove analyte associations; we'll create new ones
@@ -464,6 +475,8 @@ int US_Solution::readBufferDiskGUID( US_Buffer& buffer, QString& GUID )
 
 void US_Solution::saveBufferDisk( void )
 {
+   if ( buffer.GUID.isEmpty() )  return;
+
    // Find the buffer directory on disk
    QDir dir;
    QString path = US_Settings::dataDir() + "/buffers";
@@ -555,7 +568,6 @@ int US_Solution::deleteFromDB( US_DB2* db )
         << QString::number( solutionID );
 
       status = db->statusQuery( q );
-qDebug() << "SOLUT:delFrDB id guid status" << solutionID << solutionGUID << status;
 
       if ( status == US_DB2::SOLUT_IN_USE )
          return status;
