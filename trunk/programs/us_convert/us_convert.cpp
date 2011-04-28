@@ -592,6 +592,19 @@ void US_Convert::splitRAData(
             t.tripleDesc = QString::number( newRawData.cell    ) + " / " +
                            QString        ( newRawData.channel ) + " / " +
                            wavelength;
+
+            // Avoid duplication of GUID's
+            QString uuidc = US_Util::uuid_unparse( (unsigned char*)t.tripleGUID );
+            if ( uuidc != "00000000-0000-0000-0000-000000000000" ) 
+            {
+               uchar uuid[ 16 ];
+               QString uuid_string = US_Util::new_guid();
+               US_Util::uuid_parse( uuid_string, uuid );
+               memcpy( t.tripleGUID, (char*) uuid, 16 );
+            }
+
+            t.tripleFilename = "";
+
             triples << t;
          }
 
