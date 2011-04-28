@@ -872,6 +872,7 @@ void US_Convert::TripleInfo::clear( void )
    centerpiece  = 0;
    memset( tripleGUID, 0, 16 );
    tripleFilename = QString( "" );
+   channelID    = 1;                // One that is implemented currently
    solution.clear();
 }
 
@@ -885,6 +886,7 @@ void US_Convert::TripleInfo::show( void )
             << "centerpiece  = " << centerpiece  << '\n'
             << "tripleGUID   = " << QString( uuidc )  << '\n'
             << "tripleFilename = " << tripleFilename << '\n'
+            << "channelID    = " << QString::number( channelID ) << '\n'
             << "solutionID   = " << QString::number( solution.solutionID ) << '\n'
             << "solutionGUID = " << solution.solutionGUID << '\n'
             << "solutionDesc = " << solution.solutionDesc;

@@ -60,6 +60,7 @@ class US_Convert
          bool             excluded;           //!< Whether this triple has been dropped or not
          int              centerpiece;        //!< The ID of the centerpiece that was used
          US_Solution      solution;           //!< The solution information for this triple
+         int              channelID;          //!< The channel this triple is associated with
          TripleInfo();                        //!< A generic constructor
          void             clear( void );
          void             show( void );       // temporary
