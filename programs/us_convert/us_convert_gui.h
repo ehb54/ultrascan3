@@ -100,12 +100,13 @@ class US_ConvertGui : public US_Widgets
 
       double        reference_start;                  // boundary of reference scans
       double        reference_end;
-      bool          Pseudo_averaged;                      // true if RI averages have been done
-      int           Pseudo_reference_triple;              // number of the triple that is the reference
+      bool          Pseudo_averaged;                  // true if RI averages have been done
+      int           Pseudo_reference_triple;          // number of the triple that is the reference
       QVector< double > Pseudo_averages;
       bool          isPseudo;                         // Is this RI data pseudo-absorbance?
       bool          toleranceChanged;                 // keep track of whether the tolerance has changed
       double        scanTolerance;                    // remember the scan tolerance value
+      int           countSubsets;                     // number of subsets maximum = 4
 
       bool show_plot_progress;
       US_Experiment      ExpData; 

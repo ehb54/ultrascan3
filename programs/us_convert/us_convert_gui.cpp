@@ -1440,6 +1440,7 @@ void US_ConvertGui::include( void )
 void US_ConvertGui::define_subsets( void )
 {
    subsets.clear();
+   countSubsets = 1;      // We start with one big subset
 
    pb_define  ->setEnabled( false );
    pb_process ->setEnabled( true );
@@ -1566,9 +1567,13 @@ void US_ConvertGui::cClick( const QwtDoublePoint& p )
    switch ( step )
    {
       case SPLIT :
-         // process equil-abs data
-         draw_vline( p.x() );
-         subsets << p.x();
+         if ( countSubsets < 4 )
+         {
+             // process equil-abs data
+             draw_vline( p.x() );
+             subsets << p.x();
+             countSubsets++;
+         }
 
          break;
 
