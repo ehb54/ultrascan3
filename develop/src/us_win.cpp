@@ -859,7 +859,7 @@ void UsWin::about()
                              tr("About UltraScan..."),
                              tr("UltraScan II version " + ver + "\n"
                                 REVISION "\n"
-                                "Copyright 1989 - 2008\n"
+                                "Copyright 1989 - 2011\n"
                                 "Borries Demeler and the University of Texas System\n\n"
                                 "For more information, please visit:\n"
                                 "http://www.ultrascan.uthscsa.edu/\n\n"
@@ -882,7 +882,7 @@ void UsWin::credits()
    QMessageBox::information( this,
                              tr("UltraScan Credits"),
                              tr("UltraScan II version " + US_Version + "\n"
-                                "Copyright 1998 - 2008\n"
+                                "Copyright 1998 - 2011\n"
                                 "Borries Demeler and the University of Texas System\n\n"
                                 " - Credits -\n\n"
                                 "The development of this software has been supported by grants\n"
