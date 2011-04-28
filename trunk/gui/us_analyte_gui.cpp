@@ -1517,13 +1517,18 @@ int US_AnalyteGui::status_query( const QStringList& q )
 
    db.statusQuery( q );
 
+   int status = db.lastErrno();
+
+   if ( status == US_DB2::ANALY_IN_USE )  return status;
+
    if ( database_ok( db ) ) return US_DB2::ERROR;
-   if ( db.lastErrno() != 0 )
+
+   if ( status != US_DB2::OK )
    {
       QMessageBox::information( this,
             tr( "Database Error" ),
             tr( "The following errro was returned:\n" ) + db.lastError() );
-      return db.lastErrno(); 
+      return status;
    }
 
    return US_DB2::OK;
@@ -1699,6 +1704,7 @@ void US_AnalyteGui::delete_analyte( void )
    else
       delete_from_disk();
 
+
    list();
 }
 
@@ -1709,6 +1715,16 @@ void US_AnalyteGui::delete_from_disk( void )
    if ( ! US_Analyte::analyte_path( path ) ) return;
 
    QString fn = US_Analyte::get_filename( path, analyte.analyteGUID );
+
+
+   if ( analyte_in_use( analyte.analyteGUID ) )
+   {
+      QMessageBox::warning( this,
+            tr( "Not Deleted" ),
+            tr( "The analyte could not be deleted,\n"
+                "since it is in use in one or more solutions." ) );
+      return;
+   }
 
    // Delete it
    QFile file( fn );
@@ -1727,7 +1743,19 @@ void US_AnalyteGui::delete_from_db( void )
 {
    QStringList q;
    q << "delete_analyte" << analyte.analyteID;
-   if ( status_query( q ) != US_DB2::OK ) return;
+
+   int status = status_query( q );
+
+   if ( status == US_DB2::ANALY_IN_USE )
+   {
+      QMessageBox::warning( this,
+            tr( "Analyte Not Deleted" ),
+            tr( "The analyte could not be deleted,\n"
+                "since it is in use in one or more solutions." ) );
+      return;
+   }
+
+   if ( status != US_DB2::OK ) return;
 
    reset();
 
@@ -1774,6 +1802,48 @@ void US_AnalyteGui::verify_vbar()
          le_protein_vbar20->setText( QString::number( vbar20 ) );
       }
    }
+}
+
+// Determine by GUID whether an analyte is in use in any solution on disk
+bool US_AnalyteGui::analyte_in_use( QString& analyteGUID )
+{
+   bool in_use = false;
+   QString soldir = US_Settings::dataDir() + "/solutions/";
+   QStringList sfilt( "S*.xml" );
+   QStringList snames = QDir( soldir )
+      .entryList( sfilt, QDir::Files, QDir::Name );
+
+   for ( int ii = 0;  ii < snames.size(); ii++ )
+   {
+      QString sfname = soldir + snames.at( ii );
+      QFile sfile( sfname );
+
+      if ( ! sfile.open( QIODevice::ReadOnly | QIODevice::Text ) ) continue;
+
+      QXmlStreamReader xml( &sfile );
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "analyte" )
+         {
+            QXmlStreamAttributes atts = xml.attributes();
+
+            if ( atts.value( "guid" ).toString() == analyteGUID )
+            {
+               in_use = true;
+               break;
+            }
+         }
+      }
+
+      sfile.close();
+
+      if ( in_use )  break;
+   }
+
+   return in_use;
 }
 
 

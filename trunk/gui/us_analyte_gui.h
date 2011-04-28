@@ -163,6 +163,7 @@ class US_GUI_EXTERN US_AnalyteGui : public US_WidgetsDialog
       void    select_from_disk( void );
       void    select_from_db  ( void );
       bool    discard_changes ( void );
+      bool    analyte_in_use  ( QString& );
 
    private slots:
       void set_analyte_type   ( int  );

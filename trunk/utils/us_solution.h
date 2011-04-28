@@ -88,13 +88,13 @@ class US_UTIL_EXTERN US_Solution
       int saveToDB           ( int = 1, int = 1, US_DB2* = 0 );
 
       //! \brief    Function to delete the current solution from disk, if it exists
-      void deleteFromDisk    ( void );
+      int deleteFromDisk    ( void );
 
       /*! \brief    Function to delete the current solution from the db, if it exists
 
           \param    db For database access, an open database connection
       */
-      void deleteFromDB      ( US_DB2* = 0 );
+      int deleteFromDB      ( US_DB2* = 0 );
 
       /*! \brief    Function to find the filename of a solution on disk, if it exists.
                     Returns true if successful, false otherwise
@@ -127,5 +127,6 @@ class US_UTIL_EXTERN US_Solution
       QString get_filename   ( const QString&, bool& );
       int analyte_type       ( QString );
       QString analyte_typetext( int );
+      bool solutionInUse     ( QString& );
 };
 #endif

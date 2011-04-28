@@ -76,11 +76,15 @@ class US_UTIL_EXTERN US_DB2
       NO_RAWDATA     = 509,     //!< No raw data with the specified ID exists
       NO_EDITDATA    = 510,     //!< No edit profile with the specified ID exists
       NO_SOLUTION    = 511,     //!< No solution with the specified ID exists
-      CALEB_IN_USE   = 512,     //!< The specified rotor calibration profile is in use,
+      CALIB_IN_USE   = 512,     //!< The specified rotor calibration profile is in use,
                                 //!< and cannot be deleted
       ROTOR_IN_USE   = 513,     //!< The specified rotor is in use, and cannot be deleted
       NO_NOISE       = 514,     //!< No noise file with the specified ID exists
-      NO_PROJECT     = 515      //!< No project with the specified ID exists
+      NO_PROJECT     = 515,     //!< No project with the specified ID exists
+      BUFFR_IN_USE   = 516,     //!< The buffer to be deleted is in use
+      ANALY_IN_USE   = 517,     //!< The analyte to be deleted is in use
+      SOLUT_IN_USE   = 518,     //!< The solution to be deleted is in use
+      UNKNOWN_ERR    = 999      //!< No project with the specified ID exists
     };
 
     //! Some user levels used by the US3 database procedures
