@@ -29,8 +29,18 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
    if ( status != US_DB2::OK )
       return( db->lastError() );
 
+   // Delete links between experiment and solutions
    q.clear();
    q  << "delete_experiment_solutions" 
+      << QString::number( ExpData.expID );
+   status = db->statusQuery( q );
+
+   if ( status != US_DB2::OK )
+      return( db->lastError() );
+
+   // Same with cell table
+   q.clear();
+   q  << "delete_cell_experiments"
       << QString::number( ExpData.expID );
    status = db->statusQuery( q );
 
@@ -101,7 +111,7 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
          << ExpData.comments
          << QString::number( ExpData.expID )
          << QString::number( triple.solution.solutionID )
-         << "1" ;           // channel ID
+         << QString::number( triple.channelID );    // only channel 1 implemented
 
       status = db->statusQuery( q );
       int rawDataID = db->lastInsertID();
@@ -149,6 +159,20 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
          error += "Error returned writing cell record: " + cellGUID + "\n" +
                   status + " " + db->lastError() + "\n";
 
+      // Associate solution in this triple with experiment
+      q.clear();
+      q  << "new_experiment_solution"
+         << QString::number( ExpData.expID )
+         << QString::number( triple.solution.solutionID )
+         << QString::number( triple.channelID );
+      status = db->statusQuery( q );
+      if ( status != US_DB2::OK )
+      {
+         error += "MySQL error associating experiment "   + 
+                  QString::number( ExpData.expID ) + "\n" +
+                  " with solution " + triple.solution.solutionGUID + "\n" +
+                  status + " " + db->lastError() + "\n";
+      }
    }
 
    if ( error != QString( "" ) )
@@ -182,6 +206,13 @@ QString US_ConvertIO::readDBExperiment( QString runID,
    QString status = readRawDataFromDB( ExpData, triples, dir, db );
    if ( status != QString( "" ) )
       return status;
+
+   // Verify that the solution and project files are on disk too
+   ExpData.project.saveToDisk();
+   foreach ( US_Convert::TripleInfo triple, triples )
+   {
+      triple.solution.saveToDisk();
+   }
 
    // Now try to write the xml file
    int xmlStatus = ExpData.saveToDisk( triples, ExpData.opticalSystem, runID, dir );
