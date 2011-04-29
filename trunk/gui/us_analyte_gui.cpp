@@ -1779,7 +1779,7 @@ void US_AnalyteGui::verify_vbar()
       if ( qAbs( vbar20 - pvbar ) > 1e-4 )
       {
          QString msg  = tr(
-               "There is a significant difference between<br/>"
+               "There is a difference between<br/>"
                "the vbar20 value that you specified and<br/>"
                "the one calculated from the protein sequence.<br/> <br/>"
                "Do you wish to accept the specified value?<ul>"
