@@ -24,7 +24,7 @@ US_RotorGui::US_RotorGui(
    {
       QMessageBox::information( this,
          tr( "Attention" ),
-         tr( "Please enter the calibration name "
+         tr( "Please enter the calibration name, omega2t, "
              "and click Save Calibration Data, or Close" ) );
 
       // The rotor calibration data was passed, so let's fill in the rotor data
@@ -48,11 +48,13 @@ US_RotorGui::US_RotorGui(
       le_calibrationLabel->setText( "" );
       le_coefficient1    ->setText( QString::number( currentCalibration.coeff1  ) );
       le_coefficient2    ->setText( QString::number( currentCalibration.coeff2  ) );
-      le_omega2t         ->setText( QString::number( currentCalibration.omega2t ) );
+      le_omega2t         ->setText( "" );
 
       // Also enable line edits for saving calibrations
       le_calibrationLabel ->setReadOnly( false );
       le_calibrationLabel ->setPalette( US_GuiSettings::editColor() );
+      le_omega2t ->setReadOnly( false );
+      le_omega2t ->setPalette( US_GuiSettings::editColor() );
    }
 
    reset();
@@ -234,6 +236,8 @@ void US_RotorGui::setupGui( int select_db_disk )
    le_omega2t->setText( tr("< not available >"));
    le_omega2t->setPalette ( gray );
    le_omega2t->setReadOnly( true );
+   connect( le_omega2t, SIGNAL( textEdited    ( const QString&   ) ),
+                        SLOT  ( updateOmega2t ( const QString&   ) ) );
    top->addWidget( le_omega2t, row++, 3);
 
    // some pushbuttons
@@ -268,6 +272,7 @@ void US_RotorGui::setupGui( int select_db_disk )
 
 void US_RotorGui::reset( void )
 {
+   lw_rotors           ->setEnabled( true );
    pb_saveCalibration  ->setEnabled( false );
    pb_reset            ->setEnabled( true );
    pb_addRotor         ->setEnabled( ( US_Settings::us_inv_level() >= 4 ) &&
@@ -307,7 +312,7 @@ void US_RotorGui::reset( void )
       pb_addRotor         ->setEnabled( false );
       pb_deleteRotor      ->setEnabled( false );
       pb_deleteCalibration->setEnabled( false );
-      pb_viewReport       ->setEnabled( false );
+      lw_rotors           ->setEnabled( false );
    }
 }
 
@@ -429,16 +434,10 @@ void US_RotorGui::selectRotor( QListWidgetItem *item )
       rotorStatus = US_Rotor::DB_ONLY;
    }
 
-   if ( savingCalibration )
-      pb_saveCalibration->setEnabled( true );
+   pb_deleteRotor->setEnabled( true );
 
-   else
-   {
-      pb_deleteRotor->setEnabled( true );
-
-      // Get the associated calibration profiles
-      readCalibrationProfiles( rotorID );
-   }
+   // Get the associated calibration profiles
+   readCalibrationProfiles( rotorID );
 }
 
 US_Rotor::Status US_RotorGui::readRotor( int disk_db, int rotorID )
@@ -555,7 +554,8 @@ bool US_RotorGui::readCalibrationProfiles( int rotorID )
          QString ID   = db.value( 0 ).toString();
          QStringList dateParts = db.value( 1 ).toString().split( " " );
          QDate dateUpdated = QDate::fromString( dateParts[ 0 ], "yyyy-MM-dd"  );
-         calibrationDescriptions << ( ID + ": " + dateUpdated.toString( "d MMMM yyyy" ) );
+         QString label = db.value( 2 ).toString();
+         calibrationDescriptions << ( ID + ": " + label + dateUpdated.toString( " (d MMMM yyyy)" ) );
       }
 
    }
@@ -616,7 +616,6 @@ void US_RotorGui::selectCalibration( QListWidgetItem *item )
    if ( ! savingCalibration )
    {
       pb_deleteCalibration->setEnabled( true );
-      pb_viewReport       ->setEnabled( true );
    }
 
    reset();
@@ -701,7 +700,7 @@ void US_RotorGui::deleteCalibration( void )
 
       else if ( status != US_DB2::OK )
       {
-         db_error( db.lastError() );
+         db_error( QString::number( status ) + ": " + db.lastError() );
          return;
       }
    }
@@ -714,6 +713,7 @@ void US_RotorGui::deleteCalibration( void )
       return;
    }
 
+   readCalibrationProfiles( currentRotor.ID );
    reset();
 }
 
@@ -730,6 +730,11 @@ void US_RotorGui::updateSerialNumber( const QString &number)
 void US_RotorGui::updateLabel( const QString &label)
 {
    currentCalibration.label = label;
+}
+
+void US_RotorGui::updateOmega2t( const QString &omega2t)
+{
+   currentCalibration.omega2t = omega2t.toFloat();
 }
 
 void US_RotorGui::saveCalibration()
@@ -773,6 +778,21 @@ void US_RotorGui::saveCalibration()
          tr( "Attention" ),
          tr( "Calibration was saved to the Disk." ) );
    }
+
+   // Now that we've saved the calibration, convert to regular mode
+   savingCalibration = false;
+
+   // Disable calibration input fields
+   QPalette gray = US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   le_calibrationLabel->setPalette ( gray );
+   le_calibrationLabel->setReadOnly( true );
+   le_omega2t->setPalette ( gray );
+   le_omega2t->setReadOnly( true );
+
+   // Load all the calibration profiles
+   readCalibrationProfiles( currentRotor.ID );
+   reset();
 }
 
 void US_RotorGui::source_changed( bool db )
