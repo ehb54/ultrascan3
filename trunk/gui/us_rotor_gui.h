@@ -135,6 +135,7 @@ class US_GUI_EXTERN US_RotorGui : public US_WidgetsDialog
       void updateName         ( const QString & );
       void updateSerialNumber ( const QString & );
       void updateLabel        ( const QString & );
+      void updateOmega2t      ( const QString & );
       void saveCalibration    ( void );
 
       void help (void)

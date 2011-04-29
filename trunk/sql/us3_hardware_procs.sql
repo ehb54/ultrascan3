@@ -83,7 +83,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   rotorCalibrationID, dateUpdated
+      SELECT   rotorCalibrationID, dateUpdated, label
       FROM     rotorCalibration
       WHERE    rotorID = p_rotorID
       ORDER BY dateUpdated DESC;
