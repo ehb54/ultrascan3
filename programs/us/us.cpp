@@ -179,6 +179,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
                                                                    simulation );
   addMenu(  P_MODEL2, tr( "&Predict f and axial ratios for 4 basic shapes" ), 
                                                                    simulation );
+  addMenu(  P_SOMO,   tr( "S&OMO Bead Modeling"                 ), simulation );
+  addMenu(  P_SOMOCONFIG,   tr( "S&OMO Configuration"           ), simulation );
 
   QMenu* database    = new QMenu( tr( "&Database" ),    this );
   addMenu(  P_INVESTIGATOR , tr( "Manage &Investigator Data" ), database );
