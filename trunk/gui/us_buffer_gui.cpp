@@ -52,18 +52,18 @@ US_BufferGui::US_BufferGui(
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
 
-   QBoxLayout* search = new QHBoxLayout;
+   QBoxLayout* lo_search = new QHBoxLayout;
 
    // Search
    QLabel* lb_search = us_label( tr( "Search:" ) );
-   search->addWidget( lb_search );
+   lo_search->addWidget( lb_search );
 
    le_search = us_lineedit();
    le_search->setReadOnly( true );
    connect( le_search, SIGNAL( textChanged( const QString& ) ), 
                        SLOT  ( search     ( const QString& ) ) );
-   search->addWidget( le_search );
-   main->addLayout( search, row++, 0 );
+   lo_search->addWidget( le_search );
+   main->addLayout( lo_search, row++, 0 );
 
    // Buffer descriptions from DB
    QLabel* lb_banner1 = us_banner( 
@@ -300,7 +300,6 @@ US_BufferGui::US_BufferGui(
    main->addLayout( buttons, row, 0, 1, 3 );
 
    init_buffer();
-   query();
 }
 
 void US_BufferGui::check_db( void )
@@ -367,19 +366,19 @@ void US_BufferGui::viscosity( const QString& v )
 
 void US_BufferGui::init_buffer( void )
 {
+   query();
+
    if ( ! buffer.GUID.isEmpty() )
    {
-      query();
-
       if ( ! disk_controls->db() ) // Disk access
       {
          // Search for GUID
-         for ( int i = 0; i < GUIDs.size(); i++ )
+         for ( int i = 0; i < buffer_metadata.size(); i++ )
          {
-            if ( GUIDs[ i ] == buffer.GUID )
+            if ( buffer.GUID == buffer_metadata[ i ].guid )
             {
-               QListWidgetItem* item = lw_buffer_db->item( i );
                lw_buffer_db->setCurrentRow( i );
+               QListWidgetItem* item = lw_buffer_db->item( i );
                select_buffer( item );
                manualUpdate = false;
                break;
@@ -390,12 +389,12 @@ void US_BufferGui::init_buffer( void )
       else // DB access
       {
          // Search for bufferID
-         for ( int i = 0; i < bufferIDs.size(); i++ )
+         for ( int i = 0; i < buffer_metadata.size(); i++ )
          {
-            if ( bufferIDs[ i ] == buffer.bufferID )
+            if ( buffer.bufferID == buffer_metadata[ i ].bufferID )
             {
-               QListWidgetItem* item = lw_buffer_db->item( i );
                lw_buffer_db->setCurrentRow( i );
+               QListWidgetItem* item = lw_buffer_db->item( i );
                select_buffer( item );
                manualUpdate = false;
                break;
@@ -627,7 +626,8 @@ void US_BufferGui::search( const QString& text )
    for ( int ii = 0; ii < descriptions.size(); ii++ )
    {  // get list of filtered-description + index strings
       if ( descriptions[ ii ].contains(
-              QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) ) )
+              QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) )  &&
+           ! descriptions[ ii].isEmpty() )
       {
          sortdesc << descriptions[ ii ] + sep + QString::number( ii );
       }
@@ -707,7 +707,7 @@ void US_BufferGui::select_buffer( QListWidgetItem* item )
 
 void US_BufferGui::read_from_disk( QListWidgetItem* item )
 {
-   int row = item->listWidget()->currentRow();
+   int row = lw_buffer_db->row( item );
    int buf = buffer_metadata[ row ].index;
 
    if ( ! buffer.readFromDisk( filenames[ buf ] ) )
@@ -725,7 +725,7 @@ void US_BufferGui::read_from_disk( QListWidgetItem* item )
 
 void US_BufferGui::read_from_db( QListWidgetItem* item )
 {
-   int row = item->listWidget()->currentRow();
+   int row = lw_buffer_db->row( item );
    QString bufferID = buffer_metadata[ row ].bufferID;
    read_from_db( bufferID );
 }
@@ -903,8 +903,17 @@ void US_BufferGui::save_disk( void )
    QString path;
    if ( ! buffer_path( path ) ) return;
 
+   if ( buffer.GUID.isEmpty()  ||  buffer.description.isEmpty() )
+   {
+      QMessageBox::information( this,
+         tr( "NO Save of Results" ),
+         tr( "The buffer with an empty GUID and/or description\n"
+             "was not saved." ) );
+      return;
+   }
+
    bool    newFile;
-   QString filename = US_Buffer::get_filename( path, le_guid->text(), newFile );
+   QString filename = US_Buffer::get_filename( path, buffer.GUID, newFile );
    buffer.writeToDisk( filename );
 
    QString s = ( newFile ) ? tr( "saved" ) : tr( "updated" );
