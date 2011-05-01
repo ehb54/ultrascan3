@@ -25,7 +25,7 @@ namespace US_WinData
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
     P_SASSOC,       P_MODEL1, 
-    P_MODEL2,
+    P_MODEL2,       P_SOMO,        P_SOMOCONFIG,
 
     P_INVESTIGATOR, P_BUFFER,      P_VBAR, // Database Menu
     P_MODEL       , P_MANAGEDATA,  P_MANAGESOLN, 
@@ -180,6 +180,16 @@ namespace US_WinData
     { P_MODEL2, 0, 0, "us_predict2",
       QObject::tr( "Loading Molecular Modeling Simulator" ),
       QObject::tr( "Molecular Modeling Simulation Program (2)" ) 
+    },
+
+    { P_SOMO, 0, 0, "us3_somo",
+      QObject::tr( "Loading SOMO Bead Modeling" ),
+      QObject::tr( "SOMO Rigid Body and Brownian Dynamics Bead Modeling" ) 
+    },
+
+    { P_SOMOCONFIG, 0, 0, "us3_config",
+      QObject::tr( "Loading SOMO Bead Modeling Configuration" ),
+      QObject::tr( "SOMO Path Configuration" ) 
     },
 
     { P_INVESTIGATOR,  1, 0, "us_investigator",
