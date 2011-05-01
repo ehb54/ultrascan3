@@ -47,6 +47,7 @@ SUBDIRS += \
     us_combine_mw \
     us_combinescans \
     us_config \
+    us3_config \
     us_create_global \
     us_dcdrdat \
     us_dcdtdat \
@@ -70,6 +71,7 @@ SUBDIRS += \
     us_gainit \
     us_globalequil \
     us_hydrodyn \
+    us3_somo\
     us_license \
     us_lncr2 \
     us_meniscus \
