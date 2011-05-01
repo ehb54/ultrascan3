@@ -1,0 +1,312 @@
+SOMO Config file - computer generated, please do not edit...
+0		# Replicate overlap removal method flag
+1		# Remove side chain overlaps flag
+1		# Fuse beads flag
+70		# Bead fusing threshold (%)
+1		# Remove overlaps hierarchical flag
+1		# Percent hierarchical step
+0		# Remove overlaps synchronously flag
+1		# Percent synchronously step
+1		# Outward translation flag
+1		# flag for showing outward translation widget
+1		# Remove mainchain overlaps flag
+1		# Fuse beads flag
+70		# Bead fusing threshold (%)
+1		# Remove overlaps hierarchical flag
+1		# Percent hierarchical step
+0		# Remove overlaps synchronously flag
+1		# percent synchronously step
+0		# Outward translation flag
+0		# flag for showing outward translation widget
+1		# Remove buried beads overlaps flag
+0		# Fuse beads flag
+0		# Bead fusing threshold (%)
+1		# Remove overlaps hierarchical flag
+1		# Percent hierarchical step
+0		# Remove overlaps synchronously flag
+1		# Percent synchronously step
+0		# Outward translation flag
+0		# flag for showing outward translation widget
+0		# Replicate overlap removal method flag
+1		# Remove exposed grid bead overlaps flag
+0		# Fuse beads flag
+0		# Bead fusing threshold (%)
+0		# Remove overlaps hierarchical flag
+1		# Percent hierarchical step
+1		# Remove overlaps synchronously flag
+1		# Percent synchronously step
+1		# Outward translation flag
+1		# flag for showing outward translation widget
+1		# Remove buried grid bead overlaps flag
+0		# Fuse beads flag
+0		# Bead fusing threshold (%)
+0		# Remove overlaps hierarchical flag
+1		# Percent hierarchical step
+1		# Remove overlaps synchronously flag
+1		# Percent synchronously step
+0		# Outward translation flag
+0		# flag for showing outward translation widget
+1		# Remove grid bead overlaps flag
+0		# Fuse beads flag
+0		# Bead fusing threshold (%)
+0		# Remove overlaps hierarchical flag
+1		# Percent hierarchical step
+1		# Remove overlaps synchronously flag
+1		# Percent synchronously step
+0		# Outward translation flag
+0		# flag for showing outward translation widget
+0.001		# bead overlap tolerance
+1		# flag for selecting output format
+0		# flag for selecting sequence format
+1		# flag for residue correspondence (BEAMS only)
+1.4		# probe radius in angstrom
+1.4		# probe recheck radius in angstrom
+20		# SOMO ASA threshold
+50		# SOMO ASA threshold percent
+10		# Grid ASA threshold
+30		# Grid ASA threshold percent
+1		# flag for calculation of ASA
+1		# flag for rechecking beads
+1		# flag for ASAB1/Surfracer method
+1		# ASAB1 step size
+1		# flag to apply cubic grid
+1		# flag to hydrate original model (grid)
+0		# flag for positioning bead in center of mass or cubelet (grid)
+0		# flag for expanding beads to tangency (grid)
+5		# Length of cube side (grid)
+1		# flag for enabling asa options (grid)
+24.041		# hydration volume
+1		# flag for selecting vbar calculation
+0.72		# vbar value
+20		# manual vbar temperature 
+1		# flag for usage of peptide bond rule
+1.68		# Average atomic radius value
+16		# Average atomic mass value
+0.4		# Average atomic hydration value
+15.3		# Average bead/atom volume value
+0.72		# Average vbar value
+-10		# exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
+Water		# solvent name
+w		# solvent acronym
+20		# solvent temperature in degrees C
+1.00194		# viscosity of the solvent in cP
+0.998234		# desnisty of the solvent (g/ml)
+0		# flag for reference system
+0		# flag for boundary condition: false: stick, true: slip
+0		# flag for volume correction - false: Automatic, true: manual
+0		# volume correction value for manual entry
+0		# flag for mass correction: false: Automatic, true: manual
+0		# mass correction value for manual entry
+0		# flag for bead inclusion in computation - false: exclude hidden beads; true: use all beads
+0		# flag false: include beads in volume correction for rotational diffusion, true: exclude
+0		# flag false: include beads in volume correction for intrinsic viscosity, true: exclude
+0		# flag for overlap cutoff: false: same as in model building, true: enter manually
+0		# overlap value
+0		# PDB visualization option
+/root/ultrascan/etc/rasmol.spt		# RasMol color filename
+1		# skip hydrogen atoms?
+1		# skip water molecules?
+1		# skip alternate conformations?
+0		# find SH groups?
+0		# how to handle missing residues
+0		# how to handle missing atoms
+0.334		# Water electron density
+-0.3742		# H scattering length (*10^-12 cm)
+0.6671		# D scattering length (*10^-12 cm)
+-0.562		# H2O scattering length density (*10^-10 cm^2)
+6.404		# D2O scattering length density (*10^-10 cm^2)
+0.16		# D2O concentration (0 to 1)
+0.1		# Fraction of exchanged peptide H (0 to 1)
+1.5		# scattering wavelength
+0.014		# starting angle
+8.214		# ending angle
+0.2		# angle stepsize
+40		# maximum size
+1		# bin size
+0		# hydrate PDB model? true = yes
+0		# 0 = raw, 1 = saxs, 2 = sans
+0		# 0 = saxs, 1 = sans
+5		# bd_options.threshold_pb_pb
+5		# bd_options.threshold_pb_sc
+5		# bd_options.threshold_sc_sc
+1		# bd_options.do_rr
+1		# bd_options.force_chem
+0		# bd_options.bead_size_type
+1		# bd_options.show_pdb
+1		# bd_options.run_browflex
+8e-09		# bd_options.tprev
+8e-06		# bd_options.ttraj
+1.6e-13		# bd_options.deltat
+10		# bd_options.npadif
+1000		# bd_options.nconf
+2		# bd_options.inter
+1		# bd_options.iorder
+1234		# bd_options.iseed
+0		# bd_options.icdm
+0		# bd_options.chem_pb_pb_bond_type
+0		# bd_options.compute_chem_pb_pb_force_constant
+10		# bd_options.chem_pb_pb_force_constant
+1		# bd_options.compute_chem_pb_pb_equilibrium_dist
+0		# bd_options.chem_pb_pb_equilibrium_dist
+1		# bd_options.compute_chem_pb_pb_max_elong
+0		# bd_options.chem_pb_pb_max_elong
+0		# bd_options.chem_pb_sc_bond_type
+0		# bd_options.compute_chem_pb_sc_force_constant
+10		# bd_options.chem_pb_sc_force_constant
+1		# bd_options.compute_chem_pb_sc_equilibrium_dist
+0		# bd_options.chem_pb_sc_equilibrium_dist
+1		# bd_options.compute_chem_pb_sc_max_elong
+0		# bd_options.chem_pb_sc_max_elong
+0		# bd_options.chem_sc_sc_bond_type
+0		# bd_options.compute_chem_sc_sc_force_constant
+10		# bd_options.chem_sc_sc_force_constant
+1		# bd_options.compute_chem_sc_sc_equilibrium_dist
+0		# bd_options.chem_sc_sc_equilibrium_dist
+1		# bd_options.compute_chem_sc_sc_max_elong
+0		# bd_options.chem_sc_sc_max_elong
+0		# bd_options.pb_pb_bond_type
+0		# bd_options.compute_pb_pb_force_constant
+10		# bd_options.pb_pb_force_constant
+1		# bd_options.compute_pb_pb_equilibrium_dist
+0		# bd_options.pb_pb_equilibrium_dist
+1		# bd_options.compute_pb_pb_max_elong
+0		# bd_options.pb_pb_max_elong
+0		# bd_options.pb_sc_bond_type
+0		# bd_options.compute_pb_sc_force_constant
+10		# bd_options.pb_sc_force_constant
+1		# bd_options.compute_pb_sc_equilibrium_dist
+0		# bd_options.pb_sc_equilibrium_dist
+1		# bd_options.compute_pb_sc_max_elong
+0		# bd_options.pb_sc_max_elong
+0		# bd_options.sc_sc_bond_type
+0		# bd_options.compute_sc_sc_force_constant
+10		# bd_options.sc_sc_force_constant
+1		# bd_options.compute_sc_sc_equilibrium_dist
+0		# bd_options.sc_sc_equilibrium_dist
+1		# bd_options.compute_sc_sc_max_elong
+0		# bd_options.sc_sc_max_elong
+1		# bd_options.nmol
+1		# anaflex_options.run_anaflex
+10		# anaflex_options.nfrec
+0		# anaflex_options.instprofiles
+0		# anaflex_options.run_mode_1
+0		# anaflex_options.run_mode_1_1
+0		# anaflex_options.run_mode_1_2
+0		# anaflex_options.run_mode_1_3
+0		# anaflex_options.run_mode_1_4
+0		# anaflex_options.run_mode_1_5
+0		# anaflex_options.run_mode_1_7
+0		# anaflex_options.run_mode_1_8
+0		# anaflex_options.run_mode_1_12
+0		# anaflex_options.run_mode_1_13
+0		# anaflex_options.run_mode_1_14
+1		# anaflex_options.run_mode_1_18
+0		# anaflex_options.run_mode_1_20
+0		# anaflex_options.run_mode_1_24
+0		# anaflex_options.run_mode_2
+0		# anaflex_options.run_mode_2_1
+0		# anaflex_options.run_mode_2_2
+0		# anaflex_options.run_mode_2_3
+0		# anaflex_options.run_mode_2_4
+0		# anaflex_options.run_mode_2_5
+0		# anaflex_options.run_mode_2_7
+0		# anaflex_options.run_mode_2_8
+0		# anaflex_options.run_mode_2_12
+0		# anaflex_options.run_mode_2_13
+0		# anaflex_options.run_mode_2_14
+1		# anaflex_options.run_mode_2_18
+0		# anaflex_options.run_mode_2_20
+0		# anaflex_options.run_mode_2_24
+1		# anaflex_options.run_mode_3
+1		# anaflex_options.run_mode_3_1
+0		# anaflex_options.run_mode_3_5
+0		# anaflex_options.run_mode_3_9
+0		# anaflex_options.run_mode_3_10
+0		# anaflex_options.run_mode_3_14
+0		# anaflex_options.run_mode_3_15
+0		# anaflex_options.run_mode_3_16
+0		# anaflex_options.run_mode_4
+0		# anaflex_options.run_mode_4_1
+0		# anaflex_options.run_mode_4_6
+0		# anaflex_options.run_mode_4_7
+1		# anaflex_options.run_mode_4_8
+0		# anaflex_options.run_mode_9
+21		# anaflex_options.ntimc
+1.6e-06		# anaflex_options.tmax
+1		# anaflex_options.run_mode_3_5_iii
+99999		# anaflex_options.run_mode_3_5_jjj
+90		# anaflex_options.run_mode_3_10_theta
+1.3312		# anaflex_options.run_mode_3_10_refractive_index
+633		# anaflex_options.run_mode_3_10_lambda
+1		# anaflex_options.run_mode_3_14_iii
+99999		# anaflex_options.run_mode_3_14_jjj
+0		# batch missing atom handling
+0		# batch missing residue handling
+1		# batch run somo
+0		# batch run grid
+0		# batch run hydro
+0		# batch avg hydro
+results		# batch avg hydro name
+690		# batch window last height
+964		# batch window last width
+1		# batch number of files to follow
+/hda4/fibrinogen/runs/done/run49/short1b.pdb
+49		# save params number of fields to follow
+results.name
+results.total_beads
+results.used_beads
+results.mass
+results.vbar
+results.s20w
+results.D20w
+results.rs
+results.ff0
+results.rg
+results.tau
+results.viscosity
+tot_surf_area
+tot_volume_of
+num_of_unused
+use_beads_vol
+use_beads_surf
+use_bead_mass
+con_factor
+tra_fric_coef
+rot_fric_coef
+rot_diff_coef
+rot_fric_coef_x
+rot_diff_coef_x
+rot_stokes_rad_x
+cen_of_res_x
+cen_of_mass_x
+cen_of_diff_x
+cen_of_visc_x
+unc_int_visc
+unc_einst_rad
+cor_int_visc
+cor_einst_rad
+rel_times_tau_1
+rel_times_tau_2
+rel_times_tau_3
+rel_times_tau_4
+rel_times_tau_5
+rel_times_tau_m
+rel_times_tau_h
+max_ext_x
+axi_ratios_xz
+hydro.solvent_name
+hydro.solvent_acronym
+hydro.temperature
+hydro.solvent_viscosity
+hydro.solvent_density
+results.asa_rg_pos
+results.asa_rg_neg
+
+
+
+
+
+
+
+
+
