@@ -455,6 +455,7 @@ void US_AnalysisBase2::data_plot( void )
    int     scanCount   = d->scanData.size();
    int     points      = d->scanData[ 0 ].readings.size();
    double  boundaryPct = ct_boundaryPercent->value() / 100.0;
+   boundaryPct = ct_boundaryPercent->isEnabled() ? boundaryPct : 9.0;
    double  positionPct = ct_boundaryPos    ->value() / 100.0;
    double  baseline    = calc_baseline();
 
