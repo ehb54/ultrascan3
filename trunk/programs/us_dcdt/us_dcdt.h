@@ -27,6 +27,8 @@ class US_Dcdt : public US_AnalysisBase2
       US_Editor*        te_results;
 
       QRadioButton*     rb_radius;
+      QRadioButton*     rb_sed;
+      QRadioButton*     rb_avg;
 
       QwtCounter*       ct_sValue;
 

@@ -42,19 +42,15 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    QLabel*       lb_graph  = us_label( tr( "Graph Selection" ) );
    lb_graph->setAlignment ( Qt::AlignCenter );
 
-   QGridLayout*  rb_layout1 = us_radiobutton( tr( "x:radius" ) , rb_radius, true );
-   
-   QRadioButton* rb_sed;
-   QGridLayout*  rb_layout2 = us_radiobutton( tr( "x:S" ) , rb_sed, false );
-
-   QRadioButton* rb_avg;
-   QGridLayout*  rb_layout3 = us_radiobutton( tr( "Average S" ) , rb_avg, false );
+   QGridLayout* rb_layout1 = us_radiobutton( tr( "x:radius" ), rb_radius,false);
+   QGridLayout* rb_layout2 = us_radiobutton( tr( "x:S" ),       rb_sed, false );
+   QGridLayout* rb_layout3 = us_radiobutton( tr( "Average S" ), rb_avg, true );
 
    QButtonGroup* group = new QButtonGroup( this );
    group->addButton( rb_radius, 0 );
    group->addButton( rb_sed   , 1 );
    group->addButton( rb_avg   , 2 );
-   graphType = 0;
+   graphType = 2;
    connect( group, SIGNAL( buttonClicked( int ) ), SLOT( set_graph( int ) ) );
 
    QBoxLayout* rb_layout0 = new QHBoxLayout();
@@ -62,7 +58,10 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    rb_layout0->addLayout( rb_layout2 );
    rb_layout0->addLayout( rb_layout3 );
 
-   int row = 7;
+   int row = 5;
+   QLabel*       lb_bPos   = us_label( tr( "Boundary Pos (%):" ) );
+   controlsLayout->addWidget( lb_bPos,        row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_boundaryPos, row++, 2, 1, 2 );
 
    controlsLayout->addWidget( lb_aux,     row++, 0, 1, 4 );
 
@@ -75,6 +74,12 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
    connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
+
+   ct_boundaryPos    ->setMaxValue( 90.0 );
+   ct_boundaryPercent->disconnect();
+   ct_boundaryPercent->setValue   ( 9000.0 );
+   ct_boundaryPercent->setEnabled ( false );
+   ct_boundaryPercent->setVisible ( false );
 
    qApp->processEvents();
 }
@@ -103,7 +108,7 @@ void US_Dcdt::reset( void )
 
    ct_sValue->disconnect();
    ct_sValue->setValue( sMax );
-   rb_radius->click();
+   rb_avg   ->click();
    connect( ct_sValue, SIGNAL( valueChanged ( double ) ), 
                        SLOT  ( sMaxChanged  ( double ) ) );
    qApp->processEvents();
