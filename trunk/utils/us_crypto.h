@@ -16,12 +16,6 @@
 class US_UTIL_EXTERN US_Crypto
 {
   public:
-    //! A null constructor.
-    US_Crypto() {};
-
-    //! A null destructor.
-    ~US_Crypto(){};
-
     /*! A static function to encrypt a password string.
         \param  plaintext      The string to be encrypted.
         \param  pw             The password to use for encryption

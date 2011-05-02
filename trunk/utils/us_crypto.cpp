@@ -2,67 +2,88 @@
 #include <QtCrypto>
 
 #include "us_crypto.h"
+#include <openssl/evp.h>
 
-QStringList US_Crypto::encrypt( const QString& plaintext, const QString& pw )
+QStringList US_Crypto::encrypt( const QString& plain_text, const QString& pw )
 {
-  QByteArray       masterPW = pw.toLatin1();
-  QStringList      result;
-  QCA::Initializer init;
+   QStringList      result;
 
-  if ( ! QCA::isSupported( "aes128-cbc-pkcs7" ) )
-  {
-    qDebug() << "AES128-CBC not supported!\n";
-    return result;
-  }
+   // Seed the pseudo random number generator if needed
+   static bool seed = false;
 
-  // Create a random initialisation vector - we need this
-  // value to decrypt the resulting cipher text, but it
-  // need not be kept secret (unlike the key).
-  QCA::InitializationVector initVector( 16 );
+   if ( ! seed )
+   {
+      QTime time = QTime::currentTime();
+      // Not a great amount of entropy, but probably good enough for us
 
-  // Create a 128 bit AES cipher object using Cipher Block Chaining (CBC) mode
-  // Use Default padding, which is equivalent to PKCS7 for CBC
-  QCA::Cipher cipher( QString( "aes128" ), 
-                      QCA::Cipher::CBC,
-                      QCA::Cipher::DefaultPadding,
-                      QCA::Encode,
-                      masterPW, 
-                      initVector );
+      qsrand( (uint)time.msec() );
+      seed = true;
+   }
 
-  cipher.update( QByteArray( plaintext.toLatin1() ) );
-  QCA::SecureArray ciphertext = cipher.final();
+   // Determine the initialization vector 
+   QByteArray iv_ba( 16, '0' );
 
-  result << QCA::arrayToHex( ciphertext.toByteArray() )
-         << QCA::arrayToHex( initVector.toByteArray() );
+   for ( int i = 0; i < 16; i++ )
+      iv_ba[ i ] = qrand() % 256;
 
-  return result;
+   uchar* iv_ptr = (uchar*)iv_ba.data();
+
+   uchar key[ 16 ];  // The key is a 16 byte array 
+   memset( key, 0, 16 );  // Zero it out
+   
+   for ( int i = 0; i < pw.size(); i++ ) // Copy the password
+      key[ i ] = pw[ i ].cell();
+
+   QString    plaintext  = plain_text;
+   QByteArray plain_ba   = plaintext.toAscii();
+   uchar*     plain_ptr  = (uchar*)plain_ba.data();
+
+   EVP_CIPHER_CTX ctx;
+   uchar          out[ 100 ];   // Assume the plaintext is < 99 characters
+   int            out_length;
+   int            final_length;
+
+   EVP_EncryptInit  ( &ctx, EVP_aes_128_cbc(), key, iv_ptr );
+   EVP_EncryptUpdate( &ctx, out, &out_length, plain_ptr, plaintext.size() );
+   EVP_EncryptFinal ( &ctx, &out[ out_length ], &final_length );
+
+   int c_size = out_length + final_length;
+
+   QByteArray cipher_ba = QByteArray( (const char*)out, c_size );
+
+   result << cipher_ba.toHex() << iv_ba.toHex();
+
+   return result;
 }
-
+//////////////////////////////////////////////////////
 QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
                             const QString& initVector )
 {
-  QByteArray masterPW = pw.toLatin1();
+   if ( pw.size() == 0 ) return QString();
 
-  if ( masterPW.size() == 0 ) return QString();
+   uchar      key[ 16 ];  // The key is a 16 byte array 
+   memset( key, 0, 16 );  // Zero it out
 
-  QCA::Initializer init;
+   for ( int i = 0; i < pw.size(); i++ ) // Copy the password
+      key[ i ] = pw[ i ].cell();
+            
+   QByteArray     iv_ba    = QByteArray::fromHex( initVector.toAscii() );
+   uchar*         iv_ptr   = (uchar*)iv_ba.data();
 
-  if ( ! QCA::isSupported( "aes128-cbc-pkcs7" ) )
-  {
-    qDebug() << "AES128-CBC not supported!\n";
-    return QString();
-  }
+   QByteArray     cipher_ba  = QByteArray::fromHex( ciphertext.toAscii() );
+   uchar*         cipher_ptr = (uchar*)cipher_ba.data();
 
-  QCA::Cipher cipher( 
-                 QString( "aes128" ), 
-                 QCA::Cipher::CBC,
-                 QCA::Cipher::DefaultPadding,
-                 QCA::Decode,
-                 masterPW, 
-                 QCA::InitializationVector( QCA::hexToArray( initVector ) ) );
+   uchar          out   [ 100 ];   // Assume the plaintext is < 99 characters
+   uchar          final [ 100 ];
 
-  cipher.update( QCA::hexToArray( ciphertext ) );
-  QCA::SecureArray plainText = cipher.final();
+   int            ol;
+   EVP_CIPHER_CTX ctx;
 
-  return QString( plainText.data() );
+   EVP_DecryptInit  ( &ctx, EVP_aes_128_cbc(), key, iv_ptr );
+   EVP_DecryptUpdate( &ctx, out, &ol, cipher_ptr, cipher_ba.size() );
+   EVP_DecryptFinal ( &ctx, final, &ol );
+
+   QByteArray final_ba( (char*)final, ol );
+
+   return final_ba;
 }
