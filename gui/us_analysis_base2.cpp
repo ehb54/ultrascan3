@@ -645,6 +645,7 @@ void US_AnalysisBase2::exclude( void )
    ct_to  ->setMaxValue( totalScans - excludedScans.size() );
 
    allExcls[ index ] = excludedScans;
+   pb_reset_exclude->setEnabled( true );
 }
 
 void US_AnalysisBase2::reset_excludes( void )
