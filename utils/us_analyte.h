@@ -21,23 +21,23 @@ class US_UTIL_EXTERN US_Analyte
       //! The types of analytes used in UltraScan III
       enum analyte_t { PROTEIN, DNA, RNA, CARBOHYDRATE };
 
-      double                 vbar20;       //!< vbar at 20C
-      double                 mw;           //!< Molecular weight
-      QString                description;  //!< Description of the analyte
-      QString                analyteGUID;  //!< Global identifier of the analyte
-      QString                sequence;     //!< Coded sequnce of analyte
-      analyte_t              type;         //!< The type of analyte
+      double            vbar20;         //!< vbar at 20C
+      double            mw;             //!< Molecular weight
+      QString           description;    //!< Description of the analyte
+      QString           analyteGUID;    //!< Global identifier of the analyte
+      QString           sequence;       //!< Coded sequnce of analyte
+      analyte_t         type;           //!< The type of analyte
 
       // The following values are valid for DNA/RNA only
-      bool                   doubleStranded; //!< Single or double stranded analyte?
-      bool                   complement;     //!< Is the strand a complement?
-      bool                   _3prime;        //!< Hydroxyl or Phosphate
-      bool                   _5prime;        //!< Hydroxyl or Phosphate
-      double                 sodium;         //!< Counterion molar ratio/nucleotide
-      double                 potassium;      //!< Counterion molar ratio/nucleotide
-      double                 lithium;        //!< Counterion molar ratio/nucleotide
-      double                 magnesium;      //!< Counterion molar ratio/nucleotide
-      double                 calcium;        //!< Counterion molar ratio/nucleotide
+      bool              doubleStranded; //!< Single or double stranded analyte?
+      bool              complement;     //!< Is the strand a complement?
+      bool              _3prime;        //!< Hydroxyl or Phosphate
+      bool              _5prime;        //!< Hydroxyl or Phosphate
+      double            sodium;         //!< Counterion molar ratio/nucleotide
+      double            potassium;      //!< Counterion molar ratio/nucleotide
+      double            lithium;        //!< Counterion molar ratio/nucleotide
+      double            magnesium;      //!< Counterion molar ratio/nucleotide
+      double            calcium;        //!< Counterion molar ratio/nucleotide
 
       //! extinction[ wavelength ] <=> value
       QMap< double, double > extinction;

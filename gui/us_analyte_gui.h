@@ -118,6 +118,8 @@ class US_GUI_EXTERN US_AnalyteGui : public US_WidgetsDialog
 
       QLineEdit*    le_nucle_mw;
       QLineEdit*    le_nucle_vbar;
+      QLineEdit*    le_carbs_mw;
+      QLineEdit*    le_carbs_vbar;
 
       QWidget*      protein_widget;
       QWidget*      dna_widget;

@@ -30,6 +30,9 @@ class US_GUI_EXTERN US_WidgetsDialog : public QDialog
     //! Connect to global memory and make the values accessible.
     US_Global g;
 
+    //! Very light gray palette for read-only line edits
+    QPalette vlgray;
+
     //! \param labelString - contents of label
     //! \param fontAdjust  - adjustment to default point size 
     //! \param weight      - QFont::{Light,Normal,DemiBold,Bold,Black}\n
@@ -69,9 +72,12 @@ class US_GUI_EXTERN US_WidgetsDialog : public QDialog
 
     //! \param text - starting text in line edit box
     //! \param fontAdjust -  adjustment to default point size\n
-    //! * Color is set to US_GuiSettings::editColor()\n
-    //! * ReadOnly is false
-    QLineEdit*   us_lineedit  ( const QString& = 0, int = 0 );
+    //! \param readonly - ReadOnly flag, default uses editColor()
+    QLineEdit*   us_lineedit  ( const QString& = 0, int = 0, bool = false );
+
+    //! \param le - line edit for which to reset ReadOnly flag/color
+    //! \param readonly - ReadOnly flag, default uses vlgray
+    void         us_setReadOnly( QLineEdit*, bool = true );
 
     //! \param fontAdjust -  adjustment to default font size\n
     //! * Color is set to US_GuiSettings::editColor()

@@ -105,8 +105,8 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    QLabel* lb_id      = us_label ( tr( "Run ID / Edit ID:" ) );
    QLabel* lb_temp    = us_label ( tr( "Avg Temperature:" ) );
 
-   le_id      = us_lineedit();
-   le_temp    = us_lineedit();
+   le_id      = us_lineedit( "", 0, true );
+   le_temp    = us_lineedit( "", 0, true );
 
    te_desc    = us_textedit();
    lw_triples = us_listwidget();
@@ -120,14 +120,8 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    te_desc   ->setMaximumHeight( fontHeight * 2 + 12 );  // Add for border
    lw_triples->setMaximumHeight( fontHeight * 6 + 12 );
 
-   le_id     ->setReadOnly( true );
-   le_temp   ->setReadOnly( true );
    te_desc   ->setReadOnly( true );
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-   le_id     ->setPalette( gray );
-   le_temp   ->setPalette( gray );
-   te_desc   ->setPalette( gray );
+   te_desc   ->setPalette( vlgray );
 
    row = 0;
    runInfoLayout->addWidget( lb_info   , row++, 0, 1, 2 );
@@ -154,24 +148,13 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    viscosity    = VISC_20W;
    vbar         = TYPICAL_VBAR;
 
-   le_solution  = us_lineedit( tr( "(Experiment's solution)" ) );
-   le_density   = us_lineedit( QString::number( density,   'f', 6 ) );
-   le_viscosity = us_lineedit( QString::number( viscosity, 'f', 5 ) );
-   le_vbar      = us_lineedit( QString::number( vbar,      'f', 5 ) );
-   le_skipped   = us_lineedit( "0" );
+   le_solution  = us_lineedit( tr( "(Experiment's solution)" ), 0, true );
+   le_density   = us_lineedit( QString::number( density,   'f', 6 ), 0, true );
+   le_viscosity = us_lineedit( QString::number( viscosity, 'f', 5 ), 0, true );
+   le_vbar      = us_lineedit( QString::number( vbar,      'f', 5 ), 0, true );
+   le_skipped   = us_lineedit( "0", 0, true );
 
    pb_solution ->setEnabled ( false );
-   le_solution ->setReadOnly( true );
-   le_density  ->setReadOnly( true );
-   le_viscosity->setReadOnly( true );
-   le_vbar     ->setReadOnly( true );
-   le_skipped  ->setReadOnly( true );
-
-   le_solution ->setPalette ( gray );
-   le_density  ->setPalette ( gray );
-   le_viscosity->setPalette ( gray );
-   le_vbar     ->setPalette ( gray );
-   le_skipped  ->setPalette ( gray );
 
    row = 0;
    parameterLayout->addWidget( pb_solution , row,   0 );

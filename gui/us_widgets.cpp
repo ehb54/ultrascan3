@@ -19,6 +19,9 @@ US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFr
     g.set_global_position( p + QPoint( 30, 30 ) );
     move( p );
   }
+
+  vlgray = US_GuiSettings::editColor();
+  vlgray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
 }
 
 US_Widgets::~US_Widgets()
@@ -110,7 +113,8 @@ QTextEdit* US_Widgets::us_textedit( void )
 }
 
 // lineedit
-QLineEdit* US_Widgets::us_lineedit( const QString& text, int fontAdjust )
+QLineEdit* US_Widgets::us_lineedit( const QString& text, int fontAdjust,
+      bool readonly )
 {
   QLineEdit* le = new QLineEdit( this );
 
@@ -120,11 +124,26 @@ QLineEdit* US_Widgets::us_lineedit( const QString& text, int fontAdjust )
   
   le->insert     ( text );
   le->setAutoFillBackground( true );
-  le->setPalette ( US_GuiSettings::editColor() );
-  le->setReadOnly( false );
+  us_setReadOnly ( le, readonly );
   le->show();
 
   return le;
+}
+
+// Set read-only flag and associated color palette for a line edit
+void US_Widgets::us_setReadOnly( QLineEdit* le, bool readonly )
+{
+  if ( readonly )
+  {
+     le->setPalette ( vlgray );
+     le->setReadOnly( true );
+  }
+
+  else
+  {
+     le->setPalette ( US_GuiSettings::editColor() );
+     le->setReadOnly( false );
+  }
 }
 
 // List Widget
