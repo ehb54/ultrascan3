@@ -24,7 +24,7 @@ SOURCES      += us_mpi_analysis.cpp \
 HEADERS      += us_mpi_analysis.h \
                 us_tar.h
 
-INCLUDEPATH  += ../../utils 
+INCLUDEPATH  += ../../utils /usr/include/mysql
 DEPENDPATH   += ../../utils
 LIBS         += -lus_utils -L../../lib
 
