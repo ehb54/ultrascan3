@@ -128,6 +128,9 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DataSet* dataset )
       if ( xml.isStartElement()  &&  xml.name() == "files" )
          parse_files( xml, dataset ); 
 
+      if ( xml.isStartElement()  &&  xml.name() == "solution" )
+         parse_solution( xml, dataset ); 
+
       if ( xml.isStartElement()  &&  xml.name() == "simpoints" )
       {
          a                  = xml.attributes();
@@ -170,12 +173,6 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DataSet* dataset )
          dataset->centerpiece_bottom = a.value( "value" ).toString().toDouble();
       }
       
-      if ( xml.isStartElement()  &&  xml.name() == "vbar20" )
-      {
-         a                      = xml.attributes();
-         dataset->vbar20        = a.value( "value" ).toString().toDouble();
-      }
-      
       if ( xml.isStartElement()  &&  xml.name() == "rotor_stretch" )
       {
          a                    = xml.attributes();
@@ -206,6 +203,38 @@ void US_MPI_Analysis::parse_files( QXmlStreamReader& xml, DataSet* dataset )
          if ( type == "edit"  ) dataset->edit_file  = filename;
          if ( type == "model" ) dataset->model_file = filename;
          if ( type == "noise" ) dataset->noise_files << filename;
+      }
+   }
+}
+
+void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DataSet* dataset )
+{
+   dataset->analytes.clear();
+
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isEndElement()  &&  xml.name() == "solution" ) return;
+
+      if ( xml.isStartElement() && xml.name() == "buffer" )
+      {
+         QXmlStreamAttributes a        = xml.attributes();
+         dataset->viscosity   = a.value( "density"   ).toString().toDouble();
+         dataset->density     = a.value( "viscosity" ).toString().toDouble();
+      }
+
+      if ( xml.isStartElement() && xml.name() == "analyte" )
+      {
+         AnalyteInfo          analyte;
+         QXmlStreamAttributes a        = xml.attributes();
+
+         analyte.mw     = a.value( "mw"     ).toString().toDouble();
+         analyte.vbar20 = a.value( "vbar20" ).toString().toDouble();
+         analyte.amount = a.value( "amount" ).toString().toDouble();
+         analyte.type   = a.value( "type"   ).toString();
+
+         dataset->analytes << analyte;
       }
    }
 }

@@ -241,7 +241,7 @@ void US_MPI_Analysis::calc_residuals( int         offset,
                     ( 2.0 * ( 1.0 - vbar20 * DENS_20W ) )
                   )
             );
-
+/*
          // Get the temperature for this run
          double sum           = 0.0;
          int    scan_count    = data->run_data.scanData.size();
@@ -263,9 +263,9 @@ void US_MPI_Analysis::calc_residuals( int         offset,
 
          US_Model                      model;
          US_Model::SimulationComponent component;
-
-         component.s = s20w / solution.s20w_correction;
-         component.D = D20w / solution.D20w_correction;
+*/
+         component.s = s20w / data->s20w_correction;
+         component.D = D20w / data->D20w_correction;
 
          model.components << component;
 

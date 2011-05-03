@@ -82,6 +82,15 @@ class US_MPI_Analysis : public QObject
 #define MESH US_SimulationParameters::MeshType
 #define GRID US_SimulationParameters::GridType
 
+    class AnalyteInfo
+    {
+        public:
+            double  mw;
+            double  vbar20;
+            double  amount;
+            QString type;
+    };
+
     class DataSet
     {
         public:
@@ -98,9 +107,15 @@ class US_MPI_Analysis : public QObject
             MESH                   radial_grid;
             GRID                   time_grid;
             
-            double                 vbar20;
-            double                 viscosity;
-            double                 density;
+            QList< AnalyteInfo >   analytes;
+            double                 viscosity;   // buffer
+            double                 density;     // buffer
+
+            double                 temperature; // run
+
+            double                 s20w_correction;
+            double                 D20w_correction;
+
             double                 rotor_stretch[ 5 ];
             double                 centerpiece_bottom;
     };
@@ -268,13 +283,14 @@ class US_MPI_Analysis : public QObject
 
     // Methods
 
-    void     parse        ( const QString& );
-    void     parse_job    ( QXmlStreamReader& );
-    void     parse_dataset( QXmlStreamReader&, DataSet* );
-    void     parse_files  ( QXmlStreamReader&, DataSet* );
-    void     send_udp     ( const QString& );
-    void     abort        ( const QString&, int=-1 );
-    long int max_rss      ( void );
+    void     parse         ( const QString& );
+    void     parse_job     ( QXmlStreamReader& );
+    void     parse_dataset ( QXmlStreamReader&, DataSet* );
+    void     parse_files   ( QXmlStreamReader&, DataSet* );
+    void     parse_solution( QXmlStreamReader&, DataSet* );
+    void     send_udp      ( const QString& );
+    void     abort         ( const QString&, int=-1 );
+    long int max_rss       ( void );
 
     Gene     create_solutes( double, double, double,
                              double, double, double );
