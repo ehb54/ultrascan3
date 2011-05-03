@@ -27,10 +27,6 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
 
    QPalette normal = US_GuiSettings::editColor();
 
-   // Very light gray
-   QPalette gray = normal;
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-   
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing         ( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
@@ -49,10 +45,11 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_DB, row++, 0, 1, 3 );
 
-   QGridLayout* protein = us_radiobutton( tr( "Protein"     ), rb_protein, true );
-   QGridLayout* dna     = us_radiobutton( tr( "DNA"         ), rb_dna );
-   QGridLayout* rna     = us_radiobutton( tr( "RNA"         ), rb_rna );
-   QGridLayout* carb    = us_radiobutton( tr( "Carbohydrate"), rb_carb );
+   QGridLayout* protein = us_radiobutton( tr( "Protein"            ),
+         rb_protein, true );
+   QGridLayout* dna     = us_radiobutton( tr( "DNA"                ), rb_dna );
+   QGridLayout* rna     = us_radiobutton( tr( "RNA"                ), rb_rna );
+   QGridLayout* carb    = us_radiobutton( tr( "Carbohydrate/Other" ), rb_carb );
 
    QHBoxLayout* radios = new QHBoxLayout;
    radios->addLayout( protein );
@@ -80,9 +77,7 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    if ( US_Settings::us_inv_level() < 1 ) 
       pb_investigator->setEnabled( false );
 
-   le_investigator = us_lineedit( investigator );
-   le_investigator->setReadOnly( true );
-   le_investigator->setPalette( gray );
+   le_investigator = us_lineedit( investigator, 0, true );
    main->addWidget( le_investigator, row++, 1, 1, 2 );
 
    QBoxLayout* search = new QHBoxLayout;
@@ -123,9 +118,7 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
    description->addWidget( lb_guid, 1, 0 );
 
-   le_guid = us_lineedit( "" ); 
-   le_guid->setPalette ( gray );
-   le_guid->setReadOnly( true );
+   le_guid = us_lineedit( "", 0, true ); 
    description->addWidget( le_guid, 1, 1 );
    main->addLayout( description, row, 0, 2, 3 );
  
@@ -199,9 +192,7 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    QLabel* lb_protein_mw = us_label( tr( "MW <small>(Daltons)</small>:" ) );
    protein_info->addWidget( lb_protein_mw, prow, 0 );
 
-   le_protein_mw = us_lineedit( "" );
-   le_protein_mw->setReadOnly( true );
-   le_protein_mw->setPalette ( gray );
+   le_protein_mw = us_lineedit( "", 0, true );
    protein_info->addWidget( le_protein_mw, prow, 1 );
 
    QLabel* lb_protein_vbar20 = us_label( 
@@ -221,8 +212,7 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    
    if ( signal )
    {
-      le_protein_temp->setPalette ( gray );
-      le_protein_temp->setReadOnly( true );
+      us_setReadOnly( le_protein_temp, true );
    }
    else
    {
@@ -237,17 +227,13 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
 
    protein_info->addWidget( lb_protein_vbar, prow, 2 );
 
-   le_protein_vbar = us_lineedit( "" );
-   le_protein_vbar->setReadOnly( true );
-   le_protein_vbar->setPalette ( gray );
+   le_protein_vbar = us_lineedit( "", 0, true );
    protein_info->addWidget( le_protein_vbar, prow++, 3 );
 
    QLabel* lb_protein_residues = us_label( tr( "Residue count:" ) );
    protein_info->addWidget( lb_protein_residues, prow, 0 );
 
-   le_protein_residues = us_lineedit( "" );
-   le_protein_residues->setReadOnly( true );
-   le_protein_residues->setPalette ( gray );
+   le_protein_residues = us_lineedit( "", 0, true );
    protein_info->addWidget( le_protein_residues, prow, 1 );
    main->addWidget( protein_widget, row, 0, 1, 3 ); 
    
@@ -379,9 +365,7 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    QLabel* lb_nucle_mw = us_label( tr( "MW <small>(Daltons)</small>:" ) );
    nucle_data->addWidget( lb_nucle_mw, 0, 0 );
 
-   le_nucle_mw = us_lineedit( "", -2 );
-   le_nucle_mw->setReadOnly( true );
-   le_nucle_mw->setPalette ( gray );
+   le_nucle_mw = us_lineedit( "", -2, true );
    nucle_data->addWidget( le_nucle_mw, 0, 1, 1, 3 );
 
    QLabel* lb_nucle_vbar = us_label( 
@@ -404,9 +388,18 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    carbs_info->setSpacing        ( 2 );
    carbs_info->setContentsMargins( 2, 2, 2, 2 );
 
-   QLabel* lb_carbs = us_label( "Under Construction" );
-   lb_carbs->setAlignment( Qt::AlignCenter );
-   carbs_info->addWidget( lb_carbs, 0, 0 );
+   QLabel* lb_carbs_mw = us_label( tr( "MW <small>(Daltons)</small>:" ) );
+   carbs_info->addWidget( lb_carbs_mw, 0, 0 );
+
+   le_carbs_mw = us_lineedit( "" );
+   carbs_info->addWidget( le_carbs_mw, 0, 1, 1, 3 );
+
+   QLabel* lb_carbs_vbar = us_label( 
+         tr( "VBar<small>(cm<sup>3</sup>/g)</small>:" ) );
+   carbs_info->addWidget( lb_carbs_vbar, 1, 0 );
+
+   le_carbs_vbar = us_lineedit( "" );
+   carbs_info->addWidget( le_carbs_vbar, 1, 1, 1, 3 );
 
    main->addWidget( carbs_widget, row, 0, 1, 3 ); 
    carbs_widget->setVisible( false );
@@ -489,9 +482,9 @@ void US_AnalyteGui::new_analyte( void )
    analyte = US_Analyte();  // Set to default
    
    // Protein is default
-   if ( rb_rna ->isChecked() ) analyte.type = US_Analyte::RNA;
-   if ( rb_dna ->isChecked() ) analyte.type = US_Analyte::DNA;
-   if ( rb_carb->isChecked() ) analyte.type = US_Analyte::CARBOHYDRATE;
+   if ( rb_rna  ->isChecked() ) analyte.type = US_Analyte::RNA;
+   if ( rb_dna  ->isChecked() ) analyte.type = US_Analyte::DNA;
+   if ( rb_carb ->isChecked() ) analyte.type = US_Analyte::CARBOHYDRATE;
 
    if ( ! rb_protein->isChecked() ) analyte.vbar20 = 0.55;  // Empirical value
 
@@ -576,6 +569,7 @@ void US_AnalyteGui::populate( void )
       le_protein_vbar    ->setText( QString::number( p.vbar  , 'f', 4 ) );
       le_protein_residues->setText( QString::number( p.residues ) );
    }
+
    else if ( analyte.type == US_Analyte::DNA  ||  
              analyte.type == US_Analyte::RNA )
    {
@@ -602,7 +596,8 @@ void US_AnalyteGui::populate( void )
       inReset = false;
       update_sequence ( analyte.sequence );
    }
-   else // CARB
+
+   else if ( analyte.type == US_Analyte::CARBOHYDRATE )  
    {
       rb_carb->setChecked( true );
    }
@@ -619,10 +614,21 @@ void US_AnalyteGui::set_analyte_type( int type )
 
       switch ( analyte.type )
       {
-         case US_Analyte::PROTEIN: rb_protein->setChecked( true ); break;
-         case US_Analyte::DNA    : rb_dna    ->setChecked( true ); break;
-         case US_Analyte::RNA    : rb_rna    ->setChecked( true ); break;
-         default:                  rb_carb   ->setChecked( true ); break;
+         case US_Analyte::PROTEIN:
+            rb_protein->setChecked( true );
+            break;
+         case US_Analyte::DNA:
+            rb_dna    ->setChecked( true );
+            break;
+         case US_Analyte::RNA:
+            rb_rna    ->setChecked( true );
+            break;
+         case US_Analyte::CARBOHYDRATE:
+            rb_carb   ->setChecked( true );
+            break;
+         default:
+            rb_protein->setChecked( true );
+            break;
       }
 
       inReset = false;
@@ -658,6 +664,7 @@ void US_AnalyteGui::set_analyte_type( int type )
    analyte.type       = (US_Analyte::analyte_t) type;
    saved_analyte.type = analyte.type;
    reset();
+   list();
 }
 
 void US_AnalyteGui::close( void )
@@ -756,6 +763,8 @@ void US_AnalyteGui::reset( void )
                       
    le_nucle_mw        ->clear();
    le_nucle_vbar      ->clear();
+   le_carbs_mw        ->clear();
+   le_carbs_vbar      ->clear();
                       
    pb_save            ->setEnabled( false );
    pb_more            ->setEnabled( false );
@@ -878,6 +887,8 @@ void US_AnalyteGui::update_sequence( QString seq )
          break;
 
       case US_Analyte::CARBOHYDRATE:
+         le_carbs_mw  ->setText( QString::number( (int) analyte.mw ) );
+         le_carbs_vbar->setText( QString::number( analyte.vbar20, 'f', 4 ) );
          break;
    }
 
@@ -1375,7 +1386,7 @@ void US_AnalyteGui::list_from_db( void )
            if ( a_type == "Protein" ) current = US_Analyte::PROTEIN;
       else if ( a_type == "RNA"     ) current = US_Analyte::RNA;
       else if ( a_type == "DNA"     ) current = US_Analyte::DNA;
-      else                            current = US_Analyte::CARBOHYDRATE;
+      else if ( a_type == "Other"   ) current = US_Analyte::CARBOHYDRATE;
       
       if ( current != analyte.type ) continue;
 
@@ -1401,11 +1412,11 @@ void US_AnalyteGui::list_from_disk( void )
    QStringList filter( "A*.xml" );
    QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
 
-   QString type;
+   QString type = "*Unknown*";
    if      ( rb_protein->isChecked() ) type = "PROTEIN";
    else if ( rb_dna    ->isChecked() ) type = "DNA";
    else if ( rb_rna    ->isChecked() ) type = "RNA";
-   else                                type = "CARB";
+   else if ( rb_carb   ->isChecked() ) type = "CARBOHYDRATE";
 
    QFile a_file;
 
@@ -1572,6 +1583,10 @@ void US_AnalyteGui::select_analyte( QListWidgetItem* /* item */ )
 
    populate();
    le_protein_vbar20->setText( QString::number( analyte.vbar20, 'f', 4 ) );
+   le_nucle_vbar    ->setText( QString::number( analyte.vbar20, 'f', 4 ) );
+   le_carbs_vbar    ->setText( QString::number( analyte.vbar20, 'f', 4 ) );
+   le_nucle_mw      ->setText( QString::number( (int) analyte.mw ) );
+   le_carbs_mw      ->setText( QString::number( (int) analyte.mw ) );
    saved_analyte = analyte;
 
    pb_delete->setEnabled( true );
@@ -1633,8 +1648,8 @@ void US_AnalyteGui::select_from_db( void )
    if ( result != US_DB2::OK )
    {
       QMessageBox::warning( this,
-            tr( "Analyte Load Rrror" ),
-            tr( "Load error when reading the database:\n\n" ) + analyte.message );
+         tr( "Analyte Load Error" ),
+         tr( "Load error when reading the database:\n\n" ) + analyte.message );
       throw result;
    }
 
@@ -1649,8 +1664,25 @@ void US_AnalyteGui::save( void )
    if ( ! data_ok() ) return;
 
    le_guid->setText( analyte.analyteGUID );
-   analyte.mw     = le_protein_mw    ->text().toDouble();
-   analyte.vbar20 = le_protein_vbar20->text().toDouble();
+
+   if ( analyte.type == US_Analyte::DNA ||
+        analyte.type == US_Analyte::RNA  )
+   {
+      analyte.mw     = le_nucle_mw  ->text().toDouble();
+      analyte.vbar20 = le_nucle_vbar->text().toDouble();
+   }
+
+   else if ( analyte.type == US_Analyte::CARBOHYDRATE )
+   {
+      analyte.mw     = le_carbs_mw  ->text().toDouble();
+      analyte.vbar20 = le_carbs_vbar->text().toDouble();
+   }
+
+   else
+   {
+      analyte.mw     = le_protein_mw    ->text().toDouble();
+      analyte.vbar20 = le_protein_vbar20->text().toDouble();
+   }
 
    verify_vbar();
 

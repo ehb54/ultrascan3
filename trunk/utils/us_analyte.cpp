@@ -106,8 +106,13 @@ int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
    db->next();
 
    analyteGUID = load_guid;;
-   type = (US_Analyte::analyte_t) db->value( 1 ).toString().toInt();
-   
+   QString a_type = db->value( 1 ).toString();
+   if ( a_type == "Protein" )    type = PROTEIN;
+   else if ( a_type == "DNA" )   type = DNA;
+   else if ( a_type == "RNA" )   type = RNA;
+   else if ( a_type == "Other" ) type = CARBOHYDRATE;
+   else                          type = PROTEIN;
+
    sequence    = db->value( 2 ).toString();
    vbar20      = db->value( 3 ).toString().toDouble();
    description = db->value( 4 ).toString();
@@ -257,13 +262,16 @@ int US_Analyte::read_analyte( const QString& filename )
                type   = PROTEIN;
             }
 
-            else if (  type_string == "DNA"  ||  type_string == "RNA" )
+            else if ( type_string == "DNA"  ||  type_string == "RNA" )
             {
                type   = ( type_string == "DNA" ) ? DNA : RNA;
             }
 
-            else
-              type = CARBOHYDRATE;
+            else if ( type_string == "CARBOHYDRATE" )
+            {
+               type   = CARBOHYDRATE;
+               mw     = a.value( "mw" ).toString().toDouble();
+            }
          }
 
          else if ( xml.name() == "sequence" )
@@ -286,9 +294,6 @@ int US_Analyte::read_analyte( const QString& filename )
             }
             else if ( type == DNA  ||  type == RNA )
                mw = nucleotide( a, sequence );
-
-            else // CARBOHYDRATE
-               mw = 0.0;
          }
          else if ( xml.name() == "extinction" )
          {
@@ -534,7 +539,9 @@ int US_Analyte::write_disk( const QString& filename )
          break;
 
       case US_Analyte::CARBOHYDRATE:
-         xml.writeAttribute( "type", "CARB" );
+         xml.writeAttribute( "type", "CARBOHYDRATE" );
+         xml.writeAttribute( "vbar20", QString::number( vbar20 ) );
+         xml.writeAttribute( "mw",     QString::number( mw ) );
          break;
    }
 
@@ -705,14 +712,15 @@ int US_Analyte::write_db( US_DB2* db )
    else if ( type == US_Analyte::RNA     ) q << "RNA";
    else                                    q << "Other";
 
+   QString spectrum = "";  // Unused element
    q << sequence;
    q << QString::number( vbar20 );
    q << description;
-
-   QString spectrum = "";  // Unused element
    q << spectrum;
    q << QString::number( mw );
-   q << QString::number( US_Settings::us_inv_ID() );
+
+   if ( insert )
+      q << QString::number( US_Settings::us_inv_ID() );
 
    db->statusQuery( q );
 
@@ -769,8 +777,8 @@ void US_Analyte::dump( void )
       case PROTEIN     : qDebug() << "Type: PROTEIN"     ; break;
       case DNA         : qDebug() << "Type: DNA"         ; break;
       case RNA         : qDebug() << "Type: RNA"         ; break;
-      case CARBOHYDRATE: qDebug() << "Type: CARBOHYDRATE"; break;
-      default          : qDebug() << "Type: **UNKNOWN**" ; break;                  
+      case CARBOHYDRATE: qDebug() << "Type: OTHER"       ; break;
+      default          : qDebug() << "Type: **UNKNOWN**" ; break;
    }
 
    qDebug() << "msg   :" << message     ;

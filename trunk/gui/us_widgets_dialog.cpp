@@ -12,6 +12,9 @@ US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f )
     // Do something for invalid global memory
     qDebug( "us_win: invalid global memory" );
   }
+
+  vlgray = US_GuiSettings::editColor();
+  vlgray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
 }
 
 QLabel* US_WidgetsDialog::us_label( const QString& labelString, int fontAdjust, 
@@ -96,7 +99,8 @@ QTextEdit* US_WidgetsDialog::us_textedit( void )
 }
 
 // lineedit
-QLineEdit* US_WidgetsDialog::us_lineedit( const QString& text, int fontAdjust )
+QLineEdit* US_WidgetsDialog::us_lineedit( const QString& text, int fontAdjust,
+      bool readonly )
 {
   QLineEdit* le = new QLineEdit( this );
 
@@ -106,11 +110,25 @@ QLineEdit* US_WidgetsDialog::us_lineedit( const QString& text, int fontAdjust )
   
   le->insert     ( text );
   le->setAutoFillBackground( true );
-  le->setPalette ( US_GuiSettings::editColor() );
-  le->setReadOnly( false );
+  us_setReadOnly ( le, readonly );
   le->show();
 
   return le;
+}
+
+// Set ReadOnly and corresponding color for us_lineedit
+void US_WidgetsDialog::us_setReadOnly( QLineEdit* le, bool readonly )
+{
+  if ( readonly )
+  {
+     le->setPalette ( vlgray );
+     le->setReadOnly( true );
+  }
+  else
+  {
+     le->setPalette ( US_GuiSettings::editColor() );
+     le->setReadOnly( false );
+  }
 }
 
 // List Widget
