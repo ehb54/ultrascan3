@@ -222,7 +222,7 @@ class US_UTIL_EXTERN US_Math2
       //! \param solution    Solution for which to calculate common vbar
       //! \param temperature Average temperature of associated experiment
       //! \return The common temperature-corrected vbar
-      static double calcCommonVbar( US_Solution&, double& );
+      static double calcCommonVbar( US_Solution&, double );
 
       //! \brief An approximation of the Complimentary Gauss
       //! Error Fiunction, erfc().  Use for WIN32 only as Linux already 

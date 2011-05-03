@@ -1142,7 +1142,7 @@ void US_Math2::gaussian_smoothing( QVector< double >& array, int smooth )
 }
 
 // Calculate the weighted average of temperature-corrected vbars
-double US_Math2::calcCommonVbar( US_Solution& solution, double& temperature )
+double US_Math2::calcCommonVbar( US_Solution& solution, double temperature )
 {
    double cvbar = TYPICAL_VBAR;
    double vbsum = 0.0;
