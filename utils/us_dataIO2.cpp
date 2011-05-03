@@ -962,7 +962,7 @@ void US_DataIO2::adjust_interference( RawData& data, const EditValues& ev )
 void US_DataIO2::calc_integral( RawData& data, const EditValues& e )
 {
    // This function gets a little tricky because we have raw data, but
-   // want to adjust int the range identified by the user *and* 
+   // want to adjust in the range identified by the user *and* 
    // not use excluded scans.
 
    int               index = 0;
@@ -1001,8 +1001,8 @@ void US_DataIO2::calc_integral( RawData& data, const EditValues& e )
 
       int    r_left    = US_DataIO2::index( *s, data.x, e.rangeLeft );
       int    r_right   = US_DataIO2::index( *s, data.x, e.rangeRight );
-      int    current   = included[ scan ];
-      int    previous  = included[ scan - 1 ];
+      int    current   = scan; 
+      int    previous  = scan - 1; 
       int    position  = 0;
       double points    = (double) ( r_right - r_left + 1 );
 
