@@ -183,6 +183,56 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
    regularization          = parameters[ "regularization" ].toDouble();
    concentration_threshold = parameters[ "conc_threshold" ].toDouble();
 
+   // Calculate vbar20, vbar_tb, and s, D corrections for calc_residuals
+   for ( int i = 0; i < data_sets.size(); i++ )
+   {
+      DataSet* ds = &data_sets[ i ];
+
+      // Calculate average temperature
+
+      int    scan_count = ds->run_data.scanData.size();
+      double sum        = 0.0;
+
+      for ( int j = 0; j < scan_count; j++ )
+         sum += ds->run_data.scanData[ j ].temperature;
+
+      ds->temperature = sum / scan_count;
+
+      // Calculate common vbar
+      US_Solution solution;
+
+      for ( int j = 0; j < scan_count; j++ )
+      {
+         US_Solution::AnalyteInfo ai;
+         
+         ai.amount         = ds->analytes[ j ].amount;
+         ai.analyte.vbar20 = ds->analytes[ j ].vbar20;
+         ai.analyte.mw     = ds->analytes[ j ].mw;
+
+         if ( ds->analytes[ j ].type == "Protein" )
+            ai.analyte.type   = US_Analyte::PROTEIN;
+         else
+            ai.analyte.type   = US_Analyte::DNA;  // Actually 'other'
+
+         solution.analyteInfo << ai;
+      }
+
+      ds->vbar20  = US_Math2::calcCommonVbar( solution, 20.0 );
+      ds->vbar_tb = US_Math2::calcCommonVbar( solution, temperature );
+
+      // Convert to a different structure and calulate the s and D corrections
+      US_Math2::SolutionData sd;
+      sd.density   = ds->density;
+      sd.viscosity = ds->viscosity;
+      sd.vbar20    = ds->vbar20;
+      sd.vbar      = ds->vbar_tb;
+
+      US_Math2::data_correction( ds->temperature, sd );
+
+      ds->s20w_correction = sd.s20w_correction;
+      ds->D20w_correction = sd.D20w_correction;
+   }
+
    // Check GA buckets
    if ( analysis_type == "GA" )
    {
