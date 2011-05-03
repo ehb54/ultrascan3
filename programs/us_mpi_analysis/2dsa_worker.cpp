@@ -241,12 +241,12 @@ void US_MPI_Analysis::calc_residuals( int         offset,
                     ( 2.0 * ( 1.0 - vbar20 * DENS_20W ) )
                   )
             );
-/*
+
          // Get the temperature for this run
-         double sum           = 0.0;
+//         double sum           = 0.0;
          int    scan_count    = data->run_data.scanData.size();
          int    radius_points = data->run_data.x.size();
-
+/*
          for ( int i = 0; i < scan_count; i++ )
             sum += data->run_data.scanData[ i ].temperature;
 
@@ -260,10 +260,10 @@ void US_MPI_Analysis::calc_residuals( int         offset,
          solution.vbar      = US_Math2::adjust_vbar20( vbar20, temperature );
 
          US_Math2::data_correction( temperature, solution );
-
+*/
          US_Model                      model;
          US_Model::SimulationComponent component;
-*/
+
          component.s = s20w / data->s20w_correction;
          component.D = D20w / data->D20w_correction;
 

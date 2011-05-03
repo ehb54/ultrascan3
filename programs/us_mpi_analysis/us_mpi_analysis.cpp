@@ -186,7 +186,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
    // Calculate vbar20, vbar_tb, and s, D corrections for calc_residuals
    for ( int i = 0; i < data_sets.size(); i++ )
    {
-      DataSet* ds = &data_sets[ i ];
+      DataSet* ds = data_sets[ i ];
 
       // Calculate average temperature
 
@@ -218,7 +218,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
       }
 
       ds->vbar20  = US_Math2::calcCommonVbar( solution, 20.0 );
-      ds->vbar_tb = US_Math2::calcCommonVbar( solution, temperature );
+      ds->vbar_tb = US_Math2::calcCommonVbar( solution, ds->temperature );
 
       // Convert to a different structure and calulate the s and D corrections
       US_Math2::SolutionData sd;

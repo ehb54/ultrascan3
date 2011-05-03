@@ -113,6 +113,8 @@ class US_MPI_Analysis : public QObject
 
             double                 temperature; // run
 
+            double                 vbar20;
+            double                 vbar_tb;
             double                 s20w_correction;
             double                 D20w_correction;
 

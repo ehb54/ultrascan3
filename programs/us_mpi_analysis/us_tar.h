@@ -2,7 +2,6 @@
 #define US_TAR_H
 
 #include <QtCore>
-#include "us_extern.h"
 
 // Error codes
 
@@ -17,6 +16,7 @@
 #define TAR_ARCHIVEERROR        8
 #define TAR_MKDIRFAILED         9
 
+#define US_EXTERN
 class US_EXTERN US_Tar
 {
    public:
