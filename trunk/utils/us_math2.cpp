@@ -402,7 +402,7 @@ void US_Math2::data_correction( double t, SolutionData& d )
 
       t20 = t - 20.0;
 
-      exponent = ( c0 / ( c1 + c2 * t20 + c2 * sq( t20 ) ) ) - c4;
+      exponent = ( c0 / ( c1 + c2 * t20 + c3 * sq( t20 ) ) ) - c4;
 
       d.viscosity_wt = 100.0 * pow( 10.0, exponent );
    }
