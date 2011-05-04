@@ -19,8 +19,8 @@ QDateTime time = QDateTime::currentDateTime();  // For debug/timing
    {
       int worker;
 
-qDebug() << "Master queue status" << job_queue.isEmpty() << worker_status.contains( READY )
-         << time.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
+//qDebug() << "Master queue status" << job_queue.isEmpty() << worker_status.contains( READY )
+//         << time.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
 
       // Give the jobs to the workers
       while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
