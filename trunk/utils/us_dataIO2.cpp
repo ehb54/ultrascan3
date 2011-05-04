@@ -1062,11 +1062,11 @@ void US_DataIO2::copyRange ( double left, double right, const Scan& orig, Scan& 
       dest.readings << orig.readings[ i ];
       
       // Set the interpolated bits as needed
-      unsigned char old_bit = 1 << ( 7 - i % 8 );
+      unsigned char old_bit = (unsigned char)( 1 << ( 7 - i % 8 ) );
 
       if ( ( orig.interpolated[ i / 8 ] & old_bit ) != 0 )
       {
-         unsigned char new_bit = 1 << ( 7 - current_bit % 8 );
+         unsigned char new_bit =  (unsigned char)( 1 << ( 7 - current_bit % 8 ) );
          unsigned char byte    = dest.interpolated[ current_bit / 8 ];
          dest.interpolated[ current_bit / 8 ] = byte | new_bit;
       }
@@ -1117,7 +1117,7 @@ bool US_DataIO2::spike_check( const US_DataIO2::Scan&  s,
          if ( index < start ) break;
 
          cc           = s.interpolated[ index / 8 ];
-         interpolated = cc & ( 1 << ( 7 - index % 8 ) );
+         interpolated =  (unsigned char)( cc & ( 1 << ( 7 - index % 8 ) ) );
 
          if ( ! interpolated )
          {
@@ -1137,7 +1137,7 @@ bool US_DataIO2::spike_check( const US_DataIO2::Scan&  s,
          if ( index >= end ) break;
 
          cc           = s.interpolated[ index / 8 ];
-         interpolated = cc & ( 1 << ( 7 - index % 8 ) );
+         interpolated =  (unsigned char)( cc & ( 1 << ( 7 - index % 8 ) ) );
 
          if ( ! interpolated )
          {
@@ -1159,7 +1159,7 @@ bool US_DataIO2::spike_check( const US_DataIO2::Scan&  s,
          if ( index >= end ) break;
 
          cc           = s.interpolated[ index / 8 ];
-         interpolated = cc & ( 1 << ( 7 - index % 8 ) );
+         interpolated =  (unsigned char)( cc & ( 1 << ( 7 - index % 8 ) ) );
 
          if ( ! interpolated )
          {
@@ -1179,7 +1179,7 @@ bool US_DataIO2::spike_check( const US_DataIO2::Scan&  s,
          if ( index < start ) break;
 
          cc           = s.interpolated[ index / 8 ];
-         interpolated = cc & ( 1 << ( 7 - index % 8 ) );
+         interpolated =  (unsigned char)( cc & ( 1 << ( 7 - index % 8 ) ) );
 
          if ( ! interpolated )
          {
