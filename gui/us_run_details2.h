@@ -13,7 +13,7 @@
 
 class US_GUI_EXTERN US_RunDetails2 : public US_WidgetsDialog
 {
-   //Q_OBJECT
+   Q_OBJECT
 
    public:
       //! \param data    A reference to a list of raw data structures

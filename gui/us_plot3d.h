@@ -22,7 +22,7 @@
 
 class US_GUI_EXTERN US_Plot3D : public QMainWindow
 {
-   //Q_OBJECT
+   Q_OBJECT
 
    public:
       //! \param p  A pointer to the parent widget of this one
