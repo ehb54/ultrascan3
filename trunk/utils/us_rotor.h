@@ -206,6 +206,16 @@ class US_UTIL_EXTERN US_Rotor
          */
          static int    deleteCalibrationDB( int, US_DB2* = 0 );
 
+         /*! \brief    Function to find the dummy calibration for the current rotor in the DB,
+                       and to replace it in all experiments with this one if it exists.
+                       Most likely it is the single calibration experiment that generated the
+                       dummy calibration in the first place.
+
+             \param    oldCalibrationID Returns the database ID of the old dummy calibration here
+             \param    db For database access, an open database connection
+         */
+         int           replaceDummyDB( int&, US_DB2* = 0 );
+
          //! \brief    Method to save the current rotor calibration to disk
          void          saveDisk( void );
 

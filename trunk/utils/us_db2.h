@@ -84,6 +84,7 @@ class US_UTIL_EXTERN US_DB2
       BUFFR_IN_USE   = 516,     //!< The buffer to be deleted is in use
       ANALY_IN_USE   = 517,     //!< The analyte to be deleted is in use
       SOLUT_IN_USE   = 518,     //!< The solution to be deleted is in use
+      NO_CALIB       = 519,     //!< The specified calibration profile cannot be found
       UNKNOWN_ERR    = 999      //!< No project with the specified ID exists
     };
 
