@@ -22,7 +22,7 @@ CREATE  TABLE IF NOT EXISTS people (
   lname VARCHAR(30) NULL ,
   address VARCHAR(255) NULL ,
   city VARCHAR(30) NULL ,
-  state CHAR(2) NULL ,
+  state VARCHAR(20) NULL ,
   zip VARCHAR(10) NULL ,
   country VARCHAR(64) NULL ,
   phone VARCHAR(24) NULL ,
