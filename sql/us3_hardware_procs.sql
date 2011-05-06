@@ -316,6 +316,56 @@ BEGIN
 
 END$$
 
+-- replaces an individual rotor calibration with another, unless the calibrationID
+--  doesn't exist. Used when the original dummy calibration is being replaced
+DROP PROCEDURE IF EXISTS replace_rotor_calibration$$
+CREATE PROCEDURE replace_rotor_calibration ( p_personGUID   CHAR(36),
+                                             p_password     VARCHAR(80),
+                                             p_old_calibrationID   INT,
+                                             p_new_calibrationID   INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_experiments          INT;
+  DECLARE count_calibrations         INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_experiments
+  FROM       experiment
+  WHERE      rotorCalibrationID = p_old_calibrationID;
+
+  SELECT     COUNT(*)
+  INTO       count_calibrations
+  FROM       rotorCalibration
+  WHERE      rotorCalibrationID = p_new_calibrationID;
+
+  IF ( ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) ) THEN
+    IF ( count_calibrations = 0 ) THEN
+      -- We are verified as an admin, but no calibration by that ID exists
+      SET @US3_LAST_ERRNO = @NO_CALIB;
+      SET @US3_LAST_ERROR = "MySQL: The new calibration does not exist\n";
+
+    ELSEIF ( count_experiments > 0 ) THEN
+      -- Experiments with the old rotorCalibrationID exist
+      UPDATE experiment SET
+        rotorCalibrationID = p_new_calibrationID
+      WHERE  rotorCalibrationID = p_old_calibrationID;
+
+    -- ELSE
+      -- No records to update, but this is not really an error
+        
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
 --
 -- Rotor procedures
 --

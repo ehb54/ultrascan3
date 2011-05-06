@@ -1044,6 +1044,62 @@ int US_Rotor::RotorCalibration::deleteCalibrationDB( int calibrationID, US_DB2* 
    return status;
 }
 
+// A function to find out if the original dummy calibration is still there,
+//  and replace it with the current one if it does.
+int US_Rotor::RotorCalibration::replaceDummyDB( int& oldCalibrationID, US_DB2* db )
+{
+   QStringList calibrationIDs;
+
+   QStringList q( "get_rotor_calibration_profiles" );
+   q  << QString::number( rotorID );
+
+   db->query( q );
+   
+   while ( db->next() )
+      calibrationIDs << db->value( 0 ).toString();
+
+   // Let's remove the one we just added from the list
+   int ndx = calibrationIDs.indexOf( QString::number( this->ID ) );
+   calibrationIDs.removeAt( ndx );
+   
+   // Let's make sure we still have some
+   if ( calibrationIDs.isEmpty() )
+      return US_DB2::OK;                        // Not really an error
+
+   oldCalibrationID = -1;                       // = -1 means we haven't found it
+   foreach ( QString calibrationID, calibrationIDs )
+   {
+      q.clear();
+      q  << "get_rotor_calibration_info"
+         << calibrationID;
+
+      db->query( q );
+      db->next();
+      QString report = db->value( 3 ).toString();
+      QString label  = db->value( 9 ).toString();
+
+      if ( report.contains( "This is a dummy calibration --- please replace." ) &&
+           label.contains( "Dummy Calibration" ) )
+      {
+         oldCalibrationID = calibrationID.toInt();
+         break;
+      }
+   }
+
+   // Let's see if we found it
+   if ( oldCalibrationID == -1 )
+      return US_DB2::OK;                        // Not an error either
+
+   // Ok found one, replace
+   q.clear();
+   q  << "replace_rotor_calibration"
+      << QString::number( oldCalibrationID )
+      << QString::number( this->ID );
+   int status = db->statusQuery( q );
+
+   return status;
+}
+
 // Function to save current calibration information to disk
 void US_Rotor::RotorCalibration::saveDisk( void )
 {

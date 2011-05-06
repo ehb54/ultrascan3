@@ -57,6 +57,7 @@ BEGIN
   SET @BUFFER_IN_USE  = 516;
   SET @ANALYTE_IN_USE = 517;
   SET @SOLUTION_IN_USE = 518;
+  SET @NO_CALIB       = 519;
 
   -- Some user levels
   SET @US3_USER       = 0;

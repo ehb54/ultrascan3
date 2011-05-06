@@ -691,7 +691,7 @@ void US_RotorGui::deleteCalibration( void )
       }
 
       int status = US_Rotor::RotorCalibration::deleteCalibrationDB( calibrationID, &db );
-      if ( status == US_DB2::ROTOR_IN_USE )
+      if ( status == US_DB2::CALIB_IN_USE )
       {
          QString error = tr( "This rotor calibration is in use, and can't be deleted" );
          db_error( error );
@@ -759,13 +759,14 @@ void US_RotorGui::saveCalibration()
       int status = currentCalibration.saveDB( rotorID, &db );
       if ( status == US_DB2::OK )
       {
+         replaceDummyCalibration();
+
          reset();
 
          QMessageBox::information( this,
             tr( "Attention" ),
             tr( "Calibration was saved to the DB." ) );
       }
-
    }
 
    else
@@ -793,6 +794,65 @@ void US_RotorGui::saveCalibration()
    // Load all the calibration profiles
    readCalibrationProfiles( currentRotor.ID );
    reset();
+}
+
+// A function to find out if the original dummy calibration is still there,
+//  and replace it with the current one if it does. Also, to delete
+//  the dummy.
+void US_RotorGui::replaceDummyCalibration( void )
+{
+   // This is only valid on the DB
+   if ( ! disk_controls->db() )
+   {
+      QString error = tr( "This is a database-only function." );
+      db_error( error );
+      return;
+   }
+
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+   
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   int oldCalibrationID = -1;                   // To return the dummy's ID in
+   int status = currentCalibration.replaceDummyDB( oldCalibrationID, &db );
+
+   if ( status == US_DB2::NO_CALIB )
+   {
+      QString error = tr( "The replacement rotor calibration could not be found." );
+      db_error( error );
+      return;
+   }
+
+   else if ( db.lastErrno() != US_DB2::OK )
+   {
+      db_error( db.lastError() );
+      return;
+   }
+
+   // Was a dummy calibration found?
+   else if ( oldCalibrationID == -1 )
+      return;
+
+   // If we get here then a dummy calibration was found and replaced without error
+   status = US_Rotor::RotorCalibration::deleteCalibrationDB( oldCalibrationID, &db );
+   if ( status == US_DB2::CALIB_IN_USE )
+   {
+      QString error = tr( "The database shows the dummy calibration is still in use, and can't be deleted" );
+      db_error( error );
+      return;
+   }
+
+   else if ( status != US_DB2::OK )
+   {
+      db_error( QString::number( status ) + ": " + db.lastError() );
+      return;
+   }
 }
 
 void US_RotorGui::source_changed( bool db )
@@ -983,6 +1043,6 @@ bool US_RotorGui::loadRotors( const int labID )
 void US_RotorGui::connect_error( const QString& error )
 {
    QMessageBox::warning( this, tr( "Connection Problem" ),
-         tr( "Could not connect to databasee \n" ) + error );
+         tr( "Could not connect to database \n" ) + error );
 }
 
