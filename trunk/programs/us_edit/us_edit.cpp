@@ -2334,6 +2334,7 @@ void US_Edit::invert_values( void )
 // Remove spikes
 void US_Edit::remove_spikes( void )
 {
+   QTime time = QTime::currentTime();
    double smoothed_value;
 
    // For each scan
@@ -2372,6 +2373,7 @@ void US_Edit::remove_spikes( void )
    pb_spikes->setIcon   ( check );
    pb_spikes->setEnabled( false );
    replot();
+qDebug() << "Remove spikes elapsed time" << time.elapsed();
 }
 
 // Undo changes
@@ -2923,9 +2925,25 @@ void US_Edit::write_triple( void )
 
          db.query( q );
 
+         if ( db.lastErrno() != US_DB2::OK )
+         {
+            QMessageBox::warning( this, tr( "Database Problem" ),
+              tr( "Could not insert metadata into the database \n" ) + 
+              db.lastError() );
+
+            return;
+         }
+
          int insertID = db.lastInsertID();
 
          db.writeBlobToDB( workingDir + filename, "upload_editData", insertID );
+
+         if ( db.lastErrno() != US_DB2::OK )
+         {
+            QMessageBox::warning( this, tr( "Database Problem" ),
+              tr( "Could not insert edit xml data into database \n" ) + 
+              db.lastError() );
+         }
       }
    }
 }
