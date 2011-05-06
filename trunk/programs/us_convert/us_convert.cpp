@@ -408,7 +408,7 @@ void US_Convert::convert(
       int bitmap_size = ( radius_count + 7 ) / 8;
       uchar* interpolated = new uchar[ bitmap_size ];
       //bzero( interpolated, bitmap_size );
-      memset( interpolated, bitmap_size, sizeof( uchar) );
+      memset( interpolated, 0, bitmap_size );
 
       /*
       There are two indexes needed here.  The new radius as iterated
@@ -655,7 +655,7 @@ US_DataIO2::Scan US_Convert::newScanSubset(
    int bitmap_size = ( s.readings.size() + 7 ) / 8;
    uchar* interpolated = new uchar[ bitmap_size ];
    //bzero( interpolated, bitmap_size );
-   memset( interpolated, bitmap_size, sizeof( uchar) );
+   memset( interpolated, 0, bitmap_size );
 
    for ( int i = first_reading; i < first_reading + s.readings.size(); i++ )
    {

@@ -511,11 +511,13 @@ void US_Edit::gap_check( void )
    US_DataIO2::Scan s;
    QString          gaps;
 
-   int              scanNumber = 0;
-   bool             deleteAll  = false;
+   int              scanNumber    = 0;
+   int              rawScanNumber = -1;
+   bool             deleteAll     = false;
 
    foreach ( s, data.scanData )
    {
+      rawScanNumber++;
       // If scan has been deleted, skip to next
       if ( ! includes.contains( scanNumber ) ) continue;
 
@@ -595,7 +597,7 @@ void US_Edit::gap_check( void )
                location * s.delta_r;
             
             gaps = tr( "Scan " ) 
-                 + QString::number( scanNumber ) 
+                 + QString::number( rawScanNumber ) 
                  + tr( " has a maximum reading gap of " ) 
                  + QString::number( maxGap ) 
                  + tr( " starting at radius " ) 
