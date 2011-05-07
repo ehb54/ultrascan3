@@ -69,7 +69,7 @@ void US_SecondMoment::data_plot( void )
    us_grid( data_plot1 );
 
    data_plot1->setTitle( tr( "Run " ) + d->runID + tr( ": Cell " ) + d->cell
-             + " (" + d->wavelength + tr( " nm) - Second Moment Plot" ) );
+             + " (" + d->wavelength + tr( " nm)\nSecond Moment Plot" ) );
 
    data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "Scan Number" ) );
    data_plot1->setAxisTitle( QwtPlot::yLeft  , 
@@ -195,7 +195,7 @@ void US_SecondMoment::data_plot( void )
       curve->setData( x.data(), y.data(), 2 );
    }
 
-   data_plot1->setAxisScale   ( QwtPlot::xBottom, 0.0, x[ 1 ] + 0.25, 1.0 );
+   data_plot1->setAxisScale   ( QwtPlot::xBottom, 0.0, x[ 1 ] + 0.25, 0.0 );
    data_plot1->setAxisMaxMinor( QwtPlot::xBottom, 0 );
 
    // Mark excluded
