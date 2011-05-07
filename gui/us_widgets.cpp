@@ -2,6 +2,7 @@
 #include "us_widgets.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
+#include "us_images.h"
 
 US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFrame( w, f )
 {
@@ -22,6 +23,9 @@ US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFr
 
   vlgray = US_GuiSettings::editColor();
   vlgray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+
+  QIcon us3_icon = US_Images::getIcon( US_Images::US3_ICON );
+  setWindowIcon( us3_icon );
 }
 
 US_Widgets::~US_Widgets()

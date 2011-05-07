@@ -32,5 +32,6 @@
         <file>images/scattered.png</file>
         <file>images/us3-splash.png</file>
         <file>images/wireframe.png</file>
+        <file>images/us3-icon-32x32.png</file>
     </qresource>
 </RCC>

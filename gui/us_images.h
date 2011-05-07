@@ -46,7 +46,7 @@ class US_GUI_EXTERN US_Images
          MESH_FILLED,  MESH_HIDDEN,  MESH_NODATA,  MESH_NORMALS,
          MESH_POLYGON,  MESH_SCATTERED,  MESH_WIRE,
          MOVIE,  SAVE_CONTENT,  ICON_PROP,
-         QWTPLOT
+         QWTPLOT, US3_ICON
       };
 
       //! \brief Get image (embedded or from file) as a pixmap
