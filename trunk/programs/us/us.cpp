@@ -109,6 +109,10 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   g.set_global_position( p + QPoint( 30, 30 ) );
 
   setWindowTitle( "UltraScan III" );
+
+  QIcon us3_icon = US_Images::getIcon( US_Images::US3_ICON );
+  setWindowIcon( us3_icon );
+
   procs = QList<procData*>(); // Initialize to an empty list
 
   QFont bfont = QFont( US_GuiSettings::fontFamily(),

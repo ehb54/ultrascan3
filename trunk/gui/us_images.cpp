@@ -68,7 +68,8 @@ const QString US_Images::image_name( int itype )
       { MOVIE,           "movie"       },
       { SAVE_CONTENT,    "savecontent" },
       { ICON_PROP,       "icon"        },
-      { QWTPLOT,         "qwtplot"     }
+      { QWTPLOT,         "qwtplot"     },
+      { US3_ICON,        "us3-icon-32x32" }
    };
 
    static const int nimages = sizeof( nameMaps ) / sizeof( nameMaps[ 0 ] );

@@ -1,6 +1,7 @@
 //! \file us_widgets_dialog.cpp
 #include "us_widgets_dialog.h"
 #include "us_gui_settings.h"
+#include "us_images.h"
 
 US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f ) 
    : QDialog( w, f )
@@ -15,6 +16,9 @@ US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f )
 
   vlgray = US_GuiSettings::editColor();
   vlgray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+
+  QIcon us3_icon = US_Images::getIcon( US_Images::US3_ICON );
+  setWindowIcon( us3_icon );
 }
 
 QLabel* US_WidgetsDialog::us_label( const QString& labelString, int fontAdjust, 
