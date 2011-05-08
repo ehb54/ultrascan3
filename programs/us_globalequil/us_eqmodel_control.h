@@ -5,6 +5,8 @@
 #include "us_globeq_data.h"
 #include "us_widgets_dialog.h"
 #include "us_dataIO2.h"
+#include "us_analyte.h"
+#include "us_buffer.h"
 #include "us_help.h"
 
 class US_EqModelControl : public US_WidgetsDialog
@@ -127,6 +129,10 @@ class US_EqModelControl : public US_WidgetsDialog
       void pathlen_applyto   (  void   );
       void density_applyto   (  void   );
       void extinct_applyto   (  void   );
+      void set_vbar          (  void   );
+      void set_density       (  void   );
+      void assignVbar        (  US_Analyte );
+      void assignDensity     (  US_Buffer  );
       QHBoxLayout* radiobox  ( QGridLayout*, QRadioButton*,
                                QGridLayout*, QRadioButton* );
       void selected( void );

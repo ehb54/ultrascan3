@@ -78,6 +78,8 @@ DbgLv(1) << "SCAN_DIAGS()";
       US_DataIO2::EditedData* sdata = &dataList[ jdx ];
       int ivstx = index_radius( sdata, radlo );
       int ivenx = index_radius( sdata, radhi );
+      int endx  = scanfits[ jes ].stop_ndx;
+          ivenx = min( ivenx, endx );
       int ivenn = ivenx + 1;
       int npts  = ivenn - ivstx;
 

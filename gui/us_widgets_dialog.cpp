@@ -135,6 +135,21 @@ void US_WidgetsDialog::us_setReadOnly( QLineEdit* le, bool readonly )
   }
 }
 
+// Set ReadOnly and corresponding color for us_textedit
+void US_WidgetsDialog::us_setReadOnly( QTextEdit* te, bool readonly )
+{
+  if ( readonly )
+  {
+     te->setPalette ( vlgray );
+     te->setReadOnly( true );
+  }
+  else
+  {
+     te->setPalette ( US_GuiSettings::normalColor() );
+     te->setReadOnly( false );
+  }
+}
+
 // List Widget
 QListWidget* US_WidgetsDialog::us_listwidget ( int fontAdjust )
 {

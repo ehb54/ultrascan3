@@ -39,6 +39,7 @@ typedef struct EqRunFit_s
    bool                eq_fits[ 4 ];  // Equil fitted flags
    bool                eq_bnds[ 4 ];  // Equil bound flags
    double              stoichs[ 4 ];  // Stoichiometries
+   int                 dbdisk;        // DB/Disk flag
    int                 nbr_comps;     // Number of components
    int                 nbr_assocs;    // Number of association constants
    int                 nbr_runs;      // Number of runs

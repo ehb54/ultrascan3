@@ -53,9 +53,6 @@ US_GlobalEquil::US_GlobalEquil() : US_Widgets( true )
    QGridLayout* paramLayout    = new QGridLayout;
    QGridLayout* statusLayout   = new QGridLayout;
 
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-
    // Data Selection elements
    QLabel*      lb_datasel   = us_banner(     tr( "Data Selection"      ) ); 
    QPushButton* pb_loadExp   = us_pushbutton( tr( "Load Experiment"     ) );
@@ -244,8 +241,8 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
                                                 " high conc. limits)"  ) );
    te_status  ->setAlignment( Qt::AlignCenter );
    le_currmodl->setAlignment( Qt::AlignCenter );
-   te_status  ->setPalette( gray );
-   le_currmodl->setPalette( gray );
+   us_setReadOnly( te_status,   true );
+   us_setReadOnly( le_currmodl, true );
    te_status  ->setMinimumHeight( rowHgt * 2 + 12 );
    te_status  ->setFixedHeight(   rowHgt * 2 + 12 );
 
@@ -340,6 +337,7 @@ void US_GlobalEquil::load( void )
    }
 
    qApp->processEvents();
+   runfit.dbdisk       = dbdisk;
 
    if ( dataList[ 0 ].expType != "Equilibrium" )
    {
@@ -600,15 +598,13 @@ DbgLv(1) << "CONC_HISTOGRAM()";
 void US_GlobalEquil::reset_scan_lims( void )
 {
 DbgLv(1) << "RESET_SCAN_LIMS()";
-   for ( int js = 0; js < ntscns; js++ )
-   {
-      int jdx = scedits[ js ].dsindex;
-      int jrx = scedits[ js ].speedx;
+   sscanx  = tw_equiscns->currentRow();
+   int jdx = scedits[ sscanx ].dsindex;
+   int jrx = scedits[ sscanx ].speedx;
 
-      scedits[ js ].rad_lo = dataList[ jdx ].speedData[ jrx ].dataLeft;
-      scedits[ js ].rad_hi = dataList[ jdx ].speedData[ jrx ].dataRight;
-      scedits[ js ].edited = false;
-   }
+   scedits[ sscanx ].rad_lo = dataList[ jdx ].speedData[ jrx ].dataLeft;
+   scedits[ sscanx ].rad_hi = dataList[ jdx ].speedData[ jrx ].dataRight;
+   scedits[ sscanx ].edited = false;
 
    edata_plot();
    pb_resetsl->setEnabled( false );
@@ -856,6 +852,8 @@ void US_GlobalEquil::update_disk_db( bool dbaccess )
       dkdb_cntrls->set_disk();
       dbdisk    = US_Disk_DB_Controls::Disk;
    }
+
+   runfit.dbdisk       = dbdisk;
 }
 
 // Respond to a table row being clicked
@@ -892,6 +890,8 @@ DbgLv(1) << " GE:ClItem: signal_mc model_widget" << signal_mc << model_widget;
          emodctrl->new_scan( sscann );
       }
    }
+
+   pb_resetsl ->setEnabled( scedits[ sscanx ].edited );
 }
 
 // Respond to a table row being double-clicked
@@ -1040,8 +1040,9 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr
    double rhi  = -9e+10;
    double vlo  = 9e+10;
    double vhi  = -9e+10;
+   int    krpt = min( nrpts, scanfits[ sscanx ].stop_ndx + 1 );
 
-   for ( int jj = 0; jj < nrpts; jj++ )
+   for ( int jj = 0; jj < krpt; jj++ )
    {
       double rv = edata->radius( jj );
 
