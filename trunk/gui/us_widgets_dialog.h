@@ -79,6 +79,10 @@ class US_GUI_EXTERN US_WidgetsDialog : public QDialog
     //! \param readonly - ReadOnly flag, default uses vlgray
     void         us_setReadOnly( QLineEdit*, bool = true );
 
+    //! \param te - text edit for which to reset ReadOnly flag/color
+    //! \param readonly - ReadOnly flag, default uses vlgray
+    void         us_setReadOnly( QTextEdit*, bool = true );
+
     //! \param fontAdjust -  adjustment to default font size\n
     //! * Color is set to US_GuiSettings::editColor()
     QListWidget* us_listwidget ( int = 0 );

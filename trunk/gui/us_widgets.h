@@ -83,6 +83,10 @@ class US_GUI_EXTERN US_Widgets : public QFrame
     //! \param readonly -  flag if read-only, default uses editColor()
     void         us_setReadOnly( QLineEdit*, bool = true );
 
+    //! \param te - text edit for which to set ReadOnly and color
+    //! \param readonly -  flag if read-only, default uses editColor()
+    void         us_setReadOnly( QTextEdit*, bool = true );
+
     //! \param fontAdjust -  adjustment to default font size\n
     //! * Color is set to US_GuiSettings::editColor()
     QListWidget* us_listwidget ( int = 0 );

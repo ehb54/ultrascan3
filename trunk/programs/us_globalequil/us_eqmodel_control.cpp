@@ -5,6 +5,9 @@
 #include "us_gui_settings.h"
 #include "us_constants.h"
 #include "us_math2.h"
+#include "us_analyte_gui.h"
+#include "us_buffer_gui.h"
+#include "us_db2.h"
 
 // Main constructor with references to parameters from main GlobalEquil class
 US_EqModelControl::US_EqModelControl(
@@ -169,14 +172,12 @@ US_EqModelControl::US_EqModelControl(
    le_l2bound->setEnabled( false );
    le_l3bound->setEnabled( false );
    le_l4bound->setEnabled( false );
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-   le_mwbound->setPalette( gray );
-   le_vbbound->setPalette( gray );
-   le_l1bound->setPalette( gray );
-   le_l2bound->setPalette( gray );
-   le_l3bound->setPalette( gray );
-   le_l4bound->setPalette( gray );
+   us_setReadOnly( le_mwbound, true );
+   us_setReadOnly( le_vbbound, true );
+   us_setReadOnly( le_l1bound, true );
+   us_setReadOnly( le_l2bound, true );
+   us_setReadOnly( le_l3bound, true );
+   us_setReadOnly( le_l4bound, true );
 
    ct_grunpar->setRange( 1, runfit.nbr_comps, 1 );
    ct_grunpar->setStep( 1 );
@@ -184,6 +185,8 @@ US_EqModelControl::US_EqModelControl(
 
    connect( ct_grunpar, SIGNAL( valueChanged( double ) ),
             this,  SLOT( global_comp_changed( double ) ) );
+   connect( pb_vbar20,  SIGNAL( clicked()       ),
+            this,       SLOT(   set_vbar()      ) );
    connect( rb_mwfloat, SIGNAL( toggled( bool ) ),
             this,       SLOT(   update_floats() ) );
    connect( rb_vbfloat, SIGNAL( toggled( bool ) ),
@@ -201,13 +204,13 @@ US_EqModelControl::US_EqModelControl(
    lb_lbanner           = us_banner(
          tr( "Local Scan Parameters for Scan %1" ).arg( selscan ) );
    QLabel*      lb_cdescr  = us_label( tr( "Cell Description:" ) );
-                le_cdescr  = us_lineedit();
+                le_cdescr  = us_lineedit( "", 0, true );
    QLabel*      lb_runid   = us_label( tr( "Run ID:" ) );
-                le_runid   = us_lineedit();
+                le_runid   = us_lineedit( "", 0, true );
    QLabel*      lb_tempera = us_label( tr( "Temperature (" ) + DEGC + "):" );
-                le_tempera = us_lineedit();
+                le_tempera = us_lineedit( "", 0, true );
    QLabel*      lb_speed   = us_label( tr( "Rotor Speed (rpm)" ) );
-                le_speed   = us_lineedit();
+                le_speed   = us_lineedit( "", 0, true );
    QLabel*      lb_wavelen = us_label( tr( "Wavelength (nm)" ) );
                 le_wavelen = us_lineedit();
    QLabel*      lb_pathlen = us_label( tr( "Cell Pathlength (cm)" ) );
@@ -261,7 +264,7 @@ US_EqModelControl::US_EqModelControl(
    QLabel*      lb_extiscn = us_label( tr( "Scan(s)" ) );
                 le_extiscn = us_lineedit();
    QLabel*      lb_sigma   = us_label( tr( "Sigma for this Scan:" ) );
-                le_sigma   = us_lineedit();
+                le_sigma   = us_lineedit( "0", 0, true );
    QLayout*     lo_inclfit = us_checkbox(
          tr( "Include this Scan in the Fit:" ), ck_inclfit, false );
    QLabel*      lb_scansel = us_label( tr( "Scan Selector:" ) );
@@ -332,12 +335,16 @@ US_EqModelControl::US_EqModelControl(
    localLayout->addWidget( lb_scansel, row,   4, 1,  3 );
    localLayout->addWidget( ct_scansel, row++, 7, 1,  3 );
 
+   ck_inclfit->setEnabled( false );
+   ck_blbound->setEnabled( false );
    ck_blbound->setEnabled( false );
    ck_ambound->setEnabled( false );
    le_blbound->setEnabled( false );
    le_ambound->setEnabled( false );
-   le_blbound->setPalette( gray );
-   le_ambound->setPalette( gray );
+   us_setReadOnly( le_tempera, true );
+   us_setReadOnly( le_wavelen, true );
+   us_setReadOnly( le_blbound, true );
+   us_setReadOnly( le_ambound, true );
 
    connect( ct_lrunpar, SIGNAL( valueChanged( double ) ),
             this,   SLOT( local_comp_changed( double ) ) );
@@ -349,6 +356,8 @@ US_EqModelControl::US_EqModelControl(
             this,       SLOT(   update_floats() ) );
    connect( pb_plenapp, SIGNAL( clicked()       ),
             this,       SLOT( pathlen_applyto() ) );
+   connect( pb_density, SIGNAL( clicked()       ),
+            this,       SLOT(   set_density()   ) );
    connect( pb_densapp, SIGNAL( clicked()       ),
             this,       SLOT( density_applyto() ) );
    connect( pb_extiapp, SIGNAL( clicked()       ),
@@ -360,6 +369,7 @@ US_EqModelControl::US_EqModelControl(
    send_signal = false;
    ct_scansel->setValue( selscan );
    send_signal = true;
+   scan_changed( (double)selscan );
 
    // Button Row  (spacer, help, close)
    QHBoxLayout* buttons = new QHBoxLayout;
@@ -507,6 +517,7 @@ qDebug() << "EMC: scan_changed" << value;
    le_extiscn->setText( scan_s );
 
    disconnect_local();
+
    int scanx     = selscan - 1;
    le_cdescr ->setText( scanfits[ scanx ].descript );
    le_runid  ->setText( scanfits[ scanx ].runID );
@@ -516,6 +527,10 @@ qDebug() << "EMC: scan_changed" << value;
    le_pathlen->setText( QString::number( scanfits[ scanx ].pathlen )    );
    le_blguess->setText( QString::number( scanfits[ scanx ].baseline )   );
    le_blbound->setText( QString::number( scanfits[ scanx ].baseln_rng ) );
+   bool scnFit   = scanfits[ scanx ].scanFit;
+   ck_inclfit->setChecked(     scnFit );
+   us_setReadOnly( le_blguess, ! scnFit );
+   us_setReadOnly( le_amguess, ! scnFit );
    int compx     = (int)ct_lrunpar->value() - 1;
    double ampv   = scanfits[ scanx ].amp_vals[ compx ];
    double ampb   = scanfits[ scanx ].amp_rngs[ compx ];
@@ -889,5 +904,44 @@ QHBoxLayout* US_EqModelControl::radiobox(
    btn_grp->setExclusive( true );
 
    return lo_radiobox;
+}
+
+// Set Vbar20 from an analyte dialog, after Vbar button is clicked
+void US_EqModelControl::set_vbar()
+{
+   int            dbdisk = runfit.dbdisk;
+   US_AnalyteGui* adiag  = new US_AnalyteGui( true, QString(), dbdisk );
+   connect( adiag, SIGNAL( valueChanged( US_Analyte ) ),
+            this,  SLOT  ( assignVbar  ( US_Analyte ) ) );
+   adiag->exec();
+   qApp->processEvents();
+}
+
+// Set Density from a buffer dialog, after Density button is clicked
+void US_EqModelControl::set_density()
+{
+   US_Buffer buff;
+   int            dbdisk = runfit.dbdisk;
+   US_BufferGui*  bdiag  = new US_BufferGui( true, buff, dbdisk );
+   connect( bdiag, SIGNAL( valueChanged(  US_Buffer ) ),
+            this,  SLOT  ( assignDensity( US_Buffer ) ) );
+   bdiag->exec();
+   qApp->processEvents();
+}
+
+// Assign the Vbar from an analyte selected in US_AnalyteGui
+void US_EqModelControl::assignVbar( US_Analyte analyte )
+{
+   int compx  = (int)ct_lrunpar->value() - 1;
+   runfit.vbar_vals[ compx ] = analyte.vbar20;
+   le_vbguess->setText( QString::number( runfit.vbar_vals[ compx ] ) );
+}
+
+// Assign the Density from a buffer selected in US_BufferGui
+void US_EqModelControl::assignDensity( US_Buffer buffer )
+{
+   int scanx = selscan - 1;
+   scanfits[ scanx ].density = buffer.density;
+   le_density->setText( QString::number( scanfits[ scanx ].density ) );
 }
 
