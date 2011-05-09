@@ -82,6 +82,7 @@ SUBDIRS += \
     us_pseudoabs \
     us_radial_correction \
     us_reorder \
+    us_rotor_stretch \
     us_sassoc \
     us_secdat \
     us_spectrum \
