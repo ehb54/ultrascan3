@@ -489,10 +489,10 @@ DbgLv(1) << " LD: update_limit";
    // Reset the range of the scan counter to scans available
    ct_scselect->setRange( 1.0, (double)jsscn, 1.0 );
 
-   connect( tw_equiscns, SIGNAL( itemClicked( QTableWidgetItem* ) ),
-            this,        SLOT(   clickedItem( QTableWidgetItem* ) ) );
    connect( tw_equiscns, SIGNAL( itemDoubleClicked( QTableWidgetItem* ) ),
             this,        SLOT(   doubleClickedItem( QTableWidgetItem* ) ) );
+   connect( tw_equiscns, SIGNAL( itemSelectionChanged(          ) ),
+            this,        SLOT(   itemRowChanged(                ) ) );
 
    te_status->setText( tr( "To edit (exclude points):  Ctrl-click-hold,"
                            " move, and release mouse button in the plot area;"
@@ -814,7 +814,32 @@ DbgLv(1) << "SCAN_SELECT()" << sscann << sscanx;
 
    tw_equiscns->setCurrentCell( sscanx, 1 );   // Select the table row
 
-   clickedItem( tw_equiscns->currentItem() );  // Draw the appropriate plot
+   QString triple = tw_equiscns->item( sscanx, 2 )->text();
+   double  drpm   = tw_equiscns->item( sscanx, 3 )->text().toDouble();
+//DbgLv(1) << " Clicked: triple" << triple << "rpm" << drpm;
+   int     jdx    = -1;
+   int     jrx    = -1;
+
+   bool    found  = findData( triple, drpm, jdx, jrx );
+//DbgLv(1) << " Clicked:   found" << found << " jdx jsx" << jdx << jsx;
+
+   if ( found )  edata_plot();   // Change the plot to the newly selected scan
+
+   ct_scselect->disconnect();
+   ct_scselect->setValue( newscan );              // Set the scan nbr counter
+   connect( ct_scselect, SIGNAL( valueChanged( double ) ),
+                         SLOT(   scan_select(  double ) ) );
+
+DbgLv(1) << " GE:ClItem: signal_mc model_widget" << signal_mc << model_widget;
+   if ( signal_mc )
+   {  // Signalling of model control is enabled
+      if ( model_widget )
+      {  // If a model control is up, have it reset the scan
+         emodctrl->new_scan( sscann );
+      }
+   }
+
+   pb_resetsl ->setEnabled( scedits[ sscanx ].edited );
 
 DbgLv(1) << " GE:ScSel: signal_mc model_widget" << signal_mc << model_widget;
    if ( signal_mc )
@@ -856,42 +881,11 @@ void US_GlobalEquil::update_disk_db( bool dbaccess )
    runfit.dbdisk       = dbdisk;
 }
 
-// Respond to a table row being clicked
-void US_GlobalEquil::clickedItem( QTableWidgetItem* item )
+// Respond to a change in the row selected
+void US_GlobalEquil::itemRowChanged( )
 {
-   int row = item->row();
-//DbgLv(1) << "TableItemClicked row col" << row << item->column();
-
-   QTableWidget* tabw = item->tableWidget();
-
-   QString triple = tabw->item( row, 2 )->text();
-   double  drpm   = tabw->item( row, 3 )->text().toDouble();
-//DbgLv(1) << " Clicked: triple" << triple << "rpm" << drpm;
-   int     jdx    = -1;
-   int     jrx    = -1;
-
-   bool    found  = findData( triple, drpm, jdx, jrx );
-//DbgLv(1) << " Clicked:   found" << found << " jdx jsx" << jdx << jsx;
-
-   if ( found )  edata_plot();   // Change the plot to the newly selected scan
-
-   ct_scselect->disconnect();
-   ct_scselect->setValue( (double)( row + 1 ) );  // Set the scan nbr counter
-   connect( ct_scselect, SIGNAL( valueChanged( double ) ),
-                         SLOT(   scan_select(  double ) ) );
-
-   sscanx   = row;          // New scan index is index of clicked row
-   sscann   = sscanx + 1;   // Scan number is one more than index
-DbgLv(1) << " GE:ClItem: signal_mc model_widget" << signal_mc << model_widget;
-   if ( signal_mc )
-   {  // Signalling of model control is enabled
-      if ( model_widget )
-      {  // If a model control is up, have it reset the scan
-         emodctrl->new_scan( sscann );
-      }
-   }
-
-   pb_resetsl ->setEnabled( scedits[ sscanx ].edited );
+DbgLv(1) << "itemRowChanged";
+   scan_select( (double)( tw_equiscns->currentRow() + 1 ) );
 }
 
 // Respond to a table row being double-clicked

@@ -99,7 +99,7 @@ US_Edit::US_Edit() : US_Widgets()
    specs->addWidget( le_investigator, s_row++, 1, 1, 3 );
 
    // Row 1A
-   disk_controls = disk_controls = new US_Disk_DB_Controls;
+   disk_controls = new US_Disk_DB_Controls;
    specs->addLayout( disk_controls, s_row++, 0, 1, 4 );
 
    // Row 2
@@ -1665,7 +1665,12 @@ void US_Edit::set_dataRange( void )
    pb_spikes   ->setIcon( QIcon() );
 
    undo();
-   plot_all();
+
+   if ( ! expIsEquil )
+      plot_all();
+
+   else
+      plot_scan();
 }
 
 // Set up for a Plateau pick
