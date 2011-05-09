@@ -146,7 +146,7 @@ class US_GlobalEquil : public US_Widgets
       void close_all         ( void );
       void scan_select       ( double );
       void update_disk_db    ( bool );
-      void clickedItem       ( QTableWidgetItem* );
+      void itemRowChanged    ( void              );
       void doubleClickedItem ( QTableWidgetItem* );
       bool findData( QString, double, int&, int& );
       void pMouseDown        ( const QwtDoublePoint& );
