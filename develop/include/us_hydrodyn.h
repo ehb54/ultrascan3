@@ -126,6 +126,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QCheckBox *cb_overwrite;
       QString last_hydro_res;
       void bd_anaflex_enables( bool flag ); // turns buttons on/off based upon current status
+
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
@@ -459,6 +460,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
   #pragma warning ( default: 4251 )
 #endif
 
+      void calc_mw();             // after pdb (bead_model?) loaded, go through and compute PDB_model.mw (& later PDB_chain.mw?)
+
    public slots:
       void display_default_differences();
       void clear_display();
@@ -531,7 +534,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void saxs();
       void select_model(int);
       void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
-      int create_beads(QString *error_string); // turn pdb/atom model into bead_model
+      int create_beads(QString *error_string, bool quiet = false); // turn pdb/atom model into bead_model
       void get_atom_map(PDB_model *);
       int check_for_missing_atoms(QString *error_string, PDB_model *);
       void build_molecule_maps(PDB_model *model); // sets up maps for molecule

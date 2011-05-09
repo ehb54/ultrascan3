@@ -1393,6 +1393,10 @@ void US_Hydrodyn::reload_pdb()
    }
    model_vector_as_loaded = model_vector;
    editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
+   if ( !errors_found )
+   {
+      calc_mw();
+   }
    bead_models.clear();
    somo_processed.clear();
    update_vbar();
@@ -1616,6 +1620,10 @@ void US_Hydrodyn::load_pdb()
    {
       return; // user canceled loading PDB file
    }
+   if ( !errors_found )
+   {
+      calc_mw();
+   }
    update_vbar();
    if (results_widget)
    {
@@ -1728,6 +1736,10 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
          printError(QString("Encountered errors with your PDB structure for model %1:\n").
                     arg(i + 1) + "please check the text window");
       }
+   }
+   if ( !errors_found )
+   {
+      calc_mw();
    }
    model_vector_as_loaded = model_vector;
    if ( !model_vector.size() ||
@@ -3423,6 +3435,47 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs )
    else
    {
       QString filename = project;
+      // probably want to set specially for batch mode?
+      if ( dammix_remember_mw.count(QFileInfo(filename).fileName()) )
+      {
+         if ( dammix_remember_mw[QFileInfo(filename).fileName()] != 
+              model_vector[selected_models[0]].mw )
+         {
+            switch ( QMessageBox::question(this, 
+                                           tr("UltraScan Notice"),
+                                           QString(tr("Please note:\n\n"
+                                                      "You have remembered a molecular weight of %1 Daltons"
+                                                      "but the loaded pdb has a computed molecular weight of %1 Daltons"
+                                                      "What would you like to do?\n"))
+                                           .arg(dammix_remember_mw[QFileInfo(filename).fileName()])
+                                           .arg(model_vector[selected_models[0]].mw)
+                                           ,
+                                           tr("&Set to the newly computed value"),
+                                           tr("&Keep the remembered value"), 
+                                           tr("&Enter it manually later"),
+                                           0, // Stop == button 0
+                                           0 // Escape == button 0
+                                           )
+                     )
+            {
+            case 0 : 
+               dammix_remember_mw[QFileInfo(filename).fileName()] =
+                  model_vector[selected_models[0]].mw;
+               break;
+            case 1 : 
+               break;
+            case 2 : 
+               dammix_remember_mw.erase(QFileInfo(filename).fileName());
+               break;
+            default :
+               break;
+            }
+         }
+      } else {
+         dammix_remember_mw[QFileInfo(filename).fileName()] =
+            model_vector[selected_models[0]].mw;
+      }
+            
       if (saxs_plot_widget)
       {
          saxs_plot_window->refresh(
@@ -3492,6 +3545,54 @@ void US_Hydrodyn::bead_saxs( bool create_native_saxs )
              (unsigned int)bead_models.size(),
              (unsigned int)selected_models.size()
              );
+
+      // compute mw
+      float tmp_mw = 0.0;
+      for ( unsigned int i = 0; i < bead_models[selected_models[0]].size(); i++ )
+      {
+         tmp_mw += bead_models[selected_models[0]][i].bead_mw;
+      }
+
+      if ( tmp_mw != 0.0 &&
+           dammix_remember_mw.count(QFileInfo(filename).fileName()) )
+      {
+         if ( dammix_remember_mw[QFileInfo(filename).fileName()] != 
+              tmp_mw )
+         {
+            switch ( QMessageBox::question(this, 
+                                           tr("UltraScan Notice"),
+                                           QString(tr("Please note:\n\n"
+                                                      "You have remembered a molecular weight of %1 Daltons"
+                                                      "but the loaded bead model a computed molecular weight of %1 Daltons"
+                                                      "What would you like to do?\n"))
+                                           .arg(dammix_remember_mw[QFileInfo(filename).fileName()])
+                                           .arg(tmp_mw)
+                                           ,
+                                           tr("&Set to the newly computed value"),
+                                           tr("&Keep the remembered value"), 
+                                           tr("&Enter it manually later"),
+                                           0, // Stop == button 0
+                                           0 // Escape == button 0
+                                           )
+                     )
+            {
+            case 0 : 
+               dammix_remember_mw[QFileInfo(filename).fileName()] =
+                  tmp_mw;
+               break;
+            case 1 : 
+               break;
+            case 2 : 
+               dammix_remember_mw.erase(QFileInfo(filename).fileName());
+               break;
+            default :
+               break;
+            }
+         }
+      } else {
+         dammix_remember_mw[QFileInfo(filename).fileName()] = tmp_mw;
+      }
+
       if (saxs_plot_widget)
       {
          saxs_plot_window->refresh(

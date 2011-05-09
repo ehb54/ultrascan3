@@ -871,7 +871,7 @@ void US_Hydrodyn_Batch::load_saxs()
          {
             ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs();
          } else {
-         ((US_Hydrodyn *)us_hydrodyn)->bead_saxs();
+            ((US_Hydrodyn *)us_hydrodyn)->bead_saxs();
          }
          break;
       }

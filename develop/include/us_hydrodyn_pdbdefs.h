@@ -86,6 +86,7 @@ struct PDB_chain   // chain in PDB file
    vector <struct PDB_atom> atom;
    QString chainID;
    QString segID;
+   float mw;                                // mw of chain
 };
 
 struct PDB_model
@@ -93,9 +94,9 @@ struct PDB_model
    vector <struct PDB_chain> molecule;
    vector <struct residue> residue;         // keep track of amino acid sequence in molecule for vbar calculation
    float vbar;
+   float mw;                                // mw of model
    unsigned int model_id;
 };
-
 
 struct bead
 {
