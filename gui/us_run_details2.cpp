@@ -8,6 +8,7 @@
 
 #include <qwt_legend.h>
 
+//! Define a function especially for Windows
 #define round(x) floor( (x) + 0.5 )
 
 US_RunDetails2::US_RunDetails2( const QVector< US_DataIO2::RawData >& data, 

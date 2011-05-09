@@ -17,7 +17,7 @@ class US_UTIL_EXTERN US_Crypto
 {
   public:
     /*! A static function to encrypt a password string.
-        \param  plaintext      The string to be encrypted.
+        \param  plain_text     The string to be encrypted.
         \param  pw             The password to use for encryption
         \retval encryptionData A list of two strings containing the ciphertext
                                of the password and the initialization vector
