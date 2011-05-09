@@ -333,7 +333,7 @@ void US_Edit::sel_investigator( void )
 {
    int investigator = US_Settings::us_inv_ID();
 
-   US_Investigator* dialog = new US_Investigator( false, investigator );
+   US_Investigator* dialog = new US_Investigator( true, investigator );
    dialog->exec();
 
    investigator = US_Settings::us_inv_ID();
@@ -822,7 +822,9 @@ void US_Edit::load( void )
       }
 
       QStringList query;
-      query << "get_experiment_info_by_runID" << runID;
+      query << "get_experiment_info_by_runID" << runID 
+            << QString::number( US_Settings::us_inv_ID() );
+
       db.query( query );
       db.next();
       expType    = db.value( 8 ).toString();

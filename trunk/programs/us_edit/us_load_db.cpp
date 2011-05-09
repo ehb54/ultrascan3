@@ -124,6 +124,14 @@ void US_LoadDB::load( void )
    {
       QString f = workingDir + "/" + filenames[ runID ][ i ];
       db.readBlobFromDB( f, "download_aucData", dbIDs[ runID ][ i ].toInt() );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Database Problem" ),
+           tr( "Error getting auc file from database\n" ) + db.lastError() );
+         
+         return;
+      }
    }
 
    accept();
