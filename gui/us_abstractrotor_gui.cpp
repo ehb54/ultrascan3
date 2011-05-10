@@ -18,6 +18,9 @@ US_AbstractRotorGui::US_AbstractRotorGui(
 {
    this->setModal(true);
    this->signal = signal_wanted;
+
+   setAttribute( Qt::WA_DeleteOnClose );
+
    setupGui( select_db_disk );
 }
 

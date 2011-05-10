@@ -22,6 +22,8 @@ US_SolutionGui::US_SolutionGui(
       ) : US_WidgetsDialog( 0, 0 ), experimentID( expID ), channelID( chID ),
         signal( signal_wanted ), solution( dataIn ), autosave( auto_save )
 {
+   setAttribute( Qt::WA_DeleteOnClose );
+
    investigatorID = US_Settings::us_inv_ID();
 
    setWindowTitle( tr( "Solution Management" ) );

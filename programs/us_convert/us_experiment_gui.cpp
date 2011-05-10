@@ -489,6 +489,7 @@ void US_ExperimentGui::selectProject( void )
                       SLOT  ( update_disk_db( bool ) ) );
 
    projInfo->exec();
+   delete projInfo;
 }
 
 void US_ExperimentGui::assignProject( US_Project& project )

@@ -12,7 +12,6 @@ US_GetDBRun::US_GetDBRun( QString& r )
 {
    setWindowTitle( tr( "Available US3 Runs..." ) );
    setPalette( US_GuiSettings::frameColor() );
-//   setAttribute( Qt::WA_DeleteOnClose, true );
 
    QVBoxLayout* main = new QVBoxLayout( this );
    main->setSpacing        ( 2 );
