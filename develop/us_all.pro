@@ -71,7 +71,7 @@ SUBDIRS += \
     us_gainit \
     us_globalequil \
     us_hydrodyn \
-    us3_somo\
+    us3_hydrodyn\
     us_license \
     us_lncr2 \
     us_meniscus \
