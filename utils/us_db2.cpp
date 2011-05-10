@@ -488,16 +488,25 @@ int US_DB2::writeBlobToDB( const QString& filename,
    QFile fin( filename );
 
    if ( ! fin.open( QIODevice::ReadOnly ) )
+   {
+      db_errno = ERROR;
       return ERROR;
+   }
 
    QByteArray blobData = fin.readAll();
    fin.close();
 
    if ( blobData.size() < 1 )
+   {
+      db_errno = ERROR;
       return ERROR;
+   }
 
    if ( tableID == 0 )
+   {
+      db_errno = ERROR;
       return ERROR;
+   }
 
    // Now let's start building the query
    QString queryPart1 = "CALL " + procedure +
@@ -532,17 +541,19 @@ int US_DB2::writeBlobToDB( const QString& filename,
       error = QString( "MySQL error: " ) + mysql_error( db );
 
       delete[] sqlQuery;
+      db_errno = ERROR;
       return ERROR;
    }
 
-   result    = mysql_store_result( db );
-   row       = mysql_fetch_row( result );
-   int value = atoi( row[ 0 ] );
+   result   = mysql_store_result( db );
+   row      = mysql_fetch_row( result );
+   db_errno = atoi( row[ 0 ] );
+
    mysql_free_result( result );
    result = NULL;
 
    delete[] sqlQuery;
-   return value;
+   return db_errno;
 }
 #endif
 
@@ -577,14 +588,15 @@ int US_DB2::readBlobFromDB( const QString& filename,
    if ( mysql_query( db, sqlQuery.toAscii() ) != OK )
    {
       error = QString( "MySQL error: " ) + mysql_error( db );
-
+      db_errno = ERROR;
       return ERROR;
    }
 
    // First result set is status
-   result      = mysql_store_result( db );
-   row         = mysql_fetch_row( result );
-   int status  = atoi( row[ 0 ] );
+   result   = mysql_store_result( db );
+   row      = mysql_fetch_row( result );
+   db_errno = atoi( row[ 0 ] );
+
    mysql_free_result( result );
    result = NULL;
 
@@ -612,7 +624,7 @@ int US_DB2::readBlobFromDB( const QString& filename,
       }
    }
 
-   return( status );
+   return db_errno;
 }
 #endif
 

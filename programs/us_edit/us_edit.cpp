@@ -2343,7 +2343,6 @@ void US_Edit::invert_values( void )
 // Remove spikes
 void US_Edit::remove_spikes( void )
 {
-   QTime time = QTime::currentTime();
    double smoothed_value;
 
    // For each scan
@@ -2382,7 +2381,6 @@ void US_Edit::remove_spikes( void )
    pb_spikes->setIcon   ( check );
    pb_spikes->setEnabled( false );
    replot();
-qDebug() << "Remove spikes elapsed time" << time.elapsed();
 }
 
 // Undo changes
@@ -2926,6 +2924,7 @@ void US_Edit::write_triple( void )
       }
       else
       {
+         db.next();
          QString rawDataID = db.value( 0 ).toString();
          // Save edit file to DB
          q.clear();
@@ -2976,9 +2975,8 @@ void US_Edit::apply_prior( void )
       }
 
       QStringList q( "get_rawDataID_from_GUID" );
-      
+     
       q << US_Util::uuid_unparse( (uchar*)data.rawGUID );
-
       db.query( q );
 
       // Error check    
@@ -3063,8 +3061,6 @@ void US_Edit::apply_prior( void )
 
    if ( parameters.dataGUID != uuid )
    {
-qDebug() << "DataErr: dataGUID" << parameters.dataGUID;
-qDebug() << "DataErr: rawGUID" << uuid;
       QMessageBox::warning( this,
             tr( "Data Error" ),
             tr( "The edit file was not created using the current data" ) );
