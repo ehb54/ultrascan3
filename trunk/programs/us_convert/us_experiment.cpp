@@ -48,9 +48,16 @@ int US_Experiment::saveToDB( bool update, US_DB2* db )
       return status;
 
    // Check for experiment runID in database
+   int saveStatus = 0;
    QStringList q;
    status = checkRunID( db );
-   if ( status == US_DB2::OK && update )
+   if ( status == US_DB2::OK && ! update )
+   {
+      // Then the runID exists already, and we're not updating
+      return US_DB2::DUPFIELD;
+   }
+
+   if ( status == US_DB2::OK )
    {
       // It's ok to update the existing experiment entry
       q.clear();
@@ -70,13 +77,7 @@ int US_Experiment::saveToDB( bool update, US_DB2* db )
          << comments
          << centrifugeProtocol;
 
-      db->statusQuery( q );
-   }
-
-   else if ( status == US_DB2::OK && ! update )
-   {
-      // Then the runID exists, but we have to leave it alone
-      return US_DB2::DUPFIELD;
+      saveStatus = db->statusQuery( q );
    }
 
    else if ( status == US_DB2::NOROWS )
@@ -99,18 +100,16 @@ int US_Experiment::saveToDB( bool update, US_DB2* db )
          << centrifugeProtocol
          << QString::number( US_Settings::us_inv_ID() );
 
-      db->statusQuery( q );
+      saveStatus = db->statusQuery( q );
       expID = db->lastInsertID();
    }
 
-   else     // unspecified error
-   {
-      qDebug() << "MySQL error: " << db->lastError();
-      return status;
-   }
-
    if ( expID == 0 )      // double check
-      return US_DB2::NO_EXPERIMENT;
+   {
+      qDebug() << "Error saving experiment: " << saveStatus
+               << " " << db->lastError();
+      return saveStatus;
+   }
 
    // Let's get some info after db update
    q.clear();

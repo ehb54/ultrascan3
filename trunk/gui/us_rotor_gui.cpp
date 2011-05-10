@@ -18,6 +18,7 @@ US_RotorGui::US_RotorGui(
    this->savingCalibration = new_calibration;
    this->signal            = signal_wanted;
 
+   setAttribute( Qt::WA_DeleteOnClose );
    setupGui( select_db_disk );
 
    if ( savingCalibration )
@@ -70,6 +71,7 @@ US_RotorGui::US_RotorGui(
   currentCalibration( calibrationIn ), 
   signal( signal_wanted )
 {
+   setAttribute( Qt::WA_DeleteOnClose );
    this->savingCalibration = false;
 
    // Let's see if the user passed a rotorID, and 

@@ -31,6 +31,7 @@ US_ProjectGui::US_ProjectGui(
 
    QStringList DB = US_Settings::defaultDB();
    if ( DB.isEmpty() ) DB << "Undefined";
+
    QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
    lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_DB );
@@ -119,13 +120,28 @@ US_ProjectGui::US_ProjectGui(
       QList< QListWidgetItem* > items 
         = generalTab->lw_projects->findItems( project.projectDesc, Qt::MatchExactly );
 
-      // should be exactly 1, but let's make sure
+      // Should be exactly 1, but let's make sure
       if ( items.size() == 1 )
       {
          selectProject( items[ 0 ] );
          generalTab->lw_projects->setCurrentItem( items[ 0 ] );
       }
    }
+}
+
+// Function to clean up all the tab pointers
+US_ProjectGui::~US_ProjectGui()
+{
+   delete generalTab                  ;
+   delete goalsTab                    ; 
+   delete moleculesTab                ;
+   delete purityTab                   ;
+   delete expenseTab                  ;
+   delete bufferComponentsTab         ;
+   delete saltInformationTab          ;
+   delete auc_questionsTab            ;
+   delete notesTab                    ;
+   delete tabWidget                   ;
 }
 
 // Function to enable/disable buttons
@@ -152,6 +168,7 @@ void US_ProjectGui::enableButtons( void )
 {
    // Let's calculate if we're eligible to save this project
    generalTab->pb_save-> setEnabled( false );
+
    if ( ! goalsTab            ->getGoals().isEmpty()            &&
         ! moleculesTab        ->getMolecules().isEmpty()        &&
         ! purityTab           ->getPurity().isEmpty()           &&
@@ -167,6 +184,7 @@ void US_ProjectGui::enableButtons( void )
 
    // We can always delete something, even if it's just what's in the dialog
    generalTab->pb_del->setEnabled( false );
+
    if ( generalTab->lw_projects->currentRow() != -1 )
    {
       generalTab->pb_del->setEnabled( true );
@@ -219,7 +237,7 @@ void US_ProjectGui::accept( void )
                    "your project before accepting." ) );
          return;
       }
-   
+
       emit updateProjectGuiSelection( project );
    }
 
@@ -241,6 +259,7 @@ void US_ProjectGui::newProject( void )
    resetAll();
 
    generalTab          ->setDesc             ( tr( "New Project" ) );
+
    goalsTab            ->setGoals            ( tr( "Please replace with an introduction to your "
                                                    "research project and explain the goals "
                                                    "of your research. We will use this "
@@ -269,7 +288,7 @@ void US_ProjectGui::newProject( void )
    auc_questionsTab    ->setAUC_questions    ( tr( "How do you propose to approach the research with "
                                                    "AUC experiments?" ) );
    notesTab            ->setNotes            ( tr( "Special instructions, questions, and notes (optional)" ) );
-   
+
    enableButtons();
 }
 
@@ -544,7 +563,6 @@ void US_ProjectGui::saveProject( void )
       selectProject( items[ 0 ] );
       generalTab->lw_projects->setCurrentItem( items[ 0 ] );
    }
-
 }
 
 // Function to delete a project from disk, db, or in the current form
@@ -608,8 +626,8 @@ void US_ProjectGui::db_error( const QString& error )
 }
 
 US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
-                                            int  select_db_disk,
-                                            QWidget* parent ) : QWidget( parent )
+                                            int  select_db_disk
+                                            ) : US_Widgets() 
 {
    investigatorID = invID;
 
@@ -621,29 +639,27 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    general->setSpacing         ( 2 );
    general->setContentsMargins ( 2, 2, 2, 2 );
 
-   US_Widgets* usWidget = new US_Widgets();
-
    int row = 0;
 
    // First row
    if ( US_Settings::us_inv_level() > 2 )
    {
-      QPushButton* pb_investigator = usWidget->us_pushbutton( tr( "Select Investigator" ) );
+      QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
       connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
       general->addWidget( pb_investigator, row, 0 );
    }
    else
    {
-      QLabel* lb_investigator = usWidget->us_label( tr( "Investigator:" ) );
+      QLabel* lb_investigator = us_label( tr( "Investigator:" ) );
       general->addWidget( lb_investigator, row, 0 );
    }
       
-   le_investigator = usWidget->us_lineedit( tr( "Not Selected" ) );
+   le_investigator = us_lineedit( tr( "Not Selected" ) );
    le_investigator->setReadOnly( true );
    general->addWidget( le_investigator, row++, 1, 1, 2 );
 
    // Row 2 - Available projects
-   QLabel* lb_banner2 = usWidget->us_banner( tr( "Click on project to select" ), -2  );
+   QLabel* lb_banner2 = us_banner( tr( "Click on project to select" ), -2  );
    lb_banner2->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lb_banner2->setMinimumWidth( 400 );
    general->addWidget( lb_banner2, row, 0 );
@@ -655,7 +671,7 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    general->addLayout( disk_controls, row++, 1, 1, 2 );
 
    // Row 3
-   lw_projects = usWidget->us_listwidget();
+   lw_projects = us_listwidget();
    lw_projects-> setSortingEnabled( true );
    connect( lw_projects, SIGNAL( itemClicked    ( QListWidgetItem* ) ),
                          SIGNAL( selectProject  ( QListWidgetItem* ) ) );
@@ -665,39 +681,39 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    general->addWidget( lw_projects, row, 0, add_rows, 1 );
 
    // Row 4
-   pb_query = usWidget->us_pushbutton( tr( "Query Projects" ), true );
+   pb_query = us_pushbutton( tr( "Query Projects" ), true );
    connect( pb_query, SIGNAL( clicked() ), SIGNAL( load() ) );
    general->addWidget( pb_query, row, 1 );
 
-   pb_save = usWidget->us_pushbutton( tr( "Save Project" ), false );
+   pb_save = us_pushbutton( tr( "Save Project" ), false );
    connect( pb_save, SIGNAL( clicked() ), SIGNAL( save() ) );
    general->addWidget( pb_save, row++, 2 );
 
    // Row 5
-   pb_newProject = usWidget->us_pushbutton( tr( "New Project" ), true );
+   pb_newProject = us_pushbutton( tr( "New Project" ), true );
    connect( pb_newProject, SIGNAL( clicked() ), SIGNAL( newProject() ) );
    general->addWidget( pb_newProject, row, 1 );
 
-   pb_del = usWidget->us_pushbutton( tr( "Delete Project" ), false );
+   pb_del = us_pushbutton( tr( "Delete Project" ), false );
    connect( pb_del, SIGNAL( clicked() ), SIGNAL( deleteProject() ) );
    general->addWidget( pb_del, row++, 2 );
 
    // Row 6
-   QLabel* lb_projectDesc = usWidget->us_label( tr( "Project Name:" ) );
+   QLabel* lb_projectDesc = us_label( tr( "Project Name:" ) );
    general->addWidget( lb_projectDesc, row++, 1, 1, 2 );
 
    // Row 7
-   le_projectDesc = usWidget->us_lineedit( "", 1 );
+   le_projectDesc = us_lineedit( "", 1 );
    connect( le_projectDesc, SIGNAL( textEdited      ( const QString&   ) ),
                             SIGNAL( saveDescription ( const QString&   ) ) );
    general->addWidget( le_projectDesc, row++, 1, 1, 2 );
 
    // Row 8
-   QLabel* lb_guid = usWidget->us_label( tr( "Global Identifier:" ) );
+   QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
    general->addWidget( lb_guid, row++, 1, 1, 2 );
 
    // Row 9
-   le_guid = usWidget->us_lineedit( "" ); 
+   le_guid = us_lineedit( "" ); 
    le_guid->setPalette ( gray );
    le_guid->setReadOnly( true );
    general->addWidget( le_guid, row++, 1, 1, 2 );
@@ -766,16 +782,17 @@ QString US_ProjectGuiGeneral::getDesc( void )
    return( le_projectDesc->text() );
 }
 
-US_ProjectGui::GoalsTab::GoalsTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::GoalsTab::GoalsTab( void ) : US_Widgets()
 {
    QVBoxLayout* goals = new QVBoxLayout;
 
-   US_Widgets* usWidget = new US_Widgets();
-   QLabel* lb_goals = usWidget->us_label( tr( "Please provide a detailed description of your research, \n"
-                                              "including an introduction and goals:" ) );
+   QLabel* lb_goals = 
+      us_label( tr( "Please provide a detailed description of your research, \n"
+                    "including an introduction and goals:" ) );
+
    goals->addWidget( lb_goals );
 
-   te_goals = usWidget->us_textedit();
+   te_goals = us_textedit();
    goals->addWidget( te_goals );
    te_goals->setMinimumHeight( 200 );
    te_goals->setReadOnly( false );
@@ -794,15 +811,16 @@ QString US_ProjectGui::GoalsTab::getGoals( void )
    return( te_goals->toPlainText() );
 }
 
-US_ProjectGui::MoleculesTab::MoleculesTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::MoleculesTab::MoleculesTab( void ) : US_Widgets()
 {
    QVBoxLayout* molecules = new QVBoxLayout;
 
-   US_Widgets* usWidget = new US_Widgets();
-   QLabel* lb_molecules = usWidget->us_label( tr( "What proteins/DNA molecules are involved in the research?" ) );
+   QLabel* lb_molecules = 
+      us_label( tr( "What proteins/DNA molecules are involved in the research?" ) );
+
    molecules->addWidget( lb_molecules );
 
-   te_molecules = usWidget->us_textedit();
+   te_molecules = us_textedit();
    molecules->addWidget( te_molecules );
    te_molecules->setMinimumHeight( 200 );
    te_molecules->setReadOnly( false );
@@ -821,15 +839,16 @@ QString US_ProjectGui::MoleculesTab::getMolecules( void )
    return( te_molecules->toPlainText() );
 }
 
-US_ProjectGui::PurityTab::PurityTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::PurityTab::PurityTab( void ) : US_Widgets()
 {
    QVBoxLayout* purity = new QVBoxLayout;
 
-   US_Widgets* usWidget = new US_Widgets();
-   QLabel* lb_purity = usWidget->us_label( tr( "Please indicate the approximate purity of your sample(s)." ) );
+   QLabel* lb_purity = 
+      us_label( tr( "Please indicate the approximate purity of your sample(s)." ) );
+
    purity->addWidget( lb_purity );
 
-   le_purity = usWidget->us_lineedit();
+   le_purity = us_lineedit();
    purity->addWidget( le_purity );
 //   le_purity->setMinimumHeight( 200 );
    le_purity->setReadOnly( false );
@@ -848,16 +867,16 @@ QString US_ProjectGui::PurityTab::getPurity( void )
    return( le_purity->text() );
 }
 
-US_ProjectGui::ExpenseTab::ExpenseTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::ExpenseTab::ExpenseTab( void ) : US_Widgets()
 {
    QVBoxLayout* expense = new QVBoxLayout;
 
-   US_Widgets* usWidget = new US_Widgets();
    QLabel* lb_expense = 
-      usWidget->us_label( tr( "Please rate the expense of providing 5 ml at 1 OD 280 concentration:" ) );
+      us_label( tr( "Please rate the expense of providing 5 ml at 1 OD 280 concentration:" ) );
+
    expense->addWidget( lb_expense );
 
-   te_expense = usWidget->us_textedit();
+   te_expense = us_textedit();
    expense->addWidget( te_expense );
    te_expense->setMinimumHeight( 200 );
    te_expense->setReadOnly( false );
@@ -876,16 +895,16 @@ QString US_ProjectGui::ExpenseTab::getExpense( void )
    return( te_expense->toPlainText() );
 }
 
-US_ProjectGui::BufferComponentsTab::BufferComponentsTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::BufferComponentsTab::BufferComponentsTab( void ) : US_Widgets()
 {
    QVBoxLayout* bufferComponents = new QVBoxLayout;
 
-   US_Widgets* usWidget = new US_Widgets();
    QLabel* lb_bufferComponents = 
-      usWidget->us_label( tr( "What buffers do you plan to use?" ) );
+      us_label( tr( "What buffers do you plan to use?" ) );
+
    bufferComponents->addWidget( lb_bufferComponents );
 
-   te_bufferComponents = usWidget->us_textedit();
+   te_bufferComponents = us_textedit();
    bufferComponents->addWidget( te_bufferComponents );
    te_bufferComponents->setMinimumHeight( 200 );
    te_bufferComponents->setReadOnly( false );
@@ -904,16 +923,15 @@ QString US_ProjectGui::BufferComponentsTab::getBufferComponents( void )
    return( te_bufferComponents->toPlainText() );
 }
 
-US_ProjectGui::SaltInformationTab::SaltInformationTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::SaltInformationTab::SaltInformationTab( void ) : US_Widgets()
 {
    QVBoxLayout* saltInformation = new QVBoxLayout;
 
-   US_Widgets* usWidget = new US_Widgets();
    QLabel* lb_saltInformation = 
-      usWidget->us_label( tr( "Is a salt concentration between 20-50 mM for your experiment acceptable?" ) );
+      us_label( tr( "Is a salt concentration between 20-50 mM for your experiment acceptable?" ) );
    saltInformation->addWidget( lb_saltInformation );
 
-   te_saltInformation = usWidget->us_textedit();
+   te_saltInformation = us_textedit();
    saltInformation->addWidget( te_saltInformation );
    te_saltInformation->setMinimumHeight( 200 );
    te_saltInformation->setReadOnly( false );
@@ -932,16 +950,15 @@ QString US_ProjectGui::SaltInformationTab::getSaltInformation( void )
    return( te_saltInformation->toPlainText() );
 }
 
-US_ProjectGui::AUC_questionsTab::AUC_questionsTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::AUC_questionsTab::AUC_questionsTab( void ) : US_Widgets()
 {
    QVBoxLayout* auc_questions = new QVBoxLayout;
 
-   US_Widgets* usWidget = new US_Widgets();
    QLabel* lb_auc_questions = 
-      usWidget->us_label( tr( "What questions are you trying to answer with AUC?" ) );
+      us_label( tr( "What questions are you trying to answer with AUC?" ) );
    auc_questions->addWidget( lb_auc_questions );
 
-   te_auc_questions = usWidget->us_textedit();
+   te_auc_questions = us_textedit();
    auc_questions->addWidget( te_auc_questions );
    te_auc_questions->setMinimumHeight( 200 );
    te_auc_questions->setReadOnly( false );
@@ -960,15 +977,14 @@ QString US_ProjectGui::AUC_questionsTab::getAUC_questions( void )
    return( te_auc_questions->toPlainText() );
 }
 
-US_ProjectGui::NotesTab::NotesTab( QWidget* parent ) : QWidget( parent )
+US_ProjectGui::NotesTab::NotesTab( void ) : US_Widgets()
 {
    QVBoxLayout* notes = new QVBoxLayout;
 
-   US_Widgets* usWidget = new US_Widgets();
-   QLabel* lb_notes = usWidget->us_label( tr( "Notes:" ) );
+   QLabel* lb_notes = us_label( tr( "Notes:" ) );
    notes->addWidget( lb_notes );
 
-   te_notes = usWidget->us_textedit();
+   te_notes = us_textedit();
    notes->addWidget( te_notes );
    te_notes->setMinimumHeight( 200 );
    te_notes->setReadOnly( false );

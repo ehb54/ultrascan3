@@ -997,6 +997,7 @@ void US_ConvertGui:: loadUS3DB( void )
    // Present a dialog to ask user which experiment to load
    QString runID;
    US_GetDBRun dialog( runID );
+
    if ( dialog.exec() == QDialog::Rejected )
       return;
 
@@ -1940,24 +1941,9 @@ void US_ConvertGui::saveUS3DB( void )
       return;
    }
 
-   if ( saveStatus == BOTH )
+   if ( ExpData.checkRunID( &db ) == US_DB2::OK && ( saveStatus != BOTH ) )
    {
-      // If saveStatus == BOTH already, then it came from the db to begin with, so it's
-      // ok to update it
-      status = ExpData.saveToDB( true, &db );
-   }
-
-   else if ( ExpData.checkRunID( &db ) != US_DB2::OK )
-   {
-      // No database records with this runID found
-      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-      status = ExpData.saveToDB( false, &db );
-      QApplication::restoreOverrideCursor();
-   }
-
-   else
-   {
-      // User is trying to overwrite a runID that is already in the DB
+      // Then the user is trying to overwrite a runID that is already in the DB
       QMessageBox::warning( this,
             tr( "Duplicate runID" ),
             tr( "This runID already exists in the database. To edit that "  
@@ -1965,20 +1951,18 @@ void US_ConvertGui::saveUS3DB( void )
       return;
    }
 
+   // If saveStatus == BOTH already, then it came from the db to begin with
+   // and it should be updated. Otherwise, there shouldn't be any database
+   // records with this runID found
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   status = ExpData.saveToDB( ( saveStatus == BOTH ), &db );
+   QApplication::restoreOverrideCursor();
+
    if ( status == US_DB2::NO_PROJECT )
    {
       QMessageBox::warning( this,
             tr( "Project missing" ),
             tr( "The project associated with this experiment could not be "
-                "updated or added to the database.\n" ) );
-      return;
-   }
-
-   else if ( status == US_DB2::NO_EXPERIMENT )
-   {
-      QMessageBox::warning( this,
-            tr( "Experiment missing" ),
-            tr( "The experiment could not be "
                 "updated or added to the database.\n" ) );
       return;
    }
@@ -1994,8 +1978,8 @@ void US_ConvertGui::saveUS3DB( void )
    else if ( status != US_DB2::OK )
    {
       QMessageBox::warning( this,
-            tr( "Problem saving experiment" ),
-            tr( "Unspecified database error: " ) + db.lastError() );
+            tr( "Problem saving experiment information" ),
+            tr( "MySQL Error : " ) + db.lastError() + " (" + QString::number( status ) + ")" );
       return;
    }
 

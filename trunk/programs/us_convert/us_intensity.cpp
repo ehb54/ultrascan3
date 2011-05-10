@@ -8,6 +8,7 @@ US_Intensity::US_Intensity( const QVector< double >& data )
 {
    setWindowTitle( tr( "Details for Average Intensity Values" ) );
    setPalette( US_GuiSettings::frameColor() );
+   setAttribute( Qt::WA_DeleteOnClose );
 
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing        ( 2 );

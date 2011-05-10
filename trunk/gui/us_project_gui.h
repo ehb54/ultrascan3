@@ -12,7 +12,7 @@
            This class forms the content of the general tab in the US_Project GUI.
            Most management of the information itself takes place here.
 */
-class US_GUI_EXTERN US_ProjectGuiGeneral : public QWidget
+class US_GUI_EXTERN US_ProjectGuiGeneral : public US_Widgets
 {
    Q_OBJECT
 
@@ -23,11 +23,9 @@ class US_GUI_EXTERN US_ProjectGuiGeneral : public QWidget
        \param invID   A pointer to the current investigator ID
        \param select_db_disk Indicates whether the default search is on
                       the local disk or in the DB
-       \param parent  The parent of the widget
    */
    US_ProjectGuiGeneral( int*,
-                         int,
-                         QWidget* parent = 0 );
+                         int );
 
    //! \brief Resets all the controls on the general tab
    void          reset  ( void    );
@@ -115,8 +113,8 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
                      int  = US_Disk_DB_Controls::Default,
                      const US_Project& = US_Project() );
 
-      //! \brief A null destructor. 
-      ~US_ProjectGui() {};
+      //! \brief Cleans up when the project dialog is closed
+      ~US_ProjectGui();
 
       //! \class ProjectInfo
       //! \brief Information that is useful throughout US_ProjectGui
@@ -133,11 +131,11 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
       /*! \class GoalsTab
           \brief This class forms the content of the Goals tab in the US_Project GUI.
       */
-      class GoalsTab : public QWidget
+      class GoalsTab : public US_Widgets
       {
          public:
          //! \brief Generic constructor for the GoalsTab class
-         GoalsTab                ( QWidget* parent = 0 );
+         GoalsTab                ( void );
 
          //! \brief Returns the content entered by the user
          QString getGoals        ( void );
@@ -154,11 +152,11 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
       /*! \class MoleculesTab
           \brief This class forms the content of the molecules tab in the US_Project GUI.
       */
-      class MoleculesTab : public QWidget
+      class MoleculesTab : public US_Widgets
       {
          public:
          //! \brief Generic constructor for the MoleculesTab class
-         MoleculesTab            ( QWidget* parent = 0 );
+         MoleculesTab            ( void );
 
          //! \brief Returns the content entered by the user
          QString getMolecules    ( void );
@@ -175,11 +173,11 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
       /*! \class PurityTab
           \brief This class forms the content of the purity tab in the US_Project GUI.
       */
-      class PurityTab : public QWidget
+      class PurityTab : public US_Widgets
       {
          public:
          //! \brief Generic constructor for the PurityTab class
-         PurityTab               ( QWidget* parent = 0 );
+         PurityTab               ( void );
 
          //! \brief Returns the content entered by the user
          QString getPurity       ( void );
@@ -196,11 +194,11 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
       /*! \class ExpenseTab
           \brief This class forms the content of the expense tab in the US_Project GUI.
       */
-      class ExpenseTab : public QWidget
+      class ExpenseTab : public US_Widgets
       {
          public:
          //! \brief Generic constructor for the ExpenseTab class
-         ExpenseTab              ( QWidget* parent = 0 );
+         ExpenseTab              ( void );
 
          //! \brief Returns the content entered by the user
          QString getExpense      ( void );
@@ -217,11 +215,11 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
       /*! \class BufferComponentsTab
           \brief This class forms the content of the buffer components tab in the US_Project GUI.
       */
-      class BufferComponentsTab : public QWidget
+      class BufferComponentsTab : public US_Widgets
       {
          public:
          //! \brief Generic constructor for the BufferComponentsTab class
-         BufferComponentsTab         ( QWidget* parent = 0 );
+         BufferComponentsTab         ( void );
 
          //! \brief Returns the content entered by the user
          QString getBufferComponents ( void );
@@ -238,11 +236,11 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
       /*! \class SaltInformationTab
           \brief This class forms the content of the salt information tab in the US_Project GUI.
       */
-      class SaltInformationTab : public QWidget
+      class SaltInformationTab : public US_Widgets
       {
          public:
          //! \brief Generic constructor for the SaltInformationTab class
-         SaltInformationTab          ( QWidget* parent = 0 );
+         SaltInformationTab          ( void );
 
          //! \brief Returns the content entered by the user
          QString getSaltInformation  ( void );
@@ -259,11 +257,11 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
       /*! \class AUC_questionsTab
           \brief This class forms the content of the AUC_questions tab in the US_Project GUI.
       */
-      class AUC_questionsTab : public QWidget
+      class AUC_questionsTab : public US_Widgets
       {
          public:
          //! \brief Generic constructor for the AUC_questionsTab class
-         AUC_questionsTab            ( QWidget* parent = 0 );
+         AUC_questionsTab            ( void );
 
          //! \brief Returns the content entered by the user
          QString getAUC_questions    ( void );
@@ -280,11 +278,11 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
       /*! \class NotesTab
           \brief This class forms the content of the notes tab in the US_Project GUI.
       */
-      class NotesTab : public QWidget
+      class NotesTab : public US_Widgets
       {
          public:
          //! \brief Generic constructor for the NotesTab class
-         NotesTab                    ( QWidget* parent = 0 );
+         NotesTab                    ( void );
 
          //! \brief Returns the content entered by the user
          QString getNotes            ( void );
