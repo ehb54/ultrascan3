@@ -3,6 +3,7 @@
 US_Hydrodyn_Saxs_Mw::US_Hydrodyn_Saxs_Mw(
                                          QString msg,
                                          float *mw,
+                                         float *last_mw,
                                          bool *remember,
                                          bool *use_partial,
                                          QString *partial,
@@ -12,6 +13,7 @@ US_Hydrodyn_Saxs_Mw::US_Hydrodyn_Saxs_Mw(
 {
    this->msg = msg;
    this->mw = mw;
+   this->last_mw = last_mw;
    this->remember = remember;
    this->use_partial = use_partial;
    this->partial = partial;
@@ -55,6 +57,17 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
    le_mw->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
    connect(le_mw, SIGNAL(textChanged(const QString &)), SLOT(update_mw(const QString &)));
+
+   pb_set_to_last_used_mw = new QPushButton(tr("Set to last used weight:"), this);
+   pb_set_to_last_used_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_set_to_last_used_mw->setMinimumHeight(minHeight1);
+   pb_set_to_last_used_mw->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_set_to_last_used_mw->setEnabled(*last_mw > 0.0);
+   connect(pb_set_to_last_used_mw, SIGNAL(clicked()), SLOT(set_to_last_used_mw()));
+
+   lbl_last_used_mw = new QLabel(QString("").sprintf("%5.3f", *last_mw), this);
+   lbl_last_used_mw->setAlignment(AlignCenter|AlignVCenter);
+   lbl_last_used_mw->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    cb_remember = new QCheckBox(this);
    cb_remember->setText(tr(" Remember these values ?"));
@@ -103,6 +116,9 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
    background->addWidget(lbl_mw, j, 0);
    background->addWidget(le_mw, j, 1);
    j++;
+   background->addWidget(pb_set_to_last_used_mw, j, 0);
+   background->addWidget(lbl_last_used_mw, j, 1);
+   j++;
    background->addMultiCellWidget(cb_remember, j, j, 0, 1);
    j++;
    background->addWidget(cb_use_partial, j, 0);
@@ -110,6 +126,12 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
    j++;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
+}
+
+void US_Hydrodyn_Saxs_Mw::set_to_last_used_mw()
+{
+   le_mw->setText(QString("").sprintf("%5.3f", *last_mw));
+   *mw = *last_mw;
 }
 
 void US_Hydrodyn_Saxs_Mw::cancel()

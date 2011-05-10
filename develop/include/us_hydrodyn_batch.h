@@ -178,6 +178,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       vector < double > saxs_r;
       vector < vector < double > > saxs_prr;
       vector < vector < double > > saxs_prr_norm;
+      vector < float > saxs_prr_mw;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )

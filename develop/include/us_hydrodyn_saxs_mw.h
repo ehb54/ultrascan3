@@ -22,6 +22,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Mw : public QDialog
       US_Hydrodyn_Saxs_Mw(
                           QString msg,
                           float *mw,
+                          float *last_mw,
                           bool *remember,
                           bool *use_partial,
                           QString *partial,
@@ -34,9 +35,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Mw : public QDialog
 
       QLabel *lbl_info;
       QLabel *lbl_mw;
+      QLabel *lbl_last_used_mw;
 
       QLineEdit *le_mw;
       QLineEdit *le_partial;
+
+      QPushButton *pb_set_to_last_used_mw;
 
       QCheckBox *cb_remember;
       QCheckBox *cb_use_partial;
@@ -51,6 +55,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Mw : public QDialog
       QString msg;
       float *psv;
       float *mw;
+      float *last_mw;
       bool *write_bead_model;
       bool *remember;
       bool *use_partial;
@@ -63,6 +68,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Mw : public QDialog
       void update_mw(const QString &);
       void update_partial(const QString &);
 
+      void set_to_last_used_mw();
       void set_remember();
       void set_use_partial();
 

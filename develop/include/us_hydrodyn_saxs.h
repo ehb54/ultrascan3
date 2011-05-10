@@ -193,6 +193,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < vector < double > >                    plotted_pr;
       vector < vector < double > >                    plotted_pr_not_normalized;
       vector < vector < double > >                    plotted_r;
+      vector < float >                                plotted_pr_mw;
 
       map < QString, saxs >          saxs_map;
       map < QString, hybridization > hybrid_map;
@@ -236,6 +237,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 #endif
       map < QString, float > *remember_mw;
       map < QString, float > *match_remember_mw;
+      map < QString, QString > *remember_mw_source;
       // map < QString, float > contrib;
       vector < vector < float > > contrib_array;
       vector < PDB_atom * >  contrib_pdb_atom;
@@ -245,8 +247,6 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       float contrib_delta;
       QString contrib_file;
-
-      double get_mw(QString filename);
 
       vector < double > interpolate( vector < double > to_r, 
                                      vector < double > from_r, 
@@ -281,6 +281,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       double pr_contrib_low;
       double pr_contrib_high;
+
+      double get_mw(QString filename, bool display_mw_msg = true);
+      float last_used_mw;
+
+      QString load_pr_selected_filter;
 
    public slots:
       void show_plot_saxs_sans();

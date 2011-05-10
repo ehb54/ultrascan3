@@ -56,6 +56,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    this->our_saxs_options = our_saxs_options;
 
    guinier_cutoff = 0.2;
+   last_used_mw = 0.0;
 
    // note changes to this section should be updated in US_Hydrodyn_SaxsOptions::update_q()
    if ( our_saxs_options->wavelength == 0 )
@@ -90,6 +91,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    this->create_native_saxs = create_native_saxs;
    this->us_hydrodyn = us_hydrodyn;
    this->remember_mw = &(((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw);
+   this->remember_mw_source = &(((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source);
    this->match_remember_mw = &(((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw);
 
    USglobal=new US_Config();
@@ -1853,6 +1855,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_mw = get_mw(te_filename2->text(), false);
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
@@ -1860,11 +1863,12 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
                QString("")
                   .sprintf(
-                           "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f\n"
+                           "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons\n"
                            , model_filename.ascii()
                            , US_Version.ascii()
                            , REVISION
                            , delta
+                           , get_mw(te_filename2->text(), false)
                            );
                fprintf(fpr, "%s",
                        ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
@@ -1880,7 +1884,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   pr[i] = (double) hist[i];
                   pr_n[i] = (double) hist[i];
                }
-               normalize_pr(r, &pr_n, get_mw(te_filename2->text()));
+               normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
                fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
                for ( unsigned int i = 0; i < hist.size(); i++ )
                {
@@ -1910,6 +1914,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_mw = get_mw(te_filename2->text(), false);
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
@@ -1917,11 +1922,12 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
             QString("")
             .sprintf(
-                     "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f\n"
+                     "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons\n"
                      , model_filename.ascii()
                      , US_Version.ascii()
                      , REVISION
                      , delta
+                     , get_mw(te_filename2->text(), false)
                      );
          vector < double > r;
          vector < double > pr;
@@ -1935,7 +1941,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             pr[i] = (double) hist[i];
             pr_n[i] = (double) hist[i];
          }
-         normalize_pr(r, &pr_n, get_mw(te_filename2->text()));
+         normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
          for ( unsigned int i = 0; i < hist.size(); i++ )
          {
             if ( hist[i] ) {
@@ -1961,9 +1967,10 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #endif
    }
    plotted_pr_not_normalized.push_back(pr);
+   plotted_pr_mw.push_back((float)get_mw(te_filename2->text()));
    if ( cb_normalize->isChecked() )
    {
-      normalize_pr(r, &pr, get_mw(te_filename2->text()));
+      normalize_pr(r, &pr, get_mw(te_filename2->text(),false));
    }
 
    plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
@@ -2005,7 +2012,15 @@ void US_Hydrodyn_Saxs::load_pr()
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
       our_saxs_options->path_load_prr;
 
-   QString filename = QFileDialog::getOpenFileName(use_dir,"*", this);
+   QString filename = QFileDialog::getOpenFileName(use_dir,
+                                                   "All files (*);;"
+                                                   "sprr files (*.sprr_?);;"
+                                                   "csv files (*.csv)"
+                                                   , this
+                                                   , "open file dialog"
+                                                   , "Open"
+                                                   , &load_pr_selected_filter
+                                                   );
    if (filename.isEmpty())
    {
       return;
@@ -2070,6 +2085,51 @@ void US_Hydrodyn_Saxs::load_pr()
          f.close();
 
          QStringList qsl_headers = qsl.grep("\"Name\",\"Type; r:\"");
+         if ( qsl_headers.size() != 0 ) 
+         {
+            cout << "found old csv format, upgrading\n";
+            // upgrade the csv format
+            QRegExp rx("^\"(Type; r:|P\\(r\\)|P\\(r\\) normed)\"$");
+            QStringList new_qsl;
+            for ( unsigned int i = 0; i < qsl.size(); i++ )
+            {
+               QStringList tmp2_qsl;
+               QStringList tmp_qsl = QStringList::split(",",*(qsl.at(i)),true);
+               if ( tmp_qsl.size() > 1 )
+               {
+                  cout << QString("line %1 field 1 is <%1>\n").arg(i).arg(*(tmp_qsl.at(1)));
+               } else {
+                  cout << QString("line %1 size not greater than 1 value <%1>\n").arg(i).arg(*(qsl.at(i)));
+               }
+               if ( tmp_qsl.size() > 1 &&
+                    rx.search(*(tmp_qsl.at(1))) != -1 )
+               {
+                  cout << "trying to fix\n";
+                  QStringList tmp2_qsl;
+                  tmp2_qsl.push_back(*(tmp_qsl.at(0)));
+                  if ( *(tmp_qsl.at(0)) == "\"Name\"" )
+                  {
+                     tmp2_qsl.push_back("\"MW (Daltons)\"");
+                  } else {
+                     tmp2_qsl.push_back(QString("%1").arg(get_mw(*(tmp_qsl.at(0)), false)));
+                  }
+                  for ( unsigned int j = 1; j < tmp_qsl.size(); j++ )
+                  {
+                     tmp2_qsl.push_back(*(tmp_qsl.at(j)));
+                  }
+                  new_qsl.push_back(tmp2_qsl.join(","));
+               } else {
+                  cout << "skipped this line, regexp or length\n";
+                  // simply push back blank lines or lines with only one entry
+                  new_qsl.push_back(*(qsl.at(i)));
+               }
+            }
+            cout << "orginal csv:\n" << qsl.join("\n") << endl;
+            cout << "new csv:\n" << new_qsl.join("\n") << endl;
+            qsl = new_qsl;
+         }
+
+         qsl_headers = qsl.grep("\"Name\",\"MW (Daltons)\",\"Type; r:\"");
          if ( qsl_headers.size() == 0 ) 
          {
             QMessageBox mb(tr("UltraScan Warning"),
@@ -2100,7 +2160,7 @@ void US_Hydrodyn_Saxs::load_pr()
 
          // get the r values
          QStringList qsl_r = QStringList::split(",",*(qsl_headers.at(0)),true);
-         if ( qsl_r.size() < 4 )
+         if ( qsl_r.size() < 5 )
          {
             QMessageBox mb(tr("UltraScan Warning"),
                            tr("The csv file ") + filename + tr(" does not appear to contain any r values in the header rows.\n"),
@@ -2109,9 +2169,9 @@ void US_Hydrodyn_Saxs::load_pr()
             mb.exec();
             return;
          }
-         r.push_back((*qsl_r.at(2)).toDouble());
+         r.push_back((*qsl_r.at(3)).toDouble());
 
-         for ( QStringList::iterator it = qsl_r.at(3); it != qsl_r.end(); it++ )
+         for ( QStringList::iterator it = qsl_r.at(4); it != qsl_r.end(); it++ )
          {
             if ( (*it).toDouble() > r[r.size() - 1] )
             {
@@ -2126,8 +2186,9 @@ void US_Hydrodyn_Saxs::load_pr()
          for ( unsigned int i = 0; i < qsl_plotted_pr_names.size(); i++ )
          {
             vector < double > npr = interpolate(r, plotted_r[i], plotted_pr_not_normalized[i]);
-            QString line = QString("\"%1\",\"P(r)\",%1\n")
+            QString line = QString("\"%1\",%.2f,\"P(r)\",%1\n")
                .arg(qsl_plotted_pr_names[i])
+               .arg(plotted_pr_mw[i])
                .arg(vector_double_to_csv(npr));
             qsl << line;
          }
@@ -2144,7 +2205,6 @@ void US_Hydrodyn_Saxs::load_pr()
          }
 
          QString header_tag = qsl_r.last();
-
 
 #if defined(DEBUG_PR)
          cout << "r values (" << r.size() << "): ";
@@ -2222,6 +2282,7 @@ void US_Hydrodyn_Saxs::load_pr()
          // setup for average & stdev
          vector < double > sum_pr(r.size());
          vector < double > sum_pr2(r.size());
+
          unsigned int sum_count = 0;
          for ( unsigned int i = 0; i < r.size(); i++ )
          {
@@ -2242,6 +2303,9 @@ void US_Hydrodyn_Saxs::load_pr()
          bool found_nnls_target = false;
          bool found_nnls_model = false;
 
+         float pr_mw_avg = 0.0;
+         vector < float > pr_mws;
+
          // now go through qsl_data and load up any that map_sel_names contains
          plotted = false;
          for ( QStringList::iterator it = qsl_data.begin();
@@ -2255,10 +2319,30 @@ void US_Hydrodyn_Saxs::load_pr()
 
                pr.clear();
 
+               // setup for avg mw's
+               // 1st check the line to see if we have a mw
+               {
+                  if ( (*qsl_tmp.at(1)).toFloat() > 0e0 )
+                  {
+                     (*remember_mw)[QFileInfo(*qsl_tmp.at(0)).fileName()] = (*qsl_tmp.at(1)).toFloat();
+                     (*remember_mw_source)[QFileInfo(*qsl_tmp.at(0)).fileName()] = "loaded from csv file";
+                  } else {
+                     if ( (*remember_mw).count(QFileInfo(*qsl_tmp.at(0)).fileName()) )
+                     {
+                        (*remember_mw).erase(QFileInfo(*qsl_tmp.at(0)).fileName());
+                        (*remember_mw_source).erase(QFileInfo(*qsl_tmp.at(0)).fileName());
+                     }
+                  }
+               }
+
+               float tmp_mw = get_mw(*qsl_tmp.at(0), false);
+               pr_mw_avg += tmp_mw;
+               pr_mws.push_back(tmp_mw);
+
                // get the pr values
 
                QStringList qsl_pr = QStringList::split(",",*it,true);
-               if ( qsl_pr.size() < 4 )
+               if ( qsl_pr.size() < 5 )
                {
                   QString msg = tr("The csv file ") + filename + tr(" does not appear to contain sufficient p(r) values in data row " + *qsl_tmp.at(0) + "\n");
                   QColor save_color = editor->color();
@@ -2273,9 +2357,9 @@ void US_Hydrodyn_Saxs::load_pr()
                   break;
                }
                qsl_data_lines_plotted << *it;
-               pr.push_back((*qsl_pr.at(2)).toDouble());
+               pr.push_back((*qsl_pr.at(3)).toDouble());
             
-               for ( QStringList::iterator it = qsl_pr.at(3); it != qsl_pr.end(); it++ )
+               for ( QStringList::iterator it = qsl_pr.at(4); it != qsl_pr.end(); it++ )
                {
                   pr.push_back((*it).toDouble());
                }
@@ -2323,10 +2407,41 @@ void US_Hydrodyn_Saxs::load_pr()
 
                if ( !(create_avg && only_plot_stats) && !run_nnls )
                {
+                  (*remember_mw)[QFileInfo(filename).fileName() + " " + *qsl_tmp.at(0)] = tmp_mw;
+                  (*remember_mw_source)[QFileInfo(filename).fileName() + " " + *qsl_tmp.at(0)] = "loaded from csv";
                   plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " " + *qsl_tmp.at(0));
                }
             }
          }
+         if ( pr_mws.size() )
+         {
+            pr_mw_avg /= pr_mws.size();
+         }
+         (*remember_mw)[QFileInfo(filename).fileName() + " Average"] = pr_mw_avg;
+         (*remember_mw_source)[QFileInfo(filename).fileName() + " Average"] = "computed average from selected csv models";
+         (*remember_mw)["Standard deviation"] = pr_mw_avg;
+         (*remember_mw_source)["Standard deviation"] = "computed average from selected csv models";
+         (*remember_mw)[QFileInfo(filename).fileName() + " Average minus 1 std dev"] = pr_mw_avg;
+         (*remember_mw_source)[QFileInfo(filename).fileName() + " Average minus 1 std dev"] = "computed average from selected csv models";
+         (*remember_mw)[QFileInfo(filename).fileName() + " Average plus 1 std dev"] = pr_mw_avg;
+         (*remember_mw_source)[QFileInfo(filename).fileName() + " Average plus 1 std dev"] = "computed average from selected csv models";
+
+         (*remember_mw)["Average"] = pr_mw_avg;
+         (*remember_mw_source)["Average"] = "computed average from selected csv models";
+         (*remember_mw)["Standard deviation"] = pr_mw_avg;
+         (*remember_mw_source)["Standard deviation"] = "computed average from selected csv models";
+         (*remember_mw)["Average minus 1 standard deviation"] = pr_mw_avg;
+         (*remember_mw_source)["Average minus 1 standard deviation"] = "computed average from selected csv models";
+         (*remember_mw)["Average plus 1 standard deviation"] = pr_mw_avg;
+         (*remember_mw_source)["Average plus 1 standard deviation"] = "computed average from selected csv models";
+
+         (*remember_mw)[csv_filename + " Model"] = pr_mw_avg;
+         (*remember_mw_source)[csv_filename + " Model"] = "computed average from selected csv models";
+         (*remember_mw)[csv_filename + " Residual"] = pr_mw_avg;
+         (*remember_mw_source)[csv_filename + " Residual"] = "computed average from selected csv models";
+         (*remember_mw)[csv_filename + " Target"] = pr_mw_avg;
+         (*remember_mw_source)[csv_filename + " Target"] = "computed average from selected csv models";
+
          if ( create_avg && sum_count && !run_nnls)
          {
             pr = sum_pr;
@@ -2447,29 +2562,36 @@ void US_Hydrodyn_Saxs::load_pr()
                if ( of )
                {
                   //  header: "name","type",r1,r2,...,rn, header info
-                  fprintf(of, "\"Name\",\"Type; r:\",%s,%s\n", 
+                  fprintf(of, "\"Name\",\"MW (Daltons)\",\"Type; r:\",%s,%s\n", 
                           vector_double_to_csv(r).ascii(),
                           header_tag.ascii());
                   if ( save_original_data )
                   {
                      fprintf(of, "%s\n", qsl_data_lines_plotted.join("\n").ascii());
                   }
-                  fprintf(of, "\"%s\",\"%s\",%s\n", 
-                             "Average",
-                             "P(r)",
-                             vector_double_to_csv(pr_avg).ascii());
-                  fprintf(of, "\"%s\",\"%s\",%s\n", 
+                  fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+                          "Average",
+                          pr_mw_avg,
+                          "P(r)",
+                          vector_double_to_csv(pr_avg).ascii());
+                  if ( pr_std_dev.size() )
+                  {
+                     fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
                              "Standard deviation",
+                             pr_mw_avg,
                              "P(r)",
                              vector_double_to_csv(pr_std_dev).ascii());
-                  fprintf(of, "\"%s\",\"%s\",%s\n", 
+                     fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
                              "Average minus 1 standard deviation",
+                             pr_mw_avg,
                              "P(r)",
                              vector_double_to_csv(pr_avg_minus_std_dev).ascii());
-                  fprintf(of, "\"%s\",\"%s\",%s\n", 
+                     fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
                              "Average plus 1 standard deviation",
+                             pr_mw_avg,
                              "P(r)",
                              vector_double_to_csv(pr_avg_plus_std_dev).ascii());
+                  }
                   if ( !save_original_data )
                   {
                      fprintf(of, "\n\n\"%s\"\n", 
@@ -2532,7 +2654,16 @@ void US_Hydrodyn_Saxs::load_pr()
 
       QTextStream ts(&f);
       //      editor->append(QString("\nLoading pr(r) data from %1 %2\n").arg(filename).arg(res));
-      editor->append(ts.readLine());
+      QString firstLine = ts.readLine();
+      QRegExp sprr_mw_line("mw\\s+(\\S+)\\s+Daltons");
+      float mw = 0.0;
+      if ( sprr_mw_line.search(firstLine) != -1 )
+      {
+         mw = sprr_mw_line.cap(1).toFloat();
+         (*remember_mw)[QFileInfo(filename).fileName()] = mw;
+         (*remember_mw_source)[QFileInfo(filename).fileName()] = "loaded from sprr file";
+      }
+      editor->append(firstLine);
       while ( startline > 0 )
       {
          ts.readLine();
@@ -2554,7 +2685,13 @@ void US_Hydrodyn_Saxs::load_pr()
          pr.pop_back();
          pop_last--;
       }
-      plot_one_pr(r, pr,  QFileInfo(filename).fileName() + " P(r)");
+      QString use_filename = QFileInfo(filename).fileName() + " P(r)";
+      if ( mw )
+      {
+         (*remember_mw)[use_filename] = mw;
+         (*remember_mw_source)[use_filename] = "loaded from sprr file";
+      }         
+      plot_one_pr(r, pr, use_filename);
    }
 }
 
@@ -2562,6 +2699,7 @@ void US_Hydrodyn_Saxs::clear_plot_pr()
 {
    plotted_pr.clear();
    plotted_pr_not_normalized.clear();
+   plotted_pr_mw.clear();
    plotted_r.clear();
    qsl_plotted_pr_names.clear();
    dup_plotted_pr_name_check.clear();
@@ -4250,31 +4388,35 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString csv_filename )
       if ( of )
       {
          //  header: "name","type",r1,r2,...,rn, header info
-         fprintf(of, "\"Name\",\"Type; r:\",%s,%s\n", 
+         fprintf(of, "\"Name\",\"MW (Daltons)\",\"Type; r:\",%s,%s\n", 
                  vector_double_to_csv(nnls_r).ascii(),
                  QString("NNLS fit residual %1 : %2").arg(nnls_rmsd).arg(nnls_header_tag).ascii());
          // original models
          for ( unsigned int i = 0; i < use_x.size(); i++ )
          {
-            fprintf(of, "\"%s\",\"%s\",%s\n", 
+            fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
                     QString("%1 %2").arg(model_names[i]).arg(rescaled_x[i]).ascii(),
+                    get_mw(model_names[i], false),
                     "P(r)",
                     vector_double_to_csv(nnls_A[model_names[i]]).ascii());
          }
          // target
-         fprintf(of, "\"%s\",\"%s\",%s\n", 
+         fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
                  QString("Target %2").arg(nnls_B_name).ascii(),
+                 get_mw(model_names[0], false),
                  "P(r)",
                  vector_double_to_csv(nnls_B).ascii());
 
          // best fit model
-         fprintf(of, "\"%s\",\"%s\",%s\n", 
+         fprintf(of, "\"%s\",%.2f\"%s\",%s\n", 
                  "Model",
+                 get_mw(model_names[0], false),
                  "P(r)",
                  vector_double_to_csv(model).ascii());
          
-         fprintf(of, "\"%s\",\"%s\",%s\n", 
+         fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
                  "Residual",
+                 get_mw(model_names[0], false),
                  "P(r)",
                  vector_double_to_csv(residual).ascii());
 
@@ -4311,10 +4453,10 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    plotted_r.push_back(r);
 
    plotted_pr_not_normalized.push_back(pr);
+   plotted_pr_mw.push_back(get_mw(name,false));
 
    if ( cb_normalize->isChecked() )
    {
-      get_mw(name);
       normalize_pr(r, &pr, get_mw(name));
    }
 
@@ -4470,7 +4612,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                   get_mw(filename);
                   if ( cb_normalize->isChecked() )
                   {
-                     normalize_pr(r, &pr, get_mw(filename));
+                     normalize_pr(r, &pr, get_mw(filename, false));
                   }
                   plot_one_pr(r, pr, QFileInfo(filename).fileName());
                   if ( plotted )
@@ -5272,7 +5414,7 @@ void US_Hydrodyn_Saxs::crop_iq_data( vector < double > &q,
    }
 }
 
-double US_Hydrodyn_Saxs::get_mw( QString filename )
+double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
 {
    // enter MW and PSV
    filename = QFileInfo(filename).fileName();
@@ -5281,11 +5423,15 @@ double US_Hydrodyn_Saxs::get_mw( QString filename )
    bool use_partial = false;
    QString partial = filename;
    QString msg = QString(tr(" Enter values for total molecular weight: "));
-   
+   QString source = "";
    bool found = false;
    if ( (*remember_mw).count(filename) )
    {
       mw = (*remember_mw)[filename];
+      if ( (*remember_mw_source).count(filename) )
+      {
+         source = (*remember_mw_source)[filename];
+      }
       found = true;
    } else {
       if ( !(*match_remember_mw).empty() )
@@ -5295,12 +5441,13 @@ double US_Hydrodyn_Saxs::get_mw( QString filename )
               it != (*match_remember_mw).end();
               it++)
          {
-            printf("iterator first %s\n", it->first.ascii());
-            printf("iterator second %f\n", it->second);
+            // printf("iterator first %s\n", it->first.ascii());
+            // printf("iterator second %f\n", it->second);
             
             if ( filename.contains(it->first) )
             {
                mw = (*match_remember_mw)[it->first];
+               source = QString(tr("file name matched \"%1\"")).arg(it->first);
                found = true;
                break;
             }
@@ -5310,11 +5457,19 @@ double US_Hydrodyn_Saxs::get_mw( QString filename )
    
    if ( found ) 
    {
-      editor->append(QString("Recalled: mw %1\n").arg(mw));
+      if ( display_mw_msg )
+      {
+         editor->append(QString("%1 Molecular weight %1 (%1)\n")
+                        .arg(filename)
+                        .arg(mw)
+                        .arg(source)
+                        );
+      }
    } else {
       US_Hydrodyn_Saxs_Mw *smw = new US_Hydrodyn_Saxs_Mw(
                                                          msg,
                                                          &mw,
+                                                         &last_used_mw,
                                                          &remember,
                                                          &use_partial,
                                                          &partial,
@@ -5323,6 +5478,7 @@ double US_Hydrodyn_Saxs::get_mw( QString filename )
       do {
          smw->exec();
       } while ( mw <= 0.0 );
+      last_used_mw = mw;
       
       delete smw;
       this->isVisible() ? this->raise() : this->show();
@@ -5330,6 +5486,7 @@ double US_Hydrodyn_Saxs::get_mw( QString filename )
       if ( remember ) 
       {
          (*remember_mw)[filename] = mw;
+         (*remember_mw_source)[filename] = "manually entered value";
       }
       if ( use_partial ) 
       {

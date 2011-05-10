@@ -848,6 +848,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
    int linepos = 0;
    results.asa_rg_pos = -1e0;
    results.asa_rg_neg = -1e0;
+   float tmp_mw = 0e0;
 
    if (ftype == "bead_model")
    {
@@ -896,6 +897,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
             if (!ts.atEnd()) {
                ts >>  tmp_atom.bead_mw;
                tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
+               tmp_mw += tmp_atom.bead_mw;
             }
             else
             {
@@ -976,8 +978,9 @@ int US_Hydrodyn::read_bead_model(QString filename)
             }
          }
          editor->setCurrentFont(save_font);
-         editor->append(QString("\nvbar: %1\n\n").arg(results.vbar));
+         editor->append(QString("\nvbar: %1\n").arg(results.vbar));
          f.close();
+         editor->append(QString("\nMolecular weight: %1 Daltons\n\n").arg(tmp_mw));
          if (bead_count != (int)bead_model.size())
          {
             editor->append(QString("Error: bead count %1 does not match # of beads read from file (%2) \n").arg(bead_count).arg(bead_model.size()));
@@ -1085,6 +1088,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                if (!tsrmc.atEnd()) {
                   tsrmc >>  tmp_atom.bead_mw;
                   tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
+                  tmp_mw += tmp_atom.bead_mw;
                }
                else
                {
@@ -1141,6 +1145,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;
+         editor->append(QString("\nMolecular weight: %1 Daltons\n\n").arg(tmp_mw));
          return(overlap_check(true, true, true,
                               hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance));
       }
@@ -1399,7 +1404,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 
          if ( found ) 
          {
-            editor->append(QString("Recalled: psv %1, mw %2\n").arg(psv).arg(mw));
+            editor->append(QString("Recalled: psv %1, mw %2 Daltons\n").arg(psv).arg(mw));
          } else {
             US_Hydrodyn_Dammin_Opts *hdo = new US_Hydrodyn_Dammin_Opts(
                                                                        msg,
@@ -1420,6 +1425,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
             {
                dammix_remember_psv[filename] = psv;
                dammix_remember_mw[filename] = mw;
+               dammix_remember_mw_source[filename] =
+                  "manually entered upon load of dummy atom model";
             }
             if ( use_partial ) 
             {
@@ -1429,6 +1436,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
             }
          }
 
+         editor->append(QString("Molecular weight %1 Daltons\n").arg(mw));
          results.vbar = psv;
          mw /= bead_count;
 

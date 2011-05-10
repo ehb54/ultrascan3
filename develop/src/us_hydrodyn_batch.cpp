@@ -1313,6 +1313,7 @@ void US_Hydrodyn_Batch::start()
       saxs_r.clear();
       saxs_prr.clear();
       saxs_prr_norm.clear();
+      saxs_prr_mw.clear();
    }
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
@@ -1520,6 +1521,7 @@ void US_Hydrodyn_Batch::start()
                         }
                         saxs_prr.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr);
                         saxs_prr_norm.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm);
+                        saxs_prr_mw.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_mw);
                      }
                   }
                } else {
@@ -1538,6 +1540,7 @@ void US_Hydrodyn_Batch::start()
                      }
                      saxs_prr.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr);
                      saxs_prr_norm.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm);
+                     saxs_prr_mw.push_back(((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_mw);
                   }
                }                  
                restore_us_hydrodyn_settings();
@@ -1606,6 +1609,7 @@ void US_Hydrodyn_Batch::start()
       saxs_r.clear();
       saxs_prr.clear();
       saxs_prr_norm.clear();
+      saxs_prr_mw.clear();
    }
    if ( save_batch_active )
    {
@@ -2199,6 +2203,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
       vector < double > pr_std_dev;
       vector < double > pr_avg_minus_std_dev;
       vector < double > pr_avg_plus_std_dev;
+
       unsigned int sum_count = 0;
       for ( unsigned int i = 0; i < saxs_r.size(); i++ )
       {
@@ -2279,43 +2284,55 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
       }                                 
 
       //  header: "name","type",r1,r2,...,rn, header info
-      fprintf(of, "\"Name\",\"Type; r:\",%s,\"%s\"\n", 
+      fprintf(of, "\"Name\",\"MW (Daltons)\",\"Type; r:\",%s,\"%s\"\n", 
               vector_double_to_csv(saxs_r).ascii(),
               saxs_header_prr.remove("\n").ascii()
               );
+      float sum_mw = 0.0;
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
-         fprintf(of, "\"%s\",\"%s\",%s\n", 
+         sum_mw += saxs_prr_mw[i];
+         fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
                  csv_source_name_prr[i].ascii(),
+                 saxs_prr_mw[i],
                  "P(r)",
                  vector_double_to_csv(saxs_prr[i]).ascii());
       }
       fprintf(of, "\n");
+      if ( csv_source_name_prr.size() )
+      {
+         sum_mw /= csv_source_name_prr.size();
+      }
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
-         fprintf(of, "\"%s\",\"%s\",%s\n", 
+         fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
                  csv_source_name_prr[i].ascii(),
+                 saxs_prr_mw[i],
                  "P(r) normed",
                  vector_double_to_csv(saxs_prr_norm[i]).ascii());
       }
       if ( batch->compute_prr_avg && sum_count > 1 )
       {
-         fprintf(of, "\n\"%s\",\"%s\",%s\n", 
+         fprintf(of, "\n\"%s\",%.2f,\"%s\",%s\n", 
                  "Average",
+                 sum_mw,
                  "P(r)",
                  vector_double_to_csv(pr_avg).ascii());
          if ( batch->compute_prr_std_dev && sum_count > 2 )
          {
-            fprintf(of, "\"%s\",\"%s\",%s\n", 
+            fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
                     "Standard deviation",
+                    sum_mw,
                     "P(r)",
                     vector_double_to_csv(pr_std_dev).ascii());
-            fprintf(of, "\"%s\",\"%s\",%s\n", 
+            fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
                     "Average minus 1 standard deviation",
+                    sum_mw,
                     "P(r)",
                     vector_double_to_csv(pr_avg_minus_std_dev).ascii());
-            fprintf(of, "\"%s\",\"%s\",%s\n", 
+            fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
                     "Average plus 1 standard deviation",
+                    sum_mw,
                     "P(r)",
                     vector_double_to_csv(pr_avg_plus_std_dev).ascii());
          }

@@ -7008,19 +7008,18 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
 
 void US_Hydrodyn::calc_mw() 
 {
-   puts("calc_mw()\n");
    unsigned int save_current_model = current_model;
    QString error_string;
    for (unsigned int i = 0; i < model_vector.size(); i++)
    {
-      current_model = i;;
-      model_vector[i].mw = 0e0;
+      current_model = i;
+      model_vector[i].mw = 0.0;
       create_beads(&error_string, true);
       if( !error_string.length() ) 
       {
          for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
          {
-            model_vector[i].molecule[j].mw = 0e0;
+            model_vector[i].molecule[j].mw = 0.0;
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
             {
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
@@ -7031,13 +7030,23 @@ void US_Hydrodyn::calc_mw()
                   model_vector[i].molecule[j].mw += this_atom->mw;
                }
             }
-            printf("model %u chain %u mw %g\n",
-                   i, j, model_vector[i].molecule[j].mw);
+            // printf("model %u chain %u mw %g\n",
+            //i, j, model_vector[i].molecule[j].mw);
+            if (model_vector[i].molecule[j].mw != 0.0 )
+            {
+               editor->append(QString(tr("\nModel: %1 Chain: %1 Molecular weight %1 Daltons"))
+                              .arg(model_vector[i].model_id)
+                              .arg(model_vector[i].molecule[j].chainID)
+                              .arg(model_vector[i].molecule[j].mw));
+            }
          }
       }
-      printf("model %u  mw %g\n",
-             i, model_vector[i].mw);
+      editor->append(QString(tr("\nModel: %1 Molecular weight %1 Daltons"))
+                     .arg(model_vector[i].model_id)
+                     .arg(model_vector[i].mw));
+      // printf("model %u  mw %g\n",
+      //       i, model_vector[i].mw);
    }
-   puts("calc_mw() done\n");
+   editor->append("\n");
    current_model = save_current_model;
 }

@@ -140,10 +140,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
       vector < double > last_saxs_r;
       vector < double > last_saxs_prr;
       vector < double > last_saxs_prr_norm;
+      float last_saxs_prr_mw;
 
       map < QString, float > dammix_remember_mw;
       map < QString, float > dammix_match_remember_mw;
-
+      map < QString, QString > dammix_remember_mw_source;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -167,7 +168,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool residue_widget;
       bool atom_widget;
       bool hybrid_widget;
-      bool saxs_widget;
       bool asa_widget;
       bool overlap_widget;
       bool grid_overlap_widget;
@@ -183,6 +183,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool bd_options_widget;
       bool anaflex_options_widget;
       bool dmd_options_widget;
+      bool saxs_widget;
       bool saxs_plot_widget;
       bool advanced_config_widget;
       bool save_widget;
