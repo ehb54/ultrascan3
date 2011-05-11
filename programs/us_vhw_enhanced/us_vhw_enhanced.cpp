@@ -256,27 +256,27 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
       {
          s        = &d->scanData[ ii ];
          scplats[ ii ] = s->plateau;
-//DbgLv(1) << "p: scan " << ii+1;
          plateau  = zone_plateau( );
+DbgLv(2) << "p: scan " << ii+1 << " plateau" << plateau << s->plateau;
 
          if ( plateau > 0.0 )
          {  // save reliable scan plateaus
             plats.append( plateau );
             isrel.append( ii );
             nrelp++;
-//DbgLv(1) << "p:    *RELIABLE* " << ii+1 << nrelp;
+DbgLv(2) << "p:    *RELIABLE* " << ii+1 << nrelp;
          }
 
          else
          {  // save index to scan with no reliable plateau
             isunr.append( ii );
             nunrp++;
-//DbgLv(1) << "p:    -UNreliable- " << ii+1 << nunrp;
+DbgLv(2) << "p:    -UNreliable- " << ii+1 << nunrp;
          }
-//DbgLv(1) << "p: nrelp nunrp " << nrelp << nunrp;
-//DbgLv(1) << "  RELIABLE: 1st " << isrel.at(0)+1 << "  last" << isrel.last()+1;
+//DbgLv(2) << "p: nrelp nunrp " << nrelp << nunrp;
+//DbgLv(2) << "  RELIABLE: 1st " << isrel.at(0)+1 << "  last" << isrel.last()+1;
 //if(nunrp>0) {
-//DbgLv(1) << "  UNreli: 1st " << isunr.at(0)+1 << "  last " << isunr.last()+1;
+//DbgLv(2) << "  UNreli: 1st " << isunr.at(0)+1 << "  last " << isunr.last()+1;
 //for (int jj=0;jj<isunr.size();jj++) DbgLv(1) << "    UNr: " << isunr.at(jj)+1;
 //}
       }
@@ -321,6 +321,18 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
    double  sigma;
    double  corre;
    cpds.clear();
+
+   if ( nrelp < 4 )
+   {
+      QString wmsg = ( nrelp == 1 ) ?
+         tr( "Only 1 scan plateau was found to be reliable." ) :
+         tr( "Only %1 scan plateaus were found to be reliable." ).arg( nrelp );
+      wmsg = wmsg + 
+         tr ( "\nNot able to interpolate plateaus for the remaining scans.\n\n"
+              "A new US_Edit session might be required for this data set." );
+      QMessageBox::warning( this,
+         tr( "Insufficient Reliable Plateaus" ), wmsg );
+   }
 
    US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, nrelp );
 
@@ -1031,10 +1043,13 @@ double US_vHW_Enhanced::zone_plateau( )
 {
    double  plato  = -1.0;
    valueCount     = s->readings.size();
+   int     j3     = valueCount - PZ_POINTS - 2;
    int     j2     = first_gteq( s->plateau, s->readings, valueCount, 0 );
 DbgLv(2) << "      j2=" << j2 << " s->plateau" << s->plateau;
+           j2     = min( j2, j3 );
+DbgLv(2) << "        j2=" << j2;
    int     nzp    = PZ_POINTS;
-   int     j3     = min( ( j2 + nzp / 2 ), ( valueCount - 1 ) );
+           j3     = min( ( j2 + nzp / 2 ), ( valueCount - 1 ) );
    int     j1     = max( ( j3 - nzp + 1 ), 0 );
    int     f1     = j1;
    int     lastj  = valueCount - f1;
