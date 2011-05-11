@@ -283,15 +283,6 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_curve->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_curve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   cb_hydrate_pdb = new QCheckBox(this);
-   cb_hydrate_pdb->setText(tr(" Hydrate the Original Model (PDB files only)"));
-   cb_hydrate_pdb->setEnabled(true);
-   cb_hydrate_pdb->setChecked((*saxs_options).hydrate_pdb);
-   cb_hydrate_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_hydrate_pdb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_hydrate_pdb, SIGNAL(clicked()), this, SLOT(set_hydrate_pdb()));
-   set_hydrate_pdb();
-
    lbl_wavelength = new QLabel(tr(" Wavelength (Angstrom): "), this);
    Q_CHECK_PTR(lbl_wavelength);
    lbl_wavelength->setAlignment(AlignLeft|AlignVCenter);
@@ -418,6 +409,36 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cnt_delta_q->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_delta_q, SIGNAL(valueChanged(double)), SLOT(update_delta_q(double)));
 
+   cb_hydrate_pdb = new QCheckBox(this);
+   cb_hydrate_pdb->setText(tr(" Hydrate the Original Model (PDB files only)"));
+   cb_hydrate_pdb->setEnabled(true);
+   cb_hydrate_pdb->setChecked((*saxs_options).hydrate_pdb);
+   cb_hydrate_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_hydrate_pdb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_hydrate_pdb, SIGNAL(clicked()), this, SLOT(set_hydrate_pdb()));
+   set_hydrate_pdb();
+
+   cb_normalize_by_mw = new QCheckBox(this);
+   cb_normalize_by_mw->setText(tr(" Normalize P(r) vs r curve by molecular weight"));
+   cb_normalize_by_mw->setEnabled(true);
+   cb_normalize_by_mw->setChecked((*saxs_options).normalize_by_mw);
+   cb_normalize_by_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_normalize_by_mw->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_normalize_by_mw, SIGNAL(clicked()), this, SLOT(set_normalize_by_mw()));
+
+   lbl_misc = new QLabel(tr("Miscellaneous Options:"), this);
+   lbl_misc->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_misc->setAlignment(AlignCenter|AlignVCenter);
+   lbl_misc->setMinimumHeight(minHeight1);
+   lbl_misc->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_misc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   pb_clear_mw_cache = new QPushButton(tr("Clear remembered molecular weights"), this);
+   pb_clear_mw_cache->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_clear_mw_cache->setMinimumHeight(minHeight1);
+   pb_clear_mw_cache->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_clear_mw_cache, SIGNAL(clicked()), SLOT(clear_mw_cache()));
+
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -432,10 +453,10 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=9, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=9, columns = 4, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   background->addMultiCellWidget(lbl_info, j, j, 0, 3);
    j++;
 
    background->addMultiCellWidget(lbl_saxs_options, j, j, 0, 1);
@@ -483,34 +504,50 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addWidget(cnt_pointsmax, j, 1);
    j++;
 
-   background->addMultiCellWidget(lbl_curve, j, j, 0, 1);
-   j++;
-   background->addWidget(lbl_wavelength, j, 0);
-   background->addWidget(cnt_wavelength, j, 1);
-   j++;
-   background->addWidget(lbl_start_angle, j, 0);
-   background->addWidget(cnt_start_angle, j, 1);
-   j++;
-   background->addWidget(lbl_end_angle, j, 0);
-   background->addWidget(cnt_end_angle, j, 1);
-   j++;
-   background->addWidget(lbl_delta_angle, j, 0);
-   background->addWidget(cnt_delta_angle, j, 1);
-   j++;
-   background->addWidget(lbl_start_q, j, 0);
-   background->addWidget(cnt_start_q, j, 1);
-   j++;
-   background->addWidget(lbl_end_q, j, 0);
-   background->addWidget(cnt_end_q, j, 1);
-   j++;
-   background->addWidget(lbl_delta_q, j, 0);
-   background->addWidget(cnt_delta_q, j, 1);
-   j++;
-   background->addMultiCellWidget(cb_hydrate_pdb, j, j, 0, 1);
-   j++;
+   // column grouping 2
 
-   background->addWidget(pb_help, j, 0);
-   background->addWidget(pb_cancel, j, 1);
+   int k = 1;
+   
+   background->addMultiCellWidget(lbl_curve, k, k, 2, 3);
+   k++;
+   background->addWidget(lbl_wavelength, k, 2);
+   background->addWidget(cnt_wavelength, k, 3);
+   k++;
+   background->addWidget(lbl_start_angle, k, 2);
+   background->addWidget(cnt_start_angle, k, 3);
+   k++;
+   background->addWidget(lbl_end_angle, k, 2);
+   background->addWidget(cnt_end_angle, k, 3);
+   k++;
+   background->addWidget(lbl_delta_angle, k, 2);
+   background->addWidget(cnt_delta_angle, k, 3);
+   k++;
+   background->addWidget(lbl_start_q, k, 2);
+   background->addWidget(cnt_start_q, k, 3);
+   k++;
+   background->addWidget(lbl_end_q, k, 2);
+   background->addWidget(cnt_end_q, k, 3);
+   k++;
+   background->addWidget(lbl_delta_q, k, 2);
+   background->addWidget(cnt_delta_q, k, 3);
+   k++;
+   background->addMultiCellWidget(cb_hydrate_pdb, k, k, 2, 3);
+   k++;
+   background->addMultiCellWidget(cb_normalize_by_mw, k, k, 2, 3);
+   k++;
+
+   background->addMultiCellWidget(lbl_misc, k, k, 2, 3);
+   k++;
+   background->addMultiCellWidget(pb_clear_mw_cache, k, k, 2, 3);
+   k++;
+
+   if ( k > j )
+   {
+      j = k;
+   }
+
+   background->addMultiCellWidget(pb_help, j, j, 0, 1);
+   background->addMultiCellWidget(pb_cancel, j, j, 2, 3);
 
    setMinimumWidth(550);
 }
@@ -518,6 +555,22 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 void US_Hydrodyn_SaxsOptions::cancel()
 {
    close();
+}
+
+void US_Hydrodyn_SaxsOptions::clear_mw_cache()
+{
+   if ( !((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw.size() &&
+        !((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source.size() &&
+        !((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw.size() )
+   {
+      QMessageBox::information( this,
+                                "UltraScan",
+                                tr("The molecular weight cache is already empty") );
+   }      
+          
+   ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw.clear();
+   ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source.clear();
+   ((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw.clear();
 }
 
 void US_Hydrodyn_SaxsOptions::help()
@@ -708,6 +761,12 @@ void US_Hydrodyn_SaxsOptions::update_delta_q(double val)
 void US_Hydrodyn_SaxsOptions::set_hydrate_pdb()
 {
    (*saxs_options).hydrate_pdb = cb_hydrate_pdb->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_normalize_by_mw()
+{
+   (*saxs_options).normalize_by_mw = cb_normalize_by_mw->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

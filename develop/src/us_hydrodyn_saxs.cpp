@@ -1023,6 +1023,10 @@ void saxs_pr_thr_t::run()
 
 void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr , double mw )
 {
+   if ( !our_saxs_options->normalize_by_mw )
+   {
+      mw = 1e0;
+   }
 #if defined(NORMALIZE_OLD_WAY)
    // set distribution to a 1 peak
    double max = 0e0;

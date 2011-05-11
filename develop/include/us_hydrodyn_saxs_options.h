@@ -65,6 +65,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel *lbl_start_q;
       QLabel *lbl_end_q;
       QLabel *lbl_delta_q;
+
+      QLabel *lbl_misc;
       
       QwtCounter *cnt_water_e_density;
 
@@ -91,8 +93,10 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QwtCounter *cnt_end_q;
       QwtCounter *cnt_delta_q;
 
+      QCheckBox  *cb_hydrate_pdb;
+      QCheckBox  *cb_normalize_by_mw;
 
-      QCheckBox *cb_hydrate_pdb;
+      QPushButton *pb_clear_mw_cache;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -128,6 +132,9 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void update_delta_q(double);
 
       void set_hydrate_pdb();
+      void set_normalize_by_mw();
+
+      void clear_mw_cache();
 
       void cancel();
       void help();

@@ -166,6 +166,8 @@ struct saxs_options
    double           qend;
    unsigned int     pointsmin;
    unsigned int     pointsmax;
+
+   bool             normalize_by_mw;
 };
 
 struct hybridization

@@ -212,6 +212,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    dmd_options.threshold_pb_sc = 5;
    dmd_options.threshold_sc_sc = 5;
 
+   saxs_options.normalize_by_mw = true;
+
    // this should be stored in the residue file, hardcoded for now
 
    residue_short_names["GLY"] = 'G';
