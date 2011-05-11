@@ -227,6 +227,10 @@ void US_Hydrodyn_Saxs_Load_Csv::select_all()
    {
       lb_names->setSelected(i, select_all);
    }
+   if ( select_all )
+   {
+      lb_names->setBottomItem(lb_names->numRows() - 1);
+   }
 }
 
 void US_Hydrodyn_Saxs_Load_Csv::ok()

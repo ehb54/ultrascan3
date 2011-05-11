@@ -2095,16 +2095,16 @@ void US_Hydrodyn_Saxs::load_pr()
             {
                QStringList tmp2_qsl;
                QStringList tmp_qsl = QStringList::split(",",*(qsl.at(i)),true);
-               if ( tmp_qsl.size() > 1 )
-               {
-                  cout << QString("line %1 field 1 is <%1>\n").arg(i).arg(*(tmp_qsl.at(1)));
-               } else {
-                  cout << QString("line %1 size not greater than 1 value <%1>\n").arg(i).arg(*(qsl.at(i)));
-               }
+               // if ( tmp_qsl.size() > 1 )
+               // {
+               //      cout << QString("line %1 field 1 is <%1>\n").arg(i).arg(*(tmp_qsl.at(1)));
+               // } else {
+               // cout << QString("line %1 size not greater than 1 value <%1>\n").arg(i).arg(*(qsl.at(i)));
+               // }
                if ( tmp_qsl.size() > 1 &&
                     rx.search(*(tmp_qsl.at(1))) != -1 )
                {
-                  cout << "trying to fix\n";
+                  // cout << "trying to fix\n";
                   QStringList tmp2_qsl;
                   tmp2_qsl.push_back(*(tmp_qsl.at(0)));
                   if ( *(tmp_qsl.at(0)) == "\"Name\"" )
@@ -2119,13 +2119,13 @@ void US_Hydrodyn_Saxs::load_pr()
                   }
                   new_qsl.push_back(tmp2_qsl.join(","));
                } else {
-                  cout << "skipped this line, regexp or length\n";
+                  // cout << "skipped this line, regexp or length\n";
                   // simply push back blank lines or lines with only one entry
                   new_qsl.push_back(*(qsl.at(i)));
                }
             }
-            cout << "orginal csv:\n" << qsl.join("\n") << endl;
-            cout << "new csv:\n" << new_qsl.join("\n") << endl;
+            // cout << "orginal csv:\n" << qsl.join("\n") << endl;
+            // cout << "new csv:\n" << new_qsl.join("\n") << endl;
             qsl = new_qsl;
          }
 
@@ -2402,6 +2402,18 @@ void US_Hydrodyn_Saxs::load_pr()
                {
                   sum_pr[i] += pr[i];
                   sum_pr2[i] += pr[i] * pr[i];
+                  if ( isnan(pr[i]) ) 
+                  {
+                     cout << QString("WARNING: isnan pr[%1] for %1\n").arg(i).arg(*qsl_tmp.at(0));
+                  }
+                  if ( isnan(sum_pr[i]) ) 
+                  {
+                     cout << QString("WARNING: isnan sum_pr[%1] for %1\n").arg(i).arg(*qsl_tmp.at(0));
+                  }
+                  if ( isnan(sum_pr2[i]) ) 
+                  {
+                     cout << QString("WARNING: isnan sum_pr2[%1] for %1\n").arg(i).arg(*qsl_tmp.at(0));
+                  }
                }
                sum_count++;
 
@@ -2471,9 +2483,35 @@ void US_Hydrodyn_Saxs::load_pr()
                vector < double > std_dev(sum_pr.size());
                for ( unsigned int i = 0; i < sum_pr.size(); i++ )
                {
-                  std_dev[i] = sqrt(
-                                    ( 1e0 / ((double)sum_count - 1e0) ) *
-                                    ( sum_pr2[i] - ((sum_pr[i] * sum_pr[i]) / (double)sum_count) ) );
+                  double tmp_std_dev = 
+                     sum_pr2[i] - ((sum_pr[i] * sum_pr[i]) / (double)sum_count);
+                  std_dev[i] = 
+                     tmp_std_dev > 0e0 ?
+                     sqrt( ( 1e0 / ((double)sum_count - 1e0) ) * tmp_std_dev ) : 0e0;
+                  if ( isnan(sum_pr[i]) ) 
+                  {
+                     cout << QString("WARNING when calc'ing std dev: isnan sum_pr[%1]\n").arg(i);
+                  }
+                  if ( isnan(sum_pr2[i]) ) 
+                  {
+                     cout << QString("WARNING when calc'ing std dev: isnan sum_pr2[%1]\n").arg(i);
+                  }
+                  if ( isnan(std_dev[i]) ) 
+                  {
+                     cout << 
+                        QString("WARNING when calc'ing std dev: isnan std_dev[%1]:\n"
+                                " sum_pr[%1]  == %1\n"
+                                " sum_pr2[%1] == %1\n"
+                                " sum_count   == %1\n"
+                                " sum_pr2 - ((sum_pr * sum_pr) / sum_count)   == %1\n"
+                                )
+                        .arg(i)
+                        .arg(i).arg(sum_pr[i])
+                        .arg(i).arg(sum_pr2[i])
+                        .arg(sum_count)
+                        .arg(sum_pr2[i] - ((sum_pr[i] * sum_pr[i]) / (double)sum_count) )
+                        ;
+                  }
                }
 
                pr_std_dev = std_dev;
@@ -5436,7 +5474,7 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
    } else {
       if ( !(*match_remember_mw).empty() )
       {
-         puts("dammix_match_remember not empty");
+         // puts("dammix_match_remember not empty");
          for (map < QString, float >::iterator it = (*match_remember_mw).begin();
               it != (*match_remember_mw).end();
               it++)
