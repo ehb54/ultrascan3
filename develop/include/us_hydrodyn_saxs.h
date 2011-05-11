@@ -255,6 +255,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < double > rescale( vector < double > x );
 
       QString vector_double_to_csv( vector < double > vd );
+      double compute_pr_area( vector < double > vd, vector < double > r );
       void calc_nnls_fit( QString save_to_csv_name = "" );
       void plot_one_pr(vector < double > r, vector < double > pr, QString name);
       void plot_one_iqq(vector < double > q, vector < double > I, QString name);

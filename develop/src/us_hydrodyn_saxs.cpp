@@ -1860,18 +1860,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
-               QString("")
-                  .sprintf(
-                           "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons\n"
-                           , model_filename.ascii()
-                           , US_Version.ascii()
-                           , REVISION
-                           , delta
-                           , get_mw(te_filename2->text(), false)
-                           );
-               fprintf(fpr, "%s",
-                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
                vector < double > r;
                vector < double > pr;
                vector < double > pr_n;
@@ -1885,6 +1873,19 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   pr_n[i] = (double) hist[i];
                }
                normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
+               QString("")
+                  .sprintf(
+                           "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
+                           , model_filename.ascii()
+                           , US_Version.ascii()
+                           , REVISION
+                           , delta
+                           , get_mw(te_filename2->text(), false)
+                           , compute_pr_area(pr, r)
+                           );
+               fprintf(fpr, "%s",
+                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
                fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
                for ( unsigned int i = 0; i < hist.size(); i++ )
                {
@@ -1919,16 +1920,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
-            QString("")
-            .sprintf(
-                     "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons\n"
-                     , model_filename.ascii()
-                     , US_Version.ascii()
-                     , REVISION
-                     , delta
-                     , get_mw(te_filename2->text(), false)
-                     );
          vector < double > r;
          vector < double > pr;
          vector < double > pr_n;
@@ -1942,6 +1933,17 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             pr_n[i] = (double) hist[i];
          }
          normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
+            QString("")
+            .sprintf(
+                     "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
+                     , model_filename.ascii()
+                     , US_Version.ascii()
+                     , REVISION
+                     , delta
+                     , get_mw(te_filename2->text(), false)
+                     , compute_pr_area(pr, r)
+                     );
          for ( unsigned int i = 0; i < hist.size(); i++ )
          {
             if ( hist[i] ) {
@@ -2091,6 +2093,7 @@ void US_Hydrodyn_Saxs::load_pr()
             // upgrade the csv format
             QRegExp rx("^\"(Type; r:|P\\(r\\)|P\\(r\\) normed)\"$");
             QStringList new_qsl;
+            double delta_r = 0e0;
             for ( unsigned int i = 0; i < qsl.size(); i++ )
             {
                QStringList tmp2_qsl;
@@ -2110,8 +2113,17 @@ void US_Hydrodyn_Saxs::load_pr()
                   if ( *(tmp_qsl.at(0)) == "\"Name\"" )
                   {
                      tmp2_qsl.push_back("\"MW (Daltons)\"");
+                     tmp2_qsl.push_back("\"Area\"");
+                     delta_r = (*tmp_qsl.at(3)).toDouble() - (*tmp_qsl.at(2)).toDouble();
+                     cout << "delta_r found: " << delta_r << endl;
                   } else {
                      tmp2_qsl.push_back(QString("%1").arg(get_mw(*(tmp_qsl.at(0)), false)));
+                     double tmp_area = 0e0;
+                     for ( unsigned int j = 1; j < tmp_qsl.size(); j++ )
+                     {
+                        tmp_area += (*tmp_qsl.at(j)).toDouble();
+                     }
+                     tmp2_qsl.push_back(QString("%1").arg(tmp_area * delta_r));
                   }
                   for ( unsigned int j = 1; j < tmp_qsl.size(); j++ )
                   {
@@ -2129,7 +2141,7 @@ void US_Hydrodyn_Saxs::load_pr()
             qsl = new_qsl;
          }
 
-         qsl_headers = qsl.grep("\"Name\",\"MW (Daltons)\",\"Type; r:\"");
+         qsl_headers = qsl.grep("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\"");
          if ( qsl_headers.size() == 0 ) 
          {
             QMessageBox mb(tr("UltraScan Warning"),
@@ -2140,6 +2152,7 @@ void US_Hydrodyn_Saxs::load_pr()
             mb.exec();
             return;
          }
+
          if ( qsl_headers.size() > 1 ) 
          {
             QString ref = *(qsl_headers.at(0));
@@ -2160,7 +2173,7 @@ void US_Hydrodyn_Saxs::load_pr()
 
          // get the r values
          QStringList qsl_r = QStringList::split(",",*(qsl_headers.at(0)),true);
-         if ( qsl_r.size() < 5 )
+         if ( qsl_r.size() < 6 )
          {
             QMessageBox mb(tr("UltraScan Warning"),
                            tr("The csv file ") + filename + tr(" does not appear to contain any r values in the header rows.\n"),
@@ -2169,9 +2182,9 @@ void US_Hydrodyn_Saxs::load_pr()
             mb.exec();
             return;
          }
-         r.push_back((*qsl_r.at(3)).toDouble());
+         r.push_back((*qsl_r.at(4)).toDouble());
 
-         for ( QStringList::iterator it = qsl_r.at(4); it != qsl_r.end(); it++ )
+         for ( QStringList::iterator it = qsl_r.at(5); it != qsl_r.end(); it++ )
          {
             if ( (*it).toDouble() > r[r.size() - 1] )
             {
@@ -2186,9 +2199,10 @@ void US_Hydrodyn_Saxs::load_pr()
          for ( unsigned int i = 0; i < qsl_plotted_pr_names.size(); i++ )
          {
             vector < double > npr = interpolate(r, plotted_r[i], plotted_pr_not_normalized[i]);
-            QString line = QString("\"%1\",%.2f,\"P(r)\",%1\n")
+            QString line = QString("\"%1\",%.2f,%.2f,\"P(r)\",%1\n")
                .arg(qsl_plotted_pr_names[i])
                .arg(plotted_pr_mw[i])
+               .arg(compute_pr_area(npr, r))
                .arg(vector_double_to_csv(npr));
             qsl << line;
          }
@@ -2342,7 +2356,7 @@ void US_Hydrodyn_Saxs::load_pr()
                // get the pr values
 
                QStringList qsl_pr = QStringList::split(",",*it,true);
-               if ( qsl_pr.size() < 5 )
+               if ( qsl_pr.size() < 6 )
                {
                   QString msg = tr("The csv file ") + filename + tr(" does not appear to contain sufficient p(r) values in data row " + *qsl_tmp.at(0) + "\n");
                   QColor save_color = editor->color();
@@ -2357,9 +2371,9 @@ void US_Hydrodyn_Saxs::load_pr()
                   break;
                }
                qsl_data_lines_plotted << *it;
-               pr.push_back((*qsl_pr.at(3)).toDouble());
+               pr.push_back((*qsl_pr.at(4)).toDouble());
             
-               for ( QStringList::iterator it = qsl_pr.at(4); it != qsl_pr.end(); it++ )
+               for ( QStringList::iterator it = qsl_pr.at(5); it != qsl_pr.end(); it++ )
                {
                   pr.push_back((*it).toDouble());
                }
@@ -2600,33 +2614,37 @@ void US_Hydrodyn_Saxs::load_pr()
                if ( of )
                {
                   //  header: "name","type",r1,r2,...,rn, header info
-                  fprintf(of, "\"Name\",\"MW (Daltons)\",\"Type; r:\",%s,%s\n", 
+                  fprintf(of, "\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%s,%s\n", 
                           vector_double_to_csv(r).ascii(),
                           header_tag.ascii());
                   if ( save_original_data )
                   {
                      fprintf(of, "%s\n", qsl_data_lines_plotted.join("\n").ascii());
                   }
-                  fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+                  fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                           "Average",
                           pr_mw_avg,
+                          compute_pr_area(pr_avg, r),
                           "P(r)",
                           vector_double_to_csv(pr_avg).ascii());
                   if ( pr_std_dev.size() )
                   {
-                     fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+                     fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                              "Standard deviation",
                              pr_mw_avg,
+                             compute_pr_area(pr_std_dev, r),
                              "P(r)",
                              vector_double_to_csv(pr_std_dev).ascii());
-                     fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+                     fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                              "Average minus 1 standard deviation",
                              pr_mw_avg,
+                             compute_pr_area(pr_avg_minus_std_dev, r),
                              "P(r)",
                              vector_double_to_csv(pr_avg_minus_std_dev).ascii());
-                     fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+                     fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                              "Average plus 1 standard deviation",
                              pr_mw_avg,
+                             compute_pr_area(pr_avg_plus_std_dev, r),
                              "P(r)",
                              vector_double_to_csv(pr_avg_plus_std_dev).ascii());
                   }
@@ -4238,6 +4256,23 @@ QString US_Hydrodyn_Saxs::vector_double_to_csv( vector < double > vd )
    return result;
 }
 
+double US_Hydrodyn_Saxs::compute_pr_area( vector < double > vd, vector < double > r )
+{
+   double sum = 0e0;
+   for ( unsigned int i = 0; i < vd.size(); i++ )
+   {
+      sum += vd[i];
+   }
+
+   // assuming constant delta!
+   double delta = 0e0;
+   if ( r.size() > 1 )
+   {
+      delta = r[1] - r[0];
+   }
+   return sum * delta;
+}
+
 void US_Hydrodyn_Saxs::calc_nnls_fit( QString csv_filename )
 {
    // setup nnls run:
@@ -4426,35 +4461,39 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString csv_filename )
       if ( of )
       {
          //  header: "name","type",r1,r2,...,rn, header info
-         fprintf(of, "\"Name\",\"MW (Daltons)\",\"Type; r:\",%s,%s\n", 
+         fprintf(of, "\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%s,%s\n", 
                  vector_double_to_csv(nnls_r).ascii(),
                  QString("NNLS fit residual %1 : %2").arg(nnls_rmsd).arg(nnls_header_tag).ascii());
          // original models
          for ( unsigned int i = 0; i < use_x.size(); i++ )
          {
-            fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+            fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                     QString("%1 %2").arg(model_names[i]).arg(rescaled_x[i]).ascii(),
                     get_mw(model_names[i], false),
+                    compute_pr_area(nnls_A[model_names[i]], nnls_r),
                     "P(r)",
                     vector_double_to_csv(nnls_A[model_names[i]]).ascii());
          }
          // target
-         fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+         fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                  QString("Target %2").arg(nnls_B_name).ascii(),
                  get_mw(model_names[0], false),
+                 compute_pr_area(nnls_B, nnls_r),
                  "P(r)",
                  vector_double_to_csv(nnls_B).ascii());
 
          // best fit model
-         fprintf(of, "\"%s\",%.2f\"%s\",%s\n", 
+         fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                  "Model",
                  get_mw(model_names[0], false),
+                 compute_pr_area(model, nnls_r),
                  "P(r)",
                  vector_double_to_csv(model).ascii());
          
-         fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+         fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                  "Residual",
                  get_mw(model_names[0], false),
+                 compute_pr_area(residual, nnls_r),
                  "P(r)",
                  vector_double_to_csv(residual).ascii());
 

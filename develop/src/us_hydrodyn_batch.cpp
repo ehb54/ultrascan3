@@ -2239,9 +2239,14 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
                pr_std_dev.resize(sum_pr.size());
                for ( unsigned int i = 0; i < sum_pr.size(); i++ )
                {
-                  pr_std_dev[i] = sqrt(
-                                       ( 1e0 / ((double)sum_count - 1e0) ) *
-                                       ( sum_pr2[i] - ((sum_pr[i] * sum_pr[i]) / (double)sum_count) ) );
+                  double tmp_std_dev = 
+                     sum_pr2[i] - ((sum_pr[i] * sum_pr[i]) / (double)sum_count);
+                  pr_std_dev[i] = 
+                     tmp_std_dev > 0e0 ?
+                     sqrt( ( 1e0 / ((double)sum_count - 1e0) ) * tmp_std_dev ) : 0e0;
+                  // pr_std_dev[i] = sqrt(
+                  // ( 1e0 / ((double)sum_count - 1e0) ) *
+                  //                   ( sum_pr2[i] - ((sum_pr[i] * sum_pr[i]) / (double)sum_count) ) );
                }
 
                vector < double > pr;
@@ -2284,7 +2289,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
       }                                 
 
       //  header: "name","type",r1,r2,...,rn, header info
-      fprintf(of, "\"Name\",\"MW (Daltons)\",\"Type; r:\",%s,\"%s\"\n", 
+      fprintf(of, "\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%s,\"%s\"\n", 
               vector_double_to_csv(saxs_r).ascii(),
               saxs_header_prr.remove("\n").ascii()
               );
@@ -2292,9 +2297,10 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
          sum_mw += saxs_prr_mw[i];
-         fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+         fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                  csv_source_name_prr[i].ascii(),
                  saxs_prr_mw[i],
+                 compute_pr_area(saxs_prr[i], saxs_r),
                  "P(r)",
                  vector_double_to_csv(saxs_prr[i]).ascii());
       }
@@ -2305,34 +2311,39 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
       }
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
-         fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+         fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                  csv_source_name_prr[i].ascii(),
                  saxs_prr_mw[i],
+                 compute_pr_area(saxs_prr_norm[i], saxs_r),
                  "P(r) normed",
                  vector_double_to_csv(saxs_prr_norm[i]).ascii());
       }
       if ( batch->compute_prr_avg && sum_count > 1 )
       {
-         fprintf(of, "\n\"%s\",%.2f,\"%s\",%s\n", 
+         fprintf(of, "\n\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                  "Average",
                  sum_mw,
+                 compute_pr_area(pr_avg, saxs_r),
                  "P(r)",
                  vector_double_to_csv(pr_avg).ascii());
          if ( batch->compute_prr_std_dev && sum_count > 2 )
          {
-            fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+            fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                     "Standard deviation",
                     sum_mw,
+                    compute_pr_area(pr_std_dev, saxs_r),
                     "P(r)",
                     vector_double_to_csv(pr_std_dev).ascii());
-            fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+            fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                     "Average minus 1 standard deviation",
                     sum_mw,
+                    compute_pr_area(pr_avg_minus_std_dev, saxs_r),
                     "P(r)",
                     vector_double_to_csv(pr_avg_minus_std_dev).ascii());
-            fprintf(of, "\"%s\",%.2f,\"%s\",%s\n", 
+            fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                     "Average plus 1 standard deviation",
                     sum_mw,
+                    compute_pr_area(pr_avg_plus_std_dev, saxs_r),
                     "P(r)",
                     vector_double_to_csv(pr_avg_plus_std_dev).ascii());
          }
@@ -2345,4 +2356,21 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
       editor->append(tr("ERROR creating file: " + fname + "\n"));
       editor->setColor(save_color);
    }
+}
+
+double US_Hydrodyn_Batch::compute_pr_area( vector < double > vd, vector < double > r )
+{
+   double sum = 0e0;
+   for ( unsigned int i = 0; i < vd.size(); i++ )
+   {
+      sum += vd[i];
+   }
+
+   // assuming constant delta!
+   double delta = 0e0;
+   if ( r.size() > 1 )
+   {
+      delta = r[1] - r[0];
+   }
+   return sum * delta;
 }
