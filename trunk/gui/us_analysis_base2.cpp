@@ -228,6 +228,7 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    buffLoaded = false;
 
    dfilter    = "";
+   etype_filt = "velocity";
 }
 
 void US_AnalysisBase2::update_disk_db( bool db )
@@ -257,7 +258,7 @@ void US_AnalysisBase2::load( void )
    QString description;
 
    US_DataLoader* dialog = new US_DataLoader(
-         edlast, dbdisk, rawList, dataList, triples, description );
+         edlast, dbdisk, rawList, dataList, triples, description, etype_filt );
 
    connect( dialog, SIGNAL( changed( bool ) ), SLOT( update_disk_db( bool ) ) );
    connect( dialog, SIGNAL( progress    ( const QString& ) ), 

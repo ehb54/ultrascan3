@@ -20,13 +20,15 @@ US_DataLoader::US_DataLoader(
       QVector< US_DataIO2::RawData    >& rData,
       QVector< US_DataIO2::EditedData >& eData,
       QStringList&                       trips,
-      QString&                           desc )
+      QString&                           desc,
+      QString                            tfilt )
  : US_WidgetsDialog( 0, 0 ),
    latest     ( late ),
    rawData    ( rData ),
    editedData ( eData ),
    triples    ( trips ),
-   description( desc )
+   description( desc ),
+   etype_filt ( tfilt )
 {
    setAttribute  ( Qt::WA_DeleteOnClose );
    setWindowTitle( tr( "Load Edited Data" ) );
@@ -110,6 +112,7 @@ US_DataLoader::US_DataLoader(
    main->addLayout( buttons );
 
    // List from disk or db source
+   etype_filt = etype_filt.isEmpty() ? "velocity" : etype_filt.toLower();
    list_data();
 }
 
@@ -119,8 +122,9 @@ void US_DataLoader::search( const QString& search_string )
 
    for ( int i = 0; i < tw_data->topLevelItemCount(); i++ )
    {
-      QTreeWidgetItem* twi  = tw_data->topLevelItem( i );
-      bool             hide = ! twi->text( 0 ).contains( search_string ); 
+      QTreeWidgetItem* twi = tw_data->topLevelItem( i );
+      bool hide = ! twi->text( 0 ).contains( search_string,
+            Qt::CaseInsensitive ); 
       twi->setHidden( hide );
    }
 }
@@ -545,6 +549,7 @@ void US_DataLoader::scan_dbase_edit()
       return;
    }
 
+   bool tfilter = ( etype_filt != "none" );
    QStringList query;
    QStringList edtIDs;
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
@@ -561,6 +566,9 @@ void US_DataLoader::scan_dbase_edit()
       QString fname = db.value( 2 ).toString().replace( "\\", "/" );
       edtIDs << fname + "\\" + recID;
    }
+
+   QString prev_etype = "";
+   QString prev_expID = "";
 
    for ( int ii = 0; ii < edtIDs.size(); ii++ )
    {
@@ -590,6 +598,30 @@ void US_DataLoader::scan_dbase_edit()
       db.next();
 
       QString parGUID  = db.value( 0 ).toString();
+
+      if ( tfilter )
+      {  // If type filtering, ignore runIDs that do not match experiment type
+
+         QString expID    = db.value( 4 ).toString();
+         QString etype    = prev_etype;
+
+         if ( expID != prev_expID )
+         {  // If a new experiment, get the experiment type
+            query.clear();
+            query << "get_experiment_info" << expID;
+            db.query( query );
+            db.next();
+
+            etype            = db.value( 8 ).toString().toLower();
+         }
+
+         prev_etype       = etype;
+         prev_expID       = expID;
+
+         if ( etype != etype_filt )
+            continue;
+      }
+
       QString label    = runID;
       descrip          = runID + "." + tripID + "." + editID;
       QString baselabl = label;
@@ -623,6 +655,7 @@ void US_DataLoader::scan_local_edit( void )
 {
    setWindowTitle( tr( "Load Edited Data from Local Disk" ) );
 
+   bool        tfilter = ( etype_filt != "none" );
    QString     rdir    = US_Settings::resultDir();
    QStringList aucdirs = QDir( rdir ).entryList( 
          QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
@@ -680,6 +713,7 @@ void US_DataLoader::scan_local_edit( void )
          QXmlStreamAttributes a;
          QString recGUID;
          QString parGUID;
+         QString expType;
 
          while( ! xml.atEnd() )
          {
@@ -698,10 +732,20 @@ void US_DataLoader::scan_local_edit( void )
                   a         = xml.attributes();
                   parGUID   = a.value( "value" ).toString();
                }
+
+               else if ( xml.name() == "experiment" )
+               {
+                  a         = xml.attributes();
+                  expType   = a.value( "type" ).toString().toLower();
+               }
             }
          }
 
          filei.close();
+
+         // If type filtering, ignore runIDs that do not match experiment type
+         if ( tfilter  &&  expType != etype_filt )
+               continue;
 
          ddesc.runID      = runID;
          ddesc.tripID     = tripID;

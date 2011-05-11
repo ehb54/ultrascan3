@@ -25,13 +25,15 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       //! \param rData    A reference to a vector of rawData objects
       //! \param eData    A reference to a vector of editedData objects
       //! \param trips    A reference to a list of triples to fill
-      //! \param desc     A concatenatination of DataDesc information.
+      //! \param desc     A concatenation of DataDesc information
+      //! \param tfilt    Optional experiment type filter (default=Velocity).
 
       US_DataLoader( bool, int,
                      QVector< US_DataIO2::RawData >&,
                      QVector< US_DataIO2::EditedData >&,
                      QStringList&,
-                     QString& );
+                     QString&,
+                     QString = "" );
  
    signals:
       //! \brief A signal to tell the parent when the disk/db selection
@@ -89,6 +91,7 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       QVector< US_DataIO2::EditedData >& editedData;
       QStringList&                       triples;
       QString&                           description;
+      QString                            etype_filt;
 
       bool load_edit      ( void );
       void describe       ( void );
