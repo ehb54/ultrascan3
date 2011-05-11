@@ -56,6 +56,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       QString      runID;           //!< User specified run ID string
       QString      dfilter;         //!< Data files filter
       QString      investig;        //!< Investigator string
+      QString      etype_filt;      //!< Experiment type loader filter
 
       US_Buffer    buff;            //!< Currently loaded buffer
 

@@ -368,7 +368,7 @@ void US_FeMatch::load( void )
 
    US_DataLoader* dialog =
       new US_DataLoader( dataLatest, local, rawList, dataList,
-            triples, workingDir );
+            triples, workingDir, QString( "velocity" ) );
 
    connect( dialog, SIGNAL( changed(      bool ) ),
             this,   SLOT( update_disk_db( bool ) ) );

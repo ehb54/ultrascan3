@@ -313,7 +313,7 @@ void US_GlobalEquil::load( void )
 
    // Open a dialog to select and load data
    US_DataLoader* dialog = new US_DataLoader( dataLatest, dbdisk, rawList,
-         dataList, triples, workingDir );
+         dataList, triples, workingDir, QString( "equilibrium" ) );
 
    connect( dialog, SIGNAL( changed(      bool ) ),
             this,   SLOT( update_disk_db( bool ) ) );
@@ -491,8 +491,8 @@ DbgLv(1) << " LD: update_limit";
 
    connect( tw_equiscns, SIGNAL( itemDoubleClicked( QTableWidgetItem* ) ),
             this,        SLOT(   doubleClickedItem( QTableWidgetItem* ) ) );
-   connect( tw_equiscns, SIGNAL( itemSelectionChanged(          ) ),
-            this,        SLOT(   itemRowChanged(                ) ) );
+   connect( tw_equiscns, SIGNAL( itemSelectionChanged( ) ),
+            this,        SLOT(   itemRowChanged( )       ) );
 
    te_status->setText( tr( "To edit (exclude points):  Ctrl-click-hold,"
                            " move, and release mouse button in the plot area;"
@@ -529,6 +529,7 @@ void US_GlobalEquil::unload( void )
    triples .clear();
    scedits .clear();
 
+   tw_equiscns->disconnect();
    tw_equiscns->clear();
 
    equil_plot->detachItems();
@@ -541,6 +542,11 @@ void US_GlobalEquil::unload( void )
    pb_unload  ->setEnabled( false );
    pb_selModel->setEnabled( false );
    pb_scdiags ->setEnabled( false );
+
+   connect( tw_equiscns, SIGNAL( itemDoubleClicked( QTableWidgetItem* ) ),
+            this,        SLOT(   doubleClickedItem( QTableWidgetItem* ) ) );
+   connect( tw_equiscns, SIGNAL( itemSelectionChanged( ) ),
+            this,        SLOT(   itemRowChanged( )       ) );
 }
 
 // Generate and display scan diagnostics
