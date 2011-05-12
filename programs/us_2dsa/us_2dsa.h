@@ -91,6 +91,7 @@ class US_2dsa : public US_AnalysisBase2
       void load     ( void );
       void view     ( void );
       void save     ( void );
+      void new_triple( int );
       void help     ( void )
       { showHelp.show_help( "manual/2dsa.html" ); };
 };

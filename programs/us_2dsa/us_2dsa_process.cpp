@@ -760,12 +760,11 @@ DbgLv(1) << "THR_FIN:   (new)kcst ncto" <<  kcsteps << nctotal
          emit stage_complete( kcsteps, nctotal );
 
          emit message_update( pmessage_head() +
-                              tr( "Computing depth 1 ff. solutions..." ),
-                              false );
+            tr( "Computing depth 1 solutions and beyond ..." ), false );
 
          maxdepth       = 1;
 
-         if ( nextc < maxtsols  &&  jobs_at_depth( 1 ) == 0 )
+         if ( nextc <= maxtsols  &&  jobs_at_depth( 1 ) == 0 )
             maxdepth       = 0;  // handle no depth 1 jobs yet submitted
       }
    }

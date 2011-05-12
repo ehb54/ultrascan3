@@ -661,6 +661,10 @@ if(na==4) DbgLv(1) << "   par1-4: " << aud_params[0] << aud_params[1]
 void US_GlobalEquil::model_control( void )
 {
 DbgLv(1) << "MODEL_CONTROL()";
+   sscanx       = tw_equiscns->currentRow();
+
+   if ( sscanx < 0 )   scan_select( 1.0 );
+
    if ( model_widget )
    {
       emodctrl->raise();
@@ -670,7 +674,6 @@ DbgLv(1) << "MODEL_CONTROL()";
    else
    {
       model_widget = true;
-      sscanx       = tw_equiscns->currentRow();
       sscann       = sscanx + 1;
 
       emodctrl = new US_EqModelControl(
@@ -1226,7 +1229,8 @@ void US_GlobalEquil::pMouseMoved( const QwtDoublePoint& p )
 // Create the Scan Fits vector of parameters
 void US_GlobalEquil::assign_scanfit()
 {
-   scanfits.clear();
+   if ( scanfits.size() > 0 )
+      return;           // Only create base scanfits array one time
 
    EqScanFit   scanfit;
    QStringList channs;
