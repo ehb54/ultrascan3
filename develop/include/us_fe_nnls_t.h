@@ -107,6 +107,7 @@ class US_EXTERN US_fe_nnls_t
 
    bool gridrmsd;
    bool gridrmsd2;
+   bool ga_singleff0;
 
    vector < mfem_data > build_model(double s, double k);
 
