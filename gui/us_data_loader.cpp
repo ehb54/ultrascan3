@@ -277,6 +277,9 @@ bool US_DataLoader::load_edit( void )
          QString  afn      = tempdir + aucfn;
          QString  efn      = tempdir + filename;
 
+         QDir dir;
+         if ( ! dir.exists( tempdir ) ) dir.mkpath( tempdir );
+
          query.clear();
          query << "get_editedData" << recID;
          db.query( query );

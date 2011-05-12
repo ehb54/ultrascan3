@@ -823,7 +823,12 @@ DbgLv(1) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
    double ts;
    double u_ttl;
 
-   QFile ftto( US_Settings::tmpDir() + "/tt0-ufvm" );
+   
+   QDir dir;
+   QString tmpDir = US_Settings::tmpDir();
+   if ( ! dir.exists( tmpDir ) ) dir.mkpath( tmpDir );
+
+   QFile ftto( tmpDir + "/tt0-ufvm" );
    if ( dbg_level > 0 )
    {
       if ( ! ftto.open( QIODevice::WriteOnly | QIODevice::Truncate ) )

@@ -1508,6 +1508,10 @@ void US_Plot3D::dump_contents()
    if ( !imagetype.contains( "PS" )  &&  !imagetype.contains( "PDF" ) )
       imagetype       = imagetype.toLower();
 
+   QDir dir;
+   QString reportDir = US_Settings::reportDir();
+   if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
+
    QString ofname     = US_Settings::reportDir() + "/" + modldesc
       + "_" + datetime + "_plot3d." + fileext;
 

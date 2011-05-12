@@ -182,8 +182,12 @@ void US_Plot::zoom( bool on )
 
 void US_Plot::svg( void )
 {
+   QDir dir;
+   QString reportDir = US_Settings::reportDir();
+   if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
+
    QString fileName = QFileDialog::getSaveFileName( plot, 
-      tr( "Export File Name" ), US_Settings::reportDir(), 
+      tr( "Export File Name" ), reportDir, 
       tr( "SVG Documents (*.svg)" ) );
 
    if ( ! fileName.isEmpty() )
@@ -210,8 +214,12 @@ void US_Plot::svg( void )
 
 void US_Plot::print( void )
 {
+   QDir dir;
+   QString reportDir = US_Settings::reportDir();
+   if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
+
    QPrinter printer( QPrinter::HighResolution );
-   printer.setOutputFileName( US_Settings::reportDir() + "/ultrascan-plot.pdf" );
+   printer.setOutputFileName( reportDir + "/ultrascan-plot.pdf" );
 
    QString docName = plot->title().text();
    

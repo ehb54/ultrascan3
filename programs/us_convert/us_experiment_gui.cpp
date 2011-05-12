@@ -178,6 +178,7 @@ US_ExperimentGui::US_ExperimentGui(
 
    // Database choices
    QStringList DB = US_Settings::defaultDB();
+   if ( DB.isEmpty() ) DB << "Undefined";
    QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
    main->addWidget( lb_DB, row++, 0, 1, 2 );
 
@@ -263,7 +264,7 @@ void US_ExperimentGui::reset( void )
    // Display investigator
    expInfo.invID = US_Settings::us_inv_ID();
 
-   if ( expInfo.invID > 0 )
+   if ( expInfo.invID > 0  ||  ! disk_controls->db() )
    {
       le_investigator->setText( QString::number( expInfo.invID ) + ": " 
          + US_Settings::us_inv_name() );
@@ -585,22 +586,38 @@ void US_ExperimentGui::setOperatorList( void )
    cb_operator->clear();
    if ( options.size() > 0 )
    {
-      cb_operator->addOptions( options );
-
-      // is the operator ID in the list?
       int currentOperator = 0;
-      for ( int i = 0; i < options.size(); i++ )
+
+      if ( ! disk_controls->db() )
       {
-         if ( expInfo.operatorID == options[ i ].ID.toInt() )
-         {
-            currentOperator = i;
-            break;
-         }
+         struct listInfo disk_only;
+         disk_only.ID = QString( "0" );
+         disk_only.text = "Local";
+         cb_operator->addOption( disk_only );
+
+         expInfo.operatorID   = 0;
+         expInfo.operatorGUID = "";
       }
 
-      // Replace operator ID with one from the list
-      expInfo.operatorID   = operators[ currentOperator ].ID;
-      expInfo.operatorGUID = operators[ currentOperator ].GUID;
+      else
+      {
+         cb_operator->addOptions( options );
+        
+         // is the operator ID in the list?
+         for ( int i = 0; i < options.size(); i++ )
+         {
+            if ( expInfo.operatorID == options[ i ].ID.toInt() )
+            {
+               currentOperator = i;
+               break;
+            }
+         }
+
+         // Replace operator ID with one from the list
+         expInfo.operatorID   = operators[ currentOperator ].ID;
+         expInfo.operatorGUID = operators[ currentOperator ].GUID;
+      }
+
    }
 }
 

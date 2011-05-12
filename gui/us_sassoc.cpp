@@ -389,7 +389,11 @@ void US_Sassoc::save( void )
    f.close();
    
    // Save a picture
-   filename = US_Settings::reportDir() + "/" + project + "-" + 
+   QDir dir;
+   QString reportDir = US_Settings::reportDir();
+   if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
+
+   filename = reportDir + "/" + project + "-" + 
               QString::number( model ) + ".distribution.png";
 
    QRect   r = QRect( 2, 2, plot->width() - 4, plot->height() - 4 );
