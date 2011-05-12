@@ -25,6 +25,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
                                 QString msg,
                                 QStringList *qsl_names,
                                 QStringList *qsl_sel_names,
+                                QStringList *qsl,
+                                QString loaded_filename,
                                 bool *create_avg,
                                 bool *create_std_dev,
                                 bool *only_plot_stats,
@@ -34,6 +36,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
                                 bool *run_nnls,
                                 QString *nnls_target,
                                 bool expert_mode,
+                                void *us_hydrodyn,
                                 QWidget *p = 0, 
                                 const char *name = 0
                                 );
@@ -59,6 +62,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
 
       QPushButton *pb_select_all;
       QPushButton *pb_select_target;
+      QPushButton *pb_transpose;
       QPushButton *pb_ok;
       QPushButton *pb_cancel;
       QPushButton *pb_help;
@@ -70,6 +74,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       QString msg;
       QStringList *qsl_names;
       QStringList *qsl_sel_names;
+      QStringList *qsl;
+      QString loaded_filename;
 
       bool *create_avg;
       bool *create_std_dev;
@@ -82,6 +88,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       bool expert_mode;
 
       void update_enables();
+
+      void *us_hydrodyn;
+
 
    private slots:
 
@@ -97,6 +106,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
 
       void select_all();
       void select_target();
+      void transpose();
       void ok();
       void cancel();
       void help();

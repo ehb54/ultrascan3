@@ -2260,6 +2260,8 @@ void US_Hydrodyn_Saxs::load_pr()
                                           "Select models to load\n" + header_tag,
                                           &qsl_names,
                                           &qsl_sel_names,
+                                          &qsl,
+                                          filename,
                                           &create_avg,
                                           &create_std_dev,
                                           &only_plot_stats,
@@ -2268,7 +2270,8 @@ void US_Hydrodyn_Saxs::load_pr()
                                           &save_original_data,
                                           &run_nnls,
                                           &nnls_target,
-                                          1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode
+                                          1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode,
+                                          us_hydrodyn
                                           );
          hslc->exec();
             
