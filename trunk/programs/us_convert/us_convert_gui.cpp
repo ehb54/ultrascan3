@@ -1769,7 +1769,7 @@ int US_ConvertGui::saveUS3Disk( void )
 
    if ( ! writeDir.exists( runID ) )
    {
-      if ( ! writeDir.mkdir( runID ) )
+      if ( ! writeDir.mkpath( dirname ) )
       {
          QMessageBox::information( this,
                tr( "Error" ),

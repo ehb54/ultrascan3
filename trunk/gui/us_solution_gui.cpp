@@ -661,19 +661,22 @@ void US_SolutionGui::assignAnalyte( US_Analyte data )
    newInfo.analyte = data;
    newInfo.amount  = 1;
 
-   // Now double-check analyteID from db if we can
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() == US_DB2::OK )
+   if ( disk_controls->db() )
    {
-      QStringList q( "get_analyteID" );
-      q << newInfo.analyte.analyteGUID;
-      db.query( q );
-   
-      if ( db.next() )
-         newInfo.analyte.analyteID = db.value( 0 ).toString();
+      // Now double-check analyteID from db if we can
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+      
+      if ( db.lastErrno() == US_DB2::OK )
+      {
+         QStringList q( "get_analyteID" );
+         q << newInfo.analyte.analyteGUID;
+         db.query( q );
+      
+         if ( db.next() )
+            newInfo.analyte.analyteID = db.value( 0 ).toString();
+      }
    }
 
    // Make sure item has not been added already
@@ -782,23 +785,26 @@ void US_SolutionGui::selectBuffer( void )
 // Get information about selected buffer
 void US_SolutionGui::assignBuffer( US_Buffer newBuffer )
 {
-   // Now get the corresponding bufferID, if we can
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() == US_DB2::OK )
+   if ( disk_controls->db() ) 
    {
-      QStringList q( "get_bufferID" );
-      q << newBuffer.GUID;
-      db.query( q );
-   
-      if ( db.next() )
-         newBuffer.bufferID = db.value( 0 ).toString();
-
-      else
-         newBuffer.bufferID = QString( "-1" );
-
+      // Now get the corresponding bufferID, if we can
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+      
+      if ( db.lastErrno() == US_DB2::OK )
+      {
+         QStringList q( "get_bufferID" );
+         q << newBuffer.GUID;
+         db.query( q );
+      
+         if ( db.next() )
+            newBuffer.bufferID = db.value( 0 ).toString();
+      
+         else
+            newBuffer.bufferID = QString( "-1" );
+      
+      }
    }
 
    solution.buffer = newBuffer;
