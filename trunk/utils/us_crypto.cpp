@@ -1,5 +1,4 @@
 //! \file us_crypto.cpp
-#include <QtCrypto>
 
 #include "us_crypto.h"
 #include <openssl/evp.h>

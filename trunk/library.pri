@@ -1,5 +1,5 @@
 # Profile include file for libraries
-#  Copy file to library.pri and change QWTPATH, QCAPATH, SINGLEDIR to match your installation
+#  Copy file to library.pri and change QWTPATH, SINGLEDIR to match your installation
 #  Also see gui.pri.template
 
 !include( local.pri ) error( "local.pri is missing.  Copy from local.pri.template and update variables as appropriate" )
@@ -19,7 +19,7 @@ unix {
   }
   else {
     DEPENDPATH   += ../gui ../utils $$QWTPATH/include
-    INCLUDEPATH  += ../gui ../utils $$QWTPATH/include $$QCAPATH/include/QtCrypto
+    INCLUDEPATH  += ../gui ../utils $$QWTPATH/include
     INCLUDEPATH  += $$MYSQLPATH
   }
   DEFINES      += INTEL LINUX
@@ -29,9 +29,9 @@ unix {
 
 win32 {
   DEPENDPATH             += ../gui ../utils
-  INCLUDEPATH            += ../gui ../utils $$QWTPATH/src $$QCAPATH/include/QtCrypto
+  INCLUDEPATH            += ../gui ../utils $$QWTPATH/src 
   INCLUDEPATH            += $$MYSQLPATH
-  LIBS                   += $$QCALIB $$QWTLIB
+  LIBS                   += $$QWTLIB
   QMAKE_LFLAGS           += /IMPLIB:../lib/$${TARGET}.lib /MACHINE:X86 /INCREMENTAL:NO 
   QMAKE_CXXFLAGS_DEBUG   += /wd4996
   QMAKE_CXXFLAGS_RELEASE += /wd4996
@@ -42,9 +42,9 @@ win32 {
 macx {
   CONFIG       += i386 ppc
   DEPENDPATH   += ../gui ../utils $$QWTPATH/include
-  INCLUDEPATH  += ../gui ../utils $$QWTPATH/include $$QCAPATH/include/QtCrypto
+  INCLUDEPATH  += ../gui ../utils $$QWTPATH/include 
   DEFINES      += MAC OSX
-  LIBS         += -luuid $$QCALIB $$QWTLIB
+  LIBS         += -luuid $$QWTLIB
   DESTDIR       = ../lib
 }
 
