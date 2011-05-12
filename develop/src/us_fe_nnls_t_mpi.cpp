@@ -1097,6 +1097,14 @@ US_fe_nnls_t::init_run(const QString & data_file,
       gridrmsd2 = true;
       puts("gridrmsd2 run");
    } 
+   if ( gridopt == "ga_singleff0" )
+   {
+      ga_singleff0 = true;
+      puts("ga_single ff0 run");
+   } else {
+      ga_singleff0 = false;
+   }
+
    this->gridopt = "no";
    maxrss = 0l;
 
@@ -1374,6 +1382,12 @@ US_fe_nnls_t::init_run(const QString & data_file,
 #if defined(RUN_SHORT)
          GA_Params.genes = 10;
 #endif
+         if ( GA_Params.genes == 127 )
+         {
+            ga_singleff0 = true;
+            puts("genes == 127 forces ga_single ff0 run");
+         }
+
          ds >> GA_Params.initial_solutes;
          ds >> GA_Params.random_seed;
          if (!myrank)

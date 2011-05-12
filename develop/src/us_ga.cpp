@@ -238,6 +238,13 @@ value f_solute(value *, void *v)
    if(((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS])
    {
       double *d = (double *)n->data;
+
+      if ( our_us_fe_nnls_t->ga_singleff0 &&
+           sp[RESULT_STACK] )
+      {
+         d[1] = stack[RESULT_STACK][1];
+      }
+
       if(!ga_sc && s_proximity_limit && sp[RESULT_STACK])
       {
          int i;
@@ -262,6 +269,7 @@ value f_solute(value *, void *v)
             }
          }
       }
+         
       push_stack(RESULT_STACK, d[0]); // sedimentation
       push_stack(RESULT_STACK, d[1]); // k (f_ratio)
       ((char *)n->data)[SOLUTE_DATA_PROX_FLAG] = 0;
@@ -300,6 +308,7 @@ void f_init_solute(void *v)
    d[3] = s_estimates[i][1];
    d[4] = ff0_estimates[i][0];
    d[5] = ff0_estimates[i][1];
+      
    // find a uniform (for now) value of s
    if (ga_sc) 
    {
@@ -2300,6 +2309,8 @@ US_fe_nnls_t *our_us_fe_nnls_t;
 
 double fitness_solute(node *n)
 {
+   // if ga_singleff0, reset all ff0 to 1st active ff0
+   // ga_gsm may need a patch for this?
    double result;
    int nonzeros = 0;
    int i;
@@ -2311,6 +2322,15 @@ double fitness_solute(node *n)
    Solute solute;
    //  printf("%d: fitness_solute rsp %d\n", this_rank, sp[RESULT_STACK]); fflush(stdout);
    vector<Solute> solute_vector;
+
+   if ( our_us_fe_nnls_t->ga_singleff0 )
+   {
+      for( int i = sp[RESULT_STACK] - 2; i >= 0; i -= 2 )
+      {
+         stack[RESULT_STACK][i + 1] = stack[RESULT_STACK][1];
+      }      
+   }
+
    for(i = sp[RESULT_STACK] - 2; i >= 0; i-=2)
    {
       solute.s = stack[RESULT_STACK][i];
@@ -2325,6 +2345,7 @@ double fitness_solute(node *n)
       }
       solute_vector.push_back(solute);
    }
+
    if(debug_level > 1)
    {
       for(u = 0; u < solute_vector.size(); u++)
@@ -5840,6 +5861,10 @@ void ga_setup(struct ga_data GA_Params, int myrank, US_fe_nnls_t *pass_us_fe_nnl
       s_estimates[i][1] = GA_Params.solute[i].s_max;
       ff0_estimates[i][0] = GA_Params.solute[i].ff0_min;
       ff0_estimates[i][1] = GA_Params.solute[i].ff0_max;
+      if ( our_us_fe_nnls_t->ga_singleff0 ) {
+         ff0_estimates[i][0] = GA_Params.solute[0].ff0_min;
+         ff0_estimates[i][1] = GA_Params.solute[0].ff0_max;
+      }
    }
 
    pct_crossover = GA_Params.crossover;

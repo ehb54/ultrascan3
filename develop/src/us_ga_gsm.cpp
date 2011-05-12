@@ -1559,6 +1559,13 @@ double lamm_gsm_f(our_vector *v) {
          }
       }
    }
+   if ( our_us_fe_nnls_t->ga_singleff0 )
+   {
+      for ( int i = sp[RESULT_STACK] - 2; i >= 0; i-=2)
+      {
+         stack[RESULT_STACK][i + 1] = stack[RESULT_STACK][1];
+      }      
+   }
    //  print_stack(RESULT_STACK);
    //  printf("gsm_f @ ");
    //  for(i = 0; i < v->len; i++) {
