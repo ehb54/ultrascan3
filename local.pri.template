@@ -18,7 +18,6 @@ unix {
   #QMAKE_LINK = distcc g++
 
   QWTPATH     = /usr/local/qwt-5.1.1
-  QCAPATH     = /usr/local
   SINGLEDIR   = /opt/qt/addons/qtsingleapplication-2.5_1-commercial/src/
   MYSQLDIR    = /usr/lib/mysql
 
@@ -30,25 +29,20 @@ unix {
 }
 
 win32 {
-  QCAPATH     = C:/qca-2.0.1
   QWTPATH     = C:/qwt/qwt-5.1.1
   
   contains( DEBUGORRELEASE, debug ) {
     QWTLIB      = $$QWTPATH/lib/qwtd5.lib
-    QCALIB      = $$QCAPATH/lib/qcad2.lib
   } else {
     QWTLIB      = $$QWTPATH/lib/qwt5.lib
-    QCALIB      = $$QCAPATH/lib/qcad.lib
   }
 
   SINGLEDIR   = C:/Qt/4.4.3/addons/singleapp
 }
 
 macx {
-  QCAPATH     = /opt/local/share/qt/qca
   QWTPATH     = /usr/local/qwt-5.2.1
   QWTLIB      = -L$$QWTPATH/lib -lqwt -L../lib -lqwtplot3d
-  QCALIB      = -L$$QCAPATH/lib -lqca
   SINGLEDIR   = /opt/local/share/qt/qtsingleapplication-2.6_1-opensource/src
   MYSQLDIR    = /usr/local/lib/mysql
 }

@@ -7,11 +7,6 @@ DESTDIR      = ../../bin
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 
-isEmpty( QCA ) {
-  QCA = -lqca
-}
-
-
 CONFIG       += $$DEBUGORRELEASE qt thread warn
 
 unix {
@@ -45,7 +40,7 @@ win32 {
 macx {
   CONFIG     += i386 ppc
   LIBS       += -L../../lib -lus_utils -lus_gui 
-  LIBS       += $$QWTLIB $$QCALIB
+  LIBS       += $$QWTLIB 
   LIBS       += -L$$MYSQLDIR -lmysqlclient
   DEFINES    += MAC OSX 
 }

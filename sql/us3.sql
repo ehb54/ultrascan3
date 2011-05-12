@@ -35,6 +35,7 @@ CREATE  TABLE IF NOT EXISTS people (
   lastLogin DATETIME NULL ,
   clusterAuthorizations VARCHAR(255) NOT NULL default 'bcf:alamo:laredo:lonestar:bigred:steele:queenbee',
   userlevel TINYINT NOT NULL DEFAULT 0 ,
+  advancelevel TINYINT NOT NULL DEFAULT 0 ,
   PRIMARY KEY (personID) )
 ENGINE = InnoDB;
 
@@ -811,11 +812,6 @@ CREATE TABLE IF NOT EXISTS noise (
     FOREIGN KEY (editedDataID )
     REFERENCES editedData (editedDataID )
     ON DELETE NO ACTION
-    ON UPDATE CASCADE,
-  CONSTRAINT fk_noise_modelID
-    FOREIGN KEY (modelID )
-    REFERENCES model (modelID )
-    ON DELETE NO ACTION
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
@@ -948,11 +944,6 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisResultData (
     REFERENCES HPCAnalysisResult (HPCAnalysisResultID)
     ON DELETE CASCADE
     ON UPDATE NO ACTION ,
-   CONSTRAINT fk_HPCAnalysisResultData_noiseID
-     FOREIGN KEY (resultID)
-     REFERENCES noise (noiseID)
-     ON DELETE NO ACTION
-     ON UPDATE NO ACTION,
    CONSTRAINT fk_HPCAnalysisResultData_modelID
      FOREIGN KEY (resultID)
      REFERENCES model (modelID)

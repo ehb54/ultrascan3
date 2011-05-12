@@ -763,7 +763,8 @@ BEGIN
         SELECT     editedDataID, editedData.label, editedData.filename,
                    editedData.rawDataID, rawData.experimentID,
                    timestamp2UTC( editedData.lastUpdated) AS UTC_lastUpdated, 
-                   MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size
+                   MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size,
+                   experiment.type
         FROM       editedData, rawData, experiment, experimentPerson
         WHERE      experimentPerson.personID = p_ID
         AND        experiment.experimentID = experimentPerson.experimentID
@@ -775,7 +776,8 @@ BEGIN
         SELECT     editedDataID, editedData.label, editedData.filename,
                    editedData.rawDataID, rawData.experimentID,
                    timestamp2UTC( editedData.lastUpdated) AS UTC_lastUpdated, 
-                   MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size
+                   MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size,
+                   experiment.type
         FROM       editedData, rawData, experiment, experimentPerson
         WHERE      experiment.experimentID = experimentPerson.experimentID
         AND        rawData.experimentID = experiment.experimentID
@@ -807,7 +809,8 @@ BEGIN
       SELECT     editedDataID, editedData.label, editedData.filename,
                  editedData.rawDataID, rawData.experimentID, 
                  timestamp2UTC( editedData.lastUpdated) AS UTC_lastUpdated, 
-                 MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size
+                 MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size,
+                 experiment.type
       FROM       editedData, rawData, experiment, experimentPerson
       WHERE      experimentPerson.personID = @US3_ID
       AND        experiment.experimentID = experimentPerson.experimentID

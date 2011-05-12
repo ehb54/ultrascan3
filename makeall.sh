@@ -1,5 +1,11 @@
 #!/bin/bash
 
+QMAKEVER=`qmake --version|grep version|grep 4`
+if [ "x$QMAKEVER" == "x" ]; then
+  echo "Wrong qmake, check environment"
+  exit
+fi
+
 DIR=$(pwd)
 rm -f build.log
 NBERR=0

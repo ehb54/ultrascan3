@@ -17,7 +17,7 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
 
-   US_RotorGui w;
-   w.show();                   //!< \memberof QWidget
+   US_RotorGui* w = new US_RotorGui;
+   w->show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
