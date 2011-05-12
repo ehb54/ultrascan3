@@ -900,3 +900,15 @@ void US_2dsa::write_svg( const QString plotFile, const QwtPlot* plot )
    plot->print( generator );
 }
 
+// New triple selected
+void US_2dsa::new_triple( int index )
+{
+   edata = &dataList[ index ];
+
+   sdata.scanData.clear();                 // Clear simulation and upper plot
+   data_plot1->detachItems();
+   data_plot1->clear();
+
+   US_AnalysisBase2::new_triple( index );  // New triple as in any analysis
+}
+

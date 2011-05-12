@@ -441,8 +441,10 @@ double US_Math2::time_correction( const QVector< US_DataIO2::EditedData >& dataL
    int size  = dataList.size() * dataList[ 0 ].scanData.size();
    int count = 0;
 
-   double* x = new double[ size ];
-   double* y = new double[ size ];
+   QVector< double > vecx( size );
+   QVector< double > vecy( size );
+   double* x = vecx.data();
+   double* y = vecy.data();
    
    double c[ 2 ];  // Looking for a linear fit
 
@@ -460,9 +462,6 @@ double US_Math2::time_correction( const QVector< US_DataIO2::EditedData >& dataL
    }
 
    US_Matrix::lsfit( c, x, y, count, 2 );
-
-   delete [] x;
-   delete [] y;
 
    return c[ 0 ]; // Return the time value corresponding to zero omega2t
 }

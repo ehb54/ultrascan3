@@ -64,9 +64,12 @@ DbgLv(1) << "LaNoi:modelGUID " << modelGUID;
       mieGUIDs.insert( 0, modelGUID );
    }
 
+   int kk = 0;                // running output models index
+
    if ( nmnois > 0 )
    {  // if loaded model has noise, put noise in list
       nieGUIDs << nimGUIDs;   // initialize noise-in-edit list
+      kk++;
    }
 
    nenois      = nmnois;      // initial noise-in-edit count is noises in model
@@ -74,7 +77,7 @@ DbgLv(1) << "LaNoi:modelGUID " << modelGUID;
    for ( int ii = 1; ii < nemods; ii++ )
    {  // search through models in edit
       lmodlGUID  = mieGUIDs[ ii ];                    // this model's GUID
-      modelIndx  = QString().sprintf( "%4.4d", ii );  // models-in-edit index
+      modelIndx  = QString().sprintf( "%4.4d", kk );  // models-in-edit index
 
       // find the noises tied to this model
       int kenois = noises_in_model( ondisk, lmodlGUID, tmpGUIDs );
@@ -92,6 +95,8 @@ DbgLv(1) << "LaNoi:modelGUID " << modelGUID;
                + ":" + modelIndx;
             nieGUIDs << lnoisGUID;
          }
+
+         kk++;
       }
    }
 DbgLv(1) << "LaNoi:nemods nmnois nenois" << nemods << nmnois << nenois;
@@ -127,13 +132,20 @@ for (int jj=0;jj<nenois;jj++)
       {  // user did not say "yes":  return zero count
          nenois  = 0;       // number of edited-data-related noises
       }
+
+      if ( kk < nemods )
+      {  // Models with noise were found, so truncate models list
+         for ( int ii = 0; ii < ( nemods - kk ); ii++ )
+            mieGUIDs.removeLast();
+      }
    }
 
    return nenois;
 }
 
 // build a list of models(GUIDs) for a given edit(GUID)
-int US_LoadableNoise::models_in_edit( bool ondisk, QString eGUID, QStringList& mGUIDs )
+int US_LoadableNoise::models_in_edit( bool ondisk, QString eGUID,
+   QStringList& mGUIDs )
 {
    QString xmGUID;
    QString xeGUID;
