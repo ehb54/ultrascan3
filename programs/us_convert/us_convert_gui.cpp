@@ -693,12 +693,14 @@ void US_ConvertGui::enableScanControls( void )
 {
    ct_from->disconnect();
    ct_from->setMinValue( 0.0 );
-   ct_from->setMaxValue(  allData[ currentTriple ].scanData.size() );
+   ct_from->setMaxValue(  allData[ currentTriple ].scanData.size() 
+                        - allExcludes[ currentTriple ].size() );
    ct_from->setValue   ( 0 );
 
    ct_to  ->disconnect();
    ct_to  ->setMinValue( 0.0 );
-   ct_to  ->setMaxValue(  allData[ currentTriple ].scanData.size() );
+   ct_to  ->setMaxValue(  allData[ currentTriple ].scanData.size() 
+                        - allExcludes[ currentTriple ].size() );
    ct_to  ->setValue   ( 0 );
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
