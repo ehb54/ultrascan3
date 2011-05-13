@@ -539,10 +539,15 @@ void US_FeMatch::data_plot( void )
 
    int drow    = lw_triples->currentRow();
    edata       = &dataList[ drow ];
+   QString                            dataType = tr( "Absorbance" );
+   if ( edata->dataType == "RI" )     dataType = tr( "Intensity" );
+   if ( edata->dataType == "WI" )     dataType = tr( "Intensity" );
+   if ( edata->dataType == "IP" )     dataType = tr( "Interference" );
+   if ( edata->dataType == "FI" )     dataType = tr( "Fluourescence" );
    data_plot2->setTitle(
       tr( "Velocity Data for " ) + edata->runID );
    data_plot2->setAxisTitle( QwtPlot::yLeft,
-      tr( "Absorbance at " ) + edata->wavelength + tr( " nm" ) );
+      dataType + tr( " at " ) + edata->wavelength + tr( " nm" ) );
    data_plot2->setAxisTitle( QwtPlot::xBottom,
       tr( "Radius (cm)" ) );
 
@@ -2104,6 +2109,11 @@ QString US_FeMatch::data_details( void ) const
    int    drow     = lw_triples->currentRow();
    const US_DataIO2::EditedData* d      = &dataList[ drow ];
    double baseline = calc_baseline( drow );
+   QString                       dataType = tr( "Absorbance" );
+   if ( d->dataType == "RI" )    dataType = tr( "Intensity" );
+   if ( d->dataType == "WI" )    dataType = tr( "Intensity" );
+   if ( d->dataType == "IP" )    dataType = tr( "Interference" );
+   if ( d->dataType == "FI" )    dataType = tr( "Fluourescence" );
 
    QString s =
       "\n" + indent( 4 ) + tr( "<h3>Detailed Run Information:</h3>\n" )
@@ -2165,7 +2175,7 @@ QString US_FeMatch::data_details( void ) const
 
    // Wavelength, baseline, meniscus, range
    s += table_row( tr( "Wavelength:" ), d->wavelength + " nm" )  +
-        table_row( tr( "Baseline Absorbance:" ),
+        table_row( tr( "Baseline " ) + dataType + ":",
                    QString::number( baseline,    'f', 6 ) + " OD" ) + 
         table_row( tr( "Meniscus Position:     " ),           
                    QString::number( d->meniscus, 'f', 3 ) + " cm" );
