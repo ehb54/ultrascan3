@@ -3,6 +3,8 @@
 
 #include <QtGui>
 
+#include "qwt_plot_marker.h"
+
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"

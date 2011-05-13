@@ -400,6 +400,7 @@ void US_2dsa::save( void )
    QString descbase = runID + "." + anType + "_e" + editID 
                             + "_a" + analysID + ".";
    QString dext     = "." + edata->cell + edata->channel + edata->wavelength; 
+   QString dext2    = ".e" + editID + "-" + dext.mid( 1 );
 
    QString reppath  = US_Settings::reportDir();
    QString respath  = US_Settings::resultDir();
@@ -539,6 +540,8 @@ void US_2dsa::save( void )
    QString plot1File = filebase + "velocity.svg";
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
+   QString fitFile   = filebase + "fit.dat";
+   QString fresFile  = respath + "/" + runID + "/2dsa-fm" + dext2 + ".fit.dat";
 
    // Write HTML report file
    QFile rep_f( htmlFile );
@@ -601,6 +604,31 @@ void US_2dsa::save( void )
                + plot1File + "\n"
                + plot2File + "\n"
                + plot3File + "\n";
+
+   // Add fit files if fit-meniscus
+   if ( fitMeni )
+   {
+      QString fitstr = fit_meniscus_data();
+
+      QFile rep_f( fitFile );
+      QFile res_f( fresFile );
+
+      if ( rep_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         QTextStream ts( &rep_f );
+         ts << fitstr;
+         rep_f.close();
+         wmsg = wmsg + fitFile  + "\n";
+      }
+
+      if ( res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         QTextStream ts( &res_f );
+         ts << fitstr;
+         res_f.close();
+         wmsg = wmsg + fresFile + "\n";
+      }
+   }
 
    QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
 }
@@ -910,5 +938,28 @@ void US_2dsa::new_triple( int index )
    data_plot1->clear();
 
    US_AnalysisBase2::new_triple( index );  // New triple as in any analysis
+}
+
+// Fit meniscus data table string
+QString US_2dsa::fit_meniscus_data()
+{
+   QString mstr  = "";
+   int nmodels   = models.size();
+   
+   if ( nmodels < 2 )
+      return mstr;
+
+   for ( int ii = 0; ii < nmodels; ii++ )
+   {
+      QString mdesc = models[ ii ].description;
+      QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
+      double  rmsd  = sqrt( avari.section( " ", 0, 0 ).toDouble() );
+      QString armsd = QString().sprintf( "%10.8f", rmsd );
+      QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                      .section( " ", 0, 0 );
+      mstr         += ( ameni + " " + armsd + "\n" );
+   }
+   
+   return mstr;
 }
 

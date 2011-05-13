@@ -420,10 +420,16 @@ void US_AnalysisBase2::data_plot( void )
    int                     row  = lw_triples->currentRow();
    US_DataIO2::EditedData* d    = &dataList[ row ];
 
+   QString                        dataType = tr( "Absorbance" );
+   if ( d->dataType == "RI" )     dataType = tr( "Intensity" );
+   if ( d->dataType == "WI" )     dataType = tr( "Intensity" );
+   if ( d->dataType == "IP" )     dataType = tr( "Interference" );
+   if ( d->dataType == "FI" )     dataType = tr( "Fluorescence" );
+
    QString header = tr( "Velocity Data for ") + d->runID;
    data_plot2->setTitle( header );
 
-   header = tr( "Absorbance at " ) + d->wavelength + tr( " nm" );
+   header = dataType + tr( " at " ) + d->wavelength + tr( " nm" );
    data_plot2->setAxisTitle( QwtPlot::yLeft, header );
 
    header = tr( "Radius (cm) " );
@@ -1063,6 +1069,11 @@ QString US_AnalysisBase2::run_details( void ) const
    int hours = (int) duration / 3600;
    minutes   = (int) duration / 60 - hours * 60;
    seconds   = (int) duration % 60;
+   QString                        dataType = tr( "Absorbance:" );
+   if ( d->dataType == "RI" )     dataType = tr( "Intensity:" );
+   if ( d->dataType == "WI" )     dataType = tr( "Intensity:" );
+   if ( d->dataType == "IP" )     dataType = tr( "Interference:" );
+   if ( d->dataType == "FI" )     dataType = tr( "Fluorescence:" );
 
    QString h;
    h   = ( hours   == 1 ) ? tr( " hour "   ) : tr( " hours " );
@@ -1076,7 +1087,7 @@ QString US_AnalysisBase2::run_details( void ) const
 
    // Wavelength, baseline, meniscus, range
    s += table_row( tr( "Wavelength:" ), d->wavelength + " nm" )  +
-        table_row( tr( "Baseline Absorbance:" ),
+        table_row( tr( "Baseline " ) + dataType,
                    QString::number( calc_baseline(), 'f', 6 ) + " OD" ) + 
         table_row( tr( "Meniscus Position:     " ),           
                    QString::number( d->meniscus, 'f', 3 ) + " cm" );

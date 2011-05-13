@@ -6,6 +6,26 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
       QWidget* parent,  Qt::WindowFlags flags ) : QMainWindow( parent, flags )                                                             
 {
    file_extension = extension;
+   file_directory = US_Settings::dataDir();
+
+   if ( extension.contains( "/" ) )
+   {  // Extension is actually directory-code/extension
+
+      if ( extension.startsWith( "results" ) )
+         file_directory = US_Settings::resultDir();
+
+      else if ( extension.startsWith( "reports" ) )
+         file_directory = US_Settings::reportDir();
+
+      else if ( extension.startsWith( "data" ) )
+         file_directory = US_Settings::dataDir();
+
+      else
+         file_directory = extension.section( "/", 0, -2 );
+
+      file_extension = extension.section( "/", -1, -1 );
+   }
+
    filename = "";
    
    QMenu* fileMenu = menuBar()->addMenu( tr( "&File" ) );
@@ -75,8 +95,8 @@ void US_Editor::load( void )
    QString text;
 
    fn = QFileDialog::getOpenFileName( this, 
-         tr( "Open File" ), 
-         US_Settings::dataDir(), 
+         tr( "Open File" ),
+         file_directory, 
          file_extension );
 
   if ( fn == "" ) return;

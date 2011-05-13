@@ -1,10 +1,28 @@
 //! \file us_fit_meniscus.cpp
+#include <QApplication>
+
 #include "us_fit_meniscus.h"
+#include "us_license_t.h"
+#include "us_license.h"
 #include "us_gui_settings.h"
 #include "us_math2.h"
 #include "us_matrix.h"
 
-#include "qwt_plot_marker.h"
+//! \brief Main program for US_FitMeniscus. Loads translators and starts
+//         the class US_FitMeniscus.
+
+int main( int argc, char* argv[] )
+{
+   QApplication application( argc, argv );
+
+   #include "main1.inc"
+
+   // License is OK.  Start up.
+   
+   US_FitMeniscus w;
+   w.show();                   //!< \memberof QWidget
+   return application.exec();  //!< \memberof QApplication
+}
 
 US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 {
@@ -17,7 +35,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 
    int row = 0;
 
-   te_data = new US_Editor( US_Editor::LOAD, false );
+   te_data = new US_Editor( US_Editor::LOAD, false, "results/*.dat;;*.*" );
    connect( te_data, SIGNAL( US_EditorLoadComplete() ), 
                      SLOT  ( plot_data()             ) );
    
@@ -117,8 +135,10 @@ void US_FitMeniscus::plot_data( void )
    QStringList lines = contents.split( "\n", QString::SkipEmptyParts );
    QStringList parsed;
 
-   double* radius_values = new double[ lines.size() ];
-   double* rmsd_values   = new double[ lines.size() ];
+   QVector< double > vradi( lines.size() );
+   QVector< double > vrmsd( lines.size() );
+   double* radius_values = vradi.data();
+   double* rmsd_values   = vrmsd.data();
    
    int     count = 0;
 
@@ -193,16 +213,15 @@ void US_FitMeniscus::plot_data( void )
       le_rms_error->clear();
       meniscus_plot->replot();
 
-      delete [] radius_values;
-      delete [] rmsd_values;
-      
       return;  
    }
 
    int fit_count = (int) ( ( maxx - minx + 2 * overscan ) / 0.001 );
 
-   double* fit_x = new double[ fit_count ];
-   double* fit_y = new double[ fit_count ];
+   QVector< double > vfitx( fit_count );
+   QVector< double > vfity( fit_count );
+   double* fit_x = vfitx.data();
+   double* fit_y = vfity.data();
    double  x     = minx - overscan;
    double minimum;
 
@@ -328,9 +347,5 @@ void US_FitMeniscus::plot_data( void )
    pm->attach( meniscus_plot );
 
    meniscus_plot->replot();
-   delete [] fit_x;
-   delete [] fit_y;
-   delete [] radius_values;
-   delete [] rmsd_values;
 }
 

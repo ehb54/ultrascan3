@@ -38,6 +38,7 @@ class US_GUI_EXTERN US_Editor : public QMainWindow
       QFont      currentFont;
       QString    filename;
       QString    file_extension;
+      QString    file_directory;
    
       void saveFile   ( void );
 
