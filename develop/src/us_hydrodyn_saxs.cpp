@@ -2031,6 +2031,12 @@ void US_Hydrodyn_Saxs::load_pr()
    {
       return;
    }
+   if ( filename.contains(QRegExp("_t(|-\\d+).csv$", false)) )
+   {
+      QMessageBox::information( this, "UltraScan",
+                                tr("Can not load transposed format csv files") );
+      return;
+   }
    QFile f(filename);
    our_saxs_options->path_load_prr = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
@@ -3826,14 +3832,38 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
    our_saxs_options->path_load_saxs_curve = QFileInfo(filename).dirPath(true);
    QString ext = QFileInfo(filename).extension(FALSE).lower();
    vector < double > I;
+   vector < double > I2;
    vector < double > q;
-   double new_I, new_q;
+   vector < double > q2;
+   double new_I;
+   double new_I2;
+   double new_q;
    unsigned int Icolumn = 1;
    bool dolog10 = false;
    QString res = "";
+   unsigned int Icolumn2 = 0;
+   QString tag1;
+   QString tag2;
+
    if ( f.open(IO_ReadOnly) )
    {
       QTextStream ts(&f);
+      vector < QString > qv;
+      QStringList qsl;
+      while ( !ts.atEnd() )
+      {
+         QString qs = ts.readLine();
+         qv.push_back(qs);
+         qsl << qs;
+      }
+      f.close();
+      if ( !qv.size() )
+      {
+         QMessageBox::warning( this, "UltraScan",
+                               QString(tr("The file ")
+                                       + filename + tr(" is empty.")) );
+         return;
+      }
       if ( ext == "int" ) 
       {
          //         dolog10 = true;
@@ -3882,7 +3912,45 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
       }
       if ( ext == "dat" ) 
       {
+         // foxs?
+
          Icolumn = 1;
+         if ( qsl.grep("exp_intensity").size() )
+         {
+            
+            switch ( QMessageBox::question(this, 
+                                           tr("UltraScan Notice"),
+                                           QString(tr("Please note:\n\n"
+                                                      "The file appears to have both experiment and model data\n"
+                                                      "What would you like to do?\n"))
+                                           ,
+                                           tr("&Load only experimental"),
+                                           tr("&Load only the model"),
+                                           tr("&Load both"),
+                                           2, // Default
+                                           0 // Escape == button 0
+                                           ) )
+            {
+            case 0 : 
+               Icolumn = 1;
+               tag1 = " Experimental";
+               break;
+            case 1 : 
+               Icolumn = 2;
+               tag1 = " Model";
+               break;
+            case 2 : 
+               Icolumn = 1;
+               Icolumn2 = 2;
+               tag1 = " Experimental";
+               tag2 = " Model";
+               break;
+            default :
+               // what happended here?
+               return;
+               break;
+            }
+         }             
       }
       if ( ext == "ssaxs" ) 
       {
@@ -3926,7 +3994,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
          }
       }
       editor->append(QString("Loading SAXS data from %1 %2\n").arg(filename).arg(res));
-      editor->append(ts.readLine());
+      editor->append(qv[0]);
       double units = 1;
       switch( QMessageBox::information( this, 
                                         tr("UltraScan"),
@@ -3942,29 +4010,58 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
          units = 0.1;
          break;
       }
-      while ( !ts.atEnd() )
+      for ( unsigned int i = 1; i < qv.size(); i++ )
       {
-         ts >> new_q;
-         for ( unsigned int i = 0; i < Icolumn; i++ )
+         if ( qv[i].contains(QRegExp("^#")) )
          {
-            ts >> new_I;
+            continue;
+         }
+         QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
+         new_q = (*tokens.at(0)).toDouble();
+         new_I = (*tokens.at(Icolumn)).toDouble();
+         if ( Icolumn2 )
+         {
+            new_I2 = (*tokens.at(Icolumn2)).toDouble();
+            if ( dolog10 )
+            {
+               new_I2 = log10(new_I2);
+            }
          }
          if ( dolog10 )
          {
             new_I = log10(new_I);
          }
-         ts.readLine();
          I.push_back(new_I);
          q.push_back(new_q * units);
+         if ( Icolumn2 )
+         {
+            I2.push_back(new_I2);
+         }
       }
-      f.close();
 
       cout << QFileInfo(filename).fileName() << endl;
+      if ( Icolumn2 )
+      {
+         q2 = q;
+         crop_iq_data(q2, I2);
+      }
       crop_iq_data(q, I);
+         
       if ( q.size() )
       {
-         plot_one_iqq(q, I, QFileInfo(filename).fileName());
+         plot_one_iqq(q, I, QFileInfo(filename).fileName() + tag1);
       }
+      if ( q2.size() )
+      {
+         plot_one_iqq(q2, I2, QFileInfo(filename).fileName() + tag2);
+      }
+      if ( plotted )
+      {
+         editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+         editor->append("I(q) vs q plot done\n");
+         plotted = false;
+      }
+
       if ( plotted )
       {
          editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
