@@ -31,6 +31,8 @@ US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags )
     le_oldPasswd->setEchoMode( QLineEdit::Password );
     le_oldPasswd->setMinimumHeight( buttonh );
   }
+  else
+    le_oldPasswd = NULL;
 
   QLabel* passwd1 = us_label( "Enter New Password:" );
   passwd1->setMinimumHeight( buttonh );
@@ -100,7 +102,6 @@ void US_Admin::save( void )
 
     if ( calcsha1 != oldPW )
     {
-      //qDebug() << "Saved hash:" << oldPW << "; New hash:" << calcsha1;
       QMessageBox::information( this, 
         tr( "Attention:" ), 
         tr( "The old password is incorrect. Please re-input.\n" ) );
