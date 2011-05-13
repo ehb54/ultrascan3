@@ -3805,7 +3805,16 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
          our_saxs_options->path_load_saxs_curve.isEmpty() ?
          USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
          our_saxs_options->path_load_saxs_curve;
-      filename = QFileDialog::getOpenFileName(use_dir, "*", this);
+      filename = QFileDialog::getOpenFileName(use_dir, 
+                                              "All files (*);;"
+                                              "ssaxs files (*.ssaxs);;"
+                                              "int files [crysol] (*.int);;"
+                                              "dat files [foxs] (*.dat);;"
+                                              , this
+                                              , "open file dialog"
+                                              , "Open"
+                                              , &load_saxs_sans_selected_filter
+                                              );
       if (filename.isEmpty())
       {
          return;
@@ -3870,6 +3879,10 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
             f.close();
             return;
          }
+      }
+      if ( ext == "dat" ) 
+      {
+         Icolumn = 1;
       }
       if ( ext == "ssaxs" ) 
       {
