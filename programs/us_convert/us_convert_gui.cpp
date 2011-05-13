@@ -921,6 +921,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
 
    // Update triple information on screen
    setTripleInfo();
+   init_excludes();
 
    le_solutionDesc  -> setText( triples[ currentTriple ].solution.solutionDesc  );
 
@@ -936,7 +937,6 @@ void US_ConvertGui::loadUS3Disk( QString dir )
 
    // Redo plot
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   init_excludes();
    plot_current();
    QApplication::restoreOverrideCursor();
 
