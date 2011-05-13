@@ -44,7 +44,8 @@ class US_Convert
            { excludes.push_back( x ); }
          Excludes& operator<<( const int x )  //!< function to insert x at the end of the list
             { this->push_back( x ); return *this; }
-
+         int size( void )                     //!< function to return the size of the list
+            { return excludes.size(); }
       };
 
       //! \brief  Class that contains information about relevant 
