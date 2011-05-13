@@ -940,6 +940,11 @@ void US_AnalysisBase2::new_triple( int index )
 
    // Update GUI elements and plot for selected triple
    update( index );
+
+   // Make sure we have a reports directory for this runID
+   QString repdir = US_Settings::reportDir() + "/" + d->runID;
+   QDir dir;
+   if ( ! dir.exists( repdir ) )  dir.mkpath( repdir );
 }
 
 double US_AnalysisBase2::calc_baseline( void ) const
