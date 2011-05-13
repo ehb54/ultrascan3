@@ -914,6 +914,9 @@ void US_AnalysisBase2::new_triple( int index )
    // Save the data for the new triple
    US_DataIO2::EditedData* d = &dataList[ index ];
  
+   // Test for noise data to substract from the experiment; apply if any
+   load_noise( index );
+
    savedValues.clear();
 
    for ( int i = 0; i < d->scanData.size(); i++ )
@@ -928,9 +931,6 @@ void US_AnalysisBase2::new_triple( int index )
 
       savedValues << v;
    }
-
-   // Test for noise data to substract from the experiment; apply if any
-   load_noise( index );
 
    // Update GUI elements and plot for selected triple
    update( index );
