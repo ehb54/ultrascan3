@@ -566,16 +566,18 @@ void US_DataLoader::scan_dbase_edit()
    while ( db.next() )
    {
       QString recID = db.value( 0 ).toString();
-      QString fname = db.value( 2 ).toString().replace( "\\", "/" );
-      edtIDs << fname + "\\" + recID;
-   }
+      QString etype = db.value( 8 ).toString().toLower();
 
-   QString prev_etype = "";
-   QString prev_expID = "";
+      // If type filtering, ignore runIDs that do not match experiment type
+      if ( tfilter  &&  etype != etype_filt )
+         continue;
+
+      edtIDs << recID;
+   }
 
    for ( int ii = 0; ii < edtIDs.size(); ii++ )
    {
-      QString recID   = edtIDs.at( ii ).section( "\\", 1, 1 );
+      QString recID   = edtIDs.at( ii );
       int     idRec   = recID.toInt();
 
       query.clear();
@@ -601,29 +603,6 @@ void US_DataLoader::scan_dbase_edit()
       db.next();
 
       QString parGUID  = db.value( 0 ).toString();
-
-      if ( tfilter )
-      {  // If type filtering, ignore runIDs that do not match experiment type
-
-         QString expID    = db.value( 4 ).toString();
-         QString etype    = prev_etype;
-
-         if ( expID != prev_expID )
-         {  // If a new experiment, get the experiment type
-            query.clear();
-            query << "get_experiment_info" << expID;
-            db.query( query );
-            db.next();
-
-            etype            = db.value( 8 ).toString().toLower();
-         }
-
-         prev_etype       = etype;
-         prev_expID       = expID;
-
-         if ( etype != etype_filt )
-            continue;
-      }
 
       QString label    = runID;
       descrip          = runID + "." + tripID + "." + editID;
