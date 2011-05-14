@@ -259,14 +259,20 @@ void US_Config::help( void )
 
 void US_Config::save( void )
 {
-//   US_Settings::set_tempTolerance( sb_temperature_tol->value() );
-   US_Settings::set_browser      ( le_browser    ->text()      );
-   US_Settings::set_dataDir      ( le_dataDir    ->text()      );
-   US_Settings::set_resultDir    ( le_resultDir  ->text()      );
-   US_Settings::set_reportDir    ( le_reportDir  ->text()      );
-   US_Settings::set_archiveDir   ( le_archiveDir ->text()      );
-   US_Settings::set_tmpDir       ( le_tmpDir     ->text()      );
-//   US_Settings::set_beckmanBug   ( rb_on         ->isChecked() );
+   US_Settings::set_browser   ( le_browser   ->text() );
+   US_Settings::set_dataDir   ( le_dataDir   ->text() );
+   US_Settings::set_resultDir ( le_resultDir ->text() );
+   US_Settings::set_reportDir ( le_reportDir ->text() );
+   US_Settings::set_archiveDir( le_archiveDir->text() );
+   US_Settings::set_tmpDir    ( le_tmpDir    ->text() );
+
+   // Ensure data directories are properly created
+   QDir dir;
+   dir.mkpath( le_dataDir   ->text() );
+   dir.mkpath( le_resultDir ->text() );
+   dir.mkpath( le_reportDir ->text() );
+   dir.mkpath( le_archiveDir->text() );
+   dir.mkpath( le_tmpDir    ->text() );
 
    QMessageBox::information( this,
          tr( "Settings Saved" ),
