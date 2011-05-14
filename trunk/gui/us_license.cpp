@@ -510,6 +510,13 @@ void US_License::update_response( const QString& response )
       pb_update->setText( "Update / Renew" );
       update_screen();
     }
+
+    // After registration, ensure basic user directories are created
+    QDir dir;
+    dir.mkpath( US_Settings::dataDir() );
+    dir.mkpath( US_Settings::resultDir() );
+    dir.mkpath( US_Settings::reportDir() );
+    dir.mkpath( US_Settings::tmpDir() );
   }
   else
     // Process possible errors
