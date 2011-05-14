@@ -270,6 +270,17 @@ class US_EXTERN US_Saxs_Util
       // build averages and wiki page for subdirectory 1d, create pngsplits # of zoom (none if 1 or less)
       bool project_1d(QString wikitag, unsigned int pngsplits);
 
+      // linear fit code, solves  y = a + bx, returing sigmas & chi2
+      void linear_fit( 
+                      vector < double > x, 
+                      vector < double > y, 
+                      double &a,
+                      double &b,
+                      double &siga,
+                      double &sigb,
+                      double &chi2
+                      );
+
    private:
 
       bool run_gnom( 
@@ -447,17 +458,6 @@ class US_EXTERN US_Saxs_Util
       long min_fr_pr_cgd(our_vector *i, double epsilon, long max_iter);
       long min_hessian_bfgs(our_vector *ip, double epsilon, long max_iter);
 
-
-      // linear fit code, solves  y = a + bx, returing sigmas & chi2
-      void linear_fit( 
-                      vector < double > x, 
-                      vector < double > y, 
-                      double &a,
-                      double &b,
-                      double &siga,
-                      double &sigb,
-                      double &chi2
-                      );
 
 
 };

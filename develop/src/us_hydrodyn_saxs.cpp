@@ -3628,6 +3628,8 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
 
+      plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
+
       plotted_Iq.push_back(Iq);
 
       plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
@@ -3845,6 +3847,15 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
    QString tag1;
    QString tag2;
 
+   // scaling fields
+   QString scaling_target = "";
+   double scaling_a;
+   double scaling_b;
+   double scaling_siga;
+   double scaling_sigb;
+   double scaling_chi2;
+
+
    if ( f.open(IO_ReadOnly) )
    {
       QTextStream ts(&f);
@@ -3864,6 +3875,25 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
                                        + filename + tr(" is empty.")) );
          return;
       }
+      if ( qsl_plotted_iq_names.size() )
+      {
+         bool ok;
+         scaling_target = QInputDialog::getItem(
+                                                tr("Scale I(q) Curve"),
+                                                tr("Select the target plotted data set for scaling the loaded data:\n"
+                                                   "or Cancel of you do not wish to scale")
+                                                , 
+                                                qsl_plotted_iq_names, 
+                                                0, 
+                                                FALSE, 
+                                                &ok,
+                                                this );
+         if ( ok ) {
+            // user selected an item and pressed OK
+            cout << "not yet implemented (" << scaling_target << ")\n";
+         }
+      }         
+
       if ( ext == "int" ) 
       {
          //         dolog10 = true;
@@ -4047,6 +4077,95 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
       }
       crop_iq_data(q, I);
          
+      if ( q.size() &&
+           !scaling_target.isEmpty() && 
+           plotted_iq_names_to_pos.count(scaling_target) )
+      {
+         unsigned int iq_pos = plotted_iq_names_to_pos[scaling_target];
+         cout << "scaling target pos is " << iq_pos << endl;
+         double target_q_min = plotted_q[iq_pos][0];
+         double target_q_max = plotted_q[iq_pos][plotted_q[iq_pos].size() - 1];
+         double source_q_min = q[0];
+         double source_q_max = q[q.size() - 1];
+         double q_min = target_q_min;
+         if ( q_min < source_q_min )
+         {
+            q_min = source_q_min;
+         }
+         double q_max = target_q_max;
+         if ( q_max > source_q_max )
+         {
+            q_max = source_q_max;
+         }
+
+         cout << QString(
+                         "target q_min %1 max %1\n"
+                         "source q_min %1 max %1\n"
+                         "select q_min %1 max %1\n"
+                         )
+            .arg(target_q_min)
+            .arg(target_q_max)
+            .arg(source_q_min)
+            .arg(source_q_max)
+            .arg(q_min)
+            .arg(q_max)
+            ;
+
+         vector < double > use_q;
+         vector < double > use_I;
+         for ( unsigned int i = 0; i < plotted_q[iq_pos].size(); i++ )
+         {
+            if ( plotted_q[iq_pos][i] >= q_min &&
+                 plotted_q[iq_pos][i] <= q_max )
+            {
+               use_q.push_back(plotted_q[iq_pos][i]);
+               use_I.push_back(plotted_I[iq_pos][i]);
+            }
+         }
+         
+         cout << QString("After cropping q to overlap region:\n"
+                         "use_q.size == %1\n").arg(use_q.size());
+
+         if ( !use_q.size() )
+         {
+            QMessageBox::warning( this, "UltraScan",
+                                  QString(tr("Could not find sufficient q range overlap\n"
+                                             "to scale the loaded data to the selected target")) );
+         } else {
+            vector < double > use_source_I = interpolate(use_q, q, I);
+
+            US_Saxs_Util usu;
+
+            usu.linear_fit(
+                           use_source_I, 
+                           use_I, 
+                           scaling_a,
+                           scaling_b,
+                           scaling_siga,
+                           scaling_sigb,
+                           scaling_chi2
+                           );
+
+            QString results = 
+               QString("Scaling factor: %1  Offset: %1  Chi^2: %1\n")
+               .arg(scaling_b)
+               .arg(scaling_a)
+               .arg(scaling_chi2);
+            editor->append(results);
+            for ( unsigned int i = 0; i < I.size(); i++ )
+            {
+               I[i] = scaling_a + scaling_b * I[i];
+            }
+            if ( I2.size() )
+            {
+               for ( unsigned int i = 0; i < I2.size(); i++ )
+               {
+                  I2[i] = scaling_a + scaling_b * I2[i];
+               }
+            }
+         }
+      }
+
       if ( q.size() )
       {
          plot_one_iqq(q, I, QFileInfo(filename).fileName() + tag1);
@@ -4088,6 +4207,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs()
 {
    qsl_plotted_iq_names.clear();
    dup_plotted_iq_name_check.clear();
+   plotted_iq_names_to_pos.clear();
    plotted_Iq.clear();
    plotted_q.clear();
    plotted_q2.clear();
@@ -4885,6 +5005,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
    }
    qsl_plotted_iq_names << plot_name;
    dup_plotted_iq_name_check[plot_name] = true;
+   plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
       
    long Iq = plot_saxs->insertCurve("I(q) vs q");
    plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);

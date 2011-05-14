@@ -166,6 +166,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
      #pragma warning ( disable: 4251 )
 #endif
       map    < QString, bool >                        dup_plotted_iq_name_check;
+      map    < QString, unsigned int >                plotted_iq_names_to_pos;
       map    < QString, bool >                        dup_plotted_pr_name_check;
       vector < atom >                                 atom_list;
       vector < hybridization >                        hybrid_list;
