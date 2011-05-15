@@ -113,7 +113,7 @@ void US_Editor::load( void )
      f.close(  );
 
      e->setPlainText( text );
-     emit US_EditorLoadComplete();
+     emit US_EditorLoadComplete( filename );
   }
   else
      QMessageBox::information( this,

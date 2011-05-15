@@ -31,7 +31,8 @@ class US_GUI_EXTERN US_Editor : public QMainWindow
    
    signals:
       //! \brief Signal that file load is complete
-      void US_EditorLoadComplete( void );
+      //! \param fn Name of file that was loaded
+      void US_EditorLoadComplete( QString );
 
    private:
 

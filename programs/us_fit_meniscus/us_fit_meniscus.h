@@ -26,6 +26,8 @@ class US_FitMeniscus : public US_Widgets
       
       US_Editor*    te_data;
 
+      QPushButton*  pb_update;
+
       QSpinBox*     sb_order;
 
       QwtPlot*      meniscus_plot;
@@ -33,10 +35,16 @@ class US_FitMeniscus : public US_Widgets
       QwtPlotCurve* fit_curve;
       QwtPlotCurve* minimum_curve;
    
-   public slots:
+      QString       filedir;
+      QString       fname_load;
+      QString       fname_edit;
+
+   private slots:
       void reset    ( void );
       void plot_data( void );
       void plot_data( int );
+      void edit_update( void );
+      void file_loaded( QString );
 
       void help     ( void )
       { showHelp.show_help( "manual/fit_meniscus.html" ); };

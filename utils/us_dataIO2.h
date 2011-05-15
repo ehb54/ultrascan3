@@ -348,6 +348,12 @@ class US_UTIL_EXTERN US_DataIO2
       */
       static int     index         ( const Scan&, const QVector< XValue >&, double );
 
+      /*! Determine the index of a radius in a scan
+          \param x A vector of data radius information
+          \param r The radius where the index is needed
+      */
+      static int     index         ( const QVector< XValue >&, double );
+
 
       /*! Load edited data into a data structure.  This is the method most
           analysis programs will call to read data into memory.  It uses

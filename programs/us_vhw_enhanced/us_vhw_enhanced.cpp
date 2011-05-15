@@ -257,6 +257,7 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
          s        = &d->scanData[ ii ];
          scplats[ ii ] = s->plateau;
          plateau  = zone_plateau( );
+         plateau  = ( nunrp == 0 ) ? plateau : 0.0;
 DbgLv(2) << "p: scan " << ii+1 << " plateau" << plateau << s->plateau;
 
          if ( plateau > 0.0 )
@@ -268,10 +269,14 @@ DbgLv(2) << "p:    *RELIABLE* " << ii+1 << nrelp;
          }
 
          else
-         {  // save index to scan with no reliable plateau
-            isunr.append( ii );
-            nunrp++;
-DbgLv(2) << "p:    -UNreliable- " << ii+1 << nunrp;
+         {  // this and all remaining scans are unreliable
+            for ( int jj = ii; jj < scanCount; jj++ )
+            {
+               isunr.append( jj );
+               nunrp++;
+DbgLv(2) << "p:    -UNreliable- " << jj+1 << nunrp;
+            }
+            break;
          }
 //DbgLv(2) << "p: nrelp nunrp " << nrelp << nunrp;
 //DbgLv(2) << "  RELIABLE: 1st " << isrel.at(0)+1 << "  last" << isrel.last()+1;
@@ -324,18 +329,69 @@ DbgLv(2) << "p:    -UNreliable- " << ii+1 << nunrp;
 
    if ( nrelp < 4 )
    {
-      QString wmsg = ( nrelp == 1 ) ?
-         tr( "Only 1 scan plateau was found to be reliable." ) :
-         tr( "Only %1 scan plateaus were found to be reliable." ).arg( nrelp );
-      wmsg = wmsg + 
-         tr ( "\nNot able to interpolate plateaus for the remaining scans.\n\n"
-              "A new US_Edit session might be required for this data set." );
+      QString wmsg;
+
+      if ( nrelp == 1 )
+         wmsg = tr( "Only 1 reliable scan plateau was found." );
+
+      else if ( nrelp == 0 )
+         wmsg = tr( "No reliable scan plateaus were found." );
+
+      else
+         wmsg = tr( "Only %1 reliable scan plateaus were found." ).arg( nrelp );
+
+      wmsg = wmsg + "\n" +
+         tr ( "Not able to interpolate plateaus for the remaining scans.\n\n"
+              "Noise may need to be computed and removed from the data; or\n"
+              "a new US_Edit session might be required for this data set." );
       QMessageBox::warning( this,
          tr( "Insufficient Reliable Plateaus" ), wmsg );
    }
 
    US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, nrelp );
+DbgLv(1) << " nrelp" << nrelp << "slope intcp sigma" << slope << intcp << sigma;
 
+   // Analyze the results of fitting to successively fewer points
+   int    krelp  = nrelp;
+   double slmax  = slope;
+   double cpmin  = intcp;
+   double sgmin  = sigma;
+
+   for ( int kk = nrelp - 1; kk > 5; kk-- )
+   {
+      double  slope2 = 0.0;
+      double  intcp2 = 0.0;
+      double  sigma2 = 0.0;
+
+      US_Math2::linefit( &ptx, &pty, &slope2, &intcp2, &sigma2, &corre, kk );
+DbgLv(1) << " nrelp" << kk << "slope intcp sigma" << slope2 << intcp2 << sigma2;
+
+      if ( ( slope2 > slmax  &&  intcp2 < cpmin )  ||
+           ( slope2 > slmax  &&  sigma2 < sgmin )  ||
+           ( intcp2 < cpmin  &&  sigma2 < sgmin ) )
+      {  // 2 of 3 parameters are optimal:  save current points count
+         krelp          = kk;
+      }
+
+      slmax          = max( slmax, slope2 );
+      cpmin          = min( cpmin, intcp2 );
+      sgmin          = min( sgmin, sigma2 );
+   }
+
+   if ( krelp < nrelp )
+   {  // The "reliables" count has changed:  refit and reset index array
+      US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, krelp );
+
+      for ( int jj = krelp; jj < nrelp; jj++ )
+      {  // Mark points beyond new count as unreliable
+         isunr.append( isrel.at( jj ) );
+      }
+
+      nrelp          = krelp;
+      nunrp          = isunr.size();
+DbgLv(1) << " NRELP" << nrelp << "slope intcp sigma" << slope << intcp << sigma;
+   }
+ 
    Swavg      = slope / ( -2.0 * omega * omega );  // Swavg func of slope
 	C0         = exp( intcp );                      // C0 func of intercept
 DbgLv(1) << "Swavg(c): " << Swavg*correc << " C0: " << C0 ;
@@ -382,6 +438,7 @@ DbgLv(1) << " jj scan plateau " << jj << ii+1 << scplats[ii];
       {
          for ( int jj = 0; jj < divsCount; jj++ )
             scpds.append( cinc );
+
          cpds << scpds;
          continue;
       }
@@ -516,14 +573,13 @@ DbgLv(1) << "   +++ avgdif < avdthr (" << avgdif << avdthr << ") +++";
 
    for ( int ii = 0; ii < scanCount; ii++ )
    {
-      s        = &d->scanData[ ii ];
-
       if ( excludedScans.contains( ii ) )
       {
          kk         += divsCount;
          continue;
       }
 
+      s              = &d->scanData[ ii ];
       double  timev  = s->seconds - time_correction;
       double  timex  = 1.0 / sqrt( timev );
       double  bdrad  = bdrads.at( kl );   // back-diffus cutoff radius for scan
@@ -1047,6 +1103,7 @@ double US_vHW_Enhanced::zone_plateau( )
    int     j2     = first_gteq( s->plateau, s->readings, valueCount, 0 );
 DbgLv(2) << "      j2=" << j2 << " s->plateau" << s->plateau;
            j2     = min( j2, j3 );
+           j2     = max( 0, ( j2 - PZ_POINTS * 2 ) );
 DbgLv(2) << "        j2=" << j2;
    int     nzp    = PZ_POINTS;
            j3     = min( ( j2 + nzp / 2 ), ( valueCount - 1 ) );
