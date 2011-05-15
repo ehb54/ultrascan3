@@ -30,8 +30,7 @@ class US_GUI_EXTERN US_Editor : public QMainWindow
       QTextEdit* e;      //!< class's text editor component
    
    signals:
-      //! \brief Signal that file load is complete
-      //! \param fn Name of file that was loaded
+      //! Signal that file load is complete (passes name of file loaded).
       void US_EditorLoadComplete( QString );
 
    private:
