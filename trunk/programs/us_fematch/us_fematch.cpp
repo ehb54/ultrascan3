@@ -278,7 +278,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    data_plot2->setMinimumSize( 560, 240 );
 
    // Standard buttons
-   pb_reset    = us_pushbutton( tr( "Reset" ) );
+   pb_reset    = us_pushbutton( tr( "Reset Scans" ) );
    pb_help     = us_pushbutton( tr( "Help"  ) );
    pb_close    = us_pushbutton( tr( "Close" ) );
 
@@ -362,6 +362,7 @@ void US_FeMatch::load( void )
 
    dataLoaded = false;
    buffLoaded = false;
+   haveSim    = false;
    dataLatest = ck_edit->isChecked();
    int local  = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
                                   : US_Disk_DB_Controls::Disk;
@@ -567,8 +568,10 @@ void US_FeMatch::data_plot( void )
       count     = points > count ? points : count;
    }
 
-   double* r         = new double[ count ];
-   double* v         = new double[ count ];
+   QVector< double > vecr( count );
+   QVector< double > vecv( count );
+   double* r         = vecr.data();
+   double* v         = vecv.data();
 
    QString       title; 
    QwtPlotCurve* c;
@@ -697,6 +700,8 @@ DbgLv(1) << "      sdata->c00" << sdata->value(0,0);
 DbgLv(1) << "      sdata->c0N" << sdata->value(0,nconc-1);
 DbgLv(1) << "      sdata->cM0" << sdata->value(nscan-1,0);
 DbgLv(1) << "      sdata->cMN" << sdata->value(nscan-1,nconc-1);
+      double rmsd = 0.0;
+      int    kpts = 0;
 
       for ( int ii = 0; ii < scanCount; ii++ )
       {
@@ -708,13 +713,17 @@ DbgLv(2) << "      II POINTS" << ii << points;
          int jj    = 0;
          double rr = 0.0;
          double vv = 0.0;
+         double da = 0.0;
          rnoi      = have_ri ? ri_noise.values[ ii ] : 0.0;
 
          while ( jj < points )
          {  // accumulate coordinates of simulation curve
             tnoi      = have_ti ? ti_noise.values[ jj ] : 0.0;
             rr        = sdata->radius( jj );
-            vv        = sdata->value( ii, jj++ ) + rnoi + tnoi;
+            vv        = sdata->value( ii, jj ) + rnoi + tnoi;
+            da        = edata->value( ii, jj++ );
+            rmsd     += sq( da - vv );
+            kpts++;
 DbgLv(3) << "       JJ rr vv" << jj << rr << vv;
 
             if ( rr > rl )
@@ -730,12 +739,22 @@ DbgLv(3) << "       JJ rr vv" << jj << rr << vv;
 DbgLv(1) << "Sim plot scan count" << ii << count
  << "  r0 v0 rN vN" << r[0] << v[0 ] << r[count-1] << v[count-1];
       }
+
+      rmsd       /= (double)kpts;
+DbgLv(1) << "     Sim plot rmsd kpts" << rmsd << kpts;
+      le_variance->setText( QString::number( rmsd ) );
+      rmsd        = sqrt( rmsd );
+      le_rmsd    ->setText( QString::number( rmsd ) );
+   }
+
+   else
+   {  // No simulation exists yet
+      data_plot1->detachItems();
+      data_plot1->clear();
+      data_plot1->replot();
    }
 
    data_plot2->replot();
-
-   delete [] r;
-   delete [] v;
 
    return;
 }
@@ -947,10 +966,8 @@ void US_FeMatch::exclude( void )
    ct_to  ->setMaxValue( totalScans - excludedScans.size() );
 
    allExcls[ drow ]     = excludedScans;
-}
 
-void US_FeMatch::set_ra_visible( bool /*visible*/ )
-{
+   data_plot();
 }
 
 // respond to click of current type of distribution plot
@@ -1039,14 +1056,16 @@ void US_FeMatch::distrib_plot_stick( int type )
    data_plot1->setTitle(                       pltitle );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
    data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
-
    data_plot1->clear();
+
    QwtPlotGrid*  data_grid = us_grid( data_plot1 );
    QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
 
    int     dsize  = model_loaded.components.size();
-   double* xx     = new double[ dsize ];
-   double* yy     = new double[ dsize ];
+   QVector< double > vecx( dsize );
+   QVector< double > vecy( dsize );
+   double* xx     = vecx.data();
+   double* yy     = vecy.data();
    double  xmin   = 1.0e30;
    double  xmax   = -1.0e30;
    double  ymin   = 1.0e30;
@@ -1093,9 +1112,6 @@ void US_FeMatch::distrib_plot_stick( int type )
    data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax );
 
    data_plot1->replot();
-
-   delete [] xx;
-   delete [] yy;
 }
 
 // do 2d type distribution plot
@@ -1146,8 +1162,10 @@ void US_FeMatch::distrib_plot_2d( int type )
    QwtSymbol     symbol;
 
    int     dsize  = model_loaded.components.size();
-   double* xx     = new double[ dsize ];
-   double* yy     = new double[ dsize ];
+   QVector< double > vecx( dsize );
+   QVector< double > vecy( dsize );
+   double* xx     = vecx.data();
+   double* yy     = vecy.data();
    double  xmin   = 1.0e30;
    double  xmax   = -1.0e30;
    double  ymin   = 1.0e30;
@@ -1206,9 +1224,6 @@ void US_FeMatch::distrib_plot_2d( int type )
    data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax );
 
    data_plot1->replot();
-
-   delete [] xx;
-   delete [] yy;
 }
 
 // do residuals type distribution plot
@@ -1231,8 +1246,10 @@ void US_FeMatch::distrib_plot_resids( )
    QwtPlotCurve* line_curv = us_curve( data_plot1, "resids zline" );
 
    int     dsize  = edata->scanData[ 0 ].readings.size();
-   double* xx     = new double[ dsize ];
-   double* yy     = new double[ dsize ];
+   QVector< double > vecx( dsize );
+   QVector< double > vecy( dsize );
+   double* xx     = vecx.data();
+   double* yy     = vecy.data();
    double  zx[ 2 ];
    double  zy[ 2 ];
    double  xmin   = 1.0e30;
@@ -1309,9 +1326,6 @@ void US_FeMatch::distrib_plot_resids( )
    }
 
    data_plot1->replot();
-
-   delete [] xx;
-   delete [] yy;
 }
 
 // open dialog with advanced analysis parameters
@@ -1362,6 +1376,8 @@ void US_FeMatch::reset( )
    ct_to  ->disconnect();
    ct_from->setValue( 0 );
    ct_to  ->setValue( 0 );
+   ct_from->setMaxValue( scanCount );
+   ct_to  ->setMaxValue( scanCount );
 
    connect( ct_from, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( exclude_from( double ) ) );
@@ -1716,7 +1732,7 @@ DbgLv(1) << "   sdata->c0N" << sdata->value(0,nconc-1);
 DbgLv(1) << "   sdata->cM0" << sdata->value(nscan-1,0);
 DbgLv(1) << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
 
-   rmsd        = US_AstfemMath::variance( *sdata, *edata );
+   rmsd        = US_AstfemMath::variance( *sdata, *edata, excludedScans );
    le_variance->setText( QString::number( rmsd ) );
    rmsd        = sqrt( rmsd );
    le_rmsd    ->setText( QString::number( rmsd ) );
@@ -1972,9 +1988,13 @@ void US_FeMatch::calc_residuals()
 {
    int     dsize  = edata->scanData[ 0 ].readings.size();
    int     ssize  = sdata->scanData[ 0 ].readings.size();
-   double* xx     = new double[ dsize ];
-   double* sx     = new double[ ssize ];
-   double* sy     = new double[ ssize ];
+   int     kscan  = scanCount - excludedScans.size();
+   QVector< double > vecxx( dsize );
+   QVector< double > vecsx( ssize );
+   QVector< double > vecsy( ssize );
+   double* xx     = vecxx.data();
+   double* sx     = vecsx.data();
+   double* sy     = vecsy.data();
    double  yval;
    double  sval;
    //double  rl     = edata->radius( 0 );
@@ -2002,6 +2022,8 @@ void US_FeMatch::calc_residuals()
 
    for ( int ii = 0; ii < scanCount; ii++ )
    {
+      bool usescan = !excludedScans.contains( ii );
+
       rnoi     = frin ? ri_noise.values[ ii ] : 0.0;
 
       for ( int jj = 0; jj < ssize; jj++ )
@@ -2016,21 +2038,18 @@ void US_FeMatch::calc_residuals()
          yval          = edata->value( ii, jj ) - sval - rnoi - tnoi;
          //if ( xx[ jj ] < rl )
          //   yval          = 0.0;
-         rmsd         += sq( yval );
+         if ( usescan )
+            rmsd         += sq( yval );
          resscan[ jj ] = yval;
       }
 
       resids.append( resscan );
    }
 
-   rmsd  /= (double)( scanCount * dsize );
+   rmsd  /= (double)( kscan * dsize );
    le_variance->setText( QString::number( rmsd ) );
    rmsd   = sqrt( rmsd );
    le_rmsd    ->setText( QString::number( rmsd ) );
-
-   delete [] xx;
-   delete [] sx;
-   delete [] sy;
 }
 
 // slot to make sure all windows and dialogs get closed
@@ -2412,6 +2431,8 @@ bool US_FeMatch::mkdir( const QString& baseDir, const QString& subdir )
 
 void US_FeMatch::new_triple( int trow )
 {
+   haveSim    = false;
+
    update( trow );
 
    data_plot();

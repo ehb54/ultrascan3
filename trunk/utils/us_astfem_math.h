@@ -237,6 +237,16 @@ class US_UTIL_EXTERN US_AstfemMath
       static double variance      ( US_DataIO2::RawData&,
                                     US_DataIO2::EditedData& );
 
+      //! \brief Calculate variance for Simulation-Experimental difference.
+      //! \param simdata   Reference to simulation Raw Data.
+      //! \param editdata  Reference to experimental Edited Data.
+      //! \param exclScans List of excluded scans.
+      //! \returns         The variance (average of differences squared) between
+      //!                  the simulated and experimental readings values.
+      static double variance      ( US_DataIO2::RawData&,
+                                    US_DataIO2::EditedData&,
+                                    QList< int > );
+
       //! \brief Calculate bottom radius from channel bottom
       //! and rotor coefficients
       //! \param rpm          Rotor revolutions per minute.

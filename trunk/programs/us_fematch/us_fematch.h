@@ -149,7 +149,6 @@ class US_FeMatch : public US_Widgets
       void exclude_to  (     double );
       void comp_number (     double );
       void component_values( int    );
-      void set_ra_visible(   bool );
       QStringList last_edit_files( QStringList );
 
       void distrib_plot_stick(  int );
