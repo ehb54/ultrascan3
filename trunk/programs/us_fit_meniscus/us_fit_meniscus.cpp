@@ -35,9 +35,10 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 
    int row = 0;
 
-   te_data = new US_Editor( US_Editor::LOAD, false, "results/*.dat;;*.*" );
-   connect( te_data, SIGNAL( US_EditorLoadComplete() ), 
-                     SLOT  ( plot_data()             ) );
+   te_data = new US_Editor( US_Editor::LOAD, false,
+         "results/2dsa-fm*.dat;;*.dat;;*.*" );
+   connect( te_data, SIGNAL( US_EditorLoadComplete( QString ) ), 
+                     SLOT  ( file_loaded(           QString ) ) );
    
    QFontMetrics fm( te_data->e->font() ); 
    
@@ -74,7 +75,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    misc->addWidget( lb_fit );
 
    le_fit = us_lineedit( "" );
-   le_fit->setReadOnly( true );
+   le_fit->setReadOnly( false );
    misc->addWidget( le_fit );
 
    QLabel* lb_rms_error = us_label( tr( "RMS Error:" ) );
@@ -90,15 +91,20 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 
    QBoxLayout* buttons = new QHBoxLayout;
 
-   QPushButton* pb_plot = us_pushbutton( tr( "Plot" ) );
+   QPushButton* pb_plot   = us_pushbutton( tr( "Plot" ) );
    connect( pb_plot, SIGNAL( clicked() ), SLOT( plot_data() ) );
    buttons->addWidget( pb_plot );
 
-   QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
+   QPushButton* pb_reset  = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
    buttons->addWidget( pb_reset );
 
-   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
+                pb_update = us_pushbutton( tr( "Update Edit" ) );
+   connect( pb_update, SIGNAL( clicked() ), SLOT( edit_update() ) );
+   buttons->addWidget( pb_update );
+   pb_update->setEnabled( false );
+
+   QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
    buttons->addWidget( pb_help );
 
@@ -347,5 +353,77 @@ void US_FitMeniscus::plot_data( void )
    pm->attach( meniscus_plot );
 
    meniscus_plot->replot();
+}
+
+// Update an edit file with a new meniscus radius value
+void US_FitMeniscus::edit_update( void )
+{
+   QString fn = filedir + "/" + fname_edit;
+   QFile filei( fn );
+   QString edtext;
+
+   if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      return;
+   }
+
+   QTextStream ts( &filei );
+   while ( !ts.atEnd() )
+      edtext += ts.readLine() + "\n";
+   filei.close();
+
+   int mlsx = edtext.indexOf( "<meniscus radius=" );
+   int meqx = edtext.indexOf( "=\"", mlsx );
+   int mvsx = meqx + 2;
+   int mvcn = edtext.indexOf( "\"",  mvsx + 1 ) - mvsx;
+
+   edtext   = edtext.replace( mvsx, mvcn, le_fit->text() );
+   int mlnn = edtext.indexOf( ">", mlsx ) - mlsx + 1;
+
+   QFile fileo( fn );
+
+   if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      return;
+
+   QTextStream tso( &fileo );
+   tso << edtext;
+   fileo.close();
+
+   QString msg = tr( "In file directory\n    " ) + filedir + " ,\n" +
+                 tr( "File\n    " ) + fname_edit + "\n" +
+                 tr( "has been modified with the line:\n    " ) + 
+                 edtext.mid( mlsx, mlnn );
+   
+   QMessageBox::information( this, tr( "Edit File Updated" ), msg );
+}
+
+// Slot for handling a loaded file:  set the name of loaded,edit files
+void US_FitMeniscus::file_loaded( QString fn )
+{
+   filedir    = fn.section( "/",  0, -2 );
+   fname_load = fn.section( "/", -1, -1 );
+
+   QString edittrip = fname_load.section( ".", -3, -3 );
+   QString editID   = edittrip.section( "-", 0, 0 ).mid( 1 );
+   QString tripnode = edittrip.section( "-", 1, 1 );
+   QString runID    = filedir.section( "/", -1, -1 );
+   QString tripl    = tripnode.left( 1 ) + "." +
+                      tripnode.mid( 1, 1 ) + "." +
+                      tripnode.mid( 2 );
+   QStringList edtfilt;
+   edtfilt << runID + "." + editID + ".*." + tripl + ".xml";
+
+   fname_edit = "";
+
+   QStringList edtfiles = QDir( filedir ).entryList(
+         edtfilt, QDir::Files, QDir::Name );
+
+   if ( edtfiles.size() >= 1 )
+   {
+      fname_edit = edtfiles.at( 0 );
+      pb_update->setEnabled( true );
+   }
+
+   plot_data();
 }
 

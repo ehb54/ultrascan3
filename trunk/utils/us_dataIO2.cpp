@@ -1282,6 +1282,23 @@ int US_DataIO2::index( const Scan& s, const QVector< XValue >& x, double r )
    return -1;
 }
 
+// Returns index of radius value
+int US_DataIO2::index( const QVector< XValue >& x, double r )
+{
+   if ( r <= x[ 0 ].radius ) return 0;
+    
+   int last = x.size() - 1;
+   if ( r >= x[ last ].radius ) return last;
+
+   for ( int i = 0; i < x.size(); i++ )
+   {
+      if ( fabs( x[ i ].radius - r ) < 5.0e-4 ) return i;
+   }
+
+   // Should never happen
+   return -1;
+}
+
 QString US_DataIO2::errorString( int code )
 {
    switch ( code )

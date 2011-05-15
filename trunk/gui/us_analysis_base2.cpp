@@ -1345,6 +1345,9 @@ for (int jj=0;jj<nenois;jj++)
             escan->readings[ jj ] =
                US_DataIO2::Reading( edata->value( ii, jj ) - rinoi - tinoi );
          }
+
+         int plx        = US_DataIO2::index( edata->x, edata->plateau );
+         escan->plateau = escan->readings[ plx ].value;
       }
 
       // Keep track of noise applied to this triple
