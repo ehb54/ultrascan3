@@ -1866,6 +1866,17 @@ void US_AstfemMath::initSimData( US_DataIO2::RawData& simdata,
 double US_AstfemMath::variance( US_DataIO2::RawData&    simdata,
                                 US_DataIO2::EditedData& editdata )
 {
+   QList< int > escns;
+
+   return variance( simdata, editdata, escns );
+}
+
+// calculate variance (average difference squared) between simulated and
+//  experimental data.
+double US_AstfemMath::variance( US_DataIO2::RawData&    simdata,
+                                US_DataIO2::EditedData& editdata,
+                                QList< int > exclScans )
+{
    int    nscan = simdata .scanData.size();
    int    kscan = editdata.scanData.size();
    int    nconc = simdata .scanData[ 0 ].readings.size();
@@ -1884,8 +1895,14 @@ double US_AstfemMath::variance( US_DataIO2::RawData&    simdata,
       nconc   = ( nconc < kconc ) ? nconc : kconc;
    }
 
+   kscan      = 0;
+
    for ( int ii = 0; ii < nscan; ii++ )
    {  // accumulate sum of differences squared (readings in scans)
+
+      if ( exclScans.contains( ii ) )  continue;
+
+      kscan++;
 
       for ( int jj = 0; jj < nconc; jj++ )
       {
@@ -1893,7 +1910,7 @@ double US_AstfemMath::variance( US_DataIO2::RawData&    simdata,
       }
    }
 
-   vari  /= (double)( nscan * nconc );  // variance is average diff-squared
+   vari  /= (double)( kscan * nconc );  // variance is average diff-squared
 
    return vari;
 }
