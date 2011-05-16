@@ -59,6 +59,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    parameterLayout = new QGridLayout();
    controlsLayout  = new QGridLayout();
    buttonLayout    = new QHBoxLayout();
+   progressLayout  = new QHBoxLayout();
 
    leftLayout->addLayout( analysisLayout  );
    leftLayout->addLayout( runInfoLayout   );
@@ -66,6 +67,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    leftLayout->addLayout( controlsLayout  );
    leftLayout->addStretch();
    leftLayout->addLayout( buttonLayout    );
+   leftLayout->addLayout( progressLayout  );
 
    // Analysis buttons
    dkdb_cntrls  = new US_Disk_DB_Controls( local );
@@ -292,6 +294,14 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             this,        SLOT(   close_all() ) );
    connect( pb_help,     SIGNAL( clicked() ),
             this,        SLOT(   help()      ) );
+
+   // Progress label and bar
+   QLabel* lb_progress = us_label( tr( "% Complete:" ) );
+   progress            = us_progressBar( 0, 100, 0 );
+   lb_progress->setAlignment( Qt::AlignCenter );
+
+   progressLayout->addWidget( lb_progress );
+   progressLayout->addWidget( progress    );
 
    rightLayout->addLayout( plotLayout1 );
    rightLayout->addLayout( plotLayout2 );
@@ -1392,6 +1402,8 @@ void US_FeMatch::load_model( )
 {
    int      drow    = lw_triples->currentRow();
    QString  mdesc;
+   pb_simumodel->setEnabled( false );
+   progress->reset();
 
    // load model
    bool loadDB = dkdb_cntrls->db();
@@ -1424,11 +1436,11 @@ DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
       return;
    }
 
-   pb_advanced ->setEnabled( true );
-   pb_simumodel->setEnabled( true );
-
    // see if there are any noise files to load
    load_noise();
+
+   pb_advanced ->setEnabled( true );
+   pb_simumodel->setEnabled( true );
 }
 
 // Adjust model components based on buffer, vbar, and temperature
@@ -1701,6 +1713,8 @@ if ( dbg_level > 1 )
  simparams.save_simparms( US_Settings::appBaseDir() + "/etc/sp_fematch.xml" );
 
    compress  = le_compress->text().toDouble();
+   progress->setMaximum( model.components.size() );
+   progress->reset();
 
    if ( model.components[ 0 ].sigma == 0.0  &&
         model.components[ 0 ].delta == 0.0  &&
@@ -1709,6 +1723,8 @@ if ( dbg_level > 1 )
    {
       US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
    
+      connect( astfem_rsa, SIGNAL( current_component( int ) ),
+               this,       SLOT(   update_progress(   int ) ) );
 DbgLv(1) << " afrsa calc";
 //astfem_rsa->setTimeCorrection( true );
 
@@ -1719,8 +1735,13 @@ DbgLv(1) << " afrsa calc";
    {
       US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
 
+      connect( astfvm,     SIGNAL( comp_progress(     int ) ),
+               this,       SLOT(   update_progress(   int ) ) );
+
       astfvm->calculate(     *sdata );
    }
+
+   progress->setValue( progress->maximum() );
 
 nscan = sdata->scanData.size();
 nconc = sdata->x.size();
@@ -2519,5 +2540,11 @@ void US_FeMatch::updateSolution( US_Solution& solution_sel )
    le_viscosity->setText( bvisc );
    le_vbar     ->setText( svbar );
    le_solution ->setText( solution_rec.solutionDesc );
+}
+
+// Update progress bar as each component is completed
+void US_FeMatch::update_progress( int icomp )
+{
+   progress->setValue( icomp );
 }
 
