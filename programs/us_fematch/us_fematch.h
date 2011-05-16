@@ -181,6 +181,7 @@ class US_FeMatch : public US_Widgets
       void    new_triple( int );
       void    get_solution  ( void );
       void    updateSolution( US_Solution& );
+      void    update_progress( int );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };
@@ -207,11 +208,14 @@ class US_FeMatch : public US_Widgets
       QBoxLayout*  leftLayout;
       QBoxLayout*  rightLayout;
       QBoxLayout*  buttonLayout;
+      QBoxLayout*  progressLayout;
 
       QGridLayout* analysisLayout;
       QGridLayout* runInfoLayout;
       QGridLayout* parameterLayout;
       QGridLayout* controlsLayout;
+
+      QProgressBar* progress;
 
       US_Plot*     plotLayout1;  // Derived from QVBoxLayout
       US_Plot*     plotLayout2;
