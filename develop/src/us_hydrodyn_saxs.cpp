@@ -538,6 +538,13 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_load_pr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_pr, SIGNAL(clicked()), SLOT(load_pr()));
 
+   pb_load_plot_pr = new QPushButton(tr("Load plotted P(r)"), this);
+   Q_CHECK_PTR(pb_load_plot_pr);
+   pb_load_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_plot_pr->setMinimumHeight(minHeight1);
+   pb_load_plot_pr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_load_plot_pr, SIGNAL(clicked()), SLOT(load_plot_pr()));
+
    pb_clear_plot_pr = new QPushButton(tr("Clear P(r) Distribution"), this);
    Q_CHECK_PTR(pb_clear_plot_pr);
    pb_clear_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -742,8 +749,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(pb_plot_pr, j, 0);
    background->addWidget(progress_pr, j, 1);
    j++;
-   background->addWidget(pb_load_pr, j, 0);
-   background->addWidget(pb_clear_plot_pr, j, 1);
+   //   background->addWidget(pb_load_pr, j, 0);
+   // background->addWidget(pb_clear_plot_pr, j, 1);
+
+   QBoxLayout *hbl_plot_pr = new QHBoxLayout(0);
+   hbl_plot_pr->addWidget(pb_load_pr);
+   hbl_plot_pr->addWidget(pb_load_plot_pr);
+   hbl_plot_pr->addWidget(pb_clear_plot_pr);
+   background->addMultiCellLayout(hbl_plot_pr, j, j, 0, 1);
    j++;
    
    background->addMultiCellWidget(frame, j, j, 0, 1);
@@ -2011,23 +2024,35 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
 }
 
-void US_Hydrodyn_Saxs::load_pr()
+void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
 {
+   if ( just_plotted_curves &&
+        !qsl_plotted_pr_names.size() )
+   {
+         QMessageBox::warning( this, "UltraScan",
+                               QString(tr("There is nothing plotted!")) );
+         return;
+   }      
+
    QString use_dir = 
       our_saxs_options->path_load_prr.isEmpty() ?
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
       our_saxs_options->path_load_prr;
 
-   QString filename = QFileDialog::getOpenFileName(use_dir,
-                                                   "All files (*);;"
-                                                   "sprr files (*.sprr_?);;"
-                                                   "csv files (*.csv)"
-                                                   , this
-                                                   , "open file dialog"
-                                                   , "Open"
-                                                   , &load_pr_selected_filter
-                                                   );
-   if (filename.isEmpty())
+   QString filename;
+   if ( !just_plotted_curves )
+   {
+      filename = QFileDialog::getOpenFileName(use_dir,
+                                              "All files (*);;"
+                                              "sprr files (*.sprr_?);;"
+                                              "csv files (*.csv)"
+                                              , this
+                                              , "open file dialog"
+                                              , "Open"
+                                              , &load_pr_selected_filter
+                                              );
+   }
+   if ( filename.isEmpty() && !just_plotted_curves )
    {
       return;
    }
@@ -2038,7 +2063,10 @@ void US_Hydrodyn_Saxs::load_pr()
       return;
    }
    QFile f(filename);
-   our_saxs_options->path_load_prr = QFileInfo(filename).dirPath(true);
+   if ( !just_plotted_curves )
+   {
+      our_saxs_options->path_load_prr = QFileInfo(filename).dirPath(true);
+   }
    QString ext = QFileInfo(filename).extension(FALSE).lower();
    vector < double > r;
    vector < double > pr;
@@ -2046,9 +2074,8 @@ void US_Hydrodyn_Saxs::load_pr()
    QString res = "";
    unsigned int startline = 1;
    unsigned int pop_last = 0;
-   if ( f.open(IO_ReadOnly) )
+   if ( just_plotted_curves || f.open(IO_ReadOnly) )
    {
-
       if ( file_curve_type(f.name()) != -1 &&
            file_curve_type(f.name()) != our_saxs_options->curve )
       {
@@ -2084,17 +2111,20 @@ void US_Hydrodyn_Saxs::load_pr()
                }
       }
    
-      if ( ext == "csv" )
+      if ( ext == "csv" || just_plotted_curves )
       {
          // attempt to read a csv file
          QStringList qsl;
          QStringList qsl_data_lines_plotted;  // for potential later average save
-         QTextStream ts(&f);
-         while ( !ts.atEnd() )
+         if ( !just_plotted_curves )
          {
-            qsl << ts.readLine();
+            QTextStream ts(&f);
+            while ( !ts.atEnd() )
+            {
+               qsl << ts.readLine();
+            }
+            f.close();
          }
-         f.close();
 
          QStringList qsl_headers = qsl.grep("\"Name\",\"Type; r:\"");
          if ( qsl_headers.size() != 0 ) 
@@ -2152,7 +2182,7 @@ void US_Hydrodyn_Saxs::load_pr()
          }
 
          qsl_headers = qsl.grep("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\"");
-         if ( qsl_headers.size() == 0 ) 
+         if ( qsl_headers.size() == 0 && !just_plotted_curves ) 
          {
             QMessageBox mb(tr("UltraScan Warning"),
                            tr("The csv file ") + filename + tr(" does not appear to contain a correct header.\n"
@@ -2182,26 +2212,40 @@ void US_Hydrodyn_Saxs::load_pr()
          }
 
          // get the r values
-         QStringList qsl_r = QStringList::split(",",*(qsl_headers.at(0)),true);
-         if ( qsl_r.size() < 6 )
-         {
-            QMessageBox mb(tr("UltraScan Warning"),
-                           tr("The csv file ") + filename + tr(" does not appear to contain any r values in the header rows.\n"),
-                           QMessageBox::Critical,
-                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
-            mb.exec();
-            return;
-         }
-         r.push_back((*qsl_r.at(4)).toDouble());
+         QStringList qsl_r;
+         QString header_tag;
 
-         for ( QStringList::iterator it = qsl_r.at(5); it != qsl_r.end(); it++ )
+         if ( !just_plotted_curves )
          {
-            if ( (*it).toDouble() > r[r.size() - 1] )
+            qsl_r = QStringList::split(",",*(qsl_headers.at(0)),true);
+            if ( qsl_r.size() < 6 )
             {
-               r.push_back((*it).toDouble());
-            } else {
-               break;
+               QMessageBox mb(tr("UltraScan Warning"),
+                              tr("The csv file ") + filename + tr(" does not appear to contain any r values in the header rows.\n"),
+                              QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+               mb.exec();
+               return;
             }
+            r.push_back((*qsl_r.at(4)).toDouble());
+            
+            for ( QStringList::iterator it = qsl_r.at(5); it != qsl_r.end(); it++ )
+            {
+               if ( (*it).toDouble() > r[r.size() - 1] )
+               {
+                  r.push_back((*it).toDouble());
+               } else {
+                  break;
+               }
+            }
+         } else {
+            r = plotted_r[0];
+            header_tag = "Plotted P(r) curves";
+            QString header = 
+               QString("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%1,%1\n")
+               .arg(vector_double_to_csv(r))
+               .arg(header_tag);
+            qsl << header;
          }
 
          // ok, we have a header line
@@ -2227,8 +2271,10 @@ void US_Hydrodyn_Saxs::load_pr()
             mb.exec();
             return;
          }
-
-         QString header_tag = qsl_r.last();
+         if ( !just_plotted_curves )
+         {
+            header_tag = qsl_r.last();
+         }
 
 #if defined(DEBUG_PR)
          cout << "r values (" << r.size() << "): ";
@@ -2762,6 +2808,11 @@ void US_Hydrodyn_Saxs::load_pr()
       }         
       plot_one_pr(r, pr, use_filename);
    }
+}
+
+void US_Hydrodyn_Saxs::load_plot_pr()
+{
+   load_pr(true);
 }
 
 void US_Hydrodyn_Saxs::clear_plot_pr()

@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn_saxs_load_csv.h"
 #include "../include/us_hydrodyn.h"
+#include "qregexp.h"
 
 US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
                                                      QString msg,
@@ -366,6 +367,10 @@ void US_Hydrodyn_Saxs_Load_Csv::save_selected()
    if ( fname.isEmpty() )
    {
       return;
+   }
+   if ( !fname.contains(QRegExp(".csv$",false)) )
+   {
+      fname += ".csv";
    }
    // open
    if ( QFile::exists(fname) )

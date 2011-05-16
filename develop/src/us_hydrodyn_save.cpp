@@ -121,8 +121,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "__BREAK__",
 
             "results.viscosity", 
-            "Intrisic viscosity [cm^3/g]", 
-            "Intrisic viscosity [cm^3/g]", 
+            "Intrinsic viscosity [cm^3/g]", 
+            "Intrinsic viscosity [cm^3/g]", 
 
             // "results.viscosity_sd", 
             // "Intrisic viscosity s.d.", 

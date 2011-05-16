@@ -102,6 +102,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_clear_plot_saxs;
       QPushButton *pb_plot_pr;
       QPushButton *pb_load_pr;
+      QPushButton *pb_load_plot_pr;
       QPushButton *pb_clear_plot_pr;
       QPushButton *pb_load_gnom;
       QPushButton *pb_guinier_analysis;
@@ -290,6 +291,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString load_pr_selected_filter;
       QString load_saxs_sans_selected_filter;
 
+
    public slots:
       void show_plot_saxs_sans();
       void show_plot_pr();
@@ -311,7 +313,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_pr_contrib_low(const QString &);
       void update_pr_contrib_high(const QString &);
       void set_curve(int);
-      void load_pr();
+      void load_pr(bool just_plotted_curves = false);
+      void load_plot_pr();
       void clear_plot_pr();
       void cancel();
       void help();
