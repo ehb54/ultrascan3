@@ -2209,7 +2209,7 @@ void US_Hydrodyn_Saxs::load_pr()
          for ( unsigned int i = 0; i < qsl_plotted_pr_names.size(); i++ )
          {
             vector < double > npr = interpolate(r, plotted_r[i], plotted_pr_not_normalized[i]);
-            QString line = QString("\"%1\",%.2f,%.2f,\"P(r)\",%1\n")
+            QString line = QString("\"%1\",%1,%1,\"P(r)\",%1\n")
                .arg(qsl_plotted_pr_names[i])
                .arg(plotted_pr_mw[i])
                .arg(compute_pr_area(npr, r))
