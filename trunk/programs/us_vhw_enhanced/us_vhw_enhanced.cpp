@@ -205,6 +205,7 @@ void US_vHW_Enhanced::data_plot( void )
 
    // handle upper (vHW Extrapolation) plot, here
 
+   valueCount = d->x.size();
    scanCount  = d->scanData.size();
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
@@ -223,7 +224,6 @@ void US_vHW_Enhanced::data_plot( void )
       if ( excludedScans.contains( ii ) ) continue;
       
       s          = &d->scanData[ ii ];
-      valueCount = s->readings.size();
       plateau    = avg_plateau( );
       range      = plateau - baseline;
       basecut    = baseline + range * positPct;
@@ -240,78 +240,40 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
    int     nunrp = 0;
    QVector< double > pxvec( scanCount  );
    QVector< double > pyvec( totalCount );
-   double* ptx   = pxvec.data();
+   QVector< double > sxvec( scanCount  );
+   QVector< double > syvec( scanCount  );
+   QVector< double > fyvec( scanCount  );
+   double* ptx   = pxvec.data();   // t,log(p) points
    double* pty   = pyvec.data();
+   double* csx   = sxvec.data();   // count,slope points
+   double* csy   = syvec.data();
+   double* fsy   = fyvec.data();   // fitted slope
 
    QList< double > plats;
    QList< int >    isrel;
    QList< int >    isunr;
 
-   if ( !haveZone )
-   {  // accumulate reliable,unreliable scans and plateaus
+   // accumulate reliable,unreliable scans and plateaus
 
-      scplats.fill( 0.0, scanCount );
+   scplats.fill( 0.0, scanCount );
+   nrelp    = 0;
+   nunrp    = 0;
 
-      for ( int ii = 0; ii < scanCount; ii++ )
-      {
-         s        = &d->scanData[ ii ];
-         scplats[ ii ] = s->plateau;
-         plateau  = zone_plateau( );
-         plateau  = ( nunrp == 0 ) ? plateau : 0.0;
-DbgLv(2) << "p: scan " << ii+1 << " plateau" << plateau << s->plateau;
+DbgLv(1) << " Initial reliable (non-excluded) scan t,log(avg-plat):";
+   // Initially reliable plateaus are all average non-excluded
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {
+      if ( excludedScans.contains( ii ) ) continue;
 
-         if ( plateau > 0.0 )
-         {  // save reliable scan plateaus
-            plats.append( plateau );
-            isrel.append( ii );
-            nrelp++;
-DbgLv(2) << "p:    *RELIABLE* " << ii+1 << nrelp;
-         }
+      s             = &d->scanData[ ii ];
+      plateau       = avg_plateau();
+      scplats[ ii ] = plateau;
+      ptx[ nrelp ]  = s->seconds - time_correction;
+      pty[ nrelp ]  = log( plateau );
 
-         else
-         {  // this and all remaining scans are unreliable
-            for ( int jj = ii; jj < scanCount; jj++ )
-            {
-               isunr.append( jj );
-               nunrp++;
-DbgLv(2) << "p:    -UNreliable- " << jj+1 << nunrp;
-            }
-            break;
-         }
-//DbgLv(2) << "p: nrelp nunrp " << nrelp << nunrp;
-//DbgLv(2) << "  RELIABLE: 1st " << isrel.at(0)+1 << "  last" << isrel.last()+1;
-//if(nunrp>0) {
-//DbgLv(2) << "  UNreli: 1st " << isunr.at(0)+1 << "  last " << isunr.last()+1;
-//for (int jj=0;jj<isunr.size();jj++) DbgLv(1) << "    UNr: " << isunr.at(jj)+1;
-//}
-      }
-   }
-
-   else
-   {  // had already found flat zones, so just set up to find Swavg,C0
-      for ( int ii = 0; ii < scanCount; ii++ )
-      {
-         plats.append( scplats[ ii ] );
-         isrel.append( ii );
-         nrelp++;
-      }
-   }
-
-   haveZone          = true;
-
-   // Find Swavg and C0 by line fit
-   // Solve for slope "a" and intercept "b" in
-   // set of equations: y = ax + b 
-   //   where x is corrected time
-   //   and   y is log of plateau concentration
-   // log( Cp ) = (-2 * Swavg * omega-sq ) t + log( C0 );
-   //   for scans with reliable plateau values
-
-   for ( int jj = 0; jj < nrelp; jj++ )
-   {  // accumulate x,y of corrected time and log of plateau concentration
-      int ii     = isrel.at( jj );
-      ptx[ jj ]  = d->scanData[ ii ].seconds - time_correction;
-      pty[ jj ]  = log( plats.at( jj ) );
+      isrel.append( ii );
+DbgLv(1) << ptx[nrelp] << pty[nrelp];
+      nrelp++;
    }
 
    QList< double >  scpds;
@@ -326,72 +288,94 @@ DbgLv(2) << "p:    -UNreliable- " << jj+1 << nunrp;
    double  sigma;
    double  corre;
    cpds.clear();
-
-   if ( nrelp < 4 )
-   {
-      QString wmsg;
-
-      if ( nrelp == 1 )
-         wmsg = tr( "Only 1 reliable scan plateau was found." );
-
-      else if ( nrelp == 0 )
-         wmsg = tr( "No reliable scan plateaus were found." );
-
-      else
-         wmsg = tr( "Only %1 reliable scan plateaus were found." ).arg( nrelp );
-
-      wmsg = wmsg + "\n" +
-         tr ( "Not able to interpolate plateaus for the remaining scans.\n\n"
-              "Noise may need to be computed and removed from the data; or\n"
-              "a new US_Edit session might be required for this data set." );
-      QMessageBox::warning( this,
-         tr( "Insufficient Reliable Plateaus" ), wmsg );
-   }
-
-   US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, nrelp );
-DbgLv(1) << " nrelp" << nrelp << "slope intcp sigma" << slope << intcp << sigma;
-
-   // Analyze the results of fitting to successively fewer points
    int    krelp  = nrelp;
-   double slmax  = slope;
-   double cpmin  = intcp;
-   double sgmin  = sigma;
+   int    jrelp  = nrelp;
+   int    kf     = 0;
 
-   for ( int kk = nrelp - 1; kk > 5; kk-- )
+   // Accumulate count,slope points for line fits to the t,log(p) points
+
+   for ( int jj = 6; jj < nrelp; jj++ )
    {
-      double  slope2 = 0.0;
-      double  intcp2 = 0.0;
-      double  sigma2 = 0.0;
+      US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, jj );
 
-      US_Math2::linefit( &ptx, &pty, &slope2, &intcp2, &sigma2, &corre, kk );
-DbgLv(1) << " nrelp" << kk << "slope intcp sigma" << slope2 << intcp2 << sigma2;
-
-      if ( ( slope2 > slmax  &&  intcp2 < cpmin )  ||
-           ( slope2 > slmax  &&  sigma2 < sgmin )  ||
-           ( intcp2 < cpmin  &&  sigma2 < sgmin ) )
-      {  // 2 of 3 parameters are optimal:  save current points count
-         krelp          = kk;
-      }
-
-      slmax          = max( slmax, slope2 );
-      cpmin          = min( cpmin, intcp2 );
-      sgmin          = min( sgmin, sigma2 );
+      csx[ kf ]   = (double)jj;
+      csy[ kf++ ] = slope;
+DbgLv(1) << "k,slope point: " << kf << jj << slope;
    }
 
-   if ( krelp < nrelp )
-   {  // The "reliables" count has changed:  refit and reset index array
-      US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, krelp );
+   // Create a 3rd-order polynomial fit to the count,slope curve
 
-      for ( int jj = krelp; jj < nrelp; jj++ )
-      {  // Mark points beyond new count as unreliable
-         isunr.append( isrel.at( jj ) );
+   double coefs[ 4 ];
+
+   US_Matrix::lsfit( coefs, csx, csy, kf, 4 );
+DbgLv(1) << "3rd-ord poly fit coefs:" << coefs[0] << coefs[1] << coefs[2]
+ << coefs[3];
+
+   for ( int jj = 0; jj < kf; jj++ )
+   {
+      double xx = csx[ jj ];
+      double yy = coefs[ 0 ] + coefs[ 1 ] * xx + coefs[ 2 ] * xx * xx
+                + coefs[ 3 ] * xx * xx * xx;
+      fsy[ jj ] = yy;
+DbgLv(1) << " k,fit-slope point: " << jj << xx << yy << " raw slope" << csy[jj];
+   }
+
+   // Now find the spot where the derivative of the fit crosses zero
+   double prevx = csx[ 1 ];
+   double prevy = fsy[ 1 ];
+   double maxd  = -1e-20;
+   double dfac  = 1.0 / qAbs( fsy[ kf - 1 ] - prevy );  // norm. deriv. factor
+   double prevd = ( prevy - fsy[ 0 ] ) * dfac;  // normalized derivative
+   jrelp        = -1;
+
+   for ( int jj = 2; jj < kf; jj++ )
+   {
+      double currx = csx[ jj ];
+      double curry = fsy[ jj ];
+      double currd = ( curry - prevy ) * dfac;  // normalized derivative
+DbgLv(1) << "  k cx cy cd pd" << jj << currx << curry << currd << prevd;
+
+      if (   currd == 0.0  ||
+           ( currd > 0.0  &&  prevd < 0.0 )  ||
+           ( currd < 0.0  &&  prevd > 0.0 ) )
+      {  // Zero point or zero crossing
+         jrelp    = jj - 1;
+DbgLv(1) << "    Z-CROSS";
+for ( int mm = jj + 1; mm < kf; mm++ ) {
+ prevx = currx; prevy = curry; prevd = currd;
+ currx = csx[mm]; curry = fsy[mm];
+ currd = ( curry - prevy ) * dfac;
+ DbgLv(1) << "  k cx cy cd pd" << mm << currx << curry << currd << prevd;
+}
+         break;
       }
 
-      nrelp          = krelp;
-      nunrp          = isunr.size();
-DbgLv(1) << " NRELP" << nrelp << "slope intcp sigma" << slope << intcp << sigma;
+      if ( currd > maxd )
+      {  // Maximum derivative value
+         maxd     = currd;
+         jrelp    = jj;
+DbgLv(1) << "    MAXD" << maxd;
+      }
+      prevx      = currx;
+      prevy      = curry;
+      prevd      = currd;
    }
- 
+
+   // Do final fit to the determined number of leading points
+   krelp         = (int)csx[ jrelp ];
+
+   US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, krelp );
+
+   for ( int jj = krelp; jj < nrelp; jj++ )
+   {  // Mark points beyond new count as unreliable
+      isunr.append( isrel.at( jj ) );
+   }
+
+   nrelp          = krelp;
+   nunrp          = isunr.size();
+DbgLv(1) << " NRELP" << nrelp << "   slope intcp sigma"
+ << slope << intcp << sigma;
+
    Swavg      = slope / ( -2.0 * omega * omega );  // Swavg func of slope
 	C0         = exp( intcp );                      // C0 func of intercept
 DbgLv(1) << "Swavg(c): " << Swavg*correc << " C0: " << C0 ;
@@ -417,7 +401,6 @@ DbgLv(1) << " jj scan plateau " << jj << ii+1 << scplats[ii];
    {
       s          = &d->scanData[ ii ];
       valueCount = s->readings.size();
-      //range      = s->plateau - baseline;
       range      = scplats[ ii ] - baseline;
       basecut    = baseline + range * positPct;
       platcut    = basecut  + range * boundPct;
@@ -507,8 +490,7 @@ DbgLv(1) << "iter mxiter " << iter << mxiter;
 
       for ( int ii = 0; ii < scanCount; ii++ )
       {
-         if ( excludedScans.contains( ii ) )
-            continue;
+         if ( excludedScans.contains( ii ) )   continue;
 
          s        = &d->scanData[ ii ];
          range    = scplats[ ii ] - baseline;
@@ -1071,146 +1053,20 @@ int US_vHW_Enhanced::first_gteq( double concenv,
 //  get average scan plateau value for 11 points around input value
 double US_vHW_Enhanced::avg_plateau( )
 {
-   double plato  = s->plateau;
+   double plato  = 0.0;
 //int points=s->readings.size();
 //DbgLv(1) << "avg_plateau in: " << plato << "   points " << points;
 //DbgLv(1) << " rd0 rdn " << s->readings[0].value << s->readings[points-1].value;
-   int    j2     = first_gteq( plato, s->readings, valueCount );
+   int j2  = US_DataIO2::index( d->x, d->plateau );
+   int j1  = max( 0, ( j2 - PA_POINTS ) );
+       j2  = min( valueCount, ( j2 + PA_POINTS + 1 ) );
 
-   if ( j2 > 0 )
-   {
-      int    j1     = j2 - 7;
-      j2           += 4;
-      j1            = ( j1 > 0 )          ? j1 : 0;
-      j2            = ( j2 < valueCount ) ? j2 : valueCount;
-      plato         = 0.0;
-      for ( int jj = j1; jj < j2; jj++ )
-      {  // walk through division points; get index to place in readings
-         plato     += s->readings[ jj ].value;
-      }
-      plato        /= (double)( j2 - j1 );
-//DbgLv(1) << "     plateau out: " << plato << "    j1 j2 " << j1 << j2;
-   }
+   for ( int jj = j1; jj < j2; jj++ )    // Sum the 41 points centered at
+      plato += s->readings[ jj ].value;  //  the scan plateau radial position
+
+   plato /= (double)( j2 - j1 );         // Find and return the average
+
    return plato;
-}
-
-// find scan's plateau by finding the next flat zone after the input plateau
-double US_vHW_Enhanced::zone_plateau( )
-{
-   double  plato  = -1.0;
-   valueCount     = s->readings.size();
-   int     j3     = valueCount - PZ_POINTS - 2;
-   int     j2     = first_gteq( s->plateau, s->readings, valueCount, 0 );
-DbgLv(2) << "      j2=" << j2 << " s->plateau" << s->plateau;
-           j2     = min( j2, j3 );
-           j2     = max( 0, ( j2 - PZ_POINTS * 2 ) );
-DbgLv(2) << "        j2=" << j2;
-   int     nzp    = PZ_POINTS;
-           j3     = min( ( j2 + nzp / 2 ), ( valueCount - 1 ) );
-   int     j1     = max( ( j3 - nzp + 1 ), 0 );
-   int     f1     = j1;
-   int     lastj  = valueCount - f1;
-   int     kk     = 0;
-   QVector< double > xvec( valueCount );
-   QVector< double > yvec( valueCount );
-   double* xx     = xvec.data();
-   double* yy     = yvec.data();
-
-   // get the first potential zone and get its slope
-
-   for ( int jj = j1; jj < valueCount; jj++ )
-   {  // accumulate x,y for all readings in the scan
-      xx[ kk ]      = readings_radius( d, jj );
-      yy[ kk++ ]    = s->readings[ jj ].value;
-   }
-
-   j1             = 0;           // Convert indexes of readings
-   j2            -= f1;          //  into relative indexes in xx,yy arrays
-   j3            -= f1;
-   nzp            = min( nzp, kk );
-DbgLv(2) << "  f1 j2 j3 nzp" << f1 << j2 << j3 << nzp;
-   double  sumx;
-   double  sumy;
-   double  sumxy;
-   double  sumxs;
-
-   // Make the initial slope calculation
-   double  slope = calc_slope( xx, yy, nzp, sumx, sumy, sumxy, sumxs );
-DbgLv(2) << "      slope0 " << slope;
-   double  x0    = xx[ 0 ];
-   double  y0    = yy[ 0 ];
-   double  x1;
-   double  y1;
-   double  slmin = qAbs( slope );
-   double  plmin = yy[ j2 ];
-
-   while ( j3 < lastj )
-   {  // Loop until zone end to find the minimum absolute slope
-      slope    = qAbs( slope );  // Absolute value of slope
-
-      if ( slope < slmin )
-      {                          // New minimum slope: save slope,plateau
-         slmin    = slope;
-         plmin    = yy[ j2 ];
-      }
-
-      x0       = xx[ j1 ];       // Values to remove for slope recalculation
-      y0       = yy[ j1 ];
-      j1++;                      // Bump indexes for next iteration
-      j2++;
-      j3++;
-      if ( j3 >= lastj )  break;
-      x1       = xx[ j3 ];       // Values to add for slope recalculation
-      y1       = yy[ j3 ];
-
-      // Recalculate the slope for the next iteration by removing
-      // the current start point and adding a new end point
-      slope    = update_slope( nzp, x0, y0, x1, y1, sumx, sumy, sumxy, sumxs );
-   }
-
-   if ( slmin < PZ_THRESH )
-      plato       = plmin;       // Flatest was flat enough:  mid-Y is plateau
-
-   else
-      plato       = -1.0;        // No flat zone found:  mark as unreliable
-
-DbgLv(2) << "        slope " << slmin << "plato" << plato;
-   return plato;
-}
-
-// calculate slope of x,y and return sums used in calculations
-double US_vHW_Enhanced::calc_slope( double* x, double* y, int valueCount,
-      double& sumx, double& sumy, double& sumxy, double& sumxs )
-{
-   sumx    = 0.0;
-   sumy    = 0.0;
-   sumxy   = 0.0;
-   sumxs   = 0.0;
-
-   for ( int ii = 0; ii < valueCount; ii++ )
-   {
-      sumx   += x[ ii ];
-      sumy   += y[ ii ];
-      sumxy  += ( x[ ii ] * y[ ii ] );
-      sumxs  += ( x[ ii ] * x[ ii ] );
-   }
-
-   return fabs( ( (double)valueCount * sumxy - sumx * sumy ) /
-                ( (double)valueCount * sumxs - sumx * sumx ) );
-}
-
-// update slope of sliding x,y by simply modifying running sums used
-double US_vHW_Enhanced::update_slope( int valueCount,
-      double x0, double y0, double x1, double y1,
-      double& sumx, double& sumy, double& sumxy, double& sumxs )
-{
-   sumx   += ( x1 - x0 );
-   sumy   += ( y1 - y0 );
-   sumxy  += ( x1 * y1 - x0 * y0 );
-   sumxs  += ( x1 * x1 - x0 * x0 );
-
-   return fabs( ( (double)valueCount * sumxy - sumx * sumy ) /
-                ( (double)valueCount * sumxs - sumx * sumx ) );
 }
 
 // get sedimentation coefficient for a given concentration
