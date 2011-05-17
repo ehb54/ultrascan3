@@ -59,7 +59,7 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
 
    lbl_info = new QLabel(msg, this);
    lbl_info->setAlignment(AlignCenter|AlignVCenter);
-   lbl_info->setMinimumHeight(minHeight2);
+   lbl_info->setMinimumHeight(minHeight2 * 2);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
@@ -275,6 +275,10 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
    if ( fname.isEmpty() )
    {
       return;
+   }
+   if ( !fname.contains(QRegExp(".csv$",false)) )
+   {
+      fname += ".csv";
    }
    // open
    if ( QFile::exists(fname) )

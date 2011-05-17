@@ -2252,9 +2252,24 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
 
          // ok, we have a header line
          // append all currently plotted p(r)s to qsl
+         bool added_interpolate_msg = false;
+         QString bin_msg = "";
          for ( unsigned int i = 0; i < qsl_plotted_pr_names.size(); i++ )
          {
             vector < double > npr = interpolate(r, plotted_r[i], plotted_pr_not_normalized[i]);
+            if ( !added_interpolate_msg && r.size() > 1 )
+            {
+               bin_msg = QString(tr("Plotted P(r) interpolated to bin size of %1")).arg(r[1] - r[0]);
+               if ( plotted_r[i].size() > 1 && 
+                    r[1] - r[0] != plotted_r[i][1] - plotted_r[i][0] )
+               {
+                  bin_msg +=
+                     QString(tr(" which is DIFFERENT from the plotted bin size of %1"))
+                     .arg(plotted_r[i][1] - plotted_r[i][0]);
+               }
+               // editor->append(bin_msg + "\n");
+               added_interpolate_msg = true;
+            }
             QString line = QString("\"%1\",%1,%1,\"P(r)\",%1\n")
                .arg(qsl_plotted_pr_names[i])
                .arg(plotted_pr_mw[i])
@@ -2311,7 +2326,8 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
          
          US_Hydrodyn_Saxs_Load_Csv *hslc =
             new US_Hydrodyn_Saxs_Load_Csv(
-                                          "Select models to load\n" + header_tag,
+                                          "Select models to load\n" + header_tag + 
+                                          (bin_msg.isEmpty() ? "" : "\n" + bin_msg),
                                           &qsl_names,
                                           &qsl_sel_names,
                                           &qsl,
@@ -2370,6 +2386,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             editor->append("NNLS target: " + nnls_target + "\n");
             nnls_A.clear();
             nnls_x.clear();
+            nnls_mw.clear();
             nnls_B.clear();
             nnls_B_name = nnls_target;
             nnls_rmsd = 0e0;
@@ -2449,6 +2466,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                      found_nnls_model = true;
                      nnls_A[*qsl_tmp.at(0)] = pr;
                      nnls_x[*qsl_tmp.at(0)] = 0;
+                     nnls_mw[*qsl_tmp.at(0)] = (*qsl_tmp.at(1)).toDouble();
                   }
                }
 #if defined(DEBUG_PR)
@@ -4720,9 +4738,19 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    editor->setColor(save_color);
 
    // build model & residuals
+   double model_mw = 0e0;
    vector < double > model(use_B.size());
    vector < double > residual(use_B.size());
    vector < double > difference(use_B.size());
+
+   for ( unsigned int j = 0; j < use_x.size(); j++ )
+   {
+      model_mw += use_x[j] * nnls_mw[model_names[j]];
+      // cout << QString("model source %1 contrib %1 mw %1\n").arg(j).arg(use_x[j]).arg(nnls_mw[model_names[j]]);
+   }
+   // cout << QString("model mw %1\n").arg(model_mw);
+   (*remember_mw)[csv_filename + " Model"] = model_mw;
+   (*remember_mw_source)[csv_filename + " Model"] = "weighted average from NNLS csv models";
 
    for ( unsigned int i = 0; i < use_B.size(); i++ )
    {
@@ -4764,6 +4792,8 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
                                         nnls_r,
                                         difference,
                                         residual,
+                                        nnls_B,
+                                        true,
                                         true,
                                         true
                                         );

@@ -32,8 +32,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
                                  vector < double > r,
                                  vector < double > difference,
                                  vector < double > residuals,
+                                 vector < double > target,
                                  bool plot_residuals,
                                  bool plot_difference,
+                                 bool plot_as_percent,
                                  QWidget *p = 0, 
                                  const char *name = 0
                                  );
@@ -50,12 +52,18 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
       vector < double > r;
       vector < double > difference;
       vector < double > residuals;
+      vector < double > target;
+
+      vector < double > difference_pct;
+      vector < double > residuals_pct;
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
 
       bool              plot_residuals;
       bool              plot_difference;
+      bool              plot_as_percent;
 
       US_Config         *USglobal;
 
@@ -65,6 +73,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
 
       QCheckBox         *cb_plot_residuals;
       QCheckBox         *cb_plot_difference;
+      QCheckBox         *cb_plot_as_percent;
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
@@ -81,6 +90,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
 
       void set_plot_residuals();
       void set_plot_difference();
+      void set_plot_as_percent();
 
       void cancel();
       void help();

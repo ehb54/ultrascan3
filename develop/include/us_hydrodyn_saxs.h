@@ -206,6 +206,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       map < QString, vector < double > > nnls_A;
       map < QString,  double >           nnls_x;
+      map < QString,  double >           nnls_mw;
       vector < double >                  nnls_B;
       vector < double >                  nnls_r;
       double                             nnls_rmsd;
