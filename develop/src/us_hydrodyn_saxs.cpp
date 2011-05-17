@@ -58,6 +58,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    guinier_cutoff = 0.2;
    last_used_mw = 0.0;
 
+   saxs_residuals_widget = false;
+
    // note changes to this section should be updated in US_Hydrodyn_SaxsOptions::update_q()
    if ( our_saxs_options->wavelength == 0 )
    {
@@ -2729,7 +2731,12 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                if ( found_nnls_model && found_nnls_target )
                {
                   nnls_header_tag = header_tag;
-                  calc_nnls_fit( save_to_csv ? csv_filename : "" );
+                  QString use_csv_filename = save_to_csv ? csv_filename : "";
+                  (*remember_mw)[use_csv_filename + " Target"] =  (*remember_mw)[nnls_target];
+                  (*remember_mw_source)[use_csv_filename + " Target"] =  "copied from NNLS target\n";
+                  (*remember_mw)[use_csv_filename + " Model"] =  (*remember_mw)[nnls_target];
+                  (*remember_mw_source)[use_csv_filename + " Model"] =  "copied from NNLS target\n";
+                  calc_nnls_fit( nnls_target, use_csv_filename );
                } else {
                   editor->append("NNLS error: could not find target and models in loaded data\n");
                }
@@ -4561,7 +4568,7 @@ double US_Hydrodyn_Saxs::compute_pr_area( vector < double > vd, vector < double 
    return sum * delta;
 }
 
-void US_Hydrodyn_Saxs::calc_nnls_fit( QString csv_filename )
+void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
 {
    // setup nnls run:
    // editor->append("setting up nnls run\n");
@@ -4715,6 +4722,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString csv_filename )
    // build model & residuals
    vector < double > model(use_B.size());
    vector < double > residual(use_B.size());
+   vector < double > difference(use_B.size());
 
    for ( unsigned int i = 0; i < use_B.size(); i++ )
    {
@@ -4724,12 +4732,43 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString csv_filename )
          model[i] += use_x[j] * nnls_A[model_names[j]][i];
       }
       residual[i] = fabs(model[i] - nnls_B[i]);
+      difference[i] = nnls_B[i] - model[i];
    }
 
    // plot 
+   
    plot_one_pr(nnls_r, model, csv_filename + " Model");
-   plot_one_pr(nnls_r, residual, csv_filename + " Residual");
+
+   // plot_one_pr(nnls_r, residual, csv_filename + " Residual");
+
    plot_one_pr(nnls_r, nnls_B, csv_filename + " Target");
+
+   if ( saxs_residuals_widget )
+   {
+      if ( saxs_residuals_window->isVisible() )
+      {
+         saxs_residuals_window->raise();
+      }
+      else
+      {
+         saxs_residuals_window->show();
+      }
+      return;
+   }
+   else
+   {
+      saxs_residuals_window = 
+         new US_Hydrodyn_Saxs_Residuals(
+                                        &saxs_residuals_widget,
+                                        tr("NNLS residuals & difference targeting:\n") + title,
+                                        nnls_r,
+                                        difference,
+                                        residual,
+                                        true,
+                                        true
+                                        );
+      saxs_residuals_window->show();
+   }
 
    // save as csv
 

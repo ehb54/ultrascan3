@@ -22,6 +22,7 @@
 
 #include "us_util.h"
 #include "us_hydrodyn_pdbdefs.h"
+#include "us_hydrodyn_saxs_residuals.h"
 
 //standard C and C++ defs:
 
@@ -234,6 +235,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QProcess *rasmol;
 
+      bool                       saxs_residuals_widget;
+      US_Hydrodyn_Saxs_Residuals *saxs_residuals_window;
+
 #ifdef WIN32
      #pragma warning ( disable: 4251 )
 #endif
@@ -258,7 +262,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QString vector_double_to_csv( vector < double > vd );
       double compute_pr_area( vector < double > vd, vector < double > r );
-      void calc_nnls_fit( QString save_to_csv_name = "" );
+      void calc_nnls_fit( QString title, QString save_to_csv_name = "" );
       void plot_one_pr(vector < double > r, vector < double > pr, QString name);
       void plot_one_iqq(vector < double > q, vector < double > I, QString name);
       bool plotted;
