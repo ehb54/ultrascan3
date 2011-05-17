@@ -10,9 +10,7 @@
 #include "us_buffer_gui.h"
 #include "qwt_plot_marker.h"
 
-#define PZ_THRESH 0.200  // plateau zone slope threshold
-#define PZ_POINTS 51     // plateau zone line fit number points
-#define PZ_HZLO   5      // plateau zone horizontal extent minimum points
+#define PA_POINTS 20     // plateau average points to left and right
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
@@ -131,13 +129,8 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       void update_divis(     double );
       int  first_gteq( double, QVector< US_DataIO2::Reading >&, int, int );
       int  first_gteq( double, QVector< US_DataIO2::Reading >&, int );
-      double calc_slope( double*, double*, int,
-            double&, double&, double&, double& );
-      double update_slope( int, double, double, double, double,
-            double&, double&, double&, double& );
       double sed_coeff( double, double );
       double avg_plateau(  void );
-      double zone_plateau( void );
       double find_root( double );
       double back_diff_coeff( double );
       void groupClick( const QwtDoublePoint& );
