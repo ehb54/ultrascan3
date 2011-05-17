@@ -733,7 +733,7 @@ void US_MPI_Analysis::write_2dsa( void )
       component.signal_concentration = solute->c;
 
       QString s;
-      component.name = s.sprintf( "CompGen%3d", index++ );
+      component.name = s.sprintf( "CompGen%03d", index++ );
 
       US_Model::calc_coefficients( component );
       model.components << component;
