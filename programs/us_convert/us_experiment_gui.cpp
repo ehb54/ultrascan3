@@ -251,7 +251,7 @@ void US_ExperimentGui::reset( void )
    te_comment      ->setText( expInfo.comments             );
          
    // Experiment types combo
-   cb_expType->setCurrentIndex( 3 );  // default is "other"
+   cb_expType->setCurrentIndex( 0 );  // default is "velocity"
    for ( int i = 0; i < experimentTypes.size(); i++ )
    {
       if ( experimentTypes[ i ].toUpper() == expInfo.expType.toUpper() )
@@ -469,7 +469,7 @@ void US_ExperimentGui::selectProject( void )
    // Save other elements on the page first
    expInfo.label         = le_label   ->text(); 
    expInfo.comments      = te_comment ->toPlainText();
-   expInfo.expType       = cb_expType ->currentText();
+   expInfo.expType       = cb_expType ->currentText().toLower();
 
    int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                         : US_Disk_DB_Controls::Disk;
@@ -513,7 +513,7 @@ void US_ExperimentGui::saveLabel( void )
 
    // Save other elements on the page before reset
    expInfo.comments      = te_comment ->toPlainText();
-   expInfo.expType       = cb_expType ->currentText();
+   expInfo.expType       = cb_expType ->currentText().toLower();
 
    reset();         // To get the pb_accept enable code
 }
@@ -527,7 +527,8 @@ QComboBox* US_ExperimentGui::us_expTypeComboBox( void )
    experimentTypes << "Velocity"
                    << "Equilibrium"
                    << "Diffusion"
-                   << "other";
+                   << "Calibration"
+                   << "Other";
 
    cb->addItems( experimentTypes );
 
@@ -643,7 +644,7 @@ void US_ExperimentGui::selectRotor( void )
    // Save other elements on the page first
    expInfo.label         = le_label   ->text(); 
    expInfo.comments      = te_comment ->toPlainText();
-   expInfo.expType       = cb_expType ->currentText();
+   expInfo.expType       = cb_expType ->currentText().toLower();
 
    US_Rotor::Rotor rotor;
    rotor.ID = expInfo.rotorID;
@@ -713,7 +714,7 @@ void US_ExperimentGui::accept( void )
    expInfo.runID         = le_runID         ->text();
    expInfo.instrumentID  = cb_instrument    ->getLogicalID();
    expInfo.operatorID    = cb_operator      ->getLogicalID();
-   expInfo.expType       = cb_expType       ->currentText();
+   expInfo.expType       = cb_expType       ->currentText().toLower();
    expInfo.runTemp       = le_runTemp       ->text(); 
    expInfo.label         = le_label         ->text(); 
    expInfo.comments      = te_comment       ->toPlainText();
