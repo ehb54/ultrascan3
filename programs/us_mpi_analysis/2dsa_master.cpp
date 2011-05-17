@@ -19,9 +19,6 @@ QDateTime time = QDateTime::currentDateTime();  // For debug/timing
    {
       int worker;
 
-//qDebug() << "Master queue status" << job_queue.isEmpty() << worker_status.contains( READY )
-//         << time.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
-
       // Give the jobs to the workers
       while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
       {
@@ -40,6 +37,8 @@ QDateTime time = QDateTime::currentDateTime();  // For debug/timing
             "; Dataset: "    + QString::number( current_dataset ) +
             "; Meniscus: "   + 
                  QString::number( meniscus_values[ meniscus_run ], 'f', 3 ) +
+                 QString( "(Run %1 of %2)" ).arg( meniscus_run + 1 )
+                                            .arg( meniscus_values.size() )  +
             "; MonteCarlo: " + QString::number( mc_iteration );
          
          send_udp( progress );
@@ -702,6 +701,7 @@ void US_MPI_Analysis::process_results( int        worker,
 /////////////////////
 void US_MPI_Analysis::write_2dsa( void )
 {
+   static int index = 0;
    US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
 
    // Fill in and write out the model file
@@ -731,6 +731,9 @@ void US_MPI_Analysis::write_2dsa( void )
       component.s                    = solute->s;
       component.f_f0                 = solute->k;
       component.signal_concentration = solute->c;
+
+      QString s;
+      component.name = s.sprintf( "CompGen%3d", index++ );
 
       US_Model::calc_coefficients( component );
       model.components << component;
