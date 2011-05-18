@@ -2,6 +2,7 @@
 
 US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
                                                        bool *saxs_residuals_widget,
+                                                       unsigned int width,
                                                        QString title,
                                                        vector < double > r,
                                                        vector < double > difference,
@@ -65,7 +66,7 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
-   setGeometry(global_Xpos, global_Ypos, 595, 0);
+   setGeometry(global_Xpos, global_Ypos, width, 0);
    update_plot();
 }
 

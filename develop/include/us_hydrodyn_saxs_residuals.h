@@ -28,6 +28,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
    public:
       US_Hydrodyn_Saxs_Residuals(
                                  bool *saxs_residuals_widget,
+                                 unsigned int width,
                                  QString title,
                                  vector < double > r,
                                  vector < double > difference,

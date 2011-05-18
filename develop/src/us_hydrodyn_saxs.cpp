@@ -3893,7 +3893,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
                                               "All files (*);;"
                                               "ssaxs files (*.ssaxs);;"
                                               "int files [crysol] (*.int);;"
-                                              "dat files [foxs] (*.dat);;"
+                                              "dat files [foxs / other] (*.dat);;"
                                               , this
                                               , "open file dialog"
                                               , "Open"
@@ -3967,6 +3967,8 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
          if ( ok ) {
             // user selected an item and pressed OK
             cout << "not yet implemented (" << scaling_target << ")\n";
+         } else {
+            scaling_target = "";
          }
       }         
 
@@ -4228,15 +4230,29 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
                .arg(scaling_a)
                .arg(scaling_chi2);
             editor->append(results);
+            // cout << "saxs curve unscaled " << vector_double_to_csv(I) << endl;
             for ( unsigned int i = 0; i < I.size(); i++ )
             {
                I[i] = scaling_a + scaling_b * I[i];
+               if ( I[i] <= 0e0 )
+               {
+                  I.resize(i);
+                  q.resize(i);
+                  break;
+               }
             }
+            // cout << "saxs curve scaled " << vector_double_to_csv(I) << endl;
             if ( I2.size() )
             {
                for ( unsigned int i = 0; i < I2.size(); i++ )
                {
                   I2[i] = scaling_a + scaling_b * I2[i];
+                  if ( I2[i] <= 0e0 )
+                  {
+                     I2.resize(i);
+                     q2.resize(i);
+                     break;
+                  }
                }
             }
          }
@@ -4773,32 +4789,23 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
 
    if ( saxs_residuals_widget )
    {
-      if ( saxs_residuals_window->isVisible() )
-      {
-         saxs_residuals_window->raise();
-      }
-      else
-      {
-         saxs_residuals_window->show();
-      }
-      return;
+      saxs_residuals_window->close();
    }
-   else
-   {
-      saxs_residuals_window = 
-         new US_Hydrodyn_Saxs_Residuals(
-                                        &saxs_residuals_widget,
-                                        tr("NNLS residuals & difference targeting:\n") + title,
-                                        nnls_r,
-                                        difference,
-                                        residual,
-                                        nnls_B,
-                                        true,
-                                        true,
-                                        true
-                                        );
-      saxs_residuals_window->show();
-   }
+
+   saxs_residuals_window = 
+      new US_Hydrodyn_Saxs_Residuals(
+                                     &saxs_residuals_widget,
+                                     plot_pr->width(),
+                                     tr("NNLS residuals & difference targeting:\n") + title,
+                                     nnls_r,
+                                     difference,
+                                     residual,
+                                     nnls_B,
+                                     true,
+                                     true,
+                                     true
+                                     );
+   saxs_residuals_window->show();
 
    // save as csv
 
