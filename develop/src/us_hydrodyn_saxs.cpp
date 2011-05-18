@@ -4743,10 +4743,10 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    vector < double > residual(use_B.size());
    vector < double > difference(use_B.size());
 
-   for ( unsigned int j = 0; j < use_x.size(); j++ )
+   for ( unsigned int j = 0; j < rescaled_x.size(); j++ )
    {
-      model_mw += use_x[j] * nnls_mw[model_names[j]];
-      // cout << QString("model source %1 contrib %1 mw %1\n").arg(j).arg(use_x[j]).arg(nnls_mw[model_names[j]]);
+      model_mw += rescaled_x[j] * nnls_mw[model_names[j]];
+      // cout << QString("model source %1 contrib %1 mw %1\n").arg(j).arg(rescaled_x[j]).arg(nnls_mw[model_names[j]]);
    }
    // cout << QString("model mw %1\n").arg(model_mw);
    (*remember_mw)[csv_filename + " Model"] = model_mw;

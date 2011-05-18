@@ -65,7 +65,7 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
-   setGeometry(global_Xpos, global_Ypos, 500, 300);
+   setGeometry(global_Xpos, global_Ypos, 0, 0);
    update_plot();
 }
 
@@ -80,7 +80,7 @@ US_Hydrodyn_Saxs_Residuals::~US_Hydrodyn_Saxs_Residuals()
 void US_Hydrodyn_Saxs_Residuals::setupGUI()
 {
 
-   int minHeight1 = 30;
+   // int minHeight1 = 30;
 
    // lbl_title = new QLabel(title, this);
    // lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -100,7 +100,7 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
    plot->setAxisTitle(QwtPlot::xBottom, tr("Distance (Angstrom)"));
    plot->setAxisTitle(QwtPlot::yLeft, tr("Frequency"));
-   plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+   plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -172,14 +172,14 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    pb_help = new QPushButton(tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_help->setMinimumHeight(minHeight1);
+   // pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_cancel->setMinimumHeight(minHeight1);
+   // pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
@@ -193,8 +193,8 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    // background->addMultiCellWidget(lbl_title, j, j, 0, 1);
    // j++;
 
-   background->addMultiCellWidget(plot, j, j + 6, 0, 1);
-   j += 7;
+   background->addMultiCellWidget(plot, j, j, 0, 1);
+   j++;
 
    QBoxLayout *hbl = new QHBoxLayout(0);
    hbl->addWidget(cb_plot_residuals);
