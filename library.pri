@@ -29,12 +29,21 @@ unix {
 
 win32 {
   DEPENDPATH             += ../gui ../utils
-  INCLUDEPATH            += ../gui ../utils $$QWTPATH/src 
-  INCLUDEPATH            += $$MYSQLPATH
+
+  INCLUDEPATH            += ../gui ../utils
+  INCLUDEPATH            += $$QWTPATH/src 
+  INCLUDEPATH            += $$MYSQLPATH/include
+  INCLUDEPATH            += $$OPENSSL/include
+  INCLUDEPATH            += ../qwtplot3d-qt4/include
+
   LIBS                   += $$QWTLIB
+  LIBS                   += $$MYSQLLIB
+  LIBS                   += $${OPENSSL}/lib/libeay32.lib
+
   QMAKE_LFLAGS           += /IMPLIB:../lib/$${TARGET}.lib /MACHINE:X86 /INCREMENTAL:NO 
   QMAKE_CXXFLAGS_DEBUG   += /wd4996
   QMAKE_CXXFLAGS_RELEASE += /wd4996
+
   DEFINES                += INTEL US_MAKE_DLL
   DESTDIR                 = ../bin
 }

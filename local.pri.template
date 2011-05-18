@@ -29,15 +29,26 @@ unix {
 }
 
 win32 {
-  QWTPATH     = C:/qwt/qwt-5.1.1
+
+  # QWT3D is right for libraries, but gui apps need ../$$QWT3D
+  # due to us3 directory structure
+
+  QWT3D       = ../qwtplot3d-qt4
+  OPENSSL     = C:/OpenSSL-Win32
+  MYSQLPATH   = C:/mysql
+  QWTPATH     = C:/qwt-5.2.1
+  SINGLEDIR   = C:/qt/4.7.1/addons/qtsingleapplication-2.5_1-commercial/src/
   
   contains( DEBUGORRELEASE, debug ) {
     QWTLIB      = $$QWTPATH/lib/qwtd5.lib
+    MYSQLLIB    = $$MYSQLPATH/lib/libmysqld.lib
   } else {
     QWTLIB      = $$QWTPATH/lib/qwt5.lib
+    MYSQLLIB    = $$MYSQLPATH/lib/libmysql.lib
   }
 
-  SINGLEDIR   = C:/Qt/4.4.3/addons/singleapp
+  #  __LCC__ is needed on W32 to make mysql headers include the right W32 includes
+  DEFINES    += __LCC__
 }
 
 macx {
