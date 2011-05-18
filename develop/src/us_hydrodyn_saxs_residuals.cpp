@@ -65,7 +65,7 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
-   setGeometry(global_Xpos, global_Ypos, 0, 0);
+   setGeometry(global_Xpos, global_Ypos, 595, 0);
    update_plot();
 }
 
