@@ -158,7 +158,7 @@ void process_script(QString script_filename, US_Hydrodyn *h)
          if ( rx2.cap(1) == "load" )
          {
             cout << QString("loading \"%1\"\t").arg(rx2.cap(2));
-            bool result;
+            bool result = false;
             if ( rx2.cap(2).lower().contains(QRegExp("\\.config$")) ) 
             {
                ok = true;
