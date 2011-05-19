@@ -145,6 +145,8 @@ void US_vHW_Enhanced::load( void )
    data_plot2->setCanvasBackground( Qt::black );
    data_plot1->setMinimumSize( 600, 500 );
    data_plot2->setMinimumSize( 600, 300 );
+   data_plot2->setAxisAutoScale( QwtPlot::yLeft );
+   data_plot2->setAxisAutoScale( QwtPlot::xBottom );
 
    gpick      = new US_PlotPicker( data_plot1 );
    gpick->setSelectionFlags( QwtPicker::PointSelection
@@ -281,6 +283,7 @@ DbgLv(1) << ptx[nrelp] << pty[nrelp];
    double  pconc;
    double  mconc;
    double  cinc;
+   double  cinch;
    double  eterm;
    double  oterm;
    double  slope;
@@ -407,12 +410,13 @@ DbgLv(1) << " jj scan plateau " << ii << ii+1 << scplats[ii];
       cconc      = basecut;
       pconc      = basecut;
       mconc      = basecut;
-      sumcpij    = 0.0;
       cinc       = span * divfac;
+      cinch      = cinc / 2.0;
       omega      = s->rpm * M_PI / 30.0;
       oterm      = ( s->seconds - time_correction ) * omega * omega;
       eterm      = -2.0 * oterm / correc;
       c0term     = ( C0 - baseline ) * boundPct * divfac;
+      sumcpij    = 0.0;
 
       scpds.clear();                       // clear this scan's Cp list
 
@@ -429,7 +433,7 @@ DbgLv(1) << " jj scan plateau " << ii << ii+1 << scplats[ii];
       {  // calculate partial plateaus
          pconc      = cconc;              // prev (baseline) div concentration
          cconc     += cinc;               // curr (plateau) div concentration
-         mconc      = pconc + cinc * 0.5; // mid div concentration
+         mconc      = pconc + cinch;      // mid div concentration
 
          // get sedimentation coefficient for concentration
          sedc       = sed_coeff( mconc, oterm );
@@ -1197,6 +1201,7 @@ void US_vHW_Enhanced::div_seds( )
                // radD = bottom - ( 2 * find_root(left) * sqrt( diff * time ) )
 
                radD        = bottom - ( 2.0 * xbdleft * bdifsqr * timesqr );
+               radD        = max( d->x[ 0 ].radius, min( bottom, radD ) );
 
                int mm      = 0;
                int mmlast  = valueCount - 1;
@@ -1210,8 +1215,8 @@ void US_vHW_Enhanced::div_seds( )
                yr[ nscnu ] = s->readings[ mm ].value;
 DbgLv(1) << "  bottom meniscus bdleft" << bottom << d->meniscus << bdleft;
 DbgLv(1) << "  dsed find_root toler" << dsed << xbdleft << bdtoler;
-DbgLv(1) << "  bdiffc bdifsqr mm" << bdiffc << bdifsqr << mm << mmlast;
-DbgLv(1) << "BD x,y " << nscnu+1 << radD << yr[nscnu];
+DbgLv(2) << "  bdiffc bdifsqr" << bdiffc << bdifsqr << "mm mml" << mm << mmlast;
+DbgLv(1) << "BD x,y " << nscnu+1 << radD << yr[nscnu] << "  mm" << mm;
 
                nscnu++;
             }
@@ -1776,7 +1781,7 @@ double US_vHW_Enhanced::sedcoeff_intercept()
          yr[ nscnu ] = sedc;
          nscnu++;
       }
-DbgLv(1) << " s-i: range baseline basecut platcut mconc" << range << baseline
+DbgLv(2) << " s-i: range baseline basecut platcut mconc" << range << baseline
   << basecut << platcut << mconc;
    }
 
