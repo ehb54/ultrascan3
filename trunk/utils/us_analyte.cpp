@@ -120,7 +120,7 @@ int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
    mw          = db->value( 6 ).toString().toDouble();
 
    q.clear();
-   q << "get_nucleotide" << analyteID;
+   q << "get_nucleotide_info" << analyteID;
    db->query( q );
    db->next();
    
@@ -756,7 +756,7 @@ QString US_Analyte::get_filename( const QString& path, const QString& guid )
 void US_Analyte::write_nucleotide( US_DB2* db )
 {
    QStringList q;
-   q << "set_nucleotide" << analyteID;
+   q << "set_nucleotide_info" << analyteID;
    q << QString::number( doubleStranded );
    q << QString::number( complement );
    q << QString::number( _3prime );
@@ -768,6 +768,9 @@ void US_Analyte::write_nucleotide( US_DB2* db )
    q << QString::number( calcium );
 
    db->statusQuery( q );
+
+   if ( db->lastErrno() != US_DB2::OK ) 
+      message = QObject::tr ( "Could not update nucleotide info" );
 }
 
 void US_Analyte::dump( void )

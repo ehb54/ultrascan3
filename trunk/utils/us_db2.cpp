@@ -355,7 +355,7 @@ int US_DB2::statusQuery( const QString& sqlQuery )
       if ( result )
       {
          row       = mysql_fetch_row( result );
-         error     = row[ 0 ];
+         db_errno  = atoi( row[ 0 ] );
          mysql_free_result( result );
          result = NULL;
       }
