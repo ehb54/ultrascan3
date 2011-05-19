@@ -50,6 +50,8 @@ int US_SoluteData::sortBuckets()
 int US_SoluteData::appendBucket( bucket& buk )
 {
    int rc = 0;
+
+   limitBucket( buk );
    bndx   = allbucks.size();
    allbucks.append( buk );
    return rc;
@@ -119,6 +121,8 @@ bucket US_SoluteData::createBucket( QRectF brect, QPointF bpnt,
    buk.ff0_max = brect.top();
    buk.conc    = bconc;
    buk.status  = bstat;
+
+   limitBucket( buk );
 
    return buk;
 }
@@ -245,19 +249,13 @@ QString US_SoluteData::bucketLine(  int ix )
 {
    bucket buk = bucketAt( ix );
    int kx     = ( ix < 0 ) ? bucketsCount() : ( ix + 1 );
-#if 0
-   QString line;
-   line.sprintf(
-      "Solute Bin %d: s_min=%4.2e, s_max=%4.2e, f/f0_min=%4.2f, f/f0_max=%4.2f",
-      kx, buk.s_min, buk.s_max, buk.ff0_min, buk.ff0_max );
-   return line;
-#endif
-#if 1
+
+   limitBucket( buk );
+
    return QString(
       "Solute Bin %1: s_min=%2, s_max=%3, f/f0_min=%4, f/f0_max=%5" )
       .arg( kx ).arg( buk.s_min ).arg( buk.s_max )
       .arg( buk.ff0_min ).arg( buk.ff0_max );
-#endif
 }
 
 void US_SoluteData::setDistro( SoluteList* a_distro )
@@ -348,6 +346,9 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
       buk.ff0_max = fval + hbuckh;
       buk.conc    = cval;
       buk.status  = 2;
+
+      limitBucket( buk );
+
       buks1->append( buk );
       cvals.append( cval );
    }
@@ -659,6 +660,9 @@ int US_SoluteData::saveGAdata( QString& fname )
       for ( int jj = 0; jj < nsol; jj++ )
       {
          buk      = allbucks.at( jj );
+
+         limitBucket( buk );
+
          line.sprintf(
             "%6.4f, %6.4f, %6.4f, %6.4f",
              buk.s_min, buk.s_max, buk.ff0_min, buk.ff0_max );
@@ -1178,5 +1182,17 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
 
    delete [] xplot;
    delete [] yplot;
+}
+
+// Insure vertexes of a bucket do not exceed physically possible limits
+void US_SoluteData::limitBucket( bucket& buk )
+{
+   buk.s_min   = buk.s_min >= 0.0 ?
+                 max(  1.0, buk.s_min ) :
+                 min( -1.0, buk.s_min );
+   buk.s_max   = buk.s_max >= 0.0 ?
+                 max(  1.0, buk.s_max ) :
+                 min( -1.0, buk.s_max );
+   buk.ff0_min = max(  1.0, buk.ff0_min );
 }
 

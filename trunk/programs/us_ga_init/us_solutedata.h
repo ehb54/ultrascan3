@@ -112,6 +112,7 @@ class US_SoluteData : public QObject
     int      buildDataMC( bool, SoluteList*, SoluteList* );
     int      reportDataMC( QString&, int );
     void     outputStats( QTextStream&, QList< qreal >&, bool, QString ); 
+    void     limitBucket( bucket& );
 
   private:
     QList< bucket >  allbucks;
