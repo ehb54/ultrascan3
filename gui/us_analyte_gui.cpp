@@ -1585,7 +1585,9 @@ void US_AnalyteGui::select_analyte( QListWidgetItem* /* item */ )
    le_protein_vbar20->setText( QString::number( analyte.vbar20, 'f', 4 ) );
    le_nucle_vbar    ->setText( QString::number( analyte.vbar20, 'f', 4 ) );
    le_carbs_vbar    ->setText( QString::number( analyte.vbar20, 'f', 4 ) );
-   le_nucle_mw      ->setText( QString::number( (int) analyte.mw ) );
+   if ( analyte.type == US_Analyte::DNA ||  analyte.type == US_Analyte::RNA ) 
+      update_nucleotide();
+   //le_nucle_mw      ->setText( QString::number( (int) analyte.mw ) );
    le_carbs_mw      ->setText( QString::number( (int) analyte.mw ) );
    saved_analyte = analyte;
 
