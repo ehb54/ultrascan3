@@ -1188,11 +1188,11 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
 void US_SoluteData::limitBucket( bucket& buk )
 {
    buk.s_min   = buk.s_min >= 0.0 ?
-                 max(  1.0, buk.s_min ) :
-                 min( -1.0, buk.s_min );
+                 max(  0.1, buk.s_min ) :
+                 min( -0.1, buk.s_min );
    buk.s_max   = buk.s_max >= 0.0 ?
-                 max(  1.0, buk.s_max ) :
-                 min( -1.0, buk.s_max );
+                 max(  0.1, buk.s_max ) :
+                 min( -0.1, buk.s_max );
    buk.ff0_min = max(  1.0, buk.ff0_min );
 }
 
