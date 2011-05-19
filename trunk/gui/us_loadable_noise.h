@@ -48,7 +48,20 @@ class US_GUI_EXTERN US_LoadableNoise : public QObject
     // Build a list of noises(GUIDs) for a given model(GUID)
     int noises_in_model( bool, QString, QStringList& );
 
+    // Build noise,model IDs list for database
+    int id_list_db();
+
+    // Build noise,model IDs list for local disk
+    int id_list_disk();
+
     int dbg_level;
+
+    QStringList noiIDs;      // Noise IDs (ID for db, GUID for disk)
+    QStringList noiEdIDs;    // Noise edit GUIDs
+    QStringList noiMoIDs;    // Noise model IDs (db ID, disk GUID)
+    QStringList noiTypes;    // Noise types
+    QStringList modIDs;      // Model IDs (db ID, disk GUID)
+    QStringList modEdIDs;    // Model edit GUIDs
 };
 #endif
 

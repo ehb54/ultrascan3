@@ -132,6 +132,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       double sed_coeff( double, double );
       double avg_plateau(  void );
       double find_root( double );
+      double sedcoeff_intercept( void );
       double back_diff_coeff( double );
       void groupClick( const QwtDoublePoint& );
       void add_group_info( void );
@@ -143,7 +144,6 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       QString text_time( double, int );
       QString text_time( double );
       QStringList last_edit_files( QStringList );
-      double readings_radius( US_DataIO2::EditedData *, int );
       void new_triple  ( int );
       void update      ( int );
 

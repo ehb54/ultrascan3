@@ -36,23 +36,35 @@ int US_LoadableNoise::count_noise( bool ondisk, US_DataIO2::EditedData* edata,
    QString     lmodlGUID;                           // list model GUID
    QString     lnoisGUID;                           // list noise GUID
    QString     modelIndx;                           // "0001" style model index
-DbgLv(1) << "LaNoi:editGUID  " << editGUID;
-DbgLv(1) << "LaNoi:modelGUID " << modelGUID;
+DbgLv(2) << "LaNoi:editGUID  " << editGUID;
+DbgLv(2) << "LaNoi:modelGUID " << modelGUID;
 
-   // get a list of models tied to the loaded edit
+   // Build lists of IDs for noises and models
+   if ( ondisk )
+      id_list_disk();
+
+   else
+      id_list_db();
+for ( int ii = 0; ii < noiIDs.size(); ii++ ) {
+DbgLv(2) << "LaNoi:allNoi nID eID mID type" << noiIDs.at(ii)
+ << noiEdIDs.at(ii) << noiMoIDs.at(ii) << noiTypes.at(ii); }
+for ( int ii = 0; ii < modIDs.size(); ii++ ) {
+DbgLv(2) << "LaNoi:allMod mID eID" << modIDs.at(ii) << modEdIDs.at(ii); }
+
+   // Get a list of models tied to the loaded edit
    int nemods  = models_in_edit(  ondisk, editGUID, mieGUIDs );
 
    if ( nemods == 0 )
       return nemods;          // go no further if no models in edit
 
-   // if no model is loaded, pick the model GUID of the latest noise
+   // If no model is loaded, pick the model GUID of the latest noise
    if ( model == 0 )
-      modelGUID   = mieGUIDs[ nemods - 1 ];
+      modelGUID   = mieGUIDs[ ondisk ? nemods - 1 : 0 ];
 
-   // get a list of noises tied to the loaded model
+   // Get a list of noises tied to the loaded model
    int nmnois  = noises_in_model( ondisk, modelGUID, nimGUIDs );
 
-   // insure that the loaded model is at the head of the model-in-edit list
+   // Insure that the loaded model is at the head of the model-in-edit list
    if ( modelGUID != mieGUIDs[ 0 ] )
    {
       if ( ! mieGUIDs.removeOne( modelGUID ) )
@@ -67,7 +79,7 @@ DbgLv(1) << "LaNoi:modelGUID " << modelGUID;
    int kk = 0;                // running output models index
 
    if ( nmnois > 0 )
-   {  // if loaded model has noise, put noise in list
+   {  // If loaded model has noise, put noise in list
       nieGUIDs << nimGUIDs;   // initialize noise-in-edit list
       kk++;
    }
@@ -75,11 +87,11 @@ DbgLv(1) << "LaNoi:modelGUID " << modelGUID;
    nenois      = nmnois;      // initial noise-in-edit count is noises in model
 
    for ( int ii = 1; ii < nemods; ii++ )
-   {  // search through models in edit
+   {  // Search through models in edit
       lmodlGUID  = mieGUIDs[ ii ];                    // this model's GUID
       modelIndx  = QString().sprintf( "%4.4d", kk );  // models-in-edit index
 
-      // find the noises tied to this model
+      // Find the noises tied to this model
       int kenois = noises_in_model( ondisk, lmodlGUID, tmpGUIDs );
 
       if ( kenois > 0 )
@@ -99,9 +111,9 @@ DbgLv(1) << "LaNoi:modelGUID " << modelGUID;
          kk++;
       }
    }
-DbgLv(1) << "LaNoi:nemods nmnois nenois" << nemods << nmnois << nenois;
+DbgLv(2) << "LaNoi:nemods nmnois nenois" << nemods << nmnois << nenois;
 for (int jj=0;jj<nenois;jj++)
- DbgLv(1) << "LaNoi: jj nieG" << jj << nieGUIDs.at(jj);
+ DbgLv(2) << "LaNoi: jj nieG" << jj << nieGUIDs.at(jj);
 
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
@@ -143,7 +155,7 @@ for (int jj=0;jj<nenois;jj++)
    return nenois;
 }
 
-// build a list of models(GUIDs) for a given edit(GUID)
+// Build a list of models(GUIDs) for a given edit(GUID)
 int US_LoadableNoise::models_in_edit( bool ondisk, QString eGUID,
    QStringList& mGUIDs )
 {
@@ -153,138 +165,17 @@ int US_LoadableNoise::models_in_edit( bool ondisk, QString eGUID,
    QStringList reGUIDs;
 
    mGUIDs.clear();
-DbgLv(1) << "LaNoi:MIE: ondisk" << ondisk;
+DbgLv(2) << "LaNoi:MIE: ondisk" << ondisk;
 
-   if ( ondisk )
-   {  // Models from local disk files
-      QDir    dir;
-      QString path = US_Settings::dataDir() + "/models";
-
-      if ( !dir.exists( path ) )
-         dir.mkpath( path );
-
-      dir          = QDir( path );
-
-      QStringList filter( "M*.xml" );
-      QStringList f_names = dir.entryList( filter, QDir::Files, QDir::Name );
-
-      QXmlStreamAttributes attr;
-
-      for ( int ii = 0; ii < f_names.size(); ii++ )
+   for ( int ii = 0; ii < modIDs.size(); ii++ )
+   {  // Examine models list; Save to this list if edit GUID matches
+      xmGUID = modIDs.at( ii );
+      xeGUID = modEdIDs.at( ii );
+     
+      if ( eGUID == xeGUID )
       {
-         QString fname( path + "/" + f_names[ ii ] );
-         QFile   m_file( fname );
-
-         if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
-            continue;
-
-         QXmlStreamReader xml( &m_file );
-
-
-         while ( ! xml.atEnd() )
-         {  // Search XML elements until we find "model"
-            xml.readNext();
-
-            if ( xml.isStartElement()  &&  xml.name() == "model" )
-            {  // test for desired editGUID
-               attr    = xml.attributes();
-               xeGUID  = attr.value( "editGUID"    ).toString();
-               xmGUID  = attr.value( "modelGUID"   ).toString();
-               xrGUID  = attr.value( "requestGUID" ).toString();
-               int kmc = attr.value( "monteCarlo"  ).toString().toInt();
-
-               if ( xeGUID != eGUID )
-                  continue;
-
-               if ( kmc == 1  &&  xrGUID.length() == 36 )
-               {  // treat monte carlo specially
-                  if ( reGUIDs.contains( xrGUID ) )
-                  {  // already have this request GUID:  skip
-                     continue;
-                  }
-                  reGUIDs << xrGUID;  // this is 1st:  save it for compare
-               }
-
-               // save the GUID of each model with a matching edit GUID
-               mGUIDs << xmGUID;
-            }
-         }
-
-         m_file.close();
+         mGUIDs << xmGUID;
       }
-   }
-
-   else
-   {
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
-
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         qDebug() << "*** DB ERROR: " << db.lastErrno();
-         return 0;
-      }
-
-      QList< int > mDbIDs;
-      QStringList  query;
-      QString      invID  = QString::number( US_Settings::us_inv_ID() );
-DbgLv(1) << "LaNoi:MIE(db): invID" << invID;
-
-      query.clear();
-
-      query << "get_model_desc" << invID;
-      db.query( query );
-
-      while ( db.next() )
-      {  // accumulate from db desc entries matching editGUID;
-         xmGUID  = db.value( 1 ).toString();
-         xeGUID  = db.value( 3 ).toString();
-DbgLv(2) << "LaNoi:MIE(db): xm/xe/e GUID" << xmGUID << xeGUID << eGUID;
-
-         if ( xeGUID == eGUID )
-         {
-            mGUIDs << xmGUID;
-            mDbIDs << db.value( 0 ).toString().toInt();
-         }
-      }
-DbgLv(1) << "LaNoi:MIE(db): pass 1 mGUIDs size" << mGUIDs.size() << mDbIDs.size();
-
-      qSort( mDbIDs );            // sort model db IDs into ascending order
-
-      // Make a pass thru models to exclude MC's beyond first
-
-      for ( int ii = 0; ii < mDbIDs.size(); ii++ )
-      {
-         query.clear();
-         query << "get_model_info" << QString::number( mDbIDs.at( ii ) );
-         db.query( query );
-         db.next();
-         QString mxml = db.value( 2 ).toString();
-         int     jj   = mxml.indexOf( "requestGUID="  );
-         int     kk   = mxml.indexOf( "monteCarlo=" );
-         xrGUID       = ( jj < 0 ) ? "" : mxml.mid( jj ).section( '"', 1, 1 );
-         int     kmc  = ( kk < 0 ) ? 0 :
-                        mxml.mid( kk ).section( '"', 1, 1 ).toInt();
-DbgLv(2) << "LaNoi:MIE(db):  ii kmc rGlen" << ii << kmc << xrGUID.length()
- << " DbID" << mDbIDs.at( ii );
-
-         if ( kmc == 1  &&  xrGUID.length() == 36 )
-         {  // treat monte carlo specially
-
-            if ( reGUIDs.contains( xrGUID ) )
-            {  // already have this request GUID:  remove this model
-               mGUIDs.removeOne( db.value( 0 ).toString() );
-DbgLv(2) << "LaNoi:MIE(db):    mGI rmvd" << db.value( 0 ).toString();
-            }
-
-            else
-            {  // this is 1st:  save it for compare
-               reGUIDs << xrGUID;
-DbgLv(2) << "LaNoi:MIE(db):    dsc savd" << db.value( 1 ).toString();
-            }
-         }
-      }
-DbgLv(1) << "LaNoi:MIE(db): pass 2 mGUIDs size" << mGUIDs.size() << mDbIDs.size();
    }
 
    return mGUIDs.size();
@@ -299,91 +190,241 @@ int US_LoadableNoise::noises_in_model( bool ondisk, QString mGUID,
    QString xntype;
 
    nGUIDs.clear();
-   if ( ondisk )
-   {  // Noises from local disk files
-      QDir    dir;
-      QString path = US_Settings::dataDir() + "/noises";
 
-      if ( !dir.exists( path ) )
-         dir.mkpath( path );
+   for ( int ii = 0; ii < noiIDs.size(); ii++ )
+   {  // Examine noises list; Save to this list if model GUID matches
+      xnGUID = noiIDs  .at( ii );
+      xmGUID = noiMoIDs.at( ii );
+      xntype = noiTypes.at( ii );
 
-      dir          = QDir( path );
-
-      QStringList filter( "N*.xml" );
-      QStringList f_names = dir.entryList( filter, QDir::Files, QDir::Name );
-
-      QXmlStreamAttributes attr;
-
-      for ( int ii = 0; ii < f_names.size(); ii++ )
-      {
-         QString fname( path + "/" + f_names[ ii ] );
-         QFile   m_file( fname );
-
-         if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
-            continue;
-
-         QXmlStreamReader xml( &m_file );
-
-
-         while ( ! xml.atEnd() )
-         {  // Search XML elements until we find "noise"
-            xml.readNext();
-
-            if ( xml.isStartElement()  &&  xml.name() == "noise" )
-            {  // test for desired editGUID
-               attr    = xml.attributes();
-               xmGUID  = attr.value( "modelGUID"   ).toString();
-               xnGUID  = attr.value( "noiseGUID"   ).toString();
-               xntype  = attr.value( "type"        ).toString();
-
-               if ( xmGUID == mGUID )
-                  nGUIDs << xnGUID + ":" + xntype + ":0000";
-            }
-         }
-
-         m_file.close();
-      }
-   }
-
-   else
-   {
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
-
-      if ( db.lastErrno() != US_DB2::OK )
-         return 0;
-
-      QStringList query;
-      QString     invID  = QString::number( US_Settings::us_inv_ID() );
-      QString     xnoiID;
-      QString     xmodID;
-      QString     modlID;
-
-      query.clear();
-      query << "get_modelID" << mGUID;
-      db.query( query );
-      db.next();
-      modlID  = db.value( 0 ).toString();
-
-      query.clear();
-      query << "get_noise_desc" << invID;
-      db.query( query );
-
-      while ( db.next() )
-      {  // accumulate from db desc entries matching editGUID;
-         xnoiID  = db.value( 0 ).toString();
-         xnGUID  = db.value( 1 ).toString();
-         xmodID  = db.value( 3 ).toString();
-         xntype  = db.value( 4 ).toString();
-         xntype  = xntype.contains( "ri_nois", Qt::CaseInsensitive ) ?
+      if ( !ondisk )
+         xntype = xntype.contains( "ri_nois", Qt::CaseInsensitive ) ?
                    "ri" : "ti";
-
-//DbgLv(2) << "LaNoi:NIM(db): xm/xe/e ID" << xnoiID << xmodID << modlID;
-         if ( xmodID == modlID )
-            nGUIDs << xnGUID + ":" + xntype + ":0000";
-      }
+     
+      if ( mGUID == xmGUID )
+         nGUIDs << xnGUID + ":" + xntype + ":0000";
    }
 
    return nGUIDs.size();
+}
+
+// Build lists of noise and model IDs for database
+int US_LoadableNoise::id_list_db()
+{
+   QStringList query;
+   QString     invID  = QString::number( US_Settings::us_inv_ID() );
+
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+      return 0;
+
+   noiIDs  .clear();
+   noiEdIDs.clear();
+   noiMoIDs.clear();
+   noiTypes.clear();
+   modIDs  .clear();
+   modEdIDs.clear();
+
+   QStringList mGUIDs;
+   QStringList nGUIDs;
+   QStringList reqIDs;
+
+   // Build noise, edit, model ID lists for all noises
+   query.clear();
+   query << "get_noise_desc" << invID;
+   db.query( query );
+
+   while ( db.next() )
+   {  // Accumulate lists from noise records
+      noiIDs   << db.value( 0 ).toString();
+      nGUIDs   << db.value( 1 ).toString();
+      noiMoIDs << db.value( 3 ).toString();
+      noiTypes << db.value( 4 ).toString();
+   }
+
+   // Build model, edit ID lists for all models
+   query.clear();
+   query << "get_model_desc" << invID;
+   db.query( query );
+
+   while ( db.next() )
+   {  // Accumulate from db desc entries matching noise model IDs
+      QString modelID = db.value( 0 ).toString();
+
+      if ( noiMoIDs.contains( modelID ) )
+      {  // Only list models that have associated noise
+         QString modGUID = db.value( 1 ).toString();
+         QString editID  = db.value( 3 ).toString();
+         modIDs   << modelID;
+         modEdIDs << editID;
+         mGUIDs   << modGUID;
+      }
+   }
+
+   // Loop through models to edit out any extra monteCarlo models
+   for ( int ii = modIDs.size() - 1; ii >=0; ii-- )
+   {  // Work from the back so any removed records do not affect indexes
+      US_Model wmodel;
+
+      wmodel.load( true, mGUIDs.at( ii ), &db );
+
+      if ( wmodel.monteCarlo )
+      {  // Treat monte carlo in a special way (as single composite model)
+         if ( reqIDs.contains( wmodel.requestGUID ) )
+         {  // already have this request GUID, so remove this model
+            modIDs  .removeAt( ii );
+            modEdIDs.removeAt( ii );
+            mGUIDs  .removeAt( ii );
+         }
+
+         else
+         {  // This is the first time for this request, so save it in a list
+            reqIDs << wmodel.requestGUID;
+         }
+      }
+   }
+
+   // Convert edit IDs to edit GUIDs in noises list
+   for ( int ii = 0; ii < noiTypes.size(); ii++ )
+   {
+      QString modelID = noiMoIDs.at( ii );
+      int     jj      = modIDs.indexOf( modelID );
+      QString edGUID  = modEdIDs.at( jj );
+      QString moGUID  = mGUIDs  .at( jj );
+
+      noiEdIDs << edGUID;
+      noiMoIDs.replace( ii, moGUID );
+   }
+
+   // Replace IDs with GUIDs in main model,noise IDs list
+   modIDs.clear();
+   noiIDs.clear();
+
+   for ( int ii = 0; ii < mGUIDs.size(); ii++ )
+      modIDs   << mGUIDs.at( ii );
+
+   for ( int ii = 0; ii < nGUIDs.size(); ii++ )
+      noiIDs   << nGUIDs.at( ii );
+
+   return noiIDs.size();
+}
+
+// Build lists of noise and model IDs for local disk
+int US_LoadableNoise::id_list_disk()
+{
+   noiIDs  .clear();
+   noiEdIDs.clear();
+   noiMoIDs.clear();
+   noiTypes.clear();
+   modIDs  .clear();
+   modEdIDs.clear();
+
+   // First build noise lists
+
+   QDir    dir;
+   QString path = US_Settings::dataDir() + "/noises";
+   dir.mkpath( path );
+   dir          = QDir( path );
+
+   QStringList filter( "N*.xml" );
+   QStringList f_names = dir.entryList( filter, QDir::Files, QDir::Name );
+
+   QXmlStreamAttributes attr;
+
+   for ( int ii = 0; ii < f_names.size(); ii++ )
+   {
+      QString fname( path + "/" + f_names[ ii ] );
+      QFile   m_file( fname );
+
+      if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         continue;
+
+      QXmlStreamReader xml( &m_file );
+
+      while ( ! xml.atEnd() )
+      {  // Search XML elements until we find "noise"
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "noise" )
+         {  // test for desired editGUID
+            attr    = xml.attributes();
+            noiIDs   << attr.value( "noiseGUID"   ).toString();
+            noiMoIDs << attr.value( "modelGUID"   ).toString();
+            noiTypes << attr.value( "type"        ).toString();
+         }
+      }
+
+      m_file.close();
+   }
+
+   // Then build lists for models that have associated noise
+
+   QStringList reqIDs;
+   path         = US_Settings::dataDir() + "/models";
+   dir.mkpath( path );
+   dir          = QDir( path );
+
+   filter.clear();
+   filter << "M*.xml";
+   f_names      = dir.entryList( filter, QDir::Files, QDir::Name );
+
+   for ( int ii = 0; ii < f_names.size(); ii++ )
+   {
+      QString fname( path + "/" + f_names[ ii ] );
+      QFile   m_file( fname );
+
+      if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         continue;
+
+      QXmlStreamReader xml( &m_file );
+
+      while ( ! xml.atEnd() )
+      {  // Search XML elements until we find "model"
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "model" )
+         {  // test for desired editGUID
+            attr    = xml.attributes();
+            QString modelID = attr.value( "modelGUID"   ).toString();
+            QString editID  = attr.value( "editGUID"    ).toString();
+            QString reqGUID = attr.value( "requestGUID" ).toString();
+            QString mcst    = attr.value( "monteCarlo"  ).toString();
+            bool    mCarlo  = ( ! mcst.isEmpty()  &&  mcst!= "0" );
+
+            if ( noiMoIDs.contains( modelID ) )
+            {  // Only list models that have associated noise
+               if ( mCarlo )
+               {  // Treat monte carlo in a special way (1 composite model)
+                  if ( reqIDs.contains( reqGUID ) )
+                     continue;           // Skip 2nd and beyond of same request
+
+                  else
+                     reqIDs << reqGUID;  // Record that this request ID is used
+               }
+
+               // Model that has some noise associations
+               modIDs   << modelID;
+               modEdIDs << editID;
+            }
+         }
+      }
+
+      m_file.close();
+   }
+
+   // Fill in edit GUIDs for noises by cross referencing model
+   for ( int ii = 0; ii < noiMoIDs.size(); ii++ )
+   {
+      QString modelID = noiMoIDs.at( ii );
+      int     jj      = modIDs.indexOf( modelID );
+      QString editID  = modEdIDs.at( jj );
+
+      noiEdIDs << editID;
+   }
+
+
+   return noiIDs.size();
 }
 
