@@ -138,7 +138,7 @@ void US_Dcdt::data_plot( void )
    int     skipped     = 0;
    double  positionPct = ct_boundaryPos    ->value() / 100.0;
    double  baseline    = calc_baseline();
-
+/*
    for ( int i = 0; i < scanCount; i++ )
    {
       if ( excludedScans.contains( i ) ) continue;
@@ -148,7 +148,7 @@ void US_Dcdt::data_plot( void )
       
       if ( d->scanData[ i ].readings[ 0 ].value > test_y ) skipped++;
    }
-	skipped = 0;
+*/
 
    le_skipped->setText( QString::number( skipped ) );
 
@@ -181,6 +181,8 @@ void US_Dcdt::data_plot( void )
    arrayStart.fill( 0, scanCount );
 
    // Calculate dcdt and sValues
+   while ( excludedScans.contains( skipped ) ) skipped++;
+
    int    previous = skipped;
    int    count    = 0;
    double s_max    = 0.0;
@@ -319,7 +321,7 @@ next: avgDcdt[ j ] /= ( count - 1 );
                                           "10<sup>13</sup> sec</b>" ) );
          
    data_plot1->setAxisTitle( QwtPlot::xBottom, title );
-         
+
    // Draw the desired plot
    switch ( graphType )
    {
@@ -335,7 +337,7 @@ next: avgDcdt[ j ] /= ( count - 1 );
                x[ size++ ] = d->x[ j ].radius;
 
             curve = us_curve( data_plot1, 
-                  tr( "Scan " ) + QString::number( i + skipped + 1 ) );
+                  tr( "Scan " ) + QString::number( i + 1 ) );
 
             curve->setData( x.data(), dcdt[ i ].data(), arraySizes[ i ] );
          }
@@ -347,9 +349,10 @@ next: avgDcdt[ j ] /= ( count - 1 );
          for ( int i = 0; i < count; i++ )
          {
             curve = us_curve( data_plot1, 
-                  tr( "Scan " ) + QString::number( i + skipped + 1 ) );
+                  tr( "Scan " ) + QString::number( i + 1 ) );
 
-            curve->setData( sValues[ i ].data(), dcdt[ i ].data(), arraySizes[ i ] );
+            curve->setData( sValues[ i ].data(), dcdt[ i ].data(), 
+                            arraySizes[ i ] );
          }
          
          data_plot1->setAxisScale( QwtPlot::xBottom, 0.0, ct_sValue->value() );
