@@ -15,6 +15,7 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
                                                      QString *csv_filename,
                                                      bool *save_original_data,
                                                      bool *run_nnls,
+                                                     bool *run_best_fit,
                                                      QString *nnls_target,
                                                      bool expert_mode,
                                                      void *us_hydrodyn,
@@ -34,6 +35,7 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
    this->csv_filename = csv_filename;
    this->save_original_data = save_original_data;
    this->run_nnls = run_nnls;
+   this->run_best_fit = run_best_fit;
    this->nnls_target = nnls_target;
    this->expert_mode = expert_mode;
    this->us_hydrodyn = us_hydrodyn;
@@ -132,6 +134,14 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
       cb_run_nnls->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
       connect(cb_run_nnls, SIGNAL(clicked()), this, SLOT(set_run_nnls()));
       
+      cb_run_best_fit = new QCheckBox(this);
+      cb_run_best_fit->setText(tr(" Best fit"));
+      cb_run_best_fit->setEnabled(true);
+      cb_run_best_fit->setChecked(*run_best_fit);
+      cb_run_best_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+      cb_run_best_fit->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      connect(cb_run_best_fit, SIGNAL(clicked()), this, SLOT(set_run_best_fit()));
+      
       pb_select_target = new QPushButton(tr("Select Target"), this);
       pb_select_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
       pb_select_target->setMinimumHeight(minHeight1);
@@ -217,8 +227,12 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    background->addLayout(hbl_avg_std);
    if ( expert_mode )
    {
+      QHBoxLayout *hbl_nnls_best_fit = new QHBoxLayout;
+      hbl_nnls_best_fit->addWidget(cb_run_nnls);
+      hbl_nnls_best_fit->addWidget(cb_run_best_fit);
+
       QHBoxLayout *hbl_nnls = new QHBoxLayout;
-      hbl_nnls->addWidget(cb_run_nnls);
+      hbl_nnls->addLayout(hbl_nnls_best_fit);
       hbl_nnls->addWidget(pb_select_target);
       hbl_nnls->addWidget(lbl_nnls_target);
       background->addLayout(hbl_nnls);
@@ -478,13 +492,38 @@ void US_Hydrodyn_Saxs_Load_Csv::set_save_original_data()
 void US_Hydrodyn_Saxs_Load_Csv::set_run_nnls()
 {
    *run_nnls = cb_run_nnls->isChecked();
-   select_target();
+   if ( nnls_target->isEmpty() && *run_nnls )
+   {
+      select_target();
+   } else {
+      if ( !*run_nnls && !*run_best_fit )
+      {
+         *nnls_target = "";
+         lbl_nnls_target->setText("");
+      }
+   }         
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Load_Csv::set_run_best_fit()
+{
+   *run_best_fit = cb_run_best_fit->isChecked();
+   if ( nnls_target->isEmpty() && *run_best_fit )
+   {
+      select_target();
+   } else {
+      if ( !*run_nnls && !*run_best_fit )
+      {
+         *nnls_target = "";
+         lbl_nnls_target->setText("");
+      }
+   }
    update_enables();
 }
 
 void US_Hydrodyn_Saxs_Load_Csv::select_target()
 {
-   if ( *run_nnls )
+   if ( *run_nnls || *run_best_fit )
    {
       if ( qsl_sel_names->size() )
       {
@@ -502,18 +541,33 @@ void US_Hydrodyn_Saxs_Load_Csv::update_enables()
    cb_create_std_dev->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 2);
    cb_only_plot_stats->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
    cb_save_to_csv->setEnabled(
-                              ( cb_create_avg->isChecked() || ( expert_mode && cb_run_nnls->isChecked() ) )
-                              && qsl_sel_names->size() > 1);
+                              ( cb_create_avg->isChecked() || ( expert_mode && 
+                                                                ( 
+                                                                 cb_run_nnls->isChecked() ||
+                                                                 cb_run_best_fit->isChecked() 
+                                                                 )
+                                                                ) )
+                              && qsl_sel_names->size() > 1 );
    le_csv_filename->setEnabled(
-                               ( cb_create_avg->isChecked() || ( expert_mode && cb_run_nnls->isChecked() ) )
-                               && qsl_sel_names->size() > 1);
+                               ( cb_create_avg->isChecked() || ( expert_mode && 
+                                                                ( 
+                                                                 cb_run_nnls->isChecked() ||
+                                                                 cb_run_best_fit->isChecked() 
+                                                                 )
+                                                                 ) )
+                               && qsl_sel_names->size() > 1 );
    cb_save_original_data->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
    if ( expert_mode )
    {
-      pb_select_target->setEnabled(cb_run_nnls->isChecked() && qsl_sel_names->size() == 1);
+      pb_select_target->setEnabled( (
+                                     cb_run_nnls->isChecked() ||
+                                     cb_run_best_fit->isChecked() 
+                                     )
+                                    && qsl_sel_names->size() == 1 );
    }
    pb_transpose->setEnabled(qsl_sel_names->size());
    pb_transpose->setText(QString(tr("Transpose") + "%1")
                          .arg(qsl_sel_names->size() > 0 ? QString(" (%1)").arg(qsl_sel_names->size()) : ""));
    pb_save_selected->setEnabled(qsl_sel_names->size());
 }
+

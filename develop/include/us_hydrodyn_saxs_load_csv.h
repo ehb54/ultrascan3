@@ -34,6 +34,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
                                 QString *csv_filename,
                                 bool *save_original_data,
                                 bool *run_nnls,
+                                bool *run_best_fit,
                                 QString *nnls_target,
                                 bool expert_mode,
                                 void *us_hydrodyn,
@@ -58,6 +59,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       QCheckBox   *cb_save_original_data;
 
       QCheckBox   *cb_run_nnls;
+      QCheckBox   *cb_run_best_fit;
       QLabel      *lbl_nnls_target;
 
       QPushButton *pb_select_all;
@@ -85,6 +87,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       QString *csv_filename;
       bool *save_original_data;
       bool *run_nnls;
+      bool *run_best_fit;
       QString *nnls_target;
       bool expert_mode;
 
@@ -104,6 +107,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       void update_csv_filename(const QString &);
       void set_save_original_data();
       void set_run_nnls();
+      void set_run_best_fit();
 
       void select_all();
       void select_target();
