@@ -77,8 +77,8 @@ US_AnalysisControl::US_AnalysisControl( US_DataIO2::EditedData* dat_exp,
    int nthr     = US_Settings::threads();
    nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
 DbgLv(1) << "idealThrCout" << nthr;
-   ct_lolimits  = us_counter( 3,    1,   10,   1 );
-   ct_uplimits  = us_counter( 3,    4,  100,  10 );
+   ct_lolimits  = us_counter( 3,  0.2,   10,   1 );
+   ct_uplimits  = us_counter( 3,    1,  100,  10 );
    ct_nstepss   = us_counter( 3,    1, 1000,  60 );
    ct_lolimitk  = us_counter( 3,    1,    8,   1 );
    ct_uplimitk  = us_counter( 3,    2,   10,   4 );
