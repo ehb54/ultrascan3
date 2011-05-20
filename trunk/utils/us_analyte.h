@@ -89,7 +89,7 @@ class US_UTIL_EXTERN US_Analyte
       int    load_db     ( const QString&, US_DB2* );
       int    load_disk   ( const QString& );
       int    read_analyte( const QString& );
-      double nucleotide  ( const QXmlStreamAttributes&, const QString& );
+      void   nucleotide  ( void );
       
       int    write_disk      ( const QString& );
       int    write_db        ( US_DB2* );

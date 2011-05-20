@@ -134,6 +134,9 @@ int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
    magnesium      = db->value( 7 ).toString().toDouble();
    calcium        = db->value( 8 ).toString().toDouble();
 
+   if ( type == DNA  ||  type == RNA )
+      nucleotide();
+
    q.clear();
    q << "get_spectrum" << analyteID << "Analyte" << "'Extinction";
 
@@ -293,7 +296,20 @@ int US_Analyte::read_analyte( const QString& filename )
                extinction[ 280.0 ] = p.e280; 
             }
             else if ( type == DNA  ||  type == RNA )
-               mw = nucleotide( a, sequence );
+            {
+               doubleStranded = ( a.value( "stranded"           ).toString() == "T" );
+               complement     = ( a.value( "complement_only"    ).toString() == "T" );
+               _3prime        = ( a.value( "ThreePrimeHydroxyl" ).toString() == "T" );
+               _5prime        = ( a.value( "FivePrimeHydroxyl"  ).toString() == "T" );
+
+               sodium         = a.value( "sodium"    ).toString().toDouble();
+               potassium      = a.value( "potassium" ).toString().toDouble();
+               lithium        = a.value( "lithium"   ).toString().toDouble();
+               magnesium      = a.value( "magnesium" ).toString().toDouble();
+               calcium        = a.value( "calcium"   ).toString().toDouble();
+
+               nucleotide();
+            }
          }
          else if ( xml.name() == "extinction" )
          {
@@ -324,12 +340,9 @@ int US_Analyte::read_analyte( const QString& filename )
    return US_DB2::OK;
 }
 
-double US_Analyte::nucleotide( const QXmlStreamAttributes& a, 
-                               const QString&              seq )
+void US_Analyte::nucleotide( void )
 {
-   QString sequence = seq;
    sequence.toLower();
-   sequence.remove( QRegExp( "[^acgtu]" ) );
 
    uint A = sequence.count( "a" );
    uint C = sequence.count( "c" );
@@ -337,113 +350,98 @@ double US_Analyte::nucleotide( const QXmlStreamAttributes& a,
    uint T = sequence.count( "t" );
    uint U = sequence.count( "u" );
 
-   bool isDNA     = ( a.value( "type"               ).toString() == "DNA");
-   doubleStranded = ( a.value( "stranded"           ).toString() == "T" );
-   complement     = ( a.value( "complement_only"    ).toString() == "T" );
-   _3prime        = ( a.value( "ThreePrimeHydroxyl" ).toString() == "T" );
-   _5prime        = ( a.value( "FivePrimeHydroxyl"  ).toString() == "T" );
-
    const double mw_A = 313.209;
    const double mw_C = 289.184;
    const double mw_G = 329.208;
    const double mw_T = 304.196;
    const double mw_U = 274.170;
 
-   double MW    = 0.0;
-   uint   total = A + G + C + T + U;
+   mw         = 0.0;
+   uint total = A + G + C + T + U;
 
-   if ( isDNA )
+   if ( type == DNA )
    {
       if ( doubleStranded )
       {
-         MW += A * mw_A;
-         MW += G * mw_G;
-         MW += C * mw_C;
-         MW += T * mw_T;
-         MW += A * mw_T;
-         MW += G * mw_C;
-         MW += C * mw_G;
-         MW += T * mw_A;
+         mw += A * mw_A;
+         mw += G * mw_G;
+         mw += C * mw_C;
+         mw += T * mw_T;
+         mw += A * mw_T;
+         mw += G * mw_C;
+         mw += C * mw_G;
+         mw += T * mw_A;
       }
 
       if ( complement )
       {
-         MW += A * mw_T;
-         MW += G * mw_C;
-         MW += C * mw_G;
-         MW += T * mw_A;
+         mw += A * mw_T;
+         mw += G * mw_C;
+         mw += C * mw_G;
+         mw += T * mw_A;
       }
 
       if ( ! complement && ! doubleStranded )
       {
-         MW += A * mw_A;
-         MW += G * mw_G;
-         MW += C * mw_C;
-         MW += T * mw_T;
+         mw += A * mw_A;
+         mw += G * mw_G;
+         mw += C * mw_C;
+         mw += T * mw_T;
       }
    }
-
    else /* RNA */
    {
       if ( doubleStranded )
       {
-         MW += A * ( mw_A + 15.999 );
-         MW += G * ( mw_G + 15.999 );
-         MW += C * ( mw_C + 15.999 );
-         MW += U * ( mw_U + 15.999 );
-         MW += A * ( mw_U + 15.999 );
-         MW += G * ( mw_C + 15.999 );
-         MW += C * ( mw_G + 15.999 );
-         MW += U * ( mw_A + 15.999 );
+         mw += A * ( mw_A + 15.999 );
+         mw += G * ( mw_G + 15.999 );
+         mw += C * ( mw_C + 15.999 );
+         mw += U * ( mw_U + 15.999 );
+         mw += A * ( mw_U + 15.999 );
+         mw += G * ( mw_C + 15.999 );
+         mw += C * ( mw_G + 15.999 );
+         mw += U * ( mw_A + 15.999 );
       }
 
       if ( complement )
       {
-         MW += A * ( mw_U + 15.999 );
-         MW += G * ( mw_C + 15.999 );
-         MW += C * ( mw_G + 15.999 );
-         MW += U * ( mw_A + 15.999 );
+         mw += A * ( mw_U + 15.999 );
+         mw += G * ( mw_C + 15.999 );
+         mw += C * ( mw_G + 15.999 );
+         mw += U * ( mw_A + 15.999 );
       }
 
       if ( ! complement && ! doubleStranded )
       {
-         MW += A * ( mw_A + 15.999 );
-         MW += G * ( mw_G + 15.999 );
-         MW += C * ( mw_C + 15.999 );
-         MW += U * ( mw_U + 15.999 );
+         mw += A * ( mw_A + 15.999 );
+         mw += G * ( mw_G + 15.999 );
+         mw += C * ( mw_C + 15.999 );
+         mw += U * ( mw_U + 15.999 );
       }
    }
    
-   sodium    = a.value( "sodium"    ).toString().toDouble();
-   potassium = a.value( "potassium" ).toString().toDouble();
-   lithium   = a.value( "lithium"   ).toString().toDouble();
-   magnesium = a.value( "magnesium" ).toString().toDouble();
-   calcium   = a.value( "calcium"   ).toString().toDouble();
-
-   MW += sodium    * total * 22.99;
-   MW += potassium * total * 39.1;
-   MW += lithium   * total * 6.94;
-   MW += magnesium * total * 24.305;
-   MW += calcium   * total * 40.08;
+   mw += sodium    * total * 22.99;
+   mw += potassium * total * 39.1;
+   mw += lithium   * total * 6.94;
+   mw += magnesium * total * 24.305;
+   mw += calcium   * total * 40.08;
 
    if ( _3prime )
    {
-      MW += 17.01;
-      if ( doubleStranded )  MW += 17.01;
+      mw += 17.01;
+      if ( doubleStranded )  mw += 17.01;
    }
    else // we have phosphate
    {
-      MW += 94.87;
-      if ( doubleStranded ) MW += 94.87;
+      mw += 94.87;
+      if ( doubleStranded ) mw += 94.87;
    }
 
    if ( _5prime )
    {
-      MW -=  77.96;
-      if ( doubleStranded )  MW -= 77.96;
+      mw -=  77.96;
+      if ( doubleStranded )  mw -= 77.96;
    }
-
-   return MW;
 }
 
 bool US_Analyte::analyte_path( QString& path )

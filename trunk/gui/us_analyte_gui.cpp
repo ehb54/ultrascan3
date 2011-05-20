@@ -698,8 +698,6 @@ void US_AnalyteGui::close( void )
       emit valueChanged( analyte );
       accept();
    }
-   analyte.mw     = le_protein_mw    ->text().toDouble();
-   analyte.vbar20 = le_protein_vbar20->text().toDouble();
 
    // Just return if data is not OK
 }
