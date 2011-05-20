@@ -53,15 +53,15 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
 
    QLabel* lb_status   = us_label ( tr( "Status\nInfo:" ) );
    te_status           = us_textedit();
-   QLabel* lb_from     = us_label ( tr( "From:" ) );
+   QLabel* lb_from     = us_label ( tr( "Scan focus from:" ) );
    QLabel* lb_to       = us_label ( tr( "to:"   ) );
 
    pb_exclude   = us_pushbutton( tr( "Exclude Scan Range" ) );
    pb_exclude->setEnabled( false );
    connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude() ) );
 
-   ct_from      = us_counter( 2, 0, 0 );
-   ct_to        = us_counter( 2, 0, 0 );
+   //ct_from      = us_counter( 2, 0, 0 );
+   //ct_to        = us_counter( 2, 0, 0 );
 
    connect( ct_from, SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_from( double ) ) );
@@ -76,16 +76,22 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    connect( pb_pltres,  SIGNAL( clicked() ), SLOT( open_resplot() ) );
 
    // To modify controls layout, first make Base elements invisible
+   
    QWidget* widg;
    for ( int ii = 0; ii < controlsLayout->count(); ii++ )
       if ( ( widg = controlsLayout->itemAt( ii )->widget() ) != 0 )
          widg->setVisible( false );
+   ct_from->setVisible(true);
+   ct_to->setVisible(true);
+   pb_exclude->setVisible(true);
+   pb_reset_exclude->setVisible(true);
+   //ct_to->setVisible(true);
 
    // Add variance and rmsd to parameters layout
    QLabel* lb_vari     = us_label ( tr( "Variance:" ) );
-   le_vari             = us_lineedit( "0.00000" );
+   le_vari             = us_lineedit( "0.00000", 0, true );
    QLabel* lb_rmsd     = us_label ( tr( "RMSD:" ) );
-   le_rmsd             = us_lineedit( "0.00000" );
+   le_rmsd             = us_lineedit( "0.00000", 0, true );
    int row   = parameterLayout->rowCount();
    QPalette gray = US_GuiSettings::editColor();
    gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
@@ -100,18 +106,19 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
 
    // Reconstruct controls layout with some 2dsa-specific elements
    row       = 0;
-   controlsLayout->addWidget( lb_scan,      row++, 0, 1, 4 );
+   controlsLayout->addWidget( lb_scan,      row++, 0, 1, 3 );
    controlsLayout->addWidget( lb_from,      row,   0, 1, 1 );
-   controlsLayout->addWidget( ct_from,      row,   1, 1, 1 );
-   controlsLayout->addWidget( lb_to,        row,   2, 1, 1 );
-   controlsLayout->addWidget( ct_to,        row++, 3, 1, 1 );
-   controlsLayout->addWidget( pb_exclude,   row++, 0, 1, 4 );
-   controlsLayout->addWidget( lb_analysis,  row++, 0, 1, 4 );
-   controlsLayout->addWidget( pb_fitcntl,   row++, 0, 1, 2 );
-   controlsLayout->addWidget( pb_plt3d,     row,   0, 1, 2 );
-   controlsLayout->addWidget( pb_pltres,    row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_status,    row,   0, 3, 1 );
-   controlsLayout->addWidget( te_status,    row,   1, 3, 3 );
+   controlsLayout->addWidget( ct_from,      row++, 1, 1, 2 );
+   controlsLayout->addWidget( lb_to,        row,   0, 1, 1 );
+   controlsLayout->addWidget( ct_to,        row++, 1, 1, 2 );
+   controlsLayout->addWidget( pb_exclude,   row,   0, 1, 1 );
+   controlsLayout->addWidget( pb_reset_exclude, row++, 1, 1, 2 );
+   controlsLayout->addWidget( lb_analysis,  row++, 0, 1, 3 );
+   controlsLayout->addWidget( pb_fitcntl,   row,   0, 1, 1 );
+   controlsLayout->addWidget( pb_plt3d,     row,   1, 1, 1 );
+   controlsLayout->addWidget( pb_pltres,    row++, 2, 1, 1 );
+   controlsLayout->addWidget( lb_status,    row,   0, 1, 1 );
+   controlsLayout->addWidget( te_status,    row,   1, 1, 2 );
    row      += 3;
 
    // Set initial status text

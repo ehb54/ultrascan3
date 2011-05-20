@@ -32,7 +32,7 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    te_results = NULL;
    sMax       = 1000.0;
 
-   QLabel*       lb_aux    = us_banner( tr( "dC/dt Auxiliary Controls" ) );
+   //QLabel*       lb_aux    = us_banner( tr( "dC/dt Auxiliary Controls" ) );
    QLabel*       lb_sValue = us_label( tr( "S-value Cutoff:" ) );
    ct_sValue               = us_counter( 3, 0, 20, 20 );
    ct_sValue->setStep( 0.1 );
@@ -60,16 +60,16 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
 
    int row = 5;
    QLabel*       lb_bPos   = us_label( tr( "Boundary Pos (%):" ) );
-   controlsLayout->addWidget( lb_bPos,        row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_boundaryPos, row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_bPos,        row,   0, 1, 1 );
+   controlsLayout->addWidget( ct_boundaryPos, row++, 1, 1, 1 );
 
-   controlsLayout->addWidget( lb_aux,     row++, 0, 1, 4 );
+   //controlsLayout->addWidget( lb_aux,     row++, 0, 1, 2 );
 
-   controlsLayout->addWidget( lb_sValue,  row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_sValue,  row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_sValue,  row,   0, 1, 1 );
+   controlsLayout->addWidget( ct_sValue,  row++, 1, 1, 1 );
    
-   controlsLayout->addWidget( lb_graph,   row++, 0, 1, 4 );
-   controlsLayout->addLayout( rb_layout0, row++, 0, 1, 4 );
+   controlsLayout->addWidget( lb_graph,   row++, 0, 1, 3 );
+   controlsLayout->addLayout( rb_layout0, row++, 0, 1, 3 );
 
    connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );

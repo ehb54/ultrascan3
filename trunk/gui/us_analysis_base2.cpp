@@ -170,12 +170,11 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 
    // Analysis Controls
    QLabel* lb_analysis     = us_banner( tr( "Analysis Controls"  ) ); 
-   QLabel* lb_scan         = us_banner( tr( "Scan Control"       ) ); 
-   QLabel* lb_smoothing    = us_label ( tr( "Data Smoothing:"    ) ); 
+   QLabel* lb_smoothing    = us_label ( tr( "Data Smoothing:"    ) );
    QLabel* lb_boundPercent = us_label ( tr( "% of Boundary:"     ) ); 
    QLabel* lb_boundPos     = us_label ( tr( "Boundary Pos. (%):" ) ); 
 
-   QLabel* lb_from         = us_label ( tr( "From:" ) );
+   QLabel* lb_from         = us_label ( tr( "Scan focus from:" ) );
    QLabel* lb_to           = us_label ( tr( "to:"   ) );
 
    pb_exclude = us_pushbutton( tr( "Exclude Scan Range" ) );
@@ -200,8 +199,8 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    connect( ct_boundaryPos,     SIGNAL( valueChanged( double ) ),
                                 SLOT  ( boundary_pos( double ) ) );
    
-   ct_from            = us_counter( 2, 0, 0 );
-   ct_to              = us_counter( 2, 0, 0 );
+   ct_from            = us_counter( 3, 0, 0 );
+   ct_to              = us_counter( 3, 0, 0 );
    
    connect( ct_from, SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_from( double ) ) );
@@ -209,20 +208,19 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
                      SLOT  ( exclude_to  ( double ) ) );
 
    row = 0;
-   controlsLayout->addWidget( lb_scan           , row++, 0, 1, 4 );
-   controlsLayout->addWidget( lb_from           , row,   0 );
-   controlsLayout->addWidget( ct_from           , row,   1 );
-   controlsLayout->addWidget( lb_to             , row,   2 );
-   controlsLayout->addWidget( ct_to             , row++, 3 );
-   controlsLayout->addWidget( pb_exclude        , row,   0, 1, 2 );
-   controlsLayout->addWidget( pb_reset_exclude  , row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_analysis       , row++, 0, 1, 4 );
-   controlsLayout->addWidget( lb_smoothing      , row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_smoothing      , row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_boundPercent   , row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_boundaryPercent, row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_boundPos       , row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_boundaryPos    , row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_from           , row,   0, 1, 1 );
+   controlsLayout->addWidget( ct_from           , row++, 1, 1, 1 );
+   controlsLayout->addWidget( lb_to             , row,   0, 1, 1 );
+   controlsLayout->addWidget( ct_to             , row++, 1, 1, 1 );
+   controlsLayout->addWidget( pb_exclude        , row,   0, 1, 1 );
+   controlsLayout->addWidget( pb_reset_exclude  , row++, 1, 1, 1 );
+   controlsLayout->addWidget( lb_analysis       , row++, 0, 1, 2 );
+   controlsLayout->addWidget( lb_smoothing      , row,   0, 1, 1 );
+   controlsLayout->addWidget( ct_smoothing      , row++, 1, 1, 1 );
+   controlsLayout->addWidget( lb_boundPercent   , row,   0, 1, 1 );
+   controlsLayout->addWidget( ct_boundaryPercent, row++, 1, 1, 1 );
+   controlsLayout->addWidget( lb_boundPos       , row,   0, 1, 1 );
+   controlsLayout->addWidget( ct_boundaryPos    , row++, 1, 1, 1 );
 
    dataLoaded = false;
    buffLoaded = false;
