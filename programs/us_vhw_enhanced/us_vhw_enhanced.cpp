@@ -53,7 +53,7 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    QLabel* lb_boundPercent = us_label ( tr( "% of Boundary:"         ) );
    QLabel* lb_boundPos     = us_label ( tr( "Boundary Position (%):" ) );
 
-   QLabel* lb_from         = us_label ( tr( "From:" ) );
+   QLabel* lb_from         = us_label ( tr( "Scan focus from:" ) );
    QLabel* lb_to           = us_label ( tr( "to:"   ) );
 
    lb_tolerance  = us_label( tr( "Back Diffusion Tolerance:" ) );
@@ -87,11 +87,12 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    controlsLayout->addWidget( lb_boundPos       , 5, 0, 1, 2 );
    controlsLayout->addWidget( ct_boundaryPos    , 5, 2, 1, 2 );
    controlsLayout->addWidget( lb_scan           , 6, 0, 1, 4 );
-   controlsLayout->addWidget( lb_from           , 7, 0 );
-   controlsLayout->addWidget( ct_from           , 7, 1 );
-   controlsLayout->addWidget( lb_to             , 7, 2 );
-   controlsLayout->addWidget( ct_to             , 7, 3 );
-   controlsLayout->addWidget( pb_exclude        , 8, 0, 1, 4 );
+   controlsLayout->addWidget( lb_from           , 7, 0, 1, 2 );
+   controlsLayout->addWidget( ct_from           , 7, 2, 1, 2 );
+   controlsLayout->addWidget( lb_to             , 8, 0, 1, 2 );
+   controlsLayout->addWidget( ct_to             , 8, 2, 1, 2 );
+   controlsLayout->addWidget( pb_exclude        , 9, 0, 1, 2 );
+   controlsLayout->addWidget( pb_reset_exclude  , 9, 2, 1, 2 );
 
    connect( pb_help, SIGNAL( clicked() ),
             this,    SLOT(   help() ) );

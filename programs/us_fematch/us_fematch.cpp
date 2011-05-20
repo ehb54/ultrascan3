@@ -257,12 +257,13 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             this,       SLOT  ( exclude() ) );
 
    controlsLayout->addWidget( lb_scan           , 0, 0, 1, 4 );
-   controlsLayout->addWidget( lb_from           , 1, 0, 1, 1 );
-   controlsLayout->addWidget( ct_from           , 1, 1, 1, 1 );
-   controlsLayout->addWidget( lb_to             , 1, 2, 1, 1 );
-   controlsLayout->addWidget( ct_to             , 1, 3, 1, 1 );
-   controlsLayout->addWidget( pb_exclude        , 2, 0, 1, 4 );
-
+   controlsLayout->addWidget( lb_from           , 1, 0, 1, 2 );
+   controlsLayout->addWidget( ct_from           , 1, 2, 1, 2 );
+   controlsLayout->addWidget( lb_to             , 2, 0, 1, 2 );
+   controlsLayout->addWidget( ct_to             , 2, 2, 1, 2 );
+   controlsLayout->addWidget( pb_exclude        , 3, 0, 1, 2 );
+   //controlsLayout->addWidget( pb_reset_exclude  , 3, 2, 1, 2 );
+   
    // Plots
    plotLayout1 = new US_Plot( data_plot1,
             tr( "Experimental Data" ),
