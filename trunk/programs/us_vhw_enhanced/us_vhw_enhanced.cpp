@@ -198,6 +198,8 @@ void US_vHW_Enhanced::data_plot( void )
    if ( !dataLoaded )
       return;
 
+//DbgLv(3) << "DP:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    row        = lw_triples->currentRow();
    d          = &dataList[ row ];
 
@@ -246,11 +248,13 @@ DbgLv(1) << "  scanCount  divsCount" << scanCount << divsCount;
    QVector< double > sxvec( scanCount  );
    QVector< double > syvec( scanCount  );
    QVector< double > fyvec( scanCount  );
+   QVector< double > ccvec( valueCount );
    double* ptx   = pxvec.data();   // t,log(p) points
    double* pty   = pyvec.data();
    double* csx   = sxvec.data();   // count,slope points
    double* csy   = syvec.data();
    double* fsy   = fyvec.data();   // fitted slope
+   double* cc    = ccvec.data();
 
    QList< double > plats;
    QList< int >    isrel;
@@ -278,6 +282,7 @@ DbgLv(1) << " Initial reliable (non-excluded) scan t,log(avg-plat):";
 DbgLv(1) << ptx[nrelp] << pty[nrelp];
       nrelp++;
    }
+//DbgLv(3) << "DP:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    QList< double >  scpds;
    double  cconc;
@@ -332,6 +337,7 @@ DbgLv(1) << " k,fit-slope point: " << jj << xx << yy << " raw slope" << csy[jj];
    double prevd = ( prevy - fsy[ 0 ] ) * dfac;  // normalized derivative
    jrelp        = -1;
 
+//DbgLv(3) << "DP:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 DbgLv(1) << "Fitted slopes derivative points:";
    for ( int jj = 2; jj < kf; jj++ )
    {
@@ -373,6 +379,7 @@ DbgLv(1) << "    MAXD" << maxd;
    US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, krelp );
 DbgLv(1) << " KRELP" << krelp << "   slope intcp sigma"
  << slope << intcp << sigma;
+//DbgLv(3) << "DP:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    Swavg      = slope / ( -2.0 * omega * omega );  // Swavg func of slope
 	C0         = exp( intcp );                      // C0 func of intercept
@@ -401,9 +408,11 @@ DbgLv(1) << " jj scan plateau " << ii << ii+1 << scplats[ii];
 
    // initialize plateau values for components of scans
 
+//DbgLv(3) << "DP:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    for ( int ii = 0; ii < scanCount; ii++ )
    {
       s          = &d->scanData[ ii ];
+
       range      = scplats[ ii ] - baseline;
       basecut    = baseline + range * positPct;
       platcut    = basecut  + range * boundPct;
@@ -430,6 +439,9 @@ DbgLv(1) << " jj scan plateau " << ii << ii+1 << scplats[ii];
          continue;
       }
 
+      smoothed_readings( s->readings, valueCount, 21, cc );
+
+//DbgLv(3) << "DP:TM:05: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       for ( int jj = 0; jj < divsCount; jj++ )
       {  // calculate partial plateaus
          pconc      = cconc;              // prev (baseline) div concentration
@@ -437,7 +449,7 @@ DbgLv(1) << " jj scan plateau " << ii << ii+1 << scplats[ii];
          mconc      = pconc + cinch;      // mid div concentration
 
          // get sedimentation coefficient for concentration
-         sedc       = sed_coeff( mconc, oterm );
+         sedc       = sed_coeff( mconc, oterm, cc );
 
          // calculate the partial concentration for this division
          cpij       = ( sedc > 0.0 ) ?
@@ -452,6 +464,7 @@ DbgLv(1) << " jj scan plateau " << ii << ii+1 << scplats[ii];
 DbgLv(1) << " scn div" << ii+1 << jj+1 << " cinc cpij" << cinc << cpij
  << " sumcpij sedc" << sumcpij << sedc;
       }
+//DbgLv(3) << "DP:TM:06: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
       // get span-minus-sum_cpij and divide by number of divisions
       sdiff    = ( span - sumcpij ) * divfac;
@@ -476,6 +489,7 @@ DbgLv(1) << "   sumcpij span " << sumcpij << span
    int     mxiter    = 3;          // maximum iterations
    double  avdthr    = 2.0e-5;     // threshold cp-absavg-diff
 
+//DbgLv(3) << "DP:TM:07: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    while( iter <= mxiter )
    {
       double avgdif  = 0.0;
@@ -485,7 +499,9 @@ DbgLv(1) << "iter mxiter " << iter << mxiter;
 
       // get division sedimentation coefficient values (intercepts)
 
+//DbgLv(3) << "DP:TM:08: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       div_seds();
+//DbgLv(3) << "DP:TM:09: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
       // reset division plateaus
 
@@ -536,6 +552,7 @@ DbgLv(1) << "iter mxiter " << iter << mxiter;
 DbgLv(1) << "   iter scn " << iter << ii+1 << " sumcpij span "
    << sumcpij << span << "  sdiff sumabsdif" << sdiff << avgdif;
       }
+//DbgLv(3) << "DP:TM:10: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
       avgdif  /= (double)count;  // average of difference magnitudes
 DbgLv(1) << " iter" << iter << " avg(abs(sdiff))" << avgdif;
@@ -558,6 +575,7 @@ DbgLv(1) << "   +++ avgdif < avdthr (" << avgdif << avdthr << ") +++";
 
    // Calculate the corrected sedimentation coefficients
 
+//DbgLv(3) << "DP:TM:11: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    for ( int ii = 0; ii < scanCount; ii++ )
    {
       if ( excludedScans.contains( ii ) )
@@ -567,6 +585,9 @@ DbgLv(1) << "   +++ avgdif < avdthr (" << avgdif << avdthr << ") +++";
       }
 
       s              = &d->scanData[ ii ];
+
+      smoothed_readings( s->readings, valueCount, 21, cc );
+
       double  timev  = s->seconds - time_correction;
       double  timex  = 1.0 / sqrt( timev );
       double  bdrad  = bdrads.at( kl );   // back-diffus cutoff radius for scan
@@ -592,12 +613,15 @@ DbgLv(1) << "scn liv" << ii+1 << kl
          cconc       = pconc + cpij;        // absolute concentration
          mconc       = pconc + cpij * 0.5;  // mid div concentration
 
-         int rx      = first_gteq( mconc, s->readings, valueCount, 0 );
+         //int rx      = first_gteq( mconc, s->readings, valueCount, 0 );
+         int rx      = first_gteq( mconc, cc, valueCount, 0 );
+
          divrad      = d->x[ rx ].radius;        // radius this division pt.
 
-         if ( divrad < bdrad  ||  mconc < bdcon )
+         //if ( divrad < bdrad  ||  mconc < bdcon )
+         if ( divrad < bdrad )
          {  // corresponding sedimentation coefficient
-            sedc        = sed_coeff( mconc, oterm );
+            sedc        = sed_coeff( mconc, oterm, cc );
 if(sedc<0)
 DbgLv(1) << " *excl* div" << jj+1 << " mconc conc0" << mconc
    << s->readings[0].value;
@@ -614,6 +638,7 @@ DbgLv(1) << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
          ymax        = ( ymax > sedc ) ? ymax : sedc;
       }
    }
+//DbgLv(3) << "DP:TM:12: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    // Draw plot
    data_plot1->clear();
@@ -643,6 +668,7 @@ DbgLv(1) << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
 
    // Set points for each division of each scan
 
+//DbgLv(3) << "DP:TM:13: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    for ( int ii = 0; ii < scanCount; ii++ )
    {
       if ( excludedScans.contains( ii ) )
@@ -675,6 +701,7 @@ DbgLv(1) << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
          curve->setData  ( x, y, count );
       }
    }
+//DbgLv(3) << "DP:TM:14: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    // fit lines for each division to all scan points
 
@@ -715,6 +742,7 @@ DbgLv(1) << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
          curve->setData( x, y, 2 );
       }
    }
+//DbgLv(3) << "DP:TM:15: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    // set scales, then plot the points and lines
    xmax  *= 1.05;
@@ -783,6 +811,9 @@ DbgLv(1) << " DP: xrN yrN " << x[count-1] << y[count-1] << count;
    {
       aseds.append( pty[ ii ] );
    }
+
+//DbgLv(3) << "DP:TM:99: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   QApplication::restoreOverrideCursor();
 }
 
 // Write the main report HTML to a stream
@@ -1055,6 +1086,23 @@ int US_vHW_Enhanced::first_gteq( double concenv,
    return first_gteq( concenv, readings, valueCount, -1 );
 }
 
+// Index to first readings value greater than or equal to given concentration
+int US_vHW_Enhanced::first_gteq( double concenv, double* cc,
+      int valueCount, int defndx )
+{
+   int index = defndx;                           // Set return index to default
+
+   for ( int jj = 0; jj < valueCount; jj++ )
+   {  // Find index where concentrations value equals or exceeds the given one
+      if ( cc[ jj ] >= concenv )
+      {
+         index     = jj;                         // Set index to found point
+         break;                                  // And return with it
+      }
+   }
+   return index;
+}
+
 // Get average scan plateau value for 41 points around user-specified value
 double US_vHW_Enhanced::avg_plateau( )
 {
@@ -1077,7 +1125,7 @@ double US_vHW_Enhanced::sed_coeff( double cconc, double oterm )
    int    j2   = first_gteq( cconc, s->readings, valueCount );
    double rv0  = -1.0;          // Mark radius excluded
    double sedc = -1.0;
-//DbgLv(1) << "sed_coeff: cconc rdv0 rdcn" << cconc << s->readings[0].value
+//DbgLv(2) << "sed_coeff: cconc rdv0 rdcn" << cconc << s->readings[0].value
 //  << s->readings[valueCount-1].value << " j2" << j2;
 
    if ( j2 >= 0  &&  oterm >= 0.0 )
@@ -1104,7 +1152,45 @@ double US_vHW_Enhanced::sed_coeff( double cconc, double oterm )
    if ( rv0 > 0.0 )
    {  // Use radius and other terms to get corrected sedimentation coefficient value
       sedc        = correc * log( rv0 / d->meniscus ) / oterm;
-//DbgLv(1) << "sed_coeff:   rv0" << rv0 << " sedc" << sedc;
+DbgLv(2) << "sed_coeff:   rv0" << rv0 << " sedc" << sedc << " oterm" << oterm;
+   }
+   return sedc;
+}
+
+// Get sedimentation coefficient for a given concentration
+double US_vHW_Enhanced::sed_coeff( double cconc, double oterm, double*& cc )
+{
+   int    j2   = first_gteq( cconc, cc, valueCount, -1 );
+   double rv0  = -1.0;          // Mark radius excluded
+   double sedc = -1.0;
+//DbgLv(2) << "sed_coeff: cconc rdv0 rdcn" << cconc << s->readings[0].value
+//  << s->readings[valueCount-1].value << " j2" << j2;
+
+   if ( j2 >= 0  &&  oterm >= 0.0 )
+   {  // Likely need to interpolate radius from two input values
+      int j1      = j2 - 1;
+
+      if ( j2 > 0 )
+      {  // Interpolate radius value
+         double av1  = cc[ j1 ];
+         double av2  = cc[ j2 ];
+         double rv1  = d->x[ j1 ].radius;
+         double rv2  = d->x[ j2 ].radius;
+         double rra  = av2 - av1;
+         rra         = ( rra == 0.0 ) ? 0.0 : ( ( rv2 - rv1 ) / rra );
+         rv0         = rv1 + ( cconc - av1 ) * rra;
+      }
+
+      else
+      {
+         rv0         = -1.0;
+      }
+   }
+
+   if ( rv0 > 0.0 )
+   {  // Use radius and other terms to get corrected sedimentation coefficient value
+      sedc        = correc * log( rv0 / d->meniscus ) / oterm;
+DbgLv(2) << "sed_coeff:   rv0" << rv0 << " sedc" << sedc << " oterm" << oterm;
    }
    return sedc;
 }
@@ -1112,12 +1198,16 @@ double US_vHW_Enhanced::sed_coeff( double cconc, double oterm )
 // calculate division sedimentation coefficient values (fitted line intercepts)
 void US_vHW_Enhanced::div_seds( )
 {
+   QVector< double > rrv( valueCount );
+   QVector< double > ccv( valueCount );
    QVector< double > xxv( scanCount );
    QVector< double > yyv( scanCount );
    QVector< double > ppv( scanCount );
    QVector< double > xrv( scanCount );
    QVector< double > yrv( scanCount );
    QVector< int    > llv( scanCount );
+   double* rr       = rrv.data();
+   double* cc       = ccv.data();
    double* xx       = xxv.data();
    double* yy       = yyv.data();
    double* pp       = ppv.data();
@@ -1133,6 +1223,102 @@ void US_vHW_Enhanced::div_seds( )
    bdtoler          = ct_tolerance->value();
    valueCount       = d->x.size();
    double  bottom   = d->x[ valueCount - 1 ].radius;
+   int     mmlast   = valueCount - 1;
+   QList< QVector< double > > cclist;
+
+   for ( int jj = 0; jj < valueCount; jj++ )
+      rr[ jj ] = d->x[ jj ].radius;            // Copy radius values
+
+   // Do division-1 determination of base
+
+//DbgLv(3) << "  DS:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {
+      double  dsed;
+      double  oterm;
+      double  timecor;
+      double  timesqr;
+      double  bdleft;
+      double  xbdleft;
+      double  radD;
+      double  omegasq;
+
+      if ( !excludedScans.contains( ii ) )
+      {
+         s           = &d->scanData[ ii ];
+
+         // Create a 21-point smoothed version of the scan's concentrations
+         smoothed_readings( s->readings, valueCount, 21, cc );
+
+         omega       = s->rpm * M_PI / 30.0;
+         omegasq     = omega * omega;
+         timecor     = s->seconds - time_correction;
+         timesqr     = sqrt( timecor );
+         pconc       = baseline + ( scplats[ ii ] - baseline ) * positPct;
+
+         xx[ nscnu ] = 1.0 / timesqr;
+         ll[ nscnu ] = ii;
+         pp[ nscnu ] = pconc;               // analysis baseline
+
+         // accumulate limits based on back diffusion
+
+//left=tolerance*pow(diff,0.5)/(2*intercept[0]*omega_s*
+//  (bottom+run_inf.meniscus[selected_cell])/2
+//  *pow(run_inf.time[selected_cell][selected_lambda][i],0.5);
+//radD=bottom-(2*find_root(left)
+//  *pow((diff*run_inf.time[selected_cell][selected_lambda][i]),0.5));
+         oterm       = timecor * omegasq;
+         cpij        = cpds.at( ii ).at( 0 );
+
+         mconc       = cc[ 0 ];
+         pconc       = max( pconc, mconc ); // cleared of minimum concentration
+         mconc       = pconc + cpij * 0.5;
+         dsed        = sed_coeff( mconc, oterm, cc );
+         dsed       *= 1.0e-13;
+
+         if ( dsed < 0.0 )  continue;
+
+         // left = tolerance * sqrt( diff )
+         //        / ( 2 * intercept[0] * omega^2
+         //            * ( bottom + meniscus ) / 2 * sqrt( time ) )
+
+         bdleft      = bdtoler * bdifsqr
+            / ( dsed * omegasq * ( bottom + d->meniscus ) * timesqr );
+         xbdleft     = find_root( bdleft );
+
+         // radD = bottom - ( 2 * find_root(left) * sqrt( diff * time ) )
+
+         radD        = bottom - ( 2.0 * xbdleft * bdifsqr * timesqr );
+         radD        = max( d->x[ 0 ].radius, min( bottom, radD ) );
+
+         int mm      = 0;
+
+         while ( rr[ mm ] < radD  &&  mm < mmlast )
+            mm++;
+
+         // accumulate for this scan of this division
+         //  the back diffusion limit radius and corresponding absorbance
+         xr[ nscnu ] = radD;
+         //yr[ nscnu ] = cc[ mm ];
+         yr[ nscnu ] = s->readings[ mm ].value;
+DbgLv(1) << "  bottom meniscus bdleft" << bottom << d->meniscus << bdleft;
+DbgLv(1) << "  dsed find_root toler" << dsed << xbdleft << bdtoler;
+DbgLv(2) << "  bdiffc bdifsqr" << bdiffc << bdifsqr << "mm mml" << mm << mmlast;
+DbgLv(1) << "BD x,y " << nscnu+1 << radD << yr[nscnu] << "  mm" << mm;
+DbgLv(1) << "  ii nscnu" << ii << nscnu+1 << " dsed radD mconc yr"
+ << dsed << radD << mconc << yr[nscnu];
+DbgLv(1) << "    nscnu" << nscnu+1 << " pconc mconc cpij" << pconc << mconc << cpij;
+
+         // Save smoothed concentrations for this scan
+         cclist << QVector< double >( valueCount );
+
+         for ( int jj = 0; jj < valueCount; jj++ )
+            cclist[ nscnu ][ jj ] = cc[ jj ];
+
+         nscnu++;
+      }
+   }
+//DbgLv(3) << "  DS:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    dseds.clear();
    dslos.clear();
@@ -1148,104 +1334,40 @@ void US_vHW_Enhanced::div_seds( )
       double  corre;
       int     ii;
       double  oterm;
-      double  timecor;
-      double  timesqr;
-      double  bdleft;
-      double  xbdleft;
       double  radD;
-      double  omegasq;
+      double* ccp;
 //DbgLv(1) << "div_sed div " << jj+1;
-
-      if ( jj == 0 )
-      {  // We only need to calculate x values, basecut the 1st time thru
-
-         for ( ii = 0; ii < scanCount; ii++ )
-         {
-            if ( !excludedScans.contains( ii ) )
-            {
-               s           = &d->scanData[ ii ];
-               omega       = s->rpm * M_PI / 30.0;
-               omegasq     = omega * omega;
-               timecor     = s->seconds - time_correction;
-               timesqr     = sqrt( timecor );
-               pconc       = baseline + ( scplats[ ii ] - baseline ) * positPct;
-               xx[ nscnu ] = 1.0 / timesqr;
-               ll[ nscnu ] = ii;
-               pp[ nscnu ] = pconc;               // analysis baseline
-
-               // accumulate limits based on back diffusion
-
-//left=tolerance*pow(diff,0.5)/(2*intercept[0]*omega_s*
-//  (bottom+run_inf.meniscus[selected_cell])/2
-//  *pow(run_inf.time[selected_cell][selected_lambda][i],0.5);
-//radD=bottom-(2*find_root(left)
-//  *pow((diff*run_inf.time[selected_cell][selected_lambda][i]),0.5));
-               oterm       = timecor * omegasq;
-               cpij        = cpds.at( ii ).at( jj );
-
-               mconc       = s->readings[ 0 ].value;
-               pconc       = max( pconc, mconc ); // cleared of meniscus
-               mconc       = pconc + cpij * 0.5;
-               dsed        = sed_coeff( mconc, oterm );
-               dsed       *= 1.0e-13;
-
-               if ( dsed < 0.0 )  continue;
-
-               // left = tolerance * sqrt( diff )
-               //        / ( 2 * intercept[0] * omega^2
-               //            * ( bottom + meniscus ) / 2 * sqrt( time ) )
-
-               bdleft      = bdtoler * bdifsqr
-                  / ( dsed * omegasq * ( bottom + d->meniscus ) * timesqr );
-               xbdleft     = find_root( bdleft );
-
-               // radD = bottom - ( 2 * find_root(left) * sqrt( diff * time ) )
-
-               radD        = bottom - ( 2.0 * xbdleft * bdifsqr * timesqr );
-               radD        = max( d->x[ 0 ].radius, min( bottom, radD ) );
-
-               int mm      = 0;
-               int mmlast  = valueCount - 1;
-
-               while ( d->x[ mm ].radius < radD  &&  mm < mmlast )
-                  mm++;
-
-               // accumulate for this scan of this division
-               //  the back diffusion limit radius and corresponding absorbance
-               xr[ nscnu ] = radD;
-               yr[ nscnu ] = s->readings[ mm ].value;
-DbgLv(1) << "  bottom meniscus bdleft" << bottom << d->meniscus << bdleft;
-DbgLv(1) << "  dsed find_root toler" << dsed << xbdleft << bdtoler;
-DbgLv(2) << "  bdiffc bdifsqr" << bdiffc << bdifsqr << "mm mml" << mm << mmlast;
-DbgLv(1) << "BD x,y " << nscnu+1 << radD << yr[nscnu] << "  mm" << mm;
-
-               nscnu++;
-            }
-         }
-      }
 
       kscnu      = nscnu;
 
       // accumulate y values for this division
 
+//DbgLv(3) << "  DS:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       for ( int kk = 0; kk < nscnu; kk++ )
       { // accumulate concentration, sed.coeff. for all scans, this div
          ii         = ll[ kk ];                   // scan index
          s          = &d->scanData[ ii ];         // scan info
+//DbgLv(3) << "  DS:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+         //smoothed_readings( s->readings, valueCount, 21, cc );
          pconc      = pp[ kk ];                   // prev concen (baseline)
          cpij       = cpds.at( ii ).at( jj );     // partial concen (increment)
          cconc      = pconc + cpij;               // curr concen (plateau)
          mconc      = ( cconc + pconc ) * 0.5;    // mid div concentration
          omega      = s->rpm * M_PI / 30.0;       // omega
          oterm      = ( s->seconds - time_correction ) * omega * omega;
+//DbgLv(3) << "  DS:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
+         ccp        = cclist[ kk ].data();
          pp[ kk ]   = cconc;        // division mark of concentration for scan
-         yy[ kk ]   = sed_coeff( mconc, oterm );  // sedimentation coefficient
+         yy[ kk ]   = sed_coeff( mconc, oterm, ccp ); // sedimentation coeff.
 
-         int mm     = first_gteq( mconc, s->readings, valueCount, 0 );
+         //int mm     = first_gteq( mconc, s->readings, valueCount, 0 );
+//DbgLv(3) << "  DS:TM:05: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+         int mm     = first_gteq( mconc, ccp, valueCount, 0 );
          radD       = d->x[ mm ].radius;          // radius this division pt.
 
-         if ( radD > xr[ kk ]  &&  mconc > yr[ kk ] )
+         //if ( radD > xr[ kk ]  &&  mconc > yr[ kk ] )
+         if ( radD > xr[ kk ] )
          {  // gone beyond back-diffusion cutoff: exit loop with truncated list
             kscnu      = kk;
 //DbgLv(2) << " div kscnu" << jj+1 << kscnu
@@ -1253,6 +1375,7 @@ DbgLv(1) << "BD x,y " << nscnu+1 << radD << yr[nscnu] << "  mm" << mm;
 //if(kscnu==0) DbgLv(2) << "   pc cc cpij mm" << pconc << cconc << cpij << mm;
             break;
          }
+//DbgLv(3) << "  DS:TM:06: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 //if ( kk < 2 || kk > (nscnu-3) )
 //DbgLv(2) << "div scn " << jj+1 << ii+1 << " pconc cconc " << pconc << cconc;
 
@@ -1272,6 +1395,7 @@ DbgLv(1) << "BD x,y " << nscnu+1 << radD << yr[nscnu] << "  mm" << mm;
          else
             DbgLv(1) << "+++ SED<=0.0 div" << jj+1 << "scn" << kk+1;
       }
+//DbgLv(3) << "  DS:TM:07: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       kscnu      = ii;
 
       if ( kscnu > 0 )
@@ -1302,8 +1426,10 @@ DbgLv(1) << "    nscnu" << nscnu << "pp0 yy0 ppn yyn " << pp[0] << yy[0]
       dpnts.append( kscnu );
 //if((jj&7)==0||jj==(divsCount-1))
 // DbgLv(1) << "     div dsed slope " << jj+1 << dsed << slope;
+//DbgLv(3) << "  DS:TM:08: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    }
+//DbgLv(3) << "  DS:TM:77: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 DbgLv(1) << " dsed[0] " << dseds.at(0);
 DbgLv(1) << " dsed[L] " << dseds.at(divsCount-1);
 DbgLv(1) << " D_S: xr0 yr0 " << xr[0] << yr[0];
@@ -1317,6 +1443,7 @@ DbgLv(1) << " D_S: xrN yrN " << xr[nscnu-1] << yr[nscnu-1] << nscnu;
       bdrads.append( xr[ kk ] );
       bdcons.append( yr[ kk ] );
    }
+//DbgLv(3) << "  DS:TM:88: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    return;
 }
@@ -1339,8 +1466,8 @@ double US_vHW_Enhanced::find_root( double goal )
    double  rsqr_pi   = 1.0 / sqrt( M_PI );
    double  test      = exp( -xsqr ) * rsqr_pi - ( xv * erfc( xv ) );
            test      = ( goal != 0.0 ) ? test : 0.0;
-DbgLv(1) << "      find_root: goal test" << goal << test << " xv" << xv;
-//DbgLv(1) << "        erfc(x)" << erfc(xv);
+DbgLv(2) << "      find_root: goal test" << goal << test << " xv" << xv;
+//DbgLv(2) << "        erfc(x)" << erfc(xv);
    int     count     = 0;
 
    // iterate until the difference between subsequent x value evaluations
@@ -1366,12 +1493,12 @@ DbgLv(1) << "      find_root: goal test" << goal << test << " xv" << xv;
       xsqr   = xv * xv;
       test   = ( 1.0 + 2.0 * xsqr ) * erfc( xv ) 
          - ( 2.0 * xv * exp( -xsqr ) ) * rsqr_pi;
-//DbgLv(1) << "      find_root:  goal test" << goal << test << " x" << xv;
+//DbgLv(2) << "      find_root:  goal test" << goal << test << " x" << xv;
 
       if ( (++count) > _FR_MXKNT )
          break;
    }
-DbgLv(1) << "      find_root:  goal test" << goal << test
+DbgLv(2) << "      find_root:  goal test" << goal << test
    << " xv" << xv << "  count" << count;
 
    return xv;
@@ -1751,10 +1878,13 @@ void US_vHW_Enhanced::update( int row )
 // Calculate the sedimentation coefficient intercept for division 1
 double US_vHW_Enhanced::sedcoeff_intercept()
 {
+   int valueCount  = d->x.size();
    QVector< double > xrvec( scanCount );
    QVector< double > yrvec( scanCount );
+   QVector< double > ccvec( valueCount );
    double* xr      = xrvec.data();
    double* yr      = yrvec.data();
+   double* cc      = ccvec.data();
    double  sedc    = 0.0;
    int     nscnu   = 0;
 
@@ -1774,7 +1904,8 @@ double US_vHW_Enhanced::sedcoeff_intercept()
       double oterm    = timecor * omega * omega;
 
       // get sedimentation coefficient for concentration
-      sedc            = sed_coeff( mconc, oterm );
+      smoothed_readings( s->readings, valueCount, 21, cc );
+      sedc            = sed_coeff( mconc, oterm, cc );
 
       if ( sedc > 0.0 )
       {
@@ -1804,5 +1935,34 @@ DbgLv(1) << "sedco-intcp   slope sigma" << slope << sigma;
    }
 
    return sedc;
+}
+
+// Create a smoothed version of a scan readings vector
+void US_vHW_Enhanced::smoothed_readings(
+   QVector< US_DataIO2::Reading >& readings, int valueCount, int smpoints,
+   double*& cc )
+{
+   int    smh   = smpoints / 2;
+   int    smp   = smh + 1;
+   double smdiv = 1.0 / (double)smpoints;
+   int    mxpx  = valueCount - 1;
+
+   for ( int ii = 0; ii < valueCount; ii++ )
+   {
+      double sum = 0.0;
+
+      for ( int jj = ii - smh; jj < ii + smp; jj++ )
+      {
+         int kk  = jj;
+         kk      = ( kk >= 0    ) ? kk : ( ii + ii - jj );
+         kk      = ( kk <= mxpx ) ? kk : ( ii + ii - jj );
+
+         sum    += readings[ kk ].value;
+      }
+
+      cc[ ii ]   = sum * smdiv;
+   }
+DbgLv(1) << "SmRead: cc0 cc1 ccm ccn" << cc[0] << cc[1] << cc[mxpx-1] << cc[mxpx];
+
 }
 

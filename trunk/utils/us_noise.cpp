@@ -141,7 +141,6 @@ int US_Noise::write( US_DB2* db )
       QStringList    q;
 
       QString typen   = ( type == TI ) ? "ti_noise" : "ri_noise";
-      QString editID  = "0";
 
       q << "get_modelID" << modelGUID;
       db->query( q );
@@ -149,6 +148,12 @@ int US_Noise::write( US_DB2* db )
       QString modelID = db->value( 0 ).toString();
 
       db->mysqlEscapeString( contents, temp_contents, temp_contents.size() );
+
+      q.clear();
+      q << "get_model_desc" << modelID;
+      db->query( q );
+      db->next();
+      QString editID = db->value( 4 ).toString();
 
       // Generate a noise guid if necessary
       // The guid may be valid from a disk read, but is not in the DB
