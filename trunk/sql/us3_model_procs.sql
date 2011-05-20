@@ -335,7 +335,7 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   m.modelID, modelGUID, description, editGUID
+        SELECT   m.modelID, modelGUID, description, editGUID, m.editedDataID
         FROM     modelPerson, model m, editedData
         WHERE    modelPerson.modelID = m.modelID
         AND      m.editedDataID = editedData.editedDataID
@@ -343,7 +343,7 @@ BEGIN
         ORDER BY m.modelID DESC;
    
       ELSE
-        SELECT   m.modelID, modelGUID, description, editGUID
+        SELECT   m.modelID, modelGUID, description, editGUID, m.editedDataID
         FROM     modelPerson, model m, editedData
         WHERE    modelPerson.modelID = m.modelID
         AND      m.editedDataID = editedData.editedDataID
@@ -371,7 +371,7 @@ BEGIN
       -- Ok, user wants his own info
       SELECT @OK AS status;
 
-      SELECT   m.modelID, modelGUID, description, editGUID
+      SELECT   m.modelID, modelGUID, description, editGUID, m.editedDataID
       FROM     modelPerson, model m, editedData
       WHERE    modelPerson.modelID = m.modelID
       AND      m.editedDataID = editedData.editedDataID
