@@ -874,8 +874,7 @@ DROP TABLE IF EXISTS HPCRequestData;
 CREATE TABLE IF NOT EXISTS HPCRequestData (
   HPCRequestDataID int(11) NOT NULL AUTO_INCREMENT,
   HPCDatasetID int(11) NOT NULL,
-  dataType enum('noise', 'model'), 
-  dataID int(11) NOT NULL,          -- could be a noiseID or a modelID
+  noiseID int(11) NOT NULL,
   INDEX ndx_HPCRequestData_HPCDatasetID (HPCDatasetID ASC) ,
   PRIMARY KEY (HPCRequestDataID),
   CONSTRAINT fk_HPCRequestData_HPCDatasetID
@@ -884,15 +883,10 @@ CREATE TABLE IF NOT EXISTS HPCRequestData (
     ON DELETE CASCADE
     ON UPDATE NO ACTION,
    CONSTRAINT fk_HPCRequestData_noiseID
-     FOREIGN KEY (dataID)
+     FOREIGN KEY (noiseID)
      REFERENCES noise (noiseID)
      ON DELETE NO ACTION
-     ON UPDATE NO ACTION,
-  CONSTRAINT fk_HPCRequestData_modelID
-    FOREIGN KEY (dataID)
-    REFERENCES model (modelID)
-    ON DELETE CASCADE
-    ON UPDATE NO ACTION)
+     ON UPDATE NO ACTION)
 ENGINE=InnoDB;
   
 

@@ -824,6 +824,53 @@ BEGIN
 
 END$$
 
+-- Returns the editID associated with the given editGUID
+DROP PROCEDURE IF EXISTS get_editID$$
+CREATE PROCEDURE get_editID ( p_personGUID    CHAR(36),
+                              p_password      VARCHAR(80),
+                              p_editGUID      CHAR(36) )
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE count_editedData INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO  = @OK;
+  SET @US3_LAST_ERROR  = '';
+  SET count_editedData = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+
+    SELECT    COUNT(*)
+    INTO      count_editedData
+    FROM      editedData
+    WHERE     editGUID = p_editGUID;
+
+    IF ( TRIM( p_editGUID ) = '' ) THEN
+      SET @US3_LAST_ERRNO = @EMPTY;
+      SET @US3_LAST_ERROR = CONCAT( 'MySQL: The editGUID parameter to the ',
+                                    'get_editID function cannot be empty' );
+
+    ELSEIF ( count_editedData < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+ 
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   editedDataID
+      FROM     editedData
+      WHERE    editGUID = p_editGUID;
+
+    END IF;
+
+  END IF;
+
+END$$
+
 -- INSERTs new editedData information about one c/c/w combination in an experiment
 DROP PROCEDURE IF EXISTS new_editedData$$
 CREATE PROCEDURE new_editedData ( p_personGUID   CHAR(36),
