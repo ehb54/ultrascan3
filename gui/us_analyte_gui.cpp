@@ -683,8 +683,8 @@ void US_AnalyteGui::close( void )
       if ( response == QMessageBox::No ) return;
    }
 
-   analyte.mw     = le_protein_mw    ->text().toDouble();
-   analyte.vbar20 = le_protein_vbar20->text().toDouble();
+   if ( analyte.type == US_Analyte::PROTEIN )
+      analyte.vbar20 = le_protein_vbar20->text().toDouble();
 
    // If a signal is not wanted, just close
    if ( ! signal_wanted ) 
