@@ -140,6 +140,7 @@ int US_Noise::write( US_DB2* db )
       QByteArray     contents;
       QStringList    q;
 
+      // Get type and model IDD
       QString typen   = ( type == TI ) ? "ti_noise" : "ri_noise";
 
       q << "get_modelID" << modelGUID;
@@ -147,13 +148,23 @@ int US_Noise::write( US_DB2* db )
       db->next();
       QString modelID = db->value( 0 ).toString();
 
+      // Encapsulate the XML contents
       db->mysqlEscapeString( contents, temp_contents, temp_contents.size() );
 
+      // Determine the edit ID
+      QString invID   = QString::number( US_Settings::us_inv_ID() );
+      QString editID  = "0";
       q.clear();
-      q << "get_model_desc" << modelID;
+      q << "get_model_desc" << invID;
       db->query( q );
-      db->next();
-      QString editID = db->value( 4 ).toString();
+      while( db->next() )
+      {
+         if ( db->value( 0 ).toString() == modelID )
+         {
+            editID         = db->value( 4 ).toString();
+            break;
+         }
+      }
 
       // Generate a noise guid if necessary
       // The guid may be valid from a disk read, but is not in the DB
@@ -168,8 +179,6 @@ int US_Noise::write( US_DB2* db )
      
       if ( db->lastErrno() != US_DB2::OK )
       {
-         //q << "new_noise" << noiseGUID << description << typen
-         //  << contents << modelGUID;
          q << "new_noise" << noiseGUID << editID << modelID << modelGUID
            << typen << contents;
          message = QObject::tr( "created" );
@@ -179,12 +188,10 @@ int US_Noise::write( US_DB2* db )
       {
          db->next();
          QString noiseID = db->value( 0 ).toString();
-//qDebug() << "get_noiseID ID GUID" << noiseID << noiseGUID;
-         //q << "update_noise" << noiseID << noiseGUID << description << typen 
-         //  << contents << modelGUID;
          q << "update_noise" << noiseID << noiseGUID << editID << modelID
            << modelGUID << typen << contents;
          message = QObject::tr( "updated" );
+//qDebug() << "get_noiseID ID GUID" << noiseID << noiseGUID;
       }
 
       return db->statusQuery( q );
