@@ -14,8 +14,9 @@ OTHER_Files = ultrascan3.txt images/ultra.xpm $(wildcard images/*.png)$
 
 $(TARGETS): manual.qhp manual.qhcp $(HTML_Files) $(OTHER_Files)
 	@echo "Making Qt Assistant files"
-	qhelpgenerator manual.qhp -o $(INSTALL_DIR)/manual.qch
-	qcollectiongenerator manual.qhcp -o $(INSTALL_DIR)/manual.qhc
+	qhelpgenerator manual.qhp -o manual.qch
+	qcollectiongenerator manual.qhcp -o manual.qhc
+	cp manual.qch manual.qhc $(INSTALL_DIR)
 
 %.html: %.body header.us3 footer.us3
 	tpage $< > $@
