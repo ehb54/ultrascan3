@@ -489,6 +489,7 @@ int US_DB2::writeBlobToDB( const QString& filename,
 
    if ( ! fin.open( QIODevice::ReadOnly ) )
    {
+      error = QString( "writeBlob: cannot open file " ) + filename;
       db_errno = ERROR;
       return ERROR;
    }
@@ -498,12 +499,14 @@ int US_DB2::writeBlobToDB( const QString& filename,
 
    if ( blobData.size() < 1 )
    {
+      error = QString( "writeBlob: no data in file " ) + filename;
       db_errno = ERROR;
       return ERROR;
    }
 
    if ( tableID == 0 )
    {
+      error = QString( "writeBlob: don't know which record data belongs to in " ) + filename;
       db_errno = ERROR;
       return ERROR;
    }
@@ -622,6 +625,8 @@ int US_DB2::readBlobFromDB( const QString& filename,
          fout.write( aucData );
          fout.close();
       }
+      else
+         error = QString( "readBlob: could not write file " ) + filename;
    }
 
    return db_errno;
@@ -633,7 +638,19 @@ int US_DB2::lastInsertID( void ){ return 0; }
 #else
 int US_DB2::lastInsertID( void )
 {
-   return this->statusQuery( "SELECT last_insertID()" );
+   int ID = -1;
+
+   this->rawQuery( "SELECT last_insertID()" );
+   
+   if ( result )
+   {
+      row = mysql_fetch_row( result );
+      ID = atoi( row[ 0 ] );
+      mysql_free_result( result );
+      result = NULL;
+   }
+
+   return ID;
 }
 #endif
 
