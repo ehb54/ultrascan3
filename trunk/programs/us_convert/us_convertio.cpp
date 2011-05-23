@@ -127,20 +127,23 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
 
          if ( writeStatus == US_DB2::ERROR )
          {
-            error += "Error processing file: " + triple.tripleFilename + "\n" +
+            error += "Error processing file:\n" + 
+                     dir + triple.tripleFilename + "\n" +
                      "Could not open file or no data \n";
          }
    
          else if ( writeStatus != US_DB2::OK )
          {
-            error += "Error returned processing file: " + triple.tripleFilename + "\n" +
+            error += "Error returned processing file:\n" + 
+                     dir + triple.tripleFilename + "\n" +
                      db->lastError() + "\n";
          }
       }
 
       else
       {
-         error += "Error returned processing file: " + triple.tripleFilename + "\n" +
+         error += "Error returned processing file:\n" + 
+                  dir + triple.tripleFilename + "\n" +
                   db->lastError() + "\n";
       }
 
