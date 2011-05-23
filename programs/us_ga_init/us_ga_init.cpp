@@ -525,6 +525,8 @@ void US_GA_Initialize::autassignsb( void )
    nisols      = ( nisols == 0 ) ? sdistro->size() : nisols;
    pc1         = NULL;
    lw_sbin_data->clear();
+   soludata->clearBuckets();
+   erase_buckets( true );
 
    nibuks      = soludata->autoCalcBins( nisols, wsbuck, hfbuck );
 
