@@ -77,7 +77,8 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       double        sumcpij;
       double        sedc;
       double        sdiff;
-      double        bdiffc;
+      double        bdiff_coef;
+      double        bdiff_sedc;
 
       int           row;
       int           run_id;
@@ -129,10 +130,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       void update_divis(     double );
       int  first_gteq( double, QVector< US_DataIO2::Reading >&, int, int );
       int  first_gteq( double, QVector< US_DataIO2::Reading >&, int );
-      int  first_gteq( double, double*, int, int );
-      void smoothed_readings( QVector< US_DataIO2::Reading >&, int, int, double*& );
       double sed_coeff( double, double );
-      double sed_coeff( double, double, double*& );
       double avg_plateau(  void );
       double find_root( double );
       double sedcoeff_intercept( void );

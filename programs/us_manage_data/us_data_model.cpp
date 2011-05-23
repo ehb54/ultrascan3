@@ -234,6 +234,8 @@ for ( int ii=0; ii<rotorIDs.size(); ii++ )
    while ( db->next() )
    {
       rawIDs << db->value( 0 ).toString();
+DbgLv(2) << "BrDb: RAW id" << db->value(0).toString()
+ << " expID" << db->value(3).toString() << " solID" << db->value(4).toString();
    }
    progress->setValue( ++istep );
 
@@ -245,6 +247,8 @@ for ( int ii=0; ii<rotorIDs.size(); ii++ )
    while ( db->next() )
    {
       edtIDs << db->value( 0 ).toString();
+DbgLv(2) << "BrDb: EDT id" << db->value(0).toString()
+ << " raID" << db->value(3).toString() << " expID" << db->value(4).toString();
    }
    progress->setValue( ++istep );
 
@@ -256,6 +260,8 @@ for ( int ii=0; ii<rotorIDs.size(); ii++ )
    while ( db->next() )
    {
       modIDs << db->value( 0 ).toString();
+DbgLv(2) << "BrDb: MOD id" << db->value(0).toString()
+ << " edID" << db->value(4).toString() << " edGID" << db->value(3).toString();
    }
    progress->setValue( ++istep );
 
@@ -267,6 +273,8 @@ for ( int ii=0; ii<rotorIDs.size(); ii++ )
    while ( db->next() )
    {
       noiIDs << db->value( 0 ).toString();
+DbgLv(2) << "BrDb: NOI id" << db->value(0).toString()
+ << " edID" << db->value(2).toString() << " moID" << db->value(3).toString();
    }
    progress->setValue( ++istep );
    nraws = rawIDs.size();
