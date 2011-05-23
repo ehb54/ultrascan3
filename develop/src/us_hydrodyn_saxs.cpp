@@ -1082,14 +1082,14 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
             (*pr)[i] /= area;
          }
       }
-      cout << "normalize_pr area " << area << "\n" << flush;
+      // cout << "normalize_pr area " << area << "\n" << flush;
       {
          double area = 0e0;
          for ( unsigned int i = 0; i < pr->size(); i++ )
          {
             area += (*pr)[i] * gridspacing;
          }
-         cout << "after normalize_pr area " << area << "\n" << flush;
+         // cout << "after normalize_pr area " << area << "\n" << flush;
       }
    }
    /* riemann sum?
@@ -1105,14 +1105,14 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
          (*pr)[i] *= pr->size() / area ;
       }
    }
-   cout << "normalize_pr area " << area << "\n" << flush;
+   // cout << "normalize_pr area " << area << "\n" << flush;
    {
       double area = 0e0;
       for ( unsigned int i = 1; i < pr->size(); i++ )
       {
          area += ( (*pr)[i-1] + (*pr)[i] ) / ( 2e0 * ( r[i] - r[i-1] ) );
       }
-      cout << "after normalize_pr area " << area << "\n" << flush;
+      // cout << "after normalize_pr area " << area << "\n" << flush;
    }
    */
 #endif
@@ -2041,29 +2041,53 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
       our_saxs_options->path_load_prr;
 
+   QStringList filenames;
    QString filename;
    if ( !just_plotted_curves )
    {
-      filename = QFileDialog::getOpenFileName(use_dir,
-                                              "All files (*);;"
-                                              "sprr files (*.sprr_?);;"
-                                              "csv files (*.csv)"
-                                              , this
-                                              , "open file dialog"
-                                              , "Open"
-                                              , &load_pr_selected_filter
-                                              );
+      filenames = QFileDialog::getOpenFileNames(
+                                                "All files (*);;"
+                                                "sprr files (*.sprr_?);;"
+                                                "csv files (*.csv)"
+                                                , use_dir
+                                                , this
+                                                , "open file dialog"
+                                                , "Open"
+                                                , &load_pr_selected_filter
+                                                );
    }
-   if ( filename.isEmpty() && !just_plotted_curves )
+   if ( filenames.empty() && !just_plotted_curves )
    {
       return;
    }
+
+   if ( filenames.size() > 1 &&
+        filenames.grep(QRegExp(".csv$", false)).size() != filenames.size() )
+   {
+      QMessageBox::information( this, "UltraScan",
+                                tr("Multiple file load is currently only supported for csv files") );
+      return;
+   }
+
+   if ( filenames.size() > 1 &&
+        filenames.grep(QRegExp("_t(|-\\d+).csv$", false)).size() ) 
+   {
+      QMessageBox::information( this, "UltraScan",
+                                tr("Can not load transposed format csv files:\n") +
+                                filenames.grep(QRegExp("_t(|-\\d+).csv$", false)).join("\n")
+                                ) ;
+      return;
+   }
+
+   filename = *(filenames.at(0));
+
    if ( filename.contains(QRegExp("_t(|-\\d+).csv$", false)) )
    {
       QMessageBox::information( this, "UltraScan",
                                 tr("Can not load transposed format csv files") );
       return;
    }
+
    QFile f(filename);
    if ( !just_plotted_curves )
    {
@@ -2251,6 +2275,226 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
          }
 
          // ok, we have a header line
+
+         // do we have multiple additonal files to plot ?
+
+         if ( filenames.size() > 1 )
+         {
+            map < QString, bool > interp_msg_done;
+            for ( unsigned int i = 1; i < filenames.size(); i++ )
+            {
+               cout << QString("trying file %1 %1\n").arg(i).arg(*(filenames.at(i)));
+               QFile f2(*(filenames.at(i)));
+               if ( !f2.open(IO_ReadOnly) )
+               {
+                  QMessageBox::information( this, "UltraScan",
+                                            tr("Can not open the file for reading:\n") +
+                                            f2.name()
+                                            );
+                  return;
+               }
+
+               // append (and possibly interpolate) all the other files
+               QStringList qsl2;
+               QTextStream ts(&f2);
+               while ( !ts.atEnd() )
+               {
+                  qsl2 << ts.readLine();
+               }
+               f2.close();
+               QStringList qsl2_headers = qsl2.grep("\"Name\",\"Type; r:\"");
+               
+               // upgrade old format
+               if ( qsl2_headers.size() != 0 ) 
+               {
+                  cout << "found old csv format, upgrading\n";
+                  // upgrade the csv format
+                  QRegExp rx("^\"(Type; r:|P\\(r\\)|P\\(r\\) normed)\"$");
+                  QStringList new_qsl;
+                  double delta_r = 0e0;
+                  for ( unsigned int i = 0; i < qsl2.size(); i++ )
+                  {
+                     QStringList tmp2_qsl;
+                     QStringList tmp_qsl = QStringList::split(",",*(qsl2.at(i)),true);
+                     if ( tmp_qsl.size() > 1 &&
+                          rx.search(*(tmp_qsl.at(1))) != -1 )
+                     {
+                        // cout << "trying to fix\n";
+                        QStringList tmp2_qsl;
+                        tmp2_qsl.push_back(*(tmp_qsl.at(0)));
+                        if ( *(tmp_qsl.at(0)) == "\"Name\"" )
+                        {
+                           tmp2_qsl.push_back("\"MW (Daltons)\"");
+                           tmp2_qsl.push_back("\"Area\"");
+                           delta_r = (*tmp_qsl.at(3)).toDouble() - (*tmp_qsl.at(2)).toDouble();
+                           cout << "delta_r found: " << delta_r << endl;
+                        } else {
+                           tmp2_qsl.push_back(QString("%1").arg(get_mw(*(tmp_qsl.at(0)), false)));
+                           double tmp_area = 0e0;
+                           for ( unsigned int j = 1; j < tmp_qsl.size(); j++ )
+                           {
+                              tmp_area += (*tmp_qsl.at(j)).toDouble();
+                           }
+                           tmp2_qsl.push_back(QString("%1").arg(tmp_area * delta_r));
+                        }
+                        for ( unsigned int j = 1; j < tmp_qsl.size(); j++ )
+                        {
+                           tmp2_qsl.push_back(*(tmp_qsl.at(j)));
+                        }
+                        new_qsl.push_back(tmp2_qsl.join(","));
+                     } else {
+                        // cout << "skipped this line, regexp or length\n";
+                        // simply push back blank lines or lines with only one entry
+                        new_qsl.push_back(*(qsl.at(i)));
+                     }
+                  }
+                  // cout << "orginal csv:\n" << qsl.join("\n") << endl;
+                  // cout << "new csv:\n" << new_qsl.join("\n") << endl;
+                  qsl2 = new_qsl;
+               }
+               qsl2_headers = qsl2.grep("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\"");
+               if ( qsl2_headers.size() == 0 )
+               {
+                  QMessageBox mb(tr("UltraScan Warning"),
+                                 tr("The csv file ") + f2.name() + tr(" does not appear to contain a correct header.\n"
+                                                                      "Please manually correct the csv file."),
+                                 QMessageBox::Critical,
+                                 QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+                  mb.exec();
+                  return;
+               }
+               if ( qsl2_headers.size() > 1 ) 
+               {
+                  QString ref = *(qsl2_headers.at(0));
+                  for ( unsigned int i = 1; i < qsl2_headers.size(); i++ )
+                  {
+                     if ( ref != *(qsl2_headers.at(i)) )
+                     {
+                        QMessageBox mb(tr("UltraScan Warning"),
+                                       tr("The csv file ") + filename + tr(" contains multiple different headers\n"
+                                                                           "Please manually correct the csv file."),
+                                       QMessageBox::Critical,
+                                       QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+                        mb.exec();
+                        return;
+                     }
+                  }
+               }
+               // get the data
+               QStringList qsl_data = qsl2.grep(",\"P(r)\",");
+               if ( qsl_data.size() == 0 )
+               {
+                  QMessageBox mb(tr("UltraScan Warning"),
+                                 tr("The csv file ") + filename + tr(" does not appear to contain any data rows.\n"),
+                                 QMessageBox::Critical,
+                                 QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+                  mb.exec();
+                  return;
+               }
+
+               // get the r values
+               QStringList qsl_r;
+               QString header2_tag;
+               vector < double > r2;
+
+               qsl_r = QStringList::split(",",*(qsl2_headers.at(0)),true);
+               if ( qsl_r.size() < 6 )
+               {
+                  QMessageBox mb(tr("UltraScan Warning"),
+                                 tr("The csv file ") + f2.name() + tr(" does not appear to contain any r values in the header rows.\n"),
+                                 QMessageBox::Critical,
+                                 QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+                  mb.exec();
+                  return;
+               }
+               r2.push_back((*qsl_r.at(4)).toDouble());
+            
+               for ( QStringList::iterator it = qsl_r.at(5); it != qsl_r.end(); it++ )
+               {
+                  if ( (*it).toDouble() > r2[r2.size() - 1] )
+                  {
+                     r2.push_back((*it).toDouble());
+                  } else {
+                     break;
+                  }
+               }
+               unsigned int max_size = r2.size();
+               if ( max_size > r.size() )
+               {
+                  max_size = r.size();
+               }                  
+               // cout << QString("max size %1\n").arg(max_size);
+               bool all_match = true;
+               for ( unsigned int i = 0; i < max_size; i++ )
+               {
+                  if ( r[i] != r2[i] )
+                  {
+                     all_match = false;
+                     break;
+                  }
+               }
+               // cout << QString("check all match %1\n").arg(all_match ? "true" : false);
+
+               for ( QStringList::iterator it = qsl_data.begin();
+                     it != qsl_data.end();
+                     it++ )
+               {
+                  QStringList qsl_pr = QStringList::split(",",*it,true);
+                  if ( qsl_pr.size() < 6 )
+                  {
+                     QString msg = tr("The csv file ") + f2.name() + tr(" does not appear to contain sufficient p(r) values in data row " + *qsl_pr.at(0) + ", skipping\n");
+                     QColor save_color = editor->color();
+                     editor->setColor("red");
+                     editor->append(msg);
+                     editor->setColor(save_color);
+                  } else {
+                     // build up new row to append to qsl
+                     if ( all_match )
+                     {
+                        QString qs_tmp = *it;
+                        // optionally? 
+                        // qs_tmp.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                        qsl << qs_tmp;
+                        // cout << "yes, all match\nadding:" << qs_tmp << endl;
+                     } else {
+                        // cout << "not all match, interpolate\n";
+                        if ( !interp_msg_done.count(f2.name()) )
+                        {
+                           interp_msg_done[f2.name()] = true;
+                           QString msg = tr("The csv file ") + f2.name() + tr(" will be interpolated\n");
+                           QColor save_color = editor->color();
+                           editor->setColor("dark red");
+                           editor->append(msg);
+                           editor->setColor(save_color);
+                        }
+                        // the new pr:
+                        QStringList new_pr_fields;
+                        // pull the data values
+                        vector < double > this_pr;
+                        for ( unsigned int i = 0; i < 5; i++ )
+                        {
+                           new_pr_fields.push_back(*qsl_pr.at(i));
+                        }
+                        for ( QStringList::iterator it2 = qsl_pr.at(5); it2 != qsl_pr.end(); it2++ )
+                        {
+                           this_pr.push_back((*it2).toDouble());
+                        }
+                        // interpolate r2, pr to r, reappend to new_pr_fields
+                        vector < double > npr = interpolate(r, r2, this_pr);
+                        QString line = QString("%1,%1\n")
+                           .arg(new_pr_fields.join(","))
+                           .arg(vector_double_to_csv(npr));
+                        // cout << QString("r:\n%1\n").arg(vector_double_to_csv(r));
+                        // cout << QString("r2:\n%1\n").arg(vector_double_to_csv(r2));
+                        // cout << QString("org line:\n%1\n").arg(*it);
+                        // cout << QString("new interpolated line:\n%1\n").arg(line);
+                        qsl << line;
+                     }
+                  }
+               }
+            }            
+         }
+
          // append all currently plotted p(r)s to qsl
          bool added_interpolate_msg = false;
          QString bin_msg = "";
@@ -2278,6 +2522,36 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             qsl << line;
          }
             
+         if ( filenames.size() > 1 )
+         {
+            QStringList new_qsl;
+            for ( unsigned int i = 0; i < qsl.size(); i++ )
+            {
+               QString qs_tmp = *(qsl.at(i));
+               if ( !qs_tmp.contains(QRegExp("(Average|Standard deviation)")) )
+               {
+                  new_qsl << *(qsl.at(i));
+               }
+            }
+            if ( new_qsl.size() != qsl.size() )
+            {
+               switch( QMessageBox::information( this, 
+                                                 tr("UltraScan"),
+                                                 tr("There are multiple average and/or standard deviation lines\n") +
+                                                 tr("What do you want to do?"),
+                                                 "&Skip", 
+                                                 "&Include", 0,
+                                                 0,      // Enter == button 0
+                                                 1 ) ) { // Escape == button 2
+               case 0: // skip them
+                  qsl = new_qsl;
+                  break;
+               case 1: // Cancel clicked or Escape pressed
+                  break;
+               }
+            }
+         }
+
          QStringList qsl_data = qsl.grep(",\"P(r)\",");
          if ( qsl_data.size() == 0 )
          {
