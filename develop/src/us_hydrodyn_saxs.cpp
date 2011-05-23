@@ -1520,7 +1520,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   new_atom.b = b[hybrid_name] - our_saxs_options->water_e_density * radius * radius * radius;
                   b_count++;
                   b_bar += new_atom.b;
-                  // #if defined(BUG_DEBUG)
+#if defined(BUG_DEBUG)
                   printf("atom %d %d hybrid name %s, atom name %s b %e correction %e mapkey %s hybrid name %s\n",
                          j, k, 
                          hybrid_name.ascii(),
@@ -1530,7 +1530,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                          mapkey.ascii(),
                          hybrid_name.ascii()
                          );
-                  // #endif
+#endif
                }
                atoms.push_back(new_atom);
                contrib_pdb_atom.push_back(this_atom);
@@ -2574,11 +2574,15 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             }
             vector < double > pr_avg = pr;
 
+            double pr_avg_area = compute_pr_area(pr_avg, r);
+
             plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " Average");
 
             vector < double > pr_std_dev;
             vector < double > pr_avg_minus_std_dev;
             vector < double > pr_avg_plus_std_dev;
+
+            double pr_mw_std_dev = 0e0;
 
             if ( create_std_dev && sum_count > 2 )
             {
@@ -2617,6 +2621,35 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                }
 
                pr_std_dev = std_dev;
+
+               double pr_std_dev_area = compute_pr_area(pr_std_dev, r);
+
+               double area_sd_avg = 
+                  ( pr_avg_area > 0e0 && pr_std_dev_area > 0e0 ) ? 
+                  pr_std_dev_area / pr_avg_area :
+                  0e0 ;
+
+               if ( area_sd_avg >= 1e0 )
+               {
+                  area_sd_avg = 1e0;
+               }
+               
+               pr_mw_std_dev = pr_mw_avg * area_sd_avg;
+               (*remember_mw)["Standard deviation"] = pr_mw_std_dev;
+               (*remember_mw)[QFileInfo(filename).fileName() + " Average minus 1 std dev"] = pr_mw_avg - pr_mw_std_dev;
+               (*remember_mw)[QFileInfo(filename).fileName() + " Average plus 1 std dev"] = pr_mw_avg + pr_mw_std_dev;
+
+               // cout << QString("sd mw calcs:\n"
+               // "area_sd_avg mult: %1\n"
+               // "pr_mw_avg:        %1\n"
+               // "pr_mw_sd_minus_1: %1\n"
+               // "pr_mw_sd_plus_1:  %1\n"
+               // )
+               // .arg(area_sd_avg)
+               // .arg(pr_mw_avg)
+               // .arg(pr_mw_avg - pr_mw_std_dev)
+               // .arg(pr_mw_avg + pr_mw_std_dev)
+               // ;
 
 #if defined(DEBUG_STD_DEV)
                cout << "sum pr (" << sum_pr.size() << "): ";
@@ -2719,19 +2752,19 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   {
                      fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                              "Standard deviation",
-                             pr_mw_avg,
+                             pr_mw_std_dev,
                              compute_pr_area(pr_std_dev, r),
                              "P(r)",
                              vector_double_to_csv(pr_std_dev).ascii());
                      fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                              "Average minus 1 standard deviation",
-                             pr_mw_avg,
+                             pr_mw_avg - pr_mw_std_dev,
                              compute_pr_area(pr_avg_minus_std_dev, r),
                              "P(r)",
                              vector_double_to_csv(pr_avg_minus_std_dev).ascii());
                      fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                              "Average plus 1 standard deviation",
-                             pr_mw_avg,
+                             pr_mw_avg + pr_mw_std_dev,
                              compute_pr_area(pr_avg_plus_std_dev, r),
                              "P(r)",
                              vector_double_to_csv(pr_avg_plus_std_dev).ascii());
@@ -4615,6 +4648,14 @@ double US_Hydrodyn_Saxs::compute_pr_area( vector < double > vd, vector < double 
    {
       delta = r[1] - r[0];
    }
+   if ( delta == 0e0 )
+   {
+      cerr << QString("compute_pr_area zero delta! sum %1\nvd: %1\nr: %1\n")
+         .arg(sum)
+         .arg(vector_double_to_csv(vd))
+         .arg(vector_double_to_csv(r))
+         ;
+   }
    return sum * delta;
 }
 
@@ -6157,6 +6198,7 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
    
    if ( found ) 
    {
+      // cout <<  QString("mw: %1 %1 %1\n").arg(filename).arg(mw).arg(source);
       if ( display_mw_msg )
       {
          editor->append(QString("%1 Molecular weight %1 (%1)\n")

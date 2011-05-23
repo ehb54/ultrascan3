@@ -2188,6 +2188,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
    QString fname = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
       batch->csv_saxs_name + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
+      
    if ( QFile::exists(fname) ) 
       // && !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
    {
@@ -2204,6 +2205,9 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
       vector < double > pr_avg_minus_std_dev;
       vector < double > pr_avg_plus_std_dev;
 
+      double pr_mw_std_dev = 0e0;
+      double pr_mw_avg = 0.0;
+
       unsigned int sum_count = 0;
       for ( unsigned int i = 0; i < saxs_r.size(); i++ )
       {
@@ -2211,9 +2215,11 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
       }
       if ( batch->compute_prr_avg )
       {
+
          for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
          {
             // cout << "model: " << i << " " << vector_double_to_csv(saxs_prr[i]) << endl;
+            pr_mw_avg += saxs_prr_mw[i];
             for ( unsigned int j = 0; j < saxs_prr[i].size(); j++ )
             {
                sum_pr[j] += saxs_prr[i][j];
@@ -2225,14 +2231,20 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
          // cout << "sum: " << vector_double_to_csv(pr_avg) << endl;
          // cout << "sum2: " << vector_double_to_csv(sum_pr2) << endl;
          // cout << "sum count " << sum_count << endl;
+
          if ( sum_count )
          {
+            pr_mw_avg /= (double)sum_count;
+
             for ( unsigned int i = 0; i < pr_avg.size(); i++ )
             {
                pr_avg[i] /= (double)sum_count;
             }
 
             // cout << "pr_avg: " << vector_double_to_csv(pr_avg) << endl;
+
+            double pr_avg_area = compute_pr_area(pr_avg, saxs_r);
+            pr_mw_std_dev = 0e0;
 
             if ( batch->compute_prr_std_dev && sum_count > 2 )
             {
@@ -2284,6 +2296,19 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
                   pr.resize(saxs_r.size());
                }
                pr_avg_plus_std_dev = pr;
+
+               double pr_std_dev_area = compute_pr_area(pr_std_dev, this_r);
+
+               double area_sd_avg = 
+                  ( pr_avg_area > 0e0 && pr_std_dev_area > 0e0 ) ? 
+                  pr_std_dev_area / pr_avg_area :
+                  0e0 ;
+
+               if ( area_sd_avg >= 1e0 )
+               {
+                  area_sd_avg = 1e0;
+               }
+               pr_mw_std_dev = pr_mw_avg * area_sd_avg;
             }
          }
       }                                 
@@ -2322,7 +2347,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
       {
          fprintf(of, "\n\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                  "Average",
-                 sum_mw,
+                 pr_mw_avg,
                  compute_pr_area(pr_avg, saxs_r),
                  "P(r)",
                  vector_double_to_csv(pr_avg).ascii());
@@ -2330,19 +2355,19 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
          {
             fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                     "Standard deviation",
-                    sum_mw,
+                    pr_mw_std_dev,
                     compute_pr_area(pr_std_dev, saxs_r),
                     "P(r)",
                     vector_double_to_csv(pr_std_dev).ascii());
             fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                     "Average minus 1 standard deviation",
-                    sum_mw,
+                    pr_mw_avg - pr_mw_std_dev,
                     compute_pr_area(pr_avg_minus_std_dev, saxs_r),
                     "P(r)",
                     vector_double_to_csv(pr_avg_minus_std_dev).ascii());
             fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                     "Average plus 1 standard deviation",
-                    sum_mw,
+                    pr_mw_avg + pr_mw_std_dev,
                     compute_pr_area(pr_avg_plus_std_dev, saxs_r),
                     "P(r)",
                     vector_double_to_csv(pr_avg_plus_std_dev).ascii());

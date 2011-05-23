@@ -271,7 +271,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                          QString title, 
                          QString save_to_csv_name = ""
                          );
-      void plot_one_pr(vector < double > r, vector < double > pr, QString name);
+      void plot_one_pr(
+                       vector < double > r, 
+                       vector < double > pr, 
+                       QString name
+                       );
       void plot_one_iqq(vector < double > q, vector < double > I, QString name);
       bool plotted;
       bool save_to_csv;
@@ -342,7 +346,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void select_atom_file(const QString &);
       void select_hybrid_file(const QString &);
       void select_saxs_file(const QString &);
-      void normalize_pr(vector < double >, vector < double > *, double mw = 1e0);
+      void normalize_pr( vector < double >, 
+                         vector < double > *, 
+                         double mw = 1e0 );
       void update_saxs_sans();
       void run_guinier_analysis();
       QString saxs_filestring();
