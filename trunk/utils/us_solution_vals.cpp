@@ -133,7 +133,7 @@ bool US_SolutionVals::solinfo_disk( US_DataIO2::EditedData* edata,
    QString soluGUID = "";
 
    QString exppath = US_Settings::resultDir() + "/" + edata->runID + "/"
-      + edata->runID + "." + edata->dataType + ".xml";
+      + edata->runID + "." + edata->dataType.left( 2 ) + ".xml";
 
    QFile filei( exppath );
    if ( !filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
