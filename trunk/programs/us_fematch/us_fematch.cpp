@@ -239,30 +239,35 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    // Scan Controls
 
    QLabel* lb_scan    = us_banner( tr( "Scan Control"       ) ); 
-   QLabel* lb_from    = us_label ( tr( "From:" ) );
-   ct_from            = us_counter( 2, 0, 500, 1 );
+   QLabel* lb_from    = us_label ( tr( "Scan focus from:" ) );
+   ct_from            = us_counter( 3, 0, 500, 1 );
    QLabel* lb_to      = us_label ( tr( "to:"   ) );
-   ct_to              = us_counter( 2, 0, 500, 1 );
+   ct_to              = us_counter( 3, 0, 500, 1 );
    pb_exclude         = us_pushbutton( tr( "Exclude Scan Range" ) );
+   pb_reset_exclude   = us_pushbutton( tr( "Reset Scan Range" ) );
    ct_from->setValue( 0 );
    ct_to  ->setValue( 0 );
 
-   pb_exclude->setEnabled( false );
+   pb_exclude      ->setEnabled( false );
+   pb_reset_exclude->setEnabled( false );
 
    connect( ct_from,    SIGNAL( valueChanged( double ) ),
             this,       SLOT  ( exclude_from( double ) ) );
    connect( ct_to,      SIGNAL( valueChanged( double ) ),
             this,       SLOT  ( exclude_to  ( double ) ) );
-   connect( pb_exclude, SIGNAL( clicked() ),
-            this,       SLOT  ( exclude() ) );
+   connect( pb_exclude,       SIGNAL( clicked()        ),
+            this,             SLOT  ( exclude()        ) );
+   connect( pb_reset_exclude, SIGNAL( clicked()        ),
+            this,             SLOT  ( reset_excludes() ) );
 
-   controlsLayout->addWidget( lb_scan           , 0, 0, 1, 4 );
-   controlsLayout->addWidget( lb_from           , 1, 0, 1, 2 );
-   controlsLayout->addWidget( ct_from           , 1, 2, 1, 2 );
-   controlsLayout->addWidget( lb_to             , 2, 0, 1, 2 );
-   controlsLayout->addWidget( ct_to             , 2, 2, 1, 2 );
-   controlsLayout->addWidget( pb_exclude        , 3, 0, 1, 2 );
-   //controlsLayout->addWidget( pb_reset_exclude  , 3, 2, 1, 2 );
+   row      = 0;
+   controlsLayout->addWidget( lb_scan           , row++, 0, 1, 4 );
+   controlsLayout->addWidget( lb_from           , row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_from           , row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_to             , row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_to             , row++, 2, 1, 2 );
+   controlsLayout->addWidget( pb_exclude        , row,   0, 1, 2 );
+   controlsLayout->addWidget( pb_reset_exclude  , row++, 2, 1, 2 );
    
    // Plots
    plotLayout1 = new US_Plot( data_plot1,
@@ -281,7 +286,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    data_plot2->setMinimumSize( 560, 240 );
 
    // Standard buttons
-   pb_reset    = us_pushbutton( tr( "Reset Scans" ) );
+   pb_reset    = us_pushbutton( tr( "Reset" ) );
    pb_help     = us_pushbutton( tr( "Help"  ) );
    pb_close    = us_pushbutton( tr( "Close" ) );
 
@@ -979,6 +984,8 @@ void US_FeMatch::exclude( void )
    allExcls[ drow ]     = excludedScans;
 
    data_plot();
+
+   pb_reset_exclude->setEnabled( true );
 }
 
 // respond to click of current type of distribution plot
@@ -1372,30 +1379,6 @@ void US_FeMatch::plotres( )
    resplotd = new US_ResidPlot( this );
    resplotd->move( rpd_pos );
    resplotd->show();
-}
-
-// reset excluded scan range
-void US_FeMatch::reset( )
-{
-   if ( !dataLoaded )
-      return;
-
-   excludedScans.clear();
-   allExcls[ lw_triples->currentRow() ] = excludedScans;
-
-   ct_from->disconnect();
-   ct_to  ->disconnect();
-   ct_from->setValue( 0 );
-   ct_to  ->setValue( 0 );
-   ct_from->setMaxValue( scanCount );
-   ct_to  ->setMaxValue( scanCount );
-
-   connect( ct_from, SIGNAL( valueChanged( double ) ),
-            this,    SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,   SIGNAL( valueChanged( double ) ),
-            this,    SLOT  ( exclude_to  ( double ) ) );
-
-   data_plot();
 }
 
 // load model data and detect if RA
@@ -2547,5 +2530,88 @@ void US_FeMatch::updateSolution( US_Solution& solution_sel )
 void US_FeMatch::update_progress( int icomp )
 {
    progress->setValue( icomp );
+}
+
+// Reset scan excludes
+void US_FeMatch::reset_excludes( void )
+{
+   int                     index      = lw_triples->currentRow();
+   US_DataIO2::EditedData* d          = &dataList[ index ];
+   int                     totalScans = d->scanData.size();
+
+   excludedScans.clear();
+
+   ct_from->setMaxValue( totalScans );
+   ct_to  ->setMaxValue( totalScans );
+
+   if ( ct_to->value() != 0 )
+      ct_to ->setValue( 0 );
+   else
+      data_plot();
+
+   pb_reset_exclude->setEnabled( false );
+   allExcls[ index ] = excludedScans;
+}
+
+// Reset data set
+void US_FeMatch::reset( void )
+{
+   if ( ! dataLoaded ) return;
+
+   excludedScans.clear();
+
+   density      = DENS_20W;
+   viscosity    = VISC_20W;
+   vbar         = TYPICAL_VBAR;
+
+   le_solution ->setText( tr( "(Experiment's solution)" ) );
+   le_density  ->setText( QString::number( density,   'f', 6 ) );
+   le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
+   le_vbar     ->setText( QString::number( vbar,      'f', 5 ) );
+   ct_from     ->disconnect();
+   ct_to       ->disconnect();
+   ct_from     ->setValue( 0 );
+   ct_to       ->setValue( 0 );
+
+   connect( ct_from,            SIGNAL( valueChanged( double ) ),
+                                SLOT  ( exclude_from( double ) ) );
+                                
+   connect( ct_to,              SIGNAL( valueChanged( double ) ),
+                                SLOT  ( exclude_to  ( double ) ) );
+
+   lw_triples->  disconnect();
+   lw_triples->  clear();
+   dataList.     clear();
+   rawList.      clear();
+   excludedScans.clear();
+   triples.      clear();
+   allExcls.     clear();
+   resids.       clear();
+
+   dataLoaded = false;
+   buffLoaded = false;
+   haveSim    = false;
+   mfilter    = "";
+
+   data_plot1->detachItems();
+   data_plot2->detachItems();
+   data_plot1->clear();
+   data_plot2->clear();
+   data_plot1->replot();
+   data_plot2->replot();
+
+   pb_details  ->setEnabled( false );
+   pb_distrib  ->setEnabled( false );
+   pb_loadmodel->setEnabled( false );
+   pb_simumodel->setEnabled( false );
+   pb_view     ->setEnabled( false );
+   pb_save     ->setEnabled( false );
+   pb_exclude  ->setEnabled( false );
+   pb_advanced ->setEnabled( false );
+   pb_plot3d   ->setEnabled( false );
+   pb_plotres  ->setEnabled( false );
+   le_id       ->setText( "" );
+   le_temp     ->setText( "" );
+   te_desc     ->setText( "" );
 }
 

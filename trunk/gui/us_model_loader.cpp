@@ -539,12 +539,15 @@ void US_ModelLoader::list_models()
 
    lw_models->disconnect( SIGNAL( currentRowChanged( int ) ) );
    lw_models->clear();
+   int maxlch   = 0;
 
    if ( model_descriptions.size() > 0 )
    {
       for ( int ii = 0; ii < model_descriptions.size(); ii++ )
       {  // propagate list widget with descriptions
          lw_models->addItem( model_descriptions[ ii ].description );
+         maxlch    = qMax( maxlch,
+                           model_descriptions[ ii ].description.length() );
       }
 
       // Sort descriptions in ascending alphabetical order
@@ -557,6 +560,20 @@ void US_ModelLoader::list_models()
    }
 
    singprev   = listsing;    // save list-singles flag
+
+   // Resize the widget to show listed items well
+   QFontMetrics fm = lw_models->fontMetrics();
+   int olwid    = lw_models->width();
+   int olhgt    = lw_models->height();
+   int nlines   = qMin( model_descriptions.size(), 30 );
+   int width    = qMin( 600, maxlch * fm.maxWidth()    );
+   int height   = qMin( 800, nlines * fm.lineSpacing() );
+   width        = qMax( width,  olwid );
+   height       = ( height > olhgt ) ? height : ( ( olhgt + height ) / 2 );
+   width        = this->width()  + width  - olwid;
+   height       = this->height() + height - olhgt;
+
+   resize( width, height );
 }
 
 // Cancel button:  no models returned

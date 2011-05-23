@@ -561,18 +561,22 @@ void US_AnalysisBase2::data_plot( void )
 void US_AnalysisBase2::boundary_pct( double percent )
 {
    ct_boundaryPos->disconnect();
-   ct_boundaryPos->setMaxValue( 100 - percent );
+   ct_boundaryPos->setMaxValue( 100.0 - percent );
 
-   if ( ct_boundaryPos->value() >  100 - percent )
-      ct_boundaryPos->setValue( 100.0 - percent );
+   ct_boundaryPos->setValue( ( 100.0 - percent ) / 2.0 );
 
    connect( ct_boundaryPos, SIGNAL( valueChanged( double ) ),
                             SLOT  ( boundary_pos( double ) ) );
    data_plot();
 }
 
-void US_AnalysisBase2::boundary_pos( double /* position */ )
+void US_AnalysisBase2::boundary_pos( double percent )
 {
+   ct_boundaryPercent->disconnect();
+   ct_boundaryPercent->setMaxValue( 100.0 - percent );
+
+   connect( ct_boundaryPercent, SIGNAL( valueChanged( double ) ),
+                                SLOT  ( boundary_pct( double ) ) );
    data_plot();
 }
 

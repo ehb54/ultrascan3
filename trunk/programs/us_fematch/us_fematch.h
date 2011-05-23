@@ -81,6 +81,7 @@ class US_FeMatch : public US_Widgets
       QPushButton*  pb_close;
       QPushButton*  pb_rmsd;
       QPushButton*  pb_exclude;
+      QPushButton*  pb_reset_exclude;
       QPushButton*  pb_loadmodel;
       QPushButton*  pb_simumodel;
 
@@ -145,6 +146,7 @@ class US_FeMatch : public US_Widgets
       void exclude   (       void );
       void adjust_model(     void );
       void adjust_mc_model(  void );
+      void reset_excludes(   void );
       void exclude_from(     double );
       void exclude_to  (     double );
       void comp_number (     double );
