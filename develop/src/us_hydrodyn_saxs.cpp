@@ -5553,6 +5553,19 @@ void US_Hydrodyn_Saxs::load_gnom()
 
    if ( f.open(IO_ReadOnly) )
    {
+      QStringList qsl_gnom;
+      {
+         QTextStream ts(&f);
+         while ( !ts.atEnd() )
+         {
+            qsl_gnom << ts.readLine();
+         }
+      }
+      f.close();
+      f.open(IO_ReadOnly);
+      bool ask_save_mw_to_gnom = false;
+      double gnom_mw = 0e0;
+
       double units = 1;
       switch( QMessageBox::information( this, 
                                         tr("UltraScan"),
@@ -5649,7 +5662,35 @@ void US_Hydrodyn_Saxs::load_gnom()
                   // cout << "prr point: " << rx3.cap(1).toDouble() << " " << rx3.cap(2).toDouble() << endl;
                } else {
                   // end of prr?
-                  get_mw(filename);
+                  QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))",false);
+                  QStringList mwline = qsl_gnom.grep(qx_mw);
+                  if ( mwline.size() )
+                  {
+                     if ( qx_mw.search(*(mwline.at(0))) == -1 )
+                     {
+                        // cerr << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(*(mwline.at(0)));
+                        gnom_mw = 0e0;
+                     } else {
+                        // cout << QString("mwline cap 0 <%1> cap 1 <%1>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
+                        gnom_mw = qx_mw.cap(1).toDouble();
+                     }
+                     if ( mwline.size() > 1 )
+                     {
+                        QMessageBox::message(tr("Please note:"), 
+                                             QString(tr("There are multiple molecular weight lines in the gnom file\n"
+                                                        "Using the first one found (%1 Daltons)")).arg(gnom_mw));
+                     }
+                     if ( gnom_mw > 0e0 )
+                     {
+                        (*remember_mw)[QFileInfo(filename).fileName()] = gnom_mw;
+                        (*remember_mw_source)[QFileInfo(filename).fileName()] = "Found in gnom.out file";
+                     }
+                  }
+                  gnom_mw = get_mw(filename,false);
+                  if ( !mwline.size() )
+                  {
+                     ask_save_mw_to_gnom = true;
+                  }
                   if ( cb_normalize->isChecked() )
                   {
                      normalize_pr(r, &pr, get_mw(filename, false));
@@ -5667,6 +5708,44 @@ void US_Hydrodyn_Saxs::load_gnom()
          }
       }
       f.close();
+      if ( ask_save_mw_to_gnom && gnom_mw )
+      {
+         switch( QMessageBox::information( this, 
+                                           tr("Save GNOM with Molecular Weight"),
+                                           QString(tr("Do you want to save the molecular weight entered (%1 Daltons) into the gnom.out file?"))
+                                           .arg(gnom_mw),
+                                           "&Ok",  
+                                           "&Cancel", 
+                                           0,
+                                           0,      // Enter == button 0
+                                           1 ) ) { // Escape == button 2
+         case 0: // write the file
+            {
+               QString fname = filename;
+               if ( QFile::exists(fname) )
+               {
+                  fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname);
+               }
+               QFile f(fname);
+               if ( !f.open( IO_WriteOnly ) )
+               {
+                  QMessageBox::warning( this, "UltraScan",
+                                        QString(tr("Could not open %! for writing!")).arg(fname) );
+               } else {
+                  QTextStream t( &f );
+                  t << QString("Molecular weight %1 Daltons\n\n").arg(gnom_mw);
+                  t << qsl_gnom.join("\n");
+                  t << "\n";
+                  f.close();
+                  editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+               }
+            }                  
+            break;
+         case 1: // Cancel clicked or Escape pressed
+            break;
+         }
+      }
+
       if ( datafiles.size() )
       {
          for ( unsigned int i = 0; i < datafiles.size(); i++ )
