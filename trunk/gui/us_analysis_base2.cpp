@@ -1248,6 +1248,7 @@ void US_AnalysisBase2::set_progress( const QString& message )
 void US_AnalysisBase2::load_noise( int index )
 {
    US_DataIO2::EditedData* edata = &dataList[ index ];
+//qDebug() << "AB2: load_noise index noif" << index << noiflags[index];
 
    if ( noiflags[ index ] >= 0 )
    { // If noise already applied, ask user: retain? reselect?
@@ -1269,8 +1270,8 @@ void US_AnalysisBase2::load_noise( int index )
    bool local  = ! loadDB;
    int  nenois = lnoise.count_noise( local, edata, NULL, mieGUIDs, nieGUIDs );
 
-for (int jj=0;jj<nenois;jj++)
- qDebug() << " jj nieG" << jj << nieGUIDs.at(jj);
+//for (int jj=0;jj<nenois;jj++)
+// qDebug() << " jj nieG" << jj << nieGUIDs.at(jj);
 
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
@@ -1366,7 +1367,10 @@ for (int jj=0;jj<nenois;jj++)
 
       rinoises[ index ] = nrinois > 0 ? ri_noise : US_Noise();
       tinoises[ index ] = ntinois > 0 ? ti_noise : US_Noise();
-   }
+   }  // End:  query for desired noise
+
+   else                            // Flag that there was no noise to apply
+      noiflags[ index ] = -1;
 }
 
 // Get solution parameters via US_SolutionGui
@@ -1471,10 +1475,10 @@ void US_AnalysisBase2::back_out_noise( int index )
 {
    int noif     = noiflags[ index ];
 
-   // Remove noise from data
+   // Add noise back into data
    ri_noise     = ( ( noif & 1 ) != 0 ) ? rinoises[ index ] : US_Noise();
    ti_noise     = ( ( noif & 2 ) != 0 ) ? tinoises[ index ] : US_Noise();
-   ri_noise.apply_to_data( dataList[ index ], true );
-   ti_noise.apply_to_data( dataList[ index ], true );
+   ri_noise.apply_to_data( dataList[ index ], false );
+   ti_noise.apply_to_data( dataList[ index ], false );
 }
 
