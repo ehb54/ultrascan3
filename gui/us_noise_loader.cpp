@@ -97,7 +97,6 @@ US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
       QString mdx   = nie.section( ":", 2, 2 );  // model index part ("0001")
               nie   = typ + "_noise " + mdx;     // list name ("ti_noise 0003")
       int     ndx   = mdx.toInt();               // integral model index
-qDebug() << "NL:   ii ndx nie" << ii << ndx << nie;
 
       twi_curr      = new QTreeWidgetItem( QStringList( nie ) );
       items.at( ndx )->addChild( twi_curr );     // add as child of model "ndx"
