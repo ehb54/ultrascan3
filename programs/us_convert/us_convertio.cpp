@@ -199,11 +199,13 @@ QString US_ConvertIO::readDBExperiment( QString runID,
    else if ( readStatus != US_DB2::OK )
       return( db->lastError() );
 
-   // Clear out the directory, in case the user has messed with it locally
+   // Erase auc files in the local directory, in case the user has messed with it locally
    QDir d( dir );
-   QStringList files = d.entryList( QDir::NoDotAndDotDot | QDir::Files );
+   QStringList nameFilters = QStringList( "*.auc" );
+   QStringList files = d.entryList( nameFilters, QDir::NoDotAndDotDot | QDir::Files );
    foreach ( QString file, files )
-      d.remove( file );
+      if ( ! d.remove( file ) )
+         qDebug() << "Unable to remove file " << file;
    
    // Now read the auc data
    QString status = readRawDataFromDB( ExpData, triples, dir, db );
