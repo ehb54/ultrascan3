@@ -940,6 +940,9 @@ void US_2dsa::new_triple( int index )
 {
    edata = &dataList[ index ];
 
+   // Restore pure data type string (other values added in 2dsa processing)
+   //edata->dataType = edata->dataType.section( " ", 0, 0 );
+
    sdata.scanData.clear();                 // Clear simulation and upper plot
    data_plot1->detachItems();
    data_plot1->clear();

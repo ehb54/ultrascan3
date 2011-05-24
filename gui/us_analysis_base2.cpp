@@ -291,6 +291,8 @@ void US_AnalysisBase2::load( void )
 
    noiflags.fill( -1, dataList.size() );
    allExcls.fill( excludedScans, dataList.size() );
+   rinoises.fill( US_Noise(), dataList.size() );
+   tinoises.fill( US_Noise(), dataList.size() );
 
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ), 
                         SLOT  ( new_triple       ( int ) ) );
@@ -1248,7 +1250,14 @@ void US_AnalysisBase2::load_noise( int index )
    US_DataIO2::EditedData* edata = &dataList[ index ];
 
    if ( noiflags[ index ] >= 0 )
-      return;             // Do nothing if noise already applied, this triple
+   { // If noise already applied, ask user: retain? reselect?
+      bool retain = query_noise_retain();
+
+      if ( retain )  // Do nothing if user wants applied noise retained
+         return;
+      else           // Otherwise, back out noise and fall thru to re-select
+         back_out_noise( index );
+   }
 
    noiflags[ index ] = 0; // Initially flag no noise to subtract
 
@@ -1352,9 +1361,11 @@ for (int jj=0;jj<nenois;jj++)
          escan->plateau = escan->readings[ plx ].value;
       }
 
-      // Keep track of noise applied to this triple
+      // Keep track of noise applied to this triple and save each
       noiflags[ index ] = min( nrinois, 1 ) + 2 * min( ntinois, 1 );
 
+      rinoises[ index ] = nrinois > 0 ? ri_noise : US_Noise();
+      tinoises[ index ] = ntinois > 0 ? ti_noise : US_Noise();
    }
 }
 
@@ -1431,5 +1442,39 @@ void US_AnalysisBase2::updateSolution( US_Solution& solution_sel )
    le_viscosity->setText( bvisc );
    le_vbar     ->setText( svbar );
    le_solution ->setText( solution_rec.solutionDesc );
+}
+
+// Query whether user wants to retain already-applied noise
+bool US_AnalysisBase2::query_noise_retain( )
+{
+   QString msg = tr(
+         "Noise has previously been applied to this triple.<br/>"
+         "Do you want to retain the previous noise selection?<br/>"
+         "<ul><li><b>Yes</b> to retain the applied noise selection;</li>"
+         "<li><b>No </b> to apply a new noise selection.</li></ul>" );
+
+   QMessageBox msgBox( this );
+   msgBox.setWindowTitle( tr( "Noise Already Applied" ) );
+   msgBox.setTextFormat ( Qt::RichText );
+   msgBox.setText       ( msg );
+   msgBox.addButton     ( QMessageBox::No  );
+   msgBox.addButton     ( QMessageBox::Yes );
+   msgBox.setDefaultButton( QMessageBox::Yes );
+
+   bool retain = ( msgBox.exec() == QMessageBox::Yes );
+
+   return retain;
+}
+
+// Back out applied noise in preparation for possible reselection of noise
+void US_AnalysisBase2::back_out_noise( int index )
+{
+   int noif     = noiflags[ index ];
+
+   // Remove noise from data
+   ri_noise     = ( ( noif & 1 ) != 0 ) ? rinoises[ index ] : US_Noise();
+   ti_noise     = ( ( noif & 2 ) != 0 ) ? tinoises[ index ] : US_Noise();
+   ri_noise.apply_to_data( dataList[ index ], true );
+   ti_noise.apply_to_data( dataList[ index ], true );
 }
 

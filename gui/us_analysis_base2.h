@@ -67,6 +67,8 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
 
       QVector< int > noiflags;      //!< Noise-applied flags, for all triples
       QVector< QList< int > > allExcls; //!< Excluded scans, for all triples
+      QVector< US_Noise > rinoises; //!< ri-noises applied, for all triples
+      QVector< US_Noise > tinoises; //!< ti-noises applied, for all triples
 
       //! A class to display help in the US Help viewer
       US_Help      showHelp;
@@ -208,5 +210,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       void load_noise    ( int  );
       void get_solution  ( void );
       void updateSolution( US_Solution& );
+      bool query_noise_retain( void );
+      void back_out_noise( int  );
 };
 #endif
