@@ -1694,7 +1694,6 @@ void US_ConvertGui::show_intensity( void )
       = new US_Intensity( ( const QVector< double > ) Pseudo_averages );
    dialog->exec();
    qApp->processEvents();
-   delete dialog;
 }
 
 void US_ConvertGui::cancel_reference( void )
