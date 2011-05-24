@@ -2419,6 +2419,21 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   }
                }
                unsigned int max_size = r2.size();
+               double max_value = r2[max_size - 1];
+               if ( r.size() > 1 && r[r.size() - 1] < max_value )
+               {
+                  double r_delta = r[1] - r[0];
+                  if ( r_delta > 1e0 )
+                  {
+                     for ( double value = r[r.size() -1] + r_delta;
+                           value <= max_value;
+                           value += r_delta )
+                     {
+                        r.push_back(value);
+                     }
+                  }
+               }
+
                if ( max_size > r.size() )
                {
                   max_size = r.size();
@@ -2453,7 +2468,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                      {
                         QString qs_tmp = *it;
                         // optionally? 
-                        // qs_tmp.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                        if ( qs_tmp.contains(QRegExp("(Average|Standard deviation)")) )
+                        {
+                           qs_tmp.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                        }
                         qsl << qs_tmp;
                         // cout << "yes, all match\nadding:" << qs_tmp << endl;
                      } else {
@@ -2488,6 +2506,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                         // cout << QString("r2:\n%1\n").arg(vector_double_to_csv(r2));
                         // cout << QString("org line:\n%1\n").arg(*it);
                         // cout << QString("new interpolated line:\n%1\n").arg(line);
+                        if ( line.contains(QRegExp("(Average|Standard deviation)")) )
+                        {
+                           line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                        }
                         qsl << line;
                      }
                   }
@@ -2539,14 +2561,18 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                                                  tr("UltraScan"),
                                                  tr("There are multiple average and/or standard deviation lines\n") +
                                                  tr("What do you want to do?"),
-                                                 "&Skip", 
-                                                 "&Include", 0,
+                                                 tr("&Skip"), 
+                                                 tr("&Just averages"),
+                                                 tr("&Include"),
                                                  0,      // Enter == button 0
                                                  1 ) ) { // Escape == button 2
                case 0: // skip them
                   qsl = new_qsl;
                   break;
-               case 1: // Cancel clicked or Escape pressed
+               case 1: // just averages
+                  qsl = qsl.grep(QRegExp("(Average|Standard deviation)"));
+                  break;
+               case 2: // Cancel clicked or Escape pressed
                   break;
                }
             }
