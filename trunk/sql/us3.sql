@@ -938,12 +938,7 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisResultData (
     FOREIGN KEY (HPCAnalysisResultID)
     REFERENCES HPCAnalysisResult (HPCAnalysisResultID)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION ,
-   CONSTRAINT fk_HPCAnalysisResultData_noiseID
-     FOREIGN KEY (resultID)
-     REFERENCES noise (noiseID)
-     ON DELETE NO ACTION
-     ON UPDATE NO ACTION )
+    ON UPDATE NO ACTION )
 ENGINE = InnoDB;
 
 
