@@ -589,9 +589,21 @@ CREATE PROCEDURE delete_experiment ( p_personGUID   CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE no_more_requestIDs TINYINT DEFAULT 0;
+  DECLARE l_requestID INT;
+
+  -- Cursor for iterating through HPC requestID's
+  DECLARE request_csr CURSOR FOR
+    SELECT HPCAnalysisRequestID FROM HPCAnalysisRequest
+    WHERE  experimentID = p_experimentID;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND 
+    SET no_more_requestIDs = 1;
+
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
+  SET no_more_requestIDs = 0;
 
   IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
 
@@ -611,6 +623,19 @@ BEGIN
     LEFT JOIN   modelPerson ON ( modelPerson.modelID  = model.modelID )
     WHERE       rawData.experimentID = p_experimentID;
 
+    -- Delete all the HPC info
+    --  Commented out for now, to retain for data mining, etc.
+    -- OPEN request_csr;
+    -- request_loop:REPEAT
+    --   FETCH request_csr INTO l_requestID;
+    --   IF ( no_more_requestIDs = 0 ) THEN
+    --     CALL delete_HPCRequest( p_personGUID, p_password, l_requestID );
+    --   END IF;
+    -- UNTIL no_more_requestIDs
+    -- END REPEAT request_loop;
+    -- CLOSE request_csr;
+    -- SET no_more_requestIDs = 0;
+
     DELETE      editedData
     FROM        rawData
     LEFT JOIN   editedData  ON ( editedData.rawDataID = rawData.rawDataID )
@@ -624,6 +649,105 @@ BEGIN
 
     DELETE FROM experiment
     WHERE experimentID = p_experimentID;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- DELETEs an HPC request, plus information in related tables
+DROP PROCEDURE IF EXISTS delete_HPCRequest$$
+CREATE PROCEDURE delete_HPCRequest ( p_personGUID   CHAR(36),
+                                     p_password     VARCHAR(80),
+                                     p_requestID    INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE l_investigatorGUID CHAR(36);
+  DECLARE l_method           ENUM('2DSA','2DSA_MW','GA','GA_MW','GA_SC');
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  -- First find out the investigatorGUID, so we can see if this is the user's own data
+  SELECT    investigatorGUID
+  INTO      l_investigatorGUID
+  FROM      HPCAnalysisRequest
+  WHERE     HPCAnalysisRequestID = p_requestID;
+
+  -- Either we're an admin or we're a regular user but it's our own analysis
+  IF ( ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) ||
+       ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+         ( l_investigatorGUID = p_personGUID )           )              ) THEN
+  
+    -- Make sure records match if they have related tables or not
+    -- Have to do it in a couple of stages because of the constraints
+    DELETE      HPCAnalysisResultData, noise
+    FROM        HPCAnalysisResult
+    LEFT JOIN   HPCAnalysisResultData
+      ON        ( HPCAnalysisResult.HPCAnalysisResultID = HPCAnalysisResultData.HPCAnalysisResultID )
+    LEFT JOIN   noise
+      ON        ( HPCAnalysisResultData.resultID = noise.noiseID )
+    WHERE       HPCAnalysisResultData.HPCAnalysisResultType = 'noise'
+    AND         HPCAnalysisResult.HPCAnalysisRequestID = p_requestID;
+
+    DELETE      HPCAnalysisResultData, model, modelPerson
+    FROM        HPCAnalysisResult
+    LEFT JOIN   HPCAnalysisResultData
+      ON        ( HPCAnalysisResult.HPCAnalysisResultID = HPCAnalysisResultData.HPCAnalysisResultID )
+    LEFT JOIN   model       ON ( HPCAnalysisResultData.resultID = model.modelID )
+    LEFT JOIN   modelPerson ON ( model.modelID  = modelPerson.modelID )
+    WHERE       HPCAnalysisResultData.HPCAnalysisResultType = 'model'
+    AND         HPCAnalysisResult.HPCAnalysisRequestID = p_requestID;
+
+    DELETE FROM HPCAnalysisResult
+    WHERE       HPCAnalysisResult.HPCAnalysisRequestID = p_requestID;
+
+    DELETE      HPCDataset, HPCRequestData
+    FROM        HPCAnalysisRequest
+    LEFT JOIN   HPCDataset
+      ON        ( HPCAnalysisRequest.HPCAnalysisRequestID = HPCDataset.HPCAnalysisRequestID )
+    LEFT JOIN   HPCRequestData
+      ON        ( HPCDataset.HPCDatasetID = HPCDataset.HPCDatasetID )
+    WHERE       HPCAnalysisRequest.HPCAnalysisRequestID = p_requestID;
+
+    IF ( l_method = '2DSA' ) THEN
+      DELETE FROM 2DSA_Settings
+      WHERE       HPCAnalysisRequestID = p_requestID;
+  
+    ELSEIF ( l_method = '2DSA_MW' ) THEN
+      DELETE FROM 2DSA_MW_Settings
+      WHERE       HPCAnalysisRequestID = p_requestID;
+  
+    ELSEIF ( l_method = 'GA_MW' ) THEN
+      DELETE FROM GA_MW_Settings
+      WHERE       HPCAnalysisRequestID = p_requestID;
+  
+    ELSEIF ( l_method = 'GA_SC' ) THEN
+      DELETE FROM GA_SC_Settings
+      WHERE       HPCAnalysisRequestID = p_requestID;
+  
+    ELSEIF ( l_method = 'GA' ) THEN
+      DELETE      GA_Settings, HPCSoluteData
+      FROM        GA_Settings
+      LEFT JOIN   HPCSoluteData
+        ON        ( GA_Settings.GA_SettingsID = HPCSoluteData.GA_SettingsID )
+      WHERE       HPCAnalysisRequestID = p_requestID;
+
+    END IF;
+
+    -- Finally, the parent HPC table
+    DELETE FROM HPCAnalysisRequest
+    WHERE       HPCAnalysisRequestID = p_requestID;
+
+  ELSEIF ( ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) != @OK ) &&
+           ( ( verify_user( p_personGUID, p_password ) != @OK ) ||
+             ( l_investigatorGUID = p_personGUID )           )              ) THEN
+    
+    SET @US3_LAST_ERRNO = @NOTPERMITTED;
+    SET @US3_LAST_ERROR = 'MySQL: you do not have permission to delete this analysis';
 
   END IF;
 
