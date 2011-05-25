@@ -1,0 +1,87 @@
+#!/bin/sh
+
+# user configs - please adjust for your installation:
+
+US2=/export/home/user/demeler/us/ultrascan/
+US2BIN=$US2/bin
+US2LIB=$US2/lib
+US3=/export/home/user/demeler/ultrascan3
+QT3=/opt/kde3/lib/qt3/lib
+QT4=/usr/local/Trolltech/Qt-4.7.3
+QWT3=/usr/local/qwt/lib
+QWT4=/opt/qwt/lib
+QWT3D3=/usr/local/qwtplot3d/lib
+QWT3D4=/export/home/user/demeler/ultrascan3/lib
+TMP=/tmp
+VER=1.0
+ARCH=32
+
+#############################################################
+OS=Linux
+REV=`cut -d\" -f2  programs/us/us_revision.h | cut -d ' ' -f2`
+BUILD=$TMP/ultrascan-$OS$ARCH-$VER-rev$REV
+
+echo "Cleaning up previous UltraScan-3 build if it exists..."
+rm -rf $BUILD
+mkdir $BUILD
+
+echo "Copying UltraScan-3 and QT4 binaries..."
+cp -a $US3/bin $BUILD/.
+cp $QT4/bin/assistant $BUILD/bin/.
+
+echo "Copying UltraScan-3 libraries..."
+cp -a $US3/lib $BUILD/.
+
+echo "Copying UltraScan-3 etc..."
+cp -a $US3/etc $BUILD/.
+
+echo "Copying UltraScan-3 QT4 libraries..."
+for x in libQtCLucene.so.4 libQtCore.so.4 libQtDBus.so.4 libQtGui.so.4 \
+	libQtHelp.so.4 libQtNetwork.so.4 libQtOpenGL.so.4 libQtSql.so.4 \
+	libQtSvg.so.4 libQtWebKit.so.4 libQtXml.so.4 libphonon.so.4; do
+   cp -d $QT4/lib/$x* $BUILD/lib/.
+done
+
+echo "Copying UltraScan-3 QWT..."
+cp -d $QWT4/* $BUILD/lib/.
+
+echo "Copying UltraScan-3 QWTPLOT3D..."
+cp -d $QWT3D4/* $BUILD/lib/.
+
+echo "Copying UltraScan-3 libraries..."
+cp -d $US2/lib/* $BUILD/lib/.
+
+echo "Copying UltraScan-2 binaries..."
+cp $US2BIN/us3* $BUILD/bin/.
+cp $US2BIN/rasmol* $BUILD/bin/.
+
+echo "Copying UltraScan-2 libraries..."
+cp -d $US2LIB/* $BUILD/lib/.
+
+echo "Copying UltraScan-2 QT libraries..."
+cp -d $QT3/* $BUILD/lib/.
+
+echo "Copying UltraScan-2 QWT libraries..."
+cp -a $QWT3/* $BUILD/lib/.
+
+echo "Copying UltraScan-2 QWT3DPLOT libraries..."
+cp -a $QWT3D3/* $BUILD/lib/.
+
+echo "Copying UltraScan-2 SOMO config files..."
+cp -a $US2/etc/somo* $BUILD/etc/.
+rm -f $BUILD/etc/somo*new
+
+echo "Removing unneeded files..."
+rm -rf $BUILD/lib/*prl
+rm -rf $BUILD/lib/*.la
+
+#echo "Copying MySQL and SSL libraries..."
+
+
+echo "Stripping debugging symbols..."
+strip $BUILD/bin/*
+strip $BUILD/lib/*
+echo "removing CVS stuff..."
+find $BUILD -name .svn | xargs rm -Rf
+
+tar -cvzf $BUILD.tar.gz $BUILD

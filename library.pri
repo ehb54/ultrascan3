@@ -21,6 +21,7 @@ unix {
     DEPENDPATH   += ../gui ../utils $$QWTPATH/include
     INCLUDEPATH  += ../gui ../utils $$QWTPATH/include
     INCLUDEPATH  += $$MYSQLPATH
+    INCLUDEPATH  += $$QWTPLOTDIR/include
   }
   DEFINES      += INTEL LINUX
   LIBS         += -luuid
