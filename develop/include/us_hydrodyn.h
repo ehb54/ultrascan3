@@ -50,6 +50,7 @@
 #include "us_hydrodyn_bd_load_results_opts.h"
 #include "us_hydrodyn_bd.h"
 #include "us_hydrodyn_batch_movie_opts.h"
+#include "us_hydrodyn_comparative.h"
 
 //standard C and C++ defs:
 
@@ -102,6 +103,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool bead_model_from_file;
       batch_info batch;
       save_info save_params;
+      comparative_info comparative;
       QString somo_dir;
       QString somo_pdb_dir;
       bool screen_pdb(QString, bool display_pdb = false);
@@ -113,6 +115,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Save *save_util; // to enable calling of save routines regardless of whether or not widget is available
       bool batch_widget;
       US_Hydrodyn_Batch *batch_window;
+      bool comparative_widget;
+      US_Hydrodyn_Comparative *comparative_window;
       QString residue_filename;
       QLabel *lbl_table;
       void do_reset();
@@ -297,6 +301,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       //      QPushButton *pb_anaflex_edit;
       //      QPushButton *pb_anaflex_run;
       //      QPushButton *pb_anaflex_load_results;
+
+      QPushButton *pb_comparative;
 
       QProgressBar *progress;
       TextEdit *e;
@@ -594,6 +600,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void set_setSuffix();
       void set_overwrite();
       void set_saveParams();
+      void select_comparative();
 
       // message utility
       void editor_msg( QString color, QString msg );

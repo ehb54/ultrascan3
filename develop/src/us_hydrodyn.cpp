@@ -150,6 +150,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    anaflex_options_widget = false;
    batch_widget = false;
    save_widget = false;
+   comparative_widget = false;
    calcAutoHydro = false;
    setSuffix = false;
    overwrite = false;
@@ -246,6 +247,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    residue_short_names["DA"] = 'a';
    residue_short_names["DC"] = 'c';
    residue_short_names["DT"] = 't';
+
+   comparative = US_Hydrodyn_Comparative::empty_comparative_info();
 
    rasmol = new QProcess(this);
    rasmol->setWorkingDirectory(
@@ -609,6 +612,12 @@ void US_Hydrodyn::setupGUI()
    pb_show_hydro_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_show_hydro_results, SIGNAL(clicked()), SLOT(show_hydro_results()));
 
+   pb_comparative = new QPushButton(tr("Model classifier"), this);
+   pb_comparative->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_comparative->setEnabled(true);
+   pb_comparative->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_comparative, SIGNAL(clicked()), SLOT(select_comparative()));
+
    pb_open_hydro_results = new QPushButton(tr("Open Hydrodynamic Calculations File"), this);
    Q_CHECK_PTR(pb_open_hydro_results);
    pb_open_hydro_results->setMinimumHeight(minHeight1);
@@ -854,6 +863,7 @@ void US_Hydrodyn::setupGUI()
    //   background->addWidget(pb_anaflex_run, j, 0);
    //   background->addWidget(pb_anaflex_load_results, j, 1);
    //   j++;
+   background->addWidget(pb_comparative, j, 0);
    background->addWidget(pb_open_hydro_results, j, 1);
    j++;
    background->addWidget(pb_select_save_params, j, 0);
@@ -3180,6 +3190,28 @@ void US_Hydrodyn::show_hydro_results()
    {
       results_window = new US_Hydrodyn_Results(&results, &results_widget);
       results_window->show();
+   }
+}
+
+void US_Hydrodyn::select_comparative()
+{
+   if (comparative_widget)
+   {
+      if (comparative_window->isVisible())
+      {
+         comparative_window->raise();
+      }
+      else
+      {
+         comparative_window->show();
+      }
+      return;
+   }
+   else
+   {
+      comparative_window = 
+         new US_Hydrodyn_Comparative(&comparative, this, &comparative_widget);
+      comparative_window->show();
    }
 }
 
