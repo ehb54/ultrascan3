@@ -311,8 +311,8 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
 #define _MIN_VHR_ 0.01
 #define FMIN(a,b) ((a<b)?a:b)
 #define FMAX(a,b) ((a>b)?a:b)
-   QList< bucket > tbuk1;
-   QList< bucket > tbuk2;
+   QList< bucket >  tbuk1;
+   QList< bucket >  tbuk2;
    QList< bucket >* buks1 = &tbuk1;
    QList< bucket >* buks2 = &tbuk2;
    QList< qreal  >  cvals;
@@ -507,7 +507,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
                   break;
                }
 
-               else if ( cy1 > py1  &&  cy2 < py2 )
+               else if ( cy1 >= py1  &&  cy2 <= py2 )
                {  // current overlaps in its middle left
                   novls++;
                   buk.status   = 1;
