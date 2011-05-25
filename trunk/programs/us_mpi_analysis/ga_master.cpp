@@ -447,12 +447,36 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
    model.analysis    = type;
    model.global      = US_Model::NONE;   // For now.  Will change later.
 
-   // demo1_veloc.2DSA_e201101171200_a201101171400_us3-0000003.model.1A999
-   model.description = data->runID
-                       + "."  + id + "_e" + data->editID
-                       + "_a" + analysisDate
-                       + "_"  + db_name + "-" + requestID
-                       + ".model." + data->cell + data->channel + data->wavelength;
+   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .model
+   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .ri_noise
+   // demo1.veloc. 1A999. e201101171200_a201101171400_2DSA_us3-0000003_i01-m62345.ri_noise
+   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA_us3-0000003_mc001     .model
+   // runID.tripleID.analysisID.recordType
+   //    analysisID = editID_analysisDate_analysisType_requestID_iterID (underscores)
+   //       editID:     
+   //       requestID: from lims or 'local' 
+   //       analysisType : 2DSA GA others
+   //       iterID:       'i01-m62345' for meniscus, mc001 for monte carlo, i01 default 
+   //      
+   //       recordType: ri_noise, ti_noise, model
+
+   QString tripleID = data->cell + data->channel + data->wavelength;
+   QString dates    = "e" + data->editID + "_a" + analysisDate;
+
+   QString iterID;
+
+   if ( mc_iterations > 1 )
+      iterID.sprintf( "mc%02d", mc_iteration + 1 );
+   else if (  meniscus_points > 1 )
+      iterID.sprintf( "i%02d-m%05d", 
+              meniscus_run + 1,
+              (int)(meniscus_values[ meniscus_run ] * 10000 ) );
+   else
+      iterID = "i01";
+
+   QString analysisID = dates + "_" + id + "_" + requestID + "_" + iterID;
+
+   model.description = data->runID + "." + tripleID + "." + analysisID + ".model";
 
    // Save as class variable for later reference
    modelGUID = model.modelGUID;
