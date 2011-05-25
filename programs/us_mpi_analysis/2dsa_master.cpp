@@ -758,7 +758,7 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    US_Noise         input_noise;
    QList< QString > noise_filenames = data_sets[ 0 ]->noise_files;
 
-   for ( int j = 0; j < noise_files.size(); j++ )
+   for ( int j = 0; j < noise_filenames.size(); j++ )
    {
       input_noise.load( noise_filenames[ j ] );
       if ( input_noise.type == type ) noise.sum_noise( input_noise );
