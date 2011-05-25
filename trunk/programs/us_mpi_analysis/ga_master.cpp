@@ -466,7 +466,7 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
    QString iterID;
 
    if ( mc_iterations > 1 )
-      iterID.sprintf( "mc%02d", mc_iteration + 1 );
+      iterID.sprintf( "mc%03d", mc_iteration + 1 );
    else if (  meniscus_points > 1 )
       iterID.sprintf( "i%02d-m%05d", 
               meniscus_run + 1,
