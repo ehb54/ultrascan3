@@ -116,14 +116,14 @@ class US_UTIL_EXTERN US_Noise
       //! \param noise2     A second noise object to sum into current noise
       //! \param always_sum Flag if summing should proceed even with mismatch
       //! \returns          Flag if summing was performed.
-      bool sum_noise( US_Noise, bool );
+      bool sum_noise( US_Noise, bool = false );
 
       //! Static function to sum two noise vectors
       //! \param noise1     A first noise object into which to sum a second
       //! \param noise2     A second noise object to sum into the first
       //! \param always_sum Flag if summing should proceed even with mismatch
       //! \returns          Flag if summing was performed.
-      static bool sum_noises( US_Noise&, US_Noise, bool );
+      static bool sum_noises( US_Noise&, US_Noise, bool = false );
    private:
 
       int  load_disk       ( const QString& );
