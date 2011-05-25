@@ -751,6 +751,18 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    noise.values      = noise_data;
    noise.count       = noise_data.size();
 
+   // Add in input noise for associated noise type
+   // We are not checking for errors here, because that was checked when
+   // the input noise was applied.
+
+   US_Noise input_noise;
+
+   for ( int j = 0; j < data->noise_files.size(); j++ )
+   {
+      input_noise.load( data->noise_files[ j ] );
+      if ( input_noise.type == type ) noise.sum_noise( noise );
+   }
+
    QString fn = type_name + ".noise." + noise.noiseGUID + ".xml";
    noise.write( fn );
 
