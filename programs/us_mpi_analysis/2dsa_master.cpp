@@ -37,8 +37,8 @@ QDateTime time = QDateTime::currentDateTime();  // For debug/timing
             "; Dataset: "    + QString::number( current_dataset ) +
             "; Meniscus: "   + 
                  QString::number( meniscus_values[ meniscus_run ], 'f', 3 ) +
-                 QString( "(Run %1 of %2)" ).arg( meniscus_run + 1 )
-                                            .arg( meniscus_values.size() )  +
+                 QString( " (Run %1 of %2)" ).arg( meniscus_run + 1 )
+                                             .arg( meniscus_values.size() )  +
             "; MonteCarlo: " + QString::number( mc_iteration );
          
          send_udp( progress );
@@ -283,8 +283,6 @@ void US_MPI_Analysis::global_fit( void )
       job_queue << job;
    }
 
-   // Make sure we get ready signals before proceeding
-   worker_status.fill( INIT );
    worker_depth.fill( 0 );
    max_depth = 0;
 }
@@ -303,8 +301,6 @@ void US_MPI_Analysis::set_meniscus( void )
       job_queue << job;
    }
 
-   // Make sure we get ready signals before proceeding
-   worker_status.fill( INIT );
    worker_depth.fill( 0 );
    max_depth = 0;
 }
@@ -392,8 +388,6 @@ void US_MPI_Analysis::set_monteCarlo( void )
       job_queue << job;
    }
 
-   // Make sure we get ready signals before proceeding
-   worker_status.fill( INIT );
    worker_depth.fill( 0 );
    max_depth = 0;
 }
@@ -699,70 +693,6 @@ void US_MPI_Analysis::process_results( int        worker,
 }
 
 /////////////////////
-void US_MPI_Analysis::write_2dsa( void )
-{
-   static int index = 0;
-   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
-
-   // Fill in and write out the model file
-   US_Model model;
-
-   model.monteCarlo  = mc_iteration > 1;
-   model.wavelength  = data->wavelength.toDouble();
-   model.modelGUID   = US_Util::new_guid();
-   model.editGUID    = data->editGUID;
-   model.requestGUID = requestGUID;
-   //model.optics      = ???  How to get this?  Is is needed?
-   model.analysis    = US_Model::TWODSA;
-   model.global      = US_Model::NONE;   // For now.  Will change later.
-
-   model.description = data->runID + ".2DSA a" + analysisDate + 
-                       " e" + data->editID +
-                       db_name + "-" + requestID;
-
-   // Save as class variable for later reference
-   modelGUID = model.modelGUID;
-
-   for ( int i = 0; i < calculated_solutes[ max_depth ].size(); i++ )
-   {
-      Solute* solute = &calculated_solutes[ max_depth ][ i ];
-
-      US_Model::SimulationComponent component;
-      component.s                    = solute->s;
-      component.f_f0                 = solute->k;
-      component.signal_concentration = solute->c;
-
-      QString s;
-      component.name = s.sprintf( "CompGen%03d", index++ );
-
-      US_Model::calc_coefficients( component );
-      model.components << component;
-   }
-
-   QString fn = data->runID + ".2dsa." + model.modelGUID + ".xml";
-   model.write( fn );
-
-   // Add the file name of the model file to the output list
-   QFile f( "analysis_files.txt" );
-   if ( ! f.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append ) )
-   {
-      abort( "Could not open 'analysis_files.txt' for writing" );
-      return;
-   }
-
-   QTextStream out( &f );
-
-   QString meniscus = QString::number( meniscus_values[ meniscus_run ], 'e', 4 );
-   QString variance = QString::number( simulation_values.variance,      'e', 4 );
-
-   out << fn << ";meniscus_value=" << meniscus
-             << ";MC_iteration="   << mc_iteration 
-             << ";variance="       << variance
-             << "\n";
-   f.close();
-}
-
-/////////////////////
 void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type, 
                                    const QVector< double >& noise_data )
 {
@@ -783,14 +713,37 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
       type_name = "ri";
    }
 
-   // demo1_veloc.2DSA e 201101171200 ri _noise a201101171400 us3-0000003
-   // demo1_veloc.2DSA_e201101171200_a201101171400_us3-0000003.ri_noise.1A999
-   noise.description = data->runID 
-                       + ".2DSA_e" + data->editID  
-                       + "_a" + analysisDate 
-                       + "_" + db_name + "-" + requestID
-                       + "." + type_name + "_noise" 
-                       + "." + data->cell + data->channel + data->wavelength;
+   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .model
+   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .ri_noise
+   // demo1.veloc. 1A999. e201101171200_a201101171400_2DSA_us3-0000003_i01-m62345.ri_noise
+   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA_us3-0000003_mc001     .model
+   // runID.tripleID.analysisID.recordType
+   //    analysisID = editID_analysisDate_analysisType_requestID_iterID (underscores)
+   //       editID:     
+   //       requestID: from lims or 'local' 
+   //       analysisType : 2DSA GA others
+   //       iterID:       'i01-m62345' for meniscus, mc001 for monte carlo, i01 default 
+   //      
+   //       recordType: ri_noise, ti_noise, model
+
+   QString tripleID = data->cell + data->channel + data->wavelength;
+   QString dates    = "e" + data->editID + "_a" + analysisDate;
+
+   QString iterID;
+
+   if ( mc_iterations > 1 )  // Will not happen
+      iterID.sprintf( "mc%02d", mc_iteration + 1 );
+
+   else if (  meniscus_points > 1 )
+      iterID.sprintf( "i%02d-m%05d", 
+              meniscus_run + 1,
+              (int)(meniscus_values[ meniscus_run ] * 10000 ) );
+   else
+      iterID = "i01";
+
+   QString analysisID = dates + "_2DSA_" + requestID + "_" + iterID;
+
+   noise.description = data->runID + "." + tripleID + "." + analysisID + "." + type_name + "_noise";
 
    noise.type        = type;
    noise.noiseGUID   = US_Util::new_guid();

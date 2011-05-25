@@ -191,19 +191,12 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
       // Calculate average temperature
       ds->temperature = ds->run_data.average_temperature();
 
-if ( my_rank == 0 ) 
-   qDebug() << "temperature:" << ds->temperature;
-
       // Calculate common vbar
       US_Solution solution;
 
       for ( int j = 0; j < ds->analytes.size(); j++ )
       {
          US_Solution::AnalyteInfo ai;
-
-if ( my_rank == 0 )
-qDebug() << "analyte:" << ds->analytes[ j ].amount << ds->analytes[ j ].vbar20 
-         <<  ds->analytes[ j ].mw << ds->analytes[ j ].type;
 
          ai.amount         = ds->analytes[ j ].amount;
          ai.analyte.vbar20 = ds->analytes[ j ].vbar20;
@@ -220,9 +213,6 @@ qDebug() << "analyte:" << ds->analytes[ j ].amount << ds->analytes[ j ].vbar20
       ds->vbar20  = US_Math2::calcCommonVbar( solution, 20.0 );
       ds->vbar_tb = US_Math2::calcCommonVbar( solution, ds->temperature );
 
-if ( my_rank == 0 )
-qDebug() << "vbar:" << ds->vbar20 << ds->vbar_tb;
-
       // Convert to a different structure and calulate the s and D corrections
       US_Math2::SolutionData sd;
       sd.density   = ds->density;
@@ -234,9 +224,6 @@ qDebug() << "vbar:" << ds->vbar20 << ds->vbar_tb;
 
       ds->s20w_correction = sd.s20w_correction;
       ds->D20w_correction = sd.D20w_correction;
-
-if ( my_rank == 0 )
-qDebug() << "corrections:" << ds->s20w_correction << ds->D20w_correction;
    }
 
    // Check GA buckets
