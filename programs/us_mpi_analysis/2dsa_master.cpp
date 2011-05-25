@@ -755,12 +755,13 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    // We are not checking for errors here, because that was checked when
    // the input noise was applied.
 
-   US_Noise input_noise;
+   US_Noise         input_noise;
+   QList< QString > noise_filenames = data_sets[ 0 ]->noise_files;
 
-   for ( int j = 0; j < data->noise_files.size(); j++ )
+   for ( int j = 0; j < noise_files.size(); j++ )
    {
-      input_noise.load( data->noise_files[ j ] );
-      if ( input_noise.type == type ) noise.sum_noise( noise );
+      input_noise.load( noise_filenames[ j ] );
+      if ( input_noise.type == type ) noise.sum_noise( input_noise );
    }
 
    QString fn = type_name + ".noise." + noise.noiseGUID + ".xml";
