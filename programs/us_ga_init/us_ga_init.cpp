@@ -194,6 +194,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
             this,         SLOT(   sclick_sbdata( const QModelIndex& ) ) );
    connect( lw_sbin_data, SIGNAL( doubleClicked( const QModelIndex& ) ),
             this,         SLOT(   dclick_sbdata( const QModelIndex& ) ) );
+   connect( lw_sbin_data, SIGNAL( currentRowChanged( int )            ),
+            this,         SLOT(   newrow_sbdata(     int )            ) );
 
    us_checkbox( tr( "Plot f/f0 VS s" ), cb_plot_s, true );
    spec->addWidget( cb_plot_s, s_row, 0 );
@@ -1587,6 +1589,12 @@ QwtPlotCurve* US_GA_Initialize::drawBucketRect( int sx,
 QwtPlotCurve* US_GA_Initialize::drawBucketRect( int sx, QRectF rect )
 {
    return drawBucketRect( sx, rect.topLeft(), rect.bottomRight() );
+}
+
+// solute bin list row selected by arrow key
+void US_GA_Initialize::newrow_sbdata( int /*row*/ )
+{
+   sclick_sbdata( lw_sbin_data->currentIndex() );
 }
 
 // solute bin list row clicked: highlight bucket
