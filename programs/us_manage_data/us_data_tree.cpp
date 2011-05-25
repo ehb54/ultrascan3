@@ -637,7 +637,7 @@ DbgLv(2) << "DT: i_details row" << irow;
    US_Editor* editd = new US_Editor( US_Editor::LOAD, true, fileexts );
    editd->setWindowTitle( tr( "Data Tree Entry Details" ) );
    editd->move( QCursor::pos() + QPoint( 100, 100 ) );
-   editd->resize( 600, 500 );
+   editd->resize( 720, 360 );
    editd->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
    editd->e->setText( mtext );
    editd->show();

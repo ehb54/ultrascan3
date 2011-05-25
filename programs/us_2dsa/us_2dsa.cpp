@@ -396,18 +396,23 @@ void US_2dsa::view( void )
 // Save data (model,noise), report, and PNG image files
 void US_2dsa::save( void )
 {
-   QString analysID = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
-   QString reqGUID  = US_Util::new_guid();
-   QString runID    = edata->runID;
-   QString editID   = edata->editID;
-   editID           = editID.startsWith( "20" ) ? editID.mid( 2 ) : editID;
-   bool    fitMeni  = ( model.global == US_Model::MENISCUS );
-   bool    montCar  = model.monteCarlo;
-   QString anType   = fitMeni ? "2DSA-FM" : ( montCar ? "2DSA-MC" : "2DSA" );
-   QString descbase = runID + "." + anType + "_e" + editID 
-                            + "_a" + analysID + ".";
-   QString dext     = "." + edata->cell + edata->channel + edata->wavelength; 
-   QString dext2    = ".e" + editID + "-" + dext.mid( 1 );
+   QString analysisDate = QDateTime::currentDateTime().toString( "yyMMddhhmm" );
+   QString reqGUID      = US_Util::new_guid();
+   QString runID        = edata->runID;
+   QString editID       = edata->editID.startsWith( "20" ) ?
+                          edata->editID.mid( 2 ) :
+                          edata->editID;
+   QString dates        = "e" + editID + "_a" + analysisDate;
+   bool    fitMeni      = ( model.global == US_Model::MENISCUS );
+   bool    montCar      = model.monteCarlo;
+   QString analysisType = fitMeni ?  "2DSA-FM" :
+                          ( montCar ? "2DSA-MC" : "2DSA" );
+   QString requestID    = "local";
+   QString tripleID     = edata->cell + edata->channel + edata->wavelength; 
+   QString analysisID   = dates + "_" + analysisType + "_" + requestID + "_";
+   QString dext         = "." + tripleID;
+   QString dext2        = ".e" + editID + "-" + dext.mid( 1 );
+   QString descbase     = runID + "." + tripleID + "." + analysisID;
 
    QString reppath  = US_Settings::reportDir();
    QString respath  = US_Settings::resultDir();
@@ -480,20 +485,30 @@ void US_2dsa::save( void )
             break;
       }
    }
+double tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
+double tini = ti_noise_in.count > 0 ? ti_noise_in.values[0] : 0.0;
+double rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
+double rini = ri_noise_in.count > 0 ? ri_noise_in.values[0] : 0.0;
+DbgLv(1) << "  Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
 
    for ( int jj = 0; jj < nmodels; jj++ )
    {  // loop to output models and noises
       model             = models[ jj ];         // model to output
       QString mdesc     = model.description;    // description from processor
-      QString menisd    = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
-                          .replace( ".", "" ).leftJustified( 5, '0' );
-      QString iterad    = QString().sprintf( "%04i", jj + 1 );
+      double  menisval  = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                          .section( ' ', 0, 0 ).toDouble();
       // create the iteration part of model description:
-      // e.g., "" normally; "m60190" for meniscus; "i0001" for monte carlo
-      QString iterName  = fitMeni ? ( "m" + menisd + "." ) :
-                        ( montCar ? ( "i" + iterad + "." ) : "" );
+      // e.g.,"i01" normally; "i03-m60190" for meniscus; "mc017" for monte carlo
+      QString iterID    = "i01";
+      int     iterNum   = jj + 1;
+
+      if ( montCar )
+         iterID.sprintf( "mc%04d", iterNum );
+      else if ( fitMeni )
+         iterID.sprintf( "i%02d-m%05d", iterNum, qRound( menisval * 10000 ) );
+
       // fill in actual model parameters needed for output
-      model.description = descbase + iterName + "model" + dext;
+      model.description = descbase + iterID + ".model";
       mname             = mdlpath + "/" + mnames[ jj ];
       model.modelGUID   = US_Util::new_guid();
       model.editGUID    = edata->editGUID;
@@ -514,11 +529,15 @@ void US_2dsa::save( void )
       if ( have_ti )
       {  // output a TI noise
          ti_noise             = tinoises[ jj ];
-         ti_noise.description = descbase + iterName + "ti_noise" + dext;
+         ti_noise.description = descbase + iterID + ".ti_noise";
          ti_noise.type        = US_Noise::TI;
          ti_noise.modelGUID   = model.modelGUID;
          ti_noise.noiseGUID   = US_Util::new_guid();
          nname                = noipath + "/" + nnames[ kk++ ];
+
+         if ( ti_noise_in.count > 0 )   // Sum in any input noise
+            ti_noise.sum_noise( ti_noise_in, true );
+
          ti_noise.write( nname );
 
          if ( dbp != NULL )
@@ -528,17 +547,24 @@ void US_2dsa::save( void )
       if ( have_ri )
       {  // output an RI noise
          ri_noise             = rinoises[ jj ];
-         ri_noise.description = descbase + iterName + "ri_noise" + dext;
+         ri_noise.description = descbase + iterID + ".ri_noise";
          ri_noise.type        = US_Noise::RI;
          ri_noise.modelGUID   = model.modelGUID;
          ri_noise.noiseGUID   = US_Util::new_guid();
          nname                = noipath + "/" + nnames[ kk++ ];
+
+         if ( ri_noise_in.count > 0 )   // Sum in any input noise
+            ri_noise.sum_noise( ri_noise_in, true );
+
          ri_noise.write( nname );
 
          if ( dbp != NULL )
             ri_noise.write( dbp );
       }
    }
+tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
+rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
+DbgLv(1) << "  Post-sum tno rno" << tino << rino;
 
    QString filebase  = reppath + "/" + runID + "/"
                     + ( fitMeni ? "2dsa-fm" : ( montCar ? "2dsa-mc" : "2dsa" ) )
