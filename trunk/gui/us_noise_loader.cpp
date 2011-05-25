@@ -72,7 +72,7 @@ US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
    // populate the tree widget
    QTreeWidgetItem* twi_null = (QTreeWidgetItem*)0;
    QString          twtitle  = QString( "Models-in-Edit / Noises-in-Model" );
-   QString          mititle  = QString( "Loaded Model" );
+   QString          mititle  = QString( "Latest/Loaded Model" );
    QList< QTreeWidgetItem* > items;
    tw_noises->setColumnCount( 1 );
    tw_noises->setHeaderLabel( twtitle );
@@ -130,15 +130,14 @@ void US_NoiseLoader::itemsSelected( void )
    {
       QTreeWidgetItem* item = selitems[ ii ];
       QString itemtext = item->text( 0 );
-      QString itemtype = itemtext.left( 2 );
 
-      if ( itemtype == "ti"  ||  itemtype == "ri" )
-      {
+      if ( itemtext.contains( "_noise" ) )
+      {  // Select an individual noise
          lw_selects->addItem( itemtext );
       }
 
-      else if ( itemtype == "Lo"  ||  itemtype == "Mo" )
-      {
+      else if ( itemtext.contains( "Model" ) )
+      {  // Select all the noises associated with a model
          for ( int jj = 0; jj < item->childCount(); jj++ )
          {
             lw_selects->addItem( item->child( jj )->text( 0 ) );
@@ -234,9 +233,9 @@ void US_NoiseLoader::view_details()
    QString  mtxt;
 
    // build noise details text
-   mtxt  = tr( "All models derive from the common loaded Edit.\n" )
-         + tr( "All noise vector records derive from the loaded Model\n" )
-         + tr( "  or from siblings of that model " )
+   mtxt  = tr( "All models derive from the common loaded Edit.\n"
+               "All noise vector records derive from the latest/loaded model\n"
+               "  or from common-edit siblings of that model " )
          + ( isDB ? tr( "in the database.\n" ) : tr( "on local disk.\n" ) )
          + tr( "Details for noise vector records follow.\n" );
 
@@ -259,7 +258,7 @@ void US_NoiseLoader::view_details()
       mtxt  += tr( "\nNoise record \"" ) + typ + "_noise " + mdx + "\"";
 
       if ( mdx.toInt() == 0 )
-         mtxt  += tr( "  (from Loaded Model):\n" );
+         mtxt  += tr( "  (from Latest/Loaded Model):\n" );
 
       else
          mtxt  += tr( "  (from Model Sibling):\n" );
@@ -285,7 +284,7 @@ void US_NoiseLoader::view_details()
    US_EditorGui* detaild = new US_EditorGui();
    detaild->setWindowTitle( tr( "Noise Vector Details" ) );
    detaild->move( this->pos() + QPoint( 200, 200 ) );
-   detaild->resize( 600, 500 );
+   detaild->resize( 720, 560 );
    detaild->editor->e->setFont( QFont("monospace",US_GuiSettings::fontSize()) );
    detaild->editor->e->setText( mtxt );
    detaild->exec();

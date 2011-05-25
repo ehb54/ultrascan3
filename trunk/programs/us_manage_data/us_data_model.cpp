@@ -430,10 +430,10 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
                           .toDateTime().toString( Qt::ISODate ), true );
       QString cksum     = db->value( 5 ).toString();
       QString recsize   = db->value( 6 ).toString();
-      QString label     = descript;
+      QString label     = descript.section( ".", 0, -2 );
 
       if ( label.length() > 40 )
-         label = descript.left( 18 ) + "..." + descript.right( 19 );
+         label = descript.left( 13 ) + "..." + descript.right( 24 );
 
       QString subType   = model_type( contents );
       int     jj        = contents.indexOf( "editGUID=" );
@@ -486,7 +486,6 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
       int     idescr    = contents.indexOf( "description=" ) + 10;
       QString descript  = contents.mid( idescr, idescr+100 )
                           .section( "\"", 1, 1 );
-      QString label     = descript;
       QString date      = US_Util::toUTCDatetimeText( db->value( 6 )
                           .toDateTime().toString( Qt::ISODate ), true );
       QString cksum     = db->value( 7 ).toString();
@@ -496,9 +495,10 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
 //DbgLv(3) << "BrDb: contents================================================";
 
       contents          = cksum + " " + recsize;
+      QString label     = descript.section( ".", 0, -2 );
 
       if ( label.length() > 40 )
-         label = descript.left( 18 ) + "..." + descript.right( 19 );
+         label = descript.left( 13 ) + "..." + descript.right( 24 );
 
       cdesc.recordID    = irecID;
       cdesc.recType     = 4;
@@ -693,12 +693,9 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
 
       cdesc.parentGUID  = cdesc.parentGUID.simplified().length() == 36 ?
                           cdesc.parentGUID.simplified() : dmyGUID;
-
-      if ( model.description.length() < 41 )
-         cdesc.label       = model.description;
-      else
-         cdesc.label       = model.description.left( 18 )  + "..."
-                           + model.description.right( 19 );
+      QString label     = model.description.section( ".", 0, -2 );
+      cdesc.label       = ( label.length() < 41 ) ? label :
+                          ( label.left( 13 ) + "..." + label.right( 24 ) );
 
       ldescs << cdesc;
 
@@ -733,12 +730,9 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
 
       cdesc.parentGUID  = cdesc.parentGUID.simplified().length() == 36 ?
                           cdesc.parentGUID.simplified() : dmyGUID;
-
-      if ( noise.description.length() < 41 )
-         cdesc.label       = noise.description;
-      else
-         cdesc.label       = noise.description.left( 18 )  + "..."
-                           + noise.description.right( 19 );
+      QString label     = noise.description;
+      cdesc.label       = ( label.length() < 41 ) ? label :
+                          ( label.left( 9 ) + "..." + label.right( 28 ) );
 
       ldescs << cdesc;
 
@@ -1544,10 +1538,11 @@ int US_DataModel::record_state_flag( DataDesc descr, int pstate )
 // compose concatenation on which to sort (label:index:dataGUID:parentGUID)
 QString US_DataModel::sort_string( DataDesc ddesc, int indx )
 {  // create string for ascending sort on label
-   QString ostr = ddesc.label                        // label to sort on
-      + ":"     + QString().sprintf( "%4.4d", indx ) // index in desc. vector
-      + ":"     + ddesc.dataGUID                     // data GUID
-      + ":"     + ddesc.parentGUID;                  // parent GUID
+   QString label = ( ddesc.recType < 3 ) ? ddesc.label : ddesc.description;
+   QString ostr  = label                              // label to sort on
+      + ":"      + QString().sprintf( "%4.4d", indx ) // index in desc. vector
+      + ":"      + ddesc.dataGUID                     // data GUID
+      + ":"      + ddesc.parentGUID;                  // parent GUID
    return ostr;
 }
 
@@ -1590,9 +1585,9 @@ QString US_DataModel::model_type( int imtype, int nassoc, int gtype, bool isMC )
    if ( nassoc > 1 )
       mtype = mtype + "-RA";
 
-   // add MN | GL | SG for MENISCUS|GLOBAL|SUPERGLOBAL
+   // add FM | GL | SG for Fit-Meniscus|GLobal|SuperGlobal
    if ( gtype == (int)US_Model::MENISCUS )
-      mtype = mtype + "-MN";
+      mtype = mtype + "-FM";
 
    else if ( gtype == (int)US_Model::GLOBAL )
       mtype = mtype + "-GL";
