@@ -2,24 +2,55 @@
 
 # user configs - please adjust for your installation:
 
-US2=/export/home/user/demeler/us/ultrascan/
+# the root directory of ultrascan-2:
+US2=/usr/local/ultrascan
+
+# change to bin64/lib64 for 64 bit distros:
 US2BIN=$US2/bin
 US2LIB=$US2/lib
-US3=/export/home/user/demeler/ultrascan3
-QT3=/opt/kde3/lib/qt3/lib
-QT4=/usr/local/Trolltech/Qt-4.7.3
+
+# the root directory of ultrascan-3:
+US3=/opt/ultrascan3
+
+# the library directory for the QT3 library:
+QT3=/usr/lib/qt/lib
+
+# the root directory for the QT4 distribution: 
+QT4=/usr/local/qt4
+
+# the library directory for the qt3 version of qwt:
 QWT3=/usr/local/qwt/lib
-QWT4=/opt/qwt/lib
+
+# the library directory for the qt4 version of qwt:
+QWT4=/opt/qwt/lib/
+
+# the library directory for the qt3 version of the qwtplot3d library:
 QWT3D3=/usr/local/qwtplot3d/lib
-QWT3D4=/export/home/user/demeler/ultrascan3/lib
+
+# the library directory for the qt4 version of the qwtplot3d library:
+QWT3D4=/opt/ultrascan3/lib
+
+# the mysql, crypt(o), png and jpg libraries linked to your distribution:
+MYSQL=/usr/lib/mysql/libmysqlclient.so.15*
+CRYPTO=/lib/libcrypto.so.0*
+CRYPT=/lib/libcrypt.so.1*
+PNG=/usr/lib/libpng.so.3*
+JPG=/usr/lib/libjpeg.so.62*
+
+# a temporary directory for building the distribution:
 TMP=/tmp
+
+# the version to be built:
 VER=1.0
+
+# 32 or 64 bit:
 ARCH=32
 
 #############################################################
 OS=Linux
 REV=`cut -d\" -f2  programs/us/us_revision.h | cut -d ' ' -f2`
-BUILD=$TMP/ultrascan-$OS$ARCH-$VER-rev$REV
+FILE=ultrascan-$OS$ARCH-$VER-rev$REV
+BUILD=$TMP/$FILE
 
 echo "Cleaning up previous UltraScan-3 build if it exists..."
 rm -rf $BUILD
@@ -75,13 +106,17 @@ echo "Removing unneeded files..."
 rm -rf $BUILD/lib/*prl
 rm -rf $BUILD/lib/*.la
 
-#echo "Copying MySQL and SSL libraries..."
-
+echo "Copying miscellaneous libraries..."
+cp -d $MYSQL $BUILD/lib/.
+cp -d $JPG $BUILD/lib/.
+cp -d $PNG $BUILD/lib/.
+cp -d $CRYPT $BUILD/lib/.
+cp -d $CRYPTO $BUILD/lib/.
 
 echo "Stripping debugging symbols..."
 strip $BUILD/bin/*
 strip $BUILD/lib/*
 echo "removing CVS stuff..."
 find $BUILD -name .svn | xargs rm -Rf
-
-tar -cvzf $BUILD.tar.gz $BUILD
+cd $TMP
+tar -cvzf $FILE.tar.gz $FILE
