@@ -17,7 +17,6 @@
 #include <qfileinfo.h>
 #include <qprinter.h>
 #include <qlistbox.h>
-#include <qtabwidget.h>
 
 #include "us_util.h"
 
@@ -33,6 +32,19 @@
 #include "../include/us_hydrodyn_hydro.h"
 
 using namespace std;
+
+struct csv
+{
+   QString name;
+   
+   map < QString, int >          header_map;       // maps column names to positions
+   
+   vector < QString >            header;           // the first csv row
+   vector < vector < QString > > data;             // the entire csv past the first row
+   vector < vector < double > >  num_data;         // toDoubles of the csv file
+
+   vector < QString >            prepended_names;  // list of "model names" with QFileInfo(name).baseName(true): 
+};
 
 struct comparative_entry
 {
@@ -232,18 +244,28 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       QPushButton                   *pb_process_csv;
       QPushButton                   *pb_save_csv;
 
+      QLabel                        *lbl_loaded;
+      QListBox                      *lb_loaded;
+      QPushButton                   *pb_loaded_select_all;
+      QPushButton                   *pb_loaded_remove;
+
+      QLabel                        *lbl_selected;
+      QListBox                      *lb_selected;
+      QPushButton                   *pb_selected_select_all;
+      QPushButton                   *pb_selected_remove;
+
       QFont                         ft;
       QTextEdit                     *editor;
       QMenuBar                      *m;
       QPrinter                      printer;
-
-      QLabel                        *lbl_heat_map;
 
       QPushButton                   *pb_help;
       QPushButton                   *pb_cancel;
 
       void                          update_enables();
       void                          refresh();
+      void                          update_lb_loaded_enables();
+      void                          update_lb_selected_enables();
 
       QString                       serial_error;
       QStringList                   serialize_params();
@@ -251,6 +273,22 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       comparative_entry             deserialize_comparative_entry( QString qs );
       QString                       serialize_comparative_info( comparative_info ci );
       comparative_info              deserialize_comparative_info( QString qs );
+
+      // csv handling routines:
+
+      map < QString, csv >          csvs;      // all csvs loaded?
+      csv                           csv_read( QString filename ); // sets csv_error, csv_has
+      QString                       csv_error;
+      csv                           csv_merge( csv &csv1, csv &csv2 );
+      QString                       csv_info( csv &csv1 ); // returns readable summary info (primarily for debugging)
+      QStringList                   csv_model_names ( csv &csv1 ); // returns a list of the names (primarily for updating lb_selected)
+      bool                          csv_contains( comparative_entry ce, csv &csv1 ); // checks the csv for the column names by the comparative entry
+      bool                          all_selected_csv_contain( comparative_entry ce ); // checks all selected csvs for the column names by the comparative entry
+
+      // other utilities
+      void                          editor_msg( QString color, QString msg );
+      bool                          any_loaded_selected();
+      bool                          any_selected_selected();
 
    private slots:
       
@@ -352,6 +390,14 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       void process_csv();
       void save_csv();
 
+      void update_loaded();
+      void loaded_select_all();
+      void loaded_remove();
+
+      void update_selected();
+      void selected_select_all();
+      void selected_remove();
+
       void clear_display();
       void print();
       void update_font();
@@ -365,5 +411,4 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       void closeEvent(QCloseEvent *);
    
 };
-
 #endif
