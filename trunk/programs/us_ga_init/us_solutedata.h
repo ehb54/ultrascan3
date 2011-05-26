@@ -113,6 +113,7 @@ class US_SoluteData : public QObject
     int      reportDataMC( QString&, int );
     void     outputStats( QTextStream&, QList< qreal >&, bool, QString ); 
     void     limitBucket( bucket& );
+    int      countOverlaps();
 
   private:
     QList< bucket >  allbucks;
