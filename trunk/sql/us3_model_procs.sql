@@ -129,6 +129,8 @@ CREATE PROCEDURE new_model ( p_personGUID  CHAR(36),
                              p_modelGUID   CHAR(36),
                              p_description TEXT,
                              p_xml         TEXT,
+                             p_variance    DOUBLE,
+                             p_meniscus    DOUBLE,
                              p_editGUID    CHAR(36),
                              p_ownerID     INT )
   MODIFIES SQL DATA
@@ -175,6 +177,8 @@ BEGIN
       modelGUID    = p_modelGUID,
       description  = p_description,
       xml          = p_xml,
+      variance     = p_variance,
+      meniscus     = p_meniscus,
       lastUpdated  = NOW();
 
     IF ( duplicate_key = 1 ) THEN
@@ -207,6 +211,8 @@ CREATE PROCEDURE update_model ( p_personGUID  CHAR(36),
                                 p_modelID     INT,
                                 p_description TEXT,
                                 p_xml         TEXT,
+                                p_variance    DOUBLE,
+                                p_meniscus    DOUBLE,
                                 p_editGUID    CHAR(36) )
   MODIFIES SQL DATA
 
@@ -224,7 +230,21 @@ BEGIN
 
   -- Translate editGUID into editedDataID
   SET l_editID = 1;         -- default to special "unassigned" record
-  SELECT COUNT(*) 
+
+  SELECT COUNT(*)           -- see if we can find the existing record
+  INTO   l_count_editID
+  FROM   model
+  WHERE  modelID = p_modelID;
+
+  IF ( l_count_editID > 0 ) THEN
+    SELECT editedDataID     -- replace default with what's there already
+    INTO   l_editID
+    FROM   model
+    WHERE  modelID = p_modelID;
+
+  END IF;
+
+  SELECT COUNT(*)           -- See if the supplied parameter really does point to a record
   INTO   l_count_editID
   FROM   editedData
   WHERE  editGUID = p_editGUID;
@@ -243,6 +263,8 @@ BEGIN
       editedDataID = l_editID,
       description  = p_description,
       xml          = p_xml,
+      variance     = p_variance,
+      meniscus     = p_meniscus,
       lastUpdated  = NOW()
     WHERE modelID  = p_modelID;
 
@@ -335,7 +357,8 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   m.modelID, modelGUID, description, editGUID, m.editedDataID
+        SELECT   m.modelID, modelGUID, description, m.variance, m.meniscus,
+                 editGUID, m.editedDataID
         FROM     modelPerson, model m, editedData
         WHERE    modelPerson.modelID = m.modelID
         AND      m.editedDataID = editedData.editedDataID
@@ -343,7 +366,8 @@ BEGIN
         ORDER BY m.modelID DESC;
    
       ELSE
-        SELECT   m.modelID, modelGUID, description, editGUID, m.editedDataID
+        SELECT   m.modelID, modelGUID, description, m.variance, m.meniscus,
+                 editGUID, m.editedDataID
         FROM     modelPerson, model m, editedData
         WHERE    modelPerson.modelID = m.modelID
         AND      m.editedDataID = editedData.editedDataID
@@ -371,7 +395,8 @@ BEGIN
       -- Ok, user wants his own info
       SELECT @OK AS status;
 
-      SELECT   m.modelID, modelGUID, description, editGUID, m.editedDataID
+      SELECT   m.modelID, modelGUID, description, m.variance, m.meniscus,
+               editGUID, m.editedDataID
       FROM     modelPerson, model m, editedData
       WHERE    modelPerson.modelID = m.modelID
       AND      m.editedDataID = editedData.editedDataID
@@ -414,7 +439,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   modelGUID, description, xml, personID,
+      SELECT   modelGUID, description, xml, variance, meniscus, personID,
                timestamp2UTC( lastUpdated ) AS UTC_lastUpdated,
                MD5( xml ) AS checksum, LENGTH( xml ) AS size
       FROM     model m, modelPerson mp
