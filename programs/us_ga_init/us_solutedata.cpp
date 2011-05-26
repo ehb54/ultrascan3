@@ -1196,3 +1196,30 @@ void US_SoluteData::limitBucket( bucket& buk )
    buk.ff0_min = max(  1.0, buk.ff0_min );
 }
 
+// Count the number of overlaps in the current list of buckets
+int US_SoluteData::countOverlaps()
+{
+   int nbuks  = allbucks.size();
+   int novlps = 0;
+   QList< QRectF > bucket_rects;
+
+   // Create the list of bucket rectangles
+   for ( int ii = 0; ii < nbuks; ii++ )
+      bucket_rects << bucketRect( ii );
+
+   // Count the number of overlaps
+   for ( int ii = 0; ii < nbuks; ii++ )
+   {
+      QRectF bukrect = bucket_rects[ ii ];
+
+      // Compare this bucket to all buckets that follow it
+      for ( int jj = ii + 1; jj < nbuks; jj++ )
+      {
+         if ( bukrect.intersects( bucket_rects[ jj ] ) )
+            novlps++;   // It intersects, so bump overlaps count
+      }
+   }
+
+   return novlps;
+}
+

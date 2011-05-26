@@ -250,25 +250,31 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    pb_mandrsb->setEnabled( false );
    spec->addWidget( pb_mandrsb, s_row, 0 );
    connect( pb_mandrsb, SIGNAL( clicked() ),
-            this,       SLOT(   mandrawsb() ) );
+            this,       SLOT(   manDrawSb() ) );
 
    pb_shrnksb    = us_pushbutton( tr( "Shrink Solute Bins" ) );
    pb_shrnksb->setEnabled( false );
-   spec->addWidget( pb_shrnksb, s_row++, 1 );
+   //spec->addWidget( pb_shrnksb, s_row++, 1 );
    connect( pb_shrnksb, SIGNAL( clicked() ),
-            this,       SLOT(   shrinksb() ) );
+            this,       SLOT(   shrinkSb() ) );
+
+   pb_ckovrlp    = us_pushbutton( tr( "Check for Bin Overlaps" ) );
+   pb_ckovrlp->setEnabled( false );
+   spec->addWidget( pb_ckovrlp, s_row++, 1 );
+   connect( pb_ckovrlp, SIGNAL( clicked()       ),
+            this,       SLOT(   checkOverlaps() ) );
 
    pb_autassb    = us_pushbutton( tr( "Autoassign Solute Bins" ) );
    pb_autassb->setEnabled( false );
    spec->addWidget( pb_autassb, s_row, 0 );
    connect( pb_autassb, SIGNAL( clicked() ),
-            this,       SLOT(   autassignsb() ) );
+            this,       SLOT(   autoAssignSb() ) );
 
    pb_resetsb    = us_pushbutton( tr( "Reset Solute Bins" ) );
    pb_resetsb->setEnabled( false );
    spec->addWidget( pb_resetsb, s_row++, 1 );
    connect( pb_resetsb, SIGNAL( clicked() ),
-            this,       SLOT( resetsb() ) );
+            this,       SLOT( resetSb() ) );
 
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( false );
@@ -354,7 +360,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    main->addLayout( left );
    main->addLayout( rght );
-   main->setStretchFactor( left, 2 );
+   main->setStretchFactor( left, 3 );
+   main->setStretchFactor( spec, 3 );
    main->setStretchFactor( rght, 5 );
 
    // set up variables and initial state of GUI
@@ -449,6 +456,20 @@ void US_GA_Initialize::reset( void )
 // save the GA data
 void US_GA_Initialize::save( void )
 { 
+   int novlps = soludata->countOverlaps();
+
+   if ( novlps > 0 )
+   {
+      QString msg = ( novlps == 1 ) ?
+         tr( "There is one case of overlap between bins.\n" ) :
+         tr( "%1 pairs of bins overlap one another.\n" ).arg( novlps );
+      QMessageBox::warning( this,
+         tr( "Bin Overlaps" ),
+         msg + tr( "You must correct this condition so that\n"
+                   "no bins overlap, before you can save GA data." ) );
+      return;
+   }
+
    QString filter = tr( "GA data files (*.gadistro.dat);;" )
       + tr( "Any files (*)" );
    QString fsufx = "." + cell + wavelength + ".gadistro.dat";
@@ -473,8 +494,8 @@ void US_GA_Initialize::save( void )
    }
 }
 
-// manually draw solute bins
-void US_GA_Initialize::mandrawsb( void )
+// Manually draw solute bins
+void US_GA_Initialize::manDrawSb( void )
 {
    QColor cblack( Qt::black );
    QColor cwhite( Qt::white );
@@ -501,7 +522,7 @@ void US_GA_Initialize::mandrawsb( void )
             this, SLOT( getMouseUp(   const QwtDoublePoint& ) ) );
 
    //pb_shrnksb->setEnabled( true );
-   pb_shrnksb->setEnabled( false );
+   pb_ckovrlp->setEnabled( true );
 
    wsbuck       = ( plsmax - plsmin ) / 20.0;
    hfbuck       = ( plfmax - plfmin ) / 20.0;
@@ -515,14 +536,39 @@ void US_GA_Initialize::mandrawsb( void )
             this,      SLOT(   update_wsbuck( double ) ) );
 }
 
-// shrink solute bins
-void US_GA_Initialize::shrinksb( void )
+// Shrink solute bins
+void US_GA_Initialize::shrinkSb( void )
 {
    pb_shrnksb->setEnabled( false );
 }
 
-// auto assign solute bins
-void US_GA_Initialize::autassignsb( void )
+// Check for bin overlaps
+void US_GA_Initialize::checkOverlaps( void )
+{
+   int novlps = soludata->countOverlaps();
+
+   if ( novlps == 0 )
+   {
+      QMessageBox::information( this,
+         tr( "No Bins Overlap" ),
+         tr( "No bin overlaps were found, so you\n"
+             "may proceed to saving this GA data." ) );
+   }
+
+   else
+   {
+      QString msg = ( novlps == 1 ) ?
+         tr( "There is one case of overlap between bins.\n" ) :
+         tr( "%1 pairs of bins overlap one another.\n" ).arg( novlps );
+      QMessageBox::warning( this,
+         tr( "Bin Overlaps" ),
+         msg + tr( "You must correct this condition so that no\n"
+                   "bins overlap, before you can save GA data." ) );
+   }
+}
+
+// Auto assign solute bins
+void US_GA_Initialize::autoAssignSb( void )
 {
    nisols      = ( nisols == 0 ) ? sdistro->size() : nisols;
    pc1         = NULL;
@@ -545,8 +591,8 @@ void US_GA_Initialize::autassignsb( void )
    pb_save->setEnabled(    true );
 }
 
-// reset solute bins
-void US_GA_Initialize::resetsb( void )
+// Reset solute bins
+void US_GA_Initialize::resetSb( void )
 {
    ct_nisols->setValue( 0.0 );
    lw_sbin_data->clear();     // clear solute bucket data
@@ -556,6 +602,7 @@ void US_GA_Initialize::resetsb( void )
    erase_buckets( true );     // erase bucket rectangles from plot and delete
 
    nibuks   = 0;
+   pb_ckovrlp->setEnabled( false );
 
    data_plot->replot();
 }
@@ -566,7 +613,7 @@ void US_GA_Initialize::replot_data()
    if ( sdistro->isEmpty()  || sdistro->size() == 0 )
       return;
 
-   resetsb();
+   resetSb();
 
    if ( plot_dim == 1 )
    {
@@ -1290,7 +1337,7 @@ void US_GA_Initialize::set_limits()
    double smax = -1.0e30;
    double rdif;
 
-   resetsb();
+   resetSb();
 
    if ( plot_s )
    {
@@ -1607,6 +1654,8 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
 
    if ( rbtn_click )
    {
+      rbtn_click   = false;
+      lw_sbin_data->disconnect();
       int binx    = sx + 1;
       QMessageBox msgBox;
       QString msg = tr( "Are you sure you want to delete solute bin %1 ?" )
@@ -1619,6 +1668,12 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
       {
          removeSoluteBin( sx );
       }
+      connect( lw_sbin_data, SIGNAL( clicked(       const QModelIndex& ) ),
+               this,         SLOT(   sclick_sbdata( const QModelIndex& ) ) );
+      connect( lw_sbin_data, SIGNAL( doubleClicked( const QModelIndex& ) ),
+               this,         SLOT(   dclick_sbdata( const QModelIndex& ) ) );
+      connect( lw_sbin_data, SIGNAL( currentRowChanged( int )            ),
+               this,         SLOT(   newrow_sbdata(     int )            ) );
    }
 
    else if ( monte_carlo  &&  sx != sxset )
@@ -1628,8 +1683,6 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
       ct_hfbuck->setValue( rect.height() );
    }
    sxset        = sx;
-   rbtn_click   = false;
-
 }
 
 // solute bin list row double-clicked:  change bucket values
