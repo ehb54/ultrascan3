@@ -26,7 +26,7 @@ class US_UTIL_EXTERN US_Vector : public QVector< double >
       //! \param other The second vector of the calculation
       double dot     ( const US_Vector& );
 
-      //! \brief Mutltiply the elements of two vectors, element by element
+      //! \brief Multiply the elements of two vectors, element by element
       //! \param other The second vector of the calculation
       void   mult    ( const US_Vector& );
 
