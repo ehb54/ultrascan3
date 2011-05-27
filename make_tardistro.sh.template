@@ -36,6 +36,7 @@ CRYPTO=/lib/libcrypto.so.0*
 CRYPT=/lib/libcrypt.so.1*
 PNG=/usr/lib/libpng.so.3*
 JPG=/usr/lib/libjpeg.so.62*
+SSL=/lib/libssl.so.0*
 
 # a temporary directory for building the distribution:
 TMP=/tmp
@@ -112,6 +113,7 @@ cp -d $JPG $BUILD/lib/.
 cp -d $PNG $BUILD/lib/.
 cp -d $CRYPT $BUILD/lib/.
 cp -d $CRYPTO $BUILD/lib/.
+cp -d $SSL $BUILD/lib/.
 
 echo "Stripping debugging symbols..."
 strip $BUILD/bin/*
