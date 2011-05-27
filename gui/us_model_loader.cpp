@@ -357,7 +357,7 @@ void US_ModelLoader::list_models()
             desc.DB_id       = db.value( 0 ).toString();
             desc.modelGUID   = db.value( 1 ).toString();
             desc.description = db.value( 2 ).toString();
-            desc.editGUID    = db.value( 3 ).toString();
+            desc.editGUID    = db.value( 5 ).toString();
             desc.filename.clear();
             desc.reqGUID     = "needed";
             desc.iterations  = 0;

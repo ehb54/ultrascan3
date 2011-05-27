@@ -725,7 +725,7 @@ void US_ModelGui::list_models( void )
          md.DB_id       = db.value( 0 ).toString();
          md.modelGUID   = db.value( 1 ).toString();
          md.description = db.value( 2 ).toString();
-         md.editGUID    = db.value( 3 ).toString();
+         md.editGUID    = db.value( 5 ).toString();
          md.filename.clear();
 
          model_descriptions << md;
