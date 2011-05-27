@@ -277,7 +277,9 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       // csv handling routines:
 
       map < QString, csv >          csvs;      // all csvs loaded?
-      csv                           csv_read( QString filename ); // sets csv_error, csv_has
+      csv                           csv_read( QString filename );               // sets csv_error
+      void                          csv_write( QString filename, csv &csv1 );   // use to save any csv in the loaded 
+      csv                           csv_process( csv &csv1 );                   // process selected, then we can add it back to the loaded
       QString                       csv_error;
       csv                           csv_merge( csv &csv1, csv &csv2 );
       QString                       csv_info( csv &csv1 ); // returns readable summary info (primarily for debugging)
@@ -288,6 +290,8 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       // other utilities
       void                          editor_msg( QString color, QString msg );
       bool                          any_loaded_selected();
+      bool                          one_loaded_selected();
+      QString                       first_loaded_selected();
       bool                          any_selected_selected();
 
    private slots:

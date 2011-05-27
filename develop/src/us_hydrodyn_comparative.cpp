@@ -267,7 +267,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    lbl_target->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_sort = new QLabel(tr("Sort CSV results"), this);
+   lbl_sort = new QLabel(tr("Sort results"), this);
    lbl_sort->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_sort->setAlignment(AlignCenter|AlignVCenter);
    lbl_sort->setMinimumHeight(minHeight1);
@@ -313,28 +313,28 @@ void US_Hydrodyn_Comparative::setupGUI()
    lbl_ec->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_ec->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_buckets = new QLabel(tr("Number of\nbuckets"), this);
+   lbl_buckets = new QLabel(tr("Number of\npartitions"), this);
    lbl_buckets->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_buckets->setAlignment(AlignCenter|AlignVCenter);
    lbl_buckets->setMinimumHeight(minHeight1);
    lbl_buckets->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_buckets->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_min = new QLabel(tr("Minimum\nvalue"), this);
+   lbl_min = new QLabel(tr("Minimum\nExperimental\nvalue"), this);
    lbl_min->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_min->setAlignment(AlignCenter|AlignVCenter);
    lbl_min->setMinimumHeight(minHeight1);
    lbl_min->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_max = new QLabel(tr("Maximum\nvalue"), this);
+   lbl_max = new QLabel(tr("Maximum\nExperimental\nvalue"), this);
    lbl_max->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_max->setAlignment(AlignCenter|AlignVCenter);
    lbl_max->setMinimumHeight(minHeight1);
    lbl_max->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_csv_controls = new QLabel(tr("Save to CSV"), this);
+   lbl_csv_controls = new QLabel(tr("Add columns to results"), this);
    lbl_csv_controls->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_csv_controls->setAlignment(AlignCenter|AlignVCenter);
    lbl_csv_controls->setMinimumHeight(minHeight1);
@@ -1062,7 +1062,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    pb_process_csv->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_process_csv, SIGNAL(clicked()), SLOT(process_csv()));
 
-   pb_save_csv = new QPushButton(tr("Save results"), this);
+   pb_save_csv = new QPushButton(tr("Save"), this);
    pb_save_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_save_csv->setMinimumHeight(minHeight1);
    pb_save_csv->setEnabled(false);
@@ -1491,6 +1491,7 @@ void US_Hydrodyn_Comparative::update_enables()
                                ) 
                               );
 
+   pb_save_csv->setEnabled(one_loaded_selected());
 }
 
 void US_Hydrodyn_Comparative::update_lb_loaded_enables()
@@ -2083,7 +2084,7 @@ void US_Hydrodyn_Comparative::save_param()
    QTextStream t( &f );
    t << serialize_comparative_info( *comparative );
    f.close();
-   editor->append(QString(tr("Created saved parameter file: %1\n")).arg(fname));
+   editor->append(QString(tr("Saved parameter file: %1\n")).arg(fname));
 }
 
 void US_Hydrodyn_Comparative::load_csv()
@@ -2142,7 +2143,7 @@ void US_Hydrodyn_Comparative::update_loaded()
          {
             lb_selected->insertStringList(csv_model_names(csvs[lb_loaded->text(i)]));
          } else {
-            editor_msg("red", QString("internal error: could not find %1 csv data").arg(lb_loaded->text(i)));
+            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
          }
       }
    }
@@ -2243,6 +2244,54 @@ void US_Hydrodyn_Comparative::process_csv()
 
 void US_Hydrodyn_Comparative::save_csv()
 {
+   QString use_dir = 
+      comparative->path_csv.isEmpty() ?
+      USglobal->config_list.root_dir + "/" + "somo" :
+      comparative->path_csv;
+
+   QString sel_name = first_loaded_selected();
+   if ( sel_name.isEmpty() )
+   {
+      editor_msg("red", tr("internal error: could not find csv for saving!"));
+      return;
+   }
+   if ( !csvs.count(sel_name) )
+   {
+      editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(sel_name));
+      return;
+   }
+
+   QString use_name = sel_name.isEmpty() ? "*.csv" : sel_name;
+   if ( !use_name.contains(QRegExp(".csv$",false)) )
+   {
+      use_name += ".csv";
+   }
+
+   if ( use_name == QFileInfo(use_name).fileName() )
+   {
+      cout << QString(" use_name <%1> fi <%1>\n").arg(use_name).arg(QFileInfo(use_name).fileName());
+      use_name = use_dir + QDir::separator() + use_name;
+   }
+   cout << "use_name: " << use_name << "\n";
+
+   QString fname = QFileDialog::getSaveFileName(
+                                                use_name,
+                                                "*.csv",
+                                                this,
+                                                "save file dialog",
+                                                tr("Choose a filename to save the parameters") );
+   if ( fname.isEmpty() )
+   {
+      return;
+   }
+   if ( !fname.contains(QRegExp(".csv$",false)) )
+   {
+      fname += ".csv";
+   }
+
+   comparative->path_csv = QFileInfo(fname).dirPath(true);
+
+   csv_write( fname, csvs[sel_name] );
 }
 
 void US_Hydrodyn_Comparative::save()
@@ -2582,6 +2631,37 @@ bool US_Hydrodyn_Comparative::any_loaded_selected()
    return any_selected;
 }
 
+bool US_Hydrodyn_Comparative::one_loaded_selected()
+{
+   int no_selected = 0;
+   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   {
+      if ( lb_loaded->isSelected(i) )
+      {
+         no_selected++;
+         if ( no_selected > 1 )
+         {
+            break;
+         }
+      }
+   }
+   return no_selected == 1;
+}
+
+QString US_Hydrodyn_Comparative::first_loaded_selected()
+{
+   QString qs;
+   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   {
+      if ( lb_loaded->isSelected(i) )
+      {
+         qs = lb_loaded->text(i);
+         break;
+      }
+   }
+   return qs;
+}
+
 bool US_Hydrodyn_Comparative::any_selected_selected()
 {
    bool any_selected = false;
@@ -2594,4 +2674,46 @@ bool US_Hydrodyn_Comparative::any_selected_selected()
       }
    }
    return any_selected;
+}
+
+
+csv US_Hydrodyn_Comparative::csv_process( csv &csv1 )
+{
+   cout << "csv_process\n";
+   return csv1;
+}
+
+void US_Hydrodyn_Comparative::csv_write( QString filename, csv &csv1 )
+{
+   if ( QFile::exists(filename) )
+   {
+      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(filename);
+   }
+
+   QFile f(filename);
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString(tr("Could not open %! for writing!")).arg(filename) );
+      return;
+   }
+   QTextStream t( &f );
+   QString qs;
+   for ( unsigned int i = 0; i < csv1.header.size(); i++ )
+   {
+      qs += QString("%1\"%1\"").arg(i ? "," : "").arg(csv1.header[i]);
+   }
+   t << qs << endl;
+   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   {
+      qs = "";
+      for ( unsigned int j = 0; j < csv1.data[i].size(); j++ )
+      {
+         qs += QString("%1%1").arg(j ? "," : "").arg(csv1.data[i][j]);
+      }
+      t << qs << endl;
+   }
+   f.close();
+   editor->append(QString(tr("Saved csv file: %1\n")).arg(filename));
 }
