@@ -78,6 +78,8 @@ US_Model::US_Model()
 {
    monteCarlo      = false;
    wavelength      = 0.0;
+   variance        = 0.0;
+   meniscus        = 0.0;
    description     = "New Model";
    optics          = ABSORBANCE;
    analysis        = MANUAL;
@@ -95,6 +97,8 @@ bool US_Model::operator== ( const US_Model& m ) const
 {
    if ( monteCarlo      != m.monteCarlo      ) return false;
    if ( wavelength      != m.wavelength      ) return false;
+   if ( variance        != m.variance        ) return false;
+   if ( meniscus        != m.meniscus        ) return false;
    if ( modelGUID       != m.modelGUID       ) return false;
    if ( editGUID        != m.editGUID        ) return false;
    if ( requestGUID     != m.requestGUID     ) return false;
@@ -491,8 +495,12 @@ int US_Model::load_stream( QXmlStreamReader& xml )
             monteCarlo      = ( ! mcst.isEmpty()  &&  mcst != "0" );
             QString iter    = a.value( "iterations"     ).toString();
             monteCarlo      = monteCarlo ? monteCarlo :
-                            ( iter.isEmpty() ? false : ( iter.toInt() > 1 ) );
+                              ( iter.isEmpty() ? false : ( iter.toInt() > 1 ) );
             wavelength      = a.value( "wavelength"     ).toString().toDouble();
+            QString vari    = a.value( "variance"       ).toString();
+            variance        = vari.isEmpty() ? 0.0 : vari.toDouble();
+            QString meni    = a.value( "meniscus"       ).toString();
+            meniscus        = meni.isEmpty() ? 0.0 : vari.toDouble();
             description     = a.value( "description"    ).toString();
             modelGUID       = a.value( "modelGUID"      ).toString();
             editGUID        = a.value( "editGUID"       ).toString();
@@ -672,10 +680,13 @@ int US_Model::write( US_DB2* db )
       db->query( q );
       
       q.clear();
+      QString meni = QString::number( meniscus );
+      QString vari = QString::number( variance );
      
       if ( db->lastErrno() != US_DB2::OK )
       {
-         q << "new_model" << modelGUID << description << contents << editGUID
+         q << "new_model" << modelGUID << description << contents
+           << vari << meni << editGUID
            << QString::number( US_Settings::us_inv_ID() );
          message = QObject::tr( "created" );
       }
@@ -683,7 +694,8 @@ int US_Model::write( US_DB2* db )
       {
          db->next();
          QString id = db->value( 0 ).toString();
-         q << "update_model" << id << description << contents << editGUID;
+         q << "update_model" << id << description << contents
+           << vari << meni << editGUID;
          message = QObject::tr( "updated" );
       }
 
@@ -726,6 +738,10 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
    xml.writeAttribute   ( "modelGUID",   modelGUID   );
    xml.writeAttribute   ( "editGUID",    editGUID    );
    xml.writeAttribute   ( "wavelength",  QString::number( wavelength   ) );
+   if ( variance != 0.0 )
+      xml.writeAttribute( "variance",    QString::number( variance     ) );
+   if ( meniscus != 0.0 )
+      xml.writeAttribute( "meniscus",    QString::number( meniscus     ) );
    xml.writeAttribute   ( "coSedSolute", QString::number( coSedSolute  ) );
    xml.writeAttribute   ( "opticsType",  QString::number( optics       ) );
    xml.writeAttribute   ( "analysisType",QString::number( analysis     ) );
@@ -848,6 +864,8 @@ void US_Model::debug( void )
    qDebug() << "model dump";
    qDebug() << "desc" << description;
    qDebug() << "model guid" << modelGUID;
+   qDebug() << "variance" << variance;
+   qDebug() << "meniscus" << meniscus;
    qDebug() << "edit guid" << editGUID;
    qDebug() << "request guid" << requestGUID;
    qDebug() << "waveln" << wavelength;

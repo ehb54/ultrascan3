@@ -422,6 +422,7 @@ void US_2dsa::save( void )
    int     knois    = min( ti_noise.count, 1 ) 
                     + min( ri_noise.count, 1 );  // noise files per model
    int     nnoises  = nmodels * knois;           // number of noises to save
+   double  meniscus = edata->meniscus;
 
    // Test existence or create needed subdirectories
    if ( ! mkdir( reppath, runID ) )
@@ -495,7 +496,7 @@ DbgLv(1) << "  Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
    {  // loop to output models and noises
       model             = models[ jj ];         // model to output
       QString mdesc     = model.description;    // description from processor
-      double  menisval  = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+      double  variance  = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 )
                           .section( ' ', 0, 0 ).toDouble();
       // create the iteration part of model description:
       // e.g.,"i01" normally; "i03-m60190" for meniscus; "mc017" for monte carlo
@@ -504,8 +505,13 @@ DbgLv(1) << "  Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
 
       if ( montCar )
          iterID.sprintf( "mc%04d", iterNum );
+
       else if ( fitMeni )
-         iterID.sprintf( "i%02d-m%05d", iterNum, qRound( menisval * 10000 ) );
+      {
+         meniscus          = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                             .section( ' ', 0, 0 ).toDouble();
+         iterID.sprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
+      }
 
       // fill in actual model parameters needed for output
       model.description = descbase + iterID + ".model";
@@ -514,6 +520,8 @@ DbgLv(1) << "  Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
       model.editGUID    = edata->editGUID;
       model.requestGUID = reqGUID;
       model.analysis    = US_Model::TWODSA;
+      model.variance    = variance;
+      model.meniscus    = meniscus;
 
       for ( int cc = 0; cc < model.components.size(); cc++ )
          model.components[ cc ].name = QString().sprintf( "A%05i", cc + 1 );

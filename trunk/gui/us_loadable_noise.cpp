@@ -256,7 +256,7 @@ int US_LoadableNoise::id_list_db()
       if ( noiMoIDs.contains( modelID ) )
       {  // Only list models that have associated noise
          QString modGUID = db.value( 1 ).toString();
-         QString editID  = db.value( 3 ).toString();
+         QString editID  = db.value( 5 ).toString();
          modIDs   << modelID;
          modEdIDs << editID;
          mGUIDs   << modGUID;

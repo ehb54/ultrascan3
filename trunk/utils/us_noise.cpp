@@ -161,7 +161,7 @@ int US_Noise::write( US_DB2* db )
       {
          if ( db->value( 0 ).toString() == modelID )
          {
-            editID         = db->value( 4 ).toString();
+            editID         = db->value( 6 ).toString();
             break;
          }
       }

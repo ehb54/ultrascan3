@@ -261,7 +261,7 @@ DbgLv(2) << "BrDb: EDT id" << db->value(0).toString()
    {
       modIDs << db->value( 0 ).toString();
 DbgLv(2) << "BrDb: MOD id" << db->value(0).toString()
- << " edID" << db->value(4).toString() << " edGID" << db->value(3).toString();
+ << " edID" << db->value(6).toString() << " edGID" << db->value(5).toString();
    }
    progress->setValue( ++istep );
 
@@ -426,10 +426,10 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
       QString modelGUID = db->value( 0 ).toString();
       QString descript  = db->value( 1 ).toString();
               contents  = db->value( 2 ).toString();
-      QString date      = US_Util::toUTCDatetimeText( db->value( 4 )
+      QString date      = US_Util::toUTCDatetimeText( db->value( 6 )
                           .toDateTime().toString( Qt::ISODate ), true );
-      QString cksum     = db->value( 5 ).toString();
-      QString recsize   = db->value( 6 ).toString();
+      QString cksum     = db->value( 7 ).toString();
+      QString recsize   = db->value( 8 ).toString();
       QString label     = descript.section( ".", 0, -2 );
 
       if ( label.length() > 40 )
