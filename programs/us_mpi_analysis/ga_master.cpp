@@ -446,6 +446,8 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
    //model.optics      = ???  How to get this?  Is is needed?
    model.analysis    = type;
    model.global      = US_Model::NONE;   // For now.  Will change later.
+   model.meniscus    = meniscus_values[ meniscus_run ];
+   model.variance    = sim.variance;
 
    // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .model
    // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .ri_noise
