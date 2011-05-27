@@ -173,6 +173,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    mainLayout  ->setStretchFactor( bottomLayout, 0 );
 }
 
+// Clear the plot, m-r table text, and other elements
 void US_FitMeniscus::reset( void )
 {
    meniscus_plot->clear();
@@ -184,11 +185,13 @@ void US_FitMeniscus::reset( void )
    le_rms_error ->setText( "" );
 }
 
+// Plot the data
 void US_FitMeniscus::plot_data( int )
 {
    plot_data();
 }
 
+// Plot the data
 void US_FitMeniscus::plot_data( void )
 {
    meniscus_plot->clear();
@@ -455,7 +458,26 @@ void US_FitMeniscus::edit_update( void )
                  tr( "has been modified with the line:\n    " ) + 
                  edtext.mid( mlsx, mlnn );
    
-   QMessageBox::information( this, tr( "Edit File Updated" ), msg );
+   // If using DB, update the edit record there
+
+   if ( dkdb_cntrls->db() )
+   {
+      update_db_edit( edtext, fn, msg );
+   }
+
+   msg += tr( "\n\nDo you want to remove all fit-meniscus models\n"
+              "(and associated noises) except for the one\n"
+              "corresponding to the minimum RMSD value?" );
+
+   int response = QMessageBox::question( this, tr( "Edit File Updated" ),
+         msg, QMessageBox::Yes, QMessageBox::Cancel );
+
+   if ( response == QMessageBox::Yes )
+   {
+qDebug() << " Remove Models";
+      remove_models();
+   }
+else qDebug() << " NO Models removed";
 }
 
 // Slot for handling a loaded file:  set the name of loaded,edit files
@@ -533,10 +555,11 @@ void US_FitMeniscus::scan_dbase()
       double  meniscus   = db.value( 4 ).toString().toDouble();
       QString editGUID   = db.value( 5 ).toString();
       QString editID     = db.value( 6 ).toString();
+      QString ansysID    = descript.section( '.', -2, -2 );
+      QString iterID     = ansysID .section( '_',  6,  6 );
 qDebug() << "DbSc:   modelID vari meni" << modelID << variance << meniscus;
 
-      if ( descript.contains( "2DSA-FM" )  ||
-           descript.contains( "-m6" ) )
+      if ( iterID.length() == 10  &&  iterID.contains( "-m6" ) )
       {  // Model from meniscus fit, so save information
 qDebug() << "DbSc:    *FIT* " << descript;
          modIDs << modelID;
@@ -550,7 +573,6 @@ qDebug() << "DbSc:    *FIT* " << descript;
          // Format and save the potential fit table file name
          QString runID      = descript.section( '.',  0, -4 );
          QString tripleID   = descript.section( '.', -3, -3 );
-         QString ansysID    = descript.section( '.', -2, -2 );
          QString editLabel  = ansysID .section( '_',  0,  0 );
          QString ftfname    = runID + "/2dsa-fm." + editLabel +
                               "-" + tripleID + ".fit.dat";
@@ -581,13 +603,21 @@ qDebug() << "Number of FM models found: " << nfmods;
    }
 
    nfsets     = ufnams.size();
+   int kfsets = nfsets;
    QString rdir = US_Settings::resultDir().replace( "\\", "/" ) + "/";
 qDebug() << "Number of FM analysis sets: " << nfsets;
    QString fnamesv;
 
-   for ( int ii = 0; ii < nfsets; ii++ )
+   for ( int ii = 0; ii < kfsets; ii++ )
    {  // Find out for each set whether a corresponding fit file exists
       QString ftfname    = ufnams.at( ii );
+
+      if ( mfnams.count( ftfname ) == 1 )
+      {  // Not really a set; single fit model after previous fm run
+         nfsets--;
+         continue;
+      }
+
       QString ftfpath    = rdir + ftfname;
       QFile   ftfile( ftfpath );
 
@@ -690,3 +720,33 @@ void US_FitMeniscus::update_disk_db( bool isDB )
    pb_scandb->setEnabled( isDB );
 }
 
+// Update the DB edit record with a new meniscus value
+void US_FitMeniscus::update_db_edit( QString edtext, QString efilepath,
+      QString& msg )
+{
+   int     elnx     = edtext.indexOf( "<editGUID " );
+   int     esvx     = edtext.indexOf( "\"", elnx ) + 1;
+   int     nvch     = edtext.indexOf( "\"", esvx ) - esvx;
+   QString edGUID   = edtext.mid( esvx, nvch );
+qDebug() << "updDbEd: edGUID" << edGUID;
+
+   US_Passwd pw;
+   US_DB2 db( pw.getPasswd() );
+   QStringList query;
+   query << "get_editID" << edGUID;
+   db.query( query );
+   db.next();
+   int     idEdit   = db.value( 0 ).toString().toInt();
+qDebug() << "updDbEd: idEdit" << idEdit;
+   db.writeBlobToDB( efilepath, "upload_editData", idEdit );
+
+   msg += tr( "\n\nThe meniscus value was also updated for the"
+              "\nappropriate edit record in the database." );
+   return;
+}
+
+// Reduce f-m models (and associated noise) to the single chosen one
+void US_FitMeniscus::remove_models()
+{
+   return;
+}

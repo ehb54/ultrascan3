@@ -53,6 +53,8 @@ class US_FitMeniscus : public US_Widgets
       void scan_dbase(     void );
       void file_loaded(    QString );
       void update_disk_db( bool );
+      void update_db_edit( QString, QString, QString& );
+      void remove_models(  void );
 
       void help     ( void )
       { showHelp.show_help( "manual/fit_meniscus.html" ); };
