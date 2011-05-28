@@ -44,8 +44,9 @@
             <keyword id="l2" name="load-colormap" ref="load_colormap.html"/>
             <keyword id="m1" name="manage-data"   ref="manage_data.html"/>
             <keyword id="m2" name="model-editor"  ref="model_editor.html"/>
-            <keyword id="m3" name="model-loader" ref="load_model_distrib.html"/>
+            <keyword id="m3" name="model-loader"  ref="load_model_distrib.html"/>
             <keyword id="m4" name="model-shapes"  ref="predict1.html"/>
+            <keyword id="m5" name="model-shapes2" ref="predict2.html"/>
             <keyword id="n1" name="noise-loader"  ref="load_noise.html"/>
             <keyword id="p1" name="password"      ref="master_pw.html"/>
             <keyword id="p2" name="project"       ref="us_project.html"/>
@@ -219,10 +220,12 @@
             <file>associations.html</file>
             <file>components.html</file>
             <file>predict1.html</file>
+            <file>predict2.html</file>
             <file>images/model_editor.png</file>
             <file>images/associations.png</file>
             <file>images/components.png</file>
             <file>images/predict1.png</file>
+            <file>images/predict2-1.png</file>
 
             <file>data_loader.html</file>
             <file>images/data_loader.png</file>
@@ -246,6 +249,7 @@
 
             <file>us_equiltime.html</file>
             <file>images/us_equiltime.png</file>
+
 
         </files>
     </filterSection>

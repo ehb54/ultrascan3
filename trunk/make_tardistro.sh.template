@@ -118,7 +118,7 @@ cp -d $SSL $BUILD/lib/.
 echo "Stripping debugging symbols..."
 strip $BUILD/bin/*
 strip $BUILD/lib/*
-echo "removing CVS stuff..."
+echo "removing SVN stuff..."
 find $BUILD -name .svn | xargs rm -Rf
 cd $TMP
 tar -cvzf $FILE.tar.gz $FILE
