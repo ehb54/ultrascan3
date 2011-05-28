@@ -686,17 +686,16 @@ void US_Predict2::get_peptide( void )
    }
 
    US_AnalyteGui* dialog = new US_AnalyteGui( true );
-   connect( dialog, SIGNAL( valueChanged( double ) ),
-                    SLOT  ( update_vbar ( double ) ) );
+   connect( dialog, SIGNAL( valueChanged( US_Analyte ) ),
+                    SLOT  ( update_vbar ( US_Analyte ) ) );
    dialog->setWindowTitle( tr( "VBar Calculation" ) );
    dialog->exec();
 }
 
-void US_Predict2::update_vbar( double vbar )
+void US_Predict2::update_vbar( US_Analyte analyte )
 {
-   d.vbar   = vbar;
-
-   le_vbar  ->setText( QString::number( vbar, 'f', 4 ) );
+   d.vbar   = analyte.vbar20;
+   le_vbar  ->setText( QString::number( d.vbar, 'f', 4 ) );
 
    US_Math2::data_correction( temperature, d );
    update();
