@@ -1491,7 +1491,7 @@ void US_Hydrodyn_Comparative::update_enables()
                                ) 
                               );
 
-   pb_save_csv->setEnabled(one_loaded_selected());
+   pb_save_csv->setEnabled(any_selected);
 }
 
 void US_Hydrodyn_Comparative::update_lb_loaded_enables()
@@ -2244,6 +2244,28 @@ void US_Hydrodyn_Comparative::process_csv()
 
 void US_Hydrodyn_Comparative::save_csv()
 {
+   if ( any_loaded_selected() && !one_loaded_selected() )
+   {
+      if ( 
+          QMessageBox::question(
+                                this,
+                                tr("Merge CSV's"),
+                                tr("Multiple CSV are selected and must be merged before saving\n"
+                                   "Did you want to merge them?"),
+                                tr("&Yes"), tr("&No"),
+                                QString::null, 0, 1 ) 
+          ) 
+      {
+         return;
+      }
+      csv_merge_loaded_selected();
+      if ( any_loaded_selected() && !one_loaded_selected() )
+      {
+         editor_msg("red", "oops, csv_merge_loaded_selected didn't work as planned");
+         return;
+      }
+   }
+
    QString use_dir = 
       comparative->path_csv.isEmpty() ?
       USglobal->config_list.root_dir + "/" + "somo" :
@@ -2269,10 +2291,10 @@ void US_Hydrodyn_Comparative::save_csv()
 
    if ( use_name == QFileInfo(use_name).fileName() )
    {
-      cout << QString(" use_name <%1> fi <%1>\n").arg(use_name).arg(QFileInfo(use_name).fileName());
+      // cout << QString(" use_name <%1> fi <%1>\n").arg(use_name).arg(QFileInfo(use_name).fileName());
       use_name = use_dir + QDir::separator() + use_name;
    }
-   cout << "use_name: " << use_name << "\n";
+   // cout << "use_name: " << use_name << "\n";
 
    QString fname = QFileDialog::getSaveFileName(
                                                 use_name,
@@ -2521,7 +2543,13 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
 
    if ( !csv1.header_map.count("Model name") )
    {
-      csv_error = "no \"Model name\" header found in csv";
+      csv_error = tr("no \"Model name\" header found in csv");
+      return csv1;
+   }
+
+   if ( !csv1.data.size() )
+   {
+      csv_error = tr("no data lines found in csv");
       return csv1;
    }
 
@@ -2560,21 +2588,109 @@ QString US_Hydrodyn_Comparative::csv_info( csv &csv1 )
    {
       qs += "  " + QString("%1 %1\n").arg(i).arg(csv1.header[i]);
    }
-
-   qs +=  
-      QString(" data rows: %1\n")
-      .arg(csv1.data.size());
+   qs += " prepended names:\n";
 
    for ( unsigned int i = 0; i < csv1.prepended_names.size(); i++ )
    {
       qs += "  " + csv1.prepended_names[i] + "\n";
    }
+
+   qs +=  
+      QString(" data rows: %1\n")
+      .arg(csv1.data.size());
+
+   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   {
+      qs += QString("  row %1 data columns %1  num_data columns %1\n")
+         .arg(i).arg(csv1.data[i].size()).arg(csv1.num_data[i].size());
+   }
+
    return qs;
 }
       
 csv US_Hydrodyn_Comparative::csv_merge( csv &csv1, csv &csv2 )
 {
+   csv_error = "";
+
    csv csv_merge = csv1;
+   // cout << csv_info(csv1);   
+   // cout << csv_info(csv2);   
+
+   if ( !csv1.data.size() || !csv2.data.size() )
+   {
+      csv_error = tr("internal error: csv_merge called with zero data csv");
+      return csv_merge;
+   }
+
+   if ( !csv_merge.name.contains("+") )
+   {
+      csv_merge.name = QFileInfo(csv_merge.name).baseName(true);
+   }
+   csv_merge.name += "+" + QFileInfo(csv2.name).baseName(true);
+
+
+   // save number of empties that will be needed for csv2's columns that are not present in csv1
+
+   unsigned int empties = csv1.data.size();
+
+   // 1st append all csv2's columns that are present in csv1 as new rows
+
+   // for each row of csv2:
+   for ( unsigned int i = 0; i < csv2.data.size(); i++ )
+   {
+      vector < QString > new_data(csv_merge.header.size());
+      vector < double >  new_num_data(csv_merge.header.size());
+      // not sure if a vector initializes to zeros/blanks
+      for ( unsigned int j = 0; j < new_data.size(); j++ )
+      {
+         new_data[j] = "";
+         new_num_data[j] = 0e0;
+      }
+
+      // now set the values for existing columns
+      for ( unsigned int k = 0; k < csv_merge.header.size(); k++ )
+      {
+         if ( csv2.header_map.count(csv_merge.header[k]) )
+         {
+            unsigned int csv2_col = csv2.header_map[csv_merge.header[k]];
+            new_data[k] = csv2.data[i][csv2_col];
+            new_num_data[k] = csv2.num_data[i][csv2_col];
+         }
+      }
+      csv_merge.data.push_back(new_data);
+      csv_merge.num_data.push_back(new_num_data);
+   }
+
+   // now append all csv2's columns that are not present in csv1
+
+   for ( unsigned int i = 0; i < csv2.header.size(); i++ )
+   {
+      if ( !csv_merge.header_map.count(csv2.header[i]) )
+      {
+         csv_merge.header_map[csv2.header[i]] = csv_merge.header.size();
+         csv_merge.header.push_back(csv2.header[i]);
+         
+         for ( unsigned int j = 0; j < empties; j++ )
+         {
+            csv_merge.data[j].push_back("");
+            csv_merge.num_data[j].push_back(0e0);
+         }
+         
+         for ( unsigned int j = 0; j < csv2.data.size(); j++ )
+         {
+            csv_merge.data[j + empties].push_back(csv2.data[j][i]);
+            csv_merge.num_data[j + empties].push_back(csv2.num_data[j][i]);
+         }
+      }
+   }
+
+   // now add the prepended names
+
+   for ( unsigned int i = 0; i < csv2.prepended_names.size(); i++ )
+   {
+      csv_merge.prepended_names.push_back(csv2.prepended_names[i]);
+   }
+   
    return csv_merge;
 }
 
@@ -2596,8 +2712,6 @@ bool US_Hydrodyn_Comparative::csv_contains( comparative_entry ce, csv &csv1 )
 bool US_Hydrodyn_Comparative::all_selected_csv_contain( comparative_entry ce )
 {
    bool all_contain = true;
-   // cout << QString("all_selected_csv_contain: lb_selected->count() = %1 name %1\n").arg(lb_selected->count())
-   // .arg(ce.name);
 
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
    {
@@ -2605,7 +2719,6 @@ bool US_Hydrodyn_Comparative::all_selected_csv_contain( comparative_entry ce )
       {
          if ( csvs.count(lb_loaded->text(i)) )
          {
-            // cout << QString("checking <%1> for <%1>\n").arg(lb_loaded->text(i)).arg(ce.name);
             if ( !csvs[lb_loaded->text(i)].header_map.count(ce.name) )
             {
                all_contain = false;
@@ -2716,4 +2829,42 @@ void US_Hydrodyn_Comparative::csv_write( QString filename, csv &csv1 )
    }
    f.close();
    editor->append(QString(tr("Saved csv file: %1\n")).arg(filename));
+}
+
+void US_Hydrodyn_Comparative::csv_merge_loaded_selected() 
+{
+   if ( !any_loaded_selected() || one_loaded_selected() )
+   {
+      // nothing to do here
+      return;
+   }
+
+   csv csv_merged = csvs[first_loaded_selected()];
+   bool skip_first = true;
+   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   {
+      if ( !skip_first && lb_loaded->isSelected(i) ) 
+      {
+         if ( !csvs.count(lb_loaded->text(i)) )
+         {
+            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
+            return;
+         }
+         csv_merged = csv_merge(csv_merged, csvs[lb_loaded->text(i)]);
+      }
+
+      if ( skip_first && lb_loaded->isSelected(i) ) 
+      {
+         skip_first = false;
+      }
+   }
+   for ( int i = 0; i < lb_loaded->numRows(); i++ )
+   {
+      lb_loaded->setSelected(i, false);
+   }
+
+   csvs[csv_merged.name] = csv_merged;
+   lb_loaded->insertItem(csv_merged.name);
+   lb_loaded->setSelected(lb_loaded->numRows() - 1, true);
+   lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
 }

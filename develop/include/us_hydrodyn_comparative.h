@@ -281,7 +281,8 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       void                          csv_write( QString filename, csv &csv1 );   // use to save any csv in the loaded 
       csv                           csv_process( csv &csv1 );                   // process selected, then we can add it back to the loaded
       QString                       csv_error;
-      csv                           csv_merge( csv &csv1, csv &csv2 );
+      csv                           csv_merge( csv &csv1, csv &csv2 );          // sets csv_error
+      void                          csv_merge_loaded_selected();   // takes all loaded selected pdbs, merges them and puts it on the loaded list and selects it
       QString                       csv_info( csv &csv1 ); // returns readable summary info (primarily for debugging)
       QStringList                   csv_model_names ( csv &csv1 ); // returns a list of the names (primarily for updating lb_selected)
       bool                          csv_contains( comparative_entry ce, csv &csv1 ); // checks the csv for the column names by the comparative entry
