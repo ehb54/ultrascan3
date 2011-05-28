@@ -252,11 +252,12 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( pb_mandrsb, SIGNAL( clicked() ),
             this,       SLOT(   manDrawSb() ) );
 
-   pb_shrnksb    = us_pushbutton( tr( "Shrink Solute Bins" ) );
-   pb_shrnksb->setEnabled( false );
+   //pb_shrnksb    = us_pushbutton( tr( "Shrink Solute Bins" ) );
+   //pb_shrnksb->setEnabled( false );
    //spec->addWidget( pb_shrnksb, s_row++, 1 );
-   connect( pb_shrnksb, SIGNAL( clicked() ),
-            this,       SLOT(   shrinkSb() ) );
+   //pb_shrnksb->setVisible( false );
+   //connect( pb_shrnksb, SIGNAL( clicked() ),
+   //         this,       SLOT(   shrinkSb() ) );
 
    pb_ckovrlp    = us_pushbutton( tr( "Check for Bin Overlaps" ) );
    pb_ckovrlp->setEnabled( false );
@@ -539,7 +540,7 @@ void US_GA_Initialize::manDrawSb( void )
 // Shrink solute bins
 void US_GA_Initialize::shrinkSb( void )
 {
-   pb_shrnksb->setEnabled( false );
+   //pb_shrnksb->setEnabled( false );
 }
 
 // Check for bin overlaps
@@ -553,6 +554,7 @@ void US_GA_Initialize::checkOverlaps( void )
          tr( "No Bins Overlap" ),
          tr( "No bin overlaps were found, so you\n"
              "may proceed to saving this GA data." ) );
+      pb_save->setEnabled( true );
    }
 
    else
@@ -564,6 +566,7 @@ void US_GA_Initialize::checkOverlaps( void )
          tr( "Bin Overlaps" ),
          msg + tr( "You must correct this condition so that no\n"
                    "bins overlap, before you can save GA data." ) );
+      pb_save->setEnabled( false );
    }
 }
 
