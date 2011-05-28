@@ -500,7 +500,7 @@ int US_Model::load_stream( QXmlStreamReader& xml )
             QString vari    = a.value( "variance"       ).toString();
             variance        = vari.isEmpty() ? 0.0 : vari.toDouble();
             QString meni    = a.value( "meniscus"       ).toString();
-            meniscus        = meni.isEmpty() ? 0.0 : vari.toDouble();
+            meniscus        = meni.isEmpty() ? 0.0 : meni.toDouble();
             description     = a.value( "description"    ).toString();
             modelGUID       = a.value( "modelGUID"      ).toString();
             editGUID        = a.value( "editGUID"       ).toString();
