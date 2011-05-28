@@ -2594,6 +2594,25 @@ void US_Hydrodyn_Comparative::save_csv()
       {
          return;
       }
+      if ( !csv_premerge_column_warning_all_loaded_selected() )
+      {
+         if (
+             QMessageBox::warning(
+                                  this,
+                                  tr("Merge CSV's"),
+                                  tr("The CSVs do not all have the same column names.\n"
+                                     "This will create additional columns with blank\n"
+                                     "entries for rows from CSVs without those columns.\n"
+                                     "This will effect statistics computed on these extra columns.\n"
+                                     "Did you still want to merge them?"),
+                                  tr("&Yes"), tr("&No"),
+                                  QString::null, 0, 1 ) 
+             ) 
+         {
+            return;
+         }
+      }
+         
       csv_merge_loaded_selected();
       if ( any_loaded_selected() && !one_loaded_selected() )
       {
@@ -3202,6 +3221,12 @@ void US_Hydrodyn_Comparative::csv_merge_loaded_selected()
 
    disable_updates();
 
+   if ( !csvs.count(first_loaded_selected()) )
+   {
+      editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(first_loaded_selected()));
+      return;
+   }
+   
    csv csv_merged = csvs[first_loaded_selected()];
    bool skip_first = true;
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
@@ -3479,4 +3504,71 @@ QStringList US_Hydrodyn_Comparative::csv_parse_line( QString qs )
    }
    // cout << QString("csv_parse_line results:\n<%1>\n").arg(qsl.join(">\n<"));
    return qsl;
+}
+
+bool US_Hydrodyn_Comparative::csv_premerge_column_warning( csv &csv1, csv &csv2 )
+{
+   bool is_ok = true;
+   for ( unsigned int i = 0; i < csv1.header.size(); i++ )
+   {
+      if ( !csv2.header_map.count(csv1.header[i] ) )
+      {
+         is_ok = false;
+         break;
+      }
+   }
+
+   if ( is_ok )
+   {
+      for ( unsigned int i = 0; i < csv2.header.size(); i++ )
+      {
+         if ( !csv1.header_map.count(csv2.header[i] ) )
+         {
+            is_ok = false;
+            break;
+         }
+      }
+   }
+   
+   return is_ok;
+}
+
+bool US_Hydrodyn_Comparative::csv_premerge_column_warning_all_loaded_selected()
+{
+   if ( !any_loaded_selected() || one_loaded_selected() )
+   {
+      // nothing to do here
+      return true;
+   }
+
+   if ( !csvs.count(first_loaded_selected()) )
+   {
+      editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(first_loaded_selected()));
+      return true;
+   }
+      
+   csv *csv_ref = &csvs[first_loaded_selected()];
+   bool skip_first = true;
+
+   for ( unsigned int i = 1; i < lb_loaded->count(); i++ )
+   {
+      if ( !skip_first && lb_loaded->isSelected(i) ) 
+      {
+         if ( !csvs.count(lb_loaded->text(i)) )
+         {
+            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
+            return true;
+         }
+         if ( !csv_premerge_column_warning(*csv_ref, csvs[lb_loaded->text(i)]) )
+         {
+            return false;
+         }
+      }
+
+      if ( skip_first && lb_loaded->isSelected(i) ) 
+      {
+         skip_first = false;
+      }
+   }
+   return true;
 }

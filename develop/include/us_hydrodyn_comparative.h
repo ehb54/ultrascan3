@@ -327,6 +327,9 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       bool                          any_selected_selected();
       bool                          any_params_enabled();
 
+      bool                          csv_premerge_column_warning( csv &csv1, csv &csv2 );
+      bool                          csv_premerge_column_warning_all_loaded_selected();
+
    private slots:
       
       void setupGUI();
