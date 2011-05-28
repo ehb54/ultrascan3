@@ -7,6 +7,7 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_math2.h"
+#include "us_analyte.h"
 
 class US_Predict2 : public US_Widgets
 {
@@ -80,7 +81,7 @@ class US_Predict2 : public US_Widgets
       void get_buffer   ( void );
       void get_peptide  ( void );
       void update_buffer( double, double );
-      void update_vbar  ( double );
+      void update_vbar  ( US_Analyte );
 
 		void help         ( void )
       { showHelp.show_help("manual/predict2.html"); };
