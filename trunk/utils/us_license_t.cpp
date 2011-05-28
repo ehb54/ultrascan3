@@ -121,19 +121,36 @@ QString US_License_t::encode( const QString& str1, const QString& str2 )
   int sum1 = 0;
   int sum2 = 0;
 
-  QString STR1 = str1.toUpper();
-  QString STR2 = str2.toUpper();
+  const static QString lower = "abcdefghijklmnopqrstuvwxyz";
+  const static QString upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+  //QString STR1 = str1.toUpper();
+  //QString STR2 = str2.toUpper();
+  QString STR1 = str1;
+  QString STR2 = str2;
 
   for ( int i = 0; i < STR1.length(); i++ )
   {
-    QChar c  = STR1.at( i );
-    sum1    += c.unicode();
+    QChar c = STR1.at( i );
+
+    // Make upper case for ascii only
+    int   index = lower.indexOf( c );
+    if ( index >= 0 ) 
+       c = upper.at( index );
+
+    sum1 += c.unicode();
   }
 
   for ( int i = 0; i < STR2.length(); i++ )
   {
-    QChar c  = STR2.at( i );
-    sum2    += c.unicode();
+    QChar c = STR2.at( i );
+
+    // Make upper case for ascii only
+    int   index = lower.indexOf( c );
+    if ( index >= 0 ) 
+       c = upper.at( index );
+
+    sum2 += c.unicode();
   }
 
   QString SUM = QString::number( sum1 ) + QString::number( sum2 );
@@ -141,6 +158,7 @@ QString US_License_t::encode( const QString& str1, const QString& str2 )
   int x = int( fabs( sin( SUM.toFloat() ) ) * 65535 );
 
   QString code;
+  code = code.sprintf( "000%X", x ).right( 4 );
 
-  return code.sprintf( "000%X", x ).right( 4 );
+  return code;
 }
