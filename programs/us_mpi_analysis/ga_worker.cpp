@@ -1,9 +1,10 @@
 #include "us_mpi_analysis.h"
 #include "us_math2.h"
 
+QDateTime elapsed = QDateTime::currentDateTime();
+
 void US_MPI_Analysis::ga_worker( void )
 {
-   QDateTime time                = QDateTime::currentDateTime();
    current_dataset     = 0;
    datasets_to_process = 1;
 
@@ -34,7 +35,7 @@ void US_MPI_Analysis::ga_worker( void )
       ga_worker_loop();
 
 qDebug() << "Worker send finish message" << my_rank 
-         << time.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
+         << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
 
       MPI_Send( &msg,           // This iteration is finished
                 sizeof( msg ),  // to MPI #1
@@ -60,6 +61,7 @@ qDebug() << "Worker send finish message" << my_rank
       {
          case FINISHED: 
             finished = true;
+qDebug() << "Worker fitness hits" << my_rank << fitness_hits;
             break;
 
          case UPDATE:   
@@ -150,23 +152,42 @@ void US_MPI_Analysis::ga_worker_loop( void )
    int p_crossover = p_mutate + crossover;
    int p_plague    = p_crossover + plague;
 
+   fitness_map.clear();
+   fitness_hits = 0;
+
    QDateTime  start = QDateTime::currentDateTime();
    MPI_GA_MSG msg;
 
+////////////DEBUG
+generations = 10;
+
    for ( generation = 0; generation < generations; generation++ )
    {
+qDebug() << "Worker start generation/rank/elapsed" << generation << my_rank 
+         << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
       // Calculate fitness
       for ( int i = 0; i < population; i++ )
       {
          fitness[ i ].index   = i;
          fitness[ i ].fitness = get_fitness( genes[ i ] );
       }
+
       // Sort fitness
       qSort( fitness );
 
-      // Refine with gradient search method (gsm)
-      fitness[ 0 ].fitness = minimize( genes[ fitness[ 0 ].index ], 
-                                       fitness[ 0 ].fitness );
+      // Refine with gradient search method (gsm) on last generation
+      if ( generation == generations - 1 )
+      {
+
+qDebug() << "Worker before gsm generation/rank/elapsed" << generation << my_rank 
+         << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
+
+         fitness[ 0 ].fitness = minimize( genes[ fitness[ 0 ].index ], 
+                                          fitness[ 0 ].fitness );
+      }
+
+//qDebug() << "Worker after gsm generation/rank/elapsed" << generation << my_rank 
+//         << elapsed.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
 
       // Ensure gene is on grid
       align_gene( genes[ fitness[ 0 ].index ] );
@@ -309,6 +330,20 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    Simulation sim;
    sim.solutes = gene;
 
+   QString key = "";
+   QString str;
+
+   for ( int s = 0; s < gene.size(); s++ )
+   {
+      key += str.sprintf( "%.5f%.5f", sim.solutes[ s ].s,  sim.solutes[ s ].k );
+   }
+
+   if ( fitness_map.contains( key ) )
+   {
+      fitness_hits++;
+      return fitness_map.value( key );
+   }
+
    for ( int s = 0; s < gene.size(); s++ ) 
       sim.solutes[ s ].s *= 1.0e-13;
 
@@ -323,6 +358,7 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    }
 
    fitness *= ( 1.0 + sq( regularization * solute_count ) );
+   fitness_map.insert( key, fitness ); 
 
    return fitness;
 }

@@ -244,6 +244,8 @@ class US_MPI_Analysis : public QObject
     QList< Gene >             genes;
     QList< Gene >             best_genes;   // Size is number of processors
     QList< Simulation >       sim_values;
+    QMap < QString, double >  fitness_map;
+    int                       fitness_hits;
 
     class Fitness
     {
