@@ -22,6 +22,7 @@ US_Hydrodyn_Comparative::US_Hydrodyn_Comparative(
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("Model classifier"));
+   updates_enabled = true;
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -1094,6 +1095,13 @@ void US_Hydrodyn_Comparative::setupGUI()
    pb_loaded_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_loaded_select_all, SIGNAL(clicked()), SLOT(loaded_select_all()));
 
+   pb_loaded_set_ranges = new QPushButton(tr("Set exp. min/max"), this);
+   pb_loaded_set_ranges->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_loaded_set_ranges->setMinimumHeight(minHeight1);
+   pb_loaded_set_ranges->setEnabled(false);
+   pb_loaded_set_ranges->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_loaded_set_ranges, SIGNAL(clicked()), SLOT(loaded_set_ranges()));
+
    pb_loaded_remove = new QPushButton(tr("Remove"), this);
    pb_loaded_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_loaded_remove->setMinimumHeight(minHeight1);
@@ -1125,6 +1133,13 @@ void US_Hydrodyn_Comparative::setupGUI()
    pb_selected_select_all->setEnabled(false);
    pb_selected_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_selected_select_all, SIGNAL(clicked()), SLOT(selected_select_all()));
+
+   pb_selected_set_ranges = new QPushButton(tr("Set exp. min/max"),this);
+   pb_selected_set_ranges->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_selected_set_ranges->setMinimumHeight(minHeight1);
+   pb_selected_set_ranges->setEnabled(false);
+   pb_selected_set_ranges->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_selected_set_ranges, SIGNAL(clicked()), SLOT(selected_set_ranges()));
 
    pb_selected_remove = new QPushButton(tr("Remove"), this);
    pb_selected_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -1313,6 +1328,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    gl_loaded_selected_editor->addMultiCellWidget(lb_loaded, 0, 1, 0, 0);
    QBoxLayout *hbl_loaded_buttons = new QHBoxLayout(0);
    hbl_loaded_buttons->addWidget(pb_loaded_select_all);
+   hbl_loaded_buttons->addWidget(pb_loaded_set_ranges);
    hbl_loaded_buttons->addWidget(pb_loaded_remove);
    gl_loaded_selected_editor->addLayout(hbl_loaded_buttons, 2, 0);
 
@@ -1320,6 +1336,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    gl_loaded_selected_editor->addMultiCellWidget(lb_selected, 0, 1, 1, 1);
    QBoxLayout *hbl_selected_buttons = new QHBoxLayout(0);
    hbl_selected_buttons->addWidget(pb_selected_select_all);
+   hbl_selected_buttons->addWidget(pb_selected_set_ranges);
    hbl_selected_buttons->addWidget(pb_selected_remove);
    gl_loaded_selected_editor->addLayout(hbl_selected_buttons, 2, 1);
 
@@ -1360,166 +1377,309 @@ void US_Hydrodyn_Comparative::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Comparative::update_enables()
 {
-   cout << "update_enables\n";
-   bool any_selected = any_loaded_selected();
-
-   bool enable_s = 
-      !any_selected || all_selected_csv_contain( comparative->ce_s );
-
-   //   cout << QString(
-   //                   "update enables:\n"
-   //                   " enable_s = %1\n"
-   //                   " any_selected = %1\n"
-   //                   " all_selected_csv_contain = %1\n"
-   //                   )
-   //      .arg(enable_s ? "true" : "false")
-   //      .arg(any_selected ? "true" : "false")
-   //      .arg(all_selected_csv_contain( comparative->ce_s ) ? "true" : "false");
-
-   cb_active_s->setEnabled(enable_s);
-   le_target_s->setEnabled(enable_s && cb_active_s->isChecked());
-   le_rank_s->setEnabled(enable_s && cb_active_s->isChecked() && cb_rank->isChecked());
-   cb_include_in_weight_s->setEnabled(enable_s && cb_active_s->isChecked() && cb_weight_controls->isChecked());
-   le_weight_s->setEnabled(enable_s && cb_active_s->isChecked() && cb_weight_controls->isChecked());
-   le_buckets_s->setEnabled(enable_s && cb_active_s->isChecked());
-   le_min_s->setEnabled(enable_s && cb_active_s->isChecked() && comparative->ce_s.buckets);
-   le_max_s->setEnabled(enable_s && cb_active_s->isChecked() && comparative->ce_s.buckets);
-   cb_store_reference_s->setEnabled(enable_s && cb_active_s->isChecked());
-   cb_store_diff_s->setEnabled(enable_s && cb_active_s->isChecked());
-   cb_store_abs_diff_s->setEnabled(enable_s && cb_active_s->isChecked());
-
-   bool enable_D = 
-      !any_selected || all_selected_csv_contain( comparative->ce_D );
-
-   cb_active_D->setEnabled(enable_D);
-   le_target_D->setEnabled(enable_D && cb_active_D->isChecked());
-   le_rank_D->setEnabled(enable_D && cb_active_D->isChecked() && cb_rank->isChecked());
-   cb_include_in_weight_D->setEnabled(enable_D && cb_active_D->isChecked() && cb_weight_controls->isChecked());
-   le_weight_D->setEnabled(enable_D && cb_active_D->isChecked() && cb_weight_controls->isChecked());
-   le_buckets_D->setEnabled(enable_D && cb_active_D->isChecked());
-   le_min_D->setEnabled(enable_D && cb_active_D->isChecked() && comparative->ce_D.buckets);
-   le_max_D->setEnabled(enable_D && cb_active_D->isChecked() && comparative->ce_D.buckets);
-   cb_store_reference_D->setEnabled(enable_D && cb_active_D->isChecked());
-   cb_store_diff_D->setEnabled(enable_D && cb_active_D->isChecked());
-   cb_store_abs_diff_D->setEnabled(enable_D && cb_active_D->isChecked());
-
-   bool enable_sr = 
-      !any_selected || all_selected_csv_contain( comparative->ce_sr );
-
-   cb_active_sr->setEnabled(enable_sr);
-   le_target_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
-   le_rank_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && cb_rank->isChecked());
-   cb_include_in_weight_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && cb_weight_controls->isChecked());
-   le_weight_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && cb_weight_controls->isChecked());
-   le_buckets_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
-   le_min_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && comparative->ce_sr.buckets);
-   le_max_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && comparative->ce_sr.buckets);
-   cb_store_reference_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
-   cb_store_diff_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
-   cb_store_abs_diff_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
-
-   bool enable_fr = 
-      !any_selected || all_selected_csv_contain( comparative->ce_fr );
-
-   cb_active_fr->setEnabled(enable_fr);
-   le_target_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
-   le_rank_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && cb_rank->isChecked());
-   cb_include_in_weight_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && cb_weight_controls->isChecked());
-   le_weight_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && cb_weight_controls->isChecked());
-   le_buckets_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
-   le_min_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && comparative->ce_fr.buckets);
-   le_max_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && comparative->ce_fr.buckets);
-   cb_store_reference_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
-   cb_store_diff_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
-   cb_store_abs_diff_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
-
-   bool enable_rg = 
-      !any_selected || all_selected_csv_contain( comparative->ce_rg );
-
-   cb_active_rg->setEnabled(enable_rg);
-   le_target_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
-   le_rank_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && cb_rank->isChecked());
-   cb_include_in_weight_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && cb_weight_controls->isChecked());
-   le_weight_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && cb_weight_controls->isChecked());
-   le_buckets_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
-   le_min_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && comparative->ce_rg.buckets);
-   le_max_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && comparative->ce_rg.buckets);
-   cb_store_reference_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
-   cb_store_diff_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
-   cb_store_abs_diff_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
-
-   bool enable_tau = 
-      !any_selected || all_selected_csv_contain( comparative->ce_tau );
-
-   cb_active_tau->setEnabled(enable_tau);
-   le_target_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
-   le_rank_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && cb_rank->isChecked());
-   cb_include_in_weight_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && cb_weight_controls->isChecked());
-   le_weight_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && cb_weight_controls->isChecked());
-   le_buckets_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
-   le_min_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && comparative->ce_tau.buckets);
-   le_max_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && comparative->ce_tau.buckets);
-   cb_store_reference_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
-   cb_store_diff_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
-   cb_store_abs_diff_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
-
-   bool enable_eta = 
-      !any_selected || all_selected_csv_contain( comparative->ce_eta );
-
-   cb_active_eta->setEnabled(enable_eta);
-   le_target_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
-   le_rank_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && cb_rank->isChecked());
-   cb_include_in_weight_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && cb_weight_controls->isChecked());
-   le_weight_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && cb_weight_controls->isChecked());
-   le_buckets_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
-   le_min_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && comparative->ce_eta.buckets);
-   le_max_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && comparative->ce_eta.buckets);
-   cb_store_reference_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
-   cb_store_diff_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
-   cb_store_abs_diff_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
-
-   pb_process_csv->setEnabled(
-                              any_selected_selected() &&
-                              ( 
-                               ( cb_active_s->isEnabled() && cb_active_s->isChecked() ) ||
-                               ( cb_active_D->isEnabled() && cb_active_D->isChecked() ) ||
-                               ( cb_active_sr->isEnabled() && cb_active_sr->isChecked() ) ||
-                               ( cb_active_fr->isEnabled() && cb_active_fr->isChecked() ) ||
-                               ( cb_active_rg->isEnabled() && cb_active_rg->isChecked() ) ||
-                               ( cb_active_tau->isEnabled() && cb_active_tau->isChecked() ) ||
-                               ( cb_active_eta->isEnabled() && cb_active_eta->isChecked() ) 
-                               ) 
-                              );
-
-   pb_save_csv->setEnabled(any_selected);
+   if ( updates_enabled )
+   {
+      cout << "update_enables\n";
+      bool any_selected = any_loaded_selected();
+      
+      bool enable_s = 
+         !any_selected || all_selected_csv_contain( comparative->ce_s );
+      
+      //   cout << QString(
+      //                   "update enables:\n"
+      //                   " enable_s = %1\n"
+      //                   " any_selected = %1\n"
+      //                   " all_selected_csv_contain = %1\n"
+      //                   )
+      //      .arg(enable_s ? "true" : "false")
+      //      .arg(any_selected ? "true" : "false")
+      //      .arg(all_selected_csv_contain( comparative->ce_s ) ? "true" : "false");
+      
+      cb_active_s->setEnabled(enable_s);
+      le_target_s->setEnabled(enable_s && cb_active_s->isChecked());
+      le_rank_s->setEnabled(enable_s && cb_active_s->isChecked() && cb_rank->isChecked());
+      cb_include_in_weight_s->setEnabled(enable_s && cb_active_s->isChecked() && cb_weight_controls->isChecked());
+      le_weight_s->setEnabled(enable_s && cb_active_s->isChecked() && cb_weight_controls->isChecked());
+      le_buckets_s->setEnabled(enable_s && cb_active_s->isChecked());
+      le_min_s->setEnabled(enable_s && cb_active_s->isChecked() && comparative->ce_s.buckets);
+      le_max_s->setEnabled(enable_s && cb_active_s->isChecked() && comparative->ce_s.buckets);
+      cb_store_reference_s->setEnabled(enable_s && cb_active_s->isChecked());
+      cb_store_diff_s->setEnabled(enable_s && cb_active_s->isChecked());
+      cb_store_abs_diff_s->setEnabled(enable_s && cb_active_s->isChecked());
+      
+      bool enable_D = 
+         !any_selected || all_selected_csv_contain( comparative->ce_D );
+      
+      cb_active_D->setEnabled(enable_D);
+      le_target_D->setEnabled(enable_D && cb_active_D->isChecked());
+      le_rank_D->setEnabled(enable_D && cb_active_D->isChecked() && cb_rank->isChecked());
+      cb_include_in_weight_D->setEnabled(enable_D && cb_active_D->isChecked() && cb_weight_controls->isChecked());
+      le_weight_D->setEnabled(enable_D && cb_active_D->isChecked() && cb_weight_controls->isChecked());
+      le_buckets_D->setEnabled(enable_D && cb_active_D->isChecked());
+      le_min_D->setEnabled(enable_D && cb_active_D->isChecked() && comparative->ce_D.buckets);
+      le_max_D->setEnabled(enable_D && cb_active_D->isChecked() && comparative->ce_D.buckets);
+      cb_store_reference_D->setEnabled(enable_D && cb_active_D->isChecked());
+      cb_store_diff_D->setEnabled(enable_D && cb_active_D->isChecked());
+      cb_store_abs_diff_D->setEnabled(enable_D && cb_active_D->isChecked());
+      
+      bool enable_sr = 
+         !any_selected || all_selected_csv_contain( comparative->ce_sr );
+      
+      cb_active_sr->setEnabled(enable_sr);
+      le_target_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
+      le_rank_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && cb_rank->isChecked());
+      cb_include_in_weight_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && cb_weight_controls->isChecked());
+      le_weight_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && cb_weight_controls->isChecked());
+      le_buckets_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
+      le_min_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && comparative->ce_sr.buckets);
+      le_max_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && comparative->ce_sr.buckets);
+      cb_store_reference_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
+      cb_store_diff_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
+      cb_store_abs_diff_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
+      
+      bool enable_fr = 
+         !any_selected || all_selected_csv_contain( comparative->ce_fr );
+      
+      cb_active_fr->setEnabled(enable_fr);
+      le_target_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
+      le_rank_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && cb_rank->isChecked());
+      cb_include_in_weight_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && cb_weight_controls->isChecked());
+      le_weight_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && cb_weight_controls->isChecked());
+      le_buckets_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
+      le_min_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && comparative->ce_fr.buckets);
+      le_max_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && comparative->ce_fr.buckets);
+      cb_store_reference_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
+      cb_store_diff_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
+      cb_store_abs_diff_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
+      
+      bool enable_rg = 
+         !any_selected || all_selected_csv_contain( comparative->ce_rg );
+      
+      cb_active_rg->setEnabled(enable_rg);
+      le_target_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
+      le_rank_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && cb_rank->isChecked());
+      cb_include_in_weight_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && cb_weight_controls->isChecked());
+      le_weight_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && cb_weight_controls->isChecked());
+      le_buckets_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
+      le_min_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && comparative->ce_rg.buckets);
+      le_max_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && comparative->ce_rg.buckets);
+      cb_store_reference_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
+      cb_store_diff_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
+      cb_store_abs_diff_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
+      
+      bool enable_tau = 
+         !any_selected || all_selected_csv_contain( comparative->ce_tau );
+      
+      cb_active_tau->setEnabled(enable_tau);
+      le_target_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
+      le_rank_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && cb_rank->isChecked());
+      cb_include_in_weight_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && cb_weight_controls->isChecked());
+      le_weight_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && cb_weight_controls->isChecked());
+      le_buckets_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
+      le_min_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && comparative->ce_tau.buckets);
+      le_max_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && comparative->ce_tau.buckets);
+      cb_store_reference_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
+      cb_store_diff_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
+      cb_store_abs_diff_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
+      
+      bool enable_eta = 
+         !any_selected || all_selected_csv_contain( comparative->ce_eta );
+      
+      cb_active_eta->setEnabled(enable_eta);
+      le_target_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
+      le_rank_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && cb_rank->isChecked());
+      cb_include_in_weight_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && cb_weight_controls->isChecked());
+      le_weight_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && cb_weight_controls->isChecked());
+      le_buckets_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
+      le_min_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && comparative->ce_eta.buckets);
+      le_max_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && comparative->ce_eta.buckets);
+      cb_store_reference_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
+      cb_store_diff_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
+      cb_store_abs_diff_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
+      
+      pb_process_csv->setEnabled(
+                                 any_selected_selected() &&
+                                 ( 
+                                  ( cb_active_s->isEnabled() && cb_active_s->isChecked() ) ||
+                                  ( cb_active_D->isEnabled() && cb_active_D->isChecked() ) ||
+                                  ( cb_active_sr->isEnabled() && cb_active_sr->isChecked() ) ||
+                                  ( cb_active_fr->isEnabled() && cb_active_fr->isChecked() ) ||
+                                  ( cb_active_rg->isEnabled() && cb_active_rg->isChecked() ) ||
+                                  ( cb_active_tau->isEnabled() && cb_active_tau->isChecked() ) ||
+                                  ( cb_active_eta->isEnabled() && cb_active_eta->isChecked() ) 
+                                  ) 
+                                 );
+      
+      pb_save_csv->setEnabled(any_selected);
+   }
 }
 
 void US_Hydrodyn_Comparative::update_lb_loaded_enables()
 {
-   cout << "update_lb_loaded_enables\n";
-   pb_loaded_select_all->setEnabled(lb_loaded->count());
-   bool any_selected = any_loaded_selected();
-   pb_loaded_remove->setEnabled(any_selected);
+   if ( updates_enabled )
+   {
+      cout << "update_lb_loaded_enables\n";
+      pb_loaded_select_all->setEnabled(lb_loaded->count());
+      bool any_selected = any_loaded_selected();
+      pb_loaded_set_ranges->setEnabled(any_selected && any_params_enabled());
+      pb_loaded_remove->setEnabled(any_selected);
+   }
 }
       
 void US_Hydrodyn_Comparative::update_lb_selected_enables()
 {
-   cout << "update_lb_selected_enables\n";
-   pb_selected_select_all->setEnabled(lb_selected->count());
-   bool any_selected = any_selected_selected();
-   pb_selected_remove->setEnabled(any_selected);
-   pb_process_csv->setEnabled(
-                              any_selected &&
-                              ( 
-                               ( cb_active_s->isEnabled() && cb_active_s->isChecked() ) ||
-                               ( cb_active_D->isEnabled() && cb_active_D->isChecked() ) ||
-                               ( cb_active_sr->isEnabled() && cb_active_sr->isChecked() ) ||
-                               ( cb_active_fr->isEnabled() && cb_active_fr->isChecked() ) ||
-                               ( cb_active_rg->isEnabled() && cb_active_rg->isChecked() ) ||
-                               ( cb_active_tau->isEnabled() && cb_active_tau->isChecked() ) ||
-                               ( cb_active_eta->isEnabled() && cb_active_eta->isChecked() ) 
-                               )
-                              );
+   if ( updates_enabled )
+   {
+      cout << "update_lb_selected_enables\n";
+      pb_selected_select_all->setEnabled(lb_selected->count());
+      bool any_selected = any_selected_selected();
+      pb_selected_set_ranges->setEnabled(any_selected && any_params_enabled());
+      pb_selected_remove->setEnabled(any_selected);
+      pb_process_csv->setEnabled(
+                                 any_selected &&
+                                 ( 
+                                  ( cb_active_s->isEnabled() && cb_active_s->isChecked() ) ||
+                                  ( cb_active_D->isEnabled() && cb_active_D->isChecked() ) ||
+                                  ( cb_active_sr->isEnabled() && cb_active_sr->isChecked() ) ||
+                                  ( cb_active_fr->isEnabled() && cb_active_fr->isChecked() ) ||
+                                  ( cb_active_rg->isEnabled() && cb_active_rg->isChecked() ) ||
+                                  ( cb_active_tau->isEnabled() && cb_active_tau->isChecked() ) ||
+                                  ( cb_active_eta->isEnabled() && cb_active_eta->isChecked() ) 
+                                  )
+                                 );
+   }
+}
+
+void US_Hydrodyn_Comparative::disable_updates()
+{
+   updates_enabled = false;
+
+   // extra disables (be sure to enable these in enable_updates())
+   lb_loaded->setEnabled(false);
+   lb_selected->setEnabled(false);
+   pb_load_param->setEnabled(false);
+   pb_reset_param->setEnabled(false);
+   pb_save_param->setEnabled(false);
+   pb_load_csv->setEnabled(false);
+   pb_process_csv->setEnabled(false);
+   pb_save_csv->setEnabled(false);
+
+   // standard list for update_lb_loaded_enables()
+   pb_loaded_select_all->setEnabled(false);
+   pb_loaded_set_ranges->setEnabled(false);
+   pb_loaded_remove->setEnabled(false);
+
+   // standard list for update_lb_selected_enables()
+   pb_selected_select_all->setEnabled(false);
+   pb_selected_set_ranges->setEnabled(false);
+   pb_selected_remove->setEnabled(false);
+
+   // standard list from update_enables():
+
+   cb_active_s->setEnabled(false);
+   le_target_s->setEnabled(false);
+   le_rank_s->setEnabled(false);
+   cb_include_in_weight_s->setEnabled(false);
+   le_weight_s->setEnabled(false);
+   le_buckets_s->setEnabled(false);
+   le_min_s->setEnabled(false);
+   le_max_s->setEnabled(false);
+   cb_store_reference_s->setEnabled(false);
+   cb_store_diff_s->setEnabled(false);
+   cb_store_abs_diff_s->setEnabled(false);
+      
+   cb_active_D->setEnabled(false);
+   le_target_D->setEnabled(false);
+   le_rank_D->setEnabled(false);
+   cb_include_in_weight_D->setEnabled(false);
+   le_weight_D->setEnabled(false);
+   le_buckets_D->setEnabled(false);
+   le_min_D->setEnabled(false);
+   le_max_D->setEnabled(false);
+   cb_store_reference_D->setEnabled(false);
+   cb_store_diff_D->setEnabled(false);
+   cb_store_abs_diff_D->setEnabled(false);
+      
+   cb_active_sr->setEnabled(false);
+   le_target_sr->setEnabled(false);
+   le_rank_sr->setEnabled(false);
+   cb_include_in_weight_sr->setEnabled(false);
+   le_weight_sr->setEnabled(false);
+   le_buckets_sr->setEnabled(false);
+   le_min_sr->setEnabled(false);
+   le_max_sr->setEnabled(false);
+   cb_store_reference_sr->setEnabled(false);
+   cb_store_diff_sr->setEnabled(false);
+   cb_store_abs_diff_sr->setEnabled(false);
+      
+   cb_active_fr->setEnabled(false);
+   le_target_fr->setEnabled(false);
+   le_rank_fr->setEnabled(false);
+   cb_include_in_weight_fr->setEnabled(false);
+   le_weight_fr->setEnabled(false);
+   le_buckets_fr->setEnabled(false);
+   le_min_fr->setEnabled(false);
+   le_max_fr->setEnabled(false);
+   cb_store_reference_fr->setEnabled(false);
+   cb_store_diff_fr->setEnabled(false);
+   cb_store_abs_diff_fr->setEnabled(false);
+      
+   cb_active_rg->setEnabled(false);
+   le_target_rg->setEnabled(false);
+   le_rank_rg->setEnabled(false);
+   cb_include_in_weight_rg->setEnabled(false);
+   le_weight_rg->setEnabled(false);
+   le_buckets_rg->setEnabled(false);
+   le_min_rg->setEnabled(false);
+   le_max_rg->setEnabled(false);
+   cb_store_reference_rg->setEnabled(false);
+   cb_store_diff_rg->setEnabled(false);
+   cb_store_abs_diff_rg->setEnabled(false);
+      
+   cb_active_tau->setEnabled(false);
+   le_target_tau->setEnabled(false);
+   le_rank_tau->setEnabled(false);
+   cb_include_in_weight_tau->setEnabled(false);
+   le_weight_tau->setEnabled(false);
+   le_buckets_tau->setEnabled(false);
+   le_min_tau->setEnabled(false);
+   le_max_tau->setEnabled(false);
+   cb_store_reference_tau->setEnabled(false);
+   cb_store_diff_tau->setEnabled(false);
+   cb_store_abs_diff_tau->setEnabled(false);
+      
+   cb_active_eta->setEnabled(false);
+   le_target_eta->setEnabled(false);
+   le_rank_eta->setEnabled(false);
+   cb_include_in_weight_eta->setEnabled(false);
+   le_weight_eta->setEnabled(false);
+   le_buckets_eta->setEnabled(false);
+   le_min_eta->setEnabled(false);
+   le_max_eta->setEnabled(false);
+   cb_store_reference_eta->setEnabled(false);
+   cb_store_diff_eta->setEnabled(false);
+   cb_store_abs_diff_eta->setEnabled(false);
+      
+   pb_process_csv->setEnabled(false);
+   pb_save_csv->setEnabled(false);
+}
+
+void US_Hydrodyn_Comparative::enable_updates()
+{
+   updates_enabled = true;
+
+   lb_loaded->setEnabled(true);
+   lb_selected->setEnabled(true);
+   pb_load_param->setEnabled(true);
+   pb_reset_param->setEnabled(true);
+   pb_save_param->setEnabled(true);
+   pb_load_csv->setEnabled(true);
+   pb_process_csv->setEnabled(true);
+   pb_save_csv->setEnabled(true);
+
+   update_lb_loaded_enables();
+   update_lb_selected_enables();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::set_rank()
@@ -2119,9 +2279,19 @@ void US_Hydrodyn_Comparative::load_csv()
          editor_msg("red", QString("%1: %1").arg(*it).arg(csv_error));
       } else {
          csvs[*it] = tmp_csv;
-         editor->append(QString("loaded: %1\n").arg(*it));
-         // cout << csv_info(tmp_csv);
          lb_loaded->insertItem(tmp_csv.name);
+         if ( !csv_warn.isEmpty() )
+         {
+            QMessageBox::warning( this, "UltraScan",
+                                  QString(tr("Loading the csv %1 produced the following warnings:\n%1"))
+                                  .arg(*it)
+                                  .arg(csv_warn) 
+                                  );
+            editor_msg("dark red", QString("loaded with warnings: %1\n").arg(*it));
+         } else {
+            editor->append(QString("loaded: %1\n").arg(*it));
+         }
+         // cout << csv_info(tmp_csv);
       }
    }
    update_lb_loaded_enables();
@@ -2176,6 +2346,89 @@ void US_Hydrodyn_Comparative::loaded_select_all()
    }
 }
 
+void US_Hydrodyn_Comparative::loaded_set_ranges()
+{
+   if ( !any_loaded_selected() )
+   {
+      editor_msg("red", tr("internal error: loaded set exp min/max called but no item selected!\n"));
+      return;
+   }
+      
+   double min;
+   double max;
+
+   if ( all_selected_csv_contain( comparative->ce_s ) )
+   {
+      if ( csv_get_loaded_min_max(min, max, comparative->ce_s ) )
+      {
+         comparative->ce_s.min = min;
+         comparative->ce_s.max = max;
+         le_min_s->setText(QString("%1").arg(comparative->ce_s.min));
+         le_max_s->setText(QString("%1").arg(comparative->ce_s.max));
+      }
+   }
+   if ( all_selected_csv_contain( comparative->ce_D ) )
+   {
+      if ( csv_get_loaded_min_max(min, max, comparative->ce_D ) )
+      {
+         comparative->ce_D.min = min;
+         comparative->ce_D.max = max;
+         le_min_D->setText(QString("%1").arg(comparative->ce_D.min));
+         le_max_D->setText(QString("%1").arg(comparative->ce_D.max));
+      }
+   }
+   if ( all_selected_csv_contain( comparative->ce_sr ) )
+   {
+      if ( csv_get_loaded_min_max(min, max, comparative->ce_sr ) )
+      {
+         comparative->ce_sr.min = min;
+         comparative->ce_sr.max = max;
+         le_min_sr->setText(QString("%1").arg(comparative->ce_sr.min));
+         le_max_sr->setText(QString("%1").arg(comparative->ce_sr.max));
+      }
+   }
+   if ( all_selected_csv_contain( comparative->ce_fr ) )
+   {
+      if ( csv_get_loaded_min_max(min, max, comparative->ce_fr ) )
+      {
+         comparative->ce_fr.min = min;
+         comparative->ce_fr.max = max;
+         le_min_fr->setText(QString("%1").arg(comparative->ce_fr.min));
+         le_max_fr->setText(QString("%1").arg(comparative->ce_fr.max));
+      }
+   }
+   if ( all_selected_csv_contain( comparative->ce_rg ) )
+   {
+      if ( csv_get_loaded_min_max(min, max, comparative->ce_rg ) )
+      {
+         comparative->ce_rg.min = min;
+         comparative->ce_rg.max = max;
+         le_min_rg->setText(QString("%1").arg(comparative->ce_rg.min));
+         le_max_rg->setText(QString("%1").arg(comparative->ce_rg.max));
+      }
+   }
+   if ( all_selected_csv_contain( comparative->ce_tau ) )
+   {
+      if ( csv_get_loaded_min_max(min, max, comparative->ce_tau ) )
+      {
+         comparative->ce_tau.min = min;
+         comparative->ce_tau.max = max;
+         le_min_tau->setText(QString("%1").arg(comparative->ce_tau.min));
+         le_max_tau->setText(QString("%1").arg(comparative->ce_tau.max));
+      }
+   }
+   if ( all_selected_csv_contain( comparative->ce_eta ) )
+   {
+      if ( csv_get_loaded_min_max(min, max, comparative->ce_eta ) )
+      {
+         comparative->ce_eta.min = min;
+         comparative->ce_eta.max = max;
+         le_min_eta->setText(QString("%1").arg(comparative->ce_eta.min));
+         le_max_eta->setText(QString("%1").arg(comparative->ce_eta.max));
+      }
+   }
+}
+
 void US_Hydrodyn_Comparative::loaded_remove()
 {
    for ( int i = lb_loaded->numRows() - 1; i >= 0; i-- )
@@ -2216,6 +2469,89 @@ void US_Hydrodyn_Comparative::selected_select_all()
    if ( select_all )
    {
       lb_selected->setBottomItem(lb_selected->numRows() - 1);
+   }
+}
+
+void US_Hydrodyn_Comparative::selected_set_ranges()
+{
+   if ( !any_selected_selected() )
+   {
+      editor_msg("red", tr("internal error: loaded set exp min/max called but no item selected!\n"));
+      return;
+   }
+      
+   double min;
+   double max;
+
+   if ( all_selected_csv_contain( comparative->ce_s ) )
+   {
+      if ( csv_get_selected_min_max(min, max, comparative->ce_s ) )
+      {
+         comparative->ce_s.min = min;
+         comparative->ce_s.max = max;
+         le_min_s->setText(QString("%1").arg(comparative->ce_s.min));
+         le_max_s->setText(QString("%1").arg(comparative->ce_s.max));
+      }
+   }
+   if ( all_selected_csv_contain( comparative->ce_D ) )
+   {
+      if ( csv_get_selected_min_max(min, max, comparative->ce_D ) )
+      {
+         comparative->ce_D.min = min;
+         comparative->ce_D.max = max;
+         le_min_D->setText(QString("%1").arg(comparative->ce_D.min));
+         le_max_D->setText(QString("%1").arg(comparative->ce_D.max));
+      }
+   }
+   if ( all_selected_csv_contain( comparative->ce_sr ) )
+   {
+      if ( csv_get_selected_min_max(min, max, comparative->ce_sr ) )
+      {
+         comparative->ce_sr.min = min;
+         comparative->ce_sr.max = max;
+         le_min_sr->setText(QString("%1").arg(comparative->ce_sr.min));
+         le_max_sr->setText(QString("%1").arg(comparative->ce_sr.max));
+      }
+   }
+   if ( all_selected_csv_contain( comparative->ce_fr ) )
+   {
+      if ( csv_get_selected_min_max(min, max, comparative->ce_fr ) )
+      {
+         comparative->ce_fr.min = min;
+         comparative->ce_fr.max = max;
+         le_min_fr->setText(QString("%1").arg(comparative->ce_fr.min));
+         le_max_fr->setText(QString("%1").arg(comparative->ce_fr.max));
+      }
+   }
+   if ( all_selected_csv_contain( comparative->ce_rg ) )
+   {
+      if ( csv_get_selected_min_max(min, max, comparative->ce_rg ) )
+      {
+         comparative->ce_rg.min = min;
+         comparative->ce_rg.max = max;
+         le_min_rg->setText(QString("%1").arg(comparative->ce_rg.min));
+         le_max_rg->setText(QString("%1").arg(comparative->ce_rg.max));
+      }
+   }
+   if ( all_selected_csv_contain( comparative->ce_tau ) )
+   {
+      if ( csv_get_selected_min_max(min, max, comparative->ce_tau ) )
+      {
+         comparative->ce_tau.min = min;
+         comparative->ce_tau.max = max;
+         le_min_tau->setText(QString("%1").arg(comparative->ce_tau.min));
+         le_max_tau->setText(QString("%1").arg(comparative->ce_tau.max));
+      }
+   }
+   if ( all_selected_csv_contain( comparative->ce_eta ) )
+   {
+      if ( csv_get_selected_min_max(min, max, comparative->ce_eta ) )
+      {
+         comparative->ce_eta.min = min;
+         comparative->ce_eta.max = max;
+         le_min_eta->setText(QString("%1").arg(comparative->ce_eta.min));
+         le_max_eta->setText(QString("%1").arg(comparative->ce_eta.max));
+      }
    }
 }
 
@@ -2478,6 +2814,8 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
    csv csv1;
 
    csv_error = "";
+   csv_warn = "";
+
    if ( filename.isEmpty() )
    {
       csv_error = tr("csv read called with empty filename");
@@ -2512,33 +2850,56 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
    csv1.name = filename;
 
    int i = 0;
-   QStringList qsl_h = QStringList::split("\",\"",*qsl.at(0), true);
+   QStringList qsl_h = csv_parse_line(*qsl.at(0));
+
    for ( QStringList::iterator it = qsl_h.begin();
          it != qsl_h.end();
          it++ )
    {
       QString qs = *it;
       qs.replace("\"","");
+      if ( csv1.header_map.count(qs) )
+      {
+         csv_error = QString(tr("Duplicate header name \"%1\" found in file %1")).arg(qs).arg(f.name());
+         return csv1;
+      }
       csv1.header_map[qs] = i++;
       csv1.header.push_back(qs);
    }
 
+   unsigned int row = 1;
    for ( QStringList::iterator it = qsl.at(1);
          it != qsl.end();
          it++ )
    {
-      QStringList qsl_d = QStringList::split(",",*it, true);
+      row++;
+      QStringList qsl_d = csv_parse_line(*it);
       vector < QString > vqs;
       vector < double > vd;
-      for ( QStringList::iterator it2 = qsl_d.begin();
-            it2 != qsl_d.end();
-            it2++ )
+      if ( qsl_d.size() )
       {
-         vqs.push_back(*it2);
-         vd.push_back((*it2).toDouble());
+         for ( QStringList::iterator it2 = qsl_d.begin();
+               it2 != qsl_d.end();
+               it2++ )
+         {
+            if ( vd.size() >= csv1.header.size() )
+            {
+               csv_warn += QString(tr("%1Row %1 has more columns than the header, these columns are skipped"))
+                  .arg(csv_warn.isEmpty() ? "" : "\n").arg(row);
+               break;
+            }
+            vqs.push_back(*it2);
+            vd.push_back((*it2).toDouble());
+         }
+         if ( vd.size() < csv1.header.size() )
+         {
+            csv_warn += QString(tr("%1Row %1 has insufficient columns, skipped"))
+               .arg(csv_warn.isEmpty() ? "" : "\n").arg(row);
+         } else {
+            csv1.data.push_back(vqs);
+            csv1.num_data.push_back(vd);
+         }
       }
-      csv1.data.push_back(vqs);
-      csv1.num_data.push_back(vd);
    }
 
    if ( !csv1.header_map.count("Model name") )
@@ -2839,6 +3200,8 @@ void US_Hydrodyn_Comparative::csv_merge_loaded_selected()
       return;
    }
 
+   disable_updates();
+
    csv csv_merged = csvs[first_loaded_selected()];
    bool skip_first = true;
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
@@ -2848,6 +3211,7 @@ void US_Hydrodyn_Comparative::csv_merge_loaded_selected()
          if ( !csvs.count(lb_loaded->text(i)) )
          {
             editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
+            enable_updates();
             return;
          }
          csv_merged = csv_merge(csv_merged, csvs[lb_loaded->text(i)]);
@@ -2867,4 +3231,252 @@ void US_Hydrodyn_Comparative::csv_merge_loaded_selected()
    lb_loaded->insertItem(csv_merged.name);
    lb_loaded->setSelected(lb_loaded->numRows() - 1, true);
    lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
+
+   editor->append(QString(tr("CSVs merged: %1\n")).arg(csv_merged.name));
+
+   enable_updates();
+}
+
+bool US_Hydrodyn_Comparative::any_params_enabled()
+{
+   return 
+      all_selected_csv_contain( comparative->ce_s ) ||
+      all_selected_csv_contain( comparative->ce_D ) ||
+      all_selected_csv_contain( comparative->ce_sr ) ||
+      all_selected_csv_contain( comparative->ce_fr ) ||
+      all_selected_csv_contain( comparative->ce_rg ) ||
+      all_selected_csv_contain( comparative->ce_tau ) ||
+      all_selected_csv_contain( comparative->ce_eta ) 
+      ;
+}
+
+void US_Hydrodyn_Comparative::update_selected_map() 
+{
+   selected_map.clear();
+   for ( unsigned int i = 0; i < lb_selected->count(); i++ )
+   {
+      if ( lb_selected->isSelected(i) )
+      {
+         selected_map[lb_selected->text(i)] = true;
+      }
+   }
+}
+
+bool US_Hydrodyn_Comparative::csv_get_min_max( 
+                                              double &min, 
+                                              double &max, 
+                                              unsigned int &rows_used_count,
+                                              comparative_entry ce, 
+                                              csv &csv1,
+                                              bool ignore_selected_selected
+                                              )
+{
+   // cout << QString("start csv_get_min_max ce.name %1 %1\n").arg(ce.name).arg(ignore_selected_selected ?
+   // "all loaded selected" :
+   // "only selected selected" );
+   rows_used_count = 0;
+
+   if ( !csv1.header_map.count(ce.name) || !csv1.data.size() )
+   {
+      return false;
+   }
+
+   unsigned int col = csv1.header_map[ce.name];
+
+   bool done_first = false;
+
+   for ( unsigned int i = 0; i < csv1.num_data.size(); i++ )
+   {
+      if ( ignore_selected_selected || selected_map.count(csv1.prepended_names[i]) )
+      {   
+         rows_used_count++;
+         if ( done_first )
+         {
+            if ( min > csv1.num_data[i][col] )
+            {
+               min = csv1.num_data[i][col];
+            }
+            if ( max < csv1.num_data[i][col] )
+            {
+               max = csv1.num_data[i][col];
+            }
+         } else {
+            done_first = true;
+            min = csv1.num_data[i][col];
+            max = csv1.num_data[i][col];
+         }
+      }
+   }
+   // cout << QString("finish csv_get_min_max ce.name %1 min %1 max %1 rows used %1\n").arg(ce.name).arg(min).arg(max).arg(rows_used_count);
+
+   return true;
+}
+
+bool US_Hydrodyn_Comparative::csv_get_loaded_min_max( 
+                                                     double &min, 
+                                                     double &max, 
+                                                     comparative_entry ce
+                                                     )
+{
+   //  cout << QString("get loaded min_max %1\n").arg(ce.name);
+
+   double tmp_min;
+   double tmp_max;
+   unsigned int total_rows_used_count = 0;
+   unsigned int rows_used_count;
+
+   bool done_first = false;
+
+   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   {
+      if ( lb_loaded->isSelected(i) )
+      {
+         if ( !csvs.count(lb_loaded->text(i)) )
+         {
+            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
+            return false;
+         }
+         if ( !csv_get_min_max(tmp_min, tmp_max, rows_used_count, ce, csvs[lb_loaded->text(i)]) )
+         {
+            editor_msg("red", QString(tr("internal error: could not find %1 in csv %1")).arg(ce.name).arg(lb_loaded->text(i)));
+            return false;
+         }
+         if ( !rows_used_count )
+         {
+            editor_msg("red", QString(tr("internal error: could not find any rows for %1 in csv %1")).arg(ce.name).arg(lb_loaded->text(i)));
+            return false;
+         }
+         total_rows_used_count += rows_used_count;
+         if ( done_first )
+         {
+            if ( min > tmp_min )
+            {
+               min = tmp_min;
+            }
+            if ( max < tmp_max )
+            {
+               max = tmp_max;
+            }
+         } else {
+            done_first = true;
+            min = tmp_min;
+            max = tmp_max;
+         }
+      }
+   }
+
+   if ( !total_rows_used_count )
+   {
+      editor_msg("red", QString(tr("internal error: could not find any rows for %1 in any of the loaded selected csvs")).arg(ce.name));
+      return false;
+   }
+   return true;
+}
+
+bool US_Hydrodyn_Comparative::csv_get_selected_min_max( 
+                                                       double &min, 
+                                                       double &max, 
+                                                       comparative_entry ce
+                                                       )
+{
+   //   cout << QString("get selected min_max %1\n").arg(ce.name);
+   double tmp_min;
+   double tmp_max;
+   unsigned int rows_used_count;
+   bool done_first = false;
+
+   update_selected_map();
+
+   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   {
+      if ( lb_loaded->isSelected(i) )
+      {
+         if ( !csvs.count(lb_loaded->text(i)) )
+         {
+            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
+            return false;
+         }
+         if ( !csv_get_min_max(tmp_min, tmp_max, rows_used_count, ce, csvs[lb_loaded->text(i)], false) )
+         {
+            editor_msg("red", QString(tr("internal error: could not find %1 in csv %1")).arg(ce.name).arg(lb_loaded->text(i)));
+            return false;
+         }
+         if ( rows_used_count )
+         {
+            if ( done_first )
+            {
+               if ( min > tmp_min )
+               {
+                  min = tmp_min;
+               }
+               if ( max < tmp_max )
+               {
+                  max = tmp_max;
+               }
+            } else {
+               done_first = true;
+               min = tmp_min;
+               max = tmp_max;
+            }
+         }
+      }
+   }
+
+   return true;
+}
+
+QStringList US_Hydrodyn_Comparative::csv_parse_line( QString qs )
+{
+   // cout << QString("csv_parse_line:\ninital string <%1>\n").arg(qs);
+   QStringList qsl;
+   if ( qs.isEmpty() )
+   {
+      // cout << QString("csv_parse_line: empty\n");
+      return qsl;
+   }
+   if ( !qs.contains(",") )
+   {
+      // cout << QString("csv_parse_line: one token\n");
+      qsl << qs;
+      return qsl;
+   }
+
+   QStringList qsl_chars = QStringList::split("", qs);
+   QString token = "";
+
+   bool in_quote = false;
+
+   for ( QStringList::iterator it = qsl_chars.begin();
+         it != qsl_chars.end();
+         it++ )
+   {
+      if ( !in_quote && *it == "," )
+      {
+         qsl << token;
+         token = "";
+         continue;
+      }
+      if ( in_quote && *it == "\"" )
+      {
+         in_quote = false;
+         continue;
+      }
+      if ( !in_quote && *it == "\"" )
+      {
+         in_quote = true;
+         continue;
+      }
+      if ( !in_quote && *it == "\"" )
+      {
+         in_quote = false;
+         continue;
+      }
+      token += *it;
+   }
+   if ( !token.isEmpty() )
+   {
+      qsl << token;
+   }
+   // cout << QString("csv_parse_line results:\n<%1>\n").arg(qsl.join(">\n<"));
+   return qsl;
 }

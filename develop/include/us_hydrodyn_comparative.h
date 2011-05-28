@@ -247,11 +247,13 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       QLabel                        *lbl_loaded;
       QListBox                      *lb_loaded;
       QPushButton                   *pb_loaded_select_all;
+      QPushButton                   *pb_loaded_set_ranges;
       QPushButton                   *pb_loaded_remove;
 
       QLabel                        *lbl_selected;
       QListBox                      *lb_selected;
       QPushButton                   *pb_selected_select_all;
+      QPushButton                   *pb_selected_set_ranges;
       QPushButton                   *pb_selected_remove;
 
       QFont                         ft;
@@ -266,6 +268,9 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       void                          refresh();
       void                          update_lb_loaded_enables();
       void                          update_lb_selected_enables();
+      void                          disable_updates();
+      void                          enable_updates();
+      bool                          updates_enabled;
 
       QString                       serial_error;
       QStringList                   serialize_params();
@@ -277,10 +282,12 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       // csv handling routines:
 
       map < QString, csv >          csvs;      // all csvs loaded?
-      csv                           csv_read( QString filename );               // sets csv_error
+      csv                           csv_read( QString filename );               // sets csv_error, csv_warn
       void                          csv_write( QString filename, csv &csv1 );   // use to save any csv in the loaded 
       csv                           csv_process( csv &csv1 );                   // process selected, then we can add it back to the loaded
+      QStringList                   csv_parse_line( QString qs );               // split up line
       QString                       csv_error;
+      QString                       csv_warn;
       csv                           csv_merge( csv &csv1, csv &csv2 );          // sets csv_error
       void                          csv_merge_loaded_selected();   // takes all loaded selected pdbs, merges them and puts it on the loaded list and selects it
       QString                       csv_info( csv &csv1 ); // returns readable summary info (primarily for debugging)
@@ -288,12 +295,37 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       bool                          csv_contains( comparative_entry ce, csv &csv1 ); // checks the csv for the column names by the comparative entry
       bool                          all_selected_csv_contain( comparative_entry ce ); // checks all selected csvs for the column names by the comparative entry
 
+      bool                          csv_get_min_max( 
+                                                    double &min, 
+                                                    double &max, 
+                                                    unsigned int &rows_used_count,
+                                                    comparative_entry ce, 
+                                                    csv &csv1,
+                                                    bool ignore_selected_selected = true
+                                                    );
+
+      bool                          csv_get_loaded_min_max( 
+                                                           double &min, 
+                                                           double &max, 
+                                                           comparative_entry ce
+                                                           );
+
+      bool                          csv_get_selected_min_max( 
+                                                             double &min, 
+                                                             double &max, 
+                                                             comparative_entry ce
+                                                             );
+
+      void                          update_selected_map();
+      map < QString, bool >         selected_map;  // needed for quick lookups, maps lb_selected_selected.text()
+
       // other utilities
       void                          editor_msg( QString color, QString msg );
       bool                          any_loaded_selected();
       bool                          one_loaded_selected();
       QString                       first_loaded_selected();
       bool                          any_selected_selected();
+      bool                          any_params_enabled();
 
    private slots:
       
@@ -397,10 +429,12 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
 
       void update_loaded();
       void loaded_select_all();
+      void loaded_set_ranges();
       void loaded_remove();
 
       void update_selected();
       void selected_select_all();
+      void selected_set_ranges();
       void selected_remove();
 
       void clear_display();
