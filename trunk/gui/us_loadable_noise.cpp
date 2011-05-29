@@ -51,25 +51,34 @@ DbgLv(2) << "LaNoi:allNoi nID eID mID type" << noiIDs.at(ii)
 for ( int ii = 0; ii < modIDs.size(); ii++ ) {
 DbgLv(2) << "LaNoi:allMod mID eID" << modIDs.at(ii) << modEdIDs.at(ii); }
 
-   // Get a list of models tied to the loaded edit
+   // Get a list of models-with-noise tied to the loaded edit
    int nemods  = models_in_edit(  ondisk, editGUID, mieGUIDs );
 
    if ( nemods == 0 )
-      return nemods;          // go no further if no models in edit
+      return nemods;          // Go no further if no models-with-noise for edit
+
+   int latemx  = ondisk ? nemods - 1 : 0;   // Index to latest model-in-edit
 
    // If no model is loaded, pick the model GUID of the latest noise
    if ( model == 0 )
-      modelGUID   = mieGUIDs[ ondisk ? nemods - 1 : 0 ];
+      modelGUID   = mieGUIDs[ latemx ];
 
    // Get a list of noises tied to the loaded model
    int nmnois  = noises_in_model( ondisk, modelGUID, nimGUIDs );
 
-   // Insure that the loaded model is at the head of the model-in-edit list
+   // If the loaded model has no noise, try the latest model
+   if ( nmnois == 0 )
+   {
+      modelGUID   = mieGUIDs[ latemx ];
+      nmnois      = noises_in_model( ondisk, modelGUID, nimGUIDs );
+   }
+
+   // Insure that the loaded/latest model heads the model-in-edit list
    if ( modelGUID != mieGUIDs[ 0 ] )
    {
       if ( ! mieGUIDs.removeOne( modelGUID ) )
       {
-         qDebug( "*ERROR* Loaded model not in model-in-edit list!" );
+         qDebug( "*ERROR* Loaded/Latest model not in model-in-edit list!" );
          return 0;
       }
 
