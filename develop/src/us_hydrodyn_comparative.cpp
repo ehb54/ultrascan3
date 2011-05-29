@@ -2,6 +2,8 @@
 #include "../include/us_revision.h"
 #include "qregexp.h"
 
+#define PREMERGE_LIST_LIMIT 20
+
 US_Hydrodyn_Comparative::US_Hydrodyn_Comparative(
                                                  comparative_info *comparative,      
                                                  void *us_hydrodyn, 
@@ -1095,6 +1097,13 @@ void US_Hydrodyn_Comparative::setupGUI()
    pb_loaded_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_loaded_select_all, SIGNAL(clicked()), SLOT(loaded_select_all()));
 
+   pb_loaded_view = new QPushButton(tr("View"), this);
+   pb_loaded_view->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_loaded_view->setMinimumHeight(minHeight1);
+   pb_loaded_view->setEnabled(false);
+   pb_loaded_view->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_loaded_view, SIGNAL(clicked()), SLOT(loaded_view()));
+
    pb_loaded_set_ranges = new QPushButton(tr("Set exp. min/max"), this);
    pb_loaded_set_ranges->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_loaded_set_ranges->setMinimumHeight(minHeight1);
@@ -1328,6 +1337,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    gl_loaded_selected_editor->addMultiCellWidget(lb_loaded, 0, 1, 0, 0);
    QBoxLayout *hbl_loaded_buttons = new QHBoxLayout(0);
    hbl_loaded_buttons->addWidget(pb_loaded_select_all);
+   hbl_loaded_buttons->addWidget(pb_loaded_view);
    hbl_loaded_buttons->addWidget(pb_loaded_set_ranges);
    hbl_loaded_buttons->addWidget(pb_loaded_remove);
    gl_loaded_selected_editor->addLayout(hbl_loaded_buttons, 2, 0);
@@ -1522,6 +1532,7 @@ void US_Hydrodyn_Comparative::update_lb_loaded_enables()
       pb_loaded_select_all->setEnabled(lb_loaded->count());
       bool any_selected = any_loaded_selected();
       pb_loaded_set_ranges->setEnabled(any_selected && any_params_enabled());
+      pb_loaded_view->setEnabled(any_selected);
       pb_loaded_remove->setEnabled(any_selected);
    }
 }
@@ -1567,6 +1578,7 @@ void US_Hydrodyn_Comparative::disable_updates()
    // standard list for update_lb_loaded_enables()
    pb_loaded_select_all->setEnabled(false);
    pb_loaded_set_ranges->setEnabled(false);
+   pb_loaded_view->setEnabled(false);
    pb_loaded_remove->setEnabled(false);
 
    // standard list for update_lb_selected_enables()
@@ -2429,6 +2441,25 @@ void US_Hydrodyn_Comparative::loaded_set_ranges()
    }
 }
 
+void US_Hydrodyn_Comparative::loaded_view()
+{
+   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   {
+      if ( lb_loaded->isSelected(i) ) 
+      {
+         if ( !csvs.count(lb_loaded->text(i)) )
+         {
+            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
+         } else {
+            US_Hydrodyn_Csv_Viewer 
+               *csv_viewer_window =
+               new US_Hydrodyn_Csv_Viewer(csvs[lb_loaded->text(i)], this);
+            csv_viewer_window->show();
+         }
+      }
+   }
+}
+
 void US_Hydrodyn_Comparative::loaded_remove()
 {
    for ( int i = lb_loaded->numRows() - 1; i >= 0; i-- )
@@ -2600,14 +2631,17 @@ void US_Hydrodyn_Comparative::save_csv()
              QMessageBox::warning(
                                   this,
                                   tr("Merge CSV's"),
-                                  tr("The CSVs do not all have the same column names.\n"
-                                     "This will create additional columns with blank\n"
-                                     "entries for rows from CSVs without those columns.\n"
-                                     "This will effect statistics computed on these extra columns.\n"
-                                     "Did you still want to merge them?"),
+                                  QString(
+                                          tr("The CSVs do not all have the same column names.\n"
+                                             "This will create additional columns with blank entries\n"
+                                             "for rows from CSVs without these extra columns:\n"
+                                             "\n%1\n\n"
+                                             "This will effect statistics computed on these extra columns.\n"
+                                             "Did you still want to merge them?")
+                                          ).arg(csv_premerge_missing_header_qsl.join("\n")),
                                   tr("&Yes"), tr("&No"),
-                                  QString::null, 0, 1 ) 
-             ) 
+                                  QString::null, 0, 1 )
+             )
          {
             return;
          }
@@ -3511,30 +3545,53 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning( csv &csv1, csv &csv2 
    bool is_ok = true;
    for ( unsigned int i = 0; i < csv1.header.size(); i++ )
    {
-      if ( !csv2.header_map.count(csv1.header[i] ) )
+      if ( !csv2.header_map.count(csv1.header[i]) )
       {
          is_ok = false;
-         break;
-      }
-   }
-
-   if ( is_ok )
-   {
-      for ( unsigned int i = 0; i < csv2.header.size(); i++ )
-      {
-         if ( !csv1.header_map.count(csv2.header[i] ) )
+         if ( !csv_premerge_missing_header_map.count(csv1.header[i]) )
          {
-            is_ok = false;
-            break;
+            csv_premerge_missing_header_map[csv1.header[i]] = true;
+            if ( csv_premerge_missing_header_qsl.size() < PREMERGE_LIST_LIMIT + 1 )
+            {
+               if ( csv_premerge_missing_header_qsl.size() == PREMERGE_LIST_LIMIT )
+               {
+                  csv_premerge_missing_header_qsl << tr(" (Additional extra columns not shown.)");
+                  return is_ok;
+               }
+               csv_premerge_missing_header_qsl << QString(" From %1: %1").arg(QFileInfo(csv1.name).baseName(true)).arg(csv1.header[i]);
+            }
          }
       }
    }
-   
+
+   for ( unsigned int i = 0; i < csv2.header.size(); i++ )
+   {
+      if ( !csv1.header_map.count(csv2.header[i] ) )
+      {
+         is_ok = false;
+         if ( !csv_premerge_missing_header_map.count(csv2.header[i]) )
+         {
+            csv_premerge_missing_header_map[csv2.header[i]] = true;
+            if ( csv_premerge_missing_header_qsl.size() < PREMERGE_LIST_LIMIT + 1 )
+            {
+               if ( csv_premerge_missing_header_qsl.size() == PREMERGE_LIST_LIMIT )
+               {
+                  csv_premerge_missing_header_qsl << tr(" (Additional extra columns not shown.)");
+                  return is_ok;
+               }
+               csv_premerge_missing_header_qsl << QString(" From %1: %1").arg(QFileInfo(csv2.name).baseName(true)).arg(csv2.header[i]);
+            }
+         }
+      }
+   }
    return is_ok;
 }
 
 bool US_Hydrodyn_Comparative::csv_premerge_column_warning_all_loaded_selected()
 {
+   csv_premerge_missing_header_map.clear();
+   csv_premerge_missing_header_qsl.clear();
+   
    if ( !any_loaded_selected() || one_loaded_selected() )
    {
       // nothing to do here
@@ -3550,7 +3607,7 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning_all_loaded_selected()
    csv *csv_ref = &csvs[first_loaded_selected()];
    bool skip_first = true;
 
-   for ( unsigned int i = 1; i < lb_loaded->count(); i++ )
+   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
    {
       if ( !skip_first && lb_loaded->isSelected(i) ) 
       {
@@ -3559,7 +3616,8 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning_all_loaded_selected()
             editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
             return true;
          }
-         if ( !csv_premerge_column_warning(*csv_ref, csvs[lb_loaded->text(i)]) )
+         if ( !csv_premerge_column_warning(*csv_ref, csvs[lb_loaded->text(i)]) && 
+              csv_premerge_missing_header_qsl.size() >= PREMERGE_LIST_LIMIT )
          {
             return false;
          }
@@ -3570,5 +3628,5 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning_all_loaded_selected()
          skip_first = false;
       }
    }
-   return true;
+   return csv_premerge_missing_header_qsl.size() == 0;
 }
