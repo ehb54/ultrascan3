@@ -454,7 +454,7 @@ void US_FitMeniscus::edit_update( void )
    fileo.close();
 
    QString msg = tr( "In file directory\n    " ) + filedir + " ,\n" +
-                 tr( "File\n    " ) + fname_edit + "\n" +
+                 tr( "file\n    " ) + fname_edit + "\n" +
                  tr( "has been modified with the line:\n    " ) + 
                  edtext.mid( mlsx, mlnn );
    
@@ -467,14 +467,14 @@ void US_FitMeniscus::edit_update( void )
 
    msg += tr( "\n\nDo you want to remove all fit-meniscus models\n"
               "(and associated noises) except for the one\n"
-              "corresponding to the minimum RMSD value?" );
+              "that has the minimum RMSD value?" );
 
    int response = QMessageBox::question( this, tr( "Edit File Updated" ),
          msg, QMessageBox::Yes, QMessageBox::Cancel );
 
    if ( response == QMessageBox::Yes )
    {
-qDebug() << " Remove Models";
+qDebug() << " call Remove Models";
       remove_models();
    }
 else qDebug() << " NO Models removed";
@@ -556,7 +556,7 @@ void US_FitMeniscus::scan_dbase()
       QString editGUID   = db.value( 5 ).toString();
       QString editID     = db.value( 6 ).toString();
       QString ansysID    = descript.section( '.', -2, -2 );
-      QString iterID     = ansysID .section( '_',  6,  6 );
+      QString iterID     = ansysID .section( '_',  4,  4 );
 qDebug() << "DbSc:   modelID vari meni" << modelID << variance << meniscus;
 
       if ( iterID.length() == 10  &&  iterID.contains( "-m6" ) )
@@ -579,6 +579,7 @@ qDebug() << "DbSc:    *FIT* " << descript;
          mfnams << ftfname;
 qDebug() << "DbSc:      ftfname" << ftfname;
       }
+else qDebug() << "DbSc:    iterID" << iterID;
    }
 
    nfmods     = modIDs.size();
@@ -741,12 +742,378 @@ qDebug() << "updDbEd: idEdit" << idEdit;
    db.writeBlobToDB( efilepath, "upload_editData", idEdit );
 
    msg += tr( "\n\nThe meniscus value was also updated for the"
-              "\nappropriate edit record in the database." );
+              "\ncorresponding edit record in the database." );
    return;
 }
 
-// Reduce f-m models (and associated noise) to the single chosen one
+// Remove f-m models (and associated noise) except for the single chosen one
 void US_FitMeniscus::remove_models()
 {
+   QString srchRun  = filedir.section( "/", -1, -1 );
+   QString srchEdit = fname_load.section( ".", -3, -3 );
+   QString srchTrip = srchEdit.section( "-", 1, 1 );
+           srchEdit = srchEdit.section( "-", 0, 0 );
+//qDebug() << "RmvMod: scn1 srchRun srchEdit srchTrip"
+// << srchRun << srchEdit << srchTrip;
+
+   // Scan models files; get list of fit-meniscus type matching run/edit/triple
+   QStringList modfilt;
+   modfilt << "M*.xml";
+   QString     moddir   = US_Settings::dataDir() + "/models";
+   QStringList modfiles = QDir( moddir ).entryList(
+         modfilt, QDir::Files, QDir::Name );
+   moddir               = moddir + "/";
+
+   QStringList     lmodFnams;             // local model full path file names
+   QStringList     lmodGUIDs;             // Local model GUIDs
+   QList< double > lmodVaris;             // Local variance values
+   QList< double > lmodMenis;             // Local meniscus values
+   QStringList     lmodDescs;             // Local descriptions
+
+   QStringList     dmodIDs;               // Database model IDs
+   QStringList     dmodGUIDs;             // Database model GUIDs
+   QList< double > dmodVaris;             // Database variance values
+   QList< double > dmodMenis;             // Database meniscus values
+   QStringList     dmodDescs;             // Database descriptions
+   int nlmods           = 0;
+   int ndmods           = 0;
+   int nlnois           = 0;
+   int ndnois           = 0;
+   int lArTime          = 0;
+   int dArTime          = 0;
+   int lkModx           = -1;
+   int dkModx           = -1;
+
+   for ( int ii = 0; ii < modfiles.size(); ii++ )
+   {
+      QString modfname   = modfiles.at( ii );
+      QString modpath    = moddir + modfname;
+      US_Model model;
+      
+      if ( model.load( modpath ) != US_DB2::OK )
+         continue;    // Can't use if can't load
+
+      QString descript   = model.description;
+      QString runID      = descript.section( '.',  0, -4 );
+      QString tripID     = descript.section( '.', -3, -3 );
+      QString anRunID    = descript.section( '.', -2, -2 );
+      QString editLabl   = anRunID .section( '_',  0,  0 );
+//qDebug() << "RmvMod:  scn1 ii runID editLabl tripID"
+// << ii << runID << editLabl << tripID;
+
+      if ( runID != srchRun  ||  editLabl != srchEdit  ||  tripID != srchTrip )
+         continue;    // Can't use if from a different runID or edit or triple
+
+      QString iterID     = anRunID .section( '_',  4,  4 );
+//qDebug() << "RmvMod:    iterID" << iterID;
+
+      if ( iterID.length() != 10  ||  ! iterID.contains( "-m" ) )
+         continue;    // Can't use if not a fit-meniscus type
+
+      // Probably a file from the right set, but let's check for other sets
+      int     arTime     = anRunID .section( '_',  1,  1 ).mid( 1 ).toInt();
+
+      if ( arTime > lArTime )
+      {  // If first set or new one younger than previous, start lists
+         lmodFnams.clear();
+         lmodGUIDs.clear();
+         lmodVaris.clear();
+         lmodMenis.clear();
+         lmodDescs.clear();
+         lArTime            = arTime;
+      }
+
+      else if ( arTime < lArTime )
+      {  // If new one older than previous, skip it
+         continue;
+      }
+
+      lmodFnams << modpath;             // Save full path file name
+      lmodGUIDs << model.modelGUID;     // Save model GUID
+      lmodVaris << model.variance;      // Save variance
+      lmodMenis << model.meniscus;      // Save meniscus
+      lmodDescs << model.description;   // Save description
+   }
+
+   nlmods         = lmodFnams.size();
+qDebug() << "RmvMod: nlmods" << nlmods;
+   double minVari = 99e+10;
+
+   for ( int ii = 0; ii < nlmods; ii++ )
+   {  // Scan to identify model in set with lowest variance
+qDebug() << "low Vari scan: ii vari meni desc" << ii << lmodVaris.at(ii)
+ << lmodMenis.at(ii) << lmodDescs.at(ii).right( 22 );
+      if ( lmodVaris.at( ii ) < minVari )
+      {
+         minVari        = lmodVaris.at( ii );
+         lkModx         = ii;
+//qDebug() << "low Vari scan:   minVari lkModx" << minVari << lkModx;
+      }
+   }
+qDebug() << "RmvMod:  minVari lkModx" << minVari << lkModx;
+
+   QString     invID = QString::number( US_Settings::us_inv_ID() );
+   US_Passwd pw;
+   US_DB2 db( pw.getPasswd() );
+   QStringList query;
+
+   // Make a list of f-m models that match for DB, if possible
+   if ( dkdb_cntrls->db() )
+   {
+      query << "get_model_desc" << invID;
+      db.query( query );
+
+      while( db.next() )
+      {
+         QString modelID    = db.value( 0 ).toString();
+         QString modelGUID  = db.value( 1 ).toString();
+         QString descript   = db.value( 2 ).toString();
+         double  variance   = db.value( 3 ).toString().toDouble();
+         double  meniscus   = db.value( 4 ).toString().toDouble();
+         QString runID      = descript.section( '.',  0, -4 );
+         QString tripID     = descript.section( '.', -3, -3 );
+         QString anRunID    = descript.section( '.', -2, -2 );
+         QString editLabl   = anRunID .section( '_',  0,  0 );
+//qDebug() << "RmvMod:  scn1 ii runID editLabl tripID"
+// << ii << runID << editLabl << tripID;
+
+         if ( runID != srchRun  ||  editLabl != srchEdit
+          ||  tripID != srchTrip )
+         continue;    // Can't use if from a different runID or edit or triple
+
+         QString iterID     = anRunID .section( '_',  4,  4 );
+//qDebug() << "RmvMod:    iterID" << iterID;
+
+         if ( iterID.length() != 10  ||  ! iterID.contains( "-m" ) )
+            continue;    // Can't use if not a fit-meniscus type
+
+         // Probably a file from the right set, but let's check for other sets
+         int     arTime     = anRunID .section( '_',  1,  1 ).mid( 1 ).toInt();
+
+         if ( arTime > dArTime )
+         {  // If first set or new one younger than previous, start lists
+            dmodIDs  .clear();
+            dmodGUIDs.clear();
+            dmodVaris.clear();
+            dmodMenis.clear();
+            dmodDescs.clear();
+            dArTime            = arTime;
+         }
+
+         else if ( arTime < dArTime )
+         {  // If new one older than previous, skip it
+            continue;
+         }
+
+         dmodIDs   << modelID;             // Save model DB ID
+         dmodGUIDs << modelGUID;           // Save model GUID
+         dmodVaris << variance;            // Save variance
+         dmodMenis << meniscus;            // Save meniscus
+         dmodDescs << descript;            // Save description
+      }
+
+      ndmods         = dmodIDs.size();
+qDebug() << "RmvMod: ndmods" << ndmods;
+      double minVari = 99e+10;
+
+      for ( int ii = 0; ii < ndmods; ii++ )
+      {  // Scan to identify model in set with lowest variance
+qDebug() << "low Vari scan: ii vari meni desc" << ii << dmodVaris.at(ii)
+ << dmodMenis.at(ii) << dmodDescs.at(ii).right( 22 );
+         if ( dmodVaris.at( ii ) < minVari )
+         {
+            minVari        = dmodVaris.at( ii );
+            dkModx         = ii;
+//qDebug() << "low Vari scan:   minVari dkModx" << minVari << dkModx;
+         }
+      }
+
+      // Now, compare the findings for local versus database
+      if ( nlmods == ndmods )
+      {
+         int    jj      = 0;
+         int    kk      = ndmods - 1;
+         int    nmatch  = 0;
+         int    nmatfo  = 0;
+
+         while ( jj < nlmods )
+         {
+            if ( dmodGUIDs[ jj ] == lmodGUIDs[ kk ]  &&
+                 dmodDescs[ jj ] == lmodDescs[ kk ] )
+               nmatch++;
+
+            else if ( dmodGUIDs[ jj ] == lmodGUIDs[ jj ]  &&
+                      dmodDescs[ jj ] == lmodDescs[ jj ]  &&
+                      dmodGUIDs[ kk ] == lmodGUIDs[ kk ]  &&
+                      dmodDescs[ kk ] == lmodDescs[ kk ] )
+               nmatfo++;
+
+            jj++;
+            kk--;
+         }
+
+         if ( nmatch == nlmods )
+         {  // As expected, database records are in reverse order
+qDebug() << "++local/dbase match, but are in reverse order";
+            // Reverse the order of DB records
+            jj             = 0;
+            kk             = ndmods - 1;
+            while ( jj < kk )
+            {
+               QString modelID    = dmodIDs  [ jj ];
+               QString modelGUID  = dmodGUIDs[ jj ];
+               double  variance   = dmodVaris[ jj ];
+               double  meniscus   = dmodMenis[ jj ];
+               QString descript   = dmodDescs[ jj ];
+               dmodIDs  [ jj ]    = dmodIDs  [ kk ];
+               dmodGUIDs[ jj ]    = dmodGUIDs[ kk ];
+               dmodVaris[ jj ]    = dmodVaris[ kk ];
+               dmodMenis[ jj ]    = dmodMenis[ kk ];
+               dmodDescs[ jj ]    = dmodDescs[ kk ];
+               dmodIDs  [ kk ]    = modelID;
+               dmodGUIDs[ kk ]    = modelGUID;
+               dmodVaris[ kk ]    = variance;
+               dmodMenis[ kk ]    = meniscus;
+               dmodDescs[ kk ]    = descript;
+               jj++;
+               kk--;
+            }
+         }
+
+         else if ( nmatfo == nlmods )
+         {  // Also OK if they match and are in the same order
+qDebug() << "++local/dbase match, and in the same order";
+         }
+
+         else
+         {  // Not good if they do not match
+qDebug() << "**local/dbase DO NOT MATCH";
+qDebug() << "  nmatch nmo ndmods nlms" << nmatch << nmatfo << ndmods << nlmods;
+            return;
+         }
+      }
+
+      else if ( nlmods == 0 )
+      {  // It is OK if there are no local records, when DB ones were found
+qDebug() << "++only dbase records exist";
+      }
+
+      else
+      {  // Non-zero local & DB, but they do not match
+qDebug() << "**local/dbase DO NOT MATCH in count";
+qDebug() << "  nlmods ndmods" << nlmods << ndmods;
+         return;
+      }
+   }
+
+   if ( ndmods > 0  ||  nlmods > 0 )
+   {  // There are models to scan, so build a list of models,noises to remove
+      QStringList     rmodIDs;
+      QStringList     rmodGUIDs;
+      QStringList     rmodDescs;
+      QStringList     rmodFnams;
+      QStringList     rnoiIDs;
+      QStringList     rnoiFnams;
+      QStringList     rnoiDescs;
+      int             nlrmod = 0;
+      int             ndrmod = 0;
+      int             nlrnoi = 0;
+      int             ndrnoi = 0;
+
+      for ( int jj = 0; jj < max( nlmods, ndmods ); jj++ )
+      {  // Build the list of model files and DB ids for deletion
+         if ( jj != lkModx )
+         {
+            if ( nlmods > 0 )
+            {
+               rmodFnams << lmodFnams[ jj ];
+               if ( ndmods == 0 )
+               {
+                  rmodGUIDs << lmodGUIDs[ jj ];
+                  rmodDescs << lmodDescs[ jj ];
+               }
+               nlrmod++;
+            }
+
+            if ( ndmods > 0 )
+            {
+               rmodIDs   << dmodIDs  [ jj ];
+               rmodGUIDs << dmodGUIDs[ jj ];
+               rmodDescs << dmodDescs[ jj ];
+               ndrmod++;
+            }
+         }
+      }
+
+      for ( int jj = 0; jj < nlmods; jj++ )
+      {  // Build the list of local noise files to remove
+         QString fname      = lmodFnams[ jj ];
+         US_Noise noise;
+         noise.load( fname );
+         QString descrip    = noise.description;
+         QString basedesc   = descrip.section( ".", 0, -2 );
+         int     modx       = rmodDescs.indexOf( basedesc + ".model" );
+
+         if ( modx >= 0 )
+         {  // This noise belongs to a model on the delete list
+            rnoiFnams << fname;
+            rnoiDescs << descrip;
+            nlrnoi++;
+         }
+      }
+
+      for ( int jj = 0; jj < ndmods; jj++ )
+      {  // Build the list of DB noise IDs to remove
+         QString noiseGUID  = dmodIDs[ jj ];
+         query.clear();
+         query << "get_noiseID" << noiseGUID;
+         db.query( query );
+         db.next();
+         QString noiseID    = db.value( 0 ).toString();
+         US_Noise noise;
+         noise.load( noiseID, &db );
+         QString descrip    = noise.description;
+         QString basedesc   = descrip.section( ".", 0, -2 );
+         int     modx       = rmodDescs.indexOf( basedesc + ".model" );
+
+         if ( modx >= 0 )
+         {
+            rnoiIDs   << noiseID;
+
+            if ( nlmods == 0 )
+               rnoiDescs << descrip;
+
+            ndrnoi++;
+         }
+      }
+
+      nlnois             = nlrnoi + ( nlrnoi > nlrmod ? 2 : 1 );
+      ndnois             = ndrnoi + ( ndrnoi > ndrmod ? 2 : 1 );
+qDebug() << "RmvMod: nlrmod ndrmod nlrnoi ndrnoi"
+ << nlrmod << ndrmod << nlrnoi << ndrnoi;
+      QString msg = tr( "%1 local model files;\n"
+                        "%2 database model files;\n"
+                        "%3 local noise files;\n"
+                        "%4 database noise files;\n"
+                        "have been identified for removal\n"
+                        "Do you really want to delete them?" )
+         .arg( nlrmod ).arg( ndrmod ).arg( nlrnoi ).arg( ndrnoi );
+
+      int response = QMessageBox::question( this,
+            tr( "Remove Models and Noises?" ),
+            msg, QMessageBox::Yes, QMessageBox::Cancel );
+
+      if ( response == QMessageBox::Yes )
+      {
+qDebug() << " Remove Models and Noises";
+      }
+   }
+
+   else
+   {  // No models were found!!! (huh!!!)
+qDebug() << "**NO local/dbase models-to-remove were found!!!!";
+   }
+
    return;
 }
+
