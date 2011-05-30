@@ -11,6 +11,8 @@
 #include "us_editor.h"
 #include "us_plot.h"
 
+#define DbgLv(a) if(dbg_level>=a)qDebug()  //!< dbg_level-conditioned qDebug()
+
 class US_FitMeniscus : public US_Widgets
 {
    Q_OBJECT
@@ -45,6 +47,7 @@ class US_FitMeniscus : public US_Widgets
       QString              fname_load;
       QString              fname_edit;
 
+      int                  dbg_level;
    private slots:
       void reset    (      void );
       void plot_data(      void );
@@ -55,6 +58,8 @@ class US_FitMeniscus : public US_Widgets
       void update_disk_db( bool );
       void update_db_edit( QString, QString, QString& );
       void remove_models(  void );
+      void noises_in_edit( QString, QStringList&,
+                           QStringList&, QStringList& );
 
       void help     ( void )
       { showHelp.show_help( "manual/fit_meniscus.html" ); };
