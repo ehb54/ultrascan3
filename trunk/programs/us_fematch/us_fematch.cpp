@@ -494,7 +494,6 @@ void US_FeMatch::update( int drow )
    QString bvisc = le_viscosity->text();
    QString bcomp = le_compress ->text();
    QString svbar = le_vbar     ->text();
-   //bool    bufin = false;
    bool    bufvl = false;
 
    QString errmsg;
@@ -516,6 +515,7 @@ void US_FeMatch::update( int drow )
       density     = bdens.toDouble();
       viscosity   = bvisc.toDouble();
       compress    = bcomp.toDouble();
+      vbar        = svbar.toDouble();
 
       if ( solID.isEmpty() )
       {
@@ -540,6 +540,8 @@ void US_FeMatch::update( int drow )
    {
       QMessageBox::warning( this, tr( "Solution/Buffer Fetch" ),
             errmsg );
+      solution_rec.commonVbar20 = vbar;
+      le_solution ->setText( tr( "( ***Undefined*** )" ) );
    }
 
    data_plot();
@@ -596,9 +598,13 @@ void US_FeMatch::data_plot( void )
    QPen          pen_plot( US_GuiSettings::plotCurve() );
 
    // Calculate basic parameters for other functions
+   double avgTemp     = edata->average_temperature();
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
    solution.vbar20    = le_vbar     ->text().toDouble();
+   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
+
+   US_Math2::data_correction( avgTemp, solution );
 
    dscan           = &edata->scanData.last();
    int    point    = US_DataIO2::index( *dscan, dataList[ drow ].x,
@@ -610,9 +616,6 @@ void US_FeMatch::data_plot( void )
       baseline       += dscan->readings[ jj ].value;
 
    baseline       /= 11.0;
-   double avgTemp  = edata->average_temperature();
-   solution.vbar   = US_Math2::calcCommonVbar( solution_rec, avgTemp );
-   US_Math2::data_correction( avgTemp, solution );
 
    // Draw curves
    for ( int ii = 0; ii < scanCount; ii++ )
@@ -2219,11 +2222,11 @@ QString US_FeMatch::data_details( void ) const
 QString US_FeMatch::hydrodynamics( void ) const
 {
    // set up hydrodynamics values
+   double avgTemp     = le_temp     ->text().section( " ", 0, 0 ).toDouble();
    US_Math2::SolutionData solution = this->solution;
-   solution.vbar20    = le_vbar     ->text().toDouble();
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
-   double avgTemp     = le_temp     ->text().section( " ", 0, 0 ).toDouble();
+   solution.vbar20    = le_vbar     ->text().toDouble();
    solution.vbar      = US_Math2::calcCommonVbar( (US_Solution&)solution_rec,
                                                   avgTemp );
    US_Math2::data_correction( avgTemp, solution );
@@ -2517,6 +2520,8 @@ void US_FeMatch::updateSolution( US_Solution& solution_sel )
             bdens, bvisc, bcmpr, errmsg );
    }
 
+   density      = bdens.toDouble();
+   viscosity    = bvisc.toDouble();
    vbar         = solution_rec.commonVbar20;
    svbar        = QString::number( vbar );
 

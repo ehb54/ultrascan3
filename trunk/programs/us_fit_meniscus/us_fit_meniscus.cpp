@@ -34,6 +34,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 {
    setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
    setPalette( US_GuiSettings::frameColor() );
+   dbg_level = US_Settings::us_debug();
 
    // Main layout
    QBoxLayout*  mainLayout   = new QVBoxLayout( this );
@@ -474,10 +475,10 @@ void US_FitMeniscus::edit_update( void )
 
    if ( response == QMessageBox::Yes )
    {
-qDebug() << " call Remove Models";
+DbgLv(1) << " call Remove Models";
       remove_models();
    }
-else qDebug() << " NO Models removed";
+else DbgLv(1) << " NO Models removed";
 }
 
 // Slot for handling a loaded file:  set the name of loaded,edit files
@@ -500,12 +501,17 @@ void US_FitMeniscus::file_loaded( QString fn )
 
    QStringList edtfiles = QDir( filedir ).entryList(
          edtfilt, QDir::Files, QDir::Name );
-
+DbgLv(1) << "EDITFILT" << edtfilt;
    if ( edtfiles.size() >= 1 )
    {
       fname_edit = edtfiles.at( 0 );
       pb_update->setEnabled( true );
    }
+
+   else
+   {  // Could not find edit file, so try the database
+   }
+DbgLv(1) << " fname_edit" << fname_edit;
 
    plot_data();
 
@@ -557,11 +563,11 @@ void US_FitMeniscus::scan_dbase()
       QString editID     = db.value( 6 ).toString();
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_',  4,  4 );
-qDebug() << "DbSc:   modelID vari meni" << modelID << variance << meniscus;
+DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus;
 
       if ( iterID.length() == 10  &&  iterID.contains( "-m6" ) )
       {  // Model from meniscus fit, so save information
-qDebug() << "DbSc:    *FIT* " << descript;
+DbgLv(1) << "DbSc:    *FIT* " << descript;
          modIDs << modelID;
          modGIs << modelGUID;
          mdescs << descript;
@@ -577,13 +583,13 @@ qDebug() << "DbSc:    *FIT* " << descript;
          QString ftfname    = runID + "/2dsa-fm." + editLabel +
                               "-" + tripleID + ".fit.dat";
          mfnams << ftfname;
-qDebug() << "DbSc:      ftfname" << ftfname;
+DbgLv(1) << "DbSc:      ftfname" << ftfname;
       }
-else qDebug() << "DbSc:    iterID" << iterID;
+else DbgLv(1) << "DbSc:    iterID" << iterID;
    }
 
    nfmods     = modIDs.size();
-qDebug() << "Number of FM models found: " << nfmods;
+DbgLv(1) << "Number of FM models found: " << nfmods;
 
    // Scan local files to see what fit table files already exist
 
@@ -606,7 +612,7 @@ qDebug() << "Number of FM models found: " << nfmods;
    nfsets     = ufnams.size();
    int kfsets = nfsets;
    QString rdir = US_Settings::resultDir().replace( "\\", "/" ) + "/";
-qDebug() << "Number of FM analysis sets: " << nfsets;
+DbgLv(1) << "Number of FM analysis sets: " << nfsets;
    QString fnamesv;
 
    for ( int ii = 0; ii < kfsets; ii++ )
@@ -649,6 +655,8 @@ qDebug() << "Number of FM analysis sets: " << nfsets;
       else
       {  // File does not exist, so we definitely need to create it
          nfadds++;
+         QString ftfpath    = QString( rdir + ftfname ).section( "/", 0, -2 );
+         QDir().mkpath( ftfpath );
       }
 
       if ( ! ftfile.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -680,25 +688,25 @@ qDebug() << "Number of FM analysis sets: " << nfsets;
       fnamesv = fnamesv.isEmpty() ? ftfname : fnamesv;
    }
 
-qDebug() << "Number of FM REPLACE  sets: " << nfrpls;
-qDebug() << "Number of FM ADD      sets: " << nfadds;
-qDebug() << "Number of FM EXISTING sets: " << nfexss;
+DbgLv(1) << "Number of FM REPLACE  sets: " << nfrpls;
+DbgLv(1) << "Number of FM ADD      sets: " << nfadds;
+DbgLv(1) << "Number of FM EXISTING sets: " << nfexss;
 
    // Report
-   QString msg = tr( "DB Scan complete: " );
+   QString msg = tr( "Scan complete: " );
 
    if ( nfadds == 1  ||  nfrpls == 1 )
    {
       msg += tr( "File %1" ).arg( fnamesv );
 
       if ( nfrpls == 0 )
-         msg += tr( " was added." );
+         msg += tr( " added." );
 
       else if ( nfadds == 0 )
-         msg += tr( " was updated." );
+         msg += tr( " updated." );
 
       else
-         msg += tr( " was the last added or replace." );
+         msg += tr( " last added or replaced." );
    }
 
    else if ( nfadds == 0  &&  nfrpls == 0 )
@@ -729,7 +737,7 @@ void US_FitMeniscus::update_db_edit( QString edtext, QString efilepath,
    int     esvx     = edtext.indexOf( "\"", elnx ) + 1;
    int     nvch     = edtext.indexOf( "\"", esvx ) - esvx;
    QString edGUID   = edtext.mid( esvx, nvch );
-qDebug() << "updDbEd: edGUID" << edGUID;
+DbgLv(1) << "updDbEd: edGUID" << edGUID;
 
    US_Passwd pw;
    US_DB2 db( pw.getPasswd() );
@@ -738,7 +746,7 @@ qDebug() << "updDbEd: edGUID" << edGUID;
    db.query( query );
    db.next();
    int     idEdit   = db.value( 0 ).toString().toInt();
-qDebug() << "updDbEd: idEdit" << idEdit;
+DbgLv(1) << "updDbEd: idEdit" << idEdit;
    db.writeBlobToDB( efilepath, "upload_editData", idEdit );
 
    msg += tr( "\n\nThe meniscus value was also updated for the"
@@ -753,7 +761,7 @@ void US_FitMeniscus::remove_models()
    QString srchEdit = fname_load.section( ".", -3, -3 );
    QString srchTrip = srchEdit.section( "-", 1, 1 );
            srchEdit = srchEdit.section( "-", 0, 0 );
-//qDebug() << "RmvMod: scn1 srchRun srchEdit srchTrip"
+//DbgLv(1) << "RmvMod: scn1 srchRun srchEdit srchTrip"
 // << srchRun << srchEdit << srchTrip;
 
    // Scan models files; get list of fit-meniscus type matching run/edit/triple
@@ -798,14 +806,14 @@ void US_FitMeniscus::remove_models()
       QString tripID     = descript.section( '.', -3, -3 );
       QString anRunID    = descript.section( '.', -2, -2 );
       QString editLabl   = anRunID .section( '_',  0,  0 );
-//qDebug() << "RmvMod:  scn1 ii runID editLabl tripID"
+//DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
 // << ii << runID << editLabl << tripID;
 
       if ( runID != srchRun  ||  editLabl != srchEdit  ||  tripID != srchTrip )
          continue;    // Can't use if from a different runID or edit or triple
 
       QString iterID     = anRunID .section( '_',  4,  4 );
-//qDebug() << "RmvMod:    iterID" << iterID;
+//DbgLv(1) << "RmvMod:    iterID" << iterID;
 
       if ( iterID.length() != 10  ||  ! iterID.contains( "-m" ) )
          continue;    // Can't use if not a fit-meniscus type
@@ -836,30 +844,30 @@ void US_FitMeniscus::remove_models()
    }
 
    nlmods         = lmodFnams.size();
-qDebug() << "RmvMod: nlmods" << nlmods;
+DbgLv(1) << "RmvMod: nlmods" << nlmods;
    double minVari = 99e+10;
 
    for ( int ii = 0; ii < nlmods; ii++ )
    {  // Scan to identify model in set with lowest variance
-qDebug() << "low Vari scan: ii vari meni desc" << ii << lmodVaris.at(ii)
+DbgLv(1) << "low Vari scan: ii vari meni desc" << ii << lmodVaris.at(ii)
  << lmodMenis.at(ii) << lmodDescs.at(ii).right( 22 );
       if ( lmodVaris.at( ii ) < minVari )
       {
          minVari        = lmodVaris.at( ii );
          lkModx         = ii;
-//qDebug() << "low Vari scan:   minVari lkModx" << minVari << lkModx;
+//DbgLv(1) << "low Vari scan:   minVari lkModx" << minVari << lkModx;
       }
    }
-qDebug() << "RmvMod:  minVari lkModx" << minVari << lkModx;
-
-   QString     invID = QString::number( US_Settings::us_inv_ID() );
-   US_Passwd pw;
-   US_DB2 db( pw.getPasswd() );
-   QStringList query;
+DbgLv(1) << "RmvMod:  minVari lkModx" << minVari << lkModx;
 
    // Make a list of f-m models that match for DB, if possible
    if ( dkdb_cntrls->db() )
    {
+      QString   invID = QString::number( US_Settings::us_inv_ID() );
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+      QStringList query;
+
       query << "get_model_desc" << invID;
       db.query( query );
 
@@ -874,7 +882,7 @@ qDebug() << "RmvMod:  minVari lkModx" << minVari << lkModx;
          QString tripID     = descript.section( '.', -3, -3 );
          QString anRunID    = descript.section( '.', -2, -2 );
          QString editLabl   = anRunID .section( '_',  0,  0 );
-//qDebug() << "RmvMod:  scn1 ii runID editLabl tripID"
+//DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
 // << ii << runID << editLabl << tripID;
 
          if ( runID != srchRun  ||  editLabl != srchEdit
@@ -882,7 +890,7 @@ qDebug() << "RmvMod:  minVari lkModx" << minVari << lkModx;
          continue;    // Can't use if from a different runID or edit or triple
 
          QString iterID     = anRunID .section( '_',  4,  4 );
-//qDebug() << "RmvMod:    iterID" << iterID;
+//DbgLv(1) << "RmvMod:    iterID" << iterID;
 
          if ( iterID.length() != 10  ||  ! iterID.contains( "-m" ) )
             continue;    // Can't use if not a fit-meniscus type
@@ -910,26 +918,27 @@ qDebug() << "RmvMod:  minVari lkModx" << minVari << lkModx;
          dmodVaris << variance;            // Save variance
          dmodMenis << meniscus;            // Save meniscus
          dmodDescs << descript;            // Save description
+DbgLv(1) << "RmvMod:  scn2 ii dmodDesc" << descript; 
       }
 
       ndmods         = dmodIDs.size();
-qDebug() << "RmvMod: ndmods" << ndmods;
+DbgLv(1) << "RmvMod: ndmods" << ndmods;
       double minVari = 99e+10;
 
       for ( int ii = 0; ii < ndmods; ii++ )
       {  // Scan to identify model in set with lowest variance
-qDebug() << "low Vari scan: ii vari meni desc" << ii << dmodVaris.at(ii)
+DbgLv(1) << "low Vari scan: ii vari meni desc" << ii << dmodVaris.at(ii)
  << dmodMenis.at(ii) << dmodDescs.at(ii).right( 22 );
          if ( dmodVaris.at( ii ) < minVari )
          {
             minVari        = dmodVaris.at( ii );
             dkModx         = ii;
-//qDebug() << "low Vari scan:   minVari dkModx" << minVari << dkModx;
+DbgLv(1) << "low Vari scan:   minVari dkModx" << minVari << dkModx;
          }
       }
 
       // Now, compare the findings for local versus database
-      if ( nlmods == ndmods )
+      if ( nlmods == ndmods  ||  ( ndmods > 0 && nlmods == 0 ) )
       {
          int    jj      = 0;
          int    kk      = ndmods - 1;
@@ -954,10 +963,11 @@ qDebug() << "low Vari scan: ii vari meni desc" << ii << dmodVaris.at(ii)
 
          if ( nmatch == nlmods )
          {  // As expected, database records are in reverse order
-qDebug() << "++local/dbase match, but are in reverse order";
+DbgLv(1) << "++local/dbase match, but are in reverse order";
             // Reverse the order of DB records
             jj             = 0;
             kk             = ndmods - 1;
+            dkModx         = kk - dkModx;
             while ( jj < kk )
             {
                QString modelID    = dmodIDs  [ jj ];
@@ -980,122 +990,154 @@ qDebug() << "++local/dbase match, but are in reverse order";
             }
          }
 
-         else if ( nmatfo == nlmods )
+         else if ( nmatfo == ndmods  ||  nlmods == 0 )
          {  // Also OK if they match and are in the same order
-qDebug() << "++local/dbase match, and in the same order";
+DbgLv(1) << "++local/dbase match, and in the same order (or local only)";
          }
 
          else
          {  // Not good if they do not match
-qDebug() << "**local/dbase DO NOT MATCH";
-qDebug() << "  nmatch nmo ndmods nlms" << nmatch << nmatfo << ndmods << nlmods;
+DbgLv(1) << "**local/dbase DO NOT MATCH";
+DbgLv(1) << "  nmatch nmo ndmods nlms" << nmatch << nmatfo << ndmods << nlmods;
             return;
          }
       }
 
       else if ( nlmods == 0 )
       {  // It is OK if there are no local records, when DB ones were found
-qDebug() << "++only dbase records exist";
+DbgLv(1) << "++only dbase records exist";
+      }
+
+      else if ( ndmods == 0 )
+      {  // It is OK if there are only local records, when local ones found
+DbgLv(1) << "++only local records exist";
       }
 
       else
       {  // Non-zero local & DB, but they do not match
-qDebug() << "**local/dbase DO NOT MATCH in count";
-qDebug() << "  nlmods ndmods" << nlmods << ndmods;
+DbgLv(1) << "**local/dbase DO NOT MATCH in count";
+DbgLv(1) << "  nlmods ndmods" << nlmods << ndmods;
          return;
       }
    }
 
+DbgLv(1) << "  nlmods ndmods" << nlmods << ndmods;
    if ( ndmods > 0  ||  nlmods > 0 )
    {  // There are models to scan, so build a list of models,noises to remove
       QStringList     rmodIDs;
-      QStringList     rmodGUIDs;
       QStringList     rmodDescs;
       QStringList     rmodFnams;
       QStringList     rnoiIDs;
       QStringList     rnoiFnams;
       QStringList     rnoiDescs;
+      QStringList     nieDescs;
+      QStringList     nieIDs;
+      QStringList     nieFnams;
       int             nlrmod = 0;
       int             ndrmod = 0;
       int             nlrnoi = 0;
       int             ndrnoi = 0;
+      int             ntmods = ( ndmods > 0 ) ? ndmods : nlmods;
+      int             ikModx = ( ndmods > 0 ) ? dkModx : lkModx;
+DbgLv(1) << "  ntmods ikModx" << ntmods << ikModx;
 
-      for ( int jj = 0; jj < max( nlmods, ndmods ); jj++ )
-      {  // Build the list of model files and DB ids for deletion
-         if ( jj != lkModx )
+      QString modDesc    = "";
+
+      for ( int jj = 0; jj < ntmods; jj++ )
+      {  // Build the list of model files and DB ids for removal
+         if ( jj != ikModx )
          {
+            int itix;
+            int irix;
+            QString fname;
+            QString mDesc;
+            QString mID;
+            QString tiDesc;
+            QString riDesc;
+            QString noiID; 
+            QString noiFname;
+
             if ( nlmods > 0 )
             {
-               rmodFnams << lmodFnams[ jj ];
-               if ( ndmods == 0 )
-               {
-                  rmodGUIDs << lmodGUIDs[ jj ];
-                  rmodDescs << lmodDescs[ jj ];
-               }
+               fname  = lmodFnams[ jj ];
+               mDesc  = lmodDescs[ jj ];
                nlrmod++;
+               if ( ndmods == 0 )
+                  mID    = "-1";
             }
 
             if ( ndmods > 0 )
             {
-               rmodIDs   << dmodIDs  [ jj ];
-               rmodGUIDs << dmodGUIDs[ jj ];
-               rmodDescs << dmodDescs[ jj ];
+               mID    = dmodIDs  [ jj ];
+               mDesc  = dmodDescs[ jj ];
                ndrmod++;
+               if ( nlmods == 0 )
+                  fname  = "";
             }
-         }
-      }
+            rmodIDs   << mID;
+            rmodFnams << fname;
+            rmodDescs << mDesc;
 
-      for ( int jj = 0; jj < nlmods; jj++ )
-      {  // Build the list of local noise files to remove
-         QString fname      = lmodFnams[ jj ];
-         US_Noise noise;
-         noise.load( fname );
-         QString descrip    = noise.description;
-         QString basedesc   = descrip.section( ".", 0, -2 );
-         int     modx       = rmodDescs.indexOf( basedesc + ".model" );
+            if ( modDesc.isEmpty() )
+            {
+               modDesc = mDesc;   // Save 1st model's description
+DbgLv(1) << "RmvMod: 1st rmv-mod: jj modDesc" << jj << modDesc;
+               // Build noises-in-edit lists for database and local
+               noises_in_edit( modDesc, nieDescs, nieIDs, nieFnams );
+            }
 
-         if ( modx >= 0 )
-         {  // This noise belongs to a model on the delete list
-            rnoiFnams << fname;
-            rnoiDescs << descrip;
-            nlrnoi++;
-         }
-      }
+            tiDesc = QString( mDesc ).replace( ".model", ".ti_noise" );
+            riDesc = QString( mDesc ).replace( ".model", ".ri_noise" );
+            itix   = nieDescs.indexOf( tiDesc );
+            irix   = nieDescs.indexOf( riDesc );
 
-      for ( int jj = 0; jj < ndmods; jj++ )
-      {  // Build the list of DB noise IDs to remove
-         QString noiseGUID  = dmodIDs[ jj ];
-         query.clear();
-         query << "get_noiseID" << noiseGUID;
-         db.query( query );
-         db.next();
-         QString noiseID    = db.value( 0 ).toString();
-         US_Noise noise;
-         noise.load( noiseID, &db );
-         QString descrip    = noise.description;
-         QString basedesc   = descrip.section( ".", 0, -2 );
-         int     modx       = rmodDescs.indexOf( basedesc + ".model" );
+            if ( itix >= 0 )
+            {  // There is a TI noise to remove
+               noiID    = nieIDs  [ itix ];
+               noiFname = nieFnams[ itix ];
 
-         if ( modx >= 0 )
-         {
-            rnoiIDs   << noiseID;
+               if ( noiID != "-1" )
+                  ndrnoi++;
 
-            if ( nlmods == 0 )
-               rnoiDescs << descrip;
+               if ( ! noiFname.isEmpty() )
+                  nlrnoi++;
+               else
+                  noiFname = "";
 
-            ndrnoi++;
+               rnoiIDs   << noiID;
+               rnoiFnams << noiFname;
+               rnoiDescs << tiDesc;
+            }
+
+            if ( irix >= 0 )
+            {  // There is an RI noise to remove
+               noiID    = nieIDs  [ irix ];
+               noiFname = nieFnams[ irix ];
+
+               if ( noiID != "-1" )
+                  ndrnoi++;
+
+               if ( ! noiFname.isEmpty() )
+                  nlrnoi++;
+               else
+                  noiFname = "";
+
+               rnoiIDs   << noiID;
+               rnoiFnams << noiFname;
+               rnoiDescs << riDesc;
+            }
          }
       }
 
       nlnois             = nlrnoi + ( nlrnoi > nlrmod ? 2 : 1 );
       ndnois             = ndrnoi + ( ndrnoi > ndrmod ? 2 : 1 );
-qDebug() << "RmvMod: nlrmod ndrmod nlrnoi ndrnoi"
+DbgLv(1) << "RmvMod: nlrmod ndrmod nlrnoi ndrnoi"
  << nlrmod << ndrmod << nlrnoi << ndrnoi;
       QString msg = tr( "%1 local model files;\n"
                         "%2 database model files;\n"
                         "%3 local noise files;\n"
                         "%4 database noise files;\n"
-                        "have been identified for removal\n"
+                        "have been identified for removal.\n\n"
                         "Do you really want to delete them?" )
          .arg( nlrmod ).arg( ndrmod ).arg( nlrnoi ).arg( ndrnoi );
 
@@ -1105,14 +1147,206 @@ qDebug() << "RmvMod: nlrmod ndrmod nlrnoi ndrnoi"
 
       if ( response == QMessageBox::Yes )
       {
-qDebug() << " Remove Models and Noises";
+         US_Passwd pw;
+         US_DB2* dbP;
+         if ( dkdb_cntrls->db() )  dbP = new US_DB2( pw.getPasswd() );
+         QStringList query;
+         QString recID;
+         QString recFname;
+         QString recDesc;
+DbgLv(1) << " Remove Models and Noises";
+         for ( int ii = 0; ii < rmodIDs.size(); ii++ )
+         {
+            recID    = rmodIDs  [ ii ];
+            recDesc  = rmodDescs[ ii ];
+            recFname = rmodFnams[ ii ];
+DbgLv(1) << "  Delete: " << recID << recFname.section("/",-1,-1) << recDesc;
+
+            if ( ! recFname.isEmpty() )
+            {
+               QFile recf( recFname );
+               if ( recf.exists() )
+               {
+                  if ( recf.remove() )
+{ DbgLv(1) << "     local file removed"; }
+                  else { qDebug() << "*ERROR* removing" << recFname; }
+               }
+               else qDebug() << "*ERROR* does not exist:" << recFname;
+            }
+
+            if ( recID != "-1" )
+            {
+               query.clear();
+               query << "delete_model" << recID;
+               int stat = dbP->statusQuery( query );
+               if ( stat != 0 )
+                  qDebug() << "delete_model error" << stat;
+else DbgLv(1) << "     DB record deleted";
+            }
+         }
+
+         for ( int ii = 0; ii < rnoiIDs.size(); ii++ )
+         {
+            recID    = rnoiIDs  [ ii ];
+            recDesc  = rnoiDescs[ ii ];
+            recFname = rnoiFnams[ ii ];
+DbgLv(1) << "  Delete: " << recID << recFname.section("/",-1,-1) << recDesc;
+
+            if ( ! recFname.isEmpty() )
+            {
+               QFile recf( recFname );
+               if ( recf.exists() )
+               {
+                  if ( recf.remove() )
+{ DbgLv(1) << "     local file removed"; }
+                  else { qDebug() << "*ERROR* removing" << recFname; }
+               }
+               else qDebug() << "*ERROR* does not exist:" << recFname;
+            }
+
+            if ( recID != "-1" )
+            {
+               query.clear();
+               query << "delete_noise" << recID;
+               int stat = dbP->statusQuery( query );
+               if ( stat != 0 )
+                  qDebug() << "delete_model error" << stat;
+else DbgLv(1) << "     DB record deleted";
+            }
+         }
       }
    }
 
    else
    {  // No models were found!!! (huh!!!)
-qDebug() << "**NO local/dbase models-to-remove were found!!!!";
+DbgLv(1) << "**NO local/dbase models-to-remove were found!!!!";
    }
+
+   return;
+}
+
+// Create lists of information for noises that match a sample model from a set
+void US_FitMeniscus::noises_in_edit( QString modDesc, QStringList& nieDescs,
+      QStringList& nieIDs, QStringList& nieFnams )
+{
+   QString msetBase = modDesc.section( ".", 0, -3 ) + "." + 
+                      modDesc.section( ".", -2, -2 ).section( "_", 0, 3 );
+   QString srchTlab = msetBase.section( ".", -2, -2 );
+   QString srchTrip = srchTlab.left( 1 ) + "." + srchTlab.mid( 1, 1 ) + "." +
+                      srchTlab.mid( 2 ) + ".xml";
+   QString srchRun  = msetBase.section( ".", 0, -3 ) + "." +
+                      msetBase.section( ".", -1, -1 )
+                      .section( "_", 0, 0 ).mid( 1 );
+DbgLv(1) << "NIE: msetBase" << msetBase;
+   QStringList query;
+   QString     fname;
+   QString     noiID;
+   int         nlnois = 0;
+   bool        usesDB = dkdb_cntrls->db();
+
+   QStringList noifilt;
+   noifilt << "N*.xml";
+   QString     noidir   = US_Settings::dataDir() + "/noises";
+   QStringList noifiles = QDir( noidir ).entryList(
+         noifilt, QDir::Files, QDir::Name );
+   noidir               = noidir + "/";
+DbgLv(1) << "NIE: noise-files-size" << noifiles.size();
+
+   for ( int ii = 0; ii < noifiles.size(); ii++ )
+   {
+      QString noiFname   = noifiles.at( ii );
+      QString noiPath    = noidir + noiFname;
+      US_Noise noise;
+      
+      if ( noise.load( noiPath ) != US_DB2::OK )
+         continue;    // Can't use if can't load
+
+      QString noiDesc    = noise.description;
+DbgLv(1) << "NIE:  ii noiDesc" << ii << noiDesc;
+
+      if ( ! noiDesc.startsWith( msetBase ) )
+         continue;    // Can't use if not from the model set
+
+      nlnois++;
+
+      nieDescs << noiDesc;
+      nieFnams << noiFname;
+DbgLv(1) << "NIE:     noiFname" << noiFname;
+
+      if ( ! usesDB )
+         nieIDs   << "-1";
+   }
+
+   if ( usesDB )
+   {
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+      QStringList nIDs;
+      QString invID = QString::number( US_Settings::us_inv_ID() );
+
+      QStringList edtIDs;
+      QStringList edtNams;
+
+      query.clear();
+      query << "all_editedDataIDs" << invID;
+      db.query( query );
+
+      while( db.next() )
+      {
+         QString edtID    = db.value( 0 ).toString();
+         QString edtName  = db.value( 2 ).toString();
+
+         if ( edtName.startsWith( srchRun )  &&
+              edtName.endsWith(   srchTrip ) )
+         {
+            edtIDs  << edtID;
+            edtNams << edtName;
+DbgLv(1) << "NIE:  edtID edtName" << edtID << edtName;
+         }
+      }
+DbgLv(1) << "NIE: edtIDs-size" << edtIDs.size();
+if ( edtIDs.size() > 0 ) DbgLv(1) << "NIE: edtName0" << edtNams[0];
+
+      query.clear();
+      query << "get_noise_desc" << invID;
+      db.query( query );
+
+      while( db.next() )
+      {
+         QString noiID    = db.value( 0 ).toString();
+         QString edtID    = db.value( 2 ).toString();
+DbgLv(1) << "NIE:  noiID edtID" << noiID << edtID;
+
+         if ( edtIDs.contains( edtID ) )
+            nIDs << noiID;
+      }
+DbgLv(1) << "NIE: nIDs-size" << nIDs.size() << "msetBase" << msetBase;
+
+      for ( int ii = 0; ii < nIDs.size(); ii++ )
+      {
+         QString noiID      = nIDs[ ii ];
+         US_Noise noise;
+      
+         if ( noise.load( noiID, &db ) != US_DB2::OK )
+            continue;    // Can't use if can't load
+
+         QString noiDesc    = noise.description;
+DbgLv(1) << "NIE:  ii noiID noiDesc" << ii << noiID << noiDesc;
+
+         if ( ! noiDesc.startsWith( msetBase ) )
+            continue;    // Can't use if not from the model set
+
+         nieIDs   << noiID;
+
+         if ( nlnois == 0 )
+         {
+            nieFnams << "";
+            nieDescs << noiDesc;
+         }
+      }
+   }
+DbgLv(1) << "NIE: usesDB" << usesDB << "nlnois" << nlnois
+ << "nieDescs-size" << nieDescs.size() << "nieIDs-size" << nieIDs.size();
 
    return;
 }
