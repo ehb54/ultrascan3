@@ -250,12 +250,14 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       QListBox                      *lb_loaded;
       QPushButton                   *pb_loaded_select_all;
       QPushButton                   *pb_loaded_view;
+      QPushButton                   *pb_loaded_merge;
       QPushButton                   *pb_loaded_set_ranges;
       QPushButton                   *pb_loaded_remove;
 
       QLabel                        *lbl_selected;
       QListBox                      *lb_selected;
       QPushButton                   *pb_selected_select_all;
+      QPushButton                   *pb_selected_merge;
       QPushButton                   *pb_selected_set_ranges;
       QPushButton                   *pb_selected_remove;
 
@@ -293,6 +295,8 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       QString                       csv_warn;
       csv                           csv_merge( csv &csv1, csv &csv2 );          // sets csv_error
       void                          csv_merge_loaded_selected();   // takes all loaded selected pdbs, merges them and puts it on the loaded list and selects it
+      void                          csv_merge_selected_selected(); // takes all selected selected pdbs, merges them and puts it on the loaded list and selects it
+      void                          csv_remove( QString name, int i );
       
       QString                       csv_info( csv &csv1 ); // returns readable summary info (primarily for debugging)
       QStringList                   csv_model_names ( csv &csv1 ); // returns a list of the names (primarily for updating lb_selected)
@@ -329,12 +333,22 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       bool                          one_loaded_selected();
       QString                       first_loaded_selected();
       bool                          any_selected_selected();
+      bool                          one_selected_selected();
       bool                          any_params_enabled();
 
       bool                          csv_premerge_column_warning( csv &csv1, csv &csv2 );
       bool                          csv_premerge_column_warning_all_loaded_selected(); 
       map < QString, bool >         csv_premerge_missing_header_map; // keeps track of columns that will be added
       QStringList                   csv_premerge_missing_header_qsl; // string to display columns
+
+      // utilities for keeping names unique
+
+      map < QString, bool >         loaded_csv_names;
+      map < QString, bool >         loaded_csv_row_prepended_names;
+      void                          set_loaded_csv_row_prepended_names( csv &csv1 );
+      QString                       get_unique_csv_name( QString name );
+
+      QString                       loaded_info();
 
    private slots:
       
@@ -439,11 +453,13 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       void update_loaded();
       void loaded_select_all();
       void loaded_view();
+      void loaded_merge();
       void loaded_set_ranges();
       void loaded_remove();
 
       void update_selected();
       void selected_select_all();
+      void selected_merge();
       void selected_set_ranges();
       void selected_remove();
 

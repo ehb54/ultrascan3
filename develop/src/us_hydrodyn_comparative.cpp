@@ -25,6 +25,8 @@ US_Hydrodyn_Comparative::US_Hydrodyn_Comparative(
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("Model classifier"));
    updates_enabled = true;
+   loaded_csv_names.clear();
+   loaded_csv_row_prepended_names.clear();
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -239,6 +241,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    int minHeight2a = 120;
    int minHeight2b = 60;
    int minHeight3 = 22;
+   int minHeightpb = 26;
 
    QColorGroup cg_modes = USglobal->global_colors.cg_label;
    cg_modes.setColor(QColorGroup::Shadow, Qt::gray);
@@ -1092,28 +1095,35 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    pb_loaded_select_all = new QPushButton(tr("Select all"), this);
    pb_loaded_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_loaded_select_all->setMinimumHeight(minHeight1);
+   pb_loaded_select_all->setMinimumHeight(minHeightpb);
    pb_loaded_select_all->setEnabled(false);
    pb_loaded_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_loaded_select_all, SIGNAL(clicked()), SLOT(loaded_select_all()));
 
    pb_loaded_view = new QPushButton(tr("View"), this);
    pb_loaded_view->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_loaded_view->setMinimumHeight(minHeight1);
+   pb_loaded_view->setMinimumHeight(minHeightpb);
    pb_loaded_view->setEnabled(false);
    pb_loaded_view->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_loaded_view, SIGNAL(clicked()), SLOT(loaded_view()));
 
+   pb_loaded_merge = new QPushButton(tr("Merge"), this);
+   pb_loaded_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_loaded_merge->setMinimumHeight(minHeightpb);
+   pb_loaded_merge->setEnabled(false);
+   pb_loaded_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_loaded_merge, SIGNAL(clicked()), SLOT(loaded_merge()));
+
    pb_loaded_set_ranges = new QPushButton(tr("Set exp. min/max"), this);
-   pb_loaded_set_ranges->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_loaded_set_ranges->setMinimumHeight(minHeight1);
+   pb_loaded_set_ranges->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_loaded_set_ranges->setMinimumHeight(minHeightpb);
    pb_loaded_set_ranges->setEnabled(false);
    pb_loaded_set_ranges->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_loaded_set_ranges, SIGNAL(clicked()), SLOT(loaded_set_ranges()));
 
    pb_loaded_remove = new QPushButton(tr("Remove"), this);
    pb_loaded_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_loaded_remove->setMinimumHeight(minHeight1);
+   pb_loaded_remove->setMinimumHeight(minHeightpb);
    pb_loaded_remove->setEnabled(false);
    pb_loaded_remove->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_loaded_remove, SIGNAL(clicked()), SLOT(loaded_remove()));
@@ -1138,21 +1148,28 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    pb_selected_select_all = new QPushButton(tr("Select All"), this);
    pb_selected_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_selected_select_all->setMinimumHeight(minHeight1);
+   pb_selected_select_all->setMinimumHeight(minHeightpb);
    pb_selected_select_all->setEnabled(false);
    pb_selected_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_selected_select_all, SIGNAL(clicked()), SLOT(selected_select_all()));
 
+   pb_selected_merge = new QPushButton(tr("Merge"), this);
+   pb_selected_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_selected_merge->setMinimumHeight(minHeightpb);
+   pb_selected_merge->setEnabled(false);
+   pb_selected_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_selected_merge, SIGNAL(clicked()), SLOT(selected_merge()));
+
    pb_selected_set_ranges = new QPushButton(tr("Set exp. min/max"),this);
    pb_selected_set_ranges->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_selected_set_ranges->setMinimumHeight(minHeight1);
+   pb_selected_set_ranges->setMinimumHeight(minHeightpb);
    pb_selected_set_ranges->setEnabled(false);
    pb_selected_set_ranges->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_selected_set_ranges, SIGNAL(clicked()), SLOT(selected_set_ranges()));
 
    pb_selected_remove = new QPushButton(tr("Remove"), this);
    pb_selected_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_selected_remove->setMinimumHeight(minHeight1);
+   pb_selected_remove->setMinimumHeight(minHeightpb);
    pb_selected_remove->setEnabled(false);
    pb_selected_remove->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_selected_remove, SIGNAL(clicked()), SLOT(selected_remove()));
@@ -1335,23 +1352,37 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    // gl_loaded_selected_editor->addWidget(lbl_loaded, 0, 0);
    gl_loaded_selected_editor->addMultiCellWidget(lb_loaded, 0, 1, 0, 0);
-   QBoxLayout *hbl_loaded_buttons = new QHBoxLayout(0);
-   hbl_loaded_buttons->addWidget(pb_loaded_select_all);
-   hbl_loaded_buttons->addWidget(pb_loaded_view);
-   hbl_loaded_buttons->addWidget(pb_loaded_set_ranges);
-   hbl_loaded_buttons->addWidget(pb_loaded_remove);
-   gl_loaded_selected_editor->addLayout(hbl_loaded_buttons, 2, 0);
+   QBoxLayout *hbl_loaded_buttons1 = new QHBoxLayout(0);
+   hbl_loaded_buttons1->addWidget(pb_loaded_select_all);
+   hbl_loaded_buttons1->addWidget(pb_loaded_remove);
+   gl_loaded_selected_editor->addLayout(hbl_loaded_buttons1, 2, 0);
+
+   QBoxLayout *hbl_loaded_buttons2 = new QHBoxLayout(0);
+   hbl_loaded_buttons2->addWidget(pb_loaded_view);
+   hbl_loaded_buttons2->addWidget(pb_loaded_merge);
+   hbl_loaded_buttons2->addWidget(pb_loaded_set_ranges);
+   gl_loaded_selected_editor->addLayout(hbl_loaded_buttons2, 3, 0);
 
    // gl_loaded_selected_editor->addWidget(lbl_selected, 0, 1);
    gl_loaded_selected_editor->addMultiCellWidget(lb_selected, 0, 1, 1, 1);
-   QBoxLayout *hbl_selected_buttons = new QHBoxLayout(0);
-   hbl_selected_buttons->addWidget(pb_selected_select_all);
-   hbl_selected_buttons->addWidget(pb_selected_set_ranges);
-   hbl_selected_buttons->addWidget(pb_selected_remove);
-   gl_loaded_selected_editor->addLayout(hbl_selected_buttons, 2, 1);
 
-   gl_loaded_selected_editor->addWidget(frame, 0, 2);
-   gl_loaded_selected_editor->addMultiCellWidget(editor, 1, 1, 2, 2);
+   QBoxLayout *hbl_selected_buttons1 = new QHBoxLayout(0);
+   hbl_selected_buttons1->addWidget(pb_selected_select_all);
+   hbl_selected_buttons1->addWidget(pb_selected_remove);
+   gl_loaded_selected_editor->addLayout(hbl_selected_buttons1, 2, 1);
+
+   QBoxLayout *hbl_selected_buttons2 = new QHBoxLayout(0);
+   hbl_selected_buttons2->addWidget(pb_selected_merge);
+   hbl_selected_buttons2->addWidget(pb_selected_set_ranges);
+   gl_loaded_selected_editor->addLayout(hbl_selected_buttons2, 3, 1);
+
+   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
+   vbl_editor_group->addWidget(frame);
+   vbl_editor_group->addWidget(editor);
+
+   // gl_loaded_selected_editor->addWidget(frame, 0, 2);
+   //   gl_loaded_selected_editor->addMultiCellWidget(editor, 1, 1, 2, 2);
+   gl_loaded_selected_editor->addMultiCellLayout(vbl_editor_group, 0, 3, 2, 2);
    
    background->addMultiCellLayout(gl_loaded_selected_editor, j, j, 0, 10);
    j++;
@@ -1532,6 +1563,7 @@ void US_Hydrodyn_Comparative::update_lb_loaded_enables()
       pb_loaded_select_all->setEnabled(lb_loaded->count());
       bool any_selected = any_loaded_selected();
       pb_loaded_set_ranges->setEnabled(any_selected && any_params_enabled());
+      pb_loaded_merge->setEnabled(any_selected && !one_loaded_selected());
       pb_loaded_view->setEnabled(any_selected);
       pb_loaded_remove->setEnabled(any_selected);
    }
@@ -1544,6 +1576,7 @@ void US_Hydrodyn_Comparative::update_lb_selected_enables()
       cout << "update_lb_selected_enables\n";
       pb_selected_select_all->setEnabled(lb_selected->count());
       bool any_selected = any_selected_selected();
+      pb_selected_merge->setEnabled(any_selected && !one_selected_selected());
       pb_selected_set_ranges->setEnabled(any_selected && any_params_enabled());
       pb_selected_remove->setEnabled(any_selected);
       pb_process_csv->setEnabled(
@@ -1577,12 +1610,14 @@ void US_Hydrodyn_Comparative::disable_updates()
 
    // standard list for update_lb_loaded_enables()
    pb_loaded_select_all->setEnabled(false);
-   pb_loaded_set_ranges->setEnabled(false);
    pb_loaded_view->setEnabled(false);
+   pb_loaded_merge->setEnabled(false);
+   pb_loaded_set_ranges->setEnabled(false);
    pb_loaded_remove->setEnabled(false);
 
    // standard list for update_lb_selected_enables()
    pb_selected_select_all->setEnabled(false);
+   pb_selected_merge->setEnabled(false);
    pb_selected_set_ranges->setEnabled(false);
    pb_selected_remove->setEnabled(false);
 
@@ -2288,9 +2323,13 @@ void US_Hydrodyn_Comparative::load_csv()
       csv tmp_csv = csv_read(*it);
       if ( !csv_error.isEmpty() )
       {
-         editor_msg("red", QString("%1: %1").arg(*it).arg(csv_error));
+         if ( csv_error != tr("alread loaded") )
+         {
+            editor_msg("red", QString("%1: %1").arg(*it).arg(csv_error));
+         }
       } else {
          csvs[*it] = tmp_csv;
+         loaded_csv_names[tmp_csv.name] = true;
          lb_loaded->insertItem(tmp_csv.name);
          if ( !csv_warn.isEmpty() )
          {
@@ -2460,19 +2499,89 @@ void US_Hydrodyn_Comparative::loaded_view()
    }
 }
 
+void US_Hydrodyn_Comparative::loaded_merge()
+{
+   if ( !csv_premerge_column_warning_all_loaded_selected() )
+   {
+      if (
+          QMessageBox::warning(
+                               this,
+                               tr("Merge CSV's"),
+                               QString(
+                                       tr("The CSVs do not all have the same column names.\n"
+                                          "This will create additional columns with blank entries\n"
+                                          "for rows from CSVs without these extra columns:\n"
+                                          "\n%1\n\n"
+                                          "This will effect statistics computed on these extra columns.\n"
+                                          "Do you still want to merge them?")
+                                       ).arg(csv_premerge_missing_header_qsl.join("\n")),
+                               tr("&Yes"), tr("&No"),
+                               QString::null, 0, 1 )
+          )
+      {
+         return;
+      }
+   }
+         
+   csv_merge_loaded_selected();
+}
+
+void US_Hydrodyn_Comparative::csv_remove( QString name, int i )
+{
+   // cout << QString("csv_remove %1 %1\n").arg(name).arg(i);
+   // cout << loaded_info();
+   if ( csvs.count(name) )
+   {
+      for ( unsigned int j = 0; j < csvs[name].prepended_names.size(); j++ )
+      {
+         // cout << QString(" name: %1|%1\n").arg(csvs[name].name).arg(csvs[name].prepended_names[j]);
+         map < QString, bool >::iterator it = 
+            loaded_csv_row_prepended_names.find(csvs[name].name + 
+                                                "|" + 
+                                                csvs[name].prepended_names[j]);
+         loaded_csv_row_prepended_names.erase(it);
+      }
+      map < QString, bool >::iterator it = loaded_csv_names.find(name);
+      loaded_csv_names.erase(it);
+      map < QString, csv >::iterator it2 = csvs.find(name);
+      csvs.erase(it2);
+   } else {
+      editor_msg("red", QString(tr("internal error: csv_remove %1 could not find csv to remove!")).arg(name));
+   }
+   lb_loaded->removeItem(i);
+}
+
 void US_Hydrodyn_Comparative::loaded_remove()
 {
+   disable_updates();
    for ( int i = lb_loaded->numRows() - 1; i >= 0; i-- )
    {
       if ( lb_loaded->isSelected(i) )
       {
-         map < QString, csv >::iterator it = csvs.find(lb_loaded->text(i));
-         csvs.erase(it);
-         lb_loaded->removeItem(i);
+         csv_remove(lb_loaded->text(i), i);
+      }
+   }
+   enable_updates();
+}
+
+
+void US_Hydrodyn_Comparative::set_loaded_csv_row_prepended_names( csv &csv1 )
+{
+   for ( unsigned int i = 0; i < csv1.prepended_names.size(); i++ )
+   {
+      if ( loaded_csv_row_prepended_names.count(csv1.name + 
+                                                "|" + 
+                                                csv1.prepended_names[i]) )
+      {
+         editor_msg("red", tr("internal error: duplicate loaded prepended names found!"));
+      } else {
+         loaded_csv_row_prepended_names[csv1.name + 
+                                        "|" + 
+                                        csv1.prepended_names[i]] = true;
       }
    }
 }
-
+   
 void US_Hydrodyn_Comparative::update_selected()
 {
    update_lb_selected_enables();
@@ -2501,6 +2610,11 @@ void US_Hydrodyn_Comparative::selected_select_all()
    {
       lb_selected->setBottomItem(lb_selected->numRows() - 1);
    }
+}
+
+void US_Hydrodyn_Comparative::selected_merge()
+{
+   csv_merge_selected_selected();
 }
 
 void US_Hydrodyn_Comparative::selected_set_ranges()
@@ -2618,7 +2732,7 @@ void US_Hydrodyn_Comparative::save_csv()
                                 this,
                                 tr("Merge CSV's"),
                                 tr("Multiple CSV are selected and must be merged before saving\n"
-                                   "Did you want to merge them?"),
+                                   "Do you want to merge them?"),
                                 tr("&Yes"), tr("&No"),
                                 QString::null, 0, 1 ) 
           ) 
@@ -2637,7 +2751,7 @@ void US_Hydrodyn_Comparative::save_csv()
                                              "for rows from CSVs without these extra columns:\n"
                                              "\n%1\n\n"
                                              "This will effect statistics computed on these extra columns.\n"
-                                             "Did you still want to merge them?")
+                                             "Do you still want to merge them?")
                                           ).arg(csv_premerge_missing_header_qsl.join("\n")),
                                   tr("&Yes"), tr("&No"),
                                   QString::null, 0, 1 )
@@ -2901,6 +3015,38 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
    f.close();
 
    csv1.name = filename;
+   if ( loaded_csv_names.count(filename) )
+   {
+      if (
+          QMessageBox::warning(
+                               this,
+                               tr("Read CSV"),
+                               QString(
+                                       tr("The CSV named %1 is already loaded\nDo you want to reload it?")
+                                       ).arg(filename),
+                               tr("&Yes"), tr("&No"),
+                               QString::null, 0, 1 )
+          )
+      {
+         csv_error = tr("alread loaded");
+         return csv1;
+      }
+      // remove old load
+      bool removed_one = false;
+      for ( int i = 0; i < lb_loaded->numRows(); i++ )
+      {
+         if ( lb_loaded->text(i) == filename )
+         {
+            removed_one = true;
+            csv_remove(filename, i);
+            break;
+         }
+      }
+      if ( !removed_one )
+      {
+         editor_msg("red", QString(tr("internal error: could not find %1 in loaded list.")).arg(filename));
+      }
+   }
 
    int i = 0;
    QStringList qsl_h = csv_parse_line(*qsl.at(0));
@@ -2968,9 +3114,34 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
    }
 
    QString qs_prepend = QFileInfo(csv1.name).baseName(true) + ": ";
+
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
    {
-      csv1.prepended_names.push_back(qs_prepend + csv1.data[i][csv1.header_map["Model name"]]);
+      unsigned inc = 0;
+      while ( loaded_csv_row_prepended_names.count(
+                                                   csv1.name + 
+                                                   "|" + 
+                                                   qs_prepend + 
+                                                   csv1.data[i][csv1.header_map["Model name"]] +
+                                                   QString("%1").arg(inc ? QString("-%1").arg(inc) : "" )
+                                                   )
+              )
+      {
+         inc++;
+      }
+      
+      loaded_csv_row_prepended_names[
+                                     csv1.name + 
+                                     "|" + 
+                                     qs_prepend + 
+                                     csv1.data[i][csv1.header_map["Model name"]] +
+                                     QString("%1").arg(inc ? QString("-%1").arg(inc) : "" ) ] = true;
+              
+      csv1.prepended_names.push_back(
+                                     qs_prepend + 
+                                     csv1.data[i][csv1.header_map["Model name"]] +
+                                     QString("%1").arg(inc ? QString("-%1").arg(inc) : "" )
+                                     );
    }
       
    return csv1;
@@ -3203,6 +3374,22 @@ bool US_Hydrodyn_Comparative::any_selected_selected()
    return any_selected;
 }
 
+bool US_Hydrodyn_Comparative::one_selected_selected()
+{
+   int no_selected = 0;
+   for ( unsigned int i = 0; i < lb_selected->count(); i++ )
+   {
+      if ( lb_selected->isSelected(i) )
+      {
+         no_selected++;
+         if ( no_selected > 1 )
+         {
+            break;
+         }
+      }
+   }
+   return no_selected == 1;
+}
 
 csv US_Hydrodyn_Comparative::csv_process( csv &csv1 )
 {
@@ -3286,12 +3473,150 @@ void US_Hydrodyn_Comparative::csv_merge_loaded_selected()
       lb_loaded->setSelected(i, false);
    }
 
+   csv_merged.name = get_unique_csv_name(csv_merged.name);
    csvs[csv_merged.name] = csv_merged;
+   loaded_csv_names[csv_merged.name] = true;
+   set_loaded_csv_row_prepended_names( csv_merged );
+
    lb_loaded->insertItem(csv_merged.name);
    lb_loaded->setSelected(lb_loaded->numRows() - 1, true);
    lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
 
    editor->append(QString(tr("CSVs merged: %1\n")).arg(csv_merged.name));
+
+   enable_updates();
+}
+
+QString US_Hydrodyn_Comparative::get_unique_csv_name( QString name )
+{
+   unsigned int inc = 0;
+   while ( loaded_csv_names.count(name + ( inc ? QString("-%1").arg(inc) : "" )) )
+   {
+      inc++;
+   }
+   return name + (inc ? QString("-%1").arg(inc) : "");
+}
+   
+void US_Hydrodyn_Comparative::csv_merge_selected_selected() 
+{
+   if ( !any_selected_selected() || one_selected_selected() )
+   {
+      // nothing to do here
+      return;
+   }
+
+   disable_updates();
+
+   map < QString, bool > selected_names;
+
+   // create a map of the selected selected names
+   for ( unsigned int i = 0; i < lb_selected->count(); i++ )
+   {
+      if ( lb_selected->isSelected(i) ) 
+      {
+         selected_names[lb_selected->text(i)] = true;
+      }
+   }
+   
+   map < QString, bool > selected_models;
+   map < QString, bool > csv_used;
+   vector < QString > csv_used_vector;
+   map < QString, int > csv_used_models;
+   QString last_csv;
+
+   // now find the csv's that go with them to make our csv list
+   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   {
+      if ( lb_loaded->isSelected(i) ) 
+      {
+         if ( !csvs.count(lb_loaded->text(i)) )
+         {
+            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(first_loaded_selected()));
+            enable_updates();
+            return;
+         }
+         for ( unsigned int j = 0; j < csvs[lb_loaded->text(i)].prepended_names.size(); j++ )
+         {
+            if ( selected_names.count(csvs[lb_loaded->text(i)].prepended_names[j]) )
+            {
+               if ( !csv_used.count(lb_loaded->text(i)) )
+               {
+                  last_csv = lb_loaded->text(i);
+                  csv_used[lb_loaded->text(i)] = true;
+                  csv_used_vector.push_back(lb_loaded->text(i));
+               }
+               csv_used_models[lb_loaded->text(i)]++;
+               selected_models[csvs[lb_loaded->text(i)].prepended_names[j]] = true;
+            }
+         }
+      }
+   }
+
+   if ( csv_used_vector.size() == 0 )
+   {
+      enable_updates();
+      return;
+   }
+
+   csv csv_merged;
+
+   csv *ref_csv = &csvs[csv_used_vector[0]];
+   csv_merged.name = "selected_models_from_" + QFileInfo(ref_csv->name).baseName(true);
+   csv_merged.header_map = ref_csv->header_map;
+   csv_merged.header = ref_csv->header;
+
+   for ( unsigned int i = 0; i < ref_csv->prepended_names.size(); i++ )
+   {
+      if ( selected_models.count(ref_csv->prepended_names[i] ) )
+      {
+         csv_merged.data.push_back(ref_csv->data[i]);
+         csv_merged.num_data.push_back(ref_csv->num_data[i]);
+         csv_merged.prepended_names.push_back(ref_csv->prepended_names[i]);
+      }
+   }
+
+   // ok, we have one selected models worth in csv_merged
+
+   for ( unsigned int i = 1; i < csv_used_vector.size(); i++ )
+   {
+      csv csv_to_merge;
+      csv *ref_csv = &csvs[csv_used_vector[i]];
+      csv_to_merge.name = ref_csv->name;
+      csv_to_merge.header_map = ref_csv->header_map;
+      csv_to_merge.header = ref_csv->header;
+      for ( unsigned int j = 0; j < ref_csv->prepended_names.size(); j++ )
+      {
+         if ( selected_models.count(ref_csv->prepended_names[j] ) )
+         {
+            csv_to_merge.data.push_back(ref_csv->data[j]);
+            csv_to_merge.num_data.push_back(ref_csv->num_data[j]);
+            csv_to_merge.prepended_names.push_back(ref_csv->prepended_names[j]);
+         }
+      }
+      // now merge to csv_merged
+      csv_merged = csv_merge(csv_merged, csv_to_merge);
+   }
+
+   for ( int i = 0; i < lb_loaded->numRows(); i++ )
+   {
+      lb_loaded->setSelected(i, false);
+   }
+
+   csv_merged.name = get_unique_csv_name(csv_merged.name);
+   csvs[csv_merged.name] = csv_merged;
+   loaded_csv_names[csv_merged.name] = true;
+   set_loaded_csv_row_prepended_names( csv_merged );
+
+   lb_loaded->insertItem(csv_merged.name);
+   lb_loaded->setSelected(lb_loaded->numRows() - 1, true);
+   lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
+
+   editor->append(QString(tr("CSVs merged: %1\n")).arg(csv_merged.name));
+
+   for ( int i = 0; i < lb_selected->numRows(); i++ )
+   {
+      lb_selected->setSelected(i, true);
+   }
 
    enable_updates();
 }
@@ -3629,4 +3954,27 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning_all_loaded_selected()
       }
    }
    return csv_premerge_missing_header_qsl.size() == 0;
+}
+
+QString US_Hydrodyn_Comparative::loaded_info()
+{
+   QString qs;
+
+   qs = "loaded_csv_names:\n";
+   for ( map < QString, bool >::iterator it = loaded_csv_names.begin();
+         it != loaded_csv_names.end();
+         it++ )
+   {
+      qs += " " + it->first + "\n";
+   }
+
+   qs += "loaded_csv_row_prepended_names:\n";
+   for ( map < QString, bool >::iterator it = loaded_csv_row_prepended_names.begin();
+         it != loaded_csv_row_prepended_names.end();
+         it++ )
+   {
+      qs += " " + it->first + "\n";
+   }
+
+   return qs;
 }

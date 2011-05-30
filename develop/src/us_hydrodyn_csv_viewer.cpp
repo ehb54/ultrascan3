@@ -150,4 +150,3 @@ void US_Hydrodyn_Csv_Viewer::sort_column( int section )
    t_csv->sortColumn(section, order_ascending, true);
    order_ascending = !order_ascending;
 }
-
