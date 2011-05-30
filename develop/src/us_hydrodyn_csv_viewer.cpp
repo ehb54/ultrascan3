@@ -49,10 +49,9 @@ US_Hydrodyn_Csv_Viewer::~US_Hydrodyn_Csv_Viewer()
 
 void US_Hydrodyn_Csv_Viewer::setupGUI()
 {
-
    int minHeight1 = 30;
 
-   lbl_title = new QLabel(csv1.name, this);
+   lbl_title = new QLabel(csv1.name.left(80), this);
    lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(AlignCenter|AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);

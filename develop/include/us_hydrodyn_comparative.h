@@ -289,7 +289,7 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       map < QString, csv >          csvs;      // all csvs loaded?
       csv                           csv_read( QString filename );               // sets csv_error, csv_warn
       void                          csv_write( QString filename, csv &csv1 );   // use to save any csv in the loaded 
-      csv                           csv_process( csv &csv1 );                   // process selected, then we can add it back to the loaded
+      bool                          csv_process( csv &csv1 );                   // processes csv
       QStringList                   csv_parse_line( QString qs );               // split up line
       QString                       csv_error;
       QString                       csv_warn;
@@ -298,6 +298,9 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
 
       bool                          csv_merge_selected_selected( csv &csv_merged ); // does not add to csvs, returns false if not created
       //                            ^^^^^^ note: this function disables_updates() and you must enable_updates() afterwards. (there are potential gui issues without this behaviour)
+
+      bool                          csv_has_column_name( csv &csv1, QString name );
+      void                          csv_remove_column( csv &csv1, QString name );
 
       void                          csv_remove( QString name, int i );
       
@@ -326,6 +329,10 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
                                                              double &max, 
                                                              comparative_entry ce
                                                              );
+
+      void                          csv_make_unique_header_name( csv &csv1, QString name );
+      //                            finds a unique name that does equal the originally supplied name
+      //                            and then rename the header to that unique name
 
       void                          update_selected_map();
       map < QString, bool >         selected_map;  // needed for quick lookups, maps lb_selected_selected.text()
