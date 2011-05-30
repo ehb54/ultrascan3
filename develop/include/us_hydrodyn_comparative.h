@@ -295,7 +295,10 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       QString                       csv_warn;
       csv                           csv_merge( csv &csv1, csv &csv2 );          // sets csv_error
       void                          csv_merge_loaded_selected();   // takes all loaded selected pdbs, merges them and puts it on the loaded list and selects it
-      void                          csv_merge_selected_selected(); // takes all selected selected pdbs, merges them and puts it on the loaded list and selects it
+
+      bool                          csv_merge_selected_selected( csv &csv_merged ); // does not add to csvs, returns false if not created
+      //                            ^^^^^^ note: this function disables_updates() and you must enable_updates() afterwards. (there are potential gui issues without this behaviour)
+
       void                          csv_remove( QString name, int i );
       
       QString                       csv_info( csv &csv1 ); // returns readable summary info (primarily for debugging)

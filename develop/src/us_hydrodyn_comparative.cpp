@@ -2614,7 +2614,35 @@ void US_Hydrodyn_Comparative::selected_select_all()
 
 void US_Hydrodyn_Comparative::selected_merge()
 {
-   csv_merge_selected_selected();
+   csv csv_merged;
+   if ( csv_merge_selected_selected(csv_merged) )
+   {
+      for ( int i = 0; i < lb_loaded->numRows(); i++ )
+      {
+         lb_loaded->setSelected(i, false);
+      }
+      
+      csv_merged.name = get_unique_csv_name(csv_merged.name);
+      csvs[csv_merged.name] = csv_merged;
+      loaded_csv_names[csv_merged.name] = true;
+      set_loaded_csv_row_prepended_names( csv_merged );
+      
+      lb_loaded->insertItem(csv_merged.name);
+      lb_loaded->setSelected(lb_loaded->numRows() - 1, true);
+      lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
+      // I don't think these next 2 lines should be needed, but sometimes
+      // if a scrollbar is created, this keeps it from overwriting the bottom item:
+      lb_loaded->setCurrentItem(lb_loaded->numRows() - 1);
+      lb_loaded->ensureCurrentVisible();
+      
+      editor->append(QString(tr("CSVs merged: %1\n")).arg(csv_merged.name));
+      
+      for ( int i = 0; i < lb_selected->numRows(); i++ )
+      {
+         lb_selected->setSelected(i, true);
+      }
+   }
+   enable_updates();
 }
 
 void US_Hydrodyn_Comparative::selected_set_ranges()
@@ -2721,6 +2749,38 @@ void US_Hydrodyn_Comparative::editor_msg( QString color, QString msg )
 
 void US_Hydrodyn_Comparative::process_csv()
 {
+   csv csv_processed;
+   if ( !csv_merge_selected_selected(csv_processed) )
+   {
+      enable_updates();
+      editor_msg("red", tr("internal error: should not get here without anything selected!"));
+      return;
+   }
+
+   for ( int i = 0; i < lb_loaded->numRows(); i++ )
+   {
+      lb_loaded->setSelected(i, false);
+   }
+
+   csv_processed.name.replace(QRegExp("^selected_rows_from_"),"");
+   csv_processed.name = "Processed_" + csv_processed.name;
+   csv_processed = csv_process(csv_processed);
+
+   csv_processed.name = get_unique_csv_name(csv_processed.name);
+   csvs[csv_processed.name] = csv_processed;
+   loaded_csv_names[csv_processed.name] = true;
+   set_loaded_csv_row_prepended_names( csv_processed );
+
+   lb_loaded->insertItem(csv_processed.name);
+   lb_loaded->setSelected(lb_loaded->numRows() - 1, true);
+   lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
+   // I don't think these next 2 lines should be needed, but sometimes
+   // if a scrollbar is created, this keeps it from overwriting the bottom item:
+   lb_loaded->setCurrentItem(lb_loaded->numRows() - 1);
+   lb_loaded->ensureCurrentVisible();
+
+   editor->append(QString(tr("Processed into: %1\n")).arg(csv_processed.name));
+   enable_updates();
 }
 
 void US_Hydrodyn_Comparative::save_csv()
@@ -3394,6 +3454,14 @@ bool US_Hydrodyn_Comparative::one_selected_selected()
 csv US_Hydrodyn_Comparative::csv_process( csv &csv1 )
 {
    cout << "csv_process\n";
+
+   // for each selected ce, add the requested columns
+   // remember to check for dups etc
+
+
+   // sort appropriately
+
+
    return csv1;
 }
 
@@ -3501,15 +3569,15 @@ QString US_Hydrodyn_Comparative::get_unique_csv_name( QString name )
    return name + (inc ? QString("-%1").arg(inc) : "");
 }
    
-void US_Hydrodyn_Comparative::csv_merge_selected_selected() 
+bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged ) 
 {
-   if ( !any_selected_selected() || one_selected_selected() )
+   disable_updates();
+
+   if ( !any_selected_selected() )
    {
       // nothing to do here
-      return;
+      return false;
    }
-
-   disable_updates();
 
    map < QString, bool > selected_names;
 
@@ -3537,7 +3605,7 @@ void US_Hydrodyn_Comparative::csv_merge_selected_selected()
          {
             editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(first_loaded_selected()));
             enable_updates();
-            return;
+            return false;
          }
          for ( unsigned int j = 0; j < csvs[lb_loaded->text(i)].prepended_names.size(); j++ )
          {
@@ -3558,14 +3626,14 @@ void US_Hydrodyn_Comparative::csv_merge_selected_selected()
 
    if ( csv_used_vector.size() == 0 )
    {
-      enable_updates();
-      return;
+      return false;
    }
 
-   csv csv_merged;
+   // csv csv_merged;
 
    csv *ref_csv = &csvs[csv_used_vector[0]];
-   csv_merged.name = "selected_models_from_" + QFileInfo(ref_csv->name).baseName(true);
+   csv_merged.name.replace(QRegExp("^selected_rows_from_"),"");
+   csv_merged.name = "selected_rows_from_" + QFileInfo(ref_csv->name).baseName(true);
    csv_merged.header_map = ref_csv->header_map;
    csv_merged.header = ref_csv->header;
 
@@ -3600,33 +3668,7 @@ void US_Hydrodyn_Comparative::csv_merge_selected_selected()
       // now merge to csv_merged
       csv_merged = csv_merge(csv_merged, csv_to_merge);
    }
-
-   for ( int i = 0; i < lb_loaded->numRows(); i++ )
-   {
-      lb_loaded->setSelected(i, false);
-   }
-
-   csv_merged.name = get_unique_csv_name(csv_merged.name);
-   csvs[csv_merged.name] = csv_merged;
-   loaded_csv_names[csv_merged.name] = true;
-   set_loaded_csv_row_prepended_names( csv_merged );
-
-   lb_loaded->insertItem(csv_merged.name);
-   lb_loaded->setSelected(lb_loaded->numRows() - 1, true);
-   lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
-   // I don't think these next 2 lines should be needed, but sometimes
-   // if a scrollbar is created, this keeps it from overwriting the bottom item:
-   lb_loaded->setCurrentItem(lb_loaded->numRows() - 1);
-   lb_loaded->ensureCurrentVisible();
-
-   editor->append(QString(tr("CSVs merged: %1\n")).arg(csv_merged.name));
-
-   for ( int i = 0; i < lb_selected->numRows(); i++ )
-   {
-      lb_selected->setSelected(i, true);
-   }
-
-   enable_updates();
+   return true;
 }
 
 bool US_Hydrodyn_Comparative::any_params_enabled()
