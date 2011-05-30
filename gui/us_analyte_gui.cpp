@@ -1668,7 +1668,18 @@ void US_AnalyteGui::save( void )
    if ( analyte.type == US_Analyte::DNA ||
         analyte.type == US_Analyte::RNA  )
    {
-      analyte.mw     = le_nucle_mw  ->text().toDouble();
+      // Strip trailing items from the mw text box.
+      QStringList mw = le_nucle_mw->text().split( " ", QString::SkipEmptyParts );
+
+      if ( mw.empty() )
+      {
+         QMessageBox::warning( this,
+            tr( "Analyte Error" ),
+            tr( "Moleculare weight is empty.  Define a sequence." ) );
+         return;
+      }
+
+      analyte.mw     = mw[ 0 ].toDouble();
       analyte.vbar20 = le_nucle_vbar->text().toDouble();
    }
 
