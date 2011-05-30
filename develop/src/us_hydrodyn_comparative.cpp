@@ -3481,6 +3481,10 @@ void US_Hydrodyn_Comparative::csv_merge_loaded_selected()
    lb_loaded->insertItem(csv_merged.name);
    lb_loaded->setSelected(lb_loaded->numRows() - 1, true);
    lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
+   // I don't think these next 2 lines should be needed, but sometimes
+   // if a scrollbar is created, this keeps it from overwriting the bottom item:
+   lb_loaded->setCurrentItem(lb_loaded->numRows() - 1);
+   lb_loaded->ensureCurrentVisible();
 
    editor->append(QString(tr("CSVs merged: %1\n")).arg(csv_merged.name));
 
@@ -3610,6 +3614,10 @@ void US_Hydrodyn_Comparative::csv_merge_selected_selected()
    lb_loaded->insertItem(csv_merged.name);
    lb_loaded->setSelected(lb_loaded->numRows() - 1, true);
    lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
+   // I don't think these next 2 lines should be needed, but sometimes
+   // if a scrollbar is created, this keeps it from overwriting the bottom item:
+   lb_loaded->setCurrentItem(lb_loaded->numRows() - 1);
+   lb_loaded->ensureCurrentVisible();
 
    editor->append(QString(tr("CSVs merged: %1\n")).arg(csv_merged.name));
 
