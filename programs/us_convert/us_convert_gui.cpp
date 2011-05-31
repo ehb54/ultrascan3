@@ -294,7 +294,9 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
 
    picker = new US_PlotPicker( data_plot );
-   picker ->setRubberBand( QwtPicker::VLineRubberBand );
+   picker ->setRubberBand    ( QwtPicker::VLineRubberBand );
+   picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
+                               Qt::LeftButton, Qt::ControlModifier );
 
    // Now let's assemble the page
    
