@@ -67,7 +67,12 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
          tr( "Meniscus Fit" ),
          tr( "Radius" ), tr( "2DSA Meniscus RMSD Value" ) );
    
-   us_grid( meniscus_plot );
+   QwtPlotPicker* pick = new US_PlotPicker( meniscus_plot );
+   QwtPlotGrid*   grid = us_grid( meniscus_plot );
+   pick->setRubberBand( QwtPicker::VLineRubberBand );
+   //connect( pick, SIGNAL( moved    ( const QwtDoublePoint& ) ),
+   //         this, SLOT(   new_value( const QwtDoublePoint& ) ) );
+   grid->attach( meniscus_plot );
    
    meniscus_plot->setMinimumSize( 400, 400 );
    meniscus_plot->setAxisScale( QwtPlot::xBottom, 5.7, 6.8 );
@@ -525,12 +530,6 @@ void US_FitMeniscus::scan_dbase()
    US_Passwd pw;                   // DB password
    US_DB2 db( pw.getPasswd() );    // DB control
    QStringList query;              // DB query string list
-   QStringList modIDs;             // List of FM model IDs
-   QStringList modGIs;             // List of FM model GUIDs
-   QStringList mdescs;             // List of FM model descriptions
-   QStringList medIDs;             // List of FM model edit IDs
-   QList< double > mvaris;         // List of FM model variance values
-   QList< double > mmenis;         // List of FM model meniscus values
    QStringList mfnams;             // List of FM model fit file names
    QStringList ufnams;             // List of unique model fit file names
    QStringList uantms;             // List of unique model fit analysis times
@@ -541,7 +540,9 @@ void US_FitMeniscus::scan_dbase()
    int         nfadds = 0;         // Number of fit file additions
    int         nfexss = 0;         // Number of fit files left as they existed
 
-   QString     invID = QString::number( US_Settings::us_inv_ID() );
+   QString invID   = QString::number( US_Settings::us_inv_ID() );
+   QRegExp fmIter  = QRegExp( "i\?\?-m*",
+         Qt::CaseSensitive, QRegExp::Wildcard );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -566,8 +567,7 @@ void US_FitMeniscus::scan_dbase()
       QString iterID     = ansysID .section( '_',  4,  4 );
 DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus;
 
-      if ( iterID.length() == 10  &&
-           ( iterID.contains( "-m6" )  ||  iterID.contains( "-m5" ) ) )
+      if ( ansysID.contains( "2DSA-FM" )  ||  iterID.contains( fmIter ) )
       {  // Model from meniscus fit, so save information
 DbgLv(1) << "DbSc:    *FIT* " << descript;
 
@@ -592,7 +592,6 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
 
          mDescrs << mdescr;
       }
-else DbgLv(1) << "DbSc:    iterID" << iterID;
    }
 
    nfmods     = mDescrs.size();
@@ -607,12 +606,6 @@ DbgLv(1) << " sorted:Dn" <<  mDescrs[nfmods-1].description;
 
    le_status->setText(
          tr( "Comparing to existing local meniscus,rmsd table files ..." ) );
-   modIDs.clear();
-   modGIs.clear();
-   mdescs.clear();
-   medIDs.clear();
-   mvaris.clear();
-   mmenis.clear();
    mfnams.clear();
    ufnams.clear();
    uantms.clear();
@@ -633,12 +626,6 @@ DbgLv(1) << " sorted:Dn" <<  mDescrs[nfmods-1].description;
          uantms << antime;
       }
 
-      modIDs << mDescrs[ ii ].modelID;
-      modGIs << mDescrs[ ii ].modelGUID;
-      mdescs << mDescrs[ ii ].description;
-      medIDs << mDescrs[ ii ].editID;
-      mvaris << mDescrs[ ii ].variance;
-      mmenis << mDescrs[ ii ].meniscus;
       mfnams << mDescrs[ ii ].fitfname;
    }
 
