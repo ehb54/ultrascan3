@@ -521,6 +521,7 @@ DbgLv(1) << " fname_edit" << fname_edit;
 // Scan the database for models to use to write local fit table files
 void US_FitMeniscus::scan_dbase()
 {
+   QList< ModelDesc > mDescrs;     // List of model description objects
    US_Passwd pw;                   // DB password
    US_DB2 db( pw.getPasswd() );    // DB control
    QStringList query;              // DB query string list
@@ -528,7 +529,6 @@ void US_FitMeniscus::scan_dbase()
    QStringList modGIs;             // List of FM model GUIDs
    QStringList mdescs;             // List of FM model descriptions
    QStringList medIDs;             // List of FM model edit IDs
-   QStringList medGIs;             // List of FM model edit GUIDs
    QList< double > mvaris;         // List of FM model variance values
    QList< double > mmenis;         // List of FM model meniscus values
    QStringList mfnams;             // List of FM model fit file names
@@ -554,6 +554,7 @@ void US_FitMeniscus::scan_dbase()
 
    while( db.next() )
    {
+      ModelDesc mdescr;
       QString modelID    = db.value( 0 ).toString();
       QString modelGUID  = db.value( 1 ).toString();
       QString descript   = db.value( 2 ).toString();
@@ -568,13 +569,6 @@ DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus;
       if ( iterID.length() == 10  &&  iterID.contains( "-m6" ) )
       {  // Model from meniscus fit, so save information
 DbgLv(1) << "DbSc:    *FIT* " << descript;
-         modIDs << modelID;
-         modGIs << modelGUID;
-         mdescs << descript;
-         medIDs << editID;
-         medGIs << editGUID;
-         mvaris << variance;
-         mmenis << meniscus;
 
          // Format and save the potential fit table file name
          QString runID      = descript.section( '.',  0, -4 );
@@ -582,37 +576,78 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          QString editLabel  = ansysID .section( '_',  0,  0 );
          QString ftfname    = runID + "/2dsa-fm." + editLabel +
                               "-" + tripleID + ".fit.dat";
-         mfnams << ftfname;
-DbgLv(1) << "DbSc:      ftfname" << ftfname;
+         mdescr.description = descript;
+         mdescr.baseDescr   = runID + "." + tripleID + "."
+                              + ansysID.section( "-", 0, 3 );
+         mdescr.fitfname    = ftfname;
+         mdescr.modelID     = modelID;
+         mdescr.modelGUID   = modelGUID;
+         mdescr.editID      = editID;
+         mdescr.editGUID    = editGUID;
+         mdescr.variance    = variance;
+         mdescr.meniscus    = meniscus;
+         mdescr.antime      = descript.section( '.', -2, -2 )
+                              .section( '_',  1,  1 ).mid( 1 );
+
+         mDescrs << mdescr;
       }
 else DbgLv(1) << "DbSc:    iterID" << iterID;
    }
 
-   nfmods     = modIDs.size();
+   nfmods     = mDescrs.size();
+DbgLv(1) << " pre:D0" <<  mDescrs[0].description;
+DbgLv(1) << " pre:Dn" <<  mDescrs[nfmods-1].description;
+   qSort( mDescrs );
 DbgLv(1) << "Number of FM models found: " << nfmods;
+DbgLv(1) << " sorted:D0" <<  mDescrs[0].description;
+DbgLv(1) << " sorted:Dn" <<  mDescrs[nfmods-1].description;
 
    // Scan local files to see what fit table files already exist
 
    le_status->setText(
          tr( "Comparing to existing local meniscus,rmsd table files ..." ) );
+   modIDs.clear();
+   modGIs.clear();
+   mdescs.clear();
+   medIDs.clear();
+   mvaris.clear();
+   mmenis.clear();
+   mfnams.clear();
+   ufnams.clear();
+   uantms.clear();
 
    for ( int ii = 0; ii < nfmods; ii++ )
    {  // Find unique file names in order to create sets
-      QString ftfname    = mfnams.at( ii );
-      QString antime     = mdescs.at( ii ).section( '.', -2, -2 )
-                                          .section( '_',  1,  1 );
+      QString ftfname    = mDescrs[ ii ].fitfname;
+      QString antime     = mDescrs[ ii ].antime;
 
-      if ( ! ufnams.contains( ftfname )  &&  ! uantms.contains( antime ) )
-      {  // This is a new occurence of a file name and analysis time
+      if ( ! ufnams.contains( ftfname ) )
+      {  // This is a new fit-file name, so new analysis set
          ufnams << ftfname;
          uantms << antime;
       }
+
+      else if ( ! uantms.contains( antime ) )
+      {  // Already seen fit-file, but new analysis time, so duplicate
+         uantms << antime;
+      }
+
+      modIDs << mDescrs[ ii ].modelID;
+      modGIs << mDescrs[ ii ].modelGUID;
+      mdescs << mDescrs[ ii ].description;
+      medIDs << mDescrs[ ii ].editID;
+      mvaris << mDescrs[ ii ].variance;
+      mmenis << mDescrs[ ii ].meniscus;
+      mfnams << mDescrs[ ii ].fitfname;
    }
 
    nfsets     = ufnams.size();
+   int nantm  = uantms.size();
+   int ndupl  = nantm - nfsets;
+DbgLv(1) << "Number of FM analysis sets: " << nfsets;
+DbgLv(1) << "Number of FM analysis set duplicates: " << ndupl;
    int kfsets = nfsets;
    QString rdir = US_Settings::resultDir().replace( "\\", "/" ) + "/";
-DbgLv(1) << "Number of FM analysis sets: " << nfsets;
    QString fnamesv;
 
    for ( int ii = 0; ii < kfsets; ii++ )
@@ -633,7 +668,7 @@ DbgLv(1) << "Number of FM analysis sets: " << nfsets;
          QString ftfpath    = rdir + ftfname;
          QDateTime fdate    = QFileInfo( ftfile ).lastModified().toUTC();
          int       jj       = mfnams.indexOf( ftfname );
-         QString   modelID  = modIDs.at( jj );
+         QString   modelID  = mDescrs[ jj ].modelID;
          query.clear();
          query << "get_model_info" << modelID;
          db.next();
@@ -668,12 +703,20 @@ DbgLv(1) << "Number of FM analysis sets: " << nfsets;
       // Creating a new or replacement file:  build list of meniscus,rmsd pairs
       int       jfirst   = mfnams.indexOf( ftfname );
       int       jlast    = mfnams.lastIndexOf( ftfname ) + 1;
+      QString   antiml   = mDescrs[ jlast - 1 ].antime;
       QStringList mrpairs;
 
+DbgLv(1) << " Creating" << ftfname << "jf,jl" << jfirst << jlast;
       for ( int jj = jfirst; jj < jlast; jj++ )
       {  // First build the pairs list
-         mrpairs << QString::number( mmenis.at( jj ),         'f', 6 ) + " "
-                  + QString::number( sqrt( mvaris.at( jj ) ), 'e', 6 ); 
+         double meniscus = mDescrs[ jj ].meniscus;
+         double variance = mDescrs[ jj ].variance;
+         double rmsd     = sqrt( variance );
+         QString antime  = mDescrs[ jj ].antime;
+DbgLv(1) << "  jj desc" << jj << mDescrs[jj].description;
+         if ( antime == antiml )
+            mrpairs << QString::number( meniscus, 'f', 6 ) + " "
+                     + QString::number( rmsd,     'e', 6 ); 
       }
 
       mrpairs.sort();
@@ -772,6 +815,9 @@ void US_FitMeniscus::remove_models()
          modfilt, QDir::Files, QDir::Name );
    moddir               = moddir + "/";
 
+   QList< ModelDesc >  lMDescrs;
+   QList< ModelDesc >  dMDescrs;
+
    QStringList     lmodFnams;             // local model full path file names
    QStringList     lmodGUIDs;             // Local model GUIDs
    QList< double > lmodVaris;             // Local variance values
@@ -794,6 +840,7 @@ void US_FitMeniscus::remove_models()
 
    for ( int ii = 0; ii < modfiles.size(); ii++ )
    {
+      ModelDesc lmodd;
       QString modfname   = modfiles.at( ii );
       QString modpath    = moddir + modfname;
       US_Model model;
@@ -841,19 +888,28 @@ void US_FitMeniscus::remove_models()
       lmodVaris << model.variance;      // Save variance
       lmodMenis << model.meniscus;      // Save meniscus
       lmodDescs << model.description;   // Save description
+
+      lmodd.description = model.description;
+      lmodd.modelGUID   = model.modelGUID;
+      lmodd.modelID     = "-1";
+      lmodd.variance    = model.variance;
+      lmodd.meniscus    = model.meniscus;
+      lMDescrs << lmodd;
    }
 
-   nlmods         = lmodFnams.size();
+   nlmods         = lMDescrs.size();
+   qSort( lMDescrs );
 DbgLv(1) << "RmvMod: nlmods" << nlmods;
    double minVari = 99e+10;
 
    for ( int ii = 0; ii < nlmods; ii++ )
    {  // Scan to identify model in set with lowest variance
-DbgLv(1) << "low Vari scan: ii vari meni desc" << ii << lmodVaris.at(ii)
- << lmodMenis.at(ii) << lmodDescs.at(ii).right( 22 );
-      if ( lmodVaris.at( ii ) < minVari )
+      ModelDesc lmodd = lMDescrs[ ii ];
+DbgLv(1) << "low Vari scan: ii vari meni desc" << ii << lmodd.variance
+ << lmodd.meniscus << lmodd.description.right( 22 );
+      if ( lmodd.variance  < minVari )
       {
-         minVari        = lmodVaris.at( ii );
+         minVari        = lmodd.variance;
          lkModx         = ii;
 //DbgLv(1) << "low Vari scan:   minVari lkModx" << minVari << lkModx;
       }
@@ -863,6 +919,7 @@ DbgLv(1) << "RmvMod:  minVari lkModx" << minVari << lkModx;
    // Make a list of f-m models that match for DB, if possible
    if ( dkdb_cntrls->db() )
    {
+      ModelDesc dmodd;
       QString   invID = QString::number( US_Settings::us_inv_ID() );
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
@@ -918,20 +975,29 @@ DbgLv(1) << "RmvMod:  minVari lkModx" << minVari << lkModx;
          dmodVaris << variance;            // Save variance
          dmodMenis << meniscus;            // Save meniscus
          dmodDescs << descript;            // Save description
+
+         dmodd.description = descript;
+         dmodd.modelGUID   = modelGUID;
+         dmodd.modelID     = modelID;
+         dmodd.variance    = variance;
+         dmodd.meniscus    = meniscus;
+         dMDescrs << dmodd;
 DbgLv(1) << "RmvMod:  scn2 ii dmodDesc" << descript; 
       }
 
-      ndmods         = dmodIDs.size();
+      ndmods         = dMDescrs.size();
+      qSort( dMDescrs );
 DbgLv(1) << "RmvMod: ndmods" << ndmods;
       double minVari = 99e+10;
 
       for ( int ii = 0; ii < ndmods; ii++ )
       {  // Scan to identify model in set with lowest variance
-DbgLv(1) << "low Vari scan: ii vari meni desc" << ii << dmodVaris.at(ii)
- << dmodMenis.at(ii) << dmodDescs.at(ii).right( 22 );
-         if ( dmodVaris.at( ii ) < minVari )
+         ModelDesc dmodd = dMDescrs[ ii ];
+DbgLv(1) << "low Vari scan: ii vari meni desc" << ii << dmodd.variance 
+ << dmodd.meniscus << dmodd.description.right( 22 );
+         if ( dmodd.variance < minVari )
          {
-            minVari        = dmodVaris.at( ii );
+            minVari        = dmodd.variance;
             dkModx         = ii;
 DbgLv(1) << "low Vari scan:   minVari dkModx" << minVari << dkModx;
          }
@@ -940,65 +1006,42 @@ DbgLv(1) << "low Vari scan:   minVari dkModx" << minVari << dkModx;
       // Now, compare the findings for local versus database
       if ( nlmods == ndmods  ||  ( ndmods > 0 && nlmods == 0 ) )
       {
-         int    jj      = 0;
-         int    kk      = ndmods - 1;
          int    nmatch  = 0;
-         int    nmatfo  = 0;
 
-         while ( jj < nlmods )
+         for ( int jj = 0; jj < nlmods; jj++ )
          {
-            if ( dmodGUIDs[ jj ] == lmodGUIDs[ kk ]  &&
-                 dmodDescs[ jj ] == lmodDescs[ kk ] )
+            ModelDesc lmodd = lMDescrs[ jj ];
+            ModelDesc dmodd = dMDescrs[ jj ];
+
+            if ( lmodd.modelGUID   == dmodd.modelGUID &&
+                 lmodd.description == dmodd.description )
                nmatch++;
 
-            else if ( dmodGUIDs[ jj ] == lmodGUIDs[ jj ]  &&
-                      dmodDescs[ jj ] == lmodDescs[ jj ]  &&
-                      dmodGUIDs[ kk ] == lmodGUIDs[ kk ]  &&
-                      dmodDescs[ kk ] == lmodDescs[ kk ] )
-               nmatfo++;
+            lmodGUIDs[ jj ]    = lmodd.modelGUID;
+            lmodVaris[ jj ]    = lmodd.variance;
+            lmodMenis[ jj ]    = lmodd.meniscus; 
+            lmodDescs[ jj ]    = lmodd.description;
+         }
 
-            jj++;
-            kk--;
+         for ( int jj = 0; jj < ndmods; jj++ )
+         {
+            ModelDesc dmodd = dMDescrs[ jj ];
+            dmodIDs  [ jj ]    = dmodd.modelID;
+            dmodGUIDs[ jj ]    = dmodd.modelGUID;
+            dmodVaris[ jj ]    = dmodd.variance;
+            dmodMenis[ jj ]    = dmodd.meniscus; 
+            dmodDescs[ jj ]    = dmodd.description;
          }
 
          if ( nmatch == nlmods )
-         {  // As expected, database records are in reverse order
-DbgLv(1) << "++local/dbase match, but are in reverse order";
-            // Reverse the order of DB records
-            jj             = 0;
-            kk             = ndmods - 1;
-            dkModx         = kk - dkModx;
-            while ( jj < kk )
-            {
-               QString modelID    = dmodIDs  [ jj ];
-               QString modelGUID  = dmodGUIDs[ jj ];
-               double  variance   = dmodVaris[ jj ];
-               double  meniscus   = dmodMenis[ jj ];
-               QString descript   = dmodDescs[ jj ];
-               dmodIDs  [ jj ]    = dmodIDs  [ kk ];
-               dmodGUIDs[ jj ]    = dmodGUIDs[ kk ];
-               dmodVaris[ jj ]    = dmodVaris[ kk ];
-               dmodMenis[ jj ]    = dmodMenis[ kk ];
-               dmodDescs[ jj ]    = dmodDescs[ kk ];
-               dmodIDs  [ kk ]    = modelID;
-               dmodGUIDs[ kk ]    = modelGUID;
-               dmodVaris[ kk ]    = variance;
-               dmodMenis[ kk ]    = meniscus;
-               dmodDescs[ kk ]    = descript;
-               jj++;
-               kk--;
-            }
-         }
-
-         else if ( nmatfo == ndmods  ||  nlmods == 0 )
-         {  // Also OK if they match and are in the same order
-DbgLv(1) << "++local/dbase match, and in the same order (or local only)";
+         {  // OK if they match or local only
+DbgLv(1) << "++local/dbase match, or local only";
          }
 
          else
          {  // Not good if they do not match
 DbgLv(1) << "**local/dbase DO NOT MATCH";
-DbgLv(1) << "  nmatch nmo ndmods nlms" << nmatch << nmatfo << ndmods << nlmods;
+DbgLv(1) << "  nmatch ndmods nlmods" << nmatch << ndmods << nlmods;
             return;
          }
       }
@@ -1024,6 +1067,8 @@ DbgLv(1) << "  nlmods ndmods" << nlmods << ndmods;
 DbgLv(1) << "  nlmods ndmods" << nlmods << ndmods;
    if ( ndmods > 0  ||  nlmods > 0 )
    {  // There are models to scan, so build a list of models,noises to remove
+      ModelDesc       rmodDescrs;
+      NoiseDesc       rnoiDescrs;
       QStringList     rmodIDs;
       QStringList     rmodDescs;
       QStringList     rmodFnams;
