@@ -68,7 +68,7 @@ int US_Noise::load( const QString& filename )
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
    {
       qDebug() << "Cannot open file for reading: " << filename;
-      return false;
+      return -1;
    }
 
    QXmlStreamReader     xml( &file );
