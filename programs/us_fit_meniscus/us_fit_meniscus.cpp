@@ -566,7 +566,8 @@ void US_FitMeniscus::scan_dbase()
       QString iterID     = ansysID .section( '_',  4,  4 );
 DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus;
 
-      if ( iterID.length() == 10  &&  iterID.contains( "-m6" ) )
+      if ( iterID.length() == 10  &&
+           ( iterID.contains( "-m6" )  ||  iterID.contains( "-m5" ) ) )
       {  // Model from meniscus fit, so save information
 DbgLv(1) << "DbSc:    *FIT* " << descript;
 
