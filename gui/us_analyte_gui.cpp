@@ -1675,11 +1675,11 @@ void US_AnalyteGui::save( void )
       {
          QMessageBox::warning( this,
             tr( "Analyte Error" ),
-            tr( "Moleculare weight is empty.  Define a sequence." ) );
+            tr( "Molecular weight is empty.  Define a sequence." ) );
          return;
       }
 
-      analyte.mw     = mw[ 0 ].toDouble();
+      analyte.mw     = mw[ 0 ].toDouble() * 1000.0;
       analyte.vbar20 = le_nucle_vbar->text().toDouble();
    }
 
