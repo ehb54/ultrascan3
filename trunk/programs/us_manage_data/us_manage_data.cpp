@@ -563,10 +563,11 @@ void US_ManageData::action_result( int stat, QString item_act )
 
       if ( stat == 0 )
       {  // action was successful
-         QMessageBox::information( this,
-               item_act + tr( " Successful!" ),
-               tr( "The \"%1\" action was successfully performed." )
-               .arg( item_act ) );
+         //QMessageBox::information( this,
+         //      item_act + tr( " Successful!" ),
+         //      tr( "The \"%1\" action was successfully performed." )
+         //      .arg( item_act ) );
+         lb_status->setText( tr( "\"%1\" Success!" ).arg( item_act ) );
       }
 
       else
@@ -575,14 +576,16 @@ void US_ManageData::action_result( int stat, QString item_act )
                item_act + tr( " *ERROR*!" ),
                tr( "The \"%1\" action had an error: %2" )
                .arg( item_act ).arg( stat ) );
+         lb_status->setText( tr( "\"%1\" ERROR!" ).arg( item_act ) );
       }
    }
 
    else
    {  // cancel was selected:  report it
-      QMessageBox::information( this,
-            item_act + tr( " Cancelled!" ),
-            tr( "The \"%1\" action was cancelled." ).arg( item_act ) );
+      //QMessageBox::information( this,
+      //      item_act + tr( " Cancelled!" ),
+      //      tr( "The \"%1\" action was cancelled." ).arg( item_act ) );
+      lb_status->setText( tr( "\"%1\" Cancelled!" ).arg( item_act ) );
    }
 }
 

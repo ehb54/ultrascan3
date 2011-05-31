@@ -123,6 +123,7 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
       stat   = model.write( db );     // store model to database
       errMsg = tr( "model write to DB stat %1" ).arg( stat );
       stat   = ( stat == 0 ) ? 0 : 3043;
+DbgLv(1) << errMsg;
    }
 
    else if ( cdesc.recType == 4 )
