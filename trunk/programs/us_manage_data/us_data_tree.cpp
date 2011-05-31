@@ -669,15 +669,18 @@ QString US_DataTree::action_text( QString exstext, QString acttext )
 // report the result of an item action
 void US_DataTree::action_result( int stat, QString item_act )
 {
+   QLabel* lb_status = da_model->statlab();
+
    if ( stat != 999 )
    {  // proceed was selected:  test status of action
 
       if ( stat == 0 )
       {  // action was successful
-         QMessageBox::information( parentw,
-               item_act + tr( " Successful!" ),
-               tr( "The \"%1\" action was successfully performed." )
-               .arg( item_act ) );
+         //QMessageBox::information( parentw,
+         //      item_act + tr( " Successful!" ),
+         //      tr( "The \"%1\" action was successfully performed." )
+         //      .arg( item_act ) );
+         lb_status->setText( tr( "\"%1\" Success!" ).arg( item_act ) );
       }
 
       else
@@ -687,14 +690,16 @@ void US_DataTree::action_result( int stat, QString item_act )
                tr( "The \"%1\" action had an error: %2" )
                .arg( item_act ).arg( stat )
                + "\n\n" + da_process->lastError() );
+         lb_status->setText( tr( "\"%1\" ERROR!" ).arg( item_act ) );
       }
    }
 
    else
    {  // cancel was selected:  report it
-      QMessageBox::information( parentw,
-            item_act + tr( " Cancelled!" ),
-            tr( "The \"%1\" action was cancelled." ).arg( item_act ) );
+      //QMessageBox::information( parentw,
+      //      item_act + tr( " Cancelled!" ),
+      //      tr( "The \"%1\" action was cancelled." ).arg( item_act ) );
+      lb_status->setText( tr( "\"%1\" Cancelled!" ).arg( item_act ) );
    }
 }
 
