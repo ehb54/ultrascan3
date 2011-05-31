@@ -186,7 +186,7 @@ static vector <PDB_atom *> active_atoms;
 static US_Hydrodyn *us_hydrodyn;
 
 static void
-em(char *s)
+em(const char *s)
 {
    puts(s);
    fflush(stdout);

@@ -4021,13 +4021,15 @@ void US_Hydrodyn::radial_reduction()
                      if (
                          !reduced[pairs[i].i] &&
                          (k == 3 ||
-                          (bead_model[pairs[i].i].exposed_code != 1 ||
-                           methods[k] & RR_EXPOSED ||
-                           methods[k] & RR_ALL) &&
-                          (!(methods[k] & RR_MCSC) ||
-                           bead_model[pairs[i].i].chain == 0 ||
-                           (methods[k] & RR_BURIED &&
-                            bead_model[pairs[i].i].exposed_code != 1)))
+                          (
+                           (bead_model[pairs[i].i].exposed_code != 1 ||
+                            methods[k] & RR_EXPOSED ||
+                            methods[k] & RR_ALL) &&
+                           (!(methods[k] & RR_MCSC) ||
+                            bead_model[pairs[i].i].chain == 0 ||
+                            (methods[k] & RR_BURIED &&
+                             bead_model[pairs[i].i].exposed_code != 1))
+                           ) )
                          ) {
                         int use_bead = pairs[i].i;
                         /*      if ( !(methods[k] & RR_MCSC) ||

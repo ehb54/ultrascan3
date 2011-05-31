@@ -47,7 +47,7 @@ static QTextEdit *editor;
 #define MAXCYCLES 40
 // #define DEBUGMSG
 
-static void dbg(char *s) {
+static void dbg(const char *s) {
 #if defined(DEBUGMSG)
    printf("sr: %s\n",s); fflush(stdout);
 #else
@@ -523,13 +523,22 @@ searchcycle(int ncycles, int cycle1, int respect[][MAXCYCLES], int *hits)   /*LI
          if (respect[cycle1][i] && respect[i][cycle1])   /*they have each other in their interior */
          {
             for (j = 0; j <= ncycles - 1; j++)
+            {
                if (j != i && j != cycle1)   /*checking the other cycles */
+               {
                   if (respect[cycle1][j] && respect[i][j])   /*cycle j is in the interior of cycles cycle1 and i */
+                  {
                      if (respect[j][cycle1] && respect[j][i])   /*cycles cycle1 and i are in the interior of j */
+                     {
                         continue;
+                     }
                      else
+                     {
                         break;
-
+                     }
+                  }
+               }
+            }
             if (j == ncycles)   /*all cycles that are in the interior of cycle1 and i have cycle 1 in their interior */
             {
                hits[nhit] = i;

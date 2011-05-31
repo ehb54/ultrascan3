@@ -564,7 +564,7 @@ supc_alloc_2()
 static void
 print_time(int seconds)
 {
-   auto div_t min_sec;
+   div_t min_sec;
 
    min_sec = div(seconds, 60);
    printf("Time used for computing: %d minutes and %d seconds\n", min_sec.quot, min_sec.rem);
@@ -574,7 +574,7 @@ print_time(int seconds)
 static void
 print_time_2IO(int seconds)
 {
-   auto div_t min_sec;
+   div_t min_sec;
 
    min_sec = div(seconds, 60);
    fprintf(exe_time, "Time used for computing: %d minutes and %d seconds\n", min_sec.quot, min_sec.rem);

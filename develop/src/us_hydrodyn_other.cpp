@@ -3383,7 +3383,7 @@ void US_Hydrodyn::write_bead_spt(QString fname,
                                  float scale, 
                                  bool black_background) 
 {
-   char *colormap[] =
+   const char *colormap[] =
       {
          "black",        // 0 black
          "blue",         // 1 blue

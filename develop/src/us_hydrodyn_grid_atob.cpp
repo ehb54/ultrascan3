@@ -114,7 +114,7 @@ particle_max_sizes(PDB * pdb)
 }
 
 static void
-nrerror(char error_text[])
+nrerror(const char error_text[])
    /* Numerical Recipes standard error handler */
 {
    fprintf(stderr, "Numerical Recipes run-time error...\n");
@@ -198,10 +198,10 @@ AtoB(PDB * pdb,
      PHYSPROP * nprop, 
      long *natoms3, 
      int centre_or_cog, 
-     char input_file[], 
+     const char input_file[], 
      int set_bead_radius, 
-     char atnam[], 
-     char resnam[],
+     const char atnam[], 
+     const char resnam[],
      US_Hydrodyn *us_hydrodyn)
 {
 #if defined(DEBUG)

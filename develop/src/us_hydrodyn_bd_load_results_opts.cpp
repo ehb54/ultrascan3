@@ -342,11 +342,11 @@ void US_Hydrodyn_BD_Load_Results_Opts::check_solvent_browflex_defaults()
                                   );
 }
       
-int US_Hydrodyn_BD_Load_Results_Opts::write_conditions_to_file( QString filename )
+int US_Hydrodyn_BD_Load_Results_Opts::write_conditions_to_file( QString /* filename */ )
 {
    return -1;
 }
 
-void US_Hydrodyn_BD_Load_Results_Opts::read_conditions_from_file( QString filename )
+void US_Hydrodyn_BD_Load_Results_Opts::read_conditions_from_file( QString /* filename */ )
 {
 }

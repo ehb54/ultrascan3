@@ -173,10 +173,10 @@ void US_ImageViewer::setMenuItemFlags()
    // Options
    bool may_need_color_dithering =
       !valid_image
-      || image.depth() == 32 && QPixmap::defaultDepth() < 24;
+      || ( image.depth() == 32 && QPixmap::defaultDepth() < 24 );
    bool may_need_dithering = may_need_color_dithering
-      || image.depth() > 1 && options->isItemChecked(mo)
-      || image.depth() > 1 && QPixmap::defaultDepth() == 1;
+      || ( image.depth() > 1 && options->isItemChecked(mo) )
+      || ( image.depth() > 1 && QPixmap::defaultDepth() == 1 );
    bool has_alpha_mask = !valid_image || image.hasAlphaBuffer();
 
    options->setItemEnabled( fd, may_need_dithering );
