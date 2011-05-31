@@ -20,6 +20,45 @@ class US_FitMeniscus : public US_Widgets
    public:
       US_FitMeniscus();
 
+      // Class to hold model descriptions
+      class ModelDesc
+      {
+         public:
+            QString   description;    // Full model description
+            QString   baseDescr;      // Base analysis-set description
+            QString   fitfname;       // Associated fit file name
+            QString   modelID;        // Model DB ID
+            QString   modelGUID;      // Model GUID
+            QString   filepath;       // Full path model file name
+            QString   editID;         // Edit parent DB ID
+            QString   editGUID;       // Edit parent GUID
+            QString   antime;         // Analysis date & time (yymmddHHMM)
+            double    variance;       // Variance value
+            double    meniscus;       // Meniscus radius value
+
+            // Less than operator to enable sort
+            bool operator< ( const ModelDesc& md )
+               const { return ( description < md.description ); }
+      };
+
+      // Class to hold noise description
+      class NoiseDesc
+      {
+         public:
+            QString   description;    // Full noise description
+            QString   baseDescr;      // Base analysis-set description
+            QString   noiseID;        // Noise DB ID
+            QString   noiseGUID;      // Noise GUID
+            QString   filepath;       // Full path noise file name
+            QString   modelID;        // Model parent DB ID
+            QString   modelGUID;      // Model parent GUID
+            QString   antime;         // Analysis date & time (yymmddHHMM)
+
+            // Less than operator to enable sort
+            bool operator< ( const NoiseDesc& nd )
+               const { return ( description < nd.description ); }
+      };
+
    private:
       QLineEdit*           le_fit;
       QLineEdit*           le_rms_error;
