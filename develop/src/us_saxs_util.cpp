@@ -5584,7 +5584,7 @@ bool US_Saxs_Util::project_1d(
    QString last_base_name;
 
    cout << "reading files:\n";
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( int i = 0; i < files.size(); i++ )
    {
       if ( rxgetbasename.search(files[i]) == -1 )
       {
