@@ -6,7 +6,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
 {
    USglobal = new US_Config();
 
-   if (USglobal->config_list.fontFamily == NULL || 
+   if (USglobal->config_list.fontFamily.isEmpty() || 
        USglobal->config_list.fontSize == 0      || 
        USglobal->config_list.margin == 0)
    {
