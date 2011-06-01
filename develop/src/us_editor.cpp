@@ -419,7 +419,7 @@ void TextEdit::setupTextActions(  )
 
    QPixmap pix( 16, 16 );
 
-   pix.fill( black );
+   pix.fill( Qt::black );
    actionTextColor =
       new QAction( pix, tr( "&Color..." ), 0, this, "textColor" );
    connect( actionTextColor, SIGNAL( activated(  ) ), this,
@@ -774,7 +774,7 @@ void TextEdit::textColor(  )
    currentEditor(  )->setColor( col );
    QPixmap pix( 16, 16 );
 
-   pix.fill( black );
+   pix.fill( Qt::black );
    actionTextColor->setIconSet( pix );
 }
 
