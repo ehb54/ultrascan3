@@ -61,7 +61,7 @@ qDebug() << "Worker send finish message" << my_rank
       {
          case FINISHED: 
             finished = true;
-qDebug() << "Worker fitness hits" << my_rank << fitness_hits;
+//qDebug() << "Worker fitness hits" << my_rank << fitness_hits;
             break;
 
          case UPDATE:   
@@ -159,7 +159,7 @@ void US_MPI_Analysis::ga_worker_loop( void )
    MPI_GA_MSG msg;
 
 ////////////DEBUG
-generations = 10;
+//generations = 10;
 
    for ( generation = 0; generation < generations; generation++ )
    {
