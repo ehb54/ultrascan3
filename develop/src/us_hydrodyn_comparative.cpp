@@ -238,7 +238,7 @@ void US_Hydrodyn_Comparative::setupGUI()
 {
    int minHeight0 = 0;
    int minHeight1 = 30;
-   int minHeight2a = 120;
+   int minHeight2a = 60;
    int minHeight2b = 60;
    int minHeight3 = 22;
    int minHeightpb = 26;
@@ -289,6 +289,13 @@ void US_Hydrodyn_Comparative::setupGUI()
    cb_rank->setPalette(qp_modes);
    connect(cb_rank, SIGNAL(clicked()), SLOT(set_rank()));
 
+   lbl_rank = new QLabel(tr("Rank"), this);
+   lbl_rank->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_rank->setAlignment(AlignCenter|AlignVCenter);
+   lbl_rank->setMinimumHeight(minHeight1);
+   lbl_rank->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_rank->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+
    cb_weight_controls = new QCheckBox(this);
    cb_weight_controls->setMinimumHeight(minHeight2b);
    cb_weight_controls->setText(tr("By weighted\nsum of absolute\ndifferences"));
@@ -326,14 +333,14 @@ void US_Hydrodyn_Comparative::setupGUI()
    lbl_buckets->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_buckets->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_min = new QLabel(tr("Minimum\nModel\nvalue"), this);
+   lbl_min = new QLabel(tr("Minimum\nmodel\nvalue"), this);
    lbl_min->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_min->setAlignment(AlignCenter|AlignVCenter);
    lbl_min->setMinimumHeight(minHeight1);
    lbl_min->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_max = new QLabel(tr("Maximum\nModel\nvalue"), this);
+   lbl_max = new QLabel(tr("Maximum\nmodel\nvalue"), this);
    lbl_max->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_max->setAlignment(AlignCenter|AlignVCenter);
    lbl_max->setMinimumHeight(minHeight1);
@@ -1222,7 +1229,8 @@ void US_Hydrodyn_Comparative::setupGUI()
    background->addMultiCellWidget(lbl_target, j, j+2, 1, 1);
    background->addMultiCellWidget(lbl_sort, j, j, 2, 4);
 
-   background->addMultiCellWidget(cb_rank, j+1, j+2, 2, 2);
+   background->addMultiCellWidget(cb_rank, j+1, j+1, 2, 2);
+   background->addWidget(lbl_rank, j+2, 2);
 
    background->addMultiCellWidget(cb_weight_controls, j+1, j+1, 3, 4);
    background->addWidget(lbl_include_in_weight, j+2, 3);
@@ -1421,6 +1429,7 @@ void US_Hydrodyn_Comparative::update_enables()
    if ( updates_enabled )
    {
       cout << "update_enables\n";
+
       bool any_selected = any_loaded_selected();
       
       bool enable_s = 
@@ -1446,7 +1455,7 @@ void US_Hydrodyn_Comparative::update_enables()
       le_max_s->setEnabled(enable_s && cb_active_s->isChecked() && comparative->ce_s.buckets);
       cb_store_reference_s->setEnabled(enable_s && cb_active_s->isChecked());
       cb_store_diff_s->setEnabled(enable_s && cb_active_s->isChecked());
-      cb_store_abs_diff_s->setEnabled(enable_s && cb_active_s->isChecked());
+      cb_store_abs_diff_s->setEnabled(enable_s && cb_active_s->isChecked() && !cb_rank->isChecked());
       
       bool enable_D = 
          !any_selected || all_selected_csv_contain( comparative->ce_D );
@@ -1461,7 +1470,7 @@ void US_Hydrodyn_Comparative::update_enables()
       le_max_D->setEnabled(enable_D && cb_active_D->isChecked() && comparative->ce_D.buckets);
       cb_store_reference_D->setEnabled(enable_D && cb_active_D->isChecked());
       cb_store_diff_D->setEnabled(enable_D && cb_active_D->isChecked());
-      cb_store_abs_diff_D->setEnabled(enable_D && cb_active_D->isChecked());
+      cb_store_abs_diff_D->setEnabled(enable_D && cb_active_D->isChecked() && !cb_rank->isChecked());
       
       bool enable_sr = 
          !any_selected || all_selected_csv_contain( comparative->ce_sr );
@@ -1476,7 +1485,7 @@ void US_Hydrodyn_Comparative::update_enables()
       le_max_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && comparative->ce_sr.buckets);
       cb_store_reference_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
       cb_store_diff_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
-      cb_store_abs_diff_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
+      cb_store_abs_diff_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && !cb_rank->isChecked());
       
       bool enable_fr = 
          !any_selected || all_selected_csv_contain( comparative->ce_fr );
@@ -1491,7 +1500,7 @@ void US_Hydrodyn_Comparative::update_enables()
       le_max_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && comparative->ce_fr.buckets);
       cb_store_reference_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
       cb_store_diff_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
-      cb_store_abs_diff_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
+      cb_store_abs_diff_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && !cb_rank->isChecked());
       
       bool enable_rg = 
          !any_selected || all_selected_csv_contain( comparative->ce_rg );
@@ -1506,7 +1515,7 @@ void US_Hydrodyn_Comparative::update_enables()
       le_max_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && comparative->ce_rg.buckets);
       cb_store_reference_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
       cb_store_diff_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
-      cb_store_abs_diff_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
+      cb_store_abs_diff_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && !cb_rank->isChecked());
       
       bool enable_tau = 
          !any_selected || all_selected_csv_contain( comparative->ce_tau );
@@ -1521,7 +1530,7 @@ void US_Hydrodyn_Comparative::update_enables()
       le_max_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && comparative->ce_tau.buckets);
       cb_store_reference_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
       cb_store_diff_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
-      cb_store_abs_diff_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
+      cb_store_abs_diff_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && !cb_rank->isChecked());
       
       bool enable_eta = 
          !any_selected || all_selected_csv_contain( comparative->ce_eta );
@@ -1536,7 +1545,7 @@ void US_Hydrodyn_Comparative::update_enables()
       le_max_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && comparative->ce_eta.buckets);
       cb_store_reference_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
       cb_store_diff_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
-      cb_store_abs_diff_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
+      cb_store_abs_diff_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && !cb_rank->isChecked());
       
       pb_process_csv->setEnabled(
                                  any_selected_selected() &&
@@ -1734,6 +1743,24 @@ void US_Hydrodyn_Comparative::set_rank()
    comparative->rank = cb_rank->isChecked();
    comparative->weight_controls = !cb_rank->isChecked();
    cb_weight_controls->setChecked(comparative->weight_controls);
+
+   if ( cb_rank->isChecked() )
+   {
+      cb_store_abs_diff_s->setChecked(true);
+      comparative->ce_s.store_abs_diff = true;
+      cb_store_abs_diff_D->setChecked(true);
+      comparative->ce_D.store_abs_diff = true;
+      cb_store_abs_diff_sr->setChecked(true);
+      comparative->ce_sr.store_abs_diff = true;
+      cb_store_abs_diff_fr->setChecked(true);
+      comparative->ce_fr.store_abs_diff = true;
+      cb_store_abs_diff_rg->setChecked(true);
+      comparative->ce_rg.store_abs_diff = true;
+      cb_store_abs_diff_tau->setChecked(true);
+      comparative->ce_tau.store_abs_diff = true;
+      cb_store_abs_diff_eta->setChecked(true);
+      comparative->ce_eta.store_abs_diff = true;
+   }
    update_enables();
 }
 
@@ -3499,6 +3526,8 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
    bool diff_eta = cb_store_diff_eta->isChecked();
    bool abs_diff_eta = cb_store_abs_diff_eta->isChecked();
 
+   bool do_weight = comparative->weight_controls;
+
    bool processed_fields_exist = 
       ( do_s && ref_s && csv1.header_map.count("Exp:" + comparative->ce_s.name) ) ||
       ( do_s && diff_s && csv1.header_map.count("Diff:" + comparative->ce_s.name) ) ||
@@ -3526,7 +3555,9 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
 
       ( do_eta && ref_eta && csv1.header_map.count("Exp:" + comparative->ce_eta.name) ) ||
       ( do_eta && diff_eta && csv1.header_map.count("Diff:" + comparative->ce_eta.name) ) ||
-      ( do_eta && abs_diff_eta && csv1.header_map.count("AbsDiff:" + comparative->ce_eta.name) ) 
+      ( do_eta && abs_diff_eta && csv1.header_map.count("AbsDiff:" + comparative->ce_eta.name) ) ||
+
+      ( do_weight && csv1.header_map.count("Weighted sum of absolute differences") )
       ;
 
    if ( processed_fields_exist )
@@ -3631,6 +3662,12 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          {
             csv_remove_column(csv1, "AbsDiff:" + comparative->ce_eta.name);
          }
+
+         if ( do_weight && csv1.header_map.count("Weighted sum of absolute differences") )
+         {
+            csv_remove_column(csv1, "Weighted sum of absolute differences");
+         }
+
       } else {
          if ( do_s && ref_s && csv1.header_map.count("Exp:" + comparative->ce_s.name) )
          {
@@ -3721,6 +3758,11 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          if ( do_eta && abs_diff_eta && csv1.header_map.count("AbsDiff:" + comparative->ce_eta.name) )
          {
             csv_make_unique_header_name(csv1, "AbsDiff:" + comparative->ce_eta.name);
+         }
+
+         if ( do_weight && csv1.header_map.count("Weighted sum of absolute differences") )
+         {
+            csv_make_unique_header_name(csv1, "Weighted sum of absolute differences");
          }
       }
    }
@@ -3922,10 +3964,20 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       csv1.header_map["AbsDiff:" + comparative->ce_eta.name] = col_abs_diff_eta;
    }
 
+   unsigned int col_weight = 0;
+   if ( do_weight )
+   {
+      col_weight = next_col++;
+      csv1.header.push_back("Weighted sum of absolute differences");
+      csv1.header_map["Weighted sum of absolute differences"] = col_weight;
+   }
+
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
    {
       csv1.data[i].resize(csv1.header.size());
       csv1.num_data[i].resize(csv1.header.size());
+
+      double weight = 0e0;
 
       if ( do_s )
       {
@@ -3943,6 +3995,10 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          {
             csv1.num_data[i][col_abs_diff_s] = fabs( csv1.num_data[i][col_model_s] - exp_s );
             csv1.data[i][col_abs_diff_s] = QString("%1").arg(csv1.num_data[i][col_abs_diff_s]);
+         }
+         if ( do_weight && comparative->ce_s.include_in_weight )
+         {
+            weight += fabs( csv1.num_data[i][col_model_s] - exp_s ) * comparative->ce_s.weight;
          }
       }
 
@@ -3963,6 +4019,10 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
             csv1.num_data[i][col_abs_diff_D] = fabs( csv1.num_data[i][col_model_D] - exp_D );
             csv1.data[i][col_abs_diff_D] = QString("%1").arg(csv1.num_data[i][col_abs_diff_D]);
          }
+         if ( do_weight && comparative->ce_D.include_in_weight )
+         {
+            weight += fabs( csv1.num_data[i][col_model_D] - exp_D ) * comparative->ce_D.weight;
+         }
       }
 
       if ( do_sr )
@@ -3981,6 +4041,10 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          {
             csv1.num_data[i][col_abs_diff_sr] = fabs( csv1.num_data[i][col_model_sr] - exp_sr );
             csv1.data[i][col_abs_diff_sr] = QString("%1").arg(csv1.num_data[i][col_abs_diff_sr]);
+         }
+         if ( do_weight && comparative->ce_sr.include_in_weight )
+         {
+            weight += fabs( csv1.num_data[i][col_model_sr] - exp_sr ) * comparative->ce_sr.weight;
          }
       }
 
@@ -4001,6 +4065,10 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
             csv1.num_data[i][col_abs_diff_fr] = fabs( csv1.num_data[i][col_model_fr] - exp_fr );
             csv1.data[i][col_abs_diff_fr] = QString("%1").arg(csv1.num_data[i][col_abs_diff_fr]);
          }
+         if ( do_weight && comparative->ce_fr.include_in_weight )
+         {
+            weight += fabs( csv1.num_data[i][col_model_fr] - exp_fr ) * comparative->ce_fr.weight;
+         }
       }
 
       if ( do_rg )
@@ -4019,6 +4087,10 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          {
             csv1.num_data[i][col_abs_diff_rg] = fabs( csv1.num_data[i][col_model_rg] - exp_rg );
             csv1.data[i][col_abs_diff_rg] = QString("%1").arg(csv1.num_data[i][col_abs_diff_rg]);
+         }
+         if ( do_weight && comparative->ce_rg.include_in_weight )
+         {
+            weight += fabs( csv1.num_data[i][col_model_rg] - exp_rg ) * comparative->ce_rg.weight;
          }
       }
 
@@ -4039,6 +4111,10 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
             csv1.num_data[i][col_abs_diff_tau] = fabs( csv1.num_data[i][col_model_tau] - exp_tau );
             csv1.data[i][col_abs_diff_tau] = QString("%1").arg(csv1.num_data[i][col_abs_diff_tau]);
          }
+         if ( do_weight && comparative->ce_tau.include_in_weight )
+         {
+            weight += fabs( csv1.num_data[i][col_model_tau] - exp_tau ) * comparative->ce_tau.weight;
+         }
       }
 
       if ( do_eta )
@@ -4058,6 +4134,16 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
             csv1.num_data[i][col_abs_diff_eta] = fabs( csv1.num_data[i][col_model_eta] - exp_eta );
             csv1.data[i][col_abs_diff_eta] = QString("%1").arg(csv1.num_data[i][col_abs_diff_eta]);
          }
+         if ( do_weight && comparative->ce_eta.include_in_weight )
+         {
+            weight += fabs( csv1.num_data[i][col_model_eta] - exp_eta ) * comparative->ce_eta.weight;
+         }
+      }
+
+      if ( do_weight )
+      {
+         csv1.num_data[i][col_weight] = weight;
+         csv1.data[i][col_weight] = QString("%1").arg(weight);
       }
    }
 

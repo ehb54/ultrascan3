@@ -139,6 +139,7 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       QLabel                        *lbl_sort;
 
       QCheckBox                     *cb_rank;
+      QLabel                        *lbl_rank;
 
       QCheckBox                     *cb_weight_controls;
       QLabel                        *lbl_include_in_weight;
