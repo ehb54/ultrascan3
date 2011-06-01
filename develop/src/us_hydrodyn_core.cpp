@@ -243,7 +243,7 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
              lastResName != this_atom->resName)
          {
             // new residue
-            if (lastResSeq)
+            if ( lastResSeq != "" )
             {
                atom_counts[QString("%1|%2|%3")
                            .arg(j)
@@ -262,7 +262,7 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
          }
          atom_count++;
       }
-      if (lastResSeq)
+      if ( lastResSeq != "" )
       {
          atom_counts[QString("%1|%2|%3")
                      .arg(j)
@@ -458,7 +458,7 @@ void US_Hydrodyn::build_molecule_maps(PDB_model *model)
       {
          QString idx = QString("%1|%2").arg(j).arg(model->molecule[j].atom[k].resSeq);
          molecules_residues_atoms[idx].push_back(model->molecule[j].atom[k].name);
-         if (!molecules_residue_name[idx])
+         if ( !molecules_residue_name.count(idx) )
          {
             molecules_residue_name[idx] = model->molecule[j].atom[k].resName;
             molecules_idx_seq.push_back(idx);
