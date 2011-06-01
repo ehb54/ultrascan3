@@ -204,7 +204,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
          ai.analyte.vbar20 = ds->analytes[ j ].vbar20;
          ai.analyte.mw     = ds->analytes[ j ].mw;
 
-if ( myrank == 0 )
+if ( my_rank == 0 )
    qDebug() << "analyte vbar20/mw/amount" << ai.analyte.vbar20 
                                           << ai.analyte.mw 
                                           << ai.amount;
