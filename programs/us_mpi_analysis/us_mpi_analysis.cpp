@@ -76,7 +76,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
    else
       US_Math2::randomize();
 
-   send_udp( "Starting" );
+   send_udp( "Starting" );  // Can't send udp message until xmlfile is parsed
 
    // Read data 
    for ( int i = 0; i < data_sets.size(); i++ )
@@ -104,7 +104,9 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
       {
           US_Noise noise;
 
-          if ( noise.load( d->noise_files[ j ] ) != 0 )
+          int err = noise.load( d->noise_files[ j ] );
+
+          if ( err != 0 )
           {
              QString msg = "Abort.  Bad noise file " + d->noise_files[ j ];
              abort( msg );
@@ -202,6 +204,11 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
          ai.analyte.vbar20 = ds->analytes[ j ].vbar20;
          ai.analyte.mw     = ds->analytes[ j ].mw;
 
+if ( myrank == 0 )
+   qDebug() << "analyte vbar20/mw/amount" << ai.analyte.vbar20 
+                                          << ai.analyte.mw 
+                                          << ai.amount;
+
          if ( ds->analytes[ j ].type == "Protein" )
             ai.analyte.type   = US_Analyte::PROTEIN;
          else
@@ -220,10 +227,20 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
       sd.vbar20    = ds->vbar20;
       sd.vbar      = ds->vbar_tb;
 
+if ( my_rank == 0 )
+   qDebug() << "density/viscosity/comm vbar20/commvbar" << sd.density
+                                                        << sd.viscosity 
+                                                        << sd.vbar20 
+                                                        << sd.vbar;
+
       US_Math2::data_correction( ds->temperature, sd );
 
       ds->s20w_correction = sd.s20w_correction;
       ds->D20w_correction = sd.D20w_correction;
+
+if ( my_rank == 0 )
+   qDebug() << "s20w_correction/D20w_correction" << sd.s20w_correction 
+                                                 << sd.D20w_correction;
    }
 
    // Check GA buckets
@@ -295,12 +312,6 @@ void US_MPI_Analysis::start( void )
           ga_worker();
    }
    
-   if ( my_rank == 0 )
-   {
-      send_udp( "Finished: " + QString::number( maxrss) );
-      qDebug() << "Finished: " + QString::number( maxrss );
-   }
-
    // Pack results
    if ( my_rank == 0 )
    {
@@ -313,6 +324,12 @@ void US_MPI_Analysis::start( void )
       // Remove the files we just put into the tar archive
       QString file;
       foreach( file, files ) d.remove( file );
+   }
+
+   if ( my_rank == 0 )
+   {
+      send_udp( "Finished: " + QString::number( maxrss) );
+      qDebug() << "Finished: " + QString::number( maxrss );
    }
 
    MPI_Finalize();

@@ -93,7 +93,7 @@ qDebug() << "master start GA" << startTime;
 
 void US_MPI_Analysis::ga_master_loop( void )
 {
-qDebug() << "master start master loop";
+//qDebug() << "master start master loop";
    int    avg_generation       = -1;
    bool   early_termination    = false;
    int    fitness_same_count   = 0;
@@ -172,7 +172,7 @@ g = "";
 for ( int i = 0; i < buckets.size(); i++ )
     g += s.sprintf( "(%.3f,%.3f)", best_genes[ worker ][ i ].s, best_genes[ worker ][ i ].k);
 
-qDebug() << "master:worker/fitness/best gene" << worker <<  msg.fitness << g;
+//qDebug() << "master:worker/fitness/best gene" << worker <<  msg.fitness << g;
 
 
             static const double fitness_threshold = 1.0e-7;
@@ -415,23 +415,6 @@ void US_MPI_Analysis::set_gaMonteCarlo( void )
 void US_MPI_Analysis::write_model( const Simulation&      sim, 
                                    US_Model::AnalysisType type )
 {
-   QString id;
-
-   switch ( type )
-   {
-      case US_Model::TWODSA:
-         id = "2DSA";
-         break;
-
-      case US_Model::GA:
-         id = "GA";
-         break;
-
-      default:
-         id = "UNK";
-         break;
-   }
-
    US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
 
    // Fill in and write out the model file
@@ -444,7 +427,14 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
    model.requestGUID = requestGUID;
    //model.optics      = ???  How to get this?  Is is needed?
    model.analysis    = type;
-   model.global      = US_Model::NONE;   // For now.  Will change later.
+
+   if ( meniscus_points > 1 ) 
+       model.global = US_Model::MENISCUS;
+   else if ( data_sets.size() > 1 )
+       model.global = US_Model::GLOBAL;
+   else
+       model.global = US_Model::NONE; 
+
    model.meniscus    = meniscus_values[ meniscus_run ];
    model.variance    = sim.variance;
 
@@ -474,6 +464,9 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
               (int)(meniscus_values[ meniscus_run ] * 10000 ) );
    else
       iterID = "i01";
+
+
+   QString id = model.typeText();
 
    QString analysisID = dates + "_" + id + "_" + requestID + "_" + iterID;
 
@@ -512,9 +505,19 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
    QString meniscus = QString::number( meniscus_value, 'e', 4 );
    QString variance = QString::number( sim.variance,   'e', 4 );
 
+   int run = 1;
+
+   if ( meniscus_run > 0 ) 
+       run = meniscus_run + 1;
+   else if ( mc_iterations > 0 )
+       run = mc_iteration + 1;
+
+   QString runstring = "Run: " + QString::number( run ) + " " + tripleID;
+
    out << fn << ";meniscus_value=" << meniscus_value
              << ";MC_iteration="   << mc_iteration
              << ";variance="       << sim.variance
+             << ";run="            << runstring
              << "\n";
    f.close();
 }

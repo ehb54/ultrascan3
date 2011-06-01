@@ -760,7 +760,8 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
 
    for ( int j = 0; j < noise_filenames.size(); j++ )
    {
-      input_noise.load( noise_filenames[ j ] );
+      QString fn = "../" + noise_filenames[ j ];
+      input_noise.load( fn );
       if ( input_noise.type == type ) noise.sum_noise( input_noise );
    }
 
