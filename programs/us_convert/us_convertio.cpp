@@ -129,6 +129,7 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
          {
             error += "Error processing file:\n" + 
                      dir + triple.tripleFilename + "\n" +
+                     db->lastError() + "\n" +
                      "Could not open file or no data \n";
          }
    
@@ -349,7 +350,7 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
                                  US_DB2* db )
 {
    if ( US_Settings::us_inv_ID() == -1 )
-      return US_Convert::NOPERSON;
+      return US_DB2::NO_PERSON;
 
    ExpData.invID = US_Settings::us_inv_ID();
 
@@ -363,19 +364,40 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
       ExpData.invID   = 0;
       ExpData.invGUID = QString( "" );
       ExpData.name    = QString( "" );
-      return US_Convert::NOPERSON;
+      return US_DB2::NO_PERSON;
    }
 
    // Save updated investigator GUID
-   ExpData.invGUID = db->value( 9 ).toString();
-   ExpData.name    = db->value( 1 ).toString() + ", " + db->value( 0 ).toString();
+   if ( db->next() )
+   {
+      ExpData.invGUID = db->value( 9 ).toString();
+      ExpData.name    = db->value( 1 ).toString() + ", " + db->value( 0 ).toString();
+   }
 
+   // Check all the other GUID's for format
    QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
-   // Double check operator from GUID
+   // operator GUID
    if ( ! rx.exactMatch( ExpData.operatorGUID ) )
-      return US_Convert::NOPERSON;
+      return US_DB2::BADGUID;
 
+   // triple GUID's
+   for ( int i = 0; i < triples.size(); i++ )
+   {
+      if ( triples[ i ].excluded ) continue;
+
+      QString uuidc = US_Util::uuid_unparse( (unsigned char*) triples[ i ].tripleGUID );
+      if ( ! rx.exactMatch( uuidc ) )
+         return US_DB2::BADGUID;
+   }
+
+   // rotor GUID
+   if ( ! rx.exactMatch( ExpData.rotorGUID ) )
+      return US_DB2::BADGUID;
+
+   // Ok, GUID's are ok
+
+   // Check if operator exists
    q.clear();
    q << QString( "get_personID_from_GUID" )
      << QString( ExpData.operatorGUID );
@@ -385,41 +407,14 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
    {
       ExpData.operatorID   = 0;
       ExpData.operatorGUID = QString( "" );
-      return US_Convert::NOPERSON;
+      return US_DB2::NO_PERSON;
    }
 
    // Save updated investigator ID
-   ExpData.operatorID = db->value( 0 ).toInt();
+   if ( db->next() )
+      ExpData.operatorID = db->value( 0 ).toInt();
 
-   // Double check triple GUID's
-   for ( int i = 0; i < triples.size(); i++ )
-   {
-      if ( triples[ i ].excluded ) continue;
-
-      QString uuidc = US_Util::uuid_unparse( (unsigned char*) triples[ i ].tripleGUID );
-      if ( ! rx.exactMatch( uuidc ) )
-         return US_Convert::BADGUID;
-
-      q.clear();
-      q << QString( "get_rawDataID_from_GUID" )
-        << uuidc;
-      db->query( q );
-
-      if ( db->lastErrno() != US_DB2::OK )
-      {
-         triples[ i ].tripleID = 0;
-         memset( triples[ i ].tripleGUID, 0, 16 );
-         return US_Convert::BADGUID;
-      }
-
-      // Save updated triple ID
-      triples[ i ].tripleID = db->value( 0 ).toString().toInt();
-   }
-
-   // Double check rotor GUID
-   if ( ! rx.exactMatch( ExpData.rotorGUID ) )
-      return US_Convert::BADGUID;
-
+   // Check rotor
    q.clear();
    q << QString( "get_rotorID_from_GUID" )
      << QString( ExpData.rotorGUID );
@@ -434,11 +429,12 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
       ExpData.rotorGUID     = QString( "" );
       ExpData.rotorSerial   = QString( "" );
       ExpData.rotorName     = QString( "" );
-      return US_Convert::BADGUID;
+      return US_DB2::NO_ROTOR;
    }
 
    // Save updated rotor info 
-   ExpData.rotorID = db->value( 0 ).toInt();
+   if ( db->next() )
+      ExpData.rotorID = db->value( 0 ).toInt();
    q.clear();
    q << QString( "get_rotor_info" )
      << QString::number( ExpData.rotorID );
@@ -477,5 +473,44 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
       ExpData.rotorUpdated = QDate::fromString( dateParts[ 0 ], "yyyy-MM-dd" );
    }
 
-   return US_Convert::OK ;
+   // Initialize triple GUID's
+   int found = true;     // Let's assume we'll find them all
+   for ( int i = 0; i < triples.size(); i++ )
+   {
+      if ( triples[ i ].excluded ) continue;
+
+      QString uuidc = US_Util::uuid_unparse( (unsigned char*) triples[ i ].tripleGUID );
+      q.clear();
+      q << QString( "get_rawDataID_from_GUID" )
+        << uuidc;
+      db->query( q );
+
+      int status = db->lastErrno();
+      if ( status == US_DB2::OK )
+      {
+         // Save updated triple ID
+         if ( db->next() )
+            triples[ i ].tripleID = db->value( 0 ).toString().toInt();
+      }
+
+      else if ( status == US_DB2::NOROWS )
+      {
+         triples[ i ].tripleID = 0;
+         memset( triples[ i ].tripleGUID, 0, 16 );
+         found = false;     // At least one wasn't found in the DB
+      }
+
+      else     // more unlikely errors
+      {
+         qDebug() << "get_rawDataID_from_GUID error: " << db->lastErrno();
+         qDebug() << "triple GUID = " << uuidc;
+         return status;
+      }
+
+   }
+
+   if ( ! found )       // Probably we just haven't saved it yet
+      return US_DB2::NO_RAWDATA;
+
+   return US_DB2::OK ;
 }

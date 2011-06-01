@@ -1892,7 +1892,7 @@ void US_ConvertGui::saveUS3DB( void )
    // First check some of the data with the DB
    int status = US_ConvertIO::checkDiskData( ExpData, triples, &db );
 
-   if ( status == US_Convert::NOPERSON )    // Investigator or operator doesn't exist
+   if ( status == US_DB2::NO_PERSON )    // Investigator or operator doesn't exist
    {
       QMessageBox::information( this,
             tr( "Error" ),
@@ -1901,12 +1901,31 @@ void US_ConvertGui::saveUS3DB( void )
       return;
    }
 
-   if ( status == US_Convert::BADGUID )     // The most common problem
+   if ( status == US_DB2::BADGUID )
    {
       QMessageBox::information( this,
             tr( "Error" ),
-            tr( "One or more GUID's were not found in the database.\n" ) +
-            tr( "Most likely the run has not been saved to the DB.\n") );
+            tr( "Bad GUID format.\n" ) +
+            tr( "Please click on Edit Run Information and re-select hardware.\n") );
+      return;
+   }
+
+   if ( status == US_DB2::NO_ROTOR )
+   {
+      QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "Don't recognize the rotor configuration.\n" ) +
+            tr( "Please click on Edit Run Information and re-select hardware.\n") );
+      return;
+   }
+
+   if ( status != US_DB2::OK && status != US_DB2::NO_RAWDATA )
+   {
+      // US_DB2::OK means we're updating; US_DB2::NO_RAWDATA means it's new
+      QMessageBox::information( this,
+            tr( "Error" ),
+            db.lastError() + " (" + db.lastErrno() + ")\n" );
+      return;
    }
 
    // Save updated files and prepare to transfer to DB
