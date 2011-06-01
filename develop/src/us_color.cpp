@@ -37,7 +37,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   plot = new QwtPlot(this);
   plot->enableOutline(true);
-  plot->setOutlinePen(white);
+  plot->setOutlinePen(Qt::white);
   plot->setOutlineStyle(Qwt::Cross);
   plot->enableGridXMin();
   plot->enableGridYMin();
@@ -52,7 +52,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   plot->setMinimumSize(width*2-10, height*9);
   c1 = plot->insertCurve("Sample 1");
   plot->setCurveStyle(c1, QwtCurve::Lines);
-  plot->setCurvePen(c1, yellow);
+  plot->setCurvePen(c1, Qt::yellow);
   plot->setCurveData(c1, x, y, 2);
   plot->show();
 
