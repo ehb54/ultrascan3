@@ -115,9 +115,9 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
    QString trajfile = fi.fileName();
 
    QString filename = 
-      project + QString("%1").arg(current_model + 1) +
+      project + QString("%1").arg(current_model + 1);
       // QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
-      + QString("af%1%2").arg(use_mode).arg(sub_mode ? QString("-%1").arg(sub_mode) : "");
+   filename += QString("af%1%2").arg(use_mode).arg(sub_mode ? QString("-%1").arg(sub_mode) : "");
    QString bffilename = 
       project + QString("_%1").arg(current_model + 1) +
       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
