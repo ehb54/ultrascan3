@@ -1,11 +1,4 @@
-#include "../include/us_cmdline_t.h"
-#include <qregexp.h>
-#include <map>
-#include <vector>
-#include <list>
-
-#include <stdio.h>
-
+#include "../include/us_saxs_cmds_t.h"
 
 int main (int argc, char **argv)
 {
