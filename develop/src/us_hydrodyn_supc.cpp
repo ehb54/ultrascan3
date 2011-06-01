@@ -2612,8 +2612,11 @@ mem_ris(int model)
    // printf("create hydrores %s\n", create_hydro_res ? "true" : "false");
 
    create_hydro_res && (ris = fopen(risultati, "ab"));
-   create_hydro_res && (us_hydrodyn->last_hydro_res = QString("%1").arg(risultati));
-   cout << "last_hydro_res " << us_hydrodyn->last_hydro_res << endl;
+   if ( create_hydro_res )
+   {
+      us_hydrodyn->last_hydro_res = QString("%1").arg(risultati);
+      cout << "last_hydro_res " << us_hydrodyn->last_hydro_res << endl;
+   }
 
    hydro_res.sprintf("%s", "MODEL File Name  :___ ");
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
