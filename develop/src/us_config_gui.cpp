@@ -436,11 +436,13 @@ void US_Config_GUI::update_font()
 
 void US_Config_GUI::update_database()
 {
+#ifndef NO_DB
    US_Database *usdb;
    usdb = new US_Database();
    usdb->setCaption("Database Configuration");
    usdb->resize(330,264);
    usdb->show();
+#endif
 }
 
 void US_Config_GUI::update_off_button()

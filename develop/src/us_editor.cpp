@@ -562,6 +562,7 @@ void TextEdit::fileSaveAs(  )
 
 void TextEdit::fileSaveDB(  )
 {
+#ifndef NO_DB
    QString str, notes;
 
    if ( !currentEditor(  ) )
@@ -591,7 +592,9 @@ void TextEdit::fileSaveDB(  )
                             ( "The Notes were successfully saved to the Database.\n" ) );
       return;
    }
+#endif
 }
+
 
 void TextEdit::filePrint(  )
 {

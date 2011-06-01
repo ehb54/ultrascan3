@@ -28,7 +28,9 @@
 #include <qtextedit.h>
 #include <qtoolbar.h>
 #include <qtstream.h>
-#include "us_db.h"
+#ifndef NO_DB
+# include "us_db.h"
+#endif
 
 class US_Editor : public QFrame
 {
@@ -127,7 +129,9 @@ private slots:
     void editorChanged( QWidget * );
 
 private:
-   US_DB *currentDB;
+#ifndef NO_DB
+    US_DB *currentDB;
+#endif
     QAction *actionTextBold,
    *actionTextUnderline,
    *actionTextItalic,

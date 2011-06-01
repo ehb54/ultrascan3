@@ -296,6 +296,7 @@ void US_Hydrodyn_Misc::update_vbar_signal(float val1, float val2)
 
 void US_Hydrodyn_Misc::select_vbar()
 {
+#ifndef NO_DB
    float val;
    vbar_dlg = new US_Vbar_DB(20.0, &val, &val, true, false, 0);
    vbar_dlg->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -304,6 +305,7 @@ void US_Hydrodyn_Misc::select_vbar()
    vbar_dlg->exec();
    emit vbar_changed();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+#endif
 }
 
 void US_Hydrodyn_Misc::set_vbar()

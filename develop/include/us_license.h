@@ -6,7 +6,9 @@
 #include "us.h"
 #include "us_util.h"
 #include "us_extern.h"
-#include "us_database.h"
+#ifndef NO_DB
+#  include "us_database.h"
+#endif
 #include "us_color.h"
 #include "us_font.h"
 

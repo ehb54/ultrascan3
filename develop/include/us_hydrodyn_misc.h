@@ -11,7 +11,9 @@
 #include <qframe.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
-#include "us_db_tbl_vbar.h"
+#ifndef NO_DB
+#  include "us_db_tbl_vbar.h"
+#endif
 
 #include "us_util.h"
 
@@ -56,7 +58,9 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
                 void *us_hydrodyn;
 
       US_Config *USglobal;
+#ifndef NO_DB
       US_Vbar_DB *vbar_dlg;
+#endif
 
       QLabel *lbl_info;
       QLabel *lbl_vbar;

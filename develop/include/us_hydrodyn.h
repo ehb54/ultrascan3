@@ -24,6 +24,7 @@
 #include "us.h"
 #include "us_extern.h"
 #include "us_util.h"
+#include "us_math.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_addatom.h"
 #include "us_hydrodyn_addresidue.h"
@@ -305,7 +306,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_comparative;
 
       QProgressBar *progress;
-      TextEdit *e;
+      // TextEdit *e;
 
       US_AddAtom *addAtom;
       US_AddResidue *addResidue;
