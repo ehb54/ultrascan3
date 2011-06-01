@@ -26,7 +26,7 @@ void US_Hydrodyn_DMD_Options::setupGUI()
    int minHeight1 = 30;
    lbl_info = new QLabel(tr("DMD Options:"), this);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -42,13 +42,13 @@ void US_Hydrodyn_DMD_Options::setupGUI()
 
    lbl_info_model_creation = new QLabel(tr("Pair Discovery:"), this);
    lbl_info_model_creation->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info_model_creation->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info_model_creation->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info_model_creation->setMinimumHeight(minHeight1);
    lbl_info_model_creation->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info_model_creation->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_threshold_pb_pb = new QLabel(tr(" Threshold PB-PB (A): "), this);
-   lbl_threshold_pb_pb->setAlignment(AlignLeft|AlignVCenter);
+   lbl_threshold_pb_pb->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_threshold_pb_pb->setMinimumHeight(minHeight1);
    lbl_threshold_pb_pb->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_threshold_pb_pb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -65,7 +65,7 @@ void US_Hydrodyn_DMD_Options::setupGUI()
    connect(cnt_threshold_pb_pb, SIGNAL(valueChanged(double)), SLOT(update_threshold_pb_pb(double)));
 
    lbl_threshold_pb_sc = new QLabel(tr(" Threshold PB-SC (A): "), this);
-   lbl_threshold_pb_sc->setAlignment(AlignLeft|AlignVCenter);
+   lbl_threshold_pb_sc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_threshold_pb_sc->setMinimumHeight(minHeight1);
    lbl_threshold_pb_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_threshold_pb_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -82,7 +82,7 @@ void US_Hydrodyn_DMD_Options::setupGUI()
    connect(cnt_threshold_pb_sc, SIGNAL(valueChanged(double)), SLOT(update_threshold_pb_sc(double)));
 
    lbl_threshold_sc_sc = new QLabel(tr(" Threshold SC-SC (A): "), this);
-   lbl_threshold_sc_sc->setAlignment(AlignLeft|AlignVCenter);
+   lbl_threshold_sc_sc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_threshold_sc_sc->setMinimumHeight(minHeight1);
    lbl_threshold_sc_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_threshold_sc_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));

@@ -56,7 +56,7 @@ void US_Hydrodyn_BD::setupGUI()
    lbl_info = new QLabel(tr("Brownian Dynamics Functions:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -64,7 +64,7 @@ void US_Hydrodyn_BD::setupGUI()
    lbl_credits = new QLabel("SIMUFLEX BD suite, by J. Garcia de la Torre et al. (JCTC 5:2606-18, 2009)", this);
    Q_CHECK_PTR(lbl_credits);
    lbl_credits->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_credits->setAlignment(AlignCenter|AlignVCenter);
+   lbl_credits->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_credits->setMinimumHeight(minHeight1);
    lbl_credits->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_credits->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -72,7 +72,7 @@ void US_Hydrodyn_BD::setupGUI()
    lbl_browflex = new QLabel(tr("Browflex:"), this);
    Q_CHECK_PTR(lbl_browflex);
    lbl_browflex->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_browflex->setAlignment(AlignCenter|AlignVCenter);
+   lbl_browflex->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_browflex->setMinimumHeight(minHeight1);
    lbl_browflex->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_browflex->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -80,7 +80,7 @@ void US_Hydrodyn_BD::setupGUI()
    lbl_anaflex = new QLabel(tr("Anaflex:"), this);
    Q_CHECK_PTR(lbl_anaflex);
    lbl_anaflex->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_anaflex->setAlignment(AlignCenter|AlignVCenter);
+   lbl_anaflex->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_anaflex->setMinimumHeight(minHeight1);
    lbl_anaflex->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_anaflex->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));

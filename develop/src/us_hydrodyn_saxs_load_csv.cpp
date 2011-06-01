@@ -60,7 +60,7 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
    int minHeight2 = 30;
 
    lbl_info = new QLabel(msg, this);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight2 * 2);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
@@ -110,7 +110,7 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
 
    le_csv_filename = new QLineEdit(this, "csv_filename Line Edit");
    le_csv_filename->setText(*csv_filename);
-   le_csv_filename->setAlignment(AlignCenter|AlignVCenter);
+   le_csv_filename->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_csv_filename->setMinimumWidth(100);
    le_csv_filename->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_csv_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -149,7 +149,7 @@ void US_Hydrodyn_Saxs_Load_Csv::setupGUI()
       connect(pb_select_target, SIGNAL(clicked()), SLOT(select_target()));
 
       lbl_nnls_target = new QLabel(*nnls_target, this);
-      lbl_nnls_target->setAlignment(AlignCenter|AlignVCenter);
+      lbl_nnls_target->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       lbl_nnls_target->setMinimumHeight(minHeight2);
       lbl_nnls_target->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
       lbl_nnls_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));

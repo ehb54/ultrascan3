@@ -28,7 +28,7 @@ void US_Hydrodyn_OR::setupGUI()
    lbl_title = new QLabel(tr("Overlap reduction between " + (*o_r).title), this);
    Q_CHECK_PTR(lbl_title);
    lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_title->setAlignment(AlignCenter|AlignVCenter);
+   lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -71,7 +71,7 @@ void US_Hydrodyn_OR::setupGUI()
 
    lbl_steps = new QLabel(tr(" Overlap Reduction\n Step Size (in %): "), this);
    Q_CHECK_PTR(lbl_steps);
-   lbl_steps->setAlignment(AlignLeft|AlignVCenter);
+   lbl_steps->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_steps->setMinimumHeight(minHeight1+20);
    lbl_steps->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));

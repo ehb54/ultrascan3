@@ -26,7 +26,7 @@ US_Font::US_Font(QString *temp_fontFamily, int *temp_fontSize, QWidget *p, const
    lbl_info = new QLabel(tr("Please select a Base Font:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setGeometry(xpos, ypos, width, buttonh);
    lbl_info->setFont(QFont(*fontFamily, *fontSize, QFont::Bold));
@@ -81,7 +81,7 @@ US_Font::US_Font(QString *temp_fontFamily, int *temp_fontSize, QWidget *p, const
    
    lbl_sample = new QLabel(tr("Selected Font Samples:"), this);
    Q_CHECK_PTR(lbl_sample);
-   lbl_sample->setAlignment(AlignCenter|AlignVCenter);
+   lbl_sample->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_sample->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_sample->setGeometry(xpos, ypos, width, buttonh);
    lbl_sample->setFont(QFont(*fontFamily, *fontSize-1, QFont::Bold));

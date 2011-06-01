@@ -20,13 +20,13 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
 
    lbl_directions = new QLabel(QObject::tr("UltraScan " + US_Version + " Configuration:"),this);
    lbl_directions->setFrameStyle(QFrame::WinPanel|Raised);
-   lbl_directions->setAlignment(AlignCenter|AlignVCenter);
+   lbl_directions->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_directions->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_directions->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_paths = new QLabel(QObject::tr(" Paths and File Names:"),this);
    lbl_paths->setFrameStyle(QFrame::WinPanel|Raised);
-   lbl_paths->setAlignment(AlignLeft|AlignVCenter);
+   lbl_paths->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_paths->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_paths->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
@@ -127,7 +127,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
 
    lbl_misc = new QLabel(QObject::tr(" Miscellaneous Settings:"),this);
    lbl_misc->setFrameStyle(QFrame::WinPanel|Raised);
-   lbl_misc->setAlignment(AlignLeft|AlignVCenter);
+   lbl_misc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_misc->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_misc->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 

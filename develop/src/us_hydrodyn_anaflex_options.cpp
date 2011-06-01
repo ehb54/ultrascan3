@@ -36,14 +36,14 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
 
    lbl_info = new QLabel(tr("Anaflex Options:"), this);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_run_mode = new QLabel(tr("Run Mode:"), this);
    lbl_run_mode->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_run_mode->setAlignment(AlignCenter|AlignVCenter);
+   lbl_run_mode->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_run_mode->setMinimumHeight(minHeight1);
    lbl_run_mode->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_run_mode->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -319,26 +319,26 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    connect(cb_run_mode_3_5, SIGNAL(clicked()), SLOT(set_run_mode_3_5()));
 
    lbl_run_mode_3_5_iii_spacing = new QLabel("    ", this);
-   lbl_run_mode_3_5_iii_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_5_iii_spacing->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_5_iii_spacing->setMinimumHeight(minHeight1);
    lbl_run_mode_3_5_iii_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_run_mode_3_5_iii_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_run_mode_3_5_jjj_spacing = new QLabel("    ", this);
-   lbl_run_mode_3_5_jjj_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_5_jjj_spacing->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_5_jjj_spacing->setMinimumHeight(minHeight1);
    lbl_run_mode_3_5_jjj_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_run_mode_3_5_jjj_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_run_mode_3_5_iii = new QLabel(tr(" Bead 1 index : "), this);
-   lbl_run_mode_3_5_iii->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_5_iii->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_5_iii->setMinimumHeight(minHeight1);
    lbl_run_mode_3_5_iii->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_run_mode_3_5_iii->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_run_mode_3_5_iii = new QLineEdit(this, "Run_Mode_3_5_Iii Line Edit");
    le_run_mode_3_5_iii->setText(QString("%1").arg((*anaflex_options).run_mode_3_5_iii));
-   le_run_mode_3_5_iii->setAlignment(AlignVCenter);
+   le_run_mode_3_5_iii->setAlignment(Qt::AlignVCenter);
    le_run_mode_3_5_iii->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_run_mode_3_5_iii->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_run_mode_3_5_iii->setEnabled(true);
@@ -346,14 +346,14 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    connect(le_run_mode_3_5_iii, SIGNAL(textChanged(const QString &)), SLOT(update_run_mode_3_5_iii(const QString &)));
 
    lbl_run_mode_3_5_jjj = new QLabel(tr(" Bead 2 index : "), this);
-   lbl_run_mode_3_5_jjj->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_5_jjj->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_5_jjj->setMinimumHeight(minHeight1);
    lbl_run_mode_3_5_jjj->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_run_mode_3_5_jjj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_run_mode_3_5_jjj = new QLineEdit(this, "Run_Mode_3_5_Jjj Line Edit");
    le_run_mode_3_5_jjj->setText(QString("%1").arg((*anaflex_options).run_mode_3_5_jjj));
-   le_run_mode_3_5_jjj->setAlignment(AlignVCenter);
+   le_run_mode_3_5_jjj->setAlignment(Qt::AlignVCenter);
    le_run_mode_3_5_jjj->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_run_mode_3_5_jjj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_run_mode_3_5_jjj->setEnabled(true);
@@ -377,20 +377,20 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    connect(cb_run_mode_3_10, SIGNAL(clicked()), SLOT(set_run_mode_3_10()));
 
    lbl_run_mode_3_10_theta_spacing = new QLabel("    ", this);
-   lbl_run_mode_3_10_theta_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_10_theta_spacing->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_10_theta_spacing->setMinimumHeight(minHeight1);
    lbl_run_mode_3_10_theta_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_run_mode_3_10_theta_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_run_mode_3_10_theta = new QLabel(tr(" Theta (degrees): "), this);
-   lbl_run_mode_3_10_theta->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_10_theta->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_10_theta->setMinimumHeight(minHeight1);
    lbl_run_mode_3_10_theta->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_run_mode_3_10_theta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_run_mode_3_10_theta = new QLineEdit(this, "Run_Mode_3_10_Theta Line Edit");
    le_run_mode_3_10_theta->setText(QString("%1").arg((*anaflex_options).run_mode_3_10_theta));
-   le_run_mode_3_10_theta->setAlignment(AlignVCenter);
+   le_run_mode_3_10_theta->setAlignment(Qt::AlignVCenter);
    le_run_mode_3_10_theta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_run_mode_3_10_theta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_run_mode_3_10_theta->setMinimumWidth(75);
@@ -398,20 +398,20 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    connect(le_run_mode_3_10_theta, SIGNAL(textChanged(const QString &)), SLOT(update_run_mode_3_10_theta(const QString &)));
 
    lbl_run_mode_3_10_refractive_index_spacing = new QLabel("    ", this);
-   lbl_run_mode_3_10_refractive_index_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_10_refractive_index_spacing->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_10_refractive_index_spacing->setMinimumHeight(minHeight1);
    lbl_run_mode_3_10_refractive_index_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_run_mode_3_10_refractive_index_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_run_mode_3_10_refractive_index = new QLabel(tr(" Refractive_Index: "), this);
-   lbl_run_mode_3_10_refractive_index->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_10_refractive_index->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_10_refractive_index->setMinimumHeight(minHeight1);
    lbl_run_mode_3_10_refractive_index->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_run_mode_3_10_refractive_index->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_run_mode_3_10_refractive_index = new QLineEdit(this, "Run_Mode_3_10_Refractive_Index Line Edit");
    le_run_mode_3_10_refractive_index->setText(QString("%1").arg((*anaflex_options).run_mode_3_10_refractive_index));
-   le_run_mode_3_10_refractive_index->setAlignment(AlignVCenter);
+   le_run_mode_3_10_refractive_index->setAlignment(Qt::AlignVCenter);
    le_run_mode_3_10_refractive_index->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_run_mode_3_10_refractive_index->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_run_mode_3_10_refractive_index->setMinimumWidth(75);
@@ -419,20 +419,20 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    connect(le_run_mode_3_10_refractive_index, SIGNAL(textChanged(const QString &)), SLOT(update_run_mode_3_10_refractive_index(const QString &)));
 
    lbl_run_mode_3_10_lambda_spacing = new QLabel("    ", this);
-   lbl_run_mode_3_10_lambda_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_10_lambda_spacing->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_10_lambda_spacing->setMinimumHeight(minHeight1);
    lbl_run_mode_3_10_lambda_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_run_mode_3_10_lambda_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_run_mode_3_10_lambda = new QLabel(tr(" Lambda (nm): "), this);
-   lbl_run_mode_3_10_lambda->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_10_lambda->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_10_lambda->setMinimumHeight(minHeight1);
    lbl_run_mode_3_10_lambda->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_run_mode_3_10_lambda->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_run_mode_3_10_lambda = new QLineEdit(this, "Run_Mode_3_10_Lambda Line Edit");
    le_run_mode_3_10_lambda->setText(QString("%1").arg((*anaflex_options).run_mode_3_10_lambda));
-   le_run_mode_3_10_lambda->setAlignment(AlignVCenter);
+   le_run_mode_3_10_lambda->setAlignment(Qt::AlignVCenter);
    le_run_mode_3_10_lambda->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_run_mode_3_10_lambda->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_run_mode_3_10_lambda->setMinimumWidth(75);
@@ -448,26 +448,26 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    connect(cb_run_mode_3_14, SIGNAL(clicked()), SLOT(set_run_mode_3_14()));
    
    lbl_run_mode_3_14_iii_spacing = new QLabel(tr("    "), this);
-   lbl_run_mode_3_14_iii_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_14_iii_spacing->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_14_iii_spacing->setMinimumHeight(minHeight1);
    lbl_run_mode_3_14_iii_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_run_mode_3_14_iii_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_run_mode_3_14_jjj_spacing = new QLabel("    ", this);
-   lbl_run_mode_3_14_jjj_spacing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_14_jjj_spacing->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_14_jjj_spacing->setMinimumHeight(minHeight1);
    lbl_run_mode_3_14_jjj_spacing->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_run_mode_3_14_jjj_spacing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_run_mode_3_14_iii = new QLabel(tr(" Bead 1 index : "), this);
-   lbl_run_mode_3_14_iii->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_14_iii->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_14_iii->setMinimumHeight(minHeight1);
    lbl_run_mode_3_14_iii->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_run_mode_3_14_iii->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_run_mode_3_14_iii = new QLineEdit(this, "Run_Mode_3_14_Iii Line Edit");
    le_run_mode_3_14_iii->setText(QString("%1").arg((*anaflex_options).run_mode_3_14_iii));
-   le_run_mode_3_14_iii->setAlignment(AlignVCenter);
+   le_run_mode_3_14_iii->setAlignment(Qt::AlignVCenter);
    le_run_mode_3_14_iii->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_run_mode_3_14_iii->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_run_mode_3_14_iii->setEnabled(true);
@@ -475,14 +475,14 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    connect(le_run_mode_3_14_iii, SIGNAL(textChanged(const QString &)), SLOT(update_run_mode_3_14_iii(const QString &)));
 
    lbl_run_mode_3_14_jjj = new QLabel(tr(" Bead 2 index : "), this);
-   lbl_run_mode_3_14_jjj->setAlignment(AlignLeft|AlignVCenter);
+   lbl_run_mode_3_14_jjj->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_run_mode_3_14_jjj->setMinimumHeight(minHeight1);
    lbl_run_mode_3_14_jjj->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_run_mode_3_14_jjj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_run_mode_3_14_jjj = new QLineEdit(this, "Run_Mode_3_14_Jjj Line Edit");
    le_run_mode_3_14_jjj->setText(QString("%1").arg((*anaflex_options).run_mode_3_14_jjj));
-   le_run_mode_3_14_jjj->setAlignment(AlignVCenter);
+   le_run_mode_3_14_jjj->setAlignment(Qt::AlignVCenter);
    le_run_mode_3_14_jjj->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_run_mode_3_14_jjj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_run_mode_3_14_jjj->setEnabled(true);
@@ -560,28 +560,28 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    connect(cb_run_mode_9, SIGNAL(clicked()), SLOT(set_run_mode_9()));
 
    lbl_nfrec = new QLabel(tr(" Trajectory sampling frequency:         "), this);
-   lbl_nfrec->setAlignment(AlignLeft|AlignVCenter);
+   lbl_nfrec->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_nfrec->setMinimumHeight(minHeight1);
    lbl_nfrec->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_nfrec->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_nfrec = new QLineEdit(this, "Nfrec Line Edit");
    le_nfrec->setText(QString("%1").arg((*anaflex_options).nfrec));
-   le_nfrec->setAlignment(AlignVCenter);
+   le_nfrec->setAlignment(Qt::AlignVCenter);
    le_nfrec->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_nfrec->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_nfrec->setEnabled(true);
    connect(le_nfrec, SIGNAL(textChanged(const QString &)), SLOT(update_nfrec(const QString &)));
 
    lbl_ntimc = new QLabel(tr(" Number of points of the\n correlation function: "), this);
-   lbl_ntimc->setAlignment(AlignLeft|AlignVCenter);
+   lbl_ntimc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_ntimc->setMinimumHeight(minHeight1);
    lbl_ntimc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_ntimc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_ntimc = new QLineEdit(this, "Ntimc Line Edit");
    le_ntimc->setText(QString("%1").arg((*anaflex_options).ntimc));
-   le_ntimc->setAlignment(AlignVCenter);
+   le_ntimc->setAlignment(Qt::AlignVCenter);
    le_ntimc->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_ntimc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_ntimc->setEnabled(true);
@@ -589,14 +589,14 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    connect(le_ntimc, SIGNAL(textChanged(const QString &)), SLOT(update_ntimc(const QString &)));
 
    lbl_tmax = new QLabel(tr(" Maximum time reached in the\n calculation of the correlation function (s): "), this);
-   lbl_tmax->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_tmax->setMinimumHeight(minHeight1);
    lbl_tmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_tmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tmax = new QLineEdit(this, "Tmax Line Edit");
    le_tmax->setText(QString("%1").arg((*anaflex_options).tmax));
-   le_tmax->setAlignment(AlignVCenter);
+   le_tmax->setAlignment(Qt::AlignVCenter);
    le_tmax->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_tmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_tmax->setMinimumWidth(75);
@@ -604,13 +604,13 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    connect(le_tmax, SIGNAL(textChanged(const QString &)), SLOT(update_tmax(const QString &)));
 
    lbl_deltat = new QLabel(tr(" Correlation interval time (s): "), this);
-   lbl_deltat->setAlignment(AlignLeft|AlignVCenter);
+   lbl_deltat->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_deltat->setMinimumHeight(minHeight1);
    lbl_deltat->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_deltat = new QLineEdit(this, "Deltat Edit");
-   le_deltat->setAlignment(AlignVCenter);
+   le_deltat->setAlignment(Qt::AlignVCenter);
    le_deltat->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_deltat->setMinimumWidth(100);

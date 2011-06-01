@@ -57,20 +57,20 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
    int minHeight2 = 30;
 
    lbl_info = new QLabel(msg, this);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight2);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    lbl_title = new QLabel(tr(" Title (leave blank for no title):"), this);
    Q_CHECK_PTR(lbl_title);
-   lbl_title->setAlignment(AlignLeft|AlignVCenter);
+   lbl_title->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_title->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_title = new QLineEdit(this, "Title Line Edit");
    le_title->setText(*title);
-   le_title->setAlignment(AlignCenter | AlignVCenter);
+   le_title->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_title->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_title->setEnabled(true);
@@ -78,13 +78,13 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
 
    lbl_dir = new QLabel(tr(" Directory for movie file:"), this);
    Q_CHECK_PTR(lbl_dir);
-   lbl_dir->setAlignment(AlignLeft|AlignVCenter);
+   lbl_dir->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_dir->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_dir = new QLineEdit(this, "Dir Line Edit");
    le_dir->setText(*dir);
-   le_dir->setAlignment(AlignCenter | AlignVCenter);
+   le_dir->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_dir->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_dir->setEnabled(true);
@@ -92,14 +92,14 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
 
    lbl_file = new QLabel(tr(" Name of movie file (.avi will be appended):"), this);
    Q_CHECK_PTR(lbl_file);
-   lbl_file->setAlignment(AlignLeft|AlignVCenter);
+   lbl_file->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_file->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_file = new QLineEdit(this, "File Line Edit");
    le_file->setText(*file);
    le_file->setMinimumWidth(300);
-   le_file->setAlignment(AlignCenter | AlignVCenter);
+   le_file->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_file->setEnabled(true);
@@ -107,13 +107,13 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
 
    lbl_fps = new QLabel(tr(" Frames per second:"), this);
    Q_CHECK_PTR(lbl_fps);
-   lbl_fps->setAlignment(AlignLeft|AlignVCenter);
+   lbl_fps->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_fps->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_fps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_fps = new QLineEdit(this, "Fps Line Edit");
    le_fps->setText(QString("%1").arg(*fps));
-   le_fps->setAlignment(AlignCenter | AlignVCenter);
+   le_fps->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_fps->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_fps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_fps->setEnabled(true);
@@ -121,13 +121,13 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
 
    lbl_scale = new QLabel(tr(" Image scale:"), this);
    Q_CHECK_PTR(lbl_scale);
-   lbl_scale->setAlignment(AlignLeft|AlignVCenter);
+   lbl_scale->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_scale->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_scale = new QLineEdit(this, "Scale Line Edit");
    le_scale->setText(QString("%1").arg(*scale));
-   le_scale->setAlignment(AlignCenter | AlignVCenter);
+   le_scale->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_scale->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_scale->setEnabled(true);
@@ -143,13 +143,13 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
 
    lbl_tc_unit = new QLabel(tr(" Time code unit (e.g. ns, ps):"), this);
    Q_CHECK_PTR(lbl_tc_unit);
-   lbl_tc_unit->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tc_unit->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_tc_unit->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_tc_unit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tc_unit = new QLineEdit(this, "Tc_Unit Line Edit");
    le_tc_unit->setText(QString("%1").arg(*tc_unit));
-   le_tc_unit->setAlignment(AlignCenter | AlignVCenter);
+   le_tc_unit->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_tc_unit->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_tc_unit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_tc_unit->setEnabled(true);
@@ -157,13 +157,13 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
 
    lbl_tc_start = new QLabel(tr(" Time code start:"), this);
    Q_CHECK_PTR(lbl_tc_start);
-   lbl_tc_start->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tc_start->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_tc_start->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_tc_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tc_start = new QLineEdit(this, "Tc_Start Line Edit");
    le_tc_start->setText(QString("%1").arg(*tc_start));
-   le_tc_start->setAlignment(AlignCenter | AlignVCenter);
+   le_tc_start->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_tc_start->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_tc_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_tc_start->setEnabled(true);
@@ -171,13 +171,13 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
 
    lbl_tc_delta = new QLabel(tr(" Time code delta per frame:"), this);
    Q_CHECK_PTR(lbl_tc_delta);
-   lbl_tc_delta->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tc_delta->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_tc_delta->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_tc_delta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tc_delta = new QLineEdit(this, "Tc_Delta Line Edit");
    le_tc_delta->setText(QString("%1").arg(*tc_delta));
-   le_tc_delta->setAlignment(AlignCenter | AlignVCenter);
+   le_tc_delta->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_tc_delta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_tc_delta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_tc_delta->setEnabled(true);
@@ -185,13 +185,13 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
 
    lbl_tc_pointsize = new QLabel(tr(" Time code font pointsize:"), this);
    Q_CHECK_PTR(lbl_tc_pointsize);
-   lbl_tc_pointsize->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tc_pointsize->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_tc_pointsize->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_tc_pointsize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tc_pointsize = new QLineEdit(this, "Tc_Pointsize Line Edit");
    le_tc_pointsize->setText(QString("%1").arg(*tc_pointsize));
-   le_tc_pointsize->setAlignment(AlignCenter | AlignVCenter);
+   le_tc_pointsize->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_tc_pointsize->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_tc_pointsize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_tc_pointsize->setEnabled(true);

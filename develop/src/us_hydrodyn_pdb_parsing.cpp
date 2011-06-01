@@ -29,7 +29,7 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
    lbl_info = new QLabel(tr("SOMO PDB Parsing Options:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));

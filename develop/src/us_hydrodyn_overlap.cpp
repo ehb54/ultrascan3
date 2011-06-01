@@ -124,14 +124,14 @@ void US_Hydrodyn_Overlap::setupGUI()
 
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_overlap_tolerance = new QLabel(tr(" Bead Overlap Tolerance: "), this);
    Q_CHECK_PTR(lbl_overlap_tolerance);
-   lbl_overlap_tolerance->setAlignment(AlignLeft|AlignVCenter);
+   lbl_overlap_tolerance->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_overlap_tolerance->setMinimumHeight(minHeight1);
    lbl_overlap_tolerance->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_overlap_tolerance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));

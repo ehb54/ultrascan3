@@ -18,7 +18,7 @@ US_Admin::US_Admin(QWidget *p, const char *name) : QFrame( p, name)
                       USglobal->global_colors.cg_frame));
   
   lbl_blank = new QLabel(tr(" Change Administrator Password:"), this);
-  lbl_blank->setAlignment(AlignCenter|AlignVCenter);
+  lbl_blank->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
   lbl_blank->setFrameStyle(QFrame::WinPanel|Raised);  
   lbl_blank->setPalette(QPalette(USglobal->global_colors.cg_frame, 
                                  USglobal->global_colors.cg_frame, 
@@ -31,7 +31,7 @@ US_Admin::US_Admin(QWidget *p, const char *name) : QFrame( p, name)
                            QFont::Bold));
     
   lbl_psswd1 = new QLabel(tr(" Enter New Password:"),this);
-  lbl_psswd1->setAlignment(AlignLeft|AlignVCenter);
+  lbl_psswd1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_psswd1->setPalette(QPalette(USglobal->global_colors.cg_label, 
                                   USglobal->global_colors.cg_label, 
                                   USglobal->global_colors.cg_label));
@@ -54,7 +54,7 @@ US_Admin::US_Admin(QWidget *p, const char *name) : QFrame( p, name)
                       SLOT  ( update_psswd1( const QString& ) ) );
   
   lbl_psswd2 = new QLabel(tr(" Verify New Password:"),this);
-  lbl_psswd2->setAlignment(AlignLeft|AlignVCenter);
+  lbl_psswd2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_psswd2->setPalette(QPalette(USglobal->global_colors.cg_label, 
                                   USglobal->global_colors.cg_label, 
                                   USglobal->global_colors.cg_label));

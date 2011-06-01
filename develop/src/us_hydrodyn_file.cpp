@@ -42,19 +42,19 @@ void US_Hydrodyn_File::setupGUI()
    int minHeight2 = 30;
 
    lbl_info = new QLabel(" WARNING: The following file exists:", this);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight2);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    lbl_filename = new QLabel(*dir + *base + *ext, this);
-   lbl_filename->setAlignment(AlignCenter|AlignVCenter);
+   lbl_filename->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_filename->setMinimumHeight(minHeight2);
    lbl_filename->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    lbl_dir = new QLabel(" Path and project fixed base: ", this);
-   lbl_dir->setAlignment(AlignRight|AlignVCenter);
+   lbl_dir->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_dir->setMinimumHeight(minHeight2);
    lbl_dir->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
@@ -64,13 +64,13 @@ void US_Hydrodyn_File::setupGUI()
    le_dir->setReadOnly(true);
    le_dir->setMinimumWidth(100);
    le_dir->setMinimumHeight(minHeight2);
-   le_dir->setAlignment(AlignCenter|AlignVCenter);
+   le_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_dir->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
    le_dir->setDisabled(true);
 
    lbl_update = new QLabel(" Update the filename: ", this);
-   lbl_update->setAlignment(AlignRight|AlignVCenter);
+   lbl_update->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_update->setMinimumHeight(minHeight2);
    lbl_update->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_update->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
@@ -80,7 +80,7 @@ void US_Hydrodyn_File::setupGUI()
    le_base->setReadOnly(false);
    le_base->setMinimumWidth(200);
    le_base->setMinimumHeight(minHeight2);
-   le_base->setAlignment(AlignCenter|AlignVCenter);
+   le_base->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_base->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_base->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
    connect(le_base, SIGNAL(textChanged(const QString &)), SLOT(update_base(const QString &)));
@@ -88,7 +88,7 @@ void US_Hydrodyn_File::setupGUI()
    if ( ext->length() )
    {
       lbl_ext = new QLabel(" Fixed extension: ", this);
-      lbl_ext->setAlignment(AlignRight|AlignVCenter);
+      lbl_ext->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
       lbl_ext->setMinimumHeight(minHeight2);
       lbl_ext->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
       lbl_ext->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
@@ -98,7 +98,7 @@ void US_Hydrodyn_File::setupGUI()
       le_ext->setReadOnly(true);
       le_ext->setMinimumWidth(200);
       le_ext->setMinimumHeight(minHeight2);
-      le_ext->setAlignment(AlignCenter|AlignVCenter);
+      le_ext->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       le_ext->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
       le_ext->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
       le_ext->setDisabled(true);

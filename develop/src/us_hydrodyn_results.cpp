@@ -38,14 +38,14 @@ void US_Hydrodyn_Results::setupGUI()
                             ), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_name = new QLabel(tr(" Model: "), this);
    Q_CHECK_PTR(lbl_name);
-   lbl_name->setAlignment(AlignLeft|AlignVCenter);
+   lbl_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_name->setMinimumWidth(200);
    lbl_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -54,13 +54,13 @@ void US_Hydrodyn_Results::setupGUI()
    le_name->setText(results->name);
    le_name->setReadOnly(true);
    le_name->setMinimumWidth(200);
-   //   le_name->setAlignment(AlignLeft|AlignVCenter);
+   //   le_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    le_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_total_beads = new QLabel(tr(" Total Beads in Model: "), this);
    Q_CHECK_PTR(lbl_total_beads);
-   lbl_total_beads->setAlignment(AlignLeft|AlignVCenter);
+   lbl_total_beads->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_total_beads->setMinimumWidth(200);
    lbl_total_beads->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_total_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -80,13 +80,13 @@ void US_Hydrodyn_Results::setupGUI()
       
    le_total_beads->setReadOnly(true);
    le_total_beads->setMinimumWidth(200);
-   le_total_beads->setAlignment(AlignVCenter);
+   le_total_beads->setAlignment(Qt::AlignVCenter);
    le_total_beads->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_total_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_used_beads = new QLabel(tr(" Used Beads in Model: "), this);
    Q_CHECK_PTR(lbl_used_beads);
-   lbl_used_beads->setAlignment(AlignLeft|AlignVCenter);
+   lbl_used_beads->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_used_beads->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_used_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -102,39 +102,39 @@ void US_Hydrodyn_Results::setupGUI()
                                                   results->used_beads_sd));
    }
    le_used_beads->setReadOnly(true);
-   le_used_beads->setAlignment(AlignVCenter);
+   le_used_beads->setAlignment(Qt::AlignVCenter);
    le_used_beads->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_used_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_mass = new QLabel(tr(" Molecular Mass: "), this);
    Q_CHECK_PTR(lbl_mass);
-   lbl_mass->setAlignment(AlignLeft|AlignVCenter);
+   lbl_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_mass->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_mass = new QLineEdit(this, "mass Line Edit");
    le_mass->setText(str.sprintf("%6.4e Da", (*results).mass));
    le_mass->setReadOnly(true);
-   le_mass->setAlignment(AlignVCenter);
+   le_mass->setAlignment(Qt::AlignVCenter);
    le_mass->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_vbar = new QLabel(tr(" Part. Specif. Volume: "), this);
    Q_CHECK_PTR(lbl_vbar);
-   lbl_vbar->setAlignment(AlignLeft|AlignVCenter);
+   lbl_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_vbar = new QLineEdit(this, "vbar Line Edit");
    le_vbar->setText(str.sprintf("%5.3f cm^3/g", (*results).vbar));
    le_vbar->setReadOnly(true);
-   le_vbar->setAlignment(AlignVCenter);
+   le_vbar->setAlignment(Qt::AlignVCenter);
    le_vbar->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_s20w = new QLabel(tr(" Sedimentation Coefficient s: "), this);
    Q_CHECK_PTR(lbl_s20w);
-   lbl_s20w->setAlignment(AlignLeft|AlignVCenter);
+   lbl_s20w->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_s20w->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_s20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -148,13 +148,13 @@ void US_Hydrodyn_Results::setupGUI()
       le_s20w->setText(str.sprintf("%4.2e S (%4.2e)", (*results).s20w, (*results).s20w_sd));
    }
    le_s20w->setReadOnly(true);
-   le_s20w->setAlignment(AlignVCenter);
+   le_s20w->setAlignment(Qt::AlignVCenter);
    le_s20w->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_s20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_D20w = new QLabel(tr(" Tr. Diffusion Coefficient D: "), this);
    Q_CHECK_PTR(lbl_D20w);
-   lbl_D20w->setAlignment(AlignLeft|AlignVCenter);
+   lbl_D20w->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_D20w->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_D20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -168,13 +168,13 @@ void US_Hydrodyn_Results::setupGUI()
       le_D20w->setText(str.sprintf("%4.2e cm/sec^2 (%4.2e)", (*results).D20w, (*results).D20w_sd));
    }
    le_D20w->setReadOnly(true);
-   le_D20w->setAlignment(AlignVCenter);
+   le_D20w->setAlignment(Qt::AlignVCenter);
    le_D20w->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_D20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_tau = new QLabel(tr(" Relaxation Time, tau(h): "), this);
    Q_CHECK_PTR(lbl_tau);
-   lbl_tau->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tau->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_tau->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -188,13 +188,13 @@ void US_Hydrodyn_Results::setupGUI()
       le_tau->setText(str.sprintf("%4.2e ns (%4.2e)", (*results).tau, (*results).tau_sd));
    }
    le_tau->setReadOnly(true);
-   le_tau->setAlignment(AlignVCenter);
+   le_tau->setAlignment(Qt::AlignVCenter);
    le_tau->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_viscosity = new QLabel(tr(" Intrinsic Viscosity: "), this);
    Q_CHECK_PTR(lbl_viscosity);
-   lbl_viscosity->setAlignment(AlignLeft|AlignVCenter);
+   lbl_viscosity->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_viscosity->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -208,13 +208,13 @@ void US_Hydrodyn_Results::setupGUI()
       le_viscosity->setText(str.sprintf("%4.2e cm^3/g (%4.2e)", (*results).viscosity, (*results).viscosity_sd));
    }
    le_viscosity->setReadOnly(true);
-   le_viscosity->setAlignment(AlignVCenter);
+   le_viscosity->setAlignment(Qt::AlignVCenter);
    le_viscosity->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_rs = new QLabel(tr(" Stokes Radius: "), this);
    Q_CHECK_PTR(lbl_rs);
-   lbl_rs->setAlignment(AlignLeft|AlignVCenter);
+   lbl_rs->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_rs->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_rs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -228,13 +228,13 @@ void US_Hydrodyn_Results::setupGUI()
       le_rs->setText(str.sprintf("%4.2e nm (%4.2e)", (*results).rs, (*results).rs_sd));
    }
    le_rs->setReadOnly(true);
-   le_rs->setAlignment(AlignVCenter);
+   le_rs->setAlignment(Qt::AlignVCenter);
    le_rs->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_rs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_ff0 = new QLabel(tr(" Frictional Ratio: "), this);
    Q_CHECK_PTR(lbl_ff0);
-   lbl_ff0->setAlignment(AlignLeft|AlignVCenter);
+   lbl_ff0->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_ff0->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_ff0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -248,13 +248,13 @@ void US_Hydrodyn_Results::setupGUI()
       le_ff0->setText(str.sprintf("%3.2f nm (%3.2e)", (*results).ff0, (*results).ff0_sd));
    }
    le_ff0->setReadOnly(true);
-   le_ff0->setAlignment(AlignVCenter);
+   le_ff0->setAlignment(Qt::AlignVCenter);
    le_ff0->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_ff0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_rg = new QLabel(tr(" Radius of Gyration: "), this);
    Q_CHECK_PTR(lbl_rg);
-   lbl_rg->setAlignment(AlignLeft|AlignVCenter);
+   lbl_rg->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_rg->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -268,7 +268,7 @@ void US_Hydrodyn_Results::setupGUI()
       le_rg->setText(str.sprintf("%4.2e nm (%4.2e)", (*results).rg, (*results).rg_sd));
    }
    le_rg->setReadOnly(true);
-   le_rg->setAlignment(AlignVCenter);
+   le_rg->setAlignment(Qt::AlignVCenter);
    le_rg->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 

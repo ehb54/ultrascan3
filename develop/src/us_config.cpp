@@ -26,7 +26,7 @@ US_Config::US_Config( QObject* parent, const char* name)
 
 
 // This is for us_register only
-US_Config::US_Config( QString dummy, QObject* parent, const char* name )
+US_Config::US_Config( QString /* dummy */, QObject* parent, const char* name )
    : QObject (parent, name)
 {
    //  config_list.tar = dummy;  // Dummy to avoid compiler complaint

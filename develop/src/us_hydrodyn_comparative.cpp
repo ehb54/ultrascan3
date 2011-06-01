@@ -254,28 +254,28 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    lbl_title_param = new QLabel(tr("Select parameters"), this);
    lbl_title_param->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_title_param->setAlignment(AlignCenter|AlignVCenter);
+   lbl_title_param->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title_param->setMinimumHeight(minHeight1);
    lbl_title_param->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_title_param->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_active = new QLabel(tr("Select to enable variable comparison"), this);
    lbl_active->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_active->setAlignment(AlignCenter|AlignVCenter);
+   lbl_active->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_active->setMinimumHeight(minHeight1);
    lbl_active->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_active->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_target = new QLabel(tr("Experimental\nvalue"), this);
    lbl_target->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_target->setAlignment(AlignCenter|AlignVCenter);
+   lbl_target->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_target->setMinimumHeight(minHeight1);
    lbl_target->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_sort = new QLabel(tr("Sort results"), this);
    lbl_sort->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_sort->setAlignment(AlignCenter|AlignVCenter);
+   lbl_sort->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_sort->setMinimumHeight(minHeight1);
    lbl_sort->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_sort->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -291,7 +291,7 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    lbl_rank = new QLabel(tr("Rank"), this);
    lbl_rank->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_rank->setAlignment(AlignCenter|AlignVCenter);
+   lbl_rank->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_rank->setMinimumHeight(minHeight1);
    lbl_rank->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_rank->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -307,70 +307,70 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    lbl_include_in_weight = new QLabel(tr("Include"), this);
    lbl_include_in_weight->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_include_in_weight->setAlignment(AlignCenter|AlignVCenter);
+   lbl_include_in_weight->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_include_in_weight->setMinimumHeight(minHeight0);
    lbl_include_in_weight->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_include_in_weight->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_weight = new QLabel(tr("Weight"), this);
    lbl_weight->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_weight->setAlignment(AlignCenter|AlignVCenter);
+   lbl_weight->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_weight->setMinimumHeight(minHeight0);
    lbl_weight->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_weight->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_ec = new QLabel(tr("Equivalance class controls"), this);
    lbl_ec->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_ec->setAlignment(AlignCenter|AlignVCenter);
+   lbl_ec->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_ec->setMinimumHeight(minHeight1);
    lbl_ec->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_ec->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_buckets = new QLabel(tr("Number of\npartitions"), this);
    lbl_buckets->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_buckets->setAlignment(AlignCenter|AlignVCenter);
+   lbl_buckets->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_buckets->setMinimumHeight(minHeight1);
    lbl_buckets->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_buckets->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_min = new QLabel(tr("Minimum\nmodel\nvalue"), this);
    lbl_min->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_min->setAlignment(AlignCenter|AlignVCenter);
+   lbl_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_min->setMinimumHeight(minHeight1);
    lbl_min->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_max = new QLabel(tr("Maximum\nmodel\nvalue"), this);
    lbl_max->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_max->setAlignment(AlignCenter|AlignVCenter);
+   lbl_max->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_max->setMinimumHeight(minHeight1);
    lbl_max->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_csv_controls = new QLabel(tr("Add columns to results"), this);
    lbl_csv_controls->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_csv_controls->setAlignment(AlignCenter|AlignVCenter);
+   lbl_csv_controls->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_csv_controls->setMinimumHeight(minHeight1);
    lbl_csv_controls->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_csv_controls->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_store_reference = new QLabel(tr("Experimental\nvalue"), this);
    lbl_store_reference->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_store_reference->setAlignment(AlignCenter|AlignVCenter);
+   lbl_store_reference->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_store_reference->setMinimumHeight(minHeight1);
    lbl_store_reference->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_store_reference->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_store_diff = new QLabel(tr("Difference"), this);
    lbl_store_diff->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_store_diff->setAlignment(AlignCenter|AlignVCenter);
+   lbl_store_diff->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_store_diff->setMinimumHeight(minHeight1);
    lbl_store_diff->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_store_diff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_store_abs_diff = new QLabel(tr("Absolute\ndifference"), this);
    lbl_store_abs_diff->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_store_abs_diff->setAlignment(AlignCenter|AlignVCenter);
+   lbl_store_abs_diff->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_store_abs_diff->setMinimumHeight(minHeight1);
    lbl_store_abs_diff->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_store_abs_diff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -388,7 +388,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_s = new QLineEdit(this, "target_s Line Edit");
    le_target_s->setText(QString("%1").arg(comparative->ce_s.target));
    // le_target_s->setMinimumHeight(minHeight1);
-   le_target_s->setAlignment(AlignCenter|AlignVCenter);
+   le_target_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_target_s->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_target_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_s, SIGNAL(textChanged(const QString &)), SLOT(update_target_s(const QString &)));
@@ -396,7 +396,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_rank_s = new QLineEdit(this, "rank_s Line Edit");
    le_rank_s->setText(QString("%1").arg(comparative->ce_s.rank));
    // le_rank_s->setMinimumHeight(minHeight1);
-   le_rank_s->setAlignment(AlignCenter|AlignVCenter);
+   le_rank_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_rank_s->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_rank_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_rank_s, SIGNAL(textChanged(const QString &)), SLOT(update_rank_s(const QString &)));
@@ -413,7 +413,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_s = new QLineEdit(this, "weight_s Line Edit");
    le_weight_s->setText(QString("%1").arg(comparative->ce_s.weight));
    // le_weight_s->setMinimumHeight(minHeight1);
-   le_weight_s->setAlignment(AlignCenter|AlignVCenter);
+   le_weight_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_weight_s->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_weight_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_s, SIGNAL(textChanged(const QString &)), SLOT(update_weight_s(const QString &)));
@@ -421,7 +421,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_s = new QLineEdit(this, "buckets_s Line Edit");
    le_buckets_s->setText(QString("%1").arg(comparative->ce_s.buckets));
    // le_buckets_s->setMinimumHeight(minHeight1);
-   le_buckets_s->setAlignment(AlignCenter|AlignVCenter);
+   le_buckets_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_buckets_s->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_buckets_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_s, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_s(const QString &)));
@@ -429,7 +429,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_s = new QLineEdit(this, "min_s Line Edit");
    le_min_s->setText(QString("%1").arg(comparative->ce_s.min));
    // le_min_s->setMinimumHeight(minHeight1);
-   le_min_s->setAlignment(AlignCenter|AlignVCenter);
+   le_min_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_min_s->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_min_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_s, SIGNAL(textChanged(const QString &)), SLOT(update_min_s(const QString &)));
@@ -437,7 +437,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_max_s = new QLineEdit(this, "max_s Line Edit");
    le_max_s->setText(QString("%1").arg(comparative->ce_s.max));
    // le_max_s->setMinimumHeight(minHeight1);
-   le_max_s->setAlignment(AlignCenter|AlignVCenter);
+   le_max_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_max_s->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_max_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_max_s, SIGNAL(textChanged(const QString &)), SLOT(update_max_s(const QString &)));
@@ -482,7 +482,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_D = new QLineEdit(this, "target_D Line Edit");
    le_target_D->setText(QString("%1").arg(comparative->ce_D.target));
    // le_target_D->setMinimumHeight(minHeight1);
-   le_target_D->setAlignment(AlignCenter|AlignVCenter);
+   le_target_D->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_target_D->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_target_D->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_D, SIGNAL(textChanged(const QString &)), SLOT(update_target_D(const QString &)));
@@ -490,7 +490,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_rank_D = new QLineEdit(this, "rank_D Line Edit");
    le_rank_D->setText(QString("%1").arg(comparative->ce_D.rank));
    // le_rank_D->setMinimumHeight(minHeight1);
-   le_rank_D->setAlignment(AlignCenter|AlignVCenter);
+   le_rank_D->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_rank_D->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_rank_D->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_rank_D, SIGNAL(textChanged(const QString &)), SLOT(update_rank_D(const QString &)));
@@ -507,7 +507,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_D = new QLineEdit(this, "weight_D Line Edit");
    le_weight_D->setText(QString("%1").arg(comparative->ce_D.weight));
    // le_weight_D->setMinimumHeight(minHeight1);
-   le_weight_D->setAlignment(AlignCenter|AlignVCenter);
+   le_weight_D->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_weight_D->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_weight_D->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_D, SIGNAL(textChanged(const QString &)), SLOT(update_weight_D(const QString &)));
@@ -515,7 +515,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_D = new QLineEdit(this, "buckets_D Line Edit");
    le_buckets_D->setText(QString("%1").arg(comparative->ce_D.buckets));
    // le_buckets_D->setMinimumHeight(minHeight1);
-   le_buckets_D->setAlignment(AlignCenter|AlignVCenter);
+   le_buckets_D->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_buckets_D->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_buckets_D->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_D, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_D(const QString &)));
@@ -523,7 +523,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_D = new QLineEdit(this, "min_D Line Edit");
    le_min_D->setText(QString("%1").arg(comparative->ce_D.min));
    // le_min_D->setMinimumHeight(minHeight1);
-   le_min_D->setAlignment(AlignCenter|AlignVCenter);
+   le_min_D->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_min_D->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_min_D->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_D, SIGNAL(textChanged(const QString &)), SLOT(update_min_D(const QString &)));
@@ -531,7 +531,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_max_D = new QLineEdit(this, "max_D Line Edit");
    le_max_D->setText(QString("%1").arg(comparative->ce_D.max));
    // le_max_D->setMinimumHeight(minHeight1);
-   le_max_D->setAlignment(AlignCenter|AlignVCenter);
+   le_max_D->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_max_D->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_max_D->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_max_D, SIGNAL(textChanged(const QString &)), SLOT(update_max_D(const QString &)));
@@ -576,7 +576,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_sr = new QLineEdit(this, "target_sr Line Edit");
    le_target_sr->setText(QString("%1").arg(comparative->ce_sr.target));
    // le_target_sr->setMinimumHeight(minHeight1);
-   le_target_sr->setAlignment(AlignCenter|AlignVCenter);
+   le_target_sr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_target_sr->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_target_sr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_sr, SIGNAL(textChanged(const QString &)), SLOT(update_target_sr(const QString &)));
@@ -584,7 +584,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_rank_sr = new QLineEdit(this, "rank_sr Line Edit");
    le_rank_sr->setText(QString("%1").arg(comparative->ce_sr.rank));
    // le_rank_sr->setMinimumHeight(minHeight1);
-   le_rank_sr->setAlignment(AlignCenter|AlignVCenter);
+   le_rank_sr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_rank_sr->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_rank_sr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_rank_sr, SIGNAL(textChanged(const QString &)), SLOT(update_rank_sr(const QString &)));
@@ -601,7 +601,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_sr = new QLineEdit(this, "weight_sr Line Edit");
    le_weight_sr->setText(QString("%1").arg(comparative->ce_sr.weight));
    // le_weight_sr->setMinimumHeight(minHeight1);
-   le_weight_sr->setAlignment(AlignCenter|AlignVCenter);
+   le_weight_sr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_weight_sr->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_weight_sr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_sr, SIGNAL(textChanged(const QString &)), SLOT(update_weight_sr(const QString &)));
@@ -609,7 +609,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_sr = new QLineEdit(this, "buckets_sr Line Edit");
    le_buckets_sr->setText(QString("%1").arg(comparative->ce_sr.buckets));
    // le_buckets_sr->setMinimumHeight(minHeight1);
-   le_buckets_sr->setAlignment(AlignCenter|AlignVCenter);
+   le_buckets_sr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_buckets_sr->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_buckets_sr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_sr, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_sr(const QString &)));
@@ -617,7 +617,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_sr = new QLineEdit(this, "min_sr Line Edit");
    le_min_sr->setText(QString("%1").arg(comparative->ce_sr.min));
    // le_min_sr->setMinimumHeight(minHeight1);
-   le_min_sr->setAlignment(AlignCenter|AlignVCenter);
+   le_min_sr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_min_sr->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_min_sr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_sr, SIGNAL(textChanged(const QString &)), SLOT(update_min_sr(const QString &)));
@@ -625,7 +625,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_max_sr = new QLineEdit(this, "max_sr Line Edit");
    le_max_sr->setText(QString("%1").arg(comparative->ce_sr.max));
    // le_max_sr->setMinimumHeight(minHeight1);
-   le_max_sr->setAlignment(AlignCenter|AlignVCenter);
+   le_max_sr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_max_sr->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_max_sr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_max_sr, SIGNAL(textChanged(const QString &)), SLOT(update_max_sr(const QString &)));
@@ -670,7 +670,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_fr = new QLineEdit(this, "target_fr Line Edit");
    le_target_fr->setText(QString("%1").arg(comparative->ce_fr.target));
    // le_target_fr->setMinimumHeight(minHeight1);
-   le_target_fr->setAlignment(AlignCenter|AlignVCenter);
+   le_target_fr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_target_fr->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_target_fr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_fr, SIGNAL(textChanged(const QString &)), SLOT(update_target_fr(const QString &)));
@@ -678,7 +678,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_rank_fr = new QLineEdit(this, "rank_fr Line Edit");
    le_rank_fr->setText(QString("%1").arg(comparative->ce_fr.rank));
    // le_rank_fr->setMinimumHeight(minHeight1);
-   le_rank_fr->setAlignment(AlignCenter|AlignVCenter);
+   le_rank_fr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_rank_fr->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_rank_fr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_rank_fr, SIGNAL(textChanged(const QString &)), SLOT(update_rank_fr(const QString &)));
@@ -695,7 +695,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_fr = new QLineEdit(this, "weight_fr Line Edit");
    le_weight_fr->setText(QString("%1").arg(comparative->ce_fr.weight));
    // le_weight_fr->setMinimumHeight(minHeight1);
-   le_weight_fr->setAlignment(AlignCenter|AlignVCenter);
+   le_weight_fr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_weight_fr->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_weight_fr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_fr, SIGNAL(textChanged(const QString &)), SLOT(update_weight_fr(const QString &)));
@@ -703,7 +703,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_fr = new QLineEdit(this, "buckets_fr Line Edit");
    le_buckets_fr->setText(QString("%1").arg(comparative->ce_fr.buckets));
    // le_buckets_fr->setMinimumHeight(minHeight1);
-   le_buckets_fr->setAlignment(AlignCenter|AlignVCenter);
+   le_buckets_fr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_buckets_fr->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_buckets_fr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_fr, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_fr(const QString &)));
@@ -711,7 +711,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_fr = new QLineEdit(this, "min_fr Line Edit");
    le_min_fr->setText(QString("%1").arg(comparative->ce_fr.min));
    // le_min_fr->setMinimumHeight(minHeight1);
-   le_min_fr->setAlignment(AlignCenter|AlignVCenter);
+   le_min_fr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_min_fr->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_min_fr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_fr, SIGNAL(textChanged(const QString &)), SLOT(update_min_fr(const QString &)));
@@ -719,7 +719,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_max_fr = new QLineEdit(this, "max_fr Line Edit");
    le_max_fr->setText(QString("%1").arg(comparative->ce_fr.max));
    // le_max_fr->setMinimumHeight(minHeight1);
-   le_max_fr->setAlignment(AlignCenter|AlignVCenter);
+   le_max_fr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_max_fr->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_max_fr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_max_fr, SIGNAL(textChanged(const QString &)), SLOT(update_max_fr(const QString &)));
@@ -764,7 +764,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_rg = new QLineEdit(this, "target_rg Line Edit");
    le_target_rg->setText(QString("%1").arg(comparative->ce_rg.target));
    // le_target_rg->setMinimumHeight(minHeight1);
-   le_target_rg->setAlignment(AlignCenter|AlignVCenter);
+   le_target_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_target_rg->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_target_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_rg, SIGNAL(textChanged(const QString &)), SLOT(update_target_rg(const QString &)));
@@ -772,7 +772,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_rank_rg = new QLineEdit(this, "rank_rg Line Edit");
    le_rank_rg->setText(QString("%1").arg(comparative->ce_rg.rank));
    // le_rank_rg->setMinimumHeight(minHeight1);
-   le_rank_rg->setAlignment(AlignCenter|AlignVCenter);
+   le_rank_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_rank_rg->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_rank_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_rank_rg, SIGNAL(textChanged(const QString &)), SLOT(update_rank_rg(const QString &)));
@@ -789,7 +789,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_rg = new QLineEdit(this, "weight_rg Line Edit");
    le_weight_rg->setText(QString("%1").arg(comparative->ce_rg.weight));
    // le_weight_rg->setMinimumHeight(minHeight1);
-   le_weight_rg->setAlignment(AlignCenter|AlignVCenter);
+   le_weight_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_weight_rg->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_weight_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_rg, SIGNAL(textChanged(const QString &)), SLOT(update_weight_rg(const QString &)));
@@ -797,7 +797,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_rg = new QLineEdit(this, "buckets_rg Line Edit");
    le_buckets_rg->setText(QString("%1").arg(comparative->ce_rg.buckets));
    // le_buckets_rg->setMinimumHeight(minHeight1);
-   le_buckets_rg->setAlignment(AlignCenter|AlignVCenter);
+   le_buckets_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_buckets_rg->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_buckets_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_rg, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_rg(const QString &)));
@@ -805,7 +805,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_rg = new QLineEdit(this, "min_rg Line Edit");
    le_min_rg->setText(QString("%1").arg(comparative->ce_rg.min));
    // le_min_rg->setMinimumHeight(minHeight1);
-   le_min_rg->setAlignment(AlignCenter|AlignVCenter);
+   le_min_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_min_rg->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_min_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_rg, SIGNAL(textChanged(const QString &)), SLOT(update_min_rg(const QString &)));
@@ -813,7 +813,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_max_rg = new QLineEdit(this, "max_rg Line Edit");
    le_max_rg->setText(QString("%1").arg(comparative->ce_rg.max));
    // le_max_rg->setMinimumHeight(minHeight1);
-   le_max_rg->setAlignment(AlignCenter|AlignVCenter);
+   le_max_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_max_rg->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_max_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_max_rg, SIGNAL(textChanged(const QString &)), SLOT(update_max_rg(const QString &)));
@@ -858,7 +858,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_tau = new QLineEdit(this, "target_tau Line Edit");
    le_target_tau->setText(QString("%1").arg(comparative->ce_tau.target));
    // le_target_tau->setMinimumHeight(minHeight1);
-   le_target_tau->setAlignment(AlignCenter|AlignVCenter);
+   le_target_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_target_tau->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_target_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_tau, SIGNAL(textChanged(const QString &)), SLOT(update_target_tau(const QString &)));
@@ -866,7 +866,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_rank_tau = new QLineEdit(this, "rank_tau Line Edit");
    le_rank_tau->setText(QString("%1").arg(comparative->ce_tau.rank));
    // le_rank_tau->setMinimumHeight(minHeight1);
-   le_rank_tau->setAlignment(AlignCenter|AlignVCenter);
+   le_rank_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_rank_tau->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_rank_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_rank_tau, SIGNAL(textChanged(const QString &)), SLOT(update_rank_tau(const QString &)));
@@ -883,7 +883,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_tau = new QLineEdit(this, "weight_tau Line Edit");
    le_weight_tau->setText(QString("%1").arg(comparative->ce_tau.weight));
    // le_weight_tau->setMinimumHeight(minHeight1);
-   le_weight_tau->setAlignment(AlignCenter|AlignVCenter);
+   le_weight_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_weight_tau->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_weight_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_tau, SIGNAL(textChanged(const QString &)), SLOT(update_weight_tau(const QString &)));
@@ -891,7 +891,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_tau = new QLineEdit(this, "buckets_tau Line Edit");
    le_buckets_tau->setText(QString("%1").arg(comparative->ce_tau.buckets));
    // le_buckets_tau->setMinimumHeight(minHeight1);
-   le_buckets_tau->setAlignment(AlignCenter|AlignVCenter);
+   le_buckets_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_buckets_tau->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_buckets_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_tau, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_tau(const QString &)));
@@ -899,7 +899,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_tau = new QLineEdit(this, "min_tau Line Edit");
    le_min_tau->setText(QString("%1").arg(comparative->ce_tau.min));
    // le_min_tau->setMinimumHeight(minHeight1);
-   le_min_tau->setAlignment(AlignCenter|AlignVCenter);
+   le_min_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_min_tau->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_min_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_tau, SIGNAL(textChanged(const QString &)), SLOT(update_min_tau(const QString &)));
@@ -907,7 +907,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_max_tau = new QLineEdit(this, "max_tau Line Edit");
    le_max_tau->setText(QString("%1").arg(comparative->ce_tau.max));
    // le_max_tau->setMinimumHeight(minHeight1);
-   le_max_tau->setAlignment(AlignCenter|AlignVCenter);
+   le_max_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_max_tau->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_max_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_max_tau, SIGNAL(textChanged(const QString &)), SLOT(update_max_tau(const QString &)));
@@ -952,7 +952,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_eta = new QLineEdit(this, "target_eta Line Edit");
    le_target_eta->setText(QString("%1").arg(comparative->ce_eta.target));
    // le_target_eta->setMinimumHeight(minHeight1);
-   le_target_eta->setAlignment(AlignCenter|AlignVCenter);
+   le_target_eta->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_target_eta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_target_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_eta, SIGNAL(textChanged(const QString &)), SLOT(update_target_eta(const QString &)));
@@ -960,7 +960,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_rank_eta = new QLineEdit(this, "rank_eta Line Edit");
    le_rank_eta->setText(QString("%1").arg(comparative->ce_eta.rank));
    // le_rank_eta->setMinimumHeight(minHeight1);
-   le_rank_eta->setAlignment(AlignCenter|AlignVCenter);
+   le_rank_eta->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_rank_eta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_rank_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_rank_eta, SIGNAL(textChanged(const QString &)), SLOT(update_rank_eta(const QString &)));
@@ -977,7 +977,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_eta = new QLineEdit(this, "weight_eta Line Edit");
    le_weight_eta->setText(QString("%1").arg(comparative->ce_eta.weight));
    // le_weight_eta->setMinimumHeight(minHeight1);
-   le_weight_eta->setAlignment(AlignCenter|AlignVCenter);
+   le_weight_eta->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_weight_eta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_weight_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_eta, SIGNAL(textChanged(const QString &)), SLOT(update_weight_eta(const QString &)));
@@ -985,7 +985,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_eta = new QLineEdit(this, "buckets_eta Line Edit");
    le_buckets_eta->setText(QString("%1").arg(comparative->ce_eta.buckets));
    // le_buckets_eta->setMinimumHeight(minHeight1);
-   le_buckets_eta->setAlignment(AlignCenter|AlignVCenter);
+   le_buckets_eta->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_buckets_eta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_buckets_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_eta, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_eta(const QString &)));
@@ -993,7 +993,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_eta = new QLineEdit(this, "min_eta Line Edit");
    le_min_eta->setText(QString("%1").arg(comparative->ce_eta.min));
    // le_min_eta->setMinimumHeight(minHeight1);
-   le_min_eta->setAlignment(AlignCenter|AlignVCenter);
+   le_min_eta->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_min_eta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_min_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_eta, SIGNAL(textChanged(const QString &)), SLOT(update_min_eta(const QString &)));
@@ -1001,7 +1001,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_max_eta = new QLineEdit(this, "max_eta Line Edit");
    le_max_eta->setText(QString("%1").arg(comparative->ce_eta.max));
    // le_max_eta->setMinimumHeight(minHeight1);
-   le_max_eta->setAlignment(AlignCenter|AlignVCenter);
+   le_max_eta->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_max_eta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_max_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_max_eta, SIGNAL(textChanged(const QString &)), SLOT(update_max_eta(const QString &)));
@@ -1056,7 +1056,7 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    lbl_title_csv = new QLabel(tr("CSV Processing"), this);
    lbl_title_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_title_csv->setAlignment(AlignCenter|AlignVCenter);
+   lbl_title_csv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title_csv->setMinimumHeight(minHeight1);
    lbl_title_csv->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_title_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -1084,7 +1084,7 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    // lbl_loaded = new QLabel(tr("Loaded"), this);
    // lbl_loaded->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   // lbl_loaded->setAlignment(AlignCenter|AlignVCenter);
+   // lbl_loaded->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_loaded->setMinimumHeight(minHeight1);
    // lbl_loaded->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    // lbl_loaded->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -1137,7 +1137,7 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    // lbl_selected = new QLabel(tr("Selected"), this);
    // lbl_selected->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   // lbl_selected->setAlignment(AlignCenter|AlignVCenter);
+   // lbl_selected->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_selected->setMinimumHeight(minHeight1);
    // lbl_selected->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    // lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));

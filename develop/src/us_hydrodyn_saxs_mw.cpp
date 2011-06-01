@@ -37,13 +37,13 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
    int minHeight2 = 30;
 
    lbl_info = new QLabel(msg, this);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight2);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    lbl_mw = new QLabel(tr(" Molecular Weight (Daltons):"), this);
-   lbl_mw->setAlignment(AlignCenter|AlignVCenter);
+   lbl_mw->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_mw->setMinimumHeight(minHeight2);
    lbl_mw->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
@@ -53,7 +53,7 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
    le_mw->setReadOnly(false);
    le_mw->setMinimumWidth(100);
    le_mw->setMinimumHeight(minHeight2);
-   le_mw->setAlignment(AlignCenter|AlignVCenter);
+   le_mw->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_mw->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
    connect(le_mw, SIGNAL(textChanged(const QString &)), SLOT(update_mw(const QString &)));
@@ -66,7 +66,7 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
    connect(pb_set_to_last_used_mw, SIGNAL(clicked()), SLOT(set_to_last_used_mw()));
 
    lbl_last_used_mw = new QLabel(QString("").sprintf("%5.3f", *last_mw), this);
-   lbl_last_used_mw->setAlignment(AlignCenter|AlignVCenter);
+   lbl_last_used_mw->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_last_used_mw->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    cb_remember = new QCheckBox(this);
@@ -90,7 +90,7 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
    le_partial->setReadOnly(false);
    le_partial->setMinimumWidth(250);
    le_partial->setMinimumHeight(minHeight2);
-   le_partial->setAlignment(AlignCenter|AlignVCenter);
+   le_partial->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_partial->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_partial->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
    connect(le_partial, SIGNAL(textChanged(const QString &)), SLOT(update_partial(const QString &)));

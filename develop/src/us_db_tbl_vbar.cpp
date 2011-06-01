@@ -87,7 +87,7 @@ void US_Vbar_DB::setup_GUI()
    connect(pb_save_db, SIGNAL(clicked()), SLOT(save_db()));
 
    instr_lbl = new QLabel(tr("Doubleclick on peptide data to select:"),this);
-   instr_lbl->setAlignment(AlignHCenter|AlignVCenter);
+   instr_lbl->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    instr_lbl->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    instr_lbl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-2, QFont::Bold));
 
@@ -135,7 +135,7 @@ void US_Vbar_DB::setup_GUI()
    connect(pb_investigator, SIGNAL(clicked()), SLOT(sel_investigator()));
 
    lbl_investigator= new QLabel("",this);
-   lbl_investigator->setAlignment(AlignLeft|AlignVCenter);
+   lbl_investigator->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_investigator->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
    lbl_investigator->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    if(vbar_info.InvID>0)
@@ -152,7 +152,7 @@ void US_Vbar_DB::setup_GUI()
    lbl_file1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_file2 = new QLabel(tr(" No File Selected..."), this);
-   lbl_file2->setAlignment(AlignLeft|AlignVCenter);
+   lbl_file2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_file2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lbl_file2->setPalette( QPalette(USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit));
 
@@ -161,7 +161,7 @@ void US_Vbar_DB::setup_GUI()
    lbl_desc1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_desc2 = new QLabel(tr(" Not Selected"), this);
-   lbl_desc2->setAlignment(AlignLeft|AlignVCenter);
+   lbl_desc2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_desc2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lbl_desc2->setPalette( QPalette(USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit));
 
@@ -195,7 +195,7 @@ void US_Vbar_DB::setup_GUI()
    QString str;
    lbl_vbar2 = new QLabel(this);
    lbl_vbar2->setText(str.sprintf("%7.5f ccm/g", t2));
-   lbl_vbar2->setAlignment(AlignLeft|AlignVCenter);
+   lbl_vbar2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lbl_vbar2->setPalette( QPalette(USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit));
 
@@ -205,7 +205,7 @@ void US_Vbar_DB::setup_GUI()
 
    lbl_vbar20_2 = new QLabel(this);
    lbl_vbar20_2->setText(str.sprintf("%7.5f ccm/g", t3));
-   lbl_vbar20_2->setAlignment(AlignLeft|AlignVCenter);
+   lbl_vbar20_2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar20_2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lbl_vbar20_2->setPalette( QPalette(USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit));
 
@@ -215,7 +215,7 @@ void US_Vbar_DB::setup_GUI()
 
    lbl_e280_2 = new QLabel(this);
    lbl_e280_2->setText(str.sprintf("%7.1f OD/(mol*cm)", 1.0));
-   lbl_e280_2->setAlignment(AlignLeft|AlignVCenter);
+   lbl_e280_2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_e280_2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lbl_e280_2->setPalette( QPalette(USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit));
 
@@ -224,7 +224,7 @@ void US_Vbar_DB::setup_GUI()
    lbl_resid1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_resid2 = new QLabel(tr(" Not Selected"), this);
-   lbl_resid2->setAlignment(AlignLeft|AlignVCenter);
+   lbl_resid2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_resid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lbl_resid2->setPalette( QPalette(USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit));
 
@@ -233,7 +233,7 @@ void US_Vbar_DB::setup_GUI()
    lbl_mw1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_mw2 = new QLabel(tr(" Not Selected"), this);
-   lbl_mw2->setAlignment(AlignLeft|AlignVCenter);
+   lbl_mw2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_mw2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lbl_mw2->setPalette( QPalette(USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit));
 
@@ -1085,7 +1085,7 @@ US_Enter_Vbar_DB::US_Enter_Vbar_DB(int temp_InvID, QWidget *parent, const char *
 
    lbl_bar = new QLabel(tr(" Enter Peptide Information:"),this);
    lbl_bar->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_bar->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_bar->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_bar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize , QFont::Bold));
 
    lbl_description = new QLabel(tr(" Peptide Description:"),this);
@@ -1093,7 +1093,7 @@ US_Enter_Vbar_DB::US_Enter_Vbar_DB(int temp_InvID, QWidget *parent, const char *
    lbl_description->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    le_description = new QLineEdit("", this);
-   le_description->setAlignment(AlignLeft|AlignVCenter);
+   le_description->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    le_description->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_description->setPalette( QPalette(USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit));
    connect(le_description, SIGNAL(textChanged(const QString &)), SLOT(update_description(const QString &)));
@@ -1103,7 +1103,7 @@ US_Enter_Vbar_DB::US_Enter_Vbar_DB(int temp_InvID, QWidget *parent, const char *
    lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    le_vbar = new QLineEdit("", this);
-   le_vbar->setAlignment(AlignLeft|AlignVCenter);
+   le_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_vbar->setPalette( QPalette(USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit));
    le_vbar->setText("0.0");
@@ -1114,7 +1114,7 @@ US_Enter_Vbar_DB::US_Enter_Vbar_DB(int temp_InvID, QWidget *parent, const char *
    lbl_e280->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    le_e280 = new QLineEdit("", this);
-   le_e280->setAlignment(AlignLeft|AlignVCenter);
+   le_e280->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    le_e280->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_e280->setPalette( QPalette(USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit));
    le_e280->setText("0.0");
@@ -1132,7 +1132,7 @@ US_Enter_Vbar_DB::US_Enter_Vbar_DB(int temp_InvID, QWidget *parent, const char *
    lbl_sequence->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    le_sequence = new QTextEdit(this, "sequence_editor");
-   le_sequence->setAlignment(AlignLeft|AlignVCenter);
+   le_sequence->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    le_sequence->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_sequence->setPalette( QPalette(USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit,USglobal->global_colors.cg_edit));
    connect(le_sequence, SIGNAL(textChanged()), SLOT(update_sequence()));

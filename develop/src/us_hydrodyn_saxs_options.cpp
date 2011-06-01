@@ -28,7 +28,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_info = new QLabel(tr("SOMO SAXS/SANS Simulation Options:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -36,14 +36,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_saxs_options = new QLabel(tr("SAXS Options:"), this);
    Q_CHECK_PTR(lbl_saxs_options);
    lbl_saxs_options->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_saxs_options->setAlignment(AlignCenter|AlignVCenter);
+   lbl_saxs_options->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_saxs_options->setMinimumHeight(minHeight1);
    lbl_saxs_options->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_saxs_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_water_e_density = new QLabel(tr(" Water electron density (e / A^3): "), this);
    Q_CHECK_PTR(lbl_water_e_density);
-   lbl_water_e_density->setAlignment(AlignLeft|AlignVCenter);
+   lbl_water_e_density->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_water_e_density->setMinimumHeight(minHeight1);
    lbl_water_e_density->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_water_e_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -62,14 +62,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_sans_options = new QLabel(tr("SANS Options:"), this);
    Q_CHECK_PTR(lbl_sans_options);
    lbl_sans_options->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_sans_options->setAlignment(AlignCenter|AlignVCenter);
+   lbl_sans_options->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_sans_options->setMinimumHeight(minHeight1);
    lbl_sans_options->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_sans_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_h_scat_len = new QLabel(tr(" H scattering length (*10^-12 cm): "), this);
    Q_CHECK_PTR(lbl_h_scat_len);
-   lbl_h_scat_len->setAlignment(AlignLeft|AlignVCenter);
+   lbl_h_scat_len->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_h_scat_len->setMinimumHeight(minHeight1);
    lbl_h_scat_len->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_h_scat_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -87,7 +87,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_d_scat_len = new QLabel(tr(" D scattering length (*10^-12 cm): "), this);
    Q_CHECK_PTR(lbl_d_scat_len);
-   lbl_d_scat_len->setAlignment(AlignLeft|AlignVCenter);
+   lbl_d_scat_len->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_d_scat_len->setMinimumHeight(minHeight1);
    lbl_d_scat_len->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_d_scat_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -105,7 +105,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_h2o_scat_len_dens = new QLabel(tr(" H2O scattering length density (*10^-10 cm^2): "), this);
    Q_CHECK_PTR(lbl_h2o_scat_len_dens);
-   lbl_h2o_scat_len_dens->setAlignment(AlignLeft|AlignVCenter);
+   lbl_h2o_scat_len_dens->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_h2o_scat_len_dens->setMinimumHeight(minHeight1);
    lbl_h2o_scat_len_dens->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_h2o_scat_len_dens->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -123,7 +123,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_d2o_scat_len_dens = new QLabel(tr(" D2O scattering length density (*10^-10 cm^2): "), this);
    Q_CHECK_PTR(lbl_d2o_scat_len_dens);
-   lbl_d2o_scat_len_dens->setAlignment(AlignLeft|AlignVCenter);
+   lbl_d2o_scat_len_dens->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_d2o_scat_len_dens->setMinimumHeight(minHeight1);
    lbl_d2o_scat_len_dens->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_d2o_scat_len_dens->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -141,7 +141,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_d2o_conc = new QLabel(tr(" Buffer D2O fraction (0 - 1): "), this);
    Q_CHECK_PTR(lbl_d2o_conc);
-   lbl_d2o_conc->setAlignment(AlignLeft|AlignVCenter);
+   lbl_d2o_conc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_d2o_conc->setMinimumHeight(minHeight1);
    lbl_d2o_conc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_d2o_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -159,7 +159,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_frac_of_exch_pep = new QLabel(tr(" Fraction of non-exchanged peptide H (0 - 1): "), this);
    Q_CHECK_PTR(lbl_frac_of_exch_pep);
-   lbl_frac_of_exch_pep->setAlignment(AlignLeft|AlignVCenter);
+   lbl_frac_of_exch_pep->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_frac_of_exch_pep->setMinimumHeight(minHeight1);
    lbl_frac_of_exch_pep->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_frac_of_exch_pep->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -180,7 +180,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_guinier = new QLabel(tr("Guinier Options:"), this);
    Q_CHECK_PTR(lbl_guinier);
    lbl_guinier->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_guinier->setAlignment(AlignCenter|AlignVCenter);
+   lbl_guinier->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_guinier->setMinimumHeight(minHeight1);
    lbl_guinier->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -196,14 +196,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    le_guinier_csv_filename = new QLineEdit(this, "guinier_csv_filename Line Edit");
    le_guinier_csv_filename->setText((*saxs_options).guinier_csv_filename);
    // le_guinier_csv_filename->setMinimumHeight(minHeight1);
-   le_guinier_csv_filename->setAlignment(AlignCenter|AlignVCenter);
+   le_guinier_csv_filename->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_guinier_csv_filename->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_guinier_csv_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_guinier_csv_filename, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_csv_filename(const QString &)));
 
    lbl_qRgmax = new QLabel(tr(" Maximum q * Rg : "), this);
    Q_CHECK_PTR(lbl_qRgmax);
-   lbl_qRgmax->setAlignment(AlignLeft|AlignVCenter);
+   lbl_qRgmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_qRgmax->setMinimumHeight(minHeight1);
    lbl_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_qRgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -221,7 +221,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_qend = new QLabel(tr(" Maximum q value for Guinier search : "), this);
    Q_CHECK_PTR(lbl_qend);
-   lbl_qend->setAlignment(AlignLeft|AlignVCenter);
+   lbl_qend->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_qend->setMinimumHeight(minHeight1);
    lbl_qend->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_qend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -239,7 +239,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_pointsmin = new QLabel(tr(" Minimum number of points : "), this);
    Q_CHECK_PTR(lbl_pointsmin);
-   lbl_pointsmin->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pointsmin->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_pointsmin->setMinimumHeight(minHeight1);
    lbl_pointsmin->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_pointsmin->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -257,7 +257,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_pointsmax = new QLabel(tr(" Maximum number of points : "), this);
    Q_CHECK_PTR(lbl_pointsmax);
-   lbl_pointsmax->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pointsmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_pointsmax->setMinimumHeight(minHeight1);
    lbl_pointsmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_pointsmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -278,14 +278,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_curve = new QLabel(tr("Curve Generation Options:"), this);
    Q_CHECK_PTR(lbl_curve);
    lbl_curve->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_curve->setAlignment(AlignCenter|AlignVCenter);
+   lbl_curve->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_curve->setMinimumHeight(minHeight1);
    lbl_curve->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_curve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_wavelength = new QLabel(tr(" Wavelength (Angstrom): "), this);
    Q_CHECK_PTR(lbl_wavelength);
-   lbl_wavelength->setAlignment(AlignLeft|AlignVCenter);
+   lbl_wavelength->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_wavelength->setMinimumHeight(minHeight1);
    lbl_wavelength->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_wavelength->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -303,7 +303,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_start_angle = new QLabel(tr(" Starting Angle: "), this);
    Q_CHECK_PTR(lbl_start_angle);
-   lbl_start_angle->setAlignment(AlignLeft|AlignVCenter);
+   lbl_start_angle->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_start_angle->setMinimumHeight(minHeight1);
    lbl_start_angle->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_start_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -321,7 +321,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_end_angle = new QLabel(tr(" Ending Angle: "), this);
    Q_CHECK_PTR(lbl_end_angle);
-   lbl_end_angle->setAlignment(AlignLeft|AlignVCenter);
+   lbl_end_angle->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_end_angle->setMinimumHeight(minHeight1);
    lbl_end_angle->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_end_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -339,7 +339,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_delta_angle = new QLabel(tr(" Angle Stepsize: "), this);
    Q_CHECK_PTR(lbl_delta_angle);
-   lbl_delta_angle->setAlignment(AlignLeft|AlignVCenter);
+   lbl_delta_angle->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_delta_angle->setMinimumHeight(minHeight1);
    lbl_delta_angle->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_delta_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -357,7 +357,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_start_q = new QLabel(tr(" Starting q: "), this);
    Q_CHECK_PTR(lbl_start_q);
-   lbl_start_q->setAlignment(AlignLeft|AlignVCenter);
+   lbl_start_q->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_start_q->setMinimumHeight(minHeight1);
    lbl_start_q->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_start_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -375,7 +375,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_end_q = new QLabel(tr(" Ending q: "), this);
    Q_CHECK_PTR(lbl_end_q);
-   lbl_end_q->setAlignment(AlignLeft|AlignVCenter);
+   lbl_end_q->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_end_q->setMinimumHeight(minHeight1);
    lbl_end_q->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_end_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -393,7 +393,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_delta_q = new QLabel(tr(" q Stepsize: "), this);
    Q_CHECK_PTR(lbl_delta_q);
-   lbl_delta_q->setAlignment(AlignLeft|AlignVCenter);
+   lbl_delta_q->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_delta_q->setMinimumHeight(minHeight1);
    lbl_delta_q->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_delta_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -428,7 +428,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    lbl_misc = new QLabel(tr("Miscellaneous Options:"), this);
    lbl_misc->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_misc->setAlignment(AlignCenter|AlignVCenter);
+   lbl_misc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_misc->setMinimumHeight(minHeight1);
    lbl_misc->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_misc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));

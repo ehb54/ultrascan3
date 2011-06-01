@@ -25,7 +25,7 @@ void US_AddHybridization::setupGUI()
    lbl_info = new QLabel(tr("Add/Edit Hybridization Lookup Table:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -39,7 +39,7 @@ void US_AddHybridization::setupGUI()
 
    lbl_table = new QLabel(tr(" not selected"),this);
    lbl_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_table->setAlignment(AlignLeft|AlignVCenter);
+   lbl_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_table->setMinimumHeight(minHeight1);
    lbl_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -61,7 +61,7 @@ void US_AddHybridization::setupGUI()
 
    lbl_table_saxs = new QLabel(tr(" not selected"),this);
    lbl_table_saxs->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_table_saxs->setAlignment(AlignLeft|AlignVCenter);
+   lbl_table_saxs->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_table_saxs->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_table_saxs->setMinimumHeight(minHeight1);
    lbl_table_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -76,7 +76,7 @@ void US_AddHybridization::setupGUI()
    lbl_mw = new QLabel(tr(" Molecular Weight:"), this);
    Q_CHECK_PTR(lbl_mw);
    lbl_mw->setMinimumHeight(minHeight1);
-   lbl_mw->setAlignment(AlignLeft|AlignVCenter);
+   lbl_mw->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_mw->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
@@ -89,21 +89,21 @@ void US_AddHybridization::setupGUI()
    lbl_number_of_hybrids = new QLabel(tr(" Number of Hybridizations in File: 0"), this);
    Q_CHECK_PTR(lbl_number_of_hybrids);
    lbl_number_of_hybrids->setMinimumHeight(minHeight1);
-   lbl_number_of_hybrids->setAlignment(AlignLeft|AlignVCenter);
+   lbl_number_of_hybrids->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_number_of_hybrids->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_number_of_hybrids->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_number_of_saxs = new QLabel(tr(" Number of SAXS Atoms in File: 0"), this);
    Q_CHECK_PTR(lbl_number_of_saxs);
    lbl_number_of_saxs->setMinimumHeight(minHeight1);
-   lbl_number_of_saxs->setAlignment(AlignLeft|AlignVCenter);
+   lbl_number_of_saxs->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_number_of_saxs->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_number_of_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_radius = new QLabel(tr(" Radius (A):"), this);
    Q_CHECK_PTR(lbl_radius);
    lbl_radius->setMinimumHeight(minHeight1);
-   lbl_radius->setAlignment(AlignLeft|AlignVCenter);
+   lbl_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_radius->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
@@ -116,7 +116,7 @@ void US_AddHybridization::setupGUI()
    lbl_scat_len = new QLabel(tr(" Neutron scattering length in H2O (*10^-12 cm):"), this);
    Q_CHECK_PTR(lbl_scat_len);
    lbl_scat_len->setMinimumHeight(minHeight1);
-   lbl_scat_len->setAlignment(AlignLeft|AlignVCenter);
+   lbl_scat_len->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_scat_len->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_scat_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
@@ -129,7 +129,7 @@ void US_AddHybridization::setupGUI()
    lbl_exch_prot = new QLabel(tr(" Number of exchangable protons:"), this);
    Q_CHECK_PTR(lbl_exch_prot);
    lbl_exch_prot->setMinimumHeight(minHeight1);
-   lbl_exch_prot->setAlignment(AlignLeft|AlignVCenter);
+   lbl_exch_prot->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_exch_prot->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_exch_prot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
@@ -142,7 +142,7 @@ void US_AddHybridization::setupGUI()
    lbl_num_elect = new QLabel(tr(" Total number of electrons:"), this);
    Q_CHECK_PTR(lbl_num_elect);
    lbl_num_elect->setMinimumHeight(minHeight1);
-   lbl_num_elect->setAlignment(AlignLeft|AlignVCenter);
+   lbl_num_elect->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_num_elect->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_num_elect->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
@@ -155,7 +155,7 @@ void US_AddHybridization::setupGUI()
    lbl_name = new QLabel(tr(" Hybridization Name:"), this);
    Q_CHECK_PTR(lbl_name);
    lbl_name->setMinimumHeight(minHeight1);
-   lbl_name->setAlignment(AlignLeft|AlignVCenter);
+   lbl_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 

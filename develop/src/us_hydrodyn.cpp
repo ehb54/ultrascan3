@@ -388,7 +388,7 @@ void US_Hydrodyn::setupGUI()
    lbl_info1 = new QLabel(tr("PDB Functions:"), this);
    Q_CHECK_PTR(lbl_info1);
    lbl_info1->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info1->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info1->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info1->setMinimumHeight(minHeight1);
    lbl_info1->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -396,7 +396,7 @@ void US_Hydrodyn::setupGUI()
    lbl_info2 = new QLabel(tr("Bead Model Functions:"), this);
    Q_CHECK_PTR(lbl_info2);
    lbl_info2->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info2->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info2->setMinimumHeight(minHeight1);
    lbl_info2->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -404,7 +404,7 @@ void US_Hydrodyn::setupGUI()
    lbl_info3 = new QLabel(tr("Hydrodynamic Calculations:"), this);
    Q_CHECK_PTR(lbl_info3);
    lbl_info3->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info3->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info3->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info3->setMinimumHeight(minHeight1);
    lbl_info3->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -419,7 +419,7 @@ void US_Hydrodyn::setupGUI()
    lbl_table = new QLabel( QDir::convertSeparators( residue_filename ), this );
    lbl_table->setMinimumHeight(minHeight1);
    lbl_table->setFrameStyle(QFrame::WinPanel|Sunken);
-   lbl_table->setAlignment(AlignCenter|AlignVCenter);
+   lbl_table->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
@@ -447,14 +447,14 @@ void US_Hydrodyn::setupGUI()
 
    lbl_pdb_file = new QLabel(tr(" not selected"),this);
    lbl_pdb_file->setFrameStyle(QFrame::WinPanel|Sunken);
-   lbl_pdb_file->setAlignment(AlignCenter|AlignVCenter);
+   lbl_pdb_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_pdb_file->setMinimumHeight(minHeight1);
    lbl_pdb_file->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_pdb_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_model = new QLabel(tr(" Please select a PDB Structure:"), this);
    Q_CHECK_PTR(lbl_model);
-   lbl_model->setAlignment(AlignLeft|AlignVCenter);
+   lbl_model->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_model->setMinimumHeight(minHeight1);
    lbl_model->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -485,14 +485,14 @@ void US_Hydrodyn::setupGUI()
    le_bead_model_file = new QLineEdit(this, "bead_model_file Line Edit");
    le_bead_model_file->setText(tr(" not selected "));
    le_bead_model_file->setMinimumHeight(minHeight1);
-   le_bead_model_file->setAlignment(AlignCenter|AlignVCenter);
+   le_bead_model_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_bead_model_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_bead_model_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_file, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_file(const QString &)));
 
    lbl_bead_model_prefix = new QLabel(tr(" Bead Model Suffix:"), this);
    Q_CHECK_PTR(lbl_bead_model_prefix);
-   lbl_bead_model_prefix->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bead_model_prefix->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_model_prefix->setMinimumHeight(minHeight1);
    lbl_bead_model_prefix->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -514,7 +514,7 @@ void US_Hydrodyn::setupGUI()
    le_bead_model_prefix = new QLineEdit(this, "bead_model_prefix Line Edit");
    le_bead_model_prefix->setText(tr(""));
    le_bead_model_prefix->setMinimumHeight(minHeight1);
-   le_bead_model_prefix->setAlignment(AlignCenter|AlignVCenter);
+   le_bead_model_prefix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_bead_model_prefix->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_prefix, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_prefix(const QString &)));
@@ -522,7 +522,7 @@ void US_Hydrodyn::setupGUI()
    le_bead_model_suffix = new QLineEdit(this, "bead_model_suffix Line Edit");
    le_bead_model_suffix->setText(tr(""));
    le_bead_model_suffix->setMinimumHeight(minHeight1);
-   le_bead_model_suffix->setAlignment(AlignCenter|AlignVCenter);
+   le_bead_model_suffix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_bead_model_suffix->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_bead_model_suffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_bead_model_suffix->setReadOnly(true);
@@ -772,7 +772,7 @@ void US_Hydrodyn::setupGUI()
 
    lbl_core_progress = new QLabel("", this);
    Q_CHECK_PTR(lbl_core_progress);
-   lbl_core_progress->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_core_progress->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_core_progress->setMinimumHeight(minHeight1);
    lbl_core_progress->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_core_progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));

@@ -780,13 +780,13 @@ void TextEdit::textAlign( QAction * a )
    if ( !currentEditor(  ) )
       return;
    if ( a == actionAlignLeft )
-      currentEditor(  )->setAlignment( AlignLeft );
+      currentEditor(  )->setAlignment( Qt::AlignLeft );
    else if ( a == actionAlignCenter )
-      currentEditor(  )->setAlignment( AlignHCenter );
+      currentEditor(  )->setAlignment( Qt::AlignHCenter );
    else if ( a == actionAlignRight )
-      currentEditor(  )->setAlignment( AlignRight );
+      currentEditor(  )->setAlignment( Qt::AlignRight );
    else if ( a == actionAlignJustify )
-      currentEditor(  )->setAlignment( AlignJustify );
+      currentEditor(  )->setAlignment( Qt::AlignJustify );
 }
 
 void TextEdit::fontChanged( const QFont & f )
@@ -808,13 +808,13 @@ void TextEdit::colorChanged( const QColor & c )
 
 void TextEdit::alignmentChanged( int a )
 {
-   if ( ( a == AlignAuto ) || ( a & AlignLeft ) )
+   if ( ( a == AlignAuto ) || ( a & Qt::AlignLeft ) )
       actionAlignLeft->setOn( TRUE );
-   else if ( ( a & AlignHCenter ) )
+   else if ( ( a & Qt::AlignHCenter ) )
       actionAlignCenter->setOn( TRUE );
-   else if ( ( a & AlignRight ) )
+   else if ( ( a & Qt::AlignRight ) )
       actionAlignRight->setOn( TRUE );
-   else if ( ( a & AlignJustify ) )
+   else if ( ( a & Qt::AlignJustify ) )
       actionAlignJustify->setOn( TRUE );
 }
 

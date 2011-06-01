@@ -43,14 +43,14 @@ void US_Hydrodyn_Grid::setupGUI()
    lbl_info = new QLabel(tr("SOMO Grid Function Options (AtoB):"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_cube_side = new QLabel(tr(" Cube Side (Angstrom): "), this);
    Q_CHECK_PTR(lbl_cube_side);
-   lbl_cube_side->setAlignment(AlignLeft|AlignVCenter);
+   lbl_cube_side->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_cube_side->setMinimumHeight(minHeight1);
    lbl_cube_side->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_cube_side->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));

@@ -29,14 +29,14 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_info = new QLabel(tr("Miscellaneous SOMO Options:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_hydrovol = new QLabel(tr(" Hydration Water Vol. (A^3): "), this);
    Q_CHECK_PTR(lbl_hydrovol);
-   lbl_hydrovol->setAlignment(AlignLeft|AlignVCenter);
+   lbl_hydrovol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hydrovol->setMinimumWidth(200);
    lbl_hydrovol->setMinimumHeight(minHeight1);
    lbl_hydrovol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -73,7 +73,7 @@ void US_Hydrodyn_Misc::setupGUI()
 
    lbl_vbar = new QLabel(tr(" Enter a vbar value: "), this);
    Q_CHECK_PTR(lbl_vbar);
-   lbl_vbar->setAlignment(AlignLeft|AlignVCenter);
+   lbl_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar->setMinimumHeight(minHeight1);
    lbl_vbar->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -88,7 +88,7 @@ void US_Hydrodyn_Misc::setupGUI()
 
    lbl_vbar_temperature = new QLabel(tr(" Vbar measured/computed at T=(ºC): "), this);
    Q_CHECK_PTR(lbl_vbar_temperature);
-   lbl_vbar_temperature->setAlignment(AlignLeft|AlignVCenter);
+   lbl_vbar_temperature->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar_temperature->setMinimumHeight(minHeight1);
    lbl_vbar_temperature->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_vbar_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -112,14 +112,14 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_avg_banner = new QLabel(tr("Average Parameters for Automatic Bead Builder:"), this);
    Q_CHECK_PTR(lbl_avg_banner);
    lbl_avg_banner->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_avg_banner->setAlignment(AlignCenter|AlignVCenter);
+   lbl_avg_banner->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_avg_banner->setMinimumHeight(minHeight1);
    lbl_avg_banner->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_avg_banner->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_avg_radius = new QLabel(tr(" Average atomic radius (A): "), this);
    Q_CHECK_PTR(lbl_avg_radius);
-   lbl_avg_radius->setAlignment(AlignLeft|AlignVCenter);
+   lbl_avg_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_radius->setMinimumWidth(200);
    lbl_avg_radius->setMinimumHeight(minHeight1);
    lbl_avg_radius->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -139,7 +139,7 @@ void US_Hydrodyn_Misc::setupGUI()
 
    lbl_avg_mass = new QLabel(tr(" Average atomic mass (Da): "), this);
    Q_CHECK_PTR(lbl_avg_mass);
-   lbl_avg_mass->setAlignment(AlignLeft|AlignVCenter);
+   lbl_avg_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_mass->setMinimumWidth(200);
    lbl_avg_mass->setMinimumHeight(minHeight1);
    lbl_avg_mass->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -159,7 +159,7 @@ void US_Hydrodyn_Misc::setupGUI()
 
    lbl_avg_hydration = new QLabel(tr(" Average atomic hydration: "), this);
    Q_CHECK_PTR(lbl_avg_hydration);
-   lbl_avg_hydration->setAlignment(AlignLeft|AlignVCenter);
+   lbl_avg_hydration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_hydration->setMinimumWidth(200);
    lbl_avg_hydration->setMinimumHeight(minHeight1);
    lbl_avg_hydration->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -179,7 +179,7 @@ void US_Hydrodyn_Misc::setupGUI()
 
    lbl_avg_volume = new QLabel(tr(" Average bead/atom volume (A^3): "), this);
    Q_CHECK_PTR(lbl_avg_volume);
-   lbl_avg_volume->setAlignment(AlignLeft|AlignVCenter);
+   lbl_avg_volume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_volume->setMinimumWidth(200);
    lbl_avg_volume->setMinimumHeight(minHeight1);
    lbl_avg_volume->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -199,7 +199,7 @@ void US_Hydrodyn_Misc::setupGUI()
 
    lbl_avg_vbar = new QLabel(tr(" Average Residue vbar: "), this);
    Q_CHECK_PTR(lbl_avg_vbar);
-   lbl_avg_vbar->setAlignment(AlignLeft|AlignVCenter);
+   lbl_avg_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_vbar->setMinimumWidth(200);
    lbl_avg_vbar->setMinimumHeight(minHeight1);
    lbl_avg_vbar->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));

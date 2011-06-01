@@ -64,7 +64,7 @@ US_FitParameter::US_FitParameter(QWidget *parent, const char *name) : QWidget(pa
    xpos += column3 + spacing;
 
    lbl_unit = new QLabel("", this);
-   lbl_unit->setAlignment(AlignLeft|AlignVCenter);
+   lbl_unit->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_unit->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_unit->setGeometry(xpos+5, ypos, column4-5, buttonh);
    lbl_unit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -178,7 +178,7 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
    QString str;
    
    lbl_legend1 = new QLabel(tr("Parameter:"),this);
-   lbl_legend1->setAlignment(AlignLeft|AlignVCenter);
+   lbl_legend1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_legend1->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_legend1->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_legend1->setGeometry(xpos, ypos, span, buttonh);
@@ -187,7 +187,7 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
    xpos += column1 + spacing;
 
    lbl_legend2 = new QLabel(tr("Initial Guess:"),this);
-   lbl_legend2->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_legend2->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_legend2->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_legend2->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_legend2->setGeometry(xpos, ypos, column2, buttonh);
@@ -196,7 +196,7 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
    xpos += column2 + spacing;
 
    lbl_legend3 = new QLabel(tr("+/- Bounds:"),this);
-   lbl_legend3->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_legend3->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_legend3->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_legend3->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_legend3->setGeometry(xpos, ypos, column3, buttonh);
@@ -205,7 +205,7 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
    xpos += column3 + column4 + 2 * spacing;
 
    lbl_legend4 = new QLabel(tr("Float:"),this);
-   lbl_legend4->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_legend4->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_legend4->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_legend4->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_legend4->setGeometry(xpos, ypos, column5, buttonh);
@@ -215,7 +215,7 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
 
    lbl_legend5 = new QLabel(tr("Lock:"),this);
    lbl_legend5->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_legend5->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_legend5->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_legend5->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_legend5->setGeometry(xpos, ypos, column6, buttonh);
    lbl_legend5->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -224,7 +224,7 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
 
    lbl_legend6 = new QLabel(tr("Bound:"),this);
    lbl_legend6->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_legend6->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_legend6->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_legend6->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_legend6->setGeometry(xpos, ypos, column6, buttonh);
    lbl_legend6->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));

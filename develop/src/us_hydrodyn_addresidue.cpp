@@ -63,7 +63,7 @@ void US_AddResidue::setupGUI()
    Q_CHECK_PTR(lbl_info1);
    lbl_info1->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info1->setMinimumHeight(minHeight1);
-   lbl_info1->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info1->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info1->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
@@ -77,7 +77,7 @@ void US_AddResidue::setupGUI()
    lbl_atom_file = new QLabel(tr(" not selected"),this);
    lbl_atom_file->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_atom_file->setMinimumHeight(minHeight1);
-   lbl_atom_file->setAlignment(AlignLeft|AlignVCenter);
+   lbl_atom_file->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_atom_file->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
@@ -91,14 +91,14 @@ void US_AddResidue::setupGUI()
 
    lbl_residue_file = new QLabel(tr(" not selected"),this);
    lbl_residue_file->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_residue_file->setAlignment(AlignLeft|AlignVCenter);
+   lbl_residue_file->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_residue_file->setMinimumHeight(minHeight1);
    lbl_residue_file->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_residue_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_numresidues = new QLabel(tr(" Number of Residues in File: 0"), this);
    Q_CHECK_PTR(lbl_numresidues);
-   lbl_numresidues->setAlignment(AlignLeft|AlignVCenter);
+   lbl_numresidues->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_numresidues->setMinimumHeight(minHeight1);
    lbl_numresidues->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_numresidues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -111,7 +111,7 @@ void US_AddResidue::setupGUI()
 
    lbl_residue_name = new QLabel(tr(" Residue Name:"), this);
    Q_CHECK_PTR(lbl_residue_name);
-   lbl_residue_name->setAlignment(AlignLeft|AlignVCenter);
+   lbl_residue_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_residue_name->setMinimumHeight(minHeight1);
    lbl_residue_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_residue_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -125,7 +125,7 @@ void US_AddResidue::setupGUI()
 
    lbl_residue_comment = new QLabel(tr(" Description:"), this);
    Q_CHECK_PTR(lbl_residue_comment);
-   lbl_residue_comment->setAlignment(AlignLeft|AlignVCenter);
+   lbl_residue_comment->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_residue_comment->setMinimumHeight(minHeight1);
    lbl_residue_comment->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_residue_comment->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -139,7 +139,7 @@ void US_AddResidue::setupGUI()
 
    lbl_numatoms = new QLabel(tr(" Number of Atoms in Residue:"), this);
    Q_CHECK_PTR(lbl_numatoms);
-   lbl_numatoms->setAlignment(AlignLeft|AlignVCenter);
+   lbl_numatoms->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_numatoms->setMinimumHeight(minHeight1);
    lbl_numatoms->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_numatoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -156,7 +156,7 @@ void US_AddResidue::setupGUI()
 
    lbl_numbeads = new QLabel(tr(" Number of Beads for Residue:"), this);
    Q_CHECK_PTR(lbl_numbeads);
-   lbl_numbeads->setAlignment(AlignLeft|AlignVCenter);
+   lbl_numbeads->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_numbeads->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_numbeads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
    lbl_numbeads->setMinimumHeight(minHeight1);
@@ -174,7 +174,7 @@ void US_AddResidue::setupGUI()
    lbl_type = new QLabel(tr(" Residue Type:"), this);
    Q_CHECK_PTR(lbl_type);
    lbl_type->setMinimumHeight(minHeight1);
-   lbl_type->setAlignment(AlignLeft|AlignVCenter);
+   lbl_type->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_type->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_type->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -198,7 +198,7 @@ void US_AddResidue::setupGUI()
 
    lbl_molvol = new QLabel(tr(" Residue anhydrous mol. vol. (A^3):"), this);
    Q_CHECK_PTR(lbl_molvol);
-   lbl_molvol->setAlignment(AlignLeft|AlignVCenter);
+   lbl_molvol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_molvol->setMinimumHeight(minHeight1);
    lbl_molvol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_molvol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -212,7 +212,7 @@ void US_AddResidue::setupGUI()
 
    lbl_vbar = new QLabel(tr(" Residue partial spec. vol. (cm^3/g):"), this);
    Q_CHECK_PTR(lbl_vbar);
-   lbl_vbar->setAlignment(AlignLeft|AlignVCenter);
+   lbl_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar->setMinimumHeight(minHeight1);
    lbl_vbar->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -227,7 +227,7 @@ void US_AddResidue::setupGUI()
    lbl_asa = new QLabel(tr(" Max. Accessible Surface Area (A^2):"), this);
    Q_CHECK_PTR(lbl_asa);
    lbl_asa->setMinimumHeight(minHeight1);
-   lbl_asa->setAlignment(AlignLeft|AlignVCenter);
+   lbl_asa->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_asa->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -249,14 +249,14 @@ void US_AddResidue::setupGUI()
    lbl_info2 = new QLabel(tr(" 2. Define Residue Atoms: "), this);
    Q_CHECK_PTR(lbl_info2);
    lbl_info2->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info2->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info2->setMinimumHeight(minHeight1);
    lbl_info2->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_r_atoms = new QLabel(tr(" Select Residue Atom to be defined:  "), this);
    Q_CHECK_PTR(lbl_r_atoms);
-   lbl_r_atoms->setAlignment(AlignLeft|AlignVCenter);
+   lbl_r_atoms->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_r_atoms->setMinimumHeight(minHeight1);
    lbl_r_atoms->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_r_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -270,7 +270,7 @@ void US_AddResidue::setupGUI()
 
    lbl_define_atom = new QLabel(tr(" Select Atom from Lookup Table:"), this);
    Q_CHECK_PTR(lbl_define_atom);
-   lbl_define_atom->setAlignment(AlignLeft|AlignVCenter);
+   lbl_define_atom->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_define_atom->setMinimumHeight(minHeight1);
    lbl_define_atom->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_define_atom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -284,7 +284,7 @@ void US_AddResidue::setupGUI()
 
    lbl_define_hybrid = new QLabel(tr(" Select Hybridization for Atom:"), this);
    Q_CHECK_PTR(lbl_define_hybrid);
-   lbl_define_hybrid->setAlignment(AlignLeft|AlignVCenter);
+   lbl_define_hybrid->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_define_hybrid->setMinimumHeight(minHeight1);
    lbl_define_hybrid->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_define_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -298,7 +298,7 @@ void US_AddResidue::setupGUI()
    lbl_positioning = new QLabel(tr(" Atom determines Position: "), this);
    Q_CHECK_PTR(lbl_positioning);
    lbl_positioning->setMinimumHeight(minHeight1);
-   lbl_positioning->setAlignment(AlignLeft|AlignVCenter);
+   lbl_positioning->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_positioning->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_positioning->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -314,7 +314,7 @@ void US_AddResidue::setupGUI()
    lbl_atom_hydration = new QLabel(tr(" Hydration Number for Atom: "), this);
    Q_CHECK_PTR(lbl_atom_hydration);
    lbl_atom_hydration->setMinimumHeight(minHeight1);
-   lbl_atom_hydration->setAlignment(AlignLeft|AlignVCenter);
+   lbl_atom_hydration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_atom_hydration->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_atom_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -348,7 +348,7 @@ void US_AddResidue::setupGUI()
    lbl_info3 = new QLabel(tr(" 3. Define Residue Bead Properties: "), this);
    Q_CHECK_PTR(lbl_info3);
    lbl_info3->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info3->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info3->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info3->setMinimumHeight(minHeight1);
    lbl_info3->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -356,7 +356,7 @@ void US_AddResidue::setupGUI()
    lbl_r_beads = new QLabel(tr(" Select Residue Bead to be defined: "), this);
    Q_CHECK_PTR(lbl_r_beads);
    lbl_r_beads->setMinimumHeight(minHeight1);
-   lbl_r_beads->setAlignment(AlignLeft|AlignVCenter);
+   lbl_r_beads->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_r_beads->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_r_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -371,7 +371,7 @@ void US_AddResidue::setupGUI()
    lbl_bead_color = new QLabel(tr(" Select Bead Color: "), this);
    Q_CHECK_PTR(lbl_bead_color);
    lbl_bead_color->setMinimumHeight(minHeight1);
-   lbl_bead_color->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bead_color->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_color->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_bead_color->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -405,7 +405,7 @@ void US_AddResidue::setupGUI()
    cb_hydration->setChecked(hydration_flag);
    cb_hydration->setEnabled(false);
    cb_hydration->setMinimumHeight(minHeight1);
-   //   cb_hydration->setAlignment(AlignLeft|AlignVCenter);
+   //   cb_hydration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    cb_hydration->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    cb_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
    connect(cb_hydration, SIGNAL(clicked()), SLOT(set_hydration()));
@@ -423,7 +423,7 @@ void US_AddResidue::setupGUI()
 
    lbl_placing = new QLabel(tr(" Select Positioning Method: "), this);
    Q_CHECK_PTR(lbl_placing);
-   lbl_placing->setAlignment(AlignLeft|AlignVCenter);
+   lbl_placing->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_placing->setMinimumHeight(minHeight1);
    lbl_placing->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_placing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -441,14 +441,14 @@ void US_AddResidue::setupGUI()
 
    lbl_select_beadatom = new QLabel(tr(" Select Atom for Bead (multi-selection OK): "), this);
    Q_CHECK_PTR(lbl_select_beadatom);
-   lbl_select_beadatom->setAlignment(AlignLeft|AlignVCenter);
+   lbl_select_beadatom->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_select_beadatom->setMinimumHeight(minHeight1);
    lbl_select_beadatom->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_select_beadatom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_list_beadatom = new QLabel(tr(" Currently defined Atoms for Bead: "), this);
    Q_CHECK_PTR(lbl_list_beadatom);
-   lbl_list_beadatom->setAlignment(AlignLeft|AlignVCenter);
+   lbl_list_beadatom->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_list_beadatom->setMinimumHeight(minHeight1);
    lbl_list_beadatom->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_list_beadatom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -474,7 +474,7 @@ void US_AddResidue::setupGUI()
 
    lbl_beadchain = new QLabel(tr(" This Bead is part of the: "), this);
    Q_CHECK_PTR(lbl_beadchain);
-   lbl_beadchain->setAlignment(AlignLeft|AlignVCenter);
+   lbl_beadchain->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_beadchain->setMinimumHeight(minHeight1);
    lbl_beadchain->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_beadchain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -502,7 +502,7 @@ void US_AddResidue::setupGUI()
 
    lbl_bead_volume = new QLabel(tr(" Bead Volume: "), this);
    Q_CHECK_PTR(lbl_bead_volume);
-   lbl_bead_volume->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bead_volume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_volume->setMinimumHeight(minHeight1);
    lbl_bead_volume->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_bead_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -516,7 +516,7 @@ void US_AddResidue::setupGUI()
 
    lbl_bead_mw = new QLabel(tr(" Bead Mol. Weight: "), this);
    Q_CHECK_PTR(lbl_bead_mw);
-   lbl_bead_mw->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bead_mw->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_mw->setMinimumHeight(minHeight1);
    lbl_bead_mw->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_bead_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -530,7 +530,7 @@ void US_AddResidue::setupGUI()
 
    lbl_bead_hydro_from_atom = new QLabel(tr(" Bead Hydration from Atoms' Values: "), this);
    Q_CHECK_PTR(lbl_bead_hydro_from_atom);
-   lbl_bead_hydro_from_atom->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bead_hydro_from_atom->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_hydro_from_atom->setMinimumHeight(minHeight1);
    lbl_bead_hydro_from_atom->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_bead_hydro_from_atom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -544,7 +544,7 @@ void US_AddResidue::setupGUI()
 
    lbl_bead_hydrovol = new QLabel(tr(" Bead hydrated Volume, Radius: "), this);
    Q_CHECK_PTR(lbl_bead_hydrovol);
-   lbl_bead_hydrovol->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bead_hydrovol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_hydrovol->setMinimumHeight(minHeight1);
    lbl_bead_hydrovol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_bead_hydrovol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));

@@ -26,7 +26,7 @@ void US_AddAtom::setupGUI()
    lbl_info = new QLabel(tr("Add/Edit Atom Lookup Table:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -54,21 +54,21 @@ void US_AddAtom::setupGUI()
 
    lbl_atom_table = new QLabel(tr(" not selected"),this);
    lbl_atom_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_atom_table->setAlignment(AlignLeft|AlignVCenter);
+   lbl_atom_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_atom_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_atom_table->setMinimumHeight(minHeight1);
    lbl_atom_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_hybrid_table = new QLabel(tr(" not selected"),this);
    lbl_hybrid_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_hybrid_table->setAlignment(AlignLeft|AlignVCenter);
+   lbl_hybrid_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hybrid_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_hybrid_table->setMinimumHeight(minHeight1);
    lbl_hybrid_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_saxs_table = new QLabel(tr(" not selected"),this);
    lbl_saxs_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_saxs_table->setAlignment(AlignLeft|AlignVCenter);
+   lbl_saxs_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_saxs_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_saxs_table->setMinimumHeight(minHeight1);
    lbl_saxs_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -90,91 +90,91 @@ void US_AddAtom::setupGUI()
    lbl_mw1 = new QLabel(tr(" Molecular Weight:"), this);
    Q_CHECK_PTR(lbl_mw1);
    lbl_mw1->setMinimumHeight(minHeight1);
-   lbl_mw1->setAlignment(AlignLeft|AlignVCenter);
+   lbl_mw1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_mw1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_mw1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_mw2 = new QLabel("", this);
    Q_CHECK_PTR(lbl_mw2);
    lbl_mw2->setMinimumHeight(minHeight1);
-   lbl_mw2->setAlignment(AlignLeft|AlignVCenter);
+   lbl_mw2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_mw2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_mw2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_saxs_name1 = new QLabel(tr(" SAXS Atom Identifier:"), this);
    Q_CHECK_PTR(lbl_saxs_name1);
    lbl_saxs_name1->setMinimumHeight(minHeight1);
-   lbl_saxs_name1->setAlignment(AlignLeft|AlignVCenter);
+   lbl_saxs_name1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_saxs_name1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_saxs_name1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_saxs_name2 = new QLabel("", this);
    Q_CHECK_PTR(lbl_saxs_name2);
    lbl_saxs_name2->setMinimumHeight(minHeight1);
-   lbl_saxs_name2->setAlignment(AlignLeft|AlignVCenter);
+   lbl_saxs_name2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_saxs_name2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_saxs_name2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_radius1 = new QLabel(tr(" Radius (A):"), this);
    Q_CHECK_PTR(lbl_radius1);
    lbl_radius1->setMinimumHeight(minHeight1);
-   lbl_radius1->setAlignment(AlignLeft|AlignVCenter);
+   lbl_radius1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_radius1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_radius1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_radius2 = new QLabel("", this);
    Q_CHECK_PTR(lbl_radius2);
    lbl_radius2->setMinimumHeight(minHeight1);
-   lbl_radius2->setAlignment(AlignLeft|AlignVCenter);
+   lbl_radius2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_radius2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_radius2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_hybrid1 = new QLabel(tr(" Hybridization:"), this);
    Q_CHECK_PTR(lbl_hybrid1);
    lbl_hybrid1->setMinimumHeight(minHeight1);
-   lbl_hybrid1->setAlignment(AlignLeft|AlignVCenter);
+   lbl_hybrid1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hybrid1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_hybrid1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_hybrid2 = new QLabel("", this);
    Q_CHECK_PTR(lbl_hybrid2);
    lbl_hybrid2->setMinimumHeight(minHeight1);
-   lbl_hybrid2->setAlignment(AlignLeft|AlignVCenter);
+   lbl_hybrid2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hybrid2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_saxs_excl_vol1 = new QLabel(tr(" Excluded Vol. for SAXS Atom:"), this);
    Q_CHECK_PTR(lbl_saxs_excl_vol1);
    lbl_saxs_excl_vol1->setMinimumHeight(minHeight1);
-   lbl_saxs_excl_vol1->setAlignment(AlignLeft|AlignVCenter);
+   lbl_saxs_excl_vol1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_saxs_excl_vol1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_saxs_excl_vol1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_saxs_excl_vol2 = new QLabel(tr(" Enter Excluded Volume (A^3):"), this);
    Q_CHECK_PTR(lbl_saxs_excl_vol2);
    lbl_saxs_excl_vol2->setMinimumHeight(minHeight1);
-   lbl_saxs_excl_vol2->setAlignment(AlignLeft|AlignVCenter);
+   lbl_saxs_excl_vol2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_saxs_excl_vol2->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_saxs_excl_vol2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_number_of_atoms = new QLabel(tr(" Number of Atoms in File: 0"), this);
    Q_CHECK_PTR(lbl_number_of_atoms);
    lbl_number_of_atoms->setMinimumHeight(minHeight1);
-   lbl_number_of_atoms->setAlignment(AlignLeft|AlignVCenter);
+   lbl_number_of_atoms->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_number_of_atoms->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_number_of_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_number_of_hybrids = new QLabel(tr(" Number of Hybridizations in File: 0"), this);
    Q_CHECK_PTR(lbl_number_of_hybrids);
    lbl_number_of_hybrids->setMinimumHeight(minHeight1);
-   lbl_number_of_hybrids->setAlignment(AlignLeft|AlignVCenter);
+   lbl_number_of_hybrids->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_number_of_hybrids->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_number_of_hybrids->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_name = new QLabel(tr(" Atom Name:"), this);
    Q_CHECK_PTR(lbl_name);
    lbl_name->setMinimumHeight(minHeight1);
-   lbl_name->setAlignment(AlignLeft|AlignVCenter);
+   lbl_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 

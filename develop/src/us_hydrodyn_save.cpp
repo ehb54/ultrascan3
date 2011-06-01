@@ -933,7 +933,7 @@ void US_Hydrodyn_Save::setupGUI()
    lbl_possible = new QLabel(tr("Parameters available"), this);
    Q_CHECK_PTR(lbl_possible);
    lbl_possible->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_possible->setAlignment(AlignCenter|AlignVCenter);
+   lbl_possible->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_possible->setMinimumHeight(minHeight1);
    lbl_possible->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_possible->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -976,7 +976,7 @@ void US_Hydrodyn_Save::setupGUI()
    lbl_selected = new QLabel(tr("Parameters selected"), this);
    Q_CHECK_PTR(lbl_selected);
    lbl_selected->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_selected->setAlignment(AlignCenter|AlignVCenter);
+   lbl_selected->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_selected->setMinimumHeight(minHeight1);
    lbl_selected->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));

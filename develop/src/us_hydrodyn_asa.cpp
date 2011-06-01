@@ -27,7 +27,7 @@ void US_Hydrodyn_ASA::setupGUI()
    lbl_info = new QLabel(tr("Accessible Surface Area Options:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -52,7 +52,7 @@ void US_Hydrodyn_ASA::setupGUI()
 
    lbl_probe_radius = new QLabel(tr(" ASA Probe Radius (A): "), this);
    Q_CHECK_PTR(lbl_probe_radius);
-   lbl_probe_radius->setAlignment(AlignLeft|AlignVCenter);
+   lbl_probe_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_probe_radius->setMinimumHeight(minHeight1);
    lbl_probe_radius->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_probe_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -70,7 +70,7 @@ void US_Hydrodyn_ASA::setupGUI()
 
    lbl_probe_recheck_radius = new QLabel(tr(" ASA Probe Recheck Radius (A): "), this);
    Q_CHECK_PTR(lbl_probe_recheck_radius);
-   lbl_probe_recheck_radius->setAlignment(AlignLeft|AlignVCenter);
+   lbl_probe_recheck_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_probe_recheck_radius->setMinimumHeight(minHeight1);
    lbl_probe_recheck_radius->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_probe_recheck_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -88,7 +88,7 @@ void US_Hydrodyn_ASA::setupGUI()
 
    lbl_asa_threshold = new QLabel(tr(" SOMO ASA Threshold (A^2): "), this);
    Q_CHECK_PTR(lbl_asa_threshold);
-   lbl_asa_threshold->setAlignment(AlignLeft|AlignVCenter);
+   lbl_asa_threshold->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_asa_threshold->setMinimumHeight(minHeight1);
    lbl_asa_threshold->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_asa_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -106,7 +106,7 @@ void US_Hydrodyn_ASA::setupGUI()
 
    lbl_asa_threshold_percent = new QLabel(tr(" SOMO Bead ASA Threshold %: "), this);
    Q_CHECK_PTR(lbl_asa_threshold_percent);
-   lbl_asa_threshold_percent->setAlignment(AlignLeft|AlignVCenter);
+   lbl_asa_threshold_percent->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_asa_threshold_percent->setMinimumHeight(minHeight1);
    lbl_asa_threshold_percent->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_asa_threshold_percent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -124,7 +124,7 @@ void US_Hydrodyn_ASA::setupGUI()
 
    lbl_asa_grid_threshold = new QLabel(tr(" Grid ASA Threshold (A^2): "), this);
    Q_CHECK_PTR(lbl_asa_grid_threshold);
-   lbl_asa_grid_threshold->setAlignment(AlignLeft|AlignVCenter);
+   lbl_asa_grid_threshold->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_asa_grid_threshold->setMinimumHeight(minHeight1);
    lbl_asa_grid_threshold->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_asa_grid_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -142,7 +142,7 @@ void US_Hydrodyn_ASA::setupGUI()
 
    lbl_asa_grid_threshold_percent = new QLabel(tr(" Grid Bead ASA Threshold %: "), this);
    Q_CHECK_PTR(lbl_asa_grid_threshold_percent);
-   lbl_asa_grid_threshold_percent->setAlignment(AlignLeft|AlignVCenter);
+   lbl_asa_grid_threshold_percent->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_asa_grid_threshold_percent->setMinimumHeight(minHeight1);
    lbl_asa_grid_threshold_percent->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_asa_grid_threshold_percent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -160,7 +160,7 @@ void US_Hydrodyn_ASA::setupGUI()
 
    lbl_asab1_step = new QLabel(tr(" ASAB1 Step Size (A): "), this);
    Q_CHECK_PTR(lbl_asab1_step);
-   lbl_asab1_step->setAlignment(AlignLeft|AlignVCenter);
+   lbl_asab1_step->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_asab1_step->setMinimumHeight(minHeight1);
    lbl_asab1_step->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_asab1_step->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));

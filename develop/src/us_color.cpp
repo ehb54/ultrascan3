@@ -25,7 +25,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_background = new QLabel(tr("Frame Background"),this);
   Q_CHECK_PTR(lbl_background);
   lbl_background->setFrameStyle( QFrame::Panel | QFrame::Sunken );
-  lbl_background->setAlignment(AlignHCenter | AlignTop);
+  lbl_background->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
   lbl_background->setLineWidth(3);
   lbl_background->setFont(QFont( USglobal->config_list.fontFamily, 
                                  USglobal->config_list.fontSize, 
@@ -59,7 +59,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   
   lbl_margin = new QLabel(tr(" Current Plot Border Margin:  "),this);
   Q_CHECK_PTR(lbl_margin);
-  lbl_margin->setAlignment(AlignRight | AlignVCenter);
+  lbl_margin->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
   lbl_margin->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
@@ -82,7 +82,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_example = new QLabel(tr("Label and Button Examples : "),this);
   Q_CHECK_PTR(lbl_example);
   lbl_example->setFrameStyle(QFrame::WinPanel|Raised);
-  lbl_example->setAlignment(AlignCenter | AlignVCenter);
+  lbl_example->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
   lbl_example->setFont(QFont( USglobal->config_list.fontFamily, 
                               USglobal->config_list.fontSize - 1, QFont::Bold));
   lbl_example->setPalette(QPalette(temp_colors.cg_frame, temp_colors.cg_frame, temp_colors.cg_frame));
@@ -91,7 +91,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_banner = new QLabel(tr("Banner Label"),this);
   Q_CHECK_PTR(lbl_banner);
   lbl_banner->setFrameStyle(QFrame::WinPanel|Raised);
-  lbl_banner->setAlignment(AlignCenter | AlignVCenter);
+  lbl_banner->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
   lbl_banner->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize, 
                              QFont::Bold));
@@ -100,7 +100,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_progress = new QLabel(tr("Progress Bar:"),this);
   Q_CHECK_PTR(lbl_progress);
-  lbl_progress->setAlignment(AlignLeft | AlignVCenter);
+  lbl_progress->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
   lbl_progress->setFont(QFont( USglobal->config_list.fontFamily, 
                                USglobal->config_list.fontSize - 1, 
                                QFont::Bold));
@@ -119,7 +119,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_edit = new QLabel(tr("Edit Label"),this);
   Q_CHECK_PTR(lbl_edit);
-  lbl_edit->setAlignment(AlignHCenter|AlignVCenter);
+  lbl_edit->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
   lbl_edit->setFont(QFont( USglobal->config_list.fontFamily, 
                            USglobal->config_list.fontSize - 1, 
                            QFont::Bold));
@@ -127,7 +127,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_lcd = new QLabel(tr("LCD Panel:"),this);
   Q_CHECK_PTR(lbl_lcd);
-  lbl_lcd->setAlignment(AlignLeft | AlignVCenter);
+  lbl_lcd->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
   lbl_lcd->setFont(QFont( USglobal->config_list.fontFamily, 
                           USglobal->config_list.fontSize - 1, 
                           QFont::Bold));
@@ -147,7 +147,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_text = new QLabel(tr("Text Label"),this);
   Q_CHECK_PTR(lbl_text);
-  lbl_text->setAlignment(AlignHCenter|AlignVCenter);
+  lbl_text->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
   lbl_text->setFont(QFont( USglobal->config_list.fontFamily, 
                            USglobal->config_list.fontSize - 1, 
                            QFont::Bold));
@@ -157,7 +157,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_counter = new QLabel(tr("Counter:"),this);
   Q_CHECK_PTR(lbl_counter);
-  lbl_counter->setAlignment(AlignLeft | AlignVCenter);
+  lbl_counter->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
   lbl_counter->setFont(QFont( USglobal->config_list.fontFamily, 
                               USglobal->config_list.fontSize - 1, 
                               QFont::Bold));
@@ -258,7 +258,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_assign = new QLabel(tr("Assign new Colors:"),this);
   Q_CHECK_PTR(lbl_assign);
   lbl_assign->setFrameStyle(QFrame::WinPanel|Raised);
-  lbl_assign->setAlignment(AlignHCenter|AlignVCenter);
+  lbl_assign->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
   lbl_assign->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize, 
                              QFont::Bold));
@@ -270,7 +270,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_select = new QLabel(tr("Selected Screen Element:"),this);
   Q_CHECK_PTR(lbl_select);
-  lbl_select->setAlignment(AlignHCenter|AlignVCenter);
+  lbl_select->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
   lbl_select->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
@@ -280,7 +280,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   
   lbl_choice = new QLabel("",this);
   Q_CHECK_PTR(lbl_choice);
-  lbl_choice->setAlignment(AlignLeft|AlignVCenter);
+  lbl_choice->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_choice->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
@@ -291,7 +291,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_color1 = new QLabel("",this);
   Q_CHECK_PTR(lbl_color1);
-  lbl_color1->setAlignment(AlignLeft|AlignVCenter);
+  lbl_color1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_color1->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
@@ -316,7 +316,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_color2 = new QLabel("",this);
   Q_CHECK_PTR(lbl_color2);
-  lbl_color2->setAlignment(AlignLeft|AlignVCenter);
+  lbl_color2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_color2->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
@@ -341,7 +341,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_color3 = new QLabel("",this);
   Q_CHECK_PTR(lbl_color3);
-  lbl_color3->setAlignment(AlignLeft|AlignVCenter);
+  lbl_color3->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_color3->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
@@ -366,7 +366,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_color4 = new QLabel("",this);
   Q_CHECK_PTR(lbl_color4);
-  lbl_color4->setAlignment(AlignLeft|AlignVCenter);
+  lbl_color4->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_color4->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
@@ -392,7 +392,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_color5 = new QLabel("",this);
   Q_CHECK_PTR(lbl_color5);
-  lbl_color5->setAlignment(AlignLeft|AlignVCenter);
+  lbl_color5->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_color5->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
@@ -418,7 +418,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_color6 = new QLabel("",this);
   Q_CHECK_PTR(lbl_color6);
-  lbl_color6->setAlignment(AlignLeft|AlignVCenter);
+  lbl_color6->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_color6->setFont(QFont( USglobal->config_list.fontFamily, 
                              USglobal->config_list.fontSize - 1, 
                              QFont::Bold));
@@ -444,7 +444,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   lbl_choices = new QLabel(tr("Please Make a Selection:"),this);
   Q_CHECK_PTR(lbl_choices);
   lbl_choices->setFrameStyle(QFrame::WinPanel|Raised);
-  lbl_choices->setAlignment(AlignHCenter|AlignVCenter);
+  lbl_choices->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
   lbl_choices->setFont(QFont( USglobal->config_list.fontFamily, 
                               USglobal->config_list.fontSize, 
                               QFont::Bold));
@@ -455,7 +455,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
   lbl_select_scheme = new QLabel(tr("Select Color Scheme:"),this);
   Q_CHECK_PTR(lbl_select_scheme);
-  lbl_select_scheme->setAlignment(AlignHCenter|AlignVCenter);
+  lbl_select_scheme->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
   lbl_select_scheme->setFont(QFont( USglobal->config_list.fontFamily, 
                                     USglobal->config_list.fontSize - 1, 
                                     QFont::Bold));
@@ -465,7 +465,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   
   lbl_select_element = new QLabel(tr("Select a Screen Element:"),this);
   Q_CHECK_PTR(lbl_select_element);
-  lbl_select_element->setAlignment(AlignHCenter|AlignVCenter);
+  lbl_select_element->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
   lbl_select_element->setFont(QFont( USglobal->config_list.fontFamily, 
                                      USglobal->config_list.fontSize - 1, 
                                      QFont::Bold));

@@ -93,7 +93,7 @@ void US_Hydrodyn_Batch::setupGUI()
    lbl_selection = new QLabel(tr("Select files:"), this);
    Q_CHECK_PTR(lbl_selection);
    lbl_selection->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_selection->setAlignment(AlignCenter|AlignVCenter);
+   lbl_selection->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_selection->setMinimumHeight(minHeight1);
    lbl_selection->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_selection->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -192,14 +192,14 @@ void US_Hydrodyn_Batch::setupGUI()
 
    lbl_total_files = new QLabel(tr("Total Files: 0 "), this);
    lbl_total_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_total_files->setAlignment(AlignCenter|AlignVCenter);
+   lbl_total_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_total_files->setMinimumHeight(minHeight1);
    lbl_total_files->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_total_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_selected = new QLabel(tr("Selected: 0 "), this);
    lbl_selected->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_selected->setAlignment(AlignCenter|AlignVCenter);
+   lbl_selected->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_selected->setMinimumHeight(minHeight1);
    lbl_selected->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -207,7 +207,7 @@ void US_Hydrodyn_Batch::setupGUI()
    lbl_screen = new QLabel(tr("Screen selected files:"), this);
    Q_CHECK_PTR(lbl_screen);
    lbl_screen->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_screen->setAlignment(AlignCenter|AlignVCenter);
+   lbl_screen->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_screen->setMinimumHeight(minHeight1);
    lbl_screen->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -288,7 +288,7 @@ void US_Hydrodyn_Batch::setupGUI()
    lbl_process = new QLabel(tr("Process selected files:"), this);
    Q_CHECK_PTR(lbl_process);
    lbl_process->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_process->setAlignment(AlignCenter|AlignVCenter);
+   lbl_process->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_process->setMinimumHeight(minHeight1);
    lbl_process->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_process->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -344,7 +344,7 @@ void US_Hydrodyn_Batch::setupGUI()
 
    le_csv_saxs_name = new QLineEdit(this, "csv_saxs_name Line Edit");
    le_csv_saxs_name->setText(batch->csv_saxs_name);
-   le_csv_saxs_name->setAlignment(AlignCenter|AlignVCenter);
+   le_csv_saxs_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_csv_saxs_name->setMinimumWidth(150);
    le_csv_saxs_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_csv_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -387,7 +387,7 @@ void US_Hydrodyn_Batch::setupGUI()
 
    le_avg_hydro_name = new QLineEdit(this, "avg_hydro_name Line Edit");
    le_avg_hydro_name->setText(batch->avg_hydro_name);
-   le_avg_hydro_name->setAlignment(AlignCenter|AlignVCenter);
+   le_avg_hydro_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_avg_hydro_name->setMinimumWidth(100);
    le_avg_hydro_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_avg_hydro_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));

@@ -35,7 +35,7 @@ US_DB_Admin::US_DB_Admin( QString temp_password, QWidget* p, const char* name)
   }
 
   lbl_blank = new QLabel(str, this);
-  lbl_blank->setAlignment(AlignCenter|AlignVCenter);
+  lbl_blank->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
   lbl_blank->setFrameStyle(QFrame::WinPanel|Raised);  
   lbl_blank->setPalette(QPalette(USglobal->global_colors.cg_frame, 
                                  USglobal->global_colors.cg_frame, 
@@ -49,7 +49,7 @@ US_DB_Admin::US_DB_Admin( QString temp_password, QWidget* p, const char* name)
   ypos += buttonh*2 + buttonh/2;
 
   lbl_psswd = new QLabel(tr(" Password:"),this);
-  lbl_psswd->setAlignment(AlignLeft|AlignVCenter);
+  lbl_psswd->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_psswd->setPalette(QPalette(USglobal->global_colors.cg_label, 
                                  USglobal->global_colors.cg_label, 
                                  USglobal->global_colors.cg_label));

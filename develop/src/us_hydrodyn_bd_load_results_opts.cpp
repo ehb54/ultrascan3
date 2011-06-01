@@ -46,38 +46,38 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
    int minHeight2 = 30;
 
    lbl_info = new QLabel(msg, this);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight2);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    lbl_param = new QLabel(tr("Parameter  "), this);
-   lbl_param->setAlignment(AlignCenter|AlignVCenter);
+   lbl_param->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_param->setMinimumHeight(minHeight2);
    lbl_param->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_param->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    lbl_browflex = new QLabel(tr("  From Browflex  "), this);
-   lbl_browflex->setAlignment(AlignCenter|AlignVCenter);
+   lbl_browflex->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_browflex->setMinimumHeight(minHeight2);
    lbl_browflex->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_browflex->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    lbl_to_use = new QLabel(tr("To Use"), this);
-   lbl_to_use->setAlignment(AlignCenter|AlignVCenter);
+   lbl_to_use->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_to_use->setMinimumHeight(minHeight2);
    lbl_to_use->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_to_use->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    lbl_solvent_name = new QLabel(tr(" Solvent:"), this);
    Q_CHECK_PTR(lbl_solvent_name);
-   lbl_solvent_name->setAlignment(AlignLeft|AlignVCenter);
+   lbl_solvent_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_solvent_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_solvent_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_solvent_name = new QLineEdit(this, "Solvent_Name Line Edit");
    le_solvent_name->setText(*solvent_name);
-   le_solvent_name->setAlignment(AlignCenter | AlignVCenter);
+   le_solvent_name->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_solvent_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_solvent_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_solvent_name->setEnabled(true);
@@ -108,13 +108,13 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
    lbl_solvent_acronym = new QLabel(tr(" Solvent acronym:"), this);
    //   lbl_solvent_acronym = new QLabel(tr(" Solvent acronym (max 5 characters):"), this);
    Q_CHECK_PTR(lbl_solvent_acronym);
-   lbl_solvent_acronym->setAlignment(AlignLeft|AlignVCenter);
+   lbl_solvent_acronym->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_solvent_acronym->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_solvent_acronym->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_solvent_acronym = new QLineEdit(this, "Solvent_Acronym Line Edit");
    le_solvent_acronym->setText(*solvent_acronym);
-   le_solvent_acronym->setAlignment(AlignCenter | AlignVCenter);
+   le_solvent_acronym->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_solvent_acronym->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_solvent_acronym->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_solvent_acronym->setEnabled(true);
@@ -122,18 +122,18 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
 
    lbl_temperature = new QLabel(tr(" Temperature (ºC):  "), this);
    Q_CHECK_PTR(lbl_temperature);
-   lbl_temperature->setAlignment(AlignLeft|AlignVCenter);
+   lbl_temperature->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_temperature->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_browflex_temperature = new QLabel(QString("").sprintf("%4.2f",browflex_temperature), this);
-   lbl_browflex_temperature->setAlignment(AlignCenter | AlignVCenter);
+   lbl_browflex_temperature->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    lbl_browflex_temperature->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_browflex_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    le_temperature = new QLineEdit(this, "Temperature Line Edit");
    le_temperature->setText(QString("").sprintf("%4.2f",*temperature));
-   le_temperature->setAlignment(AlignCenter | AlignVCenter);
+   le_temperature->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_temperature->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_temperature->setEnabled(true);
@@ -141,18 +141,18 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
 
    lbl_solvent_viscosity = new QLabel(tr(" Solvent viscosity (cP):"), this);
    Q_CHECK_PTR(lbl_solvent_viscosity);
-   lbl_solvent_viscosity->setAlignment(AlignLeft|AlignVCenter);
+   lbl_solvent_viscosity->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_solvent_viscosity->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_browflex_solvent_viscosity = new QLabel(QString("").sprintf("%f",browflex_solvent_viscosity), this);
-   lbl_browflex_solvent_viscosity->setAlignment(AlignCenter | AlignVCenter);
+   lbl_browflex_solvent_viscosity->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    lbl_browflex_solvent_viscosity->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_browflex_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    le_solvent_viscosity = new QLineEdit(this, "Solvent_Viscosity Line Edit");
    le_solvent_viscosity->setText(QString("").sprintf("%f",*solvent_viscosity));
-   le_solvent_viscosity->setAlignment(AlignCenter | AlignVCenter);
+   le_solvent_viscosity->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_solvent_viscosity->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_solvent_viscosity->setEnabled(true);
@@ -160,20 +160,20 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
 
    lbl_solvent_density = new QLabel(tr(" Solvent density (g/ml):"), this);
    Q_CHECK_PTR(lbl_solvent_density);
-   lbl_solvent_density->setAlignment(AlignLeft|AlignVCenter);
+   lbl_solvent_density->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_solvent_density->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_solvent_density = new QLineEdit(this, "Solvent_Density Line Edit");
    le_solvent_density->setText(QString("").sprintf("%f",*solvent_density));
-   le_solvent_density->setAlignment(AlignCenter | AlignVCenter);
+   le_solvent_density->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_solvent_density->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_solvent_density->setEnabled(true);
    connect(le_solvent_density, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_density(const QString &)));
 
    lbl_psv = new QLabel(tr(" Enter a vbar value:"), this);
-   lbl_psv->setAlignment(AlignLeft | AlignVCenter);
+   lbl_psv->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
    lbl_psv->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
@@ -182,7 +182,7 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
    le_psv->setReadOnly(false);
    le_psv->setMinimumWidth(100);
    le_psv->setMinimumHeight(minHeight2);
-   le_psv->setAlignment(AlignCenter|AlignVCenter);
+   le_psv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_psv->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    connect(le_psv, SIGNAL(textChanged(const QString &)), SLOT(update_psv(const QString &)));

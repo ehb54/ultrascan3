@@ -32,7 +32,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
    ypos = border;
 
    lbl_blank = new QLabel(tr("Investigator Information:"), this);
-   lbl_blank->setAlignment(AlignCenter|AlignVCenter);
+   lbl_blank->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    //   lbl_blank->setFrameStyle(QFrame::WinPanel|Raised);
    lbl_blank->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_blank->setGeometry(xpos, ypos, column1 + column2 + spacing, buttonh);
@@ -44,7 +44,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
    ypos += buttonh + spacing;
 
    lbl_InvID = new QLabel(tr(" Investigator ID:"),this);
-   lbl_InvID->setAlignment(AlignLeft|AlignVCenter);
+   lbl_InvID->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_InvID->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_InvID->setGeometry(xpos, ypos, column1, buttonh);
    lbl_InvID->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -54,7 +54,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 
    newInvID =get_newID("tblInvestigators", "InvID");
    lbl_IdNumber = new QLabel("",this);
-   lbl_IdNumber->setAlignment(AlignVCenter);
+   lbl_IdNumber->setAlignment(Qt::AlignVCenter);
    lbl_IdNumber->setGeometry(xpos, ypos, column2, buttonh);
    lbl_IdNumber->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
    lbl_IdNumber->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1));
@@ -64,7 +64,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
    ypos += buttonh + spacing;
 
    lbl_LastName = new QLabel(tr(" Last Name:"),this);
-   lbl_LastName->setAlignment(AlignLeft|AlignVCenter);
+   lbl_LastName->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_LastName->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_LastName->setGeometry(xpos, ypos, column1, buttonh);
    lbl_LastName->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -103,7 +103,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
    ypos += 4 * buttonh + spacing;
 
    lbl_FirstName = new QLabel(tr(" First Name:"),this);
-   lbl_FirstName->setAlignment(AlignLeft|AlignVCenter);
+   lbl_FirstName->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_FirstName->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_FirstName->setGeometry(xpos, ypos, column1, buttonh);
    lbl_FirstName->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -120,7 +120,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
    ypos += buttonh + spacing;
 
    lbl_Address = new QLabel(tr(" Address:"),this);
-   lbl_Address->setAlignment(AlignLeft|AlignVCenter);
+   lbl_Address->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_Address->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_Address->setGeometry(xpos, ypos, column1, buttonh);
    lbl_Address->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -137,7 +137,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
    ypos += buttonh + spacing;
 
    lbl_City = new QLabel(tr(" City:"),this);
-   lbl_City->setAlignment(AlignLeft|AlignVCenter);
+   lbl_City->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_City->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_City->setGeometry(xpos, ypos, column1, buttonh);
    lbl_City->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -154,7 +154,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
    xpos = border;
 
    lbl_State = new QLabel(tr(" State:"), this);
-   lbl_State->setAlignment(AlignLeft|AlignVCenter);
+   lbl_State->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_State->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_State->setGeometry(xpos, ypos, column1, buttonh);
    lbl_State->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -172,7 +172,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
    ypos += buttonh + spacing;
 
    lbl_Zip = new QLabel(tr(" Zip:"),this);
-   lbl_Zip->setAlignment(AlignLeft|AlignVCenter);
+   lbl_Zip->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_Zip->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_Zip->setGeometry(xpos, ypos, column1, buttonh);
    lbl_Zip->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -189,7 +189,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
    ypos += buttonh + spacing;
 
    lbl_Phone = new QLabel(tr(" Phone:"),this);
-   lbl_Phone->setAlignment(AlignLeft|AlignVCenter);
+   lbl_Phone->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_Phone->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_Phone->setGeometry(xpos, ypos, column1, buttonh);
    lbl_Phone->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -206,7 +206,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
    ypos += buttonh + spacing;
 
    lbl_Email = new QLabel(tr(" Email:"),this);
-   lbl_Email->setAlignment(AlignLeft|AlignVCenter);
+   lbl_Email->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_Email->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_Email->setGeometry(xpos, ypos, column1, buttonh);
    lbl_Email->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));

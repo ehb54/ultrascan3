@@ -238,7 +238,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_info = new QLabel(tr("SAXS/SANS Plotting Functions:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -246,7 +246,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_filename1 = new QLabel(tr(""), this);
    Q_CHECK_PTR(lbl_filename1);
    lbl_filename1->setMinimumHeight(minHeight1);
-   lbl_filename1->setAlignment(AlignLeft|AlignVCenter);
+   lbl_filename1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_filename1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_filename1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
@@ -254,7 +254,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    Q_CHECK_PTR(te_filename2);
    te_filename2->setMinimumHeight(minHeight1);
    te_filename2->setMaximumHeight(minHeight1);
-   te_filename2->setAlignment(AlignLeft|AlignVCenter);
+   te_filename2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    te_filename2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    te_filename2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    te_filename2->setMinimumWidth(200);
@@ -300,21 +300,21 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    lbl_atom_table = new QLabel(tr(" not selected"),this);
    lbl_atom_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_atom_table->setAlignment(AlignLeft|AlignVCenter);
+   lbl_atom_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_atom_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_atom_table->setMinimumHeight(minHeight1);
    lbl_atom_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_hybrid_table = new QLabel(tr(" not selected"),this);
    lbl_hybrid_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_hybrid_table->setAlignment(AlignLeft|AlignVCenter);
+   lbl_hybrid_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hybrid_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_hybrid_table->setMinimumHeight(minHeight1);
    lbl_hybrid_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    lbl_saxs_table = new QLabel(tr(" not selected"),this);
    lbl_saxs_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_saxs_table->setAlignment(AlignLeft|AlignVCenter);
+   lbl_saxs_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_saxs_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_saxs_table->setMinimumHeight(minHeight1);
    lbl_saxs_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -366,7 +366,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    le_guinier_lowq2 = new QLineEdit(this, "guinier_lowq2 Line Edit");
    le_guinier_lowq2->setText("");
    // le_guinier_lowq2->setMinimumHeight(minHeight1);
-   le_guinier_lowq2->setAlignment(AlignCenter|AlignVCenter);
+   le_guinier_lowq2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_guinier_lowq2->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_guinier_lowq2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_guinier_lowq2, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_lowq2(const QString &)));
@@ -374,7 +374,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    le_guinier_highq2 = new QLineEdit(this, "guinier_highq2 Line Edit");
    le_guinier_highq2->setText("");
    // le_guinier_highq2->setMinimumHeight(minHeight1);
-   le_guinier_highq2->setAlignment(AlignCenter|AlignVCenter);
+   le_guinier_highq2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_guinier_highq2->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_guinier_highq2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_guinier_highq2, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_highq2(const QString &)));
@@ -391,7 +391,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    le_user_lowq = new QLineEdit(this, "user_lowq Line Edit");
    le_user_lowq->setText("");
    // le_user_lowq->setMinimumHeight(minHeight1);
-   le_user_lowq->setAlignment(AlignCenter|AlignVCenter);
+   le_user_lowq->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_user_lowq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_user_lowq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_user_lowq, SIGNAL(textChanged(const QString &)), SLOT(update_user_lowq(const QString &)));
@@ -399,7 +399,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    le_user_highq = new QLineEdit(this, "user_highq Line Edit");
    le_user_highq->setText("");
    // le_user_highq->setMinimumHeight(minHeight1);
-   le_user_highq->setAlignment(AlignCenter|AlignVCenter);
+   le_user_highq->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_user_highq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_user_highq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_user_highq, SIGNAL(textChanged(const QString &)), SLOT(update_user_highq(const QString &)));
@@ -414,7 +414,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 #if defined(ADD_GUINIER)      
       lbl_guinier_cutoff = new QLabel(tr("Guinier cutoff\n(1/Angstrom^2) : "), this);
       Q_CHECK_PTR(lbl_guinier_cutoff);
-      lbl_guinier_cutoff->setAlignment(AlignLeft|AlignVCenter);
+      lbl_guinier_cutoff->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
       lbl_guinier_cutoff->setMinimumHeight(minHeight1);
       lbl_guinier_cutoff->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
       lbl_guinier_cutoff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -434,14 +434,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_info_prr = new QLabel(tr("P(r) vs. r  Plotting Functions:"), this);
    Q_CHECK_PTR(lbl_info_prr);
    lbl_info_prr->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info_prr->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info_prr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info_prr->setMinimumHeight(minHeight1);
    lbl_info_prr->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info_prr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_bin_size = new QLabel(tr(" Bin size (Angstrom): "), this);
    Q_CHECK_PTR(lbl_bin_size);
-   lbl_bin_size->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bin_size->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bin_size->setMinimumHeight(minHeight1);
    lbl_bin_size->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_bin_size->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -506,14 +506,14 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    le_pr_contrib_low = new QLineEdit(this, "pr_contrib_low Line Edit");
    le_pr_contrib_low->setText("");
-   le_pr_contrib_low->setAlignment(AlignCenter|AlignVCenter);
+   le_pr_contrib_low->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pr_contrib_low->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pr_contrib_low->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_pr_contrib_low, SIGNAL(textChanged(const QString &)), SLOT(update_pr_contrib_low(const QString &)));
 
    le_pr_contrib_high = new QLineEdit(this, "pr_contrib_high Line Edit");
    le_pr_contrib_high->setText("");
-   le_pr_contrib_high->setAlignment(AlignCenter|AlignVCenter);
+   le_pr_contrib_high->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pr_contrib_high->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pr_contrib_high->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_pr_contrib_high, SIGNAL(textChanged(const QString &)), SLOT(update_pr_contrib_high(const QString &)));
@@ -659,7 +659,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    lbl_core_progress = new QLabel("", this);
    Q_CHECK_PTR(lbl_core_progress);
-   lbl_core_progress->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_core_progress->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_core_progress->setMinimumHeight(minHeight1);
    lbl_core_progress->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_core_progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));

@@ -37,7 +37,7 @@ US_Database::US_Database(QWidget *p, const char *name) : QFrame( p, name)
   ypos = border;  
   
   lbl_title = new QLabel(tr("Database List:"), this);
-  lbl_title->setAlignment(AlignCenter|AlignVCenter);
+  lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
   lbl_title->setFrameStyle(QFrame::WinPanel|Raised);
   lbl_title->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
   lbl_title->setGeometry(xpos, ypos, buttonw*2 + spacing, buttonh);
@@ -56,7 +56,7 @@ US_Database::US_Database(QWidget *p, const char *name) : QFrame( p, name)
   ypos += buttonh*3 + spacing;
   
   lbl_blank = new QLabel(tr("User Information:"), this);
-  lbl_blank->setAlignment(AlignCenter|AlignVCenter);
+  lbl_blank->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
   lbl_blank->setFrameStyle(QFrame::WinPanel|Raised);
   lbl_blank->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
   lbl_blank->setGeometry(xpos, ypos, buttonw*2 + spacing, buttonh);
@@ -66,7 +66,7 @@ US_Database::US_Database(QWidget *p, const char *name) : QFrame( p, name)
   ypos += buttonh + spacing;
 
   lbl_description = new QLabel(tr(" Database Description:"),this);
-  lbl_description->setAlignment(AlignLeft|AlignVCenter);
+  lbl_description->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_description->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   lbl_description->setGeometry(xpos, ypos, buttonw, buttonh);
   lbl_description->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -82,7 +82,7 @@ US_Database::US_Database(QWidget *p, const char *name) : QFrame( p, name)
   ypos += buttonh + spacing;
 
   lbl_username = new QLabel(tr(" User Name:"),this);
-  lbl_username->setAlignment(AlignLeft|AlignVCenter);
+  lbl_username->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_username->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   lbl_username->setGeometry(xpos, ypos, buttonw, buttonh);
   lbl_username->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -98,7 +98,7 @@ US_Database::US_Database(QWidget *p, const char *name) : QFrame( p, name)
   ypos += buttonh + spacing;
 
   lbl_password = new QLabel(tr(" Password:"),this);
-  lbl_password->setAlignment(AlignLeft|AlignVCenter);
+  lbl_password->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_password->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   lbl_password->setGeometry(xpos, ypos, buttonw, buttonh);
   lbl_password->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -115,7 +115,7 @@ US_Database::US_Database(QWidget *p, const char *name) : QFrame( p, name)
   ypos += buttonh + spacing;
 
   lbl_dbname = new QLabel(tr(" Database Name:"),this);
-  lbl_dbname->setAlignment(AlignLeft|AlignVCenter);
+  lbl_dbname->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_dbname->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   lbl_dbname->setGeometry(xpos, ypos, buttonw, buttonh);
   lbl_dbname->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -131,7 +131,7 @@ US_Database::US_Database(QWidget *p, const char *name) : QFrame( p, name)
   ypos += buttonh + spacing;
 
   lbl_host = new QLabel(tr(" Host Address:"),this);
-  lbl_host->setAlignment(AlignLeft|AlignVCenter);
+  lbl_host->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_host->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   lbl_host->setGeometry(xpos, ypos, buttonw, buttonh);
   lbl_host->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -147,7 +147,7 @@ US_Database::US_Database(QWidget *p, const char *name) : QFrame( p, name)
   ypos += buttonh + spacing;
 
   lbl_mysql = new QLabel(tr(" MYSQL"),this);
-  lbl_mysql->setAlignment(AlignLeft|AlignVCenter);
+  lbl_mysql->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_mysql->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   lbl_mysql->setGeometry(xpos, ypos, buttonw + spacing, buttonh);
   lbl_mysql->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -161,7 +161,7 @@ US_Database::US_Database(QWidget *p, const char *name) : QFrame( p, name)
   xpos += buttonw + spacing;
 
   lbl_oracle = new QLabel(tr(" ORACLE"),this);
-  lbl_oracle->setAlignment(AlignLeft|AlignVCenter);
+  lbl_oracle->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_oracle->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
   lbl_oracle->setGeometry(xpos, ypos, buttonw, buttonh);
   lbl_oracle->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));

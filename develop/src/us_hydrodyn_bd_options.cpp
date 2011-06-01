@@ -29,34 +29,34 @@ void US_Hydrodyn_BD_Options::setupGUI()
    int minHeight1 = 30;
    lbl_info = new QLabel(tr("BD Options:"), this);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_info_model_creation = new QLabel(tr("Connector Discovery:"), this);
    lbl_info_model_creation->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info_model_creation->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info_model_creation->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info_model_creation->setMinimumHeight(minHeight1);
    lbl_info_model_creation->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info_model_creation->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_info_simulation_opts = new QLabel(tr("Simulation Parameters:"), this);
    lbl_info_simulation_opts->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info_simulation_opts->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info_simulation_opts->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info_simulation_opts->setMinimumHeight(minHeight1);
    lbl_info_simulation_opts->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info_simulation_opts->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_springs = new QLabel(tr("Connector Spring Definitions (spring constant in erg/cm^2, distance in cm):"), this);
    lbl_springs->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_springs->setAlignment(AlignCenter|AlignVCenter);
+   lbl_springs->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_springs->setMinimumHeight(minHeight1);
    lbl_springs->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_springs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_bd_threshold_pb_pb = new QLabel(tr(" Threshold PB-PB (A): "), this);
-   lbl_bd_threshold_pb_pb->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bd_threshold_pb_pb->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bd_threshold_pb_pb->setMinimumHeight(minHeight1);
    lbl_bd_threshold_pb_pb->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_bd_threshold_pb_pb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -73,7 +73,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    connect(cnt_bd_threshold_pb_pb, SIGNAL(valueChanged(double)), SLOT(update_bd_threshold_pb_pb(double)));
 
    lbl_bd_threshold_pb_sc = new QLabel(tr(" Threshold PB-SC (A): "), this);
-   lbl_bd_threshold_pb_sc->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bd_threshold_pb_sc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bd_threshold_pb_sc->setMinimumHeight(minHeight1);
    lbl_bd_threshold_pb_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_bd_threshold_pb_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -90,7 +90,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    connect(cnt_bd_threshold_pb_sc, SIGNAL(valueChanged(double)), SLOT(update_bd_threshold_pb_sc(double)));
 
    lbl_bd_threshold_sc_sc = new QLabel(tr(" Threshold SC-SC (A): "), this);
-   lbl_bd_threshold_sc_sc->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bd_threshold_sc_sc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bd_threshold_sc_sc->setMinimumHeight(minHeight1);
    lbl_bd_threshold_sc_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_bd_threshold_sc_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -138,7 +138,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    bg_bead_size_type->setButton(bd_options->bead_size_type);
 
    lbl_npadif = new QLabel(tr(" Number of consecutive steps without recalculating: "), this);
-   lbl_npadif->setAlignment(AlignLeft|AlignVCenter);
+   lbl_npadif->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_npadif->setMinimumHeight(minHeight1);
    lbl_npadif->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_npadif->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -155,28 +155,28 @@ void US_Hydrodyn_BD_Options::setupGUI()
    connect(cnt_npadif, SIGNAL(valueChanged(double)), SLOT(update_npadif(double)));
 
    lbl_nmol = new QLabel(tr(" Number of subtrajectories: "), this);
-   lbl_nmol->setAlignment(AlignLeft|AlignVCenter);
+   lbl_nmol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_nmol->setMinimumHeight(minHeight1);
    lbl_nmol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_nmol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_nmol = new QLineEdit(this, "Nmol Line Edit");
    le_nmol->setText(str.sprintf("%d",(*bd_options).nmol));
-   le_nmol->setAlignment(AlignVCenter);
+   le_nmol->setAlignment(Qt::AlignVCenter);
    le_nmol->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_nmol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_nmol->setEnabled(true);
    connect(le_nmol, SIGNAL(textChanged(const QString &)), SLOT(update_nmol(const QString &)));
 
    lbl_nconf = new QLabel(tr(" Number of conformations to store: "), this);
-   lbl_nconf->setAlignment(AlignLeft|AlignVCenter);
+   lbl_nconf->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_nconf->setMinimumHeight(minHeight1);
    lbl_nconf->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_nconf->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_nconf = new QLineEdit(this, "Nconf Line Edit");
    le_nconf->setText(str.sprintf("%d",(*bd_options).nconf));
-   le_nconf->setAlignment(AlignVCenter);
+   le_nconf->setAlignment(Qt::AlignVCenter);
    le_nconf->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_nconf->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_nconf->setEnabled(true);
@@ -184,14 +184,14 @@ void US_Hydrodyn_BD_Options::setupGUI()
 
 
    lbl_iseed = new QLabel(tr(" Random seed: "), this);
-   lbl_iseed->setAlignment(AlignLeft|AlignVCenter);
+   lbl_iseed->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_iseed->setMinimumHeight(minHeight1);
    lbl_iseed->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_iseed->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_iseed = new QLineEdit(this, "Iseed Line Edit");
    le_iseed->setText(str.sprintf("%d",(*bd_options).iseed));
-   le_iseed->setAlignment(AlignVCenter);
+   le_iseed->setAlignment(Qt::AlignVCenter);
    le_iseed->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_iseed->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_iseed->setEnabled(true);
@@ -243,79 +243,79 @@ void US_Hydrodyn_BD_Options::setupGUI()
    connect(cb_run_browflex, SIGNAL(clicked()), SLOT(set_run_browflex()));
 
    lbl_tprev = new QLabel(tr(" Previous heating time (s): "), this);
-   lbl_tprev->setAlignment(AlignLeft|AlignVCenter);
+   lbl_tprev->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_tprev->setMinimumHeight(minHeight1);
    lbl_tprev->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_tprev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tprev = new QLineEdit(this, "Tprev Line Edit");
    le_tprev->setText(str.sprintf("%4.2g",(*bd_options).tprev));
-   le_tprev->setAlignment(AlignVCenter);
+   le_tprev->setAlignment(Qt::AlignVCenter);
    le_tprev->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_tprev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_tprev->setEnabled(true);
    connect(le_tprev, SIGNAL(textChanged(const QString &)), SLOT(update_tprev(const QString &)));
 
    lbl_ttraj = new QLabel(tr(" Total time duration (s): "), this);
-   lbl_ttraj->setAlignment(AlignLeft|AlignVCenter);
+   lbl_ttraj->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_ttraj->setMinimumHeight(minHeight1);
    lbl_ttraj->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_ttraj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_ttraj = new QLineEdit(this, "Ttraj Line Edit");
    le_ttraj->setText(str.sprintf("%4.2g",(*bd_options).ttraj));
-   le_ttraj->setAlignment(AlignVCenter);
+   le_ttraj->setAlignment(Qt::AlignVCenter);
    le_ttraj->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_ttraj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_ttraj->setEnabled(true);
    connect(le_ttraj, SIGNAL(textChanged(const QString &)), SLOT(update_ttraj(const QString &)));
 
    lbl_deltat = new QLabel(tr(" Duration of each simulation step (s): "), this);
-   lbl_deltat->setAlignment(AlignLeft|AlignVCenter);
+   lbl_deltat->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_deltat->setMinimumHeight(minHeight1);
    lbl_deltat->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_deltat = new QLineEdit(this, "Deltat Line Edit");
    le_deltat->setText(str.sprintf("%4.6g",(*bd_options).deltat));
-   le_deltat->setAlignment(AlignVCenter);
+   le_deltat->setAlignment(Qt::AlignVCenter);
    le_deltat->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_deltat->setEnabled(true);
    connect(le_deltat, SIGNAL(textChanged(const QString &)), SLOT(update_deltat(const QString &)));
 
    lbl_chem_pb_pb = new QLabel(tr(" Chemical PB-PB: "), this);
-   lbl_chem_pb_pb->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_chem_pb_pb->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_chem_pb_pb->setMinimumHeight(minHeight1);
    lbl_chem_pb_pb->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_chem_pb_pb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_chem_pb_sc = new QLabel(tr(" Chemical PB-SC: "), this);
-   lbl_chem_pb_sc->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_chem_pb_sc->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_chem_pb_sc->setMinimumHeight(minHeight1);
    lbl_chem_pb_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_chem_pb_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_chem_sc_sc = new QLabel(tr(" Chemical SC-SC: "), this);
-   lbl_chem_sc_sc->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_chem_sc_sc->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_chem_sc_sc->setMinimumHeight(minHeight1);
    lbl_chem_sc_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_chem_sc_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_pb_pb = new QLabel(tr(" PB-PB: "), this);
-   lbl_pb_pb->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_pb_pb->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_pb_pb->setMinimumHeight(minHeight1);
    lbl_pb_pb->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_pb_pb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_pb_sc = new QLabel(tr(" PB-SC: "), this);
-   lbl_pb_sc->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_pb_sc->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_pb_sc->setMinimumHeight(minHeight1);
    lbl_pb_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_pb_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    lbl_sc_sc = new QLabel(tr(" SC-SC: "), this);
-   lbl_sc_sc->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_sc_sc->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_sc_sc->setMinimumHeight(minHeight1);
    lbl_sc_sc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_sc_sc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -784,252 +784,252 @@ void US_Hydrodyn_BD_Options::setupGUI()
    bg_sc_sc_bond_types->setButton(bd_options->sc_sc_bond_type);
 
    lbl_chem_pb_pb_force_constant = new QLabel(tr(" Hookean spring constant: "), this);
-   lbl_chem_pb_pb_force_constant->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_pb_pb_force_constant->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_chem_pb_pb_force_constant->setMinimumHeight(minHeight1);
    lbl_chem_pb_pb_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_chem_pb_pb_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_pb_pb_force_constant = new QLineEdit(this, "Chem_Pb_Pb_Force_Constant Line Edit");
    le_chem_pb_pb_force_constant->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_pb_force_constant));
-   le_chem_pb_pb_force_constant->setAlignment(AlignVCenter);
+   le_chem_pb_pb_force_constant->setAlignment(Qt::AlignVCenter);
    le_chem_pb_pb_force_constant->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_chem_pb_pb_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_chem_pb_pb_force_constant->setEnabled(true);
    connect(le_chem_pb_pb_force_constant, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_pb_force_constant(const QString &)));
 
    lbl_chem_pb_pb_equilibrium_dist = new QLabel(tr(" Equilibrium distance: "), this);
-   lbl_chem_pb_pb_equilibrium_dist->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_pb_pb_equilibrium_dist->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_chem_pb_pb_equilibrium_dist->setMinimumHeight(minHeight1);
    lbl_chem_pb_pb_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_chem_pb_pb_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_pb_pb_equilibrium_dist = new QLineEdit(this, "Chem_Pb_Pb_Equilibrium_Dist Line Edit");
    le_chem_pb_pb_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_pb_equilibrium_dist));
-   le_chem_pb_pb_equilibrium_dist->setAlignment(AlignVCenter);
+   le_chem_pb_pb_equilibrium_dist->setAlignment(Qt::AlignVCenter);
    le_chem_pb_pb_equilibrium_dist->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_chem_pb_pb_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_chem_pb_pb_equilibrium_dist->setEnabled(true);
    connect(le_chem_pb_pb_equilibrium_dist, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_pb_equilibrium_dist(const QString &)));
 
    lbl_chem_pb_pb_max_elong = new QLabel(tr(" Maximum elongation: "), this);
-   lbl_chem_pb_pb_max_elong->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_pb_pb_max_elong->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_chem_pb_pb_max_elong->setMinimumHeight(minHeight1);
    lbl_chem_pb_pb_max_elong->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_chem_pb_pb_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_pb_pb_max_elong = new QLineEdit(this, "Chem_Pb_Pb_Max_Elong Line Edit");
    le_chem_pb_pb_max_elong->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_pb_max_elong));
-   le_chem_pb_pb_max_elong->setAlignment(AlignVCenter);
+   le_chem_pb_pb_max_elong->setAlignment(Qt::AlignVCenter);
    le_chem_pb_pb_max_elong->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_chem_pb_pb_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_chem_pb_pb_max_elong->setEnabled(true);
    connect(le_chem_pb_pb_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_pb_max_elong(const QString &)));
 
    lbl_chem_pb_sc_force_constant = new QLabel(tr(" Hookean spring constant: "), this);
-   lbl_chem_pb_sc_force_constant->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_pb_sc_force_constant->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_chem_pb_sc_force_constant->setMinimumHeight(minHeight1);
    lbl_chem_pb_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_chem_pb_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_pb_sc_force_constant = new QLineEdit(this, "Chem_Pb_Sc_Force_Constant Line Edit");
    le_chem_pb_sc_force_constant->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_sc_force_constant));
-   le_chem_pb_sc_force_constant->setAlignment(AlignVCenter);
+   le_chem_pb_sc_force_constant->setAlignment(Qt::AlignVCenter);
    le_chem_pb_sc_force_constant->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_chem_pb_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_chem_pb_sc_force_constant->setEnabled(true);
    connect(le_chem_pb_sc_force_constant, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_sc_force_constant(const QString &)));
 
    lbl_chem_pb_sc_equilibrium_dist = new QLabel(tr(" Equilibrium distance: "), this);
-   lbl_chem_pb_sc_equilibrium_dist->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_pb_sc_equilibrium_dist->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_chem_pb_sc_equilibrium_dist->setMinimumHeight(minHeight1);
    lbl_chem_pb_sc_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_chem_pb_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_pb_sc_equilibrium_dist = new QLineEdit(this, "Chem_Pb_Sc_Equilibrium_Dist Line Edit");
    le_chem_pb_sc_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_sc_equilibrium_dist));
-   le_chem_pb_sc_equilibrium_dist->setAlignment(AlignVCenter);
+   le_chem_pb_sc_equilibrium_dist->setAlignment(Qt::AlignVCenter);
    le_chem_pb_sc_equilibrium_dist->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_chem_pb_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_chem_pb_sc_equilibrium_dist->setEnabled(true);
    connect(le_chem_pb_sc_equilibrium_dist, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_sc_equilibrium_dist(const QString &)));
 
    lbl_chem_pb_sc_max_elong = new QLabel(tr(" Maximum elongation: "), this);
-   lbl_chem_pb_sc_max_elong->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_pb_sc_max_elong->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_chem_pb_sc_max_elong->setMinimumHeight(minHeight1);
    lbl_chem_pb_sc_max_elong->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_chem_pb_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_pb_sc_max_elong = new QLineEdit(this, "Chem_Pb_Sc_Max_Elong Line Edit");
    le_chem_pb_sc_max_elong->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_sc_max_elong));
-   le_chem_pb_sc_max_elong->setAlignment(AlignVCenter);
+   le_chem_pb_sc_max_elong->setAlignment(Qt::AlignVCenter);
    le_chem_pb_sc_max_elong->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_chem_pb_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_chem_pb_sc_max_elong->setEnabled(true);
    connect(le_chem_pb_sc_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_chem_pb_sc_max_elong(const QString &)));
 
    lbl_chem_sc_sc_force_constant = new QLabel(tr(" Hookean spring constant: "), this);
-   lbl_chem_sc_sc_force_constant->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_sc_sc_force_constant->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_chem_sc_sc_force_constant->setMinimumHeight(minHeight1);
    lbl_chem_sc_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_chem_sc_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_sc_sc_force_constant = new QLineEdit(this, "Chem_Sc_Sc_Force_Constant Line Edit");
    le_chem_sc_sc_force_constant->setText(str.sprintf("%4.2f",(*bd_options).chem_sc_sc_force_constant));
-   le_chem_sc_sc_force_constant->setAlignment(AlignVCenter);
+   le_chem_sc_sc_force_constant->setAlignment(Qt::AlignVCenter);
    le_chem_sc_sc_force_constant->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_chem_sc_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_chem_sc_sc_force_constant->setEnabled(true);
    connect(le_chem_sc_sc_force_constant, SIGNAL(textChanged(const QString &)), SLOT(update_chem_sc_sc_force_constant(const QString &)));
 
    lbl_chem_sc_sc_equilibrium_dist = new QLabel(tr(" Equilibrium distance: "), this);
-   lbl_chem_sc_sc_equilibrium_dist->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_sc_sc_equilibrium_dist->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_chem_sc_sc_equilibrium_dist->setMinimumHeight(minHeight1);
    lbl_chem_sc_sc_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_chem_sc_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_sc_sc_equilibrium_dist = new QLineEdit(this, "Chem_Sc_Sc_Equilibrium_Dist Line Edit");
    le_chem_sc_sc_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).chem_sc_sc_equilibrium_dist));
-   le_chem_sc_sc_equilibrium_dist->setAlignment(AlignVCenter);
+   le_chem_sc_sc_equilibrium_dist->setAlignment(Qt::AlignVCenter);
    le_chem_sc_sc_equilibrium_dist->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_chem_sc_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_chem_sc_sc_equilibrium_dist->setEnabled(true);
    connect(le_chem_sc_sc_equilibrium_dist, SIGNAL(textChanged(const QString &)), SLOT(update_chem_sc_sc_equilibrium_dist(const QString &)));
 
    lbl_chem_sc_sc_max_elong = new QLabel(tr(" Maximum elongation: "), this);
-   lbl_chem_sc_sc_max_elong->setAlignment(AlignLeft|AlignVCenter);
+   lbl_chem_sc_sc_max_elong->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_chem_sc_sc_max_elong->setMinimumHeight(minHeight1);
    lbl_chem_sc_sc_max_elong->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_chem_sc_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_sc_sc_max_elong = new QLineEdit(this, "Chem_Sc_Sc_Max_Elong Line Edit");
    le_chem_sc_sc_max_elong->setText(str.sprintf("%4.2f",(*bd_options).chem_sc_sc_max_elong));
-   le_chem_sc_sc_max_elong->setAlignment(AlignVCenter);
+   le_chem_sc_sc_max_elong->setAlignment(Qt::AlignVCenter);
    le_chem_sc_sc_max_elong->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_chem_sc_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_chem_sc_sc_max_elong->setEnabled(true);
    connect(le_chem_sc_sc_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_chem_sc_sc_max_elong(const QString &)));
 
    lbl_pb_pb_force_constant = new QLabel(tr(" Hookean spring constant: "), this);
-   lbl_pb_pb_force_constant->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pb_pb_force_constant->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_pb_pb_force_constant->setMinimumHeight(minHeight1);
    lbl_pb_pb_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_pb_pb_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_pb_pb_force_constant = new QLineEdit(this, "Pb_Pb_Force_Constant Line Edit");
    le_pb_pb_force_constant->setText(str.sprintf("%4.2f",(*bd_options).pb_pb_force_constant));
-   le_pb_pb_force_constant->setAlignment(AlignVCenter);
+   le_pb_pb_force_constant->setAlignment(Qt::AlignVCenter);
    le_pb_pb_force_constant->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pb_pb_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_pb_pb_force_constant->setEnabled(true);
    connect(le_pb_pb_force_constant, SIGNAL(textChanged(const QString &)), SLOT(update_pb_pb_force_constant(const QString &)));
 
    lbl_pb_pb_equilibrium_dist = new QLabel(tr(" Equilibrium distance: "), this);
-   lbl_pb_pb_equilibrium_dist->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pb_pb_equilibrium_dist->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_pb_pb_equilibrium_dist->setMinimumHeight(minHeight1);
    lbl_pb_pb_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_pb_pb_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_pb_pb_equilibrium_dist = new QLineEdit(this, "Pb_Pb_Equilibrium_Dist Line Edit");
    le_pb_pb_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).pb_pb_equilibrium_dist));
-   le_pb_pb_equilibrium_dist->setAlignment(AlignVCenter);
+   le_pb_pb_equilibrium_dist->setAlignment(Qt::AlignVCenter);
    le_pb_pb_equilibrium_dist->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pb_pb_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_pb_pb_equilibrium_dist->setEnabled(true);
    connect(le_pb_pb_equilibrium_dist, SIGNAL(textChanged(const QString &)), SLOT(update_pb_pb_equilibrium_dist(const QString &)));
 
    lbl_pb_pb_max_elong = new QLabel(tr(" Maximum elongation: "), this);
-   lbl_pb_pb_max_elong->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pb_pb_max_elong->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_pb_pb_max_elong->setMinimumHeight(minHeight1);
    lbl_pb_pb_max_elong->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_pb_pb_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_pb_pb_max_elong = new QLineEdit(this, "Pb_Pb_Max_Elong Line Edit");
    le_pb_pb_max_elong->setText(str.sprintf("%4.2f",(*bd_options).pb_pb_max_elong));
-   le_pb_pb_max_elong->setAlignment(AlignVCenter);
+   le_pb_pb_max_elong->setAlignment(Qt::AlignVCenter);
    le_pb_pb_max_elong->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pb_pb_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_pb_pb_max_elong->setEnabled(true);
    connect(le_pb_pb_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_pb_pb_max_elong(const QString &)));
 
    lbl_pb_sc_force_constant = new QLabel(tr(" Hookean spring constant: "), this);
-   lbl_pb_sc_force_constant->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pb_sc_force_constant->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_pb_sc_force_constant->setMinimumHeight(minHeight1);
    lbl_pb_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_pb_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_pb_sc_force_constant = new QLineEdit(this, "Pb_Sc_Force_Constant Line Edit");
    le_pb_sc_force_constant->setText(str.sprintf("%4.2f",(*bd_options).pb_sc_force_constant));
-   le_pb_sc_force_constant->setAlignment(AlignVCenter);
+   le_pb_sc_force_constant->setAlignment(Qt::AlignVCenter);
    le_pb_sc_force_constant->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pb_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_pb_sc_force_constant->setEnabled(true);
    connect(le_pb_sc_force_constant, SIGNAL(textChanged(const QString &)), SLOT(update_pb_sc_force_constant(const QString &)));
 
    lbl_pb_sc_equilibrium_dist = new QLabel(tr(" Equilibrium distance: "), this);
-   lbl_pb_sc_equilibrium_dist->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pb_sc_equilibrium_dist->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_pb_sc_equilibrium_dist->setMinimumHeight(minHeight1);
    lbl_pb_sc_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_pb_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_pb_sc_equilibrium_dist = new QLineEdit(this, "Pb_Sc_Equilibrium_Dist Line Edit");
    le_pb_sc_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).pb_sc_equilibrium_dist));
-   le_pb_sc_equilibrium_dist->setAlignment(AlignVCenter);
+   le_pb_sc_equilibrium_dist->setAlignment(Qt::AlignVCenter);
    le_pb_sc_equilibrium_dist->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pb_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_pb_sc_equilibrium_dist->setEnabled(true);
    connect(le_pb_sc_equilibrium_dist, SIGNAL(textChanged(const QString &)), SLOT(update_pb_sc_equilibrium_dist(const QString &)));
 
    lbl_pb_sc_max_elong = new QLabel(tr(" Maximum elongation: "), this);
-   lbl_pb_sc_max_elong->setAlignment(AlignLeft|AlignVCenter);
+   lbl_pb_sc_max_elong->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_pb_sc_max_elong->setMinimumHeight(minHeight1);
    lbl_pb_sc_max_elong->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_pb_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_pb_sc_max_elong = new QLineEdit(this, "Pb_Sc_Max_Elong Line Edit");
    le_pb_sc_max_elong->setText(str.sprintf("%4.2f",(*bd_options).pb_sc_max_elong));
-   le_pb_sc_max_elong->setAlignment(AlignVCenter);
+   le_pb_sc_max_elong->setAlignment(Qt::AlignVCenter);
    le_pb_sc_max_elong->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_pb_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_pb_sc_max_elong->setEnabled(true);
    connect(le_pb_sc_max_elong, SIGNAL(textChanged(const QString &)), SLOT(update_pb_sc_max_elong(const QString &)));
 
    lbl_sc_sc_force_constant = new QLabel(tr(" Hookean spring constant: "), this);
-   lbl_sc_sc_force_constant->setAlignment(AlignLeft|AlignVCenter);
+   lbl_sc_sc_force_constant->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_sc_sc_force_constant->setMinimumHeight(minHeight1);
    lbl_sc_sc_force_constant->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_sc_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_sc_sc_force_constant = new QLineEdit(this, "Sc_Sc_Force_Constant Line Edit");
    le_sc_sc_force_constant->setText(str.sprintf("%4.2f",(*bd_options).sc_sc_force_constant));
-   le_sc_sc_force_constant->setAlignment(AlignVCenter);
+   le_sc_sc_force_constant->setAlignment(Qt::AlignVCenter);
    le_sc_sc_force_constant->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_sc_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_sc_sc_force_constant->setEnabled(true);
    connect(le_sc_sc_force_constant, SIGNAL(textChanged(const QString &)), SLOT(update_sc_sc_force_constant(const QString &)));
 
    lbl_sc_sc_equilibrium_dist = new QLabel(tr(" Equilibrium distance: "), this);
-   lbl_sc_sc_equilibrium_dist->setAlignment(AlignLeft|AlignVCenter);
+   lbl_sc_sc_equilibrium_dist->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_sc_sc_equilibrium_dist->setMinimumHeight(minHeight1);
    lbl_sc_sc_equilibrium_dist->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_sc_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_sc_sc_equilibrium_dist = new QLineEdit(this, "Sc_Sc_Equilibrium_Dist Line Edit");
    le_sc_sc_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).sc_sc_equilibrium_dist));
-   le_sc_sc_equilibrium_dist->setAlignment(AlignVCenter);
+   le_sc_sc_equilibrium_dist->setAlignment(Qt::AlignVCenter);
    le_sc_sc_equilibrium_dist->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_sc_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_sc_sc_equilibrium_dist->setEnabled(true);
    connect(le_sc_sc_equilibrium_dist, SIGNAL(textChanged(const QString &)), SLOT(update_sc_sc_equilibrium_dist(const QString &)));
 
    lbl_sc_sc_max_elong = new QLabel(tr(" Maximum elongation: "), this);
-   lbl_sc_sc_max_elong->setAlignment(AlignLeft|AlignVCenter);
+   lbl_sc_sc_max_elong->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_sc_sc_max_elong->setMinimumHeight(minHeight1);
    lbl_sc_sc_max_elong->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_sc_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_sc_sc_max_elong = new QLineEdit(this, "Sc_Sc_Max_Elong Line Edit");
    le_sc_sc_max_elong->setText(str.sprintf("%4.2f",(*bd_options).sc_sc_max_elong));
-   le_sc_sc_max_elong->setAlignment(AlignVCenter);
+   le_sc_sc_max_elong->setAlignment(Qt::AlignVCenter);
    le_sc_sc_max_elong->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_sc_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_sc_sc_max_elong->setEnabled(true);

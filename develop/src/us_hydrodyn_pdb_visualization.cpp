@@ -27,7 +27,7 @@ void US_Hydrodyn_PDB_Visualization::setupGUI()
    lbl_info = new QLabel(tr("SOMO PDB Visualization Options:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_info->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -71,7 +71,7 @@ void US_Hydrodyn_PDB_Visualization::setupGUI()
    le_filename->setText((*pdb).filename);
    le_filename->setEnabled(false);
    le_filename->setMinimumHeight(minHeight1);
-   le_filename->setAlignment(AlignCenter|AlignVCenter);
+   le_filename->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_filename->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_filename, SIGNAL(textChanged(const QString &)), SLOT(update_filename(const QString &)));

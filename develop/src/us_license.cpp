@@ -16,14 +16,14 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    lbl_blank = new QLabel(
                           tr( "Please enter all fields exactly as shown in the issued license,\n"
                               "or import a license from an E-mail text file:" ), this );
-   lbl_blank->setAlignment(AlignCenter|AlignVCenter);
+   lbl_blank->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_blank->setGeometry(xpos, ypos, span+buttonw+spacing, 2*buttonh+spacing);
    lbl_blank->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
 
    ypos += spacing + 3*buttonh;
 
    lbl_firstname = new QLabel(tr("Name (first, last):"),this);
-   lbl_firstname->setAlignment(AlignLeft|AlignVCenter);
+   lbl_firstname->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_firstname->setGeometry(xpos, ypos, buttonw, buttonh);
 
    xpos += spacing + buttonw;
@@ -36,7 +36,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos += half_buttonw + spacing;
 
    lbl_lastname = new QLabel(tr(","),this);
-   lbl_lastname->setAlignment(AlignLeft|AlignVCenter);
+   lbl_lastname->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_lastname->setGeometry(xpos, ypos, column2, buttonh);
 
    xpos += spacing + column2;
@@ -50,7 +50,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    ypos += buttonh + spacing;
 
    lbl_email = new QLabel(tr("E-mail Address:"),this);
-   lbl_email->setAlignment(AlignLeft|AlignVCenter);
+   lbl_email->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_email->setGeometry(xpos, ypos, buttonw, buttonh);
 
    xpos += spacing + buttonw;
@@ -64,7 +64,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    ypos += buttonh + spacing;
 
    lbl_institution = new QLabel(tr("Institution:"),this);
-   lbl_institution->setAlignment(AlignLeft|AlignVCenter);
+   lbl_institution->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_institution->setGeometry(xpos, ypos, buttonw, buttonh);
 
    xpos += spacing + buttonw;
@@ -78,7 +78,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    ypos += buttonh + spacing;
 
    lbl_address = new QLabel(tr("Address:"),this);
-   lbl_address->setAlignment(AlignLeft|AlignVCenter);
+   lbl_address->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_address->setGeometry(xpos, ypos, buttonw, buttonh);
 
    xpos += spacing + buttonw;
@@ -92,7 +92,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    ypos += buttonh + spacing;
 
    lbl_city = new QLabel(tr("City:"),this);
-   lbl_city->setAlignment(AlignLeft|AlignVCenter);
+   lbl_city->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_city->setGeometry(xpos, ypos, buttonw, buttonh);
 
    xpos += spacing + buttonw;
@@ -105,7 +105,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos += buttonw + spacing;
 
    lbl_state = new QLabel(tr(" State:"),this);
-   lbl_state->setAlignment(AlignLeft|AlignVCenter);
+   lbl_state->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_state->setGeometry(xpos, ypos, column1, buttonh);
 
    xpos += spacing + column1;
@@ -171,7 +171,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos += column3 + spacing;
 
    lbl_zip = new QLabel(tr(" Zip:"),this);
-   lbl_zip->setAlignment(AlignLeft|AlignVCenter);
+   lbl_zip->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_zip->setGeometry(xpos, ypos, column1, buttonh);
 
    xpos += spacing + column1;
@@ -185,7 +185,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    ypos += buttonh + spacing;
 
    lbl_phone = new QLabel(tr("Phone Number:"),this);
-   lbl_phone->setAlignment(AlignLeft|AlignVCenter);
+   lbl_phone->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_phone->setGeometry(xpos, ypos, buttonw, buttonh);
 
    xpos += spacing + buttonw;
@@ -198,7 +198,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos += buttonw + spacing;
 
    lbl_licensetype = new QLabel(tr(" License:"),this);
-   lbl_licensetype->setAlignment(AlignLeft|AlignVCenter);
+   lbl_licensetype->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_licensetype->setGeometry(xpos, ypos, column1, buttonh);
 
    xpos += spacing + column1;
@@ -218,7 +218,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos += spacing + column3;
 
    lbl_version = new QLabel(tr(" Version:"),this);
-   lbl_version->setAlignment(AlignLeft|AlignVCenter);
+   lbl_version->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_version->setGeometry(xpos, ypos, column1, buttonh);
 
    xpos += spacing + column1;
@@ -250,7 +250,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    ypos += 2*buttonh + spacing;
 
    //lbl_platform = new QLabel(tr("Platform:"),this);
-   //lbl_platform->setAlignment(AlignLeft|AlignVCenter);
+   //lbl_platform->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    //lbl_platform->setGeometry(xpos, ypos, buttonw, buttonh);
 
    xpos += buttonw + spacing;
@@ -305,7 +305,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos = spacing;
 
    lbl_code = new QLabel(tr("License Code:"),this);
-   lbl_code->setAlignment(AlignLeft|AlignVCenter);
+   lbl_code->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_code->setGeometry(xpos, ypos, buttonw, buttonh);
 
    xpos += buttonw + spacing;
@@ -318,7 +318,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos += column4 + spacing;
 
    lbl_code = new QLabel("-",this);
-   lbl_code->setAlignment(AlignLeft|AlignVCenter);
+   lbl_code->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_code->setGeometry(xpos, ypos, column2, buttonh);
 
    xpos += column2 + spacing;
@@ -331,7 +331,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos += column4 + spacing;
 
    lbl_code = new QLabel("-",this);
-   lbl_code->setAlignment(AlignLeft|AlignVCenter);
+   lbl_code->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_code->setGeometry(xpos, ypos, column2, buttonh);
 
    xpos += column2 + spacing;
@@ -344,7 +344,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos += column4 + spacing;
 
    lbl_code = new QLabel("-",this);
-   lbl_code->setAlignment(AlignLeft|AlignVCenter);
+   lbl_code->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_code->setGeometry(xpos, ypos, column2, buttonh);
 
    xpos += column2 + spacing;
@@ -357,7 +357,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos += column4 + spacing;
 
    lbl_code = new QLabel("-",this);
-   lbl_code->setAlignment(AlignLeft|AlignVCenter);
+   lbl_code->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_code->setGeometry(xpos, ypos, column2, buttonh);
 
    xpos += column2 + spacing;
@@ -371,7 +371,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos = spacing;
 
    lbl_expiration = new QLabel(tr("Expiration Date:"),this);
-   lbl_expiration->setAlignment(AlignLeft|AlignVCenter);
+   lbl_expiration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_expiration->setGeometry(xpos, ypos, buttonw, buttonh);
 
    xpos += buttonw + spacing;

@@ -85,7 +85,7 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
 
    // lbl_title = new QLabel(title, this);
    // lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   // lbl_title->setAlignment(AlignCenter|AlignVCenter);
+   // lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_title->setMinimumHeight(minHeight1);
    // lbl_title->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    // lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
