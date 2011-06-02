@@ -3478,7 +3478,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 
             QString hybrid_name = residue_atom_hybrid_map[mapkey];
 
-            if ( !hybrid_name || !hybrid_name.length() ) 
+            if ( hybrid_name.isEmpty() || !hybrid_name.length() )
             {
                cout << "error: hybrid name missing for " << this_atom->resName << "|" << this_atom->name << endl; 
                QColor save_color = editor->color();
