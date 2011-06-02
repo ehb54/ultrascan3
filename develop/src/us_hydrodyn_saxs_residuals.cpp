@@ -92,7 +92,7 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
 
    plot = new QwtPlot(this);
    plot->enableOutline(true);
-   plot->setOutlinePen(white);
+   plot->setOutlinePen(Qt::white);
    plot->setOutlineStyle(Qwt::VLine);
    plot->enableGridXMin();
    plot->enableGridYMin();
