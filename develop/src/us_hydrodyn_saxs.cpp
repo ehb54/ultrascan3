@@ -586,7 +586,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    plot_saxs = new QwtPlot(this);
    plot_saxs->enableOutline(true);
-   plot_saxs->setOutlinePen(white);
+   plot_saxs->setOutlinePen(Qt::white);
    plot_saxs->setOutlineStyle(Qwt::VLine);
    plot_saxs->enableGridXMin();
    plot_saxs->enableGridYMin();
@@ -609,7 +609,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    plot_pr = new QwtPlot(this);
    plot_pr->enableOutline(true);
-   plot_pr->setOutlinePen(white);
+   plot_pr->setOutlinePen(Qt::white);
    plot_pr->setOutlineStyle(Qwt::VLine);
    plot_pr->enableGridXMin();
    plot_pr->enableGridYMin();
@@ -6035,7 +6035,7 @@ void US_Hydrodyn_Saxs::set_guinier()
          sym.setStyle(QwtSymbol::Cross);
          sym.setSize(12);
          sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
-         sym.setBrush(white);
+         sym.setBrush(Qt::white);
          plot_saxs->setCurveStyle(plotted_Iq[i], QwtCurve::NoCurve);
          plot_saxs->setCurveSymbol(plotted_Iq[i], QwtSymbol(sym));
          
