@@ -1,4 +1,5 @@
 #include "../include/us_util.h"
+#include "qdatetime.h"
 
 OneLiner::OneLiner(const QString &message, QWidget *parent, 
                    const char *name) : QDialog( parent, name, true )
