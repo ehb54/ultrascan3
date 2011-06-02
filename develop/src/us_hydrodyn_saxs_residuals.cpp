@@ -91,16 +91,21 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    // lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    plot = new QwtPlot(this);
+#ifndef QT4
    plot->enableOutline(true);
    plot->setOutlinePen(Qt::white);
    plot->setOutlineStyle(Qwt::VLine);
    plot->enableGridXMin();
    plot->enableGridYMin();
+#endif
    plot->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
+#ifndef QT4
    plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#endif
    plot->setAxisTitle(QwtPlot::xBottom, tr("Distance (Angstrom)"));
    plot->setAxisTitle(QwtPlot::yLeft, tr("Frequency"));
+#ifndef QT4
    plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -108,6 +113,7 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#endif
    plot->setMargin(USglobal->config_list.margin);
    plot->setTitle(title);
    plot->setCanvasBackground(USglobal->global_colors.plot);
@@ -269,6 +275,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
    plot->setAxisTitle(QwtPlot::yLeft, plot_as_percent ? tr("Percent") : tr("Frequency"));
    if ( plot_residuals ) 
    {
+#ifndef QT4
       long prr = plot->insertCurve("P(r) vs r");
       plot->setCurveStyle(prr, QwtCurve::Lines);
       plot->setCurveData(prr, 
@@ -276,9 +283,11 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
                          plot_as_percent ? (double *)&(residuals_pct[0]) : (double *)&(residuals[0]), 
                          (int)r.size());
       plot->setCurvePen(prr, QPen(Qt::green, 2, SolidLine));
+#endif
    }
    if ( plot_difference ) 
    {
+#ifndef QT4
       long prr = plot->insertCurve("P(r) vs r");
       plot->setCurveStyle(prr, QwtCurve::Lines);
       plot->setCurveData(prr, 
@@ -286,6 +295,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
                          plot_as_percent ? (double *)&(difference_pct[0]) : (double *)&(difference[0]),
                          (int)r.size());
       plot->setCurvePen(prr, QPen(Qt::yellow, 2, SolidLine));
+#endif
    }
    plot->replot();
 }

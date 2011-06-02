@@ -12,6 +12,7 @@
 #include <qwt_plot.h>
 #include <qwt_counter.h>
 #include <qtextedit.h>
+#include <qpen.h>
 
 #include "us_util.h"
 

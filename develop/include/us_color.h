@@ -20,6 +20,7 @@
 #include <qevent.h>
 #include <qframe.h>
 #include <qtranslator.h>
+#include <qpen.h>
 
 #include <qwt_plot.h>
 #include <qwt_counter.h>

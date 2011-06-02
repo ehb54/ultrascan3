@@ -36,24 +36,30 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
 
 
   plot = new QwtPlot(this);
+#ifndef QT4
   plot->enableOutline(true);
   plot->setOutlinePen(Qt::white);
   plot->setOutlineStyle(Qwt::Cross);
   plot->enableGridXMin();
   plot->enableGridYMin();
+#endif
   plot->setTitle(tr("Sample Plot"));
   plot->setPalette(QPalette(temp_colors.cg_plot, temp_colors.cg_plot, temp_colors.cg_plot));
+#ifndef QT4
   plot->setGridMajPen(QPen(temp_colors.major_ticks, 0, DotLine));
   plot->setGridMinPen(QPen(temp_colors.minor_ticks, 0, DotLine));
+#endif
   plot->setCanvasBackground(temp_colors.plot);    //new version
   plot->setAxisTitle(QwtPlot::xBottom, tr("X-axis"));
   plot->setAxisTitle(QwtPlot::yLeft, tr("Y-axis"));
   plot->setMargin(USglobal->config_list.margin);
   plot->setMinimumSize(width*2-10, height*9);
+#ifndef QT4
   c1 = plot->insertCurve("Sample 1");
   plot->setCurveStyle(c1, QwtCurve::Lines);
   plot->setCurvePen(c1, Qt::yellow);
   plot->setCurveData(c1, x, y, 2);
+#endif
   plot->show();
 
   
@@ -813,8 +819,10 @@ void US_Color::selected_scheme(int scheme)
       lbl_edit->setPalette(QPalette(temp_colors.cg_edit, temp_colors.cg_edit, temp_colors.cg_edit));
       cmbb_margin->setPalette(QPalette(temp_colors.cg_normal, temp_colors.cg_normal, temp_colors.cg_normal));
       progress->setPalette(QPalette(temp_colors.cg_normal, temp_colors.cg_normal, temp_colors.cg_normal));
+#ifndef QT4
       plot->setGridMinPen(QPen(temp_colors.minor_ticks, 0, DotLine));
       plot->setGridMajPen(QPen(temp_colors.major_ticks, 0, DotLine));
+#endif
       //plot->setPlotBackground(temp_colors.plot);    //old version
       plot->setCanvasBackground(temp_colors.plot);    //new version
       plot->setPalette(QPalette(temp_colors.cg_plot, temp_colors.cg_plot, temp_colors.cg_plot));
@@ -1180,14 +1188,18 @@ void US_Color::pick_color1()
     case 5:
     {
       temp_colors.major_ticks = color1;
+#ifndef QT4
       plot->setGridMajPen(QPen(temp_colors.major_ticks, 0, DotLine));
+#endif
       plot->replot();
       break;
     }
     case 6:
     {
       temp_colors.minor_ticks = color1;
+#ifndef QT4
       plot->setGridMinPen(QPen(temp_colors.minor_ticks, 0, DotLine));
+#endif
       plot->replot();
       break;
     }
@@ -1567,8 +1579,10 @@ void US_Color::apply()
   pb_color5->setPalette(QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   pb_color6->setPalette(QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
   plot->setPalette(QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
+#ifndef QT4
   plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
   plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#endif
   plot->setCanvasBackground(temp_colors.plot);
   plot->setMargin(USglobal->config_list.margin);
   cnt->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
