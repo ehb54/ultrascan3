@@ -13,6 +13,7 @@
 #include <qlabel.h>
 #include <qwidget.h>
 #include <qdialog.h>
+#include <qfiledialog.h>
 #include <qstring.h>
 #include <qprocess.h>
 #include <qmessagebox.h>
