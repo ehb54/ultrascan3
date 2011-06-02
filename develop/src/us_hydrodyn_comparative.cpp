@@ -3164,36 +3164,40 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
    }
 
    unsigned int row = 1;
-   for ( QStringList::iterator it = qsl.at(1);
-         it != qsl.end();
-         it++ )
    {
-      row++;
-      QStringList qsl_d = csv_parse_line(*it);
-      vector < QString > vqs;
-      vector < double > vd;
-      if ( qsl_d.size() )
+      QStringList::iterator it = qsl.begin();
+      it++;
+      for ( ;
+            it != qsl.end();
+            it++ )
       {
-         for ( QStringList::iterator it2 = qsl_d.begin();
-               it2 != qsl_d.end();
-               it2++ )
+         row++;
+         QStringList qsl_d = csv_parse_line(*it);
+         vector < QString > vqs;
+         vector < double > vd;
+         if ( qsl_d.size() )
          {
-            if ( vd.size() >= csv1.header.size() )
+            for ( QStringList::iterator it2 = qsl_d.begin();
+                  it2 != qsl_d.end();
+                  it2++ )
             {
-               csv_warn += QString(tr("%1Row %1 has more columns than the header, these columns are skipped"))
-                  .arg(csv_warn.isEmpty() ? "" : "\n").arg(row);
-               break;
+               if ( vd.size() >= csv1.header.size() )
+               {
+                  csv_warn += QString(tr("%1Row %1 has more columns than the header, these columns are skipped"))
+                     .arg(csv_warn.isEmpty() ? "" : "\n").arg(row);
+                  break;
+               }
+               vqs.push_back(*it2);
+               vd.push_back((*it2).toDouble());
             }
-            vqs.push_back(*it2);
-            vd.push_back((*it2).toDouble());
-         }
-         if ( vd.size() < csv1.header.size() )
-         {
-            csv_warn += QString(tr("%1Row %1 has insufficient columns, skipped"))
-               .arg(csv_warn.isEmpty() ? "" : "\n").arg(row);
-         } else {
-            csv1.data.push_back(vqs);
-            csv1.num_data.push_back(vd);
+            if ( vd.size() < csv1.header.size() )
+            {
+               csv_warn += QString(tr("%1Row %1 has insufficient columns, skipped"))
+                  .arg(csv_warn.isEmpty() ? "" : "\n").arg(row);
+            } else {
+               csv1.data.push_back(vqs);
+               csv1.num_data.push_back(vd);
+            }
          }
       }
    }

@@ -323,7 +323,7 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
               ( qsl_tmp.count() <= 3 || qsl_tmp[3] != "\"P(r) normed\"" ) )
          {
             vector < QString > array_to_save;
-            // cout << "ok: " << *qsl_tmp.at(0) << endl;
+            // cout << "ok: " << qsl_tmp[0] << endl;
             if ( max_len < (unsigned int)qsl_tmp.count() )
             {
                max_len = qsl_tmp.count();
@@ -334,7 +334,7 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
             {
                array_to_save.push_back(*it2);
             }
-            // cout << QString("line %1 qsl_tmp.count() %1 size %1\n").arg(*qsl_tmp.at(0)).arg(qsl_tmp.count()).arg(array_to_save.size());
+            // cout << QString("line %1 qsl_tmp.count() %1 size %1\n").arg(qsl_tmp[0]).arg(qsl_tmp.count()).arg(array_to_save.size());
             array2d_to_save.push_back(array_to_save);
          }
       }

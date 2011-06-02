@@ -2258,14 +2258,17 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                return;
             }
             r.push_back(qsl_r[4].toDouble());
-            
-            for ( QStringList::iterator it = qsl_r.at(5); it != qsl_r.end(); it++ )
             {
-               if ( (*it).toDouble() > r[r.size() - 1] )
+               QStringList::iterator it = qsl_r.begin();
+               it += 5;
+               for ( ; it != qsl_r.end(); it++ )
                {
-                  r.push_back((*it).toDouble());
-               } else {
-                  break;
+                  if ( (*it).toDouble() > r[r.size() - 1] )
+                  {
+                     r.push_back((*it).toDouble());
+                  } else {
+                     break;
+                  }
                }
             }
          } else {
@@ -2413,13 +2416,17 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                }
                r2.push_back(qsl_r[4].toDouble());
             
-               for ( QStringList::iterator it = qsl_r.at(5); it != qsl_r.end(); it++ )
                {
-                  if ( (*it).toDouble() > r2[r2.size() - 1] )
+                  QStringList::iterator it = qsl_r.begin();
+                  it += 5;
+                  for ( ; it != qsl_r.end(); it++ )
                   {
-                     r2.push_back((*it).toDouble());
-                  } else {
-                     break;
+                     if ( (*it).toDouble() > r2[r2.size() - 1] )
+                     {
+                        r2.push_back((*it).toDouble());
+                     } else {
+                        break;
+                     }
                   }
                }
                unsigned int max_size = r2.size();
@@ -2497,9 +2504,13 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                         {
                            new_pr_fields.push_back(qsl_pr[i]);
                         }
-                        for ( QStringList::iterator it2 = qsl_pr.at(5); it2 != qsl_pr.end(); it2++ )
                         {
-                           this_pr.push_back((*it2).toDouble());
+                           QStringList::iterator it2 = qsl_pr.begin();
+                           it2 += 5;
+                           for ( ; it2 != qsl_pr.end(); it2++ )
+                           {
+                              this_pr.push_back((*it2).toDouble());
+                           }
                         }
                         // interpolate r2, pr to r, reappend to new_pr_fields
                         vector < double > npr = interpolate(r, r2, this_pr);
@@ -2764,9 +2775,13 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                qsl_data_lines_plotted << *it;
                pr.push_back(qsl_pr[4].toDouble());
             
-               for ( QStringList::iterator it = qsl_pr.at(5); it != qsl_pr.end(); it++ )
                {
-                  pr.push_back((*it).toDouble());
+                  QStringList::iterator it = qsl_pr.begin();
+                  it += 5;
+                  for ( ; it != qsl_pr.end(); it++ )
+                  {
+                     pr.push_back((*it).toDouble());
+                  }
                }
 
                if ( run_nnls || run_best_fit )
