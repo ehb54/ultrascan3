@@ -10,11 +10,11 @@ US_Editor::US_Editor( int flag, QWidget * parent, const char *name ) : QFrame( p
       Q_CHECK_PTR( file );
       m->insertItem( tr( "&File" ), file );
 #ifndef NO_EDITOR_PRINT
-      file->insertItem( tr( "Print" ), this, SLOT( print(  ) ), ALT + Key_P );
+      file->insertItem( tr( "Print" ), this, SLOT( print(  ) ), Qt::ALT + Qt::Key_P );
       file->insertSeparator(  );
 #endif
       file->insertItem( tr( "Close" ), this, SLOT( closeDoc(  ) ),
-                        ALT + Key_W );
+                        Qt::ALT + Qt::Key_W );
    }
    else
    {
@@ -23,21 +23,21 @@ US_Editor::US_Editor( int flag, QWidget * parent, const char *name ) : QFrame( p
 
       Q_CHECK_PTR( file );
       m->insertItem( tr( "&File" ), file );
-      file->insertItem( tr( "New" ), this, SLOT( newDoc(  ) ), ALT + Key_N );
-      file->insertItem( tr( "Open" ), this, SLOT( load(  ) ), ALT + Key_O );
+      file->insertItem( tr( "New" ), this, SLOT( newDoc(  ) ), Qt::ALT + Qt::Key_N );
+      file->insertItem( tr( "Open" ), this, SLOT( load(  ) ), Qt::ALT + Qt::Key_O );
       file->insertItem( tr( "Font" ), this, SLOT( update_font(  ) ),
-                        ALT + Key_F );
-      file->insertItem( tr( "Save" ), this, SLOT( save(  ) ), ALT + Key_S );
+                        Qt::ALT + Qt::Key_F );
+      file->insertItem( tr( "Save" ), this, SLOT( save(  ) ), Qt::ALT + Qt::Key_S );
       file->insertItem( tr( "Save As" ), this, SLOT( saveAs(  ) ),
-                        ALT + Key_A );
+                        Qt::ALT + Qt::Key_A );
       file->insertSeparator(  );
 #ifndef NO_EDITOR_PRINT
-      file->insertItem( tr( "Print" ), this, SLOT( print(  ) ), ALT + Key_P );
+      file->insertItem( tr( "Print" ), this, SLOT( print(  ) ), Qt::ALT + Qt::Key_P );
 #endif
       file->insertSeparator(  );
       file->insertItem( tr( "Close" ), this, SLOT( closeDoc(  ) ),
-                        ALT + Key_W );
-      file->insertItem( tr( "Quit" ), qApp, SLOT( quit(  ) ), ALT + Key_Q );
+                        Qt::ALT + Qt::Key_W );
+      file->insertItem( tr( "Quit" ), qApp, SLOT( quit(  ) ), Qt::ALT + Qt::Key_Q );
    }
 
    e = new QTextEdit( this, "editor" );
@@ -266,18 +266,18 @@ void TextEdit::setupFileActions(  )
    QAction *a;
 
    a = new QAction( QPixmap::fromMimeSource( "filenew.xpm" ), tr( "&New..." ),
-                    CTRL + Key_N, this, "fileNew" );
+                    Qt::CTRL + Qt::Key_N, this, "fileNew" );
    connect( a, SIGNAL( activated(  ) ), this, SLOT( fileNew(  ) ) );
    a->addTo( tb );
    a->addTo( menu );
    a = new QAction( QPixmap::fromMimeSource( "fileopen.xpm" ), tr( "&Open..." ),
-                    CTRL + Key_O, this, "fileOpen" );
+                    Qt::CTRL + Qt::Key_O, this, "fileOpen" );
    connect( a, SIGNAL( activated(  ) ), this, SLOT( fileOpen(  ) ) );
    a->addTo( tb );
    a->addTo( menu );
    menu->insertSeparator(  );
    a = new QAction( QPixmap::fromMimeSource( "filesave.xpm" ), tr( "&Save..." ),
-                    CTRL + Key_S, this, "fileSave" );
+                    Qt::CTRL + Qt::Key_S, this, "fileSave" );
    connect( a, SIGNAL( activated(  ) ), this, SLOT( fileSave(  ) ) );
    a->addTo( tb );
    a->addTo( menu );
@@ -292,7 +292,7 @@ void TextEdit::setupFileActions(  )
    }
    menu->insertSeparator(  );
    a = new QAction( QPixmap::fromMimeSource( "fileprint.xpm" ),
-                    tr( "&Print..." ), CTRL + Key_P, this, "filePrint" );
+                    tr( "&Print..." ), Qt::CTRL + Qt::Key_P, this, "filePrint" );
    connect( a, SIGNAL( activated(  ) ), this, SLOT( filePrint(  ) ) );
    a->addTo( tb );
    a->addTo( menu );
@@ -316,28 +316,28 @@ void TextEdit::setupEditActions(  )
    QAction *a;
 
    a = new QAction( QPixmap::fromMimeSource( "editundo.xpm" ), tr( "&Undo" ),
-                    CTRL + Key_Z, this, "editUndo" );
+                    Qt::CTRL + Qt::Key_Z, this, "editUndo" );
    connect( a, SIGNAL( activated(  ) ), this, SLOT( editUndo(  ) ) );
    a->addTo( tb );
    a->addTo( menu );
    a = new QAction( QPixmap::fromMimeSource( "editredo.xpm" ), tr( "&Redo" ),
-                    CTRL + Key_Y, this, "editRedo" );
+                    Qt::CTRL + Qt::Key_Y, this, "editRedo" );
    connect( a, SIGNAL( activated(  ) ), this, SLOT( editRedo(  ) ) );
    a->addTo( tb );
    a->addTo( menu );
    menu->insertSeparator(  );
    a = new QAction( QPixmap::fromMimeSource( "editcopy.xpm" ), tr( "&Copy" ),
-                    CTRL + Key_C, this, "editCopy" );
+                    Qt::CTRL + Qt::Key_C, this, "editCopy" );
    connect( a, SIGNAL( activated(  ) ), this, SLOT( editCopy(  ) ) );
    a->addTo( tb );
    a->addTo( menu );
    a = new QAction( QPixmap::fromMimeSource( "editcut.xpm" ), tr( "Cu&t" ),
-                    CTRL + Key_X, this, "editCut" );
+                    Qt::CTRL + Qt::Key_X, this, "editCut" );
    connect( a, SIGNAL( activated(  ) ), this, SLOT( editCut(  ) ) );
    a->addTo( tb );
    a->addTo( menu );
    a = new QAction( QPixmap::fromMimeSource( "editpaste.xpm" ), tr( "&Paste" ),
-                    CTRL + Key_V, this, "editPaste" );
+                    Qt::CTRL + Qt::Key_V, this, "editPaste" );
    connect( a, SIGNAL( activated(  ) ), this, SLOT( editPaste(  ) ) );
    a->addTo( tb );
    a->addTo( menu );
@@ -373,7 +373,7 @@ void TextEdit::setupTextActions(  )
 
    actionTextBold =
       new QAction( QPixmap::fromMimeSource( "textbold.xpm" ), tr( "&Bold" ),
-                   CTRL + Key_B, this, "textBold" );
+                   Qt::CTRL + Qt::Key_B, this, "textBold" );
    connect( actionTextBold, SIGNAL( activated(  ) ), this,
             SLOT( textBold(  ) ) );
    actionTextBold->addTo( tb );
@@ -381,7 +381,7 @@ void TextEdit::setupTextActions(  )
    actionTextBold->setToggleAction( TRUE );
    actionTextItalic =
       new QAction( QPixmap::fromMimeSource( "textitalic.xpm" ), tr( "&Italic" ),
-                   CTRL + Key_I, this, "textItalic" );
+                   Qt::CTRL + Qt::Key_I, this, "textItalic" );
    connect( actionTextItalic, SIGNAL( activated(  ) ), this,
             SLOT( textItalic(  ) ) );
    actionTextItalic->addTo( tb );
@@ -389,7 +389,7 @@ void TextEdit::setupTextActions(  )
    actionTextItalic->setToggleAction( TRUE );
    actionTextUnderline =
       new QAction( QPixmap::fromMimeSource( "textunder.xpm" ),
-                   tr( "&Underline" ), CTRL + Key_U, this, "textUnderline" );
+                   tr( "&Underline" ), Qt::CTRL + Qt::Key_U, this, "textUnderline" );
    connect( actionTextUnderline, SIGNAL( activated(  ) ), this,
             SLOT( textUnderline(  ) ) );
    actionTextUnderline->addTo( tb );
@@ -404,19 +404,19 @@ void TextEdit::setupTextActions(  )
 
    actionAlignLeft =
       new QAction( QPixmap::fromMimeSource( "textleft.xpm" ), tr( "&Left" ),
-                   CTRL + Key_L, grp, "textLeft" );
+                   Qt::CTRL + Qt::Key_L, grp, "textLeft" );
    actionAlignLeft->setToggleAction( TRUE );
    actionAlignCenter =
       new QAction( QPixmap::fromMimeSource( "textcenter.xpm" ), tr( "C&enter" ),
-                   CTRL + Key_E, grp, "textCenter" );
+                   Qt::CTRL + Qt::Key_E, grp, "textCenter" );
    actionAlignCenter->setToggleAction( TRUE );
    actionAlignRight =
       new QAction( QPixmap::fromMimeSource( "textright.xpm" ), tr( "&Right" ),
-                   CTRL + Key_R, grp, "textRight" );
+                   Qt::CTRL + Qt::Key_R, grp, "textRight" );
    actionAlignRight->setToggleAction( TRUE );
    actionAlignJustify =
       new QAction( QPixmap::fromMimeSource( "textjustify.xpm" ),
-                   tr( "&Justify" ), CTRL + Key_J, grp, "textjustify" );
+                   tr( "&Justify" ), Qt::CTRL + Qt::Key_J, grp, "textjustify" );
    actionAlignJustify->setToggleAction( TRUE );
 
    grp->addTo( tb );
