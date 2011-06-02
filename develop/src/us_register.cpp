@@ -336,7 +336,7 @@ QString US_Register::encode( QString str1, QString str2 )
   STR1 = str1.upper();
   STR2 = str2.upper();
   
-  for ( unsigned int i = 0; i < STR1.length(); i++ )
+  for ( unsigned int i = 0; i < (unsigned int)STR1.length(); i++ )
   {
     c = STR1.at(i);
     sum1 += c.unicode();  
@@ -344,7 +344,7 @@ QString US_Register::encode( QString str1, QString str2 )
   
   SUM1 = QString::number( sum1 );
   
-  for ( unsigned int i = 0; i < STR2.length(); i++ )
+  for ( unsigned int i = 0; i < (unsigned int)STR2.length(); i++ )
   {
     c = STR2.at(i);
     sum2 += c.unicode();

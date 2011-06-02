@@ -139,18 +139,18 @@ comparative_entry US_Hydrodyn_Comparative::deserialize_comparative_entry( QStrin
       serial_error = "Error: invalid parameter file ";
    }
    int pos = 0;
-   ce.name = *(qsl.at(pos++));
-   ce.active = (bool)(*(qsl.at(pos++))).toInt();
-   ce.target = (*(qsl.at(pos++))).toDouble();
-   ce.rank = (*(qsl.at(pos++))).toInt();
-   ce.include_in_weight = (bool)(*(qsl.at(pos++))).toInt();
-   ce.weight = (*(qsl.at(pos++))).toDouble();
-   ce.buckets = (*(qsl.at(pos++))).toInt();
-   ce.min = (*(qsl.at(pos++))).toDouble();
-   ce.max = (*(qsl.at(pos++))).toDouble();
-   ce.store_reference = (bool)(*(qsl.at(pos++))).toInt();
-   ce.store_diff = (bool)(*(qsl.at(pos++))).toInt();
-   ce.store_abs_diff = (bool)(*(qsl.at(pos++))).toInt();
+   ce.name = qsl[pos++];
+   ce.active = (bool)qsl[pos++].toInt();
+   ce.target = qsl[pos++].toDouble();
+   ce.rank = qsl[pos++].toInt();
+   ce.include_in_weight = (bool)qsl[pos++].toInt();
+   ce.weight = qsl[pos++].toDouble();
+   ce.buckets = qsl[pos++].toInt();
+   ce.min = qsl[pos++].toDouble();
+   ce.max = qsl[pos++].toDouble();
+   ce.store_reference = (bool)qsl[pos++].toInt();
+   ce.store_diff = (bool)qsl[pos++].toInt();
+   ce.store_abs_diff = (bool)qsl[pos++].toInt();
    return ce;
 }   
 
@@ -180,54 +180,54 @@ comparative_info US_Hydrodyn_Comparative::deserialize_comparative_info( QString 
       serial_error = tr("Error: invalid parameter file (too few lines)");
       return ci;
    }
-   QStringList qsl0 = QStringList::split("|",*(qsl.at(0)));
+   QStringList qsl0 = QStringList::split("|",qsl[0]);
    if ( qsl0.size() < 2 )
    {
       serial_error = tr("Error: invalid parameter file (line 1 too short)");
       return ci;
    }
 
-   ci.rank = (bool)(*(qsl0.at(0))).toInt();
-   ci.weight_controls = (bool)(*(qsl0.at(1))).toInt();
+   ci.rank = (bool)qsl0[0].toInt();
+   ci.weight_controls = (bool)qsl0[1].toInt();
 
    int pos = 1;
-   ci.ce_s = deserialize_comparative_entry(*(qsl.at(pos++)));
+   ci.ce_s = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
       serial_error += QString(tr(" line %1")).arg(pos);
       return ci;
    }
-   ci.ce_D = deserialize_comparative_entry(*(qsl.at(pos++)));
+   ci.ce_D = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
       serial_error += QString(tr(" line %1")).arg(pos);
       return ci;
    }
-   ci.ce_sr = deserialize_comparative_entry(*(qsl.at(pos++)));
+   ci.ce_sr = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
       serial_error += QString(tr(" line %1")).arg(pos);
       return ci;
    }
-   ci.ce_fr = deserialize_comparative_entry(*(qsl.at(pos++)));
+   ci.ce_fr = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
       serial_error += QString(tr(" line %1")).arg(pos);
       return ci;
    }
-   ci.ce_rg = deserialize_comparative_entry(*(qsl.at(pos++)));
+   ci.ce_rg = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
       serial_error += QString(tr(" line %1")).arg(pos);
       return ci;
    }
-   ci.ce_tau = deserialize_comparative_entry(*(qsl.at(pos++)));
+   ci.ce_tau = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
       serial_error += QString(tr(" line %1")).arg(pos);
       return ci;
    }
-   ci.ce_eta = deserialize_comparative_entry(*(qsl.at(pos++)));
+   ci.ce_eta = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
       serial_error += QString(tr(" line %1")).arg(pos);
@@ -2345,7 +2345,7 @@ void US_Hydrodyn_Comparative::load_csv()
       return;
    }
 
-   comparative->path_csv = QFileInfo(*filenames.at(0)).dirPath(true);
+   comparative->path_csv = QFileInfo(filenames[0]).dirPath(true);
 
    for ( QStringList::iterator it = filenames.begin();
          it != filenames.end();
@@ -3146,7 +3146,7 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
    }
 
    int i = 0;
-   QStringList qsl_h = csv_parse_line(*qsl.at(0));
+   QStringList qsl_h = csv_parse_line(qsl[0]);
 
    for ( QStringList::iterator it = qsl_h.begin();
          it != qsl_h.end();

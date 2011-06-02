@@ -319,12 +319,12 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
                it++ )
       {
          QStringList qsl_tmp = QStringList::split(",",*it,true);
-         if ( ( map_sel_names.count(*qsl_tmp.at(0)) || it == qsl->begin() ) &&
-              ( qsl_tmp.count() <= 3 || *qsl_tmp.at(3) != "\"P(r) normed\"" ) )
+         if ( ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() ) &&
+              ( qsl_tmp.count() <= 3 || qsl_tmp[3] != "\"P(r) normed\"" ) )
          {
             vector < QString > array_to_save;
             // cout << "ok: " << *qsl_tmp.at(0) << endl;
-            if ( max_len < qsl_tmp.count() )
+            if ( max_len < (unsigned int)qsl_tmp.count() )
             {
                max_len = qsl_tmp.count();
             }
@@ -413,7 +413,7 @@ void US_Hydrodyn_Saxs_Load_Csv::save_selected()
                it++ )
       {
          QStringList qsl_tmp = QStringList::split(",",*it,true);
-         if ( map_sel_names.count(*qsl_tmp.at(0)) || it == qsl->begin() )
+         if ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() )
          {
             fprintf(of, "%s\n", (*it).ascii());
          }

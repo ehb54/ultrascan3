@@ -2083,7 +2083,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
       return;
    }
 
-   filename = *(filenames.at(0));
+   filename = filenames[0];
 
    if ( filename.contains(QRegExp("_t(|-\\d+).csv$", false)) )
    {
@@ -2164,46 +2164,46 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             QRegExp rx("^\"(Type; r:|P\\(r\\)|P\\(r\\) normed)\"$");
             QStringList new_qsl;
             double delta_r = 0e0;
-            for ( unsigned int i = 0; i < qsl.size(); i++ )
+            for ( unsigned int i = 0; i < (unsigned int)qsl.size(); i++ )
             {
                QStringList tmp2_qsl;
-               QStringList tmp_qsl = QStringList::split(",",*(qsl.at(i)),true);
+               QStringList tmp_qsl = QStringList::split(",",qsl[i],true);
                // if ( tmp_qsl.size() > 1 )
                // {
-               //      cout << QString("line %1 field 1 is <%1>\n").arg(i).arg(*(tmp_qsl.at(1)));
+               //      cout << QString("line %1 field 1 is <%1>\n").arg(i).arg(tmp_qsl[1]);
                // } else {
-               // cout << QString("line %1 size not greater than 1 value <%1>\n").arg(i).arg(*(qsl.at(i)));
+               // cout << QString("line %1 size not greater than 1 value <%1>\n").arg(i).arg(qsl[i]);
                // }
                if ( tmp_qsl.size() > 1 &&
-                    rx.search(*(tmp_qsl.at(1))) != -1 )
+                    rx.search(tmp_qsl[1]) != -1 )
                {
                   // cout << "trying to fix\n";
                   QStringList tmp2_qsl;
-                  tmp2_qsl.push_back(*(tmp_qsl.at(0)));
-                  if ( *(tmp_qsl.at(0)) == "\"Name\"" )
+                  tmp2_qsl.push_back(tmp_qsl[0]);
+                  if ( tmp_qsl[0] == "\"Name\"" )
                   {
                      tmp2_qsl.push_back("\"MW (Daltons)\"");
                      tmp2_qsl.push_back("\"Area\"");
-                     delta_r = (*tmp_qsl.at(3)).toDouble() - (*tmp_qsl.at(2)).toDouble();
+                     delta_r = tmp_qsl[3].toDouble() - tmp_qsl[2].toDouble();
                      cout << "delta_r found: " << delta_r << endl;
                   } else {
-                     tmp2_qsl.push_back(QString("%1").arg(get_mw(*(tmp_qsl.at(0)), false)));
+                     tmp2_qsl.push_back(QString("%1").arg(get_mw(tmp_qsl[0], false)));
                      double tmp_area = 0e0;
-                     for ( unsigned int j = 1; j < tmp_qsl.size(); j++ )
+                     for ( unsigned int j = 1; j < (unsigned int)tmp_qsl.size(); j++ )
                      {
-                        tmp_area += (*tmp_qsl.at(j)).toDouble();
+                        tmp_area += tmp_qsl[j].toDouble();
                      }
                      tmp2_qsl.push_back(QString("%1").arg(tmp_area * delta_r));
                   }
                   for ( unsigned int j = 1; j < tmp_qsl.size(); j++ )
                   {
-                     tmp2_qsl.push_back(*(tmp_qsl.at(j)));
+                     tmp2_qsl.push_back(tmp_qsl[j]);
                   }
                   new_qsl.push_back(tmp2_qsl.join(","));
                } else {
                   // cout << "skipped this line, regexp or length\n";
                   // simply push back blank lines or lines with only one entry
-                  new_qsl.push_back(*(qsl.at(i)));
+                  new_qsl.push_back(qsl[i]);
                }
             }
             // cout << "orginal csv:\n" << qsl.join("\n") << endl;
@@ -2225,10 +2225,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
 
          if ( qsl_headers.size() > 1 ) 
          {
-            QString ref = *(qsl_headers.at(0));
+            QString ref = qsl_headers[0];
             for ( unsigned int i = 1; i < qsl_headers.size(); i++ )
             {
-               if ( ref != *(qsl_headers.at(i)) )
+               if ( ref != qsl_headers[i] )
                {
                   QMessageBox mb(tr("UltraScan Warning"),
                                  tr("The csv file ") + filename + tr(" contains multiple different headers\n"
@@ -2247,7 +2247,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
 
          if ( !just_plotted_curves )
          {
-            qsl_r = QStringList::split(",",*(qsl_headers.at(0)),true);
+            qsl_r = QStringList::split(",",qsl_headers[0],true);
             if ( qsl_r.size() < 6 )
             {
                QMessageBox mb(tr("UltraScan Warning"),
@@ -2257,7 +2257,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                mb.exec();
                return;
             }
-            r.push_back((*qsl_r.at(4)).toDouble());
+            r.push_back(qsl_r[4].toDouble());
             
             for ( QStringList::iterator it = qsl_r.at(5); it != qsl_r.end(); it++ )
             {
@@ -2287,8 +2287,8 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             map < QString, bool > interp_msg_done;
             for ( unsigned int i = 1; i < filenames.size(); i++ )
             {
-               cout << QString("trying file %1 %1\n").arg(i).arg(*(filenames.at(i)));
-               QFile f2(*(filenames.at(i)));
+               cout << QString("trying file %1 %1\n").arg(i).arg(filenames[i]);
+               QFile f2(filenames[i]);
                if ( !f2.open(IO_ReadOnly) )
                {
                   QMessageBox::information( this, "UltraScan",
@@ -2319,37 +2319,37 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   for ( unsigned int i = 0; i < qsl2.size(); i++ )
                   {
                      QStringList tmp2_qsl;
-                     QStringList tmp_qsl = QStringList::split(",",*(qsl2.at(i)),true);
+                     QStringList tmp_qsl = QStringList::split(",",qsl2[i],true);
                      if ( tmp_qsl.size() > 1 &&
-                          rx.search(*(tmp_qsl.at(1))) != -1 )
+                          rx.search(tmp_qsl[1]) != -1 )
                      {
                         // cout << "trying to fix\n";
                         QStringList tmp2_qsl;
-                        tmp2_qsl.push_back(*(tmp_qsl.at(0)));
-                        if ( *(tmp_qsl.at(0)) == "\"Name\"" )
+                        tmp2_qsl.push_back(tmp_qsl[0]);
+                        if ( tmp_qsl[0] == "\"Name\"" )
                         {
                            tmp2_qsl.push_back("\"MW (Daltons)\"");
                            tmp2_qsl.push_back("\"Area\"");
-                           delta_r = (*tmp_qsl.at(3)).toDouble() - (*tmp_qsl.at(2)).toDouble();
+                           delta_r = tmp_qsl[3].toDouble() - tmp_qsl[2].toDouble();
                            cout << "delta_r found: " << delta_r << endl;
                         } else {
-                           tmp2_qsl.push_back(QString("%1").arg(get_mw(*(tmp_qsl.at(0)), false)));
+                           tmp2_qsl.push_back(QString("%1").arg(get_mw(tmp_qsl[0], false)));
                            double tmp_area = 0e0;
-                           for ( unsigned int j = 1; j < tmp_qsl.size(); j++ )
+                           for ( unsigned int j = 1; j < (unsigned int)tmp_qsl.size(); j++ )
                            {
-                              tmp_area += (*tmp_qsl.at(j)).toDouble();
+                              tmp_area += tmp_qsl[j].toDouble();
                            }
                            tmp2_qsl.push_back(QString("%1").arg(tmp_area * delta_r));
                         }
                         for ( unsigned int j = 1; j < tmp_qsl.size(); j++ )
                         {
-                           tmp2_qsl.push_back(*(tmp_qsl.at(j)));
+                           tmp2_qsl.push_back(tmp_qsl[j]);
                         }
                         new_qsl.push_back(tmp2_qsl.join(","));
                      } else {
                         // cout << "skipped this line, regexp or length\n";
                         // simply push back blank lines or lines with only one entry
-                        new_qsl.push_back(*(qsl.at(i)));
+                        new_qsl.push_back(qsl[i]);
                      }
                   }
                   // cout << "orginal csv:\n" << qsl.join("\n") << endl;
@@ -2369,10 +2369,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                }
                if ( qsl2_headers.size() > 1 ) 
                {
-                  QString ref = *(qsl2_headers.at(0));
+                  QString ref = qsl2_headers[0];
                   for ( unsigned int i = 1; i < qsl2_headers.size(); i++ )
                   {
-                     if ( ref != *(qsl2_headers.at(i)) )
+                     if ( ref != qsl2_headers[i] )
                      {
                         QMessageBox mb(tr("UltraScan Warning"),
                                        tr("The csv file ") + filename + tr(" contains multiple different headers\n"
@@ -2401,7 +2401,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                QString header2_tag;
                vector < double > r2;
 
-               qsl_r = QStringList::split(",",*(qsl2_headers.at(0)),true);
+               qsl_r = QStringList::split(",",qsl2_headers[0],true);
                if ( qsl_r.size() < 6 )
                {
                   QMessageBox mb(tr("UltraScan Warning"),
@@ -2411,7 +2411,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   mb.exec();
                   return;
                }
-               r2.push_back((*qsl_r.at(4)).toDouble());
+               r2.push_back(qsl_r[4].toDouble());
             
                for ( QStringList::iterator it = qsl_r.at(5); it != qsl_r.end(); it++ )
                {
@@ -2461,7 +2461,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   QStringList qsl_pr = QStringList::split(",",*it,true);
                   if ( qsl_pr.size() < 6 )
                   {
-                     QString msg = tr("The csv file ") + f2.name() + tr(" does not appear to contain sufficient p(r) values in data row " + *qsl_pr.at(0) + ", skipping\n");
+                     QString msg = tr("The csv file ") + f2.name() + tr(" does not appear to contain sufficient p(r) values in data row " + qsl_pr[0] + ", skipping\n");
                      QColor save_color = editor->color();
                      editor->setColor("red");
                      editor->append(msg);
@@ -2495,7 +2495,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                         vector < double > this_pr;
                         for ( unsigned int i = 0; i < 5; i++ )
                         {
-                           new_pr_fields.push_back(*qsl_pr.at(i));
+                           new_pr_fields.push_back(qsl_pr[i]);
                         }
                         for ( QStringList::iterator it2 = qsl_pr.at(5); it2 != qsl_pr.end(); it2++ )
                         {
@@ -2553,10 +2553,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             QStringList new_qsl;
             for ( unsigned int i = 0; i < qsl.size(); i++ )
             {
-               QString qs_tmp = *(qsl.at(i));
+               QString qs_tmp = qsl[i];
                if ( !qs_tmp.contains(QRegExp("(Average|Standard deviation)")) )
                {
-                  new_qsl << *(qsl.at(i));
+                  new_qsl << qsl[i];
                }
             }
             if ( new_qsl.size() != qsl.size() )
@@ -2614,7 +2614,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                it++ )
          {
             QStringList qsl_tmp = QStringList::split(",",*it,true);
-            qsl_names << *qsl_tmp.at(0);
+            qsl_names << qsl_tmp[0];
          }
 
          // ask for the names to load if more than one present (cb list? )
@@ -2718,29 +2718,29 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                it++ )
          {
             QStringList qsl_tmp = QStringList::split(",",*it,true);
-            if ( map_sel_names.count(*qsl_tmp.at(0)) )
+            if ( map_sel_names.count(qsl_tmp[0]) )
             {
-               cout << "loading: " << *qsl_tmp.at(0) << endl;
+               cout << "loading: " << qsl_tmp[0] << endl;
 
                pr.clear();
 
                // setup for avg mw's
                // 1st check the line to see if we have a mw
                {
-                  if ( (*qsl_tmp.at(1)).toFloat() > 0e0 )
+                  if ( qsl_tmp[1].toFloat() > 0e0 )
                   {
-                     (*remember_mw)[QFileInfo(*qsl_tmp.at(0)).fileName()] = (*qsl_tmp.at(1)).toFloat();
-                     (*remember_mw_source)[QFileInfo(*qsl_tmp.at(0)).fileName()] = "loaded from csv file";
+                     (*remember_mw)[QFileInfo(qsl_tmp[0]).fileName()] = qsl_tmp[1].toFloat();
+                     (*remember_mw_source)[QFileInfo(qsl_tmp[0]).fileName()] = "loaded from csv file";
                   } else {
-                     if ( (*remember_mw).count(QFileInfo(*qsl_tmp.at(0)).fileName()) )
+                     if ( (*remember_mw).count(QFileInfo(qsl_tmp[0]).fileName()) )
                      {
-                        (*remember_mw).erase(QFileInfo(*qsl_tmp.at(0)).fileName());
-                        (*remember_mw_source).erase(QFileInfo(*qsl_tmp.at(0)).fileName());
+                        (*remember_mw).erase(QFileInfo(qsl_tmp[0]).fileName());
+                        (*remember_mw_source).erase(QFileInfo(qsl_tmp[0]).fileName());
                      }
                   }
                }
 
-               float tmp_mw = get_mw(*qsl_tmp.at(0), false);
+               float tmp_mw = get_mw(qsl_tmp[0], false);
                pr_mw_avg += tmp_mw;
                pr_mws.push_back(tmp_mw);
 
@@ -2749,7 +2749,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                QStringList qsl_pr = QStringList::split(",",*it,true);
                if ( qsl_pr.size() < 6 )
                {
-                  QString msg = tr("The csv file ") + filename + tr(" does not appear to contain sufficient p(r) values in data row " + *qsl_tmp.at(0) + "\n");
+                  QString msg = tr("The csv file ") + filename + tr(" does not appear to contain sufficient p(r) values in data row " + qsl_tmp[0] + "\n");
                   QColor save_color = editor->color();
                   editor->setColor("red");
                   editor->append(msg);
@@ -2762,7 +2762,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   break;
                }
                qsl_data_lines_plotted << *it;
-               pr.push_back((*qsl_pr.at(4)).toDouble());
+               pr.push_back(qsl_pr[4].toDouble());
             
                for ( QStringList::iterator it = qsl_pr.at(5); it != qsl_pr.end(); it++ )
                {
@@ -2771,15 +2771,15 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
 
                if ( run_nnls || run_best_fit )
                {
-                  if ( *qsl_tmp.at(0) == nnls_target )
+                  if ( qsl_tmp[0] == nnls_target )
                   {
                      found_nnls_target = true;
                      nnls_B = pr;
                   } else {
                      found_nnls_model = true;
-                     nnls_A[*qsl_tmp.at(0)] = pr;
-                     nnls_x[*qsl_tmp.at(0)] = 0;
-                     nnls_mw[*qsl_tmp.at(0)] = (*qsl_tmp.at(1)).toDouble();
+                     nnls_A[qsl_tmp[0]] = pr;
+                     nnls_x[qsl_tmp[0]] = 0;
+                     nnls_mw[qsl_tmp[0]] = qsl_tmp[1].toDouble();
                   }
                }
 #if defined(DEBUG_PR)
@@ -2810,24 +2810,24 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   sum_pr2[i] += pr[i] * pr[i];
                   if ( isnan(pr[i]) ) 
                   {
-                     cout << QString("WARNING: isnan pr[%1] for %1\n").arg(i).arg(*qsl_tmp.at(0));
+                     cout << QString("WARNING: isnan pr[%1] for %1\n").arg(i).arg(qsl_tmp[0]);
                   }
                   if ( isnan(sum_pr[i]) ) 
                   {
-                     cout << QString("WARNING: isnan sum_pr[%1] for %1\n").arg(i).arg(*qsl_tmp.at(0));
+                     cout << QString("WARNING: isnan sum_pr[%1] for %1\n").arg(i).arg(qsl_tmp[0]);
                   }
                   if ( isnan(sum_pr2[i]) ) 
                   {
-                     cout << QString("WARNING: isnan sum_pr2[%1] for %1\n").arg(i).arg(*qsl_tmp.at(0));
+                     cout << QString("WARNING: isnan sum_pr2[%1] for %1\n").arg(i).arg(qsl_tmp[0]);
                   }
                }
                sum_count++;
 
                if ( !(create_avg && only_plot_stats) && !run_nnls && !run_best_fit )
                {
-                  (*remember_mw)[QFileInfo(filename).fileName() + " " + *qsl_tmp.at(0)] = tmp_mw;
-                  (*remember_mw_source)[QFileInfo(filename).fileName() + " " + *qsl_tmp.at(0)] = "loaded from csv";
-                  plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " " + *qsl_tmp.at(0));
+                  (*remember_mw)[QFileInfo(filename).fileName() + " " + qsl_tmp[0]] = tmp_mw;
+                  (*remember_mw_source)[QFileInfo(filename).fileName() + " " + qsl_tmp[0]] = "loaded from csv";
+                  plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " " + qsl_tmp[0]);
                }
             }
          }
@@ -4473,18 +4473,18 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
          units = 0.1;
          break;
       }
-      for ( unsigned int i = 1; i < qv.size(); i++ )
+      for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
          if ( qv[i].contains(QRegExp("^#")) )
          {
             continue;
          }
          QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
-         new_q = (*tokens.at(0)).toDouble();
-         new_I = (*tokens.at(Icolumn)).toDouble();
+         new_q = tokens[0].toDouble();
+         new_I = tokens[Icolumn].toDouble();
          if ( Icolumn2 )
          {
-            new_I2 = (*tokens.at(Icolumn2)).toDouble();
+            new_I2 = tokens[Icolumn2].toDouble();
             if ( dolog10 )
             {
                new_I2 = log10(new_I2);
@@ -5672,9 +5672,9 @@ void US_Hydrodyn_Saxs::load_gnom()
                   QStringList mwline = qsl_gnom.grep(qx_mw);
                   if ( mwline.size() )
                   {
-                     if ( qx_mw.search(*(mwline.at(0))) == -1 )
+                     if ( qx_mw.search(mwline[0]) == -1 )
                      {
-                        // cerr << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(*(mwline.at(0)));
+                        // cerr << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
                         gnom_mw = 0e0;
                      } else {
                         // cout << QString("mwline cap 0 <%1> cap 1 <%1>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));

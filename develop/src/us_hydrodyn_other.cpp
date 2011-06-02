@@ -1198,7 +1198,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          QString last_atom = "";
          if ( !qsl_atom.empty() )
          {
-            last_atom = *qsl_atom.at(qsl_atom.count() - 1);
+            last_atom = qsl_atom[qsl_atom.count() - 1];
          } else {
             editor->append("No ATOM lines found in DAMMIN/DAMMIF/DAMAVER file\n");
             f.close();
