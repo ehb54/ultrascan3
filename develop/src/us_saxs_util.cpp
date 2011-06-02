@@ -22,6 +22,8 @@
 #   undef SHOW_TIMING
 #endif
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 void US_Saxs_Scan::clear()
 {
    filename = "";

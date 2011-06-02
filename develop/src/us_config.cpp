@@ -2,6 +2,8 @@
 #include "../include/us_write_config.h"
 #include "../include/us_version.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 US_Config::US_Config( QObject* parent, const char* name)
    : QObject (parent, name)
 {

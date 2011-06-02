@@ -18,6 +18,8 @@
 #include "../include/color_white.xpm"
 #include "../include/color_yellow.xpm"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 // #define DEBUG_RESIDUE
 
 US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *p, const char *name) : QWidget( p, name)

@@ -1,6 +1,8 @@
 #include "../include/us_hydrodyn_bd_options.h"
 #include "../include/us_hydrodyn.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 US_Hydrodyn_BD_Options::US_Hydrodyn_BD_Options(BD_Options *bd_options, bool *bd_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame(p, name)
 {
    this->bd_options = bd_options;

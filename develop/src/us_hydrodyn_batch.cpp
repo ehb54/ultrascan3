@@ -11,6 +11,8 @@
 #   define SLASH "\\"
 #endif
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #if defined(OSX)
 #   define BW_LISTBOX
 #endif
@@ -453,7 +455,9 @@ void US_Hydrodyn_Batch::setupGUI()
    m->insertItem( tr("&File"), file );
    file->insertItem( tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
    file->insertItem( tr("Save"),  this, SLOT(save()),    ALT+Key_S );
+#ifndef NO_EDITOR_PRINT
    file->insertItem( tr("Print"), this, SLOT(print()),   ALT+Key_P );
+#endif
    file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
    editor->setWordWrap (((US_Hydrodyn *)us_hydrodyn)->advanced_config.scroll_editor ? QTextEdit::NoWrap : QTextEdit::WidgetWidth);
    editor->setMargin(5);
@@ -1711,6 +1715,7 @@ void US_Hydrodyn_Batch::save()
 
 void US_Hydrodyn_Batch::print()
 {
+#ifndef NO_EDITOR_PRINT
    const int MARGIN = 10;
    printer.setPageSize(QPrinter::Letter);
 
@@ -1735,6 +1740,7 @@ void US_Hydrodyn_Batch::print()
       }
       p.end();            // send job to printer
    }
+#endif
 }
 
 void US_Hydrodyn_Batch::clear_display()

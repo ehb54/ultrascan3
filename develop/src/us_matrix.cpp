@@ -1,6 +1,7 @@
 #include "../include/us_matrix.h"
 #include <cerrno>
 
+// note: this program uses cout and/or cerr and this should be replaced
 
 void m3vm(double ***matrix, double **vector, unsigned int points)
    /*

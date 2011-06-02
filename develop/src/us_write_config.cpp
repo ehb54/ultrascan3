@@ -1,6 +1,8 @@
 #include "../include/us_write_config.h"
 #include <qmessagebox.h>
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 US_Write_Config::US_Write_Config( QObject* parent, const char* name) 
    : QObject( parent, name) 
 {

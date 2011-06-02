@@ -53,6 +53,8 @@ static struct timeval start_tv, end_tv;
 #define DOTSOMO      ""
 #define DOTSOMOCAP   ""
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #if defined(TO_DO)
 static void outward_translate_1_sphere_1_fixed(
                                                float *r1,  // radius of sphere 1

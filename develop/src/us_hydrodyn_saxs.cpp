@@ -22,6 +22,8 @@
 #  define isnan _isnan
 #endif
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 // #define SAXS_DEBUG
 // #define SAXS_DEBUG2
 // #define SAXS_DEBUG_F
@@ -652,7 +654,9 @@ void US_Hydrodyn_Saxs::setupGUI()
    m->insertItem( tr("&File"), file );
    file->insertItem( tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
    file->insertItem( tr("Save"),  this, SLOT(save()),    ALT+Key_S );
+#ifndef NO_EDITOR_PRINT
    file->insertItem( tr("Print"), this, SLOT(print()),   ALT+Key_P );
+#endif
    file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
    editor->setWordWrap (QTextEdit::WidgetWidth);
    // editor->setWordWrap (QTextEdit::NoWrap);
@@ -4204,6 +4208,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 
 void US_Hydrodyn_Saxs::print()
 {
+#ifndef NO_EDITOR_PRINT
    const int MARGIN = 10;
    printer.setPageSize(QPrinter::Letter);
 
@@ -4228,6 +4233,7 @@ void US_Hydrodyn_Saxs::print()
       }
       p.end();            // send job to printer
    }
+#endif
 }
 
 void US_Hydrodyn_Saxs::load_saxs(QString filename)

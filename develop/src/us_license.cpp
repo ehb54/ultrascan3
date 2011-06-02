@@ -1,5 +1,7 @@
 #include "../include/us_license.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, name, false)
 {
    int spacing=5, column1 = 90, column2 = 10, column3=110, column4=60;

@@ -1,5 +1,7 @@
 #include "../include/us_util.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 US_Help::US_Help(QWidget *parent, const char* name) : QWidget( parent, name )
 {
   USglobal = new US_Config();

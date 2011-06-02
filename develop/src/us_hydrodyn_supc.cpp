@@ -12,6 +12,8 @@
 #include "../include/us_math.h"
 #include <qregexp.h>
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 // #define OLD_WAY_CHECK
 #define  PI M_PI
 // below are moved to variable values

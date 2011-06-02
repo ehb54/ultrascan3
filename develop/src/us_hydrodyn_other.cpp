@@ -39,6 +39,8 @@
 #   define isnan _isnan
 #endif
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define TOLERANCE overlap_tolerance
 
 void US_Hydrodyn::read_residue_file()

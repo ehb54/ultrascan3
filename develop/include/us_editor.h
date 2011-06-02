@@ -20,7 +20,9 @@
 #include <qmessagebox.h>
 #include <qpaintdevicemetrics.h>
 #include <qpainter.h>
-#include <qpdevmet.h>
+#ifndef QT4
+# include <qpdevmet.h>
+#endif
 #include <qpopupmenu.h>
 #include <qprinter.h>
 #include <qsimplerichtext.h>
@@ -59,7 +61,9 @@ protected:
 private:
    int flag;
    QMenuBar *m;
+#ifndef NO_EDITOR_PRINT
    QPrinter printer;
+#endif
 };
 
 /****************************************************************************

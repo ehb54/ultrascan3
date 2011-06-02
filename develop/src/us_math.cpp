@@ -1,5 +1,7 @@
 #include "../include/us_math.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 unsigned long square(int num)
 {
    return num * num;

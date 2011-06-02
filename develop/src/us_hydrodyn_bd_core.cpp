@@ -19,6 +19,8 @@
 #   define SLASH "\\"
 #endif
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 ostream& operator<<(ostream& out, const point& c)
 {
    out << "(" << c.axis[0] << "," << c.axis[1] << "," << c.axis[2] << ")";

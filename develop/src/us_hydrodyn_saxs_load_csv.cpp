@@ -2,6 +2,8 @@
 #include "../include/us_hydrodyn.h"
 #include "qregexp.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
                                                      QString msg,
                                                      QStringList *qsl_names,

@@ -2,6 +2,8 @@
 #include "../include/us_revision.h"
 #include <qtabwidget.h>
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 US_Hydrodyn_Save::US_Hydrodyn_Save(
                                    save_info *save, 
                                    void *us_hydrodyn, 

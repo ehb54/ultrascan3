@@ -9,8 +9,10 @@ US_Editor::US_Editor( int flag, QWidget * parent, const char *name ) : QFrame( p
 
       Q_CHECK_PTR( file );
       m->insertItem( tr( "&File" ), file );
+#ifndef NO_EDITOR_PRINT
       file->insertItem( tr( "Print" ), this, SLOT( print(  ) ), ALT + Key_P );
       file->insertSeparator(  );
+#endif
       file->insertItem( tr( "Close" ), this, SLOT( closeDoc(  ) ),
                         ALT + Key_W );
    }
@@ -29,7 +31,9 @@ US_Editor::US_Editor( int flag, QWidget * parent, const char *name ) : QFrame( p
       file->insertItem( tr( "Save As" ), this, SLOT( saveAs(  ) ),
                         ALT + Key_A );
       file->insertSeparator(  );
+#ifndef NO_EDITOR_PRINT
       file->insertItem( tr( "Print" ), this, SLOT( print(  ) ), ALT + Key_P );
+#endif
       file->insertSeparator(  );
       file->insertItem( tr( "Close" ), this, SLOT( closeDoc(  ) ),
                         ALT + Key_W );
@@ -161,8 +165,10 @@ void US_Editor::update_font(  )
    e->setFont( ft );
 }
 
+
 void US_Editor::print(  )
 {
+#ifndef NO_EDITOR_PRINT
    const int MARGIN = 10;
 
    printer.setPageSize( QPrinter::Letter );
@@ -192,6 +198,7 @@ void US_Editor::print(  )
       }
       p.end(  );                // send job to printer
    }
+#endif
 }
 
 void US_Editor::closeDoc(  )

@@ -7,6 +7,7 @@
 
 // includes and defines need cleanup
 
+
 #include "../include/us_hydrodyn.h"
 #include <qregexp.h>
 
@@ -20,6 +21,8 @@
 #   include <io.h>
 #   define SLASH "\\"
 #endif
+
+// note: this program uses cout and/or cerr and this should be replaced
 
 // ---------- create anaflex files
 // ---------- create one for each mode that is selected
