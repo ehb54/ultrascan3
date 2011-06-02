@@ -943,8 +943,6 @@ void US_Hydrodyn_Save::setupGUI()
    tw_possible = new QTabWidget(this);
    // tw_possible->setTabBar(tb_possible);
    // tw_possible->tabBar()
-   tw_possible->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(tw_possible, SIGNAL(currentChanged(QWidget *)), SLOT(tab_changed(QWidget *)));
    QListBox *this_lb;
 
    for ( unsigned int i = 0; i < field.size(); i++ )
@@ -974,6 +972,8 @@ void US_Hydrodyn_Save::setupGUI()
       lb_possible[i]->setCurrentItem(0);
       lb_possible[i]->setSelected(0, false);
    }
+   tw_possible->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(tw_possible, SIGNAL(currentChanged(QWidget *)), SLOT(tab_changed(QWidget *)));
 
    lbl_selected = new QLabel(tr("Parameters selected"), this);
    Q_CHECK_PTR(lbl_selected);
