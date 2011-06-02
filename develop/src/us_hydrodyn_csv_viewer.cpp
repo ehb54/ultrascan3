@@ -2,8 +2,6 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_csv_viewer.h"
 
-// note: this program uses cout and/or cerr and this should be replaced
-
 US_Hydrodyn_Csv_Viewer::US_Hydrodyn_Csv_Viewer(
                                                csv csv1,
                                                void *us_hydrodyn, 

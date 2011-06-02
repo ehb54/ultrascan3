@@ -22,8 +22,6 @@
 #   define SLASH "\\"
 #endif
 
-// note: this program uses cout and/or cerr and this should be replaced
-
 // ---------- create anaflex files
 // ---------- create one for each mode that is selected
 int US_Hydrodyn::create_anaflex_files()
