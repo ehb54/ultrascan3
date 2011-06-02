@@ -644,3 +644,13 @@ bool US_License::save( void )
   return isOK;
 }
 
+QString US_License::trim( const QString& st )
+{
+   QString s = st;
+   QRegExp blanks( "(^\\s+)|(\\s+$)" );
+
+   s.replace( blanks, "" );
+   return s;
+}
+
+

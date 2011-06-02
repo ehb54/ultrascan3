@@ -116,16 +116,17 @@ class US_GUI_EXTERN US_License : public US_Widgets
     void update            ( void );
     void update_response   ( const QString& );
     void request_response  ( const QString& );
+    QString trim           ( const QString& );
 
-    void update_firstname  ( const QString& s ){ firstname   = s; };
-    void update_lastname   ( const QString& s ){ lastname    = s; };
-    void update_institution( const QString& s ){ institution = s; };
-    void update_address    ( const QString& s ){ address     = s; };
-    void update_city       ( const QString& s ){ city        = s; };
-    void update_state      ( const QString& s ){ state       = s; };
-    void update_zip        ( const QString& s ){ zip         = s; };
-    void update_phone      ( const QString& s ){ phone       = s; };
-    void update_email      ( const QString& s ){ email       = s; };
-    void update_licensetype( const QString& s ){ licensetype = s; };
+    void update_firstname  ( const QString& s ){ firstname   = trim( s ); };
+    void update_lastname   ( const QString& s ){ lastname    = trim( s ); };
+    void update_institution( const QString& s ){ institution = trim( s ); };
+    void update_address    ( const QString& s ){ address     = trim( s ); };
+    void update_city       ( const QString& s ){ city        = trim( s ); };
+    void update_state      ( const QString& s ){ state       = trim( s ); };
+    void update_zip        ( const QString& s ){ zip         = trim( s ); };
+    void update_phone      ( const QString& s ){ phone       = trim( s ); };
+    void update_email      ( const QString& s ){ email       = trim( s ); };
+    void update_licensetype( const QString& s ){ licensetype = trim( s ); };
 };
 #endif
