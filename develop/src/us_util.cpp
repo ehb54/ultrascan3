@@ -496,10 +496,12 @@ int copy(const QString &sourcefile, const QString &destfile)
 */
 void view_image(const QString &filename)
 {
+#ifndef QT4
    US_ImageViewer *us_imgviewer;
    us_imgviewer = new US_ImageViewer(0, "new window", Qt::WDestructiveClose | Qt::WResizeNoErase);
    us_imgviewer->openFile(filename);
    us_imgviewer->show();   
+#endif
 }
 
 

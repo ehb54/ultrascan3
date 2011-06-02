@@ -47,7 +47,7 @@ US_Editor::US_Editor( int flag, QWidget * parent, const char *name ) : QFrame( p
    ft.setPointSize( 11 );
    ft.setBold( true );
    e->setFont( ft );
-   e->setTextFormat( QTextEdit::PlainText );
+   e->setTextFormat( Qt::PlainText );
    e->setWordWrap( QTextEdit::WidgetWidth );
    if ( flag == 0 )
    {
@@ -818,7 +818,7 @@ void TextEdit::colorChanged( const QColor & c )
 
 void TextEdit::alignmentChanged( int a )
 {
-   if ( ( a == AlignAuto ) || ( a & Qt::AlignLeft ) )
+   if ( ( a == Qt::AlignAuto ) || ( a & Qt::AlignLeft ) )
       actionAlignLeft->setOn( TRUE );
    else if ( ( a & Qt::AlignHCenter ) )
       actionAlignCenter->setOn( TRUE );

@@ -23,8 +23,9 @@
 
 #include "us.h"
 #include "us_extern.h"
-#include "us_imgviewer.h"
-
+#ifndef QT4
+# include "us_imgviewer.h"
+#endif
 
 //standard C and C++ defs:
 

@@ -1062,7 +1062,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
 
    QHBoxLayout *hbl_method = new QHBoxLayout;
 
-   QGridLayout *gl_thresh = new QGridLayout;
+   QGridLayout *gl_thresh = new QGridLayout( 0, 0 );
 
    int j = 0;
    gl_thresh->addMultiCellWidget(lbl_info_model_creation, j, j, 0, 1); j++;
@@ -1096,7 +1096,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    hbl_method_group->addLayout(vbl_method);
    hbl_method_group->addSpacing(3);
 
-   QGridLayout *gl_simu = new QGridLayout;
+   QGridLayout *gl_simu = new QGridLayout( 0, 0 );
    j = 0;
    gl_simu->addWidget(lbl_nmol, j, 0);
    gl_simu->addWidget(le_nmol, j, 1); j++;

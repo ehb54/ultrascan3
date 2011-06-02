@@ -124,7 +124,7 @@ void US_Hydrodyn_DMD_Options::setupGUI()
    vbl_top->addWidget(lbl_info);
    vbl_top->addSpacing(3);
 
-   QGridLayout *gl_thresh = new QGridLayout;
+   QGridLayout *gl_thresh = new QGridLayout( 0, 0 );
 
    int j = 0;
    gl_thresh->addMultiCellWidget(lbl_info_model_creation, j, j, 0, 1); j++;
