@@ -469,6 +469,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 #endif
 
       void calc_mw();             // after pdb (bead_model?) loaded, go through and compute PDB_model.mw (& later PDB_chain.mw?)
+      void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
 
    public slots:
       void display_default_differences();
@@ -541,7 +542,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void residue();
       void saxs();
       void select_model(int);
-      void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
       int create_beads(QString *error_string, bool quiet = false); // turn pdb/atom model into bead_model
       void get_atom_map(PDB_model *);
       int check_for_missing_atoms(QString *error_string, PDB_model *);
