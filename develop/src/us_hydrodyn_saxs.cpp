@@ -2195,7 +2195,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                      }
                      tmp2_qsl.push_back(QString("%1").arg(tmp_area * delta_r));
                   }
-                  for ( unsigned int j = 1; j < tmp_qsl.size(); j++ )
+                  for ( unsigned int j = 1; j < (unsigned int)tmp_qsl.size(); j++ )
                   {
                      tmp2_qsl.push_back(tmp_qsl[j]);
                   }
@@ -2226,7 +2226,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
          if ( qsl_headers.size() > 1 ) 
          {
             QString ref = qsl_headers[0];
-            for ( unsigned int i = 1; i < qsl_headers.size(); i++ )
+            for ( unsigned int i = 1; i < (unsigned int)qsl_headers.size(); i++ )
             {
                if ( ref != qsl_headers[i] )
                {
@@ -2288,7 +2288,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
          if ( filenames.size() > 1 )
          {
             map < QString, bool > interp_msg_done;
-            for ( unsigned int i = 1; i < filenames.size(); i++ )
+            for ( unsigned int i = 1; i < (unsigned int)filenames.size(); i++ )
             {
                cout << QString("trying file %1 %1\n").arg(i).arg(filenames[i]);
                QFile f2(filenames[i]);
@@ -2319,7 +2319,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   QRegExp rx("^\"(Type; r:|P\\(r\\)|P\\(r\\) normed)\"$");
                   QStringList new_qsl;
                   double delta_r = 0e0;
-                  for ( unsigned int i = 0; i < qsl2.size(); i++ )
+                  for ( unsigned int i = 0; i < (unsigned int)qsl2.size(); i++ )
                   {
                      QStringList tmp2_qsl;
                      QStringList tmp_qsl = QStringList::split(",",qsl2[i],true);
@@ -2344,7 +2344,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                            }
                            tmp2_qsl.push_back(QString("%1").arg(tmp_area * delta_r));
                         }
-                        for ( unsigned int j = 1; j < tmp_qsl.size(); j++ )
+                        for ( unsigned int j = 1; j < (unsigned int)tmp_qsl.size(); j++ )
                         {
                            tmp2_qsl.push_back(tmp_qsl[j]);
                         }
@@ -2373,7 +2373,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                if ( qsl2_headers.size() > 1 ) 
                {
                   QString ref = qsl2_headers[0];
-                  for ( unsigned int i = 1; i < qsl2_headers.size(); i++ )
+                  for ( unsigned int i = 1; i < (unsigned int)qsl2_headers.size(); i++ )
                   {
                      if ( ref != qsl2_headers[i] )
                      {
@@ -2535,7 +2535,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
          // append all currently plotted p(r)s to qsl
          bool added_interpolate_msg = false;
          QString bin_msg = "";
-         for ( unsigned int i = 0; i < qsl_plotted_pr_names.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int)qsl_plotted_pr_names.size(); i++ )
          {
             vector < double > npr = interpolate(r, plotted_r[i], plotted_pr_not_normalized[i]);
             if ( !added_interpolate_msg && r.size() > 1 )
@@ -2562,7 +2562,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
          if ( filenames.size() > 1 )
          {
             QStringList new_qsl;
-            for ( unsigned int i = 0; i < qsl.size(); i++ )
+            for ( unsigned int i = 0; i < (unsigned int)qsl.size(); i++ )
             {
                QString qs_tmp = qsl[i];
                if ( !qs_tmp.contains(QRegExp("(Average|Standard deviation)")) )
