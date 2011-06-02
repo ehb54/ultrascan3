@@ -15,7 +15,9 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame(p, name)
   y[0] = 1;
   y[1] = 2;
 
+#ifndef QT4
   uint c1;
+#endif
 
   setPalette(QPalette(USglobal->global_colors.cg_frame, 
                       USglobal->global_colors.cg_frame, 

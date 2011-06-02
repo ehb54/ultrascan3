@@ -494,7 +494,12 @@ int copy(const QString &sourcefile, const QString &destfile)
   e->show();
   }
 */
-void view_image(const QString &filename)
+void view_image(
+                const QString 
+#ifndef QT4
+                &filename
+#endif
+                )
 {
 #ifndef QT4
    US_ImageViewer *us_imgviewer;

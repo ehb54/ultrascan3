@@ -6,6 +6,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_math.h"
+#include "qwt_symbol.h"
 
 #include <time.h>
 #include <qstringlist.h>
@@ -6093,7 +6094,9 @@ void US_Hydrodyn_Saxs::set_guinier()
               plotted_guinier_plotted[i] == true )
          {
             plotted_guinier_plotted[i] = false;
+#ifndef QT4
             plot_saxs->removeCurve(plotted_Gp[i]);
+#endif
          }
          
          // remove the symbols & redraw the line
