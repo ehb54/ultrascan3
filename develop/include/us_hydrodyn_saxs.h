@@ -19,6 +19,10 @@
 #include <qprinter.h>
 
 #include <qwt_plot.h>
+#ifdef QT4
+# include "qwt_plot_grid.h"
+# include "qwt_plot_curve.h"
+#endif
 
 #include "us_util.h"
 #include "us_hydrodyn_pdbdefs.h"
@@ -154,6 +158,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QwtPlot *plot_pr;
       QwtPlot *plot_saxs;
+#ifdef QT4
+      QwtPlotGrid  *grid_pr;
+      QwtPlotGrid  *grid_saxs;
+#endif
 
       QProgressBar *progress_pr;
       QProgressBar *progress_saxs;
@@ -178,12 +186,20 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < vector <PDB_atom> >                    bead_models;
       vector < unsigned int >                         selected_models;
       vector < QColor >                               plot_colors;
+#ifndef QT4
       vector < long >                                 plotted_Iq;  // curve keys
+#else
+      vector < QwtPlotCurve * >                       plotted_Iq_curves;
+#endif
       vector < vector < double > >                    plotted_q;
       vector < vector < double > >                    plotted_q2;  // q^2 for guinier plots
       vector < vector < double > >                    plotted_I;
 
+#ifndef QT4
       map    < unsigned int, long >                   plotted_Gp;  // guinier points
+#else
+      map    < unsigned int, QwtPlotCurve * >         plotted_Gp_curves;  // guinier points
+#endif
       map    < unsigned int, bool >                   plotted_guinier_valid;
       map    < unsigned int, bool >                   plotted_guinier_plotted;
       map    < unsigned int, double >                 plotted_guinier_lowq2;

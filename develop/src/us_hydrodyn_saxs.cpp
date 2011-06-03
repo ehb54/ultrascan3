@@ -592,11 +592,19 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setOutlineStyle(Qwt::VLine);
    plot_saxs->enableGridXMin();
    plot_saxs->enableGridYMin();
+#else
+   grid_saxs = new QwtPlotGrid;
+   grid_saxs->enableXMin( true );
+   grid_saxs->enableYMin( true );
 #endif
    plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
 #ifndef QT4
    plot_saxs->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_saxs->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#else
+   grid_saxs->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_saxs->attach( plot_saxs );
 #endif
    plot_saxs->setAxisTitle(QwtPlot::xBottom, cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") :  tr("q (1/Angstrom)"));
    plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)"));
@@ -627,11 +635,19 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_pr->setOutlineStyle(Qwt::VLine);
    plot_pr->enableGridXMin();
    plot_pr->enableGridYMin();
+#else
+   grid_pr = new QwtPlotGrid;
+   grid_pr->enableXMin( true );
+   grid_pr->enableYMin( true );
 #endif
    plot_pr->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
 #ifndef QT4
    plot_pr->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_pr->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#else
+   grid_pr->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_pr->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_pr->attach( plot_pr );
 #endif
    plot_pr->setAxisTitle(QwtPlot::xBottom, tr("Distance (Angstrom)"));
    plot_pr->setAxisTitle(QwtPlot::yLeft, tr("Frequency"));
@@ -2003,6 +2019,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
 #ifndef QT4
    long ppr = plot_pr->insertCurve("P(r) vs r");
+#else
+   QwtPlotCurve *curve = new QwtPlotCurve( "P(r) vs r" );
 #endif
    vector < double > r;
    vector < double > pr;
@@ -2025,6 +2043,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
 #ifndef QT4
    plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
+#else
+   curve->setStyle( QwtPlotCurve::Lines );
 #endif
    plotted_r.push_back(r);
    plotted_pr.push_back(pr);
@@ -2042,6 +2062,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #ifndef QT4
    plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)r.size());
    plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+#else
+   curve->setData(
+                  (double *)&( r[ 0 ] ), 
+                  (double *)&( pr[ 0 ] ),
+                  (int)r.size()
+                  );
+   curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
+   curve->attach( plot_pr );
 #endif
    plot_pr->replot();
 
@@ -4087,6 +4115,8 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 #endif
 #ifndef QT4
       long Iq = plot_saxs->insertCurve("I(q) vs q");
+#else
+      QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
 #endif
 
       QString name = 
@@ -4103,11 +4133,18 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
 
+#ifndef QT4
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
+#else
+      plotted_iq_names_to_pos[plot_name] = plotted_Iq_curves.size();
+#endif
 
 #ifndef QT4
       plotted_Iq.push_back(Iq);
       plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
+#else
+      plotted_Iq_curves.push_back( curve );
+      curve->setStyle( QwtPlotCurve::Lines );
 #endif
       plotted_q.push_back(q);
       {
@@ -4133,6 +4170,15 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                               (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
                               (double *)&(plotted_I[p][0]), q_points);
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+#else
+      curve->setData(
+                     cb_guinier->isChecked() ?
+                     (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
+                     (double *)&(plotted_I[p][0]),
+                     q_points
+                     );
+      curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
+      curve->attach( plot_saxs );
 #endif
       plot_saxs->replot();
 
@@ -4704,13 +4750,21 @@ void US_Hydrodyn_Saxs::clear_plot_saxs()
    qsl_plotted_iq_names.clear();
    dup_plotted_iq_name_check.clear();
    plotted_iq_names_to_pos.clear();
+#ifndef QT4
    plotted_Iq.clear();
+#else
+   plotted_Iq_curves.clear();
+#endif
    plotted_q.clear();
    plotted_q2.clear();
    plotted_I.clear();
    plot_saxs->clear();
    plot_saxs->replot();
+#ifndef QT4
    plotted_Gp.clear();
+#else
+   plotted_Gp_curves.clear();
+#endif
    plotted_guinier_valid.clear();
    plotted_guinier_plotted.clear();
    plotted_guinier_lowq2.clear();
@@ -5546,6 +5600,9 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
 #ifndef QT4
    long ppr = plot_pr->insertCurve("p(r) vs r");
    plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
+#else
+   QwtPlotCurve *curve = new QwtPlotCurve( "P(r) vs r" );
+   curve->setStyle( QwtPlotCurve::Lines );
 #endif
    plotted_r.push_back(r);
 
@@ -5571,6 +5628,14 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
 #ifndef QT4
    plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
    plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+#else
+   curve->setData(
+                  (double *)&( r[ 0 ] ), 
+                  (double *)&( pr[ 0 ] ),
+                  (int)r.size()
+                  );
+   curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
+   curve->attach( plot_pr );
 #endif
    plot_pr->replot();
                   
@@ -5869,16 +5934,24 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
    }
    qsl_plotted_iq_names << plot_name;
    dup_plotted_iq_name_check[plot_name] = true;
-   plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
       
 #ifndef QT4
+   plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
+
    long Iq = plot_saxs->insertCurve("I(q) vs q");
    plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
+#else
+   plotted_iq_names_to_pos[plot_name] = plotted_Iq_curves.size();
+
+   QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
+   curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
    plotted_q.push_back(q);
 #ifndef QT4
    plotted_Iq.push_back(Iq);
+#else
+   plotted_Iq_curves.push_back( curve );
 #endif
    {
       vector < double > q2(q.size());
@@ -5889,9 +5962,8 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
       plotted_q2.push_back(q2);
    }
    plotted_I.push_back(I);
-#ifndef QT4
+
    unsigned int q_points = q.size();
-#endif
    unsigned int p = plotted_q.size() - 1;
 
 #ifndef QT4
@@ -5900,6 +5972,15 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
                            (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
                            (double *)&(plotted_I[p][0]), q_points);
    plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+#else
+   curve->setData(
+                  cb_guinier->isChecked() ?
+                  (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
+                  (double *)&(plotted_I[p][0]),
+                  q_points
+                  );
+   curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
+   curve->attach( plot_saxs );
 #endif
 
    // figure out how to plot points for guinier plots
@@ -6057,7 +6138,13 @@ void US_Hydrodyn_Saxs::set_guinier()
 
    rescale_plot();
 
-   for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
+   for ( unsigned int i = 0;
+#ifndef QT4
+         i < plotted_Iq.size();
+#else
+         i < plotted_Iq_curves.size();
+#endif
+         i++ )
    {
 
       if ( cb_guinier->isChecked() )
@@ -6072,6 +6159,16 @@ void US_Hydrodyn_Saxs::set_guinier()
             plot_saxs->setCurveData(plotted_Gp[i], (double *)&(plotted_guinier_x[i][0]), (double *)&(plotted_guinier_y[i][0]), 2);
 
             plot_saxs->setCurvePen(plotted_Gp[i], QPen("dark red", 2, SolidLine));
+#else
+            plotted_Gp_curves[i] = new QwtPlotCurve( "I(q) vs q" );
+            plotted_Gp_curves[i]->setStyle( QwtPlotCurve::Lines );
+            plotted_Gp_curves[i]->setData(
+                           (double *)&(plotted_guinier_x[i][0]), 
+                           (double *)&(plotted_guinier_y[i][0]), 
+                           2
+                           );
+            plotted_Gp_curves[i]->setPen( QPen( QColor( "dark red" ), 2, Qt::SolidLine ) );
+            plotted_Gp_curves[i]->attach( plot_saxs );
 #endif            
             plotted_guinier_plotted[i] = true;
          }
@@ -6086,6 +6183,9 @@ void US_Hydrodyn_Saxs::set_guinier()
 #ifndef QT4
          plot_saxs->setCurveStyle(plotted_Iq[i], QwtCurve::NoCurve);
          plot_saxs->setCurveSymbol(plotted_Iq[i], QwtSymbol(sym));
+#else
+         plotted_Iq_curves[i]->setStyle( QwtPlotCurve::NoCurve );
+         plotted_Iq_curves[i]->setSymbol( QwtSymbol( sym ) );
 #endif
          
       } else {
@@ -6096,6 +6196,8 @@ void US_Hydrodyn_Saxs::set_guinier()
             plotted_guinier_plotted[i] = false;
 #ifndef QT4
             plot_saxs->removeCurve(plotted_Gp[i]);
+#else
+            plotted_Gp_curves[i]->detach();
 #endif
          }
          
@@ -6108,6 +6210,9 @@ void US_Hydrodyn_Saxs::set_guinier()
          plot_saxs->setCurvePen(plotted_Iq[i], QPen(plot_colors[i % plot_colors.size()], 2, SolidLine));
 #else
          sym.setStyle(QwtSymbol::NoSymbol);
+         plotted_Iq_curves[i]->setSymbol( QwtSymbol( sym ) );
+         plotted_Iq_curves[i]->setStyle( QwtPlotCurve::Lines );
+         plotted_Iq_curves[i]->setPen( QPen( plot_colors[ i % plot_colors.size() ], 2, Qt::SolidLine ) );
 #endif
       }
 
@@ -6116,6 +6221,12 @@ void US_Hydrodyn_Saxs::set_guinier()
                               cb_guinier->isChecked() ?
                               (double *)&(plotted_q2[i][0]) : (double *)&(plotted_q[i][0]), 
                               (double *)&(plotted_I[i][0]), plotted_q[i].size());
+#else
+      plotted_Iq_curves[i]->setData(
+                                    cb_guinier->isChecked() ?
+                                    (double *)&(plotted_q2[i][0]) : (double *)&(plotted_q[i][0]), 
+                                    (double *)&(plotted_I[i][0]), plotted_q[i].size()
+                                    );
 #endif
    }
    plot_saxs->setAxisTitle(QwtPlot::xBottom, cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") :  tr("q (1/Angstrom)"));
@@ -6126,13 +6237,25 @@ void US_Hydrodyn_Saxs::clear_guinier()
 {
    // remove any existing Guinier curves
 
-   for ( unsigned int g = 0; g < plotted_Gp.size(); g++ )
+   for ( unsigned int g = 0;
+#ifndef QT4
+         g < plotted_Gp.size();
+#else
+         g < plotted_Gp_curves.size();
+#endif
+         g++ )
    {
 #ifndef QT4
       plot_saxs->removeCurve(plotted_Gp[g]);
+#else
+      plotted_Gp_curves[g]->detach();
 #endif
    }
+#ifndef QT4
    plotted_Gp.clear();
+#else
+   plotted_Gp_curves.clear();
+#endif
    plotted_guinier_valid.clear();
    plotted_guinier_lowq2.clear();
    plotted_guinier_highq2.clear();
@@ -6166,7 +6289,13 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
       "\"chi^2\","
       "\n";
    
-   for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
+   for ( unsigned int i = 0; 
+#ifndef QT4
+         i < plotted_Iq.size();
+#else
+         i < plotted_Iq_curves.size();
+#endif
+         i++ )
    {
       guinier_analysis(i, csvlog);
    }
@@ -6192,7 +6321,13 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
 
 bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
 {
-   if ( i > plotted_Iq.size() )
+   if (
+#ifndef QT4 
+       i > plotted_Iq.size() 
+#else
+       i > plotted_Iq_curves.size() 
+#endif
+       )
    {
       editor->append("internal error: invalid plot selected\n");
       return false;
@@ -6399,7 +6534,13 @@ void US_Hydrodyn_Saxs::plot_domain(
 
       bool any_guinier = false;
 
-      for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
+      for ( unsigned int i = 0; 
+#ifndef QT4
+            i < plotted_Iq.size();
+#else
+            i < plotted_Iq_curves.size();
+#endif
+            i++ )
       {
          if ( plotted_guinier_valid.count(i) &&
               plotted_guinier_valid[i] == true )
@@ -6452,7 +6593,13 @@ void US_Hydrodyn_Saxs::plot_domain(
    // this could be calculated once upon adding curves
 
    bool any_plots = false;
-   for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )
+   for ( unsigned int i = 0; 
+#ifndef QT4
+         i < plotted_Iq.size();
+#else
+         i < plotted_Iq_curves.size();
+#endif
+         i++ )
    {
       if ( !any_plots )
       {
@@ -6508,7 +6655,13 @@ void US_Hydrodyn_Saxs::plot_range(
    if ( cb_guinier->isChecked() )
    {
       // for each plot
-      for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )      
+      for ( unsigned int i = 0;
+#ifndef QT4
+            i < plotted_Iq.size();
+#else
+            i < plotted_Iq_curves.size();
+#endif
+            i++ )      
       {
          // scan the q range
          for ( unsigned int j = 0; j < plotted_q2[i].size(); j++ )
@@ -6536,7 +6689,13 @@ void US_Hydrodyn_Saxs::plot_range(
       }
    } else {
       // for each plot
-      for ( unsigned int i = 0; i < plotted_Iq.size(); i++ )      
+      for ( unsigned int i = 0; 
+#ifndef QT4
+            i < plotted_Iq.size();
+#else
+            i < plotted_Iq_curves.size();
+#endif
+            i++ )      
       {
          // scan the q range
          for ( unsigned int j = 0; j < plotted_q[i].size(); j++ )

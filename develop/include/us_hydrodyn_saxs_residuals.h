@@ -16,6 +16,11 @@
 
 #include "us_util.h"
 
+#ifdef QT4
+# include "qwt_plot_grid.h"
+# include "qwt_plot_curve.h"
+#endif
+
 //standard C and C++ defs:
 
 #include <vector>
@@ -72,6 +77,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
       QLabel            *lbl_title;
 
       QwtPlot           *plot;
+#ifdef QT4
+      QwtPlotGrid       *grid;
+#endif
 
       QCheckBox         *cb_plot_residuals;
       QCheckBox         *cb_plot_difference;

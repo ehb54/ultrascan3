@@ -24,6 +24,10 @@
 
 #include <qwt_plot.h>
 #include <qwt_counter.h>
+#ifdef QT4
+# include "qwt_plot_grid.h"
+# include "qwt_plot_curve.h"
+#endif
 
 /*
 #include <qfile.h>
@@ -105,6 +109,10 @@ class US_EXTERN US_Color : public QFrame
       QColorGroup temp_cg6;
       QwtPlot *plot;
       QwtCounter *cnt;
+#ifdef QT4
+      QwtPlotGrid  *grid;
+      QwtPlotCurve *curve;
+#endif
       QProgressBar *progress;
       QLCDNumber *lcd;
       US_Config *USglobal;
