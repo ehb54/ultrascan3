@@ -3455,7 +3455,7 @@ int US_Hydrodyn::calc_prr( bool bead_model, bool create_native_saxs )
 
 void US_Hydrodyn::pdb_saxs( bool create_native_saxs )
 {
-   //   cout << QString("ext %1 sans_sans %1 curve %1\n")
+   //   cout << QString("ext %1 sans_sans %2 curve %3\n")
    //      .arg(saxs_sans_ext())
    //      .arg(saxs_options.saxs_sans)
    //      .arg(saxs_options.curve);
@@ -3488,7 +3488,7 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs )
                                               tr("UltraScan Notice"),
                                               QString(tr("Please note:\n\n"
                                                          "You have remembered a molecular weight of %1 Daltons\n"
-                                                         "but the loaded pdb has a computed molecular weight of %1 Daltons\n"
+                                                         "but the loaded pdb has a computed molecular weight of %2 Daltons\n"
                                                          "What would you like to do?\n"))
                                               .arg(dammix_remember_mw[QFileInfo(filename).fileName()])
                                               .arg(model_vector[selected_models[0]].mw)
@@ -3612,7 +3612,7 @@ void US_Hydrodyn::bead_saxs( bool create_native_saxs )
                                            tr("UltraScan Notice"),
                                            QString(tr("Please note:\n\n"
                                                       "You have remembered a molecular weight of %1 Daltons\n"
-                                                      "but the loaded bead model a computed molecular weight of %1 Daltons\n"
+                                                      "but the loaded bead model a computed molecular weight of %2 Daltons\n"
                                                       "What would you like to do?\n"))
                                            .arg(dammix_remember_mw[QFileInfo(filename).fileName()])
                                            .arg(tmp_mw)

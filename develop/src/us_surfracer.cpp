@@ -1680,7 +1680,7 @@ surfracer_main(float prober,
          i = 0;         /*atom number counter */
          {
             system("pwd");
-            QString outfile = QString("group_%2_%1.mod")
+            QString outfile = QString("group_%1_%2.mod")
                .arg(atom_group)
                .arg(recheck ? "bead" : "atom");
 
@@ -1688,13 +1688,13 @@ surfracer_main(float prober,
             fprintf(fout, "\tatomnumber = %d;\n", atomnumber);
             fprintf(fout, "\tint apos = 0;\n");
 
-            QString bmsfile = QString("group_%2_%1.bms")
+            QString bmsfile = QString("group_%1_%2.bms")
                .arg(atom_group)
                .arg(recheck ? "bead" : "atom");
             FILE *fbms = fopen(bmsfile.ascii(), "w");
             fprintf(fbms, "%d\nmodel\n",atomnumber);
 
-            QString sptfile = QString("group_%2_%1.spt")
+            QString sptfile = QString("group_%1_%2.spt")
                .arg(atom_group)
                .arg(recheck ? "bead" : "atom");
             FILE *fspt = fopen(sptfile.ascii(), "w");

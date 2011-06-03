@@ -794,7 +794,7 @@ void US_Hydrodyn::dna_rna_resolve()
          {
             switch( QMessageBox::information( this, 
                                               tr("UltraScan"),
-                                              tr(QString("Chain %1 Molecule %1 only contains A, G & C residues (so far)\n"
+                                              tr(QString("Chain %1 Molecule %2 only contains A, G & C residues (so far)\n"
                                                          "Is it DNA or RNA?")
                                                  .arg(chainID)
                                                  .arg(i+1))
@@ -817,7 +817,7 @@ void US_Hydrodyn::dna_rna_resolve()
             if ( !already_messaged.count(QString("%1|%2").arg(i).arg(chainID)) )
             {
                already_messaged[QString("%1|%2").arg(i).arg(chainID)] = true;
-               editor->append(tr(QString("Converting Chain %1 Molecule %1 to standard DNA residue names\n")
+               editor->append(tr(QString("Converting Chain %1 Molecule %2 to standard DNA residue names\n")
                                  .arg(chainID)
                                  .arg(i+1)
                                  ));

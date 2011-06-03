@@ -115,7 +115,7 @@ bool US_Hydrodyn_Comparative::comparative_info_equals( comparative_info ci1,
 QString US_Hydrodyn_Comparative::serialize_comparative_entry( comparative_entry ce )
 {
    return 
-      QString("%1|%1|%1|%1|%1|%1|%1|%1|%1|%1|%1|%1\n")
+      QString("%1|%2|%3|%4|%5|%6|%7|%8|%9|%10|%11|%12\n")
       .arg(ce.name)
       .arg(ce.active)
       .arg(ce.target)
@@ -156,7 +156,7 @@ comparative_entry US_Hydrodyn_Comparative::deserialize_comparative_entry( QStrin
 
 QString US_Hydrodyn_Comparative::serialize_comparative_info( comparative_info ci )
 {
-   QString qs = QString("%1|%1\n")
+   QString qs = QString("%1|%2\n")
       .arg(ci.rank)
       .arg(ci.weight_controls);
    qs += serialize_comparative_entry(ci.ce_s);
@@ -176,7 +176,7 @@ comparative_info US_Hydrodyn_Comparative::deserialize_comparative_info( QString 
    QStringList qsl = QStringList::split("\n",qs);
    if ( qsl.size() < 8 )
    {
-      cout << QString("qsl size %1 < 8 qs:<%1>\n").arg(qs,qsl.size());
+      cout << QString("qsl size %1 < 8 qs:<%2>\n").arg(qs,qsl.size());
       serial_error = tr("Error: invalid parameter file (too few lines)");
       return ci;
    }
@@ -1442,8 +1442,8 @@ void US_Hydrodyn_Comparative::update_enables()
       //   cout << QString(
       //                   "update enables:\n"
       //                   " enable_s = %1\n"
-      //                   " any_selected = %1\n"
-      //                   " all_selected_csv_contain = %1\n"
+      //                   " any_selected = %2\n"
+      //                   " all_selected_csv_contain = %3\n"
       //                   )
       //      .arg(enable_s ? "true" : "false")
       //      .arg(any_selected ? "true" : "false")
@@ -2232,7 +2232,7 @@ void US_Hydrodyn_Comparative::load_param()
    if ( !f.open( IO_ReadOnly ) )
    {
       QMessageBox::warning( this, "UltraScan",
-                            QString(tr("Could not open %! for reading! (permissions?)")).arg(fname) );
+                            QString(tr("Could not open %1 for reading! (permissions?)")).arg(fname) );
       return;
    }
 
@@ -2316,7 +2316,7 @@ void US_Hydrodyn_Comparative::save_param()
    if ( !f.open( IO_WriteOnly ) )
    {
       QMessageBox::warning( this, "UltraScan",
-                            QString(tr("Could not open %! for writing!")).arg(fname) );
+                            QString(tr("Could not open %1 for writing!")).arg(fname) );
       return;
    }
    QTextStream t( &f );
@@ -2356,7 +2356,7 @@ void US_Hydrodyn_Comparative::load_csv()
       {
          if ( csv_error != tr("alread loaded") )
          {
-            editor_msg("red", QString("%1: %1").arg(*it).arg(csv_error));
+            editor_msg("red", QString("%1: %2").arg(*it).arg(csv_error));
          }
       } else {
          csvs[*it] = tmp_csv;
@@ -2365,7 +2365,7 @@ void US_Hydrodyn_Comparative::load_csv()
          if ( !csv_warn.isEmpty() )
          {
             QMessageBox::warning( this, "UltraScan",
-                                  QString(tr("Loading the csv %1 produced the following warnings:\n%1"))
+                                  QString(tr("Loading the csv %1 produced the following warnings:\n%2"))
                                   .arg(*it)
                                   .arg(csv_warn) 
                                   );
@@ -2559,13 +2559,13 @@ void US_Hydrodyn_Comparative::loaded_merge()
 
 void US_Hydrodyn_Comparative::csv_remove( QString name, int i )
 {
-   // cout << QString("csv_remove %1 %1\n").arg(name).arg(i);
+   // cout << QString("csv_remove %1 %2\n").arg(name).arg(i);
    // cout << loaded_info();
    if ( csvs.count(name) )
    {
       for ( unsigned int j = 0; j < csvs[name].prepended_names.size(); j++ )
       {
-         // cout << QString(" name: %1|%1\n").arg(csvs[name].name).arg(csvs[name].prepended_names[j]);
+         // cout << QString(" name: %1|%2\n").arg(csvs[name].name).arg(csvs[name].prepended_names[j]);
          map < QString, bool >::iterator it = 
             loaded_csv_row_prepended_names.find(csvs[name].name + 
                                                 "|" + 
@@ -2889,7 +2889,7 @@ void US_Hydrodyn_Comparative::save_csv()
 
    if ( use_name == QFileInfo(use_name).fileName() )
    {
-      // cout << QString(" use_name <%1> fi <%1>\n").arg(use_name).arg(QFileInfo(use_name).fileName());
+      // cout << QString(" use_name <%1> fi <%2>\n").arg(use_name).arg(QFileInfo(use_name).fileName());
       use_name = use_dir + QDir::separator() + use_name;
    }
    // cout << "use_name: " << use_name << "\n";
@@ -3156,7 +3156,7 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
       qs.replace("\"","");
       if ( csv1.header_map.count(qs) )
       {
-         csv_error = QString(tr("Duplicate header name \"%1\" found in file %1")).arg(qs).arg(f.name());
+         csv_error = QString(tr("Duplicate header name \"%1\" found in file %2")).arg(qs).arg(f.name());
          return csv1;
       }
       csv1.header_map[qs] = i++;
@@ -3183,7 +3183,7 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
             {
                if ( vd.size() >= csv1.header.size() )
                {
-                  csv_warn += QString(tr("%1Row %1 has more columns than the header, these columns are skipped"))
+                  csv_warn += QString(tr("%1Row %2 has more columns than the header, these columns are skipped"))
                      .arg(csv_warn.isEmpty() ? "" : "\n").arg(row);
                   break;
                }
@@ -3192,7 +3192,7 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
             }
             if ( vd.size() < csv1.header.size() )
             {
-               csv_warn += QString(tr("%1Row %1 has insufficient columns, skipped"))
+               csv_warn += QString(tr("%1Row %2 has insufficient columns, skipped"))
                   .arg(csv_warn.isEmpty() ? "" : "\n").arg(row);
             } else {
                csv1.data.push_back(vqs);
@@ -3253,7 +3253,7 @@ QString US_Hydrodyn_Comparative::csv_info( csv &csv1 )
    QString qs = 
       QString(
               "csv_info for %1:\n"
-              " headers_map: %1\n"
+              " headers_map: %2\n"
               )
       .arg(csv1.name)
       .arg(csv1.header_map.size())
@@ -3272,7 +3272,7 @@ QString US_Hydrodyn_Comparative::csv_info( csv &csv1 )
    
    for ( unsigned int i = 0; i < csv1.header.size(); i++ )
    {
-      qs += "  " + QString("%1 %1\n").arg(i).arg(csv1.header[i]);
+      qs += "  " + QString("%1 %2\n").arg(i).arg(csv1.header[i]);
    }
    qs += " prepended names:\n";
 
@@ -3287,7 +3287,7 @@ QString US_Hydrodyn_Comparative::csv_info( csv &csv1 )
 
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
    {
-      qs += QString("  row %1 data columns %1  num_data columns %1\n")
+      qs += QString("  row %1 data columns %2  num_data columns %3\n")
          .arg(i).arg(csv1.data[i].size()).arg(csv1.num_data[i].size());
    }
 
@@ -4175,14 +4175,14 @@ void US_Hydrodyn_Comparative::csv_write( QString filename, csv &csv1 )
    if ( !f.open( IO_WriteOnly ) )
    {
       QMessageBox::warning( this, "UltraScan",
-                            QString(tr("Could not open %! for writing!")).arg(filename) );
+                            QString(tr("Could not open %1 for writing!")).arg(filename) );
       return;
    }
    QTextStream t( &f );
    QString qs;
    for ( unsigned int i = 0; i < csv1.header.size(); i++ )
    {
-      qs += QString("%1\"%1\"").arg(i ? "," : "").arg(csv1.header[i]);
+      qs += QString("%1\"%2\"").arg(i ? "," : "").arg(csv1.header[i]);
    }
    t << qs << endl;
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
@@ -4190,7 +4190,7 @@ void US_Hydrodyn_Comparative::csv_write( QString filename, csv &csv1 )
       qs = "";
       for ( unsigned int j = 0; j < csv1.data[i].size(); j++ )
       {
-         qs += QString("%1%1").arg(j ? "," : "").arg(csv1.data[i][j]);
+         qs += QString("%1%2").arg(j ? "," : "").arg(csv1.data[i][j]);
       }
       t << qs << endl;
    }
@@ -4435,7 +4435,7 @@ bool US_Hydrodyn_Comparative::csv_get_min_max(
                                               bool ignore_selected_selected
                                               )
 {
-   // cout << QString("start csv_get_min_max ce.name %1 %1\n").arg(ce.name).arg(ignore_selected_selected ?
+   // cout << QString("start csv_get_min_max ce.name %1 %2\n").arg(ce.name).arg(ignore_selected_selected ?
    // "all loaded selected" :
    // "only selected selected" );
    rows_used_count = 0;
@@ -4471,7 +4471,7 @@ bool US_Hydrodyn_Comparative::csv_get_min_max(
          }
       }
    }
-   // cout << QString("finish csv_get_min_max ce.name %1 min %1 max %1 rows used %1\n").arg(ce.name).arg(min).arg(max).arg(rows_used_count);
+   // cout << QString("finish csv_get_min_max ce.name %1 min %2 max %3 rows used %4\n").arg(ce.name).arg(min).arg(max).arg(rows_used_count);
 
    return true;
 }
@@ -4502,12 +4502,12 @@ bool US_Hydrodyn_Comparative::csv_get_loaded_min_max(
          }
          if ( !csv_get_min_max(tmp_min, tmp_max, rows_used_count, ce, csvs[lb_loaded->text(i)]) )
          {
-            editor_msg("red", QString(tr("internal error: could not find %1 in csv %1")).arg(ce.name).arg(lb_loaded->text(i)));
+            editor_msg("red", QString(tr("internal error: could not find %1 in csv %2")).arg(ce.name).arg(lb_loaded->text(i)));
             return false;
          }
          if ( !rows_used_count )
          {
-            editor_msg("red", QString(tr("internal error: could not find any rows for %1 in csv %1")).arg(ce.name).arg(lb_loaded->text(i)));
+            editor_msg("red", QString(tr("internal error: could not find any rows for %1 in csv %2")).arg(ce.name).arg(lb_loaded->text(i)));
             return false;
          }
          total_rows_used_count += rows_used_count;
@@ -4562,7 +4562,7 @@ bool US_Hydrodyn_Comparative::csv_get_selected_min_max(
          }
          if ( !csv_get_min_max(tmp_min, tmp_max, rows_used_count, ce, csvs[lb_loaded->text(i)], false) )
          {
-            editor_msg("red", QString(tr("internal error: could not find %1 in csv %1")).arg(ce.name).arg(lb_loaded->text(i)));
+            editor_msg("red", QString(tr("internal error: could not find %1 in csv %2")).arg(ce.name).arg(lb_loaded->text(i)));
             return false;
          }
          if ( rows_used_count )
@@ -4663,7 +4663,7 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning( csv &csv1, csv &csv2 
                   csv_premerge_missing_header_qsl << tr(" (Additional extra columns not shown.)");
                   return is_ok;
                }
-               csv_premerge_missing_header_qsl << QString(" From %1: %1").arg(QFileInfo(csv1.name).baseName(true)).arg(csv1.header[i]);
+               csv_premerge_missing_header_qsl << QString(" From %1: %2").arg(QFileInfo(csv1.name).baseName(true)).arg(csv1.header[i]);
             }
          }
       }
@@ -4684,7 +4684,7 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning( csv &csv1, csv &csv2 
                   csv_premerge_missing_header_qsl << tr(" (Additional extra columns not shown.)");
                   return is_ok;
                }
-               csv_premerge_missing_header_qsl << QString(" From %1: %1").arg(QFileInfo(csv2.name).baseName(true)).arg(csv2.header[i]);
+               csv_premerge_missing_header_qsl << QString(" From %1: %2").arg(QFileInfo(csv2.name).baseName(true)).arg(csv2.header[i]);
             }
          }
       }

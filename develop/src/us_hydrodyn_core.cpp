@@ -7038,14 +7038,14 @@ void US_Hydrodyn::calc_mw()
             //i, j, model_vector[i].molecule[j].mw);
             if (model_vector[i].molecule[j].mw != 0.0 )
             {
-               editor->append(QString(tr("\nModel: %1 Chain: %1 Molecular weight %1 Daltons"))
+               editor->append(QString(tr("\nModel: %1 Chain: %2 Molecular weight %3 Daltons"))
                               .arg(model_vector[i].model_id)
                               .arg(model_vector[i].molecule[j].chainID)
                               .arg(model_vector[i].molecule[j].mw));
             }
          }
       }
-      editor->append(QString(tr("\nModel: %1 Molecular weight %1 Daltons"))
+      editor->append(QString(tr("\nModel: %1 Molecular weight %2 Daltons"))
                      .arg(model_vector[i].model_id)
                      .arg(model_vector[i].mw));
       // printf("model %u  mw %g\n",

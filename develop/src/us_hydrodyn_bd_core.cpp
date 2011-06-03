@@ -1245,7 +1245,7 @@ int US_Hydrodyn::compute_bd_connections()
             }
             connection_dist_stats[it->first][2] /= connection_dists[it->first].size();
          } else {
-            editor->append(QString("Error: BD connection %! has no values!\n")
+            editor->append(QString("Error: BD connection %1 has no values!\n")
                            .arg(it->first));
             return -1;
          }
@@ -1260,7 +1260,7 @@ int US_Hydrodyn::compute_bd_connections()
       if ( connection_active[it->first] ) 
       {
          cout << 
-            QString("Connection %1 distance min %1 max %2 avg %3 dist:\n")
+            QString("Connection %1 distance min %2 max %3 avg %4 dist:\n")
             .arg(it->first)
             .arg(connection_dist_stats[it->first][0])
             .arg(connection_dist_stats[it->first][1])

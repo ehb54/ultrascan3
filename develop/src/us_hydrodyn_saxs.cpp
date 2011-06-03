@@ -1245,7 +1245,7 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
          if ( contrib_array[i][j] > 0.0 )
          {
             QString id =
-               QString("%1%1%1")
+               QString("%1%2%3")
                .arg(contrib_pdb_atom[i]->resSeq)
                .arg(contrib_pdb_atom[i]->chainID != "" ? ":" : "")
                .arg(contrib_pdb_atom[i]->chainID);
@@ -1295,7 +1295,7 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
          it++ )
    {
       out += 
-         QString("select %1\ncolour %1\n")
+         QString("select %1\ncolour %2\n")
          .arg(it->first)
          //         .arg((int)(128 + contrib_sums[it->first] * 127));
          .arg(gradient[(int)(contrib_sums[it->first] * CONTRIB_GRADIENT_SIZE)]);
@@ -2053,7 +2053,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    int extension = 0;
    while ( dup_plotted_pr_name_check.count(plot_name) )
    {
-      plot_name = QString("%1-%1").arg(use_name).arg(++extension);
+      plot_name = QString("%1-%2").arg(use_name).arg(++extension);
    }
    qsl_plotted_pr_names << plot_name;
    dup_plotted_pr_name_check[plot_name] = true;
@@ -2170,7 +2170,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                                         tr("UltraScan Notice"),
                                         QString(tr("Please note:\n\n"
                                                    "The file appears to be in %1 mode and you"
-                                                   " are currently set in %1 mode.\n"
+                                                   " are currently set in %2 mode.\n"
                                                    "What would you like to do?\n"))
                                         .arg(curve_type_string(file_curve_type(f.name())))
                                         .arg(curve_type_string(our_saxs_options->curve))
@@ -2227,9 +2227,9 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                QStringList tmp_qsl = QStringList::split(",",qsl[i],true);
                // if ( tmp_qsl.size() > 1 )
                // {
-               //      cout << QString("line %1 field 1 is <%1>\n").arg(i).arg(tmp_qsl[1]);
+               //      cout << QString("line %1 field 1 is <%2>\n").arg(i).arg(tmp_qsl[1]);
                // } else {
-               // cout << QString("line %1 size not greater than 1 value <%1>\n").arg(i).arg(qsl[i]);
+               // cout << QString("line %1 size not greater than 1 value <%2>\n").arg(i).arg(qsl[i]);
                // }
                if ( tmp_qsl.size() > 1 &&
                     rx.search(tmp_qsl[1]) != -1 )
@@ -2332,7 +2332,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             r = plotted_r[0];
             header_tag = "Plotted P(r) curves";
             QString header = 
-               QString("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%1,%1\n")
+               QString("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%1,%2\n")
                .arg(vector_double_to_csv(r))
                .arg(header_tag);
             qsl << header;
@@ -2347,7 +2347,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             map < QString, bool > interp_msg_done;
             for ( unsigned int i = 1; i < (unsigned int)filenames.size(); i++ )
             {
-               cout << QString("trying file %1 %1\n").arg(i).arg(filenames[i]);
+               cout << QString("trying file %1 %2\n").arg(i).arg(filenames[i]);
                QFile f2(filenames[i]);
                if ( !f2.open(IO_ReadOnly) )
                {
@@ -2571,7 +2571,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                         }
                         // interpolate r2, pr to r, reappend to new_pr_fields
                         vector < double > npr = interpolate(r, r2, this_pr);
-                        QString line = QString("%1,%1\n")
+                        QString line = QString("%1,%2\n")
                            .arg(new_pr_fields.join(","))
                            .arg(vector_double_to_csv(npr));
                         // cout << QString("r:\n%1\n").arg(vector_double_to_csv(r));
@@ -2608,7 +2608,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                // editor->append(bin_msg + "\n");
                added_interpolate_msg = true;
             }
-            QString line = QString("\"%1\",%1,%1,\"P(r)\",%1\n")
+            QString line = QString("\"%1\",%2,%3,\"P(r)\",%4\n")
                .arg(qsl_plotted_pr_names[i])
                .arg(plotted_pr_mw[i])
                .arg(compute_pr_area(npr, r))
@@ -2882,15 +2882,15 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   sum_pr2[i] += pr[i] * pr[i];
                   if ( isnan(pr[i]) ) 
                   {
-                     cout << QString("WARNING: isnan pr[%1] for %1\n").arg(i).arg(qsl_tmp[0]);
+                     cout << QString("WARNING: isnan pr[%1] for %2\n").arg(i).arg(qsl_tmp[0]);
                   }
                   if ( isnan(sum_pr[i]) ) 
                   {
-                     cout << QString("WARNING: isnan sum_pr[%1] for %1\n").arg(i).arg(qsl_tmp[0]);
+                     cout << QString("WARNING: isnan sum_pr[%1] for %2\n").arg(i).arg(qsl_tmp[0]);
                   }
                   if ( isnan(sum_pr2[i]) ) 
                   {
-                     cout << QString("WARNING: isnan sum_pr2[%1] for %1\n").arg(i).arg(qsl_tmp[0]);
+                     cout << QString("WARNING: isnan sum_pr2[%1] for %2\n").arg(i).arg(qsl_tmp[0]);
                   }
                }
                sum_count++;
@@ -2982,10 +2982,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   {
                      cout << 
                         QString("WARNING when calc'ing std dev: isnan std_dev[%1]:\n"
-                                " sum_pr[%1]  == %1\n"
-                                " sum_pr2[%1] == %1\n"
-                                " sum_count   == %1\n"
-                                " sum_pr2 - ((sum_pr * sum_pr) / sum_count)   == %1\n"
+                                " sum_pr[%2]  == %3\n"
+                                " sum_pr2[%4] == %5\n"
+                                " sum_count   == %6\n"
+                                " sum_pr2 - ((sum_pr * sum_pr) / sum_count)   == %7\n"
                                 )
                         .arg(i)
                         .arg(i).arg(sum_pr[i])
@@ -3017,9 +3017,9 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
 
                // cout << QString("sd mw calcs:\n"
                // "area_sd_avg mult: %1\n"
-               // "pr_mw_avg:        %1\n"
-               // "pr_mw_sd_minus_1: %1\n"
-               // "pr_mw_sd_plus_1:  %1\n"
+               // "pr_mw_avg:        %2\n"
+               // "pr_mw_sd_minus_1: %3\n"
+               // "pr_mw_sd_plus_1:  %4\n"
                // )
                // .arg(area_sd_avg)
                // .arg(pr_mw_avg)
@@ -4120,7 +4120,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 #endif
 
       QString name = 
-         QString("%1_%1")
+         QString("%1_%2")
          .arg(QFileInfo(te_filename2->text()).fileName())
          .arg(current_model + 1);
       QString plot_name = name;
@@ -4128,7 +4128,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 
       while ( dup_plotted_iq_name_check.count(plot_name) )
       {
-         plot_name = QString("%1-%1").arg(name).arg(++extension);
+         plot_name = QString("%1-%2").arg(name).arg(++extension);
       }
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
@@ -4627,9 +4627,9 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
          }
 
          cout << QString(
-                         "target q_min %1 max %1\n"
-                         "source q_min %1 max %1\n"
-                         "select q_min %1 max %1\n"
+                         "target q_min %1 max %2\n"
+                         "source q_min %3 max %4\n"
+                         "select q_min %5 max %6\n"
                          )
             .arg(target_q_min)
             .arg(target_q_max)
@@ -4675,7 +4675,7 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
                            );
 
             QString results = 
-               QString("Scaling factor: %1  Offset: %1  Chi^2: %1\n")
+               QString("Scaling factor: %1  Offset: %2  Chi^2: %3\n")
                .arg(scaling_b)
                .arg(scaling_a)
                .arg(scaling_chi2);
@@ -5059,7 +5059,7 @@ double US_Hydrodyn_Saxs::compute_pr_area( vector < double > vd, vector < double 
    }
    if ( delta == 0e0 )
    {
-      cerr << QString("compute_pr_area zero delta! sum %1\nvd: %1\nr: %1\n")
+      cerr << QString("compute_pr_area zero delta! sum %1\nvd: %2\nr: %3\n")
          .arg(sum)
          .arg(vector_double_to_csv(vd))
          .arg(vector_double_to_csv(r))
@@ -5236,7 +5236,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    for ( unsigned int j = 0; j < rescaled_x.size(); j++ )
    {
       model_mw += rescaled_x[j] * nnls_mw[model_names[j]];
-      // cout << QString("model source %1 contrib %1 mw %1\n").arg(j).arg(rescaled_x[j]).arg(nnls_mw[model_names[j]]);
+      // cout << QString("model source %1 contrib %2 mw %3\n").arg(j).arg(rescaled_x[j]).arg(nnls_mw[model_names[j]]);
    }
    // cout << QString("model mw %1\n").arg(model_mw);
    (*remember_mw)[csv_filename + " Model"] = model_mw;
@@ -5321,7 +5321,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
          }
          // target
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 QString("Target %2").arg(nnls_B_name).ascii(),
+                 QString("Target %1").arg(nnls_B_name).ascii(),
                  get_mw(model_names[0], false),
                  compute_pr_area(nnls_B, nnls_r),
                  "P(r)",
@@ -5548,7 +5548,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
          }
          // target
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 QString("Target %2").arg(nnls_B_name).ascii(),
+                 QString("Target %1").arg(nnls_B_name).ascii(),
                  model_mw,
                  compute_pr_area(best_fit_target, nnls_r),
                  "P(r)",
@@ -5619,7 +5619,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    int extension = 0;
    while ( dup_plotted_pr_name_check.count(plot_name) )
    {
-      plot_name = QString("%1-%1").arg(name).arg(++extension);
+      plot_name = QString("%1-%2").arg(name).arg(++extension);
    }
    qsl_plotted_pr_names << plot_name;
    dup_plotted_pr_name_check[plot_name] = true;
@@ -5795,7 +5795,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                         // cerr << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
                         gnom_mw = 0e0;
                      } else {
-                        // cout << QString("mwline cap 0 <%1> cap 1 <%1>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
+                        // cout << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
                         gnom_mw = qx_mw.cap(1).toDouble();
                      }
                      if ( mwline.size() > 1 )
@@ -5854,7 +5854,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                if ( !f.open( IO_WriteOnly ) )
                {
                   QMessageBox::warning( this, "UltraScan",
-                                        QString(tr("Could not open %! for writing!")).arg(fname) );
+                                        QString(tr("Could not open %1 for writing!")).arg(fname) );
                } else {
                   QTextStream t( &f );
                   t << QString("Molecular weight %1 Daltons\n\n").arg(gnom_mw);
@@ -5930,7 +5930,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq(vector < double > q, vector < double > I, QS
    int extension = 0;
    while ( dup_plotted_iq_name_check.count(plot_name) )
    {
-      plot_name = QString("%1-%1").arg(name).arg(++extension);
+      plot_name = QString("%1-%2").arg(name).arg(++extension);
    }
    qsl_plotted_iq_names << plot_name;
    dup_plotted_iq_name_check[plot_name] = true;
@@ -6413,14 +6413,14 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
       report =
          QString(
                  "Guinier analysis of %1:\n"
-                 "**** Could not compute Rg, too few data points %1 ****\n"
+                 "**** Could not compute Rg, too few data points %2 ****\n"
                  )
          .arg(plotted_q[i].size());
 
       csvlog += 
          QString(
                  "\"%1\","
-                 "\"Too few data points (%1)\"\n"
+                 "\"Too few data points (%2)\"\n"
                  )
          .arg(qsl_plotted_iq_names[i])
          .arg(plotted_q[i].size());
@@ -6480,18 +6480,18 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             QString(
                     "\"%1\","
                     "\"Ok\","
-                    "%1,"
-                    "%1,"
-                    "%1,"
-                    "%1,"
-                    "%1,"
-                    "%1,"
-                    "%1,"
-                    "%1,"
-                    "%1,"
-                    "%1,"
-                    "%1,"
-                    "%1"
+                    "%2,"
+                    "%3,"
+                    "%4,"
+                    "%5,"
+                    "%6,"
+                    "%7,"
+                    "%8,"
+                    "%9,"
+                    "%10,"
+                    "%11,"
+                    "%12,"
+                    "%13"
                     "\n"
                     )
             .arg(qsl_plotted_iq_names[i])
@@ -6816,10 +6816,10 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
    
    if ( found ) 
    {
-      // cout <<  QString("mw: %1 %1 %1\n").arg(filename).arg(mw).arg(source);
+      // cout <<  QString("mw: %1 %2 %3\n").arg(filename).arg(mw).arg(source);
       if ( display_mw_msg )
       {
-         editor->append(QString("%1 Molecular weight %1 (%1)\n")
+         editor->append(QString("%1 Molecular weight %2 (%3)\n")
                         .arg(filename)
                         .arg(mw)
                         .arg(source)

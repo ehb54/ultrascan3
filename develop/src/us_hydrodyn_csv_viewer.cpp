@@ -38,7 +38,7 @@ US_Hydrodyn_Csv_Viewer::US_Hydrodyn_Csv_Viewer(
       csv_width = 1000;
    }
 
-   // cout << QString("csv size %1 %1\n").arg(csv_height).arg(csv_width);
+   // cout << QString("csv size %1 %2\n").arg(csv_height).arg(csv_width);
 
    setGeometry(global_Xpos, global_Ypos, csv_width, 100 + csv_height );
 }

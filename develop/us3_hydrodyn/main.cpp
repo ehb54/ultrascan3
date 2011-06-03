@@ -2,6 +2,8 @@
 #include "../include/us_write_config.h"
 #include <qregexp.h>
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 void process_script(QString, US_Hydrodyn *);
 
 int main (int argc, char **argv)
@@ -120,7 +122,8 @@ void process_script(QString script_filename, US_Hydrodyn *h)
       h->setSuffix = false;
       int line = 0;
       QString loadfiletype = "";
-      while ( QString c = ts.readLine() )
+      QString c;
+      while ( !(c = ts.readLine()).isNull() )
       {
          bool ok = false;
 

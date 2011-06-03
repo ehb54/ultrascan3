@@ -334,7 +334,7 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
             {
                array_to_save.push_back(*it2);
             }
-            // cout << QString("line %1 qsl_tmp.count() %1 size %1\n").arg(qsl_tmp[0]).arg(qsl_tmp.count()).arg(array_to_save.size());
+            // cout << QString("line %1 qsl_tmp.count() %2 size %3\n").arg(qsl_tmp[0]).arg(qsl_tmp.count()).arg(array_to_save.size());
             array2d_to_save.push_back(array_to_save);
          }
       }
@@ -350,7 +350,7 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
             if ( array2d_to_save[j].size() <= i ||
                  array2d_to_save[j][i].isNull() )
             {
-               // cout <<  QString("array2d_to_save[%1].size() == %1\n")
+               // cout <<  QString("array2d_to_save[%1].size() == %2\n")
                // .arg(j)
                // .arg(array2d_to_save[j].size());
                fprintf(of, comma.ascii());
@@ -527,9 +527,9 @@ void US_Hydrodyn_Saxs_Load_Csv::select_target()
    {
       if ( qsl_sel_names->size() )
       {
-         *nnls_target = *(qsl_sel_names->at(0));
+         *nnls_target = (*qsl_sel_names)[0];
       } else {
-         *nnls_target = *(qsl_names->at(0));
+         *nnls_target = (*qsl_names)[0];
       }
       lbl_nnls_target->setText(tr("Target model: ") + *nnls_target);
    }

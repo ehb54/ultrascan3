@@ -1,5 +1,7 @@
 #include "../include/us_saxs_cmds_t.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 int main (int argc, char **argv)
 {
    if (argc < 2) 
@@ -1179,29 +1181,29 @@ int main (int argc, char **argv)
           !projectdir.contains(QRegExp("^(\\|/)")) // doesn't start at root
           )
       {
-         projectdir = QString("%1%1%1")
+         projectdir = QString("%1%2%3")
             .arg(QDir::currentDirPath())
             .arg(QDir::separator())
             .arg(projectdir);
       }
 
-      QString pngdir = QString("%1%1pngs")
+      QString pngdir = QString("%1%2pngs")
          .arg(projectdir)
          .arg(QDir::separator());
 
-      QString sourcewavedir = QString("%1%1wave")
+      QString sourcewavedir = QString("%1%2wave")
          .arg(projectdir)
          .arg(QDir::separator());
 
-      QString computedwavedir = QString("%1%1cwave")
+      QString computedwavedir = QString("%1%2cwave")
          .arg(projectdir)
          .arg(QDir::separator());
 
-      QString tmpdir = QString("%1%1tmp")
+      QString tmpdir = QString("%1%2tmp")
          .arg(projectdir)
          .arg(QDir::separator());
 
-      QString logdir = QString("%1%1log")
+      QString logdir = QString("%1%2log")
          .arg(projectdir)
          .arg(QDir::separator());
 
@@ -1332,7 +1334,7 @@ int main (int argc, char **argv)
                  "# wikiPrefix will be prepended to every name\n"
                  "wikiPrefix          \n"
                  "name                %1\n"
-                 "description         %1\n"
+                 "description         %2\n"
                  "shortDescription    \n"
                  "# any number of comment lines ok\n"
                  "comment             \n"
@@ -1398,8 +1400,8 @@ int main (int argc, char **argv)
       pf.close();
       cout << 
          QString("project %1 created\n"
-                 "now put wave files in to %1/wave and\n"
-                 "edit %1/project and run \"us_saxs_cmd_t project_rebuild\" in the %1 directory\n"
+                 "now put wave files in to %2/wave and\n"
+                 "edit %3/project and run \"us_saxs_cmd_t project_rebuild\" in the %4 directory\n"
                  )
          .arg(projectdir)
          .arg(projectname)
