@@ -4,6 +4,7 @@
 #include "../include/us_version.h"
 #include "../include/us_config_gui.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
 
 // Helper class used only here
 // The purpose is to ensure the usrc.conf or the depricated $HOME/.usrc exists
