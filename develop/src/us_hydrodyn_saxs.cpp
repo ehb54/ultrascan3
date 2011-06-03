@@ -7,6 +7,9 @@
 #include "../include/us_revision.h"
 #include "../include/us_math.h"
 #include "qwt_symbol.h"
+#ifdef QT4
+# include <qwt_scale_engine.h>
+#endif
 
 #include <time.h>
 #include <qstringlist.h>
@@ -625,6 +628,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setTitle("");
 #ifndef QT4
    plot_saxs->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
+#else
+   plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
 #endif
    plot_saxs->setCanvasBackground(USglobal->global_colors.plot);
 
