@@ -292,7 +292,7 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
    }
    if ( !fname.contains(QRegExp(".csv$",false)) )
    {
-      fname += ".csv";
+      fname += "_t.csv";
    }
    // open
    if ( QFile::exists(fname) )
