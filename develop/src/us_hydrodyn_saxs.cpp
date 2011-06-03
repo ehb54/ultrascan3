@@ -2145,13 +2145,16 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
       return;
    }
 
-   filename = filenames[0];
-
-   if ( filename.contains(QRegExp("_t(|-\\d+).csv$", false)) )
+   if ( !just_plotted_curves )
    {
-      QMessageBox::information( this, "UltraScan",
-                                tr("Can not load transposed format csv files") );
-      return;
+      filename = filenames[0];
+      
+      if ( filename.contains(QRegExp("_t(|-\\d+).csv$", false)) )
+      {
+         QMessageBox::information( this, "UltraScan",
+                                   tr("Can not load transposed format csv files") );
+         return;
+      }
    }
 
    QFile f(filename);

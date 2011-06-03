@@ -319,23 +319,26 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
                it++ )
       {
          QStringList qsl_tmp = QStringList::split(",",*it,true);
-         if ( ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() ) &&
-              ( qsl_tmp.count() <= 3 || qsl_tmp[3] != "\"P(r) normed\"" ) )
+         if ( qsl_tmp.size() )
          {
-            vector < QString > array_to_save;
-            // cout << "ok: " << qsl_tmp[0] << endl;
-            if ( max_len < (unsigned int)qsl_tmp.count() )
+            if ( ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() ) &&
+                 ( qsl_tmp.count() <= 3 || qsl_tmp[3] != "\"P(r) normed\"" ) )
             {
-               max_len = qsl_tmp.count();
+               vector < QString > array_to_save;
+               // cout << "ok: " << qsl_tmp[0] << endl;
+               if ( max_len < (unsigned int)qsl_tmp.count() )
+               {
+                  max_len = qsl_tmp.count();
+               }
+               for ( QStringList::iterator it2 = qsl_tmp.begin();
+                     it2 != qsl_tmp.end();
+                     it2++ )
+               {
+                  array_to_save.push_back(*it2);
+               }
+               // cout << QString("line %1 qsl_tmp.count() %2 size %3\n").arg(qsl_tmp[0]).arg(qsl_tmp.count()).arg(array_to_save.size());
+               array2d_to_save.push_back(array_to_save);
             }
-            for ( QStringList::iterator it2 = qsl_tmp.begin();
-                  it2 != qsl_tmp.end();
-                  it2++ )
-            {
-               array_to_save.push_back(*it2);
-            }
-            // cout << QString("line %1 qsl_tmp.count() %2 size %3\n").arg(qsl_tmp[0]).arg(qsl_tmp.count()).arg(array_to_save.size());
-            array2d_to_save.push_back(array_to_save);
          }
       }
 
@@ -413,9 +416,12 @@ void US_Hydrodyn_Saxs_Load_Csv::save_selected()
                it++ )
       {
          QStringList qsl_tmp = QStringList::split(",",*it,true);
-         if ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() )
+         if ( qsl_tmp.size() ) 
          {
-            fprintf(of, "%s\n", (*it).ascii());
+            if ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() )
+            {
+               fprintf(of, "%s\n", (*it).ascii());
+            }
          }
       }
       fclose(of);
