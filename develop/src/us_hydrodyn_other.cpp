@@ -534,6 +534,7 @@ int US_Hydrodyn::read_pdb(const QString &filename)
             editor->setColor("dark green");
             editor->append(QString("PDB %1: %2").arg(str1.left(6)).arg(tmp_str));
             editor->setColor(save_color);
+            qApp->processEvents();
          }
          if (str1.left(5) == "MODEL" ||
              (str1.left(4) == "ATOM" && last_was_ENDMDL) ) // we have a new model in a multi-model file
@@ -591,6 +592,7 @@ int US_Hydrodyn::read_pdb(const QString &filename)
                editor->append(sstr + "\n\n");
                editor->setCurrentFont(save_font);
             }
+            qApp->processEvents();
             
             // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
             calc_vbar(&temp_model); // update the calculated vbar for this model
