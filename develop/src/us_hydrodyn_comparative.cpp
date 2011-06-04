@@ -195,7 +195,7 @@ QString US_Hydrodyn_Comparative::serialize_comparative_entry( comparative_entry 
               "%1|%1|%1|%1|%1|%1|%1|%1|%1|%1|%1|%1\n"
 #else
               "%1|%2|%3|%4|%5|%6|%7|%8|%9|%10|%11|%12\n"
-#endf
+#endif
 
               )
       .arg(ce.name)
