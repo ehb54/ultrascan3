@@ -34,11 +34,11 @@ public:
    }
 };
 
-class sortable_uint {
+class sortable_unsigned_int {
 public:
    unsigned int      ui;
    unsigned int      index;
-   bool operator < (const sortable_uint& objIn) const
+   bool operator < (const sortable_unsigned_int& objIn) const
    {
       return ( ui < objIn.ui );
    }
@@ -47,11 +47,11 @@ public:
 void US_Hydrodyn_Comparative::csv_sort( csv &csv1, vector < unsigned int > cols )
 {
    // build a sortable vector double containing the data of the relevant columns
-   cout << "csv_sort\ncols:";
-   for ( unsigned int i = 0; i < cols.size(); i++ )
-   {
-      cout << cols[i] << " ";
-   }
+   //   cout << "csv_sort\ncols:";
+   //   for ( unsigned int i = 0; i < cols.size(); i++ )
+   //   {
+   //      cout << cols[i] << " ";
+   //   }
    cout << endl;
 
    list < sortable_vector_double > lsvd;
@@ -4438,9 +4438,9 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       // by ranked abs diff's
       // first sort the ranking order of the cols
 
-      list < sortable_uint > lsui;
+      list < sortable_unsigned_int > lsui;
 
-      sortable_uint sui;
+      sortable_unsigned_int sui;
       
       if ( do_s )
       {
@@ -4453,7 +4453,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       {
          sui.ui = comparative->ce_D.rank;
          sui.index = col_abs_diff_D;
-         cout << "pre sort col abs diff D " <<  col_abs_diff_D << endl;
+         // cout << "pre sort col abs diff D " <<  col_abs_diff_D << endl;
          lsui.push_back( sui );
       }
 
@@ -4468,7 +4468,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       {
          sui.ui = comparative->ce_rg.rank;
          sui.index = col_abs_diff_rg;
-         cout << "pre sort col abs diff rg " <<  col_abs_diff_rg << endl;
+         // cout << "pre sort col abs diff rg " <<  col_abs_diff_rg << endl;
          lsui.push_back( sui );
       }
 
@@ -4476,7 +4476,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       {
          sui.ui = comparative->ce_fr.rank;
          sui.index = col_abs_diff_fr;
-         cout << "pre sort col abs diff fr " <<  col_abs_diff_fr << endl;
+         // cout << "pre sort col abs diff fr " <<  col_abs_diff_fr << endl;
          lsui.push_back( sui );
       }
 
@@ -4484,7 +4484,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       {
          sui.ui = comparative->ce_tau.rank;
          sui.index = col_abs_diff_tau;
-         cout << "pre sort col abs diff tau " <<  col_abs_diff_tau << endl;
+         // cout << "pre sort col abs diff tau " <<  col_abs_diff_tau << endl;
          lsui.push_back( sui );
       }
 
@@ -4492,18 +4492,18 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       {
          sui.ui = comparative->ce_eta.rank;
          sui.index = col_abs_diff_eta;
-         cout << "pre sort col abs diff eta " <<  col_abs_diff_eta << endl;
+         // cout << "pre sort col abs diff eta " <<  col_abs_diff_eta << endl;
          lsui.push_back( sui );
       }
 
       lsui.sort();
 
-      for ( list < sortable_uint >::iterator it = lsui.begin();
+      for ( list < sortable_unsigned_int >::iterator it = lsui.begin();
          it != lsui.end();
          it++ )
       {
-         cout << "list iterator it->ui " << it->ui << endl;
-         cout << "list iterator it->index " << (*it).index << endl;
+         // cout << "list iterator it->ui " << it->ui << endl;
+         // cout << "list iterator it->index " << it->index << endl;
          sort_cols.push_back( it->index );
       }
    }
