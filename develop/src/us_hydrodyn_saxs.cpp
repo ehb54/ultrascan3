@@ -5566,7 +5566,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
          
          // best fit model
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 "Best Fit Model " + model_names[lowest_chi2_pos],
+                 QString("Best Fit Model " + model_names[lowest_chi2_pos]).ascii(),
                  model_mw,
                  compute_pr_area(model, nnls_r),
                  "P(r)",
