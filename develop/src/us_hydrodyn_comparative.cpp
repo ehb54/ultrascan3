@@ -90,6 +90,7 @@ comparative_info US_Hydrodyn_Comparative::empty_comparative_info()
    ci.ce_tau = empty_comparative_entry("Relaxation Time, tau(h) [ns]");
    ci.ce_eta = empty_comparative_entry("Intrinsic viscosity [cm^3/g]");
 
+   ci.by_pct = true;
    ci.rank = true;
    ci.weight_controls = false;
 
@@ -156,7 +157,8 @@ comparative_entry US_Hydrodyn_Comparative::deserialize_comparative_entry( QStrin
 
 QString US_Hydrodyn_Comparative::serialize_comparative_info( comparative_info ci )
 {
-   QString qs = QString("%1|%2\n")
+   QString qs = QString("%1|%2|%3\n")
+      .arg(ci.by_pct)
       .arg(ci.rank)
       .arg(ci.weight_controls);
    qs += serialize_comparative_entry(ci.ce_s);
@@ -181,14 +183,15 @@ comparative_info US_Hydrodyn_Comparative::deserialize_comparative_info( QString 
       return ci;
    }
    QStringList qsl0 = QStringList::split("|",qsl[0]);
-   if ( qsl0.size() < 2 )
+   if ( qsl0.size() < 3 )
    {
       serial_error = tr("Error: invalid parameter file (line 1 too short)");
       return ci;
    }
 
-   ci.rank = (bool)qsl0[0].toInt();
-   ci.weight_controls = (bool)qsl0[1].toInt();
+   ci.by_pct = (bool)qsl0[0].toInt();
+   ci.rank = (bool)qsl0[1].toInt();
+   ci.weight_controls = (bool)qsl0[2].toInt();
 
    int pos = 1;
    ci.ce_s = deserialize_comparative_entry(qsl[pos++]);
@@ -282,6 +285,15 @@ void US_Hydrodyn_Comparative::setupGUI()
    lbl_sort->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_sort->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
+   cb_by_pct = new QCheckBox(this);
+   cb_by_pct->setText(tr("By percentage difference"));
+   cb_by_pct->setEnabled(true);
+   cb_by_pct->setMinimumHeight(minHeight3);
+   cb_by_pct->setChecked(comparative->by_pct);
+   cb_by_pct->setFont(qf_modes);
+   cb_by_pct->setPalette(qp_modes);
+   connect(cb_by_pct, SIGNAL(clicked()), SLOT(set_by_pct()));
+
    cb_rank = new QCheckBox(this);
    cb_rank->setText(tr("By ranked\nabsolute\ndifference"));
    cb_rank->setEnabled(true);
@@ -363,14 +375,14 @@ void US_Hydrodyn_Comparative::setupGUI()
    lbl_store_reference->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_store_reference->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_store_diff = new QLabel(tr("Difference"), this);
+   lbl_store_diff = new QLabel((comparative->by_pct ? "%\n" : "" ) + tr("Difference"), this);
    lbl_store_diff->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_store_diff->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_store_diff->setMinimumHeight(minHeight1);
    lbl_store_diff->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_store_diff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_store_abs_diff = new QLabel(tr("Absolute\ndifference"), this);
+   lbl_store_abs_diff = new QLabel((comparative->by_pct ? "%\n" : "") + tr("Absolute\ndifference"), this);
    lbl_store_abs_diff->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_store_abs_diff->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_store_abs_diff->setMinimumHeight(minHeight1);
@@ -1229,28 +1241,29 @@ void US_Hydrodyn_Comparative::setupGUI()
    background->addMultiCellWidget(lbl_title_param, j, j, 0, 10);
    j++;
 
-   background->addMultiCellWidget(lbl_active, j, j+2, 0, 0);
-   background->addMultiCellWidget(lbl_target, j, j+2, 1, 1);
+   background->addMultiCellWidget(lbl_active, j, j+3, 0, 0);
+   background->addMultiCellWidget(lbl_target, j, j+3, 1, 1);
    background->addMultiCellWidget(lbl_sort, j, j, 2, 4);
+   background->addMultiCellWidget(cb_by_pct, j+1, j+1, 2, 4);
 
-   background->addMultiCellWidget(cb_rank, j+1, j+1, 2, 2);
-   background->addWidget(lbl_rank, j+2, 2);
+   background->addMultiCellWidget(cb_rank, j+2, j+2, 2, 2);
+   background->addWidget(lbl_rank, j+3, 2);
 
-   background->addMultiCellWidget(cb_weight_controls, j+1, j+1, 3, 4);
-   background->addWidget(lbl_include_in_weight, j+2, 3);
-   background->addWidget(lbl_weight, j+2, 4);
+   background->addMultiCellWidget(cb_weight_controls, j+2, j+2, 3, 4);
+   background->addWidget(lbl_include_in_weight, j+3, 3);
+   background->addWidget(lbl_weight, j+3, 4);
 
-   background->addMultiCellWidget(lbl_ec, j, j, 5, 7);
-   background->addMultiCellWidget(lbl_buckets, j+1, j+2, 5, 5);
-   background->addMultiCellWidget(lbl_min, j+1, j+2, 6, 6);
-   background->addMultiCellWidget(lbl_max, j+1, j+2, 7, 7);
+   background->addMultiCellWidget(lbl_ec, j, j+1, 5, 7);
+   background->addMultiCellWidget(lbl_buckets, j+2, j+3, 5, 5);
+   background->addMultiCellWidget(lbl_min, j+2, j+3, 6, 6);
+   background->addMultiCellWidget(lbl_max, j+2, j+3, 7, 7);
 
-   background->addMultiCellWidget(lbl_csv_controls, j, j, 8, 10);
-   background->addMultiCellWidget(lbl_store_reference, j+1, j+2, 8, 8);
-   background->addMultiCellWidget(lbl_store_diff, j+1, j+2, 9, 9);
-   background->addMultiCellWidget(lbl_store_abs_diff, j+1, j+2, 10, 10);
+   background->addMultiCellWidget(lbl_csv_controls, j, j+1, 8, 10);
+   background->addMultiCellWidget(lbl_store_reference, j+2, j+3, 8, 8);
+   background->addMultiCellWidget(lbl_store_diff, j+2, j+3, 9, 9);
+   background->addMultiCellWidget(lbl_store_abs_diff, j+2, j+3, 10, 10);
 
-   j += 3;
+   j += 4;
 
    background->addWidget(cb_active_s, j, 0);
    background->addWidget(le_target_s, j, 1);
@@ -1433,6 +1446,9 @@ void US_Hydrodyn_Comparative::update_enables()
    if ( updates_enabled )
    {
       cout << "update_enables\n";
+
+      lbl_store_diff->setText((comparative->by_pct ? "%\n" : "" ) + tr("Difference"));
+      lbl_store_abs_diff->setText((comparative->by_pct ? "%\n" : "") + tr("Absolute\ndifference"));
 
       bool any_selected = any_loaded_selected();
       
@@ -1742,6 +1758,12 @@ void US_Hydrodyn_Comparative::enable_updates()
    update_enables();
 }
 
+void US_Hydrodyn_Comparative::set_by_pct()
+{
+   comparative->by_pct = cb_by_pct->isChecked();
+   update_enables();
+}
+
 void US_Hydrodyn_Comparative::set_rank()
 {
    comparative->rank = cb_rank->isChecked();
@@ -1801,6 +1823,12 @@ void US_Hydrodyn_Comparative::set_include_in_weight_s()
 void US_Hydrodyn_Comparative::update_weight_s(const QString &val)
 {
    comparative->ce_s.weight = val.toDouble();
+   if ( comparative->ce_s.weight != 0.0 &&
+        !comparative->ce_s.include_in_weight )
+   {
+      cb_include_in_weight_s->setChecked(true);
+      update_enables();
+   }
 }
 
 void US_Hydrodyn_Comparative::update_buckets_s(const QString &val)
@@ -1862,6 +1890,12 @@ void US_Hydrodyn_Comparative::set_include_in_weight_D()
 void US_Hydrodyn_Comparative::update_weight_D(const QString &val)
 {
    comparative->ce_D.weight = val.toDouble();
+   if ( comparative->ce_D.weight != 0.0 &&
+        !comparative->ce_D.include_in_weight )
+   {
+      cb_include_in_weight_D->setChecked(true);
+      update_enables();
+   }
 }
 
 void US_Hydrodyn_Comparative::update_buckets_D(const QString &val)
@@ -1924,6 +1958,12 @@ void US_Hydrodyn_Comparative::set_include_in_weight_sr()
 void US_Hydrodyn_Comparative::update_weight_sr(const QString &val)
 {
    comparative->ce_sr.weight = val.toDouble();
+   if ( comparative->ce_sr.weight != 0.0 &&
+        !comparative->ce_sr.include_in_weight )
+   {
+      cb_include_in_weight_sr->setChecked(true);
+      update_enables();
+   }
 }
 
 void US_Hydrodyn_Comparative::update_buckets_sr(const QString &val)
@@ -1985,6 +2025,12 @@ void US_Hydrodyn_Comparative::set_include_in_weight_fr()
 void US_Hydrodyn_Comparative::update_weight_fr(const QString &val)
 {
    comparative->ce_fr.weight = val.toDouble();
+   if ( comparative->ce_fr.weight != 0.0 &&
+        !comparative->ce_fr.include_in_weight )
+   {
+      cb_include_in_weight_fr->setChecked(true);
+      update_enables();
+   }
 }
 
 void US_Hydrodyn_Comparative::update_buckets_fr(const QString &val)
@@ -2047,6 +2093,12 @@ void US_Hydrodyn_Comparative::set_include_in_weight_rg()
 void US_Hydrodyn_Comparative::update_weight_rg(const QString &val)
 {
    comparative->ce_rg.weight = val.toDouble();
+   if ( comparative->ce_rg.weight != 0.0 &&
+        !comparative->ce_rg.include_in_weight )
+   {
+      cb_include_in_weight_rg->setChecked(true);
+      update_enables();
+   }
 }
 
 void US_Hydrodyn_Comparative::update_buckets_rg(const QString &val)
@@ -2109,6 +2161,12 @@ void US_Hydrodyn_Comparative::set_include_in_weight_tau()
 void US_Hydrodyn_Comparative::update_weight_tau(const QString &val)
 {
    comparative->ce_tau.weight = val.toDouble();
+   if ( comparative->ce_tau.weight != 0.0 &&
+        !comparative->ce_tau.include_in_weight )
+   {
+      cb_include_in_weight_tau->setChecked(true);
+      update_enables();
+   }
 }
 
 void US_Hydrodyn_Comparative::update_buckets_tau(const QString &val)
@@ -2171,6 +2229,12 @@ void US_Hydrodyn_Comparative::set_include_in_weight_eta()
 void US_Hydrodyn_Comparative::update_weight_eta(const QString &val)
 {
    comparative->ce_eta.weight = val.toDouble();
+   if ( comparative->ce_eta.weight != 0.0 &&
+        !comparative->ce_eta.include_in_weight )
+   {
+      cb_include_in_weight_eta->setChecked(true);
+      update_enables();
+   }
 }
 
 void US_Hydrodyn_Comparative::update_buckets_eta(const QString &val)
@@ -2984,6 +3048,7 @@ void US_Hydrodyn_Comparative::update_font()
 
 void US_Hydrodyn_Comparative::refresh()
 {
+   cb_by_pct->setChecked(comparative->by_pct);
    cb_rank->setChecked(comparative->rank);
    cb_weight_controls->setChecked(comparative->weight_controls);
    cb_active_s->setText(comparative->ce_s.name);
@@ -3538,36 +3603,41 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
 
    bool do_weight = comparative->weight_controls;
 
+   QString header_exp = "Exp:";
+   QString header_diff = QString( comparative->by_pct ? "% " : "" ) + "Diff:";
+   QString header_abs_diff = QString( comparative->by_pct ? "% " : "" ) + "AbsDiff:";
+   QString header_weight = "Weighted sum of " + QString( comparative->by_pct ? "% " : "" ) + " absolute differences";
+
    bool processed_fields_exist = 
-      ( do_s && ref_s && csv1.header_map.count("Exp:" + comparative->ce_s.name) ) ||
-      ( do_s && diff_s && csv1.header_map.count("Diff:" + comparative->ce_s.name) ) ||
-      ( do_s && abs_diff_s && csv1.header_map.count("AbsDiff:" + comparative->ce_s.name) ) ||
+      ( do_s && ref_s && csv1.header_map.count(header_exp + comparative->ce_s.name) ) ||
+      ( do_s && diff_s && csv1.header_map.count(header_diff + comparative->ce_s.name) ) ||
+      ( do_s && abs_diff_s && csv1.header_map.count(header_abs_diff + comparative->ce_s.name) ) ||
 
-      ( do_D && ref_D && csv1.header_map.count("Exp:" + comparative->ce_D.name) ) ||
-      ( do_D && diff_D && csv1.header_map.count("Diff:" + comparative->ce_D.name) ) ||
-      ( do_D && abs_diff_D && csv1.header_map.count("AbsDiff:" + comparative->ce_D.name) ) ||
+      ( do_D && ref_D && csv1.header_map.count(header_exp + comparative->ce_D.name) ) ||
+      ( do_D && diff_D && csv1.header_map.count(header_diff + comparative->ce_D.name) ) ||
+      ( do_D && abs_diff_D && csv1.header_map.count(header_abs_diff + comparative->ce_D.name) ) ||
 
-      ( do_sr && ref_sr && csv1.header_map.count("Exp:" + comparative->ce_sr.name) ) ||
-      ( do_sr && diff_sr && csv1.header_map.count("Diff:" + comparative->ce_sr.name) ) ||
-      ( do_sr && abs_diff_sr && csv1.header_map.count("AbsDiff:" + comparative->ce_sr.name) ) ||
+      ( do_sr && ref_sr && csv1.header_map.count(header_exp + comparative->ce_sr.name) ) ||
+      ( do_sr && diff_sr && csv1.header_map.count(header_diff + comparative->ce_sr.name) ) ||
+      ( do_sr && abs_diff_sr && csv1.header_map.count(header_abs_diff + comparative->ce_sr.name) ) ||
 
-      ( do_fr && ref_fr && csv1.header_map.count("Exp:" + comparative->ce_fr.name) ) ||
-      ( do_fr && diff_fr && csv1.header_map.count("Diff:" + comparative->ce_fr.name) ) ||
-      ( do_fr && abs_diff_fr && csv1.header_map.count("AbsDiff:" + comparative->ce_fr.name) ) ||
+      ( do_fr && ref_fr && csv1.header_map.count(header_exp + comparative->ce_fr.name) ) ||
+      ( do_fr && diff_fr && csv1.header_map.count(header_diff + comparative->ce_fr.name) ) ||
+      ( do_fr && abs_diff_fr && csv1.header_map.count(header_abs_diff + comparative->ce_fr.name) ) ||
 
-      ( do_rg && ref_rg && csv1.header_map.count("Exp:" + comparative->ce_rg.name) ) ||
-      ( do_rg && diff_rg && csv1.header_map.count("Diff:" + comparative->ce_rg.name) ) ||
-      ( do_rg && abs_diff_rg && csv1.header_map.count("AbsDiff:" + comparative->ce_rg.name) ) ||
+      ( do_rg && ref_rg && csv1.header_map.count(header_exp + comparative->ce_rg.name) ) ||
+      ( do_rg && diff_rg && csv1.header_map.count(header_diff + comparative->ce_rg.name) ) ||
+      ( do_rg && abs_diff_rg && csv1.header_map.count(header_abs_diff + comparative->ce_rg.name) ) ||
 
-      ( do_tau && ref_tau && csv1.header_map.count("Exp:" + comparative->ce_tau.name) ) ||
-      ( do_tau && diff_tau && csv1.header_map.count("Diff:" + comparative->ce_tau.name) ) ||
-      ( do_tau && abs_diff_tau && csv1.header_map.count("AbsDiff:" + comparative->ce_tau.name) ) ||
+      ( do_tau && ref_tau && csv1.header_map.count(header_exp + comparative->ce_tau.name) ) ||
+      ( do_tau && diff_tau && csv1.header_map.count(header_diff + comparative->ce_tau.name) ) ||
+      ( do_tau && abs_diff_tau && csv1.header_map.count(header_abs_diff + comparative->ce_tau.name) ) ||
 
-      ( do_eta && ref_eta && csv1.header_map.count("Exp:" + comparative->ce_eta.name) ) ||
-      ( do_eta && diff_eta && csv1.header_map.count("Diff:" + comparative->ce_eta.name) ) ||
-      ( do_eta && abs_diff_eta && csv1.header_map.count("AbsDiff:" + comparative->ce_eta.name) ) ||
+      ( do_eta && ref_eta && csv1.header_map.count(header_exp + comparative->ce_eta.name) ) ||
+      ( do_eta && diff_eta && csv1.header_map.count(header_diff + comparative->ce_eta.name) ) ||
+      ( do_eta && abs_diff_eta && csv1.header_map.count(header_abs_diff + comparative->ce_eta.name) ) ||
 
-      ( do_weight && csv1.header_map.count("Weighted sum of absolute differences") )
+      ( do_weight && csv1.header_map.count(header_weight) )
       ;
 
    if ( processed_fields_exist )
@@ -3582,197 +3652,197 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
                                  QString::null, 0, 1 ) 
           )
       {
-         if ( do_s && ref_s && csv1.header_map.count("Exp:" + comparative->ce_s.name) )
+         if ( do_s && ref_s && csv1.header_map.count(header_exp + comparative->ce_s.name) )
          {
-            csv_remove_column(csv1, "Exp:" + comparative->ce_s.name);
+            csv_remove_column(csv1, header_exp + comparative->ce_s.name);
          }
-         if ( do_s && diff_s && csv1.header_map.count("Diff:" + comparative->ce_s.name) ) 
+         if ( do_s && diff_s && csv1.header_map.count(header_diff + comparative->ce_s.name) ) 
          {
-            csv_remove_column(csv1, "Diff:" + comparative->ce_s.name);
+            csv_remove_column(csv1, header_diff + comparative->ce_s.name);
          }
-         if ( do_s && abs_diff_s && csv1.header_map.count("AbsDiff:" + comparative->ce_s.name) ) 
+         if ( do_s && abs_diff_s && csv1.header_map.count(header_abs_diff + comparative->ce_s.name) ) 
          {
-            csv_remove_column(csv1, "AbsDiff:" + comparative->ce_s.name);
-         }
-
-         if ( do_D && ref_D && csv1.header_map.count("Exp:" + comparative->ce_D.name) ) 
-         {
-            csv_remove_column(csv1, "Exp:" + comparative->ce_D.name);
-         }
-         if ( do_D && diff_D && csv1.header_map.count("Diff:" + comparative->ce_D.name) ) 
-         {
-            csv_remove_column(csv1, "Diff:" + comparative->ce_D.name);
-         }
-         if ( do_D && abs_diff_D && csv1.header_map.count("AbsDiff:" + comparative->ce_D.name) ) 
-         {
-            csv_remove_column(csv1, "AbsDiff:" + comparative->ce_D.name);
+            csv_remove_column(csv1, header_abs_diff + comparative->ce_s.name);
          }
 
-         if ( do_sr && ref_sr && csv1.header_map.count("Exp:" + comparative->ce_sr.name) ) 
+         if ( do_D && ref_D && csv1.header_map.count(header_exp + comparative->ce_D.name) ) 
          {
-            csv_remove_column(csv1, "Exp:" + comparative->ce_sr.name);
+            csv_remove_column(csv1, header_exp + comparative->ce_D.name);
          }
-         if ( do_sr && diff_sr && csv1.header_map.count("Diff:" + comparative->ce_sr.name) ) 
+         if ( do_D && diff_D && csv1.header_map.count(header_diff + comparative->ce_D.name) ) 
          {
-            csv_remove_column(csv1, "Diff:" + comparative->ce_sr.name);
+            csv_remove_column(csv1, header_diff + comparative->ce_D.name);
          }
-         if ( do_sr && abs_diff_sr && csv1.header_map.count("AbsDiff:" + comparative->ce_sr.name) ) 
+         if ( do_D && abs_diff_D && csv1.header_map.count(header_abs_diff + comparative->ce_D.name) ) 
          {
-            csv_remove_column(csv1, "AbsDiff:" + comparative->ce_sr.name);
-         }
-
-         if ( do_fr && ref_fr && csv1.header_map.count("Exp:" + comparative->ce_fr.name) ) 
-         {
-            csv_remove_column(csv1, "Exp:" + comparative->ce_fr.name);
-         }
-         if ( do_fr && diff_fr && csv1.header_map.count("Diff:" + comparative->ce_fr.name) ) 
-         {
-            csv_remove_column(csv1, "Diff:" + comparative->ce_fr.name);
-         }
-         if ( do_fr && abs_diff_fr && csv1.header_map.count("AbsDiff:" + comparative->ce_fr.name) ) 
-         {
-            csv_remove_column(csv1, "AbsDiff:" + comparative->ce_fr.name);
+            csv_remove_column(csv1, header_abs_diff + comparative->ce_D.name);
          }
 
-         if ( do_rg && ref_rg && csv1.header_map.count("Exp:" + comparative->ce_rg.name) ) 
+         if ( do_sr && ref_sr && csv1.header_map.count(header_exp + comparative->ce_sr.name) ) 
          {
-            csv_remove_column(csv1, "Exp:" + comparative->ce_rg.name);
+            csv_remove_column(csv1, header_exp + comparative->ce_sr.name);
          }
-         if ( do_rg && diff_rg && csv1.header_map.count("Diff:" + comparative->ce_rg.name) ) 
+         if ( do_sr && diff_sr && csv1.header_map.count(header_diff + comparative->ce_sr.name) ) 
          {
-            csv_remove_column(csv1, "Diff:" + comparative->ce_rg.name);
+            csv_remove_column(csv1, header_diff + comparative->ce_sr.name);
          }
-         if ( do_rg && abs_diff_rg && csv1.header_map.count("AbsDiff:" + comparative->ce_rg.name) ) 
+         if ( do_sr && abs_diff_sr && csv1.header_map.count(header_abs_diff + comparative->ce_sr.name) ) 
          {
-            csv_remove_column(csv1, "AbsDiff:" + comparative->ce_rg.name);
-         }
-
-         if ( do_tau && ref_tau && csv1.header_map.count("Exp:" + comparative->ce_tau.name) ) 
-         {
-            csv_remove_column(csv1, "Exp:" + comparative->ce_tau.name);
-         }
-         if ( do_tau && diff_tau && csv1.header_map.count("Diff:" + comparative->ce_tau.name) ) 
-         {
-            csv_remove_column(csv1, "Diff:" + comparative->ce_tau.name);
-         }
-         if ( do_tau && abs_diff_tau && csv1.header_map.count("AbsDiff:" + comparative->ce_tau.name) ) 
-         {
-            csv_remove_column(csv1, "AbsDiff:" + comparative->ce_tau.name);
+            csv_remove_column(csv1, header_abs_diff + comparative->ce_sr.name);
          }
 
-         if ( do_eta && ref_eta && csv1.header_map.count("Exp:" + comparative->ce_eta.name) ) 
+         if ( do_fr && ref_fr && csv1.header_map.count(header_exp + comparative->ce_fr.name) ) 
          {
-            csv_remove_column(csv1, "Exp:" + comparative->ce_eta.name);
+            csv_remove_column(csv1, header_exp + comparative->ce_fr.name);
          }
-         if ( do_eta && diff_eta && csv1.header_map.count("Diff:" + comparative->ce_eta.name) ) 
+         if ( do_fr && diff_fr && csv1.header_map.count(header_diff + comparative->ce_fr.name) ) 
          {
-            csv_remove_column(csv1, "Diff:" + comparative->ce_eta.name);
+            csv_remove_column(csv1, header_diff + comparative->ce_fr.name);
          }
-         if ( do_eta && abs_diff_eta && csv1.header_map.count("AbsDiff:" + comparative->ce_eta.name) )
+         if ( do_fr && abs_diff_fr && csv1.header_map.count(header_abs_diff + comparative->ce_fr.name) ) 
          {
-            csv_remove_column(csv1, "AbsDiff:" + comparative->ce_eta.name);
+            csv_remove_column(csv1, header_abs_diff + comparative->ce_fr.name);
          }
 
-         if ( do_weight && csv1.header_map.count("Weighted sum of absolute differences") )
+         if ( do_rg && ref_rg && csv1.header_map.count(header_exp + comparative->ce_rg.name) ) 
          {
-            csv_remove_column(csv1, "Weighted sum of absolute differences");
+            csv_remove_column(csv1, header_exp + comparative->ce_rg.name);
+         }
+         if ( do_rg && diff_rg && csv1.header_map.count(header_diff + comparative->ce_rg.name) ) 
+         {
+            csv_remove_column(csv1, header_diff + comparative->ce_rg.name);
+         }
+         if ( do_rg && abs_diff_rg && csv1.header_map.count(header_abs_diff + comparative->ce_rg.name) ) 
+         {
+            csv_remove_column(csv1, header_abs_diff + comparative->ce_rg.name);
+         }
+
+         if ( do_tau && ref_tau && csv1.header_map.count(header_exp + comparative->ce_tau.name) ) 
+         {
+            csv_remove_column(csv1, header_exp + comparative->ce_tau.name);
+         }
+         if ( do_tau && diff_tau && csv1.header_map.count(header_diff + comparative->ce_tau.name) ) 
+         {
+            csv_remove_column(csv1, header_diff + comparative->ce_tau.name);
+         }
+         if ( do_tau && abs_diff_tau && csv1.header_map.count(header_abs_diff + comparative->ce_tau.name) ) 
+         {
+            csv_remove_column(csv1, header_abs_diff + comparative->ce_tau.name);
+         }
+
+         if ( do_eta && ref_eta && csv1.header_map.count(header_exp + comparative->ce_eta.name) ) 
+         {
+            csv_remove_column(csv1, header_exp + comparative->ce_eta.name);
+         }
+         if ( do_eta && diff_eta && csv1.header_map.count(header_diff + comparative->ce_eta.name) ) 
+         {
+            csv_remove_column(csv1, header_diff + comparative->ce_eta.name);
+         }
+         if ( do_eta && abs_diff_eta && csv1.header_map.count(header_abs_diff + comparative->ce_eta.name) )
+         {
+            csv_remove_column(csv1, header_abs_diff + comparative->ce_eta.name);
+         }
+
+         if ( do_weight && csv1.header_map.count(header_weight) )
+         {
+            csv_remove_column(csv1, header_weight);
          }
 
       } else {
-         if ( do_s && ref_s && csv1.header_map.count("Exp:" + comparative->ce_s.name) )
+         if ( do_s && ref_s && csv1.header_map.count(header_exp + comparative->ce_s.name) )
          {
-            csv_make_unique_header_name(csv1, "Exp:" + comparative->ce_s.name);
+            csv_make_unique_header_name(csv1, header_exp + comparative->ce_s.name);
          }
-         if ( do_s && diff_s && csv1.header_map.count("Diff:" + comparative->ce_s.name) ) 
+         if ( do_s && diff_s && csv1.header_map.count(header_diff + comparative->ce_s.name) ) 
          {
-            csv_make_unique_header_name(csv1, "Diff:" + comparative->ce_s.name);
+            csv_make_unique_header_name(csv1, header_diff + comparative->ce_s.name);
          }
-         if ( do_s && abs_diff_s && csv1.header_map.count("AbsDiff:" + comparative->ce_s.name) ) 
+         if ( do_s && abs_diff_s && csv1.header_map.count(header_abs_diff + comparative->ce_s.name) ) 
          {
-            csv_make_unique_header_name(csv1, "AbsDiff:" + comparative->ce_s.name);
-         }
-
-         if ( do_D && ref_D && csv1.header_map.count("Exp:" + comparative->ce_D.name) ) 
-         {
-            csv_make_unique_header_name(csv1, "Exp:" + comparative->ce_D.name);
-         }
-         if ( do_D && diff_D && csv1.header_map.count("Diff:" + comparative->ce_D.name) ) 
-         {
-            csv_make_unique_header_name(csv1, "Diff:" + comparative->ce_D.name);
-         }
-         if ( do_D && abs_diff_D && csv1.header_map.count("AbsDiff:" + comparative->ce_D.name) ) 
-         {
-            csv_make_unique_header_name(csv1, "AbsDiff:" + comparative->ce_D.name);
+            csv_make_unique_header_name(csv1, header_abs_diff + comparative->ce_s.name);
          }
 
-         if ( do_sr && ref_sr && csv1.header_map.count("Exp:" + comparative->ce_sr.name) ) 
+         if ( do_D && ref_D && csv1.header_map.count(header_exp + comparative->ce_D.name) ) 
          {
-            csv_make_unique_header_name(csv1, "Exp:" + comparative->ce_sr.name);
+            csv_make_unique_header_name(csv1, header_exp + comparative->ce_D.name);
          }
-         if ( do_sr && diff_sr && csv1.header_map.count("Diff:" + comparative->ce_sr.name) ) 
+         if ( do_D && diff_D && csv1.header_map.count(header_diff + comparative->ce_D.name) ) 
          {
-            csv_make_unique_header_name(csv1, "Diff:" + comparative->ce_sr.name);
+            csv_make_unique_header_name(csv1, header_diff + comparative->ce_D.name);
          }
-         if ( do_sr && abs_diff_sr && csv1.header_map.count("AbsDiff:" + comparative->ce_sr.name) ) 
+         if ( do_D && abs_diff_D && csv1.header_map.count(header_abs_diff + comparative->ce_D.name) ) 
          {
-            csv_make_unique_header_name(csv1, "AbsDiff:" + comparative->ce_sr.name);
-         }
-
-         if ( do_fr && ref_fr && csv1.header_map.count("Exp:" + comparative->ce_fr.name) ) 
-         {
-            csv_make_unique_header_name(csv1, "Exp:" + comparative->ce_fr.name);
-         }
-         if ( do_fr && diff_fr && csv1.header_map.count("Diff:" + comparative->ce_fr.name) ) 
-         {
-            csv_make_unique_header_name(csv1, "Diff:" + comparative->ce_fr.name);
-         }
-         if ( do_fr && abs_diff_fr && csv1.header_map.count("AbsDiff:" + comparative->ce_fr.name) ) 
-         {
-            csv_make_unique_header_name(csv1, "AbsDiff:" + comparative->ce_fr.name);
+            csv_make_unique_header_name(csv1, header_abs_diff + comparative->ce_D.name);
          }
 
-         if ( do_rg && ref_rg && csv1.header_map.count("Exp:" + comparative->ce_rg.name) ) 
+         if ( do_sr && ref_sr && csv1.header_map.count(header_exp + comparative->ce_sr.name) ) 
          {
-            csv_make_unique_header_name(csv1, "Exp:" + comparative->ce_rg.name);
+            csv_make_unique_header_name(csv1, header_exp + comparative->ce_sr.name);
          }
-         if ( do_rg && diff_rg && csv1.header_map.count("Diff:" + comparative->ce_rg.name) ) 
+         if ( do_sr && diff_sr && csv1.header_map.count(header_diff + comparative->ce_sr.name) ) 
          {
-            csv_make_unique_header_name(csv1, "Diff:" + comparative->ce_rg.name);
+            csv_make_unique_header_name(csv1, header_diff + comparative->ce_sr.name);
          }
-         if ( do_rg && abs_diff_rg && csv1.header_map.count("AbsDiff:" + comparative->ce_rg.name) ) 
+         if ( do_sr && abs_diff_sr && csv1.header_map.count(header_abs_diff + comparative->ce_sr.name) ) 
          {
-            csv_make_unique_header_name(csv1, "AbsDiff:" + comparative->ce_rg.name);
-         }
-
-         if ( do_tau && ref_tau && csv1.header_map.count("Exp:" + comparative->ce_tau.name) ) 
-         {
-            csv_make_unique_header_name(csv1, "Exp:" + comparative->ce_tau.name);
-         }
-         if ( do_tau && diff_tau && csv1.header_map.count("Diff:" + comparative->ce_tau.name) ) 
-         {
-            csv_make_unique_header_name(csv1, "Diff:" + comparative->ce_tau.name);
-         }
-         if ( do_tau && abs_diff_tau && csv1.header_map.count("AbsDiff:" + comparative->ce_tau.name) ) 
-         {
-            csv_make_unique_header_name(csv1, "AbsDiff:" + comparative->ce_tau.name);
+            csv_make_unique_header_name(csv1, header_abs_diff + comparative->ce_sr.name);
          }
 
-         if ( do_eta && ref_eta && csv1.header_map.count("Exp:" + comparative->ce_eta.name) ) 
+         if ( do_fr && ref_fr && csv1.header_map.count(header_exp + comparative->ce_fr.name) ) 
          {
-            csv_make_unique_header_name(csv1, "Exp:" + comparative->ce_eta.name);
+            csv_make_unique_header_name(csv1, header_exp + comparative->ce_fr.name);
          }
-         if ( do_eta && diff_eta && csv1.header_map.count("Diff:" + comparative->ce_eta.name) ) 
+         if ( do_fr && diff_fr && csv1.header_map.count(header_diff + comparative->ce_fr.name) ) 
          {
-            csv_make_unique_header_name(csv1, "Diff:" + comparative->ce_eta.name);
+            csv_make_unique_header_name(csv1, header_diff + comparative->ce_fr.name);
          }
-         if ( do_eta && abs_diff_eta && csv1.header_map.count("AbsDiff:" + comparative->ce_eta.name) )
+         if ( do_fr && abs_diff_fr && csv1.header_map.count(header_abs_diff + comparative->ce_fr.name) ) 
          {
-            csv_make_unique_header_name(csv1, "AbsDiff:" + comparative->ce_eta.name);
+            csv_make_unique_header_name(csv1, header_abs_diff + comparative->ce_fr.name);
          }
 
-         if ( do_weight && csv1.header_map.count("Weighted sum of absolute differences") )
+         if ( do_rg && ref_rg && csv1.header_map.count(header_exp + comparative->ce_rg.name) ) 
          {
-            csv_make_unique_header_name(csv1, "Weighted sum of absolute differences");
+            csv_make_unique_header_name(csv1, header_exp + comparative->ce_rg.name);
+         }
+         if ( do_rg && diff_rg && csv1.header_map.count(header_diff + comparative->ce_rg.name) ) 
+         {
+            csv_make_unique_header_name(csv1, header_diff + comparative->ce_rg.name);
+         }
+         if ( do_rg && abs_diff_rg && csv1.header_map.count(header_abs_diff + comparative->ce_rg.name) ) 
+         {
+            csv_make_unique_header_name(csv1, header_abs_diff + comparative->ce_rg.name);
+         }
+
+         if ( do_tau && ref_tau && csv1.header_map.count(header_exp + comparative->ce_tau.name) ) 
+         {
+            csv_make_unique_header_name(csv1, header_exp + comparative->ce_tau.name);
+         }
+         if ( do_tau && diff_tau && csv1.header_map.count(header_diff + comparative->ce_tau.name) ) 
+         {
+            csv_make_unique_header_name(csv1, header_diff + comparative->ce_tau.name);
+         }
+         if ( do_tau && abs_diff_tau && csv1.header_map.count(header_abs_diff + comparative->ce_tau.name) ) 
+         {
+            csv_make_unique_header_name(csv1, header_abs_diff + comparative->ce_tau.name);
+         }
+
+         if ( do_eta && ref_eta && csv1.header_map.count(header_exp + comparative->ce_eta.name) ) 
+         {
+            csv_make_unique_header_name(csv1, header_exp + comparative->ce_eta.name);
+         }
+         if ( do_eta && diff_eta && csv1.header_map.count(header_diff + comparative->ce_eta.name) ) 
+         {
+            csv_make_unique_header_name(csv1, header_diff + comparative->ce_eta.name);
+         }
+         if ( do_eta && abs_diff_eta && csv1.header_map.count(header_abs_diff + comparative->ce_eta.name) )
+         {
+            csv_make_unique_header_name(csv1, header_abs_diff + comparative->ce_eta.name);
+         }
+
+         if ( do_weight && csv1.header_map.count(header_weight) )
+         {
+            csv_make_unique_header_name(csv1, header_weight);
          }
       }
    }
@@ -3788,22 +3858,22 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
    if ( do_s && ref_s )
    {
       col_ref_s = next_col++;
-      csv1.header.push_back("Exp:" + comparative->ce_s.name);
-      csv1.header_map["Exp:" + comparative->ce_s.name] = col_ref_s;
+      csv1.header.push_back(header_exp + comparative->ce_s.name);
+      csv1.header_map[header_exp + comparative->ce_s.name] = col_ref_s;
    }
    unsigned int col_diff_s = 0;
    if ( do_s && diff_s )
    {
       col_diff_s = next_col++;
-      csv1.header.push_back("Diff:" + comparative->ce_s.name);
-      csv1.header_map["Diff:" + comparative->ce_s.name] = col_diff_s;
+      csv1.header.push_back(header_diff + comparative->ce_s.name);
+      csv1.header_map[header_diff + comparative->ce_s.name] = col_diff_s;
    }
    unsigned int col_abs_diff_s = 0;
    if ( do_s && abs_diff_s )
    {
       col_abs_diff_s = next_col++;
-      csv1.header.push_back("AbsDiff:" + comparative->ce_s.name);
-      csv1.header_map["AbsDiff:" + comparative->ce_s.name] = col_abs_diff_s;
+      csv1.header.push_back(header_abs_diff + comparative->ce_s.name);
+      csv1.header_map[header_abs_diff + comparative->ce_s.name] = col_abs_diff_s;
    }
 
    unsigned int col_model_D = 0;
@@ -3816,22 +3886,22 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
    if ( do_D && ref_D )
    {
       col_ref_D = next_col++;
-      csv1.header.push_back("Exp:" + comparative->ce_D.name);
-      csv1.header_map["Exp:" + comparative->ce_D.name] = col_ref_D;
+      csv1.header.push_back(header_exp + comparative->ce_D.name);
+      csv1.header_map[header_exp + comparative->ce_D.name] = col_ref_D;
    }
    unsigned int col_diff_D = 0;
    if ( do_D && diff_D )
    {
       col_diff_D = next_col++;
-      csv1.header.push_back("Diff:" + comparative->ce_D.name);
-      csv1.header_map["Diff:" + comparative->ce_D.name] = col_diff_D;
+      csv1.header.push_back(header_diff + comparative->ce_D.name);
+      csv1.header_map[header_diff + comparative->ce_D.name] = col_diff_D;
    }
    unsigned int col_abs_diff_D = 0;
    if ( do_D && abs_diff_D )
    {
       col_abs_diff_D = next_col++;
-      csv1.header.push_back("AbsDiff:" + comparative->ce_D.name);
-      csv1.header_map["AbsDiff:" + comparative->ce_D.name] = col_abs_diff_D;
+      csv1.header.push_back(header_abs_diff + comparative->ce_D.name);
+      csv1.header_map[header_abs_diff + comparative->ce_D.name] = col_abs_diff_D;
    }
 
    unsigned int col_model_sr = 0;
@@ -3844,22 +3914,22 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
    if ( do_sr && ref_sr )
    {
       col_ref_sr = next_col++;
-      csv1.header.push_back("Exp:" + comparative->ce_sr.name);
-      csv1.header_map["Exp:" + comparative->ce_sr.name] = col_ref_sr;
+      csv1.header.push_back(header_exp + comparative->ce_sr.name);
+      csv1.header_map[header_exp + comparative->ce_sr.name] = col_ref_sr;
    }
    unsigned int col_diff_sr = 0;
    if ( do_sr && diff_sr )
    {
       col_diff_sr = next_col++;
-      csv1.header.push_back("Diff:" + comparative->ce_sr.name);
-      csv1.header_map["Diff:" + comparative->ce_sr.name] = col_diff_sr;
+      csv1.header.push_back(header_diff + comparative->ce_sr.name);
+      csv1.header_map[header_diff + comparative->ce_sr.name] = col_diff_sr;
    }
    unsigned int col_abs_diff_sr = 0;
    if ( do_sr && abs_diff_sr )
    {
       col_abs_diff_sr = next_col++;
-      csv1.header.push_back("AbsDiff:" + comparative->ce_sr.name);
-      csv1.header_map["AbsDiff:" + comparative->ce_sr.name] = col_abs_diff_sr;
+      csv1.header.push_back(header_abs_diff + comparative->ce_sr.name);
+      csv1.header_map[header_abs_diff + comparative->ce_sr.name] = col_abs_diff_sr;
    }
 
    unsigned int col_model_fr = 0;
@@ -3872,22 +3942,22 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
    if ( do_fr && ref_fr )
    {
       col_ref_fr = next_col++;
-      csv1.header.push_back("Exp:" + comparative->ce_fr.name);
-      csv1.header_map["Exp:" + comparative->ce_fr.name] = col_ref_fr;
+      csv1.header.push_back(header_exp + comparative->ce_fr.name);
+      csv1.header_map[header_exp + comparative->ce_fr.name] = col_ref_fr;
    }
    unsigned int col_diff_fr = 0;
    if ( do_fr && diff_fr )
    {
       col_diff_fr = next_col++;
-      csv1.header.push_back("Diff:" + comparative->ce_fr.name);
-      csv1.header_map["Diff:" + comparative->ce_fr.name] = col_diff_fr;
+      csv1.header.push_back(header_diff + comparative->ce_fr.name);
+      csv1.header_map[header_diff + comparative->ce_fr.name] = col_diff_fr;
    }
    unsigned int col_abs_diff_fr = 0;
    if ( do_fr && abs_diff_fr )
    {
       col_abs_diff_fr = next_col++;
-      csv1.header.push_back("AbsDiff:" + comparative->ce_fr.name);
-      csv1.header_map["AbsDiff:" + comparative->ce_fr.name] = col_abs_diff_fr;
+      csv1.header.push_back(header_abs_diff + comparative->ce_fr.name);
+      csv1.header_map[header_abs_diff + comparative->ce_fr.name] = col_abs_diff_fr;
    }
 
    unsigned int col_model_rg = 0;
@@ -3900,22 +3970,22 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
    if ( do_rg && ref_rg )
    {
       col_ref_rg = next_col++;
-      csv1.header.push_back("Exp:" + comparative->ce_rg.name);
-      csv1.header_map["Exp:" + comparative->ce_rg.name] = col_ref_rg;
+      csv1.header.push_back(header_exp + comparative->ce_rg.name);
+      csv1.header_map[header_exp + comparative->ce_rg.name] = col_ref_rg;
    }
    unsigned int col_diff_rg = 0;
    if ( do_rg && diff_rg )
    {
       col_diff_rg = next_col++;
-      csv1.header.push_back("Diff:" + comparative->ce_rg.name);
-      csv1.header_map["Diff:" + comparative->ce_rg.name] = col_diff_rg;
+      csv1.header.push_back(header_diff + comparative->ce_rg.name);
+      csv1.header_map[header_diff + comparative->ce_rg.name] = col_diff_rg;
    }
    unsigned int col_abs_diff_rg = 0;
    if ( do_rg && abs_diff_rg )
    {
       col_abs_diff_rg = next_col++;
-      csv1.header.push_back("AbsDiff:" + comparative->ce_rg.name);
-      csv1.header_map["AbsDiff:" + comparative->ce_rg.name] = col_abs_diff_rg;
+      csv1.header.push_back(header_abs_diff + comparative->ce_rg.name);
+      csv1.header_map[header_abs_diff + comparative->ce_rg.name] = col_abs_diff_rg;
    }
 
    unsigned int col_model_tau = 0;
@@ -3928,22 +3998,22 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
    if ( do_tau && ref_tau )
    {
       col_ref_tau = next_col++;
-      csv1.header.push_back("Exp:" + comparative->ce_tau.name);
-      csv1.header_map["Exp:" + comparative->ce_tau.name] = col_ref_tau;
+      csv1.header.push_back(header_exp + comparative->ce_tau.name);
+      csv1.header_map[header_exp + comparative->ce_tau.name] = col_ref_tau;
    }
    unsigned int col_diff_tau = 0;
    if ( do_tau && diff_tau )
    {
       col_diff_tau = next_col++;
-      csv1.header.push_back("Diff:" + comparative->ce_tau.name);
-      csv1.header_map["Diff:" + comparative->ce_tau.name] = col_diff_tau;
+      csv1.header.push_back(header_diff + comparative->ce_tau.name);
+      csv1.header_map[header_diff + comparative->ce_tau.name] = col_diff_tau;
    }
    unsigned int col_abs_diff_tau = 0;
    if ( do_tau && abs_diff_tau )
    {
       col_abs_diff_tau = next_col++;
-      csv1.header.push_back("AbsDiff:" + comparative->ce_tau.name);
-      csv1.header_map["AbsDiff:" + comparative->ce_tau.name] = col_abs_diff_tau;
+      csv1.header.push_back(header_abs_diff + comparative->ce_tau.name);
+      csv1.header_map[header_abs_diff + comparative->ce_tau.name] = col_abs_diff_tau;
    }
 
    unsigned int col_model_eta = 0;
@@ -3956,30 +4026,30 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
    if ( do_eta && ref_eta )
    {
       col_ref_eta = next_col++;
-      csv1.header.push_back("Exp:" + comparative->ce_eta.name);
-      csv1.header_map["Exp:" + comparative->ce_eta.name] = col_ref_eta;
+      csv1.header.push_back(header_exp + comparative->ce_eta.name);
+      csv1.header_map[header_exp + comparative->ce_eta.name] = col_ref_eta;
    }
    unsigned int col_diff_eta = 0;
    if ( do_eta && diff_eta )
    {
       col_diff_eta = next_col++;
-      csv1.header.push_back("Diff:" + comparative->ce_eta.name);
-      csv1.header_map["Diff:" + comparative->ce_eta.name] = col_diff_eta;
+      csv1.header.push_back(header_diff + comparative->ce_eta.name);
+      csv1.header_map[header_diff + comparative->ce_eta.name] = col_diff_eta;
    }
    unsigned int col_abs_diff_eta = 0;
    if ( do_eta && abs_diff_eta )
    {
       col_abs_diff_eta = next_col++;
-      csv1.header.push_back("AbsDiff:" + comparative->ce_eta.name);
-      csv1.header_map["AbsDiff:" + comparative->ce_eta.name] = col_abs_diff_eta;
+      csv1.header.push_back(header_abs_diff + comparative->ce_eta.name);
+      csv1.header_map[header_abs_diff + comparative->ce_eta.name] = col_abs_diff_eta;
    }
 
    unsigned int col_weight = 0;
    if ( do_weight )
    {
       col_weight = next_col++;
-      csv1.header.push_back("Weighted sum of absolute differences");
-      csv1.header_map["Weighted sum of absolute differences"] = col_weight;
+      csv1.header.push_back(header_weight);
+      csv1.header_map[header_weight] = col_weight;
    }
 
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
@@ -3999,16 +4069,32 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          if ( diff_s )
          {
             csv1.num_data[i][col_diff_s] = csv1.num_data[i][col_model_s] - exp_s;
+            if ( comparative->by_pct && exp_s != 0.0 )
+            {
+               csv1.num_data[i][col_diff_s] = 100.0 * csv1.num_data[i][col_diff_s] / exp_s;
+            }
             csv1.data[i][col_diff_s] = QString("%1").arg(csv1.num_data[i][col_diff_s]);
          }
          if ( abs_diff_s )
          {
             csv1.num_data[i][col_abs_diff_s] = fabs( csv1.num_data[i][col_model_s] - exp_s );
+            if ( comparative->by_pct && exp_s != 0.0 )
+            {
+               csv1.num_data[i][col_abs_diff_s] = 100.0 * csv1.num_data[i][col_abs_diff_s] / exp_s;
+            }
             csv1.data[i][col_abs_diff_s] = QString("%1").arg(csv1.num_data[i][col_abs_diff_s]);
          }
          if ( do_weight && comparative->ce_s.include_in_weight )
          {
-            weight += fabs( csv1.num_data[i][col_model_s] - exp_s ) * comparative->ce_s.weight;
+            if ( comparative->by_pct && exp_s != 0.0 )
+            {
+               weight += 
+                  100.0 *
+                  ( fabs( csv1.num_data[i][col_model_s] - exp_s ) / exp_s ) * 
+                  comparative->ce_s.weight;
+            } else {
+               weight += fabs( csv1.num_data[i][col_model_s] - exp_s ) * comparative->ce_s.weight;
+            }
          }
       }
 
@@ -4022,18 +4108,35 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          if ( diff_D )
          {
             csv1.num_data[i][col_diff_D] = csv1.num_data[i][col_model_D] - exp_D;
+            if ( comparative->by_pct && exp_D != 0.0 )
+            {
+               csv1.num_data[i][col_diff_D] = 100.0 * csv1.num_data[i][col_diff_D] / exp_D;
+            }
             csv1.data[i][col_diff_D] = QString("%1").arg(csv1.num_data[i][col_diff_D]);
          }
          if ( abs_diff_D )
          {
             csv1.num_data[i][col_abs_diff_D] = fabs( csv1.num_data[i][col_model_D] - exp_D );
+            if ( comparative->by_pct && exp_D != 0.0 )
+            {
+               csv1.num_data[i][col_abs_diff_D] = 100.0 * csv1.num_data[i][col_abs_diff_D] / exp_D;
+            }
             csv1.data[i][col_abs_diff_D] = QString("%1").arg(csv1.num_data[i][col_abs_diff_D]);
          }
          if ( do_weight && comparative->ce_D.include_in_weight )
          {
-            weight += fabs( csv1.num_data[i][col_model_D] - exp_D ) * comparative->ce_D.weight;
+            if ( comparative->by_pct && exp_D != 0.0 )
+            {
+               weight += 
+                  100.0 *
+                  ( fabs( csv1.num_data[i][col_model_D] - exp_D ) / exp_D ) * 
+                  comparative->ce_D.weight;
+            } else {
+               weight += fabs( csv1.num_data[i][col_model_D] - exp_D ) * comparative->ce_D.weight;
+            }
          }
       }
+
 
       if ( do_sr )
       {
@@ -4045,18 +4148,35 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          if ( diff_sr )
          {
             csv1.num_data[i][col_diff_sr] = csv1.num_data[i][col_model_sr] - exp_sr;
+            if ( comparative->by_pct && exp_sr != 0.0 )
+            {
+               csv1.num_data[i][col_diff_sr] = 100.0 * csv1.num_data[i][col_diff_sr] / exp_sr;
+            }
             csv1.data[i][col_diff_sr] = QString("%1").arg(csv1.num_data[i][col_diff_sr]);
          }
          if ( abs_diff_sr )
          {
             csv1.num_data[i][col_abs_diff_sr] = fabs( csv1.num_data[i][col_model_sr] - exp_sr );
+            if ( comparative->by_pct && exp_sr != 0.0 )
+            {
+               csv1.num_data[i][col_abs_diff_sr] = 100.0 * csv1.num_data[i][col_abs_diff_sr] / exp_sr;
+            }
             csv1.data[i][col_abs_diff_sr] = QString("%1").arg(csv1.num_data[i][col_abs_diff_sr]);
          }
          if ( do_weight && comparative->ce_sr.include_in_weight )
          {
-            weight += fabs( csv1.num_data[i][col_model_sr] - exp_sr ) * comparative->ce_sr.weight;
+            if ( comparative->by_pct && exp_sr != 0.0 )
+            {
+               weight += 
+                  100.0 *
+                  ( fabs( csv1.num_data[i][col_model_sr] - exp_sr ) / exp_sr ) * 
+                  comparative->ce_sr.weight;
+            } else {
+               weight += fabs( csv1.num_data[i][col_model_sr] - exp_sr ) * comparative->ce_sr.weight;
+            }
          }
       }
+
 
       if ( do_fr )
       {
@@ -4068,18 +4188,35 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          if ( diff_fr )
          {
             csv1.num_data[i][col_diff_fr] = csv1.num_data[i][col_model_fr] - exp_fr;
+            if ( comparative->by_pct && exp_fr != 0.0 )
+            {
+               csv1.num_data[i][col_diff_fr] = 100.0 * csv1.num_data[i][col_diff_fr] / exp_fr;
+            }
             csv1.data[i][col_diff_fr] = QString("%1").arg(csv1.num_data[i][col_diff_fr]);
          }
          if ( abs_diff_fr )
          {
             csv1.num_data[i][col_abs_diff_fr] = fabs( csv1.num_data[i][col_model_fr] - exp_fr );
+            if ( comparative->by_pct && exp_fr != 0.0 )
+            {
+               csv1.num_data[i][col_abs_diff_fr] = 100.0 * csv1.num_data[i][col_abs_diff_fr] / exp_fr;
+            }
             csv1.data[i][col_abs_diff_fr] = QString("%1").arg(csv1.num_data[i][col_abs_diff_fr]);
          }
          if ( do_weight && comparative->ce_fr.include_in_weight )
          {
-            weight += fabs( csv1.num_data[i][col_model_fr] - exp_fr ) * comparative->ce_fr.weight;
+            if ( comparative->by_pct && exp_fr != 0.0 )
+            {
+               weight += 
+                  100.0 *
+                  ( fabs( csv1.num_data[i][col_model_fr] - exp_fr ) / exp_fr ) * 
+                  comparative->ce_fr.weight;
+            } else {
+               weight += fabs( csv1.num_data[i][col_model_fr] - exp_fr ) * comparative->ce_fr.weight;
+            }
          }
       }
+
 
       if ( do_rg )
       {
@@ -4091,18 +4228,35 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          if ( diff_rg )
          {
             csv1.num_data[i][col_diff_rg] = csv1.num_data[i][col_model_rg] - exp_rg;
+            if ( comparative->by_pct && exp_rg != 0.0 )
+            {
+               csv1.num_data[i][col_diff_rg] = 100.0 * csv1.num_data[i][col_diff_rg] / exp_rg;
+            }
             csv1.data[i][col_diff_rg] = QString("%1").arg(csv1.num_data[i][col_diff_rg]);
          }
          if ( abs_diff_rg )
          {
             csv1.num_data[i][col_abs_diff_rg] = fabs( csv1.num_data[i][col_model_rg] - exp_rg );
+            if ( comparative->by_pct && exp_rg != 0.0 )
+            {
+               csv1.num_data[i][col_abs_diff_rg] = 100.0 * csv1.num_data[i][col_abs_diff_rg] / exp_rg;
+            }
             csv1.data[i][col_abs_diff_rg] = QString("%1").arg(csv1.num_data[i][col_abs_diff_rg]);
          }
          if ( do_weight && comparative->ce_rg.include_in_weight )
          {
-            weight += fabs( csv1.num_data[i][col_model_rg] - exp_rg ) * comparative->ce_rg.weight;
+            if ( comparative->by_pct && exp_rg != 0.0 )
+            {
+               weight += 
+                  100.0 *
+                  ( fabs( csv1.num_data[i][col_model_rg] - exp_rg ) / exp_rg ) * 
+                  comparative->ce_rg.weight;
+            } else {
+               weight += fabs( csv1.num_data[i][col_model_rg] - exp_rg ) * comparative->ce_rg.weight;
+            }
          }
       }
+
 
       if ( do_tau )
       {
@@ -4114,18 +4268,35 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          if ( diff_tau )
          {
             csv1.num_data[i][col_diff_tau] = csv1.num_data[i][col_model_tau] - exp_tau;
+            if ( comparative->by_pct && exp_tau != 0.0 )
+            {
+               csv1.num_data[i][col_diff_tau] = 100.0 * csv1.num_data[i][col_diff_tau] / exp_tau;
+            }
             csv1.data[i][col_diff_tau] = QString("%1").arg(csv1.num_data[i][col_diff_tau]);
          }
          if ( abs_diff_tau )
          {
             csv1.num_data[i][col_abs_diff_tau] = fabs( csv1.num_data[i][col_model_tau] - exp_tau );
+            if ( comparative->by_pct && exp_tau != 0.0 )
+            {
+               csv1.num_data[i][col_abs_diff_tau] = 100.0 * csv1.num_data[i][col_abs_diff_tau] / exp_tau;
+            }
             csv1.data[i][col_abs_diff_tau] = QString("%1").arg(csv1.num_data[i][col_abs_diff_tau]);
          }
          if ( do_weight && comparative->ce_tau.include_in_weight )
          {
-            weight += fabs( csv1.num_data[i][col_model_tau] - exp_tau ) * comparative->ce_tau.weight;
+            if ( comparative->by_pct && exp_tau != 0.0 )
+            {
+               weight += 
+                  100.0 *
+                  ( fabs( csv1.num_data[i][col_model_tau] - exp_tau ) / exp_tau ) * 
+                  comparative->ce_tau.weight;
+            } else {
+               weight += fabs( csv1.num_data[i][col_model_tau] - exp_tau ) * comparative->ce_tau.weight;
+            }
          }
       }
+
 
       if ( do_eta )
       {
@@ -4137,16 +4308,32 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          if ( diff_eta )
          {
             csv1.num_data[i][col_diff_eta] = csv1.num_data[i][col_model_eta] - exp_eta;
+            if ( comparative->by_pct && exp_eta != 0.0 )
+            {
+               csv1.num_data[i][col_diff_eta] = 100.0 * csv1.num_data[i][col_diff_eta] / exp_eta;
+            }
             csv1.data[i][col_diff_eta] = QString("%1").arg(csv1.num_data[i][col_diff_eta]);
          }
          if ( abs_diff_eta )
          {
             csv1.num_data[i][col_abs_diff_eta] = fabs( csv1.num_data[i][col_model_eta] - exp_eta );
+            if ( comparative->by_pct && exp_eta != 0.0 )
+            {
+               csv1.num_data[i][col_abs_diff_eta] = 100.0 * csv1.num_data[i][col_abs_diff_eta] / exp_eta;
+            }
             csv1.data[i][col_abs_diff_eta] = QString("%1").arg(csv1.num_data[i][col_abs_diff_eta]);
          }
          if ( do_weight && comparative->ce_eta.include_in_weight )
          {
-            weight += fabs( csv1.num_data[i][col_model_eta] - exp_eta ) * comparative->ce_eta.weight;
+            if ( comparative->by_pct && exp_eta != 0.0 )
+            {
+               weight += 
+                  100.0 *
+                  ( fabs( csv1.num_data[i][col_model_eta] - exp_eta ) / exp_eta ) * 
+                  comparative->ce_eta.weight;
+            } else {
+               weight += fabs( csv1.num_data[i][col_model_eta] - exp_eta ) * comparative->ce_eta.weight;
+            }
          }
       }
 

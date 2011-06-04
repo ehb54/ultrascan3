@@ -85,6 +85,7 @@ struct comparative_entry
 
 struct comparative_info
 {
+   bool by_pct; 
    bool rank; // set for simple sorting by difference, then rank
    bool weight_controls; // set for sorting by weighted computation
 
@@ -137,6 +138,8 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       QLabel                        *lbl_target;
 
       QLabel                        *lbl_sort;
+
+      QCheckBox                     *cb_by_pct;
 
       QCheckBox                     *cb_rank;
       QLabel                        *lbl_rank;
@@ -365,6 +368,7 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       
       void setupGUI();
 
+      void set_by_pct();
       void set_rank();
       void set_weight_controls();
 

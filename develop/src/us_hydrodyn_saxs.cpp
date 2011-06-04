@@ -5491,8 +5491,10 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    }
 
    // plot 
+   (*remember_mw)[csv_filename + " Best Fit Model " + model_names[lowest_chi2_pos]] = model_mw;
+   (*remember_mw_source)[csv_filename + " Model " + model_names[lowest_chi2_pos]] = "weight of best fit model";
    
-   plot_one_pr(nnls_r, model, csv_filename + " Model");
+   plot_one_pr(nnls_r, model, csv_filename + " Best Fit Model " + model_names[lowest_chi2_pos]);
    
    plot_one_pr(nnls_r, best_fit_target, csv_filename + " Target");
 
@@ -5564,7 +5566,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
          
          // best fit model
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 "Model",
+                 "Best Fit Model " + model_names[lowest_chi2_pos],
                  model_mw,
                  compute_pr_area(model, nnls_r),
                  "P(r)",
