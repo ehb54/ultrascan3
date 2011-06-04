@@ -308,6 +308,8 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
 
       void                          csv_remove( QString name, int i );
       
+      void                          csv_sort ( csv &csv1, vector < unsigned int > cols );
+
       QString                       csv_info( csv &csv1 ); // returns readable summary info (primarily for debugging)
       QStringList                   csv_model_names ( csv &csv1 ); // returns a list of the names (primarily for updating lb_selected)
       bool                          csv_contains( comparative_entry ce, csv &csv1 ); // checks the csv for the column names by the comparative entry

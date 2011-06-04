@@ -6,6 +6,80 @@
 
 #define PREMERGE_LIST_LIMIT 20
 
+// todo: the comparative entries should be map indexed for cleaner code
+
+class sortable_vector_double {
+   // sorts the vector in column order
+public:
+   vector < double > vd;
+   unsigned int      index;
+   bool operator < (const sortable_vector_double& objIn) const
+   {
+      unsigned int i;
+      for ( i = 0; i < vd.size(); i++ )
+      {
+         if ( vd[i] < objIn.vd[i] )
+         {
+            return true;
+            break;
+         }
+         if ( vd[i] > objIn.vd[i] )
+         {
+            return false;
+            break;
+         }
+      }
+      // if here, they are all equal
+      return false;
+   }
+};
+
+class sortable_uint {
+public:
+   unsigned int      ui;
+   unsigned int      index;
+   bool operator < (const sortable_uint& objIn) const
+   {
+      return ( ui < objIn.ui );
+   }
+};
+
+void US_Hydrodyn_Comparative::csv_sort( csv &csv1, vector < unsigned int > cols )
+{
+   // build a sortable vector double containing the data of the relevant columns
+   cout << "csv_sort\ncols:";
+   for ( unsigned int i = 0; i < cols.size(); i++ )
+   {
+      cout << cols[i] << " ";
+   }
+   cout << endl;
+
+   list < sortable_vector_double > lsvd;
+
+   for ( unsigned int i = 0; i < csv1.num_data.size(); i++ )
+   {
+      sortable_vector_double svd;
+      svd.index = i;
+      for ( unsigned int j = 0; j < cols.size(); j++ )
+      {
+         svd.vd.push_back( csv1.num_data[i][ cols[ j ] ] );
+      }
+      lsvd.push_back(svd);
+   }
+   lsvd.sort();
+   csv csv_new = csv1;
+   unsigned int i = 0;
+   for ( list < sortable_vector_double >::iterator it = lsvd.begin();
+         it != lsvd.end();
+         it++, i++ )
+   {
+      csv_new.data[ i ] = csv1.data[ it->index ];
+      csv_new.num_data[ i ] = csv1.num_data[ it->index ];
+      csv_new.prepended_names[ i ] = csv1.prepended_names[ it->index ];
+   }
+   csv1 = csv_new;
+}
+
 US_Hydrodyn_Comparative::US_Hydrodyn_Comparative(
                                                  comparative_info *comparative,      
                                                  void *us_hydrodyn, 
@@ -116,7 +190,14 @@ bool US_Hydrodyn_Comparative::comparative_info_equals( comparative_info ci1,
 QString US_Hydrodyn_Comparative::serialize_comparative_entry( comparative_entry ce )
 {
    return 
-      QString("%1|%2|%3|%4|%5|%6|%7|%8|%9|%10|%11|%12\n")
+      QString(
+#ifndef QT4
+              "%1|%1|%1|%1|%1|%1|%1|%1|%1|%1|%1|%1\n"
+#else
+              "%1|%2|%3|%4|%5|%6|%7|%8|%9|%10|%11|%12\n"
+#endf
+
+              )
       .arg(ce.name)
       .arg(ce.active)
       .arg(ce.target)
@@ -4344,11 +4425,101 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       }
    }
 
-   // sort apropriately
+   // sort appropriately
+
+   // figure out the relevant columns
+
+   vector < unsigned int > sort_cols;
+
+   if ( do_weight )
+   {
+      sort_cols.push_back( col_weight );
+   } else {
+      // by ranked abs diff's
+      // first sort the ranking order of the cols
+
+      list < sortable_uint > lsui;
+
+      sortable_uint sui;
+      
+      if ( do_s )
+      {
+         sui.ui = comparative->ce_s.rank;
+         sui.index = col_abs_diff_s;
+         lsui.push_back( sui );
+      }
+
+      if ( do_D )
+      {
+         sui.ui = comparative->ce_D.rank;
+         sui.index = col_abs_diff_D;
+         cout << "pre sort col abs diff D " <<  col_abs_diff_D << endl;
+         lsui.push_back( sui );
+      }
+
+      if ( do_sr )
+      {
+         sui.ui = comparative->ce_sr.rank;
+         sui.index = col_abs_diff_sr;
+         lsui.push_back( sui );
+      }
+
+      if ( do_rg )
+      {
+         sui.ui = comparative->ce_rg.rank;
+         sui.index = col_abs_diff_rg;
+         cout << "pre sort col abs diff rg " <<  col_abs_diff_rg << endl;
+         lsui.push_back( sui );
+      }
+
+      if ( do_fr )
+      {
+         sui.ui = comparative->ce_fr.rank;
+         sui.index = col_abs_diff_fr;
+         cout << "pre sort col abs diff fr " <<  col_abs_diff_fr << endl;
+         lsui.push_back( sui );
+      }
+
+      if ( do_tau )
+      {
+         sui.ui = comparative->ce_tau.rank;
+         sui.index = col_abs_diff_tau;
+         cout << "pre sort col abs diff tau " <<  col_abs_diff_tau << endl;
+         lsui.push_back( sui );
+      }
+
+      if ( do_eta )
+      {
+         sui.ui = comparative->ce_eta.rank;
+         sui.index = col_abs_diff_eta;
+         cout << "pre sort col abs diff eta " <<  col_abs_diff_eta << endl;
+         lsui.push_back( sui );
+      }
+
+      lsui.sort();
+
+      for ( list < sortable_uint >::iterator it = lsui.begin();
+         it != lsui.end();
+         it++ )
+      {
+         cout << "list iterator it->ui " << it->ui << endl;
+         cout << "list iterator it->index " << (*it).index << endl;
+         sort_cols.push_back( it->index );
+      }
+   }
+   cout << "data cols " << csv1.header.size() << endl;
+   
+   if ( !sort_cols.size() )
+   {
+      editor_msg("red", tr("Internal error: could not find any columns to sort!"));
+   } else {
+      csv_sort( csv1, sort_cols );
+   }
 
    // cout << csv_info(csv1);
    return true;
 }
+
 
 void US_Hydrodyn_Comparative::csv_write( QString filename, csv &csv1 )
 {
