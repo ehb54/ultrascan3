@@ -88,6 +88,7 @@ struct comparative_info
    bool by_pct; 
    bool rank; // set for simple sorting by difference, then rank
    bool weight_controls; // set for sorting by weighted computation
+   bool by_ec; 
 
    comparative_entry ce_s;
    comparative_entry ce_D;
@@ -149,6 +150,7 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       QLabel                        *lbl_weight;
 
       QLabel                        *lbl_ec;
+      QCheckBox                     *cb_by_ec;
       QLabel                        *lbl_buckets;
       QLabel                        *lbl_min;
       QLabel                        *lbl_max;
@@ -366,6 +368,12 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
 
       QString                       loaded_info();
 
+      // cleaner logic structures
+
+      void                                  build_ce_names_map();
+      vector < QString >                    ce_names;
+      map < QString, comparative_entry * >  ce_map;
+
    private slots:
       
       void setupGUI();
@@ -373,6 +381,7 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       void set_by_pct();
       void set_rank();
       void set_weight_controls();
+      void set_by_ec();
 
       void set_active_s();
       void set_active_D();
