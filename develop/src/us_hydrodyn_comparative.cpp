@@ -1587,9 +1587,9 @@ void US_Hydrodyn_Comparative::update_enables()
       le_rank_s->setEnabled(enable_s && cb_active_s->isChecked() && cb_rank->isChecked());
       cb_include_in_weight_s->setEnabled(enable_s && cb_active_s->isChecked() && cb_weight_controls->isChecked());
       le_weight_s->setEnabled(enable_s && cb_active_s->isChecked() && cb_weight_controls->isChecked());
-      le_buckets_s->setEnabled(enable_s && cb_active_s->isChecked());
-      le_min_s->setEnabled(enable_s && cb_active_s->isChecked() && comparative->ce_s.buckets);
-      le_max_s->setEnabled(enable_s && cb_active_s->isChecked() && comparative->ce_s.buckets);
+      le_buckets_s->setEnabled(cb_by_ec->isChecked() && enable_s && cb_active_s->isChecked());
+      le_min_s->setEnabled(cb_by_ec->isChecked() && enable_s && cb_active_s->isChecked() && comparative->ce_s.buckets);
+      le_max_s->setEnabled(cb_by_ec->isChecked() && enable_s && cb_active_s->isChecked() && comparative->ce_s.buckets);
       cb_store_reference_s->setEnabled(enable_s && cb_active_s->isChecked());
       cb_store_diff_s->setEnabled(enable_s && cb_active_s->isChecked());
       cb_store_abs_diff_s->setEnabled(enable_s && cb_active_s->isChecked() && !cb_rank->isChecked());
@@ -1602,9 +1602,9 @@ void US_Hydrodyn_Comparative::update_enables()
       le_rank_D->setEnabled(enable_D && cb_active_D->isChecked() && cb_rank->isChecked());
       cb_include_in_weight_D->setEnabled(enable_D && cb_active_D->isChecked() && cb_weight_controls->isChecked());
       le_weight_D->setEnabled(enable_D && cb_active_D->isChecked() && cb_weight_controls->isChecked());
-      le_buckets_D->setEnabled(enable_D && cb_active_D->isChecked());
-      le_min_D->setEnabled(enable_D && cb_active_D->isChecked() && comparative->ce_D.buckets);
-      le_max_D->setEnabled(enable_D && cb_active_D->isChecked() && comparative->ce_D.buckets);
+      le_buckets_D->setEnabled(cb_by_ec->isChecked() && enable_D && cb_active_D->isChecked());
+      le_min_D->setEnabled(cb_by_ec->isChecked() && enable_D && cb_active_D->isChecked() && comparative->ce_D.buckets);
+      le_max_D->setEnabled(cb_by_ec->isChecked() && enable_D && cb_active_D->isChecked() && comparative->ce_D.buckets);
       cb_store_reference_D->setEnabled(enable_D && cb_active_D->isChecked());
       cb_store_diff_D->setEnabled(enable_D && cb_active_D->isChecked());
       cb_store_abs_diff_D->setEnabled(enable_D && cb_active_D->isChecked() && !cb_rank->isChecked());
@@ -1617,9 +1617,9 @@ void US_Hydrodyn_Comparative::update_enables()
       le_rank_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && cb_rank->isChecked());
       cb_include_in_weight_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && cb_weight_controls->isChecked());
       le_weight_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && cb_weight_controls->isChecked());
-      le_buckets_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
-      le_min_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && comparative->ce_sr.buckets);
-      le_max_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && comparative->ce_sr.buckets);
+      le_buckets_sr->setEnabled(cb_by_ec->isChecked() && enable_sr && cb_active_sr->isChecked());
+      le_min_sr->setEnabled(cb_by_ec->isChecked() && enable_sr && cb_active_sr->isChecked() && comparative->ce_sr.buckets);
+      le_max_sr->setEnabled(cb_by_ec->isChecked() && enable_sr && cb_active_sr->isChecked() && comparative->ce_sr.buckets);
       cb_store_reference_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
       cb_store_diff_sr->setEnabled(enable_sr && cb_active_sr->isChecked());
       cb_store_abs_diff_sr->setEnabled(enable_sr && cb_active_sr->isChecked() && !cb_rank->isChecked());
@@ -1632,9 +1632,9 @@ void US_Hydrodyn_Comparative::update_enables()
       le_rank_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && cb_rank->isChecked());
       cb_include_in_weight_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && cb_weight_controls->isChecked());
       le_weight_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && cb_weight_controls->isChecked());
-      le_buckets_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
-      le_min_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && comparative->ce_fr.buckets);
-      le_max_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && comparative->ce_fr.buckets);
+      le_buckets_fr->setEnabled(cb_by_ec->isChecked() && enable_fr && cb_active_fr->isChecked());
+      le_min_fr->setEnabled(cb_by_ec->isChecked() && enable_fr && cb_active_fr->isChecked() && comparative->ce_fr.buckets);
+      le_max_fr->setEnabled(cb_by_ec->isChecked() && enable_fr && cb_active_fr->isChecked() && comparative->ce_fr.buckets);
       cb_store_reference_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
       cb_store_diff_fr->setEnabled(enable_fr && cb_active_fr->isChecked());
       cb_store_abs_diff_fr->setEnabled(enable_fr && cb_active_fr->isChecked() && !cb_rank->isChecked());
@@ -1647,9 +1647,9 @@ void US_Hydrodyn_Comparative::update_enables()
       le_rank_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && cb_rank->isChecked());
       cb_include_in_weight_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && cb_weight_controls->isChecked());
       le_weight_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && cb_weight_controls->isChecked());
-      le_buckets_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
-      le_min_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && comparative->ce_rg.buckets);
-      le_max_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && comparative->ce_rg.buckets);
+      le_buckets_rg->setEnabled(cb_by_ec->isChecked() && enable_rg && cb_active_rg->isChecked());
+      le_min_rg->setEnabled(cb_by_ec->isChecked() && enable_rg && cb_active_rg->isChecked() && comparative->ce_rg.buckets);
+      le_max_rg->setEnabled(cb_by_ec->isChecked() && enable_rg && cb_active_rg->isChecked() && comparative->ce_rg.buckets);
       cb_store_reference_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
       cb_store_diff_rg->setEnabled(enable_rg && cb_active_rg->isChecked());
       cb_store_abs_diff_rg->setEnabled(enable_rg && cb_active_rg->isChecked() && !cb_rank->isChecked());
@@ -1662,9 +1662,9 @@ void US_Hydrodyn_Comparative::update_enables()
       le_rank_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && cb_rank->isChecked());
       cb_include_in_weight_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && cb_weight_controls->isChecked());
       le_weight_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && cb_weight_controls->isChecked());
-      le_buckets_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
-      le_min_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && comparative->ce_tau.buckets);
-      le_max_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && comparative->ce_tau.buckets);
+      le_buckets_tau->setEnabled(cb_by_ec->isChecked() && enable_tau && cb_active_tau->isChecked());
+      le_min_tau->setEnabled(cb_by_ec->isChecked() && enable_tau && cb_active_tau->isChecked() && comparative->ce_tau.buckets);
+      le_max_tau->setEnabled(cb_by_ec->isChecked() && enable_tau && cb_active_tau->isChecked() && comparative->ce_tau.buckets);
       cb_store_reference_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
       cb_store_diff_tau->setEnabled(enable_tau && cb_active_tau->isChecked());
       cb_store_abs_diff_tau->setEnabled(enable_tau && cb_active_tau->isChecked() && !cb_rank->isChecked());
@@ -1677,15 +1677,16 @@ void US_Hydrodyn_Comparative::update_enables()
       le_rank_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && cb_rank->isChecked());
       cb_include_in_weight_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && cb_weight_controls->isChecked());
       le_weight_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && cb_weight_controls->isChecked());
-      le_buckets_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
-      le_min_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && comparative->ce_eta.buckets);
-      le_max_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && comparative->ce_eta.buckets);
+      le_buckets_eta->setEnabled(cb_by_ec->isChecked() && enable_eta && cb_active_eta->isChecked());
+      le_min_eta->setEnabled(cb_by_ec->isChecked() && enable_eta && cb_active_eta->isChecked() && comparative->ce_eta.buckets);
+      le_max_eta->setEnabled(cb_by_ec->isChecked() && enable_eta && cb_active_eta->isChecked() && comparative->ce_eta.buckets);
       cb_store_reference_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
       cb_store_diff_eta->setEnabled(enable_eta && cb_active_eta->isChecked());
       cb_store_abs_diff_eta->setEnabled(enable_eta && cb_active_eta->isChecked() && !cb_rank->isChecked());
       
       pb_process_csv->setEnabled(
                                  any_selected_selected() &&
+                                 ( !comparative->by_ec || ec_ready() ) &&
                                  ( 
                                   ( cb_active_s->isEnabled() && cb_active_s->isChecked() ) ||
                                   ( cb_active_D->isEnabled() && cb_active_D->isChecked() ) ||
@@ -1727,6 +1728,7 @@ void US_Hydrodyn_Comparative::update_lb_selected_enables()
       pb_selected_remove->setEnabled(any_selected);
       pb_process_csv->setEnabled(
                                  any_selected &&
+                                 ( !comparative->by_ec || ec_ready() ) &&
                                  ( 
                                   ( cb_active_s->isEnabled() && cb_active_s->isChecked() ) ||
                                   ( cb_active_D->isEnabled() && cb_active_D->isChecked() ) ||
@@ -1867,8 +1869,8 @@ void US_Hydrodyn_Comparative::enable_updates()
    pb_reset_param->setEnabled(true);
    pb_save_param->setEnabled(true);
    pb_load_csv->setEnabled(true);
-   pb_process_csv->setEnabled(true);
-   pb_save_csv->setEnabled(true);
+   // pb_process_csv->setEnabled(true);
+   // pb_save_csv->setEnabled(true);
 
    update_lb_loaded_enables();
    update_lb_selected_enables();
@@ -1981,11 +1983,13 @@ void US_Hydrodyn_Comparative::update_buckets_s(const QString &val)
 void US_Hydrodyn_Comparative::update_min_s(const QString &val)
 {
    comparative->ce_s.min = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::update_max_s(const QString &val)
 {
    comparative->ce_s.max = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::set_store_reference_s()
@@ -2048,11 +2052,13 @@ void US_Hydrodyn_Comparative::update_buckets_D(const QString &val)
 void US_Hydrodyn_Comparative::update_min_D(const QString &val)
 {
    comparative->ce_D.min = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::update_max_D(const QString &val)
 {
    comparative->ce_D.max = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::set_store_reference_D()
@@ -2116,11 +2122,13 @@ void US_Hydrodyn_Comparative::update_buckets_sr(const QString &val)
 void US_Hydrodyn_Comparative::update_min_sr(const QString &val)
 {
    comparative->ce_sr.min = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::update_max_sr(const QString &val)
 {
    comparative->ce_sr.max = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::set_store_reference_sr()
@@ -2183,11 +2191,13 @@ void US_Hydrodyn_Comparative::update_buckets_fr(const QString &val)
 void US_Hydrodyn_Comparative::update_min_fr(const QString &val)
 {
    comparative->ce_fr.min = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::update_max_fr(const QString &val)
 {
    comparative->ce_fr.max = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::set_store_reference_fr()
@@ -2251,11 +2261,13 @@ void US_Hydrodyn_Comparative::update_buckets_rg(const QString &val)
 void US_Hydrodyn_Comparative::update_min_rg(const QString &val)
 {
    comparative->ce_rg.min = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::update_max_rg(const QString &val)
 {
    comparative->ce_rg.max = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::set_store_reference_rg()
@@ -2319,11 +2331,13 @@ void US_Hydrodyn_Comparative::update_buckets_tau(const QString &val)
 void US_Hydrodyn_Comparative::update_min_tau(const QString &val)
 {
    comparative->ce_tau.min = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::update_max_tau(const QString &val)
 {
    comparative->ce_tau.max = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::set_store_reference_tau()
@@ -2387,11 +2401,13 @@ void US_Hydrodyn_Comparative::update_buckets_eta(const QString &val)
 void US_Hydrodyn_Comparative::update_min_eta(const QString &val)
 {
    comparative->ce_eta.min = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::update_max_eta(const QString &val)
 {
    comparative->ce_eta.max = val.toDouble();
+   update_enables();
 }
 
 void US_Hydrodyn_Comparative::set_store_reference_eta()
@@ -3950,24 +3966,24 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
    vector < bool > ref_( ce_names.size() );
    vector < bool > diff_( ce_names.size() );
    vector < bool > abs_diff_( ce_names.size() );
-   vector < bool > eq_( ce_names.size() );
+   vector < bool > ec_( ce_names.size() );
 
    QString header_exp      = "Exp:";
    QString header_diff     = QString( comparative->by_pct ? "% " : "" ) + "Diff:";
    QString header_abs_diff = QString( comparative->by_pct ? "% " : "" ) + "AbsDiff:";
    QString header_weight   = "Weighted sum of " + QString( comparative->by_pct ? "% " : "" ) + " absolute differences";
-   QString header_eq       = "Equivalence class partial rank";
+   QString header_ec       = "Equivalence class partial rank";
 
    vector < double > exp_             ( ce_names.size() );
-   vector < double > eq_min_          ( ce_names.size() );
-   vector < double > eq_max_          ( ce_names.size() );
+   vector < double > ec_min_          ( ce_names.size() );
+   vector < double > ec_max_          ( ce_names.size() );
    vector < double > buckets_         ( ce_names.size() );
-   vector < double > eq_delta_        ( ce_names.size() );
-   vector < double > eq_delta_over_2_ ( ce_names.size() );
+   vector < double > ec_delta_        ( ce_names.size() );
+   vector < double > ec_delta_over_2_ ( ce_names.size() );
 
    bool do_weight = comparative->weight_controls;
    bool do_by_ec  = comparative->by_ec;
-   bool do_eq     = false;
+   bool do_ec     = false;
 
    bool processed_fields_exist = ( do_weight && csv1.header_map.count(header_weight) );
 
@@ -3978,16 +3994,16 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       diff_[i]     = ce_map[ce_names[i]]->store_diff;
       abs_diff_[i] = ce_map[ce_names[i]]->store_abs_diff;
       exp_[i]      = ce_map[ce_names[i]]->target;
-      eq_min_[i]   = ce_map[ce_names[i]]->min;
-      eq_max_[i]   = ce_map[ce_names[i]]->max;
+      ec_min_[i]   = ce_map[ce_names[i]]->min;
+      ec_max_[i]   = ce_map[ce_names[i]]->max;
       buckets_[i]  = ce_map[ce_names[i]]->buckets;
-      eq_[i]       = buckets_[i] > 0 && eq_max_[i] > eq_min_[i];
+      ec_[i]       = buckets_[i] > 0 && ec_max_[i] > ec_min_[i];
 
-      if ( eq_[i] )
+      if ( ec_[i] )
       {
-         do_eq = true;
-         eq_delta_[i]       = ( eq_max_[i] - eq_min_[i] ) / buckets_[i];
-         eq_delta_over_2_[i] =  0.5 * eq_delta_[i];
+         do_ec = true;
+         ec_delta_[i]       = ( ec_max_[i] - ec_min_[i] ) / buckets_[i];
+         ec_delta_over_2_[i] =  0.5 * ec_delta_[i];
       }
 
       if ( !processed_fields_exist && do_[i] &&
@@ -3999,7 +4015,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       }
    }
 
-   if ( !processed_fields_exist && do_eq && csv1.header_map.count( header_eq ) )
+   if ( !processed_fields_exist && do_ec && csv1.header_map.count( header_ec ) )
    {
       processed_fields_exist = true;
    }
@@ -4038,9 +4054,9 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          {
             csv_remove_column(csv1, header_weight);
          }
-         if ( do_eq && csv1.header_map.count(header_eq) )
+         if ( do_ec && csv1.header_map.count(header_ec) )
          {
-            csv_remove_column(csv1, header_eq);
+            csv_remove_column(csv1, header_ec);
          }
       } else {
          for ( unsigned int i = 0; i < ce_names.size(); i++ )
@@ -4065,9 +4081,9 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          {
             csv_make_unique_header_name(csv1, header_weight);
          }
-         if ( do_eq && csv1.header_map.count(header_eq) )
+         if ( do_ec && csv1.header_map.count(header_ec) )
          {
-            csv_make_unique_header_name(csv1, header_eq);
+            csv_make_unique_header_name(csv1, header_ec);
          }
       }
    }
@@ -4117,12 +4133,12 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       csv1.header_map[header_weight] = col_weight;
    }
 
-   unsigned int col_eq = 0;
-   if ( do_eq )
+   unsigned int col_ec = 0;
+   if ( do_ec )
    {
-      col_eq = next_col++;
-      csv1.header.push_back(header_eq);
-      csv1.header_map[header_weight] = col_eq;
+      col_ec = next_col++;
+      csv1.header.push_back(header_ec);
+      csv1.header_map[header_weight] = col_ec;
    }
 
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
@@ -4131,7 +4147,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       csv1.num_data[i].resize(csv1.header.size());
 
       double weight = 0e0;
-      unsigned int eq_pos = 0;
+      unsigned int ec_pos = 0;
 
       for ( unsigned int j = 0; j < ce_names.size(); j++ )
       {
@@ -4172,12 +4188,12 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
                   weight += fabs( csv1.num_data[i][col_model_[j]] - exp_[j] ) * ce_map[ce_names[j]]->weight;
                }
             }
-            if ( do_eq && eq_[j] )
+            if ( do_ec && ec_[j] )
             {
                double abs_diff = fabs( csv1.num_data[i][col_model_[j]] - exp_[j] );
-               if ( abs_diff > eq_delta_over_2_[j] )
+               if ( abs_diff > ec_delta_over_2_[j] )
                {
-                  eq_pos += (unsigned int) ( ( abs_diff - eq_delta_over_2_[j] ) / eq_delta_over_2_[j] );
+                  ec_pos += (unsigned int) ( ( abs_diff - ec_delta_over_2_[j] ) / ec_delta_over_2_[j] );
                }
             }
          }
@@ -4188,10 +4204,10 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          csv1.num_data[i][col_weight] = weight;
          csv1.data[i][col_weight] = QString("%1").arg(weight);
       }
-      if ( do_eq )
+      if ( do_ec )
       {
-         csv1.num_data[i][col_eq] = (double) eq_pos;
-         csv1.data[i][col_eq] = QString("%1").arg(eq_pos);
+         csv1.num_data[i][col_ec] = (double) ec_pos;
+         csv1.data[i][col_ec] = QString("%1").arg(ec_pos);
       }
    }
 
@@ -4201,13 +4217,13 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
 
    vector < unsigned int > sort_cols;
 
-   if ( do_weight && col_eq )
+   if ( do_weight && col_ec )
    {
       sort_cols.push_back( col_weight );
    } else {
-      if ( do_eq && do_by_ec && col_eq )
+      if ( do_ec && do_by_ec && col_ec )
       {
-         sort_cols.push_back( col_eq );
+         sort_cols.push_back( col_ec );
       } else {
          // by ranked abs diff's
          // first sort the ranking order of the cols
@@ -4674,4 +4690,23 @@ void US_Hydrodyn_Comparative::csv_make_unique_header_name( csv &csv1, QString na
    csv1.header_map.erase(it);
    csv1.header_map[name + ( inc ? QString("-%1").arg(inc) : "" )] = col;
    csv1.header[col] = name + ( inc ? QString("-%1").arg(inc) : "" );
+}
+
+bool US_Hydrodyn_Comparative::ec_ready()
+{
+   bool is_ec_ready = false;
+   if ( comparative->by_ec )
+   {
+      for ( unsigned int i = 0; i < ce_names.size(); i++ )
+      {
+         if ( ce_map[ce_names[i]]->active &&
+              ce_map[ce_names[i]]->buckets > 0 &&
+              ce_map[ce_names[i]]->max > ce_map[ce_names[i]]->min )
+         {
+            is_ec_ready = true;
+            break;
+         }
+      }
+   }
+   return is_ec_ready;
 }
