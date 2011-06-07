@@ -166,8 +166,23 @@ DbgLv(1) << "GUI setup begun";
    int   minsw  = fontw * 40 + 10;
    int   minsh  = fonth * 18 + 10;
 DbgLv(1) << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
+   int   maxsw  = ( minsw * 5 ) / 4;
+   int   maxsh  = ( minsh * 5 ) / 4;
+
+   if ( maxsw > 500  ||  maxsh > 450 )
+   {
+      maxsw  = qMin( maxsw, 500 );
+      maxsh  = qMin( maxsh, 450 );
+      minsw  = ( maxsw * 4 ) / 5;
+      minsh  = ( maxsh * 4 ) / 5;
+   }
+
    te_status->setMinimumSize( minsw, minsh );
+   te_status->setMaximumSize( maxsw, maxsh );
+DbgLv(1) << "te_status minw minh" << minsw << minsh;
+DbgLv(1) << "te_status maxw maxh" << maxsw << maxsh;
    te_status->adjustSize();
+DbgLv(1) << "te_status size" << te_status->size();
 
    row  = 0;
    QLabel* lb_progr  = us_label( tr( "% Completed:" ) );
@@ -194,6 +209,7 @@ DbgLv(1) << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
    tw_recs->setObjectName( QString( "tree-widget" ) );
    tw_recs->setAutoFillBackground( true );
    tw_recs->installEventFilter( this );
+   tw_recs->setSelectionMode( QAbstractItemView::ExtendedSelection );
 
    connect( tw_recs, SIGNAL( itemClicked( QTreeWidgetItem*, int ) ),
             this,    SLOT(   clickedItem( QTreeWidgetItem* ) ) );
@@ -222,14 +238,15 @@ DbgLv(1) << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
       QMessageBox::information( this,
          tr( "DB Connection Problem" ),
          tr( "There was an error connecting to the database:\n" )
-         + db->lastError() 
-         + tr( "Cannot continue.  Closing" ) );
+         + db->lastError() + "\n"
+         //+ tr( "Cannot continue.  Closing" ) );
+         + tr( "Continuing without database." ) );
       db = NULL;
-      return;
+      //return;
    }
 
    personID      = 0;
-DbgLv(2) << "db passwd complete";
+DbgLv(1) << "db passwd complete";
 
    // Set default db investigator
 
@@ -245,13 +262,11 @@ DbgLv(2) << "db passwd complete";
    connect( le_invtor,  SIGNAL( editingFinished()   ),
             this,       SLOT( chg_investigator() )  );
 DbgLv(1) << "GUI setup complete";
-   // set up for synchronizing experiments
-   //syncExper      = new US_SyncExperiment( db, investig, this );
 
    // create a class to handle the data itself
    da_model       = new US_DataModel(                      this );
 
-// set needed pointers for class interaction in model object
+   // set needed pointers for class interaction in model object
    da_model->setDatabase( db,         investig  );
    da_model->setProgress( progress,   lb_status );
 
@@ -318,6 +333,9 @@ void US_ManageData::find_investigator( QString& invname )
    QString     dbFirstName;
    int         irow    = 1;
    int         nrows   = 1;
+
+   if ( db == NULL )
+      return;
 
    lb_status->setText( tr( "Examining Investigators..." ) );
    query << "get_people" << invname;

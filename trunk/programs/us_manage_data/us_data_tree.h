@@ -31,6 +31,7 @@ class US_DataTree : public QObject
       void item_remove_db(   void );
       void item_remove_loc(  void );
       void item_remove_all(  void );
+      void items_remove(     void );
       void item_details(     void );
       void row_context_menu( QTreeWidgetItem* );
 
@@ -48,6 +49,8 @@ class US_DataTree : public QObject
       QTreeWidgetItem* tw_item;      // current tree widget item
 
       US_DataModel::DataDesc  cdesc; // current record description
+
+      QList< QTreeWidgetItem* > selitems;  // all selected items
 
       QLabel*       lb_status;
 

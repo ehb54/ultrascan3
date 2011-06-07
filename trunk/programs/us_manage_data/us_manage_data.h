@@ -52,9 +52,6 @@ class US_ManageData : public US_Widgets
       QTreeWidgetItem*    tw_item;    // current tree widget item
 
       DataDesc            cdesc;      // current record description
-      QVector< DataDesc > ddescs;     // DB descriptions
-      QVector< DataDesc > ldescs;     // local-disk descriptions
-      QVector< DataDesc > adescs;     // all (merged) descriptions
 
       US_DataModel*       da_model;   // underlying data handler
       US_DataProcess*     da_process; // data processing handler
