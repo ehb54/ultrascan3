@@ -270,6 +270,9 @@ DbgLv(1) << "CONFLICT cont1 cont2" << cont1 << cont2;
 // set up and display a row context menu
 void US_DataTree::row_context_menu( QTreeWidgetItem* item )
 {
+   selitems = tw_recs->selectedItems();
+   int nsel = selitems.size();
+DbgLv(1) << "    context_menu nbr sel rows" << selitems.size();
    tw_item  = item;
    int irow = item->type() - (int)QTreeWidgetItem::UserType;
 DbgLv(2) << "    context_menu row" << irow+1;
@@ -279,18 +282,20 @@ DbgLv(2) << "    context_menu RTN setCurrent";
 DbgLv(2) << "    context_menu RTN current_datadesc";
 
    QMenu*   cmenu   = new QMenu();
-   QAction* upldact = new QAction( tr( " upload to DB" ),      parentw );
-   QAction* dnldact = new QAction( tr( " download to local" ), parentw );
-   QAction* rmdbact = new QAction( tr( " remove from DB" ),    parentw );
-   QAction* rmloact = new QAction( tr( " remove from local" ), parentw );
-   QAction* rmboact = new QAction( tr( " remove both" ),       parentw );
-   QAction* shdeact = new QAction( tr( " show details" ),      parentw );
+   QAction* upldact = new QAction( tr( " upload to DB" ),        parentw );
+   QAction* dnldact = new QAction( tr( " download to local" ),   parentw );
+   QAction* rmdbact = new QAction( tr( " remove from DB" ),      parentw );
+   QAction* rmloact = new QAction( tr( " remove from local" ),   parentw );
+   QAction* rmboact = new QAction( tr( " remove both" ),         parentw );
+   QAction* rmabact = new QAction( tr( " remove all branches" ), parentw );
+   QAction* shdeact = new QAction( tr( " show details" ),        parentw );
 
    cmenu->addAction( upldact );
    cmenu->addAction( dnldact );
    cmenu->addAction( rmdbact );
    cmenu->addAction( rmloact );
    cmenu->addAction( rmboact );
+   cmenu->addAction( rmabact );
    cmenu->addAction( shdeact );
 DbgLv(2) << "    context_menu RTN addAction";
 
@@ -304,6 +309,8 @@ DbgLv(2) << "    context_menu RTN addAction";
             this,    SLOT(   item_remove_loc() ) );
    connect( rmboact, SIGNAL( triggered() ),
             this,    SLOT(   item_remove_all() ) );
+   connect( rmabact, SIGNAL( triggered() ),
+            this,    SLOT(   items_remove()    ) );
    connect( shdeact, SIGNAL( triggered() ),
             this,    SLOT(   item_details()    ) );
 
@@ -322,6 +329,8 @@ DbgLv(2) << "    context_menu RTN addAction";
       rmdbact->setEnabled( false );
       rmboact->setEnabled( false );
    }
+
+   rmabact->setEnabled( nsel > 1 );
 
    // display the context menu and act on selection
 DbgLv(2) << "    context_menu CALL cmenu exec";
@@ -735,5 +744,88 @@ QString US_DataTree::record_state( int istate )
       flags  = flags.mid( 7, 999 );    // remove any "NOSTAT|"
 
     return "(" + hexn + ") " + flags;  // return hex flag and text version
+}
+
+// Perform items remove-all-branches action
+void US_DataTree::items_remove()
+{
+   QTreeWidgetItem* item;
+DbgLv(2) << "ITEM Remove All Branches";
+   QString item_exs = tr( "both DB and Local" );
+   QString item_act = tr( "All-branches remove" );
+   int nitems  = da_model->recCount();
+   int ndsels  = selitems.size();
+   int nbsels  = ndsels;
+   int mindtyp = 99;
+   int maxdtyp = -1;
+   int mindsta = 99;
+   int maxdsta = -1;
+   int minbtyp = mindtyp;
+   int maxbtyp = maxdtyp;
+   int minbsta = mindsta;
+   int maxbsta = maxdsta;
+   int itype;
+   int istate;
+   int stmask  = US_DataModel::REC_DB | US_DataModel::REC_LO;
+   US_DataModel::DataDesc idesc;
+   US_DataModel::DataDesc jdesc;
+if ( mindsta > 0 ) {
+QMessageBox::information( parentw, "Not Yet Implemented",
+ tr( "The \"%1\" action is not yet implemented." ).arg( item_act ) );
+ return; }
+
+   for ( int jj = 0; jj < ndsels; jj++ )
+   {
+      item      = selitems[ jj ];
+      int irow  = item->type() - (int)QTreeWidgetItem::UserType;
+      idesc     = da_model->row_datadesc( irow );
+      itype     = idesc.recType;
+      istate    = idesc.recState && stmask;
+      mindtyp   = qMin( mindtyp, itype );
+      maxdtyp   = qMax( maxdtyp, itype );
+      mindsta   = qMin( mindsta, istate );
+      maxdsta   = qMax( maxdsta, istate );
+      int jrow  = irow;
+      while ( ++jrow < nitems )
+      {
+         jdesc      = da_model->row_datadesc( jrow );
+         int jstate = jdesc.recState && stmask;
+         if ( jstate == istate )  break;
+         int jtype  = jdesc.recType;
+         minbtyp    = qMin( minbtyp, jtype );
+         maxbtyp    = qMax( maxbtyp, jtype );
+         minbsta    = qMin( minbsta, jstate );
+         maxbsta    = qMax( maxbsta, jstate );
+      }
+   }
+
+   QMessageBox msgBox( parentw );
+   int irow = tw_item->type() - (int)QTreeWidgetItem::UserType;
+   da_model->setCurrent( irow );
+   cdesc    = da_model->current_datadesc();
+
+   record_type( cdesc.recType, item_act );
+
+   msgBox.setWindowTitle( item_act );
+   msgBox.setTextFormat(  Qt::RichText );
+   msgBox.setText( action_text( item_exs, item_act ) );
+   msgBox.addButton( QMessageBox::No );
+   msgBox.addButton( QMessageBox::Yes );
+   msgBox.setDefaultButton( QMessageBox::No );
+
+   if ( msgBox.exec() == QMessageBox::Yes )
+   {
+DbgLv(2) << " ITEM ACTION: YES";
+      int stat1  = da_process->record_remove_local( irow );
+      stat1     += da_process->record_remove_db(    irow );
+
+      action_result( stat1, item_act );
+   }
+
+   else
+   {
+DbgLv(2) << " ITEM ACTION: NO";
+      action_result( 999, item_act );
+   }
 }
 
