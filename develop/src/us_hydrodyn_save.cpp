@@ -912,6 +912,11 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       printf("read field %u <%s>\n", i, field[i].ascii());
    }
 
+   if ( !save->field_flag.count("Model name") )
+   {
+      save->field_flag["Model name"] = true;
+   }
+
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -1143,7 +1148,8 @@ void US_Hydrodyn_Save::remove()
 {
    for ( int i = 0; i < lb_selected->numRows(); i++ )
    {
-      if ( lb_selected->isSelected(i) )
+      if ( lb_selected->isSelected(i) &&
+           lb_selected->text(i) != "Model name" )
       {
          lb_possible[descriptive_name_to_section[lb_selected->text(i)]]->insertItem(lb_selected->text(i));
          lb_selected->removeItem(i);
