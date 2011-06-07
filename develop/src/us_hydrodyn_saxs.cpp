@@ -2796,7 +2796,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             QStringList qsl_tmp = QStringList::split(",",*it,true);
             if ( map_sel_names.count(qsl_tmp[0]) )
             {
-               cout << "loading: " << qsl_tmp[0] << endl;
+               // cout << "loading: " << qsl_tmp[0] << endl;
 
                pr.clear();
 
@@ -3106,7 +3106,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             }
             if ( save_to_csv )
             {
-               cout << "save_to_csv\n";
+               // cout << "save_to_csv\n";
                QString fname = 
                   ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
                   csv_filename + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
@@ -3199,7 +3199,6 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                plotted = false;
             }
          }
-         
          return;
       }
 
@@ -5300,7 +5299,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    
    if ( !csv_filename.isEmpty() )
    {
-      cout << "save_to_csv\n";
+      // cout << "save_to_csv\n";
       QString fname = 
          ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
          tagged_csv_filename + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
@@ -5424,11 +5423,18 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
       best_fit_target[i] = 0e0;
    }
 
-   vector < double > a(best_fit_target.size());
-   vector < double > b(best_fit_target.size());
-   vector < double > siga(best_fit_target.size());
-   vector < double > sigb(best_fit_target.size());
-   vector < double > chi2(best_fit_target.size());
+   vector < double > a(best_fit_models.size());
+   vector < double > b(best_fit_models.size());
+   vector < double > siga(best_fit_models.size());
+   vector < double > sigb(best_fit_models.size());
+   vector < unsigned int > df(best_fit_models.size());
+   vector < double > chi2(best_fit_models.size());
+   vector < double > prob(best_fit_models.size());
+
+   vector < double > model(best_fit_models.size());
+   vector < double > rmsds(best_fit_models.size());
+   double lowest_rmsd     = 9e99;
+   int    lowest_rmsd_pos = 0;
 
    //   editor->append(QString("running best fit %1 %2\n").arg(best_fit_models.size()).arg(best_fit_target.size()));
    editor->append("Running best fit\n");
@@ -5449,37 +5455,68 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
                      sigb[i],
                      chi2[i]
                      );
+      // rescale model to target, compute rmsd
+      vector < double > tmp_model(best_fit_target.size());
+      for ( unsigned int j = 0; j < best_fit_target.size(); j++ )
+      {
+         tmp_model[j] = a[i] + b[i] * best_fit_models[model_names[i]][j];
+      }
+      rmsds[i] = US_Saxs_Util::calc_nrmsd( tmp_model, best_fit_target );
+      if ( !US_Saxs_Util::calc_chisq2( best_fit_models[model_names[i]],
+                                       best_fit_target, 
+                                       df[i],
+                                       chi2[i],
+                                       prob[i] ) )
+      {
+         QColor save_color = editor->color();
+         editor->setColor("red");
+         editor->append(tr("Internal error computing chi2"));
+         editor->setColor(save_color);
+      }
+
       if ( !i )
       {
          lowest_chi2 = chi2[i];
          lowest_chi2_pos = 0;
+         lowest_rmsd = rmsds[i];
+         lowest_rmsd_pos = 0;
+         model = tmp_model;
       } else {
          if ( lowest_chi2 > chi2[i] )
          {
             lowest_chi2 = chi2[i];
             lowest_chi2_pos = i;
          }
+         if ( lowest_rmsd > rmsds[i] )
+         {
+            lowest_rmsd = rmsds[i];
+            lowest_rmsd_pos = i;
+            model = tmp_model;
+         }
       }
-      editor->append(QString("%1 chi^2 %2\n").arg(model_names[i]).arg(chi2[i]));
+      
+      editor->append(QString("%1 NRMSD %2\% Chi^2 %3 nu %4\n")
+                     .arg(model_names[i])
+                     .arg(rmsds[i])
+                     .arg(chi2[i])
+                     .arg(df[i])
+                     // .arg(prob[i])
+                     );
    }
       
-   // list models & chi2'd
-   
-   // best is model with lowest_chi2_pos
+   double model_mw = nnls_mw[model_names[lowest_rmsd_pos]];
+
+   // best is model with lowest_rmsd_pos
    QColor save_color = editor->color();
    editor->setColor("darkBlue");
-   editor->append(QString("Best fit model: %1 chi^2 %2\n").arg(model_names[lowest_chi2_pos]).arg(chi2[lowest_chi2_pos]));
+   editor->append(QString("Best fit model: %1 NRMSD %2% Chi^2 %3 nu %4\n")
+                  .arg(model_names[lowest_rmsd_pos])
+                  .arg(rmsds[lowest_rmsd_pos])
+                  .arg(chi2[lowest_rmsd_pos])
+                  .arg(df[lowest_rmsd_pos])
+                  // .arg(prob[lowest_rmsd_pos])
+                  );
    editor->setColor(save_color);
-
-   // build model & residuals
-   double model_mw = nnls_mw[model_names[lowest_chi2_pos]];
-   vector < double > model(best_fit_target.size());
-
-   // rescale model to target
-   for ( unsigned int i = 0; i < model.size(); i++ )
-   {
-      model[i] = a[lowest_chi2_pos] + b[lowest_chi2_pos] * best_fit_models[model_names[lowest_chi2_pos]][i];
-   }
 
    vector < double > residual(best_fit_target.size());
    vector < double > difference(best_fit_target.size());
@@ -5491,10 +5528,10 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    }
 
    // plot 
-   (*remember_mw)[csv_filename + " Best Fit Model " + model_names[lowest_chi2_pos]] = model_mw;
-   (*remember_mw_source)[csv_filename + " Model " + model_names[lowest_chi2_pos]] = "weight of best fit model";
+   (*remember_mw)[csv_filename + " Best Fit Model " + model_names[lowest_rmsd_pos]] = model_mw;
+   (*remember_mw_source)[csv_filename + " Model " + model_names[lowest_rmsd_pos]] = "weight of best fit model";
    
-   plot_one_pr(nnls_r, model, csv_filename + " Best Fit Model " + model_names[lowest_chi2_pos]);
+   plot_one_pr(nnls_r, model, csv_filename + " Best Fit Model " + model_names[lowest_rmsd_pos]);
    
    plot_one_pr(nnls_r, best_fit_target, csv_filename + " Target");
 
@@ -5505,6 +5542,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
       plotted = false;
    }
    
+
    if ( saxs_residuals_widget )
    {
       saxs_residuals_window->close();
@@ -5529,7 +5567,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    
    if ( !csv_filename.isEmpty() )
    {
-      cout << "save_to_csv\n";
+      // cout << "save_to_csv\n";
       QString fname = 
          ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
          tagged_csv_filename + "_sprr_" + ((US_Hydrodyn *)us_hydrodyn)->saxs_sans_ext() + ".csv";
@@ -5545,12 +5583,16 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
          //  header: "name","type",r1,r2,...,rn, header info
          fprintf(of, "\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%s,%s\n", 
                  vector_double_to_csv(nnls_r).ascii(),
-                 QString("Best fit chi2 %1 : %2").arg(chi2[lowest_chi2_pos]).arg(nnls_header_tag).ascii());
+                 QString("Best fit NRMSD %1\% Chi^2 %2 : %3")
+                 .arg(rmsds[lowest_rmsd_pos])
+                 .arg(chi2[lowest_rmsd_pos])
+                 .arg(nnls_header_tag).ascii()
+                 );
          // original models
          for ( unsigned int i = 0; i < best_fit_models.size(); i++ )
          {
             fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                    QString("%1 %2").arg(model_names[i]).arg(chi2[i]).ascii(),
+                    QString("%1 %2").arg(model_names[i]).arg(rmsds[i]).ascii(),
                     get_mw(model_names[i], false),
                     compute_pr_area(best_fit_models[model_names[i]], nnls_r),
                     "P(r)",
@@ -5566,7 +5608,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
          
          // best fit model
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 QString("Best Fit Model " + model_names[lowest_chi2_pos]).ascii(),
+                 QString("Best Fit Model " + model_names[lowest_rmsd_pos]).ascii(),
                  model_mw,
                  compute_pr_area(model, nnls_r),
                  "P(r)",

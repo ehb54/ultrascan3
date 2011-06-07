@@ -281,6 +281,22 @@ class US_EXTERN US_Saxs_Util
                       double &chi2
                       );
 
+      static double calc_rmsd( vector < double > v1,  vector < double > v2 );
+      static double calc_nrmsd( vector < double > v1,  vector < double > v2 ); // normalized rmsd is rmsd divided by the range (of v2) time 100 (for percent)
+      static bool calc_chisq1( vector < double > bins,
+                               vector < double > ebins,
+                               unsigned int      &df,
+                               double            &chisq,
+                               double            &prob );
+      static bool calc_chisq2( vector < double > bins1,
+                               vector < double > bins2,
+                               unsigned int      &df,
+                               double            &chisq,
+                               double            &prob );
+      static double calc_gammaln( double val );
+      static bool calc_chisq_prob( double a, double x, double &prob );
+
+
    private:
 
       bool run_gnom( 

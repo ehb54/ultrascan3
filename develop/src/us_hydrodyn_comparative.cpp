@@ -4507,7 +4507,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
          sort_cols.push_back( it->index );
       }
    }
-   cout << "data cols " << csv1.header.size() << endl;
+   //   cout << "data cols " << csv1.header.size() << endl;
    
    if ( !sort_cols.size() )
    {

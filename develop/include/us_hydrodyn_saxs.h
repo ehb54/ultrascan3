@@ -323,7 +323,6 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString load_pr_selected_filter;
       QString load_saxs_sans_selected_filter;
 
-
    public slots:
       void show_plot_saxs_sans();
       void show_plot_pr();

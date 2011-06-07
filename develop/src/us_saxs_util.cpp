@@ -334,7 +334,8 @@ double US_Saxs_Util::rmsd(QString tag1, QString tag2)
 
    if ( !compat(tag1, tag2) )
    {
-      return false;
+      errormsg = "incompatible vectors for rmsd calc";
+      return 9e99;
    }
 
    double rmsd = 0e0;
@@ -5865,3 +5866,221 @@ bool US_Saxs_Util::run_gnom(
    }
    return true;
 }
+
+double US_Saxs_Util::calc_rmsd( vector < double > v1, vector < double > v2 )
+{
+   double rmsd = 0e0;
+
+   if ( v1.size() != v2.size() )
+   {
+      return 9e99;
+   }
+
+   for ( unsigned int i = 0; i < v1.size(); i++ )
+   {
+      rmsd += ( v1[i] - v2[i] ) * ( v1[i] - v2[i] );
+   }
+   return sqrt(rmsd / v1.size());
+}
+
+double US_Saxs_Util::calc_nrmsd( vector < double > v1, vector < double > v2 )
+{
+   if ( v1.size() != v2.size() || v1.size() < 2 )
+   {
+      return 9e99;
+   }
+   double rmsd = calc_rmsd( v1, v2 );
+   double v2max = v2[0];
+   double v2min = v2[0];
+
+   for ( unsigned int i = 1; i < v2.size(); i++ )
+   {
+      if ( v2max < v2[i] )
+      {
+         v2max = v2[i];
+      }
+      if ( v2min > v2[i] )
+      {
+         v2min = v2[i];
+      }
+   }
+
+   if ( v2min == v2max )
+   {
+      return 9e99;
+   }
+
+   return 100.0 * rmsd / fabs(v2max - v2min);
+}
+
+bool US_Saxs_Util::calc_chisq1( vector < double > bins,
+                                vector < double > ebins,
+                                unsigned int      &df,
+                                double            &chisq,
+                                double            &prob )
+{
+   chisq = 0.0;
+
+   if ( bins.size() != ebins.size() )
+   {
+      return false;
+   }
+   df = bins.size() - 1;
+
+   for ( unsigned int i = 0; i < bins.size(); i++ )
+   {
+      if ( ebins[i] == 0.0 )
+      {
+         return false;
+      }
+      chisq += ( bins[i] - ebins[i] ) * ( bins[i] - ebins[i] ) / ebins[i];
+   }
+   prob = -1e0;
+   return true; // calc_chisq_prob( 0.5 * df, 0.5 * chisq, prob );
+}
+
+bool US_Saxs_Util::calc_chisq2( vector < double > bins1,
+                                vector < double > bins2,
+                                unsigned int      &df,
+                                double            &chisq,
+                                double            &prob )
+{
+   chisq = 0.0;
+
+   if ( bins1.size() != bins2.size() )
+   {
+      return false;
+   }
+   df = bins1.size() - 1;
+
+   for ( unsigned int i = 0; i < bins1.size(); i++ )
+   {
+      if ( bins1[i] + bins2[i] != 0.0 )
+      {
+         chisq += 
+            ( bins1[i] - bins2[i] ) * ( bins1[i] - bins2[i] ) / 
+            ( bins1[i] + bins2[i] );
+      } else {
+         df--;
+      }
+   }
+   prob = -1e0;
+   return true; // calc_chisq_prob( 0.5 * df, 0.5 * chisq, prob );
+}
+
+double US_Saxs_Util::calc_gammaln( double val )
+{
+   double x = val;
+   double y = val;
+   double ser = 1.000000000190015;;
+
+   static double cof[6] = 
+      { 76.18009172947146, 
+        -86.50532032941677,
+        24.01409824083091, 
+        -1.231739572450155,
+	0.1208650973866179e-2,
+        -0.5395239384953e-5
+      };
+
+   double tmp;
+
+   tmp = x + 5.5;
+   tmp -= ( x + 0.5 ) * log( tmp );
+   for ( unsigned int j = 0; j <= 5 ; j++ )
+   {
+      ser += cof[j] / ++y;
+   }
+   return -tmp + log( 2.5066282746310005 * ser / x );
+}
+
+
+bool US_Saxs_Util::calc_chisq_prob( double a, double x, double &prob )
+{
+   if ( x < 0.0 || a <= 0.0 )
+   {
+      return false;
+   }
+
+   double gln = calc_gammaln(a);
+
+   if ( x < ( a + 1.0 ) ) 
+   {
+      double sum;
+      double del;
+      double ap;
+      if (x <= 0.0) {
+         if ( x < 0.0 ) 
+         {
+            cerr << "x < 0 US_Saxs_Util::calc_chi2q_prob\n";
+            return false;
+         }
+         prob = 1.0;
+         return true;
+      } else {
+         ap = a;
+         del = sum = 1.0 / a;
+         for ( unsigned int n = 1; n <= 1000; n++ )
+         {
+            ap++;
+            del *= x / ap;
+            sum += del;
+            if ( fabs(del) < fabs(sum) * 3e-7 ) 
+            {
+               prob =  1.0 - sum * exp( -x + a * log(x) - gln );
+               return true;
+            }
+         }
+         cerr << "too many iterations in US_Saxs_Util::calc_chi2q_prob\n";
+         return false;
+      }
+      // return false; // never gets here
+   } else {
+      double an;
+      double b;
+      double c;
+      double d;
+      double del;
+      double h;
+
+      b = x + 1.0 -a;
+      c = 1e30;
+      h = d = 1.0 / b;
+
+      unsigned int i;
+      for ( i = 1; i <= 1000; i++ ) 
+      {
+         an = -i * ( i - a );
+         b += 2.0;
+         d = an * d + b;
+         if ( fabs(d) < 1e-30 )
+         {
+            d = 1e-30;
+         }
+         c = b + an / c;
+         if ( fabs(c) < 1e-30 )
+         {
+            c = 1e-30;
+         }
+         d = 1.0 / d;
+         del = d * c;
+         h *= del;
+         if ( fabs( del - 1.0 ) < 3e-7)
+         {
+            break;
+         }
+      }
+      if ( i > 1000 )
+      {
+         cerr << "too many iterations in US_Saxs_Util::calc_chi2q_prob\n";
+         return false;
+      }
+        
+      prob = exp( -x + a * log( x ) - gln ) * h;
+      return true;
+   }
+   // return false; // never gets here
+}
+
+
+
