@@ -359,6 +359,8 @@ void US_Analyte::nucleotide( void )
    mw         = 0.0;
    uint total = A + G + C + T + U;
 
+   if ( doubleStranded ) total *= 2;
+
    if ( type == DNA )
    {
       if ( doubleStranded )
