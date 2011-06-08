@@ -124,10 +124,13 @@ QString US_License_t::encode( const QString& str1, const QString& str2 )
   const static QString lower = "abcdefghijklmnopqrstuvwxyz";
   const static QString upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-  //QString STR1 = str1.toUpper();
-  //QString STR2 = str2.toUpper();
+  QRegExp blanks( "(^\\s+)|(\\s+$)" );
+
   QString STR1 = str1;
+  STR1.replace( blanks, "" );
+  
   QString STR2 = str2;
+  STR2.replace( blanks, "" );
 
   for ( int i = 0; i < STR1.length(); i++ )
   {
@@ -155,7 +158,7 @@ QString US_License_t::encode( const QString& str1, const QString& str2 )
 
   QString SUM = QString::number( sum1 ) + QString::number( sum2 );
                 
-  int x = int( fabs( sin( SUM.toFloat() ) ) * 65535 );
+  int x = int( fabs( sin( SUM.toDouble() ) ) * 65535 );
 
   QString code;
   code = code.sprintf( "000%X", x ).right( 4 );
