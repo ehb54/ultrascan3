@@ -440,21 +440,22 @@ DbgLv(1) << "FIN_FIN: dens visc vbar vbar_tb"
    {
       // Get standard-space solute values (20,W)
       US_Model::SimulationComponent mcomp;
-      mcomp.s     = qAbs( c_solutes[ maxdepth ][ cc ].s );
-      mcomp.D     = 0.0;
-      mcomp.mw    = 0.0;
-      mcomp.f     = 0.0;
-      mcomp.f_f0  = c_solutes[ maxdepth ][ cc ].k;
+      mcomp.vbar20 = vbar;
+      mcomp.s      = qAbs( c_solutes[ maxdepth ][ cc ].s );
+      mcomp.D      = 0.0;
+      mcomp.mw     = 0.0;
+      mcomp.f      = 0.0;
+      mcomp.f_f0   = c_solutes[ maxdepth ][ cc ].k;
       mcomp.signal_concentration
-                  = c_solutes[ maxdepth ][ cc ].c;
+                   = c_solutes[ maxdepth ][ cc ].c;
 
       // Complete other coefficients in standard-space
       model.calc_coefficients( mcomp );
 DbgLv(1) << " Bcc comp D" << mcomp.D;
 
       // Convert to experiment-space for simulation below
-      mcomp.s    *= sfactor;
-      mcomp.D    *= dfactor;
+      mcomp.s     *= sfactor;
+      mcomp.D     *= dfactor;
 DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
       model.components[ cc ]  = mcomp;

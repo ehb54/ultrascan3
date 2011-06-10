@@ -144,6 +144,7 @@ if (taskx==0) DbgLv(1) << "   CR: dens visc vbar20 vbar temp scorr dcorr"
           increp  = ( increp < 10 ) ? 10 : increp;
    int    kstep   = 0;                             // progress step count
           kk      = 0;                             // nnls_a output index
+   zcomponent.vbar20  = vbar20;                    // vbar-20 for all components
 
    for ( int cc = 0; cc < nsolutes; cc++ )
    {

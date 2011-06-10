@@ -423,6 +423,7 @@ void US_2dsa::save( void )
                     + min( ri_noise.count, 1 );  // noise files per model
    int     nnoises  = nmodels * knois;           // number of noises to save
    double  meniscus = edata->meniscus;
+   double  dwavelen = edata->wavelength.toDouble();
 
    // Test existence or create needed subdirectories
    if ( ! mkdir( reppath, runID ) )
@@ -522,9 +523,10 @@ DbgLv(1) << "  Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
       model.analysis    = US_Model::TWODSA;
       model.variance    = variance;
       model.meniscus    = meniscus;
+      model.wavelength  = dwavelen;
 
       for ( int cc = 0; cc < model.components.size(); cc++ )
-         model.components[ cc ].name = QString().sprintf( "A%05i", cc + 1 );
+         model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
 
       // output the model
       model.write( mname );

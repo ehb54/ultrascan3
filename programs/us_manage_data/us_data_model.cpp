@@ -433,7 +433,7 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
       QString label     = descript.section( ".", 0, -2 );
 
       if ( label.length() > 40 )
-         label = descript.left( 13 ) + "..." + descript.right( 24 );
+         label = label.left( 13 ) + "..." + label.right( 24 );
 
       QString subType   = model_type( contents );
       int     jj        = contents.indexOf( "editGUID=" );
@@ -498,7 +498,7 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
       QString label     = descript.section( ".", 0, -2 );
 
       if ( label.length() > 40 )
-         label = descript.left( 13 ) + "..." + descript.right( 24 );
+         label = label.left( 13 ) + "..." + label.right( 24 );
 
       cdesc.recordID    = irecID;
       cdesc.recType     = 4;
@@ -779,6 +779,15 @@ DbgLv(2) << "MERGE: nd nl dlab llab"
          descd.filename     = descl.filename;     // filename from local
          descd.lastmodDate  = descl.lastmodDate;  // last mod date from local
          descd.description  = descl.description;  // description from local
+//if ( descl.recType == 3 && descd.contents != descl.contents ) {
+// US_Model modell;
+// US_Model modeld;
+// modell.load( descl.filename );
+// modeld.load( QString::number(descd.recordID), db );
+// DbgLv(1) << " ++LOCAL Model:";
+// modell.debug();
+// DbgLv(1) << " ++DB Model:";
+// modeld.debug(); }
          descd.contents     = descd.contents + " " + descl.contents;
 
          adescs << descd;                  // output combo record
@@ -845,7 +854,15 @@ DbgLv(2) << "MERGE: nd nl dlab llab"
       // but with different GUIDs. Output one of them, based on
       // an alphanumeric comparison of label values.
 
-      if ( descd.label < descl.label )
+      QString dlabel = descd.label;
+      QString llabel = descl.label;
+      if ( descd.recType > 2 )
+      {
+         dlabel = descd.description;
+         llabel = descl.description;
+      }
+
+      if ( dlabel < llabel )
       {  // output db record first based on alphabetic label sort
          adescs << descd;
 //DbgLv(2) << "MERGE:  kar jdr jlr (4)GID" << kar << jdr << jlr << descd.dataGUID;
@@ -917,6 +934,10 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
       return;
 
    tdess.resize( nrecs );
+   // Determine maximum description string length
+   maxdlen = 0;
+   for ( int ii = 0; ii < nrecs; ii++ )
+      maxdlen = qMax( maxdlen, descs[ ii ].description.length() );
 
    for ( int ii = 0; ii < nrecs; ii++ )
    {  // build sort strings for Raw,Edit,Model,Noise; copy unsorted vector
@@ -1197,6 +1218,7 @@ DbgLv(2) << "  R dummy:" << dsorts;
    sortm.sort();
    sortn.sort();
 DbgLv(1) << "sort/dumy: count REMN" << countR << countE << countM << countN;
+//for(int ii=0;ii<countM;ii++) DbgLv(2) << "sm" << ii << "++ " << sortm[ii];
 
    int noutR  = 0;               // count of each kind in hierarchical output
    int noutE  = 0;
@@ -1538,7 +1560,11 @@ int US_DataModel::record_state_flag( DataDesc descr, int pstate )
 // compose concatenation on which to sort (label:index:dataGUID:parentGUID)
 QString US_DataModel::sort_string( DataDesc ddesc, int indx )
 {  // create string for ascending sort on label
-   QString label = ( ddesc.recType < 3 ) ? ddesc.label : ddesc.description;
+   QString label  = ( ddesc.recType < 3 ) ? ddesc.label : ddesc.description;
+   int     lablen = label.length();
+   if ( lablen < maxdlen )
+      label = label.leftJustified( maxdlen, ' ' );
+
    QString ostr  = label                              // label to sort on
       + ":"      + QString().sprintf( "%4.4d", indx ) // index in desc. vector
       + ":"      + ddesc.dataGUID                     // data GUID
