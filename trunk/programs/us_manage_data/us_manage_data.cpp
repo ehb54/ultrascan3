@@ -57,7 +57,7 @@ DbgLv(1) << "GUI setup begun";
    QGridLayout* dctlLayout  = new QGridLayout();
    QVBoxLayout* smryLayout  = new QVBoxLayout();
    QGridLayout* statLayout  = new QGridLayout();
-   QGridLayout* tctlLayout  = new QGridLayout();
+   QGridLayout* treeLayout  = new QGridLayout();
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
    leftLayout->setSpacing        ( 0 );
@@ -70,18 +70,18 @@ DbgLv(1) << "GUI setup begun";
    smryLayout->setContentsMargins( 0, 1, 0, 1 );
    statLayout->setSpacing        ( 1 );
    statLayout->setContentsMargins( 0, 0, 0, 0 );
-   tctlLayout->setSpacing        ( 1 );
-   tctlLayout->setContentsMargins( 0, 0, 0, 0 );
+   treeLayout->setSpacing        ( 1 );
+   treeLayout->setContentsMargins( 0, 0, 0, 0 );
    dbg_level     = US_Settings::us_debug();
 
    // fill in the GUI components
    int row       = 0;
 
    pb_invtor     = us_pushbutton( tr( "Investigator" ) );
-   dctlLayout->addWidget( pb_invtor, row,   0, 1, 1 );
+   dctlLayout->addWidget( pb_invtor, row,   0, 1, 3 );
 
    le_invtor     = us_lineedit();
-   dctlLayout->addWidget( le_invtor, row++, 1, 1, 7 );
+   dctlLayout->addWidget( le_invtor, row++, 3, 1, 5 );
 
    pb_reset      = us_pushbutton( tr( "Reset" ), false );
    dctlLayout->addWidget( pb_reset,  row,   0, 1, 4 );
@@ -142,7 +142,8 @@ DbgLv(1) << "GUI setup begun";
    te_status->setPalette( US_GuiSettings::normalColor() );
    te_status->setTextBackgroundColor( pa.color( QPalette::Window ) );
    te_status->setTextColor( pa.color( QPalette::WindowText ) );
-   te_status->setFont(  QFont( "monospace", US_GuiSettings::fontSize() - 2 ) );
+   te_status->setFont(  QFont( US_Widgets::fixedFont().family(),
+                        US_GuiSettings::fontSize() - 2 ) );
    te_status->setText(
       tr( "%1 Combined Total data sets;\n" ).arg( 0 ) +
       tr( "  %1 Combined RawData    records;\n" ).arg( 0 ) +
@@ -197,7 +198,7 @@ DbgLv(1) << "te_status size" << te_status->size();
    rbtn_click        = false;
    tw_recs           = new QTreeWidget();
    tw_recs->setPalette( te_status->palette() );
-   tctlLayout->addWidget( tw_recs );
+   treeLayout->addWidget( tw_recs );
 
    QStringList theads;
    theads << "Type" << "Label" << "SubType" << "Source"
@@ -221,7 +222,7 @@ DbgLv(1) << "te_status size" << te_status->size();
    leftLayout->addLayout( smryLayout );
    leftLayout->setStretchFactor( smryLayout, 10 );
    leftLayout->addLayout( statLayout );
-   rghtLayout->addLayout( tctlLayout );
+   rghtLayout->addLayout( treeLayout );
 
    mainLayout->addLayout( leftLayout );
    mainLayout->addLayout( rghtLayout );
