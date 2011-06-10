@@ -526,6 +526,24 @@ void US_FeMatch::update( int drow )
       else if ( solID.length() < 36  &&  dbP != NULL )
       {
          solution_rec.readFromDB( solID.toInt(), dbP );
+
+DbgLv(1) << "FeM:SOL: solID cvbar sttemp" << solution_rec.solutionID
+ << solution_rec.commonVbar20 << solution_rec.storageTemp;
+US_Passwd pw;
+US_DB2* dbP = new US_DB2( pw.getPasswd() );
+for ( int mm=0; mm<solution_rec.analyteInfo.size(); mm++ )
+{
+ DbgLv(1) << "FeM:SOL: mm amt mw" << mm << solution_rec.analyteInfo[mm].amount
+  << solution_rec.analyteInfo[mm].analyte.mw;
+ QString anID=solution_rec.analyteInfo[mm].analyte.analyteID;
+ QString anGID=solution_rec.analyteInfo[mm].analyte.analyteGUID;
+ DbgLv(1) << "FeM:SOL:  anID" << anID << "anGUID" << anGID;
+ US_Analyte alyt;
+ alyt.load( true, anGID, dbP );
+ DbgLv(1) << "FeM:SOL:  a.anID" <<  alyt.analyteID<< "a.anGUID"
+  << alyt.analyteGUID;
+ DbgLv(1) << "FeM:SOL:  a.mw" <<  alyt.mw;
+}
       }
 
       else
@@ -543,6 +561,9 @@ void US_FeMatch::update( int drow )
       solution_rec.commonVbar20 = vbar;
       le_solution ->setText( tr( "( ***Undefined*** )" ) );
    }
+
+   ti_noise.count = 0;
+   ri_noise.count = 0;
 
    data_plot();
 }
@@ -1423,6 +1444,9 @@ DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
       return;
    }
 
+   ti_noise.count = 0;
+   ri_noise.count = 0;
+
    // see if there are any noise files to load
    load_noise();
 
@@ -1437,10 +1461,11 @@ void US_FeMatch::adjust_model()
 
    // build model component correction factors
    double avgTemp     = edata->average_temperature();
+   double vbar20      = le_vbar     ->text().toDouble();
 
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
-   solution.vbar20    = le_vbar     ->text().toDouble();
+   solution.vbar20    = vbar20;
    solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
 
    US_Math2::data_correction( avgTemp, solution );
@@ -1453,12 +1478,43 @@ void US_FeMatch::adjust_model()
    for ( int jj = 0; jj < model.components.size(); jj++ )
    {
       US_Model::SimulationComponent* sc = &model.components[ jj ];
+double s0_k = sc->f_f0;
+double s0_s = sc->s;
+double s0_D = sc->D;
+double s0_w = sc->mw;
+double s0_b = sc->vbar20;
 
+      sc->vbar20  = vbar20;
       sc->mw      = 0.0;
       sc->f       = 0.0;
-      sc->f_f0    = 0.0;
+      //sc->f_f0    = 0.0;
+      sc->D       = 0.0;
 
       model.calc_coefficients( *sc );
+if ( jj < 2 ) {
+ DbgLv(1) << "AdjMo: 0) s" << s0_s << "k" << s0_k << "D" << s0_D
+  << "mw" << s0_w << "vbar20" << s0_b << "  jj" << jj;
+ double s1_k = sc->f_f0;
+ double s1_s = sc->s;
+ double s1_D = sc->D;
+ double s1_w = sc->mw;
+ double s1_b = sc->vbar20;
+ DbgLv(1) << "AdjMo:  1) s" << s1_s << "k" << s1_k << "D" << s1_D
+  << "mw" << s1_w << "vbar20" << s1_b;
+ double D20w = R * K20 / ( AVOGADRO * 18.0 * M_PI *
+   pow(s0_k * VISC_20W / 100.0, 3.0 / 2.0) * 
+   sqrt(s0_s * s1_b / (2.0 * (1.0 - s1_b * DENS_20W))));
+ sc->mw = sc->f = sc->f_f0 = 0.0;
+ sc->D = D20w;
+ model.calc_coefficients( *sc );
+double s2_k = sc->f_f0;
+double s2_s = sc->s;
+double s2_D = sc->D;
+double s2_w = sc->mw;
+double s2_b = sc->vbar20;
+ DbgLv(1) << "AdjMo:  2) s" << s2_s << "k" << s2_k << "D" << s2_D
+  << "mw" << s2_w << "vbar20" << s2_b;
+}
 
       sc->s      *= scorrec;
       sc->D      *= dcorrec;
@@ -1512,7 +1568,7 @@ void US_FeMatch::adjust_mc_model()
       }
 
       else
-      {  // for multiples find average concentration; use modified componenta
+      {  // for multiples find average concentration; use modified component
          double cconc = mcomp.signal_concentration;
 //DbgLv(1) << "AMM:  ii kdup" << ii << kdup << "  cconc0" << cconc;
 
@@ -2075,14 +2131,13 @@ void US_FeMatch::close_all()
 // String to accomplish line indentation
 QString US_FeMatch::indent( const int spaces ) const
 {
-   return ( QString( "            " ).left( spaces ) );
+   return ( QString( " " ).leftJustified( spaces, ' ' ) );
 }
 
 // Table row HTML with 2 columns
 QString US_FeMatch::table_row( const QString& s1, const QString& s2 ) const
 {
-   return( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2
-           + "</td></tr>\n" );
+   return( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td></tr>\n" );
 }
 
 // Table row HTML with 3 columns
@@ -2243,9 +2298,9 @@ QString US_FeMatch::hydrodynamics( void ) const
         table_row( tr( "Density (absolute):" ),
                    QString::number( solution.density_tb, 'f', 6 ) + " g/ccm" ) +
         table_row( tr( "Vbar:" ), 
-                   QString::number( solution.vbar, 'f', 4 ) + " ccm/g" ) +
+                   QString::number( solution.vbar, 'f', 6 ) + " ccm/g" ) +
         table_row( tr( "Vbar corrected for 20 " ) + MLDEGC + ":",
-                   QString::number( solution.vbar20, 'f', 4 ) + " ccm/g" ) +
+                   QString::number( solution.vbar20, 'f', 6 ) + " ccm/g" ) +
         table_row( tr( "Buoyancy (Water, 20 " ) + MLDEGC + "): ",
                    QString::number( solution.buoyancyw, 'f', 6 ) ) +
         table_row( tr( "Buoyancy (absolute)" ),

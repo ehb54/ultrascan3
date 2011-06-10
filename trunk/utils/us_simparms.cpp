@@ -122,12 +122,54 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    speed_step.append( sp );
 
 #ifndef NO_DB
+   if ( db != NULL  &&  ( rotorCalID.isEmpty() || rotorCalID == "0" ) )
+   {  // If reading from db and no calibration ID yet, get it from DB
+      int         stat_db = 0;
+      bool        ok_db;
+      QString     expID;
+      QStringList query;
+//qDebug() << "Sim parms:runID" << editdata.runID;
+//qDebug() << "Sim parms:invID" << QString::number( US_Settings::us_inv_ID() );
+      query << "get_experiment_info_by_runID"
+            << editdata.runID
+            << QString::number( US_Settings::us_inv_ID() );
+      db->query( query );
+      stat_db = db->lastErrno();
+//qDebug() << "Sim parms:query() stat" << stat_db;
+      if ( stat_db != US_DB2::NOROWS )
+      {
+         ok_db      = db->next();
+//qDebug() << "Sim parms: next() ok_db" << ok_db;
+         if ( ok_db )
+         {
+            expID      = db->value( 1 ).toString();
+            rotorCalID = db->value( 7 ).toString();
+//qDebug() << "Sim parms: expID" << expID;
+//qDebug() << "Sim parms: rotorCalID" << rotorCalID;
+         }
+         else
+            rotorCalID = "";
+
+         if ( rotorCalID.isEmpty()  &&  ! expID.isEmpty() )
+         {
+            query.clear();
+            query << "get_experiment_info" << expID;
+            db->query( query );
+            stat_db = db->lastErrno();
+            if ( stat_db != US_DB2::NOROWS  &&  db->next() )
+            {
+               rotorCalID = db->value( 7 ).toString();
+//qDebug() << "Sim parms:        rotorCalID" << rotorCalID;
+            }
+         }
+      }
+   }
+
    // set rotor coefficients, channel bottom position from hardware files
    setHardware( db, rotorCalID, 0, 0 );
 
    // calculate bottom using RPM, start bottom, and rotor coefficients
-   bottom              = US_AstfemMath::calc_bottom( rpm, bottom_position,
-                                                     rotorcoeffs );
+   bottom = US_AstfemMath::calc_bottom( rpm, bottom_position, rotorcoeffs );
 #else
    // For NO_DB (back end) the bottom needs to be set after this function
    bottom = bottom_position;
@@ -415,6 +457,7 @@ void US_SimulationParameters::debug( void )
    qDebug() << "Grid Type       :" << gridType;
    qDebug() << "Radial Res      :" << radial_resolution;
    qDebug() << "Meniscus        :" << meniscus;
+   qDebug() << "Bottom Pos      :" << bottom_position;
    qDebug() << "Bottom          :" << bottom;
    qDebug() << "Temperature     :" << temperature;
    qDebug() << "Random noise    :" << rnoise;
@@ -422,7 +465,6 @@ void US_SimulationParameters::debug( void )
    qDebug() << "Radial Inv Noise:" << rinoise;
    qDebug() << "Band Forming    :" << band_forming;
    qDebug() << "Band Volume     :" << band_volume;
-   qDebug() << "Bottom Pos      :" << bottom_position;
    qDebug() << "Rotor Calibr.ID :" << rotorCalID;
    qDebug() << "Rotor Coeffs    :" << rotorcoeffs[ 0 ] << rotorcoeffs[ 1 ];
 

@@ -433,6 +433,7 @@ QString US_DB2::buildQuery( const QStringList& arguments )
 
    newquery += ")";
 
+//qDebug() << "NewQuery:" << newquery;
    return newquery;
 }
 

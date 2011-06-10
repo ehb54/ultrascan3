@@ -970,7 +970,7 @@ double US_AnalysisBase2::calc_baseline( void ) const
 // String to accomplish line identation
 QString US_AnalysisBase2::indent( const int spaces ) const
 {
-   return QString( "            " ).left( spaces );
+   return QString( " " ).leftJustified( spaces, ' ' );
 }
 
 // Table row HTML with 2 columns

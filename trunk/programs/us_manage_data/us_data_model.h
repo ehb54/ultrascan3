@@ -90,6 +90,7 @@ class US_DataModel : public QObject
 
       int           personID;
       int           dbg_level;
+      int           maxdlen;
 
       QString       invID;
       QString       run_name;

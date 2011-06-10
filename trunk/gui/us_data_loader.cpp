@@ -54,8 +54,8 @@ US_DataLoader::US_DataLoader(
    // Only enable the investigator button for privileged users
    pb_invest = us_pushbutton( tr( "Select Investigator" ) );
 
-   int inv = US_Settings::us_inv_level();
-   pb_invest->setEnabled( ( inv > 0 )  && disk_controls->db() );
+   int invlev = US_Settings::us_inv_level();
+   pb_invest->setEnabled( ( invlev > 0 )  && disk_controls->db() );
    connect( pb_invest, SIGNAL( clicked() ), SLOT( get_person() ) );
    top->addWidget( pb_invest, row, 0 );
 
@@ -63,7 +63,9 @@ US_DataLoader::US_DataLoader(
    QPalette gray = US_GuiSettings::editColor();
    gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
 
-   QString name = ( inv > 0 ) ? QString::number( inv ) + ": " : "";
+   QString name = ( invlev > 0 )
+                  ? QString::number( US_Settings::us_inv_ID() ) + ": "
+                  : "";
 
    le_invest = us_lineedit( name + US_Settings::us_inv_name() );
    le_invest->setPalette ( gray );
