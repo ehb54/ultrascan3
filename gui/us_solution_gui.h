@@ -143,7 +143,9 @@ class US_GUI_EXTERN US_SolutionGui : public US_WidgetsDialog
       void selectSolution     ( QListWidgetItem* );
       void addAnalyte         ( void );
       void assignAnalyte      ( US_Analyte );
+      void replaceAnalyte     ( US_Analyte );
       void selectAnalyte      ( QListWidgetItem* );
+      void changeAnalyte      ( QListWidgetItem* );
       void removeAnalyte      ( void );
       void calcCommonVbar20   ( void );
       void selectBuffer       ( void );

@@ -95,6 +95,8 @@ US_SolutionGui::US_SolutionGui(
    lw_analytes-> setSortingEnabled( true );
    connect( lw_analytes, SIGNAL( itemClicked  ( QListWidgetItem* ) ),
                          SLOT  ( selectAnalyte( QListWidgetItem* ) ) );
+   connect( lw_analytes, SIGNAL( itemDoubleClicked  ( QListWidgetItem* ) ),
+                         SLOT  ( changeAnalyte      ( QListWidgetItem* ) ) );
 
    int add_rows = ( US_Settings::us_debug() == 0 ) ? 6 : 8;
 
@@ -680,7 +682,19 @@ void US_SolutionGui::assignAnalyte( US_Analyte data )
    }
 
    // Make sure item has not been added already
-   if ( solution.analyteInfo.contains( newInfo ) )
+   // Check manually because the amounts could be different, but it's still
+   // the same analyte
+   bool found = false;
+   foreach ( US_Solution::AnalyteInfo itemInfo, solution.analyteInfo )
+   {
+      if ( itemInfo.analyte == newInfo.analyte )
+      {
+         found = true;
+         break;
+      }
+   }
+
+   if ( found )
    {
       QMessageBox::information( this,
             tr( "Attention" ),
@@ -719,6 +733,109 @@ void US_SolutionGui::selectAnalyte( QListWidgetItem* item )
    connect( ct_amount, SIGNAL( valueChanged ( double ) ),      // if the user has changed it
                        SLOT  ( saveAmount   ( double ) ) );
    changed = true;
+}
+
+// Function to handle when solution listwidget item is double-clicked
+void US_SolutionGui::changeAnalyte( QListWidgetItem* item )
+{
+   // Get the right index in the sorted list, and get the analyte info
+   int ndx = analyteMap[ item ];
+   US_Analyte currentAnalyte = solution.analyteInfo[ ndx].analyte;
+
+   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
+
+   US_AnalyteGui* analyte_dialog = new US_AnalyteGui( true, 
+                                                      currentAnalyte.analyteGUID, 
+                                                      dbdisk );
+
+   connect( analyte_dialog, SIGNAL( valueChanged   ( US_Analyte ) ),
+            this,           SLOT  ( replaceAnalyte ( US_Analyte ) ) );
+
+   connect( analyte_dialog, SIGNAL( use_db        ( bool ) ), 
+                            SLOT  ( update_disk_db( bool ) ) );
+
+   analyte_dialog->exec();
+   qApp->processEvents();
+   changed = true;
+}
+
+// Replace current analyte item with information about selected analyte
+void US_SolutionGui::replaceAnalyte( US_Analyte data )
+{
+   US_Solution::AnalyteInfo newInfo;
+   newInfo.analyte = data;
+   newInfo.amount  = 1;
+
+   if ( disk_controls->db() )
+   {
+      // Now double-check analyteID from db if we can
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+      
+      if ( db.lastErrno() == US_DB2::OK )
+      {
+         QStringList q( "get_analyteID" );
+         q << newInfo.analyte.analyteGUID;
+         db.query( q );
+      
+         if ( db.next() )
+            newInfo.analyte.analyteID = db.value( 0 ).toString();
+      }
+   }
+
+   // Which item is selected currently?
+   QListWidgetItem* item = lw_analytes->currentItem();
+   int ndx = analyteMap[ item ];
+
+   // Let's see if the item has been added already, checking manually
+   // because the amounts could be different but it's still
+   // the same analyte
+   bool found = false;
+   for ( int i = 0; i < solution.analyteInfo.size(); i++ )
+   {
+      // if i == ndx, this is the one we're going to delete in a minute
+      US_Solution::AnalyteInfo itemInfo = solution.analyteInfo[ i ];
+      if ( ( itemInfo.analyte == newInfo.analyte ) &&
+           ( i != ndx )                            )
+      {
+         found = true;
+         break;
+      }
+   }
+
+   if ( found )
+   {
+      QMessageBox::information( this,
+            tr( "Attention" ),
+            tr( "Your solution already contains this analyte\n"
+                "If you wish to change the amount, remove it and "
+                "add it again.\n" ) );
+      return;
+   }
+
+   // Delete the old one and add the new one
+   solution.analyteInfo.removeAt( ndx );
+   lw_analytes->removeItemWidget( item );
+   solution.analyteInfo << newInfo;
+
+   calcCommonVbar20();
+
+   // We're maintaining a map to account for automatic sorting of the list
+   QListWidgetItem* newItem = new QListWidgetItem( newInfo.analyte.description, 
+                                                   lw_analytes );
+   analyteMap[ newItem ] = solution.analyteInfo.size() - 1;   // The one we just added
+   ndx = analyteMap[ newItem ];
+
+   reset();
+   changed = true;
+
+   // Find the item we just added and select it
+   QList< QListWidgetItem* > items = lw_analytes->findItems( newInfo.analyte.description, 
+                                                             Qt::MatchExactly );
+   lw_analytes->setCurrentItem( items[ 0 ] );   // should be only one
+   selectAnalyte( items[ 0 ] );
 }
 
 // Function to add analyte to solution
