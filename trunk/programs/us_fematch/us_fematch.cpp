@@ -389,8 +389,8 @@ void US_FeMatch::load( void )
 
    connect( dialog, SIGNAL( changed(      bool ) ),
             this,   SLOT( update_disk_db( bool ) ) );
-   connect( dialog, SIGNAL( progress(     const QString& ) ),
-            this,   SLOT( set_progress(   const QString& ) ) );
+   connect( dialog, SIGNAL( progress(     const QString ) ),
+            this,   SLOT( set_progress(   const QString ) ) );
 
    if ( dialog->exec() != QDialog::Accepted )  return;
 
@@ -2501,7 +2501,7 @@ void US_FeMatch::new_triple( int trow )
    data_plot();
 }
 
-void US_FeMatch::set_progress( const QString& message )
+void US_FeMatch::set_progress( const QString message )
 {
    te_desc->setText( "<b>" + message + " ...</b>" );
 }

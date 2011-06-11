@@ -176,7 +176,7 @@ class US_FeMatch : public US_Widgets
       QString hydrodynamics ( void )                      const;
       QString scan_info     ( void )                      const;
       QString distrib_info  ( void )                      const;
-      void    set_progress(   const QString& );
+      void    set_progress(   const QString );
       void    update_disk_db( bool );
       void    write_plot( const QString&, const QwtPlot* );
       bool    mkdir(      const QString&, const QString& );
