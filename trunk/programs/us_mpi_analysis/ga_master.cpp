@@ -483,6 +483,8 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
       component.s                    = solute->s;
       component.f_f0                 = solute->k;
       component.signal_concentration = solute->c;
+      component.name                 = QString().sprintf( "SC%04d", i + 1 );
+      component.vbar20               = data_sets[ 0 ]->vbar20;
 
       US_Model::calc_coefficients( component );
       model.components << component;
