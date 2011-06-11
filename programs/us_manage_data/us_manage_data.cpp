@@ -188,8 +188,8 @@ DbgLv(1) << "te_status size" << te_status->size();
    row  = 0;
    QLabel* lb_progr  = us_label( tr( "% Completed:" ) );
    progress          = us_progressBar( 0, 100, 0 );
-   statLayout->addWidget( lb_progr,  row,   0, 1, 3 );
-   statLayout->addWidget( progress,  row++, 3, 1, 5 );
+   statLayout->addWidget( lb_progr,  row,   0, 1, 4 );
+   statLayout->addWidget( progress,  row++, 4, 1, 4 );
 
    lb_status         = us_label( tr( "Status" ) );
    statLayout->addWidget( lb_status, row,   0, 1, 8 );
@@ -228,6 +228,8 @@ DbgLv(1) << "te_status size" << te_status->size();
    mainLayout->addLayout( rghtLayout );
    mainLayout->setStretchFactor( leftLayout, 2 );
    mainLayout->setStretchFactor( rghtLayout, 8 );
+
+   setMinimumWidth( (int)( maxsw * 2.6 ) );
 
    show();    // display main window before password dialog appears
 

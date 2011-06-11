@@ -42,7 +42,7 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       void changed( bool DB );
 
       //! \brief A signal to provide the parent with a progress message
-      void progress( const QString& );
+      void progress( const QString );
 
    private:
       US_Help showHelp;

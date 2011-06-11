@@ -27,8 +27,7 @@ typedef struct distro_sys
    QList< Solute > mw_distro;
    QwtLinearColorMap* colormap;
    QString         run_name;
-   QString         cell;
-   QString         wavelength;
+   QString         analys_name;
    QString         method;
    QString         cmapname;
    int             distro_type;

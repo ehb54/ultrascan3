@@ -206,7 +206,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       void exclude_to    ( double );
       void smoothing     ( double );
       void update_disk_db( bool );
-      void set_progress  ( const QString& );
+      void set_progress  ( const QString );
       void load_noise    ( int  );
       void get_solution  ( void );
       void updateSolution( US_Solution& );

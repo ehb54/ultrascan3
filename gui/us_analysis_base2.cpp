@@ -259,8 +259,8 @@ void US_AnalysisBase2::load( void )
          edlast, dbdisk, rawList, dataList, triples, description, etype_filt );
 
    connect( dialog, SIGNAL( changed( bool ) ), SLOT( update_disk_db( bool ) ) );
-   connect( dialog, SIGNAL( progress    ( const QString& ) ), 
-                    SLOT  ( set_progress( const QString& ) ) );
+   connect( dialog, SIGNAL( progress    ( const QString ) ), 
+                    SLOT  ( set_progress( const QString ) ) );
 
    if ( dialog->exec() != QDialog::Accepted ) return;
 
@@ -1238,7 +1238,7 @@ bool US_AnalysisBase2::mkdir( const QString& baseDir, const QString& subdir )
 }
 
 // Slot to give load-data progress feedback
-void US_AnalysisBase2::set_progress( const QString& message )
+void US_AnalysisBase2::set_progress( const QString message )
 {
    te_desc->setText( "<b>" + message + " ...</b>" );
    qApp->processEvents();

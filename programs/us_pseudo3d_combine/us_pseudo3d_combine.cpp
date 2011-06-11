@@ -164,7 +164,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    connect( ct_curr_distr, SIGNAL( valueChanged( double ) ),
             this,          SLOT( update_curr_distr( double ) ) );
 
-   le_distr_info = us_lineedit( tr( "Run xxx.1 (2DSA)" ) );
+   le_distr_info = us_lineedit( tr( "Run: xxx.1 (2DSA)" ) );
    le_distr_info->setReadOnly( true );
    spec->addWidget( le_distr_info, s_row++, 0, 1, 2 );
 
@@ -267,7 +267,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    main->addLayout( left );
    main->addLayout( plot );
-   main->setStretchFactor( left, 2 );
+   main->setStretchFactor( left, 3 );
    main->setStretchFactor( plot, 5 );
 
    mfilter    = "";
@@ -407,20 +407,12 @@ void US_Pseudo3D_Combine::plot_data( void )
       data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
    }
 
-   QString tstr = tsys->run_name;
-   tstr         = ( tstr.length() > 40 ) ?
-                  ( tstr.left( 18 ) + "..." + tstr.right( 19 ) ) : tstr;
-   tstr         = tstr + "." + tsys->cell + tsys->wavelength
+   QString tstr = tsys->run_name + "\n" + tsys->analys_name
                   + "\n" + tsys->method;
    QwtText qwtTitle( tstr );
-   if ( tstr.length() > 40 )
-   {
-      qwtTitle.setFont( QFont( US_GuiSettings::fontFamily(),
-         US_GuiSettings::fontSize()+1, QFont::Bold ) );
-   }
+   qwtTitle.setFont( QFont( US_GuiSettings::fontFamily(),
+                            US_GuiSettings::fontSize() + 1, QFont::Bold ) );
    data_plot->setTitle( qwtTitle );
-
-   data_plot->replot();
 
    // automatically save plot image in a PNG file
    QPixmap plotmap( data_plot->size() );
@@ -431,7 +423,7 @@ void US_Pseudo3D_Combine::plot_data( void )
    QDir dirof( ofdir );
    if ( !dirof.exists( ) )
       QDir( US_Settings::reportDir() ).mkdir( tsys->run_name );
-   QString celli  = "." + tsys->cell + tsys->wavelength;
+   QString celli  = "." + tsys->run_name.section( ".", -1, -1 );
    QString methi  = tsys->method;
    methi          = methi + "_pseudo3d_f" + ( plot_s ? "s" : "mw" );
    if ( tsys->distro_type == (int)US_Model::MANUAL )
@@ -475,8 +467,8 @@ void US_Pseudo3D_Combine::update_curr_distr( double dval )
    if ( curr_distr > (-1)  &&  curr_distr < system.size() )
    {
       DisSys* tsys = (DisSys*)&system.at( curr_distr );
-      QString tstr = "Run " + tsys->run_name + "." + tsys->cell +
-         tsys->wavelength + " (" + tsys->method + ")";
+      QString tstr = tr( "Run: " ) + tsys->run_name + "."
+         + tsys->analys_name + " (" + tsys->method + ")";
       le_distr_info->setText( tstr );
       cmapname     = tsys->cmapname;
       le_cmap_name->setText( cmapname );
@@ -577,72 +569,25 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
    QString mdesc = mdescr.section( mdescr.left( 1 ), 1, 1 );
 
    // load current colormap
-   tsys.colormap = colormap;
-   tsys.cmapname = cmapname;
+   tsys.colormap     = colormap;
+   tsys.cmapname     = cmapname;
 
-   // set values based on description
-   int jj        = mdesc.lastIndexOf( "." );
-   int kk        = mdesc.length();
+   tsys.run_name     = mdesc.section( ".",  0, -3 );
+   QString asys      = mdesc.section( ".", -2, -2 );
+   tsys.analys_name  = asys.section( "_", 0, 1 ) + "_"
+                     + asys.section( "_", 3, 4 );
+   tsys.method       = model.typeText();
 
-   if ( jj < 0 )
-   {  // for model not really a distribution, fake it
-      mdesc      = mdesc + ".model.1A280";
-      jj         = mdesc.lastIndexOf( "." );
-      kk         = mdesc.length();
-   }
+   tsys.distro_type  = (int)model.analysis;
+   tsys.monte_carlo  = model.monteCarlo;
 
-   QString tstr     = mdesc.right( kk - jj - 1 );
-
-   tsys.method      = model.typeText();
-   tsys.cell        = tstr.left( 1 );
-   tstr             = mdesc.right( kk - jj - 2 );
-   tsys.wavelength  = tstr;
-   QString meth0    = tsys.method + "_";
-   QString meth1    = "." + meth0;
-   QString meth2    = "_" + meth0;
-   jj   = mdesc.indexOf( meth1 );
-   kk   = mdesc.indexOf( meth2 );
-
-   if ( jj < 0  &&  kk < 0 )
-   {
-      if ( mdesc.indexOf( tsys.method.toLower() ) > 0 )
-      {
-         meth0     = tsys.method.toLower() + "_";
-         meth1     = "." + meth0;
-         meth2     = "_" + meth0;
-
-         jj        = mdesc.indexOf( meth1 );
-         kk        = mdesc.indexOf( meth2 );
-      }
-   }
-
-   if ( jj < 0  ||  ( kk > 0 && kk < jj ) )
-      mdesc         = mdesc.replace( meth2, meth1 );
-
-   mdesc            = mdesc.replace( meth1, "." );
-   tsys.run_name    = mdesc.section( ".", 0, -3 );
-   tsys.run_name    = tsys.run_name.isEmpty() ?
-                      mdesc.section( ".", 0, 0 ) :
-                      tsys.run_name;
-
-   tsys.distro_type = (int)model.analysis;
-   tsys.monte_carlo = model.monteCarlo;
-
-   tstr    = "Run " + tsys.run_name + "." + tsys.cell +
-      tsys.wavelength + " (" + tsys.method + ")";
-   le_distr_info->setText( tstr );
-
-   tstr    = tsys.run_name;
-   tstr    = ( tstr.length() > 40 ) ?
-             ( tstr.left( 18 ) + "..." + tstr.right( 19 ) ) : tstr;
-   tstr    = tstr + "." + tsys.cell + tsys.wavelength
-             + "\n" + tsys.method;
-   data_plot->setTitle( tstr );
+   le_distr_info->setText( tr( "Run: " ) + tsys.run_name + "."
+      + tsys.analys_name + " (" + tsys.method + ")" );
 
    // read in and set distribution s,c,k values
    if ( tsys.distro_type != (int)US_Model::COFS )
    {
-      for ( jj = 0; jj < model.components.size(); jj++ )
+      for ( int jj = 0; jj < model.components.size(); jj++ )
       {
          sol_s.s  = model.components[ jj ].s * 1.0e13;
          sol_s.c  = model.components[ jj ].signal_concentration;
