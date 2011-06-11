@@ -235,6 +235,7 @@ class US_MPI_Analysis : public QObject
     int                       generation;
     int                       s_grid;
     int                       k_grid;
+    int                       fitness_count;
 
     typedef QVector< Solute > Gene;
 
