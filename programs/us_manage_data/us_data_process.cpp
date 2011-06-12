@@ -296,12 +296,15 @@ DbgLv(1) << "REC_RMV: exp ID" << cdesc.parentID;
    {  // remove an EditedData record
       query.clear();
       query << "delete_editedData" << dataID;
+DbgLv(1) << "EDT_RMV:" << query;
 
       if ( ( stat = db->statusQuery( query ) ) != 0 )
       {
+DbgLv(1) << "EDT_RMV:   stat" << stat;
          errMsg = tr( "delete_editedData status=%1" ).arg( stat );
          stat   = 2012;
       }
+DbgLv(1) << "EDT_RMV:    stat" << stat;
    }
 
    else if ( cdesc.recType == 3 )

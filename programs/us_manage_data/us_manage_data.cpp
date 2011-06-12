@@ -164,7 +164,7 @@ DbgLv(1) << "GUI setup begun";
    QFontMetrics fm( te_status->font() );
    int   fontw  = fm.maxWidth();
    int   fonth  = fm.lineSpacing();
-   int   minsw  = fontw * 40 + 10;
+   int   minsw  = fontw * 44 + 10;
    int   minsh  = fonth * 18 + 10;
 DbgLv(1) << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
    int   maxsw  = ( minsw * 5 ) / 4;
@@ -657,8 +657,9 @@ void US_ManageData::reportDataStatus()
    }
 
    // reformat and display report on record counts
-   const char* fmtn[] = { "%2d", "%3d", "%4d" };
+   const char* fmtn[] = { "%2d", "%3d", "%4d", "%5d" };
    int         ff     = ( ncrecs < 100 )  ? 0 : ( ( ncrecs < 1000 ) ? 1 : 2 );
+               ff     = ( ncrecs > 9999 ) ? 3 : ncrecs;
    QString actr = QString().sprintf( fmtn[ ff ], ncrecs );
    QString acrr = QString().sprintf( fmtn[ ff ], ncraws );
    QString acer = QString().sprintf( fmtn[ ff ], ncedts );

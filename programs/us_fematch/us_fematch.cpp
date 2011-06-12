@@ -750,18 +750,17 @@ DbgLv(1) << "      sdata->cMN" << sdata->value(nscan-1,nconc-1);
          points    = sdata->scanData[ ii ].readings.size();
 DbgLv(2) << "      II POINTS" << ii << points;
          count     = 0;
-         int jj    = 0;
          double rr = 0.0;
          double vv = 0.0;
          double da = 0.0;
          rnoi      = have_ri ? ri_noise.values[ ii ] : 0.0;
 
-         while ( jj < points )
+         for ( int jj = 0; jj < points; jj++ )
          {  // accumulate coordinates of simulation curve
             tnoi      = have_ti ? ti_noise.values[ jj ] : 0.0;
             rr        = sdata->radius( jj );
             vv        = sdata->value( ii, jj ) + rnoi + tnoi;
-            da        = edata->value( ii, jj++ );
+            da        = edata->value( ii, jj );
             rmsd     += sq( da - vv );
             kpts++;
 DbgLv(3) << "       JJ rr vv" << jj << rr << vv;
@@ -1683,12 +1682,13 @@ void US_FeMatch::simulate_model( )
    US_DataIO2::RawData*    rdata   = &rawList[  drow ];
    US_DataIO2::EditedData* edata   = &dataList[ drow ];
    US_DataIO2::Reading     reading;
-   int    nscan   = rdata->scanData.size();
+   int    kscan   = rdata->scanData.size();
+   int    nscan   = edata->scanData.size();
    int    nconc   = edata->x.size();
    double radlo   = edata->radius( 0 );
    double radhi   = edata->radius( nconc - 1 );
    double rmsd    = 0.0;
-DbgLv(1) << " nscan nconc" << nscan << nconc;
+DbgLv(1) << " kscan nscan nconc" << kscan << nscan << nconc;
 DbgLv(1) << " radlo radhi" << radlo << radhi;
 DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
 
@@ -1697,10 +1697,8 @@ DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
    sdata          = new US_DataIO2::RawData();
 
    // initialize simulation parameters using edited data information
-   //simparams.initFromData( NULL, *edata );
    US_Passwd pw;
-   US_DB2* dbP = dkdb_cntrls->db() ?
-                 new US_DB2( pw.getPasswd() ) : 0;
+   US_DB2* dbP = dkdb_cntrls->db() ?  new US_DB2( pw.getPasswd() ) : 0;
    simparams.initFromData( dbP, *edata );
 DbgLv(1) << " initFrDat rotorCalID coeffs" << simparams.rotorCalID
    << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
@@ -1708,6 +1706,7 @@ DbgLv(1) << " initFrDat rotorCalID coeffs" << simparams.rotorCalID
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;
    simparams.radial_resolution = ( radhi - radlo ) / (double)( nconc - 1 );
+   simparams.bottom            = simparams.bottom_position;
 
    QString mtyp = adv_vals[ "meshtype" ];
    QString gtyp = adv_vals[ "gridtype" ];

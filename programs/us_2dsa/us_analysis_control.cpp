@@ -4,18 +4,22 @@
 #include "us_analysis_control.h"
 #include "us_adv_analysis.h"
 #include "us_settings.h"
+#include "us_passwd.h"
+#include "us_db2.h"
 #include "us_gui_settings.h"
 
 #include <qwt_legend.h>
 
 // constructor:  2dsa analysis controls widget
 US_AnalysisControl::US_AnalysisControl( US_DataIO2::EditedData* dat_exp,
-    QWidget* p ) : US_WidgetsDialog( p, 0 )
+    bool fromDB, QWidget* p ) : US_WidgetsDialog( p, 0 )
 {
    edata          = dat_exp;
    parentw        = p;
    processor      = 0;
    dbg_level      = US_Settings::us_debug();
+   US_Passwd pw;
+   US_DB2* dbP    = fromDB ? new US_DB2( pw.getPasswd() ) : NULL;
 
    setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
@@ -244,12 +248,14 @@ DbgLv(1) << "idealThrCout" << nthr;
    sparms         = new US_SimulationParameters();
    QString dtype  = edata->dataType;
    edata->dataType = dtype.section( " ", 0, 0 );
-   sparms->initFromData( NULL, *edata );
+
+   sparms->initFromData( dbP, *edata );
 DbgLv(1) << " initFrData rCalID coefs" << sparms->rotorCalID
    << sparms->rotorcoeffs[0] << sparms->rotorcoeffs[1];
 if ( dbg_level > 0 )
  sparms->save_simparms( US_Settings::appBaseDir() + "/etc/sp_2dsa.xml" );
    edata->dataType = dtype;
+   sparms->bottom  = sparms->bottom_position;
 
 DbgLv(1) << "Pre-resize AC size" << size();
    resize( 710, 440 );
@@ -272,6 +278,9 @@ void US_AnalysisControl::optimize_options()
       ck_tinoise ->setChecked( false );
       ck_rinoise ->setChecked( false ); 
    }
+
+   ct_menisrng->adjustSize();
+   adjustSize();
 }
 
 // uncheck optimize options other than one just checked
@@ -349,14 +358,8 @@ void US_AnalysisControl::checkIterate(  bool checked )
 // start fit button clicked
 void US_AnalysisControl::start()
 {
-   if ( processor == 0 )
-      processor   = new US_2dsaProcess( edata, sparms, this );
-
-   else
-      processor->disconnect();
-
    if ( parentw )
-   {
+   {  // Get pointers to needed objects from the main
       US_2dsa* mainw = (US_2dsa*)parentw;
       edata          = mainw->mw_editdata();
       sdata          = mainw->mw_simdata();
@@ -371,6 +374,35 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
 DbgLv(1) << "AnaC:  dens/visc/vbar" << edata->dataType;
    }
 
+   // Make sure that any fit-meniscus is reasonable
+   if ( ck_menisc->isChecked() )
+   {
+      double menrng = ct_menisrng->value();
+      double bmenis = edata->meniscus;
+      double hmenis = bmenis + menrng * 0.5;
+      double lrdata = edata->x[ 0 ].radius;
+
+      if ( hmenis >= lrdata )
+      {
+         QMessageBox::critical( this, tr( "Meniscus-Data Overlap!" ),
+            tr( "The highest meniscus (%1), implied in the range given,\n"
+                "equals or exceeds the low data range radius (%2).\n\n"
+                "You must either quit this program and re-edit the data\n"
+                "to have a low radius value farther from the meniscus;\n"
+                "or change the fit-meniscus range given here." )
+                .arg( hmenis ).arg( lrdata ) );
+         return;
+      }
+   }
+
+   // Start a processing object if need be
+   if ( processor == 0 )
+      processor   = new US_2dsaProcess( edata, sparms, this );
+
+   else
+      processor->disconnect();
+
+   // Set up for the start of fit processing
    le_iteration->setText( "0" );
    le_oldvari  ->setText( "0.000e-05" );
    le_newvari  ->setText( "0.000e-05" );
@@ -410,6 +442,7 @@ DbgLv(1) << "AnaC:  dens/visc/vbar" << edata->dataType;
    double vtoler = 1.0e-12;
    double menrng = ct_menisrng->value();
 
+   // Begin the fit
    processor->set_iters( mxiter, mciter, mniter, vtoler, menrng );
 
    processor->start_fit( slo, sup, nss, klo, kup, nks,
@@ -419,7 +452,6 @@ DbgLv(1) << "AnaC:  dens/visc/vbar" << edata->dataType;
    pb_stopfit->setEnabled( true  );
    pb_plot   ->setEnabled( false );
    pb_save   ->setEnabled( false );
-
 }
 
 // stop fit button clicked

@@ -20,7 +20,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       //! \brief US_AnalysisControl constructor
       //! \param dat_exp Pointer to the experiment data
       //! \param         Pointer to the parent of this widget
-      US_AnalysisControl( US_DataIO2::EditedData*, QWidget* p = 0 );
+      US_AnalysisControl( US_DataIO2::EditedData*, bool, QWidget* p = 0 );
 
    public slots:
       void update_progress (  int  );
