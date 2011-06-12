@@ -331,9 +331,9 @@ void US_Math2::data_correction( double t, SolutionData& d )
    double t3 = t * t2;
    double t4 = t * t3;
    double t5 = t * t4;
-if ( qAbs(d.vbar-0.72) > 0.001 )
-qDebug() << "M2:dacor: t" << t << "dens visc" << d.density << d.viscosity
- << "vbar20 vbartb" << d.vbar20 << d.vbar;
+//if ( qAbs(d.vbar-0.72) > 0.001 )
+//qDebug() << "M2:dacor: t" << t << "dens visc" << d.density << d.viscosity
+// << "vbar20 vbartb" << d.vbar20 << d.vbar;
   
    /*!
    The density of water.  An empirical equation derived from
@@ -431,15 +431,14 @@ qDebug() << "M2:dacor: t" << t << "dens visc" << d.density << d.viscosity
    double K          = t + K0;
 
    d.D20w_correction = ( K20 / K ) * ( d.viscosity / VISC_20W );
-if ( qAbs(d.vbar-0.72) > 0.001 ) {
+//if ( qAbs(d.vbar-0.72) > 0.001 ) {
 //qDebug() << "M2:dacor:  denstb denswt" << d.density_tb << d.density_wt;
 //qDebug() << "M2:dacor:  visctb viscwt" << d.viscosity_tb << d.viscosity_wt;
 //qDebug() << "M2:dacor:  buoyb buoyw" << d.buoyancyb << d.buoyancyw;
-qDebug() << "M2:dacor:   scorr dcorr" << d.s20w_correction << d.D20w_correction;
 //qDebug() << "M2:dacor:    vbtb vb20" << d.vbar << d.vbar20;
 //qDebug() << "M2:dacor:    dentb den20" << d.density_tb << DENS_20W;
 //qDebug() << "M2:dacor:    vistb vis20" << d.viscosity_tb << VISC_20W;
-}
+//qDebug() << "M2:dacor:   scorr dcorr" << d.s20w_correction << d.D20w_correction; }
 
 }
 

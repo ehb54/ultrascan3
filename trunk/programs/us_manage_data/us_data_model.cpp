@@ -175,6 +175,7 @@ void US_DataModel::scan_dbase( )
 
    DbgLv(1) << "  expID expGUID runID label comment date";
 
+lb_status->setText("Reading Experiments");
    for ( int ii = 0; ii < expIDs.size(); ii++ )
    {
       QString expID = expIDs[ ii ];
@@ -239,6 +240,7 @@ DbgLv(2) << "BrDb: RAW id" << db->value(0).toString()
    }
    progress->setValue( ++istep );
 
+lb_status->setText("Reading Edits");
    // get edited data IDs
    query.clear();
    query << "all_editedDataIDs" << invID;
@@ -252,6 +254,7 @@ DbgLv(2) << "BrDb: EDT id" << db->value(0).toString()
    }
    progress->setValue( ++istep );
 
+lb_status->setText("Reading Models");
    // get model IDs
    query.clear();
    query << "get_model_desc" << invID;
@@ -265,6 +268,7 @@ DbgLv(2) << "BrDb: MOD id" << db->value(0).toString()
    }
    progress->setValue( ++istep );
 
+lb_status->setText("Reading Noises");
    // get noise IDs
    query.clear();
    query << "get_noise_desc" << invID;
@@ -286,6 +290,7 @@ DbgLv(2) << "BrDb: NOI id" << db->value(0).toString()
 DbgLv(1) << "BrDb: kr ke km kn"
  << rawIDs.size() << edtIDs.size() << modIDs.size() << noiIDs.size();
 
+lb_status->setText("Getting Raw Info");
    for ( int ii = 0; ii < nraws; ii++ )
    {  // get raw data information from DB
       recID             = rawIDs.at( ii );
@@ -352,6 +357,7 @@ DbgLv(2) << "BrDb:      label filename comment" << label << filename << comment;
       progress->setValue( ( istep += 5 ) );
    }
 
+lb_status->setText("Getting Edit Info");
    for ( int ii = 0; ii < nedts; ii++ )
    {  // get edited data information from DB
       recID             = edtIDs.at( ii );
@@ -413,6 +419,7 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
       edtMap[ cdesc.dataGUID ] = cdesc.recordID;    // save edit ID for GUID
    }
 
+lb_status->setText("Getting Model Info");
    for ( int ii = 0; ii < nmods; ii++ )
    {  // get model information from DB
       recID             = modIDs.at( ii );
@@ -467,6 +474,7 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
       progress->setValue( ++istep );
    }
 
+lb_status->setText("Getting Noise Info");
    for ( int ii = 0; ii < nnois; ii++ )
    {  // get noise information from DB
       recID             = noiIDs.at( ii );

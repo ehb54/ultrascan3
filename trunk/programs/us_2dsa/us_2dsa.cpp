@@ -748,7 +748,7 @@ DbgLv(1) << "  OFitCntl: dens visc vbar20 vbartb" << edata->dataType;
    else
       acd_pos  = this->pos() + QPoint(  500,  50 );
 
-   analcd  = new US_AnalysisControl( edata, this );
+   analcd  = new US_AnalysisControl( edata, ! def_local, this );
    analcd->move( acd_pos );
    analcd->show();
 DbgLv(1) << "  AFitCntl: dens visc vbar20 vbartb" << edata->dataType;
