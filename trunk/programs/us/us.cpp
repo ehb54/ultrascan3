@@ -330,7 +330,7 @@ void US_Win::launch( int index )
    if ( !QFile( procapp ).exists() )
       procapp         = procbin;
 
-   process->start( procapp );
+   process->start( "open", QStringList(procapp) );
 #endif
 
   if ( ! process->waitForStarted( 10000 ) ) // 10 second timeout

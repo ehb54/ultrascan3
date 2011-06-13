@@ -80,7 +80,12 @@ void US_Help::openBrowser( const QString& location )
    QString     program = US_Settings::browser();
    QStringList args;
 
+#ifndef Q_WS_MAC
    args << location;
+#else
+   args << "-a" << program << location;
+   program = "open";
+#endif
 
    proc->start( program, args );
 

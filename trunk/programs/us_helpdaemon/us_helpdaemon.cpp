@@ -24,8 +24,8 @@ US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
 #ifndef Q_WS_MAC
   daemon.start( QLatin1String( "assistant" ), args );
 #else
-  QString assisloc  = US_Settings::appBaseDir() + "/bin/Assistant.app";
-  daemon.start( assisloc.toLatin1(), args );
+  QString assisloc  = US_Settings::appBaseDir() + "/Developer/Applications/Qt/Assistant.app";
+  daemon.start( assisloc, args );
 #endif
   daemon.waitForStarted();
 
