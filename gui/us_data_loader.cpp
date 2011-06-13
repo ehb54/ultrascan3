@@ -341,6 +341,18 @@ void US_DataLoader::describe( )
    QString filename = ddesc.filename;
    QString dataGUID = ddesc.dataGUID;
    QString aucGUID  = ddesc.aucGUID;
+
+   if ( disk_controls->db()  &&  aucGUID.length() < 36 )
+   {
+      US_Passwd   pw;
+      US_DB2      db( pw.getPasswd() );
+      QStringList query;
+      query << "get_rawData" << aucGUID;
+      db.query( query );
+      db.next();
+      aucGUID          = db.value( 0 ).toString();
+   }
+
    QString cdesc    = label + descript + filename + dataGUID + aucGUID + dbID;
 
    QString sep      = ";";     // Use semi-colon as separator
@@ -542,6 +554,7 @@ void US_DataLoader::accepted()
 // Scan database for edit sets
 void US_DataLoader::scan_dbase_edit()
 {
+//qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
 
@@ -563,6 +576,7 @@ void US_DataLoader::scan_dbase_edit()
 
    query << "all_editedDataIDs" << invID;
 
+//qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    db.query( query );
 
    while ( db.next() )
@@ -577,11 +591,13 @@ void US_DataLoader::scan_dbase_edit()
       edtIDs << recID;
    }
 
+//qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    for ( int ii = 0; ii < edtIDs.size(); ii++ )
    {
       QString recID   = edtIDs.at( ii );
       int     idRec   = recID.toInt();
 
+//qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       query.clear();
       query << "get_editedData" << recID;
       db.query( query );
@@ -599,13 +615,7 @@ void US_DataLoader::scan_dbase_edit()
       QString editID   = filebase.section( ".", 1, 1 );
       QString tripID   = filebase.section( ".", -4, -2 );
 
-      query.clear();
-      query << "get_rawData" << parID;
-      db.query( query );
-      db.next();
-
-      QString parGUID  = db.value( 0 ).toString();
-
+//qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       QString label    = runID;
       descrip          = runID + "." + tripID + "." + editID;
       QString baselabl = label;
@@ -617,7 +627,7 @@ void US_DataLoader::scan_dbase_edit()
       ddesc.descript   = descrip;
       ddesc.filename   = filename;
       ddesc.dataGUID   = recGUID;
-      ddesc.aucGUID    = parGUID;
+      ddesc.aucGUID    = parID;
       ddesc.DB_id      = idRec;
       ddesc.date       = date;
       ddesc.tripknt    = 1;
@@ -628,10 +638,13 @@ void US_DataLoader::scan_dbase_edit()
       ddesc.isLatest   = latest;
 
       datamap[ descrip ] = ddesc;
+//qDebug() << "ScDB:TM:06: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    }
+//qDebug() << "ScDB:TM:88: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    if ( latest )
       pare_to_latest();
+//qDebug() << "ScDB:TM:99: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 }
 
 // Scan local disk for edit sets
@@ -825,6 +838,17 @@ void US_DataLoader::show_data_info( QPoint pos )
       filespec      = filename.section( "/", -1, -1 )
                       + tr( "\n  File Directory:        " )
                       + filename.section( "/", 0, -2 );
+   }
+
+   else if ( disk_controls->db()  &&  ddesc.aucGUID.length() < 36 )
+   {
+      US_Passwd   pw;
+      US_DB2      db( pw.getPasswd() );
+      QStringList query;
+      query << "get_rawData" << ddesc.aucGUID;
+      db.query( query );
+      db.next();
+      ddesc.aucGUID    = db.value( 0 ).toString();
    }
 
    QString dtext    = tr( "Data Information:" )
