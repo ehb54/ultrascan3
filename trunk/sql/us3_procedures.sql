@@ -27,6 +27,7 @@ BEGIN
   SET @INACTIVE       = 103;
   SET @BADPASS        = 104;
   SET @EMPTY          = 105;
+  SET @BAD_CHECKSUM   = 106;
 
   SET @NOTPERMITTED   = 201;
   SET @BADOPERATOR    = 202;

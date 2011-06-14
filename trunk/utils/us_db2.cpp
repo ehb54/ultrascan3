@@ -355,7 +355,7 @@ int US_DB2::statusQuery( const QString& sqlQuery )
       if ( result )
       {
          row       = mysql_fetch_row( result );
-         db_errno  = atoi( row[ 0 ] );
+         error     = row[ 0 ];
          mysql_free_result( result );
          result = NULL;
       }
@@ -512,22 +512,46 @@ int US_DB2::writeBlobToDB( const QString& filename,
       return ERROR;
    }
 
+   // Create an escaped version of the data
+   QByteArray blobData_escaped;
+   ulong escaped_length = mysqlEscapeString( blobData_escaped, blobData, blobData.size() );
+
+   // Calculate a checksum
+   QByteArray checksum = 
+        QCryptographicHash::hash( blobData, QCryptographicHash::Md5 ).toHex();
+
    // Now let's start building the query
    QString queryPart1 = "CALL " + procedure +
                         "('"    + guid      + 
                         "', '"  + userPW    + 
                         "', "   + QString::number( tableID )   +
                         ", '"   ;
-   char* sqlQuery = new char[ blobData.size() * 2 + queryPart1.size() + 3 ];
-   strcpy( sqlQuery, queryPart1.toAscii() );
-
-   // Now insert blob data directly into query with escape codes
-   const char* blobPtr = blobData.data();
-   char* queryPtr = sqlQuery + queryPart1.size();
-   int length = mysql_real_escape_string( db, queryPtr, blobPtr, blobData.size() );
-   queryPtr += length;
+   QByteArray sqlQuery( escaped_length 
+                      + queryPart1.size()
+                      + checksum.size() + 7, '\0' );
+   strcpy( sqlQuery.data(), queryPart1.toAscii() );
+   char* queryPtr = sqlQuery.data() + queryPart1.size();
+   memcpy( queryPtr, blobData_escaped.data(), escaped_length );
+   queryPtr += escaped_length;
+   strcpy( queryPtr, "', '" );
+   queryPtr += 4;
+   memcpy( queryPtr, checksum.data(), checksum.size() );
+   queryPtr += checksum.size();
    strcpy( queryPtr, "')\0" );
 
+/*
+   QByteArray sqlQuery2( escaped_length 
+                       + queryPart1.size()
+                       + checksum.size() + 7, '\0' );
+   sqlQuery2 = queryPart1.toAscii()
+             + blobData_escaped + "', '"
+             + checksum + "')\0";
+
+   ulong checkSize = escaped_length + queryPart1.size() + checksum.size() + 7;
+   qDebug() << ( ( sqlQuery == sqlQuery2 ) ? "check equal" : "check not equal" );
+   qDebug() << "check2 " << memcmp( sqlQuery.data(), sqlQuery2.data(), checkSize );
+*/
+ 
    // We can't use standard methods since they use QStrings
    // Clear out any unused result sets
    if ( result )
@@ -540,11 +564,10 @@ int US_DB2::writeBlobToDB( const QString& filename,
    }
    result = NULL;
 
-   if ( mysql_query( db, sqlQuery ) != 0 )
+   if ( mysql_query( db, sqlQuery.data() ) != 0 )
    {
       error = QString( "MySQL error: " ) + mysql_error( db );
-
-      delete[] sqlQuery;
+  
       db_errno = ERROR;
       return ERROR;
    }
@@ -553,10 +576,24 @@ int US_DB2::writeBlobToDB( const QString& filename,
    row      = mysql_fetch_row( result );
    db_errno = atoi( row[ 0 ] );
 
+//qDebug() << "Debug " << lastDebug();
    mysql_free_result( result );
    result = NULL;
 
-   delete[] sqlQuery;
+   if ( db_errno == BAD_CHECKSUM )
+   {
+      error = QString( "writeBlob: data transmission error (MD5 checksum)" ) ;
+
+      return BAD_CHECKSUM;
+   }
+
+   else if ( db_errno != OK )
+   {
+      error = QString( "MySQL error: " ) + lastError();
+
+      return db_errno;
+   }
+
    return db_errno;
 }
 #endif
@@ -574,7 +611,7 @@ int US_DB2::readBlobFromDB( const QString& filename,
                       "', "   + QString::number( tableID )   +
                       ")"   ;
 
-   // We can't use standard methods since because the
+   // We can't use standard methods because the
    // binary data doesn't all transfer
 
    // Make sure that we clear out any unused
@@ -615,19 +652,34 @@ int US_DB2::readBlobFromDB( const QString& filename,
 
       // Now convert
       QByteArray aucData( row[ 0 ], lengths[ 0 ] );
+      QByteArray checksum = row[ 1 ];
+      QByteArray calculated = 
+           QCryptographicHash::hash( aucData, QCryptographicHash::Md5 ).toHex();
 
       mysql_free_result( result );
       result = NULL;
 
       // Since we got data, let's write it out
       QFile fout( filename );
-      if ( fout.open( QIODevice::WriteOnly ) )
+      if ( checksum != calculated )
+      {
+         error = QString( "readBlob: data transmission error (MD5 checksum)" ) ;
+
+         db_errno = BAD_CHECKSUM;
+      }
+
+      else if ( ! fout.open( QIODevice::WriteOnly ) )
+      {
+         error = QString( "readBlob: could not write file " ) + filename;
+
+         db_errno = ERROR;
+      }
+
+      else
       {
          fout.write( aucData );
          fout.close();
       }
-      else
-         error = QString( "readBlob: could not write file " ) + filename;
    }
 
    return db_errno;
@@ -681,7 +733,7 @@ unsigned long US_DB2::mysqlEscapeString( QByteArray& , QByteArray& , unsigned lo
 #else
 unsigned long US_DB2::mysqlEscapeString( QByteArray& to, QByteArray& from, unsigned long length )
 {
-   to.resize( length * 2 );     // Make room in advance for escaped characters
+   to.resize( length * 2 + 1 );     // Make room in advance for escaped characters
 
    const char* fromPtr = from.data();
    char* toPtr         = to.data();
@@ -694,7 +746,7 @@ unsigned long US_DB2::mysqlEscapeString( QByteArray& to, QByteArray& from, unsig
 
    // Size string appropriately and return new length
    to.resize( to_length + 1 );
-   return to_length + 1;
+   return to_length;
 }
 #endif
 

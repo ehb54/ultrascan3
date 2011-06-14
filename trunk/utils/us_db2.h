@@ -52,6 +52,7 @@ class US_UTIL_EXTERN US_DB2
       INACTIVE       = 103,     //!< The account has not been activated
       BADPASS        = 104,     //!< Incorrect password
       EMPTY          = 105,     //!< A required parameter was empty
+      BAD_CHECKSUM   = 106,     //!< A transmission error; bad MD5 checksum
      
       NOTPERMITTED   = 201,     //!< User does not have permission 
       BADOPERATOR    = 202,     //!< Operator does not have permission to use that instrument
@@ -244,7 +245,8 @@ class US_UTIL_EXTERN US_DB2
         \param procedure The name of the MySQL stored procedure that will
                accept the data and write it to the database. The procedure
                must implement a parameter list as follows:<br><br>
-               CALL procedure( yourGUID, yourPassword, tableID, blobData );<br><br>
+               CALL procedure( yourGUID, yourPassword, tableID, blobData, 
+               checksum ); where checksum is an MD5 checksum<br><br>
 
         \param tableID The integer primary-key index of the record that the
                raw binary data should be written to.
@@ -265,9 +267,10 @@ class US_UTIL_EXTERN US_DB2
                the file and write the raw binary data to it.
 
         \param procedure The name of the MySQL stored procedure that will
-               accept the data and write it to the database. The procedure
+               read the data from the database. The procedure
                must implement a parameter list as follows:<br><br>
-               CALL procedure( yourGUID, yourPassword, tableID, blobData );<br><br>
+               CALL procedure( yourGUID, yourPassword, tableID, blobData, checksum );
+               where checksum is an MD5 checksum.<br><br>
 
         \param tableID The integer primary-key index of the record that 
                contains the raw binary data.
