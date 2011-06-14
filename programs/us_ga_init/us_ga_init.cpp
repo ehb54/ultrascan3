@@ -473,7 +473,7 @@ void US_GA_Initialize::save( void )
 
    QString filter = tr( "GA data files (*.gadistro.dat);;" )
       + tr( "Any files (*)" );
-   QString fsufx = "." + cell + wavelength + ".gadistro.dat";
+   QString fsufx = ".gadistro.dat";
    QString fname = run_name + fsufx;
    fname         = QFileDialog::getSaveFileName( this,
       tr( "Save GA Data File" ),
@@ -488,8 +488,7 @@ void US_GA_Initialize::save( void )
       soludata->buildDataMC( plot_s, &s_distro, &w_distro );  // build it
 
       int jj        = fname.lastIndexOf( fsufx );
-      fsufx         = ".ga_stats." + cell + wavelength;
-      fname         = ( ( jj > 0 ) ? fname.left( jj ) : fname ) + fsufx;
+      fname         = ( ( jj > 0 ) ? fname.left( jj ) : fname ) + ".ga.stats";
 
       soludata->reportDataMC( fname, mc_iters );              // report it
    }
@@ -817,10 +816,7 @@ void US_GA_Initialize::plot_3dim( void )
    pick->setTrackerPen( QPen( ( csum > 600 ) ? QColor( Qt::black ) :
                                                QColor( Qt::white ) ) );
 
-   QString tstr = run_name;
-   tstr         = ( tstr.length() > 40 ) ?
-                  ( tstr.left( 18 ) + "..." + tstr.right( 19 ) ) : tstr;
-   tstr         = tstr + "." + cell + wavelength + "\n" + method;
+   QString tstr = run_name + "\n" + analys_name + "\n (" + method + ")";
    data_plot->setTitle( tstr );
 
    // set up spectrogram data
@@ -1155,49 +1151,11 @@ qDebug() << "  NO Model components";
    // parse model information from its description
    mdesc        = mdesc.section( sep, 1, 1 );
    method       = model.typeText();
-   QString str0 = method + "_";
-   QString str1 = "." + str0;
-   QString str2 = "_" + str0;
-   int jjd      = mdesc.indexOf( str1 );
-   int jju      = mdesc.indexOf( str2 );
+   run_name     = mdesc.section( ".",  0, -3 );
+   QString asys = mdesc.section( ".", -2, -2 );
+   analys_name  = asys.section( "_", 0, 1 ) + "_"
+                + asys.section( "_", 3, 4 );
 
-   if ( jjd < 0  &&  jju < 0 )
-   {
-      if ( mdesc.indexOf( method.toLower() ) > 0 )
-      {
-         str0      = method.toLower() + "_";
-         str1      = "." + str0;
-         str2      = "_" + str0;
-         jjd       = mdesc.indexOf( str1 );
-         jju       = mdesc.indexOf( str2 );
-      }
-   }
-
-   if ( jjd < 0  ||  ( jju > 0 && jju < jjd ) )
-      mdesc        = mdesc.replace( str2, str1 );
-
-   mdesc        = mdesc.replace( str1, "." );
-
-   run_name     = mdesc.section( ".", 0, -3 );
-   run_name     = run_name.isEmpty() ? 
-                  mdesc.section( ".", 0, 0 ) :
-                  run_name;
-
-   int jj       = mdesc.lastIndexOf( "." );
-   int kk       = mdesc.length();
-
-   if ( jj < 0 )
-   {  // for model not really a distribution, fake it
-      mdesc        = mdesc + ".model.1A260";
-      jj           = mdesc.lastIndexOf( "." );
-      kk           = mdesc.length();
-   }
-
-   QString tstr = mdesc.right( kk - jj - 1 );
-
-   cell         = tstr.left( 1 );
-   tstr         = mdesc.right( kk - jj - 2 );
-   wavelength   = tstr;
    monte_carlo  = model.monteCarlo;
    mc_iters     = monte_carlo ? aiters.toInt() : 1;
 qDebug() << "MC" << monte_carlo << " iters" << mc_iters;
@@ -1205,10 +1163,7 @@ qDebug() << "MC" << monte_carlo << " iters" << mc_iters;
    s_distro.clear();
    w_distro.clear();
 
-   tstr      = run_name;
-   tstr      = ( tstr.length() > 40 ) ?
-               ( tstr.left( 18 ) + "..." + tstr.right( 19 ) ) : tstr;
-   tstr      = tstr + "." + cell + wavelength + "\n" + method;
+   QString tstr = run_name+ "\n" + analys_name + "\n (" + method + ")";
    data_plot->setTitle( tstr );
 
    // read in and set distribution s,c,k,d values
@@ -1267,12 +1222,12 @@ qDebug() << "MC" << monte_carlo << " iters" << mc_iters;
 
    pb_resetsb->setEnabled( true );
 
-   kk           = s_distro.size();
+   nisols       = s_distro.size();
    dfilname     = "(" + mfnam + ") " + mdesc;
    stdfline     = "  " + dfilname;
-   stnpline     = tr( "The number of distribution points is %1" ).arg( kk );
+   stnpline     = tr( "The number of distribution points is %1" ).arg( nisols );
 
-   if ( kk != psdsiz )
+   if ( nisols != psdsiz )
       stnpline    += tr( "\n  (reduced from %1)" ).arg( psdsiz );
 
    te_status->setText( stcmline + "\n" + stdiline + "\n"
@@ -1282,7 +1237,6 @@ qDebug() << "MC" << monte_carlo << " iters" << mc_iters;
 
    soludata->setDistro( sdistro );
 
-   nisols       = kk;
    nibuks       = 0;
    wsbuck       = ( plsmax - plsmin ) / 20.0;
    hfbuck       = ( plfmax - plfmin ) / 20.0;
