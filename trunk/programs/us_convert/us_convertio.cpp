@@ -180,7 +180,18 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
    }
 
    if ( error != QString( "" ) )
+   {
+      // Most likely the data is not in a desirable state in the db, for instance
+      // the raw data record might have been written but the blob upload failed.
+      // So let's delete the experiment and rawData. That way, the runID has not
+      // become tainted and we can try again
+      q.clear();
+      q  << "delete_experiment"
+         << QString::number( ExpData.expID );
+      int delete_status = db->statusQuery( q );
+
       return( error );
+   }
 
    return( QString( "" ) );
 }
@@ -269,11 +280,29 @@ QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData,
    work.mkdir( ExpData.runID );
 
    // Read the auc files to disk
+   QString error = QString( "" );
    for ( int i = 0; i < rawDataIDs.size(); i++ )
    {
       QString f = dir + "/" + filenames[ i ];
-      db->readBlobFromDB( f, QString( "download_aucData" ), rawDataIDs[ i ].toInt() );
+      int readStatus = db->readBlobFromDB( f, QString( "download_aucData" ),
+                                           rawDataIDs[ i ].toInt() );
+
+      if ( readStatus == US_DB2::ERROR )
+      {
+         error += "Error processing file: " + f + "\n" +
+                  "Could not open file or no data \n";
+      }
+
+      else if ( readStatus != US_DB2::OK )
+      {
+         error += "Error returned processing file: " + f + "\n" +
+                  db->lastError() + "\n";
+      }
    }
+
+   // If we can't even read the files we should just stop here
+   if ( error != QString( "" ) )
+      return( error );
 
    // Now get the centerpiece info
    int commonCenterpiece = 0;
@@ -285,7 +314,6 @@ QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData,
       commonCenterpiece = db->value( 3 ).toInt();
 
    // Get the other db info and create triples
-   QString error = QString( "" );
    triples.clear();
    for ( int i = 0; i < rawDataIDs.size(); i++ )
    {
