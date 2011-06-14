@@ -441,10 +441,12 @@ DROP PROCEDURE IF EXISTS upload_aucData$$
 CREATE PROCEDURE upload_aucData ( p_personGUID   CHAR(36),
                                   p_password     VARCHAR(80),
                                   p_rawDataID    INT,
-                                  p_data         LONGBLOB )
+                                  p_data         LONGBLOB,
+                                  p_checksum     CHAR(33) )
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE l_checksum     CHAR(33);
   DECLARE l_experimentID INT;
   DECLARE not_found      TINYINT DEFAULT 0;
 
@@ -455,13 +457,23 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
  
+  -- Compare checksum with calculated checksum
+  SET l_checksum = MD5( p_data );
+  SET @DEBUG = CONCAT( l_checksum , ' ', p_checksum );
+
   -- Get information we need to verify ownership
   SELECT experimentID
   INTO   l_experimentID
   FROM   rawData
   WHERE  rawDataID = p_rawDataID;
 
-  IF ( verify_experiment_permission( p_personGUID, p_password, l_experimentID ) = @OK ) THEN
+  IF ( l_checksum != p_checksum ) THEN
+
+    -- Checksums don't match; abort
+    SET @US3_LAST_ERRNO = @BAD_CHECKSUM;
+    SET @US3_LAST_ERROR = "MySQL: Transmission error, bad checksum";
+
+  ELSEIF ( verify_experiment_permission( p_personGUID, p_password, l_experimentID ) = @OK ) THEN
  
     -- This is either an admin, or a person inquiring about his own experiment
     UPDATE rawData SET
@@ -526,7 +538,7 @@ SET @DEBUG = CONCAT('Raw data ID = ', p_rawDataID,
     -- This is either an admin, or a person inquiring about his own experiment
     SELECT @OK AS status;
 
-    SELECT data
+    SELECT data, MD5( data )
     FROM   rawData
     WHERE  rawDataID = p_rawDataID;
 
@@ -1065,10 +1077,12 @@ DROP PROCEDURE IF EXISTS upload_editData$$
 CREATE PROCEDURE upload_editData ( p_personGUID   CHAR(36),
                                    p_password     VARCHAR(80),
                                    p_editedDataID INT,
-                                   p_data         LONGBLOB )
+                                   p_data         LONGBLOB,
+                                   p_checksum     CHAR(33) )
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE l_checksum     CHAR(33);
   DECLARE l_experimentID INT;
   DECLARE not_found      TINYINT DEFAULT 0;
 
@@ -1079,7 +1093,17 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
  
-  IF ( verify_editData_permission( p_personGUID, p_password, p_editedDataID ) = @OK ) THEN
+  -- Compare checksum with calculated checksum
+  SET l_checksum = MD5( p_data );
+  SET @DEBUG = CONCAT( l_checksum , ' ', p_checksum );
+
+  IF ( l_checksum != p_checksum ) THEN
+
+    -- Checksums don't match; abort
+    SET @US3_LAST_ERRNO = @BAD_CHECKSUM;
+    SET @US3_LAST_ERROR = "MySQL: Transmission error, bad checksum";
+
+  ELSEIF ( verify_editData_permission( p_personGUID, p_password, p_editedDataID ) = @OK ) THEN
  
     -- This is either an admin, or a person inquiring about his own experiment
     UPDATE editedData SET
@@ -1137,7 +1161,7 @@ SET @DEBUG = CONCAT('Edited data ID = ', p_editedDataID,
     -- This is either an admin, or a person inquiring about his own experiment
     SELECT @OK AS status;
 
-    SELECT data
+    SELECT data, MD5( data )
     FROM   editedData
     WHERE  editedDataID = p_editedDataID;
 
