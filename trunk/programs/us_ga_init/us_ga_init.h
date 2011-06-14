@@ -136,8 +136,7 @@ class US_GA_Initialize : public US_Widgets
       bool          rbtn_click;
 
       QString       run_name;
-      QString       cell;
-      QString       wavelength;
+      QString       analys_name;
       QString       method;
       QString       xa_title_s;
       QString       xa_title_mw;

@@ -44,20 +44,11 @@ class US_Pseudo3D_Combine : public US_Widgets
       US_Pseudo3D_Combine();
 
    private:
-
-      QLabel*       lb_info1;
-      QLabel*       lb_resolu;
-      QLabel*       lb_xreso;
-      QLabel*       lb_yreso;
-      QLabel*       lb_zfloor;
-      QLabel*       lb_autolim;
       QLabel*       lb_plt_smin;
       QLabel*       lb_plt_smax;
-      QLabel*       lb_plt_fmin;
-      QLabel*       lb_plt_fmax;
-      QLabel*       lb_curr_distr;
 
-      QLineEdit*    le_distr_info;
+      QTextEdit*    te_distr_info;
+
       QLineEdit*    le_cmap_name;
 
       US_Help       showHelp;
@@ -70,6 +61,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       QwtCounter*   ct_plt_fmax;     
       QwtCounter*   ct_plt_smin;     
       QwtCounter*   ct_plt_smax;     
+      QwtCounter*   ct_plt_dlay;     
       QwtCounter*   ct_curr_distr;
 
       QwtPlot*      data_plot;
