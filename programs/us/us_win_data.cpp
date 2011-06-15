@@ -11,25 +11,25 @@ namespace US_WinData
     P_EXIT   = 4,
     P_CONFIG = 300, P_EDIT,                // Edit Menu
     
-    P_SECOND,       P_DCDT,   P_VHWE,      // Velocity Menu
-                    P_2DSA,   P_GAINIT,
-                    P_FEMA,   P_PSEUDO3D,
+    P_SECOND,       P_DCDT,                // Velocity Menu
+    P_VHWE,         P_2DSA,         P_GAINIT,
+    P_FEMA,         P_PSEUDO3D,
 
     P_EQGLOBFIT,                           // Equilibrium Menu
 
     P_GLOBFITEQ,                           // Global Fit Menu
 
     P_CONVERT,      P_FITMEN,              // Utilities menu
-    P_COLORGRAD,    P_RPTGEN,  
-    P_ROTORCAL,     P_LICENSE,
+    P_COLORGRAD,    P_RPTGEN,       P_ROTORCAL,
+    P_LICENSE,      P_VHWCOMB,
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
-    P_SASSOC,       P_MODEL1, 
-    P_MODEL2,       P_SOMO,        P_SOMOCONFIG,
+    P_SASSOC,       P_MODEL1,       P_MODEL2,
+    P_SOMO,         P_SOMOCONFIG,
 
-    P_INVESTIGATOR, P_BUFFER,      P_VBAR, // Database Menu
-    P_MODEL       , P_MANAGEDATA,  P_MANAGESOLN, 
-    P_MANAGEPROJ,   P_MANAGEROTOR,
+    P_INVESTIGATOR, P_BUFFER,              // Database Menu
+    P_VBAR,         P_MODEL,        P_MANAGEDATA, 
+    P_MANAGESOLN,   P_MANAGEPROJ,   P_MANAGEROTOR,
 
     P_END 
   };
@@ -157,7 +157,12 @@ namespace US_WinData
       QObject::tr( "License Manager Program" )
     },
 
-    { P_ASTFEM, 0, 0, "us_astfem_sim",
+    { P_VHWCOMB,   0, 0, "us_vhw_combine",
+      QObject::tr( "Loading van Holde - Weischet Combine" ),
+      QObject::tr( "van Holde - Weischet Combine Program" )
+    },
+    
+    { P_ASTFEM,    0, 0, "us_astfem_sim",
        QObject::tr( "Loading Finite Element Sedimentation Simulator (ASTFEM)" ),
        QObject::tr( "Finite Element Simulation Program (ASTFEM)" )
     },
