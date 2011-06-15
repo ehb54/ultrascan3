@@ -22,22 +22,26 @@ class US_vHW_Combine : public US_Widgets
 
    private:
 
+      // Distribution description object
       class DistrDesc
       {
          public:
-            QString runID;
-            QString triple;
-            QList< double > dseds;
-            QList< double > bfracs;
-            QColor     color;
-            QwtSymbol* symbol;
+            QString          runID;    // Run ID
+            QString          triple;   // Triple
+            QList< double >  dsedcs;   // Distr. sedimentation coeffs.
+            QList< double >  bfracs;   // Boundary fractions
+            QwtSymbol        symbol;   // Curve symbol
+            QColor           color;    // Curve color
       };
 
-      QList< DistrDesc >  distros;
-      QList< DistrDesc >  pdistrs;
+      QList< DistrDesc >  distros;     // All distributions
+      QList< DistrDesc >  pdistrs;     // Plotted distributions
 
-      QStringList    distIDs;
-      QStringList    pdisIDs;
+      QList< int >        symbols;     // Possible symbol shapes
+      QList< QColor >     colors;      // Possible colors
+
+      QStringList    distIDs;          // All distribs. IDs
+      QStringList    pdisIDs;          // Plotted distribs. IDs
 
       QLineEdit*     le_runid;
       QLineEdit*     le_distname;
@@ -51,8 +55,6 @@ class US_vHW_Combine : public US_Widgets
       US_Help        showHelp;
  
       QwtPlot*       data_plot1;
-      QwtPlotCurve*  curve;
-      QwtPlotCurve*  dcurve;
       US_PlotPicker* gpick;
 
       QString        runID;
@@ -62,10 +64,16 @@ class US_vHW_Combine : public US_Widgets
 
    private slots:
 
-      void load(      void );
-      void save(      void );
-      void reset(     void );
-      void data_plot( void );
+      void load           ( void );
+      void save           ( void );
+      void reset_data     ( void );
+      void reset_plot     ( void );
+      void plot_data      ( void );
+      void plot_distr     ( DistrDesc, QString );
+      void runid_select   ( int );
+      void triple_select  ( int );
+      void setSymbol      ( DistrDesc&, int );
+      void possibleSymbols( void );
 
       void help(      void )
       { showHelp.show_help( "vhw_combine.html" ); };
