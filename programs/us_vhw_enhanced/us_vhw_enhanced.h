@@ -108,6 +108,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       QList< double >          bdcons;     // back-diffusion concentrations
       QList< double >          groupxy;    // group select pick coordinates
       QList< GrpInfo >         groupdat;   // selected group info structures
+      QList< bool >            saved;      // List by triple of saved flags
 
       QVector< double >        scplats;    // scan plateaus for current triple
 
@@ -147,6 +148,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       QStringList last_edit_files( QStringList );
       void new_triple  ( int );
       void update      ( int );
+      void copy_data_files( QString, QString, QString );
 
       void help     ( void )
       { showHelp.show_help( "vhw_enhanced.html" ); };

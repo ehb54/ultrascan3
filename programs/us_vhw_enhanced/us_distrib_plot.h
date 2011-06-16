@@ -73,8 +73,10 @@ class US_DistribPlot : public US_WidgetsDialog
       void plot_combined ( void );
       void change_sensit ( double );
       void change_smooth ( double );
-      int  histo_data( double**, double** );
-      int  envel_data( double**, double** );
+      int  histo_data( QVector< double >&,  QVector< double >& );
+      int  envel_data( QVector< double >&,  QVector< double >& );
+      void save_data_file( QString );
+      void save_and_close( void );
       void help     ( void )
       { showHelp.show_help( "vhw_distrib_plot.html" ); };
 };

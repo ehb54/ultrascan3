@@ -26,12 +26,14 @@ class US_vHW_Combine : public US_Widgets
       class DistrDesc
       {
          public:
-            QString          runID;    // Run ID
-            QString          triple;   // Triple
-            QList< double >  dsedcs;   // Distr. sedimentation coeffs.
-            QList< double >  bfracs;   // Boundary fractions
-            QwtSymbol        symbol;   // Curve symbol
-            QColor           color;    // Curve color
+            QString            runID;    // Run ID
+            QString            triple;   // Triple
+            QVector< double >  dsedcs;   // Distribution sedimentation coeffs.
+            QVector< double >  bfracs;   // Boundary fractions
+            QVector< double >  esedcs;   // Envelope sedimentation coeffs.
+            QVector< double >  efreqs;   // Envelope frequencies
+            QwtSymbol          symbol;   // Curve symbol
+            QColor             color;    // Curve color
       };
 
       QList< DistrDesc >  distros;     // All distributions
@@ -73,7 +75,10 @@ class US_vHW_Combine : public US_Widgets
       void runid_select   ( int );
       void triple_select  ( int );
       void setSymbol      ( DistrDesc&, int );
+      int  envel_data     ( DistrDesc& );
       void possibleSymbols( void );
+      QString expandedTriple ( QString );
+      QString collapsedTriple( QString );
 
       void help(      void )
       { showHelp.show_help( "vhw_combine.html" ); };
