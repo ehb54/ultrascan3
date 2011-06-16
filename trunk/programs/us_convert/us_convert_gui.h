@@ -163,7 +163,7 @@ class US_ConvertGui : public US_Widgets
       void updateExpInfo   ( US_Experiment& );
       void cancelExpInfo   ( void );
       void getSolutionInfo ( void );
-      void updateSolutionInfo( US_Solution& );
+      void updateSolutionInfo( US_Solution );
       void cancelSolutionInfo( void );
       void tripleApplyAll    ( void );
       void runDetails      ( void );

@@ -719,9 +719,9 @@ void US_Predict2::get_solution( void )
    }
 
    US_SolutionGui* dialog = new US_SolutionGui( true );
-   //connect( dialog, SIGNAL( valueChanged( US_Analyte ) ),
-   //                 SLOT  ( update_vbar ( US_Analyte ) ) );
-   //dialog->setWindowTitle( tr( "VBar Calculation" ) );
+   //connect( dialog, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
+   //                 SLOT  ( update_solution           ( US_Solution ) );
+   dialog->setWindowTitle( tr( "VBar Calculation" ) );
    dialog->exec();
 }
 

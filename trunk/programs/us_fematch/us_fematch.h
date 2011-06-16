@@ -182,7 +182,7 @@ class US_FeMatch : public US_Widgets
       bool    mkdir(      const QString&, const QString& );
       void    new_triple( int );
       void    get_solution  ( void );
-      void    updateSolution( US_Solution& );
+      void    updateSolution( US_Solution );
       void    update_progress( int );
 
       void help     ( void )
