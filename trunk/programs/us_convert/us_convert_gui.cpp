@@ -427,19 +427,23 @@ void US_ConvertGui::sel_investigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, ExpData.invID );
 
    connect( inv_dialog,
-      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
-      SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
+      SIGNAL( investigator_accepted( int ) ),
+      SLOT  ( assign_investigator  ( int ) ) );
 
    inv_dialog->exec();
 }
 
 // Function to assign the selected investigator as current
-void US_ConvertGui::assign_investigator( int invID,
-      const QString& lname, const QString& fname)
+void US_ConvertGui::assign_investigator( int invID )
 {
    ExpData.invID = invID;
-   le_investigator->setText( QString::number( invID ) + ": " +
-         lname + ", " + fname );
+
+   QString number = ( invID > 0 )
+                    ? QString::number( invID ) + ": "
+                    : "";
+
+   le_investigator->setText( number + US_Settings::us_inv_name() );
+
 }
 
 // Function to change the data source (disk/db)

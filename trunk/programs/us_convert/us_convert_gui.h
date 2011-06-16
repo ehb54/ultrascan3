@@ -147,10 +147,8 @@ class US_ConvertGui : public US_Widgets
 
       /*! \brief Assign the selected investigator as current
           \param invID  The ID of the selected investigator
-          \param lname  The last name of the investigator
-          \param fname  The first name of the investigator
       */
-      void assign_investigator( int, const QString&, const QString& );
+      void assign_investigator( int );
 
       void import          ( QString dir = "" );
       void reimport        ( void );

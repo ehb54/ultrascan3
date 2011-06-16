@@ -101,7 +101,7 @@ class US_ExperimentGui : public US_WidgetsDialog
       void reload            ( void );
       void syncHardware      ( void );
       void selectInvestigator( void );
-      void assignInvestigator( int, const QString&, const QString& );
+      void assignInvestigator( int  );
       void getInvestigatorInfo( void );
       void source_changed     ( bool );
       void update_disk_db     ( bool );

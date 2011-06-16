@@ -118,7 +118,7 @@ class US_ManageData : public US_Widgets
       void chg_investigator(    void );
       void find_investigator(   QString& );
       void sel_investigator(    void );
-      void assign_investigator( int, const QString&, const QString& );
+      void assign_investigator( int  );
       void clickedItem(      QTreeWidgetItem* );
       QString action_text(   QString, QString );
       void    action_result( int,     QString );
