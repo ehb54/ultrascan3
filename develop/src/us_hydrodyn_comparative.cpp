@@ -402,7 +402,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    connect(cb_by_pct, SIGNAL(clicked()), SLOT(set_by_pct()));
 
    cb_rank = new QCheckBox(this);
-   cb_rank->setText(tr("By ranked\nabsolute\ndifference"));
+   cb_rank->setText(QString(tr("By ranked\n%1absolute\ndifference")).arg(comparative->by_pct ? "% " : "" ));
    cb_rank->setEnabled(true);
    cb_rank->setMinimumHeight(minHeight2b);
    cb_rank->setChecked(comparative->rank);
@@ -419,7 +419,7 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    cb_weight_controls = new QCheckBox(this);
    cb_weight_controls->setMinimumHeight(minHeight2b);
-   cb_weight_controls->setText(tr("By weighted\nsum of absolute\ndifferences"));
+   cb_weight_controls->setText(QString(tr("By weighted sum\nof %1absolute\ndifferences")).arg(comparative->by_pct ? "% " : "" ));
    cb_weight_controls->setEnabled(true);
    cb_weight_controls->setChecked(comparative->weight_controls);
    cb_weight_controls->setFont(qf_modes);
@@ -1566,6 +1566,8 @@ void US_Hydrodyn_Comparative::update_enables()
 
       lbl_store_diff->setText((comparative->by_pct ? "%\n" : "" ) + tr("Difference"));
       lbl_store_abs_diff->setText((comparative->by_pct ? "%\n" : "") + tr("Absolute\ndifference"));
+      cb_rank->setText(QString(tr("By ranked\n%1absolute\ndifference")).arg(comparative->by_pct ? "% " : "" ));
+      cb_weight_controls->setText(QString(tr("By weighted sum\nof %1absolute\ndifferences")).arg(comparative->by_pct ? "% " : "" ));
 
       bool any_selected = any_loaded_selected();
       
