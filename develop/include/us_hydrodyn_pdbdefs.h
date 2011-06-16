@@ -168,6 +168,27 @@ struct saxs_options
    unsigned int     pointsmax;
 
    bool             normalize_by_mw;
+   
+   // options for saxs/sans iq curve computation
+
+   bool    saxs_iq_native_debye;
+   bool    saxs_iq_crysol;
+   bool    saxs_iq_foxs;
+
+   bool    sans_iq_native_debye;
+   bool    sans_iq_cryson;
+
+   bool    iq_ask;                // ask when "compute saxs curve" is pressed
+
+   bool    iq_scale_ask;
+   bool    iq_scale_angstrom;
+   bool    iq_scale_nm;
+
+   // crysol specific options
+   unsigned int crysol_max_harmonics;
+   unsigned int crysol_fibonacci_grid_order;
+
+   bool     crysol_default_load_difference_intensity;
 };
 
 struct hybridization

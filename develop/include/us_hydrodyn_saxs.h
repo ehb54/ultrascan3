@@ -57,6 +57,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                        bool                           *saxs_widget, 
                        saxs_options                   *our_saxs_options,
                        QString                        pdb_file, 
+                       QString                        pdb_filepath, 
                        vector < residue >             residue_list,
                        vector < PDB_model >           model_vector,
                        vector < vector <PDB_atom> >   bead_models,
@@ -73,6 +74,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void refresh(
                    QString                        pdb_file, 
+                   QString                        pdb_filepath, 
                    vector < residue >             residue_list,
                    vector < PDB_model >           model_vector,
                    vector < vector <PDB_atom> >   bead_models,
@@ -238,6 +240,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       unsigned int current_model;
 
       QString model_filename;
+      QString model_filepathname;
 
       QString atom_filename;
       QString hybrid_filename;
@@ -322,6 +325,41 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QString load_pr_selected_filter;
       QString load_saxs_sans_selected_filter;
+
+   private:
+
+      void editor_msg( QString color, QString msg );
+
+      int run_saxs_iq_foxs( QString pdb );
+      int run_saxs_iq_crysol( QString pdb );
+      int run_sans_iq_cryson( QString pdb );
+
+      QProcess *foxs;
+      QProcess *crysol;
+      QProcess *cryson;
+
+      QString foxs_last_pdb;
+      QString crysol_last_pdb;
+      QString crysol_last_pdb_base;
+      QString cryson_last_pdb;
+      QString cryson_last_pdb_base;
+
+   private slots:
+
+      void foxs_readFromStdout();
+      void foxs_readFromStderr();
+      void foxs_launchFinished();
+      void foxs_processExited();
+
+      void crysol_readFromStdout();
+      void crysol_readFromStderr();
+      void crysol_launchFinished();
+      void crysol_processExited();
+
+      void cryson_readFromStdout();
+      void cryson_readFromStderr();
+      void cryson_launchFinished();
+      void cryson_processExited();
 
    public slots:
       void show_plot_saxs_sans();

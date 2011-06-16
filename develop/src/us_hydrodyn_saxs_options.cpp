@@ -59,6 +59,77 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cnt_water_e_density->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_water_e_density, SIGNAL(valueChanged(double)), SLOT(update_water_e_density(double)));
 
+   lbl_saxs_iq = new QLabel(tr(" I(q) method: "), this);
+   lbl_saxs_iq->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_saxs_iq->setMinimumHeight(minHeight1);
+   lbl_saxs_iq->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_saxs_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cb_saxs_iq_native_debye = new QCheckBox(this);
+   cb_saxs_iq_native_debye->setText(tr("Native Debye "));
+   cb_saxs_iq_native_debye->setEnabled(true);
+   cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
+   cb_saxs_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_saxs_iq_native_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_saxs_iq_native_debye, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_debye()));
+
+   cb_saxs_iq_crysol = new QCheckBox(this);
+   cb_saxs_iq_crysol->setText(tr("Crysol"));
+   cb_saxs_iq_crysol->setEnabled(true);
+   cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
+   cb_saxs_iq_crysol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_saxs_iq_crysol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_saxs_iq_crysol, SIGNAL(clicked()), this, SLOT(set_saxs_iq_crysol()));
+
+   cb_saxs_iq_foxs = new QCheckBox(this);
+   cb_saxs_iq_foxs->setText(tr("FoXS"));
+   cb_saxs_iq_foxs->setEnabled(true);
+   cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
+   cb_saxs_iq_foxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_saxs_iq_foxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_saxs_iq_foxs, SIGNAL(clicked()), this, SLOT(set_saxs_iq_foxs()));
+
+   lbl_crysol_max_harmonics = new QLabel(tr(" Crysol: Maximum order of harmonics"), this);
+   lbl_crysol_max_harmonics->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_crysol_max_harmonics->setMinimumHeight(minHeight1);
+   lbl_crysol_max_harmonics->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_crysol_max_harmonics->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_crysol_max_harmonics = new QwtCounter(this);
+   cnt_crysol_max_harmonics->setRange(10, 75, 1);
+   cnt_crysol_max_harmonics->setValue((*saxs_options).crysol_max_harmonics);
+   cnt_crysol_max_harmonics->setMinimumHeight(minHeight1);
+   cnt_crysol_max_harmonics->setEnabled(true);
+   cnt_crysol_max_harmonics->setNumButtons(2);
+   cnt_crysol_max_harmonics->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_crysol_max_harmonics->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_crysol_max_harmonics, SIGNAL(valueChanged(double)), SLOT(update_crysol_max_harmonics(double)));
+
+   lbl_crysol_fibonacci_grid_order = new QLabel(tr(" Crysol: Order of Fibonacci grid"), this);
+   lbl_crysol_fibonacci_grid_order->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_crysol_fibonacci_grid_order->setMinimumHeight(minHeight1);
+   lbl_crysol_fibonacci_grid_order->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_crysol_fibonacci_grid_order->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_crysol_fibonacci_grid_order = new QwtCounter(this);
+   cnt_crysol_fibonacci_grid_order->setRange(10, 75, 1);
+   cnt_crysol_fibonacci_grid_order->setValue((*saxs_options).crysol_fibonacci_grid_order);
+   cnt_crysol_fibonacci_grid_order->setMinimumHeight(minHeight1);
+   cnt_crysol_fibonacci_grid_order->setEnabled(true);
+   cnt_crysol_fibonacci_grid_order->setNumButtons(2);
+   cnt_crysol_fibonacci_grid_order->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_crysol_fibonacci_grid_order->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_crysol_fibonacci_grid_order, SIGNAL(valueChanged(double)), SLOT(update_crysol_fibonacci_grid_order(double)));
+
+   cb_crysol_default_load_difference_intensity = new QCheckBox(this);
+   cb_crysol_default_load_difference_intensity->setText(tr("Crysol: automatically load difference intensity"));
+   cb_crysol_default_load_difference_intensity->setEnabled(true);
+   cb_crysol_default_load_difference_intensity->setChecked((*saxs_options).crysol_default_load_difference_intensity);
+   cb_crysol_default_load_difference_intensity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_crysol_default_load_difference_intensity->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_crysol_default_load_difference_intensity, SIGNAL(clicked()), this, SLOT(set_crysol_default_load_difference_intensity()));
+
+
    lbl_sans_options = new QLabel(tr("SANS Options:"), this);
    Q_CHECK_PTR(lbl_sans_options);
    lbl_sans_options->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -174,6 +245,28 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cnt_frac_of_exch_pep->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cnt_frac_of_exch_pep->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_frac_of_exch_pep, SIGNAL(valueChanged(double)), SLOT(update_frac_of_exch_pep(double)));
+
+   lbl_sans_iq = new QLabel(tr(" I(q) method: "), this);
+   lbl_sans_iq->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_sans_iq->setMinimumHeight(minHeight1);
+   lbl_sans_iq->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_sans_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cb_sans_iq_native_debye = new QCheckBox(this);
+   cb_sans_iq_native_debye->setText(tr("Native Debye "));
+   cb_sans_iq_native_debye->setEnabled(true);
+   cb_sans_iq_native_debye->setChecked((*saxs_options).sans_iq_native_debye);
+   cb_sans_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_sans_iq_native_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_sans_iq_native_debye, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_debye()));
+
+   cb_sans_iq_cryson = new QCheckBox(this);
+   cb_sans_iq_cryson->setText(tr("Cryson"));
+   cb_sans_iq_cryson->setEnabled(true);
+   cb_sans_iq_cryson->setChecked((*saxs_options).sans_iq_cryson);
+   cb_sans_iq_cryson->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_sans_iq_cryson->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_sans_iq_cryson, SIGNAL(clicked()), this, SLOT(set_sans_iq_cryson()));
 
    // -------------- guinier section ------------
 
@@ -439,6 +532,38 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    pb_clear_mw_cache->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear_mw_cache, SIGNAL(clicked()), SLOT(clear_mw_cache()));
 
+   cb_iq_ask = new QCheckBox(this);
+   cb_iq_ask->setText(tr(" Manually choose I(q) method"));
+   cb_iq_ask->setEnabled(true);
+   cb_iq_ask->setChecked((*saxs_options).iq_ask);
+   cb_iq_ask->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iq_ask->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iq_ask, SIGNAL(clicked()), this, SLOT(set_iq_ask()));
+
+   cb_iq_scale_ask = new QCheckBox(this);
+   cb_iq_scale_ask->setText(tr(" Always ask angstrom or nanometer"));
+   cb_iq_scale_ask->setEnabled(true);
+   cb_iq_scale_ask->setChecked((*saxs_options).iq_scale_ask);
+   cb_iq_scale_ask->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iq_scale_ask->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iq_scale_ask, SIGNAL(clicked()), this, SLOT(set_iq_scale_ask()));
+
+   cb_iq_scale_angstrom = new QCheckBox(this);
+   cb_iq_scale_angstrom->setText(tr(" I(q) curves in angstrom"));
+   cb_iq_scale_angstrom->setEnabled(true);
+   cb_iq_scale_angstrom->setChecked((*saxs_options).iq_scale_angstrom);
+   cb_iq_scale_angstrom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iq_scale_angstrom->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iq_scale_angstrom, SIGNAL(clicked()), this, SLOT(set_iq_scale_angstrom()));
+
+   cb_iq_scale_nm = new QCheckBox(this);
+   cb_iq_scale_nm->setText(tr(" I(q) curves in nanometer"));
+   cb_iq_scale_nm->setEnabled(true);
+   cb_iq_scale_nm->setChecked((*saxs_options).iq_scale_nm);
+   cb_iq_scale_nm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_iq_scale_nm->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_iq_scale_nm, SIGNAL(clicked()), this, SLOT(set_iq_scale_nm()));
+
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -465,6 +590,25 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addWidget(cnt_water_e_density, j, 1);
    j++;
 
+   QHBoxLayout *hbl_saxs_iq = new QHBoxLayout;
+   hbl_saxs_iq->addWidget(lbl_saxs_iq);
+   hbl_saxs_iq->addWidget(cb_saxs_iq_native_debye);
+   hbl_saxs_iq->addWidget(cb_saxs_iq_crysol);
+   hbl_saxs_iq->addWidget(cb_saxs_iq_foxs);
+   background->addMultiCellLayout(hbl_saxs_iq, j, j, 0, 1);
+   j++;
+
+   background->addWidget(lbl_crysol_max_harmonics, j, 0);
+   background->addWidget(cnt_crysol_max_harmonics, j, 1);
+   j++;
+
+   background->addWidget(lbl_crysol_fibonacci_grid_order, j, 0);
+   background->addWidget(cnt_crysol_fibonacci_grid_order, j, 1);
+   j++;
+
+   background->addMultiCellWidget(cb_crysol_default_load_difference_intensity, j, j, 0, 1);
+   j++;
+
    background->addMultiCellWidget(lbl_sans_options, j, j, 0, 1);
    j++;
    background->addWidget(lbl_h_scat_len, j, 0);
@@ -484,6 +628,13 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    j++;
    background->addWidget(lbl_frac_of_exch_pep, j, 0);
    background->addWidget(cnt_frac_of_exch_pep, j, 1);
+   j++;
+
+   QHBoxLayout *hbl_sans_iq = new QHBoxLayout;
+   hbl_sans_iq->addWidget(lbl_sans_iq);
+   hbl_sans_iq->addWidget(cb_sans_iq_native_debye);
+   hbl_sans_iq->addWidget(cb_sans_iq_cryson);
+   background->addMultiCellLayout(hbl_sans_iq, j, j, 0, 1);
    j++;
 
    background->addMultiCellWidget(lbl_guinier, j, j, 0, 1);
@@ -538,6 +689,17 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    background->addMultiCellWidget(lbl_misc, k, k, 2, 3);
    k++;
+   background->addMultiCellWidget(cb_iq_ask, k, k, 2, 3);
+   k++;
+   background->addMultiCellWidget(cb_iq_scale_ask, k, k, 2, 3);
+   k++;
+
+   QHBoxLayout *hbl_iq_scale = new QHBoxLayout;
+   hbl_iq_scale->addWidget(cb_iq_scale_angstrom);
+   hbl_iq_scale->addWidget(cb_iq_scale_nm);
+   background->addMultiCellLayout(hbl_iq_scale, k, k, 2, 3);
+   k++;
+
    background->addMultiCellWidget(pb_clear_mw_cache, k, k, 2, 3);
    k++;
 
@@ -549,7 +711,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addMultiCellWidget(pb_help, j, j, 0, 1);
    background->addMultiCellWidget(pb_cancel, j, j, 2, 3);
 
-   setMinimumWidth(550);
+   setMinimumWidth(750);
 }
 
 void US_Hydrodyn_SaxsOptions::cancel()
@@ -594,6 +756,54 @@ void US_Hydrodyn_SaxsOptions::update_water_e_density(double val)
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_SaxsOptions::set_saxs_iq_native_debye()
+{
+   (*saxs_options).saxs_iq_native_debye = cb_saxs_iq_native_debye->isChecked();
+   (*saxs_options).saxs_iq_foxs = !cb_saxs_iq_native_debye->isChecked();
+   (*saxs_options).saxs_iq_crysol = false;
+   cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
+   cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_saxs_iq_crysol()
+{
+   (*saxs_options).saxs_iq_crysol = cb_saxs_iq_crysol->isChecked();
+   (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_crysol->isChecked();
+   (*saxs_options).saxs_iq_foxs = false;
+   cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
+   cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_saxs_iq_foxs()
+{
+   (*saxs_options).saxs_iq_foxs = cb_saxs_iq_foxs->isChecked();
+   (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_foxs->isChecked();
+   (*saxs_options).saxs_iq_crysol = false;
+   cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
+   cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_crysol_max_harmonics(double val)
+{
+   (*saxs_options).crysol_max_harmonics = (float) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_crysol_fibonacci_grid_order(double val)
+{
+   (*saxs_options).crysol_fibonacci_grid_order = (float) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_crysol_default_load_difference_intensity()
+{
+   (*saxs_options).crysol_default_load_difference_intensity = cb_crysol_default_load_difference_intensity->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_SaxsOptions::update_h_scat_len(double val)
 {
    (*saxs_options).h_scat_len = (float) val;
@@ -628,6 +838,22 @@ void US_Hydrodyn_SaxsOptions::update_frac_of_exch_pep(double val)
 {
    (*saxs_options).frac_of_exch_pep = (float) val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_sans_iq_native_debye()
+{
+   (*saxs_options).sans_iq_native_debye = cb_sans_iq_native_debye->isChecked();
+   (*saxs_options).sans_iq_cryson = !cb_sans_iq_native_debye->isChecked();
+   cb_sans_iq_cryson->setChecked((*saxs_options).sans_iq_cryson);
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_sans_iq_cryson()
+{
+   (*saxs_options).sans_iq_cryson = cb_sans_iq_cryson->isChecked();
+   (*saxs_options).sans_iq_native_debye = !cb_sans_iq_cryson->isChecked();
+   cb_sans_iq_native_debye->setChecked((*saxs_options).sans_iq_native_debye);
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SaxsOptions::update_wavelength(double val)
@@ -770,6 +996,30 @@ void US_Hydrodyn_SaxsOptions::set_normalize_by_mw()
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_SaxsOptions::set_iq_ask()
+{
+   (*saxs_options).iq_ask = cb_iq_ask->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_iq_scale_ask()
+{
+   (*saxs_options).iq_scale_ask = cb_iq_scale_ask->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_iq_scale_angstrom()
+{
+   (*saxs_options).iq_scale_angstrom = cb_iq_scale_angstrom->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_iq_scale_nm()
+{
+   (*saxs_options).iq_scale_nm = cb_iq_scale_nm->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_SaxsOptions::set_guinier_csv()
 {
    (*saxs_options).guinier_csv = cb_guinier_csv->isChecked();
@@ -813,3 +1063,4 @@ void US_Hydrodyn_SaxsOptions::update_pointsmax(double val)
    }
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
+

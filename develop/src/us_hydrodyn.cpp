@@ -216,6 +216,22 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    dmd_options.threshold_sc_sc = 5;
 
    saxs_options.normalize_by_mw = true;
+   saxs_options.saxs_iq_native_debye = false;
+   saxs_options.saxs_iq_foxs = true;
+   saxs_options.saxs_iq_crysol = false;
+
+   saxs_options.sans_iq_native_debye = true;
+   saxs_options.sans_iq_cryson = false;
+
+   saxs_options.iq_ask = false;
+
+   saxs_options.iq_scale_ask = false;
+   saxs_options.iq_scale_angstrom = true;
+   saxs_options.iq_scale_nm = false;
+
+   saxs_options.crysol_max_harmonics = 15;
+   saxs_options.crysol_fibonacci_grid_order = 17;
+   saxs_options.crysol_default_load_difference_intensity = true;
 
    // this should be stored in the residue file, hardcoded for now
 
@@ -3529,6 +3545,7 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs )
       {
          saxs_plot_window->refresh(
                                    filename,
+                                   pdb_file,
                                    residue_list,
                                    model_vector,
                                    bead_models,
@@ -3546,6 +3563,7 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs )
                                                  &saxs_plot_widget,
                                                  &saxs_options,
                                                  filename,
+                                                 pdb_file,
                                                  residue_list,
                                                  model_vector,
                                                  bead_models,
@@ -3651,6 +3669,7 @@ void US_Hydrodyn::bead_saxs( bool create_native_saxs )
       {
          saxs_plot_window->refresh(
                                    filename,
+                                   pdb_file,
                                    residue_list,
                                    model_vector,
                                    bead_models,
@@ -3668,6 +3687,7 @@ void US_Hydrodyn::bead_saxs( bool create_native_saxs )
                                                  &saxs_plot_widget,
                                                  &saxs_options,
                                                  filename,
+                                                 pdb_file,
                                                  residue_list,
                                                  model_vector,
                                                  bead_models,

@@ -43,6 +43,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    bool                           *saxs_widget,
                                    saxs_options                   *our_saxs_options,
                                    QString                        filename, 
+                                   QString                        filepathname, 
                                    vector < residue >             residue_list,
                                    vector < PDB_model >           model_vector,
                                    vector < vector <PDB_atom> >   bead_models,
@@ -60,7 +61,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    this->saxs_widget = saxs_widget;
    *saxs_widget = true;
    this->our_saxs_options = our_saxs_options;
-
+   model_filepathname = filepathname;
    guinier_cutoff = 0.2;
    last_used_mw = 0.0;
 
@@ -132,7 +133,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
       }
    }
    // pb_plot_saxs->setEnabled(source ? false : true);
-   pb_plot_saxs_sans->setEnabled(false);
+   pb_plot_saxs_sans->setEnabled(true);
    te_filename2->setText(filename);
    model_filename = filename;
    atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
@@ -169,6 +170,7 @@ US_Hydrodyn_Saxs::~US_Hydrodyn_Saxs()
 
 void US_Hydrodyn_Saxs::refresh(
                                QString                        filename, 
+                               QString                        filepathname, 
                                vector < residue >             residue_list,
                                vector < PDB_model >           model_vector,
                                vector < vector <PDB_atom> >   bead_models,
@@ -187,6 +189,7 @@ void US_Hydrodyn_Saxs::refresh(
    this->residue_atom_hybrid_map = residue_atom_hybrid_map;
    this->source = source;
    this->create_native_saxs = create_native_saxs;
+   model_filepathname = filepathname;
    QFileInfo fi(filename);
    switch (source)
    {
@@ -3488,6 +3491,18 @@ void saxs_Iq_thr_t::run()
 
 void US_Hydrodyn_Saxs::show_plot_saxs()
 {
+   if ( our_saxs_options->saxs_iq_foxs ) 
+   {
+      // cout << model_filepathname << endl;
+      run_saxs_iq_foxs( model_filepathname );
+      return;
+   }
+   if ( our_saxs_options->saxs_iq_crysol ) 
+   {
+      // cout << model_filepathname << endl;
+      run_saxs_iq_crysol( model_filepathname );
+      return;
+   }
    // don't forget to later merge deleted waters into model_vector
    // right now we are going with first residue map entry
    stopFlag = false;
@@ -4438,41 +4453,45 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
              << "Ic(q)  Shape scattering"
              << "Ib(q)  Border layer scattering Ib(q)";
          bool ok;
-         res = QInputDialog::getItem(
-                                             "Crysol's .int format has four available datasets", 
-                                             "Select the set you wish to plot::", lst, 0, FALSE, &ok,
-                                             this );
-         if ( ok ) {
-            // user selected an item and pressed OK
-            Icolumn = 0;
-            if ( res.contains(QRegExp("^I.q. ")) ) 
-            {
-               Icolumn = 1;
+         
+         if ( !our_saxs_options->crysol_default_load_difference_intensity )
+         {
+            res = QInputDialog::getItem(
+                                        "Crysol's .int format has four available datasets", 
+                                        "Select the set you wish to plot::", lst, 0, FALSE, &ok,
+                                        this );
+            if ( ok ) {
+               // user selected an item and pressed OK
+               Icolumn = 0;
+               if ( res.contains(QRegExp("^I.q. ")) ) 
+               {
+                  Icolumn = 1;
+               } 
+               if ( res.contains(QRegExp("^Ia.q. ")) ) 
+               {
+                  Icolumn = 2;
+               } 
+               if ( res.contains(QRegExp("^Ic.q. ")) ) 
+               {
+                  Icolumn = 3;
+               } 
+               if ( res.contains(QRegExp("^Ib.q. ")) ) 
+               {
+                  Icolumn = 4;
+               } 
+               if ( !Icolumn ) 
+               {
+                  cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
+                  return;
+               }
+               cout << " column " << Icolumn << endl;
             } 
-            if ( res.contains(QRegExp("^Ia.q. ")) ) 
+            else
             {
-               Icolumn = 2;
-            } 
-            if ( res.contains(QRegExp("^Ic.q. ")) ) 
-            {
-               Icolumn = 3;
-            } 
-            if ( res.contains(QRegExp("^Ib.q. ")) ) 
-            {
-               Icolumn = 4;
-            } 
-            if ( !Icolumn ) 
-            {
-               cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
-               f.close();
                return;
             }
-            cout << " column " << Icolumn << endl;
-         } 
-         else
-         {
-            f.close();
-            return;
+         } else {
+            Icolumn = 1;
          }
       }
       if ( ext == "dat" ) 
@@ -4547,34 +4566,43 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
             if ( !Icolumn ) 
             {
                cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
-               f.close();
                return;
             }
             cout << " column " << Icolumn << endl;
          } 
          else
          {
-            f.close();
             return;
          }
       }
       editor->append(QString("Loading SAXS data from %1 %2\n").arg(filename).arg(res));
       editor->append(qv[0]);
-      double units = 1;
-      switch( QMessageBox::information( this, 
-                                        tr("UltraScan"),
-                                        tr("Is this file in Angstrom or nm units?"),
-                                        "&Angstrom", 
-                                        "&nm", 0,
-                                        0,      // Enter == button 0
-                                        1 ) ) { // Escape == button 2
-      case 0: // load it as is
-         units = 1;
-         break;
-      case 1: // rescale
-         units = 0.1;
-         break;
+      double units = 1.0;
+      if ( our_saxs_options->iq_scale_ask )
+      {
+         switch( QMessageBox::information( this, 
+                                           tr("UltraScan"),
+                                           tr("Is this file in Angstrom or nm units?"),
+                                           "&Angstrom", 
+                                           "&nm", 0,
+                                           0,      // Enter == button 0
+                                           1 ) ) { // Escape == button 2
+         case 0: // load it as is
+            units = 1.0;
+            break;
+         case 1: // rescale
+            units = 0.1;
+            break;
+         } 
+      } else {
+         if ( our_saxs_options->iq_scale_angstrom ) 
+         {
+            units = 1.0;
+         } else {
+            units = 0.1;
+         }
       }
+
       for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
          if ( qv[i].contains(QRegExp("^#")) )
@@ -4784,6 +4812,12 @@ void US_Hydrodyn_Saxs::clear_plot_saxs()
 
 void US_Hydrodyn_Saxs::show_plot_sans()
 {
+   if ( our_saxs_options->sans_iq_cryson ) 
+   {
+      // cout << model_filepathname << endl;
+      run_sans_iq_cryson( model_filepathname );
+      return;
+   }
 }
 
 void US_Hydrodyn_Saxs::show_plot_saxs_sans()
@@ -5743,19 +5777,29 @@ void US_Hydrodyn_Saxs::load_gnom()
       double gnom_mw = 0e0;
 
       double units = 1;
-      switch( QMessageBox::information( this, 
-                                        tr("UltraScan"),
-                                        tr("Is this GNOM file in Angstrom or nm units?"),
-                                        "&Angstrom", 
-                                        "&nm", 0,
-                                        0,      // Enter == button 0
-                                        1 ) ) { // Escape == button 2
-      case 0: // load it as is
-         units = 1;
-         break;
-      case 1: // rescale
-         units = 0.1;
-         break;
+      if ( our_saxs_options->iq_scale_ask )
+      {
+         switch( QMessageBox::information( this, 
+                                           tr("UltraScan"),
+                                           tr("Is this file in Angstrom or nm units?"),
+                                           "&Angstrom", 
+                                           "&nm", 0,
+                                           0,      // Enter == button 0
+                                           1 ) ) { // Escape == button 2
+         case 0: // load it as is
+            units = 1.0;
+            break;
+         case 1: // rescale
+            units = 0.1;
+            break;
+         } 
+      } else {
+         if ( our_saxs_options->iq_scale_angstrom ) 
+         {
+            units = 1.0;
+         } else {
+            units = 0.1;
+         }
       }
          
       QTextStream ts(&f);
