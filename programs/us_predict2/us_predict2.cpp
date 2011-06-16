@@ -6,6 +6,7 @@
 #include "us_buffer_gui.h"
 #include "us_analyte_gui.h"
 #include "us_constants.h"
+#include "us_solution_gui.h"
 
 US_Predict2::US_Predict2() : US_Widgets()
 {
@@ -31,6 +32,10 @@ US_Predict2::US_Predict2() : US_Widgets()
 
    QGridLayout* controls = new QGridLayout;
    int c_row = 0;
+
+   QPushButton* pb_solution = us_pushbutton( tr( "Select Solution" ) );
+   connect( pb_solution, SIGNAL( clicked() ), SLOT( get_solution() ) );
+   controls->addWidget( pb_solution, c_row++, 0, 1, 2 );
 
    QPushButton* pb_density = us_pushbutton( tr( "Density" ) );
    connect( pb_density, SIGNAL( clicked() ), SLOT( get_buffer() ) );
@@ -700,4 +705,25 @@ void US_Predict2::update_vbar( US_Analyte analyte )
    US_Math2::data_correction( temperature, d );
    update();
 }
+
+void US_Predict2::get_solution( void )
+{
+   if ( model == None  ||  le_param1->text().toDouble() == 0.0  
+                       ||  le_param2->text().toDouble() == 0.0 )
+   {
+      QMessageBox::information( this,
+            tr( "Attention" ),
+            tr( "Select a parameter combination and define\n"
+                "those parameters first.") );
+      return;
+   }
+
+   US_SolutionGui* dialog = new US_SolutionGui( true );
+   //connect( dialog, SIGNAL( valueChanged( US_Analyte ) ),
+   //                 SLOT  ( update_vbar ( US_Analyte ) ) );
+   //dialog->setWindowTitle( tr( "VBar Calculation" ) );
+   dialog->exec();
+}
+
+
 

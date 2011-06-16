@@ -400,14 +400,13 @@ void US_ExperimentGui::selectInvestigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, expInfo.invID );
 
    connect( inv_dialog, 
-      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
-      SLOT  ( assignInvestigator   ( int, const QString&, const QString& ) ) );
+      SIGNAL( investigator_accepted( int ) ),
+      SLOT  ( assignInvestigator   ( int ) ) );
 
    inv_dialog->exec();
 }
 
-void US_ExperimentGui::assignInvestigator( int invID,
-      const QString& /*lname*/, const QString& /*fname*/ )
+void US_ExperimentGui::assignInvestigator( int invID )
 {
    expInfo.invID = invID;
 

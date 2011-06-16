@@ -188,9 +188,16 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
       q.clear();
       q  << "delete_experiment"
          << QString::number( ExpData.expID );
+      
       int delete_status = db->statusQuery( q );
 
-      return( error );
+      if ( delete_status != US_DB2::OK )
+      {
+         error += "MySQL error deleting experiment " + QString::number( ExpData.expID ) 
+               + "\n" + db->lastError() + "\n";
+      }
+
+      return error;
    }
 
    return( QString( "" ) );

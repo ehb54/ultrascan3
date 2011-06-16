@@ -142,14 +142,13 @@ void US_LoadDB::sel_investigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, personID );
 
    connect( inv_dialog,
-      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
-      SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
+      SIGNAL( investigator_accepted( int ) ),
+      SLOT  ( assign_investigator  ( int ) ) );
 
    inv_dialog->exec();
 }
 
-void US_LoadDB::assign_investigator( int invID,
-      const QString& /*lname*/, const QString& /*fname*/ )
+void US_LoadDB::assign_investigator( int invID )
 {
    personID = invID;
 

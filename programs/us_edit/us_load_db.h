@@ -33,7 +33,7 @@ class US_LoadDB : public US_WidgetsDialog
       void    expand             ( void );
       void    collapse           ( void );
       void    sel_investigator   ( void );
-      void    assign_investigator( int, const QString&, const QString& );
+      void    assign_investigator( int  );
       void    limit_data         ( const QString& );
       QString investigator_name  ( const QString& );
 };
