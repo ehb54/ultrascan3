@@ -1,4 +1,4 @@
-//! \file us_analysis_base2.h
+///! \file us_analysis_base2.h
 #ifndef US_ANALYSIS_BASE_H
 #define US_ANALYSIS_BASE_H
 
@@ -209,7 +209,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       void set_progress  ( const QString );
       void load_noise    ( int  );
       void get_solution  ( void );
-      void updateSolution( US_Solution& );
+      void updateSolution( US_Solution );
       bool query_noise_retain( void );
       void back_out_noise( int  );
 };

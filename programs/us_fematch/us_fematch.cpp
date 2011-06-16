@@ -2538,14 +2538,14 @@ void US_FeMatch::get_solution()
    US_SolutionGui* soluInfo = new US_SolutionGui( expID, 1, true, dbdisk,
                                                   solution_rec, false );
 
-   connect( soluInfo, SIGNAL( updateSolutionGuiSelection( US_Solution& ) ),
-            this,     SLOT(   updateSolution(             US_Solution& ) ) );
+   connect( soluInfo, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
+            this,     SLOT(   updateSolution(             US_Solution ) ) );
 
    soluInfo->exec();
 }
 
 // Update solution parameters after user has made selections
-void US_FeMatch::updateSolution( US_Solution& solution_sel )
+void US_FeMatch::updateSolution( US_Solution solution_sel )
 {
    solution_rec    = solution_sel;
 

@@ -1174,8 +1174,8 @@ void US_ConvertGui::getSolutionInfo( void )
                                                       dbdisk, // data source
                                                       solution );
 
-   connect( solutionInfo, SIGNAL( updateSolutionGuiSelection( US_Solution& ) ),
-            this,         SLOT  ( updateSolutionInfo        ( US_Solution& ) ) );
+   connect( solutionInfo, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
+            this,         SLOT  ( updateSolutionInfo        ( US_Solution ) ) );
 
    connect( solutionInfo, SIGNAL( cancelSolutionGuiSelection() ),
             this,         SLOT  ( cancelSolutionInfo        () ) );
@@ -1187,7 +1187,7 @@ void US_ConvertGui::getSolutionInfo( void )
 }
 
 // Updating after user has selected info from experiment dialog
-void US_ConvertGui::updateSolutionInfo( US_Solution& s )
+void US_ConvertGui::updateSolutionInfo( US_Solution s )
 {
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
