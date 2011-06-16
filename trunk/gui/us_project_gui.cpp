@@ -469,7 +469,7 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
          QMessageBox::information( this, 
                tr( "Attention" ), 
                tr( "The project was not found.\n" 
-                   "Please restore and try again.\n" ) ); 
+                   "Please select an existing project and try again.\n" ) ); 
       } 
       
       else if ( status != US_DB2::OK ) 

@@ -81,6 +81,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    connect( disk_controls, SIGNAL( changed       ( bool ) ),
                            SLOT  ( source_changed( bool ) ) );
    settings->addLayout( disk_controls, row++, 0, 1, 2 );
+   save_diskDB = US_Disk_DB_Controls::Default;
 
    // Display Run ID
    QLabel* lb_runID = us_label( tr( "Run ID:" ) );
@@ -298,6 +299,18 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
                                Qt::LeftButton, Qt::ControlModifier );
 
+   // Instructions ( missing to do items )
+   QVBoxLayout* todo = new QVBoxLayout();
+
+   QLabel* lb_todoinfo = us_banner( tr( "Instructions ( to do list )" ), -1 );
+   todo->addWidget( lb_todoinfo );
+
+   lw_todoinfo = us_listwidget();
+   lw_todoinfo->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
+   lw_todoinfo->setMaximumHeight ( 90 );
+   lw_todoinfo->setSelectionMode( QAbstractItemView::NoSelection );
+   todo->addWidget( lw_todoinfo );
+
    // Now let's assemble the page
    
    QVBoxLayout* left     = new QVBoxLayout;
@@ -305,12 +318,17 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    left->addLayout( settings );
    left->addLayout( buttons );
    
+   QVBoxLayout* right    = new QVBoxLayout;
+   
+   right->addLayout( plot );
+   right->addLayout( todo );
+
    QHBoxLayout* main = new QHBoxLayout( this );
    main->setSpacing         ( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
 
    main->addLayout( left );
-   main->addLayout( plot );
+   main->addLayout( right );
 
    main->setStretch( 0, 2 );
    main->setStretch( 1, 4 );
@@ -328,8 +346,6 @@ void US_ConvertGui::reset( void )
    le_runID        ->setText( "" );
    le_runID2       ->setText( "" );
    le_solutionDesc ->setText( "" );
-
-//   cb_centerpiece  ->load();
 
    pb_import     ->setEnabled( true  );
    pb_loadUS3    ->setEnabled( true  );
@@ -367,6 +383,10 @@ void US_ConvertGui::reset( void )
    show_plot_progress = true;
    ExpData.rpms.clear();
 
+   // Erase the todo list
+   lw_todoinfo->clear();
+   lw_todoinfo->addItem( "Load or import some AUC data" );
+   
    data_plot     ->detachItems();
    picker        ->disconnect();
    data_plot     ->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
@@ -385,6 +405,7 @@ void US_ConvertGui::reset( void )
    isPseudo         = false;
 
    pb_reference   ->setEnabled( false );
+   referenceDefined = false;
 
    // Display investigator
    ExpData.invID = US_Settings::us_inv_ID();
@@ -458,12 +479,25 @@ void US_ConvertGui::source_changed( bool )
          tr( "There is no default database set." ) );
    }
 
+   // Did we switch from disk to db?
+   if ( disk_controls->db() && ! save_diskDB )
+   {
+      // Make sure these are explicitly chosen
+      ExpData.operatorID = 0;
+      ExpData.rotorID    = 0;
+      ExpData.calibrationID = 0;
+   }
+
+   save_diskDB = disk_controls->db();
+
    // Reinvestigate whether to enable the buttons
    enableControls();
 }
 
 void US_ConvertGui::update_disk_db( bool db )
 {
+   save_diskDB = disk_controls->db();
+
    ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
 }
 
@@ -551,6 +585,12 @@ void US_ConvertGui::import( QString dir )
 
    // Ok to enable some buttons now
    enableControls();
+
+   if ( runType == "RI" )
+   {
+      referenceDefined = false;
+      pb_reference->setEnabled( true );
+   }
 }
 
 // User pressed the reimport data button
@@ -595,6 +635,11 @@ void US_ConvertGui::reimport( void )
    // Ok to enable some buttons now
    enableControls();
 
+   if ( runType == "RI" )
+   {
+      referenceDefined = false;
+      pb_reference->setEnabled( true );
+   }
 }
 
 // Enable the common dialog controls when there is data
@@ -606,8 +651,6 @@ void US_ConvertGui::enableControls( void )
    else
    {
       // Ok to enable some buttons now
-      if ( ! disk_controls->db() )
-        pb_saveUS3   ->setEnabled( true );
       pb_details     ->setEnabled( true );
       pb_solution    ->setEnabled( true );
       cb_centerpiece ->setEnabled( true );
@@ -620,7 +663,7 @@ void US_ConvertGui::enableControls( void )
       pb_dropScan    ->setEnabled( currentScanCount > 1 );
 
       if ( runType == "RI" )
-         pb_reference->setEnabled( true );
+         pb_reference->setEnabled( ! referenceDefined );
    
       if ( subsets.size() < 1 )
       {
@@ -666,8 +709,7 @@ void US_ConvertGui::enableControls( void )
 
       enableRunIDControl( saveStatus == NOT_SAVED );
          
-      if ( disk_controls->db() )
-         enableSyncDB();
+      enableSaveBtn();
    }
 }
 
@@ -717,65 +759,125 @@ void US_ConvertGui::enableScanControls( void )
 
 }
 
-// Enable the "sync with DB" button, if appropriate
-void US_ConvertGui::enableSyncDB( void )
+// Enable the "save" button, if appropriate
+// Let's use the same logic to populate the todo list too
+void US_ConvertGui::enableSaveBtn( void )
 {
-   if ( ! disk_controls->db() ) return;  // already handled
+   lw_todoinfo->clear();
+   int count = 0;
+   bool completed = true;
+   cb_centerpiece->setLogicalIndex( triples[ currentTriple ].centerpiece );
 
-   // Have we made connection with the db?
-   if ( ! ExpData.syncOK ||
-        triples.size() == 0 )
+   if ( allData.size() == 0 )
    {
-      pb_saveUS3 ->setEnabled( false );
-      return;
+      count++;
+      lw_todoinfo->addItem( QString::number( count ) + ": Load or import some AUC data" );
+      completed = false;
    }
 
-   // Verify connectivity
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
+   // Do we have any triples?
+   if ( triples.size() == 0 )
    {
-      pb_saveUS3 ->setEnabled( false );
-      return;
+      count++;
+      lw_todoinfo->addItem( QString::number( count ) + ": Load or import some AUC data" );
+      completed = false;
    }
+   
+   // Is the run info defined?
+   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
+   // Not checking operator on disk -- defined as "Local"
+   if ( ( ExpData.rotorID == 0 )              ||
+        ( ExpData.calibrationID == 0 )        ||
+        ( ExpData.labID == 0 )                ||
+        ( ExpData.instrumentID == 0 )         ||
+        ( ExpData.label.isEmpty() )           ||
+        ( ! rx.exactMatch( ExpData.project.projectGUID ) ) )
+   {
+      count++;
+      lw_todoinfo->addItem( QString::number( count ) + ": Edit run information" );
+      completed = false;
+   }
+   
    // Have we filled out all the c/c/w info?
    // Check GUIDs, because solutionID's may not be present yet.
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-   for ( int i = 0; i < triples.size(); i++ )
+   foreach ( US_Convert::TripleInfo triple, triples )
    {
-      US_Convert::TripleInfo triple = triples[ i ];
       if ( triple.excluded ) continue;
-
+   
       if ( ! rx.exactMatch( triple.solution.solutionGUID ) )
       {
-         pb_saveUS3 ->setEnabled( false );
-         return;
+         count++;
+         lw_todoinfo->addItem( QString::number( count ) + 
+                               ": Select solution for triple " +
+                               triple.tripleDesc );
+         completed = false;
       }
    }
 
-   // We have to have saved it to the HD before, to have auc files
-/*   if ( saveStatus == NOT_SAVED )
+   foreach ( US_Convert::TripleInfo triple, triples )
    {
-      return;
+      if ( triple.excluded ) continue;
+   
+      if ( triple.centerpiece == 0 )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count ) + 
+                               ": Select centerpiece for triple " +
+                               triple.tripleDesc );
+         completed = false;
+      }
    }
-*/
-
-   // Information is there, but we need to see if the runID exists in the 
-   // DB. If we didn't load it from there, then we shouldn't be able to sync
-   int recStatus = ExpData.checkRunID( &db );
-
-   // if a record is found but saveStatus == BOTH, then we are editing that record
-   if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) 
+  
+   if ( disk_controls->db() )
    {
-      pb_saveUS3 ->setEnabled( false );
-      return;
+      // Verify connectivity
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+   
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count ) +
+                               ": Verify database connectivity" );
+         completed = false;
+      }
+   
+      // Information is there, but we need to see if the runID exists in the 
+      // DB. If we didn't load it from there, then we shouldn't be able to sync
+      int recStatus = ExpData.checkRunID( &db );
+   
+      // if a record is found but saveStatus == BOTH, then we are editing that record
+      if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) // ||
+           // ( ! ExpData.syncOK ) ) 
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count ) +
+                               ": Select a different runID" );
+         completed = false;
+      }
+   
+      // Not checking operator on disk -- defined as "Local"
+      if ( ExpData.operatorID == 0 )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count ) + ": Select operator in run information" );
+         completed = false;
+      }
+
    }
 
-   // If we made it here, user can sync with DB
-   pb_saveUS3 ->setEnabled( true );
+   // This can go on the todo list, but should not prevent user from saving
+   if ( ( runType == "RI" ) && ( ! referenceDefined ) )
+   {
+      count++;
+      lw_todoinfo->addItem( QString::number( count ) + 
+                            ": Define reference scans" );
+   }
+
+   // If we made it here, user can save
+   pb_saveUS3 ->setEnabled( completed );
 }
 
 // Process when the user changes the runID
@@ -923,6 +1025,74 @@ void US_ConvertGui::loadUS3Disk( QString dir )
             tr( "Unknown error: " ) + status );
    }
 
+   // Now that we have the experiment, let's read the rest of the
+   //  solution and project information
+   status = ExpData.project.readFromDisk( ExpData.project.projectGUID );
+
+   // Error reporting 
+   if ( status == US_DB2::NO_PROJECT ) 
+   { 
+      QMessageBox::information( this, 
+            tr( "Attention" ), 
+            tr( "The project was not found.\n" 
+                "Please select an existing project and try again.\n" ) ); 
+   } 
+   
+   else if ( status != US_DB2::OK ) 
+   { 
+      QMessageBox::information( this, 
+            tr( "Disk Read Problem" ), 
+            tr( "Could not read data from the disk.\n" 
+                "Disk status: " ) + QString::number( status ) ); 
+   }
+
+   // and clear it out
+   if ( status != US_DB2::OK )
+      ExpData.project.clear();
+
+   // Now the solutions
+   for ( int i = 0; i < triples.size(); i++ )
+   {
+      status = triples[ i ].solution.readFromDisk( triples[ i ].solution.solutionGUID );
+
+      // Error reporting
+      if ( status == US_DB2::NO_SOLUTION )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ),
+               tr( "A solution this run refers to was not found, or could not be read.\n"
+                   "Please select an existing solution and try again.\n" ) );
+      }
+      
+      else if ( status == US_DB2::NO_BUFFER )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ),
+               tr( "The buffer this solution refers to was not found.\n"
+                   "Please restore and try again.\n" ) );
+      }
+      
+      else if ( status == US_DB2::NO_ANALYTE )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ),
+               tr( "One of the analytes this solution refers to was not found.\n"
+                   "Please restore and try again.\n" ) );
+      }
+      
+      else if ( status != US_DB2::OK )
+      {
+         QMessageBox::information( this, 
+               tr( "Disk Read Problem" ), 
+               tr( "Could not read data from the disk.\n" 
+                   "Disk status: " ) + QString::number( status ) ); 
+      }
+
+      // Just clear it out
+      if ( status != US_DB2::OK )
+         triples[ i ].solution.clear();
+   }
+
    if ( allData.size() == 0 ) return;
 
    // Update triple information on screen
@@ -968,7 +1138,10 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    enableRunIDControl( false );
 
    if ( runType == "RI" )
+   {
+      referenceDefined = false;
       pb_reference->setEnabled( true );
+   }
 
    else if ( runType == "RA" && subsets.size() < 1 )
    {
@@ -982,8 +1155,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    // Read it in ok, so ok to sync with DB
    ExpData.syncOK = true;
 
-   if ( disk_controls->db() )
-      enableSyncDB();
+   enableSaveBtn();
 }
 
 // Function to load an experiment from the DB
@@ -1326,6 +1498,8 @@ void US_ConvertGui::checkTemperature( void )
 void US_ConvertGui::getCenterpieceIndex( int )
 {
    triples[ currentTriple ].centerpiece = cb_centerpiece->getLogicalID();
+
+   enableSaveBtn();
 }
 
 void US_ConvertGui::focus_from( double scan )
@@ -1539,6 +1713,7 @@ void US_ConvertGui::process_reference( const QwtDoublePoint& p )
    data_plot->replot();
 
    pb_reference  ->setEnabled( false );
+   referenceDefined = true;
    picker        ->disconnect();
 
    // Double check if min < max
@@ -1568,6 +1743,8 @@ void US_ConvertGui::process_reference( const QwtDoublePoint& p )
    lw_triple->setCurrentRow( currentTriple );
    plot_current();
    QApplication::restoreOverrideCursor();
+
+   enableSaveBtn();
 }
 
 // Process a control-click on the plot window
@@ -1718,12 +1895,15 @@ void US_ConvertGui::cancel_reference( void )
    setTripleInfo();
 
    pb_reference  ->setEnabled( true );
+   referenceDefined = false;
    pb_cancelref  ->setEnabled( false );
    pb_intensity  ->setEnabled( false );
    currentTriple = 0;
    lw_triple->setCurrentRow( currentTriple );
 
    plot_current();
+
+   enableSaveBtn();
 }
 
 void US_ConvertGui::drop_reference( void )

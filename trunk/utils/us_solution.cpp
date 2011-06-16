@@ -24,7 +24,7 @@ int US_Solution::readFromDisk( QString& guid )
 
    if ( ! found )
    {
-      qDebug() << "Error: file not found for guid "
+      qDebug() << "Error: solution file not found - guid "
                << guid;
       return US_DB2::NO_SOLUTION;
    }
