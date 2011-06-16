@@ -148,7 +148,7 @@ class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog
       void remove_component   ( QListWidgetItem* );
       void select_buffer      ( QListWidgetItem* );
       void search             ( const QString& = QString() );
-      void assign_investigator( int, const QString&, const QString& );
+      void assign_investigator( int  );
       void source_changed     ( bool );
      
       void help ( void ) { showHelp.show_help( "us_buffer.html" ); };

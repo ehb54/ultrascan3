@@ -447,14 +447,13 @@ void US_BufferGui::sel_investigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, personID );
 
    connect( inv_dialog, 
-      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
-      SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
+      SIGNAL( investigator_accepted( int ) ),
+      SLOT  ( assign_investigator  ( int ) ) );
    
    inv_dialog->exec();
 }
 
-void US_BufferGui::assign_investigator( int invID, 
-      const QString& /* unused */, const QString& /* unused */ )
+void US_BufferGui::assign_investigator( int invID )
 {
    personID    = invID;
    view_shared = false;

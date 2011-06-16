@@ -124,7 +124,7 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       void build_dialog(  void );
       void select_diskdb( void );
       void get_person(    void );
-      void update_person( int, const QString&, const QString& );
+      void update_person( int  );
       void list_models (  void );
       void msearch(       const QString& );
       void compress_list( void );

@@ -201,6 +201,6 @@ class US_GUI_EXTERN US_AnalyteGui : public US_WidgetsDialog
       { showHelp.show_help( "analytes.html" ); };
 
       void update_sequence    ( QString );
-      void assign_investigator( int, const QString&, const QString& );
+      void assign_investigator( int     );
 };
 #endif

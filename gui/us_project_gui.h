@@ -84,7 +84,7 @@ class US_GUI_EXTERN US_ProjectGuiGeneral : public US_Widgets
 private:
    private slots:
    void sel_investigator   ( void );
-   void assign_investigator( int, const QString&, const QString& );
+   void assign_investigator( int  );
 };
     
 /*! \class US_ProjectGui

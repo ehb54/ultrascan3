@@ -47,10 +47,7 @@ class US_GUI_EXTERN US_Investigator : public US_WidgetsDialog
    signals:
       //! \brief A signal that returns data to the invoking program
       //! \param investigatorID The index in the database for this person
-      //! \param lname The last name of the selected investigator
-      //! \param fname The first name of the selected investigator
-      void investigator_accepted( int investigatorID, 
-            const QString& lname, const QString& fname );
+      void investigator_accepted( int investigatorID );
 
    private:
       bool                         signal_wanted;

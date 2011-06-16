@@ -1283,19 +1283,22 @@ void US_AnalyteGui::sel_investigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true );
    
    connect( inv_dialog,
-      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
-      SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
+      SIGNAL( investigator_accepted( int ) ),
+      SLOT  ( assign_investigator  ( int ) ) );
    
    inv_dialog->exec();
 }
 
-void US_AnalyteGui::assign_investigator( int invID,
-      const QString& lname, const QString& fname)
+void US_AnalyteGui::assign_investigator( int invID )
 {
-   le_investigator->setText( QString::number( invID ) + ": " +
-         lname + ", " + fname );
-
    personID = invID;
+
+   QString number = ( personID > 0 )
+            ? QString::number( invID ) + ": "
+            : "";
+
+   le_investigator->setText( number + US_Settings::us_inv_name() );
+
    lw_analytes->clear();
    le_search  ->clear();
    le_search  ->setEnabled( false );
