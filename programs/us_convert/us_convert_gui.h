@@ -33,6 +33,7 @@ class US_ConvertGui : public US_Widgets
       US_ConvertGui();
 
       US_Disk_DB_Controls* disk_controls;     //!< Radiobuttons for disk/db choice
+      bool            save_diskDB;            //!< To keep track of changes
 
       QList< double > subsets;                //!< A list of subset boundaries
 
@@ -47,6 +48,8 @@ class US_ConvertGui : public US_Widgets
       aucStatus      saveStatus;
       US_Help        showHelp;
       US_PlotPicker* picker;
+
+      bool          referenceDefined;               // Has the reference channel been defined?
 
       QString       runType;
       QString       oldRunType;
@@ -63,6 +66,8 @@ class US_ConvertGui : public US_Widgets
 
       QLabel*       lb_triple;
       QListWidget*  lw_triple;                        // cell, channel, wavelength
+
+      QListWidget*  lw_todoinfo;                      // todo list
 
       QwtCounter*   ct_from;
       QwtCounter*   ct_to;
@@ -116,7 +121,7 @@ class US_ConvertGui : public US_Widgets
       void reset           ( void );
       void enableRunIDControl( bool );
       void enableScanControls( void );
-      void enableSyncDB    ( void );
+      void enableSaveBtn   ( void );
       void getExpInfo      ( void );
       void setTripleInfo   ( void );
       void checkTemperature( void );

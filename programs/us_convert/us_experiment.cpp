@@ -320,7 +320,12 @@ int US_Experiment::saveToDisk(
          xml.writeAttribute   ( "guid", uuidc );
          xml.writeAttribute   ( "cell", cell );
          xml.writeAttribute   ( "channel", channel );
-         xml.writeAttribute   ( "wavelength", wl );
+
+         if ( runType == "WA" )
+            xml.writeAttribute( "radius", wl );
+
+         else
+            xml.writeAttribute( "wavelength", wl );
 
             xml.writeStartElement( "centerpiece" );
             xml.writeAttribute   ( "id", QString::number( t.centerpiece ) );
@@ -432,7 +437,6 @@ void US_Experiment::readExperiment(
             this->project.projectID      = a.value( "id"   ).toString().toInt();
             this->project.projectGUID    = a.value( "guid" ).toString();
             this->project.projectDesc    = a.value( "desc" ).toString();
-            this->project.readFromDisk( this->project.projectGUID );
          }
    
          else if ( xml.name() == "lab" )
@@ -479,7 +483,13 @@ void US_Experiment::readExperiment(
             QXmlStreamAttributes a = xml.attributes();
             QString cell           = a.value( "cell" ).toString();
             QString channel        = a.value( "channel" ).toString();
-            QString wl             = a.value( "wavelength" ).toString();
+
+            QString wl;
+            if ( runType == "WA" )
+               wl                  = a.value( "radius" ).toString();
+
+            else
+               wl                  = a.value( "wavelength" ).toString();
    
             // Find the index of this triple
             QString triple         = cell + " / " + channel + " / " + wl;
@@ -503,11 +513,25 @@ void US_Experiment::readExperiment(
                QString uuidc = a.value( "guid" ).toString();
                US_Util::uuid_parse( uuidc, (unsigned char*) triples[ ndx ].tripleGUID );
 
-               triples[ ndx ].tripleFilename = runID    + "." +
-                                               runType  + "." +
-                                               cell     + "." +
-                                               channel  + "." +
-                                               wl       + ".auc";
+               if ( runType == "WA" )
+               {
+                   double r       = wl.toDouble() * 1000.0;
+                   QString radius = QString::number( (int) round( r ) );
+                   triples[ ndx ].tripleFilename = runID      + "." 
+                                                 + runType    + "." 
+                                                 + cell       + "." 
+                                                 + channel    + "." 
+                                                 + radius     + ".auc";
+               }
+               
+               else
+               {
+                   triples[ ndx ].tripleFilename = runID      + "." 
+                                                 + runType    + "." 
+                                                 + cell       + "." 
+                                                 + channel    + "." 
+                                                 + wl         + ".auc";
+               }
 
                triples[ ndx ].excluded       = false;
 
@@ -578,7 +602,6 @@ void US_Experiment::readDataset( QXmlStreamReader& xml, US_Convert::TripleInfo& 
             triple.solution.solutionID   = a.value( "id"   ).toString().toInt();
             triple.solution.solutionGUID = a.value( "guid" ).toString();
             triple.solution.solutionDesc = a.value( "desc" ).toString();
-            triple.solution.readFromDisk( triple.solution.solutionGUID );
          }
 
       }

@@ -342,7 +342,13 @@ QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData,
          triple.solution.solutionID = db->value( 5 ).toInt();
 
          QStringList part      = triple.tripleFilename.split( "." );
-         triple.tripleDesc     = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
+         QString wl;
+         QString runType       = part[ 1 ];
+         if ( runType == "WA" )
+            wl = QString::number( part[ 4 ].toDouble() / 1000.0 );
+         else
+            wl = part[ 4 ];
+         triple.tripleDesc     = part[ 2 ] + " / " + part[ 3 ] + " / " + wl;
          triple.excluded       = false;
 
          triple.centerpiece    = commonCenterpiece;

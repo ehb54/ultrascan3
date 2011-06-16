@@ -272,9 +272,15 @@ int  US_Convert::readUS3Disk(
    {
       part.clear();
       part = files[ i ].split( "." );
+      QString wl;
+      if ( runType == "WA" )
+         wl = QString::number( part[ 4 ].toDouble() / 1000.0 );
+      else
+         wl = part[ 4 ];
 
       TripleInfo t;
-      t.tripleDesc = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
+
+      t.tripleDesc = part[ 2 ] + " / " + part[ 3 ] + " / " + wl;
       t.excluded   = false;
       triples << t;
    }
