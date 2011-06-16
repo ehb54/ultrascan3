@@ -748,15 +748,14 @@ void US_ProjectGuiGeneral::sel_investigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, *investigatorID );
 
    connect( inv_dialog,
-      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
-      SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
+      SIGNAL( investigator_accepted( int ) ),
+      SLOT  ( assign_investigator  ( int ) ) );
 
    inv_dialog->exec();
 }
 
 // Function to assign the selected investigator as current
-void US_ProjectGuiGeneral::assign_investigator( int invID,
-      const QString& /*lname*/, const QString& /*fname*/ )
+void US_ProjectGuiGeneral::assign_investigator( int invID )
 {
    *investigatorID = invID;
 

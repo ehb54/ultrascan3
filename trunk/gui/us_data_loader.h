@@ -104,7 +104,7 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       void list_data      ( void );
       void get_person     ( void );
       void update_disk_db(  bool );
-      void update_person  ( int, const QString&, const QString& );
+      void update_person  ( int  );
       void search         ( const QString& );
       void cancelled      ( void );
       void accepted       ( void );

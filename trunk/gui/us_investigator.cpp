@@ -412,12 +412,9 @@ void US_Investigator::close( void )
 
    // Send signal *after* updating settings.
    if ( signal_wanted )
-   {
-      emit investigator_accepted( le_invID->text().toInt(), 
-            le_lname->text(), le_fname->text() );
-   }
+      emit investigator_accepted( le_invID->text().toInt() );
 
-   accept();
+   US_WidgetsDialog::close();
 }
 
 void US_Investigator::reset( void )

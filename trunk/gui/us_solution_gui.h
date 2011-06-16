@@ -135,7 +135,7 @@ class US_GUI_EXTERN US_SolutionGui : public US_WidgetsDialog
       void accept             ( void );
       void cancel             ( void );
       void sel_investigator   ( void );
-      void assign_investigator( int, const QString&, const QString& );
+      void assign_investigator( int  );
       void load               ( void );
       void loadDisk           ( void );
       void loadDB             ( void );

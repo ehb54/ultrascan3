@@ -237,15 +237,14 @@ void US_ModelLoader::get_person()
    US_Investigator* dialog = new US_Investigator( true, invID );
 
    connect( dialog,
-      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
-      SLOT(   update_person(         int, const QString&, const QString& ) ) );
+      SIGNAL( investigator_accepted( int ) ),
+      SLOT(   update_person(         int ) ) );
 
    dialog->exec();
 }
 
 // Slot to handle accept in investigator dialog
-void US_ModelLoader::update_person( int ID, 
-      const QString& /*lname*/, const QString& /*fname*/)
+void US_ModelLoader::update_person( int ID )
 {
    QString number = ( ID > 0 ) ? QString::number( ID ) + ": " : "";
    le_investigator->setText( number + US_Settings::us_inv_name() );
