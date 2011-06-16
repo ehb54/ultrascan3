@@ -104,6 +104,11 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    connect( pb_close,  SIGNAL( clicked()    ),
             this,      SLOT(   close()      ) );
 
+   connect( ck_distrib,  SIGNAL( stateChanged( int) ),
+            this,        SLOT(   plot_data()        ) );
+   connect( ck_envelope, SIGNAL( stateChanged( int) ),
+            this,        SLOT(   plot_data()        ) );
+
    connect( lw_runids,   SIGNAL( currentRowChanged( int ) ),
             this,        SLOT(   runid_select(      int ) ) );
    connect( lw_triples,  SIGNAL( currentRowChanged( int ) ),
@@ -186,8 +191,8 @@ void US_vHW_Combine::load( void )
       DistrDesc ddesc;
       ddesc.runID   = runid;
       ddesc.triple  = tripl;
-
       QFile fi( fpath );
+
       if ( fi.open( QIODevice::ReadOnly | QIODevice::Text ) )
       {
          QTextStream ts( &fi );
@@ -206,11 +211,63 @@ int kk = ddesc.dsedcs.size()-1;
 DbgLv(1) << "Distro runid" << ddesc.runID << " triple" << ddesc.triple << kk;
 DbgLv(1) << "  0 sed frac" << ddesc.dsedcs[0] << ddesc.bfracs[0];
 DbgLv(1) << "  kk sed frac" << ddesc.dsedcs[kk] << ddesc.bfracs[kk];
+         fi.close();
          setSymbol( ddesc, distx );
+
+         fpath         = fpath.replace( ".distrib.", ".envelope." );
+         QFile fe( fpath );
+         fline         = ts.readLine().simplified();
+
+         if ( fe.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         {  // Read in  envelope data
+            QTextStream ts( &fe );
+            QString fline = ts.readLine().simplified();
+            int     fnz   = -1;
+            int     lnz   = 0;
+
+            while ( !ts.atEnd() )
+            {
+               fline = ts.readLine().simplified();
+               double sedc  = fline.section( " ", 0, 0 ).toDouble();
+               double freq  = fline.section( " ", 1, 1 ).toDouble();
+
+               if ( freq != 0.0 )
+               {
+                  lnz      = ddesc.esedcs.size();
+                  if ( fnz < 0 ) fnz = lnz;
+               }
+
+               ddesc.esedcs << sedc;
+               ddesc.efreqs << freq;
+            }
+
+            fe.close();
+            int nepts = ddesc.esedcs.size();
+            fnz       = qMax( ( fnz - 2 ), 0 );
+            lnz       = qMin( ( lnz + 2 ), nepts );
+            nepts     = 0;
+
+            for ( int jj = fnz; jj < lnz; jj++ )
+            {  // Reduce array to Y's from first to last non-zero
+               ddesc.esedcs[ nepts ] = ddesc.esedcs[ jj ];
+               ddesc.efreqs[ nepts ] = ddesc.efreqs[ jj ];
+               nepts++;
+            }
+
+            if ( nepts < ddesc.esedcs.size() )
+            {
+               ddesc.esedcs.resize( nepts );
+               ddesc.efreqs.resize( nepts );
+            }
+         }
+
+         else
+         {  // Calculate envelope data from distribution data
+            envel_data( ddesc );
+         }
 
          distros << ddesc;
          distIDs << runid + "." + tripl;
-         fi.close();
          distx++;
       }
    }
@@ -274,14 +331,11 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    bool dplot  = ck_distrib ->isChecked();
    bool eplot  = ck_envelope->isChecked();
    int  ndispt = ddesc.bfracs.size();
-   QVector< double > xvec( ndispt );
-   QVector< double > yvec( ndispt );
-   QVector< double > svec( ndispt );
-   QVector< double > bvec( ndispt );
-   double* xx  = xvec.data();
-   double* yy  = yvec.data();
-   double* xs  = svec.data();
-   double* yb  = bvec.data();
+   int  nenvpt = ddesc.efreqs.size();
+   double* xx  = ddesc.dsedcs.data();
+   double* yy  = ddesc.bfracs.data();
+   double* xs  = ddesc.esedcs.data();
+   double* yf  = ddesc.efreqs.data();
 
    QString dcID = "DPoint - " + distrID;
    QString lcID = "DLine - "  + distrID;
@@ -290,17 +344,10 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    QwtPlotCurve* lcurve;
    QwtPlotCurve* ecurve;
    QPen          dlpen( QPen( Qt::yellow ) );
-   //QPen          elpen( QPen( QBrush( ddesc.color ), 5.0 ) );
    QPen          elpen( QPen( QBrush( ddesc.color ), 3.0 ) );
 
    if ( dplot )
-   {  // Build data and then curves for distribution plot
-      for ( int ii = 0; ii < ndispt; ii++ )
-      {
-         xx[ ii ]   = ddesc.dsedcs[ ii ];
-         yy[ ii ]   = ddesc.bfracs[ ii ];
-      }
-
+   {  // Build curves for distribution plot
       dcurve        = us_curve( data_plot1, dcID );
       dcurve->setStyle ( QwtPlotCurve::NoCurve );
       dcurve->setSymbol( ddesc.symbol );
@@ -316,60 +363,16 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    }
 
    if ( eplot )
-   {  // Build data then curves for envelope plot
-      int   steps;
-      int   nSensit   = 50;
-      double min_cept = 1.0e+6;
-      double max_cept = 1.0e-6;
-      double sed_bin  = ddesc.dsedcs[ 0 ];
-      double div_scl  = (double)nSensit * (double)ndispt * 0.01;
-
-      for ( int ii = 0; ii < ndispt; ii++ )
-      {  // Get the min,max sedcoeff intercept values
-         min_cept     = qMin( min_cept, ddesc.dsedcs[ ii ] );
-         max_cept     = qMax( max_cept, ddesc.dsedcs[ ii ] );
-      }
-
-      sed_bin       = ( max_cept - min_cept ) / div_scl;
-      double mxstep = max_cept * 4.0 / 3.0;
-      steps         = (int)( mxstep / sed_bin );
-
-      if ( steps > ndispt )
-      {  // Insure we have enough room in our arrays
-         svec.resize( steps );
-         bvec.resize( steps );
-         xs = svec.data();
-         yb = bvec.data();
-      }
-
-      int kstep = 0;
-
-      for ( int ii = 0; ii < steps; ii++ )
-      {  // Accumulate sedcoeffs,bins for non-zero bin counts
-         double sedlo = sed_bin * (double)ii;
-         double sedhi = sedlo + sed_bin;
-         double sval  = ( sedlo + sedhi ) * 0.5;
-         int kbin   = 0;
-
-         for ( int jj = 0; jj < ndispt; jj++ )
-         {  // Count bins that fall into the current range
-            double sedc  = ddesc.dsedcs[ jj ];
-            if ( sedc >= sedlo  &&  sedc < sedhi )
-               kbin++;
-         }
-
-         if ( kbin < 1 )  continue;  // Skip zeroes
-
-         xs[ kstep ]  = sval;
-         yb[ kstep ]  = (double)kbin;
-//DbgLv(1) << "   kstep xs yb" << kstep << xs[kstep] << yb[kstep];
-         kstep++;
-      }
-
+   {  // Build curve for envelope plot
+int kk=ddesc.efreqs.size();
+DbgLv(2) << "   xs0 yf0" << xs[0] << yf[0];
+DbgLv(2) << "   xs1 yf1" << xs[1] << yf[1];
+DbgLv(2) << "   xsm yfm" << xs[kk-2] << yf[kk-2];
+DbgLv(2) << "   xsn yfn" << xs[kk-1] << yf[kk-1];
       ecurve        = us_curve( data_plot1, ecID );
       ecurve->setStyle ( QwtPlotCurve::Lines );
       ecurve->setPen   ( elpen );
-      ecurve->setData  ( xs, yb, kstep );
+      ecurve->setData  ( xs, yf, nenvpt );
       ecurve->setYAxis ( QwtPlot::yRight );
    }
 
@@ -414,7 +417,7 @@ DbgLv(1) << "RunIDSel:runID" << runID;
    {
       if ( distros[ ii ].runID == runID )
       {
-         lw_triples->addItem( distros[ ii ].triple );
+         lw_triples->addItem( expandedTriple( distros[ ii ].triple ) );
       }
    }
 }
@@ -425,7 +428,7 @@ void US_vHW_Combine::triple_select( int row )
 DbgLv(1) << "TripleSel:row" << row;
    if ( row < 0 )  return;
    QListWidgetItem* item = lw_triples->item( row );
-   triple   = item->text();
+   triple   = collapsedTriple( item->text() );
 DbgLv(1) << "TripleSel:triple" << triple;
 
    DistrDesc ddesc;
@@ -494,7 +497,8 @@ void US_vHW_Combine::possibleSymbols()
    symbols << (int)( QwtSymbol::Triangle  );
    symbols << (int)( QwtSymbol::Diamond   );
    symbols << (int)( QwtSymbol::LTriangle );
-   symbols << (int)( QwtSymbol::Cross     );
+   symbols << (int)( QwtSymbol::Hexagon   );
+   symbols << (int)( QwtSymbol::Star2     );
    symbols << (int)( QwtSymbol::DTriangle );
 
    colors  << QColor( 255,   0,   0 );
@@ -518,5 +522,151 @@ void US_vHW_Combine::possibleSymbols()
    colors  << QColor( 255,  80,  40 );
    colors  << QColor(  40, 255,  40 );
    colors  << QColor(  40,  40, 255 );
+}
+
+// Return an expanded version ("1 / A / 260") of a triple string ("1A260")
+QString US_vHW_Combine::expandedTriple( QString ctriple )
+{
+   QString etriple = ctriple;
+
+   if ( ! etriple.contains( " / " ) )
+      etriple = etriple.left( 1 ) + " / " +
+                etriple.mid( 1, 1 ) + " / " +
+                etriple.mid( 2 );
+
+   return etriple;
+}
+
+// Return a collapsed version ("1A260") of a triple string ("1 / A / 260")
+QString US_vHW_Combine::collapsedTriple( QString etriple )
+{
+   QString ctriple = etriple;
+
+   if ( ctriple.contains( " / " ) )
+      ctriple = ctriple.replace( " / ", "" ).simplified();
+
+   return ctriple;
+}
+
+// Generate envelope data
+int US_vHW_Combine::envel_data( DistrDesc& ddesc )
+{
+   int     nSensit  = 50;
+   int     nSmooth  = 30;
+   int     steps;
+   int     nepts    = 300;
+   int     ndpts    = ddesc.dsedcs.size();
+   double  max_cept = 1.0e-6;
+   double  min_cept = 1.0e+6;
+   double  sed_bin  = ddesc.dsedcs.at( 0 );
+   double  his_sum  = 0.0;
+   double  env_sum  = 0.0;
+   double  div_scl  = (double)nSensit * (double)ndpts * 0.01;
+   double  max_step;
+   double  sigma;
+   double  sed_lo;
+   double  sed_hi;
+   double  sedc;
+
+   for ( int jj = 0; jj < ndpts; jj++ )
+   {  // get min,max intercept sedimentation coefficients
+      max_cept   = max( max_cept, ddesc.dsedcs.at( jj ) );
+      min_cept   = min( min_cept, ddesc.dsedcs.at( jj ) );
+   }
+
+   // calculate values based on range and sensitivity
+   sed_bin      = ( max_cept - min_cept ) / div_scl;
+   max_step     = max_cept * 4.0 / 3.0;
+   steps        = (int)( max_step / sed_bin );
+
+   if ( nepts <= steps )
+   {  // insure envelope array size bigger than histogram array size
+      nepts        = steps + 1;
+   }
+
+   ddesc.esedcs.fill( 0.0, nepts );
+   ddesc.efreqs.fill( 0.0, nepts );
+   double  bink   = 0.0;
+   double  sval   = 0.0;
+   double  pisqr  = sqrt( M_PI * 2.0 );
+   double* xval   = ddesc.esedcs.data();
+   double* yval   = ddesc.efreqs.data();
+   double  scale  = max_step / (double)nepts;
+
+   for ( int jj = 0; jj < nepts; jj++ )
+   {  // initialize envelope values
+      xval[ jj ]   = scale * (double)jj;
+      yval[ jj ]   = 0.0;
+   }
+
+   sigma        = sed_bin * 0.02 * (double)nSmooth;
+
+   for ( int jj = 0; jj < steps; jj++ )
+   {  // calculate histogram values and envelope values based on them
+      int kbin     = 0;
+      sed_lo       = sed_bin * (double)jj;
+      sed_hi       = sed_lo + sed_bin;
+      sval         = ( sed_lo + sed_hi ) * 0.5;
+
+      for ( int kk = 0; kk < ndpts; kk++ )
+      {  // count sedcoeffs within current step range
+         sedc         = ddesc.dsedcs.at( kk );
+
+         if ( sedc >= sed_lo  &&  sedc < sed_hi )
+            kbin++;
+      }
+
+      bink         = (double)kbin;
+      his_sum     += ( bink * sed_bin );  // bump histogram sum
+
+      if ( kbin > 0 )
+      {  // if non-empty bin, update envelope Y values
+         for ( int kk = 0; kk < nepts; kk++ )
+         {
+            double xdif  = ( xval[ kk ] - sval ) / sigma;
+            yval[ kk ]  += ( ( bink / ( sigma * pisqr ) )
+               * exp( -( xdif * xdif ) / 2.0 ) );
+         }
+      }
+   }
+
+   for ( int kk = 0; kk < nepts; kk++ )
+   {  // accumulate the envelope values sum
+      env_sum     += yval[ kk ];
+   }
+
+   env_sum     *= xval[ 1 ];            // sum times X increment
+   scale        = his_sum / env_sum;    // normalizing scale factor
+DbgLv(2) << "ED: hsum esum scale " << his_sum << env_sum << scale;
+
+   int fnz      = -1;
+   int lnz      = 0;
+
+   for ( int kk = 0; kk < nepts; kk++ )
+   {  // normalize Y values
+      yval[ kk ]  *= scale;
+
+      if ( yval[ kk ] != 0.0 )
+      {
+         if ( fnz < 0 )  fnz = kk;
+         lnz = kk;
+      }
+   }
+
+   fnz    = qMax( ( fnz - 2 ), 0 );
+   lnz    = qMin( ( lnz + 2 ), nepts );
+   nepts  = 0;
+
+   for ( int ii = fnz; ii < lnz; ii++ )
+   {  // Reduce array to Y's from first to last non-zero
+      xval[ nepts ] = xval[ ii ];
+      yval[ nepts ] = yval[ ii ];
+      nepts++;
+   }
+
+   ddesc.esedcs.resize( nepts );
+   ddesc.efreqs.resize( nepts );
+
+   return nepts;                        // return arrays' size
 }
 

@@ -91,8 +91,8 @@ US_DistribPlot::US_DistribPlot( const QList< double >& divfracs,
             this,           SLOT  ( type_plot()  ) );
    connect( pb_help,        SIGNAL( clicked()    ),
             this,           SLOT  ( help()       ) );
-   connect( pb_close,       SIGNAL( clicked()    ),
-            this,           SLOT  ( close()      ) );
+   connect( pb_close,       SIGNAL( clicked()        ),
+            this,           SLOT  ( save_and_close() ) );
    connect( pb_histogram,   SIGNAL( clicked()    ),
             this,           SLOT  ( hide_histo() ) );
    connect( pb_envelope,    SIGNAL( clicked()    ),
@@ -101,7 +101,6 @@ US_DistribPlot::US_DistribPlot( const QList< double >& divfracs,
             this,           SLOT  ( change_sensit( double ) ) );
    connect( ct_smoothing,   SIGNAL( valueChanged(  double ) ),
             this,           SLOT  ( change_smooth( double ) ) );
-
 }
 
 // Generate distribution,histogram plots and save the SVG files
@@ -111,6 +110,7 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
    QSvgGenerator generator2;
 
    // Set up, generate distribution plot and save it to a file
+   data_plot->detachItems();
    QwtPlotGrid* grid = us_grid( data_plot );
    grid->enableXMin( true );
    grid->enableYMin( true );
@@ -138,6 +138,14 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
    generator2.setSize( data_plot->size() );
    generator2.setFileName( plot2File );
    data_plot->print( generator2 );
+
+   // Also save the envelope data with present parameters
+   QString dat2File = US_Settings::resultDir() + "/"
+      + plot1File.section( "/", -2, -2 ) + "/"
+      + plot1File.section( "/", -1, -1 ).section( ".", 0, 1 )
+      + ".envelope.dat";
+
+   save_data_file( dat2File );
 }
 
 // clear plot and execute appropriate new plot
@@ -318,8 +326,8 @@ void US_DistribPlot::plot_distrib( void )
 // plot histogram
 void US_DistribPlot::plot_histogram( void )
 {
-   double* xx;
-   double* yy;
+   QVector< double > xvec;
+   QVector< double > yvec;
    double  maxx;
    double  maxy;
    int     npoints;
@@ -333,7 +341,9 @@ void US_DistribPlot::plot_histogram( void )
       tr( "Sedimentation Coefficient" ) );
  
    // Calculate histogram data
-   npoints  = histo_data( &xx, &yy );
+   npoints  = histo_data( xvec, yvec );
+   double* xx = xvec.data();
+   double* yy = yvec.data();
    maxx     = xx[ 0 ];
    maxy     = yy[ 0 ];
 
@@ -359,15 +369,16 @@ for(int jj=0;jj<npoints;jj++) DbgLv(2) << jj << xx[jj] << yy[jj];
 
 
    if ( plotType == HISTO  ||  plotType == NONE )
+   {
       data_plot->replot();
-
-   delete [] xx;
-   delete [] yy;
+   }
 }
 
 // plot envelope
 void US_DistribPlot::plot_envelope( void )
 {
+   QVector< double > xvec;
+   QVector< double > yvec;
    double* xx;
    double* yy;
    double  maxx;
@@ -384,7 +395,9 @@ void US_DistribPlot::plot_envelope( void )
          tr( "Sedimentation Coefficient" ) );
 
       // calculate histogram data in order to use its maximum Y
-      npoints  = histo_data( &xx, &yy );
+      npoints  = histo_data( xvec, yvec );
+      xx       = xvec.data();
+      yy       = yvec.data();
       maxx     = xx[ 0 ];
       maxy     = yy[ 0 ];
 
@@ -398,13 +411,12 @@ void US_DistribPlot::plot_envelope( void )
       maxy     = (double)( (int)( maxy / 2.0 ) + 1 ) * 2.0;
       data_plot->setAxisScale( QwtPlot::yLeft,   0.0,  maxy,  5.0 );
       data_plot->setAxisScale( QwtPlot::xBottom, 0.0,  maxx,  1.0 );
-
-      delete [] xx;       // free up work arrays for re-use below
-      delete [] yy;
    }
 
    // Calculate envelope data
-   npoints  = envel_data( &xx, &yy );
+   npoints  = envel_data( xvec, yvec );
+   xx       = xvec.data();
+   yy       = yvec.data();
 
    // Draw a cyan line through points
    ecurve  = us_curve( data_plot, tr( "Envelope Line" ) );
@@ -412,9 +424,6 @@ void US_DistribPlot::plot_envelope( void )
    ecurve->setData( xx, yy, npoints );
 
    data_plot->replot();
-
-   delete [] xx;
-   delete [] yy;
 }
 
 // plot combined histogram and envelope
@@ -425,7 +434,8 @@ void US_DistribPlot::plot_combined( void )
 }
 
 // generate histogram data
-int US_DistribPlot::histo_data( double** xxP, double** yyP )
+int US_DistribPlot::histo_data( QVector< double >& xvec,
+                                QVector< double >& yvec )
 {
    int     steps;
    double  max_cept = 1.0e-6;
@@ -448,8 +458,10 @@ int US_DistribPlot::histo_data( double** xxP, double** yyP )
    max_step     = max_cept * 4.0 / 3.0;
    steps        = (int)( max_step / sed_bin );
 
-   double* bink = new double[ steps ];           // bin count array
-   double* sval = new double[ steps ];           // sedcoeff array
+   xvec.fill( 0.0, steps );
+   yvec.fill( 0.0, steps );
+   double* sval = xvec.data();                   // sedcoeff array
+   double* bink = yvec.data();                   // bin count array
 
    for ( int jj = 0; jj < steps; jj++ )
    {  // accumulate histogram values
@@ -469,23 +481,12 @@ int US_DistribPlot::histo_data( double** xxP, double** yyP )
       bink[ jj ]   = (double)kbin;             // current bin count
    }
 
-   *xxP         = new double[ steps ];         // allocate return arrays
-   *yyP         = new double[ steps ];
-
-   for ( int jj = 0; jj < steps; jj++ )
-   {  // copy internal arrays to ones returned
-      (*xxP)[ jj ] = sval[ jj ];
-      (*yyP)[ jj ] = bink[ jj ];
-   }
-
-   delete [] bink;                             // clean up
-   delete [] sval;
-
    return steps;                               // return arrays' size
 }
 
-// generate envelope data
-int US_DistribPlot::envel_data( double** xxP, double** yyP )
+// Generate envelope data
+int US_DistribPlot::envel_data( QVector< double >& xvec,
+                                QVector< double >& yvec )
 {
    int     steps;
    int     array    = 300;
@@ -517,11 +518,13 @@ int US_DistribPlot::envel_data( double** xxP, double** yyP )
       array        = steps + 1;
    }
 
+   xvec.fill( 0.0, array );
+   yvec.fill( 0.0, array );
    double  bink   = 0.0;
    double  sval   = 0.0;
    double  pisqr  = sqrt( M_PI * 2.0 );
-   double* xval   = new double[ array ];
-   double* yval   = new double[ array ];
+   double* xval   = xvec.data();
+   double* yval   = yvec.data();
    double  scale  = max_step / (double)array;
 
    for ( int jj = 0; jj < array; jj++ )
@@ -575,19 +578,59 @@ DbgLv(2) << "ED: hsum esum scale " << his_sum << env_sum << scale;
       yval[ kk ]  *= scale;
    }
 
-   *xxP         = new double[ array ];  // allocate X,Y arrays
-   *yyP         = new double[ array ];
-
-   for ( int jj = 0; jj < array; jj++ )
-   {  // copy internal arrays to the returned ones
-      (*xxP)[ jj ] = xval[ jj ];
-      (*yyP)[ jj ] = yval[ jj ];
-   }
-
-   delete [] xval;                      // clean up
-   delete [] yval;
-
    return array;                        // return arrays' size
 }
 
+// Save plots and data to temporary files and close
+void US_DistribPlot::save_and_close()
+{
+   QString basename   = US_Settings::tmpDir() + "/vHW.temp.";
+   QString tplot1File = basename + "s-c-distrib.svg";
+   QString tplot2File = basename + "s-c-histo.svg";
+   QString tdata2File = basename + "envelope.dat";
+
+   save_plots(     tplot1File, tplot2File );
+   save_data_file( tdata2File );
+
+   close();
+}
+
+// Save envelope data file
+void US_DistribPlot::save_data_file( QString data2File )
+{
+   QVector< double > hseds;
+   QVector< double > hfrqs;
+   QVector< double > eseds;
+   QVector< double > efrqs;
+
+   int nhpts  = histo_data( hseds, hfrqs );
+   int nepts  = envel_data( eseds, efrqs );
+DbgLv(1) << "SaveDat: file" << data2File << "nhpts nepts" << nhpts << nepts;
+
+   QFile datf( data2File );
+
+   if ( ! datf.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
+      return;
+
+   QTextStream ts( &datf );
+
+   ts << tr( "S-value(Envelope):    "
+             "Frequency:    "
+             "S-value(Histogram):   "
+             "Frequency:\n" );
+
+   for ( int ii = 0; ii < nepts; ii++ )
+   {
+      if ( ii < nhpts )
+         ts << QString().sprintf( "%.6f    %.6f    %.6f  %9.2f\n",
+               eseds[ ii ], efrqs[ ii ], hseds[ ii ], hfrqs[ ii ] );
+
+      else
+         ts << QString().sprintf( "%.6f    %.6f\n",
+               eseds[ ii ], efrqs[ ii ] );
+   }
+DbgLv(1) << "SaveDat:   file written";
+
+   datf.close();
+}
 

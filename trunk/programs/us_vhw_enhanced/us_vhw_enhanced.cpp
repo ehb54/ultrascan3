@@ -158,8 +158,11 @@ void US_vHW_Enhanced::load( void )
 
    pb_selegr->setEnabled( true );
    pb_dstrpl->setEnabled( true );
+   haveZone    = false;
 
-   haveZone   = false;
+   saved.clear();
+   for ( int ii = 0; ii < triples.size(); ii++ )
+      saved << false;
 
    update( 0 );
 }
@@ -184,6 +187,8 @@ void US_vHW_Enhanced::distr_plot(  void )
    dialog->move( this->pos() + QPoint( 100, 100 ) );
    dialog->exec();
    delete dialog;
+   row        = lw_triples->currentRow();
+   saved.replace( row, true );
 }
 
 // data plot
@@ -912,6 +917,8 @@ void US_vHW_Enhanced::save_data( void )
    write_dis();
    files << basernam + "extrap.dat";
    files << basernam + "distrib.dat";
+   QString data2File = basernam + "envelope.dat";
+   files << data2File;
 
    if ( groupdat.size() > 0 )
    {
@@ -954,9 +961,18 @@ void US_vHW_Enhanced::save_data( void )
       bfracs.append( bfrac );
    }
 
-   US_DistribPlot* dialog = new US_DistribPlot( bfracs, dseds );
-   dialog->save_plots( plot3File, plot4File );
-   delete dialog;
+   if ( saved[ row ] == false )
+   {  // If no plot dialog was opened for this triple, get files now
+      US_DistribPlot* dialog = new US_DistribPlot( bfracs, dseds );
+      dialog->save_plots( plot3File, plot4File );
+
+      delete dialog;
+   }
+
+   else
+   {  // Otherwise, copy the temporary files created earlier
+      copy_data_files( plot3File, plot4File, data2File );
+   }
 
    files << " ";
    files << htmlFile;
@@ -1843,5 +1859,28 @@ DbgLv(1) << "sedco-intcp   slope sigma" << slope << sigma;
    sedc  *= 1.0e-13;
 
    return sedc;
+}
+
+// Copy temporary files saved by plot dialog to report/results
+void US_vHW_Enhanced::copy_data_files( QString plot1File,
+      QString plot2File, QString data2File )
+{
+   QString tempbase   = US_Settings::tmpDir() + "/vHW.temp.";
+   QString tplot1File = tempbase + "s-c-distrib.svg";
+   QString tplot2File = tempbase + "s-c-histo.svg";
+   QString tdata2File = tempbase + "envelope.dat";
+
+   QFile tfp1( tplot1File );
+   QFile tfp2( tplot2File );
+   QFile tfd2( tdata2File );
+
+   if ( tfp1.exists() )
+      tfp1.copy( plot1File );
+
+   if ( tfp2.exists() )
+      tfp2.copy( plot2File );
+
+   if ( tfd2.exists() )
+      tfd2.copy( data2File );
 }
 
