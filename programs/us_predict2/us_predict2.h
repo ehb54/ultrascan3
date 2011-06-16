@@ -21,6 +21,7 @@ class US_Predict2 : public US_Widgets
       enum { None, MW_SEDIMENTATION, MW_DIFFUSION, SED_DIFF } model;
       enum { PROLATE, OBLATE, ROD };
 
+      int        analyte_number;
       double     sed_coeff;
       double     mw;
       double     diff_coeff;
@@ -67,24 +68,25 @@ class US_Predict2 : public US_Widgets
       double root       ( int   , double );
 
 	public slots:
+      void update         ( void );
+		void do_mw_s        ( void );
+		void do_mw_d        ( void );
+		void do_s_d         ( void );
+      void update_param1  ( const QString& );
+      void update_param2  ( const QString& );
+      void density        ( const QString& );
+      void viscosity      ( const QString& );
+      void vbar           ( const QString& );
+      void degC           ( const QString& );
+      void get_buffer     ( void );
+      void get_solution   ( void );
+      void get_peptide    ( void );
+      void update_buffer  ( double, double );
+      void update_vbar    ( US_Analyte );
+      void update_solution( US_Solution );
+      void choose         ( int );
 
-      void update       ( void );
-		void do_mw_s      ( void );
-		void do_mw_d      ( void );
-		void do_s_d       ( void );
-      void update_param1( const QString& );
-      void update_param2( const QString& );
-      void density      ( const QString& );
-      void viscosity    ( const QString& );
-      void vbar         ( const QString& );
-      void degC         ( const QString& );
-      void get_buffer   ( void );
-      void get_solution ( void );
-      void get_peptide  ( void );
-      void update_buffer( double, double );
-      void update_vbar  ( US_Analyte );
-
-		void help         ( void )
+		void help           ( void )
       { showHelp.show_help("manual/predict2.html"); };
 };
 #endif
