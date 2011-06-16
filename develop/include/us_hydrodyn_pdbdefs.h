@@ -189,6 +189,7 @@ struct saxs_options
    unsigned int crysol_fibonacci_grid_order;
 
    bool     crysol_default_load_difference_intensity;
+   bool     crysol_version_26;
 };
 
 struct hybridization

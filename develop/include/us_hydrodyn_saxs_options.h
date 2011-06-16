@@ -54,6 +54,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QwtCounter *cnt_crysol_fibonacci_grid_order;
 
       QCheckBox  *cb_crysol_default_load_difference_intensity;
+      QCheckBox  *cb_crysol_version_26;
 
       QLabel     *lbl_sans_options;
       QLabel     *lbl_h_scat_len;
@@ -134,6 +135,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void update_crysol_max_harmonics(double);
       void update_crysol_fibonacci_grid_order(double);
       void set_crysol_default_load_difference_intensity();
+      void set_crysol_version_26();
 
       void update_h_scat_len(double);
       void update_d_scat_len(double);

@@ -232,7 +232,8 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    QString use_pdb = pdb;
    
    // copy pdb if the name is too long
-   if ( QFileInfo(crysol_last_pdb).fileName() != QFileInfo(crysol_last_pdb_base).fileName() )
+   if ( our_saxs_options->crysol_version_26 ||
+        QFileInfo(crysol_last_pdb).fileName() != QFileInfo(crysol_last_pdb_base).fileName() )
    {
       QFile f( pdb );
       if ( !f.open( IO_ReadOnly ) )
@@ -289,7 +290,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    crysol = new QProcess( this );
    crysol->setWorkingDirectory( dir );
    crysol->addArgument( prog );
-   crysol->addArgument( use_pdb );
+   crysol->addArgument( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb );
 
    crysol->addArgument( "/sm" );
    crysol->addArgument( QString("%1").arg( our_saxs_options->end_q ) );

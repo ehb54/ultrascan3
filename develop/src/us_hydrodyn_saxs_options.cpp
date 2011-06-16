@@ -129,6 +129,13 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_crysol_default_load_difference_intensity->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_crysol_default_load_difference_intensity, SIGNAL(clicked()), this, SLOT(set_crysol_default_load_difference_intensity()));
 
+   cb_crysol_version_26 = new QCheckBox(this);
+   cb_crysol_version_26->setText(tr("Crysol: support version 2.6"));
+   cb_crysol_version_26->setEnabled(true);
+   cb_crysol_version_26->setChecked((*saxs_options).crysol_version_26);
+   cb_crysol_version_26->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_crysol_version_26->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_crysol_version_26, SIGNAL(clicked()), this, SLOT(set_crysol_version_26()));
 
    lbl_sans_options = new QLabel(tr("SANS Options:"), this);
    Q_CHECK_PTR(lbl_sans_options);
@@ -609,6 +616,9 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addMultiCellWidget(cb_crysol_default_load_difference_intensity, j, j, 0, 1);
    j++;
 
+   background->addMultiCellWidget(cb_crysol_version_26, j, j, 0, 1);
+   j++;
+
    background->addMultiCellWidget(lbl_sans_options, j, j, 0, 1);
    j++;
    background->addWidget(lbl_h_scat_len, j, 0);
@@ -788,19 +798,25 @@ void US_Hydrodyn_SaxsOptions::set_saxs_iq_foxs()
 
 void US_Hydrodyn_SaxsOptions::update_crysol_max_harmonics(double val)
 {
-   (*saxs_options).crysol_max_harmonics = (float) val;
+   (*saxs_options).crysol_max_harmonics = (unsigned int) val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SaxsOptions::update_crysol_fibonacci_grid_order(double val)
 {
-   (*saxs_options).crysol_fibonacci_grid_order = (float) val;
+   (*saxs_options).crysol_fibonacci_grid_order = (unsigned int) val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SaxsOptions::set_crysol_default_load_difference_intensity()
 {
    (*saxs_options).crysol_default_load_difference_intensity = cb_crysol_default_load_difference_intensity->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::set_crysol_version_26()
+{
+   (*saxs_options).crysol_version_26 = cb_crysol_version_26->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

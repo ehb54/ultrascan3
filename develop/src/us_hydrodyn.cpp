@@ -232,6 +232,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_options.crysol_max_harmonics = 15;
    saxs_options.crysol_fibonacci_grid_order = 17;
    saxs_options.crysol_default_load_difference_intensity = true;
+   saxs_options.crysol_version_26 = false;
 
    // this should be stored in the residue file, hardcoded for now
 
