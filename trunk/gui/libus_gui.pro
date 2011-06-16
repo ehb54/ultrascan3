@@ -21,6 +21,7 @@ HEADERS      = \
                us_analyte_gui.h         \
                us_associations_gui.h    \
                us_buffer_gui.h          \
+               us_choice.h              \
                us_colorgradIO.h         \
                us_data_loader.h         \
                us_editor.h              \
@@ -55,6 +56,7 @@ SOURCES      = \
                us_analyte_gui.cpp         \
                us_associations_gui.cpp    \
                us_buffer_gui.cpp          \
+               us_choice.cpp              \
                us_colorgradIO.cpp         \
                us_data_loader.cpp         \
                us_editor.cpp              \

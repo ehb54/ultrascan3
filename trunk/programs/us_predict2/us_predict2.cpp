@@ -7,10 +7,11 @@
 #include "us_analyte_gui.h"
 #include "us_constants.h"
 #include "us_solution_gui.h"
+#include "us_choice.h"
 
 US_Predict2::US_Predict2() : US_Widgets()
 {
-   model = None;
+   model = SED_DIFF;
 
    temperature = NORMAL_TEMP;
    d.density   = DENS_20W;
@@ -20,7 +21,6 @@ US_Predict2::US_Predict2() : US_Widgets()
 
    US_Math2::data_correction( temperature, d );
    
-
    setWindowTitle( tr( "Predict f and axial ratios for 4 basic shapes" ) );
    setPalette( US_GuiSettings::frameColor() );
 
@@ -42,7 +42,7 @@ US_Predict2::US_Predict2() : US_Widgets()
    controls->addWidget( pb_density, c_row, 0 );
 
    le_density = us_lineedit();
-   le_density->setText( QString::number( DENS_20W ) );
+   le_density->setText( QString::number( DENS_20W, 'f', 4 ) );
    connect( le_density, SIGNAL( textChanged( const QString& ) ),
                         SLOT  ( density    ( const QString& ) ) );
    controls->addWidget( le_density, c_row++, 1 );
@@ -52,7 +52,7 @@ US_Predict2::US_Predict2() : US_Widgets()
    controls->addWidget( pb_viscosity, c_row, 0 );
 
    le_viscosity = us_lineedit();
-   le_viscosity->setText( QString::number( VISC_20W ) );
+   le_viscosity->setText( QString::number( VISC_20W , 'f', 4 ) );
    connect( le_viscosity, SIGNAL( textChanged( const QString& ) ), 
                           SLOT  ( viscosity  ( const QString& ) ) );
    controls->addWidget( le_viscosity, c_row++, 1 );
@@ -62,7 +62,7 @@ US_Predict2::US_Predict2() : US_Widgets()
    controls->addWidget( pb_vbar, c_row, 0 );
 
    le_vbar = us_lineedit();
-   le_vbar->setText( QString::number( TYPICAL_VBAR ) );
+   le_vbar->setText( QString::number( TYPICAL_VBAR, 'f', 4 ) );
    connect( le_vbar, SIGNAL( textChanged( const QString& ) ), 
                      SLOT  ( vbar       ( const QString& ) ) );
    controls->addWidget( le_vbar, c_row++, 1 );
@@ -84,7 +84,6 @@ US_Predict2::US_Predict2() : US_Widgets()
    controls->addWidget( lb_param1, c_row, 0 );
 
    le_param1 = us_lineedit();
-   le_param1->setText( "0.000" );
    connect( le_param1, SIGNAL( textChanged  ( const QString& ) ), 
                        SLOT  ( update_param1( const QString& ) ) );
    controls->addWidget( le_param1, c_row++, 1 );
@@ -93,7 +92,6 @@ US_Predict2::US_Predict2() : US_Widgets()
    controls->addWidget( lb_param2, c_row, 0 );
 
    le_param2 = us_lineedit();
-   le_param2->setText( "0.000" );
    connect( le_param2, SIGNAL( textChanged  ( const QString& ) ), 
                        SLOT  ( update_param2( const QString& ) ) );
    controls->addWidget( le_param2, c_row++, 1 );
@@ -247,8 +245,8 @@ US_Predict2::US_Predict2() : US_Widgets()
 void US_Predict2::do_mw_s()
 {
    model = MW_SEDIMENTATION;
-   le_param1->setText( "0.000");
-   le_param2->setText( "0.000");
+   le_param1->clear();
+   le_param2->clear();
    
    sed_coeff = 0.0;
    mw        = 0.0;
@@ -268,8 +266,8 @@ void US_Predict2::do_mw_s()
 void US_Predict2::do_mw_d()
 {
    model = MW_DIFFUSION;
-   le_param1->setText( "0.000" );
-   le_param2->setText( "0.000" );
+   le_param1->clear();
+   le_param2->clear();
    
    diff_coeff = 0.0;
    mw         = 0.0;
@@ -289,8 +287,8 @@ void US_Predict2::do_mw_d()
 void US_Predict2::do_s_d()
 {
    model = SED_DIFF;
-   le_param1->setText( "0.000" );
-   le_param2->setText( "0.000" );
+   le_param1->clear();
+   le_param2->clear();
    
    sed_coeff  = 0.0;
    diff_coeff = 0.0;
@@ -322,6 +320,7 @@ void US_Predict2::update( void )
    sc.f           = 0.0;
    sc.f_f0        = 0.0;
 
+   /*
    if ( model == None )
    {
       QMessageBox::information( this,
@@ -329,22 +328,23 @@ void US_Predict2::update( void )
             tr( "You have to define a parameter combination first!" ) );
       return;
    }
+   */
 
    if ( model == MW_SEDIMENTATION )
    {
       if ( mw == 0.0 )
       {
-         QMessageBox::information( this,
-               tr( "Please Note:" ), 
-               tr( "Please define the Molecular Weight first!" ) );
+      //   QMessageBox::information( this,
+      //         tr( "Please Note:" ), 
+      //         tr( "Please define the Molecular Weight first!" ) );
          return;
       }
 
       if ( sed_coeff == 0.0 )
       {
-         QMessageBox::information( this,
-               tr( "Please Note:" ), 
-               tr( "Please define a Sedimentation Coefficient first!" ) );
+         //QMessageBox::information( this,
+         //      tr( "Please Note:" ), 
+         //      tr( "Please define a Sedimentation Coefficient first!" ) );
          return;
       }
 
@@ -363,17 +363,17 @@ void US_Predict2::update( void )
    {
       if ( mw == 0 )
       {
-         QMessageBox::information( this,
-               tr( "Please Note:" ), 
-               tr( "Please define the Molecular Weight first!" ) );
+         //QMessageBox::information( this,
+         //      tr( "Please Note:" ), 
+         //      tr( "Please define the Molecular Weight first!" ) );
          return;
       }
 
       if ( diff_coeff == 0 )
       {
-         QMessageBox::information( this,
-               tr( "Please Note:" ), 
-               tr( "Please define a Diffusion Coefficient first!" ) );
+         //QMessageBox::information( this,
+         //      tr( "Please Note:" ), 
+         //      tr( "Please define a Diffusion Coefficient first!" ) );
          return;
       }
 
@@ -392,17 +392,17 @@ void US_Predict2::update( void )
    {
       if ( sed_coeff == 0 )
       {
-         QMessageBox::information( this,
-               tr( "Please Note:" ), 
-               tr( "Please define the Sedimentation Coefficient first!" ) );
+         //QMessageBox::information( this,
+         //      tr( "Please Note:" ), 
+         //      tr( "Please define the Sedimentation Coefficient first!" ) );
          return;
       }
 
       if ( diff_coeff == 0 )
       {
-         QMessageBox::information( this,
-               tr( "Please Note:" ), 
-               tr( "Please define a Diffusion Coefficient first!" ) );
+         //QMessageBox::information( this,
+         //      tr( "Please Note:" ), 
+         //      tr( "Please define a Diffusion Coefficient first!" ) );
          return;
       }
 
@@ -483,12 +483,14 @@ bool US_Predict2::check_valid( double f_f0 )
             tr( "This model is physically impossible!\n"
                 "The f/f0 ratio (%1) is less than 1." ).arg( f_f0 ) );
       
+      /*
       sed_coeff  = 0.0;
       diff_coeff = 0.0;
       mw         = 0.0;
       
-      le_param1->setText( "0.000" );
-      le_param2->setText( "0.000" );
+      le_param1->clear();
+      le_param2->clear();
+      */
       
       return false;
    }
@@ -708,6 +710,7 @@ void US_Predict2::update_vbar( US_Analyte analyte )
 
 void US_Predict2::get_solution( void )
 {
+   /*
    if ( model == None  ||  le_param1->text().toDouble() == 0.0  
                        ||  le_param2->text().toDouble() == 0.0 )
    {
@@ -717,13 +720,61 @@ void US_Predict2::get_solution( void )
                 "those parameters first.") );
       return;
    }
+   */
 
-   US_SolutionGui* dialog = new US_SolutionGui( true );
-   //connect( dialog, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
-   //                 SLOT  ( update_solution           ( US_Solution ) );
+   US_SolutionGui* dialog = new US_SolutionGui( 1, 1, true );
+   connect( dialog, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
+                    SLOT  ( update_solution           ( US_Solution ) ) );
    dialog->setWindowTitle( tr( "VBar Calculation" ) );
    dialog->exec();
 }
 
+void US_Predict2::update_solution( US_Solution solution )
+{
+   d.density   = solution.buffer.density;
+   d.viscosity = solution.buffer.viscosity;
 
+   le_density  ->setText( QString::number( d.density,   'f', 4 ) );
+   le_viscosity->setText( QString::number( d.viscosity, 'f', 4 ) );
 
+   US_Analyte analyte;
+   
+   if ( solution.analyteInfo.size() == 0 )
+   {
+      QMessageBox::warning( this, 
+            tr( "No Analyte" ),
+            tr( "There is no analyte in the solution" ) );
+      return;
+   }
+   else if ( solution.analyteInfo.size() == 1 )
+   {
+     analyte = solution.analyteInfo[ 0 ].analyte;
+     d.vbar= analyte.vbar20;;
+     le_vbar->setText( QString::number( d.vbar, 'f', 4 ) );
+   }
+   else
+   {
+     US_Choice* dialog = new US_Choice( solution );
+     connect( dialog, SIGNAL( choice( int ) ),
+                      SLOT  ( choose( int ) ) );
+     dialog->exec();
+     qApp->processEvents();
+
+     analyte = solution.analyteInfo[ analyte_number ].analyte;
+     d.vbar= analyte.vbar20;;
+     le_vbar->setText( QString::number( d.vbar, 'f', 4 ) );
+   }
+
+   if ( model == MW_DIFFUSION  ||  model == MW_SEDIMENTATION )
+   {
+      le_param1->setText( QString::number( analyte.mw, 'e', 4 ) ); 
+   }
+   
+   US_Math2::data_correction( temperature, d );
+   update();
+}
+
+void US_Predict2::choose( int value )
+{
+   analyte_number = value;
+}

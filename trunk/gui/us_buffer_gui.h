@@ -39,7 +39,7 @@ class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog
       //! value of -1 indicates the data was manually input or was
       //! returned from the local disk.
       //! \param bufferID A string value of the returned ID
-      void valueBufferID( const QString& bufferID );
+      void valueBufferID( const QString bufferID );
 
       //! A signal to indicate that the current disk/db selection has changed. 
       //! /param DB True if DB is the new selection
