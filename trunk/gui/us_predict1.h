@@ -12,6 +12,7 @@
 #include "us_analyte_gui.h"
 #include "us_analyte.h"
 #include "us_hydrosim.h"
+#include "us_solution.h"
 
 
 //! A class to present a graph of frictional ratio as a function of
@@ -54,6 +55,7 @@ class US_GUI_EXTERN US_Predict1 : public US_WidgetsDialog
       US_Hydrosim&            allparams;
       US_Analyte              base_analyte;
       int                     access;
+      int                     analyte_number;
       bool                    signal;
 
       US_Math2::SolutionData  solution;
@@ -98,27 +100,30 @@ class US_GUI_EXTERN US_Predict1 : public US_WidgetsDialog
 
       US_Help        showHelp;
 
-      void update       ( void );
+      void update         ( void );
+                        
+   private slots:       
+      void new_value      ( const QwtDoublePoint&   );
+      void mouseU         ( const QwtDoublePoint&   );
+      void update_ratio   ( void                    );
+      void update_mw      ( const QString&          );
+      void degC           ( const QString&          ); 
+      void density        ( const QString&          );
+      void viscosity      ( const QString&          );
+      void vbar           ( const QString&          );
+      void get_buffer     ( void                    ); 
+      void get_peptide    ( void                    ); 
+      void complete       ( void                    );
+      void debug          ( void                    );
+      void source_changed ( bool                    );
+      void get_solution   ( void                    );
 
-   private slots:
-      void new_value    ( const QwtDoublePoint&   );
-      void mouseU       ( const QwtDoublePoint&   );
-      void update_ratio ( void                    );
-      void update_mw    ( const QString&          );
-      void degC         ( const QString&          ); 
-      void density      ( const QString&          );
-      void viscosity    ( const QString&          );
-      void vbar         ( const QString&          );
-      void get_buffer   ( void                    ); 
-      void get_peptide  ( void                    ); 
-      void complete     ( void                    );
-      void debug        ( void                    );
-      void source_changed( bool                   );
+      void update_buffer  ( const US_Buffer         );
+      void update_vbar    ( const US_Analyte        );
+      void update_solution( const US_Solution       );
+      void choose         ( int                     );
 
-      void update_buffer( const US_Buffer         );
-      void update_vbar  ( const US_Analyte        );
-
-      void help         ( void )
+      void help           ( void )
       { showHelp.show_help( "manual/predict1.html" ); };
 };
 #endif
