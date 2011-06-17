@@ -307,6 +307,27 @@ void US_Predict2::do_s_d()
 
 void US_Predict2::update( void )
 {
+   if ( le_param1->text().toDouble() == 0.0  ||
+        le_param2->text().toDouble() == 0.0 )
+   {
+      le_prolate_a ->clear();
+      le_prolate_b ->clear();
+      le_prolate_ab->clear();
+      le_oblate_a  ->clear();
+      le_oblate_b  ->clear();
+      le_oblate_ab ->clear();
+      le_rod_a     ->clear();
+      le_rod_b     ->clear();
+      le_rod_ab    ->clear();
+      le_fCoef     ->clear();
+      le_f0        ->clear();
+      le_r0        ->clear();
+      le_volume    ->clear();
+      le_ff0       ->clear();
+      le_param3    ->clear();
+      return;
+   }
+
    US_Model::SimulationComponent sc;
    double vol_per_molecule;
    double rad_sphere;
@@ -320,33 +341,10 @@ void US_Predict2::update( void )
    sc.f           = 0.0;
    sc.f_f0        = 0.0;
 
-   /*
-   if ( model == None )
-   {
-      QMessageBox::information( this,
-            tr( "Please Note:" ), 
-            tr( "You have to define a parameter combination first!" ) );
-      return;
-   }
-   */
-
    if ( model == MW_SEDIMENTATION )
    {
-      if ( mw == 0.0 )
-      {
-      //   QMessageBox::information( this,
-      //         tr( "Please Note:" ), 
-      //         tr( "Please define the Molecular Weight first!" ) );
-         return;
-      }
-
-      if ( sed_coeff == 0.0 )
-      {
-         //QMessageBox::information( this,
-         //      tr( "Please Note:" ), 
-         //      tr( "Please define a Sedimentation Coefficient first!" ) );
-         return;
-      }
+      if ( mw        == 0.0 ) return;
+      if ( sed_coeff == 0.0 ) return;
 
       sc.mw            = mw;
       sc.s             = sed_coeff;
@@ -361,21 +359,8 @@ void US_Predict2::update( void )
 
    if ( model == MW_DIFFUSION )
    {
-      if ( mw == 0 )
-      {
-         //QMessageBox::information( this,
-         //      tr( "Please Note:" ), 
-         //      tr( "Please define the Molecular Weight first!" ) );
-         return;
-      }
-
-      if ( diff_coeff == 0 )
-      {
-         //QMessageBox::information( this,
-         //      tr( "Please Note:" ), 
-         //      tr( "Please define a Diffusion Coefficient first!" ) );
-         return;
-      }
+      if ( mw         == 0.0 ) return;
+      if ( diff_coeff == 0.0 ) return;
 
       sc.mw            = mw;
       sc.D             = diff_coeff;
@@ -390,21 +375,8 @@ void US_Predict2::update( void )
 
    if ( model == SED_DIFF )
    {
-      if ( sed_coeff == 0 )
-      {
-         //QMessageBox::information( this,
-         //      tr( "Please Note:" ), 
-         //      tr( "Please define the Sedimentation Coefficient first!" ) );
-         return;
-      }
-
-      if ( diff_coeff == 0 )
-      {
-         //QMessageBox::information( this,
-         //      tr( "Please Note:" ), 
-         //      tr( "Please define a Diffusion Coefficient first!" ) );
-         return;
-      }
+      if ( sed_coeff  == 0.0 ) return;
+      if ( diff_coeff == 0.0 ) return;
 
       sc.s             = sed_coeff;
       sc.D             = diff_coeff;
@@ -425,7 +397,10 @@ void US_Predict2::update( void )
    f0           = frict_coeff / ff0;
 
    if ( ! check_valid( ff0 ) )
+   {
+      le_param3->clear();
       return;
+   }
 
    // Recalculate volume to put into cubic angstroms:
    vol_per_molecule = 4.0 * M_PI / 3.0 * pow( r0, 3.0 );
@@ -434,10 +409,9 @@ void US_Predict2::update( void )
    le_r0    ->setText( QString::number( r0,               'e', 4 ) );
    le_f0    ->setText( QString::number( f0,               'e', 4 ) );
    le_volume->setText( QString::number( vol_per_molecule, 'e', 4 ) );
-   le_ff0   ->setText( QString::number( ff0,              'e', 4 ) );
+   le_ff0   ->setText( QString::number( ff0,              'f', 4 ) );
 
    // prolate ellipsoid
-
    double ratio = root( PROLATE, ff0 );
    double ap    = r0 * pow( ratio, 2.0 / 3.0 );
    double bp    = ap / ratio;
@@ -447,7 +421,6 @@ void US_Predict2::update( void )
    le_prolate_ab->setText( QString::number( ratio, 'e', 4 ) );
 
    // oblate ellipsoid
-
    ratio        = root( OBLATE, ff0 );
    double bo    = r0 / pow( ratio, 2.0 / 3.0 );
    double ao    = ratio * bo;
@@ -456,7 +429,6 @@ void US_Predict2::update( void )
    le_oblate_ab->setText( QString::number( ratio, 'e', 4 ) );
 
    // long rod
-
    if ( ff0 > 1.32 )
    {
       ratio        = root( ROD, ff0 );
@@ -478,10 +450,10 @@ bool US_Predict2::check_valid( double f_f0 )
 {
    if (  f_f0  < 1.0 )
    {
-      QMessageBox::information( this,
-            tr( "Attention:" ), 
-            tr( "This model is physically impossible!\n"
-                "The f/f0 ratio (%1) is less than 1." ).arg( f_f0 ) );
+      //QMessageBox::information( this,
+      //      tr( "Attention:" ), 
+      //      tr( "This model is physically impossible!\n"
+      //          "The f/f0 ratio (%1) is less than 1." ).arg( f_f0 ) );
       
       /*
       sed_coeff  = 0.0;
@@ -611,6 +583,8 @@ void US_Predict2::update_param1( const QString& s )
       sed_coeff = s.toDouble();
    else
       mw = s.toDouble();
+
+   update();
 }
 
 void US_Predict2::update_param2( const QString& s )
@@ -619,6 +593,8 @@ void US_Predict2::update_param2( const QString& s )
       sed_coeff  = s.toDouble();
    else
       diff_coeff = s.toDouble();
+
+   update();
 }
 
 void US_Predict2::density( const QString& s )

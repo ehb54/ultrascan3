@@ -4,6 +4,9 @@
 #include "us_constants.h"
 #include "us_gui_settings.h"
 #include "us_buffer_gui.h"
+#include "us_choice.h"
+#include "us_solution_gui.h"
+#include "us_math2.h"
 
 #include "qwt_legend.h"
 
@@ -60,6 +63,10 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    QGridLayout* controls = new QGridLayout;
    int c_row = 0;
 
+   QPushButton* pb_solution = us_pushbutton( tr( "Select Solution" ) );
+   connect( pb_solution, SIGNAL( clicked() ), SLOT( get_solution() ) );
+   controls->addWidget( pb_solution, c_row++, 0, 1, 2 );
+
    // Basic values
    if ( signal )
    {
@@ -67,7 +74,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       controls->addWidget( lb_density, c_row, 0 );
 
       solution.density = DENS_20W;
-      le_density = us_lineedit( QString::number( solution.density, 'f', 6 ) );
+      le_density = us_lineedit( QString::number( solution.density, 'f', 4 ) );
       le_density->setPalette( gray );
       le_density->setReadOnly( true );
       controls->addWidget( le_density, c_row++, 1 );
@@ -76,7 +83,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       controls->addWidget( lb_viscosity, c_row, 0 );
 
       solution.viscosity = VISC_20W;
-      le_viscosity = us_lineedit( QString::number( solution.viscosity, 'f', 6 ) );
+      le_viscosity = us_lineedit( QString::number( solution.viscosity, 'f', 4 ) );
       le_viscosity->setPalette( gray );
       le_viscosity->setReadOnly( true );
       controls->addWidget( le_viscosity, c_row++, 1 );
@@ -88,7 +95,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       controls->addWidget( pb_density, c_row, 0 );
 
       le_density = us_lineedit();
-      le_density->setText( QString::number( DENS_20W, 'f', 6 ) );
+      le_density->setText( QString::number( DENS_20W, 'f', 4 ) );
       connect( le_density, SIGNAL( textChanged( const QString& ) ),
                            SLOT  ( density    ( const QString& ) ) );
       controls->addWidget( le_density, c_row++, 1 );
@@ -98,7 +105,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       controls->addWidget( pb_viscosity, c_row, 0 );
 
       le_viscosity = us_lineedit();
-      le_viscosity->setText( QString::number( VISC_20W, 'f', 6 ) );
+      le_viscosity->setText( QString::number( VISC_20W, 'f', 4 ) );
       connect( le_viscosity, SIGNAL( textChanged( const QString& ) ), 
                              SLOT  ( viscosity  ( const QString& ) ) );
       controls->addWidget( le_viscosity, c_row++, 1 );
@@ -368,8 +375,8 @@ void US_Predict1::update_buffer( const US_Buffer b )
    solution.density   = b.density;
    solution.viscosity = b.viscosity;
 
-   le_density  ->setText( QString::number( solution.density,    'f', 6 ) );
-   le_viscosity->setText( QString::number( solution.viscosity , 'f', 6 ) );
+   le_density  ->setText( QString::number( solution.density,    'f', 4 ) );
+   le_viscosity->setText( QString::number( solution.viscosity , 'f', 4 ) );
 
    US_Math2::data_correction( temperature, solution );
    update();
@@ -469,7 +476,7 @@ void US_Predict1::update()
    lb_sphere[ 1 ] ->setText( QString::number( allparams.sphere.s      , 'e', 4 ) );
    lb_sphere[ 2 ] ->setText( QString::number( allparams.sphere.D      , 'e', 4 ) );
    lb_sphere[ 3 ] ->setText( QString::number( allparams.sphere.f      , 'e', 4 ) ); 
-   lb_sphere[ 4 ] ->setText( QString::number( allparams.sphere.f_f0   , 'e', 4 ) );
+   lb_sphere[ 4 ] ->setText( QString::number( allparams.sphere.f_f0   , 'f', 4 ) );
    lb_sphere[ 5 ] ->setText( QString::number( allparams.sphere.a      , 'e', 4 ) );
    lb_sphere[ 6 ] ->setText( QString::number( allparams.sphere.b      , 'e', 4 ) );
    lb_sphere[ 7 ] ->setText( QString::number( allparams.sphere.volume , 'e', 4 ) );
@@ -477,7 +484,7 @@ void US_Predict1::update()
    lb_prolate[ 1 ]->setText( QString::number( allparams.prolate.s     , 'e', 4 ) );
    lb_prolate[ 2 ]->setText( QString::number( allparams.prolate.D     , 'e', 4 ) );
    lb_prolate[ 3 ]->setText( QString::number( allparams.prolate.f     , 'e', 4 ) ); 
-   lb_prolate[ 4 ]->setText( QString::number( allparams.prolate.f_f0  , 'e', 4 ) );
+   lb_prolate[ 4 ]->setText( QString::number( allparams.prolate.f_f0  , 'f', 4 ) );
    lb_prolate[ 5 ]->setText( QString::number( allparams.prolate.a     , 'e', 4 ) );
    lb_prolate[ 6 ]->setText( QString::number( allparams.prolate.b     , 'e', 4 ) );
    lb_prolate[ 7 ]->setText( QString::number( allparams.prolate.volume, 'e', 4 ) );
@@ -485,7 +492,7 @@ void US_Predict1::update()
    lb_oblate[ 1 ] ->setText( QString::number( allparams.oblate.s      , 'e', 4 ) );
    lb_oblate[ 2 ] ->setText( QString::number( allparams.oblate.D      , 'e', 4 ) );
    lb_oblate[ 3 ] ->setText( QString::number( allparams.oblate.f      , 'e', 4 ) ); 
-   lb_oblate[ 4 ] ->setText( QString::number( allparams.oblate.f_f0   , 'e', 4 ) );
+   lb_oblate[ 4 ] ->setText( QString::number( allparams.oblate.f_f0   , 'f', 4 ) );
    lb_oblate[ 5 ] ->setText( QString::number( allparams.oblate.a      , 'e', 4 ) );
    lb_oblate[ 6 ] ->setText( QString::number( allparams.oblate.b      , 'e', 4 ) );
    lb_oblate[ 7 ] ->setText( QString::number( allparams.oblate.volume , 'e', 4 ) );
@@ -493,7 +500,7 @@ void US_Predict1::update()
    lb_rod[ 1 ]    ->setText( QString::number( allparams.rod.s         , 'e', 4 ) );
    lb_rod[ 2 ]    ->setText( QString::number( allparams.rod.D         , 'e', 4 ) );
    lb_rod[ 3 ]    ->setText( QString::number( allparams.rod.f         , 'e', 4 ) ); 
-   lb_rod[ 4 ]    ->setText( QString::number( allparams.rod.f_f0      , 'e', 4 ) );
+   lb_rod[ 4 ]    ->setText( QString::number( allparams.rod.f_f0      , 'f', 4 ) );
    lb_rod[ 5 ]    ->setText( QString::number( allparams.rod.a         , 'e', 4 ) );
    lb_rod[ 6 ]    ->setText( QString::number( allparams.rod.b         , 'e', 4 ) );
    lb_rod[ 7 ]    ->setText( QString::number( allparams.rod.volume    , 'e', 4 ) );
@@ -551,3 +558,66 @@ void US_Predict1::debug( void )
                         << sim.rod.volume;
 */
 }
+
+void US_Predict1::get_solution( void )
+{
+   US_SolutionGui* dialog = new US_SolutionGui( 1, 1, true );
+   connect( dialog, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
+                    SLOT  ( update_solution           ( US_Solution ) ) );
+   dialog->setWindowTitle( tr( "Solutions" ) );
+   dialog->exec();
+}
+
+void US_Predict1::update_solution( US_Solution soln )
+{
+   solution.density   = soln.buffer.density;
+   solution.viscosity = soln.buffer.viscosity;
+
+   le_density  ->setText( QString::number( solution.density,   'f', 4 ) );
+   le_viscosity->setText( QString::number( solution.viscosity, 'f', 4 ) );
+
+   US_Analyte analyte;
+
+   if ( soln.analyteInfo.size() == 0 )
+   {
+      QMessageBox::warning( this,
+            tr( "No Analyte" ),
+            tr( "There is no analyte in the solution" ) );
+      return;
+   }
+   else if ( soln.analyteInfo.size() == 1 )
+   {
+     analyte         = soln.analyteInfo[ 0 ].analyte;
+     solution.vbar20 = analyte.vbar20;;
+     solution.vbar   = US_Math2::adjust_vbar20( solution.vbar20, temperature );
+     le_vbar->setText( QString::number( solution.vbar, 'f', 4 ) );
+
+     mw = analyte.mw;
+     le_mw->setText( QString::number( mw, 'e', 4 ) );
+   }
+   else
+   {
+     US_Choice* dialog = new US_Choice( soln );
+     connect( dialog, SIGNAL( choice( int ) ),
+                      SLOT  ( choose( int ) ) );
+     dialog->exec();
+     qApp->processEvents();
+
+     analyte = soln.analyteInfo[ analyte_number ].analyte;
+     solution.vbar20 = analyte.vbar20;;
+     solution.vbar   = US_Math2::adjust_vbar20( solution.vbar20, temperature );
+     le_vbar->setText( QString::number( solution.vbar, 'f', 4 ) );
+
+     mw = analyte.mw;
+     le_mw->setText( QString::number( mw, 'e', 4 ) );
+   }
+
+   update();
+}
+
+void US_Predict1::choose( int value )
+{
+   analyte_number = value;
+}
+
+
