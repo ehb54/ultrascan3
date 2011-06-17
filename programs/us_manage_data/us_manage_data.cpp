@@ -659,7 +659,7 @@ void US_ManageData::reportDataStatus()
    // reformat and display report on record counts
    const char* fmtn[] = { "%2d", "%3d", "%4d", "%5d" };
    int         ff     = ( ncrecs < 100 )  ? 0 : ( ( ncrecs < 1000 ) ? 1 : 2 );
-               ff     = ( ncrecs > 9999 ) ? 3 : ncrecs;
+               ff     = ( ncrecs > 9999 ) ? 3 : ff;
    QString actr = QString().sprintf( fmtn[ ff ], ncrecs );
    QString acrr = QString().sprintf( fmtn[ ff ], ncraws );
    QString acer = QString().sprintf( fmtn[ ff ], ncedts );
