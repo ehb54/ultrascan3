@@ -3495,7 +3495,7 @@ void US_Hydrodyn::write_bead_spt(QString fname,
                   );
       movie_text.push_back(fname);
    }
-   fprintf(fspt, last_spt_text.ascii());
+   fprintf(fspt, ( last_spt_text.isNull() ? "" : last_spt_text.ascii() ) );
    fclose(fspt);
    fclose(fbms);
 }
@@ -4005,8 +4005,8 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
               "as in original PDB file"
               ,-hydro.unit
               );
-      fprintf(fsomo, options_log.ascii());
-      fprintf(fsomo, last_abb_msgs.ascii());
+      fprintf(fsomo, ( options_log.isNull() ? "" : options_log.ascii() ) );
+      fprintf(fsomo, ( last_abb_msgs.isNull() ? "" : last_abb_msgs.ascii() ) );
       fclose(fsomo);
    }
    if (fbeams) {

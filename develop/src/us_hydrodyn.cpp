@@ -267,6 +267,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    residue_short_names["DC"] = 'c';
    residue_short_names["DT"] = 't';
 
+   last_abb_msgs = "";
+
    comparative = US_Hydrodyn_Comparative::empty_comparative_info();
 
    rasmol = new QProcess(this);
