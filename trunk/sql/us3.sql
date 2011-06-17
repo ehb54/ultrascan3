@@ -845,7 +845,7 @@ DROP TABLE IF EXISTS HPCDataset;
 CREATE TABLE IF NOT EXISTS HPCDataset (
   HPCDatasetID int(11) NOT NULL AUTO_INCREMENT,
   HPCAnalysisRequestID int(11) NOT NULL,
-  editedDataID INT(11) NOT NULL ,
+  editedDataID INT(11) DEFAULT NULL,
   simpoints int(11) default NULL,
   band_volume double default NULL,
   radial_grid tinyint(4) default NULL,
@@ -862,7 +862,7 @@ CREATE TABLE IF NOT EXISTS HPCDataset (
   CONSTRAINT fk_HPCDataset_editedDataID
     FOREIGN KEY (editedDataID)
     REFERENCES editedData ( editedDataID )
-    ON DELETE CASCADE
+    ON DELETE SET NULL
     ON UPDATE NO ACTION )
 ENGINE=InnoDB;
 
@@ -874,8 +874,9 @@ DROP TABLE IF EXISTS HPCRequestData;
 CREATE TABLE IF NOT EXISTS HPCRequestData (
   HPCRequestDataID int(11) NOT NULL AUTO_INCREMENT,
   HPCDatasetID int(11) NOT NULL,
-  noiseID int(11) NOT NULL,
+  noiseID int(11) DEFAULT NULL,
   INDEX ndx_HPCRequestData_HPCDatasetID (HPCDatasetID ASC) ,
+  INDEX ndx_HPCRequestData_noiseID ( noiseID ASC ),
   PRIMARY KEY (HPCRequestDataID),
   CONSTRAINT fk_HPCRequestData_HPCDatasetID
     FOREIGN KEY (HPCDatasetID)
@@ -885,7 +886,7 @@ CREATE TABLE IF NOT EXISTS HPCRequestData (
    CONSTRAINT fk_HPCRequestData_noiseID
      FOREIGN KEY (noiseID)
      REFERENCES noise (noiseID)
-     ON DELETE NO ACTION
+     ON DELETE SET NULL
      ON UPDATE NO ACTION)
 ENGINE=InnoDB;
   
