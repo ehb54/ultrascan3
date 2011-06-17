@@ -469,6 +469,13 @@ BEGIN
 
   IF ( verify_model_permission( p_personGUID, p_password, p_modelID ) = @OK ) THEN
 
+    -- Make sure records match if they have related tables or not
+    -- Have to do it in a couple of stages because of the constraints
+    DELETE      noise
+    FROM        model
+    LEFT JOIN   noise ON ( noise.modelID = model.modelID )
+    WHERE       model.modelID = p_modelID;
+
     DELETE FROM modelPerson
     WHERE modelID = p_modelID;
 
