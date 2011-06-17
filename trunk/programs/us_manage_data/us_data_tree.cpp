@@ -275,7 +275,7 @@ void US_DataTree::row_context_menu( QTreeWidgetItem* item )
 DbgLv(1) << "    context_menu nbr sel rows" << selitems.size();
    tw_item  = item;
    int irow = item->type() - (int)QTreeWidgetItem::UserType;
-   int jrow = irow + 1;
+   //int jrow = irow + 1;
 DbgLv(2) << "    context_menu row" << irow+1;
    da_model->setCurrent( irow );
 DbgLv(2) << "    context_menu RTN setCurrent";
@@ -333,7 +333,8 @@ DbgLv(2) << "    context_menu RTN addAction";
 
    if ( irow > 0 )
    {  // Disable upload if parent not in the DB
-      DataDesc jdesc = da_model->row_datadesc( irow - 1 );
+      //DataDesc jdesc = da_model->row_datadesc( irow - 1 );
+   }
 
    rmabact->setEnabled( nsel > 1 );
 
@@ -760,7 +761,7 @@ DbgLv(2) << "ITEM Remove All Branches";
    QString item_act = tr( "All-branches remove" );
    int nitems  = da_model->recCount();
    int ndsels  = selitems.size();
-   int nbsels  = ndsels;
+   //int nbsels  = ndsels;
    int mindtyp = 99;
    int maxdtyp = -1;
    int mindsta = 99;
