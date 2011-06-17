@@ -1,0 +1,111 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III van Holde - Weischet Combine'
+%]
+
+    <h2> <i>UltraScan</i> van Holde - Weischet Combined Plots: </h2>
+
+    <p> To combine integral van Holde - Weischet G(s) distributions from
+    multiple datasets (either from different cells of the same run or from
+    different runs), use "Combine Distribution Plots (vHW)" from the
+    Utilities menu. This will allow you to compare integral distributions
+    from different cells to each other. This may be useful if you analyzed
+    the same sample under different conditions; for example, different pH
+    levels or different concentrations. If the samples are the same, the
+    distributions should overlay; if the samples behave differently, the
+    distributions will be shifted relative to each other.</p>
+
+    <p> All distributions will be plotted relative to the boundary fraction
+    used in analysis. For example, if you analyzed 100% of the boundary,
+    the distribution will range from 0 % to 100 % of the Y-axis.
+    A distribution that was analyzed for 72 % of the boundary, shifted 8 %
+    from the bottom will be plotted from 8 % to 80 % of the Y-axis. It is
+    important that this distinction be made, since, for example,
+    concentration-dependent samples will behave differently depending on the
+    position in the boundary; or heterogeneous samples will show different
+    distributions depending on which portion of the boundary was analyzed.</p>
+
+    <p> When data are loaded, arrays of X,Y distribution and envelope values
+    are read and saved. These are then used to quickly display plots.
+    If you want to change the mix of data plotted, you may click the
+    Reset Plot button; and then quickly make new selections that are
+    plotted without need for recalculations.</p>
+
+    <img src="images/vhw_combine.png" alt="vHW main Combine Window"/>
+
+    <ul>
+        <li>
+            <b>Load Data</b> Click on this button and, in the resulting
+            standard file directory dialog, select a run directory to search
+            for distribution data files.
+        </li>
+            
+        <li>
+            <b>Save Data</b> Save combined integral distribution and
+            envelope data into a data file.
+        </li>
+
+        <li>
+            <b>Reset Data</b> Clear all data, lists and plots. To choose
+            runs and triples, a new set of Load Data selections must be made.
+        </li>
+
+        <li>
+            <b>Reset Plot</b> Clear all plots. Data is still saved, so
+            a new set of plots can be created by simply selecting runs
+            and triples.
+        </li>
+
+        <li>
+            <b>Help</b> Display detailed vHW_Combine help.
+        </li>
+
+        <li>
+            <b>Close</b> Close this application.
+        </li>
+            
+        <li>
+            <b>Integral</b> Check to specify that plots are to include
+            integral distributions.
+        </li>
+
+        <li>
+            <b>Envelope</b> Check to specify that plots are to include
+            envelopes.
+        </li>
+
+        <li>
+            <b>Current Run ID:</b> The read-only text to the right of this
+            label indicates the currently selected run.
+        </li>
+            
+        <li>
+            <b>Distribution Name:</b> The name shown to the right of this
+            label is to be used for any saved combination distribution
+            data files. By default, the name shown is the first run selected,
+            but this can by changed by the user to any desired name.
+        </li>
+            
+        <li>
+            <b>Run IDs:</b> The list below shows all runs selected in
+            Load Data dialogs. Click on a list line to reveal the Cell /
+            Channel / Wavelength triples for the run.
+        </li>
+
+        <li>
+            <b>Cell / Channel / Wavelength:</b> The list below shows the
+            triples for the currently selected run. Click on a triple line
+            to have its distribution/envelope added to the combined plot.
+        </li>
+    </ul>
+
+    <p> Besides the integral distribution plots shown above, you may
+    display envelope plots.</p>
+
+    <img src="images/vhw_combine-envel.png" alt="vHW Combine Envelope Plot"/>
+
+    <p> You may also combine both integral and envelope plots in a single
+    plot.</p>
+
+    <img src="images/vhw_combine-combo.png" alt="vHW Combine Combo Plot"/>
+
+[% INCLUDE footer.us3 %]
