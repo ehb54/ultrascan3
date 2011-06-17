@@ -44,9 +44,9 @@ class US_DataModel : public QObject
          QString   lastmodDate;       // last modification date/time
       };
 
-      void      setDatabase( US_DB2*,         QString      );
-      void      setProgress( QProgressBar*,   QLabel*      );
-      void      setSiblings( QObject*,        QObject*     );
+      void      setDatabase( US_DB2*                   );
+      void      setProgress( QProgressBar*,   QLabel*  );
+      void      setSiblings( QObject*,        QObject* );
       US_DB2*       dbase   (      void );
       QString       invtext (      void );
       QProgressBar* progrBar(      void );
@@ -60,6 +60,7 @@ class US_DataModel : public QObject
       QString   investigator_text( void );
       DataDesc  row_datadesc(      int  );
       DataDesc  current_datadesc(  void );
+      void      change_datadesc (  DataDesc, int );
       void      setCurrent(        int  );
       int       recCount(          void );
       int       recCountDB(        void );
@@ -67,7 +68,6 @@ class US_DataModel : public QObject
 
    private:
       US_DB2*       db;               // pointer to opened DB connection
-      QString       investig;         // investigator text
       QProgressBar* progress;         // progress bar on main window
       QLabel*       lb_status;        // status label on main window
       QWidget*      parentw;          // parent widget (main window)
@@ -79,6 +79,7 @@ class US_DataModel : public QObject
       QVector< DataDesc > ddescs;     // DB descriptions
       QVector< DataDesc > ldescs;     // local-disk descriptions
       QVector< DataDesc > adescs;     // all (merged) descriptions
+      QVector< int >      chgrows;    // changed rows;
 
       QObject*            ob_process; // data processor
       QObject*            ob_tree;    // data tree handler
@@ -103,6 +104,7 @@ class US_DataModel : public QObject
       void scan_dbase(     void );
       void scan_local(     void );
       void merge_dblocal(  void );
+      void review_dbase(   void );
 
       void sort_descs(     QVector< DataDesc >& descs );
       bool review_descs(   QStringList&, QVector< DataDesc >& );

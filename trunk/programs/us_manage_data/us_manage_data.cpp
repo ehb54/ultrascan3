@@ -80,7 +80,11 @@ DbgLv(1) << "GUI setup begun";
    pb_invtor     = us_pushbutton( tr( "Investigator" ) );
    dctlLayout->addWidget( pb_invtor, row,   0, 1, 3 );
 
-   le_invtor     = us_lineedit();
+   personID      = US_Settings::us_inv_ID();
+   QString invn  = ( personID > 0 ) ? QString::number( personID ) : "";
+   le_invtor     = us_lineedit( invn + ": " + US_Settings::us_inv_name(), 1 );
+   le_invtor->setReadOnly( true );
+   le_invtor->setPalette( vlgray );
    dctlLayout->addWidget( le_invtor, row++, 3, 1, 5 );
 
    pb_reset      = us_pushbutton( tr( "Reset" ), false );
@@ -145,21 +149,21 @@ DbgLv(1) << "GUI setup begun";
    te_status->setFont(  QFont( US_Widgets::fixedFont().family(),
                         US_GuiSettings::fontSize() - 2 ) );
    te_status->setText(
-      tr( "%1 Combined Total data sets;\n" ).arg( 0 ) +
-      tr( "  %1 Combined RawData    records;\n" ).arg( 0 ) +
-      tr( "  %1 Combined EditedData records;\n" ).arg( 0 ) +
-      tr( "  %1 Combined Model      records;\n" ).arg( 0 ) +
-      tr( "  %1 Combined Noise      records.\n" ).arg( 0 ) +
-      tr( "%1 Database Total data sets;\n" ).arg( 0 ) +
-      tr( "  %1 Database RawData    records;\n" ).arg( 0 ) +
-      tr( "  %1 Database EditedData records;\n" ).arg( 0 ) +
-      tr( "  %1 Database Model      records;\n" ).arg( 0 ) +
-      tr( "  %1 Database Noise      records.\n" ).arg( 0 ) +
-      tr( "%1 Local    Total data sets;\n" ).arg( 0 ) +
-      tr( "  %1 Local    RawData    records;\n" ).arg( 0 ) +
-      tr( "  %1 Local    EditedData records;\n" ).arg( 0 ) +
-      tr( "  %1 Local    Model      records;\n" ).arg( 0 ) +
-      tr( "  %1 Local    Noise      records.\n" ).arg( 0 ) );
+      tr( " 0 Combined Total data sets;\n"
+          "   0 Combined RawData    records;\n"
+          "   0 Combined EditedData records;\n"
+          "   0 Combined Model      records;\n"
+          "   0 Combined Noise      records.\n"
+          " 0 Database Total data sets;\n"
+          "   0 Database RawData    records;\n"
+          "   0 Database EditedData records;\n"
+          "   0 Database Model      records;\n"
+          "   0 Database Noise      records.\n"
+          " 0 Local    Total data sets;\n"
+          "   0 Local    RawData    records;\n"
+          "   0 Local    EditedData records;\n"
+          "   0 Local    Model      records;\n"
+          "   0 Local    Noise      records.\n" ) );
    smryLayout->addWidget( te_status );
    QFontMetrics fm( te_status->font() );
    int   fontw  = fm.maxWidth();
@@ -248,30 +252,17 @@ DbgLv(1) << "te_status size" << te_status->size();
       db = NULL;
       //return;
    }
-
-   personID      = 0;
 DbgLv(1) << "db passwd complete";
 
-   // Set default db investigator
-
-   investig = QString::number( US_Settings::us_inv_ID() )
-      + ": " + US_Settings::us_inv_name();
-
-   le_invtor->setText( investig );
-
-   find_investigator(  investig );
-
-   connect( pb_invtor,  SIGNAL( clicked()           ),
-            this,       SLOT( sel_investigator()    ) );
-   connect( le_invtor,  SIGNAL( editingFinished()   ),
-            this,       SLOT( chg_investigator() )  );
+   connect( pb_invtor,  SIGNAL( clicked()          ),
+            this,       SLOT(   sel_investigator() ) );
 DbgLv(1) << "GUI setup complete";
 
    // create a class to handle the data itself
    da_model       = new US_DataModel(                      this );
 
    // set needed pointers for class interaction in model object
-   da_model->setDatabase( db,         investig  );
+   da_model->setDatabase( db );
    da_model->setProgress( progress,   lb_status );
 
    // create a class to handle processing the data (upload,download,remove)
@@ -280,7 +271,7 @@ DbgLv(1) << "GUI setup complete";
    // create a class to handle the data tree display
    da_tree        = new US_DataTree(    da_model, tw_recs, this );
 
-   // set needed pointers to sibline classes in model object
+   // set needed pointers to sibling classes in model object
    da_model->setSiblings( (QObject*)da_process, (QObject*)da_tree   );
 DbgLv(1) << "classes setup complete";
 
@@ -314,66 +305,6 @@ bool US_ManageData::eventFilter( QObject *obj, QEvent *e )
    {  // pass all others for normal handling
       return US_Widgets::eventFilter( obj, e );
    }
-}
-
-// handle change of investigator text
-void US_ManageData::chg_investigator()
-{
-   investig = le_invtor->text();     // get current (partial) investigator text
-
-   find_investigator( investig );    // find an actual one that matches
-
-   le_invtor->setText( investig );   // display the full investigator string
-
-   da_model->setDatabase( db, investig );
-}
-
-// query database for match to (partial) investigator name
-void US_ManageData::find_investigator( QString& invname )
-{
-   QStringList query;
-   QString     dbInvestID;
-   QString     dbLastName;
-   QString     dbFirstName;
-   int         irow    = 1;
-   int         nrows   = 1;
-
-   if ( db == NULL )
-      return;
-
-   lb_status->setText( tr( "Examining Investigators..." ) );
-   query << "get_people" << invname;
-   db->query( query );
-
-   if ( db->numRows() < 1 )
-   {  // Investigator text yields nothing:  retry with blank field
-      query.clear();
-      query << "get_people" << "";
-      db->query( query );
-   }
-
-   nrows    = db->numRows();
-   progress->setMaximum( nrows);
-
-   while ( db->next() )
-   {  // Loop through investigators looking for a match
-      dbInvestID  = db->value( 0 ).toString();
-      dbLastName  = db->value( 1 ).toString();
-      dbFirstName = db->value( 2 ).toString();
-
-      if ( nrows < 2  ||
-           dbLastName.contains(  invname, Qt::CaseInsensitive )  ||
-           dbFirstName.contains( invname, Qt::CaseInsensitive ) )
-      {  // Single investigator or a match to last/first name
-         invname    = dbInvestID + ": " + dbLastName + ", " + dbFirstName;
-         personID   = dbInvestID.toInt();
-         break;
-      }
-      progress->setValue( irow++ );
-   }
-
-   progress->setValue( nrows );
-   lb_status->setText( tr( "Investigator Search Complete" ) );
 }
 
 // toggle edits between hide/show
@@ -501,9 +432,9 @@ void US_ManageData::reset_hsbuttons( bool show,
 // scan the database and local disk for R/E/M/N data sets
 void US_ManageData::scan_data()
 {
-   da_model->scan_data();            // scan the data
+   da_model->scan_data();          // scan the data
 
-   da_tree ->build_dtree();          // rebuild the data tree with present data
+   da_tree ->build_dtree();        // rebuild the data tree with present data
 
    // resize so all of columns are shown
    tw_recs->expandAll();                      // expand the entire tree
@@ -526,7 +457,7 @@ void US_ManageData::scan_data()
 }
 
 
-// open dialog and get investigator when button clicked
+// Open dialog and get investigator when button clicked
 void US_ManageData::sel_investigator()
 {
    US_Investigator* inv_dialog = new US_Investigator( true, personID );
@@ -538,18 +469,17 @@ void US_ManageData::sel_investigator()
    inv_dialog->exec();
 }
 
-// assign an investigator string in proper id:lastname,firstname form
+// Assign an investigator string in proper id:lastname,firstname form
 void US_ManageData::assign_investigator( int invID )
 {
    personID   = invID;
+   le_invtor->setText( QString::number( personID )
+         + ": " + US_Settings::us_inv_name() );
 
-   investig   = QString::number( US_Settings::us_inv_ID() )
-      + ": " + US_Settings::us_inv_name();
-   le_invtor->setText( investig );
-   da_model->setDatabase( db, investig );
+   da_model->setDatabase( db );
 }
 
-// handle a right-mouse click of a row cell
+// Handle a right-mouse click of a row cell
 void US_ManageData::clickedItem( QTreeWidgetItem* item )
 {
 //DbgLv(2) << "TABLE ITEM CLICKED rbtn_click" << rbtn_click;
@@ -657,39 +587,36 @@ void US_ManageData::reportDataStatus()
    }
 
    // reformat and display report on record counts
-   const char* fmtn[] = { "%2d", "%3d", "%4d", "%5d" };
-   int         ff     = ( ncrecs < 100 )  ? 0 : ( ( ncrecs < 1000 ) ? 1 : 2 );
-               ff     = ( ncrecs > 9999 ) ? 3 : ff;
-   QString actr = QString().sprintf( fmtn[ ff ], ncrecs );
-   QString acrr = QString().sprintf( fmtn[ ff ], ncraws );
-   QString acer = QString().sprintf( fmtn[ ff ], ncedts );
-   QString acmr = QString().sprintf( fmtn[ ff ], ncmods );
-   QString acnr = QString().sprintf( fmtn[ ff ], ncnois );
-   QString adtr = QString().sprintf( fmtn[ ff ], ndrecs );
-   QString adrr = QString().sprintf( fmtn[ ff ], ndraws );
-   QString ader = QString().sprintf( fmtn[ ff ], ndedts );
-   QString admr = QString().sprintf( fmtn[ ff ], ndmods );
-   QString adnr = QString().sprintf( fmtn[ ff ], ndnois );
-   QString altr = QString().sprintf( fmtn[ ff ], nlrecs );
-   QString alrr = QString().sprintf( fmtn[ ff ], nlraws );
-   QString aler = QString().sprintf( fmtn[ ff ], nledts );
-   QString almr = QString().sprintf( fmtn[ ff ], nlmods );
-   QString alnr = QString().sprintf( fmtn[ ff ], nlnois );
    te_status->setText(
-      actr + tr( " Combined Total data sets;\n  "      ) +
-      acrr + tr( " Combined RawData    records;\n  "   ) +
-      acer + tr( " Combined EditedData records;\n  "   ) +
-      acmr + tr( " Combined Model      records;\n  "   ) +
-      acnr + tr( " Combined Noise      records.\n"     ) +
-      adtr + tr( " Database Total data sets;\n  "      ) +
-      adrr + tr( " Database RawData    records;\n  "   ) +
-      ader + tr( " Database EditedData records;\n  "   ) +
-      admr + tr( " Database Model      records;\n  "   ) +
-      adnr + tr( " Database Noise      records.\n"     ) +
-      altr + tr( " Local    Total data sets;\n  "      ) +
-      alrr + tr( " Local    RawData    records;\n  "   ) +
-      aler + tr( " Local    EditedData records;\n  "   ) +
-      almr + tr( " Local    Model      records;\n  "   ) +
-      alnr + tr( " Local    Noise      records.\n"     ) );
+      QString().sprintf( "%5d", ncrecs ) +
+      tr( " Combined Total data sets;\n  "    ) +
+      QString().sprintf( "%5d", ncraws ) +
+      tr( " Combined RawData    records;\n  " ) +
+      QString().sprintf( "%5d", ncedts ) +
+      tr( " Combined EditedData records;\n  " ) +
+      QString().sprintf( "%5d", ncmods ) +
+      tr( " Combined Model      records;\n  " ) +
+      QString().sprintf( "%5d", ncnois ) +
+      tr( " Combined Noise      records.\n"   ) +
+      QString().sprintf( "%5d", ndrecs ) +
+      tr( " Database Total data sets;\n  "    ) +
+      QString().sprintf( "%5d", ndraws ) +
+      tr( " Database RawData    records;\n  " ) +
+      QString().sprintf( "%5d", ndedts ) +
+      tr( " Database EditedData records;\n  " ) +
+      QString().sprintf( "%5d", ndmods ) +
+      tr( " Database Model      records;\n  " ) +
+      QString().sprintf( "%5d", ndnois ) +
+      tr( " Database Noise      records.\n"   ) +
+      QString().sprintf( "%5d", nlrecs ) +
+      tr( " Local    Total data sets;\n  "    ) +
+      QString().sprintf( "%5d", nlraws ) +
+      tr( " Local    RawData    records;\n  " ) +
+      QString().sprintf( "%5d", nledts ) +
+      tr( " Local    EditedData records;\n  " ) +
+      QString().sprintf( "%5d", nlmods ) +
+      tr( " Local    Model      records;\n  " ) +
+      QString().sprintf( "%5d", nlnois ) +
+      tr( " Local    Noise      records.\n"   ) );
 }
 

@@ -14,19 +14,20 @@ US_DataModel::US_DataModel( QWidget* parwidg /*=0*/ )
 {
    parentw    = parwidg;   // parent (main manage_data) widget
 
-   ddescs.clear();         // db descriptions
-   ldescs.clear();         // local descriptions
-   adescs.clear();         // all descriptions
+   ddescs .clear();        // db descriptions
+   ldescs .clear();        // local descriptions
+   adescs .clear();        // all descriptions
+   chgrows.clear();        // changed rows
 
    dbg_level  = US_Settings::us_debug();
 }
 
 // set database related pointers
-void US_DataModel::setDatabase( US_DB2* a_db, QString a_invtxt )
+void US_DataModel::setDatabase( US_DB2* a_db )
 {
    db         = a_db;      // pointer to opened db connection
-   investig   = a_invtxt;  // investigator text
-   invID      = investig.section( ":", 0, 0 ).simplified();
+   invID      = QString::number( US_Settings::us_inv_ID() );
+DbgLv(1) << "DMod:setDB: invID" << invID;
 }
 
 // set progress bar related pointers
@@ -47,12 +48,6 @@ void US_DataModel::setSiblings( QObject* a_proc, QObject* a_tree )
 US_DB2* US_DataModel::dbase()
 {
    return db;
-}
-
-// get investigator text
-QString US_DataModel::invtext()
-{
-   return investig;
 }
 
 // get progress bar pointer
@@ -82,10 +77,6 @@ QObject* US_DataModel::treeobj()
 // scan the database and local disk for R/E/M/N data sets
 void US_DataModel::scan_data()
 {
-   ddescs.clear();         // db descriptions
-   ldescs.clear();         // local descriptions
-   adescs.clear();         // all descriptions
-
    scan_dbase( );          // read db to build db descriptions
 
    sort_descs( ddescs  );  // sort db descriptions
@@ -97,19 +88,27 @@ void US_DataModel::scan_data()
    merge_dblocal();        // merge database and local descriptions
 }
 
-// get pointer to data description object at specified row
+// Get data description object at specified row
 US_DataModel::DataDesc US_DataModel::row_datadesc( int irow )
 {
    return adescs.at( irow );
 }
 
-// get pointer to current data description object
+// Get current data description object
 US_DataModel::DataDesc US_DataModel::current_datadesc( )
 {
    return cdesc;
 }
 
-// set pointer to current data description object
+// Change data description object at a specified row
+void US_DataModel::change_datadesc( DataDesc ddesc, int row )
+{
+   adescs[ row ] = ddesc;
+   cdesc         = ddesc;
+   chgrows << row;
+}
+
+// Set current data description object
 void US_DataModel::setCurrent( int irow )
 {
    cdesc   = adescs.at( irow );
@@ -154,6 +153,12 @@ void US_DataModel::scan_dbase( )
    int         nnois = 0;
    int         nstep = 20;
    int         istep = 0;
+
+   if ( chgrows.size() > 0 )
+   {  // If changes since last scan, just modify existing db descriptions
+      review_dbase();
+      return;
+   }
 
    lb_status->setText( tr( "Reading DataBase Data..." ) );
    progress->setMaximum( nstep );
@@ -540,6 +545,9 @@ DbgLv(2) << "BrDb:       noi ii id nGID dsc typ noityp"
 // scan the local disk for R/E/M/N data sets
 void US_DataModel::scan_local( )
 {
+   ldescs.clear();         // local descriptions
+   adescs.clear();         // all descriptions
+
    // start with AUC (raw) and edit files in directories of resultDir
    QString     rdir     = US_Settings::resultDir();
    QString     ddir     = US_Settings::dataDir();
@@ -1480,7 +1488,7 @@ DbgLv(1) << "RvwD:      nmult" << nmult;
          abort = false;     // signal to proceed with data tree build
       }
    }
-DbgLv(1) << "review_descs   abort" << abort;
+DbgLv(1) << "review_descs   abort flag:" << abort;
 
    return abort;
 }
@@ -1505,7 +1513,7 @@ int US_DataModel::index_substring( QString ss, int ixs, QStringList& sl )
    return sl.indexOf( rexp );
 }
 
-// get sublist from string list of substring matches at a given string position
+// Get sublist from string list of substring matches at given string position
 QStringList US_DataModel::filter_substring( QString ss, int ixs,
    QStringList& sl )
 {
@@ -1765,4 +1773,42 @@ QString US_DataModel::expGUIDauc( QString aucfile )
    return expGUID;
 }
 
+// Review and reset database description list after changes
+void US_DataModel::review_dbase()
+{
+   ddescs.clear();     // Wipe out the old DB descriptions list
+DbgLv(1) << "RvDB: #chgr #adesc" << chgrows.size() << adescs.size();
+
+   for ( int row = 0; row < adescs.size(); row++ )
+   {  // Review all records looking for changed DB records
+      cdesc           = adescs[ row ];
+
+      if ( chgrows.contains( row ) )
+      {  // Test whether to add to list if a changed row
+DbgLv(1) << "RvDB:   row state ID" << row << cdesc.recState << cdesc.recordID;
+
+         if ( cdesc.recordID < 0 )             // skip if DB rec removed
+            continue;                          //  or local-only
+
+DbgLv(1) << "RvDB:     ++ upd cdesc, row state" << row << cdesc.recState;
+      }
+
+      else if ( ( cdesc.recState & PAR_DB ) == 0 )
+         continue;                             // skip if local-only
+
+      // Modify contents and state to be DB-only
+      QString contdb  = cdesc.contents;
+      contdb          = contdb.section( " ", 0, 0 ) + " " +
+                        contdb.section( " ", 1, 1 );
+      cdesc.contents  = contdb;
+      cdesc.recState  = ( cdesc.recState & PAR_DB ) | REC_DB;
+
+      // Save this DB record to the DB list
+      ddescs << cdesc;
+   }
+DbgLv(1) << "RvDB:  #ddescs" << ddescs.size();
+
+   chgrows.clear();                            // Clear changed-row list
+   lb_status->setText( tr( "Database Review Complete" ) );
+}
 

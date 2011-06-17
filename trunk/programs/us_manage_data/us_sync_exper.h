@@ -24,10 +24,9 @@ class US_SyncExperiment : public QObject
       Sets up the database person ID and pointer to the database connection
 
           \param    db       A pointer to an open database connection
-          \param    investig Investigator string ("ID: LastName, FirstName")
           \param    parent   Pointer to parent QWidget.
       */
-      US_SyncExperiment( US_DB2*, QString, QWidget* = 0 );
+      US_SyncExperiment( US_DB2*, QWidget* = 0 );
 
       /*! \brief    Synchronize database and local experiment records
 
@@ -49,7 +48,6 @@ class US_SyncExperiment : public QObject
 
       QWidget*    parentw;
 
-      QString     invID;
       QString     expID;
       QString     rawID;
 
