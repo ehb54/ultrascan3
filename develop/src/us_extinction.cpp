@@ -628,6 +628,12 @@ void US_Extinction::plot()
                                          / ( 2 * pow(fitparameters[wavelengthScan_vector.size() + (3 * k) + 2], 2))));
             }
             poly_plot[i][j] *= fitparameters[i]; 
+				/*
+				if (i==1)
+				{
+					cout << wavelengthScan_vector[i].lambda.size() << ": " << poly_plot[i][j] << endl;
+				}
+				*/
          }
       }
       data_plot->setCurveData(curve[i], x_plot[i], y_plot[i], wavelengthScan_vector[i].lambda.size());
@@ -659,6 +665,15 @@ void US_Extinction::plot()
 			}
 	   	f.close();
       }
+		/*
+      for (k=0; k<order; k++)
+      {
+         cout << "a[" << k << "] = " << fitparameters[wavelengthScan_vector.size() + (3 * k)] << endl;
+         cout << "p[" << k << "] = " << fitparameters[wavelengthScan_vector.size() + (3 * k) + 1] << endl;
+         cout << "w[" << k << "] = " << fitparameters[wavelengthScan_vector.size() + (3 * k) + 2] << endl;
+		}
+		*/
+
    }
 
    data_plot->replot();
@@ -905,11 +920,57 @@ void US_Extinction::save()
          ts << tr("Peak width: ") << fitparameters[wavelengthScan_vector.size() + (i * 3) + 2] << " nm\n";
       }
       ts << "\n";
+		ts << "Equation to be multiplied by the relative concentration of each scan (printed below)\n";
+		ts << "to re-generate the curve for each scan:\n\n";
+		ts << "Concentration = Relative_Conc * SUM amplitude_i * exp((-(lambda - position_i)^2) / (2*width_i^2))\n";
+		ts << "\n";
       for (i=0; i<wavelengthScan_vector.size(); i++)
       {
          ts << tr("Relative Concentration of Scan ") << (i+1) << ": " << fitparameters[i] << "\n";
       }
       ts << "\n";
+		ts << "/* A small C++ program to calculate the concentration curve\n";
+	   ts << "   compile with \"g++ myprog.cpp\"\n";
+		ts << "   run with \"./a.out relative_concentration wavelength_start wavelength_end\"\n";
+		ts << "*/\n";
+		ts << "#include <iostream>\n"; 
+		ts << "#include <math.h>\n"; 
+		ts << "#include <cstdlib>\n"; 
+		ts << "using namespace std;\n"; 
+		ts << "int main (int argc, char **argv)\n"; 
+		ts << "{\n"; 
+		ts << "  float p[5], w[5], a[5], c=0.0, rel_conc;\n"; 
+		ts << "  int start, end;\n"; 
+      for (i=0; i<order; i++)
+      {
+         ts << "   a[" << i << "] = " << exp(fitparameters[wavelengthScan_vector.size() + (i * 3)]) << ";\n";
+         ts << "   p[" << i << "] = " << fitparameters[wavelengthScan_vector.size() + (i * 3) + 1] << ";\n";
+         ts << "   w[" << i << "] = " << fitparameters[wavelengthScan_vector.size() + (i * 3) + 2] << ";\n";
+      }
+		ts << "  if(argc < 4)\n"; 
+		ts << "  {\n"; 
+		ts << "     cout << \"\\nUsage: a,out relative_concentration wavelength_start wavelength_end\\n\";\n"; 
+		ts << "     return(-1);\n"; 
+		ts << "  }\n"; 
+		ts << "  else\n"; 
+		ts << "  {\n"; 
+		ts << "     rel_conc = atof(argv[1]);\n"; 
+		ts << "     start = atoi(argv[2]);\n"; 
+		ts << "     end = atoi(argv[3]);\n"; 
+		ts << "  }\n"; 
+		ts << "  for (int j=start; j<end; j++)\n"; 
+		ts << "  {\n"; 
+		ts << "     c = 0.0;\n"; 
+		ts << "     for (int i=0; i<5; i++)\n"; 
+		ts << "     {\n"; 
+		ts << "        c += rel_conc * a[i] * exp(-pow(j-p[i], 2.0)/(2.0*w[i]*w[i]));\n"; 
+		ts << "     }\n"; 
+		ts << "     cout << j << \", \" << c << endl;\n"; 
+		ts << "  }\n"; 
+		ts << "  return 0;\n"; 
+		ts << "}\n\n\n"; 
+
+
    }
    f.close();
    QPixmap p;
