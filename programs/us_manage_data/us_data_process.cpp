@@ -12,21 +12,19 @@ US_DataProcess::US_DataProcess( US_DataModel* dmodel, QWidget* parent /*=0*/ )
 {
    parentw          = parent;
    da_model         = dmodel;
-   QString investig = da_model->invtext();
-   QString invID    = investig.section( ":", 0, 0 );
    db               = da_model->dbase();
    dbg_level        = US_Settings::us_debug();
 
-   syncExper        = new US_SyncExperiment( db, invID, parent );
+   syncExper        = new US_SyncExperiment( db, parent );
 }
 
 // perform a record upload to the database from local disk
-int US_DataProcess::record_upload( int irow )
+int US_DataProcess::record_upload( int row )
 {
-DbgLv(1) << "REC_ULD: row" << irow+1;
+DbgLv(1) << "REC_ULD: row" << row+1;
    int stat = 0;
 
-   cdesc            = da_model->row_datadesc( irow );
+   cdesc            = da_model->row_datadesc( row );
 
    QStringList query;
    QString filepath = cdesc.filename;
@@ -36,8 +34,6 @@ DbgLv(1) << "REC_ULD: row" << irow+1;
 
    if      ( cdesc.recType == 1 )
    {  // upload a Raw record
-      //US_DataIO2::RawData        rdata;
-
       QString runID    = filename.section( ".",  0,  0 );
       QString tripl    = filename.section( ".", -4, -2 )
                          .replace( ".", " / " );
@@ -51,12 +47,12 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
 
       if ( stat == 0 )
       {
+         idData = cdesc.recordID;
          stat   = db->writeBlobToDB( filepath,
                                      QString( "upload_aucData" ),
                                      idData );
          errMsg = tr( "Raw upload writeBlobToDB() status %1" ).arg( stat );
          stat   = ( stat == 0 ) ? 0 : 3041;
-
       }
    }
 
@@ -110,6 +106,7 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
          errMsg = tr( "writeBlob Edited stat %1, idData %2" )
             .arg( stat ).arg( idData );
          stat = ( stat == 0 ) ? 0 : 3042;
+         cdesc.recordID = idData;
       }
    }
 
@@ -123,6 +120,7 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
       stat   = model.write( db );     // store model to database
       errMsg = tr( "model write to DB stat %1" ).arg( stat );
       stat   = ( stat == 0 ) ? 0 : 3043;
+      cdesc.recordID = db->lastInsertID();
 DbgLv(1) << errMsg;
    }
 
@@ -137,6 +135,7 @@ DbgLv(2) << "NOISE: (2) filepath" << filepath;
       stat   = noise.write( db );
       errMsg = tr( "noise write to DB stat %1" ).arg( stat );
       stat   = ( stat == 0 ) ? 0 : 3044;
+      cdesc.recordID = db->lastInsertID();
    }
 
    else
@@ -145,16 +144,21 @@ DbgLv(2) << "NOISE: (2) filepath" << filepath;
       stat   = 3045;
    }
 
+   if ( stat == 0 )
+   {
+      da_model->change_datadesc( cdesc, row );
+   }
+
    return stat;
 }
 
 // perform a record download from the database to local disk
-int US_DataProcess::record_download( int irow )
+int US_DataProcess::record_download( int row )
 {
    int stat = 0;
    QStringList query;
 
-   cdesc            = da_model->row_datadesc( irow );
+   cdesc            = da_model->row_datadesc( row );
 
    int idData       = cdesc.recordID;
    QString dataID   = QString::number( idData );
@@ -164,8 +168,8 @@ int US_DataProcess::record_download( int irow )
    QString runID    = filename.section( ".",  0,  0 );
 
    filepath         = ( filepath == filename ) ?
-                      US_Settings::resultDir() + "/" + runID + "/" + filename :
-                      filepath;
+                     US_Settings::resultDir() + "/" + runID + "/" + filename :
+                     filepath;
 
    QDir dirp;
    QString filedir  = filepath.section( "/", 0, -2 );
@@ -262,16 +266,23 @@ int US_DataProcess::record_download( int irow )
       stat   = 3015;
    }
 
+   if ( stat == 0 )
+   {
+      cdesc.recState |= US_DataModel::REC_DB;
+      da_model->change_datadesc( cdesc, row );
+   }
+
    return stat;
 }
 // perform a record remove from the database
-int US_DataProcess::record_remove_db( int irow )
+int US_DataProcess::record_remove_db( int row )
 {
    int stat = 0;
    QStringList query;
 
-   cdesc            = da_model->row_datadesc( irow );
-   QString dataID   = QString::number( cdesc.recordID );
+   cdesc            = da_model->row_datadesc( row );
+   int     irecID   = cdesc.recordID;
+   QString dataID   = QString::number( irecID );
 
    if      ( cdesc.recType == 1 )
    {  // remove a Raw record
@@ -290,6 +301,8 @@ DbgLv(1) << "REC_RMV: exp ID" << cdesc.parentID;
          errMsg = tr( "delete_rawData status=%1" ).arg( stat );
          stat   = 2011;
       }
+      else
+         irecID = -1;
    }
 
    else if ( cdesc.recType == 2 )
@@ -304,6 +317,8 @@ DbgLv(1) << "EDT_RMV:   stat" << stat;
          errMsg = tr( "delete_editedData status=%1" ).arg( stat );
          stat   = 2012;
       }
+      else
+         irecID = -1;
 DbgLv(1) << "EDT_RMV:    stat" << stat;
    }
 
@@ -317,6 +332,8 @@ DbgLv(1) << "EDT_RMV:    stat" << stat;
          errMsg = tr( "delete_model status=%1" ).arg( stat );
          stat   = 2013;
       }
+      else
+         irecID = -1;
    }
 
    else if ( cdesc.recType == 4 )
@@ -327,8 +344,12 @@ DbgLv(1) << "EDT_RMV:    stat" << stat;
       if ( ( stat = db->statusQuery( query ) ) != 0 )
       {
          errMsg = tr( "delete_noise status=%1" ).arg( stat );
+DbgLv(1) << "NOI_RMV:   dataID" << dataID << "errMsg:" << errMsg;
+DbgLv(1) << "NOI_RMV:    lastErr" << db->lastError() << db->lastErrno();
          stat   = 2014;
       }
+      else
+         irecID = -1;
    }
 
    else
@@ -336,14 +357,21 @@ DbgLv(1) << "EDT_RMV:    stat" << stat;
       errMsg = tr( "DB remove attempt for type=%1" ).arg( cdesc.recType );
       stat   = 2015;
    }
+
+   if ( stat == 0 )
+   {
+      cdesc.recordID = irecID;
+      da_model->change_datadesc( cdesc, row );
+   }
+
    return stat;
 }
 
 // perform a record remove from local disk
-int US_DataProcess::record_remove_local( int irow )
+int US_DataProcess::record_remove_local( int row )
 {
    int stat = 0;
-   cdesc            = da_model->row_datadesc( irow );
+   cdesc            = da_model->row_datadesc( row );
 
    QString filepath = cdesc.filename;
    QString filename = filepath.section( "/", -1, -1 );
@@ -377,6 +405,11 @@ int US_DataProcess::record_remove_local( int irow )
    {  // file did not exist
       errMsg = tr( "*ERROR* attempt to remove non-existent file\n" ) + filepath;
       stat   = 2000;
+   }
+
+   if ( stat == 0 )
+   {
+      da_model->change_datadesc( cdesc, row );
    }
 
    return stat;

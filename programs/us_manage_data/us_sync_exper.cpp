@@ -5,13 +5,13 @@
 #include "us_settings.h"
 
 // Check synchronizing of experiment on database and local with raw data
-US_SyncExperiment::US_SyncExperiment( US_DB2* a_db, QString a_invID,
-      QWidget* parent /*= 0*/ )
+US_SyncExperiment::US_SyncExperiment( US_DB2* a_db, QWidget* parent /*= 0*/ )
 {
    db         = a_db;
-   invID      = a_invID;
    parentw    = parent;
    dbg_level  = US_Settings::us_debug();
+
+   QString invID = QString::number( US_Settings::us_inv_ID() );
 
    // get lists of experimental IDs and run IDs
    QStringList query;
@@ -71,13 +71,15 @@ int US_SyncExperiment::synchronize( US_DataModel::DataDesc& cdesc )
       db->query( query );
 
       if ( db->lastErrno() == US_DB2::OK )
-      {  // get experiment ID and run ID
+      {  // get IDs for raw(AUC), experiment, and run
          db->next();
+         rawID      = db->value( 0 ).toString();
          expID      = db->value( 1 ).toString();
          int jj     = expIDs.indexOf( expID );
          havedexp   = ( jj >= 0 );
          havedraw   = true;
          runID      = ( havedexp ) ? runIDs.at( jj ) : runID;
+         cdesc.recordID   = rawID.toInt();
 
          if ( havedexp )
          {  // pick up GUID for possible compare to local
@@ -124,7 +126,8 @@ DbgLv(1) << "db get_exp_inf: dateUpd" << db->value(12).toString();
                   haverexp         = true;
                   cdesc.parentGUID = rexpGUID;
                   cdesc.parentID   = expID.toInt();
-                  DbgLv(1) << "   EXP update, ID runID" << expID << runID;
+                  cdesc.recordID   = rawID.toInt();
+                  DbgLv(1) << "   EXP update: ID exp run raw" << expID << runID << rawID;
                }
                else
                {
