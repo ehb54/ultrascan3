@@ -44,6 +44,7 @@ HEADERS      = us_analyte.h       \
                us_project.h       \
                us_settings.h      \
                us_simparms.h      \
+               us_solute.h        \
                us_solution.h      \
                us_solution_vals.h \
                us_stiffbase.h     \
@@ -74,6 +75,7 @@ SOURCES      = us_analyte.cpp       \
                us_project.cpp       \
                us_settings.cpp      \
                us_simparms.cpp      \
+               us_solute.cpp        \
                us_solution.cpp      \
                us_solution_vals.cpp \
                us_stiffbase.cpp     \
