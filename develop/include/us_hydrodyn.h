@@ -167,6 +167,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QString pdb_file;
 
+      US_Hydrodyn_Saxs *saxs_plot_window;
+      bool saxs_plot_widget;
+
    private:
       US_Config *USglobal;
 
@@ -183,13 +186,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool misc_widget;
       bool pdb_parsing_widget;
       bool pdb_visualization_widget;
+      bool saxs_widget;
       bool saxs_options_widget;
       bool bd_widget;
       bool bd_options_widget;
       bool anaflex_options_widget;
       bool dmd_options_widget;
-      bool saxs_widget;
-      bool saxs_plot_widget;
       bool advanced_config_widget;
       bool save_widget;
 
@@ -326,7 +328,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Grid *grid_window;
       US_Hydrodyn_PDB_Visualization *pdb_visualization_window;
       US_Hydrodyn_PDB_Parsing *pdb_parsing_window;
-      US_Hydrodyn_Saxs *saxs_plot_window;
       US_Hydrodyn_SaxsOptions *saxs_options_window;
       US_Hydrodyn_AdvancedConfig *advanced_config_window;
       US_Hydrodyn_Save *save_window;

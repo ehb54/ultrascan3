@@ -71,6 +71,12 @@ int US_Hydrodyn_Saxs::run_saxs_iq_foxs( QString pdb )
 
    foxs->addArgument( pdb );
 
+   cout << 
+      QString("foxs -q %1 -s %2 %3\n")
+      .arg( our_saxs_options->end_q )
+      .arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q) )
+      .arg( pdb );
+
    connect( foxs, SIGNAL(readyReadStdout()), this, SLOT(foxs_readFromStdout()) );
    connect( foxs, SIGNAL(readyReadStderr()), this, SLOT(foxs_readFromStderr()) );
    connect( foxs, SIGNAL(processExited()), this, SLOT(foxs_processExited()) );

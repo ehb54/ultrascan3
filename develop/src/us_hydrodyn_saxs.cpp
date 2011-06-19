@@ -335,6 +335,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_plot_saxs_sans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_plot_saxs_sans, SIGNAL(clicked()), SLOT(show_plot_saxs_sans()));
 
+   lbl_current_method = new QLabel( "",this );
+   lbl_current_method->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+   lbl_current_method->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_current_method->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   lbl_current_method->setMinimumHeight(minHeight1);
+   lbl_current_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   set_current_method_text();
+
    pb_load_saxs_sans = new QPushButton("", this);
    Q_CHECK_PTR(pb_load_saxs_sans);
    pb_load_saxs_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -740,10 +748,15 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl->addWidget(rb_sans);
    background->addMultiCellLayout(hbl, j, j, 0, 1);
    j++;
+   
+   QBoxLayout *hbl_iqq = new QHBoxLayout();
+   hbl_iqq->addWidget(pb_plot_saxs_sans);
+   hbl_iqq->addWidget(lbl_current_method);
+   hbl_iqq->addWidget(progress_saxs);
 
-   background->addWidget(pb_plot_saxs_sans, j, 0);
-   background->addWidget(progress_saxs, j, 1);
+   background->addMultiCellLayout(hbl_iqq, j, j, 0, 1);
    j++;
+
    background->addWidget(pb_load_saxs_sans, j, 0);
    background->addWidget(pb_clear_plot_saxs, j, 1);
    j++;
@@ -3503,6 +3516,13 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       run_saxs_iq_crysol( model_filepathname );
       return;
    }
+   if ( our_saxs_options->saxs_iq_native_debye ) 
+   {
+      // cout << model_filepathname << endl;
+      // calc_saxs_iq_native_debye();
+      calc_saxs_iq_native_foxs();
+      return;
+   }
    // don't forget to later merge deleted waters into model_vector
    // right now we are going with first residue map entry
    stopFlag = false;
@@ -4832,6 +4852,7 @@ void US_Hydrodyn_Saxs::load_saxs_sans()
       
 void US_Hydrodyn_Saxs::update_saxs_sans()
 {
+   set_current_method_text();
    if ( rb_sans->isChecked() ) 
    {
       pb_plot_saxs_sans->setText(tr("Compute SANS Curve"));
@@ -6951,3 +6972,42 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
    }
    return mw;
 }
+
+void US_Hydrodyn_Saxs::set_current_method_text() 
+{
+   QString cm = tr("unknown");
+   if ( our_saxs_options->saxs_sans == 0 ) // saxs, probably should be enum
+   {
+      if ( our_saxs_options->saxs_iq_native_debye )
+      {
+         cm = "Native debye";
+      } else {
+         if ( our_saxs_options->saxs_iq_crysol )
+         {
+            cm = "Crysol";
+         } else {
+            if ( our_saxs_options->saxs_iq_foxs )
+            {
+               cm = "FoXS";
+            } 
+         }
+      }
+   } else {
+      if ( our_saxs_options->sans_iq_native_debye )
+      {
+         cm = "Native debye";
+      } else {
+         if ( our_saxs_options->sans_iq_cryson )
+         {
+            cm = "Cryson";
+         } 
+      }
+   }
+   lbl_current_method->setText( cm );
+}
+      
+            
+            
+         
+      
+   

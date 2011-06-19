@@ -17,6 +17,7 @@
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
+#include <qregexp.h>
 
 #include <qwt_plot.h>
 #ifdef QT4
@@ -43,6 +44,8 @@ using namespace std;
 struct saxs_atom
 {
    QString saxs_name;
+   QString hybrid_name;
+   int hydrogens;    
    float pos[3];
    float excl_vol;
    float b;           // scattering factor b for p(r) calcs
@@ -105,6 +108,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPrinter printer;
 
       QPushButton *pb_plot_saxs_sans;
+      QLabel      *lbl_current_method;
       QPushButton *pb_load_saxs_sans;
       QPushButton *pb_clear_plot_saxs;
       QPushButton *pb_plot_pr;
@@ -251,6 +255,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QProgressBar *progress;
 
+      void set_current_method_text();
+
    private:
 
       QProcess *rasmol;
@@ -343,6 +349,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString crysol_last_pdb_base;
       QString cryson_last_pdb;
       QString cryson_last_pdb_base;
+
+      void calc_saxs_iq_native_debye();
+      void calc_saxs_iq_native_foxs();
 
    private slots:
 

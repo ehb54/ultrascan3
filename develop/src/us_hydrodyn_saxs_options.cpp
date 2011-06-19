@@ -774,6 +774,10 @@ void US_Hydrodyn_SaxsOptions::set_saxs_iq_native_debye()
    cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
    cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_text();
+   }
 }
 
 void US_Hydrodyn_SaxsOptions::set_saxs_iq_crysol()
@@ -784,6 +788,10 @@ void US_Hydrodyn_SaxsOptions::set_saxs_iq_crysol()
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
    cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_text();
+   }
 }
 
 void US_Hydrodyn_SaxsOptions::set_saxs_iq_foxs()
@@ -794,6 +802,10 @@ void US_Hydrodyn_SaxsOptions::set_saxs_iq_foxs()
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
    cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_text();
+   }
 }
 
 void US_Hydrodyn_SaxsOptions::update_crysol_max_harmonics(double val)
@@ -862,6 +874,10 @@ void US_Hydrodyn_SaxsOptions::set_sans_iq_native_debye()
    (*saxs_options).sans_iq_cryson = !cb_sans_iq_native_debye->isChecked();
    cb_sans_iq_cryson->setChecked((*saxs_options).sans_iq_cryson);
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_text();
+   }
 }
 
 void US_Hydrodyn_SaxsOptions::set_sans_iq_cryson()
@@ -870,6 +886,10 @@ void US_Hydrodyn_SaxsOptions::set_sans_iq_cryson()
    (*saxs_options).sans_iq_native_debye = !cb_sans_iq_cryson->isChecked();
    cb_sans_iq_native_debye->setChecked((*saxs_options).sans_iq_native_debye);
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_text();
+   }
 }
 
 void US_Hydrodyn_SaxsOptions::update_wavelength(double val)
