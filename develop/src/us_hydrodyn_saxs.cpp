@@ -7006,3 +7006,4 @@ void US_Hydrodyn_Saxs::set_current_method_text()
    }
    lbl_current_method->setText( cm );
 }
+
