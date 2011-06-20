@@ -67,7 +67,7 @@ class US_ConvertGui : public US_Widgets
       QLabel*       lb_triple;
       QListWidget*  lw_triple;                        // cell, channel, wavelength
 
-      QListWidget*  lw_todoinfo;                      // todo list
+      QListWidget*  lw_todoinfo;                      // to do list
 
       QwtCounter*   ct_from;
       QwtCounter*   ct_to;
