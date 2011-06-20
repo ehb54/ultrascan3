@@ -77,11 +77,7 @@ class US_EXTERN US_License : public QDialog
       QString platform;
       QString version;
       QString licensetype;
-      QString code1;
-      QString code2;
-      QString code3;
-      QString code4;
-      QString code5;
+      QString code;
       QString expiration;
 
 
@@ -93,11 +89,7 @@ class US_EXTERN US_License : public QDialog
       QLineEdit *le_zip;
       QLineEdit *le_phone;
       QLineEdit *le_email;
-      QLineEdit *le_code1;
-      QLineEdit *le_code2;
-      QLineEdit *le_code3;
-      QLineEdit *le_code4;
-      QLineEdit *le_code5;
+      QLineEdit *le_code;
       QLineEdit *le_expiration;
 
       QComboBox *cbb_state;
@@ -130,11 +122,7 @@ class US_EXTERN US_License : public QDialog
       void update_email(const QString &);
       void update_version(int);
       void update_licensetype(int);
-      void update_code1(const QString &);
-      void update_code2(const QString &);
-      void update_code3(const QString &);
-      void update_code4(const QString &);
-      void update_code5(const QString &);
+      void update_code(const QString &);
       void update_expiration(const QString &);
       void update_opteron_rb();
       void update_intel_rb();

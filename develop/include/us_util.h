@@ -195,7 +195,7 @@ class US_EXTERN US_Config : public QObject
 #define ETC_DIR   "etc"
 #define USRC      "etc/usrc.conf"
 #define USCOLORS  "etc/uscolorsconf.bin"
-#define USLICENSE "etc/uslicense"
+#define USLICENSE "etc/us_license.txt"
 #define USDB      "etc/usdbconf.bin"
 #define USDBINIT  "etc/mysql.sql"
 

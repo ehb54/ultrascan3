@@ -71,7 +71,6 @@ private slots:
   void us_license();    
   
 public slots:
-  QString encode( QString, QString );
   bool read();
 };
 

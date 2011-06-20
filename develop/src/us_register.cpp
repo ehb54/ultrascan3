@@ -247,20 +247,15 @@ bool US_Register::read()
     flag = false;
     exit( -1 );
   }
-
-  register_list.code1 = encode(register_list.lastname, register_list.firstname);
-  register_list.code2 = encode(register_list.company,  register_list.address);
-  register_list.code3 = encode(register_list.city,     register_list.zip);
-  register_list.code4 = encode(register_list.phone,    register_list.email);
-  register_list.code5 = encode((register_list.platform + register_list.os 
-                              + register_list.version), register_list.expiration);
-  
-  temp_license = register_list.code1 + "-" 
-               + register_list.code2 + "-"
-               + register_list.code3 + "-"
-               + register_list.code4 + "-"
-               + register_list.code5; 
-
+  QString concat;
+  QChar cval;
+  concat = register_list.expiration + register_list.email;
+  temp_license ="";
+  for (unsigned int i=0; i<concat.length(); i++)
+  {	cval = concat[i];
+		temp_license += str.sprintf("%X", cval.unicode());
+  }
+  temp_license.truncate(70);
   if ( QString::compare(temp_license, register_list.license) == 0 )
   {
     QDate today = QDate::currentDate();
@@ -321,43 +316,5 @@ void US_Register::license_info( const QString& str )
       exit(0);
       break;
   }
-}
-
-/*!
-  A secure function for creating a license key.
-*/
-QString US_Register::encode( QString str1, QString str2 )
-{
-  QString STR1, STR2, SUM, SUM1, SUM2, code;
-  QChar c;
-  int sum1 = 0, sum2 = 0, x;
-  float j;
-
-  STR1 = str1.upper();
-  STR2 = str2.upper();
-  
-  for ( unsigned int i = 0; i < (unsigned int)STR1.length(); i++ )
-  {
-    c = STR1.at(i);
-    sum1 += c.unicode();  
-  }
-  
-  SUM1 = QString::number( sum1 );
-  
-  for ( unsigned int i = 0; i < (unsigned int)STR2.length(); i++ )
-  {
-    c = STR2.at(i);
-    sum2 += c.unicode();
-  }
-  
-  SUM2 = QString::number( sum2 );
-  SUM  = SUM1 + SUM2;
-  j    = SUM.toDouble();
-  x    = int( fabs( sin( j ) ) * 65535 );
-
-  code.sprintf("000%x", x);
-  code = code.right(4);
-
-  return code.upper();
 }
 

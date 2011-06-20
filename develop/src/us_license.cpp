@@ -4,7 +4,7 @@
 
 US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, name, false)
 {
-   int spacing=5, column1 = 90, column2 = 10, column3=110, column4=60;
+   int spacing=5, column1 = 90, column2 = 10, column3=110;
    int xpos=spacing, ypos=spacing;
    int buttonw = 180;
    int buttonh = 26;
@@ -312,62 +312,10 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
    xpos += buttonw + spacing;
 
-   le_code1 = new QLineEdit(this);
-   le_code1->setGeometry(xpos, ypos, column4, buttonh);
-   connect(le_code1, SIGNAL(textChanged(const QString &)), 
-           SLOT(update_code1(const QString &)));
-
-   xpos += column4 + spacing;
-
-   lbl_code = new QLabel("-",this);
-   lbl_code->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_code->setGeometry(xpos, ypos, column2, buttonh);
-
-   xpos += column2 + spacing;
-
-   le_code2 = new QLineEdit(this);
-   le_code2->setGeometry(xpos, ypos, column4, buttonh);
-   connect(le_code2, SIGNAL(textChanged(const QString &)), 
-           SLOT(update_code2(const QString &)));
-
-   xpos += column4 + spacing;
-
-   lbl_code = new QLabel("-",this);
-   lbl_code->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_code->setGeometry(xpos, ypos, column2, buttonh);
-
-   xpos += column2 + spacing;
-
-   le_code3 = new QLineEdit(this);
-   le_code3->setGeometry(xpos, ypos, column4, buttonh);
-   connect(le_code3, SIGNAL(textChanged(const QString &)), 
-           SLOT(update_code3(const QString &)));
-
-   xpos += column4 + spacing;
-
-   lbl_code = new QLabel("-",this);
-   lbl_code->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_code->setGeometry(xpos, ypos, column2, buttonh);
-
-   xpos += column2 + spacing;
-
-   le_code4 = new QLineEdit(this);
-   le_code4->setGeometry(xpos, ypos, column4, buttonh);
-   connect(le_code4, SIGNAL(textChanged(const QString &)), 
-           SLOT(update_code4(const QString &)));
-
-   xpos += column4 + spacing;
-
-   lbl_code = new QLabel("-",this);
-   lbl_code->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_code->setGeometry(xpos, ypos, column2, buttonh);
-
-   xpos += column2 + spacing;
-
-   le_code5 = new QLineEdit(this);
-   le_code5->setGeometry(xpos, ypos, column4, buttonh);
-   connect(le_code5, SIGNAL(textChanged(const QString &)), 
-           SLOT(update_code5(const QString &)));
+   le_code = new QLineEdit(this);
+   le_code->setGeometry(xpos, ypos, full_buttonw, buttonh);
+   connect(le_code, SIGNAL(textChanged(const QString &)), 
+           SLOT(update_code(const QString &)));
 
    ypos += spacing + buttonh;
    xpos = spacing;
@@ -491,7 +439,7 @@ void US_License::save()
       ts<<os<<"\n";
       ts<<version<<"\n";
       ts<<licensetype<<"\n";
-      ts<<code1<<"-"<<code2<<"-"<<code3<<"-"<<code4<<"-"<<code5<<"\n";
+      ts<<code<<"\n";
       ts<<expiration<<"\n";
 
       QMessageBox::message(
@@ -524,29 +472,9 @@ void US_License::import()
    if (texfile.open(IO_ReadOnly))
    {
       QTextStream ts(&texfile);
-      while (line != "_____________________CUT HERE_____________________" && !ts.atEnd())
-      {
-         line = ts.readLine();
-      }
-      if (!ts.atEnd())
-      {
-         lastname = ts.readLine();
-         le_lastname->setText(lastname);
-         count++;
-      }
-      else
-      {
-         QMessageBox::message(
-                              tr( "Attention:" ), 
-                              tr( "This file does not seem to be an E-mail text file.\n"
-                                  "It is missing the\n\n"
-                                  "\"_____________________CUT HERE_____________________\"\n\n"
-                                  "text string.\n"
-                                  "Please load an e-mail license message file or add the string "
-                                  "exactly as shown to the\n"
-                                  "top of the license file so this program can recognize it." ) );
-         return;
-      }
+      lastname = ts.readLine();
+      le_lastname->setText(lastname);
+      count++;
       if (!ts.atEnd())
       {
          firstname = ts.readLine();
@@ -676,16 +604,7 @@ void US_License::import()
       if (!ts.atEnd())
       {
          QString Code=ts.readLine();
-         code1 = Code.section('-',0,0);
-         le_code1->setText(code1);
-         code2 = Code.section('-',1,1);
-         le_code2->setText(code2);
-         code3 = Code.section('-',2,2);
-         le_code3->setText(code3);
-         code4 = Code.section('-',3,3);
-         le_code4->setText(code4);
-         code5 = Code.section('-',4,4);
-         le_code5->setText(code5);
+         le_code->setText(Code);
       }
       if (!ts.atEnd())
       {
@@ -879,29 +798,9 @@ void US_License::update_licensetype(int item)
    licensetype = cbb_licensetype->text(item);
 }
 
-void US_License::update_code1(const QString &str)
+void US_License::update_code(const QString &str)
 {
-   code1 = str;
-}
-
-void US_License::update_code2(const QString &str)
-{
-   code2 = str;
-}
-
-void US_License::update_code3(const QString &str)
-{
-   code3 = str;
-}
-
-void US_License::update_code4(const QString &str)
-{
-   code4 = str;
-}
-
-void US_License::update_code5(const QString &str)
-{
-   code5 = str;
+   code = str;
 }
 
 void US_License::update_expiration(const QString &str)
