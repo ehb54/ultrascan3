@@ -214,6 +214,7 @@ void US_Hydrodyn_Saxs::refresh(
          }
       }
    }
+
    // pb_plot_saxs->setEnabled(source ? false : true);
    if ( source )
    {
