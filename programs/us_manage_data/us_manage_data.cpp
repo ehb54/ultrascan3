@@ -210,7 +210,8 @@ DbgLv(1) << "te_status size" << te_status->size();
    ntrows = 5;
    ntcols = theads.size();
    tw_recs->setHeaderLabels( theads );
-   tw_recs->setFont(  QFont( "monospace", US_GuiSettings::fontSize() - 1 ) );
+   tw_recs->setFont(  QFont( US_Widgets::fixedFont().family(),
+                        US_GuiSettings::fontSize() - 1 ) );
    tw_recs->setObjectName( QString( "tree-widget" ) );
    tw_recs->setAutoFillBackground( true );
    tw_recs->installEventFilter( this );

@@ -26,13 +26,6 @@ class US_DataTree : public QObject
 
    public slots:
       void dtree_help(       void );
-      void item_upload(      void );
-      void item_download(    void );
-      void item_remove_db(   void );
-      void item_remove_loc(  void );
-      void item_remove_all(  void );
-      void items_remove(     void );
-      void item_details(     void );
       void row_context_menu( QTreeWidgetItem* );
 
    private:
@@ -48,9 +41,13 @@ class US_DataTree : public QObject
 
       QTreeWidgetItem* tw_item;      // current tree widget item
 
-      US_DataModel::DataDesc  cdesc; // current record description
+      US_DataModel::DataDesc    cdesc;     // current record description
 
       QList< QTreeWidgetItem* > selitems;  // all selected items
+
+      QVector< int >            selrows;   // all selected rows
+      QVector< int >            actrows;   // all action rows
+      QVector< int >            rawrows;   // Raw selected rows
 
       QLabel*       lb_status;
 
@@ -85,9 +82,18 @@ class US_DataTree : public QObject
       int           dbg_level;
 
    private slots:
-      void record_type(      int,     QString& );
-      QString action_text(   QString, QString  );
-      void    action_result( int,     QString  );
-      QString record_state(  int               );
+      void    item_upload    ( void );
+      void    item_download  ( void );
+      void    item_remove_db ( void );
+      void    item_remove_loc( void );
+      void    item_remove_all( void );
+      void    item_details   ( void );
+      void    items_details  ( void );
+      int     action_rows    ( void );
+      void    record_type    ( int,     QString& );
+      int     do_actions     ( QString, QString  );
+      QString action_text    ( QString, QString  );
+      void    action_result  ( int,     QString  );
+      QString record_state   ( int               );
 };
 #endif

@@ -16,12 +16,15 @@ class US_DataProcess : public QObject
    public:
       US_DataProcess( US_DataModel*, QWidget* = 0 );
 
-      int record_upload(       int );
-      int record_download(     int );
-      int record_remove_db(    int );
-      int record_remove_local( int );
+      int     record_upload      ( int );
+      int     record_download    ( int );
+      int     record_remove_db   ( int );
+      int     record_remove_local( int );
 
-      QString lastError( void ) { return errMsg; }
+      QString lastError          ( void     );
+      void    partialError       ( int, int );
+      void    appendError        ( QString  );
+      bool    raw_ancestor_ok    ( int      );
 
    private:
       QString                 errMsg;     // message from last error
@@ -38,8 +41,8 @@ class US_DataProcess : public QObject
 
       int                     dbg_level;
 
+   private slots:
       QString get_model_filename( QString );
       QString get_noise_filename( QString );
-
 };
 #endif

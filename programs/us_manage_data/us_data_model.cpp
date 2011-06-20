@@ -350,6 +350,7 @@ DbgLv(2) << "BrDb:      label filename comment" << label << filename << comment;
       cdesc.contents    = contents;
       cdesc.label       = label;
       cdesc.description = comment;
+      cdesc.filemodDate = "";
       cdesc.lastmodDate = date;
 
       if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
@@ -410,6 +411,7 @@ DbgLv(2) << "BrDb:     edt ii id eGID rGID label date"
                           filebase.section( ".", 0, 2 ) :
                           comment;
       cdesc.label       = cdesc.description;
+      cdesc.filemodDate = "";
       cdesc.lastmodDate = date;
 
       if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
@@ -467,6 +469,7 @@ lb_status->setText("Getting Model Info");
       cdesc.contents    = contents;
       cdesc.label       = label;
       cdesc.description = descript;
+      cdesc.filemodDate = "";
       cdesc.lastmodDate = date;
 
       if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
@@ -524,6 +527,7 @@ lb_status->setText("Getting Noise Info");
       cdesc.contents    = contents;
       cdesc.label       = label;
       cdesc.description = descript;
+      cdesc.filemodDate = "";
       cdesc.lastmodDate = date;
 DbgLv(2) << "BrDb:       noi ii id nGID dsc typ noityp"
    << ii << irecID << noiseGUID << descript << cdesc.subType << noiseType;
@@ -619,6 +623,7 @@ DbgLv(2) << "BrLoc:      contents" << contents;
          cdesc.lastmodDate = US_Util::toUTCDatetimeText( QFileInfo( aucfile )
                              .lastModified().toUTC().toString( Qt::ISODate )
                              , true );
+         cdesc.filemodDate = cdesc.lastmodDate;
 
          if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
             cdesc.dataGUID    = US_Util::new_guid();
@@ -664,6 +669,7 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
             cdesc.lastmodDate = US_Util::toUTCDatetimeText( QFileInfo( edtfile )
                                 .lastModified().toUTC().toString( Qt::ISODate )
                                 , true );
+            cdesc.filemodDate = cdesc.lastmodDate;
 
             if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
                cdesc.dataGUID    = US_Util::new_guid();
@@ -703,6 +709,7 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
       cdesc.lastmodDate = US_Util::toUTCDatetimeText( QFileInfo( modfil )
                           .lastModified().toUTC().toString( Qt::ISODate )
                           , true );
+      cdesc.filemodDate = cdesc.lastmodDate;
 
       if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
          cdesc.dataGUID    = US_Util::new_guid();
@@ -740,6 +747,7 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
       cdesc.lastmodDate = US_Util::toUTCDatetimeText( QFileInfo( noifil )
                           .lastModified().toUTC().toString( Qt::ISODate )
                           , true );
+      cdesc.filemodDate = cdesc.lastmodDate;
 
       if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
          cdesc.dataGUID    = US_Util::new_guid();
@@ -793,7 +801,7 @@ DbgLv(2) << "MERGE: nd nl dlab llab"
       {  // records match in GUID:  merge them into one
          descd.recState    |= descl.recState;     // OR states
          descd.filename     = descl.filename;     // filename from local
-         descd.lastmodDate  = descl.lastmodDate;  // last mod date from local
+         descd.filemodDate  = descl.filemodDate;  // file last mod from local
          descd.description  = descl.description;  // description from local
 //if ( descl.recType == 3 && descd.contents != descl.contents ) {
 // US_Model modell;
@@ -1065,6 +1073,7 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
       cdesc.lastmodDate = US_Util::toUTCDatetimeText(
                           QDateTime::currentDateTime().toUTC()
                           .toString( Qt::ISODate ), true );
+      cdesc.filemodDate = cdesc.lastmodDate;
 
       dlabel = dlabel.section( ".", 0, 0 );
       dindex = QString().sprintf( "%4.4d", kndx++ );
@@ -1137,6 +1146,7 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
       cdesc.lastmodDate = US_Util::toUTCDatetimeText(
                           QDateTime::currentDateTime().toUTC()
                           .toString( Qt::ISODate ), true );
+      cdesc.filemodDate = cdesc.lastmodDate;
 
       dlabel = dlabel.section( ".", 0, 0 );
       dindex = QString().sprintf( "%4.4d", kndx++ );
@@ -1209,6 +1219,7 @@ DbgLv(1) << "sort_desc: nrecs" << nrecs;
       cdesc.lastmodDate = US_Util::toUTCDatetimeText(
                           QDateTime::currentDateTime().toUTC()
                           .toString( Qt::ISODate ), true );
+      cdesc.filemodDate = cdesc.lastmodDate;
 
       dlabel = dlabel.section( ".", 0, 0 );
       dindex = QString().sprintf( "%4.4d", kndx++ );
@@ -1467,6 +1478,8 @@ DbgLv(1) << "RvwD:      nmult" << nmult;
                cdesc.filename.section( "/",  0, -2 ) + "\n" +
                tr( "  File Name:  " ) +
                cdesc.filename.section( "/", -1, -1 ) + "\n" +
+               tr( "  File Last Mod:  " ) +
+               cdesc.filemodDate + "\n" +
                tr( "  Last Mod Date:  " ) +
                cdesc.lastmodDate + "\n";
          }
@@ -1476,7 +1489,8 @@ DbgLv(1) << "RvwD:      nmult" << nmult;
          editd->setWindowTitle( tr( "Data Set Duplicate GUID Details" ) );
          editd->move( QCursor::pos() + QPoint( 200, 200 ) );
          editd->resize( 600, 500 );
-         editd->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
+         editd->e->setFont( QFont( US_Widgets::fixedFont().family(),
+                            US_GuiSettings::fontSize() ) );
          editd->e->setText( msg );
          editd->show();
 
