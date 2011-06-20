@@ -132,8 +132,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
          }
       }
    }
-   // pb_plot_saxs->setEnabled(source ? false : true);
-   pb_plot_saxs_sans->setEnabled(true);
+   pb_plot_saxs->setEnabled(source ? false : true);
+   // pb_plot_saxs_sans->setEnabled(true);
    te_filename2->setText(filename);
    model_filename = filename;
    atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
@@ -233,7 +233,7 @@ void US_Hydrodyn_Saxs::refresh(
       rb_curve_sans->setEnabled(true);
    }
       
-   pb_plot_saxs_sans->setEnabled(false);
+   pb_plot_saxs->setEnabled(source ? false : true);
    te_filename2->setText(filename);
    model_filename = filename;
    pb_stop->setEnabled(false);
@@ -1428,8 +1428,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          editor->append(tr("Terminated by user request.\n"));
          progress_pr->reset();
          lbl_core_progress->setText("");
-         // pb_plot_saxs->setEnabled(source ? false : true);
-         pb_plot_saxs_sans->setEnabled(false);
+         pb_plot_saxs->setEnabled(source ? false : true);
+         // pb_plot_saxs_sans->setEnabled(true);
          pb_plot_pr->setEnabled(true);
          return;
       }
@@ -1759,8 +1759,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   editor->append(tr("Terminated by user request.\n"));
                   progress_pr->reset();
                   lbl_core_progress->setText("");
-                  // pb_plot_saxs_sans->setEnabled(source ? false : true);
-                  pb_plot_saxs_sans->setEnabled(false);
+                  pb_plot_saxs_sans->setEnabled(source ? false : true);
+                  // pb_plot_saxs_sans->setEnabled(false);
                   pb_plot_pr->setEnabled(true);
                   return;
                }
@@ -1825,8 +1825,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   editor->append(tr("Terminated by user request.\n"));
                   progress_pr->reset();
                   lbl_core_progress->setText("");
-                  // pb_plot_saxs_sans->setEnabled(source ? false : true);
-                  pb_plot_saxs_sans->setEnabled(false);
+                  pb_plot_saxs_sans->setEnabled(source ? false : true);
+                  // pb_plot_saxs_sans->setEnabled(false);
                   pb_plot_pr->setEnabled(true);
                   return;
                }
@@ -2096,8 +2096,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
    progress_pr->setTotalSteps(1);
    progress_pr->setProgress(1);
-   // pb_plot_saxs_sans->setEnabled(source ? false : true);
-   pb_plot_saxs_sans->setEnabled(false);
+   pb_plot_saxs_sans->setEnabled(source ? false : true);
+   // pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(true);
 
    QColor save_color = editor->color();
