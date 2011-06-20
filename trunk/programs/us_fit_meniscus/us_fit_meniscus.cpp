@@ -1196,7 +1196,7 @@ DbgLv(1) << " Remove Models and Noises";
 DbgLv(1) << "  Delete: " << recID << recFname.section("/",-1,-1) << recDesc;
 
             if ( ! recFname.isEmpty() )
-            {
+            {  // Delete local file model
                QFile recf( recFname );
                if ( recf.exists() )
                {
@@ -1204,11 +1204,11 @@ DbgLv(1) << "  Delete: " << recID << recFname.section("/",-1,-1) << recDesc;
 { DbgLv(1) << "     local file removed"; }
                   else { qDebug() << "*ERROR* removing" << recFname; }
                }
-               else qDebug() << "*ERROR* does not exist:" << recFname;
+               else { qDebug() << "*ERROR* does not exist:" << recFname; }
             }
 
             if ( recID != "-1" )
-            {
+            {  // Delete model (and any child noise) from DB
                query.clear();
                query << "delete_model" << recID;
                int stat = dbP->statusQuery( query );
@@ -1226,7 +1226,7 @@ else DbgLv(1) << "     DB record deleted";
 DbgLv(1) << "  Delete: " << recID << recFname.section("/",-1,-1) << recDesc;
 
             if ( ! recFname.isEmpty() )
-            {
+            {  // Delete local file noise
                QFile recf( recFname );
                if ( recf.exists() )
                {
@@ -1234,18 +1234,10 @@ DbgLv(1) << "  Delete: " << recID << recFname.section("/",-1,-1) << recDesc;
 { DbgLv(1) << "     local file removed"; }
                   else { qDebug() << "*ERROR* removing" << recFname; }
                }
-               else qDebug() << "*ERROR* does not exist:" << recFname;
+               else { qDebug() << "*ERROR* does not exist:" << recFname; }
             }
 
-            if ( recID != "-1" )
-            {
-               query.clear();
-               query << "delete_noise" << recID;
-               int stat = dbP->statusQuery( query );
-               if ( stat != 0 )
-                  qDebug() << "delete_model error" << stat;
-else DbgLv(1) << "     DB record deleted";
-            }
+            // No need to remove noises from DB; model remove did that
          }
       }
    }
@@ -1303,7 +1295,7 @@ DbgLv(1) << "NIE:  ii noiDesc" << ii << noiDesc;
       nlnois++;
 
       nieDescs << noiDesc;
-      nieFnams << noiFname;
+      nieFnams << noiPath;
 DbgLv(1) << "NIE:     noiFname" << noiFname;
 
       if ( ! usesDB )
