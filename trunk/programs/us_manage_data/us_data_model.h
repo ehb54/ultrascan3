@@ -41,7 +41,8 @@ class US_DataModel : public QObject
          QString   contents;          // md5sum() and length of data
          QString   label;             // record identifying label
          QString   description;       // record description string
-         QString   lastmodDate;       // last modification date/time
+         QString   filemodDate;       // last modification date/time (file)
+         QString   lastmodDate;       // last modification date/time (DB/file)
       };
 
       void      setDatabase( US_DB2*                   );

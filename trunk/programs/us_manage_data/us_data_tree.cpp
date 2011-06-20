@@ -32,7 +32,8 @@ US_DataTree::US_DataTree( US_DataModel* dmodel, QTreeWidget* treewidg,
    ntrows = 5;
    ntcols = theads.size();
    tw_recs->setHeaderLabels( theads );
-   tw_recs->setFont(  QFont( "monospace", US_GuiSettings::fontSize() - 1 ) );
+   tw_recs->setFont(  QFont( US_Widgets::fixedFont().family(),
+                      US_GuiSettings::fontSize() - 1 ) );
    tw_recs->setObjectName( QString( "tree-widget" ) );
    tw_recs->setAutoFillBackground( true );
 }
@@ -275,68 +276,112 @@ void US_DataTree::row_context_menu( QTreeWidgetItem* item )
 DbgLv(1) << "    context_menu nbr sel rows" << selitems.size();
    tw_item  = item;
    int irow = item->type() - (int)QTreeWidgetItem::UserType;
-   //int jrow = irow + 1;
+
+   if ( nsel > 1 )
+   {  // If multiple selections, set first row
+      for ( int ii = 0; ii < nsel; ii++ )
+      {
+         QTreeWidgetItem* jitem = selitems[ ii ];
+         int jrow = jitem->type() - (int)QTreeWidgetItem::UserType;
+         irow     = qMin( irow, jrow );
+      }
+   }
+
 DbgLv(2) << "    context_menu row" << irow+1;
    da_model->setCurrent( irow );
 DbgLv(2) << "    context_menu RTN setCurrent";
    cdesc    = da_model->current_datadesc();
 DbgLv(2) << "    context_menu RTN current_datadesc";
 
-   QMenu*   cmenu   = new QMenu();
-   QAction* upldact = new QAction( tr( " upload to DB" ),        parentw );
-   QAction* dnldact = new QAction( tr( " download to local" ),   parentw );
-   QAction* rmdbact = new QAction( tr( " remove from DB" ),      parentw );
-   QAction* rmloact = new QAction( tr( " remove from local" ),   parentw );
-   QAction* rmboact = new QAction( tr( " remove both" ),         parentw );
-   QAction* rmabact = new QAction( tr( " remove all branches" ), parentw );
-   QAction* shdeact = new QAction( tr( " show details" ),        parentw );
+   QString tupload = tr( " upload record to DB" );
+   QString tdnload = tr( " download record to local" );
+   QString tdbasrm = tr( " remove branch from DB" );
+   QString tloclrm = tr( " remove branch from local" );
+   QString tbothrm = tr( " remove branch from both" );
+   QString tshdeta = tr( " show record details" );
 
-   cmenu->addAction( upldact );
-   cmenu->addAction( dnldact );
-   cmenu->addAction( rmdbact );
-   cmenu->addAction( rmloact );
-   cmenu->addAction( rmboact );
-   cmenu->addAction( rmabact );
-   cmenu->addAction( shdeact );
+   if ( nsel > 1 )
+   {  // Multiple selections:  "record/branch" to "branches"
+      tupload.replace( tr( "record" ), tr( "branches" ) );
+      tdnload.replace( tr( "record" ), tr( "branches" ) );
+      tdbasrm.replace( tr( "branch" ), tr( "branches" ) );
+      tloclrm.replace( tr( "branch" ), tr( "branches" ) );
+      tbothrm.replace( tr( "branch" ), tr( "branches" ) );
+      tshdeta.replace( tr( "record" ), tr( "records"  ) );
+   }
+
+   if ( cdesc.recType == 1 )
+   {  // Raw:  "record/branches" to "descendants"
+      tupload.replace( tr( "record"   ), tr( "descendants" ) );
+      tupload.replace( tr( "branches" ), tr( "descendants" ) );
+      tdnload.replace( tr( "record"   ), tr( "descendants" ) );
+      tdnload.replace( tr( "branches" ), tr( "descendants" ) );
+      tdbasrm.replace( tr( "branches" ), tr( "descendants" ) );
+      tdbasrm.replace( tr( "branch"   ), tr( "descendants" ) );
+      tloclrm.replace( tr( "branches" ), tr( "descendants" ) );
+      tloclrm.replace( tr( "branch"   ), tr( "descendants" ) );
+      tbothrm.replace( tr( "branches" ), tr( "descendants" ) );
+      tbothrm.replace( tr( "branch"   ), tr( "descendants" ) );
+   }
+
+   QMenu*   cmenu   = new QMenu();
+   QAction* aupload = new QAction( tupload, parentw );
+   QAction* adnload = new QAction( tdnload, parentw );
+   QAction* adbasrm = new QAction( tdbasrm, parentw );
+   QAction* aloclrm = new QAction( tloclrm, parentw );
+   QAction* abothrm = new QAction( tbothrm, parentw );
+   QAction* ashdeta = new QAction( tshdeta, parentw );
+
+   cmenu->addAction( aupload );
+   cmenu->addAction( adnload );
+   cmenu->addAction( adbasrm );
+   cmenu->addAction( aloclrm );
+   cmenu->addAction( abothrm );
+   cmenu->addAction( ashdeta );
 DbgLv(2) << "    context_menu RTN addAction";
 
-   connect( upldact, SIGNAL( triggered() ),
+   connect( aupload, SIGNAL( triggered() ),
             this,    SLOT(   item_upload()     ) );
-   connect( dnldact, SIGNAL( triggered() ),
+   connect( adnload, SIGNAL( triggered() ),
             this,    SLOT(   item_download()   ) );
-   connect( rmdbact, SIGNAL( triggered() ),
+   connect( adbasrm, SIGNAL( triggered() ),
             this,    SLOT(   item_remove_db()  ) );
-   connect( rmloact, SIGNAL( triggered() ),
+   connect( aloclrm, SIGNAL( triggered() ),
             this,    SLOT(   item_remove_loc() ) );
-   connect( rmboact, SIGNAL( triggered() ),
+   connect( abothrm, SIGNAL( triggered() ),
             this,    SLOT(   item_remove_all() ) );
-   connect( rmabact, SIGNAL( triggered() ),
-            this,    SLOT(   items_remove()    ) );
-   connect( shdeact, SIGNAL( triggered() ),
+   connect( ashdeta, SIGNAL( triggered() ),
             this,    SLOT(   item_details()    ) );
 
    // disable menu items that are not appropriate to the record
 
    if ( ( cdesc.recState & US_DataModel::REC_LO ) == 0 )
    {  // if record not local, no upload and no remove from local or both
-      upldact->setEnabled( false );
-      rmloact->setEnabled( false );
-      rmboact->setEnabled( false );
+      aupload->setEnabled( false );
+      aloclrm->setEnabled( false );
+      abothrm->setEnabled( false );
    }
 
    if ( ( cdesc.recState & US_DataModel::REC_DB ) == 0 )
    {  // if record not db, no download and no remove from db or both
-      dnldact->setEnabled( false );
-      rmdbact->setEnabled( false );
-      rmboact->setEnabled( false );
+      adnload->setEnabled( false );
+      adbasrm->setEnabled( false );
+      abothrm->setEnabled( false );
    }
 
-   if ( irow > 0 )
-   {  // Disable upload if parent not in the DB
-      //DataDesc jdesc = da_model->row_datadesc( irow - 1 );
+   // Disable upload if parent not in the DB
+   int jrow = irow;
+   US_DataModel::DataDesc jdesc = da_model->row_datadesc( jrow );
+
+   while ( --jrow > 0  &&  cdesc.recType > 1 )
+   {
+      jdesc = da_model->row_datadesc( jrow );
+      if ( jdesc.recType < cdesc.recType )
+         break;
    }
 
-   rmabact->setEnabled( nsel > 1 );
+   if ( ( jdesc.recState & US_DataModel::REC_DB ) == 0 )
+      adnload->setEnabled( false );
 
    // display the context menu and act on selection
 DbgLv(2) << "    context_menu CALL cmenu exec";
@@ -398,7 +443,8 @@ void US_DataTree::dtree_help()
    editd->setWindowTitle( tr( "Data Sets Tree Help and Legend" ) );
    editd->move( QCursor::pos() + QPoint( 200, 200 ) );
    editd->resize( 600, 500 );
-   editd->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
+   editd->e->setFont( QFont( US_Widgets::fixedFont().family(),
+                      US_GuiSettings::fontSize() ) );
    editd->e->setText( mtext );
    editd->show();
 }
@@ -432,7 +478,7 @@ DbgLv(2) << "ITEM Upload";
    if ( msgBox.exec() == QMessageBox::Yes )
    {
 DbgLv(2) << " ITEM ACTION: YES";
-      int stat1  = da_process->record_upload( irow );
+      int stat1  = do_actions( item_exs, item_act );
 
       action_result( stat1, item_act );
    }
@@ -474,7 +520,7 @@ DbgLv(2) << "ITEM Download";
    if ( msgBox.exec() == QMessageBox::Yes )
    {
 DbgLv(2) << " ITEM ACTION: YES";
-      int stat1  = da_process->record_download( irow );
+      int stat1  = do_actions( item_exs, item_act );
 
       action_result( stat1, item_act );
    }
@@ -491,17 +537,11 @@ void US_DataTree::item_remove_db()
 {
 DbgLv(2) << "ITEM Remove from DB";
    QString     item_exs = tr( "Database only" );
-   QString     item_act = tr( "DB remove" );
+   QString     item_act = tr( "DB-only remove" );
    QMessageBox msgBox( parentw );
    int irow = tw_item->type() - (int)QTreeWidgetItem::UserType;
    da_model->setCurrent( irow );
    cdesc    = da_model->current_datadesc();
-
-   if ( ( cdesc.recState & US_DataModel::REC_LO ) != 0 )
-   {
-      item_exs = tr( "both DB and Local" );
-      item_act = tr( "DB-only remove" );
-   }
 
    record_type( cdesc.recType, item_act );
 
@@ -515,7 +555,7 @@ DbgLv(2) << "ITEM Remove from DB";
    if ( msgBox.exec() == QMessageBox::Yes )
    {
 DbgLv(2) << " ITEM ACTION: YES";
-      int stat1  = da_process->record_remove_db( irow );
+      int stat1  = do_actions( item_exs, item_act );
 
       action_result( stat1, item_act );
    }
@@ -532,17 +572,11 @@ void US_DataTree::item_remove_loc()
 {
 DbgLv(2) << "ITEM Remove from Local";
    QString     item_exs = tr( "Local disk only" );
-   QString     item_act = tr( "Local remove" );
+   QString     item_act = tr( "Local-only remove" );
    QMessageBox msgBox( parentw );
    int irow = tw_item->type() - (int)QTreeWidgetItem::UserType;
    da_model->setCurrent( irow );
    cdesc    = da_model->current_datadesc();
-
-   if ( ( cdesc.recState & US_DataModel::REC_DB ) != 0 )
-   {
-      item_exs = tr( "both DB and Local" );
-      item_act = tr( "Local-only remove" );
-   }
 
    record_type( cdesc.recType, item_act );
 
@@ -556,7 +590,7 @@ DbgLv(2) << "ITEM Remove from Local";
    if ( msgBox.exec() == QMessageBox::Yes )
    {
 DbgLv(2) << " ITEM ACTION: YES";
-      int stat1  = da_process->record_remove_local( irow );
+      int stat1  = do_actions( item_exs, item_act );
 
       action_result( stat1, item_act );
    }
@@ -591,8 +625,7 @@ DbgLv(2) << "ITEM Remove Both DB and Local";
    if ( msgBox.exec() == QMessageBox::Yes )
    {
 DbgLv(2) << " ITEM ACTION: YES";
-      int stat1  = da_process->record_remove_local( irow );
-      stat1     += da_process->record_remove_db(    irow );
+      int stat1  = do_actions( item_exs, item_act );
 
       action_result( stat1, item_act );
    }
@@ -604,12 +637,18 @@ DbgLv(2) << " ITEM ACTION: NO";
    }
 }
 
-// perform item details action
+// Perform item details action
 void US_DataTree::item_details(  )
 {
+   if ( selitems.size() > 1 )
+   {
+      items_details();
+      return;
+   }
+
    const char* rtyps[]  = { "RawData", "EditedData", "Model", "Noise" };
-   QString     fileexts = tr( "Text,Log files (*.txt *.log);;" )
-      + tr( "All files (*)" );
+   QString     fileexts = tr( "Text,Log files (*.txt *.log)"
+                              ";;All files (*)" );
    int         irow     = tw_item->type() - (int)QTreeWidgetItem::UserType;
 DbgLv(2) << "DT: i_details row" << irow;
 
@@ -631,8 +670,9 @@ DbgLv(2) << "DT: i_details row" << irow;
          + cdesc.filename.section( "/",  0, -2 ) + "\n" +
       tr( "  File Name      : " )
          + cdesc.filename.section( "/", -1, -1 ) + "\n" +
-      tr( "  Record State   : " ) + record_state( cdesc.recState ) + "\n" +
-      tr( "  Last Mod Date  : " ) + cdesc.lastmodDate + "\n";
+      tr( "  File Last Mod  : " ) + cdesc.filemodDate + "\n" +
+      tr( "  Last Mod Date  : " ) + cdesc.lastmodDate + "\n" +
+      tr( "  Record State   : " ) + record_state( cdesc.recState ) + "\n";
 
    if ( cdesc.contents.length() < 60 )
    {
@@ -653,12 +693,63 @@ DbgLv(2) << "DT: i_details row" << irow;
    editd->setWindowTitle( tr( "Data Tree Entry Details" ) );
    editd->move( QCursor::pos() + QPoint( 100, 100 ) );
    editd->resize( 720, 360 );
-   editd->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
+   editd->e->setFont( QFont( US_Widgets::fixedFont().family(),
+                      US_GuiSettings::fontSize() ) );
    editd->e->setText( mtext );
    editd->show();
 }
 
-// prepend a record type string to an item action
+// Perform multiple-items details action
+void US_DataTree::items_details(  )
+{
+   const char* rtyps[]  = { "RawData", "EditedData", "Model", "Noise" };
+   QString     fileexts = tr( "Text,Log files (*.txt *.log)"
+                              ";;All files (*)" );
+
+   int narows = action_rows();
+
+   int nsrows = selrows.size();
+   int nrrows = rawrows.size();
+   int irow   = selrows[ 0 ];
+   int krow   = selrows[ nsrows - 1 ];
+   krow       = ( narows > 0 ) ? actrows[ narows - 1 ] : krow;
+DbgLv(2) << "DT: i_details row" << irow;
+   cdesc    = da_model->row_datadesc( irow );
+   US_DataModel::DataDesc kdesc    = da_model->row_datadesc( krow );
+
+   QString mtext =
+      tr( "Data Tree Items from Rows %1 to %2 -- \n\n" )
+         .arg( irow ).arg( krow ) +
+      tr( "  Type   (first) : %1\n" ).arg( rtyps[ cdesc.recType - 1 ] ) +
+      tr( "    Description    : " ) + cdesc.description + "\n" +
+      tr( "    DB record ID   : %1\n" ).arg( cdesc.recordID ) +
+      tr( "    File Directory : " )
+         + cdesc.filename.section( "/",  0, -2 ) + "\n" +
+      tr( "    File Name      : " )
+         + cdesc.filename.section( "/", -1, -1 ) + "\n" +
+      tr( "  Type    (last) : %1\n" ).arg( rtyps[ kdesc.recType - 1 ] ) +
+      tr( "    Description    : " ) + kdesc.description + "\n" +
+      tr( "    DB record ID   : %1\n" ).arg( kdesc.recordID ) +
+      tr( "    File Directory : " )
+         + kdesc.filename.section( "/",  0, -2 ) + "\n" +
+      tr( "    File Name      : " )
+         + kdesc.filename.section( "/", -1, -1 ) + "\n" +
+      tr( "  Total Selected Records : " ) + QString::number( nsrows ) + "\n" +
+      tr( "  Total Action Records   : " ) + QString::number( narows ) + "\n" +
+      tr( "  Total Raw Selections   : " ) + QString::number( nrrows ) + "\n";
+
+   // display the text dialog
+   US_Editor* editd = new US_Editor( US_Editor::LOAD, true, fileexts );
+   editd->setWindowTitle( tr( "Data Tree Entries Details" ) );
+   editd->move( QCursor::pos() + QPoint( 100, 100 ) );
+   editd->resize( 760, 320 );
+   editd->e->setFont( QFont( US_Widgets::fixedFont().family(),
+                      US_GuiSettings::fontSize() ) );
+   editd->e->setText( mtext );
+   editd->show();
+}
+
+// Prepend a record type string to an item action
 void US_DataTree::record_type( int recType, QString& item_act )
 {
    const char* rtyps[]  = { "RawData", "EditedData", "Model", "Noise" };
@@ -670,15 +761,19 @@ void US_DataTree::record_type( int recType, QString& item_act )
    }
 }
 
-
-// format an item action text for a message box
+// Format an item action text for a message box
 QString US_DataTree::action_text( QString exstext, QString acttext )
 {
-   return tr( "This item exists on %1.<br>"
-              "Are you sure you want to proceed with a %2?<ul>"
-              "<li><b>No </b> to cancel the action;</li>"
-              "<li><b>Yes</b> to proceed with the action.</li></ul>" )
-          .arg( exstext ).arg( acttext );
+   QString lines = ( selitems.size() == 1 )
+                 ?  tr( "This item exists on %1.<br>"
+                        "Are you sure you want to proceed with a %2?<ul>" )
+                    .arg( exstext ).arg( acttext )
+                 :  tr( "These items exists on %1.<br>"
+                        "Are you sure you want to proceed with %2s?<ul>" )
+                    .arg( exstext ).arg( acttext );
+   return lines +
+           tr( "<li><b>No </b> to cancel the action;</li>"
+               "<li><b>Yes</b> to proceed with the action.</li></ul>" );
 }
 
 // report the result of an item action
@@ -691,10 +786,6 @@ void US_DataTree::action_result( int stat, QString item_act )
 
       if ( stat == 0 )
       {  // action was successful
-         //QMessageBox::information( parentw,
-         //      item_act + tr( " Successful!" ),
-         //      tr( "The \"%1\" action was successfully performed." )
-         //      .arg( item_act ) );
          lb_status->setText( tr( "\"%1\" Success!" ).arg( item_act ) );
       }
 
@@ -711,9 +802,6 @@ void US_DataTree::action_result( int stat, QString item_act )
 
    else
    {  // cancel was selected:  report it
-      //QMessageBox::information( parentw,
-      //      item_act + tr( " Cancelled!" ),
-      //      tr( "The \"%1\" action was cancelled." ).arg( item_act ) );
       lb_status->setText( tr( "\"%1\" Cancelled!" ).arg( item_act ) );
    }
 }
@@ -752,86 +840,171 @@ QString US_DataTree::record_state( int istate )
     return "(" + hexn + ") " + flags;  // return hex flag and text version
 }
 
-// Perform items remove-all-branches action
-void US_DataTree::items_remove()
+// Perform the action(s) chosen in context menu
+int US_DataTree::do_actions( QString item_exs, QString item_act )
 {
-   QTreeWidgetItem* item;
-DbgLv(2) << "ITEM Remove All Branches";
-   QString item_exs = tr( "both DB and Local" );
-   QString item_act = tr( "All-branches remove" );
-   int nitems  = da_model->recCount();
-   int ndsels  = selitems.size();
-   //int nbsels  = ndsels;
-   int mindtyp = 99;
-   int maxdtyp = -1;
-   int mindsta = 99;
-   int maxdsta = -1;
-   int minbtyp = mindtyp;
-   int maxbtyp = maxdtyp;
-   int minbsta = mindsta;
-   int maxbsta = maxdsta;
-   int itype;
-   int istate;
-   int stmask  = US_DataModel::REC_DB | US_DataModel::REC_LO;
-   US_DataModel::DataDesc idesc;
-   US_DataModel::DataDesc jdesc;
-if ( mindsta > 0 ) {
-QMessageBox::information( parentw, "Not Yet Implemented",
- tr( "The \"%1\" action is not yet implemented." ).arg( item_act ) );
- return; }
+   int narows  = action_rows();
+DbgLv(1) << "ITEM do_actions" << narows << item_exs << item_act;
+   int naerrs  = 0;
+   int istat   = 0;
+   bool frDB   = item_exs.contains( "Datab" )
+              || item_exs.contains( "DB "   );
+   bool frLoc  = item_exs.contains( "Local" );
+   bool frBoth = item_exs.contains( "both"  );
+   frDB        = frBoth ? true : frDB;
+   frLoc       = frBoth ? true : frLoc;
+   bool dnLoad = item_act.contains( "Local file " );
+   bool upLoad = item_act.contains( "DB create"   )
+              || item_act.contains( "DB replace"  );
+   bool remove = item_act.contains( "remove"      );
 
-   for ( int jj = 0; jj < ndsels; jj++ )
-   {
-      item      = selitems[ jj ];
-      int irow  = item->type() - (int)QTreeWidgetItem::UserType;
-      idesc     = da_model->row_datadesc( irow );
-      itype     = idesc.recType;
-      istate    = idesc.recState && stmask;
-      mindtyp   = qMin( mindtyp, itype );
-      maxdtyp   = qMax( maxdtyp, itype );
-      mindsta   = qMin( mindsta, istate );
-      maxdsta   = qMax( maxdsta, istate );
-      int jrow  = irow;
-      while ( ++jrow < nitems )
+   if ( remove && frDB )
+   {                                  // REMOVE from DB
+      int  lrtyp  = 9;   // last remove type
+      int  karows = 0;
+
+      for ( int jj = 0; jj < narows; jj++ )
       {
-         jdesc      = da_model->row_datadesc( jrow );
-         int jstate = jdesc.recState && stmask;
-         if ( jstate == istate )  break;
-         int jtype  = jdesc.recType;
-         minbtyp    = qMin( minbtyp, jtype );
-         maxbtyp    = qMax( maxbtyp, jtype );
-         minbsta    = qMin( minbsta, jstate );
-         maxbsta    = qMax( maxbsta, jstate );
+         int irow   = actrows[ jj ];
+         US_DataModel::DataDesc ddesc = da_model->row_datadesc( irow );
+         int ityp   = ddesc.recType;
+
+         if ( ityp > lrtyp )  continue;  // skip if descendant of last removed
+
+         lrtyp      = ityp;              // save type of last removed
+         karows++;
+         int stat1  = da_process->record_remove_db( irow );
+
+         if ( stat1 != 0 )
+         {
+            naerrs++;
+            istat      = stat1;
+         }
+      }
+
+      narows      = karows;
+   }
+
+   if ( remove && frLoc )
+   {                                  // REMOVE from LOCAL
+      for ( int ii = 4; ii > 1; ii-- )
+      {  // Remove records from bottom up
+         for ( int jj = 0; jj < narows; jj++ )
+         {
+            int irow   = actrows[ jj ];
+            US_DataModel::DataDesc ddesc = da_model->row_datadesc( irow );
+            int ityp   = ddesc.recType;
+
+            if ( ityp != ii )  continue;  // skip if not at current level
+
+            int stat1  = da_process->record_remove_local( irow );
+
+            if ( stat1 != 0 )
+            {
+               naerrs++;
+               istat      = stat1;
+            }
+         }
       }
    }
 
-   QMessageBox msgBox( parentw );
-   int irow = tw_item->type() - (int)QTreeWidgetItem::UserType;
-   da_model->setCurrent( irow );
-   cdesc    = da_model->current_datadesc();
+   if ( upLoad )           
+   {                                  // UPLOAD to DB
+      for ( int ii = 2; ii < 5; ii++ )
+      {  // Upload records from top down
+         for ( int jj = 0; jj < narows; jj++ )
+         {
+            int irow   = actrows[ jj ];
+            US_DataModel::DataDesc ddesc = da_model->row_datadesc( irow );
+            int ityp   = ddesc.recType;
 
-   record_type( cdesc.recType, item_act );
+            if ( ityp != ii )  continue;  // skip if not at current level
 
-   msgBox.setWindowTitle( item_act );
-   msgBox.setTextFormat(  Qt::RichText );
-   msgBox.setText( action_text( item_exs, item_act ) );
-   msgBox.addButton( QMessageBox::No );
-   msgBox.addButton( QMessageBox::Yes );
-   msgBox.setDefaultButton( QMessageBox::No );
+            int stat1  = da_process->record_upload( irow );
 
-   if ( msgBox.exec() == QMessageBox::Yes )
-   {
-DbgLv(2) << " ITEM ACTION: YES";
-      int stat1  = da_process->record_remove_local( irow );
-      stat1     += da_process->record_remove_db(    irow );
-
-      action_result( stat1, item_act );
+            if ( stat1 != 0 )
+            {
+               naerrs++;
+               istat      = stat1;
+            }
+         }
+      }
    }
 
-   else
-   {
-DbgLv(2) << " ITEM ACTION: NO";
-      action_result( 999, item_act );
+   if ( dnLoad )            
+   {                                  // DOWNLOAD to LOCAL
+      for ( int ii = 2; ii < 5; ii++ )
+      {  // Download records from top down
+         for ( int jj = 0; jj < narows; jj++ )
+         {
+            int irow   = actrows[ jj ];
+            US_DataModel::DataDesc ddesc = da_model->row_datadesc( irow );
+            int ityp   = ddesc.recType;
+
+            if ( ityp != ii )  continue;  // skip if not at current level
+
+            int stat1  = da_process->record_download( irow );
+
+            if ( stat1 != 0 )
+            {
+               naerrs++;
+               istat      = stat1;
+            }
+         }
+      }
    }
+
+   if ( naerrs > 0  &&  naerrs < narows )
+   {  // Append to error message, explaining partial success
+      da_process->partialError( naerrs, narows );
+   }
+
+   return istat;
+}
+
+// Create lists of selected rows and implied action rows
+int US_DataTree::action_rows( )
+{
+   // Build up the list of selected rows; then sort it
+   int nsrows = selitems.size();
+   selrows.clear();
+   actrows.clear();
+   rawrows.clear();
+
+   for ( int ii = 0; ii < nsrows; ii++ )
+      selrows << selitems[ ii ]->type() - (int)QTreeWidgetItem::UserType;
+
+   qSort( selrows );
+DbgLv(1) << "acrow: nsrows" << nsrows;
+
+   // Build up the list of action rows; include descendants, exclude Raw
+   for ( int ii = 0; ii < nsrows; ii++ )
+   {
+      int irow   = selrows[ ii ];
+      US_DataModel::DataDesc ddesc = da_model->row_datadesc( irow );
+      int ityp   = ddesc.recType;
+DbgLv(1) << "acrow:  irow ityp" << irow << ityp;
+      if ( ityp > 1 )
+         actrows << irow;     // add to action list if not Raw
+      else
+         rawrows << irow;     // otherwise, add to Raw-selected list
+
+      for ( int jrow = ( irow + 1 ); jrow < ncrecs; jrow++ )
+      {  // add descendants from next-row until back-to-level
+         US_DataModel::DataDesc ddesc = da_model->row_datadesc( jrow );
+
+DbgLv(1) << "acrow:    jrow jtyp" << jrow << ddesc.recType;
+         if ( ddesc.recType <= ityp )
+            break;     // once we've reached or passed same level, break
+
+         if ( selrows.contains( jrow ) )
+            continue;  // if descendant already in select list, don't add
+
+         actrows << jrow;
+      }
+   }
+DbgLv(1) << "acrow:  narows nrrows" << actrows.size() << rawrows.size();
+
+   return actrows.size();
 }
 

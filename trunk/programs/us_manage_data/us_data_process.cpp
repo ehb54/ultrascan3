@@ -26,6 +26,27 @@ DbgLv(1) << "REC_ULD: row" << row+1;
 
    cdesc            = da_model->row_datadesc( row );
 
+   if ( ! raw_ancestor_ok( row ) )
+   {  // Cannot upload if ancestor Raw is not in both DB and Local
+      errMsg = tr( "Cannot upload records whose ancestor"
+                   " Raw record is not both DB and Local.\n"
+                   "Use us_convert (Utilities->Convert Legacy Data)"
+                   " to create or modify the ancestor Raw." );
+      stat   = 3061;
+      return stat;
+   }
+
+   QDateTime dtime  = QDateTime::fromString( cdesc.lastmodDate );
+   QDateTime ftime  = QDateTime::fromString( cdesc.filemodDate );
+
+   if ( ( cdesc.recState & US_DataModel::REC_DB ) != 0  &&
+        ftime < dtime )
+   {  // Cannot replace DB record with older Local record
+      errMsg = tr( "The Local file record is older than the DB record." );
+      stat   = 3061;
+      return stat;
+   }
+
    QStringList query;
    QString filepath = cdesc.filename;
    QString pathdir  = filepath.section( "/",  0, -2 );
@@ -160,6 +181,16 @@ int US_DataProcess::record_download( int row )
 
    cdesc            = da_model->row_datadesc( row );
 
+   if ( ! raw_ancestor_ok( row ) )
+   {  // Cannot download if ancestor Raw is not in both DB and Local
+      errMsg = tr( "Cannot download records whose ancestor"
+                   " Raw record is not both DB and Local.\n"
+                   "Use us_convert (Utilities->Convert Legacy Data)"
+                   " to create or modify the ancestor Raw." );
+      stat   = 3061;
+      return stat;
+   }
+
    int idData       = cdesc.recordID;
    QString dataID   = QString::number( idData );
    QString filepath = cdesc.filename;
@@ -187,7 +218,6 @@ int US_DataProcess::record_download( int row )
 
    if      ( cdesc.recType == 1 )
    {  // download a Raw record
-      
       stat   = db->readBlobFromDB( filepath, "download_aucData", idData );
       if ( stat != 0 )
          errMsg = tr( "Raw download status %1" ).arg( stat )
@@ -267,7 +297,7 @@ int US_DataProcess::record_download( int row )
    }
 
    if ( stat == 0 )
-   {
+   {  // Change the record state to include "in-DB"
       cdesc.recState |= US_DataModel::REC_DB;
       da_model->change_datadesc( cdesc, row );
    }
@@ -415,6 +445,7 @@ int US_DataProcess::record_remove_local( int row )
    return stat;
 }
 
+// Get next model file name
 QString US_DataProcess::get_model_filename( QString guid )
 {
    QString path;
@@ -425,6 +456,7 @@ QString US_DataProcess::get_model_filename( QString guid )
    return US_DataFiles::get_filename( path, guid, "M", "model", "modelGUID" );
 }
 
+// Get next noise file name
 QString US_DataProcess::get_noise_filename( QString guid )
 {
    QString path  = US_Settings::dataDir() + "/noises";
@@ -437,5 +469,48 @@ QString US_DataProcess::get_noise_filename( QString guid )
    }
 
    return US_DataFiles::get_filename( path, guid, "N", "noise", "noiseGUID" );
+}
+
+// Return the last error message
+QString US_DataProcess::lastError( )
+{
+   return errMsg;
+}
+
+// Append to last error message a notice of errors on some actions
+void US_DataProcess::partialError( int nacterrs, int nactions )
+{
+   errMsg += tr( "\n\n%1 error(s) on %2 attempted actions.\n" )
+             .arg( nacterrs ).arg( nactions );
+}
+
+// Append a string to the last error message
+void US_DataProcess::appendError( QString aperrMsg )
+{
+   errMsg += aperrMsg;
+}
+
+// Test for ancestor Raw record in both DB and local
+bool US_DataProcess::raw_ancestor_ok( int row )
+{
+   bool isOK = false;
+   int  jrow = row;
+   int  bSrc = US_DataModel::REC_DB | US_DataModel::REC_LO;
+
+   while ( --jrow >= 0 )
+   {  // walk up tree until a Raw record is encountered.
+      US_DataModel::DataDesc ddesc = da_model->row_datadesc( jrow );
+
+      if ( ddesc.recType == 1 )
+      {  // This is the Raw ancestor of the given record
+         if ( ( ddesc.recState & bSrc ) == bSrc )
+         {  // If both DB and Local, mark as OK for upload/download
+            isOK = true;
+         }
+         break;
+      }
+   }
+
+   return isOK;
 }
 
