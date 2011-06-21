@@ -308,6 +308,56 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_saxs_sans->insert(rb_sans);
    connect(bg_saxs_sans, SIGNAL(clicked(int)), SLOT(set_saxs_sans(int)));
 
+   rb_saxs_iq_native_debye = new QRadioButton(tr("Full"), this);
+   rb_saxs_iq_native_debye->setEnabled(true);
+   rb_saxs_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_saxs_iq_native_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_saxs_iq_native_fast = new QRadioButton(tr("Fast"), this);
+   rb_saxs_iq_native_fast->setEnabled(true);
+   rb_saxs_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_saxs_iq_native_fast->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_saxs_iq_foxs = new QRadioButton(tr("FoXS"), this);
+   rb_saxs_iq_foxs->setEnabled(true);
+   rb_saxs_iq_foxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_saxs_iq_foxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_saxs_iq_crysol = new QRadioButton(tr("Crysol"), this);
+   rb_saxs_iq_crysol->setEnabled(true);
+   rb_saxs_iq_crysol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_saxs_iq_crysol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_saxs_iq = new QButtonGroup(1, Qt::Horizontal, 0);
+   bg_saxs_iq->setRadioButtonExclusive(true);
+   bg_saxs_iq->insert(rb_saxs_iq_native_debye);
+   bg_saxs_iq->insert(rb_saxs_iq_native_fast);
+   bg_saxs_iq->insert(rb_saxs_iq_foxs);
+   bg_saxs_iq->insert(rb_saxs_iq_crysol);
+   connect(bg_saxs_iq, SIGNAL(clicked(int)), SLOT(set_saxs_iq(int)));
+
+   rb_sans_iq_native_debye = new QRadioButton(tr("Full"), this);
+   rb_sans_iq_native_debye->setEnabled(true);
+   rb_sans_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_sans_iq_native_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_sans_iq_native_fast = new QRadioButton(tr("Fast"), this);
+   rb_sans_iq_native_fast->setEnabled(true);
+   rb_sans_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_sans_iq_native_fast->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_sans_iq_cryson = new QRadioButton(tr("Cryson"), this);
+   rb_sans_iq_cryson->setEnabled(true);
+   rb_sans_iq_cryson->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_sans_iq_cryson->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_sans_iq = new QButtonGroup(1, Qt::Horizontal, 0);
+   bg_sans_iq->setRadioButtonExclusive(true);
+   bg_sans_iq->insert(rb_sans_iq_native_debye);
+   bg_sans_iq->insert(rb_sans_iq_native_fast);
+   bg_sans_iq->insert(rb_sans_iq_cryson);
+   connect(bg_sans_iq, SIGNAL(clicked(int)), SLOT(set_sans_iq(int)));
+
    lbl_atom_table = new QLabel(tr(" not selected"),this);
    lbl_atom_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_atom_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -335,14 +385,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_plot_saxs_sans->setMinimumHeight(minHeight1);
    pb_plot_saxs_sans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_plot_saxs_sans, SIGNAL(clicked()), SLOT(show_plot_saxs_sans()));
-
-   lbl_current_method = new QLabel( "",this );
-   lbl_current_method->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_current_method->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_current_method->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   lbl_current_method->setMinimumHeight(minHeight1);
-   lbl_current_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   set_current_method_text();
 
    pb_load_saxs_sans = new QPushButton("", this);
    Q_CHECK_PTR(pb_load_saxs_sans);
@@ -744,18 +786,25 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(lbl_saxs_table, j, 1);
    j++;
 
-   QBoxLayout *hbl = new QHBoxLayout(0);
-   hbl->addWidget(rb_saxs);
-   hbl->addWidget(rb_sans);
-   background->addMultiCellLayout(hbl, j, j, 0, 1);
+   QBoxLayout *hbl_saxs_iq = new QHBoxLayout(0);
+   hbl_saxs_iq->addWidget(rb_saxs);
+   hbl_saxs_iq->addWidget(rb_saxs_iq_native_debye);
+   hbl_saxs_iq->addWidget(rb_saxs_iq_native_fast);
+   hbl_saxs_iq->addWidget(rb_saxs_iq_foxs);
+   hbl_saxs_iq->addWidget(rb_saxs_iq_crysol);
+   background->addMultiCellLayout(hbl_saxs_iq, j, j, 0, 1);
+   j++;
+
+   QBoxLayout *hbl_sans_iq = new QHBoxLayout(0);
+   hbl_sans_iq->addWidget(rb_sans);
+   hbl_sans_iq->addWidget(rb_sans_iq_native_debye);
+   hbl_sans_iq->addWidget(rb_sans_iq_native_fast);
+   hbl_sans_iq->addWidget(rb_sans_iq_cryson);
+   background->addMultiCellLayout(hbl_sans_iq, j, j, 0, 1);
    j++;
    
-   QBoxLayout *hbl_iqq = new QHBoxLayout();
-   hbl_iqq->addWidget(pb_plot_saxs_sans);
-   hbl_iqq->addWidget(lbl_current_method);
-   hbl_iqq->addWidget(progress_saxs);
-
-   background->addMultiCellLayout(hbl_iqq, j, j, 0, 1);
+   background->addWidget(pb_plot_saxs_sans, j, 0);
+   background->addWidget(progress_saxs, j, 1);
    j++;
 
    background->addWidget(pb_load_saxs_sans, j, 0);
@@ -3517,11 +3566,15 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       run_saxs_iq_crysol( model_filepathname );
       return;
    }
+   if ( our_saxs_options->saxs_iq_native_fast ) 
+   {
+      // calc_saxs_iq_native_debye();
+      calc_saxs_iq_native_fast();
+      return;
+   }
    if ( our_saxs_options->saxs_iq_native_debye ) 
    {
-      // cout << model_filepathname << endl;
-      // calc_saxs_iq_native_debye();
-      calc_saxs_iq_native_foxs();
+      calc_saxs_iq_native_debye();
       return;
    }
    // don't forget to later merge deleted waters into model_vector
@@ -4853,18 +4906,36 @@ void US_Hydrodyn_Saxs::load_saxs_sans()
       
 void US_Hydrodyn_Saxs::update_saxs_sans()
 {
-   set_current_method_text();
+   set_current_method_buttons();
    if ( rb_sans->isChecked() ) 
    {
       pb_plot_saxs_sans->setText(tr("Compute SANS Curve"));
       pb_load_saxs_sans->setText(tr("Load SANS Curve"));
       pb_clear_plot_saxs->setText(tr("Clear SANS Curve"));
       plot_saxs->setTitle((cb_guinier->isChecked() ? "Guinier " : "") + tr("SANS Curve"));
+
+      rb_saxs_iq_native_debye->setEnabled(false);
+      rb_saxs_iq_native_fast ->setEnabled(false);
+      rb_saxs_iq_foxs        ->setEnabled(false);
+      rb_saxs_iq_crysol      ->setEnabled(false);
+
+      rb_sans_iq_native_debye->setEnabled(true);
+      rb_sans_iq_native_fast ->setEnabled(true);
+      rb_sans_iq_cryson      ->setEnabled(true);
    } else {
       pb_plot_saxs_sans->setText(tr("Compute SAXS Curve"));
       pb_load_saxs_sans->setText(tr("Load SAXS Curve"));
       pb_clear_plot_saxs->setText(tr("Clear SAXS Curve"));
       plot_saxs->setTitle((cb_guinier->isChecked() ? "Guinier " : "") + tr("SAXS Curve"));
+
+      rb_saxs_iq_native_debye->setEnabled(true);
+      rb_saxs_iq_native_fast ->setEnabled(true);
+      rb_saxs_iq_foxs        ->setEnabled(true);
+      rb_saxs_iq_crysol      ->setEnabled(true);
+
+      rb_sans_iq_native_debye->setEnabled(false);
+      rb_sans_iq_native_fast ->setEnabled(false);
+      rb_sans_iq_cryson      ->setEnabled(false);
    }
 }
 
@@ -6974,35 +7045,41 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
    return mw;
 }
 
-void US_Hydrodyn_Saxs::set_current_method_text() 
+void US_Hydrodyn_Saxs::set_current_method_buttons() 
 {
-   QString cm = tr("unknown");
-   if ( our_saxs_options->saxs_sans == 0 ) // saxs, probably should be enum
-   {
-      if ( our_saxs_options->saxs_iq_native_debye )
-      {
-         cm = "Native debye";
-      } else {
-         if ( our_saxs_options->saxs_iq_crysol )
-         {
-            cm = "Crysol";
-         } else {
-            if ( our_saxs_options->saxs_iq_foxs )
-            {
-               cm = "FoXS";
-            } 
-         }
-      }
-   } else {
-      if ( our_saxs_options->sans_iq_native_debye )
-      {
-         cm = "Native debye";
-      } else {
-         if ( our_saxs_options->sans_iq_cryson )
-         {
-            cm = "Cryson";
-         } 
-      }
-   }
-   lbl_current_method->setText( cm );
+   rb_saxs_iq_native_debye->setChecked(our_saxs_options->saxs_iq_native_debye);
+   rb_saxs_iq_native_fast ->setChecked(our_saxs_options->saxs_iq_native_fast);
+   rb_saxs_iq_foxs        ->setChecked(our_saxs_options->saxs_iq_foxs);
+   rb_saxs_iq_crysol      ->setChecked(our_saxs_options->saxs_iq_crysol);
+   rb_sans_iq_native_debye->setChecked(our_saxs_options->sans_iq_native_debye);
+   rb_sans_iq_native_fast ->setChecked(our_saxs_options->sans_iq_native_fast);
+   rb_sans_iq_cryson      ->setChecked(our_saxs_options->sans_iq_cryson);
 }
+
+
+void US_Hydrodyn_Saxs::set_saxs_iq(int val)
+{
+   rb_saxs_iq_native_debye->setChecked( val == 0 );
+   rb_saxs_iq_native_fast ->setChecked( val == 1 );
+   rb_saxs_iq_foxs        ->setChecked( val == 2 );
+   rb_saxs_iq_crysol      ->setChecked( val == 3 );
+
+   our_saxs_options->saxs_iq_native_debye = rb_saxs_iq_native_debye->isChecked();
+   our_saxs_options->saxs_iq_native_fast  = rb_saxs_iq_native_fast->isChecked();
+   our_saxs_options->saxs_iq_foxs         = rb_saxs_iq_foxs->isChecked();
+   our_saxs_options->saxs_iq_crysol       = rb_saxs_iq_crysol->isChecked();
+
+}
+
+void US_Hydrodyn_Saxs::set_sans_iq(int val)
+{
+   rb_sans_iq_native_debye->setChecked( val == 0 );
+   rb_sans_iq_native_fast ->setChecked( val == 1 );
+   rb_sans_iq_cryson      ->setChecked( val == 2 );
+
+   our_saxs_options->sans_iq_native_debye = rb_sans_iq_native_debye->isChecked();
+   our_saxs_options->sans_iq_native_fast  = rb_sans_iq_native_fast->isChecked();
+   our_saxs_options->sans_iq_cryson       = rb_sans_iq_cryson->isChecked();
+}
+
+   

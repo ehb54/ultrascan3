@@ -44,6 +44,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel     *lbl_water_e_density;
       QLabel     *lbl_saxs_iq;
       QCheckBox  *cb_saxs_iq_native_debye;
+      QCheckBox  *cb_saxs_iq_native_fast;
       QCheckBox  *cb_saxs_iq_crysol;
       QCheckBox  *cb_saxs_iq_foxs;
 
@@ -65,6 +66,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel     *lbl_frac_of_exch_pep;
       QLabel     *lbl_sans_iq;
       QCheckBox  *cb_sans_iq_native_debye;
+      QCheckBox  *cb_sans_iq_native_fast;
       QCheckBox  *cb_sans_iq_cryson;
 
       QLabel *lbl_guinier;
@@ -129,6 +131,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 
       void update_water_e_density(double);
       void set_saxs_iq_native_debye();
+      void set_saxs_iq_native_fast();
       void set_saxs_iq_crysol();
       void set_saxs_iq_foxs();
 
@@ -144,6 +147,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void update_d2o_conc(double);
       void update_frac_of_exch_pep(double);
       void set_sans_iq_native_debye();
+      void set_sans_iq_native_fast();
       void set_sans_iq_cryson();
 
       void set_guinier_csv();

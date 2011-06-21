@@ -13,14 +13,18 @@
 #endif
 
 #define SAXS_MIN_Q 1e-6
-#define SAXS_DEBUG
-#define SAXS_DEBUG_F
-#define SAXS_DEBUG2
+// #define SAXS_DEBUG
+// #define SAXS_DEBUG_F
+// #define SAXS_DEBUG_FF
+// #define SAXS_DEBUG2
 
-void US_Hydrodyn_Saxs::calc_saxs_iq_native_foxs()
+void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 {
    // don't forget to later merge deleted waters into model_vector
    // right now we are going with first residue map entry
+
+   // cout << "plotted_I.size() " << plotted_I.size() << endl;
+   // cout << "plotted_q.size() " << plotted_q.size() << endl;
    stopFlag = false;
    pb_stop->setEnabled(true);
    pb_plot_saxs_sans->setEnabled(false);
@@ -155,7 +159,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_foxs()
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
-            cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
+            // cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
             
             // this is probably correct but FoXS uses the saxs table excluded volume
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
@@ -315,6 +319,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_foxs()
       cout << endl;
 #endif
       // compute form factors
+      saxs saxsH = saxs_map["H"];
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
          saxs saxs = saxs_map[atoms[i].saxs_name];
@@ -345,15 +350,17 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_foxs()
             saxs.a[2] +
             saxs.a[3] +
             atoms[i].hydrogens * 
-            ( saxs_map["H"].c +
-              saxs_map["H"].a[0] +
-              saxs_map["H"].a[1] +
-              saxs_map["H"].a[2] +
-              saxs_map["H"].a[3] );
+            ( saxsH.c +
+              saxsH.a[0] +
+              saxsH.a[1] +
+              saxsH.a[2] +
+              saxsH.a[3] );
 
          fc[0][i] = vie;
          fp[0][i] = f[0][i] - fc[0][i];
          
+
+#if defined(SAXS_DEBUG_FF)
          cout << 
             QString("ff[%1] %2 %3 %4\n")
             .arg( i )
@@ -361,113 +368,169 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_foxs()
             .arg( fc[0][i] )
             .arg( fp[0][i] )
             ;
-      }
-      return;
-#if defined(SAXS_DEBUG)
-      cout << "f' computed, now compute I\n";
 #endif
-      editor->append("f' computed, starting computation of I(q)\n");
-      qApp->processEvents();
-      if ( stopFlag ) 
-      {
-         editor->append(tr("Terminated by user request.\n"));
-         progress_saxs->reset();
-         lbl_core_progress->setText("");
-         pb_plot_saxs_sans->setEnabled(true);
-         pb_plot_pr->setEnabled(true);
-         return;
       }
+
+
+      // foxs method: compute real space distribution
+
+      unsigned int as = atoms.size();
+      unsigned int as1 = as - 1;
+      // double rik; // distance from atom i to k 
+      double rik2; // square distance from atom i to k 
+      //      float delta = our_saxs_options->bin_size;
+      float delta = 0.5; // for foxs method
+      float one_over_delta = 1.0 / delta;
+      unsigned int pos;
+      vector < float > hist;
+      contrib_array.clear();
+      contrib_file = ((US_Hydrodyn *)us_hydrodyn)->pdb_file;
+      // cout << "contrib_file " << contrib_file << endl;
+      
+      progress_saxs->setTotalSteps((int)(as1 * 1.15));
+      if ( 0 && cb_pr_contrib->isChecked() &&
+           !source &&
+           contrib_file.contains(QRegExp("(PDB|pdb)$")) )
+      {
+         for ( unsigned int i = 0; i < as1; i++ )
+         {
+            // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
+            // cout << lcp << endl;
+            // lbl_core_progress->setText(lcp);
+            progress_saxs->setProgress(i+1);
+            qApp->processEvents();
+            if ( stopFlag ) 
+            {
+               editor->append(tr("Terminated by user request.\n"));
+               progress_saxs->reset();
+               lbl_core_progress->setText("");
+               pb_plot_saxs_sans->setEnabled(true);
+               pb_plot_pr->setEnabled(true);
+               return;
+            }
+            for ( unsigned int k = i + 1; k < as; k++ )
+            {
+               rik2 = 
+                  (atoms[i].pos[0] - atoms[k].pos[0]) *
+                  (atoms[i].pos[0] - atoms[k].pos[0]) +
+                  (atoms[i].pos[1] - atoms[k].pos[1]) *
+                  (atoms[i].pos[1] - atoms[k].pos[1]) +
+                  (atoms[i].pos[2] - atoms[k].pos[2]) *
+                  (atoms[i].pos[2] - atoms[k].pos[2]);
+               // rik = sqrt( rik2 );
+               pos = (unsigned int)floor(rik2 * one_over_delta);
+               
+               if ( hist.size() <= pos )
+               {
+                  hist.resize(pos + 1024);
+                  for ( unsigned int l = 0; l < atoms.size(); l++ )
+                  {
+                     contrib_array[l].resize(pos + 1024);
+                  }
+               }
+               
+               hist[pos] += 2.0 * fp[0][i] * fp[0][k];
+               contrib_array[i][pos] += fp[0][i];
+               contrib_array[k][pos] += fp[0][k];
+            }
+         }
+      } else {
+         for ( unsigned int i = 0; i < as1; i++ )
+         {
+            // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
+            // cout << lcp << endl;
+            // lbl_core_progress->setText(lcp);
+            progress_saxs->setProgress(i+1);
+            qApp->processEvents();
+            if ( stopFlag ) 
+            {
+               editor->append(tr("Terminated by user request.\n"));
+               progress_saxs->reset();
+               lbl_core_progress->setText("");
+               pb_plot_saxs_sans->setEnabled(true);
+               pb_plot_pr->setEnabled(true);
+               return;
+            }
+            for ( unsigned int k = i + 1; k < as; k++ )
+            {
+               rik2 = 
+                  (atoms[i].pos[0] - atoms[k].pos[0]) *
+                  (atoms[i].pos[0] - atoms[k].pos[0]) +
+                  (atoms[i].pos[1] - atoms[k].pos[1]) *
+                  (atoms[i].pos[1] - atoms[k].pos[1]) +
+                  (atoms[i].pos[2] - atoms[k].pos[2]) *
+                  (atoms[i].pos[2] - atoms[k].pos[2]);
+               // rik = sqrt( rik2 );
+               pos = (unsigned int)floor(rik2 * one_over_delta);
+               
+               if ( hist.size() <= pos )
+               {
+                  hist.resize(pos + 1024);
+               }
+               hist[pos] += 2.0 * fp[0][i] * fp[0][k];
+            }
+            hist[0] += fp[0][i] * fp[0][i];
+         }
+         hist[0] += fp[0][as1] * fp[0][as1];
+      }         
+   
+      while( hist.size() && !hist[hist.size()-1] ) 
+      {
+         hist.pop_back();
+      }
+      if ( contrib_array.size() ) 
+      {
+         for ( unsigned int k = 0; k < contrib_array.size(); k++ )
+         {
+            contrib_array[k].resize(hist.size());
+         }
+      }
+      //      for ( unsigned int i = 0; i < hist.size(); i++ )
+      //      {
+      //         cout << "hist[" << i << "] = " << hist[i] << endl;
+      //      }
+
+      // vector < float > save_hist = hist;
+      // hist[0] = 0.0;
+
+      progress_saxs->setProgress( 1, 2 );
+
+      // hist = save_hist;
+
       vector < double > I;
-      vector < double > Ia;
-      vector < double > Ic;
+      vector < double > dist(hist.size());
       I.resize(q_points);
-      Ia.resize(q_points);
-      Ic.resize(q_points);
       for ( unsigned int j = 0; j < q_points; j++ )
       {
          I[j] = 0.0f;
-         Ia[j] = 0.0f;
-         Ic[j] = 0.0f;
       }
-      unsigned int as = atoms.size();
-      unsigned int as1 = as - 1;
-      double rik; // distance from atom i to k 
-      double qrik; // q * rik
-      double sqrikd; // sin * q * rik / qrik
-      progress_saxs->setTotalSteps((int)(as1 * 1.15));
-      for ( unsigned int i = 0; i < as1; i++ )
       {
-         // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
-         // cout << lcp << endl;
-         // lbl_core_progress->setText(lcp);
-         progress_saxs->setProgress(i+1);
-         qApp->processEvents();
-         if ( stopFlag ) 
+         double d = 0.0;
+         
+         for ( unsigned int j = 0; j < hist.size(); j++, d += delta )
          {
-            editor->append(tr("Terminated by user request.\n"));
-            progress_saxs->reset();
-            lbl_core_progress->setText("");
-            pb_plot_saxs_sans->setEnabled(true);
-            pb_plot_pr->setEnabled(true);
-            return;
-         }
-         for ( unsigned int k = i + 1; k < as; k++ )
-         {
-            rik = 
-               sqrt(
-                    (atoms[i].pos[0] - atoms[k].pos[0]) *
-                    (atoms[i].pos[0] - atoms[k].pos[0]) +
-                    (atoms[i].pos[1] - atoms[k].pos[1]) *
-                    (atoms[i].pos[1] - atoms[k].pos[1]) +
-                    (atoms[i].pos[2] - atoms[k].pos[2]) *
-                    (atoms[i].pos[2] - atoms[k].pos[2])
-                    );
-#if defined(SAXS_DEBUG_F)
-            cout << "dist atoms:  "
-                 << i
-                 << " "
-                 << atoms[i].saxs_name
-                 << ","
-                 << k
-                 << " "
-                 << atoms[k].saxs_name
-                 << " "
-                 << rik
-                 << endl;
-#endif
-            for ( unsigned int j = 0; j < q_points; j++ )
-            {
-               qrik = rik * q[j];
-               sqrikd = sin(qrik) / qrik;
-               I[j] += fp[j][i] * fp[j][k] * sqrikd;
-               Ia[j] += f[j][i] * f[j][k] * sqrikd;
-               Ic[j] += fc[j][i] * fc[j][k] * sqrikd;
-#if defined(SAXS_DEBUG_F)
-               cout << QString("").sprintf("I[%f] += (%f * %f) * (sin(%f) / %f) == %f\n"
-                                           , q[j]
-                                           , fp[j][i]
-                                           , fp[j][k]
-                                           , qrik
-                                           , qrik
-                                           , I[j]);
-#endif
-            }
+            dist[j] = sqrt( d );
+            // cout << QString("dist[%1] = %2\n").arg(j).arg(dist[j]);
          }
       }
 
-#if defined(I_MULT_2)
-      for ( unsigned int j = 0; j < q_points; j++ )
+      double x;
+      for ( unsigned int i = 0; i < q.size(); i++ )
       {
-         I[j] *= 2; // we only computed one symmetric side
-         Ia[j] *= 2; // we only computed one symmetric side
-         Ic[j] *= 2; // we only computed one symmetric side
-#  if defined(SAXS_DEBUG_F)
-         cout << QString("").sprintf("I[%f] = %f\n",
-                                     q[j],
-                                     I[j]);
-#  endif
+         // cout << "q[i] " << q[i] << endl;
+         
+         for ( unsigned int j = 0; j < hist.size(); j++ )
+         {
+            x = dist[j] * q[i];
+            // cout << "dist[ " <<  j << "] = " << dist[j] << endl;
+            // cout << "sinc(x) = "  << (( fabs(x) < 1e-16 ) ? 1.0 : sin(x) / x) << endl;
+            // cout << "r_dist[" << j << "] = " << hist[j] << endl;
+            I[i] += hist[j] * (( fabs(x) < 1e-16 ) ? 1.0 : sin(x) / x);
+         }
+         I[i] *= exp( -0.23 * q[i] * q[i] );
+         // cout << "I[" << i << "] = " << I[i] << endl;
       }
-#endif
+         
       lbl_core_progress->setText("");
       qApp->processEvents();
       progress_saxs->reset();
@@ -523,6 +586,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_foxs()
          }
          plotted_q2.push_back(q2);
       }
+      //      for ( unsigned int i = 0; i < q.size(); i++ )
+      //      {
+      //         cout << QString("q[%1] = %2  I[%3] = %4\n")
+      //            .arg(i).arg(q[i]).arg(i).arg(I[i]);
+      //      }
       plotted_I.push_back(I);
       unsigned int p = plotted_q.size() - 1;
 #if defined(SAXS_DEBUG)
@@ -530,7 +598,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_foxs()
 #endif
       for ( unsigned int i = 0; i < plotted_I[p].size(); i++ ) 
       {
-         plotted_I[p][i] = log10(plotted_I[p][i]);
+         // plotted_I[p][i] = log10(plotted_I[p][i]);
       }
 #ifndef QT4
       plot_saxs->setCurveData(Iq, 
@@ -548,7 +616,22 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_foxs()
       curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
       curve->attach( plot_saxs );
 #endif
-      plot_saxs->replot();
+      //      for ( unsigned int i = 0; i < q.size(); i++ )
+      //      {
+      //         cout << QString("plotted_q[%1][%1] = %1  plotted_I[%1]I[%1] = %1\n")
+      //    .arg(p)
+      //            .arg(i)
+      //            .arg(plotted_q[p][i])
+      //            .arg(p)
+      //            .arg(i)
+      //            .arg(plotted_I[p][i]);
+      //      }
+      // plot_saxs->replot();
+      cb_user_range->setChecked(false);
+      cb_guinier->setChecked(true);
+      rescale_plot();
+      cb_guinier->setChecked(false);
+      rescale_plot();
 
       // save the data to a file
       if ( create_native_saxs )
@@ -616,11 +699,9 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_foxs()
                        ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
                for ( unsigned int i = 0; i < q.size(); i++ )
                {
-                  fprintf(fsaxs, "%.6e\t%.6e\t%.6e\t%.6e\n", q[i], I[i], Ia[i], Ic[i]);
+                  fprintf(fsaxs, "%.6e\t%.6e\n", q[i], I[i]);
                   ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.push_back(q[i]);
                   ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.push_back(I[i]);
-                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.push_back(Ia[i]);
-                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.push_back(Ic[i]);
                }
                fclose(fsaxs);
             } 
@@ -660,16 +741,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_foxs()
          {
             ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.push_back(q[i]);
             ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.push_back(I[i]);
-            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.push_back(Ia[i]);
-            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.push_back(Ic[i]);
          }
       }
-   }
+   } // models
+
    pb_plot_saxs_sans->setEnabled(true);
    pb_plot_pr->setEnabled(true);
 }
 
-//  -----------------------------------------
+//  ------------------------------------------------------------------------------------------------------
 void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 {
    // don't forget to later merge deleted waters into model_vector
@@ -679,6 +759,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
    pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(false);
    progress_saxs->reset();
+   QRegExp count_hydrogens("H(\\d)");
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
@@ -803,6 +884,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
 
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
+            new_atom.hybrid_name = hybrid_name;
+            new_atom.hydrogens = 0;
+            if ( count_hydrogens.search(hybrid_name) != -1 )
+            {
+               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+            }
 
             if ( !saxs_map.count(hybrid_map[hybrid_name].saxs_name) )
             {
@@ -956,6 +1043,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       }
       cout << endl;
 #endif
+      saxs saxsH = saxs_map["H"];
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
          saxs saxs = saxs_map[atoms[i].saxs_name];
@@ -984,7 +1072,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                saxs.a[0] * exp(-saxs.b[0] * q2[j]) +
                saxs.a[1] * exp(-saxs.b[1] * q2[j]) +
                saxs.a[2] * exp(-saxs.b[2] * q2[j]) +
-               saxs.a[3] * exp(-saxs.b[3] * q2[j]);
+               saxs.a[3] * exp(-saxs.b[3] * q2[j]) +
+               atoms[i].hydrogens * 
+               ( saxsH.c + 
+                 saxsH.a[0] * exp(-saxsH.b[0] * q2[j]) +
+                 saxsH.a[1] * exp(-saxsH.b[1] * q2[j]) +
+                 saxsH.a[2] * exp(-saxsH.b[2] * q2[j]) +
+                 saxsH.a[3] * exp(-saxsH.b[3] * q2[j]) );
             fc[j][i] =  vie * exp(m_pi_vi23 * q2[j]);
             fp[j][i] = f[j][i] - fc[j][i];
 #if defined(SAXS_DEBUG_F)
@@ -1193,10 +1287,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 #if defined(SAXS_DEBUG)
       cout << "plot # " << p << endl;
 #endif
-      for ( unsigned int i = 0; i < plotted_I[p].size(); i++ ) 
-      {
-         plotted_I[p][i] = log10(plotted_I[p][i]);
-      }
+      //      for ( unsigned int i = 0; i < plotted_I[p].size(); i++ ) 
+      //      {
+      //         plotted_I[p][i] = log10(plotted_I[p][i]);
+      //      }
 #ifndef QT4
       plot_saxs->setCurveData(Iq, 
                               cb_guinier->isChecked() ?
@@ -1213,7 +1307,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], 2, Qt::SolidLine ) );
       curve->attach( plot_saxs );
 #endif
-      plot_saxs->replot();
+      cb_user_range->setChecked(false);
+      cb_guinier->setChecked(true);
+      rescale_plot();
+      cb_guinier->setChecked(false);
+      rescale_plot();
 
       // save the data to a file
       if ( create_native_saxs )

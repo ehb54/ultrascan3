@@ -172,10 +172,12 @@ struct saxs_options
    // options for saxs/sans iq curve computation
 
    bool    saxs_iq_native_debye;
+   bool    saxs_iq_native_fast;
    bool    saxs_iq_crysol;
    bool    saxs_iq_foxs;
 
    bool    sans_iq_native_debye;
+   bool    sans_iq_native_fast;
    bool    sans_iq_cryson;
 
    bool    iq_ask;                // ask when "compute saxs curve" is pressed

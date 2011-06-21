@@ -107,8 +107,22 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QPrinter printer;
 
+      QButtonGroup *bg_saxs_sans;
+      QRadioButton *rb_saxs;
+      QRadioButton *rb_sans;
+
+      QButtonGroup *bg_saxs_iq;
+      QRadioButton *rb_saxs_iq_native_debye;
+      QRadioButton *rb_saxs_iq_native_fast;
+      QRadioButton *rb_saxs_iq_foxs;
+      QRadioButton *rb_saxs_iq_crysol;
+
+      QButtonGroup *bg_sans_iq;
+      QRadioButton *rb_sans_iq_native_debye;
+      QRadioButton *rb_sans_iq_native_fast;
+      QRadioButton *rb_sans_iq_cryson;
+
       QPushButton *pb_plot_saxs_sans;
-      QLabel      *lbl_current_method;
       QPushButton *pb_load_saxs_sans;
       QPushButton *pb_clear_plot_saxs;
       QPushButton *pb_plot_pr;
@@ -126,10 +140,6 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_cancel;
 
       QwtCounter *cnt_bin_size;
-
-      QButtonGroup *bg_saxs_sans;
-      QRadioButton *rb_saxs;
-      QRadioButton *rb_sans;
 
       QCheckBox *cb_normalize;
 
@@ -255,7 +265,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QProgressBar *progress;
 
-      void set_current_method_text();
+      void set_current_method_buttons();
 
    private:
 
@@ -351,7 +361,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString cryson_last_pdb_base;
 
       void calc_saxs_iq_native_debye();
-      void calc_saxs_iq_native_foxs();
+      void calc_saxs_iq_native_fast();
 
    private slots:
 
@@ -379,6 +389,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void clear_guinier();
       void setupGUI();
       void set_saxs_sans(int);
+      void set_saxs_iq(int);
+      void set_sans_iq(int);
       void load_saxs_sans();
       void show_plot_saxs();
       void load_saxs(QString filename = "");

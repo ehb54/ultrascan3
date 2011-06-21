@@ -66,20 +66,20 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_saxs_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_saxs_iq_native_debye = new QCheckBox(this);
-   cb_saxs_iq_native_debye->setText(tr("Native Debye "));
+   cb_saxs_iq_native_debye->setText(tr("Full Debye "));
    cb_saxs_iq_native_debye->setEnabled(true);
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
    cb_saxs_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_saxs_iq_native_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_saxs_iq_native_debye, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_debye()));
 
-   cb_saxs_iq_crysol = new QCheckBox(this);
-   cb_saxs_iq_crysol->setText(tr("Crysol"));
-   cb_saxs_iq_crysol->setEnabled(true);
-   cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
-   cb_saxs_iq_crysol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_saxs_iq_crysol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cb_saxs_iq_crysol, SIGNAL(clicked()), this, SLOT(set_saxs_iq_crysol()));
+   cb_saxs_iq_native_fast = new QCheckBox(this);
+   cb_saxs_iq_native_fast->setText(tr("Fast Debye "));
+   cb_saxs_iq_native_fast->setEnabled(true);
+   cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
+   cb_saxs_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_saxs_iq_native_fast->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_saxs_iq_native_fast, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_fast()));
 
    cb_saxs_iq_foxs = new QCheckBox(this);
    cb_saxs_iq_foxs->setText(tr("FoXS"));
@@ -88,6 +88,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_saxs_iq_foxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_saxs_iq_foxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_saxs_iq_foxs, SIGNAL(clicked()), this, SLOT(set_saxs_iq_foxs()));
+
+   cb_saxs_iq_crysol = new QCheckBox(this);
+   cb_saxs_iq_crysol->setText(tr("Crysol"));
+   cb_saxs_iq_crysol->setEnabled(true);
+   cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
+   cb_saxs_iq_crysol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_saxs_iq_crysol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_saxs_iq_crysol, SIGNAL(clicked()), this, SLOT(set_saxs_iq_crysol()));
 
    lbl_crysol_max_harmonics = new QLabel(tr(" Crysol: Maximum order of harmonics"), this);
    lbl_crysol_max_harmonics->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -260,12 +268,20 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_sans_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_sans_iq_native_debye = new QCheckBox(this);
-   cb_sans_iq_native_debye->setText(tr("Native Debye "));
+   cb_sans_iq_native_debye->setText(tr("Full Debye "));
    cb_sans_iq_native_debye->setEnabled(true);
    cb_sans_iq_native_debye->setChecked((*saxs_options).sans_iq_native_debye);
    cb_sans_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_sans_iq_native_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_sans_iq_native_debye, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_debye()));
+
+   cb_sans_iq_native_fast = new QCheckBox(this);
+   cb_sans_iq_native_fast->setText(tr("Fast Debye "));
+   cb_sans_iq_native_fast->setEnabled(true);
+   cb_sans_iq_native_fast->setChecked((*saxs_options).sans_iq_native_fast);
+   cb_sans_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_sans_iq_native_fast->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_sans_iq_native_fast, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_fast()));
 
    cb_sans_iq_cryson = new QCheckBox(this);
    cb_sans_iq_cryson->setText(tr("Cryson"));
@@ -600,8 +616,9 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    QHBoxLayout *hbl_saxs_iq = new QHBoxLayout;
    hbl_saxs_iq->addWidget(lbl_saxs_iq);
    hbl_saxs_iq->addWidget(cb_saxs_iq_native_debye);
-   hbl_saxs_iq->addWidget(cb_saxs_iq_crysol);
+   hbl_saxs_iq->addWidget(cb_saxs_iq_native_fast);
    hbl_saxs_iq->addWidget(cb_saxs_iq_foxs);
+   hbl_saxs_iq->addWidget(cb_saxs_iq_crysol);
    background->addMultiCellLayout(hbl_saxs_iq, j, j, 0, 1);
    j++;
 
@@ -643,6 +660,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    QHBoxLayout *hbl_sans_iq = new QHBoxLayout;
    hbl_sans_iq->addWidget(lbl_sans_iq);
    hbl_sans_iq->addWidget(cb_sans_iq_native_debye);
+   hbl_sans_iq->addWidget(cb_sans_iq_native_fast);
    hbl_sans_iq->addWidget(cb_sans_iq_cryson);
    background->addMultiCellLayout(hbl_sans_iq, j, j, 0, 1);
    j++;
@@ -769,14 +787,32 @@ void US_Hydrodyn_SaxsOptions::update_water_e_density(double val)
 void US_Hydrodyn_SaxsOptions::set_saxs_iq_native_debye()
 {
    (*saxs_options).saxs_iq_native_debye = cb_saxs_iq_native_debye->isChecked();
-   (*saxs_options).saxs_iq_foxs = !cb_saxs_iq_native_debye->isChecked();
+   (*saxs_options).saxs_iq_native_fast = !cb_saxs_iq_native_debye->isChecked();
+   (*saxs_options).saxs_iq_foxs = false;
    (*saxs_options).saxs_iq_crysol = false;
+   cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
    cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
    cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
    {
-      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_text();
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_buttons();
+   }
+}
+
+void US_Hydrodyn_SaxsOptions::set_saxs_iq_native_fast()
+{
+   (*saxs_options).saxs_iq_native_fast = cb_saxs_iq_native_fast->isChecked();
+   (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_native_fast->isChecked();
+   (*saxs_options).saxs_iq_foxs = false;
+   (*saxs_options).saxs_iq_crysol = false;
+   cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
+   cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
+   cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_buttons();
    }
 }
 
@@ -784,13 +820,15 @@ void US_Hydrodyn_SaxsOptions::set_saxs_iq_crysol()
 {
    (*saxs_options).saxs_iq_crysol = cb_saxs_iq_crysol->isChecked();
    (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_crysol->isChecked();
+   (*saxs_options).saxs_iq_native_fast = false;
    (*saxs_options).saxs_iq_foxs = false;
+   cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
    cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
    {
-      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_text();
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_buttons();
    }
 }
 
@@ -798,13 +836,15 @@ void US_Hydrodyn_SaxsOptions::set_saxs_iq_foxs()
 {
    (*saxs_options).saxs_iq_foxs = cb_saxs_iq_foxs->isChecked();
    (*saxs_options).saxs_iq_native_debye = !cb_saxs_iq_foxs->isChecked();
+   (*saxs_options).saxs_iq_native_fast = false;
    (*saxs_options).saxs_iq_crysol = false;
+   cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
    cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
    {
-      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_text();
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_buttons();
    }
 }
 
@@ -871,12 +911,29 @@ void US_Hydrodyn_SaxsOptions::update_frac_of_exch_pep(double val)
 void US_Hydrodyn_SaxsOptions::set_sans_iq_native_debye()
 {
    (*saxs_options).sans_iq_native_debye = cb_sans_iq_native_debye->isChecked();
-   (*saxs_options).sans_iq_cryson = !cb_sans_iq_native_debye->isChecked();
+   (*saxs_options).sans_iq_native_fast = !cb_sans_iq_native_debye->isChecked();
+   (*saxs_options).sans_iq_cryson = false;
+   cb_sans_iq_native_fast->setChecked((*saxs_options).sans_iq_native_fast);
    cb_sans_iq_cryson->setChecked((*saxs_options).sans_iq_cryson);
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
    {
-      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_text();
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_buttons();
+   }
+}
+
+void US_Hydrodyn_SaxsOptions::set_sans_iq_native_fast()
+{
+   (*saxs_options).sans_iq_native_fast = cb_sans_iq_native_fast->isChecked();
+   (*saxs_options).sans_iq_native_debye = !cb_sans_iq_native_fast->isChecked();
+   (*saxs_options).sans_iq_cryson = false;
+   cb_sans_iq_native_debye->setChecked((*saxs_options).sans_iq_native_debye);
+   cb_sans_iq_native_fast->setChecked((*saxs_options).sans_iq_native_fast);
+   cb_sans_iq_cryson->setChecked((*saxs_options).sans_iq_cryson);
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_buttons();
    }
 }
 
@@ -884,11 +941,13 @@ void US_Hydrodyn_SaxsOptions::set_sans_iq_cryson()
 {
    (*saxs_options).sans_iq_cryson = cb_sans_iq_cryson->isChecked();
    (*saxs_options).sans_iq_native_debye = !cb_sans_iq_cryson->isChecked();
+   (*saxs_options).sans_iq_native_fast = false;
+   cb_sans_iq_native_fast->setChecked((*saxs_options).sans_iq_native_fast);
    cb_sans_iq_native_debye->setChecked((*saxs_options).sans_iq_native_debye);
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
    {
-      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_text();
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_buttons();
    }
 }
 

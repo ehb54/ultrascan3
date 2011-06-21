@@ -216,11 +216,14 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    dmd_options.threshold_sc_sc = 5;
 
    saxs_options.normalize_by_mw = true;
+
    saxs_options.saxs_iq_native_debye = false;
-   saxs_options.saxs_iq_foxs = true;
+   saxs_options.saxs_iq_native_fast = true;
+   saxs_options.saxs_iq_foxs = false;
    saxs_options.saxs_iq_crysol = false;
 
    saxs_options.sans_iq_native_debye = true;
+   saxs_options.sans_iq_native_fast = false;
    saxs_options.sans_iq_cryson = false;
 
    saxs_options.iq_ask = false;
