@@ -17,17 +17,16 @@ void US_Solute::init_solutes( double s_min,   double s_max,   int s_res,
 {
    if ( grid_reps < 1 ) grid_reps = 1;
 
-   double s_step   = fabs( s_max   - s_min   ) / ( s_res   - 1 ) * grid_reps;
-   double ff0_step = fabs( ff0_max - ff0_min ) / ( ff0_res - 1 ) * grid_reps;
+   double s_step   = fabs( s_max   - s_min   ) / ( ( s_res   / grid_reps ) - 1 );
+   double ff0_step = fabs( ff0_max - ff0_min ) / ( ( ff0_res / grid_reps ) - 1 );
+   double s_grid   = s_step   / grid_reps;  
+   double ff0_grid = ff0_step / grid_reps;   
 
    // Allow a 1% overscan
    s_max   += 0.01 * s_step;
    ff0_max += 0.01 * ff0_step;
 
    solute_list.reserve( sq( grid_reps ) );
-
-   double s_grid   = s_step   / grid_reps;
-   double ff0_grid = ff0_step / grid_reps;
 
    // Generate solutes for each grid repetition
    for ( int i = 0; i < grid_reps; i++ )
