@@ -52,18 +52,23 @@ class US_UTIL_EXTERN US_Solute
       }
 
       //! A static function to initialize solutes
-      //! \param workers The number of workers that will analyze the solutes
       //! \param s_min The minimum sedimentation value
       //! \param s_max The maximum sedimentation value
       //! \param s_res The number of ponts to evaluate between s_min and s_max
       //! \param ff0_min The minimum frictional ratio
       //! \param ff0_max The maximum frictional ratio
       //! \param ff0_res The number of ponts to evaluate between ff0_min and 
-      //                 ff0_max
-      //  \param solute_list A reference to the output values.  This is a 
-      //                     list of vectors.
-      static void init_solutes( int, double, double, int,
-                                     double, double, int,
-                                     QList< QVector< US_Solute > >& );
+      //!                ff0_max
+      //! \param grid_reps The number of grids used to partition the data
+      //! \param solute_list A reference to the output values.  This is a 
+      //!                    list of vectors.
+      static void init_solutes( double, double, int,
+                                double, double, int, int,
+                                QList< QVector< US_Solute > >& );
+
+   private:
+      static QVector< US_Solute > create_solutes(
+                    double s_min,   double s_max,   double s_step,
+                    double ff0_min, double ff0_max, double ff0_step );
 };
 #endif
