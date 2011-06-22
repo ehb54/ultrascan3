@@ -203,8 +203,10 @@ SOURCES += \
   src/us_hydrodyn_saxs_external.cpp \
   src/us_hydrodyn_saxs_iqq.cpp \
   src/us_hydrodyn_saxs_load_csv.cpp \
+  src/us_hydrodyn_saxs_loads.cpp \
   src/us_hydrodyn_saxs_mw.cpp \
   src/us_hydrodyn_saxs_options.cpp \
+  src/us_hydrodyn_saxs_plots.cpp \
   src/us_hydrodyn_saxs_residuals.cpp \
   src/us_hydrodyn_supc.cpp \
   src/us_imgviewer.cpp \

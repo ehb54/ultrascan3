@@ -81,6 +81,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_saxs_iq_native_fast->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_saxs_iq_native_fast, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_fast()));
 
+   cb_saxs_iq_native_fast_compute_pr = new QCheckBox(this);
+   cb_saxs_iq_native_fast_compute_pr->setText(tr("P(r) "));
+   cb_saxs_iq_native_fast_compute_pr->setEnabled(true);
+   cb_saxs_iq_native_fast_compute_pr->setChecked((*saxs_options).saxs_iq_native_fast_compute_pr);
+   cb_saxs_iq_native_fast_compute_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_saxs_iq_native_fast_compute_pr->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_saxs_iq_native_fast_compute_pr, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_fast_compute_pr()));
+
    cb_saxs_iq_foxs = new QCheckBox(this);
    cb_saxs_iq_foxs->setText(tr("FoXS"));
    cb_saxs_iq_foxs->setEnabled(true);
@@ -96,6 +104,38 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_saxs_iq_crysol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_saxs_iq_crysol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_saxs_iq_crysol, SIGNAL(clicked()), this, SLOT(set_saxs_iq_crysol()));
+
+   lbl_fast_bin_size = new QLabel(tr(" Fast Debye: Bin size"), this);
+   lbl_fast_bin_size->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_fast_bin_size->setMinimumHeight(minHeight1);
+   lbl_fast_bin_size->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_fast_bin_size->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_fast_bin_size = new QwtCounter(this);
+   cnt_fast_bin_size->setRange(0.01, 100, 0.01);
+   cnt_fast_bin_size->setValue((*saxs_options).fast_bin_size);
+   cnt_fast_bin_size->setMinimumHeight(minHeight1);
+   cnt_fast_bin_size->setEnabled(true);
+   cnt_fast_bin_size->setNumButtons(2);
+   cnt_fast_bin_size->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_fast_bin_size->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_fast_bin_size, SIGNAL(valueChanged(double)), SLOT(update_fast_bin_size(double)));
+
+   lbl_fast_modulation = new QLabel(tr(" Fast Debye: Modulation"), this);
+   lbl_fast_modulation->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_fast_modulation->setMinimumHeight(minHeight1);
+   lbl_fast_modulation->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_fast_modulation->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_fast_modulation = new QwtCounter(this);
+   cnt_fast_modulation->setRange(0.1, 0.5, 0.001);
+   cnt_fast_modulation->setValue((*saxs_options).fast_modulation);
+   cnt_fast_modulation->setMinimumHeight(minHeight1);
+   cnt_fast_modulation->setEnabled(true);
+   cnt_fast_modulation->setNumButtons(3);
+   cnt_fast_modulation->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_fast_modulation->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_fast_modulation, SIGNAL(valueChanged(double)), SLOT(update_fast_modulation(double)));
 
    lbl_crysol_max_harmonics = new QLabel(tr(" Crysol: Maximum order of harmonics"), this);
    lbl_crysol_max_harmonics->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -282,6 +322,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_sans_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_sans_iq_native_fast->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_sans_iq_native_fast, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_fast()));
+
+   cb_sans_iq_native_fast_compute_pr = new QCheckBox(this);
+   cb_sans_iq_native_fast_compute_pr->setText(tr("P(r) "));
+   cb_sans_iq_native_fast_compute_pr->setEnabled(true);
+   cb_sans_iq_native_fast_compute_pr->setChecked((*saxs_options).sans_iq_native_fast_compute_pr);
+   cb_sans_iq_native_fast_compute_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_sans_iq_native_fast_compute_pr->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_sans_iq_native_fast_compute_pr, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_fast_compute_pr()));
 
    cb_sans_iq_cryson = new QCheckBox(this);
    cb_sans_iq_cryson->setText(tr("Cryson"));
@@ -617,9 +665,18 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    hbl_saxs_iq->addWidget(lbl_saxs_iq);
    hbl_saxs_iq->addWidget(cb_saxs_iq_native_debye);
    hbl_saxs_iq->addWidget(cb_saxs_iq_native_fast);
+   hbl_saxs_iq->addWidget(cb_saxs_iq_native_fast_compute_pr);
    hbl_saxs_iq->addWidget(cb_saxs_iq_foxs);
    hbl_saxs_iq->addWidget(cb_saxs_iq_crysol);
    background->addMultiCellLayout(hbl_saxs_iq, j, j, 0, 1);
+   j++;
+
+   background->addWidget(lbl_fast_bin_size, j, 0);
+   background->addWidget(cnt_fast_bin_size, j, 1);
+   j++;
+
+   background->addWidget(lbl_fast_modulation, j, 0);
+   background->addWidget(cnt_fast_modulation, j, 1);
    j++;
 
    background->addWidget(lbl_crysol_max_harmonics, j, 0);
@@ -661,6 +718,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    hbl_sans_iq->addWidget(lbl_sans_iq);
    hbl_sans_iq->addWidget(cb_sans_iq_native_debye);
    hbl_sans_iq->addWidget(cb_sans_iq_native_fast);
+   hbl_sans_iq->addWidget(cb_sans_iq_native_fast_compute_pr);
    hbl_sans_iq->addWidget(cb_sans_iq_cryson);
    background->addMultiCellLayout(hbl_sans_iq, j, j, 0, 1);
    j++;
@@ -816,6 +874,12 @@ void US_Hydrodyn_SaxsOptions::set_saxs_iq_native_fast()
    }
 }
 
+void US_Hydrodyn_SaxsOptions::set_saxs_iq_native_fast_compute_pr()
+{
+   (*saxs_options).saxs_iq_native_fast_compute_pr = cb_saxs_iq_native_fast_compute_pr->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_SaxsOptions::set_saxs_iq_crysol()
 {
    (*saxs_options).saxs_iq_crysol = cb_saxs_iq_crysol->isChecked();
@@ -920,6 +984,12 @@ void US_Hydrodyn_SaxsOptions::set_sans_iq_native_debye()
    {
       ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->set_current_method_buttons();
    }
+}
+
+void US_Hydrodyn_SaxsOptions::set_sans_iq_native_fast_compute_pr()
+{
+   (*saxs_options).sans_iq_native_fast_compute_pr = cb_sans_iq_native_fast_compute_pr->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SaxsOptions::set_sans_iq_native_fast()
@@ -1159,3 +1229,14 @@ void US_Hydrodyn_SaxsOptions::update_pointsmax(double val)
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_SaxsOptions::update_fast_bin_size(double val)
+{
+   (*saxs_options).fast_bin_size = (float) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_fast_modulation(double val)
+{
+   (*saxs_options).fast_modulation = (float) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}

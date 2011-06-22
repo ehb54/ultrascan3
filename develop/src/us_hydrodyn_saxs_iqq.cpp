@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
+#include "../include/us_saxs_util.h"
 
 #define SLASH "/"
 #if defined(WIN32)
@@ -290,7 +291,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          q2[j] = q[j] * q[j];
       }
 
-      double m_pi_vi23; // - pi * pow(v,2/3)
+      // double m_pi_vi23; // - pi * pow(v,2/3)
       float vi; // excluded water vol
       float vie; // excluded water * e density
 
@@ -326,7 +327,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 
          vi = atoms[i].excl_vol;
          vie = vi * our_saxs_options->water_e_density;
-         m_pi_vi23 = -M_PI * pow((double)vi,2.0/3.0); // - pi * pow(v,2/3)
+         // m_pi_vi23 = -M_PI * pow((double)vi,2.0/3.0); // - pi * pow(v,2/3)
 #if defined(SAXS_DEBUG_FX)
          cout << i << "\t"
               << atoms[i].saxs_name << "\t";
@@ -371,68 +372,133 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 #endif
       }
 
-
       // foxs method: compute real space distribution
 
       unsigned int as = atoms.size();
       unsigned int as1 = as - 1;
-      // double rik; // distance from atom i to k 
+      double rik; // distance from atom i to k 
       double rik2; // square distance from atom i to k 
-      //      float delta = our_saxs_options->bin_size;
-      float delta = 0.5; // for foxs method
+      float delta = our_saxs_options->fast_bin_size;
       float one_over_delta = 1.0 / delta;
+      float delta_pr = our_saxs_options->bin_size;
+      float one_over_delta_pr = 1.0 / delta_pr;
       unsigned int pos;
+      unsigned int pos_pr;
       vector < float > hist;
+      vector < float > hist_pr;
       contrib_array.clear();
       contrib_file = ((US_Hydrodyn *)us_hydrodyn)->pdb_file;
       // cout << "contrib_file " << contrib_file << endl;
       
       progress_saxs->setTotalSteps((int)(as1 * 1.15));
-      if ( 0 && cb_pr_contrib->isChecked() &&
-           !source &&
-           contrib_file.contains(QRegExp("(PDB|pdb)$")) )
+      if ( our_saxs_options->saxs_iq_native_fast_compute_pr )
       {
-         for ( unsigned int i = 0; i < as1; i++ )
+         pb_pr_contrib->setEnabled(false);
+         if ( cb_pr_contrib->isChecked() &&
+              !source &&
+              contrib_file.contains(QRegExp("(PDB|pdb)$")) )
          {
-            // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
-            // cout << lcp << endl;
-            // lbl_core_progress->setText(lcp);
-            progress_saxs->setProgress(i+1);
-            qApp->processEvents();
-            if ( stopFlag ) 
+            contrib_array.resize(atoms.size());
+            for ( unsigned int i = 0; i < as1; i++ )
             {
-               editor->append(tr("Terminated by user request.\n"));
-               progress_saxs->reset();
-               lbl_core_progress->setText("");
-               pb_plot_saxs_sans->setEnabled(true);
-               pb_plot_pr->setEnabled(true);
-               return;
-            }
-            for ( unsigned int k = i + 1; k < as; k++ )
-            {
-               rik2 = 
-                  (atoms[i].pos[0] - atoms[k].pos[0]) *
-                  (atoms[i].pos[0] - atoms[k].pos[0]) +
-                  (atoms[i].pos[1] - atoms[k].pos[1]) *
-                  (atoms[i].pos[1] - atoms[k].pos[1]) +
-                  (atoms[i].pos[2] - atoms[k].pos[2]) *
-                  (atoms[i].pos[2] - atoms[k].pos[2]);
-               // rik = sqrt( rik2 );
-               pos = (unsigned int)floor(rik2 * one_over_delta);
-               
-               if ( hist.size() <= pos )
+               // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
+               // cout << lcp << endl;
+               // lbl_core_progress->setText(lcp);
+               progress_saxs->setProgress(i+1);
+               qApp->processEvents();
+               if ( stopFlag ) 
                {
-                  hist.resize(pos + 1024);
-                  for ( unsigned int l = 0; l < atoms.size(); l++ )
-                  {
-                     contrib_array[l].resize(pos + 1024);
-                  }
+                  editor->append(tr("Terminated by user request.\n"));
+                  progress_saxs->reset();
+                  lbl_core_progress->setText("");
+                  pb_plot_saxs_sans->setEnabled(true);
+                  pb_plot_pr->setEnabled(true);
+                  return;
                }
-               
-               hist[pos] += 2.0 * fp[0][i] * fp[0][k];
-               contrib_array[i][pos] += fp[0][i];
-               contrib_array[k][pos] += fp[0][k];
+               for ( unsigned int k = i + 1; k < as; k++ )
+               {
+                  rik2 = 
+                     (atoms[i].pos[0] - atoms[k].pos[0]) *
+                     (atoms[i].pos[0] - atoms[k].pos[0]) +
+                     (atoms[i].pos[1] - atoms[k].pos[1]) *
+                     (atoms[i].pos[1] - atoms[k].pos[1]) +
+                     (atoms[i].pos[2] - atoms[k].pos[2]) *
+                     (atoms[i].pos[2] - atoms[k].pos[2]);
+                  rik = sqrt( rik2 );
+                  pos = (unsigned int)floor(rik2 * one_over_delta);
+                  pos_pr = (unsigned int)floor(rik * one_over_delta_pr);
+                  
+                  if ( hist.size() <= pos )
+                  {
+                     hist.resize(pos + 1024);
+                  }
+                  if ( hist_pr.size() <= pos_pr )
+                  {
+                     hist_pr.resize(pos_pr + 1024);
+                     for ( unsigned int l = 0; l < atoms.size(); l++ )
+                     {
+                        contrib_array[l].resize(pos_pr + 1024);
+                     }
+                  }
+                  hist_pr[pos_pr] += 2.0 * fp[0][i] * fp[0][k];
+                  
+                  hist[pos] += 2.0 * fp[0][i] * fp[0][k];
+                  contrib_array[i][pos] += fp[0][i];
+                  contrib_array[k][pos] += fp[0][k];
+               }
+               hist[0] += fp[0][i] * fp[0][i];
             }
+            hist[0] += fp[0][as1] * fp[0][as1];
+            pb_pr_contrib->setEnabled(true);
+         } else {
+            for ( unsigned int i = 0; i < as1; i++ )
+            {
+               // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
+               // cout << lcp << endl;
+               // lbl_core_progress->setText(lcp);
+               progress_saxs->setProgress(i+1);
+               qApp->processEvents();
+               if ( stopFlag ) 
+               {
+                  editor->append(tr("Terminated by user request.\n"));
+                  progress_saxs->reset();
+                  lbl_core_progress->setText("");
+                  pb_plot_saxs_sans->setEnabled(true);
+                  pb_plot_pr->setEnabled(true);
+                  return;
+               }
+               for ( unsigned int k = i + 1; k < as; k++ )
+               {
+                  rik2 = 
+                     (atoms[i].pos[0] - atoms[k].pos[0]) *
+                     (atoms[i].pos[0] - atoms[k].pos[0]) +
+                     (atoms[i].pos[1] - atoms[k].pos[1]) *
+                     (atoms[i].pos[1] - atoms[k].pos[1]) +
+                     (atoms[i].pos[2] - atoms[k].pos[2]) *
+                     (atoms[i].pos[2] - atoms[k].pos[2]);
+                  rik = sqrt( rik2 );
+                  pos = (unsigned int)floor(rik2 * one_over_delta);
+                  pos_pr = (unsigned int)floor(rik * one_over_delta_pr);
+                  
+                  if ( hist.size() <= pos )
+                  {
+                     hist.resize(pos + 1024);
+                  }
+                  hist[pos] += 2.0 * fp[0][i] * fp[0][k];
+
+                  if ( hist_pr.size() <= pos_pr )
+                  {
+                     hist_pr.resize(pos_pr + 1024);
+                  }
+                  hist_pr[pos_pr] += 2.0 * fp[0][i] * fp[0][k];
+               }
+               hist[0] += fp[0][i] * fp[0][i];
+            }
+            hist[0] += fp[0][as1] * fp[0][as1];
+         }         
+         while( hist_pr.size() && !hist_pr[hist_pr.size()-1] ) 
+         {
+            hist_pr.pop_back();
          }
       } else {
          for ( unsigned int i = 0; i < as1; i++ )
@@ -473,7 +539,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          }
          hist[0] += fp[0][as1] * fp[0][as1];
       }         
-   
+      
       while( hist.size() && !hist[hist.size()-1] ) 
       {
          hist.pop_back();
@@ -492,6 +558,162 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 
       // vector < float > save_hist = hist;
       // hist[0] = 0.0;
+
+      QString name = 
+         QString("%1_%2")
+         .arg(QFileInfo(te_filename2->text()).fileName())
+         .arg(current_model + 1);
+
+      QString plot_name = name;
+
+      // save the data to a file
+      if ( our_saxs_options->saxs_iq_native_fast_compute_pr )
+      {
+         if ( create_native_saxs )
+         {
+            QString fpr_name = 
+               USglobal->config_list.root_dir + 
+               SLASH + "somo" + SLASH + "saxs" + SLASH + sprr_filestring();
+            
+            bool ok_to_write = true;
+            if ( QFile::exists(fpr_name) &&
+                 !((US_Hydrodyn *)us_hydrodyn)->overwrite ) 
+            {
+               
+               fpr_name = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fpr_name);
+               ok_to_write = true;
+            }
+            
+            if ( ok_to_write )
+            {
+               FILE *fpr = fopen(fpr_name, "w");
+               if ( fpr ) 
+               {
+                  editor->append(tr("P(r) curve file: ") + fpr_name + tr(" created.\n"));
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_mw = get_mw(te_filename2->text(), false);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+                  vector < double > r;
+                  vector < double > pr;
+                  vector < double > pr_n;
+                  r.resize(hist_pr.size());
+                  pr.resize(hist_pr.size());
+                  pr_n.resize(hist.size());
+                  for ( unsigned int i = 0; i < hist_pr.size(); i++) 
+                  {
+                     r[i] = i * delta_pr;
+                     pr[i] = (double) hist_pr[i];
+                     pr_n[i] = (double) hist_pr[i];
+                  }
+                  normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
+                     QString("")
+                     .sprintf(
+                              "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
+                              , model_filename.ascii()
+                              , US_Version.ascii()
+                              , REVISION
+                              , delta
+                              , get_mw(te_filename2->text(), false)
+                              , compute_pr_area(pr, r)
+                              );
+                  fprintf(fpr, "%s",
+                          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
+                  fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
+                  for ( unsigned int i = 0; i < hist_pr.size(); i++ )
+                  {
+                     if ( hist_pr[i] ) {
+                        fprintf(fpr, "%.6e\t%.6e\t%.6e\n", r[i], pr[i], pr_n[i]);
+                        ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(r[i]);
+                        ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
+                        ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
+                     }
+                  }
+                  fclose(fpr);
+               }
+               else
+               {
+#if defined(PR_DEBUG)
+                  cout << "can't create " << fpr_name << endl;
+#endif
+                  editor->append(tr("WARNING: Could not create PR curve file: ") + fpr_name + "\n");
+                  QMessageBox mb(tr("UltraScan Warning"),
+                                 tr("The output file ") + fpr_name + tr(" could not be created."), 
+                                 QMessageBox::Critical,
+                                 QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+                  mb.exec();
+               }
+            }
+         } else {
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_mw = get_mw(te_filename2->text(), false);
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+            vector < double > r;
+            vector < double > pr;
+            vector < double > pr_n;
+            r.resize(hist_pr.size());
+            pr.resize(hist_pr.size());
+            pr_n.resize(hist_pr.size());
+            for ( unsigned int i = 0; i < hist_pr.size(); i++) 
+            {
+               r[i] = i * delta_pr;
+               pr[i] = (double) hist_pr[i];
+               pr_n[i] = (double) hist_pr[i];
+            }
+            normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
+               QString("")
+               .sprintf(
+                        "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
+                        , model_filename.ascii()
+                        , US_Version.ascii()
+                        , REVISION
+                        , delta
+                        , get_mw(te_filename2->text(), false)
+                        , compute_pr_area(pr, r)
+                        );
+            for ( unsigned int i = 0; i < hist_pr.size(); i++ )
+            {
+               if ( hist_pr[i] ) {
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.push_back(r[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.push_back(pr[i]);
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.push_back(pr_n[i]);
+               }
+            }
+         }
+
+         vector < double > r;
+         vector < double > pr;
+         r.resize(hist_pr.size());
+         pr.resize(hist_pr.size());
+         for ( unsigned int i = 0; i < hist_pr.size(); i++) 
+         {
+            r[i] = i * delta_pr;
+            pr[i] = (double) hist_pr[i];
+#if defined(PR_DEBUG)
+            printf("%e %e\n", r[i], pr[i]);
+#endif
+         }
+         plotted_pr_not_normalized.push_back(pr);
+         plotted_pr_mw.push_back((float)get_mw(te_filename2->text(), false));
+         if ( cb_normalize->isChecked() )
+         {
+            normalize_pr(r, &pr, get_mw(te_filename2->text(),false));
+         }
+
+         plot_one_pr( r, pr, te_filename2->text() );
+         
+      } // compute_pr
 
       progress_saxs->setProgress( 1, 2 );
 
@@ -527,7 +749,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             // cout << "r_dist[" << j << "] = " << hist[j] << endl;
             I[i] += hist[j] * (( fabs(x) < 1e-16 ) ? 1.0 : sin(x) / x);
          }
-         I[i] *= exp( -0.23 * q[i] * q[i] );
+         I[i] *= exp( - our_saxs_options->fast_modulation * q[i] * q[i] );
          // cout << "I[" << i << "] = " << I[i] << endl;
       }
          
@@ -537,6 +759,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 #if defined(SAXS_DEBUG)
       cout << "I computed\n";
 #endif
+      if ( plotted )
+      {
+         editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+         plotted = false;
+      }
       editor->append("I(q) computed.\n");
 #if defined(BUG_DEBUG)
       qApp->processEvents();
@@ -544,17 +771,131 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       sleep(1);
       cout << " sleep 1 e done" << endl;
 #endif
+
+      // scaling fields
+      QString scaling_target = "";
+      double scaling_a;
+      double scaling_b;
+      double scaling_siga;
+      double scaling_sigb;
+      double scaling_chi2;
+
+      if ( qsl_plotted_iq_names.size() )
+      {
+         bool ok;
+         scaling_target = QInputDialog::getItem(
+                                                tr("Scale I(q) Curve"),
+                                                tr("Select the target plotted data set for scaling the loaded data:\n"
+                                                   "or Cancel of you do not wish to scale")
+                                                , 
+                                                qsl_plotted_iq_names, 
+                                                0, 
+                                                FALSE, 
+                                                &ok,
+                                                this );
+         if ( ok ) {
+            // user selected an item and pressed OK
+         } else {
+            scaling_target = "";
+         }
+      }         
+
+      // crop_iq_data(q, I);
+         
+      if ( q.size() &&
+           !scaling_target.isEmpty() && 
+           plotted_iq_names_to_pos.count(scaling_target) )
+      {
+         unsigned int iq_pos = plotted_iq_names_to_pos[scaling_target];
+         cout << "scaling target pos is " << iq_pos << endl;
+         double target_q_min = plotted_q[iq_pos][0];
+         double target_q_max = plotted_q[iq_pos][plotted_q[iq_pos].size() - 1];
+         double source_q_min = q[0];
+         double source_q_max = q[q.size() - 1];
+         double q_min = target_q_min;
+         if ( q_min < source_q_min )
+         {
+            q_min = source_q_min;
+         }
+         double q_max = target_q_max;
+         if ( q_max > source_q_max )
+         {
+            q_max = source_q_max;
+         }
+
+         cout << QString(
+                         "target q_min %1 max %2\n"
+                         "source q_min %3 max %4\n"
+                         "select q_min %5 max %6\n"
+                         )
+            .arg(target_q_min)
+            .arg(target_q_max)
+            .arg(source_q_min)
+            .arg(source_q_max)
+            .arg(q_min)
+            .arg(q_max)
+            ;
+
+         vector < double > use_q;
+         vector < double > use_I;
+         for ( unsigned int i = 0; i < plotted_q[iq_pos].size(); i++ )
+         {
+            if ( plotted_q[iq_pos][i] >= q_min &&
+                 plotted_q[iq_pos][i] <= q_max )
+            {
+               use_q.push_back(plotted_q[iq_pos][i]);
+               use_I.push_back(plotted_I[iq_pos][i]);
+            }
+         }
+         
+         cout << QString("After cropping q to overlap region:\n"
+                         "use_q.size == %1\n").arg(use_q.size());
+
+         if ( !use_q.size() )
+         {
+            QMessageBox::warning( this, "UltraScan",
+                                  QString(tr("Could not find sufficient q range overlap\n"
+                                             "to scale the loaded data to the selected target")) );
+         } else {
+            vector < double > use_source_I = interpolate(use_q, q, I);
+
+            US_Saxs_Util usu;
+
+            usu.linear_fit(
+                           use_source_I, 
+                           use_I, 
+                           scaling_a,
+                           scaling_b,
+                           scaling_siga,
+                           scaling_sigb,
+                           scaling_chi2
+                           );
+
+            QString results = 
+               QString("Scaling factor: %1  Offset: %2  Chi^2: %3\n")
+               .arg(scaling_b)
+               .arg(scaling_a)
+               .arg(scaling_chi2);
+            editor->append(results);
+            // cout << "saxs curve unscaled " << vector_double_to_csv(I) << endl;
+            for ( unsigned int i = 0; i < I.size(); i++ )
+            {
+               I[i] = scaling_a + scaling_b * I[i];
+               if ( I[i] <= 0e0 )
+               {
+                  I.resize(i);
+                  q.resize(i);
+                  break;
+               }
+            }
+         }
+      }
+
 #ifndef QT4
       long Iq = plot_saxs->insertCurve("I(q) vs q");
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
 #endif
-
-      QString name = 
-         QString("%1_%2")
-         .arg(QFileInfo(te_filename2->text()).fileName())
-         .arg(current_model + 1);
-      QString plot_name = name;
       int extension = 0;
 
       while ( dup_plotted_iq_name_check.count(plot_name) )
@@ -744,6 +1085,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          }
       }
    } // models
+
+   if ( plotted )
+   {
+      editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+      plotted = false;
+   }
 
    pb_plot_saxs_sans->setEnabled(true);
    pb_plot_pr->setEnabled(true);
@@ -997,10 +1344,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       f.resize(q_points);
       fc.resize(q_points);
       fp.resize(q_points);
+
+      double one_over_4pi = 1.0 / (4.0 * M_PI);
+      double one_over_4pi_2 = one_over_4pi * one_over_4pi;
       vector < double > q;  // store q grid
       vector < double > q2; // store q^2
+      vector < double > q_over_4pi_2; // store (q over 4pi)^2
       q.resize(q_points);
       q2.resize(q_points);
+      q_over_4pi_2.resize(q_points);
 
       for ( unsigned int j = 0; j < q_points; j++ )
       {
@@ -1013,9 +1365,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             q[j] = SAXS_MIN_Q;
          }
          q2[j] = q[j] * q[j];
+         q_over_4pi_2[j] = q[j] * q[j] * one_over_4pi_2;
       }
 
-      double m_pi_vi23; // - pi * pow(v,2/3)
+      // double m_pi_vi23; // - pi * pow(v,2/3)
+      double vi_23_4pi;
       float vi; // excluded water vol
       float vie; // excluded water * e density
 
@@ -1049,7 +1403,9 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          saxs saxs = saxs_map[atoms[i].saxs_name];
          vi = atoms[i].excl_vol;
          vie = vi * our_saxs_options->water_e_density;
-         m_pi_vi23 = -M_PI * pow((double)vi,2.0/3.0); // - pi * pow(v,2/3)
+         // m_pi_vi23 = -M_PI * pow((double)vi,2.0/3.0); // - pi * pow(v,2/3)
+         vi_23_4pi = - pow((double)vi,2.0/3.0) * one_over_4pi;
+
 #if defined(SAXS_DEBUG_FX)
          cout << i << "\t"
               << atoms[i].saxs_name << "\t";
@@ -1069,17 +1425,17 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             // so I'm holding off for now.
 
             f[j][i] = saxs.c + 
-               saxs.a[0] * exp(-saxs.b[0] * q2[j]) +
-               saxs.a[1] * exp(-saxs.b[1] * q2[j]) +
-               saxs.a[2] * exp(-saxs.b[2] * q2[j]) +
-               saxs.a[3] * exp(-saxs.b[3] * q2[j]) +
+               saxs.a[0] * exp(-saxs.b[0] * q_over_4pi_2[j]) +
+               saxs.a[1] * exp(-saxs.b[1] * q_over_4pi_2[j]) +
+               saxs.a[2] * exp(-saxs.b[2] * q_over_4pi_2[j]) +
+               saxs.a[3] * exp(-saxs.b[3] * q_over_4pi_2[j]) +
                atoms[i].hydrogens * 
                ( saxsH.c + 
-                 saxsH.a[0] * exp(-saxsH.b[0] * q2[j]) +
-                 saxsH.a[1] * exp(-saxsH.b[1] * q2[j]) +
-                 saxsH.a[2] * exp(-saxsH.b[2] * q2[j]) +
-                 saxsH.a[3] * exp(-saxsH.b[3] * q2[j]) );
-            fc[j][i] =  vie * exp(m_pi_vi23 * q2[j]);
+                 saxsH.a[0] * exp(-saxsH.b[0] * q_over_4pi_2[j]) +
+                 saxsH.a[1] * exp(-saxsH.b[1] * q_over_4pi_2[j]) +
+                 saxsH.a[2] * exp(-saxsH.b[2] * q_over_4pi_2[j]) +
+                 saxsH.a[3] * exp(-saxsH.b[3] * q_over_4pi_2[j]) );
+            fc[j][i] =  vie * exp(vi_23_4pi * q2[j]);
             fp[j][i] = f[j][i] - fc[j][i];
 #if defined(SAXS_DEBUG_F)
             if (1 || (q[j] > .0099 && q[j] < .0101)) {
@@ -1197,10 +1553,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             for ( unsigned int j = 0; j < q_points; j++ )
             {
                qrik = rik * q[j];
-               sqrikd = sin(qrik) / qrik;
-               I[j] += fp[j][i] * fp[j][k] * sqrikd;
-               Ia[j] += f[j][i] * f[j][k] * sqrikd;
-               Ic[j] += fc[j][i] * fc[j][k] * sqrikd;
+               sqrikd = ( fabs(qrik) < 1e-16 ) ? 1.0 : sin(qrik) / qrik;
+               I[j] += 2.0 * fp[j][i] * fp[j][k] * sqrikd;
+               Ia[j] += 2.0 * f[j][i] * f[j][k] * sqrikd;
+               Ic[j] += 2.0 * fc[j][i] * fc[j][k] * sqrikd;
 #if defined(SAXS_DEBUG_F)
                cout << QString("").sprintf("I[%f] += (%f * %f) * (sin(%f) / %f) == %f\n"
                                            , q[j]
@@ -1210,23 +1566,29 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                                            , qrik
                                            , I[j]);
 #endif
-            }
+            } // j
+         } // k
+         for ( unsigned int j = 0; j < q_points; j++ )
+         {
+            I[j] += fp[j][i] * fp[j][i];
+            Ia[j] += f[j][i] * f[j][i];
+            Ic[j] += fc[j][i] * fc[j][i];
          }
       }
-
-#if defined(I_MULT_2)
       for ( unsigned int j = 0; j < q_points; j++ )
       {
-         I[j] *= 2; // we only computed one symmetric side
-         Ia[j] *= 2; // we only computed one symmetric side
-         Ic[j] *= 2; // we only computed one symmetric side
-#  if defined(SAXS_DEBUG_F)
-         cout << QString("").sprintf("I[%f] = %f\n",
-                                     q[j],
-                                     I[j]);
-#  endif
+         I[j] += fp[j][as1] * fp[j][as1];
+         Ia[j] += f[j][as1] * f[j][as1];
+         Ic[j] += fc[j][as1] * fc[j][as1];
       }
-#endif
+
+      //for ( unsigned int j = 0; j < q_points; j++ )
+      //      {
+      //         I[j] = I[j] > 0.0 ? log10(I[j]) : 0.0;
+      //         Ia[j] = Ia[j] > 0.0 ? log10(Ia[j]) : 0.0;
+      //         Ic[j] = Ic[j] > 0.0 ? log10(Ic[j]) : 0.0;
+      //      }
+
       lbl_core_progress->setText("");
       qApp->processEvents();
       progress_saxs->reset();
@@ -1240,6 +1602,127 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       sleep(1);
       cout << " sleep 1 e done" << endl;
 #endif
+
+      // scaling fields
+      QString scaling_target = "";
+      double scaling_a;
+      double scaling_b;
+      double scaling_siga;
+      double scaling_sigb;
+      double scaling_chi2;
+
+      if ( qsl_plotted_iq_names.size() )
+      {
+         bool ok;
+         scaling_target = QInputDialog::getItem(
+                                                tr("Scale I(q) Curve"),
+                                                tr("Select the target plotted data set for scaling the loaded data:\n"
+                                                   "or Cancel of you do not wish to scale")
+                                                , 
+                                                qsl_plotted_iq_names, 
+                                                0, 
+                                                FALSE, 
+                                                &ok,
+                                                this );
+         if ( ok ) {
+            // user selected an item and pressed OK
+         } else {
+            scaling_target = "";
+         }
+      }         
+
+      // crop_iq_data(q, I);
+         
+      if ( q.size() &&
+           !scaling_target.isEmpty() && 
+           plotted_iq_names_to_pos.count(scaling_target) )
+      {
+         unsigned int iq_pos = plotted_iq_names_to_pos[scaling_target];
+         cout << "scaling target pos is " << iq_pos << endl;
+         double target_q_min = plotted_q[iq_pos][0];
+         double target_q_max = plotted_q[iq_pos][plotted_q[iq_pos].size() - 1];
+         double source_q_min = q[0];
+         double source_q_max = q[q.size() - 1];
+         double q_min = target_q_min;
+         if ( q_min < source_q_min )
+         {
+            q_min = source_q_min;
+         }
+         double q_max = target_q_max;
+         if ( q_max > source_q_max )
+         {
+            q_max = source_q_max;
+         }
+
+         cout << QString(
+                         "target q_min %1 max %2\n"
+                         "source q_min %3 max %4\n"
+                         "select q_min %5 max %6\n"
+                         )
+            .arg(target_q_min)
+            .arg(target_q_max)
+            .arg(source_q_min)
+            .arg(source_q_max)
+            .arg(q_min)
+            .arg(q_max)
+            ;
+
+         vector < double > use_q;
+         vector < double > use_I;
+         for ( unsigned int i = 0; i < plotted_q[iq_pos].size(); i++ )
+         {
+            if ( plotted_q[iq_pos][i] >= q_min &&
+                 plotted_q[iq_pos][i] <= q_max )
+            {
+               use_q.push_back(plotted_q[iq_pos][i]);
+               use_I.push_back(plotted_I[iq_pos][i]);
+            }
+         }
+         
+         cout << QString("After cropping q to overlap region:\n"
+                         "use_q.size == %1\n").arg(use_q.size());
+
+         if ( !use_q.size() )
+         {
+            QMessageBox::warning( this, "UltraScan",
+                                  QString(tr("Could not find sufficient q range overlap\n"
+                                             "to scale the loaded data to the selected target")) );
+         } else {
+            vector < double > use_source_I = interpolate(use_q, q, I);
+
+            US_Saxs_Util usu;
+
+            usu.linear_fit(
+                           use_source_I, 
+                           use_I, 
+                           scaling_a,
+                           scaling_b,
+                           scaling_siga,
+                           scaling_sigb,
+                           scaling_chi2
+                           );
+
+            QString results = 
+               QString("Scaling factor: %1  Offset: %2  Chi^2: %3\n")
+               .arg(scaling_b)
+               .arg(scaling_a)
+               .arg(scaling_chi2);
+            editor->append(results);
+            // cout << "saxs curve unscaled " << vector_double_to_csv(I) << endl;
+            for ( unsigned int i = 0; i < I.size(); i++ )
+            {
+               I[i] = scaling_a + scaling_b * I[i];
+               if ( I[i] <= 0e0 )
+               {
+                  I.resize(i);
+                  q.resize(i);
+                  break;
+               }
+            }
+         }
+      }
+
+
 #ifndef QT4
       long Iq = plot_saxs->insertCurve("I(q) vs q");
 #else
@@ -1308,6 +1791,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       curve->attach( plot_saxs );
 #endif
       cb_user_range->setChecked(false);
+      cb_guinier->setChecked(true);
+      rescale_plot();
+      cb_guinier->setChecked(false);
+      rescale_plot();
       cb_guinier->setChecked(true);
       rescale_plot();
       cb_guinier->setChecked(false);

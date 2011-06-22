@@ -45,8 +45,15 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel     *lbl_saxs_iq;
       QCheckBox  *cb_saxs_iq_native_debye;
       QCheckBox  *cb_saxs_iq_native_fast;
+      QCheckBox  *cb_saxs_iq_native_fast_compute_pr;
       QCheckBox  *cb_saxs_iq_crysol;
       QCheckBox  *cb_saxs_iq_foxs;
+
+      QLabel     *lbl_fast_bin_size;
+      QwtCounter *cnt_fast_bin_size;
+
+      QLabel     *lbl_fast_modulation;
+      QwtCounter *cnt_fast_modulation;
 
       QLabel     *lbl_crysol_max_harmonics;
       QwtCounter *cnt_crysol_max_harmonics;
@@ -67,6 +74,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel     *lbl_sans_iq;
       QCheckBox  *cb_sans_iq_native_debye;
       QCheckBox  *cb_sans_iq_native_fast;
+      QCheckBox  *cb_sans_iq_native_fast_compute_pr;
       QCheckBox  *cb_sans_iq_cryson;
 
       QLabel *lbl_guinier;
@@ -132,8 +140,12 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void update_water_e_density(double);
       void set_saxs_iq_native_debye();
       void set_saxs_iq_native_fast();
+      void set_saxs_iq_native_fast_compute_pr();
       void set_saxs_iq_crysol();
       void set_saxs_iq_foxs();
+
+      void update_fast_bin_size(double);
+      void update_fast_modulation(double);
 
       void update_crysol_max_harmonics(double);
       void update_crysol_fibonacci_grid_order(double);
@@ -148,6 +160,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void update_frac_of_exch_pep(double);
       void set_sans_iq_native_debye();
       void set_sans_iq_native_fast();
+      void set_sans_iq_native_fast_compute_pr();
       void set_sans_iq_cryson();
 
       void set_guinier_csv();

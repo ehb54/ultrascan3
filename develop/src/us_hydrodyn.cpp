@@ -219,11 +219,13 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    saxs_options.saxs_iq_native_debye = false;
    saxs_options.saxs_iq_native_fast = true;
+   saxs_options.saxs_iq_native_fast_compute_pr = false;
    saxs_options.saxs_iq_foxs = false;
    saxs_options.saxs_iq_crysol = false;
 
    saxs_options.sans_iq_native_debye = true;
    saxs_options.sans_iq_native_fast = false;
+   saxs_options.sans_iq_native_fast_compute_pr = false;
    saxs_options.sans_iq_cryson = false;
 
    saxs_options.iq_ask = false;
@@ -236,6 +238,9 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_options.crysol_fibonacci_grid_order = 17;
    saxs_options.crysol_default_load_difference_intensity = true;
    saxs_options.crysol_version_26 = false;
+
+   saxs_options.fast_bin_size = 0.5;
+   saxs_options.fast_modulation = 0.23;
 
    // this should be stored in the residue file, hardcoded for now
 

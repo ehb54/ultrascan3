@@ -38,6 +38,9 @@
 #include <stdio.h>
 #include <iostream>
 
+#include <time.h>
+#include <qstringlist.h>
+#include <qinputdialog.h>
 
 using namespace std;
 
