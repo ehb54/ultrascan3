@@ -5,11 +5,38 @@
 #include <QtCore>
 
 #include "us_extern.h"
+#include "us_dataIO2.h"
+#include "us_simparms.h"
+#include "us_model.h"
+#include "us_noise.h"
 #include "us_solute.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
+//! \brief Worker thread task packet
+typedef struct work_packet_s
+{
+   int     thrn;       // thread number (1,...)
+   int     taskx;      // task index (0,...)
+   int     depth;      // depth index (0,...)
+   int     iter;       // iteration index (0,...)
+   int     menmcx;     // meniscus/monte-carlo index (0,...)
+   int     typeref;    // refinement-type flag (0,... for UGRID,...)
+   int     state;      // state flag (0-3 for READY,RUNNING,COMPLETE,ABORTED)
+   int     noisf;      // noise flag (0-3 for NONE,TI,RI,BOTH)
+
+   double  ll_s;       // subgrid lower-limit s
+   double  ll_k;       // subgrid lower-limit k
+
+   QVector< US_Solute >     isolutes;  // input solutes
+   QVector< US_Solute >     csolutes;  // computed solutes
+   QVector< double >        ti_noise;  // computed ti noise
+   QVector< double >        ri_noise;  // computed ri noise
+
+   US_DataIO2::EditedData*  edata;  // pointer to experiment data
+   US_SimulationParameters* sparms; // pointer to simulation parameters
+} WorkPacket;
 
 //! \brief Worker thread to do actual work of 2DSA analysis
 
@@ -97,8 +124,8 @@ class WorkerThread : public QThread
       US_Noise                ra_noise;    // computed random noise
       US_SimulationParameters simparms;    // simulation parameters
 
-      QVector< Solute >       solute_i;    // input solutes
-      QVector< Solute >       solute_c;    // computed solutes
+      QVector< US_Solute >       solute_i;    // input solutes
+      QVector< US_Solute >       solute_c;    // computed solutes
 };
 
 #endif

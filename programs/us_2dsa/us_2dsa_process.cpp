@@ -205,29 +205,24 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
    int    ktask = 0;
    int    jdpth = 0;
    int    jnois = fnoionly ? 0 : noisflag;
-   double llss  = slolim;
+   QList< QVector< US_Solute > > solute_list;
+   double ssllim = slolim * 1.0e-13;
+   double ssulim = suplim * 1.0e-13;
 
-   // Define work unit parameters, including solutes for each subgrid
-   for ( int ii = 0; ii < ngrefine; ii++ )
+   // Generate the original sub-grid solutes list
+   US_Solute::init_solutes( ssllim, ssulim, nssteps,
+                            klolim, kuplim, nksteps, ngrefine, orig_sols );
+
+   // Queue all the depth-0 tasks
+   for ( int ii = 0; ii < sq( ngrefine ); ii++ )
    {
-      double llsk = klolim;
+      WorkPacket wtask;
+      double llss = orig_sols[ ii ][ 0 ].s;
+      double llsk = orig_sols[ ii ][ 0 ].k;
 
-      for ( int jj = 0; jj < ngrefine; jj++ )
-      {
-         WorkPacket wtask;
+      queue_task( wtask, llss, llsk, ktask++, jdpth, jnois, orig_sols[ ii ] );
 
-         QVector< Solute > isolutes = create_solutes( llss, suplim, sdelta_s,
-                                                      llsk, kuplim, sdelta_k );
-
-         queue_task( wtask, llss, llsk, ktask++, jdpth, jnois, isolutes );
-
-         orig_sols << isolutes;
-
-         maxtsols       = max( maxtsols, wtask.isolutes.size() );
-         llsk          += gdelta_k;
-      }
-
-      llss     += gdelta_s;
+      maxtsols       = max( maxtsols, wtask.isolutes.size() );
    }
 
    // Start the first threads. This will begin the first work units (subgrids).
@@ -377,7 +372,7 @@ DbgLv(1) << "(FF)PROCESS_JOB thrn" << wresult.thrn << "taskx" << wresult.taskx
  << "depth" << wresult.depth;
 
    if ( c_solutes.size() < ( maxdepth + 1 ) )
-      c_solutes << QVector< Solute >();
+      c_solutes << QVector< US_Solute >();
 
    c_solutes[ maxdepth ] =  wresult.csolutes;  // final iter calc'd solutes
    int nsolutes = c_solutes[ maxdepth ].size();
@@ -643,23 +638,6 @@ DbgLv(1) << " GET_RES:   ti,ri counts" << ti_noise.count << ri_noise.count;
    return all_ok;
 }
 
-// Build solutes vector for a subgrid
-QVector< Solute > US_2dsaProcess::create_solutes(
-   double ll_s, double ul_s, double delta_s,
-   double ll_k, double ul_k, double delta_k )
-{
-   QVector< Solute > solu;
-   ll_s    *= 1.0e-13;
-   ul_s    *= 1.0e-13;
-   delta_s *= 1.0e-13;
-
-   for ( double sval = ll_s; sval <= ul_s; sval += delta_s )
-      for ( double kval = ll_k; kval <= ul_k; kval += delta_k )
-         solu << Solute( sval, kval );
-
-   return solu;
-}
-
 // Submit a job
 void US_2dsaProcess::submit_job( WorkPacket& wtask, int thrx )
 {
@@ -709,7 +687,7 @@ DbgLv(1) << "PJ: taskx csolutes size tot" << taskx << nrcso << ntcsols;
 
    // This loop should only execute, at most, once per result
    while( c_solutes.size() < ( depth + 1 ) )
-      c_solutes << QVector< Solute >();
+      c_solutes << QVector< US_Solute >();
 
    int nextc    = c_solutes[ depth ].size() + wresult.csolutes.size();
    int jnois    = fnoionly ? 0 : noisflag;
@@ -827,7 +805,7 @@ DbgLv(1) << pmsg;
 
 // Build a task and add it to the queue
 void US_2dsaProcess::queue_task( WorkPacket& wtask, double llss, double llsk,
-      int taskx, int depth, int noisf, QVector< Solute > isolutes )
+      int taskx, int depth, int noisf, QVector< US_Solute > isolutes )
 {
    wtask.thrn     = 0;             // thread number (none while queued)
    wtask.taskx    = taskx;         // task index
@@ -869,7 +847,7 @@ void US_2dsaProcess::iterate()
 
    tkdepths .clear();
    job_queue.clear();
-   QVector< Solute > csolutes = c_solutes[ maxdepth ];
+   QVector< US_Solute > csolutes = c_solutes[ maxdepth ];
 
    int    ncsol = csolutes.size();   // number of solutes calculated last iter
 
@@ -913,7 +891,7 @@ DbgLv(1) << "ITER:   r-iter1 ncto (diff)" << nctotal << kadd;
       for ( int jj = 0; jj < ngrefine; jj++ )
       {
          // get the solutes originally created for this subgrid
-         QVector< Solute > isolutes = orig_sols[ ktask ];
+         QVector< US_Solute > isolutes = orig_sols[ ktask ];
 
          // add any calculated solutes not already in subgrid
          for ( int cc = 0; cc < ncsol; cc++ )
@@ -1117,7 +1095,7 @@ void US_2dsaProcess::requeue_tasks()
 
       for ( int jj = 0; jj < ngrefine; jj++ )
       {
-         QVector< Solute > isolutes = orig_sols[ ktask ];
+         QVector< US_Solute > isolutes = orig_sols[ ktask ];
          WorkPacket wtask;
          queue_task( wtask, llss, llsk, ktask++, jdpth, jnois, isolutes );
          llsk          += gdelta_k;

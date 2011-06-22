@@ -17,7 +17,6 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-
 //! \brief 2DSA Processor object
 
 /*! \class US_2dsaProcess
@@ -84,7 +83,7 @@ class US_2dsaProcess : public QObject
       //! \returns       Message about last error
       QString lastError( void ) { return errMsg; }
 
-      static const int solute_doubles = sizeof( Solute ) / sizeof( double );
+      static const int solute_doubles = sizeof( US_Solute ) / sizeof( double );
 
       class Simulation
       {
@@ -92,7 +91,7 @@ class US_2dsaProcess : public QObject
             double variance;
             QVector< double > ti_noise;
             QVector< double > ri_noise;
-            QVector< Solute > solutes;
+            QVector< US_Solute > solutes;
       };
 
 private:
@@ -119,9 +118,9 @@ private:
 
       QList< double >            itvaris;    // iteration variances
 
-      QList< QVector< Solute > > c_solutes;  // calculated solutes
-      QList< QVector< Solute > > orig_sols;  // original solutes
-      QList< QVector< Solute > > ical_sols;  // iteration calculated solutes
+      QList< QVector< US_Solute > > c_solutes;  // calculated solutes
+      QList< QVector< US_Solute > > orig_sols;  // original solutes
+      QList< QVector< US_Solute > > ical_sols;  // iteration calculated solutes
 
       US_DataIO2::EditedData*    edata;      // experimental data (mc_iter)
       US_DataIO2::EditedData*    bdata;      // base experimental data
@@ -183,10 +182,8 @@ private:
       QTime      timer;        // timer for elapsed time measure
 
    private slots:
-      QVector< Solute > create_solutes( double, double, double,
-                                        double, double, double );
       void queue_task( WorkPacket&, double, double,
-                       int, int, int, QVector< Solute > );
+                       int, int, int, QVector< US_Solute > );
       void process_job(      WorkerThread* );
       void process_final(    WorkerThread* );
       void step_progress(    int );
