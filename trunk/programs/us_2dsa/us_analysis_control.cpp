@@ -520,7 +520,7 @@ void US_AnalysisControl::grid_change()
    //int    nscan  = edata->scanData.size();            // # scans
    //int    nconc  = edata->x.size();                   // # concentrations
    //int    ntconc = nconc * nscan;                     // # total readings
-   long   szsol  = sizeof( Solute );                  // size Solute
+   long   szsol  = sizeof( US_Solute );               // size Solute
    long   szval  = sizeof( double );                  // size vector value
    long   szgso  = ngstep * szsol;                    // size grid solutes
    long   szsso  = nsstep * szsol * nthrd;            // size subg solutes

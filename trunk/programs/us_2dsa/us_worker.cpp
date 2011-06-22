@@ -133,7 +133,7 @@ DebugTime("BEG:calcres");
    solution.vbar20    = vbar20;
    solution.vbar      = vbar;
    US_Math2::data_correction( avgtemp, solution );
-if (taskx==0) DbgLv(1) << "   CR: dens visc vbar20 vbar temp scorr dcorr"
+if (taskx<1) DbgLv(1) << "   CR: dens visc vbar20 vbar temp scorr dcorr"
  << density << viscosity << vbar20 << vbar << avgtemp
  << solution.s20w_correction << solution.D20w_correction;
    double sfactor = 1.0 / solution.s20w_correction;
@@ -159,7 +159,7 @@ if (taskx==0) DbgLv(1) << "   CR: dens visc vbar20 vbar temp scorr dcorr"
 
       // initialize simulation data with experiment grid
       US_AstfemMath::initSimData( sdata, *edata, 0.0 );
-if (dbg_level > 0 && taskx==0 && cc==0) { model.debug(); simparms.debug(); }
+if (dbg_level > 0 && taskx<1 && cc==0) { model.debug(); simparms.debug(); }
 
       // calculate Astfem_RSA solution
       US_Astfem_RSA astfem_rsa( model, simparms );
