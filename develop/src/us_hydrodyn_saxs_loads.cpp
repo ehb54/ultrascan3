@@ -78,6 +78,18 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
                                        + filename + tr(" is empty.")) );
          return;
       }
+
+      unsigned int number_of_fields = 0;
+      if ( qv.size() > 3 )
+      {
+         QString test_line = qv[2];
+         test_line.replace(QRegExp("^\\s+"),"");
+         test_line.replace(QRegExp("\\s+$"),"");
+         QStringList test_list = QStringList::split(QRegExp("\\s+"), test_line);
+         number_of_fields = test_list.size();
+         cout << "number of fields: " << number_of_fields << endl;
+      }
+
       if ( qsl_plotted_iq_names.size() )
       {
          bool ok;
@@ -193,40 +205,45 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
       if ( ext == "ssaxs" ) 
       {
          //         dolog10 = true;
-         QStringList lst;
-         lst << "I(q)   Difference intensity"
-             << "Ia(q)  Atomic scattering"
-             << "Ic(q)  Shape scattering";
-         bool ok;
-         res = QInputDialog::getItem(
-                                             "There are three available datasets", 
-                                             "Select the set you wish to plot::", lst, 0, FALSE, &ok,
-                                             this );
-         if ( ok ) {
-            // user selected an item and pressed OK
-            Icolumn = 0;
-            if ( res.contains(QRegExp("^I.q. ")) ) 
-            {
-               Icolumn = 1;
+         if ( number_of_fields >= 4 )
+         {
+            QStringList lst;
+            lst << "I(q)   Difference intensity"
+                << "Ia(q)  Atomic scattering"
+                << "Ic(q)  Shape scattering";
+            bool ok;
+            res = QInputDialog::getItem(
+                                        "There are three available datasets", 
+                                        "Select the set you wish to plot::", lst, 0, FALSE, &ok,
+                                        this );
+            if ( ok ) {
+               // user selected an item and pressed OK
+               Icolumn = 0;
+               if ( res.contains(QRegExp("^I.q. ")) ) 
+               {
+                  Icolumn = 1;
+               } 
+               if ( res.contains(QRegExp("^Ia.q. ")) ) 
+               {
+                  Icolumn = 2;
+               } 
+               if ( res.contains(QRegExp("^Ic.q. ")) ) 
+               {
+                  Icolumn = 3;
+               } 
+               if ( !Icolumn ) 
+               {
+                  cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
+                  return;
+               }
+               cout << " column " << Icolumn << endl;
             } 
-            if ( res.contains(QRegExp("^Ia.q. ")) ) 
+            else
             {
-               Icolumn = 2;
-            } 
-            if ( res.contains(QRegExp("^Ic.q. ")) ) 
-            {
-               Icolumn = 3;
-            } 
-            if ( !Icolumn ) 
-            {
-               cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
                return;
             }
-            cout << " column " << Icolumn << endl;
-         } 
-         else
-         {
-            return;
+         } else {
+            Icolumn = 1;
          }
       }
       editor->append(QString("Loading SAXS data from %1 %2\n").arg(filename).arg(res));
@@ -264,25 +281,28 @@ void US_Hydrodyn_Saxs::load_saxs(QString filename)
             continue;
          }
          QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
-         new_q = tokens[0].toDouble();
-         new_I = tokens[Icolumn].toDouble();
-         if ( Icolumn2 )
+         if ( tokens.size() > Icolumn )
          {
-            new_I2 = tokens[Icolumn2].toDouble();
+            new_q = tokens[0].toDouble();
+            new_I = tokens[Icolumn].toDouble();
+            if ( Icolumn2 && tokens.size() > Icolumn2 )
+            {
+               new_I2 = tokens[Icolumn2].toDouble();
+               if ( dolog10 )
+               {
+                  new_I2 = log10(new_I2);
+               }
+            }
             if ( dolog10 )
             {
-               new_I2 = log10(new_I2);
+               new_I = log10(new_I);
             }
-         }
-         if ( dolog10 )
-         {
-            new_I = log10(new_I);
-         }
-         I.push_back(new_I);
-         q.push_back(new_q * units);
-         if ( Icolumn2 )
-         {
-            I2.push_back(new_I2);
+            I.push_back(new_I);
+            q.push_back(new_q * units);
+            if ( Icolumn2 && tokens.size() > Icolumn2 )
+            {
+               I2.push_back(new_I2);
+            }
          }
       }
 
