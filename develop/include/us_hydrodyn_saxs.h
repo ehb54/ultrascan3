@@ -52,6 +52,10 @@ struct saxs_atom
    float pos[3];
    float excl_vol;
    float b;           // scattering factor b for p(r) calcs
+
+   // for bead models:
+   float srv;         // square root of relative volume
+   saxs saxs_data;    
 };
 
 class US_EXTERN US_Hydrodyn_Saxs : public QFrame
@@ -116,12 +120,14 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QButtonGroup *bg_saxs_iq;
       QRadioButton *rb_saxs_iq_native_debye;
+      QRadioButton *rb_saxs_iq_native_hybrid;
       QRadioButton *rb_saxs_iq_native_fast;
       QRadioButton *rb_saxs_iq_foxs;
       QRadioButton *rb_saxs_iq_crysol;
 
       QButtonGroup *bg_sans_iq;
       QRadioButton *rb_sans_iq_native_debye;
+      QRadioButton *rb_sans_iq_native_hybrid;
       QRadioButton *rb_sans_iq_native_fast;
       QRadioButton *rb_sans_iq_cryson;
 
@@ -274,6 +280,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QProcess *rasmol;
 
+      bool bead_model_ok_for_saxs;
+
       bool                       saxs_residuals_widget;
       US_Hydrodyn_Saxs_Residuals *saxs_residuals_window;
 
@@ -365,6 +373,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void calc_saxs_iq_native_debye();
       void calc_saxs_iq_native_fast();
+
+      void calc_saxs_iq_native_debye_bead_model();
+      void calc_saxs_iq_native_fast_bead_model();
+
+      void set_bead_model_ok_for_saxs(); // checks current_model
 
    private slots:
 

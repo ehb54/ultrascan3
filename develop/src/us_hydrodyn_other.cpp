@@ -443,6 +443,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    {
       temp_atom.charge = "  ";
    }
+   temp_atom.saxs_data.saxs_name = "";
    (*temp_chain).atom.push_back(temp_atom);
    bool found = false;
    for (unsigned int m = 0; m < residue_list.size(); m++)
@@ -952,6 +953,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
             tmp_atom.resName = "RESIDUE";
             tmp_atom.iCode = "ICODE";
             tmp_atom.chainID = "CHAIN";
+            tmp_atom.saxs_data.saxs_name = "";
             bead_model.push_back(tmp_atom);
          }
          QFont save_font = editor->currentFont();
@@ -1119,6 +1121,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                tmp_atom.resName = "RESIDUE";
                tmp_atom.iCode = "ICODE";
                tmp_atom.chainID = "CHAIN";
+               tmp_atom.saxs_data.saxs_name = "";
                bead_model.push_back(tmp_atom);
             }
             frmc.close();
@@ -1160,6 +1163,18 @@ int US_Hydrodyn::read_bead_model(QString filename)
    {
       if (f.open(IO_ReadOnly))
       {
+         if ( saxs_options.compute_saxs_coeff_for_bead_models )
+         {
+            if ( !saxs_util->saxs_map.count("DAM") )
+            {
+               QColor save_color = editor->color();
+               editor->setColor("red");
+               editor->append(tr(
+                                 "Warning: No 'DAM' SAXS atom found. Bead model SAXS disabled.\n"
+                                 ));
+               editor->setColor(save_color);
+            }
+         }
          QStringList qsl;
          {
             QTextStream ts(&f);
@@ -1501,6 +1516,15 @@ int US_Hydrodyn::read_bead_model(QString filename)
             tmp_atom.resName = "RESIDUE";
             tmp_atom.iCode = "ICODE";
             tmp_atom.chainID = "CHAIN";
+            tmp_atom.saxs_data.saxs_name = "";
+            if ( saxs_options.compute_saxs_coeff_for_bead_models && 
+                 saxs_util->saxs_map.count("DAM") )
+            {
+               tmp_atom.saxs_name = "DAM";
+               tmp_atom.saxs_data = saxs_util->saxs_map["DAM"];
+               tmp_atom.hydrogens = 0;
+            }
+
             bead_model.push_back(tmp_atom);
             // cout << QString("bead loaded serial %1\n").arg(tmp_atom.serial);
          }

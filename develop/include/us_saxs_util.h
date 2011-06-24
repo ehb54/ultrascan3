@@ -4,6 +4,7 @@
 // QT defs:
 
 #include "us_util.h"
+#include "us_hydrodyn_pdbdefs.h"
 #include <math.h>
 #include <sys/time.h>
 #include <map>
@@ -297,6 +298,27 @@ class US_EXTERN US_Saxs_Util
       static bool calc_chisq_prob( double a, double x, double &prob );
 
 
+      bool setup_saxs_maps( QString atom_file, QString hybrid_file, QString saxs_file );
+
+      atom current_atom;
+      hybridization current_hybrid;
+      saxs current_saxs;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      vector < atom >                atom_list;
+      vector < hybridization >       hybrid_list;
+      vector < saxs >                saxs_list;
+      map < QString, saxs >          saxs_map;
+      map < QString, hybridization > hybrid_map;
+      map < QString, atom >          atom_map;
+      map < QString, vector <int> >  multi_residue_map;
+      map < QString, QString >       residue_atom_hybrid_map;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
    private:
 
       bool run_gnom( 
@@ -474,8 +496,9 @@ class US_EXTERN US_Saxs_Util
       long min_fr_pr_cgd(our_vector *i, double epsilon, long max_iter);
       long min_hessian_bfgs(our_vector *ip, double epsilon, long max_iter);
 
-
-
+      bool select_atom_file( QString );
+      bool select_hybrid_file( QString );
+      bool select_saxs_file( QString );
 };
 
 #endif

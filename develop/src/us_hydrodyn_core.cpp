@@ -2232,6 +2232,8 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
 #endif
    get_atom_map(&model_vector[current_model]);
 
+   QRegExp count_hydrogens("H(\\d)");
+
    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
    {
       QString last_resSeq = "";
@@ -2452,6 +2454,108 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                this_atom->chain = (int) this_atom->p_residue->r_bead[this_atom->bead_assignment].chain;
                this_atom->atom_hydration =  residue_list[respos].r_atom[atompos].hydration;
                this_atom->type = this_atom->p_residue->type;
+
+               if ( saxs_options.compute_saxs_coeff_for_bead_models )
+               {
+                  QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
+                  if ( this_atom->name == "OXT" )
+                  {
+                     mapkey = "OXT|OXT";
+                  }
+                  
+                  if ( !residue_atom_hybrid_map.count(mapkey) )
+                  {
+                     cout << "error: hybrid name missing for " << this_atom->resName << "|" << this_atom->name << endl; 
+                     QColor save_color = editor->color();
+                     editor->setColor("red");
+                     editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
+                                    .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                                    .arg(j+1)
+                                    .arg(this_atom->resName)
+                                    .arg(this_atom->resSeq));
+                     editor->setColor(save_color);
+                  } else {
+                     QString hybrid_name = residue_atom_hybrid_map[mapkey];
+
+                     if ( hybrid_name.isEmpty() || !hybrid_name.length() )
+                     {
+                        cout << "error: hybrid name empty for " << this_atom->resName << "|" << this_atom->name << endl; 
+                        QColor save_color = editor->color();
+                        editor->setColor("red");
+                        editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
+                                       .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                                       .arg(j+1)
+                                       .arg(this_atom->resName)
+                                       .arg(this_atom->resSeq));
+                        editor->setColor(save_color);
+                     } else {
+                        if ( !saxs_util->hybrid_map.count(hybrid_name) )
+                        {
+                           cout << "error: hybrid_map name missing for hybrid_name " << hybrid_name << endl;
+                           QColor save_color = editor->color();
+                           editor->setColor("red");
+                           editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
+                                          .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                                          .arg(j+1)
+                                          .arg(this_atom->resName)
+                                          .arg(this_atom->resSeq)
+                                          .arg(hybrid_name)
+                                          );
+                           editor->setColor(save_color);
+                        } else {
+                           if ( !saxs_util->atom_map.count(this_atom->name + "~" + hybrid_name) )
+                           {
+                              cout << "error: atom_map missing for hybrid_name "
+                                   << hybrid_name 
+                                   << " atom name "
+                                   << this_atom->name
+                                   << endl;
+                              QColor save_color = editor->color();
+                              editor->setColor("red");
+                              editor->append(QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
+                                             .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                                             .arg(j+1)
+                                             .arg(this_atom->name)
+                                             .arg(this_atom->resName)
+                                             .arg(this_atom->resSeq)
+                                             .arg(hybrid_name)
+                                             );
+                              editor->setColor(save_color);
+                           } else {
+                              this_atom->saxs_name = saxs_util->hybrid_map[hybrid_name].saxs_name; 
+                              this_atom->hybrid_name = hybrid_name;
+                              this_atom->hydrogens = 0;
+                              if ( count_hydrogens.search(hybrid_name) != -1 )
+                              {
+                                 this_atom->hydrogens = count_hydrogens.cap(1).toInt();
+                              }
+                              this_atom->saxs_excl_vol = saxs_util->atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+                              if ( !saxs_util->saxs_map.count(saxs_util->hybrid_map[hybrid_name].saxs_name) )
+                              {
+                                 cout << "error: saxs_map missing for hybrid_name "
+                                      << hybrid_name 
+                                      << " saxs name "
+                                      << saxs_util->hybrid_map[hybrid_name].saxs_name
+                                      << endl;
+                                 QColor save_color = editor->color();
+                                 editor->setColor("red");
+                                 editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 Saxs name %6 name missing from SAXS atom file. Atom skipped.\n")
+                                                .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                                                .arg(j+1)
+                                                .arg(this_atom->resName)
+                                                .arg(this_atom->resSeq)
+                                                .arg(hybrid_name)
+                                                .arg(saxs_util->hybrid_map[hybrid_name].saxs_name)
+                                                );
+                                 editor->setColor(save_color);
+                              } else {
+                                 this_atom->saxs_data = saxs_util->saxs_map[saxs_util->hybrid_map[hybrid_name].saxs_name];
+                              }
+                           }
+                        }
+                     }
+                  }
+               } // saxs setup
 
                if ( misc.pb_rule_on &&
                     this_atom->resName == "PRO" &&

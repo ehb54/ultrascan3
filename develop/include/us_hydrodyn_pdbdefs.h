@@ -19,6 +19,15 @@ struct matrix
    float element[3][3];
 };
 
+struct saxs
+{
+   QString saxs_name;            // name of atom, for example, CD+2
+   float   a[4];                 // a coefficients
+   float   b[4];                 // b coefficients
+   float   c;                    // c coefficient
+   float   volume;               // atomic volume
+};
+
 struct PDB_atom
 {
    unsigned int serial;
@@ -79,6 +88,11 @@ struct PDB_atom
    int group;                        // used in surfracer for breaking up groups of atoms
    QString count_idx;                // used in us_hydrodyn for backtracking on bead/atom exceptions
    float atom_hydration;      // used for atob grid hydration
+   saxs saxs_data;
+   QString saxs_name;
+   QString hybrid_name;
+   int hydrogens;    
+   float        saxs_excl_vol;   // SAXS excluded volume value
 };
 
 struct PDB_chain   // chain in PDB file
@@ -115,15 +129,6 @@ struct bead
    float        mw;              // bead mw
    bool         hydration_flag;  // false = use sum of atom's hydrations, true = bead hydration overrides
    float        atom_hydration;  // number of waters bound based upon sum of atoms' hydrations
-};
-
-struct saxs
-{
-   QString saxs_name;            // name of atom, for example, CD+2
-   float   a[4];                 // a coefficients
-   float   b[4];                 // b coefficients
-   float   c;                    // c coefficient
-   float   volume;               // atomic volume
 };
 
 struct saxs_options
@@ -172,15 +177,19 @@ struct saxs_options
    // options for saxs/sans iq curve computation
 
    bool    saxs_iq_native_debye;
+   bool    saxs_iq_native_hybrid;
    bool    saxs_iq_native_fast;
    bool    saxs_iq_native_fast_compute_pr;
    bool    saxs_iq_crysol;
    bool    saxs_iq_foxs;
 
    bool    sans_iq_native_debye;
+   bool    sans_iq_native_hybrid;
    bool    sans_iq_native_fast;
    bool    sans_iq_native_fast_compute_pr;
    bool    sans_iq_cryson;
+
+   float   hybrid_q_point;
 
    bool    iq_ask;                // ask when "compute saxs curve" is pressed
 
@@ -197,6 +206,13 @@ struct saxs_options
 
    bool    crysol_default_load_difference_intensity;
    bool    crysol_version_26;
+
+   // bead model control
+   bool    compute_saxs_coeff_for_bead_models;
+   bool    compute_sans_coeff_for_bead_models;
+   QString default_atom_filename;
+   QString default_hybrid_filename;
+   QString default_saxs_filename;
 };
 
 struct hybridization

@@ -104,6 +104,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    setupGUI();
    editor->append("\n\n");
    QFileInfo fi(filename);
+   bead_model_ok_for_saxs = true;
    switch ( source )
    {
       case 0: // the source is a PDB file
@@ -114,6 +115,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
       case 1: // the source is a Bead Model file
       {
          lbl_filename1->setText(" Bead Model Filename: ");
+         set_bead_model_ok_for_saxs();
          break;
       }
       default: // undefined
@@ -127,8 +129,11 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
          }
       }
    }
-   pb_plot_saxs_sans->setEnabled(source ? false : true);
-   // pb_plot_saxs_sans->setEnabled(true);
+   if ( !selected_models.size() )
+   {
+      bead_model_ok_for_saxs = false;
+   }
+   pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
    te_filename2->setText(filename);
    model_filename = filename;
    atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
@@ -186,6 +191,7 @@ void US_Hydrodyn_Saxs::refresh(
    this->create_native_saxs = create_native_saxs;
    model_filepathname = filepathname;
    QFileInfo fi(filename);
+   bead_model_ok_for_saxs = true;
    switch (source)
    {
       case 0: // the source is a PDB file
@@ -196,6 +202,7 @@ void US_Hydrodyn_Saxs::refresh(
       case 1: // the source is a Bead Model file
       {
          lbl_filename1->setText(" Bead Model Filename: ");
+         set_bead_model_ok_for_saxs();
          break;
       }
       default: // undefined
@@ -209,8 +216,11 @@ void US_Hydrodyn_Saxs::refresh(
          }
       }
    }
+   if ( !selected_models.size() )
+   {
+      bead_model_ok_for_saxs = false;
+   }
 
-   // pb_plot_saxs->setEnabled(source ? false : true);
    if ( source )
    {
       our_saxs_options->curve = 0;
@@ -229,7 +239,7 @@ void US_Hydrodyn_Saxs::refresh(
       rb_curve_sans->setEnabled(true);
    }
       
-   pb_plot_saxs_sans->setEnabled(source ? false : true);
+   pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
    te_filename2->setText(filename);
    model_filename = filename;
    pb_stop->setEnabled(false);
@@ -308,6 +318,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    rb_saxs_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_saxs_iq_native_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
+   rb_saxs_iq_native_hybrid = new QRadioButton(tr("Hybrid"), this);
+   rb_saxs_iq_native_hybrid->setEnabled(true);
+   rb_saxs_iq_native_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_saxs_iq_native_hybrid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    rb_saxs_iq_native_fast = new QRadioButton(tr("Fast"), this);
    rb_saxs_iq_native_fast->setEnabled(true);
    rb_saxs_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -326,6 +341,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_saxs_iq = new QButtonGroup(1, Qt::Horizontal, 0);
    bg_saxs_iq->setRadioButtonExclusive(true);
    bg_saxs_iq->insert(rb_saxs_iq_native_debye);
+   bg_saxs_iq->insert(rb_saxs_iq_native_hybrid);
    bg_saxs_iq->insert(rb_saxs_iq_native_fast);
    bg_saxs_iq->insert(rb_saxs_iq_foxs);
    bg_saxs_iq->insert(rb_saxs_iq_crysol);
@@ -335,6 +351,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    rb_sans_iq_native_debye->setEnabled(true);
    rb_sans_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_sans_iq_native_debye->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_sans_iq_native_hybrid = new QRadioButton(tr("Hybrid"), this);
+   rb_sans_iq_native_hybrid->setEnabled(true);
+   rb_sans_iq_native_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_sans_iq_native_hybrid->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    rb_sans_iq_native_fast = new QRadioButton(tr("Fast"), this);
    rb_sans_iq_native_fast->setEnabled(true);
@@ -349,6 +370,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_sans_iq = new QButtonGroup(1, Qt::Horizontal, 0);
    bg_sans_iq->setRadioButtonExclusive(true);
    bg_sans_iq->insert(rb_sans_iq_native_debye);
+   bg_sans_iq->insert(rb_sans_iq_native_hybrid);
    bg_sans_iq->insert(rb_sans_iq_native_fast);
    bg_sans_iq->insert(rb_sans_iq_cryson);
    connect(bg_sans_iq, SIGNAL(clicked(int)), SLOT(set_sans_iq(int)));
@@ -784,6 +806,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    QBoxLayout *hbl_saxs_iq = new QHBoxLayout(0);
    hbl_saxs_iq->addWidget(rb_saxs);
    hbl_saxs_iq->addWidget(rb_saxs_iq_native_debye);
+   hbl_saxs_iq->addWidget(rb_saxs_iq_native_hybrid);
    hbl_saxs_iq->addWidget(rb_saxs_iq_native_fast);
    hbl_saxs_iq->addWidget(rb_saxs_iq_foxs);
    hbl_saxs_iq->addWidget(rb_saxs_iq_crysol);
@@ -793,6 +816,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    QBoxLayout *hbl_sans_iq = new QHBoxLayout(0);
    hbl_sans_iq->addWidget(rb_sans);
    hbl_sans_iq->addWidget(rb_sans_iq_native_debye);
+   hbl_sans_iq->addWidget(rb_sans_iq_native_hybrid);
    hbl_sans_iq->addWidget(rb_sans_iq_native_fast);
    hbl_sans_iq->addWidget(rb_sans_iq_cryson);
    background->addMultiCellLayout(hbl_sans_iq, j, j, 0, 1);
@@ -1473,7 +1497,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          editor->append(tr("Terminated by user request.\n"));
          progress_pr->reset();
          lbl_core_progress->setText("");
-         pb_plot_saxs_sans->setEnabled(source ? false : true);
+         pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
          // pb_plot_saxs_sans->setEnabled(true);
          pb_plot_pr->setEnabled(true);
          return;
@@ -1804,7 +1828,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   editor->append(tr("Terminated by user request.\n"));
                   progress_pr->reset();
                   lbl_core_progress->setText("");
-                  pb_plot_saxs_sans->setEnabled(source ? false : true);
+                  pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
                   // pb_plot_saxs_sans->setEnabled(false);
                   pb_plot_pr->setEnabled(true);
                   return;
@@ -1870,7 +1894,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   editor->append(tr("Terminated by user request.\n"));
                   progress_pr->reset();
                   lbl_core_progress->setText("");
-                  pb_plot_saxs_sans->setEnabled(source ? false : true);
+                  pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
                   // pb_plot_saxs_sans->setEnabled(false);
                   pb_plot_pr->setEnabled(true);
                   return;
@@ -2141,7 +2165,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
    progress_pr->setTotalSteps(1);
    progress_pr->setProgress(1);
-   pb_plot_saxs_sans->setEnabled(source ? false : true);
+   pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
    // pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(true);
 
@@ -2375,13 +2399,13 @@ void saxs_Iq_thr_t::run()
 
 void US_Hydrodyn_Saxs::show_plot_saxs()
 {
-   if ( our_saxs_options->saxs_iq_foxs ) 
+   if ( !source && our_saxs_options->saxs_iq_foxs ) 
    {
       // cout << model_filepathname << endl;
       run_saxs_iq_foxs( model_filepathname );
       return;
    }
-   if ( our_saxs_options->saxs_iq_crysol ) 
+   if ( !source && our_saxs_options->saxs_iq_crysol ) 
    {
       // cout << model_filepathname << endl;
       run_saxs_iq_crysol( model_filepathname );
@@ -2390,14 +2414,26 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
    if ( our_saxs_options->saxs_iq_native_fast ) 
    {
       // calc_saxs_iq_native_debye();
-      calc_saxs_iq_native_fast();
+      source ? calc_saxs_iq_native_fast_bead_model() : calc_saxs_iq_native_fast();
       return;
    }
    if ( our_saxs_options->saxs_iq_native_debye ) 
    {
-      calc_saxs_iq_native_debye();
+      source ? calc_saxs_iq_native_debye_bead_model() : calc_saxs_iq_native_debye();
       return;
    }
+   if ( our_saxs_options->saxs_iq_native_hybrid ) 
+   {
+      QMessageBox::information(this, 
+                               tr("Method not implemented:"), 
+                               QString(tr("The selected method is not yet implemented.")));
+      return;
+   }
+   QMessageBox::information(this, 
+                            tr("Method not supported:"), 
+                            QString(tr("The selected method is not supported for this model")));
+   return;
+   
    // don't forget to later merge deleted waters into model_vector
    // right now we are going with first residue map entry
    stopFlag = false;
@@ -3287,6 +3323,9 @@ void US_Hydrodyn_Saxs::show_plot_sans()
       run_sans_iq_cryson( model_filepathname );
       return;
    }
+   QMessageBox::information(this, 
+                            tr("Method not implemented:"), 
+                            QString(tr("The selected method is not yet implemented.")));
 }
 
 void US_Hydrodyn_Saxs::show_plot_saxs_sans()
@@ -5303,27 +5342,49 @@ void US_Hydrodyn_Saxs::set_current_method_buttons()
 
 void US_Hydrodyn_Saxs::set_saxs_iq(int val)
 {
-   rb_saxs_iq_native_debye->setChecked( val == 0 );
-   rb_saxs_iq_native_fast ->setChecked( val == 1 );
-   rb_saxs_iq_foxs        ->setChecked( val == 2 );
-   rb_saxs_iq_crysol      ->setChecked( val == 3 );
+   rb_saxs_iq_native_debye ->setChecked( val == 0 );
+   rb_saxs_iq_native_hybrid->setChecked( val == 1 );
+   rb_saxs_iq_native_fast  ->setChecked( val == 2 );
+   rb_saxs_iq_foxs         ->setChecked( val == 3 );
+   rb_saxs_iq_crysol       ->setChecked( val == 4 );
 
-   our_saxs_options->saxs_iq_native_debye = rb_saxs_iq_native_debye->isChecked();
-   our_saxs_options->saxs_iq_native_fast  = rb_saxs_iq_native_fast->isChecked();
-   our_saxs_options->saxs_iq_foxs         = rb_saxs_iq_foxs->isChecked();
-   our_saxs_options->saxs_iq_crysol       = rb_saxs_iq_crysol->isChecked();
+   our_saxs_options->saxs_iq_native_debye  = rb_saxs_iq_native_debye ->isChecked();
+   our_saxs_options->saxs_iq_native_hybrid = rb_saxs_iq_native_hybrid->isChecked();
+   our_saxs_options->saxs_iq_native_fast   = rb_saxs_iq_native_fast  ->isChecked();
+   our_saxs_options->saxs_iq_foxs          = rb_saxs_iq_foxs         ->isChecked();
+   our_saxs_options->saxs_iq_crysol        = rb_saxs_iq_crysol       ->isChecked();
 
 }
 
 void US_Hydrodyn_Saxs::set_sans_iq(int val)
 {
-   rb_sans_iq_native_debye->setChecked( val == 0 );
-   rb_sans_iq_native_fast ->setChecked( val == 1 );
-   rb_sans_iq_cryson      ->setChecked( val == 2 );
+   rb_sans_iq_native_debye ->setChecked( val == 0 );
+   rb_sans_iq_native_hybrid->setChecked( val == 1 );
+   rb_sans_iq_native_fast  ->setChecked( val == 2 );
+   rb_sans_iq_cryson       ->setChecked( val == 3 );
 
-   our_saxs_options->sans_iq_native_debye = rb_sans_iq_native_debye->isChecked();
-   our_saxs_options->sans_iq_native_fast  = rb_sans_iq_native_fast->isChecked();
-   our_saxs_options->sans_iq_cryson       = rb_sans_iq_cryson->isChecked();
+   our_saxs_options->sans_iq_native_debye  = rb_sans_iq_native_debye ->isChecked();
+   our_saxs_options->sans_iq_native_hybrid = rb_sans_iq_native_hybrid->isChecked();
+   our_saxs_options->sans_iq_native_fast   = rb_sans_iq_native_fast  ->isChecked();
+   our_saxs_options->sans_iq_cryson        = rb_sans_iq_cryson       ->isChecked();
 }
-
    
+void US_Hydrodyn_Saxs::set_bead_model_ok_for_saxs()
+{
+   for ( unsigned int i = 0; i < selected_models.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < bead_models[selected_models[i]].size(); j++ )
+      {
+         // cout << "saxs name [" << j << "] = " << bead_models[i][j].saxs_data.saxs_name << endl;
+         if ( bead_models[i][j].active &&
+              bead_models[i][j].saxs_data.saxs_name.isEmpty() )
+         {
+            cout << "bead model " << i << " is NOT ok for saxs\n";
+            bead_model_ok_for_saxs = false;
+            return;
+         }
+      }
+   }
+   cout << "bead models are ok for saxs\n";
+   bead_model_ok_for_saxs = true;
+}

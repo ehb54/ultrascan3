@@ -411,7 +411,7 @@ void US_Hydrodyn_Saxs::crysol_launchFinished()
 
 // -------------------- cryson ------------------------------
 
-int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
+int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString /* pdb */ )
 {
    return -1;
 }

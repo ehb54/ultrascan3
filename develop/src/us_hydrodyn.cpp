@@ -218,15 +218,19 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_options.normalize_by_mw = true;
 
    saxs_options.saxs_iq_native_debye = false;
+   saxs_options.saxs_iq_native_hybrid = false;
    saxs_options.saxs_iq_native_fast = true;
    saxs_options.saxs_iq_native_fast_compute_pr = false;
    saxs_options.saxs_iq_foxs = false;
    saxs_options.saxs_iq_crysol = false;
 
    saxs_options.sans_iq_native_debye = true;
+   saxs_options.sans_iq_native_hybrid = false;
    saxs_options.sans_iq_native_fast = false;
    saxs_options.sans_iq_native_fast_compute_pr = false;
    saxs_options.sans_iq_cryson = false;
+
+   saxs_options.hybrid_q_point = 0.2;
 
    saxs_options.iq_ask = false;
 
@@ -241,6 +245,12 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    saxs_options.fast_bin_size = 0.5;
    saxs_options.fast_modulation = 0.23;
+
+   saxs_options.compute_saxs_coeff_for_bead_models = true;
+   saxs_options.compute_sans_coeff_for_bead_models = false;
+   saxs_options.default_atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
+   saxs_options.default_hybrid_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hybrid";
+   saxs_options.default_saxs_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
 
    // this should be stored in the residue file, hardcoded for now
 
@@ -359,6 +369,27 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    }
    
    save_util = new US_Hydrodyn_Save(&save_params, this);
+   saxs_util = new US_Saxs_Util();
+   if ( 
+       !saxs_util->setup_saxs_maps( 
+                                   saxs_options.default_atom_filename ,
+                                   saxs_options.default_hybrid_filename ,
+                                   saxs_options.default_saxs_filename 
+                                   )
+       &&
+       saxs_options.compute_saxs_coeff_for_bead_models
+       )
+   {
+      QColor save_color = editor->color();
+      editor->setColor("red");
+      editor->append(tr(
+                        "Warning: Error setting up SAXS structure factor files.\n"
+                        "Bead model SAXS disabled.\n"
+                        "Check to make sure the files in SOMO->SAXS/SANS Options are correct.\n"
+                        ));
+      editor->setColor(save_color);
+      saxs_options.compute_saxs_coeff_for_bead_models = false;
+   }
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -2397,6 +2428,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      somo_processed.resize(current_model + 1);
                   }
                   bead_model = bead_models[current_model];
+
                   any_models = true;
                   somo_processed[current_model] = 1;
 #if defined(DEBUG)
@@ -2530,6 +2562,30 @@ int US_Hydrodyn::calc_grid_pdb()
                         return -1;
                      }
                   }
+
+                  if ( saxs_options.compute_saxs_coeff_for_bead_models )
+                  {
+                     if ( !saxs_util->saxs_map.count("A2B") )
+                     {
+                        QColor save_color = editor->color();
+                        editor->setColor("red");
+                        editor->append(tr(
+                                          "Warning: No 'A2B' SAXS atom found. Bead model SAXS disabled.\n"
+                                          ));
+                        editor->setColor(save_color);
+                        for(unsigned int i = 0; i < bead_model.size(); i++) {
+                           bead_model[i].saxs_data.saxs_name = "";
+                        }
+                     } else {
+                        for(unsigned int i = 0; i < bead_model.size(); i++) {
+                           bead_model[i].saxs_name = "A2B";
+                           bead_model[i].saxs_data = saxs_util->saxs_map["A2B"];
+                           bead_model[i].hydrogens = 0;
+                        }
+                     }
+                     bead_models[current_model] = bead_model;
+                  }                     
+
                   progress->setProgress(progress->progress() + 1);
 
                   // write_bead_spt(somo_dir + SLASH + project +

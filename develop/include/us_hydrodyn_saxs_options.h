@@ -44,6 +44,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel     *lbl_water_e_density;
       QLabel     *lbl_saxs_iq;
       QCheckBox  *cb_saxs_iq_native_debye;
+      QCheckBox  *cb_saxs_iq_native_hybrid;
       QCheckBox  *cb_saxs_iq_native_fast;
       QCheckBox  *cb_saxs_iq_native_fast_compute_pr;
       QCheckBox  *cb_saxs_iq_crysol;
@@ -54,6 +55,9 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 
       QLabel     *lbl_fast_modulation;
       QwtCounter *cnt_fast_modulation;
+
+      QLabel     *lbl_hybrid_q_point;
+      QwtCounter *cnt_hybrid_q_point;
 
       QLabel     *lbl_crysol_max_harmonics;
       QwtCounter *cnt_crysol_max_harmonics;
@@ -73,6 +77,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel     *lbl_frac_of_exch_pep;
       QLabel     *lbl_sans_iq;
       QCheckBox  *cb_sans_iq_native_debye;
+      QCheckBox  *cb_sans_iq_native_hybrid;
       QCheckBox  *cb_sans_iq_native_fast;
       QCheckBox  *cb_sans_iq_native_fast_compute_pr;
       QCheckBox  *cb_sans_iq_cryson;
@@ -120,6 +125,16 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QCheckBox  *cb_hydrate_pdb;
       QCheckBox  *cb_normalize_by_mw;
 
+      QLabel      *lbl_bead_model_control;
+      QCheckBox   *cb_compute_saxs_coeff_for_bead_models;
+      QCheckBox   *cb_compute_sans_coeff_for_bead_models;
+      QPushButton *pb_default_atom_filename;
+      QLineEdit   *le_default_atom_filename;
+      QPushButton *pb_default_hybrid_filename;
+      QLineEdit   *le_default_hybrid_filename;
+      QPushButton *pb_default_saxs_filename;
+      QLineEdit   *le_default_saxs_filename;
+
       QLabel      *lbl_misc;
       QPushButton *pb_clear_mw_cache;
       QCheckBox   *cb_iq_ask;
@@ -139,6 +154,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 
       void update_water_e_density(double);
       void set_saxs_iq_native_debye();
+      void set_saxs_iq_native_hybrid();
       void set_saxs_iq_native_fast();
       void set_saxs_iq_native_fast_compute_pr();
       void set_saxs_iq_crysol();
@@ -146,6 +162,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 
       void update_fast_bin_size(double);
       void update_fast_modulation(double);
+
+      void update_hybrid_q_point(double);
 
       void update_crysol_max_harmonics(double);
       void update_crysol_fibonacci_grid_order(double);
@@ -159,6 +177,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void update_d2o_conc(double);
       void update_frac_of_exch_pep(double);
       void set_sans_iq_native_debye();
+      void set_sans_iq_native_hybrid();
       void set_sans_iq_native_fast();
       void set_sans_iq_native_fast_compute_pr();
       void set_sans_iq_cryson();
@@ -177,6 +196,12 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void update_start_q(double);
       void update_end_q(double);
       void update_delta_q(double);
+
+      void set_compute_saxs_coeff_for_bead_models();
+      void set_compute_sans_coeff_for_bead_models();
+      void default_atom_filename();
+      void default_hybrid_filename();
+      void default_saxs_filename();
 
       void set_hydrate_pdb();
       void set_normalize_by_mw();

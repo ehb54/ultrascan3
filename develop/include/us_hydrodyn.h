@@ -52,6 +52,7 @@
 #include "us_hydrodyn_bd.h"
 #include "us_hydrodyn_batch_movie_opts.h"
 #include "us_hydrodyn_comparative.h"
+#include "us_saxs_util.h"
 
 //standard C and C++ defs:
 
@@ -131,6 +132,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QCheckBox *cb_overwrite;
       QString last_hydro_res;
       void bd_anaflex_enables( bool flag ); // turns buttons on/off based upon current status
+      US_Saxs_Util *saxs_util;
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
