@@ -20,7 +20,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       //! \brief US_AnalysisControl constructor
       //! \param dat_exp Pointer to the experiment data
       //! \param         Pointer to the parent of this widget
-      US_AnalysisControl( US_DataIO2::EditedData*, bool, QWidget* p = 0 );
+      US_AnalysisControl( QList< US_SolveSim::DataSet* >&, QWidget* p = 0 );
 
    public slots:
       void update_progress (  int  );
@@ -37,17 +37,19 @@ class US_AnalysisControl : public US_WidgetsDialog
       QGridLayout*  controlsLayout;
       QGridLayout*  optimizeLayout;
 
-      US_DataIO2::EditedData*      edata;
-      US_DataIO2::RawData*         sdata;
-      US_DataIO2::RawData*         rdata;
-      US_Model*                    model;
-      US_Noise*                    ri_noise;
-      US_Noise*                    ti_noise;
-      US_SimulationParameters*     sparms;
-      QPointer< QTextEdit    >     mw_stattext;
+      QList< US_SolveSim::DataSet* >&  dsets;
 
-      QWidget*                     parentw;
-      US_2dsaProcess*              processor;
+      US_DataIO2::EditedData*          edata;
+      US_DataIO2::RawData*             sdata;
+      US_DataIO2::RawData*             rdata;
+      US_Model*                        model;
+      US_Noise*                        ri_noise;
+      US_Noise*                        ti_noise;
+      US_SimulationParameters*         sparms;
+      QPointer< QTextEdit    >         mw_stattext;
+
+      QWidget*                         parentw;
+      US_2dsaProcess*                  processor;
 
       QwtCounter*   ct_lolimits;
       QwtCounter*   ct_uplimits;

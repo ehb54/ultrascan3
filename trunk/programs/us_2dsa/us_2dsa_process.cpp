@@ -21,13 +21,11 @@
 #endif
 
 // Class to process 2DSA simulations
-US_2dsaProcess::US_2dsaProcess( US_DataIO2::EditedData* da_exper,
-   US_SimulationParameters* sim_pars, QObject* parent /*=0*/ )
-   : QObject( parent )
+US_2dsaProcess::US_2dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
+   QObject* parent /*=0*/ ) : QObject( parent ), dsets( dsets )
 {
-   bdata            = da_exper;       // pointer to base experiment data
+   bdata    = &dsets[ 0 ]->run_data;  // pointer to base experiment data
    edata            = bdata;          // working pointer to experiment
-   simparms         = sim_pars;       // simulation parameters
    parentw          = parent; 
    dbg_level        = US_Settings::us_debug();
    maxrss           = 0;              // max memory
@@ -159,7 +157,7 @@ DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
          edata              = &wdata;
          double bmeniscus   = bdata->meniscus;
          edata->meniscus    = bmeniscus - menrange * 0.5;
-         simparms->meniscus = edata->meniscus;
+         dsets[ 0 ]->simparams.meniscus = edata->meniscus;
 DbgLv(1) << "MENISC: mm_iter meniscus bmeniscus"
  << mm_iter << edata->meniscus << bmeniscus;
       }
@@ -312,8 +310,7 @@ void US_2dsaProcess::final_computes()
    wtask.taskx    = tkdepths.size();
    wtask.depth    = maxdepth;
    wtask.noisf    = noisflag;    // in this case, we use the noise flag
-   wtask.edata    = edata;
-   wtask.sparms   = simparms;
+   wtask.dsets    = dsets;
    wtask.csolutes.clear();
    wtask.ti_noise.clear();
    wtask.ri_noise.clear();
@@ -408,26 +405,12 @@ DbgLv(1) << "FIN_FIN:    c_sol size" << nsolutes;
    }
 DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
 
-   // pick up solution/buffer values passed via data's dataType string
-   QString dvv      = edata->dataType;
-   double density   = dvv.section( " ", 1, 1 ).toDouble();
-   double viscosity = dvv.section( " ", 2, 2 ).toDouble();
-   double vbar      = dvv.section( " ", 3, 3 ).toDouble();
-   double vbar_tb   = dvv.section( " ", 4, 4 ).toDouble();
-   double avgtemp   = edata->average_temperature();
-
-   // computed s,D correction factors
-   US_Math2::SolutionData solution;
-   solution.density   = density;
-   solution.viscosity = viscosity;
-   solution.vbar20    = vbar;
-   solution.vbar      = vbar_tb;
-   US_Math2::data_correction( avgtemp, solution );
-   double sfactor     = 1.0 / solution.s20w_correction;
-   double dfactor     = 1.0 / solution.D20w_correction;
-DbgLv(1) << "FIN_FIN: dens visc vbar vbar_tb"
- << density << viscosity << vbar << vbar_tb
- << " s20w,D20w_corr" << solution.s20w_correction << solution.D20w_correction;
+   US_SolveSim::DataSet* dset = dsets[ 0 ];
+   double sfactor     = 1.0 / dset->s20w_correction;
+   double dfactor     = 1.0 / dset->D20w_correction;
+   double vbar20      = dset->vbar20;
+DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
+ << dset->D20w_correction << "sfac dfac" << sfactor << dfactor;
    model.components.resize( nsolutes );
 
    // build the final model
@@ -435,7 +418,7 @@ DbgLv(1) << "FIN_FIN: dens visc vbar vbar_tb"
    {
       // Get standard-space solute values (20,W)
       US_Model::SimulationComponent mcomp;
-      mcomp.vbar20 = vbar;
+      mcomp.vbar20 = vbar20;
       mcomp.s      = qAbs( c_solutes[ maxdepth ][ cc ].s );
       mcomp.D      = 0.0;
       mcomp.mw     = 0.0;
@@ -458,18 +441,19 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
 DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
  << c_solutes[maxdepth][nsolutes-1].c;
+#if 0
    // calculate the simulation data
 
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
-DbgLv(1) << "FIN_FIN: dens visc vbar" << density << viscosity << vbar;
-DbgLv(1) << "FIN_FIN: rotorcoefs"
-   << simparms->rotorcoeffs[0] << simparms->rotorcoeffs[1];
-DbgLv(1) << "FIN_FIN: bottom bposition" << simparms->bottom
-   << simparms->bottom_position;
-DbgLv(1) << "FIN_FIN: rreso menisc temp" << simparms->radial_resolution
-   << simparms->meniscus << simparms->temperature;
-   US_Astfem_RSA astfem_rsa( model, *simparms );
+//DbgLv(1) << "FIN_FIN: dens visc vbar" << density << viscosity << vbar;
+//DbgLv(1) << "FIN_FIN: rotorcoefs"
+//   << simparms->rotorcoeffs[0] << simparms->rotorcoeffs[1];
+//DbgLv(1) << "FIN_FIN: bottom bposition" << simparms->bottom
+//   << simparms->bottom_position;
+//DbgLv(1) << "FIN_FIN: rreso menisc temp" << simparms->radial_resolution
+//   << simparms->meniscus << simparms->temperature;
+   US_Astfem_RSA astfem_rsa( model, dsets[ 0 ]->simparams );
 
    astfem_rsa.calculate( sdata );
 
@@ -490,8 +474,33 @@ DbgLv(1) << "FIN_FIN: rreso menisc temp" << simparms->radial_resolution
       }
    }
 
-   // set variance and communicate to control through residual's scan 0
    vari      /= (double)( nscans * npoints );
+#endif
+#if 1
+   nscans           = edata->scanData.size();
+   npoints          = edata->x.size();
+   double vari      = wresult.sim_vals.variance;
+   US_AstfemMath::initSimData( sdata, *edata, 0.0 );
+   US_AstfemMath::initSimData( rdata, *edata, 0.0 );
+   US_DataIO2::RawData* simdat = &wresult.sim_vals.sim_data;
+   US_DataIO2::RawData* resids = &wresult.sim_vals.residuals;
+   // build residuals data set (experiment minus simulation minus any noise)
+   for ( int ss = 0; ss < nscans; ss++ )
+   {
+      for ( int rr = 0; rr < npoints; rr++ )
+      {
+         sdata.scanData[ ss ].readings[ rr ].value = simdat->value( ss, rr );
+         rdata.scanData[ ss ].readings[ rr ].value = resids->value( ss, rr );
+      }
+   }
+
+#endif
+int mms=nscans/2;
+int mmr=npoints/2;
+DbgLv(1) << "FIN_FIN: edatm sdatm rdatm" << edata->value(mms,mmr)
+ << sdata.value(mms,mmr) << rdata.value(mms,mmr);
+
+   // set variance and communicate to control through residual's scan 0
    itvaris   << vari;
    ical_sols << c_solutes[ maxdepth ];
    US_DataIO2::Scan* rscan0 = &rdata.scanData[ 0 ];
@@ -590,8 +599,8 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
 DbgLv(1) << "cc comp D" << model.components[ cc ].D;
-      model.components[ cc ].s *= solution.s20w_correction;
-      model.components[ cc ].D *= solution.D20w_correction;
+      model.components[ cc ].s *= dset->s20w_correction;
+      model.components[ cc ].D *= dset->D20w_correction;
 DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
    }
 
@@ -816,8 +825,7 @@ void US_2dsaProcess::queue_task( WorkPacket& wtask, double llss, double llsk,
    wtask.iter     = r_iter;        // refine-iteration index
    wtask.ll_s     = llss;          // lower limit s (x 1e13)
    wtask.ll_k     = llsk;          // lower limit k
-   wtask.edata    = edata;         // pointer to experiment data
-   wtask.sparms   = simparms;      // pointer to simulation parameters
+   wtask.dsets    = dsets;         // pointer to experiment data
    wtask.isolutes = isolutes;      // solutes for calc_residuals task
 
    wtask.csolutes.clear();         // clear output vectors

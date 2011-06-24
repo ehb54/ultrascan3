@@ -11,15 +11,12 @@
 #include <qwt_legend.h>
 
 // constructor:  2dsa analysis controls widget
-US_AnalysisControl::US_AnalysisControl( US_DataIO2::EditedData* dat_exp,
-    bool fromDB, QWidget* p ) : US_WidgetsDialog( p, 0 )
+US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
+    QWidget* p ) : US_WidgetsDialog( p, 0 ), dsets( dsets )
 {
-   edata          = dat_exp;
    parentw        = p;
    processor      = 0;
    dbg_level      = US_Settings::us_debug();
-   US_Passwd pw;
-   US_DB2* dbP    = fromDB ? new US_DB2( pw.getPasswd() ) : NULL;
 
    setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
@@ -244,22 +241,11 @@ DbgLv(1) << "idealThrCout" << nthr;
 
    grid_change();
 
-   // initialize simulation parameters from data
-   sparms         = new US_SimulationParameters();
-   QString dtype  = edata->dataType;
-   edata->dataType = dtype.section( " ", 0, 0 );
+   edata          = &dsets[ 0 ]->run_data;
 
-   sparms->initFromData( dbP, *edata );
-DbgLv(1) << " initFrData rCalID coefs" << sparms->rotorCalID
-   << sparms->rotorcoeffs[0] << sparms->rotorcoeffs[1];
-if ( dbg_level > 0 )
- sparms->save_simparms( US_Settings::appBaseDir() + "/etc/sp_2dsa.xml" );
-   edata->dataType = dtype;
-   sparms->bottom  = sparms->bottom_position;
-
-DbgLv(1) << "Pre-resize AC size" << size();
+//DbgLv(2) << "Pre-resize AC size" << size();
    resize( 710, 440 );
-DbgLv(1) << "Post-resize AC size" << size();
+//DbgLv(2) << "Post-resize AC size" << size();
 }
 
 // enable/disable optimize counters based on chosen method
@@ -371,7 +357,6 @@ void US_AnalysisControl::start()
 
       mainw->analysis_done( -1 );   // reset counters to zero
 DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
-DbgLv(1) << "AnaC:  dens/visc/vbar" << edata->dataType;
    }
 
    // Make sure that any fit-meniscus is reasonable
@@ -397,7 +382,7 @@ DbgLv(1) << "AnaC:  dens/visc/vbar" << edata->dataType;
 
    // Start a processing object if need be
    if ( processor == 0 )
-      processor   = new US_2dsaProcess( edata, sparms, this );
+      processor   = new US_2dsaProcess( dsets, this );
 
    else
       processor->disconnect();
@@ -664,6 +649,8 @@ DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 // slot to handle advanced analysis controls
 void US_AnalysisControl::advanced()
 {
+   US_SimulationParameters* sparms = &dsets[ 0 ]->simparams;
+
    US_AdvAnalysis* aadiag = new US_AdvAnalysis( sparms, this );
    if ( aadiag->exec() == QDialog::Accepted )
    {
