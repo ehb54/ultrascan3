@@ -2424,9 +2424,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
    }
    if ( our_saxs_options->saxs_iq_native_hybrid ) 
    {
-      QMessageBox::information(this, 
-                               tr("Method not implemented:"), 
-                               QString(tr("The selected method is not yet implemented.")));
+      source ? calc_saxs_iq_native_hybrid_bead_model() : calc_saxs_iq_native_hybrid();
       return;
    }
    QMessageBox::information(this, 
