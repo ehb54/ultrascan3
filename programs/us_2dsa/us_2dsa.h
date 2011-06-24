@@ -45,9 +45,13 @@ class US_2dsa : public US_AnalysisBase2
 
       US_Editor*           te_results;
 
-      US_DataIO2::EditedData*     edata;
-      US_DataIO2::RawData         sdata;
-      US_DataIO2::RawData         rdata;
+      US_SolveSim::DataSet            dset;
+
+      QList< US_SolveSim::DataSet* >  dsets;
+
+      US_DataIO2::EditedData*         edata;
+      US_DataIO2::RawData             sdata;
+      US_DataIO2::RawData             rdata;
 
       QPointer< US_ResidPlot >        resplotd;
       QPointer< US_PlotControl >      eplotcd;

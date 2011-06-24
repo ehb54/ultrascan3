@@ -41,8 +41,7 @@ class US_2dsaProcess : public QObject
       //! \param da_exper  Pointer to input experiment data
       //! \param sim_pars  Pointer to simulation parameters
       //! \param parent    Pointer to parent object
-      US_2dsaProcess( US_DataIO2::EditedData*,
-                      US_SimulationParameters*,
+      US_2dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
                       QObject* = 0 );
 
       //! \brief Start the fit calculations
@@ -85,15 +84,6 @@ class US_2dsaProcess : public QObject
 
       static const int solute_doubles = sizeof( US_Solute ) / sizeof( double );
 
-      class Simulation
-      {
-         public:
-            double variance;
-            QVector< double > ti_noise;
-            QVector< double > ri_noise;
-            QVector< US_Solute > solutes;
-      };
-
 private:
 
       signals:
@@ -103,6 +93,8 @@ private:
       void message_update(   QString, bool );
 
 private:
+      QList< US_SolveSim::DataSet* >& dsets;
+
       long int maxrss;
 
       long int max_rss( void );

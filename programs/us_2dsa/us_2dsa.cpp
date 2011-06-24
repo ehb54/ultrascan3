@@ -151,6 +151,11 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    rbd_pos      = this->pos() + QPoint(  100, 100 );
    epd_pos      = this->pos() + QPoint(  400, 200 );
    acd_pos      = this->pos() + QPoint(  500,  50 );
+
+   dsets.clear();
+DbgLv(1) << "  main constr - FF";
+   dsets << &dset;
+DbgLv(1) << "  main constr - GG";
 }
 
 // slot to handle the completion of a 2-D spectrum analysis stage
@@ -731,14 +736,37 @@ void US_2dsa::open_fitcntl()
 {
    int    drow     = lw_triples->currentRow();
    if ( drow < 0 )   return;
+
    edata           = &dataList[ drow ];
    double avTemp   = edata->average_temperature();
-   double vbar20   = vbar;
+   double vbar20   = solution_rec.commonVbar20;
    double vbartb   = US_Math2::calcCommonVbar( solution_rec, avTemp );
-   edata->dataType = edata->dataType.section( " ", 0, 0 )
-      + QString().sprintf( " %.6f %.5f %5f %5f",
-            density, viscosity, vbar20, vbartb );
+   US_Math2::SolutionData sd;
+   sd.density      = density;
+   sd.viscosity    = viscosity;
+   sd.vbar20       = vbar20;
+   sd.vbar         = vbartb;
+   US_Math2::data_correction( avTemp, sd );
+
 DbgLv(1) << "  OFitCntl: dens visc vbar20 vbartb" << edata->dataType;
+
+   US_Passwd pw;
+   US_DB2* dbP             = disk_controls->db()
+                             ? new US_DB2( pw.getPasswd() )
+                             : NULL;
+DbgLv(1) << "  OFitCntl - CC";
+   dset.simparams.initFromData( dbP, dataList[ drow ] );
+
+   dset.run_data           = dataList[ drow ];
+   dset.simparams.bottom   = dset.simparams.bottom_position;
+   dset.viscosity          = viscosity;
+   dset.density            = density;
+   dset.temperature        = avTemp;
+   dset.vbar20             = vbar20;
+   dset.vbartb             = vbartb;
+   dset.s20w_correction    = sd.s20w_correction;
+   dset.D20w_correction    = sd.D20w_correction;
+DbgLv(1) << "  OFitCntl - EE";
 
    if ( analcd != 0 )
    {
@@ -748,7 +776,7 @@ DbgLv(1) << "  OFitCntl: dens visc vbar20 vbartb" << edata->dataType;
    else
       acd_pos  = this->pos() + QPoint(  500,  50 );
 
-   analcd  = new US_AnalysisControl( edata, ! def_local, this );
+   analcd  = new US_AnalysisControl( dsets, this );
    analcd->move( acd_pos );
    analcd->show();
 DbgLv(1) << "  AFitCntl: dens visc vbar20 vbartb" << edata->dataType;

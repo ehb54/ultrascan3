@@ -10,10 +10,12 @@
 #include "us_model.h"
 #include "us_noise.h"
 #include "us_solute.h"
+#include "us_solve_sim.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
+
 //! \brief Worker thread task packet
 typedef struct work_packet_s
 {
@@ -34,8 +36,9 @@ typedef struct work_packet_s
    QVector< double >        ti_noise;  // computed ti noise
    QVector< double >        ri_noise;  // computed ri noise
 
-   US_DataIO2::EditedData*  edata;  // pointer to experiment data
-   US_SimulationParameters* sparms; // pointer to simulation parameters
+   QList< US_SolveSim::DataSet* > dsets;     // list of data set object pointers
+   US_SolveSim::Simulation        sim_vals;  // simulation values
+
 } WorkPacket;
 
 //! \brief Worker thread to do actual work of 2DSA analysis
@@ -53,50 +56,20 @@ class WorkerThread : public QThread
       WorkerThread( QObject* parent = 0 );
       ~WorkerThread();
 
-      void define_work( WorkPacket& );
-      void get_result(  WorkPacket& );
-      void run();
-      void flag_abort();
+   public slots:
+      void define_work     ( WorkPacket& );
+      void get_result      ( WorkPacket& );
+      void run             ();
+      void flag_abort      ();
+      void forward_progress( int  );
 
    signals:
-      void work_progress( int );
-      void work_complete( WorkerThread* );
+      void work_progress   ( int );
+      void work_complete   ( WorkerThread* );
 
    private:
 
-      void calc_residuals(    void );
-      void compute_a_tilde(  QVector< double >& );
-      void compute_L_tildes( int, int,
-                             QVector< double >&,
-                             const QVector< double >& );
-      void compute_L_tilde(  QVector< double >&,
-                             const QVector< double >& );
-      void compute_L(        int, int,
-                             QVector< double >&,
-                             const QVector< double >&,
-                             const QVector< double >& );
-      void ri_small_a_and_b( int, int, int,
-                             QVector< double >&,
-                             QVector< double >&,
-                             const QVector< double >&,
-                             const QVector< double >&,
-                             const QVector< double >& );
-      void ti_small_a_and_b( int, int, int,
-                             QVector< double >&,
-                             QVector< double >&,
-                             const QVector< double >&,
-                             const QVector< double >&,
-                             const QVector< double >& );
-      void compute_L_bar(    QVector< double >&,
-                             const QVector< double >&,
-                             const QVector< double >& );
-      void compute_a_bar(    QVector< double >&,
-                             const QVector< double >& );
-      void compute_L_bars(   int, int, int, int,
-                             QVector< double >&,
-                             const QVector< double >&,
-                             const QVector< double >& );
-      void DebugTime( QString );
+      void calc_residuals  ( void );
 
       double  llim_s;        // lower limit in s (UGRID)
       double  llim_k;        // lower limit in k (UGRID)
@@ -124,8 +97,12 @@ class WorkerThread : public QThread
       US_Noise                ra_noise;    // computed random noise
       US_SimulationParameters simparms;    // simulation parameters
 
-      QVector< US_Solute >       solute_i;    // input solutes
-      QVector< US_Solute >       solute_c;    // computed solutes
+      QList< US_SolveSim::DataSet* > dsets;     // list of data set obj. ptrs.
+      US_SolveSim::Simulation        sim_vals;  // simulation values
+      US_SolveSim*                   solvesim;  // object for calc_residuals()
+
+      QVector< US_Solute >    solutes_i;   // solutes input
+      QVector< US_Solute >    solutes_c;   // solutes computed
 };
 
 #endif
