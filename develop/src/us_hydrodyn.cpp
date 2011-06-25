@@ -4131,8 +4131,3 @@ void US_Hydrodyn::run_us_admin()
 void US_Hydrodyn::update_enables()
 {
 }
-
-void US_Hydrodyn::pdb_hydrate_for_saxs()
-{
-   puts("not yet");
-}

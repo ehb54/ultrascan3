@@ -189,6 +189,7 @@ SOURCES += \
   src/us_hydrodyn_file.cpp \
   src/us_hydrodyn_grid.cpp \
   src/us_hydrodyn_grid_atob.cpp \
+  src/us_hydrodyn_hydrate.cpp \
   src/us_hydrodyn_hydro.cpp \
   src/us_hydrodyn_misc.cpp \
   src/us_hydrodyn_other.cpp \
