@@ -35,7 +35,6 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
       return -1;
    } 
 
-   puts("ph1");
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_somo->setEnabled(false);
@@ -47,7 +46,6 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
    options_log = "";
    display_default_differences();
    model_vector = model_vector_as_loaded;
-   puts("ph1 a");
 
    if (!residue_list.size() ||
        !model_vector.size())
@@ -61,7 +59,6 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
 
-   puts("ph1 b");
    bool any_errors = false;
    bool any_models = false;
 
@@ -76,7 +73,6 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
    msg += "\n";
    editor->append(msg);
 
-   puts("ph2");
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++)
    {
       if (!any_errors && lb_model->isSelected(current_model))
@@ -106,7 +102,6 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
       // calculate bead model and generate hydrodynamics calculation output
       // if successful, enable follow-on buttons:
    }
-   puts("ph3");
    if (any_models && !any_errors)
    {
       qApp->processEvents();
@@ -115,7 +110,6 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
    {
       editor->append("Errors encountered\n");
    }
-   puts("ph4");
 
    pb_somo->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
@@ -126,7 +120,6 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
 
 int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
 {
-   puts("pa1");
    QString error_string = "";
    progress->reset();
    editor->append(QString("\nHydrating the pdb for %1 model %2\n").arg(project).arg(current_model+1));
@@ -161,7 +154,6 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
    {
       return -1;
    }
-   puts("pa2");
    int retval = create_beads(&error_string, true);
    if ( retval )
    {
@@ -204,7 +196,6 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
       }
    }
 
-   puts("pa3");
    if(error_string.length()) {
       progress->setProgress(mppos);
       qApp->processEvents();
@@ -335,7 +326,6 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
          }
       }
    }
-   puts("pa4");
 
    // pass 1 assign bead #'s, chain #'s, initialize data
 
