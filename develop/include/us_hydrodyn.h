@@ -520,6 +520,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void list_exposed();
       void view_exposed();
 
+      bool rotamer_changed;  // toggles need for reloading rotamer file
+      bool load_rotamer();
+
    private slots:
       void browflex_readFromStdout();
       void browflex_readFromStderr();

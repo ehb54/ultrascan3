@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_asab1.h"
 #include "../include/us_surfracer.h"
+#include "qmessagebox.h"
 
 #define DOTSOMO      ""
 #ifndef WIN32
@@ -20,6 +21,14 @@
 
 int US_Hydrodyn::pdb_hydrate_for_saxs()
 {
+   if ( !load_rotamer() )
+   {
+      QMessageBox::warning(this,
+                           tr("Hydrated Rotamer file not found:"),
+                           tr("The Hydrated Rotamer file can be set in SOMO->SAXS/SANS Options"));
+      return -1;
+   } 
+
    vector < unsigned int > selected_models;
    for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
    {
@@ -31,7 +40,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
    if ( selected_models.size() != 1 )
    {
       QMessageBox::message(tr("Please note:"),
-                           tr("You must select exactly one model to perform SAXS functions."));
+                           tr("You must select exactly one model to hydrate."));
       return -1;
    } 
 
@@ -1450,4 +1459,16 @@ void US_Hydrodyn::view_exposed()
                                                   "Please check to make sure RASMOL is properly installed..."));
       return;
    }
+}
+
+bool US_Hydrodyn::load_rotamer()
+{
+   puts("load_rotamer");
+   if ( !rotamer_changed )
+   {
+      return true;
+   }
+   puts("load_rotamer not yet implemented");
+   rotamer_changed = false;
+   return true;
 }

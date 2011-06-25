@@ -1659,7 +1659,7 @@ void US_Hydrodyn_SaxsOptions::default_saxs_filename()
 
 void US_Hydrodyn_SaxsOptions::default_rotamer_filename()
 {
-   QString rotamer_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", "*.saxs_atoms *.SAXS_ATOMS", this);
+   QString rotamer_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", "*.hydrated_rotamer *.HYDRATED_ROTAMER", this);
    if (rotamer_filename.isEmpty())
    {
       return;
@@ -1667,6 +1667,7 @@ void US_Hydrodyn_SaxsOptions::default_rotamer_filename()
    else
    {
       (*saxs_options).default_rotamer_filename = rotamer_filename;
+      ((US_Hydrodyn *)us_hydrodyn)->rotamer_changed = true;      
       le_default_rotamer_filename->setText( QFileInfo(rotamer_filename).fileName() );
    }
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
