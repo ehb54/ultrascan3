@@ -5347,13 +5347,17 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
 
 void US_Hydrodyn_Saxs::set_current_method_buttons() 
 {
-   rb_saxs_iq_native_debye->setChecked(our_saxs_options->saxs_iq_native_debye);
-   rb_saxs_iq_native_fast ->setChecked(our_saxs_options->saxs_iq_native_fast);
-   rb_saxs_iq_foxs        ->setChecked(our_saxs_options->saxs_iq_foxs);
-   rb_saxs_iq_crysol      ->setChecked(our_saxs_options->saxs_iq_crysol);
-   rb_sans_iq_native_debye->setChecked(our_saxs_options->sans_iq_native_debye);
-   rb_sans_iq_native_fast ->setChecked(our_saxs_options->sans_iq_native_fast);
-   rb_sans_iq_cryson      ->setChecked(our_saxs_options->sans_iq_cryson);
+   rb_saxs_iq_native_debye  ->setChecked(our_saxs_options->saxs_iq_native_debye);
+   rb_saxs_iq_native_hybrid ->setChecked(our_saxs_options->saxs_iq_native_hybrid);
+   rb_saxs_iq_native_hybrid2->setChecked(our_saxs_options->saxs_iq_native_hybrid2);
+   rb_saxs_iq_native_fast   ->setChecked(our_saxs_options->saxs_iq_native_fast);
+   rb_saxs_iq_foxs          ->setChecked(our_saxs_options->saxs_iq_foxs);
+   rb_saxs_iq_crysol        ->setChecked(our_saxs_options->saxs_iq_crysol);
+   rb_sans_iq_native_debye  ->setChecked(our_saxs_options->sans_iq_native_debye);
+   rb_sans_iq_native_hybrid ->setChecked(our_saxs_options->sans_iq_native_hybrid);
+   rb_sans_iq_native_hybrid2->setChecked(our_saxs_options->sans_iq_native_hybrid2);
+   rb_sans_iq_native_fast   ->setChecked(our_saxs_options->sans_iq_native_fast);
+   rb_sans_iq_cryson        ->setChecked(our_saxs_options->sans_iq_cryson);
 }
 
 

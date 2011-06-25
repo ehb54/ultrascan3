@@ -2327,7 +2327,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid()
       unsigned int pos;
       vector < float > hist;
       
-      progress_saxs->setTotalSteps((int)(as1 * 1.15));
+      progress_saxs->setTotalSteps((int)(as * 2 + 2));
 
       vector < vector < double > > rik_array(as);
 
@@ -2381,8 +2381,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid()
          hist.pop_back();
       }
 
-      progress_saxs->setProgress( 1, 3 );
-
       // hist = save_hist;
 
       vector < double > I;
@@ -2427,13 +2425,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid()
       }
       double qrik; // q * rik
       double sqrikd; // sin * q * rik / qrik
-      progress_saxs->setTotalSteps((int)(as1 * 1.15));
       for ( unsigned int i = 0; i < as1; i++ )
       {
          // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
          // cout << lcp << endl;
          // lbl_core_progress->setText(lcp);
-         progress_saxs->setProgress(i+1);
+         progress_saxs->setProgress(as + i + 1);
          qApp->processEvents();
          if ( stopFlag ) 
          {
@@ -3216,7 +3213,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       unsigned int pos;
       vector < float > hist;
       
-      progress_saxs->setTotalSteps((int)(as1 * 1.15));
+      progress_saxs->setTotalSteps((int)(as * 2 + 2));
 
       vector < vector < double > > rik_array(as);
 
@@ -3269,8 +3266,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       {
          hist.pop_back();
       }
-
-      progress_saxs->setProgress( 1, 3 );
 
       // hist = save_hist;
 
@@ -3335,13 +3330,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 
       double qrik; // q * rik
       double sqrikd; // sin * q * rik / qrik
-      progress_saxs->setTotalSteps((int)(as1 * 1.15));
+
       for ( unsigned int i = 0; i < as1; i++ )
       {
          // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
          // cout << lcp << endl;
          // lbl_core_progress->setText(lcp);
-         progress_saxs->setProgress(i+1);
+         progress_saxs->setProgress(as + i + 1);
          qApp->processEvents();
          if ( stopFlag ) 
          {

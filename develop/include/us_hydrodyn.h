@@ -274,6 +274,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_save;
       QPushButton *pb_select_residue_file;
       QPushButton *pb_load_pdb;
+      QPushButton *pb_pdb_hydrate_for_saxs;
       QPushButton *pb_pdb_saxs;
       QPushButton *pb_bead_saxs;
       QPushButton *pb_help;
@@ -513,6 +514,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void pdb_saxs( bool create_native_saxs = true );
       void bead_saxs( bool create_native_saxs = true );
+      void pdb_hydrate_for_saxs();
 
    private slots:
       void browflex_readFromStdout();

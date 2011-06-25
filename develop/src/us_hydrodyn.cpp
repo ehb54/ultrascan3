@@ -219,8 +219,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    saxs_options.saxs_iq_native_debye = false;
    saxs_options.saxs_iq_native_hybrid = false;
-   saxs_options.saxs_iq_native_hybrid2 = false;
-   saxs_options.saxs_iq_native_fast = true;
+   saxs_options.saxs_iq_native_hybrid2 = true;
+   saxs_options.saxs_iq_native_fast = false;
    saxs_options.saxs_iq_native_fast_compute_pr = false;
    saxs_options.saxs_iq_foxs = false;
    saxs_options.saxs_iq_crysol = false;
@@ -232,8 +232,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_options.sans_iq_native_fast_compute_pr = false;
    saxs_options.sans_iq_cryson = false;
 
-   saxs_options.hybrid_q_point = 0.2;
-   saxs_options.hybrid2_q_points = 10;
+   saxs_options.hybrid_q_point = 0.15;
+   saxs_options.hybrid2_q_points = 15;
 
    saxs_options.iq_ask = false;
 
@@ -599,6 +599,14 @@ void US_Hydrodyn::setupGUI()
    pb_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_somo, SIGNAL(clicked()), SLOT(calc_somo()));
 
+   pb_pdb_hydrate_for_saxs = new QPushButton(tr("Hydrate"), this);
+   Q_CHECK_PTR(pb_pdb_hydrate_for_saxs);
+   pb_pdb_hydrate_for_saxs->setMinimumHeight(minHeight1);
+   pb_pdb_hydrate_for_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pdb_hydrate_for_saxs->setEnabled(true);
+   pb_pdb_hydrate_for_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_pdb_hydrate_for_saxs, SIGNAL(clicked()), SLOT(pdb_hydrate_for_saxs()));
+
    pb_pdb_saxs = new QPushButton(tr("SAXS/SANS Functions"), this);
    Q_CHECK_PTR(pb_pdb_saxs);
    pb_pdb_saxs->setMinimumHeight(minHeight1);
@@ -867,7 +875,10 @@ void US_Hydrodyn::setupGUI()
    j++;
    background->addWidget(pb_view_pdb, j, 0);
    j++;
-   background->addWidget(pb_pdb_saxs, j, 0);
+   QHBoxLayout *hbl_pdb_saxs = new QHBoxLayout;
+   hbl_pdb_saxs->addWidget(pb_pdb_hydrate_for_saxs);
+   hbl_pdb_saxs->addWidget(pb_pdb_saxs);
+   background->addLayout(hbl_pdb_saxs, j, 0);
    j++;
    background->addWidget(pb_dmd_run, j, 0);
    j++;
@@ -4119,4 +4130,9 @@ void US_Hydrodyn::run_us_admin()
 
 void US_Hydrodyn::update_enables()
 {
+}
+
+void US_Hydrodyn::pdb_hydrate_for_saxs()
+{
+   puts("not yet");
 }
