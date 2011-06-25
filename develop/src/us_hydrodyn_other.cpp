@@ -5026,6 +5026,7 @@ bool US_Hydrodyn::install_new_version()
    names.push_back("atom");
    names.push_back("saxs_atoms");
    names.push_back("residue");
+   names.push_back("hydrated_rotamer");
 
    vector < bool > install; 
    install.resize(names.size());
@@ -5090,6 +5091,9 @@ bool US_Hydrodyn::install_new_version()
    // ask to proceed
 
    QString msg = tr("New versions will be installed for the following files:\n");
+#ifdef WIN32
+   msg += tr("Note: This step may require you to run as Administrator.\n");
+#endif
    for ( unsigned int i = 0; i < names.size(); i++ )
    {
       if ( install[i] )
