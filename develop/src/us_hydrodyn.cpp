@@ -219,6 +219,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    saxs_options.saxs_iq_native_debye = false;
    saxs_options.saxs_iq_native_hybrid = false;
+   saxs_options.saxs_iq_native_hybrid2 = false;
    saxs_options.saxs_iq_native_fast = true;
    saxs_options.saxs_iq_native_fast_compute_pr = false;
    saxs_options.saxs_iq_foxs = false;
@@ -226,11 +227,13 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    saxs_options.sans_iq_native_debye = true;
    saxs_options.sans_iq_native_hybrid = false;
+   saxs_options.sans_iq_native_hybrid2 = false;
    saxs_options.sans_iq_native_fast = false;
    saxs_options.sans_iq_native_fast_compute_pr = false;
    saxs_options.sans_iq_cryson = false;
 
    saxs_options.hybrid_q_point = 0.2;
+   saxs_options.hybrid2_q_points = 10;
 
    saxs_options.iq_ask = false;
 
