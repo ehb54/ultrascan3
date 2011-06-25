@@ -139,6 +139,8 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLineEdit   *le_default_hybrid_filename;
       QPushButton *pb_default_saxs_filename;
       QLineEdit   *le_default_saxs_filename;
+      QPushButton *pb_default_rotamer_filename;
+      QLineEdit   *le_default_rotamer_filename;
 
       QLabel      *lbl_misc;
       QPushButton *pb_clear_mw_cache;
@@ -211,6 +213,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void default_atom_filename();
       void default_hybrid_filename();
       void default_saxs_filename();
+      void default_rotamer_filename();
 
       void set_hydrate_pdb();
       void set_normalize_by_mw();

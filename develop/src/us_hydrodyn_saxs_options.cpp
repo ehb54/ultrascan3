@@ -728,6 +728,21 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    le_default_saxs_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_default_saxs_filename->setReadOnly(true);
 
+   pb_default_rotamer_filename = new QPushButton(tr("Set Hydrated Rotamer File"), this);
+   pb_default_rotamer_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_default_rotamer_filename->setMinimumHeight(minHeight1);
+   pb_default_rotamer_filename->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_default_rotamer_filename, SIGNAL(clicked()), SLOT(default_rotamer_filename()));
+
+   le_default_rotamer_filename = new QLineEdit(this, "");
+   le_default_rotamer_filename->setText(QFileInfo((*saxs_options).default_rotamer_filename).fileName());
+   // le_default_rotamer_filename->setMinimumHeight(minHeight1);
+   // le_default_rotamer_filename->setMaximumHeight(minHeight1);
+   le_default_rotamer_filename->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   le_default_rotamer_filename->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   le_default_rotamer_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_default_rotamer_filename->setReadOnly(true);
+
    lbl_misc = new QLabel(tr("Miscellaneous Options:"), this);
    lbl_misc->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_misc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -937,6 +952,9 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    k++;
    background->addWidget(pb_default_saxs_filename, k, 2);
    background->addWidget(le_default_saxs_filename, k, 3);
+   k++;
+   background->addWidget(pb_default_rotamer_filename, k, 2);
+   background->addWidget(le_default_rotamer_filename, k, 3);
    k++;
 
    background->addMultiCellWidget(lbl_misc, k, k, 2, 3);
@@ -1635,6 +1653,21 @@ void US_Hydrodyn_SaxsOptions::default_saxs_filename()
                                                                   saxs_options->default_saxs_filename 
                                                                   );
       }
+   }
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::default_rotamer_filename()
+{
+   QString rotamer_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", "*.saxs_atoms *.SAXS_ATOMS", this);
+   if (rotamer_filename.isEmpty())
+   {
+      return;
+   }
+   else
+   {
+      (*saxs_options).default_rotamer_filename = rotamer_filename;
+      le_default_rotamer_filename->setText( QFileInfo(rotamer_filename).fileName() );
    }
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

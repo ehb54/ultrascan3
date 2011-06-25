@@ -217,6 +217,7 @@ struct saxs_options
    QString default_atom_filename;
    QString default_hybrid_filename;
    QString default_saxs_filename;
+   QString default_rotamer_filename;
 };
 
 struct hybridization

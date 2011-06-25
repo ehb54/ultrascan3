@@ -254,6 +254,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_options.default_atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
    saxs_options.default_hybrid_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hybrid";
    saxs_options.default_saxs_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
+   saxs_options.default_rotamer_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hydrated_rotamer";
 
    // this should be stored in the residue file, hardcoded for now
 
@@ -876,8 +877,8 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_view_pdb, j, 0);
    j++;
    QHBoxLayout *hbl_pdb_saxs = new QHBoxLayout;
-   hbl_pdb_saxs->addWidget(pb_pdb_hydrate_for_saxs);
    hbl_pdb_saxs->addWidget(pb_pdb_saxs);
+   hbl_pdb_saxs->addWidget(pb_pdb_hydrate_for_saxs);
    background->addLayout(hbl_pdb_saxs, j, 0);
    j++;
    background->addWidget(pb_dmd_run, j, 0);
