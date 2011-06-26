@@ -171,7 +171,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   xpos += smallColumn + spacing;
 
   cbb_licensetype = us_comboBox();
-  types << "academic" << "commercial" << "trial";
+  types << "academic" << "commercial";
   cbb_licensetype->addItems( types );
   licensetype = "academic";  // Initialize
   cbb_licensetype->setGeometry( xpos, ypos, mediumColumn, rowHeight );
