@@ -1,7 +1,5 @@
 <?php
-   $username = "limsconfig";
-   $password = "lookn4a$";
-   $host = "bcf.uthscsa.edu";
+include 'dbconfig.php';
    $link = mysql_connect($host, $username, $password) or die("Could not connect");
    mysql_select_db("lims2_config") or die("Could not select database");
 
