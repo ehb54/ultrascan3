@@ -1,7 +1,6 @@
 <?php
-   $username = "limsconfig";
-   $password = "lookn4a$";
-   $host = "bcf.uthscsa.edu";
+include 'ultrascan_global.php';
+include 'dbconfig.php';
    $link = mysql_connect($host, $username, $password) or die("Could not connect");
    mysql_select_db("lims2_config") or die("Could not select database");
 
@@ -80,9 +79,11 @@
 		fwrite($file, "\$dbusername				= '" . $line["dbusername"] . "';\n");
 		fwrite($file, "\$dbpasswd				= '" . $line["dbpasswd"] . "';\n");
 		fwrite($file, "\$database_name			= '" . $line["database_name"] . "';\n");
-		fwrite($file, "\$db_host					= '" . $line["db_host"] . "';\n");
-		fwrite($file, "\$data_dir				= '" . $line["data_dir"] . "';\n");
-		fwrite($file, "\$full_path				= '" . $line["full_path"] . "';\n\n");
+		fwrite($file, "\$db_host					= '" . $DBHost . "';\n");
+		fwrite($file, "\$data_dir				= 'data/';\n");
+		fwrite($file, "\$full_path				= '" . $LimsBase . "/" . $line["dbusername"] . "';\n\n");
+		fwrite($file, "\$GridDir					= '" . $GridDir . "';\n");
+		fwrite($file, "\$UltraScanBase		= '" . $UltraScanBase . "';\n");
 		fwrite($file, $footer);
 		fclose($file);
 	}

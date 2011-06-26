@@ -7,5 +7,5 @@
 $UltraScanBase			= '/usr/local/ultrascan2';
 $GridDir 				= '/etc/grid';
 $LimsBase            = '/srv/www/htdocs/uslims/uslims2';
-
+$DBHost					= 'ultrascan.uthscsa.edu';
 ?>
