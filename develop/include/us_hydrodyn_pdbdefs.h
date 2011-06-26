@@ -28,6 +28,22 @@ struct saxs
    float   volume;               // atomic volume
 };
 
+struct rotamer_atom
+{
+   QString name;
+   point   coordinate;
+};
+
+struct rotamer
+{
+   QString name;
+   QString residue;
+   QString extension;
+
+   vector < rotamer_atom > side_chain;
+   vector < rotamer_atom > waters;
+};
+
 struct PDB_atom
 {
    unsigned int serial;

@@ -21,13 +21,15 @@
 
 int US_Hydrodyn::pdb_hydrate_for_saxs()
 {
-   if ( !load_rotamer() )
+   QString error_msg;
+   if ( !load_rotamer( error_msg ) )
    {
-      QMessageBox::warning(this,
-                           tr("Hydrated Rotamer file not found:"),
-                           tr("The Hydrated Rotamer file can be set in SOMO->SAXS/SANS Options"));
+      QMessageBox::warning( this,
+                            tr( "Error reading Hydrated Rotamer file" ),
+                            error_msg );
       return -1;
    } 
+   cout << list_rotamers( false );
 
    vector < unsigned int > selected_models;
    for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
@@ -1461,14 +1463,221 @@ void US_Hydrodyn::view_exposed()
    }
 }
 
-bool US_Hydrodyn::load_rotamer()
+bool US_Hydrodyn::load_rotamer( QString &error_msg )
 {
    puts("load_rotamer");
    if ( !rotamer_changed )
    {
       return true;
    }
-   puts("load_rotamer not yet implemented");
+
+   editor->append( tr("Reading hydrated rotamer file\n") );
+   qApp->processEvents();
+   rotamers.clear();
+
+   QFile f( saxs_options.default_rotamer_filename );
+   if ( !f.exists() )
+   {
+      error_msg = tr( "Hydrated Rotamer file not found:\n"
+                      "The Hydrated Rotamer file can be set in SOMO->SAXS/SANS Options" );
+      return false;
+   }
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      error_msg = tr( "Hydrated Rotamer file is not readable:\n"
+                      "Check file permissions" );
+      return false;
+   }      
+
+   QStringList qsl;
+   QTextStream ts( &f );
+   
+   while ( !ts.atEnd() )
+   {
+      qsl << ts.readLine();
+   }
+
+   f.close();
+
+   QRegExp rx_whitespace("\\s+");
+   QRegExp rx_skip("^(#|\\s+$)");
+   QRegExp rx_main_chain("^(N|CA|C|O)$");
+
+   bool in_rotamer = false;
+   bool in_rotamer_waters = false;
+
+   rotamer tmp_rotamer;
+
+   for ( unsigned int i = 0; i < qsl.size(); i++ )
+   {
+      if ( rx_skip.search( qsl[ i ] ) != -1 )
+      {
+         continue;
+      }
+      if ( qsl[ i ].length() > 30 )
+      {
+         qsl[ i ].at( 22 ) = ' ';
+      }
+      QStringList qsl_line = QStringList::split( rx_whitespace, qsl[ i ] );
+      if ( !in_rotamer )
+      {
+         if ( qsl_line.size() != 2 )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens %2" ) )
+               .arg( i + 1 )
+               .arg( qsl_line.size() );
+            return false;
+         }
+         
+         if ( qsl_line[ 0 ] != "start-rotamer:" )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  Unrecognized token %2" ) )
+               .arg( i + 1 )
+               .arg( qsl_line[ 0 ] );
+            return false;
+         }
+         tmp_rotamer.name = qsl_line[ 1 ];
+         tmp_rotamer.residue = tmp_rotamer.name.left( 3 );
+         tmp_rotamer.extension = tmp_rotamer.name.right( 7 );
+         tmp_rotamer.side_chain.clear();
+         tmp_rotamer.waters.clear();
+         in_rotamer = true;
+         in_rotamer_waters = false;
+         continue;
+      }
+      if ( qsl_line.size() == 1 )
+      {
+         if ( qsl_line[ 0 ] == "end-rotamer" )
+         {
+            // push back rotamer info here
+            if ( !tmp_rotamer.side_chain.size() ||
+                 !tmp_rotamer.waters.size() )
+            {
+               error_msg = 
+                  QString( tr( "Error in hydrated rotamer file line %1.  Empty rotamer" ) )
+                  .arg( i + 1 );
+               return false;
+            }
+            rotamers[ tmp_rotamer.residue ].push_back( tmp_rotamer );
+            in_rotamer = false;
+            in_rotamer_waters = false;
+            continue;
+         }
+         if ( qsl_line[ 0 ] != "TER" )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  Unrecognized token %2 in this context" ) )
+               .arg( i + 1 )
+               .arg( qsl_line[ 0 ] );
+            return false;
+         }
+         in_rotamer_waters = true;
+         continue;
+      }
+      if ( qsl_line.size() != 12 )
+      {
+         error_msg = 
+            QString( tr ( "Error in hydrated rotamer file line %1:\n"
+                          "%2\n"
+                          "Unexpected number of tokens %3\n" ) )
+            .arg( i + 1 )
+            .arg( qsl[ i ] )
+            .arg( qsl_line.size() );
+         return false;
+      }
+      if ( qsl_line[ 0 ] != "ATOM" )
+      {
+         error_msg = 
+            QString( tr( "Error in hydrated rotamer file line %1.  Unrecognized token %2" ) )
+            .arg( i + 1 )
+            .arg( qsl_line[ 0 ] );
+         return false;
+      }
+
+      if ( qsl[ i ].at( 13 ) == 'H' )
+      {
+         // skip hydrogens for now
+         continue;
+      }
+      
+      if ( !in_rotamer_waters &&
+           rx_main_chain.search( qsl_line[ 2 ] ) != -1 )
+      {
+         // skip main chain 
+         continue;
+      }
+         
+      if ( qsl_line[ 3 ] == "GLY" )
+      {
+         // skip GLY in case old romater file format 
+         continue;
+      }
+      rotamer_atom ra;
+      ra.name = qsl_line[ 2 ];
+      ra.coordinate.axis[ 0 ] = qsl_line[ 6 ].toFloat();
+      ra.coordinate.axis[ 1 ] = qsl_line[ 7 ].toFloat();
+      ra.coordinate.axis[ 2 ] = qsl_line[ 8 ].toFloat();
+            
+      if ( in_rotamer_waters )
+      {
+         tmp_rotamer.waters.push_back( ra );
+      } else {
+         tmp_rotamer.side_chain.push_back( ra );
+      }
+   }
+
+   if ( in_rotamer )
+   {
+      error_msg = 
+         tr( "Error in hydrated rotamer file at end, no final end-rotamer." );
+      return false;
+   }
+
+   editor->append( tr("Done reading hydrated rotamer file\n") );
+   qApp->processEvents();
    rotamer_changed = false;
    return true;
 }
+
+QString US_Hydrodyn::list_rotamers( bool coords )
+{
+   QString out = "";
+   for (  map < QString, vector < rotamer > >::iterator it = rotamers.begin();
+          it != rotamers.end();
+          it++ )
+   {
+      out += QString( "Rotamers for residue: %1\n" ).arg( it->first );
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         out += QString(" %1: sc").arg( it->second[ i ].extension );
+         for ( unsigned int j = 0; j < it->second[ i ].side_chain.size(); j++ )
+         {
+            out += QString(" %1").arg( it->second[ i ].side_chain[ j ].name );
+            if ( coords )
+            {
+               out += QString( " [%1,%2,%3]" )
+                  .arg( it->second[ i ].side_chain[ j ].coordinate.axis[ 0 ] )
+                  .arg( it->second[ i ].side_chain[ j ].coordinate.axis[ 1 ] )
+                  .arg( it->second[ i ].side_chain[ j ].coordinate.axis[ 2 ] );
+            }
+         }
+         out += " w";
+         for ( unsigned int j = 0; j < it->second[ i ].waters.size(); j++ )
+         {
+            out += QString(" %1").arg( it->second[ i ].waters[ j ].name );
+            if ( coords )
+            {
+               out += QString( " [%1,%2,%3]" )
+                  .arg( it->second[ i ].side_chain[ j ].coordinate.axis[ 0 ] )
+                  .arg( it->second[ i ].side_chain[ j ].coordinate.axis[ 1 ] )
+                  .arg( it->second[ i ].side_chain[ j ].coordinate.axis[ 2 ] );
+            }
+         }
+         out += "\n";
+      }
+   }
+   return out;
+}
+

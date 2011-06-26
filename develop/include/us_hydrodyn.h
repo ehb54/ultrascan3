@@ -477,6 +477,20 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       int pdb_asa_for_saxs_hydrate();
 
+      bool load_rotamer( QString &error_msg );
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      map < QString, vector < rotamer > >  rotamers;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+      QString list_rotamers( bool coords = false );
+
+   public:
+
+      bool rotamer_changed;  // toggles need for reloading rotamer file
+
    public slots:
       void display_default_differences();
       void clear_display();
@@ -519,10 +533,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int pdb_hydrate_for_saxs();
       void list_exposed();
       void view_exposed();
-
-      bool rotamer_changed;  // toggles need for reloading rotamer file
-      bool load_rotamer();
-
+      
    private slots:
       void browflex_readFromStdout();
       void browflex_readFromStderr();
