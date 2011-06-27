@@ -8,7 +8,7 @@ include 'dbconfig.php';
 	$result = mysql_query($query) or die("Query failed");
 
 	$header = "<?php\n\n"
-			  . "include '../../ultrascan_global.php';\n\n"  
+			  . "include 'ultrascan_global.php';\n\n"  
 			  . "/*  Database Information - Required!!\n"  
 		     . "*  -- Configure the Variables Below --\n"
 			  . "*  Other files that may need to be edited:\n"
@@ -70,20 +70,21 @@ include 'dbconfig.php';
 		$filename = $line["database_name"] . "/user/config.php";
 		$file = fopen($filename, 'w');
 		fwrite($file, $header);
-		fwrite($file, "\$topTitle				= '" . $line["topTitle"] . "';\n");
-		fwrite($file, "\$topImage				= '" . $line["topImage"] . "';\n");
-		fwrite($file, "\$facilityName			= '" . $line["facilityName"] . "';\n");
-		fwrite($file, "\$facilityAdmin			= '" . $line["facilityAdmin"] . "';\n");
-		fwrite($file, "\$facilityAdminPhone	= '" . $line["facilityAdminPhone"] . "';\n");
-		fwrite($file, "\$facilityAdminEmail	= '" . $line["facilityAdminEmail"] . "';\n");
-		fwrite($file, "\$dbusername				= '" . $line["dbusername"] . "';\n");
-		fwrite($file, "\$dbpasswd				= '" . $line["dbpasswd"] . "';\n");
-		fwrite($file, "\$database_name			= '" . $line["database_name"] . "';\n");
-		fwrite($file, "\$db_host					= '" . $DBHost . "';\n");
-		fwrite($file, "\$data_dir				= 'data/';\n");
-		fwrite($file, "\$full_path				= '" . $LimsBase . "/" . $line["dbusername"] . "';\n\n");
-		fwrite($file, "\$GridDir					= '" . $GridDir . "';\n");
-		fwrite($file, "\$UltraScanBase		= '" . $UltraScanBase . "';\n");
+		fwrite($file, "\$topTitle           = '" . $line["topTitle"] . "';\n");
+		fwrite($file, "\$topImage           = '" . $line["topImage"] . "';\n");
+		fwrite($file, "\$facilityName       = '" . $line["facilityName"] . "';\n");
+		fwrite($file, "\$facilityAdmin      = '" . $line["facilityAdmin"] . "';\n");
+		fwrite($file, "\$facilityAdminPhone = '" . $line["facilityAdminPhone"] . "';\n");
+		fwrite($file, "\$facilityAdminEmail = '" . $line["facilityAdminEmail"] . "';\n");
+		fwrite($file, "\$dbusername         = '" . $line["dbusername"] . "';\n");
+		fwrite($file, "\$dbpasswd           = '" . $line["dbpasswd"] . "';\n");
+		fwrite($file, "\$database_name      = '" . $line["database_name"] . "';\n");
+		fwrite($file, "\$db_host            = '" . $DBHost . "';\n");
+		fwrite($file, "\$data_dir           = 'data/';\n");
+		fwrite($file, "\$full_path          = '" . $LimsBase . "/uslims2_" . $line["dbusername"] . "';\n");
+		fwrite($file, "\$GridDir            = '" . $GridDir . "';\n");
+		fwrite($file, "\$USGrid             = '" . $UltraScanBase . $GridDir . "';\n");
+		fwrite($file, "\$UltraScanBase      = '" . $UltraScanBase . "';\n\n");
 		fwrite($file, $footer);
 		fclose($file);
 	}
