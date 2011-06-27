@@ -40,6 +40,7 @@ struct rotamer
    QString residue;
    QString extension;
 
+   vector < float >        dihedral_angles;
    vector < rotamer_atom > side_chain;
    vector < rotamer_atom > waters;
 };

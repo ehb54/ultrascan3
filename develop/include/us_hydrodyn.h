@@ -481,8 +481,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
-      map < QString, vector < rotamer > >     rotamers;
-      map < QString, map < QString, point > > to_hydrate;
+      map < QString, vector < vector < QString > > > dihedral_atoms;
+      map < QString, vector < rotamer > >            rotamers;
+      map < QString, map < QString, point > >        to_hydrate;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif

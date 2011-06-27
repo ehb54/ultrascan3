@@ -1388,6 +1388,7 @@ void US_Hydrodyn::build_to_hydrate()
    }
 
    // pass 2 add side chain to to_hydrate map
+   QRegExp rx_main_chain("^(N|O)$");
 
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
@@ -1400,7 +1401,8 @@ void US_Hydrodyn::build_to_hydrate()
             .arg( this_atom->resSeq )
             .arg( this_atom->chainID );
 
-         if ( this_atom->chain == 1 && exposed_sc.count( mapkey ) )
+         if ( rx_main_chain.search( this_atom->resName ) == -1 
+              && exposed_sc.count( mapkey ) )
          {
             to_hydrate[ mapkey ][ this_atom->name ] = this_atom->coordinate;
 
@@ -1481,18 +1483,23 @@ void US_Hydrodyn::view_exposed()
    unsigned int i = current_model;
    cout << "exposed side chain atom list:\n";
    map < QString, bool > exposed_sc;
-
+   map < QString, QString > use_color;
+   
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
          if ( this_atom->exposed_code == 1 &&
               this_atom->chain == 1 )
          {
-            exposed_sc[ 
-                       QString( "%1%2%3" )
-                       .arg( this_atom->resSeq )
-                       .arg( this_atom->chainID != "" ? ":" : "" )
-                       .arg( this_atom->chainID ) ] = true;
+
+            QString mapkey = 
+               QString( "%1%2%3" )
+               .arg( this_atom->resSeq )
+               .arg( this_atom->chainID != "" ? ":" : "" )
+               .arg( this_atom->chainID );
+
+            exposed_sc[ mapkey ] = true;
+            use_color[ mapkey ] = rotamers.count ( this_atom->resName ) ? "green" : "yellow";
          }
       }
    }
@@ -1505,8 +1512,11 @@ void US_Hydrodyn::view_exposed()
          it++ )
    {
       cout << it->first << endl;
-      out += QString("select %1\ncolour green\n").arg(it->first);
+      out += QString("select %1\ncolour %2\n")
+         .arg( it->first )
+         .arg( use_color[ it->first ] );
    }
+   out += "select all\n";
 
    QString fname = 
       somo_dir + SLASH + "tmp" + SLASH + QFileInfo( pdb_file ).baseName() + ".spt";
@@ -1553,6 +1563,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
    editor->append( tr("Reading hydrated rotamer file\n") );
    qApp->processEvents();
    rotamers.clear();
+   dihedral_atoms.clear();
 
    QFile f( saxs_options.default_rotamer_filename );
    if ( !f.exists() )
@@ -1580,7 +1591,8 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
 
    QRegExp rx_whitespace("\\s+");
    QRegExp rx_skip("^(#|\\s+$)");
-   QRegExp rx_main_chain("^(N|CA|C|O)$");
+   QRegExp rx_main_chain("^(N|O)$");
+   QRegExp rx_atom("^ATOM");
 
    bool in_rotamer = false;
    bool in_rotamer_waters = false;
@@ -1593,11 +1605,37 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
       {
          continue;
       }
-      if ( qsl[ i ].length() > 30 )
+      if ( qsl[ i ].length() > 30 && qsl[ i ].contains( rx_atom ) )
       {
          qsl[ i ].at( 22 ) = ' ';
       }
       QStringList qsl_line = QStringList::split( rx_whitespace, qsl[ i ] );
+      if ( qsl_line[ 0 ] == "dihedral:" )
+      {
+         qsl_line.pop_front();
+         QString res = qsl_line[ 0 ];
+         qsl_line.pop_front();
+         vector < QString > four_atoms;
+         for ( unsigned int j = 0; j < qsl_line.size(); j++ )
+         {
+            four_atoms.push_back( qsl_line[ j ] );
+            if ( four_atoms.size() == 4 )
+            {
+               dihedral_atoms[ res ].push_back( four_atoms );
+               four_atoms.clear();
+            }
+         }
+         if ( four_atoms.size() )
+         {
+            error_msg = 
+               QString( tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens %2 on dihedral line" ) )
+               .arg( i + 1 )
+               .arg( qsl_line.size() + 2 );
+            return false;
+         }
+         continue;
+      }  
+               
       if ( !in_rotamer )
       {
          if ( qsl_line.size() != 2 )
@@ -1717,12 +1755,32 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
    editor->append( tr("Done reading hydrated rotamer file\n") );
    qApp->processEvents();
    rotamer_changed = false;
+   puts("load_rotamer done");
    return true;
 }
 
 QString US_Hydrodyn::list_rotamers( bool coords )
 {
-   QString out = "";
+   QString out;
+
+   out = "dihedral atoms:\n";
+   for (  map < QString, vector < vector < QString > > >::iterator it = dihedral_atoms.begin();
+          it != dihedral_atoms.end();
+          it++ )
+   {
+      out += QString(" %1:\n").arg( it->first );
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         for ( unsigned int j = 0; j < it->second[i].size(); j++ )
+         {
+            out += QString(" %1").arg( it->second[i][j] );
+         }
+         out += " ; ";
+      }
+      out += "\n";
+   }
+   out += "\n";
+
    for (  map < QString, vector < rotamer > >::iterator it = rotamers.begin();
           it != rotamers.end();
           it++ )
