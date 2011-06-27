@@ -19,6 +19,8 @@
 #   define STDERR_FILENO 2
 #endif
 
+// #define DEBUG_DIHEDRAL
+
 int US_Hydrodyn::pdb_hydrate_for_saxs()
 {
    QString error_msg;
@@ -1009,7 +1011,6 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
       return -1;
    }
 
-
 #if defined(OLD_ASAB1_SC_COMPUTE)
    // pass 2d compute mc asa
    vector <float> bead_mc_asa;
@@ -1660,6 +1661,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          tmp_rotamer.extension = tmp_rotamer.name.right( 7 );
          tmp_rotamer.side_chain.clear();
          tmp_rotamer.waters.clear();
+         tmp_rotamer.atom_map.clear();
          in_rotamer = true;
          in_rotamer_waters = false;
          continue;
@@ -1728,7 +1730,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          
       if ( qsl_line[ 3 ] == "GLY" )
       {
-         // skip GLY in case old romater file format 
+         // skip GLY to support old romater file format 
          continue;
       }
       rotamer_atom ra;
@@ -1741,6 +1743,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
       {
          tmp_rotamer.waters.push_back( ra );
       } else {
+         tmp_rotamer.atom_map[ ra.name ] = ra;
          tmp_rotamer.side_chain.push_back( ra );
       }
    }
@@ -1756,8 +1759,122 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
    qApp->processEvents();
    rotamer_changed = false;
    puts("load_rotamer done");
+   if ( !compute_rotamer_dihedrals( error_msg ) )
+   {
+      return false;
+   }
+   cout << list_rotamer_dihedrals();
    return true;
 }
+
+bool US_Hydrodyn::compute_rotamer_dihedrals( QString &error_msg )
+{
+   editor->append( tr("Calculating dihedrals of rotamers\n") );
+   qApp->processEvents();
+   puts("Calculating dihedrals of rotamers");
+
+   // a dihedral computation takes 4 points
+   vector < point > p(4);
+   float dihedral;
+
+   // for each residue
+   for (  map < QString, vector < rotamer > >::iterator it = rotamers.begin();
+          it != rotamers.end();
+          it++ )
+   {
+      // for each rotamer for the residue
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+#if defined( DEBUG_DIHEDRAL )
+         cout << 
+            QString("computation for dihedral %1 %2:\n")
+            .arg( it->first )
+            .arg( it->second[ i ].extension );
+#endif
+         it->second[ i ].dihedral_angles.clear();
+         // process each dihedral chain, giving 4 points
+         for ( unsigned int j = 0; j < dihedral_atoms[ it->first ].size(); j++ )
+         {
+#if defined( DEBUG_DIHEDRAL )
+            cout << QString("  dihedral chain pos %1:\n").arg( j );
+#endif
+            if ( dihedral_atoms[ it->first ][ j ].size() != 4 )
+            {
+               error_msg = 
+                  QString( "Dihedral table size incorrect, should be 4 but is %1 for %2th dihedral group of %3" )
+                  .arg( dihedral_atoms[ it->first ][ j ].size() )
+                  .arg( j + 1 )
+                  .arg( it->first );
+               return false;
+            }
+            for ( unsigned int k = 0; k < dihedral_atoms[ it->first ][ j ].size(); k++ )
+            {
+#if defined( DEBUG_DIHEDRAL )
+               cout << QString("  %1: ").arg( dihedral_atoms[ it->first ][ j ][ k ] );
+#endif
+               if ( !( it->second[ i ].atom_map.count( dihedral_atoms[ it->first ][ j ][ k ] ) ) )
+               {
+                  error_msg = 
+                     QString( "Rotamer for %1 is missing dihedral atom %2" )
+                     .arg( it->first )
+                     .arg( dihedral_atoms[ it->first ][ j ][ k ] );
+                  return false;
+               }
+               p[ k ] = it->second[ i ].atom_map[ dihedral_atoms[ it->first ][ j ][ k ] ].coordinate;
+#if defined( DEBUG_DIHEDRAL )
+               cout << p[ k ];
+#endif
+            }
+#if defined( DEBUG_DIHEDRAL )
+            cout << "\n"
+                    "   plane1:  " << plane( p[ 0 ], p[ 1 ], p[ 2 ] ) << endl;
+            cout << "   minus32: " << minus( p[ 2 ], p [ 1 ] ) << endl;
+            cout << "   minus12: " << minus( p[ 0 ], p [ 1 ] ) << endl;
+            cout << "   cross:   " << cross( minus( p[ 2 ], p [ 1 ] ), minus( p[ 0 ], p [ 1 ] ) ) << endl;
+            cout << "   plane2: " << plane( p[ 1 ], p[ 2 ], p[ 3 ] ) << endl;
+            cout << "   dot:    " << dot( plane( p[ 0 ], p[ 1 ], p[ 2 ] ),
+                                          plane( p[ 1 ], p[ 2 ], p[ 3 ] ) ) << endl;
+            cout << "   acos:   " << acos( dot( plane( p[ 0 ], p[ 1 ], p[ 2 ] ),
+                                                plane( p[ 1 ], p[ 2 ], p[ 3 ] ) ) ) << endl;
+#endif
+
+            dihedral = acos( dot( plane( p[ 0 ], p[ 1 ], p[ 2 ] ),
+                                  plane( p[ 1 ], p[ 2 ], p[ 3 ] ) ) );
+            it->second[ i ].dihedral_angles.push_back( dihedral );
+         }
+      }
+   }
+   editor->append( tr("Done calculating dihedrals of rotamers\n") );
+   qApp->processEvents();
+   puts("Done calculating dihedrals of rotamers");
+   return true;
+}
+
+QString US_Hydrodyn::list_rotamer_dihedrals()
+{
+   QString out;
+
+   out = "rotamer dihedrals:\n";
+
+   for (  map < QString, vector < rotamer > >::iterator it = rotamers.begin();
+          it != rotamers.end();
+          it++ )
+   {
+      out += QString( "Rotamers for residue: %1\n" ).arg( it->first );
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         out += QString(" %1: sc").arg( it->second[ i ].extension );
+         for ( unsigned int j = 0; j < it->second[ i ].dihedral_angles.size(); j++ )
+         {
+            out += QString(" %1").arg( it->second[ i ].dihedral_angles[ j ] );
+         }
+         out += "\n";
+      }
+      out += "\n";
+   }
+   return out;
+}
+
 
 QString US_Hydrodyn::list_rotamers( bool coords )
 {

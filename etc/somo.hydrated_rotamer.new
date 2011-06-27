@@ -8,8 +8,8 @@ dihedral: LYS  C CA CB CG  CA CB CG CD  CB CG CD CE  CG CD CE NZ
 dihedral: MET  C CA CB CG  CA CB CG SD  CB CG SD CE
 dihedral: SER  C CA CB OG
 dihedral: THR  C CA CB CG2
-dihedral: TRP  C CA CB CG  CA CB CG CD1  CB CG CD1 NE1
-dihedral: TYR  C CA CB CG  CA CB CG CD1  CB CG CD1 CE1
+dihedral: TRP  C CA CB CG  CA CB CG CD1
+dihedral: TYR  C CA CB CG  CA CB CG CD1
 start-rotamer: ARG-1-1-1-1
 ATOM     10  N   ARG A   2      14.964  17.090  14.290  1.00  0.00           N  
 ATOM     11  H   ARG A   2      15.541  16.661  13.582  1.00  0.00           H  

@@ -2,6 +2,7 @@
 #define US_HYDRODYN_PDBDEFS_H
 
 #include <vector>
+#include <map>
 using namespace std;
 
 // QT defs:
@@ -40,9 +41,10 @@ struct rotamer
    QString residue;
    QString extension;
 
-   vector < float >        dihedral_angles;
-   vector < rotamer_atom > side_chain;
-   vector < rotamer_atom > waters;
+   vector < float >                  dihedral_angles;
+   vector < rotamer_atom >           side_chain;
+   vector < rotamer_atom >           waters;
+   map    < QString, rotamer_atom >  atom_map;
 };
 
 struct PDB_atom

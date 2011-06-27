@@ -1426,6 +1426,15 @@ point US_Hydrodyn::plane( PDB_atom *a1, PDB_atom *a2, PDB_atom *a3 )
    return result;
 }
 
+point US_Hydrodyn::plane( point p1, point p2, point p3 )
+{
+   point result = normal ( cross(
+                                 minus( p3, p2 ),
+                                 minus( p1, p2 )
+                                 ) );
+   return result;
+}
+
 point US_Hydrodyn::average( vector < point > *v )
 {
    point result = (*v)[0];

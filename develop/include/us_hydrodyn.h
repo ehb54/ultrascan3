@@ -477,7 +477,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       int pdb_asa_for_saxs_hydrate();
 
-      bool load_rotamer( QString &error_msg );
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
@@ -487,7 +486,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+      bool load_rotamer( QString &error_msg );
       QString list_rotamers( bool coords = false );
+
+      bool compute_rotamer_dihedrals( QString &error_msg );
+      QString list_rotamer_dihedrals();
 
       void build_to_hydrate();
       QString list_to_hydrate( bool coords = false );
@@ -658,6 +661,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       float dot( point p1, point p2);          // p1 dot p2
       point normal( point p1 );                // normalized point
       point plane( PDB_atom *a1, PDB_atom *a2, PDB_atom *a3 );  //( a3 - a2 ) x ( a1 - a2 )
+      point plane( point p1, point p2, point p3 );  //( a3 - a2 ) x ( a1 - a2 )
       point average( vector < point > *v );    // returns an average vector
       float dist( point p1, point p2);         // sqrt( (p1 - p2) dot (p1 - p2) )
 
