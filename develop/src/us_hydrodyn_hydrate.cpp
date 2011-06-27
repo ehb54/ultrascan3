@@ -2223,6 +2223,71 @@ QString US_Hydrodyn::list_water_positioning_atoms()
 bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
 {
 
+   vector < point > p1;
+   vector < point > p2;
+
+   for ( map < QString, rotamer >::iterator it = best_fit_rotamer.begin();
+         it != best_fit_rotamer.end();
+         it++ )
+   {
+      if ( !to_hydrate.count( it->first ) )
+      {
+         error_msg = QString( tr( "Internal error: best_fit_rotamer key %1 not found in to_hydrate" ) )
+            .arg( it->first );
+         return false;
+      }
+
+      // for each water to add:
+      cout << QString( "need to compute best transform matrix for %1:\n" ).arg( it->first );
+      if ( it->second.water_positioning_atoms.size() !=
+           it->second.waters.size() )
+      {
+         error_msg = QString( tr( "Internal error: water positioning atom size %1 does not match waters size %2" ) )
+            .arg( it->second.water_positioning_atoms.size() )
+            .arg( it->second.waters.size() );
+         return false;
+      }
+
+      for ( unsigned int i = 0; i < it->second.water_positioning_atoms.size(); i++ )
+      {
+         // get coordinates of 
+         p1.resize( it->second.water_positioning_atoms[ i ].size() );
+         p2.resize( it->second.water_positioning_atoms[ i ].size() );
+
+            
+         for ( unsigned int j = 0; j < it->second.water_positioning_atoms[ i ].size(); j++ )
+         {
+            if ( !it->second.atom_map.count( it->second.water_positioning_atoms[ i ][ j ] ) )
+            {
+               error_msg = QString( tr( "Internal error: water positioning atom %1 not found in atom_map" ) )
+                  .arg( it->second.water_positioning_atoms[ i ][ j ] );
+               return false;
+            }
+            p1[ j ] = it->second.atom_map[ it->second.water_positioning_atoms[ i ][ j ] ].coordinate;
+
+            if ( !to_hydrate[ it->first ].count( it->second.water_positioning_atoms[ i ][ j ] ) )
+            {
+               error_msg = QString( tr( "Internal error: water positioning atom %1 not found in to_hydrate atoms" ) )
+                  .arg( it->second.water_positioning_atoms[ i ][ j ] );
+               return false;
+            }
+            p2[ j ] = to_hydrate[ it->first ][ it->second.water_positioning_atoms[ i ][ j ] ];
+
+            cout << QString( "  %1 [%2,%3,%4] to [%5,%6,%7]\n" )
+               .arg( it->second.water_positioning_atoms[ i ][ j ] )
+               .arg( p1[ j ].axis[ 0 ] )
+               .arg( p1[ j ].axis[ 1 ] )
+               .arg( p1[ j ].axis[ 2 ] )
+               .arg( p2[ j ].axis[ 0 ] )
+               .arg( p2[ j ].axis[ 1 ] )
+               .arg( p2[ j ].axis[ 2 ] );
+         }
+         cout << QString( " and apply it to the point [%1,%2,%3]\n")
+            .arg( it->second.waters[ i ].coordinate.axis[ 0 ] )
+            .arg( it->second.waters[ i ].coordinate.axis[ 1 ] )
+            .arg( it->second.waters[ i ].coordinate.axis[ 2 ] );
+      }
+   }
 
    error_msg = "not yet implemented";
    return false;
