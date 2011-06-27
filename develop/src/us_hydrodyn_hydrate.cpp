@@ -20,6 +20,7 @@
 #endif
 
 // #define DEBUG_DIHEDRAL
+// #define DEBUG_TO_HYDRATE_DIHEDRAL
 
 int US_Hydrodyn::pdb_hydrate_for_saxs()
 {
@@ -97,6 +98,22 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
             view_exposed();
             build_to_hydrate();
             cout << list_to_hydrate();
+            if ( !compute_to_hydrate_dihedrals( error_msg ) )
+            {
+               QMessageBox::warning( this,
+                                     tr( "Error computing dihedrals of exposed side chain" ),
+                                     error_msg );
+               any_errors = true;
+            }
+            cout << list_to_hydrate_dihedrals();
+            if ( !build_best_fit_rotamer( error_msg ) )
+            {
+               QMessageBox::warning( this,
+                                     tr( "Error finding best fit rotamer" ),
+                                     error_msg );
+               any_errors = true;
+            }
+            cout << list_best_fit_rotamer();
          }
          else
          {
@@ -1403,7 +1420,9 @@ void US_Hydrodyn::build_to_hydrate()
             .arg( this_atom->chainID );
 
          if ( rx_main_chain.search( this_atom->resName ) == -1 
-              && exposed_sc.count( mapkey ) )
+              && exposed_sc.count( mapkey )
+              && rotamers.count( this_atom->resName )
+              )
          {
             to_hydrate[ mapkey ][ this_atom->name ] = this_atom->coordinate;
 
@@ -1418,12 +1437,94 @@ void US_Hydrodyn::build_to_hydrate()
    }
 }
 
-QString US_Hydrodyn::list_to_hydrate( bool coords )
+bool US_Hydrodyn::compute_to_hydrate_dihedrals( QString &error_msg )
 {
-   QString out = "";
+   puts("computing to hydrate dihedrals");
+   to_hydrate_dihedrals.clear();
+
+   vector < point > p(4);
+   float dihedral;
+
+   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.+)$");
+
    for (  map < QString, map < QString, point > >::iterator it = to_hydrate.begin();
           it != to_hydrate.end();
           it++ )
+   {
+      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      {
+         error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( it->first );
+         return false;
+      }
+      QString resName = rx_expand_mapkey.cap( 1 );
+      // check dihedrals for this residue
+      if ( !dihedral_atoms.count( resName ) )
+      {
+         error_msg = QString( tr( "No dihedral group found for residue %1." ) ).arg( resName );
+         return false;
+      }
+#if defined( DEBUG_TO_HYDRATE_DIHEDRAL )
+      cout << 
+         QString("computation for to hydrate dihedral %1 %2\n")
+         .arg( it->first )
+         .arg( resName );
+#endif
+      for ( unsigned int i = 0; i < dihedral_atoms[ resName ].size(); i++ )
+      {
+         if ( dihedral_atoms[ resName ][ i ].size() != 4 )
+         {
+            error_msg = 
+               QString( "Dihedral table size incorrect, should be 4 but is %1 for %2th dihedral group of %3" )
+               .arg( dihedral_atoms[ resName ][ i ].size() )
+               .arg( i + 1 )
+               .arg( resName );
+            return false;
+         }
+
+         for ( unsigned int j = 0; j < dihedral_atoms[ resName ][ i ].size(); j++ )
+         {
+            if ( !( it->second.count( dihedral_atoms[ resName ][ i ][ j ] ) ) )
+            {
+               error_msg = 
+                  QString( "Side chain %1 is missing required dihedral atom %2" )
+                  .arg( it->first )
+                  .arg( dihedral_atoms[ it->first ][ i ][ j ] );
+               return false;
+            }
+            p[ j ] = it->second[ dihedral_atoms[ resName ][ i ][ j ] ];
+         }
+         dihedral = acos( dot( plane( p[ 0 ], p[ 1 ], p[ 2 ] ),
+                               plane( p[ 1 ], p[ 2 ], p[ 3 ] ) ) );
+         to_hydrate_dihedrals[ it->first ].push_back( dihedral );
+      }
+   }
+   puts("done computing to hydrate dihedrals");
+   return true;
+}
+
+QString US_Hydrodyn::list_to_hydrate_dihedrals()
+{
+   QString out = "";
+   for ( map < QString, vector < float > >::iterator it = to_hydrate_dihedrals.begin();
+         it != to_hydrate_dihedrals.end();
+         it++ )
+   {
+      out += QString( "Dihedrals for: %1 " ).arg( it->first );
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         out += QString( " %1" ).arg( it->second[ i ] );
+      }
+      out += "\n";
+   }
+   return out;
+}
+
+QString US_Hydrodyn::list_to_hydrate( bool coords )
+{
+   QString out = "";
+   for ( map < QString, map < QString, point > >::iterator it = to_hydrate.begin();
+         it != to_hydrate.end();
+         it++ )
    {
       out += QString( "Side chains for: %1\n" ).arg( it->first );
       for ( map < QString, point >::iterator it2 = it->second.begin();
@@ -1500,7 +1601,7 @@ void US_Hydrodyn::view_exposed()
                .arg( this_atom->chainID );
 
             exposed_sc[ mapkey ] = true;
-            use_color[ mapkey ] = rotamers.count ( this_atom->resName ) ? "green" : "yellow";
+            use_color[ mapkey ] = rotamers.count( this_atom->resName ) ? "green" : "yellow";
          }
       }
    }
@@ -1934,3 +2035,80 @@ QString US_Hydrodyn::list_rotamers( bool coords )
    }
    return out;
 }
+
+bool US_Hydrodyn::build_best_fit_rotamer( QString &error_msg )
+{
+   best_fit_rotamer.clear();
+
+   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.+)$");
+
+   // go through the computed dihedrals, compute sum of abs differences, choose best one
+   for ( map < QString, vector < float > >::iterator it = to_hydrate_dihedrals.begin();
+         it != to_hydrate_dihedrals.end();
+         it++ )
+   {
+      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      {
+         error_msg = QString( tr( "internal error: could not expand mapkey %1" ) ).arg( it->first );
+         return false;
+      }
+      QString resName = rx_expand_mapkey.cap( 1 );
+      // check dihedrals for this residue
+      if ( !rotamers.count( resName ) )
+      {
+         error_msg = QString( tr( "No rotamer group found for residue %1." ) ).arg( resName );
+         return false;
+      }
+      
+      float        best_fitness;
+      unsigned int best_fitness_pos;
+
+      for ( unsigned int i = 0; i < rotamers[ resName ].size(); i++ )
+      {
+         if ( it->second.size() != rotamers[ resName ][ i ].dihedral_angles.size() )
+         {
+            error_msg = 
+               QString( tr( "Number of dihedrals do not match between side chain %1 (%2) and rotamer %3 (%4)" ) )
+               .arg( it->first )
+               .arg( it->second.size() )
+               .arg( rotamers[ resName ][ i ].name )
+               .arg( rotamers[ resName ][ i ].dihedral_angles.size() );
+            return false;
+         }
+         float fitness = 0.0;
+         for ( unsigned int j = 0; j < it->second.size(); j++ )
+         {
+            // the dihedral angles are computed by acos, and range of acos is [0,pi], 
+            // so I think we are ok
+            fitness += fabs( it->second[ j ] - rotamers[ resName ][ i ].dihedral_angles[ j ] );
+         }
+         if ( !i || best_fitness > fitness )
+         {
+            best_fitness = fitness;
+            best_fitness_pos = i;
+         }
+      }
+      
+      best_fit_rotamer[ it->first ] = rotamers[ resName ][ best_fitness_pos ];
+   }
+   return true;
+}
+
+QString US_Hydrodyn::list_best_fit_rotamer()
+{
+   QString out;
+
+   out = "Best fit rotamers:\n";
+
+   for ( map < QString, rotamer >::iterator it = best_fit_rotamer.begin();
+         it != best_fit_rotamer.end();
+         it++ )
+   {
+      out += 
+         QString( "%1 %2\n" )
+         .arg( it->first )
+         .arg( it->second.name );
+   }
+   return out;
+}
+

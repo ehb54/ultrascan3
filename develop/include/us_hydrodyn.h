@@ -477,12 +477,17 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       int pdb_asa_for_saxs_hydrate();
 
+      void list_exposed();
+      void view_exposed();
+
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
       map < QString, vector < vector < QString > > > dihedral_atoms;
       map < QString, vector < rotamer > >            rotamers;
       map < QString, map < QString, point > >        to_hydrate;
+      map < QString, vector < float > >              to_hydrate_dihedrals;
+      map < QString, rotamer >                       best_fit_rotamer;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -495,8 +500,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void build_to_hydrate();
       QString list_to_hydrate( bool coords = false );
 
-      void list_exposed();
-      void view_exposed();
+      bool compute_to_hydrate_dihedrals( QString &error_msg );
+      QString list_to_hydrate_dihedrals();
+
+      bool build_best_fit_rotamer( QString &error_msg );
+      QString list_best_fit_rotamer();
 
    public:
 
