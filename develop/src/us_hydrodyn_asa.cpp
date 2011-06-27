@@ -158,6 +158,38 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_asa_grid_threshold_percent->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_asa_grid_threshold_percent, SIGNAL(valueChanged(double)), SLOT(update_asa_grid_threshold_percent(double)));
 
+   lbl_hydrate_probe_radius = new QLabel(tr(" Hydrate ASA Probe Radius (A): "), this);
+   lbl_hydrate_probe_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_hydrate_probe_radius->setMinimumHeight(minHeight1);
+   lbl_hydrate_probe_radius->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_hydrate_probe_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_hydrate_probe_radius = new QwtCounter(this);
+   cnt_hydrate_probe_radius->setRange(0, 10, 0.01);
+   cnt_hydrate_probe_radius->setValue((*asa).hydrate_probe_radius);
+   cnt_hydrate_probe_radius->setMinimumHeight(minHeight1);
+   cnt_hydrate_probe_radius->setEnabled(true);
+   cnt_hydrate_probe_radius->setNumButtons(3);
+   cnt_hydrate_probe_radius->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_hydrate_probe_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_hydrate_probe_radius, SIGNAL(valueChanged(double)), SLOT(update_hydrate_probe_radius(double)));
+
+   lbl_hydrate_threshold = new QLabel(tr(" Hydrate Threshold (A^2): "), this);
+   lbl_hydrate_threshold->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_hydrate_threshold->setMinimumHeight(minHeight1);
+   lbl_hydrate_threshold->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_hydrate_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_hydrate_threshold= new QwtCounter(this);
+   cnt_hydrate_threshold->setRange(0, 100, 0.1);
+   cnt_hydrate_threshold->setValue((*asa).hydrate_threshold);
+   cnt_hydrate_threshold->setMinimumHeight(minHeight1);
+   cnt_hydrate_threshold->setEnabled(true);
+   cnt_hydrate_threshold->setNumButtons(3);
+   cnt_hydrate_threshold->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_hydrate_threshold->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_hydrate_threshold, SIGNAL(valueChanged(double)), SLOT(update_hydrate_threshold(double)));
+
    lbl_asab1_step = new QLabel(tr(" ASAB1 Step Size (A): "), this);
    Q_CHECK_PTR(lbl_asab1_step);
    lbl_asab1_step->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -236,6 +268,12 @@ void US_Hydrodyn_ASA::setupGUI()
    background->addWidget(lbl_asa_grid_threshold_percent, j, 0);
    background->addWidget(cnt_asa_grid_threshold_percent, j, 1);
    j++;
+   background->addWidget(lbl_hydrate_probe_radius, j, 0);
+   background->addWidget(cnt_hydrate_probe_radius, j, 1);
+   j++;
+   background->addWidget(lbl_hydrate_threshold, j, 0);
+   background->addWidget(cnt_hydrate_threshold, j, 1);
+   j++;
    background->addWidget(lbl_asab1_step, j, 0);
    background->addWidget(cnt_asab1_step, j, 1);
    j++;
@@ -296,6 +334,18 @@ void US_Hydrodyn_ASA::update_asa_grid_threshold(double val)
 void US_Hydrodyn_ASA::update_asa_grid_threshold_percent(double val)
 {
    (*asa).grid_threshold_percent = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_ASA::update_hydrate_probe_radius(double val)
+{
+   (*asa).hydrate_probe_radius = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_ASA::update_hydrate_threshold(double val)
+{
+   (*asa).hydrate_threshold = (float) val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

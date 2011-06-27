@@ -93,6 +93,8 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
          {
             list_exposed();
             view_exposed();
+            build_to_hydrate();
+            cout << list_to_hydrate();
          }
          else
          {
@@ -223,7 +225,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
       {
          return -1;
       }
-      int retval = surfracer_main(asa.probe_radius,
+      int retval = surfracer_main(asa.hydrate_probe_radius,
                                   active_atoms,
                                   false,
                                   progress,
@@ -1135,11 +1137,11 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                       this_atom->resName.ascii(),
                       this_atom->resSeq.ascii()); fflush(stdout);
 #endif
-               this_atom->visibility = (this_atom->bead_asa >= asa.threshold);
+               this_atom->visibility = (this_atom->bead_asa >= asa.hydrate_threshold);
 #if defined(OLD_ASAB1_SC_COMPUTE)
                if (this_atom->chain == 1) {
                   printf("visibility was %d is ", this_atom->visibility);
-                  this_atom->visibility = (this_atom->bead_asa + bead_mc_asa[this_atom->resSeq] >= asa.threshold);
+                  this_atom->visibility = (this_atom->bead_asa + bead_mc_asa[this_atom->resSeq] >= asa.hydrate_threshold);
                   printf("%d\n", this_atom->visibility);
                }
 #endif
@@ -1361,6 +1363,83 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
    }
    return 0;
 }
+
+void US_Hydrodyn::build_to_hydrate()
+{
+   to_hydrate.clear();
+   unsigned int i = current_model;
+
+   // pass 1 identify exposed sc's
+
+   map < QString, bool > exposed_sc;
+
+   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+         PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+         if ( this_atom->exposed_code == 1 &&
+              this_atom->chain == 1 )
+         {
+            exposed_sc[ QString( "%1~%2~%3" )
+                        .arg( this_atom->resName )
+                        .arg( this_atom->resSeq )
+                        .arg( this_atom->chainID ) ] = true;
+         }
+      }
+   }
+
+   // pass 2 add side chain to to_hydrate map
+
+   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+
+         PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+
+         QString mapkey =
+            QString( "%1~%2~%3" )
+            .arg( this_atom->resName )
+            .arg( this_atom->resSeq )
+            .arg( this_atom->chainID );
+
+         if ( this_atom->chain == 1 && exposed_sc.count( mapkey ) )
+         {
+            to_hydrate[ mapkey ][ this_atom->name ] = this_atom->coordinate;
+
+            cout << QString("adding %1 %2 %3 %4\n")
+               .arg(this_atom->resName)
+               .arg(this_atom->resSeq)
+               .arg(this_atom->chainID)
+               .arg(this_atom->name);
+         }
+
+      }
+   }
+}
+
+QString US_Hydrodyn::list_to_hydrate( bool coords )
+{
+   QString out = "";
+   for (  map < QString, map < QString, point > >::iterator it = to_hydrate.begin();
+          it != to_hydrate.end();
+          it++ )
+   {
+      out += QString( "Side chains for: %1\n" ).arg( it->first );
+      for ( map < QString, point >::iterator it2 = it->second.begin();
+            it2 != it->second.end();
+            it2++ )
+      {
+         out += QString(" %1").arg( it2->first );
+         if ( coords )
+         {
+            out += QString( " [%1,%2,%3]" )
+               .arg( it2->second.axis[ 0 ] )
+               .arg( it2->second.axis[ 1 ] )
+               .arg( it2->second.axis[ 2 ] );
+         }
+      }
+      out += "\n";
+   }
+   return out;
+}         
 
 void US_Hydrodyn::list_exposed()
 {
@@ -1680,4 +1759,3 @@ QString US_Hydrodyn::list_rotamers( bool coords )
    }
    return out;
 }
-

@@ -481,11 +481,18 @@ class US_EXTERN US_Hydrodyn : public QFrame
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
-      map < QString, vector < rotamer > >  rotamers;
+      map < QString, vector < rotamer > >     rotamers;
+      map < QString, map < QString, point > > to_hydrate;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
       QString list_rotamers( bool coords = false );
+
+      void build_to_hydrate();
+      QString list_to_hydrate( bool coords = false );
+
+      void list_exposed();
+      void view_exposed();
 
    public:
 
@@ -531,8 +538,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void pdb_saxs( bool create_native_saxs = true );
       void bead_saxs( bool create_native_saxs = true );
       int pdb_hydrate_for_saxs();
-      void list_exposed();
-      void view_exposed();
       
    private slots:
       void browflex_readFromStdout();

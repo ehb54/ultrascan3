@@ -209,6 +209,9 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    results.asa_rg_neg = 0.0;
 
    // move to save/restore
+   asa.hydrate_probe_radius = 1.4;
+   asa.hydrate_threshold = 20;
+
    dmd_options.force_chem = true;
    dmd_options.pdb_static_pairs = false;
    dmd_options.threshold_pb_pb = 5;

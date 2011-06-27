@@ -36,6 +36,8 @@ struct asa_options
    bool recheck_beads;
    int method;  // 0 == surfracer , 1 == asab1
    float asab1_step;
+   float hydrate_probe_radius;
+   float hydrate_threshold;
 };
 
 class US_EXTERN US_Hydrodyn_ASA : public QFrame
@@ -59,6 +61,8 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
       QLabel *lbl_asa_threshold_percent;
       QLabel *lbl_asa_grid_threshold;
       QLabel *lbl_asa_grid_threshold_percent;
+      QLabel *lbl_hydrate_probe_radius;
+      QLabel *lbl_hydrate_threshold;
       QLabel *lbl_asab1_step;
       
       QwtCounter *cnt_probe_radius;
@@ -67,6 +71,8 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
       QwtCounter *cnt_asa_threshold_percent;
       QwtCounter *cnt_asa_grid_threshold;
       QwtCounter *cnt_asa_grid_threshold_percent;
+      QwtCounter *cnt_hydrate_probe_radius;
+      QwtCounter *cnt_hydrate_threshold;
       QwtCounter *cnt_asab1_step;
 
       QCheckBox *cb_asa_calculation;
@@ -89,6 +95,8 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
       void update_asa_grid_threshold(double);
       void update_asa_grid_threshold_percent(double);
       void update_asab1_step(double);
+      void update_hydrate_probe_radius(double);
+      void update_hydrate_threshold(double);
       void select_asa_method(int);
       void set_asa_calculation();
       void set_bead_check();
