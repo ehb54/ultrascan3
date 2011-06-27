@@ -21,6 +21,7 @@
 
 // #define DEBUG_DIHEDRAL
 // #define DEBUG_TO_HYDRATE_DIHEDRAL
+#define MAX_WATER_POSITIONING_ATOMS 4
 
 int US_Hydrodyn::pdb_hydrate_for_saxs()
 {
@@ -106,7 +107,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
                any_errors = true;
             }
             cout << list_to_hydrate_dihedrals();
-            if ( !build_best_fit_rotamer( error_msg ) )
+            if ( !compute_best_fit_rotamer( error_msg ) )
             {
                QMessageBox::warning( this,
                                      tr( "Error finding best fit rotamer" ),
@@ -114,6 +115,14 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
                any_errors = true;
             }
             cout << list_best_fit_rotamer();
+            if ( !compute_waters_to_add( error_msg ) )
+            {
+               QMessageBox::warning( this,
+                                     tr( "Error trying to add waters" ),
+                                     error_msg );
+               any_errors = true;
+            }
+            cout << list_waters_to_add();
          }
          else
          {
@@ -1865,6 +1874,11 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
       return false;
    }
    cout << list_rotamer_dihedrals();
+   if ( !compute_water_positioning_atoms( error_msg ) )
+   {
+      return false;
+   }
+   cout << list_water_positioning_atoms();
    return true;
 }
 
@@ -2036,7 +2050,7 @@ QString US_Hydrodyn::list_rotamers( bool coords )
    return out;
 }
 
-bool US_Hydrodyn::build_best_fit_rotamer( QString &error_msg )
+bool US_Hydrodyn::compute_best_fit_rotamer( QString &error_msg )
 {
    best_fit_rotamer.clear();
 
@@ -2112,3 +2126,128 @@ QString US_Hydrodyn::list_best_fit_rotamer()
    return out;
 }
 
+class sortable_float {
+public:
+   float             f;
+   unsigned int      index;
+   bool operator < (const sortable_float& objIn) const
+   {
+      return ( f < objIn.f );
+   }
+};
+
+bool US_Hydrodyn::compute_water_positioning_atoms( QString & /* error_msg */ )
+{
+   editor->append( tr("Calculating water positioning atoms for each rotamer\n") );
+   qApp->processEvents();
+   puts("Calculating water positioning atoms for each rotamer");
+
+   list < sortable_float > lsf;
+   sortable_float          sf;
+   vector < QString >      wpa;
+
+   for ( map < QString, vector < rotamer > >::iterator it = rotamers.begin();
+         it != rotamers.end();
+         it++ )
+   {
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         it->second[ i ].water_positioning_atoms.clear();
+
+         // for each water
+
+         for ( unsigned int j = 0; j < it->second[ i ].waters.size(); j++ )
+         {
+            lsf.clear();
+            wpa.clear();
+            
+            // find the distance to each side chain atom
+            for ( unsigned int k = 0; k < it->second[ i ].side_chain.size(); k++ )
+            {
+               sf.f = dist( it->second[ i ].waters[ j ].coordinate, it->second[ i ].side_chain[ k ].coordinate );
+               sf.index = k;
+               lsf.push_back( sf );
+            }
+
+            lsf.sort();
+            
+            unsigned int pushed = 0;
+            for ( list < sortable_float >::iterator it2 = lsf.begin();
+                  it2 != lsf.end();
+                  it2++ )
+            {
+               wpa.push_back( it->second[ i ].side_chain[ it2->index ].name );
+               pushed++;
+               if ( pushed >= MAX_WATER_POSITIONING_ATOMS )
+               {
+                  break;
+               }
+            }
+            it->second[ i ].water_positioning_atoms.push_back( wpa );
+         }
+      }
+   }
+   editor->append( tr("Done calculating water positioning atoms for each rotamer\n") );
+   qApp->processEvents();
+   puts("Done calculating water positioning atoms for each rotamer");
+   return true;
+}
+
+QString US_Hydrodyn::list_water_positioning_atoms()
+{
+   QString out = "Water positioning atoms:\n";
+
+   for (  map < QString, vector < rotamer > >::iterator it = rotamers.begin();
+          it != rotamers.end();
+          it++ )
+   {
+      out += QString( "  Rotamer for residue: %1\n" ).arg( it->first );
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         out += QString("  %1:\n").arg( it->second[ i ].extension );
+         for ( unsigned int j = 0; j < it->second[ i ].water_positioning_atoms.size(); j++ )
+         {
+            out += QString( "    water %1 :" ).arg( j );
+            for ( unsigned int k = 0; k < it->second[ i ].water_positioning_atoms[ j ].size(); k++ )
+            {
+               out += QString(" %1").arg( it->second[ i ].water_positioning_atoms[ j ][ k ] );
+            }
+            out += "\n";
+         }
+      }
+      out += "\n";
+   }
+   return out;
+}
+
+bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
+{
+
+
+   error_msg = "not yet implemented";
+   return false;
+}
+
+QString US_Hydrodyn::list_waters_to_add()
+{
+   QString out;
+
+   out = "Waters to add:\n";
+   for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
+         it != waters_to_add.end();
+         it++ )
+   {
+      out += QString( "%1: " ).arg( it->first );
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         out += QString( " [%1,%2,%3]" )
+            .arg( it->second[ i ].axis[ 0 ] )
+            .arg( it->second[ i ].axis[ 1 ] )
+            .arg( it->second[ i ].axis[ 2 ] )
+            ;
+      }
+      out += "\n";
+   }
+
+   return out;
+}

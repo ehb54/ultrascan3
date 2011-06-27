@@ -488,6 +488,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, map < QString, point > >        to_hydrate;
       map < QString, vector < float > >              to_hydrate_dihedrals;
       map < QString, rotamer >                       best_fit_rotamer;
+      map < QString, vector < point > >              waters_to_add;
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -497,14 +498,20 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool compute_rotamer_dihedrals( QString &error_msg );
       QString list_rotamer_dihedrals();
 
+      bool compute_water_positioning_atoms( QString &error_msg );
+      QString list_water_positioning_atoms();
+
       void build_to_hydrate();
       QString list_to_hydrate( bool coords = false );
 
       bool compute_to_hydrate_dihedrals( QString &error_msg );
       QString list_to_hydrate_dihedrals();
 
-      bool build_best_fit_rotamer( QString &error_msg );
+      bool compute_best_fit_rotamer( QString &error_msg );
       QString list_best_fit_rotamer();
+
+      bool compute_waters_to_add( QString &error_msg );
+      QString list_waters_to_add();
 
    public:
 

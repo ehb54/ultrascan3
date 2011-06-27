@@ -44,6 +44,7 @@ struct rotamer
    vector < float >                  dihedral_angles;
    vector < rotamer_atom >           side_chain;
    vector < rotamer_atom >           waters;
+   vector < vector < QString > >     water_positioning_atoms;
    map    < QString, rotamer_atom >  atom_map;
 };
 
