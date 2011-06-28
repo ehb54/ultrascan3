@@ -358,7 +358,9 @@ BEGIN
   
       IF ( p_ID > 0 ) THEN
         SELECT   m.modelID, modelGUID, description, m.variance, m.meniscus,
-                 editGUID, m.editedDataID
+                 editGUID, m.editedDataID,
+                 timestamp2UTC( m.lastUpdated ) AS UTC_lastUpdated,
+                 MD5( xml ) AS checksum, LENGTH( xml ) AS size
         FROM     modelPerson, model m, editedData
         WHERE    modelPerson.modelID = m.modelID
         AND      m.editedDataID = editedData.editedDataID
@@ -367,7 +369,9 @@ BEGIN
    
       ELSE
         SELECT   m.modelID, modelGUID, description, m.variance, m.meniscus,
-                 editGUID, m.editedDataID
+                 editGUID, m.editedDataID,
+                 timestamp2UTC( m.lastUpdated ) AS UTC_lastUpdated,
+                 MD5( xml ) AS checksum, LENGTH( xml ) AS size
         FROM     modelPerson, model m, editedData
         WHERE    modelPerson.modelID = m.modelID
         AND      m.editedDataID = editedData.editedDataID
@@ -396,7 +400,9 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   m.modelID, modelGUID, description, m.variance, m.meniscus,
-               editGUID, m.editedDataID
+               editGUID, m.editedDataID,
+               timestamp2UTC( m.lastUpdated ) AS UTC_lastUpdated,
+               MD5( xml ) AS checksum, LENGTH( xml ) AS size
       FROM     modelPerson, model m, editedData
       WHERE    modelPerson.modelID = m.modelID
       AND      m.editedDataID = editedData.editedDataID
