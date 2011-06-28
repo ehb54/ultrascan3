@@ -6,6 +6,13 @@ if [ "x$QMAKEVER" == "x" ]; then
   exit
 fi
 
+ISMAC=0
+FIXMAC=""
+if [ "`uname -s`" = "Darwin" ]; then
+  ISMAC=1
+  FIXMAC=./fix-mac-make.sh
+fi
+
 DIR=$(pwd)
 rm -f build.log
 NBERR=0
@@ -17,7 +24,14 @@ do
   if [ $d == "programs/us_mpi_analysis" ]; then continue; fi
   pushd $d
   sdir=`pwd`
-  qmake *.pro
+  if [ $ISMAC -eq 0 ]; then
+    qmake *.pro
+  else
+    qmake -spec /usr/local/Qt4.7/mkspecs/macx-g++ *.pro
+    if [ "$d" = "gui" ]; then
+      ${FIXMAC}
+    fi
+  fi
   echo "Making in $d"   >> $DIR/build.log
   (cd $sdir;make 2>&1)  >> $DIR/build.log
   stat=$?

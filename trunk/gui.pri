@@ -38,10 +38,11 @@ win32 {
 }
 
 macx {
-  CONFIG     += i386 ppc
+  CONFIG     += x86 x86_64
   LIBS       += -L../../lib -lus_utils -lus_gui 
   LIBS       += $$QWTLIB 
-  LIBS       += -L$$MYSQLDIR -lmysqlclient
+  LIBS       += -L../../lib -lmysqlclient -framework QtOpenGL
   DEFINES    += MAC OSX 
+  INCLUDEPATH += ../../mysqldir/include
 }
 

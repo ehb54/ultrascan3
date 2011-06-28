@@ -11,6 +11,7 @@
 #ifdef Q_WS_MAC
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include <mach/mach.h>
 #include <mach/vm_statistics.h>
 #include <mach/mach_types.h>
 #include <mach/mach_init.h>
@@ -18,6 +19,9 @@
 #endif
 #ifndef Q_WS_WIN
 #include <sys/user.h>
+#else
+#include <windows.h>
+#include <psapi.h>
 #endif
 
 // Class to process 2DSA simulations
@@ -61,28 +65,23 @@ long int US_2dsaProcess::max_rss( void )
 #endif
 
 #ifdef Q_WS_MAC         // Mac : use task_info call
-   vm_size_t page_size;
-   mach_port_t mach_port;
-   mach_msg_type_number_t count;
-   vm_statistics_data_t vm_stats;
+   struct task_basic_info task_stats;
+   mach_msg_type_number_t inf_count = TASK_BASIC_INFO_COUNT;
+   task_t   task    = current_task();
+   long int usedmem = 0;
 
-   mach_port   = mach_host_self();
-   count       = sizeof( vm_stats ) / sizeof( natural_t );
-
-   if ( host_page_size( mach_port, &page_size ) == KERN_SUCCESS  &&
-        host_statistics( mach_port, HOST_VM_INFO,
-                         (host_info_t)&vm_stats, &count ) == KERN_SUCCESS )
+   int stat1 = task_info( task, TASK_BASIC_INFO, (task_info_t)&task_stats, &inf_count );
+   if ( stat1 == KERN_SUCCESS )
    {
-      long int usedmem = ( (int64_t)vm_stats.active_count +
-                           (int64_t)vm_stats.inactive_count +
-                           (int64_t)vm_stats.wire_count )
-                         * (int64_t)page_size;
-      maxrss = max( maxrss, usedmem );
+      usedmem = ( (int64_t)task_stats.resident_size + 512 ) / 1024;
+DbgLv(1) << "2P(2dsaProc): usedmem" << usedmem;
    }
+
+   maxrss = max( maxrss, usedmem );
 #endif
 
-//#ifdef Q_WS_WIN         // Windows: direct use of GetProcessMemoryInfo
-#ifdef NEVER
+#ifdef Q_WS_WIN         // Windows: direct use of GetProcessMemoryInfo
+//#ifdef NEVER
    HANDLE hProcess;
    DWORD processID;
    PROCESS_MEMORY_COUNTERS pmc;
