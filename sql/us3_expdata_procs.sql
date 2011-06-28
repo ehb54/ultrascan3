@@ -220,7 +220,8 @@ BEGIN
                    rawData.experimentID, rawData.solutionID, 
                    timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
                    MD5( rawData.data ) AS checksum, LENGTH( rawData.data ) AS size,
-                   experimentPerson.personID
+                   experimentPerson.personID,
+                   rawDataGUID, rawData.comment, experiment.experimentGUID
         FROM       rawData, experiment, experimentPerson
         WHERE      experimentPerson.personID = p_ID
         AND        experiment.experimentID = experimentPerson.experimentID
@@ -232,7 +233,8 @@ BEGIN
                    rawData.experimentID, rawData.solutionID,
                    timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
                    MD5( rawData.data ) AS checksum, LENGTH( rawData.data ) AS size,
-                   experimentPerson.personID
+                   experimentPerson.personID,
+                   rawDataGUID, rawData.comment, experiment.experimentGUID
         FROM       rawData, experiment, experimentPerson
         WHERE      experiment.experimentID = experimentPerson.experimentID
         AND        rawData.experimentID = experiment.experimentID
@@ -264,7 +266,8 @@ BEGIN
                  rawData.experimentID, rawData.solutionID, 
                  timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
                  MD5( rawData.data ) AS checksum, LENGTH( rawData.data ) AS size,
-                 experimentPerson.personID
+                 experimentPerson.personID,
+                 rawDataGUID, rawData.comment, experiment.experimentGUID
       FROM       rawData, experiment, experimentPerson
       WHERE      experimentPerson.personID = @US3_ID
       AND        experiment.experimentID = experimentPerson.experimentID
@@ -776,7 +779,7 @@ BEGIN
                    editedData.rawDataID, rawData.experimentID,
                    timestamp2UTC( editedData.lastUpdated) AS UTC_lastUpdated, 
                    MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size,
-                   experiment.type
+                   experiment.type, editedData.editGUID
         FROM       editedData, rawData, experiment, experimentPerson
         WHERE      experimentPerson.personID = p_ID
         AND        experiment.experimentID = experimentPerson.experimentID
@@ -789,7 +792,7 @@ BEGIN
                    editedData.rawDataID, rawData.experimentID,
                    timestamp2UTC( editedData.lastUpdated) AS UTC_lastUpdated, 
                    MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size,
-                   experiment.type
+                   experiment.type, editedData.editGUID
         FROM       editedData, rawData, experiment, experimentPerson
         WHERE      experiment.experimentID = experimentPerson.experimentID
         AND        rawData.experimentID = experiment.experimentID
@@ -822,7 +825,7 @@ BEGIN
                  editedData.rawDataID, rawData.experimentID, 
                  timestamp2UTC( editedData.lastUpdated) AS UTC_lastUpdated, 
                  MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size,
-                 experiment.type
+                 experiment.type, editedData.editGUID
       FROM       editedData, rawData, experiment, experimentPerson
       WHERE      experimentPerson.personID = @US3_ID
       AND        experiment.experimentID = experimentPerson.experimentID

@@ -431,14 +431,18 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   noiseID, noiseGUID, editedDataID, noise.modelID, noiseType
+        SELECT   noiseID, noiseGUID, editedDataID, noise.modelID, noiseType, modelGUID,
+                 timestamp2UTC( timeEntered ) AS UTC_timeEntered,
+                 MD5( xml ) AS checksum, LENGTH( xml ) AS size
         FROM     modelPerson, noise
         WHERE    modelPerson.modelID  = noise.modelID
         AND      modelPerson.personID = p_ID
         ORDER BY timeEntered DESC;
 
       ELSE
-        SELECT   noiseID, noiseGUID, editedDataID, noise.modelID, noiseType
+        SELECT   noiseID, noiseGUID, editedDataID, noise.modelID, noiseType, modelGUID,
+                 timestamp2UTC( timeEntered ) AS UTC_timeEntered,
+                 MD5( xml ) AS checksum, LENGTH( xml ) AS size
         FROM     modelPerson, noise
         WHERE    modelPerson.modelID  = noise.modelID
         ORDER BY timeEntered DESC;
@@ -465,7 +469,9 @@ BEGIN
       -- Ok, user wants his own info
       SELECT @OK AS status;
 
-      SELECT   noiseID, noiseGUID, editedDataID, noise.modelID, noiseType
+      SELECT   noiseID, noiseGUID, editedDataID, noise.modelID, noiseType, modelGUID,
+               timestamp2UTC( timeEntered ) AS UTC_timeEntered,
+               MD5( xml ) AS checksum, LENGTH( xml ) AS size
       FROM     modelPerson, noise
       WHERE    modelPerson.modelID  = noise.modelID
       AND      modelPerson.personID = @US3_ID
