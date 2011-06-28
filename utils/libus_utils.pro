@@ -7,7 +7,7 @@ unix: TARGET = us_utils
 macx {
       TARGET = us_utils
       LIBS  += -L$${MYSQLDIR} -lmysqlclient
-      LIBS  += -L../lib -lus_gui
+      LIBS  += -L../lib
 }
 
 win32 {

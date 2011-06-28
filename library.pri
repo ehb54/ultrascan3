@@ -21,10 +21,8 @@ unix {
     DEPENDPATH   += ../gui ../utils $$QWTPATH/include
     INCLUDEPATH  += ../gui ../utils $$QWTPATH/include
     INCLUDEPATH  += $$MYSQLPATH
-    INCLUDEPATH  += $$QWTPLOTDIR/include
   }
   DEFINES      += INTEL LINUX
-  LIBS         += -luuid
   DESTDIR       = ../lib
 }
 
@@ -50,11 +48,11 @@ win32 {
 }
 
 macx {
-  CONFIG       += i386 ppc
+  CONFIG       += x86 x86_64
   DEPENDPATH   += ../gui ../utils $$QWTPATH/include
-  INCLUDEPATH  += ../gui ../utils $$QWTPATH/include 
+  INCLUDEPATH  += ../gui ../utils $$QWTPATH/include ../mysql/include
   DEFINES      += MAC OSX
-  LIBS         += -luuid $$QWTLIB
+  LIBS         += $$QWTLIB
   DESTDIR       = ../lib
 }
 
