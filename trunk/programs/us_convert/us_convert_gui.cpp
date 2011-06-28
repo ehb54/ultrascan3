@@ -379,7 +379,6 @@ void US_ConvertGui::reset( void )
    allExcludes.clear();
    triples.clear();
    allData.clear();
-   Pseudo_averaged    = false;
    show_plot_progress = true;
    ExpData.rpms.clear();
 
@@ -1093,6 +1092,53 @@ void US_ConvertGui::loadUS3Disk( QString dir )
          triples[ i ].solution.clear();
    }
 
+   // Now read the RI Profile, if it exists
+   if ( runType == "RI" )
+   {
+      referenceDefined = false;
+      pb_reference->setEnabled( true );
+
+      status = ExpData.readRIDisk( runID, dir );
+
+      if ( status == US_Convert::CANTOPEN )
+      {
+         QString readFile = runID      + "." 
+                          + "RIProfile.xml";
+         QMessageBox::information( this,
+               tr( "Error" ),
+               tr( "US3 run data ok, but unable to read intensity profile.\n " ) +
+               tr( "Cannot open read file: " ) + dir + readFile );
+      }
+      
+      else if ( status == US_Convert::BADXML )
+      {
+         QString readFile = runID      + "." 
+                          + "RIProfile.xml";
+         QMessageBox::information( this,
+               tr( "Error" ),
+               tr( "US3 run data ok, but unable to read intensity profile.\n " ) +
+               tr( "Improper XML in read file: " ) + dir + readFile );
+      }
+      
+      else if ( status != US_Convert::OK )
+      {
+         QMessageBox::information( this,
+               tr( "Error" ),
+               tr( "Unknown error: " ) + status );
+      }
+
+      else
+      {
+         // Enable intensity plot
+         pb_intensity->setEnabled( true );
+         
+         referenceDefined = true;
+         pb_reference->setEnabled( false );
+         pb_cancelref ->setEnabled( true );
+      }
+
+   }
+
    if ( allData.size() == 0 ) return;
 
    // Update triple information on screen
@@ -1137,13 +1183,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
 
    enableRunIDControl( false );
 
-   if ( runType == "RI" )
-   {
-      referenceDefined = false;
-      pb_reference->setEnabled( true );
-   }
-
-   else if ( runType == "RA" && subsets.size() < 1 )
+   if ( runType == "RA" && subsets.size() < 1 )
    {
       // Allow user to define subsets, if he hasn't already
       pb_define   ->setEnabled( true );
@@ -1711,9 +1751,6 @@ void US_ConvertGui::process_reference( const QwtDoublePoint& p )
    reference_end = p.x();
    draw_vline( reference_end );
    data_plot->replot();
-
-   pb_reference  ->setEnabled( false );
-   referenceDefined = true;
    picker        ->disconnect();
 
    // Double check if min < max
@@ -1744,6 +1781,8 @@ void US_ConvertGui::process_reference( const QwtDoublePoint& p )
    plot_current();
    QApplication::restoreOverrideCursor();
 
+   pb_reference  ->setEnabled( false );
+   referenceDefined = true;
    enableSaveBtn();
 }
 
@@ -1779,7 +1818,7 @@ void US_ConvertGui::cClick( const QwtDoublePoint& p )
 
 void US_ConvertGui::PseudoCalcAvg( void )
 {
-   if ( Pseudo_averaged ) return;             // Average calculation has already been done
+   if ( referenceDefined ) return;             // Average calculation has already been done
 
    US_DataIO2::RawData referenceData = allData[ currentTriple ];
    int ref_size = referenceData.scanData[ 0 ].readings.size();
@@ -1804,17 +1843,17 @@ void US_ConvertGui::PseudoCalcAvg( void )
       }
 
       if ( count > 0 )
-         Pseudo_averages << sum / count;
+         ExpData.RIProfile << sum / count;
 
       else
-         Pseudo_averages << 1.0;    // See the log10 function, later
+         ExpData.RIProfile << 1.0;    // See the log10 function, later
 
    }
    
    // Now average around excluded values
    int lastGood  = 0;
    int countBad  = 0;
-   for ( int i = 0; i < Pseudo_averages.size(); i++ )
+   for ( int i = 0; i < ExpData.RIProfile.size(); i++ )
    {
       // In case there are adjacent excluded scans...
       if ( allExcludes[ currentTriple ].contains( i ) )
@@ -1823,9 +1862,9 @@ void US_ConvertGui::PseudoCalcAvg( void )
       // Calculate average of before and after for intervening values
       else if ( countBad > 0 )
       {
-         double newAvg = ( Pseudo_averages[ lastGood ] + Pseudo_averages[ i ] ) / 2.0;
+         double newAvg = ( ExpData.RIProfile[ lastGood ] + ExpData.RIProfile[ i ] ) / 2.0;
          for ( int k = lastGood + 1; k < i; k++ )
-            Pseudo_averages[ k ] = newAvg;
+            ExpData.RIProfile[ k ] = newAvg;
 
          countBad = 0;
       }
@@ -1837,8 +1876,6 @@ void US_ConvertGui::PseudoCalcAvg( void )
    }
 
    // Now calculate the pseudo-absorbance
-   RIData = allData;
-
    for ( int i = 0; i < allData.size(); i++ )
    {
       US_DataIO2::RawData* currentData = &allData[ i ];
@@ -1854,7 +1891,7 @@ void US_ConvertGui::PseudoCalcAvg( void )
             // Protect against possible inf's and nan's, if a reading 
             // evaluates to 0 or wherever log function is undefined or -inf
             if ( r->value < 1.0 ) r->value = 1.0;
-            r->value = log10(Pseudo_averages[ j ] / r->value );
+            r->value = log10(ExpData.RIProfile[ j ] / r->value );
          }
       }
 
@@ -1864,9 +1901,9 @@ void US_ConvertGui::PseudoCalcAvg( void )
    }
 
    // Enable intensity plot
+   referenceDefined = true;
    pb_intensity->setEnabled( true );
-
-   Pseudo_averaged = true;
+   pb_reference  ->setEnabled( false );
    pb_cancelref ->setEnabled( true );
 }
 
@@ -1874,18 +1911,33 @@ void US_ConvertGui::PseudoCalcAvg( void )
 void US_ConvertGui::show_intensity( void )
 {
    US_Intensity* dialog
-      = new US_Intensity( ( const QVector< double > ) Pseudo_averages );
+      = new US_Intensity( ( const QVector< double > ) ExpData.RIProfile );
    dialog->exec();
    qApp->processEvents();
 }
 
 void US_ConvertGui::cancel_reference( void )
 {
-   Pseudo_averaged = false;
-   allData     = RIData;
-   RIData.clear();
+   // Do the inverse operation and retrieve raw intensity data
+   for ( int i = 0; i < allData.size(); i++ )
+   {
+      US_DataIO2::RawData* currentData = &allData[ i ];
 
-   Pseudo_averages.clear();
+      for ( int j = 0; j < currentData->scanData.size(); j++ )
+      {
+         US_DataIO2::Scan* s = &currentData->scanData[ j ];
+
+         for ( int k = 0; k < s->readings.size(); k++ )
+         {
+            US_DataIO2::Reading* r = &s->readings[ k ];
+
+            r->value = ExpData.RIProfile[ j ] / pow( 10, r->value );
+         }
+      }
+   }
+
+   referenceDefined = false;
+   ExpData.RIProfile.clear();
    reference_start = 0.0;
    reference_end   = 0.0;
 
@@ -1895,7 +1947,6 @@ void US_ConvertGui::cancel_reference( void )
    setTripleInfo();
 
    pb_reference  ->setEnabled( true );
-   referenceDefined = false;
    pb_cancelref  ->setEnabled( false );
    pb_intensity  ->setEnabled( false );
    currentTriple = 0;
@@ -2040,6 +2091,45 @@ int US_ConvertGui::saveUS3Disk( void )
       return( status );
    }
 
+   // Save or delete RI intensity profile
+   if ( runType == "RI" )
+   {
+      if ( referenceDefined )
+      {
+         status = ExpData.saveRIDisk( runID, dirname ); 
+         
+         if ( status == US_Convert::CANTOPEN )
+         {
+            QString writeFile = runID      + "." 
+                              + "RIProfile.xml";
+            QMessageBox::information( this,
+                  tr( "Error" ),
+                  tr( "Cannot open write file: " ) + dirname + writeFile );
+         }
+         
+         else if ( status != US_Convert::OK )
+         {
+            QMessageBox::information( this,
+                  tr( "Error" ),
+                  tr( "Error: " ) + status );
+            return( status );
+         
+         }
+      }
+
+      else
+      {
+         // Maybe the profile has been deleted, so let's
+         // delete the xml file and avoid confusion later
+         QDir d( dirname );
+         QString filename = runID      + "." 
+                          + "RIProfile.xml";
+         if ( d.exists( filename ) && ! d.remove( filename ) )
+            qDebug() << "Unable to remove file" << filename;
+
+      }
+   }
+
    // Status is OK
    QMessageBox::information( this,
          tr( "Success" ),
@@ -2179,6 +2269,14 @@ void US_ConvertGui::saveUS3DB( void )
             tr( "Duplicate runID" ),
             tr( "The runID already exists in the database.\n" ) );
       return;
+   }
+
+   else if ( status == US_DB2::ERROR )
+   {
+      // This is what happens in the case of RI data, and the xml is bad
+      QMessageBox::warning( this,
+            tr( "Bad RI XML" ),
+            tr( "There was a problem with the xml data read from the database.\n" ) );
    }
 
    else if ( status != US_DB2::OK )

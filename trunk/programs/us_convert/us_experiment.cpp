@@ -47,6 +47,12 @@ int US_Experiment::saveToDB( bool update, US_DB2* db )
    else if ( status != US_DB2::OK )
       return status;
 
+   // Get the RI information, if appropriate
+   QByteArray RIxml;
+   QByteArray RIxmlEscaped;
+   createRIXml( RIxml );
+   unsigned long length = db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
+
    // Check for experiment runID in database
    int saveStatus = 0;
    QStringList q;
@@ -72,6 +78,8 @@ int US_Experiment::saveToDB( bool update, US_DB2* db )
          << QString::number( rotorID )
          << QString::number( calibrationID )
          << expType
+         << opticalSystem
+         << RIxmlEscaped
          << runTemp
          << label
          << comments
@@ -94,6 +102,8 @@ int US_Experiment::saveToDB( bool update, US_DB2* db )
          << QString::number( rotorID )
          << QString::number( calibrationID )
          << expType
+         << opticalSystem
+         << RIxml
          << runTemp
          << label
          << comments
@@ -131,7 +141,9 @@ int US_Experiment::readFromDB( QString runID,
    q << runID
      << QString::number( US_Settings::us_inv_ID() );
    db->query( q );
- 
+
+   QByteArray xmlFile;
+
    if ( db->next() )
    {
       this->runID        = runID;
@@ -150,6 +162,8 @@ int US_Experiment::readFromDB( QString runID,
       centrifugeProtocol = db->value( 12 ).toString();
       date               = db->value( 13 ).toString();
       invID              = db->value( 14 ).toInt();
+      opticalSystem      = db->value( 15 ).toString().toAscii();
+      xmlFile            = db->value( 16 ).toString().toAscii();
    }
 
    else if ( db->lastErrno() == US_DB2::NOROWS )
@@ -220,6 +234,20 @@ int US_Experiment::readFromDB( QString runID,
       rotorUpdated = QDate::fromString( dateParts[ 0 ], "yyyy-MM-dd" );
    }
 
+   // If this is RI data, get the intensity profile
+   RIProfile.clear();
+   if ( opticalSystem == "RI" )
+   {
+      int status = importRIxml( xmlFile );
+
+      if ( status != US_Convert::OK )
+      {
+         // We don't really have a good error code in US_DB2 for this
+         RIProfile.clear();
+         return US_DB2::ERROR;
+      }
+   }
+      
    return US_DB2::OK;
 }
 
@@ -608,6 +636,140 @@ void US_Experiment::readDataset( QXmlStreamReader& xml, US_Convert::TripleInfo& 
    }
 }
 
+int US_Experiment::saveRIDisk( 
+    QString runID,
+    QString dirname )
+{ 
+   if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
+   QString writeFile = runID      + "." 
+                     + "RIProfile.xml";
+   QFile file( dirname + writeFile );
+   if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
+      return( US_Convert::CANTOPEN );
+
+   // Get the RI information
+   QByteArray RIxml;
+   createRIXml( RIxml );
+
+   QTextStream out( &file );
+   out << RIxml;
+
+   return( US_Convert::OK );
+}
+
+int US_Experiment::readRIDisk( 
+    QString runID,
+    QString dirname )
+{
+   // First figure out the xml file name, and try to open it
+   QString filename = runID      + "." 
+                    + "RIProfile.xml";
+
+   QFile f( dirname + filename );
+   if ( ! f.open( QIODevice::ReadOnly ) ) return US_Convert::CANTOPEN;
+   QTextStream ds( &f );
+
+   QXmlStreamReader xml( &f );
+
+   this->RIProfile.clear();
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isStartElement() )
+      {
+         if ( xml.name() == "RI" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            double value           = a.value("value").toString().toDouble();
+            this->RIProfile << value;
+         }
+      }
+   }
+
+   bool error = xml.hasError();
+   f.close();
+
+   if ( error ) return US_Convert::BADXML;
+
+   return US_Convert::OK;
+}
+
+void US_Experiment::createRIXml( QByteArray& str )
+{
+   if ( this->opticalSystem != "RI" )
+   {
+      str = QByteArray( "" );
+      return ;
+   }
+
+   if ( this->RIProfile.size() == 0 )
+   {
+      str = QByteArray( "" );
+      return ;
+   }
+
+   // Create the RI xml directly, and write it to a buffer
+   // QByteArray xmlFile;
+   // QBuffer buffer( &xmlFile );
+   QBuffer buffer( &str );
+   buffer.open( QIODevice::WriteOnly );
+
+   QXmlStreamWriter xml;
+   xml.setDevice( &buffer );
+   xml.setAutoFormatting( true );
+
+   xml.writeStartDocument();
+   xml.writeDTD("<!DOCTYPE US_RIProfile>");
+   xml.writeStartElement("US_RIProfile");
+   xml.writeAttribute("version", "1.0");
+
+   // Loop through the intensity profile values
+   foreach ( double value, this->RIProfile )
+   {
+      xml.writeStartElement( "RI" );
+      xml.writeAttribute   ( "value", QString::number( value ) );
+      xml.writeEndElement  ();
+
+   }
+
+   xml.writeEndElement(); // US_RIProfile
+   xml.writeEndDocument();
+
+   buffer.close();
+}
+
+int US_Experiment::importRIxml( QByteArray& str )
+{
+   QBuffer buffer( &str );
+   buffer.open( QIODevice::ReadOnly );
+
+   QXmlStreamReader xml( &buffer );
+
+   this->RIProfile.clear();
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isStartElement() )
+      {
+         if ( xml.name() == "RI" )
+         {
+            QXmlStreamAttributes a = xml.attributes();
+            double value           = a.value("value").toString().toDouble();
+            this->RIProfile << value;
+         }
+      }
+   }
+
+   bool error = xml.hasError();
+   buffer.close();
+
+   if ( error ) return US_Convert::BADXML;
+
+   return US_Convert::OK ;
+}
+
 // Zero out all data structures
 void US_Experiment::clear( void )
 {
@@ -639,6 +801,7 @@ void US_Experiment::clear( void )
    centrifugeProtocol = QString( "" );
    date               = QString( "" );
    syncOK             = false;
+   RIProfile.clear();
 
    rpms.clear();
 }
@@ -684,4 +847,7 @@ void US_Experiment::show( void )
       qDebug() << "rpm = " << rpms[ i ];
    }
 
+   qDebug() << "RI Profile data";
+   for ( int i = 0; i < RIProfile.size(); i++ )
+      qDebug() << RIProfile[ i ];
 }

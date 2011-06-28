@@ -63,6 +63,7 @@ class US_Experiment
       QString          date;               //!< The date the record was entered or last updated
       bool             syncOK;             //!< The user has connected with the db
       QStringList      experimentTypes;    //!< A list of possible experiment types
+      QVector< double > RIProfile;         //!< If RI data, the intensity profile
 
       /*! \brief Generic constructor for the US_Experiment class.
       */
@@ -128,6 +129,24 @@ class US_Experiment
                  QString ,
                  QString );
 
+      /*! \brief    Writes the radial intensity profile data to the HD
+
+          \param    runID   The run ID associated with the RI data
+          \param    dirname The location where the RI Profile is to go.
+      */
+      int saveRIDisk( 
+           QString ,
+           QString );
+
+      /*! \brief    Reads radial intensity profile data from the HD
+
+          \param    runID   The run ID associated with the RI data
+          \param    dirname The location where the RI Profile is.
+      */
+      int readRIDisk( 
+           QString ,
+           QString );
+
       void clear( void );                  //!< Function to reset all class variables to defaults
       void show ( void );                  // Temporary function to display current exp info
 
@@ -144,5 +163,8 @@ class US_Experiment
                  QXmlStreamReader& , 
                  US_Convert::TripleInfo& );
 
+      void createRIXml( QByteArray& );
+
+      int  importRIxml( QByteArray& );
 };
 #endif
