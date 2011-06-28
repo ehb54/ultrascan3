@@ -49,8 +49,6 @@ class US_ConvertGui : public US_Widgets
       US_Help        showHelp;
       US_PlotPicker* picker;
 
-      bool          referenceDefined;               // Has the reference channel been defined?
-
       QString       runType;
       QString       oldRunType;
 
@@ -94,7 +92,6 @@ class US_ConvertGui : public US_Widgets
 
       QList< US_DataIO2::BeckmanRawScan > legacyData; // legacy data from file
       QVector< US_DataIO2::RawData >      allData;    // all the data, separated by c/c/w
-      QVector< US_DataIO2::RawData >      RIData;     // to save RI data, after converting to Pseudo
       QString       currentDir;
       QString       saveDescription;
 
@@ -105,9 +102,8 @@ class US_ConvertGui : public US_Widgets
 
       double        reference_start;                  // boundary of reference scans
       double        reference_end;
-      bool          Pseudo_averaged;                  // true if RI averages have been done
+      bool          referenceDefined;                 // true if RI averages have been done
       int           Pseudo_reference_triple;          // number of the triple that is the reference
-      QVector< double > Pseudo_averages;
       bool          isPseudo;                         // Is this RI data pseudo-absorbance?
       bool          toleranceChanged;                 // keep track of whether the tolerance has changed
       double        scanTolerance;                    // remember the scan tolerance value

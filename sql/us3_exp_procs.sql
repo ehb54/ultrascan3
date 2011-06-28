@@ -192,6 +192,8 @@ CREATE PROCEDURE new_experiment ( p_personGUID   CHAR(36),
                                   p_calibrationID INT,
                                   p_type         ENUM('velocity', 'equilibrium', 
                                                    'diffusion', 'calibration', 'other'),
+                                  p_runType      ENUM( 'RA', 'RI', 'IP', 'FI', 'WA', 'WI' ),
+                                  p_RIProfile    TEXT,
                                   p_runTemp      FLOAT,
                                   p_label        VARCHAR(80),
                                   p_comment      TEXT,
@@ -229,6 +231,10 @@ BEGIN
       SET @US3_LAST_ERROR = "MySQL: Duplicate runID in experiment table";
 
     ELSE
+      IF ( p_runType != 'RI' ) THEN
+        SET p_RIProfile = '';
+      END IF;
+
       INSERT INTO experiment SET
         projectID          = p_projectID,
         experimentGUID     = p_expGUID,
@@ -239,6 +245,8 @@ BEGIN
         rotorID            = p_rotorID,
         rotorCalibrationID = p_calibrationID,
         type               = p_type,
+        runType            = p_runType,
+        RIProfile          = p_RIProfile,
         runTemp            = p_runTemp,
         label              = p_label,
         comment            = p_comment,
@@ -281,6 +289,8 @@ CREATE PROCEDURE update_experiment ( p_personGUID   CHAR(36),
                                      p_calibrationID INT,
                                      p_type         ENUM('velocity', 'equilibrium', 
                                                       'diffusion', 'calibration', 'other'),
+                                     p_runType      ENUM( 'RA', 'RI', 'IP', 'FI', 'WA', 'WI' ),
+                                     p_RIProfile    TEXT,
                                      p_runTemp      FLOAT,
                                      p_label        VARCHAR(80),
                                      p_comment      TEXT,
@@ -318,11 +328,15 @@ BEGIN
       SET @US3_LAST_ERROR = "MySQL: Duplicate runID in experiment table";
 
     ELSE
-      -- Keep MySQL from having trouble with duplicate GUID's (
+      -- Keep MySQL from having trouble with duplicate GUID's
       SELECT experimentGUID
       INTO   l_expGUID
       FROM   experiment
       WHERE  experimentID = p_experimentID;
+
+      IF ( p_runType != 'RI' ) THEN
+        SET p_RIProfile = '';
+      END IF;
 
       IF ( STRCMP( l_expGUID, p_expGUID ) = 0 ) THEN
         UPDATE experiment SET
@@ -335,6 +349,8 @@ BEGIN
           rotorID            = p_rotorID,
           rotorCalibrationID = p_calibrationID,
           type               = p_type,
+          runType            = p_runType,
+          RIProfile          = p_RIProfile,
           runTemp            = p_runTemp,
           label              = p_label,
           comment            = p_comment,
@@ -353,6 +369,8 @@ BEGIN
           rotorID            = p_rotorID,
           rotorCalibrationID = p_calibrationID,
           type               = p_type,
+          runType            = p_runType,
+          RIProfile          = p_RIProfile,
           runTemp            = p_runTemp,
           label              = p_label,
           comment            = p_comment,
@@ -403,14 +421,14 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   e.experimentID, runID, type
+        SELECT   e.experimentID, runID, type, runType
         FROM     experiment e, experimentPerson p
         WHERE    e.experimentID = p.experimentID
         AND      p.personID = p_ID
         ORDER BY runID;
    
       ELSE
-        SELECT   e.experimentID, runID, type
+        SELECT   e.experimentID, runID, type, runType
         FROM     experiment e, experimentPerson p
         WHERE    e.experimentID = p.experimentID
         ORDER BY runID;
@@ -437,7 +455,7 @@ BEGIN
       -- Ok, user wants his own info
       SELECT @OK AS status;
 
-      SELECT   e.experimentID, runID, type
+      SELECT   e.experimentID, runID, type, runType
       FROM     experiment e, experimentPerson p
       WHERE    e.experimentID = p.experimentID
       AND      p.personID = @US3_ID
@@ -481,7 +499,7 @@ BEGIN
       SELECT   experimentGUID, projectID, runID, labID, instrumentID, 
                operatorID, rotorID, rotorCalibrationID, type, runTemp, label, comment, 
                centrifugeProtocol, timestamp2UTC( dateUpdated) AS UTC_dateUpdated, 
-               personID
+               personID, runType, RIProfile
       FROM     experiment e, experimentPerson ep
       WHERE    e.experimentID = ep.experimentID
       AND      e.experimentID = p_experimentID;
@@ -539,7 +557,8 @@ BEGIN
 
       SELECT projectID, ep.experimentID, experimentGUID, labID, instrumentID, 
              operatorID, rotorID, rotorCalibrationID, type, runTemp, label, comment, 
-             centrifugeProtocol, dateUpdated, personID
+             centrifugeProtocol, dateUpdated, personID,
+             runType, RIProfile
       FROM   experiment exp, experimentPerson ep
       WHERE  exp.experimentID   = ep.experimentID
       AND    ep.personID        = p_ID
@@ -566,7 +585,8 @@ BEGIN
 
       SELECT projectID, ep.experimentID, experimentGUID, labID, instrumentID, 
              operatorID, rotorID, rotorCalibrationID, type, runTemp, label, comment, 
-             centrifugeProtocol, dateUpdated, personID
+             centrifugeProtocol, dateUpdated, personID,
+             runType, RIProfile
       FROM   experiment exp, experimentPerson ep
       WHERE  exp.experimentID   = ep.experimentID
       AND    ep.personID        = @US3_ID
