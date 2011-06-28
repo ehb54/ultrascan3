@@ -2428,6 +2428,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
 
    unsigned int atom_number = 0;
    unsigned int residue_number = 0;
+   map < QString, bool > chains_used;
 
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
@@ -2446,6 +2447,8 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
                      this_atom->coordinate.axis[ 1 ],
                      this_atom->coordinate.axis[ 2 ]
                      );
+         chains_used[ this_atom->chainID ]++;
+
          if ( atom_number < this_atom->serial )
          {
             atom_number = this_atom->serial;
@@ -2458,6 +2461,39 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
    }
    ts << "TER\n";
 
+   QString chainID = "W";
+   if ( chains_used.count( chainID ) )
+   {
+      for ( int i = 9; i >= 0; i-- )
+      {
+         chainID = QString( "%1" ).arg( i );
+         if ( !chains_used.count( chainID ) )
+         {
+            break;
+         }
+      }
+      if ( chains_used.count( chainID ) )
+      {
+         chainID = "Z";
+      }
+      if ( chains_used.count( chainID ) )
+      {
+         chainID = "Y";
+      }
+      if ( chains_used.count( chainID ) )
+      {
+         chainID = "X";
+      }
+      if ( chains_used.count( chainID ) )
+      {
+         chainID = "w";
+      }
+      if ( chains_used.count( chainID ) )
+      {
+         chainID = "W";
+      }
+   }
+      
    // check already added waters:
    for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
          it != waters_to_add.end();
@@ -2468,8 +2504,9 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
          ts << 
             QString("")
             .sprintf(     
-                     "ATOM   %4d  OW  SWH  %4d    %8.3f%8.3f%8.3f  1.00 10.00           O  \n",
+                     "ATOM   %4d  OW  SWH %1s%4d    %8.3f%8.3f%8.3f  1.00 10.00           O  \n",
                      ++atom_number,
+                     chainID.ascii(),
                      ++residue_number,
                      it->second[ i ].axis[ 0 ],
                      it->second[ i ].axis[ 1 ],
