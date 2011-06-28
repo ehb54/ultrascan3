@@ -190,6 +190,7 @@ SOURCES += \
   src/us_hydrodyn_grid.cpp \
   src/us_hydrodyn_grid_atob.cpp \
   src/us_hydrodyn_hydrate.cpp \
+  src/us_hydrodyn_hydrate_align.cpp \
   src/us_hydrodyn_hydro.cpp \
   src/us_hydrodyn_misc.cpp \
   src/us_hydrodyn_other.cpp \
@@ -476,6 +477,7 @@ HEADERS += \
   include/us_surfracer.h \
   include/us_tar.h \
   include/us_thread.h \
+  include/us_tnt_jama.h \
   include/us_util.h \
   include/us_vbar.h \
   include/us_velocreport.h \

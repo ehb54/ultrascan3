@@ -513,6 +513,19 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool compute_waters_to_add( QString &error_msg );
       QString list_waters_to_add();
 
+      bool has_steric_clash( point p );
+
+      // atom align computes a transformation matrix 
+      // on the transform_from to the transform_to
+      // applies it to the apply_from and
+      // leaves the result in result
+
+      bool atom_align( vector < point > transform_from, 
+                       vector < point > transform_to, 
+                       vector < point > apply_from, 
+                       vector < point > &result,
+                       QString          &error_msg ); 
+
    public:
 
       bool rotamer_changed;  // toggles need for reloading rotamer file

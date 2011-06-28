@@ -259,6 +259,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_options.default_saxs_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
    saxs_options.default_rotamer_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hydrated_rotamer";
 
+   saxs_options.steric_clash_distance = 1.8;
+
    rotamer_changed = true;  // force on-demand loading of rotamer file
 
    // this should be stored in the residue file, hardcoded for now

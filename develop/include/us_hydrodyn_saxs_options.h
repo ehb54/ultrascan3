@@ -143,12 +143,17 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLineEdit   *le_default_rotamer_filename;
 
       QLabel      *lbl_misc;
-      QPushButton *pb_clear_mw_cache;
+
+      QLabel      *lbl_steric_clash_distance;
+      QwtCounter  *cnt_steric_clash_distance;
+
       QCheckBox   *cb_iq_ask;
 
       QCheckBox   *cb_iq_scale_ask;
       QCheckBox   *cb_iq_scale_angstrom;
       QCheckBox   *cb_iq_scale_nm;
+
+      QPushButton *pb_clear_mw_cache;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -218,12 +223,14 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void set_hydrate_pdb();
       void set_normalize_by_mw();
 
-      void clear_mw_cache();
+      void update_steric_clash_distance(double);
       void set_iq_ask();
 
       void set_iq_scale_ask();
       void set_iq_scale_angstrom();
       void set_iq_scale_nm();
+
+      void clear_mw_cache();
 
       void cancel();
       void help();

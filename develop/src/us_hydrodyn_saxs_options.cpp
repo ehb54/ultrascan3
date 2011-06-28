@@ -750,11 +750,21 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_misc->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_misc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   pb_clear_mw_cache = new QPushButton(tr("Clear remembered molecular weights"), this);
-   pb_clear_mw_cache->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_clear_mw_cache->setMinimumHeight(minHeight1);
-   pb_clear_mw_cache->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_clear_mw_cache, SIGNAL(clicked()), SLOT(clear_mw_cache()));
+   lbl_steric_clash_distance = new QLabel(tr(" Steric clash minimum distance : "), this);
+   lbl_steric_clash_distance->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_steric_clash_distance->setMinimumHeight(minHeight1);
+   lbl_steric_clash_distance->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_steric_clash_distance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_steric_clash_distance = new QwtCounter(this);
+   cnt_steric_clash_distance->setRange(1.5, 10, 0.1);
+   cnt_steric_clash_distance->setValue((*saxs_options).steric_clash_distance);
+   cnt_steric_clash_distance->setMinimumHeight(minHeight1);
+   cnt_steric_clash_distance->setEnabled(true);
+   cnt_steric_clash_distance->setNumButtons(2);
+   cnt_steric_clash_distance->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_steric_clash_distance->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_steric_clash_distance, SIGNAL(valueChanged(double)), SLOT(update_steric_clash_distance(double)));
 
    cb_iq_ask = new QCheckBox(this);
    cb_iq_ask->setText(tr(" Manually choose I(q) method"));
@@ -787,6 +797,12 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_iq_scale_nm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_iq_scale_nm->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_iq_scale_nm, SIGNAL(clicked()), this, SLOT(set_iq_scale_nm()));
+
+   pb_clear_mw_cache = new QPushButton(tr("Clear remembered molecular weights"), this);
+   pb_clear_mw_cache->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_clear_mw_cache->setMinimumHeight(minHeight1);
+   pb_clear_mw_cache->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_clear_mw_cache, SIGNAL(clicked()), SLOT(clear_mw_cache()));
 
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
@@ -958,6 +974,9 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    k++;
 
    background->addMultiCellWidget(lbl_misc, k, k, 2, 3);
+   k++;
+   background->addWidget(lbl_steric_clash_distance, k, 2);
+   background->addWidget(cnt_steric_clash_distance, k, 3);
    k++;
    background->addMultiCellWidget(cb_iq_ask, k, k, 2, 3);
    k++;
@@ -1565,6 +1584,12 @@ void US_Hydrodyn_SaxsOptions::update_hybrid_q_point(double val)
 void US_Hydrodyn_SaxsOptions::update_hybrid2_q_points(double val)
 {
    (*saxs_options).hybrid2_q_points = (unsigned int) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_steric_clash_distance(double val)
+{
+   (*saxs_options).steric_clash_distance = (unsigned int) val;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

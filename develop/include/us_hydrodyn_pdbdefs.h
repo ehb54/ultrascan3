@@ -238,6 +238,8 @@ struct saxs_options
    QString default_hybrid_filename;
    QString default_saxs_filename;
    QString default_rotamer_filename;
+
+   double  steric_clash_distance;
 };
 
 struct hybridization

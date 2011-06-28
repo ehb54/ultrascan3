@@ -2222,9 +2222,17 @@ QString US_Hydrodyn::list_water_positioning_atoms()
 
 bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
 {
+   editor->append( tr("Transforming waters to add to pdb coordinates\n") );
+   qApp->processEvents();
+   puts("Transforming waters to add to pdb coordinates");
+
+   unsigned int count_waters           = 0;
+   unsigned int count_waters_added     = 0;
+   unsigned int count_waters_not_added = 0;
 
    vector < point > p1;
    vector < point > p2;
+   waters_to_add.clear();
 
    for ( map < QString, rotamer >::iterator it = best_fit_rotamer.begin();
          it != best_fit_rotamer.end();
@@ -2282,15 +2290,35 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg )
                .arg( p2[ j ].axis[ 1 ] )
                .arg( p2[ j ].axis[ 2 ] );
          }
+         vector < point > rotamer_waters;
+         rotamer_waters.push_back( it->second.waters[ i ].coordinate );
+         vector < point > new_waters;
          cout << QString( " and apply it to the point [%1,%2,%3]\n")
             .arg( it->second.waters[ i ].coordinate.axis[ 0 ] )
             .arg( it->second.waters[ i ].coordinate.axis[ 1 ] )
             .arg( it->second.waters[ i ].coordinate.axis[ 2 ] );
+         if ( !atom_align( p1, p2, rotamer_waters, new_waters, error_msg ) )
+         {
+            return false;
+         }
+         count_waters++;
+         if ( !has_steric_clash( new_waters[ 0 ] ) )
+         {
+            count_waters_added++;
+            waters_to_add[ it->first ].push_back( new_waters[ 0 ] );
+         } else {
+            count_waters_not_added++;
+         }
       }
    }
-
-   error_msg = "not yet implemented";
-   return false;
+   editor->append( tr("Done transforming waters to add to pdb coordinates\n") );
+   editor->append( QString( tr("%1 waters added. %2 not added due to steric clashes \n") )
+                   .arg( count_waters_added ) 
+                   .arg( count_waters_not_added ) 
+                   );
+   qApp->processEvents();
+   puts("Done transforming waters to add to pdb coordinates");
+   return true;
 }
 
 QString US_Hydrodyn::list_waters_to_add()
@@ -2315,4 +2343,35 @@ QString US_Hydrodyn::list_waters_to_add()
    }
 
    return out;
+}
+
+bool US_Hydrodyn::has_steric_clash( point p )
+{
+   unsigned int i = current_model;
+
+   // check structure:
+   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+         PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+         if ( dist( this_atom->coordinate, p ) <= saxs_options.steric_clash_distance )
+         {
+            return true;
+         }
+      }
+   }
+
+   // check already added waters:
+   for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
+         it != waters_to_add.end();
+         it++ )
+   {
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         if ( dist( it->second[ i ], p ) <= saxs_options.steric_clash_distance )
+         {
+            return true;
+         }
+      }
+   }
+   return false;
 }
