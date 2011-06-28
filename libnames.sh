@@ -15,8 +15,8 @@ LIBS="utils gui"
 FILES="\
  libqwt.5.2.2.dylib \
  libqwtplot3d-qt4.0.2.7.dylib \
- libus_gui.dylib.10.0.0 \
- libus_utils.dylib.10.0.0 \
+ libus_gui.10.0.0.dylib \
+ libus_utils.10.0.0.dylib \
 "
 
  
