@@ -515,6 +515,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       bool has_steric_clash( point p );
 
+      bool write_pdb_with_waters( QString &error_msg );
+
       // atom align computes a transformation matrix 
       // on the transform_from to the transform_to
       // applies it to the apply_from and
@@ -525,6 +527,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
                        vector < point > apply_from, 
                        vector < point > &result,
                        QString          &error_msg ); 
+
+      QString last_hydrated_pdb_name;
+
+      bool selected_models_contain_SWH();
 
    public:
 

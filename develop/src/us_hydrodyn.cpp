@@ -210,7 +210,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    // move to save/restore
    asa.hydrate_probe_radius = 1.4;
-   asa.hydrate_threshold = 20;
+   asa.hydrate_threshold = 10;
 
    dmd_options.force_chem = true;
    dmd_options.pdb_static_pairs = false;
@@ -259,7 +259,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saxs_options.default_saxs_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
    saxs_options.default_rotamer_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hydrated_rotamer";
 
-   saxs_options.steric_clash_distance = 1.8;
+   saxs_options.steric_clash_distance = 1.4;
 
    rotamer_changed = true;  // force on-demand loading of rotamer file
 
@@ -285,6 +285,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    residue_short_names["LYS"] = 'K';
    residue_short_names["ARG"] = 'R';
    residue_short_names["HIS"] = 'H';
+   residue_short_names["SWH"] = '~';
 
    residue_short_names["G"] = 'g';
    residue_short_names["A"] = 'a';
@@ -2126,6 +2127,18 @@ void US_Hydrodyn::update_bead_model_prefix(const QString &str)
 
 int US_Hydrodyn::calc_somo()
 {
+   if ( selected_models_contain_SWH() )
+   {
+      QMessageBox::warning( this,
+                            tr( "Selected model contains SWH residue" ),
+                            tr( 
+                               "Can not process models that contain the SWH residue.\n"
+                               "These are currently generated only for SAXS/SANS computations\n"
+                               )
+                            );
+      return -1;
+   }
+
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_somo->setEnabled(false);
@@ -2262,6 +2275,18 @@ int US_Hydrodyn::calc_somo()
 
 int US_Hydrodyn::calc_grid_pdb()
 {
+   if ( selected_models_contain_SWH() )
+   {
+      QMessageBox::warning( this,
+                            tr( "Selected model contains SWH residue" ),
+                            tr( 
+                               "Can not process models that contain the SWH residue.\n"
+                               "These are currently generated only for SAXS/SANS computations"
+                               )
+                            );
+      return -1;
+   }
+
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    options_log = "";

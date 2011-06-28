@@ -394,6 +394,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    temp_atom.serial = str2.toUInt();
 
    str2 = str1.mid(11, 5);
+   temp_atom.orgName = str2;
    temp_atom.name = str2.stripWhiteSpace();
 
    temp_atom.altLoc = str1.mid(16, 1);

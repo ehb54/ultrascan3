@@ -99,6 +99,8 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
             view_exposed();
             build_to_hydrate();
             cout << list_to_hydrate();
+            progress->setProgress(9);
+            qApp->processEvents();
             if ( !compute_to_hydrate_dihedrals( error_msg ) )
             {
                QMessageBox::warning( this,
@@ -107,6 +109,8 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
                any_errors = true;
             }
             cout << list_to_hydrate_dihedrals();
+            progress->setProgress(10);
+            qApp->processEvents();
             if ( !compute_best_fit_rotamer( error_msg ) )
             {
                QMessageBox::warning( this,
@@ -115,6 +119,8 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
                any_errors = true;
             }
             cout << list_best_fit_rotamer();
+            progress->setProgress(11);
+            qApp->processEvents();
             if ( !compute_waters_to_add( error_msg ) )
             {
                QMessageBox::warning( this,
@@ -123,6 +129,27 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
                any_errors = true;
             }
             cout << list_waters_to_add();
+            progress->setProgress(1, 1);
+            qApp->processEvents();
+            if ( !write_pdb_with_waters( error_msg ) )
+            {
+               QMessageBox::warning( this,
+                                     tr( "Error trying to write pdb with waters" ),
+                                     error_msg );
+               any_errors = true;
+            }
+            if ( !any_errors &&
+                 !screen_pdb( last_hydrated_pdb_name, true ) )
+            {
+               QMessageBox::warning( this,
+                                     tr( "Error trying to reload hydrated pdb" ),
+                                     error_msg );
+               any_errors = true;
+            }
+            if ( !any_errors )
+            {
+               pdb_saxs();
+            }
          }
          else
          {
@@ -139,9 +166,6 @@ int US_Hydrodyn::pdb_hydrate_for_saxs()
          progress->reset();
          return -1;
       }
-
-      // calculate bead model and generate hydrodynamics calculation output
-      // if successful, enable follow-on buttons:
    }
    if (any_models && !any_errors)
    {
@@ -175,7 +199,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
    results.asa_rg_pos = 0.0;
    results.asa_rg_neg = 0.0;
    editor->append("PDB structure ok\n");
-   int mppos = 18 + (asa.recheck_beads ? 1 : 0);
+   int mppos = 12;
    progress->setTotalSteps(mppos);
    int ppos = 1;
    progress->setProgress(ppos++); // 1
@@ -2370,6 +2394,109 @@ bool US_Hydrodyn::has_steric_clash( point p )
          if ( dist( it->second[ i ], p ) <= saxs_options.steric_clash_distance )
          {
             return true;
+         }
+      }
+   }
+   return false;
+}
+
+bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg )
+{
+   QString fname = pdb_file;
+   fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) 
+      + QString( "_%1-h.pdb" ).arg( current_model + 1 );
+   if ( !overwrite && QFile::exists( fname ) )
+   {
+      fname = fileNameCheck( fname );
+   }
+
+   QFile f( fname );
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      error_msg = QString( tr("can not open file %1 for writing" ) ).arg( fname );
+      return false;
+   }
+
+   QTextStream ts( &f );
+
+   ts << 
+      QString( "HEADER  US-SOMO Hydrated pdb file %1\n" ).arg( fname );
+   ts <<
+      QString( "MODEL %1\n" ).arg( current_model + 1 );
+
+   unsigned int i = current_model;
+
+   unsigned int atom_number = 0;
+   unsigned int residue_number = 0;
+
+   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+         PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+
+         ts << 
+            QString("")
+            .sprintf(     
+                     "ATOM   %4d%5s%4s %1s%4d    %8.3f%8.3f%8.3f  1.00 10.00               \n",
+                     this_atom->serial,
+                     this_atom->orgName.ascii(),
+                     this_atom->resName.ascii(),
+                     this_atom->chainID.ascii(),
+                     this_atom->resSeq.toUInt(),
+                     this_atom->coordinate.axis[ 0 ],
+                     this_atom->coordinate.axis[ 1 ],
+                     this_atom->coordinate.axis[ 2 ]
+                     );
+         if ( atom_number < this_atom->serial )
+         {
+            atom_number = this_atom->serial;
+         }
+         if ( residue_number < this_atom->resSeq.toUInt() )
+         {
+            residue_number = this_atom->resSeq.toUInt();
+         }
+      }
+   }
+   ts << "TER\n";
+
+   // check already added waters:
+   for ( map < QString, vector < point > >::iterator it = waters_to_add.begin();
+         it != waters_to_add.end();
+         it++ )
+   {
+      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      {
+         ts << 
+            QString("")
+            .sprintf(     
+                     "ATOM   %4d  OW  SWH  %4d    %8.3f%8.3f%8.3f  1.00 10.00           O  \n",
+                     ++atom_number,
+                     ++residue_number,
+                     it->second[ i ].axis[ 0 ],
+                     it->second[ i ].axis[ 1 ],
+                     it->second[ i ].axis[ 2 ]
+                     );
+
+      }
+   }
+   ts << "TER\nENDMDL\nEND\n";
+   f.close();
+   last_hydrated_pdb_name = fname;
+   editor->append( QString( tr( "File %1 created\n" ) ).arg( fname ) );
+   return true;
+}
+
+bool US_Hydrodyn::selected_models_contain_SWH()
+{
+   for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++) {
+      if ( lb_model->isSelected( i ) ) {
+         for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+            for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+               PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+               if ( this_atom->resName == "SWH" )
+               {
+                  return true;
+               }
+            }
          }
       }
    }

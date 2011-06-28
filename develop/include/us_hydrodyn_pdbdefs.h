@@ -52,6 +52,7 @@ struct PDB_atom
 {
    unsigned int serial;
    QString name;
+   QString orgName;
    QString altLoc;
    QString resName;
    QString chainID;
