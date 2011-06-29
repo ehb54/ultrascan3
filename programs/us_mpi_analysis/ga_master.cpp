@@ -420,7 +420,7 @@ void US_MPI_Analysis::write_model( const Simulation&      sim,
    // Fill in and write out the model file
    US_Model model;
 
-   model.monteCarlo  = mc_iteration > 1;
+   model.monteCarlo  = mc_iterations > 1;
    model.wavelength  = data->wavelength.toDouble();
    model.modelGUID   = US_Util::new_guid();
    model.editGUID    = data->editGUID;
