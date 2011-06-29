@@ -1,2 +1,0 @@
-unset DISPLAY
-perl $ULTRASCAN/etc/mpi_update_proccount.pl
