@@ -23,6 +23,7 @@ FILES="\
 #		fix each of the us3 libraries
 for FILE in ${FILES} ; do
 
+  SHORTF=`echo "${FILE}" | sed -e "s/[0-9]\.[0-9]\.dylib/dylib/"`
 #		get list of names that need fixing
   ##LIBL=`otool -L ${FILE} \
   ##  | egrep '_utils|_gui|qwt|qwtplot3d-qt4|framework|mysql' \
@@ -33,6 +34,7 @@ for FILE in ${FILES} ; do
     | egrep '_utils|_gui|qwt|qwtplot3d-qt4|mysql' \
     | grep -v executable \
     | grep -v ${FILE} \
+    | grep -v ${SHORTF} \
     | grep -v Library \
     | awk '{print $1}'`
 

@@ -42,7 +42,12 @@ do
   popd
 done
 
-doxygen >> $DIR/build.log
+if [ $ISMAC -eq 0 ]; then
+  doxygen >> $DIR/build.log
+else
+  $DIR/libnames.sh >> $DIR/build.log
+  $DIR/appnames.sh >> $DIR/build.log
+fi
 
 if [ $NBERR -gt 0 ]; then
   echo "*** $NBERR Build Error(s) ***"

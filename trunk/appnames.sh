@@ -23,7 +23,7 @@ for BUND in `ls -d *.app`;do
   ##  | grep -v executable \
   ##  | awk '{print $1}'`
   LIBL=`otool -L ${APPP} \
-    | egrep '_utils|_gui|qwt|qca|mysql' \
+    | egrep '_utils|us_gui|qwt|qca|mysql' \
     | grep -v executable \
     | grep -v Library \
     | awk '{print $1}'`
