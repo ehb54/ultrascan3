@@ -1,7 +1,0 @@
-#!/usr/bin/perl
-$ultrascan = $ENV{'ULTRASCAN'};
-$ultrascan = "/share/apps64/ultrascan" if !$ultrascan;
-open(FH, "$ultrascan/etc/tigre_sysstat");
-flock(FH, 2) || print STDERR "$0: Warning can not flock $ultrascan/etc/tigre_sysstat\n";
-system("cat $ultrascan/etc/tigre_sysstat");
-close(FH);
