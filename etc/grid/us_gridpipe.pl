@@ -11,6 +11,7 @@ $globus_statusupdate = 60;  # seconds to wait for status update
 $killupdate = 60;  # seconds to wait for rekilling
 $maxkillreps = 120;  # number of times to try to kill before giving up
 $logfiledir = "$us/etc/grid/log";    
+$us_gridcontrol_t = "$us/bin/us_gridcontrol_t";
 # ----------- end user configuration area
 
 use DB_File;
@@ -266,7 +267,7 @@ sub startjob_gc {
     my $child;
     if(!($child = fork)) {
 	print STDERR "$0: child started gc process job\n" if $debug;
-	`us_gridcontrol_t $_[0] > $logfiledir/us_gridcontrol.stdout 2> $logfiledir/us_gridcontrol.stderr`;
+	`$us_gridcontrol_t $_[0] > $logfiledir/us_gridcontrol.stdout 2> $logfiledir/us_gridcontrol.stderr`;
 	exit;
     }
     print STDERR "$0: gc child pid is $child\n" if $debug;
@@ -277,7 +278,7 @@ sub startjob_gc_tigre {
     my $child;
     if(!($child = fork)) {
 	print STDERR "$0: child started gc process job\n" if $debug;
-	`us_gridcontrol_t $_[0] TIGRE $_[1] > $logfiledir/us_gridcontrol.stdout 2> $logfiledir/us_gridcontrol.stderr`;
+	`$us_gridcontrol_t $_[0] TIGRE $_[1] > $logfiledir/us_gridcontrol.stdout 2> $logfiledir/us_gridcontrol.stderr`;
 	exit;
     }
     print STDERR "$0: gc tigre child pid is $child\n" if $debug;

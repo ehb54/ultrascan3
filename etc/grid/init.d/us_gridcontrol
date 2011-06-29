@@ -16,9 +16,11 @@ elif [ "$1" = "stop" ] ; then
     ( kill `ps -ef | grep /usr/local/ultrascan2/etc/grid/us_gridpipe_status_server.pl | grep -v grep | grep ' perl ' | awk '{ print $2 }'` ) 2> /dev/null
     ( kill -9 `ps -ef | grep /usr/local/ultrascan2/etc/grid/us_gridpipe.pl | grep -v grep | grep ' perl ' | awk '{ print $2 }'` ) 2> /dev/null
     ( kill -9 `ps -ef | grep /usr/local/ultrascan2/etc/grid/us_gridpipe_status_server.pl | grep -v grep | grep ' perl ' | awk '{ print $2 }'` ) 2> /dev/null
+elif [ "$1" = "status" ] ; then
+    ps -ef | grep /usr/local/ultrascan2/etc/grid/us_gridpipe.pl | grep -v grep 
+    ps -ef | grep /usr/local/ultrascan2/etc/grid/us_gridpipe_status_server.pl | grep -v grep
 else
-
-  echo "Usage: [start | stop]"
+  echo "Usage: [start|status|stop]"
   exit 1
 
 fi
