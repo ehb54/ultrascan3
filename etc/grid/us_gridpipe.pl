@@ -3,14 +3,14 @@
 $us = $ENV{'ULTRASCAN'} || die "The environment variable ULTRASCAN must be set.  Terminating\n";
 # ----------- user configuration area
 #$debug++;
-$debugdb++;
-$dbname = "$us/etc/us_gridpipe_db";
+#$debugdb++;
+$dbname = "$us/etc/grid/us_gridpipe_db";
 $globustimeout = 15; # seconds to wait for globusrun-ws commands to succeed or timeout
 $statusupdate = 10;  # seconds to wait for status update
 $globus_statusupdate = 60;  # seconds to wait for status update
 $killupdate = 60;  # seconds to wait for rekilling
 $maxkillreps = 120;  # number of times to try to kill before giving up
-$logfiledir = "/lustre/tmp";    # reset to /lustre/tmp
+$logfiledir = "$us/grid/log";    
 # ----------- end user configuration area
 
 use DB_File;
@@ -19,15 +19,15 @@ use FileHandle;
 $|=1;
 
 $us = $ENV{'ULTRASCAN'} || die "The environment variable ULTRASCAN must be set.  Terminating\n";
-open(SYS_LOCK, "$us/etc/us_gridpipe.lock") || die "$0: lockfile $us/etc/us_gridpipe.lock error: $!.  Terminating\n";
-flock(SYS_LOCK, 6) || die "$0: lockfile $us/etc/us_gridpipe.lock is already in use ($!).  Terminating\n";
+open(SYS_LOCK, "$us/etc/grid/us_gridpipe.lock") || die "$0: lockfile $us/etc/grid/us_gridpipe.lock error: $!.  Terminating\n";
+flock(SYS_LOCK, 6) || die "$0: lockfile $us/etc/grid/us_gridpipe.lock is already in use ($!).  Terminating\n";
 
-require "$us/etc/us_gcfields.pl";
+require "$us/etc/grid/us_gcfields.pl";
 
-$status_file = "$us/etc/mpi_queue_status";
-$status_detail_file = "$us/etc/queue_status_detail";
+$status_file = "$us/etc/grid/mpi_queue_status";
+$status_detail_file = "$us/etc/grid/queue_status_detail";
 
-$pipe = "$us/etc/us_gridpipe";
+$pipe = "$us/etc/grid/us_gridpipe";
 
 $ENV{'DISPLAY'}='';
 
@@ -348,7 +348,7 @@ sub startjob_tigre_status {
 	    print "startjob_tigre_status: <$_[0]>\n";
 	    my $status = &timedexec($globustimeout, 
                                     $gfac ? 
-                                    "$us/etc/us_asta_status.pl $gfac" :
+                                    "$us/etc/grid/us_asta_status.pl $gfac" :
                                     "globusrun-ws -status -job-epr-file $_[0]"
                                     );
 	    chomp $status;
@@ -548,7 +548,7 @@ sub tigre_kill {
         my $gfac = is_gfac($_[0]);
 	my $reps = 0;
         if ( $gfac ) {
-            my $cmd = "$us/etc/us_asta_cancel.pl $gfac\n";
+            my $cmd = "$us/etc/grid/us_asta_cancel.pl $gfac\n";
             print STDERR "$0: $cmd";
             print STDERR `$cmd`;
         } else {
@@ -731,7 +731,7 @@ sub handle_request {
                     my $gfac = is_gfac($use_i);
                     my $status = &timedexec($globustimeout, 
                                             $gfac ? 
-                                            "$us/etc/us_asta_status.pl $gfac" :
+                                            "$us/etc/grid/us_asta_status.pl $gfac" :
                                             "globusrun-ws -status -job-epr-file $use_i"
                                             );
 		    chomp $status;
