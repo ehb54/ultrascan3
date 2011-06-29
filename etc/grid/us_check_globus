@@ -1,0 +1,1 @@
+su - apache -c "perl $ULTRASCAN/etc/check_globus.pl $*"

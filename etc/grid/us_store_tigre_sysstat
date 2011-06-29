@@ -1,0 +1,155 @@
+#!/usr/local/bin/perl
+
+$ENV{'GLOBUS_LOCATION'} = '/share/apps/tigre/globus';
+
+
+# @systems = ( 'bcf.uthscsa.edu' , 'alamo.uthscsa.edu');
+@systems = ( 
+	     'lonestar.tacc.utexas.edu', 
+	     'ranger.tacc.utexas.edu', 
+#	     'eldorado.acrl.uh.edu', 
+#	     'antaeus.hpcc.ttu.edu', 
+#	     'cosmos.tamu.edu', 
+	     'a01.hlrb2.lrz-muenchen.de', 
+	     'ng2.vpac.monash.edu.au',
+	     'queenbee.loni-lsu.teragrid.org' ,
+	     'gatekeeper.bigred.iu.teragrid.org' ,
+	     'gatekeeper.ranger.tacc.teragrid.org' ,
+
+	     'bcf.uthscsa.edu', 
+	     'alamo.uthscsa.edu', 
+	     'laredo.uthscsa.edu' 
+	     );
+$cutoff = 7;
+# @systemssize = ( 4, 2, 2 );
+@globusport = ( 
+		8443, # lonestar
+		8443, # ranger
+#		8443, # eldorado
+#		9443, # antaeus
+#		8443, # cosmos
+		8443, # hlrb2
+		8443, # ng2.vpac.monash
+		8443, # queenbee.loni-lsu.teragrid.org
+		8443, # gatekeeper.bigred.iu.teragrid.org
+		2119, # gatekeeper.ranger.tacc.teragrid.org
+
+		9443, # bcf
+		9443, # alamo
+		9443  # laredo
+		);
+
+use Net::Telnet;
+
+$proxy = `env LD_LIBRARY_PATH=/share/apps/tigre/globus/lib:\$LD_LIBRARY_PATH /share/apps/tigre/globus/bin/grid-proxy-info 2>&1`;
+open(LOG, ">>/tmp/us_get_tigre_sysstat.out");
+print LOG `date
+echo \$PATH
+echo \$LD_LIBRARY_PATH
+who am i`;
+print LOG $proxy;
+close LOG;
+
+if($proxy =~ /ERROR/) {
+    $noproxy++;
+} else {
+    ( $timeleft ) = $proxy =~ /timeleft : (.*)$/;
+
+    ( $hh, $mm, $ss ) = $timeleft =~ /(\d*):(\d\d):(\d\d)/;
+
+    if($hh == 0 && $mm < 5) {
+	$noproxy++;
+    }
+}
+
+
+$ultrascan = $ENV{'ULTRASCAN'};
+$exclude = `cat $ultrascan/etc/tigre_exclude 2> /dev/null`;
+
+open(OUT, ">$ultrascan/etc/tigre_sysstat.new");
+
+for($i = 0; $i < $cutoff; $i++) {
+    next if $exclude =~ /$systems[$i]/;
+# no load checking
+    $t = new Net::Telnet(Timeout=>.5, Errmode=>'return', Port=>$globusport[$i]);
+    $t->open($systems[$i] =~ /lonestar/ ? "lslogin2.lonestar.tacc.utexas.edu" : $systems[$i]);
+    print OUT "$systems[$i] ";
+    if(!length($t->errmsg)) {
+	if(0 && $systems[$i] =~ /hlrb/) {
+	    print OUT 'up TESTING *';
+	} else {
+	    print OUT 'up * *';
+	}
+    } else {
+	print OUT 'down * *';
+    }
+    $t->close();
+    print OUT "\n";
+}
+
+## @fn $ timedexec($timeout, $command)
+# runs a shell command for timeout seconds and if it has not completed, it returns with 'non-responsive'
+# @param the timeout in seconds and the command
+# @return the results from the command or 'non-responsive'
+
+sub timedexec {
+
+    my $return;
+    my $pid = open(PIPE, "$_[1] |") or die $!;
+
+    eval {
+	local $SIG{ALRM} = sub { die "timeout" };
+	alarm($_[0]);
+	my @results = <PIPE>;
+	$return = join '', @results;
+	close(PIPE);
+	alarm(0);
+    };
+
+    if($@) {
+	alarm(0);
+	if($@ =~ /timeout/) {
+	    $return = "NA";
+	    kill 9, $pid;
+	    close(PIPE); 
+#	    print "timed out\n";
+	    # timed out;
+	} else {
+	    print "success\n";
+	    die;
+	}
+    }
+    $return;
+}
+
+for($i = $cutoff; $i < @systems; $i++) {
+    next if $exclude =~ /$systems[$i]/;
+    print OUT "$systems[$i] ";
+    $t = new Net::Telnet(Timeout=>.1, Errmode=>'return', Port=>$globusport[$i]);
+    $t->open($systems[$i]);
+    if(!length($t->errmsg)) { # && !($systems[$i] =~ /^laredo/)) {
+	print OUT 'up '; # if !($systems[$i] =~ /laredo/);
+#	print OUT 'TEST ' if $systems[$i] =~ /laredo/;
+	if(!$noproxy) { #  && !($systems[$i] =~ /laredo/)) {
+	    $sys1 = &timedexec(15, "perl $ultrascan/etc/pbsinfo.pl $systems[$i] 15001 2>/dev/null");
+	    chomp $sys1;
+	    $sys2 = &timedexec(15, "perl $ultrascan/etc/pbsinfo.pl $systems[$i] 36001 2>/dev/null"); # if $systems[$i] ne 'bcf.uthscsa.edu';
+	    chomp $sys2;
+	    print OUT "$sys1 $sys2";
+	} else {
+	    print OUT '* *';
+	}
+    } else {
+	print OUT 'down * *';
+    }
+    $t->close();
+    print OUT "\n";
+}
+# print OUT "meta up TESTING * *\n";
+close(OUT);
+sleep 2;
+
+open(FH, "$ultrascan/etc/tigre_sysstat");
+flock(FH, 2) || print STDERR "$0: Warning can not flock $ultrascan/etc/tigre_sysstat\n";
+system("mv $ultrascan/etc/tigre_sysstat.new $ultrascan/etc/tigre_sysstat");
+close(FH);

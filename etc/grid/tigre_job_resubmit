@@ -1,0 +1,10 @@
+#!/usr/bin/perl
+
+$arg = shift || die "usage: tigre_job_cancel id\n";
+
+$US = $ENV{'ULTRASCAN'};
+$US = '/share/apps64/ultrascan';
+
+print `echo tigre_job_resubmit $arg > $US/etc/us_gridpipe`;
+
+

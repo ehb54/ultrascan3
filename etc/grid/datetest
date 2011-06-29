@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+
+$arg = shift;
+$file = shift;
+
+open(OUT, ">$file");
+print OUT "test $arg endtest\n";
+close OUT;
+

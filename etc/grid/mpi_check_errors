@@ -1,0 +1,12 @@
+#!/usr/bin/perl
+
+$last = `ls -t /tmp/gc_mpi_*.0 | head -1`;
+chomp $last;
+$last =~ s/\.0$//;
+
+print "most recent job logs are ${last}.?\n";
+
+$error1 = `grep p4_error ${last}.1`;
+$error2 = `cat ${last}.2`;
+
+print "--- start error transcript ---\n" . $error1 . $error2 . "--- end error transcript ---\n";

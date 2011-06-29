@@ -1,0 +1,1 @@
+su - apache -c "/usr/bin/perl $ULTRASCAN/etc/check_tigre.pl $1 $2"
