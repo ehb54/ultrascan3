@@ -1,8 +1,0 @@
-file=`mktemp`
-echo no update > $file
-chmod 666 $file
-echo status_full $file > /share/apps64/ultrascan/etc/us_gridpipe
-sleep 4
-echo nop > /share/apps64/ultrascan/etc/us_gridpipe
-cat $file
-rm -f $file
