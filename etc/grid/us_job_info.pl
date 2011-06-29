@@ -29,7 +29,7 @@ sub pid_info {
     # print out basic info
     # 
     $epr = "$dir/$timestamp/us_tigre_epr${timestamp}.xml";
-    $cmd = "$US/etc/us_gridpipe_my_jobid.pl $epr 2> /dev/null\n";
+    $cmd = "$US/etc/grid/us_gridpipe_my_jobid.pl $epr 2> /dev/null\n";
     print $cmd if $debug;
     $jid = `$cmd`;
     chomp $jid;

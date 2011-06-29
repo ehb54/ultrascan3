@@ -1,0 +1,24 @@
+#!/bin/sh
+
+export ULTRASCAN=/usr/local/ultrascan2
+
+if [ "$1" = "start" ] ; then
+        echo "Starting US GridControl Service ..."
+        su - apache -c "env ULTRASCAN=/usr/local/ultrascan2 nohup perl /usr/local/ultrascan2/etc/grid/us_gridpipe.pl" >  /usr/local/ultrascan2/etc/grid/log/us_gridpipe.stderr 2>  /usr/local/ultrascan2/etc/grid/log/us_gridpipe.stdout &
+        nohup perl /usr/local/ultrascan2/etc/grid/us_gridpipe_status_server.pl 787 > /usr/local/ultrascan2/etc/grid/log/gridpipe_status.stdout 2> /usr/local/ultrascan2/etc/grid/log/gridpipe_status.stderr &
+
+elif [ "$1" = "stop" ] ; then
+    echo "Stopping US GridControl Service ..."
+    # this doesn't work:
+    # killall -9 /usr/local/ultrascan2/etc/grid/us_gridpipe.pl
+    # killall -9 /usr/local/ultrascan2/etc/grid/us_gridpipe_status_server.pl
+    ( kill `ps -ef | grep /usr/local/ultrascan2/etc/grid/us_gridpipe.pl | grep -v grep | grep ' perl ' | awk '{ print $2 }'` ) 2> /dev/null
+    ( kill `ps -ef | grep /usr/local/ultrascan2/etc/grid/us_gridpipe_status_server.pl | grep -v grep | grep ' perl ' | awk '{ print $2 }'` ) 2> /dev/null
+    ( kill -9 `ps -ef | grep /usr/local/ultrascan2/etc/grid/us_gridpipe.pl | grep -v grep | grep ' perl ' | awk '{ print $2 }'` ) 2> /dev/null
+    ( kill -9 `ps -ef | grep /usr/local/ultrascan2/etc/grid/us_gridpipe_status_server.pl | grep -v grep | grep ' perl ' | awk '{ print $2 }'` ) 2> /dev/null
+else
+
+  echo "Usage: [start | stop]"
+  exit 1
+
+fi

@@ -2,7 +2,7 @@
 
 $us = $ENV{'ULTRASCAN'} || die "The environment variable ULTRASCAN must be set.  Terminating\n";
 # ----------- user configuration area
-$dbname = "$us/etc/us_gridpipe_db";
+$dbname = "$us/etc/grid/us_gridpipe_db";
 # ----------- end user configuration area
 
 use DB_File;

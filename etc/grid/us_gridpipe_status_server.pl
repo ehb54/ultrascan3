@@ -9,7 +9,7 @@
 
 $us = $ENV{'ULTRASCAN'} || die "The environment variable ULTRASCAN must be set.  Terminating\n";
 # ----------- user configuration area
-$dbname = "$us/etc/us_gridpipe_db";
+$dbname = "$us/etc/grid/us_gridpipe_db";
 # ----------- end user configuration area
 
 use DB_File;
@@ -173,7 +173,7 @@ $server = IO::Socket::INET->new(LocalPort => $port,
 
 use Inline C;
 
-reduce_perms(48,48);
+reduce_perms(25,25);
 
 print "awating UDP messages on port $port\n";
 
