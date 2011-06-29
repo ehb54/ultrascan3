@@ -9,20 +9,23 @@ my $debug;
 # print "Content-type: text/html\n\n";
 
 ## mysql user database name
-my $db ="xregistry_ogce";
+my $db ="exp_notification";
 ## mysql database user name
-my $user = "xreg_ogce";
+my $user = "exp_ogce";
 
 ## mysql database password
-my $pass = "xreg_pass";
+my $pass = "exp_pass";
 
-## user hostname : This should be "localhost" but it can be diffrent too
-my $host="localhost";
+## user hostname 
+my $host="gw33.quarry.iu.teragrid.org";
+
+## user port 
+my $db_port="3306";
 
 my $experimentID = $ARGV[0];
 
 #DB Connection
-my $dbh = DBI->connect("DBI:mysql:$db; host=$host", "$user", "$pass", {'RaiseError' => 1});
+my $dbh = DBI->connect("DBI:mysql:$db;host=$host:port=$db_port", "$user", "$pass", {'RaiseError' => 1});
 
 ## SQL query
 

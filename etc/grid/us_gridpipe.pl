@@ -10,7 +10,7 @@ $statusupdate = 10;  # seconds to wait for status update
 $globus_statusupdate = 60;  # seconds to wait for status update
 $killupdate = 60;  # seconds to wait for rekilling
 $maxkillreps = 120;  # number of times to try to kill before giving up
-$logfiledir = "$us/grid/log";    
+$logfiledir = "$us/etc/grid/log";    
 # ----------- end user configuration area
 
 use DB_File;

@@ -4,12 +4,15 @@ use SOAP::Lite;
 # Parameter name
 my $experimentID = $ARGV[0];
 
-open(OUT, ">>/lustre/tmp/us_asta_cancel.log");
+my $us = $ENV{'ULTRASCAN'} || die "The environment variable ULTRASCAN must be set.  Terminating\n";
+my $logfiledir = "$us/etc/grid/log";    
+
+open(OUT, ">>$logfiledir/us_asta_cancel.log");
 print OUT "$0 $experimentID\n";
 close OUT;
 
 # Webserice parameters
-my $WSDL = 'http://localhost:5680/axis2/services/CancelJob?wsdl';
+my $WSDL = 'http://gw33.quarry.iu.teragrid.org:8088/axis2/services/CancelJob?wsdl';
 my $namespace = 'http://jobsubmittion.ogce.org';
 
 # Soap call

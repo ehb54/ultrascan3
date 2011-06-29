@@ -7,14 +7,16 @@
 # IF THIS FAILS FOR THE NUMBER OF PROCESSORS YOU HAVE SELECTED, TIGRE JOBS WILL FAIL!
 # THIS IS NOT HOW MANY PROCS THE SYSTEM HAS, BUT HOW MANY TIGRE/PBS KNOW ABOUT!!!!
 
-@bcfdowncount = `/opt/torque/bin/pbsnodes -l`;
-@laredodowncount = `ssh laredo.uthscsa.edu /opt/torque/bin/pbsnodes -l`;
-@alamodowncount = `ssh alamo.uthscsa.edu /opt/torque/bin/pbsnodes -l`;
+# @bcfdowncount = `/opt/torque/bin/pbsnodes -l`;
+# @laredodowncount = `ssh laredo.uthscsa.edu /opt/torque/bin/pbsnodes -l`;
+# @alamodowncount = `ssh alamo.uthscsa.edu /opt/torque/bin/pbsnodes -l`;
 
-$bcf_no_procs = 32 -2 * @bcfdowncount;
-$alamo_no_procs = 32 - 2 * @alamodowncount;
-#$laredo_no_procs = 20;
-#$laredo_no_procs = 20 - 4 * @laredodowncount;
+# $bcf_no_procs = 32 -2 * @bcfdowncount;
+# $alamo_no_procs = 32 - 2 * @alamodowncount;
+# $laredo_no_procs = 20;
+# $laredo_no_procs = 20 - 4 * @laredodowncount;
+
+$logfiledir = "$us/etc/grid/log";    
 
 $MAX_RETRIES = 11;
 $MAX_RETRIES_SHORT = 2;
@@ -45,7 +47,7 @@ $util_ti = .5;
 $execute = 1 ; # uncomment this line for live version, comment for listing commands to be executed
 
 sub check_is_resubmit {
-    $cmd = "perl $US/etc/us_gridpipe_is_resubmit.pl '$jid|$basedir/$id/$eprfile'\n";
+    $cmd = "perl $US/etc/grid/us_gridpipe_is_resubmit.pl '$jid|$basedir/$id/$eprfile'\n";
     print $cmd;
     $is_resubmit = `$cmd`;
     die "tigre job was resubmitted\n" if $is_resubmit == 1;
@@ -53,7 +55,7 @@ sub check_is_resubmit {
 
 sub if_gfac_set_workrun {
     if ( $gfac[$usesys] ) {
-	$cmd = "$US/etc/us_asta_dir.pl $exp_tag\n";
+	$cmd = "$US/etc/grid/us_asta_dir.pl $exp_tag\n";
 	my $tries = 0;
 	do {
 	    print $cmd;
@@ -125,40 +127,40 @@ $_[0]
 "
 		 );
 
-    if(-e "/lustre/tmp/gc_tigre_${id}.2") {
+    if(-e "$logfiledir/gc_tigre_${id}.2") {
 	$msg->attach(Type     => 'TEXT',
-		     Path     => "/lustre/tmp/gc_tigre_${id}.2",
+		     Path     => "$logfiledir/gc_tigre_${id}.2",
 		     Filename => "gc_tigre_${id}.stderr");
     }
 
-    if(-e "/lustre/tmp/gc_tigre_${id}.1") {
+    if(-e "$logfiledir/gc_tigre_${id}.1") {
 	$msg->attach(Type     => 'TEXT',
-		     Path     => "/lustre/tmp/gc_tigre_${id}.1",
+		     Path     => "$logfiledir/gc_tigre_${id}.1",
 		     Filename => "gc_tigre_${id}.stdout");
     }
 
-    if(-e "/lustre/tmp/us_job${id}.stderr") {
-	$fname = &ifbigcompress("/lustre/tmp/us_job${id}.stderr");
+    if(-e "$logfiledir/us_job${id}.stderr") {
+	$fname = &ifbigcompress("$logfiledir/us_job${id}.stderr");
 	if ( $fname =~ /\.gz$/ ) {
 	    $msg->attach(Type     => 'application/x-gzip',
-			 Path     => "/lustre/tmp/us_job${id}.stderr.gz",
+			 Path     => "$logfiledir/us_job${id}.stderr.gz",
 			 Filename => "us_job${id}.stderr.gz");
 	} else {
 	    $msg->attach(Type     => 'TEXT',
-			 Path     => "/lustre/tmp/us_job${id}.stderr",
+			 Path     => "$logfiledir/us_job${id}.stderr",
 			 Filename => "us_job${id}.stderr");
 	}
     }
 
-    if(-e "/lustre/tmp/us_job${id}.stdout") {
-	$fname = &ifbigcompress("/lustre/tmp/us_job${id}.stdout");
+    if(-e "$logfiledir/us_job${id}.stdout") {
+	$fname = &ifbigcompress("$logfiledir/us_job${id}.stdout");
 	if ( $fname =~ /\.gz$/ ) {
 	    $msg->attach(Type     => 'application/x-gzip',
-			 Path     => "/lustre/tmp/us_job${id}.stdout.gz",
+			 Path     => "$logfiledir/us_job${id}.stdout.gz",
 			 Filename => "us_job${id}.stdout.gz");
 	} else {
 	    $msg->attach(Type     => 'TEXT',
-			 Path     => "/lustre/tmp/us_job${id}.stdout",
+			 Path     => "$logfiledir/us_job${id}.stdout",
 			 Filename => "us_job${id}.stdout");
 	}
     }
@@ -311,12 +313,12 @@ $experiment = shift;
 $solutes = shift;
 $cwd = "$basedir/$id";
 
-require "$US/etc/us_gcfields.pl";
+require "$US/etc/grid/us_gcfields.pl";
 &parsegc($gcfile);
 
 $eprfile = "us_tigre_epr${id}.xml";
 
-$cmd = "$US/etc/us_gridpipe_my_jobid.pl $basedir/$id/$eprfile\n";
+$cmd = "$US/etc/grid/us_gridpipe_my_jobid.pl $basedir/$id/$eprfile\n";
 print $cmd;
 $jid = `$cmd`;
 chomp $jid;
@@ -407,7 +409,7 @@ $results
 "
 		 );
     $msg->send('smtp', 'smtp.uthscsa.edu');
-    $cmd = "echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/us_gridpipe";
+    $cmd = "echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/grid/us_gridpipe";
     print "$cmd\n";
     print `$cmd`;
     exit;
@@ -832,7 +834,7 @@ $max_time[14] = $max_time[0];  # new lonestar
 
 print "Maximum time[0]=$max_time[0]\n";
 
-$cmd = "perl $ENV{'ULTRASCAN'}/etc/us_parse_gc.pl $util $util_ti $gcfile\n";
+$cmd = "perl $ENV{'ULTRASCAN'}/etc/grid/us_parse_gc.pl $util $util_ti $gcfile\n";
 print $cmd;
 $np = `$cmd`;
 chomp $np;
@@ -841,7 +843,7 @@ $np = 2 if $np < 2;
 # $np = 31;
 
 $esttime = 120; # we should do better
-$hostfile = "$ENV{'ULTRASCAN'}/etc/us_tigre_hosts";
+$hostfile = "$ENV{'ULTRASCAN'}/etc/grid/us_tigre_hosts";
 
 if(!$default_system) {
 #    use SelectResource;
@@ -859,7 +861,7 @@ print "using tigre system $default_system\n";
 
 if($default_system ne 'meta' && !$gfac[$usesys]) {
     do {
-	$result = `perl $ULTRASCAN/etc/check_tigre.pl $default_system`;
+	$result = `perl $ULTRASCAN/etc/grid/check_tigre.pl $default_system`;
 	if($result =~ /ERROR/) {
 	    print STDERR "$result";
 	    if(!$messagesent) {
@@ -1003,7 +1005,7 @@ if($default_system ne 'meta') {
 		       $HPCAnalysisID,
 		       $gcfile);
     
-    print `echo tigre_job_start $pr_line > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
+    print `echo tigre_job_start $pr_line > $ENV{'ULTRASCAN'}/etc/grid/us_gridpipe`;
 }
 
 # put files to TIGRE client
@@ -1137,7 +1139,7 @@ if($default_system eq 'meta') {
 		       $date,
 		       $grms_id);
     
-    print `echo tigre_job_start $pr_line > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
+    print `echo tigre_job_start $pr_line > $ENV{'ULTRASCAN'}/etc/grid/us_gridpipe`;
 } else {
     &check_is_resubmit();
     if ( !$gfac[$usesys] ) {
@@ -1158,9 +1160,9 @@ if($default_system eq 'meta') {
 	    do {
 		print "check submit 0:\n";
 		sleep 10;
-		$status = `globusrun-ws -status -job-epr-file $eprfile 2> /lustre/tmp/gc_tigre_${id}_globus_stderr`;
+		$status = `globusrun-ws -status -job-epr-file $eprfile 2> $logfiledir/gc_tigre_${id}_globus_stderr`;
 		print "status is <$status>\n";
-		$stderr = `cat /lustre/tmp/gc_tigre_${id}_globus_stderr`;
+		$stderr = `cat $logfiledir/gc_tigre_${id}_globus_stderr`;
 		print "stderr is <$stderr>\n";
 		print STDERR $stderr;
 		if($stderr =~ /SOAP Fault/ &&
@@ -1189,7 +1191,7 @@ if($default_system eq 'meta') {
 	    } while($lastfail && $ecount && $ecount <= $max_ecount);
 	}
     } else {
-	$cmd = "perl $US/etc/us_asta_run.pl $SYSTEM ${WORKRUN}/experiments${timestamp}.dat ${WORKRUN}/solutes${timestamp}.dat $jid $np $max_time[$usesys] $queues[$usesys] $gfac_hc\n";
+	$cmd = "perl $US/etc/grid/us_asta_run.pl $SYSTEM ${WORKRUN}/experiments${timestamp}.dat ${WORKRUN}/solutes${timestamp}.dat $jid $np $max_time[$usesys] $queues[$usesys] $gfac_hc\n";
 	print $cmd;
 	if ( $execute ) {
 	    $result = `$cmd`;
@@ -1210,8 +1212,8 @@ do {
 	$status = `grms-client job_info $grms_id 2> /dev/null | grep Status | awk '{ print \$3 }'`;
     } else {
 	if ( !$gfac[$usesys] ) {
-	    $status = `globusrun-ws -status -job-epr-file $eprfile 2> /lustre/tmp/gc_tigre_${id}_globus_stderr`;
-	    $stderr = `cat /lustre/tmp/gc_tigre_${id}_globus_stderr`;
+	    $status = `globusrun-ws -status -job-epr-file $eprfile 2> $logfiledir/gc_tigre_${id}_globus_stderr`;
+	    $stderr = `cat $logfiledir/gc_tigre_${id}_globus_stderr`;
 	    print STDERR $stderr;
 	    if($stderr =~ /SOAP Fault/ &&
 	       $status != /^$/) {
@@ -1219,7 +1221,7 @@ do {
 		$status = '';
 	    }
 	} else {
-            $cmd = "$US/etc/us_asta_status.pl $exp_tag\n";
+            $cmd = "$US/etc/grid/us_asta_status.pl $exp_tag\n";
             print $cmd;
             $status = `$cmd`;
             $status = "FINISHED\n" if $status =~ /COMPLETED/;
@@ -1253,36 +1255,36 @@ do {
 	if($default_system ne 'meta') {
 	    if ( $gfac[$usesys] ) {
 		if ( length($WORKRUN) ) {
-		    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stderr", "/lustre/tmp/us_job${id}.stderr");
-		    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stdout", "/lustre/tmp/us_job${id}.stdout");
+		    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stderr", "$logfiledir/us_job${id}.stderr");
+		    &gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stdout", "$logfiledir/us_job${id}.stdout");
 		} else {
-		    $cmd = "$US/etc/us_asta_message.pl $exp_tag\n";
+		    $cmd = "$US/etc/grid/us_asta_message.pl $exp_tag\n";
 		    $gfac_out = $cmd;
 		    $gfac_out .= "GFAC Message:----------\n";
 		    $gfac_out .=  `$cmd`;
 		    $gfac_out .=  "-----------------------\n";
 		    print $gfac_out;
-		    open (GFACERR, ">/lustre/tmp/us_job${id}.stderr");
+		    open (GFACERR, ">$logfiledir/us_job${id}.stderr");
 		    print GFACERR $gfac_out;
 		    close GFACERR;
 		}
 	    } else {
-		&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "/lustre/tmp/us_job${id}.stderr");
-		&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "/lustre/tmp/us_job${id}.stdout");
+		&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "$logfiledir/us_job${id}.stderr");
+		&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "$logfiledir/us_job${id}.stdout");
 	    }
 		
 #	    $cmd = 
-#"$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
-#$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
+#"$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr $logfiledir/
+#$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout $logfiledir/
 #";
 #	    print $cmd;
 #	    print `$cmd` if $execute;
 	}
 	&failmsg("Tigre Status returned 'Failed'");
 	if($default_system eq 'meta') {
-	    print `echo tigre_job_end $grms_id > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
+	    print `echo tigre_job_end $grms_id > $ENV{'ULTRASCAN'}/etc/grid/us_gridpipe`;
 	} else {
-	    print `echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
+	    print `echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/grid/us_gridpipe`;
 	}
 	die "tigre job failed submission on $default_system\n";
     }
@@ -1430,21 +1432,21 @@ sub retrieve_result_files {
 
 if($default_system eq 'meta') {
     $cmd = 
-"mv us_job${id}.stderr /lustre/tmp/us_job${id}.stderr
-mv us_job${id}.stdout /lustre/tmp/us_job${id}.stdout
+"mv us_job${id}.stderr $logfiledir/us_job${id}.stderr
+mv us_job${id}.stdout $logfiledir/us_job${id}.stdout
 ";
     print $cmd;
     print `$cmd` if $execute;
 } else {
     if ( $gfac[$usesys] ) {
-	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stderr", "/lustre/tmp/us_job${id}.stderr");
-	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stdout", "/lustre/tmp/us_job${id}.stdout");
+	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stderr", "$logfiledir/us_job${id}.stderr");
+	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stdout", "$logfiledir/us_job${id}.stdout");
     } else {
-	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "/lustre/tmp/us_job${id}.stderr");
-	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "/lustre/tmp/us_job${id}.stdout");
+	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "$logfiledir/us_job${id}.stderr");
+	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "$logfiledir/us_job${id}.stdout");
     }
-#    $cmd = "$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
-#    $gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
+#    $cmd = "$gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr $logfiledir/
+#    $gsi[$usesys]scp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout $logfiledir/
     &retrieve_result_files();
 
 #    $cmd =
@@ -1457,22 +1459,22 @@ mv us_job${id}.stdout /lustre/tmp/us_job${id}.stdout
 }
 
 print "----tail us_job${id}.stderr --- from $default_system ---\n";
-print `tail /lustre/tmp/us_job${id}.stderr` if $execute;
+print `tail $logfiledir/us_job${id}.stderr` if $execute;
 print "----end us_job${id}.stderr ---\n";
 
 # check for 'job complete'
-$cmd = "grep -l 'job complete' /lustre/tmp/us_job${id}.stdout";
+$cmd = "grep -l 'job complete' $logfiledir/us_job${id}.stdout";
 $res = `$cmd`;
 chomp $res;
 print "$cmd: $res\n";
-if ( $res ne "/lustre/tmp/us_job${id}.stdout" ) 
+if ( $res ne "$logfiledir/us_job${id}.stdout" ) 
 {
     &failmsg("Your job possibly terminated without a 'job complete' status");
 # don't die until we have tested this a bit
 #    if($default_system eq 'meta') {
-#	print `echo tigre_job_end $grms_id > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
+#	print `echo tigre_job_end $grms_id > $ENV{'ULTRASCAN'}/etc/grid/us_gridpipe`;
 #    } else {
-#	print `echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
+#	print `echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/grid/us_gridpipe`;
 #    }
 #    die "tigre job failed submission on $default_system\n";
 }    
@@ -1488,36 +1490,36 @@ print `perl $ENV{'ULTRASCAN'}/bin64/us_email.pl email_list_* email_msg` if $exec
 
 
 if($default_system eq 'meta') {
-    print `echo tigre_job_end $grms_id > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
+    print `echo tigre_job_end $grms_id > $ENV{'ULTRASCAN'}/etc/grid/us_gridpipe`;
 } else {
     $cmd = "$gsi[$usesys]ssh -p $PORT_SSH ${GSI_SYSTEM} rm -fr $WORKRUN\n";
     print "not run: $cmd";
 # print `$cmd` if $execute;
-    print `echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
+    print `echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/grid/us_gridpipe`;
 }
 
 # check for good completion
-$good_completion = `grep '^0: finalizing' /lustre/tmp/us_job${id}.stdout`;
+$good_completion = `grep '^0: finalizing' $logfiledir/us_job${id}.stdout`;
 if(!($good_completion =~ '0: finalizing')) {
     &failmsg("TIGRE job completed successfully, but results indicate job failed");
 }
 
 # accumulate statistics
 $US = $ENV{'ULTRASCAN'};
-require "$US/etc/us_extract_usage.pl";
-&extract_usage("/lustre/tmp/us_job${id}.stdout");
+require "$US/etc/grid/us_extract_usage.pl";
+&extract_usage("$logfiledir/us_job${id}.stdout");
 $extra_fields = "$util|$util_ti|$default_system|$np|$total_points|$esttime|$date|$id";
 $extra_fields_title = "util|util_ti|default_system|np|total_points|esttime|date|id";
 
 
-print "Writing to $US/etc/tigre_db\n";
-$lock = "$US/etc/tigre_db_lock";
+print "Writing to $US/etc/grid/tigre_db\n";
+$lock = "$US/etc/grid/tigre_db_lock";
 open(FH, $lock) || print STDERR "$0: WARNING can't open $lock!\n";
 flock(FH, 2)  || print STDERR "$0: WARNING can't flock $lock!\n";
-open(DB, ">>$US/etc/tigre_db");
+open(DB, ">>$US/etc/grid/tigre_db");
 print DB "$dbstring|$extract_usage|$extra_fields\n";
 close DB;
-open(DBS, ">>$US/etc/tigre_short_db");
+open(DBS, ">>$US/etc/grid/tigre_short_db");
 print DBS "$db_minstring|$extract_usage|$extra_fields\n";
 close DBS;
 close FH;
@@ -1575,7 +1577,7 @@ if ($HPCAnalysisID > 0)
     grep(s/$tid\.model\./$tid\.ti_noise\./,@tinoise);
     grep(s/$tid\.model\./$tid\.ri_noise\./,@rinoise);
 
-    @text = `perl $ULTRASCAN/etc/us_old_format.pl email_text_$tid`;
+    @text = `perl $ULTRASCAN/etc/grid/us_old_format.pl email_text_$tid`;
     grep(chomp,@text);
     @text = grep(/^Experiment /, @text);
 
@@ -1625,4 +1627,4 @@ print "Finished\n";
 
 __END__
 
-nohup perl $ULTRASCAN/etc/us_tigre_job.pl /var/www/html/cauma/data/47a5253a5aff13184a456a803d59d60d/1154573785.gc emre@flash.net 060802223315 /var/www/html/cauma/data/47a5253a5aff13184a456a803d59d60d /var/www/html/cauma/data/47a5253a5aff13184a456a803d59d60d/experiments060802223315.dat /var/www/html/cauma/data/47a5253a5aff13184a456a803d59d60d/solutes060802223315-0.dat > /tmp/gc_tigre_060802223315.1 2> /tmp/gc_tigre_060802223315.2 
+nohup perl $ULTRASCAN/etc/grid/us_tigre_job.pl /var/www/html/cauma/data/47a5253a5aff13184a456a803d59d60d/1154573785.gc emre@flash.net 060802223315 /var/www/html/cauma/data/47a5253a5aff13184a456a803d59d60d /var/www/html/cauma/data/47a5253a5aff13184a456a803d59d60d/experiments060802223315.dat /var/www/html/cauma/data/47a5253a5aff13184a456a803d59d60d/solutes060802223315-0.dat > /tmp/gc_tigre_060802223315.1 2> /tmp/gc_tigre_060802223315.2 
