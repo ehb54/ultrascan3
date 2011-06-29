@@ -7,8 +7,8 @@ SOAP::Lite->import(+trace => qw(debug));
 use Data::Uniqid qw ( suniqid uniqid luniqid );
 
 # GFAC Location. Need to change based on where we host gfac but going to be one most of the time
-my $WSDL = 'http://gw33.quarry.iu.teragrid.org:5678/?wsdl';
-my $ENDPOINT = 'http://gw33.quarry.iu.teragrid.org:5678/';
+my $WSDL = 'http://localhost:5678/?wsdl';
+my $ENDPOINT = 'http://localhost:5678/';
 # Parameter setting. Paramerters passed to run the job. These are used to create soap request.
 #Host to run the job
 
@@ -19,7 +19,8 @@ my $experimentFileLoc = shift;                                                  
 my $solutesFileLoc = shift;                                                      # '/work/rfnu/solutes091204143912.dat';
 my $expParam = shift;                                                            # '777'
 my $noofProcess = shift;                                                         # '32'
-my $walltime = shift || die "usage: $0 hostname experimentfileloc solutefileloc jobid np walltime\n"; # '200';
+my $walltime = shift || die "usage: $0 hostname experimentfileloc solutefileloc jobid np walltime queuename\n"; # '200';
+my $queueName = shift;
 
 my $id = uniqid;
 my $experimentID = "Experiment-$id" ;
@@ -61,14 +62,24 @@ my $SOAPHeader = "<wsa:To xmlns:wsa=\"http://www.w3.org/2005/08/addressing\"
               xmlns:lh=\"http://lead.extreme.indiana.edu/namespaces/2005/10/lead-context-header\" xmlns:wsa=\"http://www.w3.org/2005/08/addressing\">
             <lh:experiment-id>$experimentID</lh:experiment-id>
             <lh:event-sink-epr>
-                <wsa:Address>http://ogceportal.iu.teragrid.org:12346//topic/$experimentID</wsa:Address>
+                <wsa:Address>http://ogceportal.iu.teragrid.org:12346/topic/$experimentID</wsa:Address>
             </lh:event-sink-epr>
             <lh:user-dn>/C=US/O=National Center for Supercomputing Applications/CN=Raminderjeet Fnu</lh:user-dn>
             <lh:workflow-instance-id>$experimentID</lh:workflow-instance-id>
-            <lh:workflow-time-step>0</lh:workflow-time-step>
-            <lrm:resource-mapping max-wall-time=\"$walltime\" node-count=\"$noofProcess\"
-                  xmlns:lrm=\"http://lead.extreme.indiana.edu/namespaces/2006/lead-resource-mapping/\">$hostName</lrm:resource-mapping>
-        </lh:context>";
+           <lh:workflow-time-step>0</lh:workflow-time-step> <lrm:resource-mapping ";
+my $headercond ='';
+if($walltime != ''){
+        $headercond = $headercond. "max-wall-time=\"$walltime\" ";
+}
+if($noofProcess !=''){
+        $headercond = $headercond. "node-count=\"$noofProcess\" ";
+}
+if($queueName ne ''){
+        $headercond = $headercond. "queue-name=\"$queueName\" ";
+}
+
+$SOAPHeader = $SOAPHeader. $headercond. " xmlns:lrm=\"http://lead.extreme.indiana.edu/namespaces/2006/lead-resource-mapping/\">$hostName</lrm:resource-mapping>   
+</lh:context>";
 
 my $header = SOAP::Header-> type(xml => $SOAPHeader);
 

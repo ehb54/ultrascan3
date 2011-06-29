@@ -2,8 +2,8 @@
 
 $us = $ENV{'ULTRASCAN'} || die "The environment variable ULTRASCAN must be set.  Terminating\n";
 # ----------- user configuration area
-$debug++;
-#$debugdb++;
+#$debug++;
+$debugdb++;
 $dbname = "$us/etc/us_gridpipe_db";
 $globustimeout = 15; # seconds to wait for globusrun-ws commands to succeed or timeout
 $statusupdate = 10;  # seconds to wait for status update

@@ -31,6 +31,7 @@ sub LOCK_UN { 8 }
 # @return nothing
 
 sub dbopen {
+    undef %db;
     open(DBLOCK, $dblock) || die "couldn't access dblock file $dblock\n";
     tie %db, "DB_File", $dbfile || die "can not open $dbfile: $!\n";
 }
@@ -53,7 +54,7 @@ sub dbclose {
 sub dblock {
     if (!flock(DBLOCK, LOCK_EX)) {
 	do {
-	    print STDERR "$0: warning: error trying to lock file $dblock <\!>\n";
+	    print STDERR "$0: warning: error trying to lock file $dblock <$!>\n";
 	    sleep 5;
 	} while (!flock(DBLOCK, LOCK_EX));
     }
@@ -67,7 +68,7 @@ sub dblock {
 sub dbunlock {
     if (!flock(DBLOCK, LOCK_UN)) {
 	do {
-	    print STDERR "$0: warning: error trying to unlock file $dblock <\!>\n";
+	    print STDERR "$0: warning: error trying to unlock file $dblock <$!>\n";
 	    sleep 5;
 	} while (!flock(DBLOCK, LOCK_UN));
     }
@@ -187,6 +188,10 @@ while(1) {
             dbopen();
             dbwrite($key, $data);
             dbclose();
+	    dbopen();
+	    my %mdb = dbrocopy();
+	    dbclose();
+	    print "WARNING: mdb{$key} = $mdb{$key} should be $data\n" if $mdb{$key} ne $data ;
         }
     }
 }

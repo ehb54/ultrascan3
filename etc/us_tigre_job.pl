@@ -8,13 +8,13 @@
 # THIS IS NOT HOW MANY PROCS THE SYSTEM HAS, BUT HOW MANY TIGRE/PBS KNOW ABOUT!!!!
 
 @bcfdowncount = `/opt/torque/bin/pbsnodes -l`;
-# laredo is down
-@laredodowncount = `ssh laredo /opt/torque/bin/pbsnodes -l`;
-@alamodowncount = `ssh alamo /opt/torque/bin/pbsnodes -l`;
+@laredodowncount = `ssh laredo.uthscsa.edu /opt/torque/bin/pbsnodes -l`;
+@alamodowncount = `ssh alamo.uthscsa.edu /opt/torque/bin/pbsnodes -l`;
 
-$bcf_no_procs = 20 - 2 * @bcfdowncount;
+$bcf_no_procs = 32 -2 * @bcfdowncount;
 $alamo_no_procs = 32 - 2 * @alamodowncount;
-$laredo_no_procs = 20 - 4 * @laredodowncount;
+#$laredo_no_procs = 20;
+#$laredo_no_procs = 20 - 4 * @laredodowncount;
 
 $MAX_RETRIES = 11;
 $MAX_RETRIES_SHORT = 2;
@@ -433,6 +433,8 @@ $ULTRASCAN = $ENV{'ULTRASCAN'};
             'queenbee.loni-lsu.teragrid.org' ,
             'gatekeeper.bigred.iu.teragrid.org' ,
             'gatekeeper.ranger.tacc.teragrid.org' ,
+            'lonestar.tacc.teragrid.org' ,
+            'bcf.biochemistry.uthscsa.edu' ,
 	    'meta' 
 	    );
 
@@ -456,6 +458,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 		 8443 , # queenbee
 		 8443 , # bigred
 		 0, # gatekeeper.ranger
+		 0, # new lonestar 
+		 0, # bcf gram5 
 		 0 
 		 );
 
@@ -474,6 +478,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	      22 , # queenbee
 	      22 , # bigred
 	      22 , # ranger
+	      22 , # new lonestar
+	      22 , # bcf gram5
 	      0 ,
 	      );
 
@@ -492,6 +498,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	 '/work/brookes' ,
 	 '/N/dc/scratch/tg-ebrookes' , # bigred
 	 '/work/01314/ultrasca' , # ranger
+	 '/work/01314/ultrasca' , # new lonestar
+	 '/work/ultrasca' , # bcf gram5
 	 '' 
 	 );
 
@@ -510,6 +518,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	       'PBS' ,
 	       'Loadleveler' , # bigred
 	       '' , # ranger
+	       '' , # new lonestar
+	       '' , # gram5 bcf
                'PBS' ,  # ?
 	       '' 
 	       );
@@ -529,6 +539,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	 'bin64' ,  #queenbee
 	 'bin' ,  # bigred
 	 'bin64' ,  # ranger
+	 'bin64' ,  # new lonestar
+	 'bin64' ,  # gram5 bcf
 	 'bin64'   #meta
        );
 @executable = (
@@ -546,6 +558,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
        'us_fe_nnls_t.sh' , #queenbee
        'us_fe_nnls_t_mpi' , #bigred
        'us_fe_nnls_t_mpi.sh' , #ranger
+       'us_fe_nnls_t_mpi' , #new lonestar
+       'us_fe_nnls_t_mpi' , #gram5 bcf
        'us_fe_nnls_t_mpi' , #meta
        );
 
@@ -565,6 +579,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   '' ,  #queenbee
 	   '<queue>NORMAL</queue>' , # bigred
 	   '' , #ranger / determined based upon runtime
+	   '' , # new lonestar / determined based upon runtime
+	   'default' , # gram5 bcf
 	   '' #meta
 	   );
 
@@ -620,6 +636,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 ' , # queenbee
 	   '', # bigred
 	   '', # ranger
+	   '', # new lonestar
+	   '', # gram5 bcf
 	   '' # meta
 	   );
 
@@ -656,6 +674,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   64 , # queenbee
 	   64 , # bigred
 	   128 , # ranger
+	   144 , # new lonestar
+	   16 , # gram5 bcf
 	   64 #meta
 	   );
 
@@ -674,6 +694,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   2880 ,  # queenbee
 	   2880 ,  # bigred
 	   2880 ,  # ranger
+	   1440 ,  # new lonestar
+	   60000 , # bcf
 	   2880    # meta
 	   );
 @gsi = (
@@ -691,6 +713,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	'gsi' ,  # queenbee
 	'gsi' ,  # bigred
 	'' ,  # ranger
+	'' ,  # new lonestar
+	'' ,  # gram5 bcf
 	'gsi'    # meta
 	);
 
@@ -709,6 +733,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	 0 ,  # queenbee
 	 0 ,  # bigred
 	 1 ,  # ranger
+	 1 ,  # new lonestar
+	 1 ,  # gram5 bcf
 	 0    # meta
 	 );
 
@@ -801,6 +827,8 @@ $max_time[9] = $max_time[0];
 $max_time[11] = $max_time[0];  # queenbee
 $max_time[12] = $max_time[0];  # bigred
 $max_time[13] = $max_time[0];  # ranger
+$max_time[14] = $max_time[0];  # new lonestar
+
 
 print "Maximum time[0]=$max_time[0]\n";
 
@@ -905,7 +933,22 @@ if( $default_system =~ /gatekeeper.ranger/ )
     $np = $max_np[$usesys] if $np > $max_np[$usesys];
 }
 
-print "np is $np\n";
+$gfac_hc = 0;
+if( $default_system =~ /lonestar.tacc.teragrid.org/ )
+{
+    $np = 12 * ( int( $np / 12 ) + 1);
+    $np = $max_np[$usesys] if $np > $max_np[$usesys];
+    $gfac_hc = int($np / 12);
+}
+
+if( $default_system =~ /bcf.biochemistry.uthscsa.edu/ )
+{
+    $np = 2 * ( int( $np / 2 ) + 1);
+    $np = $max_np[$usesys] if $np > $max_np[$usesys];
+    $gfac_hc = int($np / 2);
+}
+
+print "np is $np gfac_hc is $gfac_hc\n";
 if( $default_system =~ /gatekeeper.ranger/ )
 {
     if ( $max_time[$usesys] > 1440 )
@@ -914,13 +957,20 @@ if( $default_system =~ /gatekeeper.ranger/ )
     } else {
 	$queues[$usesys] = 'normal';
     }
-    print "submitting to ranger via '$queues[$usesys]' queue\n";
+    print "submitting to $default_system via '$queues[$usesys]' queue\n";
+}
+
+if( $default_system =~ /lonestar.tacc.teragrid.org/ )
+{
+    $queues[$usesys] = 'normal';
+    print "submitting to $default_system via '$queues[$usesys]' queue\n";
 }
     
 $SYSTEM = $systems[$usesys];
 $GSI_SYSTEM = $SYSTEM;
 $GSI_SYSTEM = "brecca.vpac.monash.edu.au" if $SYSTEM =~ /ng2.vpac.monash.edu.au/;
 $GSI_SYSTEM = "gatekeeper.iu.teragrid.org" if $SYSTEM =~ /bigred/;
+$GSI_SYSTEM = "tg-login.ranger.tacc.teragrid.org" if $SYSTEM =~ /ranger/;
 $PORT_GLOBUS = $ports_globus[$usesys];
 $PORT_SSH = $ports_ssh[$usesys];
 $WORK = $work[$usesys];
@@ -938,7 +988,6 @@ $MAXMEM = "<maxMemory>2000</maxMemory>" if $SYSTEM =~ /ng2.vpac.monash.edu.au/;
 
 $WORKTMP = "${WORK}/tmp";
 $WORKRUN = "${WORK}/tmp/$id";
-
 
 $xmlfile = "us_tigre_job_desc${id}.xml";
 
@@ -1140,7 +1189,7 @@ if($default_system eq 'meta') {
 	    } while($lastfail && $ecount && $ecount <= $max_ecount);
 	}
     } else {
-	$cmd = "perl $US/etc/us_asta_run.pl $SYSTEM ${WORKRUN}/experiments${timestamp}.dat ${WORKRUN}/solutes${timestamp}.dat $jid $np $max_time[$usesys] $queues[$usesys]\n";
+	$cmd = "perl $US/etc/us_asta_run.pl $SYSTEM ${WORKRUN}/experiments${timestamp}.dat ${WORKRUN}/solutes${timestamp}.dat $jid $np $max_time[$usesys] $queues[$usesys] $gfac_hc\n";
 	print $cmd;
 	if ( $execute ) {
 	    $result = `$cmd`;
@@ -1384,12 +1433,12 @@ if($default_system eq 'meta') {
 "mv us_job${id}.stderr /lustre/tmp/us_job${id}.stderr
 mv us_job${id}.stdout /lustre/tmp/us_job${id}.stdout
 ";
+    print $cmd;
+    print `$cmd` if $execute;
 } else {
     if ( $gfac[$usesys] ) {
 	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stderr", "/lustre/tmp/us_job${id}.stderr");
 	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/UltraScan_MPI_Program.stdout", "/lustre/tmp/us_job${id}.stdout");
-	print $cmd;
-	print `$cmd` if $execute;
     } else {
 	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stderr", "/lustre/tmp/us_job${id}.stderr");
 	&gsiget($GSI_SYSTEM, $PORT_SSH, "${WORKRUN}/us_job${id}.stdout", "/lustre/tmp/us_job${id}.stdout");

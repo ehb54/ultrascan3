@@ -9,15 +9,15 @@ my $debug;
 # print "Content-type: text/html\n\n";
 
 ## mysql user database name
-my $db ="exp_notification";
+my $db ="xregistry_ogce";
 ## mysql database user name
-my $user = "exp_ogce";
+my $user = "xreg_ogce";
 
 ## mysql database password
-my $pass = "exp_pass";
+my $pass = "xreg_pass";
 
 ## user hostname : This should be "localhost" but it can be diffrent too
-my $host="gw33.quarry.iu.teragrid.org";
+my $host="localhost";
 
 my $experimentID = $ARGV[0];
 

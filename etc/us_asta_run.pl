@@ -36,6 +36,7 @@ my $expParam = shift;                                                           
 my $noofProcess = shift;                                                         # '32'
 my $walltime = shift || die "usage: $0 hostname experimentfileloc solutefileloc jobid np walltime queuename\n"; # '200';
 my $queueName = shift;
+my $noofHosts = shift;
 
 my $id = uniqid;
 my $experimentID = "Experiment-$id" ;
@@ -88,6 +89,9 @@ if($walltime != 0){
 }
 if($noofProcess != 0){
         $headercond = $headercond. "node-count=\"$noofProcess\" ";
+}
+if ($noofHosts !=''){
+        $headercond = $headercond. "cpu-count=\"$noofHosts\" ";
 }
 if($queueName ne ''){
         $headercond = $headercond. "queue-name=\"$queueName\" ";

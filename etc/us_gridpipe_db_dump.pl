@@ -155,5 +155,8 @@ sub dbtest {
     dbclose();
 }
 
-&dbopen();
+# dbopen();
+# dbwrite("next_seq", 9500);
+# dbclose();
+dbopen();
 print &dblist();

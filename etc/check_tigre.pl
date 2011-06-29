@@ -6,7 +6,7 @@ use MIME::Lite;
 
 sub do_email {
     $em = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
-			   To      =>  'ebrookes@cs.utsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
+			   To      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
 			   Subject =>  "TIGRE ERROR on $system for user apache",
 			   Data    => "us_check_tigre noticed the following problem
 --------------------------------------------------------------------------------
@@ -18,7 +18,11 @@ $_[1]
     $em->send('smtp', 'smtp.uthscsa.edu');
 }
 
-    
+$home = $ENV{'HOME'};
+chdir "$home/tmp";
+print `pwd`;
+
+
 $system = shift;
 if($system eq '-e') {
     $email++;
@@ -114,6 +118,7 @@ for($i = 0; $i < @systems; $i++) {
 $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 $gsi_system = $system;
 $gsi_system = "brecca.vpac.monash.edu.au" if $system =~ /ng2.vpac.monash.edu.au/;
+$gsi_system = "gatekeeper.iu.teragrid.org" if $system =~ /gatekeeper.bigred.iu.teragrid.org/;
 
 $gsissh = `gsissh -p $ports_ssh[$reversesystems{$system}] -v $gsi_system echo $home[$reversesystems{$system}]test123 2>&1`;
 if(!($gsissh =~ /test123/)) {
@@ -144,6 +149,8 @@ if(!($globusrun =~ /Done/)) {
 }
 
 
+$gsisshcmd = "gsissh -p $ports_ssh[$reversesystems{$system}] -v $gsi_system cat $home[$reversesystems{$system}]$datef 2>&1";
+print "$gsisshcmd\n";
 $gsissh = `gsissh -p $ports_ssh[$reversesystems{$system}] -v $gsi_system cat $home[$reversesystems{$system}]$datef 2>&1`;
 if(!($gsissh =~ /test $date endtest/)) {
     $msg = "ERROR: gsissh did not return the correct file.  Output follows:\n$gsissh\n";
