@@ -1,4 +1,5 @@
 #include "../include/us_data_io.h"
+#include "../include/us_limsconv.h"
 
 US_Data_IO::US_Data_IO(struct runinfo *run_inf, bool baseline_flag, QObject *parent, const char *name)
    : QObject (parent, name)
@@ -488,8 +489,267 @@ int US_Data_IO::load_run(QString fn, int run_type, bool *has_data,
       ds >> (*run_inf).rotor;
       f.close();
    }
+   // now check to make sure the databases match and update if the old DB name was used
+	// if the database doesn't match our configured database we need to first check if 
+	// the database name is old and needs to be updated. If it is old, we also need to 
+	// check if the new name matches the default db. If it does, we need to re-write 
+	// the file with the new database name updated
+	bool db_used = false;
+	for(i=0; i<8; i++)
+	{
+		for(j=0; j<4; j++)
+		{
+			if((*run_inf).buffer_serialnumber[i][j] != -1)
+			{
+				db_used = true;
+			}
+		}
+	}
+	if (db_used)
+	{
+		QString default_db;
+		// check to see if the dbname matches the default database
+   	if(!check_dbname((*run_inf).dbname, &default_db))  
+   	{
+			// if it doesn't match, check if it is an old database name	  
+      	for (i=0; i<57; i++)
+      	{
+				// if it is an old name, we need to check if the corresponding new name 
+				// matches the default database 	  
+         	if ((*run_inf).dbname == limsold[i])
+         	{
+cout << "default: " << default_db << ", limsold: " << limsold[i] << ", dbname: " << (*run_inf).dbname << ", limsnew: " << limsnew[i] << endl;
+					// if the corresponding new name matches, we update the database name and
+					// write the new name to the data file and break out of the loop	  
+					if(check_dbname(limsnew[i], &default_db))
+					{
+            		(*run_inf).dbname = limsnew[i];
+            		int write_error = write_run(fn, run_type, has_data, cp_list);
+						cout << "write error: " << write_error << endl;
+						if (write_error < 0) return (write_error);
+            		break;
+					}
+					// else we will signal an error
+					else
+					{
+						return(-4); // database doesn't match	  
+					}
+				}
+         }
+      }
+   }
    return(0);
 }
+
+int US_Data_IO::write_run(QString fn, int run_type, bool *has_data,
+                         vector <struct centerpieceInfo> *cp_list)
+{
+	unsigned int i, j, k;	  
+	cout << "runtype: " << run_type << endl;
+   if (fn.isEmpty())
+   {
+      return (-22);
+   }
+   if (	run_type ==   1 || 
+		 	run_type ==   3 ||
+		 	run_type ==   5 ||
+		 	run_type ==   7 ||
+		 	run_type ==   9 ||
+		 	run_type ==  11 ||
+		 	run_type ==  13 ||
+		 	run_type ==  17 ||
+		 	run_type ==  19 ||
+		 	run_type ==  21 ||
+		 	run_type ==  31 ||
+		 	run_type == 101 )
+   {
+      QFile f(fn);
+      f.remove();
+      if (!f.open(IO_WriteOnly))
+      {
+         QString str = tr("UltraScan encountered a Problem when trying to open the edited data file.\n\n"
+                          "Please make sure that the file: \"")  + fn +
+            tr("\"\ncan be written to your results directory.\n\n"
+               "Current Results Directory: \"")
+            + USglobal->config_list.result_dir + "\"";
+			cout << str << endl;
+         return(-20);   // -20 error code = file can't be written
+      }
+      QDataStream ts (&f);
+      ts << US_Version;
+      ts << (*run_inf).data_dir;
+      ts << (*run_inf).run_id;
+      ts << (*run_inf).avg_temperature;
+      ts << (*run_inf).temperature_check;
+      ts << (*run_inf).time_correction;
+      ts << (*run_inf).duration;
+      ts << (*run_inf).total_scans;
+      ts << (*run_inf).delta_r;
+      ts << (*run_inf).expdata_id;
+      ts << (*run_inf).investigator;
+      ts << (*run_inf).date;
+      ts << (*run_inf).description;
+      ts << (*run_inf).dbname;
+      ts << (*run_inf).dbhost;
+      ts << (*run_inf).dbdriver;
+      ts << (int)(*run_inf).exp_type.velocity;
+      ts << (int)(*run_inf).exp_type.equilibrium;
+      ts << (int)(*run_inf).exp_type.diffusion;
+      ts << (int)(*run_inf).exp_type.simulation;
+      ts << (int)(*run_inf).exp_type.interference;
+      ts << (int)(*run_inf).exp_type.absorbance;
+      ts << (int)(*run_inf).exp_type.fluorescence;
+      ts << (int)(*run_inf).exp_type.intensity;
+      ts << (int)(*run_inf).exp_type.wavelength;
+      for (i=0; i<8; i++)
+      {
+         ts << (*run_inf).centerpiece[i];
+         ts << (*run_inf).meniscus[i];
+         ts << (*run_inf).cell_id[i];
+         ts << (*run_inf).wavelength_count[i];
+      }
+      for (i=0; i<8; i++)
+      {
+         for (j=0; j<4; j++)   // one for each channel
+         {
+            ts << (*run_inf).buffer_serialnumber[i][j];
+            for(int k=0; k<3;k++)
+            {
+               ts << (*run_inf).peptide_serialnumber[i][j][k];
+               ts << (*run_inf).DNA_serialnumber[i][j][k];
+            }
+         }
+         for (j=0; j<3; j++)
+         {
+            ts << (*run_inf).wavelength[i][j];
+            ts << (*run_inf).scans[i][j];
+            ts << (*run_inf).baseline[i][j];
+            if ((*run_inf).centerpiece[i] >= 0)
+            {
+               for (k=0; k<(*cp_list)[(*run_inf).centerpiece[i]].channels; k++)
+               {
+                  ts << (*run_inf).range_left[i][j][k];
+                  ts << (*run_inf).range_right[i][j][k];
+                  ts << (*run_inf).points[i][j][k];
+                  ts << (*run_inf).point_density[i][j][k];
+               }
+            }
+         }
+      }
+      for (i=0; i<8; i++)
+      {
+         for (j=0; j<(*run_inf).wavelength_count[i]; j++)
+         {
+            for (k=0; k<(*run_inf).scans[i][j]; k++)
+            {
+               ts << (*run_inf).rpm[i][j][k];
+               ts << (*run_inf).temperature[i][j][k];
+               // add the time correction back on before writing the data back to disk:
+               (*run_inf).time[i][j][k] += (unsigned int) ((*run_inf).time_correction + 0.5);
+               ts << (*run_inf).time[i][j][k];
+               ts << (*run_inf).omega_s_t[i][j][k];
+               //cout << "cell: " << i + 1 << ", lambda: " << j+1 << ", channel: " << k +1 << ": " << (*run_inf).plateau[i][j][k] << endl;;
+               ts << (*run_inf).plateau[i][j][k];
+               //               cout << "writing plateau: [i=" << i << "][j=" << j << "][k=" << k << "]: " << temp_run.plateau[i][j][k] << endl;
+            }
+         }
+      }
+      ts << (*run_inf).rotor;
+   }
+   if (	run_type ==  2 || 
+			run_type ==  4 ||
+			run_type ==  6 ||
+			run_type ==  8 ||
+			run_type == 10 ||
+			run_type == 12 ||
+			run_type == 14 ||
+			run_type == 32 )
+   {
+      QFile f(fn);
+      f.open(IO_WriteOnly);
+      QDataStream ts (&f);
+      ts << US_Version;
+      ts << (*run_inf).data_dir;
+      ts << (*run_inf).run_id;
+      ts << (*run_inf).duration;
+      ts << (*run_inf).total_scans;
+      ts << (*run_inf).delta_r;
+      ts << (*run_inf).expdata_id;
+      ts << (*run_inf).investigator;
+      ts << (*run_inf).date;
+      ts << (*run_inf).description;
+      ts << (*run_inf).dbname;
+      ts << (*run_inf).dbhost;
+      ts << (*run_inf).dbdriver;
+      ts << (int)(*run_inf).exp_type.velocity;
+      ts << (int)(*run_inf).exp_type.equilibrium;
+      ts << (int)(*run_inf).exp_type.diffusion;
+      ts << (int)(*run_inf).exp_type.simulation;
+      ts << (int)(*run_inf).exp_type.interference;
+      ts << (int)(*run_inf).exp_type.absorbance;
+      ts << (int)(*run_inf).exp_type.fluorescence;
+      ts << (int)(*run_inf).exp_type.intensity;
+      ts << (int)(*run_inf).exp_type.wavelength;
+      for (i=0; i<8; i++)
+      {
+         ts << (*run_inf).centerpiece[i];
+         ts << (*run_inf).cell_id[i];
+         ts << (*run_inf).wavelength_count[i];
+      }
+      for (i=0; i<8; i++)
+      {
+         for (j=0; j<4; j++)   // one for each channel
+         {
+            ts << (*run_inf).buffer_serialnumber[i][j];
+            for(int k=0; k<3;k++)
+            {
+               ts << (*run_inf).peptide_serialnumber[i][j][k];
+               ts << (*run_inf).DNA_serialnumber[i][j][k];
+            }
+         }
+         for (j=0; j<3; j++)
+         {
+            ts << (*run_inf).wavelength[i][j];
+            ts << (*run_inf).scans[i][j];
+            if ((*run_inf).centerpiece[i] >= 0  && (*run_inf).scans[i][j] != 0)
+            {
+               for (k=0; k<(*cp_list)[(*run_inf).centerpiece[i]].channels; k++)
+               {
+                  ts << (*run_inf).range_left[i][j][k];
+                  ts << (*run_inf).range_right[i][j][k];
+                  ts << (*run_inf).points[i][j][k];
+                  ts << (*run_inf).point_density[i][j][k];
+               }
+            }
+         }
+      }
+      for (i=0; i<8; i++)
+      {
+         for (j=0; j<(*run_inf).wavelength_count[i]; j++)
+         {
+            for (k=0; k<(*run_inf).scans[i][j]; k++)
+            {
+               ts << (*run_inf).rpm[i][j][k];
+               ts << (*run_inf).temperature[i][j][k];
+               ts << (*run_inf).time[i][j][k];
+               ts << (*run_inf).omega_s_t[i][j][k];
+            }
+         }
+      }
+      for (i=0; i<8; i++)
+      {
+         has_data[i]=false;
+         if ((*run_inf).scans[i][0] != 0)
+         {
+            has_data[i] = true;
+         }
+      }
+      ts << (*run_inf).rotor;
+      f.close();
+   }
+   return(0);
+}
+
 
 int US_Data_IO::load_veloc_scan(struct channelData *data,
                                 unsigned int selected_cell, unsigned int selected_lambda,

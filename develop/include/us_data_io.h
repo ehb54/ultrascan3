@@ -48,6 +48,10 @@ class US_EXTERN US_Data_IO : public QObject
       int,                     // run type
       bool *,                   // has_data[8]
       vector <struct centerpieceInfo> *);
+      int write_run(QString,    //file name
+      int,                     // run type
+      bool *,                   // has_data[8]
+      vector <struct centerpieceInfo> *);
       int load_veloc_scan(struct channelData *, unsigned int, unsigned int, unsigned int);
       int load_hydrodynamics(struct US_DatabaseLogin, struct hydrodynamicData *);
       int load_hydrodynamics(struct hydrodynamicData *);

@@ -908,8 +908,10 @@ void US_Cell_DB::add_db()
    }
 
    QSqlCursor check( "tblCell");
+	check.last();
    QString condition;
    condition.sprintf("CellID = %d", cell_info.CellID);
+	cout << condition << endl;
    check.select(condition);
    if(check.next())
    {
