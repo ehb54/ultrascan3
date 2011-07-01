@@ -65,6 +65,12 @@ void US_Data_IO::assign_simparams(struct SimulationParameters *sp, unsigned int 
 int US_Data_IO::load_run(QString fn, int run_type, bool *has_data,
                          vector <struct centerpieceInfo> *cp_list)
 {
+   bool gridcontrol_flag = false;
+   if (run_type == 201) // us_gridcontrol_t sends a '201' flag to signal veloc data
+   {
+      gridcontrol_flag = true;
+      run_type = 1;
+   }
    unsigned int i, j, k;
    if ((*run_inf).temperature != NULL)
    {
@@ -490,51 +496,54 @@ int US_Data_IO::load_run(QString fn, int run_type, bool *has_data,
       f.close();
    }
    // now check to make sure the databases match and update if the old DB name was used
-	// if the database doesn't match our configured database we need to first check if 
-	// the database name is old and needs to be updated. If it is old, we also need to 
-	// check if the new name matches the default db. If it does, we need to re-write 
-	// the file with the new database name updated
-	bool db_used = false;
-	for(i=0; i<8; i++)
-	{
-		for(j=0; j<4; j++)
-		{
-			if((*run_inf).buffer_serialnumber[i][j] != -1)
-			{
-				db_used = true;
-			}
-		}
-	}
-	if (db_used)
-	{
-		QString default_db;
-		// check to see if the dbname matches the default database
-   	if(!check_dbname((*run_inf).dbname, &default_db))  
-   	{
-			// if it doesn't match, check if it is an old database name	  
-      	for (i=0; i<57; i++)
-      	{
-				// if it is an old name, we need to check if the corresponding new name 
-				// matches the default database 	  
-         	if ((*run_inf).dbname == limsold[i])
-         	{
+   // if the database doesn't match our configured database we need to first check if 
+   // the database name is old and needs to be updated. If it is old, we also need to 
+   // check if the new name matches the default db. If it does, we need to re-write 
+   // the file with the new database name updated
+   bool db_used = false;
+   for(i=0; i<8; i++)
+   {
+      for(j=0; j<4; j++)
+      {
+         if((*run_inf).buffer_serialnumber[i][j] != -1)
+         {
+            db_used = true;
+         }
+      }
+   }
+   if (db_used)
+   {
+      QString default_db;
+      // if we load data from us_gridcontrol_t we don't need to do the database check
+      // since the database name comes from php in the selected LIMS instance.
+      if (gridcontrol_flag)  return(0);
+      // check to see if the dbname matches the default database
+      if(!check_dbname((*run_inf).dbname, &default_db))  
+      {
+         // if it doesn't match, check if it is an old database name     
+         for (i=0; i<57; i++)
+         {
+            // if it is an old name, we need to check if the corresponding new name 
+            // matches the default database      
+            if ((*run_inf).dbname == limsold[i])
+            {
 cout << "default: " << default_db << ", limsold: " << limsold[i] << ", dbname: " << (*run_inf).dbname << ", limsnew: " << limsnew[i] << endl;
-					// if the corresponding new name matches, we update the database name and
-					// write the new name to the data file and break out of the loop	  
-					if(check_dbname(limsnew[i], &default_db))
-					{
-            		(*run_inf).dbname = limsnew[i];
-            		int write_error = write_run(fn, run_type, has_data, cp_list);
-						cout << "write error: " << write_error << endl;
-						if (write_error < 0) return (write_error);
-            		break;
-					}
-					// else we will signal an error
-					else
-					{
-						return(-4); // database doesn't match	  
-					}
-				}
+               // if the corresponding new name matches, we update the database name and
+               // write the new name to the data file and break out of the loop     
+               if(check_dbname(limsnew[i], &default_db))
+               {
+                  (*run_inf).dbname = limsnew[i];
+                  int write_error = write_run(fn, run_type, has_data, cp_list);
+                  cout << "write error: " << write_error << endl;
+                  if (write_error < 0) return (write_error);
+                  break;
+               }
+               // else we will signal an error
+               else
+               {
+                  return(-4); // database doesn't match     
+               }
+            }
          }
       }
    }
@@ -544,24 +553,24 @@ cout << "default: " << default_db << ", limsold: " << limsold[i] << ", dbname: "
 int US_Data_IO::write_run(QString fn, int run_type, bool *has_data,
                          vector <struct centerpieceInfo> *cp_list)
 {
-	unsigned int i, j, k;	  
-	cout << "runtype: " << run_type << endl;
+   unsigned int i, j, k;     
+   cout << "runtype: " << run_type << endl;
    if (fn.isEmpty())
    {
       return (-22);
    }
-   if (	run_type ==   1 || 
-		 	run_type ==   3 ||
-		 	run_type ==   5 ||
-		 	run_type ==   7 ||
-		 	run_type ==   9 ||
-		 	run_type ==  11 ||
-		 	run_type ==  13 ||
-		 	run_type ==  17 ||
-		 	run_type ==  19 ||
-		 	run_type ==  21 ||
-		 	run_type ==  31 ||
-		 	run_type == 101 )
+   if (   run_type ==   1 || 
+          run_type ==   3 ||
+          run_type ==   5 ||
+          run_type ==   7 ||
+          run_type ==   9 ||
+          run_type ==  11 ||
+          run_type ==  13 ||
+          run_type ==  17 ||
+          run_type ==  19 ||
+          run_type ==  21 ||
+          run_type ==  31 ||
+          run_type == 101 )
    {
       QFile f(fn);
       f.remove();
@@ -572,7 +581,7 @@ int US_Data_IO::write_run(QString fn, int run_type, bool *has_data,
             tr("\"\ncan be written to your results directory.\n\n"
                "Current Results Directory: \"")
             + USglobal->config_list.result_dir + "\"";
-			cout << str << endl;
+         cout << str << endl;
          return(-20);   // -20 error code = file can't be written
       }
       QDataStream ts (&f);
@@ -656,14 +665,14 @@ int US_Data_IO::write_run(QString fn, int run_type, bool *has_data,
       }
       ts << (*run_inf).rotor;
    }
-   if (	run_type ==  2 || 
-			run_type ==  4 ||
-			run_type ==  6 ||
-			run_type ==  8 ||
-			run_type == 10 ||
-			run_type == 12 ||
-			run_type == 14 ||
-			run_type == 32 )
+   if (   run_type ==  2 || 
+         run_type ==  4 ||
+         run_type ==  6 ||
+         run_type ==  8 ||
+         run_type == 10 ||
+         run_type == 12 ||
+         run_type == 14 ||
+         run_type == 32 )
    {
       QFile f(fn);
       f.open(IO_WriteOnly);

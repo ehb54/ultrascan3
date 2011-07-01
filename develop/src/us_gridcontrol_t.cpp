@@ -140,7 +140,7 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
          selected_channel --;
          cerr << "Channel for experiment " << i+1 << ": " << selected_channel << endl;
          cerr << "About to load file: " << fn << endl;
-         int result = dataIO->load_run(fn, 1, has_data, &cp_list);
+         int result = dataIO->load_run(fn, 201, has_data, &cp_list);
          cerr << "loading resulted in: " << result << endl;
          if (result < 0)
          {
