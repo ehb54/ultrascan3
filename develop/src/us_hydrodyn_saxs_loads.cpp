@@ -9,6 +9,11 @@
 #  define SLASH "\\"
 #endif
 
+#ifdef WIN32
+# include <float.h>
+# define isnan(x) _isnan(x)
+#endif
+
 void US_Hydrodyn_Saxs::load_saxs(QString filename)
 {
    if ( filename.isEmpty() )
