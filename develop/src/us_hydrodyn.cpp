@@ -612,7 +612,7 @@ void US_Hydrodyn::setupGUI()
    Q_CHECK_PTR(pb_pdb_hydrate_for_saxs);
    pb_pdb_hydrate_for_saxs->setMinimumHeight(minHeight1);
    pb_pdb_hydrate_for_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_pdb_hydrate_for_saxs->setEnabled(true);
+   pb_pdb_hydrate_for_saxs->setEnabled(false);
    pb_pdb_hydrate_for_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_pdb_hydrate_for_saxs, SIGNAL(clicked()), SLOT(pdb_hydrate_for_saxs()));
 
