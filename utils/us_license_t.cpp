@@ -83,14 +83,13 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
     return Pending;
   }
 
+  QString license_string = expiration + email;
+  QString calculation = "";
+  QString str;
+  for ( int i = 0; i < license_string.size(); i++ )
+    calculation += str.sprintf( "%X", license_string[ i ].unicode() );
 
-  QString code1 = encode( lastname, firstname );
-  QString code2 = encode( company , address   );
-  QString code3 = encode( city    , zip       );
-  QString code4 = encode( phone   , email     );
-  QString code5 = encode( platform + opSys + version, expiration );
-
-  QString calculation = code1 + "-" + code2 + "-" + code3 + "-" + code4 + "-" + code5;
+  calculation.truncate(24);
 
   if ( calculation != validation )
   { 
@@ -116,52 +115,3 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
   return OK;
 }
 
-QString US_License_t::encode( const QString& str1, const QString& str2 )
-{
-  int sum1 = 0;
-  int sum2 = 0;
-
-  const static QString lower = "abcdefghijklmnopqrstuvwxyz";
-  const static QString upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-  QRegExp blanks( "(^\\s+)|(\\s+$)" );
-
-  QString STR1 = str1;
-  STR1.replace( blanks, "" );
-  
-  QString STR2 = str2;
-  STR2.replace( blanks, "" );
-
-  for ( int i = 0; i < STR1.length(); i++ )
-  {
-    QChar c = STR1.at( i );
-
-    // Make upper case for ascii only
-    int   index = lower.indexOf( c );
-    if ( index >= 0 ) 
-       c = upper.at( index );
-
-    sum1 += c.unicode();
-  }
-
-  for ( int i = 0; i < STR2.length(); i++ )
-  {
-    QChar c = STR2.at( i );
-
-    // Make upper case for ascii only
-    int   index = lower.indexOf( c );
-    if ( index >= 0 ) 
-       c = upper.at( index );
-
-    sum2 += c.unicode();
-  }
-
-  QString SUM = QString::number( sum1 ) + QString::number( sum2 );
-                
-  int x = int( fabs( sin( SUM.toDouble() ) ) * 65535 );
-
-  QString code;
-  code = code.sprintf( "000%X", x ).right( 4 );
-
-  return code;
-}
